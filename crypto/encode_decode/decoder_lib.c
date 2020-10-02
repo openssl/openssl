@@ -430,6 +430,7 @@ static int decoder_process(const OSSL_PARAM params[], void *arg)
     int err, ok = 0;
     /* For recursions */
     struct decoder_process_data_st new_data;
+    const char *object_type = NULL;
 
     memset(&new_data, 0, sizeof(new_data));
     new_data.ctx = data->ctx;
@@ -471,6 +472,11 @@ static int decoder_process(const OSSL_PARAM params[], void *arg)
         if (new_data.bio == NULL)
             goto end;
         bio = new_data.bio;
+
+        /* Get the object type if there is one */
+        p = OSSL_PARAM_locate_const(params, OSSL_OBJECT_PARAM_DATA_TYPE);
+        if (p != NULL && !OSSL_PARAM_get_utf8_string_ptr(p, &object_type))
+            goto end;
     }
 
     /*
@@ -511,6 +517,13 @@ static int decoder_process(const OSSL_PARAM params[], void *arg)
          * that decoder.
          */
         if (decoder != NULL && !OSSL_DECODER_is_a(decoder, new_input_type))
+            continue;
+
+        /*
+         * If the previous decoder gave us an object type, we check to see
+         * if that matches the decoder we're currently considering.
+         */
+        if (object_type != NULL && !OSSL_DECODER_is_a(new_decoder, object_type))
             continue;
 
         /*

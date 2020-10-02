@@ -21,6 +21,7 @@
 #include <openssl/err.h>
 #include <openssl/params.h>
 #include <openssl/pem.h>
+#include "internal/nelem.h"
 #include "prov/bio.h"
 #include "prov/implementations.h"
 #include "prov/providercommonerr.h"
@@ -109,8 +110,27 @@ static int pem2der_decode(void *vctx, OSSL_CORE_BIO *cin,
                           OSSL_CALLBACK *data_cb, void *data_cbarg,
                           OSSL_PASSPHRASE_CALLBACK *pw_cb, void *pw_cbarg)
 {
+    /* Strings to peal off the pem name */
+    static const char *pealable_pem_name_endings[] = {
+        /*
+         * These entries should be in longest to shortest order to avoid
+         * mixups.
+         */
+        "ENCRYPTED PRIVATE KEY",
+        "PRIVATE KEY",
+        "PUBLIC KEY",
+        "PARAMETERS"
+
+        /*
+         * Libcrypto currently only supports decoding keys with provider side
+         * decoders, so we don't try to peal any other PEM name.  That's an
+         * exercise for when libcrypto starts to treat other types of objects
+         * via providers.
+         */
+    };
     struct pem2der_ctx_st *ctx = vctx;
     char *pem_name = NULL, *pem_header = NULL;
+    size_t pem_name_len, i;
     unsigned char *der = NULL;
     long der_len = 0;
     int ok = 0;
@@ -137,16 +157,46 @@ static int pem2der_decode(void *vctx, OSSL_CORE_BIO *cin,
             goto end;
     }
 
-    {
-        OSSL_PARAM params[3];
+    /*
+     * Peal off certain strings from the end of |pem_name|, as they serve
+     * no further purpose.
+     */
+    for (i = 0, pem_name_len = strlen(pem_name);
+         i < OSSL_NELEM(pealable_pem_name_endings);
+         i++) {
+        size_t peal_len = strlen(pealable_pem_name_endings[i]);
+        size_t pem_name_offset;
 
-        params[0] =
-            OSSL_PARAM_construct_utf8_string(OSSL_OBJECT_PARAM_DATA_TYPE,
-                                             pem_name, 0);
-        params[1] =
+        if (peal_len <= pem_name_len) {
+            pem_name_offset = pem_name_len - peal_len;
+            if (strcmp(pem_name + pem_name_offset,
+                       pealable_pem_name_endings[i]) == 0) {
+
+                do {
+                    pem_name[pem_name_offset] = '\0';
+                } while (pem_name_offset > 0
+                         && pem_name[--pem_name_offset] == ' ');
+
+                if (pem_name[0] == '\0') {
+                    OPENSSL_free(pem_name);
+                    pem_name = NULL;
+                }
+                break;
+            }
+        }
+    }
+
+    {
+        OSSL_PARAM params[3], *p = params;
+
+        if (pem_name != NULL)
+            *p++ =
+                OSSL_PARAM_construct_utf8_string(OSSL_OBJECT_PARAM_DATA_TYPE,
+                                                 pem_name, 0);
+        *p++ =
             OSSL_PARAM_construct_octet_string(OSSL_OBJECT_PARAM_DATA,
                                               der, der_len);
-        params[2] = OSSL_PARAM_construct_end();
+        *p = OSSL_PARAM_construct_end();
 
         ok = data_cb(params, data_cbarg);
     }
