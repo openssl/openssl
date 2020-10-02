@@ -32,7 +32,7 @@ int ossl_decoder_ctx_add_decoder_inst(OSSL_DECODER_CTX *ctx,
                                       OSSL_DECODER_INSTANCE *di);
 
 int ossl_decoder_ctx_setup_for_EVP_PKEY(OSSL_DECODER_CTX *ctx,
-                                        EVP_PKEY **pkey,
+                                        EVP_PKEY **pkey, const char *keytype,
                                         OPENSSL_CTX *libctx,
                                         const char *propquery);
 

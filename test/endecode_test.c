@@ -201,7 +201,7 @@ static int decode_EVP_PKEY_prov(void **object, void *encoded, long encoded_len,
     const unsigned char *upass = (const unsigned char *)pass;
     int ok = 0;
 
-    if (!TEST_ptr(dctx = OSSL_DECODER_CTX_new_by_EVP_PKEY(&pkey, NULL,
+    if (!TEST_ptr(dctx = OSSL_DECODER_CTX_new_by_EVP_PKEY(&pkey, NULL, NULL,
                                                           NULL, NULL))
         || (pass != NULL
             && !OSSL_DECODER_CTX_set_passphrase(dctx, upass, strlen(pass)))

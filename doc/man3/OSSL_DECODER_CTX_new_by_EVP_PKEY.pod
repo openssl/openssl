@@ -14,7 +14,8 @@ OSSL_DECODER_CTX_set_passphrase_cb
  #include <openssl/decoder.h>
 
  OSSL_DECODER_CTX *
- OSSL_DECODER_CTX_new_by_EVP_PKEY(const EVP_PKEY *pkey, const char *input_type,
+ OSSL_DECODER_CTX_new_by_EVP_PKEY(const EVP_PKEY *pkey,
+                                  const char *input_type, const char *keytype,
                                   OPENSSL_CTX *libctx, const char *propquery);
 
  int OSSL_DECODER_CTX_set_passphrase(OSSL_DECODER_CTX *ctx,
@@ -44,8 +45,14 @@ data suitable for B<EVP_PKEY>s.  All these implementations are implicitly
 fetched using I<libctx> and I<propquery>.
 
 The search of decoder implementations can be limited with I<input_type>,
-which specifies a starting input type.  This is further explained in
-L<OSSL_DECODER_CTX_set_input_type(3)>.
+which specifies a starting input type.  NULL is valid input and signifies
+that the decoder implementations will find out the input type on their own.
+This is further explained in L<OSSL_DECODER_CTX_set_input_type(3)>.
+
+The search of decoder implementations can also be limited with I<keytype>,
+which specifies the expected resulting keytype.  NULL is valid input and
+signifies that the decoder implementations will find out the keytype on
+their own from the input they get.
 
 If no suitable decoder implementation is found,
 OSSL_DECODER_CTX_new_by_EVP_PKEY() still creates a B<OSSL_DECODER_CTX>, but

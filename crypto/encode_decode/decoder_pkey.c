@@ -188,6 +188,7 @@ static void decoder_clean_EVP_PKEY_construct_arg(void *construct_data)
 
 struct collected_data_st {
     struct decoder_EVP_PKEY_data_st *process_data;
+    const char *keytype;
     STACK_OF(OPENSSL_CSTRING) *names;
     OSSL_DECODER_CTX *ctx;
 
@@ -198,6 +199,8 @@ static void collect_keymgmt(EVP_KEYMGMT *keymgmt, void *arg)
 {
     struct collected_data_st *data = arg;
 
+    if (data->keytype != NULL && !EVP_KEYMGMT_is_a(keymgmt, data->keytype))
+        return;
     if (data->error_occured)
         return;
 
@@ -253,7 +256,7 @@ static void collect_decoder(OSSL_DECODER *decoder, void *arg)
 }
 
 int ossl_decoder_ctx_setup_for_EVP_PKEY(OSSL_DECODER_CTX *ctx,
-                                        EVP_PKEY **pkey,
+                                        EVP_PKEY **pkey, const char *keytype,
                                         OPENSSL_CTX *libctx,
                                         const char *propquery)
 {
@@ -264,14 +267,14 @@ int ossl_decoder_ctx_setup_for_EVP_PKEY(OSSL_DECODER_CTX *ctx,
     if ((data = OPENSSL_zalloc(sizeof(*data))) == NULL
         || (data->process_data =
             OPENSSL_zalloc(sizeof(*data->process_data))) == NULL
-        || (data->process_data->keymgmts
-            = sk_EVP_KEYMGMT_new_null()) == NULL
+        || (data->process_data->keymgmts = sk_EVP_KEYMGMT_new_null()) == NULL
         || (data->names = sk_OPENSSL_CSTRING_new_null()) == NULL) {
         ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_MALLOC_FAILURE);
         goto err;
     }
     data->process_data->object = (void **)pkey;
     data->ctx = ctx;
+    data->keytype = keytype;
 
     /* First, find all keymgmts to form goals */
     EVP_KEYMGMT_do_all_provided(libctx, collect_keymgmt, data);
@@ -320,10 +323,10 @@ int ossl_decoder_ctx_setup_for_EVP_PKEY(OSSL_DECODER_CTX *ctx,
     return ok;
 }
 
-OSSL_DECODER_CTX *OSSL_DECODER_CTX_new_by_EVP_PKEY(EVP_PKEY **pkey,
-                                                   const char *input_type,
-                                                   OPENSSL_CTX *libctx,
-                                                   const char *propquery)
+OSSL_DECODER_CTX *
+OSSL_DECODER_CTX_new_by_EVP_PKEY(EVP_PKEY **pkey,
+                                 const char *input_type, const char *keytype,
+                                 OPENSSL_CTX *libctx, const char *propquery)
 {
     OSSL_DECODER_CTX *ctx = NULL;
 
@@ -332,7 +335,8 @@ OSSL_DECODER_CTX *OSSL_DECODER_CTX_new_by_EVP_PKEY(EVP_PKEY **pkey,
         return NULL;
     }
     if (OSSL_DECODER_CTX_set_input_type(ctx, input_type)
-        && ossl_decoder_ctx_setup_for_EVP_PKEY(ctx, pkey, libctx, propquery)
+        && ossl_decoder_ctx_setup_for_EVP_PKEY(ctx, pkey, keytype,
+                                               libctx, propquery)
         && OSSL_DECODER_CTX_add_extra(ctx, libctx, propquery))
         return ctx;
 

@@ -582,7 +582,8 @@ static int file_setup_decoders(struct file_ctx_st *ctx)
          * Since we're setting up our own constructor, we don't need to care
          * more than that...
          */
-        if (!ossl_decoder_ctx_setup_for_EVP_PKEY(ctx->_.file.decoderctx, &dummy,
+        if (!ossl_decoder_ctx_setup_for_EVP_PKEY(ctx->_.file.decoderctx,
+                                                 &dummy, NULL,
                                                  libctx, ctx->_.file.propq)
             || !OSSL_DECODER_CTX_add_extra(ctx->_.file.decoderctx,
                                            libctx, ctx->_.file.propq)) {
