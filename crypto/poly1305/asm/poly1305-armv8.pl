@@ -61,10 +61,14 @@ $code.=<<___;
 
 // forward "declarations" are required for Apple
 .extern	OPENSSL_armcap_P
-.globl	poly1305_blocks
-.globl	poly1305_emit
-
+.hidden	OPENSSL_armcap_P
 .globl	poly1305_init
+.hidden	poly1305_init
+.globl	poly1305_blocks
+.hidden	poly1305_blocks
+.globl	poly1305_emit
+.hidden	poly1305_emit
+
 .type	poly1305_init,%function
 .align	5
 poly1305_init:

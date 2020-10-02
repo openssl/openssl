@@ -178,6 +178,7 @@ $code.=<<___;
 #ifndef	__KERNEL__
 # include "arm_arch.h"
 .extern OPENSSL_armcap_P
+.hidden OPENSSL_armcap_P
 #endif
 
 .text
@@ -323,9 +324,6 @@ $code.=<<___;
 .long	0xca62c1d6,0xca62c1d6,0xca62c1d6,0xca62c1d6	//K_60_79
 .asciz	"SHA1 block transform for ARMv8, CRYPTOGAMS by <appro\@openssl.org>"
 .align	2
-#if !defined(__KERNELL__) && !defined(_WIN64)
-.comm	OPENSSL_armcap_P,4,4
-#endif
 ___
 }}}
 
