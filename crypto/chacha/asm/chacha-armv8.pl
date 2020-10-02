@@ -135,6 +135,7 @@ $code.=<<___;
 #ifndef	__KERNEL__
 # include "arm_arch.h"
 .extern	OPENSSL_armcap_P
+.hidden	OPENSSL_armcap_P
 #endif
 
 .text
