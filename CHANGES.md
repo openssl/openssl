@@ -23,6 +23,11 @@ OpenSSL 3.0
 
 ### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
 
+ * Add PKCS7_get_octet_string() and PKCS7_type_is_other() to the public
+   interface. Their functionality remains unchanged.
+
+   *Jordan Montgomery*
+
  * Deprecated EVP_PKEY_set_alias_type().  This function was previously
    needed as a workaround to recognise SM2 keys.  With OpenSSL 3.0, this key
    type is internally recognised so the workaround is no longer needed.
