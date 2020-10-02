@@ -20,7 +20,7 @@ static int add_attribute(STACK_OF(X509_ATTRIBUTE) **sk, int nid, int atrtype,
                          void *value);
 static ASN1_TYPE *get_attribute(STACK_OF(X509_ATTRIBUTE) *sk, int nid);
 
-static int PKCS7_type_is_other(PKCS7 *p7)
+int PKCS7_type_is_other(PKCS7 *p7)
 {
     int isOther = 1;
 
@@ -43,7 +43,7 @@ static int PKCS7_type_is_other(PKCS7 *p7)
 
 }
 
-static ASN1_OCTET_STRING *PKCS7_get_octet_string(PKCS7 *p7)
+ASN1_OCTET_STRING *PKCS7_get_octet_string(PKCS7 *p7)
 {
     if (PKCS7_type_is_data(p7))
         return p7->d.data;
