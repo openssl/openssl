@@ -93,18 +93,21 @@ typedef int (encoder)(void **encoded, long *encoded_len, void *object,
                       const char *output_type, int selection,
                       const char *pass, const char *pcipher);
 typedef int (decoder)(void **object, void *encoded, long encoded_len,
-                      const char *type, int selection, const char *pass);
+                      const char *keytype, const char *input_type,
+                      int selection, const char *pass);
 typedef int (tester)(const void *data1, size_t data1_len,
                      const void *data2, size_t data2_len);
 typedef int (checker)(const char *type, const void *data, size_t data_len);
 typedef void (dumper)(const char *label, const void *data, size_t data_len);
+
+#define FLAG_DECODE_WITH_TYPE   0x0001
 
 static int test_encode_decode(const char *type, EVP_PKEY *pkey,
                               const char *output_type, int selection,
                               const char *pass, const char *pcipher,
                               encoder *encode_cb, decoder *decode_cb,
                               tester *test_cb, checker *check_cb,
-                              dumper *dump_cb)
+                              dumper *dump_cb, int flags)
 {
     void *encoded = NULL;
     long encoded_len = 0;
@@ -122,6 +125,7 @@ static int test_encode_decode(const char *type, EVP_PKEY *pkey,
                              selection, pass, pcipher))
         || !TEST_true(check_cb(type, encoded, encoded_len))
         || !TEST_true(decode_cb((void **)&pkey2, encoded, encoded_len,
+                                (flags & FLAG_DECODE_WITH_TYPE ? type : NULL),
                                 output_type, selection, pass))
         || !TEST_true(encode_cb(&encoded2, &encoded2_len, pkey2, output_type,
                                 selection, pass, pcipher)))
@@ -199,8 +203,8 @@ static int encode_EVP_PKEY_prov(void **encoded, long *encoded_len,
 }
 
 static int decode_EVP_PKEY_prov(void **object, void *encoded, long encoded_len,
-                                const char *type, int selection,
-                                const char *pass)
+                                const char *keytype, const char *input_type,
+                                int selection, const char *pass)
 {
     EVP_PKEY *pkey = NULL, *testpkey = NULL;
     OSSL_DECODER_CTX *dctx = NULL;
@@ -210,7 +214,7 @@ static int decode_EVP_PKEY_prov(void **object, void *encoded, long encoded_len,
     int i;
     const char *badtype;
 
-    if (strcmp(type, "DER") == 0)
+    if (strcmp(input_type, "DER") == 0)
         badtype = "PEM";
     else
         badtype = "DER";
@@ -226,11 +230,12 @@ static int decode_EVP_PKEY_prov(void **object, void *encoded, long encoded_len,
      * and produce the same result.
      */
     for (i = 0; i < 3; i++) {
-        const char *testtype = (i == 0) ? type
+        const char *testtype = (i == 0) ? input_type
                                         : ((i == 1) ? NULL : badtype);
 
         if (!TEST_ptr(dctx = OSSL_DECODER_CTX_new_by_EVP_PKEY(&testpkey,
-                                                              testtype, NULL,
+                                                              testtype,
+                                                              keytype,
                                                               NULL, NULL))
             || (pass != NULL
                 && !OSSL_DECODER_CTX_set_passphrase(dctx, upass, strlen(pass)))
@@ -482,7 +487,7 @@ static int test_unprotected_via_DER(const char *type, EVP_PKEY *key)
                               NULL, NULL,
                               encode_EVP_PKEY_prov, decode_EVP_PKEY_prov,
                               test_mem, check_unprotected_PKCS8_DER,
-                              dump_der);
+                              dump_der, 0);
 }
 
 static int check_unprotected_PKCS8_PEM(const char *type,
@@ -503,7 +508,7 @@ static int test_unprotected_via_PEM(const char *type, EVP_PKEY *key)
                               NULL, NULL,
                               encode_EVP_PKEY_prov, decode_EVP_PKEY_prov,
                               test_text, check_unprotected_PKCS8_PEM,
-                              dump_pem);
+                              dump_pem, 0);
 }
 
 static int check_params_DER(const char *type, const void *data, size_t data_len)
@@ -550,7 +555,7 @@ static int test_params_via_DER(const char *type, EVP_PKEY *key)
                               NULL, NULL,
                               encode_EVP_PKEY_prov, decode_EVP_PKEY_prov,
                               test_mem, check_params_DER,
-                              dump_der);
+                              dump_der, FLAG_DECODE_WITH_TYPE);
 }
 
 static int test_params_via_PEM(const char *type, EVP_PKEY *key)
@@ -560,7 +565,7 @@ static int test_params_via_PEM(const char *type, EVP_PKEY *key)
                               NULL, NULL,
                               encode_EVP_PKEY_prov, decode_EVP_PKEY_prov,
                               test_text, check_params_PEM,
-                              dump_pem);
+                              dump_pem, 0);
 }
 
 static int check_unprotected_legacy_PEM(const char *type,
@@ -583,7 +588,7 @@ static int test_unprotected_via_legacy_PEM(const char *type, EVP_PKEY *key)
                               NULL, NULL,
                               encode_EVP_PKEY_legacy_PEM, decode_EVP_PKEY_prov,
                               test_text, check_unprotected_legacy_PEM,
-                              dump_pem);
+                              dump_pem, 0);
 }
 
 #ifndef OPENSSL_NO_DSA
@@ -605,7 +610,7 @@ static int test_unprotected_via_MSBLOB(const char *type, EVP_PKEY *key)
                               NULL, NULL,
                               encode_EVP_PKEY_MSBLOB, decode_EVP_PKEY_prov,
                               test_mem, check_MSBLOB,
-                              dump_der);
+                              dump_der, 0);
 }
 
 # ifndef OPENSSL_NO_RC4
@@ -626,7 +631,7 @@ static int test_unprotected_via_PVK(const char *type, EVP_PKEY *key)
                               NULL, NULL,
                               encode_EVP_PKEY_PVK, decode_EVP_PKEY_prov,
                               test_mem, check_PVK,
-                              dump_der);
+                              dump_der, 0);
 }
 # endif
 #endif
@@ -653,7 +658,7 @@ static int test_protected_via_DER(const char *type, EVP_PKEY *key)
                               pass, pass_cipher,
                               encode_EVP_PKEY_prov, decode_EVP_PKEY_prov,
                               test_mem, check_protected_PKCS8_DER,
-                              dump_der);
+                              dump_der, 0);
 }
 
 static int check_protected_PKCS8_PEM(const char *type,
@@ -674,7 +679,7 @@ static int test_protected_via_PEM(const char *type, EVP_PKEY *key)
                               pass, pass_cipher,
                               encode_EVP_PKEY_prov, decode_EVP_PKEY_prov,
                               test_text, check_protected_PKCS8_PEM,
-                              dump_pem);
+                              dump_pem, 0);
 }
 
 static int check_protected_legacy_PEM(const char *type,
@@ -698,7 +703,7 @@ static int test_protected_via_legacy_PEM(const char *type, EVP_PKEY *key)
                               pass, pass_cipher,
                               encode_EVP_PKEY_legacy_PEM, decode_EVP_PKEY_prov,
                               test_text, check_protected_legacy_PEM,
-                              dump_pem);
+                              dump_pem, 0);
 }
 
 #if !defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_RC4)
@@ -709,7 +714,7 @@ static int test_protected_via_PVK(const char *type, EVP_PKEY *key)
                               | OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS,
                               pass, NULL,
                               encode_EVP_PKEY_PVK, decode_EVP_PKEY_prov,
-                              test_mem, check_PVK, dump_der);
+                              test_mem, check_PVK, dump_der, 0);
 }
 #endif
 
@@ -730,7 +735,7 @@ static int test_public_via_DER(const char *type, EVP_PKEY *key)
                               | OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS,
                               NULL, NULL,
                               encode_EVP_PKEY_prov, decode_EVP_PKEY_prov,
-                              test_mem, check_public_DER, dump_der);
+                              test_mem, check_public_DER, dump_der, 0);
 }
 
 static int check_public_PEM(const char *type, const void *data, size_t data_len)
@@ -750,7 +755,7 @@ static int test_public_via_PEM(const char *type, EVP_PKEY *key)
                               | OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS,
                               NULL, NULL,
                               encode_EVP_PKEY_prov, decode_EVP_PKEY_prov,
-                              test_text, check_public_PEM, dump_pem);
+                              test_text, check_public_PEM, dump_pem, 0);
 }
 
 #ifndef OPENSSL_NO_DSA
@@ -773,7 +778,7 @@ static int test_public_via_MSBLOB(const char *type, EVP_PKEY *key)
                               NULL, NULL,
                               encode_public_EVP_PKEY_MSBLOB,
                               decode_EVP_PKEY_prov,
-                              test_mem, check_public_MSBLOB, dump_der);
+                              test_mem, check_public_MSBLOB, dump_der, 0);
 }
 #endif
 
