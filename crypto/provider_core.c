@@ -866,7 +866,8 @@ const OSSL_ALGORITHM *ossl_provider_query_operation(const OSSL_PROVIDER *prov,
                                                     int operation_id,
                                                     int *no_cache)
 {
-    return prov->query_operation(prov->provctx, operation_id, no_cache);
+    return prov->query_operation == NULL
+        ? NULL : prov->query_operation(prov->provctx, operation_id, no_cache);
 }
 
 int ossl_provider_set_operation_bit(OSSL_PROVIDER *provider, size_t bitnum)
