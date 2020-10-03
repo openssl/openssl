@@ -31,7 +31,7 @@ Encapsulates the data required to evaluate whether SCTs meet a Certificate Trans
 =head1 DESCRIPTION
 
 A B<CT_POLICY_EVAL_CTX> is used by functions that evaluate whether Signed
-Certificate Timestamps (SCTs) fulfil a Certificate Transparency (CT) policy.
+Certificate Timestamps (SCTs) fulfill a Certificate Transparency (CT) policy.
 This policy may be, for example, that at least one valid SCT is available. To
 determine this, an SCT's timestamp and signature must be verified.
 This requires:
