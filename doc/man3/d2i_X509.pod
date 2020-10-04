@@ -1,5 +1,12 @@
 =pod
 
+=begin comment
+
+Any keypair function here that gets deprecated should be moved to
+d2i_RSAPrivateKey.pod.
+
+=end comment
+
 =head1 NAME
 
 d2i_ACCESS_DESCRIPTION,
@@ -141,17 +148,8 @@ d2i_POLICYQUALINFO,
 d2i_PROFESSION_INFO,
 d2i_PROXY_CERT_INFO_EXTENSION,
 d2i_PROXY_POLICY,
-d2i_RSAPrivateKey,
-d2i_RSAPrivateKey_bio,
-d2i_RSAPrivateKey_fp,
-d2i_RSAPublicKey,
-d2i_RSAPublicKey_bio,
-d2i_RSAPublicKey_fp,
 d2i_RSA_OAEP_PARAMS,
 d2i_RSA_PSS_PARAMS,
-d2i_RSA_PUBKEY,
-d2i_RSA_PUBKEY_bio,
-d2i_RSA_PUBKEY_fp,
 d2i_SCRYPT_PARAMS,
 d2i_SCT_LIST,
 d2i_SXNET,
@@ -337,17 +335,8 @@ i2d_POLICYQUALINFO,
 i2d_PROFESSION_INFO,
 i2d_PROXY_CERT_INFO_EXTENSION,
 i2d_PROXY_POLICY,
-i2d_RSAPrivateKey,
-i2d_RSAPrivateKey_bio,
-i2d_RSAPrivateKey_fp,
-i2d_RSAPublicKey,
-i2d_RSAPublicKey_bio,
-i2d_RSAPublicKey_fp,
 i2d_RSA_OAEP_PARAMS,
 i2d_RSA_PSS_PARAMS,
-i2d_RSA_PUBKEY,
-i2d_RSA_PUBKEY_bio,
-i2d_RSA_PUBKEY_fp,
 i2d_SCRYPT_PARAMS,
 i2d_SCT_LIST,
 i2d_SXNET,
@@ -411,7 +400,7 @@ i2d_X509_VAL,
 =head1 DESCRIPTION
 
 In the description here, B<I<TYPE>> is used a placeholder
-for any of the OpenSSL datatypes, such as I<X509_CRL>.
+for any of the OpenSSL datatypes, such as B<X509_CRL>.
 The function parameters I<ppin> and I<ppout> are generally
 either both named I<pp> in the headers, or I<in> and I<out>.
 
@@ -511,10 +500,6 @@ L<PEM_write_PrivateKey(3)>, or similar instead.
 =item B<ECDSA_SIG>
 
 Represents an ECDSA signature.
-
-=item B<RSAPublicKey>
-
-Represents a PKCS#1 RSA public key structure.
 
 =item B<X509_ALGOR>
 

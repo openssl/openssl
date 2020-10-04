@@ -784,37 +784,6 @@ const unsigned char *EVP_PKEY_get0_siphash(const EVP_PKEY *pkey, size_t *len)
 }
 # endif
 
-# ifndef OPENSSL_NO_RSA
-int EVP_PKEY_set1_RSA(EVP_PKEY *pkey, RSA *key)
-{
-    int ret = EVP_PKEY_assign_RSA(pkey, key);
-    if (ret)
-        RSA_up_ref(key);
-    return ret;
-}
-
-RSA *EVP_PKEY_get0_RSA(const EVP_PKEY *pkey)
-{
-    if (!evp_pkey_downgrade((EVP_PKEY *)pkey)) {
-        ERR_raise(ERR_LIB_EVP, EVP_R_INACCESSIBLE_KEY);
-        return NULL;
-    }
-    if (pkey->type != EVP_PKEY_RSA && pkey->type != EVP_PKEY_RSA_PSS) {
-        ERR_raise(ERR_LIB_EVP, EVP_R_EXPECTING_AN_RSA_KEY);
-        return NULL;
-    }
-    return pkey->pkey.rsa;
-}
-
-RSA *EVP_PKEY_get1_RSA(EVP_PKEY *pkey)
-{
-    RSA *ret = EVP_PKEY_get0_RSA(pkey);
-    if (ret != NULL)
-        RSA_up_ref(ret);
-    return ret;
-}
-# endif
-
 # ifndef OPENSSL_NO_DSA
 DSA *EVP_PKEY_get0_DSA(const EVP_PKEY *pkey)
 {

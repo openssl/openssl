@@ -35,7 +35,7 @@ SOURCE[../libssl]=\
         statem/statem.c record/ssl3_record_tls13.c record/tls_pad.c \
         tls_depr.c $KTLSSRC
 IF[{- !$disabled{'deprecated-3.0'} -}]
-  SOURCE[../libssl]=s3_cbc.c
+  SOURCE[../libssl]=s3_cbc.c  ssl_rsa_legacy.c
 ENDIF
 DEFINE[../libssl]=$AESDEF
 

@@ -10,7 +10,6 @@
 #ifndef OSSL_CRYPTO_RSA_LOCAL_H
 #define OSSL_CRYPTO_RSA_LOCAL_H
 
-#include "crypto/rsa.h"
 #include "internal/refcount.h"
 #include "crypto/rsa.h"
 
