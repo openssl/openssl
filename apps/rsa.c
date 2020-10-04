@@ -22,6 +22,13 @@
 #include <openssl/x509.h>
 #include <openssl/pem.h>
 #include <openssl/bn.h>
+#include <openssl/encoder.h>
+
+/*
+ * TODO: This include is to get OSSL_KEYMGMT_SELECT_*, which feels a bit
+ * much just for those macros...  they might serve better as EVP macros.
+ */
+#include <openssl/core_dispatch.h>
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
@@ -62,12 +69,10 @@ const OPTIONS rsa_options[] = {
     {"traditional", OPT_TRADITIONAL, '-',
      "Use traditional format for private keys"},
 
-#if !defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_RC4)
     OPT_SECTION("PVK"),
     {"pvk-strong", OPT_PVK_STRONG, '-', "Enable 'Strong' PVK encoding level (default)"},
     {"pvk-weak", OPT_PVK_WEAK, '-', "Enable 'Weak' PVK encoding level"},
     {"pvk-none", OPT_PVK_NONE, '-', "Don't enforce PVK encoding"},
-#endif
 
     OPT_PROV_OPTIONS,
     {NULL}
@@ -77,20 +82,21 @@ int rsa_main(int argc, char **argv)
 {
     ENGINE *e = NULL;
     BIO *out = NULL;
-    RSA *rsa = NULL;
     EVP_PKEY *pkey = NULL;
     EVP_PKEY_CTX *pctx;
     const EVP_CIPHER *enc = NULL;
     char *infile = NULL, *outfile = NULL, *prog;
     char *passin = NULL, *passout = NULL, *passinarg = NULL, *passoutarg = NULL;
-    int i, private = 0;
+    int private = 0;
     int informat = FORMAT_PEM, outformat = FORMAT_PEM, text = 0, check = 0;
     int noout = 0, modulus = 0, pubin = 0, pubout = 0, ret = 1;
-#if !defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_RC4)
     int pvk_encr = 2;
-#endif
     OPTION_CHOICE o;
     int traditional = 0;
+    const char *output_type = NULL;
+    const char *output_structure = NULL;
+    int selection = 0;
+    OSSL_ENCODER_CTX *ectx = NULL;
 
     prog = opt_init(argc, argv, rsa_options);
     while ((o = opt_next()) != OPT_EOF) {
@@ -142,9 +148,7 @@ int rsa_main(int argc, char **argv)
         case OPT_PVK_STRONG:    /* pvk_encr:= 2 */
         case OPT_PVK_WEAK:      /* pvk_encr:= 1 */
         case OPT_PVK_NONE:      /* pvk_encr:= 0 */
-#if !defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_RC4)
             pvk_encr = (o - OPT_PVK_NONE);
-#endif
             break;
         case OPT_NOOUT:
             noout = 1;
@@ -203,11 +207,12 @@ int rsa_main(int argc, char **argv)
         pkey = load_key(infile, informat, 1, passin, e, "private key");
     }
 
-    if (pkey != NULL)
-        rsa = EVP_PKEY_get1_RSA(pkey);
-
-    if (rsa == NULL) {
+    if (pkey == NULL) {
         ERR_print_errors(bio_err);
+        goto end;
+    }
+    if (!EVP_PKEY_is_a(pkey, "RSA")) {
+        BIO_printf(bio_err, "Not an RSA key\n");
         goto end;
     }
 
@@ -226,11 +231,14 @@ int rsa_main(int argc, char **argv)
     }
 
     if (modulus) {
-        const BIGNUM *n;
-        RSA_get0_key(rsa, &n, NULL, NULL);
+        BIGNUM *n = NULL;
+
+        /* Every RSA key has an 'n' */
+        EVP_PKEY_get_bn_param(pkey, "n", &n);
         BIO_printf(out, "Modulus=");
         BN_print(out, n);
         BIO_printf(out, "\n");
+        BN_free(n);
     }
 
     if (check) {
@@ -268,77 +276,81 @@ int rsa_main(int argc, char **argv)
         goto end;
     }
     BIO_printf(bio_err, "writing RSA key\n");
-    if (outformat == FORMAT_ASN1) {
-        if (pubout || pubin) {
-            if (pubout == 2)
-                i = i2d_RSAPublicKey_bio(out, rsa);
-            else
-                i = i2d_RSA_PUBKEY_bio(out, rsa);
-        } else {
-            assert(private);
-            i = i2d_RSAPrivateKey_bio(out, rsa);
-        }
-    } else if (outformat == FORMAT_PEM) {
-        if (pubout || pubin) {
-            if (pubout == 2)
-                i = PEM_write_bio_RSAPublicKey(out, rsa);
-            else
-                i = PEM_write_bio_RSA_PUBKEY(out, rsa);
-        } else {
-            assert(private);
-            if (traditional) {
-                i = PEM_write_bio_PrivateKey_traditional(out, pkey, enc, NULL, 0,
-                                                         NULL, passout);
-            } else {
-                i = PEM_write_bio_PrivateKey(out, pkey,
-                                             enc, NULL, 0, NULL, passout);
-            }
-        }
-#ifndef OPENSSL_NO_DSA
-    } else if (outformat == FORMAT_MSBLOB || outformat == FORMAT_PVK) {
-        EVP_PKEY *pk;
-        pk = EVP_PKEY_new();
-        if (pk == NULL)
-            goto end;
 
-        EVP_PKEY_set1_RSA(pk, rsa);
-        if (outformat == FORMAT_PVK) {
-            if (pubin) {
-                BIO_printf(bio_err, "PVK form impossible with public key input\n");
-                EVP_PKEY_free(pk);
-                goto end;
-            }
-            assert(private);
-# ifdef OPENSSL_NO_RC4
-            BIO_printf(bio_err, "PVK format not supported\n");
-            EVP_PKEY_free(pk);
+    /* Choose output type for the format */
+    if (outformat == FORMAT_ASN1) {
+        output_type = "DER";
+    } else if (outformat == FORMAT_PEM) {
+        output_type = "PEM";
+    } else if (outformat == FORMAT_MSBLOB) {
+        output_type = "MSBLOB";
+    } else if (outformat == FORMAT_PVK) {
+        if (pubin) {
+            BIO_printf(bio_err, "PVK form impossible with public key input\n");
             goto end;
-# else
-            i = i2b_PVK_bio(out, pk, pvk_encr, 0, passout);
-# endif
-        } else if (pubin || pubout) {
-            i = i2b_PublicKey_bio(out, pk);
-        } else {
-            assert(private);
-            i = i2b_PrivateKey_bio(out, pk);
         }
-        EVP_PKEY_free(pk);
-#endif
+        output_type = "PVK";
     } else {
         BIO_printf(bio_err, "bad output format specified for outfile\n");
         goto end;
     }
-    if (i <= 0) {
+
+    /* Select what you want in the output */
+    if (pubout || pubin) {
+        selection = OSSL_KEYMGMT_SELECT_PUBLIC_KEY;
+    } else {
+        assert(private);
+        selection = (OSSL_KEYMGMT_SELECT_KEYPAIR
+                     | OSSL_KEYMGMT_SELECT_ALL_PARAMETERS);
+    }
+
+    /* For DER based output, select the desired output structure */
+    if (outformat == FORMAT_ASN1 || outformat == FORMAT_PEM) {
+        if (pubout || pubin) {
+            if (pubout == 2)
+                output_structure = "SubjectPublicKeyInfo";
+            else
+                output_structure = "pkcs1"; /* "type-specific" would work too */
+        } else {
+            assert(private);
+            if (traditional)
+                output_structure = "pkcs1"; /* "type-specific" would work too */
+            else
+                output_structure = "pkcs8";
+        }
+    }
+
+    /* Now, perform the encoding */
+    ectx = OSSL_ENCODER_CTX_new_by_EVP_PKEY(pkey, selection,
+                                            output_type, output_structure,
+                                            NULL, NULL);
+    if (OSSL_ENCODER_CTX_get_num_encoders(ectx) == 0) {
+        BIO_printf(bio_err, "%s format not supported\n", output_type);
+        goto end;
+    }
+
+    /* PVK is a bit special... */
+    if (outformat == FORMAT_PVK) {
+        OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
+
+        params[0] = OSSL_PARAM_construct_int("encrypt-level", &pvk_encr);
+        if (!OSSL_ENCODER_CTX_set_params(ectx, params)) {
+            BIO_printf(bio_err, "invalid PVK encryption level\n");
+            goto end;
+        }
+    }
+
+    if (!OSSL_ENCODER_to_bio(ectx, out)) {
         BIO_printf(bio_err, "unable to write key\n");
         ERR_print_errors(bio_err);
-    } else {
-        ret = 0;
+        goto end;
     }
+    ret = 0;
  end:
+    OSSL_ENCODER_CTX_free(ectx);
     release_engine(e);
     BIO_free_all(out);
     EVP_PKEY_free(pkey);
-    RSA_free(rsa);
     OPENSSL_free(passin);
     OPENSSL_free(passout);
     return ret;

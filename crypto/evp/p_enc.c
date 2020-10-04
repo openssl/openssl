@@ -7,11 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-/*
- * RSA low level APIs are deprecated for public use, but still ok for
- * internal use.
- */
-#include "internal/deprecated.h"
+/* We need to use the deprecated RSA low level calls */
+#define OPENSSL_SUPPRESS_DEPRECATED
 
 #include <stdio.h>
 #include "internal/cryptlib.h"

@@ -20,6 +20,7 @@
 #include <openssl/evp.h>
 #include <openssl/x509.h>
 #include <openssl/dh.h>
+#include <openssl/rsa.h>
 #include <openssl/bn.h>
 #include <openssl/md5.h>
 #include <openssl/trace.h>

@@ -457,9 +457,11 @@ typedef int (EVP_PBE_KEYGEN) (EVP_CIPHER_CTX *ctx, const char *pass,
                               const EVP_CIPHER *cipher, const EVP_MD *md,
                               int en_de);
 
-# ifndef OPENSSL_NO_RSA
-#  define EVP_PKEY_assign_RSA(pkey,rsa) EVP_PKEY_assign((pkey),EVP_PKEY_RSA,\
-                                                        (rsa))
+# ifndef OPENSSL_NO_DEPRECATED_3_0
+#  ifndef OPENSSL_NO_RSA
+#   define EVP_PKEY_assign_RSA(pkey,rsa) EVP_PKEY_assign((pkey),EVP_PKEY_RSA,\
+                                                         (rsa))
+#  endif
 # endif
 
 # ifndef OPENSSL_NO_DSA
@@ -1211,11 +1213,16 @@ const unsigned char *EVP_PKEY_get0_poly1305(const EVP_PKEY *pkey, size_t *len);
 const unsigned char *EVP_PKEY_get0_siphash(const EVP_PKEY *pkey, size_t *len);
 # endif
 
-# ifndef OPENSSL_NO_RSA
+# ifndef OPENSSL_NO_DEPRECATED_3_0
+#  ifndef OPENSSL_NO_RSA
 struct rsa_st;
+OSSL_DEPRECATEDIN_3_0
 int EVP_PKEY_set1_RSA(EVP_PKEY *pkey, struct rsa_st *key);
+OSSL_DEPRECATEDIN_3_0
 struct rsa_st *EVP_PKEY_get0_RSA(const EVP_PKEY *pkey);
+OSSL_DEPRECATEDIN_3_0
 struct rsa_st *EVP_PKEY_get1_RSA(EVP_PKEY *pkey);
+#  endif
 # endif
 # ifndef OPENSSL_NO_DSA
 struct dsa_st;

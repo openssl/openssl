@@ -135,10 +135,12 @@ static ASN1_ITEM_EXP *asn1_item_list[] = {
     ASN1_ITEM_ref(PROXY_CERT_INFO_EXTENSION),
     ASN1_ITEM_ref(PROXY_POLICY),
 #ifndef OPENSSL_NO_RSA
+# ifndef OPENSSL_NO_DEPRECATED_3_0
     ASN1_ITEM_ref(RSAPrivateKey),
     ASN1_ITEM_ref(RSAPublicKey),
     ASN1_ITEM_ref(RSA_OAEP_PARAMS),
     ASN1_ITEM_ref(RSA_PSS_PARAMS),
+# endif
 #endif
 #ifndef OPENSSL_NO_SCRYPT
     ASN1_ITEM_ref(SCRYPT_PARAMS),

@@ -7,6 +7,12 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * RSA low level APIs are deprecated for public use, but still ok for
+ * internal use.
+ */
+#include "internal/deprecated.h"
+
 #include <stdio.h>
 #include <string.h>
 
@@ -215,6 +221,7 @@ static int test_check_prime_factor(void)
     return ret;
 }
 
+/* This test uses legacy functions because they can take invalid numbers */
 static int test_check_private_exponent(void)
 {
     int ret = 0;

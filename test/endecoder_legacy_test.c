@@ -35,6 +35,12 @@
 
 #include <stdlib.h>
 #include <string.h>
+
+/*
+ * We test deprecated functions, so we need to suppress deprecation warnings.
+ */
+#define OPENSSL_SUPPRESS_DEPRECATED
+
 #include <openssl/bio.h>
 #include <openssl/evp.h>
 #include <openssl/asn1.h>

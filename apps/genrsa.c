@@ -79,9 +79,7 @@ int genrsa_main(int argc, char **argv)
     BN_GENCB *cb = BN_GENCB_new();
     ENGINE *eng = NULL;
     BIGNUM *bn = BN_new();
-    RSA *rsa;
     BIO *out = NULL;
-    const BIGNUM *e;
     EVP_PKEY *pkey = NULL;
     EVP_PKEY_CTX *ctx = NULL;
     const EVP_CIPHER *enc = NULL;
@@ -205,9 +203,11 @@ opthelp:
     }
 
     if (verbose) {
-        if ((rsa = EVP_PKEY_get0_RSA(pkey)) != NULL) {
-            RSA_get0_key(rsa, NULL, &e, NULL);
-        } else {
+        BIGNUM *e = NULL;
+
+        /* Every RSA key has an 'e' */
+        EVP_PKEY_get_bn_param(pkey, "e", &e);
+        if (e == NULL) {
             BIO_printf(bio_err, "Error cannot access RSA e\n");
             goto end;
         }
@@ -218,6 +218,7 @@ opthelp:
         }
         OPENSSL_free(hexe);
         OPENSSL_free(dece);
+        BN_free(e);
     }
     if (traditional) {
         if (!PEM_write_bio_PrivateKey_traditional(out, pkey, enc, NULL, 0,
