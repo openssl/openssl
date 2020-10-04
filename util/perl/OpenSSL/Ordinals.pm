@@ -407,7 +407,6 @@ sub _parse_features {
         if ($def =~ m{^ZLIB$})                      { $features{$&} =  $op; }
         if ($def =~ m{^OPENSSL_USE_})               { $features{$'} =  $op; }
         if ($def =~ m{^OPENSSL_NO_})                { $features{$'} = !$op; }
-        if ($def =~ m{^DEPRECATEDIN_(.*)$})         { $features{$&} = !$op; }
     }
 
     return %features;
