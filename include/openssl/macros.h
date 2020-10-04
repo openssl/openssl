@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
@@ -152,10 +151,17 @@
 # endif
 
 /*
- * Define macros for deprecation purposes.  We always define the macros
- * DEPERECATEDIN_{major}_{minor}() for all OpenSSL versions we care for,
- * and OPENSSL_NO_DEPRECATED_{major}_{minor} to be used to check if
- * removal of deprecated functions applies on that particular version.
+ * Define macros for deprecation and simulated removal purposes.
+ *
+ * The macros OSSL_DEPRECATED_{major}_{minor} are always defined for
+ * all OpenSSL versions we care for.  They can be used as attributes
+ * in function declarations where appropriate.
+ *
+ * The macros OPENSSL_NO_DEPRECATED_{major}_{minor} are defined for
+ * all OpenSSL versions up to or equal to the version given with
+ * OPENSSL_API_COMPAT.  They are used as guards around anything that's
+ * deprecated up to that version, as an effect of the developer option
+ * 'no-deprecated'.
  */
 
 # undef OPENSSL_NO_DEPRECATED_3_0
@@ -168,73 +174,101 @@
 
 # if OPENSSL_API_LEVEL >= 30000
 #  ifndef OPENSSL_NO_DEPRECATED
-#   define DEPRECATEDIN_3_0(f)       OSSL_DEPRECATED(3.0) f;
+#   define OSSL_DEPRECATEDIN_3_0                OSSL_DEPRECATED(3.0)
+#   define OSSL_DEPRECATEDIN_3_0_FOR(msg)       OSSL_DEPRECATED_FOR(3.0, msg)
+#   define DEPRECATEDIN_3_0(f)                  OSSL_DEPRECATEDIN_3_0 f;
 #  else
-#   define DEPRECATEDIN_3_0(f)
 #   define OPENSSL_NO_DEPRECATED_3_0
+#   define DEPRECATEDIN_3_0(f)
 #  endif
 # else
-#  define DEPRECATEDIN_3_0(f)        f;
+#  define OSSL_DEPRECATEDIN_3_0
+#  define OSSL_DEPRECATEDIN_3_0_FOR(msg)
+#  define DEPRECATEDIN_3_0(f)                   f;
 # endif
 # if OPENSSL_API_LEVEL >= 10101
 #  ifndef OPENSSL_NO_DEPRECATED
-#   define DEPRECATEDIN_1_1_1(f)     OSSL_DEPRECATED(1.1.1) f;
+#   define OSSL_DEPRECATEDIN_1_1_1              OSSL_DEPRECATED(1.1.1)
+#   define OSSL_DEPRECATEDIN_1_1_1_FOR(msg)     OSSL_DEPRECATED_FOR(1.1.1, msg)
+#   define DEPRECATEDIN_1_1_1(f)                OSSL_DEPRECATEDIN_1_1_1 f;
 #  else
-#   define DEPRECATEDIN_1_1_1(f)
 #   define OPENSSL_NO_DEPRECATED_1_1_1
+#   define DEPRECATEDIN_1_1_1(f)
 #  endif
 # else
-#  define DEPRECATEDIN_1_1_1(f)      f;
+#  define OSSL_DEPRECATEDIN_1_1_1
+#  define OSSL_DEPRECATEDIN_1_1_1_FOR(msg)
+#  define DEPRECATEDIN_1_1_1(f)                 f;
 # endif
 # if OPENSSL_API_LEVEL >= 10100
 #  ifndef OPENSSL_NO_DEPRECATED
-#   define DEPRECATEDIN_1_1_0(f)     OSSL_DEPRECATED(1.1.0) f;
+#   define OSSL_DEPRECATEDIN_1_1_0              OSSL_DEPRECATED(1.1.0)
+#   define OSSL_DEPRECATEDIN_1_1_0_FOR(msg)     OSSL_DEPRECATED_FOR(1.1.0, msg)
+#   define DEPRECATEDIN_1_1_0(f)                OSSL_DEPRECATEDIN_1_1_0 f;
 #  else
-#   define DEPRECATEDIN_1_1_0(f)
 #   define OPENSSL_NO_DEPRECATED_1_1_0
+#   define DEPRECATEDIN_1_1_0(f)
 #  endif
 # else
-#  define DEPRECATEDIN_1_1_0(f)      f;
+#  define OSSL_DEPRECATEDIN_1_1_0
+#  define OSSL_DEPRECATEDIN_1_1_0_FOR(msg)
+#  define DEPRECATEDIN_1_1_0(f)                 f;
 # endif
 # if OPENSSL_API_LEVEL >= 10002
 #  ifndef OPENSSL_NO_DEPRECATED
-#   define DEPRECATEDIN_1_0_2(f)     OSSL_DEPRECATED(1.0.2) f;
+#   define OSSL_DEPRECATEDIN_1_0_2              OSSL_DEPRECATED(1.0.2)
+#   define OSSL_DEPRECATEDIN_1_0_2_FOR(msg)     OSSL_DEPRECATED_FOR(1.0.2, msg)
+#   define DEPRECATEDIN_1_0_2(f)                OSSL_DEPRECATEDIN_1_0_2 f;
 #  else
-#   define DEPRECATEDIN_1_0_2(f)
 #   define OPENSSL_NO_DEPRECATED_1_0_2
+#   define DEPRECATEDIN_1_0_2(f)
 #  endif
 # else
-#  define DEPRECATEDIN_1_0_2(f)      f;
+#  define OSSL_DEPRECATEDIN_1_0_2
+#  define OSSL_DEPRECATEDIN_1_0_2_FOR(msg)
+#  define DEPRECATEDIN_1_0_2(f)                 f;
 # endif
 # if OPENSSL_API_LEVEL >= 10001
 #  ifndef OPENSSL_NO_DEPRECATED
-#   define DEPRECATEDIN_1_0_1(f)     OSSL_DEPRECATED(1.0.1) f;
+#   define OSSL_DEPRECATEDIN_1_0_1              OSSL_DEPRECATED(1.0.1)
+#   define OSSL_DEPRECATEDIN_1_0_1_FOR(msg)     OSSL_DEPRECATED_FOR(1.0.1, msg)
+#   define DEPRECATEDIN_1_0_1(f)                OSSL_DEPRECATEDIN_1_0_1 f;
 #  else
-#   define DEPRECATEDIN_1_0_1(f)
 #   define OPENSSL_NO_DEPRECATED_1_0_1
+#   define DEPRECATEDIN_1_0_1(f)
 #  endif
 # else
-#  define DEPRECATEDIN_1_0_1(f)      f;
+#  define OSSL_DEPRECATEDIN_1_0_1
+#  define OSSL_DEPRECATEDIN_1_0_1_FOR(msg)
+#  define DEPRECATEDIN_1_0_1(f)                 f;
 # endif
 # if OPENSSL_API_LEVEL >= 10000
 #  ifndef OPENSSL_NO_DEPRECATED
-#   define DEPRECATEDIN_1_0_0(f)     OSSL_DEPRECATED(1.0.0) f;
+#   define OSSL_DEPRECATEDIN_1_0_0              OSSL_DEPRECATED(1.0.0)
+#   define OSSL_DEPRECATEDIN_1_0_0_FOR(msg)     OSSL_DEPRECATED_FOR(1.0.0, msg)
+#   define DEPRECATEDIN_1_0_0(f)                OSSL_DEPRECATEDIN_1_0_0 f;
 #  else
-#   define DEPRECATEDIN_1_0_0(f)
 #   define OPENSSL_NO_DEPRECATED_1_0_0
+#   define DEPRECATEDIN_1_0_0(f)
 #  endif
 # else
-#  define DEPRECATEDIN_1_0_0(f)      f;
+#  define OSSL_DEPRECATEDIN_1_0_0
+#  define OSSL_DEPRECATEDIN_1_0_0_FOR(msg)
+#  define DEPRECATEDIN_1_0_0(f)                 f;
 # endif
 # if OPENSSL_API_LEVEL >= 908
 #  ifndef OPENSSL_NO_DEPRECATED
-#   define DEPRECATEDIN_0_9_8(f)     OSSL_DEPRECATED(0.9.8) f;
+#   define OSSL_DEPRECATEDIN_0_9_8              OSSL_DEPRECATED(0.9.8)
+#   define OSSL_DEPRECATEDIN_0_9_8_FOR(msg)     OSSL_DEPRECATED_FOR(0.9.8, msg)
+#   define DEPRECATEDIN_0_9_8(f)                OSSL_DEPRECATEDIN_0_9_8 f;
 #  else
-#   define DEPRECATEDIN_0_9_8(f)
 #   define OPENSSL_NO_DEPRECATED_0_9_8
+#   define DEPRECATEDIN_0_9_8(f)
 #  endif
 # else
-#  define DEPRECATEDIN_0_9_8(f)      f;
+#  define OSSL_DEPRECATEDIN_0_9_8
+#  define OSSL_DEPRECATEDIN_0_9_8_FOR(msg)
+#  define DEPRECATEDIN_0_9_8(f)                 f;
 # endif
 
 /*
