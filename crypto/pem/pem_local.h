@@ -34,6 +34,9 @@
     (OSSL_KEYMGMT_SELECT_ALL_PARAMETERS | OSSL_KEYMGMT_SELECT_KEYPAIR)
 # define PEM_SELECTION_Parameters OSSL_KEYMGMT_SELECT_ALL_PARAMETERS
 
+# define PEM_STRUCTURE_RSAPrivateKey "type-specific"
+# define PEM_STRUCTURE_RSAPublicKey "type-specific"
+
 /* Alternative IMPLEMENT macros for provided encoders */
 
 # define IMPLEMENT_PEM_provided_write_body_vars(type, asn1)             \

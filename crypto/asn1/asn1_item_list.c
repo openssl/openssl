@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+/* We need to use the low level ASN1 items until they are removed */
+#define OPENSSL_SUPPRESS_DEPRECATED
+
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/asn1.h>

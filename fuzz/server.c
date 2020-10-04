@@ -12,6 +12,9 @@
 
 /* Test first part of SSL server handshake. */
 
+/* We need to use the deprecated RSA low level calls */
+#define OPENSSL_SUPPRESS_DEPRECATED
+
 #include <time.h>
 #include <openssl/rand.h>
 #include <openssl/ssl.h>
@@ -92,6 +95,7 @@ static const uint8_t kCertificateDER[] = {
     0x76, 0x8a, 0xbb,
 };
 
+#ifndef OPENSSL_NO_DEPRECATED_3_0
 static const uint8_t kRSAPrivateKeyDER[] = {
     0x30, 0x82, 0x04, 0xa5, 0x02, 0x01, 0x00, 0x02, 0x82, 0x01, 0x01, 0x00,
     0xce, 0x47, 0xcb, 0x11, 0xbb, 0xd2, 0x9d, 0x8e, 0x9e, 0xd2, 0x1e, 0x14,
@@ -194,6 +198,7 @@ static const uint8_t kRSAPrivateKeyDER[] = {
     0xb2, 0xc6, 0xb2, 0x0a, 0x2a, 0x7c, 0x6d, 0x6a, 0x40, 0xfc, 0xf5, 0x50,
     0x98, 0x46, 0x89, 0x82, 0x40,
 };
+#endif
 
 
 #ifndef OPENSSL_NO_EC
@@ -512,7 +517,9 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
 #endif
     SSL_CTX *ctx;
     int ret;
+#ifndef OPENSSL_NO_DEPRECATED_3_0
     RSA *privkey;
+#endif
     const uint8_t *bufp;
     EVP_PKEY *pkey;
     X509 *cert;
@@ -539,6 +546,7 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
     ret = SSL_CTX_set_cipher_list(ctx, "ALL:eNULL:@SECLEVEL=0");
     OPENSSL_assert(ret == 1);
 
+#ifndef OPENSSL_NO_DEPRECATED_3_0
     /* RSA */
     bufp = kRSAPrivateKeyDER;
     privkey = d2i_RSAPrivateKey(NULL, &bufp, sizeof(kRSAPrivateKeyDER));
@@ -548,6 +556,7 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
     ret = SSL_CTX_use_PrivateKey(ctx, pkey);
     OPENSSL_assert(ret == 1);
     EVP_PKEY_free(pkey);
+#endif
 
     bufp = kCertificateDER;
     cert = d2i_X509(NULL, &bufp, sizeof(kCertificateDER));

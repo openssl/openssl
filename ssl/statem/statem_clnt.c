@@ -20,6 +20,7 @@
 #include <openssl/evp.h>
 #include <openssl/md5.h>
 #include <openssl/dh.h>
+#include <openssl/rsa.h>
 #include <openssl/bn.h>
 #include <openssl/engine.h>
 #include <openssl/trace.h>
@@ -2982,7 +2983,7 @@ static int tls_construct_cke_rsa(SSL *s, WPACKET *pkt)
     }
 
     pkey = X509_get0_pubkey(s->session->peer);
-    if (EVP_PKEY_get0_RSA(pkey) == NULL) {
+    if (!EVP_PKEY_is_a(pkey, "RSA")) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_CKE_RSA,
                  ERR_R_INTERNAL_ERROR);
         return 0;

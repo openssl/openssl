@@ -9,7 +9,7 @@ SOURCE[../../libcrypto]=$COMMON\
         e_des.c e_bf.c e_idea.c e_des3.c \
         e_rc4.c e_aes.c names.c e_aria.c e_sm4.c \
         e_xcbc_d.c e_rc2.c e_cast.c e_rc5.c m_null.c \
-        p_seal.c p_sign.c p_verify.c \
+        p_seal.c p_sign.c p_verify.c p_legacy.c \
         bio_md.c bio_b64.c bio_enc.c evp_err.c e_null.c \
         c_allc.c c_alld.c bio_ok.c \
         evp_pkey.c evp_pbe.c p5_crpt.c p5_crpt2.c pbe_scrypt.c \

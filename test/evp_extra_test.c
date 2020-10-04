@@ -18,16 +18,17 @@
 #include <openssl/crypto.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
-#include <openssl/rsa.h>
 #include <openssl/x509.h>
 #include <openssl/pem.h>
 #include <openssl/kdf.h>
 #include <openssl/provider.h>
 #include <openssl/core_names.h>
 #include <openssl/params.h>
+#include <openssl/param_build.h>
 #include <openssl/dsa.h>
 #include <openssl/dh.h>
 #include <openssl/aes.h>
+#include <openssl/decoder.h>
 #include "testutil.h"
 #include "internal/nelem.h"
 #include "internal/sizes.h"
@@ -410,28 +411,24 @@ static APK_DATA keycheckdata[] = {
 #endif
 };
 
+static EVP_PKEY *load_example_key(const char *keytype,
+                                  const unsigned char *data, size_t data_len)
+{
+    const unsigned char **pdata = &data;
+    EVP_PKEY *pkey = NULL;
+    OSSL_DECODER_CTX *dctx =
+        OSSL_DECODER_CTX_new_by_EVP_PKEY(&pkey, "DER", keytype, testctx, NULL);
+
+    /* |pkey| will be NULL on error */
+    (void)OSSL_DECODER_from_data(dctx, pdata, &data_len);
+    OSSL_DECODER_CTX_free(dctx);
+    return pkey;
+}
+
 static EVP_PKEY *load_example_rsa_key(void)
 {
-    EVP_PKEY *ret = NULL;
-    const unsigned char *derp = kExampleRSAKeyDER;
-    EVP_PKEY *pkey = NULL;
-    RSA *rsa = NULL;
-
-    if (!TEST_true(d2i_RSAPrivateKey(&rsa, &derp, sizeof(kExampleRSAKeyDER))))
-        return NULL;
-
-    if (!TEST_ptr(pkey = EVP_PKEY_new())
-            || !TEST_true(EVP_PKEY_set1_RSA(pkey, rsa)))
-        goto end;
-
-    ret = pkey;
-    pkey = NULL;
-
-end:
-    EVP_PKEY_free(pkey);
-    RSA_free(rsa);
-
-    return ret;
+    return load_example_key("RSA", kExampleRSAKeyDER,
+                            sizeof(kExampleRSAKeyDER));
 }
 
 #ifndef OPENSSL_NO_DSA
@@ -1690,8 +1687,10 @@ static int test_DSA_get_set_params(void)
 
 static int test_RSA_get_set_params(void)
 {
-    RSA *rsa = NULL;
+    OSSL_PARAM_BLD *bld = NULL;
+    OSSL_PARAM *params = NULL;
     BIGNUM *n = NULL, *e = NULL, *d = NULL;
+    EVP_PKEY_CTX *pctx = NULL;
     EVP_PKEY *pkey = NULL;
     int ret = 0;
 
@@ -1699,30 +1698,38 @@ static int test_RSA_get_set_params(void)
      * Setup the parameters for our RSA object. For our purposes they don't
      * have to actually be *valid* parameters. We just need to set something.
      */
-    rsa = RSA_new();
-    n = BN_new();
-    e = BN_new();
-    d = BN_new();
-    if (!TEST_ptr(rsa)
-            || !TEST_ptr(n)
-            || !TEST_ptr(e)
-            || !TEST_ptr(d)
-        || !RSA_set0_key(rsa, n, e, d))
+    if (!TEST_ptr(pctx = EVP_PKEY_CTX_new_from_name(testctx, "RSA", NULL))
+        || !TEST_ptr(bld = OSSL_PARAM_BLD_new())
+        || !TEST_ptr(n = BN_new())
+        || !TEST_ptr(e = BN_new())
+        || !TEST_ptr(d = BN_new()))
         goto err;
-    n = e = d = NULL;
-
-    pkey = EVP_PKEY_new();
-    if (!TEST_ptr(pkey)
-            || !TEST_true(EVP_PKEY_assign_RSA(pkey, rsa)))
+    if (!TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_RSA_N, n)))
+        goto err;
+    n = NULL;
+    if (!TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_RSA_E, e)))
+        goto err;
+    e = NULL;
+    if (!TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_RSA_D, d)))
+        goto err;
+    d = NULL;
+    if (!TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld)))
         goto err;
 
-    rsa = NULL;
+    if (!TEST_int_gt(EVP_PKEY_key_fromdata_init(pctx), 0)
+        || !TEST_int_gt(EVP_PKEY_fromdata(pctx, &pkey, params), 0))
+        goto err;
+
+    if (!TEST_ptr(pkey))
+        goto err;
 
     ret = test_EVP_PKEY_CTX_get_set_params(pkey);
 
  err:
     EVP_PKEY_free(pkey);
-    RSA_free(rsa);
+    EVP_PKEY_CTX_free(pctx);
+    OSSL_PARAM_BLD_free_params(params);
+    OSSL_PARAM_BLD_free(bld);
     BN_free(n);
     BN_free(e);
     BN_free(d);

@@ -939,10 +939,13 @@ int req_main(int argc, char **argv)
         }
         fprintf(stdout, "Modulus=");
 #ifndef OPENSSL_NO_RSA
-        if (EVP_PKEY_base_id(tpubkey) == EVP_PKEY_RSA) {
-            const BIGNUM *n;
-            RSA_get0_key(EVP_PKEY_get0_RSA(tpubkey), &n, NULL, NULL);
+        if (EVP_PKEY_is_a(tpubkey, "RSA")) {
+            BIGNUM *n;
+
+            /* Every RSA key has an 'n' */
+            EVP_PKEY_get_bn_param(pkey, "n", &n);
             BN_print(out, n);
+            BN_free(n);
         } else
 #endif
             fprintf(stdout, "Wrong Algorithm type");

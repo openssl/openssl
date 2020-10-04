@@ -169,9 +169,11 @@ static ASN1_ITEM_EXP *item_type[] = {
     ASN1_ITEM_ref(PROXY_CERT_INFO_EXTENSION),
     ASN1_ITEM_ref(PROXY_POLICY),
     ASN1_ITEM_ref(RSA_OAEP_PARAMS),
-    ASN1_ITEM_ref(RSAPrivateKey),
     ASN1_ITEM_ref(RSA_PSS_PARAMS),
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+    ASN1_ITEM_ref(RSAPrivateKey),
     ASN1_ITEM_ref(RSAPublicKey),
+#endif
     ASN1_ITEM_ref(SXNET),
     ASN1_ITEM_ref(SXNETID),
     ASN1_ITEM_ref(USERNOTICE),
@@ -339,7 +341,9 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
     DO_TEST_NO_PRINT(DSA, d2i_DSAPublicKey, i2d_DSAPublicKey);
     DO_TEST_NO_PRINT(DSA, d2i_DSAparams, i2d_DSAparams);
 #endif
+#ifndef OPENSSL_NO_DEPRECATED_3_0
     DO_TEST_NO_PRINT(RSA, d2i_RSAPublicKey, i2d_RSAPublicKey);
+#endif
 #ifndef OPENSSL_NO_EC
     DO_TEST_PRINT_OFFSET(EC_GROUP, d2i_ECPKParameters, i2d_ECPKParameters, ECPKParameters_print);
     DO_TEST_PRINT_OFFSET(EC_KEY, d2i_ECPrivateKey, i2d_ECPrivateKey, EC_KEY_print);

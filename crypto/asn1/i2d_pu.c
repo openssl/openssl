@@ -18,16 +18,20 @@
 #include <openssl/bn.h>
 #include <openssl/evp.h>
 #include <openssl/objects.h>
-#include <openssl/rsa.h>
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+# include <openssl/rsa.h>
+#endif
 #include <openssl/dsa.h>
 #include <openssl/ec.h>
 
 int i2d_PublicKey(const EVP_PKEY *a, unsigned char **pp)
 {
     switch (EVP_PKEY_id(a)) {
-#ifndef OPENSSL_NO_RSA
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+# ifndef OPENSSL_NO_RSA
     case EVP_PKEY_RSA:
         return i2d_RSAPublicKey(EVP_PKEY_get0_RSA(a), pp);
+# endif
 #endif
 #ifndef OPENSSL_NO_DSA
     case EVP_PKEY_DSA:
