@@ -525,6 +525,9 @@ EOF
     { regexp   => qr/DECLARE_PKCS12_SET_OF<<<\((.*)\)>>>/,
       massager => sub { return (); }
     },
+
+    #####
+    # PEM stuff
     { regexp   => qr/DECLARE_PEM(?|_rw|_rw_cb|_rw_const)<<<\((.*?),.*\)>>>/,
       massager => sub { return (<<"EOF");
 #ifndef OPENSSL_NO_STDIO
@@ -536,9 +539,6 @@ int PEM_write_bio_$1(void);
 EOF
       },
     },
-
-    #####
-    # PEM stuff
     { regexp   => qr/DECLARE_PEM(?|_write|_write_cb|_write_const)<<<\((.*?),.*\)>>>/,
       massager => sub { return (<<"EOF");
 #ifndef OPENSSL_NO_STDIO
@@ -554,6 +554,18 @@ EOF
 int PEM_read_$1(void);
 #endif
 int PEM_read_bio_$1(void);
+EOF
+      },
+    },
+    # Universal translator of attributed PEM declarators
+    { regexp   => qr/
+          DECLARE_PEM
+          (_rw|_rw_cb|_rw_const|_write|_write_cb|_write_const|_read|_read_cb)
+          _attr
+          <<<\(\s*OSSL_DEPRECATEDIN_(.*?)\s*,(.*?)\)>>>
+      /x,
+      massager => sub { return (<<"EOF");
+DECLARE_PEM$1($3)
 EOF
       },
     },
