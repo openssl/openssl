@@ -507,6 +507,21 @@ int $2_dup(void);
 EOF
       }
     },
+    # Universal translator of attributed PEM declarators
+    { regexp   => qr/
+          DECLARE_ASN1
+          (_ENCODE_FUNCTIONS_only|_ENCODE_FUNCTIONS|_ENCODE_FUNCTIONS_name
+           |_ALLOC_FUNCTIONS_name|_ALLOC_FUNCTIONS|_FUNCTIONS_name|_FUNCTIONS
+           |_NDEF_FUNCTION|_PRINT_FUNCTION|_PRINT_FUNCTION_name
+           |_DUP_FUNCTION|_DUP_FUNCTION_name)
+          _attr
+          <<<\(\s*OSSL_DEPRECATEDIN_(.*?)\s*,(.*?)\)>>>
+      /x,
+      massager => sub { return (<<"EOF");
+DECLARE_ASN1$1($3)
+EOF
+      },
+    },
     { regexp   => qr/DECLARE_PKCS12_SET_OF<<<\((.*)\)>>>/,
       massager => sub { return (); }
     },

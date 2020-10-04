@@ -230,45 +230,76 @@ typedef struct ASN1_VALUE_st ASN1_VALUE;
 
 /* Declare ASN1 functions: the implement macro in in asn1t.h */
 
-# define DECLARE_ASN1_FUNCTIONS(type) DECLARE_ASN1_FUNCTIONS_name(type, type)
+/*
+ * The mysterious 'extern' that's passed to some macros is innocuous,
+ * and is there to quiet pre-C99 compilers that may complain about empty
+ * arguments in macro calls.
+ */
 
-# define DECLARE_ASN1_ALLOC_FUNCTIONS(type) \
-        DECLARE_ASN1_ALLOC_FUNCTIONS_name(type, type)
+# define DECLARE_ASN1_FUNCTIONS_attr(attr, type)                            \
+    DECLARE_ASN1_FUNCTIONS_name_attr(attr, type, type)
+# define DECLARE_ASN1_FUNCTIONS(type)                                       \
+    DECLARE_ASN1_FUNCTIONS_attr(extern, type)
 
-# define DECLARE_ASN1_FUNCTIONS_name(type, name) \
-        DECLARE_ASN1_ALLOC_FUNCTIONS_name(type, name) \
-        DECLARE_ASN1_ENCODE_FUNCTIONS_name(type, name)
+# define DECLARE_ASN1_ALLOC_FUNCTIONS_attr(attr, type)                      \
+    DECLARE_ASN1_ALLOC_FUNCTIONS_name_attr(attr, type, type)
+# define DECLARE_ASN1_ALLOC_FUNCTIONS(type)                                 \
+    DECLARE_ASN1_ALLOC_FUNCTIONS_attr(extern, type)
 
-# define DECLARE_ASN1_ENCODE_FUNCTIONS(type, itname, name) \
-        DECLARE_ASN1_ENCODE_FUNCTIONS_only(type, name) \
-        DECLARE_ASN1_ITEM(itname)
+# define DECLARE_ASN1_FUNCTIONS_name_attr(attr, type, name)                 \
+    DECLARE_ASN1_ALLOC_FUNCTIONS_name_attr(attr, type, name)                \
+    DECLARE_ASN1_ENCODE_FUNCTIONS_name_attr(attr, type, name)
+# define DECLARE_ASN1_FUNCTIONS_name(type, name)                            \
+    DECLARE_ASN1_FUNCTIONS_name_attr(extern, type, name)
 
+# define DECLARE_ASN1_ENCODE_FUNCTIONS_attr(attr, type, itname, name)       \
+    DECLARE_ASN1_ENCODE_FUNCTIONS_only_attr(attr, type, name)               \
+    DECLARE_ASN1_ITEM_attr(attr, itname)
+# define DECLARE_ASN1_ENCODE_FUNCTIONS(type, itname, name)                  \
+    DECLARE_ASN1_ENCODE_FUNCTIONS_attr(extern, type, itname, name)
+
+# define DECLARE_ASN1_ENCODE_FUNCTIONS_name_attr(attr, type, name)          \
+    DECLARE_ASN1_ENCODE_FUNCTIONS_attr(attr, type, name, name)
 # define DECLARE_ASN1_ENCODE_FUNCTIONS_name(type, name) \
-         DECLARE_ASN1_ENCODE_FUNCTIONS(type, name, name)
+    DECLARE_ASN1_ENCODE_FUNCTIONS_name_attr(extern, type, name)
 
-# define DECLARE_ASN1_ENCODE_FUNCTIONS_only(type, name) \
-        type *d2i_##name(type **a, const unsigned char **in, long len); \
-        int i2d_##name(const type *a, unsigned char **out);
+# define DECLARE_ASN1_ENCODE_FUNCTIONS_only_attr(attr, type, name)          \
+    attr type *d2i_##name(type **a, const unsigned char **in, long len);    \
+    attr int i2d_##name(const type *a, unsigned char **out);
+# define DECLARE_ASN1_ENCODE_FUNCTIONS_only(type, name)                     \
+    DECLARE_ASN1_ENCODE_FUNCTIONS_only_attr(extern, type, name)
 
-# define DECLARE_ASN1_NDEF_FUNCTION(name) \
-        int i2d_##name##_NDEF(const name *a, unsigned char **out);
+# define DECLARE_ASN1_NDEF_FUNCTION_attr(attr, name)                        \
+    attr int i2d_##name##_NDEF(const name *a, unsigned char **out);
+# define DECLARE_ASN1_NDEF_FUNCTION(name)                                   \
+    DECLARE_ASN1_NDEF_FUNCTION_attr(extern, name)
 
-# define DECLARE_ASN1_ALLOC_FUNCTIONS_name(type, name) \
-        type *name##_new(void); \
-        void name##_free(type *a);
+# define DECLARE_ASN1_ALLOC_FUNCTIONS_name_attr(attr, type, name)           \
+    attr type *name##_new(void);                                            \
+    attr void name##_free(type *a);
+# define DECLARE_ASN1_ALLOC_FUNCTIONS_name(type, name)                      \
+    DECLARE_ASN1_ALLOC_FUNCTIONS_name_attr(extern, type, name)
 
-# define DECLARE_ASN1_DUP_FUNCTION(type) \
-        DECLARE_ASN1_DUP_FUNCTION_name(type, type)
+# define DECLARE_ASN1_DUP_FUNCTION_attr(attr, type)                         \
+    DECLARE_ASN1_DUP_FUNCTION_name_attr(attr, type, type)
+# define DECLARE_ASN1_DUP_FUNCTION(type)                                    \
+    DECLARE_ASN1_DUP_FUNCTION_attr(extern, type)
 
-# define DECLARE_ASN1_DUP_FUNCTION_name(type, name) \
-        type *name##_dup(const type *a);
+# define DECLARE_ASN1_DUP_FUNCTION_name_attr(attr, type, name)              \
+    attr type *name##_dup(const type *a);
+# define DECLARE_ASN1_DUP_FUNCTION_name(type, name)                         \
+    DECLARE_ASN1_DUP_FUNCTION_name_attr(extern, type, name)
 
-# define DECLARE_ASN1_PRINT_FUNCTION(stname) \
-        DECLARE_ASN1_PRINT_FUNCTION_fname(stname, stname)
+# define DECLARE_ASN1_PRINT_FUNCTION_attr(attr, stname)                     \
+    DECLARE_ASN1_PRINT_FUNCTION_fname_attr(attr, stname, stname)
+# define DECLARE_ASN1_PRINT_FUNCTION(stname)                                \
+    DECLARE_ASN1_PRINT_FUNCTION_attr(extern, stname)
 
-# define DECLARE_ASN1_PRINT_FUNCTION_fname(stname, fname) \
-        int fname##_print_ctx(BIO *out, const stname *x, int indent, \
-                                         const ASN1_PCTX *pctx);
+# define DECLARE_ASN1_PRINT_FUNCTION_fname_attr(attr, stname, fname)        \
+    attr int fname##_print_ctx(BIO *out, const stname *x, int indent,       \
+                               const ASN1_PCTX *pctx);
+# define DECLARE_ASN1_PRINT_FUNCTION_fname(stname, fname)                   \
+    DECLARE_ASN1_PRINT_FUNCTION_fname_attr(extern, stname, fname)
 
 # define D2I_OF(type) type *(*)(type **,const unsigned char **,long)
 # define I2D_OF(type) int (*)(const type *,unsigned char **)
@@ -344,8 +375,10 @@ typedef const ASN1_ITEM *ASN1_ITEM_EXP (void);
 
 # define ASN1_ITEM_rptr(ref) (ref##_it())
 
-# define DECLARE_ASN1_ITEM(name) \
-        const ASN1_ITEM * name##_it(void);
+# define DECLARE_ASN1_ITEM_attr(attr, name)                                 \
+    attr const ASN1_ITEM * name##_it(void);
+# define DECLARE_ASN1_ITEM(name)                                            \
+    DECLARE_ASN1_ITEM_attr(extern, name)
 
 /* Parameters used by ASN1_STRING_print_ex() */
 
