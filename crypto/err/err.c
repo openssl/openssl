@@ -225,7 +225,7 @@ static void err_patch(int lib, ERR_STRING_DATA *str)
 }
 
 /*
- * Hash in |str| error strings. Assumes the URN_ONCE was done.
+ * Hash in |str| error strings. Assumes the RUN_ONCE was done.
  */
 static int err_load_strings(const ERR_STRING_DATA *str)
 {
