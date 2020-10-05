@@ -283,6 +283,20 @@ EOF
     },
 
     #####
+    # Core stuff
+
+    # OSSL_CORE_MAKE_FUNC is a macro to create the necessary data and inline
+    # function the libcrypto<->provider interface
+    { regexp   => qr/OSSL_CORE_MAKE_FUNC<<<\((.*?),(.*?),(.*?)\)>>>/,
+      massager => sub {
+          return (<<"EOF");
+typedef $1 OSSL_FUNC_$2_fn$3;
+static ossl_inline OSSL_FUNC_$2_fn *OSSL_FUNC_$2(const OSSL_DISPATCH *opf);
+EOF
+      },
+    },
+
+    #####
     # LHASH stuff
 
     # LHASH_OF(foo) is used as a type, but the chandlers won't take it
