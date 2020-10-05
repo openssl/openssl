@@ -98,25 +98,25 @@ int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
             X509err(X509_F_X509_PUBKEY_SET, X509_R_METHOD_NOT_SUPPORTED);
             goto error;
         }
-    } else if (pkey->keymgmt != NULL) {
+    } else if (evp_pkey_is_provided(pkey)) {
         const OSSL_PROVIDER *pkprov = EVP_KEYMGMT_provider(pkey->keymgmt);
         OPENSSL_CTX *libctx = ossl_provider_library_context(pkprov);
-        BIO *bmem = BIO_new(BIO_s_mem());
+        unsigned char *der = NULL;
+        size_t derlen = 0;
         int selection = (OSSL_KEYMGMT_SELECT_PUBLIC_KEY
                          | OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS);
         OSSL_ENCODER_CTX *ectx =
             OSSL_ENCODER_CTX_new_by_EVP_PKEY(pkey, "DER", selection,
                                              libctx, NULL);
 
-        if (OSSL_ENCODER_to_bio(ectx, bmem)) {
-            const unsigned char *der = NULL;
-            long derlen = BIO_get_mem_data(bmem, (char **)&der);
+        if (OSSL_ENCODER_to_data(ectx, &der, &derlen)) {
+            const unsigned char *pder = der;
 
-            pk = d2i_X509_PUBKEY(NULL, &der, derlen);
+            pk = d2i_X509_PUBKEY(NULL, &pder, (long)derlen);
         }
 
         OSSL_ENCODER_CTX_free(ectx);
-        BIO_free(bmem);
+        OPENSSL_free(der);
     }
 
     if (pk == NULL)

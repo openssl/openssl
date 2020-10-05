@@ -251,21 +251,17 @@ static EVP_PKEY *try_key_value(struct extracted_param_data_st *data,
 {
     EVP_PKEY *pk = NULL;
     OSSL_DECODER_CTX *decoderctx = NULL;
-    BIO *membio =
-        BIO_new_mem_buf(data->octet_data, (int)data->octet_data_size);
-
-    if (membio == NULL)
-        return 0;
+    const unsigned char *pdata = data->octet_data;
+    size_t pdatalen = data->octet_data_size;
 
     decoderctx =
         OSSL_DECODER_CTX_new_by_EVP_PKEY(&pk, "DER", NULL, libctx, propq);
     (void)OSSL_DECODER_CTX_set_passphrase_cb(decoderctx, cb, cbarg);
 
     /* No error if this couldn't be decoded */
-    (void)OSSL_DECODER_from_bio(decoderctx, membio);
+    (void)OSSL_DECODER_from_data(decoderctx, &pdata, &pdatalen);
 
     OSSL_DECODER_CTX_free(decoderctx);
-    BIO_free(membio);
 
     return pk;
 }
