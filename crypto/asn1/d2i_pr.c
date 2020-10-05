@@ -45,6 +45,7 @@ EVP_PKEY *d2i_PrivateKey_ex(int type, EVP_PKEY **a, const unsigned char **pp,
         goto err;
     }
 
+    ERR_set_mark();
     if (!ret->ameth->old_priv_decode ||
         !ret->ameth->old_priv_decode(ret, &p, length)) {
         if (ret->ameth->priv_decode != NULL
@@ -60,6 +61,7 @@ EVP_PKEY *d2i_PrivateKey_ex(int type, EVP_PKEY **a, const unsigned char **pp,
                 goto err;
             EVP_PKEY_free(ret);
             ret = tmp;
+            ERR_pop_to_mark();
             if (EVP_PKEY_type(type) != EVP_PKEY_base_id(ret))
                 goto err;
         } else {

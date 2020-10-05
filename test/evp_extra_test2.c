@@ -15,6 +15,7 @@
  */
 
 #include <openssl/evp.h>
+#include <openssl/pem.h>
 #include <openssl/provider.h>
 #include "testutil.h"
 #include "internal/nelem.h"
@@ -248,6 +249,27 @@ static int test_alternative_default(void)
     return ok;
 }
 
+static int test_d2i_PrivateKey_ex(void) {
+    int ok;
+    OSSL_PROVIDER *provider;
+    BIO *key_bio;
+    EVP_PKEY* pkey;
+    ok = 0;
+
+    provider = OSSL_PROVIDER_load(NULL, "default");
+    key_bio = BIO_new_mem_buf((&keydata[0])->kder, (&keydata)[0]->size);
+
+    ok = TEST_ptr(pkey = PEM_read_bio_PrivateKey(key_bio, NULL, NULL, NULL));
+    TEST_int_eq(ERR_peek_error(), 0);
+    test_openssl_errors();
+
+    EVP_PKEY_free(pkey);
+    BIO_free(key_bio);
+    OSSL_PROVIDER_unload(provider);
+
+    return ok;
+}
+
 int setup_tests(void)
 {
     mainctx = OPENSSL_CTX_new();
@@ -264,6 +286,7 @@ int setup_tests(void)
 
     ADD_TEST(test_alternative_default);
     ADD_ALL_TESTS(test_d2i_AutoPrivateKey_ex, OSSL_NELEM(keydata));
+    ADD_TEST(test_d2i_PrivateKey_ex);
 
     return 1;
 }
