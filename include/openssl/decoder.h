@@ -106,6 +106,8 @@ int OSSL_DECODER_from_bio(OSSL_DECODER_CTX *ctx, BIO *in);
 #ifndef OPENSSL_NO_STDIO
 int OSSL_DECODER_from_fp(OSSL_DECODER_CTX *ctx, FILE *in);
 #endif
+int OSSL_DECODER_from_data(OSSL_DECODER_CTX *ctx, const unsigned char **pdata,
+                           size_t *pdata_len);
 
 /*
  * Create the OSSL_DECODER_CTX with an associated type.  This will perform

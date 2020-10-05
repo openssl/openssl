@@ -101,6 +101,8 @@ int OSSL_ENCODER_to_bio(OSSL_ENCODER_CTX *ctx, BIO *out);
 #ifndef OPENSSL_NO_STDIO
 int OSSL_ENCODER_to_fp(OSSL_ENCODER_CTX *ctx, FILE *fp);
 #endif
+int OSSL_ENCODER_to_data(OSSL_ENCODER_CTX *ctx, unsigned char **pdata,
+                         size_t *pdata_len);
 
 /*
  * Create the OSSL_ENCODER_CTX with an associated type.  This will perform

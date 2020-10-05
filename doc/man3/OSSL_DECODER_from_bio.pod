@@ -2,6 +2,7 @@
 
 =head1 NAME
 
+OSSL_DECODER_from_data,
 OSSL_DECODER_from_bio,
 OSSL_DECODER_from_fp
 - Routines to perform a decoding
@@ -12,6 +13,8 @@ OSSL_DECODER_from_fp
 
  int OSSL_DECODER_from_bio(OSSL_DECODER_CTX *ctx, BIO *in);
  int OSSL_DECODER_from_fp(OSSL_DECODER_CTX *ctx, FILE *fp);
+ int OSSL_DECODER_from_data(OSSL_DECODER_CTX *ctx, const unsigned char **pdata,
+                            size_t *pdata_len);
 
 Feature availability macros:
 
@@ -23,6 +26,12 @@ is undefined.
 =back
 
 =head1 DESCRIPTION
+
+OSSL_DECODER_from_data() runs the decoding process for the context I<ctx>,
+with input coming from I<*pdata>, I<*pdata_len> bytes long.  Both I<*pdata>
+and I<*pdata_len> must be non-NULL.  When OSSL_DECODER_from_data() returns,
+I<*pdata> is updated to point at the location after what has been decoded,
+and I<*pdata_len> to have the number of remaining bytes.
 
 OSSL_DECODER_from_bio() runs the decoding process for the context I<ctx>,
 with the input coming from the B<BIO> I<in>.  Should it make a difference,

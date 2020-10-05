@@ -49,6 +49,54 @@ int OSSL_ENCODER_to_fp(OSSL_ENCODER_CTX *ctx, FILE *fp)
 }
 #endif
 
+int OSSL_ENCODER_to_data(OSSL_ENCODER_CTX *ctx, unsigned char **pdata,
+                         size_t *pdata_len)
+{
+    BIO *out = BIO_new(BIO_s_mem());
+    BUF_MEM *buf = NULL;
+    int ret = 0;
+
+    if (pdata_len == NULL) {
+        ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
+    if (OSSL_ENCODER_to_bio(ctx, out)
+        && BIO_get_mem_ptr(out, &buf) > 0) {
+        ret = 1; /* Hope for the best. A too small buffer will clear this */
+
+        if (pdata != NULL && *pdata != NULL) {
+            if (*pdata_len < buf->length)
+                /*
+                 * It's tempting to do |*pdata_len = (size_t)buf->length|
+                 * However, it's believed to be confusing more than helpful,
+                 * so we don't.
+                 */
+                ret = 0;
+            else
+                *pdata_len -= buf->length;
+        } else {
+            /* The buffer with the right size is already allocated for us */
+            *pdata_len = (size_t)buf->length;
+        }
+
+        if (ret) {
+            if (pdata != NULL) {
+                if (*pdata != NULL) {
+                    memcpy(*pdata, buf->data, buf->length);
+                    *pdata += buf->length;
+                } else {
+                    /* In this case, we steal the data from BIO_s_mem() */
+                    *pdata = (unsigned char *)buf->data;
+                    buf->data = NULL;
+                }
+            }
+        }
+    }
+    BIO_free(out);
+    return ret;
+}
+
 int OSSL_ENCODER_CTX_set_output_type(OSSL_ENCODER_CTX *ctx,
                                      const char *output_type)
 {

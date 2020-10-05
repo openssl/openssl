@@ -5286,3 +5286,5 @@ EVP_KEM_gettable_ctx_params             ?	3_0_0	EXIST::FUNCTION:
 EVP_KEM_settable_ctx_params             ?	3_0_0	EXIST::FUNCTION:
 PKCS7_type_is_other                     ?	3_0_0	EXIST::FUNCTION:
 PKCS7_get_octet_string                  ?	3_0_0	EXIST::FUNCTION:
+OSSL_DECODER_from_data                  ?	3_0_0	EXIST::FUNCTION:
+OSSL_ENCODER_to_data                    ?	3_0_0	EXIST::FUNCTION:
