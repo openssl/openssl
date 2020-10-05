@@ -49,6 +49,43 @@ int OSSL_ENCODER_to_fp(OSSL_ENCODER_CTX *ctx, FILE *fp)
 }
 #endif
 
+int OSSL_ENCODER_to_data(OSSL_ENCODER_CTX *ctx, unsigned char **pdata,
+                         size_t *pdata_len)
+{
+    BIO *out = BIO_new(BIO_s_mem());
+    BUF_MEM *buf = NULL;
+    int ret = 0;
+
+    if (pdata_len == NULL) {
+        ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
+    if (OSSL_ENCODER_to_bio(ctx, out)
+        && BIO_get_mem_ptr(out, &buf) > 0) {
+
+        if (pdata != NULL && *pdata != NULL)
+            *pdata_len -= buf->length;
+        else
+            *pdata_len = (size_t)buf->length;
+
+        if (pdata != NULL) {
+            if (*pdata != NULL) {
+                memcpy(*pdata, buf->data, buf->length);
+                *pdata += buf->length;
+            } else {
+                /* In this case, we steal the data from BIO_s_mem() */
+                *pdata = (unsigned char *)buf->data;
+                buf->data = NULL;
+            }
+        }
+
+        ret = 1;
+    }
+    BIO_free(out);
+    return ret;
+}
+
 int OSSL_ENCODER_CTX_set_output_type(OSSL_ENCODER_CTX *ctx,
                                      const char *output_type)
 {

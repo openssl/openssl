@@ -77,6 +77,27 @@ int OSSL_DECODER_from_fp(OSSL_DECODER_CTX *ctx, FILE *fp)
 }
 #endif
 
+int OSSL_DECODER_from_data(OSSL_DECODER_CTX *ctx, const unsigned char **pdata,
+                           size_t *pdata_len)
+{
+    BIO *membio;
+    int ret = 0;
+
+    if (pdata == NULL || *pdata == NULL || pdata_len == NULL) {
+        ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
+    membio = BIO_new_mem_buf(*pdata, (int)*pdata_len);
+    if (OSSL_DECODER_from_bio(ctx, membio)) {
+        *pdata_len = (size_t)BIO_get_mem_data(membio, pdata);
+        ret = 1;
+    }
+    BIO_free(membio);
+
+    return ret;
+}
+
 int OSSL_DECODER_CTX_set_input_type(OSSL_DECODER_CTX *ctx,
                                     const char *input_type)
 {
