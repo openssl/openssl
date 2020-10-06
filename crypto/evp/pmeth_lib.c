@@ -1762,6 +1762,16 @@ int evp_pkey_ctx_use_cached_data(EVP_PKEY_CTX *ctx)
     return ret;
 }
 
+OPENSSL_CTX *evp_pkey_ctx_get0_libctx(EVP_PKEY_CTX *ctx)
+{
+    return ctx->libctx;
+}
+
+const char *evp_pkey_ctx_get0_propq(EVP_PKEY_CTX *ctx)
+{
+    return ctx->propquery;
+}
+
 /* Utility functions to send a string of hex string to a ctrl */
 
 int EVP_PKEY_CTX_str2ctrl(EVP_PKEY_CTX *ctx, int cmd, const char *str)

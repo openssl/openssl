@@ -244,6 +244,7 @@ int ERR_load_ASN1_strings(void);
 # define ASN1_R_TYPE_NOT_PRIMITIVE                        195
 # define ASN1_R_UNEXPECTED_EOC                            159
 # define ASN1_R_UNIVERSALSTRING_IS_WRONG_LENGTH           215
+# define ASN1_R_UNKNOWN_DIGEST                            229
 # define ASN1_R_UNKNOWN_FORMAT                            160
 # define ASN1_R_UNKNOWN_MESSAGE_DIGEST_ALGORITHM          161
 # define ASN1_R_UNKNOWN_OBJECT_TYPE                       162

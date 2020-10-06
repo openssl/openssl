@@ -133,3 +133,8 @@ int asn1_type_set_octetstring_int(ASN1_TYPE *a, long num,
                                   unsigned char *data, int len);
 int asn1_type_get_octetstring_int(const ASN1_TYPE *a, long *num,
                                   unsigned char *data, int max_len);
+
+int x509_algor_new_from_md(X509_ALGOR **palg, const EVP_MD *md);
+const EVP_MD *x509_algor_get_md(X509_ALGOR *alg);
+X509_ALGOR *x509_algor_mgf1_decode(X509_ALGOR *alg);
+int x509_algor_md_to_mgf1(X509_ALGOR **palg, const EVP_MD *mgf1md);

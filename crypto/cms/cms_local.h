@@ -471,6 +471,10 @@ void cms_SignerInfos_set_cmsctx(CMS_ContentInfo *cms);
 /* ESS routines */
 int ess_check_signing_certs(CMS_SignerInfo *si, STACK_OF(X509) *chain);
 
+int cms_dh_envelope(CMS_RecipientInfo *ri, int decrypt);
+int cms_ecdh_envelope(CMS_RecipientInfo *ri, int decrypt);
+int cms_rsa_envelope(CMS_RecipientInfo *ri, int decrypt);
+
 DECLARE_ASN1_ITEM(CMS_CertificateChoices)
 DECLARE_ASN1_ITEM(CMS_DigestedData)
 DECLARE_ASN1_ITEM(CMS_EncryptedData)

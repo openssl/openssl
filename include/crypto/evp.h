@@ -835,6 +835,8 @@ int evp_pkey_ctx_get1_id_len_prov(EVP_PKEY_CTX *ctx, size_t *id_len);
 
 int evp_pkey_ctx_use_cached_data(EVP_PKEY_CTX *ctx);
 #endif /* !defined(FIPS_MODULE) */
+OPENSSL_CTX *evp_pkey_ctx_get0_libctx(EVP_PKEY_CTX *ctx);
+const char *evp_pkey_ctx_get0_propq(EVP_PKEY_CTX *ctx);
 void evp_method_store_flush(OPENSSL_CTX *libctx);
 int evp_set_default_properties_int(OPENSSL_CTX *libctx, const char *propq,
                                    int loadconfig);

@@ -115,6 +115,15 @@ int cms_env_asn1_ctrl(CMS_RecipientInfo *ri, int cmd)
             return 0;
     } else
         return 0;
+
+    if (EVP_PKEY_is_a(pkey, "DHX"))
+        return cms_dh_envelope(ri, cmd);
+    else if (EVP_PKEY_is_a(pkey, "EC"))
+        return cms_ecdh_envelope(ri, cmd);
+    else if (EVP_PKEY_is_a(pkey, "RSA"))
+        return cms_rsa_envelope(ri, cmd);
+
+    /* Something else? We'll give engines etc a chance to handle this */
     if (pkey->ameth == NULL || pkey->ameth->pkey_ctrl == NULL)
         return 1;
     i = pkey->ameth->pkey_ctrl(pkey, ASN1_PKEY_CTRL_CMS_ENVELOPE, cmd, ri);

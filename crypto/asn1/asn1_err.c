@@ -171,6 +171,7 @@ static const ERR_STRING_DATA ASN1_str_reasons[] = {
     {ERR_PACK(ERR_LIB_ASN1, 0, ASN1_R_UNEXPECTED_EOC), "unexpected eoc"},
     {ERR_PACK(ERR_LIB_ASN1, 0, ASN1_R_UNIVERSALSTRING_IS_WRONG_LENGTH),
     "universalstring is wrong length"},
+    {ERR_PACK(ERR_LIB_ASN1, 0, ASN1_R_UNKNOWN_DIGEST), "unknown digest"},
     {ERR_PACK(ERR_LIB_ASN1, 0, ASN1_R_UNKNOWN_FORMAT), "unknown format"},
     {ERR_PACK(ERR_LIB_ASN1, 0, ASN1_R_UNKNOWN_MESSAGE_DIGEST_ALGORITHM),
     "unknown message digest algorithm"},
