@@ -11,6 +11,8 @@
 #include <openssl/x509.h>
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
+#include <openssl/err.h>
+#include "crypto/asn1.h"
 #include "crypto/evp.h"
 
 ASN1_SEQUENCE(X509_ALGOR) = {
@@ -124,4 +126,65 @@ int X509_ALGOR_copy(X509_ALGOR *dest, const X509_ALGOR *src)
     }
 
     return 1;
+}
+
+/* allocate and set algorithm ID from EVP_MD, default SHA1 */
+int x509_algor_new_from_md(X509_ALGOR **palg, const EVP_MD *md)
+{
+    /* Default is SHA1 so no need to create it - still success */
+    if (md == NULL || EVP_MD_is_a(md, "SHA1"))
+        return 1;
+    *palg = X509_ALGOR_new();
+    if (*palg == NULL)
+        return 0;
+    X509_ALGOR_set_md(*palg, md);
+    return 1;
+}
+
+/* convert algorithm ID to EVP_MD, default SHA1 */
+const EVP_MD *x509_algor_get_md(X509_ALGOR *alg)
+{
+    const EVP_MD *md;
+
+    if (alg == NULL)
+        return EVP_sha1();
+    md = EVP_get_digestbyobj(alg->algorithm);
+    if (md == NULL)
+        ASN1err(0, ASN1_R_UNKNOWN_DIGEST);
+    return md;
+}
+
+X509_ALGOR *x509_algor_mgf1_decode(X509_ALGOR *alg)
+{
+    if (OBJ_obj2nid(alg->algorithm) != NID_mgf1)
+        return NULL;
+    return ASN1_TYPE_unpack_sequence(ASN1_ITEM_rptr(X509_ALGOR),
+                                     alg->parameter);
+}
+
+/* Allocate and set MGF1 algorithm ID from EVP_MD */
+int x509_algor_md_to_mgf1(X509_ALGOR **palg, const EVP_MD *mgf1md)
+{
+    X509_ALGOR *algtmp = NULL;
+    ASN1_STRING *stmp = NULL;
+
+    *palg = NULL;
+    if (mgf1md == NULL || EVP_MD_is_a(mgf1md, "SHA1"))
+        return 1;
+    /* need to embed algorithm ID inside another */
+    if (!x509_algor_new_from_md(&algtmp, mgf1md))
+        goto err;
+    if (ASN1_item_pack(algtmp, ASN1_ITEM_rptr(X509_ALGOR), &stmp) == NULL)
+         goto err;
+    *palg = X509_ALGOR_new();
+    if (*palg == NULL)
+        goto err;
+    X509_ALGOR_set0(*palg, OBJ_nid2obj(NID_mgf1), V_ASN1_SEQUENCE, stmp);
+    stmp = NULL;
+ err:
+    ASN1_STRING_free(stmp);
+    X509_ALGOR_free(algtmp);
+    if (*palg)
+        return 1;
+    return 0;
 }

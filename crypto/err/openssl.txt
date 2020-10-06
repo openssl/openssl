@@ -1996,6 +1996,7 @@ ASN1_R_TYPE_NOT_CONSTRUCTED:156:type not constructed
 ASN1_R_TYPE_NOT_PRIMITIVE:195:type not primitive
 ASN1_R_UNEXPECTED_EOC:159:unexpected eoc
 ASN1_R_UNIVERSALSTRING_IS_WRONG_LENGTH:215:universalstring is wrong length
+ASN1_R_UNKNOWN_DIGEST:229:unknown digest
 ASN1_R_UNKNOWN_FORMAT:160:unknown format
 ASN1_R_UNKNOWN_MESSAGE_DIGEST_ALGORITHM:161:unknown message digest algorithm
 ASN1_R_UNKNOWN_OBJECT_TYPE:162:unknown object type
@@ -2181,6 +2182,7 @@ CMS_R_CONTENT_TYPE_NOT_SIGNED_DATA:108:content type not signed data
 CMS_R_CONTENT_VERIFY_ERROR:109:content verify error
 CMS_R_CTRL_ERROR:110:ctrl error
 CMS_R_CTRL_FAILURE:111:ctrl failure
+CMS_R_DECODE_ERROR:187:decode error
 CMS_R_DECRYPT_ERROR:112:decrypt error
 CMS_R_ERROR_GETTING_PUBLIC_KEY:113:error getting public key
 CMS_R_ERROR_READING_MESSAGEDIGEST_ATTRIBUTE:114:\
@@ -2192,6 +2194,9 @@ CMS_R_ESS_SIGNING_CERTID_MISMATCH_ERROR:183:ess signing certid mismatch error
 CMS_R_INVALID_ENCRYPTED_KEY_LENGTH:117:invalid encrypted key length
 CMS_R_INVALID_KEY_ENCRYPTION_PARAMETER:176:invalid key encryption parameter
 CMS_R_INVALID_KEY_LENGTH:118:invalid key length
+CMS_R_INVALID_LABEL:190:invalid label
+CMS_R_INVALID_OAEP_PARAMETERS:191:invalid oaep parameters
+CMS_R_KDF_PARAMETER_ERROR:186:kdf parameter error
 CMS_R_MD_BIO_INIT_ERROR:119:md bio init error
 CMS_R_MESSAGEDIGEST_ATTRIBUTE_WRONG_LENGTH:120:\
 	messagedigest attribute wrong length
@@ -2223,10 +2228,12 @@ CMS_R_NO_PRIVATE_KEY:133:no private key
 CMS_R_NO_PUBLIC_KEY:134:no public key
 CMS_R_NO_RECEIPT_REQUEST:168:no receipt request
 CMS_R_NO_SIGNERS:135:no signers
+CMS_R_PEER_KEY_ERROR:188:peer key error
 CMS_R_PRIVATE_KEY_DOES_NOT_MATCH_CERTIFICATE:136:\
 	private key does not match certificate
 CMS_R_RECEIPT_DECODE_ERROR:169:receipt decode error
 CMS_R_RECIPIENT_ERROR:137:recipient error
+CMS_R_SHARED_INFO_ERROR:189:shared info error
 CMS_R_SIGNER_CERTIFICATE_NOT_FOUND:138:signer certificate not found
 CMS_R_SIGNFINAL_ERROR:139:signfinal error
 CMS_R_SMIME_TEXT_ERROR:140:smime text error
@@ -2242,9 +2249,11 @@ CMS_R_UNKNOWN_DIGEST_ALGORITHM:149:unknown digest algorithm
 CMS_R_UNKNOWN_ID:150:unknown id
 CMS_R_UNSUPPORTED_COMPRESSION_ALGORITHM:151:unsupported compression algorithm
 CMS_R_UNSUPPORTED_CONTENT_TYPE:152:unsupported content type
+CMS_R_UNSUPPORTED_ENCRYPTION_TYPE:192:unsupported encryption type
 CMS_R_UNSUPPORTED_KEK_ALGORITHM:153:unsupported kek algorithm
 CMS_R_UNSUPPORTED_KEY_ENCRYPTION_ALGORITHM:179:\
 	unsupported key encryption algorithm
+CMS_R_UNSUPPORTED_LABEL_SOURCE:193:unsupported label source
 CMS_R_UNSUPPORTED_RECIPIENTINFO_TYPE:155:unsupported recipientinfo type
 CMS_R_UNSUPPORTED_RECIPIENT_TYPE:154:unsupported recipient type
 CMS_R_UNSUPPORTED_TYPE:156:unsupported type
