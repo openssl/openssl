@@ -69,11 +69,13 @@ EVP_PKEY *d2i_PrivateKey_ex(int type, EVP_PKEY **a, const unsigned char **pp,
             goto err;
         }
     }
+    ERR_clear_last_mark();
     *pp = p;
     if (a != NULL)
         (*a) = ret;
     return ret;
  err:
+    ERR_clear_last_mark();
     if (a == NULL || *a != ret)
         EVP_PKEY_free(ret);
     return NULL;
