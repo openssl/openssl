@@ -208,7 +208,7 @@ static int decode_EVP_PKEY_prov(void **object, void *encoded, long encoded_len,
 {
     EVP_PKEY *pkey = NULL, *testpkey = NULL;
     OSSL_DECODER_CTX *dctx = NULL;
-    BIO *mem_deser = NULL;
+    BIO *encoded_bio = NULL;
     const unsigned char *upass = (const unsigned char *)pass;
     int ok = 0;
     int i;
@@ -219,7 +219,7 @@ static int decode_EVP_PKEY_prov(void **object, void *encoded, long encoded_len,
     else
         badtype = "DER";
 
-    if (!TEST_ptr(mem_deser = BIO_new_mem_buf(encoded, encoded_len)))
+    if (!TEST_ptr(encoded_bio = BIO_new_mem_buf(encoded, encoded_len)))
         goto end;
 
     /*
@@ -239,11 +239,13 @@ static int decode_EVP_PKEY_prov(void **object, void *encoded, long encoded_len,
                                                               NULL, NULL))
             || (pass != NULL
                 && !OSSL_DECODER_CTX_set_passphrase(dctx, upass, strlen(pass)))
-            || !TEST_int_gt(BIO_reset(mem_deser), 0)
+            || !TEST_int_gt(BIO_reset(encoded_bio), 0)
                /* We expect to fail when using a bad input type */
-            || !TEST_int_eq(OSSL_DECODER_from_bio(dctx, mem_deser),
+            || !TEST_int_eq(OSSL_DECODER_from_bio(dctx, encoded_bio),
                             (i == 2) ? 0 : 1))
             goto end;
+        OSSL_DECODER_CTX_free(dctx);
+        dctx = NULL;
 
         if (i == 0) {
             pkey = testpkey;
@@ -265,7 +267,7 @@ static int decode_EVP_PKEY_prov(void **object, void *encoded, long encoded_len,
  end:
     EVP_PKEY_free(pkey);
     EVP_PKEY_free(testpkey);
-    BIO_free(mem_deser);
+    BIO_free(encoded_bio);
     OSSL_DECODER_CTX_free(dctx);
     return ok;
 }
