@@ -14,6 +14,18 @@
 #  define DECLARE_IS_ENDIAN
 #  define IS_LITTLE_ENDIAN (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)
 #  define IS_BIG_ENDIAN (__BYTE_ORDER__ != __ORDER_LITTLE_ENDIAN__)
+#  if defined(L_ENDIAN) && (__BYTE_ORDER__ != __ORDER_LITTLE_ENDIAN__)
+#   error "L_ENDIAN defined on a big endian machine"
+#  endif
+#  if defined(B_ENDIAN) && (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)
+#   error "B_ENDIAN defined on a little endian machine"
+#  endif
+#  if !defined(L_ENDIAN) && (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)
+#   define L_ENDIAN
+#  endif
+#  if !defined(B_ENDIAN) && (__BYTE_ORDER__ != __ORDER_LITTLE_ENDIAN__)
+#   define B_ENDIAN
+#  endif
 # else
 #  define DECLARE_IS_ENDIAN \
     const union { \
