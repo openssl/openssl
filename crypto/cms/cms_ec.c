@@ -13,7 +13,6 @@
 #include "cms_local.h"
 #include "crypto/evp.h"
 
-
 static EVP_PKEY *pkey_type2param(int ptype, const void *pval,
                                  OPENSSL_CTX *libctx, const char *propq)
 {
@@ -127,6 +126,7 @@ static int ecdh_cms_set_kdf_param(EVP_PKEY_CTX *pctx, int eckdf_nid)
 {
     int kdf_nid, kdfmd_nid, cofactor;
     const EVP_MD *kdf_md;
+
     if (eckdf_nid == NID_undef)
         return 0;
 
@@ -159,7 +159,6 @@ static int ecdh_cms_set_kdf_param(EVP_PKEY_CTX *pctx, int eckdf_nid)
 static int ecdh_cms_set_shared_info(EVP_PKEY_CTX *pctx, CMS_RecipientInfo *ri)
 {
     int rv = 0;
-
     X509_ALGOR *alg, *kekalg = NULL;
     ASN1_OCTET_STRING *ukm;
     const unsigned char *p;
@@ -233,7 +232,7 @@ static int ecdh_cms_decrypt(CMS_RecipientInfo *ri)
         if (!CMS_RecipientInfo_kari_get0_orig_id(ri, &alg, &pubkey,
                                                  NULL, NULL, NULL))
             return 0;
-        if (!alg || !pubkey)
+        if (alg == NULL || pubkey == NULL)
             return 0;
         if (!ecdh_cms_set_peerkey(pctx, alg, pubkey)) {
             CMSerr(0, CMS_R_PEER_KEY_ERROR);
@@ -350,7 +349,7 @@ static int ecdh_cms_encrypt(CMS_RecipientInfo *ri)
 
     penclen = CMS_SharedInfo_encode(&penc, wrap_alg, ukm, keylen);
 
-    if (!penclen)
+    if (penclen == 0)
         goto err;
 
     if (EVP_PKEY_CTX_set0_ecdh_kdf_ukm(pctx, penc, penclen) <= 0)
@@ -362,7 +361,7 @@ static int ecdh_cms_encrypt(CMS_RecipientInfo *ri)
      * of another AlgorithmIdentifier.
      */
     penclen = i2d_X509_ALGOR(wrap_alg, &penc);
-    if (!penc || !penclen)
+    if (penc == NULL || penclen == 0)
         goto err;
     wrap_str = ASN1_STRING_new();
     if (wrap_str == NULL)
@@ -388,4 +387,25 @@ int cms_ecdh_envelope(CMS_RecipientInfo *ri, int decrypt)
 
     CMSerr(0, CMS_R_NOT_SUPPORTED_FOR_THIS_KEY_TYPE);
     return 0;
+}
+
+/* ECDSA and DSA implementation is the same */
+int cms_ecdsa_dsa_sign(CMS_SignerInfo *si, int verify)
+{
+    if (verify == 0) {
+        int snid, hnid;
+        X509_ALGOR *alg1, *alg2;
+        EVP_PKEY *pkey = si->pkey;
+
+        CMS_SignerInfo_get0_algs(si, NULL, NULL, &alg1, &alg2);
+        if (alg1 == NULL || alg1->algorithm == NULL)
+            return -1;
+        hnid = OBJ_obj2nid(alg1->algorithm);
+        if (hnid == NID_undef)
+            return -1;
+        if (!OBJ_find_sigid_by_algs(&snid, hnid, EVP_PKEY_id(pkey)))
+            return -1;
+        X509_ALGOR_set0(alg2, OBJ_nid2obj(snid), V_ASN1_UNDEF, 0);
+    }
+    return 1;
 }

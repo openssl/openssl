@@ -10,8 +10,8 @@
 #include <openssl/cms.h>
 #include <openssl/err.h>
 #include "crypto/asn1.h"
+#include "crypto/rsa.h"
 #include "cms_local.h"
-
 
 static RSA_OAEP_PARAMS *rsa_oaep_decode(const X509_ALGOR *alg)
 {
@@ -145,6 +145,7 @@ static int rsa_cms_encrypt(CMS_RecipientInfo *ri)
         goto err;
     if (labellen > 0) {
         ASN1_OCTET_STRING *los;
+
         oaep->pSourceFunc = X509_ALGOR_new();
         if (oaep->pSourceFunc == NULL)
             goto err;
@@ -176,6 +177,69 @@ int cms_rsa_envelope(CMS_RecipientInfo *ri, int decrypt)
         return rsa_cms_decrypt(ri);
     else if (decrypt == 0)
         return rsa_cms_encrypt(ri);
+
+    CMSerr(0, CMS_R_NOT_SUPPORTED_FOR_THIS_KEY_TYPE);
+    return 0;
+}
+
+static int rsa_cms_sign(CMS_SignerInfo *si)
+{
+    int pad_mode = RSA_PKCS1_PADDING;
+    X509_ALGOR *alg;
+    EVP_PKEY_CTX *pkctx = CMS_SignerInfo_get0_pkey_ctx(si);
+    ASN1_STRING *os = NULL;
+
+    CMS_SignerInfo_get0_algs(si, NULL, NULL, NULL, &alg);
+    if (pkctx != NULL) {
+        if (EVP_PKEY_CTX_get_rsa_padding(pkctx, &pad_mode) <= 0)
+            return 0;
+    }
+    if (pad_mode == RSA_PKCS1_PADDING) {
+        X509_ALGOR_set0(alg, OBJ_nid2obj(NID_rsaEncryption), V_ASN1_NULL, 0);
+        return 1;
+    }
+    /* We don't support it */
+    if (pad_mode != RSA_PKCS1_PSS_PADDING)
+        return 0;
+    os = ossl_rsa_ctx_to_pss_string(pkctx);
+    if (os == NULL)
+        return 0;
+    X509_ALGOR_set0(alg, OBJ_nid2obj(EVP_PKEY_RSA_PSS), V_ASN1_SEQUENCE, os);
+    return 1;
+}
+
+static int rsa_cms_verify(CMS_SignerInfo *si)
+{
+    int nid, nid2;
+    X509_ALGOR *alg;
+    EVP_PKEY_CTX *pkctx = CMS_SignerInfo_get0_pkey_ctx(si);
+    EVP_PKEY *pkey = EVP_PKEY_CTX_get0_pkey(pkctx);
+
+    CMS_SignerInfo_get0_algs(si, NULL, NULL, NULL, &alg);
+    nid = OBJ_obj2nid(alg->algorithm);
+    if (nid == EVP_PKEY_RSA_PSS)
+        return ossl_rsa_pss_to_ctx(NULL, pkctx, alg, NULL);
+    /* Only PSS allowed for PSS keys */
+    if (EVP_PKEY_is_a(pkey, "RSA-PSS")) {
+        RSAerr(RSA_F_RSA_CMS_VERIFY, RSA_R_ILLEGAL_OR_UNSUPPORTED_PADDING_MODE);
+        return 0;
+    }
+    if (nid == NID_rsaEncryption)
+        return 1;
+    /* Workaround for some implementation that use a signature OID */
+    if (OBJ_find_sigid_algs(nid, NULL, &nid2)) {
+        if (nid2 == NID_rsaEncryption)
+            return 1;
+    }
+    return 0;
+}
+
+int cms_rsa_sign(CMS_SignerInfo *si, int verify)
+{
+    if (verify == 1)
+        return rsa_cms_verify(si);
+    else if (verify == 0)
+        return rsa_cms_sign(si);
 
     CMSerr(0, CMS_R_NOT_SUPPORTED_FOR_THIS_KEY_TYPE);
     return 0;

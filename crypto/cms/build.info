@@ -7,6 +7,6 @@ SOURCE[../../libcrypto]= \
 IF[{- !$disabled{dh} -}]
   SOURCE[../../libcrypto]=cms_dh.c
 ENDIF
-IF[{- !$disabled{ed} -}]
-  SOURCE[../../libcrypto]=cms_ecdh.c
+IF[{- !$disabled{ec} -}]
+  SOURCE[../../libcrypto]=cms_ec.c
 ENDIF
