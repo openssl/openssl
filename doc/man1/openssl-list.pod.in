@@ -29,6 +29,7 @@ B<openssl list>
 [B<-asymcipher-algorithms>]
 [B<-public-key-algorithms>]
 [B<-public-key-methods>]
+[B<-providers>]
 {- output_off() if $disabled{"deprecated-3.0"}; ""
 -}[B<-engines>]
 {- output_on() if $disabled{"deprecated-3.0"}; ""
@@ -142,6 +143,14 @@ Display a list of signature algorithms.
 =item B<-asymcipher-algorithms>
 
 Display a list of asymmetric cipher algorithms.
+
+=item B<-providers>
+
+Display a list of all loaded providers with their names, version and status.
+
+In verbose mode, the full version and all provider parameters will additionally
+be displayed.
+
 
 =item B<-engines>
 

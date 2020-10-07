@@ -28,6 +28,12 @@ OpenSSL 3.0
 
    *Jordan Montgomery*
 
+ * Added new option for 'openssl list', '-providers', which will display the
+   list of loaded providers, their names, version and status.  It optionally
+   displays their gettable parameters.
+
+   *Paul Dale*
+
  * Deprecated EVP_PKEY_set_alias_type().  This function was previously
    needed as a workaround to recognise SM2 keys.  With OpenSSL 3.0, this key
    type is internally recognised so the workaround is no longer needed.

@@ -1037,6 +1037,72 @@ static void list_pkey_meth(void)
     list_kems();
 }
 
+DEFINE_STACK_OF(OSSL_PROVIDER)
+static int provider_cmp(const OSSL_PROVIDER * const *a,
+                        const OSSL_PROVIDER * const *b)
+{
+    return strcmp(OSSL_PROVIDER_name(*a), OSSL_PROVIDER_name(*b));
+}
+
+static int collect_providers(OSSL_PROVIDER *provider, void *stack)
+{
+    STACK_OF(OSSL_PROVIDER) *provider_stack = stack;
+
+    sk_OSSL_PROVIDER_push(provider_stack, provider);
+    return 1;
+}
+
+static void list_provider_info(void)
+{
+    STACK_OF(OSSL_PROVIDER) *providers = sk_OSSL_PROVIDER_new(provider_cmp);
+    OSSL_PARAM params[5];
+    char *name, *version, *buildinfo;
+    int status;
+    int i;
+
+    if (providers == NULL) {
+        BIO_printf(bio_err, "ERROR: Memory allocation\n");
+        return;
+    }
+    BIO_printf(bio_out, "Providers:\n");
+    OSSL_PROVIDER_do_all(NULL, &collect_providers, providers);
+    sk_OSSL_PROVIDER_sort(providers);
+    for (i = 0; i < sk_OSSL_PROVIDER_num(providers); i++) {
+        const OSSL_PROVIDER *prov = sk_OSSL_PROVIDER_value(providers, i);
+
+        /* Query the "known" information parameters, the order matches below */
+        params[0] = OSSL_PARAM_construct_utf8_ptr(OSSL_PROV_PARAM_NAME,
+                                                  &name, 0);
+        params[1] = OSSL_PARAM_construct_utf8_ptr(OSSL_PROV_PARAM_VERSION,
+                                                  &version, 0);
+        params[2] = OSSL_PARAM_construct_int(OSSL_PROV_PARAM_STATUS, &status);
+        params[3] = OSSL_PARAM_construct_utf8_ptr(OSSL_PROV_PARAM_BUILDINFO,
+                                                  &buildinfo, 0);
+        params[4] = OSSL_PARAM_construct_end();
+        OSSL_PARAM_set_all_unmodified(params);
+        if (!OSSL_PROVIDER_get_params(prov, params)) {
+            BIO_printf(bio_err, "ERROR: Unable to query provider parameters\n");
+            return;
+        }
+
+        /* Print out the provider information, the params order matches above */
+        BIO_printf(bio_out, "  %s\n", OSSL_PROVIDER_name(prov));
+        if (OSSL_PARAM_modified(params))
+            BIO_printf(bio_out, "    name: %s\n", name);
+        if (OSSL_PARAM_modified(params + 1))
+            BIO_printf(bio_out, "    version: %s\n", version);
+        if (OSSL_PARAM_modified(params + 2))
+            BIO_printf(bio_out, "    status: %sactive\n", status ? "" : "in");
+        if (verbose) {
+            if (OSSL_PARAM_modified(params + 3))
+                BIO_printf(bio_out, "    build info: %s\n", buildinfo);
+            print_param_types("gettable provider parameters",
+                              OSSL_PROVIDER_gettable_params(prov), 4);
+        }
+    }
+    sk_OSSL_PROVIDER_free(providers);
+}
+
 #ifndef OPENSSL_NO_DEPRECATED_3_0
 static void list_engines(void)
 {
@@ -1210,6 +1276,7 @@ typedef enum HELPLIST_CHOICE {
     OPT_KDF_ALGORITHMS, OPT_RANDOM_INSTANCES, OPT_RANDOM_GENERATORS,
     OPT_ENCODERS, OPT_DECODERS, OPT_KEYMANAGERS, OPT_KEYEXCHANGE_ALGORITHMS,
     OPT_KEM_ALGORITHMS, OPT_SIGNATURE_ALGORITHMS, OPT_ASYM_CIPHER_ALGORITHMS,
+    OPT_PROVIDER_INFO,
     OPT_MISSING_HELP, OPT_OBJECTS, OPT_SELECT_NAME,
 #ifndef OPENSSL_NO_DEPRECATED_3_0
     OPT_ENGINES, 
@@ -1258,6 +1325,8 @@ const OPTIONS list_options[] = {
      "List of public key algorithms"},
     {"public-key-methods", OPT_PK_METHOD, '-',
      "List of public key methods"},
+    {"providers", OPT_PROVIDER_INFO, '-',
+     "List of provider information"},
 #ifndef OPENSSL_NO_DEPRECATED_3_0
     {"engines", OPT_ENGINES, '-',
      "List of loaded engines"},
@@ -1298,6 +1367,7 @@ int list_main(int argc, char **argv)
         unsigned int asym_cipher_algorithms:1;
         unsigned int pk_algorithms:1;
         unsigned int pk_method:1;
+        unsigned int provider_info:1;
 #ifndef OPENSSL_NO_DEPRECATED_3_0
         unsigned int engines:1;
 #endif
@@ -1377,6 +1447,9 @@ opthelp:
         case OPT_PK_METHOD:
             todo.pk_method = 1;
             break;
+        case OPT_PROVIDER_INFO:
+            todo.provider_info = 1;
+            break;
 #ifndef OPENSSL_NO_DEPRECATED_3_0
         case OPT_ENGINES:
             todo.engines = 1;
@@ -1448,6 +1521,8 @@ opthelp:
         list_pkey();
     if (todo.pk_method)
         list_pkey_meth();
+    if (todo.provider_info)
+        list_provider_info();
 #ifndef OPENSSL_NO_DEPRECATED_3_0
     if (todo.engines)
         list_engines();
