@@ -311,7 +311,7 @@ int PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store,
         char *ptr;
         long len;
         len = BIO_get_mem_data(indata, &ptr);
-        tmpin = BIO_new_mem_buf(ptr, len);
+        tmpin = (len == 0) ? indata : BIO_new_mem_buf(ptr, len);
         if (tmpin == NULL) {
             PKCS7err(0, ERR_R_MALLOC_FAILURE);
             goto err;
