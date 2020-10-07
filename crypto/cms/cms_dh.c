@@ -7,7 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <assert.h>
 #include <openssl/cms.h>
+#include <openssl/dh.h>
 #include <openssl/err.h>
 #include <openssl/core_names.h>
 #include "cms_local.h"
@@ -32,9 +34,7 @@ static int dh_cms_set_peerkey(EVP_PKEY_CTX *pctx,
         goto err;
 
     pk = EVP_PKEY_CTX_get0_pkey(pctx);
-    if (pk == NULL)
-        goto err;
-    if (!EVP_PKEY_is_a(pk, "DHX"))
+    if (pk == NULL || !EVP_PKEY_is_a(pk, "DHX"))
         goto err;
 
     /* Get public key */
@@ -85,10 +85,8 @@ static int dh_cms_set_shared_info(EVP_PKEY_CTX *pctx, CMS_RecipientInfo *ri)
         goto err;
     }
 
-    if (EVP_PKEY_CTX_set_dh_kdf_type(pctx, EVP_PKEY_DH_KDF_X9_42) <= 0)
-        goto err;
-
-    if (EVP_PKEY_CTX_set_dh_kdf_md(pctx, EVP_sha1()) <= 0)
+    if (EVP_PKEY_CTX_set_dh_kdf_type(pctx, EVP_PKEY_DH_KDF_X9_42) <= 0
+            || EVP_PKEY_CTX_set_dh_kdf_md(pctx, EVP_sha1()) <= 0)
         goto err;
 
     if (alg->parameter->type != V_ASN1_SEQUENCE)
@@ -139,9 +137,7 @@ static int dh_cms_set_shared_info(EVP_PKEY_CTX *pctx, CMS_RecipientInfo *ri)
 
 static int dh_cms_decrypt(CMS_RecipientInfo *ri)
 {
-    EVP_PKEY_CTX *pctx;
-
-    pctx = CMS_RecipientInfo_get0_pkey_ctx(ri);
+    EVP_PKEY_CTX *pctx = CMS_RecipientInfo_get0_pkey_ctx(ri);
 
     if (pctx == NULL)
         return 0;
@@ -194,8 +190,9 @@ static int dh_cms_encrypt(CMS_RecipientInfo *ri)
     if (!CMS_RecipientInfo_kari_get0_orig_id(ri, &talg, &pubkey,
                                              NULL, NULL, NULL))
         goto err;
-    X509_ALGOR_get0(&aoid, NULL, NULL, talg);
+
     /* Is everything uninitialised? */
+    X509_ALGOR_get0(&aoid, NULL, NULL, talg);
     if (aoid == OBJ_nid2obj(NID_undef)) {
         BIGNUM *bn_pub_key = NULL;
         ASN1_INTEGER *pubk;
@@ -207,8 +204,8 @@ static int dh_cms_encrypt(CMS_RecipientInfo *ri)
         BN_free(bn_pub_key);
         if (pubk == NULL)
             goto err;
-        /* Set the key */
 
+        /* Set the key */
         penclen = i2d_ASN1_INTEGER(pubk, &penc);
         ASN1_INTEGER_free(pubk);
         if (penclen <= 0)
@@ -224,9 +221,7 @@ static int dh_cms_encrypt(CMS_RecipientInfo *ri)
 
     /* See if custom parameters set */
     kdf_type = EVP_PKEY_CTX_get_dh_kdf_type(pctx);
-    if (kdf_type <= 0)
-        goto err;
-    if (!EVP_PKEY_CTX_get_dh_kdf_md(pctx, &kdf_md))
+    if (kdf_type <= 0 || !EVP_PKEY_CTX_get_dh_kdf_md(pctx, &kdf_md))
         goto err;
 
     if (kdf_type == EVP_PKEY_DH_KDF_NONE) {
@@ -312,9 +307,12 @@ static int dh_cms_encrypt(CMS_RecipientInfo *ri)
 
 int cms_dh_envelope(CMS_RecipientInfo *ri, int decrypt)
 {
+    assert(decrypt == 0 || decrypt == 1);
+
     if (decrypt == 1)
         return dh_cms_decrypt(ri);
-    else if (decrypt == 0)
+
+    if (decrypt == 0)
         return dh_cms_encrypt(ri);
 
     CMSerr(0, CMS_R_NOT_SUPPORTED_FOR_THIS_KEY_TYPE);

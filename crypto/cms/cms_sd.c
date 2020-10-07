@@ -233,6 +233,15 @@ static int cms_sd_asn1_ctrl(CMS_SignerInfo *si, int cmd)
     EVP_PKEY *pkey = si->pkey;
     int i;
 
+#if !defined(OPENSSL_NO_DSA) || !defined(OPENSSL_NO_EC)
+    if (EVP_PKEY_is_a(pkey, "DSA") || EVP_PKEY_is_a(pkey, "EC"))
+        return cms_ecdsa_dsa_sign(si, cmd);
+    else
+#endif
+    if (EVP_PKEY_is_a(pkey, "RSA") || EVP_PKEY_is_a(pkey, "RSA-PSS"))
+        return cms_rsa_sign(si, cmd);
+
+    /* Something else? We'll give engines etc a chance to handle this */
     if (pkey->ameth == NULL || pkey->ameth->pkey_ctrl == NULL)
         return 1;
     i = pkey->ameth->pkey_ctrl(pkey, ASN1_PKEY_CTRL_CMS_SIGN, cmd, si);

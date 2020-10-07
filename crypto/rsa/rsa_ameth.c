@@ -26,11 +26,6 @@
 #include "crypto/rsa.h"
 #include "rsa_local.h"
 
-#ifndef OPENSSL_NO_CMS
-static int rsa_cms_sign(CMS_SignerInfo *si);
-static int rsa_cms_verify(CMS_SignerInfo *si);
-#endif
-
 static RSA_PSS_PARAMS *rsa_pss_decode(const X509_ALGOR *alg);
 static int rsa_sync_to_pss_params_30(RSA *rsa);
 
@@ -511,13 +506,6 @@ static int rsa_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
             PKCS7_RECIP_INFO_get0_alg(arg2, &alg);
         break;
 #ifndef OPENSSL_NO_CMS
-    case ASN1_PKEY_CTRL_CMS_SIGN:
-        if (arg1 == 0)
-            return rsa_cms_sign(arg2);
-        else if (arg1 == 1)
-            return rsa_cms_verify(arg2);
-        break;
-
     case ASN1_PKEY_CTRL_CMS_RI_TYPE:
         if (pkey_is_pss(pkey))
             return -2;
@@ -560,7 +548,6 @@ static RSA_PSS_PARAMS *rsa_ctx_to_pss(EVP_PKEY_CTX *pkctx)
 {
     const EVP_MD *sigmd, *mgf1md;
     EVP_PKEY *pk = EVP_PKEY_CTX_get0_pkey(pkctx);
-    RSA *rsa = EVP_PKEY_get0_RSA(pk);
     int saltlen;
 
     if (EVP_PKEY_CTX_get_signature_md(pkctx, &sigmd) <= 0)
@@ -572,7 +559,7 @@ static RSA_PSS_PARAMS *rsa_ctx_to_pss(EVP_PKEY_CTX *pkctx)
     if (saltlen == -1) {
         saltlen = EVP_MD_size(sigmd);
     } else if (saltlen == -2 || saltlen == -3) {
-        saltlen = RSA_size(rsa) - EVP_MD_size(sigmd) - 2;
+        saltlen = EVP_PKEY_size(pk) - EVP_MD_size(sigmd) - 2;
         if ((EVP_PKEY_bits(pk) & 0x7) == 1)
             saltlen--;
         if (saltlen < 0)
@@ -610,7 +597,7 @@ RSA_PSS_PARAMS *rsa_pss_params_create(const EVP_MD *sigmd,
     return NULL;
 }
 
-static ASN1_STRING *rsa_ctx_to_pss_string(EVP_PKEY_CTX *pkctx)
+ASN1_STRING *ossl_rsa_ctx_to_pss_string(EVP_PKEY_CTX *pkctx)
 {
     RSA_PSS_PARAMS *pss = rsa_ctx_to_pss(pkctx);
     ASN1_STRING *os;
@@ -629,8 +616,8 @@ static ASN1_STRING *rsa_ctx_to_pss_string(EVP_PKEY_CTX *pkctx)
  * passed to pkctx instead.
  */
 
-static int rsa_pss_to_ctx(EVP_MD_CTX *ctx, EVP_PKEY_CTX *pkctx,
-                          const X509_ALGOR *sigalg, EVP_PKEY *pkey)
+int ossl_rsa_pss_to_ctx(EVP_MD_CTX *ctx, EVP_PKEY_CTX *pkctx,
+                        const X509_ALGOR *sigalg, EVP_PKEY *pkey)
 {
     int rv = -1;
     int saltlen;
@@ -639,14 +626,14 @@ static int rsa_pss_to_ctx(EVP_MD_CTX *ctx, EVP_PKEY_CTX *pkctx,
 
     /* Sanity check: make sure it is PSS */
     if (OBJ_obj2nid(sigalg->algorithm) != EVP_PKEY_RSA_PSS) {
-        RSAerr(RSA_F_RSA_PSS_TO_CTX, RSA_R_UNSUPPORTED_SIGNATURE_TYPE);
+        RSAerr(0, RSA_R_UNSUPPORTED_SIGNATURE_TYPE);
         return -1;
     }
     /* Decode PSS parameters */
     pss = rsa_pss_decode(sigalg);
 
     if (!rsa_pss_get_param(pss, &md, &mgf1md, &saltlen)) {
-        RSAerr(RSA_F_RSA_PSS_TO_CTX, RSA_R_INVALID_PSS_PARAMETERS);
+        RSAerr(0, RSA_R_INVALID_PSS_PARAMETERS);
         goto err;
     }
 
@@ -659,7 +646,7 @@ static int rsa_pss_to_ctx(EVP_MD_CTX *ctx, EVP_PKEY_CTX *pkctx,
         if (EVP_PKEY_CTX_get_signature_md(pkctx, &checkmd) <= 0)
             goto err;
         if (EVP_MD_type(md) != EVP_MD_type(checkmd)) {
-            RSAerr(RSA_F_RSA_PSS_TO_CTX, RSA_R_DIGEST_DOES_NOT_MATCH);
+            RSAerr(0, RSA_R_DIGEST_DOES_NOT_MATCH);
             goto err;
         }
     }
@@ -780,33 +767,6 @@ static int rsa_sync_to_pss_params_30(RSA *rsa)
     return 1;
 }
 
-#ifndef OPENSSL_NO_CMS
-static int rsa_cms_verify(CMS_SignerInfo *si)
-{
-    int nid, nid2;
-    X509_ALGOR *alg;
-    EVP_PKEY_CTX *pkctx = CMS_SignerInfo_get0_pkey_ctx(si);
-
-    CMS_SignerInfo_get0_algs(si, NULL, NULL, NULL, &alg);
-    nid = OBJ_obj2nid(alg->algorithm);
-    if (nid == EVP_PKEY_RSA_PSS)
-        return rsa_pss_to_ctx(NULL, pkctx, alg, NULL);
-    /* Only PSS allowed for PSS keys */
-    if (pkey_ctx_is_pss(pkctx)) {
-        RSAerr(RSA_F_RSA_CMS_VERIFY, RSA_R_ILLEGAL_OR_UNSUPPORTED_PADDING_MODE);
-        return 0;
-    }
-    if (nid == NID_rsaEncryption)
-        return 1;
-    /* Workaround for some implementation that use a signature OID */
-    if (OBJ_find_sigid_algs(nid, NULL, &nid2)) {
-        if (nid2 == NID_rsaEncryption)
-            return 1;
-    }
-    return 0;
-}
-#endif
-
 /*
  * Customised RSA item verification routine. This is called when a signature
  * is encountered requiring special handling. We currently only handle PSS.
@@ -821,40 +781,12 @@ static int rsa_item_verify(EVP_MD_CTX *ctx, const ASN1_ITEM *it,
         RSAerr(RSA_F_RSA_ITEM_VERIFY, RSA_R_UNSUPPORTED_SIGNATURE_TYPE);
         return -1;
     }
-    if (rsa_pss_to_ctx(ctx, NULL, sigalg, pkey) > 0) {
+    if (ossl_rsa_pss_to_ctx(ctx, NULL, sigalg, pkey) > 0) {
         /* Carry on */
         return 2;
     }
     return -1;
 }
-
-#ifndef OPENSSL_NO_CMS
-static int rsa_cms_sign(CMS_SignerInfo *si)
-{
-    int pad_mode = RSA_PKCS1_PADDING;
-    X509_ALGOR *alg;
-    EVP_PKEY_CTX *pkctx = CMS_SignerInfo_get0_pkey_ctx(si);
-    ASN1_STRING *os = NULL;
-
-    CMS_SignerInfo_get0_algs(si, NULL, NULL, NULL, &alg);
-    if (pkctx) {
-        if (EVP_PKEY_CTX_get_rsa_padding(pkctx, &pad_mode) <= 0)
-            return 0;
-    }
-    if (pad_mode == RSA_PKCS1_PADDING) {
-        X509_ALGOR_set0(alg, OBJ_nid2obj(NID_rsaEncryption), V_ASN1_NULL, 0);
-        return 1;
-    }
-    /* We don't support it */
-    if (pad_mode != RSA_PKCS1_PSS_PADDING)
-        return 0;
-    os = rsa_ctx_to_pss_string(pkctx);
-    if (!os)
-        return 0;
-    X509_ALGOR_set0(alg, OBJ_nid2obj(EVP_PKEY_RSA_PSS), V_ASN1_SEQUENCE, os);
-    return 1;
-}
-#endif
 
 static int rsa_item_sign(EVP_MD_CTX *ctx, const ASN1_ITEM *it, const void *asn,
                          X509_ALGOR *alg1, X509_ALGOR *alg2,
@@ -869,7 +801,7 @@ static int rsa_item_sign(EVP_MD_CTX *ctx, const ASN1_ITEM *it, const void *asn,
         return 2;
     if (pad_mode == RSA_PKCS1_PSS_PADDING) {
         ASN1_STRING *os1 = NULL;
-        os1 = rsa_ctx_to_pss_string(pkctx);
+        os1 = ossl_rsa_ctx_to_pss_string(pkctx);
         if (!os1)
             return 0;
         /* Duplicate parameters if we have to */

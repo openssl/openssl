@@ -474,6 +474,8 @@ int ess_check_signing_certs(CMS_SignerInfo *si, STACK_OF(X509) *chain);
 int cms_dh_envelope(CMS_RecipientInfo *ri, int decrypt);
 int cms_ecdh_envelope(CMS_RecipientInfo *ri, int decrypt);
 int cms_rsa_envelope(CMS_RecipientInfo *ri, int decrypt);
+int cms_ecdsa_dsa_sign(CMS_SignerInfo *si, int verify);
+int cms_rsa_sign(CMS_SignerInfo *si, int verify);
 
 DECLARE_ASN1_ITEM(CMS_CertificateChoices)
 DECLARE_ASN1_ITEM(CMS_DigestedData)
