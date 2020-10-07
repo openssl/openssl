@@ -19,15 +19,15 @@
 OSSL_provider_init_fn ossl_null_provider_init;
 
 /* Parameters we provide to the core */
-static const OSSL_ITEM null_param_types[] = {
-    { OSSL_PARAM_UTF8_PTR, OSSL_PROV_PARAM_NAME },
-    { OSSL_PARAM_UTF8_PTR, OSSL_PROV_PARAM_VERSION },
-    { OSSL_PARAM_UTF8_PTR, OSSL_PROV_PARAM_BUILDINFO },
-    { OSSL_PARAM_INTEGER, OSSL_PROV_PARAM_STATUS },
-    { 0, NULL }
+static const OSSL_PARAM null_param_types[] = {
+    OSSL_PARAM_DEFN(OSSL_PROV_PARAM_NAME, OSSL_PARAM_UTF8_PTR, NULL, 0),
+    OSSL_PARAM_DEFN(OSSL_PROV_PARAM_VERSION, OSSL_PARAM_UTF8_PTR, NULL, 0),
+    OSSL_PARAM_DEFN(OSSL_PROV_PARAM_BUILDINFO, OSSL_PARAM_UTF8_PTR, NULL, 0),
+    OSSL_PARAM_DEFN(OSSL_PROV_PARAM_STATUS, OSSL_PARAM_INTEGER, NULL, 0),
+    OSSL_PARAM_END
 };
 
-static const OSSL_ITEM *null_gettable_params(const OSSL_PROVIDER *prov)
+static const OSSL_PARAM *null_gettable_params(const OSSL_PROVIDER *prov)
 {
     return null_param_types;
 }
