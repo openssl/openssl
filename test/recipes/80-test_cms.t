@@ -45,6 +45,7 @@ my $provname = 'default';
 my $datadir = srctop_dir("test", "recipes", "80-test_cms_data");
 my $smdir    = srctop_dir("test", "smime-certs");
 my $smcont   = srctop_file("test", "smcont.txt");
+my $smcont_zero = srctop_file("test", "smcont_zero.txt");
 my ($no_des, $no_dh, $no_dsa, $no_ec, $no_ec2m, $no_rc2, $no_zlib)
     = disabled qw/des dh dsa ec ec2m rc2 zlib/;
 
@@ -167,6 +168,15 @@ my @smime_pkcs7_tests = (
       [ "{cmd2}", @prov, "-verify", "-in", "{output}.cms",
         "-CAfile", catfile($smdir, "smroot.pem"), "-out", "{output}.txt" ],
       \&final_compare
+    ],
+
+    [ "signed zero-length content S/MIME format, RSA key SHA1",
+      [ "{cmd1}", @defaultprov, "-sign", "-in", $smcont_zero, "-md", "sha1",
+        "-certfile", catfile($smdir, "smroot.pem"),
+        "-signer", catfile($smdir, "smrsa1.pem"), "-out", "{output}.cms" ],
+      [ "{cmd2}", @prov, "-verify", "-in", "{output}.cms",
+        "-CAfile", catfile($smdir, "smroot.pem"), "-out", "{output}.txt" ],
+      \&zero_compare
     ],
 
     [ "signed content test streaming S/MIME format, 2 DSA and 2 RSA keys",
@@ -677,6 +687,13 @@ sub final_compare {
 
     diag "Comparing $smcont with $opts{output}.txt";
     return compare_text($smcont, "$opts{output}.txt") == 0;
+}
+
+sub zero_compare {
+    my %opts = @_;
+
+    diag "Checking for zero-length file";
+    return (-e "$opts{output}.txt" && -z "$opts{output}.txt");
 }
 
 subtest "CMS => PKCS#7 compatibility tests\n" => sub {
