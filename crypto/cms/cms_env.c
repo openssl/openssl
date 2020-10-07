@@ -1303,6 +1303,20 @@ err:
  */
 int cms_pkey_get_ri_type(EVP_PKEY *pk)
 {
+    /* Check types that we know about */
+    if (EVP_PKEY_is_a(pk, "DH"))
+        return CMS_RECIPINFO_AGREE;
+    else if (EVP_PKEY_is_a(pk, "DSA"))
+        return CMS_RECIPINFO_NONE;
+    else if (EVP_PKEY_is_a(pk, "EC"))
+        return CMS_RECIPINFO_AGREE;
+    else if (EVP_PKEY_is_a(pk, "RSA"))
+        return CMS_RECIPINFO_TRANS;
+
+    /*
+     * Otherwise this might ben an engine implementation, so see if we can get
+     * the type from the ameth.
+     */
     if (pk->ameth && pk->ameth->pkey_ctrl) {
         int i, r;
         i = pk->ameth->pkey_ctrl(pk, ASN1_PKEY_CTRL_CMS_RI_TYPE, 0, &r);
