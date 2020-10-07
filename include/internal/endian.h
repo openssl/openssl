@@ -10,6 +10,16 @@
 #ifndef OSSL_INTERNAL_ENDIAN_H
 # define OSSL_INTERNAL_ENDIAN_H
 
+/*
+ * IS_LITTLE_ENDIAN and IS_BIG_ENDIAN can be used to detect the endiannes
+ * at compile time. To use it, DECLARE_IS_ENDIAN must be used in the same
+ * function after the variable declaration.
+ *
+ * L_ENDIAN and B_ENDIAN can be used at precompile time. They can be set
+ * in the configarion using the lib_cppflags variable. If neither is
+ * set, it will fall back to code works with either endianness.
+ */
+
 # if defined(__BYTE_ORDER__) && defined(__ORDER_LITTLE_ENDIAN__)
 #  define DECLARE_IS_ENDIAN
 #  define IS_LITTLE_ENDIAN (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)
