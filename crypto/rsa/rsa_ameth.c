@@ -18,7 +18,6 @@
 #include <openssl/asn1t.h>
 #include <openssl/x509.h>
 #include <openssl/bn.h>
-#include <openssl/cms.h>
 #include <openssl/core_names.h>
 #include <openssl/param_build.h>
 #include "crypto/asn1.h"
@@ -505,13 +504,6 @@ static int rsa_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
         if (arg1 == 0)
             PKCS7_RECIP_INFO_get0_alg(arg2, &alg);
         break;
-#ifndef OPENSSL_NO_CMS
-    case ASN1_PKEY_CTRL_CMS_RI_TYPE:
-        if (pkey_is_pss(pkey))
-            return -2;
-        *(int *)arg2 = CMS_RECIPINFO_TRANS;
-        return 1;
-#endif
 
     case ASN1_PKEY_CTRL_DEFAULT_MD_NID:
         if (pkey->pkey.rsa->pss != NULL) {

@@ -17,7 +17,6 @@
 #include <openssl/x509.h>
 #include <openssl/asn1.h>
 #include <openssl/bn.h>
-#include <openssl/cms.h>
 #include <openssl/core_names.h>
 #include <openssl/param_build.h>
 #include "internal/cryptlib.h"
@@ -481,11 +480,6 @@ static int dsa_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
             X509_ALGOR_set0(alg2, OBJ_nid2obj(snid), V_ASN1_UNDEF, 0);
         }
         return 1;
-#ifndef OPENSSL_NO_CMS
-    case ASN1_PKEY_CTRL_CMS_RI_TYPE:
-        *(int *)arg2 = CMS_RECIPINFO_NONE;
-        return 1;
-#endif
 
     case ASN1_PKEY_CTRL_DEFAULT_MD_NID:
         *(int *)arg2 = NID_sha256;

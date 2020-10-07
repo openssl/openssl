@@ -19,7 +19,6 @@
 #include <openssl/bn.h>
 #include <openssl/core_names.h>
 #include <openssl/param_build.h>
-#include <openssl/cms.h>
 #include "internal/ffc.h"
 #include "internal/cryptlib.h"
 #include "crypto/asn1.h"
@@ -449,11 +448,6 @@ static int dh_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 static int dhx_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 {
     switch (op) {
-#ifndef OPENSSL_NO_CMS
-    case ASN1_PKEY_CTRL_CMS_RI_TYPE:
-        *(int *)arg2 = CMS_RECIPINFO_AGREE;
-        return 1;
-#endif
     default:
         return -2;
     }
