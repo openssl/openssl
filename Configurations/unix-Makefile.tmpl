@@ -525,7 +525,7 @@ clean: libclean
 	$(RM) tags TAGS doc-nits
 	$(RM) -r test/test-runs
 	$(RM) openssl.pc libcrypto.pc libssl.pc liboqs.pc
-	-$(RM) `find . -type l \! -name '.*' \! -name 'liboqs.*' -print`
+	-$(RM) `find . -type l \! -name '.*' \! -name 'liboqs.*'  -print`
 	$(RM) $(TARFILE)
 
 distclean: clean
@@ -674,7 +674,6 @@ install_dev: install_runtime_libs
 	@cp libssl.pc "$(DESTDIR)$(libdir)/pkgconfig"
 	@chmod 644 "$(DESTDIR)$(libdir)/pkgconfig/libssl.pc"
 	@$(ECHO) "install openssl.pc -> $(DESTDIR)$(libdir)/pkgconfig/openssl.pc"
-
 	@cp openssl.pc "$(DESTDIR)$(libdir)/pkgconfig"
 	@chmod 644 "$(DESTDIR)$(libdir)/pkgconfig/openssl.pc"
 	@$(ECHO) "install liboqs.pc -> $(DESTDIR)$(libdir)/pkgconfig/liboqs.pc"
@@ -757,8 +756,9 @@ install_runtime: install_programs
 
 install_runtime_libs: build_libs
 	@[ -n "$(INSTALLTOP)" ] || (echo INSTALLTOP should not be empty; exit 1)
+	@ : {- output_off() if windowsdll(); "" -}
 	@$(PERL) $(SRCDIR)/util/mkdir-p.pl "$(DESTDIR)$(libdir)"
-	@ : {- output_off() unless windowsdll(); "" -}
+	@ : {- output_on() if windowsdll(); output_off() unless windowsdll(); "" -}
 	@$(PERL) $(SRCDIR)/util/mkdir-p.pl "$(DESTDIR)$(INSTALLTOP)/bin"
 	@ : {- output_on() unless windowsdll(); "" -}
 	@$(ECHO) "*** Installing runtime libraries"

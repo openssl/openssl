@@ -7,6 +7,33 @@
  https://github.com/openssl/openssl/commits/ and pick the appropriate
  release branch.
 
+ Changes between 1.1.1g and 1.1.1h [22 Sep 2020]
+
+  *) Certificates with explicit curve parameters are now disallowed in
+     verification chains if the X509_V_FLAG_X509_STRICT flag is used.
+     [Tomas Mraz]
+
+  *) The 'MinProtocol' and 'MaxProtocol' configuration commands now silently
+     ignore TLS protocol version bounds when configuring DTLS-based contexts, and
+     conversely, silently ignore DTLS protocol version bounds when configuring
+     TLS-based contexts.  The commands can be repeated to set bounds of both
+     types.  The same applies with the corresponding "min_protocol" and
+     "max_protocol" command-line switches, in case some application uses both TLS
+     and DTLS.
+  
+     SSL_CTX instances that are created for a fixed protocol version (e.g.
+     TLSv1_server_method()) also silently ignore version bounds.  Previously
+     attempts to apply bounds to these protocol versions would result in an
+     error.  Now only the "version-flexible" SSL_CTX instances are subject to
+     limits in configuration files in command-line options.
+     [Viktor Dukhovni]
+
+  *) Handshake now fails if Extended Master Secret extension is dropped
+     on renegotiation.
+     [Tomas Mraz]
+
+  *) The Oracle Developer Studio compiler will start reporting deprecated APIs
+
  Changes between 1.1.1f and 1.1.1g [21 Apr 2020]
 
   *) Fixed segmentation fault in SSL_check_chain()

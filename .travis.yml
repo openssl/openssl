@@ -57,7 +57,7 @@ matrix:
               apt:
                   packages:
                       - clang-6.0
-          env: EXTENDED_TEST="yes" CONFIG_OPTS="no-asm enable-ubsan enable-rc5 enable-md2 enable-ssl3 enable-ssl3-method enable-nextprotoneg no-shared enable-buildtest-c++ -fno-sanitize=alignment -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION -D__NO_STRING_INLINES -Wno-unused-command-line-argument" MATRIX_EVAL="CC=clang-6.0 && CXX=clang++-6.0"
+          env: EXTENDED_TEST="yes" CONFIG_OPTS="no-asm enable-ubsan enable-rc5 enable-md2 enable-ssl3 enable-ssl3-method enable-nextprotoneg no-shared enable-buildtest-c++ -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION -D__NO_STRING_INLINES -Wno-unused-command-line-argument" MATRIX_EVAL="CC=clang-6.0 && CXX=clang++-6.0"
         - os: linux
           arch: s390x
           compiler: gcc
@@ -121,7 +121,7 @@ matrix:
           env: EXTENDED_TEST="yes" CONFIG_OPTS="enable-msan -D__NO_STRING_INLINES -Wno-unused-command-line-argument"
         - os: linux
           compiler: clang
-          env:  EXTENDED_TEST="yes" CONFIG_OPTS="no-asm enable-ubsan enable-rc5 enable-md2 enable-ssl3 enable-ssl3-method enable-nextprotoneg no-shared -fno-sanitize=alignment -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION -D__NO_STRING_INLINES -Wno-unused-command-line-argument"
+          env:  EXTENDED_TEST="yes" CONFIG_OPTS="no-asm enable-ubsan enable-rc5 enable-md2 enable-ssl3 enable-ssl3-method enable-nextprotoneg no-shared -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION -D__NO_STRING_INLINES -Wno-unused-command-line-argument"
         - os: linux
           compiler: clang
           env: EXTENDED_TEST="yes" CONFIG_OPTS="no-asm enable-asan enable-rc5 enable-md2 no-shared -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION -D__NO_STRING_INLINES -Wno-unused-command-line-argument"
@@ -134,7 +134,7 @@ matrix:
                   sources:
                       - ubuntu-toolchain-r-test
           compiler: gcc-5
-          env: UBUNTU_GCC_HACK="yes" EXTENDED_TEST="yes" CONFIG_OPTS="--debug no-asm enable-ubsan enable-rc5 enable-md2 -DPEDANTIC" OPENSSL_TEST_RAND_ORDER=0
+          env: UBUNTU_GCC_HACK="yes" EXTENDED_TEST="yes" CONFIG_OPTS="--debug no-asm enable-asan enable-ubsan enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128" OPENSSL_TEST_RAND_ORDER=0
         - os: linux
           addons:
               apt:

@@ -98,8 +98,11 @@ current system time. B<timestamp> is the number of seconds since
 
 =item B<-check_ss_sig>
 
-Verify the signature on the self-signed root CA. This is disabled by default
-because it doesn't add any security.
+Verify the signature of
+the last certificate in a chain if the certificate is supposedly self-signed.
+This is prohibited and will result in an error if it is a non-conforming CA
+certificate with key usage restrictions not including the keyCertSign bit.
+This verification is disabled by default because it doesn't add any security.
 
 =item B<-CRLfile file>
 
@@ -333,7 +336,7 @@ in PEM format.
 =head1 VERIFY OPERATION
 
 The B<verify> program uses the same functions as the internal SSL and S/MIME
-verification, therefore this description applies to these verify operations
+verification, therefore, this description applies to these verify operations
 too.
 
 There is one crucial difference between the verify operations performed
@@ -769,7 +772,7 @@ is silently ignored.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
