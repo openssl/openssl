@@ -284,6 +284,7 @@ static int get_cert_by_subject_ex(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
         }
         for (;;) {
             char c = '/';
+
 #ifdef OPENSSL_SYS_VMS
             c = ent->dir[strlen(ent->dir) - 1];
             if (c != ':' && c != '>' && c != ']') {
@@ -297,7 +298,7 @@ static int get_cert_by_subject_ex(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
             } else {
                 c = '\0';
             }
-#endif
+
             if (c == '\0') {
                 /*
                  * This is special.  When c == '\0', no directory separator
@@ -305,7 +306,9 @@ static int get_cert_by_subject_ex(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
                  */
                 BIO_snprintf(b->data, b->max,
                              "%s%08lx.%s%d", ent->dir, h, postfix, k);
-            } else {
+            } else
+#endif
+            {
                 BIO_snprintf(b->data, b->max,
                              "%s%c%08lx.%s%d", ent->dir, c, h, postfix, k);
             }
