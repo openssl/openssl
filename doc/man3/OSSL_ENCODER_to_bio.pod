@@ -39,18 +39,16 @@ after the encoded bytes, and I<*pdata_len> will be assigned the number of
 remaining bytes.
 
 OSSL_ENCODER_to_bio() runs the encoding process for the context I<ctx>, with
-the output going to the B<BIO> I<out>.  The application is required to set
-up the B<BIO> properly, for example to have it in text or binary mode if
-that's appropriate.
-
-=for comment Know your encoder!
+the output going to the B<BIO> I<out>.
 
 OSSL_ENCODER_to_fp() does the same thing as OSSL_ENCODER_to_bio(),
 except that the output is going to the B<FILE> I<fp>.
 
+=for comment Know your encoder!
+
 For OSSL_ENCODER_to_bio() and OSSL_ENCODER_to_fp(), the application is
 required to set up the B<BIO> properly, for example to have it in text
-or binary mode as is appropriate for the output type.
+or binary mode as is appropriate for the encoder output type.
 
 =head1 RETURN VALUES
 
