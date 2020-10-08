@@ -289,10 +289,10 @@ static int run_cert(X509 *crt, const char *nameincert,
     for (; *pname != NULL; ++pname) {
         int samename = strcasecmp(nameincert, *pname) == 0;
         size_t namelen = strlen(*pname);
-        char *name = OPENSSL_malloc(namelen);
+        char *name = OPENSSL_malloc(namelen + 1);
         int match, ret;
 
-        memcpy(name, *pname, namelen);
+        memcpy(name, *pname, namelen + 1);
 
         match = -1;
         if (!TEST_int_ge(ret = X509_check_host(crt, name, namelen, 0, NULL),
