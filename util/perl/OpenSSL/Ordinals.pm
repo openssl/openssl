@@ -179,7 +179,7 @@ sub renumber {
     my $self = shift;
 
     my $max_assigned = 0;
-    foreach ($self->items(by => by_number())) {
+    foreach ($self->items(sort => by_number())) {
         $_->number($_->intnum()) if $_->number() =~ m|^\?|;
         if ($max_assigned < $_->number()) {
             $max_assigned = $_->number();
@@ -190,34 +190,49 @@ sub renumber {
 
 =item B<< $ordinals->rewrite >>
 
+=item B<< $ordinals->rewrite >>, I<%options>
+
 If an ordinals file has been loaded, it gets rewritten with the data from
 the current work database.
+
+If there are more arguments, they are used as I<%options> with the
+same semantics as for B<< $ordinals->items >> described below, apart
+from B<sort>, which is forbidden here.
 
 =cut
 
 sub rewrite {
     my $self = shift;
+    my %opts = @_;
 
-    $self->write($self->{filename});
+    $self->write($self->{filename}, %opts);
 }
 
 =item B<< $ordinals->write FILENAME >>
 
+=item B<< $ordinals->write FILENAME >>, I<%options>
+
 Writes the current work database data to the ordinals file FILENAME.
 This also validates the data, see B<< $ordinals->validate >> below.
+
+If there are more arguments, they are used as I<%options> with the
+same semantics as for B<< $ordinals->items >> described next, apart
+from B<sort>, which is forbidden here.
 
 =cut
 
 sub write {
     my $self = shift;
     my $filename = shift;
+    my %opts = @_;
 
     croak "Undefined filename" unless defined($filename);
+    croak "The 'sort' option is not allowed" if $opts{sort};
 
     $self->validate();
 
     open F, '>', $filename or croak "Unable to open $filename";
-    foreach ($self->items(by => by_number())) {
+    foreach ($self->items(%opts, sort => by_number())) {
         print F $_->to_string(),"\n";
     }
     close F;
