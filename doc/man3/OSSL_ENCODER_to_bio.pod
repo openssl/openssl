@@ -47,8 +47,8 @@ except that the output is going to the B<FILE> I<fp>.
 =for comment Know your encoder!
 
 For OSSL_ENCODER_to_bio() and OSSL_ENCODER_to_fp(), the application is
-required to set up the B<BIO> properly, for example to have it in text
-or binary mode as is appropriate for the encoder output type.
+required to set up the B<BIO> or B<FILE> properly, for example to have
+it in text or binary mode as is appropriate for the encoder output type.
 
 =head1 RETURN VALUES
 

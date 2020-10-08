@@ -67,6 +67,11 @@ int OSSL_ENCODER_to_data(OSSL_ENCODER_CTX *ctx, unsigned char **pdata,
 
         if (pdata != NULL && *pdata != NULL) {
             if (*pdata_len < buf->length)
+                /*
+                 * It's tempting to do |*pdata_len = (size_t)buf->length|
+                 * However, it's believed to be confusing more than helpful,
+                 * so we don't.
+                 */
                 ret = 0;
             else
                 *pdata_len -= buf->length;
