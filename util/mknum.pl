@@ -118,7 +118,15 @@ if ($checkexist) {
         }
     }
 } else {
-    $ordinals->rewrite();
+    my $dropped = 0;
+    my $unassigned;
+    my $filter = sub {
+        my $item = shift;
+        my $result = $item->number() ne '?' || $item->exists();
+        $dropped++ unless $result;
+        return $result;
+    };
+    $ordinals->rewrite(filter => $filter);
     my %stats = $ordinals->stats();
     print STDERR
         "${ordinals_file}: $stats{modified} old symbols have updated info\n"
@@ -128,9 +136,13 @@ if ($checkexist) {
     } else {
         print STDERR "${ordinals_file}: No new symbols added\n";
     }
-    if ($stats{unassigned}) {
-        my $symbol = $stats{unassigned} == 1 ? "symbol" : "symbols";
-        my $is = $stats{unassigned} == 1 ? "is" : "are";
-        print STDERR "${ordinals_file}: $stats{unassigned} $symbol $is without ordinal number\n";
+    if ($dropped) {
+        print STDERR "${ordinals_file}: Dropped $dropped new symbols\n";
+    }
+    $unassigned = $stats{unassigned} - $dropped;
+    if ($unassigned) {
+        my $symbol = $unassigned == 1 ? "symbol" : "symbols";
+        my $is = $unassigned == 1 ? "is" : "are";
+        print STDERR "${ordinals_file}: $unassigned $symbol $is without ordinal number\n";
     }
 }
