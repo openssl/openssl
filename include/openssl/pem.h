@@ -199,12 +199,12 @@ extern "C" {
 # if defined(OPENSSL_NO_STDIO)
 
 #  define DECLARE_PEM_read_fp_attr(attr, name, type) /**/
-#  define DECLARE_PEM_write_fp_attr(name, type) /**/
-#  define DECLARE_PEM_write_fp_attr(name, type) /**/
+#  define DECLARE_PEM_write_fp_attr(attr, name, type) /**/
+#  define DECLARE_PEM_write_fp_attr(attr, name, type) /**/
 #  ifndef OPENSSL_NO_DEPRECATED_3_0
-#   define DECLARE_PEM_write_fp_const_attr(name, type) /**/
+#   define DECLARE_PEM_write_fp_const_attr(attr, name, type) /**/
 #  endif
-#  define DECLARE_PEM_write_cb_fp_attr(name, type) /**/
+#  define DECLARE_PEM_write_cb_fp_attr(attr, name, type) /**/
 
 # else
 
