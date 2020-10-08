@@ -4430,17 +4430,6 @@ OPENSSL_version_build_metadata          ?	3_0_0	EXIST::FUNCTION:
 EVP_aes_128_siv                         ?	3_0_0	EXIST::FUNCTION:SIV
 EVP_aes_192_siv                         ?	3_0_0	EXIST::FUNCTION:SIV
 EVP_aes_256_siv                         ?	3_0_0	EXIST::FUNCTION:SIV
-CRYPTO_siv128_new                       ?	3_0_0	NOEXIST::FUNCTION:SIV
-CRYPTO_siv128_init                      ?	3_0_0	NOEXIST::FUNCTION:SIV
-CRYPTO_siv128_copy_ctx                  ?	3_0_0	NOEXIST::FUNCTION:SIV
-CRYPTO_siv128_aad                       ?	3_0_0	NOEXIST::FUNCTION:SIV
-CRYPTO_siv128_encrypt                   ?	3_0_0	NOEXIST::FUNCTION:SIV
-CRYPTO_siv128_decrypt                   ?	3_0_0	NOEXIST::FUNCTION:SIV
-CRYPTO_siv128_finish                    ?	3_0_0	NOEXIST::FUNCTION:SIV
-CRYPTO_siv128_set_tag                   ?	3_0_0	NOEXIST::FUNCTION:SIV
-CRYPTO_siv128_get_tag                   ?	3_0_0	NOEXIST::FUNCTION:SIV
-CRYPTO_siv128_cleanup                   ?	3_0_0	NOEXIST::FUNCTION:SIV
-CRYPTO_siv128_speed                     ?	3_0_0	NOEXIST::FUNCTION:SIV
 OPENSSL_INIT_set_config_filename        ?	3_0_0	EXIST::FUNCTION:STDIO
 OPENSSL_INIT_set_config_file_flags      ?	3_0_0	EXIST::FUNCTION:STDIO
 ASYNC_WAIT_CTX_get_callback             ?	3_0_0	EXIST::FUNCTION:
@@ -4626,9 +4615,6 @@ OSSL_CMP_MSG_free                       ?	3_0_0	EXIST::FUNCTION:CMP
 ERR_load_CMP_strings                    ?	3_0_0	EXIST::FUNCTION:CMP
 EVP_MD_CTX_set_params                   ?	3_0_0	EXIST::FUNCTION:
 EVP_MD_CTX_get_params                   ?	3_0_0	EXIST::FUNCTION:
-OPENSSL_CTX_get0_primary_drbg           ?	3_0_0	NOEXIST::FUNCTION:
-OPENSSL_CTX_get0_public_drbg            ?	3_0_0	NOEXIST::FUNCTION:
-OPENSSL_CTX_get0_private_drbg           ?	3_0_0	NOEXIST::FUNCTION:
 BN_CTX_new_ex                           ?	3_0_0	EXIST::FUNCTION:
 BN_CTX_secure_new_ex                    ?	3_0_0	EXIST::FUNCTION:
 OPENSSL_thread_stop_ex                  ?	3_0_0	EXIST::FUNCTION:
@@ -4666,9 +4652,6 @@ ERR_vset_error                          ?	3_0_0	EXIST::FUNCTION:
 X509_get0_authority_issuer              ?	3_0_0	EXIST::FUNCTION:
 X509_get0_authority_serial              ?	3_0_0	EXIST::FUNCTION:
 X509_self_signed                        ?	3_0_0	EXIST::FUNCTION:
-EC_GROUP_new_by_curve_name_ex           ?	3_0_0	NOEXIST::FUNCTION:EC
-EC_KEY_new_ex                           ?	3_0_0	NOEXIST::FUNCTION:EC
-EC_KEY_new_by_curve_name_ex             ?	3_0_0	NOEXIST::FUNCTION:EC
 OPENSSL_hexstr2buf_ex                   ?	3_0_0	EXIST::FUNCTION:
 OPENSSL_buf2hexstr_ex                   ?	3_0_0	EXIST::FUNCTION:
 OSSL_PARAM_allocate_from_text           ?	3_0_0	EXIST::FUNCTION:
@@ -4792,9 +4775,7 @@ OSSL_CMP_print_to_bio                   ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_print_errors_cb                ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CRMF_CERTID_get0_issuer            ?	3_0_0	EXIST::FUNCTION:CRMF
 OSSL_CRMF_CERTID_get0_serialNumber      ?	3_0_0	EXIST::FUNCTION:CRMF
-EVP_DigestSignInit_ex                   ?	3_0_0	NOEXIST::FUNCTION:
 EVP_DigestSignUpdate                    ?	3_0_0	EXIST::FUNCTION:
-EVP_DigestVerifyInit_ex                 ?	3_0_0	NOEXIST::FUNCTION:
 EVP_DigestVerifyUpdate                  ?	3_0_0	EXIST::FUNCTION:
 BN_check_prime                          ?	3_0_0	EXIST::FUNCTION:
 EVP_KEYMGMT_is_a                        ?	3_0_0	EXIST::FUNCTION:
@@ -5019,7 +5000,6 @@ SRP_Calc_B_ex                           ?	3_0_0	EXIST::FUNCTION:SRP
 SRP_Calc_u_ex                           ?	3_0_0	EXIST::FUNCTION:SRP
 SRP_Calc_x_ex                           ?	3_0_0	EXIST::FUNCTION:SRP
 SRP_Calc_client_key_ex                  ?	3_0_0	EXIST::FUNCTION:SRP
-X509v3_cache_extensions                 ?	3_0_0	NOEXIST::FUNCTION:
 EVP_PKEY_gettable_params                ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_get_int_param                  ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_get_size_t_param               ?	3_0_0	EXIST::FUNCTION:
@@ -5064,8 +5044,6 @@ EVP_PKEY_CTX_set_dhx_rfc5114            ?	3_0_0	EXIST::FUNCTION:DH
 X509_VERIFY_PARAM_get0_host             ?	3_0_0	EXIST::FUNCTION:
 X509_VERIFY_PARAM_get0_email            ?	3_0_0	EXIST::FUNCTION:
 X509_VERIFY_PARAM_get1_ip_asc           ?	3_0_0	EXIST::FUNCTION:
-X509_verify_ex                          ?	3_0_0	NOEXIST::FUNCTION:
-X509_REQ_verify_ex                      ?	3_0_0	NOEXIST::FUNCTION:
 X509_ALGOR_copy                         ?	3_0_0	EXIST::FUNCTION:
 X509_REQ_set0_signature                 ?	3_0_0	EXIST::FUNCTION:
 X509_REQ_set1_signature_algo            ?	3_0_0	EXIST::FUNCTION:
@@ -5094,7 +5072,6 @@ EVP_RAND_uninstantiate                  ?	3_0_0	EXIST::FUNCTION:
 EVP_RAND_generate                       ?	3_0_0	EXIST::FUNCTION:
 EVP_RAND_reseed                         ?	3_0_0	EXIST::FUNCTION:
 EVP_RAND_nonce                          ?	3_0_0	EXIST::FUNCTION:
-EVP_RAND_set_callbacks                  ?	3_0_0	NOEXIST::FUNCTION:
 EVP_RAND_enable_locking                 ?	3_0_0	EXIST::FUNCTION:
 EVP_RAND_verify_zeroization             ?	3_0_0	EXIST::FUNCTION:
 EVP_RAND_strength                       ?	3_0_0	EXIST::FUNCTION:
