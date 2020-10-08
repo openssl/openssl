@@ -40,13 +40,26 @@ int i2d_PrivateKey(const EVP_PKEY *a, unsigned char **pp)
         int ret = -1;
         OSSL_ENCODER_CTX *ctx;
 
-        if ((ctx = OSSL_ENCODER_CTX_new_by_EVP_PKEY(a, "DER", selection,
-                                                    NULL, NULL)) != NULL
-            && OSSL_ENCODER_CTX_get_num_encoders(ctx) != 0
+        /*
+         * The structure "rawkey" is expected to implements the same as
+         * a->ameth->old_priv_encode(), so we look for it first, and if not
+         * available, we use the "pkcs8" structure.  That implements the
+         * same encoding as the legacy code above.
+         */
+        ctx = OSSL_ENCODER_CTX_new_by_EVP_PKEY(a, "DER", selection,
+                                               NULL, "structure=rawkey");
+        if (OSSL_ENCODER_CTX_get_num_encoders(ctx) == 0) {
+            OSSL_ENCODER_CTX_free(ctx);
+            ctx = OSSL_ENCODER_CTX_new_by_EVP_PKEY(a, "DER", selection,
+                                                   NULL, "structure=pkcs8");
+        }
+
+        if (OSSL_ENCODER_CTX_get_num_encoders(ctx) != 0
             && OSSL_ENCODER_to_data(ctx, pp, &length))
             ret = (int)length;
         OSSL_ENCODER_CTX_free(ctx);
-        return ret;
+        if (ret != -1)
+            return ret;
     }
     ASN1err(ASN1_F_I2D_PRIVATEKEY, ASN1_R_UNSUPPORTED_PUBLIC_KEY_TYPE);
     return -1;

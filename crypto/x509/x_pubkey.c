@@ -103,11 +103,12 @@ int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
         OPENSSL_CTX *libctx = ossl_provider_library_context(pkprov);
         unsigned char *der = NULL;
         size_t derlen = 0;
+        const char *propq = "structure=SubjectPublicKeyInfo";
         int selection = (OSSL_KEYMGMT_SELECT_PUBLIC_KEY
                          | OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS);
         OSSL_ENCODER_CTX *ectx =
             OSSL_ENCODER_CTX_new_by_EVP_PKEY(pkey, "DER", selection,
-                                             libctx, NULL);
+                                             libctx, propq);
 
         if (OSSL_ENCODER_to_data(ectx, &der, &derlen)) {
             const unsigned char *pder = der;
