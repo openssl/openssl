@@ -63,24 +63,30 @@ int OSSL_ENCODER_to_data(OSSL_ENCODER_CTX *ctx, unsigned char **pdata,
 
     if (OSSL_ENCODER_to_bio(ctx, out)
         && BIO_get_mem_ptr(out, &buf) > 0) {
+        ret = 1; /* Hope for the best. A too small buffer will clear this */
 
-        if (pdata != NULL && *pdata != NULL)
-            *pdata_len -= buf->length;
-        else
+        if (pdata != NULL && *pdata != NULL) {
+            if (*pdata_len < buf->length)
+                ret = 0;
+            else
+                *pdata_len -= buf->length;
+        } else {
+            /* The buffer with the right size is already allocated for us */
             *pdata_len = (size_t)buf->length;
-
-        if (pdata != NULL) {
-            if (*pdata != NULL) {
-                memcpy(*pdata, buf->data, buf->length);
-                *pdata += buf->length;
-            } else {
-                /* In this case, we steal the data from BIO_s_mem() */
-                *pdata = (unsigned char *)buf->data;
-                buf->data = NULL;
-            }
         }
 
-        ret = 1;
+        if (ret) {
+            if (pdata != NULL) {
+                if (*pdata != NULL) {
+                    memcpy(*pdata, buf->data, buf->length);
+                    *pdata += buf->length;
+                } else {
+                    /* In this case, we steal the data from BIO_s_mem() */
+                    *pdata = (unsigned char *)buf->data;
+                    buf->data = NULL;
+                }
+            }
+        }
     }
     BIO_free(out);
     return ret;

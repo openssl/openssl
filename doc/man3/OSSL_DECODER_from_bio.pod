@@ -14,7 +14,7 @@ OSSL_DECODER_from_fp
  int OSSL_DECODER_from_bio(OSSL_DECODER_CTX *ctx, BIO *in);
  int OSSL_DECODER_from_fp(OSSL_DECODER_CTX *ctx, FILE *fp);
  int OSSL_DECODER_from_data(OSSL_DECODER_CTX *ctx, const unsigned char **pdata,
-                            size_t data_len);
+                            size_t *pdata_len);
 
 Feature availability macros:
 
