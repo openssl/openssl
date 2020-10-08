@@ -1470,7 +1470,7 @@ described here.  Examine the Makefiles themselves for the full list.
 
     install_html_docs
                    Only install the OpenSSL HTML documentation.
-                   
+
     install_fips
                    Install the FIPS provider module configuration file.
 
