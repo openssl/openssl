@@ -8,6 +8,7 @@
  */
 
 #include <stdio.h>
+#include <limits.h>
 #include "internal/cryptlib.h"
 #include <openssl/evp.h>
 #include <openssl/encoder.h>
@@ -31,12 +32,16 @@ int i2d_PrivateKey(const EVP_PKEY *a, unsigned char **pp)
         return ret;
     }
     if (evp_pkey_is_provided(a)) {
+        /*
+         * This is horribly much, but then again, |*pp| is unbounded, and
+         * we really can't know better.
+         */
+        size_t length = INT_MAX;
         /* The private key includes everything */
-        OSSL_ENCODER_CTX *ctx;
         int selection =
             OSSL_KEYMGMT_SELECT_ALL_PARAMETERS | OSSL_KEYMGMT_SELECT_KEYPAIR;
-        size_t length;
         int ret = -1;
+        OSSL_ENCODER_CTX *ctx;
 
         if ((ctx = OSSL_ENCODER_CTX_new_by_EVP_PKEY(a, "DER", selection,
                                                     NULL, NULL)) != NULL
