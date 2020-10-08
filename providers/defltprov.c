@@ -433,15 +433,11 @@ static const OSSL_ALGORITHM deflt_keymgmt[] = {
 };
 
 static const OSSL_ALGORITHM deflt_encoder[] = {
-#define ENCODER(name, _fips, _output, func_table)                           \
-    { name,                                                                 \
-      "provider=default,fips=" _fips ",output=" _output,                    \
-      (func_table) }
-
+#define ENCODER_PROVIDER "default"
 #include "encoders.inc"
     { NULL, NULL, NULL }
 };
-#undef ENCODER
+#undef ENCODER_PROVIDER
 
 static const OSSL_ALGORITHM deflt_decoder[] = {
 #define DECODER(name, _fips, _input, func_table)                            \
