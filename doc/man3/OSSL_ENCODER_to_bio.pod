@@ -41,8 +41,8 @@ remaining bytes.
 OSSL_ENCODER_to_bio() runs the encoding process for the context I<ctx>, with
 the output going to the B<BIO> I<out>.
 
-OSSL_ENCODER_to_fp() does the same thing as OSSL_ENCODER_to_bio(),
-except that the output is going to the B<FILE> I<fp>.
+OSSL_ENCODER_to_fp() does the same thing as OSSL_ENCODER_to_bio(), except
+that the output is going to the B<FILE> I<fp>.
 
 =for comment Know your encoder!
 
@@ -52,8 +52,8 @@ it in text or binary mode as is appropriate for the encoder output type.
 
 =head1 RETURN VALUES
 
-OSSL_ENCODER_to_bio() and OSSL_ENCODER_to_fp() return 1 on success, or 0 on
-failure.
+OSSL_ENCODER_to_bio(), OSSL_ENCODER_to_fp() and OSSL_ENCODER_to_data()
+return 1 on success, or 0 on failure.
 
 =begin comment TODO(3.0) Add examples!
 
