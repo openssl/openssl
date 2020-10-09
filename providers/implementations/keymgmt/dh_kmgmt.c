@@ -310,7 +310,7 @@ static ossl_inline int dh_get_params(void *key, OSSL_PARAM params[])
     if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_MAX_SIZE)) != NULL
         && !OSSL_PARAM_set_int(p, DH_size(dh)))
         return 0;
-    if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_TLS_ENCODED_PT)) != NULL) {
+    if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY)) != NULL) {
         if (p->data_type != OSSL_PARAM_OCTET_STRING)
             return 0;
         p->return_size = dh_key2buf(dh, (unsigned char **)&p->data,
@@ -327,7 +327,7 @@ static const OSSL_PARAM dh_params[] = {
     OSSL_PARAM_int(OSSL_PKEY_PARAM_BITS, NULL),
     OSSL_PARAM_int(OSSL_PKEY_PARAM_SECURITY_BITS, NULL),
     OSSL_PARAM_int(OSSL_PKEY_PARAM_MAX_SIZE, NULL),
-    OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_TLS_ENCODED_PT, NULL, 0),
+    OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY, NULL, 0),
     DH_IMEXPORTABLE_PARAMETERS,
     DH_IMEXPORTABLE_PUBLIC_KEY,
     DH_IMEXPORTABLE_PRIVATE_KEY,
@@ -340,7 +340,7 @@ static const OSSL_PARAM *dh_gettable_params(void *provctx)
 }
 
 static const OSSL_PARAM dh_known_settable_params[] = {
-    OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_TLS_ENCODED_PT, NULL, 0),
+    OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY, NULL, 0),
     OSSL_PARAM_END
 };
 
@@ -354,7 +354,7 @@ static int dh_set_params(void *key, const OSSL_PARAM params[])
     DH *dh = key;
     const OSSL_PARAM *p;
 
-    p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_TLS_ENCODED_PT);
+    p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY);
     if (p != NULL
             && (p->data_type != OSSL_PARAM_OCTET_STRING
                 || !dh_buf2key(dh, p->data, p->data_size)))

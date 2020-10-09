@@ -713,9 +713,9 @@ int tls_parse_ctos_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
 
         s->s3.group_id = group_id;
 
-        if (!EVP_PKEY_set1_tls_encodedpoint(s->s3.peer_tmp,
+        if (EVP_PKEY_set1_encoded_public_key(s->s3.peer_tmp,
                 PACKET_data(&encoded_pt),
-                PACKET_remaining(&encoded_pt))) {
+                PACKET_remaining(&encoded_pt)) <= 0) {
             SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
                      SSL_F_TLS_PARSE_CTOS_KEY_SHARE, SSL_R_BAD_ECPOINT);
             return 0;
@@ -1751,7 +1751,7 @@ EXT_RETURN tls_construct_stoc_key_share(SSL *s, WPACKET *pkt,
         }
 
         /* Generate encoding of server key */
-        encoded_pt_len = EVP_PKEY_get1_tls_encodedpoint(skey, &encodedPoint);
+        encoded_pt_len = EVP_PKEY_get1_encoded_public_key(skey, &encodedPoint);
         if (encoded_pt_len == 0) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                      SSL_F_TLS_CONSTRUCT_STOC_KEY_SHARE,

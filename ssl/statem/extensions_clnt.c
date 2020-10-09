@@ -647,8 +647,8 @@ static int add_key_share(SSL *s, WPACKET *pkt, unsigned int curve_id)
     }
 
     /* Encode the public key. */
-    encodedlen = EVP_PKEY_get1_tls_encodedpoint(key_share_key,
-                                                &encoded_point);
+    encodedlen = EVP_PKEY_get1_encoded_public_key(key_share_key,
+                                                  &encoded_point);
     if (encodedlen == 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_ADD_KEY_SHARE, ERR_R_EC_LIB);
         goto err;
@@ -1916,8 +1916,8 @@ int tls_parse_stoc_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
             return 0;
         }
 
-        if (!EVP_PKEY_set1_tls_encodedpoint(skey, PACKET_data(&encoded_pt),
-                    PACKET_remaining(&encoded_pt))) {
+        if (EVP_PKEY_set1_encoded_public_key(skey, PACKET_data(&encoded_pt),
+                                             PACKET_remaining(&encoded_pt)) <= 0) {
             SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_F_TLS_PARSE_STOC_KEY_SHARE,
                     SSL_R_BAD_ECPOINT);
             EVP_PKEY_free(skey);

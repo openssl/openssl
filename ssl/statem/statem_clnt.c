@@ -2235,9 +2235,9 @@ static int tls_process_ske_ecdhe(SSL *s, PACKET *pkt, EVP_PKEY **pkey)
         return 0;
     }
 
-    if (!EVP_PKEY_set1_tls_encodedpoint(s->s3.peer_tmp,
-                                        PACKET_data(&encoded_pt),
-                                        PACKET_remaining(&encoded_pt))) {
+    if (EVP_PKEY_set1_encoded_public_key(s->s3.peer_tmp,
+                                         PACKET_data(&encoded_pt),
+                                         PACKET_remaining(&encoded_pt)) <= 0) {
         SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_F_TLS_PROCESS_SKE_ECDHE,
                  SSL_R_BAD_ECPOINT);
         return 0;
@@ -3147,7 +3147,7 @@ static int tls_construct_cke_ecdhe(SSL *s, WPACKET *pkt)
     }
 
     /* Generate encoding of client key */
-    encoded_pt_len = EVP_PKEY_get1_tls_encodedpoint(ckey, &encodedPoint);
+    encoded_pt_len = EVP_PKEY_get1_encoded_public_key(ckey, &encodedPoint);
 
     if (encoded_pt_len == 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_CKE_ECDHE,

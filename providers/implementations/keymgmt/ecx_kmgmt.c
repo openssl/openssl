@@ -265,7 +265,7 @@ static int ecx_get_params(void *key, OSSL_PARAM params[], int bits, int secbits,
     if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_MAX_SIZE)) != NULL
         && !OSSL_PARAM_set_int(p, size))
         return 0;
-    if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_TLS_ENCODED_PT)) != NULL
+    if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY)) != NULL
             && (ecx->type == ECX_KEY_TYPE_X25519
                 || ecx->type == ECX_KEY_TYPE_X448)) {
         if (!OSSL_PARAM_set_octet_string(p, ecx->pubkey, ecx->keylen))
@@ -317,7 +317,7 @@ static const OSSL_PARAM ecx_gettable_params[] = {
     OSSL_PARAM_int(OSSL_PKEY_PARAM_SECURITY_BITS, NULL),
     OSSL_PARAM_int(OSSL_PKEY_PARAM_MAX_SIZE, NULL),
     OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_MANDATORY_DIGEST, NULL, 0),
-    OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_TLS_ENCODED_PT, NULL, 0),
+    OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY, NULL, 0),
     ECX_KEY_TYPES(),
     OSSL_PARAM_END
 };
@@ -369,7 +369,7 @@ static int ecx_set_params(void *key, const OSSL_PARAM params[])
     ECX_KEY *ecxkey = key;
     const OSSL_PARAM *p;
 
-    p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_TLS_ENCODED_PT);
+    p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY);
     if (p != NULL) {
         void *buf = ecxkey->pubkey;
 
@@ -412,7 +412,7 @@ static int ed448_set_params(void *key, const OSSL_PARAM params[])
 }
 
 static const OSSL_PARAM ecx_settable_params[] = {
-    OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_TLS_ENCODED_PT, NULL, 0),
+    OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY, NULL, 0),
     OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_PROPERTIES, NULL, 0),
     OSSL_PARAM_END
 };

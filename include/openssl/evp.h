@@ -1280,9 +1280,24 @@ int EVP_PKEY_get_default_digest_name(EVP_PKEY *pkey,
                                      char *mdname, size_t mdname_sz);
 int EVP_PKEY_supports_digest_nid(EVP_PKEY *pkey, int nid);
 
-int EVP_PKEY_set1_tls_encodedpoint(EVP_PKEY *pkey,
-                                   const unsigned char *pt, size_t ptlen);
-size_t EVP_PKEY_get1_tls_encodedpoint(EVP_PKEY *pkey, unsigned char **ppt);
+/*
+ * For backwards compatibility. Use EVP_PKEY_set1_encoded_public_key in
+ * preference
+ */
+#define EVP_PKEY_set1_tls_encodedpoint(pkey, pt, ptlen) \
+        EVP_PKEY_set1_encoded_public_key((pkey), (pt), (ptlen))
+
+int EVP_PKEY_set1_encoded_public_key(EVP_PKEY *pkey,
+                                     const unsigned char *pub, size_t publen);
+
+/*
+ * For backwards compatibility. Use EVP_PKEY_get1_encoded_public_key in
+ * preference
+ */
+#define EVP_PKEY_get1_tls_encodedpoint(pkey, ppt) \
+        EVP_PKEY_get1_encoded_public_key((pkey), (ppt))
+
+size_t EVP_PKEY_get1_encoded_public_key(EVP_PKEY *pkey, unsigned char **ppub);
 
 int EVP_CIPHER_type(const EVP_CIPHER *ctx);
 

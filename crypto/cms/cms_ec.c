@@ -112,8 +112,7 @@ static int ecdh_cms_set_peerkey(EVP_PKEY_CTX *pctx,
     if (p == NULL || plen == 0)
         goto err;
 
-    /* TODO(3.0): Terrible name. We need a non-tls specific name */
-    if (!EVP_PKEY_set1_tls_encodedpoint(pkpeer, p, plen))
+    if (!EVP_PKEY_set1_encoded_public_key(pkpeer, p, plen))
         goto err;
 
     if (EVP_PKEY_derive_set_peer(pctx, pkpeer) > 0)
@@ -279,8 +278,7 @@ static int ecdh_cms_encrypt(CMS_RecipientInfo *ri)
     if (aoid == OBJ_nid2obj(NID_undef)) {
         /* Set the key */
 
-        /* TODO(3.0): Terrible name. Needs a non TLS specific name */
-        penclen = EVP_PKEY_get1_tls_encodedpoint(pkey, &penc);
+        penclen = EVP_PKEY_get1_encoded_public_key(pkey, &penc);
         ASN1_STRING_set0(pubkey, penc, penclen);
         pubkey->flags &= ~(ASN1_STRING_FLAG_BITS_LEFT | 0x07);
         pubkey->flags |= ASN1_STRING_FLAG_BITS_LEFT;
