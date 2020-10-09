@@ -1189,10 +1189,6 @@ int ssl3_write_pending(SSL *s, int type, const unsigned char *buf, size_t len,
                 i = BIO_flush(s->wbio);
                 if (i <= 0)
                     return i;
-            }
-
-            if (BIO_get_ktls_send(s->wbio)
-                && type != SSL3_RT_APPLICATION_DATA) {
                 BIO_set_ktls_ctrl_msg(s->wbio, type);
             }
             /* TODO(size_t): Convert this call */
