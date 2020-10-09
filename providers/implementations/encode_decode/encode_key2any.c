@@ -970,34 +970,92 @@ static int key2any_encode(struct key2any_ctx_st *ctx, OSSL_CORE_BIO *cout,
 #define DO_SubjectPublicKeyInfo(impl, type, output)                         \
     DO_PUBLIC_KEY(impl, type, spki, output)
 
-/* PKCS#1 is a structure for RSA private and public keys */
+/* PKCS#1 defines a structure for RSA private and public keys */
 #define DO_PKCS1(impl, type, output)                                        \
     DO_PRIVATE_KEY(impl, type, raw, output)                                 \
     DO_PUBLIC_KEY(impl, type, raw, output)
 
-/*
- * RAW is an OpenSSL invention, a collective name to represent any key type
- * where OpenSSL 1.1.1 has corresponding keytype specific i2d_TYPEPrivateKey,
- * i2d_TYPEPublicKey and i2d_TYPEparams.
- * The provided keytype name does not have to be exactly the same as TYPE
- * character by character, but should be close enough for humans to see that
- * they are the same.
- *
- * For RSA, it's exactly the same as PKCS#1
- */
-#define DO_RAW(impl, type, output)                                          \
-    DO_PRIVATE_KEY(impl, type, raw, output)                                 \
-    DO_PUBLIC_KEY(impl, type, raw, output)                                  \
+/* PKCS#3 defines a structure for DH parameters */
+#define DO_PKCS3(impl, type, output)                                        \
+    DO_PARAMETERS(impl, type, raw, output)
+/* X9.42 defines a structure for DHx parameters */
+#define DO_X9_42(impl, type, output)                                        \
     DO_PARAMETERS(impl, type, raw, output)
 
 /*
- * RAWKEY is an OpenSSL invention, a collective name to represent any key
- * type where OpenSSL 1.1.1 has a corresponding EVP_PKEY_ASN1_METHOD that
- * implements old_priv_encode.  This is in place to support i2d_PrivateKey().
+ * RAW is a uniform name for key type specific output for private and public
+ * keys.  This is used when no better name has been found.  If there are more
+ * expressive DO_ names above, those are preferred.
+ *
+ * RAW_w_params is like RAW, but has additional support for parameter output.
  */
-#define DO_RAWKEY(impl, type, output)                                       \
-    DO_PRIVATE_KEY(impl, type, raw, output)
+#define DO_RAW(impl, type, output)                                          \
+    DO_PRIVATE_KEY(impl, type, raw, output)                                 \
+    DO_PUBLIC_KEY(impl, type, raw, output)
+#define DO_RAW_w_params(impl, type, output)                                 \
+    DO_RAW(impl, type, output)                                              \
+    DO_PARAMETERS(impl, type, raw, output)
 
+/*
+ * OSSL designates internal OpenSSL combinations, where we currently have
+ * OSSL_params, OSSL_old and OSSL_current to re-implement certain functions
+ * of EVP_PKEY_ASN1_METHOD that exists in OpenSSL 1.1.1.
+ *
+ * OSSL_params re-implements param_encode() function.  This is expected to
+ * be used by i2d_KeyParams() and PEM_write_bio_Parameters().
+ * .
+ * OSSL_old and OSSL_current are variations of the same thing, they implement
+ * a private key and public key encoder, which are expected to be used by
+ * id2_PrivateKey() and i2d_PublicKey().
+ *
+ * The difference between OSSL_old and OSSL_current is that OSSL_old
+ * re-implements the combination of old_priv_encode() and pub_encode(),
+ * while OSSL_current re-implements the combination of priv_encode() and
+ * pub_encode() functions.
+ *
+ * OSSL_old_w_params is OSSL_old and OSSL_params combined.
+ * OSSL_current_w_params is OSSL_current and OSSL_params combined.
+ */
+#define DO_OSSL_old(impl, type, output)                                     \
+    DO_PRIVATE_KEY(impl, type, raw, output)                                 \
+    DO_PUBLIC_KEY(impl, type, spki, output)
+
+#define DO_OSSL_current(impl, type, output)                                 \
+    DO_PRIVATE_KEY(impl, type, pkcs8, output)                               \
+    DO_PUBLIC_KEY(impl, type, spki, output)
+
+#define DO_OSSL_params(impl, type, output)                                  \
+    DO_PARAMETERS(impl, type, raw, output)
+
+#define DO_OSSL_old_w_params(impl, type, output)                            \
+    DO_OSSL_old(impl, type, output)                                         \
+    DO_OSSL_params(impl, type, output)
+
+#define DO_OSSL_current_w_params(impl, type, output)                        \
+    DO_OSSL_current(impl, type, output)                                     \
+    DO_OSSL_params(impl, type, output)
+
+/*
+ * MAKE_ENCODER is the single driver for creating OSSL_DISPATCH tables.
+ * It takes the following arguments:
+ *
+ * impl         This is the key type name that's being implemented.
+ * type         This is the type name for the set of functions that implement
+ *              the key type.  For example, ed25519, ed448, x25519 and x448
+ *              are all implemented with the exact same set of functions.
+ * evp_type     The corresponding EVP_PKEY_xxx type macro for each key.
+ *              Necessary because we currently use EVP_PKEY with legacy
+ *              native keys internally.  This will need to be refactored
+ *              when that legacy support goes away.
+ * kind         What kind of support to implement.  These translate into
+ *              the DO_##kind macros above.
+ * output       The output type to implement.  may be der or pem.
+ *
+ * The resulting OSSL_DISPATCH array gets the following name (expressed in
+ * C preprocessor terms) from those arguments:
+ *
+ * ossl_##impl##_to_##kind##_##output##_encoder_functions
+ */
 #define MAKE_ENCODER(impl, type, evp_type, kind, output)                    \
     static OSSL_FUNC_encoder_get_params_fn                                  \
     impl##_to_##kind##_##output##_get_params;                               \
@@ -1068,50 +1126,79 @@ static int key2any_encode(struct key2any_ctx_st *ctx, OSSL_CORE_BIO *cout,
     }
 
 /*
- * Not all key types have a RAW implementation.  We only aim to duplicate
- * what is available in 1.1.1 as i2d_TYPEPrivateKey(), i2d_TYPEPublicKey()
- * and i2d_TYPEparams().  So for example, there are no publicly available
- * i2d_ function for ED25519, ED448, X25519 or X448, and therefore no raw
- * implementation here either.
- *
- * Even fewer key types have a RAWKEY implementation: RSA, DSA and EC_KEY.
- * (interestingly enough, DH doesn't have this...  if that was omitted on
- * purpose or just a mistake is lost in history)
+ * Duplicate existing EVP_PKEY_ASN1_METHOD implementations for
+ * i2d_PrivateKey(), i2d_PublicKey() and i2d_KeyParams().
+ * Only the DER encoders are needed here.
  */
+MAKE_ENCODER(rsa, rsa, EVP_PKEY_RSA, OSSL_old, der);
+MAKE_ENCODER(rsapss, rsa, EVP_PKEY_RSA, OSSL_current, der);
+#ifndef OPENSSL_NO_DH
+MAKE_ENCODER(dh, dh, EVP_PKEY_DH, OSSL_current_w_params, der);
+MAKE_ENCODER(dhx, dh, EVP_PKEY_DH, OSSL_current_w_params, der);
+#endif
+#ifndef OPENSSL_NO_DSA
+MAKE_ENCODER(dsa, dsa, EVP_PKEY_DH, OSSL_old_w_params, der);
+#endif
+#ifndef OPENSSL_NO_EC
+MAKE_ENCODER(ec, ec, EVP_PKEY_EC, OSSL_old_w_params, der);
+MAKE_ENCODER(ed25519, ecx, EVP_PKEY_ED25519, OSSL_current, der);
+MAKE_ENCODER(ed448, ecx, EVP_PKEY_ED448, OSSL_current, der);
+MAKE_ENCODER(x25519, ecx, EVP_PKEY_X25519, OSSL_current, der);
+MAKE_ENCODER(x448, ecx, EVP_PKEY_ED448, OSSL_current, der);
+#endif
 
+/*
+ * Key specific params output support.  This may duplicate some of the
+ * implementations specified above, but are more specific.
+ * These are expected to be used by PEM_write_bio_Parameters(), and are
+ * therefore only defined for PEM.
+ */
+#ifndef OPENSSL_NO_DH
+MAKE_ENCODER(dh, dh, EVP_PKEY_DH, OSSL_params, pem);
+MAKE_ENCODER(dhx, dh, EVP_PKEY_DH, OSSL_params, pem);
+#endif
+#ifndef OPENSSL_NO_DSA
+MAKE_ENCODER(dsa, dsa, EVP_PKEY_DH, OSSL_params, pem);
+#endif
+#ifndef OPENSSL_NO_EC
+MAKE_ENCODER(ec, ec, EVP_PKEY_EC, OSSL_params, pem);
+#endif
+
+/*
+ * PKCS#8 and SubjectPublicKeyInfo support.  This may duplicate some of the
+ * implementations specified above, but are more specific.
+ * For PEM, these are expected to be used by PEM_write_bio_PrivateKey(),
+ * PEM_write_bio_PUBKEY() and PEM_write_bio_Parameters().
+ */
+MAKE_ENCODER(rsa, rsa, EVP_PKEY_RSA, PKCS8, der);
+MAKE_ENCODER(rsa, rsa, EVP_PKEY_RSA, PKCS8, pem);
+MAKE_ENCODER(rsa, rsa, EVP_PKEY_RSA, SubjectPublicKeyInfo, der);
+MAKE_ENCODER(rsa, rsa, EVP_PKEY_RSA, SubjectPublicKeyInfo, pem);
+MAKE_ENCODER(rsapss, rsa, EVP_PKEY_RSA, PKCS8, der);
+MAKE_ENCODER(rsapss, rsa, EVP_PKEY_RSA, PKCS8, pem);
+MAKE_ENCODER(rsapss, rsa, EVP_PKEY_RSA, SubjectPublicKeyInfo, der);
+MAKE_ENCODER(rsapss, rsa, EVP_PKEY_RSA, SubjectPublicKeyInfo, pem);
 #ifndef OPENSSL_NO_DH
 MAKE_ENCODER(dh, dh, EVP_PKEY_DH, PKCS8, der);
 MAKE_ENCODER(dh, dh, EVP_PKEY_DH, PKCS8, pem);
 MAKE_ENCODER(dh, dh, EVP_PKEY_DH, SubjectPublicKeyInfo, der);
 MAKE_ENCODER(dh, dh, EVP_PKEY_DH, SubjectPublicKeyInfo, pem);
-MAKE_ENCODER(dh, dh, EVP_PKEY_DH, RAW, der);
-MAKE_ENCODER(dh, dh, EVP_PKEY_DH, RAW, pem);
 MAKE_ENCODER(dhx, dh, EVP_PKEY_DH, PKCS8, der);
 MAKE_ENCODER(dhx, dh, EVP_PKEY_DH, PKCS8, pem);
 MAKE_ENCODER(dhx, dh, EVP_PKEY_DH, SubjectPublicKeyInfo, der);
 MAKE_ENCODER(dhx, dh, EVP_PKEY_DH, SubjectPublicKeyInfo, pem);
-MAKE_ENCODER(dhx, dh, EVP_PKEY_DH, RAW, der);
-MAKE_ENCODER(dhx, dh, EVP_PKEY_DH, RAW, pem);
 #endif
 #ifndef OPENSSL_NO_DSA
 MAKE_ENCODER(dsa, dsa, EVP_PKEY_DSA, PKCS8, der);
 MAKE_ENCODER(dsa, dsa, EVP_PKEY_DSA, PKCS8, pem);
 MAKE_ENCODER(dsa, dsa, EVP_PKEY_DSA, SubjectPublicKeyInfo, der);
 MAKE_ENCODER(dsa, dsa, EVP_PKEY_DSA, SubjectPublicKeyInfo, pem);
-MAKE_ENCODER(dsa, dsa, EVP_PKEY_DSA, RAW, der);
-MAKE_ENCODER(dsa, dsa, EVP_PKEY_DSA, RAW, pem);
-MAKE_ENCODER(dsa, dsa, EVP_PKEY_DSA, RAWKEY, der);
-MAKE_ENCODER(dsa, dsa, EVP_PKEY_DSA, RAWKEY, pem);
 #endif
 #ifndef OPENSSL_NO_EC
 MAKE_ENCODER(ec, ec, EVP_PKEY_EC, PKCS8, der);
 MAKE_ENCODER(ec, ec, EVP_PKEY_EC, PKCS8, pem);
 MAKE_ENCODER(ec, ec, EVP_PKEY_EC, SubjectPublicKeyInfo, der);
 MAKE_ENCODER(ec, ec, EVP_PKEY_EC, SubjectPublicKeyInfo, pem);
-MAKE_ENCODER(ec, ec, EVP_PKEY_EC, RAW, der);
-MAKE_ENCODER(ec, ec, EVP_PKEY_EC, RAW, pem);
-MAKE_ENCODER(ec, ec, EVP_PKEY_EC, RAWKEY, der);
-MAKE_ENCODER(ec, ec, EVP_PKEY_EC, RAWKEY, pem);
 MAKE_ENCODER(ed25519, ecx, EVP_PKEY_ED25519, PKCS8, der);
 MAKE_ENCODER(ed25519, ecx, EVP_PKEY_ED25519, PKCS8, pem);
 MAKE_ENCODER(ed25519, ecx, EVP_PKEY_ED25519, SubjectPublicKeyInfo, der);
@@ -1129,17 +1216,31 @@ MAKE_ENCODER(x448, ecx, EVP_PKEY_ED448, PKCS8, pem);
 MAKE_ENCODER(x448, ecx, EVP_PKEY_ED448, SubjectPublicKeyInfo, der);
 MAKE_ENCODER(x448, ecx, EVP_PKEY_ED448, SubjectPublicKeyInfo, pem);
 #endif
-MAKE_ENCODER(rsa, rsa, EVP_PKEY_RSA, PKCS8, der);
-MAKE_ENCODER(rsa, rsa, EVP_PKEY_RSA, PKCS8, pem);
-MAKE_ENCODER(rsa, rsa, EVP_PKEY_RSA, SubjectPublicKeyInfo, der);
-MAKE_ENCODER(rsa, rsa, EVP_PKEY_RSA, SubjectPublicKeyInfo, pem);
-MAKE_ENCODER(rsa, rsa, EVP_PKEY_RSA, RAW, der);
-MAKE_ENCODER(rsa, rsa, EVP_PKEY_RSA, RAW, pem);
-MAKE_ENCODER(rsa, rsa, EVP_PKEY_RSA, RAWKEY, der);
-MAKE_ENCODER(rsa, rsa, EVP_PKEY_RSA, RAWKEY, pem);
-MAKE_ENCODER(rsapss, rsa, EVP_PKEY_RSA, PKCS8, der);
-MAKE_ENCODER(rsapss, rsa, EVP_PKEY_RSA, PKCS8, pem);
-MAKE_ENCODER(rsapss, rsa, EVP_PKEY_RSA, SubjectPublicKeyInfo, der);
-MAKE_ENCODER(rsapss, rsa, EVP_PKEY_RSA, SubjectPublicKeyInfo, pem);
-MAKE_ENCODER(rsapss, rsa, EVP_PKEY_RSA, RAW, der);
-MAKE_ENCODER(rsapss, rsa, EVP_PKEY_RSA, RAW, pem);
+
+/*
+ * Support for key type specific output formats.  Not all key types have
+ * this, we only aim to duplicate what is available in 1.1.1 as
+ * i2d_TYPEPrivateKey(), i2d_TYPEPublicKey() and i2d_TYPEparams().
+ * For example, there are no publicly available i2d_ function for
+ * ED25519, ED448, X25519 or X448, and they therefore only have PKCS#8
+ * and SubjectPublicKeyInfo implementations as implemented above.
+ */
+
+MAKE_ENCODER(rsa, rsa, EVP_PKEY_RSA, PKCS1, der);
+MAKE_ENCODER(rsa, rsa, EVP_PKEY_RSA, PKCS1, pem);
+#ifndef OPENSSL_NO_DH
+MAKE_ENCODER(dh, dh, EVP_PKEY_DH, PKCS3, der); /* parameters only */
+MAKE_ENCODER(dh, dh, EVP_PKEY_DH, PKCS3, pem); /* parameters only */
+MAKE_ENCODER(dhx, dh, EVP_PKEY_DH, X9_42, der); /* parameters only */
+MAKE_ENCODER(dhx, dh, EVP_PKEY_DH, X9_42, pem); /* parameters only */
+#endif
+#ifndef OPENSSL_NO_DSA
+/* TODO: better name than RAW for standard DSA key specific formats */
+MAKE_ENCODER(dsa, dsa, EVP_PKEY_DSA, RAW_w_params, der);
+MAKE_ENCODER(dsa, dsa, EVP_PKEY_DSA, RAW_w_params, pem);
+#endif
+#ifndef OPENSSL_NO_EC
+/* TODO: better name than RAW for standard EC key specific formats */
+MAKE_ENCODER(ec, ec, EVP_PKEY_DSA, RAW_w_params, der);
+MAKE_ENCODER(ec, ec, EVP_PKEY_DSA, RAW_w_params, pem);
+#endif
