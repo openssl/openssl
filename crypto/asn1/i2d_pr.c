@@ -32,10 +32,7 @@ int i2d_PrivateKey(const EVP_PKEY *a, unsigned char **pp)
         return ret;
     }
     if (evp_pkey_is_provided(a)) {
-        /*
-         * This is horribly much, but then again, |*pp| is unbounded, and
-         * we really can't know better.
-         */
+        /* |*pp| is unbounded, so we need an upper limit */
         size_t length = INT_MAX;
         /* The private key includes everything */
         int selection =
