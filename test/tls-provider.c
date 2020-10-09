@@ -476,7 +476,8 @@ static ossl_inline int xor_get_params(void *vkey, OSSL_PARAM params[])
         && !OSSL_PARAM_set_int(p, xor_group.secbits))
         return 0;
 
-    if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_TLS_ENCODED_PT)) != NULL) {
+    if ((p = OSSL_PARAM_locate(params,
+                               OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY)) != NULL) {
         if (p->data_type != OSSL_PARAM_OCTET_STRING)
             return 0;
         p->return_size = XOR_KEY_SIZE;
@@ -490,7 +491,7 @@ static ossl_inline int xor_get_params(void *vkey, OSSL_PARAM params[])
 static const OSSL_PARAM xor_params[] = {
     OSSL_PARAM_int(OSSL_PKEY_PARAM_BITS, NULL),
     OSSL_PARAM_int(OSSL_PKEY_PARAM_SECURITY_BITS, NULL),
-    OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_TLS_ENCODED_PT, NULL, 0),
+    OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY, NULL, 0),
     OSSL_PARAM_END
 };
 
@@ -504,7 +505,7 @@ static int xor_set_params(void *vkey, const OSSL_PARAM params[])
     XORKEY *key = vkey;
     const OSSL_PARAM *p;
 
-    p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_TLS_ENCODED_PT);
+    p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY);
     if (p != NULL) {
         if (p->data_type != OSSL_PARAM_OCTET_STRING
                 || p->data_size != XOR_KEY_SIZE)
@@ -517,7 +518,7 @@ static int xor_set_params(void *vkey, const OSSL_PARAM params[])
 }
 
 static const OSSL_PARAM xor_known_settable_params[] = {
-    OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_TLS_ENCODED_PT, NULL, 0),
+    OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY, NULL, 0),
     OSSL_PARAM_END
 };
 

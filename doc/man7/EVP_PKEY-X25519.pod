@@ -40,10 +40,11 @@ The public key value.
 
 The private key value.
 
-=item "tls-encoded-pt" (B<OSSL_PKEY_PARAM_TLS_ENCODED_PT>) <octet string>
+=item "encoded-pub-key" (B<OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY>) <octet string>
 
-Used for getting and setting the encoding of the public key used in a key exchange
-message for the TLS protocol.
+Used for getting and setting the encoding of a public key for the B<X25519> and
+B<X448> key types. Public keys are expected be encoded in a format as defined by
+RFC7748.
 
 =back
 

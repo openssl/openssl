@@ -4046,8 +4046,8 @@ X509_STORE_lock                         4134	3_0_0	EXIST::FUNCTION:
 X509_set_proxy_pathlen                  4135	3_0_0	EXIST::FUNCTION:
 X509_get_proxy_pathlen                  4136	3_0_0	EXIST::FUNCTION:
 DSA_bits                                4137	3_0_0	EXIST::FUNCTION:DSA
-EVP_PKEY_set1_tls_encodedpoint          4138	3_0_0	EXIST::FUNCTION:
-EVP_PKEY_get1_tls_encodedpoint          4139	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_set1_tls_encodedpoint          4138	3_0_0	NOEXIST::FUNCTION:
+EVP_PKEY_get1_tls_encodedpoint          4139	3_0_0	NOEXIST::FUNCTION:
 ASN1_STRING_get0_data                   4140	3_0_0	EXIST::FUNCTION:
 X509_SIG_getm                           4141	3_0_0	EXIST::FUNCTION:
 X509_get0_serialNumber                  4142	3_0_0	EXIST::FUNCTION:
@@ -5290,3 +5290,5 @@ OSSL_DECODER_from_data                  ?	3_0_0	EXIST::FUNCTION:
 OSSL_ENCODER_to_data                    ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_CTX_get0_libctx                ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_CTX_get0_propq                 ?	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_set1_encoded_public_key        ?	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_get1_encoded_public_key        ?	3_0_0	EXIST::FUNCTION:

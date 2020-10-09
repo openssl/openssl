@@ -2633,8 +2633,8 @@ int tls_construct_server_key_exchange(SSL *s, WPACKET *pkt)
         }
 
         /* Encode the public key. */
-        encodedlen = EVP_PKEY_get1_tls_encodedpoint(s->s3.tmp.pkey,
-                                                    &encodedPoint);
+        encodedlen = EVP_PKEY_get1_encoded_public_key(s->s3.tmp.pkey,
+                                                      &encodedPoint);
         if (encodedlen == 0) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                      SSL_F_TLS_CONSTRUCT_SERVER_KEY_EXCHANGE, ERR_R_EC_LIB);
@@ -3216,7 +3216,7 @@ static int tls_process_cke_ecdhe(SSL *s, PACKET *pkt)
             goto err;
         }
 
-        if (EVP_PKEY_set1_tls_encodedpoint(ckey, data, i) == 0) {
+        if (EVP_PKEY_set1_encoded_public_key(ckey, data, i) <= 0) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_CKE_ECDHE,
                      ERR_R_EC_LIB);
             goto err;
