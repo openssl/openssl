@@ -39,7 +39,7 @@
  */
 # define PEM_STRUCTURE_PUBKEY "structure=SubjectPublicKeyInfo"
 # define PEM_STRUCTURE_PrivateKey "structure=pkcs8"
-# define PEM_STRUCTURE_Parameters "structure=raw"
+# define PEM_STRUCTURE_Parameters "structure=ossl"
 
 /* Alternative IMPLEMENT macros for provided encoders */
 

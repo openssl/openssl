@@ -590,7 +590,10 @@ static int check_unprotected_legacy_PEM(const char *type,
 
 static int test_unprotected_via_legacy_PEM(const char *type, EVP_PKEY *key)
 {
-    return test_encode_decode(type, key, "structure=raw",
+    static char structure_propq[80];
+
+    return TEST_int_gt(BIO_snprintf(structure_propq, "structure=%s", type), 0)
+        && test_encode_decode(type, key, structure_propq,
                               "PEM", OSSL_KEYMGMT_SELECT_KEYPAIR
                               | OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS,
                               NULL, NULL,
@@ -705,7 +708,10 @@ static int check_protected_legacy_PEM(const char *type,
 
 static int test_protected_via_legacy_PEM(const char *type, EVP_PKEY *key)
 {
-    return test_encode_decode(type, key, NULL,
+    static char structure_propq[80];
+
+    return TEST_int_gt(BIO_snprintf(structure_propq, "structure=%s", type), 0)
+        && test_encode_decode(type, key, structure_propq,
                               "PEM", OSSL_KEYMGMT_SELECT_KEYPAIR
                               | OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS,
                               pass, pass_cipher,
