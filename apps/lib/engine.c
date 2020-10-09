@@ -14,6 +14,8 @@
  */
 #define OPENSSL_SUPPRESS_DEPRECATED
 
+#include <string.h> /* strcmp */
+
 #include <openssl/types.h> /* Ensure we have the ENGINE type, regardless */
 #ifndef OPENSSL_NO_ENGINE
 # include <openssl/engine.h>
