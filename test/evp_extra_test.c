@@ -29,6 +29,7 @@
 #include <openssl/dh.h>
 #include <openssl/aes.h>
 #include <openssl/decoder.h>
+#include <openssl/rsa.h>
 #include "testutil.h"
 #include "internal/nelem.h"
 #include "internal/sizes.h"
@@ -2256,6 +2257,31 @@ err:
     return ret;
 }
 
+static int test_EVP_rsa_pss_with_keygen_bits(void)
+{
+    int ret;
+    OSSL_PROVIDER *provider;
+    EVP_PKEY_CTX *ctx;
+    EVP_PKEY *pkey;
+    const EVP_MD *md;
+    pkey = NULL;
+    ret = 0;
+    provider = OSSL_PROVIDER_load(NULL, "default");
+    md = EVP_get_digestbyname("sha256");
+
+    ret = TEST_ptr((ctx = EVP_PKEY_CTX_new_id(EVP_PKEY_RSA_PSS, NULL)))
+        && TEST_true(EVP_PKEY_keygen_init(ctx))
+        && TEST_int_gt(EVP_PKEY_CTX_set_rsa_keygen_bits(ctx, 512), 0)
+        && TEST_true(EVP_PKEY_CTX_set_rsa_pss_keygen_md(ctx, md))
+        && TEST_true(EVP_PKEY_keygen(ctx, &pkey));
+
+    EVP_PKEY_free(pkey);
+    EVP_PKEY_CTX_free(ctx);
+    OSSL_PROVIDER_unload(provider);
+    return ret;
+}
+
+
 int setup_tests(void)
 {
     testctx = OSSL_LIB_CTX_new();
@@ -2321,6 +2347,7 @@ int setup_tests(void)
 
     ADD_TEST(test_rand_agglomeration);
     ADD_ALL_TESTS(test_evp_iv, 10);
+    ADD_TEST(test_EVP_rsa_pss_with_keygen_bits);
 
     return 1;
 }
