@@ -23,6 +23,16 @@ OpenSSL 3.0
 
 ### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
 
+ * Deprecated EVP_PKEY_set1_tls_encodedpoint() and
+   EVP_PKEY_get1_tls_encodedpoint(). These functions were previously used by
+   libssl to set or get an encoded public key in/from an EVP_PKEY object. With
+   OpenSSL 3.0 these are replaced by the more generic functions
+   EVP_PKEY_set1_encoded_public_key() and EVP_PKEY_get1_encoded_public_key().
+   The old versions have been converted to deprecated macros that just call the
+   new functions.
+
+   *Matt Caswell*
+
  * The security callback, which can be customised by application code, supports
    the security operation SSL_SECOP_TMP_DH. This is defined to take an EVP_PKEY
    in the "other" parameter. In most places this is what is passed. All these
