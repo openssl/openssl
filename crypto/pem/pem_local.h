@@ -28,11 +28,9 @@
  * decoding operation can return an object that contains what libcrypto
  * expects.
  */
-# define PEM_SELECTION_PUBKEY                                           \
-    (OSSL_KEYMGMT_SELECT_ALL_PARAMETERS | OSSL_KEYMGMT_SELECT_PUBLIC_KEY)
-# define PEM_SELECTION_PrivateKey                                       \
-    (OSSL_KEYMGMT_SELECT_ALL_PARAMETERS | OSSL_KEYMGMT_SELECT_KEYPAIR)
-# define PEM_SELECTION_Parameters OSSL_KEYMGMT_SELECT_ALL_PARAMETERS
+# define PEM_SELECTION_PUBKEY           EVP_PKEY_PUBLIC_KEY
+# define PEM_SELECTION_PrivateKey       EVP_PKEY_KEYPAIR
+# define PEM_SELECTION_Parameters       EVP_PKEY_KEY_PARAMETERS
 
 /* Alternative IMPLEMENT macros for provided encoders */
 

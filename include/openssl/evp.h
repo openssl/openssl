@@ -75,6 +75,14 @@
 /* Special indicator that the object is uniquely provider side */
 # define EVP_PKEY_KEYMGMT -1
 
+/* Easy to use macros for EVP_PKEY related selections */
+# define EVP_PKEY_KEY_PARAMETERS                                            \
+    ( OSSL_KEYMGMT_SELECT_ALL_PARAMETERS )
+# define EVP_PKEY_PUBLIC_KEY                                                \
+    ( EVP_PKEY_KEY_PARAMETERS | OSSL_KEYMGMT_SELECT_PUBLIC_KEY )
+# define EVP_PKEY_KEYPAIR                                                   \
+    ( EVP_PKEY_PUBLIC_KEY | OSSL_KEYMGMT_SELECT_PRIVATE_KEY )
+
 #ifdef  __cplusplus
 extern "C" {
 #endif

@@ -39,7 +39,11 @@ OSSL_ENCODER_CTX_set_passphrase_ui
 OSSL_ENCODER_CTX_new_by_EVP_PKEY() is a utility function that creates a
 B<OSSL_ENCODER_CTX>, finds all applicable encoder implementations and sets
 them up, so almost all the caller has to do next is call functions like
-L<OSSL_ENCODER_to_bio(3)>.
+L<OSSL_ENCODER_to_bio(3)>.  I<output_type> determines the final output
+encoding, and I<selection> can be used to select what parts of the I<pkey>
+should be included in the output.  I<output_type> is further discussed in
+L</Output types> below, and I<selection> is further described in
+L</Selections>.
 
 Internally, OSSL_ENCODER_CTX_new_by_EVP_PKEY() uses the names from the
 L<EVP_KEYMGMT(3)> implementation associated with I<pkey> to build a list of
@@ -74,6 +78,69 @@ and OSSL_ENCODER_CTX_set_passphrase_cb() sets up a callback method that the
 implementation can use to prompt for a pass phrase, giving the caller the
 choice of prefered pass phrase callback form.  These are called indirectly,
 through an internal B<OSSL_PASSPHRASE_CALLBACK> function.
+
+=head2 Output types
+
+The possible B<EVP_PKEY> output types depends on the available
+implementations.
+
+OpenSSL has built in implementations for the following output types:
+
+=over 4
+
+=item C<TEXT>
+
+The output is a human readable description of the key.
+L<EVP_PKEY_print_private(3)>, L<EVP_PKEY_print_public(3)> and
+L<EVP_PKEY_print_params(3)> use this for their output.
+
+=item C<DER>
+
+The output is the DER encoding of the I<selection> of the I<pkey>.
+
+=item C<PEM>
+
+The output is the I<selection> of the I<pkey> in PEM format.
+
+=back
+
+=head2 Selections
+
+=begin comment
+
+These constants should really be documented among the EVP manuals, but this
+will have to do for now.
+
+=end comment
+
+The following constants can be used for standard I<selection>:
+
+=over 4
+
+=item B<EVP_PKEY_KEY_PARAMETERS>
+
+Indicates that only the key parameters should be included in the output.
+Where it matters, the data type in the output will indicate that the data is
+parameters, not a key.
+
+=item B<EVP_PKEY_PUBLIC_KEY>
+
+Indicates that the public key and eventual key parameters will be included
+in the output.  Where it matters, the data type in the output will indicate
+that the data is a public key.
+
+=item B<EVP_PKEY_KEYPAIR>
+
+Indicates that the private key, the public key and eventual key parameters
+should be included in the output.  Where it matters, the data type in the
+output will indicate that the data is a private key.
+
+=back
+
+These are only indications, the encoder implementations are free to
+determine what makes sense to include in the output, and this may depend on
+the desired output.  For example, an EC key in a PKCS#8 structure doesn't
+usually include the public key.
 
 =head1 RETURN VALUES
 
