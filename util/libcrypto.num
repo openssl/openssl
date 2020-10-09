@@ -5287,6 +5287,8 @@ PEM_write_bio_PUBKEY_ex                 ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_get_group_name                 ?	3_0_0	EXIST::FUNCTION:
 CRYPTO_atomic_or                        ?	3_0_0	EXIST::FUNCTION:
 CRYPTO_atomic_load                      ?	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_CTX_set_rsa_pss_keygen_md      ?	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_CTX_set_rsa_pss_keygen_md_name ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_settable_params                ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_set_params                     ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_set_int_param                  ?	3_0_0	EXIST::FUNCTION:
