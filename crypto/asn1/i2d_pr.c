@@ -35,8 +35,7 @@ int i2d_PrivateKey(const EVP_PKEY *a, unsigned char **pp)
         /* |*pp| is unbounded, so we need an upper limit */
         size_t length = INT_MAX;
         /* The private key includes everything */
-        int selection =
-            OSSL_KEYMGMT_SELECT_ALL_PARAMETERS | OSSL_KEYMGMT_SELECT_KEYPAIR;
+        int selection = EVP_PKEY_PRIVATE_KEY;
         int ret = -1;
         OSSL_ENCODER_CTX *ctx;
 
