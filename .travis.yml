@@ -173,6 +173,7 @@ before_script:
           fi;
       fi
     - ./configdata.pm --dump
+    - export BUILDOPTS="-j4"
     - export HARNESS_JOBS=${HARNESS_JOBS:-4}
     - cd $top
 
@@ -183,9 +184,9 @@ script:
           make="make";
       fi
     - if [ -n "$GENERATE" ]; then
-          make2="$make PERL=no-perl";
+          make2="$make $BUILDOPTS PERL=no-perl";
       else
-          make2="$make";
+          make2="$make $BUILDOPTS";
       fi
     - top=${PWD}
     - if [ -n "$DESTDIR" ]; then
