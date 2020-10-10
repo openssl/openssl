@@ -21,8 +21,6 @@ before_build:
     - ps: >-
         Get-VSSetupInstance -All
     - ps: >-
-        gci env:* | sort-object name
-    - ps: >-
         If ($env:Platform -Match "x86") {
             $env:VCVARS_PLATFORM="x86"
             $env:TARGET="VC-WIN32 no-asm --strict-warnings"
@@ -45,7 +43,7 @@ before_build:
     - perl configdata.pm --dump
     - cd ..
     - ps: >-
-        if (-not $env:APPVEYOR_PULL_REQUEST_NUMBER`
+        If (-not $env:APPVEYOR_PULL_REQUEST_NUMBER`
             -or (&git log -1 $env:APPVEYOR_PULL_REQUEST_HEAD_COMMIT |
                  Select-String "\[extended tests\]") ) {
             $env:EXTENDED_TESTS="yes"
@@ -56,6 +54,8 @@ before_build:
         } Else {
             $env:NMAKE="nmake /S"
         }
+    - ps: >-
+        gci env:* | sort-object name
 
 build_script:
     - cd _build
