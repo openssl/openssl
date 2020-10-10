@@ -24,7 +24,7 @@
 # define NON_EMPTY_TRANSLATION_UNIT static void *dummy = &dummy;
 
 /*
- * Generic deprecation macro, can be used as an attribute anywhere
+ * Generic deprecation macro
  *
  * If OPENSSL_SUPPRESS_DEPRECATED is defined, then OSSL_DEPRECATED and
  * OSSL_DEPRECATED_FOR become no-ops
