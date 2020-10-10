@@ -54,16 +54,16 @@
 #    if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 5)
 #     define OSSL_DEPRECATED(since) \
           __attribute__((deprecated("Since OpenSSL " # since)))
-#     define OSSL_DEPRECATED_FOR(since,message) \
+#     define OSSL_DEPRECATED_FOR(since, message) \
           __attribute__((deprecated("Since OpenSSL " # since ";" message)))
 #    elif __GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ > 0)
 #     define OSSL_DEPRECATED(since) __attribute__((deprecated))
-#     define OSSL_DEPRECATED_FOR(since,message) __attribute__((deprecated))
+#     define OSSL_DEPRECATED_FOR(since, message) __attribute__((deprecated))
 #    endif
 #   elif defined(__SUNPRO_C)
 #    if (__SUNPRO_C >= 0x5130)
 #     define OSSL_DEPRECATED(since) __attribute__ ((deprecated))
-#     define OSSL_DEPRECATED_FOR(since,message) __attribute__ ((deprecated))
+#     define OSSL_DEPRECATED_FOR(since, message) __attribute__ ((deprecated))
 #    endif
 #   endif
 #  endif
@@ -72,7 +72,7 @@
 /* Still not defined?  Then define empty macros */
 # ifndef OSSL_DEPRECATED
 #  define OSSL_DEPRECATED(since)
-#  define OSSL_DEPRECATED_FOR(since,message)
+#  define OSSL_DEPRECATED_FOR(since, message)
 # endif
 
 /*
