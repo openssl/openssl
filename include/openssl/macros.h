@@ -40,11 +40,11 @@
 #    if _MSC_VER >= 1400
 #     define OSSL_DEPRECATED(since) \
           __declspec(deprecated("Since OpenSSL " # since))
-#     define OSSL_DEPRECATED_FOR(since,message) \
+#     define OSSL_DEPRECATED_FOR(since, message) \
           __declspec(deprecated("Since OpenSSL " # since ";" message))
 #    elif _MSC_VER >= 1310
 #     define OSSL_DEPRECATED(since) __declspec(deprecated)
-#     define OSSL_DEPRECATED_FOR(since,message) __declspec(deprecated)
+#     define OSSL_DEPRECATED_FOR(since, message) __declspec(deprecated)
 #    endif
 #   elif defined(__GNUC__)
      /*
