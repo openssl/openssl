@@ -424,8 +424,8 @@ static int chacha20_poly1305_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     }
     if (in == NULL                              /* explicit final */
         || plen != len) {                       /* or tls mode */
-        unsigned char temp[POLY1305_BLOCK_SIZE];
         DECLARE_IS_ENDIAN;
+        unsigned char temp[POLY1305_BLOCK_SIZE];
 
         if (actx->aad) {                        /* wrap up aad */
             if ((rem = (size_t)actx->len.aad % POLY1305_BLOCK_SIZE))
