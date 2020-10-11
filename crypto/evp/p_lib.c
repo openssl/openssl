@@ -1920,6 +1920,9 @@ int evp_pkey_downgrade(EVP_PKEY *pk)
     CRYPTO_RWLOCK *tmp_lock = NULL; /* Temporary lock */
     int rv = 0;
 
+    if (!ossl_assert(pk != NULL))
+        return 0;
+
     /*
      * Throughout this whole function, we must ensure that we lock / unlock
      * the exact same lock.  Note that we do pass it around a bit.
