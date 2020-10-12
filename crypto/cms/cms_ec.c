@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <assert.h>
 #include <openssl/cms.h>
 #include <openssl/err.h>
 #include <openssl/decoder.h>
@@ -29,7 +30,14 @@ static EVP_PKEY *pkey_type2param(int ptype, const void *pval,
         /* TODO(3.0): Need to be able to specify here that only params will do */
         ctx = OSSL_DECODER_CTX_new_by_EVP_PKEY(&pkey, "DER", "EC", libctx,
                                                propq);
+        if (ctx == NULL)
+            goto err;
+
         membio = BIO_new_mem_buf(pm, pmlen);
+        if (membio == NULL) {
+            OSSL_DECODER_CTX_free(ctx);
+            goto err;
+        }
         OSSL_DECODER_from_bio(ctx, membio);
         BIO_free(membio);
         OSSL_DECODER_CTX_free(ctx);
@@ -37,15 +45,9 @@ static EVP_PKEY *pkey_type2param(int ptype, const void *pval,
         const ASN1_OBJECT *poid = pval;
         const char *groupname;
 
-        /*
-         * type == V_ASN1_OBJECT => the parameters are given by an asn1 OID
-         */
-
+        /* type == V_ASN1_OBJECT => the parameters are given by an asn1 OID */
         pctx = EVP_PKEY_CTX_new_from_name(libctx, "EC", propq);
-
-        if (pctx == NULL)
-            goto err;
-        if (EVP_PKEY_paramgen_init(pctx) <= 0)
+        if (pctx == NULL || EVP_PKEY_paramgen_init(pctx) <= 0)
             goto err;
         groupname = OBJ_nid2sn(OBJ_obj2nid(poid));
         if (groupname == NULL
@@ -53,10 +55,8 @@ static EVP_PKEY *pkey_type2param(int ptype, const void *pval,
             CMSerr(0, CMS_R_DECODE_ERROR);
             goto err;
         }
-        if (EVP_PKEY_paramgen(pctx, &pkey) <= 0) {
-            EVP_PKEY_free(pkey);
-            pkey = NULL;
-        }
+        if (EVP_PKEY_paramgen(pctx, &pkey) <= 0)
+            goto err;
     } else {
         CMSerr(0, CMS_R_DECODE_ERROR);
         goto err;
@@ -84,9 +84,11 @@ static int ecdh_cms_set_peerkey(EVP_PKEY_CTX *pctx,
     X509_ALGOR_get0(&aoid, &atype, &aval, alg);
     if (OBJ_obj2nid(aoid) != NID_X9_62_id_ecPublicKey)
         goto err;
+
     /* If absent parameters get group from main key */
     if (atype == V_ASN1_UNDEF || atype == V_ASN1_NULL) {
         EVP_PKEY *pk;
+
         pk = EVP_PKEY_CTX_get0_pkey(pctx);
         if (pk == NULL)
             goto err;
@@ -380,9 +382,12 @@ static int ecdh_cms_encrypt(CMS_RecipientInfo *ri)
 
 int cms_ecdh_envelope(CMS_RecipientInfo *ri, int decrypt)
 {
+    assert(decrypt == 0 || decrypt == 1);
+
     if (decrypt == 1)
         return ecdh_cms_decrypt(ri);
-    else if (decrypt == 0)
+
+    if (decrypt == 0)
         return ecdh_cms_encrypt(ri);
 
     CMSerr(0, CMS_R_NOT_SUPPORTED_FOR_THIS_KEY_TYPE);
@@ -392,6 +397,8 @@ int cms_ecdh_envelope(CMS_RecipientInfo *ri, int decrypt)
 /* ECDSA and DSA implementation is the same */
 int cms_ecdsa_dsa_sign(CMS_SignerInfo *si, int verify)
 {
+    assert(verify == 0 || verify == 1);
+
     if (verify == 0) {
         int snid, hnid;
         X509_ALGOR *alg1, *alg2;

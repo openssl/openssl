@@ -184,7 +184,7 @@ int x509_algor_md_to_mgf1(X509_ALGOR **palg, const EVP_MD *mgf1md)
  err:
     ASN1_STRING_free(stmp);
     X509_ALGOR_free(algtmp);
-    if (*palg)
+    if (*palg != NULL)
         return 1;
     return 0;
 }

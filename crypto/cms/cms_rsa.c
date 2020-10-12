@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <assert.h>
 #include <openssl/cms.h>
 #include <openssl/err.h>
 #include "crypto/asn1.h"
@@ -118,7 +119,7 @@ static int rsa_cms_encrypt(CMS_RecipientInfo *ri)
 
     if (CMS_RecipientInfo_ktri_get0_algs(ri, NULL, NULL, &alg) <= 0)
         return 0;
-    if (pkctx) {
+    if (pkctx != NULL) {
         if (EVP_PKEY_CTX_get_rsa_padding(pkctx, &pad_mode) <= 0)
             return 0;
     }
@@ -173,9 +174,12 @@ static int rsa_cms_encrypt(CMS_RecipientInfo *ri)
 
 int cms_rsa_envelope(CMS_RecipientInfo *ri, int decrypt)
 {
+    assert(decrypt == 0 || decrypt == 1);
+
     if (decrypt == 1)
         return rsa_cms_decrypt(ri);
-    else if (decrypt == 0)
+
+    if (decrypt == 0)
         return rsa_cms_encrypt(ri);
 
     CMSerr(0, CMS_R_NOT_SUPPORTED_FOR_THIS_KEY_TYPE);
@@ -236,9 +240,12 @@ static int rsa_cms_verify(CMS_SignerInfo *si)
 
 int cms_rsa_sign(CMS_SignerInfo *si, int verify)
 {
+    assert(verify == 0 || verify == 1);
+
     if (verify == 1)
         return rsa_cms_verify(si);
-    else if (verify == 0)
+
+    if (verify == 0)
         return rsa_cms_sign(si);
 
     CMSerr(0, CMS_R_NOT_SUPPORTED_FOR_THIS_KEY_TYPE);
