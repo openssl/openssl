@@ -1762,12 +1762,12 @@ int evp_pkey_ctx_use_cached_data(EVP_PKEY_CTX *ctx)
     return ret;
 }
 
-OPENSSL_CTX *evp_pkey_ctx_get0_libctx(EVP_PKEY_CTX *ctx)
+OPENSSL_CTX *EVP_PKEY_CTX_get0_libctx(EVP_PKEY_CTX *ctx)
 {
     return ctx->libctx;
 }
 
-const char *evp_pkey_ctx_get0_propq(EVP_PKEY_CTX *ctx)
+const char *EVP_PKEY_CTX_get0_propq(EVP_PKEY_CTX *ctx)
 {
     return ctx->propquery;
 }

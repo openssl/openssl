@@ -100,10 +100,9 @@ static int ecdh_cms_set_peerkey(EVP_PKEY_CTX *pctx,
         if (!EVP_PKEY_copy_parameters(pkpeer, pk))
             goto err;
     } else {
-        /* TODO(3.0): Should the get0_libctx/propq calls actually be public API? */
         pkpeer = pkey_type2param(atype, aval,
-                                 evp_pkey_ctx_get0_libctx(pctx),
-                                 evp_pkey_ctx_get0_propq(pctx));
+                                 EVP_PKEY_CTX_get0_libctx(pctx),
+                                 EVP_PKEY_CTX_get0_propq(pctx));
         if (pkpeer == NULL)
             goto err;
     }
