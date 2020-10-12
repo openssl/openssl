@@ -1966,6 +1966,9 @@ int EVP_hex2ctrl(int (*cb)(void *ctx, int cmd, void *buf, size_t buflen),
 int EVP_PKEY_CTX_set_group_name(EVP_PKEY_CTX *ctx, const char *name);
 int EVP_PKEY_CTX_get_group_name(EVP_PKEY_CTX *ctx, char *name, size_t namelen);
 
+OPENSSL_CTX *EVP_PKEY_CTX_get0_libctx(EVP_PKEY_CTX *ctx);
+const char *EVP_PKEY_CTX_get0_propq(EVP_PKEY_CTX *ctx);
+
 # ifdef  __cplusplus
 }
 # endif
