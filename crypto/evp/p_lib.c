@@ -1321,8 +1321,7 @@ int EVP_PKEY_set1_encoded_public_key(EVP_PKEY *pkey, const unsigned char *pub,
                                      size_t publen)
 {
     if (pkey->ameth == NULL) {
-        OSSL_PARAM params[2]
-            = { OSSL_PARAM_END, OSSL_PARAM_END };
+        OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
 
         if (pkey->keymgmt == NULL || pkey->keydata == NULL)
             return 0;
