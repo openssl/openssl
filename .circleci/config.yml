@@ -1,6 +1,14 @@
-version: 2
+version: 2.1
 
-# TODO: Add psutil to CI images.
+exclude_master: &exclude_master
+  filters:
+    branches:
+      ignore: master
+
+parameters:
+  run_downstream_tests:
+    type: boolean
+    default: false
 
 # CircleCI doesn't handle large file sets properly for local builds
 # https://github.com/CircleCI-Public/circleci-cli/issues/281#issuecomment-472808051
@@ -12,130 +20,165 @@ localCheckout: &localCheckout
     git ls-files -z | xargs -0 -s 2090860 tar -c | tar -x -C ${PROJECT_PATH}
     cp -a /tmp/_circleci_local_build_repo/.git ${PROJECT_PATH}
 
-.openssl_job: &openssljob
-  docker:
-    - image: ${IMAGE}
-  steps:
-    - checkout # change this from "checkout" to "*localCheckout" when running CircleCI locally
-    - run:
-        name: Clone liboqs
-        command: ./oqs-scripts/clone_liboqs.sh # unconditional checkout to test for changes there
-    - run:
-        name: Build liboqs
-        command: .circleci/git_no_checkin_in_last_day.sh || ./oqs-scripts/build_liboqs.sh
-    - run:
-        name: Build OpenSSL
-        command: .circleci/git_no_checkin_in_last_day.sh || ./oqs-scripts/build_openssl.sh
-    - run:
-        name: Run OpenSSL tests
-        command: .circleci/git_no_checkin_in_last_day.sh || (env LD_LIBRARY_PATH="$(pwd):$(pwd)/oqs/lib" make test)
-    - run:
-        name: Run OQS connection, CMS and speed tests
-        command: .circleci/git_no_checkin_in_last_day.sh || (env LD_LIBRARY_PATH="$(pwd):$(pwd)/oqs/lib" python3 -m pytest --numprocesses=auto oqs-test/test_tls_full.py oqs-test/test_cms.py oqs-test/test_speed.py --junitxml=oqs-test/tmp/test-results/pytest/test-results.xml)
-    - store_test_results: # Note that this command will fail when running CircleCI locally, that is expected behaviour
-        path: oqs-test/tmp/test-results
-
-.macopenssl_job: &macopenssljob
-    macos:
-       xcode: "11.3.0"
-    steps:
-        - checkout # change this from "checkout" to "*localCheckout" when running CircleCI locally
-        - run:
-            name: Install dependencies
-            command: |
-              .circleci/git_no_checkin_in_last_day.sh || (
-              brew unlink python@2 &&
-              brew install cmake ninja &&
-              pip3 install --user pytest pytest-xdist psutil
-              )
-        - run:
-            name: Clone liboqs
-            command: ./oqs-scripts/clone_liboqs.sh # unconditional checkout to test for changes there
-        - run:
-            name: Build liboqs
-            command: .circleci/git_no_checkin_in_last_day.sh || ./oqs-scripts/build_liboqs.sh
-        - run:
-            name: Build OpenSSL
-            command: .circleci/git_no_checkin_in_last_day.sh || (./Configure ${OPENSSL_LIBTYPE} darwin64-x86_64-cc no-tests && make -j3)
-        - run:
-            name: Run OQS connection, CMS and speed tests
-            command: .circleci/git_no_checkin_in_last_day.sh || (env DYLD_LIBRARY_PATH="$(pwd):$(pwd)/oqs/lib" python3 -m pytest --numprocesses=auto oqs-test/test_tls_full.py oqs-test/test_cms.py oqs-test/test_speed.py --junitxml=oqs-test/tmp/test-results/pytest/test-results.xml)
-        - store_test_results: # Note that this command will fail when running CircleCI locally, that is expected behaviour
-            path: oqs-test/tmp/test-results
-
-.boringssl_interop_job: &boringsslinteropjob
-  docker:
-    - image: ${IMAGE}
-  steps:
-    - checkout # change this from "checkout" to "*localCheckout" when running CircleCI locally
-    - run:
-        name: Clone liboqs and BoringSSL
-        command: ./oqs-scripts/clone_liboqs.sh && ./oqs-scripts/clone_boringssl.sh
-    - run:
-        name: Build liboqs
-        command: .circleci/git_no_checkin_in_last_day.sh || ./oqs-scripts/build_liboqs.sh
-    - run:
-        name: Build BoringSSL
-        command: .circleci/git_no_checkin_in_last_day.sh || ./oqs-scripts/build_boringssl.sh
-    - run:
-        name: Build OpenSSL
-        command: .circleci/git_no_checkin_in_last_day.sh || (./Configure linux-x86_64 no-shared no-tests && make -j15)
-    - run:
-        name: Test BoringSSL client against OpenSSL server
-        command: .circleci/git_no_checkin_in_last_day.sh || (python3 -m pytest --numprocesses=auto oqs-interop-test/test_full.py --client-prog=boringssl/build/ssl/test/bssl_shim --client-type=bssl --server-prog=apps/openssl --server-type=ossl --junitxml=oqs-interop-test/tmp/test-results/pytest/bssl_client-test-results.xml)
-    - run:
-        name: Test OpenSSL client against BoringSSL server
-        command: .circleci/git_no_checkin_in_last_day.sh || (python3 -m pytest --numprocesses=auto oqs-interop-test/test_full.py --client-prog=apps/openssl --client-type=ossl --server-prog=boringssl/build/tool/bssl --server-type=bssl --junitxml=oqs-interop-test/tmp/test-results/pytest/ossl_client-test-results.xml)
-    - store_test_results: # Note that this command will fail when running CircleCI locally, that is expected behaviour
-        path: oqs-interop-test/tmp/test-results
-
 jobs:
-  debian_buster-shared_oqs-static_ossl:
-    <<: *openssljob
-    environment:
-      IMAGE: openquantumsafe/ci-debian-buster-amd64:latest
-      LIBOQS_LIBTYPE: shared
-  ubuntu_bionic-shared_oqs-shared_ossl:
-    <<: *openssljob
-    environment:
-      IMAGE: openquantumsafe/ci-ubuntu-bionic-x86_64:latest
-      LIBOQS_LIBTYPE: shared
-      OPENSSL_LIBTYPE: shared
-  ubuntu_bionic-static_oqs-static_ossl:
-    <<: *openssljob
-    environment:
-      IMAGE: openquantumsafe/ci-ubuntu-bionic-x86_64:latest
-  ubuntu_bionic-static_oqs-static_ossl-boringssl-interop:
-    <<: *boringsslinteropjob
-    environment:
-      IMAGE: openquantumsafe/ci-ubuntu-bionic-x86_64:latest
-      LIBOQS_USE_OPENSSL: OFF
-  macOS-shared_oqs-shared_ossl:
-    <<: *macopenssljob
-    environment:
-      LIBOQS_LIBTYPE: shared
-      OPENSSL_LIBTYPE: shared
-  macOS-static_oqs-static_ossl:
-    <<: *macopenssljob
+  ubuntu_bionic:
+    description: A template for running OQS-OpenSSL tests on x64 Ubuntu Bionic Docker VMs
+    parameters:
+      LIBOQS_SHARED:
+        description: "Build liboqs as a shared library."
+        type: boolean
+        default: false
+      OPENSSL_SHARED:
+        description: "Build OpenSSL as a shared library."
+        type: boolean
+        default: false
+    docker:
+      - image: openquantumsafe/ci-ubuntu-bionic-x86_64:latest
+        auth:
+          username: $DOCKER_LOGIN
+          password: $DOCKER_PASSWORD
+    steps:
+      - checkout # change this from "checkout" to "*localCheckout" when running CircleCI locally
+      - run:
+          name: Clone liboqs
+          command: ./oqs-scripts/clone_liboqs.sh
+      - run:
+          name: Build liboqs
+          command: <<# parameters.LIBOQS_SHARED >> env LIBOQS_LIBTYPE=shared <</ parameters.LIBOQS_SHARED >> ./oqs-scripts/build_liboqs.sh
+      - run:
+          name: Build OpenSSL
+          command: <<# parameters.OPENSSL_SHARED >> env OPENSSL_LIBTYPE=shared <</ parameters.OPENSSL_SHARED >> ./oqs-scripts/build_openssl.sh
+      - run:
+          name: Run OpenSSL tests
+          command: env LD_LIBRARY_PATH="$(pwd):$(pwd)/oqs/lib" make test
+      - run:
+          name: Run OQS connection, CMS and speed tests
+          command: env LD_LIBRARY_PATH="$(pwd):$(pwd)/oqs/lib" python3 -m pytest --numprocesses=auto oqs-test/test_tls_full.py oqs-test/test_cms.py oqs-test/test_speed.py
+
+  macOS:
+    description: A template for running OQS-OpenSSL tests on macOS
+    macos:
+      xcode: "11.3.0"
+    parameters:
+      LIBOQS_SHARED:
+        description: "Build liboqs as a shared library."
+        type: boolean
+        default: false
+      OPENSSL_SHARED:
+        description: "Build OpenSSL as a shared library."
+        type: boolean
+        default: false
+    steps:
+      - checkout # change this from "checkout" to "*localCheckout" when running CircleCI locally
+      - run:
+          name: Install dependencies
+          command: brew unlink python@2 && env HOMEBREW_NO_AUTO_UPDATE=1 brew install cmake ninja && pip3 install pytest pytest-xdist psutil
+      - run:
+          name: Clone liboqs
+          command: ./oqs-scripts/clone_liboqs.sh
+      - run:
+          name: Build liboqs
+          command: <<# parameters.LIBOQS_SHARED >> env LIBOQS_LIBTYPE=shared <</ parameters.LIBOQS_SHARED >> ./oqs-scripts/build_liboqs.sh
+      - run:
+          name: Build OpenSSL
+          command: <<# parameters.OPENSSL_SHARED >> env OPENSSL_LIBTYPE=shared <</ parameters.OPENSSL_SHARED >> ./oqs-scripts/build_openssl.sh
+      # TODO: Figure out why the tests fail on macOS when OpenSSL
+      # is built as a shared library.
+      #- run:
+          #name: Run OpenSSL tests
+          #command: env DYLD_LIBRARY_PATH="$(pwd):$(pwd)/oqs/lib" make test
+      - run:
+          name: Run OQS connection, CMS and speed tests
+          command: env DYLD_LIBRARY_PATH="$(pwd):$(pwd)/oqs/lib" python3 -m pytest --numprocesses=auto oqs-test/test_tls_full.py oqs-test/test_cms.py oqs-test/test_speed.py
+
+  ubuntu_boringssl_interop:
+    description: A job that tests interoperability between OQS-OpenSSL and OQS-BoringSSL on a x64 Ubuntu Bionic Docker VM
+    docker:
+      - image: openquantumsafe/ci-ubuntu-bionic-x86_64:latest
+    steps:
+      - checkout # change this from "checkout" to "*localCheckout" when running CircleCI locally
+      - run:
+          name: Clone liboqs and BoringSSL
+          command: ./oqs-scripts/clone_liboqs.sh && ./oqs-scripts/clone_boringssl.sh
+      - run:
+          name: Build liboqs
+          command: env LIBOQS_USE_OPENSSL=OFF ./oqs-scripts/build_liboqs.sh
+      - run:
+          name: Build BoringSSL
+          command:  ./oqs-scripts/build_boringssl.sh
+      - run:
+          name: Build OpenSSL
+          command: ./Configure linux-x86_64 no-shared no-tests && make -j15
+      - run:
+          name: Test BoringSSL client against OpenSSL server
+          command: python3 -m pytest --numprocesses=auto oqs-interop-test/test_full.py --client-type=bssl
+      - run:
+          name: Test OpenSSL client against BoringSSL server
+          command: python3 -m pytest --numprocesses=auto oqs-interop-test/test_full.py --client-type=ossl
+
+  trigger-oqs-demos-ci:
+    docker:
+      - image: cimg/base:2020.01
+        auth:
+          username: $DOCKER_LOGIN
+          password: $DOCKER_PASSWORD
+    steps:
+      - run:
+          name: Trigger oqs-demos CI
+          command: |
+            curl -u ${BUILD_TRIGGER_TOKEN}: \
+                 -X POST \
+                 --header "Content-Type: application/json" \
+                 -d '{ "branch": "master", "parameters": { "new_openssl_commit": true } }' \
+                 https://circleci.com/api/v2/project/gh/open-quantum-safe/oqs-demos/pipeline
 
 workflows:
-  version: 2
+  version: 2.1
   build:
     jobs:
-      - ubuntu_bionic-static_oqs-static_ossl
-      - ubuntu_bionic-shared_oqs-shared_ossl
-  nightly:
-    triggers:
-      - schedule:
-          cron: "0 3 * * *"
-          filters:
-            branches:
-              only:
-                - OQS-OpenSSL_1_1_1-stable
+      - macOS:
+          <<: *exclude_master
+          name: macOS-static_oqs-static_ossl
+      - macOS:
+          <<: *exclude_master
+          name: macOS-shared_oqs-shared_ossl
+          LIBOQS_SHARED: true
+          OPENSSL_SHARED: true
+      - ubuntu_bionic:
+          <<: *exclude_master
+          name: ubuntu-static_oqs-static_ossl
+      - ubuntu_bionic:
+          <<: *exclude_master
+          name: ubuntu-shared_oqs-shared_ossl
+          LIBOQS_SHARED: true
+          OPENSSL_SHARED: true
+      - ubuntu_boringssl_interop:
+          <<: *exclude_master
+          name: boringssl-interop
+  commit-to-main-branch:
+    when:
+      equal: [ OQS-OpenSSL_1_1_1-stable , << pipeline.git.branch >> ]
     jobs:
-      - debian_buster-shared_oqs-static_ossl
-      - macOS-shared_oqs-shared_ossl
-      - macOS-static_oqs-static_ossl
-      - ubuntu_bionic-shared_oqs-shared_ossl
-      - ubuntu_bionic-static_oqs-static_ossl
-      - ubuntu_bionic-static_oqs-static_ossl-boringssl-interop
+      - trigger-oqs-demos-ci:
+          context: openquantumsafe
+  liboqs-commit:
+    # We don't use "when" to filter more smartly because of:
+    # https://app.circleci.com/pipelines/github/open-quantum-safe/boringssl/187/workflows/c95855c2-47a6-4f83-8575-f98f6a279879/jobs/377
+    when: << pipeline.parameters.run_downstream_tests >>
+    jobs:
+      - macOS:
+          name: macOS-static_oqs-static_ossl
+      - macOS:
+          name: macOS-shared_oqs-shared_ossl
+          LIBOQS_SHARED: true
+          OPENSSL_SHARED: true
+      - ubuntu_bionic:
+          name: ubuntu-static_oqs-static_ossl
+      - ubuntu_bionic:
+          name: ubuntu-shared_oqs-shared_ossl
+          LIBOQS_SHARED: true
+          OPENSSL_SHARED: true
+      - ubuntu_boringssl_interop:
+          name: boringssl-interop
+      - trigger-oqs-demos-ci:
+          context: openquantumsafe

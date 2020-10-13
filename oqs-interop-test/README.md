@@ -8,11 +8,6 @@ There are two types of tests:
 
 - The "full" TLS test suite, which tests TLS connections for all possible pairs of signature and key-exchange algorithms.
 
-For each of these test types, the client and server must be specified using the following options:
+For each of these test types, the `--client-type` argument must be specified. This argument can take values `ossl` (denoting OpenSSL) and `bssl` (denoting BoringSSL). The client and server programs are then automatically selected.
 
-- `--client-prog`: Path to either the BoringSSL or OpenSSL client.
-- `--client-type`: Specifies whether the client is a BoringSSL or OpenSSL one.
-- `--client-prog`: Path to either the BoringSSL or OpenSSL server.
-- `--client-type`: Specifies whether the server is a BoringSSL or OpenSSL one.
-
-If the client is an OpenSSL one, the server must be a BoringSSL one, and vice versa. Furthermore, if the server is an OpenSSL one, a CA and server certificate are generated and verified by the BoringSSL client. On the other hand, if the server is a BoringSSL one, only a single self-signed certificate is sent to the OpenSSL client, and no certificate verification takes place (this is due to the way the BoringSSL server is written).
+If the client is an OpenSSL one, a BoringSSL server will be started and vice versa. Furthermore, if the server is an OpenSSL one, a CA and server certificate are generated and verified by the BoringSSL client. On the other hand, if the server is a BoringSSL one, only a single self-signed certificate is sent to the OpenSSL client, and no certificate verification takes place (this is due to the way the BoringSSL server is written).
