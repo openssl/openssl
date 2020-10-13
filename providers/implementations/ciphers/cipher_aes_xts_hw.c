@@ -59,6 +59,7 @@ static int cipher_hw_aes_xts_generic_initkey(PROV_CIPHER_CTX *ctx,
         XTS_SET_KEY_FN(HWAES_set_encrypt_key, HWAES_set_decrypt_key,
                        HWAES_encrypt, HWAES_decrypt,
                        stream_enc, stream_dec);
+        return 1;
     } else
 #endif /* HWAES_CAPABLE */
 
