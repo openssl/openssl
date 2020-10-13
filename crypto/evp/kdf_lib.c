@@ -119,7 +119,7 @@ void EVP_KDF_reset(EVP_KDF_CTX *ctx)
         ctx->meth->reset(ctx->data);
 }
 
-size_t EVP_KDF_size(EVP_KDF_CTX *ctx)
+size_t EVP_KDF_CTX_get_kdf_size(EVP_KDF_CTX *ctx)
 {
     OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
     size_t s;
