@@ -1105,7 +1105,7 @@ EVP_MAC *EVP_MAC_CTX_mac(EVP_MAC_CTX *ctx);
 int EVP_MAC_CTX_get_params(EVP_MAC_CTX *ctx, OSSL_PARAM params[]);
 int EVP_MAC_CTX_set_params(EVP_MAC_CTX *ctx, const OSSL_PARAM params[]);
 
-size_t EVP_MAC_size(EVP_MAC_CTX *ctx);
+size_t EVP_MAC_CTX_get_mac_size(EVP_MAC_CTX *ctx);
 int EVP_MAC_init(EVP_MAC_CTX *ctx);
 int EVP_MAC_update(EVP_MAC_CTX *ctx, const unsigned char *data, size_t datalen);
 int EVP_MAC_final(EVP_MAC_CTX *ctx,

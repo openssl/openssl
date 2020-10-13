@@ -80,7 +80,7 @@ static int do_mac(EVP_MAC_CTX *ctx, unsigned char *tmp, BIO *in,
 
     if (!EVP_MAC_init(ctx))
         goto err;
-    if (EVP_MAC_size(ctx) > outsz)
+    if (EVP_MAC_CTX_get_mac_size(ctx) > outsz)
         goto end;
     while ((i = BIO_read(in, (char *)tmp, BUFSIZE)) != 0) {
         if (i < 0 || !EVP_MAC_update(ctx, tmp, i))

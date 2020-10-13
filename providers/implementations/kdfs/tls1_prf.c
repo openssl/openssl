@@ -296,7 +296,7 @@ static int tls1_prf_P_hash(EVP_MAC_CTX *ctx_init,
         goto err;
     if (!EVP_MAC_init(ctx_init))
         goto err;
-    chunk = EVP_MAC_size(ctx_init);
+    chunk = EVP_MAC_CTX_get_mac_size(ctx_init);
     if (chunk == 0)
         goto err;
     /* A(0) = seed */

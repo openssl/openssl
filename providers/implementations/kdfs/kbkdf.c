@@ -218,7 +218,7 @@ static int kbkdf_derive(void *vctx, unsigned char *key, size_t keylen)
         return 0;
     }
 
-    h = EVP_MAC_size(ctx->ctx_init);
+    h = EVP_MAC_CTX_get_mac_size(ctx->ctx_init);
     if (h == 0)
         goto done;
     if (ctx->iv_len != 0 && ctx->iv_len != h) {

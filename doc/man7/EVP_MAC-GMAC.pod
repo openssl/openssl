@@ -47,7 +47,7 @@ EVP_MAC_CTX_get_params():
 
 =back
 
-The "size" parameter can also be retrieved with EVP_MAC_size().
+The "size" parameter can also be retrieved with EVP_MAC_CTX_get_mac_size().
 The length of the "size" parameter is equal to that of an B<unsigned int>.
 
 =head1 SEE ALSO
