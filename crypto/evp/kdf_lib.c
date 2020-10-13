@@ -110,7 +110,7 @@ const EVP_KDF *EVP_KDF_CTX_kdf(EVP_KDF_CTX *ctx)
     return ctx->meth;
 }
 
-void EVP_KDF_reset(EVP_KDF_CTX *ctx)
+void EVP_KDF_CTX_reset(EVP_KDF_CTX *ctx)
 {
     if (ctx == NULL)
         return;
