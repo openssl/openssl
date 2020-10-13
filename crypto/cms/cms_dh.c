@@ -9,6 +9,7 @@
 
 #include <assert.h>
 #include <openssl/cms.h>
+#include <openssl/dh.h>
 #include <openssl/err.h>
 #include <openssl/core_names.h>
 #include "cms_local.h"
