@@ -89,7 +89,7 @@ static OSSL_FUNC_kem_decapsulate_fn xor_decapsulate;
  * purposes
  */
 struct tls_group_st {
-    unsigned int group_id; /* IANA reserved for private use */
+    unsigned int group_id; /* for "tls-group-id", see provider-base(7) */
     unsigned int secbits;
     unsigned int mintls;
     unsigned int maxtls;
@@ -101,7 +101,7 @@ struct tls_group_st {
 #define XORGROUP_NAME "xorgroup"
 #define XORGROUP_NAME_INTERNAL "xorgroup-int"
 static struct tls_group_st xor_group = {
-    0,                  /* group_id */
+    0,                  /* group_id, set by randomize_tls_group_id() */
     128,                /* secbits */
     TLS1_3_VERSION,     /* mintls */
     0,                  /* maxtls */
