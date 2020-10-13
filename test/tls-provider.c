@@ -113,7 +113,7 @@ static struct tls_group_st xor_group = {
 #define XORKEMGROUP_NAME "xorkemgroup"
 #define XORKEMGROUP_NAME_INTERNAL "xorkemgroup-int"
 static struct tls_group_st xor_kemgroup = {
-    0,                  /* group_id */
+    0,                  /* group_id, set by randomize_tls_group_id() */
     128,                /* secbits */
     TLS1_3_VERSION,     /* mintls */
     0,                  /* maxtls */
