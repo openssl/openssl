@@ -132,7 +132,6 @@ static int test_store_get_params(int idx)
     return 1;
 }
 
-#ifndef OPENSSL_NO_DEPRECATED_3_0
 /*
  * This test verifies that calling OSSL_STORE_ATTACH does not set an
  * "unregistered scheme" error when called.
@@ -160,7 +159,6 @@ static int test_store_attach_unregistered_scheme(void)
     OPENSSL_CTX_free(libctx);
     return ret;
 }
-#endif
 
 const OPTIONS *test_get_options(void)
 {
@@ -201,8 +199,6 @@ int setup_tests(void)
     ADD_TEST(test_store_open);
     ADD_TEST(test_store_search_by_key_fingerprint_fail);
     ADD_ALL_TESTS(test_store_get_params, 3);
-#ifndef OPENSSL_NO_DEPRECATED_3_0
     ADD_TEST(test_store_attach_unregistered_scheme);
-#endif
     return 1;
 }
