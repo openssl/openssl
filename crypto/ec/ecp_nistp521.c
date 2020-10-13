@@ -684,8 +684,24 @@ static void (*felem_square_p)(largefelem out, const felem in) =
 static void (*felem_mul_p)(largefelem out, const felem in1, const felem in2) =
     felem_mul_wrapper;
 
+void p521_felem_square(largefelem out, const felem in);
+void p521_felem_mul(largefelem out, const felem in1, const felem in2);
+
+# if defined(_ARCH_PPC64)
+#  include "ppc_arch.h"
+# endif
+
 void felem_select(void)
 {
+# if defined(_ARCH_PPC64)
+    if ((OPENSSL_ppccap_P & PPC_MADD300) && (OPENSSL_ppccap_P & PPC_ALTIVEC)) {
+        felem_square_p = p521_felem_square;
+        felem_mul_p = p521_felem_mul;
+
+        return;
+    }
+# endif
+
     /* Default */
     felem_square_p = felem_square_ref;
     felem_mul_p = felem_mul_ref;
