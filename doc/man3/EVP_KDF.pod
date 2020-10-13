@@ -93,7 +93,7 @@ I<ctx>.
 
 =head2 Computing functions
 
-EVP_KDF_reset() resets the context to the default state as if the context
+EVP_KDF_CTX_reset() resets the context to the default state as if the context
 had just been created.
 
 EVP_KDF_derive() derives I<keylen> bytes of key material and places it in the
@@ -245,7 +245,7 @@ EVP_KDF_up_ref() returns 1 on success, 0 on error.
 EVP_KDF_CTX_new() returns either the newly allocated
 B<EVP_KDF_CTX> structure or NULL if an error occurred.
 
-EVP_KDF_CTX_free() and EVP_KDF_reset() do not return a value.
+EVP_KDF_CTX_free() and EVP_KDF_CTX_reset() do not return a value.
 
 EVP_KDF_CTX_get_kdf_size() returns the output size.  B<SIZE_MAX> is returned to indicate
 that the algorithm produces a variable amount of output; 0 to indicate failure.
