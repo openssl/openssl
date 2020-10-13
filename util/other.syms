@@ -601,3 +601,5 @@ OSSL_TRACE1                             define
 OSSL_TRACE2                             define
 OSSL_TRACE9                             define
 TS_VERIFY_CTS_set_certs                 define deprecated 3.0.0
+EVP_PKEY_get1_tls_encodedpoint          define deprecated 3.0.0
+EVP_PKEY_set1_tls_encodedpoint          define deprecated 3.0.0
