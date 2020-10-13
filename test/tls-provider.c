@@ -334,12 +334,9 @@ static int xor_encapsulate(void *vpxorctx,
     rv = 1;
 
  end:
-    if (genctx != NULL)
-        xor_gen_cleanup(genctx);
-    if (ourkey != NULL)
-        xor_freedata(ourkey);
-    if (derivectx != NULL)
-        xor_freectx(derivectx);
+    xor_gen_cleanup(genctx);
+    xor_freedata(ourkey);
+    xor_freectx(derivectx);
     return rv;
 }
 
@@ -384,10 +381,8 @@ static int xor_decapsulate(void *vpxorctx,
     rv = 1;
 
  end:
-    if (peerkey != NULL)
-        xor_freedata(peerkey);
-    if (derivectx != NULL)
-        xor_freectx(derivectx);
+    xor_freedata(peerkey);
+    xor_freectx(derivectx);
     return rv;
 }
 
