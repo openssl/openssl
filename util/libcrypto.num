@@ -98,7 +98,7 @@ PKCS5_pbe2_set_scrypt                   99	3_0_0	EXIST::FUNCTION:SCRYPT
 X509_find_by_subject                    100	3_0_0	EXIST::FUNCTION:
 DSAparams_print                         101	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,DSA
 BF_set_key                              102	3_0_0	EXIST::FUNCTION:BF,DEPRECATEDIN_3_0
-d2i_DHparams                            103	3_0_0	EXIST::FUNCTION:DH
+d2i_DHparams                            103	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,DH
 i2d_PKCS7_ENC_CONTENT                   104	3_0_0	EXIST::FUNCTION:
 DH_generate_key                         105	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,DH
 ENGINE_add_conf_module                  106	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,ENGINE
@@ -152,7 +152,7 @@ X509_REVOKED_get_ext_count              154	3_0_0	EXIST::FUNCTION:
 BN_is_prime_fasttest_ex                 155	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 ERR_load_PKCS12_strings                 156	3_0_0	EXIST::FUNCTION:
 EVP_sha384                              157	3_0_0	EXIST::FUNCTION:
-i2d_DHparams                            158	3_0_0	EXIST::FUNCTION:DH
+i2d_DHparams                            158	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,DH
 TS_VERIFY_CTX_set_store                 159	3_0_0	EXIST::FUNCTION:TS
 PKCS12_verify_mac                       160	3_0_0	EXIST::FUNCTION:
 X509v3_addr_canonize                    161	3_0_0	EXIST::FUNCTION:RFC3779
@@ -457,7 +457,7 @@ ASN1_INTEGER_to_BN                      465	3_0_0	EXIST::FUNCTION:
 OPENSSL_memcmp                          466	3_0_0	NOEXIST::FUNCTION:
 BUF_MEM_new                             467	3_0_0	EXIST::FUNCTION:
 DSO_set_filename                        468	3_0_0	EXIST::FUNCTION:
-DH_new                                  469	3_0_0	EXIST::FUNCTION:DH
+DH_new                                  469	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,DH
 OCSP_RESPID_free                        470	3_0_0	EXIST::FUNCTION:OCSP
 PKCS5_pbe2_set                          471	3_0_0	EXIST::FUNCTION:
 SCT_set_signature_nid                   473	3_0_0	EXIST::FUNCTION:CT
@@ -717,7 +717,7 @@ TXT_DB_write                            735	3_0_0	EXIST::FUNCTION:
 OCSP_REQUEST_get1_ext_d2i               736	3_0_0	EXIST::FUNCTION:OCSP
 CMS_unsigned_add1_attr_by_NID           737	3_0_0	EXIST::FUNCTION:CMS
 BN_mod_exp_mont                         738	3_0_0	EXIST::FUNCTION:
-d2i_DHxparams                           739	3_0_0	EXIST::FUNCTION:DH
+d2i_DHxparams                           739	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,DH
 DH_size                                 740	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,DH
 CONF_imodule_get_name                   741	3_0_0	EXIST::FUNCTION:
 ENGINE_get_pkey_meth_engine             742	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,ENGINE
@@ -2155,7 +2155,7 @@ BN_GF2m_add                             2202	3_0_0	EXIST::FUNCTION:EC2M
 CMAC_resume                             2203	3_0_0	EXIST::FUNCTION:CMAC,DEPRECATEDIN_3_0
 TS_ACCURACY_set_millis                  2204	3_0_0	EXIST::FUNCTION:TS
 X509V3_EXT_conf                         2205	3_0_0	EXIST::FUNCTION:
-i2d_DHxparams                           2206	3_0_0	EXIST::FUNCTION:DH
+i2d_DHxparams                           2206	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,DH
 EVP_CIPHER_CTX_free                     2207	3_0_0	EXIST::FUNCTION:
 WHIRLPOOL_BitUpdate                     2208	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,WHIRLPOOL
 EVP_idea_ecb                            2209	3_0_0	EXIST::FUNCTION:IDEA

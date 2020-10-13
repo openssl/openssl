@@ -51,11 +51,12 @@ const DH_METHOD *dh_get_method(const DH *dh)
 {
     return dh->meth;
 }
-
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 DH *DH_new(void)
 {
     return dh_new_intern(NULL, NULL);
 }
+# endif
 
 DH *DH_new_method(ENGINE *engine)
 {

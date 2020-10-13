@@ -147,7 +147,7 @@ DEPRECATEDIN_3_0(const DH_METHOD *DH_get_default_method(void))
 DEPRECATEDIN_3_0(int DH_set_method(DH *dh, const DH_METHOD *meth))
 DEPRECATEDIN_3_0(DH *DH_new_method(ENGINE *engine))
 
-DH *DH_new(void);
+DEPRECATEDIN_3_0(DH *DH_new(void))
 void DH_free(DH *dh);
 int DH_up_ref(DH *dh);
 int DH_bits(const DH *dh);
@@ -185,8 +185,12 @@ DEPRECATEDIN_3_0(int DH_compute_key(unsigned char *key, const BIGNUM *pub_key,
                                     DH *dh))
 DEPRECATEDIN_3_0(int DH_compute_key_padded(unsigned char *key,
                                            const BIGNUM *pub_key, DH *dh))
-DECLARE_ASN1_ENCODE_FUNCTIONS_only(DH, DHparams)
-DECLARE_ASN1_ENCODE_FUNCTIONS_only(DH, DHxparams)
+
+#  ifndef OPENSSL_NO_DEPRECATED_3_0
+DECLARE_ASN1_ENCODE_FUNCTIONS_only_attr(OSSL_DEPRECATEDIN_3_0, DH, DHparams)
+DECLARE_ASN1_ENCODE_FUNCTIONS_only_attr(OSSL_DEPRECATEDIN_3_0, DH, DHxparams)
+#  endif
+
 #  ifndef OPENSSL_NO_STDIO
 DEPRECATEDIN_3_0(int DHparams_print_fp(FILE *fp, const DH *x))
 #  endif
