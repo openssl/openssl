@@ -2819,6 +2819,17 @@ int tls_provider_set_tls_params(SSL *s, EVP_CIPHER_CTX *ctx,
                                 const EVP_CIPHER *ciph,
                                 const EVP_MD *md);
 
+void ssl_engine_finish(ENGINE *e);
+const EVP_CIPHER *tls_get_cipher_from_engine(int nid);
+const EVP_MD *tls_get_digest_from_engine(int nid);
+int tls_engine_load_ssl_client_cert(SSL *s, X509 **px509, EVP_PKEY **ppkey);
+int ssl_old_hmac_new(SSL_HMAC *ret);
+void ssl_old_hmac_free(SSL_HMAC *ctx);
+int ssl_old_hmac_init(SSL_HMAC *ctx, void *key, size_t len, char *md);
+int ssl_old_hmac_update(SSL_HMAC *ctx, const unsigned char *data, size_t len);
+int ssl_old_hmac_final(SSL_HMAC *ctx, unsigned char *md, size_t *len);
+size_t ssl_old_hmac_size(const SSL_HMAC *ctx);
+
 # else /* OPENSSL_UNIT_TEST */
 
 #  define ssl_init_wbio_buffer SSL_test_functions()->p_ssl_init_wbio_buffer

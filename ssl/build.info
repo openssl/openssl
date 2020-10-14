@@ -33,7 +33,7 @@ SOURCE[../libssl]=\
         bio_ssl.c ssl_err.c tls_srp.c t1_trce.c ssl_utst.c \
         record/ssl3_buffer.c record/ssl3_record.c record/dtls1_bitmap.c \
         statem/statem.c record/ssl3_record_tls13.c record/tls_pad.c \
-        $KTLSSRC
+        tls_depr.c $KTLSSRC
 IF[{- !$disabled{'deprecated-3.0'} -}]
   SOURCE[../libssl]=s3_cbc.c
 ENDIF
