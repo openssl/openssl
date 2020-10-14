@@ -3103,11 +3103,8 @@ static int tls_process_cke_rsa(SSL *s, PACKET *pkt)
 
 static int tls_process_cke_dhe(SSL *s, PACKET *pkt)
 {
-#ifndef OPENSSL_NO_DH
     EVP_PKEY *skey = NULL;
-    DH *cdh;
     unsigned int i;
-    BIGNUM *pub_key;
     const unsigned char *data;
     EVP_PKEY *ckey = NULL;
     int ret = 0;
@@ -3142,12 +3139,9 @@ static int tls_process_cke_dhe(SSL *s, PACKET *pkt)
         goto err;
     }
 
-    cdh = EVP_PKEY_get0_DH(ckey);
-    pub_key = BN_bin2bn(data, i, NULL);
-    if (pub_key == NULL || cdh == NULL || !DH_set0_key(cdh, pub_key, NULL)) {
+    if (!EVP_PKEY_set1_tls_encodedpoint(ckey, data, i)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_CKE_DHE,
                  ERR_R_INTERNAL_ERROR);
-        BN_free(pub_key);
         goto err;
     }
 
@@ -3162,12 +3156,6 @@ static int tls_process_cke_dhe(SSL *s, PACKET *pkt)
  err:
     EVP_PKEY_free(ckey);
     return ret;
-#else
-    /* Should never happen */
-    SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_CKE_DHE,
-             ERR_R_INTERNAL_ERROR);
-    return 0;
-#endif
 }
 
 static int tls_process_cke_ecdhe(SSL *s, PACKET *pkt)
