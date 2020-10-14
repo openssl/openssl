@@ -2048,12 +2048,16 @@ int s_server_main(int argc, char *argv[])
 
         if (dh == NULL) {
             SSL_CTX_set_dh_auto(ctx, 1);
-        } else if (!SSL_CTX_set_tmp_dh(ctx, dh)) {
+        }
+# ifndef OPENSSL_NO_DEPRECATED_3_0
+        /* TODO(3.0): We need a 3.0 friendly way of doing this */
+        else if (!SSL_CTX_set_tmp_dh(ctx, dh)) {
             BIO_puts(bio_err, "Error setting temp DH parameters\n");
             ERR_print_errors(bio_err);
             DH_free(dh);
             goto end;
         }
+# endif
 
         if (ctx2 != NULL) {
             if (!dhfile) {
@@ -2068,12 +2072,16 @@ int s_server_main(int argc, char *argv[])
             }
             if (dh == NULL) {
                 SSL_CTX_set_dh_auto(ctx2, 1);
-            } else if (!SSL_CTX_set_tmp_dh(ctx2, dh)) {
+            }
+# ifndef OPENSSL_NO_DEPRECATED_3_0
+          /* TODO(3.0): We need a 3.0 friendly way of doing this */
+            else if (!SSL_CTX_set_tmp_dh(ctx2, dh)) {
                 BIO_puts(bio_err, "Error setting temp DH parameters\n");
                 ERR_print_errors(bio_err);
                 DH_free(dh);
                 goto end;
             }
+# endif
         }
         DH_free(dh);
     }
@@ -3006,6 +3014,8 @@ static void print_connection_info(SSL *con)
 #ifndef OPENSSL_NO_DH
 static DH *load_dh_param(const char *dhfile)
 {
+# ifndef OPENSSL_NO_DEPRECATED_3_0
+    /* TODO(3.0): Use a decoder for this */
     DH *ret = NULL;
     BIO *bio;
 
@@ -3015,6 +3025,9 @@ static DH *load_dh_param(const char *dhfile)
  err:
     BIO_free(bio);
     return ret;
+# else
+    return NULL;
+# endif
 }
 #endif
 
