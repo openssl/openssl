@@ -879,7 +879,7 @@ IMPLEMENT_ECX_VARIANT(ED448)
 
 # endif
 
-# ifndef OPENSSL_NO_DH
+# if !defined(OPENSSL_NO_DH) && !defined(OPENSSL_NO_DEPRECATED_3_0)
 
 int EVP_PKEY_set1_DH(EVP_PKEY *pkey, DH *key)
 {
