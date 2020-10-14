@@ -1406,7 +1406,7 @@ X509_ATTRIBUTE_set1_object              1438	3_0_0	EXIST::FUNCTION:
 i2d_ECPrivateKey_bio                    1439	3_0_0	EXIST::FUNCTION:EC
 BN_GENCB_free                           1440	3_0_0	EXIST::FUNCTION:
 HMAC_size                               1441	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
-EVP_PKEY_get0_DH                        1442	3_0_0	EXIST::FUNCTION:DH
+EVP_PKEY_get0_DH                        1442	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,DH
 d2i_OCSP_CRLID                          1443	3_0_0	EXIST::FUNCTION:OCSP
 EVP_CIPHER_CTX_set_padding              1444	3_0_0	EXIST::FUNCTION:
 CTLOG_new_from_base64                   1445	3_0_0	EXIST::FUNCTION:CT
@@ -1585,7 +1585,7 @@ X509V3_EXT_get                          1621	3_0_0	EXIST::FUNCTION:
 OCSP_id_cmp                             1622	3_0_0	EXIST::FUNCTION:OCSP
 NCONF_dump_bio                          1623	3_0_0	EXIST::FUNCTION:
 X509_NAME_get_entry                     1624	3_0_0	EXIST::FUNCTION:
-EVP_PKEY_get1_DH                        1625	3_0_0	EXIST::FUNCTION:DH
+EVP_PKEY_get1_DH                        1625	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,DH
 CRYPTO_gcm128_aad                       1626	3_0_0	EXIST::FUNCTION:
 EVP_des_cfb8                            1627	3_0_0	EXIST::FUNCTION:DES
 BN_BLINDING_convert                     1628	3_0_0	EXIST::FUNCTION:
@@ -2910,7 +2910,7 @@ NAME_CONSTRAINTS_it                     2972	3_0_0	EXIST::FUNCTION:
 TS_REQ_get_cert_req                     2973	3_0_0	EXIST::FUNCTION:TS
 BIO_pop                                 2974	3_0_0	EXIST::FUNCTION:
 SHA256_Final                            2975	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
-EVP_PKEY_set1_DH                        2976	3_0_0	EXIST::FUNCTION:DH
+EVP_PKEY_set1_DH                        2976	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,DH
 DH_get_ex_data                          2977	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,DH
 CRYPTO_secure_malloc                    2978	3_0_0	EXIST::FUNCTION:
 TS_RESP_get_status_info                 2979	3_0_0	EXIST::FUNCTION:TS
