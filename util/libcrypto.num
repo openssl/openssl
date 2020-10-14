@@ -274,7 +274,7 @@ X509_get_ext_d2i                        279	3_0_0	EXIST::FUNCTION:
 d2i_PKCS7_ENC_CONTENT                   280	3_0_0	EXIST::FUNCTION:
 BUF_MEM_grow                            281	3_0_0	EXIST::FUNCTION:
 TS_REQ_free                             282	3_0_0	EXIST::FUNCTION:TS
-PEM_read_DHparams                       283	3_0_0	EXIST::FUNCTION:DH,STDIO
+PEM_read_DHparams                       283	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,DH,STDIO
 RSA_private_decrypt                     284	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,RSA
 X509V3_EXT_get_nid                      285	3_0_0	EXIST::FUNCTION:
 BIO_s_log                               286	3_0_0	EXIST::FUNCTION:
@@ -447,7 +447,7 @@ ENGINE_get_digests                      455	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3
 TS_MSG_IMPRINT_get_algo                 456	3_0_0	EXIST::FUNCTION:TS
 DH_new_method                           457	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,DH
 BF_ecb_encrypt                          458	3_0_0	EXIST::FUNCTION:BF,DEPRECATEDIN_3_0
-PEM_write_bio_DHparams                  459	3_0_0	EXIST::FUNCTION:DH
+PEM_write_bio_DHparams                  459	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,DH
 EVP_DigestFinal                         460	3_0_0	EXIST::FUNCTION:
 CT_POLICY_EVAL_CTX_set_shared_CTLOG_STORE 461	3_0_0	EXIST::FUNCTION:CT
 X509v3_asid_add_id_or_range             462	3_0_0	EXIST::FUNCTION:RFC3779
@@ -2017,7 +2017,7 @@ BN_GENCB_get_arg                        2063	3_0_0	EXIST::FUNCTION:
 EVP_MD_CTX_clear_flags                  2064	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_meth_get_verifyctx             2065	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 CT_POLICY_EVAL_CTX_get0_cert            2066	3_0_0	EXIST::FUNCTION:CT
-PEM_write_DHparams                      2067	3_0_0	EXIST::FUNCTION:DH,STDIO
+PEM_write_DHparams                      2067	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,DH,STDIO
 DH_set_ex_data                          2068	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,DH
 OCSP_SIGNATURE_free                     2069	3_0_0	EXIST::FUNCTION:OCSP
 CRYPTO_128_unwrap_pad                   2070	3_0_0	EXIST::FUNCTION:
@@ -2405,7 +2405,7 @@ BIGNUM_it                               2455	3_0_0	EXIST::FUNCTION:
 BN_BLINDING_get_flags                   2456	3_0_0	EXIST::FUNCTION:
 X509_EXTENSION_get_critical             2457	3_0_0	EXIST::FUNCTION:
 DSA_set_default_method                  2458	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,DSA
-PEM_write_bio_DHxparams                 2459	3_0_0	EXIST::FUNCTION:DH
+PEM_write_bio_DHxparams                 2459	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,DH
 DSA_set_ex_data                         2460	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,DSA
 BIO_s_datagram_sctp                     2461	3_0_0	EXIST::FUNCTION:DGRAM,SCTP
 SXNET_add_id_asc                        2462	3_0_0	EXIST::FUNCTION:
@@ -3190,7 +3190,7 @@ X509_set1_notBefore                     3255	3_0_0	EXIST::FUNCTION:
 MD4                                     3256	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,MD4
 EVP_PKEY_CTX_dup                        3257	3_0_0	EXIST::FUNCTION:
 ENGINE_setup_bsd_cryptodev              3258	3_0_0	EXIST:__FreeBSD__:FUNCTION:DEPRECATEDIN_1_1_0,ENGINE
-PEM_read_bio_DHparams                   3259	3_0_0	EXIST::FUNCTION:DH
+PEM_read_bio_DHparams                   3259	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,DH
 CMS_SharedInfo_encode                   3260	3_0_0	EXIST::FUNCTION:CMS
 ASN1_OBJECT_create                      3261	3_0_0	EXIST::FUNCTION:
 i2d_ECParameters                        3262	3_0_0	EXIST::FUNCTION:EC
@@ -3684,7 +3684,7 @@ ASN1_TIME_print                         3763	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_CTX_get0_peerkey               3764	3_0_0	EXIST::FUNCTION:
 BN_mod_lshift1                          3765	3_0_0	EXIST::FUNCTION:
 BIO_ADDRINFO_family                     3766	3_0_0	EXIST::FUNCTION:SOCK
-PEM_write_DHxparams                     3767	3_0_0	EXIST::FUNCTION:DH,STDIO
+PEM_write_DHxparams                     3767	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,DH,STDIO
 BN_mod_exp2_mont                        3768	3_0_0	EXIST::FUNCTION:
 ASN1_PRINTABLE_free                     3769	3_0_0	EXIST::FUNCTION:
 PKCS7_ATTR_SIGN_it                      3771	3_0_0	EXIST::FUNCTION:

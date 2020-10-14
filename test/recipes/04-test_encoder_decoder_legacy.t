@@ -11,11 +11,15 @@ use warnings;
 
 use OpenSSL::Test::Simple;
 use OpenSSL::Test qw/:DEFAULT srctop_file bldtop_dir/;
+use OpenSSL::Test::Utils;
 use Cwd qw(abs_path);
 
-setup("test_encode_legacy");
+setup("test_encoder_decoder_legacy");
 
+plan skip_all => "Not available in a no-deprecated build"
+    if disabled("deprecated");
 plan tests => 1;
+
 
 $ENV{OPENSSL_MODULES} = abs_path(bldtop_dir("providers"));
 $ENV{OPENSSL_CONF} = abs_path(srctop_file("test", "default-and-legacy.cnf"));
