@@ -1225,9 +1225,13 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 # define SSL_ERROR_WANT_ASYNC            9
 # define SSL_ERROR_WANT_ASYNC_JOB       10
 # define SSL_ERROR_WANT_CLIENT_HELLO_CB 11
-# define SSL_CTRL_SET_TMP_DH                     3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
+#  define SSL_CTRL_SET_TMP_DH                    3
+# endif
 # define SSL_CTRL_SET_TMP_ECDH                   4
-# define SSL_CTRL_SET_TMP_DH_CB                  6
+# ifndef OPENSSL_NO_DEPRECATED_3_0
+#  define SSL_CTRL_SET_TMP_DH_CB                 6
+# endif
 # define SSL_CTRL_GET_CLIENT_CERT_REQUEST        9
 # define SSL_CTRL_GET_NUM_RENEGOTIATIONS         10
 # define SSL_CTRL_CLEAR_NUM_RENEGOTIATIONS       11
@@ -1351,14 +1355,18 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
         SSL_ctrl((ssl),SSL_CTRL_CLEAR_NUM_RENEGOTIATIONS,0,NULL)
 # define SSL_total_renegotiations(ssl) \
         SSL_ctrl((ssl),SSL_CTRL_GET_TOTAL_RENEGOTIATIONS,0,NULL)
-# define SSL_CTX_set_tmp_dh(ctx,dh) \
+# ifndef OPENSSL_NO_DEPRECATED_3_0
+#  define SSL_CTX_set_tmp_dh(ctx,dh) \
         SSL_CTX_ctrl(ctx,SSL_CTRL_SET_TMP_DH,0,(char *)(dh))
+# endif
 # define SSL_CTX_set_dh_auto(ctx, onoff) \
         SSL_CTX_ctrl(ctx,SSL_CTRL_SET_DH_AUTO,onoff,NULL)
 # define SSL_set_dh_auto(s, onoff) \
         SSL_ctrl(s,SSL_CTRL_SET_DH_AUTO,onoff,NULL)
-# define SSL_set_tmp_dh(ssl,dh) \
+# ifndef OPENSSL_NO_DEPRECATED_3_0
+#  define SSL_set_tmp_dh(ssl,dh) \
         SSL_ctrl(ssl,SSL_CTRL_SET_TMP_DH,0,(char *)(dh))
+# endif
 # ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define SSL_CTX_set_tmp_ecdh(ctx,ecdh) \
         SSL_CTX_ctrl(ctx,SSL_CTRL_SET_TMP_ECDH,0,(char *)(ecdh))
@@ -2129,13 +2137,17 @@ void SSL_CTX_set_default_read_buffer_len(SSL_CTX *ctx, size_t len);
 void SSL_set_default_read_buffer_len(SSL *s, size_t len);
 
 # ifndef OPENSSL_NO_DH
+#  ifndef OPENSSL_NO_DEPRECATED_3_0
 /* NB: the |keylength| is only applicable when is_export is true */
+OSSL_DEPRECATEDIN_3_0
 void SSL_CTX_set_tmp_dh_callback(SSL_CTX *ctx,
                                  DH *(*dh) (SSL *ssl, int is_export,
                                             int keylength));
+OSSL_DEPRECATEDIN_3_0
 void SSL_set_tmp_dh_callback(SSL *ssl,
                              DH *(*dh) (SSL *ssl, int is_export,
                                         int keylength));
+#  endif
 # endif
 
 __owur const COMP_METHOD *SSL_get_current_compression(const SSL *s);
