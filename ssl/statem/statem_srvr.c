@@ -2429,10 +2429,11 @@ int tls_construct_server_key_exchange(SSL *s, WPACKET *pkt)
     const SIGALG_LOOKUP *lu = s->s3.tmp.sigalg;
     int i;
     unsigned long type;
-    const BIGNUM *r[4];
+    BIGNUM *r[4];
     EVP_MD_CTX *md_ctx = EVP_MD_CTX_new();
     EVP_PKEY_CTX *pctx = NULL;
     size_t paramlen, paramoffset;
+    int freer = 0, ret = 0;
 
     if (!WPACKET_get_total_written(pkt, &paramoffset)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
@@ -2455,9 +2456,7 @@ int tls_construct_server_key_exchange(SSL *s, WPACKET *pkt)
 #ifndef OPENSSL_NO_DH
     if (type & (SSL_kDHE | SSL_kDHEPSK)) {
         CERT *cert = s->cert;
-
         EVP_PKEY *pkdhp = NULL;
-        DH *dh;
 
         if (s->cert->dh_tmp_auto) {
             pkdh = ssl_get_auto_dh(s);
@@ -2499,17 +2498,20 @@ int tls_construct_server_key_exchange(SSL *s, WPACKET *pkt)
             goto err;
         }
 
-        dh = EVP_PKEY_get0_DH(s->s3.tmp.pkey);
-        if (dh == NULL) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            goto err;
-        }
-
         EVP_PKEY_free(pkdh);
         pkdh = NULL;
 
-        DH_get0_pqg(dh, &r[0], NULL, &r[1]);
-        DH_get0_key(dh, &r[2], NULL);
+        /* These BIGNUMs need to be freed when we're finished */
+        freer = 1;
+        if (!EVP_PKEY_get_bn_param(s->s3.tmp.pkey, OSSL_PKEY_PARAM_FFC_P,
+                                   &r[0])
+                || !EVP_PKEY_get_bn_param(s->s3.tmp.pkey, OSSL_PKEY_PARAM_FFC_G,
+                                          &r[1])
+                || !EVP_PKEY_get_bn_param(s->s3.tmp.pkey,
+                                          OSSL_PKEY_PARAM_PUB_KEY, &r[2])) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            goto err;
+        }
     } else
 #endif
 #ifndef OPENSSL_NO_EC
@@ -2613,7 +2615,6 @@ int tls_construct_server_key_exchange(SSL *s, WPACKET *pkt)
             goto err;
         }
 
-#ifndef OPENSSL_NO_DH
         /*-
          * for interoperability with some versions of the Microsoft TLS
          * stack, we need to zero pad the DHE pub key to the same length
@@ -2630,7 +2631,7 @@ int tls_construct_server_key_exchange(SSL *s, WPACKET *pkt)
                 memset(binval, 0, len);
             }
         }
-#endif
+
         if (!WPACKET_allocate_bytes(pkt, BN_num_bytes(r[i]), &binval)
                 || !WPACKET_close(pkt)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
@@ -2716,17 +2717,20 @@ int tls_construct_server_key_exchange(SSL *s, WPACKET *pkt)
         OPENSSL_free(tbs);
     }
 
-    EVP_MD_CTX_free(md_ctx);
-    return 1;
+    ret = 1;
  err:
-#ifndef OPENSSL_NO_DH
     EVP_PKEY_free(pkdh);
-#endif
 #ifndef OPENSSL_NO_EC
     OPENSSL_free(encodedPoint);
 #endif
     EVP_MD_CTX_free(md_ctx);
-    return 0;
+    if (freer) {
+        BN_free(r[0]);
+        BN_free(r[1]);
+        BN_free(r[2]);
+        BN_free(r[3]);
+    }
+    return ret;
 }
 
 int tls_construct_certificate_request(SSL *s, WPACKET *pkt)
