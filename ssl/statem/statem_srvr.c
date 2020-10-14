@@ -2541,16 +2541,13 @@ int tls_construct_server_key_exchange(SSL *s, WPACKET *pkt)
         DH *dh;
 
         if (s->cert->dh_tmp_auto) {
-            DH *dhp = ssl_get_auto_dh(s);
-            pkdh = EVP_PKEY_new();
-            if (pkdh == NULL || dhp == NULL) {
-                DH_free(dhp);
+            pkdh = ssl_get_auto_dh(s);
+            if (pkdh == NULL) {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                          SSL_F_TLS_CONSTRUCT_SERVER_KEY_EXCHANGE,
                          ERR_R_INTERNAL_ERROR);
                 goto err;
             }
-            EVP_PKEY_assign_DH(pkdh, dhp);
             pkdhp = pkdh;
         } else {
             pkdhp = cert->dh_tmp;

@@ -2693,7 +2693,7 @@ __owur int ssl_validate_ct(SSL *s);
 #  endif
 
 #  ifndef OPENSSL_NO_DH
-__owur DH *ssl_get_auto_dh(SSL *s);
+__owur EVP_PKEY *ssl_get_auto_dh(SSL *s);
 #  endif
 
 __owur int ssl_security_cert(SSL *s, SSL_CTX *ctx, X509 *x, int vfy, int is_ee);
