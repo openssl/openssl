@@ -166,7 +166,6 @@ static struct test_stanza_st {
       NULL,                      /* No PEM_read_bio_ECParameters */
       (PEM_read_bio_of_void *)PEM_read_bio_EC_PUBKEY, },
 #endif
-#ifndef OPENSSL_NO_DEPRECATED_3_0
     { "RSA", { "RSA", "type-specific" }, EVP_PKEY_RSA,
       (i2d_of_void *)i2d_RSAPrivateKey,
       (i2d_of_void *)i2d_RSAPublicKey,
@@ -184,7 +183,6 @@ static struct test_stanza_st {
       (PEM_read_bio_of_void *)PEM_read_bio_RSAPublicKey,
       NULL,                      /* No PEM_read_bio_RSAparams */
       (PEM_read_bio_of_void *)PEM_read_bio_RSA_PUBKEY }
-#endif
 };
 
 /*

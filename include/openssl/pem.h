@@ -391,8 +391,10 @@ DECLARE_PEM_rw_cb(ECPrivateKey, EC_KEY)
 DECLARE_PEM_rw(EC_PUBKEY, EC_KEY)
 # endif
 # ifndef OPENSSL_NO_DH
-DECLARE_PEM_rw(DHparams, DH)
-DECLARE_PEM_write(DHxparams, DH)
+#  ifndef OPENSSL_NO_DEPRECATED_3_0
+DECLARE_PEM_rw_attr(OSSL_DEPRECATEDIN_3_0, DHparams, DH)
+DECLARE_PEM_write_attr(OSSL_DEPRECATEDIN_3_0, DHxparams, DH)
+#  endif
 # endif
 DECLARE_PEM_rw_cb(PrivateKey, EVP_PKEY)
 EVP_PKEY *PEM_read_bio_PrivateKey_ex(BIO *bp, EVP_PKEY **x,
