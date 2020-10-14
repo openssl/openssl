@@ -79,7 +79,6 @@ const OPTIONS dhparam_options[] = {
 int dhparam_main(int argc, char **argv)
 {
     BIO *in = NULL, *out = NULL;
-    DH *dh = NULL, *alloc_dh = NULL;
     EVP_PKEY *pkey = NULL, *tmppkey = NULL;
     EVP_PKEY_CTX *ctx = NULL;
     char *infile = NULL, *outfile = NULL, *prog;
@@ -343,7 +342,6 @@ int dhparam_main(int argc, char **argv)
  end:
     if (ret != 0)
         ERR_print_errors(bio_err);
-    DH_free(alloc_dh);
     BIO_free(in);
     BIO_free_all(out);
     EVP_PKEY_free(pkey);
