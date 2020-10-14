@@ -3452,15 +3452,15 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
         ret = (int)(s->s3.flags);
         break;
 #ifndef OPENSSL_NO_DH
+# ifndef OPENSSL_NO_DEPRECATED_3_0
     case SSL_CTRL_SET_TMP_DH:
         {
-            DH *dh = (DH *)parg;
             EVP_PKEY *pkdh = NULL;
-            if (dh == NULL) {
+            if (parg == NULL) {
                 ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_NULL_PARAMETER);
                 return 0;
             }
-            pkdh = ssl_dh_to_pkey(dh);
+            pkdh = ssl_dh_to_pkey(parg);
             if (pkdh == NULL) {
                 ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
                 return 0;
@@ -3481,6 +3481,7 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
             ERR_raise(ERR_LIB_SSL, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
             return ret;
         }
+# endif
     case SSL_CTRL_SET_DH_AUTO:
         s->cert->dh_tmp_auto = larg;
         return 1;
@@ -3776,7 +3777,7 @@ long ssl3_callback_ctrl(SSL *s, int cmd, void (*fp) (void))
     int ret = 0;
 
     switch (cmd) {
-#ifndef OPENSSL_NO_DH
+#if !defined(OPENSSL_NO_DH ) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     case SSL_CTRL_SET_TMP_DH_CB:
         {
             s->cert->dh_tmp_cb = (DH *(*)(SSL *, int, int))fp;
@@ -3802,16 +3803,15 @@ long ssl3_callback_ctrl(SSL *s, int cmd, void (*fp) (void))
 long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 {
     switch (cmd) {
-#ifndef OPENSSL_NO_DH
+#if !defined(OPENSSL_NO_DH) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     case SSL_CTRL_SET_TMP_DH:
         {
-            DH *dh = (DH *)parg;
             EVP_PKEY *pkdh = NULL;
-            if (dh == NULL) {
+            if (parg == NULL) {
                 ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_NULL_PARAMETER);
                 return 0;
             }
-            pkdh = ssl_dh_to_pkey(dh);
+            pkdh = ssl_dh_to_pkey(parg);
             if (pkdh == NULL) {
                 ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
                 return 0;
@@ -3831,10 +3831,10 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
             ERR_raise(ERR_LIB_SSL, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
             return 0;
         }
+#endif
     case SSL_CTRL_SET_DH_AUTO:
         ctx->cert->dh_tmp_auto = larg;
         return 1;
-#endif
 #ifndef OPENSSL_NO_EC
     case SSL_CTRL_SET_TMP_ECDH:
         {
@@ -4046,7 +4046,7 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 long ssl3_ctx_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp) (void))
 {
     switch (cmd) {
-#ifndef OPENSSL_NO_DH
+#if !defined(OPENSSL_NO_DH) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     case SSL_CTRL_SET_TMP_DH_CB:
         {
             ctx->cert->dh_tmp_cb = (DH *(*)(SSL *, int, int))fp;
@@ -5009,18 +5009,3 @@ int ssl_encapsulate(SSL *s, EVP_PKEY *pubkey,
     EVP_PKEY_CTX_free(pctx);
     return rv;
 }
-
-#ifndef OPENSSL_NO_DH
-EVP_PKEY *ssl_dh_to_pkey(DH *dh)
-{
-    EVP_PKEY *ret;
-    if (dh == NULL)
-        return NULL;
-    ret = EVP_PKEY_new();
-    if (EVP_PKEY_set1_DH(ret, dh) <= 0) {
-        EVP_PKEY_free(ret);
-        return NULL;
-    }
-    return ret;
-}
-#endif

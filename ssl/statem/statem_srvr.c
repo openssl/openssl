@@ -2469,15 +2469,16 @@ int tls_construct_server_key_exchange(SSL *s, WPACKET *pkt)
         } else {
             pkdhp = cert->dh_tmp;
         }
+#ifndef OPENSSL_NO_DEPRECATED_3_0
         if ((pkdhp == NULL) && (s->cert->dh_tmp_cb != NULL)) {
-            DH *dhp = s->cert->dh_tmp_cb(s, 0, 1024);
-            pkdh = ssl_dh_to_pkey(dhp);
+            pkdh = ssl_dh_to_pkey(s->cert->dh_tmp_cb(s, 0, 1024));
             if (pkdh == NULL) {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 goto err;
             }
             pkdhp = pkdh;
         }
+#endif
         if (pkdhp == NULL) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_MISSING_TMP_DH_KEY);
             goto err;
