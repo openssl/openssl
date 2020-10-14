@@ -4493,7 +4493,7 @@ int SSL_want(const SSL *s)
  * \param dh the callback
  */
 
-#ifndef OPENSSL_NO_DH
+#if !defined(OPENSSL_NO_DH) && !defined(OPENSSL_NO_DEPRECATED_3_0)
 void SSL_CTX_set_tmp_dh_callback(SSL_CTX *ctx,
                                  DH *(*dh) (SSL *ssl, int is_export,
                                             int keylength))

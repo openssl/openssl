@@ -16,7 +16,7 @@ SSL_get_verify_depth                    16	3_0_0	EXIST::FUNCTION:
 SSL_get0_dane                           17	3_0_0	EXIST::FUNCTION:
 SSL_CTX_sess_get_get_cb                 18	3_0_0	EXIST::FUNCTION:
 SSL_CTX_get_default_passwd_cb_userdata  19	3_0_0	EXIST::FUNCTION:
-SSL_set_tmp_dh_callback                 20	3_0_0	EXIST::FUNCTION:DH
+SSL_set_tmp_dh_callback                 20	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,DH
 SSL_CTX_get_verify_depth                21	3_0_0	EXIST::FUNCTION:
 SSL_CTX_use_RSAPrivateKey_file          22	3_0_0	EXIST::FUNCTION:RSA
 SSL_use_PrivateKey_file                 23	3_0_0	EXIST::FUNCTION:
@@ -152,7 +152,7 @@ i2d_SSL_SESSION                         152	3_0_0	EXIST::FUNCTION:
 SSL_SESSION_get_master_key              153	3_0_0	EXIST::FUNCTION:
 SSL_COMP_get_compression_methods        154	3_0_0	EXIST::FUNCTION:
 SSL_CTX_set_alpn_select_cb              155	3_0_0	EXIST::FUNCTION:
-SSL_CTX_set_tmp_dh_callback             156	3_0_0	EXIST::FUNCTION:DH
+SSL_CTX_set_tmp_dh_callback             156	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,DH
 SSL_CTX_get_default_passwd_cb           157	3_0_0	EXIST::FUNCTION:
 TLSv1_server_method                     158	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_1_1_0,TLS1_METHOD
 DTLS_server_method                      159	3_0_0	EXIST::FUNCTION:
