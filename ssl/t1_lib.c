@@ -7,9 +7,6 @@
  * https://www.openssl.org/source/license.html
  */
 
-/* We need access to the deprecated low level HMAC APIs */
-#define OPENSSL_SUPPRESS_DEPRECATED
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <openssl/objects.h>
@@ -3387,8 +3384,7 @@ SSL_HMAC *ssl_hmac_new(const SSL_CTX *ctx)
 #ifndef OPENSSL_NO_DEPRECATED_3_0
     if (ctx->ext.ticket_key_evp_cb == NULL
             && ctx->ext.ticket_key_cb != NULL) {
-        ret->old_ctx = HMAC_CTX_new();
-        if (ret->old_ctx == NULL)
+        if (!ssl_hmac_old_new(ret))
             goto err;
         return ret;
     }
@@ -3410,18 +3406,11 @@ void ssl_hmac_free(SSL_HMAC *ctx)
     if (ctx != NULL) {
         EVP_MAC_CTX_free(ctx->ctx);
 #ifndef OPENSSL_NO_DEPRECATED_3_0
-        HMAC_CTX_free(ctx->old_ctx);
+        ssl_hmac_old_free(ctx);
 #endif
         OPENSSL_free(ctx);
     }
 }
-
-#ifndef OPENSSL_NO_DEPRECATED_3_0
-HMAC_CTX *ssl_hmac_get0_HMAC_CTX(SSL_HMAC *ctx)
-{
-    return ctx->old_ctx;
-}
-#endif
 
 EVP_MAC_CTX *ssl_hmac_get0_EVP_MAC_CTX(SSL_HMAC *ctx)
 {
@@ -3441,8 +3430,7 @@ int ssl_hmac_init(SSL_HMAC *ctx, void *key, size_t len, char *md)
     }
 #ifndef OPENSSL_NO_DEPRECATED_3_0
     if (ctx->old_ctx != NULL)
-        return HMAC_Init_ex(ctx->old_ctx, key, len,
-                            EVP_get_digestbyname(md), NULL);
+        return ssl_hmac_old_init(ctx, key, len, md);
 #endif
     return 0;
 }
@@ -3453,7 +3441,7 @@ int ssl_hmac_update(SSL_HMAC *ctx, const unsigned char *data, size_t len)
         return EVP_MAC_update(ctx->ctx, data, len);
 #ifndef OPENSSL_NO_DEPRECATED_3_0
     if (ctx->old_ctx != NULL)
-        return HMAC_Update(ctx->old_ctx, data, len);
+        return ssl_hmac_old_update(ctx, data, len);
 #endif
     return 0;
 }
@@ -3464,15 +3452,8 @@ int ssl_hmac_final(SSL_HMAC *ctx, unsigned char *md, size_t *len,
     if (ctx->ctx != NULL)
         return EVP_MAC_final(ctx->ctx, md, len, max_size);
 #ifndef OPENSSL_NO_DEPRECATED_3_0
-    if (ctx->old_ctx != NULL) {
-        unsigned int l;
-
-        if (HMAC_Final(ctx->old_ctx, md, &l) > 0) {
-            if (len != NULL)
-                *len = l;
-            return 1;
-        }
-    }
+    if (ctx->old_ctx != NULL)
+        return ssl_hmac_old_final(ctx, md, len);
 #endif
     return 0;
 }
@@ -3483,7 +3464,7 @@ size_t ssl_hmac_size(const SSL_HMAC *ctx)
         return EVP_MAC_size(ctx->ctx);
 #ifndef OPENSSL_NO_DEPRECATED_3_0
     if (ctx->old_ctx != NULL)
-        return HMAC_size(ctx->old_ctx);
+        return ssl_hmac_old_size(ctx);
 #endif
     return 0;
 }

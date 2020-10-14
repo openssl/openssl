@@ -9,9 +9,6 @@
  * https://www.openssl.org/source/license.html
  */
 
-/* We need to use some engine deprecated APIs */
-#define OPENSSL_SUPPRESS_DEPRECATED
-
 #include <stdio.h>
 #include <ctype.h>
 #include <openssl/objects.h>
@@ -316,7 +313,7 @@ static int get_optional_pkey_id(const char *pkey_name)
                                     ameth) <= 0)
             pkey_id = 0;
     }
-    ENGINE_finish(tmpeng);
+    tls_engine_finish(tmpeng);
     return pkey_id;
 }
 

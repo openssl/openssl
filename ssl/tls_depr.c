@@ -1,0 +1,147 @@
+/*
+ * Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
+ */
+
+/* We need to use some engine and HMAC deprecated APIs */
+#define OPENSSL_SUPPRESS_DEPRECATED
+
+#include <openssl/engine.h>
+#include "ssl_local.h"
+
+/*
+ * Engine APIs are only used to support applications that still use ENGINEs.
+ * Once ENGINE is removed completely, all of this code can also be removed.
+ */
+
+#ifndef OPENSSL_NO_ENGINE
+void tls_engine_finish(ENGINE *e)
+{
+    ENGINE_finish(e);
+}
+#endif
+
+const EVP_CIPHER *tls_get_cipher_from_engine(int nid)
+{
+#ifndef OPENSSL_NO_ENGINE
+    ENGINE *eng;
+
+    /*
+     * If there is an Engine available for this cipher we use the "implicit"
+     * form to ensure we use that engine later.
+     */
+    eng = ENGINE_get_cipher_engine(nid);
+    if (eng != NULL) {
+        ENGINE_finish(eng);
+        return EVP_get_cipherbynid(nid);
+    }
+#endif
+    return NULL;
+}
+
+const EVP_MD *tls_get_digest_from_engine(int nid)
+{
+#ifndef OPENSSL_NO_ENGINE
+    ENGINE *eng;
+
+    /*
+     * If there is an Engine available for this digest we use the "implicit"
+     * form to ensure we use that engine later.
+     */
+    eng = ENGINE_get_digest_engine(nid);
+    if (eng != NULL) {
+        ENGINE_finish(eng);
+        return EVP_get_digestbynid(nid);
+    }
+#endif
+    return NULL;
+}
+
+#ifndef OPENSSL_NO_ENGINE
+int tls_engine_load_ssl_client_cert(SSL *s, X509 **px509, EVP_PKEY **ppkey)
+{
+    return ENGINE_load_ssl_client_cert(s->ctx->client_cert_engine, s,
+                                       SSL_get_client_CA_list(s),
+                                       px509, ppkey, NULL, NULL, NULL);
+}
+#endif
+
+#ifndef OPENSSL_NO_ENGINE
+int SSL_CTX_set_client_cert_engine(SSL_CTX *ctx, ENGINE *e)
+{
+    if (!ENGINE_init(e)) {
+        SSLerr(SSL_F_SSL_CTX_SET_CLIENT_CERT_ENGINE, ERR_R_ENGINE_LIB);
+        return 0;
+    }
+    if (!ENGINE_get_ssl_client_cert_function(e)) {
+        SSLerr(SSL_F_SSL_CTX_SET_CLIENT_CERT_ENGINE,
+               SSL_R_NO_CLIENT_CERT_METHOD);
+        ENGINE_finish(e);
+        return 0;
+    }
+    ctx->client_cert_engine = e;
+    return 1;
+}
+#endif
+
+/*
+ * The HMAC APIs below are only used to support the deprecated public API
+ * macro SSL_CTX_set_tlsext_ticket_key_cb(). The application supplied callback
+ * takes an HMAC_CTX in its argument list. The preferred alternative is
+ * SSL_CTX_set_tlsext_ticket_key_evp_cb(). Once
+ * SSL_CTX_set_tlsext_ticket_key_cb() is removed, then all of this code can also
+ * be removed.
+ */
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+int ssl_hmac_old_new(SSL_HMAC *ret)
+{
+    ret->old_ctx = HMAC_CTX_new();
+    if (ret->old_ctx == NULL)
+        return 0;
+
+    return 1;
+}
+
+void ssl_hmac_old_free(SSL_HMAC *ctx)
+{
+    HMAC_CTX_free(ctx->old_ctx);
+}
+
+int ssl_hmac_old_init(SSL_HMAC *ctx, void *key, size_t len, char *md)
+{
+    return HMAC_Init_ex(ctx->old_ctx, key, len, EVP_get_digestbyname(md), NULL);
+}
+
+int ssl_hmac_old_update(SSL_HMAC *ctx, const unsigned char *data, size_t len)
+{
+    return HMAC_Update(ctx->old_ctx, data, len);
+}
+
+int ssl_hmac_old_final(SSL_HMAC *ctx, unsigned char *md, size_t *len)
+{
+    unsigned int l;
+
+    if (HMAC_Final(ctx->old_ctx, md, &l) > 0) {
+        if (len != NULL)
+            *len = l;
+        return 1;
+    }
+
+    return 0;
+}
+
+size_t ssl_hmac_old_size(const SSL_HMAC *ctx)
+{
+    return HMAC_size(ctx->old_ctx);
+}
+
+HMAC_CTX *ssl_hmac_get0_HMAC_CTX(SSL_HMAC *ctx)
+{
+    return ctx->old_ctx;
+}
+#endif
+

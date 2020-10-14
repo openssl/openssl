@@ -8,9 +8,6 @@
  * https://www.openssl.org/source/license.html
  */
 
-/* We need to use some engine deprecated APIs */
-#define OPENSSL_SUPPRESS_DEPRECATED
-
 #include <stdio.h>
 #include <openssl/rand.h>
 #include <openssl/engine.h>
@@ -1204,24 +1201,6 @@ int (*SSL_CTX_get_client_cert_cb(SSL_CTX *ctx)) (SSL *ssl, X509 **x509,
                                                  EVP_PKEY **pkey) {
     return ctx->client_cert_cb;
 }
-
-#ifndef OPENSSL_NO_ENGINE
-int SSL_CTX_set_client_cert_engine(SSL_CTX *ctx, ENGINE *e)
-{
-    if (!ENGINE_init(e)) {
-        SSLerr(SSL_F_SSL_CTX_SET_CLIENT_CERT_ENGINE, ERR_R_ENGINE_LIB);
-        return 0;
-    }
-    if (!ENGINE_get_ssl_client_cert_function(e)) {
-        SSLerr(SSL_F_SSL_CTX_SET_CLIENT_CERT_ENGINE,
-               SSL_R_NO_CLIENT_CERT_METHOD);
-        ENGINE_finish(e);
-        return 0;
-    }
-    ctx->client_cert_engine = e;
-    return 1;
-}
-#endif
 
 void SSL_CTX_set_cookie_generate_cb(SSL_CTX *ctx,
                                     int (*cb) (SSL *ssl,
