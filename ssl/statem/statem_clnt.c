@@ -23,6 +23,8 @@
 #include <openssl/bn.h>
 #include <openssl/engine.h>
 #include <openssl/trace.h>
+#include <openssl/core_names.h>
+#include <openssl/param_build.h>
 #include <internal/cryptlib.h>
 
 static MSG_PROCESS_RETURN tls_process_as_hello_retry_request(SSL *s, PACKET *pkt);
@@ -2090,14 +2092,13 @@ static int tls_process_ske_srp(SSL *s, PACKET *pkt, EVP_PKEY **pkey)
 
 static int tls_process_ske_dhe(SSL *s, PACKET *pkt, EVP_PKEY **pkey)
 {
-#ifndef OPENSSL_NO_DH
     PACKET prime, generator, pub_key;
     EVP_PKEY *peer_tmp = NULL;
-
-    DH *dh = NULL;
     BIGNUM *p = NULL, *g = NULL, *bnpub_key = NULL;
-
-    int check_bits = 0;
+    EVP_PKEY_CTX *pctx = NULL;
+    OSSL_PARAM *params = NULL;
+    OSSL_PARAM_BLD *tmpl = NULL;
+    int ret = 0;
 
     if (!PACKET_get_length_prefixed_2(pkt, &prime)
         || !PACKET_get_length_prefixed_2(pkt, &generator)
@@ -2105,15 +2106,6 @@ static int tls_process_ske_dhe(SSL *s, PACKET *pkt, EVP_PKEY **pkey)
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_TLS_PROCESS_SKE_DHE,
                  SSL_R_LENGTH_MISMATCH);
         return 0;
-    }
-
-    peer_tmp = EVP_PKEY_new();
-    dh = DH_new();
-
-    if (peer_tmp == NULL || dh == NULL) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_SKE_DHE,
-                 ERR_R_MALLOC_FAILURE);
-        goto err;
     }
 
     /* TODO(size_t): Convert these calls */
@@ -2128,39 +2120,36 @@ static int tls_process_ske_dhe(SSL *s, PACKET *pkt, EVP_PKEY **pkey)
         goto err;
     }
 
-    /* test non-zero pubkey */
-    if (BN_is_zero(bnpub_key)) {
-        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_F_TLS_PROCESS_SKE_DHE,
-                 SSL_R_BAD_DH_VALUE);
+    tmpl = OSSL_PARAM_BLD_new();
+    if (tmpl == NULL
+            || !OSSL_PARAM_BLD_push_BN(tmpl, OSSL_PKEY_PARAM_FFC_P, p)
+            || !OSSL_PARAM_BLD_push_BN(tmpl, OSSL_PKEY_PARAM_FFC_G, g)
+            || !OSSL_PARAM_BLD_push_BN(tmpl, OSSL_PKEY_PARAM_PUB_KEY,
+                                       bnpub_key)
+            || (params = OSSL_PARAM_BLD_to_param(tmpl)) == NULL) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, 0, ERR_R_INTERNAL_ERROR);
         goto err;
     }
 
-    if (!DH_set0_pqg(dh, p, NULL, g)) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_SKE_DHE,
-                 ERR_R_BN_LIB);
+    pctx = EVP_PKEY_CTX_new_from_name(s->ctx->libctx, "DH", s->ctx->propq);
+    if (pctx == NULL) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, 0, ERR_R_INTERNAL_ERROR);
         goto err;
     }
-    p = g = NULL;
-
-    if (DH_check_params(dh, &check_bits) == 0 || check_bits != 0) {
-        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_F_TLS_PROCESS_SKE_DHE,
-                 SSL_R_BAD_DH_VALUE);
+    if (EVP_PKEY_key_fromdata_init(pctx) <= 0
+            || EVP_PKEY_fromdata(pctx, &peer_tmp, params) <= 0) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, 0, SSL_R_BAD_DH_VALUE);
         goto err;
     }
 
-    if (!DH_set0_key(dh, bnpub_key, NULL)) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_SKE_DHE,
-                 ERR_R_BN_LIB);
+    EVP_PKEY_CTX_free(pctx);
+    pctx = EVP_PKEY_CTX_new_from_pkey(s->ctx->libctx, peer_tmp, s->ctx->propq);
+    if (pctx == NULL
+            || EVP_PKEY_param_check(pctx) != 1
+            || EVP_PKEY_public_check(pctx) != 1) {
+        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, 0, SSL_R_BAD_DH_VALUE);
         goto err;
     }
-    bnpub_key = NULL;
-
-    if (EVP_PKEY_assign_DH(peer_tmp, dh) == 0) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_SKE_DHE,
-                 ERR_R_EVP_LIB);
-        goto err;
-    }
-    dh = NULL;
 
     if (!ssl_security(s, SSL_SECOP_TMP_DH, EVP_PKEY_security_bits(peer_tmp),
                       0, peer_tmp)) {
@@ -2170,6 +2159,7 @@ static int tls_process_ske_dhe(SSL *s, PACKET *pkt, EVP_PKEY **pkey)
     }
 
     s->s3.peer_tmp = peer_tmp;
+    peer_tmp = NULL;
 
     /*
      * FIXME: This makes assumptions about which ciphersuites come with
@@ -2179,21 +2169,18 @@ static int tls_process_ske_dhe(SSL *s, PACKET *pkt, EVP_PKEY **pkey)
         *pkey = X509_get0_pubkey(s->session->peer);
     /* else anonymous DH, so no certificate or pkey. */
 
-    return 1;
+    ret = 1;
 
  err:
+    OSSL_PARAM_BLD_free(tmpl);
+    OSSL_PARAM_BLD_free_params(params);
+    EVP_PKEY_free(peer_tmp);
+    EVP_PKEY_CTX_free(pctx);
     BN_free(p);
     BN_free(g);
     BN_free(bnpub_key);
-    DH_free(dh);
-    EVP_PKEY_free(peer_tmp);
 
-    return 0;
-#else
-    SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_SKE_DHE,
-             ERR_R_INTERNAL_ERROR);
-    return 0;
-#endif
+    return ret;
 }
 
 static int tls_process_ske_ecdhe(SSL *s, PACKET *pkt, EVP_PKEY **pkey)
