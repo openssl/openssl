@@ -325,22 +325,3 @@ int dh_get0_nid(const DH *dh)
 {
     return dh->params.nid;
 }
-
-int dh_ffc_params_fromdata(DH *dh, const OSSL_PARAM params[])
-{
-    int ret;
-    FFC_PARAMS *ffc;
-
-    if (dh == NULL)
-        return 0;
-    ffc = dh_get0_params(dh);
-    if (ffc == NULL)
-        return 0;
-
-    ret = ossl_ffc_params_fromdata(ffc, params);
-    if (ret) {
-        dh_cache_named_group(dh);
-        dh->dirty_cnt++;
-    }
-    return ret;
-}

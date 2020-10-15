@@ -30,6 +30,17 @@ int ossl_param_build_set_int(OSSL_PARAM_BLD *bld, OSSL_PARAM *p,
     return 1;
 }
 
+int ossl_param_build_set_long(OSSL_PARAM_BLD *bld, OSSL_PARAM *p,
+                              const char *key, long num)
+{
+    if (bld != NULL)
+        return OSSL_PARAM_BLD_push_long(bld, key, num);
+    p = OSSL_PARAM_locate(p, key);
+    if (p != NULL)
+        return OSSL_PARAM_set_long(p, num);
+    return 1;
+}
+
 int ossl_param_build_set_utf8_string(OSSL_PARAM_BLD *bld, OSSL_PARAM *p,
                                      const char *key, const char *buf)
 {

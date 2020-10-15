@@ -12,6 +12,8 @@
 
 int ossl_param_build_set_int(OSSL_PARAM_BLD *bld, OSSL_PARAM *p,
                              const char *key, int num);
+int ossl_param_build_set_long(OSSL_PARAM_BLD *bld, OSSL_PARAM *p,
+                              const char *key, long num);
 int ossl_param_build_set_utf8_string(OSSL_PARAM_BLD *bld, OSSL_PARAM *p,
                                      const char *key, const char *buf);
 int ossl_param_build_set_octet_string(OSSL_PARAM_BLD *bld, OSSL_PARAM *p,
