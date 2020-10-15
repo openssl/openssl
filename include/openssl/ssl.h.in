@@ -1505,6 +1505,9 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 # define SSL_get_server_tmp_key(s, pk) \
          SSL_get_peer_tmp_key(s, pk)
 
+int SSL_set0_tmp_dh_pkey(SSL *s, EVP_PKEY *dhpkey);
+int SSL_CTX_set0_tmp_dh_pkey(SSL_CTX *ctx, EVP_PKEY *dhpkey);
+
 /*
  * The following symbol names are old and obsolete. They are kept
  * for compatibility reasons only and should not be used anymore.
