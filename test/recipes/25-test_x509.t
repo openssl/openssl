@@ -72,13 +72,16 @@ SKIP: {
 }
 
 subtest 'x509 -- x.509 v1 certificate' => sub {
-    tconversion("x509", srctop_file("test","testx509.pem"));
+    tconversion( -type => 'x509', -prefix => 'x509v1',
+                 -in => srctop_file("test","testx509.pem") );
 };
 subtest 'x509 -- first x.509 v3 certificate' => sub {
-    tconversion("x509", srctop_file("test","v3-cert1.pem"));
+    tconversion( -type => 'x509', -prefix => 'x509v3-1',
+                 -in => srctop_file("test","v3-cert1.pem") );
 };
 subtest 'x509 -- second x.509 v3 certificate' => sub {
-    tconversion("x509", srctop_file("test","v3-cert2.pem"));
+    tconversion( -type => 'x509', -prefix => 'x509v3-2',
+                 -in => srctop_file("test","v3-cert2.pem") );
 };
 
 subtest 'x509 -- pathlen' => sub {

@@ -30,14 +30,18 @@ SKIP: {
         if disabled("ec");
 
     subtest 'EC conversions -- private key' => sub {
-        tconversion("ec", srctop_file("test","testec-p256.pem"));
+        tconversion( -type => 'ec', -prefix => 'ec-priv',
+                     -in => srctop_file("test","testec-p256.pem") );
     };
     subtest 'EC conversions -- private key PKCS#8' => sub {
-        tconversion("ec", srctop_file("test","testec-p256.pem"), "pkey");
+        tconversion( -type => 'ec', -prefix => 'ec-pkcs8',
+                     -in => srctop_file("test","testec-p256.pem"),
+                     -args => "pkey" );
     };
     subtest 'EC conversions -- public key' => sub {
-        tconversion("ec", srctop_file("test","testecpub-p256.pem"),
-                    "ec", "-pubin", "-pubout");
+        tconversion( -type => 'ec', -prefix => 'ec-pub',
+                     -in => srctop_file("test","testecpub-p256.pem"),
+                     -args => [ "ec", "-pubin", "-pubout" ] );
     };
 }
 
@@ -46,14 +50,18 @@ SKIP: {
         if disabled("ec");
 
     subtest 'PKEY conversions -- private key' => sub {
-        tconversion("pkey", srctop_file("test","testec-p256.pem"));
+        tconversion( -type => 'pkey', -prefix => 'ec-pkey-priv',
+                     -in => srctop_file("test","testec-p256.pem") );
     };
     subtest 'PKEY conversions -- private key PKCS#8' => sub {
-        tconversion("pkey", srctop_file("test","testec-p256.pem"), "pkey");
+        tconversion( -type => 'pkey', -prefix => 'ec-pkey-pkcs8',
+                     -in => srctop_file("test","testec-p256.pem"),
+                     -args => "pkey" );
     };
     subtest 'PKEY conversions -- public key' => sub {
-        tconversion("pkey", srctop_file("test","testecpub-p256.pem"),
-                    "pkey", "-pubin", "-pubout");
+        tconversion( -type => 'pkey', -prefix => 'ec-pkey-pub',
+                     -in => srctop_file("test","testecpub-p256.pem"),
+                     -args => [ "pkey", "-pubin", "-pubout" ] );
     };
 }
 
@@ -62,24 +70,32 @@ SKIP: {
         if disabled("ec");
 
     subtest 'Ed25519 conversions -- private key' => sub {
-        tconversion("pkey", srctop_file("test", "tested25519.pem"));
+        tconversion( -type => "pkey", -prefix => "ed25519-pkey-priv",
+                     -in => srctop_file("test", "tested25519.pem") );
     };
     subtest 'Ed25519 conversions -- private key PKCS#8' => sub {
-        tconversion("pkey", srctop_file("test", "tested25519.pem"), "pkey");
+        tconversion( -type => "pkey", -prefix => "ed25519-pkey-pkcs8",
+                     -in => srctop_file("test", "tested25519.pem"),
+                     -args => ["pkey"] );
     };
     subtest 'Ed25519 conversions -- public key' => sub {
-        tconversion("pkey", srctop_file("test", "tested25519pub.pem"),
-                    "pkey", "-pubin", "-pubout");
+        tconversion( -type => "pkey", -prefix => "ed25519-pkey-pub",
+                     -in => srctop_file("test", "tested25519pub.pem"),
+                     -args => ["pkey", "-pubin", "-pubout"] );
     };
 
     subtest 'Ed448 conversions -- private key' => sub {
-        tconversion("pkey", srctop_file("test", "tested448.pem"));
+        tconversion( -type => "pkey", -prefix => "ed448-pkey-priv",
+                     -in => srctop_file("test", "tested448.pem") );
     };
     subtest 'Ed448 conversions -- private key PKCS#8' => sub {
-        tconversion("pkey", srctop_file("test", "tested448.pem"), "pkey");
+        tconversion( -type => "pkey", -prefix => "ed448-pkey-pkcs8",
+                     -in => srctop_file("test", "tested448.pem"),
+                     -args => ["pkey"] );
     };
     subtest 'Ed448 conversions -- public key' => sub {
-        tconversion("pkey", srctop_file("test", "tested448pub.pem"),
-                    "pkey", "-pubin", "-pubout");
+        tconversion( -type => "pkey", -prefix => "ed448-pkey-pub",
+                     -in => srctop_file("test", "tested448pub.pem"),
+                     -args => ["pkey", "-pubin", "-pubout"] );
     };
 }

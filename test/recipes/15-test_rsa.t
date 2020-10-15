@@ -37,10 +37,13 @@ sub run_rsa_tests {
 	     if disabled("rsa");
 
          subtest "$cmd conversions -- private key" => sub {
-	     tconversion($cmd, srctop_file("test", "testrsa.pem"));
+	     tconversion( -type => $cmd, -prefix => "$cmd-priv",
+                          -in => srctop_file("test", "testrsa.pem") );
          };
          subtest "$cmd conversions -- private key PKCS#8" => sub {
-	     tconversion($cmd, srctop_file("test", "testrsa.pem"), "pkey");
+	     tconversion( -type => $cmd, -prefix => "$cmd-pkcs8",
+                          -in => srctop_file("test", "testrsa.pem"),
+                          -args => ["pkey"] );
          };
     }
 
@@ -49,8 +52,9 @@ sub run_rsa_tests {
 	     if disabled($cmd) || disabled("dsa") || $cmd == 'pkey';
 
          subtest "$cmd conversions -- public key" => sub {
-	     tconversion("msb", srctop_file("test", "testrsapub.pem"), "rsa",
-		         "-pubin", "-pubout");
+	     tconversion( -type => 'msb', -prefix => "$cmd-msb-pub",
+                          -in => srctop_file("test", "testrsapub.pem"),
+                          -args => ["rsa", "-pubin", "-pubout"] );
          };
     }
 }

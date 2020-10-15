@@ -26,17 +26,22 @@ ok(run(test(["dsa_no_digest_size_test"])),
    "running dsa_no_digest_size_test");
 
 subtest "dsa conversions using 'openssl dsa' -- private key" => sub {
-    tconversion("dsa", srctop_file("test","testdsa.pem"));
+    tconversion( -type => 'dsa', -prefix => 'dsa-priv',
+                 -in => srctop_file("test","testdsa.pem") );
 };
 subtest "dsa conversions using 'openssl dsa' -- public key" => sub {
-    tconversion("msb", srctop_file("test","testdsapub.pem"), "dsa",
-                "-pubin", "-pubout");
+    tconversion( -type => 'msb', -prefix => 'dsa-msb-pub',
+                 -in => srctop_file("test","testdsapub.pem"),
+                 -args => ["dsa", "-pubin", "-pubout"] );
 };
 
 subtest "dsa conversions using 'openssl pkey' -- private key PKCS#8" => sub {
-    tconversion("dsa", srctop_file("test","testdsa.pem"), "pkey");
+    tconversion( -type => 'dsa', -prefix => 'dsa-pkcs8',
+                 -in => srctop_file("test","testdsa.pem"),
+                 -args => ["pkey"] );
 };
 subtest "dsa conversions using 'openssl pkey' -- public key" => sub {
-    tconversion("dsa", srctop_file("test","testdsapub.pem"), "pkey",
-                "-pubin", "-pubout");
+    tconversion( -type => 'dsa', -prefix => 'dsa-pkey-pub',
+                 -in => srctop_file("test","testdsapub.pem"),
+                 -args => ["pkey", "-pubin", "-pubout"] );
 };

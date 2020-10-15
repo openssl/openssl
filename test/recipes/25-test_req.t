@@ -237,7 +237,8 @@ sub run_conversion {
             plan skip_all => "skipping req conversion test for $reqfile"
                 if grep /Unknown Public Key/, map { s/\R//; } <DATA>;
 
-            tconversion("req", $reqfile, @openssl_args);
+            tconversion( -type => 'req', -in => $reqfile,
+                         -args => [ @openssl_args ] );
         }
         close DATA;
         unlink "req-check.err";
