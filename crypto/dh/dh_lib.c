@@ -219,18 +219,6 @@ int DH_set0_pqg(DH *dh, BIGNUM *p, BIGNUM *q, BIGNUM *g)
 
     ossl_ffc_params_set0_pqg(&dh->params, p, q, g);
     dh_cache_named_group(dh);
-    if (q != NULL)
-        dh->length = BN_num_bits(q);
-    /*
-     * Check if this is a named group. If it finds a named group then the
-     * 'q' and 'length' value are either already set or are set by the
-     * call.
-     */
-    if (DH_get_nid(dh) == NID_undef) {
-        /* If its not a named group then set the 'length' if q is not NULL */
-        if (q != NULL)
-            dh->length = BN_num_bits(q);
-    }
     dh->dirty_cnt++;
     return 1;
 }
@@ -264,7 +252,6 @@ int DH_set0_key(DH *dh, BIGNUM *pub_key, BIGNUM *priv_key)
     if (priv_key != NULL) {
         BN_clear_free(dh->priv_key);
         dh->priv_key = priv_key;
-        dh->length = BN_num_bits(priv_key);
     }
 
     dh->dirty_cnt++;
