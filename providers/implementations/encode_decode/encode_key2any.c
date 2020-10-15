@@ -789,7 +789,7 @@ static const OSSL_PARAM *key2any_settable_ctx_params(ossl_unused void *provctx)
 static int key2any_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
     struct key2any_ctx_st *ctx = vctx;
-    OSSL_LIB_CTX *libctx = ossl_prov_ctx_get0_library_context(ctx->provctx);
+    OSSL_LIB_CTX *libctx = ossl_prov_ctx_get0_libctx(ctx->provctx);
     const OSSL_PARAM *cipherp =
         OSSL_PARAM_locate_const(params, OSSL_ENCODER_PARAM_CIPHER);
     const OSSL_PARAM *propsp =

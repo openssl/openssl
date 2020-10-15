@@ -100,7 +100,7 @@ int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
         }
     } else if (evp_pkey_is_provided(pkey)) {
         const OSSL_PROVIDER *pkprov = EVP_KEYMGMT_provider(pkey->keymgmt);
-        OSSL_LIB_CTX *libctx = ossl_provider_library_context(pkprov);
+        OSSL_LIB_CTX *libctx = ossl_provider_libctx(pkprov);
         unsigned char *der = NULL;
         size_t derlen = 0;
         int selection = (OSSL_KEYMGMT_SELECT_PUBLIC_KEY
@@ -309,7 +309,7 @@ int i2d_PUBKEY(const EVP_PKEY *a, unsigned char **pp)
         X509_PUBKEY_free(xpk);
     } else if (a->keymgmt != NULL) {
         const OSSL_PROVIDER *pkprov = EVP_KEYMGMT_provider(a->keymgmt);
-        OSSL_LIB_CTX *libctx = ossl_provider_library_context(pkprov);
+        OSSL_LIB_CTX *libctx = ossl_provider_libctx(pkprov);
         int selection = (OSSL_KEYMGMT_SELECT_PUBLIC_KEY
                          | OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS);
         OSSL_ENCODER_CTX *ctx =

@@ -57,7 +57,7 @@ static void *eddsa_newctx(void *provctx, const char *propq_unused)
         return NULL;
     }
 
-    peddsactx->libctx = PROV_LIBRARY_CONTEXT_OF(provctx);
+    peddsactx->libctx = PROV_LIBCTX_OF(provctx);
 
     return peddsactx;
 }

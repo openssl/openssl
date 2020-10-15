@@ -176,7 +176,7 @@ static int der2key_decode(void *vctx, OSSL_CORE_BIO *cin,
                           OSSL_PASSPHRASE_CALLBACK *pw_cb, void *pw_cbarg)
 {
     struct der2key_ctx_st *ctx = vctx;
-    void *libctx = PROV_LIBRARY_CONTEXT_OF(ctx->provctx);
+    void *libctx = PROV_LIBCTX_OF(ctx->provctx);
     unsigned char *der = NULL;
     const unsigned char *derp;
     long der_len = 0;

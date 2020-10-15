@@ -102,7 +102,7 @@ static void *sm2sig_newctx(void *provctx, const char *propq)
     if (ctx == NULL)
         return NULL;
 
-    ctx->libctx = PROV_LIBRARY_CONTEXT_OF(provctx);
+    ctx->libctx = PROV_LIBCTX_OF(provctx);
     if (propq != NULL && (ctx->propq = OPENSSL_strdup(propq)) == NULL) {
         OPENSSL_free(ctx);
         ctx = NULL;

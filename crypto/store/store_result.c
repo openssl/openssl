@@ -107,7 +107,7 @@ int ossl_store_handle_load_result(const OSSL_PARAM params[], void *arg)
     OSSL_STORE_CTX *ctx = cbdata->ctx;
     const OSSL_PROVIDER *provider =
         OSSL_STORE_LOADER_provider(ctx->fetched_loader);
-    OSSL_LIB_CTX *libctx = ossl_provider_library_context(provider);
+    OSSL_LIB_CTX *libctx = ossl_provider_libctx(provider);
     const char *propq = ctx->properties;
     const OSSL_PARAM *p;
     struct extracted_param_data_st helper_data;

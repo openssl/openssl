@@ -1183,7 +1183,7 @@ static OSSL_LIB_CTX *EVP_CIPHER_CTX_get_libctx(EVP_CIPHER_CTX *ctx)
         return NULL;
 
     prov = EVP_CIPHER_provider(cipher);
-    return ossl_provider_library_context(prov);
+    return ossl_provider_libctx(prov);
 }
 #endif
 

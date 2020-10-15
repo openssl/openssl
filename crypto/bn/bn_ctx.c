@@ -249,7 +249,7 @@ BIGNUM *BN_CTX_get(BN_CTX *ctx)
     return ret;
 }
 
-OSSL_LIB_CTX *bn_get_lib_ctx(BN_CTX *ctx)
+OSSL_LIB_CTX *bn_get_libctx(BN_CTX *ctx)
 {
     if (ctx == NULL)
         return NULL;

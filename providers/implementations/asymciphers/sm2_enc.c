@@ -49,7 +49,7 @@ static void *sm2_newctx(void *provctx)
 
     if (psm2ctx == NULL)
         return NULL;
-    psm2ctx->libctx = PROV_LIBRARY_CONTEXT_OF(provctx);
+    psm2ctx->libctx = PROV_LIBCTX_OF(provctx);
 
     return psm2ctx;
 }

@@ -55,7 +55,7 @@ static void *mac_newctx(void *provctx, const char *propq, const char *macname)
     if (pmacctx == NULL)
         return NULL;
 
-    pmacctx->libctx = PROV_LIBRARY_CONTEXT_OF(provctx);
+    pmacctx->libctx = PROV_LIBCTX_OF(provctx);
     if (propq != NULL && (pmacctx->propq = OPENSSL_strdup(propq)) == NULL) {
         ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
         goto err;
@@ -200,7 +200,7 @@ static int mac_set_ctx_params(void *vpmacctx, const OSSL_PARAM params[])
 static const OSSL_PARAM *mac_settable_ctx_params(void *provctx,
                                                  const char *macname)
 {
-    EVP_MAC *mac = EVP_MAC_fetch(PROV_LIBRARY_CONTEXT_OF(provctx), macname,
+    EVP_MAC *mac = EVP_MAC_fetch(PROV_LIBCTX_OF(provctx), macname,
                                  NULL);
     const OSSL_PARAM *params;
 

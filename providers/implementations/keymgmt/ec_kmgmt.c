@@ -236,7 +236,7 @@ void *ec_newdata(void *provctx)
 {
     if (!ossl_prov_is_running())
         return NULL;
-    return EC_KEY_new_ex(PROV_LIBRARY_CONTEXT_OF(provctx), NULL);
+    return EC_KEY_new_ex(PROV_LIBCTX_OF(provctx), NULL);
 }
 
 static
@@ -831,7 +831,7 @@ struct ec_gen_ctx {
 
 static void *ec_gen_init(void *provctx, int selection)
 {
-    OSSL_LIB_CTX *libctx = PROV_LIBRARY_CONTEXT_OF(provctx);
+    OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(provctx);
     struct ec_gen_ctx *gctx = NULL;
 
     if (!ossl_prov_is_running() || (selection & (EC_POSSIBLE_SELECTIONS)) == 0)

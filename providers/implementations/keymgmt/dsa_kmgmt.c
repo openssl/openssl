@@ -113,7 +113,7 @@ static void *dsa_newdata(void *provctx)
 {
     if (!ossl_prov_is_running())
         return NULL;
-    return dsa_new_with_ctx(PROV_LIBRARY_CONTEXT_OF(provctx));
+    return dsa_new_with_ctx(PROV_LIBCTX_OF(provctx));
 }
 
 static void dsa_freedata(void *keydata)
@@ -363,7 +363,7 @@ static int dsa_validate(void *keydata, int selection)
 
 static void *dsa_gen_init(void *provctx, int selection)
 {
-    OSSL_LIB_CTX *libctx = PROV_LIBRARY_CONTEXT_OF(provctx);
+    OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(provctx);
     struct dsa_gen_ctx *gctx = NULL;
 
     if (!ossl_prov_is_running() || (selection & DSA_POSSIBLE_SELECTIONS) == 0)

@@ -663,7 +663,7 @@ static int drbg_ctr_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
     PROV_DRBG *ctx = (PROV_DRBG *)vctx;
     PROV_DRBG_CTR *ctr = (PROV_DRBG_CTR *)ctx->data;
-    OSSL_LIB_CTX *libctx = PROV_LIBRARY_CONTEXT_OF(ctx->provctx);
+    OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(ctx->provctx);
     const OSSL_PARAM *p;
     char *ecb;
     const char *propquery = NULL;

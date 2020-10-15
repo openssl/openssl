@@ -178,7 +178,7 @@ static void *kmac_fetch_new(void *provctx, const OSSL_PARAM *params)
     if (kctx == NULL)
         return 0;
     if (!ossl_prov_digest_load_from_params(&kctx->digest, params,
-                                      PROV_LIBRARY_CONTEXT_OF(provctx))) {
+                                      PROV_LIBCTX_OF(provctx))) {
         kmac_free(kctx);
         return 0;
     }

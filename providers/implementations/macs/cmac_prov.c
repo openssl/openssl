@@ -173,7 +173,7 @@ static const OSSL_PARAM *cmac_settable_ctx_params(ossl_unused void *provctx)
 static int cmac_set_ctx_params(void *vmacctx, const OSSL_PARAM params[])
 {
     struct cmac_data_st *macctx = vmacctx;
-    OSSL_LIB_CTX *ctx = PROV_LIBRARY_CONTEXT_OF(macctx->provctx);
+    OSSL_LIB_CTX *ctx = PROV_LIBCTX_OF(macctx->provctx);
     const OSSL_PARAM *p;
 
     if (!ossl_prov_cipher_load_from_params(&macctx->cipher, params, ctx))
