@@ -313,7 +313,7 @@ static int get_optional_pkey_id(const char *pkey_name)
                                     ameth) <= 0)
             pkey_id = 0;
     }
-    ssl_engine_finish(tmpeng);
+    tls_engine_finish(tmpeng);
     return pkey_id;
 }
 

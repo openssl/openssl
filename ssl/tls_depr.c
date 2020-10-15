@@ -19,7 +19,7 @@
  */
 
 #ifndef OPENSSL_NO_ENGINE
-void ssl_engine_finish(ENGINE *e)
+void tls_engine_finish(ENGINE *e)
 {
     ENGINE_finish(e);
 }
@@ -97,7 +97,7 @@ int SSL_CTX_set_client_cert_engine(SSL_CTX *ctx, ENGINE *e)
  * be removed.
  */
 #ifndef OPENSSL_NO_DEPRECATED_3_0
-int ssl_old_hmac_new(SSL_HMAC *ret)
+int ssl_hmac_old_new(SSL_HMAC *ret)
 {
     ret->old_ctx = HMAC_CTX_new();
     if (ret->old_ctx == NULL)
@@ -106,22 +106,22 @@ int ssl_old_hmac_new(SSL_HMAC *ret)
     return 1;
 }
 
-void ssl_old_hmac_free(SSL_HMAC *ctx)
+void ssl_hmac_old_free(SSL_HMAC *ctx)
 {
     HMAC_CTX_free(ctx->old_ctx);
 }
 
-int ssl_old_hmac_init(SSL_HMAC *ctx, void *key, size_t len, char *md)
+int ssl_hmac_old_init(SSL_HMAC *ctx, void *key, size_t len, char *md)
 {
     return HMAC_Init_ex(ctx->old_ctx, key, len, EVP_get_digestbyname(md), NULL);
 }
 
-int ssl_old_hmac_update(SSL_HMAC *ctx, const unsigned char *data, size_t len)
+int ssl_hmac_old_update(SSL_HMAC *ctx, const unsigned char *data, size_t len)
 {
     return HMAC_Update(ctx->old_ctx, data, len);
 }
 
-int ssl_old_hmac_final(SSL_HMAC *ctx, unsigned char *md, size_t *len)
+int ssl_hmac_old_final(SSL_HMAC *ctx, unsigned char *md, size_t *len)
 {
     unsigned int l;
 
@@ -134,7 +134,7 @@ int ssl_old_hmac_final(SSL_HMAC *ctx, unsigned char *md, size_t *len)
     return 0;
 }
 
-size_t ssl_old_hmac_size(const SSL_HMAC *ctx)
+size_t ssl_hmac_old_size(const SSL_HMAC *ctx)
 {
     return HMAC_size(ctx->old_ctx);
 }
