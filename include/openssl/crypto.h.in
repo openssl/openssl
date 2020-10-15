@@ -202,7 +202,7 @@ struct crypto_ex_data_st {
 # define CRYPTO_EX_INDEX_UI_METHOD       14
 # define CRYPTO_EX_INDEX_RAND_DRBG       15
 # define CRYPTO_EX_INDEX_DRBG            CRYPTO_EX_INDEX_RAND_DRBG
-# define CRYPTO_EX_INDEX_OSSL_LIB_CTX     16
+# define CRYPTO_EX_INDEX_OSSL_LIB_CTX    16
 # define CRYPTO_EX_INDEX_EVP_PKEY        17
 # define CRYPTO_EX_INDEX__COUNT          18
 
