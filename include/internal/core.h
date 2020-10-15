@@ -28,13 +28,13 @@
  */
 typedef struct ossl_method_construct_method_st {
     /* Create store */
-    void *(*alloc_tmp_store)(OPENSSL_CTX *ctx);
+    void *(*alloc_tmp_store)(OSSL_LIB_CTX *ctx);
     /* Remove a store */
     void (*dealloc_tmp_store)(void *store);
     /* Get an already existing method from a store */
-    void *(*get)(OPENSSL_CTX *libctx, void *store, void *data);
+    void *(*get)(OSSL_LIB_CTX *libctx, void *store, void *data);
     /* Store a method in a store */
-    int (*put)(OPENSSL_CTX *libctx, void *store, void *method,
+    int (*put)(OSSL_LIB_CTX *libctx, void *store, void *method,
                const OSSL_PROVIDER *prov, int operation_id, const char *name,
                const char *propdef, void *data);
     /* Construct a new method */
@@ -44,11 +44,11 @@ typedef struct ossl_method_construct_method_st {
     void (*destruct)(void *method, void *data);
 } OSSL_METHOD_CONSTRUCT_METHOD;
 
-void *ossl_method_construct(OPENSSL_CTX *ctx, int operation_id,
+void *ossl_method_construct(OSSL_LIB_CTX *ctx, int operation_id,
                             int force_cache,
                             OSSL_METHOD_CONSTRUCT_METHOD *mcm, void *mcm_data);
 
-void ossl_algorithm_do_all(OPENSSL_CTX *libctx, int operation_id,
+void ossl_algorithm_do_all(OSSL_LIB_CTX *libctx, int operation_id,
                            OSSL_PROVIDER *provider,
                            int (*pre)(OSSL_PROVIDER *, int operation_id,
                                       void *data, int *result),

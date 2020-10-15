@@ -52,7 +52,7 @@ static OSSL_FUNC_keymgmt_export_types_fn dh_export_types;
     (OSSL_KEYMGMT_SELECT_KEYPAIR | OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS)
 
 struct dh_gen_ctx {
-    OPENSSL_CTX *libctx;
+    OSSL_LIB_CTX *libctx;
 
     FFC_PARAMS *ffc_params;
     int selection;
@@ -430,7 +430,7 @@ static int dh_validate(void *keydata, int selection)
 
 static void *dh_gen_init_base(void *provctx, int selection, int type)
 {
-    OPENSSL_CTX *libctx = PROV_LIBRARY_CONTEXT_OF(provctx);
+    OSSL_LIB_CTX *libctx = PROV_LIBRARY_CONTEXT_OF(provctx);
     struct dh_gen_ctx *gctx = NULL;
 
     if (!ossl_prov_is_running())

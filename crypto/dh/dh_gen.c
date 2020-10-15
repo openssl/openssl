@@ -91,7 +91,7 @@ int dh_get_named_group_uid_from_size(int pbits)
 
 #ifdef FIPS_MODULE
 
-static int dh_gen_named_group(OPENSSL_CTX *libctx, DH *ret, int prime_len)
+static int dh_gen_named_group(OSSL_LIB_CTX *libctx, DH *ret, int prime_len)
 {
     DH *dh;
     int ok = 0;

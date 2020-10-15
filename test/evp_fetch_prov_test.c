@@ -76,17 +76,17 @@ static int calculate_digest(const EVP_MD *md, const char *msg, size_t len,
     return ret;
 }
 
-static int load_providers(OPENSSL_CTX **libctx, OSSL_PROVIDER *prov[])
+static int load_providers(OSSL_LIB_CTX **libctx, OSSL_PROVIDER *prov[])
 {
-    OPENSSL_CTX *ctx = NULL;
+    OSSL_LIB_CTX *ctx = NULL;
     int ret = 0;
     size_t i;
 
-    ctx = OPENSSL_CTX_new();
+    ctx = OSSL_LIB_CTX_new();
     if (!TEST_ptr(ctx))
         goto err;
 
-    if (!TEST_true(OPENSSL_CTX_load_config(ctx, config_file)))
+    if (!TEST_true(OSSL_LIB_CTX_load_config(ctx, config_file)))
         goto err;
     if (test_get_argument_count() > 2)
         goto err;
@@ -102,7 +102,7 @@ static int load_providers(OPENSSL_CTX **libctx, OSSL_PROVIDER *prov[])
     *libctx = ctx;
 err:
     if (ret == 0)
-        OPENSSL_CTX_free(ctx);
+        OSSL_LIB_CTX_free(ctx);
     return ret;
 }
 
@@ -111,7 +111,7 @@ err:
  */
 static int test_EVP_MD_fetch(void)
 {
-    OPENSSL_CTX *ctx = NULL;
+    OSSL_LIB_CTX *ctx = NULL;
     EVP_MD *md = NULL;
     OSSL_PROVIDER *prov[2] = {NULL, NULL};
     int ret = 0;
@@ -162,7 +162,7 @@ err:
      */
     if (ctx != NULL) {
         OPENSSL_thread_stop_ex(ctx);
-        OPENSSL_CTX_free(ctx);
+        OSSL_LIB_CTX_free(ctx);
     }
     return ret;
 }
@@ -197,7 +197,7 @@ err:
  */
 static int test_EVP_CIPHER_fetch(void)
 {
-    OPENSSL_CTX *ctx = NULL;
+    OSSL_LIB_CTX *ctx = NULL;
     EVP_CIPHER *cipher = NULL;
     OSSL_PROVIDER *prov[2] = {NULL, NULL};
     int ret = 0;
@@ -229,7 +229,7 @@ err:
     EVP_CIPHER_free(cipher);
     OSSL_PROVIDER_unload(prov[0]);
     OSSL_PROVIDER_unload(prov[1]);
-    OPENSSL_CTX_free(ctx);
+    OSSL_LIB_CTX_free(ctx);
     return ret;
 }
 

@@ -39,7 +39,7 @@ EVP_RAND                                datatype
 EVP_RAND_CTX                            datatype
 GEN_SESSION_CB                          datatype
 OPENSSL_Applink                         external
-OPENSSL_CTX                             datatype
+OSSL_LIB_CTX                            datatype
 NAMING_AUTHORITY                        datatype
 OSSL_DECODER                            datatype
 OSSL_DECODER_CTX                        datatype

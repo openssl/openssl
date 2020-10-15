@@ -226,7 +226,7 @@ typedef struct {
     /* Expected Session Ticket Application Data */
     char *expected_session_ticket_app_data;
 
-    OPENSSL_CTX *libctx;
+    OSSL_LIB_CTX *libctx;
 } SSL_TEST_CTX;
 
 const char *ssl_test_result_name(ssl_test_result_t result);
@@ -249,9 +249,9 @@ const char *ssl_max_fragment_len_name(int MFL_mode);
  * See test/README.ssltest.md for details on the conf file format.
  */
 SSL_TEST_CTX *SSL_TEST_CTX_create(const CONF *conf, const char *test_section,
-                                  OPENSSL_CTX *libctx);
+                                  OSSL_LIB_CTX *libctx);
 
-SSL_TEST_CTX *SSL_TEST_CTX_new(OPENSSL_CTX *libctx);
+SSL_TEST_CTX *SSL_TEST_CTX_new(OSSL_LIB_CTX *libctx);
 
 void SSL_TEST_CTX_free(SSL_TEST_CTX *ctx);
 

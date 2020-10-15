@@ -18,7 +18,7 @@ X509_STORE_CTX_verify_fn
 
  #include <openssl/x509_vfy.h>
 
- X509_STORE_CTX *X509_STORE_CTX_new_ex(OPENSSL_CTX *libctx, const char *propq);
+ X509_STORE_CTX *X509_STORE_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq);
  X509_STORE_CTX *X509_STORE_CTX_new(void);
  void X509_STORE_CTX_cleanup(X509_STORE_CTX *ctx);
  void X509_STORE_CTX_free(X509_STORE_CTX *ctx);

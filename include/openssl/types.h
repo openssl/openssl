@@ -204,7 +204,7 @@ typedef struct ct_policy_eval_ctx_st CT_POLICY_EVAL_CTX;
 typedef struct ossl_store_info_st OSSL_STORE_INFO;
 typedef struct ossl_store_search_st OSSL_STORE_SEARCH;
 
-typedef struct openssl_ctx_st OPENSSL_CTX;
+typedef struct ossl_lib_ctx_st OSSL_LIB_CTX;
 
 typedef struct ossl_dispatch_st OSSL_DISPATCH;
 typedef struct ossl_item_st OSSL_ITEM;

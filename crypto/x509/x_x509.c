@@ -134,7 +134,7 @@ int i2d_X509(const X509 *a, unsigned char **out)
  * asn1 object and it needs a libctx to operate.
  * Use X509_new_ex() instead if possible.
  */
-int x509_set0_libctx(X509 *x, OPENSSL_CTX *libctx, const char *propq)
+int x509_set0_libctx(X509 *x, OSSL_LIB_CTX *libctx, const char *propq)
 {
     if (x != NULL) {
         x->libctx = libctx;
@@ -143,7 +143,7 @@ int x509_set0_libctx(X509 *x, OPENSSL_CTX *libctx, const char *propq)
     return 1;
 }
 
-X509 *X509_new_ex(OPENSSL_CTX *libctx, const char *propq)
+X509 *X509_new_ex(OSSL_LIB_CTX *libctx, const char *propq)
 {
     X509 *cert = NULL;
 

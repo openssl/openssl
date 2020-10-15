@@ -31,7 +31,7 @@ typedef struct test_fixture {
     int expected;
 } CMP_PROTECT_TEST_FIXTURE;
 
-static OPENSSL_CTX *libctx = NULL;
+static OSSL_LIB_CTX *libctx = NULL;
 static OSSL_PROVIDER *default_null_provider = NULL, *provider = NULL;
 
 static void tear_down(CMP_PROTECT_TEST_FIXTURE *fixture)
@@ -500,7 +500,7 @@ void cleanup_tests(void)
     X509_free(intermediate);
     OSSL_CMP_MSG_free(ir_protected);
     OSSL_CMP_MSG_free(ir_unprotected);
-    OPENSSL_CTX_free(libctx);
+    OSSL_LIB_CTX_free(libctx);
 }
 
 #define USAGE "server.pem IR_protected.der IR_unprotected.der IP_PBM.der " \

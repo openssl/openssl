@@ -18,7 +18,7 @@ functions
 
  #include <openssl/ssl.h>
 
- SSL_CTX *SSL_CTX_new_ex(OPENSSL_CTX *libctx, const char *propq,
+ SSL_CTX *SSL_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
                          const SSL_METHOD *method);
  SSL_CTX *SSL_CTX_new(const SSL_METHOD *method);
  int SSL_CTX_up_ref(SSL_CTX *ctx);
@@ -75,7 +75,7 @@ functions
 
 SSL_CTX_new_ex() creates a new B<SSL_CTX> object as a framework to
 establish TLS/SSL or DTLS enabled connections using the library context
-I<libctx> (see L<OPENSSL_CTX(3)>). Any cryptographic algorithms that are used
+I<libctx> (see L<OSSL_LIB_CTX(3)>). Any cryptographic algorithms that are used
 by any B<SSL> objects created from this B<SSL_CTX> will be fetched from the
 I<libctx> using the property query string I<propq> (see
 L<provider(7)/Fetching algorithms>. Either or both the I<libctx> or I<propq>

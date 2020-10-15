@@ -6,7 +6,7 @@ ossl_algorithm_do_all - generic algorithm implementation iterator
 
 =head1 SYNOPSIS
 
- void ossl_algorithm_do_all(OPENSSL_CTX *libctx, int operation_id,
+ void ossl_algorithm_do_all(OSSL_LIB_CTX *libctx, int operation_id,
                             OSSL_PROVIDER *provider,
                             void (*fn)(OSSL_PROVIDER *provider,
                                        const OSSL_ALGORITHM *algo,

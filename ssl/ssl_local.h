@@ -832,7 +832,7 @@ typedef struct tls_group_info_st {
 # define TLS_GROUP_FFDHE_FOR_TLS1_3 (TLS_GROUP_FFDHE|TLS_GROUP_ONLY_FOR_TLS1_3)
 
 struct ssl_ctx_st {
-    OPENSSL_CTX *libctx;
+    OSSL_LIB_CTX *libctx;
 
     const SSL_METHOD *method;
     STACK_OF(SSL_CIPHER) *cipher_list;
@@ -2812,12 +2812,12 @@ void ssl_comp_free_compression_methods_int(void);
 /* ssl_mcnf.c */
 void ssl_ctx_system_config(SSL_CTX *ctx);
 
-const EVP_CIPHER *ssl_evp_cipher_fetch(OPENSSL_CTX *libctx,
+const EVP_CIPHER *ssl_evp_cipher_fetch(OSSL_LIB_CTX *libctx,
                                        int nid,
                                        const char *properties);
 int ssl_evp_cipher_up_ref(const EVP_CIPHER *cipher);
 void ssl_evp_cipher_free(const EVP_CIPHER *cipher);
-const EVP_MD *ssl_evp_md_fetch(OPENSSL_CTX *libctx,
+const EVP_MD *ssl_evp_md_fetch(OSSL_LIB_CTX *libctx,
                                int nid,
                                const char *properties);
 int ssl_evp_md_up_ref(const EVP_MD *md);

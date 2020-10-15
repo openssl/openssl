@@ -166,7 +166,7 @@ OSSL_PROVIDER *EVP_KEYEXCH_provider(const EVP_KEYEXCH *exchange)
     return exchange->prov;
 }
 
-EVP_KEYEXCH *EVP_KEYEXCH_fetch(OPENSSL_CTX *ctx, const char *algorithm,
+EVP_KEYEXCH *EVP_KEYEXCH_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
                                const char *properties)
 {
     return evp_generic_fetch(ctx, OSSL_OP_KEYEXCH, algorithm, properties,
@@ -457,7 +457,7 @@ int EVP_KEYEXCH_is_a(const EVP_KEYEXCH *keyexch, const char *name)
     return evp_is_a(keyexch->prov, keyexch->name_id, NULL, name);
 }
 
-void EVP_KEYEXCH_do_all_provided(OPENSSL_CTX *libctx,
+void EVP_KEYEXCH_do_all_provided(OSSL_LIB_CTX *libctx,
                                  void (*fn)(EVP_KEYEXCH *keyexch, void *arg),
                                  void *arg)
 {

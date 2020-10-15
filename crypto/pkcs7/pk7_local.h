@@ -10,5 +10,5 @@
 #include "crypto/pkcs7.h"
 
 const PKCS7_CTX *pkcs7_get0_ctx(const PKCS7 *p7);
-OPENSSL_CTX *pkcs7_ctx_get0_libctx(const PKCS7_CTX *ctx);
+OSSL_LIB_CTX *pkcs7_ctx_get0_libctx(const PKCS7_CTX *ctx);
 const char *pkcs7_ctx_get0_propq(const PKCS7_CTX *ctx);

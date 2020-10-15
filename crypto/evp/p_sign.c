@@ -15,7 +15,7 @@
 #include "crypto/evp.h"
 
 int EVP_SignFinal_ex(EVP_MD_CTX *ctx, unsigned char *sigret,
-                     unsigned int *siglen, EVP_PKEY *pkey, OPENSSL_CTX *libctx,
+                     unsigned int *siglen, EVP_PKEY *pkey, OSSL_LIB_CTX *libctx,
                      const char *propq)
 {
     unsigned char m[EVP_MAX_MD_SIZE];

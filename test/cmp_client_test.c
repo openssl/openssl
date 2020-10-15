@@ -30,7 +30,7 @@ typedef struct test_fixture {
     STACK_OF(X509) *caPubs;
 } CMP_SES_TEST_FIXTURE;
 
-static OPENSSL_CTX *libctx = NULL;
+static OSSL_LIB_CTX *libctx = NULL;
 static OSSL_PROVIDER *default_null_provider = NULL, *provider = NULL;
 
 static EVP_PKEY *server_key = NULL;
@@ -343,7 +343,7 @@ void cleanup_tests(void)
     EVP_PKEY_free(server_key);
     X509_free(client_cert);
     EVP_PKEY_free(client_key);
-    OPENSSL_CTX_free(libctx);
+    OSSL_LIB_CTX_free(libctx);
     return;
 }
 

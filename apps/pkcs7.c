@@ -60,7 +60,7 @@ int pkcs7_main(int argc, char **argv)
     char *infile = NULL, *outfile = NULL, *prog;
     int i, print_certs = 0, text = 0, noout = 0, p7_print = 0, ret = 1;
     OPTION_CHOICE o;
-    OPENSSL_CTX *libctx = app_get0_libctx();
+    OSSL_LIB_CTX *libctx = app_get0_libctx();
     const char *propq = app_get0_propq();
 
     prog = opt_init(argc, argv, pkcs7_options);

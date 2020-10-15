@@ -384,7 +384,7 @@ static int process_pollReq(OSSL_CMP_SRV_CTX *srv_ctx,
     return 1;
 }
 
-OSSL_CMP_SRV_CTX *ossl_cmp_mock_srv_new(OPENSSL_CTX *libctx, const char *propq)
+OSSL_CMP_SRV_CTX *ossl_cmp_mock_srv_new(OSSL_LIB_CTX *libctx, const char *propq)
 {
     OSSL_CMP_SRV_CTX *srv_ctx = OSSL_CMP_SRV_CTX_new(libctx, propq);
     mock_srv_ctx *ctx = mock_srv_ctx_new();

@@ -957,7 +957,7 @@ static X509_STORE *create_cert_store(const char *CApath, const char *CAfile,
 {
     X509_STORE *cert_ctx = NULL;
     X509_LOOKUP *lookup = NULL;
-    OPENSSL_CTX *libctx = app_get0_libctx();
+    OSSL_LIB_CTX *libctx = app_get0_libctx();
     const char *propq = app_get0_propq();
 
     cert_ctx = X509_STORE_new();

@@ -119,7 +119,7 @@ int CMS_data(CMS_ContentInfo *cms, BIO *out, unsigned int flags)
 }
 
 CMS_ContentInfo *CMS_data_create_ex(BIO *in, unsigned int flags,
-                                    OPENSSL_CTX *libctx, const char *propq)
+                                    OSSL_LIB_CTX *libctx, const char *propq)
 {
     CMS_ContentInfo *cms = cms_Data_create(libctx, propq);
 
@@ -164,7 +164,7 @@ int CMS_digest_verify(CMS_ContentInfo *cms, BIO *dcont, BIO *out,
 }
 
 CMS_ContentInfo *CMS_digest_create_ex(BIO *in, const EVP_MD *md,
-                                      unsigned int flags, OPENSSL_CTX *ctx,
+                                      unsigned int flags, OSSL_LIB_CTX *ctx,
                                       const char *propq)
 {
     CMS_ContentInfo *cms;
@@ -220,7 +220,7 @@ int CMS_EncryptedData_decrypt(CMS_ContentInfo *cms,
 CMS_ContentInfo *CMS_EncryptedData_encrypt_ex(BIO *in, const EVP_CIPHER *cipher,
                                               const unsigned char *key,
                                               size_t keylen, unsigned int flags,
-                                              OPENSSL_CTX *libctx,
+                                              OSSL_LIB_CTX *libctx,
                                               const char *propq)
 {
     CMS_ContentInfo *cms;
@@ -500,7 +500,7 @@ int CMS_verify_receipt(CMS_ContentInfo *rcms, CMS_ContentInfo *ocms,
 
 CMS_ContentInfo *CMS_sign_ex(X509 *signcert, EVP_PKEY *pkey,
                              STACK_OF(X509) *certs, BIO *data,
-                             unsigned int flags, OPENSSL_CTX *libctx,
+                             unsigned int flags, OSSL_LIB_CTX *libctx,
                              const char *propq)
 {
     CMS_ContentInfo *cms;
@@ -619,7 +619,7 @@ CMS_ContentInfo *CMS_sign_receipt(CMS_SignerInfo *si,
 
 CMS_ContentInfo *CMS_encrypt_ex(STACK_OF(X509) *certs, BIO *data,
                                 const EVP_CIPHER *cipher, unsigned int flags,
-                                OPENSSL_CTX *libctx, const char *propq)
+                                OSSL_LIB_CTX *libctx, const char *propq)
 {
     CMS_ContentInfo *cms;
     int i;

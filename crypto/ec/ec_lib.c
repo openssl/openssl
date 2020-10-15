@@ -26,7 +26,7 @@
 
 /* functions for EC_GROUP objects */
 
-EC_GROUP *ec_group_new_ex(OPENSSL_CTX *libctx, const char *propq,
+EC_GROUP *ec_group_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
                           const EC_METHOD *meth)
 {
     EC_GROUP *ret;
@@ -1403,7 +1403,7 @@ int EC_GROUP_get_pentanomial_basis(const EC_GROUP *group, unsigned int *k1,
  * mathematically wrong anyway and should not be used.
  */
 static EC_GROUP *ec_group_explicit_to_named(const EC_GROUP *group,
-                                            OPENSSL_CTX *libctx,
+                                            OSSL_LIB_CTX *libctx,
                                             const char *propq,
                                             BN_CTX *ctx)
 {
@@ -1499,7 +1499,7 @@ static int ec_encoding_param2id(const OSSL_PARAM *p, int *id)
 }
 
 static EC_GROUP *group_new_from_name(const OSSL_PARAM *p,
-                                     OPENSSL_CTX *libctx, const char *propq)
+                                     OSSL_LIB_CTX *libctx, const char *propq)
 {
     int ok = 0, nid;
     const char *curve_name = NULL;
@@ -1528,7 +1528,7 @@ static EC_GROUP *group_new_from_name(const OSSL_PARAM *p,
 }
 
 EC_GROUP *EC_GROUP_new_from_params(const OSSL_PARAM params[],
-                                   OPENSSL_CTX *libctx, const char *propq)
+                                   OSSL_LIB_CTX *libctx, const char *propq)
 {
     const OSSL_PARAM *ptmp, *pa, *pb;
     int ok = 0;

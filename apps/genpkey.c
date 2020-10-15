@@ -22,7 +22,7 @@
 #endif
 
 static int init_keygen_file(EVP_PKEY_CTX **pctx, const char *file, ENGINE *e,
-                            OPENSSL_CTX *libctx, const char *propq);
+                            OSSL_LIB_CTX *libctx, const char *propq);
 static int genpkey_cb(EVP_PKEY_CTX *ctx);
 
 typedef enum OPTION_choice {
@@ -73,7 +73,7 @@ int genpkey_main(int argc, char **argv)
     OPTION_CHOICE o;
     int outformat = FORMAT_PEM, text = 0, ret = 1, rv, do_param = 0;
     int private = 0;
-    OPENSSL_CTX *libctx = app_get0_libctx();
+    OSSL_LIB_CTX *libctx = app_get0_libctx();
     const char *propq = app_get0_propq();
 
     prog = opt_init(argc, argv, genpkey_options);
@@ -240,7 +240,7 @@ int genpkey_main(int argc, char **argv)
 }
 
 static int init_keygen_file(EVP_PKEY_CTX **pctx, const char *file, ENGINE *e,
-                            OPENSSL_CTX *libctx, const char *propq)
+                            OSSL_LIB_CTX *libctx, const char *propq)
 {
     BIO *pbio;
     EVP_PKEY *pkey = NULL;
@@ -287,7 +287,7 @@ static int init_keygen_file(EVP_PKEY_CTX **pctx, const char *file, ENGINE *e,
 
 int init_gen_str(EVP_PKEY_CTX **pctx,
                  const char *algname, ENGINE *e, int do_param,
-                 OPENSSL_CTX *libctx, const char *propq)
+                 OSSL_LIB_CTX *libctx, const char *propq)
 {
     EVP_PKEY_CTX *ctx = NULL;
     const EVP_PKEY_ASN1_METHOD *ameth;

@@ -22,7 +22,7 @@ OSSL_ENCODER_get_params
 
  typedef struct ossl_encoder_st OSSL_ENCODER;
 
- OSSL_ENCODER *OSSL_ENCODER_fetch(OPENSSL_CTX *ctx, const char *name,
+ OSSL_ENCODER *OSSL_ENCODER_fetch(OSSL_LIB_CTX *ctx, const char *name,
                                   const char *properties);
  int OSSL_ENCODER_up_ref(OSSL_ENCODER *encoder);
  void OSSL_ENCODER_free(OSSL_ENCODER *encoder);
@@ -30,7 +30,7 @@ OSSL_ENCODER_get_params
  const char *OSSL_ENCODER_properties(const OSSL_ENCODER *encoder);
  int OSSL_ENCODER_is_a(const OSSL_ENCODER *encoder, const char *name);
  int OSSL_ENCODER_number(const OSSL_ENCODER *encoder);
- void OSSL_ENCODER_do_all_provided(OPENSSL_CTX *libctx,
+ void OSSL_ENCODER_do_all_provided(OSSL_LIB_CTX *libctx,
                                    void (*fn)(OSSL_ENCODER *encoder, void *arg),
                                    void *arg);
  void OSSL_ENCODER_names_do_all(const OSSL_ENCODER *encoder,
@@ -46,7 +46,7 @@ encode an object of some kind to a encoded form, such as PEM,
 DER, or even human readable text.
 
 OSSL_ENCODER_fetch() looks for an algorithm within the provider that
-has been loaded into the B<OPENSSL_CTX> given by I<ctx>, having the
+has been loaded into the B<OSSL_LIB_CTX> given by I<ctx>, having the
 name given by I<name> and the properties given by I<properties>.
 The I<name> determines what type of object the fetched encoder
 method is expected to be able to encode, and the properties are
@@ -117,7 +117,7 @@ OSSL_ENCODER_number() returns an integer.
 =head1 SEE ALSO
 
 L<provider(7)>, L<OSSL_ENCODER_CTX(3)>, L<OSSL_ENCODER_to_bio(3)>,
-L<OSSL_ENCODER_CTX_new_by_EVP_PKEY(3)>, L<OPENSSL_CTX(3)>
+L<OSSL_ENCODER_CTX_new_by_EVP_PKEY(3)>, L<OSSL_LIB_CTX(3)>
 
 =head1 HISTORY
 

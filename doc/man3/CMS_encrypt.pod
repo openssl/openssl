@@ -10,7 +10,7 @@ CMS_encrypt_ex, CMS_encrypt - create a CMS envelopedData structure
 
  CMS_ContentInfo *CMS_encrypt_ex(STACK_OF(X509) *certs, BIO *in,
                                  const EVP_CIPHER *cipher, unsigned int flags,
-                                 OPENSSL_CTX *libctx, const char *propq);
+                                 OSSL_LIB_CTX *libctx, const char *propq);
  CMS_ContentInfo *CMS_encrypt(STACK_OF(X509) *certs, BIO *in,
                               const EVP_CIPHER *cipher, unsigned int flags);
 

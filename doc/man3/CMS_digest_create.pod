@@ -10,7 +10,7 @@ CMS_digest_create_ex, CMS_digest_create
  #include <openssl/cms.h>
 
  CMS_ContentInfo *CMS_digest_create_ex(BIO *in, const EVP_MD *md,
-                                       unsigned int flags, OPENSSL_CTX *ctx,
+                                       unsigned int flags, OSSL_LIB_CTX *ctx,
                                        const char *propq);
 
  CMS_ContentInfo *CMS_digest_create(BIO *in, const EVP_MD *md,

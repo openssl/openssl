@@ -68,7 +68,7 @@ static OSSL_FUNC_keymgmt_export_types_fn ecx_imexport_types;
 #define ECX_POSSIBLE_SELECTIONS (OSSL_KEYMGMT_SELECT_KEYPAIR)
 
 struct ecx_gen_ctx {
-    OPENSSL_CTX *libctx;
+    OSSL_LIB_CTX *libctx;
     char *propq;
     ECX_KEY_TYPE type;
     int selection;
@@ -443,7 +443,7 @@ static const OSSL_PARAM *ed448_settable_params(void *provctx)
 
 static void *ecx_gen_init(void *provctx, int selection, ECX_KEY_TYPE type)
 {
-    OPENSSL_CTX *libctx = PROV_LIBRARY_CONTEXT_OF(provctx);
+    OSSL_LIB_CTX *libctx = PROV_LIBRARY_CONTEXT_OF(provctx);
     struct ecx_gen_ctx *gctx = NULL;
 
     if (!ossl_prov_is_running())

@@ -22,7 +22,7 @@ OSSL_DECODER_get_params
 
  typedef struct ossl_decoder_st OSSL_DECODER;
 
- OSSL_DECODER *OSSL_DECODER_fetch(OPENSSL_CTX *ctx, const char *name,
+ OSSL_DECODER *OSSL_DECODER_fetch(OSSL_LIB_CTX *ctx, const char *name,
                                   const char *properties);
  int OSSL_DECODER_up_ref(OSSL_DECODER *decoder);
  void OSSL_DECODER_free(OSSL_DECODER *decoder);
@@ -30,7 +30,7 @@ OSSL_DECODER_get_params
  const char *OSSL_DECODER_properties(const OSSL_DECODER *decoder);
  int OSSL_DECODER_is_a(const OSSL_DECODER *decoder, const char *name);
  int OSSL_DECODER_number(const OSSL_DECODER *decoder);
- void OSSL_DECODER_do_all_provided(OPENSSL_CTX *libctx,
+ void OSSL_DECODER_do_all_provided(OSSL_LIB_CTX *libctx,
                                    void (*fn)(OSSL_DECODER *decoder, void *arg),
                                    void *arg);
  void OSSL_DECODER_names_do_all(const OSSL_DECODER *decoder,
@@ -46,7 +46,7 @@ decode encoded data into an object of some type that the rest
 of OpenSSL knows how to handle.
 
 OSSL_DECODER_fetch() looks for an algorithm within the provider that
-has been loaded into the B<OPENSSL_CTX> given by I<ctx>, having the
+has been loaded into the B<OSSL_LIB_CTX> given by I<ctx>, having the
 name given by I<name> and the properties given by I<properties>.
 The I<name> determines what type of object the fetched decoder
 method is expected to be able to decode, and the properties are
@@ -124,7 +124,7 @@ Text, because pod2xxx doesn't like empty sections
 =head1 SEE ALSO
 
 L<provider(7)>, L<OSSL_DECODER_CTX(3)>, L<OSSL_DECODER_from_bio(3)>,
-L<OSSL_DECODER_CTX_new_by_EVP_PKEY(3)>, L<OPENSSL_CTX(3)>
+L<OSSL_DECODER_CTX_new_by_EVP_PKEY(3)>, L<OSSL_LIB_CTX(3)>
 
 =head1 HISTORY
 

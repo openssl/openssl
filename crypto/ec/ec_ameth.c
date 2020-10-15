@@ -101,7 +101,7 @@ static int eckey_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
 }
 
 static EC_KEY *eckey_type2param(int ptype, const void *pval,
-                                OPENSSL_CTX *libctx, const char *propq)
+                                OSSL_LIB_CTX *libctx, const char *propq)
 {
     EC_KEY *eckey = NULL;
     EC_GROUP *group = NULL;
@@ -155,7 +155,7 @@ static int eckey_pub_decode(EVP_PKEY *pkey, const X509_PUBKEY *pubkey)
     int ptype, pklen;
     EC_KEY *eckey = NULL;
     X509_ALGOR *palg;
-    OPENSSL_CTX *libctx = NULL;
+    OSSL_LIB_CTX *libctx = NULL;
     const char *propq = NULL;
 
     if (!X509_PUBKEY_get0_libctx(&libctx, &propq, pubkey)
@@ -200,7 +200,7 @@ static int eckey_pub_cmp(const EVP_PKEY *a, const EVP_PKEY *b)
 }
 
 static int eckey_priv_decode_ex(EVP_PKEY *pkey, const PKCS8_PRIV_KEY_INFO *p8,
-                                OPENSSL_CTX *libctx, const char *propq)
+                                OSSL_LIB_CTX *libctx, const char *propq)
 {
     const unsigned char *p = NULL;
     const void *pval;
@@ -562,7 +562,7 @@ size_t ec_pkey_dirty_cnt(const EVP_PKEY *pkey)
 
 static
 int ec_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
-                      EVP_KEYMGMT *to_keymgmt, OPENSSL_CTX *libctx,
+                      EVP_KEYMGMT *to_keymgmt, OSSL_LIB_CTX *libctx,
                       const char *propq)
 {
     const EC_KEY *eckey = NULL;

@@ -14,7 +14,7 @@ EVP_VerifyInit, EVP_VerifyUpdate, EVP_VerifyFinal_ex, EVP_VerifyFinal
  int EVP_VerifyUpdate(EVP_MD_CTX *ctx, const void *d, unsigned int cnt);
  int EVP_VerifyFinal_ex(EVP_MD_CTX *ctx, const unsigned char *sigbuf,
                         unsigned int siglen, EVP_PKEY *pkey,
-                        OPENSSL_CTX *libctx, const char *propq);
+                        OSSL_LIB_CTX *libctx, const char *propq);
  int EVP_VerifyFinal(EVP_MD_CTX *ctx, unsigned char *sigbuf, unsigned int siglen,
                      EVP_PKEY *pkey);
 

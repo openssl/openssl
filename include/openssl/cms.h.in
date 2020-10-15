@@ -53,7 +53,7 @@ DECLARE_ASN1_FUNCTIONS(CMS_ContentInfo)
 DECLARE_ASN1_FUNCTIONS(CMS_ReceiptRequest)
 DECLARE_ASN1_PRINT_FUNCTION(CMS_ContentInfo)
 
-CMS_ContentInfo *CMS_ContentInfo_new_ex(OPENSSL_CTX *libctx, const char *propq);
+CMS_ContentInfo *CMS_ContentInfo_new_ex(OSSL_LIB_CTX *libctx, const char *propq);
 
 # define CMS_SIGNERINFO_ISSUER_SERIAL    0
 # define CMS_SIGNERINFO_KEYIDENTIFIER    1
@@ -125,7 +125,7 @@ CMS_ContentInfo *CMS_sign(X509 *signcert, EVP_PKEY *pkey,
                           unsigned int flags);
 CMS_ContentInfo *CMS_sign_ex(X509 *signcert, EVP_PKEY *pkey,
                              STACK_OF(X509) *certs, BIO *data,
-                             unsigned int flags, OPENSSL_CTX *ctx,
+                             unsigned int flags, OSSL_LIB_CTX *ctx,
                              const char *propq);
 
 CMS_ContentInfo *CMS_sign_receipt(CMS_SignerInfo *si,
@@ -135,14 +135,14 @@ CMS_ContentInfo *CMS_sign_receipt(CMS_SignerInfo *si,
 int CMS_data(CMS_ContentInfo *cms, BIO *out, unsigned int flags);
 CMS_ContentInfo *CMS_data_create(BIO *in, unsigned int flags);
 CMS_ContentInfo *CMS_data_create_ex(BIO *in, unsigned int flags,
-                                    OPENSSL_CTX *ctx, const char *propq);
+                                    OSSL_LIB_CTX *ctx, const char *propq);
 
 int CMS_digest_verify(CMS_ContentInfo *cms, BIO *dcont, BIO *out,
                       unsigned int flags);
 CMS_ContentInfo *CMS_digest_create(BIO *in, const EVP_MD *md,
                                    unsigned int flags);
 CMS_ContentInfo *CMS_digest_create_ex(BIO *in, const EVP_MD *md,
-                                      unsigned int flags, OPENSSL_CTX *ctx,
+                                      unsigned int flags, OSSL_LIB_CTX *ctx,
                                       const char *propq);
 
 int CMS_EncryptedData_decrypt(CMS_ContentInfo *cms,
@@ -155,7 +155,7 @@ CMS_ContentInfo *CMS_EncryptedData_encrypt(BIO *in, const EVP_CIPHER *cipher,
 CMS_ContentInfo *CMS_EncryptedData_encrypt_ex(BIO *in, const EVP_CIPHER *cipher,
                                               const unsigned char *key,
                                               size_t keylen, unsigned int flags,
-                                              OPENSSL_CTX *ctx,
+                                              OSSL_LIB_CTX *ctx,
                                               const char *propq);
 
 int CMS_EncryptedData_set1_key(CMS_ContentInfo *cms, const EVP_CIPHER *ciph,
@@ -174,7 +174,7 @@ CMS_ContentInfo *CMS_encrypt(STACK_OF(X509) *certs, BIO *in,
                              const EVP_CIPHER *cipher, unsigned int flags);
 CMS_ContentInfo *CMS_encrypt_ex(STACK_OF(X509) *certs, BIO *in,
                                 const EVP_CIPHER *cipher, unsigned int flags,
-                                OPENSSL_CTX *ctx, const char *propq);
+                                OSSL_LIB_CTX *ctx, const char *propq);
 
 int CMS_decrypt(CMS_ContentInfo *cms, EVP_PKEY *pkey, X509 *cert,
                 BIO *dcont, BIO *out, unsigned int flags);
@@ -193,11 +193,11 @@ int CMS_RecipientInfo_type(CMS_RecipientInfo *ri);
 EVP_PKEY_CTX *CMS_RecipientInfo_get0_pkey_ctx(CMS_RecipientInfo *ri);
 CMS_ContentInfo *CMS_AuthEnvelopedData_create(const EVP_CIPHER *cipher);
 CMS_ContentInfo *
-CMS_AuthEnvelopedData_create_ex(const EVP_CIPHER *cipher, OPENSSL_CTX *ctx,
+CMS_AuthEnvelopedData_create_ex(const EVP_CIPHER *cipher, OSSL_LIB_CTX *ctx,
                                 const char *propq);
 CMS_ContentInfo *CMS_EnvelopedData_create(const EVP_CIPHER *cipher);
 CMS_ContentInfo *CMS_EnvelopedData_create_ex(const EVP_CIPHER *cipher,
-                                             OPENSSL_CTX *ctx,
+                                             OSSL_LIB_CTX *ctx,
                                              const char *propq);
 
 CMS_RecipientInfo *CMS_add1_recipient_cert(CMS_ContentInfo *cms,
@@ -342,7 +342,7 @@ CMS_ReceiptRequest *CMS_ReceiptRequest_create0_ex(
     unsigned char *id, int idlen, int allorfirst,
     STACK_OF(GENERAL_NAMES) *receiptList,
     STACK_OF(GENERAL_NAMES) *receiptsTo,
-    OPENSSL_CTX *ctx, const char *propq);
+    OSSL_LIB_CTX *ctx, const char *propq);
 
 int CMS_add1_ReceiptRequest(CMS_SignerInfo *si, CMS_ReceiptRequest *rr);
 void CMS_ReceiptRequest_get0_values(CMS_ReceiptRequest *rr,

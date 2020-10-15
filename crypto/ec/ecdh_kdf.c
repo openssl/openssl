@@ -25,7 +25,7 @@ int ecdh_KDF_X9_63(unsigned char *out, size_t outlen,
                    const unsigned char *Z, size_t Zlen,
                    const unsigned char *sinfo, size_t sinfolen,
                    const EVP_MD *md,
-                   OPENSSL_CTX *libctx, const char *propq)
+                   OSSL_LIB_CTX *libctx, const char *propq)
 {
     int ret = 0;
     EVP_KDF_CTX *kctx = NULL;

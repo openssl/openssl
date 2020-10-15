@@ -10,7 +10,7 @@ evp_pkey_export_to_provider, evp_pkey_copy_downgraded, evp_pkey_downgrade
  /* Only for EVP source */
  #include "evp_local.h"
 
- void *evp_pkey_export_to_provider(EVP_PKEY *pk, OPENSSL_CTX *libctx,
+ void *evp_pkey_export_to_provider(EVP_PKEY *pk, OSSL_LIB_CTX *libctx,
                                    EVP_KEYMGMT **keymgmt,
                                    const char *propquery);
  int evp_pkey_copy_downgraded(EVP_PKEY **dest, const EVP_PKEY *src);
@@ -60,7 +60,7 @@ allocated, this is OK.
 
 =head1 SEE ALSO
 
-L<OPENSSL_CTX(3)>, L<EVP_KEYMGMT(3)>
+L<OSSL_LIB_CTX(3)>, L<EVP_KEYMGMT(3)>
 
 =head1 HISTORY
 

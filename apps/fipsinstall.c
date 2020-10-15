@@ -220,7 +220,7 @@ static void free_config_and_unload(CONF *conf)
 
 static int verify_module_load(const char *parent_config_file)
 {
-    return OPENSSL_CTX_load_config(NULL, parent_config_file);
+    return OSSL_LIB_CTX_load_config(NULL, parent_config_file);
 }
 
 /*

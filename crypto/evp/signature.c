@@ -298,7 +298,7 @@ OSSL_PROVIDER *EVP_SIGNATURE_provider(const EVP_SIGNATURE *signature)
     return signature->prov;
 }
 
-EVP_SIGNATURE *EVP_SIGNATURE_fetch(OPENSSL_CTX *ctx, const char *algorithm,
+EVP_SIGNATURE *EVP_SIGNATURE_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
                                    const char *properties)
 {
     return evp_generic_fetch(ctx, OSSL_OP_SIGNATURE, algorithm, properties,
@@ -317,7 +317,7 @@ int EVP_SIGNATURE_number(const EVP_SIGNATURE *signature)
     return signature->name_id;
 }
 
-void EVP_SIGNATURE_do_all_provided(OPENSSL_CTX *libctx,
+void EVP_SIGNATURE_do_all_provided(OSSL_LIB_CTX *libctx,
                                    void (*fn)(EVP_SIGNATURE *signature,
                                               void *arg),
                                    void *arg)

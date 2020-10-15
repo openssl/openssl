@@ -48,8 +48,8 @@ const char *ossl_rsa_mgf_nid2name(int mgf);
 int ossl_rsa_oaeppss_md2nid(const EVP_MD *md);
 const char *ossl_rsa_oaeppss_nid2name(int md);
 
-RSA *ossl_rsa_new_with_ctx(OPENSSL_CTX *libctx);
-OPENSSL_CTX *ossl_rsa_get0_libctx(RSA *r);
+RSA *ossl_rsa_new_with_ctx(OSSL_LIB_CTX *libctx);
+OSSL_LIB_CTX *ossl_rsa_get0_libctx(RSA *r);
 
 int ossl_rsa_set0_all_params(RSA *r, const STACK_OF(BIGNUM) *primes,
                              const STACK_OF(BIGNUM) *exps,
@@ -64,14 +64,14 @@ int ossl_rsa_pss_params_30_todata(const RSA_PSS_PARAMS_30 *pss,
                                   OSSL_PARAM_BLD *bld, OSSL_PARAM params[]);
 int ossl_rsa_pss_params_30_fromdata(RSA_PSS_PARAMS_30 *pss_params,
                                     const OSSL_PARAM params[],
-                                    OPENSSL_CTX *libctx);
+                                    OSSL_LIB_CTX *libctx);
 
-int ossl_rsa_padding_check_PKCS1_type_2_TLS(OPENSSL_CTX *ctx, unsigned char *to,
+int ossl_rsa_padding_check_PKCS1_type_2_TLS(OSSL_LIB_CTX *ctx, unsigned char *to,
                                             size_t tlen,
                                             const unsigned char *from,
                                             size_t flen, int client_version,
                                             int alt_version);
-int ossl_rsa_padding_add_PKCS1_OAEP_mgf1_ex(OPENSSL_CTX *libctx,
+int ossl_rsa_padding_add_PKCS1_OAEP_mgf1_ex(OSSL_LIB_CTX *libctx,
                                             unsigned char *to, int tlen,
                                             const unsigned char *from, int flen,
                                             const unsigned char *param,

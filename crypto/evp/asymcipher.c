@@ -405,7 +405,7 @@ OSSL_PROVIDER *EVP_ASYM_CIPHER_provider(const EVP_ASYM_CIPHER *cipher)
     return cipher->prov;
 }
 
-EVP_ASYM_CIPHER *EVP_ASYM_CIPHER_fetch(OPENSSL_CTX *ctx, const char *algorithm,
+EVP_ASYM_CIPHER *EVP_ASYM_CIPHER_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
                                        const char *properties)
 {
     return evp_generic_fetch(ctx, OSSL_OP_ASYM_CIPHER, algorithm, properties,
@@ -424,7 +424,7 @@ int EVP_ASYM_CIPHER_number(const EVP_ASYM_CIPHER *cipher)
     return cipher->name_id;
 }
 
-void EVP_ASYM_CIPHER_do_all_provided(OPENSSL_CTX *libctx,
+void EVP_ASYM_CIPHER_do_all_provided(OSSL_LIB_CTX *libctx,
                                      void (*fn)(EVP_ASYM_CIPHER *cipher,
                                                 void *arg),
                                      void *arg)

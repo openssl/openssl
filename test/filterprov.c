@@ -26,7 +26,7 @@ int filter_provider_set_filter(int operation, const char *name);
 #define MAX_ALG_FILTERS 5
 
 struct filter_prov_globals_st {
-    OPENSSL_CTX *libctx;
+    OSSL_LIB_CTX *libctx;
     OSSL_PROVIDER *deflt;
     struct {
         int operation;
@@ -40,7 +40,7 @@ static struct filter_prov_globals_st ourglobals;
 static struct filter_prov_globals_st *get_globals(void)
 {
     /*
-     * Ideally we'd like to store this in the OPENSSL_CTX so that we can have
+     * Ideally we'd like to store this in the OSSL_LIB_CTX so that we can have
      * more than one instance of the filter provider at a time. But for now we
      * just make it simple.
      */
@@ -97,7 +97,7 @@ static void filter_teardown(void *provctx)
     struct filter_prov_globals_st *globs = get_globals();
 
     OSSL_PROVIDER_unload(globs->deflt);
-    OPENSSL_CTX_free(globs->libctx);
+    OSSL_LIB_CTX_free(globs->libctx);
 }
 
 /* Functions we provide to the core */
@@ -116,7 +116,7 @@ int filter_provider_init(const OSSL_CORE_HANDLE *handle,
                          void **provctx)
 {
     memset(&ourglobals, 0, sizeof(ourglobals));
-    ourglobals.libctx = OPENSSL_CTX_new();
+    ourglobals.libctx = OSSL_LIB_CTX_new();
     if (ourglobals.libctx == NULL)
         goto err;
 
@@ -130,7 +130,7 @@ int filter_provider_init(const OSSL_CORE_HANDLE *handle,
 
  err:
     OSSL_PROVIDER_unload(ourglobals.deflt);
-    OPENSSL_CTX_free(ourglobals.libctx);
+    OSSL_LIB_CTX_free(ourglobals.libctx);
     return 0;
 }
 

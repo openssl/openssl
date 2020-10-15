@@ -63,7 +63,7 @@ static OSSL_FUNC_signature_settable_ctx_md_params_fn dsa_settable_ctx_md_params;
  */
 
 typedef struct {
-    OPENSSL_CTX *libctx;
+    OSSL_LIB_CTX *libctx;
     char *propq;
     DSA *dsa;
 

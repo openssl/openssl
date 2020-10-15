@@ -92,9 +92,9 @@ struct x509_lookup_method_st {
                          const char *str, int len, X509_OBJECT *ret);
     int (*get_by_subject_ex) (X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
                               const X509_NAME *name, X509_OBJECT *ret,
-                              OPENSSL_CTX *libctx, const char *propq);
+                              OSSL_LIB_CTX *libctx, const char *propq);
     int (*ctrl_ex) (X509_LOOKUP *ctx, int cmd, const char *argc, long argl,
-                    char **ret, OPENSSL_CTX *libctx, const char *propq);
+                    char **ret, OSSL_LIB_CTX *libctx, const char *propq);
 };
 
 /* This is the functions plus an instance of the local variables. */

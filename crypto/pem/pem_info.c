@@ -26,7 +26,7 @@
 #ifndef OPENSSL_NO_STDIO
 STACK_OF(X509_INFO)
 *PEM_X509_INFO_read_ex(FILE *fp, STACK_OF(X509_INFO) *sk, pem_password_cb *cb,
-                       void *u, OPENSSL_CTX *libctx, const char *propq)
+                       void *u, OSSL_LIB_CTX *libctx, const char *propq)
 {
     BIO *b;
     STACK_OF(X509_INFO) *ret;
@@ -50,7 +50,7 @@ STACK_OF(X509_INFO) *PEM_X509_INFO_read(FILE *fp, STACK_OF(X509_INFO) *sk,
 
 STACK_OF(X509_INFO)
 *PEM_X509_INFO_read_bio_ex(BIO *bp, STACK_OF(X509_INFO) *sk,
-                           pem_password_cb *cb, void *u, OPENSSL_CTX *libctx,
+                           pem_password_cb *cb, void *u, OSSL_LIB_CTX *libctx,
                            const char *propq)
 {
     X509_INFO *xi = NULL;

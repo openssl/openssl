@@ -13,10 +13,10 @@ typedef struct siv128_context SIV128_CONTEXT;
 
 SIV128_CONTEXT *CRYPTO_siv128_new(const unsigned char *key, int klen,
                                   EVP_CIPHER *cbc, EVP_CIPHER *ctr,
-                                  OPENSSL_CTX *libctx, const char *propq);
+                                  OSSL_LIB_CTX *libctx, const char *propq);
 int CRYPTO_siv128_init(SIV128_CONTEXT *ctx, const unsigned char *key, int klen,
                        const EVP_CIPHER *cbc, const EVP_CIPHER *ctr,
-                       OPENSSL_CTX *libctx, const char *propq);
+                       OSSL_LIB_CTX *libctx, const char *propq);
 int CRYPTO_siv128_copy_ctx(SIV128_CONTEXT *dest, SIV128_CONTEXT *src);
 int CRYPTO_siv128_aad(SIV128_CONTEXT *ctx, const unsigned char *aad,
                       size_t len);

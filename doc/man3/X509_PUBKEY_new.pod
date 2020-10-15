@@ -21,7 +21,7 @@ X509_PUBKEY_eq - SubjectPublicKeyInfo public key functions
  EVP_PKEY *X509_PUBKEY_get(const X509_PUBKEY *key);
 
  EVP_PKEY *d2i_PUBKEY_ex(EVP_PKEY **a, const unsigned char **pp, long length,
-                         OPENSSL_CTX *libctx, const char *propq);
+                         OSSL_LIB_CTX *libctx, const char *propq);
  EVP_PKEY *d2i_PUBKEY(EVP_PKEY **a, const unsigned char **pp, long length);
  int i2d_PUBKEY(const EVP_PKEY *a, unsigned char **pp);
 

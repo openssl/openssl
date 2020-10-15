@@ -12,7 +12,7 @@ ossl_namemap_doall_names
 
  #include "internal/cryptlib.h"
 
- OSSL_NAMEMAP *ossl_namemap_stored(OPENSSL_CTX *libctx);
+ OSSL_NAMEMAP *ossl_namemap_stored(OSSL_LIB_CTX *libctx);
 
  OSSL_NAMEMAP *ossl_namemap_new(void);
  void ossl_namemap_free(OSSL_NAMEMAP *namemap);

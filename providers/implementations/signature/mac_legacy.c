@@ -37,7 +37,7 @@ static OSSL_FUNC_signature_settable_ctx_params_fn mac_poly1305_settable_ctx_para
 static OSSL_FUNC_signature_settable_ctx_params_fn mac_cmac_settable_ctx_params;
 
 typedef struct {
-    OPENSSL_CTX *libctx;
+    OSSL_LIB_CTX *libctx;
     char *propq;
     MAC_KEY *key;
     EVP_MAC_CTX *macctx;

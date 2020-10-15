@@ -170,7 +170,7 @@ int ASYNC_start_job(ASYNC_JOB **job, ASYNC_WAIT_CTX *wctx, int *ret,
                     int (*func)(void *), void *args, size_t size)
 {
     async_ctx *ctx;
-    OPENSSL_CTX *libctx;
+    OSSL_LIB_CTX *libctx;
 
     if (!OPENSSL_init_crypto(OPENSSL_INIT_ASYNC, NULL))
         return ASYNC_ERR;
@@ -208,7 +208,7 @@ int ASYNC_start_job(ASYNC_JOB **job, ASYNC_WAIT_CTX *wctx, int *ret,
                  * Restore the default libctx to what it was the last time the
                  * fibre ran
                  */
-                libctx = OPENSSL_CTX_set0_default(ctx->currjob->libctx);
+                libctx = OSSL_LIB_CTX_set0_default(ctx->currjob->libctx);
                 /* Resume previous job */
                 if (!async_fibre_swapcontext(&ctx->dispatcher,
                         &ctx->currjob->fibrectx, 1)) {
@@ -221,7 +221,7 @@ int ASYNC_start_job(ASYNC_JOB **job, ASYNC_WAIT_CTX *wctx, int *ret,
                  * again to what it was originally, and remember what it had
                  * been changed to.
                  */
-                ctx->currjob->libctx = OPENSSL_CTX_set0_default(libctx);
+                ctx->currjob->libctx = OSSL_LIB_CTX_set0_default(libctx);
                 continue;
             }
 
@@ -252,7 +252,7 @@ int ASYNC_start_job(ASYNC_JOB **job, ASYNC_WAIT_CTX *wctx, int *ret,
 
         ctx->currjob->func = func;
         ctx->currjob->waitctx = wctx;
-        libctx = openssl_ctx_get_concrete(NULL);
+        libctx = ossl_lib_ctx_get_concrete(NULL);
         if (!async_fibre_swapcontext(&ctx->dispatcher,
                 &ctx->currjob->fibrectx, 1)) {
             ASYNCerr(ASYNC_F_ASYNC_START_JOB, ASYNC_R_FAILED_TO_SWAP_CONTEXT);
@@ -262,7 +262,7 @@ int ASYNC_start_job(ASYNC_JOB **job, ASYNC_WAIT_CTX *wctx, int *ret,
          * In case the fibre changed the default libctx we set it back again
          * to what it was, and remember what it had been changed to.
          */
-        ctx->currjob->libctx = OPENSSL_CTX_set0_default(libctx);
+        ctx->currjob->libctx = OSSL_LIB_CTX_set0_default(libctx);
     }
 
 err:

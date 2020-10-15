@@ -219,7 +219,7 @@ EVP_PKEY_CTX *CMS_RecipientInfo_get0_pkey_ctx(CMS_RecipientInfo *ri)
 }
 
 CMS_ContentInfo *CMS_EnvelopedData_create_ex(const EVP_CIPHER *cipher,
-                                             OPENSSL_CTX *libctx,
+                                             OSSL_LIB_CTX *libctx,
                                              const char *propq)
 {
     CMS_ContentInfo *cms;
@@ -248,7 +248,7 @@ CMS_ContentInfo *CMS_EnvelopedData_create(const EVP_CIPHER *cipher)
 }
 
 CMS_ContentInfo *
-CMS_AuthEnvelopedData_create_ex(const EVP_CIPHER *cipher, OPENSSL_CTX *libctx,
+CMS_AuthEnvelopedData_create_ex(const EVP_CIPHER *cipher, OSSL_LIB_CTX *libctx,
                                 const char *propq)
 {
     CMS_ContentInfo *cms;

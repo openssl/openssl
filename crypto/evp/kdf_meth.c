@@ -147,7 +147,7 @@ static void *evp_kdf_from_dispatch(int name_id,
     return kdf;
 }
 
-EVP_KDF *EVP_KDF_fetch(OPENSSL_CTX *libctx, const char *algorithm,
+EVP_KDF *EVP_KDF_fetch(OSSL_LIB_CTX *libctx, const char *algorithm,
                        const char *properties)
 {
     return evp_generic_fetch(libctx, OSSL_OP_KDF, algorithm, properties,
@@ -186,7 +186,7 @@ const OSSL_PARAM *EVP_KDF_settable_ctx_params(const EVP_KDF *kdf)
     return kdf->settable_ctx_params(ossl_provider_ctx(EVP_KDF_provider(kdf)));
 }
 
-void EVP_KDF_do_all_provided(OPENSSL_CTX *libctx,
+void EVP_KDF_do_all_provided(OSSL_LIB_CTX *libctx,
                              void (*fn)(EVP_KDF *kdf, void *arg),
                              void *arg)
 {

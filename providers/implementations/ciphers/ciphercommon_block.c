@@ -22,7 +22,7 @@ int ssl3_cbc_remove_padding_and_mac(size_t *reclen,
                                     unsigned char **mac,
                                     int *alloced,
                                     size_t block_size, size_t mac_size,
-                                    OPENSSL_CTX *libctx);
+                                    OSSL_LIB_CTX *libctx);
 
 int tls1_cbc_remove_padding_and_mac(size_t *reclen,
                                     size_t origreclen,
@@ -31,7 +31,7 @@ int tls1_cbc_remove_padding_and_mac(size_t *reclen,
                                     int *alloced,
                                     size_t block_size, size_t mac_size,
                                     int aead,
-                                    OPENSSL_CTX *libctx);
+                                    OSSL_LIB_CTX *libctx);
 
 /*
  * Fills a single block of buffered data from the input, and returns the amount
@@ -154,7 +154,7 @@ int unpadblock(unsigned char *buf, size_t *buflen, size_t blocksize)
  *   1: (in constant time) Record is publicly valid. If padding is invalid then
  *      the mac is random
  */
-int tlsunpadblock(OPENSSL_CTX *libctx, unsigned int tlsversion,
+int tlsunpadblock(OSSL_LIB_CTX *libctx, unsigned int tlsversion,
                   unsigned char *buf, size_t *buflen, size_t blocksize,
                   unsigned char **mac, int *alloced, size_t macsize, int aead)
 {

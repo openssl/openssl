@@ -263,7 +263,7 @@ static void *evp_rand_from_dispatch(int name_id,
     return rand;
 }
 
-EVP_RAND *EVP_RAND_fetch(OPENSSL_CTX *libctx, const char *algorithm,
+EVP_RAND *EVP_RAND_fetch(OSSL_LIB_CTX *libctx, const char *algorithm,
                          const char *properties)
 {
     return evp_generic_fetch(libctx, OSSL_OP_RAND, algorithm, properties,
@@ -447,7 +447,7 @@ const OSSL_PARAM *EVP_RAND_settable_ctx_params(const EVP_RAND *rand)
                ossl_provider_ctx(EVP_RAND_provider(rand)));
 }
 
-void EVP_RAND_do_all_provided(OPENSSL_CTX *libctx,
+void EVP_RAND_do_all_provided(OSSL_LIB_CTX *libctx,
                               void (*fn)(EVP_RAND *rand, void *arg),
                               void *arg)
 {

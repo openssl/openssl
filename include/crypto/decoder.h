@@ -12,7 +12,7 @@
 
 # include <openssl/decoder.h>
 
-OSSL_DECODER *ossl_decoder_fetch_by_number(OPENSSL_CTX *libctx,
+OSSL_DECODER *ossl_decoder_fetch_by_number(OSSL_LIB_CTX *libctx,
                                                      int id,
                                                      const char *properties);
 
@@ -33,7 +33,7 @@ int ossl_decoder_ctx_add_decoder_inst(OSSL_DECODER_CTX *ctx,
 
 int ossl_decoder_ctx_setup_for_EVP_PKEY(OSSL_DECODER_CTX *ctx,
                                         EVP_PKEY **pkey, const char *keytype,
-                                        OPENSSL_CTX *libctx,
+                                        OSSL_LIB_CTX *libctx,
                                         const char *propquery);
 
 #endif

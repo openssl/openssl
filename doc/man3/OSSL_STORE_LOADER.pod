@@ -34,7 +34,7 @@ unregister STORE loaders for different URI schemes
  typedef struct ossl_store_loader_st OSSL_STORE_LOADER;
 
  OSSL_STORE_LOADER *OSSL_STORE_LOADER_fetch(const char *scheme,
-                                            OPENSSL_CTX *libctx,
+                                            OSSL_LIB_CTX *libctx,
                                             const char *properties);
  int OSSL_STORE_LOADER_up_ref(OSSL_STORE_LOADER *loader);
  void OSSL_STORE_LOADER_free(OSSL_STORE_LOADER *loader);
@@ -44,7 +44,7 @@ unregister STORE loaders for different URI schemes
  int OSSL_STORE_LOADER_number(const OSSL_STORE_LOADER *loader);
  int OSSL_STORE_LOADER_is_a(const OSSL_STORE_LOADER *loader,
                             const char *scheme);
- void OSSL_STORE_LOADER_do_all_provided(OPENSSL_CTX *libctx,
+ void OSSL_STORE_LOADER_do_all_provided(OSSL_LIB_CTX *libctx,
                                         void (*fn)(OSSL_STORE_LOADER *loader,
                                                    void *arg),
                                         void *arg);
@@ -76,7 +76,7 @@ L<openssl_user_macros(7)>:
       OSSL_STORE_open_ex_fn store_open_ex_function);
  typedef OSSL_STORE_LOADER_CTX *(*OSSL_STORE_attach_fn)
      (const OSSL_STORE_LOADER *loader, BIO *bio,
-      OPENSSL_CTX *libctx, const char *propq,
+      OSSL_LIB_CTX *libctx, const char *propq,
       const UI_METHOD *ui_method, void *ui_data);
  int OSSL_STORE_LOADER_set_attach(OSSL_STORE_LOADER *loader,
                                   OSSL_STORE_attach_fn attach_function);
@@ -118,7 +118,7 @@ OSSL_STORE_eof(), OSSL_STORE_error() and OSSL_STORE_close() for specific
 storage schemes.
 
 OSSL_STORE_LOADER_fetch() looks for an implementation for a storage
-I<scheme> within the providers that has been loaded into the B<OPENSSL_CTX>
+I<scheme> within the providers that has been loaded into the B<OSSL_LIB_CTX>
 given by I<ctx>, and with the properties given by I<properties>.
 
 OSSL_STORE_LOADER_up_ref() increments the reference count for the given
@@ -347,7 +347,7 @@ or NULL on failure.
 
 =head1 SEE ALSO
 
-L<ossl_store(7)>, L<OSSL_STORE_open(3)>, L<OPENSSL_CTX(3)>,
+L<ossl_store(7)>, L<OSSL_STORE_open(3)>, L<OSSL_LIB_CTX(3)>,
 L<provider-storemgmt(7)>
 
 =head1 HISTORY

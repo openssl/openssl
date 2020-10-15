@@ -49,7 +49,7 @@ static int get_cert_by_subject(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
                                const X509_NAME *name, X509_OBJECT *ret);
 static int get_cert_by_subject_ex(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
                                   const X509_NAME *name, X509_OBJECT *ret,
-                                  OPENSSL_CTX *libctx, const char *propq);
+                                  OSSL_LIB_CTX *libctx, const char *propq);
 static X509_LOOKUP_METHOD x509_dir_lookup = {
     "Load certs from files in a directory",
     new_dir,                         /* new_item */
@@ -216,7 +216,7 @@ static int add_cert_dir(BY_DIR *ctx, const char *dir, int type)
 
 static int get_cert_by_subject_ex(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
                                   const X509_NAME *name, X509_OBJECT *ret,
-                                  OPENSSL_CTX *libctx, const char *propq)
+                                  OSSL_LIB_CTX *libctx, const char *propq)
 {
     BY_DIR *ctx;
     union {

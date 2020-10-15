@@ -26,7 +26,7 @@ OSSL_CRMF_MSG_get_certReqId
 
  X509
  *OSSL_CRMF_ENCRYPTEDVALUE_get1_encCert(const OSSL_CRMF_ENCRYPTEDVALUE *ecert,
-                                        OPENSSL_CTX *libctx, const char *propq,
+                                        OSSL_LIB_CTX *libctx, const char *propq,
                                         EVP_PKEY *pkey);
 
  int OSSL_CRMF_MSG_get_certReqId(const OSSL_CRMF_MSG *crm);
@@ -50,7 +50,7 @@ of the given CertId I<cid>, which must be of ASN.1 type GEN_DIRNAME.
 
 OSSL_CRMF_ENCRYPTEDVALUE_get1_encCert() decrypts the certificate in the given
 encryptedValue I<ecert>, using the private key I<pkey>, library context
-I<libctx> and property query string I<propq> (see L<OPENSSL_CTX(3)>).
+I<libctx> and property query string I<propq> (see L<OSSL_LIB_CTX(3)>).
 This is needed for the indirect POPO method as in RFC 4210 section 5.2.8.2.
 The function returns the decrypted certificate as a copy, leaving its ownership
 with the caller, who is responsible for freeing it.

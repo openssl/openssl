@@ -926,7 +926,7 @@ int main(int argc, char *argv[])
     char *arg = NULL, *argn = NULL;
     const char *provider = NULL, *config = NULL;
     OSSL_PROVIDER *thisprov = NULL, *defctxnull = NULL;
-    OPENSSL_CTX *libctx = NULL;
+    OSSL_LIB_CTX *libctx = NULL;
 
     verbose = 0;
     debug = 0;
@@ -1367,12 +1367,12 @@ int main(int argc, char *argv[])
         defctxnull = OSSL_PROVIDER_load(NULL, "null");
         if (defctxnull == NULL)
             goto end;
-        libctx = OPENSSL_CTX_new();
+        libctx = OSSL_LIB_CTX_new();
         if (libctx == NULL)
             goto end;
 
         if (config != NULL
-                && !OPENSSL_CTX_load_config(libctx, config))
+                && !OSSL_LIB_CTX_load_config(libctx, config))
             goto end;
 
         thisprov = OSSL_PROVIDER_load(libctx, provider);
@@ -1891,7 +1891,7 @@ int main(int argc, char *argv[])
 
     OSSL_PROVIDER_unload(defctxnull);
     OSSL_PROVIDER_unload(thisprov);
-    OPENSSL_CTX_free(libctx);
+    OSSL_LIB_CTX_free(libctx);
 
     BIO_free(bio_err);
     EXIT(ret);

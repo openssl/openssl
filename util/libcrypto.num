@@ -4444,8 +4444,8 @@ EVP_KDF_derive                          ?	3_0_0	EXIST::FUNCTION:
 EVP_KDF_name                            ?	3_0_0	EXIST::FUNCTION:
 EC_GROUP_get0_field                     ?	3_0_0	EXIST::FUNCTION:EC
 CRYPTO_alloc_ex_data                    ?	3_0_0	EXIST::FUNCTION:
-OPENSSL_CTX_new                         ?	3_0_0	EXIST::FUNCTION:
-OPENSSL_CTX_free                        ?	3_0_0	EXIST::FUNCTION:
+OSSL_LIB_CTX_new                        ?	3_0_0	EXIST::FUNCTION:
+OSSL_LIB_CTX_free                       ?	3_0_0	EXIST::FUNCTION:
 OPENSSL_LH_flush                        ?	3_0_0	EXIST::FUNCTION:
 BN_native2bn                            ?	3_0_0	EXIST::FUNCTION:
 BN_bn2nativepad                         ?	3_0_0	EXIST::FUNCTION:
@@ -4970,7 +4970,7 @@ EVP_PKEY_CTX_set1_rsa_keygen_pubexp     ?	3_0_0	EXIST::FUNCTION:RSA
 EVP_PKEY_CTX_set_rsa_keygen_primes      ?	3_0_0	EXIST::FUNCTION:RSA
 NCONF_new_ex                            ?	3_0_0	EXIST::FUNCTION:
 CONF_modules_load_file_ex               ?	3_0_0	EXIST::FUNCTION:
-OPENSSL_CTX_load_config                 ?	3_0_0	EXIST::FUNCTION:
+OSSL_LIB_CTX_load_config                ?	3_0_0	EXIST::FUNCTION:
 OSSL_PARAM_BLD_to_param                 ?	3_0_0	EXIST::FUNCTION:
 OSSL_PARAM_BLD_free_params              ?	3_0_0	EXIST::FUNCTION:
 OSSL_PARAM_BLD_push_int                 ?	3_0_0	EXIST::FUNCTION:
@@ -5100,7 +5100,7 @@ OSSL_PROVIDER_get_capabilities          ?	3_0_0	EXIST::FUNCTION:
 EC_GROUP_new_by_curve_name_ex           ?	3_0_0	EXIST::FUNCTION:EC
 EC_KEY_new_ex                           ?	3_0_0	EXIST::FUNCTION:EC
 EC_KEY_new_by_curve_name_ex             ?	3_0_0	EXIST::FUNCTION:EC
-OPENSSL_CTX_set0_default                ?	3_0_0	EXIST::FUNCTION:
+OSSL_LIB_CTX_set0_default               ?	3_0_0	EXIST::FUNCTION:
 PEM_X509_INFO_read_bio_ex               ?	3_0_0	EXIST::FUNCTION:
 PEM_X509_INFO_read_ex                   ?	3_0_0	EXIST::FUNCTION:STDIO
 X509_REQ_verify_ex                      ?	3_0_0	EXIST::FUNCTION:

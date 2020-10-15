@@ -14,7 +14,7 @@
 
 struct mac_key_st {
     CRYPTO_RWLOCK *lock;
-    OPENSSL_CTX *libctx;
+    OSSL_LIB_CTX *libctx;
     CRYPTO_REF_COUNT refcnt;
     unsigned char *priv_key;
     size_t priv_key_len;
@@ -25,6 +25,6 @@ struct mac_key_st {
 
 typedef struct mac_key_st MAC_KEY;
 
-MAC_KEY *mac_key_new(OPENSSL_CTX *libctx, int cmac);
+MAC_KEY *mac_key_new(OSSL_LIB_CTX *libctx, int cmac);
 void mac_key_free(MAC_KEY *mackey);
 int mac_key_up_ref(MAC_KEY *mackey);

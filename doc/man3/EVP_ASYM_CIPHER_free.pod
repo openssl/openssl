@@ -12,14 +12,14 @@ EVP_ASYM_CIPHER_gettable_ctx_params, EVP_ASYM_CIPHER_settable_ctx_params
 
  #include <openssl/evp.h>
 
- EVP_ASYM_CIPHER *EVP_ASYM_CIPHER_fetch(OPENSSL_CTX *ctx, const char *algorithm,
+ EVP_ASYM_CIPHER *EVP_ASYM_CIPHER_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
                                         const char *properties);
  void EVP_ASYM_CIPHER_free(EVP_ASYM_CIPHER *cipher);
  int EVP_ASYM_CIPHER_up_ref(EVP_ASYM_CIPHER *cipher);
  int EVP_ASYM_CIPHER_number(const EVP_ASYM_CIPHER *cipher);
  int EVP_ASYM_CIPHER_is_a(const EVP_ASYM_CIPHER *cipher, const char *name);
  OSSL_PROVIDER *EVP_ASYM_CIPHER_provider(const EVP_ASYM_CIPHER *cipher);
- void EVP_ASYM_CIPHER_do_all_provided(OPENSSL_CTX *libctx,
+ void EVP_ASYM_CIPHER_do_all_provided(OSSL_LIB_CTX *libctx,
                                       void (*fn)(EVP_ASYM_CIPHER *cipher,
                                                  void *arg),
                                       void *arg);
@@ -34,7 +34,7 @@ EVP_ASYM_CIPHER_gettable_ctx_params, EVP_ASYM_CIPHER_settable_ctx_params
 EVP_ASYM_CIPHER_fetch() fetches the implementation for the given
 B<algorithm> from any provider offering it, within the criteria given
 by the B<properties> and in the scope of the given library context B<ctx> (see
-L<OPENSSL_CTX(3)>). The algorithm will be one offering functions for performing
+L<OSSL_LIB_CTX(3)>). The algorithm will be one offering functions for performing
 asymmetric cipher related tasks such as asymmetric encryption and decryption.
 See L<provider(7)/Fetching algorithms> for further information.
 

@@ -40,7 +40,7 @@ int i2d_CMS_ContentInfo(const CMS_ContentInfo *a, unsigned char **out)
     return ASN1_item_i2d((const ASN1_VALUE *)a, out, (CMS_ContentInfo_it()));
 }
 
-CMS_ContentInfo *CMS_ContentInfo_new_ex(OPENSSL_CTX *libctx, const char *propq)
+CMS_ContentInfo *CMS_ContentInfo_new_ex(OSSL_LIB_CTX *libctx, const char *propq)
 {
     CMS_ContentInfo *ci;
 
@@ -78,7 +78,7 @@ const CMS_CTX *cms_get0_cmsctx(const CMS_ContentInfo *cms)
     return cms != NULL ? &cms->ctx : NULL;
 }
 
-OPENSSL_CTX *cms_ctx_get0_libctx(const CMS_CTX *ctx)
+OSSL_LIB_CTX *cms_ctx_get0_libctx(const CMS_CTX *ctx)
 {
     return ctx->libctx;
 }
@@ -117,7 +117,7 @@ const ASN1_OBJECT *CMS_get0_type(const CMS_ContentInfo *cms)
     return cms->contentType;
 }
 
-CMS_ContentInfo *cms_Data_create(OPENSSL_CTX *libctx, const char *propq)
+CMS_ContentInfo *cms_Data_create(OSSL_LIB_CTX *libctx, const char *propq)
 {
     CMS_ContentInfo *cms = CMS_ContentInfo_new_ex(libctx, propq);
 

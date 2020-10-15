@@ -59,7 +59,7 @@ enum kdf_type {
  */
 
 typedef struct {
-    OPENSSL_CTX *libctx;
+    OSSL_LIB_CTX *libctx;
     DH *dh;
     DH *dhpeer;
     unsigned int pad : 1;

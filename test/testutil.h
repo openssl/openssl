@@ -205,7 +205,7 @@ size_t test_get_argument_count(void);
  */
 int test_skip_common_options(void);
 
-int test_get_libctx(OPENSSL_CTX **libctx,
+int test_get_libctx(OSSL_LIB_CTX **libctx,
                     OSSL_PROVIDER **default_null_provider,
                     OSSL_PROVIDER **provider, int argn, const char *usage);
 

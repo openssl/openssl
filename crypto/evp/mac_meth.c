@@ -149,7 +149,7 @@ static void *evp_mac_from_dispatch(int name_id,
     return mac;
 }
 
-EVP_MAC *EVP_MAC_fetch(OPENSSL_CTX *libctx, const char *algorithm,
+EVP_MAC *EVP_MAC_fetch(OSSL_LIB_CTX *libctx, const char *algorithm,
                        const char *properties)
 {
     return evp_generic_fetch(libctx, OSSL_OP_MAC, algorithm, properties,
@@ -193,7 +193,7 @@ const OSSL_PARAM *EVP_MAC_settable_ctx_params(const EVP_MAC *mac)
     return mac->settable_ctx_params(ossl_provider_ctx(EVP_MAC_provider(mac)));
 }
 
-void EVP_MAC_do_all_provided(OPENSSL_CTX *libctx,
+void EVP_MAC_do_all_provided(OSSL_LIB_CTX *libctx,
                              void (*fn)(EVP_MAC *mac, void *arg),
                              void *arg)
 {

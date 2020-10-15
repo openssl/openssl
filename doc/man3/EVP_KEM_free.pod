@@ -12,14 +12,14 @@ EVP_KEM_gettable_ctx_params, EVP_KEM_settable_ctx_params
 
  #include <openssl/evp.h>
 
- EVP_KEM *EVP_KEM_fetch(OPENSSL_CTX *ctx, const char *algorithm,
+ EVP_KEM *EVP_KEM_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
                         const char *properties);
  void EVP_KEM_free(EVP_KEM *kem);
  int EVP_KEM_up_ref(EVP_KEM *kem);
  int EVP_KEM_number(const EVP_KEM *kem);
  int EVP_KEM_is_a(const EVP_KEM *kem, const char *name);
  OSSL_PROVIDER *EVP_KEM_provider(const EVP_KEM *kem);
- void EVP_KEM_do_all_provided(OPENSSL_CTX *libctx,
+ void EVP_KEM_do_all_provided(OSSL_LIB_CTX *libctx,
                               void (*fn)(EVP_KEM *kem, void *arg), void *arg);
  void EVP_KEM_names_do_all(const EVP_KEM *kem,
                            void (*fn)(const char *name, void *data), void *data);
@@ -30,7 +30,7 @@ EVP_KEM_gettable_ctx_params, EVP_KEM_settable_ctx_params
 
 EVP_KEM_fetch() fetches the implementation for the given B<algorithm> from any
 provider offering it, within the criteria given by the B<properties> and in the
-scope of the given library context B<ctx> (see L<OPENSSL_CTX(3)>). The algorithm
+scope of the given library context B<ctx> (see L<OSSL_LIB_CTX(3)>). The algorithm
 will be one offering functions for performing asymmetric kem related tasks such
 as key encapsulation and decapsulation.
 See L<provider(7)/Fetching algorithms> for further information.

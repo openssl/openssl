@@ -31,7 +31,7 @@ int pem_check_suffix(const char *pem_str, const char *suffix);
 
 static EVP_PKEY *pem_read_bio_key(BIO *bp, EVP_PKEY **x,
                                   pem_password_cb *cb, void *u,
-                                  OPENSSL_CTX *libctx, const char *propq,
+                                  OSSL_LIB_CTX *libctx, const char *propq,
                                   int expected_store_info_type,
                                   int try_secure)
 {
@@ -101,7 +101,7 @@ static EVP_PKEY *pem_read_bio_key(BIO *bp, EVP_PKEY **x,
 
 EVP_PKEY *PEM_read_bio_PUBKEY_ex(BIO *bp, EVP_PKEY **x,
                                  pem_password_cb *cb, void *u,
-                                 OPENSSL_CTX *libctx, const char *propq)
+                                 OSSL_LIB_CTX *libctx, const char *propq)
 {
     return pem_read_bio_key(bp, x, cb, u, libctx, propq,
                             OSSL_STORE_INFO_PUBKEY, 0);
@@ -116,7 +116,7 @@ EVP_PKEY *PEM_read_bio_PUBKEY(BIO *bp, EVP_PKEY **x, pem_password_cb *cb,
 #ifndef OPENSSL_NO_STDIO
 EVP_PKEY *PEM_read_PUBKEY_ex(FILE *fp, EVP_PKEY **x,
                              pem_password_cb *cb, void *u,
-                             OPENSSL_CTX *libctx, const char *propq)
+                             OSSL_LIB_CTX *libctx, const char *propq)
 {
     BIO *b;
     EVP_PKEY *ret;
@@ -139,7 +139,7 @@ EVP_PKEY *PEM_read_PUBKEY(FILE *fp, EVP_PKEY **x, pem_password_cb *cb, void *u)
 
 EVP_PKEY *PEM_read_bio_PrivateKey_ex(BIO *bp, EVP_PKEY **x,
                                      pem_password_cb *cb, void *u,
-                                     OPENSSL_CTX *libctx, const char *propq)
+                                     OSSL_LIB_CTX *libctx, const char *propq)
 {
     return pem_read_bio_key(bp, x, cb, u, libctx, propq,
                             OSSL_STORE_INFO_PKEY, 1);
@@ -198,7 +198,7 @@ int PEM_write_bio_PrivateKey_traditional(BIO *bp, const EVP_PKEY *x,
 }
 
 EVP_PKEY *PEM_read_bio_Parameters_ex(BIO *bp, EVP_PKEY **x,
-                                     OPENSSL_CTX *libctx, const char *propq)
+                                     OSSL_LIB_CTX *libctx, const char *propq)
 {
     return pem_read_bio_key(bp, x, NULL, NULL, libctx, propq,
                             OSSL_STORE_INFO_PARAMS, 0);
@@ -227,7 +227,7 @@ PEM_write_fnsig(Parameters, EVP_PKEY, BIO, write_bio)
 
 #ifndef OPENSSL_NO_STDIO
 EVP_PKEY *PEM_read_PrivateKey_ex(FILE *fp, EVP_PKEY **x, pem_password_cb *cb,
-                                 void *u, OPENSSL_CTX *libctx,
+                                 void *u, OSSL_LIB_CTX *libctx,
                                  const char *propq)
 {
     BIO *b;

@@ -145,28 +145,28 @@ int ossl_ffc_params_print(BIO *bp, const FFC_PARAMS *ffc, int indent);
 #endif /* FIPS_MODULE */
 
 
-int ossl_ffc_params_FIPS186_4_generate(OPENSSL_CTX *libctx, FFC_PARAMS *params,
+int ossl_ffc_params_FIPS186_4_generate(OSSL_LIB_CTX *libctx, FFC_PARAMS *params,
                                        int type, size_t L, size_t N,
                                        int *res, BN_GENCB *cb);
-int ossl_ffc_params_FIPS186_2_generate(OPENSSL_CTX *libctx, FFC_PARAMS *params,
+int ossl_ffc_params_FIPS186_2_generate(OSSL_LIB_CTX *libctx, FFC_PARAMS *params,
                                        int type, size_t L, size_t N,
                                        int *res, BN_GENCB *cb);
 
-int ossl_ffc_params_FIPS186_4_gen_verify(OPENSSL_CTX *libctx,
+int ossl_ffc_params_FIPS186_4_gen_verify(OSSL_LIB_CTX *libctx,
                                          FFC_PARAMS *params, int mode, int type,
                                          size_t L, size_t N, int *res,
                                          BN_GENCB *cb);
-int ossl_ffc_params_FIPS186_2_gen_verify(OPENSSL_CTX *libctx,
+int ossl_ffc_params_FIPS186_2_gen_verify(OSSL_LIB_CTX *libctx,
                                          FFC_PARAMS *params, int mode, int type,
                                          size_t L, size_t N, int *res,
                                          BN_GENCB *cb);
 
-int ossl_ffc_params_simple_validate(OPENSSL_CTX *libctx, FFC_PARAMS *params,
+int ossl_ffc_params_simple_validate(OSSL_LIB_CTX *libctx, FFC_PARAMS *params,
                                     int type);
-int ossl_ffc_params_FIPS186_4_validate(OPENSSL_CTX *libctx,
+int ossl_ffc_params_FIPS186_4_validate(OSSL_LIB_CTX *libctx,
                                        const FFC_PARAMS *params,
                                        int type, int *res, BN_GENCB *cb);
-int ossl_ffc_params_FIPS186_2_validate(OPENSSL_CTX *libctx,
+int ossl_ffc_params_FIPS186_2_validate(OSSL_LIB_CTX *libctx,
                                        const FFC_PARAMS *params,
                                        int type, int *res, BN_GENCB *cb);
 

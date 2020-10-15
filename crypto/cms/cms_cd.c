@@ -21,7 +21,7 @@
 
 /* CMS CompressedData Utilities */
 
-CMS_ContentInfo *cms_CompressedData_create(int comp_nid, OPENSSL_CTX *libctx,
+CMS_ContentInfo *cms_CompressedData_create(int comp_nid, OSSL_LIB_CTX *libctx,
                                            const char *propq)
 {
     CMS_ContentInfo *cms;

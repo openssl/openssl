@@ -528,7 +528,7 @@ static const OSSL_PARAM *xor_settable_params(void *provctx)
 
 struct xor_gen_ctx {
     int selection;
-    OPENSSL_CTX *libctx;
+    OSSL_LIB_CTX *libctx;
 };
 
 static void *xor_gen_init(void *provctx, int selection)
@@ -542,8 +542,8 @@ static void *xor_gen_init(void *provctx, int selection)
     if ((gctx = OPENSSL_zalloc(sizeof(*gctx))) != NULL)
         gctx->selection = selection;
 
-    /* Our provctx is really just an OPENSSL_CTX */
-    gctx->libctx = (OPENSSL_CTX *)provctx;
+    /* Our provctx is really just an OSSL_LIB_CTX */
+    gctx->libctx = (OSSL_LIB_CTX *)provctx;
 
     return gctx;
 }
@@ -648,14 +648,14 @@ static const OSSL_ALGORITHM *tls_prov_query(void *provctx, int operation_id,
 
 /* Functions we provide to the core */
 static const OSSL_DISPATCH tls_prov_dispatch_table[] = {
-    { OSSL_FUNC_PROVIDER_TEARDOWN, (void (*)(void))OPENSSL_CTX_free },
+    { OSSL_FUNC_PROVIDER_TEARDOWN, (void (*)(void))OSSL_LIB_CTX_free },
     { OSSL_FUNC_PROVIDER_QUERY_OPERATION, (void (*)(void))tls_prov_query },
     { OSSL_FUNC_PROVIDER_GET_CAPABILITIES, (void (*)(void))tls_prov_get_capabilities },
     { 0, NULL }
 };
 
 static
-unsigned int randomize_tls_group_id(OPENSSL_CTX *libctx)
+unsigned int randomize_tls_group_id(OSSL_LIB_CTX *libctx)
 {
     /*
      * Randomise the group_id we're going to use to ensure we don't interoperate
@@ -692,7 +692,7 @@ int tls_provider_init(const OSSL_CORE_HANDLE *handle,
                       const OSSL_DISPATCH **out,
                       void **provctx)
 {
-    OPENSSL_CTX *libctx = OPENSSL_CTX_new();
+    OSSL_LIB_CTX *libctx = OSSL_LIB_CTX_new();
 
     *provctx = libctx;
 

@@ -67,7 +67,7 @@ static int load_common(const OSSL_PARAM params[], const char **propquery,
 
 int ossl_prov_cipher_load_from_params(PROV_CIPHER *pc,
                                       const OSSL_PARAM params[],
-                                      OPENSSL_CTX *ctx)
+                                      OSSL_LIB_CTX *ctx)
 {
     const OSSL_PARAM *p;
     const char *propquery;
@@ -124,7 +124,7 @@ int ossl_prov_digest_copy(PROV_DIGEST *dst, const PROV_DIGEST *src)
     return 1;
 }
 
-const EVP_MD *ossl_prov_digest_fetch(PROV_DIGEST *pd, OPENSSL_CTX *libctx,
+const EVP_MD *ossl_prov_digest_fetch(PROV_DIGEST *pd, OSSL_LIB_CTX *libctx,
                            const char *mdname, const char *propquery)
 {
     EVP_MD_free(pd->alloc_md);
@@ -135,7 +135,7 @@ const EVP_MD *ossl_prov_digest_fetch(PROV_DIGEST *pd, OPENSSL_CTX *libctx,
 
 int ossl_prov_digest_load_from_params(PROV_DIGEST *pd,
                                       const OSSL_PARAM params[],
-                                      OPENSSL_CTX *ctx)
+                                      OSSL_LIB_CTX *ctx)
 {
     const OSSL_PARAM *p;
     const char *propquery;
@@ -245,7 +245,7 @@ int ossl_prov_macctx_load_from_params(EVP_MAC_CTX **macctx,
                                       const char *macname,
                                       const char *ciphername,
                                       const char *mdname,
-                                      OPENSSL_CTX *libctx)
+                                      OSSL_LIB_CTX *libctx)
 {
     const OSSL_PARAM *p;
     const char *properties = NULL;

@@ -563,7 +563,7 @@ int ossl_default_provider_init(const OSSL_CORE_HANDLE *handle,
         return 0;
     }
     ossl_prov_ctx_set0_library_context(*provctx,
-                                       (OPENSSL_CTX *)c_get_libctx(handle));
+                                       (OSSL_LIB_CTX *)c_get_libctx(handle));
     ossl_prov_ctx_set0_handle(*provctx, handle);
     ossl_prov_ctx_set0_core_bio_method(*provctx, corebiometh);
 

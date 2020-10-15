@@ -72,7 +72,7 @@ int X509_LOOKUP_shutdown(X509_LOOKUP *ctx)
 }
 
 int X509_LOOKUP_ctrl_ex(X509_LOOKUP *ctx, int cmd, const char *argc, long argl,
-                        char **ret, OPENSSL_CTX *libctx, const char *propq)
+                        char **ret, OSSL_LIB_CTX *libctx, const char *propq)
 {
     if (ctx->method == NULL)
         return -1;
@@ -91,7 +91,7 @@ int X509_LOOKUP_ctrl(X509_LOOKUP *ctx, int cmd, const char *argc, long argl,
 
 int X509_LOOKUP_by_subject_ex(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
                               const X509_NAME *name, X509_OBJECT *ret,
-                              OPENSSL_CTX *libctx, const char *propq)
+                              OSSL_LIB_CTX *libctx, const char *propq)
 {
     if (ctx->skip
         || ctx->method == NULL

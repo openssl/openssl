@@ -21,7 +21,7 @@
 static int pkcs7_copy_existing_digest(PKCS7 *p7, PKCS7_SIGNER_INFO *si);
 
 PKCS7 *PKCS7_sign_ex(X509 *signcert, EVP_PKEY *pkey, STACK_OF(X509) *certs,
-                     BIO *data, int flags, OPENSSL_CTX *libctx,
+                     BIO *data, int flags, OSSL_LIB_CTX *libctx,
                      const char *propq)
 {
     PKCS7 *p7;
@@ -445,7 +445,7 @@ STACK_OF(X509) *PKCS7_get0_signers(PKCS7 *p7, STACK_OF(X509) *certs,
 
 PKCS7 *PKCS7_encrypt_ex(STACK_OF(X509) *certs, BIO *in,
                         const EVP_CIPHER *cipher, int flags,
-                        OPENSSL_CTX *libctx, const char *propq)
+                        OSSL_LIB_CTX *libctx, const char *propq)
 {
     PKCS7 *p7;
     BIO *p7bio = NULL;

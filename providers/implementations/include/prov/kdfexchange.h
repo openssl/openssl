@@ -12,7 +12,7 @@
 #include "internal/refcount.h"
 
 struct kdf_data_st {
-    OPENSSL_CTX *libctx;
+    OSSL_LIB_CTX *libctx;
     CRYPTO_REF_COUNT refcnt;
     CRYPTO_RWLOCK *lock;
 };

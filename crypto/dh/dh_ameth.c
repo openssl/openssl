@@ -479,7 +479,7 @@ static size_t dh_pkey_dirty_cnt(const EVP_PKEY *pkey)
 }
 
 static int dh_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
-                             EVP_KEYMGMT *to_keymgmt, OPENSSL_CTX *libctx,
+                             EVP_KEYMGMT *to_keymgmt, OSSL_LIB_CTX *libctx,
                              const char *propq)
 {
     DH *dh = from->pkey.dh;

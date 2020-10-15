@@ -24,7 +24,7 @@
 #include "crypto/dh.h"
 #include "dh_local.h"
 
-static DH *dh_new_intern(ENGINE *engine, OPENSSL_CTX *libctx);
+static DH *dh_new_intern(ENGINE *engine, OSSL_LIB_CTX *libctx);
 
 #ifndef FIPS_MODULE
 int DH_set_method(DH *dh, const DH_METHOD *meth)
@@ -63,12 +63,12 @@ DH *DH_new_method(ENGINE *engine)
 }
 #endif /* !FIPS_MODULE */
 
-DH *dh_new_ex(OPENSSL_CTX *libctx)
+DH *dh_new_ex(OSSL_LIB_CTX *libctx)
 {
     return dh_new_intern(NULL, libctx);
 }
 
-static DH *dh_new_intern(ENGINE *engine, OPENSSL_CTX *libctx)
+static DH *dh_new_intern(ENGINE *engine, OSSL_LIB_CTX *libctx)
 {
     DH *ret = OPENSSL_zalloc(sizeof(*ret));
 

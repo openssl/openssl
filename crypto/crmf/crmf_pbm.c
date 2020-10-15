@@ -35,7 +35,7 @@
  * |macnid| e.g., NID_hmac_sha1
  * returns pointer to OSSL_CRMF_PBMPARAMETER on success, NULL on error
  */
-OSSL_CRMF_PBMPARAMETER *OSSL_CRMF_pbmp_new(OPENSSL_CTX *libctx, size_t slen,
+OSSL_CRMF_PBMPARAMETER *OSSL_CRMF_pbmp_new(OSSL_LIB_CTX *libctx, size_t slen,
                                            int owfnid, size_t itercnt,
                                            int macnid)
 {
@@ -123,7 +123,7 @@ OSSL_CRMF_PBMPARAMETER *OSSL_CRMF_pbmp_new(OPENSSL_CTX *libctx, size_t slen,
  * returns 1 on success, 0 on error
  */
 /* TODO try to combine with other MAC calculations in the libray */
-int OSSL_CRMF_pbm_new(OPENSSL_CTX *libctx, const char *propq,
+int OSSL_CRMF_pbm_new(OSSL_LIB_CTX *libctx, const char *propq,
                       const OSSL_CRMF_PBMPARAMETER *pbmp,
                       const unsigned char *msg, size_t msglen,
                       const unsigned char *sec, size_t seclen,

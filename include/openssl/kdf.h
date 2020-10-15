@@ -27,7 +27,7 @@ extern "C" {
 
 int EVP_KDF_up_ref(EVP_KDF *kdf);
 void EVP_KDF_free(EVP_KDF *kdf);
-EVP_KDF *EVP_KDF_fetch(OPENSSL_CTX *libctx, const char *algorithm,
+EVP_KDF *EVP_KDF_fetch(OSSL_LIB_CTX *libctx, const char *algorithm,
                        const char *properties);
 
 EVP_KDF_CTX *EVP_KDF_CTX_new(EVP_KDF *kdf);
@@ -49,7 +49,7 @@ const OSSL_PARAM *EVP_KDF_gettable_params(const EVP_KDF *kdf);
 const OSSL_PARAM *EVP_KDF_gettable_ctx_params(const EVP_KDF *kdf);
 const OSSL_PARAM *EVP_KDF_settable_ctx_params(const EVP_KDF *kdf);
 
-void EVP_KDF_do_all_provided(OPENSSL_CTX *libctx,
+void EVP_KDF_do_all_provided(OSSL_LIB_CTX *libctx,
                              void (*fn)(EVP_KDF *kdf, void *arg),
                              void *arg);
 void EVP_KDF_names_do_all(const EVP_KDF *kdf,

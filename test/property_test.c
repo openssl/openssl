@@ -387,9 +387,9 @@ err:
 static int test_fips_mode(void)
 {
     int ret = 0;
-    OPENSSL_CTX *ctx = NULL;
+    OSSL_LIB_CTX *ctx = NULL;
 
-    if (!TEST_ptr(ctx = OPENSSL_CTX_new()))
+    if (!TEST_ptr(ctx = OSSL_LIB_CTX_new()))
         goto err;
 
     ret = TEST_true(EVP_set_default_properties(ctx, "default=yes,fips=yes"))
@@ -408,7 +408,7 @@ static int test_fips_mode(void)
           && TEST_true(EVP_default_properties_enable_fips(ctx, 0))
           && TEST_false(EVP_default_properties_is_fips_enabled(ctx));
 err:
-    OPENSSL_CTX_free(ctx);
+    OSSL_LIB_CTX_free(ctx);
     return ret;
 }
 

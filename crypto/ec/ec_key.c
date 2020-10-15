@@ -34,12 +34,12 @@ EC_KEY *EC_KEY_new(void)
 }
 #endif
 
-EC_KEY *EC_KEY_new_ex(OPENSSL_CTX *ctx, const char *propq)
+EC_KEY *EC_KEY_new_ex(OSSL_LIB_CTX *ctx, const char *propq)
 {
     return ec_key_new_method_int(ctx, propq, NULL);
 }
 
-EC_KEY *EC_KEY_new_by_curve_name_ex(OPENSSL_CTX *ctx, const char *propq,
+EC_KEY *EC_KEY_new_by_curve_name_ex(OSSL_LIB_CTX *ctx, const char *propq,
                                     int nid)
 {
     EC_KEY *ret = EC_KEY_new_ex(ctx, propq);
@@ -651,7 +651,7 @@ int EC_KEY_set_public_key_affine_coordinates(EC_KEY *key, BIGNUM *x,
 
 }
 
-OPENSSL_CTX *ec_key_get_libctx(const EC_KEY *key)
+OSSL_LIB_CTX *ec_key_get_libctx(const EC_KEY *key)
 {
     return key->libctx;
 }

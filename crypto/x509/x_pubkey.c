@@ -31,7 +31,7 @@ struct X509_pubkey_st {
     EVP_PKEY *pkey;
 
     /* extra data for the callback, used by d2i_PUBKEY_ex */
-    OPENSSL_CTX *libctx;
+    OSSL_LIB_CTX *libctx;
     const char *propq;
 };
 
@@ -100,7 +100,7 @@ int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
         }
     } else if (evp_pkey_is_provided(pkey)) {
         const OSSL_PROVIDER *pkprov = EVP_KEYMGMT_provider(pkey->keymgmt);
-        OPENSSL_CTX *libctx = ossl_provider_library_context(pkprov);
+        OSSL_LIB_CTX *libctx = ossl_provider_library_context(pkprov);
         unsigned char *der = NULL;
         size_t derlen = 0;
         int selection = (OSSL_KEYMGMT_SELECT_PUBLIC_KEY
@@ -242,7 +242,7 @@ EVP_PKEY *X509_PUBKEY_get(const X509_PUBKEY *key)
  */
 
 EVP_PKEY *d2i_PUBKEY_ex(EVP_PKEY **a, const unsigned char **pp, long length,
-                        OPENSSL_CTX *libctx, const char *propq)
+                        OSSL_LIB_CTX *libctx, const char *propq)
 {
     X509_PUBKEY *xpk, *xpk2 = NULL, **pxpk = NULL;
     EVP_PKEY *pktmp = NULL;
@@ -309,7 +309,7 @@ int i2d_PUBKEY(const EVP_PKEY *a, unsigned char **pp)
         X509_PUBKEY_free(xpk);
     } else if (a->keymgmt != NULL) {
         const OSSL_PROVIDER *pkprov = EVP_KEYMGMT_provider(a->keymgmt);
-        OPENSSL_CTX *libctx = ossl_provider_library_context(pkprov);
+        OSSL_LIB_CTX *libctx = ossl_provider_library_context(pkprov);
         int selection = (OSSL_KEYMGMT_SELECT_PUBLIC_KEY
                          | OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS);
         OSSL_ENCODER_CTX *ctx =
@@ -530,7 +530,7 @@ int X509_PUBKEY_eq(const X509_PUBKEY *a, const X509_PUBKEY *b)
     return EVP_PKEY_eq(pA, pB);
 }
 
-int X509_PUBKEY_get0_libctx(OPENSSL_CTX **plibctx, const char **ppropq,
+int X509_PUBKEY_get0_libctx(OSSL_LIB_CTX **plibctx, const char **ppropq,
                             const X509_PUBKEY *key)
 {
     if (plibctx)

@@ -10,13 +10,13 @@ OSSL_CRMF_pbmp_new
 
  #include <openssl/crmf.h>
 
- int OSSL_CRMF_pbm_new(OPENSSL_CTX *libctx, const char *propq,
+ int OSSL_CRMF_pbm_new(OSSL_LIB_CTX *libctx, const char *propq,
                        const OSSL_CRMF_PBMPARAMETER *pbmp,
                        const unsigned char *msg, size_t msglen,
                        const unsigned char *sec, size_t seclen,
                        unsigned char **mac, size_t *maclen);
 
- OSSL_CRMF_PBMPARAMETER *OSSL_CRMF_pbmp_new(OPENSSL_CTX *libctx, size_t saltlen,
+ OSSL_CRMF_PBMPARAMETER *OSSL_CRMF_pbmp_new(OSSL_LIB_CTX *libctx, size_t saltlen,
                                             int owfnid, size_t itercnt,
                                             int macnid);
 

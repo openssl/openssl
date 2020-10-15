@@ -112,9 +112,9 @@ OpenSSL 3.0
 
    *Rich Salz and Richard Levitte*
 
- * Added a library context that applications as well as other
-   libraries can use to form a separate context within which libcrypto
-   operations are performed.
+ * Added a library context `OSSL_LIB_CTX` that applications as well as
+   other libraries can use to form a separate context within which
+   libcrypto operations are performed.
 
    There are two ways this can be used:
 
@@ -122,15 +122,18 @@ OpenSSL 3.0
      such an argument, such as `EVP_CIPHER_fetch` and similar algorithm
      fetching functions.
    - Indirectly, by creating a new library context and then assigning
-     it as the new default, with `OPENSSL_CTX_set0_default`.
+     it as the new default, with `OSSL_LIB_CTX_set0_default`.
 
-   All public OpenSSL functions that take an `OPENSSL_CTX` pointer,
-   apart from the functions directly related to `OPENSSL_CTX`, accept
+   All public OpenSSL functions that take an `OSSL_LIB_CTX` pointer,
+   apart from the functions directly related to `OSSL_LIB_CTX`, accept
    NULL to indicate that the default library context should be used.
 
    Library code that changes the default library context using
-   `OPENSSL_CTX_set0_default` should take care to restore it with a
+   `OSSL_LIB_CTX_set0_default` should take care to restore it with a
    second call before returning to the caller.
+
+   _(Note: the library context was initially called `OPENSSL_CTX` and
+   renamed to `OSSL_LIB_CTX` in version 3.0.0 alpha7.)_
 
    *Richard Levitte*
 

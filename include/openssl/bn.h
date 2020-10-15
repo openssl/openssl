@@ -206,9 +206,9 @@ void BN_zero_ex(BIGNUM *a);
 
 const BIGNUM *BN_value_one(void);
 char *BN_options(void);
-BN_CTX *BN_CTX_new_ex(OPENSSL_CTX *ctx);
+BN_CTX *BN_CTX_new_ex(OSSL_LIB_CTX *ctx);
 BN_CTX *BN_CTX_new(void);
-BN_CTX *BN_CTX_secure_new_ex(OPENSSL_CTX *ctx);
+BN_CTX *BN_CTX_secure_new_ex(OSSL_LIB_CTX *ctx);
 BN_CTX *BN_CTX_secure_new(void);
 void BN_CTX_free(BN_CTX *c);
 void BN_CTX_start(BN_CTX *ctx);

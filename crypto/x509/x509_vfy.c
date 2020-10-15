@@ -2322,7 +2322,7 @@ int X509_STORE_CTX_purpose_inherit(X509_STORE_CTX *ctx, int def_purpose,
     return 1;
 }
 
-X509_STORE_CTX *X509_STORE_CTX_new_ex(OPENSSL_CTX *libctx, const char *propq)
+X509_STORE_CTX *X509_STORE_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq)
 {
     X509_STORE_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
 

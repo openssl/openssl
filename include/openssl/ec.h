@@ -391,7 +391,7 @@ EC_GROUP *EC_GROUP_new_curve_GF2m(const BIGNUM *p, const BIGNUM *a,
  *          if an error occurred
  */
 EC_GROUP *EC_GROUP_new_from_params(const OSSL_PARAM params[],
-                                   OPENSSL_CTX *libctx, const char *propq);
+                                   OSSL_LIB_CTX *libctx, const char *propq);
 
 /**
  * Creates a EC_GROUP object with a curve specified by a NID
@@ -402,7 +402,7 @@ EC_GROUP *EC_GROUP_new_from_params(const OSSL_PARAM params[],
  *  \return newly created EC_GROUP object with specified curve or NULL
  *          if an error occurred
  */
-EC_GROUP *EC_GROUP_new_by_curve_name_ex(OPENSSL_CTX *libctx, const char *propq,
+EC_GROUP *EC_GROUP_new_by_curve_name_ex(OSSL_LIB_CTX *libctx, const char *propq,
                                         int nid);
 
 /**
@@ -882,7 +882,7 @@ int ECPKParameters_print_fp(FILE *fp, const EC_GROUP *x, int off);
  *               which case the default library context is used.
  *  \return EC_KEY object or NULL if an error occurred.
  */
-EC_KEY *EC_KEY_new_ex(OPENSSL_CTX *ctx, const char *propq);
+EC_KEY *EC_KEY_new_ex(OSSL_LIB_CTX *ctx, const char *propq);
 
 /**
  *  Creates a new EC_KEY object. Same as calling EC_KEY_new_ex with a
@@ -908,7 +908,7 @@ int EC_KEY_decoded_from_explicit_params(const EC_KEY *key);
  *  \param  nid   NID of the named curve.
  *  \return EC_KEY object or NULL if an error occurred.
  */
-EC_KEY *EC_KEY_new_by_curve_name_ex(OPENSSL_CTX *ctx, const char *propq,
+EC_KEY *EC_KEY_new_by_curve_name_ex(OSSL_LIB_CTX *ctx, const char *propq,
                                     int nid);
 
 /**

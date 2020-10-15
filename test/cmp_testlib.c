@@ -12,7 +12,7 @@
 #include "cmp_testlib.h"
 #include <openssl/rsa.h> /* needed in case config no-deprecated */
 
-EVP_PKEY *load_pem_key(const char *file, OPENSSL_CTX *libctx)
+EVP_PKEY *load_pem_key(const char *file, OSSL_LIB_CTX *libctx)
 {
     EVP_PKEY *key = NULL;
     BIO *bio = NULL;
@@ -27,7 +27,7 @@ EVP_PKEY *load_pem_key(const char *file, OPENSSL_CTX *libctx)
     return key;
 }
 
-X509 *load_pem_cert(const char *file, OPENSSL_CTX *libctx)
+X509 *load_pem_cert(const char *file, OSSL_LIB_CTX *libctx)
 {
     X509 *cert = NULL;
     BIO *bio = NULL;

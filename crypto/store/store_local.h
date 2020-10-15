@@ -171,10 +171,10 @@ int ossl_store_file_detach_pem_bio_int(OSSL_STORE_LOADER_CTX *ctx);
  * Provider stuff
  * -------------------
  */
-OSSL_STORE_LOADER *ossl_store_loader_fetch(OPENSSL_CTX *libctx,
+OSSL_STORE_LOADER *ossl_store_loader_fetch(OSSL_LIB_CTX *libctx,
                                            const char *scheme,
                                            const char *properties);
-OSSL_STORE_LOADER *ossl_store_loader_fetch_by_number(OPENSSL_CTX *libctx,
+OSSL_STORE_LOADER *ossl_store_loader_fetch_by_number(OSSL_LIB_CTX *libctx,
                                                      int scheme_id,
                                                      const char *properties);
 

@@ -13,7 +13,7 @@ EVP_SignFinal_ex, EVP_SignFinal
  int EVP_SignInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl);
  int EVP_SignUpdate(EVP_MD_CTX *ctx, const void *d, unsigned int cnt);
  int EVP_SignFinal_ex(EVP_MD_CTX *ctx, unsigned char *md, unsigned int *s,
-                      EVP_PKEY *pkey, OPENSSL_CTX *libctx, const char *propq);
+                      EVP_PKEY *pkey, OSSL_LIB_CTX *libctx, const char *propq);
  int EVP_SignFinal(EVP_MD_CTX *ctx, unsigned char *sig, unsigned int *s,
                    EVP_PKEY *pkey);
 

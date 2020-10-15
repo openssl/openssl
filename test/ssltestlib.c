@@ -684,7 +684,7 @@ static int always_retry_puts(BIO *bio, const char *str)
     return -1;
 }
 
-int create_ssl_ctx_pair(OPENSSL_CTX *libctx, const SSL_METHOD *sm,
+int create_ssl_ctx_pair(OSSL_LIB_CTX *libctx, const SSL_METHOD *sm,
 const SSL_METHOD *cm,
                         int min_proto_version, int max_proto_version,
                         SSL_CTX **sctx, SSL_CTX **cctx, char *certfile,

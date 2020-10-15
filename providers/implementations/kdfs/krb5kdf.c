@@ -132,7 +132,7 @@ static int krb5kdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
     const OSSL_PARAM *p;
     KRB5KDF_CTX *ctx = vctx;
-    OPENSSL_CTX *provctx = PROV_LIBRARY_CONTEXT_OF(ctx->provctx);
+    OSSL_LIB_CTX *provctx = PROV_LIBRARY_CONTEXT_OF(ctx->provctx);
 
     if (!ossl_prov_cipher_load_from_params(&ctx->cipher, params, provctx))
         return 0;

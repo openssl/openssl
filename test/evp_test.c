@@ -73,7 +73,7 @@ typedef enum OPTION_choice {
 } OPTION_CHOICE;
 
 static OSSL_PROVIDER *prov_null = NULL;
-static OPENSSL_CTX *libctx = NULL;
+static OSSL_LIB_CTX *libctx = NULL;
 
 /* List of public and private keys */
 static KEY_LIST *private_keys;
@@ -1842,9 +1842,9 @@ static int pbe_test_run(EVP_TEST *t)
     PBE_DATA *expected = t->data;
     unsigned char *key;
     EVP_MD *fetched_digest = NULL;
-    OPENSSL_CTX *save_libctx;
+    OSSL_LIB_CTX *save_libctx;
 
-    save_libctx = OPENSSL_CTX_set0_default(libctx);
+    save_libctx = OSSL_LIB_CTX_set0_default(libctx);
 
     if (!TEST_ptr(key = OPENSSL_malloc(expected->key_len))) {
         t->err = "INTERNAL_ERROR";
@@ -1890,7 +1890,7 @@ static int pbe_test_run(EVP_TEST *t)
 err:
     EVP_MD_free(fetched_digest);
     OPENSSL_free(key);
-    OPENSSL_CTX_set0_default(save_libctx);
+    OSSL_LIB_CTX_set0_default(save_libctx);
     return 1;
 }
 
@@ -3595,9 +3595,9 @@ int setup_tests(void)
     }
 
     /* load the provider via configuration into the created library context */
-    libctx = OPENSSL_CTX_new();
+    libctx = OSSL_LIB_CTX_new();
     if (libctx == NULL
-        || !OPENSSL_CTX_load_config(libctx, config_file)) {
+        || !OSSL_LIB_CTX_load_config(libctx, config_file)) {
         TEST_error("Failed to load config %s\n", config_file);
         return 0;
     }
@@ -3613,7 +3613,7 @@ int setup_tests(void)
 void cleanup_tests(void)
 {
     OSSL_PROVIDER_unload(prov_null);
-    OPENSSL_CTX_free(libctx);
+    OSSL_LIB_CTX_free(libctx);
 }
 
 #define STR_STARTS_WITH(str, pre) strncasecmp(pre, str, strlen(pre)) == 0

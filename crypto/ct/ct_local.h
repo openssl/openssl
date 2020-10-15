@@ -101,7 +101,7 @@ struct sct_ctx_st {
     /* milliseconds since epoch (to check that the SCT isn't from the future) */
     uint64_t epoch_time_in_ms;
 
-    OPENSSL_CTX *libctx;
+    OSSL_LIB_CTX *libctx;
     char *propq;
 };
 
@@ -113,14 +113,14 @@ struct ct_policy_eval_ctx_st {
     /* milliseconds since epoch (to check that SCTs aren't from the future) */
     uint64_t epoch_time_in_ms;
 
-    OPENSSL_CTX *libctx;
+    OSSL_LIB_CTX *libctx;
     char *propq;
 };
 
 /*
  * Creates a new context for verifying an SCT.
  */
-SCT_CTX *SCT_CTX_new(OPENSSL_CTX *ctx, const char *propq);
+SCT_CTX *SCT_CTX_new(OSSL_LIB_CTX *ctx, const char *propq);
 /*
  * Deletes an SCT verification context.
  */

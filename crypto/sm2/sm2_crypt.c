@@ -139,7 +139,7 @@ int sm2_encrypt(const EC_KEY *key,
     size_t field_size;
     const int C3_size = EVP_MD_size(digest);
     EVP_MD *fetched_digest = NULL;
-    OPENSSL_CTX *libctx = ec_key_get_libctx(key);
+    OSSL_LIB_CTX *libctx = ec_key_get_libctx(key);
     const char *propq = ec_key_get0_propq(key);
 
     /* NULL these before any "goto done" */
@@ -297,7 +297,7 @@ int sm2_decrypt(const EC_KEY *key,
     const uint8_t *C3 = NULL;
     int msg_len = 0;
     EVP_MD_CTX *hash = NULL;
-    OPENSSL_CTX *libctx = ec_key_get_libctx(key);
+    OSSL_LIB_CTX *libctx = ec_key_get_libctx(key);
     const char *propq = ec_key_get0_propq(key);
 
     if (field_size == 0 || hash_size <= 0)

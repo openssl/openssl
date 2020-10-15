@@ -9,5 +9,5 @@
 
 #include <openssl/types.h>
 
-OSSL_ENCODER *ossl_encoder_fetch_by_number(OPENSSL_CTX *libctx, int id,
+OSSL_ENCODER *ossl_encoder_fetch_by_number(OSSL_LIB_CTX *libctx, int id,
                                            const char *properties);

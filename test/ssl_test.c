@@ -21,7 +21,7 @@
 
 static CONF *conf = NULL;
 static OSSL_PROVIDER *defctxnull = NULL, *thisprov = NULL;
-static OPENSSL_CTX *libctx = NULL;
+static OSSL_LIB_CTX *libctx = NULL;
 
 /* Currently the section names are of the form test-<number>, e.g. test-15. */
 #define MAX_TESTCASE_NAME_LENGTH 100
@@ -542,5 +542,5 @@ void cleanup_tests(void)
     NCONF_free(conf);
     OSSL_PROVIDER_unload(defctxnull);
     OSSL_PROVIDER_unload(thisprov);
-    OPENSSL_CTX_free(libctx);
+    OSSL_LIB_CTX_free(libctx);
 }

@@ -254,7 +254,7 @@ static int kbkdf_set_buffer(unsigned char **out, size_t *out_len,
 static int kbkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
     KBKDF *ctx = (KBKDF *)vctx;
-    OPENSSL_CTX *libctx = PROV_LIBRARY_CONTEXT_OF(ctx->provctx);
+    OSSL_LIB_CTX *libctx = PROV_LIBRARY_CONTEXT_OF(ctx->provctx);
     const OSSL_PARAM *p;
     OSSL_PARAM mparams[2];
 

@@ -43,7 +43,7 @@ typedef struct st_args {
 } SELF_TEST_ARGS;
 
 static OSSL_PROVIDER *prov_null = NULL;
-static OPENSSL_CTX *libctx = NULL;
+static OSSL_LIB_CTX *libctx = NULL;
 static SELF_TEST_ARGS self_test_args = { 0 };
 static OSSL_CALLBACK self_test_events;
 
@@ -1440,9 +1440,9 @@ int setup_tests(void)
         return 0;
     }
 
-    libctx = OPENSSL_CTX_new();
+    libctx = OSSL_LIB_CTX_new();
     if (libctx == NULL
-        || !OPENSSL_CTX_load_config(libctx, config_file)) {
+        || !OSSL_LIB_CTX_load_config(libctx, config_file)) {
         opt_printf_stderr("Failed to load config\n");
         return 0;
     }
@@ -1489,5 +1489,5 @@ int setup_tests(void)
 void cleanup_tests(void)
 {
     OSSL_PROVIDER_unload(prov_null);
-    OPENSSL_CTX_free(libctx);
+    OSSL_LIB_CTX_free(libctx);
 }

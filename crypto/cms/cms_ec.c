@@ -16,7 +16,7 @@
 
 #ifndef OPENSSL_NO_EC
 static EVP_PKEY *pkey_type2param(int ptype, const void *pval,
-                                 OPENSSL_CTX *libctx, const char *propq)
+                                 OSSL_LIB_CTX *libctx, const char *propq)
 {
     EVP_PKEY *pkey = NULL;
     EVP_PKEY_CTX *pctx = NULL;

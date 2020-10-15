@@ -95,7 +95,7 @@ int ASN1_item_verify(const ASN1_ITEM *it, const X509_ALGOR *alg,
 int ASN1_item_verify_ex(const ASN1_ITEM *it, const X509_ALGOR *alg,
                         const ASN1_BIT_STRING *signature, const void *data,
                         const ASN1_OCTET_STRING *id, EVP_PKEY *pkey,
-                        OPENSSL_CTX *libctx, const char *propq)
+                        OSSL_LIB_CTX *libctx, const char *propq)
 {
     EVP_MD_CTX *ctx;
     int rv = -1;
