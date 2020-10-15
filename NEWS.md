@@ -18,7 +18,7 @@ OpenSSL Releases
 OpenSSL 3.0
 -----------
 
-### Major changes between OpenSSL 1.1.1 and OpenSSL 3.0 alpha 7 [in pre-release]
+### Major changes between OpenSSL 1.1.1 and OpenSSL 3.0 [under development]
 
   * Remove the `RAND_DRBG` API.
   * Deprecated the `ENGINE` API.
