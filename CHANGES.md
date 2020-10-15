@@ -133,7 +133,7 @@ OpenSSL 3.0
    second call before returning to the caller.
 
    _(Note: the library context was initially called `OPENSSL_CTX` and
-   renamed to `OSSL_LIB_CTX` in version 3.0.0 beta7.)_
+   renamed to `OSSL_LIB_CTX` in version 3.0.0 alpha7.)_
 
    *Richard Levitte*
 
