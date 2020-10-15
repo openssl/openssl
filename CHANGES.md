@@ -21,7 +21,7 @@ OpenSSL Releases
 OpenSSL 3.0
 -----------
 
-### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
+### Changes between 1.1.1 and 3.0 alpha 7 [15 Oct 2020]
 
  * Add PKCS7_get_octet_string() and PKCS7_type_is_other() to the public
    interface. Their functionality remains unchanged.
