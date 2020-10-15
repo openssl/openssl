@@ -271,6 +271,7 @@ static int generate_key(DH *dh)
             if (dh->params.q == NULL) {
                 /* secret exponent length */
                 l = dh->length ? dh->length : BN_num_bits(dh->params.p) - 1;
+                /* TODO: should l be checked for validity here? */
                 if (!BN_priv_rand_ex(priv_key, l, BN_RAND_TOP_ONE,
                                      BN_RAND_BOTTOM_ANY, ctx))
                     goto err;
