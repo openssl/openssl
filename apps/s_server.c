@@ -21,6 +21,7 @@
 #include <openssl/e_os2.h>
 #include <openssl/async.h>
 #include <openssl/ssl.h>
+#include <openssl/decoder.h>
 
 #ifndef OPENSSL_NO_SOCK
 
@@ -71,9 +72,7 @@ static int generate_session_id(SSL *ssl, unsigned char *id,
                                unsigned int *id_len);
 static void init_session_cache_ctx(SSL_CTX *sctx);
 static void free_sessions(void);
-#ifndef OPENSSL_NO_DH
-static DH *load_dh_param(const char *dhfile);
-#endif
+static EVP_PKEY *load_dh_param(const char *dhfile);
 static void print_connection_info(SSL *con);
 
 static const int bufsize = 16 * 1024;
@@ -2030,62 +2029,62 @@ int s_server_main(int argc, char *argv[])
     if (alpn_ctx.data)
         SSL_CTX_set_alpn_select_cb(ctx, alpn_cb, &alpn_ctx);
 
-#ifndef OPENSSL_NO_DH
     if (!no_dhe) {
-        DH *dh = NULL;
+        EVP_PKEY *dhpkey = NULL;
 
         if (dhfile != NULL)
-            dh = load_dh_param(dhfile);
+            dhpkey = load_dh_param(dhfile);
         else if (s_cert_file != NULL)
-            dh = load_dh_param(s_cert_file);
+            dhpkey = load_dh_param(s_cert_file);
 
-        if (dh != NULL) {
+        if (dhpkey != NULL) {
             BIO_printf(bio_s_out, "Setting temp DH parameters\n");
         } else {
             BIO_printf(bio_s_out, "Using default temp DH parameters\n");
         }
         (void)BIO_flush(bio_s_out);
 
-        if (dh == NULL) {
+        if (dhpkey == NULL) {
             SSL_CTX_set_dh_auto(ctx, 1);
+        } else {
+            if (!EVP_PKEY_up_ref(dhpkey)) {
+                EVP_PKEY_free(dhpkey);
+                goto end;
+            }
+            if (!SSL_CTX_set0_tmp_dh_pkey(ctx, dhpkey)) {
+                BIO_puts(bio_err, "Error setting temp DH parameters\n");
+                ERR_print_errors(bio_err);
+                /* Free 2 references */
+                EVP_PKEY_free(dhpkey);
+                EVP_PKEY_free(dhpkey);
+                goto end;
+            }
         }
-# ifndef OPENSSL_NO_DEPRECATED_3_0
-        /* TODO(3.0): We need a 3.0 friendly way of doing this */
-        else if (!SSL_CTX_set_tmp_dh(ctx, dh)) {
-            BIO_puts(bio_err, "Error setting temp DH parameters\n");
-            ERR_print_errors(bio_err);
-            DH_free(dh);
-            goto end;
-        }
-# endif
 
         if (ctx2 != NULL) {
-            if (!dhfile) {
-                DH *dh2 = load_dh_param(s_cert_file2);
-                if (dh2 != NULL) {
+            if (dhfile != NULL) {
+                EVP_PKEY *dhpkey2 = load_dh_param(s_cert_file2);
+
+                if (dhpkey2 != NULL) {
                     BIO_printf(bio_s_out, "Setting temp DH parameters\n");
                     (void)BIO_flush(bio_s_out);
 
-                    DH_free(dh);
-                    dh = dh2;
+                    EVP_PKEY_free(dhpkey);
+                    dhpkey = dhpkey2;
                 }
             }
-            if (dh == NULL) {
+            if (dhpkey == NULL) {
                 SSL_CTX_set_dh_auto(ctx2, 1);
-            }
-# ifndef OPENSSL_NO_DEPRECATED_3_0
-          /* TODO(3.0): We need a 3.0 friendly way of doing this */
-            else if (!SSL_CTX_set_tmp_dh(ctx2, dh)) {
+            } else if (!SSL_CTX_set0_tmp_dh_pkey(ctx2, dhpkey)) {
                 BIO_puts(bio_err, "Error setting temp DH parameters\n");
                 ERR_print_errors(bio_err);
-                DH_free(dh);
+                EVP_PKEY_free(dhpkey);
                 goto end;
             }
-# endif
+            dhpkey = NULL;
         }
-        DH_free(dh);
+        EVP_PKEY_free(dhpkey);
     }
-#endif
 
     if (!set_cert_key_stuff(ctx, s_cert, s_key, s_chain, build_chain))
         goto end;
@@ -3011,25 +3010,26 @@ static void print_connection_info(SSL *con)
     (void)BIO_flush(bio_s_out);
 }
 
-#ifndef OPENSSL_NO_DH
-static DH *load_dh_param(const char *dhfile)
+static EVP_PKEY *load_dh_param(const char *dhfile)
 {
-# ifndef OPENSSL_NO_DEPRECATED_3_0
-    /* TODO(3.0): Use a decoder for this */
-    DH *ret = NULL;
+    EVP_PKEY *dhpkey = NULL;
     BIO *bio;
+    OSSL_DECODER_CTX *decoderctx = NULL;
 
     if ((bio = BIO_new_file(dhfile, "r")) == NULL)
         goto err;
-    ret = PEM_read_bio_DHparams(bio, NULL, NULL, NULL);
- err:
+
+    decoderctx
+        = OSSL_DECODER_CTX_new_by_EVP_PKEY(&dhpkey, "PEM", "DH",
+                                           NULL, NULL);
+    if (decoderctx != NULL)
+        OSSL_DECODER_from_bio(decoderctx, bio);
+
+err:
+    OSSL_DECODER_CTX_free(decoderctx);
     BIO_free(bio);
-    return ret;
-# else
-    return NULL;
-# endif
+    return dhpkey;
 }
-#endif
 
 static int www_body(int s, int stype, int prot, unsigned char *context)
 {

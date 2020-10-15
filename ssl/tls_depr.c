@@ -144,7 +144,7 @@ HMAC_CTX *ssl_hmac_get0_HMAC_CTX(SSL_HMAC *ctx)
 }
 
 /* Some deprecated public APIs pass DH objects */
-#ifndef OPENSSL_NO_DH
+# ifndef OPENSSL_NO_DH
 EVP_PKEY *ssl_dh_to_pkey(DH *dh)
 {
     EVP_PKEY *ret;
@@ -157,6 +157,6 @@ EVP_PKEY *ssl_dh_to_pkey(DH *dh)
     }
     return ret;
 }
-#endif
+# endif
 #endif
 

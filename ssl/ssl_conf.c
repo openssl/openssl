@@ -11,7 +11,8 @@
 #include "ssl_local.h"
 #include <openssl/conf.h>
 #include <openssl/objects.h>
-#include <openssl/dh.h>
+#include <openssl/decoder.h>
+#include <openssl/core_dispatch.h>
 #include "internal/nelem.h"
 
 /*
@@ -574,34 +575,51 @@ static int cmd_ClientCAStore(SSL_CONF_CTX *cctx, const char *value)
     return cmd_RequestCAStore(cctx, value);
 }
 
-#if !defined(OPENSSL_NO_DH) && !defined(OPENSSL_NO_DEPRECATED_3_0)
-/* TODO(3.0): We need a 3.0 friendly way of doing this */
 static int cmd_DHParameters(SSL_CONF_CTX *cctx, const char *value)
 {
     int rv = 0;
-    DH *dh = NULL;
+    EVP_PKEY *dhpkey = NULL;
     BIO *in = NULL;
-    if (cctx->ctx || cctx->ssl) {
+    SSL_CTX *sslctx = (cctx->ssl != NULL) ? cctx->ssl->ctx : cctx->ctx;
+    OSSL_DECODER_CTX *decoderctx = NULL;
+
+    if (cctx->ctx != NULL || cctx->ssl != NULL) {
         in = BIO_new(BIO_s_file());
         if (in == NULL)
             goto end;
         if (BIO_read_filename(in, value) <= 0)
             goto end;
-        dh = PEM_read_bio_DHparams(in, NULL, NULL, NULL);
-        if (dh == NULL)
+
+        decoderctx
+            = OSSL_DECODER_CTX_new_by_EVP_PKEY(&dhpkey, "PEM", NULL, "DH",
+                                               OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS,
+                                               sslctx->libctx, sslctx->propq);
+        if (decoderctx == NULL
+                || !OSSL_DECODER_from_bio(decoderctx, in)) {
+            OSSL_DECODER_CTX_free(decoderctx);
             goto end;
-    } else
+        }
+        OSSL_DECODER_CTX_free(decoderctx);
+
+        if (dhpkey == NULL)
+            goto end;
+    } else {
         return 1;
-    if (cctx->ctx)
-        rv = SSL_CTX_set_tmp_dh(cctx->ctx, dh);
-    if (cctx->ssl)
-        rv = SSL_set_tmp_dh(cctx->ssl, dh);
+    }
+
+    if (cctx->ctx != NULL) {
+        if ((rv = SSL_CTX_set0_tmp_dh_pkey(cctx->ctx, dhpkey)) > 0)
+            dhpkey = NULL;
+    }
+    if (cctx->ssl != NULL) {
+        if ((rv = SSL_set0_tmp_dh_pkey(cctx->ssl, dhpkey)) > 0)
+            dhpkey = NULL;
+    }
  end:
-    DH_free(dh);
+    EVP_PKEY_free(dhpkey);
     BIO_free(in);
     return rv > 0;
 }
-#endif
 
 static int cmd_RecordPadding(SSL_CONF_CTX *cctx, const char *value)
 {
@@ -727,11 +745,9 @@ static const ssl_conf_cmd_tbl ssl_conf_cmds[] = {
     SSL_CONF_CMD(ClientCAStore, NULL,
                  SSL_CONF_FLAG_SERVER | SSL_CONF_FLAG_CERTIFICATE,
                  SSL_CONF_TYPE_STORE),
-#if !defined(OPENSSL_NO_DH) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     SSL_CONF_CMD(DHParameters, "dhparam",
                  SSL_CONF_FLAG_SERVER | SSL_CONF_FLAG_CERTIFICATE,
                  SSL_CONF_TYPE_FILE),
-#endif
     SSL_CONF_CMD_STRING(RecordPadding, "record_padding", 0),
     SSL_CONF_CMD_STRING(NumTickets, "num_tickets", SSL_CONF_FLAG_SERVER),
 };
