@@ -243,6 +243,7 @@ long DH_get_length(const DH *dh)
 int DH_set_length(DH *dh, long length)
 {
     dh->length = length;
+    dh->dirty_cnt++;
     return 1;
 }
 
