@@ -104,7 +104,7 @@ provider):
  core_gettable_params           OSSL_FUNC_CORE_GETTABLE_PARAMS
  core_get_params                OSSL_FUNC_CORE_GET_PARAMS
  core_thread_start              OSSL_FUNC_CORE_THREAD_START
- core_get_libctx       OSSL_FUNC_CORE_GET_LIBCTX
+ core_get_libctx                OSSL_FUNC_CORE_GET_LIBCTX
  core_new_error                 OSSL_FUNC_CORE_NEW_ERROR
  core_set_error_debug           OSSL_FUNC_CORE_SET_ERROR_DEBUG
  core_set_error                 OSSL_FUNC_CORE_SET_ERROR
