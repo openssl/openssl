@@ -397,15 +397,13 @@ int ssl_print_tmp_key(BIO *out, SSL *s)
 #ifndef OPENSSL_NO_EC
     case EVP_PKEY_EC:
         {
-            EC_KEY *ec = EVP_PKEY_get1_EC_KEY(key);
-            int nid;
-            const char *cname;
-            nid = EC_GROUP_get_curve_name(EC_KEY_get0_group(ec));
-            EC_KEY_free(ec);
-            cname = EC_curve_nid2nist(nid);
-            if (cname == NULL)
-                cname = OBJ_nid2sn(nid);
-            BIO_printf(out, "ECDH, %s, %d bits\n", cname, EVP_PKEY_bits(key));
+            char name[80];
+            size_t name_len;
+
+            if (!EVP_PKEY_get_utf8_string_param(key, OSSL_PKEY_PARAM_GROUP_NAME,
+                                                name, sizeof(name), &name_len))
+                strcpy(name, "?");
+            BIO_printf(out, "ECDH, %s, %d bits\n", name, EVP_PKEY_bits(key));
         }
     break;
 #endif

@@ -400,13 +400,19 @@ int X509_check_private_key(const X509 *x, const EVP_PKEY *k)
 
 static int check_suite_b(EVP_PKEY *pkey, int sign_nid, unsigned long *pflags)
 {
-    const EC_GROUP *grp = NULL;
+    char curve_name[80];
+    size_t curve_name_len;
     int curve_nid;
-    if (pkey && EVP_PKEY_id(pkey) == EVP_PKEY_EC)
-        grp = EC_KEY_get0_group(EVP_PKEY_get0_EC_KEY(pkey));
-    if (!grp)
+
+    if (pkey == NULL || !EVP_PKEY_is_a(pkey, "EC"))
         return X509_V_ERR_SUITE_B_INVALID_ALGORITHM;
-    curve_nid = EC_GROUP_get_curve_name(grp);
+
+    if (!EVP_PKEY_get_utf8_string_param(pkey, OSSL_PKEY_PARAM_GROUP_NAME,
+                                        curve_name, sizeof(curve_name),
+                                        &curve_name_len))
+        return X509_V_ERR_SUITE_B_INVALID_CURVE;
+
+    curve_nid = OBJ_txt2nid(curve_name);
     /* Check curve is consistent with LOS */
     if (curve_nid == NID_secp384r1) { /* P-384 */
         /*

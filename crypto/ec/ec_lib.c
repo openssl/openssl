@@ -9,7 +9,7 @@
  */
 
 /*
- * ECDSA low level APIs are deprecated for public use, but still ok for
+ * EC_GROUP low level APIs are deprecated for public use, but still ok for
  * internal use.
  */
 #include "internal/deprecated.h"
@@ -1461,32 +1461,6 @@ err:
     return NULL;
 }
 
-static int ec_encoding_param2id(const OSSL_PARAM *p, int *id)
-{
-    const char *name = NULL;
-    int status = 0;
-
-    switch (p->data_type) {
-    case OSSL_PARAM_UTF8_STRING:
-        /* The OSSL_PARAM functions have no support for this */
-        name = p->data;
-        status = (name != NULL);
-        break;
-    case OSSL_PARAM_UTF8_PTR:
-        status = OSSL_PARAM_get_utf8_ptr(p, &name);
-        break;
-    }
-    if (status) {
-        int i = ec_encoding_name2id(name);
-
-        if (i >= 0) {
-            *id = i;
-            return 1;
-        }
-    }
-    return 0;
-}
-
 static EC_GROUP *group_new_from_name(const OSSL_PARAM *p,
                                      OSSL_LIB_CTX *libctx, const char *propq)
 {
@@ -1516,6 +1490,42 @@ static EC_GROUP *group_new_from_name(const OSSL_PARAM *p,
     return NULL;
 }
 
+/* These parameters can be set directly into an EC_GROUP */
+int ec_group_set_params(EC_GROUP *group, const OSSL_PARAM params[])
+{
+    int encoding_flag = -1, format = -1;
+    const OSSL_PARAM *p;
+
+    p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_EC_POINT_CONVERSION_FORMAT);
+    if (p != NULL) {
+        if (!ec_pt_format_param2id(p, &format)) {
+            ECerr(0, EC_R_INVALID_FORM);
+            return 0;
+        }
+        EC_GROUP_set_point_conversion_form(group, format);
+    }
+
+    p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_EC_ENCODING);
+    if (p != NULL) {
+        if (!ec_encoding_param2id(p, &encoding_flag)) {
+            ECerr(0, EC_R_INVALID_FORM);
+            return 0;
+        }
+        EC_GROUP_set_asn1_flag(group, encoding_flag);
+    }
+    /* Optional seed */
+    p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_EC_SEED);
+    if (p != NULL) {
+        /* The seed is allowed to be NULL */
+        if (p->data_type != OSSL_PARAM_OCTET_STRING
+            || !EC_GROUP_set_seed(group, p->data, p->data_size)) {
+            ECerr(0, EC_R_INVALID_SEED);
+            return 0;
+        }
+    }
+    return 1;
+}
+
 EC_GROUP *EC_GROUP_new_from_params(const OSSL_PARAM params[],
                                    OSSL_LIB_CTX *libctx, const char *propq)
 {
@@ -1530,19 +1540,19 @@ EC_GROUP *EC_GROUP_new_from_params(const OSSL_PARAM params[],
     const unsigned char *buf = NULL;
     int encoding_flag = -1;
 
-    ptmp = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_EC_ENCODING);
-    if (ptmp != NULL && !ec_encoding_param2id(ptmp, &encoding_flag)) {
-        ERR_raise(ERR_LIB_EC, EC_R_INVALID_ENCODING);
-        return 0;
-    }
-
+    /* This is the simple named group case */
     ptmp = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_GROUP_NAME);
     if (ptmp != NULL) {
         group = group_new_from_name(ptmp, libctx, propq);
-        if (group != NULL)
-            EC_GROUP_set_asn1_flag(group, encoding_flag);
+        if (group != NULL) {
+            if (!ec_group_set_params(group, params)) {
+                EC_GROUP_free(group);
+                group = NULL;
+            }
+        }
         return group;
     }
+    /* If it gets here then we are trying explicit parameters */
     bnctx = BN_CTX_new_ex(libctx);
     if (bnctx == NULL) {
         ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
@@ -1690,6 +1700,12 @@ EC_GROUP *EC_GROUP_new_from_params(const OSSL_PARAM params[],
          * If we did not find a named group then the encoding should be explicit
          * if it was specified
          */
+        ptmp = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_EC_ENCODING);
+        if (ptmp != NULL
+            && !ec_encoding_param2id(ptmp, &encoding_flag)) {
+            ECerr(0, EC_R_INVALID_ENCODING);
+            return 0;
+        }
         if (encoding_flag == OPENSSL_EC_NAMED_CURVE) {
             ERR_raise(ERR_LIB_EC, EC_R_INVALID_ENCODING);
             goto err;

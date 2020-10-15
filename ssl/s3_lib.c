@@ -18,6 +18,7 @@
 #include <openssl/rand.h>
 #include <openssl/trace.h>
 #include <openssl/x509v3.h>
+#include <openssl/core_names.h>
 #include "internal/cryptlib.h"
 
 #define TLS13_NUM_CIPHERS       OSSL_NELEM(tls13_ciphers)
@@ -3429,6 +3430,29 @@ static char *srp_password_from_info_cb(SSL *s, void *arg)
 }
 #endif
 
+#if !defined(OPENSSL_NO_EC) && !defined(OPENSSL_NO_DEPRECATED_3_0)
+static int ssl_set_tmp_ecdh_groups(uint16_t **pext, size_t *pextlen,
+                                   EVP_PKEY *pkey)
+{
+    char name[80];
+    int nid, ret = 0;
+    size_t name_len;
+
+    if (!EVP_PKEY_get_utf8_string_param(pkey, OSSL_PKEY_PARAM_GROUP_NAME,
+                                        name, sizeof(name), &name_len)) {
+        SSLerr(0, EC_R_MISSING_PARAMETERS);
+        return 0;
+    }
+    nid = OBJ_txt2nid(name);
+    if (nid == NID_undef)
+        goto end;
+    ret = tls1_set_groups(pext, pextlen, &nid, 1);
+end:
+    EVP_PKEY_free(pkey);
+    return ret;
+}
+#endif
+
 static int ssl3_set_req_cert_type(CERT *c, const unsigned char *p, size_t len);
 
 long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
@@ -3472,33 +3496,28 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
             ERR_raise(ERR_LIB_SSL, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
             return ret;
         }
-# endif
+#endif
     case SSL_CTRL_SET_DH_AUTO:
         s->cert->dh_tmp_auto = larg;
         return 1;
-#ifndef OPENSSL_NO_EC
+#if !defined(OPENSSL_NO_EC) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     case SSL_CTRL_SET_TMP_ECDH:
         {
-            const EC_GROUP *group = NULL;
-            int nid;
+            EVP_PKEY *pkecdh = NULL;
 
             if (parg == NULL) {
                 ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_NULL_PARAMETER);
                 return 0;
             }
-            group = EC_KEY_get0_group((const EC_KEY *)parg);
-            if (group == NULL) {
-                ERR_raise(ERR_LIB_SSL, EC_R_MISSING_PARAMETERS);
+            pkecdh = ssl_ecdh_to_pkey(parg);
+            if (pkecdh == NULL) {
+                ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
                 return 0;
             }
-            nid = EC_GROUP_get_curve_name(group);
-            if (nid == NID_undef)
-                return 0;
-            return tls1_set_groups(&s->ext.supportedgroups,
-                                   &s->ext.supportedgroups_len,
-                                   &nid, 1);
+            return ssl_set_tmp_ecdh_groups(&s->ext.supportedgroups,
+                                           &s->ext.supportedgroups_len,
+                                           pkecdh);
         }
-        break;
 #endif                          /* !OPENSSL_NO_EC */
     case SSL_CTRL_SET_TLSEXT_HOSTNAME:
         /*
@@ -3816,27 +3835,23 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
     case SSL_CTRL_SET_DH_AUTO:
         ctx->cert->dh_tmp_auto = larg;
         return 1;
-#ifndef OPENSSL_NO_EC
+#if !defined(OPENSSL_NO_EC) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     case SSL_CTRL_SET_TMP_ECDH:
         {
-            const EC_GROUP *group = NULL;
-            int nid;
+            EVP_PKEY *pkecdh = NULL;
 
             if (parg == NULL) {
                 ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_NULL_PARAMETER);
                 return 0;
             }
-            group = EC_KEY_get0_group((const EC_KEY *)parg);
-            if (group == NULL) {
-                ERR_raise(ERR_LIB_SSL, EC_R_MISSING_PARAMETERS);
+            pkecdh = ssl_ecdh_to_pkey(parg);
+            if (pkecdh == NULL) {
+                ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
                 return 0;
             }
-            nid = EC_GROUP_get_curve_name(group);
-            if (nid == NID_undef)
-                return 0;
-            return tls1_set_groups(&ctx->ext.supportedgroups,
-                                   &ctx->ext.supportedgroups_len,
-                                   &nid, 1);
+            return ssl_set_tmp_ecdh_groups(&ctx->ext.supportedgroups,
+                                           &ctx->ext.supportedgroups_len,
+                                           pkecdh);
         }
 #endif                          /* !OPENSSL_NO_EC */
     case SSL_CTRL_SET_TLSEXT_SERVERNAME_ARG:

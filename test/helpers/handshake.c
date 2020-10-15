@@ -12,6 +12,7 @@
 #include <openssl/bio.h>
 #include <openssl/x509_vfy.h>
 #include <openssl/ssl.h>
+#include <openssl/core_names.h>
 #ifndef OPENSSL_NO_SRP
 #include <openssl/srp.h>
 #endif
@@ -1270,15 +1271,18 @@ static char *dup_str(const unsigned char *in, size_t len)
 
 static int pkey_type(EVP_PKEY *pkey)
 {
-    int nid = EVP_PKEY_id(pkey);
-
 #ifndef OPENSSL_NO_EC
-    if (nid == EVP_PKEY_EC) {
-        const EC_KEY *ec = EVP_PKEY_get0_EC_KEY(pkey);
-        return EC_GROUP_get_curve_name(EC_KEY_get0_group(ec));
+    if (EVP_PKEY_is_a(pkey, "EC")) {
+        char name[80];
+        size_t name_len;
+
+        if (!EVP_PKEY_get_utf8_string_param(pkey, OSSL_PKEY_PARAM_GROUP_NAME,
+                                            name, sizeof(name), &name_len))
+            return NID_undef;
+        return OBJ_txt2nid(name);
     }
 #endif
-    return nid;
+    return EVP_PKEY_id(pkey);
 }
 
 static int peer_pkey_type(SSL *s)

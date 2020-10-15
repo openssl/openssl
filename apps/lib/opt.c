@@ -391,6 +391,20 @@ int opt_pair(const char *name, const OPT_PAIR* pairs, int *result)
     return 0;
 }
 
+/* Look through a list of valid names */
+int opt_string(const char *name, const char **options)
+{
+    const char **p;
+
+    for (p = options; *p != NULL; p++)
+        if (strcmp(*p, name) == 0)
+            return 1;
+    opt_printf_stderr("%s: Value must be one of:\n", prog);
+    for (p = options; *p != NULL; p++)
+        opt_printf_stderr("\t%s\n", *p);
+    return 0;
+}
+
 /* Parse an int, put it into *result; return 0 on failure, else 1. */
 int opt_int(const char *value, int *result)
 {

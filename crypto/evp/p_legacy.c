@@ -17,6 +17,7 @@
 #include <openssl/evp.h>
 #include <openssl/err.h>
 #include <openssl/rsa.h>
+#include <openssl/ec.h>
 #include "crypto/types.h"
 #include "crypto/evp.h"
 #include "evp_local.h"
@@ -24,6 +25,7 @@
 int EVP_PKEY_set1_RSA(EVP_PKEY *pkey, RSA *key)
 {
     int ret = EVP_PKEY_assign_RSA(pkey, key);
+
     if (ret)
         RSA_up_ref(key);
     return ret;
@@ -45,7 +47,41 @@ RSA *EVP_PKEY_get0_RSA(const EVP_PKEY *pkey)
 RSA *EVP_PKEY_get1_RSA(EVP_PKEY *pkey)
 {
     RSA *ret = EVP_PKEY_get0_RSA(pkey);
+
     if (ret != NULL)
         RSA_up_ref(ret);
     return ret;
 }
+
+#ifndef OPENSSL_NO_EC
+int EVP_PKEY_set1_EC_KEY(EVP_PKEY *pkey, EC_KEY *key)
+{
+    int ret = EVP_PKEY_assign_EC_KEY(pkey, key);
+
+    if (ret)
+        EC_KEY_up_ref(key);
+    return ret;
+}
+
+EC_KEY *EVP_PKEY_get0_EC_KEY(const EVP_PKEY *pkey)
+{
+    if (!evp_pkey_downgrade((EVP_PKEY *)pkey)) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_INACCESSIBLE_KEY);
+        return NULL;
+    }
+    if (EVP_PKEY_base_id(pkey) != EVP_PKEY_EC) {
+        EVPerr(EVP_F_EVP_PKEY_GET0_EC_KEY, EVP_R_EXPECTING_A_EC_KEY);
+        return NULL;
+    }
+    return pkey->pkey.ec;
+}
+
+EC_KEY *EVP_PKEY_get1_EC_KEY(EVP_PKEY *pkey)
+{
+    EC_KEY *ret = EVP_PKEY_get0_EC_KEY(pkey);
+
+    if (ret != NULL)
+        EC_KEY_up_ref(ret);
+    return ret;
+}
+#endif /* OPENSSL_NO_EC */

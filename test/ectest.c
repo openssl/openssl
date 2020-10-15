@@ -9,13 +9,10 @@
  */
 
 /*
- * We need access to the deprecated EC_POINTs_mul, EC_GROUP_precompute_mult,
- * and EC_GROUP_have_precompute_mult for testing purposes
- * when the deprecated calls are not hidden
+ * EC_KEY low level APIs are deprecated for public use, but still ok for
+ * internal use.
  */
-#ifndef OPENSSL_NO_DEPRECATED_3_0
-# define OPENSSL_SUPPRESS_DEPRECATED
-#endif
+#include "internal/deprecated.h"
 
 #include <string.h>
 #include "internal/nelem.h"

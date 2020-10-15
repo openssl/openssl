@@ -159,5 +159,21 @@ EVP_PKEY *ssl_dh_to_pkey(DH *dh)
     return ret;
 }
 # endif
-#endif
 
+/* Some deprecated public APIs pass EC_KEY objects */
+# ifndef OPENSSL_NO_EC
+EVP_PKEY *ssl_ecdh_to_pkey(EC_KEY *ec)
+{
+    EVP_PKEY *ret;
+
+    if (ec == NULL)
+        return NULL;
+    ret = EVP_PKEY_new();
+    if (EVP_PKEY_set1_EC_KEY(ret, ec) <= 0) {
+        EVP_PKEY_free(ret);
+        return NULL;
+    }
+    return ret;
+}
+# endif
+#endif

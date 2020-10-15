@@ -384,6 +384,7 @@ static const unsigned char pExampleECParamDER[] = {
 typedef struct APK_DATA_st {
     const unsigned char *kder;
     size_t size;
+    const char *keytype;
     int evptype;
     int check;
     int pub_check;
@@ -392,22 +393,22 @@ typedef struct APK_DATA_st {
 } APK_DATA;
 
 static APK_DATA keydata[] = {
-    {kExampleRSAKeyDER, sizeof(kExampleRSAKeyDER), EVP_PKEY_RSA},
-    {kExampleRSAKeyPKCS8, sizeof(kExampleRSAKeyPKCS8), EVP_PKEY_RSA},
+    {kExampleRSAKeyDER, sizeof(kExampleRSAKeyDER), "RSA", EVP_PKEY_RSA},
+    {kExampleRSAKeyPKCS8, sizeof(kExampleRSAKeyPKCS8), "RSA", EVP_PKEY_RSA},
 #ifndef OPENSSL_NO_EC
-    {kExampleECKeyDER, sizeof(kExampleECKeyDER), EVP_PKEY_EC}
+    {kExampleECKeyDER, sizeof(kExampleECKeyDER), "EC", EVP_PKEY_EC}
 #endif
 };
 
 static APK_DATA keycheckdata[] = {
-    {kExampleRSAKeyDER, sizeof(kExampleRSAKeyDER), EVP_PKEY_RSA, 1, 1, 1, 0},
-    {kExampleBadRSAKeyDER, sizeof(kExampleBadRSAKeyDER), EVP_PKEY_RSA,
+    {kExampleRSAKeyDER, sizeof(kExampleRSAKeyDER), "RSA", EVP_PKEY_RSA, 1, 1, 1, 0},
+    {kExampleBadRSAKeyDER, sizeof(kExampleBadRSAKeyDER), "RSA", EVP_PKEY_RSA,
      0, 1, 1, 0},
 #ifndef OPENSSL_NO_EC
-    {kExampleECKeyDER, sizeof(kExampleECKeyDER), EVP_PKEY_EC, 1, 1, 1, 0},
+    {kExampleECKeyDER, sizeof(kExampleECKeyDER), "EC", EVP_PKEY_EC, 1, 1, 1, 0},
     /* group is also associated in our pub key */
-    {kExampleECPubKeyDER, sizeof(kExampleECPubKeyDER), EVP_PKEY_EC, 0, 1, 1, 1},
-    {pExampleECParamDER, sizeof(pExampleECParamDER), EVP_PKEY_EC, 0, 0, 1, 2}
+    {kExampleECPubKeyDER, sizeof(kExampleECPubKeyDER), "EC", EVP_PKEY_EC, 0, 1, 1, 1},
+    {pExampleECParamDER, sizeof(pExampleECParamDER), "EC", EVP_PKEY_EC, 0, 0, 1, 2}
 #endif
 };
 
@@ -911,18 +912,14 @@ static struct ec_der_pub_keys_st {
 static int test_invalide_ec_char2_pub_range_decode(int id)
 {
     int ret = 0;
-    BIO *bio = NULL;
-    EC_KEY *eckey = NULL;
+    EVP_PKEY *pkey;
 
-    if (!TEST_ptr(bio = BIO_new_mem_buf(ec_der_pub_keys[id].der,
-                                        ec_der_pub_keys[id].len)))
-        goto err;
-    eckey = d2i_EC_PUBKEY_bio(bio, NULL);
-    ret = (ec_der_pub_keys[id].valid && TEST_ptr(eckey))
-          || TEST_ptr_null(eckey);
-err:
-    EC_KEY_free(eckey);
-    BIO_free(bio);
+    pkey = load_example_key("EC", ec_der_pub_keys[id].der,
+                            ec_der_pub_keys[id].len);
+
+    ret = (ec_der_pub_keys[id].valid && TEST_ptr(pkey))
+          || TEST_ptr_null(pkey);
+    EVP_PKEY_free(pkey);
     return ret;
 }
 
@@ -1417,11 +1414,7 @@ static EVP_PKEY_METHOD *custom_pmeth;
 static int test_EVP_PKEY_check(int i)
 {
     int ret = 0;
-    const unsigned char *p;
     EVP_PKEY *pkey = NULL;
-#ifndef OPENSSL_NO_EC
-    EC_KEY *eckey = NULL;
-#endif
     EVP_PKEY_CTX *ctx = NULL;
 #ifndef OPENSSL_NO_DEPRECATED_3_0
     EVP_PKEY_CTX *ctx2 = NULL;
@@ -1434,36 +1427,12 @@ static int test_EVP_PKEY_check(int i)
     int expected_pub_check = ak->pub_check;
     int expected_param_check = ak->param_check;
     int type = ak->type;
-    BIO *pubkey = NULL;
 
-    p = input;
-
-    switch (type) {
-    case 0:
-        if (!TEST_ptr(pkey = d2i_AutoPrivateKey(NULL, &p, input_len))
-            || !TEST_ptr_eq(p, input + input_len)
-            || !TEST_int_eq(EVP_PKEY_id(pkey), expected_id))
-            goto done;
-        break;
-#ifndef OPENSSL_NO_EC
-    case 1:
-        if (!TEST_ptr(pubkey = BIO_new_mem_buf(input, input_len))
-            || !TEST_ptr(eckey = d2i_EC_PUBKEY_bio(pubkey, NULL))
-            || !TEST_ptr(pkey = EVP_PKEY_new())
-            || !TEST_true(EVP_PKEY_assign_EC_KEY(pkey, eckey)))
-            goto done;
-        break;
-    case 2:
-        if (!TEST_ptr(eckey = d2i_ECParameters(NULL, &p, input_len))
-            || !TEST_ptr_eq(p, input + input_len)
-            || !TEST_ptr(pkey = EVP_PKEY_new())
-            || !TEST_true(EVP_PKEY_assign_EC_KEY(pkey, eckey)))
-            goto done;
-        break;
-#endif
-    default:
-        return 0;
-    }
+    if (!TEST_ptr(pkey = load_example_key(ak->keytype, input, input_len)))
+        goto done;
+    if (type == 0
+        && !TEST_int_eq(EVP_PKEY_id(pkey), expected_id))
+        goto done;
 
     if (!TEST_ptr(ctx = EVP_PKEY_CTX_new(pkey, NULL)))
         goto done;
@@ -1501,7 +1470,6 @@ static int test_EVP_PKEY_check(int i)
     EVP_PKEY_CTX_free(ctx2);
 #endif
     EVP_PKEY_free(pkey);
-    BIO_free(pubkey);
     return ret;
 }
 

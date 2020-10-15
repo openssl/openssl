@@ -32,7 +32,7 @@ IF[{- !$disabled{tests} -}]
           versions \
           aborttest test_test pkcs12_format_test \
           sanitytest rsa_complex exdatatest bntest \
-          ectest ecstresstest gmdifftest pbelutest \
+          ecstresstest gmdifftest pbelutest \
           destest mdc2test \
           exptest \
           evp_pkey_provided_test evp_test evp_extra_test evp_extra_test2 \
@@ -96,7 +96,7 @@ IF[{- !$disabled{tests} -}]
 
   SOURCE[ectest]=ectest.c
   INCLUDE[ectest]=../include ../apps/include
-  DEPEND[ectest]=../libcrypto libtestutil.a
+  DEPEND[ectest]=../libcrypto.a libtestutil.a
 
   SOURCE[ecstresstest]=ecstresstest.c
   INCLUDE[ecstresstest]=../include ../apps/include
@@ -548,7 +548,7 @@ IF[{- !$disabled{tests} -}]
       PROGRAMS{noinst}=sm4_internal_test
     ENDIF
     IF[{- !$disabled{ec} -}]
-      PROGRAMS{noinst}=ec_internal_test curve448_internal_test
+      PROGRAMS{noinst}=ectest ec_internal_test curve448_internal_test
     ENDIF
     IF[{- !$disabled{cmac} -}]
       PROGRAMS{noinst}=cmactest

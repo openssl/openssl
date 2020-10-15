@@ -23,6 +23,7 @@ int evp_pkey_ctx_set_ec_param_enc_prov(EVP_PKEY_CTX *ctx, int param_enc);
 # ifndef OPENSSL_NO_EC
 #  include <openssl/core.h>
 #  include <openssl/ec.h>
+#  include "crypto/types.h"
 
 /*-
  * Computes the multiplicative inverse of x in the range
@@ -69,10 +70,18 @@ int ec_group_todata(const EC_GROUP *group, OSSL_PARAM_BLD *tmpl,
                     const char *propq,
                     BN_CTX *bnctx, unsigned char **genbuf);
 int ec_group_fromdata(EC_KEY *ec, const OSSL_PARAM params[]);
+int ec_group_set_params(EC_GROUP *group, const OSSL_PARAM params[]);
 int ec_key_fromdata(EC_KEY *ecx, const OSSL_PARAM params[], int include_private);
 int ec_key_otherparams_fromdata(EC_KEY *ec, const OSSL_PARAM params[]);
 int ec_set_ecdh_cofactor_mode(EC_KEY *ec, int mode);
 int ec_encoding_name2id(const char *name);
+int ec_encoding_param2id(const OSSL_PARAM *p, int *id);
+int ec_pt_format_name2id(const char *name);
+int ec_pt_format_param2id(const OSSL_PARAM *p, int *id);
+char *ec_pt_format_id2name(int id);
+
+char *ec_check_group_type_id2name(int flags);
+int ec_set_check_group_type_from_name(EC_KEY *ec, const char *name);
 
 # endif /* OPENSSL_NO_EC */
 #endif

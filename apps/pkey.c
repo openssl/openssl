@@ -11,26 +11,11 @@
 #include <string.h>
 #include "apps.h"
 #include "progs.h"
+#include "ec_common.h"
 #include <openssl/pem.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
-
-#ifndef OPENSSL_NO_EC
-# include <openssl/ec.h>
-
-static OPT_PAIR ec_conv_forms[] = {
-    {"compressed", POINT_CONVERSION_COMPRESSED},
-    {"uncompressed", POINT_CONVERSION_UNCOMPRESSED},
-    {"hybrid", POINT_CONVERSION_HYBRID},
-    {NULL}
-};
-
-static OPT_PAIR ec_param_enc[] = {
-    {"named_curve", OPENSSL_EC_NAMED_CURVE},
-    {"explicit", 0},
-    {NULL}
-};
-#endif
+#include <openssl/core_names.h>
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
@@ -94,10 +79,8 @@ int pkey_main(int argc, char **argv)
     int pubin = 0, pubout = 0, text_pub = 0, text = 0, noout = 0, ret = 1;
     int private = 0, traditional = 0, check = 0, pub_check = 0;
 #ifndef OPENSSL_NO_EC
-    EC_KEY *eckey;
-    int ec_asn1_flag = OPENSSL_EC_NAMED_CURVE, new_ec_asn1_flag = 0;
-    int i, new_ec_form = 0;
-    point_conversion_form_t ec_form = POINT_CONVERSION_UNCOMPRESSED;
+    char *asn1_encoding = NULL;
+    char *point_format = NULL;
 #endif
 
     prog = opt_init(argc, argv, pkey_options);
@@ -167,20 +150,18 @@ int pkey_main(int argc, char **argv)
 #ifdef OPENSSL_NO_EC
             goto opthelp;
 #else
-            if (!opt_pair(opt_arg(), ec_conv_forms, &i))
+            point_format = opt_arg();
+            if (!opt_string(point_format, point_format_options))
                 goto opthelp;
-            new_ec_form = 1;
-            ec_form = i;
             break;
 #endif
         case OPT_EC_PARAM_ENC:
 #ifdef OPENSSL_NO_EC
             goto opthelp;
 #else
-            if (!opt_pair(opt_arg(), ec_param_enc, &i))
+            asn1_encoding = opt_arg();
+            if (!opt_string(asn1_encoding, asn1_encoding_options))
                 goto opthelp;
-            new_ec_asn1_flag = 1;
-            ec_asn1_flag = i;
             break;
 #endif
         case OPT_PROV_CASES:
@@ -234,20 +215,22 @@ int pkey_main(int argc, char **argv)
         goto end;
 
 #ifndef OPENSSL_NO_EC
-    /*
-     * TODO: remove this and use a set params call with a 'pkeyopt' command
-     * line option instead.
-     */
-    if (new_ec_form || new_ec_asn1_flag) {
-        if ((eckey = EVP_PKEY_get0_EC_KEY(pkey)) == NULL) {
-            ERR_print_errors(bio_err);
-            goto end;
-        }
-        if (new_ec_form)
-            EC_KEY_set_conv_form(eckey, ec_form);
+    if (asn1_encoding != NULL || point_format != NULL) {
+        OSSL_PARAM params[3], *p = params;
 
-        if (new_ec_asn1_flag)
-            EC_KEY_set_asn1_flag(eckey, ec_asn1_flag);
+        if (!EVP_PKEY_is_a(pkey, "EC"))
+            goto end;
+
+        if (asn1_encoding != NULL)
+            *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_EC_ENCODING,
+                                                    asn1_encoding, 0);
+        if (point_format != NULL)
+            *p++ = OSSL_PARAM_construct_utf8_string(
+                       OSSL_PKEY_PARAM_EC_POINT_CONVERSION_FORMAT,
+                       point_format, 0);
+        *p = OSSL_PARAM_construct_end();
+        if (EVP_PKEY_set_params(pkey, params) <= 0)
+            goto end;
     }
 #endif
 

@@ -363,6 +363,7 @@ int opt_umax(const char *arg, uintmax_t *result);
 # define uintmax_t unsigned long
 #endif
 int opt_pair(const char *arg, const OPT_PAIR * pairs, int *result);
+int opt_string(const char *name, const char **options);
 int opt_cipher(const char *name, const EVP_CIPHER **cipherp);
 int opt_md(const char *name, const EVP_MD **mdp);
 char *opt_arg(void);

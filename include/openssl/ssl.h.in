@@ -1227,13 +1227,13 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 # define SSL_ERROR_WANT_ASYNC            9
 # define SSL_ERROR_WANT_ASYNC_JOB       10
 # define SSL_ERROR_WANT_CLIENT_HELLO_CB 11
+
 # ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define SSL_CTRL_SET_TMP_DH                    3
-# endif
-# define SSL_CTRL_SET_TMP_ECDH                   4
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+#  define SSL_CTRL_SET_TMP_ECDH                  4
 #  define SSL_CTRL_SET_TMP_DH_CB                 6
 # endif
+
 # define SSL_CTRL_GET_CLIENT_CERT_REQUEST        9
 # define SSL_CTRL_GET_NUM_RENEGOTIATIONS         10
 # define SSL_CTRL_CLEAR_NUM_RENEGOTIATIONS       11

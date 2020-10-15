@@ -583,7 +583,9 @@ typedef struct loopargs_st {
     DSA *dsa_key[DSA_NUM];
 #endif
 #ifndef OPENSSL_NO_EC
+# ifndef OPENSSL_NO_DEPRECATED_3_0
     EC_KEY *ecdsa[ECDSA_NUM];
+# endif
     EVP_PKEY_CTX *ecdh_ctx[EC_NUM];
     EVP_MD_CTX *eddsa_ctx[EdDSA_NUM];
     EVP_MD_CTX *eddsa_ctx2[EdDSA_NUM];
@@ -4082,8 +4084,10 @@ int speed_main(int argc, char **argv)
             DSA_free(loopargs[i].dsa_key[k]);
 #endif
 #ifndef OPENSSL_NO_EC
+# if !defined(OPENSSL_NO_DEPRECATED_3_0)
         for (k = 0; k < ECDSA_NUM; k++)
             EC_KEY_free(loopargs[i].ecdsa[k]);
+# endif
         for (k = 0; k < EC_NUM; k++)
             EVP_PKEY_CTX_free(loopargs[i].ecdh_ctx[k]);
         for (k = 0; k < EdDSA_NUM; k++) {

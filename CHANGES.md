@@ -69,6 +69,49 @@ OpenSSL 3.0
 
    *Dmitry Belyavskiy*
 
+ * All of the low level EC_KEY functions have been deprecated including:
+
+   EC_KEY_OpenSSL, EC_KEY_get_default_method, EC_KEY_set_default_method,
+   EC_KEY_get_method, EC_KEY_set_method, EC_KEY_new_method
+   EC_KEY_METHOD_new, EC_KEY_METHOD_free, EC_KEY_METHOD_set_init,
+   EC_KEY_METHOD_set_keygen, EC_KEY_METHOD_set_compute_key,
+   EC_KEY_METHOD_set_sign, EC_KEY_METHOD_set_verify,
+   EC_KEY_METHOD_get_init, EC_KEY_METHOD_get_keygen,
+   EC_KEY_METHOD_get_compute_key, EC_KEY_METHOD_get_sign,
+   EC_KEY_METHOD_get_verify,
+   EC_KEY_new_ex, EC_KEY_new, EC_KEY_get_flags, EC_KEY_set_flags,
+   EC_KEY_clear_flags, EC_KEY_decoded_from_explicit_params,
+   EC_KEY_new_by_curve_name_ex, EC_KEY_new_by_curve_name, EC_KEY_free,
+   EC_KEY_copy, EC_KEY_dup, EC_KEY_up_ref, EC_KEY_get0_engine,
+   EC_KEY_get0_group, EC_KEY_set_group, EC_KEY_get0_private_key,
+   EC_KEY_set_private_key, EC_KEY_get0_public_key, EC_KEY_set_public_key,
+   EC_KEY_get_enc_flags, EC_KEY_set_enc_flags, EC_KEY_get_conv_form,
+   EC_KEY_set_conv_form, EC_KEY_set_ex_data, EC_KEY_get_ex_data,
+   EC_KEY_set_asn1_flag, EC_KEY_generate_key, EC_KEY_check_key, EC_KEY_can_sign,
+   EC_KEY_set_public_key_affine_coordinates, EC_KEY_key2buf, EC_KEY_oct2key,
+   EC_KEY_oct2priv, EC_KEY_priv2oct and EC_KEY_priv2buf.
+   Applications that need to implement an EC_KEY_METHOD need to consider
+   implementation of the functionality in a special provider.
+   For replacement of the functions manipulating the EC_KEY objects
+   see the EVP_PKEY-EC(7) manual page.
+
+   Additionally functions that read and write EC_KEY objects such as
+   o2i_ECPublicKey, i2o_ECPublicKey, ECParameters_print_fp, EC_KEY_print_fp,
+   d2i_ECPKParameters, d2i_ECParameters, d2i_ECPrivateKey, d2i_ECPrivateKey_bio,
+   d2i_ECPrivateKey_fp, d2i_EC_PUBKEY, d2i_EC_PUBKEY_bio, d2i_EC_PUBKEY_fp,
+   i2d_ECPKParameters, i2d_ECParameters, i2d_ECPrivateKey, i2d_ECPrivateKey_bio,
+   i2d_ECPrivateKey_fp, i2d_EC_PUBKEY, i2d_EC_PUBKEY_bio and i2d_EC_PUBKEY_fp
+   have also been deprecated. Applications should instead use the
+   OSSL_DECODER and OSSL_ENCODER APIs to read and write EC files.
+
+   Finally functions that assign or obtain EC_KEY objects from an EVP_PKEY such as
+   EVP_PKEY_assign_EC_KEY, EVP_PKEY_get0_EC_KEY, EVP_PKEY_get1_EC_KEY and
+   EVP_PKEY_set1_EC_KEY are also deprecated. Applications should instead either
+   read or write an EVP_PKEY directly using the OSSL_DECODER and OSSL_ENCODER
+   APIs. Or load an EVP_PKEY directly from EC data using EVP_PKEY_fromdata().
+
+   *Shane Lontis, Paul Dale, Richard Levitte, and Tomas Mraz*
+
  * Deprecated all the libcrypto and libssl error string loading
    functions: ERR_load_ASN1_strings(), ERR_load_ASYNC_strings(),
    ERR_load_BIO_strings(), ERR_load_BN_strings(), ERR_load_BUF_strings(),
@@ -591,19 +634,6 @@ OpenSSL 3.0
    Use of these low level functions has been informally discouraged for a long
    time.  Instead applications should use the EVP_PKEY_derive(3),
    EVP_DigestSign(3) and EVP_DigestVerify(3) functions.
-
-   *Paul Dale*
-
- * Deprecated the EC_KEY_METHOD functions.  These include:
-
-   EC_KEY_METHOD_new, EC_KEY_METHOD_free, EC_KEY_METHOD_set_init,
-   EC_KEY_METHOD_set_keygen, EC_KEY_METHOD_set_compute_key,
-   EC_KEY_METHOD_set_sign, EC_KEY_METHOD_set_verify,
-   EC_KEY_METHOD_get_init, EC_KEY_METHOD_get_keygen,
-   EC_KEY_METHOD_get_compute_key, EC_KEY_METHOD_get_sign and
-   EC_KEY_METHOD_get_verify.
-
-   Instead applications and extension writers should use the OSSL_PROVIDER APIs.
 
    *Paul Dale*
 

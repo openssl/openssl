@@ -7,6 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "internal/deprecated.h"
+
 #include <string.h>
 
 #include <openssl/core_names.h>
@@ -466,7 +468,7 @@ int evp_pkey_ctx_set_ec_param_enc_prov(EVP_PKEY_CTX *ctx, int param_enc)
 
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_EC_ENCODING,
                                             (char *)enc, 0);
-    *p++ = OSSL_PARAM_construct_end();
+    *p = OSSL_PARAM_construct_end();
 
     ret = evp_pkey_ctx_set_params_strict(ctx, params);
  end:

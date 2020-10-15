@@ -7,11 +7,17 @@
  * https://www.openssl.org/source/license.html
  */
 
-/* When removal is simulated, we still need the type internally */
+#ifndef OPENSSL_NO_EC
+static const char *point_format_options[] = {
+    "uncompressed",
+    "compressed",
+    "hybrid",
+    NULL
+};
 
-#ifdef OPENSSL_NO_DEPRECATED_3_0
-typedef struct rsa_st RSA;
-typedef struct rsa_meth_st RSA_METHOD;
-typedef struct ec_key_st EC_KEY;
-typedef struct ec_key_method_st EC_KEY_METHOD;
+static const char *asn1_encoding_options[] = {
+    "named_curve",
+    "explicit",
+    NULL
+};
 #endif

@@ -2468,6 +2468,9 @@ __owur int ssl_encapsulate(SSL *s, EVP_PKEY *pubkey,
                            unsigned char **ctp, size_t *ctlenp,
                            int gensecret);
 __owur EVP_PKEY *ssl_dh_to_pkey(DH *dh);
+# if !defined(OPENSSL_NO_EC) && !defined(OPENSSL_NO_DEPRECATED_3_0)
+__owur EVP_PKEY *ssl_ecdh_to_pkey(EC_KEY *ec);
+# endif
 __owur unsigned int ssl_get_max_send_fragment(const SSL *ssl);
 __owur unsigned int ssl_get_split_send_fragment(const SSL *ssl);
 

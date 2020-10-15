@@ -718,6 +718,7 @@ static void sv_usage(void)
 static void print_key_details(BIO *out, EVP_PKEY *key)
 {
     int keyid = EVP_PKEY_id(key);
+#if 0
 #ifndef OPENSSL_NO_EC
     if (keyid == EVP_PKEY_EC) {
         EC_KEY *ec = EVP_PKEY_get1_EC_KEY(key);
@@ -730,6 +731,7 @@ static void print_key_details(BIO *out, EVP_PKEY *key)
             cname = OBJ_nid2sn(nid);
         BIO_printf(out, "%d bits EC (%s)", EVP_PKEY_bits(key), cname);
     } else
+#endif
 #endif
     {
         const char *algname;
