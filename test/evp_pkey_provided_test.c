@@ -237,7 +237,7 @@ static int test_print_key_type_using_encoder(const char *alg, int type,
         /* Use an invalid cipher name, which should generate no output */
         TEST_note("NOT Displaying PEM encrypted with (invalid) FOO");
         if (!TEST_false(OSSL_ENCODER_CTX_set_cipher(ctx, "FOO", NULL))
-            || !TEST_false(OSSL_ENCODER_to_bio(ctx, bio_out)))
+            && !TEST_false(OSSL_ENCODER_to_bio(ctx, bio_out)))
             goto err;
 
         /* Clear the cipher.  This should give us an unencrypted PEM again */
