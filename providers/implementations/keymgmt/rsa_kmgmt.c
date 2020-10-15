@@ -73,7 +73,7 @@ static int pss_params_fromdata(RSA_PSS_PARAMS_30 *pss_params,
 
 static void *rsa_newdata(void *provctx)
 {
-    OSSL_LIB_CTX *libctx = PROV_LIBRARY_CONTEXT_OF(provctx);
+    OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(provctx);
     RSA *rsa;
 
     if (!ossl_prov_is_running())
@@ -89,7 +89,7 @@ static void *rsa_newdata(void *provctx)
 
 static void *rsapss_newdata(void *provctx)
 {
-    OSSL_LIB_CTX *libctx = PROV_LIBRARY_CONTEXT_OF(provctx);
+    OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(provctx);
     RSA *rsa;
 
     if (!ossl_prov_is_running())
@@ -416,7 +416,7 @@ static int rsa_gencb(int p, int n, BN_GENCB *cb)
 
 static void *gen_init(void *provctx, int selection, int rsa_type)
 {
-    OSSL_LIB_CTX *libctx = PROV_LIBRARY_CONTEXT_OF(provctx);
+    OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(provctx);
     struct rsa_gen_ctx *gctx = NULL;
 
     if (!ossl_prov_is_running())

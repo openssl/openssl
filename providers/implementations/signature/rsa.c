@@ -170,7 +170,7 @@ static void *rsa_newctx(void *provctx, const char *propq)
         return NULL;
     }
 
-    prsactx->libctx = PROV_LIBRARY_CONTEXT_OF(provctx);
+    prsactx->libctx = PROV_LIBCTX_OF(provctx);
     prsactx->flag_allow_md = 1;
     prsactx->propq = propq_copy;
     return prsactx;

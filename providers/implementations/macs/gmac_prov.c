@@ -184,7 +184,7 @@ static int gmac_set_ctx_params(void *vmacctx, const OSSL_PARAM params[])
 {
     struct gmac_data_st *macctx = vmacctx;
     EVP_CIPHER_CTX *ctx = macctx->ctx;
-    OSSL_LIB_CTX *provctx = PROV_LIBRARY_CONTEXT_OF(macctx->provctx);
+    OSSL_LIB_CTX *provctx = PROV_LIBCTX_OF(macctx->provctx);
     const OSSL_PARAM *p;
 
    if (ctx == NULL

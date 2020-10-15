@@ -136,7 +136,7 @@ static void *dh_newdata(void *provctx)
     DH *dh = NULL;
 
     if (ossl_prov_is_running()) {
-        dh = dh_new_ex(PROV_LIBRARY_CONTEXT_OF(provctx));
+        dh = dh_new_ex(PROV_LIBCTX_OF(provctx));
         if (dh != NULL) {
             DH_clear_flags(dh, DH_FLAG_TYPE_MASK);
             DH_set_flags(dh, DH_FLAG_TYPE_DH);
@@ -149,7 +149,7 @@ static void *dhx_newdata(void *provctx)
 {
     DH *dh = NULL;
 
-    dh = dh_new_ex(PROV_LIBRARY_CONTEXT_OF(provctx));
+    dh = dh_new_ex(PROV_LIBCTX_OF(provctx));
     if (dh != NULL) {
         DH_clear_flags(dh, DH_FLAG_TYPE_MASK);
         DH_set_flags(dh, DH_FLAG_TYPE_DHX);
@@ -430,7 +430,7 @@ static int dh_validate(void *keydata, int selection)
 
 static void *dh_gen_init_base(void *provctx, int selection, int type)
 {
-    OSSL_LIB_CTX *libctx = PROV_LIBRARY_CONTEXT_OF(provctx);
+    OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(provctx);
     struct dh_gen_ctx *gctx = NULL;
 
     if (!ossl_prov_is_running())

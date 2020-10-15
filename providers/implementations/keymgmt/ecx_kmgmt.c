@@ -85,7 +85,7 @@ static void *x25519_new_key(void *provctx)
 {
     if (!ossl_prov_is_running())
         return 0;
-    return ecx_key_new(PROV_LIBRARY_CONTEXT_OF(provctx), ECX_KEY_TYPE_X25519, 0,
+    return ecx_key_new(PROV_LIBCTX_OF(provctx), ECX_KEY_TYPE_X25519, 0,
                        NULL);
 }
 
@@ -93,7 +93,7 @@ static void *x448_new_key(void *provctx)
 {
     if (!ossl_prov_is_running())
         return 0;
-    return ecx_key_new(PROV_LIBRARY_CONTEXT_OF(provctx), ECX_KEY_TYPE_X448, 0,
+    return ecx_key_new(PROV_LIBCTX_OF(provctx), ECX_KEY_TYPE_X448, 0,
                        NULL);
 }
 
@@ -101,7 +101,7 @@ static void *ed25519_new_key(void *provctx)
 {
     if (!ossl_prov_is_running())
         return 0;
-    return ecx_key_new(PROV_LIBRARY_CONTEXT_OF(provctx), ECX_KEY_TYPE_ED25519, 0,
+    return ecx_key_new(PROV_LIBCTX_OF(provctx), ECX_KEY_TYPE_ED25519, 0,
                        NULL);
 }
 
@@ -109,7 +109,7 @@ static void *ed448_new_key(void *provctx)
 {
     if (!ossl_prov_is_running())
         return 0;
-    return ecx_key_new(PROV_LIBRARY_CONTEXT_OF(provctx), ECX_KEY_TYPE_ED448, 0,
+    return ecx_key_new(PROV_LIBCTX_OF(provctx), ECX_KEY_TYPE_ED448, 0,
                        NULL);
 }
 
@@ -443,7 +443,7 @@ static const OSSL_PARAM *ed448_settable_params(void *provctx)
 
 static void *ecx_gen_init(void *provctx, int selection, ECX_KEY_TYPE type)
 {
-    OSSL_LIB_CTX *libctx = PROV_LIBRARY_CONTEXT_OF(provctx);
+    OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(provctx);
     struct ecx_gen_ctx *gctx = NULL;
 
     if (!ossl_prov_is_running())

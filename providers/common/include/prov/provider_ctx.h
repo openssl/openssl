@@ -25,15 +25,15 @@ typedef struct prov_ctx_st {
  * To be used anywhere the library context needs to be passed, such as to
  * fetching functions.
  */
-# define PROV_LIBRARY_CONTEXT_OF(provctx)        \
-    ossl_prov_ctx_get0_library_context((provctx))
+# define PROV_LIBCTX_OF(provctx)        \
+    ossl_prov_ctx_get0_libctx((provctx))
 
 PROV_CTX *ossl_prov_ctx_new(void);
 void ossl_prov_ctx_free(PROV_CTX *ctx);
-void ossl_prov_ctx_set0_library_context(PROV_CTX *ctx, OSSL_LIB_CTX *libctx);
+void ossl_prov_ctx_set0_libctx(PROV_CTX *ctx, OSSL_LIB_CTX *libctx);
 void ossl_prov_ctx_set0_handle(PROV_CTX *ctx, const OSSL_CORE_HANDLE *handle);
 void ossl_prov_ctx_set0_core_bio_method(PROV_CTX *ctx, BIO_METHOD *corebiometh);
-OSSL_LIB_CTX *ossl_prov_ctx_get0_library_context(PROV_CTX *ctx);
+OSSL_LIB_CTX *ossl_prov_ctx_get0_libctx(PROV_CTX *ctx);
 const OSSL_CORE_HANDLE *ossl_prov_ctx_get0_handle(PROV_CTX *ctx);
 BIO_METHOD *ossl_prov_ctx_get0_core_bio_method(PROV_CTX *ctx);
 

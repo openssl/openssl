@@ -134,7 +134,7 @@ static int kdf_sshkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
     const OSSL_PARAM *p;
     KDF_SSHKDF *ctx = vctx;
-    OSSL_LIB_CTX *provctx = PROV_LIBRARY_CONTEXT_OF(ctx->provctx);
+    OSSL_LIB_CTX *provctx = PROV_LIBCTX_OF(ctx->provctx);
     int t;
 
     if (!ossl_prov_digest_load_from_params(&ctx->digest, params, provctx))

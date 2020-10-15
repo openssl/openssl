@@ -318,7 +318,7 @@ static size_t prov_drbg_get_nonce(PROV_DRBG *drbg,
     size_t ret = 0, n;
     RAND_POOL *pool;
     unsigned char *buf = NULL;
-    OSSL_LIB_CTX *libctx = PROV_LIBRARY_CONTEXT_OF(drbg->provctx);
+    OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(drbg->provctx);
     PROV_DRBG_NONCE_GLOBAL *dngbl
         = ossl_lib_ctx_get_data(libctx, OSSL_LIB_CTX_DRBG_NONCE_INDEX,
                                &drbg_nonce_ossl_ctx_method);

@@ -108,7 +108,7 @@ static void *dsa_newctx(void *provctx, const char *propq)
     if (pdsactx == NULL)
         return NULL;
 
-    pdsactx->libctx = PROV_LIBRARY_CONTEXT_OF(provctx);
+    pdsactx->libctx = PROV_LIBCTX_OF(provctx);
     pdsactx->flag_allow_md = 1;
     if (propq != NULL && (pdsactx->propq = OPENSSL_strdup(propq)) == NULL) {
         OPENSSL_free(pdsactx);

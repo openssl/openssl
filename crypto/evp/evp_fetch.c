@@ -185,7 +185,7 @@ static void *construct_evp_method(const OSSL_ALGORITHM *algodef,
      * number.
      */
     struct evp_method_data_st *methdata = data;
-    OSSL_LIB_CTX *libctx = ossl_provider_library_context(prov);
+    OSSL_LIB_CTX *libctx = ossl_provider_libctx(prov);
     OSSL_NAMEMAP *namemap = ossl_namemap_stored(libctx);
     const char *names = algodef->algorithm_names;
     int name_id = ossl_namemap_add_names(namemap, 0, names, NAME_SEPARATOR);
@@ -484,7 +484,7 @@ static void do_one(OSSL_PROVIDER *provider, const OSSL_ALGORITHM *algo,
                    int no_store, void *vdata)
 {
     struct do_all_data_st *data = vdata;
-    OSSL_LIB_CTX *libctx = ossl_provider_library_context(provider);
+    OSSL_LIB_CTX *libctx = ossl_provider_libctx(provider);
     OSSL_NAMEMAP *namemap = ossl_namemap_stored(libctx);
     int name_id = ossl_namemap_add_names(namemap, 0, algo->algorithm_names,
                                          NAME_SEPARATOR);
@@ -524,7 +524,7 @@ void evp_generic_do_all(OSSL_LIB_CTX *libctx, int operation_id,
 
 const char *evp_first_name(const OSSL_PROVIDER *prov, int name_id)
 {
-    OSSL_LIB_CTX *libctx = ossl_provider_library_context(prov);
+    OSSL_LIB_CTX *libctx = ossl_provider_libctx(prov);
     OSSL_NAMEMAP *namemap = ossl_namemap_stored(libctx);
 
     return ossl_namemap_num2name(namemap, name_id, 0);
@@ -536,7 +536,7 @@ int evp_is_a(OSSL_PROVIDER *prov, int number,
     /*
      * For a |prov| that is NULL, the library context will be NULL
      */
-    OSSL_LIB_CTX *libctx = ossl_provider_library_context(prov);
+    OSSL_LIB_CTX *libctx = ossl_provider_libctx(prov);
     OSSL_NAMEMAP *namemap = ossl_namemap_stored(libctx);
 
     if (prov == NULL)
@@ -548,7 +548,7 @@ void evp_names_do_all(OSSL_PROVIDER *prov, int number,
                       void (*fn)(const char *name, void *data),
                       void *data)
 {
-    OSSL_LIB_CTX *libctx = ossl_provider_library_context(prov);
+    OSSL_LIB_CTX *libctx = ossl_provider_libctx(prov);
     OSSL_NAMEMAP *namemap = ossl_namemap_stored(libctx);
 
     ossl_namemap_doall_names(namemap, number, fn, data);

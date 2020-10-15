@@ -20,7 +20,7 @@ provider-base
  int core_get_params(const OSSL_CORE_HANDLE *handle, OSSL_PARAM params[]);
  int core_thread_start(const OSSL_CORE_HANDLE *handle,
                        OSSL_thread_stop_handler_fn handfn);
- OPENSSL_CORE_CTX *core_get_library_context(const OSSL_CORE_HANDLE *handle);
+ OPENSSL_CORE_CTX *core_get_libctx(const OSSL_CORE_HANDLE *handle);
  void core_new_error(const OSSL_CORE_HANDLE *handle);
  void core_set_error_debug(const OSSL_CORE_HANDLE *handle,
                            const char *file, int line, const char *func);
@@ -104,7 +104,7 @@ provider):
  core_gettable_params           OSSL_FUNC_CORE_GETTABLE_PARAMS
  core_get_params                OSSL_FUNC_CORE_GET_PARAMS
  core_thread_start              OSSL_FUNC_CORE_THREAD_START
- core_get_library_context       OSSL_FUNC_CORE_GET_LIBRARY_CONTEXT
+ core_get_libctx       OSSL_FUNC_CORE_GET_LIBCTX
  core_new_error                 OSSL_FUNC_CORE_NEW_ERROR
  core_set_error_debug           OSSL_FUNC_CORE_SET_ERROR_DEBUG
  core_set_error                 OSSL_FUNC_CORE_SET_ERROR
@@ -152,7 +152,7 @@ parameters.
 
 =for comment core_thread_start() TBA
 
-core_get_library_context() retrieves the library context in which the library
+core_get_libctx() retrieves the library context in which the library
 object for the current provider is stored, accessible through the I<handle>.
 This may sometimes be useful if the provider wishes to store a
 reference to its context in the same library context.

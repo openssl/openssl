@@ -66,8 +66,8 @@ OSSL_CORE_MAKE_FUNC(int,core_get_params,(const OSSL_CORE_HANDLE *prov,
 # define OSSL_FUNC_CORE_THREAD_START           3
 OSSL_CORE_MAKE_FUNC(int,core_thread_start,(const OSSL_CORE_HANDLE *prov,
                                            OSSL_thread_stop_handler_fn handfn))
-# define OSSL_FUNC_CORE_GET_LIBRARY_CONTEXT    4
-OSSL_CORE_MAKE_FUNC(OPENSSL_CORE_CTX *,core_get_library_context,
+# define OSSL_FUNC_CORE_GET_LIBCTX    4
+OSSL_CORE_MAKE_FUNC(OPENSSL_CORE_CTX *,core_get_libctx,
                     (const OSSL_CORE_HANDLE *prov))
 # define OSSL_FUNC_CORE_NEW_ERROR              5
 OSSL_CORE_MAKE_FUNC(void,core_new_error,(const OSSL_CORE_HANDLE *prov))

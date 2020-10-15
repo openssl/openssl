@@ -530,7 +530,7 @@ void file_load_cleanup(void *construct_data)
 static int file_setup_decoders(struct file_ctx_st *ctx)
 {
     EVP_PKEY *dummy; /* for OSSL_DECODER_CTX_new_by_EVP_PKEY() */
-    OSSL_LIB_CTX *libctx = ossl_prov_ctx_get0_library_context(ctx->provctx);
+    OSSL_LIB_CTX *libctx = ossl_prov_ctx_get0_libctx(ctx->provctx);
     OSSL_DECODER *to_obj = NULL; /* Last resort decoder */
     OSSL_DECODER_INSTANCE *to_obj_inst = NULL;
     OSSL_DECODER_CLEANUP *old_cleanup = NULL;

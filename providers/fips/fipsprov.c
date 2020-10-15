@@ -73,7 +73,7 @@ static OSSL_FUNC_CRYPTO_secure_clear_free_fn *c_CRYPTO_secure_clear_free;
 static OSSL_FUNC_CRYPTO_secure_allocated_fn *c_CRYPTO_secure_allocated;
 static OSSL_FUNC_BIO_vsnprintf_fn *c_BIO_vsnprintf;
 static OSSL_FUNC_self_test_cb_fn *c_stcbfn = NULL;
-static OSSL_FUNC_core_get_library_context_fn *c_get_libctx = NULL;
+static OSSL_FUNC_core_get_libctx_fn *c_get_libctx = NULL;
 
 typedef struct fips_global_st {
     const OSSL_CORE_HANDLE *handle;
@@ -544,7 +544,7 @@ static const OSSL_ALGORITHM *fips_query(void *provctx, int operation_id,
 
 static void fips_teardown(void *provctx)
 {
-    OSSL_LIB_CTX_free(PROV_LIBRARY_CONTEXT_OF(provctx));
+    OSSL_LIB_CTX_free(PROV_LIBCTX_OF(provctx));
     ossl_prov_ctx_free(provctx);
 }
 
@@ -586,8 +586,8 @@ int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
 
     for (; in->function_id != 0; in++) {
         switch (in->function_id) {
-        case OSSL_FUNC_CORE_GET_LIBRARY_CONTEXT:
-            c_get_libctx = OSSL_FUNC_core_get_library_context(in);
+        case OSSL_FUNC_CORE_GET_LIBCTX:
+            c_get_libctx = OSSL_FUNC_core_get_libctx(in);
             break;
         case OSSL_FUNC_CORE_GETTABLE_PARAMS:
             c_gettable_params = OSSL_FUNC_core_gettable_params(in);
@@ -701,7 +701,7 @@ int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
         OSSL_LIB_CTX_free(libctx);
         goto err;
     }
-    ossl_prov_ctx_set0_library_context(*provctx, libctx);
+    ossl_prov_ctx_set0_libctx(*provctx, libctx);
     ossl_prov_ctx_set0_handle(*provctx, handle);
 
     if ((fgbl = ossl_lib_ctx_get_data(libctx, OSSL_LIB_CTX_FIPS_PROV_INDEX,
@@ -740,12 +740,12 @@ int fips_intern_provider_init(const OSSL_CORE_HANDLE *handle,
                               const OSSL_DISPATCH **out,
                               void **provctx)
 {
-    OSSL_FUNC_core_get_library_context_fn *c_internal_get_libctx = NULL;
+    OSSL_FUNC_core_get_libctx_fn *c_internal_get_libctx = NULL;
 
     for (; in->function_id != 0; in++) {
         switch (in->function_id) {
-        case OSSL_FUNC_CORE_GET_LIBRARY_CONTEXT:
-            c_internal_get_libctx = OSSL_FUNC_core_get_library_context(in);
+        case OSSL_FUNC_CORE_GET_LIBCTX:
+            c_internal_get_libctx = OSSL_FUNC_core_get_libctx(in);
             break;
         default:
             break;
@@ -763,7 +763,7 @@ int fips_intern_provider_init(const OSSL_CORE_HANDLE *handle,
      * internal provider. This is not something that most providers would be
      * able to do.
      */
-    ossl_prov_ctx_set0_library_context(
+    ossl_prov_ctx_set0_libctx(
         *provctx, (OSSL_LIB_CTX *)c_internal_get_libctx(handle)
     );
     ossl_prov_ctx_set0_handle(*provctx, handle);

@@ -86,7 +86,7 @@ static void *rsakem_newctx(void *provctx)
 
     if (prsactx == NULL)
         return NULL;
-    prsactx->libctx = PROV_LIBRARY_CONTEXT_OF(provctx);
+    prsactx->libctx = PROV_LIBCTX_OF(provctx);
     prsactx->op = KEM_OP_UNDEFINED;
 
     return prsactx;

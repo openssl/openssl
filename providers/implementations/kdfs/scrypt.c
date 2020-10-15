@@ -66,7 +66,7 @@ static void *kdf_scrypt_new(void *provctx)
         ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
-    ctx->libctx = PROV_LIBRARY_CONTEXT_OF(provctx);
+    ctx->libctx = PROV_LIBCTX_OF(provctx);
     kdf_scrypt_init(ctx);
     return ctx;
 }

@@ -816,7 +816,7 @@ void *ossl_provider_prov_ctx(const OSSL_PROVIDER *prov)
     return NULL;
 }
 
-OSSL_LIB_CTX *ossl_provider_library_context(const OSSL_PROVIDER *prov)
+OSSL_LIB_CTX *ossl_provider_libctx(const OSSL_PROVIDER *prov)
 {
     /* TODO(3.0) just: return prov->libctx; */
     return prov != NULL ? prov->libctx : NULL;
@@ -849,7 +849,7 @@ int ossl_provider_self_test(const OSSL_PROVIDER *prov)
         return 1;
     ret = prov->self_test(prov->provctx);
     if (ret == 0)
-        evp_method_store_flush(ossl_provider_library_context(prov));
+        evp_method_store_flush(ossl_provider_libctx(prov));
     return ret;
 }
 
@@ -940,7 +940,7 @@ static const OSSL_PARAM param_types[] = {
 static OSSL_FUNC_core_gettable_params_fn core_gettable_params;
 static OSSL_FUNC_core_get_params_fn core_get_params;
 static OSSL_FUNC_core_thread_start_fn core_thread_start;
-static OSSL_FUNC_core_get_library_context_fn core_get_libctx;
+static OSSL_FUNC_core_get_libctx_fn core_get_libctx;
 #ifndef FIPS_MODULE
 static OSSL_FUNC_core_new_error_fn core_new_error;
 static OSSL_FUNC_core_set_error_debug_fn core_set_error_debug;
@@ -996,7 +996,7 @@ static OPENSSL_CORE_CTX *core_get_libctx(const OSSL_CORE_HANDLE *handle)
      */
     OSSL_PROVIDER *prov = (OSSL_PROVIDER *)handle;
 
-    return (OPENSSL_CORE_CTX *)ossl_provider_library_context(prov);
+    return (OPENSSL_CORE_CTX *)ossl_provider_libctx(prov);
 }
 
 static int core_thread_start(const OSSL_CORE_HANDLE *handle,
@@ -1079,7 +1079,7 @@ static int core_pop_error_to_mark(const OSSL_CORE_HANDLE *handle)
 static const OSSL_DISPATCH core_dispatch_[] = {
     { OSSL_FUNC_CORE_GETTABLE_PARAMS, (void (*)(void))core_gettable_params },
     { OSSL_FUNC_CORE_GET_PARAMS, (void (*)(void))core_get_params },
-    { OSSL_FUNC_CORE_GET_LIBRARY_CONTEXT, (void (*)(void))core_get_libctx },
+    { OSSL_FUNC_CORE_GET_LIBCTX, (void (*)(void))core_get_libctx },
     { OSSL_FUNC_CORE_THREAD_START, (void (*)(void))core_thread_start },
 #ifndef FIPS_MODULE
     { OSSL_FUNC_CORE_NEW_ERROR, (void (*)(void))core_new_error },

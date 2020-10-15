@@ -1069,7 +1069,7 @@ int EVP_PKEY_can_sign(const EVP_PKEY *pkey)
         }
     } else {
         const OSSL_PROVIDER *prov = EVP_KEYMGMT_provider(pkey->keymgmt);
-        OSSL_LIB_CTX *libctx = ossl_provider_library_context(prov);
+        OSSL_LIB_CTX *libctx = ossl_provider_libctx(prov);
         const char *supported_sig =
             pkey->keymgmt->query_operation_name != NULL
             ? pkey->keymgmt->query_operation_name(OSSL_OP_SIGNATURE)
@@ -1885,7 +1885,7 @@ int evp_pkey_copy_downgraded(EVP_PKEY **dest, const EVP_PKEY *src)
                  * that we are using.
                  */
                 OSSL_LIB_CTX *libctx =
-                    ossl_provider_library_context(keymgmt->prov);
+                    ossl_provider_libctx(keymgmt->prov);
                 EVP_PKEY_CTX *pctx =
                     EVP_PKEY_CTX_new_from_pkey(libctx, *dest, NULL);
 

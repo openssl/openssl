@@ -136,7 +136,7 @@ int ossl_base_provider_init(const OSSL_CORE_HANDLE *handle,
                             const OSSL_DISPATCH *in, const OSSL_DISPATCH **out,
                             void **provctx)
 {
-    OSSL_FUNC_core_get_library_context_fn *c_get_libctx = NULL;
+    OSSL_FUNC_core_get_libctx_fn *c_get_libctx = NULL;
     BIO_METHOD *corebiometh;
 
     if (!ossl_prov_bio_from_dispatch(in))
@@ -149,8 +149,8 @@ int ossl_base_provider_init(const OSSL_CORE_HANDLE *handle,
         case OSSL_FUNC_CORE_GET_PARAMS:
             c_get_params = OSSL_FUNC_core_get_params(in);
             break;
-        case OSSL_FUNC_CORE_GET_LIBRARY_CONTEXT:
-            c_get_libctx = OSSL_FUNC_core_get_library_context(in);
+        case OSSL_FUNC_CORE_GET_LIBCTX:
+            c_get_libctx = OSSL_FUNC_core_get_libctx(in);
             break;
         default:
             /* Just ignore anything we don't understand */
@@ -175,7 +175,7 @@ int ossl_base_provider_init(const OSSL_CORE_HANDLE *handle,
         *provctx = NULL;
         return 0;
     }
-    ossl_prov_ctx_set0_library_context(*provctx,
+    ossl_prov_ctx_set0_libctx(*provctx,
                                        (OSSL_LIB_CTX *)c_get_libctx(handle));
     ossl_prov_ctx_set0_handle(*provctx, handle);
     ossl_prov_ctx_set0_core_bio_method(*provctx, corebiometh);

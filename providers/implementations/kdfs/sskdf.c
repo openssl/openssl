@@ -452,7 +452,7 @@ static int sskdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
     const OSSL_PARAM *p;
     KDF_SSKDF *ctx = vctx;
-    OSSL_LIB_CTX *libctx = PROV_LIBRARY_CONTEXT_OF(ctx->provctx);
+    OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(ctx->provctx);
     size_t sz;
 
     if (!ossl_prov_digest_load_from_params(&ctx->digest, params, libctx))

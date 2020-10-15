@@ -118,12 +118,12 @@ int mac_key_up_ref(MAC_KEY *mackey)
 
 static void *mac_new(void *provctx)
 {
-    return mac_key_new(PROV_LIBRARY_CONTEXT_OF(provctx), 0);
+    return mac_key_new(PROV_LIBCTX_OF(provctx), 0);
 }
 
 static void *mac_new_cmac(void *provctx)
 {
-    return mac_key_new(PROV_LIBRARY_CONTEXT_OF(provctx), 1);
+    return mac_key_new(PROV_LIBCTX_OF(provctx), 1);
 }
 
 static void mac_free(void *mackey)
@@ -372,7 +372,7 @@ static const OSSL_PARAM *mac_settable_params(void *provctx)
 
 static void *mac_gen_init(void *provctx, int selection)
 {
-    OSSL_LIB_CTX *libctx = PROV_LIBRARY_CONTEXT_OF(provctx);
+    OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(provctx);
     struct mac_gen_ctx *gctx = NULL;
 
     if (!ossl_prov_is_running())

@@ -245,7 +245,7 @@ static void *construct_decoder(const OSSL_ALGORITHM *algodef,
      * namemap entry, this is it.  Should the name already exist there, we
      * know that ossl_namemap_add() will return its corresponding number.
      */
-    OSSL_LIB_CTX *libctx = ossl_provider_library_context(prov);
+    OSSL_LIB_CTX *libctx = ossl_provider_libctx(prov);
     OSSL_NAMEMAP *namemap = ossl_namemap_stored(libctx);
     const char *names = algodef->algorithm_names;
     int id = ossl_namemap_add_names(namemap, 0, names, NAME_SEPARATOR);
@@ -380,7 +380,7 @@ int OSSL_DECODER_number(const OSSL_DECODER *decoder)
 int OSSL_DECODER_is_a(const OSSL_DECODER *decoder, const char *name)
 {
     if (decoder->base.prov != NULL) {
-        OSSL_LIB_CTX *libctx = ossl_provider_library_context(decoder->base.prov);
+        OSSL_LIB_CTX *libctx = ossl_provider_libctx(decoder->base.prov);
         OSSL_NAMEMAP *namemap = ossl_namemap_stored(libctx);
 
         return ossl_namemap_name2num(namemap, name) == decoder->base.id;
@@ -398,7 +398,7 @@ static void decoder_do_one(OSSL_PROVIDER *provider,
                            int no_store, void *vdata)
 {
     struct decoder_do_all_data_st *data = vdata;
-    OSSL_LIB_CTX *libctx = ossl_provider_library_context(provider);
+    OSSL_LIB_CTX *libctx = ossl_provider_libctx(provider);
     OSSL_NAMEMAP *namemap = ossl_namemap_stored(libctx);
     const char *names = algodef->algorithm_names;
     int id = ossl_namemap_add_names(namemap, 0, names, NAME_SEPARATOR);
@@ -434,7 +434,7 @@ void OSSL_DECODER_names_do_all(const OSSL_DECODER *decoder,
         return;
 
     if (decoder->base.prov != NULL) {
-        OSSL_LIB_CTX *libctx = ossl_provider_library_context(decoder->base.prov);
+        OSSL_LIB_CTX *libctx = ossl_provider_libctx(decoder->base.prov);
         OSSL_NAMEMAP *namemap = ossl_namemap_stored(libctx);
 
         ossl_namemap_doall_names(namemap, decoder->base.id, fn, data);

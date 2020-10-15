@@ -166,7 +166,7 @@ static int kdf_tls1_prf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
     const OSSL_PARAM *p;
     TLS1_PRF *ctx = vctx;
-    OSSL_LIB_CTX *libctx = PROV_LIBRARY_CONTEXT_OF(ctx->provctx);
+    OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(ctx->provctx);
 
     if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_DIGEST)) != NULL) {
         if (strcasecmp(p->data, SN_md5_sha1) == 0) {

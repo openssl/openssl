@@ -69,7 +69,7 @@ int DH_KDF_X9_42(unsigned char *out, size_t outlen,
     int nid;
     const char *key_alg = NULL;
     const OSSL_PROVIDER *prov = EVP_MD_provider(md);
-    OSSL_LIB_CTX *libctx = ossl_provider_library_context(prov);
+    OSSL_LIB_CTX *libctx = ossl_provider_libctx(prov);
 
     nid = OBJ_obj2nid(key_oid);
     if (nid == NID_undef)

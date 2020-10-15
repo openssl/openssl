@@ -114,7 +114,7 @@ size_t prov_crngt_get_entropy(PROV_DRBG *drbg,
     RAND_POOL *pool;
     size_t q, r = 0, s, t = 0;
     int attempts = 3, crng_test_pass = 1;
-    OSSL_LIB_CTX *libctx = PROV_LIBRARY_CONTEXT_OF(drbg->provctx);
+    OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(drbg->provctx);
     CRNG_TEST_GLOBAL *crngt_glob
         = ossl_lib_ctx_get_data(libctx, OSSL_LIB_CTX_RAND_CRNGT_INDEX,
                                &rand_crng_ossl_ctx_method);

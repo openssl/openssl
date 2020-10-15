@@ -36,7 +36,7 @@ void gcm_initctx(void *provctx, PROV_GCM_CTX *ctx, size_t keybits,
     ctx->ivlen = (EVP_GCM_TLS_FIXED_IV_LEN + EVP_GCM_TLS_EXPLICIT_IV_LEN);
     ctx->keylen = keybits / 8;
     ctx->hw = hw;
-    ctx->libctx = PROV_LIBRARY_CONTEXT_OF(provctx);
+    ctx->libctx = PROV_LIBCTX_OF(provctx);
 }
 
 static int gcm_init(void *vctx, const unsigned char *key, size_t keylen,

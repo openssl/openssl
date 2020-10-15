@@ -595,5 +595,5 @@ void ossl_cipher_generic_initkey(void *vctx, size_t kbits, size_t blkbits,
     ctx->mode = mode;
     ctx->blocksize = blkbits / 8;
     if (provctx != NULL)
-        ctx->libctx = PROV_LIBRARY_CONTEXT_OF(provctx); /* used for rand */
+        ctx->libctx = PROV_LIBCTX_OF(provctx); /* used for rand */
 }
