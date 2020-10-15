@@ -485,6 +485,7 @@ static int dh_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
     DH *dh = from->pkey.dh;
     OSSL_PARAM_BLD *tmpl;
     const BIGNUM *p = DH_get0_p(dh), *g = DH_get0_g(dh), *q = DH_get0_q(dh);
+    long l = DH_get_length(dh);
     const BIGNUM *pub_key = DH_get0_pub_key(dh);
     const BIGNUM *priv_key = DH_get0_priv_key(dh);
     OSSL_PARAM *params = NULL;
@@ -512,6 +513,11 @@ static int dh_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
             goto err;
     }
     selection |= OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS;
+    if (l > 0) {
+        if (!OSSL_PARAM_BLD_push_long(tmpl, OSSL_PKEY_PARAM_DH_PRIV_LEN, l))
+            goto err;
+        selection |= OSSL_KEYMGMT_SELECT_OTHER_PARAMETERS;
+    }
     if (pub_key != NULL) {
         if (!OSSL_PARAM_BLD_push_BN(tmpl, OSSL_PKEY_PARAM_PUB_KEY, pub_key))
             goto err;
@@ -550,7 +556,7 @@ static int dh_pkey_import_from_type(const OSSL_PARAM params[], void *vpctx,
     DH_clear_flags(dh, DH_FLAG_TYPE_MASK);
     DH_set_flags(dh, type == EVP_PKEY_DH ? DH_FLAG_TYPE_DH : DH_FLAG_TYPE_DHX);
 
-    if (!dh_ffc_params_fromdata(dh, params)
+    if (!dh_params_fromdata(dh, params)
         || !dh_key_fromdata(dh, params)
         || !EVP_PKEY_assign(pkey, type, dh)) {
         DH_free(dh);

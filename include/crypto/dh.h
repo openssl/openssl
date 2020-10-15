@@ -8,6 +8,7 @@
  */
 
 #include <openssl/core.h>
+#include <openssl/params.h>
 #include <openssl/dh.h>
 #include "internal/ffc.h"
 
@@ -24,8 +25,10 @@ void dh_cache_named_group(DH *dh);
 
 FFC_PARAMS *dh_get0_params(DH *dh);
 int dh_get0_nid(const DH *dh);
-int dh_ffc_params_fromdata(DH *dh, const OSSL_PARAM params[]);
+int dh_params_fromdata(DH *dh, const OSSL_PARAM params[]);
 int dh_key_fromdata(DH *dh, const OSSL_PARAM params[]);
+int dh_params_todata(DH *dh, OSSL_PARAM_BLD *bld, OSSL_PARAM params[]);
+int dh_key_todata(DH *dh, OSSL_PARAM_BLD *bld, OSSL_PARAM params[]);
 
 int dh_check_pub_key_partial(const DH *dh, const BIGNUM *pub_key, int *ret);
 int dh_check_priv_key(const DH *dh, const BIGNUM *priv_key, int *ret);
