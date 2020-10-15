@@ -23,6 +23,7 @@ setup("test_eai_data");
 
 plan tests => 11;
 
+require_ok(srctop_file('test','recipes','tconversion.pl'));
 my $folder = "test/recipes/25-test_eai_data";
 
 my $ascii_pem = srctop_file($folder, "ascii_leaf.pem");

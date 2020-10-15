@@ -18,6 +18,7 @@ setup("test_rusext");
 
 plan tests => 5;
 
+require_ok(srctop_file('test', 'recipes', 'tconversion.pl'));
 my $pem = srctop_file("test/certs", "grfc.pem");
 my $out_msb = "grfc.msb";
 my $out_utf8 = "grfc.utf8";
