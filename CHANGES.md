@@ -23,6 +23,17 @@ OpenSSL 3.0
 
 ### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
 
+ * The security callback, which can be customised by application code, supports
+   the security operation SSL_SECOP_TMP_DH. This is defined to take an EVP_PKEY
+   in the "other" parameter. In most places this is what is passed. All these
+   places occur server side. However there was one client side call of this
+   security operation and it passed a DH object instead. This is incorrect
+   according to the definition of SSL_SECOP_TMP_DH, and is inconsistent with all
+   of the other locations. Therefore this client side call has been changed to
+   pass an EVP_PKEY instead.
+
+   *Matt Caswell*
+
  * Add PKCS7_get_octet_string() and PKCS7_type_is_other() to the public
    interface. Their functionality remains unchanged.
 
