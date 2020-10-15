@@ -22,28 +22,13 @@ int ASYNC_is_capable(void)
 
 void async_local_cleanup(void)
 {
-    async_ctx *ctx = async_get_ctx();
-    if (ctx != NULL) {
-        async_fibre *fibre = &ctx->dispatcher;
-        if (fibre != NULL && fibre->fibre != NULL && fibre->converted) {
-            ConvertFiberToThread();
-            fibre->fibre = NULL;
-        }
-    }
+    if (GetCurrentFiber())
+        ConvertFiberToThread();
 }
 
-int async_fibre_init_dispatcher(async_fibre *fibre)
+int async_fibre_init_dispatcher(async_ctx *ctx)
 {
-    fibre->fibre = ConvertThreadToFiber(NULL);
-    if (fibre->fibre == NULL) {
-        fibre->converted = 0;
-        fibre->fibre = GetCurrentFiber();
-        if (fibre->fibre == NULL)
-            return 0;
-    } else {
-        fibre->converted = 1;
-    }
-
+    ConvertThreadToFiber(NULL);
     return 1;
 }
 

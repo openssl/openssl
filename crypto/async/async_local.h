@@ -31,13 +31,14 @@ typedef struct async_pool_st async_pool;
 #include "arch/async_null.h"
 
 struct async_ctx_st {
-    async_fibre dispatcher;
     ASYNC_JOB *currjob;
     unsigned int blocked;
 };
 
 struct async_job_st {
     async_fibre fibrectx;
+    async_fibre back;
+    struct async_job_st *prevjob;
     int (*func) (void *);
     void *funcargs;
     int ret;
