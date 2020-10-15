@@ -24,7 +24,7 @@ my $out = "cyrillic_crl.out";
 my $utf = srctop_file("test/certs", "cyrillic_crl.utf8");
 
 subtest 'crl conversions' => sub {
-    tconversion("crl", srctop_file("test","testcrl.pem"));
+    tconversion( -type => "crl", -in => srctop_file("test","testcrl.pem") );
 };
 
 ok(run(test(['crltest'])));

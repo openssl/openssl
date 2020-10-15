@@ -20,8 +20,10 @@ plan tests => 3;
 require_ok(srctop_file('test','recipes','tconversion.pl'));
 
 subtest 'pkcs7 conversions -- pkcs7' => sub {
-    tconversion("p7", srctop_file("test", "testp7.pem"), "pkcs7");
+    tconversion( -type => 'p7', -in => srctop_file("test", "testp7.pem"),
+                 -args => ["pkcs7"] );
 };
 subtest 'pkcs7 conversions -- pkcs7d' => sub {
-    tconversion("p7d", srctop_file("test", "pkcs7-1.pem"), "pkcs7");
+    tconversion( -type => 'p7d', -in => srctop_file("test", "pkcs7-1.pem"),
+                 -args => ["pkcs7"] );
 };

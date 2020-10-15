@@ -24,5 +24,6 @@ plan tests => 2;
 require_ok(srctop_file('test','recipes','tconversion.pl'));
 
 subtest 'sid conversions' => sub {
-    tconversion("sid", srctop_file("test","testsid.pem"), "sess_id");
+    tconversion( -type => 'sid', -in => srctop_file("test","testsid.pem"),
+                 -args => ["sess_id"] );
 };

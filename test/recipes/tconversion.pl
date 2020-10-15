@@ -21,14 +21,23 @@ my %conversionforms = (
     "msb"	=> [ "d", "p", "msblob" ],
     );
 sub tconversion {
-    my $testtype = shift;
-    my $t = shift;
+    my %opts = @_;
+
+    die "Missing option -type" unless $opts{-type};
+    die "Missing option -in" unless $opts{-in};
+    my $testtype = $opts{-type};
+    my $t = $opts{-in};
+    my $prefix = $opts{-prefix} // $testtype;
     my @conversionforms =
 	defined($conversionforms{$testtype}) ?
 	@{$conversionforms{$testtype}} :
 	@{$conversionforms{"*"}};
-    my @openssl_args = @_;
-    if (!@openssl_args) { @openssl_args = ($testtype); }
+    my @openssl_args;
+    if (defined $opts{-args}) {
+        @openssl_args = @{$opts{-args}} if ref $opts{-args} eq 'ARRAY';
+        @openssl_args = ($opts{-args}) if ref $opts{-args} eq '';
+    }
+    @openssl_args = ($testtype) unless @openssl_args;
 
     my $n = scalar @conversionforms;
     my $totaltests =
@@ -44,13 +53,13 @@ sub tconversion {
 
     my $init;
     if (scalar @openssl_args > 0 && $openssl_args[0] eq "pkey") {
-	$init = ok(run(app([@cmd, "-in", $t, "-out", "$testtype-fff.p"])),
+	$init = ok(run(app([@cmd, "-in", $t, "-out", "$prefix-fff.p"])),
 		   'initializing');
     } else {
-	$init = ok(copy($t, "$testtype-fff.p"), 'initializing');
+	$init = ok(copy($t, "$prefix-fff.p"), 'initializing');
     }
     if (!$init) {
-	diag("Trying to copy $t to $testtype-fff.p : $!");
+	diag("Trying to copy $t to $prefix-fff.p : $!");
     }
 
   SKIP: {
@@ -58,9 +67,9 @@ sub tconversion {
 
       foreach my $to (@conversionforms) {
 	  ok(run(app([@cmd,
-		      "-in", "$testtype-fff.p",
+		      "-in", "$prefix-fff.p",
 		      "-inform", "p",
-		      "-out", "$testtype-f.$to",
+		      "-out", "$prefix-f.$to",
 		      "-outform", $to])),
 	     "p -> $to");
       }
@@ -68,23 +77,23 @@ sub tconversion {
       foreach my $to (@conversionforms) {
 	  foreach my $from (@conversionforms) {
 	      ok(run(app([@cmd,
-			  "-in", "$testtype-f.$from",
+			  "-in", "$prefix-f.$from",
 			  "-inform", $from,
-			  "-out", "$testtype-ff.$from$to",
+			  "-out", "$prefix-ff.$from$to",
 			  "-outform", $to])),
 		 "$from -> $to");
 	  }
       }
 
       if ($testtype ne "p7d") {
-	  is(cmp_text("$testtype-fff.p", "$testtype-f.p"), 0,
+	  is(cmp_text("$prefix-fff.p", "$prefix-f.p"), 0,
 	     'comparing orig to p');
       }
 
       foreach my $to (@conversionforms) {
 	  next if $to eq "d";
 	  foreach my $from (@conversionforms) {
-	      is(cmp_text("$testtype-f.$to", "$testtype-ff.$from$to"), 0,
+	      is(cmp_text("$prefix-f.$to", "$prefix-ff.$from$to"), 0,
 		 "comparing $to to $from$to");
 	  }
       }
