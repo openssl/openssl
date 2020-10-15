@@ -16,7 +16,7 @@
 #include "internal/provider.h"
 
 struct construct_data_st {
-    OPENSSL_CTX *libctx;
+    OSSL_LIB_CTX *libctx;
     OSSL_METHOD_STORE *store;
     int operation_id;
     int force_store;
@@ -100,7 +100,7 @@ static void ossl_method_construct_this(OSSL_PROVIDER *provider,
     data->mcm->destruct(method, data->mcm_data);
 }
 
-void *ossl_method_construct(OPENSSL_CTX *libctx, int operation_id,
+void *ossl_method_construct(OSSL_LIB_CTX *libctx, int operation_id,
                             int force_store,
                             OSSL_METHOD_CONSTRUCT_METHOD *mcm, void *mcm_data)
 {

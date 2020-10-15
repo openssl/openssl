@@ -122,14 +122,14 @@ OpenSSL 3.0
      such an argument, such as `EVP_CIPHER_fetch` and similar algorithm
      fetching functions.
    - Indirectly, by creating a new library context and then assigning
-     it as the new default, with `OPENSSL_CTX_set0_default`.
+     it as the new default, with `OSSL_LIB_CTX_set0_default`.
 
-   All public OpenSSL functions that take an `OPENSSL_CTX` pointer,
-   apart from the functions directly related to `OPENSSL_CTX`, accept
+   All public OpenSSL functions that take an `OSSL_LIB_CTX` pointer,
+   apart from the functions directly related to `OSSL_LIB_CTX`, accept
    NULL to indicate that the default library context should be used.
 
    Library code that changes the default library context using
-   `OPENSSL_CTX_set0_default` should take care to restore it with a
+   `OSSL_LIB_CTX_set0_default` should take care to restore it with a
    second call before returning to the caller.
 
    *Richard Levitte*

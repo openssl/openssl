@@ -14,7 +14,7 @@ Encapsulates the data required to evaluate whether SCTs meet a Certificate Trans
 
  #include <openssl/ct.h>
 
- CT_POLICY_EVAL_CTX *CT_POLICY_EVAL_CTX_new_ex(OPENSSL_CTX *libctx,
+ CT_POLICY_EVAL_CTX *CT_POLICY_EVAL_CTX_new_ex(OSSL_LIB_CTX *libctx,
                                                const char *propq);
  CT_POLICY_EVAL_CTX *CT_POLICY_EVAL_CTX_new(void);
  void CT_POLICY_EVAL_CTX_free(CT_POLICY_EVAL_CTX *ctx);

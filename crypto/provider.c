@@ -13,7 +13,7 @@
 #include <openssl/core_names.h>
 #include "internal/provider.h"
 
-OSSL_PROVIDER *OSSL_PROVIDER_try_load(OPENSSL_CTX *libctx, const char *name)
+OSSL_PROVIDER *OSSL_PROVIDER_try_load(OSSL_LIB_CTX *libctx, const char *name)
 {
     OSSL_PROVIDER *prov = NULL;
 
@@ -30,7 +30,7 @@ OSSL_PROVIDER *OSSL_PROVIDER_try_load(OPENSSL_CTX *libctx, const char *name)
     return prov;
 }
 
-OSSL_PROVIDER *OSSL_PROVIDER_load(OPENSSL_CTX *libctx, const char *name)
+OSSL_PROVIDER *OSSL_PROVIDER_load(OSSL_LIB_CTX *libctx, const char *name)
 {
     /* Any attempt to load a provider disables auto-loading of defaults */
     if (ossl_provider_disable_fallback_loading(libctx))
@@ -44,7 +44,7 @@ int OSSL_PROVIDER_unload(OSSL_PROVIDER *prov)
     return 1;
 }
 
-int OSSL_PROVIDER_available(OPENSSL_CTX *libctx, const char *name)
+int OSSL_PROVIDER_available(OSSL_LIB_CTX *libctx, const char *name)
 {
     OSSL_PROVIDER *prov = NULL;
     int available = 0;
@@ -91,7 +91,7 @@ int OSSL_PROVIDER_get_capabilities(const OSSL_PROVIDER *prov,
     return ossl_provider_get_capabilities(prov, capability, cb, arg);
 }
 
-int OSSL_PROVIDER_add_builtin(OPENSSL_CTX *libctx, const char *name,
+int OSSL_PROVIDER_add_builtin(OSSL_LIB_CTX *libctx, const char *name,
                               OSSL_provider_init_fn *init_fn)
 {
     OSSL_PROVIDER *prov = NULL;
@@ -120,7 +120,7 @@ const char *OSSL_PROVIDER_name(const OSSL_PROVIDER *prov)
     return ossl_provider_name(prov);
 }
 
-int OSSL_PROVIDER_do_all(OPENSSL_CTX *ctx,
+int OSSL_PROVIDER_do_all(OSSL_LIB_CTX *ctx,
                          int (*cb)(OSSL_PROVIDER *provider,
                                    void *cbdata),
                          void *cbdata)

@@ -16,7 +16,7 @@
 
 #  include <openssl/cmp.h>
 
-OSSL_CMP_SRV_CTX *ossl_cmp_mock_srv_new(OPENSSL_CTX *libctx, const char *propq);
+OSSL_CMP_SRV_CTX *ossl_cmp_mock_srv_new(OSSL_LIB_CTX *libctx, const char *propq);
 void ossl_cmp_mock_srv_free(OSSL_CMP_SRV_CTX *srv_ctx);
 
 int ossl_cmp_mock_srv_set1_certOut(OSSL_CMP_SRV_CTX *srv_ctx, X509 *cert);

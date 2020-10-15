@@ -115,7 +115,7 @@ struct X509_crl_st {
     void *meth_data;
     CRYPTO_RWLOCK *lock;
 
-    OPENSSL_CTX *libctx;
+    OSSL_LIB_CTX *libctx;
     const char *propq;
 };
 
@@ -195,7 +195,7 @@ struct x509_st {
     /* Set on live certificates for authentication purposes */
     ASN1_OCTET_STRING *distinguishing_id;
 
-    OPENSSL_CTX *libctx;
+    OSSL_LIB_CTX *libctx;
     const char *propq;
 } /* X509 */ ;
 
@@ -271,7 +271,7 @@ struct x509_store_ctx_st {      /* X509_STORE_CTX */
     /* signed via bare TA public key, rather than CA certificate */
     int bare_ta_signed;
 
-    OPENSSL_CTX *libctx;
+    OSSL_LIB_CTX *libctx;
     char *propq;
 };
 
@@ -305,16 +305,16 @@ int x509_set1_time(ASN1_TIME **ptm, const ASN1_TIME *tm);
 int x509_print_ex_brief(BIO *bio, X509 *cert, unsigned long neg_cflags);
 int x509v3_cache_extensions(X509 *x);
 int x509_init_sig_info(X509 *x);
-int x509_check_issued_int(X509 *issuer, X509 *subject, OPENSSL_CTX *libctx,
+int x509_check_issued_int(X509 *issuer, X509 *subject, OSSL_LIB_CTX *libctx,
                           const char *propq);
 
-int x509_set0_libctx(X509 *x, OPENSSL_CTX *libctx, const char *propq);
-int x509_crl_set0_libctx(X509_CRL *x, OPENSSL_CTX *libctx, const char *propq);
+int x509_set0_libctx(X509 *x, OSSL_LIB_CTX *libctx, const char *propq);
+int x509_crl_set0_libctx(X509_CRL *x, OSSL_LIB_CTX *libctx, const char *propq);
 int x509_init_sig_info(X509 *x);
 int asn1_item_digest_ex(const ASN1_ITEM *it, const EVP_MD *type, void *data,
                         unsigned char *md, unsigned int *len,
-                        OPENSSL_CTX *libctx, const char *propq);
+                        OSSL_LIB_CTX *libctx, const char *propq);
 int X509_add_cert_new(STACK_OF(X509) **sk, X509 *cert, int flags);
 
-int X509_PUBKEY_get0_libctx(OPENSSL_CTX **plibctx, const char **ppropq,
+int X509_PUBKEY_get0_libctx(OSSL_LIB_CTX **plibctx, const char **ppropq,
                             const X509_PUBKEY *key);

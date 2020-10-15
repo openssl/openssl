@@ -22,14 +22,14 @@ static int do_pk8pkey(BIO *bp, const EVP_PKEY *x, int isder,
                       int nid, const EVP_CIPHER *enc,
                       const char *kstr, int klen,
                       pem_password_cb *cb, void *u,
-                      OPENSSL_CTX *libctx, const char *propq);
+                      OSSL_LIB_CTX *libctx, const char *propq);
 
 #ifndef OPENSSL_NO_STDIO
 static int do_pk8pkey_fp(FILE *bp, const EVP_PKEY *x, int isder,
                          int nid, const EVP_CIPHER *enc,
                          const char *kstr, int klen,
                          pem_password_cb *cb, void *u,
-                         OPENSSL_CTX *libctx, const char *propq);
+                         OSSL_LIB_CTX *libctx, const char *propq);
 #endif
 /*
  * These functions write a private key in PKCS#8 format: it is a "drop in"
@@ -69,7 +69,7 @@ int i2d_PKCS8PrivateKey_nid_bio(BIO *bp, const EVP_PKEY *x, int nid,
 static int do_pk8pkey(BIO *bp, const EVP_PKEY *x, int isder, int nid,
                       const EVP_CIPHER *enc, const char *kstr, int klen,
                       pem_password_cb *cb, void *u,
-                      OPENSSL_CTX *libctx, const char *propq)
+                      OSSL_LIB_CTX *libctx, const char *propq)
 {
     int ret = 0;
     const char *outtype = isder ? "DER" : "PEM";
@@ -230,7 +230,7 @@ int PEM_write_PKCS8PrivateKey(FILE *fp, const EVP_PKEY *x, const EVP_CIPHER *enc
 static int do_pk8pkey_fp(FILE *fp, const EVP_PKEY *x, int isder, int nid,
                          const EVP_CIPHER *enc, const char *kstr, int klen,
                          pem_password_cb *cb, void *u,
-                         OPENSSL_CTX *libctx, const char *propq)
+                         OSSL_LIB_CTX *libctx, const char *propq)
 {
     BIO *bp;
     int ret;

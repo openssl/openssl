@@ -9,14 +9,14 @@ OSSL_SELF_TEST_get_callback - specify a callback for processing self tests
 
  #include <openssl/self_test.h>
 
- void OSSL_SELF_TEST_set_callback(OPENSSL_CTX *ctx, OSSL_CALLBACK *cb, void *cbarg);
- void OSSL_SELF_TEST_get_callback(OPENSSL_CTX *ctx, OSSL_CALLBACK **cb, void **cbarg);
+ void OSSL_SELF_TEST_set_callback(OSSL_LIB_CTX *ctx, OSSL_CALLBACK *cb, void *cbarg);
+ void OSSL_SELF_TEST_get_callback(OSSL_LIB_CTX *ctx, OSSL_CALLBACK **cb, void **cbarg);
 
 =head1 DESCRIPTION
 
 Set or gets the optional application callback (and the callback argument) that
 is called during self testing.
-The application callback B<OSSL_CALLBACK> is associated with a B<OPENSSL_CTX>.
+The application callback B<OSSL_CALLBACK> is associated with a B<OSSL_LIB_CTX>.
 The application callback function receives information about a running self test,
 and may return a result to the calling self test.
 See L<openssl-core.h(7)> for further information on the callback.
@@ -33,7 +33,7 @@ not been called.
 L<openssl-core.h(7)>,
 L<OSSL_PROVIDER-FIPS(7)>
 L<OSSL_SELF_TEST_new(3)>
-L<OPENSSL_CTX(3)>
+L<OSSL_LIB_CTX(3)>
 
 =head1 HISTORY
 

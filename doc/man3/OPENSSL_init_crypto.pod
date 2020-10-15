@@ -15,7 +15,7 @@ and deinitialisation functions
  void OPENSSL_cleanup(void);
  int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings);
  int OPENSSL_atexit(void (*handler)(void));
- void OPENSSL_thread_stop_ex(OPENSSL_CTX *ctx);
+ void OPENSSL_thread_stop_ex(OSSL_LIB_CTX *ctx);
  void OPENSSL_thread_stop(void);
 
  OPENSSL_INIT_SETTINGS *OPENSSL_INIT_new(void);
@@ -214,24 +214,24 @@ process wide resources are freed. In the event that multiple stop handlers are
 registered, no guarantees are made about the order of execution.
 
 The OPENSSL_thread_stop_ex() function deallocates resources associated
-with the current thread for the given OPENSSL_CTX B<ctx>. The B<ctx> parameter
-can be NULL in which case the default OPENSSL_CTX is used.
+with the current thread for the given OSSL_LIB_CTX B<ctx>. The B<ctx> parameter
+can be NULL in which case the default OSSL_LIB_CTX is used.
 
 Typically, this function will be called automatically by the library when
-the thread exits as long as the OPENSSL_CTX has not been freed before the thread
-exits. If OPENSSL_CTX_free() is called OPENSSL_thread_stop_ex will be called
+the thread exits as long as the OSSL_LIB_CTX has not been freed before the thread
+exits. If OSSL_LIB_CTX_free() is called OPENSSL_thread_stop_ex will be called
 automatically for the current thread (but not any other threads that may have
-used this OPENSSL_CTX).
+used this OSSL_LIB_CTX).
 
 OPENSSL_thread_stop_ex should be called on all threads that will exit after the
-OPENSSL_CTX is freed.
-Typically this is not necessary for the default OPENSSL_CTX (because all
+OSSL_LIB_CTX is freed.
+Typically this is not necessary for the default OSSL_LIB_CTX (because all
 resources are cleaned up on library exit) except if thread local resources
 should be freed before library exit, or under the circumstances described in
 the NOTES section below.
 
 OPENSSL_thread_stop() is the same as OPENSSL_thread_stop_ex() except that the
-default OPENSSL_CTX is always used.
+default OSSL_LIB_CTX is always used.
 
 The B<OPENSSL_INIT_LOAD_CONFIG> flag will load a configuration file, as with
 L<CONF_modules_load_file(3)> with NULL filename and application name and the

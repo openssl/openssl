@@ -22,7 +22,7 @@
  * Information about a CT log server.
  */
 struct ctlog_st {
-    OPENSSL_CTX *libctx;
+    OSSL_LIB_CTX *libctx;
     char *propq;
     char *name;
     uint8_t log_id[CT_V1_HASHLEN];
@@ -34,7 +34,7 @@ struct ctlog_st {
  * It takes ownership of any CTLOG instances added to it.
  */
 struct ctlog_store_st {
-    OPENSSL_CTX *libctx;
+    OSSL_LIB_CTX *libctx;
     char *propq;
     STACK_OF(CTLOG) *logs;
 };
@@ -100,7 +100,7 @@ err:
     return ret;
 }
 
-CTLOG_STORE *CTLOG_STORE_new_ex(OPENSSL_CTX *libctx, const char *propq)
+CTLOG_STORE *CTLOG_STORE_new_ex(OSSL_LIB_CTX *libctx, const char *propq)
 {
     CTLOG_STORE *ret = OPENSSL_zalloc(sizeof(*ret));
 
@@ -264,7 +264,7 @@ end:
  * Takes ownership of the public key.
  * Copies the name.
  */
-CTLOG *CTLOG_new_ex(EVP_PKEY *public_key, const char *name, OPENSSL_CTX *libctx,
+CTLOG *CTLOG_new_ex(EVP_PKEY *public_key, const char *name, OSSL_LIB_CTX *libctx,
                     const char *propq)
 {
     CTLOG *ret = OPENSSL_zalloc(sizeof(*ret));

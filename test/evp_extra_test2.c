@@ -20,7 +20,7 @@
 #include "testutil.h"
 #include "internal/nelem.h"
 
-static OPENSSL_CTX *mainctx = NULL;
+static OSSL_LIB_CTX *mainctx = NULL;
 static OSSL_PROVIDER *nullprov = NULL;
 
 /*
@@ -214,7 +214,7 @@ static int test_d2i_AutoPrivateKey_ex(int i)
 
 static int test_alternative_default(void)
 {
-    OPENSSL_CTX *oldctx;
+    OSSL_LIB_CTX *oldctx;
     EVP_MD *sha256;
     int ok = 0;
 
@@ -229,7 +229,7 @@ static int test_alternative_default(void)
      * Now we switch to our main library context, and try again.  Since no
      * providers are loaded in this one, it should fall back to the default.
      */
-    if (!TEST_ptr(oldctx = OPENSSL_CTX_set0_default(mainctx))
+    if (!TEST_ptr(oldctx = OSSL_LIB_CTX_set0_default(mainctx))
         || !TEST_ptr(sha256 = EVP_MD_fetch(NULL, "SHA2-256", NULL)))
         goto err;
     EVP_MD_free(sha256);
@@ -239,7 +239,7 @@ static int test_alternative_default(void)
      * Switching back should give us our main library context back, and
      * fetching SHA2-256 should fail again.
      */
-    if (!TEST_ptr_eq(OPENSSL_CTX_set0_default(oldctx), mainctx)
+    if (!TEST_ptr_eq(OSSL_LIB_CTX_set0_default(oldctx), mainctx)
         || !TEST_ptr_null(sha256 = EVP_MD_fetch(NULL, "SHA2-256", NULL)))
         goto err;
 
@@ -272,14 +272,14 @@ static int test_d2i_PrivateKey_ex(void) {
 
 int setup_tests(void)
 {
-    mainctx = OPENSSL_CTX_new();
+    mainctx = OSSL_LIB_CTX_new();
 
     if (!TEST_ptr(mainctx))
         return 0;
 
     nullprov = OSSL_PROVIDER_load(NULL, "null");
     if (!TEST_ptr(nullprov)) {
-        OPENSSL_CTX_free(mainctx);
+        OSSL_LIB_CTX_free(mainctx);
         mainctx = NULL;
         return 0;
     }
@@ -293,6 +293,6 @@ int setup_tests(void)
 
 void cleanup_tests(void)
 {
-    OPENSSL_CTX_free(mainctx);
+    OSSL_LIB_CTX_free(mainctx);
     OSSL_PROVIDER_unload(nullprov);
 }

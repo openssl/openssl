@@ -206,7 +206,7 @@ static void encoder_destruct_EVP_PKEY(void *arg)
 static int ossl_encoder_ctx_setup_for_EVP_PKEY(OSSL_ENCODER_CTX *ctx,
                                                const EVP_PKEY *pkey,
                                                int selection,
-                                               OPENSSL_CTX *libctx,
+                                               OSSL_LIB_CTX *libctx,
                                                const char *propquery)
 {
     struct construct_data_st *data = NULL;
@@ -337,7 +337,7 @@ static int ossl_encoder_ctx_setup_for_EVP_PKEY(OSSL_ENCODER_CTX *ctx,
 OSSL_ENCODER_CTX *OSSL_ENCODER_CTX_new_by_EVP_PKEY(const EVP_PKEY *pkey,
                                                    const char *output_type,
                                                    int selection,
-                                                   OPENSSL_CTX *libctx,
+                                                   OSSL_LIB_CTX *libctx,
                                                    const char *propquery)
 {
     OSSL_ENCODER_CTX *ctx = NULL;

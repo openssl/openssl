@@ -147,7 +147,7 @@ static BIGNUM *sm2_compute_msg_hash(const EVP_MD *digest,
     uint8_t *z = NULL;
     BIGNUM *e = NULL;
     EVP_MD *fetched_digest = NULL;
-    OPENSSL_CTX *libctx = ec_key_get_libctx(key);
+    OSSL_LIB_CTX *libctx = ec_key_get_libctx(key);
     const char *propq = ec_key_get0_propq(key);
 
     if (md_size < 0) {
@@ -206,7 +206,7 @@ static ECDSA_SIG *sm2_sig_gen(const EC_KEY *key, const BIGNUM *e)
     BIGNUM *s = NULL;
     BIGNUM *x1 = NULL;
     BIGNUM *tmp = NULL;
-    OPENSSL_CTX *libctx = ec_key_get_libctx(key);
+    OSSL_LIB_CTX *libctx = ec_key_get_libctx(key);
 
     kG = EC_POINT_new(group);
     ctx = BN_CTX_new_ex(libctx);
@@ -306,7 +306,7 @@ static int sm2_sig_verify(const EC_KEY *key, const ECDSA_SIG *sig,
     BIGNUM *x1 = NULL;
     const BIGNUM *r = NULL;
     const BIGNUM *s = NULL;
-    OPENSSL_CTX *libctx = ec_key_get_libctx(key);
+    OSSL_LIB_CTX *libctx = ec_key_get_libctx(key);
 
     ctx = BN_CTX_new_ex(libctx);
     pt = EC_POINT_new(group);

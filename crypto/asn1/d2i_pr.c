@@ -22,7 +22,7 @@
 #include "crypto/evp.h"
 
 EVP_PKEY *d2i_PrivateKey_ex(int type, EVP_PKEY **a, const unsigned char **pp,
-                            long length, OPENSSL_CTX *libctx, const char *propq)
+                            long length, OSSL_LIB_CTX *libctx, const char *propq)
 {
     EVP_PKEY *ret;
     const unsigned char *p = *pp;
@@ -98,7 +98,7 @@ EVP_PKEY *d2i_PrivateKey(int type, EVP_PKEY **a, const unsigned char **pp,
  */
 
 EVP_PKEY *d2i_AutoPrivateKey_ex(EVP_PKEY **a, const unsigned char **pp,
-                                long length, OPENSSL_CTX *libctx,
+                                long length, OSSL_LIB_CTX *libctx,
                                 const char *propq)
 {
     STACK_OF(ASN1_TYPE) *inkey;

@@ -22,7 +22,7 @@ OpenSSL 3.0
 
   * Remove the `RAND_DRBG` API.
   * Deprecated the `ENGINE` API.
-  * Added `OPENSSL_CTX`, a libcrypto library context.
+  * Added `OSSL_LIB_CTX`, a libcrypto library context.
   * Interactive mode is removed from the 'openssl' program.
   * The X25519, X448, Ed25519, Ed448 and SHAKE256 algorithms are included in
     the FIPS provider.  None have the "fips=yes" property set and, as such,

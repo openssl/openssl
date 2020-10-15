@@ -73,13 +73,13 @@ struct extracted_param_data_st {
 static int try_name(struct extracted_param_data_st *, OSSL_STORE_INFO **);
 static int try_key(struct extracted_param_data_st *, OSSL_STORE_INFO **,
                    OSSL_STORE_CTX *, const OSSL_PROVIDER *,
-                   OPENSSL_CTX *, const char *);
+                   OSSL_LIB_CTX *, const char *);
 static int try_cert(struct extracted_param_data_st *, OSSL_STORE_INFO **,
-                    OPENSSL_CTX *, const char *);
+                    OSSL_LIB_CTX *, const char *);
 static int try_crl(struct extracted_param_data_st *, OSSL_STORE_INFO **,
-                   OPENSSL_CTX *, const char *);
+                   OSSL_LIB_CTX *, const char *);
 static int try_pkcs12(struct extracted_param_data_st *, OSSL_STORE_INFO **,
-                      OSSL_STORE_CTX *, OPENSSL_CTX *, const char *);
+                      OSSL_STORE_CTX *, OSSL_LIB_CTX *, const char *);
 
 #define SET_ERR_MARK() ERR_set_mark()
 #define CLEAR_ERR_MARK()                                                \
@@ -107,7 +107,7 @@ int ossl_store_handle_load_result(const OSSL_PARAM params[], void *arg)
     OSSL_STORE_CTX *ctx = cbdata->ctx;
     const OSSL_PROVIDER *provider =
         OSSL_STORE_LOADER_provider(ctx->fetched_loader);
-    OPENSSL_CTX *libctx = ossl_provider_library_context(provider);
+    OSSL_LIB_CTX *libctx = ossl_provider_library_context(provider);
     const char *propq = ctx->properties;
     const OSSL_PARAM *p;
     struct extracted_param_data_st helper_data;
@@ -192,7 +192,7 @@ static int try_name(struct extracted_param_data_st *data, OSSL_STORE_INFO **v)
 static EVP_PKEY *try_key_ref(struct extracted_param_data_st *data,
                              OSSL_STORE_CTX *ctx,
                              const OSSL_PROVIDER *provider,
-                             OPENSSL_CTX *libctx, const char *propq)
+                             OSSL_LIB_CTX *libctx, const char *propq)
 {
     EVP_PKEY *pk = NULL;
     EVP_KEYMGMT *keymgmt = NULL;
@@ -247,7 +247,7 @@ static EVP_PKEY *try_key_ref(struct extracted_param_data_st *data,
 static EVP_PKEY *try_key_value(struct extracted_param_data_st *data,
                                OSSL_STORE_CTX *ctx,
                                OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg,
-                               OPENSSL_CTX *libctx, const char *propq)
+                               OSSL_LIB_CTX *libctx, const char *propq)
 {
     EVP_PKEY *pk = NULL;
     OSSL_DECODER_CTX *decoderctx = NULL;
@@ -272,7 +272,7 @@ static EVP_PKEY *try_key_value_legacy(struct extracted_param_data_st *data,
                                       store_info_new_fn **store_info_new,
                                       OSSL_STORE_CTX *ctx,
                                       OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg,
-                                      OPENSSL_CTX *libctx, const char *propq)
+                                      OSSL_LIB_CTX *libctx, const char *propq)
 {
     EVP_PKEY *pk = NULL;
     const unsigned char *der = data->octet_data, *derp;
@@ -351,7 +351,7 @@ static EVP_PKEY *try_key_value_legacy(struct extracted_param_data_st *data,
 
 static int try_key(struct extracted_param_data_st *data, OSSL_STORE_INFO **v,
                    OSSL_STORE_CTX *ctx, const OSSL_PROVIDER *provider,
-                   OPENSSL_CTX *libctx, const char *propq)
+                   OSSL_LIB_CTX *libctx, const char *propq)
 {
     store_info_new_fn *store_info_new = NULL;
 
@@ -422,7 +422,7 @@ static int try_key(struct extracted_param_data_st *data, OSSL_STORE_INFO **v,
 }
 
 static int try_cert(struct extracted_param_data_st *data, OSSL_STORE_INFO **v,
-                    OPENSSL_CTX *libctx, const char *propq)
+                    OSSL_LIB_CTX *libctx, const char *propq)
 {
     if (data->object_type == OSSL_OBJECT_UNKNOWN
         || data->object_type == OSSL_OBJECT_CERT) {
@@ -469,7 +469,7 @@ static int try_cert(struct extracted_param_data_st *data, OSSL_STORE_INFO **v,
 }
 
 static int try_crl(struct extracted_param_data_st *data, OSSL_STORE_INFO **v,
-                   OPENSSL_CTX *libctx, const char *propq)
+                   OSSL_LIB_CTX *libctx, const char *propq)
 {
     if (data->object_type == OSSL_OBJECT_UNKNOWN
         || data->object_type == OSSL_OBJECT_CRL) {
@@ -497,7 +497,7 @@ static int try_crl(struct extracted_param_data_st *data, OSSL_STORE_INFO **v,
 
 static int try_pkcs12(struct extracted_param_data_st *data, OSSL_STORE_INFO **v,
                       OSSL_STORE_CTX *ctx,
-                      OPENSSL_CTX *libctx, const char *propq)
+                      OSSL_LIB_CTX *libctx, const char *propq)
 {
     /* There is no specific object type for PKCS12 */
     if (data->object_type == OSSL_OBJECT_UNKNOWN) {

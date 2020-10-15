@@ -9,7 +9,7 @@ x509v3_cache_extensions
 
  #include <openssl/x509v3.h>
 
- int x509v3_cache_extensions(X509 *x, OPENSSL_CTX *libctx, const char *propq);
+ int x509v3_cache_extensions(X509 *x, OSSL_LIB_CTX *libctx, const char *propq);
 
 =head1 DESCRIPTION
 

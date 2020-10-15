@@ -266,7 +266,7 @@ const RAND_METHOD *RAND_get_rand_method(void)
  * the default method, then just call RAND_bytes().  Otherwise make
  * sure we're instantiated and use the private DRBG.
  */
-int RAND_priv_bytes_ex(OPENSSL_CTX *ctx, unsigned char *buf, int num)
+int RAND_priv_bytes_ex(OSSL_LIB_CTX *ctx, unsigned char *buf, int num)
 {
     EVP_RAND_CTX *rand;
     const RAND_METHOD *meth = RAND_get_rand_method();
@@ -290,7 +290,7 @@ int RAND_priv_bytes(unsigned char *buf, int num)
     return RAND_priv_bytes_ex(NULL, buf, num);
 }
 
-int RAND_bytes_ex(OPENSSL_CTX *ctx, unsigned char *buf, int num)
+int RAND_bytes_ex(OSSL_LIB_CTX *ctx, unsigned char *buf, int num)
 {
     EVP_RAND_CTX *rand;
     const RAND_METHOD *meth = RAND_get_rand_method();
@@ -366,10 +366,10 @@ typedef struct rand_global_st {
 } RAND_GLOBAL;
 
 /*
- * Initialize the OPENSSL_CTX global DRBGs on first use.
+ * Initialize the OSSL_LIB_CTX global DRBGs on first use.
  * Returns the allocated global data on success or NULL on failure.
  */
-static void *rand_ossl_ctx_new(OPENSSL_CTX *libctx)
+static void *rand_ossl_ctx_new(OSSL_LIB_CTX *libctx)
 {
     RAND_GLOBAL *dgbl = OPENSSL_zalloc(sizeof(*dgbl));
 
@@ -423,20 +423,20 @@ static void rand_ossl_ctx_free(void *vdgbl)
     OPENSSL_free(dgbl);
 }
 
-static const OPENSSL_CTX_METHOD rand_drbg_ossl_ctx_method = {
+static const OSSL_LIB_CTX_METHOD rand_drbg_ossl_ctx_method = {
     rand_ossl_ctx_new,
     rand_ossl_ctx_free,
 };
 
-static RAND_GLOBAL *rand_get_global(OPENSSL_CTX *libctx)
+static RAND_GLOBAL *rand_get_global(OSSL_LIB_CTX *libctx)
 {
-    return openssl_ctx_get_data(libctx, OPENSSL_CTX_DRBG_INDEX,
+    return ossl_lib_ctx_get_data(libctx, OSSL_LIB_CTX_DRBG_INDEX,
                                 &rand_drbg_ossl_ctx_method);
 }
 
 static void rand_delete_thread_state(void *arg)
 {
-    OPENSSL_CTX *ctx = arg;
+    OSSL_LIB_CTX *ctx = arg;
     RAND_GLOBAL *dgbl = rand_get_global(ctx);
     EVP_RAND_CTX *rand;
 
@@ -452,7 +452,7 @@ static void rand_delete_thread_state(void *arg)
     EVP_RAND_CTX_free(rand);
 }
 
-static EVP_RAND_CTX *rand_new_drbg(OPENSSL_CTX *libctx, EVP_RAND_CTX *parent,
+static EVP_RAND_CTX *rand_new_drbg(OSSL_LIB_CTX *libctx, EVP_RAND_CTX *parent,
                                    unsigned int reseed_interval,
                                    time_t reseed_time_interval)
 {
@@ -512,7 +512,7 @@ static EVP_RAND_CTX *rand_new_drbg(OPENSSL_CTX *libctx, EVP_RAND_CTX *parent,
  * Returns pointer to its EVP_RAND_CTX on success, NULL on failure.
  *
  */
-EVP_RAND_CTX *RAND_get0_primary(OPENSSL_CTX *ctx)
+EVP_RAND_CTX *RAND_get0_primary(OSSL_LIB_CTX *ctx)
 {
     RAND_GLOBAL *dgbl = rand_get_global(ctx);
 
@@ -534,7 +534,7 @@ EVP_RAND_CTX *RAND_get0_primary(OPENSSL_CTX *ctx)
  * Get the public random generator.
  * Returns pointer to its EVP_RAND_CTX on success, NULL on failure.
  */
-EVP_RAND_CTX *RAND_get0_public(OPENSSL_CTX *ctx)
+EVP_RAND_CTX *RAND_get0_public(OSSL_LIB_CTX *ctx)
 {
     RAND_GLOBAL *dgbl = rand_get_global(ctx);
     EVP_RAND_CTX *rand, *primary;
@@ -548,7 +548,7 @@ EVP_RAND_CTX *RAND_get0_public(OPENSSL_CTX *ctx)
         if (primary == NULL)
             return NULL;
 
-        ctx = openssl_ctx_get_concrete(ctx);
+        ctx = ossl_lib_ctx_get_concrete(ctx);
         /*
          * If the private is also NULL then this is the first time we've
          * used this thread.
@@ -567,7 +567,7 @@ EVP_RAND_CTX *RAND_get0_public(OPENSSL_CTX *ctx)
  * Get the private random generator.
  * Returns pointer to its EVP_RAND_CTX on success, NULL on failure.
  */
-EVP_RAND_CTX *RAND_get0_private(OPENSSL_CTX *ctx)
+EVP_RAND_CTX *RAND_get0_private(OSSL_LIB_CTX *ctx)
 {
     RAND_GLOBAL *dgbl = rand_get_global(ctx);
     EVP_RAND_CTX *rand, *primary;
@@ -581,7 +581,7 @@ EVP_RAND_CTX *RAND_get0_private(OPENSSL_CTX *ctx)
         if (primary == NULL)
             return NULL;
 
-        ctx = openssl_ctx_get_concrete(ctx);
+        ctx = ossl_lib_ctx_get_concrete(ctx);
         /*
          * If the public is also NULL then this is the first time we've
          * used this thread.

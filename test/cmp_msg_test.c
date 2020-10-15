@@ -30,7 +30,7 @@ typedef struct test_fixture {
     OSSL_CMP_PKISI *si;
 } CMP_MSG_TEST_FIXTURE;
 
-static OPENSSL_CTX *libctx = NULL;
+static OSSL_LIB_CTX *libctx = NULL;
 static OSSL_PROVIDER *default_null_provider = NULL, *provider = NULL;
 
 /* TODO(3.0) Clean this up - See issue #12680 */
@@ -551,7 +551,7 @@ void cleanup_tests(void)
 {
     EVP_PKEY_free(newkey);
     X509_free(cert);
-    OPENSSL_CTX_free(libctx);
+    OSSL_LIB_CTX_free(libctx);
 }
 
 #define USAGE "new.key server.crt pkcs10.der module_name [module_conf_file]\n"

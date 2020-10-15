@@ -10,7 +10,7 @@ EVP_DigestVerifyFinal, EVP_DigestVerify - EVP signature verification functions
  #include <openssl/evp.h>
 
  int EVP_DigestVerifyInit_ex(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
-                             const char *mdname, OPENSSL_CTX *libctx,
+                             const char *mdname, OSSL_LIB_CTX *libctx,
                              const char *props, EVP_PKEY *pkey);
  int EVP_DigestVerifyInit(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
                           const EVP_MD *type, ENGINE *e, EVP_PKEY *pkey);
@@ -52,7 +52,7 @@ an EVP_PKEY_CTX value before being passed to EVP_DigestVerifyInit_ex()
 (which means the EVP_PKEY_CTX is created inside
 EVP_DigestVerifyInit_ex() and it will be freed automatically when the
 EVP_MD_CTX is freed). If the EVP_PKEY_CTX to be used is created by
-EVP_DigestVerifyInit_ex then it will use the B<OPENSSL_CTX> specified
+EVP_DigestVerifyInit_ex then it will use the B<OSSL_LIB_CTX> specified
 in I<libctx> and the property query string specified in I<props>.
 
 No B<EVP_PKEY_CTX> will be created by EVP_DigestSignInit_ex() if the

@@ -27,7 +27,7 @@ static void provider_free(OSSL_PROVIDER *prov)
     OSSL_PROVIDER_unload(prov);
 }
 
-int app_provider_load(OPENSSL_CTX *libctx, const char *provider_name)
+int app_provider_load(OSSL_LIB_CTX *libctx, const char *provider_name)
 {
     OSSL_PROVIDER *prov;
 

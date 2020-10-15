@@ -21,7 +21,7 @@
 /* calculate = SHA1(PAD(x) || PAD(y)) */
 
 static BIGNUM *srp_Calc_xy(const BIGNUM *x, const BIGNUM *y, const BIGNUM *N,
-                           OPENSSL_CTX *libctx, const char *propq)
+                           OSSL_LIB_CTX *libctx, const char *propq)
 {
     unsigned char digest[SHA_DIGEST_LENGTH];
     unsigned char *tmp = NULL;
@@ -49,7 +49,7 @@ static BIGNUM *srp_Calc_xy(const BIGNUM *x, const BIGNUM *y, const BIGNUM *N,
     return res;
 }
 
-static BIGNUM *srp_Calc_k(const BIGNUM *N, const BIGNUM *g, OPENSSL_CTX *libctx,
+static BIGNUM *srp_Calc_k(const BIGNUM *N, const BIGNUM *g, OSSL_LIB_CTX *libctx,
                           const char *propq)
 {
     /* k = SHA1(N | PAD(g)) -- tls-srp RFC 5054 */
@@ -57,7 +57,7 @@ static BIGNUM *srp_Calc_k(const BIGNUM *N, const BIGNUM *g, OPENSSL_CTX *libctx,
 }
 
 BIGNUM *SRP_Calc_u_ex(const BIGNUM *A, const BIGNUM *B, const BIGNUM *N,
-                      OPENSSL_CTX *libctx, const char *propq)
+                      OSSL_LIB_CTX *libctx, const char *propq)
 {
     /* u = SHA1(PAD(A) || PAD(B) ) -- tls-srp RFC 5054 */
     return srp_Calc_xy(A, B, N, libctx, propq);
@@ -100,7 +100,7 @@ BIGNUM *SRP_Calc_server_key(const BIGNUM *A, const BIGNUM *v, const BIGNUM *u,
 }
 
 BIGNUM *SRP_Calc_B_ex(const BIGNUM *b, const BIGNUM *N, const BIGNUM *g,
-                      const BIGNUM *v, OPENSSL_CTX *libctx, const char *propq)
+                      const BIGNUM *v, OSSL_LIB_CTX *libctx, const char *propq)
 {
     BIGNUM *kv = NULL, *gb = NULL;
     BIGNUM *B = NULL, *k = NULL;
@@ -138,7 +138,7 @@ BIGNUM *SRP_Calc_B(const BIGNUM *b, const BIGNUM *N, const BIGNUM *g,
 }
 
 BIGNUM *SRP_Calc_x_ex(const BIGNUM *s, const char *user, const char *pass,
-                      OPENSSL_CTX *libctx, const char *propq)
+                      OSSL_LIB_CTX *libctx, const char *propq)
 {
     unsigned char dig[SHA_DIGEST_LENGTH];
     EVP_MD_CTX *ctxt;
@@ -207,7 +207,7 @@ BIGNUM *SRP_Calc_A(const BIGNUM *a, const BIGNUM *N, const BIGNUM *g)
 
 BIGNUM *SRP_Calc_client_key_ex(const BIGNUM *N, const BIGNUM *B, const BIGNUM *g,
                             const BIGNUM *x, const BIGNUM *a, const BIGNUM *u,
-                            OPENSSL_CTX *libctx, const char *propq)
+                            OSSL_LIB_CTX *libctx, const char *propq)
 {
     BIGNUM *tmp = NULL, *tmp2 = NULL, *tmp3 = NULL, *k = NULL, *K = NULL;
     BN_CTX *bn_ctx;

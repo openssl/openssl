@@ -72,7 +72,7 @@ EVP_CIPHER_do_all_provided
 
  #include <openssl/evp.h>
 
- EVP_CIPHER *EVP_CIPHER_fetch(OPENSSL_CTX *ctx, const char *algorithm,
+ EVP_CIPHER *EVP_CIPHER_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
                               const char *properties);
  int EVP_CIPHER_up_ref(EVP_CIPHER *cipher);
  void EVP_CIPHER_free(EVP_CIPHER *cipher);
@@ -159,7 +159,7 @@ EVP_CIPHER_do_all_provided
  int EVP_CIPHER_param_to_asn1(EVP_CIPHER_CTX *c, ASN1_TYPE *type);
  int EVP_CIPHER_asn1_to_param(EVP_CIPHER_CTX *c, ASN1_TYPE *type);
 
- void EVP_CIPHER_do_all_provided(OPENSSL_CTX *libctx,
+ void EVP_CIPHER_do_all_provided(OSSL_LIB_CTX *libctx,
                                  void (*fn)(EVP_CIPHER *cipher, void *arg),
                                  void *arg);
 
@@ -346,7 +346,7 @@ algorithm that's identifiable with I<name>, otherwise 0.
 If I<cipher> is a legacy cipher (it's the return value from the likes
 of EVP_aes128() rather than the result of an EVP_CIPHER_fetch()), only
 cipher names registered with the default library context (see
-L<OPENSSL_CTX(3)>) will be considered.
+L<OSSL_LIB_CTX(3)>) will be considered.
 
 EVP_CIPHER_number() returns the internal dynamic number assigned to
 the I<cipher>.  This is only useful with fetched B<EVP_CIPHER>s.

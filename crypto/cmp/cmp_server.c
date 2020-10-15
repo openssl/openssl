@@ -48,7 +48,7 @@ void OSSL_CMP_SRV_CTX_free(OSSL_CMP_SRV_CTX *srv_ctx)
     OPENSSL_free(srv_ctx);
 }
 
-OSSL_CMP_SRV_CTX *OSSL_CMP_SRV_CTX_new(OPENSSL_CTX *libctx, const char *propq)
+OSSL_CMP_SRV_CTX *OSSL_CMP_SRV_CTX_new(OSSL_LIB_CTX *libctx, const char *propq)
 {
     OSSL_CMP_SRV_CTX *ctx = OPENSSL_zalloc(sizeof(OSSL_CMP_SRV_CTX));
 

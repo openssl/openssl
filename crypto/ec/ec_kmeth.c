@@ -76,7 +76,7 @@ int EC_KEY_set_method(EC_KEY *key, const EC_KEY_METHOD *meth)
     return 1;
 }
 
-EC_KEY *ec_key_new_method_int(OPENSSL_CTX *libctx, const char *propq,
+EC_KEY *ec_key_new_method_int(OSSL_LIB_CTX *libctx, const char *propq,
                               ENGINE *engine)
 {
     EC_KEY *ret = OPENSSL_zalloc(sizeof(*ret));

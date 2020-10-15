@@ -81,7 +81,7 @@ struct prov_cipher_ctx_st {
     unsigned char iv[GENERIC_BLOCK_SIZE];
     const PROV_CIPHER_HW *hw; /* hardware specific functions */
     const void *ks; /* Pointer to algorithm specific key data */
-    OPENSSL_CTX *libctx;
+    OSSL_LIB_CTX *libctx;
 };
 
 struct prov_cipher_hw_st {

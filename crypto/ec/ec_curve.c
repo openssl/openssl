@@ -3180,7 +3180,7 @@ int ec_curve_name2nid(const char *name)
     return NID_undef;
 }
 
-static EC_GROUP *ec_group_new_from_data(OPENSSL_CTX *libctx,
+static EC_GROUP *ec_group_new_from_data(OSSL_LIB_CTX *libctx,
                                         const char *propq,
                                         const ec_list_element curve)
 {
@@ -3290,7 +3290,7 @@ static EC_GROUP *ec_group_new_from_data(OPENSSL_CTX *libctx,
     return group;
 }
 
-EC_GROUP *EC_GROUP_new_by_curve_name_ex(OPENSSL_CTX *libctx, const char *propq,
+EC_GROUP *EC_GROUP_new_by_curve_name_ex(OSSL_LIB_CTX *libctx, const char *propq,
                                         int nid)
 {
     EC_GROUP *ret = NULL;

@@ -36,12 +36,12 @@ PEM_write_bio_PKCS7, PEM_write_PKCS7 - PEM routines
  typedef int pem_password_cb(char *buf, int size, int rwflag, void *u);
 
  EVP_PKEY *PEM_read_bio_PrivateKey_ex(BIO *bp, EVP_PKEY **x, pem_password_cb *cb,
-                                      void *u, OPENSSL_CTX *libctx,
+                                      void *u, OSSL_LIB_CTX *libctx,
                                       const char *propq);
  EVP_PKEY *PEM_read_bio_PrivateKey(BIO *bp, EVP_PKEY **x,
                                    pem_password_cb *cb, void *u);
  EVP_PKEY *PEM_read_PrivateKey_ex(FILE *fp, EVP_PKEY **x, pem_password_cb *cb,
-                                  void *u, OPENSSL_CTX *libctx,
+                                  void *u, OSSL_LIB_CTX *libctx,
                                   const char *propq);
  EVP_PKEY *PEM_read_PrivateKey(FILE *fp, EVP_PKEY **x,
                                pem_password_cb *cb, void *u);
@@ -70,12 +70,12 @@ PEM_write_bio_PKCS7, PEM_write_PKCS7 - PEM routines
 
  EVP_PKEY *PEM_read_bio_PUBKEY_ex(BIO *bp, EVP_PKEY **x,
                                   pem_password_cb *cb, void *u,
-                                  OPENSSL_CTX *libctx, const char *propq);
+                                  OSSL_LIB_CTX *libctx, const char *propq);
  EVP_PKEY *PEM_read_bio_PUBKEY(BIO *bp, EVP_PKEY **x,
                                pem_password_cb *cb, void *u);
  EVP_PKEY *PEM_read_PUBKEY_ex(FILE *fp, EVP_PKEY **x,
                               pem_password_cb *cb, void *u,
-                              OPENSSL_CTX *libctx, const char *propq);
+                              OSSL_LIB_CTX *libctx, const char *propq);
  EVP_PKEY *PEM_read_PUBKEY(FILE *fp, EVP_PKEY **x,
                            pem_password_cb *cb, void *u);
  int PEM_write_bio_PUBKEY(BIO *bp, EVP_PKEY *x);
@@ -125,7 +125,7 @@ PEM_write_bio_PKCS7, PEM_write_PKCS7 - PEM routines
  int PEM_write_DSA_PUBKEY(FILE *fp, DSA *x);
 
  EVP_PKEY *PEM_read_bio_Parameters_ex(BIO *bp, EVP_PKEY **x,
-                                      OPENSSL_CTX *libctx, const char *propq);
+                                      OSSL_LIB_CTX *libctx, const char *propq);
  EVP_PKEY *PEM_read_bio_Parameters(BIO *bp, EVP_PKEY **x);
  int PEM_write_bio_Parameters(BIO *bp, const EVP_PKEY *x);
 

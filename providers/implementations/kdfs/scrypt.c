@@ -37,10 +37,10 @@ static int scrypt_alg(const char *pass, size_t passlen,
                       const unsigned char *salt, size_t saltlen,
                       uint64_t N, uint64_t r, uint64_t p, uint64_t maxmem,
                       unsigned char *key, size_t keylen, EVP_MD *sha256,
-                      OPENSSL_CTX *libctx, const char *propq);
+                      OSSL_LIB_CTX *libctx, const char *propq);
 
 typedef struct {
-    OPENSSL_CTX *libctx;
+    OSSL_LIB_CTX *libctx;
     char *propq;
     unsigned char *pass;
     size_t pass_len;
@@ -404,7 +404,7 @@ static int scrypt_alg(const char *pass, size_t passlen,
                       const unsigned char *salt, size_t saltlen,
                       uint64_t N, uint64_t r, uint64_t p, uint64_t maxmem,
                       unsigned char *key, size_t keylen, EVP_MD *sha256,
-                      OPENSSL_CTX *libctx, const char *propq)
+                      OSSL_LIB_CTX *libctx, const char *propq)
 {
     int rv = 0;
     unsigned char *B;

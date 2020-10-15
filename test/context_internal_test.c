@@ -14,7 +14,7 @@
 
 /*
  * Everything between BEGIN EXAMPLE and END EXAMPLE is copied from
- * doc/internal/man3/openssl_ctx_get_data.pod
+ * doc/internal/man3/ossl_lib_ctx_get_data.pod
  */
 
 /*
@@ -27,7 +27,7 @@ typedef struct foo_st {
     void *data;
 } FOO;
 
-static void *foo_new(OPENSSL_CTX *ctx)
+static void *foo_new(OSSL_LIB_CTX *ctx)
 {
     FOO *ptr = OPENSSL_zalloc(sizeof(*ptr));
     if (ptr != NULL)
@@ -38,7 +38,7 @@ static void foo_free(void *ptr)
 {
     OPENSSL_free(ptr);
 }
-static const OPENSSL_CTX_METHOD foo_method = {
+static const OSSL_LIB_CTX_METHOD foo_method = {
     foo_new,
     foo_free
 };
@@ -48,23 +48,23 @@ static const OPENSSL_CTX_METHOD foo_method = {
  * ======================================================================
  */
 
-static int test_context(OPENSSL_CTX *ctx)
+static int test_context(OSSL_LIB_CTX *ctx)
 {
     FOO *data = NULL;
 
-    return TEST_ptr(data = openssl_ctx_get_data(ctx, 0, &foo_method))
+    return TEST_ptr(data = ossl_lib_ctx_get_data(ctx, 0, &foo_method))
         /* OPENSSL_zalloc in foo_new() initialized it to zero */
         && TEST_int_eq(data->i, 42);
 }
 
 static int test_app_context(void)
 {
-    OPENSSL_CTX *ctx = NULL;
+    OSSL_LIB_CTX *ctx = NULL;
     int result =
-        TEST_ptr(ctx = OPENSSL_CTX_new())
+        TEST_ptr(ctx = OSSL_LIB_CTX_new())
         && test_context(ctx);
 
-    OPENSSL_CTX_free(ctx);
+    OSSL_LIB_CTX_free(ctx);
     return result;
 }
 

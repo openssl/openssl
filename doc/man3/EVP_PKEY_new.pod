@@ -24,14 +24,14 @@ EVP_PKEY_get_raw_public_key
  int EVP_PKEY_up_ref(EVP_PKEY *key);
  void EVP_PKEY_free(EVP_PKEY *key);
 
- EVP_PKEY *EVP_PKEY_new_raw_private_key_ex(OPENSSL_CTX *libctx,
+ EVP_PKEY *EVP_PKEY_new_raw_private_key_ex(OSSL_LIB_CTX *libctx,
                                            const char *keytype,
                                            const char *propq,
                                            const unsigned char *key,
                                            size_t keylen);
  EVP_PKEY *EVP_PKEY_new_raw_private_key(int type, ENGINE *e,
                                         const unsigned char *key, size_t keylen);
- EVP_PKEY *EVP_PKEY_new_raw_public_key_ex(OPENSSL_CTX *libctx,
+ EVP_PKEY *EVP_PKEY_new_raw_public_key_ex(OSSL_LIB_CTX *libctx,
                                           const char *keytype,
                                           const char *propq,
                                           const unsigned char *key,
@@ -40,7 +40,7 @@ EVP_PKEY_get_raw_public_key
                                        const unsigned char *key, size_t keylen);
  EVP_PKEY *EVP_PKEY_new_CMAC_key_ex(const unsigned char *priv, size_t len,
                                     const char *cipher_name,
-                                    OPENSSL_CTX *libctx, const char *propq);
+                                    OSSL_LIB_CTX *libctx, const char *propq);
  EVP_PKEY *EVP_PKEY_new_CMAC_key(ENGINE *e, const unsigned char *priv,
                                  size_t len, const EVP_CIPHER *cipher);
  EVP_PKEY *EVP_PKEY_new_mac_key(int type, ENGINE *e, const unsigned char *key,

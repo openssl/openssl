@@ -32,7 +32,7 @@
 static int ossl_store_close_it(OSSL_STORE_CTX *ctx);
 
 OSSL_STORE_CTX *
-OSSL_STORE_open_ex(const char *uri, OPENSSL_CTX *libctx, const char *propq,
+OSSL_STORE_open_ex(const char *uri, OSSL_LIB_CTX *libctx, const char *propq,
                    const UI_METHOD *ui_method, void *ui_data,
                    OSSL_STORE_post_process_info_fn post_process,
                    void *post_process_data)
@@ -916,7 +916,7 @@ const EVP_MD *OSSL_STORE_SEARCH_get0_digest(const OSSL_STORE_SEARCH *criterion)
 }
 
 OSSL_STORE_CTX *OSSL_STORE_attach(BIO *bp, const char *scheme,
-                                  OPENSSL_CTX *libctx, const char *propq,
+                                  OSSL_LIB_CTX *libctx, const char *propq,
                                   const UI_METHOD *ui_method, void *ui_data,
                                   OSSL_STORE_post_process_info_fn post_process,
                                   void *post_process_data)

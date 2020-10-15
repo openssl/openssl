@@ -3123,7 +3123,7 @@ static int ssl_session_cmp(const SSL_SESSION *a, const SSL_SESSION *b)
  * via ssl.h.
  */
 
-SSL_CTX *SSL_CTX_new_ex(OPENSSL_CTX *libctx, const char *propq,
+SSL_CTX *SSL_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
                         const SSL_METHOD *meth)
 {
     SSL_CTX *ret = NULL;
@@ -5893,7 +5893,7 @@ void SSL_set_allow_early_data_cb(SSL *s,
     s->allow_early_data_cb_data = arg;
 }
 
-const EVP_CIPHER *ssl_evp_cipher_fetch(OPENSSL_CTX *libctx,
+const EVP_CIPHER *ssl_evp_cipher_fetch(OSSL_LIB_CTX *libctx,
                                        int nid,
                                        const char *properties)
 {
@@ -5948,7 +5948,7 @@ void ssl_evp_cipher_free(const EVP_CIPHER *cipher)
     }
 }
 
-const EVP_MD *ssl_evp_md_fetch(OPENSSL_CTX *libctx,
+const EVP_MD *ssl_evp_md_fetch(OSSL_LIB_CTX *libctx,
                                int nid,
                                const char *properties)
 {

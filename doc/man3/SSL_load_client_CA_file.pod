@@ -13,7 +13,7 @@ SSL_add_store_cert_subjects_to_stack
  #include <openssl/ssl.h>
 
  STACK_OF(X509_NAME) *SSL_load_client_CA_file_ex(const char *file,
-                                                 OPENSSL_CTX *libctx,
+                                                 OSSL_LIB_CTX *libctx,
                                                  const char *propq);
  STACK_OF(X509_NAME) *SSL_load_client_CA_file(const char *file);
 

@@ -15,7 +15,7 @@
 /* Generic object loader, given expected type and criterion */
 static int cache_objects(X509_LOOKUP *lctx, const char *uri,
                          const OSSL_STORE_SEARCH *criterion,
-                         int depth, OPENSSL_CTX *libctx, const char *propq)
+                         int depth, OSSL_LIB_CTX *libctx, const char *propq)
 {
     int ok = 0;
     OSSL_STORE_CTX *ctx = NULL;
@@ -105,7 +105,7 @@ static void by_store_free(X509_LOOKUP *ctx)
 }
 
 static int by_store_ctrl_ex(X509_LOOKUP *ctx, int cmd, const char *argp,
-                            long argl, char **retp, OPENSSL_CTX *libctx,
+                            long argl, char **retp, OSSL_LIB_CTX *libctx,
                             const char *propq)
 {
     switch (cmd) {
@@ -141,7 +141,7 @@ static int by_store_ctrl(X509_LOOKUP *ctx, int cmd,
 
 static int by_store(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
                     const OSSL_STORE_SEARCH *criterion, X509_OBJECT *ret,
-                    OPENSSL_CTX *libctx, const char *propq)
+                    OSSL_LIB_CTX *libctx, const char *propq)
 {
     STACK_OF(OPENSSL_STRING) *uris = X509_LOOKUP_get_method_data(ctx);
     int i;
@@ -159,7 +159,7 @@ static int by_store(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
 
 static int by_store_subject_ex(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
                                const X509_NAME *name, X509_OBJECT *ret,
-                               OPENSSL_CTX *libctx, const char *propq)
+                               OSSL_LIB_CTX *libctx, const char *propq)
 {
     OSSL_STORE_SEARCH *criterion =
         OSSL_STORE_SEARCH_by_name((X509_NAME *)name); /* won't modify it */

@@ -11,7 +11,7 @@
 #include <openssl/provider.h>
 #include <string.h>
 
-int test_get_libctx(OPENSSL_CTX **libctx,
+int test_get_libctx(OSSL_LIB_CTX **libctx,
                     OSSL_PROVIDER **default_null_provider,
                     OSSL_PROVIDER **provider, int argn, const char *usage)
 {
@@ -25,14 +25,14 @@ int test_get_libctx(OPENSSL_CTX **libctx,
         const char *config_fname = test_get_argument(argn + 1);
 
         *default_null_provider = OSSL_PROVIDER_load(NULL, "null");
-        *libctx = OPENSSL_CTX_new();
+        *libctx = OSSL_LIB_CTX_new();
         if (!TEST_ptr(*libctx)) {
             TEST_error("Failed to create libctx\n");
             goto err;
         }
 
         if (config_fname != NULL
-                && !TEST_true(OPENSSL_CTX_load_config(*libctx, config_fname))) {
+                && !TEST_true(OSSL_LIB_CTX_load_config(*libctx, config_fname))) {
             TEST_error("Error loading config file %s\n", config_fname);
             goto err;
         }

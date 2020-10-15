@@ -87,7 +87,7 @@ struct bignum_ctx {
     /* Flags. */
     int flags;
     /* The library context */
-    OPENSSL_CTX *libctx;
+    OSSL_LIB_CTX *libctx;
 };
 
 #ifndef FIPS_MODULE
@@ -128,7 +128,7 @@ static void ctxdbg(BIO *channel, const char *text, BN_CTX *ctx)
 # define CTXDBG(str, ctx) do {} while(0)
 #endif /* FIPS_MODULE */
 
-BN_CTX *BN_CTX_new_ex(OPENSSL_CTX *ctx)
+BN_CTX *BN_CTX_new_ex(OSSL_LIB_CTX *ctx)
 {
     BN_CTX *ret;
 
@@ -150,7 +150,7 @@ BN_CTX *BN_CTX_new(void)
 }
 #endif
 
-BN_CTX *BN_CTX_secure_new_ex(OPENSSL_CTX *ctx)
+BN_CTX *BN_CTX_secure_new_ex(OSSL_LIB_CTX *ctx)
 {
     BN_CTX *ret = BN_CTX_new_ex(ctx);
 
@@ -249,7 +249,7 @@ BIGNUM *BN_CTX_get(BN_CTX *ctx)
     return ret;
 }
 
-OPENSSL_CTX *bn_get_lib_ctx(BN_CTX *ctx)
+OSSL_LIB_CTX *bn_get_lib_ctx(BN_CTX *ctx)
 {
     if (ctx == NULL)
         return NULL;

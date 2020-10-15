@@ -101,7 +101,7 @@ static int cmp_ctx_set_md(OSSL_CMP_CTX *ctx, EVP_MD **pmd, int nid)
  * Allocates and initializes OSSL_CMP_CTX context structure with default values.
  * Returns new context on success, NULL on error
  */
-OSSL_CMP_CTX *OSSL_CMP_CTX_new(OPENSSL_CTX *libctx, const char *propq)
+OSSL_CMP_CTX *OSSL_CMP_CTX_new(OSSL_LIB_CTX *libctx, const char *propq)
 {
     OSSL_CMP_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
 

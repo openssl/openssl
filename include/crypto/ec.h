@@ -47,19 +47,19 @@ __owur int ec_group_do_inverse_ord(const EC_GROUP *group, BIGNUM *res,
 int ecdh_KDF_X9_63(unsigned char *out, size_t outlen,
                    const unsigned char *Z, size_t Zlen,
                    const unsigned char *sinfo, size_t sinfolen,
-                   const EVP_MD *md, OPENSSL_CTX *libctx, const char *propq);
+                   const EVP_MD *md, OSSL_LIB_CTX *libctx, const char *propq);
 
 int ec_key_public_check(const EC_KEY *eckey, BN_CTX *ctx);
 int ec_key_private_check(const EC_KEY *eckey);
 int ec_key_pairwise_check(const EC_KEY *eckey, BN_CTX *ctx);
-OPENSSL_CTX *ec_key_get_libctx(const EC_KEY *eckey);
+OSSL_LIB_CTX *ec_key_get_libctx(const EC_KEY *eckey);
 const char *ec_key_get0_propq(const EC_KEY *eckey);
 const char *ec_curve_nid2name(int nid);
 int ec_curve_name2nid(const char *name);
 
 /* Backend support */
 int ec_group_todata(const EC_GROUP *group, OSSL_PARAM_BLD *tmpl,
-                    OSSL_PARAM params[], OPENSSL_CTX *libctx, const char *propq,
+                    OSSL_PARAM params[], OSSL_LIB_CTX *libctx, const char *propq,
                     BN_CTX *bnctx, unsigned char **genbuf);
 int ec_group_fromdata(EC_KEY *ec, const OSSL_PARAM params[]);
 int ec_key_fromdata(EC_KEY *ecx, const OSSL_PARAM params[], int include_private);

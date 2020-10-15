@@ -42,7 +42,7 @@ struct evp_pkey_ctx_st {
      * Library context, property query, keytype and keymgmt associated with
      * this context
      */
-    OPENSSL_CTX *libctx;
+    OSSL_LIB_CTX *libctx;
     const char *propquery;
     const char *keytype;
     EVP_KEYMGMT *keymgmt;
@@ -699,7 +699,7 @@ void openssl_add_all_ciphers_int(void);
 void openssl_add_all_digests_int(void);
 void evp_cleanup_int(void);
 void evp_app_cleanup_int(void);
-void *evp_pkey_export_to_provider(EVP_PKEY *pk, OPENSSL_CTX *libctx,
+void *evp_pkey_export_to_provider(EVP_PKEY *pk, OSSL_LIB_CTX *libctx,
                                   EVP_KEYMGMT **keymgmt,
                                   const char *propquery);
 #ifndef FIPS_MODULE
@@ -801,13 +801,13 @@ void evp_encode_ctx_set_flags(EVP_ENCODE_CTX *ctx, unsigned int flags);
 /* Use the SRP base64 alphabet instead of the standard one */
 #define EVP_ENCODE_CTX_USE_SRP_ALPHABET     2
 
-const EVP_CIPHER *evp_get_cipherbyname_ex(OPENSSL_CTX *libctx, const char *name);
-const EVP_MD *evp_get_digestbyname_ex(OPENSSL_CTX *libctx, const char *name);
+const EVP_CIPHER *evp_get_cipherbyname_ex(OSSL_LIB_CTX *libctx, const char *name);
+const EVP_MD *evp_get_digestbyname_ex(OSSL_LIB_CTX *libctx, const char *name);
 
 int pkcs5_pbkdf2_hmac_ex(const char *pass, int passlen,
                          const unsigned char *salt, int saltlen, int iter,
                          const EVP_MD *digest, int keylen, unsigned char *out,
-                         OPENSSL_CTX *libctx, const char *propq);
+                         OSSL_LIB_CTX *libctx, const char *propq);
 
 #ifndef FIPS_MODULE
 /*
@@ -826,7 +826,7 @@ int evp_pkey_ctx_set_params_strict(EVP_PKEY_CTX *ctx, OSSL_PARAM *params);
 int evp_pkey_ctx_get_params_strict(EVP_PKEY_CTX *ctx, OSSL_PARAM *params);
 
 EVP_MD_CTX *evp_md_ctx_new_ex(EVP_PKEY *pkey, const ASN1_OCTET_STRING *id,
-                              OPENSSL_CTX *libctx, const char *propq);
+                              OSSL_LIB_CTX *libctx, const char *propq);
 int evp_pkey_name2type(const char *name);
 
 int evp_pkey_ctx_set1_id_prov(EVP_PKEY_CTX *ctx, const void *id, int len);
@@ -835,8 +835,8 @@ int evp_pkey_ctx_get1_id_len_prov(EVP_PKEY_CTX *ctx, size_t *id_len);
 
 int evp_pkey_ctx_use_cached_data(EVP_PKEY_CTX *ctx);
 #endif /* !defined(FIPS_MODULE) */
-void evp_method_store_flush(OPENSSL_CTX *libctx);
-int evp_set_default_properties_int(OPENSSL_CTX *libctx, const char *propq,
+void evp_method_store_flush(OSSL_LIB_CTX *libctx);
+int evp_set_default_properties_int(OSSL_LIB_CTX *libctx, const char *propq,
                                    int loadconfig);
 
 void evp_md_ctx_clear_digest(EVP_MD_CTX *ctx, int force);

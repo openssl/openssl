@@ -29,7 +29,7 @@ static int ssl3_cbc_copy_mac(size_t *reclen,
                              size_t block_size,
                              size_t mac_size,
                              size_t good,
-                             OPENSSL_CTX *libctx);
+                             OSSL_LIB_CTX *libctx);
 
 int ssl3_cbc_remove_padding_and_mac(size_t *reclen,
                                     size_t origreclen,
@@ -37,7 +37,7 @@ int ssl3_cbc_remove_padding_and_mac(size_t *reclen,
                                     unsigned char **mac,
                                     int *alloced,
                                     size_t block_size, size_t mac_size,
-                                    OPENSSL_CTX *libctx);
+                                    OSSL_LIB_CTX *libctx);
 
 int tls1_cbc_remove_padding_and_mac(size_t *reclen,
                                     size_t origreclen,
@@ -46,7 +46,7 @@ int tls1_cbc_remove_padding_and_mac(size_t *reclen,
                                     int *alloced,
                                     size_t block_size, size_t mac_size,
                                     int aead,
-                                    OPENSSL_CTX *libctx);
+                                    OSSL_LIB_CTX *libctx);
 
 /*-
  * ssl3_cbc_remove_padding removes padding from the decrypted, SSLv3, CBC
@@ -71,7 +71,7 @@ int ssl3_cbc_remove_padding_and_mac(size_t *reclen,
                                     unsigned char **mac,
                                     int *alloced,
                                     size_t block_size, size_t mac_size,
-                                    OPENSSL_CTX *libctx)
+                                    OSSL_LIB_CTX *libctx)
 {
     size_t padding_length;
     size_t good;
@@ -117,7 +117,7 @@ int tls1_cbc_remove_padding_and_mac(size_t *reclen,
                                     int *alloced,
                                     size_t block_size, size_t mac_size,
                                     int aead,
-                                    OPENSSL_CTX *libctx)
+                                    OSSL_LIB_CTX *libctx)
 {
     size_t good = -1;
     size_t padding_length, to_check, i;
@@ -204,7 +204,7 @@ static int ssl3_cbc_copy_mac(size_t *reclen,
                              size_t block_size,
                              size_t mac_size,
                              size_t good,
-                             OPENSSL_CTX *libctx)
+                             OSSL_LIB_CTX *libctx)
 {
 #if defined(CBC_MAC_ROTATE_IN_PLACE)
     unsigned char rotated_mac_buf[64 + EVP_MAX_MD_SIZE];

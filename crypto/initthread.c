@@ -208,12 +208,12 @@ void ossl_cleanup_thread(void)
     destructor_key.sane = -1;
 }
 
-void OPENSSL_thread_stop_ex(OPENSSL_CTX *ctx)
+void OPENSSL_thread_stop_ex(OSSL_LIB_CTX *ctx)
 {
-    ctx = openssl_ctx_get_concrete(ctx);
+    ctx = ossl_lib_ctx_get_concrete(ctx);
     /*
      * TODO(3.0). It would be nice if we could figure out a way to do this on
-     * all threads that have used the OPENSSL_CTX when the OPENSSL_CTX is freed.
+     * all threads that have used the OSSL_LIB_CTX when the OSSL_LIB_CTX is freed.
      * This is currently not possible due to the use of thread local variables.
      */
     ossl_ctx_thread_stop(ctx);
@@ -242,7 +242,7 @@ void ossl_ctx_thread_stop(void *arg)
 
 #else
 
-static void *thread_event_ossl_ctx_new(OPENSSL_CTX *libctx)
+static void *thread_event_ossl_ctx_new(OSSL_LIB_CTX *libctx)
 {
     THREAD_EVENT_HANDLER **hands = NULL;
     CRYPTO_THREAD_LOCAL *tlocal = OPENSSL_zalloc(sizeof(*tlocal));
@@ -273,7 +273,7 @@ static void thread_event_ossl_ctx_free(void *tlocal)
     OPENSSL_free(tlocal);
 }
 
-static const OPENSSL_CTX_METHOD thread_event_ossl_ctx_method = {
+static const OSSL_LIB_CTX_METHOD thread_event_ossl_ctx_method = {
     thread_event_ossl_ctx_new,
     thread_event_ossl_ctx_free,
 };
@@ -281,9 +281,9 @@ static const OPENSSL_CTX_METHOD thread_event_ossl_ctx_method = {
 void ossl_ctx_thread_stop(void *arg)
 {
     THREAD_EVENT_HANDLER **hands;
-    OPENSSL_CTX *ctx = arg;
+    OSSL_LIB_CTX *ctx = arg;
     CRYPTO_THREAD_LOCAL *local
-        = openssl_ctx_get_data(ctx, OPENSSL_CTX_THREAD_EVENT_HANDLER_INDEX,
+        = ossl_lib_ctx_get_data(ctx, OSSL_LIB_CTX_THREAD_EVENT_HANDLER_INDEX,
                                &thread_event_ossl_ctx_method);
 
     if (local == NULL)
@@ -329,22 +329,22 @@ int ossl_init_thread_start(const void *index, void *arg,
     THREAD_EVENT_HANDLER **hands;
     THREAD_EVENT_HANDLER *hand;
 #ifdef FIPS_MODULE
-    OPENSSL_CTX *ctx = arg;
+    OSSL_LIB_CTX *ctx = arg;
 
     /*
      * In FIPS mode the list of THREAD_EVENT_HANDLERs is unique per combination
-     * of OPENSSL_CTX and thread. This is because in FIPS mode each OPENSSL_CTX
+     * of OSSL_LIB_CTX and thread. This is because in FIPS mode each OSSL_LIB_CTX
      * gets informed about thread stop events individually.
      */
     CRYPTO_THREAD_LOCAL *local
-        = openssl_ctx_get_data(ctx, OPENSSL_CTX_THREAD_EVENT_HANDLER_INDEX,
+        = ossl_lib_ctx_get_data(ctx, OSSL_LIB_CTX_THREAD_EVENT_HANDLER_INDEX,
                                &thread_event_ossl_ctx_method);
 #else
     /*
      * Outside of FIPS mode the list of THREAD_EVENT_HANDLERs is unique per
-     * thread, but may hold multiple OPENSSL_CTXs. We only get told about
+     * thread, but may hold multiple OSSL_LIB_CTXs. We only get told about
      * thread stop events globally, so we have to ensure all affected
-     * OPENSSL_CTXs are informed.
+     * OSSL_LIB_CTXs are informed.
      */
     CRYPTO_THREAD_LOCAL *local = &destructor_key.value;
 #endif

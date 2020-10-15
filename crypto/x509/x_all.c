@@ -37,7 +37,7 @@ int X509_verify(X509 *a, EVP_PKEY *r)
                                a->distinguishing_id, r, a->libctx, a->propq);
 }
 
-int X509_REQ_verify_ex(X509_REQ *a, EVP_PKEY *r, OPENSSL_CTX *libctx,
+int X509_REQ_verify_ex(X509_REQ *a, EVP_PKEY *r, OSSL_LIB_CTX *libctx,
                        const char *propq)
 {
     return ASN1_item_verify_ex(ASN1_ITEM_rptr(X509_REQ_INFO), &a->sig_alg,
@@ -555,7 +555,7 @@ EVP_PKEY *d2i_PrivateKey_fp(FILE *fp, EVP_PKEY **a)
     return ASN1_d2i_fp_of(EVP_PKEY, EVP_PKEY_new, d2i_AutoPrivateKey, fp, a);
 }
 
-EVP_PKEY *d2i_PrivateKey_ex_fp(FILE *fp, EVP_PKEY **a, OPENSSL_CTX *libctx,
+EVP_PKEY *d2i_PrivateKey_ex_fp(FILE *fp, EVP_PKEY **a, OSSL_LIB_CTX *libctx,
                                const char *propq)
 {
     BIO *b;
@@ -619,7 +619,7 @@ EVP_PKEY *d2i_PrivateKey_bio(BIO *bp, EVP_PKEY **a)
     return ASN1_d2i_bio_of(EVP_PKEY, EVP_PKEY_new, d2i_AutoPrivateKey, bp, a);
 }
 
-EVP_PKEY *d2i_PrivateKey_ex_bio(BIO *bp, EVP_PKEY **a, OPENSSL_CTX *libctx,
+EVP_PKEY *d2i_PrivateKey_ex_bio(BIO *bp, EVP_PKEY **a, OSSL_LIB_CTX *libctx,
                                 const char *propq)
 {
     BUF_MEM *b = NULL;

@@ -27,7 +27,7 @@
 #include "crypto/security_bits.h"
 #include "rsa_local.h"
 
-static RSA *rsa_new_intern(ENGINE *engine, OPENSSL_CTX *libctx);
+static RSA *rsa_new_intern(ENGINE *engine, OSSL_LIB_CTX *libctx);
 
 #ifndef FIPS_MODULE
 RSA *RSA_new(void)
@@ -66,12 +66,12 @@ RSA *RSA_new_method(ENGINE *engine)
 }
 #endif
 
-RSA *ossl_rsa_new_with_ctx(OPENSSL_CTX *libctx)
+RSA *ossl_rsa_new_with_ctx(OSSL_LIB_CTX *libctx)
 {
     return rsa_new_intern(NULL, libctx);
 }
 
-static RSA *rsa_new_intern(ENGINE *engine, OPENSSL_CTX *libctx)
+static RSA *rsa_new_intern(ENGINE *engine, OSSL_LIB_CTX *libctx)
 {
     RSA *ret = OPENSSL_zalloc(sizeof(*ret));
 
@@ -189,7 +189,7 @@ int RSA_up_ref(RSA *r)
     return i > 1 ? 1 : 0;
 }
 
-OPENSSL_CTX *ossl_rsa_get0_libctx(RSA *r)
+OSSL_LIB_CTX *ossl_rsa_get0_libctx(RSA *r)
 {
     return r->libctx;
 }

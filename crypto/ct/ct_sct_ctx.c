@@ -20,7 +20,7 @@
 
 #include "ct_local.h"
 
-SCT_CTX *SCT_CTX_new(OPENSSL_CTX *libctx, const char *propq)
+SCT_CTX *SCT_CTX_new(OSSL_LIB_CTX *libctx, const char *propq)
 {
     SCT_CTX *sctx = OPENSSL_zalloc(sizeof(*sctx));
 

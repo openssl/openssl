@@ -10,7 +10,7 @@ CMS_sign, CMS_sign_ex - create a CMS SignedData structure
 
  CMS_ContentInfo *CMS_sign_ex(X509 *signcert, EVP_PKEY *pkey,
                               STACK_OF(X509) *certs, BIO *data,
-                              unsigned int flags, OPENSSL_CTX *ctx,
+                              unsigned int flags, OSSL_LIB_CTX *ctx,
                               const char *propq);
  CMS_ContentInfo *CMS_sign(X509 *signcert, EVP_PKEY *pkey, STACK_OF(X509) *certs,
                            BIO *data, unsigned int flags);

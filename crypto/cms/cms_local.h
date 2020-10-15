@@ -47,7 +47,7 @@ typedef struct CMS_ReceiptsFrom_st CMS_ReceiptsFrom;
 typedef struct CMS_CTX_st CMS_CTX;
 
 struct CMS_CTX_st {
-    OPENSSL_CTX *libctx;
+    OSSL_LIB_CTX *libctx;
     char *propq;
 };
 
@@ -390,14 +390,14 @@ DECLARE_ASN1_ALLOC_FUNCTIONS(CMS_IssuerAndSerialNumber)
 
 BIO *cms_content_bio(CMS_ContentInfo *cms);
 const CMS_CTX *cms_get0_cmsctx(const CMS_ContentInfo *cms);
-OPENSSL_CTX *cms_ctx_get0_libctx(const CMS_CTX *ctx);
+OSSL_LIB_CTX *cms_ctx_get0_libctx(const CMS_CTX *ctx);
 const char *cms_ctx_get0_propq(const CMS_CTX *ctx);
 void cms_resolve_libctx(CMS_ContentInfo *ci);
 
-CMS_ContentInfo *cms_Data_create(OPENSSL_CTX *ctx, const char *propq);
+CMS_ContentInfo *cms_Data_create(OSSL_LIB_CTX *ctx, const char *propq);
 
 CMS_ContentInfo *cms_DigestedData_create(const EVP_MD *md,
-                                         OPENSSL_CTX *libctx, const char *propq);
+                                         OSSL_LIB_CTX *libctx, const char *propq);
 BIO *cms_DigestedData_init_bio(const CMS_ContentInfo *cms);
 int cms_DigestedData_do_final(const CMS_ContentInfo *cms, BIO *chain, int verify);
 
@@ -411,7 +411,7 @@ int cms_SignerIdentifier_get0_signer_id(CMS_SignerIdentifier *sid,
                                         ASN1_INTEGER **sno);
 int cms_SignerIdentifier_cert_cmp(CMS_SignerIdentifier *sid, X509 *cert);
 
-CMS_ContentInfo *cms_CompressedData_create(int comp_nid, OPENSSL_CTX *libctx,
+CMS_ContentInfo *cms_CompressedData_create(int comp_nid, OSSL_LIB_CTX *libctx,
                                            const char *propq);
 BIO *cms_CompressedData_init_bio(const CMS_ContentInfo *cms);
 

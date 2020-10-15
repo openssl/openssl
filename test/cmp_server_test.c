@@ -18,7 +18,7 @@ typedef struct test_fixture {
     OSSL_CMP_MSG *req;
 } CMP_SRV_TEST_FIXTURE;
 
-static OPENSSL_CTX *libctx = NULL;
+static OSSL_LIB_CTX *libctx = NULL;
 static OSSL_PROVIDER *default_null_provider = NULL, *provider = NULL;
 static OSSL_CMP_MSG *request = NULL;
 
@@ -123,7 +123,7 @@ void cleanup_tests(void)
     OSSL_CMP_MSG_free(request);
     OSSL_PROVIDER_unload(default_null_provider);
     OSSL_PROVIDER_unload(provider);
-    OPENSSL_CTX_free(libctx);
+    OSSL_LIB_CTX_free(libctx);
     return;
 }
 

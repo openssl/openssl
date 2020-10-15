@@ -408,7 +408,7 @@ static int ec_param_explicit_gen_to_text(BIO *out, const EC_GROUP *group,
 
 /* Print explicit parameters */
 static int ec_param_explicit_to_text(BIO *out, const EC_GROUP *group,
-                                     OPENSSL_CTX *libctx)
+                                     OSSL_LIB_CTX *libctx)
 {
     int ret = 0, tmp_nid;
     BN_CTX *ctx = NULL;
@@ -449,7 +449,7 @@ err:
 }
 
 static int ec_param_to_text(BIO *out, const EC_GROUP *group,
-                            OPENSSL_CTX *libctx)
+                            OSSL_LIB_CTX *libctx)
 {
     if (EC_GROUP_get_asn1_flag(group) & OPENSSL_EC_NAMED_CURVE) {
         const char *curve_name;

@@ -19,7 +19,7 @@
 static int process(const char *uri, const UI_METHOD *uimeth, PW_CB_DATA *uidata,
                    int expected, int criterion, OSSL_STORE_SEARCH *search,
                    int text, int noout, int recursive, int indent, BIO *out,
-                   const char *prog, OPENSSL_CTX *libctx, const char *propq);
+                   const char *prog, OSSL_LIB_CTX *libctx, const char *propq);
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP, OPT_ENGINE, OPT_OUT, OPT_PASSIN,
@@ -84,7 +84,7 @@ int storeutl_main(int argc, char *argv[])
     char *alias = NULL;
     OSSL_STORE_SEARCH *search = NULL;
     const EVP_MD *digest = NULL;
-    OPENSSL_CTX *libctx = app_get0_libctx();
+    OSSL_LIB_CTX *libctx = app_get0_libctx();
     const char *propq = app_get0_propq();
 
     while ((o = opt_next()) != OPT_EOF) {
@@ -351,7 +351,7 @@ static int indent_printf(int indent, BIO *bio, const char *format, ...)
 static int process(const char *uri, const UI_METHOD *uimeth, PW_CB_DATA *uidata,
                    int expected, int criterion, OSSL_STORE_SEARCH *search,
                    int text, int noout, int recursive, int indent, BIO *out,
-                   const char *prog, OPENSSL_CTX *libctx, const char *propq)
+                   const char *prog, OSSL_LIB_CTX *libctx, const char *propq)
 {
     OSSL_STORE_CTX *store_ctx = NULL;
     int ret = 1, items = 0;

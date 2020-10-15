@@ -29,7 +29,7 @@ typedef struct crng_test_global_st {
     RAND_POOL *crngt_pool;
 } CRNG_TEST_GLOBAL;
 
-static int crngt_get_entropy(OPENSSL_CTX *ctx, RAND_POOL *pool,
+static int crngt_get_entropy(OSSL_LIB_CTX *ctx, RAND_POOL *pool,
                              unsigned char *buf, unsigned char *md,
                              unsigned int *md_size)
 {
@@ -65,7 +65,7 @@ static void rand_crng_ossl_ctx_free(void *vcrngt_glob)
     OPENSSL_free(crngt_glob);
 }
 
-static void *rand_crng_ossl_ctx_new(OPENSSL_CTX *ctx)
+static void *rand_crng_ossl_ctx_new(OSSL_LIB_CTX *ctx)
 {
     unsigned char buf[CRNGT_BUFSIZ];
     CRNG_TEST_GLOBAL *crngt_glob = OPENSSL_zalloc(sizeof(*crngt_glob));
@@ -88,7 +88,7 @@ static void *rand_crng_ossl_ctx_new(OPENSSL_CTX *ctx)
     return NULL;
 }
 
-static const OPENSSL_CTX_METHOD rand_crng_ossl_ctx_method = {
+static const OSSL_LIB_CTX_METHOD rand_crng_ossl_ctx_method = {
     rand_crng_ossl_ctx_new,
     rand_crng_ossl_ctx_free,
 };
@@ -114,9 +114,9 @@ size_t prov_crngt_get_entropy(PROV_DRBG *drbg,
     RAND_POOL *pool;
     size_t q, r = 0, s, t = 0;
     int attempts = 3, crng_test_pass = 1;
-    OPENSSL_CTX *libctx = PROV_LIBRARY_CONTEXT_OF(drbg->provctx);
+    OSSL_LIB_CTX *libctx = PROV_LIBRARY_CONTEXT_OF(drbg->provctx);
     CRNG_TEST_GLOBAL *crngt_glob
-        = openssl_ctx_get_data(libctx, OPENSSL_CTX_RAND_CRNGT_INDEX,
+        = ossl_lib_ctx_get_data(libctx, OSSL_LIB_CTX_RAND_CRNGT_INDEX,
                                &rand_crng_ossl_ctx_method);
     OSSL_CALLBACK *stcb = NULL;
     void *stcbarg = NULL;

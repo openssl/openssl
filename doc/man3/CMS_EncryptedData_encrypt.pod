@@ -14,7 +14,7 @@ CMS_EncryptedData_encrypt_ex, CMS_EncryptedData_encrypt
                                                const unsigned char *key,
                                                size_t keylen,
                                                unsigned int flags,
-                                               OPENSSL_CTX *ctx,
+                                               OSSL_LIB_CTX *ctx,
                                                const char *propq);
 
  CMS_ContentInfo *CMS_EncryptedData_encrypt(BIO *in,

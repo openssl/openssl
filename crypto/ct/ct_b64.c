@@ -133,7 +133,7 @@ SCT *SCT_new_from_base64(unsigned char version, const char *logid_base64,
  * -1 on internal (malloc) failure
  */
 int CTLOG_new_from_base64_ex(CTLOG **ct_log, const char *pkey_base64,
-                             const char *name, OPENSSL_CTX *libctx,
+                             const char *name, OSSL_LIB_CTX *libctx,
                              const char *propq)
 {
     unsigned char *pkey_der = NULL;

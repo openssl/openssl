@@ -173,7 +173,7 @@ const char *OPENSSL_info(int type);
 int OPENSSL_issetugid(void);
 
 struct crypto_ex_data_st {
-    OPENSSL_CTX *ctx;
+    OSSL_LIB_CTX *ctx;
     STACK_OF(void) *sk;
 };
 
@@ -202,7 +202,7 @@ struct crypto_ex_data_st {
 # define CRYPTO_EX_INDEX_UI_METHOD       14
 # define CRYPTO_EX_INDEX_RAND_DRBG       15
 # define CRYPTO_EX_INDEX_DRBG            CRYPTO_EX_INDEX_RAND_DRBG
-# define CRYPTO_EX_INDEX_OPENSSL_CTX     16
+# define CRYPTO_EX_INDEX_OSSL_LIB_CTX     16
 # define CRYPTO_EX_INDEX_EVP_PKEY        17
 # define CRYPTO_EX_INDEX__COUNT          18
 
@@ -449,7 +449,7 @@ void OPENSSL_cleanup(void);
 int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings);
 int OPENSSL_atexit(void (*handler)(void));
 void OPENSSL_thread_stop(void);
-void OPENSSL_thread_stop_ex(OPENSSL_CTX *ctx);
+void OPENSSL_thread_stop_ex(OSSL_LIB_CTX *ctx);
 
 /* Low-level control of initialization */
 OPENSSL_INIT_SETTINGS *OPENSSL_INIT_new(void);
@@ -506,10 +506,10 @@ int CRYPTO_THREAD_cleanup_local(CRYPTO_THREAD_LOCAL *key);
 CRYPTO_THREAD_ID CRYPTO_THREAD_get_current_id(void);
 int CRYPTO_THREAD_compare_id(CRYPTO_THREAD_ID a, CRYPTO_THREAD_ID b);
 
-OPENSSL_CTX *OPENSSL_CTX_new(void);
-int OPENSSL_CTX_load_config(OPENSSL_CTX *ctx, const char *config_file);
-void OPENSSL_CTX_free(OPENSSL_CTX *);
-OPENSSL_CTX *OPENSSL_CTX_set0_default(OPENSSL_CTX *libctx);
+OSSL_LIB_CTX *OSSL_LIB_CTX_new(void);
+int OSSL_LIB_CTX_load_config(OSSL_LIB_CTX *ctx, const char *config_file);
+void OSSL_LIB_CTX_free(OSSL_LIB_CTX *);
+OSSL_LIB_CTX *OSSL_LIB_CTX_set0_default(OSSL_LIB_CTX *libctx);
 
 # ifdef  __cplusplus
 }

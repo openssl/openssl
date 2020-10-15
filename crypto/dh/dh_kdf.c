@@ -29,7 +29,7 @@ int dh_KDF_X9_42_asn1(unsigned char *out, size_t outlen,
                       const unsigned char *Z, size_t Zlen,
                       const char *cek_alg,
                       const unsigned char *ukm, size_t ukmlen, const EVP_MD *md,
-                      OPENSSL_CTX *libctx, const char *propq)
+                      OSSL_LIB_CTX *libctx, const char *propq)
 {
     int ret = 0;
     EVP_KDF_CTX *kctx = NULL;
@@ -69,7 +69,7 @@ int DH_KDF_X9_42(unsigned char *out, size_t outlen,
     int nid;
     const char *key_alg = NULL;
     const OSSL_PROVIDER *prov = EVP_MD_provider(md);
-    OPENSSL_CTX *libctx = ossl_provider_library_context(prov);
+    OSSL_LIB_CTX *libctx = ossl_provider_library_context(prov);
 
     nid = OBJ_obj2nid(key_oid);
     if (nid == NID_undef)

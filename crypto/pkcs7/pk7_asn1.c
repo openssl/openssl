@@ -83,7 +83,7 @@ PKCS7 *PKCS7_new(void)
     return (PKCS7 *)ASN1_item_new(ASN1_ITEM_rptr(PKCS7));
 }
 
-PKCS7 *PKCS7_new_ex(OPENSSL_CTX *libctx, const char *propq)
+PKCS7 *PKCS7_new_ex(OSSL_LIB_CTX *libctx, const char *propq)
 {
     PKCS7 *pkcs7 = PKCS7_new();
 

@@ -62,9 +62,9 @@ static void namenum_free(NAMENUM_ENTRY *n)
     OPENSSL_free(n);
 }
 
-/* OPENSSL_CTX_METHOD functions for a namemap stored in a library context */
+/* OSSL_LIB_CTX_METHOD functions for a namemap stored in a library context */
 
-static void *stored_namemap_new(OPENSSL_CTX *libctx)
+static void *stored_namemap_new(OSSL_LIB_CTX *libctx)
 {
     OSSL_NAMEMAP *namemap = ossl_namemap_new();
 
@@ -85,7 +85,7 @@ static void stored_namemap_free(void *vnamemap)
     }
 }
 
-static const OPENSSL_CTX_METHOD stored_namemap_method = {
+static const OSSL_LIB_CTX_METHOD stored_namemap_method = {
     stored_namemap_new,
     stored_namemap_free,
 };
@@ -390,10 +390,10 @@ static void get_legacy_md_names(const OBJ_NAME *on, void *arg)
  * ==========================
  */
 
-OSSL_NAMEMAP *ossl_namemap_stored(OPENSSL_CTX *libctx)
+OSSL_NAMEMAP *ossl_namemap_stored(OSSL_LIB_CTX *libctx)
 {
     OSSL_NAMEMAP *namemap =
-        openssl_ctx_get_data(libctx, OPENSSL_CTX_NAMEMAP_INDEX,
+        ossl_lib_ctx_get_data(libctx, OSSL_LIB_CTX_NAMEMAP_INDEX,
                              &stored_namemap_method);
 
 #ifndef FIPS_MODULE

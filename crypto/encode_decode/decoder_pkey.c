@@ -257,7 +257,7 @@ static void collect_decoder(OSSL_DECODER *decoder, void *arg)
 
 int ossl_decoder_ctx_setup_for_EVP_PKEY(OSSL_DECODER_CTX *ctx,
                                         EVP_PKEY **pkey, const char *keytype,
-                                        OPENSSL_CTX *libctx,
+                                        OSSL_LIB_CTX *libctx,
                                         const char *propquery)
 {
     struct collected_data_st *data = NULL;
@@ -326,7 +326,7 @@ int ossl_decoder_ctx_setup_for_EVP_PKEY(OSSL_DECODER_CTX *ctx,
 OSSL_DECODER_CTX *
 OSSL_DECODER_CTX_new_by_EVP_PKEY(EVP_PKEY **pkey,
                                  const char *input_type, const char *keytype,
-                                 OPENSSL_CTX *libctx, const char *propquery)
+                                 OSSL_LIB_CTX *libctx, const char *propquery)
 {
     OSSL_DECODER_CTX *ctx = NULL;
 

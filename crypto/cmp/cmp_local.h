@@ -28,7 +28,7 @@
  * this structure is used to store the context for CMP sessions
  */
 struct ossl_cmp_ctx_st {
-    OPENSSL_CTX *libctx;
+    OSSL_LIB_CTX *libctx;
     const char *propq;
     OSSL_CMP_log_cb_t log_cb; /* log callback for error/debug/etc. output */
     OSSL_CMP_severity log_verbosity; /* level of verbosity of log output */
@@ -747,7 +747,7 @@ int ossl_cmp_asn1_octet_string_set1(ASN1_OCTET_STRING **tgt,
 int ossl_cmp_asn1_octet_string_set1_bytes(ASN1_OCTET_STRING **tgt,
                                           const unsigned char *bytes, int len);
 STACK_OF(X509)
-    *ossl_cmp_build_cert_chain(OPENSSL_CTX *libctx, const char *propq,
+    *ossl_cmp_build_cert_chain(OSSL_LIB_CTX *libctx, const char *propq,
                                X509_STORE *store,
                                STACK_OF(X509) *certs, X509 *cert);
 

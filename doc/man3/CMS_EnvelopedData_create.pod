@@ -11,12 +11,12 @@ CMS_AuthEnvelopedData_create, CMS_AuthEnvelopedData_create_ex
  #include <openssl/cms.h>
 
  CMS_ContentInfo *
- CMS_EnvelopedData_create_ex(const EVP_CIPHER *cipher, OPENSSL_CTX *libctx,
+ CMS_EnvelopedData_create_ex(const EVP_CIPHER *cipher, OSSL_LIB_CTX *libctx,
                              const char *propq);
  CMS_ContentInfo *CMS_EnvelopedData_create(const EVP_CIPHER *cipher);
 
  CMS_ContentInfo *
- CMS_AuthEnvelopedData_create_ex(const EVP_CIPHER *cipher, OPENSSL_CTX *libctx,
+ CMS_AuthEnvelopedData_create_ex(const EVP_CIPHER *cipher, OSSL_LIB_CTX *libctx,
                                  const char *propq);
  CMS_ContentInfo *CMS_AuthEnvelopedData_create(const EVP_CIPHER *cipher);
 

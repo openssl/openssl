@@ -25,7 +25,7 @@ static int bnrand(BNRAND_FLAG flag, BIGNUM *rnd, int bits, int top, int bottom,
 {
     unsigned char *buf = NULL;
     int b, ret = 0, bit, bytes, mask;
-    OPENSSL_CTX *libctx = bn_get_lib_ctx(ctx);
+    OSSL_LIB_CTX *libctx = bn_get_lib_ctx(ctx);
 
     if (bits == 0) {
         if (top != BN_RAND_TOP_ANY || bottom != BN_RAND_BOTTOM_ANY)
@@ -254,7 +254,7 @@ int BN_generate_dsa_nonce(BIGNUM *out, const BIGNUM *range,
     unsigned char *k_bytes = NULL;
     int ret = 0;
     EVP_MD *md = NULL;
-    OPENSSL_CTX *libctx = bn_get_lib_ctx(ctx);
+    OSSL_LIB_CTX *libctx = bn_get_lib_ctx(ctx);
 
     if (mdctx == NULL)
         goto err;

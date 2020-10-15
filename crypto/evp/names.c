@@ -72,7 +72,7 @@ const EVP_CIPHER *EVP_get_cipherbyname(const char *name)
     return evp_get_cipherbyname_ex(NULL, name);
 }
 
-const EVP_CIPHER *evp_get_cipherbyname_ex(OPENSSL_CTX *libctx, const char *name)
+const EVP_CIPHER *evp_get_cipherbyname_ex(OSSL_LIB_CTX *libctx, const char *name)
 {
     const EVP_CIPHER *cp;
     OSSL_NAMEMAP *namemap;
@@ -117,7 +117,7 @@ const EVP_MD *EVP_get_digestbyname(const char *name)
     return evp_get_digestbyname_ex(NULL, name);
 }
 
-const EVP_MD *evp_get_digestbyname_ex(OPENSSL_CTX *libctx, const char *name)
+const EVP_MD *evp_get_digestbyname_ex(OSSL_LIB_CTX *libctx, const char *name)
 {
     const EVP_MD *dp;
     OSSL_NAMEMAP *namemap;

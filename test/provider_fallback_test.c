@@ -12,7 +12,7 @@
 #include <openssl/evp.h>
 #include "testutil.h"
 
-static int test_provider(OPENSSL_CTX *ctx)
+static int test_provider(OSSL_LIB_CTX *ctx)
 {
     EVP_KEYMGMT *rsameth = NULL;
     const OSSL_PROVIDER *prov = NULL;
@@ -34,16 +34,16 @@ static int test_fallback_provider(void)
 
 static int test_explicit_provider(void)
 {
-    OPENSSL_CTX *ctx = NULL;
+    OSSL_LIB_CTX *ctx = NULL;
     OSSL_PROVIDER *prov = NULL;
     int ok;
 
-    ok = TEST_ptr(ctx = OPENSSL_CTX_new())
+    ok = TEST_ptr(ctx = OSSL_LIB_CTX_new())
         && TEST_ptr(prov = OSSL_PROVIDER_load(ctx, "default"))
         && test_provider(ctx)
         && TEST_true(OSSL_PROVIDER_unload(prov));
 
-    OPENSSL_CTX_free(ctx);
+    OSSL_LIB_CTX_free(ctx);
     return ok;
 }
 

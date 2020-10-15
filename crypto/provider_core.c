@@ -54,7 +54,7 @@ struct ossl_provider_st {
     DSO *module;
     OSSL_provider_init_fn *init_function;
     STACK_OF(INFOPAIR) *parameters;
-    OPENSSL_CTX *libctx; /* The library context this instance is in */
+    OSSL_LIB_CTX *libctx; /* The library context this instance is in */
     struct provider_store_st *store; /* The store this instance belongs to */
 #ifndef FIPS_MODULE
     /*
@@ -138,7 +138,7 @@ static void provider_store_free(void *vstore)
     OPENSSL_free(store);
 }
 
-static void *provider_store_new(OPENSSL_CTX *ctx)
+static void *provider_store_new(OSSL_LIB_CTX *ctx)
 {
     struct provider_store_st *store = OPENSSL_zalloc(sizeof(*store));
     const struct predefined_providers_st *p = NULL;
@@ -179,23 +179,23 @@ static void *provider_store_new(OPENSSL_CTX *ctx)
     return store;
 }
 
-static const OPENSSL_CTX_METHOD provider_store_method = {
+static const OSSL_LIB_CTX_METHOD provider_store_method = {
     provider_store_new,
     provider_store_free,
 };
 
-static struct provider_store_st *get_provider_store(OPENSSL_CTX *libctx)
+static struct provider_store_st *get_provider_store(OSSL_LIB_CTX *libctx)
 {
     struct provider_store_st *store = NULL;
 
-    store = openssl_ctx_get_data(libctx, OPENSSL_CTX_PROVIDER_STORE_INDEX,
+    store = ossl_lib_ctx_get_data(libctx, OSSL_LIB_CTX_PROVIDER_STORE_INDEX,
                                  &provider_store_method);
     if (store == NULL)
         CRYPTOerr(CRYPTO_F_GET_PROVIDER_STORE, ERR_R_INTERNAL_ERROR);
     return store;
 }
 
-int ossl_provider_disable_fallback_loading(OPENSSL_CTX *libctx)
+int ossl_provider_disable_fallback_loading(OSSL_LIB_CTX *libctx)
 {
     struct provider_store_st *store;
 
@@ -206,7 +206,7 @@ int ossl_provider_disable_fallback_loading(OPENSSL_CTX *libctx)
     return 0;
 }
 
-OSSL_PROVIDER *ossl_provider_find(OPENSSL_CTX *libctx, const char *name,
+OSSL_PROVIDER *ossl_provider_find(OSSL_LIB_CTX *libctx, const char *name,
                                   int noconfig)
 {
     struct provider_store_st *store = NULL;
@@ -271,7 +271,7 @@ int ossl_provider_up_ref(OSSL_PROVIDER *prov)
     return ref;
 }
 
-OSSL_PROVIDER *ossl_provider_new(OPENSSL_CTX *libctx, const char *name,
+OSSL_PROVIDER *ossl_provider_new(OSSL_LIB_CTX *libctx, const char *name,
                                  OSSL_provider_init_fn *init_function,
                                  int noconfig)
 {
@@ -430,7 +430,7 @@ int ossl_provider_add_parameter(OSSL_PROVIDER *prov,
  */
 static const OSSL_DISPATCH *core_dispatch; /* Define further down */
 
-int OSSL_PROVIDER_set_default_search_path(OPENSSL_CTX *libctx, const char *path)
+int OSSL_PROVIDER_set_default_search_path(OSSL_LIB_CTX *libctx, const char *path)
 {
     struct provider_store_st *store;
     char *p = NULL;
@@ -724,7 +724,7 @@ static void provider_activate_fallbacks(struct provider_store_st *store)
     }
 }
 
-int ossl_provider_forall_loaded(OPENSSL_CTX *ctx,
+int ossl_provider_forall_loaded(OSSL_LIB_CTX *ctx,
                                 int (*cb)(OSSL_PROVIDER *provider,
                                           void *cbdata),
                                 void *cbdata)
@@ -816,7 +816,7 @@ void *ossl_provider_prov_ctx(const OSSL_PROVIDER *prov)
     return NULL;
 }
 
-OPENSSL_CTX *ossl_provider_library_context(const OSSL_PROVIDER *prov)
+OSSL_LIB_CTX *ossl_provider_library_context(const OSSL_PROVIDER *prov)
 {
     /* TODO(3.0) just: return prov->libctx; */
     return prov != NULL ? prov->libctx : NULL;

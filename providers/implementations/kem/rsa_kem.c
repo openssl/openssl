@@ -52,7 +52,7 @@ static OSSL_FUNC_kem_settable_ctx_params_fn rsakem_settable_ctx_params;
  * we use that here too.
  */
 typedef struct {
-    OPENSSL_CTX *libctx;
+    OSSL_LIB_CTX *libctx;
     RSA *rsa;
     int op;
 } PROV_RSA_CTX;

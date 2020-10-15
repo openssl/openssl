@@ -21,9 +21,9 @@
 #include "testutil.h"
 
 typedef struct {
-    OPENSSL_CTX *ctx1;
+    OSSL_LIB_CTX *ctx1;
     OSSL_PROVIDER *prov1;
-    OPENSSL_CTX *ctx2;
+    OSSL_LIB_CTX *ctx2;
     OSSL_PROVIDER *prov2;
 } FIXTURE;
 
@@ -32,8 +32,8 @@ static void tear_down(FIXTURE *fixture)
     if (fixture != NULL) {
         OSSL_PROVIDER_unload(fixture->prov1);
         OSSL_PROVIDER_unload(fixture->prov2);
-        OPENSSL_CTX_free(fixture->ctx1);
-        OPENSSL_CTX_free(fixture->ctx2);
+        OSSL_LIB_CTX_free(fixture->ctx1);
+        OSSL_LIB_CTX_free(fixture->ctx2);
         OPENSSL_free(fixture);
     }
 }
@@ -43,10 +43,10 @@ static FIXTURE *set_up(const char *testcase_name)
     FIXTURE *fixture;
 
     if (!TEST_ptr(fixture = OPENSSL_zalloc(sizeof(*fixture)))
-        || !TEST_ptr(fixture->ctx1 = OPENSSL_CTX_new())
+        || !TEST_ptr(fixture->ctx1 = OSSL_LIB_CTX_new())
         || !TEST_ptr(fixture->prov1 = OSSL_PROVIDER_load(fixture->ctx1,
                                                          "default"))
-        || !TEST_ptr(fixture->ctx2 = OPENSSL_CTX_new())
+        || !TEST_ptr(fixture->ctx2 = OSSL_LIB_CTX_new())
         || !TEST_ptr(fixture->prov2 = OSSL_PROVIDER_load(fixture->ctx2,
                                                          "default"))) {
         tear_down(fixture);

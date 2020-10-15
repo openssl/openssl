@@ -91,8 +91,8 @@ void OPENSSL_cpuid_setup(void);
 extern unsigned int OPENSSL_ia32cap_P[];
 #endif
 void OPENSSL_showfatal(const char *fmta, ...);
-int do_ex_data_init(OPENSSL_CTX *ctx);
-void crypto_cleanup_all_ex_data_int(OPENSSL_CTX *ctx);
+int do_ex_data_init(OSSL_LIB_CTX *ctx);
+void crypto_cleanup_all_ex_data_int(OSSL_LIB_CTX *ctx);
 int openssl_init_fork_handlers(void);
 int openssl_get_fork_id(void);
 
@@ -138,62 +138,62 @@ typedef struct ossl_ex_data_global_st {
 } OSSL_EX_DATA_GLOBAL;
 
 
-/* OPENSSL_CTX */
+/* OSSL_LIB_CTX */
 
-# define OPENSSL_CTX_PROVIDER_STORE_RUN_ONCE_INDEX          0
-# define OPENSSL_CTX_DEFAULT_METHOD_STORE_RUN_ONCE_INDEX    1
-# define OPENSSL_CTX_METHOD_STORE_RUN_ONCE_INDEX            2
-# define OPENSSL_CTX_MAX_RUN_ONCE                           3
+# define OSSL_LIB_CTX_PROVIDER_STORE_RUN_ONCE_INDEX          0
+# define OSSL_LIB_CTX_DEFAULT_METHOD_STORE_RUN_ONCE_INDEX    1
+# define OSSL_LIB_CTX_METHOD_STORE_RUN_ONCE_INDEX            2
+# define OSSL_LIB_CTX_MAX_RUN_ONCE                           3
 
-# define OPENSSL_CTX_EVP_METHOD_STORE_INDEX         0
-# define OPENSSL_CTX_PROVIDER_STORE_INDEX           1
-# define OPENSSL_CTX_PROPERTY_DEFN_INDEX            2
-# define OPENSSL_CTX_PROPERTY_STRING_INDEX          3
-# define OPENSSL_CTX_NAMEMAP_INDEX                  4
-# define OPENSSL_CTX_DRBG_INDEX                     5
-# define OPENSSL_CTX_DRBG_NONCE_INDEX               6
-# define OPENSSL_CTX_RAND_CRNGT_INDEX               7
-# define OPENSSL_CTX_THREAD_EVENT_HANDLER_INDEX     8
-# define OPENSSL_CTX_FIPS_PROV_INDEX                9
-# define OPENSSL_CTX_ENCODER_STORE_INDEX        10
-# define OPENSSL_CTX_DECODER_STORE_INDEX      11
-# define OPENSSL_CTX_SELF_TEST_CB_INDEX            12
-# define OPENSSL_CTX_BIO_PROV_INDEX                13
-# define OPENSSL_CTX_GLOBAL_PROPERTIES             14
-# define OPENSSL_CTX_STORE_LOADER_STORE_INDEX      15
-# define OPENSSL_CTX_MAX_INDEXES                   16
+# define OSSL_LIB_CTX_EVP_METHOD_STORE_INDEX         0
+# define OSSL_LIB_CTX_PROVIDER_STORE_INDEX           1
+# define OSSL_LIB_CTX_PROPERTY_DEFN_INDEX            2
+# define OSSL_LIB_CTX_PROPERTY_STRING_INDEX          3
+# define OSSL_LIB_CTX_NAMEMAP_INDEX                  4
+# define OSSL_LIB_CTX_DRBG_INDEX                     5
+# define OSSL_LIB_CTX_DRBG_NONCE_INDEX               6
+# define OSSL_LIB_CTX_RAND_CRNGT_INDEX               7
+# define OSSL_LIB_CTX_THREAD_EVENT_HANDLER_INDEX     8
+# define OSSL_LIB_CTX_FIPS_PROV_INDEX                9
+# define OSSL_LIB_CTX_ENCODER_STORE_INDEX        10
+# define OSSL_LIB_CTX_DECODER_STORE_INDEX      11
+# define OSSL_LIB_CTX_SELF_TEST_CB_INDEX            12
+# define OSSL_LIB_CTX_BIO_PROV_INDEX                13
+# define OSSL_LIB_CTX_GLOBAL_PROPERTIES             14
+# define OSSL_LIB_CTX_STORE_LOADER_STORE_INDEX      15
+# define OSSL_LIB_CTX_MAX_INDEXES                   16
 
-typedef struct openssl_ctx_method {
-    void *(*new_func)(OPENSSL_CTX *ctx);
+typedef struct ossl_lib_ctx_method {
+    void *(*new_func)(OSSL_LIB_CTX *ctx);
     void (*free_func)(void *);
-} OPENSSL_CTX_METHOD;
+} OSSL_LIB_CTX_METHOD;
 
-OPENSSL_CTX *openssl_ctx_get_concrete(OPENSSL_CTX *ctx);
-int openssl_ctx_is_default(OPENSSL_CTX *ctx);
-int openssl_ctx_is_global_default(OPENSSL_CTX *ctx);
+OSSL_LIB_CTX *ossl_lib_ctx_get_concrete(OSSL_LIB_CTX *ctx);
+int ossl_lib_ctx_is_default(OSSL_LIB_CTX *ctx);
+int ossl_lib_ctx_is_global_default(OSSL_LIB_CTX *ctx);
 
 /* Functions to retrieve pointers to data by index */
-void *openssl_ctx_get_data(OPENSSL_CTX *, int /* index */,
-                           const OPENSSL_CTX_METHOD * ctx);
+void *ossl_lib_ctx_get_data(OSSL_LIB_CTX *, int /* index */,
+                           const OSSL_LIB_CTX_METHOD * ctx);
 
-void openssl_ctx_default_deinit(void);
-OSSL_EX_DATA_GLOBAL *openssl_ctx_get_ex_data_global(OPENSSL_CTX *ctx);
-typedef int (openssl_ctx_run_once_fn)(OPENSSL_CTX *ctx);
-typedef void (openssl_ctx_onfree_fn)(OPENSSL_CTX *ctx);
+void ossl_lib_ctx_default_deinit(void);
+OSSL_EX_DATA_GLOBAL *ossl_lib_ctx_get_ex_data_global(OSSL_LIB_CTX *ctx);
+typedef int (ossl_lib_ctx_run_once_fn)(OSSL_LIB_CTX *ctx);
+typedef void (ossl_lib_ctx_onfree_fn)(OSSL_LIB_CTX *ctx);
 
-int openssl_ctx_run_once(OPENSSL_CTX *ctx, unsigned int idx,
-                         openssl_ctx_run_once_fn run_once_fn);
-int openssl_ctx_onfree(OPENSSL_CTX *ctx, openssl_ctx_onfree_fn onfreefn);
+int ossl_lib_ctx_run_once(OSSL_LIB_CTX *ctx, unsigned int idx,
+                         ossl_lib_ctx_run_once_fn run_once_fn);
+int ossl_lib_ctx_onfree(OSSL_LIB_CTX *ctx, ossl_lib_ctx_onfree_fn onfreefn);
 
-OPENSSL_CTX *crypto_ex_data_get_openssl_ctx(const CRYPTO_EX_DATA *ad);
-int crypto_new_ex_data_ex(OPENSSL_CTX *ctx, int class_index, void *obj,
+OSSL_LIB_CTX *crypto_ex_data_get_ossl_lib_ctx(const CRYPTO_EX_DATA *ad);
+int crypto_new_ex_data_ex(OSSL_LIB_CTX *ctx, int class_index, void *obj,
                           CRYPTO_EX_DATA *ad);
-int crypto_get_ex_new_index_ex(OPENSSL_CTX *ctx, int class_index,
+int crypto_get_ex_new_index_ex(OSSL_LIB_CTX *ctx, int class_index,
                                long argl, void *argp,
                                CRYPTO_EX_new *new_func,
                                CRYPTO_EX_dup *dup_func,
                                CRYPTO_EX_free *free_func);
-int crypto_free_ex_index_ex(OPENSSL_CTX *ctx, int class_index, int idx);
+int crypto_free_ex_index_ex(OSSL_LIB_CTX *ctx, int class_index, int idx);
 
 /* Function for simple binary search */
 

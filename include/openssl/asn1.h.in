@@ -736,12 +736,12 @@ void *ASN1_item_dup(const ASN1_ITEM *it, const void *x);
 int ASN1_item_sign_ex(const ASN1_ITEM *it, X509_ALGOR *algor1,
                       X509_ALGOR *algor2, ASN1_BIT_STRING *signature,
                       const void *data, const ASN1_OCTET_STRING *id,
-                      EVP_PKEY *pkey, const EVP_MD *md, OPENSSL_CTX *libctx,
+                      EVP_PKEY *pkey, const EVP_MD *md, OSSL_LIB_CTX *libctx,
                       const char *propq);
 int ASN1_item_verify_ex(const ASN1_ITEM *it, const X509_ALGOR *alg,
                         const ASN1_BIT_STRING *signature, const void *data,
                         const ASN1_OCTET_STRING *id, EVP_PKEY *pkey,
-                        OPENSSL_CTX *libctx, const char *propq);
+                        OSSL_LIB_CTX *libctx, const char *propq);
 
 /* ASN1 alloc/free macros for when a type is only used internally */
 
@@ -912,7 +912,7 @@ int SMIME_write_ASN1(BIO *bio, ASN1_VALUE *val, BIO *data, int flags,
 int SMIME_write_ASN1_ex(BIO *bio, ASN1_VALUE *val, BIO *data, int flags,
                         int ctype_nid, int econt_nid,
                         STACK_OF(X509_ALGOR) *mdalgs, const ASN1_ITEM *it,
-                        OPENSSL_CTX *libctx, const char *propq);
+                        OSSL_LIB_CTX *libctx, const char *propq);
 ASN1_VALUE *SMIME_read_ASN1(BIO *bio, BIO **bcont, const ASN1_ITEM *it);
 ASN1_VALUE *SMIME_read_ASN1_ex(BIO *bio, BIO **bcont, const ASN1_ITEM *it,
                                ASN1_VALUE **x);

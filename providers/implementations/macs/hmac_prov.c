@@ -256,7 +256,7 @@ static const OSSL_PARAM *hmac_settable_ctx_params(ossl_unused void *provctx)
 static int hmac_set_ctx_params(void *vmacctx, const OSSL_PARAM params[])
 {
     struct hmac_data_st *macctx = vmacctx;
-    OPENSSL_CTX *ctx = PROV_LIBRARY_CONTEXT_OF(macctx->provctx);
+    OSSL_LIB_CTX *ctx = PROV_LIBRARY_CONTEXT_OF(macctx->provctx);
     const OSSL_PARAM *p;
 
     if (!ossl_prov_digest_load_from_params(&macctx->digest, params, ctx))

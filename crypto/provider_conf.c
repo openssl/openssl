@@ -70,7 +70,7 @@ static int provider_conf_params(OSSL_PROVIDER *prov,
     return ok;
 }
 
-static int provider_conf_load(OPENSSL_CTX *libctx, const char *name,
+static int provider_conf_load(OSSL_LIB_CTX *libctx, const char *name,
                               const char *value, const CONF *cnf)
 {
     int i;

@@ -5439,7 +5439,7 @@ static void sc_muladd(uint8_t *s, const uint8_t *a, const uint8_t *b,
 
 int ED25519_sign(uint8_t *out_sig, const uint8_t *message, size_t message_len,
                  const uint8_t public_key[32], const uint8_t private_key[32],
-                 OPENSSL_CTX *libctx, const char *propq)
+                 OSSL_LIB_CTX *libctx, const char *propq)
 {
     uint8_t az[SHA512_DIGEST_LENGTH];
     uint8_t nonce[SHA512_DIGEST_LENGTH];
@@ -5495,7 +5495,7 @@ static const char allzeroes[15];
 
 int ED25519_verify(const uint8_t *message, size_t message_len,
                    const uint8_t signature[64], const uint8_t public_key[32],
-                   OPENSSL_CTX *libctx, const char *propq)
+                   OSSL_LIB_CTX *libctx, const char *propq)
 {
     int i;
     ge_p3 A;
@@ -5577,7 +5577,7 @@ err:
     return res;
 }
 
-int ED25519_public_from_private(OPENSSL_CTX *ctx, uint8_t out_public_key[32],
+int ED25519_public_from_private(OSSL_LIB_CTX *ctx, uint8_t out_public_key[32],
                                 const uint8_t private_key[32], const char *propq)
 {
     uint8_t az[SHA512_DIGEST_LENGTH];

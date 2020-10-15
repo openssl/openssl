@@ -567,7 +567,7 @@ int common_get_params(void *key, OSSL_PARAM params[], int sm2)
     const EC_GROUP *ecg = NULL;
     OSSL_PARAM *p;
     unsigned char *pub_key = NULL, *genbuf = NULL;
-    OPENSSL_CTX *libctx;
+    OSSL_LIB_CTX *libctx;
     const char *propq;
     BN_CTX *bnctx = NULL;
 
@@ -817,7 +817,7 @@ int ec_validate(void *keydata, int selection)
 }
 
 struct ec_gen_ctx {
-    OPENSSL_CTX *libctx;
+    OSSL_LIB_CTX *libctx;
     char *group_name;
     char *encoding;
     char *field_type;
@@ -831,7 +831,7 @@ struct ec_gen_ctx {
 
 static void *ec_gen_init(void *provctx, int selection)
 {
-    OPENSSL_CTX *libctx = PROV_LIBRARY_CONTEXT_OF(provctx);
+    OSSL_LIB_CTX *libctx = PROV_LIBRARY_CONTEXT_OF(provctx);
     struct ec_gen_ctx *gctx = NULL;
 
     if (!ossl_prov_is_running() || (selection & (EC_POSSIBLE_SELECTIONS)) == 0)

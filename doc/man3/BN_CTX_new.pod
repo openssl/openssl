@@ -9,10 +9,10 @@ BN_CTX_new_ex, BN_CTX_new, BN_CTX_secure_new_ex, BN_CTX_secure_new, BN_CTX_free
 
  #include <openssl/bn.h>
 
- BN_CTX *BN_CTX_new_ex(OPENSSL_CTX *ctx);
+ BN_CTX *BN_CTX_new_ex(OSSL_LIB_CTX *ctx);
  BN_CTX *BN_CTX_new(void);
 
- BN_CTX *BN_CTX_secure_new_ex(OPENSSL_CTX *ctx);
+ BN_CTX *BN_CTX_secure_new_ex(OSSL_LIB_CTX *ctx);
  BN_CTX *BN_CTX_secure_new(void);
 
  void BN_CTX_free(BN_CTX *c);

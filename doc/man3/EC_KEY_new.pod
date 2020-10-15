@@ -20,12 +20,12 @@ EC_KEY objects
 
  #include <openssl/ec.h>
 
- EC_KEY *EC_KEY_new_ex(OPENSSL_CTX *ctx, const char *propq);
+ EC_KEY *EC_KEY_new_ex(OSSL_LIB_CTX *ctx, const char *propq);
  EC_KEY *EC_KEY_new(void);
  int EC_KEY_get_flags(const EC_KEY *key);
  void EC_KEY_set_flags(EC_KEY *key, int flags);
  void EC_KEY_clear_flags(EC_KEY *key, int flags);
- EC_KEY *EC_KEY_new_by_curve_name_ex(OPENSSL_CTX *ctx, const char *propq,
+ EC_KEY *EC_KEY_new_by_curve_name_ex(OSSL_LIB_CTX *ctx, const char *propq,
                                      int nid);
  EC_KEY *EC_KEY_new_by_curve_name(int nid);
  void EC_KEY_free(EC_KEY *key);
@@ -68,7 +68,7 @@ An EC_KEY represents a public key and, optionally, the associated private
 key.
 A new EC_KEY with no associated curve can be constructed by calling
 EC_KEY_new_ex() and specifying the associated library context in I<ctx>
-(see L<OPENSSL_CTX(3)>) and property query string I<propq>.
+(see L<OSSL_LIB_CTX(3)>) and property query string I<propq>.
 The I<ctx> parameter may be NULL in which case the default library context is
 used.
 The reference count for the newly created EC_KEY is initially
@@ -81,7 +81,7 @@ context is always used.
 
 Alternatively a new EC_KEY can be constructed by calling
 EC_KEY_new_by_curve_name_ex() and supplying the nid of the associated
-curve, the library context to be used I<ctx> (see L<OPENSSL_CTX(3)>) and any
+curve, the library context to be used I<ctx> (see L<OSSL_LIB_CTX(3)>) and any
 property query string I<propq>.
 The I<ctx> parameter may be NULL in which case the default library context is
 used. The I<propq> value may also be NULL.
@@ -209,7 +209,7 @@ L<EC_GROUP_copy(3)>, L<EC_POINT_new(3)>,
 L<EC_POINT_add(3)>,
 L<EC_GFp_simple_method(3)>,
 L<d2i_ECPKParameters(3)>,
-L<OPENSSL_CTX(3)>
+L<OSSL_LIB_CTX(3)>
 
 =head1 HISTORY
 

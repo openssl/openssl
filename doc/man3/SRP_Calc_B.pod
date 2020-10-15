@@ -22,22 +22,22 @@ SRP_Calc_client_key
  BIGNUM *SRP_Calc_server_key(const BIGNUM *A, const BIGNUM *v, const BIGNUM *u,
                              const BIGNUM *b, const BIGNUM *N);
  BIGNUM *SRP_Calc_B_ex(const BIGNUM *b, const BIGNUM *N, const BIGNUM *g,
-                       const BIGNUM *v, OPENSSL_CTX *libctx, const char *propq);
+                       const BIGNUM *v, OSSL_LIB_CTX *libctx, const char *propq);
  BIGNUM *SRP_Calc_B(const BIGNUM *b, const BIGNUM *N, const BIGNUM *g,
                    const BIGNUM *v);
 
  BIGNUM *SRP_Calc_u_ex(const BIGNUM *A, const BIGNUM *B, const BIGNUM *N,
-                       OPENSSL_CTX *libctx, const char *propq);
+                       OSSL_LIB_CTX *libctx, const char *propq);
  BIGNUM *SRP_Calc_u(const BIGNUM *A, const BIGNUM *B, const BIGNUM *N);
 
  /* client side .... */
  BIGNUM *SRP_Calc_client_key_ex(const BIGNUM *N, const BIGNUM *B, const BIGNUM *g,
                              const BIGNUM *x, const BIGNUM *a, const BIGNUM *u,
-                             OPENSSL_CTX *libctx, const char *propq);
+                             OSSL_LIB_CTX *libctx, const char *propq);
  BIGNUM *SRP_Calc_client_key(const BIGNUM *N, const BIGNUM *B, const BIGNUM *g,
                              const BIGNUM *x, const BIGNUM *a, const BIGNUM *u);
  BIGNUM *SRP_Calc_x_ex(const BIGNUM *s, const char *user, const char *pass,
-                       OPENSSL_CTX *libctx, const char *propq);
+                       OSSL_LIB_CTX *libctx, const char *propq);
  BIGNUM *SRP_Calc_x(const BIGNUM *s, const char *user, const char *pass);
  BIGNUM *SRP_Calc_A(const BIGNUM *a, const BIGNUM *N, const BIGNUM *g);
 

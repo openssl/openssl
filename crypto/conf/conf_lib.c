@@ -178,7 +178,7 @@ int CONF_dump_bio(LHASH_OF(CONF_VALUE) *conf, BIO *out)
  * the "CONF classic" functions, for consistency.
  */
 
-CONF *NCONF_new_ex(OPENSSL_CTX *libctx, CONF_METHOD *meth)
+CONF *NCONF_new_ex(OSSL_LIB_CTX *libctx, CONF_METHOD *meth)
 {
     CONF *ret;
 

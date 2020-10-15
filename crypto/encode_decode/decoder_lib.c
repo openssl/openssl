@@ -217,7 +217,7 @@ int OSSL_DECODER_CTX_add_decoder(OSSL_DECODER_CTX *ctx, OSSL_DECODER *decoder)
 }
 
 int OSSL_DECODER_CTX_add_extra(OSSL_DECODER_CTX *ctx,
-                               OPENSSL_CTX *libctx, const char *propq)
+                               OSSL_LIB_CTX *libctx, const char *propq)
 {
     /*
      * This function goes through existing decoder methods in

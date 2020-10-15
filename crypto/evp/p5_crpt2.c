@@ -22,7 +22,7 @@
 int pkcs5_pbkdf2_hmac_ex(const char *pass, int passlen,
                          const unsigned char *salt, int saltlen, int iter,
                          const EVP_MD *digest, int keylen, unsigned char *out,
-                         OPENSSL_CTX *libctx, const char *propq)
+                         OSSL_LIB_CTX *libctx, const char *propq)
 {
     const char *empty = "";
     int rv = 1, mode = 1;

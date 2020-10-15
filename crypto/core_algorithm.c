@@ -14,7 +14,7 @@
 #include "internal/provider.h"
 
 struct algorithm_data_st {
-    OPENSSL_CTX *libctx;
+    OSSL_LIB_CTX *libctx;
     int operation_id;            /* May be zero for finding them all */
     int (*pre)(OSSL_PROVIDER *, int operation_id, void *data, int *result);
     void (*fn)(OSSL_PROVIDER *, const OSSL_ALGORITHM *, int no_store,
@@ -85,7 +85,7 @@ static int algorithm_do_this(OSSL_PROVIDER *provider, void *cbdata)
     return ok;
 }
 
-void ossl_algorithm_do_all(OPENSSL_CTX *libctx, int operation_id,
+void ossl_algorithm_do_all(OSSL_LIB_CTX *libctx, int operation_id,
                            OSSL_PROVIDER *provider,
                            int (*pre)(OSSL_PROVIDER *, int operation_id,
                                       void *data, int *result),

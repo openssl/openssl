@@ -74,20 +74,20 @@ static void loader_store_free(void *vstore)
     ossl_method_store_free(vstore);
 }
 
-static void *loader_store_new(OPENSSL_CTX *ctx)
+static void *loader_store_new(OSSL_LIB_CTX *ctx)
 {
     return ossl_method_store_new(ctx);
 }
 
 
-static const OPENSSL_CTX_METHOD loader_store_method = {
+static const OSSL_LIB_CTX_METHOD loader_store_method = {
     loader_store_new,
     loader_store_free,
 };
 
 /* Data to be passed through ossl_method_construct() */
 struct loader_data_st {
-    OPENSSL_CTX *libctx;
+    OSSL_LIB_CTX *libctx;
     OSSL_METHOD_CONSTRUCT_METHOD *mcm;
     int scheme_id;               /* For get_loader_from_store() */
     const char *scheme;          /* For get_loader_from_store() */
@@ -100,7 +100,7 @@ struct loader_data_st {
  */
 
 /* Temporary loader method store, constructor and destructor */
-static void *alloc_tmp_loader_store(OPENSSL_CTX *ctx)
+static void *alloc_tmp_loader_store(OSSL_LIB_CTX *ctx)
 {
     return ossl_method_store_new(ctx);
 }
@@ -112,14 +112,14 @@ static void *alloc_tmp_loader_store(OPENSSL_CTX *ctx)
 }
 
 /* Get the permanent loader store */
-static OSSL_METHOD_STORE *get_loader_store(OPENSSL_CTX *libctx)
+static OSSL_METHOD_STORE *get_loader_store(OSSL_LIB_CTX *libctx)
 {
-    return openssl_ctx_get_data(libctx, OPENSSL_CTX_STORE_LOADER_STORE_INDEX,
+    return ossl_lib_ctx_get_data(libctx, OSSL_LIB_CTX_STORE_LOADER_STORE_INDEX,
                                 &loader_store_method);
 }
 
 /* Get loader methods from a store, or put one in */
-static void *get_loader_from_store(OPENSSL_CTX *libctx, void *store,
+static void *get_loader_from_store(OSSL_LIB_CTX *libctx, void *store,
                                    void *data)
 {
     struct loader_data_st *methdata = data;
@@ -141,7 +141,7 @@ static void *get_loader_from_store(OPENSSL_CTX *libctx, void *store,
     return method;
 }
 
-static int put_loader_in_store(OPENSSL_CTX *libctx, void *store,
+static int put_loader_in_store(OSSL_LIB_CTX *libctx, void *store,
                                void *method, const OSSL_PROVIDER *prov,
                                int operation_id, const char *scheme,
                                const char *propdef, void *unused)
@@ -235,7 +235,7 @@ static void *construct_loader(const OSSL_ALGORITHM *algodef,
      * namemap entry, this is it.  Should the scheme already exist there, we
      * know that ossl_namemap_add() will return its corresponding number.
      */
-    OPENSSL_CTX *libctx = ossl_provider_library_context(prov);
+    OSSL_LIB_CTX *libctx = ossl_provider_library_context(prov);
     OSSL_NAMEMAP *namemap = ossl_namemap_stored(libctx);
     const char *scheme = algodef->algorithm_names;
     int id = ossl_namemap_add_name(namemap, 0, scheme);
@@ -254,7 +254,7 @@ static void destruct_loader(void *method, void *data)
 }
 
 /* Fetching support.  Can fetch by numeric identity or by scheme */
-static OSSL_STORE_LOADER *inner_loader_fetch(OPENSSL_CTX *libctx,
+static OSSL_STORE_LOADER *inner_loader_fetch(OSSL_LIB_CTX *libctx,
                                              int id, const char *scheme,
                                              const char *properties)
 {
@@ -311,13 +311,13 @@ static OSSL_STORE_LOADER *inner_loader_fetch(OPENSSL_CTX *libctx,
 }
 
 OSSL_STORE_LOADER *OSSL_STORE_LOADER_fetch(const char *scheme,
-                                           OPENSSL_CTX *libctx,
+                                           OSSL_LIB_CTX *libctx,
                                            const char *properties)
 {
     return inner_loader_fetch(libctx, 0, scheme, properties);
 }
 
-OSSL_STORE_LOADER *ossl_store_loader_fetch_by_number(OPENSSL_CTX *libctx,
+OSSL_STORE_LOADER *ossl_store_loader_fetch_by_number(OSSL_LIB_CTX *libctx,
                                                      int scheme_id,
                                                      const char *properties)
 {
@@ -361,7 +361,7 @@ int OSSL_STORE_LOADER_number(const OSSL_STORE_LOADER *loader)
 int OSSL_STORE_LOADER_is_a(const OSSL_STORE_LOADER *loader, const char *name)
 {
     if (loader->prov != NULL) {
-        OPENSSL_CTX *libctx = ossl_provider_library_context(loader->prov);
+        OSSL_LIB_CTX *libctx = ossl_provider_library_context(loader->prov);
         OSSL_NAMEMAP *namemap = ossl_namemap_stored(libctx);
 
         return ossl_namemap_name2num(namemap, name) == loader->scheme_id;
@@ -379,7 +379,7 @@ static void loader_do_one(OSSL_PROVIDER *provider,
                           int no_store, void *vdata)
 {
     struct loader_do_all_data_st *data = vdata;
-    OPENSSL_CTX *libctx = ossl_provider_library_context(provider);
+    OSSL_LIB_CTX *libctx = ossl_provider_library_context(provider);
     OSSL_NAMEMAP *namemap = ossl_namemap_stored(libctx);
     const char *name = algodef->algorithm_names;
     int id = ossl_namemap_add_name(namemap, 0, name);
@@ -395,7 +395,7 @@ static void loader_do_one(OSSL_PROVIDER *provider,
     }
 }
 
-void OSSL_STORE_LOADER_do_all_provided(OPENSSL_CTX *libctx,
+void OSSL_STORE_LOADER_do_all_provided(OSSL_LIB_CTX *libctx,
                                        void (*fn)(OSSL_STORE_LOADER *loader,
                                                   void *arg),
                                        void *arg)
@@ -417,7 +417,7 @@ void OSSL_STORE_LOADER_names_do_all(const OSSL_STORE_LOADER *loader,
         return;
 
     if (loader->prov != NULL) {
-        OPENSSL_CTX *libctx = ossl_provider_library_context(loader->prov);
+        OSSL_LIB_CTX *libctx = ossl_provider_library_context(loader->prov);
         OSSL_NAMEMAP *namemap = ossl_namemap_stored(libctx);
 
         ossl_namemap_doall_names(namemap, loader->scheme_id, fn, data);

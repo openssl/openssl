@@ -432,7 +432,7 @@ const PKCS7_CTX *pkcs7_get0_ctx(const PKCS7 *p7)
     return p7 != NULL ? &p7->ctx : NULL;
 }
 
-OPENSSL_CTX *pkcs7_ctx_get0_libctx(const PKCS7_CTX *ctx)
+OSSL_LIB_CTX *pkcs7_ctx_get0_libctx(const PKCS7_CTX *ctx)
 {
     return ctx != NULL ? ctx->libctx : NULL;
 }

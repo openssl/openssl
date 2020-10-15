@@ -172,7 +172,7 @@ static int get_legacy_alg_type_from_keymgmt(const EVP_KEYMGMT *keymgmt)
 }
 #endif /* FIPS_MODULE */
 
-static EVP_PKEY_CTX *int_ctx_new(OPENSSL_CTX *libctx,
+static EVP_PKEY_CTX *int_ctx_new(OSSL_LIB_CTX *libctx,
                                  EVP_PKEY *pkey, ENGINE *e,
                                  const char *keytype, const char *propquery,
                                  int id)
@@ -338,14 +338,14 @@ static EVP_PKEY_CTX *int_ctx_new(OPENSSL_CTX *libctx,
 
 /*- All methods below can also be used in FIPS_MODULE */
 
-EVP_PKEY_CTX *EVP_PKEY_CTX_new_from_name(OPENSSL_CTX *libctx,
+EVP_PKEY_CTX *EVP_PKEY_CTX_new_from_name(OSSL_LIB_CTX *libctx,
                                          const char *name,
                                          const char *propquery)
 {
     return int_ctx_new(libctx, NULL, NULL, name, propquery, -1);
 }
 
-EVP_PKEY_CTX *EVP_PKEY_CTX_new_from_pkey(OPENSSL_CTX *libctx, EVP_PKEY *pkey,
+EVP_PKEY_CTX *EVP_PKEY_CTX_new_from_pkey(OSSL_LIB_CTX *libctx, EVP_PKEY *pkey,
                                          const char *propquery)
 {
     return int_ctx_new(libctx, pkey, NULL, NULL, propquery, -1);
@@ -1762,7 +1762,7 @@ int evp_pkey_ctx_use_cached_data(EVP_PKEY_CTX *ctx)
     return ret;
 }
 
-OPENSSL_CTX *EVP_PKEY_CTX_get0_libctx(EVP_PKEY_CTX *ctx)
+OSSL_LIB_CTX *EVP_PKEY_CTX_get0_libctx(EVP_PKEY_CTX *ctx)
 {
     return ctx->libctx;
 }

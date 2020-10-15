@@ -606,7 +606,7 @@ __owur static int parse_expected_client_sign_hash(SSL_TEST_CTX *test_ctx,
 }
 
 __owur static int parse_expected_ca_names(STACK_OF(X509_NAME) **pnames,
-                                          const char *value, OPENSSL_CTX *libctx)
+                                          const char *value, OSSL_LIB_CTX *libctx)
 {
     if (value == NULL)
         return 0;
@@ -718,7 +718,7 @@ static const ssl_test_server_option ssl_test_server_options[] = {
     { "SessionTicketAppData", &parse_server_session_ticket_app_data },
 };
 
-SSL_TEST_CTX *SSL_TEST_CTX_new(OPENSSL_CTX *libctx)
+SSL_TEST_CTX *SSL_TEST_CTX_new(OSSL_LIB_CTX *libctx)
 {
     SSL_TEST_CTX *ret;
 
@@ -837,7 +837,7 @@ static int parse_server_options(SSL_TEST_SERVER_CONF *server, const CONF *conf,
 }
 
 SSL_TEST_CTX *SSL_TEST_CTX_create(const CONF *conf, const char *test_section,
-                                  OPENSSL_CTX *libctx)
+                                  OSSL_LIB_CTX *libctx)
 {
     STACK_OF(CONF_VALUE) *sk_conf = NULL;
     SSL_TEST_CTX *ctx = NULL;

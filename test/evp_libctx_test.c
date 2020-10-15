@@ -32,7 +32,7 @@
 #include "crypto/bn_dh.h"   /* _bignum_ffdhe2048_p */
 #include "../e_os.h"        /* strcasecmp */
 
-static OPENSSL_CTX *libctx = NULL;
+static OSSL_LIB_CTX *libctx = NULL;
 static OSSL_PROVIDER *nullprov = NULL;
 static OSSL_PROVIDER *libprov = NULL;
 static STACK_OF(OPENSSL_CSTRING) *cipher_names = NULL;
@@ -643,11 +643,11 @@ int setup_tests(void)
     if (!TEST_ptr(nullprov))
         return 0;
 
-    libctx = OPENSSL_CTX_new();
+    libctx = OSSL_LIB_CTX_new();
     if (!TEST_ptr(libctx))
         return 0;
     if (config_file != NULL
-        && !TEST_true(OPENSSL_CTX_load_config(libctx, config_file)))
+        && !TEST_true(OSSL_LIB_CTX_load_config(libctx, config_file)))
         return 0;
 
     libprov = OSSL_PROVIDER_load(libctx, prov_name);
@@ -681,6 +681,6 @@ void cleanup_tests(void)
 {
     sk_OPENSSL_CSTRING_free(cipher_names);
     OSSL_PROVIDER_unload(libprov);
-    OPENSSL_CTX_free(libctx);
+    OSSL_LIB_CTX_free(libctx);
     OSSL_PROVIDER_unload(nullprov);
 }

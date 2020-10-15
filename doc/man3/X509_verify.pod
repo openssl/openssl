@@ -14,7 +14,7 @@ verify certificate, certificate request, or CRL signature
  int X509_verify(X509 *x, EVP_PKEY *pkey);
  int X509_self_signed(X509 *cert, int verify_signature);
 
- int X509_REQ_verify_ex(X509_REQ *a, EVP_PKEY *pkey, OPENSSL_CTX *libctx,
+ int X509_REQ_verify_ex(X509_REQ *a, EVP_PKEY *pkey, OSSL_LIB_CTX *libctx,
                         const char *propq);
  int X509_REQ_verify(X509_REQ *a, EVP_PKEY *r);
  int X509_CRL_verify(X509_CRL *a, EVP_PKEY *r);
@@ -61,7 +61,7 @@ L<X509_NAME_get_index_by_NID(3)>,
 L<X509_NAME_print_ex(3)>,
 L<X509V3_get_d2i(3)>,
 L<X509_verify_cert(3)>,
-L<OPENSSL_CTX(3)>
+L<OSSL_LIB_CTX(3)>
 
 =head1 HISTORY
 

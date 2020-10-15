@@ -36,7 +36,7 @@ typedef enum {
 /* Setup EVP_PKEY using public, private or generation */
 static int ecx_key_op(EVP_PKEY *pkey, int id, const X509_ALGOR *palg,
                       const unsigned char *p, int plen, ecx_key_op_t op,
-                      OPENSSL_CTX *libctx, const char *propq)
+                      OSSL_LIB_CTX *libctx, const char *propq)
 {
     ECX_KEY *key = NULL;
     unsigned char *privkey, *pubkey;
@@ -150,7 +150,7 @@ static int ecx_pub_cmp(const EVP_PKEY *a, const EVP_PKEY *b)
 }
 
 static int ecx_priv_decode_ex(EVP_PKEY *pkey, const PKCS8_PRIV_KEY_INFO *p8,
-                              OPENSSL_CTX *libctx, const char *propq)
+                              OSSL_LIB_CTX *libctx, const char *propq)
 {
     const unsigned char *p;
     int plen;
@@ -396,7 +396,7 @@ static size_t ecx_pkey_dirty_cnt(const EVP_PKEY *pkey)
 }
 
 static int ecx_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
-                              EVP_KEYMGMT *to_keymgmt, OPENSSL_CTX *libctx,
+                              EVP_KEYMGMT *to_keymgmt, OSSL_LIB_CTX *libctx,
                               const char *propq)
 {
     const ECX_KEY *key = from->pkey.ecx;

@@ -10,7 +10,7 @@ evp_generic_fetch, evp_generic_fetch_by_number
  /* Only for EVP source */
  #include "evp_local.h"
 
- void *evp_generic_fetch(OPENSSL_CTX *libctx, int operation_id,
+ void *evp_generic_fetch(OSSL_LIB_CTX *libctx, int operation_id,
                          const char *name, const char *properties,
                          void *(*new_method)(int name_id,
                                              const OSSL_DISPATCH *fns,
@@ -20,7 +20,7 @@ evp_generic_fetch, evp_generic_fetch_by_number
                          int (*up_ref_method)(void *),
                          void (*free_method)(void *));
 
- void *evp_generic_fetch_by_number(OPENSSL_CTX *ctx, int operation_id,
+ void *evp_generic_fetch_by_number(OSSL_LIB_CTX *ctx, int operation_id,
                                    int name_id, const char *properties,
                                    void *(*new_method)(int name_id,
                                                        const OSSL_DISPATCH *fns,
@@ -182,7 +182,7 @@ And here's the implementation of the FOO method fetcher:
         EVP_FOO_meth_free(vfoo);
     }
 
-    EVP_FOO *EVP_FOO_fetch(OPENSSL_CTX *ctx,
+    EVP_FOO *EVP_FOO_fetch(OSSL_LIB_CTX *ctx,
                            const char *name,
                            const char *properties)
     {

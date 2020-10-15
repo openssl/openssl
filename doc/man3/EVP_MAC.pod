@@ -18,7 +18,7 @@ EVP_MAC_do_all_provided - EVP MAC routines
  typedef struct evp_mac_st EVP_MAC;
  typedef struct evp_mac_ctx_st EVP_MAC_CTX;
 
- EVP_MAC *EVP_MAC_fetch(OPENSSL_CTX *libctx, const char *algorithm,
+ EVP_MAC *EVP_MAC_fetch(OSSL_LIB_CTX *libctx, const char *algorithm,
                         const char *properties);
  int EVP_MAC_up_ref(EVP_MAC *mac);
  void EVP_MAC_free(EVP_MAC *mac);
@@ -48,7 +48,7 @@ EVP_MAC_do_all_provided - EVP MAC routines
  const OSSL_PARAM *EVP_MAC_gettable_ctx_params(const EVP_MAC *mac);
  const OSSL_PARAM *EVP_MAC_settable_ctx_params(const EVP_MAC *mac);
 
- void EVP_MAC_do_all_provided(OPENSSL_CTX *libctx,
+ void EVP_MAC_do_all_provided(OSSL_LIB_CTX *libctx,
                               void (*fn)(EVP_MAC *mac, void *arg),
                               void *arg);
 

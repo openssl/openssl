@@ -31,7 +31,7 @@ typedef struct prov_siv_ctx_st {
     EVP_CIPHER *ctr;        /* These are fetched - so we need to free them */
     EVP_CIPHER *cbc;
     const PROV_CIPHER_HW_AES_SIV *hw;
-    OPENSSL_CTX *libctx;
+    OSSL_LIB_CTX *libctx;
 } PROV_AES_SIV_CTX;
 
 const PROV_CIPHER_HW_AES_SIV *ossl_prov_cipher_hw_aes_siv(size_t keybits);

@@ -83,7 +83,7 @@ int EVP_MD_CTX_reset(EVP_MD_CTX *ctx)
 
 #ifndef FIPS_MODULE
 EVP_MD_CTX *evp_md_ctx_new_ex(EVP_PKEY *pkey, const ASN1_OCTET_STRING *id,
-                              OPENSSL_CTX *libctx, const char *propq)
+                              OSSL_LIB_CTX *libctx, const char *propq)
 {
     EVP_MD_CTX *ctx;
     EVP_PKEY_CTX *pctx = NULL;
@@ -954,7 +954,7 @@ static void evp_md_free(void *md)
     EVP_MD_free(md);
 }
 
-EVP_MD *EVP_MD_fetch(OPENSSL_CTX *ctx, const char *algorithm,
+EVP_MD *EVP_MD_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
                      const char *properties)
 {
     EVP_MD *md =
@@ -987,7 +987,7 @@ void EVP_MD_free(EVP_MD *md)
     OPENSSL_free(md);
 }
 
-void EVP_MD_do_all_provided(OPENSSL_CTX *libctx,
+void EVP_MD_do_all_provided(OSSL_LIB_CTX *libctx,
                             void (*fn)(EVP_MD *mac, void *arg),
                             void *arg)
 {

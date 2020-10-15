@@ -67,7 +67,7 @@ OSSL_CMP_CTX_set1_senderNonce
 
  #include <openssl/cmp.h>
 
- OSSL_CMP_CTX *OSSL_CMP_CTX_new(OPENSSL_CTX *libctx, const char *propq);
+ OSSL_CMP_CTX *OSSL_CMP_CTX_new(OSSL_LIB_CTX *libctx, const char *propq);
  void OSSL_CMP_CTX_free(OSSL_CMP_CTX *ctx);
  int OSSL_CMP_CTX_reinit(OSSL_CMP_CTX *ctx);
  int OSSL_CMP_CTX_set_option(OSSL_CMP_CTX *ctx, int opt, int val);

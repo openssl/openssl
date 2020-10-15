@@ -353,7 +353,7 @@ int OSSL_CRMF_MSG_push0_extension(OSSL_CRMF_MSG *crm,
 static int create_popo_signature(OSSL_CRMF_POPOSIGNINGKEY *ps,
                                  const OSSL_CRMF_CERTREQUEST *cr,
                                  EVP_PKEY *pkey, const EVP_MD *digest,
-                                 OPENSSL_CTX *libctx, const char *propq)
+                                 OSSL_LIB_CTX *libctx, const char *propq)
 {
     if (ps == NULL || cr == NULL || pkey == NULL) {
         CRMFerr(0, CRMF_R_NULL_ARGUMENT);
@@ -373,7 +373,7 @@ static int create_popo_signature(OSSL_CRMF_POPOSIGNINGKEY *ps,
 
 int OSSL_CRMF_MSG_create_popo(int meth, OSSL_CRMF_MSG *crm,
                               EVP_PKEY *pkey, const EVP_MD *digest,
-                              OPENSSL_CTX *libctx, const char *propq)
+                              OSSL_LIB_CTX *libctx, const char *propq)
 {
     OSSL_CRMF_POPO *pp = NULL;
     ASN1_INTEGER *tag = NULL;
@@ -441,7 +441,7 @@ int OSSL_CRMF_MSG_create_popo(int meth, OSSL_CRMF_MSG *crm,
 /* verifies the Proof-of-Possession of the request with the given rid in reqs */
 int OSSL_CRMF_MSGS_verify_popo(const OSSL_CRMF_MSGS *reqs,
                                int rid, int acceptRAVerified,
-                               OPENSSL_CTX *libctx, const char *propq)
+                               OSSL_LIB_CTX *libctx, const char *propq)
 {
     OSSL_CRMF_MSG *req = NULL;
     X509_PUBKEY *pubkey = NULL;
@@ -587,7 +587,7 @@ int OSSL_CRMF_CERTTEMPLATE_fill(OSSL_CRMF_CERTTEMPLATE *tmpl,
  */
 X509
 *OSSL_CRMF_ENCRYPTEDVALUE_get1_encCert(const OSSL_CRMF_ENCRYPTEDVALUE *ecert,
-                                       OPENSSL_CTX *libctx, const char *propq,
+                                       OSSL_LIB_CTX *libctx, const char *propq,
                                        EVP_PKEY *pkey)
 {
     X509 *cert = NULL; /* decrypted certificate */

@@ -12,8 +12,8 @@ RAND_pseudo_bytes - generate random data
  int RAND_bytes(unsigned char *buf, int num);
  int RAND_priv_bytes(unsigned char *buf, int num);
 
- int RAND_bytes_ex(OPENSSL_CTX *ctx, unsigned char *buf, int num);
- int RAND_priv_bytes_ex(OPENSSL_CTX *ctx, unsigned char *buf, int num);
+ int RAND_bytes_ex(OSSL_LIB_CTX *ctx, unsigned char *buf, int num);
+ int RAND_priv_bytes_ex(OSSL_LIB_CTX *ctx, unsigned char *buf, int num);
 
 Deprecated since OpenSSL 1.1.0, can be hidden entirely by defining
 B<OPENSSL_API_COMPAT> with a suitable version value, see
@@ -37,7 +37,7 @@ RAND_bytes_ex() and RAND_priv_bytes_ex() are the same as RAND_bytes() and
 RAND_priv_bytes() except that they both take an additional I<ctx> parameter.
 The DRBG used for the operation is the public or private DRBG associated with
 the specified I<ctx>. The parameter can be NULL, in which case
-the default library context is used (see L<OPENSSL_CTX(3)>.
+the default library context is used (see L<OSSL_LIB_CTX(3)>.
 If the default RAND_METHOD has been changed then for compatibility reasons the
 RAND_METHOD will be used in preference and the DRBG of the library context
 ignored.

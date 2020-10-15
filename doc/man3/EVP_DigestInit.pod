@@ -27,7 +27,7 @@ EVP_MD_do_all_provided
 
  #include <openssl/evp.h>
 
- EVP_MD *EVP_MD_fetch(OPENSSL_CTX *ctx, const char *algorithm,
+ EVP_MD *EVP_MD_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
                       const char *properties);
  int EVP_MD_up_ref(EVP_MD *md);
  void EVP_MD_free(EVP_MD *md);
@@ -95,7 +95,7 @@ EVP_MD_do_all_provided
  EVP_PKEY_CTX *EVP_MD_CTX_pkey_ctx(const EVP_MD_CTX *ctx);
  void EVP_MD_CTX_set_pkey_ctx(EVP_MD_CTX *ctx, EVP_PKEY_CTX *pctx);
 
- void EVP_MD_do_all_provided(OPENSSL_CTX *libctx,
+ void EVP_MD_do_all_provided(OSSL_LIB_CTX *libctx,
                              void (*fn)(EVP_MD *mac, void *arg),
                              void *arg);
 
@@ -259,7 +259,7 @@ identifiable with I<name>, otherwise 0.
 If I<md> is a legacy digest (it's the return value from the likes of
 EVP_sha256() rather than the result of an EVP_MD_fetch()), only cipher
 names registered with the default library context (see
-L<OPENSSL_CTX(3)>) will be considered.
+L<OSSL_LIB_CTX(3)>) will be considered.
 
 =item EVP_MD_number()
 

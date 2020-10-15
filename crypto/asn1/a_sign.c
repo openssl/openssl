@@ -126,7 +126,7 @@ int ASN1_item_sign(const ASN1_ITEM *it, X509_ALGOR *algor1, X509_ALGOR *algor2,
 int ASN1_item_sign_ex(const ASN1_ITEM *it, X509_ALGOR *algor1,
                       X509_ALGOR *algor2, ASN1_BIT_STRING *signature,
                       const void *data, const ASN1_OCTET_STRING *id,
-                      EVP_PKEY *pkey, const EVP_MD *md, OPENSSL_CTX *libctx,
+                      EVP_PKEY *pkey, const EVP_MD *md, OSSL_LIB_CTX *libctx,
                       const char *propq)
 {
     int rv = 0;

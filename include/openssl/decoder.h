@@ -26,7 +26,7 @@
 extern "C" {
 # endif
 
-OSSL_DECODER *OSSL_DECODER_fetch(OPENSSL_CTX *libctx, const char *name,
+OSSL_DECODER *OSSL_DECODER_fetch(OSSL_LIB_CTX *libctx, const char *name,
                                  const char *properties);
 int OSSL_DECODER_up_ref(OSSL_DECODER *encoder);
 void OSSL_DECODER_free(OSSL_DECODER *encoder);
@@ -36,7 +36,7 @@ const char *OSSL_DECODER_properties(const OSSL_DECODER *encoder);
 int OSSL_DECODER_number(const OSSL_DECODER *encoder);
 int OSSL_DECODER_is_a(const OSSL_DECODER *encoder, const char *name);
 
-void OSSL_DECODER_do_all_provided(OPENSSL_CTX *libctx,
+void OSSL_DECODER_do_all_provided(OSSL_LIB_CTX *libctx,
                                   void (*fn)(OSSL_DECODER *encoder, void *arg),
                                   void *arg);
 void OSSL_DECODER_names_do_all(const OSSL_DECODER *encoder,
@@ -72,7 +72,7 @@ int OSSL_DECODER_CTX_set_input_type(OSSL_DECODER_CTX *ctx,
                                     const char *input_type);
 int OSSL_DECODER_CTX_add_decoder(OSSL_DECODER_CTX *ctx, OSSL_DECODER *decoder);
 int OSSL_DECODER_CTX_add_extra(OSSL_DECODER_CTX *ctx,
-                               OPENSSL_CTX *libctx, const char *propq);
+                               OSSL_LIB_CTX *libctx, const char *propq);
 int OSSL_DECODER_CTX_get_num_decoders(OSSL_DECODER_CTX *ctx);
 
 typedef struct ossl_decoder_instance_st OSSL_DECODER_INSTANCE;
@@ -116,7 +116,7 @@ int OSSL_DECODER_from_data(OSSL_DECODER_CTX *ctx, const unsigned char **pdata,
 OSSL_DECODER_CTX *
 OSSL_DECODER_CTX_new_by_EVP_PKEY(EVP_PKEY **pkey,
                                  const char *input_type, const char *keytype,
-                                 OPENSSL_CTX *libctx, const char *propquery);
+                                 OSSL_LIB_CTX *libctx, const char *propquery);
 
 # ifdef __cplusplus
 }

@@ -59,7 +59,7 @@ static OSSL_FUNC_signature_settable_ctx_md_params_fn sm2sig_settable_ctx_md_para
  * we use that here too.
  */
 typedef struct {
-    OPENSSL_CTX *libctx;
+    OSSL_LIB_CTX *libctx;
     char *propq;
     EC_KEY *ec;
 

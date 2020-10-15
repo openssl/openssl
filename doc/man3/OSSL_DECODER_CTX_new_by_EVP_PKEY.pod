@@ -16,7 +16,7 @@ OSSL_DECODER_CTX_set_passphrase_cb
  OSSL_DECODER_CTX *
  OSSL_DECODER_CTX_new_by_EVP_PKEY(const EVP_PKEY *pkey,
                                   const char *input_type, const char *keytype,
-                                  OPENSSL_CTX *libctx, const char *propquery);
+                                  OSSL_LIB_CTX *libctx, const char *propquery);
 
  int OSSL_DECODER_CTX_set_passphrase(OSSL_DECODER_CTX *ctx,
                                      const unsigned char *kstr,

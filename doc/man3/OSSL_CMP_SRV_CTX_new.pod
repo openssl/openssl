@@ -29,7 +29,7 @@ OSSL_CMP_SRV_CTX_set_grant_implicit_confirm
                                             const OSSL_CMP_MSG *req);
  OSSL_CMP_MSG *OSSL_CMP_CTX_server_perform(OSSL_CMP_CTX *client_ctx,
                                            const OSSL_CMP_MSG *req);
- OSSL_CMP_SRV_CTX *OSSL_CMP_SRV_CTX_new(OPENSSL_CTX *libctx, const char *propq);
+ OSSL_CMP_SRV_CTX *OSSL_CMP_SRV_CTX_new(OSSL_LIB_CTX *libctx, const char *propq);
  void OSSL_CMP_SRV_CTX_free(OSSL_CMP_SRV_CTX *srv_ctx);
 
  typedef OSSL_CMP_PKISI *(*OSSL_CMP_SRV_cert_request_cb_t)(

@@ -321,7 +321,7 @@ OSSL_PROVIDER *EVP_KEM_provider(const EVP_KEM *kem)
     return kem->prov;
 }
 
-EVP_KEM *EVP_KEM_fetch(OPENSSL_CTX *ctx, const char *algorithm,
+EVP_KEM *EVP_KEM_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
                        const char *properties)
 {
     return evp_generic_fetch(ctx, OSSL_OP_KEM, algorithm, properties,
@@ -340,7 +340,7 @@ int EVP_KEM_number(const EVP_KEM *kem)
     return kem->name_id;
 }
 
-void EVP_KEM_do_all_provided(OPENSSL_CTX *libctx,
+void EVP_KEM_do_all_provided(OSSL_LIB_CTX *libctx,
                              void (*fn)(EVP_KEM *kem, void *arg),
                              void *arg)
 {

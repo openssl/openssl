@@ -59,17 +59,17 @@ RAND_METHOD *RAND_OpenSSL(void);
 int RAND_bytes(unsigned char *buf, int num);
 int RAND_priv_bytes(unsigned char *buf, int num);
 
-/* Equivalent of RAND_priv_bytes() but additionally taking an OPENSSL_CTX */
-int RAND_priv_bytes_ex(OPENSSL_CTX *ctx, unsigned char *buf, int num);
+/* Equivalent of RAND_priv_bytes() but additionally taking an OSSL_LIB_CTX */
+int RAND_priv_bytes_ex(OSSL_LIB_CTX *ctx, unsigned char *buf, int num);
 
-/* Equivalent of RAND_bytes() but additionally taking an OPENSSL_CTX */
-int RAND_bytes_ex(OPENSSL_CTX *ctx, unsigned char *buf, int num);
+/* Equivalent of RAND_bytes() but additionally taking an OSSL_LIB_CTX */
+int RAND_bytes_ex(OSSL_LIB_CTX *ctx, unsigned char *buf, int num);
 
 DEPRECATEDIN_1_1_0(int RAND_pseudo_bytes(unsigned char *buf, int num))
 
-EVP_RAND_CTX *RAND_get0_primary(OPENSSL_CTX *ctx);
-EVP_RAND_CTX *RAND_get0_public(OPENSSL_CTX *ctx);
-EVP_RAND_CTX *RAND_get0_private(OPENSSL_CTX *ctx);
+EVP_RAND_CTX *RAND_get0_primary(OSSL_LIB_CTX *ctx);
+EVP_RAND_CTX *RAND_get0_public(OSSL_LIB_CTX *ctx);
+EVP_RAND_CTX *RAND_get0_private(OSSL_LIB_CTX *ctx);
 
 void RAND_seed(const void *buf, int num);
 void RAND_keep_random_devices_open(int keep);

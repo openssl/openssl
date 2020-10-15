@@ -11,7 +11,7 @@ X509_free, X509_up_ref - X509 certificate ASN1 allocation functions
  #include <openssl/x509.h>
 
  X509 *X509_new(void);
- X509 *X509_new_ex(OPENSSL_CTX *libctx, const char *propq);
+ X509 *X509_new_ex(OSSL_LIB_CTX *libctx, const char *propq);
  void X509_free(X509 *a);
  int X509_up_ref(X509 *a);
  STACK_OF(X509) *X509_chain_up_ref(STACK_OF(X509) *x);

@@ -50,7 +50,7 @@ static OSSL_FUNC_keymgmt_export_types_fn dsa_export_types;
     (OSSL_KEYMGMT_SELECT_KEYPAIR | OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS)
 
 struct dsa_gen_ctx {
-    OPENSSL_CTX *libctx;
+    OSSL_LIB_CTX *libctx;
 
     FFC_PARAMS *ffc_params;
     int selection;
@@ -363,7 +363,7 @@ static int dsa_validate(void *keydata, int selection)
 
 static void *dsa_gen_init(void *provctx, int selection)
 {
-    OPENSSL_CTX *libctx = PROV_LIBRARY_CONTEXT_OF(provctx);
+    OSSL_LIB_CTX *libctx = PROV_LIBRARY_CONTEXT_OF(provctx);
     struct dsa_gen_ctx *gctx = NULL;
 
     if (!ossl_prov_is_running() || (selection & DSA_POSSIBLE_SELECTIONS) == 0)

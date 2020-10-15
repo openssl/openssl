@@ -23,7 +23,7 @@ EVP_KEYMGMT_gen_settable_params
 
  typedef struct evp_keymgmt_st EVP_KEYMGMT;
 
- EVP_KEYMGMT *EVP_KEYMGMT_fetch(OPENSSL_CTX *ctx, const char *algorithm,
+ EVP_KEYMGMT *EVP_KEYMGMT_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
                                 const char *properties);
  int EVP_KEYMGMT_up_ref(EVP_KEYMGMT *keymgmt);
  void EVP_KEYMGMT_free(EVP_KEYMGMT *keymgmt);
@@ -32,7 +32,7 @@ EVP_KEYMGMT_gen_settable_params
  int EVP_KEYMGMT_number(const EVP_KEYMGMT *keymgmt);
  const char *EVP_KEYMGMT_get0_first_name(const EVP_KEYMGMT *keymgmt);
 
- void EVP_KEYMGMT_do_all_provided(OPENSSL_CTX *libctx,
+ void EVP_KEYMGMT_do_all_provided(OSSL_LIB_CTX *libctx,
                                   void (*fn)(EVP_KEYMGMT *keymgmt, void *arg),
                                   void *arg);
  void EVP_KEYMGMT_names_do_all(const EVP_KEYMGMT *keymgmt,
@@ -54,7 +54,7 @@ public interface, this object is simply passed into other functions
 when needed.
 
 EVP_KEYMGMT_fetch() looks for an algorithm within the provider that
-has been loaded into the B<OPENSSL_CTX> given by I<ctx>, having the
+has been loaded into the B<OSSL_LIB_CTX> given by I<ctx>, having the
 name given by I<algorithm> and the properties given by I<properties>.
 
 EVP_KEYMGMT_up_ref() increments the reference count for the given
@@ -128,7 +128,7 @@ NULL on error.
 
 =head1 SEE ALSO
 
-L<EVP_MD_fetch(3)>, L<OPENSSL_CTX(3)>
+L<EVP_MD_fetch(3)>, L<OSSL_LIB_CTX(3)>
 
 =head1 HISTORY
 

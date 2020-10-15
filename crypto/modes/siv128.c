@@ -142,7 +142,7 @@ __owur static ossl_inline int siv128_do_encrypt(EVP_CIPHER_CTX *ctx, unsigned ch
  */
 SIV128_CONTEXT *CRYPTO_siv128_new(const unsigned char *key, int klen,
                                   EVP_CIPHER *cbc, EVP_CIPHER *ctr,
-                                  OPENSSL_CTX *libctx, const char *propq)
+                                  OSSL_LIB_CTX *libctx, const char *propq)
 {
     SIV128_CONTEXT *ctx;
     int ret;
@@ -162,7 +162,7 @@ SIV128_CONTEXT *CRYPTO_siv128_new(const unsigned char *key, int klen,
  */
 int CRYPTO_siv128_init(SIV128_CONTEXT *ctx, const unsigned char *key, int klen,
                        const EVP_CIPHER *cbc, const EVP_CIPHER *ctr,
-                       OPENSSL_CTX *libctx, const char *propq)
+                       OSSL_LIB_CTX *libctx, const char *propq)
 {
     static const unsigned char zero[SIV_LEN] = { 0 };
     size_t out_len = SIV_LEN;

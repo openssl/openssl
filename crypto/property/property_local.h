@@ -14,9 +14,9 @@
 typedef int OSSL_PROPERTY_IDX;
 
 /* Property string functions */
-OSSL_PROPERTY_IDX ossl_property_name(OPENSSL_CTX *ctx, const char *s,
+OSSL_PROPERTY_IDX ossl_property_name(OSSL_LIB_CTX *ctx, const char *s,
                                      int create);
-OSSL_PROPERTY_IDX ossl_property_value(OPENSSL_CTX *ctx, const char *s,
+OSSL_PROPERTY_IDX ossl_property_value(OSSL_LIB_CTX *ctx, const char *s,
                                       int create);
 
 /* Property list functions */
@@ -24,8 +24,8 @@ void ossl_property_free(OSSL_PROPERTY_LIST *p);
 int ossl_property_has_optional(const OSSL_PROPERTY_LIST *query);
 
 /* Property definition cache functions */
-OSSL_PROPERTY_LIST *ossl_prop_defn_get(OPENSSL_CTX *ctx, const char *prop);
-int ossl_prop_defn_set(OPENSSL_CTX *ctx, const char *prop,
+OSSL_PROPERTY_LIST *ossl_prop_defn_get(OSSL_LIB_CTX *ctx, const char *prop);
+int ossl_prop_defn_set(OSSL_LIB_CTX *ctx, const char *prop,
                        OSSL_PROPERTY_LIST *pl);
 
 /* Property cache lock / unlock */

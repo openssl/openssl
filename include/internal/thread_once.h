@@ -12,7 +12,7 @@
 /*
  * Initialisation of global data should never happen via "RUN_ONCE" inside the
  * FIPS module. Global data should instead always be associated with a specific
- * OPENSSL_CTX object. In this way data will get cleaned up correctly when the
+ * OSSL_LIB_CTX object. In this way data will get cleaned up correctly when the
  * module gets unloaded.
  */
 #if !defined(FIPS_MODULE) || defined(ALLOW_RUN_ONCE_IN_FIPS)

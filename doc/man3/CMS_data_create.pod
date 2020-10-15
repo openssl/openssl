@@ -10,7 +10,7 @@ CMS_data_create_ex, CMS_data_create
  #include <openssl/cms.h>
 
  CMS_ContentInfo *CMS_data_create_ex(BIO *in, unsigned int flags,
-                                     OPENSSL_CTX *libctx, const char *propq);
+                                     OSSL_LIB_CTX *libctx, const char *propq);
  CMS_ContentInfo *CMS_data_create(BIO *in, unsigned int flags);
 
 =head1 DESCRIPTION

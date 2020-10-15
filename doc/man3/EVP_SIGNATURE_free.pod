@@ -12,14 +12,14 @@ EVP_SIGNATURE_gettable_ctx_params, EVP_SIGNATURE_settable_ctx_params
 
  #include <openssl/evp.h>
 
- EVP_SIGNATURE *EVP_SIGNATURE_fetch(OPENSSL_CTX *ctx, const char *algorithm,
+ EVP_SIGNATURE *EVP_SIGNATURE_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
                                     const char *properties);
  void EVP_SIGNATURE_free(EVP_SIGNATURE *signature);
  int EVP_SIGNATURE_up_ref(EVP_SIGNATURE *signature);
  int EVP_SIGNATURE_number(const EVP_SIGNATURE *signature);
  int EVP_SIGNATURE_is_a(const EVP_SIGNATURE *signature, const char *name);
  OSSL_PROVIDER *EVP_SIGNATURE_provider(const EVP_SIGNATURE *signature);
- void EVP_SIGNATURE_do_all_provided(OPENSSL_CTX *libctx,
+ void EVP_SIGNATURE_do_all_provided(OSSL_LIB_CTX *libctx,
                                     void (*fn)(EVP_SIGNATURE *signature,
                                                void *arg),
                                     void *arg);

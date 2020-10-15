@@ -18,7 +18,7 @@
 /* CMS DigestedData Utilities */
 
 CMS_ContentInfo *cms_DigestedData_create(const EVP_MD *md,
-                                         OPENSSL_CTX *libctx, const char *propq)
+                                         OSSL_LIB_CTX *libctx, const char *propq)
 {
     CMS_ContentInfo *cms;
     CMS_DigestedData *dd;

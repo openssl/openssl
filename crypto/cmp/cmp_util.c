@@ -217,7 +217,7 @@ int ossl_cmp_X509_STORE_add1_certs(X509_STORE *store, STACK_OF(X509) *certs,
  */
 /* TODO this should be of more general interest and thus be exported. */
 STACK_OF(X509)
-    *ossl_cmp_build_cert_chain(OPENSSL_CTX *libctx, const char *propq,
+    *ossl_cmp_build_cert_chain(OSSL_LIB_CTX *libctx, const char *propq,
                                X509_STORE *store,
                                STACK_OF(X509) *certs, X509 *cert)
 {
