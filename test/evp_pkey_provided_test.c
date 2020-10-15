@@ -457,6 +457,7 @@ static int test_fromdata_dh_named_group(void)
         0xcf, 0x33, 0x42, 0x83, 0x42
     };
     static const char group_name[] = "ffdhe2048";
+    static const long priv_len = 224;
 
     if (!TEST_ptr(bld = OSSL_PARAM_BLD_new())
         || !TEST_ptr(pub = BN_bin2bn(pub_data, sizeof(pub_data), NULL))
@@ -464,6 +465,8 @@ static int test_fromdata_dh_named_group(void)
         || !TEST_true(OSSL_PARAM_BLD_push_utf8_string(bld,
                                                       OSSL_PKEY_PARAM_GROUP_NAME,
                                                       group_name, 0))
+        || !TEST_true(OSSL_PARAM_BLD_push_long(bld, OSSL_PKEY_PARAM_DH_PRIV_LEN,
+                                               priv_len))
         || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_PUB_KEY, pub))
         || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_PRIV_KEY, priv))
         || !TEST_ptr(fromdata_params = OSSL_PARAM_BLD_to_param(bld)))
@@ -597,6 +600,7 @@ static int test_fromdata_dh_fips186_4(void)
        0x33, 0x42, 0x83, 0x42
     };
     static const char group_name[] = "ffdhe2048";
+    static const long priv_len = 224;
 
 
     if (!TEST_ptr(bld = OSSL_PARAM_BLD_new())
@@ -605,6 +609,8 @@ static int test_fromdata_dh_fips186_4(void)
         || !TEST_true(OSSL_PARAM_BLD_push_utf8_string(bld,
                                                       OSSL_PKEY_PARAM_GROUP_NAME,
                                                       group_name, 0))
+        || !TEST_true(OSSL_PARAM_BLD_push_long(bld, OSSL_PKEY_PARAM_DH_PRIV_LEN,
+                                               priv_len))
         || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_PUB_KEY, pub))
         || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_PRIV_KEY, priv))
         || !TEST_ptr(fromdata_params = OSSL_PARAM_BLD_to_param(bld)))
