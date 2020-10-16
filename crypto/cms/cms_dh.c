@@ -46,11 +46,7 @@ static int dh_cms_set_peerkey(EVP_PKEY_CTX *pctx,
     pkpeer = EVP_PKEY_new();
     if (pkpeer == NULL
             || !EVP_PKEY_copy_parameters(pkpeer, pk)
-               /*
-                * TODO(3.0): This is badly named!! Can we make this more
-                * generic and not TLS specific?
-                */
-            || !EVP_PKEY_set1_tls_encodedpoint(pkpeer, p, plen))
+            || !EVP_PKEY_set1_encoded_public_key(pkpeer, p, plen))
         goto err;
 
     if (EVP_PKEY_derive_set_peer(pctx, pkpeer) > 0)
