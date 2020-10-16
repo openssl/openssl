@@ -493,6 +493,7 @@ OSSL_DECODER_CTX *OSSL_DECODER_CTX_new(void)
 int OSSL_DECODER_CTX_set_params(OSSL_DECODER_CTX *ctx,
                                 const OSSL_PARAM params[])
 {
+    int ok = 1;
     size_t i;
     size_t l;
 
@@ -516,9 +517,9 @@ int OSSL_DECODER_CTX_set_params(OSSL_DECODER_CTX *ctx,
         if (decoderctx == NULL || decoder->set_ctx_params == NULL)
             continue;
         if (!decoder->set_ctx_params(decoderctx, params))
-            return 0;
+            ok = 0;
     }
-    return 1;
+    return ok;
 }
 
 void OSSL_DECODER_CTX_free(OSSL_DECODER_CTX *ctx)

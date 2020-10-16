@@ -503,6 +503,7 @@ OSSL_ENCODER_CTX *OSSL_ENCODER_CTX_new(void)
 int OSSL_ENCODER_CTX_set_params(OSSL_ENCODER_CTX *ctx,
                                 const OSSL_PARAM params[])
 {
+    int ok = 1;
     size_t i;
     size_t l;
 
@@ -524,9 +525,9 @@ int OSSL_ENCODER_CTX_set_params(OSSL_ENCODER_CTX *ctx,
         if (encoderctx == NULL || encoder->set_ctx_params == NULL)
             continue;
         if (!encoder->set_ctx_params(encoderctx, params))
-            return 0;
+            ok = 0;
     }
-    return 1;
+    return ok;
 }
 
 void OSSL_ENCODER_CTX_free(OSSL_ENCODER_CTX *ctx)
