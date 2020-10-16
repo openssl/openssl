@@ -981,9 +981,7 @@ const OPTIONS s_server_options[] = {
     {"use_srtp", OPT_SRTP_PROFILES, 's',
      "Offer SRTP key management with a colon-separated profile list"},
 #endif
-#ifndef OPENSSL_NO_DH
     {"no_dhe", OPT_NO_DHE, '-', "Disable ephemeral DH"},
-#endif
 #ifndef OPENSSL_NO_NEXTPROTONEG
     {"nextprotoneg", OPT_NEXTPROTONEG, 's',
      "Set the advertised protocols for the NPN extension (comma-separated list)"},
@@ -1029,10 +1027,8 @@ int s_server_main(int argc, char *argv[])
 #endif
     do_server_cb server_cb;
     int vpmtouched = 0, build_chain = 0, no_cache = 0, ext_cache = 0;
-#ifndef OPENSSL_NO_DH
     char *dhfile = NULL;
     int no_dhe = 0;
-#endif
     int nocert = 0, ret = 1;
     int noCApath = 0, noCAfile = 0, noCAstore = 0;
     int s_cert_format = FORMAT_PEM, s_key_format = FORMAT_PEM;
@@ -1441,9 +1437,7 @@ int s_server_main(int argc, char *argv[])
             s_quiet = s_brief = verify_args.quiet = 1;
             break;
         case OPT_NO_DHE:
-#ifndef OPENSSL_NO_DH
             no_dhe = 1;
-#endif
             break;
         case OPT_NO_RESUME_EPHEMERAL:
             no_resume_ephemeral = 1;
