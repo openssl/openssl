@@ -8,6 +8,12 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * This is an internal test that is intentionally using internal APIs. Some of
+ * those APIs are deprecated for public use.
+ */
+#include "internal/deprecated.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

@@ -136,9 +136,9 @@ DECLARE_ASN1_ITEM(DHparams)
         ASN1_d2i_bio_of(DH, DH_new, d2i_DHxparams, bp, x)
 #   define i2d_DHxparams_bio(bp, x) \
         ASN1_i2d_bio_of(DH, i2d_DHxparams, bp, x)
-#  endif
 
-DECLARE_ASN1_DUP_FUNCTION_name(DH, DHparams)
+DECLARE_ASN1_DUP_FUNCTION_name_attr(OSSL_DEPRECATEDIN_3_0, DH, DHparams)
+#  endif
 
 DEPRECATEDIN_3_0(const DH_METHOD *DH_OpenSSL(void))
 
@@ -148,9 +148,9 @@ DEPRECATEDIN_3_0(int DH_set_method(DH *dh, const DH_METHOD *meth))
 DEPRECATEDIN_3_0(DH *DH_new_method(ENGINE *engine))
 
 DEPRECATEDIN_3_0(DH *DH_new(void))
-void DH_free(DH *dh);
-int DH_up_ref(DH *dh);
-int DH_bits(const DH *dh);
+DEPRECATEDIN_3_0(void DH_free(DH *dh))
+DEPRECATEDIN_3_0(int DH_up_ref(DH *dh))
+DEPRECATEDIN_3_0(int DH_bits(const DH *dh))
 DEPRECATEDIN_3_0(int DH_size(const DH *dh))
 DEPRECATEDIN_3_0(int DH_security_bits(const DH *dh))
 #  ifndef OPENSSL_NO_DEPRECATED_3_0
@@ -176,7 +176,7 @@ DEPRECATEDIN_3_0(int DH_check_pub_key_ex(const DH *dh, const BIGNUM *pub_key))
 /*
  * TODO(3.0): deprecate DH_check_params once ssl/statem/statem_clnt.c is fixed.
  */
-int DH_check_params(const DH *dh, int *ret);
+DEPRECATEDIN_3_0(int DH_check_params(const DH *dh, int *ret))
 DEPRECATEDIN_3_0(int DH_check(const DH *dh, int *codes))
 DEPRECATEDIN_3_0(int DH_check_pub_key(const DH *dh, const BIGNUM *pub_key,
                                       int *codes))
@@ -197,13 +197,12 @@ DEPRECATEDIN_3_0(int DHparams_print_fp(FILE *fp, const DH *x))
 DEPRECATEDIN_3_0(int DHparams_print(BIO *bp, const DH *x))
 
 /* RFC 5114 parameters */
-DH *DH_get_1024_160(void);
-DH *DH_get_2048_224(void);
-DH *DH_get_2048_256(void);
+DEPRECATEDIN_3_0(DH *DH_get_1024_160(void))
+DEPRECATEDIN_3_0(DH *DH_get_2048_224(void))
+DEPRECATEDIN_3_0(DH *DH_get_2048_256(void))
 
 /* Named parameters, currently RFC7919 and RFC3526 */
-/* TODO(3.0): deprecate DH_new_by_nid() after converting ssl/s3_lib.c */
-DH *DH_new_by_nid(int nid);
+DEPRECATEDIN_3_0(DH *DH_new_by_nid(int nid))
 DEPRECATEDIN_3_0(int DH_get_nid(const DH *dh))
 
 /* RFC2631 KDF */
@@ -213,23 +212,23 @@ DEPRECATEDIN_3_0(int DH_KDF_X9_42(unsigned char *out, size_t outlen,
                                   const unsigned char *ukm,
                                   size_t ukmlen, const EVP_MD *md))
 
-void DH_get0_pqg(const DH *dh,
-                 const BIGNUM **p, const BIGNUM **q, const BIGNUM **g);
-int DH_set0_pqg(DH *dh, BIGNUM *p, BIGNUM *q, BIGNUM *g);
-void DH_get0_key(const DH *dh,
-                 const BIGNUM **pub_key, const BIGNUM **priv_key);
-int DH_set0_key(DH *dh, BIGNUM *pub_key, BIGNUM *priv_key);
-const BIGNUM *DH_get0_p(const DH *dh);
-const BIGNUM *DH_get0_q(const DH *dh);
-const BIGNUM *DH_get0_g(const DH *dh);
-const BIGNUM *DH_get0_priv_key(const DH *dh);
-const BIGNUM *DH_get0_pub_key(const DH *dh);
-void DH_clear_flags(DH *dh, int flags);
-int DH_test_flags(const DH *dh, int flags);
-void DH_set_flags(DH *dh, int flags);
+DEPRECATEDIN_3_0(void DH_get0_pqg(const DH *dh, const BIGNUM **p,
+                                  const BIGNUM **q, const BIGNUM **g))
+DEPRECATEDIN_3_0(int DH_set0_pqg(DH *dh, BIGNUM *p, BIGNUM *q, BIGNUM *g))
+DEPRECATEDIN_3_0(void DH_get0_key(const DH *dh, const BIGNUM **pub_key,
+                                  const BIGNUM **priv_key))
+DEPRECATEDIN_3_0(int DH_set0_key(DH *dh, BIGNUM *pub_key, BIGNUM *priv_key))
+DEPRECATEDIN_3_0(const BIGNUM *DH_get0_p(const DH *dh))
+DEPRECATEDIN_3_0(const BIGNUM *DH_get0_q(const DH *dh))
+DEPRECATEDIN_3_0(const BIGNUM *DH_get0_g(const DH *dh))
+DEPRECATEDIN_3_0(const BIGNUM *DH_get0_priv_key(const DH *dh))
+DEPRECATEDIN_3_0(const BIGNUM *DH_get0_pub_key(const DH *dh))
+DEPRECATEDIN_3_0(void DH_clear_flags(DH *dh, int flags))
+DEPRECATEDIN_3_0(int DH_test_flags(const DH *dh, int flags))
+DEPRECATEDIN_3_0(void DH_set_flags(DH *dh, int flags))
 DEPRECATEDIN_3_0(ENGINE *DH_get0_engine(DH *d))
-long DH_get_length(const DH *dh);
-int DH_set_length(DH *dh, long length);
+DEPRECATEDIN_3_0(long DH_get_length(const DH *dh))
+DEPRECATEDIN_3_0(int DH_set_length(DH *dh, long length))
 
 DEPRECATEDIN_3_0(DH_METHOD *DH_meth_new(const char *name, int flags))
 DEPRECATEDIN_3_0(void DH_meth_free(DH_METHOD *dhm))
