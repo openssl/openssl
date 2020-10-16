@@ -556,10 +556,12 @@ Push them to github, make PRs from them and have them approved:
 
 When merging them into the main repository, do it like this:
 
-    git push --follow-tags openssl-git@git.openssl.org:openssl.git \\
+    git push openssl-git@git.openssl.org:openssl.git \\
         $tmp_release_branch:$release_branch
     git push openssl-git@git.openssl.org:openssl.git \\
         $tmp_update_branch:$update_branch
+    git push openssl-git@git.openssl.org:openssl.git \\
+        $tag
 EOF
 else
 cat <<EOF
@@ -570,8 +572,10 @@ Push it to github, make a PR from it and have it approved:
 
 When merging it into the main repository, do it like this:
 
-    git push --follow-tags openssl-git@git.openssl.org:openssl.git \\
+    git push openssl-git@git.openssl.org:openssl.git \\
         $tmp_release_branch:$release_branch
+    git push openssl-git@git.openssl.org:openssl.git \\
+        $tag
 EOF
 fi
 
