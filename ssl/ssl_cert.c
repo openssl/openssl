@@ -90,14 +90,15 @@ CERT *ssl_cert_dup(CERT *cert)
         OPENSSL_free(ret);
         return NULL;
     }
-#ifndef OPENSSL_NO_DH
+
     if (cert->dh_tmp != NULL) {
         ret->dh_tmp = cert->dh_tmp;
         EVP_PKEY_up_ref(ret->dh_tmp);
     }
+#ifndef OPENSSL_NO_DH
     ret->dh_tmp_cb = cert->dh_tmp_cb;
-    ret->dh_tmp_auto = cert->dh_tmp_auto;
 #endif
+    ret->dh_tmp_auto = cert->dh_tmp_auto;
 
     for (i = 0; i < SSL_PKEY_NUM; i++) {
         CERT_PKEY *cpk = cert->pkeys + i;
@@ -232,9 +233,7 @@ void ssl_cert_free(CERT *c)
         return;
     REF_ASSERT_ISNT(i < 0);
 
-#ifndef OPENSSL_NO_DH
     EVP_PKEY_free(c->dh_tmp);
-#endif
 
     ssl_cert_clear_certs(c);
     OPENSSL_free(c->conf_sigalgs);

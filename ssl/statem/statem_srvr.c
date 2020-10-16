@@ -2497,9 +2497,7 @@ int tls_construct_server_done(SSL *s, WPACKET *pkt)
 
 int tls_construct_server_key_exchange(SSL *s, WPACKET *pkt)
 {
-#ifndef OPENSSL_NO_DH
     EVP_PKEY *pkdh = NULL;
-#endif
 #ifndef OPENSSL_NO_EC
     unsigned char *encodedPoint = NULL;
     size_t encodedlen = 0;
@@ -2533,7 +2531,6 @@ int tls_construct_server_key_exchange(SSL *s, WPACKET *pkt)
     if (type & (SSL_kPSK | SSL_kRSAPSK)) {
     } else
 #endif                          /* !OPENSSL_NO_PSK */
-#ifndef OPENSSL_NO_DH
     if (type & (SSL_kDHE | SSL_kDHEPSK)) {
         CERT *cert = s->cert;
         EVP_PKEY *pkdhp = NULL;
@@ -2550,7 +2547,7 @@ int tls_construct_server_key_exchange(SSL *s, WPACKET *pkt)
         } else {
             pkdhp = cert->dh_tmp;
         }
-#ifndef OPENSSL_NO_DEPRECATED_3_0
+#if !defined(OPENSSL_NO_DH) && !defined(OPENSSL_NO_DEPRECATED_3_0)
         if ((pkdhp == NULL) && (s->cert->dh_tmp_cb != NULL)) {
             pkdh = ssl_dh_to_pkey(s->cert->dh_tmp_cb(s, 0, 1024));
             if (pkdh == NULL) {
@@ -2601,7 +2598,6 @@ int tls_construct_server_key_exchange(SSL *s, WPACKET *pkt)
             goto err;
         }
     } else
-#endif
 #ifndef OPENSSL_NO_EC
     if (type & (SSL_kECDHE | SSL_kECDHEPSK)) {
 

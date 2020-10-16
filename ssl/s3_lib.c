@@ -3451,8 +3451,7 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
     case SSL_CTRL_GET_FLAGS:
         ret = (int)(s->s3.flags);
         break;
-#ifndef OPENSSL_NO_DH
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+#if !defined(OPENSSL_NO_DH) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     case SSL_CTRL_SET_TMP_DH:
         {
             EVP_PKEY *pkdh = NULL;
@@ -3478,7 +3477,6 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
     case SSL_CTRL_SET_DH_AUTO:
         s->cert->dh_tmp_auto = larg;
         return 1;
-#endif
 #ifndef OPENSSL_NO_EC
     case SSL_CTRL_SET_TMP_ECDH:
         {

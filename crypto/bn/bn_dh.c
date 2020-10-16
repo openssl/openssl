@@ -10,7 +10,6 @@
 #include "bn_local.h"
 #include "internal/nelem.h"
 
-#ifndef OPENSSL_NO_DH
 # include <openssl/dh.h>
 # include "crypto/bn_dh.h"
 
@@ -1051,5 +1050,3 @@ make_dh_bn(modp_6144_p)
 make_dh_bn(modp_6144_q)
 make_dh_bn(modp_8192_p)
 make_dh_bn(modp_8192_q)
-
-#endif /* OPENSSL_NO_DH */
