@@ -2004,11 +2004,12 @@ typedef struct cert_st {
      * an index, not a pointer.
      */
     CERT_PKEY *key;
-# ifndef OPENSSL_NO_DH
+
     EVP_PKEY *dh_tmp;
+#ifndef OPENSSL_NO_DH
     DH *(*dh_tmp_cb) (SSL *ssl, int is_export, int keysize);
+#endif
     int dh_tmp_auto;
-# endif
     /* Flags related to certificates */
     uint32_t cert_flags;
     CERT_PKEY pkeys[SSL_PKEY_NUM];
@@ -2692,9 +2693,7 @@ void tls1_set_cert_validity(SSL *s);
 __owur int ssl_validate_ct(SSL *s);
 #  endif
 
-#  ifndef OPENSSL_NO_DH
 __owur EVP_PKEY *ssl_get_auto_dh(SSL *s);
-#  endif
 
 __owur int ssl_security_cert(SSL *s, SSL_CTX *ctx, X509 *x, int vfy, int is_ee);
 __owur int ssl_security_cert_chain(SSL *s, STACK_OF(X509) *sk, X509 *ex,

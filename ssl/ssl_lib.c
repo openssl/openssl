@@ -3504,11 +3504,11 @@ void ssl_set_masks(SSL *s)
     if (c == NULL)
         return;
 
+    dh_tmp = (c->dh_tmp != NULL
 #ifndef OPENSSL_NO_DH
-    dh_tmp = (c->dh_tmp != NULL || c->dh_tmp_cb != NULL || c->dh_tmp_auto);
-#else
-    dh_tmp = 0;
+              || c->dh_tmp_cb != NULL
 #endif
+              || c->dh_tmp_auto);
 
     rsa_enc = pvalid[SSL_PKEY_RSA] & CERT_PKEY_VALID;
     rsa_sign = pvalid[SSL_PKEY_RSA] & CERT_PKEY_VALID;
