@@ -374,10 +374,9 @@ static int dsa_param_decode(EVP_PKEY *pkey,
 {
     DSA *dsa;
 
-    if ((dsa = d2i_DSAparams(NULL, pder, derlen)) == NULL) {
-        DSAerr(DSA_F_DSA_PARAM_DECODE, ERR_R_DSA_LIB);
+    if ((dsa = d2i_DSAparams(NULL, pder, derlen)) == NULL)
         return 0;
-    }
+
     dsa->dirty_cnt++;
     EVP_PKEY_assign_DSA(pkey, dsa);
     return 1;
