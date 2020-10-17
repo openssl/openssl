@@ -31,7 +31,7 @@ plan tests =>
     + 1;
 
 unless ($no_fips) {
-    @test_args = ("-config", srctop_file("test","fips.cnf"),
+    @test_args = ("-config", srctop_file("test","fips-and-base.cnf"),
                   "-provider", "fips");
 
     ok(run(app(['openssl', 'fipsinstall',
