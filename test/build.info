@@ -793,6 +793,11 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[endecode_test]=.. ../include ../apps/include
   DEPEND[endecode_test]=../libcrypto.a libtestutil.a
 
+  PROGRAMS{noinst}=endecoder_legacy_test
+  SOURCE[endecoder_legacy_test]=endecoder_legacy_test.c
+  INCLUDE[endecoder_legacy_test]=.. ../include ../apps/include
+  DEPEND[endecoder_legacy_test]=../libcrypto.a libtestutil.a
+
   PROGRAMS{noinst}=namemap_internal_test
   SOURCE[namemap_internal_test]=namemap_internal_test.c
   INCLUDE[namemap_internal_test]=.. ../include ../apps/include
