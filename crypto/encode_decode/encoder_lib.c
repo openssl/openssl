@@ -16,11 +16,38 @@
 #include <openssl/provider.h>
 #include "encoder_local.h"
 
-static int encoder_process(OSSL_ENCODER_CTX *ctx, BIO *out);
+struct encoder_process_data_st {
+    OSSL_ENCODER_CTX *ctx;
+
+    /* Current BIO */
+    BIO *bio;
+
+    /* Index of the current encoder instance to be processed */
+    int current_encoder_inst_index;
+
+    /* Processing data passed down through recursion */
+    int level;                   /* Recursion level */
+    OSSL_ENCODER_INSTANCE *next_encoder_inst;
+    int count_output_structure;
+
+    /* Processing data passed up through recursion */
+    OSSL_ENCODER_INSTANCE *prev_encoder_inst;
+    unsigned char *running_output;
+    size_t running_output_length;
+};
+
+static int encoder_process(struct encoder_process_data_st *data);
 
 int OSSL_ENCODER_to_bio(OSSL_ENCODER_CTX *ctx, BIO *out)
 {
-    return encoder_process(ctx, out);
+    struct encoder_process_data_st data;
+
+    memset(&data, 0, sizeof(data));
+    data.ctx = ctx;
+    data.bio = out;
+    data.current_encoder_inst_index = OSSL_ENCODER_CTX_get_num_encoders(ctx);
+
+    return encoder_process(&data) > 0;
 }
 
 #ifndef OPENSSL_NO_STDIO
@@ -57,7 +84,7 @@ int OSSL_ENCODER_to_data(OSSL_ENCODER_CTX *ctx, unsigned char **pdata,
     int ret = 0;
 
     if (pdata_len == NULL) {
-        ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_PASSED_NULL_PARAMETER);
+        ERR_raise(ERR_LIB_OSSL_ENCODER, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
 
@@ -336,132 +363,236 @@ OSSL_ENCODER_INSTANCE_get_output_structure(OSSL_ENCODER_INSTANCE *encoder_inst)
     return encoder_inst->output_structure;
 }
 
-static int encoder_process(OSSL_ENCODER_CTX *ctx, BIO *out)
+static int encoder_process(struct encoder_process_data_st *data)
 {
-    size_t i, end;
-    void *latest_output = NULL;
-    size_t latest_output_length = 0;
-    const char *latest_output_type = NULL;
-    const char *last_input_type = NULL;
-    const char *last_output_structure = NULL;
-    int ok = 0;
+    OSSL_ENCODER_INSTANCE *current_encoder_inst = NULL;
+    OSSL_ENCODER *current_encoder = NULL;
+    OSSL_ENCODER_CTX *current_encoder_ctx = NULL;
+    BIO *allocated_out = NULL;
+    const void *original_data = NULL;
+    OSSL_PARAM abstract[10];
+    const OSSL_PARAM *current_abstract = NULL;
+    int i;
+    int ok = -1;  /* -1 signifies that the lookup loop gave nothing */
+    int top = 0;
 
-    end = OSSL_ENCODER_CTX_get_num_encoders(ctx);
-    for (i = 0; i < end; i++) {
-        OSSL_ENCODER_INSTANCE *encoder_inst =
-            sk_OSSL_ENCODER_INSTANCE_value(ctx->encoder_insts, i);
-        OSSL_ENCODER *encoder = OSSL_ENCODER_INSTANCE_get_encoder(encoder_inst);
-        void *encoderctx = OSSL_ENCODER_INSTANCE_get_encoder_ctx(encoder_inst);
-        const char *current_input_type =
-            OSSL_ENCODER_INSTANCE_get_input_type(encoder_inst);
-        const char *current_output_type =
-            OSSL_ENCODER_INSTANCE_get_output_type(encoder_inst);
-        const char *current_output_structure =
-            OSSL_ENCODER_INSTANCE_get_output_structure(encoder_inst);
-        BIO *current_out;
-        BIO *allocated_out = NULL;
-        const void *current_data = NULL;
-        OSSL_PARAM abstract[10];
-        OSSL_PARAM *abstract_p;
-        const OSSL_PARAM *current_abstract = NULL;
+    if (data->next_encoder_inst == NULL) {
+        /* First iteration, where we prepare for what is to come */
 
-        if (latest_output_type == NULL) {
-            /*
-             * This is the first iteration, so we prepare the object to be
-             * encoded
-             */
+        data->count_output_structure =
+            data->ctx->output_structure == NULL ? -1 : 0;
+        top = 1;
+    }
 
-            current_data = ctx->construct(encoder_inst, ctx->construct_data);
+    for (i = data->current_encoder_inst_index; i-- > 0;) {
+        OSSL_ENCODER *next_encoder = NULL;
+        const char *current_output_type;
+        const char *current_output_structure;
+        struct encoder_process_data_st new_data;
 
-            /* Assume that the constructor recorded an error */
-            if (current_data == NULL)
-                goto loop_end;
+        if (!top)
+            next_encoder =
+                OSSL_ENCODER_INSTANCE_get_encoder(data->next_encoder_inst);
+
+        current_encoder_inst =
+            sk_OSSL_ENCODER_INSTANCE_value(data->ctx->encoder_insts, i);
+        current_encoder =
+            OSSL_ENCODER_INSTANCE_get_encoder(current_encoder_inst);
+        current_encoder_ctx =
+            OSSL_ENCODER_INSTANCE_get_encoder_ctx(current_encoder_inst);
+        current_output_type =
+            OSSL_ENCODER_INSTANCE_get_output_type(current_encoder_inst);
+        current_output_structure =
+            OSSL_ENCODER_INSTANCE_get_output_structure(current_encoder_inst);
+        memset(&new_data, 0, sizeof(new_data));
+        new_data.ctx = data->ctx;
+        new_data.current_encoder_inst_index = i;
+        new_data.next_encoder_inst = current_encoder_inst;
+        new_data.count_output_structure = data->count_output_structure;
+        new_data.level = data->level + 1;
+
+        /*
+         * If this is the top call, we check if the output type of the current
+         * encoder matches the desired output type.
+         * If this isn't the top call, i.e. this is deeper in the recursion,
+         * we instead check if the output type of the current encoder matches
+         * the name of the next encoder (the one found by the parent call).
+         */
+        if (top) {
+            if (data->ctx->output_type != NULL
+                && strcasecmp(current_output_type,
+                              data->ctx->output_type) != 0)
+                continue;
         } else {
-            /*
-             * Check that the latest output type matches the currently
-             * considered encoder
-             */
-            if (!OSSL_ENCODER_is_a(encoder, latest_output_type))
+            if (!OSSL_ENCODER_is_a(next_encoder, current_output_type))
+                continue;
+        }
+
+        /*
+         * If the caller and the current encoder specify an output structure,
+         * Check if they match.  If they do, count the match, otherwise skip
+         * the current encoder.
+         */
+        if (data->ctx->output_structure != NULL
+            && current_output_structure != NULL) {
+            if (strcasecmp(data->ctx->output_structure,
+                           current_output_structure) != 0)
                 continue;
 
-            /*
-             * If there is a latest output type, there should be a latest output
-             */
-            if (!ossl_assert(latest_output != NULL)) {
-                ERR_raise(ERR_LIB_OSSL_ENCODER, ERR_R_INTERNAL_ERROR);
-                goto loop_end;
-            }
-
-            /*
-             * Create an object abstraction from the latest output, which was
-             * stolen from the previous round.
-             */
-            abstract_p = abstract;
-            if (last_input_type != NULL)
-                *abstract_p++ =
-                    OSSL_PARAM_construct_utf8_string(OSSL_OBJECT_PARAM_DATA_TYPE,
-                                                     (char *)last_input_type, 0);
-            if (last_output_structure != NULL)
-                *abstract_p++ =
-                    OSSL_PARAM_construct_utf8_string(OSSL_OBJECT_PARAM_DATA_STRUCTURE,
-                                                     (char *)last_output_structure,
-                                                     0);
-            *abstract_p++ =
-                OSSL_PARAM_construct_octet_string(OSSL_OBJECT_PARAM_DATA,
-                                                  latest_output,
-                                                  latest_output_length);
-            *abstract_p = OSSL_PARAM_construct_end();
-            current_abstract = abstract;
+            data->count_output_structure++;
         }
 
         /*
-         * If the desired output type matches the output type of the currently
-         * considered encoder, we're setting up final output.  Otherwise, set
-         * up an intermediary memory output.
+         * Recurse to process the encoder implementations before the current
+         * one.
          */
-        if (strcasecmp(ctx->output_type, current_output_type) == 0)
-            current_out = out;
-        else if ((current_out = allocated_out = BIO_new(BIO_s_mem())) == NULL)
-            goto loop_end;     /* Assume BIO_new() recorded an error */
+        ok = encoder_process(&new_data);
 
-        ok = encoder->encode(encoderctx, (OSSL_CORE_BIO *)current_out,
-                             current_data, current_abstract, ctx->selection,
-                             ossl_pw_passphrase_callback_enc, &ctx->pwdata);
-
-        if (current_input_type != NULL)
-            last_input_type = current_input_type;
-        if (current_output_structure != NULL)
-            last_output_structure = current_output_structure;
-
-        if (!ok)
-            goto loop_end;
-
-        OPENSSL_free(latest_output);
+        data->prev_encoder_inst = new_data.prev_encoder_inst;
+        data->running_output = new_data.running_output;
+        data->running_output_length = new_data.running_output_length;
 
         /*
-         * Steal the output from the BIO_s_mem, if we did allocate one.
-         * That'll be the data for an object abstraction in the next round.
+         * ok == -1     means that the recursion call above gave no further
+         *              encoders, and that the one we're currently at should
+         *              be tried.
+         * ok == 0      means that something failed in the recursion call
+         *              above, making the result unsuitable for a chain.
+         *              In this case, we simply continue to try finding a
+         *              suitable encoder at this recursion level.
+         * ok == 1      means that the recursion call was successful, and we
+         *              try to use the result at this recursion level.
          */
-        if (allocated_out != NULL) {
-            BUF_MEM *buf;
-
-            BIO_get_mem_ptr(allocated_out, &buf);
-            latest_output = buf->data;
-            latest_output_length = buf->length;
-            memset(buf, 0, sizeof(*buf));
-            BIO_free(allocated_out);
-        }
-
-        latest_output_type = encoder_inst->output_type;
-
-     loop_end:
-        if (current_data != NULL)
-            ctx->cleanup(ctx->construct_data);
-
-        if (ok)
+        if (ok != 0)
             break;
     }
 
-    OPENSSL_free(latest_output);
+    /*
+     * If |i < 0|, we didn't find any useful encoder in this recursion, so
+     * we do the rest of the process only if |i >= 0|.
+     */
+    if (i < 0) {
+        ok = -1;
+    } else {
+        /* Preparations */
+
+        switch (ok) {
+        case 0:
+            break;
+        case -1:
+            /*
+             * We have reached the beginning of the encoder instance sequence,
+             * so we prepare the object to be encoded.
+             */
+
+            /*
+             * |data->count_output_structure| is one of these values:
+             *
+             * -1       There is no desired output structure
+             *  0       There is a desired output structure, and it wasn't
+             *          matched by any of the encoder instances that were
+             *          considered
+             * >0       There is a desired output structure, and at least one
+             *          of the encoder instances matched it
+             */
+            if (data->count_output_structure == 0)
+                return 0;
+
+            original_data =
+                data->ctx->construct(current_encoder_inst,
+                                     data->ctx->construct_data);
+
+            /* Assume that the constructor recorded an error */
+            if (original_data != NULL)
+                ok = 1;
+            else
+                ok = 0;
+            break;
+        case 1:
+            if (!ossl_assert(data->running_output != NULL)) {
+                ERR_raise(ERR_LIB_OSSL_ENCODER, ERR_R_INTERNAL_ERROR);
+                ok = 0;
+                break;
+            }
+
+            {
+                /*
+                 * Create an object abstraction from the latest output, which
+                 * was stolen from the previous round.
+                 */
+
+                OSSL_PARAM *abstract_p = abstract;
+                const char *prev_input_type =
+                    OSSL_ENCODER_INSTANCE_get_input_type(data->prev_encoder_inst);
+                const char *prev_output_structure =
+                    OSSL_ENCODER_INSTANCE_get_output_structure(data->prev_encoder_inst);
+
+                if (prev_input_type != NULL)
+                    *abstract_p++ =
+                        OSSL_PARAM_construct_utf8_string(OSSL_OBJECT_PARAM_DATA_TYPE,
+                                                         (char *)prev_input_type, 0);
+                if (prev_output_structure != NULL)
+                    *abstract_p++ =
+                        OSSL_PARAM_construct_utf8_string(OSSL_OBJECT_PARAM_DATA_STRUCTURE,
+                                                         (char *)prev_output_structure,
+                                                         0);
+                *abstract_p++ =
+                    OSSL_PARAM_construct_octet_string(OSSL_OBJECT_PARAM_DATA,
+                                                      data->running_output,
+                                                      data->running_output_length);
+                *abstract_p = OSSL_PARAM_construct_end();
+                current_abstract = abstract;
+            }
+            break;
+        }
+
+        /* Calling the encoder implementation */
+
+        if (ok) {
+            BIO *current_out = NULL;
+
+            /*
+             * If we're at the last encoder instance to use, we're setting up
+             * final output.  Otherwise, set up an intermediary memory output.
+             */
+            if (top)
+                current_out = data->bio;
+            else if ((current_out = allocated_out = BIO_new(BIO_s_mem()))
+                     == NULL)
+                ok = 0;     /* Assume BIO_new() recorded an error */
+
+            if (ok)
+                ok = current_encoder->encode(current_encoder_ctx,
+                                             (OSSL_CORE_BIO *)current_out,
+                                             original_data, current_abstract,
+                                             data->ctx->selection,
+                                             ossl_pw_passphrase_callback_enc,
+                                             &data->ctx->pwdata);
+
+            data->prev_encoder_inst = current_encoder_inst;
+        }
+    }
+
+    /* Cleanup and collecting the result */
+
+    OPENSSL_free(data->running_output);
+    data->running_output = NULL;
+
+    /*
+     * Steal the output from the BIO_s_mem, if we did allocate one.
+     * That'll be the data for an object abstraction in the next round.
+     */
+    if (allocated_out != NULL) {
+        BUF_MEM *buf;
+
+        BIO_get_mem_ptr(allocated_out, &buf);
+        data->running_output = (unsigned char *)buf->data;
+        data->running_output_length = buf->length;
+        memset(buf, 0, sizeof(*buf));
+    }
+
+    BIO_free(allocated_out);
+    if (original_data != NULL)
+        data->ctx->cleanup(data->ctx->construct_data);
     return ok;
 }
