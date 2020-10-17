@@ -153,6 +153,11 @@ data.
 is either missing or has the value OSSL_OBJECT_UNKNOWN), libcrypto
 interprets the object data type as the input type for a decoder.
 
+=item "data-structure" (B<OSSL_OBJECT_PARAM_DATA_STRUCTURE>) <utf8 string>
+
+The outermost structure of the object content.  Legitimate values depend on
+the object type.
+
 =item "desc" (B<OSSL_OBJECT_PARAM_DESC>) <utf8 string>
 
 A human readable text that describes extra details on the object.

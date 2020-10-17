@@ -42,11 +42,12 @@ extern "C" {
  * This set of parameter names is explained in detail in provider-object(7)
  * (doc/man7/provider-object.pod)
  */
-#define OSSL_OBJECT_PARAM_TYPE       "type"      /* INTEGER */
-#define OSSL_OBJECT_PARAM_DATA_TYPE  "data-type" /* UTF8_STRING */
-#define OSSL_OBJECT_PARAM_REFERENCE  "reference" /* OCTET_STRING */
-#define OSSL_OBJECT_PARAM_DATA       "data" /* OCTET_STRING or UTF8_STRING */
-#define OSSL_OBJECT_PARAM_DESC       "desc"      /* UTF8_STRING */
+#define OSSL_OBJECT_PARAM_TYPE              "type"      /* INTEGER */
+#define OSSL_OBJECT_PARAM_DATA_TYPE         "data-type" /* UTF8_STRING */
+#define OSSL_OBJECT_PARAM_DATA_STRUCTURE    "data-structure" /* UTF8_STRING */
+#define OSSL_OBJECT_PARAM_REFERENCE         "reference" /* OCTET_STRING */
+#define OSSL_OBJECT_PARAM_DATA              "data" /* OCTET_STRING or UTF8_STRING */
+#define OSSL_OBJECT_PARAM_DESC              "desc"      /* UTF8_STRING */
 
 /*
  * Algorithm parameters
