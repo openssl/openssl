@@ -75,6 +75,7 @@ int OSSL_ENCODER_CTX_set_output_structure(OSSL_ENCODER_CTX *ctx,
 int OSSL_ENCODER_CTX_add_encoder(OSSL_ENCODER_CTX *ctx, OSSL_ENCODER *encoder);
 int OSSL_ENCODER_CTX_add_extra(OSSL_ENCODER_CTX *ctx,
                                OSSL_LIB_CTX *libctx, const char *propq);
+int OSSL_ENCODER_CTX_prune_encoders(OSSL_ENCODER_CTX *ctx);
 int OSSL_ENCODER_CTX_get_num_encoders(OSSL_ENCODER_CTX *ctx);
 
 typedef struct ossl_encoder_instance_st OSSL_ENCODER_INSTANCE;
@@ -114,8 +115,9 @@ int OSSL_ENCODER_to_data(OSSL_ENCODER_CTX *ctx, unsigned char **pdata,
  * This is more useful than calling OSSL_ENCODER_CTX_new().
  */
 OSSL_ENCODER_CTX *OSSL_ENCODER_CTX_new_by_EVP_PKEY(const EVP_PKEY *pkey,
-                                                   const char *output_type,
                                                    int selection,
+                                                   const char *output_type,
+                                                   const char *output_struct,
                                                    OSSL_LIB_CTX *libctx,
                                                    const char *propquery);
 

@@ -256,6 +256,57 @@ int OSSL_ENCODER_CTX_add_extra(OSSL_ENCODER_CTX *ctx,
     return 1;
 }
 
+int OSSL_ENCODER_CTX_prune_encoders(OSSL_ENCODER_CTX *ctx)
+{
+    const char *latest_output_type = ctx->output_type;
+    int count_output_structure = ctx->output_structure == NULL ? -1 : 0;
+    size_t i = OSSL_ENCODER_CTX_get_num_encoders(ctx);
+
+    for (; i-- > 0;) {
+        OSSL_ENCODER_INSTANCE *encoder_inst =
+            sk_OSSL_ENCODER_INSTANCE_value(ctx->encoder_insts, i);
+        const char *output_type =
+            OSSL_ENCODER_INSTANCE_get_output_type(encoder_inst);
+        const char *output_structure =
+            OSSL_ENCODER_INSTANCE_get_output_structure(encoder_inst);
+
+        /*
+         * If the implementation output type doesn't match what we're
+         * currently looking for, throw it away.
+         */
+        if (strcasecmp(output_type, latest_output_type) != 0) {
+            sk_OSSL_ENCODER_INSTANCE_delete(ctx->encoder_insts, i);
+            ossl_encoder_instance_free(encoder_inst);
+            continue;
+        }
+
+        /*
+         * If the caller and the implementation specify an output structure,
+         * throw it away if they don't match, otherwise count the matches.
+         * At the end of this loop, the count must not be zero.
+         */
+        if (ctx->output_structure != NULL && output_structure != NULL) {
+            if (strcasecmp(ctx->output_structure, output_structure) != 0) {
+                sk_OSSL_ENCODER_INSTANCE_delete(ctx->encoder_insts, i);
+                ossl_encoder_instance_free(encoder_inst);
+                continue;
+            }
+
+            count_output_structure++;
+        }
+
+        latest_output_type = output_type;
+    }
+
+    if (count_output_structure == 0) {
+        sk_OSSL_ENCODER_INSTANCE_pop_free(ctx->encoder_insts,
+                                          ossl_encoder_instance_free);
+        ctx->encoder_insts = NULL;
+    }
+
+    return 1;
+}
+
 int OSSL_ENCODER_CTX_get_num_encoders(OSSL_ENCODER_CTX *ctx)
 {
     if (ctx == NULL || ctx->encoder_insts == NULL)
