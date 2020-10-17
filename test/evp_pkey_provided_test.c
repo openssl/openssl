@@ -155,7 +155,7 @@ static int test_print_key_using_pem(const char *alg, const EVP_PKEY *pk)
 static int test_print_key_type_using_encoder(const char *alg, int type,
                                              const EVP_PKEY *pk)
 {
-    const char *output_type;
+    const char *output_type, *output_structure;
     int selection;
     OSSL_ENCODER_CTX *ctx = NULL;
     BIO *membio = BIO_new(BIO_s_mem());
@@ -164,36 +164,42 @@ static int test_print_key_type_using_encoder(const char *alg, int type,
     switch (type) {
     case PRIV_TEXT:
         output_type = "TEXT";
+        output_structure = NULL;
         selection = OSSL_KEYMGMT_SELECT_KEYPAIR
             | OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS;
         break;
 
     case PRIV_PEM:
         output_type = "PEM";
+        output_structure = "pkcs8";
         selection = OSSL_KEYMGMT_SELECT_KEYPAIR
             | OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS;
         break;
 
     case PRIV_DER:
         output_type = "DER";
+        output_structure = "pkcs8";
         selection = OSSL_KEYMGMT_SELECT_KEYPAIR
             | OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS;
         break;
 
     case PUB_TEXT:
         output_type = "TEXT";
+        output_structure = NULL;
         selection = OSSL_KEYMGMT_SELECT_PUBLIC_KEY
             | OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS;
         break;
 
     case PUB_PEM:
         output_type = "PEM";
+        output_structure = "SubjectPublicKeyInfo";
         selection = OSSL_KEYMGMT_SELECT_PUBLIC_KEY
             | OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS;
         break;
 
     case PUB_DER:
         output_type = "DER";
+        output_structure = "SubjectPublicKeyInfo";
         selection = OSSL_KEYMGMT_SELECT_PUBLIC_KEY
             | OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS;
         break;
@@ -208,8 +214,9 @@ static int test_print_key_type_using_encoder(const char *alg, int type,
 
     /* Make a context, it's valid for several prints */
     TEST_note("Setting up a OSSL_ENCODER context with passphrase");
-    if (!TEST_ptr(ctx = OSSL_ENCODER_CTX_new_by_EVP_PKEY(pk, output_type,
-                                                         selection,
+    if (!TEST_ptr(ctx = OSSL_ENCODER_CTX_new_by_EVP_PKEY(pk, selection,
+                                                         output_type,
+                                                         output_structure,
                                                          NULL, NULL))
         /* Check that this operation is supported */
         || !TEST_int_ne(OSSL_ENCODER_CTX_get_num_encoders(ctx), 0))
