@@ -200,6 +200,11 @@ static void *encoder_from_dispatch(int id, const OSSL_ALGORITHM *algodef,
                 encoder->settable_ctx_params =
                     OSSL_FUNC_encoder_settable_ctx_params(fns);
             break;
+        case OSSL_FUNC_ENCODER_DOES_SELECTION:
+            if (encoder->does_selection == NULL)
+                encoder->does_selection =
+                    OSSL_FUNC_encoder_does_selection(fns);
+            break;
         case OSSL_FUNC_ENCODER_ENCODE:
             if (encoder->encode == NULL)
                 encoder->encode = OSSL_FUNC_encoder_encode(fns);

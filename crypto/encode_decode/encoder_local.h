@@ -33,6 +33,7 @@ struct ossl_encoder_st {
     OSSL_FUNC_encoder_gettable_params_fn *gettable_params;
     OSSL_FUNC_encoder_set_ctx_params_fn *set_ctx_params;
     OSSL_FUNC_encoder_settable_ctx_params_fn *settable_ctx_params;
+    OSSL_FUNC_encoder_does_selection_fn *does_selection;
     OSSL_FUNC_encoder_encode_fn *encode;
     OSSL_FUNC_encoder_import_object_fn *import_object;
     OSSL_FUNC_encoder_free_object_fn *free_object;
