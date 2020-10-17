@@ -24,6 +24,9 @@ provider-encoder - The OSSL_ENCODER library E<lt>-E<gt> provider functions
  int OSSL_FUNC_encoder_set_ctx_params(void *ctx, const OSSL_PARAM params[]);
  const OSSL_PARAM *OSSL_FUNC_encoder_settable_ctx_params(void *provctx)
 
+ /* Functions to check selection support */
+ int OSSL_FUNC_encoder_does(void *provctx, int selection);
+
  /* Functions to encode object data */
  int OSSL_FUNC_encoder_encode(void *ctx, OSSL_CORE_BIO *out,
                               const void *obj_raw,
@@ -111,6 +114,8 @@ macros in L<openssl-core_dispatch.h(7)>, as follows:
  OSSL_FUNC_encoder_set_ctx_params      OSSL_FUNC_ENCODER_SET_CTX_PARAMS
  OSSL_FUNC_encoder_settable_ctx_params OSSL_FUNC_ENCODER_SETTABLE_CTX_PARAMS
 
+ OSSL_FUNC_encoder_does                OSSL_FUNC_ENCODER_DOES
+
  OSSL_FUNC_encoder_encode              OSSL_FUNC_ENCODER_ENCODE_DATA
 
  OSSL_FUNC_encoder_import_object       OSSL_FUNC_ENCODER_IMPORT_OBJECT
@@ -178,6 +183,9 @@ hints, but must do so with care.  In the end, the output must make sense,
 and if there's a corresponding decoder, the resulting decoded object must
 match the original object that was encoded.
 
+OSSL_FUNC_encoder_does() should tell if a particular implementation supports
+any of the combinations given by I<selection>.
+
 =head2 Context functions
 
 OSSL_FUNC_encoder_newctx() returns a context to be used with the rest of
@@ -214,8 +222,6 @@ OSSL_FUNC_encoder_free_object() should free the object that was created with
 OSSL_FUNC_encoder_import_object().
 
 =head2 Encoding functions
-
-=for comment There will be a "Decoding functions" title as well
 
 OSSL_FUNC_encoder_encode() should take an provider-native object (in
 I<obj_raw>) or an object abstraction (in I<obj_abstract>), and should output
@@ -320,6 +326,9 @@ parameters was invalid or caused an error, for which 0 is returned.
 
 OSSL_FUNC_encoder_settable_ctx_params() returns a pointer to an array of
 constant B<OSSL_PARAM> elements.
+
+OSSL_FUNC_encoder_does() returns 1 if the encoder implementation supports
+any of the I<selection> bits, otherwise 0.
 
 OSSL_FUNC_encoder_encode() return 1 on success, or 0 on failure.
 
