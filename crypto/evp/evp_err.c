@@ -71,7 +71,6 @@ static const ERR_STRING_DATA EVP_str_reasons[] = {
     "expecting a poly1305 key"},
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_EXPECTING_A_SIPHASH_KEY),
     "expecting a siphash key"},
-    {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_FETCH_FAILED), "fetch failed"},
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_FINAL_ERROR), "final error"},
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_FIPS_MODE_NOT_SUPPORTED),
     "fips mode not supported"},

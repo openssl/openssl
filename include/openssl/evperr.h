@@ -190,7 +190,6 @@
 # define EVP_R_EXPECTING_A_EC_KEY                         142
 # define EVP_R_EXPECTING_A_POLY1305_KEY                   164
 # define EVP_R_EXPECTING_A_SIPHASH_KEY                    175
-# define EVP_R_FETCH_FAILED                               202
 # define EVP_R_FINAL_ERROR                                188
 # define EVP_R_FIPS_MODE_NOT_SUPPORTED                    167
 # define EVP_R_GENERATE_ERROR                             214

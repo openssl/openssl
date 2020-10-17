@@ -368,3 +368,16 @@ int ossl_lib_ctx_onfree(OSSL_LIB_CTX *ctx, ossl_lib_ctx_onfree_fn onfreefn)
 
     return 1;
 }
+
+const char *ossl_lib_ctx_get_descriptor(OSSL_LIB_CTX *libctx)
+{
+#ifdef FIPS_MODULE
+    return "FIPS internal library context";
+#else
+    if (ossl_lib_ctx_is_global_default(libctx))
+        return "Global default library context";
+    if (ossl_lib_ctx_is_default(libctx))
+        return "Thread-local default library context";
+    return "Non-default library context";
+#endif
+}
