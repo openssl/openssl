@@ -52,10 +52,11 @@ struct ossl_decoder_st {
 };
 
 struct ossl_encoder_instance_st {
-    OSSL_ENCODER *encoder;       /* Never NULL */
-    void *encoderctx;            /* Never NULL */
-    const char *input_type;      /* May be NULL */
-    const char *output_type;     /* Never NULL */
+    OSSL_ENCODER *encoder;        /* Never NULL */
+    void *encoderctx;             /* Never NULL */
+    const char *input_type;       /* May be NULL */
+    const char *output_type;      /* Never NULL */
+    const char *output_structure; /* May be NULL */
 };
 
 DEFINE_STACK_OF(OSSL_ENCODER_INSTANCE)
@@ -64,17 +65,23 @@ void ossl_encoder_instance_free(OSSL_ENCODER_INSTANCE *encoder_inst);
 
 struct ossl_encoder_ctx_st {
     /*
-     * The desired output type.  The encoder implementation have a gettable
-     * "output-type" parameter that this will match against.
-     */
-    const char *output_type;
-    /*
      * Select what parts of an object will be encoded.  This selection is
      * bit encoded, and the bits correspond to selection bits available with
      * the provider side operation.  For example, when encoding an EVP_PKEY,
      * the OSSL_KEYMGMT_SELECT_ macros are used for this.
      */
     int selection;
+    /*
+     * The desired output type.  The encoder implementation must have a
+     * gettable "output-type" parameter that this will match against.
+     */
+    const char *output_type;
+    /*
+     * The desired output structure, if that's relevant for the type of
+     * object being encoded.  It may be used for selection of the starting
+     * encoder implementations in a chain.
+     */
+    const char *output_structure;
 
     /*
      * Decoders that are components of any current decoding path.
