@@ -25,8 +25,10 @@
 #include <openssl/dsa.h>
 #include <openssl/dh.h>
 #include <openssl/safestack.h>
+#include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
 #include <openssl/x509.h>
+#include <openssl/encoder.h>
 #include "testutil.h"
 #include "internal/nelem.h"
 #include "crypto/bn_dh.h"   /* _bignum_ffdhe2048_p */
@@ -448,19 +450,26 @@ static int rsa_keygen(int bits, EVP_PKEY **pub, EVP_PKEY **priv)
     EVP_PKEY_CTX *keygen_ctx = NULL;
     unsigned char *pub_der = NULL;
     const unsigned char *pp = NULL;
-    long len = 0;
+    size_t len = 0;
+    OSSL_ENCODER_CTX *ectx = NULL;
 
     if (!TEST_ptr(keygen_ctx = EVP_PKEY_CTX_new_from_name(libctx, "RSA", NULL))
         || !TEST_int_gt(EVP_PKEY_keygen_init(keygen_ctx), 0)
         || !TEST_true(EVP_PKEY_CTX_set_rsa_keygen_bits(keygen_ctx, bits))
         || !TEST_int_gt(EVP_PKEY_keygen(keygen_ctx, priv), 0)
-        || !TEST_int_gt(len = i2d_PublicKey(*priv, &pub_der), 0))
+        || !TEST_ptr(ectx =
+                     OSSL_ENCODER_CTX_new_by_EVP_PKEY(*priv,
+                                                      EVP_PKEY_PUBLIC_KEY,
+                                                      "DER", "type-specific",
+                                                      libctx, NULL))
+        || !TEST_true(OSSL_ENCODER_to_data(ectx, &pub_der, &len)))
         goto err;
     pp = pub_der;
     if (!TEST_ptr(d2i_PublicKey(EVP_PKEY_RSA, pub, &pp, len)))
         goto err;
     ret = 1;
 err:
+    OSSL_ENCODER_CTX_free(ectx);
     OPENSSL_free(pub_der);
     EVP_PKEY_CTX_free(keygen_ctx);
     return ret;
