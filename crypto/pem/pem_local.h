@@ -32,12 +32,20 @@
 # define PEM_SELECTION_PrivateKey       EVP_PKEY_KEYPAIR
 # define PEM_SELECTION_Parameters       EVP_PKEY_KEY_PARAMETERS
 
+/*
+ * Properties, named according to the ASN.1 names used throughout libcrypto.
+ */
+# define PEM_STRUCTURE_PUBKEY "SubjectPublicKeyInfo"
+# define PEM_STRUCTURE_PrivateKey "pkcs8"
+# define PEM_STRUCTURE_Parameters "type-specific"
+
 /* Alternative IMPLEMENT macros for provided encoders */
 
 # define IMPLEMENT_PEM_provided_write_body_vars(type, asn1)             \
     int ret = 0;                                                        \
     OSSL_ENCODER_CTX *ctx =                                             \
-        OSSL_ENCODER_CTX_new_by_##type(x, "PEM", PEM_SELECTION_##asn1,  \
+        OSSL_ENCODER_CTX_new_by_##type(x, PEM_SELECTION_##asn1,         \
+                                       "PEM", PEM_STRUCTURE_##asn1,     \
                                        NULL, NULL);                     \
                                                                         \
     if (OSSL_ENCODER_CTX_get_num_encoders(ctx) == 0) {                  \

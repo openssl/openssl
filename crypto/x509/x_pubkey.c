@@ -105,6 +105,7 @@ int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
         size_t derlen = 0;
         OSSL_ENCODER_CTX *ectx =
             OSSL_ENCODER_CTX_new_by_EVP_PKEY(pkey, "DER", EVP_PKEY_PUBLIC_KEY,
+                                             "SubjectPublicKeyInfo",
                                              libctx, NULL);
 
         if (OSSL_ENCODER_to_data(ectx, &der, &derlen)) {
@@ -310,6 +311,7 @@ int i2d_PUBKEY(const EVP_PKEY *a, unsigned char **pp)
         OSSL_LIB_CTX *libctx = ossl_provider_libctx(pkprov);
         OSSL_ENCODER_CTX *ctx =
             OSSL_ENCODER_CTX_new_by_EVP_PKEY(a, "DER", EVP_PKEY_PUBLIC_KEY,
+                                             "SubjectPublicKeyInfo",
                                              libctx, NULL);
         BIO *out = BIO_new(BIO_s_mem());
         BUF_MEM *buf = NULL;
