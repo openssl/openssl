@@ -454,7 +454,8 @@ static int rsa_keygen(int bits, EVP_PKEY **pub, EVP_PKEY **priv)
         || !TEST_int_gt(EVP_PKEY_keygen_init(keygen_ctx), 0)
         || !TEST_true(EVP_PKEY_CTX_set_rsa_keygen_bits(keygen_ctx, bits))
         || !TEST_int_gt(EVP_PKEY_keygen(keygen_ctx, priv), 0)
-        || !TEST_int_gt(len = i2d_PublicKey(*priv, &pub_der), 0))
+        || !TEST_int_gt(len = i2d_PublicKey_ex(libctx, *priv, NULL, &pub_der),
+                        0))
         goto err;
     pp = pub_der;
     if (!TEST_ptr(d2i_PublicKey(EVP_PKEY_RSA, pub, &pp, len)))
