@@ -97,18 +97,6 @@ int OSSL_ENCODER_to_data(OSSL_ENCODER_CTX *ctx, unsigned char **pdata,
     return ret;
 }
 
-int OSSL_ENCODER_CTX_set_output_type(OSSL_ENCODER_CTX *ctx,
-                                     const char *output_type)
-{
-    if (!ossl_assert(ctx != NULL) || !ossl_assert(output_type != NULL)) {
-        ERR_raise(ERR_LIB_OSSL_ENCODER, ERR_R_PASSED_NULL_PARAMETER);
-        return 0;
-    }
-
-    ctx->output_type = output_type;
-    return 1;
-}
-
 int OSSL_ENCODER_CTX_set_selection(OSSL_ENCODER_CTX *ctx, int selection)
 {
     if (!ossl_assert(ctx != NULL)) {
@@ -125,11 +113,35 @@ int OSSL_ENCODER_CTX_set_selection(OSSL_ENCODER_CTX *ctx, int selection)
     return 1;
 }
 
+int OSSL_ENCODER_CTX_set_output_type(OSSL_ENCODER_CTX *ctx,
+                                     const char *output_type)
+{
+    if (!ossl_assert(ctx != NULL) || !ossl_assert(output_type != NULL)) {
+        ERR_raise(ERR_LIB_OSSL_ENCODER, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
+    ctx->output_type = output_type;
+    return 1;
+}
+
+int OSSL_ENCODER_CTX_set_output_structure(OSSL_ENCODER_CTX *ctx,
+                                          const char *output_structure)
+{
+    if (!ossl_assert(ctx != NULL) || !ossl_assert(output_structure != NULL)) {
+        ERR_raise(ERR_LIB_OSSL_ENCODER, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
+    ctx->output_structure = output_structure;
+    return 1;
+}
+
 static OSSL_ENCODER_INSTANCE *ossl_encoder_instance_new(OSSL_ENCODER *encoder,
                                                         void *encoderctx)
 {
     OSSL_ENCODER_INSTANCE *encoder_inst = NULL;
-    OSSL_PARAM params[3];
+    OSSL_PARAM params[4];
 
     if (!ossl_assert(encoder != NULL)) {
         ERR_raise(ERR_LIB_OSSL_ENCODER, ERR_R_PASSED_NULL_PARAMETER);
@@ -155,12 +167,16 @@ static OSSL_ENCODER_INSTANCE *ossl_encoder_instance_new(OSSL_ENCODER *encoder,
         OSSL_PARAM_construct_utf8_ptr(OSSL_ENCODER_PARAM_OUTPUT_TYPE,
                                       (char **)&encoder_inst->output_type, 0);
     params[1] =
+        OSSL_PARAM_construct_utf8_ptr(OSSL_ENCODER_PARAM_OUTPUT_STRUCTURE,
+                                      (char **)&encoder_inst->output_structure,
+                                      0);
+    params[2] =
         OSSL_PARAM_construct_utf8_ptr(OSSL_ENCODER_PARAM_INPUT_TYPE,
                                       (char **)&encoder_inst->input_type, 0);
-    params[2] = OSSL_PARAM_construct_end();
+    params[3] = OSSL_PARAM_construct_end();
 
     if (!encoder->get_params(params)
-        || !OSSL_PARAM_modified(&params[1]))
+        || !OSSL_PARAM_modified(&params[0]))
         goto err;
 
     if (!OSSL_ENCODER_up_ref(encoder)) {
@@ -312,6 +328,14 @@ OSSL_ENCODER_INSTANCE_get_output_type(OSSL_ENCODER_INSTANCE *encoder_inst)
     return encoder_inst->output_type;
 }
 
+const char *
+OSSL_ENCODER_INSTANCE_get_output_structure(OSSL_ENCODER_INSTANCE *encoder_inst)
+{
+    if (encoder_inst == NULL)
+        return NULL;
+    return encoder_inst->output_structure;
+}
+
 static int encoder_process(OSSL_ENCODER_CTX *ctx, BIO *out)
 {
     size_t i, end;
@@ -319,6 +343,7 @@ static int encoder_process(OSSL_ENCODER_CTX *ctx, BIO *out)
     size_t latest_output_length = 0;
     const char *latest_output_type = NULL;
     const char *last_input_type = NULL;
+    const char *last_output_structure = NULL;
     int ok = 0;
 
     end = OSSL_ENCODER_CTX_get_num_encoders(ctx);
@@ -331,10 +356,12 @@ static int encoder_process(OSSL_ENCODER_CTX *ctx, BIO *out)
             OSSL_ENCODER_INSTANCE_get_input_type(encoder_inst);
         const char *current_output_type =
             OSSL_ENCODER_INSTANCE_get_output_type(encoder_inst);
+        const char *current_output_structure =
+            OSSL_ENCODER_INSTANCE_get_output_structure(encoder_inst);
         BIO *current_out;
         BIO *allocated_out = NULL;
         const void *current_data = NULL;
-        OSSL_PARAM abstract[3];
+        OSSL_PARAM abstract[10];
         OSSL_PARAM *abstract_p;
         const OSSL_PARAM *current_abstract = NULL;
 
@@ -374,6 +401,11 @@ static int encoder_process(OSSL_ENCODER_CTX *ctx, BIO *out)
                 *abstract_p++ =
                     OSSL_PARAM_construct_utf8_string(OSSL_OBJECT_PARAM_DATA_TYPE,
                                                      (char *)last_input_type, 0);
+            if (last_output_structure != NULL)
+                *abstract_p++ =
+                    OSSL_PARAM_construct_utf8_string(OSSL_OBJECT_PARAM_DATA_STRUCTURE,
+                                                     (char *)last_output_structure,
+                                                     0);
             *abstract_p++ =
                 OSSL_PARAM_construct_octet_string(OSSL_OBJECT_PARAM_DATA,
                                                   latest_output,
@@ -398,6 +430,8 @@ static int encoder_process(OSSL_ENCODER_CTX *ctx, BIO *out)
 
         if (current_input_type != NULL)
             last_input_type = current_input_type;
+        if (current_output_structure != NULL)
+            last_output_structure = current_output_structure;
 
         if (!ok)
             goto loop_end;
@@ -417,6 +451,8 @@ static int encoder_process(OSSL_ENCODER_CTX *ctx, BIO *out)
             memset(buf, 0, sizeof(*buf));
             BIO_free(allocated_out);
         }
+
+        latest_output_type = encoder_inst->output_type;
 
      loop_end:
         if (current_data != NULL)

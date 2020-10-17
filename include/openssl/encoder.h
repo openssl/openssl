@@ -65,9 +65,11 @@ int OSSL_ENCODER_CTX_set_passphrase_ui(OSSL_ENCODER_CTX *ctx,
 int OSSL_ENCODER_CTX_set_cipher(OSSL_ENCODER_CTX *ctx,
                                 const char *cipher_name,
                                 const char *propquery);
+int OSSL_ENCODER_CTX_set_selection(OSSL_ENCODER_CTX *ctx, int selection);
 int OSSL_ENCODER_CTX_set_output_type(OSSL_ENCODER_CTX *ctx,
                                      const char *output_type);
-int OSSL_ENCODER_CTX_set_selection(OSSL_ENCODER_CTX *ctx, int selection);
+int OSSL_ENCODER_CTX_set_output_structure(OSSL_ENCODER_CTX *ctx,
+                                          const char *output_structure);
 
 /* Utilities to add encoders */
 int OSSL_ENCODER_CTX_add_encoder(OSSL_ENCODER_CTX *ctx, OSSL_ENCODER *encoder);
@@ -84,6 +86,8 @@ const char *
 OSSL_ENCODER_INSTANCE_get_input_type(OSSL_ENCODER_INSTANCE *encoder_inst);
 const char *
 OSSL_ENCODER_INSTANCE_get_output_type(OSSL_ENCODER_INSTANCE *encoder_inst);
+const char *
+OSSL_ENCODER_INSTANCE_get_output_structure(OSSL_ENCODER_INSTANCE *encoder_inst);
 
 typedef const void *OSSL_ENCODER_CONSTRUCT(OSSL_ENCODER_INSTANCE *encoder_inst,
                                            void *construct_data);

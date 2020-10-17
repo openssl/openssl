@@ -251,6 +251,19 @@ This parameter is I<mandatory>.
 in a set of properties, it would be possible to determine the output type
 from the C<output> property.
 
+=item "output-structure" (B<OSSL_ENCODER_PARAM_OUTPUT_STRUCTURE>) <UTF8 string>
+
+This is used to specify the outermost output structure for an ENCODER
+implementation.
+
+For example, an output of type "DER" for a key pair could be structured
+using PKCS#8, or a key type specific structure, such as PKCS#1 for RSA
+keys.
+
+=for comment If we had functionality to get the value of a specific property
+in a set of properties, it would be possible to determine the output
+structure from the C<structure> property.
+
 =back
 
 =head2 Encoder operation parameters
