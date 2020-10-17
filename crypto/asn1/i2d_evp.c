@@ -48,7 +48,7 @@ static int i2d_provided(const EVP_PKEY *a, int selection,
     }
 
     if (ctx == NULL) {
-        ASN1err(0, ASN1_R_UNSUPPORTED_TYPE);
+        ERR_raise(ERR_LIB_ASN1, ASN1_R_UNSUPPORTED_TYPE);
         return -1;
     }
     if (OSSL_ENCODER_to_data(ctx, pp, &len))
@@ -66,7 +66,7 @@ int i2d_KeyParams(const EVP_PKEY *a, unsigned char **pp)
     }
     if (a->ameth != NULL && a->ameth->param_encode != NULL)
         return a->ameth->param_encode(a, pp);
-    ASN1err(ASN1_F_I2D_KEYPARAMS, ASN1_R_UNSUPPORTED_TYPE);
+    ERR_raise(ERR_LIB_ASN1, ASN1_R_UNSUPPORTED_TYPE);
     return -1;
 }
 
@@ -94,7 +94,7 @@ int i2d_PrivateKey(const EVP_PKEY *a, unsigned char **pp)
         }
         return ret;
     }
-    ASN1err(ASN1_F_I2D_PRIVATEKEY, ASN1_R_UNSUPPORTED_PUBLIC_KEY_TYPE);
+    ERR_raise(ERR_LIB_ASN1, ASN1_R_UNSUPPORTED_PUBLIC_KEY_TYPE);
     return -1;
 }
 
@@ -119,7 +119,7 @@ int i2d_PublicKey(const EVP_PKEY *a, unsigned char **pp)
         return i2o_ECPublicKey(EVP_PKEY_get0_EC_KEY(a), pp);
 #endif
     default:
-        ASN1err(ASN1_F_I2D_PUBLICKEY, ASN1_R_UNSUPPORTED_PUBLIC_KEY_TYPE);
+        ERR_raise(ERR_LIB_ASN1, ASN1_R_UNSUPPORTED_PUBLIC_KEY_TYPE);
         return -1;
     }
 }
