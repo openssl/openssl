@@ -92,6 +92,8 @@ struct loader_data_st {
     int scheme_id;               /* For get_loader_from_store() */
     const char *scheme;          /* For get_loader_from_store() */
     const char *propquery;       /* For get_loader_from_store() */
+
+    unsigned int flag_construct_error_occured : 1;
 };
 
 /*
@@ -227,7 +229,7 @@ static void *loader_from_dispatch(int scheme_id, const OSSL_ALGORITHM *algodef,
  * then call loader_from_dispatch() with that identity number.
  */
 static void *construct_loader(const OSSL_ALGORITHM *algodef,
-                              OSSL_PROVIDER *prov, void *unused)
+                              OSSL_PROVIDER *prov, void *data)
 {
     /*
      * This function is only called if get_loader_from_store() returned
@@ -235,6 +237,7 @@ static void *construct_loader(const OSSL_ALGORITHM *algodef,
      * namemap entry, this is it.  Should the scheme already exist there, we
      * know that ossl_namemap_add() will return its corresponding number.
      */
+    struct loader_data_st *methdata = data;
     OSSL_LIB_CTX *libctx = ossl_provider_libctx(prov);
     OSSL_NAMEMAP *namemap = ossl_namemap_stored(libctx);
     const char *scheme = algodef->algorithm_names;
@@ -243,6 +246,14 @@ static void *construct_loader(const OSSL_ALGORITHM *algodef,
 
     if (id != 0)
         method = loader_from_dispatch(id, algodef, prov);
+
+    /*
+     * Flag to indicate that there was actual construction errors.  This
+     * helps inner_evp_generic_fetch() determine what error it should
+     * record on inaccessible algorithms.
+     */
+    if (method == NULL)
+        methdata->flag_construct_error_occured = 1;
 
     return method;
 }
@@ -261,19 +272,32 @@ static OSSL_STORE_LOADER *inner_loader_fetch(OSSL_LIB_CTX *libctx,
     OSSL_METHOD_STORE *store = get_loader_store(libctx);
     OSSL_NAMEMAP *namemap = ossl_namemap_stored(libctx);
     void *method = NULL;
+    int unsupported = 0;
 
-    if (store == NULL || namemap == NULL)
+    if (store == NULL || namemap == NULL) {
+        ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_PASSED_INVALID_ARGUMENT);
         return NULL;
+    }
 
     /*
      * If we have been passed neither a scheme_id or a scheme, we have an
      * internal programming error.
      */
-    if (!ossl_assert(id != 0 || scheme != NULL))
+    if (!ossl_assert(id != 0 || scheme != NULL)) {
+        ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_INTERNAL_ERROR);
         return NULL;
+    }
 
+    /* If we haven't received a name id yet, try to get one for the name */
     if (id == 0)
         id = ossl_namemap_name2num(namemap, scheme);
+
+    /*
+     * If we haven't found the name yet, chances are that the algorithm to
+     * be fetched is unsupported.
+     */
+    if (id == 0)
+        unsupported = 1;
 
     if (id == 0
         || !ossl_method_store_cache_get(store, id, properties, &method)) {
@@ -292,6 +316,7 @@ static OSSL_STORE_LOADER *inner_loader_fetch(OSSL_LIB_CTX *libctx,
         mcmdata.scheme_id = id;
         mcmdata.scheme = scheme;
         mcmdata.propquery = properties;
+        mcmdata.flag_construct_error_occured = 0;
         if ((method = ossl_method_construct(libctx, OSSL_OP_STORE,
                                             0 /* !force_cache */,
                                             &mcm, &mcmdata)) != NULL) {
@@ -305,6 +330,24 @@ static OSSL_STORE_LOADER *inner_loader_fetch(OSSL_LIB_CTX *libctx,
             ossl_method_store_cache_set(store, id, properties, method,
                                         up_ref_loader, free_loader);
         }
+
+        /*
+         * If we never were in the constructor, the algorithm to be fetched
+         * is unsupported.
+         */
+        unsupported = !mcmdata.flag_construct_error_occured;
+    }
+
+    if (method == NULL) {
+        int code = unsupported ? ERR_R_UNSUPPORTED : ERR_R_FETCH_FAILED;
+
+        if (scheme == NULL)
+            scheme = ossl_namemap_num2name(namemap, id, 0);
+        ERR_raise_data(ERR_LIB_OSSL_STORE, code,
+                       "%s, Scheme (%s : %d), Properties (%s)",
+                       ossl_lib_ctx_get_descriptor(libctx),
+                       scheme = NULL ? "<null>" : scheme, id,
+                       properties == NULL ? "<null>" : properties);
     }
 
     return method;

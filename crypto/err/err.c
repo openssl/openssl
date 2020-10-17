@@ -117,6 +117,15 @@ static ERR_STRING_DATA ERR_str_reasons[] = {
     {ERR_R_INVALID_PROVIDER_FUNCTIONS, "invalid provider functions"},
     {ERR_R_INTERRUPTED_OR_CANCELLED, "interrupted or cancelled"},
 
+    /*
+     * Something is unsupported, exactly what is expressed with additional data
+     */
+    {ERR_R_UNSUPPORTED, "unsupported"},
+    /*
+     * A fetch failed for other reasons than the name to be fetched being
+     * unsupported.
+     */
+    {ERR_R_FETCH_FAILED, "fetch failed"},
     {0, NULL},
 };
 #endif

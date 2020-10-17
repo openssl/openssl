@@ -215,19 +215,6 @@ static void destruct_evp_method(void *method, void *data)
     methdata->destruct_method(method);
 }
 
-static const char *libctx_descriptor(OSSL_LIB_CTX *libctx)
-{
-#ifdef FIPS_MODULE
-    return "FIPS internal library context";
-#else
-    if (ossl_lib_ctx_is_global_default(libctx))
-        return "Global default library context";
-    if (ossl_lib_ctx_is_default(libctx))
-        return "Thread-local default library context";
-    return "Non-default library context";
-#endif
-}
-
 static void *
 inner_evp_generic_fetch(OSSL_LIB_CTX *libctx, int operation_id,
                         int name_id, const char *name,
@@ -245,7 +232,7 @@ inner_evp_generic_fetch(OSSL_LIB_CTX *libctx, int operation_id,
     int unsupported = 0;
 
     if (store == NULL || namemap == NULL) {
-        ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT);
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_INVALID_ARGUMENT);
         return NULL;
     }
 
@@ -254,7 +241,7 @@ inner_evp_generic_fetch(OSSL_LIB_CTX *libctx, int operation_id,
      * programming error.
      */
     if (!ossl_assert(operation_id > 0)) {
-        ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
+        ERR_raise(ERR_LIB_EVP, ERR_R_INTERNAL_ERROR);
         return NULL;
     }
 
@@ -263,7 +250,7 @@ inner_evp_generic_fetch(OSSL_LIB_CTX *libctx, int operation_id,
      * internal programming error.
      */
     if (!ossl_assert(name_id != 0 || name != NULL)) {
-        ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
+        ERR_raise(ERR_LIB_EVP, ERR_R_INTERNAL_ERROR);
         return NULL;
     }
 
@@ -280,7 +267,7 @@ inner_evp_generic_fetch(OSSL_LIB_CTX *libctx, int operation_id,
      * For all intents and purposes, this is an internal error.
      */
     if (name_id != 0 && (meth_id = evp_method_id(name_id, operation_id)) == 0) {
-        ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
+        ERR_raise(ERR_LIB_EVP, ERR_R_INTERNAL_ERROR);
         return NULL;
     }
 
@@ -337,14 +324,13 @@ inner_evp_generic_fetch(OSSL_LIB_CTX *libctx, int operation_id,
     }
 
     if (method == NULL) {
-        int code =
-            unsupported ? EVP_R_UNSUPPORTED_ALGORITHM : EVP_R_FETCH_FAILED;
+        int code = unsupported ? ERR_R_UNSUPPORTED : ERR_R_FETCH_FAILED;
 
         if (name == NULL)
             name = ossl_namemap_num2name(namemap, name_id, 0);
         ERR_raise_data(ERR_LIB_EVP, code,
                        "%s, Algorithm (%s : %d), Properties (%s)",
-                       libctx_descriptor(libctx),
+                       ossl_lib_ctx_get_descriptor(libctx),
                        name = NULL ? "<null>" : name, name_id,
                        properties == NULL ? "<null>" : properties);
     }
