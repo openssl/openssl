@@ -114,8 +114,7 @@ document.
  * [NOTES-Valgrind.md](NOTES-Valgrind.md)
 
 Specific notes on upgrading to OpenSSL 3.0 from previous versions, as well as
-known issues are available on the OpenSSL
-[wiki](https://wiki.openssl.org/index.php/OpenSSL_3.0).
+known issues are available on the [OpenSSL 3.0 Wiki] page.
 
 Documentation
 =============
@@ -193,6 +192,10 @@ All rights reserved.
 [wiki.openssl.org]:
     <https://wiki.openssl.org>
     "OpenSSL Wiki"
+
+[OpenSSL 3.0 Wiki]:
+    <https://wiki.openssl.org/index.php/OpenSSL_3.0>
+    "OpenSSL 3.0 Wiki"
 
 [RFC 8446]:
      <https://tools.ietf.org/html/rfc8446>
