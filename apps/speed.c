@@ -3488,7 +3488,7 @@ static int do_multi(int multi, int size_num)
                 BIO_printf(bio_err, "dup failed\n");
                 exit(1);
             }
-            close(dup_fd)
+            close(dup_fd);
             close(fd[1]);
             mr = 1;
             usertime = 0;
