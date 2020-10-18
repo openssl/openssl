@@ -47,12 +47,11 @@ int FuzzerInitialize(int *argc, char ***argv)
     ERR_clear_error();
     CRYPTO_free_ex_index(0, -1);
     idx = SSL_get_ex_data_X509_STORE_CTX_idx();
-    FuzzerSetRand();
     comp_methods = SSL_COMP_get_compression_methods();
     if (comp_methods != NULL)
         sk_SSL_COMP_sort(comp_methods);
 
-    return 1;
+    return FuzzerSetRand();
 }
 
 int FuzzerTestOneInput(const uint8_t *buf, size_t len)

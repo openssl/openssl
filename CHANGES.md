@@ -91,6 +91,13 @@ OpenSSL 3.0
 
    *Paul Dale and Matthias St. Pierre*
 
+ * Deprecate ability to set/get RAND_METHOD.  The functions RAND_set_method()
+   and RAND_get_method() have been deprecated, along with the ability to
+   have ENGINE's provide random bytes. Third-parties that want to provide
+   their own random numbers must do so as a provider.
+
+   *Rich Salz*
+
  * Allow SSL_set1_host() and SSL_add1_host() to take IP literal addresses
    as well as actual hostnames.
 

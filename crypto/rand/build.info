@@ -1,8 +1,11 @@
 LIBS=../../libcrypto
 
-$COMMON=rand_lib.c rand_meth.c
-$CRYPTO=randfile.c rand_err.c rand_deprecated.c
+$COMMON=rand_lib.c
+IF[{- !$disabled{'deprecated-3.0'} -}]
+  $COMMON=$COMMON rand_meth.c
+ENDIF
 
+$CRYPTO=randfile.c rand_err.c rand_deprecated.c
 IF[{- !$disabled{'egd'} -}]
   $CRYPTO=$CRYPTO rand_egd.c
 ENDIF

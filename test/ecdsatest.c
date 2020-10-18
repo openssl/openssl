@@ -11,6 +11,8 @@
 /*
  * Low level APIs are deprecated for public use, but still ok for internal use.
  */
+#define OPENSSL_SUPPRESS_DEPRECATED
+#include <openssl/macros.h>
 #include "internal/deprecated.h"
 
 #include <openssl/opensslconf.h> /* To see if OPENSSL_NO_EC is defined */
@@ -25,11 +27,13 @@
 # include "internal/nelem.h"
 # include "ecdsatest.h"
 
+#ifndef OPENSSL_NO_DEPRECATED_3_0
 /* functions to change the RAND_METHOD */
 static int fbytes(unsigned char *buf, int num);
 
 static RAND_METHOD fake_rand;
 static const RAND_METHOD *old_rand;
+#endif
 static int use_fake = 0;
 static const char *numbers[2];
 static size_t crv_len = 0;
@@ -37,6 +41,7 @@ static EC_builtin_curve *curves = NULL;
 
 static int change_rand(void)
 {
+#ifndef OPENSSL_NO_DEPRECATED_3_0
     /* save old rand method */
     if (!TEST_ptr(old_rand = RAND_get_rand_method()))
         return 0;
@@ -47,16 +52,20 @@ static int change_rand(void)
     /* set new RAND_METHOD */
     if (!TEST_true(RAND_set_rand_method(&fake_rand)))
         return 0;
+#endif
     return 1;
 }
 
 static int restore_rand(void)
 {
+#ifndef OPENSSL_NO_DEPRECATED_3_0
     if (!TEST_true(RAND_set_rand_method(old_rand)))
         return 0;
+#endif
     return 1;
 }
 
+#ifndef OPENSSL_NO_DEPRECATED_3_0
 static int fbytes(unsigned char *buf, int num)
 {
     int ret = 0;
@@ -82,6 +91,7 @@ static int fbytes(unsigned char *buf, int num)
     BN_free(tmp);
     return ret;
 }
+#endif
 
 /*-
  * This function hijacks the RNG to feed it the chosen ECDSA key and nonce.

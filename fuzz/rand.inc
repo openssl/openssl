@@ -9,32 +9,48 @@
  */
 #include <openssl/rand.h>
 
-static int fuzz_bytes(unsigned char *buf, int num)
+int FuzzerSetRand(void)
 {
-    unsigned char val = 1;
+    return 0;
+}
+#if 0
+static int rand_test_init(EVP_TEST *t, const char *name)
+{
+    RAND_DATA *rdata;
+    EVP_RAND *rand;
+    OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
+    unsigned int strength = 256;
 
-    while (--num >= 0)
-        *buf++ = val++;
+    if (!TEST_ptr(rdata = OPENSSL_zalloc(sizeof(*rdata))))
+        return 0;
+
+    /* TEST-RAND is available in the FIPS provider but not with "fips=yes" */
+    rand = EVP_RAND_fetch(libctx, "TEST-RAND", "-fips");
+    if (rand == NULL)
+        goto err;
+    rdata->parent = EVP_RAND_CTX_new(rand, NULL);
+    EVP_RAND_free(rand);
+    if (rdata->parent == NULL)
+        goto err;
+
+    *params = OSSL_PARAM_construct_uint(OSSL_RAND_PARAM_STRENGTH, &strength);
+    if (!EVP_RAND_set_ctx_params(rdata->parent, params))
+        goto err;
+
+    rand = EVP_RAND_fetch(libctx, name, NULL);
+    if (rand == NULL)
+        goto err;
+    rdata->ctx = EVP_RAND_CTX_new(rand, rdata->parent);
+    EVP_RAND_free(rand);
+    if (rdata->ctx == NULL)
+        goto err;
+
+    rdata->n = -1;
+    t->data = rdata;
     return 1;
+ err:
+    EVP_RAND_CTX_free(rdata->parent);
+    OPENSSL_free(rdata);
+    return 0;
 }
-
-static int fuzz_status(void)
-{
-    return 1;
-}
-
-static RAND_METHOD fuzz_rand_method = {
-    NULL,
-    fuzz_bytes,
-    NULL,
-    NULL,
-    fuzz_bytes,
-    fuzz_status
-};
-
-void FuzzerSetRand(void)
-{
-    RAND_set_rand_method(&fuzz_rand_method);
-}
-
-
+#endif

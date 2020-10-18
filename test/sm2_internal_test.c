@@ -10,6 +10,8 @@
 /*
  * Low level APIs are deprecated for public use, but still ok for internal use.
  */
+#define OPENSSL_SUPPRESS_DEPRECATED
+#include <openssl/macros.h>
 #include "internal/deprecated.h"
 
 #include <stdio.h>
@@ -28,8 +30,10 @@
 
 # include "crypto/sm2.h"
 
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 static RAND_METHOD fake_rand;
 static const RAND_METHOD *saved_rand;
+#endif
 
 static uint8_t *fake_rand_bytes = NULL;
 static size_t fake_rand_bytes_offset = 0;

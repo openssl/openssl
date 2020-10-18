@@ -7,6 +7,10 @@
  * https://www.openssl.org/source/license.html
  */
 
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+# define OPENSSL_SUPPRESS_DEPRECATED
+#endif
+
 #include <string.h>
 #include "internal/nelem.h"
 #include <openssl/crypto.h>
@@ -45,6 +49,7 @@
  */
 static int gen_bytes(EVP_RAND_CTX *drbg, unsigned char *buf, int num)
 {
+#ifndef OPENSSL_NO_DEPRECATED_3_0
     const RAND_METHOD *meth = RAND_get_rand_method();
 
     if (meth != NULL && meth != RAND_OpenSSL()) {
@@ -52,6 +57,7 @@ static int gen_bytes(EVP_RAND_CTX *drbg, unsigned char *buf, int num)
             return meth->bytes(buf, num);
         return -1;
     }
+#endif
 
     if (drbg != NULL)
         return EVP_RAND_generate(drbg, buf, num, 0, 0, NULL, 0);
@@ -550,8 +556,10 @@ static int test_rand_reseed(void)
         return TEST_skip("CRNGT cannot be disabled");
 
     /* Check whether RAND_OpenSSL() is the default method */
+#ifndef OPENSSL_NO_DEPRECATED_3_0
     if (!TEST_ptr_eq(RAND_get_rand_method(), RAND_OpenSSL()))
         return 0;
+#endif
 
     /* All three DRBGs should be non-null */
     if (!TEST_ptr(primary = RAND_get0_primary(NULL))

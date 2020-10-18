@@ -112,7 +112,12 @@ struct engine_st {
     const DSA_METHOD *dsa_meth;
     const DH_METHOD *dh_meth;
     const EC_KEY_METHOD *ec_meth;
+# ifndef OPENSSL_NO_DEPRECATED_3_0
     const RAND_METHOD *rand_meth;
+#else
+    /* Keep for binary compatibility? */
+    const void *rand_meth;
+#endif
     /* Cipher handling is via this callback */
     ENGINE_CIPHERS_PTR ciphers;
     /* Digest handling is via this callback */

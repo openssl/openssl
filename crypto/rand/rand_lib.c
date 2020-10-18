@@ -36,7 +36,9 @@ static ENGINE *funct_ref;
 static CRYPTO_RWLOCK *rand_engine_lock;
 # endif
 static CRYPTO_RWLOCK *rand_meth_lock;
+#ifndef OPENSSL_NO_DEPRECATED_3_0
 static const RAND_METHOD *default_RAND_meth;
+#endif
 static CRYPTO_ONCE rand_init = CRYPTO_ONCE_STATIC_INIT;
 
 static int rand_inited = 0;
@@ -71,14 +73,18 @@ DEFINE_RUN_ONCE_STATIC(do_rand_init)
 
 void rand_cleanup_int(void)
 {
-    const RAND_METHOD *meth = default_RAND_meth;
-
     if (!rand_inited)
         return;
 
-    if (meth != NULL && meth->cleanup != NULL)
-        meth->cleanup();
-    RAND_set_rand_method(NULL);
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+    {
+        const RAND_METHOD *meth = default_RAND_meth;
+
+        if (meth != NULL && meth->cleanup != NULL)
+            meth->cleanup();
+        RAND_set_rand_method(NULL);
+    }
+#endif
     rand_pool_cleanup();
 # ifndef OPENSSL_NO_ENGINE
     CRYPTO_THREAD_lock_free(rand_engine_lock);
@@ -109,13 +115,13 @@ void RAND_keep_random_devices_open(int keep)
  */
 int RAND_poll(void)
 {
+#ifndef OPENSSL_NO_DEPRECATED_3_0
     const RAND_METHOD *meth = RAND_get_rand_method();
     int ret = meth == RAND_OpenSSL();
 
     if (meth == NULL)
         return 0;
 
-#ifndef OPENSSL_NO_DEPRECATED_3_0
     if (!ret) {
         /* fill random pool and seed the current legacy RNG */
         RAND_POOL *pool = rand_pool_new(RAND_DRBG_STRENGTH, 1,
@@ -138,10 +144,13 @@ int RAND_poll(void)
      err:
         rand_pool_free(pool);
     }
-#endif
     return ret;
+#else
+    return 1;
+#endif
 }
 
+#ifndef OPENSSL_NO_DEPRECATED_3_0
 int RAND_set_rand_method(const RAND_METHOD *meth)
 {
     if (!RUN_ONCE(&rand_init, do_rand_init))
@@ -188,6 +197,7 @@ const RAND_METHOD *RAND_get_rand_method(void)
 }
 
 # if !defined(OPENSSL_NO_ENGINE)
+#  if !defined(OPENSSL_NO_DEPRECATED_3_0)
 int RAND_set_rand_engine(ENGINE *engine)
 {
     const RAND_METHOD *tmp_meth = NULL;
@@ -212,21 +222,34 @@ int RAND_set_rand_engine(ENGINE *engine)
     return 1;
 }
 # endif
+#endif
 
 void RAND_seed(const void *buf, int num)
 {
+#ifndef OPENSSL_NO_DEPRECATED_3_0
     const RAND_METHOD *meth = RAND_get_rand_method();
 
     if (meth != NULL && meth->seed != NULL)
         meth->seed(buf, num);
+#else
+    EVP_RAND_CTX *drbg = RAND_get0_primary(NULL);
+
+    if (drbg != NULL && num >= 0)
+        EVP_RAND_reseed(drbg, 0, NULL, 0, buf, num);
+#endif
 }
 
 void RAND_add(const void *buf, int num, double randomness)
 {
+#ifndef OPENSSL_NO_DEPRECATED_3_0
     const RAND_METHOD *meth = RAND_get_rand_method();
 
     if (meth != NULL && meth->add != NULL)
         meth->add(buf, num, randomness);
+#else
+    if (randomness != 0)
+        RAND_seed(buf, num);
+#endif
 }
 
 # if !defined(OPENSSL_NO_DEPRECATED_1_1_0)
@@ -243,6 +266,7 @@ int RAND_pseudo_bytes(unsigned char *buf, int num)
 
 int RAND_status(void)
 {
+#ifndef OPENSSL_NO_DEPRECATED_3_0
     EVP_RAND_CTX *rand;
     const RAND_METHOD *meth = RAND_get_rand_method();
 
@@ -252,13 +276,21 @@ int RAND_status(void)
     if ((rand = RAND_get0_primary(NULL)) == NULL)
         return 0;
     return EVP_RAND_state(rand) == EVP_RAND_STATE_READY;
+#else
+    EVP_RAND_CTX *drbg = RAND_get0_primary(NULL);
+
+    return EVP_RAND_state(drbg) == EVP_RAND_STATE_READY ? 1 : 0;
+#endif
 }
 #else  /* !FIPS_MODULE */
 
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 const RAND_METHOD *RAND_get_rand_method(void)
 {
     return NULL;
 }
+# endif
+
 #endif /* !FIPS_MODULE */
 
 /*
@@ -269,6 +301,7 @@ const RAND_METHOD *RAND_get_rand_method(void)
 int RAND_priv_bytes_ex(OSSL_LIB_CTX *ctx, unsigned char *buf, int num)
 {
     EVP_RAND_CTX *rand;
+#ifndef OPENSSL_NO_DEPRECATED_3_0
     const RAND_METHOD *meth = RAND_get_rand_method();
 
     if (meth != NULL && meth != RAND_OpenSSL()) {
@@ -277,6 +310,7 @@ int RAND_priv_bytes_ex(OSSL_LIB_CTX *ctx, unsigned char *buf, int num)
         RANDerr(RAND_F_RAND_PRIV_BYTES_EX, RAND_R_FUNC_NOT_IMPLEMENTED);
         return -1;
     }
+#endif
 
     rand = RAND_get0_private(ctx);
     if (rand != NULL)
@@ -293,6 +327,7 @@ int RAND_priv_bytes(unsigned char *buf, int num)
 int RAND_bytes_ex(OSSL_LIB_CTX *ctx, unsigned char *buf, int num)
 {
     EVP_RAND_CTX *rand;
+#ifndef OPENSSL_NO_DEPRECATED_3_0
     const RAND_METHOD *meth = RAND_get_rand_method();
 
     if (meth != NULL && meth != RAND_OpenSSL()) {
@@ -301,6 +336,7 @@ int RAND_bytes_ex(OSSL_LIB_CTX *ctx, unsigned char *buf, int num)
         RANDerr(RAND_F_RAND_BYTES_EX, RAND_R_FUNC_NOT_IMPLEMENTED);
         return -1;
     }
+#endif
 
     rand = RAND_get0_public(ctx);
     if (rand != NULL)

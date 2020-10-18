@@ -47,7 +47,7 @@ CSPRNG instance will not affect the secrecy of these private values.
 
 In the rare case where the default implementation does not satisfy your special
 requirements, the default RAND method can be replaced by your own RAND
-method using L<RAND_set_rand_method(3)>.
+method in a provider.
 
 Changing the default random generator should be necessary
 only in exceptional cases and is not recommended, unless you have a profound
