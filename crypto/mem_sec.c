@@ -21,11 +21,18 @@
 #include <string.h>
 
 #ifndef OPENSSL_NO_SECURE_MEMORY
+# if defined(_WIN32)
+#  include <windows.h>
+# endif
 # include <stdlib.h>
 # include <assert.h>
-# include <unistd.h>
+# if defined(OPENSSL_SYS_UNIX)
+#  include <unistd.h>
+# endif
 # include <sys/types.h>
-# include <sys/mman.h>
+# if defined(OPENSSL_SYS_UNIX)
+#  include <sys/mman.h>
+# endif
 # if defined(OPENSSL_SYS_LINUX)
 #  include <sys/syscall.h>
 #  if defined(SYS_mlock2)
@@ -375,6 +382,10 @@ static int sh_init(size_t size, size_t minsize)
     size_t i;
     size_t pgsize;
     size_t aligned;
+#if defined(_WIN32)
+    DWORD flOldProtect;
+    SYSTEM_INFO systemInfo;
+#endif
 
     memset(&sh, 0, sizeof(sh));
 
@@ -446,15 +457,19 @@ static int sh_init(size_t size, size_t minsize)
         else
             pgsize = (size_t)tmppgsize;
     }
+#elif defined(_WIN32)
+    GetSystemInfo(&systemInfo);
+    pgsize = (size_t)systemInfo.dwPageSize;
 #else
     pgsize = PAGE_SIZE;
 #endif
     sh.map_size = pgsize + sh.arena_size + pgsize;
 
-#ifdef MAP_ANON
+#if !defined(_WIN32)
+# ifdef MAP_ANON
     sh.map_result = mmap(NULL, sh.map_size,
                          PROT_READ|PROT_WRITE, MAP_ANON|MAP_PRIVATE, -1, 0);
-#else
+# else
     {
         int fd;
 
@@ -465,9 +480,16 @@ static int sh_init(size_t size, size_t minsize)
             close(fd);
         }
     }
-#endif
+# endif
     if (sh.map_result == MAP_FAILED)
         goto err;
+#else
+    sh.map_result = VirtualAlloc(NULL, sh.map_size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+
+    if (sh.map_result == NULL)
+            goto err;
+#endif
+
     sh.arena = (char *)(sh.map_result + pgsize);
     sh_setbit(sh.arena, 0, sh.bittable);
     sh_add_to_list(&sh.freelist[0], sh.arena);
@@ -475,14 +497,24 @@ static int sh_init(size_t size, size_t minsize)
     /* Now try to add guard pages and lock into memory. */
     ret = 1;
 
+#if !defined(_WIN32)
     /* Starting guard is already aligned from mmap. */
     if (mprotect(sh.map_result, pgsize, PROT_NONE) < 0)
         ret = 2;
+#else
+    if (VirtualProtect(sh.map_result, pgsize, PAGE_NOACCESS, &flOldProtect) == FALSE)
+        ret = 2;
+#endif
 
     /* Ending guard page - need to round up to page boundary */
     aligned = (pgsize + sh.arena_size + (pgsize - 1)) & ~(pgsize - 1);
+#if !defined(_WIN32)
     if (mprotect(sh.map_result + aligned, pgsize, PROT_NONE) < 0)
         ret = 2;
+#else
+    if (VirtualProtect(sh.map_result + aligned, pgsize, PAGE_NOACCESS, &flOldProtect) == FALSE)
+        ret = 2;
+#endif
 
 #if defined(OPENSSL_SYS_LINUX) && defined(MLOCK_ONFAULT) && defined(SYS_mlock2)
     if (syscall(SYS_mlock2, sh.arena, sh.arena_size, MLOCK_ONFAULT) < 0) {
@@ -493,6 +525,9 @@ static int sh_init(size_t size, size_t minsize)
             ret = 2;
         }
     }
+#elif defined(_WIN32)
+    if (VirtualLock(sh.arena, sh.arena_size) == FALSE)
+        ret = 2;
 #else
     if (mlock(sh.arena, sh.arena_size) < 0)
         ret = 2;
@@ -514,8 +549,13 @@ static void sh_done(void)
     OPENSSL_free(sh.freelist);
     OPENSSL_free(sh.bittable);
     OPENSSL_free(sh.bitmalloc);
+#if !defined(_WIN32)
     if (sh.map_result != MAP_FAILED && sh.map_size)
         munmap(sh.map_result, sh.map_size);
+#else
+    if (sh.map_result != NULL && sh.map_size)
+        VirtualFree(sh.map_result, 0, MEM_RELEASE);
+#endif
     memset(&sh, 0, sizeof(sh));
 }
 
