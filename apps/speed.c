@@ -3467,6 +3467,7 @@ static int do_multi(int multi, int size_num)
     int n;
     int fd[2];
     int *fds;
+    int dup_fd;
     static char sep[] = ":";
 
     fds = app_malloc(sizeof(*fds) * multi, "fd buffer for do_multi");
@@ -3483,10 +3484,11 @@ static int do_multi(int multi, int size_num)
         } else {
             close(fd[0]);
             close(1);
-            if (dup(fd[1]) == -1) {
+            if ((dup_fd = dup(fd[1])) == -1) {
                 BIO_printf(bio_err, "dup failed\n");
                 exit(1);
             }
+            close(dup_fd)
             close(fd[1]);
             mr = 1;
             usertime = 0;
