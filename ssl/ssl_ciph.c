@@ -1288,21 +1288,17 @@ static int ciphersuite_cb(const char *elem, int len, void *arg)
     /* Arbitrary sized temp buffer for the cipher name. Should be big enough */
     char name[80];
 
-    if (len > (int)(sizeof(name) - 1)) {
-        ERR_raise(ERR_LIB_SSL, SSL_R_NO_CIPHER_MATCH);
-        return 0;
-    }
+    if (len > (int)(sizeof(name) - 1))
+        /* Anyway return 1 so we can parse rest of the list */
+        return 1;
 
     memcpy(name, elem, len);
     name[len] = '\0';
 
     cipher = ssl3_get_cipher_by_std_name(name);
-    if (cipher == NULL) {
-        ERR_raise(ERR_LIB_SSL, SSL_R_NO_CIPHER_MATCH);
-        return 0;
+    if (cipher == NULL)
         /* Ciphersuite not found but return 1 to parse rest of the list */
         return 1;
-    }
 
     if (!sk_SSL_CIPHER_push(ciphersuites, cipher)) {
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
@@ -1323,6 +1319,7 @@ static __owur int set_ciphersuites(STACK_OF(SSL_CIPHER) **currciphers, const cha
     if (*str != '\0'
             && (CONF_parse_list(str, ':', 1, ciphersuite_cb, newciphers) <= 0
                 || sk_SSL_CIPHER_num(newciphers) == 0 )) {
+        ERR_raise(ERR_LIB_SSL, SSL_R_NO_CIPHER_MATCH);
         sk_SSL_CIPHER_free(newciphers);
         return 0;
     }
