@@ -479,8 +479,6 @@ static int sh_init(size_t size, int minsize)
 
     if (sh.map_result == NULL)
             goto err;
-
-    memset(sh.map_result, 0, sh.map_size);
 #endif
 
     sh.arena = (char *)(sh.map_result + pgsize);
