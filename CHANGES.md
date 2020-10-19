@@ -23,6 +23,11 @@ OpenSSL 3.0
 
 ### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
 
+ * Changed behavior of SSL_CTX_set_ciphersuites() and SSL_set_ciphersuites()
+   to ignore unknown ciphers.
+
+   *Otto Hollmann*
+
  * The -cipher-commands and -digest-commands options of the command line
    utility list has been deprecated.
    Instead use the -cipher-algorithms and -digest-algorithms options.
