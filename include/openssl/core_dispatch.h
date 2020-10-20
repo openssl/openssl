@@ -534,7 +534,7 @@ OSSL_CORE_MAKE_FUNC(int, keymgmt_has, (const void *keydata, int selection))
 
 /* Key checks - validation */
 # define OSSL_FUNC_KEYMGMT_VALIDATE                   22
-OSSL_CORE_MAKE_FUNC(int, keymgmt_validate, (void *keydata, int selection))
+OSSL_CORE_MAKE_FUNC(int, keymgmt_validate, (const void *keydata, int selection))
 
 /* Key checks - matching */
 # define OSSL_FUNC_KEYMGMT_MATCH                      23

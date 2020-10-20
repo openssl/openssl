@@ -363,7 +363,7 @@ static int dh_set_params(void *key, const OSSL_PARAM params[])
     return 1;
 }
 
-static int dh_validate_public(DH *dh)
+static int dh_validate_public(const DH *dh)
 {
     const BIGNUM *pub_key = NULL;
 
@@ -373,7 +373,7 @@ static int dh_validate_public(DH *dh)
     return DH_check_pub_key_ex(dh, pub_key);
 }
 
-static int dh_validate_private(DH *dh)
+static int dh_validate_private(const DH *dh)
 {
     int status = 0;
     const BIGNUM *priv_key = NULL;
@@ -384,9 +384,9 @@ static int dh_validate_private(DH *dh)
     return dh_check_priv_key(dh, priv_key, &status);;
 }
 
-static int dh_validate(void *keydata, int selection)
+static int dh_validate(const void *keydata, int selection)
 {
-    DH *dh = keydata;
+    const DH *dh = keydata;
     int ok = 0;
 
     if (!ossl_prov_is_running())

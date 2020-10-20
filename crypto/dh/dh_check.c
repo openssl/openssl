@@ -281,7 +281,7 @@ err:
  * FFC pairwise check from SP800-56A R3.
  *    Section 5.6.2.1.4 Owner Assurance of Pair-wise Consistency
  */
-int dh_check_pairwise(DH *dh)
+int dh_check_pairwise(const DH *dh)
 {
     int ret = 0;
     BN_CTX *ctx = NULL;

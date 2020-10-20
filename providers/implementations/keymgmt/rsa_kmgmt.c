@@ -357,9 +357,9 @@ static const OSSL_PARAM *rsa_gettable_params(void *provctx)
     return rsa_params;
 }
 
-static int rsa_validate(void *keydata, int selection)
+static int rsa_validate(const void *keydata, int selection)
 {
-    RSA *rsa = keydata;
+    const RSA *rsa = keydata;
     int ok = 0;
 
     if (!ossl_prov_is_running())

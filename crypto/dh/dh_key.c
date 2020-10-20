@@ -182,7 +182,7 @@ int DH_generate_key(DH *dh)
 #endif
 }
 
-int dh_generate_public_key(BN_CTX *ctx, DH *dh, const BIGNUM *priv_key,
+int dh_generate_public_key(BN_CTX *ctx, const DH *dh, const BIGNUM *priv_key,
                            BIGNUM *pub_key)
 {
     int ret = 0;
@@ -193,8 +193,16 @@ int dh_generate_public_key(BN_CTX *ctx, DH *dh, const BIGNUM *priv_key,
         return 0;
 
     if (dh->flags & DH_FLAG_CACHE_MONT_P) {
-        mont = BN_MONT_CTX_set_locked(&dh->method_mont_p,
-                                      dh->lock, dh->params.p, ctx);
+        /*
+         * We take the input DH as const, but we lie, because in some cases we
+         * want to get a hold of its Montgomery context.
+         *
+         * We cast to remove the const qualifier in this case, it should be
+         * fine...
+         */
+        BN_MONT_CTX **pmont = (BN_MONT_CTX **)&dh->method_mont_p;
+
+        mont = BN_MONT_CTX_set_locked(pmont, dh->lock, dh->params.p, ctx);
         if (mont == NULL)
             goto err;
     }
