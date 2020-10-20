@@ -337,9 +337,11 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
 #endif
 #ifndef OPENSSL_NO_DSA
     DO_TEST_NO_PRINT(DSA_SIG, d2i_DSA_SIG, i2d_DSA_SIG);
+# ifndef OPENSSL_NO_DEPRECATED_3_0
     DO_TEST_NO_PRINT(DSA, d2i_DSAPrivateKey, i2d_DSAPrivateKey);
     DO_TEST_NO_PRINT(DSA, d2i_DSAPublicKey, i2d_DSAPublicKey);
     DO_TEST_NO_PRINT(DSA, d2i_DSAparams, i2d_DSAparams);
+# endif
 #endif
 #ifndef OPENSSL_NO_DEPRECATED_3_0
     DO_TEST_NO_PRINT(RSA, d2i_RSAPublicKey, i2d_RSAPublicKey);
