@@ -380,7 +380,7 @@ DECLARE_PEM_rw_attr(OSSL_DEPRECATEDIN_3_0, RSAPublicKey, RSA)
 DECLARE_PEM_rw_attr(OSSL_DEPRECATEDIN_3_0, RSA_PUBKEY, RSA)
 #  endif
 # endif
-# ifndef OPENSSL_NO_DSA
+# if !defined(OPENSSL_NO_DSA) || !defined(OPENSSL_NO_DEPRECATED_3_0)
 DECLARE_PEM_rw_cb(DSAPrivateKey, DSA)
 DECLARE_PEM_rw(DSA_PUBKEY, DSA)
 DECLARE_PEM_rw(DSAparams, DSA)
@@ -457,7 +457,7 @@ EVP_PKEY *PEM_read_bio_Parameters_ex(BIO *bp, EVP_PKEY **x,
 EVP_PKEY *PEM_read_bio_Parameters(BIO *bp, EVP_PKEY **x);
 int PEM_write_bio_Parameters(BIO *bp, const EVP_PKEY *x);
 
-# ifndef OPENSSL_NO_DSA
+# if !defined(OPENSSL_NO_DSA) || !defined(OPENSSL_NO_DEPRECATED_3_0)
 EVP_PKEY *b2i_PrivateKey(const unsigned char **in, long length);
 EVP_PKEY *b2i_PublicKey(const unsigned char **in, long length);
 EVP_PKEY *b2i_PrivateKey_bio(BIO *in);
