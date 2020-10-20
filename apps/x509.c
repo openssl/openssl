@@ -755,7 +755,6 @@ int x509_main(int argc, char **argv)
                     goto end;
                 }
                 BIO_printf(out, "Modulus=");
-#ifndef OPENSSL_NO_RSA
                 if (EVP_PKEY_is_a(pkey, "RSA")) {
                     BIGNUM *n;
 
@@ -763,16 +762,14 @@ int x509_main(int argc, char **argv)
                     EVP_PKEY_get_bn_param(pkey, "n", &n);
                     BN_print(out, n);
                     BN_free(n);
-                } else
-#endif
-#ifndef OPENSSL_NO_DSA
-                if (EVP_PKEY_id(pkey) == EVP_PKEY_DSA) {
-                    const BIGNUM *dsapub = NULL;
-                    DSA_get0_key(EVP_PKEY_get0_DSA(pkey), &dsapub, NULL);
+                } else if (EVP_PKEY_is_a(pkey, "DSA")) {
+                    BIGNUM *dsapub;
+
+                    /* Every DSA key has an 'pub' */
+                    EVP_PKEY_get_bn_param(pkey, "pub", &dsapub);
                     BN_print(out, dsapub);
-                } else
-#endif
-                {
+                    BN_free(dsapub);
+                } else {
                     BIO_printf(out, "Wrong Algorithm type");
                 }
                 BIO_printf(out, "\n");
