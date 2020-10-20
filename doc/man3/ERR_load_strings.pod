@@ -2,7 +2,8 @@
 
 =head1 NAME
 
-ERR_load_strings, ERR_PACK, ERR_get_next_error_library - load
+ERR_load_strings, ERR_load_strings_const,
+ERR_PACK, ERR_get_next_error_library - load
 arbitrary error strings
 
 =head1 SYNOPSIS
@@ -10,28 +11,33 @@ arbitrary error strings
  #include <openssl/err.h>
 
  void ERR_load_strings(int lib, ERR_STRING_DATA str[]);
+ ERR_load_strings_const(ERR_STRING_DATA str[]);
+ int ERR_load_strings_const(const ERR_STRING_DATA *str);
 
  int ERR_get_next_error_library(void);
 
- unsigned long ERR_PACK(int lib, int func, int reason);
+ unsigned long ERR_PACK(int lib, 0, int reason);
 
 =head1 DESCRIPTION
 
 ERR_load_strings() registers error strings for library number B<lib>.
+ERR_load_strings_const() is the same, except that the library number is
+already packed into the error code; this is used by code generated
+during the build process.
 
 B<str> is an array of error string data:
 
- typedef struct ERR_string_data_st
- {
+ typedef struct ERR_string_data_st {
      unsigned long error;
      char *string;
  } ERR_STRING_DATA;
 
-The error code is generated from the library number and a function and
-reason code: B<error> = ERR_PACK(B<lib>, B<func>, B<reason>).
-ERR_PACK() is a macro.
+The array is terminated by an entry of C<{0,0}>.
 
-The last entry in the array is {0,0}.
+The error code is generated from the library number and reason code:
+B<error> = ERR_PACK(B<lib>, 0, B<reason>).
+The second argument is ignored, but must be present for source compatibility.
+ERR_PACK() is a macro.
 
 ERR_get_next_error_library() can be used to assign library numbers
 to user libraries at run time.

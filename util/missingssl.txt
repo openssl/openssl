@@ -1,5 +1,4 @@
-# Missing functions in libssl, as of Tue Oct  1 16:13:38 EDT 2019
-ERR_load_SSL_strings(3)
+# Missing functions in libssl, as of Tue Oct 20 16:28:14 EDT 2020
 SRP_Calc_A_param(3)
 SSL_COMP_get_name(3)
 SSL_COMP_set0_compression_methods(3)
