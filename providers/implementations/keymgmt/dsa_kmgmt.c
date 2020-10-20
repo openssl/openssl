@@ -305,14 +305,14 @@ static const OSSL_PARAM *dsa_gettable_params(void *provctx)
     return dsa_params;
 }
 
-static int dsa_validate_domparams(DSA *dsa)
+static int dsa_validate_domparams(const DSA *dsa)
 {
     int status = 0;
 
     return dsa_check_params(dsa, &status);
 }
 
-static int dsa_validate_public(DSA *dsa)
+static int dsa_validate_public(const DSA *dsa)
 {
     int status = 0;
     const BIGNUM *pub_key = NULL;
@@ -323,7 +323,7 @@ static int dsa_validate_public(DSA *dsa)
     return dsa_check_pub_key(dsa, pub_key, &status);
 }
 
-static int dsa_validate_private(DSA *dsa)
+static int dsa_validate_private(const DSA *dsa)
 {
     int status = 0;
     const BIGNUM *priv_key = NULL;
@@ -334,9 +334,9 @@ static int dsa_validate_private(DSA *dsa)
     return dsa_check_priv_key(dsa, priv_key, &status);
 }
 
-static int dsa_validate(void *keydata, int selection)
+static int dsa_validate(const void *keydata, int selection)
 {
-    DSA *dsa = keydata;
+    const DSA *dsa = keydata;
     int ok = 0;
 
     if (!ossl_prov_is_running())

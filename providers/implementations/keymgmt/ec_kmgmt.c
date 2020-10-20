@@ -785,9 +785,9 @@ const OSSL_PARAM *sm2_settable_params(ossl_unused void *provctx)
 #endif
 
 static
-int ec_validate(void *keydata, int selection)
+int ec_validate(const void *keydata, int selection)
 {
-    EC_KEY *eck = keydata;
+    const EC_KEY *eck = keydata;
     int ok = 0;
     BN_CTX *ctx = NULL;
 
