@@ -1318,7 +1318,7 @@ static __owur int set_ciphersuites(STACK_OF(SSL_CIPHER) **currciphers, const cha
     /* Parse the list. We explicitly allow an empty list */
     if (*str != '\0'
             && (CONF_parse_list(str, ':', 1, ciphersuite_cb, newciphers) <= 0
-                || sk_SSL_CIPHER_num(newciphers) == 0 )) {
+                || sk_SSL_CIPHER_num(newciphers) == 0)) {
         ERR_raise(ERR_LIB_SSL, SSL_R_NO_CIPHER_MATCH);
         sk_SSL_CIPHER_free(newciphers);
         return 0;
