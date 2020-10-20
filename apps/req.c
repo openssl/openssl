@@ -626,7 +626,7 @@ int req_main(int argc, char **argv)
                        "         Your key size is %ld! Larger key size may behave not as expected.\n",
                        OPENSSL_RSA_MAX_MODULUS_BITS, newkey);
 
-#ifndef OPENSSL_NO_DSA
+#if !defined(OPENSSL_NO_DSA) || !defined(OPENSSL_NO_DEPRECATED_3_0)
         if (pkey_type == EVP_PKEY_DSA && newkey > OPENSSL_DSA_MAX_MODULUS_BITS)
             BIO_printf(bio_err,
                        "Warning: It is not recommended to use more than %d bit for DSA keys.\n"
