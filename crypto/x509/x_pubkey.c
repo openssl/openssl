@@ -103,7 +103,6 @@ int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
         OSSL_LIB_CTX *libctx = ossl_provider_libctx(pkprov);
         unsigned char *der = NULL;
         size_t derlen = 0;
-        int selection = EVP_PKEY_PUBLIC_KEY;
         OSSL_ENCODER_CTX *ectx =
             OSSL_ENCODER_CTX_new_by_EVP_PKEY(pkey, "DER", EVP_PKEY_PUBLIC_KEY,
                                              libctx, NULL);
@@ -309,8 +308,6 @@ int i2d_PUBKEY(const EVP_PKEY *a, unsigned char **pp)
     } else if (a->keymgmt != NULL) {
         const OSSL_PROVIDER *pkprov = EVP_KEYMGMT_provider(a->keymgmt);
         OSSL_LIB_CTX *libctx = ossl_provider_libctx(pkprov);
-        int selection = (OSSL_KEYMGMT_SELECT_PUBLIC_KEY
-                         | OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS);
         OSSL_ENCODER_CTX *ctx =
             OSSL_ENCODER_CTX_new_by_EVP_PKEY(a, "DER", EVP_PKEY_PUBLIC_KEY,
                                              libctx, NULL);
