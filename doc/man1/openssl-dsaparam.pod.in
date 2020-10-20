@@ -40,7 +40,7 @@ Print out a usage message.
 
 =item B<-inform> B<DER>|B<PEM>, B<-outform> B<DER>|B<PEM>
 
-The input and formats; the default is B<PEM>.
+This option has become obsolete.
 See L<openssl(1)/Format Options> for details.
 
 Parameters are a sequence of B<ASN.1 INTEGER>s: B<p>, B<q>, and B<g>.

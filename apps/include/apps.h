@@ -116,6 +116,7 @@ EVP_PKEY *load_key(const char *uri, int format, int maybe_stdin,
                    const char *pass, ENGINE *e, const char *desc);
 EVP_PKEY *load_pubkey(const char *uri, int format, int maybe_stdin,
                       const char *pass, ENGINE *e, const char *desc);
+EVP_PKEY *load_keyparams(const char *uri, int maybe_stdin, const char *desc);
 int load_certs(const char *uri, STACK_OF(X509) **certs,
                const char *pass, const char *desc);
 int load_crls(const char *uri, STACK_OF(X509_CRL) **crls,
@@ -123,6 +124,7 @@ int load_crls(const char *uri, STACK_OF(X509_CRL) **crls,
 int load_key_certs_crls(const char *uri, int maybe_stdin,
                         const char *pass, const char *desc,
                         EVP_PKEY **ppkey, EVP_PKEY **ppubkey,
+                        EVP_PKEY **pparams,
                         X509 **pcert, STACK_OF(X509) **pcerts,
                         X509_CRL **pcrl, STACK_OF(X509_CRL) **pcrls);
 int load_key_cert_crl(const char *uri, int maybe_stdin,
