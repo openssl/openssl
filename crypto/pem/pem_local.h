@@ -29,7 +29,7 @@
  * expects.
  */
 # define PEM_SELECTION_PUBKEY           EVP_PKEY_PUBLIC_KEY
-# define PEM_SELECTION_PrivateKey       EVP_PKEY_PRIVATE_KEY
+# define PEM_SELECTION_PrivateKey       EVP_PKEY_KEYPAIR
 # define PEM_SELECTION_Parameters       EVP_PKEY_KEY_PARAMETERS
 
 /* Alternative IMPLEMENT macros for provided encoders */

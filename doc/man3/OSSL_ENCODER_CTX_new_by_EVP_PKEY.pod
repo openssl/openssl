@@ -117,7 +117,7 @@ The following constants can be used for standard I<selection>:
 
 =over 4
 
-=item B<EVP_PKEY_PARAMETERS>
+=item B<EVP_PKEY_KEY_PARAMETERS>
 
 Indicates that only the key parameters should be included in the output.
 Where it matters, the data type in the output will indicate that the data is
@@ -129,7 +129,7 @@ Indicates that the public key and eventual key parameters will be included
 in the output.  Where it matters, the data type in the output will indicate
 that the data is a public key.
 
-=item B<EVP_PKEY_PRIVATE_KEY>
+=item B<EVP_PKEY_KEYPAIR>
 
 Indicates that the private key, the public key and eventual key parameters
 should be included in the output.  Where it matters, the data type in the
