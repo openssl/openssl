@@ -2150,6 +2150,7 @@ static int tls_process_ske_dhe(SSL *s, PACKET *pkt, EVP_PKEY **pkey)
                  ERR_R_EVP_LIB);
         goto err;
     }
+    dh = NULL;
 
     if (!ssl_security(s, SSL_SECOP_TMP_DH, EVP_PKEY_security_bits(peer_tmp),
                       0, peer_tmp)) {
