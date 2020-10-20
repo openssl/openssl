@@ -133,8 +133,10 @@ typedef struct hmac_ctx_st HMAC_CTX;
 typedef struct dh_st DH;
 typedef struct dh_method DH_METHOD;
 
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 typedef struct dsa_st DSA;
 typedef struct dsa_method DSA_METHOD;
+# endif
 
 # ifndef OPENSSL_NO_DEPRECATED_3_0
 typedef struct rsa_st RSA;
