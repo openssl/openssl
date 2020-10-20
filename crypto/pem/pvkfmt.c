@@ -20,7 +20,7 @@
 
 #include "internal/cryptlib.h"
 #include <openssl/pem.h>
-#include "internal/pem.h"
+#include "crypto/pem.h"
 #include <openssl/rand.h>
 #include <openssl/bn.h>
 #if !defined(OPENSSL_NO_RSA) && !defined(OPENSSL_NO_DSA)

@@ -22,8 +22,8 @@
 #include <openssl/params.h>
 #include <openssl/pem.h>         /* For public PVK functions */
 #include <openssl/x509.h>
-#include "internal/pem.h"        /* For internal PVK and "blob" headers */
 #include "internal/passphrase.h"
+#include "crypto/pem.h"          /* For internal PVK and "blob" headers */
 #include "prov/bio.h"
 #include "prov/implementations.h"
 #include "endecoder_local.h"

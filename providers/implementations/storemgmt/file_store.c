@@ -25,7 +25,7 @@
 #include <openssl/decoder.h>
 #include <openssl/store.h>       /* The OSSL_STORE_INFO type numbers */
 #include "internal/o_dir.h"
-#include "internal/pem.h"        /* For PVK and "blob" PEM headers */
+#include "crypto/pem.h"          /* For PVK and "blob" PEM headers */
 #include "crypto/decoder.h"
 #include "prov/implementations.h"
 #include "prov/bio.h"
