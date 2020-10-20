@@ -131,9 +131,9 @@ static void mac_free(void *mackey)
     mac_key_free(mackey);
 }
 
-static int mac_has(void *keydata, int selection)
+static int mac_has(const void *keydata, int selection)
 {
-    MAC_KEY *key = keydata;
+    const MAC_KEY *key = keydata;
     int ok = 0;
 
     if (ossl_prov_is_running() && key != NULL) {

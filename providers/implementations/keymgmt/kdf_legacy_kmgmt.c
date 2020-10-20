@@ -91,7 +91,7 @@ static void kdf_freedata(void *kdfdata)
     kdf_data_free(kdfdata);
 }
 
-static int kdf_has(void *keydata, int selection)
+static int kdf_has(const void *keydata, int selection)
 {
     return 0;
 }

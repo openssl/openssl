@@ -113,9 +113,9 @@ static void *ed448_new_key(void *provctx)
                        NULL);
 }
 
-static int ecx_has(void *keydata, int selection)
+static int ecx_has(const void *keydata, int selection)
 {
-    ECX_KEY *key = keydata;
+    const ECX_KEY *key = keydata;
     int ok = 0;
 
     if (ossl_prov_is_running() && key != NULL) {

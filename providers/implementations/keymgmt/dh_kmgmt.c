@@ -143,9 +143,9 @@ static void dh_freedata(void *keydata)
     DH_free(keydata);
 }
 
-static int dh_has(void *keydata, int selection)
+static int dh_has(const void *keydata, int selection)
 {
-    DH *dh = keydata;
+    const DH *dh = keydata;
     int ok = 0;
 
     if (ossl_prov_is_running() && dh != NULL) {
