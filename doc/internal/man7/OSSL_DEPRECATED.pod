@@ -1,0 +1,157 @@
+=pod
+
+=head1 NAME
+
+OPENSSL_NO_DEPRECATED_3_0, OSSL_DEPRECATEDIN_3_0, OSSL_DEPRECATEDIN_3_0_FOR,
+OPENSSL_NO_DEPRECATED_1_1_1, OSSL_DEPRECATEDIN_1_1_1, OSSL_DEPRECATEDIN_1_1_1_FOR,
+OPENSSL_NO_DEPRECATED_1_1_0, OSSL_DEPRECATEDIN_1_1_0, OSSL_DEPRECATEDIN_1_1_0_FOR,
+OPENSSL_NO_DEPRECATED_1_0_2, OSSL_DEPRECATEDIN_1_0_2, OSSL_DEPRECATEDIN_1_0_2_FOR,
+OPENSSL_NO_DEPRECATED_1_0_1, OSSL_DEPRECATEDIN_1_0_1, OSSL_DEPRECATEDIN_1_0_1_FOR,
+OPENSSL_NO_DEPRECATED_1_0_0, OSSL_DEPRECATEDIN_1_0_0, OSSL_DEPRECATEDIN_1_0_0_FOR,
+OPENSSL_NO_DEPRECATED_0_9_8, OSSL_DEPRECATEDIN_0_9_8, OSSL_DEPRECATEDIN_0_9_8_FOR,
+OSSL_DEPRECATED,
+OSSL_DEPRECATED_FOR
+- Macros to deprecating symbols and/or remove them
+
+=head1 SYNOPSIS
+
+ #include <openssl/macros.h>
+
+ OSSL_DEPRECATED(since)
+ OSSL_DEPRECATED_FOR(since, msg)
+
+ OPENSSL_NO_DEPRECATED_3_0
+ OSSL_DEPRECATEDIN_3_0
+ OSSL_DEPRECATEDIN_3_0_FOR(msg)
+
+ OPENSSL_NO_DEPRECATED_1_1_1
+ OSSL_DEPRECATEDIN_1_1_1
+ OSSL_DEPRECATEDIN_1_1_1_FOR(msg)
+
+ OPENSSL_NO_DEPRECATED_1_1_0
+ OSSL_DEPRECATEDIN_1_1_0
+ OSSL_DEPRECATEDIN_1_1_0_FOR(msg)
+
+ OPENSSL_NO_DEPRECATED_1_0_2
+ OSSL_DEPRECATEDIN_1_0_2
+ OSSL_DEPRECATEDIN_1_0_2_FOR(msg)
+
+ OPENSSL_NO_DEPRECATED_1_0_1
+ OSSL_DEPRECATEDIN_1_0_1
+ OSSL_DEPRECATEDIN_1_0_1_FOR(msg)
+
+ OPENSSL_NO_DEPRECATED_1_0_0
+ OSSL_DEPRECATEDIN_1_0_0
+ OSSL_DEPRECATEDIN_1_0_0_FOR(msg)
+
+ OPENSSL_NO_DEPRECATED_0_9_8
+ OSSL_DEPRECATEDIN_0_9_8
+ OSSL_DEPRECATEDIN_0_9_8_FOR(msg)
+
+=head1 DESCRIPTION
+
+Deprecation means to indicate that a symbol (usually a function, but can also
+be a define and less commonly a type or even variable) should not be used
+any more.
+OpenSSL supports multiple types of deprecation, including compile-time
+warnings, all the way to the removal of the implementation.
+This is controlled by two configurations parameters: C<--api=> to
+specify a version, and C<no-deprecated> to control actual removal.
+These are documented in the F<INSTALL.md> file provided with the source.
+As a third case, sometimes an item is deprecated, but it is still used
+within the OpenSSL software itself.
+
+The standard macros follow the same naming convention using the release
+version as a suffix, replacing the periods such as in B<1.1.0> with underscores,
+like B<1_1_0>. Because the 3.0 release introduces a new numbering scheme,
+in the text below we will indicate it as B<OSSL_DEPRECATEDIN_I<version>>
+
+Many modern compilers allow an annotation, or attribute, to be attached
+to a function declaration.
+This is done by using B<OSSL_DEPRECATEDIN_I<version>> or
+B<OSSL_DEPRECATEDIN_I<version>_FOR> as the first part of a function
+declaration.
+For example:
+
+ OSSL_DEPRECATEDIN_1_1_0 __owur int
+ HMAC_Init(HMAC_CTX *ctx, const void *key, int len, const EVP_MD *md);
+
+If this is not supported by the compiler being used, they expand to
+nothing.
+
+These declarations are in the public header files that can be found
+in the F<include/openssl> directory in the source distribution.
+
+With this declaration, any program that uses the deprecated function,
+assuming OpenSSL is configured to support it, will get a compile-time
+warning that HMAC_Init() is deprecated.
+
+To make it possible to hide the declaration completely, all
+deprecations should be wrapped inside an ifdef. For compatibility with
+other OpenSSL macros, a double negative must be used:
+
+ #ifndef OPENSSL_NO_DEPRECATED_1_1_0
+ OSSL_DEPRECATEDIN_1_1_0 __owur int
+ HMAC_Init(HMAC_CTX *ctx, const void *key, int len, const EVP_MD *md);
+ #endif
+
+Hiding the declaration completely is done when OpenSSL is configured to
+remove old API's, via the C<--api> configuration parameter.
+
+The wrapper must be used when deprecating a C<define>,
+C<typedef>, or a variable declaration.
+When deprecating items in a header file, it might make sense to move
+deprecations to one place, rather than putting multiple instances of
+pre-processor C<ifndef> lines throughout the file.
+
+To remove the actual implementation, use the wrapper:
+
+ #ifndef OPENSSL_NO_DEPRECATED_1_1_0
+ OSSL_DEPRECATEDIN_1_1_0 __owur int
+ HMAC_Init(HMAC_CTX *ctx, const void *key, int len, const EVP_MD *md)
+ {
+   ...
+   return ret;
+ }
+ #endif
+
+If a deprecated function is needed elsewhere within OpenSSL, do not
+wrap the implementation because some build configurations will "ifdef out"
+the implementation. Instead, a file that implements publically-deprecated
+function should include this near the beginning of its translation unit:
+
+ /*
+  * RSA low level APIs are deprecated for public use, but are kept for
+  * internal use.
+  */
+ #include "internal/deprecated.h"
+
+
+Any OpenSSL source file that needs to use a deprecated function, should
+add this line (or equivalent) at the start of the translation unit,
+perhaps with an explanatory comment:
+
+ /*
+  * Still using legacy RSA_ functions.
+  */
+ #define OPENSSL_SUPPRESS_DEPRECATED
+
+In a subsequent release, the declaration should be moved to an internal
+header file and the wrapper and deprecation attribute should be removed.
+A more complete solution is to rewrite the code that uses the deprecated
+API's.
+
+=head1 SEE ALSO
+
+L<openssl_user_macros(7)>
+
+=head1 COPYRIGHT
+
+Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut
