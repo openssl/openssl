@@ -380,11 +380,12 @@ DECLARE_PEM_rw_attr(OSSL_DEPRECATEDIN_3_0, RSAPublicKey, RSA)
 DECLARE_PEM_rw_attr(OSSL_DEPRECATEDIN_3_0, RSA_PUBKEY, RSA)
 #  endif
 # endif
-# if !defined(OPENSSL_NO_DSA) \
-     || !defined(OPENSSL_NO_DEPRECATED_3_0)
+# ifndef OPENSSL_NO_DEPRECATED_3_0
+#  ifndef OPENSSL_NO_DSA
 DECLARE_PEM_rw_cb_attr(OSSL_DEPRECATEDIN_3_0, DSAPrivateKey, DSA)
 DECLARE_PEM_rw_attr(OSSL_DEPRECATEDIN_3_0, DSA_PUBKEY, DSA)
 DECLARE_PEM_rw_attr(OSSL_DEPRECATEDIN_3_0, DSAparams, DSA)
+#  endif
 # endif
 # ifndef OPENSSL_NO_EC
 DECLARE_PEM_rw(ECPKParameters, EC_GROUP)
@@ -458,8 +459,8 @@ EVP_PKEY *PEM_read_bio_Parameters_ex(BIO *bp, EVP_PKEY **x,
 EVP_PKEY *PEM_read_bio_Parameters(BIO *bp, EVP_PKEY **x);
 int PEM_write_bio_Parameters(BIO *bp, const EVP_PKEY *x);
 
-# if !defined(OPENSSL_NO_DSA) \
-     || !defined(OPENSSL_NO_DEPRECATED_3_0)
+# ifndef OPENSSL_NO_DEPRECATED_3_0
+#  ifndef OPENSSL_NO_DSA
 OSSL_DEPRECATEDIN_3_0 EVP_PKEY *b2i_PrivateKey(const unsigned char **in,
                                                long length);
 OSSL_DEPRECATEDIN_3_0 EVP_PKEY *b2i_PublicKey(const unsigned char **in,
@@ -468,12 +469,13 @@ OSSL_DEPRECATEDIN_3_0 EVP_PKEY *b2i_PrivateKey_bio(BIO *in);
 OSSL_DEPRECATEDIN_3_0 EVP_PKEY *b2i_PublicKey_bio(BIO *in);
 OSSL_DEPRECATEDIN_3_0 int i2b_PrivateKey_bio(BIO *out, const EVP_PKEY *pk);
 OSSL_DEPRECATEDIN_3_0 int i2b_PublicKey_bio(BIO *out, const EVP_PKEY *pk);
-#  ifndef OPENSSL_NO_RC4
+#   ifndef OPENSSL_NO_RC4
 OSSL_DEPRECATEDIN_3_0 EVP_PKEY *b2i_PVK_bio(BIO *in, pem_password_cb *cb,
                                             void *u);
 OSSL_DEPRECATEDIN_3_0 int i2b_PVK_bio(BIO *out, const EVP_PKEY *pk,
                                       int enclevel, pem_password_cb *cb,
                                       void *u);
+#   endif
 #  endif
 # endif
 
