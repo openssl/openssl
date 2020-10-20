@@ -476,7 +476,7 @@ X509 *load_cert_pass(const char *uri, int maybe_stdin,
     if (desc == NULL)
         desc = "certificate";
     (void)load_key_certs_crls(uri, maybe_stdin, pass, desc,
-                              NULL, NULL, &cert, NULL, NULL, NULL);
+                              NULL, NULL, NULL, &cert, NULL, NULL, NULL);
     if (cert == NULL) {
         BIO_printf(bio_err, "Unable to load %s\n", desc);
         ERR_print_errors(bio_err);
@@ -492,7 +492,7 @@ X509_CRL *load_crl(const char *uri, int format, const char *desc)
     if (desc == NULL)
         desc = "CRL";
     (void)load_key_certs_crls(uri, 0, NULL, desc,
-                              NULL,  NULL, NULL, NULL, &crl, NULL);
+                              NULL, NULL,  NULL, NULL, NULL, &crl, NULL);
     if (crl == NULL) {
         BIO_printf(bio_err, "Unable to load %s\n", desc);
         ERR_print_errors(bio_err);
@@ -559,7 +559,7 @@ EVP_PKEY *load_key(const char *uri, int format, int may_stdin,
         }
     } else {
         (void)load_key_certs_crls(uri, may_stdin, pass, desc,
-                                  &pkey, NULL, NULL, NULL, NULL, NULL);
+                                  &pkey, NULL, NULL, NULL, NULL, NULL, NULL);
     }
 
     if (pkey == NULL) {
@@ -589,13 +589,29 @@ EVP_PKEY *load_pubkey(const char *uri, int format, int maybe_stdin,
         }
     } else {
         (void)load_key_certs_crls(uri, maybe_stdin, pass, desc,
-                                  NULL, &pkey, NULL, NULL, NULL, NULL);
+                                  NULL, &pkey, NULL, NULL, NULL, NULL, NULL);
     }
     if (pkey == NULL) {
         BIO_printf(bio_err, "Unable to load %s\n", desc);
         ERR_print_errors(bio_err);
     }
     return pkey;
+}
+
+EVP_PKEY *load_keyparams(const char *uri, int maybe_stdin, const char *desc)
+{
+    EVP_PKEY *params = NULL;
+
+    if (desc == NULL)
+        desc = "key parameters";
+
+    (void)load_key_certs_crls(uri, maybe_stdin, NULL, desc,
+                              NULL, NULL, &params, NULL, NULL, NULL, NULL);
+    if (params == NULL) {
+        BIO_printf(bio_err, "Unable to load %s\n", desc);
+        ERR_print_errors(bio_err);
+    }
+    return params;
 }
 
 void app_bail_out(char *fmt, ...)
@@ -627,7 +643,7 @@ int load_certs(const char *uri, STACK_OF(X509) **certs,
                const char *pass, const char *desc)
 {
     int was_NULL = *certs == NULL;
-    int ret = load_key_certs_crls(uri, 0, pass, desc, NULL, NULL,
+    int ret = load_key_certs_crls(uri, 0, pass, desc, NULL, NULL, NULL,
                                   NULL, certs, NULL, NULL);
 
     if (!ret && was_NULL) {
@@ -645,7 +661,7 @@ int load_crls(const char *uri, STACK_OF(X509_CRL) **crls,
               const char *pass, const char *desc)
 {
     int was_NULL = *crls == NULL;
-    int ret = load_key_certs_crls(uri, 0, pass, desc, NULL, NULL,
+    int ret = load_key_certs_crls(uri, 0, pass, desc, NULL, NULL, NULL,
                                   NULL, NULL, NULL, crls);
 
     if (!ret && was_NULL) {
@@ -671,6 +687,7 @@ int load_crls(const char *uri, STACK_OF(X509_CRL) **crls,
 int load_key_certs_crls(const char *uri, int maybe_stdin,
                         const char *pass, const char *desc,
                         EVP_PKEY **ppkey, EVP_PKEY **ppubkey,
+                        EVP_PKEY **pparams,
                         X509 **pcert, STACK_OF(X509) **pcerts,
                         X509_CRL **pcrl, STACK_OF(X509_CRL) **pcrls)
 {
@@ -761,6 +778,10 @@ int load_key_certs_crls(const char *uri, int maybe_stdin,
             if (ppubkey != NULL && *ppubkey == NULL)
                 ok = ((*ppubkey = OSSL_STORE_INFO_get1_PUBKEY(info)) != NULL);
             break;
+        case OSSL_STORE_INFO_PARAMS:
+            if (pparams != NULL && *pparams == NULL)
+                ok = ((*pparams = OSSL_STORE_INFO_get1_PARAMS(info)) != NULL);
+            break;
         case OSSL_STORE_INFO_CERT:
             if (pcert != NULL && *pcert == NULL)
                 ok = (*pcert = OSSL_STORE_INFO_get1_CERT(info)) != NULL;
@@ -794,8 +815,11 @@ int load_key_certs_crls(const char *uri, int maybe_stdin,
     if (failed == NULL) {
         int any = 0;
 
-        if (ppkey != NULL && *ppkey == NULL) {
+        if ((ppkey != NULL && *ppkey == NULL)
+            || (ppubkey != NULL && *ppubkey == NULL)) {
             failed = "key";
+        } else if (pparams != NULL && *pparams == NULL) {
+            failed = "params";
         } else if ((pcert != NULL || pcerts != NULL) && ncerts == 0) {
             if (pcert == NULL)
                 any = 1;

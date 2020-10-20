@@ -66,7 +66,7 @@ const OPTIONS dsaparam_options[] = {
 int dsaparam_main(int argc, char **argv)
 {
     ENGINE *e = NULL;
-    BIO *in = NULL, *out = NULL;
+    BIO *out = NULL;
     EVP_PKEY *params = NULL, *pkey = NULL;
     EVP_PKEY_CTX *ctx = NULL;
     int numbits = -1, num = 0, genkey = 0;
@@ -140,9 +140,6 @@ int dsaparam_main(int argc, char **argv)
     }
     private = genkey ? 1 : 0;
 
-    in = bio_open_default(infile, 'r', informat);
-    if (in == NULL)
-        goto end;
     out = bio_open_owner(outfile, outformat, private);
     if (out == NULL)
         goto end;
@@ -181,10 +178,12 @@ int dsaparam_main(int argc, char **argv)
             BIO_printf(bio_err, "Error, DSA key generation failed\n");
             goto end;
         }
-    } else if (informat == FORMAT_ASN1) {
-        params = d2i_KeyParams_bio(EVP_PKEY_DSA, NULL, in);
     } else {
-        params = PEM_read_bio_Parameters(in, NULL);
+        params = load_keyparams(infile, 1, "DSA parameters");
+        if (!EVP_PKEY_is_a(params, "DSA")) {
+            EVP_PKEY_free(params);
+            params = NULL;
+        }
     }
     if (params == NULL) {
         BIO_printf(bio_err, "Error, unable to load DSA parameters\n");
@@ -276,7 +275,6 @@ int dsaparam_main(int argc, char **argv)
  end:
     if (ret != 0)
         ERR_print_errors(bio_err);
-    BIO_free(in);
     BIO_free_all(out);
     EVP_PKEY_CTX_free(ctx);
     EVP_PKEY_free(pkey);

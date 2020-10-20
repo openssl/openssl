@@ -724,7 +724,7 @@ static int load_cert_certs(const char *uri,
         return ret;
     }
     pass_string = get_passwd(pass, desc);
-    ret = load_key_certs_crls(uri, 0, pass_string, desc, NULL, NULL,
+    ret = load_key_certs_crls(uri, 0, pass_string, desc, NULL, NULL, NULL,
                               pcert, pcerts, NULL, NULL);
     clear_free(pass_string);
 
