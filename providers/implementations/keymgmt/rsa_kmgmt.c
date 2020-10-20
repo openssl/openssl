@@ -108,9 +108,9 @@ static void rsa_freedata(void *keydata)
     RSA_free(keydata);
 }
 
-static int rsa_has(void *keydata, int selection)
+static int rsa_has(const void *keydata, int selection)
 {
-    RSA *rsa = keydata;
+    const RSA *rsa = keydata;
     int ok = 0;
 
     if (rsa != NULL && ossl_prov_is_running()) {

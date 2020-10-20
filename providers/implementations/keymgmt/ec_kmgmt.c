@@ -246,9 +246,9 @@ void ec_freedata(void *keydata)
 }
 
 static
-int ec_has(void *keydata, int selection)
+int ec_has(const void *keydata, int selection)
 {
-    EC_KEY *ec = keydata;
+    const EC_KEY *ec = keydata;
     int ok = 0;
 
     if (ossl_prov_is_running() && ec != NULL) {

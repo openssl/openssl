@@ -121,9 +121,9 @@ static void dsa_freedata(void *keydata)
     DSA_free(keydata);
 }
 
-static int dsa_has(void *keydata, int selection)
+static int dsa_has(const void *keydata, int selection)
 {
-    DSA *dsa = keydata;
+    const DSA *dsa = keydata;
     int ok = 0;
 
     if (ossl_prov_is_running() && dsa != NULL) {

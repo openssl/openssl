@@ -418,9 +418,9 @@ static void xor_freedata(void *keydata)
     OPENSSL_free(keydata);
 }
 
-static int xor_has(void *vkey, int selection)
+static int xor_has(const void *vkey, int selection)
 {
-    XORKEY *key = vkey;
+    const XORKEY *key = vkey;
     int ok = 0;
 
     if (key != NULL) {

@@ -530,7 +530,7 @@ OSSL_CORE_MAKE_FUNC(const char *, keymgmt_query_operation_name,
 
 /* Key checks - key data content checks */
 # define OSSL_FUNC_KEYMGMT_HAS                        21
-OSSL_CORE_MAKE_FUNC(int, keymgmt_has, (void *keydata, int selection))
+OSSL_CORE_MAKE_FUNC(int, keymgmt_has, (const void *keydata, int selection))
 
 /* Key checks - validation */
 # define OSSL_FUNC_KEYMGMT_VALIDATE                   22
