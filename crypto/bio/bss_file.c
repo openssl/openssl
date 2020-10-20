@@ -245,7 +245,7 @@ static long file_ctrl(BIO *b, int cmd, long num, void *ptr)
              * turn off buffering until the bug is resolved.
              */
             if ((num & BIO_FP_TEXT) != 0)
-                setvbuf((FILE *)ptr, NULL, _IONB, 0);
+                setvbuf((FILE *)ptr, NULL, _IONBF, 0);
 # elif defined(OPENSSL_SYS_MSDOS)
             int fd = fileno((FILE *)ptr);
             /* Set correct text/binary mode */
