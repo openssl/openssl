@@ -256,7 +256,7 @@ Blowfish and RC5 algorithms use a 128 bit key.
 Note that some of these ciphers can be disabled at compile time
 and some are available only if an appropriate engine is configured
 in the configuration file. The output when invoking this command
-with the B<-ciphers> option (that is C<openssl enc -ciphers>) is
+with the B<-list> option (that is C<openssl enc -list>) is
 a list of ciphers, supported by your version of OpenSSL, including
 ones provided by configured engines.
 
