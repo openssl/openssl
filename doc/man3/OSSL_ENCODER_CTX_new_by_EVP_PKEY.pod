@@ -42,7 +42,7 @@ them up, so almost all the caller has to do next is call functions like
 L<OSSL_ENCODER_to_bio(3)>.  I<output_type> determines the final output
 encoding, and I<selection> can be used to select what parts of the I<pkey>
 should be included in the output.  I<output_type> is further discussed in
-L</Output types> below, and I<selection> is further describe in
+L</Output types> below, and I<selection> is further described in
 L</Selections>.
 
 Internally, OSSL_ENCODER_CTX_new_by_EVP_PKEY() uses the names from the
