@@ -3769,20 +3769,19 @@ long ssl3_callback_ctrl(SSL *s, int cmd, void (*fp) (void))
     switch (cmd) {
 #if !defined(OPENSSL_NO_DH) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     case SSL_CTRL_SET_TMP_DH_CB:
-        {
-            s->cert->dh_tmp_cb = (DH *(*)(SSL *, int, int))fp;
-        }
+        s->cert->dh_tmp_cb = (DH *(*)(SSL *, int, int))fp;
+        ret = 1;
         break;
 #endif
     case SSL_CTRL_SET_TLSEXT_DEBUG_CB:
         s->ext.debug_cb = (void (*)(SSL *, int, int,
                                     const unsigned char *, int, void *))fp;
+        ret = 1;
         break;
 
     case SSL_CTRL_SET_NOT_RESUMABLE_SESS_CB:
-        {
-            s->not_resumable_session_cb = (int (*)(SSL *, int))fp;
-        }
+        s->not_resumable_session_cb = (int (*)(SSL *, int))fp;
+        ret = 1;
         break;
     default:
         break;
