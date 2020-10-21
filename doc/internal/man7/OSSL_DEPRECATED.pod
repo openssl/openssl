@@ -68,6 +68,8 @@ in the text below we will indicate it as B<OSSL_DEPRECATEDIN_I<version>>
 
 Many modern compilers allow an annotation, or attribute, to be attached
 to a function declaration.
+If this is not supported by the compiler being used, they expand to
+nothing.
 This is done by using B<OSSL_DEPRECATEDIN_I<version>> or
 B<OSSL_DEPRECATEDIN_I<version>_FOR> as the first part of a function
 declaration.
@@ -75,9 +77,6 @@ For example:
 
  OSSL_DEPRECATEDIN_1_1_0 __owur int
  HMAC_Init(HMAC_CTX *ctx, const void *key, int len, const EVP_MD *md);
-
-If this is not supported by the compiler being used, they expand to
-nothing.
 
 These declarations are in the public header files that can be found
 in the F<include/openssl> directory in the source distribution.
@@ -121,7 +120,7 @@ the implementation. Instead, a file that implements publically-deprecated
 function should include this near the beginning of its translation unit:
 
  /*
-  * RSA low level APIs are deprecated for public use, but are kept for
+  * HMAC low level APIs are deprecated for public use, but are kept for
   * internal use.
   */
  #include "internal/deprecated.h"
@@ -132,7 +131,7 @@ add this line (or equivalent) at the start of the translation unit,
 perhaps with an explanatory comment:
 
  /*
-  * Still using legacy RSA_ functions.
+  * This file uses the publically-deprecated HMAC functions.
   */
  #define OPENSSL_SUPPRESS_DEPRECATED
 
