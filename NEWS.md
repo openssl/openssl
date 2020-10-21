@@ -20,6 +20,7 @@ OpenSSL 3.0
 
 ### Major changes between OpenSSL 1.1.1 and OpenSSL 3.0 [under development]
 
+  * Deprecated the `DSA_` functions.
   * Deprecated the `ERR_load_` functions.
   * Remove the `RAND_DRBG` API.
   * Deprecated the `ENGINE` API.
