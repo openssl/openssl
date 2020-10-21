@@ -12,8 +12,6 @@
 
 const OSSL_CORE_HANDLE *FIPS_get_core_handle(OSSL_LIB_CTX *ctx);
 
-const char *ossl_prov_util_nid_to_name(int nid);
-
 int ossl_cipher_capable_aes_cbc_hmac_sha1(void);
 int ossl_cipher_capable_aes_cbc_hmac_sha256(void);
 
