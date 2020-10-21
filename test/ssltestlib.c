@@ -731,10 +731,6 @@ const SSL_METHOD *cm,
             goto err;
     }
 
-#ifndef OPENSSL_NO_DH
-    SSL_CTX_set_dh_auto(serverctx, 1);
-#endif
-
     *sctx = serverctx;
     if (cctx != NULL)
         *cctx = clientctx;
