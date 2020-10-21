@@ -30,6 +30,7 @@
 #include <openssl/core_names.h>
 #include <openssl/core_dispatch.h>
 #include <openssl/provider.h>
+#include <openssl/param_build.h>
 
 #include "ssltestlib.h"
 #include "testutil.h"
@@ -6374,6 +6375,9 @@ static int test_info_callback(int tst)
                                        privkey)))
         goto end;
 
+    if (!TEST_true(SSL_CTX_set_dh_auto(sctx, 1)))
+        goto end;
+
     /*
      * For even numbered tests we check the server callbacks. For odd numbers we
      * check the client.
@@ -8045,7 +8049,197 @@ static int test_ssl_dup(void)
 
     return testresult;
 }
-#endif
+
+# ifndef OPENSSL_NO_DH
+
+static EVP_PKEY *tmp_dh_params = NULL;
+
+/* Helper function for the test_set_tmp_dh() tests */
+static EVP_PKEY *get_tmp_dh_params(void)
+{
+    if (tmp_dh_params == NULL) {
+        BIGNUM *p = NULL;
+        OSSL_PARAM_BLD *tmpl = NULL;
+        EVP_PKEY_CTX *pctx = NULL;
+        OSSL_PARAM *params = NULL;
+        EVP_PKEY *dhpkey = NULL;
+
+        p = BN_get_rfc3526_prime_2048(NULL);
+        if (!TEST_ptr(p))
+            goto end;
+
+        pctx = EVP_PKEY_CTX_new_from_name(libctx, "DH", NULL);
+        if (!TEST_ptr(pctx)
+                || !TEST_true(EVP_PKEY_key_fromdata_init(pctx)))
+            goto end;
+
+        tmpl = OSSL_PARAM_BLD_new();
+        if (!TEST_ptr(tmpl)
+                || !TEST_true(OSSL_PARAM_BLD_push_BN(tmpl,
+                                                        OSSL_PKEY_PARAM_FFC_P,
+                                                        p))
+                || !TEST_true(OSSL_PARAM_BLD_push_uint(tmpl,
+                                                        OSSL_PKEY_PARAM_FFC_G,
+                                                        2)))
+            goto end;
+
+        params = OSSL_PARAM_BLD_to_param(tmpl);
+        if (!TEST_ptr(params)
+                || !TEST_true(EVP_PKEY_fromdata(pctx, &dhpkey, params)))
+            goto end;
+
+        tmp_dh_params = dhpkey;
+    end:
+        BN_free(p);
+        EVP_PKEY_CTX_free(pctx);
+        OSSL_PARAM_BLD_free(tmpl);
+        OSSL_PARAM_BLD_free_params(params);
+    }
+
+    if (!EVP_PKEY_up_ref(tmp_dh_params))
+        return NULL;
+
+    return tmp_dh_params;
+}
+
+#  ifndef OPENSSL_NO_DEPRECATED
+/* Callback used by test_set_tmp_dh() */
+static DH *tmp_dh_callback(SSL *s, int is_export, int keylen)
+{
+    EVP_PKEY *dhpkey = get_tmp_dh_params();
+    DH *ret = NULL;
+
+    if (!TEST_ptr(dhpkey))
+        return NULL;
+
+    ret = EVP_PKEY_get0_DH(dhpkey);
+
+    EVP_PKEY_free(dhpkey);
+
+    return ret;
+}
+#  endif
+
+/*
+ * Test the various methods for setting temporary DH parameters
+ *
+ * Test  0: Default (no auto) setting
+ * Test  1: Explicit SSL_CTX auto off
+ * Test  2: Explicit SSL auto off
+ * Test  3: Explicit SSL_CTX auto on
+ * Test  4: Explicit SSL auto on
+ * Test  5: Explicit SSL_CTX auto off, custom DH params via EVP_PKEY
+ * Test  6: Explicit SSL auto off, custom DH params via EVP_PKEY
+ *
+ * The following are testing deprecated APIs, so we only run them if available
+ * Test  7: Explicit SSL_CTX auto off, custom DH params via DH
+ * Test  8: Explicit SSL auto off, custom DH params via DH
+ * Test  9: Explicit SSL_CTX auto off, custom DH params via callback
+ * Test 10: Explicit SSL auto off, custom DH params via callback
+ */
+static int test_set_tmp_dh(int idx)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0;
+    int dhauto = (idx == 3 || idx == 4) ? 1 : 0;
+    int expected = (idx <= 2) ? 0 : 1;
+    EVP_PKEY *dhpkey = NULL;
+#  ifndef OPENSSL_NO_DEPRECATED_3_0
+    DH *dh = NULL;
+#  else
+
+    if (idx >= 7)
+        return 1;
+#  endif
+
+    if (idx >= 5 && idx <= 8) {
+        dhpkey = get_tmp_dh_params();
+        if (!TEST_ptr(dhpkey))
+            goto end;
+    }
+#  ifndef OPENSSL_NO_DEPRECATED_3_0
+    if (idx == 7 || idx == 8) {
+        dh = EVP_PKEY_get0_DH(dhpkey);
+        if (!TEST_ptr(dh))
+            goto end;
+    }
+#  endif
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+                                       TLS_client_method(),
+                                       0,
+                                       0,
+                                       &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    if ((idx & 1) == 1) {
+        if (!TEST_true(SSL_CTX_set_dh_auto(sctx, dhauto)))
+            goto end;
+    }
+
+    if (idx == 5) {
+        if (!TEST_true(SSL_CTX_set0_tmp_dh_pkey(sctx, dhpkey)))
+            goto end;
+        dhpkey = NULL;
+    }
+#  ifndef OPENSSL_NO_DEPRECATED_3_0
+    else if (idx == 7) {
+        if (!TEST_true(SSL_CTX_set_tmp_dh(sctx, dh)))
+            goto end;
+    } else if (idx == 9) {
+        SSL_CTX_set_tmp_dh_callback(sctx, tmp_dh_callback);
+    }
+#  endif
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+                                      NULL, NULL)))
+        goto end;
+
+    if ((idx & 1) == 0 && idx != 0) {
+        if (!TEST_true(SSL_set_dh_auto(serverssl, dhauto)))
+            goto end;
+    }
+    if (idx == 6) {
+        if (!TEST_true(SSL_set0_tmp_dh_pkey(serverssl, dhpkey)))
+            goto end;
+        dhpkey = NULL;
+    }
+#  ifndef OPENSSL_NO_DEPRECATED_3_0
+    else if (idx == 8) {
+        if (!TEST_true(SSL_set_tmp_dh(serverssl, dh)))
+            goto end;
+    } else if (idx == 10) {
+        SSL_set_tmp_dh_callback(serverssl, tmp_dh_callback);
+    }
+#  endif
+
+    if (!TEST_true(SSL_set_min_proto_version(serverssl, TLS1_2_VERSION))
+            || !TEST_true(SSL_set_max_proto_version(serverssl, TLS1_2_VERSION))
+            || !TEST_true(SSL_set_cipher_list(serverssl, "DHE-RSA-AES128-SHA")))
+        goto end;
+
+    /*
+     * If autoon then we should succeed. Otherwise we expect failure because
+     * there are no parameters
+     */
+    if (!TEST_int_eq(create_ssl_connection(serverssl, clientssl,
+                                           SSL_ERROR_NONE), expected))
+        goto end;
+
+    testresult = 1;
+
+ end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    EVP_PKEY_free(dhpkey);
+
+    return testresult;
+}
+# endif /* OPENSSL_NO_DH */
+#endif /* OPENSSL_NO_TLS1_2 */
 
 OPT_TEST_DECLARE_USAGE("certfile privkeyfile srpvfile tmpfile provider config\n")
 
@@ -8252,6 +8446,9 @@ int setup_tests(void)
 #endif
 #ifndef OPENSSL_NO_TLS1_2
     ADD_TEST(test_ssl_dup);
+# ifndef OPENSSL_NO_DH
+    ADD_ALL_TESTS(test_set_tmp_dh, 11);
+# endif
 #endif
     return 1;
 
@@ -8265,6 +8462,9 @@ int setup_tests(void)
 
 void cleanup_tests(void)
 {
+# ifndef OPENSSL_NO_DH
+    EVP_PKEY_free(tmp_dh_params);
+#endif
     OPENSSL_free(cert);
     OPENSSL_free(privkey);
     OPENSSL_free(cert2);
