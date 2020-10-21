@@ -10,7 +10,6 @@
 /*
  * Low level APIs are deprecated for public use, but still ok for internal use.
  */
-#define OPENSSL_SUPPRESS_DEPRECATED
 #include <openssl/macros.h>
 #include "internal/deprecated.h"
 
@@ -24,65 +23,34 @@
 #include <openssl/crypto.h>
 #include <openssl/err.h>
 #include <openssl/rand.h>
+#include "crypto/rand.h"
 #include "testutil.h"
 
 #ifndef OPENSSL_NO_SM2
 
 # include "crypto/sm2.h"
 
-# ifndef OPENSSL_NO_DEPRECATED_3_0
-static RAND_METHOD fake_rand;
-static const RAND_METHOD *saved_rand;
-#endif
-
-static uint8_t *fake_rand_bytes = NULL;
-static size_t fake_rand_bytes_offset = 0;
-static size_t fake_rand_size = 0;
-
-static int get_faked_bytes(unsigned char *buf, int num)
-{
-    if (fake_rand_bytes == NULL)
-        return saved_rand->bytes(buf, num);
-
-    if (!TEST_size_t_gt(fake_rand_size, 0))
-        return 0;
-
-    while (num-- > 0) {
-        if (fake_rand_bytes_offset >= fake_rand_size)
-            fake_rand_bytes_offset = 0;
-        *buf++ = fake_rand_bytes[fake_rand_bytes_offset++];
-    }
-
-    return 1;
-}
+static EVP_RAND_CTX *rprimary, *rpub, *rpriv, *rfake;
 
 static int start_fake_rand(const char *hex_bytes)
 {
-    /* save old rand method */
-    if (!TEST_ptr(saved_rand = RAND_get_rand_method()))
-        return 0;
-
-    fake_rand = *saved_rand;
-    /* use own random function */
-    fake_rand.bytes = get_faked_bytes;
-
-    fake_rand_bytes = OPENSSL_hexstr2buf(hex_bytes, NULL);
-    fake_rand_bytes_offset = 0;
-    fake_rand_size = strlen(hex_bytes) / 2;
-
-    /* set new RAND_METHOD */
-    if (!TEST_true(RAND_set_rand_method(&fake_rand)))
-        return 0;
+    if (rfake == NULL) {
+        rprimary = RAND_get0_primary(NULL);
+        rpub = RAND_get0_public(NULL);
+        rpriv = RAND_get0_private(NULL);
+        rfake = RAND_make_fake(hex_bytes);
+    }
+    TEST_ptr_eq(rprimary, RAND_swap_primary(NULL, rfake));
+    TEST_ptr_eq(rpub, RAND_swap_public(NULL, rfake));
+    TEST_ptr_eq(rpriv, RAND_swap_private(NULL, rfake));
     return 1;
 }
 
 static int restore_rand(void)
 {
-    OPENSSL_free(fake_rand_bytes);
-    fake_rand_bytes = NULL;
-    fake_rand_bytes_offset = 0;
-    if (!TEST_true(RAND_set_rand_method(saved_rand)))
-        return 0;
+    RAND_swap_primary(NULL, rprimary);
+    RAND_swap_public(NULL, rpub);
+    RAND_swap_private(NULL, rpriv);
     return 1;
 }
 

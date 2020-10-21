@@ -13,7 +13,6 @@
 #include <openssl/err.h>
 #include <openssl/rand.h>
 #include "fuzzer.h"
-
 #include "rand.inc"
 
 int FuzzerInitialize(int *argc, char ***argv)

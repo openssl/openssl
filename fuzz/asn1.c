@@ -39,7 +39,6 @@
 #include <openssl/ssl.h>
 #include <internal/nelem.h>
 #include "fuzzer.h"
-
 #include "rand.inc"
 
 static ASN1_ITEM_EXP *item_type[] = {

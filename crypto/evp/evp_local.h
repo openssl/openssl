@@ -10,7 +10,7 @@
 /* EVP_MD_CTX related stuff */
 
 #include <openssl/core_dispatch.h>
-#include "internal/refcount.h"
+#include "crypto/rand.h"
 
 #define EVP_CTRL_RET_UNSUPPORTED -1
 
@@ -65,14 +65,6 @@ struct evp_kdf_ctx_st {
     EVP_KDF *meth;              /* Method structure */
     void *data;                 /* Algorithm-specific data */
 } /* EVP_KDF_CTX */ ;
-
-struct evp_rand_ctx_st {
-    EVP_RAND *meth;             /* Method structure */
-    void *data;                 /* Algorithm-specific data */
-    EVP_RAND_CTX *parent;       /* Parent EVP_RAND or NULL if none */
-    CRYPTO_REF_COUNT refcnt;    /* Context reference count */
-    CRYPTO_RWLOCK *refcnt_lock;
-} /* EVP_RAND_CTX */ ;
 
 struct evp_keymgmt_st {
     int id;                      /* libcrypto internal */

@@ -21,7 +21,6 @@
 #include <openssl/dh.h>
 #include <openssl/err.h>
 #include "fuzzer.h"
-
 #include "rand.inc"
 
 static const uint8_t kCertificateDER[] = {

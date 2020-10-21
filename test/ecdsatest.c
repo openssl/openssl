@@ -11,8 +11,6 @@
 /*
  * Low level APIs are deprecated for public use, but still ok for internal use.
  */
-#define OPENSSL_SUPPRESS_DEPRECATED
-#include <openssl/macros.h>
 #include "internal/deprecated.h"
 
 #include <openssl/opensslconf.h> /* To see if OPENSSL_NO_EC is defined */
@@ -25,15 +23,10 @@
 # include <openssl/ec.h>
 # include <openssl/rand.h>
 # include "internal/nelem.h"
+# include "crypto/rand.h"
 # include "ecdsatest.h"
 
-#ifndef OPENSSL_NO_DEPRECATED_3_0
-/* functions to change the RAND_METHOD */
-static int fbytes(unsigned char *buf, int num);
-
-static RAND_METHOD fake_rand;
-static const RAND_METHOD *old_rand;
-#endif
+static EVP_RAND_CTX *rprimary, *rpub, *rpriv, *rfake;
 static int use_fake = 0;
 static const char *numbers[2];
 static size_t crv_len = 0;
@@ -41,57 +34,25 @@ static EC_builtin_curve *curves = NULL;
 
 static int change_rand(void)
 {
-#ifndef OPENSSL_NO_DEPRECATED_3_0
-    /* save old rand method */
-    if (!TEST_ptr(old_rand = RAND_get_rand_method()))
-        return 0;
-
-    fake_rand = *old_rand;
-    /* use own random function */
-    fake_rand.bytes = fbytes;
-    /* set new RAND_METHOD */
-    if (!TEST_true(RAND_set_rand_method(&fake_rand)))
-        return 0;
-#endif
+    if (rfake == NULL) {
+        rprimary = RAND_get0_primary(NULL);
+        rpub = RAND_get0_public(NULL);
+        rpriv = RAND_get0_private(NULL);
+        rfake = RAND_make_fake(NULL);
+    }
+    TEST_ptr_eq(rprimary, RAND_swap_primary(NULL, rfake));
+    TEST_ptr_eq(rpub, RAND_swap_public(NULL, rfake));
+    TEST_ptr_eq(rpriv, RAND_swap_private(NULL, rfake));
     return 1;
 }
 
 static int restore_rand(void)
 {
-#ifndef OPENSSL_NO_DEPRECATED_3_0
-    if (!TEST_true(RAND_set_rand_method(old_rand)))
-        return 0;
-#endif
+    RAND_swap_primary(NULL, rprimary);
+    RAND_swap_public(NULL, rpub);
+    RAND_swap_private(NULL, rpriv);
     return 1;
 }
-
-#ifndef OPENSSL_NO_DEPRECATED_3_0
-static int fbytes(unsigned char *buf, int num)
-{
-    int ret = 0;
-    static int fbytes_counter = 0;
-    BIGNUM *tmp = NULL;
-
-    if (use_fake == 0)
-        return old_rand->bytes(buf, num);
-
-    use_fake = 0;
-
-    if (!TEST_ptr(tmp = BN_new())
-        || !TEST_int_lt(fbytes_counter, OSSL_NELEM(numbers))
-        || !TEST_true(BN_hex2bn(&tmp, numbers[fbytes_counter]))
-        /* tmp might need leading zeros so pad it out */
-        || !TEST_int_le(BN_num_bytes(tmp), num)
-        || !TEST_true(BN_bn2binpad(tmp, buf, num)))
-        goto err;
-
-    fbytes_counter = (fbytes_counter + 1) % OSSL_NELEM(numbers);
-    ret = 1;
- err:
-    BN_free(tmp);
-    return ret;
-}
-#endif
 
 /*-
  * This function hijacks the RNG to feed it the chosen ECDSA key and nonce.

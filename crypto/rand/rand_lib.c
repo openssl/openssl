@@ -221,6 +221,7 @@ int RAND_set_rand_engine(ENGINE *engine)
     CRYPTO_THREAD_unlock(rand_engine_lock);
     return 1;
 }
+#  endif
 # endif
 #endif
 
@@ -566,6 +567,20 @@ EVP_RAND_CTX *RAND_get0_primary(OSSL_LIB_CTX *ctx)
     return dgbl->primary;
 }
 
+EVP_RAND_CTX *RAND_swap_primary(OSSL_LIB_CTX *ctx, EVP_RAND_CTX *prim)
+{
+    EVP_RAND_CTX *oprim = RAND_get0_primary(ctx);
+    RAND_GLOBAL *dgbl = rand_get_global(ctx);
+
+    if (oprim == NULL
+            || dgbl == NULL
+            || !CRYPTO_THREAD_write_lock(dgbl->lock))
+        return NULL;
+    dgbl->primary = prim;
+    CRYPTO_THREAD_unlock(dgbl->lock);
+    return oprim;
+}
+
 /*
  * Get the public random generator.
  * Returns pointer to its EVP_RAND_CTX on success, NULL on failure.
@@ -599,6 +614,20 @@ EVP_RAND_CTX *RAND_get0_public(OSSL_LIB_CTX *ctx)
     return rand;
 }
 
+EVP_RAND_CTX *RAND_swap_public(OSSL_LIB_CTX *ctx, EVP_RAND_CTX *pub)
+{
+    EVP_RAND_CTX *oldpub = RAND_get0_public(ctx);
+    RAND_GLOBAL *dgbl = rand_get_global(ctx);
+
+    if (oldpub == NULL
+            || dgbl == NULL
+            || !CRYPTO_THREAD_write_lock(dgbl->lock))
+        return NULL;
+    CRYPTO_THREAD_set_local(&dgbl->public, pub);
+    CRYPTO_THREAD_unlock(dgbl->lock);
+    return oldpub;
+}
+
 /*
  * Get the private random generator.
  * Returns pointer to its EVP_RAND_CTX on success, NULL on failure.
@@ -630,6 +659,20 @@ EVP_RAND_CTX *RAND_get0_private(OSSL_LIB_CTX *ctx)
         CRYPTO_THREAD_set_local(&dgbl->private, rand);
     }
     return rand;
+}
+
+EVP_RAND_CTX *RAND_swap_private(OSSL_LIB_CTX *ctx, EVP_RAND_CTX *priv)
+{
+    EVP_RAND_CTX *oldpriv = RAND_get0_private(ctx);
+    RAND_GLOBAL *dgbl = rand_get_global(ctx);
+
+    if (oldpriv == NULL
+            || dgbl == NULL
+            || !CRYPTO_THREAD_write_lock(dgbl->lock))
+        return NULL;
+    CRYPTO_THREAD_set_local(&dgbl->private, priv);
+    CRYPTO_THREAD_unlock(dgbl->lock);
+    return oldpriv;
 }
 
 #ifndef FIPS_MODULE

@@ -89,7 +89,7 @@ IF[{- !$disabled{tests} -}]
 
   SOURCE[asn1-test]=asn1.c test-corpus.c
   INCLUDE[asn1-test]=../include
-  DEPEND[asn1-test]=../libcrypto ../libssl
+  DEPEND[asn1-test]=../providers/libnonfips.a ../libcrypto.a ../libssl.a
 
   SOURCE[asn1parse-test]=asn1parse.c test-corpus.c
   INCLUDE[asn1parse-test]=../include
@@ -105,11 +105,11 @@ IF[{- !$disabled{tests} -}]
 
   SOURCE[client-test]=client.c test-corpus.c
   INCLUDE[client-test]=../include
-  DEPEND[client-test]=../libcrypto ../libssl
+  DEPEND[client-test]=../providers/libnonfips.a ../libcrypto.a ../libssl.a
 
   SOURCE[cmp-test]=cmp.c test-corpus.c
   INCLUDE[cmp-test]=../include
-  DEPEND[cmp-test]=../libcrypto.a
+  DEPEND[cmp-test]=../providers/libnonfips.a ../libcrypto.a
   # referring to static lib allows using non-exported functions
 
   SOURCE[cms-test]=cms.c test-corpus.c
@@ -130,9 +130,9 @@ IF[{- !$disabled{tests} -}]
 
   SOURCE[server-test]=server.c test-corpus.c
   INCLUDE[server-test]=../include
-  DEPEND[server-test]=../libcrypto ../libssl
+  DEPEND[server-test]=../providers/libnonfips.a ../libcrypto.a ../libssl.a
 
   SOURCE[x509-test]=x509.c test-corpus.c
   INCLUDE[x509-test]=../include
-  DEPEND[x509-test]=../libcrypto
+  DEPEND[x509-test]=../providers/libnonfips.a ../libcrypto.a
 ENDIF

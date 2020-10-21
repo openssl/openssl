@@ -17,7 +17,6 @@
 #include <openssl/dh.h>
 #include <openssl/err.h>
 #include "fuzzer.h"
-
 #include "rand.inc"
 
 /* unused, to avoid warning. */

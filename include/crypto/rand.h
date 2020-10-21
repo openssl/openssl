@@ -7,18 +7,46 @@
  * https://www.openssl.org/source/license.html
  */
 
-/*
- * Licensed under the Apache License 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * https://www.openssl.org/source/license.html
- * or in the file LICENSE in the source distribution.
- */
-
 #ifndef OSSL_CRYPTO_RAND_H
 # define OSSL_CRYPTO_RAND_H
 
 # include <openssl/rand.h>
+#include <openssl/core_dispatch.h>
+#include "internal/refcount.h"
+
+struct evp_rand_st {
+    OSSL_PROVIDER *prov;
+    int name_id;
+    CRYPTO_REF_COUNT refcnt;
+    CRYPTO_RWLOCK *refcnt_lock;
+
+    const OSSL_DISPATCH *dispatch;
+    OSSL_FUNC_rand_newctx_fn *newctx;
+    OSSL_FUNC_rand_freectx_fn *freectx;
+    OSSL_FUNC_rand_instantiate_fn *instantiate;
+    OSSL_FUNC_rand_uninstantiate_fn *uninstantiate;
+    OSSL_FUNC_rand_generate_fn *generate;
+    OSSL_FUNC_rand_reseed_fn *reseed;
+    OSSL_FUNC_rand_nonce_fn *nonce;
+    OSSL_FUNC_rand_enable_locking_fn *enable_locking;
+    OSSL_FUNC_rand_lock_fn *lock;
+    OSSL_FUNC_rand_unlock_fn *unlock;
+    OSSL_FUNC_rand_gettable_params_fn *gettable_params;
+    OSSL_FUNC_rand_gettable_ctx_params_fn *gettable_ctx_params;
+    OSSL_FUNC_rand_settable_ctx_params_fn *settable_ctx_params;
+    OSSL_FUNC_rand_get_params_fn *get_params;
+    OSSL_FUNC_rand_get_ctx_params_fn *get_ctx_params;
+    OSSL_FUNC_rand_set_ctx_params_fn *set_ctx_params;
+    OSSL_FUNC_rand_verify_zeroization_fn *verify_zeroization;
+};
+
+struct evp_rand_ctx_st {
+    EVP_RAND *meth;             /* Method structure */
+    void *data;                 /* Algorithm-specific data */
+    EVP_RAND_CTX *parent;       /* Parent EVP_RAND or NULL if none */
+    CRYPTO_REF_COUNT refcnt;    /* Context reference count */
+    CRYPTO_RWLOCK *refcnt_lock;
+};
 
 /*
  * Defines related to seed sources
@@ -92,5 +120,13 @@ void rand_pool_keep_random_devices_open(int keep);
  * Configuration
  */
 void ossl_random_add_conf_module(void);
+
+/*
+ * Swapping DRBG implementations; only to be used for testing.
+ */
+EVP_RAND_CTX *RAND_make_fake(const char *values);
+EVP_RAND_CTX *RAND_swap_primary(OSSL_LIB_CTX *ctx, EVP_RAND_CTX *prim);
+EVP_RAND_CTX *RAND_swap_public(OSSL_LIB_CTX *ctx, EVP_RAND_CTX *pub);
+EVP_RAND_CTX *RAND_swap_private(OSSL_LIB_CTX *ctx, EVP_RAND_CTX *priv);
 
 #endif
