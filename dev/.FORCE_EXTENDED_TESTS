@@ -1,0 +1,10 @@
+This file accomplishes nothing, other than ensuring this commit is not empty and
+CI steps over it.
+
+To trigger extended tests the important bit is including the line
+
+~~~
+[extended tests]
+~~~
+
+in the body of a commit message.
