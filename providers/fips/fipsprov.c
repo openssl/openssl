@@ -10,7 +10,6 @@
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
 #include <openssl/params.h>
-#include <openssl/obj_mac.h> /* NIDs used by ossl_prov_util_nid_to_name() */
 #include <openssl/fips_names.h>
 #include <openssl/rand.h> /* RAND_get0_public() */
 #include "internal/cryptlib.h"
@@ -182,103 +181,6 @@ static int fips_self_test(void *provctx)
 {
     set_self_test_cb(FIPS_get_core_handle(selftest_params.libctx));
     return SELF_TEST_post(&selftest_params, 1) ? 1 : 0;
-}
-
-/* FIPS specific version of the function of the same name in provlib.c */
-/* TODO(3.0) - Is this function needed ? */
-const char *ossl_prov_util_nid_to_name(int nid)
-{
-    /* We don't have OBJ_nid2n() in FIPS_MODULE so we have an explicit list */
-
-    switch (nid) {
-    /* Digests */
-    case NID_sha1:
-        return "SHA1";
-    case NID_sha224:
-        return "SHA-224";
-    case NID_sha256:
-        return "SHA-256";
-    case NID_sha384:
-        return "SHA-384";
-    case NID_sha512:
-        return "SHA-512";
-    case NID_sha512_224:
-        return "SHA-512/224";
-    case NID_sha512_256:
-        return "SHA-512/256";
-    case NID_sha3_224:
-        return "SHA3-224";
-    case NID_sha3_256:
-        return "SHA3-256";
-    case NID_sha3_384:
-        return "SHA3-384";
-    case NID_sha3_512:
-        return "SHA3-512";
-
-    /* Ciphers */
-    case NID_aes_256_ecb:
-        return "AES-256-ECB";
-    case NID_aes_192_ecb:
-        return "AES-192-ECB";
-    case NID_aes_128_ecb:
-        return "AES-128-ECB";
-    case NID_aes_256_cbc:
-        return "AES-256-CBC";
-    case NID_aes_192_cbc:
-        return "AES-192-CBC";
-    case NID_aes_128_cbc:
-        return "AES-128-CBC";
-    case NID_aes_256_ctr:
-        return "AES-256-CTR";
-    case NID_aes_192_ctr:
-        return "AES-192-CTR";
-    case NID_aes_128_ctr:
-        return "AES-128-CTR";
-    case NID_aes_256_xts:
-        return "AES-256-XTS";
-    case NID_aes_128_xts:
-        return "AES-128-XTS";
-    case NID_aes_256_gcm:
-        return "AES-256-GCM";
-    case NID_aes_192_gcm:
-        return "AES-192-GCM";
-    case NID_aes_128_gcm:
-        return "AES-128-GCM";
-    case NID_aes_256_ccm:
-        return "AES-256-CCM";
-    case NID_aes_192_ccm:
-        return "AES-192-CCM";
-    case NID_aes_128_ccm:
-        return "AES-128-CCM";
-    case NID_id_aes256_wrap:
-        return "AES-256-WRAP";
-    case NID_id_aes192_wrap:
-        return "AES-192-WRAP";
-    case NID_id_aes128_wrap:
-        return "AES-128-WRAP";
-    case NID_id_aes256_wrap_pad:
-        return "AES-256-WRAP-PAD";
-    case NID_id_aes192_wrap_pad:
-        return "AES-192-WRAP-PAD";
-    case NID_id_aes128_wrap_pad:
-        return "AES-128-WRAP-PAD";
-    case NID_des_ede3_ecb:
-        return "DES-EDE3";
-    case NID_des_ede3_cbc:
-        return "DES-EDE3-CBC";
-    case NID_aes_256_cbc_hmac_sha256:
-        return "AES-256-CBC-HMAC-SHA256";
-    case NID_aes_128_cbc_hmac_sha256:
-        return "AES-128-CBC-HMAC-SHA256";
-    case NID_aes_256_cbc_hmac_sha1:
-        return "AES-256-CBC-HMAC-SHA1";
-    case NID_aes_128_cbc_hmac_sha1:
-        return "AES-128-CBC-HMAC-SHA1";
-    default:
-        break;
-    }
-
-    return NULL;
 }
 
 /*
