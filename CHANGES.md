@@ -466,9 +466,9 @@ OpenSSL 3.0
  * All of the low level DH functions have been deprecated including:
 
    DH_OpenSSL, DH_set_default_method, DH_get_default_method, DH_set_method,
-   DH_new_method, DH_size, DH_security_bits, DH_get_ex_new_index,
-   DH_set_ex_data, DH_get_ex_data, DH_generate_parameters_ex,
-   DH_check_params_ex, DH_check_ex, DH_check_pub_key_ex,
+   DH_new_method, DH_new, DH_free, DH_up_ref, DH_bits, DH_set0_pqg, DH_size,
+   DH_security_bits, DH_get_ex_new_index, DH_set_ex_data, DH_get_ex_data,
+   DH_generate_parameters_ex, DH_check_params_ex, DH_check_ex, DH_check_pub_key_ex,
    DH_check, DH_check_pub_key, DH_generate_key, DH_compute_key,
    DH_compute_key_padded, DHparams_print_fp, DHparams_print, DH_get_nid,
    DH_KDF_X9_42, DH_get0_engine, DH_meth_new, DH_meth_free, DH_meth_dup,
@@ -483,7 +483,18 @@ OpenSSL 3.0
    time.  Instead applications should use L<EVP_PKEY_derive_init(3)>
    and L<EVP_PKEY_derive(3)>.
 
-   *Paul Dale*
+   Additionally functions that read and write DH objects such as d2i_DHparams,
+   i2d_DHparams, PEM_read_DHparam, PEM_write_DHparams and other similar
+   functions have also been deprecated. Applications should instead use the
+   OSSL_DECODER and OSSL_ENCODER APIs to read and write DH files.
+
+   Finaly functions that assign or obtain DH objects from an EVP_PKEY such as
+   EVP_PKEY_assign_DH(), EVP_PKEY_get0_DH, EVP_PKEY_get1_DH, EVP_PKEY_set1_DH
+   are also deprecated. Applications should instead either read or write an
+   EVP_PKEY directly using the OSSL_DECODER and OSSL_ENCODER APIs. Or load an
+   EVP_PKEY directly from DH data using EVP_PKEY_fromdata().
+
+   *Paul Dale and Matt Caswell*
 
  * All of the low level DSA functions have been deprecated including:
 
