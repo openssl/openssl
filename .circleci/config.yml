@@ -1,10 +1,5 @@
 version: 2.1
 
-exclude_master: &exclude_master
-  filters:
-    branches:
-      ignore: master
-
 parameters:
   run_downstream_tests:
     type: boolean
@@ -137,24 +132,22 @@ workflows:
   build:
     jobs:
       - macOS:
-          <<: *exclude_master
           name: macOS-static_oqs-static_ossl
       - macOS:
-          <<: *exclude_master
           name: macOS-shared_oqs-shared_ossl
           LIBOQS_SHARED: true
           OPENSSL_SHARED: true
       - ubuntu_bionic:
-          <<: *exclude_master
           name: ubuntu-static_oqs-static_ossl
+          context: openquantumsafe
       - ubuntu_bionic:
-          <<: *exclude_master
           name: ubuntu-shared_oqs-shared_ossl
+          context: openquantumsafe
           LIBOQS_SHARED: true
           OPENSSL_SHARED: true
       - ubuntu_boringssl_interop:
-          <<: *exclude_master
           name: boringssl-interop
+          context: openquantumsafe
   commit-to-main-branch:
     when:
       equal: [ OQS-OpenSSL_1_1_1-stable , << pipeline.git.branch >> ]
@@ -174,11 +167,14 @@ workflows:
           OPENSSL_SHARED: true
       - ubuntu_bionic:
           name: ubuntu-static_oqs-static_ossl
+          context: openquantumsafe
       - ubuntu_bionic:
           name: ubuntu-shared_oqs-shared_ossl
+          context: openquantumsafe
           LIBOQS_SHARED: true
           OPENSSL_SHARED: true
       - ubuntu_boringssl_interop:
           name: boringssl-interop
+          context: openquantumsafe
       - trigger-oqs-demos-ci:
           context: openquantumsafe
