@@ -203,6 +203,10 @@ used for data that remains constant and in a constant location for a
 long enough duration (such as the life-time of the entity that
 offers these parameters).
 
+=item B<OSSL_PARAM_END>
+
+This must be used to terminate any B<OSSL_PARAM> array. 
+
 =back
 
 =head1 NOTES
@@ -259,6 +263,10 @@ must fill all I<data_size> bytes and ensure correct padding for the
 native endianness, and set I<return_size> to the same value as
 I<data_size>.
 
+=item *
+
+The array must be terminated by B<OSSL_PARAM_END>.
+
 =back
 
 =begin comment RETURN VALUES doesn't make sense for a manual that only
@@ -288,7 +296,7 @@ This example is for setting parameters on some object:
     OSSL_PARAM set[] = {
         { "foo", OSSL_PARAM_UTF8_STRING_PTR, &foo, foo_l, 0 },
         { "bar", OSSL_PARAM_UTF8_STRING, &bar, sizeof(bar), 0 },
-        { NULL, 0, NULL, 0, NULL }
+        OSSL_PARAM_END
     };
 
 =head3 Example 2
@@ -302,7 +310,7 @@ This example is for requesting parameters on some object:
     OSSL_PARAM request[] = {
         { "foo", OSSL_PARAM_UTF8_STRING_PTR, &foo, 0 /*irrelevant*/, 0 },
         { "bar", OSSL_PARAM_UTF8_STRING, &bar, sizeof(bar), 0 },
-        { NULL, 0, NULL, 0, NULL }
+        OSSL_PARAM_END
     };
 
 A I<responder> that receives this array (as I<params> in this example)
