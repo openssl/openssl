@@ -88,7 +88,7 @@ static int cipher_hw_aes_t4_initkey(PROV_CIPHER_CTX *dat,
 #define PROV_CIPHER_HW_declare(mode)                                           \
 static const PROV_CIPHER_HW aes_t4_##mode = {                                  \
     cipher_hw_aes_t4_initkey,                                                  \
-    cipher_hw_generic_##mode,                                                  \
+    ossl_cipher_hw_generic_##mode,                                             \
     cipher_hw_aes_copyctx                                                      \
 };
 #define PROV_CIPHER_HW_select(mode)                                            \
