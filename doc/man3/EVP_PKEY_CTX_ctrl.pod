@@ -414,7 +414,8 @@ p, q, and verifiable g are required, since it is not part of a persisted key.
 
 EVP_PKEY_CTX_set_dsa_paramgen_type() sets the generation type to use FIPS186-4
 generation if I<name> is "fips186_4", or FIPS186-2 generation if I<name> is
-"fips186_2". The default value is "fips186_4".
+"fips186_2". The default value for the default provider is "fips186_2". The
+default value for the FIPS provider is "fips186_4".
 
 =head2 DH parameters
 
@@ -454,7 +455,9 @@ Uses a safe prime generator g (PKCS#3 format).
 
 =back
 
-The default is B<DH_PARAMGEN_TYPE_GENERATOR>.
+The default is B<DH_PARAMGEN_TYPE_GENERATOR> in the default provider for the
+"DH" keytype, and B<DH_PARAMGEN_TYPE_FIPS_186_4> in the FIPS provider and for
+the "DHX" keytype in the default provider.
 
 EVP_PKEY_CTX_set_dh_paramgen_gindex() sets the I<gindex> used by the generator G.
 The default value is -1 which uses unverifiable g, otherwise a positive value

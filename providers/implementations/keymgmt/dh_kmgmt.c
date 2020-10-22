@@ -83,7 +83,6 @@ typedef struct dh_name2id_st{
 
 static const DH_GENTYPE_NAME2ID dhtype2id[]=
 {
-    { "default", DH_PARAMGEN_TYPE_FIPS_186_4 },
     { "fips186_4", DH_PARAMGEN_TYPE_FIPS_186_4 },
     { "fips186_2", DH_PARAMGEN_TYPE_FIPS_186_2 },
     { "group", DH_PARAMGEN_TYPE_GROUP },
@@ -101,9 +100,20 @@ const char *dh_gen_type_id2name(int id)
     return NULL;
 }
 
-static int dh_gen_type_name2id(const char *name)
+static int dh_gen_type_name2id(const char *name, int type)
 {
     size_t i;
+
+    if (strcmp(name, "default") == 0) {
+#ifdef FIPS_MODULE
+        if (type == DH_FLAG_TYPE_DHX)
+            return DH_PARAMGEN_TYPE_FIPS_186_4;
+#else
+        if (type == DH_FLAG_TYPE_DHX)
+            return DH_PARAMGEN_TYPE_FIPS_186_2;
+#endif
+        return DH_PARAMGEN_TYPE_GENERATOR;
+    }
 
     for (i = 0; i < OSSL_NELEM(dhtype2id); ++i) {
         if (strcmp(dhtype2id[i].name, name) == 0)
@@ -428,7 +438,13 @@ static void *dh_gen_init_base(void *provctx, int selection, int type)
         gctx->pbits = 2048;
         gctx->qbits = 224;
         gctx->mdname = NULL;
+#ifdef FIPS_MODULE
         gctx->gen_type = DH_PARAMGEN_TYPE_FIPS_186_4;
+#else
+        gctx->gen_type = (type == DH_FLAG_TYPE_DHX)
+                         ? DH_PARAMGEN_TYPE_FIPS_186_2
+                         : DH_PARAMGEN_TYPE_GENERATOR;
+#endif
         gctx->gindex = -1;
         gctx->hindex = 0;
         gctx->pcounter = -1;
@@ -485,7 +501,8 @@ static int dh_gen_set_params(void *genctx, const OSSL_PARAM params[])
     p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_FFC_TYPE);
     if (p != NULL) {
         if (p->data_type != OSSL_PARAM_UTF8_STRING
-            || ((gctx->gen_type = dh_gen_type_name2id(p->data)) == -1)) {
+            || ((gctx->gen_type = dh_gen_type_name2id(p->data,
+                                                      gctx->dh_type)) == -1)) {
             ERR_raise(ERR_LIB_PROV, ERR_R_PASSED_INVALID_ARGUMENT);
             return 0;
         }
