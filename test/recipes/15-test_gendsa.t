@@ -79,6 +79,7 @@ ok(run(app([ 'openssl', 'genpkey',
 # Just put some dummy ones in to show it works.
 ok(run(app([ 'openssl', 'genpkey',
              '-paramfile', 'dsagen.der',
+             '-pkeyopt', 'type:fips186_4',
              '-pkeyopt', 'gindex:1',
              '-pkeyopt', 'hexseed:0102030405060708090A0B0C0D0E0F1011121314',
              '-pkeyopt', 'pcounter:25',

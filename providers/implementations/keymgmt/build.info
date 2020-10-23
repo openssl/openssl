@@ -1,7 +1,6 @@
 # We make separate GOAL variables for each algorithm, to make it easy to
 # switch each to the Legacy provider when needed.
 
-$DSA_GOAL=../../libimplementations.a
 $EC_GOAL=../../libimplementations.a
 $ECX_GOAL=../../libimplementations.a
 $KDF_GOAL=../../libimplementations.a
@@ -11,7 +10,8 @@ IF[{- !$disabled{dh} -}]
   SOURCE[../../libnonfips.a]=dh_kmgmt.c
 ENDIF
 IF[{- !$disabled{dsa} -}]
-  SOURCE[$DSA_GOAL]=dsa_kmgmt.c
+  SOURCE[../../libfips.a]=dsa_kmgmt.c
+  SOURCE[../../libnonfips.a]=dsa_kmgmt.c
 ENDIF
 IF[{- !$disabled{ec} -}]
   SOURCE[$EC_GOAL]=ec_kmgmt.c
