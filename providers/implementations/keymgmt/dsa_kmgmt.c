@@ -75,7 +75,11 @@ typedef struct dh_name2id_st{
 
 static const DSA_GENTYPE_NAME2ID dsatype2id[]=
 {
+#ifdef FIPS_MODULE
     { "default", DSA_PARAMGEN_TYPE_FIPS_186_4 },
+#else
+    { "default", DSA_PARAMGEN_TYPE_FIPS_186_2 },
+#endif
     { "fips186_4", DSA_PARAMGEN_TYPE_FIPS_186_4 },
     { "fips186_2", DSA_PARAMGEN_TYPE_FIPS_186_2 },
 };
@@ -374,7 +378,11 @@ static void *dsa_gen_init(void *provctx, int selection)
         gctx->libctx = libctx;
         gctx->pbits = 2048;
         gctx->qbits = 224;
+#ifdef FIPS_MODULE
         gctx->gen_type = DSA_PARAMGEN_TYPE_FIPS_186_4;
+#else
+        gctx->gen_type = DSA_PARAMGEN_TYPE_FIPS_186_2;
+#endif
         gctx->gindex = -1;
         gctx->pcounter = -1;
         gctx->hindex = 0;
