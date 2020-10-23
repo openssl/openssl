@@ -106,13 +106,13 @@ static int dh_gen_type_name2id(const char *name, int type)
 
     if (strcmp(name, "default") == 0) {
 #ifdef FIPS_MODULE
-        if (type == DH_FLAG_TYPE_DHX)
-            return DH_PARAMGEN_TYPE_FIPS_186_4;
+        return DH_PARAMGEN_TYPE_FIPS_186_4;
 #else
         if (type == DH_FLAG_TYPE_DHX)
             return DH_PARAMGEN_TYPE_FIPS_186_2;
-#endif
+
         return DH_PARAMGEN_TYPE_GENERATOR;
+#endif
     }
 
     for (i = 0; i < OSSL_NELEM(dhtype2id); ++i) {
