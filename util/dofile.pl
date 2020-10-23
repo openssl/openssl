@@ -71,7 +71,7 @@ sub errorcallback {
 
 my $prepend = <<"_____";
 use File::Spec::Functions;
-use lib "$FindBin::Bin/../Configurations";
+use lib '$FindBin::Bin/../Configurations';
 use lib '$config{builddir}';
 use platform;
 _____

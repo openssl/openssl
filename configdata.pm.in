@@ -121,7 +121,7 @@ unless (caller) {
         use OpenSSL::fallback '{- sourcefile('external', 'perl', 'MODULES.txt') -}';
         use OpenSSL::Template;
 
-        my $prepend = <<"_____";
+        my $prepend = <<'_____';
 use File::Spec::Functions;
 use lib '{- sourcedir('util', 'perl') -}';
 use lib '{- sourcedir('Configurations') -}';
