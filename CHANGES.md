@@ -23,6 +23,21 @@ OpenSSL 3.0
 
 ### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
 
+ * The functions SSL_CTX_set_tmp_dh_callback and SSL_set_tmp_dh_callback, as
+   well as the macros SSL_CTX_set_tmp_dh() and SSL_set_tmp_dh() have been
+   deprecated. These are used to set the Diffie-Hellman (DH) parameters that
+   are to be used by servers requiring ephemeral DH keys. Instead applications
+   should consider using the built-in DH parameters that are available by
+   calling SSL_CTX_set_dh_auto() or SSL_set_dh_auto(). If custom parameters are
+   necessary then applications can use the alternative functions
+   SSL_CTX_set0_tmp_dh_pkey() and SSL_set0_tmp_dh_pkey(). There is no direct
+   replacement for the "callback" functions. The callback was originally useful
+   in order to have different parameters for export and non-export ciphersuites.
+   Export ciphersuites are no longer supported by OpenSSL. Use of the callback
+   functions should be replaced by one of the other methods described above.
+
+   *Matt Caswell*
+
  * The -crypt option to the passwd command line tool has been removed.
 
    *Paul Dale*
