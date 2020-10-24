@@ -94,6 +94,9 @@ other OpenSSL macros, a double negative must be used:
  HMAC_Init(HMAC_CTX *ctx, const void *key, int len, const EVP_MD *md);
  #endif
 
+Note that the script that parses the header files is not a full C
+parser, so the C<ifndef> must be on a line by itself.
+
 Hiding the declaration completely is done when OpenSSL is configured to
 remove old API's, via the C<--api> configuration parameter.
 
