@@ -485,7 +485,7 @@ X509 *load_cert_pass(const char *uri, int maybe_stdin,
 }
 
 /* the format parameter is meanwhile not needed anymore and thus ignored */
-X509_CRL *load_crl(const char *uri, int format, const char *desc)
+X509_CRL *load_crl(const char *uri, const char *desc)
 {
     X509_CRL *crl = NULL;
 
@@ -1915,7 +1915,7 @@ static X509_CRL *load_crl_crldp(STACK_OF(DIST_POINT) *crldp)
         DIST_POINT *dp = sk_DIST_POINT_value(crldp, i);
         urlptr = get_dp_url(dp);
         if (urlptr)
-            return load_crl(urlptr, FORMAT_HTTP, "CRL via CDP");
+            return load_crl(urlptr, "CRL via CDP");
     }
     return NULL;
 }

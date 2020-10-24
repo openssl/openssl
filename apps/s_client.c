@@ -1731,7 +1731,7 @@ int s_client_main(int argc, char **argv)
     }
 
     if (cert_file != NULL) {
-        cert = load_cert_pass(cert_file, cert_format, pass, "client certificate");
+        cert = load_cert_pass(cert_file, 1, pass, "client certificate");
         if (cert == NULL)
             goto end;
     }
@@ -1743,7 +1743,7 @@ int s_client_main(int argc, char **argv)
 
     if (crl_file != NULL) {
         X509_CRL *crl;
-        crl = load_crl(crl_file, crl_format, "CRL");
+        crl = load_crl(crl_file, "CRL");
         if (crl == NULL)
             goto end;
         crls = sk_X509_CRL_new_null();

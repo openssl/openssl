@@ -540,7 +540,7 @@ static EVP_PKEY_CTX *init_ctx(const char *kdfalg, int *pkeysize,
         break;
 
     case KEY_CERT:
-        x = load_cert(keyfile, FORMAT_UNDEF, "Certificate");
+        x = load_cert(keyfile, "Certificate");
         if (x) {
             pkey = X509_get_pubkey(x);
             X509_free(x);
