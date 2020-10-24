@@ -1744,8 +1744,7 @@ int s_server_main(int argc, char *argv[])
         if (s_key == NULL)
             goto end;
 
-        s_cert = load_cert_pass(s_cert_file, s_cert_format, pass,
-                           "server certificate");
+        s_cert = load_cert_pass(s_cert_file, 1, pass, "server certificate");
 
         if (s_cert == NULL)
             goto end;
@@ -1761,7 +1760,7 @@ int s_server_main(int argc, char *argv[])
             if (s_key2 == NULL)
                 goto end;
 
-            s_cert2 = load_cert_pass(s_cert_file2, s_cert_format, pass,
+            s_cert2 = load_cert_pass(s_cert_file2, 1, pass,
                                 "second server certificate");
 
             if (s_cert2 == NULL)
@@ -1784,7 +1783,7 @@ int s_server_main(int argc, char *argv[])
 
     if (crl_file != NULL) {
         X509_CRL *crl;
-        crl = load_crl(crl_file, crl_format, "CRL");
+        crl = load_crl(crl_file, "CRL");
         if (crl == NULL)
             goto end;
         crls = sk_X509_CRL_new_null();
@@ -1806,8 +1805,8 @@ int s_server_main(int argc, char *argv[])
         if (s_dkey == NULL)
             goto end;
 
-        s_dcert = load_cert_pass(s_dcert_file, s_dcert_format, dpass,
-                            "second server certificate");
+        s_dcert = load_cert_pass(s_dcert_file, 1, dpass,
+                                 "second server certificate");
 
         if (s_dcert == NULL) {
             ERR_print_errors(bio_err);

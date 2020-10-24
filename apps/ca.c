@@ -591,7 +591,7 @@ end_of_options:
             && (certfile = lookup_conf(conf, section, ENV_CERTIFICATE)) == NULL)
             goto end;
 
-        x509 = load_cert_pass(certfile, certformat, passin, "CA certificate");
+        x509 = load_cert_pass(certfile, 1, passin, "CA certificate");
         if (x509 == NULL)
             goto end;
 
@@ -1269,7 +1269,7 @@ end_of_options:
         } else {
             X509 *revcert;
 
-            revcert = load_cert_pass(infile, certformat, passin,
+            revcert = load_cert_pass(infile, 1, passin,
                                      "certificate to be revoked");
             if (revcert == NULL)
                 goto end;
@@ -1404,7 +1404,8 @@ static int certify_cert(X509 **xret, const char *infile, int certformat,
     EVP_PKEY *pktmp = NULL;
     int ok = -1, i;
 
-    if ((template_cert = load_cert_pass(infile, certformat, passin, "template certificate")) == NULL)
+    if ((template_cert = load_cert_pass(infile, 1, passin,
+                                        "template certificate")) == NULL)
         goto end;
     if (verbose)
         X509_print(bio_err, template_cert);
