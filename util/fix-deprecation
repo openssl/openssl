@@ -1,0 +1,97 @@
+#! /usr/bin/perl
+
+use strict;
+use warnings;
+
+# This scripts finds DEPRECATEDIN declarations and converts them to
+# C declarations with the corresponding OSSL_DEPRECATEDIN attribute
+# macro.  It also makes sure they are guarded them with a corresponding
+# '#ifndef OPENSSL_NO_DEPRECATED', and pays extra attention to only have
+# one such guard around a group of deprecations for the same version.
+
+my $parens_re =
+    qr/(
+           \(                   # The start of what we recurse on
+               (?:
+                   (?> [^()]+ )     # Non-parens, without backtracking
+               |
+                   (?-1)            # Recurse to start of parens group
+               )*
+           \)                   # The end of what we recurse on
+       )/x;
+
+my $deprecated_kw_re = qr/(DEPRECATEDIN)_(\d+_\d+(?:_\d+)?)/;
+my $deprecated_re =
+    qr/
+          $deprecated_kw_re
+          \(
+          (
+              (?:
+                  (?> [^()]+ )
+              |
+                  $parens_re
+              )*
+          )
+          \)
+    /x;
+my $headertext;
+{
+    local $/;
+    $headertext = <STDIN>;
+}
+$headertext =~ s/\R/\n/g;
+
+my $cppspaces = '';
+my $currentguard = "";
+my $cnt = 0;
+while ( $headertext =~ m/(.*?)                          # $1
+                         (                              # $2
+                             ^
+                             (?|
+                                 (\#)(\s*)(if)?.*?      # $3 ('#')
+                                                        # $4 (spaces)
+                                                        # $5 ('if'?)
+                             |
+                                 \s*$deprecated_kw_re\(.*?
+                                                        # $3 = 'DEPRECATEDIN'
+                                                        # $4 (vers)
+                             )
+                             \n
+                         )
+                        /msx ) {
+    my $before = $1;
+    my $deprecation = '';
+    my $test = $2.$';
+    my $after = $';
+    my $version = undef;
+
+    if ($3 eq '#') {
+        # Treat preprocessor lines (count spaces)
+        $cppspaces = $4;
+        $cppspaces .= ' ' if (defined $5 && $5 eq 'if');
+        $before .= $2;
+    } elsif ($test =~ m/^\s*$deprecated_re\s*?\n/) {
+        # Treat DEPRECATEDIN_...
+        $version = $2;
+        $deprecation = "OSSL_DEPRECATEDIN_$version $3;\n";
+        $after = $';            # Different from the previous!
+    }
+
+    if ($currentguard ne ''
+        && (defined $version && $currentguard ne $version
+            || $before !~ /^\s*$/s)) {
+        print "#${cppspaces}endif\n";
+        $currentguard = "";
+    }
+    print $before;
+    if ($deprecation) {
+        if ($currentguard eq '' && defined $version) {
+            $currentguard = $version;
+            print "#${cppspaces}ifndef OPENSSL_NO_DEPRECATED_$version\n";
+        }
+        print $deprecation;
+    }
+    $headertext = $after;
+}
+print "#endif\n" if $currentguard ne '';
+print $headertext;
