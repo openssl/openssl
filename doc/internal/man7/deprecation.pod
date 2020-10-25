@@ -2,185 +2,98 @@
 
 =head1 NAME
 
-deprecation - Macros used for deprecating symbols and simulate removal
-
-=head1 SYNOPSIS
-
- #include <openssl/macros.h>
-
- OSSL_DEPRECATED(since)
- OSSL_DEPRECATED_FOR(since, msg)
-
- OPENSSL_NO_DEPRECATED_3_0
- OSSL_DEPRECATEDIN_3_0
- OSSL_DEPRECATEDIN_3_0_FOR(msg)
-
- OPENSSL_NO_DEPRECATED_1_1_1
- OSSL_DEPRECATEDIN_1_1_1
- OSSL_DEPRECATEDIN_1_1_1_FOR(msg)
-
- OPENSSL_NO_DEPRECATED_1_1_0
- OSSL_DEPRECATEDIN_1_1_0
- OSSL_DEPRECATEDIN_1_1_0_FOR(msg)
-
- OPENSSL_NO_DEPRECATED_1_0_2
- OSSL_DEPRECATEDIN_1_0_2
- OSSL_DEPRECATEDIN_1_0_2_FOR(msg)
-
- OPENSSL_NO_DEPRECATED_1_0_1
- OSSL_DEPRECATEDIN_1_0_1
- OSSL_DEPRECATEDIN_1_0_1_FOR(msg)
-
- OPENSSL_NO_DEPRECATED_1_0_0
- OSSL_DEPRECATEDIN_1_0_0
- OSSL_DEPRECATEDIN_1_0_0_FOR(msg)
-
- OPENSSL_NO_DEPRECATED_0_9_8
- OSSL_DEPRECATEDIN_0_9_8
- OSSL_DEPRECATEDIN_0_9_8_FOR(msg)
+OPENSSL_NO_DEPRECATED_3_0, OSSL_DEPRECATEDIN_3_0,
+OPENSSL_NO_DEPRECATED_1_1_1, OSSL_DEPRECATEDIN_1_1_1,
+OPENSSL_NO_DEPRECATED_1_1_0, OSSL_DEPRECATEDIN_1_1_0,
+OPENSSL_NO_DEPRECATED_1_0_2, OSSL_DEPRECATEDIN_1_0_2,
+OPENSSL_NO_DEPRECATED_1_0_1, OSSL_DEPRECATEDIN_1_0_1,
+OPENSSL_NO_DEPRECATED_1_0_0, OSSL_DEPRECATEDIN_1_0_0,
+OPENSSL_NO_DEPRECATED_0_9_8, OSSL_DEPRECATEDIN_0_9_8,
+deprecation - How to do deprecation
 
 =head1 DESCRIPTION
 
 Deprecation of a symbol is adding an attribute to the declaration of that
 symbol (function, type, variable, but we currently only do that for
-functions in our F<< <openssl/*.h> >> header files).
+functions in our public header files, F<< <openssl/*.h> >>).
 
 Removal of a symbol is not the same thing as deprecation, as it actually
-removes the symbol from public view.
+explicitly removes the symbol from public view.
 
 OpenSSL configuration supports deprecation as well as simulating removal of
-symbols from public view, and also supports doing this in terms of a
-specified OpenSSL version.
+symbols from public view (with the configuration option `no-deprecated`, or
+if the user chooses to do so, with L<OPENSSL_NO_DEPRECATED(7)>), and also
+supports doing this in terms of a specified OpenSSL version (with the
+configuration option `--api`, or if the user chooses to do so, with
+L<OPENSSL_API_COMPAT(7)>).
 
-Deprecation is done using attribute macros having names starting with
-B<OSSL_DEPRECATED>, used with any declaration it applies to.
+Deprecation is done using attribute macros named
+B<OSSL_DEPRECATEDIN_I<version>>, used with any declaration it applies to.
 
-Simulating removal is done with guard macros having names starting with
-L<OPENSSL_NO_DEPRECATED(7)>.
+Simulating removal is done with C<#ifndef> preprocessor guards using macros
+named B<OPENSSL_NO_DEPRECATED_I<version>>.
 
-The implementation of a deprecated symbol is kept for two reasons:
+B<OSSL_DEPRECATEDIN_I<version>> and B<OPENSSL_NO_DEPRECATED_I<version>> are
+defined in F<< <openssl/macros.h> >>.
+
+In those macro names, B<I<version>> corresponds to the OpenSSL release since
+which the deprecation applies, with underscores instead of periods.  Because
+of the change in version scheme with OpenSSL 3.0, the B<I<version>> for
+versions before that are three numbers (such as C<1_1_0>), while they are
+two numbers (such as C<3_0>) from 3.0 and on.
+
+The implementation of a deprecated symbol is kept for one of two reasons:
 
 =over 4
 
-=item Kept as legacy for the deprecation period
+=item Planned to be removed
 
-It's implemented only to have it available as long as the symbol isn't
-removed entirely (be it by explicitly removing it when it's judged that it
-has been deprecated long enough, or because the removal is simulated).
-These need to be guarded appropriately, as shown in the L</Implementations
-kept as legacy>.
+The symbol and its implementation are planned to be removed some time in the
+future, but needs to remain available until that time.
+Such an implementation needs to be guarded appropriately, as shown in
+L</Implementations to be removed> below.
 
-=item Kept for internal purposes
+=item Planned to remain internally
 
-The implementation doesn't need to change or be guarded.  However, it's
-necessary to ensure that the declaration remains available for the
-translation unit where the implementation is located, even when the symbol
-is publicly unavailable through simulated removal.  That's done by including
-an internal header file very early in the translation unit.  See
-L</Implementations kept for internal purposes>.
+The symbol is planned to be removed from public view, but will otherwise
+remain for internal purposes.  In this case, the implementation doesn't need
+to change or be guarded.
 
-In a future cleanup, the declaration should be explicitly moved to an
-internal header file, with the deprecation attribute removed, and the
-translation unit should adjust its header inclusions accordingly.
+However, it's necessary to ensure that the declaration remains available for
+the translation unit where the symbol is used or implemented, even when the
+symbol is publicly unavailable through simulated removal.  That's done by
+including an internal header file very early in the affected translation
+units.  See L</Implementations to remain internally> below.
+
+In the future, when the deprecated declaration is to actually be removed
+from public view, it should be moved to an internal header file, with the
+deprecation attribute removed, and the translation units that implement or
+use that symbol should adjust their header inclusions accordingly.
 
 =back
-
-=head2 General macros
-
-I<Note: none of these macros should be used directly, please use the version
-specific macros instead>
-
-OSSL_DEPRECATED() implements the deprecated attribute if the compiler
-supports it, otherwise it expands to nothing.  It takes one argument
-I<since> that should be set to the OpenSSL version where the symbol was
-deprecated, and will be displayed with the deprecation warning message,
-for compilers that support user specified deprecation messages.
-
-OSSL_DEPRECATED_FOR() does the same as OSSL_DEPRECATED(), but also takes a
-second argument I<msg>, which is an additional text messages to be displayed
-with the deprecation warning along with the OpenSSL version number, for
-compilers that support user specified deprecation messages.
-
-B<OPENSSL_NO_DEPRECATED> is a macro that's generated by OpenSSL
-configuration in response to the C<no-deprecated> configuration option.
-This macro suppresses the definition of deprecated symbols.
-
-=head2 Version specific macros
-
-OSSL_DEPRECATEDIN_I<major>_I<minor>() macros that are defined to
-OSSL_DEPRECATED() with that version number as I<since>, for any version up
-to and including the one expressed with L<OPENSSL_API_COMPAT(7)>.  For any
-known version above the version expressed with L<OPENSSL_API_COMPAT(7)>,
-The are defined to nothing.
-
-OSSL_DEPRECATEDIN_I<major>_I<minor>_FOR() macros that are defined to
-OSSL_DEPRECATED() with that version number as I<since>, under the same
-conditions as OSSL_DEPRECATEDIN_I<major>_I<minor>().
-
-B<OPENSSL_NO_DEPRECATED_I<major>_I<minor>> macros should be used as
-guards around declarations that will eventually disappear from the public
-header files (F<< <openssl/*.h> >>).
-
-Any set of symbols deprecated with a B<OSSL_DEPRECATEDIN_I<major>_I<minor>>
-attribute macro B<must> be wrapped with a guard using the corresponding
-B<OPENSSL_NO_DEPRECATED_I<major>_I<minor>> macro, see L</Header files>
-example below.  This not only affects what the user of the header file will
-have available, it's also used to determine the conditions for exporting the
-symbol in the shared libraries.
 
 =head1 EXAMPLES
 
 =head2 Header files
 
-In public header files (F<< <openssl/*.h> >>), a deprecated symbol will
-always be wrapped with a negative test of the guard:
+In public header files (F<< <openssl/*.h> >>), this is what a deprecation is
+expected to look like, including the preprocessor wrapping for simulated
+removal:
 
- # ifndef OPENSSL_NO_DEPRECATED_1_1_0
+ # ifndef OPENSSL_NO_DEPRECATED_3_0
  /* ... */
- OSSL_DEPRECATEDIN_1_1_0 __owur int
- HMAC_Init(HMAC_CTX *ctx, const void *key, int len, const EVP_MD *md);
+
+ OSSL_DEPRECATEDIN_3_0 RSA *RSA_new_method(ENGINE *engine);
+
  /* ... */
  # endif
 
-=head2 Implementations of deprecated symbols
+=head2 Implementations to be removed
 
-At least for the period of deprecation for any symbol, its implementation
-needs to be kept, and for symbols that are kept internally, for longer than
-that.  There are two things to deal with:
-
-=over 4
-
-=item Deprecation warnings
-
-To remedy deprecation warnings, simply define the macro
-B<OPENSSL_SUPPRESS_DEPRECATED> at the beginning of the translation unit.
-
-=item Simulated removal
-
-=over 4
-
-=item *
-
-For symbols that are kept as legacy, the simulated removal should be
-enforced, by guarding the implementation the exact same way as the
-declaration in the public header file.
-
-=item *
-
-For symbols that are planned to be kept internally beyond their deprecation
-period, the translation units that implement them must ensure that the
-public header files they include to that declare the symbols don't remove
-the symbols, even when removal is otherwise simulated.
-
-=back
-
-=back
-
-=head3 Implementations kept as legacy
-
-For a deprecated function that we plan to simply remove, for example
+For a deprecated function that we plan to remove in the future, for example
 RSA_new_method(), the following should be found very early (before including
-any OpenSSL header file) in the translation unit:
+any OpenSSL header file) in the translation unit that implements it and in
+any translation unit that uses it:
 
  /*
   * Suppress deprecation warnings for RSA low level implementations that are
@@ -188,7 +101,8 @@ any OpenSSL header file) in the translation unit:
   */
  #define OPENSSL_SUPPRESS_DEPRECATED
 
-And RSA_new_method() implementation itself should be guarded like this:
+The RSA_new_method() implementation itself must be guarded the same way as
+its declaration in the public header file is:
 
  #ifndef OPENSSL_NO_DEPRECATED_3_0
  RSA *RSA_new_method(ENGINE *engine)
@@ -197,11 +111,12 @@ And RSA_new_method() implementation itself should be guarded like this:
  }
  #endif
 
-=head3 Implementations kept for internal purposes
+=head2 Implementations to remain internally
 
 For a deprecated function that we plan to keep internally, for example
 RSA_size(), the following should be found very early (before including any
-other OpenSSL header file) in the translation unit:
+other OpenSSL header file) in the translation unit that implements it and in
+any translation unit that uses it:
 
  /*
   * RSA low level APIs are deprecated for public use, but are kept for
