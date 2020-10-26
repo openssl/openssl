@@ -127,7 +127,7 @@ jobs:
             curl -u ${BUILD_TRIGGER_TOKEN}: \
                  -X POST \
                  --header "Content-Type: application/json" \
-                 -d '{ "branch": "master", "parameters": { "new_openssl_commit": true } }' \
+                 -d '{ "branch": "main", "parameters": { "new_openssl_commit": true } }' \
                  https://circleci.com/api/v2/project/gh/open-quantum-safe/oqs-demos/pipeline
 
 workflows:
