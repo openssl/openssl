@@ -98,6 +98,21 @@ int OSSL_DECODER_from_data(OSSL_DECODER_CTX *ctx, const unsigned char **pdata,
     return ret;
 }
 
+int OSSL_DECODER_CTX_set_selection(OSSL_DECODER_CTX *ctx, int selection)
+{
+    if (!ossl_assert(ctx != NULL)) {
+        ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
+    /*
+     * 0 is a valid selection, and means that the caller leaves
+     * it to code to discover what the selection is.
+     */
+    ctx->selection = selection;
+    return 1;
+}
+
 int OSSL_DECODER_CTX_set_input_type(OSSL_DECODER_CTX *ctx,
                                     const char *input_type)
 {
@@ -114,11 +129,27 @@ int OSSL_DECODER_CTX_set_input_type(OSSL_DECODER_CTX *ctx,
     return 1;
 }
 
+int OSSL_DECODER_CTX_set_input_structure(OSSL_DECODER_CTX *ctx,
+                                         const char *input_structure)
+{
+    if (!ossl_assert(ctx != NULL)) {
+        ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
+    /*
+     * NULL is a valid starting input type, and means that the caller leaves
+     * it to code to discover what the starting input type is.
+     */
+    ctx->input_structure = input_structure;
+    return 1;
+}
+
 OSSL_DECODER_INSTANCE *ossl_decoder_instance_new(OSSL_DECODER *decoder,
                                                  void *decoderctx)
 {
     OSSL_DECODER_INSTANCE *decoder_inst = NULL;
-    OSSL_PARAM params[2];
+    OSSL_PARAM params[3];
 
     if (!ossl_assert(decoder != NULL)) {
         ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_PASSED_NULL_PARAMETER);
@@ -140,16 +171,22 @@ OSSL_DECODER_INSTANCE *ossl_decoder_instance_new(OSSL_DECODER *decoder,
         goto err;
     }
 
-    /* Cache the input type for this encoder */
+    /* Cache the input type for this decoder */
     params[0] =
         OSSL_PARAM_construct_utf8_ptr(OSSL_DECODER_PARAM_INPUT_TYPE,
                                       (char **)&decoder_inst->input_type, 0);
-    params[1] = OSSL_PARAM_construct_end();
+    params[1] =
+        OSSL_PARAM_construct_utf8_ptr(OSSL_DECODER_PARAM_INPUT_STRUCTURE,
+                                      (char **)&decoder_inst->input_structure,
+                                      0);
+    params[2] = OSSL_PARAM_construct_end();
 
     if (!decoder->get_params(params)
         || !OSSL_PARAM_modified(&params[0]))
         goto err;
 
+    decoder_inst->flag_input_structure_was_set =
+        OSSL_PARAM_modified(&params[1]);
     decoder_inst->decoder = decoder;
     decoder_inst->decoderctx = decoderctx;
     return decoder_inst;
@@ -171,7 +208,7 @@ void ossl_decoder_instance_free(OSSL_DECODER_INSTANCE *decoder_inst)
 }
 
 int ossl_decoder_ctx_add_decoder_inst(OSSL_DECODER_CTX *ctx,
-                                         OSSL_DECODER_INSTANCE *di)
+                                      OSSL_DECODER_INSTANCE *di)
 {
     if (ctx->decoder_insts == NULL
         && (ctx->decoder_insts =
@@ -225,7 +262,7 @@ int OSSL_DECODER_CTX_add_extra(OSSL_DECODER_CTX *ctx,
      * what the existing ones want as input, and push those newly fetched
      * decoders on top of the same stack.
      * Then it does the same again, but looping over the newly fetched
-     * decoders, until there are no more encoders to be fetched, or
+     * decoders, until there are no more decoders to be fetched, or
      * when we have done this 10 times.
      *
      * we do this with sliding windows on the stack by keeping track of indexes
@@ -439,6 +476,16 @@ OSSL_DECODER_INSTANCE_get_input_type(OSSL_DECODER_INSTANCE *decoder_inst)
     return decoder_inst->input_type;
 }
 
+const char *
+OSSL_DECODER_INSTANCE_get_input_structure(OSSL_DECODER_INSTANCE *decoder_inst,
+                                          int *was_set)
+{
+    if (decoder_inst == NULL)
+        return NULL;
+    *was_set = decoder_inst->flag_input_structure_was_set;
+    return decoder_inst->input_structure;
+}
+
 static int decoder_process(const OSSL_PARAM params[], void *arg)
 {
     struct decoder_process_data_st *data = arg;
@@ -564,6 +611,7 @@ static int decoder_process(const OSSL_PARAM params[], void *arg)
         /* Recurse */
         new_data.current_decoder_inst_index = i;
         ok = new_decoder->decode(new_decoderctx, (OSSL_CORE_BIO *)bio,
+                                 new_data.ctx->selection,
                                  decoder_process, &new_data,
                                  ossl_pw_passphrase_callback_dec,
                                  &new_data.ctx->pwdata);

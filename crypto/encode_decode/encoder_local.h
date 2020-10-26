@@ -96,6 +96,9 @@ struct ossl_decoder_instance_st {
     OSSL_DECODER *decoder;       /* Never NULL */
     void *decoderctx;            /* Never NULL */
     const char *input_type;      /* Never NULL */
+    const char *input_structure; /* May be NULL */
+
+    unsigned int flag_input_structure_was_set : 1;
 };
 
 DEFINE_STACK_OF(OSSL_DECODER_INSTANCE)
@@ -108,6 +111,25 @@ struct ossl_decoder_ctx_st {
      * regardless of their respective input type.
      */
     const char *start_input_type;
+    /*
+     * The desired input structure, if that's relevant for the type of
+     * object being encoded.  It may be used for selection of the ending
+     * decoder implementations in a chain, i.e. those chosen using the
+     * expected output data type.
+     */
+    const char *input_structure;
+    /*
+     * Select what parts of an object are expected.  This may affect what
+     * decoder implementations are selected, because there are structures
+     * that look different depending on this selection; for example, EVP_PKEY
+     * objects often have different encoding structures for private keys,
+     * public keys and key parameters.
+     * This selection is bit encoded, and the bits correspond to selection
+     * bits available with the provider side operation.  For example, when
+     * encoding an EVP_PKEY, the OSSL_KEYMGMT_SELECT_ macros are used for
+     * this.
+     */
+    int selection;
 
     /*
      * Decoders that are components of any current decoding path.
