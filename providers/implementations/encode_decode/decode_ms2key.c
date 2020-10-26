@@ -188,27 +188,37 @@ static int ms2key_post(struct ms2key_ctx_st *ctx, EVP_PKEY *pkey,
     return ok;
 }
 
-static int msblob2key_decode(void *vctx, OSSL_CORE_BIO *cin,
+static int msblob2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
                              OSSL_CALLBACK *data_cb, void *data_cbarg,
                              OSSL_PASSPHRASE_CALLBACK *pw_cb, void *pw_cbarg)
 {
     struct ms2key_ctx_st *ctx = vctx;
     int ispub = -1;
     EVP_PKEY *pkey = read_msblob(ctx->provctx, cin, &ispub);
-    int ok = ms2key_post(ctx, pkey, data_cb, data_cbarg);
+    int ok = 0;
+
+    if (selection == 0
+        || (ispub
+            ? (selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0
+            : (selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0))
+        ok = ms2key_post(ctx, pkey, data_cb, data_cbarg);
 
     EVP_PKEY_free(pkey);
     return ok;
 }
 
 #ifndef OPENSSL_NO_RC4
-static int pvk2key_decode(void *vctx, OSSL_CORE_BIO *cin,
+static int pvk2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
                           OSSL_CALLBACK *data_cb, void *data_cbarg,
                           OSSL_PASSPHRASE_CALLBACK *pw_cb, void *pw_cbarg)
 {
     struct ms2key_ctx_st *ctx = vctx;
     EVP_PKEY *pkey = read_pvk(ctx->provctx, cin, pw_cb, pw_cbarg);
-    int ok = ms2key_post(ctx, pkey, data_cb, data_cbarg);
+    int ok = 0;
+
+    if (selection == 0
+        || (selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0)
+        ok = ms2key_post(ctx, pkey, data_cb, data_cbarg);
 
     EVP_PKEY_free(pkey);
     return ok;

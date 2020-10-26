@@ -362,20 +362,50 @@ extern const OSSL_DISPATCH ossl_ec_to_pem_encoder_functions[];
 extern const OSSL_DISPATCH ossl_ec_to_text_encoder_functions[];
 
 /* Decoders */
-extern const OSSL_DISPATCH ossl_der_to_dh_decoder_functions[];
-extern const OSSL_DISPATCH ossl_der_to_dhx_decoder_functions[];
-extern const OSSL_DISPATCH ossl_der_to_dsa_decoder_functions[];
+extern const OSSL_DISPATCH ossl_PKCS8_der_to_dh_decoder_functions[];
+extern const OSSL_DISPATCH ossl_SubjectPublicKeyInfo_der_to_dh_decoder_functions[];
+extern const OSSL_DISPATCH ossl_type_specific_params_der_to_dh_decoder_functions[];
+extern const OSSL_DISPATCH ossl_DH_der_to_dh_decoder_functions[];
+
+extern const OSSL_DISPATCH ossl_PKCS8_der_to_dhx_decoder_functions[];
+extern const OSSL_DISPATCH ossl_SubjectPublicKeyInfo_der_to_dhx_decoder_functions[];
+extern const OSSL_DISPATCH ossl_type_specific_params_der_to_dhx_decoder_functions[];
+extern const OSSL_DISPATCH ossl_DHX_der_to_dhx_decoder_functions[];
+
+extern const OSSL_DISPATCH ossl_PKCS8_der_to_dsa_decoder_functions[];
+extern const OSSL_DISPATCH ossl_SubjectPublicKeyInfo_der_to_dsa_decoder_functions[];
+extern const OSSL_DISPATCH ossl_type_specific_der_to_dsa_decoder_functions[];
+extern const OSSL_DISPATCH ossl_DSA_der_to_dsa_decoder_functions[];
 extern const OSSL_DISPATCH ossl_msblob_to_dsa_decoder_functions[];
 extern const OSSL_DISPATCH ossl_pvk_to_dsa_decoder_functions[];
-extern const OSSL_DISPATCH ossl_der_to_ec_decoder_functions[];
-extern const OSSL_DISPATCH ossl_der_to_x25519_decoder_functions[];
-extern const OSSL_DISPATCH ossl_der_to_x448_decoder_functions[];
-extern const OSSL_DISPATCH ossl_der_to_ed25519_decoder_functions[];
-extern const OSSL_DISPATCH ossl_der_to_ed448_decoder_functions[];
-extern const OSSL_DISPATCH ossl_der_to_rsa_decoder_functions[];
-extern const OSSL_DISPATCH ossl_der_to_rsapss_decoder_functions[];
+
+extern const OSSL_DISPATCH ossl_PKCS8_der_to_ec_decoder_functions[];
+extern const OSSL_DISPATCH ossl_SubjectPublicKeyInfo_der_to_ec_decoder_functions[];
+extern const OSSL_DISPATCH ossl_type_specific_no_pub_der_to_ec_decoder_functions[];
+extern const OSSL_DISPATCH ossl_EC_der_to_ec_decoder_functions[];
+
+extern const OSSL_DISPATCH ossl_PKCS8_der_to_x25519_decoder_functions[];
+extern const OSSL_DISPATCH ossl_SubjectPublicKeyInfo_der_to_x25519_decoder_functions[];
+
+extern const OSSL_DISPATCH ossl_PKCS8_der_to_x448_decoder_functions[];
+extern const OSSL_DISPATCH ossl_SubjectPublicKeyInfo_der_to_x448_decoder_functions[];
+
+extern const OSSL_DISPATCH ossl_PKCS8_der_to_ed25519_decoder_functions[];
+extern const OSSL_DISPATCH ossl_SubjectPublicKeyInfo_der_to_ed25519_decoder_functions[];
+
+extern const OSSL_DISPATCH ossl_PKCS8_der_to_ed448_decoder_functions[];
+extern const OSSL_DISPATCH ossl_SubjectPublicKeyInfo_der_to_ed448_decoder_functions[];
+
+extern const OSSL_DISPATCH ossl_PKCS8_der_to_rsa_decoder_functions[];
+extern const OSSL_DISPATCH ossl_SubjectPublicKeyInfo_der_to_rsa_decoder_functions[];
+extern const OSSL_DISPATCH ossl_type_specific_keypair_der_to_rsa_decoder_functions[];
+extern const OSSL_DISPATCH ossl_RSA_der_to_rsa_decoder_functions[];
 extern const OSSL_DISPATCH ossl_msblob_to_rsa_decoder_functions[];
 extern const OSSL_DISPATCH ossl_pvk_to_rsa_decoder_functions[];
+
+extern const OSSL_DISPATCH ossl_PKCS8_der_to_rsapss_decoder_functions[];
+extern const OSSL_DISPATCH ossl_SubjectPublicKeyInfo_der_to_rsapss_decoder_functions[];
+
 extern const OSSL_DISPATCH ossl_pem_to_der_decoder_functions[];
 
 extern const OSSL_DISPATCH ossl_file_store_functions[];
