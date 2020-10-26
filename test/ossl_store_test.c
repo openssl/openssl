@@ -133,9 +133,9 @@ static int test_store_attach_unregistered_scheme(void)
     int ret;
     OSSL_STORE_CTX *store_ctx;
     OSSL_PROVIDER *provider;
-    OPENSSL_CTX *libctx;
+    OSSL_LIB_CTX *libctx;
     BIO *bio;
-    libctx = OPENSSL_CTX_new();
+    libctx = OSSL_LIB_CTX_new();
     provider = OSSL_PROVIDER_load(libctx, "default");
     bio = BIO_new_file("test/certs/sm2-root.crt", "r");
 
@@ -148,7 +148,7 @@ static int test_store_attach_unregistered_scheme(void)
     BIO_free(bio);
     OSSL_STORE_close(store_ctx);
     OSSL_PROVIDER_unload(provider);
-    OPENSSL_CTX_free(libctx);
+    OSSL_LIB_CTX_free(libctx);
     return ret;
 }
 #endif
