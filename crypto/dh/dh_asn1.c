@@ -34,7 +34,11 @@ static int dh_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         *pval = NULL;
         return 2;
     } else if (operation == ASN1_OP_D2I_POST) {
-        ((DH *)*pval)->dirty_cnt++;
+        DH *dh = (DH *)*pval;
+
+        DH_clear_flags(dh, DH_FLAG_TYPE_MASK);
+        DH_set_flags(dh, DH_FLAG_TYPE_DH);
+        dh->dirty_cnt++;
     }
     return 1;
 }
@@ -123,6 +127,8 @@ DH *d2i_DHxparams(DH **a, const unsigned char **pp, long length)
     }
 
     OPENSSL_free(dhx);
+    DH_clear_flags(dh, DH_FLAG_TYPE_MASK);
+    DH_set_flags(dh, DH_FLAG_TYPE_DHX);
     return dh;
 }
 

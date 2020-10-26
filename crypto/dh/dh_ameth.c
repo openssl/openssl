@@ -42,10 +42,6 @@ static DH *d2i_dhp(const EVP_PKEY *pkey, const unsigned char **pp,
     else
         dh = d2i_DHparams(NULL, pp, length);
 
-    if (dh != NULL) {
-        DH_clear_flags(dh, DH_FLAG_TYPE_MASK);
-        DH_set_flags(dh, is_dhx ? DH_FLAG_TYPE_DHX : DH_FLAG_TYPE_DH);
-    }
     return dh;
 }
 
