@@ -24,23 +24,16 @@ static EVP_PKEY *pkey_type2param(int ptype, const void *pval,
     if (ptype == V_ASN1_SEQUENCE) {
         const ASN1_STRING *pstr = pval;
         const unsigned char *pm = pstr->data;
-        int pmlen = pstr->length;
+        size_t pmlen = (size_t)pstr->length;
         OSSL_DECODER_CTX *ctx = NULL;
-        BIO *membio = NULL;
+        int selection = OSSL_KEYMGMT_SELECT_ALL_PARAMETERS;
 
-        /* TODO(3.0): Need to be able to specify here that only params will do */
-        ctx = OSSL_DECODER_CTX_new_by_EVP_PKEY(&pkey, "DER", "EC", libctx,
-                                               propq);
+        ctx = OSSL_DECODER_CTX_new_by_EVP_PKEY(&pkey, "DER", NULL, "EC",
+                                               selection, libctx, propq);
         if (ctx == NULL)
             goto err;
 
-        membio = BIO_new_mem_buf(pm, pmlen);
-        if (membio == NULL) {
-            OSSL_DECODER_CTX_free(ctx);
-            goto err;
-        }
-        OSSL_DECODER_from_bio(ctx, membio);
-        BIO_free(membio);
+        OSSL_DECODER_from_data(ctx, &pm, &pmlen);
         OSSL_DECODER_CTX_free(ctx);
     } else if (ptype == V_ASN1_OBJECT) {
         const ASN1_OBJECT *poid = pval;
