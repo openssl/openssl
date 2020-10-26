@@ -24,7 +24,7 @@
 #undef BUFSIZE
 #define BUFSIZE 1024*8
 
-int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
+int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout, int xoflen,
           EVP_PKEY *key, unsigned char *sigin, int siglen,
           const char *sig_name, const char *md_name,
           const char *file);
@@ -40,7 +40,7 @@ typedef enum OPTION_choice {
     OPT_C, OPT_R, OPT_OUT, OPT_SIGN, OPT_PASSIN, OPT_VERIFY,
     OPT_PRVERIFY, OPT_SIGNATURE, OPT_KEYFORM, OPT_ENGINE, OPT_ENGINE_IMPL,
     OPT_HEX, OPT_BINARY, OPT_DEBUG, OPT_FIPS_FINGERPRINT,
-    OPT_HMAC, OPT_MAC, OPT_SIGOPT, OPT_MACOPT,
+    OPT_HMAC, OPT_MAC, OPT_SIGOPT, OPT_MACOPT, OPT_XOFLEN,
     OPT_DIGEST,
     OPT_R_ENUM, OPT_PROV_ENUM
 } OPTION_CHOICE;
@@ -65,6 +65,7 @@ const OPTIONS dgst_options[] = {
     {"keyform", OPT_KEYFORM, 'f', "Key file format (ENGINE, other values ignored)"},
     {"hex", OPT_HEX, '-', "Print as hex dump"},
     {"binary", OPT_BINARY, '-', "Print in binary form"},
+    {"xoflen", OPT_XOFLEN, 'p', "Output length for XOF algorithms"},
     {"d", OPT_DEBUG, '-', "Print debug info"},
     {"debug", OPT_DEBUG, '-', "Print debug info"},
 
@@ -105,6 +106,7 @@ int dgst_main(int argc, char **argv)
     OPTION_CHOICE o;
     int separator = 0, debug = 0, keyform = FORMAT_PEM, siglen = 0;
     int i, ret = 1, out_bin = -1, want_pub = 0, do_verify = 0;
+    int xoflen = 0;
     unsigned char *buf = NULL, *sigbuf = NULL;
     int engine_impl = 0;
     struct doall_dgst_digests dec;
@@ -179,6 +181,9 @@ int dgst_main(int argc, char **argv)
             break;
         case OPT_BINARY:
             out_bin = 1;
+            break;
+        case OPT_XOFLEN:
+            xoflen = atoi(opt_arg());
             break;
         case OPT_DEBUG:
             debug = 1;
@@ -399,9 +404,20 @@ int dgst_main(int argc, char **argv)
     if (md != NULL)
         md_name = EVP_MD_name(md);
 
+    if (xoflen > 0) {
+        if (!(EVP_MD_flags(md) & EVP_MD_FLAG_XOF)) {
+            BIO_printf(bio_err, "Length can only be specified for XOF\n");
+            goto end;
+        }
+        if (sigkey != NULL) {
+            BIO_printf(bio_err, "Signing key cannot be specified for XOF\n");
+            goto end;
+        }
+    }
+
     if (argc == 0) {
         BIO_set_fp(in, stdin, BIO_NOCLOSE);
-        ret = do_fp(out, buf, inp, separator, out_bin, sigkey, sigbuf,
+        ret = do_fp(out, buf, inp, separator, out_bin, xoflen, sigkey, sigbuf,
                     siglen, NULL, md_name, "stdin");
     } else {
         const char *sig_name = NULL;
@@ -417,8 +433,8 @@ int dgst_main(int argc, char **argv)
                 ret++;
                 continue;
             } else {
-                r = do_fp(out, buf, inp, separator, out_bin, sigkey, sigbuf,
-                          siglen, sig_name, md_name, argv[i]);
+                r = do_fp(out, buf, inp, separator, out_bin, xoflen,
+                          sigkey, sigbuf, siglen, sig_name, md_name, argv[i]);
             }
             if (r)
                 ret = r;
@@ -504,14 +520,14 @@ static const char *newline_escape_filename(const char *file, int * backslash)
 }
 
 
-int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
+int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout, int xoflen,
           EVP_PKEY *key, unsigned char *sigin, int siglen,
           const char *sig_name, const char *md_name,
           const char *file)
 {
     size_t len = BUFSIZE;
     int i, backslash = 0, ret = 1;
-    unsigned char *sigbuf = NULL;
+    unsigned char *allocated_buf = NULL;
 
     while (BIO_pending(bp) || !BIO_eof(bp)) {
         i = BIO_read(bp, (char *)buf, BUFSIZE);
@@ -552,11 +568,27 @@ int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
         }
         if (tmplen > BUFSIZE) {
             len = tmplen;
-            sigbuf = app_malloc(len, "Signature buffer");
-            buf = sigbuf;
+            allocated_buf = app_malloc(len, "Signature buffer");
+            buf = allocated_buf;
         }
         if (!EVP_DigestSignFinal(ctx, buf, &len)) {
             BIO_printf(bio_err, "Error Signing Data\n");
+            ERR_print_errors(bio_err);
+            goto end;
+        }
+    } else if (xoflen > 0) {
+        EVP_MD_CTX *ctx;
+
+        len = xoflen;
+        if (len > BUFSIZE) {
+            allocated_buf = app_malloc(len, "Digest buffer");
+            buf = allocated_buf;
+        }
+
+        BIO_get_md_ctx(bp, &ctx);
+
+        if (!EVP_DigestFinalXOF(ctx, buf, len)) {
+            BIO_printf(bio_err, "Error Digesting Data\n");
             ERR_print_errors(bio_err);
             goto end;
         }
@@ -602,8 +634,8 @@ int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
 
     ret = 0;
  end:
-    if (sigbuf != NULL)
-        OPENSSL_clear_free(sigbuf, len);
+    if (allocated_buf != NULL)
+        OPENSSL_clear_free(allocated_buf, len);
 
     return ret;
 }
