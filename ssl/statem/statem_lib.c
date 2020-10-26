@@ -101,8 +101,8 @@ int tls_setup_handshake(SSL *s)
     memset(s->ext.extflags, 0, sizeof(s->ext.extflags));
 
     if (ssl_get_min_max_version(s, &ver_min, &ver_max, NULL) != 0) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_SETUP_HANDSHAKE,
-                    ERR_R_INTERNAL_ERROR);
+        SSLfatal(s, SSL_AD_PROTOCOL_VERSION, SSL_F_TLS_SETUP_HANDSHAKE,
+                    SSL_R_NO_PROTOCOLS_AVAILABLE);
         return 0;
     }
 
