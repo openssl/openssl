@@ -8,8 +8,8 @@ OSSL_DEPRECATED, OSSL_DEPRECATED_FOR - General deprecation macros
 
  #include <openssl/macros.h>
 
- OSSL_DEPRECATED(since)
- OSSL_DEPRECATED_FOR(since, msg)
+ #define OSSL_DEPRECATED(since)
+ #define OSSL_DEPRECATED_FOR(since, msg)
 
 =head1 DESCRIPTION
 
@@ -26,6 +26,17 @@ compilers that support user specified deprecation messages.
 
 These macros are used to define the version specific deprecation macros
 described in L<deprecation(7)>.
+
+=begin comment
+
+[RETURN VALUES isn't relevant for these macros, but find-doc-nits demands
+the presence of this section]
+
+=head1 RETURN VALUES
+
+[podchecker doesn't like empty sections]
+
+=end comment
 
 =head1 SEE ALSO
 
