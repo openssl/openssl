@@ -104,6 +104,7 @@ typedef struct node_bio node_bio;
 
 void try_move_read_head(node_bio *nbio);
 void free_empty(node_bio *nbio);
+size_t node_bio_read(node_bio *nbio, char *out, size_t size);
 
 size_t node_bio_read(node_bio *nbio, char *out, size_t size) {
   size_t bytes_read;
@@ -180,6 +181,7 @@ void try_move_read_head(node_bio *nbio) {
 }
 
 
+int read(BIO *bio, char *out, int len);
 int read(BIO *bio, char *out, int len) {
   printf("%s read\n", BIO_method_name(bio));
 
@@ -195,6 +197,7 @@ int read(BIO *bio, char *out, int len) {
   return bytes;
 }
 
+void try_allocate_for_write(node_bio *nbio, size_t hint);
 void try_allocate_for_write(node_bio *nbio, size_t hint) {
   buffer *w;
   buffer *r;
@@ -233,6 +236,7 @@ void try_allocate_for_write(node_bio *nbio, size_t hint) {
   }
 }
 
+void node_bio_write(node_bio *nbio, const char *data, size_t size);
 void node_bio_write(node_bio *nbio, const char *data, size_t size) {
   size_t offset;
   size_t left;
@@ -276,6 +280,7 @@ void node_bio_write(node_bio *nbio, const char *data, size_t size) {
   //CHECK_EQ(left, 0);
 }
 
+int write(BIO *bio, const char *data, int len);
 int write(BIO *bio, const char *data, int len) {
   BIO_clear_retry_flags(bio);
 
@@ -285,7 +290,7 @@ int write(BIO *bio, const char *data, int len) {
   return len;
 }
 
-
+void reset(node_bio *nbio);
 void reset(node_bio *nbio) {
   if (nbio->read_head == NULL)
     return;
@@ -300,6 +305,7 @@ void reset(node_bio *nbio) {
   nbio->write_head = nbio->read_head;
 }
 
+long ctrl(BIO *bio, int cmd, long larg, void *parg);
 long ctrl(BIO *bio, int cmd, long larg, void *parg) {
   node_bio *nbio;
   long ret;
@@ -354,6 +360,7 @@ long ctrl(BIO *bio, int cmd, long larg, void *parg) {
   return ret;
 }
 
+int node_bio_free(BIO *bio);
 int node_bio_free(BIO *bio) {
   if (bio == NULL)
     return 0;
