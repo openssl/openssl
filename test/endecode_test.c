@@ -235,7 +235,9 @@ static int decode_EVP_PKEY_prov(void **object, void *encoded, long encoded_len,
 
         if (!TEST_ptr(dctx = OSSL_DECODER_CTX_new_by_EVP_PKEY(&testpkey,
                                                               testtype,
+                                                              NULL,
                                                               keytype,
+                                                              selection,
                                                               NULL, NULL))
             || (pass != NULL
                 && !OSSL_DECODER_CTX_set_passphrase(dctx, upass, strlen(pass)))
