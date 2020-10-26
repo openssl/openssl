@@ -9,6 +9,7 @@
 
 #include <openssl/core_names.h>
 #include <openssl/core_object.h>
+#include <openssl/provider.h>
 #include <openssl/evp.h>
 #include <openssl/ui.h>
 #include <openssl/decoder.h>
@@ -16,6 +17,7 @@
 #include "crypto/evp.h"
 #include "crypto/decoder.h"
 #include "encoder_local.h"
+#include "e_os.h"                /* strcasecmp on Windows */
 
 int OSSL_DECODER_CTX_set_passphrase(OSSL_DECODER_CTX *ctx,
                                     const unsigned char *kstr,
@@ -231,10 +233,40 @@ static void collect_name(const char *name, void *arg)
     data->error_occured = 0;         /* All is good now */
 }
 
+/*
+ * The input structure check is only done on the initial decoder
+ * implementations.
+ */
+static int collect_decoder_check_input_structure(OSSL_DECODER_CTX *ctx,
+                                                 OSSL_DECODER_INSTANCE *di)
+{
+    int di_is_was_set = 0;
+    const char *di_is =
+        OSSL_DECODER_INSTANCE_get_input_structure(di, &di_is_was_set);
+
+    /*
+     * If caller didn't give an input structure name, the decoder is accepted
+     * unconditionally with regards to the input structure.
+     */
+    if (ctx->input_structure == NULL)
+        return 1;
+    /*
+     * If the caller did give an input structure name, the decoder must have
+     * a matching input structure to be accepted.
+     */
+    if (di_is != NULL
+        && strcasecmp(ctx->input_structure, di_is) == 0)
+        return 1;
+    return 0;
+}
+
 static void collect_decoder(OSSL_DECODER *decoder, void *arg)
 {
     struct collected_data_st *data = arg;
     size_t i, end_i;
+    const OSSL_PROVIDER *prov = OSSL_DECODER_provider(decoder);
+    void *provctx = OSSL_PROVIDER_get0_provider_ctx(prov);
+    void *decoderctx = NULL;
 
     if (data->error_occured)
         return;
@@ -246,10 +278,30 @@ static void collect_decoder(OSSL_DECODER *decoder, void *arg)
     end_i = sk_OPENSSL_CSTRING_num(data->names);
     for (i = 0; i < end_i; i++) {
         const char *name = sk_OPENSSL_CSTRING_value(data->names, i);
+        OSSL_DECODER_INSTANCE *di = NULL;
 
-        if (!OSSL_DECODER_is_a(decoder, name))
-            continue;
-        (void)OSSL_DECODER_CTX_add_decoder(data->ctx, decoder);
+        if (OSSL_DECODER_is_a(decoder, name)
+            /*
+             * Either the caller didn't give a selection, or if they did,
+             * the decoder must tell us if it supports that selection to
+             * be accepted.  If the decoder doesn't have |does_selection|,
+             * it's seen as taking anything.
+             */
+            && (decoder->does_selection == NULL
+                || decoder->does_selection(provctx, data->ctx->selection))
+            && (decoderctx = decoder->newctx(provctx)) != NULL
+            && (di = ossl_decoder_instance_new(decoder, decoderctx)) != NULL) {
+            /* If successful so far, don't free these directly */
+            decoderctx = NULL;
+
+            if (collect_decoder_check_input_structure(data->ctx, di)
+                && ossl_decoder_ctx_add_decoder_inst(data->ctx, di))
+                di = NULL;      /* If successfully added, don't free it */
+        }
+
+        /* Free what can be freed */
+        ossl_decoder_instance_free(di);
+        decoder->freectx(decoderctx);
     }
 
     data->error_occured = 0;         /* All is good now */
@@ -325,7 +377,9 @@ int ossl_decoder_ctx_setup_for_EVP_PKEY(OSSL_DECODER_CTX *ctx,
 
 OSSL_DECODER_CTX *
 OSSL_DECODER_CTX_new_by_EVP_PKEY(EVP_PKEY **pkey,
-                                 const char *input_type, const char *keytype,
+                                 const char *input_type,
+                                 const char *input_structure,
+                                 const char *keytype, int selection,
                                  OSSL_LIB_CTX *libctx, const char *propquery)
 {
     OSSL_DECODER_CTX *ctx = NULL;
@@ -335,6 +389,8 @@ OSSL_DECODER_CTX_new_by_EVP_PKEY(EVP_PKEY **pkey,
         return NULL;
     }
     if (OSSL_DECODER_CTX_set_input_type(ctx, input_type)
+        && OSSL_DECODER_CTX_set_input_structure(ctx, input_structure)
+        && OSSL_DECODER_CTX_set_selection(ctx, selection)
         && ossl_decoder_ctx_setup_for_EVP_PKEY(ctx, pkey, keytype,
                                                libctx, propquery)
         && OSSL_DECODER_CTX_add_extra(ctx, libctx, propquery))

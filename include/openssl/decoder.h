@@ -121,7 +121,9 @@ int OSSL_DECODER_from_data(OSSL_DECODER_CTX *ctx, const unsigned char **pdata,
  */
 OSSL_DECODER_CTX *
 OSSL_DECODER_CTX_new_by_EVP_PKEY(EVP_PKEY **pkey,
-                                 const char *input_type, const char *keytype,
+                                 const char *input_type,
+                                 const char *input_struct,
+                                 const char *keytype, int selection,
                                  OSSL_LIB_CTX *libctx, const char *propquery);
 
 # ifdef __cplusplus
