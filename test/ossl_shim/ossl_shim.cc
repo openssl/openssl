@@ -1085,6 +1085,7 @@ static bool DoExchange(bssl::UniquePtr<SSL_SESSION> *out_session,
     } while (config->async && RetryAsync(ssl.get(), ret));
     if (ret != 1 ||
         !CheckHandshakeProperties(ssl.get(), is_resume)) {
+      fprintf(stderr, "resumption check failed\n");
       return false;
     }
 
@@ -1105,6 +1106,7 @@ static bool DoExchange(bssl::UniquePtr<SSL_SESSION> *out_session,
       return false;
     }
     if (WriteAll(ssl.get(), result.data(), result.size()) < 0) {
+      fprintf(stderr, "writing exported key material failed\n");
       return false;
     }
   }
@@ -1135,6 +1137,7 @@ static bool DoExchange(bssl::UniquePtr<SSL_SESSION> *out_session,
     if (config->shim_writes_first) {
       if (WriteAll(ssl.get(), reinterpret_cast<const uint8_t *>("hello"),
                    5) < 0) {
+        fprintf(stderr, "shim_writes_first write failed\n");
         return false;
       }
     }
@@ -1160,6 +1163,7 @@ static bool DoExchange(bssl::UniquePtr<SSL_SESSION> *out_session,
             fprintf(stderr, "Invalid SSL_get_error output\n");
             return false;
           }
+          fprintf(stderr, "Unexpected entry in error queue\n");
           return false;
         }
         // Successfully read data.
@@ -1179,6 +1183,7 @@ static bool DoExchange(bssl::UniquePtr<SSL_SESSION> *out_session,
           buf[i] ^= 0xff;
         }
         if (WriteAll(ssl.get(), buf.get(), n) < 0) {
+          fprintf(stderr, "write of inverted bitstream failed\n");
           return false;
         }
       }
