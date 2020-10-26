@@ -1615,6 +1615,12 @@ int dtls1_process_record(SSL *s, DTLS1_BITMAP *bitmap)
         mac_size = 0;
     }
 
+    /*
+     * Set a mark around the packet decryption attempt.  This is DTLS, so
+     * bad packets are just ignored, and we don't want to leave stray
+     * errors in the queue from processing bogus junk that we ignored.
+     */
+    ERR_set_mark();
     enc_err = s->method->ssl3_enc->enc(s, rr, 1, 0, &macbuf, mac_size);
 
     /*-
@@ -1624,6 +1630,7 @@ int dtls1_process_record(SSL *s, DTLS1_BITMAP *bitmap)
      *    1: Success or MTE decryption failed (MAC will be randomised)
      */
     if (enc_err == 0) {
+        ERR_pop_to_mark();
         if (ossl_statem_in_error(s)) {
             /* SSLfatal() got called */
             goto end;
@@ -1633,6 +1640,7 @@ int dtls1_process_record(SSL *s, DTLS1_BITMAP *bitmap)
         RECORD_LAYER_reset_packet_length(&s->rlayer);
         goto end;
     }
+    ERR_clear_last_mark();
     OSSL_TRACE_BEGIN(TLS) {
         BIO_printf(trc_out, "dec %zd\n", rr->length);
         BIO_dump_indent(trc_out, rr->data, rr->length, 4);
