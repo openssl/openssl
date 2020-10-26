@@ -91,10 +91,11 @@ my %mandatory_sections = (
                          );
 
 # Symbols that we ignored.
-# They are internal macros that we currently don't document
+# They are reserved macros that we currently don't document
 my $ignored = qr/(?| ^i2d_
                  |   ^d2i_
                  |   ^DEPRECATEDIN
+                 |   ^OSSL_DEPRECATED
                  |   \Q_fnsig(3)\E$
                  |   ^IMPLEMENT_
                  |   ^_?DECLARE_
