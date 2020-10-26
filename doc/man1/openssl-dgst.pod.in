@@ -16,6 +16,7 @@ B<openssl> B<dgst>|I<digest>
 [B<-list>]
 [B<-hex>]
 [B<-binary>]
+[B<-xoflen> I<length>]
 [B<-r>]
 [B<-out> I<filename>]
 [B<-sign> I<filename>]
@@ -83,6 +84,10 @@ signatures using B<-hex>.
 =item B<-binary>
 
 Output the digest or signature in binary form.
+
+=item B<-xoflen> I<length>
+
+Set the output length for XOF algorithms, such as B<shake128>.
 
 =item B<-r>
 
