@@ -198,6 +198,10 @@ void *ossl_decoder_from_dispatch(int id, const OSSL_ALGORITHM *algodef,
                 decoder->settable_ctx_params =
                     OSSL_FUNC_decoder_settable_ctx_params(fns);
             break;
+        case OSSL_FUNC_DECODER_DOES:
+            if (decoder->does == NULL)
+                decoder->does = OSSL_FUNC_decoder_does(fns);
+            break;
         case OSSL_FUNC_DECODER_DECODE:
             if (decoder->decode == NULL)
                 decoder->decode = OSSL_FUNC_decoder_decode(fns);
