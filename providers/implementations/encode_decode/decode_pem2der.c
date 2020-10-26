@@ -106,7 +106,11 @@ static int pem2der_pass_helper(char *buf, int num, int w, void *data)
     return (int)plen;
 }
 
-static int pem2der_decode(void *vctx, OSSL_CORE_BIO *cin,
+/*
+ * pem2der_decode() doesn't care one bit about selections.  That's for the
+ * next decoder in the chain.
+ */
+static int pem2der_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
                           OSSL_CALLBACK *data_cb, void *data_cbarg,
                           OSSL_PASSPHRASE_CALLBACK *pw_cb, void *pw_cbarg)
 {
