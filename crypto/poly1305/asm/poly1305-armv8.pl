@@ -866,8 +866,8 @@ poly1305_blocks_neon:
 	st1	{$ACC4}[0],[$ctx]
 
 .Lno_data_neon:
-	.inst	0xd50323bf		// autiasp
 	ldr	x29,[sp],#80
+	.inst	0xd50323bf		// autiasp
 	ret
 .size	poly1305_blocks_neon,.-poly1305_blocks_neon
 
