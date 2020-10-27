@@ -256,6 +256,32 @@ DEFINE_LHASH_OF(OPENSSL_CSTRING);
 #  pragma warning (pop)
 # endif
 
+/*	
+ * If called without higher optimization (min. -xO3) the Oracle Developer	
+ * Studio compiler generates code for the defined (static inline) functions	
+ * above.	
+ * This would later lead to the linker complaining about missing symbols when	
+ * this header file is included but the resulting object is not linked against	
+ * the Crypto library (openssl#6912).	
+ */	
+# ifdef __SUNPRO_C	
+#  pragma weak OPENSSL_LH_new	
+#  pragma weak OPENSSL_LH_flush	
+#  pragma weak OPENSSL_LH_free	
+#  pragma weak OPENSSL_LH_insert	
+#  pragma weak OPENSSL_LH_delete	
+#  pragma weak OPENSSL_LH_retrieve	
+#  pragma weak OPENSSL_LH_error	
+#  pragma weak OPENSSL_LH_num_items	
+#  pragma weak OPENSSL_LH_node_stats_bio	
+#  pragma weak OPENSSL_LH_node_usage_stats_bio	
+#  pragma weak OPENSSL_LH_stats_bio	
+#  pragma weak OPENSSL_LH_get_down_load	
+#  pragma weak OPENSSL_LH_set_down_load	
+#  pragma weak OPENSSL_LH_doall	
+#  pragma weak OPENSSL_LH_doall_arg	
+# endif /* __SUNPRO_C */	
+
 #ifdef  __cplusplus
 }
 #endif
