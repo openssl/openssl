@@ -437,9 +437,11 @@ Therefore the public key of this I<cert> must correspond to
 the private key set before or thereafter via OSSL_CMP_CTX_set1_pkey().
 When using signature-based protection of CMP request messages
 this CMP signer certificate will be included first in the extraCerts field.
+It serves as fallback reference certificate, see OSSL_CMP_CTX_set1_oldCert().
 The subject of this I<cert> will be used as the sender field of outgoing
 messages, while the subject of any cert set via OSSL_CMP_CTX_set1_oldCert()
 and any value set via OSSL_CMP_CTX_set1_subjectName() are used as fallback.
+
 The I<cert> argument may be NULL to clear the entry.
 
 OSSL_CMP_CTX_build_cert_chain() builds a certificate chain for the CMP signer
@@ -548,7 +550,8 @@ OSSL_CMP_CTX_set1_oldCert() sets the old certificate to be updated in
 Key Update Requests (KUR) or to be revoked in Revocation Requests (RR).
 It must be given for RR, else it defaults to the CMP signer certificate.
 The reference certificate determined in this way, if any, is also used for
-deriving default subject DN and Subject Alternative Names for IR, CR, and KUR.
+deriving default subject DN and Subject Alternative Names and the
+default issuer entry in the requested certificate template of IR/CR/KUR.
 The subject of the reference certificate is used as the sender field value
 in CMP message headers.
 Its issuer is used as default recipient in CMP message headers.

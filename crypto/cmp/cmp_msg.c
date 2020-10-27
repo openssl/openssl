@@ -209,6 +209,8 @@ OSSL_CRMF_MSG *OSSL_CMP_CTX_setup_CRM(OSSL_CMP_CTX *ctx, int for_KUR, int rid)
     EVP_PKEY *rkey = OSSL_CMP_CTX_get0_newPkey(ctx, 0);
     STACK_OF(GENERAL_NAME) *default_sans = NULL;
     const X509_NAME *subject = determine_subj(ctx, refcert, for_KUR);
+    const X509_NAME *issuer = ctx->issuer != NULL || refcert == NULL
+        ? ctx->issuer : X509_get_issuer_name(refcert);
     int crit = ctx->setSubjectAltNameCritical || subject == NULL;
     /* RFC5280: subjectAltName MUST be critical if subject is null */
     X509_EXTENSIONS *exts = NULL;
@@ -234,8 +236,7 @@ OSSL_CRMF_MSG *OSSL_CMP_CTX_setup_CRM(OSSL_CMP_CTX *ctx, int for_KUR, int rid)
              * it could be NULL if centralized key creation was supported
              */
             || !OSSL_CRMF_CERTTEMPLATE_fill(OSSL_CRMF_MSG_get0_tmpl(crm), rkey,
-                                            subject, ctx->issuer,
-                                            NULL /* serial */))
+                                            subject, issuer, NULL /* serial */))
         goto err;
     if (ctx->days != 0) {
         time_t now = time(NULL);
@@ -433,7 +434,7 @@ OSSL_CMP_MSG *ossl_cmp_certrep_new(OSSL_CMP_CTX *ctx, int bodytype,
         if (msg->extraCerts == NULL
                 || !X509_add_certs(msg->extraCerts, chain,
                                    X509_ADD_FLAG_UP_REF | X509_ADD_FLAG_NO_DUP))
-        goto err;
+            goto err;
     }
 
     if (!unprotectedErrors
