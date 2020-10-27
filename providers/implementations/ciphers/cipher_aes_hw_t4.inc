@@ -19,7 +19,7 @@ static int cipher_hw_aes_t4_initkey(PROV_CIPHER_CTX *dat,
     PROV_AES_CTX *adat = (PROV_AES_CTX *)dat;
     AES_KEY *ks = &adat->ks.ks;
 
-    dat->ks = (const void *)ks; /* used by cipher_hw_generic_XXX */
+    dat->ks = (const void *)ks; /* used by ossl_cipher_hw_generic_XXX */
 
     bits = keylen * 8;
     if ((dat->mode == EVP_CIPH_ECB_MODE || dat->mode == EVP_CIPH_CBC_MODE)
