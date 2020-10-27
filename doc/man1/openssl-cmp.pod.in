@@ -403,7 +403,8 @@ The certificate to be updated (i.e., renewed or re-keyed) in Key Update Request
 It must be given for RR, while for KUR it defaults to B<-cert>.
 
 The reference certificate determined in this way, if any, is also used for
-deriving default subject DN and Subject Alternative Names for IR, CR, and KUR.
+deriving default subject DN and Subject Alternative Names and the
+default issuer entry in the requested certificate template of IR/CR/KUR.
 Its subject is used as sender of outgoing messages if B<-cert> is not given.
 Its issuer is used as default recipient in CMP message headers
 if neither B<-recipient>, B<-srvcert>, nor B<-issuer> is given.
@@ -629,7 +630,8 @@ The client's current CMP signer certificate.
 Requires the corresponding key to be given with B<-key>.
 The subject of this certificate will be used as sender of outgoing CMP messages,
 while the subject of B<-oldcert> or B<-subjectName> may provide fallback values.
-The issuer of this certificate is used as one of the recipient fallback values.
+The issuer of this certificate is used as one of the recipient fallback values
+and as fallback issuer entry in the certificate template of IR, CR, and KUR.
 When using signature-based message protection, this "protection certificate"
 will be included first in the extraCerts field of outgoing messages
 and the signature is done with the corresponding key.
