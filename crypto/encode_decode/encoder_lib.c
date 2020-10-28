@@ -208,6 +208,8 @@ void ossl_encoder_instance_free(OSSL_ENCODER_INSTANCE *encoder_inst)
 static int ossl_encoder_ctx_add_encoder_inst(OSSL_ENCODER_CTX *ctx,
                                              OSSL_ENCODER_INSTANCE *ei)
 {
+    int ok;
+
     if (ctx->encoder_insts == NULL
         && (ctx->encoder_insts =
             sk_OSSL_ENCODER_INSTANCE_new_null()) == NULL) {
@@ -215,7 +217,18 @@ static int ossl_encoder_ctx_add_encoder_inst(OSSL_ENCODER_CTX *ctx,
         return 0;
     }
 
-    return (sk_OSSL_ENCODER_INSTANCE_push(ctx->encoder_insts, ei) > 0);
+    ok = (sk_OSSL_ENCODER_INSTANCE_push(ctx->encoder_insts, ei) > 0);
+    if (ok) {
+        OSSL_TRACE_BEGIN(ENCODER) {
+            BIO_printf(trc_out,
+                       "(ctx %p) Added encoder instance %p (encoder %p) with:\n",
+                       (void *)ctx, (void *)ei, (void *)ei->encoder);
+            BIO_printf(trc_out,
+                       "    output type: %s, output structure: %s, input type :%s\n",
+                       ei->output_type, ei->output_structure, ei->input_type);
+        } OSSL_TRACE_END(ENCODER);
+    }
+    return ok;
 }
 
 int OSSL_ENCODER_CTX_add_encoder(OSSL_ENCODER_CTX *ctx, OSSL_ENCODER *encoder)
@@ -242,16 +255,6 @@ int OSSL_ENCODER_CTX_add_encoder(OSSL_ENCODER_CTX *ctx, OSSL_ENCODER *encoder)
 
     if (!ossl_encoder_ctx_add_encoder_inst(ctx, encoder_inst))
         goto err;
-
-    OSSL_TRACE_BEGIN(ENCODER) {
-        BIO_printf(trc_out,
-                   "(ctx %p) Added encoder instance %p (encoder %p) with:\n",
-                   (void *)ctx, (void *)encoder_inst, (void *)encoder);
-        BIO_printf(trc_out,
-                   "    output type: %s, output structure: %s, input type :%s\n",
-                   encoder_inst->output_type, encoder_inst->output_structure,
-                   encoder_inst->input_type);
-    } OSSL_TRACE_END(ENCODER);
 
     return 1;
  err:
