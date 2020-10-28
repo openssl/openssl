@@ -211,6 +211,8 @@ void ossl_decoder_instance_free(OSSL_DECODER_INSTANCE *decoder_inst)
 int ossl_decoder_ctx_add_decoder_inst(OSSL_DECODER_CTX *ctx,
                                       OSSL_DECODER_INSTANCE *di)
 {
+    int ok;
+
     if (ctx->decoder_insts == NULL
         && (ctx->decoder_insts =
             sk_OSSL_DECODER_INSTANCE_new_null()) == NULL) {
@@ -218,7 +220,18 @@ int ossl_decoder_ctx_add_decoder_inst(OSSL_DECODER_CTX *ctx,
         return 0;
     }
 
-    return (sk_OSSL_DECODER_INSTANCE_push(ctx->decoder_insts, di) > 0);
+    ok = (sk_OSSL_DECODER_INSTANCE_push(ctx->decoder_insts, di) > 0);
+    if (ok) {
+        OSSL_TRACE_BEGIN(DECODER) {
+            BIO_printf(trc_out,
+                       "(ctx %p) Added decoder instance %p (decoder %p) with:\n",
+                       (void *)ctx, (void *)di, (void *)di->decoder);
+            BIO_printf(trc_out,
+                       "    input type: %s, input structure: %s\n",
+                       di->input_type, di->input_structure);
+        } OSSL_TRACE_END(DECODER);
+    }
+    return ok;
 }
 
 int OSSL_DECODER_CTX_add_decoder(OSSL_DECODER_CTX *ctx, OSSL_DECODER *decoder)
@@ -245,15 +258,6 @@ int OSSL_DECODER_CTX_add_decoder(OSSL_DECODER_CTX *ctx, OSSL_DECODER *decoder)
 
     if (!ossl_decoder_ctx_add_decoder_inst(ctx, decoder_inst))
         goto err;
-
-    OSSL_TRACE_BEGIN(DECODER) {
-        BIO_printf(trc_out,
-                   "(ctx %p) Added decoder instance %p (decoder %p) with:\n",
-                   (void *)ctx, (void *)decoder_inst, (void *)decoder);
-        BIO_printf(trc_out,
-                   "    input type: %s, input structure: %s\n",
-                   decoder_inst->input_type, decoder_inst->input_structure);
-    } OSSL_TRACE_END(DECODER);
 
     return 1;
  err:
