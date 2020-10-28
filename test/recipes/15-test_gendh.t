@@ -18,7 +18,7 @@ setup("test_gendh");
 
 plan skip_all => "This test is unsupported in a no-dh build" if disabled("dh");
 
-plan tests => 13;
+plan tests => 12;
 
 ok(run(app([ 'openssl', 'genpkey', '-genparam',
              '-algorithm', 'DH',
@@ -54,28 +54,18 @@ ok(run(app([ 'openssl', 'genpkey', '-genparam',
              '-algorithm', 'DH',
              '-pkeyopt', 'gindex:1',
              '-pkeyopt', 'type:fips186_4',
-             '-out', 'dhgen.pem'])),
+             '-out', 'dhgen.pem' ])),
    "genpkey DH params fips186_4 PEM");
-
-ok(run(app([ 'openssl', 'genpkey', '-genparam',
-             '-algorithm', 'DH',
-             '-pkeyopt', 'gindex:1',
-             '-pkeyopt', 'pbits:2048',
-             '-pkeyopt', 'qbits:256',
-             '-pkeyopt', 'type:fips186_4',
-             '-outform', 'DER',
-             '-out', 'dhgen.der'])),
-   "genpkey DH params fips186_4 DER");
 
 # The seed and counter should be the ones generated from the param generation
 # Just put some dummy ones in to show it works.
 ok(run(app([ 'openssl', 'genpkey',
-             '-paramfile', 'dhgen.der',
+             '-paramfile', 'dhgen.pem',
              '-pkeyopt', 'gindex:1',
              '-pkeyopt', 'hexseed:0102030405060708090A0B0C0D0E0F1011121314',
              '-pkeyopt', 'pcounter:25',
-             '-text'])),
-   "genpkey DH fips186_4 with DER params");
+             '-text' ])),
+   "genpkey DH fips186_4 with PEM params");
 
  ok(!run(app([ 'openssl', 'genpkey',
               '-algorithm', 'DH'])),
