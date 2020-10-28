@@ -5286,4 +5286,5 @@ EVP_PKEY_CTX_get0_propq                 ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_set1_encoded_public_key        ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_get1_encoded_public_key        ?	3_0_0	EXIST::FUNCTION:
 OSSL_ENCODER_CTX_set_output_structure   ?	3_0_0	EXIST::FUNCTION:
+OSSL_ENCODER_CTX_prune_encoders         ?	3_0_0	EXIST::FUNCTION:
 OSSL_ENCODER_INSTANCE_get_output_structure ?	3_0_0	EXIST::FUNCTION:
