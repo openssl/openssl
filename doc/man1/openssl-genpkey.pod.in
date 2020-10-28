@@ -47,8 +47,10 @@ standard output is used.
 
 =item B<-outform> B<DER>|B<PEM>
 
-The output format; the default is B<PEM>.
+The output format, except when B<-genparam> is given; the default is B<PEM>.
 See L<openssl(1)/Format Options> for details.
+
+When B<-genparam> is given, B<-outform> is ignored.
 
 =item B<-pass> I<arg>
 
