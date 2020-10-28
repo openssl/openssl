@@ -245,6 +245,7 @@ static int der2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
     long new_der_len;
     EVP_PKEY *pkey = NULL;
     void *key = NULL;
+    int orig_selection = selection;
     int ok = 0;
 
     /*
@@ -264,7 +265,7 @@ static int der2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
 
     SET_ERR_MARK();
     if (!read_der(ctx->provctx, cin, &der, &der_len))
-        goto err;
+        goto end;
 
     if (ctx->desc->extract_key == NULL) {
         /*
@@ -274,9 +275,17 @@ static int der2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
         derp = der;
         if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0) {
             key = ctx->desc->d2i_private_key(NULL, &derp, der_len);
-        } else if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0) {
+            if (key == NULL && orig_selection != 0)
+                goto end;
+        }
+        if (key == NULL
+            && (selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0) {
             key = ctx->desc->d2i_public_key(NULL, &derp, der_len);
-        } else if ((selection & OSSL_KEYMGMT_SELECT_ALL_PARAMETERS) != 0) {
+            if (key == NULL && orig_selection != 0)
+                goto end;
+        }
+        if (key == NULL
+            && (selection & OSSL_KEYMGMT_SELECT_ALL_PARAMETERS) != 0) {
             key = ctx->desc->d2i_key_params(NULL, &derp, der_len);
         }
     } else {
@@ -304,7 +313,8 @@ static int der2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
                                      libctx, NULL);
         }
 
-        if (pkey == NULL && (selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0) {
+        if (pkey == NULL
+            && (selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0) {
             RESET_ERR_MARK();
             derp = der;
             pkey = d2i_PUBKEY_ex(NULL, &derp, der_len, libctx, NULL);
@@ -331,7 +341,7 @@ static int der2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
         }
     }
 
- err:
+ end:
     /*
      * Prune low-level ASN.1 parse errors from error queue, assuming
      * that this is called by decoder_process() in a loop trying several
