@@ -1,6 +1,6 @@
 /*
  * Copyright 2018-2020 The OpenSSL Project Authors. All Rights Reserved.
- * Copyright (c) 2018-2019, Oracle and/or its affiliates.  All rights reserved.
+ * Copyright (c) 2018-2020, Oracle and/or its affiliates.  All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -1051,6 +1051,68 @@ static int test_kdf_kbkdf_8009_prf2(void)
     return ret;
 }
 
+#if !defined(OPENSSL_NO_CMAC)
+/*
+ * Test vector taken from
+ * https://csrc.nist.gov/CSRC/media/Projects/
+ *    Cryptographic-Algorithm-Validation-Program/documents/KBKDF800-108/CounterMode.zip
+ *    Note: Only 32 bit counter is supported ([RLEN=32_BITS])
+ */
+static int test_kdf_kbkdf_fixedinfo(void)
+{
+    int ret;
+    EVP_KDF_CTX *kctx;
+    OSSL_PARAM params[8], *p = params;
+    static char *cipher = "AES128";
+    static char *mac = "CMAC";
+    static char *mode = "COUNTER";
+    int use_l = 0;
+    int use_separator = 0;
+
+    static unsigned char input_key[] = {
+        0xc1, 0x0b, 0x15, 0x2e, 0x8c, 0x97, 0xb7, 0x7e,
+        0x18, 0x70, 0x4e, 0x0f, 0x0b, 0xd3, 0x83, 0x05,
+    };
+    static unsigned char fixed_input[] = {
+        0x98, 0xcd, 0x4c, 0xbb, 0xbe, 0xbe, 0x15, 0xd1,
+        0x7d, 0xc8, 0x6e, 0x6d, 0xba, 0xd8, 0x00, 0xa2,
+        0xdc, 0xbd, 0x64, 0xf7, 0xc7, 0xad, 0x0e, 0x78,
+        0xe9, 0xcf, 0x94, 0xff, 0xdb, 0xa8, 0x9d, 0x03,
+        0xe9, 0x7e, 0xad, 0xf6, 0xc4, 0xf7, 0xb8, 0x06,
+        0xca, 0xf5, 0x2a, 0xa3, 0x8f, 0x09, 0xd0, 0xeb,
+        0x71, 0xd7, 0x1f, 0x49, 0x7b, 0xcc, 0x69, 0x06,
+        0xb4, 0x8d, 0x36, 0xc4,
+
+    };
+    static unsigned char output[] = {
+        0x26, 0xfa, 0xf6, 0x19, 0x08, 0xad, 0x9e, 0xe8,
+        0x81, 0xb8, 0x30, 0x5c, 0x22, 0x1d, 0xb5, 0x3f,
+    };
+    unsigned char result[sizeof(output)] = { 0 };
+
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_CIPHER, cipher, 0);
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_MAC, mac, 0);
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_MODE, mode, 0);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY, input_key,
+                                             sizeof(input_key));
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_INFO,
+                                             fixed_input, sizeof(fixed_input));
+    *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_KBKDF_USE_L, &use_l);
+    *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_KBKDF_USE_SEPARATOR,
+                                    &use_separator);
+    *p = OSSL_PARAM_construct_end();
+
+    kctx = get_kdfbyname("KBKDF");
+    ret = TEST_ptr(kctx)
+        && TEST_true(EVP_KDF_CTX_set_params(kctx, params))
+        && TEST_int_gt(EVP_KDF_derive(kctx, result, sizeof(result)), 0)
+        && TEST_mem_eq(result, sizeof(result), output, sizeof(output));
+
+    EVP_KDF_CTX_free(kctx);
+    return ret;
+}
+#endif /* OPENSSL_NO_CMAC */
+
 static int test_kdf_ss_hmac(void)
 {
     int ret;
@@ -1322,6 +1384,9 @@ int setup_tests(void)
     ADD_TEST(test_kdf_kbkdf_1byte_key);
     ADD_TEST(test_kdf_kbkdf_8009_prf1);
     ADD_TEST(test_kdf_kbkdf_8009_prf2);
+#if !defined(OPENSSL_NO_CMAC)
+    ADD_TEST(test_kdf_kbkdf_fixedinfo);
+#endif
     ADD_TEST(test_kdf_get_kdf);
     ADD_TEST(test_kdf_tls1_prf);
     ADD_TEST(test_kdf_tls1_prf_invalid_digest);
