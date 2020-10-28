@@ -584,10 +584,9 @@ static int der2key_export_object(void *vctx,
 #define DO_EC(keytype)                                  \
     "EC", 0,                                            \
         ( OSSL_KEYMGMT_SELECT_PRIVATE_KEY               \
-          | OSSL_KEYMGMT_SELECT_PUBLIC_KEY              \
           | OSSL_KEYMGMT_SELECT_ALL_PARAMETERS ),       \
         keytype##_d2i_private_key,                      \
-        keytype##_d2i_public_key,                       \
+        NULL,                                           \
         keytype##_d2i_key_params,                       \
         NULL,                                           \
         keytype##_free
