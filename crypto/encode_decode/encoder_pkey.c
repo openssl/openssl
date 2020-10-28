@@ -15,6 +15,7 @@
 #include <openssl/core_names.h>
 #include <openssl/provider.h>
 #include <openssl/safestack.h>
+#include <openssl/trace.h>
 #include "internal/provider.h"
 #include "internal/property.h"
 #include "crypto/evp.h"
@@ -288,14 +289,28 @@ OSSL_ENCODER_CTX *OSSL_ENCODER_CTX_new_by_EVP_PKEY(const EVP_PKEY *pkey,
         ERR_raise(ERR_LIB_OSSL_ENCODER, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
+
+    OSSL_TRACE_BEGIN(ENCODER) {
+        BIO_printf(trc_out,
+                   "(ctx %p) Looking for %s encoders with selection %d\n",
+                   (void *)ctx, EVP_PKEY_get0_first_alg_name(pkey), selection);
+        BIO_printf(trc_out, "    output type: %s, output structure: %s\n",
+                   output_type, output_struct);
+    } OSSL_TRACE_END(ENCODER);
+
     if (OSSL_ENCODER_CTX_set_output_type(ctx, output_type)
         && (output_struct == NULL
             || OSSL_ENCODER_CTX_set_output_structure(ctx, output_struct))
         && OSSL_ENCODER_CTX_set_selection(ctx, selection)
         && ossl_encoder_ctx_setup_for_EVP_PKEY(ctx, pkey, selection,
                                                libctx, propquery)
-        && OSSL_ENCODER_CTX_add_extra(ctx, libctx, propquery))
+        && OSSL_ENCODER_CTX_add_extra(ctx, libctx, propquery)) {
+        OSSL_TRACE_BEGIN(ENCODER) {
+            BIO_printf(trc_out, "(ctx %p) Got %d encoders\n",
+                       (void *)ctx, OSSL_ENCODER_CTX_get_num_encoders(ctx));
+        } OSSL_TRACE_END(ENCODER);
         return ctx;
+    }
 
     OSSL_ENCODER_CTX_free(ctx);
     return NULL;

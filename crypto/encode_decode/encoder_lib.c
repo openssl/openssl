@@ -14,6 +14,7 @@
 #include <openssl/buffer.h>
 #include <openssl/params.h>
 #include <openssl/provider.h>
+#include <openssl/trace.h>
 #include "encoder_local.h"
 
 struct encoder_process_data_st {
@@ -234,6 +235,8 @@ void ossl_encoder_instance_free(OSSL_ENCODER_INSTANCE *encoder_inst)
 static int ossl_encoder_ctx_add_encoder_inst(OSSL_ENCODER_CTX *ctx,
                                              OSSL_ENCODER_INSTANCE *ei)
 {
+    int ok;
+
     if (ctx->encoder_insts == NULL
         && (ctx->encoder_insts =
             sk_OSSL_ENCODER_INSTANCE_new_null()) == NULL) {
@@ -241,7 +244,18 @@ static int ossl_encoder_ctx_add_encoder_inst(OSSL_ENCODER_CTX *ctx,
         return 0;
     }
 
-    return (sk_OSSL_ENCODER_INSTANCE_push(ctx->encoder_insts, ei) > 0);
+    ok = (sk_OSSL_ENCODER_INSTANCE_push(ctx->encoder_insts, ei) > 0);
+    if (ok) {
+        OSSL_TRACE_BEGIN(ENCODER) {
+            BIO_printf(trc_out,
+                       "(ctx %p) Added encoder instance %p (encoder %p) with:\n",
+                       (void *)ctx, (void *)ei, (void *)ei->encoder);
+            BIO_printf(trc_out,
+                       "    output type: %s, output structure: %s, input type :%s\n",
+                       ei->output_type, ei->output_structure, ei->input_type);
+        } OSSL_TRACE_END(ENCODER);
+    }
+    return ok;
 }
 
 int OSSL_ENCODER_CTX_add_encoder(OSSL_ENCODER_CTX *ctx, OSSL_ENCODER *encoder)
@@ -411,6 +425,13 @@ static int encoder_process(struct encoder_process_data_st *data)
         new_data.count_output_structure = data->count_output_structure;
         new_data.level = data->level + 1;
 
+        OSSL_TRACE_BEGIN(ENCODER) {
+            BIO_printf(trc_out,
+                       "[%d] (ctx %p) Considering encoder instance %p (encoder %p)\n",
+                       data->level, (void *)data->ctx,
+                       (void *)current_encoder_inst, (void *)current_encoder);
+        } OSSL_TRACE_END(ENCODER);
+
         /*
          * If this is the top call, we check if the output type of the current
          * encoder matches the desired output type.
@@ -421,11 +442,25 @@ static int encoder_process(struct encoder_process_data_st *data)
         if (top) {
             if (data->ctx->output_type != NULL
                 && strcasecmp(current_output_type,
-                              data->ctx->output_type) != 0)
+                              data->ctx->output_type) != 0) {
+                OSSL_TRACE_BEGIN(ENCODER) {
+                    BIO_printf(trc_out,
+                               "[%d]    Skipping because current encoder output type (%s) != desired output type (%s)\n",
+                               data->level,
+                               current_output_type, data->ctx->output_type);
+                } OSSL_TRACE_END(ENCODER);
                 continue;
+            }
         } else {
-            if (!OSSL_ENCODER_is_a(next_encoder, current_output_type))
+            if (!OSSL_ENCODER_is_a(next_encoder, current_output_type)) {
+                OSSL_TRACE_BEGIN(ENCODER) {
+                    BIO_printf(trc_out,
+                               "[%d]    Skipping because current encoder output type (%s) != name of encoder %p\n",
+                               data->level,
+                               current_output_type, (void *)next_encoder);
+                } OSSL_TRACE_END(ENCODER);
                 continue;
+            }
         }
 
         /*
@@ -436,8 +471,16 @@ static int encoder_process(struct encoder_process_data_st *data)
         if (data->ctx->output_structure != NULL
             && current_output_structure != NULL) {
             if (strcasecmp(data->ctx->output_structure,
-                           current_output_structure) != 0)
+                           current_output_structure) != 0) {
+                OSSL_TRACE_BEGIN(ENCODER) {
+                    BIO_printf(trc_out,
+                               "[%d]    Skipping because current encoder output structure (%s) != ctx output structure (%s)\n",
+                               data->level,
+                               current_output_structure,
+                               data->ctx->output_structure);
+                } OSSL_TRACE_END(ENCODER);
                 continue;
+            }
 
             data->count_output_structure++;
         }
@@ -465,6 +508,12 @@ static int encoder_process(struct encoder_process_data_st *data)
          */
         if (ok != 0)
             break;
+
+        OSSL_TRACE_BEGIN(ENCODER) {
+            BIO_printf(trc_out,
+                       "[%d]    Skipping because recusion level %d failed\n",
+                       data->level, new_data.level);
+        } OSSL_TRACE_END(ENCODER);
     }
 
     /*
@@ -473,6 +522,12 @@ static int encoder_process(struct encoder_process_data_st *data)
      */
     if (i < 0) {
         ok = -1;
+
+        OSSL_TRACE_BEGIN(ENCODER) {
+            BIO_printf(trc_out,
+                       "[%d] (ctx %p) No suitable encoder found\n",
+                       data->level, (void *)data->ctx);
+        } OSSL_TRACE_END(ENCODER);
     } else {
         /* Preparations */
 
@@ -561,13 +616,20 @@ static int encoder_process(struct encoder_process_data_st *data)
                      == NULL)
                 ok = 0;     /* Assume BIO_new() recorded an error */
 
-            if (ok)
+            if (ok) {
                 ok = current_encoder->encode(current_encoder_ctx,
                                              (OSSL_CORE_BIO *)current_out,
                                              original_data, current_abstract,
                                              data->ctx->selection,
                                              ossl_pw_passphrase_callback_enc,
                                              &data->ctx->pwdata);
+                OSSL_TRACE_BEGIN(ENCODER) {
+                    BIO_printf(trc_out,
+                               "[%d] (ctx %p) Running encoder instance %p => %d\n",
+                               data->level, (void *)data->ctx,
+                               (void *)current_encoder_inst, ok);
+                } OSSL_TRACE_END(ENCODER);
+            }
 
             data->prev_encoder_inst = current_encoder_inst;
         }
