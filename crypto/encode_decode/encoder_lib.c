@@ -14,6 +14,7 @@
 #include <openssl/buffer.h>
 #include <openssl/params.h>
 #include <openssl/provider.h>
+#include <openssl/trace.h>
 #include "encoder_local.h"
 
 static int encoder_process(OSSL_ENCODER_CTX *ctx, BIO *out);
@@ -242,6 +243,16 @@ int OSSL_ENCODER_CTX_add_encoder(OSSL_ENCODER_CTX *ctx, OSSL_ENCODER *encoder)
     if (!ossl_encoder_ctx_add_encoder_inst(ctx, encoder_inst))
         goto err;
 
+    OSSL_TRACE_BEGIN(ENCODER) {
+        BIO_printf(trc_out,
+                   "(ctx %p) Added encoder instance %p (encoder %p) with:\n",
+                   (void *)ctx, (void *)encoder_inst, (void *)encoder);
+        BIO_printf(trc_out,
+                   "    output type: %s, output structure: %s, input type :%s\n",
+                   encoder_inst->output_type, encoder_inst->output_structure,
+                   encoder_inst->input_type);
+    } OSSL_TRACE_END(ENCODER);
+
     return 1;
  err:
     ossl_encoder_instance_free(encoder_inst);
@@ -270,11 +281,23 @@ int OSSL_ENCODER_CTX_prune_encoders(OSSL_ENCODER_CTX *ctx)
         const char *output_structure =
             OSSL_ENCODER_INSTANCE_get_output_structure(encoder_inst);
 
+        OSSL_TRACE_BEGIN(ENCODER) {
+            BIO_printf(trc_out,
+                       "(ctx %p) Considering encoder instance %p (encoder %p) because\n",
+                           (void *)ctx, (void *)encoder_inst,
+                           (void *)encoder_inst->encoder);
+        } OSSL_TRACE_END(ENCODER);
+
         /*
          * If the implementation output type doesn't match what we're
          * currently looking for, throw it away.
          */
         if (strcasecmp(output_type, latest_output_type) != 0) {
+            OSSL_TRACE_BEGIN(ENCODER) {
+                BIO_printf(trc_out,
+                           "   Dropping because encoder output type (%s) != latest output type (%s)\n",
+                           output_type, latest_output_type);
+            } OSSL_TRACE_END(ENCODER);
             sk_OSSL_ENCODER_INSTANCE_delete(ctx->encoder_insts, i);
             ossl_encoder_instance_free(encoder_inst);
             continue;
@@ -287,6 +310,11 @@ int OSSL_ENCODER_CTX_prune_encoders(OSSL_ENCODER_CTX *ctx)
          */
         if (ctx->output_structure != NULL && output_structure != NULL) {
             if (strcasecmp(ctx->output_structure, output_structure) != 0) {
+                OSSL_TRACE_BEGIN(ENCODER) {
+                    BIO_printf(trc_out,
+                               "    Dropping because encoder output structure (%s) != ctx output structure (%s)\n",
+                               output_structure, ctx->output_structure);
+                } OSSL_TRACE_END(ENCODER);
                 sk_OSSL_ENCODER_INSTANCE_delete(ctx->encoder_insts, i);
                 ossl_encoder_instance_free(encoder_inst);
                 continue;
@@ -299,6 +327,12 @@ int OSSL_ENCODER_CTX_prune_encoders(OSSL_ENCODER_CTX *ctx)
     }
 
     if (count_output_structure == 0) {
+        OSSL_TRACE_BEGIN(ENCODER) {
+            BIO_printf(trc_out,
+                       "(ctx %p) Dropping all remaining encoder instances because\n",
+                               (void *)ctx);
+            BIO_printf(trc_out, "    they don't respond to an output structure\n");
+        } OSSL_TRACE_END(ENCODER);
         sk_OSSL_ENCODER_INSTANCE_pop_free(ctx->encoder_insts,
                                           ossl_encoder_instance_free);
         ctx->encoder_insts = NULL;
@@ -478,6 +512,12 @@ static int encoder_process(OSSL_ENCODER_CTX *ctx, BIO *out)
         ok = encoder->encode(encoderctx, (OSSL_CORE_BIO *)current_out,
                              current_data, current_abstract, ctx->selection,
                              ossl_pw_passphrase_callback_enc, &ctx->pwdata);
+
+        OSSL_TRACE_BEGIN(ENCODER) {
+            BIO_printf(trc_out,
+                       "(ctx %p) Running encoder instance %p => %d\n",
+                       (void *)ctx, (void *)encoder_inst, ok);
+        } OSSL_TRACE_END(ENCODER);
 
         if (current_input_type != NULL)
             last_input_type = current_input_type;
