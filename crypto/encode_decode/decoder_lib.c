@@ -14,6 +14,7 @@
 #include <openssl/evperr.h>
 #include <openssl/ecerr.h>
 #include <openssl/x509err.h>
+#include <openssl/trace.h>
 #include "internal/passphrase.h"
 #include "crypto/decoder.h"
 #include "encoder_local.h"
@@ -244,6 +245,15 @@ int OSSL_DECODER_CTX_add_decoder(OSSL_DECODER_CTX *ctx, OSSL_DECODER *decoder)
 
     if (!ossl_decoder_ctx_add_decoder_inst(ctx, decoder_inst))
         goto err;
+
+    OSSL_TRACE_BEGIN(DECODER) {
+        BIO_printf(trc_out,
+                   "(ctx %p) Added decoder instance %p (decoder %p) with:\n",
+                   (void *)ctx, (void *)decoder_inst, (void *)decoder);
+        BIO_printf(trc_out,
+                   "    input type: %s, input structure: %s\n",
+                   decoder_inst->input_type, decoder_inst->input_structure);
+    } OSSL_TRACE_END(DECODER);
 
     return 1;
  err:
@@ -615,6 +625,13 @@ static int decoder_process(const OSSL_PARAM params[], void *arg)
                                  decoder_process, &new_data,
                                  ossl_pw_passphrase_callback_dec,
                                  &new_data.ctx->pwdata);
+
+        OSSL_TRACE_BEGIN(DECODER) {
+            BIO_printf(trc_out,
+                       "(ctx %p) Running decoder instance %p => %d\n",
+                       (void *)new_data.ctx, (void *)new_decoder_inst, ok);
+        } OSSL_TRACE_END(DECODER);
+
         if (ok)
             break;
         err = ERR_peek_last_error();

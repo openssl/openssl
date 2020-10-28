@@ -14,6 +14,7 @@
 #include <openssl/ui.h>
 #include <openssl/decoder.h>
 #include <openssl/safestack.h>
+#include <openssl/trace.h>
 #include "crypto/evp.h"
 #include "crypto/decoder.h"
 #include "encoder_local.h"
@@ -389,13 +390,27 @@ OSSL_DECODER_CTX_new_by_EVP_PKEY(EVP_PKEY **pkey,
         ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
+
+    OSSL_TRACE_BEGIN(DECODER) {
+        BIO_printf(trc_out,
+                   "(ctx %p) Looking for %s decoders with selection %d\n",
+                   (void *)ctx, keytype, selection);
+        BIO_printf(trc_out, "    input type: %s, input structure: %s\n",
+                   input_type, input_structure);
+    } OSSL_TRACE_END(DECODER);
+
     if (OSSL_DECODER_CTX_set_input_type(ctx, input_type)
         && OSSL_DECODER_CTX_set_input_structure(ctx, input_structure)
         && OSSL_DECODER_CTX_set_selection(ctx, selection)
         && ossl_decoder_ctx_setup_for_EVP_PKEY(ctx, pkey, keytype,
                                                libctx, propquery)
-        && OSSL_DECODER_CTX_add_extra(ctx, libctx, propquery))
+        && OSSL_DECODER_CTX_add_extra(ctx, libctx, propquery)) {
+        OSSL_TRACE_BEGIN(DECODER) {
+            BIO_printf(trc_out, "(ctx %p) Got %d decoders\n",
+                       (void *)ctx, OSSL_DECODER_CTX_get_num_decoders(ctx));
+        } OSSL_TRACE_END(DECODER);
         return ctx;
+    }
 
     OSSL_DECODER_CTX_free(ctx);
     return NULL;
