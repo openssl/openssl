@@ -200,6 +200,8 @@ extern "C" {
 #define OSSL_KDF_PARAM_CIPHER       OSSL_ALG_PARAM_CIPHER     /* utf8 string */
 #define OSSL_KDF_PARAM_CONSTANT     "constant"  /* octet string */
 #define OSSL_KDF_PARAM_PKCS12_ID    "id"        /* int */
+#define OSSL_KDF_PARAM_KBKDF_USE_L  "use-l"             /* int */
+#define OSSL_KDF_PARAM_KBKDF_USE_SEPARATOR  "use-separator"     /* int */
 
 /* Known KDF names */
 #define OSSL_KDF_NAME_HKDF          "HKDF"

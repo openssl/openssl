@@ -68,6 +68,8 @@ typedef struct {
     size_t context_len;
     unsigned char *iv;
     size_t iv_len;
+    int use_l;
+    int use_separator;
 } KBKDF;
 
 /* Definitions needed for typechecking. */
@@ -96,6 +98,12 @@ static uint32_t be32(uint32_t host)
     return big;
 }
 
+static void init(KBKDF *ctx)
+{
+    ctx->use_l = 1;
+    ctx->use_separator = 1;
+}
+
 static void *kbkdf_new(void *provctx)
 {
     KBKDF *ctx;
@@ -110,6 +118,7 @@ static void *kbkdf_new(void *provctx)
     }
 
     ctx->provctx = provctx;
+    init(ctx);
     return ctx;
 }
 
@@ -135,20 +144,32 @@ static void kbkdf_reset(void *vctx)
     OPENSSL_clear_free(ctx->iv, ctx->iv_len);
     memset(ctx, 0, sizeof(*ctx));
     ctx->provctx = provctx;
+    init(ctx);
 }
 
 /* SP800-108 section 5.1 or section 5.2 depending on mode. */
 static int derive(EVP_MAC_CTX *ctx_init, kbkdf_mode mode, unsigned char *iv,
                   size_t iv_len, unsigned char *label, size_t label_len,
                   unsigned char *context, size_t context_len,
-                  unsigned char *k_i, size_t h, uint32_t l, unsigned char *ko,
-                  size_t ko_len)
+                  unsigned char *k_i, size_t h, uint32_t l, int has_separator,
+                  unsigned char *ko, size_t ko_len)
 {
     int ret = 0;
     EVP_MAC_CTX *ctx = NULL;
     size_t written = 0, to_write, k_i_len = iv_len;
     const unsigned char zero = 0;
     uint32_t counter, i;
+    /*
+     * From SP800-108:
+     * The fixed input data is a concatenation of a Label,
+     * a separation indicator 0x00, the Context, and L.
+     * One or more of these fixed input data fields may be omitted.
+     *
+     * has_separator == 0 means that the separator is omitted.
+     * Passing a value of l == 0 means that L is omitted.
+     * The Context and L are omitted automatically if a NULL buffer is passed.
+     */
+    int has_l = (l != 0);
 
     /* Setup K(0) for feedback mode. */
     if (iv_len > 0)
@@ -167,9 +188,9 @@ static int derive(EVP_MAC_CTX *ctx_init, kbkdf_mode mode, unsigned char *iv,
 
         if (!EVP_MAC_update(ctx, (unsigned char *)&i, 4)
             || !EVP_MAC_update(ctx, label, label_len)
-            || !EVP_MAC_update(ctx, &zero, 1)
+            || (has_separator && !EVP_MAC_update(ctx, &zero, 1))
             || !EVP_MAC_update(ctx, context, context_len)
-            || !EVP_MAC_update(ctx, (unsigned char *)&l, 4)
+            || (has_l && !EVP_MAC_update(ctx, (unsigned char *)&l, 4))
             || !EVP_MAC_final(ctx, k_i, NULL, h))
             goto done;
 
@@ -193,7 +214,7 @@ static int kbkdf_derive(void *vctx, unsigned char *key, size_t keylen)
     KBKDF *ctx = (KBKDF *)vctx;
     int ret = 0;
     unsigned char *k_i = NULL;
-    uint32_t l = be32(keylen * 8);
+    uint32_t l = 0;
     size_t h = 0;
 
     if (!ossl_prov_is_running())
@@ -226,13 +247,16 @@ static int kbkdf_derive(void *vctx, unsigned char *key, size_t keylen)
         goto done;
     }
 
+    if (ctx->use_l != 0)
+        l = be32(keylen * 8);
+
     k_i = OPENSSL_zalloc(h);
     if (k_i == NULL)
         goto done;
 
     ret = derive(ctx->ctx_init, ctx->mode, ctx->iv, ctx->iv_len, ctx->label,
                  ctx->label_len, ctx->context, ctx->context_len, k_i, h, l,
-                 key, keylen);
+                 ctx->use_separator, key, keylen);
 done:
     if (ret != 1)
         OPENSSL_cleanse(key, keylen);
@@ -297,6 +321,14 @@ static int kbkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     if (p != NULL && !kbkdf_set_buffer(&ctx->iv, &ctx->iv_len, p))
         return 0;
 
+    p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_KBKDF_USE_L);
+    if (p != NULL && !OSSL_PARAM_get_int(p, &ctx->use_l))
+        return 0;
+
+    p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_KBKDF_USE_SEPARATOR);
+    if (p != NULL && !OSSL_PARAM_get_int(p, &ctx->use_separator))
+        return 0;
+
     /* Set up digest context, if we can. */
     if (ctx->ctx_init != NULL && ctx->ki_len != 0) {
         mparams[0] = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY,
@@ -322,8 +354,9 @@ static const OSSL_PARAM *kbkdf_settable_ctx_params(ossl_unused void *provctx)
         OSSL_PARAM_utf8_string(OSSL_KDF_PARAM_CIPHER, NULL, 0),
         OSSL_PARAM_utf8_string(OSSL_KDF_PARAM_MAC, NULL, 0),
         OSSL_PARAM_utf8_string(OSSL_KDF_PARAM_MODE, NULL, 0),
-
         OSSL_PARAM_utf8_string(OSSL_KDF_PARAM_PROPERTIES, NULL, 0),
+        OSSL_PARAM_int(OSSL_KDF_PARAM_KBKDF_USE_L, NULL),
+        OSSL_PARAM_int(OSSL_KDF_PARAM_KBKDF_USE_SEPARATOR, NULL),
         OSSL_PARAM_END,
     };
     return known_settable_ctx_params;
