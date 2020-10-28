@@ -70,6 +70,9 @@ static EVP_PKEY *pem_read_bio_key(BIO *bp, EVP_PKEY **x,
 # endif
 #endif
 
+    if (!OSSL_STORE_expect(ctx, expected_store_info_type))
+        goto err;
+
     while (!OSSL_STORE_eof(ctx)
            && (info = OSSL_STORE_load(ctx)) != NULL) {
         if (OSSL_STORE_INFO_get_type(info) == expected_store_info_type) {
