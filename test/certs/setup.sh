@@ -196,6 +196,18 @@ OPENSSL_KEYBITS=768 \
 # EC cert with named curve signed by named curve ca
 ./mkcert.sh genee server.example ee-key-ec-named-named \
     ee-cert-ec-named-named ca-key-ec-named ca-cert-ec-named
+# 1024-bit leaf key
+OPENSSL_KEYBITS=1024 \
+./mkcert.sh genee server.example ee-key-1024 ee-cert-1024 ca-key ca-cert
+# 3072-bit leaf key
+OPENSSL_KEYBITS=3072 \
+./mkcert.sh genee server.example ee-key-3072 ee-cert-3072 ca-key ca-cert
+# 4096-bit leaf key
+OPENSSL_KEYBITS=4096 \
+./mkcert.sh genee server.example ee-key-4096 ee-cert-4096 ca-key ca-cert
+# 8192-bit leaf key
+OPENSSL_KEYBITS=8192 \
+./mkcert.sh genee server.example ee-key-8192 ee-cert-8192 ca-key ca-cert
 
 # self-signed end-entity cert with explicit keyUsage not including KeyCertSign
 openssl req -new -x509 -key ee-key.pem -subj /CN=ee-self-signed -out ee-self-signed.pem -addext keyUsage=digitalSignature -days 36500
