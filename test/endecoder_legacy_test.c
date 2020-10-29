@@ -44,7 +44,9 @@
 #include <openssl/decoder.h>
 #include <openssl/dh.h>
 #include <openssl/dsa.h>
-#include <openssl/rsa.h>
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+# include <openssl/rsa.h>
+#endif
 #include "internal/nelem.h"
 #include "crypto/evp.h"
 
@@ -152,6 +154,7 @@ struct test_stanza_st {
       NULL,                      /* No PEM_read_bio_ECPublicKey */
       NULL,                      /* No PEM_read_bio_ECParameters */
       (PEM_read_bio_of_void *)PEM_read_bio_EC_PUBKEY, },
+#ifndef OPENSSL_NO_DEPRECATED_3_0
     { "RSA", { "RSA", "type-specific" }, EVP_PKEY_RSA,
       (i2d_of_void *)i2d_RSAPrivateKey,
       (i2d_of_void *)i2d_RSAPublicKey,
@@ -169,6 +172,7 @@ struct test_stanza_st {
       (PEM_read_bio_of_void *)PEM_read_bio_RSAPublicKey,
       NULL,                      /* No PEM_read_bio_RSAparams */
       (PEM_read_bio_of_void *)PEM_read_bio_RSA_PUBKEY }
+#endif
 };
 
 /*
@@ -216,7 +220,9 @@ static struct key_st {
 #ifndef OPENSSL_NO_EC
     { "EC", EVP_PKEY_EC, EC_params, NULL },
 #endif
+#ifndef OPENSSL_NO_DEPRECATED_3_0
     { "RSA", EVP_PKEY_RSA, NULL, NULL },
+#endif
 };
 
 static EVP_PKEY *make_key(const char *type,
