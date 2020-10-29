@@ -68,7 +68,9 @@ If there is no certificate (e.g. for PSK ciphersuites), then it it will be
 consistent with the size of the negotiated symmetric cipher key.
 
 Applications may supply their own DH parameters instead of using the built-in
-values. To do so they should call SSL_CTX_set0_tmp_dh_pkey() or
+values. This approach is discouraged and applications should in preference use
+the built-in parameter support described above. Applications wishing to supply
+their own DH parameters should call SSL_CTX_set0_tmp_dh_pkey() or
 SSL_set0_tmp_dh_pkey() to supply the parameters for the B<SSL_CTX> or B<SSL>
 respectively. The parameters should be supplied in the I<dhpkey> argument as
 an B<EVP_PKEY> containg DH parameters. Ownership of the I<dhpkey> value is
