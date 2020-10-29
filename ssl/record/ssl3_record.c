@@ -1615,6 +1615,11 @@ int dtls1_process_record(SSL *s, DTLS1_BITMAP *bitmap)
         mac_size = 0;
     }
 
+    /*
+     * Set a mark around the packet decryption attempt.  This is DTLS, so
+     * bad packets are just ignored, and we don't want to leave stray
+     * errors in the queue from processing bogus junk that we ignored.
+     */
     ERR_set_mark();
     enc_err = s->method->ssl3_enc->enc(s, rr, 1, 0, &macbuf, mac_size);
 
