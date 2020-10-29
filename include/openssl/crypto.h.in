@@ -389,9 +389,11 @@ int OPENSSL_isservice(void);
 
 void OPENSSL_init(void);
 # ifdef OPENSSL_SYS_UNIX
-void OPENSSL_fork_prepare(void);
-void OPENSSL_fork_parent(void);
-void OPENSSL_fork_child(void);
+#  ifndef OPENSSL_NO_DEPRECATED_3_0
+OSSL_DEPRECATEDIN_3_0 void OPENSSL_fork_prepare(void);
+OSSL_DEPRECATEDIN_3_0 void OPENSSL_fork_parent(void);
+OSSL_DEPRECATEDIN_3_0 void OPENSSL_fork_child(void);
+#  endif
 # endif
 
 struct tm *OPENSSL_gmtime(const time_t *timer, struct tm *result);

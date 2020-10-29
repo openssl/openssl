@@ -1246,6 +1246,15 @@ OpenSSL 3.0
 
    *David von Oheimb*
 
+ * Deprecated pthread fork support methods. These were unused so no
+   replacement is required.
+
+   - OPENSSL_fork_prepare()
+   - OPENSSL_fork_parent()
+   - OPENSSL_fork_child()
+
+   *Randall S. Becker*
+
 OpenSSL 1.1.1
 -------------
 
