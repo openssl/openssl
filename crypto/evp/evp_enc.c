@@ -535,6 +535,13 @@ int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
     size_t soutl;
     int blocksize;
 
+    if (outl != NULL) {
+        *outl = 0;
+    } else {
+        EVPerr(EVP_F_EVP_ENCRYPTUPDATE, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
     /* Prevent accidental use of decryption context when encrypting */
     if (!ctx->encrypt) {
         EVPerr(EVP_F_EVP_ENCRYPTUPDATE, EVP_R_INVALID_OPERATION);
@@ -588,6 +595,13 @@ int EVP_EncryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
     unsigned int i, b, bl;
     size_t soutl;
     int blocksize;
+
+    if (outl != NULL) {
+        *outl = 0;
+    } else {
+        EVPerr(EVP_F_EVP_ENCRYPTFINAL_EX, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
 
     /* Prevent accidental use of decryption context when encrypting */
     if (!ctx->encrypt) {
@@ -669,6 +683,13 @@ int EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
     unsigned int b;
     size_t soutl;
     int blocksize;
+
+    if (outl != NULL) {
+        *outl = 0;
+    } else {
+        EVPerr(EVP_F_EVP_DECRYPTUPDATE, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
 
     /* Prevent accidental use of encryption context when decrypting */
     if (ctx->encrypt) {
@@ -783,6 +804,13 @@ int EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
     size_t soutl;
     int ret;
     int blocksize;
+
+    if (outl != NULL) {
+        *outl = 0;
+    } else {
+        EVPerr(EVP_F_EVP_DECRYPTFINAL_EX, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
 
     /* Prevent accidental use of encryption context when decrypting */
     if (ctx->encrypt) {
