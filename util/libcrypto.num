@@ -4195,9 +4195,9 @@ OSSL_STORE_INFO_set0_NAME_description   4284	3_0_0	EXIST::FUNCTION:
 OSSL_STORE_INFO_get1_NAME_description   4285	3_0_0	EXIST::FUNCTION:
 OSSL_STORE_do_all_loaders               4286	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 OSSL_STORE_LOADER_get0_engine           4287	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
-OPENSSL_fork_prepare                    4288	3_0_0	EXIST:UNIX:FUNCTION:
-OPENSSL_fork_parent                     4289	3_0_0	EXIST:UNIX:FUNCTION:
-OPENSSL_fork_child                      4290	3_0_0	EXIST:UNIX:FUNCTION:
+OPENSSL_fork_prepare                    4288	3_0_0	EXIST:UNIX:FUNCTION:DEPRECATEDIN_3_0
+OPENSSL_fork_parent                     4289	3_0_0	EXIST:UNIX:FUNCTION:DEPRECATEDIN_3_0
+OPENSSL_fork_child                      4290	3_0_0	EXIST:UNIX:FUNCTION:DEPRECATEDIN_3_0
 EVP_sha3_224                            4304	3_0_0	EXIST::FUNCTION:
 EVP_sha3_256                            4305	3_0_0	EXIST::FUNCTION:
 EVP_sha3_384                            4306	3_0_0	EXIST::FUNCTION:

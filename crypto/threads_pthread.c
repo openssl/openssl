@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+/* We need to use the OPENSSL_fork_*() deprecated APIs */
+#define OPENSSL_SUPPRESS_DEPRECATED
+
 #include <openssl/crypto.h>
 #include "internal/cryptlib.h"
 
@@ -196,12 +199,30 @@ int CRYPTO_atomic_add(int *val, int amount, int *ret, CRYPTO_RWLOCK *lock)
 
 # ifndef FIPS_MODULE
 #  ifdef OPENSSL_SYS_UNIX
+
+#   ifndef OPENSSL_NO_DEPRECATED_3_0
+
+void OPENSSL_fork_prepare(void)
+{
+}
+
+void OPENSSL_fork_parent(void)
+{
+}
+
+void OPENSSL_fork_child(void)
+{
+}
+
+#   endif
 static pthread_once_t fork_once_control = PTHREAD_ONCE_INIT;
 
 static void fork_once_func(void)
 {
+#   ifndef OPENSSL_NO_DEPRECATED_3_0
     pthread_atfork(OPENSSL_fork_prepare,
                    OPENSSL_fork_parent, OPENSSL_fork_child);
+#   endif
 }
 #  endif
 
