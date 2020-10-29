@@ -25,6 +25,7 @@
 /* TODO(3.0) Figure out what flags need to be passed */
 #define WRAP_FLAGS (EVP_CIPH_WRAP_MODE | EVP_CIPH_CUSTOM_IV \
                     | EVP_CIPH_ALWAYS_CALL_INIT)
+#define WRAP_FLAGS_INV (WRAP_FLAGS | EVP_CIPH_FLAG_INVERSE_CIPHER)
 
 typedef size_t (*aeswrap_fn)(void *key, const unsigned char *iv,
                              unsigned char *out, const unsigned char *in,
@@ -85,7 +86,6 @@ static int aes_wrap_init(void *vctx, const unsigned char *key,
         return 0;
 
     ctx->enc = enc;
-    ctx->block = enc ? (block128_f)AES_encrypt : (block128_f)AES_decrypt;
     if (ctx->pad)
         wctx->wrapfn = enc ? CRYPTO_128_wrap_pad : CRYPTO_128_unwrap_pad;
     else
@@ -96,14 +96,32 @@ static int aes_wrap_init(void *vctx, const unsigned char *key,
             return 0;
     }
     if (key != NULL) {
+        int use_forward_transform;
+
         if (keylen != ctx->keylen) {
            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
            return 0;
         }
-        if (ctx->enc)
-            AES_set_encrypt_key(key, keylen * 8, &wctx->ks.ks);
+        /*
+         * See SP800-38F : Section 5.1
+         * The forward and inverse transformations for the AES block
+         * cipher—called “cipher” and “inverse  cipher” are informally known as
+         * the AES encryption and AES decryption functions, respectively.
+         * If the designated cipher function for a key-wrap algorithm is chosen
+         * to be the AES decryption function, then CIPH-1K will be the AES
+         * encryption function.
+         */
+        if ((ctx->flags & EVP_CIPH_FLAG_INVERSE_CIPHER) == 0)
+            use_forward_transform = ctx->enc;
         else
+            use_forward_transform = !ctx->enc;
+        if (use_forward_transform) {
+            AES_set_encrypt_key(key, keylen * 8, &wctx->ks.ks);
+            ctx->block = (block128_f)AES_encrypt;
+        } else {
             AES_set_decrypt_key(key, keylen * 8, &wctx->ks.ks);
+            ctx->block = (block128_f)AES_decrypt;
+        }
     }
     return 1;
 }
@@ -266,3 +284,10 @@ IMPLEMENT_cipher(wrap, wrap, WRAP, WRAP_FLAGS, 128, 64, AES_WRAP_NOPAD_IVLEN * 8
 IMPLEMENT_cipher(wrap, wrappad, WRAP, WRAP_FLAGS, 256, 64, AES_WRAP_PAD_IVLEN * 8);
 IMPLEMENT_cipher(wrap, wrappad, WRAP, WRAP_FLAGS, 192, 64, AES_WRAP_PAD_IVLEN * 8);
 IMPLEMENT_cipher(wrap, wrappad, WRAP, WRAP_FLAGS, 128, 64, AES_WRAP_PAD_IVLEN * 8);
+
+IMPLEMENT_cipher(wrap, wrapinv, WRAP, WRAP_FLAGS_INV, 256, 64, AES_WRAP_NOPAD_IVLEN * 8);
+IMPLEMENT_cipher(wrap, wrapinv, WRAP, WRAP_FLAGS_INV, 192, 64, AES_WRAP_NOPAD_IVLEN * 8);
+IMPLEMENT_cipher(wrap, wrapinv, WRAP, WRAP_FLAGS_INV, 128, 64, AES_WRAP_NOPAD_IVLEN * 8);
+IMPLEMENT_cipher(wrap, wrappadinv, WRAP, WRAP_FLAGS_INV, 256, 64, AES_WRAP_PAD_IVLEN * 8);
+IMPLEMENT_cipher(wrap, wrappadinv, WRAP, WRAP_FLAGS_INV, 192, 64, AES_WRAP_PAD_IVLEN * 8);
+IMPLEMENT_cipher(wrap, wrappadinv, WRAP, WRAP_FLAGS_INV, 128, 64, AES_WRAP_PAD_IVLEN * 8);
