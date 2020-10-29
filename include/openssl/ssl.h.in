@@ -2140,15 +2140,17 @@ void SSL_CTX_set_default_read_buffer_len(SSL_CTX *ctx, size_t len);
 void SSL_set_default_read_buffer_len(SSL *s, size_t len);
 
 # ifndef OPENSSL_NO_DH
+#  ifndef OPENSSL_NO_DEPRECATED_3_0
 /* NB: the |keylength| is only applicable when is_export is true */
-DEPRECATEDIN_3_0(
-        void SSL_CTX_set_tmp_dh_callback(SSL_CTX *ctx,
-                                         DH *(*dh) (SSL *ssl, int is_export,
-                                                    int keylength)))
-DEPRECATEDIN_3_0(void SSL_set_tmp_dh_callback(SSL *ssl,
-                                              DH *(*dh) (SSL *ssl,
-                                                         int is_export,
-                                                         int keylength)))
+OSSL_DEPRECATEDIN_3_0
+void SSL_CTX_set_tmp_dh_callback(SSL_CTX *ctx,
+                                 DH *(*dh) (SSL *ssl, int is_export,
+                                            int keylength));
+OSSL_DEPRECATEDIN_3_0
+void SSL_set_tmp_dh_callback(SSL *ssl,
+                             DH *(*dh) (SSL *ssl, int is_export,
+                                        int keylength));
+#  endif
 # endif
 
 __owur const COMP_METHOD *SSL_get_current_compression(const SSL *s);
