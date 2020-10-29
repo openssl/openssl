@@ -35,6 +35,7 @@
 /include/openssl/err.h
 /include/openssl/ess.h
 /include/openssl/fipskey.h
+/include/openssl/lhash.h
 /include/openssl/ocsp.h
 /include/openssl/opensslv.h
 /include/openssl/pkcs12.h
