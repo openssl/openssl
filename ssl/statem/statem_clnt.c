@@ -3075,7 +3075,7 @@ static int tls_construct_cke_dhe(SSL *s, WPACKET *pkt)
     /* send off the data */
 
     /* Generate encoding of server key */
-    encoded_pub_len = EVP_PKEY_get1_tls_encodedpoint(ckey, &encoded_pub);
+    encoded_pub_len = EVP_PKEY_get1_encoded_public_key(ckey, &encoded_pub);
     if (encoded_pub_len == 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, 0, ERR_R_INTERNAL_ERROR);
         EVP_PKEY_free(skey);
