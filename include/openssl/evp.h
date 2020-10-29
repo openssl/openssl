@@ -320,6 +320,7 @@ DEPRECATEDIN_3_0(int (*EVP_CIPHER_meth_get_ctrl(const EVP_CIPHER *cipher))
 # define         EVP_CIPH_FLAG_CIPHER_WITH_MAC   0x2000000
 /* For supplementary wrap cipher support */
 # define         EVP_CIPH_FLAG_GET_WRAP_CIPHER   0x4000000
+# define         EVP_CIPH_FLAG_INVERSE_CIPHER    0x8000000
 
 /*
  * Cipher context flag to indicate we can handle wrap mode: if allowed in

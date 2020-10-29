@@ -23,6 +23,15 @@ OpenSSL 3.0
 
 ### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
 
+ * Add support for AES Key Wrap inverse ciphers to the EVP layer.
+   The algorithms are:
+   "AES-128-WRAP-INV", "AES-192-WRAP-INV", "AES-256-WRAP-INV",
+   "AES-128-WRAP-PAD-INV", "AES-192-WRAP-PAD-INV" and "AES-256-WRAP-PAD-INV".
+   The inverse ciphers use AES decryption for wrapping, and
+   AES encryption for unwrapping.
+
+   *Shane Lontis*
+
  * Deprecated EVP_PKEY_set1_tls_encodedpoint() and
    EVP_PKEY_get1_tls_encodedpoint(). These functions were previously used by
    libssl to set or get an encoded public key in/from an EVP_PKEY object. With
