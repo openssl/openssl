@@ -389,6 +389,8 @@ static int init_thread_deregister(void *index, int all)
         return 0;
     if (!all)
         CRYPTO_THREAD_write_lock(gtr->lock);
+    else
+        glob_tevent_reg = NULL;
     for (i = 0; i < sk_THREAD_EVENT_HANDLER_PTR_num(gtr->skhands); i++) {
         THREAD_EVENT_HANDLER **hands
             = sk_THREAD_EVENT_HANDLER_PTR_value(gtr->skhands, i);
