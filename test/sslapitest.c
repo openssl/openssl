@@ -75,6 +75,14 @@ static char *cert = NULL;
 static char *privkey = NULL;
 static char *cert2 = NULL;
 static char *privkey2 = NULL;
+static char *cert1024 = NULL;
+static char *privkey1024 = NULL;
+static char *cert3072 = NULL;
+static char *privkey3072 = NULL;
+static char *cert4096 = NULL;
+static char *privkey4096 = NULL;
+static char *cert8192 = NULL;
+static char *privkey8192 = NULL;
 static char *srpvfile = NULL;
 static char *tmpfilename = NULL;
 
@@ -8238,6 +8246,114 @@ static int test_set_tmp_dh(int idx)
 
     return testresult;
 }
+
+/*
+ * Test the auto DH keys are appropriately sized
+ */
+static int test_dh_auto(int idx)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0;
+    EVP_PKEY *tmpkey = NULL;
+    char *thiscert = NULL, *thiskey = NULL;
+    size_t expdhsize = 0;
+    const char *ciphersuite = "DHE-RSA-AES128-SHA";
+
+    switch (idx) {
+    case 0:
+        /* The FIPS provider doesn't support this DH size - so we ignore it */
+        if (is_fips)
+            return 1;
+        thiscert = cert1024;
+        thiskey = privkey1024;
+        expdhsize = 1024;
+        break;
+    case 1:
+        /* 2048 bit prime */
+        thiscert = cert;
+        thiskey = privkey;
+        expdhsize = 2048;
+        break;
+    case 2:
+        thiscert = cert3072;
+        thiskey = privkey3072;
+        expdhsize = 3072;
+        break;
+    case 3:
+        thiscert = cert4096;
+        thiskey = privkey4096;
+        expdhsize = 4096;
+        break;
+    case 4:
+        thiscert = cert8192;
+        thiskey = privkey8192;
+        expdhsize = 8192;
+        break;
+    /* No certificate cases */
+    case 5:
+        /* The FIPS provider doesn't support this DH size - so we ignore it */
+        if (is_fips)
+            return 1;
+        ciphersuite = "ADH-AES128-SHA256:@SECLEVEL=0";
+        expdhsize = 1024;
+        break;
+    case 6:
+        ciphersuite = "ADH-AES256-SHA256:@SECLEVEL=0";
+        expdhsize = 3072;
+        break;
+    default:
+        TEST_error("Invalid text index");
+        goto end;
+    }
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+                                       TLS_client_method(),
+                                       0,
+                                       0,
+                                       &sctx, &cctx, thiscert, thiskey)))
+        goto end;
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+                                      NULL, NULL)))
+        goto end;
+
+    if (!TEST_true(SSL_set_dh_auto(serverssl, 1))
+            || !TEST_true(SSL_set_min_proto_version(serverssl, TLS1_2_VERSION))
+            || !TEST_true(SSL_set_max_proto_version(serverssl, TLS1_2_VERSION))
+            || !TEST_true(SSL_set_cipher_list(serverssl, ciphersuite))
+            || !TEST_true(SSL_set_cipher_list(clientssl, ciphersuite)))
+        goto end;
+
+    /*
+     * Send the server's first flight. At this point the server has created the
+     * temporary DH key but hasn't finished using it yet. Once used it is
+     * removed, so we cannot test it.
+     */
+    if (!TEST_int_le(SSL_connect(clientssl), 0)
+            || !TEST_int_le(SSL_accept(serverssl), 0))
+        goto end;
+
+    if (!TEST_int_gt(SSL_get_tmp_key(serverssl, &tmpkey), 0))
+        goto end;
+    if (!TEST_size_t_eq(EVP_PKEY_bits(tmpkey), expdhsize))
+        goto end;
+
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
+        goto end;
+
+    testresult = 1;
+
+ end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    EVP_PKEY_free(tmpkey);
+
+    return testresult;
+
+}
 # endif /* OPENSSL_NO_DH */
 #endif /* OPENSSL_NO_TLS1_2 */
 
@@ -8328,6 +8444,38 @@ int setup_tests(void)
 
     privkey2 = test_mk_file_path(certsdir, "server-ecdsa-key.pem");
     if (privkey2 == NULL)
+        goto err;
+
+    cert1024 = test_mk_file_path(certsdir, "ee-cert-1024.pem");
+    if (cert1024 == NULL)
+        goto err;
+
+    privkey1024 = test_mk_file_path(certsdir, "ee-key-1024.pem");
+    if (privkey1024 == NULL)
+        goto err;
+
+    cert3072 = test_mk_file_path(certsdir, "ee-cert-3072.pem");
+    if (cert3072 == NULL)
+        goto err;
+
+    privkey3072 = test_mk_file_path(certsdir, "ee-key-3072.pem");
+    if (privkey3072 == NULL)
+        goto err;
+
+    cert4096 = test_mk_file_path(certsdir, "ee-cert-4096.pem");
+    if (cert4096 == NULL)
+        goto err;
+
+    privkey4096 = test_mk_file_path(certsdir, "ee-key-4096.pem");
+    if (privkey4096 == NULL)
+        goto err;
+
+    cert8192 = test_mk_file_path(certsdir, "ee-cert-8192.pem");
+    if (cert8192 == NULL)
+        goto err;
+
+    privkey8192 = test_mk_file_path(certsdir, "ee-key-8192.pem");
+    if (privkey8192 == NULL)
         goto err;
 
 #if !defined(OPENSSL_NO_KTLS) && !defined(OPENSSL_NO_SOCK)
@@ -8448,6 +8596,7 @@ int setup_tests(void)
     ADD_TEST(test_ssl_dup);
 # ifndef OPENSSL_NO_DH
     ADD_ALL_TESTS(test_set_tmp_dh, 11);
+    ADD_ALL_TESTS(test_dh_auto, 7);
 # endif
 #endif
     return 1;
@@ -8469,6 +8618,14 @@ void cleanup_tests(void)
     OPENSSL_free(privkey);
     OPENSSL_free(cert2);
     OPENSSL_free(privkey2);
+    OPENSSL_free(cert1024);
+    OPENSSL_free(privkey1024);
+    OPENSSL_free(cert3072);
+    OPENSSL_free(privkey3072);
+    OPENSSL_free(cert4096);
+    OPENSSL_free(privkey4096);
+    OPENSSL_free(cert8192);
+    OPENSSL_free(privkey8192);
     bio_s_mempacket_test_free();
     bio_s_always_retry_free();
     OSSL_PROVIDER_unload(defctxnull);
