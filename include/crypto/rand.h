@@ -19,6 +19,7 @@
 # define OSSL_CRYPTO_RAND_H
 
 # include <openssl/rand.h>
+# include "crypto/rand_pool.h"
 
 /*
  * Defines related to seed sources
@@ -92,5 +93,25 @@ void rand_pool_keep_random_devices_open(int keep);
  * Configuration
  */
 void ossl_random_add_conf_module(void);
+
+/*
+ * Get and cleanup random seed material.
+ */
+size_t ossl_rand_get_entropy(ossl_unused OSSL_CORE_HANDLE *handle,
+                             unsigned char **pout, int entropy,
+                             size_t min_len, size_t max_len);
+void ossl_rand_cleanup_entropy(ossl_unused OSSL_CORE_HANDLE *handle,
+                               unsigned char *buf, size_t len);
+size_t ossl_rand_get_nonce(ossl_unused OSSL_CORE_HANDLE *handle,
+                           unsigned char **pout, size_t min_len, size_t max_len,
+                           const void *salt, size_t salt_len);
+void ossl_rand_cleanup_nonce(ossl_unused OSSL_CORE_HANDLE *handle,
+                             unsigned char *buf, size_t len);
+
+/*
+ * Get seeding material from the operating system sources.
+ */
+size_t ossl_pool_acquire_entropy(RAND_POOL *pool);
+int ossl_pool_add_nonce_data(RAND_POOL *pool);
 
 #endif

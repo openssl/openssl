@@ -186,8 +186,6 @@ static const ERR_STRING_DATA PROV_str_reasons[] = {
     "unable to get parent reseed prop counter"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_UNABLE_TO_GET_PARENT_STRENGTH),
     "unable to get parent strength"},
-    {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_UNABLE_TO_GET_RESEED_PROP_CTR),
-    "unable to get reseed prop ctr"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_UNABLE_TO_INITIALISE_CIPHERS),
     "unable to initialise ciphers"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_UNABLE_TO_LOAD_SHA1),

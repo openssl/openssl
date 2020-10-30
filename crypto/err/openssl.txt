@@ -2944,6 +2944,8 @@ PROV_R_NO_PARAMETERS_SET:177:no parameters set
 PROV_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE:178:\
 	operation not supported for this keytype
 PROV_R_OUTPUT_BUFFER_TOO_SMALL:106:output buffer too small
+PROV_R_PARENT_CANNOT_GENERATE_RANDOM_NUMBERS:228:\
+        parent cannot generate random numbers
 PROV_R_PARENT_LOCKING_NOT_ENABLED:182:parent locking not enabled
 PROV_R_PARENT_STRENGTH_TOO_WEAK:194:parent strength too weak
 PROV_R_PATH_MUST_BE_ABSOLUTE:219:path must be absolute
@@ -2965,7 +2967,6 @@ PROV_R_UNABLE_TO_GET_NONCE:203:unable to get nonce
 PROV_R_UNABLE_TO_GET_PARENT_RESEED_PROP_COUNTER:198:\
 	unable to get parent reseed prop counter
 PROV_R_UNABLE_TO_GET_PARENT_STRENGTH:199:unable to get parent strength
-PROV_R_UNABLE_TO_GET_RESEED_PROP_CTR:200:unable to get reseed prop ctr
 PROV_R_UNABLE_TO_INITIALISE_CIPHERS:208:unable to initialise ciphers
 PROV_R_UNABLE_TO_LOAD_SHA1:143:unable to load sha1
 PROV_R_UNABLE_TO_LOAD_SHA256:147:unable to load sha256
@@ -3027,7 +3028,7 @@ RAND_R_UNABLE_TO_FETCH_DRBG:144:unable to fetch drbg
 RAND_R_UNABLE_TO_GET_PARENT_RESEED_PROP_COUNTER:141:\
 	unable to get parent reseed prop counter
 RAND_R_UNABLE_TO_GET_PARENT_STRENGTH:138:unable to get parent strength
-RAND_R_UNABLE_TO_GET_RESEED_PROP_CTR:142:unable to get reseed prop ctr
+RAND_R_UNABLE_TO_GET_RESEED_COUNTER :142:unable to get reseed counter
 RAND_R_UNABLE_TO_LOCK_PARENT:140:unable to lock parent
 RAND_R_UNSUPPORTED_DRBG_FLAGS:132:unsupported drbg flags
 RAND_R_UNSUPPORTED_DRBG_TYPE:120:unsupported drbg type

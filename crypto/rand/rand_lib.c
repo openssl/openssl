@@ -27,7 +27,7 @@
 #include "e_os.h"
 
 #ifndef FIPS_MODULE
-# include "prov/rand_pool.h"
+# include "crypto/rand_pool.h"
 # include "prov/seeding.h"
 
 # ifndef OPENSSL_NO_ENGINE
