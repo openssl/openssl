@@ -65,6 +65,16 @@ provider-base
 
  void self_test_cb(OPENSSL_CORE_CTX *ctx, OSSL_CALLBACK **cb, void **cbarg)
 
+ size_t get_entropy(const OSSL_CORE_HANDLE *handle,
+                    unsigned char **pout, int entropy,
+                    size_t min_len, size_t max_len)
+ void cleanup_entropy(const OSSL_CORE_HANDLE *handle,
+                      unsigned char *buf, size_t len)
+ size_t get_nonce(const OSSL_CORE_HANDLE *handle,
+                  unsigned char **pout, size_t min_len, size_t max_len,
+                  const void *salt, size_t salt_len)
+ void cleanup_nonce(const OSSL_CORE_HANDLE *handle,
+                    unsigned char *buf, size_t len)
 
  /* Functions offered by the provider to libcrypto */
  void provider_teardown(void *provctx);
@@ -129,6 +139,10 @@ provider):
  BIO_vprintf                    OSSL_FUNC_BIO_VPRINTF
  OPENSSL_cleanse                OSSL_FUNC_OPENSSL_CLEANSE
  OSSL_SELF_TEST_set_callback    OSSL_FUNC_SELF_TEST_CB
+ ossl_rand_get_entropy          OSSL_FUNC_GET_ENTROPY
+ ossl_rand_cleanup_entropy      OSSL_FUNC_CLEANUP_ENTROPY
+ ossl_rand_get_nonce            OSSL_FUNC_GET_NONCE
+ ossl_rand_cleanup_nonce        OSSL_FUNC_CLEANUP_NONCE
 
 For I<*out> (the B<OSSL_DISPATCH> array passed from the provider to
 F<libcrypto>):
@@ -209,6 +223,28 @@ that a provider does not mix BIOs from the core with BIOs used on the provider
 side (the two are not compatible).
 OSSL_SELF_TEST_set_callback() is used to set an optional callback that can be
 passed into a provider. This may be ignored by a provider.
+
+get_entropy() retrieves seeding material from the operating system.
+The seeding material will have at least I<entropy> bytes of randomness and the
+output will have at least I<min_len> and at most I<max_len> bytes.
+The buffer address is stored in I<*pout> and the buffer length is
+returned to the caller.  On error, zero is returned.
+
+cleanup_entropy() is used to clean up and free the buffer returned by
+get_entropy().  The entropy pointer returned by get_entropy() is passed in
+B<buf> and its length in B<len>.
+
+get_nonce() retrieves a nonce using the passed I<salt> parameter
+of length I<salt_len> and operating system specific information.
+The I<salt> should contain uniquely identifying information and this is
+included, in an unspecified manner, as part of the output.
+The output is stored in a buffer which contrains at least I<min_len> and at
+most I<max_len> bytes.  The buffer address is stored in I<*pout> and the
+buffer length returned to the caller.  On error, zero is returned.
+
+cleanup_nonce() is used to clean up and free the buffer returned by
+get_nonce().  The nonce pointer returned by get_nonce() is passed in
+B<buf> and its length in B<len>.
 
 =head2 Provider functions
 
