@@ -19,6 +19,7 @@
 #include "prov/providercommon.h"
 #include "prov/implementations.h"
 #include "prov/provider_util.h"
+#include "prov/seeding.h"
 #include "internal/nelem.h"
 
 /*
@@ -527,7 +528,8 @@ int ossl_default_provider_init(const OSSL_CORE_HANDLE *handle,
     OSSL_FUNC_core_get_libctx_fn *c_get_libctx = NULL;
     BIO_METHOD *corebiometh;
 
-    if (!ossl_prov_bio_from_dispatch(in))
+    if (!ossl_prov_bio_from_dispatch(in)
+            || !ossl_prov_seeding_from_dispatch(in))
         return 0;
     for (; in->function_id != 0; in++) {
         switch (in->function_id) {

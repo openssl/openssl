@@ -247,7 +247,7 @@ static int test_rng_set_ctx_params(void *vdrbg, const OSSL_PARAM params[])
     if (p != NULL && !OSSL_PARAM_get_time_t(p, &drbg->reseed_time))
         return 0;
 
-    if (!set_size_t(params, OSSL_DRBG_PARAM_MAX_REQUEST, &drbg->max_request)
+    if (!set_size_t(params, OSSL_RAND_PARAM_MAX_REQUEST, &drbg->max_request)
             || !set_size_t(params, OSSL_DRBG_PARAM_MIN_ENTROPYLEN,
                            &drbg->min_entropylen)
             || !set_size_t(params, OSSL_DRBG_PARAM_MAX_ENTROPYLEN,
@@ -270,7 +270,7 @@ static const OSSL_PARAM *test_rng_settable_ctx_params(ossl_unused void *provctx)
         OSSL_PARAM_octet_string(OSSL_RAND_PARAM_TEST_ENTROPY, NULL, 0),
         OSSL_PARAM_octet_string(OSSL_RAND_PARAM_TEST_NONCE, NULL, 0),
         OSSL_PARAM_uint(OSSL_RAND_PARAM_STRENGTH, NULL),
-        OSSL_PARAM_size_t(OSSL_DRBG_PARAM_MAX_REQUEST, NULL),
+        OSSL_PARAM_size_t(OSSL_RAND_PARAM_MAX_REQUEST, NULL),
         OSSL_PARAM_size_t(OSSL_DRBG_PARAM_MIN_ENTROPYLEN, NULL),
         OSSL_PARAM_size_t(OSSL_DRBG_PARAM_MAX_ENTROPYLEN, NULL),
         OSSL_PARAM_size_t(OSSL_DRBG_PARAM_MIN_NONCELEN, NULL),

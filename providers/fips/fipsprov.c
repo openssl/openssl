@@ -18,6 +18,7 @@
 #include "prov/providercommon.h"
 #include "prov/providercommonerr.h"
 #include "prov/provider_util.h"
+#include "prov/seeding.h"
 #include "self_test.h"
 
 static const char FIPS_DEFAULT_PROPERTIES[] = "provider=fips,fips=yes";
@@ -495,6 +496,8 @@ int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
     FIPS_GLOBAL *fgbl;
     OSSL_LIB_CTX *libctx = NULL;
 
+    if (!ossl_prov_seeding_from_dispatch(in))
+        return 0;
     for (; in->function_id != 0; in++) {
         switch (in->function_id) {
         case OSSL_FUNC_CORE_GET_LIBCTX:
@@ -575,10 +578,9 @@ int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
         case OSSL_FUNC_BIO_VSNPRINTF:
             c_BIO_vsnprintf = OSSL_FUNC_BIO_vsnprintf(in);
             break;
-        case OSSL_FUNC_SELF_TEST_CB: {
+        case OSSL_FUNC_SELF_TEST_CB:
             c_stcbfn = OSSL_FUNC_self_test_cb(in);
             break;
-        }
         default:
             /* Just ignore anything we don't understand */
             break;
