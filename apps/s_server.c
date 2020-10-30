@@ -3006,22 +3006,12 @@ static void print_connection_info(SSL *con)
 
 static EVP_PKEY *load_dh_param(const char *dhfile)
 {
-    EVP_PKEY *dhpkey = NULL;
-    BIO *bio;
-    OSSL_DECODER_CTX *decoderctx = NULL;
+    EVP_PKEY *dhpkey = load_keyparams(dhfile, 0, "DH parameters");
 
-    if ((bio = BIO_new_file(dhfile, "r")) == NULL)
-        goto err;
-
-    decoderctx
-        = OSSL_DECODER_CTX_new_by_EVP_PKEY(&dhpkey, "PEM", "DH",
-                                           NULL, NULL);
-    if (decoderctx != NULL)
-        OSSL_DECODER_from_bio(decoderctx, bio);
-
-err:
-    OSSL_DECODER_CTX_free(decoderctx);
-    BIO_free(bio);
+    if (dhpkey != NULL && !EVP_PKEY_is_a(dhpkey, "DH")) {
+        EVP_PKEY_free(dhpkey);
+        dhpkey = NULL;
+    }
     return dhpkey;
 }
 
