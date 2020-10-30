@@ -47,7 +47,6 @@ OSSL_ENCODER_CTX_set_cleanup
  int OSSL_ENCODER_CTX_add_encoder(OSSL_ENCODER_CTX *ctx, OSSL_ENCODER *encoder);
  int OSSL_ENCODER_CTX_add_extra(OSSL_ENCODER_CTX *ctx,
                                 OSSL_LIB_CTX *libctx, const char *propq);
- int OSSL_ENCODER_CTX_prune_encoders(OSSL_ENCODER_CTX *ctx);
  int OSSL_ENCODER_CTX_get_num_encoders(OSSL_ENCODER_CTX *ctx);
 
  typedef struct ossl_encoder_instance_st OSSL_ENCODER_INSTANCE;
@@ -113,12 +112,6 @@ I<ctx> with a encoder, to be used to encode an input object.
 OSSL_ENCODER_CTX_add_extra() finds encoders that further encodes output
 from already added encoders, and adds them as well.  This is used to build
 encoder chains.
-
-OSSL_ENCODER_CTX_prune_encoders() goes through all the encoders that were
-added with OSSL_ENCODER_CTX_add_encoder() and OSSL_ENCODER_CTX_add_extra(),
-and removes those that don't match the criteria given with
-OSSL_ENCODER_CTX_set_selection(), OSSL_ENCODER_CTX_set_output_type() and
-OSSL_ENCODER_CTX_set_output_structure().
 
 OSSL_ENCODER_CTX_set_output_type() sets the ending output type.  This must
 be specified, and determines if a complete encoder chain is available.
