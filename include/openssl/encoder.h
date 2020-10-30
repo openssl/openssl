@@ -75,7 +75,6 @@ int OSSL_ENCODER_CTX_set_output_structure(OSSL_ENCODER_CTX *ctx,
 int OSSL_ENCODER_CTX_add_encoder(OSSL_ENCODER_CTX *ctx, OSSL_ENCODER *encoder);
 int OSSL_ENCODER_CTX_add_extra(OSSL_ENCODER_CTX *ctx,
                                OSSL_LIB_CTX *libctx, const char *propq);
-int OSSL_ENCODER_CTX_prune_encoders(OSSL_ENCODER_CTX *ctx);
 int OSSL_ENCODER_CTX_get_num_encoders(OSSL_ENCODER_CTX *ctx);
 
 typedef struct ossl_encoder_instance_st OSSL_ENCODER_INSTANCE;
