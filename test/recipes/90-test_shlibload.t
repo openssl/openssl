@@ -23,6 +23,7 @@ plan skip_all => "Test only supported in a shared build" if disabled("shared");
 plan skip_all => "Test is disabled on AIX" if config('target') =~ m|^aix|;
 plan skip_all => "Test is disabled on NonStop" if config('target') =~ m|^nonstop|;
 plan skip_all => "Test only supported in a dso build" if disabled("dso");
+plan skip_all => "Test is disabled in an address sanitizer build" unless disabled("asan");
 
 plan tests => 10;
 
