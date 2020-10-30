@@ -27,33 +27,31 @@ static int i2d_provided(const EVP_PKEY *a, int selection,
                         unsigned char **pp)
 {
     OSSL_ENCODER_CTX *ctx = NULL;
-    int ret = -1;
-    /*
-     * The i2d_ calls don't take a boundary length for *pp.  However,
-     * OSSL_ENCODER_CTX_get_num_encoders() needs one, so we make one
-     * up.
-     */
-    size_t len = INT_MAX;
+    int ret;
 
-    for (; *output_structures != NULL; output_structures++) {
+    for (ret = -1;
+         ret == -1 && *output_structures != NULL;
+         output_structures++) {
+        /*
+         * The i2d_ calls don't take a boundary length for *pp.  However,
+         * OSSL_ENCODER_CTX_get_num_encoders() needs one, so we make one
+         * up.
+         */
+        size_t len = INT_MAX;
+
         ctx = OSSL_ENCODER_CTX_new_by_EVP_PKEY(a, selection, "DER",
                                                *output_structures,
                                                NULL, NULL);
         if (ctx == NULL)
             return -1;
-        if (OSSL_ENCODER_CTX_get_num_encoders(ctx) != 0)
-            break;
+        if (OSSL_ENCODER_to_data(ctx, pp, &len))
+            ret = (int)len;
         OSSL_ENCODER_CTX_free(ctx);
         ctx = NULL;
     }
 
-    if (ctx == NULL) {
+    if (ret == -1)
         ERR_raise(ERR_LIB_ASN1, ASN1_R_UNSUPPORTED_TYPE);
-        return -1;
-    }
-    if (OSSL_ENCODER_to_data(ctx, pp, &len))
-        ret = (int)len;
-    OSSL_ENCODER_CTX_free(ctx);
     return ret;
 }
 
