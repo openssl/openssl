@@ -10,7 +10,7 @@
 #include <openssl/opensslconf.h>
 
 #include <openssl/rand.h>
-#include "prov/rand_pool.h"
+#include "crypto/rand_pool.h"
 #include "crypto/rand.h"
 #include "internal/cryptlib.h"
 #include "prov/seeding.h"

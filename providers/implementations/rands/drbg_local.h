@@ -17,6 +17,7 @@
 # include "internal/tsan_assist.h"
 # include "internal/nelem.h"
 # include "internal/numbers.h"
+# include "prov/provider_ctx.h"
 
 /* How many times to read the TSC as a randomness source. */
 # define TSC_READ_COUNT                 4
@@ -71,7 +72,7 @@ typedef enum drbg_status_e {
  */
 struct prov_drbg_st {
     CRYPTO_RWLOCK *lock;
-    void *provctx;
+    PROV_CTX *provctx;
 
     /* Virtual functions are cache here */
     int (*instantiate)(PROV_DRBG *drbg,
@@ -103,21 +104,6 @@ struct prov_drbg_st {
      */
     int fork_id;
     unsigned short flags; /* various external flags */
-
-    /*
-     * The random_data is used by PROV_add()/drbg_add() to attach random
-     * data to the global drbg, such that the rand_drbg_get_entropy() callback
-     * can pull it during instantiation and reseeding. This is necessary to
-     * reconcile the different philosophies of the PROV and the PROV_DRBG
-     * with respect to how randomness is added to the RNG during reseeding
-     * (see PR #4328).
-     */
-    struct rand_pool_st *seed_pool;
-
-    /*
-     * Auxiliary pool for additional data.
-     */
-    struct rand_pool_st *adin_pool;
 
     /*
      * The following parameters are setup by the per-type "init" function.
@@ -242,17 +228,17 @@ int ossl_drbg_set_ctx_params(PROV_DRBG *drbg, const OSSL_PARAM params[]);
     OSSL_PARAM_uint(OSSL_DRBG_PARAM_RESEED_REQUESTS, NULL),             \
     OSSL_PARAM_uint64(OSSL_DRBG_PARAM_RESEED_TIME_INTERVAL, NULL)
 
-#define OSSL_PARAM_DRBG_GETTABLE_CTX_COMMON                              \
+#define OSSL_PARAM_DRBG_GETTABLE_CTX_COMMON                             \
     OSSL_PARAM_int(OSSL_RAND_PARAM_STATE, NULL),                        \
     OSSL_PARAM_uint(OSSL_RAND_PARAM_STRENGTH, NULL),                    \
-    OSSL_PARAM_size_t(OSSL_DRBG_PARAM_MAX_REQUEST, NULL),               \
+    OSSL_PARAM_size_t(OSSL_RAND_PARAM_MAX_REQUEST, NULL),               \
     OSSL_PARAM_size_t(OSSL_DRBG_PARAM_MIN_ENTROPYLEN, NULL),            \
     OSSL_PARAM_size_t(OSSL_DRBG_PARAM_MAX_ENTROPYLEN, NULL),            \
     OSSL_PARAM_size_t(OSSL_DRBG_PARAM_MIN_NONCELEN, NULL),              \
     OSSL_PARAM_size_t(OSSL_DRBG_PARAM_MAX_NONCELEN, NULL),              \
     OSSL_PARAM_size_t(OSSL_DRBG_PARAM_MAX_PERSLEN, NULL),               \
     OSSL_PARAM_size_t(OSSL_DRBG_PARAM_MAX_ADINLEN, NULL),               \
-    OSSL_PARAM_uint(OSSL_DRBG_PARAM_RESEED_COUNTER, NULL),                  \
+    OSSL_PARAM_uint(OSSL_DRBG_PARAM_RESEED_COUNTER, NULL),              \
     OSSL_PARAM_time_t(OSSL_DRBG_PARAM_RESEED_TIME, NULL),               \
     OSSL_PARAM_uint(OSSL_DRBG_PARAM_RESEED_REQUESTS, NULL),             \
     OSSL_PARAM_uint64(OSSL_DRBG_PARAM_RESEED_TIME_INTERVAL, NULL)
