@@ -8056,46 +8056,55 @@ static int test_ssl_dup(void)
 }
 
 # ifndef OPENSSL_NO_DH
+
+static EVP_PKEY *tmp_dh_params = NULL;
+
 /* Helper function for the test_set_tmp_dh() tests */
 static EVP_PKEY *get_tmp_dh_params(void)
 {
-    BIGNUM *p = NULL;
-    OSSL_PARAM_BLD *tmpl = NULL;
-    EVP_PKEY_CTX *pctx = NULL;
-    OSSL_PARAM *params = NULL;
-    EVP_PKEY *dhpkey = NULL;
+    if (tmp_dh_params == NULL) {
+        BIGNUM *p = NULL;
+        OSSL_PARAM_BLD *tmpl = NULL;
+        EVP_PKEY_CTX *pctx = NULL;
+        OSSL_PARAM *params = NULL;
+        EVP_PKEY *dhpkey = NULL;
 
-    p = BN_get_rfc3526_prime_2048(NULL);
-    if (!TEST_ptr(p))
-        goto end;
+        p = BN_get_rfc3526_prime_2048(NULL);
+        if (!TEST_ptr(p))
+            goto end;
 
-    pctx = EVP_PKEY_CTX_new_from_name(libctx, "DH", NULL);
-    if (!TEST_ptr(pctx)
-            || !TEST_true(EVP_PKEY_key_fromdata_init(pctx)))
-        goto end;
+        pctx = EVP_PKEY_CTX_new_from_name(libctx, "DH", NULL);
+        if (!TEST_ptr(pctx)
+                || !TEST_true(EVP_PKEY_key_fromdata_init(pctx)))
+            goto end;
 
-    tmpl = OSSL_PARAM_BLD_new();
-    if (!TEST_ptr(tmpl)
-            || !TEST_true(OSSL_PARAM_BLD_push_BN(tmpl,
-                                                    OSSL_PKEY_PARAM_FFC_P,
-                                                    p))
-            || !TEST_true(OSSL_PARAM_BLD_push_uint(tmpl,
-                                                    OSSL_PKEY_PARAM_FFC_G,
-                                                    2)))
-        goto end;
+        tmpl = OSSL_PARAM_BLD_new();
+        if (!TEST_ptr(tmpl)
+                || !TEST_true(OSSL_PARAM_BLD_push_BN(tmpl,
+                                                        OSSL_PKEY_PARAM_FFC_P,
+                                                        p))
+                || !TEST_true(OSSL_PARAM_BLD_push_uint(tmpl,
+                                                        OSSL_PKEY_PARAM_FFC_G,
+                                                        2)))
+            goto end;
 
-    params = OSSL_PARAM_BLD_to_param(tmpl);
-    if (!TEST_ptr(params)
-            || !TEST_true(EVP_PKEY_fromdata(pctx, &dhpkey, params)))
-        goto end;
+        params = OSSL_PARAM_BLD_to_param(tmpl);
+        if (!TEST_ptr(params)
+                || !TEST_true(EVP_PKEY_fromdata(pctx, &dhpkey, params)))
+            goto end;
 
- end:
-    BN_free(p);
-    EVP_PKEY_CTX_free(pctx);
-    OSSL_PARAM_BLD_free(tmpl);
-    OSSL_PARAM_BLD_free_params(params);
+        tmp_dh_params = dhpkey;
+    end:
+        BN_free(p);
+        EVP_PKEY_CTX_free(pctx);
+        OSSL_PARAM_BLD_free(tmpl);
+        OSSL_PARAM_BLD_free_params(params);
+    }
 
-    return dhpkey;
+    if (!EVP_PKEY_up_ref(tmp_dh_params))
+        return NULL;
+
+    return tmp_dh_params;
 }
 
 #  ifndef OPENSSL_NO_DEPRECATED
@@ -8108,7 +8117,7 @@ static DH *tmp_dh_callback(SSL *s, int is_export, int keylen)
     if (!TEST_ptr(dhpkey))
         return NULL;
 
-    ret = EVP_PKEY_get1_DH(dhpkey);
+    ret = EVP_PKEY_get0_DH(dhpkey);
 
     EVP_PKEY_free(dhpkey);
 
@@ -8156,7 +8165,7 @@ static int test_set_tmp_dh(int idx)
     }
 #  ifndef OPENSSL_NO_DEPRECATED_3_0
     if (idx == 7 || idx == 8) {
-        dh = EVP_PKEY_get1_DH(dhpkey);
+        dh = EVP_PKEY_get0_DH(dhpkey);
         if (!TEST_ptr(dh))
             goto end;
     }
@@ -8183,7 +8192,6 @@ static int test_set_tmp_dh(int idx)
     else if (idx == 7) {
         if (!TEST_true(SSL_CTX_set_tmp_dh(sctx, dh)))
             goto end;
-        dh = NULL;
     } else if (idx == 9) {
         SSL_CTX_set_tmp_dh_callback(sctx, tmp_dh_callback);
     }
@@ -8206,7 +8214,6 @@ static int test_set_tmp_dh(int idx)
     else if (idx == 8) {
         if (!TEST_true(SSL_set_tmp_dh(serverssl, dh)))
             goto end;
-        dh = NULL;
     } else if (idx == 10) {
         SSL_set_tmp_dh_callback(serverssl, tmp_dh_callback);
     }
@@ -8233,9 +8240,6 @@ static int test_set_tmp_dh(int idx)
     SSL_CTX_free(sctx);
     SSL_CTX_free(cctx);
     EVP_PKEY_free(dhpkey);
-#  ifndef OPENSSL_NO_DEPRECATED_3_0
-    DH_free(dh);
-#  endif
 
     return testresult;
 }
@@ -8604,6 +8608,7 @@ int setup_tests(void)
 
 void cleanup_tests(void)
 {
+    EVP_PKEY_free(tmp_dh_params);
     OPENSSL_free(cert);
     OPENSSL_free(privkey);
     OPENSSL_free(cert2);
