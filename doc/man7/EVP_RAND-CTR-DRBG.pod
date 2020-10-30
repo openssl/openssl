@@ -24,11 +24,11 @@ The supported parameters are:
 
 =item "strength" (B<OSSL_RAND_PARAM_STRENGTH>) <unsigned integer>
 
+=item "max_request" (B<OSSL_RAND_PARAM_MAX_REQUEST>) <unsigned integer>
+
 =item "reseed_requests" (B<OSSL_DRBG_PARAM_RESEED_REQUESTS>) <unsigned integer>
 
 =item "reseed_time_interval" (B<OSSL_DRBG_PARAM_RESEED_TIME_INTERVAL>) <integer>
-
-=item "max_request" (B<OSSL_DRBG_PARAM_MAX_REQUEST>) <unsigned integer>
 
 =item "min_entropylen" (B<OSSL_DRBG_PARAM_MIN_ENTROPYLEN>) <unsigned integer>
 
