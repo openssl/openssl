@@ -181,7 +181,7 @@ int EVP_PKEY_gen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey)
 
     /*
      * the returned value from evp_keymgmt_util_gen() is cached in *ppkey,
-     * so we so not need to save it, just check it.
+     * so we do not need to save it, just check it.
      */
     ret = ret
         && (evp_keymgmt_util_gen(*ppkey, ctx->keymgmt, ctx->op.keymgmt.genctx,
