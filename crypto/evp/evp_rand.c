@@ -511,7 +511,7 @@ static int evp_rand_generate_locked(EVP_RAND_CTX *ctx, unsigned char *out,
     size_t chunk, max_request = 0;
     OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
 
-    params[0] = OSSL_PARAM_construct_size_t(OSSL_DRBG_PARAM_MAX_REQUEST,
+    params[0] = OSSL_PARAM_construct_size_t(OSSL_RAND_PARAM_MAX_REQUEST,
                                             &max_request);
     if (!evp_rand_get_ctx_params_locked(ctx, params)
             || max_request == 0) {

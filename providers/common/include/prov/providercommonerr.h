@@ -160,7 +160,6 @@ int ERR_load_PROV_strings(void);
 # define PROV_R_UNABLE_TO_GET_NONCE                       203
 # define PROV_R_UNABLE_TO_GET_PARENT_RESEED_PROP_COUNTER  198
 # define PROV_R_UNABLE_TO_GET_PARENT_STRENGTH             199
-# define PROV_R_UNABLE_TO_GET_RESEED_PROP_CTR             200
 # define PROV_R_UNABLE_TO_INITIALISE_CIPHERS              208
 # define PROV_R_UNABLE_TO_LOAD_SHA1                       143
 # define PROV_R_UNABLE_TO_LOAD_SHA256                     147

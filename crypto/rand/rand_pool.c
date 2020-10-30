@@ -14,7 +14,7 @@
 #include "crypto/rand.h"
 #include <openssl/engine.h>
 #include "internal/thread_once.h"
-#include "prov/rand_pool.h"
+#include "crypto/rand_pool.h"
 
 /*
  * Allocate memory and initialize a new random pool

@@ -102,7 +102,7 @@ int ERR_load_RAND_strings(void);
 # define RAND_R_UNABLE_TO_FETCH_DRBG                      144
 # define RAND_R_UNABLE_TO_GET_PARENT_RESEED_PROP_COUNTER  141
 # define RAND_R_UNABLE_TO_GET_PARENT_STRENGTH             138
-# define RAND_R_UNABLE_TO_GET_RESEED_PROP_CTR             142
+# define RAND_R_UNABLE_TO_GET_RESEED_COUNTER              142
 # define RAND_R_UNABLE_TO_LOCK_PARENT                     140
 # define RAND_R_UNSUPPORTED_DRBG_FLAGS                    132
 # define RAND_R_UNSUPPORTED_DRBG_TYPE                     120

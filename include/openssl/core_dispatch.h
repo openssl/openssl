@@ -161,6 +161,23 @@ OSSL_CORE_MAKE_FUNC(int, BIO_ctrl, (OSSL_CORE_BIO *bio,
 OSSL_CORE_MAKE_FUNC(void, self_test_cb, (OPENSSL_CORE_CTX *ctx, OSSL_CALLBACK **cb,
                                          void **cbarg))
 
+/* Functions to get seed material from the operating system */
+#define OSSL_FUNC_GET_ENTROPY                101
+#define OSSL_FUNC_CLEANUP_ENTROPY            102
+#define OSSL_FUNC_GET_NONCE                  103
+#define OSSL_FUNC_CLEANUP_NONCE              104
+OSSL_CORE_MAKE_FUNC(size_t, get_entropy, (const OSSL_CORE_HANDLE *handle,
+                                          unsigned char **pout, int entropy,
+                                          size_t min_len, size_t max_len))
+OSSL_CORE_MAKE_FUNC(void, cleanup_entropy, (const OSSL_CORE_HANDLE *handle,
+                                            unsigned char *buf, size_t len))
+OSSL_CORE_MAKE_FUNC(size_t, get_nonce, (const OSSL_CORE_HANDLE *handle,
+                                        unsigned char **pout, size_t min_len,
+                                        size_t max_len, const void *salt,
+                                        size_t salt_len))
+OSSL_CORE_MAKE_FUNC(void, cleanup_nonce, (const OSSL_CORE_HANDLE *handle,
+                                          unsigned char *buf, size_t len))
+
 /* Functions provided by the provider to the Core, reserved numbers 1024-1535 */
 # define OSSL_FUNC_PROVIDER_TEARDOWN           1024
 OSSL_CORE_MAKE_FUNC(void,provider_teardown,(void *provctx))

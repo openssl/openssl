@@ -219,13 +219,13 @@ extern "C" {
 /* Known RAND names */
 #define OSSL_RAND_PARAM_STATE                   "state"
 #define OSSL_RAND_PARAM_STRENGTH                "strength"
+#define OSSL_RAND_PARAM_MAX_REQUEST             "max_request"
 #define OSSL_RAND_PARAM_TEST_ENTROPY            "test_entropy"
 #define OSSL_RAND_PARAM_TEST_NONCE              "test_nonce"
 
 /* RAND/DRBG names */
 #define OSSL_DRBG_PARAM_RESEED_REQUESTS         "reseed_requests"
 #define OSSL_DRBG_PARAM_RESEED_TIME_INTERVAL    "reseed_time_interval"
-#define OSSL_DRBG_PARAM_MAX_REQUEST             "max_request"
 #define OSSL_DRBG_PARAM_MIN_ENTROPYLEN          "min_entropylen"
 #define OSSL_DRBG_PARAM_MAX_ENTROPYLEN          "max_entropylen"
 #define OSSL_DRBG_PARAM_MIN_NONCELEN            "min_noncelen"
