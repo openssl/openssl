@@ -79,9 +79,10 @@ caller should not free it if the function call is succesful.
 
 The deprecated macros SSL_CTX_set_tmp_dh() and SSL_set_tmp_dh() do the same
 thing as SSL_CTX_set0_tmp_dh_pkey() and SSL_set0_tmp_dh_pkey() except that the
-DH parameters are supplied in a B<DH> object instead in the I<dh> argument.
-Applications should use "auto" parameters instead, or call
-SSL_CTX_set0_tmp_dh_pkey() or SSL_set0_tmp_dh_pkey() as appropriate.
+DH parameters are supplied in a B<DH> object instead in the I<dh> argument, and
+ownership of the B<DH> object is retained by the application. Applications
+should use "auto" parameters instead, or call SSL_CTX_set0_tmp_dh_pkey() or
+SSL_set0_tmp_dh_pkey() as appropriate.
 
 An application may instead specify the DH parameters via a callback function
 using the functions SSL_CTX_set_tmp_dh_callback() or SSL_set_tmp_dh_callback()
@@ -96,7 +97,8 @@ argument. Previous versions of OpenSSL used the B<is_export> and B<keylength>
 arguments to control parameter generation for export and non-export
 cipher suites. Modern OpenSSL does not support export ciphersuites and so these
 arguments are unused and can be ignored by the callback. The callback should
-return the parameters to be used in a DH object.
+return the parameters to be used in a DH object. Ownership of the DH object is
+retained by the application and should later be freed.
 
 =head1 RETURN VALUES
 
