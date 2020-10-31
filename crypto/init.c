@@ -42,7 +42,6 @@ struct ossl_init_stop_st {
 };
 
 static OPENSSL_INIT_STOP *stop_handlers = NULL;
-static CRYPTO_RWLOCK *init_lock = NULL;
 
 static CRYPTO_ONCE base = CRYPTO_ONCE_STATIC_INIT;
 static int base_inited = 0;
@@ -55,8 +54,6 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_base)
     ossl_malloc_setup_failures();
 #endif
 
-    if ((init_lock = CRYPTO_THREAD_lock_new()) == NULL)
-        goto err;
     OPENSSL_cpuid_setup();
 
     if (!ossl_init_thread())
@@ -67,8 +64,6 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_base)
 
 err:
     OSSL_TRACE(INIT, "ossl_init_base failed!\n");
-    CRYPTO_THREAD_lock_free(init_lock);
-    init_lock = NULL;
 
     return 0;
 }
@@ -366,9 +361,6 @@ void OPENSSL_cleanup(void)
     }
     stop_handlers = NULL;
 
-    CRYPTO_THREAD_lock_free(init_lock);
-    init_lock = NULL;
-
     /*
      * We assume we are single-threaded for this function, i.e. no race
      * conditions for the various "*_inited" vars below.
@@ -538,13 +530,22 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
         return 0;
 
     if (opts & OPENSSL_INIT_LOAD_CONFIG) {
-        int ret;
-        CRYPTO_THREAD_write_lock(init_lock);
-        conf_settings = settings;
-        ret = RUN_ONCE(&config, ossl_init_config);
-        conf_settings = NULL;
-        CRYPTO_THREAD_unlock(init_lock);
-        if (ret <= 0)
+        /*
+         * Since ossl_init_config() is a run-once function which can't
+         * take any parameters, we need to pass the value to it through
+         * the static variable `conf_settings`. This is thread-safe,
+         * because passing non-null settings is well defined and allowed
+         * only during early initialization in single-threaded mode.
+         *
+         * To prevent thread sanitizer warnings, we avoid unnecessary
+         * updates of `conf_settings` with null values. We don't even
+         * care to reset it to its initial value after first use,
+         * because it's only used once by ossl_init_config() anyway.
+         */
+        if (settings != NULL)
+            conf_settings = settings;
+
+        if (!RUN_ONCE(&config, ossl_init_config))
             return 0;
     }
 
