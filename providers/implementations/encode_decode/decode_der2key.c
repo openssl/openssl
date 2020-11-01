@@ -123,7 +123,7 @@ struct keytype_desc_st {
      */
     int evp_type;
 
-    /* The selection mask for OSSL_FUNC_decoder_does() */
+    /* The selection mask for OSSL_FUNC_decoder_does_selection() */
     int selection_mask;
 
     /* For type specific decoders, we use the corresponding d2i */
@@ -652,8 +652,8 @@ static int der2key_export_object(void *vctx,
     {                                                                   \
         return der2key_get_params(params, &kind##_##keytype##_desc);    \
     }                                                                   \
-    static int kind##_der2##keytype##_does(void *provctx,               \
-                                           int selection)               \
+    static int kind##_der2##keytype##_does_selection(void *provctx,     \
+                                                     int selection)     \
     {                                                                   \
         return der2key_check_selection(selection,                       \
                                        &kind##_##keytype##_desc);       \
@@ -668,8 +668,8 @@ static int der2key_export_object(void *vctx,
           (void (*)(void))kind##_der2##keytype##_gettable_params },     \
         { OSSL_FUNC_DECODER_GET_PARAMS,                                 \
           (void (*)(void))kind##_der2##keytype##_get_params },          \
-        { OSSL_FUNC_DECODER_DOES,                                       \
-          (void (*)(void))kind##_der2##keytype##_does },                \
+        { OSSL_FUNC_DECODER_DOES_SELECTION,                             \
+          (void (*)(void))kind##_der2##keytype##_does_selection },      \
         { OSSL_FUNC_DECODER_DECODE,                                     \
           (void (*)(void))der2key_decode },                             \
         { OSSL_FUNC_DECODER_EXPORT_OBJECT,                              \
