@@ -289,8 +289,8 @@ static void collect_decoder(OSSL_DECODER *decoder, void *arg)
              * be accepted.  If the decoder doesn't have |does|, it's seen
              * as taking anything.
              */
-            && (decoder->does == NULL
-                || decoder->does(provctx, data->ctx->selection))
+            && (decoder->does_selection == NULL
+                || decoder->does_selection(provctx, data->ctx->selection))
             && (decoderctx = decoder->newctx(provctx)) != NULL
             && (di = ossl_decoder_instance_new(decoder, decoderctx)) != NULL) {
             /* If successful so far, don't free these directly */
