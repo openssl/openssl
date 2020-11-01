@@ -756,7 +756,7 @@ OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, kem_settable_ctx_params, (void *provctx)
 # define OSSL_FUNC_ENCODER_GETTABLE_PARAMS             4
 # define OSSL_FUNC_ENCODER_SET_CTX_PARAMS              5
 # define OSSL_FUNC_ENCODER_SETTABLE_CTX_PARAMS         6
-# define OSSL_FUNC_ENCODER_DOES                       10
+# define OSSL_FUNC_ENCODER_DOES_SELECTION             10
 # define OSSL_FUNC_ENCODER_ENCODE                     11
 # define OSSL_FUNC_ENCODER_IMPORT_OBJECT              20
 # define OSSL_FUNC_ENCODER_FREE_OBJECT                21
@@ -770,11 +770,8 @@ OSSL_CORE_MAKE_FUNC(int, encoder_set_ctx_params,
 OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, encoder_settable_ctx_params,
                     (void *provctx))
 
-OSSL_CORE_MAKE_FUNC(int, encoder_does, (void *provctx, int selection))
-/*
- * TODO(3.0) investigate if this should be two functions, one that takes a
- * raw object and one that takes an object abstraction.
- */
+OSSL_CORE_MAKE_FUNC(int, encoder_does_selection,
+                    (void *provctx, int selection))
 OSSL_CORE_MAKE_FUNC(int, encoder_encode,
                     (void *ctx, OSSL_CORE_BIO *out,
                      const void *obj_raw, const OSSL_PARAM obj_abstract[],

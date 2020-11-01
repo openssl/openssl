@@ -25,7 +25,7 @@ provider-encoder - The OSSL_ENCODER library E<lt>-E<gt> provider functions
  const OSSL_PARAM *OSSL_FUNC_encoder_settable_ctx_params(void *provctx)
 
  /* Functions to check selection support */
- int OSSL_FUNC_encoder_does(void *provctx, int selection);
+ int OSSL_FUNC_encoder_does_selection(void *provctx, int selection);
 
  /* Functions to encode object data */
  int OSSL_FUNC_encoder_encode(void *ctx, OSSL_CORE_BIO *out,
@@ -114,7 +114,7 @@ macros in L<openssl-core_dispatch.h(7)>, as follows:
  OSSL_FUNC_encoder_set_ctx_params      OSSL_FUNC_ENCODER_SET_CTX_PARAMS
  OSSL_FUNC_encoder_settable_ctx_params OSSL_FUNC_ENCODER_SETTABLE_CTX_PARAMS
 
- OSSL_FUNC_encoder_does                OSSL_FUNC_ENCODER_DOES
+ OSSL_FUNC_encoder_does_selection      OSSL_FUNC_ENCODER_DOES_SELECTION
 
  OSSL_FUNC_encoder_encode              OSSL_FUNC_ENCODER_ENCODE_DATA
 
@@ -176,15 +176,15 @@ be encoded, with a set of bits I<selection> that are passed in an B<int>.
 This set of bits depend entirely on what kind of provider-side object is
 passed.  For example, those bits are assumed to be the same as those used
 with L<provider-keymgmt(7)> (see L<provider-keymgmt(7)/Key Objects>) when
-the object is an asymmetric key.
+the object is an asymmetric keypair.
 
 ENCODER implementations are free to regard the I<selection> as a set of
 hints, but must do so with care.  In the end, the output must make sense,
 and if there's a corresponding decoder, the resulting decoded object must
 match the original object that was encoded.
 
-OSSL_FUNC_encoder_does() should tell if a particular implementation supports
-any of the combinations given by I<selection>.
+OSSL_FUNC_encoder_does_selection() should tell if a particular implementation
+supports any of the combinations given by I<selection>.
 
 =head2 Context functions
 
