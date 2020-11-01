@@ -1211,7 +1211,8 @@ static int key2any_encode(struct key2any_ctx_st *ctx, OSSL_CORE_BIO *cout,
     {                                                                       \
         ossl_prov_free_key(ossl_##impl##_keymgmt_functions, key);           \
     }                                                                       \
-    static int impl##_to_##kind##_##output##_does(void *ctx, int selection) \
+    static int impl##_to_##kind##_##output##_does_selection(void *ctx,      \
+                                                            int selection)  \
     {                                                                       \
         return key2any_check_selection(selection,                           \
                                        DO_##kind##_selection_mask);         \
@@ -1248,8 +1249,8 @@ static int key2any_encode(struct key2any_ctx_st *ctx, OSSL_CORE_BIO *cout,
           (void (*)(void))key2any_settable_ctx_params },                    \
         { OSSL_FUNC_ENCODER_SET_CTX_PARAMS,                                 \
           (void (*)(void))key2any_set_ctx_params },                         \
-        { OSSL_FUNC_ENCODER_DOES,                                           \
-          (void (*)(void))impl##_to_##kind##_##output##_does },             \
+        { OSSL_FUNC_ENCODER_DOES_SELECTION,                                 \
+          (void (*)(void))impl##_to_##kind##_##output##_does_selection },   \
         { OSSL_FUNC_ENCODER_IMPORT_OBJECT,                                  \
           (void (*)(void))impl##_to_##kind##_##output##_import_object },    \
         { OSSL_FUNC_ENCODER_FREE_OBJECT,                                    \
