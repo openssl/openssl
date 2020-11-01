@@ -206,6 +206,8 @@ ENCODER("DH", dh, yes, pem, PKCS3),
 /* X9.42 defines the format for DHX parameters */
 ENCODER("DHX", dhx, yes, der, X9_42),
 ENCODER("DHX", dhx, yes, pem, X9_42),
+#endif
+#ifndef OPENSSL_NO_EC
 /* RFC 5915 defines the format for EC keys and parameters */
 ENCODER("EC", ec, yes, der, X9_62),
 ENCODER("EC", ec, yes, pem, X9_62),
