@@ -101,8 +101,8 @@ static void collect_encoder(OSSL_ENCODER *encoder, void *arg)
         void *provctx = OSSL_PROVIDER_get0_provider_ctx(prov);
 
         if (!OSSL_ENCODER_is_a(encoder, name)
-            || (encoder->does != NULL
-                && !encoder->does(provctx, data->ctx->selection)))
+            || (encoder->does_selection != NULL
+                && !encoder->does_selection(provctx, data->ctx->selection)))
             continue;
         (void)OSSL_ENCODER_CTX_add_encoder(data->ctx, encoder);
     }
