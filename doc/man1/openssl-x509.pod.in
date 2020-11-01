@@ -516,12 +516,14 @@ generate a certificate containing any desired public key.
 
 =item B<-subj> I<arg>
 
-When a certificate is created set its subject name to the given value.
+When a certificate, or a request is signed and created, set its subject name to the 
+given value. The latter lets you adjust an existing request.
 
 The arg must be formatted as C</type0=value0/type1=value1/type2=...>.
 Special characters may be escaped by C<\> (backslash), whitespace is retained.
 Empty values are permitted, but the corresponding type will not be included
 in the certificate.
+
 Giving a single C</> will lead to an empty sequence of RDNs (a NULL-DN).
 Multi-valued RDNs can be formed by placing a C<+> character instead of a C</>
 between the AttributeValueAssertions (AVAs) that specify the members of the set.
@@ -534,6 +536,18 @@ Unless the B<-CA> option is given the issuer is set to the same value.
 This option can be used in conjunction with the B<-force_pubkey> option
 to create a certificate even without providing an input certificate
 or certificate request.
+
+=item B<-multivalue_rdn>
+
+This option causes the B<-subj> argument to be interpreted with full
+support for multivalued RDNs. Applies to the value set by the
+B<-subj> and B<-subject> flags.
+
+Example:
+
+I</DC=org/DC=OpenSSL/DC=users/UID=123456+CN=John Doe>
+
+If -multi_rdn is not used then the UID value is I<123456+CN=John Doe>.
 
 =back
 

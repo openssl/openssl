@@ -16,7 +16,7 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_x509");
 
-plan tests => 15;
+plan tests => 26;
 
 require_ok(srctop_file('test','recipes','tconversion.pl'));
 
@@ -57,6 +57,7 @@ SKIP: {
     my $pubkey = "ca-pubkey.pem"; # the corresponding issuer public key
     # use any (different) key for signing our self-issued cert:
     my $signkey = srctop_file(@path, "ee-ecdsa-key.pem");
+    my $preq  = srctop_file(@path, "x509-check.csr");
     my $selfout = "self-issued.out";
     my $testcert = srctop_file(@path, "ee-cert.pem");
     ok(run(app(["openssl", "pkey", "-in", $pkey, "-pubout", "-out", $pubkey]))
@@ -67,8 +68,115 @@ SKIP: {
        &&
        run(app(["openssl", "verify", "-no_check_time",
                 "-trusted", $selfout, "-partial_chain", $testcert])));
+
     unlink $pubkey;
     unlink $selfout;
+}
+# X509 -subj override tests.
+{
+    my @path = qw(test certs);
+    my $signkey = srctop_file(@path, "rootCA.key");
+    my $preq  = srctop_file(@path, "x509-check.csr");
+    my $selfout = "self-issued.out";
+    my $pem = srctop_file("test/certs", "servercert.pem");
+
+    ok(run(app(["openssl", "x509", "-in", $pem,
+                 "-signkey", $signkey, "-out", $selfout]))
+       &&
+       comparesubject(["openssl", "x509", "-noout", "-subject", "-in", $selfout],
+	"subject=CN = server.example"));
+
+    # Run a normal x509 signing session; and check that the CN is unaltered.
+    # Then run a second one were we change the CN.
+    ok(run(app(["openssl", "x509", "-in", $pem,
+                 "-subj", "/CN=SomeNewCN",
+                 "-signkey", $signkey, "-out", $selfout]))
+       &&
+       comparesubject(["openssl", "x509", "-noout", "-subject", "-in", $selfout],
+	"subject=CN = SomeNewCN"));
+
+     # And repeat this for the -req variation of the x509 sign functionality.
+     ok(run(app(["openssl", "x509", "-in", $preq,
+                 "-req",
+                 "-signkey", $signkey, "-out", $selfout]))
+       &&
+       comparesubject(["openssl", "x509", "-noout", "-subject", "-in", $selfout],
+		 "subject=CN = x509-check-test"));
+
+     ok(run(app(["openssl", "x509", "-in", $preq,
+                 "-req", "-subj", "/CN=SomeNewCNOnReq",
+                 "-signkey", $signkey, "-out", $selfout]))
+       &&
+       comparesubject(["openssl", "x509", "-noout", "-subject", "-in", $selfout],
+		 "subject=CN = SomeNewCNOnReq"));
+
+     # Create a naked public RSA key for the next step.
+     my $pub = "cert.pub";
+     my $prv = "cert.key";
+     ok(run(app(["openssl", "genrsa","-out", $prv])));
+     ok(run(app(["openssl", "rsa","-in", $prv,
+		"-pubout", "-out", $pub])));
+
+     # And finally the -new, no req, no cert variation using
+     # just the naked key.
+     #
+     ok(run(app(["openssl", "x509",
+                 "-new",
+                 "-subj", "/CN=NakedCN",
+                 "-force_pubkey", $pub,
+                 "-signkey", $signkey,
+                 "-out", $selfout]))
+       &&
+       comparesubject(["openssl", "x509", "-noout", "-subject", "-in", $selfout],
+		 "subject=CN = NakedCN"));
+
+    unlink $selfout;
+    unlink $pub;
+    unlink $prv;
+};
+# X509 -multirdn tests
+{
+     my @path = qw(test certs);
+     my $signkey = srctop_file(@path, "rootCA.key");
+     my $preq  = srctop_file(@path, "x509-check.csr");
+     my $selfout = "self-issued.out";
+     my $pem = srctop_file("test/certs", "servercert.pem");
+
+     # Create a naked public RSA key for the next step.
+     my $pub = "cert.pub";
+     my $prv = "cert.key";
+
+     ok(run(app(["openssl", "genrsa","-out", $prv])));
+     ok(run(app(["openssl", "rsa","-in", $prv,
+		"-pubout", "-out", $pub])));
+
+     # Without a multi value - i.e. the plus just becomes part of the actual CN value.
+     #
+     ok(run(app(["openssl", "x509",
+                 "-new",
+                 "-subj", "/CN=foo+CN=bar",
+                 "-force_pubkey", $pub,
+                 "-signkey", $signkey,
+                 "-out", $selfout]),
+                 "-nameopt oneline")
+       &&
+       comparesubject(["openssl", "x509", "-noout", "-subject", "-in", $selfout],
+		 'subject=CN = "foo+CN=bar"'));
+
+     # As a multi value RDN is intenden, two CN values in parallel. The ','
+     # is just there to force a quote around the valoue for easier inspection.
+     #
+     ok(run(app(["openssl", "x509",
+                 "-new",
+                 "-multivalue_rdn",
+                 "-subj", "/CN=Foo,1+CN=bar,2",
+                 "-force_pubkey", $pub,
+                 "-signkey", $signkey,
+                 "-out", $selfout]),
+                 "-nameopt oneline")
+       &&
+       comparesubject(["openssl", "x509", "-noout", "-subject", "-in", $selfout],
+		 'subject=CN = "Foo,1" + CN = "bar,2"'));
 }
 
 subtest 'x509 -- x.509 v1 certificate' => sub {
@@ -82,6 +190,18 @@ subtest 'x509 -- first x.509 v3 certificate' => sub {
 subtest 'x509 -- second x.509 v3 certificate' => sub {
     tconversion( -type => 'x509', -prefix => 'x509v3-2',
                  -in => srctop_file("test","v3-cert2.pem") );
+};
+
+sub comparesubject {
+    my ($cmdarray, $str) = @_;
+    my @lines = run(app($cmdarray), capture => 1);
+
+    return 1 if $lines[0] =~ m|^\Q${str}\E\R$|;
+
+    note "Expecting >>", $str,"<<";
+    note "Got       >>", $lines[0],"<<";
+
+    return 0;
 };
 
 subtest 'x509 -- pathlen' => sub {

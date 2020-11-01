@@ -56,7 +56,8 @@ typedef enum OPTION_choice {
     OPT_ADDTRUST, OPT_ADDREJECT, OPT_SETALIAS, OPT_CERTOPT, OPT_NAMEOPT,
     OPT_C, OPT_EMAIL, OPT_OCSP_URI, OPT_SERIAL, OPT_NEXT_SERIAL,
     OPT_MODULUS, OPT_PUBKEY, OPT_X509TOREQ, OPT_TEXT, OPT_HASH,
-    OPT_ISSUER_HASH, OPT_SUBJECT, OPT_ISSUER, OPT_FINGERPRINT, OPT_DATES,
+    OPT_ISSUER_HASH, OPT_SUBJECT, OPT_MULTIVALUE_RDN,
+    OPT_ISSUER, OPT_FINGERPRINT, OPT_DATES,
     OPT_PURPOSE, OPT_STARTDATE, OPT_ENDDATE, OPT_CHECKEND, OPT_CHECKHOST,
     OPT_CHECKEMAIL, OPT_CHECKIP, OPT_NOOUT, OPT_TRUSTOUT, OPT_CLRTRUST,
     OPT_CLRREJECT, OPT_ALIAS, OPT_CACREATESERIAL, OPT_CLREXT, OPT_OCSPID,
@@ -87,6 +88,8 @@ const OPTIONS x509_options[] = {
     OPT_SECTION("Output"),
     {"serial", OPT_SERIAL, '-', "Print serial number value"},
     {"subject_hash", OPT_HASH, '-', "Print subject hash value"},
+    {"multivalue_rdn", OPT_MULTIVALUE_RDN, '-',
+     "Enable support for multivalued RDNs in subject set/modify"},
     {"issuer_hash", OPT_ISSUER_HASH, '-', "Print issuer hash value"},
     {"hash", OPT_HASH, '-', "Synonym for -subject_hash"},
     {"subject", OPT_SUBJECT, '-', "Print subject DN"},
@@ -175,7 +178,6 @@ int x509_main(int argc, char **argv)
     char *subj = NULL;
     X509_NAME *fsubj = NULL;
     const unsigned long chtype = MBSTRING_ASC;
-    const int multirdn = 1;
     STACK_OF(ASN1_OBJECT) *trust = NULL, *reject = NULL;
     STACK_OF(OPENSSL_STRING) *sigopts = NULL, *vfyopts = NULL;
     X509 *x = NULL, *xca = NULL;
@@ -196,6 +198,7 @@ int x509_main(int argc, char **argv)
     int ocsp_uri = 0, trustout = 0, clrtrust = 0, clrreject = 0, aliasout = 0;
     int ret = 1, i, num = 0, badsig = 0, clrext = 0, nocert = 0;
     int text = 0, serial = 0, subject = 0, issuer = 0, startdate = 0, ext = 0;
+    int multirdn = 0;
     int enddate = 0;
     time_t checkoffset = 0;
     unsigned long certflag = 0;
@@ -318,6 +321,9 @@ int x509_main(int argc, char **argv)
         case OPT_SUBJ:
             subj = opt_arg();
             break;
+        case OPT_MULTIVALUE_RDN:
+             multirdn = 1;
+             break;
         case OPT_ADDTRUST:
             if ((objtmp = OBJ_txt2obj(opt_arg(), 0)) == NULL) {
                 BIO_printf(bio_err,
@@ -620,9 +626,25 @@ int x509_main(int argc, char **argv)
             goto end;
         }
 
-        n = req == NULL ? fsubj : X509_REQ_get_subject_name(req);
-        if (!X509_set_issuer_name(x, n) || !X509_set_subject_name(x, n))
+        if (req == NULL) {
+            if (fsubj == NULL) {
+                BIO_printf(bio_err, "We need either a request/certificate to extract a subject from; or one set with -subj\n");
+                goto end;
+            }
+            n = fsubj;
+        } else {
+            n = X509_REQ_get_subject_name(req);
+        }
+
+        if (!X509_set_issuer_name(x, n))
             goto end;
+        if (!X509_set_subject_name(x, n))
+            goto end;
+        if (n == fsubj) {
+            X509_NAME_free(fsubj);
+            fsubj = NULL;
+        }
+
         if (!set_cert_times(x, NULL, NULL, days))
             goto end;
 
@@ -634,8 +656,14 @@ int x509_main(int argc, char **argv)
             goto end;
         if (fkey != NULL && !X509_set_pubkey(x, fkey))
             goto end;
-        if (fsubj != NULL && !X509_set_subject_name(x, fsubj))
+    }
+
+    if (fsubj) {
+        if (!X509_set_subject_name(x, fsubj))
             goto end;
+
+         print_name(bio_err, "Overwrittten by -subj=", X509_get_subject_name(x),
+                get_nameopt());
     }
 
     if (CA_flag) {
