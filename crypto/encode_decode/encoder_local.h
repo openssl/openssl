@@ -46,7 +46,7 @@ struct ossl_decoder_st {
     OSSL_FUNC_decoder_gettable_params_fn *gettable_params;
     OSSL_FUNC_decoder_set_ctx_params_fn *set_ctx_params;
     OSSL_FUNC_decoder_settable_ctx_params_fn *settable_ctx_params;
-    OSSL_FUNC_decoder_does_fn *does;
+    OSSL_FUNC_decoder_does_selection_fn *does_selection;
     OSSL_FUNC_decoder_decode_fn *decode;
     OSSL_FUNC_decoder_export_object_fn *export_object;
 };
