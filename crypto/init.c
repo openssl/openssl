@@ -42,7 +42,7 @@ struct ossl_init_stop_st {
 };
 
 static OPENSSL_INIT_STOP *stop_handlers = NULL;
-static CRYPTO_RWLOCK *init_lock = NULL;
+static CRYPTO_THREAD_LOCAL conf_settings_key;
 
 static CRYPTO_ONCE base = CRYPTO_ONCE_STATIC_INIT;
 static int base_inited = 0;
@@ -55,7 +55,7 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_base)
     ossl_malloc_setup_failures();
 #endif
 
-    if ((init_lock = CRYPTO_THREAD_lock_new()) == NULL)
+    if (CRYPTO_THREAD_init_local(&conf_settings_key, NULL) != 1)
         goto err;
     OPENSSL_cpuid_setup();
 
@@ -67,8 +67,7 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_base)
 
 err:
     OSSL_TRACE(INIT, "ossl_init_base failed!\n");
-    CRYPTO_THREAD_lock_free(init_lock);
-    init_lock = NULL;
+    CRYPTO_THREAD_cleanup_local(&conf_settings_key);
 
     return 0;
 }
@@ -231,10 +230,10 @@ DEFINE_RUN_ONCE_STATIC_ALT(ossl_init_no_add_all_digests,
 
 static CRYPTO_ONCE config = CRYPTO_ONCE_STATIC_INIT;
 static int config_inited = 0;
-static const OPENSSL_INIT_SETTINGS *conf_settings = NULL;
 DEFINE_RUN_ONCE_STATIC(ossl_init_config)
 {
-    int ret = openssl_config_int(conf_settings);
+    int ret = openssl_config_int((const OPENSSL_INIT_SETTINGS*)
+                                 CRYPTO_THREAD_get_local(&conf_settings_key));
     config_inited = 1;
     return ret;
 }
@@ -366,8 +365,7 @@ void OPENSSL_cleanup(void)
     }
     stop_handlers = NULL;
 
-    CRYPTO_THREAD_lock_free(init_lock);
-    init_lock = NULL;
+    CRYPTO_THREAD_cleanup_local(&conf_settings_key);
 
     /*
      * We assume we are single-threaded for this function, i.e. no race
@@ -539,11 +537,8 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
 
     if (opts & OPENSSL_INIT_LOAD_CONFIG) {
         int ret;
-        CRYPTO_THREAD_write_lock(init_lock);
-        conf_settings = settings;
+        CRYPTO_THREAD_set_local(&conf_settings_key, (void*)settings);
         ret = RUN_ONCE(&config, ossl_init_config);
-        conf_settings = NULL;
-        CRYPTO_THREAD_unlock(init_lock);
         if (ret <= 0)
             return 0;
     }
