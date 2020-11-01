@@ -61,11 +61,6 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_base)
 
     base_inited = 1;
     return 1;
-
-err:
-    OSSL_TRACE(INIT, "ossl_init_base failed!\n");
-
-    return 0;
 }
 
 static CRYPTO_ONCE register_atexit = CRYPTO_ONCE_STATIC_INIT;
