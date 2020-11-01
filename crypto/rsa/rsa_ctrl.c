@@ -132,13 +132,9 @@ int EVP_PKEY_CTX_set_rsa_oaep_md_name(EVP_PKEY_CTX *ctx, const char *mdname,
                                              */
                                             (char *)mdname, 0);
     if (mdprops != NULL) {
-        *p++ = OSSL_PARAM_construct_utf8_string(
-                    OSSL_ASYM_CIPHER_PARAM_OAEP_DIGEST_PROPS,
-                    /*
-                     * Cast away the const. This is read
-                     * only so should be safe
-                     */
-                    (char *)mdprops, 0);
+        const char *name = OSSL_ASYM_CIPHER_PARAM_OAEP_DIGEST_PROPS;
+
+        *p++ = OSSL_PARAM_construct_utf8_string(name, (char *)mdprops, 0);
     }
     *p = OSSL_PARAM_construct_end();
 
