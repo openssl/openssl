@@ -3140,7 +3140,7 @@ static int tls_process_cke_dhe(SSL *s, PACKET *pkt)
         goto err;
     }
 
-    if (!EVP_PKEY_set1_tls_encodedpoint(ckey, data, i)) {
+    if (!EVP_PKEY_set1_encoded_public_key(ckey, data, i)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_CKE_DHE,
                  ERR_R_INTERNAL_ERROR);
         goto err;
