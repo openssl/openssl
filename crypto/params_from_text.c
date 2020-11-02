@@ -145,7 +145,7 @@ static int construct_from_text(OSSL_PARAM *to, const OSSL_PARAM *paramdef,
             if (ishex) {
                 size_t l = 0;
 
-                if (!OPENSSL_hexstr2buf_ex(buf, buf_n, &l, value))
+                if (!OPENSSL_hexstr2buf_ex(buf, buf_n, &l, value, ':'))
                     return 0;
             } else {
                 memcpy(buf, value, buf_n);
