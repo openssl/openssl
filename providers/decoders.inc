@@ -23,15 +23,16 @@
 #define DECODER_STRUCTURE_EC                            "ec"
 #define DECODER_STRUCTURE_RSA                           "rsa"
 
-#define DECODER(name, input, output, fips)                              \
-    { name,                                                             \
-      "provider=" DECODER_PROVIDER ",fips=" #fips ",input=" #input,     \
-      (ossl_##input##_to_##output##_decoder_functions) }
-#define DECODER_w_structure(name, input, structure, output, fips)       \
-    { name,                                                             \
-      "provider=" DECODER_PROVIDER ",fips=" #fips ",input=" #input      \
-      ",structure=" DECODER_STRUCTURE_##structure,                      \
-      (ossl_##structure##_##input##_to_##output##_decoder_functions) }
+/* Arguments are prefixed with '_' to avoid build breaks on certain platforms */
+#define DECODER(_name, _input, _output, _fips)                          \
+    { _name,                                                            \
+      "provider=" DECODER_PROVIDER ",fips=" #_fips ",input=" #_input,   \
+      (ossl_##_input##_to_##_output##_decoder_functions) }
+#define DECODER_w_structure(_name, _input, _structure, _output, _fips)  \
+    { _name,                                                            \
+      "provider=" DECODER_PROVIDER ",fips=" #_fips ",input=" #_input    \
+      ",structure=" DECODER_STRUCTURE_##_structure,                     \
+      (ossl_##_structure##_##_input##_to_##_output##_decoder_functions) }
 
 #ifndef OPENSSL_NO_DH
 DECODER_w_structure("DH", der, PKCS8, dh, yes),

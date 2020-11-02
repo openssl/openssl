@@ -107,8 +107,8 @@ static int pem2der_pass_helper(char *buf, int num, int w, void *data)
 }
 
 /*
- * pem2der_decode() doesn't care one bit about selections.  That's for the
- * next decoder in the chain.
+ * The selection parameter in pem2der_decode() is not used by this function
+ * because it's not relevant just to decode PEM to DER.
  */
 static int pem2der_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
                           OSSL_CALLBACK *data_cb, void *data_cbarg,

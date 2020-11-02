@@ -216,10 +216,6 @@ static int pvk2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
     EVP_PKEY *pkey = read_pvk(ctx->provctx, cin, pw_cb, pw_cbarg);
     int ok = 0;
 
-    /*
-     * TODO: investigate if it makes sense to accept public key selection
-     * as well
-     * */
     if (selection == 0
         || (selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0)
         ok = ms2key_post(ctx, pkey, data_cb, data_cbarg);
