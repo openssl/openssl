@@ -708,10 +708,16 @@ size_t EC_POINT_point2buf(const EC_GROUP *group, const EC_POINT *point,
                           unsigned char **pbuf, BN_CTX *ctx);
 
 /* other interfaces to point2oct/oct2point: */
-BIGNUM *EC_POINT_point2bn(const EC_GROUP *, const EC_POINT *,
-                          point_conversion_form_t form, BIGNUM *, BN_CTX *);
-EC_POINT *EC_POINT_bn2point(const EC_GROUP *, const BIGNUM *,
-                            EC_POINT *, BN_CTX *);
+#  ifndef OPENSSL_NO_DEPRECATED_3_0
+OSSL_DEPRECATEDIN_3_0 BIGNUM *EC_POINT_point2bn(const EC_GROUP *,
+                                                const EC_POINT *,
+                                                point_conversion_form_t form,
+                                                BIGNUM *, BN_CTX *);
+OSSL_DEPRECATEDIN_3_0 EC_POINT *EC_POINT_bn2point(const EC_GROUP *,
+                                                  const BIGNUM *,
+                                                  EC_POINT *, BN_CTX *);
+#  endif /* OPENSSL_NO_DEPRECATED_3_0 */
+
 char *EC_POINT_point2hex(const EC_GROUP *, const EC_POINT *,
                          point_conversion_form_t form, BN_CTX *);
 EC_POINT *EC_POINT_hex2point(const EC_GROUP *, const char *,

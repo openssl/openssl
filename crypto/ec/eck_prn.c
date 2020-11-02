@@ -69,10 +69,11 @@ int ECPKParameters_print(BIO *bp, const EC_GROUP *x, int off)
     int ret = 0, reason = ERR_R_BIO_LIB;
     BN_CTX *ctx = NULL;
     const EC_POINT *point = NULL;
-    BIGNUM *p = NULL, *a = NULL, *b = NULL, *gen = NULL;
+    BIGNUM *p = NULL, *a = NULL, *b = NULL;
+    unsigned char *gen_buf = NULL;
     const BIGNUM *order = NULL, *cofactor = NULL;
     const unsigned char *seed;
-    size_t seed_len = 0;
+    size_t seed_len = 0, gen_buf_len = 0;
 
     static const char *gen_compressed = "Generator (compressed):";
     static const char *gen_uncompressed = "Generator (uncompressed):";
@@ -112,6 +113,7 @@ int ECPKParameters_print(BIO *bp, const EC_GROUP *x, int off)
                 goto err;
         }
     } else {
+        const char *form_str;
         /* explicit parameters */
         int is_char_two = 0;
         point_conversion_form_t form;
@@ -144,7 +146,8 @@ int ECPKParameters_print(BIO *bp, const EC_GROUP *x, int off)
 
         form = EC_GROUP_get_point_conversion_form(x);
 
-        if ((gen = EC_POINT_point2bn(x, point, form, NULL, ctx)) == NULL) {
+        gen_buf_len = EC_POINT_point2buf(x, point, form, &gen_buf, ctx);
+        if (gen_buf_len == 0) {
             reason = ERR_R_EC_LIB;
             goto err;
         }
@@ -185,22 +188,18 @@ int ECPKParameters_print(BIO *bp, const EC_GROUP *x, int off)
             goto err;
         if ((b != NULL) && !ASN1_bn_print(bp, "B:   ", b, NULL, off))
             goto err;
-        if (form == POINT_CONVERSION_COMPRESSED) {
-            if ((gen != NULL) && !ASN1_bn_print(bp, gen_compressed, gen,
-                                                NULL, off))
-                goto err;
-        } else if (form == POINT_CONVERSION_UNCOMPRESSED) {
-            if ((gen != NULL) && !ASN1_bn_print(bp, gen_uncompressed, gen,
-                                                NULL, off))
-                goto err;
-        } else {                /* form == POINT_CONVERSION_HYBRID */
 
-            if ((gen != NULL) && !ASN1_bn_print(bp, gen_hybrid, gen,
-                                                NULL, off))
-                goto err;
-        }
-        if ((order != NULL) && !ASN1_bn_print(bp, "Order: ", order,
-                                              NULL, off))
+        if (form == POINT_CONVERSION_COMPRESSED)
+            form_str = gen_compressed;
+        else if (form == POINT_CONVERSION_UNCOMPRESSED)
+            form_str = gen_uncompressed;
+        else
+            form_str = gen_hybrid;
+        if (gen_buf != NULL
+            && !print_bin(bp, form_str, gen_buf, gen_buf_len, off))
+            goto err;
+
+        if ((order != NULL) && !ASN1_bn_print(bp, "Order: ", order, NULL, off))
             goto err;
         if ((cofactor != NULL) && !ASN1_bn_print(bp, "Cofactor: ", cofactor,
                                                  NULL, off))
@@ -215,7 +214,7 @@ int ECPKParameters_print(BIO *bp, const EC_GROUP *x, int off)
     BN_free(p);
     BN_free(a);
     BN_free(b);
-    BN_free(gen);
+    OPENSSL_clear_free(gen_buf, gen_buf_len);
     BN_CTX_free(ctx);
     return ret;
 }

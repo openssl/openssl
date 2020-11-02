@@ -45,7 +45,7 @@ ENDIF
 
 $COMMON=ec_lib.c ecp_smpl.c ecp_mont.c ecp_nist.c ec_cvt.c ec_mult.c \
         ec_curve.c ec_check.c ec_print.c ec_key.c ecx_key.c ec_asn1.c \
-        ec2_smpl.c \
+        ec2_smpl.c ec_deprecated.c \
         ecp_oct.c ec2_oct.c ec_oct.c ec_kmeth.c ecdh_ossl.c \
         ecdsa_ossl.c ecdsa_sign.c ecdsa_vrf.c curve25519.c \
         curve448/arch_32/f_impl.c curve448/f_generic.c curve448/scalar.c \

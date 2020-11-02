@@ -294,7 +294,6 @@ int ecparam_main(int argc, char **argv)
             goto end;
         }
         BIO_printf(bio_err, "ok\n");
-
     }
 
     if (outformat == FORMAT_ASN1 && genkey)
