@@ -17,6 +17,7 @@
 #include <string.h> /* strcmp */
 
 #include <openssl/types.h> /* Ensure we have the ENGINE type, regardless */
+#include <openssl/err.h>
 #ifndef OPENSSL_NO_ENGINE
 # include <openssl/engine.h>
 #endif
@@ -145,3 +146,31 @@ EVP_PKEY *load_engine_public_key(ENGINE *e, const char *keyid,
     return rv;
 }
 
+int get_legacy_pkey_id(OSSL_LIB_CTX *libctx, const char *algname, ENGINE *e)
+{
+    const EVP_PKEY_ASN1_METHOD *ameth;
+    ENGINE *tmpeng = NULL;
+    int pkey_id = NID_undef;
+
+    ERR_set_mark();
+    ameth = EVP_PKEY_asn1_find_str(&tmpeng, algname, -1);
+
+#if !defined(OPENSSL_NO_ENGINE)
+    ENGINE_finish(tmpeng);
+
+    if (ameth == NULL && e != NULL)
+        ameth = ENGINE_get_pkey_asn1_meth_str(e, algname, -1);
+    else
+#endif
+    /* We're only interested if it comes from an ENGINE */
+    if (tmpeng == NULL)
+        ameth = NULL;
+
+    ERR_pop_to_mark();
+    if (ameth == NULL)
+        return NID_undef;
+
+    EVP_PKEY_asn1_get0_info(&pkey_id, NULL, NULL, NULL, NULL, ameth);
+
+    return pkey_id;
+}
