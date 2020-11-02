@@ -966,8 +966,7 @@ static int final_server_name(SSL *s, unsigned int context, int sent)
      * context, to avoid the confusing situation of having sess_accept_good
      * exceed sess_accept (zero) for the new context.
      */
-    if (SSL_IS_FIRST_HANDSHAKE(s) && s->ctx != s->session_ctx
-		    && s->hello_retry_request == SSL_HRR_NONE) {
+    if (SSL_IS_FIRST_HANDSHAKE(s) && s->ctx != s->session_ctx) {
         tsan_counter(&s->ctx->stats.sess_accept);
         tsan_decr(&s->session_ctx->stats.sess_accept);
     }
