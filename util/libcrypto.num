@@ -2953,7 +2953,7 @@ BIO_dgram_non_fatal_error               3016	3_0_0	EXIST::FUNCTION:DGRAM
 OCSP_request_is_signed                  3017	3_0_0	EXIST::FUNCTION:OCSP
 i2d_BASIC_CONSTRAINTS                   3018	3_0_0	EXIST::FUNCTION:
 EC_KEY_get_method                       3019	3_0_0	EXIST::FUNCTION:EC
-EC_POINT_bn2point                       3021	3_0_0	EXIST::FUNCTION:EC
+EC_POINT_bn2point                       3021	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,EC
 PBE2PARAM_it                            3022	3_0_0	EXIST::FUNCTION:
 BN_rand                                 3023	3_0_0	EXIST::FUNCTION:
 ASN1_TYPE_unpack_sequence               3024	3_0_0	EXIST::FUNCTION:
@@ -3381,7 +3381,7 @@ BIO_method_type                         3451	3_0_0	EXIST::FUNCTION:
 ECPKParameters_print                    3452	3_0_0	EXIST::FUNCTION:EC
 EVP_rc4                                 3453	3_0_0	EXIST::FUNCTION:RC4
 CMS_data_create                         3454	3_0_0	EXIST::FUNCTION:CMS
-EC_POINT_point2bn                       3455	3_0_0	EXIST::FUNCTION:EC
+EC_POINT_point2bn                       3455	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,EC
 CMS_unsigned_get0_data_by_OBJ           3456	3_0_0	EXIST::FUNCTION:CMS
 ASN1_OCTET_STRING_cmp                   3457	3_0_0	EXIST::FUNCTION:
 X509_NAME_print_ex                      3458	3_0_0	EXIST::FUNCTION:
