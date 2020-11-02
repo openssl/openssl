@@ -797,7 +797,7 @@ struct ssl_cipher_st {
      * 'algorithms'
      */
     uint32_t algorithm_mkey;    /* key exchange algorithm */
-    uint32_t algorithm_auth;    /* server authentication */
+    uint64_t algorithm_auth;    /* server authentication */
     uint32_t algorithm_enc;     /* symmetric encryption */
     uint32_t algorithm_mac;     /* symmetric authentication */
     int min_tls;                /* minimum SSL/TLS protocol version */
@@ -1901,7 +1901,7 @@ typedef struct cert_pkey_st CERT_PKEY;
  */
 typedef struct {
     int nid; /* NID of public key algorithm */
-    uint32_t amask; /* authmask corresponding to key type */
+    uint64_t amask; /* authmask corresponding to key type */
 } SSL_CERT_LOOKUP;
 
 typedef struct ssl3_state_st {

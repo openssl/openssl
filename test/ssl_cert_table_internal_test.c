@@ -31,7 +31,7 @@
 #define test_cert_table(nid, amask, idx) \
     do_test_cert_table(nid, amask, idx, #idx)
 
-static int do_test_cert_table(int nid, uint32_t amask, size_t idx,
+static int do_test_cert_table(int nid, uint64_t amask, size_t idx,
                               const char *idxname)
 {
     const SSL_CERT_LOOKUP *clu = &ssl_cert_info[idx];
@@ -45,7 +45,7 @@ static int do_test_cert_table(int nid, uint32_t amask, size_t idx,
         TEST_note("Expected %s, got %s\n", OBJ_nid2sn(nid),
                   OBJ_nid2sn(clu->nid));
     if (clu->amask != amask)
-        TEST_note("Expected auth mask 0x%x, got 0x%x\n", amask, clu->amask);
+        TEST_note("Expected auth mask 0x%lx, got 0x%lx\n", amask, clu->amask);
     return 0;
 }
 
