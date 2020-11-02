@@ -62,7 +62,7 @@ void ecx_key_free(ECX_KEY *key)
         return;
 
     CRYPTO_DOWN_REF(&key->references, &i, key->lock);
-    REF_PRINT_COUNT("ECX_KEY", r);
+    REF_PRINT_COUNT("ECX_KEY", key);
     if (i > 0)
         return;
     REF_ASSERT_ISNT(i < 0);
