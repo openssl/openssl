@@ -236,8 +236,6 @@ static void collect_name(const char *name, void *arg)
 /*
  * The input structure check is only done on the initial decoder
  * implementations.
- * TODO(4.0): Investigate if an input structure condition would be feasible
- * in the middle of a chain of decoders, not just the beginning.
  */
 static int collect_decoder_check_input_structure(OSSL_DECODER_CTX *ctx,
                                                  OSSL_DECODER_INSTANCE *di)
