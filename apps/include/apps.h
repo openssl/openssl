@@ -160,6 +160,8 @@ EVP_PKEY *load_engine_private_key(ENGINE *e, const char *keyid,
 EVP_PKEY *load_engine_public_key(ENGINE *e, const char *keyid,
                                  const char *pass, const char *desc);
 
+int get_legacy_pkey_id(OSSL_LIB_CTX *libctx, const char *algname, ENGINE *e);
+
 # ifndef OPENSSL_NO_OCSP
 OCSP_RESPONSE *process_responder(OCSP_REQUEST *req,
                                  const char *host, const char *path,
