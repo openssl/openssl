@@ -27,6 +27,7 @@
 #define ENCODER_STRUCTURE_X9_42                         "X9.42"
 #define ENCODER_STRUCTURE_X9_62                         "X9.62"
 
+/* Arguments are prefixed with '_' to avoid build breaks on certain platforms */
 #define ENCODER_TEXT(_name, _sym, _fips)                                \
     { _name,                                                            \
       "provider=" ENCODER_PROVIDER ",fips=" #_fips ",output=text",      \
