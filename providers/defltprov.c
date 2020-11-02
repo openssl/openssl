@@ -436,8 +436,8 @@ static const OSSL_ALGORITHM deflt_encoder[] = {
 #define ENCODER_PROVIDER "default"
 #include "encoders.inc"
     { NULL, NULL, NULL }
-};
 #undef ENCODER_PROVIDER
+};
 
 static const OSSL_ALGORITHM deflt_decoder[] = {
 #define DECODER(name, _fips, _input, func_table)                            \

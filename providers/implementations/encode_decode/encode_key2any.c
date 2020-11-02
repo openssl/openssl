@@ -1383,7 +1383,6 @@ MAKE_ENCODER(dh, dh, EVP_PKEY_DH, PKCS3, pem); /* parameters only */
 MAKE_ENCODER(dhx, dh, EVP_PKEY_DHX, X9_42, der); /* parameters only */
 MAKE_ENCODER(dhx, dh, EVP_PKEY_DHX, X9_42, pem); /* parameters only */
 #endif
-/* TODO(3.0) Standard name for on-file DSA key format */
 #ifndef OPENSSL_NO_EC
 MAKE_ENCODER(ec, ec, EVP_PKEY_EC, X9_62, der);
 MAKE_ENCODER(ec, ec, EVP_PKEY_EC, X9_62, pem);

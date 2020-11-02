@@ -72,8 +72,8 @@ static const OSSL_ALGORITHM base_encoder[] = {
 #define ENCODER_PROVIDER "base"
 #include "encoders.inc"
     { NULL, NULL, NULL }
-};
 #undef ENCODER_PROVIDER
+};
 
 static const OSSL_ALGORITHM base_decoder[] = {
 #define DECODER(name, _fips, _input, func_table)                            \

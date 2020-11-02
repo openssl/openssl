@@ -27,15 +27,15 @@
 #define ENCODER_STRUCTURE_X9_42                         "X9.42"
 #define ENCODER_STRUCTURE_X9_62                         "X9.62"
 
-#define ENCODER_TEXT(name, sym, fips)                                       \
-    { name,                                                                 \
-      "provider=" ENCODER_PROVIDER ",fips=" #fips ",output=text",           \
-      (ossl_##sym##_to_text_encoder_functions) }
-#define ENCODER(name, sym, fips, output, structure)                         \
-    { name,                                                                 \
-      "provider=" ENCODER_PROVIDER ",fips=" #fips ",output=" #output        \
-      ",structure=" ENCODER_STRUCTURE_##structure,                          \
-      (ossl_##sym##_to_##structure##_##output##_encoder_functions) }
+#define ENCODER_TEXT(_name, _sym, _fips)                                \
+    { _name,                                                            \
+      "provider=" ENCODER_PROVIDER ",fips=" #_fips ",output=text",      \
+      (ossl_##_sym##_to_text_encoder_functions) }
+#define ENCODER(_name, _sym, _fips, _output, _structure)                \
+    { _name,                                                            \
+      "provider=" ENCODER_PROVIDER ",fips=" #_fips ",output=" #_output  \
+      ",structure=" ENCODER_STRUCTURE_##_structure,                     \
+      (ossl_##_sym##_to_##_structure##_##_output##_encoder_functions) }
 
 /*
  * Entries for human text "encoders"
