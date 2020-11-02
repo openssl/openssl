@@ -118,9 +118,10 @@ static int test_hexstr_ex_to_from(int test_index)
     unsigned char buf[64];
     struct testdata *test = &tbl_testdata[test_index];
 
-    return TEST_true(OPENSSL_hexstr2buf_ex(buf, sizeof(buf), &len, test->in))
+    return TEST_true(OPENSSL_hexstr2buf_ex(buf, sizeof(buf), &len, test->in, ':'))
            && TEST_mem_eq(buf, len, test->expected, test->expected_len)
-           && TEST_true(OPENSSL_buf2hexstr_ex(out, sizeof(out), NULL, buf, len))
+           && TEST_true(OPENSSL_buf2hexstr_ex(out, sizeof(out), NULL, buf, len,
+                        ':'))
            && TEST_str_eq(out, test->in);
 }
 
