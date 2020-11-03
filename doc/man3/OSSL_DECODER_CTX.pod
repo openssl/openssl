@@ -1,8 +1,3 @@
-crypto: function OSSL_DECODER_CTX_set_input_structure(3) undocumented
-
-crypto: function OSSL_DECODER_CTX_set_selection(3) undocumented
-
-crypto: function OSSL_DECODER_INSTANCE_get_input_structure(3) undocumented
 =pod
 
 =head1 NAME
