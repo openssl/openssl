@@ -219,10 +219,6 @@ static int ossl_encoder_ctx_setup_for_EVP_PKEY(OSSL_ENCODER_CTX *ctx,
     }
 
     if (pkey->keymgmt != NULL) {
-#if 0
-        OSSL_ENCODER *found = NULL;
-        const OSSL_PROVIDER *desired_prov = EVP_KEYMGMT_provider(pkey->keymgmt);
-#endif
         struct collected_encoder_st encoder_data;
         struct collected_names_st keymgmt_data;
 
