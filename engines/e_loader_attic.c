@@ -1424,27 +1424,13 @@ static int file_read_asn1(BIO *bp, unsigned char **data, long *len)
     return 1;
 }
 
-static int ends_with_dirsep(const char *uri)
-{
-    if (*uri != '\0')
-        uri += strlen(uri) - 1;
-#if defined(__VMS)
-    if (*uri == ']' || *uri == '>' || *uri == ':')
-        return 1;
-#elif defined(_WIN32)
-    if (*uri == '\\')
-        return 1;
-#endif
-    return *uri == '/';
-}
-
 static int file_name_to_uri(OSSL_STORE_LOADER_CTX *ctx, const char *name,
                             char **data)
 {
     assert(name != NULL);
     assert(data != NULL);
     {
-        const char *pathsep = ends_with_dirsep(ctx->uri) ? "" : "/";
+        const char *pathsep = ossl_ends_with_dirsep(ctx->uri) ? "" : "/";
         long calculated_length = strlen(ctx->uri) + strlen(pathsep)
             + strlen(name) + 1 /* \0 */;
 
