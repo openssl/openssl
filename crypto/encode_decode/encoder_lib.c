@@ -425,14 +425,6 @@ static int encoder_process(struct encoder_process_data_st *data)
         new_data.count_output_structure = data->count_output_structure;
         new_data.level = data->level + 1;
 
-#if 0
-        /*
-         * Assume that we find nothing.  This is changed by the recursive
-         * call further down, if we get there.
-         */
-        ok = -1;
-#endif
-
         OSSL_TRACE_BEGIN(ENCODER) {
             BIO_printf(trc_out,
                        "[%d] (ctx %p) Considering encoder instance %p (encoder %p)\n",
