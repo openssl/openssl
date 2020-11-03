@@ -104,7 +104,10 @@ static void collect_encoder(OSSL_ENCODER *encoder, void *arg)
             || (encoder->does_selection != NULL
                 && !encoder->does_selection(provctx, data->ctx->selection)))
             continue;
-        (void)OSSL_ENCODER_CTX_add_encoder(data->ctx, encoder);
+
+        /* Only add each encoder implementation once */
+        if (OSSL_ENCODER_CTX_add_encoder(data->ctx, encoder))
+            break;
     }
 
     data->error_occured = 0;         /* All is good now */
