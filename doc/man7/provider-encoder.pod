@@ -327,8 +327,8 @@ parameters was invalid or caused an error, for which 0 is returned.
 OSSL_FUNC_encoder_settable_ctx_params() returns a pointer to an array of
 constant B<OSSL_PARAM> elements.
 
-OSSL_FUNC_encoder_does() returns 1 if the encoder implementation supports
-any of the I<selection> bits, otherwise 0.
+OSSL_FUNC_encoder_does_selection() returns 1 if the encoder implementation
+supports any of the I<selection> bits, otherwise 0.
 
 OSSL_FUNC_encoder_encode() return 1 on success, or 0 on failure.
 
