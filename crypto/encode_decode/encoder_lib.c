@@ -425,8 +425,13 @@ static int encoder_process(struct encoder_process_data_st *data)
         new_data.count_output_structure = data->count_output_structure;
         new_data.level = data->level + 1;
 
-        /* Ensure that preparations */
+#if 0
+        /*
+         * Assume that we find nothing.  This is changed by the recursive
+         * call further down, if we get there.
+         */
         ok = -1;
+#endif
 
         OSSL_TRACE_BEGIN(ENCODER) {
             BIO_printf(trc_out,
@@ -488,7 +493,12 @@ static int encoder_process(struct encoder_process_data_st *data)
             data->count_output_structure++;
         }
 
+        /*
+         * Recurse to process the encoder implementations before the current
+         * one.
+         */
         ok = encoder_process(&new_data);
+
         data->prev_encoder_inst = new_data.prev_encoder_inst;
         data->running_output = new_data.running_output;
         data->running_output_length = new_data.running_output_length;
@@ -527,9 +537,8 @@ static int encoder_process(struct encoder_process_data_st *data)
                        data->level, (void *)data->ctx);
         } OSSL_TRACE_END(ENCODER);
     } else {
-        /*
-         * Preparations
-         */
+        /* Preparations */
+
         switch (ok) {
         case 0:
             break;
@@ -600,9 +609,8 @@ static int encoder_process(struct encoder_process_data_st *data)
             break;
         }
 
-        /*
-         * Calling the encoder implementation
-         */
+        /* Calling the encoder implementation */
+
         if (ok) {
             BIO *current_out = NULL;
 
@@ -635,9 +643,8 @@ static int encoder_process(struct encoder_process_data_st *data)
         }
     }
 
-    /*
-     * Cleanup and collecting the result
-     */
+    /* Cleanup and collecting the result */
+
     OPENSSL_free(data->running_output);
     data->running_output = NULL;
 
