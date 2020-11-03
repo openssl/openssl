@@ -24,6 +24,7 @@
 #include <openssl/params.h>
 #include <openssl/decoder.h>
 #include <openssl/store.h>       /* The OSSL_STORE_INFO type numbers */
+#include "internal/cryptlib.h"
 #include "internal/o_dir.h"
 #include "crypto/pem.h"          /* For PVK and "blob" PEM headers */
 #include "crypto/decoder.h"
@@ -647,27 +648,13 @@ static int file_load_file(struct file_ctx_st *ctx,
  *  --------------------------------------
  */
 
-static int ends_with_dirsep(const char *uri)
-{
-    if (*uri != '\0')
-        uri += strlen(uri) - 1;
-#if defined(__VMS)
-    if (*uri == ']' || *uri == '>' || *uri == ':')
-        return 1;
-#elif defined(_WIN32)
-    if (*uri == '\\')
-        return 1;
-#endif
-    return *uri == '/';
-}
-
 static char *file_name_to_uri(struct file_ctx_st *ctx, const char *name)
 {
     char *data = NULL;
 
     assert(name != NULL);
     {
-        const char *pathsep = ends_with_dirsep(ctx->uri) ? "" : "/";
+        const char *pathsep = ossl_ends_with_dirsep(ctx->uri) ? "" : "/";
         long calculated_length = strlen(ctx->uri) + strlen(pathsep)
             + strlen(name) + 1 /* \0 */;
 

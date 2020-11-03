@@ -253,4 +253,18 @@ char *openssl_buf2hexstr_sep(const unsigned char *buf, long buflen, char sep);
 unsigned char *openssl_hexstr2buf_sep(const char *str, long *buflen,
                                       const char sep);
 
+static ossl_inline int ossl_ends_with_dirsep(const char *path)
+{
+    if (*path != '\0')
+        path += strlen(path) - 1;
+# if defined __VMS
+    if (*path == ']' || *path == '>' || *path == ':')
+        return 1;
+# elif defined _WIN32
+    if (*path == '\\')
+        return 1;
+# endif
+    return *path == '/';
+}
+
 #endif
