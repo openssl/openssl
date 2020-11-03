@@ -144,7 +144,8 @@ static X509_PUBKEY *key_to_pubkey(const void *key, int key_nid,
  * any defined envelopment of that kind.
  */
 static int key_to_pkcs8_der_priv_bio(BIO *out, const void *key,
-                                     int key_nid, const char *pemname,
+                                     int key_nid,
+                                     ossl_unused const char *pemname,
                                      key_to_paramstring_fn *p2s,
                                      i2d_of_void *k2d,
                                      struct key2any_ctx_st *ctx)
@@ -177,7 +178,8 @@ static int key_to_pkcs8_der_priv_bio(BIO *out, const void *key,
 }
 
 static int key_to_pkcs8_pem_priv_bio(BIO *out, const void *key,
-                                     int key_nid, const char *pemname,
+                                     int key_nid,
+                                     ossl_unused const char *pemname,
                                      key_to_paramstring_fn *p2s,
                                      i2d_of_void *k2d,
                                      struct key2any_ctx_st *ctx)
@@ -210,7 +212,8 @@ static int key_to_pkcs8_pem_priv_bio(BIO *out, const void *key,
 }
 
 static int key_to_spki_der_pub_bio(BIO *out, const void *key,
-                                   int key_nid, const char *pemname,
+                                   int key_nid,
+                                   ossl_unused const char *pemname,
                                    key_to_paramstring_fn *p2s,
                                    i2d_of_void *k2d,
                                    struct key2any_ctx_st *ctx)
@@ -234,7 +237,8 @@ static int key_to_spki_der_pub_bio(BIO *out, const void *key,
 }
 
 static int key_to_spki_pem_pub_bio(BIO *out, const void *key,
-                                   int key_nid, const char *pemname,
+                                   int key_nid,
+                                   ossl_unused const char *pemname,
                                    key_to_paramstring_fn *p2s,
                                    i2d_of_void *k2d,
                                    struct key2any_ctx_st *ctx)
@@ -270,7 +274,8 @@ static int key_to_spki_pem_pub_bio(BIO *out, const void *key,
  * on k2d to do the complete work.
  */
 static int key_to_type_specific_der_bio(BIO *out, const void *key,
-                                        int key_nid, const char *pemname,
+                                        int key_nid,
+                                        ossl_unused const char *pemname,
                                         key_to_paramstring_fn *p2s,
                                         i2d_of_void *k2d,
                                         struct key2any_ctx_st *ctx)
@@ -1073,16 +1078,11 @@ static int key2any_encode(struct key2any_ctx_st *ctx, OSSL_CORE_BIO *cout,
  * Three forms exist:
  *
  * - type_specific_keypair              Only supports private and public key
- * - type_specific_pub                  Only supports public key
  * - type_specific_params               Only supports parameters
  * - type_specific                      Supports all parts of an EVP_PKEY
  * - type_specific_no_pub               Supports all parts of an EVP_PKEY
  *                                      except public key
  */
-#define type_specific_pub_output_structure "type-specific"
-#define DO_type_specific_pub_selection_mask DO_PUBLIC_KEY_selection_mask
-#define DO_type_specific_pub(impl, type, output)                            \
-    DO_PUBLIC_KEY(impl, type, type_specific, output)
 #define type_specific_params_output_structure "type-specific"
 #define DO_type_specific_params_selection_mask DO_PARAMETERS_selection_mask
 #define DO_type_specific_params(impl, type, output)                         \
