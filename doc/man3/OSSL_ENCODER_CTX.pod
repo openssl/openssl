@@ -155,26 +155,28 @@ or NULL to indicate that an error has occured.
 
 These utility functions may be used by a constructor:
 
-OSSL_ENCODER_INSTANCE_get_encoder() can be used to get the encoder method
-from a encoder instance I<encoder_inst>.
+OSSL_ENCODER_INSTANCE_get_encoder() can be used to get the encoder
+implementation of the encoder instance I<encoder_inst>.
 
 OSSL_ENCODER_INSTANCE_get_encoder_ctx() can be used to get the encoder
-method's provider context from a encoder instance I<encoder_inst>.
+implementation's provider context of the encoder instance I<encoder_inst>.
 
 OSSL_ENCODER_INSTANCE_get_input_type() can be used to get the input type for
-encoder method from a encoder instance I<encoder_inst>.  This may be NULL.
+the encoder implementation of the encoder instance I<encoder_inst>.
+This may be NULL.
 
 OSSL_ENCODER_INSTANCE_get_output_type() can be used to get the output type
-for encoder method from a encoder instance I<encoder_inst>.  This will never
-be NULL.
+for the encoder implementation of the encoder instance I<encoder_inst>.
+This will never be NULL.
 
 OSSL_ENCODER_INSTANCE_get_output_type() can be used to get the output type
-for encoder method from a encoder instance I<encoder_inst>.  This will never
-be NULL.
+for the encoder implementation of the encoder instance I<encoder_inst>.
+This will never be NULL.
 
 OSSL_ENCODER_INSTANCE_get_output_structure() can be used to get the output
-structure for encoder method from a encoder instance I<encoder_inst>.  This
-may be NULL.
+structure for the encoder implementation of the encoder instance
+I<encoder_inst>.
+This may be NULL.
 
 =head1 RETURN VALUES
 
