@@ -162,6 +162,9 @@ static int test_dtls_drop_records(int idx)
                                        &sctx, &cctx, cert, privkey)))
         return 0;
 
+    if (!TEST_true(SSL_CTX_set_dh_auto(sctx, 1)))
+        goto end;
+
     if (idx >= TOTAL_FULL_HAND_RECORDS) {
         /* We're going to do a resumption handshake. Get a session first. */
         if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,

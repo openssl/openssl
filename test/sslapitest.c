@@ -6383,6 +6383,9 @@ static int test_info_callback(int tst)
                                        privkey)))
         goto end;
 
+    if (!TEST_true(SSL_CTX_set_dh_auto(sctx, 1)))
+        goto end;
+
     /*
      * For even numbered tests we check the server callbacks. For odd numbers we
      * check the client.
