@@ -598,7 +598,8 @@ EVP_PKEY *load_pubkey(const char *uri, int format, int maybe_stdin,
     return pkey;
 }
 
-EVP_PKEY *load_keyparams(const char *uri, int maybe_stdin, const char *desc)
+EVP_PKEY *load_keyparams(const char *uri, int maybe_stdin, const char *keytype,
+                         const char *desc)
 {
     EVP_PKEY *params = NULL;
 
@@ -607,9 +608,11 @@ EVP_PKEY *load_keyparams(const char *uri, int maybe_stdin, const char *desc)
 
     (void)load_key_certs_crls(uri, maybe_stdin, NULL, desc,
                               NULL, NULL, &params, NULL, NULL, NULL, NULL);
-    if (params == NULL) {
-        BIO_printf(bio_err, "Unable to load %s\n", desc);
+    if (params != NULL && keytype != NULL && !EVP_PKEY_is_a(params, keytype)) {
+        BIO_printf(bio_err, "Unable to load %s from %s\n", desc, uri);
         ERR_print_errors(bio_err);
+        EVP_PKEY_free(params);
+        params = NULL;
     }
     return params;
 }
@@ -699,8 +702,9 @@ int load_key_certs_crls(const char *uri, int maybe_stdin,
     int ncrls = 0;
     const char *failed =
         ppkey != NULL ? "key" : ppubkey != NULL ? "public key" :
-        pcert != NULL ? "cert" : pcrl != NULL ? "CRL" :
-        pcerts != NULL ? "certs" : pcrls != NULL ? "CRLs" : NULL;
+        pparams != NULL ? "params" : pcert != NULL ? "cert" :
+        pcrl != NULL ? "CRL" : pcerts != NULL ? "certs" :
+        pcrls != NULL ? "CRLs" : NULL;
     /* TODO make use of the engine reference 'eng' when loading pkeys */
 
     if (ppkey != NULL)
