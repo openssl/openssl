@@ -17,7 +17,7 @@ HOME			= .
 openssl_conf = openssl_init
 
 # Comment this out if you deliberately want to ignore
-# the configuration errors
+# configuration errors
 config_diagnostics = 1
 
 # Extra OBJECT IDENTIFIER info:
