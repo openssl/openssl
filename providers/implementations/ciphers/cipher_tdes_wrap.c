@@ -138,7 +138,7 @@ static int tdes_wrap_cipher(void *vctx,
         return 0;
 
     if (outsize < inl) {
-        PROVerr(0, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
+        ERR_raise(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
         return 0;
     }
 
@@ -158,12 +158,12 @@ static int tdes_wrap_update(void *vctx, unsigned char *out, size_t *outl,
     if (inl == 0)
         return 1;
     if (outsize < inl) {
-        PROVerr(0, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
+        ERR_raise(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
         return 0;
     }
 
     if (!tdes_wrap_cipher(vctx, out, outl, outsize, in, inl)) {
-        PROVerr(0, PROV_R_CIPHER_OPERATION_FAILED);
+        ERR_raise(ERR_LIB_PROV, PROV_R_CIPHER_OPERATION_FAILED);
         return 0;
     }
     return 1;

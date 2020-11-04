@@ -53,7 +53,7 @@ static void *eddsa_newctx(void *provctx, const char *propq_unused)
 
     peddsactx = OPENSSL_zalloc(sizeof(PROV_EDDSA_CTX));
     if (peddsactx == NULL) {
-        PROVerr(0, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
@@ -74,12 +74,12 @@ static int eddsa_digest_signverify_init(void *vpeddsactx, const char *mdname,
         return 0;
 
     if (mdname != NULL && mdname[0] != '\0') {
-        PROVerr(0, PROV_R_INVALID_DIGEST);
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_DIGEST);
         return 0;
     }
 
     if (!ecx_key_up_ref(edkey)) {
-        PROVerr(0, ERR_R_INTERNAL_ERROR);
+        ERR_raise(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR);
         return 0;
     }
 
@@ -101,7 +101,7 @@ static int eddsa_digest_signverify_init(void *vpeddsactx, const char *mdname,
         break;
     default:
         /* Should never happen */
-        PROVerr(0, ERR_R_INTERNAL_ERROR);
+        ERR_raise(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR);
         return 0;
     }
     if (ret && WPACKET_finish(&pkt)) {
@@ -130,13 +130,13 @@ int ed25519_digest_sign(void *vpeddsactx, unsigned char *sigret,
         return 1;
     }
     if (sigsize < ED25519_SIGSIZE) {
-        PROVerr(0, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
+        ERR_raise(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
         return 0;
     }
 
     if (ED25519_sign(sigret, tbs, tbslen, edkey->pubkey, edkey->privkey,
                      peddsactx->libctx, NULL) == 0) {
-        PROVerr(0, PROV_R_FAILED_TO_SIGN);
+        ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SIGN);
         return 0;
     }
     *siglen = ED25519_SIGSIZE;
@@ -158,13 +158,13 @@ int ed448_digest_sign(void *vpeddsactx, unsigned char *sigret,
         return 1;
     }
     if (sigsize < ED448_SIGSIZE) {
-        PROVerr(0, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
+        ERR_raise(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
         return 0;
     }
 
     if (ED448_sign(peddsactx->libctx, sigret, tbs, tbslen, edkey->pubkey,
                    edkey->privkey, NULL, 0, edkey->propq) == 0) {
-        PROVerr(0, PROV_R_FAILED_TO_SIGN);
+        ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SIGN);
         return 0;
     }
     *siglen = ED448_SIGSIZE;
@@ -224,7 +224,7 @@ static void *eddsa_dupctx(void *vpeddsactx)
     dstctx->key = NULL;
 
     if (srcctx->key != NULL && !ecx_key_up_ref(srcctx->key)) {
-        PROVerr(0, ERR_R_INTERNAL_ERROR);
+        ERR_raise(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR);
         goto err;
     }
     dstctx->key = srcctx->key;

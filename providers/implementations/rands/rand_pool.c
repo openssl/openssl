@@ -26,7 +26,7 @@ RAND_POOL *rand_pool_new(int entropy_requested, int secure,
     size_t min_alloc_size = RAND_POOL_MIN_ALLOCATION(secure);
 
     if (pool == NULL) {
-        RANDerr(RAND_F_RAND_POOL_NEW, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_RAND, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
@@ -43,7 +43,7 @@ RAND_POOL *rand_pool_new(int entropy_requested, int secure,
         pool->buffer = OPENSSL_zalloc(pool->alloc_len);
 
     if (pool->buffer == NULL) {
-        RANDerr(RAND_F_RAND_POOL_NEW, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_RAND, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
@@ -68,7 +68,7 @@ RAND_POOL *rand_pool_attach(const unsigned char *buffer, size_t len,
     RAND_POOL *pool = OPENSSL_zalloc(sizeof(*pool));
 
     if (pool == NULL) {
-        RANDerr(RAND_F_RAND_POOL_ATTACH, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_RAND, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
@@ -210,7 +210,7 @@ static int rand_pool_grow(RAND_POOL *pool, size_t len)
         size_t newlen = pool->alloc_len;
 
         if (pool->attached || len > pool->max_len - pool->len) {
-            RANDerr(RAND_F_RAND_POOL_GROW, ERR_R_INTERNAL_ERROR);
+            ERR_raise(ERR_LIB_RAND, ERR_R_INTERNAL_ERROR);
             return 0;
         }
 
@@ -223,7 +223,7 @@ static int rand_pool_grow(RAND_POOL *pool, size_t len)
         else
             p = OPENSSL_zalloc(newlen);
         if (p == NULL) {
-            RANDerr(RAND_F_RAND_POOL_GROW, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_RAND, ERR_R_MALLOC_FAILURE);
             return 0;
         }
         memcpy(p, pool->buffer, pool->len);
@@ -249,7 +249,7 @@ size_t rand_pool_bytes_needed(RAND_POOL *pool, unsigned int entropy_factor)
     size_t entropy_needed = rand_pool_entropy_needed(pool);
 
     if (entropy_factor < 1) {
-        RANDerr(RAND_F_RAND_POOL_BYTES_NEEDED, RAND_R_ARGUMENT_OUT_OF_RANGE);
+        ERR_raise(ERR_LIB_RAND, RAND_R_ARGUMENT_OUT_OF_RANGE);
         return 0;
     }
 
@@ -257,7 +257,7 @@ size_t rand_pool_bytes_needed(RAND_POOL *pool, unsigned int entropy_factor)
 
     if (bytes_needed > pool->max_len - pool->len) {
         /* not enough space left */
-        RANDerr(RAND_F_RAND_POOL_BYTES_NEEDED, RAND_R_RANDOM_POOL_OVERFLOW);
+        ERR_raise(ERR_LIB_RAND, RAND_R_RANDOM_POOL_OVERFLOW);
         return 0;
     }
 
@@ -306,12 +306,12 @@ int rand_pool_add(RAND_POOL *pool,
                   const unsigned char *buffer, size_t len, size_t entropy)
 {
     if (len > pool->max_len - pool->len) {
-        RANDerr(RAND_F_RAND_POOL_ADD, RAND_R_ENTROPY_INPUT_TOO_LONG);
+        ERR_raise(ERR_LIB_RAND, RAND_R_ENTROPY_INPUT_TOO_LONG);
         return 0;
     }
 
     if (pool->buffer == NULL) {
-        RANDerr(RAND_F_RAND_POOL_ADD, ERR_R_INTERNAL_ERROR);
+        ERR_raise(ERR_LIB_RAND, ERR_R_INTERNAL_ERROR);
         return 0;
     }
 
@@ -325,7 +325,7 @@ int rand_pool_add(RAND_POOL *pool,
          * indeterminate result.
          */
         if (pool->alloc_len > pool->len && pool->buffer + pool->len == buffer) {
-            RANDerr(RAND_F_RAND_POOL_ADD, ERR_R_INTERNAL_ERROR);
+            ERR_raise(ERR_LIB_RAND, ERR_R_INTERNAL_ERROR);
             return 0;
         }
         /*
@@ -363,12 +363,12 @@ unsigned char *rand_pool_add_begin(RAND_POOL *pool, size_t len)
         return NULL;
 
     if (len > pool->max_len - pool->len) {
-        RANDerr(RAND_F_RAND_POOL_ADD_BEGIN, RAND_R_RANDOM_POOL_OVERFLOW);
+        ERR_raise(ERR_LIB_RAND, RAND_R_RANDOM_POOL_OVERFLOW);
         return NULL;
     }
 
     if (pool->buffer == NULL) {
-        RANDerr(RAND_F_RAND_POOL_ADD_BEGIN, ERR_R_INTERNAL_ERROR);
+        ERR_raise(ERR_LIB_RAND, ERR_R_INTERNAL_ERROR);
         return NULL;
     }
 
@@ -399,7 +399,7 @@ unsigned char *rand_pool_add_begin(RAND_POOL *pool, size_t len)
 int rand_pool_add_end(RAND_POOL *pool, size_t len, size_t entropy)
 {
     if (len > pool->alloc_len - pool->len) {
-        RANDerr(RAND_F_RAND_POOL_ADD_END, RAND_R_RANDOM_POOL_OVERFLOW);
+        ERR_raise(ERR_LIB_RAND, RAND_R_RANDOM_POOL_OVERFLOW);
         return 0;
     }
 

@@ -252,7 +252,7 @@ static int kmac_init(void *vmacctx)
 
     /* Check key has been set */
     if (kctx->key_len == 0) {
-        EVPerr(EVP_F_KMAC_INIT, EVP_R_NO_KEY_SET);
+        ERR_raise(ERR_LIB_EVP, EVP_R_NO_KEY_SET);
         return 0;
     }
     if (!EVP_DigestInit_ex(kctx->ctx, ossl_prov_digest_md(&kctx->digest),

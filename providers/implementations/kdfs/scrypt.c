@@ -417,7 +417,7 @@ static int scrypt_alg(const char *pass, size_t passlen,
         return 0;
     /* Check p * r < SCRYPT_PR_MAX avoiding overflow */
     if (p > SCRYPT_PR_MAX / r) {
-        EVPerr(EVP_F_SCRYPT_ALG, EVP_R_MEMORY_LIMIT_EXCEEDED);
+        ERR_raise(ERR_LIB_EVP, EVP_R_MEMORY_LIMIT_EXCEEDED);
         return 0;
     }
 
@@ -428,7 +428,7 @@ static int scrypt_alg(const char *pass, size_t passlen,
 
     if (16 * r <= LOG2_UINT64_MAX) {
         if (N >= (((uint64_t)1) << (16 * r))) {
-            EVPerr(EVP_F_SCRYPT_ALG, EVP_R_MEMORY_LIMIT_EXCEEDED);
+            ERR_raise(ERR_LIB_EVP, EVP_R_MEMORY_LIMIT_EXCEEDED);
             return 0;
         }
     }
@@ -446,7 +446,7 @@ static int scrypt_alg(const char *pass, size_t passlen,
      * have to be revised when/if PKCS5_PBKDF2_HMAC accepts size_t.]
      */
     if (Blen > INT_MAX) {
-        EVPerr(EVP_F_SCRYPT_ALG, EVP_R_MEMORY_LIMIT_EXCEEDED);
+        ERR_raise(ERR_LIB_EVP, EVP_R_MEMORY_LIMIT_EXCEEDED);
         return 0;
     }
 
@@ -456,14 +456,14 @@ static int scrypt_alg(const char *pass, size_t passlen,
      */
     i = UINT64_MAX / (32 * sizeof(uint32_t));
     if (N + 2 > i / r) {
-        EVPerr(EVP_F_SCRYPT_ALG, EVP_R_MEMORY_LIMIT_EXCEEDED);
+        ERR_raise(ERR_LIB_EVP, EVP_R_MEMORY_LIMIT_EXCEEDED);
         return 0;
     }
     Vlen = 32 * r * (N + 2) * sizeof(uint32_t);
 
     /* check total allocated size fits in uint64_t */
     if (Blen > UINT64_MAX - Vlen) {
-        EVPerr(EVP_F_SCRYPT_ALG, EVP_R_MEMORY_LIMIT_EXCEEDED);
+        ERR_raise(ERR_LIB_EVP, EVP_R_MEMORY_LIMIT_EXCEEDED);
         return 0;
     }
 
@@ -472,7 +472,7 @@ static int scrypt_alg(const char *pass, size_t passlen,
         maxmem = SIZE_MAX;
 
     if (Blen + Vlen > maxmem) {
-        EVPerr(EVP_F_SCRYPT_ALG, EVP_R_MEMORY_LIMIT_EXCEEDED);
+        ERR_raise(ERR_LIB_EVP, EVP_R_MEMORY_LIMIT_EXCEEDED);
         return 0;
     }
 
@@ -482,7 +482,7 @@ static int scrypt_alg(const char *pass, size_t passlen,
 
     B = OPENSSL_malloc((size_t)(Blen + Vlen));
     if (B == NULL) {
-        EVPerr(EVP_F_SCRYPT_ALG, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
         return 0;
     }
     X = (uint32_t *)(B + Blen);
@@ -501,7 +501,7 @@ static int scrypt_alg(const char *pass, size_t passlen,
     rv = 1;
  err:
     if (rv == 0)
-        EVPerr(EVP_F_SCRYPT_ALG, EVP_R_PBKDF2_ERROR);
+        ERR_raise(ERR_LIB_EVP, EVP_R_PBKDF2_ERROR);
 
     OPENSSL_clear_free(B, (size_t)(Blen + Vlen));
     return rv;
