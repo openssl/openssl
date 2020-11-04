@@ -851,7 +851,7 @@ int SSL_CONF_cmd(SSL_CONF_CTX *cctx, const char *cmd, const char *value)
 {
     const ssl_conf_cmd_tbl *runcmd;
     if (cmd == NULL) {
-        SSLerr(SSL_F_SSL_CONF_CMD, SSL_R_INVALID_NULL_CMD_NAME);
+        ERR_raise(ERR_LIB_SSL, SSL_R_INVALID_NULL_CMD_NAME);
         return 0;
     }
 
@@ -873,14 +873,14 @@ int SSL_CONF_cmd(SSL_CONF_CTX *cctx, const char *cmd, const char *value)
         if (rv == -2)
             return -2;
         if (cctx->flags & SSL_CONF_FLAG_SHOW_ERRORS) {
-            SSLerr(SSL_F_SSL_CONF_CMD, SSL_R_BAD_VALUE);
+            ERR_raise(ERR_LIB_SSL, SSL_R_BAD_VALUE);
             ERR_add_error_data(4, "cmd=", cmd, ", value=", value);
         }
         return 0;
     }
 
     if (cctx->flags & SSL_CONF_FLAG_SHOW_ERRORS) {
-        SSLerr(SSL_F_SSL_CONF_CMD, SSL_R_UNKNOWN_CMD_NAME);
+        ERR_raise(ERR_LIB_SSL, SSL_R_UNKNOWN_CMD_NAME);
         ERR_add_error_data(2, "cmd=", cmd);
     }
 

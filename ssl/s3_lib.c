@@ -3457,17 +3457,17 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
             DH *dh = (DH *)parg;
             EVP_PKEY *pkdh = NULL;
             if (dh == NULL) {
-                SSLerr(SSL_F_SSL3_CTRL, ERR_R_PASSED_NULL_PARAMETER);
+                ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_NULL_PARAMETER);
                 return 0;
             }
             pkdh = ssl_dh_to_pkey(dh);
             if (pkdh == NULL) {
-                SSLerr(SSL_F_SSL3_CTRL, ERR_R_MALLOC_FAILURE);
+                ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
                 return 0;
             }
             if (!ssl_security(s, SSL_SECOP_TMP_DH,
                               EVP_PKEY_security_bits(pkdh), 0, pkdh)) {
-                SSLerr(SSL_F_SSL3_CTRL, SSL_R_DH_KEY_TOO_SMALL);
+                ERR_raise(ERR_LIB_SSL, SSL_R_DH_KEY_TOO_SMALL);
                 EVP_PKEY_free(pkdh);
                 return 0;
             }
@@ -3478,7 +3478,7 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
         break;
     case SSL_CTRL_SET_TMP_DH_CB:
         {
-            SSLerr(SSL_F_SSL3_CTRL, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+            ERR_raise(ERR_LIB_SSL, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
             return ret;
         }
     case SSL_CTRL_SET_DH_AUTO:
@@ -3492,12 +3492,12 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
             int nid;
 
             if (parg == NULL) {
-                SSLerr(SSL_F_SSL3_CTRL, ERR_R_PASSED_NULL_PARAMETER);
+                ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_NULL_PARAMETER);
                 return 0;
             }
             group = EC_KEY_get0_group((const EC_KEY *)parg);
             if (group == NULL) {
-                SSLerr(SSL_F_SSL3_CTRL, EC_R_MISSING_PARAMETERS);
+                ERR_raise(ERR_LIB_SSL, EC_R_MISSING_PARAMETERS);
                 return 0;
             }
             nid = EC_GROUP_get_curve_name(group);
@@ -3530,15 +3530,15 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
                 break;
             len = strlen((char *)parg);
             if (len == 0 || len > TLSEXT_MAXLEN_host_name) {
-                SSLerr(SSL_F_SSL3_CTRL, SSL_R_SSL3_EXT_INVALID_SERVERNAME);
+                ERR_raise(ERR_LIB_SSL, SSL_R_SSL3_EXT_INVALID_SERVERNAME);
                 return 0;
             }
             if ((s->ext.hostname = OPENSSL_strdup((char *)parg)) == NULL) {
-                SSLerr(SSL_F_SSL3_CTRL, ERR_R_INTERNAL_ERROR);
+                ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
                 return 0;
             }
         } else {
-            SSLerr(SSL_F_SSL3_CTRL, SSL_R_SSL3_EXT_INVALID_SERVERNAME_TYPE);
+            ERR_raise(ERR_LIB_SSL, SSL_R_SSL3_EXT_INVALID_SERVERNAME_TYPE);
             return 0;
         }
         break;
@@ -3808,17 +3808,17 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
             DH *dh = (DH *)parg;
             EVP_PKEY *pkdh = NULL;
             if (dh == NULL) {
-                SSLerr(SSL_F_SSL3_CTX_CTRL, ERR_R_PASSED_NULL_PARAMETER);
+                ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_NULL_PARAMETER);
                 return 0;
             }
             pkdh = ssl_dh_to_pkey(dh);
             if (pkdh == NULL) {
-                SSLerr(SSL_F_SSL3_CTX_CTRL, ERR_R_MALLOC_FAILURE);
+                ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
                 return 0;
             }
             if (!ssl_ctx_security(ctx, SSL_SECOP_TMP_DH,
                                   EVP_PKEY_security_bits(pkdh), 0, pkdh)) {
-                SSLerr(SSL_F_SSL3_CTX_CTRL, SSL_R_DH_KEY_TOO_SMALL);
+                ERR_raise(ERR_LIB_SSL, SSL_R_DH_KEY_TOO_SMALL);
                 EVP_PKEY_free(pkdh);
                 return 0;
             }
@@ -3828,7 +3828,7 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
         }
     case SSL_CTRL_SET_TMP_DH_CB:
         {
-            SSLerr(SSL_F_SSL3_CTX_CTRL, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+            ERR_raise(ERR_LIB_SSL, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
             return 0;
         }
     case SSL_CTRL_SET_DH_AUTO:
@@ -3842,12 +3842,12 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
             int nid;
 
             if (parg == NULL) {
-                SSLerr(SSL_F_SSL3_CTX_CTRL, ERR_R_PASSED_NULL_PARAMETER);
+                ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_NULL_PARAMETER);
                 return 0;
             }
             group = EC_KEY_get0_group((const EC_KEY *)parg);
             if (group == NULL) {
-                SSLerr(SSL_F_SSL3_CTX_CTRL, EC_R_MISSING_PARAMETERS);
+                ERR_raise(ERR_LIB_SSL, EC_R_MISSING_PARAMETERS);
                 return 0;
             }
             nid = EC_GROUP_get_curve_name(group);
@@ -3871,7 +3871,7 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
             if (keys == NULL)
                 return tick_keylen;
             if (larg != tick_keylen) {
-                SSLerr(SSL_F_SSL3_CTX_CTRL, SSL_R_INVALID_TICKET_KEYS_LENGTH);
+                ERR_raise(ERR_LIB_SSL, SSL_R_INVALID_TICKET_KEYS_LENGTH);
                 return 0;
             }
             if (cmd == SSL_CTRL_SET_TLSEXT_TICKET_KEYS) {
@@ -3925,11 +3925,11 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
         if (parg == NULL)
             break;
         if (strlen((const char *)parg) > 255 || strlen((const char *)parg) < 1) {
-            SSLerr(SSL_F_SSL3_CTX_CTRL, SSL_R_INVALID_SRP_USERNAME);
+            ERR_raise(ERR_LIB_SSL, SSL_R_INVALID_SRP_USERNAME);
             return 0;
         }
         if ((ctx->srp_ctx.login = OPENSSL_strdup((char *)parg)) == NULL) {
-            SSLerr(SSL_F_SSL3_CTX_CTRL, ERR_R_INTERNAL_ERROR);
+            ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
             return 0;
         }
         break;
@@ -3939,7 +3939,7 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
         if (ctx->srp_ctx.info != NULL)
             OPENSSL_free(ctx->srp_ctx.info);
         if ((ctx->srp_ctx.info = OPENSSL_strdup((char *)parg)) == NULL) {
-            SSLerr(SSL_F_SSL3_CTX_CTRL, ERR_R_INTERNAL_ERROR);
+            ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
             return 0;
         }
         break;
@@ -3993,12 +3993,12 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
     case SSL_CTRL_EXTRA_CHAIN_CERT:
         if (ctx->extra_certs == NULL) {
             if ((ctx->extra_certs = sk_X509_new_null()) == NULL) {
-                SSLerr(SSL_F_SSL3_CTX_CTRL, ERR_R_MALLOC_FAILURE);
+                ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
                 return 0;
             }
         }
         if (!sk_X509_push(ctx->extra_certs, (X509 *)parg)) {
-            SSLerr(SSL_F_SSL3_CTX_CTRL, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
             return 0;
         }
         break;

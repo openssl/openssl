@@ -1855,7 +1855,7 @@ MSG_PROCESS_RETURN tls_process_server_certificate(SSL *s, PACKET *pkt)
         if (x == NULL) {
             SSLfatal(s, SSL_AD_DECODE_ERROR,
                      SSL_F_TLS_PROCESS_SERVER_CERTIFICATE, ERR_R_MALLOC_FAILURE);
-            SSLerr(0, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
             goto err;
         }
         if (d2i_X509(&x, (const unsigned char **)&certbytes,
@@ -3654,8 +3654,7 @@ WORK_STATE tls_prepare_client_certificate(SSL *s, WORK_STATE wst)
                 i = 0;
         } else if (i == 1) {
             i = 0;
-            SSLerr(SSL_F_TLS_PREPARE_CLIENT_CERTIFICATE,
-                   SSL_R_BAD_DATA_RETURNED_BY_CALLBACK);
+            ERR_raise(ERR_LIB_SSL, SSL_R_BAD_DATA_RETURNED_BY_CALLBACK);
         }
 
         X509_free(x509);
