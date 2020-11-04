@@ -132,15 +132,13 @@ __owur int ossl_statem_accept(SSL *s);
 __owur int ossl_statem_connect(SSL *s);
 void ossl_statem_clear(SSL *s);
 void ossl_statem_set_renegotiate(SSL *s);
-void ossl_statem_fatal(SSL *s, int al, int func, int reason, const char *file,
-                       int line);
+void ossl_statem_fatal(SSL *s, int al, int reason, const char *fmt, ...);
 # define SSL_AD_NO_ALERT    -1
-# ifndef OPENSSL_NO_ERR
-#  define SSLfatal(s, al, f, r)  ossl_statem_fatal((s), (al), (0), (r), \
-                                                   OPENSSL_FILE, OPENSSL_LINE)
-# else
-#  define SSLfatal(s, al, f, r)  ossl_statem_fatal((s), (al), (0), (r), NULL, 0)
-# endif
+# define SSLfatal(s, al, r) SSLfatal_data((s), (al), (r), NULL)
+# define SSLfatal_data                                          \
+    (ERR_new(),                                                 \
+     ERR_set_debug(OPENSSL_FILE, OPENSSL_LINE, OPENSSL_FUNC),   \
+     ossl_statem_fatal)
 
 int ossl_statem_in_error(const SSL *s);
 void ossl_statem_set_in_init(SSL *s, int init);

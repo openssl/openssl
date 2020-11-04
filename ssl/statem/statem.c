@@ -112,14 +112,19 @@ void ossl_statem_set_renegotiate(SSL *s)
 }
 
 /*
- * Put the state machine into an error state and send an alert if appropriate.
+ * Error reporting building block that's used instead of ERR_set_error().
+ * In addition to what ERR_set_error() does, this puts the state machine
+ * into an error state and sends an alert if appropriate.
  * This is a permanent error for the current connection.
  */
-void ossl_statem_fatal(SSL *s, int al, int func, int reason, const char *file,
-                       int line)
+void ossl_statem_fatal(SSL *s, int al, int reason, const char *fmt, ...)
 {
-    ERR_raise(ERR_LIB_SSL, reason);
-    ERR_set_debug(file, line, NULL); /* Override what ERR_raise set */
+    va_list args;
+
+    va_start(args, fmt);
+    ERR_vset_error(ERR_LIB_SSL, reason, fmt, args);
+    va_end(args);
+
     /* We shouldn't call SSLfatal() twice. Once is enough */
     if (s->statem.in_init && s->statem.state == MSG_FLOW_ERROR)
       return;
