@@ -267,8 +267,7 @@ static EVP_PKEY *try_key_value(struct extracted_param_data_st *data,
             | OSSL_KEYMGMT_SELECT_ALL_PARAMETERS;
         break;
     case OSSL_STORE_INFO_PKEY:
-        selection =
-            OSSL_KEYMGMT_SELECT_KEYPAIR | OSSL_KEYMGMT_SELECT_ALL_PARAMETERS;
+        selection = OSSL_KEYMGMT_SELECT_ALL;
         break;
     default:
         return NULL;
