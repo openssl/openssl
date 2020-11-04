@@ -285,8 +285,8 @@ static void collect_decoder(OSSL_DECODER *decoder, void *arg)
             /*
              * Either the caller didn't give a selection, or if they did,
              * the decoder must tell us if it supports that selection to
-             * be accepted.  If the decoder doesn't have |does|, it's seen
-             * as taking anything.
+             * be accepted.  If the decoder doesn't have |does_selection|,
+             * it's seen as taking anything.
              */
             && (decoder->does_selection == NULL
                 || decoder->does_selection(provctx, data->ctx->selection))

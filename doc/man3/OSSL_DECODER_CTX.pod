@@ -192,17 +192,18 @@ constructed, otherwise 0.
 
 These utility functions may be used by a constructor:
 
-OSSL_DECODER_INSTANCE_get_decoder() can be used to get the decoder method
-from a decoder instance I<decoder_inst>.
+OSSL_DECODER_INSTANCE_get_decoder() can be used to get the decoder
+implementation from a decoder instance I<decoder_inst>.
 
 OSSL_DECODER_INSTANCE_get_decoder_ctx() can be used to get the decoder
-method's provider context from a decoder instance I<decoder_inst>.
+implementation's provider context from a decoder instance I<decoder_inst>.
 
 OSSL_DECODER_INSTANCE_get_input_type() can be used to get the decoder
-method's input type from a decoder instance I<decoder_inst>.
+implementation's input type from a decoder instance I<decoder_inst>.
 
 OSSL_DECODER_INSTANCE_get_input_structure() can be used to get the input
-structure for the encoder method from a encoder instance I<encoder_inst>.
+structure for the decoder implementation from a decoder instance
+I<decoder_inst>.
 This may be NULL.
 
 =head1 RETURN VALUES
