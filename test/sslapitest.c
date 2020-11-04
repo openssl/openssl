@@ -8608,7 +8608,9 @@ int setup_tests(void)
 
 void cleanup_tests(void)
 {
+# ifndef OPENSSL_NO_DH
     EVP_PKEY_free(tmp_dh_params);
+#endif
     OPENSSL_free(cert);
     OPENSSL_free(privkey);
     OPENSSL_free(cert2);
