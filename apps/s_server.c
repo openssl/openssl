@@ -72,7 +72,6 @@ static int generate_session_id(SSL *ssl, unsigned char *id,
                                unsigned int *id_len);
 static void init_session_cache_ctx(SSL_CTX *sctx);
 static void free_sessions(void);
-static EVP_PKEY *load_dh_param(const char *dhfile);
 static void print_connection_info(SSL *con);
 
 static const int bufsize = 16 * 1024;
@@ -2027,9 +2026,9 @@ int s_server_main(int argc, char *argv[])
         EVP_PKEY *dhpkey = NULL;
 
         if (dhfile != NULL)
-            dhpkey = load_dh_param(dhfile);
+            dhpkey = load_keyparams(dhfile, 0, "DH", "DH parameters");
         else if (s_cert_file != NULL)
-            dhpkey = load_dh_param(s_cert_file);
+            dhpkey = load_keyparams(s_cert_file, 0, "DH", "DH parameters");
 
         if (dhpkey != NULL) {
             BIO_printf(bio_s_out, "Setting temp DH parameters\n");
@@ -2057,7 +2056,8 @@ int s_server_main(int argc, char *argv[])
 
         if (ctx2 != NULL) {
             if (dhfile != NULL) {
-                EVP_PKEY *dhpkey2 = load_dh_param(s_cert_file2);
+                EVP_PKEY *dhpkey2 = load_keyparams(s_cert_file2, 0, "DH",
+                                                   "DH parameters");
 
                 if (dhpkey2 != NULL) {
                     BIO_printf(bio_s_out, "Setting temp DH parameters\n");
@@ -3002,17 +3002,6 @@ static void print_connection_info(SSL *con)
 #endif
 
     (void)BIO_flush(bio_s_out);
-}
-
-static EVP_PKEY *load_dh_param(const char *dhfile)
-{
-    EVP_PKEY *dhpkey = load_keyparams(dhfile, 0, "DH parameters");
-
-    if (dhpkey != NULL && !EVP_PKEY_is_a(dhpkey, "DH")) {
-        EVP_PKEY_free(dhpkey);
-        dhpkey = NULL;
-    }
-    return dhpkey;
 }
 
 static int www_body(int s, int stype, int prot, unsigned char *context)
