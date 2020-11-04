@@ -338,7 +338,8 @@ int ossl_method_store_fetch(OSSL_METHOD_STORE *store, int nid,
     int j, best = -1, score, optional;
 
 #ifndef FIPS_MODULE
-    OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, NULL);
+    if (!OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, NULL))
+	return 0;
 #endif
 
     if (nid <= 0 || method == NULL || store == NULL)
@@ -357,7 +358,7 @@ int ossl_method_store_fetch(OSSL_METHOD_STORE *store, int nid,
 
     if (prop_query != NULL)
         p2 = pq = ossl_parse_query(store->ctx, prop_query);
-    plp = ossl_ctx_global_properties(store->ctx, 1);
+    plp = ossl_ctx_global_properties(store->ctx, 0);
     if (plp != NULL && *plp != NULL) {
         if (pq == NULL) {
             pq = *plp;
