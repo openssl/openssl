@@ -518,65 +518,64 @@ static int check_chain(X509_STORE_CTX *ctx)
                            */
             /* Check Basic Constraints according to RFC 5280 section 4.2.1.9 */
             if (x->ex_pathlen != -1) {
-                if ((x->ex_flags & EXFLAG_CA) == 0)
-                    ctx->error = X509_V_ERR_PATHLEN_INVALID_FOR_NON_CA;
-                if ((x->ex_kusage & KU_KEY_CERT_SIGN) == 0)
-                    ctx->error = X509_V_ERR_PATHLEN_WITHOUT_KU_KEY_CERT_SIGN;
+                CHECK_CB((x->ex_flags & EXFLAG_CA) == 0,
+                         ctx, x, i, X509_V_ERR_PATHLEN_INVALID_FOR_NON_CA);
+                CHECK_CB((x->ex_kusage & KU_KEY_CERT_SIGN) == 0, ctx, x, i,
+                         X509_V_ERR_PATHLEN_WITHOUT_KU_KEY_CERT_SIGN);
             }
-            if ((x->ex_flags & EXFLAG_CA) != 0
-                    && (x->ex_flags & EXFLAG_BCONS) != 0
-                    && (x->ex_flags & EXFLAG_BCONS_CRITICAL) == 0)
-                ctx->error = X509_V_ERR_CA_BCONS_NOT_CRITICAL;
+            CHECK_CB((x->ex_flags & EXFLAG_CA) != 0
+                         && (x->ex_flags & EXFLAG_BCONS) != 0
+                         && (x->ex_flags & EXFLAG_BCONS_CRITICAL) == 0,
+                     ctx, x, i, X509_V_ERR_CA_BCONS_NOT_CRITICAL);
             /* Check Key Usage according to RFC 5280 section 4.2.1.3 */
             if ((x->ex_flags & EXFLAG_CA) != 0) {
-                if ((x->ex_flags & EXFLAG_KUSAGE) == 0)
-                    ctx->error = X509_V_ERR_CA_CERT_MISSING_KEY_USAGE;
+                CHECK_CB((x->ex_flags & EXFLAG_KUSAGE) == 0,
+                         ctx, x, i, X509_V_ERR_CA_CERT_MISSING_KEY_USAGE);
             } else {
-                if ((x->ex_kusage & KU_KEY_CERT_SIGN) != 0)
-                    ctx->error = X509_V_ERR_KU_KEY_CERT_SIGN_INVALID_FOR_NON_CA;
+                CHECK_CB((x->ex_kusage & KU_KEY_CERT_SIGN) != 0, ctx, x, i,
+                         X509_V_ERR_KU_KEY_CERT_SIGN_INVALID_FOR_NON_CA);
             }
             /* Check issuer is non-empty acc. to RFC 5280 section 4.1.2.4 */
-            if (X509_NAME_entry_count(X509_get_issuer_name(x)) == 0)
-                ctx->error = X509_V_ERR_ISSUER_NAME_EMPTY;
+            CHECK_CB(X509_NAME_entry_count(X509_get_issuer_name(x)) == 0,
+                     ctx, x, i, X509_V_ERR_ISSUER_NAME_EMPTY);
             /* Check subject is non-empty acc. to RFC 5280 section 4.1.2.6 */
-            if (((x->ex_flags & EXFLAG_CA) != 0
-                 || (x->ex_kusage & KU_CRL_SIGN) != 0
-                 || x->altname == NULL
-                 ) && X509_NAME_entry_count(X509_get_subject_name(x)) == 0)
-                ctx->error = X509_V_ERR_SUBJECT_NAME_EMPTY;
-            if (X509_NAME_entry_count(X509_get_subject_name(x)) == 0
-                    && x->altname != NULL
-                    && (x->ex_flags & EXFLAG_SAN_CRITICAL) == 0)
-                ctx->error = X509_V_ERR_EMPTY_SUBJECT_SAN_NOT_CRITICAL;
+            CHECK_CB(((x->ex_flags & EXFLAG_CA) != 0
+                      || (x->ex_kusage & KU_CRL_SIGN) != 0
+                      || x->altname == NULL
+                      ) && X509_NAME_entry_count(X509_get_subject_name(x)) == 0,
+                     ctx, x, i, X509_V_ERR_SUBJECT_NAME_EMPTY);
+            CHECK_CB(X509_NAME_entry_count(X509_get_subject_name(x)) == 0
+                         && x->altname != NULL
+                         && (x->ex_flags & EXFLAG_SAN_CRITICAL) == 0,
+                     ctx, x, i, X509_V_ERR_EMPTY_SUBJECT_SAN_NOT_CRITICAL);
             /* Check SAN is non-empty according to RFC 5280 section 4.2.1.6 */
-            if (x->altname != NULL && sk_GENERAL_NAME_num(x->altname) <= 0)
-                ctx->error = X509_V_ERR_EMPTY_SUBJECT_ALT_NAME;
+            CHECK_CB(x->altname != NULL && sk_GENERAL_NAME_num(x->altname) <= 0,
+                     ctx, x, i, X509_V_ERR_EMPTY_SUBJECT_ALT_NAME);
             /* TODO add more checks on SAN entries */
             /* Check sig alg consistency acc. to RFC 5280 section 4.1.1.2 */
-            if (X509_ALGOR_cmp(&x->sig_alg, &x->cert_info.signature) != 0)
-                ctx->error = X509_V_ERR_SIGNATURE_ALGORITHM_INCONSISTENCY;
-            if (x->akid != NULL && (x->ex_flags & EXFLAG_AKID_CRITICAL) != 0)
-                ctx->error = X509_V_ERR_AUTHORITY_KEY_IDENTIFIER_CRITICAL;
-            if (x->skid != NULL && (x->ex_flags & EXFLAG_SKID_CRITICAL) != 0)
-                ctx->error = X509_V_ERR_SUBJECT_KEY_IDENTIFIER_CRITICAL;
+            CHECK_CB(X509_ALGOR_cmp(&x->sig_alg, &x->cert_info.signature) != 0,
+                     ctx, x, i, X509_V_ERR_SIGNATURE_ALGORITHM_INCONSISTENCY);
+            CHECK_CB(x->akid != NULL
+                         && (x->ex_flags & EXFLAG_AKID_CRITICAL) != 0,
+                     ctx, x, i, X509_V_ERR_AUTHORITY_KEY_IDENTIFIER_CRITICAL);
+            CHECK_CB(x->skid != NULL
+                         && (x->ex_flags & EXFLAG_SKID_CRITICAL) != 0,
+                     ctx, x, i, X509_V_ERR_SUBJECT_KEY_IDENTIFIER_CRITICAL);
             if (X509_get_version(x) >= 2) { /* at least X.509v3 */
                 /* Check AKID presence acc. to RFC 5280 section 4.2.1.1 */
-                if (i + 1 < num /*
-                                 * this means not last cert in chain,
-                                 * taken as "generated by conforming CAs"
-                                 */
-                        && (x->akid == NULL || x->akid->keyid == NULL))
-                    ctx->error = X509_V_ERR_MISSING_AUTHORITY_KEY_IDENTIFIER;
+                CHECK_CB(i + 1 < num /*
+                                      * this means not last cert in chain,
+                                      * taken as "generated by conforming CAs"
+                                      */
+                         && (x->akid == NULL || x->akid->keyid == NULL), ctx,
+                         x, i, X509_V_ERR_MISSING_AUTHORITY_KEY_IDENTIFIER);
                 /* Check SKID presence acc. to RFC 5280 section 4.2.1.2 */
-                if ((x->ex_flags & EXFLAG_CA) != 0 && x->skid == NULL)
-                    ctx->error = X509_V_ERR_MISSING_SUBJECT_KEY_IDENTIFIER;
+                CHECK_CB((x->ex_flags & EXFLAG_CA) != 0 && x->skid == NULL,
+                         ctx, x, i, X509_V_ERR_MISSING_SUBJECT_KEY_IDENTIFIER);
             } else {
-                if (sk_X509_EXTENSION_num(X509_get0_extensions(x)) > 0)
-                    ctx->error = X509_V_ERR_EXTENSIONS_REQUIRE_VERSION_3;
+                CHECK_CB(sk_X509_EXTENSION_num(X509_get0_extensions(x)) > 0,
+                         ctx, x, i, X509_V_ERR_EXTENSIONS_REQUIRE_VERSION_3);
             }
-            if (ctx->error != X509_V_OK)
-                ret = 0;
-            CHECK_CB(ret == 0, ctx, x, i, X509_V_OK);
         }
 
         /* check_purpose() makes the callback as needed */
