@@ -123,7 +123,7 @@ struct err_state_st {
 
 # define ERR_LIB_USER            128
 
-# if 1 || !defined(OPENSSL_NO_DEPRECATED_3_0)
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define ASN1err(f, r) ERR_raise_data(ERR_LIB_ASN1, (r), NULL)
 #  define ASYNCerr(f, r) ERR_raise_data(ERR_LIB_ASYNC, (r), NULL)
 #  define BIOerr(f, r) ERR_raise_data(ERR_LIB_BIO, (r), NULL)
