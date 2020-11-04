@@ -155,13 +155,13 @@ static int rsa_encrypt(void *vprsactx, unsigned char *out, size_t *outlen,
         unsigned char *tbuf;
 
         if ((tbuf = OPENSSL_malloc(rsasize)) == NULL) {
-            PROVerr(0, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
             return 0;
         }
         if (prsactx->oaep_md == NULL) {
             OPENSSL_free(tbuf);
             prsactx->oaep_md = EVP_MD_fetch(prsactx->libctx, "SHA-1", NULL);
-            PROVerr(0, ERR_R_INTERNAL_ERROR);
+            ERR_raise(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR);
             return 0;
         }
         ret =
@@ -230,7 +230,7 @@ static int rsa_decrypt(void *vprsactx, unsigned char *out, size_t *outlen,
         unsigned char *tbuf;
 
         if ((tbuf = OPENSSL_malloc(len)) == NULL) {
-            PROVerr(0, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
             return 0;
         }
         ret = RSA_private_decrypt(inlen, in, tbuf, prsactx->rsa,
@@ -248,7 +248,7 @@ static int rsa_decrypt(void *vprsactx, unsigned char *out, size_t *outlen,
             if (prsactx->oaep_md == NULL) {
                 prsactx->oaep_md = EVP_MD_fetch(prsactx->libctx, "SHA-1", NULL);
                 if (prsactx->oaep_md == NULL) {
-                    PROVerr(0, ERR_R_INTERNAL_ERROR);
+                    ERR_raise(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR);
                     return 0;
                 }
             }

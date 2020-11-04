@@ -161,7 +161,7 @@ static size_t prov_drbg_get_entropy(PROV_DRBG *drbg, unsigned char **pout,
              * We currently don't support the algorithm from NIST SP 800-90C
              * 10.1.2 to use a weaker DRBG as source
              */
-            RANDerr(0, PROV_R_PARENT_STRENGTH_TOO_WEAK);
+            ERR_raise(ERR_LIB_RAND, PROV_R_PARENT_STRENGTH_TOO_WEAK);
             return 0;
         }
     }
@@ -402,7 +402,7 @@ int ossl_prov_drbg_instantiate(PROV_DRBG *drbg, unsigned int strength,
         return 0;
 
     if (strength > drbg->strength) {
-        PROVerr(0, PROV_R_INSUFFICIENT_DRBG_STRENGTH);
+        ERR_raise(ERR_LIB_PROV, PROV_R_INSUFFICIENT_DRBG_STRENGTH);
         goto end;
     }
     min_entropy = drbg->strength;
@@ -414,15 +414,15 @@ int ossl_prov_drbg_instantiate(PROV_DRBG *drbg, unsigned int strength,
         perslen = sizeof(ossl_pers_string);
     }
     if (perslen > drbg->max_perslen) {
-        PROVerr(0, PROV_R_PERSONALISATION_STRING_TOO_LONG);
+        ERR_raise(ERR_LIB_PROV, PROV_R_PERSONALISATION_STRING_TOO_LONG);
         goto end;
     }
 
     if (drbg->state != EVP_RAND_STATE_UNINITIALISED) {
         if (drbg->state == EVP_RAND_STATE_ERROR)
-            PROVerr(0, PROV_R_IN_ERROR_STATE);
+            ERR_raise(ERR_LIB_PROV, PROV_R_IN_ERROR_STATE);
         else
-            PROVerr(0, PROV_R_ALREADY_INSTANTIATED);
+            ERR_raise(ERR_LIB_PROV, PROV_R_ALREADY_INSTANTIATED);
         goto end;
     }
 
@@ -434,19 +434,19 @@ int ossl_prov_drbg_instantiate(PROV_DRBG *drbg, unsigned int strength,
                                           drbg->min_noncelen,
                                           drbg->max_noncelen);
             if (noncelen == 0) {
-                PROVerr(0, PROV_R_ERROR_RETRIEVING_NONCE);
+                ERR_raise(ERR_LIB_PROV, PROV_R_ERROR_RETRIEVING_NONCE);
                 goto end;
             }
             nonce = OPENSSL_malloc(noncelen);
             if (nonce == NULL) {
-                PROVerr(0, PROV_R_ERROR_RETRIEVING_NONCE);
+                ERR_raise(ERR_LIB_PROV, PROV_R_ERROR_RETRIEVING_NONCE);
                 goto end;
             }
             if (noncelen != drbg->parent_nonce(drbg->parent, nonce,
                                                drbg->strength,
                                                drbg->min_noncelen,
                                                drbg->max_noncelen)) {
-                PROVerr(0, PROV_R_ERROR_RETRIEVING_NONCE);
+                ERR_raise(ERR_LIB_PROV, PROV_R_ERROR_RETRIEVING_NONCE);
                 goto end;
             }
 #ifndef PROV_RAND_GET_RANDOM_NONCE
@@ -470,7 +470,7 @@ int ossl_prov_drbg_instantiate(PROV_DRBG *drbg, unsigned int strength,
                                            drbg->max_noncelen);
             if (noncelen < drbg->min_noncelen
                     || noncelen > drbg->max_noncelen) {
-                PROVerr(0, PROV_R_ERROR_RETRIEVING_NONCE);
+                ERR_raise(ERR_LIB_PROV, PROV_R_ERROR_RETRIEVING_NONCE);
                 goto end;
             }
         }
@@ -489,13 +489,13 @@ int ossl_prov_drbg_instantiate(PROV_DRBG *drbg, unsigned int strength,
                              prediction_resistance);
     if (entropylen < min_entropylen
             || entropylen > max_entropylen) {
-        PROVerr(0, PROV_R_ERROR_RETRIEVING_ENTROPY);
+        ERR_raise(ERR_LIB_PROV, PROV_R_ERROR_RETRIEVING_ENTROPY);
         goto end;
     }
 
     if (!drbg->instantiate(drbg, entropy, entropylen, nonce, noncelen,
                            pers, perslen)) {
-        PROVerr(0, PROV_R_ERROR_INSTANTIATING_DRBG);
+        ERR_raise(ERR_LIB_PROV, PROV_R_ERROR_INSTANTIATING_DRBG);
         goto end;
     }
 
@@ -548,23 +548,23 @@ int ossl_prov_drbg_reseed(PROV_DRBG *drbg, int prediction_resistance,
         rand_drbg_restart(drbg);
 
         if (drbg->state == EVP_RAND_STATE_ERROR) {
-            PROVerr(0, PROV_R_IN_ERROR_STATE);
+            ERR_raise(ERR_LIB_PROV, PROV_R_IN_ERROR_STATE);
             return 0;
         }
         if (drbg->state == EVP_RAND_STATE_UNINITIALISED) {
-            PROVerr(0, PROV_R_NOT_INSTANTIATED);
+            ERR_raise(ERR_LIB_PROV, PROV_R_NOT_INSTANTIATED);
             return 0;
         }
     }
 
     if (ent != NULL) {
         if (ent_len < drbg->min_entropylen) {
-            RANDerr(0, RAND_R_ENTROPY_OUT_OF_RANGE);
+            ERR_raise(ERR_LIB_RAND, RAND_R_ENTROPY_OUT_OF_RANGE);
             drbg->state = EVP_RAND_STATE_ERROR;
             return 0;
         }
         if (ent_len > drbg->max_entropylen) {
-            RANDerr(0, RAND_R_ENTROPY_INPUT_TOO_LONG);
+            ERR_raise(ERR_LIB_RAND, RAND_R_ENTROPY_INPUT_TOO_LONG);
             drbg->state = EVP_RAND_STATE_ERROR;
             return 0;
         }
@@ -573,7 +573,7 @@ int ossl_prov_drbg_reseed(PROV_DRBG *drbg, int prediction_resistance,
     if (adin == NULL) {
         adinlen = 0;
     } else if (adinlen > drbg->max_adinlen) {
-        PROVerr(0, PROV_R_ADDITIONAL_INPUT_TOO_LONG);
+        ERR_raise(ERR_LIB_PROV, PROV_R_ADDITIONAL_INPUT_TOO_LONG);
         return 0;
     }
 
@@ -616,7 +616,7 @@ int ossl_prov_drbg_reseed(PROV_DRBG *drbg, int prediction_resistance,
                              prediction_resistance);
     if (entropylen < drbg->min_entropylen
             || entropylen > drbg->max_entropylen) {
-        PROVerr(0, PROV_R_ERROR_RETRIEVING_ENTROPY);
+        ERR_raise(ERR_LIB_PROV, PROV_R_ERROR_RETRIEVING_ENTROPY);
         goto end;
     }
 
@@ -662,25 +662,25 @@ int ossl_prov_drbg_generate(PROV_DRBG *drbg, unsigned char *out, size_t outlen,
         rand_drbg_restart(drbg);
 
         if (drbg->state == EVP_RAND_STATE_ERROR) {
-            PROVerr(0, PROV_R_IN_ERROR_STATE);
+            ERR_raise(ERR_LIB_PROV, PROV_R_IN_ERROR_STATE);
             return 0;
         }
         if (drbg->state == EVP_RAND_STATE_UNINITIALISED) {
-            PROVerr(0, PROV_R_NOT_INSTANTIATED);
+            ERR_raise(ERR_LIB_PROV, PROV_R_NOT_INSTANTIATED);
             return 0;
         }
     }
     if (strength > drbg->strength) {
-        PROVerr(0, PROV_R_INSUFFICIENT_DRBG_STRENGTH);
+        ERR_raise(ERR_LIB_PROV, PROV_R_INSUFFICIENT_DRBG_STRENGTH);
         return 0;
     }
 
     if (outlen > drbg->max_request) {
-        PROVerr(0, PROV_R_REQUEST_TOO_LARGE_FOR_DRBG);
+        ERR_raise(ERR_LIB_PROV, PROV_R_REQUEST_TOO_LARGE_FOR_DRBG);
         return 0;
     }
     if (adinlen > drbg->max_adinlen) {
-        PROVerr(0, PROV_R_ADDITIONAL_INPUT_TOO_LONG);
+        ERR_raise(ERR_LIB_PROV, PROV_R_ADDITIONAL_INPUT_TOO_LONG);
         return 0;
     }
 
@@ -708,7 +708,7 @@ int ossl_prov_drbg_generate(PROV_DRBG *drbg, unsigned char *out, size_t outlen,
     if (reseed_required || prediction_resistance) {
         if (!ossl_prov_drbg_reseed(drbg, prediction_resistance, NULL, 0,
                                    adin, adinlen)) {
-            PROVerr(0, PROV_R_RESEED_ERROR);
+            ERR_raise(ERR_LIB_PROV, PROV_R_RESEED_ERROR);
             return 0;
         }
         adin = NULL;
@@ -717,7 +717,7 @@ int ossl_prov_drbg_generate(PROV_DRBG *drbg, unsigned char *out, size_t outlen,
 
     if (!drbg->generate(drbg, out, outlen, adin, adinlen)) {
         drbg->state = EVP_RAND_STATE_ERROR;
-        PROVerr(0, PROV_R_GENERATE_ERROR);
+        ERR_raise(ERR_LIB_PROV, PROV_R_GENERATE_ERROR);
         return 0;
     }
 
@@ -749,7 +749,7 @@ static int rand_drbg_restart(PROV_DRBG *drbg)
         drbg->state = EVP_RAND_STATE_ERROR;
         rand_pool_free(drbg->seed_pool);
         drbg->seed_pool = NULL;
-        RANDerr(0, ERR_R_INTERNAL_ERROR);
+        ERR_raise(ERR_LIB_RAND, ERR_R_INTERNAL_ERROR);
         return 0;
     }
 

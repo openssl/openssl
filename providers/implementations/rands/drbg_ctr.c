@@ -494,7 +494,7 @@ static int drbg_ctr_init_lengths(PROV_DRBG *drbg)
 
 #ifdef FIPS_MODULE
     if (!ctr->use_df) {
-        PROVerr(0, RAND_R_DERIVATION_FUNCTION_MANDATORY_FOR_FIPS);
+        ERR_raise(ERR_LIB_PROV, RAND_R_DERIVATION_FUNCTION_MANDATORY_FOR_FIPS);
         ctr->use_df = 1;
         res = 0;
     }
