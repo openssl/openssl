@@ -13,8 +13,15 @@ X509_verify_cert - discover and verify X509 certificate chain
 =head1 DESCRIPTION
 
 The X509_verify_cert() function attempts to discover and validate a
-certificate chain based on parameters in B<ctx>. A complete description of
-the process is contained in the L<openssl-verify(1)> manual page.
+certificate chain based on parameters in B<ctx>.
+The verification context, of type B<X509_STORE_CTX>, can be constructed
+using L<X509_STORE_CTX_new(3)> and L<X509_STORE_CTX_init(3)>.
+It usually includes a set of certificates serving as trust anchors,
+a set of non-trusted certificates that may be needed for chain construction,
+flags such as X509_V_FLAG_X509_STRICT, and various other optional components
+such as a callback function that allows customizing the verification outcome.
+A complete description of the certificate verification process is contained in
+the L<openssl-verify(1)> manual page.
 
 Applications rarely call this function directly but it is used by
 OpenSSL internally for certificate validation, in both the S/MIME and
@@ -35,7 +42,7 @@ otherwise it return zero, in exceptional circumstances it can also
 return a negative code.
 
 If the function fails additional error information can be obtained by
-examining B<ctx> using, for example X509_STORE_CTX_get_error().
+examining B<ctx> using, for example L<X509_STORE_CTX_get_error(3)>.
 
 =head1 BUGS
 
@@ -45,6 +52,7 @@ functions which use F<< <x509_vfy.h> >>.
 
 =head1 SEE ALSO
 
+L<X509_STORE_CTX_new(3)>, L<X509_STORE_CTX_init(3)>,
 L<X509_STORE_CTX_get_error(3)>
 
 =head1 COPYRIGHT
