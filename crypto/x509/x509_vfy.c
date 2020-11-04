@@ -3356,10 +3356,11 @@ static int build_chain(X509_STORE_CTX *ctx)
         CHECK_CB(DANETLS_ENABLED(dane)
                      && (!DANETLS_HAS_PKIX(dane) || dane->pdpth >= 0),
                  ctx, NULL, num-1, X509_V_ERR_DANE_NO_MATCH);
-        CHECK_CB(self_signed, ctx, NULL, num-1,
-                 sk_X509_num(ctx->chain) == 1
-                 ? X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT
-                 : X509_V_ERR_SELF_SIGNED_CERT_IN_CHAIN);
+        if (self_signed)
+            return verify_cb_cert(ctx, NULL, num-1,
+                                  sk_X509_num(ctx->chain) == 1
+                                  ? X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT
+                                  : X509_V_ERR_SELF_SIGNED_CERT_IN_CHAIN);
         return verify_cb_cert(ctx, NULL, num-1,
                               ctx->num_untrusted < num
                               ? X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT
