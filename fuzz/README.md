@@ -114,15 +114,15 @@ To do all the tests of a specific fuzzer such as asn1 you can run
 
     fuzz/asn1-test fuzz/corpora/asn1
 or
-    make test TESTS=fuzz_test FUZZ_TESTS=asn1
+    make test TESTS=fuzz_test_asn1
 
 To run several fuzz tests you can use for instance:
 
-    make test TESTS=test_fuzz FUZZ_TESTS="cmp cms"
+    make test TESTS='test_fuzz_cmp test_fuzz_cms'
 
 To run all fuzz tests you can use:
 
-    make test TESTS=test_fuzz
+    make test TESTS='test_fuzz_*'
 
 Random numbers
 --------------

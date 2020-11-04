@@ -1,3 +1,4 @@
+#!/usr/bin/env perl
 # Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -8,19 +9,14 @@
 use strict;
 use warnings;
 
-use OpenSSL::Glob;
-use OpenSSL::Test qw/:DEFAULT srctop_dir/;
+use OpenSSL::Test qw/:DEFAULT srctop_file/;
+use OpenSSL::Test::Utils;
 
-sub fuzz_ok {
-    die "Only one argument accepted" if scalar @_ != 1;
+my $fuzzer = "client";
+setup("test_fuzz_${fuzzer}");
 
-    my $f = $_[0];
-    my $d = srctop_dir('fuzz', 'corpora', $f);
+plan tests => 2; # one more due to below require_ok(...)
 
-    SKIP: {
-        skip "No directory $d", 1 unless -d $d;
-        ok(run(fuzz(["$f-test", $d])), "Fuzzing $f");
-    }
-}
+require_ok(srctop_file('test','recipes','fuzz.pl'));
 
-1;
+fuzz_ok($fuzzer);
