@@ -270,7 +270,10 @@ static ossl_inline int ossl_ends_with_dirsep(const char *path)
 static ossl_inline int ossl_is_absolute_path(const char *path)
 {
 # if defined __VMS
-    if (strchr(path, ':') != NULL)
+    if (strchr(path, ':') != NULL
+        || ((path[0] == '[' || path[0] == '<')
+            && path[1] != '.' && path[1] != '-'
+            && path[1] != ']' && path[1] != '>'))
         return 1;
 # elif defined _WIN32
     if (path[0] == '\\'
