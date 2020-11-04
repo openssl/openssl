@@ -16,7 +16,7 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_x509");
 
-plan tests => 15;
+plan tests => 14;
 
 require_ok(srctop_file('test','recipes','tconversion.pl'));
 
@@ -124,8 +124,6 @@ sub test_errors { # actually tests diagnostics of OSSL_STORE
     return $res && $found;
 }
 
-ok(test_errors("Can't open any-dir/", "root-cert.pem", '-out', 'any-dir/'),
-   "load root-cert errors");
 ok(test_errors("RC2-40-CBC", "v3-certs-RC2.p12", '-passin', 'pass:v3-certs'),
    "load v3-certs-RC2 no asn1 errors");
 SKIP: {
