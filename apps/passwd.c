@@ -7,9 +7,6 @@
  * https://www.openssl.org/source/license.html
  */
 
-/* We need to use some deprecated APIs */
-#define OPENSSL_SUPPRESS_DEPRECATED
-
 #include <string.h>
 
 #include "apps.h"
@@ -41,7 +38,6 @@ static const char ascii_dollar[] = { 0x24, 0x00 };
 
 typedef enum {
     passwd_unset = 0,
-    passwd_crypt,
     passwd_md5,
     passwd_apr1,
     passwd_sha256,
@@ -57,7 +53,7 @@ typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_IN,
     OPT_NOVERIFY, OPT_QUIET, OPT_TABLE, OPT_REVERSE, OPT_APR1,
-    OPT_1, OPT_5, OPT_6, OPT_CRYPT, OPT_AIXMD5, OPT_SALT, OPT_STDIN,
+    OPT_1, OPT_5, OPT_6, OPT_AIXMD5, OPT_SALT, OPT_STDIN,
     OPT_R_ENUM, OPT_PROV_ENUM
 } OPTION_CHOICE;
 
@@ -85,9 +81,6 @@ const OPTIONS passwd_options[] = {
     {"apr1", OPT_APR1, '-', "MD5-based password algorithm, Apache variant"},
     {"1", OPT_1, '-', "MD5-based password algorithm"},
     {"aixmd5", OPT_AIXMD5, '-', "AIX MD5-based password algorithm"},
-#if !defined(OPENSSL_NO_DES) && !defined(OPENSSL_NO_DEPRECATED_3_0)
-    {"crypt", OPT_CRYPT, '-', "Standard Unix password algorithm (default)"},
-#endif
 
     OPT_R_OPTIONS,
     OPT_PROV_OPTIONS,
@@ -171,13 +164,6 @@ int passwd_main(int argc, char **argv)
                 goto opthelp;
             mode = passwd_aixmd5;
             break;
-        case OPT_CRYPT:
-#if !defined(OPENSSL_NO_DES) && !defined(OPENSSL_NO_DEPRECATED_3_0)
-            if (mode != passwd_unset)
-                goto opthelp;
-            mode = passwd_crypt;
-#endif
-            break;
         case OPT_SALT:
             passed_salt = 1;
             salt = opt_arg();
@@ -210,13 +196,8 @@ int passwd_main(int argc, char **argv)
 
     if (mode == passwd_unset) {
         /* use default */
-        mode = passwd_crypt;
+        mode = passwd_md5;
     }
-
-#if defined(OPENSSL_NO_DES) || defined(OPENSSL_NO_DEPRECATED_3_0)
-    if (mode == passwd_crypt)
-        goto opthelp;
-#endif
 
     if (infile != NULL && in_stdin) {
         BIO_printf(bio_err, "%s: Can't combine -in and -stdin\n", prog);
@@ -232,9 +213,6 @@ int passwd_main(int argc, char **argv)
         if (in == NULL)
             goto end;
     }
-
-    if (mode == passwd_crypt)
-        pw_maxlen = 8;
 
     if (passwds == NULL) {
         /* no passwords on the command line */
@@ -806,11 +784,6 @@ static int do_passwd(int passed_salt, char **salt_p, char **salt_malloc_p,
         size_t saltlen = 0;
         size_t i;
 
-#if !defined(OPENSSL_NO_DES) && !defined(OPENSSL_NO_DEPRECATED_3_0)
-        if (mode == passwd_crypt)
-            saltlen = 2;
-#endif                         /* !OPENSSL_NO_DES */
-
         if (mode == passwd_md5 || mode == passwd_apr1 || mode == passwd_aixmd5)
             saltlen = 8;
 
@@ -849,10 +822,6 @@ static int do_passwd(int passed_salt, char **salt_p, char **salt_malloc_p,
     assert(strlen(passwd) <= pw_maxlen);
 
     /* now compute password hash */
-#if !defined(OPENSSL_NO_DES) && !defined(OPENSSL_NO_DEPRECATED_3_0)
-    if (mode == passwd_crypt)
-        hash = DES_crypt(passwd, *salt_p);
-#endif
     if (mode == passwd_md5 || mode == passwd_apr1)
         hash = md5crypt(passwd, (mode == passwd_md5 ? "1" : "apr1"), *salt_p);
     if (mode == passwd_aixmd5)

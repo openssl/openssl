@@ -9,7 +9,6 @@ openssl-passwd - compute password hashes
 
 B<openssl passwd>
 [B<-help>]
-[B<-crypt>]
 [B<-1>]
 [B<-apr1>]
 [B<-aixmd5>]
@@ -34,9 +33,8 @@ This command computes the hash of a password typed at
 run-time or the hash of each password in a list.  The password list is
 taken from the named file for option B<-in>, from stdin for
 option B<-stdin>, or from the command line, or from the terminal otherwise.
-The Unix standard algorithm B<-crypt> and the MD5-based BSD password
-algorithm B<-1>, its Apache variant B<-apr1>, and its AIX variant are
-available.
+The MD5-based BSD password algorithm B<-1>, its Apache variant B<-apr1>,
+and its AIX variant are available.
 
 =head1 OPTIONS
 
@@ -46,13 +44,9 @@ available.
 
 Print out a usage message.
 
-=item B<-crypt>
-
-Use the B<crypt> algorithm (default).
-
 =item B<-1>
 
-Use the MD5 based BSD password algorithm B<1>.
+Use the MD5 based BSD password algorithm B<1> (default).
 
 =item B<-apr1>
 
@@ -107,9 +101,6 @@ When the B<-table> option is used, reverse the order of cleartext and hash.
 
 =head1 EXAMPLES
 
-  % openssl passwd -crypt -salt xx password
-  xxj31ZMTZzkVA
-
   % openssl passwd -1 -salt xxxxxxxx password
   $1$xxxxxxxx$UYCIxa628.9qXjpQCjM4a.
 
@@ -118,6 +109,10 @@ When the B<-table> option is used, reverse the order of cleartext and hash.
 
   % openssl passwd -aixmd5 -salt xxxxxxxx password
   xxxxxxxx$8Oaipk/GPKhC64w/YVeFD/
+
+=head1 HISTORY
+
+The B<-crypt> option was removed in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

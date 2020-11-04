@@ -23,6 +23,10 @@ OpenSSL 3.0
 
 ### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
 
+ * The -crypt option to the passwd command line tool has been removed.
+
+   *Paul Dale*
+
  * Add support for AES Key Wrap inverse ciphers to the EVP layer.
    The algorithms are:
    "AES-128-WRAP-INV", "AES-192-WRAP-INV", "AES-256-WRAP-INV",
