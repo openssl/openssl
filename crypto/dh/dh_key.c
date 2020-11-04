@@ -44,12 +44,12 @@ static int compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
 #endif
 
     if (BN_num_bits(dh->params.p) > OPENSSL_DH_MAX_MODULUS_BITS) {
-        DHerr(0, DH_R_MODULUS_TOO_LARGE);
+        ERR_raise(ERR_LIB_DH, DH_R_MODULUS_TOO_LARGE);
         goto err;
     }
 
     if (BN_num_bits(dh->params.p) < DH_MIN_MODULUS_BITS) {
-        DHerr(0, DH_R_MODULUS_TOO_SMALL);
+        ERR_raise(ERR_LIB_DH, DH_R_MODULUS_TOO_SMALL);
         return 0;
     }
 
@@ -62,7 +62,7 @@ static int compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
         goto err;
 
     if (dh->priv_key == NULL) {
-        DHerr(0, DH_R_NO_PRIVATE_VALUE);
+        ERR_raise(ERR_LIB_DH, DH_R_NO_PRIVATE_VALUE);
         goto err;
     }
 
@@ -76,13 +76,13 @@ static int compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
 /* TODO(3.0) : Solve in a PR related to Key validation for DH */
 #ifndef FIPS_MODULE
     if (!DH_check_pub_key(dh, pub_key, &check_result) || check_result) {
-        DHerr(0, DH_R_INVALID_PUBKEY);
+        ERR_raise(ERR_LIB_DH, DH_R_INVALID_PUBKEY);
         goto err;
     }
 #endif
     if (!dh->meth->bn_mod_exp(dh, tmp, pub_key, dh->priv_key, dh->params.p, ctx,
                               mont)) {
-        DHerr(0, ERR_R_BN_LIB);
+        ERR_raise(ERR_LIB_DH, ERR_R_BN_LIB);
         goto err;
     }
 
@@ -229,12 +229,12 @@ static int generate_key(DH *dh)
     BIGNUM *pub_key = NULL, *priv_key = NULL;
 
     if (BN_num_bits(dh->params.p) > OPENSSL_DH_MAX_MODULUS_BITS) {
-        DHerr(0, DH_R_MODULUS_TOO_LARGE);
+        ERR_raise(ERR_LIB_DH, DH_R_MODULUS_TOO_LARGE);
         return 0;
     }
 
     if (BN_num_bits(dh->params.p) < DH_MIN_MODULUS_BITS) {
-        DHerr(0, DH_R_MODULUS_TOO_SMALL);
+        ERR_raise(ERR_LIB_DH, DH_R_MODULUS_TOO_SMALL);
         return 0;
     }
 
@@ -325,7 +325,7 @@ static int generate_key(DH *dh)
     ok = 1;
  err:
     if (ok != 1)
-        DHerr(0, ERR_R_BN_LIB);
+        ERR_raise(ERR_LIB_DH, ERR_R_BN_LIB);
 
     if (pub_key != dh->pub_key)
         BN_free(pub_key);
@@ -361,7 +361,7 @@ int dh_buf2key(DH *dh, const unsigned char *buf, size_t len)
         goto err;
     return 1;
 err:
-    DHerr(DH_F_DH_BUF2KEY, err_reason);
+    ERR_raise(ERR_LIB_DH, err_reason);
     BN_free(pubkey);
     return 0;
 }
@@ -378,7 +378,7 @@ size_t dh_key2buf(const DH *dh, unsigned char **pbuf_out, size_t size, int alloc
     if (p == NULL || pubkey == NULL
             || (p_size = BN_num_bytes(p)) == 0
             || BN_num_bytes(pubkey) == 0) {
-        DHerr(DH_F_DH_KEY2BUF, DH_R_INVALID_PUBKEY);
+        ERR_raise(ERR_LIB_DH, DH_R_INVALID_PUBKEY);
         return 0;
     }
     if (pbuf_out != NULL && (alloc || *pbuf_out != NULL)) {
@@ -390,7 +390,7 @@ size_t dh_key2buf(const DH *dh, unsigned char **pbuf_out, size_t size, int alloc
         }
 
         if (pbuf == NULL) {
-            DHerr(DH_F_DH_KEY2BUF, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_DH, ERR_R_MALLOC_FAILURE);
             return 0;
         }
         /*
@@ -400,7 +400,7 @@ size_t dh_key2buf(const DH *dh, unsigned char **pbuf_out, size_t size, int alloc
         if (BN_bn2binpad(pubkey, pbuf, p_size) < 0) {
             if (alloc)
                 OPENSSL_free(pbuf);
-            DHerr(DH_F_DH_KEY2BUF, DH_R_BN_ERROR);
+            ERR_raise(ERR_LIB_DH, DH_R_BN_ERROR);
             return 0;
         }
         *pbuf_out = pbuf;

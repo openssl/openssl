@@ -131,7 +131,7 @@ static int pkey_dsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
         if (EVP_MD_type((const EVP_MD *)p2) != NID_sha1 &&
             EVP_MD_type((const EVP_MD *)p2) != NID_sha224 &&
             EVP_MD_type((const EVP_MD *)p2) != NID_sha256) {
-            DSAerr(DSA_F_PKEY_DSA_CTRL, DSA_R_INVALID_DIGEST_TYPE);
+            ERR_raise(ERR_LIB_DSA, DSA_R_INVALID_DIGEST_TYPE);
             return 0;
         }
         dctx->pmd = p2;
@@ -149,7 +149,7 @@ static int pkey_dsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
             EVP_MD_type((const EVP_MD *)p2) != NID_sha3_256 &&
             EVP_MD_type((const EVP_MD *)p2) != NID_sha3_384 &&
             EVP_MD_type((const EVP_MD *)p2) != NID_sha3_512) {
-            DSAerr(DSA_F_PKEY_DSA_CTRL, DSA_R_INVALID_DIGEST_TYPE);
+            ERR_raise(ERR_LIB_DSA, DSA_R_INVALID_DIGEST_TYPE);
             return 0;
         }
         dctx->md = p2;
@@ -165,8 +165,7 @@ static int pkey_dsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
         return 1;
 
     case EVP_PKEY_CTRL_PEER_KEY:
-        DSAerr(DSA_F_PKEY_DSA_CTRL,
-               EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        ERR_raise(ERR_LIB_DSA, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
         return -2;
     default:
         return -2;
@@ -190,7 +189,7 @@ static int pkey_dsa_ctrl_str(EVP_PKEY_CTX *ctx,
         const EVP_MD *md = EVP_get_digestbyname(value);
 
         if (md == NULL) {
-            DSAerr(DSA_F_PKEY_DSA_CTRL_STR, DSA_R_INVALID_DIGEST_TYPE);
+            ERR_raise(ERR_LIB_DSA, DSA_R_INVALID_DIGEST_TYPE);
             return 0;
         }
         return EVP_PKEY_CTX_set_dsa_paramgen_md(ctx, md);
@@ -236,7 +235,7 @@ static int pkey_dsa_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
     DSA *dsa = NULL;
 
     if (ctx->pkey == NULL) {
-        DSAerr(DSA_F_PKEY_DSA_KEYGEN, DSA_R_NO_PARAMETERS_SET);
+        ERR_raise(ERR_LIB_DSA, DSA_R_NO_PARAMETERS_SET);
         return 0;
     }
     dsa = DSA_new();

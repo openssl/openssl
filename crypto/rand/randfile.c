@@ -94,14 +94,14 @@ int RAND_load_file(const char *file, long bytes)
         return 0;
 
     if ((in = openssl_fopen(file, "rb")) == NULL) {
-        RANDerr(RAND_F_RAND_LOAD_FILE, RAND_R_CANNOT_OPEN_FILE);
+        ERR_raise(ERR_LIB_RAND, RAND_R_CANNOT_OPEN_FILE);
         ERR_add_error_data(2, "Filename=", file);
         return -1;
     }
 
 #ifndef OPENSSL_NO_POSIX_IO
     if (fstat(fileno(in), &sb) < 0) {
-        RANDerr(RAND_F_RAND_LOAD_FILE, RAND_R_INTERNAL_ERROR);
+        ERR_raise(ERR_LIB_RAND, RAND_R_INTERNAL_ERROR);
         ERR_add_error_data(2, "Filename=", file);
         fclose(in);
         return -1;
@@ -162,7 +162,7 @@ int RAND_load_file(const char *file, long bytes)
     OPENSSL_cleanse(buf, sizeof(buf));
     fclose(in);
     if (!RAND_status()) {
-        RANDerr(RAND_F_RAND_LOAD_FILE, RAND_R_RESEED_ERROR);
+        ERR_raise(ERR_LIB_RAND, RAND_R_RESEED_ERROR);
         ERR_add_error_data(2, "Filename=", file);
         return -1;
     }
@@ -179,7 +179,7 @@ int RAND_write_file(const char *file)
     struct stat sb;
 
     if (stat(file, &sb) >= 0 && !S_ISREG(sb.st_mode)) {
-        RANDerr(RAND_F_RAND_WRITE_FILE, RAND_R_NOT_A_REGULAR_FILE);
+        ERR_raise(ERR_LIB_RAND, RAND_R_NOT_A_REGULAR_FILE);
         ERR_add_error_data(2, "Filename=", file);
         return -1;
     }
@@ -229,7 +229,7 @@ int RAND_write_file(const char *file)
     if (out == NULL)
         out = openssl_fopen(file, "wb");
     if (out == NULL) {
-        RANDerr(RAND_F_RAND_WRITE_FILE, RAND_R_CANNOT_OPEN_FILE);
+        ERR_raise(ERR_LIB_RAND, RAND_R_CANNOT_OPEN_FILE);
         ERR_add_error_data(2, "Filename=", file);
         return -1;
     }

@@ -76,14 +76,14 @@ static RSA *rsa_new_intern(ENGINE *engine, OSSL_LIB_CTX *libctx)
     RSA *ret = OPENSSL_zalloc(sizeof(*ret));
 
     if (ret == NULL) {
-        RSAerr(0, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_RSA, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
     ret->references = 1;
     ret->lock = CRYPTO_THREAD_lock_new();
     if (ret->lock == NULL) {
-        RSAerr(0, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_RSA, ERR_R_MALLOC_FAILURE);
         OPENSSL_free(ret);
         return NULL;
     }
@@ -94,7 +94,7 @@ static RSA *rsa_new_intern(ENGINE *engine, OSSL_LIB_CTX *libctx)
     ret->flags = ret->meth->flags & ~RSA_FLAG_NON_FIPS_ALLOW;
     if (engine) {
         if (!ENGINE_init(engine)) {
-            RSAerr(0, ERR_R_ENGINE_LIB);
+            ERR_raise(ERR_LIB_RSA, ERR_R_ENGINE_LIB);
             goto err;
         }
         ret->engine = engine;
@@ -104,7 +104,7 @@ static RSA *rsa_new_intern(ENGINE *engine, OSSL_LIB_CTX *libctx)
     if (ret->engine) {
         ret->meth = ENGINE_get_RSA(ret->engine);
         if (ret->meth == NULL) {
-            RSAerr(0, ERR_R_ENGINE_LIB);
+            ERR_raise(ERR_LIB_RSA, ERR_R_ENGINE_LIB);
             goto err;
         }
     }
@@ -118,7 +118,7 @@ static RSA *rsa_new_intern(ENGINE *engine, OSSL_LIB_CTX *libctx)
 #endif
 
     if ((ret->meth->init != NULL) && !ret->meth->init(ret)) {
-        RSAerr(0, ERR_R_INIT_FAIL);
+        ERR_raise(ERR_LIB_RSA, ERR_R_INIT_FAIL);
         goto err;
     }
 

@@ -25,7 +25,7 @@ void *ASN1_d2i_fp(void *(*xnew) (void), d2i_of_void *d2i, FILE *in, void **x)
     void *ret;
 
     if ((b = BIO_new(BIO_s_file())) == NULL) {
-        ASN1err(ASN1_F_ASN1_D2I_FP, ERR_R_BUF_LIB);
+        ERR_raise(ERR_LIB_ASN1, ERR_R_BUF_LIB);
         return NULL;
     }
     BIO_set_fp(b, in, BIO_NOCLOSE);
@@ -80,7 +80,7 @@ void *ASN1_item_d2i_fp(const ASN1_ITEM *it, FILE *in, void *x)
     char *ret;
 
     if ((b = BIO_new(BIO_s_file())) == NULL) {
-        ASN1err(ASN1_F_ASN1_ITEM_D2I_FP, ERR_R_BUF_LIB);
+        ERR_raise(ERR_LIB_ASN1, ERR_R_BUF_LIB);
         return NULL;
     }
     BIO_set_fp(b, in, BIO_NOCLOSE);
@@ -108,7 +108,7 @@ int asn1_d2i_read_bio(BIO *in, BUF_MEM **pb)
 
     b = BUF_MEM_new();
     if (b == NULL) {
-        ASN1err(ASN1_F_ASN1_D2I_READ_BIO, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
         return -1;
     }
 
@@ -118,17 +118,17 @@ int asn1_d2i_read_bio(BIO *in, BUF_MEM **pb)
             want -= (len - off);
 
             if (len + want < len || !BUF_MEM_grow_clean(b, len + want)) {
-                ASN1err(ASN1_F_ASN1_D2I_READ_BIO, ERR_R_MALLOC_FAILURE);
+                ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
                 goto err;
             }
             i = BIO_read(in, &(b->data[len]), want);
             if ((i < 0) && ((len - off) == 0)) {
-                ASN1err(ASN1_F_ASN1_D2I_READ_BIO, ASN1_R_NOT_ENOUGH_DATA);
+                ERR_raise(ERR_LIB_ASN1, ASN1_R_NOT_ENOUGH_DATA);
                 goto err;
             }
             if (i > 0) {
                 if (len + i < len) {
-                    ASN1err(ASN1_F_ASN1_D2I_READ_BIO, ASN1_R_TOO_LONG);
+                    ERR_raise(ERR_LIB_ASN1, ASN1_R_TOO_LONG);
                     goto err;
                 }
                 len += i;
@@ -154,7 +154,7 @@ int asn1_d2i_read_bio(BIO *in, BUF_MEM **pb)
         if (inf & 1) {
             /* no data body so go round again */
             if (eos == UINT32_MAX) {
-                ASN1err(ASN1_F_ASN1_D2I_READ_BIO, ASN1_R_HEADER_TOO_LONG);
+                ERR_raise(ERR_LIB_ASN1, ASN1_R_HEADER_TOO_LONG);
                 goto err;
             }
             eos++;
@@ -175,7 +175,7 @@ int asn1_d2i_read_bio(BIO *in, BUF_MEM **pb)
                 want -= (len - off);
                 if (want > INT_MAX /* BIO_read takes an int length */  ||
                     len + want < len) {
-                    ASN1err(ASN1_F_ASN1_D2I_READ_BIO, ASN1_R_TOO_LONG);
+                    ERR_raise(ERR_LIB_ASN1, ASN1_R_TOO_LONG);
                     goto err;
                 }
                 while (want > 0) {
@@ -188,15 +188,14 @@ int asn1_d2i_read_bio(BIO *in, BUF_MEM **pb)
                     size_t chunk = want > chunk_max ? chunk_max : want;
 
                     if (!BUF_MEM_grow_clean(b, len + chunk)) {
-                        ASN1err(ASN1_F_ASN1_D2I_READ_BIO, ERR_R_MALLOC_FAILURE);
+                        ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
                         goto err;
                     }
                     want -= chunk;
                     while (chunk > 0) {
                         i = BIO_read(in, &(b->data[len]), chunk);
                         if (i <= 0) {
-                            ASN1err(ASN1_F_ASN1_D2I_READ_BIO,
-                                    ASN1_R_NOT_ENOUGH_DATA);
+                            ERR_raise(ERR_LIB_ASN1, ASN1_R_NOT_ENOUGH_DATA);
                             goto err;
                         }
                     /*
@@ -211,7 +210,7 @@ int asn1_d2i_read_bio(BIO *in, BUF_MEM **pb)
                 }
             }
             if (off + slen < off) {
-                ASN1err(ASN1_F_ASN1_D2I_READ_BIO, ASN1_R_TOO_LONG);
+                ERR_raise(ERR_LIB_ASN1, ASN1_R_TOO_LONG);
                 goto err;
             }
             off += slen;
@@ -223,7 +222,7 @@ int asn1_d2i_read_bio(BIO *in, BUF_MEM **pb)
     }
 
     if (off > INT_MAX) {
-        ASN1err(ASN1_F_ASN1_D2I_READ_BIO, ASN1_R_TOO_LONG);
+        ERR_raise(ERR_LIB_ASN1, ASN1_R_TOO_LONG);
         goto err;
     }
 

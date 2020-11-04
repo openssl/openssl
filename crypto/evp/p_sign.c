@@ -33,7 +33,7 @@ int EVP_SignFinal_ex(EVP_MD_CTX *ctx, unsigned char *sigret,
         EVP_MD_CTX *tmp_ctx = EVP_MD_CTX_new();
 
         if (tmp_ctx == NULL) {
-            EVPerr(0, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
             return 0;
         }
         rv = EVP_MD_CTX_copy_ex(tmp_ctx, ctx);

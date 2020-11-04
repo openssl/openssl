@@ -65,7 +65,7 @@ X509_POLICY_NODE *level_add_node(X509_POLICY_LEVEL *level,
 
     node = OPENSSL_zalloc(sizeof(*node));
     if (node == NULL) {
-        X509V3err(X509V3_F_LEVEL_ADD_NODE, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
     node->data = data;
@@ -80,11 +80,11 @@ X509_POLICY_NODE *level_add_node(X509_POLICY_LEVEL *level,
             if (level->nodes == NULL)
                 level->nodes = policy_node_cmp_new();
             if (level->nodes == NULL) {
-                X509V3err(X509V3_F_LEVEL_ADD_NODE, ERR_R_MALLOC_FAILURE);
+                ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
                 goto node_error;
             }
             if (!sk_X509_POLICY_NODE_push(level->nodes, node)) {
-                X509V3err(X509V3_F_LEVEL_ADD_NODE, ERR_R_MALLOC_FAILURE);
+                ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
                 goto node_error;
             }
         }
@@ -94,11 +94,11 @@ X509_POLICY_NODE *level_add_node(X509_POLICY_LEVEL *level,
         if (tree->extra_data == NULL)
             tree->extra_data = sk_X509_POLICY_DATA_new_null();
         if (tree->extra_data == NULL){
-            X509V3err(X509V3_F_LEVEL_ADD_NODE, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
             goto node_error;
         }
         if (!sk_X509_POLICY_DATA_push(tree->extra_data, data)) {
-            X509V3err(X509V3_F_LEVEL_ADD_NODE, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
             goto node_error;
         }
     }

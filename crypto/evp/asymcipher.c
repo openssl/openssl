@@ -25,7 +25,7 @@ static int evp_pkey_asym_cipher_init(EVP_PKEY_CTX *ctx, int operation)
     const char *supported_ciph = NULL;
 
     if (ctx == NULL) {
-        EVPerr(0, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
         return -2;
     }
 
@@ -100,14 +100,14 @@ static int evp_pkey_asym_cipher_init(EVP_PKEY_CTX *ctx, int operation)
     ctx->op.ciph.ciphprovctx = cipher->newctx(ossl_provider_ctx(cipher->prov));
     if (ctx->op.ciph.ciphprovctx == NULL) {
         /* The provider key can stay in the cache */
-        EVPerr(0, EVP_R_INITIALIZATION_ERROR);
+        ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
         goto err;
     }
 
     switch (operation) {
     case EVP_PKEY_OP_ENCRYPT:
         if (cipher->encrypt_init == NULL) {
-            EVPerr(0, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+            ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
             ret = -2;
             goto err;
         }
@@ -115,14 +115,14 @@ static int evp_pkey_asym_cipher_init(EVP_PKEY_CTX *ctx, int operation)
         break;
     case EVP_PKEY_OP_DECRYPT:
         if (cipher->decrypt_init == NULL) {
-            EVPerr(0, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+            ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
             ret = -2;
             goto err;
         }
         ret = cipher->decrypt_init(ctx->op.ciph.ciphprovctx, provkey);
         break;
     default:
-        EVPerr(0, EVP_R_INITIALIZATION_ERROR);
+        ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
         goto err;
     }
 
@@ -139,7 +139,7 @@ static int evp_pkey_asym_cipher_init(EVP_PKEY_CTX *ctx, int operation)
     ERR_pop_to_mark();
 
     if (ctx->pmeth == NULL || ctx->pmeth->encrypt == NULL) {
-        EVPerr(0, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
         return -2;
     }
     switch(ctx->operation) {
@@ -154,7 +154,7 @@ static int evp_pkey_asym_cipher_init(EVP_PKEY_CTX *ctx, int operation)
         ret = ctx->pmeth->decrypt_init(ctx);
         break;
     default:
-        EVPerr(0, EVP_R_INITIALIZATION_ERROR);
+        ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
         ret = -1;
     }
 
@@ -178,12 +178,12 @@ int EVP_PKEY_encrypt(EVP_PKEY_CTX *ctx,
     int ret;
 
     if (ctx == NULL) {
-        EVPerr(0, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
         return -2;
     }
 
     if (ctx->operation != EVP_PKEY_OP_ENCRYPT) {
-        EVPerr(0, EVP_R_OPERATON_NOT_INITIALIZED);
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATON_NOT_INITIALIZED);
         return -1;
     }
 
@@ -196,8 +196,7 @@ int EVP_PKEY_encrypt(EVP_PKEY_CTX *ctx,
 
  legacy:
     if (ctx->pmeth == NULL || ctx->pmeth->encrypt == NULL) {
-        EVPerr(EVP_F_EVP_PKEY_ENCRYPT,
-               EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
         return -2;
     }
     M_check_autoarg(ctx, out, outlen, EVP_F_EVP_PKEY_ENCRYPT)
@@ -216,12 +215,12 @@ int EVP_PKEY_decrypt(EVP_PKEY_CTX *ctx,
     int ret;
 
     if (ctx == NULL) {
-        EVPerr(0, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
         return -2;
     }
 
     if (ctx->operation != EVP_PKEY_OP_DECRYPT) {
-        EVPerr(0, EVP_R_OPERATON_NOT_INITIALIZED);
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATON_NOT_INITIALIZED);
         return -1;
     }
 
@@ -234,8 +233,7 @@ int EVP_PKEY_decrypt(EVP_PKEY_CTX *ctx,
 
  legacy:
     if (ctx->pmeth == NULL || ctx->pmeth->decrypt == NULL) {
-        EVPerr(EVP_F_EVP_PKEY_DECRYPT,
-               EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
         return -2;
     }
     M_check_autoarg(ctx, out, outlen, EVP_F_EVP_PKEY_DECRYPT)

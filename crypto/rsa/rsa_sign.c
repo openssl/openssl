@@ -247,19 +247,19 @@ static int encode_pkcs1(unsigned char **out, size_t *out_len, int type,
     unsigned char *dig_info;
 
     if (type == NID_undef) {
-        RSAerr(RSA_F_ENCODE_PKCS1, RSA_R_UNKNOWN_ALGORITHM_TYPE);
+        ERR_raise(ERR_LIB_RSA, RSA_R_UNKNOWN_ALGORITHM_TYPE);
         return 0;
     }
     di_prefix = ossl_rsa_digestinfo_encoding(type, &di_prefix_len);
     if (di_prefix == NULL) {
-        RSAerr(RSA_F_ENCODE_PKCS1,
-               RSA_R_THE_ASN1_OBJECT_IDENTIFIER_IS_NOT_KNOWN_FOR_THIS_MD);
+        ERR_raise(ERR_LIB_RSA,
+                  RSA_R_THE_ASN1_OBJECT_IDENTIFIER_IS_NOT_KNOWN_FOR_THIS_MD);
         return 0;
     }
     dig_info_len = di_prefix_len + m_len;
     dig_info = OPENSSL_malloc(dig_info_len);
     if (dig_info == NULL) {
-        RSAerr(RSA_F_ENCODE_PKCS1, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_RSA, ERR_R_MALLOC_FAILURE);
         return 0;
     }
     memcpy(dig_info, di_prefix, di_prefix_len);
@@ -291,7 +291,7 @@ int RSA_sign(int type, const unsigned char *m, unsigned int m_len,
          * RSASSA-PKCS1-v1_5.
          */
         if (m_len != SSL_SIG_LENGTH) {
-            RSAerr(RSA_F_RSA_SIGN, RSA_R_INVALID_MESSAGE_LENGTH);
+            ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_MESSAGE_LENGTH);
             return 0;
         }
         encoded_len = SSL_SIG_LENGTH;
@@ -303,7 +303,7 @@ int RSA_sign(int type, const unsigned char *m, unsigned int m_len,
     }
 
     if (encoded_len + RSA_PKCS1_PADDING_SIZE > (size_t)RSA_size(rsa)) {
-        RSAerr(RSA_F_RSA_SIGN, RSA_R_DIGEST_TOO_BIG_FOR_RSA_KEY);
+        ERR_raise(ERR_LIB_RSA, RSA_R_DIGEST_TOO_BIG_FOR_RSA_KEY);
         goto err;
     }
     encrypt_len = RSA_private_encrypt((int)encoded_len, encoded, sigret, rsa,
@@ -337,14 +337,14 @@ int int_rsa_verify(int type, const unsigned char *m, unsigned int m_len,
     unsigned char *decrypt_buf = NULL, *encoded = NULL;
 
     if (siglen != (size_t)RSA_size(rsa)) {
-        RSAerr(RSA_F_INT_RSA_VERIFY, RSA_R_WRONG_SIGNATURE_LENGTH);
+        ERR_raise(ERR_LIB_RSA, RSA_R_WRONG_SIGNATURE_LENGTH);
         return 0;
     }
 
     /* Recover the encoded digest. */
     decrypt_buf = OPENSSL_malloc(siglen);
     if (decrypt_buf == NULL) {
-        RSAerr(RSA_F_INT_RSA_VERIFY, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_RSA, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
@@ -362,7 +362,7 @@ int int_rsa_verify(int type, const unsigned char *m, unsigned int m_len,
          * RSASSA-PKCS1-v1_5.
          */
         if (decrypt_len != SSL_SIG_LENGTH) {
-            RSAerr(RSA_F_INT_RSA_VERIFY, RSA_R_BAD_SIGNATURE);
+            ERR_raise(ERR_LIB_RSA, RSA_R_BAD_SIGNATURE);
             goto err;
         }
 
@@ -371,12 +371,12 @@ int int_rsa_verify(int type, const unsigned char *m, unsigned int m_len,
             *prm_len = SSL_SIG_LENGTH;
         } else {
             if (m_len != SSL_SIG_LENGTH) {
-                RSAerr(RSA_F_INT_RSA_VERIFY, RSA_R_INVALID_MESSAGE_LENGTH);
+                ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_MESSAGE_LENGTH);
                 goto err;
             }
 
             if (memcmp(decrypt_buf, m, SSL_SIG_LENGTH) != 0) {
-                RSAerr(RSA_F_INT_RSA_VERIFY, RSA_R_BAD_SIGNATURE);
+                ERR_raise(ERR_LIB_RSA, RSA_R_BAD_SIGNATURE);
                 goto err;
             }
         }
@@ -391,12 +391,12 @@ int int_rsa_verify(int type, const unsigned char *m, unsigned int m_len,
             *prm_len = 16;
         } else {
             if (m_len != 16) {
-                RSAerr(RSA_F_INT_RSA_VERIFY, RSA_R_INVALID_MESSAGE_LENGTH);
+                ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_MESSAGE_LENGTH);
                 goto err;
             }
 
             if (memcmp(m, decrypt_buf + 2, 16) != 0) {
-                RSAerr(RSA_F_INT_RSA_VERIFY, RSA_R_BAD_SIGNATURE);
+                ERR_raise(ERR_LIB_RSA, RSA_R_BAD_SIGNATURE);
                 goto err;
             }
         }
@@ -415,7 +415,7 @@ int int_rsa_verify(int type, const unsigned char *m, unsigned int m_len,
                 goto err;
             m_len = (unsigned int)len;
             if (m_len > decrypt_len) {
-                RSAerr(RSA_F_INT_RSA_VERIFY, RSA_R_INVALID_DIGEST_LENGTH);
+                ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_DIGEST_LENGTH);
                 goto err;
             }
             m = decrypt_buf + decrypt_len - m_len;
@@ -427,7 +427,7 @@ int int_rsa_verify(int type, const unsigned char *m, unsigned int m_len,
 
         if (encoded_len != decrypt_len
                 || memcmp(encoded, decrypt_buf, encoded_len) != 0) {
-            RSAerr(RSA_F_INT_RSA_VERIFY, RSA_R_BAD_SIGNATURE);
+            ERR_raise(ERR_LIB_RSA, RSA_R_BAD_SIGNATURE);
             goto err;
         }
 

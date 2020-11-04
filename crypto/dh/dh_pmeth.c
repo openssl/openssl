@@ -57,7 +57,7 @@ static int pkey_dh_init(EVP_PKEY_CTX *ctx)
     DH_PKEY_CTX *dctx;
 
     if ((dctx = OPENSSL_zalloc(sizeof(*dctx))) == NULL) {
-        DHerr(DH_F_PKEY_DH_INIT, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_DH, ERR_R_MALLOC_FAILURE);
         return 0;
     }
     dctx->prime_len = 2048;
@@ -245,7 +245,7 @@ static int pkey_dh_ctrl_str(EVP_PKEY_CTX *ctx,
         int nid = OBJ_sn2nid(value);
 
         if (nid == NID_undef) {
-            DHerr(DH_F_PKEY_DH_CTRL_STR, DH_R_INVALID_PARAMETER_NAME);
+            ERR_raise(ERR_LIB_DH, DH_R_INVALID_PARAMETER_NAME);
             return -2;
         }
         dctx->param_nid = nid;
@@ -400,7 +400,7 @@ static int pkey_dh_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
     DH *dh = NULL;
 
     if (ctx->pkey == NULL && dctx->param_nid == NID_undef) {
-        DHerr(DH_F_PKEY_DH_KEYGEN, DH_R_NO_PARAMETERS_SET);
+        ERR_raise(ERR_LIB_DH, DH_R_NO_PARAMETERS_SET);
         return 0;
     }
     if (dctx->param_nid != NID_undef)
@@ -424,7 +424,7 @@ static int pkey_dh_derive(EVP_PKEY_CTX *ctx, unsigned char *key,
     DH_PKEY_CTX *dctx = ctx->data;
     BIGNUM *dhpub;
     if (!ctx->pkey || !ctx->peerkey) {
-        DHerr(DH_F_PKEY_DH_DERIVE, DH_R_KEYS_NOT_SET);
+        ERR_raise(ERR_LIB_DH, DH_R_KEYS_NOT_SET);
         return 0;
     }
     dh = ctx->pkey->pkey.dh;

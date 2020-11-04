@@ -321,13 +321,13 @@ static int bio_zlib_new(BIO *bi)
 # ifdef ZLIB_SHARED
     (void)COMP_zlib();
     if (!zlib_loaded) {
-        COMPerr(COMP_F_BIO_ZLIB_NEW, COMP_R_ZLIB_NOT_SUPPORTED);
+        ERR_raise(ERR_LIB_COMP, COMP_R_ZLIB_NOT_SUPPORTED);
         return 0;
     }
 # endif
     ctx = OPENSSL_zalloc(sizeof(*ctx));
     if (ctx == NULL) {
-        COMPerr(COMP_F_BIO_ZLIB_NEW, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_COMP, ERR_R_MALLOC_FAILURE);
         return 0;
     }
     ctx->ibufsize = ZLIB_DEFAULT_BUFSIZE;
@@ -381,7 +381,7 @@ static int bio_zlib_read(BIO *b, char *out, int outl)
     if (!ctx->ibuf) {
         ctx->ibuf = OPENSSL_malloc(ctx->ibufsize);
         if (ctx->ibuf == NULL) {
-            COMPerr(COMP_F_BIO_ZLIB_READ, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_COMP, ERR_R_MALLOC_FAILURE);
             return 0;
         }
         inflateInit(zin);
@@ -397,7 +397,7 @@ static int bio_zlib_read(BIO *b, char *out, int outl)
         while (zin->avail_in) {
             ret = inflate(zin, 0);
             if ((ret != Z_OK) && (ret != Z_STREAM_END)) {
-                COMPerr(COMP_F_BIO_ZLIB_READ, COMP_R_ZLIB_INFLATE_ERROR);
+                ERR_raise(ERR_LIB_COMP, COMP_R_ZLIB_INFLATE_ERROR);
                 ERR_add_error_data(2, "zlib error:", zError(ret));
                 return 0;
             }
@@ -442,7 +442,7 @@ static int bio_zlib_write(BIO *b, const char *in, int inl)
         ctx->obuf = OPENSSL_malloc(ctx->obufsize);
         /* Need error here */
         if (ctx->obuf == NULL) {
-            COMPerr(COMP_F_BIO_ZLIB_WRITE, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_COMP, ERR_R_MALLOC_FAILURE);
             return 0;
         }
         ctx->optr = ctx->obuf;
@@ -483,7 +483,7 @@ static int bio_zlib_write(BIO *b, const char *in, int inl)
         /* Compress some more */
         ret = deflate(zout, 0);
         if (ret != Z_OK) {
-            COMPerr(COMP_F_BIO_ZLIB_WRITE, COMP_R_ZLIB_DEFLATE_ERROR);
+            ERR_raise(ERR_LIB_COMP, COMP_R_ZLIB_DEFLATE_ERROR);
             ERR_add_error_data(2, "zlib error:", zError(ret));
             return 0;
         }
@@ -532,7 +532,7 @@ static int bio_zlib_flush(BIO *b)
         if (ret == Z_STREAM_END)
             ctx->odone = 1;
         else if (ret != Z_OK) {
-            COMPerr(COMP_F_BIO_ZLIB_FLUSH, COMP_R_ZLIB_DEFLATE_ERROR);
+            ERR_raise(ERR_LIB_COMP, COMP_R_ZLIB_DEFLATE_ERROR);
             ERR_add_error_data(2, "zlib error:", zError(ret));
             return 0;
         }

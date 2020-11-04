@@ -87,7 +87,7 @@ static int dir_ctrl(X509_LOOKUP *ctx, int cmd, const char *argp, long argl,
                 ret = add_cert_dir(ld, X509_get_default_cert_dir(),
                                    X509_FILETYPE_PEM);
             if (!ret) {
-                X509err(X509_F_DIR_CTRL, X509_R_LOADING_CERT_DIR);
+                ERR_raise(ERR_LIB_X509, X509_R_LOADING_CERT_DIR);
             }
         } else
             ret = add_cert_dir(ld, argp, (int)argl);
@@ -101,19 +101,19 @@ static int new_dir(X509_LOOKUP *lu)
     BY_DIR *a = OPENSSL_malloc(sizeof(*a));
 
     if (a == NULL) {
-        X509err(X509_F_NEW_DIR, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
         return 0;
     }
 
     if ((a->buffer = BUF_MEM_new()) == NULL) {
-        X509err(X509_F_NEW_DIR, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
         goto err;
     }
     a->dirs = NULL;
     a->lock = CRYPTO_THREAD_lock_new();
     if (a->lock == NULL) {
         BUF_MEM_free(a->buffer);
-        X509err(X509_F_NEW_DIR, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
         goto err;
     }
     lu->method_data = a;
@@ -163,7 +163,7 @@ static int add_cert_dir(BY_DIR *ctx, const char *dir, int type)
     const char *s, *ss, *p;
 
     if (dir == NULL || *dir == '\0') {
-        X509err(X509_F_ADD_CERT_DIR, X509_R_INVALID_DIRECTORY);
+        ERR_raise(ERR_LIB_X509, X509_R_INVALID_DIRECTORY);
         return 0;
     }
 
@@ -188,13 +188,13 @@ static int add_cert_dir(BY_DIR *ctx, const char *dir, int type)
             if (ctx->dirs == NULL) {
                 ctx->dirs = sk_BY_DIR_ENTRY_new_null();
                 if (!ctx->dirs) {
-                    X509err(X509_F_ADD_CERT_DIR, ERR_R_MALLOC_FAILURE);
+                    ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
                     return 0;
                 }
             }
             ent = OPENSSL_malloc(sizeof(*ent));
             if (ent == NULL) {
-                X509err(X509_F_ADD_CERT_DIR, ERR_R_MALLOC_FAILURE);
+                ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
                 return 0;
             }
             ent->dir_type = type;
@@ -206,7 +206,7 @@ static int add_cert_dir(BY_DIR *ctx, const char *dir, int type)
             }
             if (!sk_BY_DIR_ENTRY_push(ctx->dirs, ent)) {
                 by_dir_entry_free(ent);
-                X509err(X509_F_ADD_CERT_DIR, ERR_R_MALLOC_FAILURE);
+                ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
                 return 0;
             }
         }
@@ -243,12 +243,12 @@ static int get_cert_by_subject_ex(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
         stmp.data.crl = &data.crl;
         postfix = "r";
     } else {
-        X509err(0, X509_R_WRONG_LOOKUP_TYPE);
+        ERR_raise(ERR_LIB_X509, X509_R_WRONG_LOOKUP_TYPE);
         goto finish;
     }
 
     if ((b = BUF_MEM_new()) == NULL) {
-        X509err(0, ERR_R_BUF_LIB);
+        ERR_raise(ERR_LIB_X509, ERR_R_BUF_LIB);
         goto finish;
     }
 
@@ -263,7 +263,7 @@ static int get_cert_by_subject_ex(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
         ent = sk_BY_DIR_ENTRY_value(ctx->dirs, i);
         j = strlen(ent->dir) + 1 + 8 + 6 + 1 + 1;
         if (!BUF_MEM_grow(b, j)) {
-            X509err(0, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
             goto finish;
         }
         if (type == X509_LU_CRL && ent->hashes) {
@@ -360,7 +360,7 @@ static int get_cert_by_subject_ex(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
                 hent = OPENSSL_malloc(sizeof(*hent));
                 if (hent == NULL) {
                     CRYPTO_THREAD_unlock(ctx->lock);
-                    X509err(0, ERR_R_MALLOC_FAILURE);
+                    ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
                     ok = 0;
                     goto finish;
                 }
@@ -369,7 +369,7 @@ static int get_cert_by_subject_ex(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
                 if (!sk_BY_DIR_HASH_push(ent->hashes, hent)) {
                     CRYPTO_THREAD_unlock(ctx->lock);
                     OPENSSL_free(hent);
-                    X509err(0, ERR_R_MALLOC_FAILURE);
+                    ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
                     ok = 0;
                     goto finish;
                 }

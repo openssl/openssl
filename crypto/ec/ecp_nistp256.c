@@ -156,12 +156,12 @@ static int BN_to_felem(felem out, const BIGNUM *bn)
     int num_bytes;
 
     if (BN_is_negative(bn)) {
-        ECerr(EC_F_BN_TO_FELEM, EC_R_BIGNUM_OUT_OF_RANGE);
+        ERR_raise(ERR_LIB_EC, EC_R_BIGNUM_OUT_OF_RANGE);
         return 0;
     }
     num_bytes = BN_bn2lebinpad(bn, b_out, sizeof(b_out));
     if (num_bytes < 0) {
-        ECerr(EC_F_BN_TO_FELEM, EC_R_BIGNUM_OUT_OF_RANGE);
+        ERR_raise(ERR_LIB_EC, EC_R_BIGNUM_OUT_OF_RANGE);
         return 0;
     }
     bin32_to_felem(out, b_out);
@@ -1853,7 +1853,7 @@ static NISTP256_PRE_COMP *nistp256_pre_comp_new(void)
     NISTP256_PRE_COMP *ret = OPENSSL_zalloc(sizeof(*ret));
 
     if (ret == NULL) {
-        ECerr(EC_F_NISTP256_PRE_COMP_NEW, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
         return ret;
     }
 
@@ -1861,7 +1861,7 @@ static NISTP256_PRE_COMP *nistp256_pre_comp_new(void)
 
     ret->lock = CRYPTO_THREAD_lock_new();
     if (ret->lock == NULL) {
-        ECerr(EC_F_NISTP256_PRE_COMP_NEW, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
         OPENSSL_free(ret);
         return NULL;
     }
@@ -1931,8 +1931,7 @@ int ec_GFp_nistp256_group_set_curve(EC_GROUP *group, const BIGNUM *p,
     BN_bin2bn(nistp256_curve_params[1], sizeof(felem_bytearray), curve_a);
     BN_bin2bn(nistp256_curve_params[2], sizeof(felem_bytearray), curve_b);
     if ((BN_cmp(curve_p, p)) || (BN_cmp(curve_a, a)) || (BN_cmp(curve_b, b))) {
-        ECerr(EC_F_EC_GFP_NISTP256_GROUP_SET_CURVE,
-              EC_R_WRONG_CURVE_PARAMETERS);
+        ERR_raise(ERR_LIB_EC, EC_R_WRONG_CURVE_PARAMETERS);
         goto err;
     }
     group->field_mod_func = BN_nist_mod_256;
@@ -1959,8 +1958,7 @@ int ec_GFp_nistp256_point_get_affine_coordinates(const EC_GROUP *group,
     longfelem tmp;
 
     if (EC_POINT_is_at_infinity(group, point)) {
-        ECerr(EC_F_EC_GFP_NISTP256_POINT_GET_AFFINE_COORDINATES,
-              EC_R_POINT_AT_INFINITY);
+        ERR_raise(ERR_LIB_EC, EC_R_POINT_AT_INFINITY);
         return 0;
     }
     if ((!BN_to_felem(x_in, point->X)) || (!BN_to_felem(y_in, point->Y)) ||
@@ -1974,8 +1972,7 @@ int ec_GFp_nistp256_point_get_affine_coordinates(const EC_GROUP *group,
     felem_contract(x_out, x_in);
     if (x != NULL) {
         if (!smallfelem_to_BN(x, x_out)) {
-            ECerr(EC_F_EC_GFP_NISTP256_POINT_GET_AFFINE_COORDINATES,
-                  ERR_R_BN_LIB);
+            ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
             return 0;
         }
     }
@@ -1986,8 +1983,7 @@ int ec_GFp_nistp256_point_get_affine_coordinates(const EC_GROUP *group,
     felem_contract(y_out, y_in);
     if (y != NULL) {
         if (!smallfelem_to_BN(y, y_out)) {
-            ECerr(EC_F_EC_GFP_NISTP256_POINT_GET_AFFINE_COORDINATES,
-                  ERR_R_BN_LIB);
+            ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
             return 0;
         }
     }
@@ -2075,7 +2071,7 @@ int ec_GFp_nistp256_points_mul(const EC_GROUP *group, EC_POINT *r,
         if (!smallfelem_to_BN(x, g_pre_comp[0][1][0]) ||
             !smallfelem_to_BN(y, g_pre_comp[0][1][1]) ||
             !smallfelem_to_BN(z, g_pre_comp[0][1][2])) {
-            ECerr(EC_F_EC_GFP_NISTP256_POINTS_MUL, ERR_R_BN_LIB);
+            ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
             goto err;
         }
         if (!ec_GFp_simple_set_Jprojective_coordinates_GFp(group, generator, x,
@@ -2106,7 +2102,7 @@ int ec_GFp_nistp256_points_mul(const EC_GROUP *group, EC_POINT *r,
               OPENSSL_malloc(sizeof(*tmp_smallfelems) * (num_points * 17 + 1));
         if ((secrets == NULL) || (pre_comp == NULL)
             || (mixed && (tmp_smallfelems == NULL))) {
-            ECerr(EC_F_EC_GFP_NISTP256_POINTS_MUL, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
             goto err;
         }
 
@@ -2138,7 +2134,7 @@ int ec_GFp_nistp256_points_mul(const EC_GROUP *group, EC_POINT *r,
                      * constant-timeness
                      */
                     if (!BN_nnmod(tmp_scalar, p_scalar, group->order, ctx)) {
-                        ECerr(EC_F_EC_GFP_NISTP256_POINTS_MUL, ERR_R_BN_LIB);
+                        ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
                         goto err;
                     }
                     num_bytes = BN_bn2lebinpad(tmp_scalar,
@@ -2148,7 +2144,7 @@ int ec_GFp_nistp256_points_mul(const EC_GROUP *group, EC_POINT *r,
                                                secrets[i], sizeof(secrets[i]));
                 }
                 if (num_bytes < 0) {
-                    ECerr(EC_F_EC_GFP_NISTP256_POINTS_MUL, ERR_R_BN_LIB);
+                    ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
                     goto err;
                 }
                 /* precompute multiples */
@@ -2192,7 +2188,7 @@ int ec_GFp_nistp256_points_mul(const EC_GROUP *group, EC_POINT *r,
              * constant-timeness
              */
             if (!BN_nnmod(tmp_scalar, scalar, group->order, ctx)) {
-                ECerr(EC_F_EC_GFP_NISTP256_POINTS_MUL, ERR_R_BN_LIB);
+                ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
                 goto err;
             }
             num_bytes = BN_bn2lebinpad(tmp_scalar, g_secret, sizeof(g_secret));
@@ -2216,7 +2212,7 @@ int ec_GFp_nistp256_points_mul(const EC_GROUP *group, EC_POINT *r,
     felem_contract(z_in, z_out);
     if ((!smallfelem_to_BN(x, x_in)) || (!smallfelem_to_BN(y, y_in)) ||
         (!smallfelem_to_BN(z, z_in))) {
-        ECerr(EC_F_EC_GFP_NISTP256_POINTS_MUL, ERR_R_BN_LIB);
+        ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
         goto err;
     }
     ret = ec_GFp_simple_set_Jprojective_coordinates_GFp(group, r, x, y, z, ctx);

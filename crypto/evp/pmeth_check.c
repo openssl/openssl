@@ -48,7 +48,7 @@ int EVP_PKEY_public_check(EVP_PKEY_CTX *ctx)
     int ok;
 
     if (pkey == NULL) {
-        EVPerr(EVP_F_EVP_PKEY_PUBLIC_CHECK, EVP_R_NO_KEY_SET);
+        ERR_raise(ERR_LIB_EVP, EVP_R_NO_KEY_SET);
         return 0;
     }
 
@@ -71,7 +71,7 @@ int EVP_PKEY_public_check(EVP_PKEY_CTX *ctx)
     return pkey->ameth->pkey_public_check(pkey);
 #endif
  not_supported:
-    EVPerr(0, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+    ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
     return -2;
 }
 
@@ -81,7 +81,7 @@ int EVP_PKEY_param_check(EVP_PKEY_CTX *ctx)
     int ok;
 
     if (pkey == NULL) {
-        EVPerr(EVP_F_EVP_PKEY_PARAM_CHECK, EVP_R_NO_KEY_SET);
+        ERR_raise(ERR_LIB_EVP, EVP_R_NO_KEY_SET);
         return 0;
     }
 
@@ -105,7 +105,7 @@ int EVP_PKEY_param_check(EVP_PKEY_CTX *ctx)
     return pkey->ameth->pkey_param_check(pkey);
 #endif
  not_supported:
-    EVPerr(0, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+    ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
     return -2;
 }
 
@@ -115,7 +115,7 @@ int EVP_PKEY_private_check(EVP_PKEY_CTX *ctx)
     int ok;
 
     if (pkey == NULL) {
-        EVPerr(0, EVP_R_NO_KEY_SET);
+        ERR_raise(ERR_LIB_EVP, EVP_R_NO_KEY_SET);
         return 0;
     }
 
@@ -123,7 +123,7 @@ int EVP_PKEY_private_check(EVP_PKEY_CTX *ctx)
         return ok;
 
     /* not supported for legacy keys */
-    EVPerr(0, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+    ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
     return -2;
 }
 
@@ -133,7 +133,7 @@ int EVP_PKEY_pairwise_check(EVP_PKEY_CTX *ctx)
     int ok;
 
     if (pkey == NULL) {
-        EVPerr(0, EVP_R_NO_KEY_SET);
+        ERR_raise(ERR_LIB_EVP, EVP_R_NO_KEY_SET);
         return 0;
     }
 
@@ -141,7 +141,7 @@ int EVP_PKEY_pairwise_check(EVP_PKEY_CTX *ctx)
         return ok;
 
     /* not supported for legacy keys */
-    EVPerr(0, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+    ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
     return -2;
 }
 
@@ -151,7 +151,7 @@ int EVP_PKEY_check(EVP_PKEY_CTX *ctx)
     int ok;
 
     if (pkey == NULL) {
-        EVPerr(EVP_F_EVP_PKEY_CHECK, EVP_R_NO_KEY_SET);
+        ERR_raise(ERR_LIB_EVP, EVP_R_NO_KEY_SET);
         return 0;
     }
 
@@ -174,7 +174,7 @@ int EVP_PKEY_check(EVP_PKEY_CTX *ctx)
     return pkey->ameth->pkey_check(pkey);
 #endif
  not_supported:
-    EVPerr(0, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+    ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
     return -2;
 }
 

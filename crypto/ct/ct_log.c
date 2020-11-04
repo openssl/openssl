@@ -63,7 +63,7 @@ static CTLOG_STORE_LOAD_CTX *ctlog_store_load_ctx_new(void)
     CTLOG_STORE_LOAD_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
 
     if (ctx == NULL)
-        CTerr(CT_F_CTLOG_STORE_LOAD_CTX_NEW, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_CT, ERR_R_MALLOC_FAILURE);
 
     return ctx;
 }
@@ -83,12 +83,12 @@ static int ct_v1_log_id_from_pkey(CTLOG *log, EVP_PKEY *pkey)
     EVP_MD *sha256 = NULL;
 
     if (pkey_der_len <= 0) {
-        CTerr(CT_F_CT_V1_LOG_ID_FROM_PKEY, CT_R_LOG_KEY_INVALID);
+        ERR_raise(ERR_LIB_CT, CT_R_LOG_KEY_INVALID);
         goto err;
     }
     sha256 = EVP_MD_fetch(log->libctx, "SHA2-256", log->propq);
     if (sha256 == NULL) {
-        CTerr(CT_F_CT_V1_LOG_ID_FROM_PKEY, ERR_LIB_EVP);
+        ERR_raise(ERR_LIB_CT, ERR_LIB_EVP);
         goto err;
     }
 
@@ -105,7 +105,7 @@ CTLOG_STORE *CTLOG_STORE_new_ex(OSSL_LIB_CTX *libctx, const char *propq)
     CTLOG_STORE *ret = OPENSSL_zalloc(sizeof(*ret));
 
     if (ret == NULL) {
-        CTerr(0, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_CT, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
@@ -113,14 +113,14 @@ CTLOG_STORE *CTLOG_STORE_new_ex(OSSL_LIB_CTX *libctx, const char *propq)
     if (propq != NULL) {
         ret->propq = OPENSSL_strdup(propq);
         if (ret->propq == NULL) {
-            CTerr(0, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_CT, ERR_R_MALLOC_FAILURE);
             goto err;
         }
     }
 
     ret->logs = sk_CTLOG_new_null();
     if (ret->logs == NULL) {
-        CTerr(0, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_CT, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
@@ -151,13 +151,13 @@ static int ctlog_new_from_conf(CTLOG_STORE *store, CTLOG **ct_log,
     char *pkey_base64;
 
     if (description == NULL) {
-        CTerr(CT_F_CTLOG_NEW_FROM_CONF, CT_R_LOG_CONF_MISSING_DESCRIPTION);
+        ERR_raise(ERR_LIB_CT, CT_R_LOG_CONF_MISSING_DESCRIPTION);
         return 0;
     }
 
     pkey_base64 = NCONF_get_string(conf, section, "key");
     if (pkey_base64 == NULL) {
-        CTerr(CT_F_CTLOG_NEW_FROM_CONF, CT_R_LOG_CONF_MISSING_KEY);
+        ERR_raise(ERR_LIB_CT, CT_R_LOG_CONF_MISSING_KEY);
         return 0;
     }
 
@@ -218,7 +218,7 @@ static int ctlog_store_load_log(const char *log_name, int log_name_len,
 
 mem_err:
     CTLOG_free(ct_log);
-    CTerr(CT_F_CTLOG_STORE_LOAD_LOG, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_CT, ERR_R_MALLOC_FAILURE);
     return -1;
 }
 
@@ -236,19 +236,19 @@ int CTLOG_STORE_load_file(CTLOG_STORE *store, const char *file)
         goto end;
 
     if (NCONF_load(load_ctx->conf, file, NULL) <= 0) {
-        CTerr(CT_F_CTLOG_STORE_LOAD_FILE, CT_R_LOG_CONF_INVALID);
+        ERR_raise(ERR_LIB_CT, CT_R_LOG_CONF_INVALID);
         goto end;
     }
 
     enabled_logs = NCONF_get_string(load_ctx->conf, NULL, "enabled_logs");
     if (enabled_logs == NULL) {
-        CTerr(CT_F_CTLOG_STORE_LOAD_FILE, CT_R_LOG_CONF_INVALID);
+        ERR_raise(ERR_LIB_CT, CT_R_LOG_CONF_INVALID);
         goto end;
     }
 
     if (!CONF_parse_list(enabled_logs, ',', 1, ctlog_store_load_log, load_ctx) ||
         load_ctx->invalid_log_entries > 0) {
-        CTerr(CT_F_CTLOG_STORE_LOAD_FILE, CT_R_LOG_CONF_INVALID);
+        ERR_raise(ERR_LIB_CT, CT_R_LOG_CONF_INVALID);
         goto end;
     }
 
@@ -270,7 +270,7 @@ CTLOG *CTLOG_new_ex(EVP_PKEY *public_key, const char *name, OSSL_LIB_CTX *libctx
     CTLOG *ret = OPENSSL_zalloc(sizeof(*ret));
 
     if (ret == NULL) {
-        CTerr(0, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_CT, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
@@ -278,14 +278,14 @@ CTLOG *CTLOG_new_ex(EVP_PKEY *public_key, const char *name, OSSL_LIB_CTX *libctx
     if (propq != NULL) {
         ret->name = OPENSSL_strdup(propq);
         if (ret->propq == NULL) {
-            CTerr(0, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_CT, ERR_R_MALLOC_FAILURE);
             goto err;
         }
     }
 
     ret->name = OPENSSL_strdup(name);
     if (ret->name == NULL) {
-        CTerr(0, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_CT, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 

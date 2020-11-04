@@ -42,7 +42,7 @@ BIO *cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec,
 
     b = BIO_new(BIO_f_cipher());
     if (b == NULL) {
-        CMSerr(CMS_F_CMS_ENCRYPTEDCONTENT_INIT_BIO, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_CMS, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
@@ -67,14 +67,13 @@ BIO *cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec,
     }
     if (cipher == NULL) {
         (void)ERR_clear_last_mark();
-        CMSerr(CMS_F_CMS_ENCRYPTEDCONTENT_INIT_BIO, CMS_R_UNKNOWN_CIPHER);
+        ERR_raise(ERR_LIB_CMS, CMS_R_UNKNOWN_CIPHER);
         goto err;
     }
     (void)ERR_pop_to_mark();
 
     if (EVP_CipherInit_ex(ctx, cipher, NULL, NULL, NULL, enc) <= 0) {
-        CMSerr(CMS_F_CMS_ENCRYPTEDCONTENT_INIT_BIO,
-               CMS_R_CIPHER_INITIALISATION_ERROR);
+        ERR_raise(ERR_LIB_CMS, CMS_R_CIPHER_INITIALISATION_ERROR);
         goto err;
     }
 
@@ -89,7 +88,7 @@ BIO *cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec,
         }
     } else {
         if (evp_cipher_asn1_to_param_ex(ctx, calg->parameter, &aparams) <= 0) {
-            CMSerr(0, CMS_R_CIPHER_PARAMETER_INITIALISATION_ERROR);
+            ERR_raise(ERR_LIB_CMS, CMS_R_CIPHER_PARAMETER_INITIALISATION_ERROR);
             goto err;
         }
         if ((EVP_CIPHER_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER)) {
@@ -97,7 +96,7 @@ BIO *cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec,
             if (ec->taglen > 0
                     && EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG,
                                            ec->taglen, ec->tag) <= 0) {
-                CMSerr(0, CMS_R_CIPHER_AEAD_SET_TAG_ERROR);
+                ERR_raise(ERR_LIB_CMS, CMS_R_CIPHER_AEAD_SET_TAG_ERROR);
                 goto err;
             }
         }
@@ -111,7 +110,7 @@ BIO *cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec,
     if (!enc || !ec->key) {
         tkey = OPENSSL_malloc(tkeylen);
         if (tkey == NULL) {
-            CMSerr(CMS_F_CMS_ENCRYPTEDCONTENT_INIT_BIO, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_CMS, ERR_R_MALLOC_FAILURE);
             goto err;
         }
         if (EVP_CIPHER_CTX_rand_key(ctx, tkey) <= 0)
@@ -137,8 +136,7 @@ BIO *cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec,
              * which may be useful in MMA.
              */
             if (enc || ec->debug) {
-                CMSerr(CMS_F_CMS_ENCRYPTEDCONTENT_INIT_BIO,
-                       CMS_R_INVALID_KEY_LENGTH);
+                ERR_raise(ERR_LIB_CMS, CMS_R_INVALID_KEY_LENGTH);
                 goto err;
             } else {
                 /* Use random key */
@@ -152,14 +150,13 @@ BIO *cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec,
     }
 
     if (EVP_CipherInit_ex(ctx, NULL, NULL, ec->key, piv, enc) <= 0) {
-        CMSerr(CMS_F_CMS_ENCRYPTEDCONTENT_INIT_BIO,
-               CMS_R_CIPHER_INITIALISATION_ERROR);
+        ERR_raise(ERR_LIB_CMS, CMS_R_CIPHER_INITIALISATION_ERROR);
         goto err;
     }
     if (enc) {
         calg->parameter = ASN1_TYPE_new();
         if (calg->parameter == NULL) {
-            CMSerr(CMS_F_CMS_ENCRYPTEDCONTENT_INIT_BIO, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_CMS, ERR_R_MALLOC_FAILURE);
             goto err;
         }
         if ((EVP_CIPHER_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER)) {
@@ -171,8 +168,7 @@ BIO *cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec,
         }
 
         if (evp_cipher_param_to_asn1_ex(ctx, calg->parameter, &aparams) <= 0) {
-            CMSerr(CMS_F_CMS_ENCRYPTEDCONTENT_INIT_BIO,
-                   CMS_R_CIPHER_PARAMETER_INITIALISATION_ERROR);
+            ERR_raise(ERR_LIB_CMS, CMS_R_CIPHER_PARAMETER_INITIALISATION_ERROR);
             goto err;
         }
         /* If parameter type not set omit parameter */
@@ -204,7 +200,7 @@ int cms_EncryptedContent_init(CMS_EncryptedContentInfo *ec,
     ec->cipher = cipher;
     if (key) {
         if ((ec->key = OPENSSL_malloc(keylen)) == NULL) {
-            CMSerr(CMS_F_CMS_ENCRYPTEDCONTENT_INIT, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_CMS, ERR_R_MALLOC_FAILURE);
             return 0;
         }
         memcpy(ec->key, key, keylen);
@@ -221,19 +217,19 @@ int CMS_EncryptedData_set1_key(CMS_ContentInfo *cms, const EVP_CIPHER *ciph,
     CMS_EncryptedContentInfo *ec;
 
     if (!key || !keylen) {
-        CMSerr(CMS_F_CMS_ENCRYPTEDDATA_SET1_KEY, CMS_R_NO_KEY);
+        ERR_raise(ERR_LIB_CMS, CMS_R_NO_KEY);
         return 0;
     }
     if (ciph) {
         cms->d.encryptedData = M_ASN1_new_of(CMS_EncryptedData);
         if (!cms->d.encryptedData) {
-            CMSerr(CMS_F_CMS_ENCRYPTEDDATA_SET1_KEY, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_CMS, ERR_R_MALLOC_FAILURE);
             return 0;
         }
         cms->contentType = OBJ_nid2obj(NID_pkcs7_encrypted);
         cms->d.encryptedData->version = 0;
     } else if (OBJ_obj2nid(cms->contentType) != NID_pkcs7_encrypted) {
-        CMSerr(CMS_F_CMS_ENCRYPTEDDATA_SET1_KEY, CMS_R_NOT_ENCRYPTED_DATA);
+        ERR_raise(ERR_LIB_CMS, CMS_R_NOT_ENCRYPTED_DATA);
         return 0;
     }
     ec = cms->d.encryptedData->encryptedContentInfo;

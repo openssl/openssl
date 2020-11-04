@@ -91,7 +91,7 @@ BIO *BIO_new_mem_buf(const void *buf, int len)
     size_t sz;
 
     if (buf == NULL) {
-        BIOerr(BIO_F_BIO_NEW_MEM_BUF, BIO_R_NULL_PARAMETER);
+        ERR_raise(ERR_LIB_BIO, BIO_R_NULL_PARAMETER);
         return NULL;
     }
     sz = (len < 0) ? strlen(buf) : (size_t)len;
@@ -222,11 +222,11 @@ static int mem_write(BIO *b, const char *in, int inl)
     BIO_BUF_MEM *bbm = (BIO_BUF_MEM *)b->ptr;
 
     if (in == NULL) {
-        BIOerr(BIO_F_MEM_WRITE, BIO_R_NULL_PARAMETER);
+        ERR_raise(ERR_LIB_BIO, BIO_R_NULL_PARAMETER);
         goto end;
     }
     if (b->flags & BIO_FLAGS_MEM_RDONLY) {
-        BIOerr(BIO_F_MEM_WRITE, BIO_R_WRITE_TO_READ_ONLY_BIO);
+        ERR_raise(ERR_LIB_BIO, BIO_R_WRITE_TO_READ_ONLY_BIO);
         goto end;
     }
     BIO_clear_retry_flags(b);

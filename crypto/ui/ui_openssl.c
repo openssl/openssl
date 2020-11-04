@@ -457,7 +457,7 @@ static int open_console(UI *ui)
             {
                 char tmp_num[10];
                 BIO_snprintf(tmp_num, sizeof(tmp_num) - 1, "%d", errno);
-                UIerr(UI_F_OPEN_CONSOLE, UI_R_UNKNOWN_TTYGET_ERRNO_VALUE);
+                ERR_raise(ERR_LIB_UI, UI_R_UNKNOWN_TTYGET_ERRNO_VALUE);
                 ERR_add_error_data(2, "errno=", tmp_num);
 
                 return 0;
@@ -472,7 +472,7 @@ static int open_console(UI *ui)
         char tmp_num[12];
 
         BIO_snprintf(tmp_num, sizeof(tmp_num) - 1, "%%X%08X", status);
-        UIerr(UI_F_OPEN_CONSOLE, UI_R_SYSASSIGN_ERROR);
+        ERR_raise(ERR_LIB_UI, UI_R_SYSASSIGN_ERROR);
         ERR_add_error_data(2, "status=", tmp_num);
         return 0;
     }
@@ -512,7 +512,7 @@ static int noecho_console(UI *ui)
                          status);
             BIO_snprintf(tmp_num[1], sizeof(tmp_num[1]) - 1, "%%X%08X",
                          iosb.iosb$w_value);
-            UIerr(UI_F_NOECHO_CONSOLE, UI_R_SYSQIOW_ERROR);
+            ERR_raise(ERR_LIB_UI, UI_R_SYSQIOW_ERROR);
             ERR_add_error_data(5, "status=", tmp_num[0],
                                ",", "iosb.iosb$w_value=", tmp_num[1]);
             return 0;
@@ -550,7 +550,7 @@ static int echo_console(UI *ui)
                          status);
             BIO_snprintf(tmp_num[1], sizeof(tmp_num[1]) - 1, "%%X%08X",
                          iosb.iosb$w_value);
-            UIerr(UI_F_ECHO_CONSOLE, UI_R_SYSQIOW_ERROR);
+            ERR_raise(ERR_LIB_UI, UI_R_SYSQIOW_ERROR);
             ERR_add_error_data(5, "status=", tmp_num[0],
                                ",", "iosb.iosb$w_value=", tmp_num[1]);
             return 0;
@@ -578,7 +578,7 @@ static int close_console(UI *ui)
         char tmp_num[12];
 
         BIO_snprintf(tmp_num, sizeof(tmp_num) - 1, "%%X%08X", status);
-        UIerr(UI_F_CLOSE_CONSOLE, UI_R_SYSDASSGN_ERROR);
+        ERR_raise(ERR_LIB_UI, UI_R_SYSDASSGN_ERROR);
         ERR_add_error_data(2, "status=", tmp_num);
         return 0;
     }

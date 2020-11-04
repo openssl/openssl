@@ -168,7 +168,7 @@ static int aesni_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
     }
 
     if (ret < 0) {
-        EVPerr(EVP_F_AESNI_INIT_KEY, EVP_R_AES_KEY_SETUP_FAILED);
+        ERR_raise(ERR_LIB_EVP, EVP_R_AES_KEY_SETUP_FAILED);
         return 0;
     }
 
@@ -276,7 +276,7 @@ static int aesni_xts_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
          */
         if ((!allow_insecure_decrypt || enc)
                 && CRYPTO_memcmp(key, key + bytes, bytes) == 0) {
-            EVPerr(EVP_F_AESNI_XTS_INIT_KEY, EVP_R_XTS_DUPLICATED_KEYS);
+            ERR_raise(ERR_LIB_EVP, EVP_R_XTS_DUPLICATED_KEYS);
             return 0;
         }
 
@@ -502,7 +502,7 @@ static int aes_t4_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
     }
 
     if (ret < 0) {
-        EVPerr(EVP_F_AES_T4_INIT_KEY, EVP_R_AES_KEY_SETUP_FAILED);
+        ERR_raise(ERR_LIB_EVP, EVP_R_AES_KEY_SETUP_FAILED);
         return 0;
     }
 
@@ -608,7 +608,7 @@ static int aes_t4_xts_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
          */
         if ((!allow_insecure_decrypt || enc)
                 && CRYPTO_memcmp(key, key + bytes, bytes) == 0) {
-            EVPerr(EVP_F_AES_T4_XTS_INIT_KEY, EVP_R_XTS_DUPLICATED_KEYS);
+            ERR_raise(ERR_LIB_EVP, EVP_R_XTS_DUPLICATED_KEYS);
             return 0;
         }
 
@@ -1364,7 +1364,7 @@ static int s390x_aes_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
                     OPENSSL_free(gctx->iv);
 
                 if ((gctx->iv = OPENSSL_malloc(len)) == NULL) {
-                    EVPerr(EVP_F_S390X_AES_GCM_CTRL, ERR_R_MALLOC_FAILURE);
+                    ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
                     return 0;
                 }
             }
@@ -1483,7 +1483,7 @@ static int s390x_aes_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
             len = S390X_gcm_ivpadlen(gctx->ivlen);
 
             if ((gctx_out->iv = OPENSSL_malloc(len)) == NULL) {
-                EVPerr(EVP_F_S390X_AES_GCM_CTRL, ERR_R_MALLOC_FAILURE);
+                ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
                 return 0;
             }
 
@@ -1559,7 +1559,7 @@ static int s390x_aes_gcm_tls_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
      * side only.
      */
     if (ctx->encrypt && ++gctx->tls_enc_records == 0) {
-        EVPerr(EVP_F_S390X_AES_GCM_TLS_CIPHER, EVP_R_TOO_MANY_RECORDS);
+        ERR_raise(ERR_LIB_EVP, EVP_R_TOO_MANY_RECORDS);
         goto err;
     }
 
@@ -2380,7 +2380,7 @@ static int aes_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
     }
 
     if (ret < 0) {
-        EVPerr(EVP_F_AES_INIT_KEY, EVP_R_AES_KEY_SETUP_FAILED);
+        ERR_raise(ERR_LIB_EVP, EVP_R_AES_KEY_SETUP_FAILED);
         return 0;
     }
 
@@ -2555,7 +2555,7 @@ static int aes_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
             if (gctx->iv != c->iv)
                 OPENSSL_free(gctx->iv);
             if ((gctx->iv = OPENSSL_malloc(arg)) == NULL) {
-                EVPerr(EVP_F_AES_GCM_CTRL, ERR_R_MALLOC_FAILURE);
+                ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
                 return 0;
             }
         }
@@ -2657,7 +2657,7 @@ static int aes_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
                 gctx_out->iv = out->iv;
             else {
                 if ((gctx_out->iv = OPENSSL_malloc(gctx->ivlen)) == NULL) {
-                    EVPerr(EVP_F_AES_GCM_CTRL, ERR_R_MALLOC_FAILURE);
+                    ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
                     return 0;
                 }
                 memcpy(gctx_out->iv, gctx->iv, gctx->ivlen);
@@ -2768,7 +2768,7 @@ static int aes_gcm_tls_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
      * side only.
      */
     if (ctx->encrypt && ++gctx->tls_enc_records == 0) {
-        EVPerr(EVP_F_AES_GCM_TLS_CIPHER, EVP_R_TOO_MANY_RECORDS);
+        ERR_raise(ERR_LIB_EVP, EVP_R_TOO_MANY_RECORDS);
         goto err;
     }
 
@@ -3119,7 +3119,7 @@ static int aes_xts_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
              */
             if ((!allow_insecure_decrypt || enc)
                     && CRYPTO_memcmp(key, key + bytes, bytes) == 0) {
-                EVPerr(EVP_F_AES_XTS_INIT_KEY, EVP_R_XTS_DUPLICATED_KEYS);
+                ERR_raise(ERR_LIB_EVP, EVP_R_XTS_DUPLICATED_KEYS);
                 return 0;
             }
 
@@ -3218,7 +3218,7 @@ static int aes_xts_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
      * NIST SP 800-38E mandates the same limit.
      */
     if (len > XTS_MAX_BLOCKS_PER_DATA_UNIT * AES_BLOCK_SIZE) {
-        EVPerr(EVP_F_AES_XTS_CIPHER, EVP_R_XTS_DATA_UNIT_IS_TOO_LARGE);
+        ERR_raise(ERR_LIB_EVP, EVP_R_XTS_DATA_UNIT_IS_TOO_LARGE);
         return 0;
     }
 
@@ -3568,7 +3568,7 @@ static int aes_wrap_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     if (!pad && inlen & 0x7)
         return -1;
     if (is_partially_overlapping(out, in, inlen)) {
-        EVPerr(EVP_F_AES_WRAP_CIPHER, EVP_R_PARTIALLY_OVERLAPPING);
+        ERR_raise(ERR_LIB_EVP, EVP_R_PARTIALLY_OVERLAPPING);
         return 0;
     }
     if (!out) {
@@ -3872,7 +3872,7 @@ static int aes_ocb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
             buf_len = &(octx->data_buf_len);
 
             if (is_partially_overlapping(out + *buf_len, in, len)) {
-                EVPerr(EVP_F_AES_OCB_CIPHER, EVP_R_PARTIALLY_OVERLAPPING);
+                ERR_raise(ERR_LIB_EVP, EVP_R_PARTIALLY_OVERLAPPING);
                 return 0;
             }
         }

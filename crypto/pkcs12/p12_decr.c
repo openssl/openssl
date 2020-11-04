@@ -27,7 +27,7 @@ unsigned char *PKCS12_pbe_crypt(const X509_ALGOR *algor,
     int max_out_len, mac_len = 0;
 
     if (ctx == NULL) {
-        PKCS12err(PKCS12_F_PKCS12_PBE_CRYPT, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PKCS12, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
@@ -45,7 +45,7 @@ unsigned char *PKCS12_pbe_crypt(const X509_ALGOR *algor,
     max_out_len = inlen + EVP_CIPHER_CTX_block_size(ctx);
     if (EVP_CIPHER_flags(EVP_CIPHER_CTX_cipher(ctx)) & EVP_CIPH_FLAG_CIPHER_WITH_MAC) {
         if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_TLS1_AAD, 0, &mac_len) < 0) {
-            PKCS12err(PKCS12_F_PKCS12_PBE_CRYPT, ERR_R_INTERNAL_ERROR);
+            ERR_raise(ERR_LIB_PKCS12, ERR_R_INTERNAL_ERROR);
             goto err;
         }
 
@@ -53,28 +53,27 @@ unsigned char *PKCS12_pbe_crypt(const X509_ALGOR *algor,
             max_out_len += mac_len;
         } else {
             if (inlen < mac_len) {
-                PKCS12err(PKCS12_F_PKCS12_PBE_CRYPT,
-                          PKCS12_R_UNSUPPORTED_PKCS12_MODE);
+                ERR_raise(ERR_LIB_PKCS12, PKCS12_R_UNSUPPORTED_PKCS12_MODE);
                 goto err;
             }
             inlen -= mac_len;
             if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG,
                                     (int)mac_len, (unsigned char *)in+inlen) < 0) {
-                PKCS12err(PKCS12_F_PKCS12_PBE_CRYPT, ERR_R_INTERNAL_ERROR);
+                ERR_raise(ERR_LIB_PKCS12, ERR_R_INTERNAL_ERROR);
                 goto err;
             }
         }
     }
 
     if ((out = OPENSSL_malloc(max_out_len)) == NULL) {
-        PKCS12err(PKCS12_F_PKCS12_PBE_CRYPT, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PKCS12, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
     if (!EVP_CipherUpdate(ctx, out, &i, in, inlen)) {
         OPENSSL_free(out);
         out = NULL;
-        PKCS12err(PKCS12_F_PKCS12_PBE_CRYPT, ERR_R_EVP_LIB);
+        ERR_raise(ERR_LIB_PKCS12, ERR_R_EVP_LIB);
         goto err;
     }
 
@@ -82,8 +81,7 @@ unsigned char *PKCS12_pbe_crypt(const X509_ALGOR *algor,
     if (!EVP_CipherFinal_ex(ctx, out + i, &i)) {
         OPENSSL_free(out);
         out = NULL;
-        PKCS12err(PKCS12_F_PKCS12_PBE_CRYPT,
-                  PKCS12_R_PKCS12_CIPHERFINAL_ERROR);
+        ERR_raise(ERR_LIB_PKCS12, PKCS12_R_PKCS12_CIPHERFINAL_ERROR);
         goto err;
     }
     outlen += i;
@@ -91,7 +89,7 @@ unsigned char *PKCS12_pbe_crypt(const X509_ALGOR *algor,
         if (EVP_CIPHER_CTX_encrypting(ctx)) {
             if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG,
                 (int)mac_len, out+outlen) < 0) {
-                PKCS12err(PKCS12_F_PKCS12_PBE_CRYPT, ERR_R_INTERNAL_ERROR);
+                ERR_raise(ERR_LIB_PKCS12, ERR_R_INTERNAL_ERROR);
                 goto err;
             }
             outlen += mac_len;
@@ -134,7 +132,7 @@ void *PKCS12_item_decrypt_d2i(const X509_ALGOR *algor, const ASN1_ITEM *it,
     if (zbuf)
         OPENSSL_cleanse(out, outlen);
     if (!ret)
-        PKCS12err(PKCS12_F_PKCS12_ITEM_DECRYPT_D2I, PKCS12_R_DECODE_ERROR);
+        ERR_raise(ERR_LIB_PKCS12, PKCS12_R_DECODE_ERROR);
     OPENSSL_free(out);
     return ret;
 }
@@ -154,17 +152,17 @@ ASN1_OCTET_STRING *PKCS12_item_i2d_encrypt(X509_ALGOR *algor,
     int inlen;
 
     if ((oct = ASN1_OCTET_STRING_new()) == NULL) {
-        PKCS12err(PKCS12_F_PKCS12_ITEM_I2D_ENCRYPT, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PKCS12, ERR_R_MALLOC_FAILURE);
         goto err;
     }
     inlen = ASN1_item_i2d(obj, &in, it);
     if (!in) {
-        PKCS12err(PKCS12_F_PKCS12_ITEM_I2D_ENCRYPT, PKCS12_R_ENCODE_ERROR);
+        ERR_raise(ERR_LIB_PKCS12, PKCS12_R_ENCODE_ERROR);
         goto err;
     }
     if (!PKCS12_pbe_crypt(algor, pass, passlen, in, inlen, &oct->data,
                           &oct->length, 1)) {
-        PKCS12err(PKCS12_F_PKCS12_ITEM_I2D_ENCRYPT, PKCS12_R_ENCRYPT_ERROR);
+        ERR_raise(ERR_LIB_PKCS12, PKCS12_R_ENCRYPT_ERROR);
         OPENSSL_free(in);
         goto err;
     }

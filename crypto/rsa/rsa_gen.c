@@ -87,19 +87,19 @@ static int rsa_multiprime_keygen(RSA *rsa, int bits, int primes,
 
     if (bits < RSA_MIN_MODULUS_BITS) {
         ok = 0;             /* we set our own err */
-        RSAerr(0, RSA_R_KEY_SIZE_TOO_SMALL);
+        ERR_raise(ERR_LIB_RSA, RSA_R_KEY_SIZE_TOO_SMALL);
         goto err;
     }
 
     /* A bad value for e can cause infinite loops */
     if (e_value != NULL && !ossl_rsa_check_public_exponent(e_value)) {
-        RSAerr(0, RSA_R_PUB_EXPONENT_OUT_OF_RANGE);
+        ERR_raise(ERR_LIB_RSA, RSA_R_PUB_EXPONENT_OUT_OF_RANGE);
         return 0;
     }
 
     if (primes < RSA_DEFAULT_PRIME_NUM || primes > rsa_multip_cap(bits)) {
         ok = 0;             /* we set our own err */
-        RSAerr(0, RSA_R_KEY_PRIME_NUM_INVALID);
+        ERR_raise(ERR_LIB_RSA, RSA_R_KEY_PRIME_NUM_INVALID);
         goto err;
     }
 
@@ -410,7 +410,7 @@ static int rsa_multiprime_keygen(RSA *rsa, int bits, int primes,
     ok = 1;
  err:
     if (ok == -1) {
-        RSAerr(0, ERR_LIB_BN);
+        ERR_raise(ERR_LIB_RSA, ERR_LIB_BN);
         ok = 0;
     }
     BN_CTX_end(ctx);

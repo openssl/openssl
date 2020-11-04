@@ -119,7 +119,7 @@ PKCS12_SAFEBAG *PKCS12_SAFEBAG_create_secret(int type, int vtype, const unsigned
     PKCS12_SAFEBAG *safebag;
 
     if ((bag = PKCS12_BAGS_new()) == NULL) {
-        PKCS12err(0, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PKCS12, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
     bag->type = OBJ_nid2obj(type);
@@ -130,19 +130,19 @@ PKCS12_SAFEBAG *PKCS12_SAFEBAG_create_secret(int type, int vtype, const unsigned
             ASN1_OCTET_STRING *strtmp = ASN1_OCTET_STRING_new();
 
             if (strtmp == NULL) {
-                PKCS12err(0, ERR_R_MALLOC_FAILURE);
+                ERR_raise(ERR_LIB_PKCS12, ERR_R_MALLOC_FAILURE);
                 goto err;
             }
             /* Pack data into an octet string */
             if (!ASN1_OCTET_STRING_set(strtmp, value, len)) {
                 ASN1_OCTET_STRING_free(strtmp);
-                PKCS12err(0, PKCS12_R_ENCODE_ERROR);
+                ERR_raise(ERR_LIB_PKCS12, PKCS12_R_ENCODE_ERROR);
                 goto err;
             }
             bag->value.other = ASN1_TYPE_new();
             if (bag->value.other == NULL) {
                 ASN1_OCTET_STRING_free(strtmp);
-                PKCS12err(0, ERR_R_MALLOC_FAILURE);
+                ERR_raise(ERR_LIB_PKCS12, ERR_R_MALLOC_FAILURE);
                 goto err;
             }
             ASN1_TYPE_set(bag->value.other, vtype, strtmp);
@@ -150,12 +150,12 @@ PKCS12_SAFEBAG *PKCS12_SAFEBAG_create_secret(int type, int vtype, const unsigned
         break;
 
     default:
-        PKCS12err(0, PKCS12_R_INVALID_TYPE);
+        ERR_raise(ERR_LIB_PKCS12, PKCS12_R_INVALID_TYPE);
         goto err;
     }
 
     if ((safebag = PKCS12_SAFEBAG_new()) == NULL) {
-        PKCS12err(0, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PKCS12, ERR_R_MALLOC_FAILURE);
         goto err;
     }
     safebag->value.bag = bag;
@@ -174,7 +174,7 @@ PKCS12_SAFEBAG *PKCS12_SAFEBAG_create0_p8inf(PKCS8_PRIV_KEY_INFO *p8)
     PKCS12_SAFEBAG *bag = PKCS12_SAFEBAG_new();
 
     if (bag == NULL) {
-        PKCS12err(PKCS12_F_PKCS12_SAFEBAG_CREATE0_P8INF, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PKCS12, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
     bag->type = OBJ_nid2obj(NID_keyBag);
@@ -190,7 +190,7 @@ PKCS12_SAFEBAG *PKCS12_SAFEBAG_create0_pkcs8(X509_SIG *p8)
 
     /* Set up the safe bag */
     if (bag == NULL) {
-        PKCS12err(PKCS12_F_PKCS12_SAFEBAG_CREATE0_PKCS8, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PKCS12, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
     bag->type = OBJ_nid2obj(NID_pkcs8ShroudedKeyBag);

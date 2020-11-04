@@ -306,17 +306,17 @@ int ossl_rsa_sp800_56b_check_public(const RSA *rsa)
      */
     nbits = BN_num_bits(rsa->n);
     if (!ossl_rsa_sp800_56b_validate_strength(nbits, -1)) {
-        RSAerr(0, RSA_R_INVALID_KEY_LENGTH);
+        ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_KEY_LENGTH);
         return 0;
     }
 #endif
     if (!BN_is_odd(rsa->n)) {
-        RSAerr(0, RSA_R_INVALID_MODULUS);
+        ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_MODULUS);
         return 0;
     }
     /* (Steps b-c): 2^16 < e < 2^256, n and e must be odd */
     if (!ossl_rsa_check_public_exponent(rsa->e)) {
-        RSAerr(0, RSA_R_PUB_EXPONENT_OUT_OF_RANGE);
+        ERR_raise(ERR_LIB_RSA, RSA_R_PUB_EXPONENT_OUT_OF_RANGE);
         return 0;
     }
 
@@ -330,13 +330,13 @@ int ossl_rsa_sp800_56b_check_public(const RSA *rsa)
      * The modulus has no factors smaller than 752.
      */
     if (!BN_gcd(gcd, rsa->n, bn_get0_small_factors(), ctx) || !BN_is_one(gcd)) {
-        RSAerr(0, RSA_R_INVALID_MODULUS);
+        ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_MODULUS);
         goto err;
     }
 
     ret = bn_miller_rabin_is_prime(rsa->n, 0, ctx, NULL, 1, &status);
     if (ret != 1 || status != BN_PRIMETEST_COMPOSITE_NOT_POWER_OF_PRIME) {
-        RSAerr(0, RSA_R_INVALID_MODULUS);
+        ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_MODULUS);
         ret = 0;
         goto err;
     }
@@ -381,7 +381,7 @@ int ossl_rsa_sp800_56b_check_keypair(const RSA *rsa, const BIGNUM *efixed,
             || rsa->e == NULL
             || rsa->d == NULL
             || rsa->n == NULL) {
-        RSAerr(0, RSA_R_INVALID_REQUEST);
+        ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_REQUEST);
         return 0;
     }
     /* (Step 1): Check Ranges */
@@ -392,19 +392,19 @@ int ossl_rsa_sp800_56b_check_keypair(const RSA *rsa, const BIGNUM *efixed,
     if (efixed != NULL) {
         /* (2): Check fixed exponent matches public exponent. */
         if (BN_cmp(efixed, rsa->e) != 0) {
-            RSAerr(0, RSA_R_INVALID_REQUEST);
+            ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_REQUEST);
             return 0;
         }
     }
     /* (Step 1.c): e is odd integer 65537 <= e < 2^256 */
     if (!ossl_rsa_check_public_exponent(rsa->e)) {
         /* exponent out of range */
-        RSAerr(0, RSA_R_PUB_EXPONENT_OUT_OF_RANGE);
+        ERR_raise(ERR_LIB_RSA, RSA_R_PUB_EXPONENT_OUT_OF_RANGE);
         return 0;
     }
     /* (Step 3.b): check the modulus */
     if (nbits != BN_num_bits(rsa->n)) {
-        RSAerr(0, RSA_R_INVALID_KEYPAIR);
+        ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_KEYPAIR);
         return 0;
     }
 
@@ -418,7 +418,7 @@ int ossl_rsa_sp800_56b_check_keypair(const RSA *rsa, const BIGNUM *efixed,
         goto err;
     /* (Step 4.c): Check n = pq */
     if (BN_cmp(rsa->n, r) != 0) {
-        RSAerr(0, RSA_R_INVALID_REQUEST);
+        ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_REQUEST);
         goto err;
     }
 
@@ -431,7 +431,7 @@ int ossl_rsa_sp800_56b_check_keypair(const RSA *rsa, const BIGNUM *efixed,
           /* 6.4.1.2.3 (Step 7): Check the CRT components */
           && ossl_rsa_check_crt_components(rsa, ctx);
     if (ret != 1)
-        RSAerr(0, RSA_R_INVALID_KEYPAIR);
+        ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_KEYPAIR);
 
 err:
     BN_clear(r);

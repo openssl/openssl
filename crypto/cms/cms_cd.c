@@ -32,8 +32,7 @@ CMS_ContentInfo *cms_CompressedData_create(int comp_nid, OSSL_LIB_CTX *libctx,
      * compression algorithm or parameters have some meaning...
      */
     if (comp_nid != NID_zlib_compression) {
-        CMSerr(CMS_F_CMS_COMPRESSEDDATA_CREATE,
-               CMS_R_UNSUPPORTED_COMPRESSION_ALGORITHM);
+        ERR_raise(ERR_LIB_CMS, CMS_R_UNSUPPORTED_COMPRESSION_ALGORITHM);
         return NULL;
     }
     cms = CMS_ContentInfo_new_ex(libctx, propq);
@@ -68,15 +67,13 @@ BIO *cms_CompressedData_init_bio(const CMS_ContentInfo *cms)
     const ASN1_OBJECT *compoid;
 
     if (OBJ_obj2nid(cms->contentType) != NID_id_smime_ct_compressedData) {
-        CMSerr(CMS_F_CMS_COMPRESSEDDATA_INIT_BIO,
-               CMS_R_CONTENT_TYPE_NOT_COMPRESSED_DATA);
+        ERR_raise(ERR_LIB_CMS, CMS_R_CONTENT_TYPE_NOT_COMPRESSED_DATA);
         return NULL;
     }
     cd = cms->d.compressedData;
     X509_ALGOR_get0(&compoid, NULL, NULL, cd->compressionAlgorithm);
     if (OBJ_obj2nid(compoid) != NID_zlib_compression) {
-        CMSerr(CMS_F_CMS_COMPRESSEDDATA_INIT_BIO,
-               CMS_R_UNSUPPORTED_COMPRESSION_ALGORITHM);
+        ERR_raise(ERR_LIB_CMS, CMS_R_UNSUPPORTED_COMPRESSION_ALGORITHM);
         return NULL;
     }
     return BIO_new(BIO_f_zlib());

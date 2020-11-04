@@ -49,8 +49,7 @@ int BIO_get_host_ip(const char *str, unsigned char *ip)
         size_t l;
 
         if (BIO_ADDRINFO_family(res) != AF_INET) {
-            BIOerr(BIO_F_BIO_GET_HOST_IP,
-                   BIO_R_GETHOSTBYNAME_ADDR_IS_NOT_AF_INET);
+            ERR_raise(ERR_LIB_BIO, BIO_R_GETHOSTBYNAME_ADDR_IS_NOT_AF_INET);
         } else if (BIO_ADDR_rawaddress(BIO_ADDRINFO_address(res), NULL, &l)) {
             /*
              * Because only AF_INET addresses will reach this far, we can assert
@@ -73,7 +72,7 @@ int BIO_get_port(const char *str, unsigned short *port_ptr)
     int ret = 0;
 
     if (str == NULL) {
-        BIOerr(BIO_F_BIO_GET_PORT, BIO_R_NO_PORT_DEFINED);
+        ERR_raise(ERR_LIB_BIO, BIO_R_NO_PORT_DEFINED);
         return 0;
     }
 
@@ -82,8 +81,7 @@ int BIO_get_port(const char *str, unsigned short *port_ptr)
 
     if (BIO_lookup(NULL, str, BIO_LOOKUP_CLIENT, AF_INET, SOCK_STREAM, &res)) {
         if (BIO_ADDRINFO_family(res) != AF_INET) {
-            BIOerr(BIO_F_BIO_GET_PORT,
-                   BIO_R_ADDRINFO_ADDR_IS_NOT_AF_INET);
+            ERR_raise(ERR_LIB_BIO, BIO_R_ADDRINFO_ADDR_IS_NOT_AF_INET);
         } else {
             *port_ptr = ntohs(BIO_ADDR_rawport(BIO_ADDRINFO_address(res)));
             ret = 1;
@@ -143,7 +141,7 @@ int BIO_sock_init(void)
         if (WSAStartup(0x0202, &wsa_state) != 0) {
             ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
                            "calling wsastartup()");
-            BIOerr(BIO_F_BIO_SOCK_INIT, BIO_R_WSASTARTUP);
+            ERR_raise(ERR_LIB_BIO, BIO_R_WSASTARTUP);
             return -1;
         }
     }
@@ -256,7 +254,7 @@ int BIO_accept(int sock, char **ip_port)
         }
         ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
                        "calling accept()");
-        BIOerr(BIO_F_BIO_ACCEPT, BIO_R_ACCEPT_ERROR);
+        ERR_raise(ERR_LIB_BIO, BIO_R_ACCEPT_ERROR);
         goto end;
     }
 
@@ -269,7 +267,7 @@ int BIO_accept(int sock, char **ip_port)
             *ip_port = NULL;
 
         if (*ip_port == NULL) {
-            BIOerr(BIO_F_BIO_ACCEPT, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_BIO, ERR_R_MALLOC_FAILURE);
             BIO_closesocket(ret);
             ret = (int)INVALID_SOCKET;
         } else {
@@ -345,7 +343,7 @@ int BIO_socket_nbio(int s, int mode)
     }
 # else
     /* make sure this call always pushes an error level; BIO_socket_ioctl() does so, so we do too. */
-    BIOerr(BIO_F_BIO_SOCKET_NBIO, ERR_R_PASSED_INVALID_ARGUMENT);
+    ERR_raise(ERR_LIB_BIO, ERR_R_PASSED_INVALID_ARGUMENT);
 # endif
 
     return (ret == 0);
@@ -365,17 +363,17 @@ int BIO_sock_info(int sock,
             if (ret == -1) {
                 ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
                                "calling getsockname()");
-                BIOerr(BIO_F_BIO_SOCK_INFO, BIO_R_GETSOCKNAME_ERROR);
+                ERR_raise(ERR_LIB_BIO, BIO_R_GETSOCKNAME_ERROR);
                 return 0;
             }
             if ((size_t)addr_len > sizeof(*info->addr)) {
-                BIOerr(BIO_F_BIO_SOCK_INFO, BIO_R_GETSOCKNAME_TRUNCATED_ADDRESS);
+                ERR_raise(ERR_LIB_BIO, BIO_R_GETSOCKNAME_TRUNCATED_ADDRESS);
                 return 0;
             }
         }
         break;
     default:
-        BIOerr(BIO_F_BIO_SOCK_INFO, BIO_R_UNKNOWN_INFO_TYPE);
+        ERR_raise(ERR_LIB_BIO, BIO_R_UNKNOWN_INFO_TYPE);
         return 0;
     }
     return 1;

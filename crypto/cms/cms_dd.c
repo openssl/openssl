@@ -64,7 +64,7 @@ int cms_DigestedData_do_final(const CMS_ContentInfo *cms, BIO *chain, int verify
     CMS_DigestedData *dd;
 
     if (mctx == NULL) {
-        CMSerr(CMS_F_CMS_DIGESTEDDATA_DO_FINAL, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_CMS, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
@@ -78,14 +78,12 @@ int cms_DigestedData_do_final(const CMS_ContentInfo *cms, BIO *chain, int verify
 
     if (verify) {
         if (mdlen != (unsigned int)dd->digest->length) {
-            CMSerr(CMS_F_CMS_DIGESTEDDATA_DO_FINAL,
-                   CMS_R_MESSAGEDIGEST_WRONG_LENGTH);
+            ERR_raise(ERR_LIB_CMS, CMS_R_MESSAGEDIGEST_WRONG_LENGTH);
             goto err;
         }
 
         if (memcmp(md, dd->digest->data, mdlen))
-            CMSerr(CMS_F_CMS_DIGESTEDDATA_DO_FINAL,
-                   CMS_R_VERIFICATION_FAILURE);
+            ERR_raise(ERR_LIB_CMS, CMS_R_VERIFICATION_FAILURE);
         else
             r = 1;
     } else {

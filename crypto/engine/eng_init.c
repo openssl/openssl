@@ -70,7 +70,7 @@ int engine_unlocked_finish(ENGINE *e, int unlock_for_handlers)
     REF_ASSERT_ISNT(e->funct_ref < 0);
     /* Release the structural reference too */
     if (!engine_free_util(e, 0)) {
-        ENGINEerr(ENGINE_F_ENGINE_UNLOCKED_FINISH, ENGINE_R_FINISH_FAILED);
+        ERR_raise(ERR_LIB_ENGINE, ENGINE_R_FINISH_FAILED);
         return 0;
     }
     return to_return;
@@ -81,11 +81,11 @@ int ENGINE_init(ENGINE *e)
 {
     int ret;
     if (e == NULL) {
-        ENGINEerr(ENGINE_F_ENGINE_INIT, ERR_R_PASSED_NULL_PARAMETER);
+        ERR_raise(ERR_LIB_ENGINE, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
     if (!RUN_ONCE(&engine_lock_init, do_engine_lock_init)) {
-        ENGINEerr(ENGINE_F_ENGINE_INIT, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_ENGINE, ERR_R_MALLOC_FAILURE);
         return 0;
     }
     CRYPTO_THREAD_write_lock(global_engine_lock);
@@ -105,7 +105,7 @@ int ENGINE_finish(ENGINE *e)
     to_return = engine_unlocked_finish(e, 1);
     CRYPTO_THREAD_unlock(global_engine_lock);
     if (!to_return) {
-        ENGINEerr(ENGINE_F_ENGINE_FINISH, ENGINE_R_FINISH_FAILED);
+        ERR_raise(ERR_LIB_ENGINE, ENGINE_R_FINISH_FAILED);
         return 0;
     }
     return to_return;

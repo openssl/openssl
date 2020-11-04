@@ -50,7 +50,7 @@ ASN1_OCTET_STRING *OSSL_CMP_HDR_get0_transactionID(const
                                                    OSSL_CMP_PKIHEADER *hdr)
 {
     if (hdr == NULL) {
-        CMPerr(0, CMP_R_NULL_ARGUMENT);
+        ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
         return NULL;
     }
     return hdr->transactionID;
@@ -66,7 +66,7 @@ ASN1_OCTET_STRING *ossl_cmp_hdr_get0_senderNonce(const OSSL_CMP_PKIHEADER *hdr)
 ASN1_OCTET_STRING *OSSL_CMP_HDR_get0_recipNonce(const OSSL_CMP_PKIHEADER *hdr)
 {
     if (hdr == NULL) {
-        CMPerr(0, CMP_R_NULL_ARGUMENT);
+        ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
         return NULL;
     }
     return hdr->recipNonce;
@@ -147,7 +147,7 @@ static int set_random(ASN1_OCTET_STRING **tgt, OSSL_CMP_CTX *ctx, size_t len)
     int res = 0;
 
     if (bytes == NULL || RAND_bytes_ex(ctx->libctx, bytes, len) <= 0)
-        CMPerr(0, CMP_R_FAILURE_OBTAINING_RANDOM);
+        ERR_raise(ERR_LIB_CMP, CMP_R_FAILURE_OBTAINING_RANDOM);
     else
         res = ossl_cmp_asn1_octet_string_set1_bytes(tgt, bytes, len);
     OPENSSL_free(bytes);

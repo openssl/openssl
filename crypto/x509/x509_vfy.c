@@ -117,7 +117,7 @@ int X509_self_signed(X509 *cert, int verify_signature)
     EVP_PKEY *pkey;
 
     if ((pkey = X509_get0_pubkey(cert)) == NULL) { /* handles cert == NULL */
-        X509err(0, X509_R_UNABLE_TO_GET_CERTS_PUBLIC_KEY);
+        ERR_raise(ERR_LIB_X509, X509_R_UNABLE_TO_GET_CERTS_PUBLIC_KEY);
         return -1;
     }
     if (!x509v3_cache_extensions(cert))
@@ -263,7 +263,7 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
     int ret;
 
     if (ctx->cert == NULL) {
-        X509err(X509_F_X509_VERIFY_CERT, X509_R_NO_CERT_SET_FOR_US_TO_VERIFY);
+        ERR_raise(ERR_LIB_X509, X509_R_NO_CERT_SET_FOR_US_TO_VERIFY);
         ctx->error = X509_V_ERR_INVALID_CALL;
         return -1;
     }
@@ -273,7 +273,7 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
          * This X509_STORE_CTX has already been used to verify a cert. We
          * cannot do another one.
          */
-        X509err(X509_F_X509_VERIFY_CERT, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+        ERR_raise(ERR_LIB_X509, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
         ctx->error = X509_V_ERR_INVALID_CALL;
         return -1;
     }
@@ -700,7 +700,7 @@ static int check_name_constraints(X509_STORE_CTX *ctx)
              */
             tmpsubject = X509_NAME_dup(tmpsubject);
             if (tmpsubject == NULL) {
-                X509err(X509_F_CHECK_NAME_CONSTRAINTS, ERR_R_MALLOC_FAILURE);
+                ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
                 ctx->error = X509_V_ERR_OUT_OF_MEM;
                 return 0;
             }
@@ -1658,7 +1658,7 @@ static int check_policy(X509_STORE_CTX *ctx)
      * X509_policy_check() call.
      */
     if (ctx->bare_ta_signed && !sk_X509_push(ctx->chain, NULL)) {
-        X509err(X509_F_CHECK_POLICY, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
         ctx->error = X509_V_ERR_OUT_OF_MEM;
         return 0;
     }
@@ -1668,7 +1668,7 @@ static int check_policy(X509_STORE_CTX *ctx)
         (void)sk_X509_pop(ctx->chain);
 
     if (ret == X509_PCY_TREE_INTERNAL) {
-        X509err(X509_F_CHECK_POLICY, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
         ctx->error = X509_V_ERR_OUT_OF_MEM;
         return 0;
     }
@@ -1691,7 +1691,7 @@ static int check_policy(X509_STORE_CTX *ctx)
         return ctx->verify_cb(0, ctx);
     }
     if (ret != X509_PCY_TREE_VALID) {
-        X509err(X509_F_CHECK_POLICY, ERR_R_INTERNAL_ERROR);
+        ERR_raise(ERR_LIB_X509, ERR_R_INTERNAL_ERROR);
         return 0;
     }
 
@@ -1992,16 +1992,14 @@ int X509_get_pubkey_parameters(EVP_PKEY *pkey, STACK_OF(X509) *chain)
     for (i = 0; i < sk_X509_num(chain); i++) {
         ktmp = X509_get0_pubkey(sk_X509_value(chain, i));
         if (ktmp == NULL) {
-            X509err(X509_F_X509_GET_PUBKEY_PARAMETERS,
-                    X509_R_UNABLE_TO_GET_CERTS_PUBLIC_KEY);
+            ERR_raise(ERR_LIB_X509, X509_R_UNABLE_TO_GET_CERTS_PUBLIC_KEY);
             return 0;
         }
         if (!EVP_PKEY_missing_parameters(ktmp))
             break;
     }
     if (ktmp == NULL) {
-        X509err(X509_F_X509_GET_PUBKEY_PARAMETERS,
-                X509_R_UNABLE_TO_FIND_PARAMETERS_IN_CHAIN);
+        ERR_raise(ERR_LIB_X509, X509_R_UNABLE_TO_FIND_PARAMETERS_IN_CHAIN);
         return 0;
     }
 
@@ -2026,37 +2024,37 @@ X509_CRL *X509_CRL_diff(X509_CRL *base, X509_CRL *newer,
     STACK_OF(X509_REVOKED) *revs = NULL;
     /* CRLs can't be delta already */
     if (base->base_crl_number || newer->base_crl_number) {
-        X509err(X509_F_X509_CRL_DIFF, X509_R_CRL_ALREADY_DELTA);
+        ERR_raise(ERR_LIB_X509, X509_R_CRL_ALREADY_DELTA);
         return NULL;
     }
     /* Base and new CRL must have a CRL number */
     if (!base->crl_number || !newer->crl_number) {
-        X509err(X509_F_X509_CRL_DIFF, X509_R_NO_CRL_NUMBER);
+        ERR_raise(ERR_LIB_X509, X509_R_NO_CRL_NUMBER);
         return NULL;
     }
     /* Issuer names must match */
     if (X509_NAME_cmp(X509_CRL_get_issuer(base), X509_CRL_get_issuer(newer))) {
-        X509err(X509_F_X509_CRL_DIFF, X509_R_ISSUER_MISMATCH);
+        ERR_raise(ERR_LIB_X509, X509_R_ISSUER_MISMATCH);
         return NULL;
     }
     /* AKID and IDP must match */
     if (!crl_extension_match(base, newer, NID_authority_key_identifier)) {
-        X509err(X509_F_X509_CRL_DIFF, X509_R_AKID_MISMATCH);
+        ERR_raise(ERR_LIB_X509, X509_R_AKID_MISMATCH);
         return NULL;
     }
     if (!crl_extension_match(base, newer, NID_issuing_distribution_point)) {
-        X509err(X509_F_X509_CRL_DIFF, X509_R_IDP_MISMATCH);
+        ERR_raise(ERR_LIB_X509, X509_R_IDP_MISMATCH);
         return NULL;
     }
     /* Newer CRL number must exceed full CRL number */
     if (ASN1_INTEGER_cmp(newer->crl_number, base->crl_number) <= 0) {
-        X509err(X509_F_X509_CRL_DIFF, X509_R_NEWER_CRL_NOT_NEWER);
+        ERR_raise(ERR_LIB_X509, X509_R_NEWER_CRL_NOT_NEWER);
         return NULL;
     }
     /* CRLs must verify */
     if (skey && (X509_CRL_verify(base, skey) <= 0 ||
                  X509_CRL_verify(newer, skey) <= 0)) {
-        X509err(X509_F_X509_CRL_DIFF, X509_R_CRL_VERIFY_FAILURE);
+        ERR_raise(ERR_LIB_X509, X509_R_CRL_VERIFY_FAILURE);
         return NULL;
     }
     /* Create new CRL */
@@ -2118,7 +2116,7 @@ X509_CRL *X509_CRL_diff(X509_CRL *base, X509_CRL *newer,
     return crl;
 
  memerr:
-    X509err(X509_F_X509_CRL_DIFF, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
     X509_CRL_free(crl);
     return NULL;
 }
@@ -2242,8 +2240,7 @@ int X509_STORE_CTX_purpose_inherit(X509_STORE_CTX *ctx, int def_purpose,
         X509_PURPOSE *ptmp;
         idx = X509_PURPOSE_get_by_id(purpose);
         if (idx == -1) {
-            X509err(X509_F_X509_STORE_CTX_PURPOSE_INHERIT,
-                    X509_R_UNKNOWN_PURPOSE_ID);
+            ERR_raise(ERR_LIB_X509, X509_R_UNKNOWN_PURPOSE_ID);
             return 0;
         }
         ptmp = X509_PURPOSE_get0(idx);
@@ -2255,8 +2252,7 @@ int X509_STORE_CTX_purpose_inherit(X509_STORE_CTX *ctx, int def_purpose,
              * X509_TRUST_DEFAULT case actually supposed to be handled?
              */
             if (idx == -1) {
-                X509err(X509_F_X509_STORE_CTX_PURPOSE_INHERIT,
-                        X509_R_UNKNOWN_PURPOSE_ID);
+                ERR_raise(ERR_LIB_X509, X509_R_UNKNOWN_PURPOSE_ID);
                 return 0;
             }
             ptmp = X509_PURPOSE_get0(idx);
@@ -2268,8 +2264,7 @@ int X509_STORE_CTX_purpose_inherit(X509_STORE_CTX *ctx, int def_purpose,
     if (trust) {
         idx = X509_TRUST_get_by_id(trust);
         if (idx == -1) {
-            X509err(X509_F_X509_STORE_CTX_PURPOSE_INHERIT,
-                    X509_R_UNKNOWN_TRUST_ID);
+            ERR_raise(ERR_LIB_X509, X509_R_UNKNOWN_TRUST_ID);
             return 0;
         }
     }
@@ -2286,7 +2281,7 @@ X509_STORE_CTX *X509_STORE_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq)
     X509_STORE_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
 
     if (ctx == NULL) {
-        X509err(0, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
@@ -2295,7 +2290,7 @@ X509_STORE_CTX *X509_STORE_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq)
         ctx->propq = OPENSSL_strdup(propq);
         if (ctx->propq == NULL) {
             OPENSSL_free(ctx);
-            X509err(0, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
             return NULL;
         }
     }
@@ -2413,7 +2408,7 @@ int X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
 
     ctx->param = X509_VERIFY_PARAM_new();
     if (ctx->param == NULL) {
-        X509err(X509_F_X509_STORE_CTX_INIT, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
@@ -2430,7 +2425,7 @@ int X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
                                         X509_VERIFY_PARAM_lookup("default"));
 
     if (ret == 0) {
-        X509err(X509_F_X509_STORE_CTX_INIT, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
@@ -2449,7 +2444,7 @@ int X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
     if (CRYPTO_new_ex_data(CRYPTO_EX_INDEX_X509_STORE_CTX, ctx,
                            &ctx->ex_data))
         return 1;
-    X509err(X509_F_X509_STORE_CTX_INIT, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
 
  err:
     /*
@@ -2671,12 +2666,12 @@ static unsigned char *dane_i2d(
         len = i2d_X509_PUBKEY(X509_get_X509_PUBKEY(cert), &buf);
         break;
     default:
-        X509err(X509_F_DANE_I2D, X509_R_BAD_SELECTOR);
+        ERR_raise(ERR_LIB_X509, X509_R_BAD_SELECTOR);
         return NULL;
     }
 
     if (len < 0 || buf == NULL) {
-        X509err(X509_F_DANE_I2D, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
@@ -3004,7 +2999,7 @@ static int build_chain(X509_STORE_CTX *ctx)
 
     /* Our chain starts with a single untrusted element. */
     if (!ossl_assert(num == 1 && ctx->num_untrusted == num))  {
-        X509err(X509_F_BUILD_CHAIN, ERR_R_INTERNAL_ERROR);
+        ERR_raise(ERR_LIB_X509, ERR_R_INTERNAL_ERROR);
         ctx->error = X509_V_ERR_UNSPECIFIED;
         return 0;
     }
@@ -3040,7 +3035,7 @@ static int build_chain(X509_STORE_CTX *ctx)
      * multiple passes over it, while free to remove elements as we go.
      */
     if (ctx->untrusted && (sktmp = sk_X509_dup(ctx->untrusted)) == NULL) {
-        X509err(X509_F_BUILD_CHAIN, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
         ctx->error = X509_V_ERR_OUT_OF_MEM;
         return 0;
     }
@@ -3057,7 +3052,7 @@ static int build_chain(X509_STORE_CTX *ctx)
      */
     if (DANETLS_ENABLED(dane) && dane->certs != NULL) {
         if (sktmp == NULL && (sktmp = sk_X509_new_null()) == NULL) {
-            X509err(X509_F_BUILD_CHAIN, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
             ctx->error = X509_V_ERR_OUT_OF_MEM;
             return 0;
         }
@@ -3148,7 +3143,7 @@ static int build_chain(X509_STORE_CTX *ctx)
                  */
                 if ((search & S_DOALTERNATE) != 0) {
                     if (!ossl_assert(num > i && i > 0 && !self_signed)) {
-                        X509err(X509_F_BUILD_CHAIN, ERR_R_INTERNAL_ERROR);
+                        ERR_raise(ERR_LIB_X509, ERR_R_INTERNAL_ERROR);
                         X509_free(xtmp);
                         trust = X509_TRUST_REJECTED;
                         ctx->error = X509_V_ERR_UNSPECIFIED;
@@ -3178,7 +3173,7 @@ static int build_chain(X509_STORE_CTX *ctx)
                 if (!self_signed) {
                     if (!sk_X509_push(ctx->chain, x = xtmp)) {
                         X509_free(xtmp);
-                        X509err(X509_F_BUILD_CHAIN, ERR_R_MALLOC_FAILURE);
+                        ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
                         trust = X509_TRUST_REJECTED;
                         ctx->error = X509_V_ERR_OUT_OF_MEM;
                         search = 0;
@@ -3223,7 +3218,7 @@ static int build_chain(X509_STORE_CTX *ctx)
                  */
                 if (ok) {
                     if (!ossl_assert(ctx->num_untrusted <= num)) {
-                        X509err(X509_F_BUILD_CHAIN, ERR_R_INTERNAL_ERROR);
+                        ERR_raise(ERR_LIB_X509, ERR_R_INTERNAL_ERROR);
                         trust = X509_TRUST_REJECTED;
                         ctx->error = X509_V_ERR_UNSPECIFIED;
                         search = 0;
@@ -3268,7 +3263,7 @@ static int build_chain(X509_STORE_CTX *ctx)
         if ((search & S_DOUNTRUSTED) != 0) {
             num = sk_X509_num(ctx->chain);
             if (!ossl_assert(num == ctx->num_untrusted)) {
-                X509err(X509_F_BUILD_CHAIN, ERR_R_INTERNAL_ERROR);
+                ERR_raise(ERR_LIB_X509, ERR_R_INTERNAL_ERROR);
                 trust = X509_TRUST_REJECTED;
                 ctx->error = X509_V_ERR_UNSPECIFIED;
                 search = 0;
@@ -3293,7 +3288,7 @@ static int build_chain(X509_STORE_CTX *ctx)
             (void) sk_X509_delete_ptr(sktmp, xtmp);
 
             if (!X509_up_ref(xtmp)) {
-                X509err(X509_F_BUILD_CHAIN, ERR_R_INTERNAL_ERROR);
+                ERR_raise(ERR_LIB_X509, ERR_R_INTERNAL_ERROR);
                 trust = X509_TRUST_REJECTED;
                 ctx->error = X509_V_ERR_UNSPECIFIED;
                 search = 0;
@@ -3302,7 +3297,7 @@ static int build_chain(X509_STORE_CTX *ctx)
 
             if (!sk_X509_push(ctx->chain, xtmp)) {
                 X509_free(xtmp);
-                X509err(X509_F_BUILD_CHAIN, ERR_R_MALLOC_FAILURE);
+                ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
                 trust = X509_TRUST_REJECTED;
                 ctx->error = X509_V_ERR_OUT_OF_MEM;
                 search = 0;

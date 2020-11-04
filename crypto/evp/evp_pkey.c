@@ -31,12 +31,12 @@ EVP_PKEY *EVP_PKCS82PKEY_ex(const PKCS8_PRIV_KEY_INFO *p8, OSSL_LIB_CTX *libctx,
         return NULL;
 
     if ((pkey = EVP_PKEY_new()) == NULL) {
-        EVPerr(0, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
     if (!EVP_PKEY_set_type(pkey, OBJ_obj2nid(algoid))) {
-        EVPerr(0, EVP_R_UNSUPPORTED_PRIVATE_KEY_ALGORITHM);
+        ERR_raise(ERR_LIB_EVP, EVP_R_UNSUPPORTED_PRIVATE_KEY_ALGORITHM);
         i2t_ASN1_OBJECT(obj_tmp, 80, algoid);
         ERR_add_error_data(2, "TYPE=", obj_tmp);
         goto error;
@@ -47,11 +47,11 @@ EVP_PKEY *EVP_PKCS82PKEY_ex(const PKCS8_PRIV_KEY_INFO *p8, OSSL_LIB_CTX *libctx,
             goto error;
     } else if (pkey->ameth->priv_decode != NULL) {
         if (!pkey->ameth->priv_decode(pkey, p8)) {
-            EVPerr(0, EVP_R_PRIVATE_KEY_DECODE_ERROR);
+            ERR_raise(ERR_LIB_EVP, EVP_R_PRIVATE_KEY_DECODE_ERROR);
             goto error;
         }
     } else {
-        EVPerr(0, EVP_R_METHOD_NOT_SUPPORTED);
+        ERR_raise(ERR_LIB_EVP, EVP_R_METHOD_NOT_SUPPORTED);
         goto error;
     }
 
@@ -101,24 +101,22 @@ PKCS8_PRIV_KEY_INFO *EVP_PKEY2PKCS8(const EVP_PKEY *pkey)
     } else {
         p8 = PKCS8_PRIV_KEY_INFO_new();
         if (p8  == NULL) {
-            EVPerr(EVP_F_EVP_PKEY2PKCS8, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
             return NULL;
         }
 
         if (pkey->ameth != NULL) {
             if (pkey->ameth->priv_encode != NULL) {
                 if (!pkey->ameth->priv_encode(p8, pkey)) {
-                    EVPerr(EVP_F_EVP_PKEY2PKCS8,
-                           EVP_R_PRIVATE_KEY_ENCODE_ERROR);
+                    ERR_raise(ERR_LIB_EVP, EVP_R_PRIVATE_KEY_ENCODE_ERROR);
                     goto error;
                 }
             } else {
-                EVPerr(EVP_F_EVP_PKEY2PKCS8, EVP_R_METHOD_NOT_SUPPORTED);
+                ERR_raise(ERR_LIB_EVP, EVP_R_METHOD_NOT_SUPPORTED);
                 goto error;
             }
         } else {
-            EVPerr(EVP_F_EVP_PKEY2PKCS8,
-                   EVP_R_UNSUPPORTED_PRIVATE_KEY_ALGORITHM);
+            ERR_raise(ERR_LIB_EVP, EVP_R_UNSUPPORTED_PRIVATE_KEY_ALGORITHM);
             goto error;
         }
     }

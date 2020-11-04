@@ -416,13 +416,13 @@ ASN1_OCTET_STRING *X509_digest_sig(const X509 *cert)
     ASN1_OCTET_STRING *new = NULL;
 
     if (cert == NULL) {
-        X509err(0, ERR_R_PASSED_NULL_PARAMETER);
+        ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
         return NULL;
     }
 
     if (!OBJ_find_sigid_algs(X509_get_signature_nid(cert), &md_NID, NULL)
             || (md = EVP_get_digestbynid(md_NID)) == NULL) {
-        CMPerr(0, X509_R_UNSUPPORTED_ALGORITHM);
+        ERR_raise(ERR_LIB_CMP, X509_R_UNSUPPORTED_ALGORITHM);
         return NULL;
     }
     if (!X509_digest(cert, md, hash, &len)
@@ -562,7 +562,7 @@ EVP_PKEY *d2i_PrivateKey_ex_fp(FILE *fp, EVP_PKEY **a, OSSL_LIB_CTX *libctx,
     void *ret;
 
     if ((b = BIO_new(BIO_s_file())) == NULL) {
-        X509err(0, ERR_R_BUF_LIB);
+        ERR_raise(ERR_LIB_X509, ERR_R_BUF_LIB);
         return NULL;
     }
     BIO_set_fp(b, fp, BIO_NOCLOSE);

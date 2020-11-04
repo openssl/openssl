@@ -90,13 +90,13 @@ EVP_MD_CTX *evp_md_ctx_new_ex(EVP_PKEY *pkey, const ASN1_OCTET_STRING *id,
 
     if ((ctx = EVP_MD_CTX_new()) == NULL
         || (pctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey, propq)) == NULL) {
-        ASN1err(0, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
 # ifndef OPENSSL_NO_EC
     if (id != NULL && EVP_PKEY_CTX_set1_id(pctx, id->data, id->length) <= 0) {
-        ASN1err(0, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 # endif
@@ -153,7 +153,7 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
             return EVP_DigestSignInit(ctx, NULL, type, impl, NULL);
         if (ctx->pctx->operation == EVP_PKEY_OP_VERIFYCTX)
             return EVP_DigestVerifyInit(ctx, NULL, type, impl, NULL);
-        EVPerr(0, EVP_R_UPDATE_ERROR);
+        ERR_raise(ERR_LIB_EVP, EVP_R_UPDATE_ERROR);
         return 0;
     }
 #endif
@@ -162,7 +162,7 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
 
     if (ctx->provctx != NULL) {
         if (!ossl_assert(ctx->digest != NULL)) {
-            EVPerr(EVP_F_EVP_DIGESTINIT_EX, EVP_R_INITIALIZATION_ERROR);
+            ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
             return 0;
         }
         if (ctx->digest->freectx != NULL)
@@ -226,7 +226,7 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
     if (type->prov == NULL) {
 #ifdef FIPS_MODULE
         /* We only do explicit fetches inside the FIPS module */
-        EVPerr(EVP_F_EVP_DIGESTINIT_EX, EVP_R_INITIALIZATION_ERROR);
+        ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
         return 0;
 #else
         EVP_MD *provmd = EVP_MD_fetch(NULL, OBJ_nid2sn(type->type), "");
@@ -248,13 +248,13 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
     if (ctx->provctx == NULL) {
         ctx->provctx = ctx->digest->newctx(ossl_provider_ctx(type->prov));
         if (ctx->provctx == NULL) {
-            EVPerr(EVP_F_EVP_DIGESTINIT_EX, EVP_R_INITIALIZATION_ERROR);
+            ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
             return 0;
         }
     }
 
     if (ctx->digest->dinit == NULL) {
-        EVPerr(EVP_F_EVP_DIGESTINIT_EX, EVP_R_INITIALIZATION_ERROR);
+        ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
         return 0;
     }
 
@@ -267,7 +267,7 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
     if (type) {
         if (impl != NULL) {
             if (!ENGINE_init(impl)) {
-                EVPerr(EVP_F_EVP_DIGESTINIT_EX, EVP_R_INITIALIZATION_ERROR);
+                ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
                 return 0;
             }
         } else {
@@ -279,7 +279,7 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
             const EVP_MD *d = ENGINE_get_digest(impl, type->type);
 
             if (d == NULL) {
-                EVPerr(EVP_F_EVP_DIGESTINIT_EX, EVP_R_INITIALIZATION_ERROR);
+                ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
                 ENGINE_finish(impl);
                 return 0;
             }
@@ -294,7 +294,7 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
             ctx->engine = NULL;
     } else {
         if (!ctx->digest) {
-            EVPerr(EVP_F_EVP_DIGESTINIT_EX, EVP_R_NO_DIGEST_SET);
+            ERR_raise(ERR_LIB_EVP, EVP_R_NO_DIGEST_SET);
             return 0;
         }
         type = ctx->digest;
@@ -310,7 +310,7 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
             ctx->update = type->update;
             ctx->md_data = OPENSSL_zalloc(type->ctx_size);
             if (ctx->md_data == NULL) {
-                EVPerr(EVP_F_EVP_DIGESTINIT_EX, ERR_R_MALLOC_FAILURE);
+                ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
                 return 0;
             }
         }
@@ -358,7 +358,7 @@ int EVP_DigestUpdate(EVP_MD_CTX *ctx, const void *data, size_t count)
             return EVP_DigestSignUpdate(ctx, data, count);
         if (ctx->pctx->operation == EVP_PKEY_OP_VERIFYCTX)
             return EVP_DigestVerifyUpdate(ctx, data, count);
-        EVPerr(EVP_F_EVP_DIGESTUPDATE, EVP_R_UPDATE_ERROR);
+        ERR_raise(ERR_LIB_EVP, EVP_R_UPDATE_ERROR);
         return 0;
     }
 
@@ -368,7 +368,7 @@ int EVP_DigestUpdate(EVP_MD_CTX *ctx, const void *data, size_t count)
         goto legacy;
 
     if (ctx->digest->dupdate == NULL) {
-        EVPerr(EVP_F_EVP_DIGESTUPDATE, EVP_R_UPDATE_ERROR);
+        ERR_raise(ERR_LIB_EVP, EVP_R_UPDATE_ERROR);
         return 0;
     }
     return ctx->digest->dupdate(ctx->provctx, data, count);
@@ -405,7 +405,7 @@ int EVP_DigestFinal_ex(EVP_MD_CTX *ctx, unsigned char *md, unsigned int *isize)
         goto legacy;
 
     if (ctx->digest->dfinal == NULL) {
-        EVPerr(EVP_F_EVP_DIGESTFINAL_EX, EVP_R_FINAL_ERROR);
+        ERR_raise(ERR_LIB_EVP, EVP_R_FINAL_ERROR);
         return 0;
     }
 
@@ -415,7 +415,7 @@ int EVP_DigestFinal_ex(EVP_MD_CTX *ctx, unsigned char *md, unsigned int *isize)
         if (size <= UINT_MAX) {
             *isize = (int)size;
         } else {
-            EVPerr(EVP_F_EVP_DIGESTFINAL_EX, EVP_R_FINAL_ERROR);
+            ERR_raise(ERR_LIB_EVP, EVP_R_FINAL_ERROR);
             ret = 0;
         }
     }
@@ -446,7 +446,7 @@ int EVP_DigestFinalXOF(EVP_MD_CTX *ctx, unsigned char *md, size_t size)
         goto legacy;
 
     if (ctx->digest->dfinal == NULL) {
-        EVPerr(EVP_F_EVP_DIGESTFINALXOF, EVP_R_FINAL_ERROR);
+        ERR_raise(ERR_LIB_EVP, EVP_R_FINAL_ERROR);
         return 0;
     }
 
@@ -469,7 +469,7 @@ legacy:
         }
         OPENSSL_cleanse(ctx->md_data, ctx->digest->ctx_size);
     } else {
-        EVPerr(EVP_F_EVP_DIGESTFINALXOF, EVP_R_NOT_XOF_OR_INVALID_LENGTH);
+        ERR_raise(ERR_LIB_EVP, EVP_R_NOT_XOF_OR_INVALID_LENGTH);
     }
 
     return ret;
@@ -486,7 +486,7 @@ int EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in)
     unsigned char *tmp_buf;
 
     if (in == NULL || in->digest == NULL) {
-        EVPerr(EVP_F_EVP_MD_CTX_COPY_EX, EVP_R_INPUT_NOT_INITIALIZED);
+        ERR_raise(ERR_LIB_EVP, EVP_R_INPUT_NOT_INITIALIZED);
         return 0;
     }
 
@@ -495,7 +495,7 @@ int EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in)
         goto legacy;
 
     if (in->digest->dupctx == NULL) {
-        EVPerr(EVP_F_EVP_MD_CTX_COPY_EX, EVP_R_NOT_ABLE_TO_COPY_CTX);
+        ERR_raise(ERR_LIB_EVP, EVP_R_NOT_ABLE_TO_COPY_CTX);
         return 0;
     }
 
@@ -513,7 +513,7 @@ int EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in)
     if (in->provctx != NULL) {
         out->provctx = in->digest->dupctx(in->provctx);
         if (out->provctx == NULL) {
-            EVPerr(EVP_F_EVP_MD_CTX_COPY_EX, EVP_R_NOT_ABLE_TO_COPY_CTX);
+            ERR_raise(ERR_LIB_EVP, EVP_R_NOT_ABLE_TO_COPY_CTX);
             return 0;
         }
     }
@@ -525,7 +525,7 @@ int EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in)
     if (in->pctx != NULL) {
         out->pctx = EVP_PKEY_CTX_dup(in->pctx);
         if (out->pctx == NULL) {
-            EVPerr(EVP_F_EVP_MD_CTX_COPY_EX, EVP_R_NOT_ABLE_TO_COPY_CTX);
+            ERR_raise(ERR_LIB_EVP, EVP_R_NOT_ABLE_TO_COPY_CTX);
             EVP_MD_CTX_reset(out);
             return 0;
         }
@@ -539,7 +539,7 @@ int EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in)
 #if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODULE)
     /* Make sure it's safe to copy a digest context using an ENGINE */
     if (in->engine && !ENGINE_init(in->engine)) {
-        EVPerr(EVP_F_EVP_MD_CTX_COPY_EX, ERR_R_ENGINE_LIB);
+        ERR_raise(ERR_LIB_EVP, ERR_R_ENGINE_LIB);
         return 0;
     }
 #endif
@@ -568,7 +568,7 @@ int EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in)
         else {
             out->md_data = OPENSSL_malloc(out->digest->ctx_size);
             if (out->md_data == NULL) {
-                EVPerr(EVP_F_EVP_MD_CTX_COPY_EX, ERR_R_MALLOC_FAILURE);
+                ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
                 return 0;
             }
         }
@@ -839,7 +839,7 @@ static void *evp_md_from_dispatch(int name_id,
 
     /* EVP_MD_fetch() will set the legacy NID if available */
     if ((md = evp_md_new()) == NULL) {
-        EVPerr(0, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 

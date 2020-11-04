@@ -87,13 +87,11 @@ int ec_GF2m_simple_set_compressed_coordinates(const EC_GROUP *group,
             if (ERR_GET_LIB(err) == ERR_LIB_BN
                 && ERR_GET_REASON(err) == BN_R_NO_SOLUTION) {
                 ERR_clear_error();
-                ECerr(EC_F_EC_GF2M_SIMPLE_SET_COMPRESSED_COORDINATES,
-                      EC_R_INVALID_COMPRESSED_POINT);
+                ERR_raise(ERR_LIB_EC, EC_R_INVALID_COMPRESSED_POINT);
             } else
 #endif
             {
-                ECerr(EC_F_EC_GF2M_SIMPLE_SET_COMPRESSED_COORDINATES,
-                      ERR_R_BN_LIB);
+                ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
             }
             goto err;
         }
@@ -139,7 +137,7 @@ size_t ec_GF2m_simple_point2oct(const EC_GROUP *group, const EC_POINT *point,
     if ((form != POINT_CONVERSION_COMPRESSED)
         && (form != POINT_CONVERSION_UNCOMPRESSED)
         && (form != POINT_CONVERSION_HYBRID)) {
-        ECerr(EC_F_EC_GF2M_SIMPLE_POINT2OCT, EC_R_INVALID_FORM);
+        ERR_raise(ERR_LIB_EC, EC_R_INVALID_FORM);
         goto err;
     }
 
@@ -147,7 +145,7 @@ size_t ec_GF2m_simple_point2oct(const EC_GROUP *group, const EC_POINT *point,
         /* encodes to a single 0 octet */
         if (buf != NULL) {
             if (len < 1) {
-                ECerr(EC_F_EC_GF2M_SIMPLE_POINT2OCT, EC_R_BUFFER_TOO_SMALL);
+                ERR_raise(ERR_LIB_EC, EC_R_BUFFER_TOO_SMALL);
                 return 0;
             }
             buf[0] = 0;
@@ -164,7 +162,7 @@ size_t ec_GF2m_simple_point2oct(const EC_GROUP *group, const EC_POINT *point,
     /* if 'buf' is NULL, just return required length */
     if (buf != NULL) {
         if (len < ret) {
-            ECerr(EC_F_EC_GF2M_SIMPLE_POINT2OCT, EC_R_BUFFER_TOO_SMALL);
+            ERR_raise(ERR_LIB_EC, EC_R_BUFFER_TOO_SMALL);
             goto err;
         }
 
@@ -199,7 +197,7 @@ size_t ec_GF2m_simple_point2oct(const EC_GROUP *group, const EC_POINT *point,
 
         skip = field_len - BN_num_bytes(x);
         if (skip > field_len) {
-            ECerr(EC_F_EC_GF2M_SIMPLE_POINT2OCT, ERR_R_INTERNAL_ERROR);
+            ERR_raise(ERR_LIB_EC, ERR_R_INTERNAL_ERROR);
             goto err;
         }
         while (skip > 0) {
@@ -209,7 +207,7 @@ size_t ec_GF2m_simple_point2oct(const EC_GROUP *group, const EC_POINT *point,
         skip = BN_bn2bin(x, buf + i);
         i += skip;
         if (i != 1 + field_len) {
-            ECerr(EC_F_EC_GF2M_SIMPLE_POINT2OCT, ERR_R_INTERNAL_ERROR);
+            ERR_raise(ERR_LIB_EC, ERR_R_INTERNAL_ERROR);
             goto err;
         }
 
@@ -217,7 +215,7 @@ size_t ec_GF2m_simple_point2oct(const EC_GROUP *group, const EC_POINT *point,
             || form == POINT_CONVERSION_HYBRID) {
             skip = field_len - BN_num_bytes(y);
             if (skip > field_len) {
-                ECerr(EC_F_EC_GF2M_SIMPLE_POINT2OCT, ERR_R_INTERNAL_ERROR);
+                ERR_raise(ERR_LIB_EC, ERR_R_INTERNAL_ERROR);
                 goto err;
             }
             while (skip > 0) {
@@ -229,7 +227,7 @@ size_t ec_GF2m_simple_point2oct(const EC_GROUP *group, const EC_POINT *point,
         }
 
         if (i != ret) {
-            ECerr(EC_F_EC_GF2M_SIMPLE_POINT2OCT, ERR_R_INTERNAL_ERROR);
+            ERR_raise(ERR_LIB_EC, ERR_R_INTERNAL_ERROR);
             goto err;
         }
     }
@@ -268,7 +266,7 @@ int ec_GF2m_simple_oct2point(const EC_GROUP *group, EC_POINT *point,
 #endif
 
     if (len == 0) {
-        ECerr(EC_F_EC_GF2M_SIMPLE_OCT2POINT, EC_R_BUFFER_TOO_SMALL);
+        ERR_raise(ERR_LIB_EC, EC_R_BUFFER_TOO_SMALL);
         return 0;
     }
     form = buf[0];
@@ -277,17 +275,17 @@ int ec_GF2m_simple_oct2point(const EC_GROUP *group, EC_POINT *point,
     if ((form != 0) && (form != POINT_CONVERSION_COMPRESSED)
         && (form != POINT_CONVERSION_UNCOMPRESSED)
         && (form != POINT_CONVERSION_HYBRID)) {
-        ECerr(EC_F_EC_GF2M_SIMPLE_OCT2POINT, EC_R_INVALID_ENCODING);
+        ERR_raise(ERR_LIB_EC, EC_R_INVALID_ENCODING);
         return 0;
     }
     if ((form == 0 || form == POINT_CONVERSION_UNCOMPRESSED) && y_bit) {
-        ECerr(EC_F_EC_GF2M_SIMPLE_OCT2POINT, EC_R_INVALID_ENCODING);
+        ERR_raise(ERR_LIB_EC, EC_R_INVALID_ENCODING);
         return 0;
     }
 
     if (form == 0) {
         if (len != 1) {
-            ECerr(EC_F_EC_GF2M_SIMPLE_OCT2POINT, EC_R_INVALID_ENCODING);
+            ERR_raise(ERR_LIB_EC, EC_R_INVALID_ENCODING);
             return 0;
         }
 
@@ -301,7 +299,7 @@ int ec_GF2m_simple_oct2point(const EC_GROUP *group, EC_POINT *point,
          POINT_CONVERSION_COMPRESSED) ? 1 + field_len : 1 + 2 * field_len;
 
     if (len != enc_len) {
-        ECerr(EC_F_EC_GF2M_SIMPLE_OCT2POINT, EC_R_INVALID_ENCODING);
+        ERR_raise(ERR_LIB_EC, EC_R_INVALID_ENCODING);
         return 0;
     }
 
@@ -323,7 +321,7 @@ int ec_GF2m_simple_oct2point(const EC_GROUP *group, EC_POINT *point,
     if (!BN_bin2bn(buf + 1, field_len, x))
         goto err;
     if (BN_num_bits(x) > m) {
-        ECerr(EC_F_EC_GF2M_SIMPLE_OCT2POINT, EC_R_INVALID_ENCODING);
+        ERR_raise(ERR_LIB_EC, EC_R_INVALID_ENCODING);
         goto err;
     }
 
@@ -334,14 +332,14 @@ int ec_GF2m_simple_oct2point(const EC_GROUP *group, EC_POINT *point,
         if (!BN_bin2bn(buf + 1 + field_len, field_len, y))
             goto err;
         if (BN_num_bits(y) > m) {
-            ECerr(EC_F_EC_GF2M_SIMPLE_OCT2POINT, EC_R_INVALID_ENCODING);
+            ERR_raise(ERR_LIB_EC, EC_R_INVALID_ENCODING);
             goto err;
         }
         if (form == POINT_CONVERSION_HYBRID) {
             if (!group->meth->field_div(group, yxi, y, x, ctx))
                 goto err;
             if (y_bit != BN_is_odd(yxi)) {
-                ECerr(EC_F_EC_GF2M_SIMPLE_OCT2POINT, EC_R_INVALID_ENCODING);
+                ERR_raise(ERR_LIB_EC, EC_R_INVALID_ENCODING);
                 goto err;
             }
         }

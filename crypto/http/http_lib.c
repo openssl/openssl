@@ -38,7 +38,7 @@ int OSSL_HTTP_parse_url(const char *url, char **phost, char **pport,
         *pssl = 0;
 
     if (url == NULL) {
-        HTTPerr(0, ERR_R_PASSED_NULL_PARAMETER);
+        ERR_raise(ERR_LIB_HTTP, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
 
@@ -58,7 +58,7 @@ int OSSL_HTTP_parse_url(const char *url, char **phost, char **pport,
             port = OSSL_HTTPS_PORT;
             portnum = 443;
         } else if (strcmp(buf, OSSL_HTTP_NAME) != 0) {
-            HTTPerr(0, HTTP_R_INVALID_URL_PREFIX);
+            ERR_raise(ERR_LIB_HTTP, HTTP_R_INVALID_URL_PREFIX);
             goto err;
         }
         p += 3;
@@ -95,7 +95,7 @@ int OSSL_HTTP_parse_url(const char *url, char **phost, char **pport,
             if (p == port || (*p != '\0' && *p != '/'))
                 goto parse_err;
             if (portnum <= 0 || portnum >= 65536) {
-                HTTPerr(0, HTTP_R_INVALID_PORT_NUMBER);
+                ERR_raise(ERR_LIB_HTTP, HTTP_R_INVALID_PORT_NUMBER);
                 goto err;
             }
         }
@@ -109,7 +109,7 @@ int OSSL_HTTP_parse_url(const char *url, char **phost, char **pport,
     if (*path == '\0') {
         path = "/";
     } else if (*path != '/') {
-        HTTPerr(0, HTTP_R_INVALID_URL_PATH);
+        ERR_raise(ERR_LIB_HTTP, HTTP_R_INVALID_URL_PATH);
         goto parse_err;
     }
 
@@ -126,7 +126,7 @@ int OSSL_HTTP_parse_url(const char *url, char **phost, char **pport,
     return 1;
 
  parse_err:
-    HTTPerr(0, HTTP_R_ERROR_PARSING_URL);
+    ERR_raise(ERR_LIB_HTTP, HTTP_R_ERROR_PARSING_URL);
 
  err:
     if (ppath != NULL) {

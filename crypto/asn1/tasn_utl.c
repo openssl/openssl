@@ -85,7 +85,7 @@ int asn1_do_lock(ASN1_VALUE **pval, int op, const ASN1_ITEM *it)
         *lck = ret = 1;
         *lock = CRYPTO_THREAD_lock_new();
         if (*lock == NULL) {
-            ASN1err(ASN1_F_ASN1_DO_LOCK, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
             return -1;
         }
         break;
@@ -168,7 +168,7 @@ int asn1_enc_save(ASN1_VALUE **pval, const unsigned char *in, int inlen,
 
     OPENSSL_free(enc->enc);
     if ((enc->enc = OPENSSL_malloc(inlen)) == NULL) {
-        ASN1err(ASN1_F_ASN1_ENC_SAVE, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
         return 0;
     }
     memcpy(enc->enc, in, inlen);
@@ -255,7 +255,7 @@ const ASN1_TEMPLATE *asn1_do_adb(const ASN1_VALUE *val,
 
     /* Let application callback translate value */
     if (adb->adb_cb != NULL && adb->adb_cb(&selector) == 0) {
-        ASN1err(ASN1_F_ASN1_DO_ADB, ASN1_R_UNSUPPORTED_ANY_DEFINED_BY_TYPE);
+        ERR_raise(ERR_LIB_ASN1, ASN1_R_UNSUPPORTED_ANY_DEFINED_BY_TYPE);
         return NULL;
     }
 
@@ -280,6 +280,6 @@ const ASN1_TEMPLATE *asn1_do_adb(const ASN1_VALUE *val,
  err:
     /* FIXME: should log the value or OID of unsupported type */
     if (nullerr)
-        ASN1err(ASN1_F_ASN1_DO_ADB, ASN1_R_UNSUPPORTED_ANY_DEFINED_BY_TYPE);
+        ERR_raise(ERR_LIB_ASN1, ASN1_R_UNSUPPORTED_ANY_DEFINED_BY_TYPE);
     return NULL;
 }

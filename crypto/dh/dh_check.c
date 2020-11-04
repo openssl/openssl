@@ -33,13 +33,13 @@ int DH_check_params_ex(const DH *dh)
         return 0;
 
     if ((errflags & DH_CHECK_P_NOT_PRIME) != 0)
-        DHerr(DH_F_DH_CHECK_PARAMS_EX, DH_R_CHECK_P_NOT_PRIME);
+        ERR_raise(ERR_LIB_DH, DH_R_CHECK_P_NOT_PRIME);
     if ((errflags & DH_NOT_SUITABLE_GENERATOR) != 0)
-        DHerr(DH_F_DH_CHECK_PARAMS_EX, DH_R_NOT_SUITABLE_GENERATOR);
+        ERR_raise(ERR_LIB_DH, DH_R_NOT_SUITABLE_GENERATOR);
     if ((errflags & DH_MODULUS_TOO_SMALL) != 0)
-        DHerr(DH_F_DH_CHECK_PARAMS_EX, DH_R_MODULUS_TOO_SMALL);
+        ERR_raise(ERR_LIB_DH, DH_R_MODULUS_TOO_SMALL);
     if ((errflags & DH_MODULUS_TOO_LARGE) != 0)
-        DHerr(DH_F_DH_CHECK_PARAMS_EX, DH_R_MODULUS_TOO_LARGE);
+        ERR_raise(ERR_LIB_DH, DH_R_MODULUS_TOO_LARGE);
 
     return errflags == 0;
 }
@@ -116,23 +116,23 @@ int DH_check_ex(const DH *dh)
         return 0;
 
     if ((errflags & DH_NOT_SUITABLE_GENERATOR) != 0)
-        DHerr(DH_F_DH_CHECK_EX, DH_R_NOT_SUITABLE_GENERATOR);
+        ERR_raise(ERR_LIB_DH, DH_R_NOT_SUITABLE_GENERATOR);
     if ((errflags & DH_CHECK_Q_NOT_PRIME) != 0)
-        DHerr(DH_F_DH_CHECK_EX, DH_R_CHECK_Q_NOT_PRIME);
+        ERR_raise(ERR_LIB_DH, DH_R_CHECK_Q_NOT_PRIME);
     if ((errflags & DH_CHECK_INVALID_Q_VALUE) != 0)
-        DHerr(DH_F_DH_CHECK_EX, DH_R_CHECK_INVALID_Q_VALUE);
+        ERR_raise(ERR_LIB_DH, DH_R_CHECK_INVALID_Q_VALUE);
     if ((errflags & DH_CHECK_INVALID_J_VALUE) != 0)
-        DHerr(DH_F_DH_CHECK_EX, DH_R_CHECK_INVALID_J_VALUE);
+        ERR_raise(ERR_LIB_DH, DH_R_CHECK_INVALID_J_VALUE);
     if ((errflags & DH_UNABLE_TO_CHECK_GENERATOR) != 0)
-        DHerr(DH_F_DH_CHECK_EX, DH_R_UNABLE_TO_CHECK_GENERATOR);
+        ERR_raise(ERR_LIB_DH, DH_R_UNABLE_TO_CHECK_GENERATOR);
     if ((errflags & DH_CHECK_P_NOT_PRIME) != 0)
-        DHerr(DH_F_DH_CHECK_EX, DH_R_CHECK_P_NOT_PRIME);
+        ERR_raise(ERR_LIB_DH, DH_R_CHECK_P_NOT_PRIME);
     if ((errflags & DH_CHECK_P_NOT_SAFE_PRIME) != 0)
-        DHerr(DH_F_DH_CHECK_EX, DH_R_CHECK_P_NOT_SAFE_PRIME);
+        ERR_raise(ERR_LIB_DH, DH_R_CHECK_P_NOT_SAFE_PRIME);
     if ((errflags & DH_MODULUS_TOO_SMALL) != 0)
-        DHerr(DH_F_DH_CHECK_EX, DH_R_MODULUS_TOO_SMALL);
+        ERR_raise(ERR_LIB_DH, DH_R_MODULUS_TOO_SMALL);
     if ((errflags & DH_MODULUS_TOO_LARGE) != 0)
-        DHerr(DH_F_DH_CHECK_EX, DH_R_MODULUS_TOO_LARGE);
+        ERR_raise(ERR_LIB_DH, DH_R_MODULUS_TOO_LARGE);
 
     return errflags == 0;
 }
@@ -221,11 +221,11 @@ int DH_check_pub_key_ex(const DH *dh, const BIGNUM *pub_key)
         return 0;
 
     if ((errflags & DH_CHECK_PUBKEY_TOO_SMALL) != 0)
-        DHerr(DH_F_DH_CHECK_PUB_KEY_EX, DH_R_CHECK_PUBKEY_TOO_SMALL);
+        ERR_raise(ERR_LIB_DH, DH_R_CHECK_PUBKEY_TOO_SMALL);
     if ((errflags & DH_CHECK_PUBKEY_TOO_LARGE) != 0)
-        DHerr(DH_F_DH_CHECK_PUB_KEY_EX, DH_R_CHECK_PUBKEY_TOO_LARGE);
+        ERR_raise(ERR_LIB_DH, DH_R_CHECK_PUBKEY_TOO_LARGE);
     if ((errflags & DH_CHECK_PUBKEY_INVALID) != 0)
-        DHerr(DH_F_DH_CHECK_PUB_KEY_EX, DH_R_CHECK_PUBKEY_INVALID);
+        ERR_raise(ERR_LIB_DH, DH_R_CHECK_PUBKEY_INVALID);
 
     return errflags == 0;
 }

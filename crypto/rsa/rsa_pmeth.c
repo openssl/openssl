@@ -112,7 +112,7 @@ static int setup_tbuf(RSA_PKEY_CTX *ctx, EVP_PKEY_CTX *pk)
     if (ctx->tbuf != NULL)
         return 1;
     if ((ctx->tbuf = OPENSSL_malloc(RSA_size(pk->pkey->pkey.rsa))) == NULL) {
-        RSAerr(RSA_F_SETUP_TBUF, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_RSA, ERR_R_MALLOC_FAILURE);
         return 0;
     }
     return 1;
@@ -139,7 +139,7 @@ static int pkey_rsa_sign(EVP_PKEY_CTX *ctx, unsigned char *sig,
 
     if (rctx->md) {
         if (tbslen != (size_t)EVP_MD_size(rctx->md)) {
-            RSAerr(RSA_F_PKEY_RSA_SIGN, RSA_R_INVALID_DIGEST_LENGTH);
+            ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_DIGEST_LENGTH);
             return -1;
         }
 
@@ -155,11 +155,11 @@ static int pkey_rsa_sign(EVP_PKEY_CTX *ctx, unsigned char *sig,
             ret = sltmp;
         } else if (rctx->pad_mode == RSA_X931_PADDING) {
             if ((size_t)RSA_size(rsa) < tbslen + 1) {
-                RSAerr(RSA_F_PKEY_RSA_SIGN, RSA_R_KEY_SIZE_TOO_SMALL);
+                ERR_raise(ERR_LIB_RSA, RSA_R_KEY_SIZE_TOO_SMALL);
                 return -1;
             }
             if (!setup_tbuf(rctx, ctx)) {
-                RSAerr(RSA_F_PKEY_RSA_SIGN, ERR_R_MALLOC_FAILURE);
+                ERR_raise(ERR_LIB_RSA, ERR_R_MALLOC_FAILURE);
                 return -1;
             }
             memcpy(rctx->tbuf, tbs, tbslen);
@@ -214,13 +214,11 @@ static int pkey_rsa_verifyrecover(EVP_PKEY_CTX *ctx,
                 return 0;
             ret--;
             if (rctx->tbuf[ret] != RSA_X931_hash_id(EVP_MD_type(rctx->md))) {
-                RSAerr(RSA_F_PKEY_RSA_VERIFYRECOVER,
-                       RSA_R_ALGORITHM_MISMATCH);
+                ERR_raise(ERR_LIB_RSA, RSA_R_ALGORITHM_MISMATCH);
                 return 0;
             }
             if (ret != EVP_MD_size(rctx->md)) {
-                RSAerr(RSA_F_PKEY_RSA_VERIFYRECOVER,
-                       RSA_R_INVALID_DIGEST_LENGTH);
+                ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_DIGEST_LENGTH);
                 return 0;
             }
             if (rout)
@@ -259,7 +257,7 @@ static int pkey_rsa_verify(EVP_PKEY_CTX *ctx,
             return RSA_verify(EVP_MD_type(rctx->md), tbs, tbslen,
                               sig, siglen, rsa);
         if (tbslen != (size_t)EVP_MD_size(rctx->md)) {
-            RSAerr(RSA_F_PKEY_RSA_VERIFY, RSA_R_INVALID_DIGEST_LENGTH);
+            ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_DIGEST_LENGTH);
             return -1;
         }
         if (rctx->pad_mode == RSA_X931_PADDING) {
@@ -365,13 +363,13 @@ static int check_padding_md(const EVP_MD *md, int padding)
     mdnid = EVP_MD_type(md);
 
     if (padding == RSA_NO_PADDING) {
-        RSAerr(RSA_F_CHECK_PADDING_MD, RSA_R_INVALID_PADDING_MODE);
+        ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_PADDING_MODE);
         return 0;
     }
 
     if (padding == RSA_X931_PADDING) {
         if (RSA_X931_hash_id(mdnid) == -1) {
-            RSAerr(RSA_F_CHECK_PADDING_MD, RSA_R_INVALID_X931_DIGEST);
+            ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_X931_DIGEST);
             return 0;
         }
     } else {
@@ -397,7 +395,7 @@ static int check_padding_md(const EVP_MD *md, int padding)
             return 1;
 
         default:
-            RSAerr(RSA_F_CHECK_PADDING_MD, RSA_R_INVALID_DIGEST);
+            ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_DIGEST);
             return 0;
 
         }
@@ -434,8 +432,7 @@ static int pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
             return 1;
         }
  bad_pad:
-        RSAerr(RSA_F_PKEY_RSA_CTRL,
-               RSA_R_ILLEGAL_OR_UNSUPPORTED_PADDING_MODE);
+        ERR_raise(ERR_LIB_RSA, RSA_R_ILLEGAL_OR_UNSUPPORTED_PADDING_MODE);
         return -2;
 
     case EVP_PKEY_CTRL_GET_RSA_PADDING:
@@ -445,7 +442,7 @@ static int pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
     case EVP_PKEY_CTRL_RSA_PSS_SALTLEN:
     case EVP_PKEY_CTRL_GET_RSA_PSS_SALTLEN:
         if (rctx->pad_mode != RSA_PKCS1_PSS_PADDING) {
-            RSAerr(RSA_F_PKEY_RSA_CTRL, RSA_R_INVALID_PSS_SALTLEN);
+            ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_PSS_SALTLEN);
             return -2;
         }
         if (type == EVP_PKEY_CTRL_GET_RSA_PSS_SALTLEN) {
@@ -456,13 +453,13 @@ static int pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
             if (rsa_pss_restricted(rctx)) {
                 if (p1 == RSA_PSS_SALTLEN_AUTO
                     && ctx->operation == EVP_PKEY_OP_VERIFY) {
-                    RSAerr(RSA_F_PKEY_RSA_CTRL, RSA_R_INVALID_PSS_SALTLEN);
+                    ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_PSS_SALTLEN);
                     return -2;
                 }
                 if ((p1 == RSA_PSS_SALTLEN_DIGEST
                      && rctx->min_saltlen > EVP_MD_size(rctx->md))
                     || (p1 >= 0 && p1 < rctx->min_saltlen)) {
-                    RSAerr(RSA_F_PKEY_RSA_CTRL, RSA_R_PSS_SALTLEN_TOO_SMALL);
+                    ERR_raise(ERR_LIB_RSA, RSA_R_PSS_SALTLEN_TOO_SMALL);
                     return 0;
                 }
             }
@@ -472,7 +469,7 @@ static int pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 
     case EVP_PKEY_CTRL_RSA_KEYGEN_BITS:
         if (p1 < RSA_MIN_MODULUS_BITS) {
-            RSAerr(RSA_F_PKEY_RSA_CTRL, RSA_R_KEY_SIZE_TOO_SMALL);
+            ERR_raise(ERR_LIB_RSA, RSA_R_KEY_SIZE_TOO_SMALL);
             return -2;
         }
         rctx->nbits = p1;
@@ -480,7 +477,7 @@ static int pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 
     case EVP_PKEY_CTRL_RSA_KEYGEN_PUBEXP:
         if (p2 == NULL || !BN_is_odd((BIGNUM *)p2) || BN_is_one((BIGNUM *)p2)) {
-            RSAerr(RSA_F_PKEY_RSA_CTRL, RSA_R_BAD_E_VALUE);
+            ERR_raise(ERR_LIB_RSA, RSA_R_BAD_E_VALUE);
             return -2;
         }
         BN_free(rctx->pub_exp);
@@ -489,7 +486,7 @@ static int pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 
     case EVP_PKEY_CTRL_RSA_KEYGEN_PRIMES:
         if (p1 < RSA_DEFAULT_PRIME_NUM || p1 > RSA_MAX_PRIME_NUM) {
-            RSAerr(RSA_F_PKEY_RSA_CTRL, RSA_R_KEY_PRIME_NUM_INVALID);
+            ERR_raise(ERR_LIB_RSA, RSA_R_KEY_PRIME_NUM_INVALID);
             return -2;
         }
         rctx->primes = p1;
@@ -498,7 +495,7 @@ static int pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
     case EVP_PKEY_CTRL_RSA_OAEP_MD:
     case EVP_PKEY_CTRL_GET_RSA_OAEP_MD:
         if (rctx->pad_mode != RSA_PKCS1_OAEP_PADDING) {
-            RSAerr(RSA_F_PKEY_RSA_CTRL, RSA_R_INVALID_PADDING_MODE);
+            ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_PADDING_MODE);
             return -2;
         }
         if (type == EVP_PKEY_CTRL_GET_RSA_OAEP_MD)
@@ -513,7 +510,7 @@ static int pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
         if (rsa_pss_restricted(rctx)) {
             if (EVP_MD_type(rctx->md) == EVP_MD_type(p2))
                 return 1;
-            RSAerr(RSA_F_PKEY_RSA_CTRL, RSA_R_DIGEST_NOT_ALLOWED);
+            ERR_raise(ERR_LIB_RSA, RSA_R_DIGEST_NOT_ALLOWED);
             return 0;
         }
         rctx->md = p2;
@@ -527,7 +524,7 @@ static int pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
     case EVP_PKEY_CTRL_GET_RSA_MGF1_MD:
         if (rctx->pad_mode != RSA_PKCS1_PSS_PADDING
             && rctx->pad_mode != RSA_PKCS1_OAEP_PADDING) {
-            RSAerr(RSA_F_PKEY_RSA_CTRL, RSA_R_INVALID_MGF1_MD);
+            ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_MGF1_MD);
             return -2;
         }
         if (type == EVP_PKEY_CTRL_GET_RSA_MGF1_MD) {
@@ -539,7 +536,7 @@ static int pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
             if (rsa_pss_restricted(rctx)) {
                 if (EVP_MD_type(rctx->mgf1md) == EVP_MD_type(p2))
                     return 1;
-                RSAerr(RSA_F_PKEY_RSA_CTRL, RSA_R_MGF1_DIGEST_NOT_ALLOWED);
+                ERR_raise(ERR_LIB_RSA, RSA_R_MGF1_DIGEST_NOT_ALLOWED);
                 return 0;
             }
             rctx->mgf1md = p2;
@@ -548,7 +545,7 @@ static int pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 
     case EVP_PKEY_CTRL_RSA_OAEP_LABEL:
         if (rctx->pad_mode != RSA_PKCS1_OAEP_PADDING) {
-            RSAerr(RSA_F_PKEY_RSA_CTRL, RSA_R_INVALID_PADDING_MODE);
+            ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_PADDING_MODE);
             return -2;
         }
         OPENSSL_free(rctx->oaep_label);
@@ -563,7 +560,7 @@ static int pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 
     case EVP_PKEY_CTRL_GET_RSA_OAEP_LABEL:
         if (rctx->pad_mode != RSA_PKCS1_OAEP_PADDING) {
-            RSAerr(RSA_F_PKEY_RSA_CTRL, RSA_R_INVALID_PADDING_MODE);
+            ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_PADDING_MODE);
             return -2;
         }
         *(unsigned char **)p2 = rctx->oaep_label;
@@ -586,8 +583,7 @@ static int pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
         return 1;
     /* fall through */
     case EVP_PKEY_CTRL_PEER_KEY:
-        RSAerr(RSA_F_PKEY_RSA_CTRL,
-               RSA_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        ERR_raise(ERR_LIB_RSA, RSA_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
         return -2;
 
     default:
@@ -600,7 +596,7 @@ static int pkey_rsa_ctrl_str(EVP_PKEY_CTX *ctx,
                              const char *type, const char *value)
 {
     if (value == NULL) {
-        RSAerr(RSA_F_PKEY_RSA_CTRL_STR, RSA_R_VALUE_MISSING);
+        ERR_raise(ERR_LIB_RSA, RSA_R_VALUE_MISSING);
         return 0;
     }
     if (strcmp(type, "rsa_padding_mode") == 0) {
@@ -621,7 +617,7 @@ static int pkey_rsa_ctrl_str(EVP_PKEY_CTX *ctx,
         } else if (strcmp(value, "pss") == 0) {
             pm = RSA_PKCS1_PSS_PADDING;
         } else {
-            RSAerr(RSA_F_PKEY_RSA_CTRL_STR, RSA_R_UNKNOWN_PADDING_TYPE);
+            ERR_raise(ERR_LIB_RSA, RSA_R_UNKNOWN_PADDING_TYPE);
             return -2;
         }
         return EVP_PKEY_CTX_set_rsa_padding(ctx, pm);
@@ -832,7 +828,7 @@ static int pkey_pss_init(EVP_PKEY_CTX *ctx)
     if ((RSA_bits(rsa) & 0x7) == 1)
         max_saltlen--;
     if (min_saltlen > max_saltlen) {
-        RSAerr(RSA_F_PKEY_PSS_INIT, RSA_R_INVALID_SALT_LENGTH);
+        ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_SALT_LENGTH);
         return 0;
     }
 

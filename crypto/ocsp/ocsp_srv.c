@@ -117,7 +117,7 @@ OCSP_SINGLERESP *OCSP_basic_add1_status(OCSP_BASICRESP *rsp,
     switch (cs->type = status) {
     case V_OCSP_CERTSTATUS_REVOKED:
         if (!revtime) {
-            OCSPerr(OCSP_F_OCSP_BASIC_ADD1_STATUS, OCSP_R_NO_REVOKED_TIME);
+            ERR_raise(ERR_LIB_OCSP, OCSP_R_NO_REVOKED_TIME);
             goto err;
         }
         if ((cs->value.revoked = ri = OCSP_REVOKEDINFO_new()) == NULL)
@@ -176,14 +176,13 @@ int OCSP_basic_sign_ctx(OCSP_BASICRESP *brsp,
     EVP_PKEY *pkey;
 
     if (ctx == NULL || EVP_MD_CTX_pkey_ctx(ctx) == NULL) {
-        OCSPerr(OCSP_F_OCSP_BASIC_SIGN_CTX, OCSP_R_NO_SIGNER_KEY);
+        ERR_raise(ERR_LIB_OCSP, OCSP_R_NO_SIGNER_KEY);
         goto err;
     }
 
     pkey = EVP_PKEY_CTX_get0_pkey(EVP_MD_CTX_pkey_ctx(ctx));
     if (pkey == NULL || !X509_check_private_key(signer, pkey)) {
-        OCSPerr(OCSP_F_OCSP_BASIC_SIGN_CTX,
-                OCSP_R_PRIVATE_KEY_DOES_NOT_MATCH_CERTIFICATE);
+        ERR_raise(ERR_LIB_OCSP, OCSP_R_PRIVATE_KEY_DOES_NOT_MATCH_CERTIFICATE);
         goto err;
     }
 

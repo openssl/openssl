@@ -824,7 +824,7 @@ doapr_outch(char **sbuffer,
         *maxlen += BUFFER_INC;
         if (*buffer == NULL) {
             if ((*buffer = OPENSSL_malloc(*maxlen)) == NULL) {
-                BIOerr(BIO_F_DOAPR_OUTCH, ERR_R_MALLOC_FAILURE);
+                ERR_raise(ERR_LIB_BIO, ERR_R_MALLOC_FAILURE);
                 return 0;
             }
             if (*currlen > 0) {

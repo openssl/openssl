@@ -54,7 +54,7 @@ void *CRYPTO_memdup(const void *data, size_t siz, const char* file, int line)
 
     ret = CRYPTO_malloc(siz, file, line);
     if (ret == NULL) {
-        CRYPTOerr(CRYPTO_F_CRYPTO_MEMDUP, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
     return memcpy(ret, data, siz);
@@ -148,19 +148,19 @@ static int hexstr2buf_sep(unsigned char *buf, size_t buf_n, size_t *buflen,
             continue;
         cl = *p++;
         if (!cl) {
-            CRYPTOerr(0, CRYPTO_R_ODD_NUMBER_OF_DIGITS);
+            ERR_raise(ERR_LIB_CRYPTO, CRYPTO_R_ODD_NUMBER_OF_DIGITS);
             return 0;
         }
         cli = OPENSSL_hexchar2int(cl);
         chi = OPENSSL_hexchar2int(ch);
         if (cli < 0 || chi < 0) {
-            CRYPTOerr(0, CRYPTO_R_ILLEGAL_HEX_DIGIT);
+            ERR_raise(ERR_LIB_CRYPTO, CRYPTO_R_ILLEGAL_HEX_DIGIT);
             return 0;
         }
         cnt++;
         if (q != NULL) {
             if (cnt > buf_n) {
-                CRYPTOerr(0, CRYPTO_R_TOO_SMALL_BUFFER);
+                ERR_raise(ERR_LIB_CRYPTO, CRYPTO_R_TOO_SMALL_BUFFER);
                 return 0;
             }
             *q++ = (unsigned char)((chi << 4) | cli);
@@ -189,7 +189,7 @@ unsigned char *openssl_hexstr2buf_sep(const char *str, long *buflen,
 
     buf_n = strlen(str) >> 1;
     if ((buf = OPENSSL_malloc(buf_n)) == NULL) {
-        CRYPTOerr(0, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
@@ -227,7 +227,7 @@ static int buf2hexstr_sep(char *str, size_t str_n, size_t *strlen,
         return 1;
 
     if (str_n < (unsigned long)len) {
-        CRYPTOerr(0, CRYPTO_R_TOO_SMALL_BUFFER);
+        ERR_raise(ERR_LIB_CRYPTO, CRYPTO_R_TOO_SMALL_BUFFER);
         return 0;
     }
 
@@ -264,7 +264,7 @@ char *openssl_buf2hexstr_sep(const unsigned char *buf, long buflen, char sep)
 
     tmp_n = (sep != CH_ZERO) ? buflen * 3 : 1 + buflen * 2;
     if ((tmp = OPENSSL_malloc(tmp_n)) == NULL) {
-        CRYPTOerr(0, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 

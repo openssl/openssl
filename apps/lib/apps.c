@@ -2036,14 +2036,14 @@ ASN1_VALUE *app_http_get_asn1(const char *url, const char *proxy,
     ASN1_VALUE *resp = NULL;
 
     if (url == NULL || it == NULL) {
-        HTTPerr(0, ERR_R_PASSED_NULL_PARAMETER);
+        ERR_raise(ERR_LIB_HTTP, ERR_R_PASSED_NULL_PARAMETER);
         return NULL;
     }
 
     if (!OSSL_HTTP_parse_url(url, &server, &port, NULL, NULL, &use_ssl))
         return NULL;
     if (use_ssl && ssl_ctx == NULL) {
-        HTTPerr(0, ERR_R_PASSED_NULL_PARAMETER);
+        ERR_raise(ERR_LIB_HTTP, ERR_R_PASSED_NULL_PARAMETER);
         ERR_add_error_data(1, "missing SSL_CTX");
         goto end;
     }

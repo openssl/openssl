@@ -60,7 +60,7 @@ static void *evp_kdf_from_dispatch(int name_id,
     int fnkdfcnt = 0, fnctxcnt = 0;
 
     if ((kdf = evp_kdf_new()) == NULL) {
-        EVPerr(0, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
     kdf->name_id = name_id;

@@ -30,8 +30,7 @@ int CMS_RecipientInfo_kari_get0_alg(CMS_RecipientInfo *ri,
                                     ASN1_OCTET_STRING **pukm)
 {
     if (ri->type != CMS_RECIPINFO_AGREE) {
-        CMSerr(CMS_F_CMS_RECIPIENTINFO_KARI_GET0_ALG,
-               CMS_R_NOT_KEY_AGREEMENT);
+        ERR_raise(ERR_LIB_CMS, CMS_R_NOT_KEY_AGREEMENT);
         return 0;
     }
     if (palg)
@@ -47,8 +46,7 @@ STACK_OF(CMS_RecipientEncryptedKey)
 *CMS_RecipientInfo_kari_get0_reks(CMS_RecipientInfo *ri)
 {
     if (ri->type != CMS_RECIPINFO_AGREE) {
-        CMSerr(CMS_F_CMS_RECIPIENTINFO_KARI_GET0_REKS,
-               CMS_R_NOT_KEY_AGREEMENT);
+        ERR_raise(ERR_LIB_CMS, CMS_R_NOT_KEY_AGREEMENT);
         return NULL;
     }
     return ri->d.kari->recipientEncryptedKeys;
@@ -64,8 +62,7 @@ int CMS_RecipientInfo_kari_get0_orig_id(CMS_RecipientInfo *ri,
     CMS_OriginatorIdentifierOrKey *oik;
 
     if (ri->type != CMS_RECIPINFO_AGREE) {
-        CMSerr(CMS_F_CMS_RECIPIENTINFO_KARI_GET0_ORIG_ID,
-               CMS_R_NOT_KEY_AGREEMENT);
+        ERR_raise(ERR_LIB_CMS, CMS_R_NOT_KEY_AGREEMENT);
         return 0;
     }
     oik = ri->d.kari->originator;
@@ -102,8 +99,7 @@ int CMS_RecipientInfo_kari_orig_id_cmp(CMS_RecipientInfo *ri, X509 *cert)
     CMS_OriginatorIdentifierOrKey *oik;
 
     if (ri->type != CMS_RECIPINFO_AGREE) {
-        CMSerr(CMS_F_CMS_RECIPIENTINFO_KARI_ORIG_ID_CMP,
-               CMS_R_NOT_KEY_AGREEMENT);
+        ERR_raise(ERR_LIB_CMS, CMS_R_NOT_KEY_AGREEMENT);
         return -2;
     }
     oik = ri->d.kari->originator;
@@ -480,7 +476,7 @@ int cms_RecipientInfo_kari_encrypt(const CMS_ContentInfo *cms,
     int i;
 
     if (ri->type != CMS_RECIPINFO_AGREE) {
-        CMSerr(CMS_F_CMS_RECIPIENTINFO_KARI_ENCRYPT, CMS_R_NOT_KEY_AGREEMENT);
+        ERR_raise(ERR_LIB_CMS, CMS_R_NOT_KEY_AGREEMENT);
         return 0;
     }
     kari = ri->d.kari;

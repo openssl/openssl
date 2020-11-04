@@ -55,7 +55,7 @@ PKCS12 *PKCS12_create(const char *pass, const char *name, EVP_PKEY *pkey, X509 *
         mac_iter = 1;
 
     if (pkey == NULL && cert == NULL && ca == NULL) {
-        PKCS12err(PKCS12_F_PKCS12_CREATE, PKCS12_R_INVALID_NULL_ARGUMENT);
+        ERR_raise(ERR_LIB_PKCS12, PKCS12_R_INVALID_NULL_ARGUMENT);
         return NULL;
     }
 

@@ -50,7 +50,7 @@ static ASN1_INTEGER *def_serial_cb(struct TS_resp_ctx *ctx, void *data)
     return serial;
 
  err:
-    TSerr(TS_F_DEF_SERIAL_CB, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_TS, ERR_R_MALLOC_FAILURE);
     TS_RESP_CTX_set_status_info(ctx, TS_STATUS_REJECTION,
                                 "Error during serial number generation.");
     ASN1_INTEGER_free(serial);
@@ -64,7 +64,7 @@ static int def_time_cb(struct TS_resp_ctx *ctx, void *data,
 {
     struct timeval tv;
     if (gettimeofday(&tv, NULL) != 0) {
-        TSerr(TS_F_DEF_TIME_CB, TS_R_TIME_SYSCALL_ERROR);
+        ERR_raise(ERR_LIB_TS, TS_R_TIME_SYSCALL_ERROR);
         TS_RESP_CTX_set_status_info(ctx, TS_STATUS_REJECTION,
                                     "Time is not available.");
         TS_RESP_CTX_add_failure_info(ctx, TS_INFO_TIME_NOT_AVAILABLE);
@@ -83,7 +83,7 @@ static int def_time_cb(struct TS_resp_ctx *ctx, void *data,
 {
     time_t t;
     if (time(&t) == (time_t)-1) {
-        TSerr(TS_F_DEF_TIME_CB, TS_R_TIME_SYSCALL_ERROR);
+        ERR_raise(ERR_LIB_TS, TS_R_TIME_SYSCALL_ERROR);
         TS_RESP_CTX_set_status_info(ctx, TS_STATUS_REJECTION,
                                     "Time is not available.");
         TS_RESP_CTX_add_failure_info(ctx, TS_INFO_TIME_NOT_AVAILABLE);
@@ -113,7 +113,7 @@ TS_RESP_CTX *TS_RESP_CTX_new(void)
     TS_RESP_CTX *ctx;
 
     if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) == NULL) {
-        TSerr(TS_F_TS_RESP_CTX_NEW, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_TS, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
@@ -146,8 +146,7 @@ void TS_RESP_CTX_free(TS_RESP_CTX *ctx)
 int TS_RESP_CTX_set_signer_cert(TS_RESP_CTX *ctx, X509 *signer)
 {
     if (X509_check_purpose(signer, X509_PURPOSE_TIMESTAMP_SIGN, 0) != 1) {
-        TSerr(TS_F_TS_RESP_CTX_SET_SIGNER_CERT,
-              TS_R_INVALID_SIGNER_CERTIFICATE_PURPOSE);
+        ERR_raise(ERR_LIB_TS, TS_R_INVALID_SIGNER_CERTIFICATE_PURPOSE);
         return 0;
     }
     X509_free(ctx->signer_cert);
@@ -178,7 +177,7 @@ int TS_RESP_CTX_set_def_policy(TS_RESP_CTX *ctx, const ASN1_OBJECT *def_policy)
         goto err;
     return 1;
  err:
-    TSerr(TS_F_TS_RESP_CTX_SET_DEF_POLICY, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_TS, ERR_R_MALLOC_FAILURE);
     return 0;
 }
 
@@ -190,7 +189,7 @@ int TS_RESP_CTX_set_certs(TS_RESP_CTX *ctx, STACK_OF(X509) *certs)
     if (!certs)
         return 1;
     if ((ctx->certs = X509_chain_up_ref(certs)) == NULL) {
-        TSerr(TS_F_TS_RESP_CTX_SET_CERTS, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_TS, ERR_R_MALLOC_FAILURE);
         return 0;
     }
 
@@ -211,7 +210,7 @@ int TS_RESP_CTX_add_policy(TS_RESP_CTX *ctx, const ASN1_OBJECT *policy)
 
     return 1;
  err:
-    TSerr(TS_F_TS_RESP_CTX_ADD_POLICY, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_TS, ERR_R_MALLOC_FAILURE);
     ASN1_OBJECT_free(copy);
     return 0;
 }
@@ -226,7 +225,7 @@ int TS_RESP_CTX_add_md(TS_RESP_CTX *ctx, const EVP_MD *md)
 
     return 1;
  err:
-    TSerr(TS_F_TS_RESP_CTX_ADD_MD, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_TS, ERR_R_MALLOC_FAILURE);
     return 0;
 }
 
@@ -259,7 +258,7 @@ int TS_RESP_CTX_set_accuracy(TS_RESP_CTX *ctx,
     return 1;
  err:
     TS_RESP_CTX_accuracy_free(ctx);
-    TSerr(TS_F_TS_RESP_CTX_SET_ACCURACY, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_TS, ERR_R_MALLOC_FAILURE);
     return 0;
 }
 
@@ -314,7 +313,7 @@ int TS_RESP_CTX_set_status_info(TS_RESP_CTX *ctx,
     ret = 1;
  err:
     if (!ret)
-        TSerr(TS_F_TS_RESP_CTX_SET_STATUS_INFO, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_TS, ERR_R_MALLOC_FAILURE);
     TS_STATUS_INFO_free(si);
     ASN1_UTF8STRING_free(utf8_text);
     return ret;
@@ -342,7 +341,7 @@ int TS_RESP_CTX_add_failure_info(TS_RESP_CTX *ctx, int failure)
         goto err;
     return 1;
  err:
-    TSerr(TS_F_TS_RESP_CTX_ADD_FAILURE_INFO, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_TS, ERR_R_MALLOC_FAILURE);
     return 0;
 }
 
@@ -375,7 +374,7 @@ TS_RESP *TS_RESP_create_response(TS_RESP_CTX *ctx, BIO *req_bio)
     ts_RESP_CTX_init(ctx);
 
     if ((ctx->response = TS_RESP_new()) == NULL) {
-        TSerr(TS_F_TS_RESP_CREATE_RESPONSE, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_TS, ERR_R_MALLOC_FAILURE);
         goto end;
     }
     if ((ctx->request = d2i_TS_REQ_bio(req_bio, NULL)) == NULL) {
@@ -400,7 +399,7 @@ TS_RESP *TS_RESP_create_response(TS_RESP_CTX *ctx, BIO *req_bio)
 
  end:
     if (!result) {
-        TSerr(TS_F_TS_RESP_CREATE_RESPONSE, TS_R_RESPONSE_SETUP_ERROR);
+        ERR_raise(ERR_LIB_TS, TS_R_RESPONSE_SETUP_ERROR);
         if (ctx->response != NULL) {
             if (TS_RESP_CTX_set_status_info_cond(ctx,
                                                  TS_STATUS_REJECTION,
@@ -496,7 +495,7 @@ static ASN1_OBJECT *ts_RESP_get_policy(TS_RESP_CTX *ctx)
     int i;
 
     if (ctx->default_policy == NULL) {
-        TSerr(TS_F_TS_RESP_GET_POLICY, TS_R_INVALID_NULL_POINTER);
+        ERR_raise(ERR_LIB_TS, TS_R_INVALID_NULL_POINTER);
         return NULL;
     }
     if (!requested || !OBJ_cmp(requested, ctx->default_policy))
@@ -509,7 +508,7 @@ static ASN1_OBJECT *ts_RESP_get_policy(TS_RESP_CTX *ctx)
             policy = current;
     }
     if (policy == NULL) {
-        TSerr(TS_F_TS_RESP_GET_POLICY, TS_R_UNACCEPTABLE_POLICY);
+        ERR_raise(ERR_LIB_TS, TS_R_UNACCEPTABLE_POLICY);
         TS_RESP_CTX_set_status_info(ctx, TS_STATUS_REJECTION,
                                     "Requested policy is not " "supported.");
         TS_RESP_CTX_add_failure_info(ctx, TS_INFO_UNACCEPTED_POLICY);
@@ -585,7 +584,7 @@ static TS_TST_INFO *ts_RESP_create_tst_info(TS_RESP_CTX *ctx,
     if (!result) {
         TS_TST_INFO_free(tst_info);
         tst_info = NULL;
-        TSerr(TS_F_TS_RESP_CREATE_TST_INFO, TS_R_TST_INFO_SETUP_ERROR);
+        ERR_raise(ERR_LIB_TS, TS_R_TST_INFO_SETUP_ERROR);
         TS_RESP_CTX_set_status_info_cond(ctx, TS_STATUS_REJECTION,
                                          "Error during TSTInfo "
                                          "generation.");
@@ -633,12 +632,12 @@ static int ts_RESP_sign(TS_RESP_CTX *ctx)
     int i;
 
     if (!X509_check_private_key(ctx->signer_cert, ctx->signer_key)) {
-        TSerr(TS_F_TS_RESP_SIGN, TS_R_PRIVATE_KEY_DOES_NOT_MATCH_CERTIFICATE);
+        ERR_raise(ERR_LIB_TS, TS_R_PRIVATE_KEY_DOES_NOT_MATCH_CERTIFICATE);
         goto err;
     }
 
     if ((p7 = PKCS7_new()) == NULL) {
-        TSerr(TS_F_TS_RESP_SIGN, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_TS, ERR_R_MALLOC_FAILURE);
         goto err;
     }
     if (!PKCS7_set_type(p7, NID_pkcs7_signed))
@@ -658,14 +657,14 @@ static int ts_RESP_sign(TS_RESP_CTX *ctx)
 
     if ((si = PKCS7_add_signature(p7, ctx->signer_cert,
                                   ctx->signer_key, ctx->signer_md)) == NULL) {
-        TSerr(TS_F_TS_RESP_SIGN, TS_R_PKCS7_ADD_SIGNATURE_ERROR);
+        ERR_raise(ERR_LIB_TS, TS_R_PKCS7_ADD_SIGNATURE_ERROR);
         goto err;
     }
 
     oid = OBJ_nid2obj(NID_id_smime_ct_TSTInfo);
     if (!PKCS7_add_signed_attribute(si, NID_pkcs9_contentType,
                                     V_ASN1_OBJECT, oid)) {
-        TSerr(TS_F_TS_RESP_SIGN, TS_R_PKCS7_ADD_SIGNED_ATTR_ERROR);
+        ERR_raise(ERR_LIB_TS, TS_R_PKCS7_ADD_SIGNED_ATTR_ERROR);
         goto err;
     }
 
@@ -676,7 +675,7 @@ static int ts_RESP_sign(TS_RESP_CTX *ctx)
             goto err;
 
         if (!ESS_SIGNING_CERT_add(si, sc)) {
-            TSerr(TS_F_TS_RESP_SIGN, TS_R_ESS_ADD_SIGNING_CERT_ERROR);
+            ERR_raise(ERR_LIB_TS, TS_R_ESS_ADD_SIGNING_CERT_ERROR);
             goto err;
         }
     } else {
@@ -686,7 +685,7 @@ static int ts_RESP_sign(TS_RESP_CTX *ctx)
             goto err;
 
         if (!ESS_SIGNING_CERT_V2_add(si, sc2)) {
-            TSerr(TS_F_TS_RESP_SIGN, TS_R_ESS_ADD_SIGNING_CERT_V2_ERROR);
+            ERR_raise(ERR_LIB_TS, TS_R_ESS_ADD_SIGNING_CERT_V2_ERROR);
             goto err;
         }
     }
@@ -694,15 +693,15 @@ static int ts_RESP_sign(TS_RESP_CTX *ctx)
     if (!ts_TST_INFO_content_new(p7))
         goto err;
     if ((p7bio = PKCS7_dataInit(p7, NULL)) == NULL) {
-        TSerr(TS_F_TS_RESP_SIGN, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_TS, ERR_R_MALLOC_FAILURE);
         goto err;
     }
     if (!i2d_TS_TST_INFO_bio(p7bio, ctx->tst_info)) {
-        TSerr(TS_F_TS_RESP_SIGN, TS_R_TS_DATASIGN);
+        ERR_raise(ERR_LIB_TS, TS_R_TS_DATASIGN);
         goto err;
     }
     if (!PKCS7_dataFinal(p7, p7bio)) {
-        TSerr(TS_F_TS_RESP_SIGN, TS_R_TS_DATASIGN);
+        ERR_raise(ERR_LIB_TS, TS_R_TS_DATASIGN);
         goto err;
     }
     TS_RESP_set_tst_info(ctx->response, p7, ctx->tst_info);
@@ -813,7 +812,7 @@ static ASN1_GENERALIZEDTIME *TS_RESP_set_genTime_with_precision(
     return asn1_time;
 
  err:
-    TSerr(TS_F_TS_RESP_SET_GENTIME_WITH_PRECISION, TS_R_COULD_NOT_SET_TIME);
+    ERR_raise(ERR_LIB_TS, TS_R_COULD_NOT_SET_TIME);
     return NULL;
 }
 

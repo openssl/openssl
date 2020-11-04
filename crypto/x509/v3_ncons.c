@@ -127,7 +127,7 @@ static void *v2i_NAME_CONSTRAINTS(const X509V3_EXT_METHOD *method,
             ptree = &ncons->excludedSubtrees;
             tval.name = val->name + 9;
         } else {
-            X509V3err(X509V3_F_V2I_NAME_CONSTRAINTS, X509V3_R_INVALID_SYNTAX);
+            ERR_raise(ERR_LIB_X509V3, X509V3_R_INVALID_SYNTAX);
             goto err;
         }
         tval.value = val->value;
@@ -146,7 +146,7 @@ static void *v2i_NAME_CONSTRAINTS(const X509V3_EXT_METHOD *method,
     return ncons;
 
  memerr:
-    X509V3err(X509V3_F_V2I_NAME_CONSTRAINTS, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
  err:
     NAME_CONSTRAINTS_free(ncons);
     GENERAL_SUBTREE_free(sub);

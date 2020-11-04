@@ -127,8 +127,7 @@ int engine_table_register(ENGINE_TABLE **table, ENGINE_CLEANUP_CB *cleanup,
         fnd->uptodate = 0;
         if (setdefault) {
             if (!engine_unlocked_init(e)) {
-                ENGINEerr(ENGINE_F_ENGINE_TABLE_REGISTER,
-                          ENGINE_R_INIT_FAILED);
+                ERR_raise(ERR_LIB_ENGINE, ENGINE_R_INIT_FAILED);
                 goto end;
             }
             if (fnd->funct)

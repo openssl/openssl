@@ -167,7 +167,7 @@ int OSSL_CMP_ITAV_push0_stack_item(STACK_OF(OSSL_CMP_ITAV) **itav_sk_p,
     int created = 0;
 
     if (itav_sk_p == NULL || itav == NULL) {
-        CMPerr(0, CMP_R_NULL_ARGUMENT);
+        ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
         goto err;
     }
 
@@ -194,15 +194,15 @@ int ossl_cmp_asn1_get_int(const ASN1_INTEGER *a)
     int64_t res;
 
     if (!ASN1_INTEGER_get_int64(&res, a)) {
-        CMPerr(0, ASN1_R_INVALID_NUMBER);
+        ERR_raise(ERR_LIB_CMP, ASN1_R_INVALID_NUMBER);
         return -1;
     }
     if (res < INT_MIN) {
-        CMPerr(0, ASN1_R_TOO_SMALL);
+        ERR_raise(ERR_LIB_CMP, ASN1_R_TOO_SMALL);
         return -1;
     }
     if (res > INT_MAX) {
-        CMPerr(0, ASN1_R_TOO_LARGE);
+        ERR_raise(ERR_LIB_CMP, ASN1_R_TOO_LARGE);
         return -1;
     }
     return (int)res;

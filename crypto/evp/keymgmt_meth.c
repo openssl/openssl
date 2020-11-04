@@ -23,7 +23,7 @@ static void *keymgmt_new(void)
     if ((keymgmt = OPENSSL_zalloc(sizeof(*keymgmt))) == NULL
         || (keymgmt->lock = CRYPTO_THREAD_lock_new()) == NULL) {
         EVP_KEYMGMT_free(keymgmt);
-        EVPerr(0, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
@@ -187,7 +187,7 @@ static void *keymgmt_from_dispatch(int name_id,
             && (keymgmt->gen_init == NULL
                 || keymgmt->gen_cleanup == NULL))) {
         EVP_KEYMGMT_free(keymgmt);
-        EVPerr(0, EVP_R_INVALID_PROVIDER_FUNCTIONS);
+        ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_PROVIDER_FUNCTIONS);
         return NULL;
     }
     keymgmt->prov = prov;

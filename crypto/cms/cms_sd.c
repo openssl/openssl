@@ -27,7 +27,7 @@
 static CMS_SignedData *cms_get0_signed(CMS_ContentInfo *cms)
 {
     if (OBJ_obj2nid(cms->contentType) != NID_pkcs7_signed) {
-        CMSerr(CMS_F_CMS_GET0_SIGNED, CMS_R_CONTENT_TYPE_NOT_SIGNED_DATA);
+        ERR_raise(ERR_LIB_CMS, CMS_R_CONTENT_TYPE_NOT_SIGNED_DATA);
         return NULL;
     }
     return cms->d.signedData;
@@ -38,7 +38,7 @@ static CMS_SignedData *cms_signed_data_init(CMS_ContentInfo *cms)
     if (cms->d.other == NULL) {
         cms->d.signedData = M_ASN1_new_of(CMS_SignedData);
         if (!cms->d.signedData) {
-            CMSerr(CMS_F_CMS_SIGNED_DATA_INIT, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_CMS, ERR_R_MALLOC_FAILURE);
             return NULL;
         }
         cms->d.signedData->version = 1;
@@ -160,8 +160,7 @@ static int cms_copy_messageDigest(CMS_ContentInfo *cms, CMS_SignerInfo *si)
                                                     (NID_pkcs9_messageDigest),
                                                     -3, V_ASN1_OCTET_STRING);
         if (!messageDigest) {
-            CMSerr(CMS_F_CMS_COPY_MESSAGEDIGEST,
-                   CMS_R_ERROR_READING_MESSAGEDIGEST_ATTRIBUTE);
+            ERR_raise(ERR_LIB_CMS, CMS_R_ERROR_READING_MESSAGEDIGEST_ATTRIBUTE);
             return 0;
         }
 
@@ -172,7 +171,7 @@ static int cms_copy_messageDigest(CMS_ContentInfo *cms, CMS_SignerInfo *si)
         else
             return 0;
     }
-    CMSerr(CMS_F_CMS_COPY_MESSAGEDIGEST, CMS_R_NO_MATCHING_DIGEST);
+    ERR_raise(ERR_LIB_CMS, CMS_R_NO_MATCHING_DIGEST);
     return 0;
 }
 
@@ -191,7 +190,7 @@ int cms_set1_SignerIdentifier(CMS_SignerIdentifier *sid, X509 *cert, int type,
         break;
 
     default:
-        CMSerr(CMS_F_CMS_SET1_SIGNERIDENTIFIER, CMS_R_UNKNOWN_ID);
+        ERR_raise(ERR_LIB_CMS, CMS_R_UNKNOWN_ID);
         return 0;
     }
 
@@ -246,11 +245,11 @@ static int cms_sd_asn1_ctrl(CMS_SignerInfo *si, int cmd)
         return 1;
     i = pkey->ameth->pkey_ctrl(pkey, ASN1_PKEY_CTRL_CMS_SIGN, cmd, si);
     if (i == -2) {
-        CMSerr(CMS_F_CMS_SD_ASN1_CTRL, CMS_R_NOT_SUPPORTED_FOR_THIS_KEY_TYPE);
+        ERR_raise(ERR_LIB_CMS, CMS_R_NOT_SUPPORTED_FOR_THIS_KEY_TYPE);
         return 0;
     }
     if (i <= 0) {
-        CMSerr(CMS_F_CMS_SD_ASN1_CTRL, CMS_R_CTRL_FAILURE);
+        ERR_raise(ERR_LIB_CMS, CMS_R_CTRL_FAILURE);
         return 0;
     }
     return 1;
@@ -267,8 +266,7 @@ CMS_SignerInfo *CMS_add1_signer(CMS_ContentInfo *cms,
     const CMS_CTX *ctx = cms_get0_cmsctx(cms);
 
     if (!X509_check_private_key(signer, pk)) {
-        CMSerr(CMS_F_CMS_ADD1_SIGNER,
-               CMS_R_PRIVATE_KEY_DOES_NOT_MATCH_CERTIFICATE);
+        ERR_raise(ERR_LIB_CMS, CMS_R_PRIVATE_KEY_DOES_NOT_MATCH_CERTIFICATE);
         return NULL;
     }
     sd = cms_signed_data_init(cms);
@@ -290,7 +288,7 @@ CMS_SignerInfo *CMS_add1_signer(CMS_ContentInfo *cms,
     si->pctx = NULL;
 
     if (si->mctx == NULL) {
-        CMSerr(CMS_F_CMS_ADD1_SIGNER, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_CMS, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
@@ -313,18 +311,18 @@ CMS_SignerInfo *CMS_add1_signer(CMS_ContentInfo *cms,
             goto err;
         md = EVP_get_digestbynid(def_nid);
         if (md == NULL) {
-            CMSerr(CMS_F_CMS_ADD1_SIGNER, CMS_R_NO_DEFAULT_DIGEST);
+            ERR_raise(ERR_LIB_CMS, CMS_R_NO_DEFAULT_DIGEST);
             goto err;
         }
     }
 
     if (!md) {
-        CMSerr(CMS_F_CMS_ADD1_SIGNER, CMS_R_NO_DIGEST_SET);
+        ERR_raise(ERR_LIB_CMS, CMS_R_NO_DIGEST_SET);
         goto err;
     }
 
     if (md == NULL) {
-        CMSerr(CMS_F_CMS_ADD1_SIGNER, CMS_R_NO_DIGEST_SET);
+        ERR_raise(ERR_LIB_CMS, CMS_R_NO_DIGEST_SET);
         goto err;
     }
 
@@ -434,7 +432,7 @@ CMS_SignerInfo *CMS_add1_signer(CMS_ContentInfo *cms,
     return si;
 
  merr:
-    CMSerr(CMS_F_CMS_ADD1_SIGNER, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_CMS, ERR_R_MALLOC_FAILURE);
  err:
     M_ASN1_free_of(si, CMS_SignerInfo);
     return NULL;
@@ -478,7 +476,7 @@ static int cms_add1_signingTime(CMS_SignerInfo *si, ASN1_TIME *t)
         ASN1_TIME_free(tt);
 
     if (!r)
-        CMSerr(CMS_F_CMS_ADD1_SIGNINGTIME, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_CMS, ERR_R_MALLOC_FAILURE);
 
     return r;
 
@@ -620,12 +618,12 @@ static int cms_SignerInfo_content_sign(CMS_ContentInfo *cms,
     const CMS_CTX *ctx = cms_get0_cmsctx(cms);
 
     if (mctx == NULL) {
-        CMSerr(CMS_F_CMS_SIGNERINFO_CONTENT_SIGN, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_CMS, ERR_R_MALLOC_FAILURE);
         return 0;
     }
 
     if (si->pkey == NULL) {
-        CMSerr(CMS_F_CMS_SIGNERINFO_CONTENT_SIGN, CMS_R_NO_PRIVATE_KEY);
+        ERR_raise(ERR_LIB_CMS, CMS_R_NO_PRIVATE_KEY);
         goto err;
     }
 
@@ -666,7 +664,7 @@ static int cms_SignerInfo_content_sign(CMS_ContentInfo *cms,
         siglen = EVP_PKEY_size(si->pkey);
         sig = OPENSSL_malloc(siglen);
         if (sig == NULL) {
-            CMSerr(CMS_F_CMS_SIGNERINFO_CONTENT_SIGN, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_CMS, ERR_R_MALLOC_FAILURE);
             goto err;
         }
         if (EVP_PKEY_sign(pctx, sig, &siglen, md, mdlen) <= 0) {
@@ -680,12 +678,12 @@ static int cms_SignerInfo_content_sign(CMS_ContentInfo *cms,
 
         sig = OPENSSL_malloc(EVP_PKEY_size(si->pkey));
         if (sig == NULL) {
-            CMSerr(CMS_F_CMS_SIGNERINFO_CONTENT_SIGN, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_CMS, ERR_R_MALLOC_FAILURE);
             goto err;
         }
         if (!EVP_SignFinal_ex(mctx, sig, &siglen, si->pkey, ctx->libctx,
                               ctx->propq)) {
-            CMSerr(CMS_F_CMS_SIGNERINFO_CONTENT_SIGN, CMS_R_SIGNFINAL_ERROR);
+            ERR_raise(ERR_LIB_CMS, CMS_R_SIGNFINAL_ERROR);
             OPENSSL_free(sig);
             goto err;
         }
@@ -761,7 +759,7 @@ int CMS_SignerInfo_sign(CMS_SignerInfo *si)
 #if 0
     if (EVP_PKEY_CTX_ctrl(pctx, -1, EVP_PKEY_OP_SIGN,
                           EVP_PKEY_CTRL_CMS_SIGN, 0, si) <= 0) {
-        CMSerr(CMS_F_CMS_SIGNERINFO_SIGN, CMS_R_CTRL_ERROR);
+        ERR_raise(ERR_LIB_CMS, CMS_R_CTRL_ERROR);
         goto err;
     }
 #endif
@@ -794,7 +792,7 @@ int CMS_SignerInfo_sign(CMS_SignerInfo *si)
 #if 0
     if (EVP_PKEY_CTX_ctrl(pctx, -1, EVP_PKEY_OP_SIGN,
                           EVP_PKEY_CTRL_CMS_SIGN, 1, si) <= 0) {
-        CMSerr(CMS_F_CMS_SIGNERINFO_SIGN, CMS_R_CTRL_ERROR);
+        ERR_raise(ERR_LIB_CMS, CMS_R_CTRL_ERROR);
         goto err;
     }
 #endif
@@ -822,7 +820,7 @@ int CMS_SignerInfo_verify(CMS_SignerInfo *si)
     const CMS_CTX *ctx = si->cms_ctx;
 
     if (si->pkey == NULL) {
-        CMSerr(CMS_F_CMS_SIGNERINFO_VERIFY, CMS_R_NO_PUBLIC_KEY);
+        ERR_raise(ERR_LIB_CMS, CMS_R_NO_PUBLIC_KEY);
         return -1;
     }
 
@@ -840,13 +838,13 @@ int CMS_SignerInfo_verify(CMS_SignerInfo *si)
         md = EVP_get_digestbyobj(si->digestAlgorithm->algorithm);
     if (md == NULL) {
         (void)ERR_clear_last_mark();
-        CMSerr(0, CMS_R_UNKNOWN_DIGEST_ALGORITHM);
+        ERR_raise(ERR_LIB_CMS, CMS_R_UNKNOWN_DIGEST_ALGORITHM);
         return -1;
     }
     (void)ERR_pop_to_mark();
 
     if (si->mctx == NULL && (si->mctx = EVP_MD_CTX_new()) == NULL) {
-        CMSerr(CMS_F_CMS_SIGNERINFO_VERIFY, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_CMS, ERR_R_MALLOC_FAILURE);
         goto err;
     }
     mctx = si->mctx;
@@ -870,7 +868,7 @@ int CMS_SignerInfo_verify(CMS_SignerInfo *si)
     r = EVP_DigestVerifyFinal(mctx,
                               si->signature->data, si->signature->length);
     if (r <= 0)
-        CMSerr(CMS_F_CMS_SIGNERINFO_VERIFY, CMS_R_VERIFICATION_FAILURE);
+        ERR_raise(ERR_LIB_CMS, CMS_R_VERIFICATION_FAILURE);
  err:
     EVP_MD_free(fetched_md);
     EVP_MD_CTX_reset(mctx);
@@ -919,7 +917,7 @@ int CMS_SignerInfo_verify_content(CMS_SignerInfo *si, BIO *chain)
     unsigned int mlen;
 
     if (mctx == NULL) {
-        CMSerr(CMS_F_CMS_SIGNERINFO_VERIFY_CONTENT, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_CMS, ERR_R_MALLOC_FAILURE);
         goto err;
     }
     /* If we have any signed attributes look for messageDigest value */
@@ -928,8 +926,7 @@ int CMS_SignerInfo_verify_content(CMS_SignerInfo *si, BIO *chain)
                                          OBJ_nid2obj(NID_pkcs9_messageDigest),
                                          -3, V_ASN1_OCTET_STRING);
         if (os == NULL) {
-            CMSerr(CMS_F_CMS_SIGNERINFO_VERIFY_CONTENT,
-                   CMS_R_ERROR_READING_MESSAGEDIGEST_ATTRIBUTE);
+            ERR_raise(ERR_LIB_CMS, CMS_R_ERROR_READING_MESSAGEDIGEST_ATTRIBUTE);
             goto err;
         }
     }
@@ -938,8 +935,7 @@ int CMS_SignerInfo_verify_content(CMS_SignerInfo *si, BIO *chain)
         goto err;
 
     if (EVP_DigestFinal_ex(mctx, mval, &mlen) <= 0) {
-        CMSerr(CMS_F_CMS_SIGNERINFO_VERIFY_CONTENT,
-               CMS_R_UNABLE_TO_FINALIZE_CONTEXT);
+        ERR_raise(ERR_LIB_CMS, CMS_R_UNABLE_TO_FINALIZE_CONTEXT);
         goto err;
     }
 
@@ -947,14 +943,12 @@ int CMS_SignerInfo_verify_content(CMS_SignerInfo *si, BIO *chain)
 
     if (os != NULL) {
         if (mlen != (unsigned int)os->length) {
-            CMSerr(CMS_F_CMS_SIGNERINFO_VERIFY_CONTENT,
-                   CMS_R_MESSAGEDIGEST_ATTRIBUTE_WRONG_LENGTH);
+            ERR_raise(ERR_LIB_CMS, CMS_R_MESSAGEDIGEST_ATTRIBUTE_WRONG_LENGTH);
             goto err;
         }
 
         if (memcmp(mval, os->data, mlen)) {
-            CMSerr(CMS_F_CMS_SIGNERINFO_VERIFY_CONTENT,
-                   CMS_R_VERIFICATION_FAILURE);
+            ERR_raise(ERR_LIB_CMS, CMS_R_VERIFICATION_FAILURE);
             r = 0;
         } else
             r = 1;
@@ -975,8 +969,7 @@ int CMS_SignerInfo_verify_content(CMS_SignerInfo *si, BIO *chain)
         r = EVP_PKEY_verify(pkctx, si->signature->data,
                             si->signature->length, mval, mlen);
         if (r <= 0) {
-            CMSerr(CMS_F_CMS_SIGNERINFO_VERIFY_CONTENT,
-                   CMS_R_VERIFICATION_FAILURE);
+            ERR_raise(ERR_LIB_CMS, CMS_R_VERIFICATION_FAILURE);
             r = 0;
         }
     }

@@ -42,7 +42,7 @@ static int bnrand(BNRAND_FLAG flag, BIGNUM *rnd, int bits, int top, int bottom,
 
     buf = OPENSSL_malloc(bytes);
     if (buf == NULL) {
-        BNerr(BN_F_BNRAND, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_BN, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
@@ -95,7 +95,7 @@ static int bnrand(BNRAND_FLAG flag, BIGNUM *rnd, int bits, int top, int bottom,
     return ret;
 
 toosmall:
-    BNerr(BN_F_BNRAND, BN_R_BITS_TOO_SMALL);
+    ERR_raise(ERR_LIB_BN, BN_R_BITS_TOO_SMALL);
     return 0;
 }
 
@@ -135,7 +135,7 @@ static int bnrand_range(BNRAND_FLAG flag, BIGNUM *r, const BIGNUM *range,
     int count = 100;
 
     if (range->neg || BN_is_zero(range)) {
-        BNerr(BN_F_BNRAND_RANGE, BN_R_INVALID_RANGE);
+        ERR_raise(ERR_LIB_BN, BN_R_INVALID_RANGE);
         return 0;
     }
 
@@ -170,7 +170,7 @@ static int bnrand_range(BNRAND_FLAG flag, BIGNUM *r, const BIGNUM *range,
             }
 
             if (!--count) {
-                BNerr(BN_F_BNRAND_RANGE, BN_R_TOO_MANY_ITERATIONS);
+                ERR_raise(ERR_LIB_BN, BN_R_TOO_MANY_ITERATIONS);
                 return 0;
             }
 
@@ -183,7 +183,7 @@ static int bnrand_range(BNRAND_FLAG flag, BIGNUM *r, const BIGNUM *range,
                 return 0;
 
             if (!--count) {
-                BNerr(BN_F_BNRAND_RANGE, BN_R_TOO_MANY_ITERATIONS);
+                ERR_raise(ERR_LIB_BN, BN_R_TOO_MANY_ITERATIONS);
                 return 0;
             }
         }
@@ -270,13 +270,13 @@ int BN_generate_dsa_nonce(BIGNUM *out, const BIGNUM *range,
          * large and we don't handle this case in order to avoid leaking the
          * length of the private key.
          */
-        BNerr(BN_F_BN_GENERATE_DSA_NONCE, BN_R_PRIVATE_KEY_TOO_LARGE);
+        ERR_raise(ERR_LIB_BN, BN_R_PRIVATE_KEY_TOO_LARGE);
         goto err;
     }
 
     md = EVP_MD_fetch(libctx, "SHA512", NULL);
     if (md == NULL) {
-        BNerr(BN_F_BN_GENERATE_DSA_NONCE, BN_R_NO_SUITABLE_DIGEST);
+        ERR_raise(ERR_LIB_BN, BN_R_NO_SUITABLE_DIGEST);
         goto err;
     }
     for (done = 0; done < num_k_bytes;) {

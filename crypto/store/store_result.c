@@ -325,8 +325,7 @@ static EVP_PKEY *try_key_value_legacy(struct extracted_param_data_st *data,
             size_t plen = 0;
 
             if (!cb(pbuf, sizeof(pbuf), &plen, NULL, cbarg)) {
-                ERR_raise(ERR_LIB_OSSL_STORE,
-                          OSSL_STORE_R_BAD_PASSWORD_READ);
+                ERR_raise(ERR_LIB_OSSL_STORE, OSSL_STORE_R_BAD_PASSWORD_READ);
             } else {
                 const X509_ALGOR *alg = NULL;
                 const ASN1_OCTET_STRING *oct = NULL;

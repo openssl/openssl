@@ -124,14 +124,14 @@ static int do_pk8pkey(BIO *bp, const EVP_PKEY *x, int isder, int nid,
 
         ret = 0;
         if ((p8inf = EVP_PKEY2PKCS8(x)) == NULL) {
-            PEMerr(PEM_F_DO_PK8PKEY, PEM_R_ERROR_CONVERTING_PRIVATE_KEY);
+            ERR_raise(ERR_LIB_PEM, PEM_R_ERROR_CONVERTING_PRIVATE_KEY);
             goto legacy_end;
         }
         if (enc || (nid != -1)) {
             if (kstr == NULL) {
                 klen = cb(buf, PEM_BUFSIZE, 1, u);
                 if (klen <= 0) {
-                    PEMerr(PEM_F_DO_PK8PKEY, PEM_R_READ_KEY);
+                    ERR_raise(ERR_LIB_PEM, PEM_R_READ_KEY);
                     goto legacy_end;
                 }
 
@@ -177,7 +177,7 @@ EVP_PKEY *d2i_PKCS8PrivateKey_bio(BIO *bp, EVP_PKEY **x, pem_password_cb *cb,
     else
         klen = PEM_def_callback(psbuf, PEM_BUFSIZE, 0, u);
     if (klen < 0) {
-        PEMerr(PEM_F_D2I_PKCS8PRIVATEKEY_BIO, PEM_R_BAD_PASSWORD_READ);
+        ERR_raise(ERR_LIB_PEM, PEM_R_BAD_PASSWORD_READ);
         X509_SIG_free(p8);
         return NULL;
     }
@@ -236,7 +236,7 @@ static int do_pk8pkey_fp(FILE *fp, const EVP_PKEY *x, int isder, int nid,
     int ret;
 
     if ((bp = BIO_new_fp(fp, BIO_NOCLOSE)) == NULL) {
-        PEMerr(PEM_F_DO_PK8PKEY_FP, ERR_R_BUF_LIB);
+        ERR_raise(ERR_LIB_PEM, ERR_R_BUF_LIB);
         return 0;
     }
     ret = do_pk8pkey(bp, x, isder, nid, enc, kstr, klen, cb, u, libctx, propq);
@@ -251,7 +251,7 @@ EVP_PKEY *d2i_PKCS8PrivateKey_fp(FILE *fp, EVP_PKEY **x, pem_password_cb *cb,
     EVP_PKEY *ret;
 
     if ((bp = BIO_new_fp(fp, BIO_NOCLOSE)) == NULL) {
-        PEMerr(PEM_F_D2I_PKCS8PRIVATEKEY_FP, ERR_R_BUF_LIB);
+        ERR_raise(ERR_LIB_PEM, ERR_R_BUF_LIB);
         return NULL;
     }
     ret = d2i_PKCS8PrivateKey_bio(bp, x, cb, u);

@@ -132,7 +132,7 @@ static DH *dh_new_by_group_name(OSSL_LIB_CTX *libctx, const char *name)
                                  dh_named_groups[i].g);
         }
     }
-    DHerr(0, DH_R_INVALID_PARAMETER_NID);
+    ERR_raise(ERR_LIB_DH, DH_R_INVALID_PARAMETER_NID);
     return NULL;
 }
 

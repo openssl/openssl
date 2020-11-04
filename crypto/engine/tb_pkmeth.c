@@ -75,8 +75,7 @@ const EVP_PKEY_METHOD *ENGINE_get_pkey_meth(ENGINE *e, int nid)
     EVP_PKEY_METHOD *ret;
     ENGINE_PKEY_METHS_PTR fn = ENGINE_get_pkey_meths(e);
     if (!fn || !fn(e, &ret, NULL, nid)) {
-        ENGINEerr(ENGINE_F_ENGINE_GET_PKEY_METH,
-                  ENGINE_R_UNIMPLEMENTED_PUBLIC_KEY_METHOD);
+        ERR_raise(ERR_LIB_ENGINE, ENGINE_R_UNIMPLEMENTED_PUBLIC_KEY_METHOD);
         return NULL;
     }
     return ret;

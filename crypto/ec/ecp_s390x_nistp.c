@@ -140,27 +140,26 @@ static ECDSA_SIG *ecdsa_s390x_nistp_sign_sig(const unsigned char *dgst,
     group = EC_KEY_get0_group(eckey);
     privkey = EC_KEY_get0_private_key(eckey);
     if (group == NULL || privkey == NULL) {
-        ECerr(EC_F_ECDSA_S390X_NISTP_SIGN_SIG, EC_R_MISSING_PARAMETERS);
+        ERR_raise(ERR_LIB_EC, EC_R_MISSING_PARAMETERS);
         return NULL;
     }
 
     if (!EC_KEY_can_sign(eckey)) {
-        ECerr(EC_F_ECDSA_S390X_NISTP_SIGN_SIG,
-              EC_R_CURVE_DOES_NOT_SUPPORT_SIGNING);
+        ERR_raise(ERR_LIB_EC, EC_R_CURVE_DOES_NOT_SUPPORT_SIGNING);
         return NULL;
     }
 
     k = BN_secure_new();
     sig = ECDSA_SIG_new();
     if (k == NULL || sig == NULL) {
-        ECerr(EC_F_ECDSA_S390X_NISTP_SIGN_SIG, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
         goto ret;
     }
 
     sig->r = BN_new();
     sig->s = BN_new();
     if (sig->r == NULL || sig->s == NULL) {
-        ECerr(EC_F_ECDSA_S390X_NISTP_SIGN_SIG, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
         goto ret;
     }
 
@@ -169,7 +168,7 @@ static ECDSA_SIG *ecdsa_s390x_nistp_sign_sig(const unsigned char *dgst,
     memcpy(param + S390X_OFF_H(len) + off, dgst, len - off);
 
     if (BN_bn2binpad(privkey, param + S390X_OFF_K(len), len) == -1) {
-        ECerr(EC_F_ECDSA_S390X_NISTP_SIGN_SIG, ERR_R_BN_LIB);
+        ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
         goto ret;
     }
 
@@ -182,15 +181,14 @@ static ECDSA_SIG *ecdsa_s390x_nistp_sign_sig(const unsigned char *dgst,
          */
          if (RAND_priv_bytes_ex(eckey->libctx, param + S390X_OFF_RN(len),
                                 len) != 1) {
-             ECerr(EC_F_ECDSA_S390X_NISTP_SIGN_SIG,
-                   EC_R_RANDOM_NUMBER_GENERATION_FAILED);
+             ERR_raise(ERR_LIB_EC, EC_R_RANDOM_NUMBER_GENERATION_FAILED);
              goto ret;
          }
     } else {
         /* Reconstruct k = (k^-1)^-1. */
         if (ec_group_do_inverse_ord(group, k, kinv, NULL) == 0
             || BN_bn2binpad(k, param + S390X_OFF_RN(len), len) == -1) {
-            ECerr(EC_F_ECDSA_S390X_NISTP_SIGN_SIG, ERR_R_BN_LIB);
+            ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
             goto ret;
         }
         /* Turns KDSA internal nonce-generation off. */
@@ -198,13 +196,13 @@ static ECDSA_SIG *ecdsa_s390x_nistp_sign_sig(const unsigned char *dgst,
     }
 
     if (s390x_kdsa(fc, param, NULL, 0) != 0) {
-        ECerr(EC_F_ECDSA_S390X_NISTP_SIGN_SIG, ERR_R_ECDSA_LIB);
+        ERR_raise(ERR_LIB_EC, ERR_R_ECDSA_LIB);
         goto ret;
     }
 
     if (BN_bin2bn(param + S390X_OFF_R(len), len, sig->r) == NULL
         || BN_bin2bn(param + S390X_OFF_S(len), len, sig->s) == NULL) {
-        ECerr(EC_F_ECDSA_S390X_NISTP_SIGN_SIG, ERR_R_BN_LIB);
+        ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
         goto ret;
     }
 
@@ -234,19 +232,18 @@ static int ecdsa_s390x_nistp_verify_sig(const unsigned char *dgst, int dgstlen,
     group = EC_KEY_get0_group(eckey);
     pubkey = EC_KEY_get0_public_key(eckey);
     if (eckey == NULL || group == NULL || pubkey == NULL || sig == NULL) {
-        ECerr(EC_F_ECDSA_S390X_NISTP_VERIFY_SIG, EC_R_MISSING_PARAMETERS);
+        ERR_raise(ERR_LIB_EC, EC_R_MISSING_PARAMETERS);
         return -1;
     }
 
     if (!EC_KEY_can_sign(eckey)) {
-        ECerr(EC_F_ECDSA_S390X_NISTP_VERIFY_SIG,
-              EC_R_CURVE_DOES_NOT_SUPPORT_SIGNING);
+        ERR_raise(ERR_LIB_EC, EC_R_CURVE_DOES_NOT_SUPPORT_SIGNING);
         return -1;
     }
 
     ctx = BN_CTX_new_ex(group->libctx);
     if (ctx == NULL) {
-        ECerr(EC_F_ECDSA_S390X_NISTP_VERIFY_SIG, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
         return -1;
     }
 
@@ -255,7 +252,7 @@ static int ecdsa_s390x_nistp_verify_sig(const unsigned char *dgst, int dgstlen,
     x = BN_CTX_get(ctx);
     y = BN_CTX_get(ctx);
     if (x == NULL || y == NULL) {
-        ECerr(EC_F_ECDSA_S390X_NISTP_VERIFY_SIG, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
         goto ret;
     }
 
@@ -269,7 +266,7 @@ static int ecdsa_s390x_nistp_verify_sig(const unsigned char *dgst, int dgstlen,
         || BN_bn2binpad(sig->s, param + S390X_OFF_S(len), len) == -1
         || BN_bn2binpad(x, param + S390X_OFF_X(len), len) == -1
         || BN_bn2binpad(y, param + S390X_OFF_Y(len), len) == -1) {
-        ECerr(EC_F_ECDSA_S390X_NISTP_VERIFY_SIG, ERR_R_BN_LIB);
+        ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
         goto ret;
     }
 

@@ -23,7 +23,7 @@ unsigned char *OPENSSL_asc2uni(const char *asc, int asclen,
         asclen = strlen(asc);
     ulen = asclen * 2 + 2;
     if ((unitmp = OPENSSL_malloc(ulen)) == NULL) {
-        PKCS12err(PKCS12_F_OPENSSL_ASC2UNI, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PKCS12, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
     for (i = 0; i < ulen - 2; i += 2) {
@@ -53,7 +53,7 @@ char *OPENSSL_uni2asc(const unsigned char *uni, int unilen)
         asclen++;
     uni++;
     if ((asctmp = OPENSSL_malloc(asclen)) == NULL) {
-        PKCS12err(PKCS12_F_OPENSSL_UNI2ASC, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PKCS12, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
     for (i = 0; i < unilen; i += 2)
@@ -115,7 +115,7 @@ unsigned char *OPENSSL_utf82uni(const char *asc, int asclen,
     ulen += 2;  /* for trailing UTF16 zero */
 
     if ((ret = OPENSSL_malloc(ulen)) == NULL) {
-        PKCS12err(PKCS12_F_OPENSSL_UTF82UNI, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PKCS12, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
     /* re-run the loop writing down UTF-16 characters in big-endian order */
@@ -200,7 +200,7 @@ char *OPENSSL_uni2utf8(const unsigned char *uni, int unilen)
         asclen++;
 
     if ((asctmp = OPENSSL_malloc(asclen)) == NULL) {
-        PKCS12err(PKCS12_F_OPENSSL_UNI2UTF8, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PKCS12, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 

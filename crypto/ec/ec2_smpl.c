@@ -109,7 +109,7 @@ int ec_GF2m_simple_group_set_curve(EC_GROUP *group,
         goto err;
     i = BN_GF2m_poly2arr(group->field, group->poly, 6) - 1;
     if ((i != 5) && (i != 3)) {
-        ECerr(EC_F_EC_GF2M_SIMPLE_GROUP_SET_CURVE, EC_R_UNSUPPORTED_FIELD);
+        ERR_raise(ERR_LIB_EC, EC_R_UNSUPPORTED_FIELD);
         goto err;
     }
 
@@ -188,8 +188,7 @@ int ec_GF2m_simple_group_check_discriminant(const EC_GROUP *group,
     if (ctx == NULL) {
         ctx = new_ctx = BN_CTX_new();
         if (ctx == NULL) {
-            ECerr(EC_F_EC_GF2M_SIMPLE_GROUP_CHECK_DISCRIMINANT,
-                  ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
             goto err;
         }
     }
@@ -293,8 +292,7 @@ int ec_GF2m_simple_point_set_affine_coordinates(const EC_GROUP *group,
 {
     int ret = 0;
     if (x == NULL || y == NULL) {
-        ECerr(EC_F_EC_GF2M_SIMPLE_POINT_SET_AFFINE_COORDINATES,
-              ERR_R_PASSED_NULL_PARAMETER);
+        ERR_raise(ERR_LIB_EC, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
 
@@ -326,14 +324,12 @@ int ec_GF2m_simple_point_get_affine_coordinates(const EC_GROUP *group,
     int ret = 0;
 
     if (EC_POINT_is_at_infinity(group, point)) {
-        ECerr(EC_F_EC_GF2M_SIMPLE_POINT_GET_AFFINE_COORDINATES,
-              EC_R_POINT_AT_INFINITY);
+        ERR_raise(ERR_LIB_EC, EC_R_POINT_AT_INFINITY);
         return 0;
     }
 
     if (BN_cmp(point->Z, BN_value_one())) {
-        ECerr(EC_F_EC_GF2M_SIMPLE_POINT_GET_AFFINE_COORDINATES,
-              ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+        ERR_raise(ERR_LIB_EC, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
         return 0;
     }
     if (x != NULL) {
@@ -733,7 +729,7 @@ int ec_GF2m_simple_ladder_pre(const EC_GROUP *group,
     do {
         if (!BN_priv_rand_ex(s->Z, BN_num_bits(group->field) - 1,
                              BN_RAND_TOP_ANY, BN_RAND_BOTTOM_ANY, ctx)) {
-            ECerr(EC_F_EC_GF2M_SIMPLE_LADDER_PRE, ERR_R_BN_LIB);
+            ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
             return 0;
         }
     } while (BN_is_zero(s->Z));
@@ -748,7 +744,7 @@ int ec_GF2m_simple_ladder_pre(const EC_GROUP *group,
     do {
         if (!BN_priv_rand_ex(r->Y, BN_num_bits(group->field) - 1,
                              BN_RAND_TOP_ANY, BN_RAND_BOTTOM_ANY, ctx)) {
-            ECerr(EC_F_EC_GF2M_SIMPLE_LADDER_PRE, ERR_R_BN_LIB);
+            ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
             return 0;
         }
     } while (BN_is_zero(r->Y));
@@ -817,7 +813,7 @@ int ec_GF2m_simple_ladder_post(const EC_GROUP *group,
     if (BN_is_zero(s->Z)) {
         if (!EC_POINT_copy(r, p)
             || !EC_POINT_invert(group, r, ctx)) {
-            ECerr(EC_F_EC_GF2M_SIMPLE_LADDER_POST, ERR_R_EC_LIB);
+            ERR_raise(ERR_LIB_EC, ERR_R_EC_LIB);
             return 0;
         }
         return 1;
@@ -828,7 +824,7 @@ int ec_GF2m_simple_ladder_post(const EC_GROUP *group,
     t1 = BN_CTX_get(ctx);
     t2 = BN_CTX_get(ctx);
     if (t2 == NULL) {
-        ECerr(EC_F_EC_GF2M_SIMPLE_LADDER_POST, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
@@ -907,7 +903,7 @@ int ec_GF2m_simple_points_mul(const EC_GROUP *group, EC_POINT *r,
      */
 
     if ((t = EC_POINT_new(group)) == NULL) {
-        ECerr(EC_F_EC_GF2M_SIMPLE_POINTS_MUL, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
         return 0;
     }
 
@@ -934,7 +930,7 @@ static int ec_GF2m_simple_field_inv(const EC_GROUP *group, BIGNUM *r,
     int ret;
 
     if (!(ret = BN_GF2m_mod_inv(r, a, group->field, ctx)))
-        ECerr(EC_F_EC_GF2M_SIMPLE_FIELD_INV, EC_R_CANNOT_INVERT);
+        ERR_raise(ERR_LIB_EC, EC_R_CANNOT_INVERT);
     return ret;
 }
 

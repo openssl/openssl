@@ -44,7 +44,7 @@ ASN1_BIT_STRING *ossl_cmp_calc_protection(const OSSL_CMP_CTX *ctx,
     prot_part.body = msg->body;
 
     if (msg->header->protectionAlg == NULL) {
-        CMPerr(0, CMP_R_UNKNOWN_ALGORITHM_ID);
+        ERR_raise(ERR_LIB_CMP, CMP_R_UNKNOWN_ALGORITHM_ID);
         return NULL;
     }
     X509_ALGOR_get0(&algorOID, &pptype, &ppval, msg->header->protectionAlg);
@@ -60,17 +60,17 @@ ASN1_BIT_STRING *ossl_cmp_calc_protection(const OSSL_CMP_CTX *ctx,
         const unsigned char *pbm_str_uc = NULL;
 
         if (ctx->secretValue == NULL) {
-            CMPerr(0, CMP_R_MISSING_PBM_SECRET);
+            ERR_raise(ERR_LIB_CMP, CMP_R_MISSING_PBM_SECRET);
             return NULL;
         }
         if (ppval == NULL) {
-            CMPerr(0, CMP_R_ERROR_CALCULATING_PROTECTION);
+            ERR_raise(ERR_LIB_CMP, CMP_R_ERROR_CALCULATING_PROTECTION);
             return NULL;
         }
 
         len = i2d_OSSL_CMP_PROTECTEDPART(&prot_part, &prot_part_der);
         if (len < 0 || prot_part_der == NULL) {
-            CMPerr(0, CMP_R_ERROR_CALCULATING_PROTECTION);
+            ERR_raise(ERR_LIB_CMP, CMP_R_ERROR_CALCULATING_PROTECTION);
             goto end;
         }
         prot_part_der_len = (size_t)len;
@@ -79,7 +79,7 @@ ASN1_BIT_STRING *ossl_cmp_calc_protection(const OSSL_CMP_CTX *ctx,
         pbm_str_uc = pbm_str->data;
         pbm = d2i_OSSL_CRMF_PBMPARAMETER(NULL, &pbm_str_uc, pbm_str->length);
         if (pbm == NULL) {
-            CMPerr(0, CMP_R_WRONG_ALGORITHM_OID);
+            ERR_raise(ERR_LIB_CMP, CMP_R_WRONG_ALGORITHM_OID);
             goto end;
         }
 
@@ -108,12 +108,13 @@ ASN1_BIT_STRING *ossl_cmp_calc_protection(const OSSL_CMP_CTX *ctx,
         const EVP_MD *md = NULL;
 
         if (ctx->pkey == NULL) {
-            CMPerr(0, CMP_R_MISSING_KEY_INPUT_FOR_CREATING_PROTECTION);
+            ERR_raise(ERR_LIB_CMP,
+                      CMP_R_MISSING_KEY_INPUT_FOR_CREATING_PROTECTION);
             return NULL;
         }
         if (!OBJ_find_sigid_algs(OBJ_obj2nid(algorOID), &md_nid, NULL)
                 || (md = EVP_get_digestbynid(md_nid)) == NULL) {
-            CMPerr(0, CMP_R_UNKNOWN_ALGORITHM_ID);
+            ERR_raise(ERR_LIB_CMP, CMP_R_UNKNOWN_ALGORITHM_ID);
             return NULL;
         }
 
@@ -234,7 +235,7 @@ static int set_sig_algor(const OSSL_CMP_CTX *ctx, X509_ALGOR **alg)
 
     if (!OBJ_find_sigid_by_algs(&nid, EVP_MD_type(ctx->digest),
                                 EVP_PKEY_id(ctx->pkey))) {
-        CMPerr(0, CMP_R_UNSUPPORTED_KEY_TYPE);
+        ERR_raise(ERR_LIB_CMP, CMP_R_UNSUPPORTED_KEY_TYPE);
         return 0;
     }
     if ((algo = OBJ_nid2obj(nid)) == NULL)
@@ -290,7 +291,7 @@ int ossl_cmp_msg_protect(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg)
 
         /* make sure that key and certificate match */
         if (!X509_check_private_key(ctx->cert, ctx->pkey)) {
-            CMPerr(0, CMP_R_CERT_AND_KEY_DO_NOT_MATCH);
+            ERR_raise(ERR_LIB_CMP, CMP_R_CERT_AND_KEY_DO_NOT_MATCH);
             goto err;
         }
 
@@ -305,7 +306,8 @@ int ossl_cmp_msg_protect(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg)
          * from ctx->untrusted, and then ctx->extraCertsOut
          */
     } else {
-        CMPerr(0, CMP_R_MISSING_KEY_INPUT_FOR_CREATING_PROTECTION);
+        ERR_raise(ERR_LIB_CMP,
+                  CMP_R_MISSING_KEY_INPUT_FOR_CREATING_PROTECTION);
         goto err;
     }
     if (!ctx->unprotectedSend
@@ -329,9 +331,9 @@ int ossl_cmp_msg_protect(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg)
     if (!(ossl_cmp_general_name_is_NULL_DN(msg->header->sender)
           && msg->header->senderKID == NULL))
         return 1;
-    CMPerr(0, CMP_R_MISSING_SENDER_IDENTIFICATION);
+    ERR_raise(ERR_LIB_CMP, CMP_R_MISSING_SENDER_IDENTIFICATION);
 
  err:
-    CMPerr(0, CMP_R_ERROR_PROTECTING_MESSAGE);
+    ERR_raise(ERR_LIB_CMP, CMP_R_ERROR_PROTECTING_MESSAGE);
     return 0;
 }

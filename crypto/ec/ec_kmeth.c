@@ -82,7 +82,7 @@ EC_KEY *ec_key_new_method_int(OSSL_LIB_CTX *libctx, const char *propq,
     EC_KEY *ret = OPENSSL_zalloc(sizeof(*ret));
 
     if (ret == NULL) {
-        ECerr(EC_F_EC_KEY_NEW_METHOD_INT, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
@@ -90,7 +90,7 @@ EC_KEY *ec_key_new_method_int(OSSL_LIB_CTX *libctx, const char *propq,
     if (propq != NULL) {
         ret->propq = OPENSSL_strdup(propq);
         if (ret->propq == NULL) {
-            ECerr(EC_F_EC_KEY_NEW_METHOD_INT, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
             goto err;
         }
     }
@@ -98,7 +98,7 @@ EC_KEY *ec_key_new_method_int(OSSL_LIB_CTX *libctx, const char *propq,
     ret->references = 1;
     ret->lock = CRYPTO_THREAD_lock_new();
     if (ret->lock == NULL) {
-        ECerr(EC_F_EC_KEY_NEW_METHOD_INT, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
@@ -106,7 +106,7 @@ EC_KEY *ec_key_new_method_int(OSSL_LIB_CTX *libctx, const char *propq,
 #if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODULE)
     if (engine != NULL) {
         if (!ENGINE_init(engine)) {
-            ECerr(EC_F_EC_KEY_NEW_METHOD_INT, ERR_R_ENGINE_LIB);
+            ERR_raise(ERR_LIB_EC, ERR_R_ENGINE_LIB);
             goto err;
         }
         ret->engine = engine;
@@ -115,7 +115,7 @@ EC_KEY *ec_key_new_method_int(OSSL_LIB_CTX *libctx, const char *propq,
     if (ret->engine != NULL) {
         ret->meth = ENGINE_get_EC(ret->engine);
         if (ret->meth == NULL) {
-            ECerr(EC_F_EC_KEY_NEW_METHOD_INT, ERR_R_ENGINE_LIB);
+            ERR_raise(ERR_LIB_EC, ERR_R_ENGINE_LIB);
             goto err;
         }
     }
@@ -132,7 +132,7 @@ EC_KEY *ec_key_new_method_int(OSSL_LIB_CTX *libctx, const char *propq,
 #endif
 
     if (ret->meth->init != NULL && ret->meth->init(ret) == 0) {
-        ECerr(EC_F_EC_KEY_NEW_METHOD_INT, ERR_R_INIT_FAIL);
+        ERR_raise(ERR_LIB_EC, ERR_R_INIT_FAIL);
         goto err;
     }
     return ret;
@@ -157,11 +157,11 @@ int ECDH_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
     unsigned char *sec = NULL;
     size_t seclen;
     if (eckey->meth->compute_key == NULL) {
-        ECerr(EC_F_ECDH_COMPUTE_KEY, EC_R_OPERATION_NOT_SUPPORTED);
+        ERR_raise(ERR_LIB_EC, EC_R_OPERATION_NOT_SUPPORTED);
         return 0;
     }
     if (outlen > INT_MAX) {
-        ECerr(EC_F_ECDH_COMPUTE_KEY, EC_R_INVALID_OUTPUT_LENGTH);
+        ERR_raise(ERR_LIB_EC, EC_R_INVALID_OUTPUT_LENGTH);
         return 0;
     }
     if (!eckey->meth->compute_key(&sec, &seclen, pub_key, eckey))

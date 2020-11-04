@@ -97,8 +97,7 @@ int OSSL_PROVIDER_add_builtin(OSSL_LIB_CTX *libctx, const char *name,
     OSSL_PROVIDER *prov = NULL;
 
     if (name == NULL || init_fn == NULL) {
-        CRYPTOerr(CRYPTO_F_OSSL_PROVIDER_ADD_BUILTIN,
-                  ERR_R_PASSED_NULL_PARAMETER);
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
 

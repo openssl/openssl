@@ -127,8 +127,7 @@ static void *evp_keyexch_from_dispatch(int name_id,
          * be present. Same goes for get_ctx_params and gettable_ctx_params.
          * The dupctx and set_peer functions are optional.
          */
-        EVPerr(EVP_F_EVP_KEYEXCH_FROM_DISPATCH,
-               EVP_R_INVALID_PROVIDER_FUNCTIONS);
+        ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_PROVIDER_FUNCTIONS);
         goto err;
     }
 
@@ -184,7 +183,7 @@ int EVP_PKEY_derive_init(EVP_PKEY_CTX *ctx)
     const char *supported_exch = NULL;
 
     if (ctx == NULL) {
-        EVPerr(0, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
         return -2;
     }
 
@@ -277,7 +276,7 @@ int EVP_PKEY_derive_init(EVP_PKEY_CTX *ctx)
     ctx->op.kex.exchprovctx = exchange->newctx(ossl_provider_ctx(exchange->prov));
     if (ctx->op.kex.exchprovctx == NULL) {
         /* The provider key can stay in the cache */
-        EVPerr(0, EVP_R_INITIALIZATION_ERROR);
+        ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
         goto err;
     }
     ret = exchange->init(ctx->op.kex.exchprovctx, provkey);
@@ -300,7 +299,7 @@ int EVP_PKEY_derive_init(EVP_PKEY_CTX *ctx)
     return 0;
 #else
     if (ctx->pmeth == NULL || ctx->pmeth->derive == NULL) {
-        EVPerr(0, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
         return -2;
     }
 
@@ -319,8 +318,7 @@ int EVP_PKEY_derive_set_peer(EVP_PKEY_CTX *ctx, EVP_PKEY *peer)
     void *provkey = NULL;
 
     if (ctx == NULL) {
-        EVPerr(EVP_F_EVP_PKEY_DERIVE_SET_PEER,
-               EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
         return -2;
     }
 
@@ -328,8 +326,7 @@ int EVP_PKEY_derive_set_peer(EVP_PKEY_CTX *ctx, EVP_PKEY *peer)
         goto legacy;
 
     if (ctx->op.kex.exchange->set_peer == NULL) {
-        EVPerr(EVP_F_EVP_PKEY_DERIVE_SET_PEER,
-               EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
         return -2;
     }
 
@@ -356,15 +353,13 @@ int EVP_PKEY_derive_set_peer(EVP_PKEY_CTX *ctx, EVP_PKEY *peer)
              || ctx->pmeth->encrypt != NULL
              || ctx->pmeth->decrypt != NULL)
         || ctx->pmeth->ctrl == NULL) {
-        EVPerr(EVP_F_EVP_PKEY_DERIVE_SET_PEER,
-               EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
         return -2;
     }
     if (ctx->operation != EVP_PKEY_OP_DERIVE
         && ctx->operation != EVP_PKEY_OP_ENCRYPT
         && ctx->operation != EVP_PKEY_OP_DECRYPT) {
-        EVPerr(EVP_F_EVP_PKEY_DERIVE_SET_PEER,
-               EVP_R_OPERATON_NOT_INITIALIZED);
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATON_NOT_INITIALIZED);
         return -1;
     }
 
@@ -377,12 +372,12 @@ int EVP_PKEY_derive_set_peer(EVP_PKEY_CTX *ctx, EVP_PKEY *peer)
         return 1;
 
     if (ctx->pkey == NULL) {
-        EVPerr(EVP_F_EVP_PKEY_DERIVE_SET_PEER, EVP_R_NO_KEY_SET);
+        ERR_raise(ERR_LIB_EVP, EVP_R_NO_KEY_SET);
         return -1;
     }
 
     if (ctx->pkey->type != peer->type) {
-        EVPerr(EVP_F_EVP_PKEY_DERIVE_SET_PEER, EVP_R_DIFFERENT_KEY_TYPES);
+        ERR_raise(ERR_LIB_EVP, EVP_R_DIFFERENT_KEY_TYPES);
         return -1;
     }
 
@@ -395,7 +390,7 @@ int EVP_PKEY_derive_set_peer(EVP_PKEY_CTX *ctx, EVP_PKEY *peer)
      */
     if (!EVP_PKEY_missing_parameters(peer) &&
         !EVP_PKEY_parameters_eq(ctx->pkey, peer)) {
-        EVPerr(EVP_F_EVP_PKEY_DERIVE_SET_PEER, EVP_R_DIFFERENT_PARAMETERS);
+        ERR_raise(ERR_LIB_EVP, EVP_R_DIFFERENT_PARAMETERS);
         return -1;
     }
 
@@ -419,13 +414,12 @@ int EVP_PKEY_derive(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *pkeylen)
     int ret;
 
     if (ctx == NULL) {
-        EVPerr(EVP_F_EVP_PKEY_DERIVE,
-               EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
         return -2;
     }
 
     if (!EVP_PKEY_CTX_IS_DERIVE_OP(ctx)) {
-        EVPerr(EVP_F_EVP_PKEY_DERIVE, EVP_R_OPERATON_NOT_INITIALIZED);
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATON_NOT_INITIALIZED);
         return -1;
     }
 
@@ -438,8 +432,7 @@ int EVP_PKEY_derive(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *pkeylen)
     return ret;
  legacy:
     if (ctx ==  NULL || ctx->pmeth == NULL || ctx->pmeth->derive == NULL) {
-        EVPerr(EVP_F_EVP_PKEY_DERIVE,
-               EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
         return -2;
     }
 

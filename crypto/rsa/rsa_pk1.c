@@ -32,8 +32,7 @@ int RSA_padding_add_PKCS1_type_1(unsigned char *to, int tlen,
     unsigned char *p;
 
     if (flen > (tlen - RSA_PKCS1_PADDING_SIZE)) {
-        RSAerr(RSA_F_RSA_PADDING_ADD_PKCS1_TYPE_1,
-               RSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE);
+        ERR_raise(ERR_LIB_RSA, RSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE);
         return 0;
     }
 
@@ -73,16 +72,14 @@ int RSA_padding_check_PKCS1_type_1(unsigned char *to, int tlen,
     /* Accept inputs with and without the leading 0-byte. */
     if (num == flen) {
         if ((*p++) != 0x00) {
-            RSAerr(RSA_F_RSA_PADDING_CHECK_PKCS1_TYPE_1,
-                   RSA_R_INVALID_PADDING);
+            ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_PADDING);
             return -1;
         }
         flen--;
     }
 
     if ((num != (flen + 1)) || (*(p++) != 0x01)) {
-        RSAerr(RSA_F_RSA_PADDING_CHECK_PKCS1_TYPE_1,
-               RSA_R_BLOCK_TYPE_IS_NOT_01);
+        ERR_raise(ERR_LIB_RSA, RSA_R_BLOCK_TYPE_IS_NOT_01);
         return -1;
     }
 
@@ -94,8 +91,7 @@ int RSA_padding_check_PKCS1_type_1(unsigned char *to, int tlen,
                 p++;
                 break;
             } else {
-                RSAerr(RSA_F_RSA_PADDING_CHECK_PKCS1_TYPE_1,
-                       RSA_R_BAD_FIXED_HEADER_DECRYPT);
+                ERR_raise(ERR_LIB_RSA, RSA_R_BAD_FIXED_HEADER_DECRYPT);
                 return -1;
             }
         }
@@ -103,20 +99,18 @@ int RSA_padding_check_PKCS1_type_1(unsigned char *to, int tlen,
     }
 
     if (i == j) {
-        RSAerr(RSA_F_RSA_PADDING_CHECK_PKCS1_TYPE_1,
-               RSA_R_NULL_BEFORE_BLOCK_MISSING);
+        ERR_raise(ERR_LIB_RSA, RSA_R_NULL_BEFORE_BLOCK_MISSING);
         return -1;
     }
 
     if (i < 8) {
-        RSAerr(RSA_F_RSA_PADDING_CHECK_PKCS1_TYPE_1,
-               RSA_R_BAD_PAD_BYTE_COUNT);
+        ERR_raise(ERR_LIB_RSA, RSA_R_BAD_PAD_BYTE_COUNT);
         return -1;
     }
     i++;                        /* Skip over the '\0' */
     j -= i;
     if (j > tlen) {
-        RSAerr(RSA_F_RSA_PADDING_CHECK_PKCS1_TYPE_1, RSA_R_DATA_TOO_LARGE);
+        ERR_raise(ERR_LIB_RSA, RSA_R_DATA_TOO_LARGE);
         return -1;
     }
     memcpy(to, p, (unsigned int)j);
@@ -132,7 +126,7 @@ int ossl_rsa_padding_add_PKCS1_type_2_ex(OSSL_LIB_CTX *libctx, unsigned char *to
     unsigned char *p;
 
     if (flen > (tlen - RSA_PKCS1_PADDING_SIZE)) {
-        RSAerr(0, RSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE);
+        ERR_raise(ERR_LIB_RSA, RSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE);
         return 0;
     }
 
@@ -186,14 +180,13 @@ int RSA_padding_check_PKCS1_type_2(unsigned char *to, int tlen,
      */
 
     if (flen > num || num < RSA_PKCS1_PADDING_SIZE) {
-        RSAerr(RSA_F_RSA_PADDING_CHECK_PKCS1_TYPE_2,
-               RSA_R_PKCS_DECODING_ERROR);
+        ERR_raise(ERR_LIB_RSA, RSA_R_PKCS_DECODING_ERROR);
         return -1;
     }
 
     em = OPENSSL_malloc(num);
     if (em == NULL) {
-        RSAerr(RSA_F_RSA_PADDING_CHECK_PKCS1_TYPE_2, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_RSA, ERR_R_MALLOC_FAILURE);
         return -1;
     }
     /*
@@ -270,7 +263,7 @@ int RSA_padding_check_PKCS1_type_2(unsigned char *to, int tlen,
      * the error stack. Instead we opt not to put an error on the stack at all
      * in case of padding failure in the FIPS provider.
      */
-    RSAerr(RSA_F_RSA_PADDING_CHECK_PKCS1_TYPE_2, RSA_R_PKCS_DECODING_ERROR);
+    ERR_raise(ERR_LIB_RSA, RSA_R_PKCS_DECODING_ERROR);
     err_clear_last_constant_time(1 & good);
 #endif
 

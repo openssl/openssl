@@ -67,7 +67,7 @@ int ossl_cmp_mock_srv_set1_certOut(OSSL_CMP_SRV_CTX *srv_ctx, X509 *cert)
     mock_srv_ctx *ctx = OSSL_CMP_SRV_CTX_get0_custom_ctx(srv_ctx);
 
     if (ctx == NULL) {
-        CMPerr(0, CMP_R_NULL_ARGUMENT);
+        ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
         return 0;
     }
     if (cert == NULL || X509_up_ref(cert)) {
@@ -85,7 +85,7 @@ int ossl_cmp_mock_srv_set1_chainOut(OSSL_CMP_SRV_CTX *srv_ctx,
     STACK_OF(X509) *chain_copy = NULL;
 
     if (ctx == NULL) {
-        CMPerr(0, CMP_R_NULL_ARGUMENT);
+        ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
         return 0;
     }
     if (chain != NULL && (chain_copy = X509_chain_up_ref(chain)) == NULL)
@@ -102,7 +102,7 @@ int ossl_cmp_mock_srv_set1_caPubsOut(OSSL_CMP_SRV_CTX *srv_ctx,
     STACK_OF(X509) *caPubs_copy = NULL;
 
     if (ctx == NULL) {
-        CMPerr(0, CMP_R_NULL_ARGUMENT);
+        ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
         return 0;
     }
     if (caPubs != NULL && (caPubs_copy = X509_chain_up_ref(caPubs)) == NULL)
@@ -119,7 +119,7 @@ int ossl_cmp_mock_srv_set_statusInfo(OSSL_CMP_SRV_CTX *srv_ctx, int status,
     OSSL_CMP_PKISI *si;
 
     if (ctx == NULL) {
-        CMPerr(0, CMP_R_NULL_ARGUMENT);
+        ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
         return 0;
     }
     if ((si = OSSL_CMP_STATUSINFO_new(status, fail_info, text)) == NULL)
@@ -134,7 +134,7 @@ int ossl_cmp_mock_srv_set_send_error(OSSL_CMP_SRV_CTX *srv_ctx, int val)
     mock_srv_ctx *ctx = OSSL_CMP_SRV_CTX_get0_custom_ctx(srv_ctx);
 
     if (ctx == NULL) {
-        CMPerr(0, CMP_R_NULL_ARGUMENT);
+        ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
         return 0;
     }
     ctx->sendError = val != 0;
@@ -146,11 +146,11 @@ int ossl_cmp_mock_srv_set_pollCount(OSSL_CMP_SRV_CTX *srv_ctx, int count)
     mock_srv_ctx *ctx = OSSL_CMP_SRV_CTX_get0_custom_ctx(srv_ctx);
 
     if (ctx == NULL) {
-        CMPerr(0, CMP_R_NULL_ARGUMENT);
+        ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
         return 0;
     }
     if (count < 0) {
-        CMPerr(0, CMP_R_INVALID_ARGS);
+        ERR_raise(ERR_LIB_CMP, CMP_R_INVALID_ARGS);
         return 0;
     }
     ctx->pollCount = count;
@@ -162,7 +162,7 @@ int ossl_cmp_mock_srv_set_checkAfterTime(OSSL_CMP_SRV_CTX *srv_ctx, int sec)
     mock_srv_ctx *ctx = OSSL_CMP_SRV_CTX_get0_custom_ctx(srv_ctx);
 
     if (ctx == NULL) {
-        CMPerr(0, CMP_R_NULL_ARGUMENT);
+        ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
         return 0;
     }
     ctx->checkAfterTime = sec;
@@ -183,11 +183,11 @@ static OSSL_CMP_PKISI *process_cert_request(OSSL_CMP_SRV_CTX *srv_ctx,
 
     if (ctx == NULL || cert_req == NULL
             || certOut == NULL || chainOut == NULL || caPubs == NULL) {
-        CMPerr(0, CMP_R_NULL_ARGUMENT);
+        ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
         return NULL;
     }
     if (ctx->sendError) {
-        CMPerr(0, CMP_R_ERROR_PROCESSING_MESSAGE);
+        ERR_raise(ERR_LIB_CMP, CMP_R_ERROR_PROCESSING_MESSAGE);
         return NULL;
     }
 
@@ -235,11 +235,11 @@ static OSSL_CMP_PKISI *process_rr(OSSL_CMP_SRV_CTX *srv_ctx,
     mock_srv_ctx *ctx = OSSL_CMP_SRV_CTX_get0_custom_ctx(srv_ctx);
 
     if (ctx == NULL || rr == NULL || issuer == NULL || serial == NULL) {
-        CMPerr(0, CMP_R_NULL_ARGUMENT);
+        ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
         return NULL;
     }
     if (ctx->sendError || ctx->certOut == NULL) {
-        CMPerr(0, CMP_R_ERROR_PROCESSING_MESSAGE);
+        ERR_raise(ERR_LIB_CMP, CMP_R_ERROR_PROCESSING_MESSAGE);
         return NULL;
     }
 
@@ -247,7 +247,7 @@ static OSSL_CMP_PKISI *process_rr(OSSL_CMP_SRV_CTX *srv_ctx,
     if (X509_NAME_cmp(issuer, X509_get_issuer_name(ctx->certOut)) != 0
             || ASN1_INTEGER_cmp(serial,
                                 X509_get0_serialNumber(ctx->certOut)) != 0) {
-        CMPerr(0, CMP_R_REQUEST_NOT_ACCEPTED);
+        ERR_raise(ERR_LIB_CMP, CMP_R_REQUEST_NOT_ACCEPTED);
         return NULL;
     }
     return OSSL_CMP_PKISI_dup(ctx->statusOut);
@@ -261,11 +261,11 @@ static int process_genm(OSSL_CMP_SRV_CTX *srv_ctx,
     mock_srv_ctx *ctx = OSSL_CMP_SRV_CTX_get0_custom_ctx(srv_ctx);
 
     if (ctx == NULL || genm == NULL || in == NULL || out == NULL) {
-        CMPerr(0, CMP_R_NULL_ARGUMENT);
+        ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
         return 0;
     }
     if (ctx->sendError) {
-        CMPerr(0, CMP_R_ERROR_PROCESSING_MESSAGE);
+        ERR_raise(ERR_LIB_CMP, CMP_R_ERROR_PROCESSING_MESSAGE);
         return 0;
     }
 
@@ -285,7 +285,7 @@ static void process_error(OSSL_CMP_SRV_CTX *srv_ctx, const OSSL_CMP_MSG *error,
     int i;
 
     if (ctx == NULL || error == NULL) {
-        CMPerr(0, CMP_R_NULL_ARGUMENT);
+        ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
         return;
     }
 
@@ -330,17 +330,17 @@ static int process_certConf(OSSL_CMP_SRV_CTX *srv_ctx,
     ASN1_OCTET_STRING *digest;
 
     if (ctx == NULL || certConf == NULL || certHash == NULL) {
-        CMPerr(0, CMP_R_NULL_ARGUMENT);
+        ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
         return 0;
     }
     if (ctx->sendError || ctx->certOut == NULL) {
-        CMPerr(0, CMP_R_ERROR_PROCESSING_MESSAGE);
+        ERR_raise(ERR_LIB_CMP, CMP_R_ERROR_PROCESSING_MESSAGE);
         return 0;
     }
 
     if (certReqId != ctx->certReqId) {
         /* in case of error, invalid reqId -1 */
-        CMPerr(0, CMP_R_BAD_REQUEST_ID);
+        ERR_raise(ERR_LIB_CMP, CMP_R_BAD_REQUEST_ID);
         return 0;
     }
 
@@ -348,7 +348,7 @@ static int process_certConf(OSSL_CMP_SRV_CTX *srv_ctx,
         return 0;
     if (ASN1_OCTET_STRING_cmp(certHash, digest) != 0) {
         ASN1_OCTET_STRING_free(digest);
-        CMPerr(0, CMP_R_CERTHASH_UNMATCHED);
+        ERR_raise(ERR_LIB_CMP, CMP_R_CERTHASH_UNMATCHED);
         return 0;
     }
     ASN1_OCTET_STRING_free(digest);
@@ -363,12 +363,12 @@ static int process_pollReq(OSSL_CMP_SRV_CTX *srv_ctx,
 
     if (ctx == NULL || pollReq == NULL
             || certReq == NULL || check_after == NULL) {
-        CMPerr(0, CMP_R_NULL_ARGUMENT);
+        ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
         return 0;
     }
     if (ctx->sendError || ctx->certReq == NULL) {
         *certReq = NULL;
-        CMPerr(0, CMP_R_ERROR_PROCESSING_MESSAGE);
+        ERR_raise(ERR_LIB_CMP, CMP_R_ERROR_PROCESSING_MESSAGE);
         return 0;
     }
 

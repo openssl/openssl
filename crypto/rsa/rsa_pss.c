@@ -66,14 +66,14 @@ int RSA_verify_PKCS1_PSS_mgf1(RSA *rsa, const unsigned char *mHash,
     if (sLen == RSA_PSS_SALTLEN_DIGEST) {
         sLen = hLen;
     } else if (sLen < RSA_PSS_SALTLEN_MAX) {
-        RSAerr(RSA_F_RSA_VERIFY_PKCS1_PSS_MGF1, RSA_R_SLEN_CHECK_FAILED);
+        ERR_raise(ERR_LIB_RSA, RSA_R_SLEN_CHECK_FAILED);
         goto err;
     }
 
     MSBits = (BN_num_bits(rsa->n) - 1) & 0x7;
     emLen = RSA_size(rsa);
     if (EM[0] & (0xFF << MSBits)) {
-        RSAerr(RSA_F_RSA_VERIFY_PKCS1_PSS_MGF1, RSA_R_FIRST_OCTET_INVALID);
+        ERR_raise(ERR_LIB_RSA, RSA_R_FIRST_OCTET_INVALID);
         goto err;
     }
     if (MSBits == 0) {
@@ -81,24 +81,24 @@ int RSA_verify_PKCS1_PSS_mgf1(RSA *rsa, const unsigned char *mHash,
         emLen--;
     }
     if (emLen < hLen + 2) {
-        RSAerr(RSA_F_RSA_VERIFY_PKCS1_PSS_MGF1, RSA_R_DATA_TOO_LARGE);
+        ERR_raise(ERR_LIB_RSA, RSA_R_DATA_TOO_LARGE);
         goto err;
     }
     if (sLen == RSA_PSS_SALTLEN_MAX) {
         sLen = emLen - hLen - 2;
     } else if (sLen > emLen - hLen - 2) { /* sLen can be small negative */
-        RSAerr(RSA_F_RSA_VERIFY_PKCS1_PSS_MGF1, RSA_R_DATA_TOO_LARGE);
+        ERR_raise(ERR_LIB_RSA, RSA_R_DATA_TOO_LARGE);
         goto err;
     }
     if (EM[emLen - 1] != 0xbc) {
-        RSAerr(RSA_F_RSA_VERIFY_PKCS1_PSS_MGF1, RSA_R_LAST_OCTET_INVALID);
+        ERR_raise(ERR_LIB_RSA, RSA_R_LAST_OCTET_INVALID);
         goto err;
     }
     maskedDBLen = emLen - hLen - 1;
     H = EM + maskedDBLen;
     DB = OPENSSL_malloc(maskedDBLen);
     if (DB == NULL) {
-        RSAerr(RSA_F_RSA_VERIFY_PKCS1_PSS_MGF1, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_RSA, ERR_R_MALLOC_FAILURE);
         goto err;
     }
     if (PKCS1_MGF1(DB, maskedDBLen, H, hLen, mgf1Hash) < 0)
@@ -109,11 +109,11 @@ int RSA_verify_PKCS1_PSS_mgf1(RSA *rsa, const unsigned char *mHash,
         DB[0] &= 0xFF >> (8 - MSBits);
     for (i = 0; DB[i] == 0 && i < (maskedDBLen - 1); i++) ;
     if (DB[i++] != 0x1) {
-        RSAerr(RSA_F_RSA_VERIFY_PKCS1_PSS_MGF1, RSA_R_SLEN_RECOVERY_FAILED);
+        ERR_raise(ERR_LIB_RSA, RSA_R_SLEN_RECOVERY_FAILED);
         goto err;
     }
     if (sLen != RSA_PSS_SALTLEN_AUTO && (maskedDBLen - i) != sLen) {
-        RSAerr(RSA_F_RSA_VERIFY_PKCS1_PSS_MGF1, RSA_R_SLEN_CHECK_FAILED);
+        ERR_raise(ERR_LIB_RSA, RSA_R_SLEN_CHECK_FAILED);
         goto err;
     }
     if (!EVP_DigestInit_ex(ctx, Hash, NULL)
@@ -127,7 +127,7 @@ int RSA_verify_PKCS1_PSS_mgf1(RSA *rsa, const unsigned char *mHash,
     if (!EVP_DigestFinal_ex(ctx, H_, NULL))
         goto err;
     if (memcmp(H_, H, hLen)) {
-        RSAerr(RSA_F_RSA_VERIFY_PKCS1_PSS_MGF1, RSA_R_BAD_SIGNATURE);
+        ERR_raise(ERR_LIB_RSA, RSA_R_BAD_SIGNATURE);
         ret = 0;
     } else {
         ret = 1;
@@ -177,7 +177,7 @@ int RSA_padding_add_PKCS1_PSS_mgf1(RSA *rsa, unsigned char *EM,
     } else if (sLen == RSA_PSS_SALTLEN_MAX_SIGN) {
         sLen = RSA_PSS_SALTLEN_MAX;
     } else if (sLen < RSA_PSS_SALTLEN_MAX) {
-        RSAerr(RSA_F_RSA_PADDING_ADD_PKCS1_PSS_MGF1, RSA_R_SLEN_CHECK_FAILED);
+        ERR_raise(ERR_LIB_RSA, RSA_R_SLEN_CHECK_FAILED);
         goto err;
     }
 
@@ -188,22 +188,19 @@ int RSA_padding_add_PKCS1_PSS_mgf1(RSA *rsa, unsigned char *EM,
         emLen--;
     }
     if (emLen < hLen + 2) {
-        RSAerr(RSA_F_RSA_PADDING_ADD_PKCS1_PSS_MGF1,
-               RSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE);
+        ERR_raise(ERR_LIB_RSA, RSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE);
         goto err;
     }
     if (sLen == RSA_PSS_SALTLEN_MAX) {
         sLen = emLen - hLen - 2;
     } else if (sLen > emLen - hLen - 2) {
-        RSAerr(RSA_F_RSA_PADDING_ADD_PKCS1_PSS_MGF1,
-               RSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE);
+        ERR_raise(ERR_LIB_RSA, RSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE);
         goto err;
     }
     if (sLen > 0) {
         salt = OPENSSL_malloc(sLen);
         if (salt == NULL) {
-            RSAerr(RSA_F_RSA_PADDING_ADD_PKCS1_PSS_MGF1,
-                   ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_RSA, ERR_R_MALLOC_FAILURE);
             goto err;
         }
         if (RAND_bytes_ex(rsa->libctx, salt, sLen) <= 0)

@@ -41,7 +41,7 @@ static async_ctx *async_ctx_new(void)
 
     nctx = OPENSSL_malloc(sizeof(*nctx));
     if (nctx == NULL) {
-        ASYNCerr(ASYNC_F_ASYNC_CTX_NEW, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_ASYNC, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
@@ -83,7 +83,7 @@ static ASYNC_JOB *async_job_new(void)
 
     job = OPENSSL_zalloc(sizeof(*job));
     if (job == NULL) {
-        ASYNCerr(ASYNC_F_ASYNC_JOB_NEW, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_ASYNC, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
@@ -161,7 +161,7 @@ void async_start_func(void)
              * Should not happen. Getting here will close the thread...can't do
              * much about it
              */
-            ASYNCerr(ASYNC_F_ASYNC_START_FUNC, ASYNC_R_FAILED_TO_SWAP_CONTEXT);
+            ERR_raise(ERR_LIB_ASYNC, ASYNC_R_FAILED_TO_SWAP_CONTEXT);
         }
     }
 }
@@ -212,8 +212,7 @@ int ASYNC_start_job(ASYNC_JOB **job, ASYNC_WAIT_CTX *wctx, int *ret,
                 /* Resume previous job */
                 if (!async_fibre_swapcontext(&ctx->dispatcher,
                         &ctx->currjob->fibrectx, 1)) {
-                    ASYNCerr(ASYNC_F_ASYNC_START_JOB,
-                             ASYNC_R_FAILED_TO_SWAP_CONTEXT);
+                    ERR_raise(ERR_LIB_ASYNC, ASYNC_R_FAILED_TO_SWAP_CONTEXT);
                     goto err;
                 }
                 /*
@@ -226,7 +225,7 @@ int ASYNC_start_job(ASYNC_JOB **job, ASYNC_WAIT_CTX *wctx, int *ret,
             }
 
             /* Should not happen */
-            ASYNCerr(ASYNC_F_ASYNC_START_JOB, ERR_R_INTERNAL_ERROR);
+            ERR_raise(ERR_LIB_ASYNC, ERR_R_INTERNAL_ERROR);
             async_release_job(ctx->currjob);
             ctx->currjob = NULL;
             *job = NULL;
@@ -240,7 +239,7 @@ int ASYNC_start_job(ASYNC_JOB **job, ASYNC_WAIT_CTX *wctx, int *ret,
         if (args != NULL) {
             ctx->currjob->funcargs = OPENSSL_malloc(size);
             if (ctx->currjob->funcargs == NULL) {
-                ASYNCerr(ASYNC_F_ASYNC_START_JOB, ERR_R_MALLOC_FAILURE);
+                ERR_raise(ERR_LIB_ASYNC, ERR_R_MALLOC_FAILURE);
                 async_release_job(ctx->currjob);
                 ctx->currjob = NULL;
                 return ASYNC_ERR;
@@ -255,7 +254,7 @@ int ASYNC_start_job(ASYNC_JOB **job, ASYNC_WAIT_CTX *wctx, int *ret,
         libctx = ossl_lib_ctx_get_concrete(NULL);
         if (!async_fibre_swapcontext(&ctx->dispatcher,
                 &ctx->currjob->fibrectx, 1)) {
-            ASYNCerr(ASYNC_F_ASYNC_START_JOB, ASYNC_R_FAILED_TO_SWAP_CONTEXT);
+            ERR_raise(ERR_LIB_ASYNC, ASYNC_R_FAILED_TO_SWAP_CONTEXT);
             goto err;
         }
         /*
@@ -292,7 +291,7 @@ int ASYNC_pause_job(void)
 
     if (!async_fibre_swapcontext(&job->fibrectx,
                                  &ctx->dispatcher, 1)) {
-        ASYNCerr(ASYNC_F_ASYNC_PAUSE_JOB, ASYNC_R_FAILED_TO_SWAP_CONTEXT);
+        ERR_raise(ERR_LIB_ASYNC, ASYNC_R_FAILED_TO_SWAP_CONTEXT);
         return 0;
     }
     /* Reset counts of added and deleted fds */
@@ -339,7 +338,7 @@ int ASYNC_init_thread(size_t max_size, size_t init_size)
     size_t curr_size = 0;
 
     if (init_size > max_size) {
-        ASYNCerr(ASYNC_F_ASYNC_INIT_THREAD, ASYNC_R_INVALID_POOL_SIZE);
+        ERR_raise(ERR_LIB_ASYNC, ASYNC_R_INVALID_POOL_SIZE);
         return 0;
     }
 
@@ -351,13 +350,13 @@ int ASYNC_init_thread(size_t max_size, size_t init_size)
 
     pool = OPENSSL_zalloc(sizeof(*pool));
     if (pool == NULL) {
-        ASYNCerr(ASYNC_F_ASYNC_INIT_THREAD, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_ASYNC, ERR_R_MALLOC_FAILURE);
         return 0;
     }
 
     pool->jobs = sk_ASYNC_JOB_new_reserve(NULL, init_size);
     if (pool->jobs == NULL) {
-        ASYNCerr(ASYNC_F_ASYNC_INIT_THREAD, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_ASYNC, ERR_R_MALLOC_FAILURE);
         OPENSSL_free(pool);
         return 0;
     }
@@ -382,7 +381,7 @@ int ASYNC_init_thread(size_t max_size, size_t init_size)
     }
     pool->curr_size = curr_size;
     if (!CRYPTO_THREAD_set_local(&poolkey, pool)) {
-        ASYNCerr(ASYNC_F_ASYNC_INIT_THREAD, ASYNC_R_FAILED_TO_SET_POOL);
+        ERR_raise(ERR_LIB_ASYNC, ASYNC_R_FAILED_TO_SET_POOL);
         goto err;
     }
 

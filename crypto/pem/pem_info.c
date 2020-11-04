@@ -32,7 +32,7 @@ STACK_OF(X509_INFO)
     STACK_OF(X509_INFO) *ret;
 
     if ((b = BIO_new(BIO_s_file())) == NULL) {
-        PEMerr(0, ERR_R_BUF_LIB);
+        ERR_raise(ERR_LIB_PEM, ERR_R_BUF_LIB);
         return 0;
     }
     BIO_set_fp(b, fp, BIO_NOCLOSE);
@@ -66,7 +66,7 @@ STACK_OF(X509_INFO)
 
     if (sk == NULL) {
         if ((ret = sk_X509_INFO_new_null()) == NULL) {
-            PEMerr(0, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_PEM, ERR_R_MALLOC_FAILURE);
             goto err;
         }
     } else
@@ -210,11 +210,11 @@ STACK_OF(X509_INFO)
                 p = data;
                 if (ptype) {
                     if (!d2i_PrivateKey(ptype, pp, &p, len)) {
-                        PEMerr(0, ERR_R_ASN1_LIB);
+                        ERR_raise(ERR_LIB_PEM, ERR_R_ASN1_LIB);
                         goto err;
                     }
                 } else if (d2i(pp, &p, len) == NULL) {
-                    PEMerr(0, ERR_R_ASN1_LIB);
+                    ERR_raise(ERR_LIB_PEM, ERR_R_ASN1_LIB);
                     goto err;
                 }
             } else {            /* encrypted RSA data */
@@ -290,7 +290,7 @@ int PEM_X509_INFO_write_bio(BIO *bp, const X509_INFO *xi, EVP_CIPHER *enc,
                     */
                 || (strlen(objstr) + 23 + 2 * EVP_CIPHER_iv_length(enc) + 13)
                    > sizeof(buf)) {
-            PEMerr(PEM_F_PEM_X509_INFO_WRITE_BIO, PEM_R_UNSUPPORTED_CIPHER);
+            ERR_raise(ERR_LIB_PEM, PEM_R_UNSUPPORTED_CIPHER);
             goto err;
         }
     }
@@ -303,7 +303,7 @@ int PEM_X509_INFO_write_bio(BIO *bp, const X509_INFO *xi, EVP_CIPHER *enc,
     if (xi->x_pkey != NULL) {
         if ((xi->enc_data != NULL) && (xi->enc_len > 0)) {
             if (enc == NULL) {
-                PEMerr(PEM_F_PEM_X509_INFO_WRITE_BIO, PEM_R_CIPHER_IS_NULL);
+                ERR_raise(ERR_LIB_PEM, PEM_R_CIPHER_IS_NULL);
                 goto err;
             }
 
@@ -319,8 +319,7 @@ int PEM_X509_INFO_write_bio(BIO *bp, const X509_INFO *xi, EVP_CIPHER *enc,
              */
             objstr = OBJ_nid2sn(EVP_CIPHER_nid(xi->enc_cipher.cipher));
             if (objstr == NULL) {
-                PEMerr(PEM_F_PEM_X509_INFO_WRITE_BIO,
-                       PEM_R_UNSUPPORTED_CIPHER);
+                ERR_raise(ERR_LIB_PEM, PEM_R_UNSUPPORTED_CIPHER);
                 goto err;
             }
 

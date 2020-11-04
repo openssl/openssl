@@ -60,7 +60,7 @@ static int rc5_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
             return 1;
 
         default:
-            EVPerr(EVP_F_RC5_CTRL, EVP_R_UNSUPPORTED_NUMBER_OF_ROUNDS);
+            ERR_raise(ERR_LIB_EVP, EVP_R_UNSUPPORTED_NUMBER_OF_ROUNDS);
             return 0;
         }
 
@@ -73,7 +73,7 @@ static int r_32_12_16_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                                const unsigned char *iv, int enc)
 {
     if (EVP_CIPHER_CTX_key_length(ctx) > 255) {
-        EVPerr(EVP_F_R_32_12_16_INIT_KEY, EVP_R_BAD_KEY_LENGTH);
+        ERR_raise(ERR_LIB_EVP, EVP_R_BAD_KEY_LENGTH);
         return 0;
     }
     return RC5_32_set_key(&data(ctx)->ks, EVP_CIPHER_CTX_key_length(ctx),

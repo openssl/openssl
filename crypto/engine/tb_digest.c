@@ -74,7 +74,7 @@ const EVP_MD *ENGINE_get_digest(ENGINE *e, int nid)
     const EVP_MD *ret;
     ENGINE_DIGESTS_PTR fn = ENGINE_get_digests(e);
     if (!fn || !fn(e, &ret, NULL, nid)) {
-        ENGINEerr(ENGINE_F_ENGINE_GET_DIGEST, ENGINE_R_UNIMPLEMENTED_DIGEST);
+        ERR_raise(ERR_LIB_ENGINE, ENGINE_R_UNIMPLEMENTED_DIGEST);
         return NULL;
     }
     return ret;

@@ -121,7 +121,7 @@ int CONF_modules_load(const CONF *cnf, const char *appname,
     if (values == NULL) {
         if (!(flags & CONF_MFLAGS_SILENT)) {
             ERR_clear_last_mark();
-            CONFerr(0, CONF_R_OPENSSL_CONF_REFERENCES_MISSING_SECTION);
+            ERR_raise(ERR_LIB_CONF, CONF_R_OPENSSL_CONF_REFERENCES_MISSING_SECTION);
             ERR_add_error_data(2, "openssl_conf=", vsection);
         } else {
             ERR_pop_to_mark();
@@ -228,7 +228,7 @@ static int module_run(const CONF *cnf, const char *name, const char *value,
 
     if (!md) {
         if (!(flags & CONF_MFLAGS_SILENT)) {
-            CONFerr(CONF_F_MODULE_RUN, CONF_R_UNKNOWN_MODULE_NAME);
+            ERR_raise(ERR_LIB_CONF, CONF_R_UNKNOWN_MODULE_NAME);
             ERR_add_error_data(2, "module=", name);
         }
         return -1;
@@ -240,7 +240,7 @@ static int module_run(const CONF *cnf, const char *name, const char *value,
         if (!(flags & CONF_MFLAGS_SILENT)) {
             char rcode[DECIMAL_SIZE(ret) + 1];
 
-            CONFerr(CONF_F_MODULE_RUN, CONF_R_MODULE_INITIALIZATION_ERROR);
+            ERR_raise(ERR_LIB_CONF, CONF_R_MODULE_INITIALIZATION_ERROR);
             BIO_snprintf(rcode, sizeof(rcode), "%-8d", ret);
             ERR_add_error_data(6, "module=", name, ", value=", value,
                                ", retcode=", rcode);
@@ -287,7 +287,7 @@ static CONF_MODULE *module_load_dso(const CONF *cnf,
 
  err:
     DSO_free(dso);
-    CONFerr(CONF_F_MODULE_LOAD_DSO, errcode);
+    ERR_raise(ERR_LIB_CONF, errcode);
     ERR_add_error_data(4, "module=", name, ", path=", path);
     return NULL;
 }
@@ -302,7 +302,7 @@ static CONF_MODULE *module_add(DSO *dso, const char *name,
     if (supported_modules == NULL)
         return NULL;
     if ((tmod = OPENSSL_zalloc(sizeof(*tmod))) == NULL) {
-        CONFerr(CONF_F_MODULE_ADD, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_CONF, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
@@ -385,13 +385,13 @@ static int module_init(CONF_MODULE *pmod, const char *name, const char *value,
     if (initialized_modules == NULL) {
         initialized_modules = sk_CONF_IMODULE_new_null();
         if (!initialized_modules) {
-            CONFerr(CONF_F_MODULE_INIT, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_CONF, ERR_R_MALLOC_FAILURE);
             goto err;
         }
     }
 
     if (!sk_CONF_IMODULE_push(initialized_modules, imod)) {
-        CONFerr(CONF_F_MODULE_INIT, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_CONF, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
@@ -582,7 +582,7 @@ int CONF_parse_list(const char *list_, int sep, int nospc,
     const char *lstart, *tmpend, *p;
 
     if (list_ == NULL) {
-        CONFerr(CONF_F_CONF_PARSE_LIST, CONF_R_LIST_CANNOT_BE_NULL);
+        ERR_raise(ERR_LIB_CONF, CONF_R_LIST_CANNOT_BE_NULL);
         return 0;
     }
 

@@ -167,7 +167,7 @@ int X509_add_cert_new(STACK_OF(X509) **sk, X509 *cert, int flags)
 {
     if (*sk == NULL
             && (*sk = sk_X509_new_null()) == NULL) {
-        X509err(0, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
         return 0;
     }
     return X509_add_cert(*sk, cert, flags);
@@ -176,7 +176,7 @@ int X509_add_cert_new(STACK_OF(X509) **sk, X509 *cert, int flags)
 int X509_add_cert(STACK_OF(X509) *sk, X509 *cert, int flags)
 {
     if (sk == NULL) {
-        X509err(0, ERR_R_PASSED_NULL_PARAMETER);
+        ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
     if ((flags & X509_ADD_FLAG_NO_DUP) != 0) {
@@ -195,7 +195,7 @@ int X509_add_cert(STACK_OF(X509) *sk, X509 *cert, int flags)
         return 1;
     if (!sk_X509_insert(sk, cert,
                         (flags & X509_ADD_FLAG_PREPEND) != 0 ? 0 : -1)) {
-        X509err(0, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
         return 0;
     }
     if ((flags & X509_ADD_FLAG_UP_REF) != 0)
@@ -362,13 +362,13 @@ int X509_check_private_key(const X509 *x, const EVP_PKEY *k)
     case 1:
         break;
     case 0:
-        X509err(X509_F_X509_CHECK_PRIVATE_KEY, X509_R_KEY_VALUES_MISMATCH);
+        ERR_raise(ERR_LIB_X509, X509_R_KEY_VALUES_MISMATCH);
         break;
     case -1:
-        X509err(X509_F_X509_CHECK_PRIVATE_KEY, X509_R_KEY_TYPE_MISMATCH);
+        ERR_raise(ERR_LIB_X509, X509_R_KEY_TYPE_MISMATCH);
         break;
     case -2:
-        X509err(X509_F_X509_CHECK_PRIVATE_KEY, X509_R_UNKNOWN_KEY_TYPE);
+        ERR_raise(ERR_LIB_X509, X509_R_UNKNOWN_KEY_TYPE);
     }
     if (ret > 0)
         return 1;

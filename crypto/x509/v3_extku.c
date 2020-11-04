@@ -79,7 +79,7 @@ static void *v2i_EXTENDED_KEY_USAGE(const X509V3_EXT_METHOD *method,
 
     extku = sk_ASN1_OBJECT_new_reserve(NULL, num);
     if (extku == NULL) {
-        X509V3err(X509V3_F_V2I_EXTENDED_KEY_USAGE, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
         sk_ASN1_OBJECT_free(extku);
         return NULL;
     }
@@ -92,7 +92,7 @@ static void *v2i_EXTENDED_KEY_USAGE(const X509V3_EXT_METHOD *method,
             extval = val->name;
         if ((objtmp = OBJ_txt2obj(extval, 0)) == NULL) {
             sk_ASN1_OBJECT_pop_free(extku, ASN1_OBJECT_free);
-            X509V3err(X509V3_F_V2I_EXTENDED_KEY_USAGE,
+            ERR_raise(ERR_LIB_X509V3,
                       X509V3_R_INVALID_OBJECT_IDENTIFIER);
             ERR_add_error_data(1, extval);
             return NULL;

@@ -22,7 +22,7 @@ BN_RECP_CTX *BN_RECP_CTX_new(void)
     BN_RECP_CTX *ret;
 
     if ((ret = OPENSSL_zalloc(sizeof(*ret))) == NULL) {
-        BNerr(BN_F_BN_RECP_CTX_NEW, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_BN, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
@@ -146,7 +146,7 @@ int BN_div_recp(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m,
     j = 0;
     while (BN_ucmp(r, &(recp->N)) >= 0) {
         if (j++ > 2) {
-            BNerr(BN_F_BN_DIV_RECP, BN_R_BAD_RECIPROCAL);
+            ERR_raise(ERR_LIB_BN, BN_R_BAD_RECIPROCAL);
             goto err;
         }
         if (!BN_usub(r, r, &(recp->N)))

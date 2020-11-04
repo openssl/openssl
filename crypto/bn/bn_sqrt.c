@@ -38,7 +38,7 @@ BIGNUM *BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
             return ret;
         }
 
-        BNerr(BN_F_BN_MOD_SQRT, BN_R_P_IS_NOT_PRIME);
+        ERR_raise(ERR_LIB_BN, BN_R_P_IS_NOT_PRIME);
         return NULL;
     }
 
@@ -197,7 +197,7 @@ BIGNUM *BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
             goto end;
         if (r == 0) {
             /* m divides p */
-            BNerr(BN_F_BN_MOD_SQRT, BN_R_P_IS_NOT_PRIME);
+            ERR_raise(ERR_LIB_BN, BN_R_P_IS_NOT_PRIME);
             goto end;
         }
     }
@@ -209,7 +209,7 @@ BIGNUM *BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
          * than just bad luck. Even if p is not prime, we should have found
          * some y such that r == -1.
          */
-        BNerr(BN_F_BN_MOD_SQRT, BN_R_TOO_MANY_ITERATIONS);
+        ERR_raise(ERR_LIB_BN, BN_R_TOO_MANY_ITERATIONS);
         goto end;
     }
 
@@ -224,7 +224,7 @@ BIGNUM *BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
     if (!BN_mod_exp(y, y, q, p, ctx))
         goto end;
     if (BN_is_one(y)) {
-        BNerr(BN_F_BN_MOD_SQRT, BN_R_P_IS_NOT_PRIME);
+        ERR_raise(ERR_LIB_BN, BN_R_P_IS_NOT_PRIME);
         goto end;
     }
 
@@ -308,7 +308,7 @@ BIGNUM *BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
         while (!BN_is_one(t)) {
             i++;
             if (i == e) {
-                BNerr(BN_F_BN_MOD_SQRT, BN_R_NOT_A_SQUARE);
+                ERR_raise(ERR_LIB_BN, BN_R_NOT_A_SQUARE);
                 goto end;
             }
             if (!BN_mod_mul(t, t, t, p, ctx))
@@ -342,7 +342,7 @@ BIGNUM *BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
             err = 1;
 
         if (!err && 0 != BN_cmp(x, A)) {
-            BNerr(BN_F_BN_MOD_SQRT, BN_R_NOT_A_SQUARE);
+            ERR_raise(ERR_LIB_BN, BN_R_NOT_A_SQUARE);
             err = 1;
         }
     }

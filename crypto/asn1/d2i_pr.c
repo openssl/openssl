@@ -30,7 +30,7 @@ EVP_PKEY *d2i_PrivateKey_ex(int type, EVP_PKEY **a, const unsigned char **pp,
 
     if ((a == NULL) || (*a == NULL)) {
         if ((ret = EVP_PKEY_new()) == NULL) {
-            ASN1err(0, ERR_R_EVP_LIB);
+            ERR_raise(ERR_LIB_ASN1, ERR_R_EVP_LIB);
             return NULL;
         }
     } else {
@@ -42,7 +42,7 @@ EVP_PKEY *d2i_PrivateKey_ex(int type, EVP_PKEY **a, const unsigned char **pp,
     }
 
     if (!EVP_PKEY_set_type(ret, type)) {
-        ASN1err(0, ASN1_R_UNKNOWN_PUBLIC_KEY_TYPE);
+        ERR_raise(ERR_LIB_ASN1, ASN1_R_UNKNOWN_PUBLIC_KEY_TYPE);
         goto err;
     }
 
@@ -71,7 +71,7 @@ EVP_PKEY *d2i_PrivateKey_ex(int type, EVP_PKEY **a, const unsigned char **pp,
                 goto err;
         } else {
             ERR_clear_last_mark();
-            ASN1err(0, ERR_R_ASN1_LIB);
+            ERR_raise(ERR_LIB_ASN1, ERR_R_ASN1_LIB);
             goto err;
         }
     } else {
@@ -128,7 +128,7 @@ EVP_PKEY *d2i_AutoPrivateKey_ex(EVP_PKEY **a, const unsigned char **pp,
 
         sk_ASN1_TYPE_pop_free(inkey, ASN1_TYPE_free);
         if (p8 == NULL) {
-            ASN1err(0, ASN1_R_UNSUPPORTED_PUBLIC_KEY_TYPE);
+            ERR_raise(ERR_LIB_ASN1, ASN1_R_UNSUPPORTED_PUBLIC_KEY_TYPE);
             return NULL;
         }
         ret = EVP_PKCS82PKEY_ex(p8, libctx, propq);

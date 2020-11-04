@@ -122,7 +122,7 @@ EVP_PKEY *PEM_read_PUBKEY_ex(FILE *fp, EVP_PKEY **x,
     EVP_PKEY *ret;
 
     if ((b = BIO_new(BIO_s_file())) == NULL) {
-        PEMerr(0, ERR_R_BUF_LIB);
+        ERR_raise(ERR_LIB_PEM, ERR_R_BUF_LIB);
         return 0;
     }
     BIO_set_fp(b, fp, BIO_NOCLOSE);
@@ -234,7 +234,7 @@ EVP_PKEY *PEM_read_PrivateKey_ex(FILE *fp, EVP_PKEY **x, pem_password_cb *cb,
     EVP_PKEY *ret;
 
     if ((b = BIO_new(BIO_s_file())) == NULL) {
-        PEMerr(0, ERR_R_BUF_LIB);
+        ERR_raise(ERR_LIB_PEM, ERR_R_BUF_LIB);
         return 0;
     }
     BIO_set_fp(b, fp, BIO_NOCLOSE);
@@ -257,7 +257,7 @@ int PEM_write_PrivateKey(FILE *fp, const EVP_PKEY *x, const EVP_CIPHER *enc,
     int ret;
 
     if ((b = BIO_new_fp(fp, BIO_NOCLOSE)) == NULL) {
-        PEMerr(PEM_F_PEM_WRITE_PRIVATEKEY, ERR_R_BUF_LIB);
+        ERR_raise(ERR_LIB_PEM, ERR_R_BUF_LIB);
         return 0;
     }
     ret = PEM_write_bio_PrivateKey(b, x, enc, kstr, klen, cb, u);

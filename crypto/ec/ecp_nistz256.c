@@ -637,7 +637,7 @@ __owur static int ecp_nistz256_windowed_mul(const EC_GROUP *group,
         || (p_str =
             OPENSSL_malloc(num * 33 * sizeof(unsigned char))) == NULL
         || (scalars = OPENSSL_malloc(num * sizeof(BIGNUM *))) == NULL) {
-        ECerr(EC_F_ECP_NISTZ256_WINDOWED_MUL, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
@@ -654,7 +654,7 @@ __owur static int ecp_nistz256_windowed_mul(const EC_GROUP *group,
             if ((mod = BN_CTX_get(ctx)) == NULL)
                 goto err;
             if (!BN_nnmod(mod, scalar[i], group->order, ctx)) {
-                ECerr(EC_F_ECP_NISTZ256_WINDOWED_MUL, ERR_R_BN_LIB);
+                ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
                 goto err;
             }
             scalars[i] = mod;
@@ -682,8 +682,7 @@ __owur static int ecp_nistz256_windowed_mul(const EC_GROUP *group,
         if (!ecp_nistz256_bignum_to_field_elem(temp[0].X, point[i]->X)
             || !ecp_nistz256_bignum_to_field_elem(temp[0].Y, point[i]->Y)
             || !ecp_nistz256_bignum_to_field_elem(temp[0].Z, point[i]->Z)) {
-            ECerr(EC_F_ECP_NISTZ256_WINDOWED_MUL,
-                  EC_R_COORDINATES_OUT_OF_RANGE);
+            ERR_raise(ERR_LIB_EC, EC_R_COORDINATES_OUT_OF_RANGE);
             goto err;
         }
 
@@ -834,7 +833,7 @@ __owur static int ecp_nistz256_mult_precompute(EC_GROUP *group, BN_CTX *ctx)
     EC_pre_comp_free(group);
     generator = EC_GROUP_get0_generator(group);
     if (generator == NULL) {
-        ECerr(EC_F_ECP_NISTZ256_MULT_PRECOMPUTE, EC_R_UNDEFINED_GENERATOR);
+        ERR_raise(ERR_LIB_EC, EC_R_UNDEFINED_GENERATOR);
         return 0;
     }
 
@@ -862,7 +861,7 @@ __owur static int ecp_nistz256_mult_precompute(EC_GROUP *group, BN_CTX *ctx)
         goto err;
 
     if (BN_is_zero(order)) {
-        ECerr(EC_F_ECP_NISTZ256_MULT_PRECOMPUTE, EC_R_UNKNOWN_ORDER);
+        ERR_raise(ERR_LIB_EC, EC_R_UNKNOWN_ORDER);
         goto err;
     }
 
@@ -870,7 +869,7 @@ __owur static int ecp_nistz256_mult_precompute(EC_GROUP *group, BN_CTX *ctx)
 
     if ((precomp_storage =
          OPENSSL_malloc(37 * 64 * sizeof(P256_POINT_AFFINE) + 64)) == NULL) {
-        ECerr(EC_F_ECP_NISTZ256_MULT_PRECOMPUTE, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
@@ -902,8 +901,7 @@ __owur static int ecp_nistz256_mult_precompute(EC_GROUP *group, BN_CTX *ctx)
                 goto err;
             if (!ecp_nistz256_bignum_to_field_elem(temp.X, P->X) ||
                 !ecp_nistz256_bignum_to_field_elem(temp.Y, P->Y)) {
-                ECerr(EC_F_ECP_NISTZ256_MULT_PRECOMPUTE,
-                      EC_R_COORDINATES_OUT_OF_RANGE);
+                ERR_raise(ERR_LIB_EC, EC_R_COORDINATES_OUT_OF_RANGE);
                 goto err;
             }
             ecp_nistz256_scatter_w7(preComputedTable[j], &temp, k);
@@ -976,7 +974,7 @@ __owur static int ecp_nistz256_points_mul(const EC_GROUP *group,
     BIGNUM *tmp_scalar;
 
     if ((num + 1) == 0 || (num + 1) > OPENSSL_MALLOC_MAX_NELEMS(void *)) {
-        ECerr(EC_F_ECP_NISTZ256_POINTS_MUL, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
         return 0;
     }
 
@@ -985,7 +983,7 @@ __owur static int ecp_nistz256_points_mul(const EC_GROUP *group,
     if (scalar) {
         generator = EC_GROUP_get0_generator(group);
         if (generator == NULL) {
-            ECerr(EC_F_ECP_NISTZ256_POINTS_MUL, EC_R_UNDEFINED_GENERATOR);
+            ERR_raise(ERR_LIB_EC, EC_R_UNDEFINED_GENERATOR);
             goto err;
         }
 
@@ -1033,7 +1031,7 @@ __owur static int ecp_nistz256_points_mul(const EC_GROUP *group,
                     goto err;
 
                 if (!BN_nnmod(tmp_scalar, scalar, group->order, ctx)) {
-                    ECerr(EC_F_ECP_NISTZ256_POINTS_MUL, ERR_R_BN_LIB);
+                    ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
                     goto err;
                 }
                 scalar = tmp_scalar;
@@ -1125,13 +1123,13 @@ __owur static int ecp_nistz256_points_mul(const EC_GROUP *group,
          */
         new_scalars = OPENSSL_malloc((num + 1) * sizeof(BIGNUM *));
         if (new_scalars == NULL) {
-            ECerr(EC_F_ECP_NISTZ256_POINTS_MUL, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
             goto err;
         }
 
         new_points = OPENSSL_malloc((num + 1) * sizeof(EC_POINT *));
         if (new_points == NULL) {
-            ECerr(EC_F_ECP_NISTZ256_POINTS_MUL, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
             goto err;
         }
 
@@ -1186,14 +1184,14 @@ __owur static int ecp_nistz256_get_affine(const EC_GROUP *group,
     BN_ULONG x_ret[P256_LIMBS], y_ret[P256_LIMBS];
 
     if (EC_POINT_is_at_infinity(group, point)) {
-        ECerr(EC_F_ECP_NISTZ256_GET_AFFINE, EC_R_POINT_AT_INFINITY);
+        ERR_raise(ERR_LIB_EC, EC_R_POINT_AT_INFINITY);
         return 0;
     }
 
     if (!ecp_nistz256_bignum_to_field_elem(point_x, point->X) ||
         !ecp_nistz256_bignum_to_field_elem(point_y, point->Y) ||
         !ecp_nistz256_bignum_to_field_elem(point_z, point->Z)) {
-        ECerr(EC_F_ECP_NISTZ256_GET_AFFINE, EC_R_COORDINATES_OUT_OF_RANGE);
+        ERR_raise(ERR_LIB_EC, EC_R_COORDINATES_OUT_OF_RANGE);
         return 0;
     }
 
@@ -1228,7 +1226,7 @@ static NISTZ256_PRE_COMP *ecp_nistz256_pre_comp_new(const EC_GROUP *group)
     ret = OPENSSL_zalloc(sizeof(*ret));
 
     if (ret == NULL) {
-        ECerr(EC_F_ECP_NISTZ256_PRE_COMP_NEW, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
         return ret;
     }
 
@@ -1238,7 +1236,7 @@ static NISTZ256_PRE_COMP *ecp_nistz256_pre_comp_new(const EC_GROUP *group)
 
     ret->lock = CRYPTO_THREAD_lock_new();
     if (ret->lock == NULL) {
-        ECerr(EC_F_ECP_NISTZ256_PRE_COMP_NEW, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
         OPENSSL_free(ret);
         return NULL;
     }
@@ -1327,7 +1325,7 @@ static int ecp_nistz256_inv_mod_ord(const EC_GROUP *group, BIGNUM *r,
      * Catch allocation failure early.
      */
     if (bn_wexpand(r, P256_LIMBS) == NULL) {
-        ECerr(EC_F_ECP_NISTZ256_INV_MOD_ORD, ERR_R_BN_LIB);
+        ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
         goto err;
     }
 
@@ -1336,14 +1334,14 @@ static int ecp_nistz256_inv_mod_ord(const EC_GROUP *group, BIGNUM *r,
 
         if ((tmp = BN_CTX_get(ctx)) == NULL
             || !BN_nnmod(tmp, x, group->order, ctx)) {
-            ECerr(EC_F_ECP_NISTZ256_INV_MOD_ORD, ERR_R_BN_LIB);
+            ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
             goto err;
         }
         x = tmp;
     }
 
     if (!ecp_nistz256_bignum_to_field_elem(t, x)) {
-        ECerr(EC_F_ECP_NISTZ256_INV_MOD_ORD, EC_R_COORDINATES_OUT_OF_RANGE);
+        ERR_raise(ERR_LIB_EC, EC_R_COORDINATES_OUT_OF_RANGE);
         goto err;
     }
 

@@ -120,7 +120,7 @@ static int rc2_magic_to_meth(int i)
     else if (i == RC2_40_MAGIC)
         return 40;
     else {
-        EVPerr(EVP_F_RC2_MAGIC_TO_METH, EVP_R_UNSUPPORTED_KEY_SIZE);
+        ERR_raise(ERR_LIB_EVP, EVP_R_UNSUPPORTED_KEY_SIZE);
         return 0;
     }
 }

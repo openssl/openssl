@@ -148,7 +148,7 @@ int ec_GFp_simple_group_set_curve(EC_GROUP *group,
 
     /* p must be a prime > 3 */
     if (BN_num_bits(p) <= 2 || !BN_is_odd(p)) {
-        ECerr(EC_F_EC_GFP_SIMPLE_GROUP_SET_CURVE, EC_R_INVALID_FIELD);
+        ERR_raise(ERR_LIB_EC, EC_R_INVALID_FIELD);
         return 0;
     }
 
@@ -257,8 +257,7 @@ int ec_GFp_simple_group_check_discriminant(const EC_GROUP *group, BN_CTX *ctx)
     if (ctx == NULL) {
         ctx = new_ctx = BN_CTX_new_ex(group->libctx);
         if (ctx == NULL) {
-            ECerr(EC_F_EC_GFP_SIMPLE_GROUP_CHECK_DISCRIMINANT,
-                  ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
             goto err;
         }
     }
@@ -490,8 +489,7 @@ int ec_GFp_simple_point_set_affine_coordinates(const EC_GROUP *group,
         /*
          * unlike for projective coordinates, we do not tolerate this
          */
-        ECerr(EC_F_EC_GFP_SIMPLE_POINT_SET_AFFINE_COORDINATES,
-              ERR_R_PASSED_NULL_PARAMETER);
+        ERR_raise(ERR_LIB_EC, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
 
@@ -510,8 +508,7 @@ int ec_GFp_simple_point_get_affine_coordinates(const EC_GROUP *group,
     int ret = 0;
 
     if (EC_POINT_is_at_infinity(group, point)) {
-        ECerr(EC_F_EC_GFP_SIMPLE_POINT_GET_AFFINE_COORDINATES,
-              EC_R_POINT_AT_INFINITY);
+        ERR_raise(ERR_LIB_EC, EC_R_POINT_AT_INFINITY);
         return 0;
     }
 
@@ -561,8 +558,7 @@ int ec_GFp_simple_point_get_affine_coordinates(const EC_GROUP *group,
         }
     } else {
         if (!group->meth->field_inv(group, Z_1, Z_, ctx)) {
-            ECerr(EC_F_EC_GFP_SIMPLE_POINT_GET_AFFINE_COORDINATES,
-                  ERR_R_BN_LIB);
+            ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
             goto err;
         }
 
@@ -1192,7 +1188,7 @@ int ec_GFp_simple_make_affine(const EC_GROUP *group, EC_POINT *point,
     if (!EC_POINT_set_affine_coordinates(group, point, x, y, ctx))
         goto err;
     if (!point->Z_is_one) {
-        ECerr(EC_F_EC_GFP_SIMPLE_MAKE_AFFINE, ERR_R_INTERNAL_ERROR);
+        ERR_raise(ERR_LIB_EC, ERR_R_INTERNAL_ERROR);
         goto err;
     }
 
@@ -1273,7 +1269,7 @@ int ec_GFp_simple_points_make_affine(const EC_GROUP *group, size_t num,
      */
 
     if (!group->meth->field_inv(group, tmp, prod_Z[num - 1], ctx)) {
-        ECerr(EC_F_EC_GFP_SIMPLE_POINTS_MAKE_AFFINE, ERR_R_BN_LIB);
+        ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
         goto err;
     }
     if (group->meth->field_encode != 0) {
@@ -1406,7 +1402,7 @@ int ec_GFp_simple_field_inv(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a,
         goto err;
     /* r := 1/(a * e) */
     if (!BN_mod_inverse(r, r, group->field, ctx)) {
-        ECerr(EC_F_EC_GFP_SIMPLE_FIELD_INV, EC_R_CANNOT_INVERT);
+        ERR_raise(ERR_LIB_EC, EC_R_CANNOT_INVERT);
         goto err;
     }
     /* r := e/(a * e) = 1/a */
@@ -1439,7 +1435,7 @@ int ec_GFp_simple_blind_coordinates(const EC_GROUP *group, EC_POINT *p,
     lambda = BN_CTX_get(ctx);
     temp = BN_CTX_get(ctx);
     if (temp == NULL) {
-        ECerr(EC_F_EC_GFP_SIMPLE_BLIND_COORDINATES, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
         goto end;
     }
 

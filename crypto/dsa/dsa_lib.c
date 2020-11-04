@@ -137,14 +137,14 @@ static DSA *dsa_new_intern(ENGINE *engine, OSSL_LIB_CTX *libctx)
     DSA *ret = OPENSSL_zalloc(sizeof(*ret));
 
     if (ret == NULL) {
-        DSAerr(0, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_DSA, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
     ret->references = 1;
     ret->lock = CRYPTO_THREAD_lock_new();
     if (ret->lock == NULL) {
-        DSAerr(0, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_DSA, ERR_R_MALLOC_FAILURE);
         OPENSSL_free(ret);
         return NULL;
     }
@@ -155,7 +155,7 @@ static DSA *dsa_new_intern(ENGINE *engine, OSSL_LIB_CTX *libctx)
     ret->flags = ret->meth->flags & ~DSA_FLAG_NON_FIPS_ALLOW; /* early default init */
     if (engine) {
         if (!ENGINE_init(engine)) {
-            DSAerr(0, ERR_R_ENGINE_LIB);
+            ERR_raise(ERR_LIB_DSA, ERR_R_ENGINE_LIB);
             goto err;
         }
         ret->engine = engine;
@@ -164,7 +164,7 @@ static DSA *dsa_new_intern(ENGINE *engine, OSSL_LIB_CTX *libctx)
     if (ret->engine) {
         ret->meth = ENGINE_get_DSA(ret->engine);
         if (ret->meth == NULL) {
-            DSAerr(0, ERR_R_ENGINE_LIB);
+            ERR_raise(ERR_LIB_DSA, ERR_R_ENGINE_LIB);
             goto err;
         }
     }
@@ -178,7 +178,7 @@ static DSA *dsa_new_intern(ENGINE *engine, OSSL_LIB_CTX *libctx)
 #endif
 
     if ((ret->meth->init != NULL) && !ret->meth->init(ret)) {
-        DSAerr(0, ERR_R_INIT_FAIL);
+        ERR_raise(ERR_LIB_DSA, ERR_R_INIT_FAIL);
         goto err;
     }
 

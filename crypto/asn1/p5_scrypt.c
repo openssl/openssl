@@ -49,20 +49,18 @@ X509_ALGOR *PKCS5_pbe2_set_scrypt(const EVP_CIPHER *cipher,
     PBE2PARAM *pbe2 = NULL;
 
     if (!cipher) {
-        ASN1err(ASN1_F_PKCS5_PBE2_SET_SCRYPT, ERR_R_PASSED_NULL_PARAMETER);
+        ERR_raise(ERR_LIB_ASN1, ERR_R_PASSED_NULL_PARAMETER);
         goto err;
     }
 
     if (EVP_PBE_scrypt(NULL, 0, NULL, 0, N, r, p, 0, NULL, 0) == 0) {
-        ASN1err(ASN1_F_PKCS5_PBE2_SET_SCRYPT,
-                ASN1_R_INVALID_SCRYPT_PARAMETERS);
+        ERR_raise(ERR_LIB_ASN1, ASN1_R_INVALID_SCRYPT_PARAMETERS);
         goto err;
     }
 
     alg_nid = EVP_CIPHER_type(cipher);
     if (alg_nid == NID_undef) {
-        ASN1err(ASN1_F_PKCS5_PBE2_SET_SCRYPT,
-                ASN1_R_CIPHER_HAS_NO_OBJECT_IDENTIFIER);
+        ERR_raise(ERR_LIB_ASN1, ASN1_R_CIPHER_HAS_NO_OBJECT_IDENTIFIER);
         goto err;
     }
 
@@ -94,8 +92,7 @@ X509_ALGOR *PKCS5_pbe2_set_scrypt(const EVP_CIPHER *cipher,
     if (EVP_CipherInit_ex(ctx, cipher, NULL, NULL, iv, 0) == 0)
         goto err;
     if (EVP_CIPHER_param_to_asn1(ctx, scheme->parameter) <= 0) {
-        ASN1err(ASN1_F_PKCS5_PBE2_SET_SCRYPT,
-                ASN1_R_ERROR_SETTING_CIPHER_PARAMS);
+        ERR_raise(ERR_LIB_ASN1, ASN1_R_ERROR_SETTING_CIPHER_PARAMS);
         goto err;
     }
     EVP_CIPHER_CTX_free(ctx);
@@ -135,7 +132,7 @@ X509_ALGOR *PKCS5_pbe2_set_scrypt(const EVP_CIPHER *cipher,
     return ret;
 
  merr:
-    ASN1err(ASN1_F_PKCS5_PBE2_SET_SCRYPT, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
 
  err:
     PBE2PARAM_free(pbe2);
@@ -202,7 +199,7 @@ static X509_ALGOR *pkcs5_scrypt_set(const unsigned char *salt, size_t saltlen,
     return keyfunc;
 
  merr:
-    ASN1err(ASN1_F_PKCS5_SCRYPT_SET, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
  err:
     SCRYPT_PARAMS_free(sparam);
     X509_ALGOR_free(keyfunc);
@@ -221,7 +218,7 @@ int PKCS5_v2_scrypt_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass,
     SCRYPT_PARAMS *sparam = NULL;
 
     if (EVP_CIPHER_CTX_cipher(ctx) == NULL) {
-        EVPerr(EVP_F_PKCS5_V2_SCRYPT_KEYIVGEN, EVP_R_NO_CIPHER_SET);
+        ERR_raise(ERR_LIB_EVP, EVP_R_NO_CIPHER_SET);
         goto err;
     }
 
@@ -230,13 +227,13 @@ int PKCS5_v2_scrypt_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass,
     sparam = ASN1_TYPE_unpack_sequence(ASN1_ITEM_rptr(SCRYPT_PARAMS), param);
 
     if (sparam == NULL) {
-        EVPerr(EVP_F_PKCS5_V2_SCRYPT_KEYIVGEN, EVP_R_DECODE_ERROR);
+        ERR_raise(ERR_LIB_EVP, EVP_R_DECODE_ERROR);
         goto err;
     }
 
     t = EVP_CIPHER_CTX_key_length(ctx);
     if (t < 0) {
-        EVPerr(EVP_F_PKCS5_V2_SCRYPT_KEYIVGEN, EVP_R_INVALID_KEY_LENGTH);
+        ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_KEY_LENGTH);
         goto err;
     }
     keylen = t;
@@ -247,8 +244,7 @@ int PKCS5_v2_scrypt_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass,
         uint64_t spkeylen;
         if ((ASN1_INTEGER_get_uint64(&spkeylen, sparam->keyLength) == 0)
             || (spkeylen != keylen)) {
-            EVPerr(EVP_F_PKCS5_V2_SCRYPT_KEYIVGEN,
-                   EVP_R_UNSUPPORTED_KEYLENGTH);
+            ERR_raise(ERR_LIB_EVP, EVP_R_UNSUPPORTED_KEYLENGTH);
             goto err;
         }
     }
@@ -257,8 +253,7 @@ int PKCS5_v2_scrypt_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass,
         || ASN1_INTEGER_get_uint64(&r, sparam->blockSize) == 0
         || ASN1_INTEGER_get_uint64(&p, sparam->parallelizationParameter) == 0
         || EVP_PBE_scrypt(NULL, 0, NULL, 0, N, r, p, 0, NULL, 0) == 0) {
-        EVPerr(EVP_F_PKCS5_V2_SCRYPT_KEYIVGEN,
-               EVP_R_ILLEGAL_SCRYPT_PARAMETERS);
+        ERR_raise(ERR_LIB_EVP, EVP_R_ILLEGAL_SCRYPT_PARAMETERS);
         goto err;
     }
 

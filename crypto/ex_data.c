@@ -31,7 +31,7 @@ static EX_CALLBACKS *get_and_lock(OSSL_EX_DATA_GLOBAL *global, int class_index)
     EX_CALLBACKS *ip;
 
     if (class_index < 0 || class_index >= CRYPTO_EX_INDEX__COUNT) {
-        CRYPTOerr(CRYPTO_F_GET_AND_LOCK, ERR_R_PASSED_INVALID_ARGUMENT);
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT);
         return NULL;
     }
 
@@ -159,14 +159,14 @@ int crypto_get_ex_new_index_ex(OSSL_LIB_CTX *ctx, int class_index, long argl,
          * "app_data" routines use ex_data index zero.  See RT 3710. */
         if (ip->meth == NULL
             || !sk_EX_CALLBACK_push(ip->meth, NULL)) {
-            CRYPTOerr(CRYPTO_F_CRYPTO_GET_EX_NEW_INDEX_EX, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
             goto err;
         }
     }
 
     a = (EX_CALLBACK *)OPENSSL_malloc(sizeof(*a));
     if (a == NULL) {
-        CRYPTOerr(CRYPTO_F_CRYPTO_GET_EX_NEW_INDEX_EX, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
         goto err;
     }
     a->argl = argl;
@@ -176,7 +176,7 @@ int crypto_get_ex_new_index_ex(OSSL_LIB_CTX *ctx, int class_index, long argl,
     a->free_func = free_func;
 
     if (!sk_EX_CALLBACK_push(ip->meth, NULL)) {
-        CRYPTOerr(CRYPTO_F_CRYPTO_GET_EX_NEW_INDEX_EX, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
         OPENSSL_free(a);
         goto err;
     }
@@ -235,7 +235,7 @@ int crypto_new_ex_data_ex(OSSL_LIB_CTX *ctx, int class_index, void *obj,
     CRYPTO_THREAD_unlock(global->ex_data_lock);
 
     if (mx > 0 && storage == NULL) {
-        CRYPTOerr(CRYPTO_F_CRYPTO_NEW_EX_DATA_EX, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
         return 0;
     }
     for (i = 0; i < mx; i++) {
@@ -301,7 +301,7 @@ int CRYPTO_dup_ex_data(int class_index, CRYPTO_EX_DATA *to,
     if (mx == 0)
         return 1;
     if (storage == NULL) {
-        CRYPTOerr(CRYPTO_F_CRYPTO_DUP_EX_DATA, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
         return 0;
     }
     /*
@@ -434,20 +434,20 @@ int CRYPTO_set_ex_data(CRYPTO_EX_DATA *ad, int idx, void *val)
 
     if (ad->sk == NULL) {
         if ((ad->sk = sk_void_new_null()) == NULL) {
-            CRYPTOerr(CRYPTO_F_CRYPTO_SET_EX_DATA, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
             return 0;
         }
     }
 
     for (i = sk_void_num(ad->sk); i <= idx; ++i) {
         if (!sk_void_push(ad->sk, NULL)) {
-            CRYPTOerr(CRYPTO_F_CRYPTO_SET_EX_DATA, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
             return 0;
         }
     }
     if (sk_void_set(ad->sk, idx, val) != val) {
         /* Probably the index is out of bounds */
-        CRYPTOerr(CRYPTO_F_CRYPTO_SET_EX_DATA, ERR_R_PASSED_INVALID_ARGUMENT);
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT);
         return 0;
     }
     return 1;

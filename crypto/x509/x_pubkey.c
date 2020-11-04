@@ -85,17 +85,16 @@ int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
 
     if (pkey->ameth != NULL) {
         if ((pk = X509_PUBKEY_new()) == NULL) {
-            X509err(X509_F_X509_PUBKEY_SET, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
             goto error;
         }
         if (pkey->ameth->pub_encode != NULL) {
             if (!pkey->ameth->pub_encode(pk, pkey)) {
-                X509err(X509_F_X509_PUBKEY_SET,
-                        X509_R_PUBLIC_KEY_ENCODE_ERROR);
+                ERR_raise(ERR_LIB_X509, X509_R_PUBLIC_KEY_ENCODE_ERROR);
                 goto error;
             }
         } else {
-            X509err(X509_F_X509_PUBKEY_SET, X509_R_METHOD_NOT_SUPPORTED);
+            ERR_raise(ERR_LIB_X509, X509_R_METHOD_NOT_SUPPORTED);
             goto error;
         }
     } else if (evp_pkey_is_provided(pkey)) {
@@ -123,7 +122,7 @@ int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
 
     X509_PUBKEY_free(*x);
     if (!EVP_PKEY_up_ref(pkey)) {
-        X509err(X509_F_X509_PUBKEY_SET, ERR_R_INTERNAL_ERROR);
+        ERR_raise(ERR_LIB_X509, ERR_R_INTERNAL_ERROR);
         goto error;
     }
     *x = pk;
@@ -147,7 +146,7 @@ int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
     return 1;
 
  unsupported:
-    X509err(X509_F_X509_PUBKEY_SET, X509_R_UNSUPPORTED_ALGORITHM);
+    ERR_raise(ERR_LIB_X509, X509_R_UNSUPPORTED_ALGORITHM);
 
  error:
     X509_PUBKEY_free(pk);
@@ -166,12 +165,12 @@ static int x509_pubkey_decode(EVP_PKEY **ppkey, const X509_PUBKEY *key)
     EVP_PKEY *pkey = EVP_PKEY_new();
 
     if (pkey == NULL) {
-        X509err(X509_F_X509_PUBKEY_DECODE, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
         return -1;
     }
 
     if (!EVP_PKEY_set_type(pkey, OBJ_obj2nid(key->algor->algorithm))) {
-        X509err(X509_F_X509_PUBKEY_DECODE, X509_R_UNSUPPORTED_ALGORITHM);
+        ERR_raise(ERR_LIB_X509, X509_R_UNSUPPORTED_ALGORITHM);
         goto error;
     }
 
@@ -184,7 +183,7 @@ static int x509_pubkey_decode(EVP_PKEY **ppkey, const X509_PUBKEY *key)
         if (!pkey->ameth->pub_decode(pkey, key))
             goto error;
     } else {
-        X509err(X509_F_X509_PUBKEY_DECODE, X509_R_METHOD_NOT_SUPPORTED);
+        ERR_raise(ERR_LIB_X509, X509_R_METHOD_NOT_SUPPORTED);
         goto error;
     }
 
@@ -217,7 +216,7 @@ EVP_PKEY *X509_PUBKEY_get0(const X509_PUBKEY *key)
     x509_pubkey_decode(&ret, key);
     /* If decode doesn't fail something bad happened */
     if (ret != NULL) {
-        X509err(X509_F_X509_PUBKEY_GET0, ERR_R_INTERNAL_ERROR);
+        ERR_raise(ERR_LIB_X509, ERR_R_INTERNAL_ERROR);
         EVP_PKEY_free(ret);
     }
 
@@ -229,7 +228,7 @@ EVP_PKEY *X509_PUBKEY_get(const X509_PUBKEY *key)
     EVP_PKEY *ret = X509_PUBKEY_get0(key);
 
     if (ret != NULL && !EVP_PKEY_up_ref(ret)) {
-        X509err(X509_F_X509_PUBKEY_GET, ERR_R_INTERNAL_ERROR);
+        ERR_raise(ERR_LIB_X509, ERR_R_INTERNAL_ERROR);
         ret = NULL;
     }
     return ret;
@@ -374,7 +373,7 @@ int i2d_RSA_PUBKEY(const RSA *a, unsigned char **pp)
         return 0;
     pktmp = EVP_PKEY_new();
     if (pktmp == NULL) {
-        ASN1err(ASN1_F_I2D_RSA_PUBKEY, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
         return -1;
     }
     (void)EVP_PKEY_assign_RSA(pktmp, (RSA *)a);
@@ -416,7 +415,7 @@ int i2d_DSA_PUBKEY(const DSA *a, unsigned char **pp)
         return 0;
     pktmp = EVP_PKEY_new();
     if (pktmp == NULL) {
-        ASN1err(ASN1_F_I2D_DSA_PUBKEY, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
         return -1;
     }
     (void)EVP_PKEY_assign_DSA(pktmp, (DSA *)a);
@@ -458,7 +457,7 @@ int i2d_EC_PUBKEY(const EC_KEY *a, unsigned char **pp)
     if (a == NULL)
         return 0;
     if ((pktmp = EVP_PKEY_new()) == NULL) {
-        ASN1err(ASN1_F_I2D_EC_PUBKEY, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
         return -1;
     }
     (void)EVP_PKEY_assign_EC_KEY(pktmp, (EC_KEY *)a);

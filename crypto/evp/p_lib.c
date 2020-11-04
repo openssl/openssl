@@ -145,20 +145,20 @@ int EVP_PKEY_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from)
         }
     } else if (evp_pkey_is_legacy(to)) {
         if (to->type != from->type) {
-            EVPerr(EVP_F_EVP_PKEY_COPY_PARAMETERS, EVP_R_DIFFERENT_KEY_TYPES);
+            ERR_raise(ERR_LIB_EVP, EVP_R_DIFFERENT_KEY_TYPES);
             goto err;
         }
     }
 
     if (EVP_PKEY_missing_parameters(from)) {
-        EVPerr(EVP_F_EVP_PKEY_COPY_PARAMETERS, EVP_R_MISSING_PARAMETERS);
+        ERR_raise(ERR_LIB_EVP, EVP_R_MISSING_PARAMETERS);
         goto err;
     }
 
     if (!EVP_PKEY_missing_parameters(to)) {
         if (EVP_PKEY_parameters_eq(to, from) == 1)
             return 1;
-        EVPerr(EVP_F_EVP_PKEY_COPY_PARAMETERS, EVP_R_DIFFERENT_PARAMETERS);
+        ERR_raise(ERR_LIB_EVP, EVP_R_DIFFERENT_PARAMETERS);
         return 0;
     }
 
@@ -390,7 +390,7 @@ static EVP_PKEY *new_raw_key_int(OSSL_LIB_CTX *libctx,
                             (void *)key, len);
 
             if (EVP_PKEY_fromdata(ctx, &pkey, params) != 1) {
-                EVPerr(0, EVP_R_KEY_SETUP_FAILED);
+                ERR_raise(ERR_LIB_EVP, EVP_R_KEY_SETUP_FAILED);
                 goto err;
             }
 
@@ -406,7 +406,7 @@ static EVP_PKEY *new_raw_key_int(OSSL_LIB_CTX *libctx,
 
     pkey = EVP_PKEY_new();
     if (pkey == NULL) {
-        EVPerr(0, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
@@ -420,22 +420,22 @@ static EVP_PKEY *new_raw_key_int(OSSL_LIB_CTX *libctx,
 
     if (key_is_priv) {
         if (pkey->ameth->set_priv_key == NULL) {
-            EVPerr(0, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+            ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
             goto err;
         }
 
         if (!pkey->ameth->set_priv_key(pkey, key, len)) {
-            EVPerr(0, EVP_R_KEY_SETUP_FAILED);
+            ERR_raise(ERR_LIB_EVP, EVP_R_KEY_SETUP_FAILED);
             goto err;
         }
     } else {
         if (pkey->ameth->set_pub_key == NULL) {
-            EVPerr(0, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+            ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
             goto err;
         }
 
         if (!pkey->ameth->set_pub_key(pkey, key, len)) {
-            EVPerr(0, EVP_R_KEY_SETUP_FAILED);
+            ERR_raise(ERR_LIB_EVP, EVP_R_KEY_SETUP_FAILED);
             goto err;
         }
     }
@@ -524,17 +524,17 @@ int EVP_PKEY_get_raw_private_key(const EVP_PKEY *pkey, unsigned char *priv,
     }
 
     if (pkey->ameth == NULL) {
-        EVPerr(0, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
         return 0;
     }
 
     if (pkey->ameth->get_priv_key == NULL) {
-        EVPerr(0, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
         return 0;
     }
 
     if (!pkey->ameth->get_priv_key(pkey, priv, len)) {
-        EVPerr(0, EVP_R_GET_RAW_KEY_FAILED);
+        ERR_raise(ERR_LIB_EVP, EVP_R_GET_RAW_KEY_FAILED);
         return 0;
     }
 
@@ -556,18 +556,17 @@ int EVP_PKEY_get_raw_public_key(const EVP_PKEY *pkey, unsigned char *pub,
     }
 
     if (pkey->ameth == NULL) {
-        EVPerr(0, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
         return 0;
     }
 
      if (pkey->ameth->get_pub_key == NULL) {
-        EVPerr(EVP_F_EVP_PKEY_GET_RAW_PUBLIC_KEY,
-               EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
         return 0;
     }
 
     if (!pkey->ameth->get_pub_key(pkey, pub, len)) {
-        EVPerr(EVP_F_EVP_PKEY_GET_RAW_PUBLIC_KEY, EVP_R_GET_RAW_KEY_FAILED);
+        ERR_raise(ERR_LIB_EVP, EVP_R_GET_RAW_KEY_FAILED);
         return 0;
     }
 
@@ -592,7 +591,7 @@ static EVP_PKEY *new_cmac_key_int(const unsigned char *priv, size_t len,
         cipher_name = EVP_CIPHER_name(cipher);
 
     if (cipher_name == NULL) {
-        EVPerr(0, EVP_R_KEY_SETUP_FAILED);
+        ERR_raise(ERR_LIB_EVP, EVP_R_KEY_SETUP_FAILED);
         return NULL;
     }
 
@@ -601,7 +600,7 @@ static EVP_PKEY *new_cmac_key_int(const unsigned char *priv, size_t len,
         goto err;
 
     if (!EVP_PKEY_key_fromdata_init(ctx)) {
-        EVPerr(0, EVP_R_KEY_SETUP_FAILED);
+        ERR_raise(ERR_LIB_EVP, EVP_R_KEY_SETUP_FAILED);
         goto err;
     }
 
@@ -620,7 +619,7 @@ static EVP_PKEY *new_cmac_key_int(const unsigned char *priv, size_t len,
     *p = OSSL_PARAM_construct_end();
 
     if (!EVP_PKEY_fromdata(ctx, &pkey, params)) {
-        EVPerr(0, EVP_R_KEY_SETUP_FAILED);
+        ERR_raise(ERR_LIB_EVP, EVP_R_KEY_SETUP_FAILED);
         goto err;
     }
 
@@ -629,7 +628,7 @@ static EVP_PKEY *new_cmac_key_int(const unsigned char *priv, size_t len,
 
     return pkey;
 # else
-    EVPerr(0, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+    ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
     return NULL;
 # endif
 }
@@ -679,7 +678,7 @@ int EVP_PKEY_set_alias_type(EVP_PKEY *pkey, int type)
      * but not one that resolves to the base type.
      */
     if (EVP_PKEY_type(type) != EVP_PKEY_base_id(pkey)) {
-        EVPerr(EVP_F_EVP_PKEY_SET_ALIAS_TYPE, EVP_R_UNSUPPORTED_ALGORITHM);
+        ERR_raise(ERR_LIB_EVP, EVP_R_UNSUPPORTED_ALGORITHM);
         return 0;
     }
 
@@ -693,12 +692,12 @@ int EVP_PKEY_set1_engine(EVP_PKEY *pkey, ENGINE *e)
 {
     if (e != NULL) {
         if (!ENGINE_init(e)) {
-            EVPerr(EVP_F_EVP_PKEY_SET1_ENGINE, ERR_R_ENGINE_LIB);
+            ERR_raise(ERR_LIB_EVP, ERR_R_ENGINE_LIB);
             return 0;
         }
         if (ENGINE_get_pkey_meth(e, pkey->type) == NULL) {
             ENGINE_finish(e);
-            EVPerr(EVP_F_EVP_PKEY_SET1_ENGINE, EVP_R_UNSUPPORTED_ALGORITHM);
+            ERR_raise(ERR_LIB_EVP, EVP_R_UNSUPPORTED_ALGORITHM);
             return 0;
         }
     }
@@ -748,7 +747,7 @@ const unsigned char *EVP_PKEY_get0_hmac(const EVP_PKEY *pkey, size_t *len)
 {
     ASN1_OCTET_STRING *os = NULL;
     if (pkey->type != EVP_PKEY_HMAC) {
-        EVPerr(EVP_F_EVP_PKEY_GET0_HMAC, EVP_R_EXPECTING_AN_HMAC_KEY);
+        ERR_raise(ERR_LIB_EVP, EVP_R_EXPECTING_AN_HMAC_KEY);
         return NULL;
     }
     os = EVP_PKEY_get0(pkey);
@@ -761,7 +760,7 @@ const unsigned char *EVP_PKEY_get0_poly1305(const EVP_PKEY *pkey, size_t *len)
 {
     ASN1_OCTET_STRING *os = NULL;
     if (pkey->type != EVP_PKEY_POLY1305) {
-        EVPerr(EVP_F_EVP_PKEY_GET0_POLY1305, EVP_R_EXPECTING_A_POLY1305_KEY);
+        ERR_raise(ERR_LIB_EVP, EVP_R_EXPECTING_A_POLY1305_KEY);
         return NULL;
     }
     os = EVP_PKEY_get0(pkey);
@@ -776,7 +775,7 @@ const unsigned char *EVP_PKEY_get0_siphash(const EVP_PKEY *pkey, size_t *len)
     ASN1_OCTET_STRING *os = NULL;
 
     if (pkey->type != EVP_PKEY_SIPHASH) {
-        EVPerr(EVP_F_EVP_PKEY_GET0_SIPHASH, EVP_R_EXPECTING_A_SIPHASH_KEY);
+        ERR_raise(ERR_LIB_EVP, EVP_R_EXPECTING_A_SIPHASH_KEY);
         return NULL;
     }
     os = EVP_PKEY_get0(pkey);
@@ -801,7 +800,7 @@ RSA *EVP_PKEY_get0_RSA(const EVP_PKEY *pkey)
         return NULL;
     }
     if (pkey->type != EVP_PKEY_RSA && pkey->type != EVP_PKEY_RSA_PSS) {
-        EVPerr(EVP_F_EVP_PKEY_GET0_RSA, EVP_R_EXPECTING_AN_RSA_KEY);
+        ERR_raise(ERR_LIB_EVP, EVP_R_EXPECTING_AN_RSA_KEY);
         return NULL;
     }
     return pkey->pkey.rsa;
@@ -824,7 +823,7 @@ DSA *EVP_PKEY_get0_DSA(const EVP_PKEY *pkey)
         return NULL;
     }
     if (pkey->type != EVP_PKEY_DSA) {
-        EVPerr(EVP_F_EVP_PKEY_GET0_DSA, EVP_R_EXPECTING_A_DSA_KEY);
+        ERR_raise(ERR_LIB_EVP, EVP_R_EXPECTING_A_DSA_KEY);
         return NULL;
     }
     return pkey->pkey.dsa;
@@ -864,7 +863,7 @@ EC_KEY *EVP_PKEY_get0_EC_KEY(const EVP_PKEY *pkey)
         return NULL;
     }
     if (EVP_PKEY_base_id(pkey) != EVP_PKEY_EC) {
-        EVPerr(EVP_F_EVP_PKEY_GET0_EC_KEY, EVP_R_EXPECTING_A_EC_KEY);
+        ERR_raise(ERR_LIB_EVP, EVP_R_EXPECTING_A_EC_KEY);
         return NULL;
     }
     return pkey->pkey.ec;
@@ -930,7 +929,7 @@ DH *EVP_PKEY_get0_DH(const EVP_PKEY *pkey)
         return NULL;
     }
     if (pkey->type != EVP_PKEY_DH && pkey->type != EVP_PKEY_DHX) {
-        EVPerr(EVP_F_EVP_PKEY_GET0_DH, EVP_R_EXPECTING_A_DH_KEY);
+        ERR_raise(ERR_LIB_EVP, EVP_R_EXPECTING_A_DH_KEY);
         return NULL;
     }
     return pkey->pkey.dh;
@@ -1394,7 +1393,7 @@ static int evp_pkey_reset_unlocked(EVP_PKEY *pk)
 
     pk->lock = CRYPTO_THREAD_lock_new();
     if (pk->lock == NULL) {
-        EVPerr(0, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
         return 0;
     }
     return 1;
@@ -1405,7 +1404,7 @@ EVP_PKEY *EVP_PKEY_new(void)
     EVP_PKEY *ret = OPENSSL_zalloc(sizeof(*ret));
 
     if (ret == NULL) {
-        EVPerr(EVP_F_EVP_PKEY_NEW, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
@@ -1414,7 +1413,7 @@ EVP_PKEY *EVP_PKEY_new(void)
 
 #ifndef FIPS_MODULE
     if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_EVP_PKEY, ret, &ret->ex_data)) {
-        EVPerr(EVP_F_EVP_PKEY_NEW, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 #endif
@@ -1504,7 +1503,7 @@ static int pkey_set_type(EVP_PKEY *pkey, ENGINE *e, int type, const char *str,
 #endif
         check = check && keymgmt == NULL;
         if (check) {
-            EVPerr(EVP_F_PKEY_SET_TYPE, EVP_R_UNSUPPORTED_ALGORITHM);
+            ERR_raise(ERR_LIB_EVP, EVP_R_UNSUPPORTED_ALGORITHM);
             return 0;
         }
     }

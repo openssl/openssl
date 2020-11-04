@@ -74,7 +74,7 @@ const EVP_CIPHER *ENGINE_get_cipher(ENGINE *e, int nid)
     const EVP_CIPHER *ret;
     ENGINE_CIPHERS_PTR fn = ENGINE_get_ciphers(e);
     if (!fn || !fn(e, &ret, NULL, nid)) {
-        ENGINEerr(ENGINE_F_ENGINE_GET_CIPHER, ENGINE_R_UNIMPLEMENTED_CIPHER);
+        ERR_raise(ERR_LIB_ENGINE, ENGINE_R_UNIMPLEMENTED_CIPHER);
         return NULL;
     }
     return ret;

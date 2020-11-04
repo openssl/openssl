@@ -69,7 +69,7 @@ int ossl_rsa_padding_add_PKCS1_OAEP_mgf1_ex(OSSL_LIB_CTX *libctx,
 #ifndef FIPS_MODULE
         md = EVP_sha1();
 #else
-        RSAerr(0, ERR_R_PASSED_NULL_PARAMETER);
+        ERR_raise(ERR_LIB_RSA, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
 #endif
     }
@@ -80,12 +80,12 @@ int ossl_rsa_padding_add_PKCS1_OAEP_mgf1_ex(OSSL_LIB_CTX *libctx,
 
     /* step 2b: check KLen > nLen - 2 HLen - 2 */
     if (flen > emlen - 2 * mdlen - 1) {
-        RSAerr(0, RSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE);
+        ERR_raise(ERR_LIB_RSA, RSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE);
         return 0;
     }
 
     if (emlen < 2 * mdlen + 1) {
-        RSAerr(0, RSA_R_KEY_SIZE_TOO_SMALL);
+        ERR_raise(ERR_LIB_RSA, RSA_R_KEY_SIZE_TOO_SMALL);
         return 0;
     }
 
@@ -109,7 +109,7 @@ int ossl_rsa_padding_add_PKCS1_OAEP_mgf1_ex(OSSL_LIB_CTX *libctx,
     dbmask_len = emlen - mdlen;
     dbmask = OPENSSL_malloc(dbmask_len);
     if (dbmask == NULL) {
-        RSAerr(0, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_RSA, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
@@ -172,7 +172,7 @@ int RSA_padding_check_PKCS1_OAEP_mgf1(unsigned char *to, int tlen,
 #ifndef FIPS_MODULE
         md = EVP_sha1();
 #else
-        RSAerr(0, ERR_R_PASSED_NULL_PARAMETER);
+        ERR_raise(ERR_LIB_RSA, ERR_R_PASSED_NULL_PARAMETER);
         return -1;
 #endif
     }
@@ -193,22 +193,20 @@ int RSA_padding_check_PKCS1_OAEP_mgf1(unsigned char *to, int tlen,
      * This does not leak any side-channel information.
      */
     if (num < flen || num < 2 * mdlen + 2) {
-        RSAerr(RSA_F_RSA_PADDING_CHECK_PKCS1_OAEP_MGF1,
-               RSA_R_OAEP_DECODING_ERROR);
+        ERR_raise(ERR_LIB_RSA, RSA_R_OAEP_DECODING_ERROR);
         return -1;
     }
 
     dblen = num - mdlen - 1;
     db = OPENSSL_malloc(dblen);
     if (db == NULL) {
-        RSAerr(RSA_F_RSA_PADDING_CHECK_PKCS1_OAEP_MGF1, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_RSA, ERR_R_MALLOC_FAILURE);
         goto cleanup;
     }
 
     em = OPENSSL_malloc(num);
     if (em == NULL) {
-        RSAerr(RSA_F_RSA_PADDING_CHECK_PKCS1_OAEP_MGF1,
-               ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_RSA, ERR_R_MALLOC_FAILURE);
         goto cleanup;
     }
 
@@ -309,8 +307,7 @@ int RSA_padding_check_PKCS1_OAEP_mgf1(unsigned char *to, int tlen,
      * the error stack. Instead we opt not to put an error on the stack at all
      * in case of padding failure in the FIPS provider.
      */
-    RSAerr(RSA_F_RSA_PADDING_CHECK_PKCS1_OAEP_MGF1,
-           RSA_R_OAEP_DECODING_ERROR);
+    ERR_raise(ERR_LIB_RSA, RSA_R_OAEP_DECODING_ERROR);
     err_clear_last_constant_time(1 & good);
 #endif
  cleanup:

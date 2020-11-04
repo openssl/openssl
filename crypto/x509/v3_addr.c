@@ -897,7 +897,7 @@ static void *v2i_IPAddrBlocks(const struct v3_ext_method *method,
     int i;
 
     if ((addr = sk_IPAddressFamily_new(IPAddressFamily_cmp)) == NULL) {
-        X509V3err(X509V3_F_V2I_IPADDRBLOCKS, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
@@ -919,7 +919,7 @@ static void *v2i_IPAddrBlocks(const struct v3_ext_method *method,
             afi = IANA_AFI_IPV6;
             safi = &safi_;
         } else {
-            X509V3err(X509V3_F_V2I_IPADDRBLOCKS,
+            ERR_raise(ERR_LIB_X509V3,
                       X509V3_R_EXTENSION_NAME_ERROR);
             ERR_add_error_data(1, val->name);
             goto err;
@@ -944,7 +944,7 @@ static void *v2i_IPAddrBlocks(const struct v3_ext_method *method,
             *safi = strtoul(val->value, &t, 0);
             t += strspn(t, " \t");
             if (*safi > 0xFF || *t++ != ':') {
-                X509V3err(X509V3_F_V2I_IPADDRBLOCKS, X509V3_R_INVALID_SAFI);
+                ERR_raise(ERR_LIB_X509V3, X509V3_R_INVALID_SAFI);
                 X509V3_conf_add_error_name_value(val);
                 goto err;
             }
@@ -954,7 +954,7 @@ static void *v2i_IPAddrBlocks(const struct v3_ext_method *method,
             s = OPENSSL_strdup(val->value);
         }
         if (s == NULL) {
-            X509V3err(X509V3_F_V2I_IPADDRBLOCKS, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
             goto err;
         }
 
@@ -964,8 +964,7 @@ static void *v2i_IPAddrBlocks(const struct v3_ext_method *method,
          */
         if (strcmp(s, "inherit") == 0) {
             if (!X509v3_addr_add_inherit(addr, afi, safi)) {
-                X509V3err(X509V3_F_V2I_IPADDRBLOCKS,
-                          X509V3_R_INVALID_INHERITANCE);
+                ERR_raise(ERR_LIB_X509V3, X509V3_R_INVALID_INHERITANCE);
                 X509V3_conf_add_error_name_value(val);
                 goto err;
             }
@@ -980,7 +979,7 @@ static void *v2i_IPAddrBlocks(const struct v3_ext_method *method,
         s[i1] = '\0';
 
         if (a2i_ipadd(min, s) != length) {
-            X509V3err(X509V3_F_V2I_IPADDRBLOCKS, X509V3_R_INVALID_IPADDRESS);
+            ERR_raise(ERR_LIB_X509V3, X509V3_R_INVALID_IPADDRESS);
             X509V3_conf_add_error_name_value(val);
             goto err;
         }
@@ -989,13 +988,12 @@ static void *v2i_IPAddrBlocks(const struct v3_ext_method *method,
         case '/':
             prefixlen = (int)strtoul(s + i2, &t, 10);
             if (t == s + i2 || *t != '\0') {
-                X509V3err(X509V3_F_V2I_IPADDRBLOCKS,
-                          X509V3_R_EXTENSION_VALUE_ERROR);
+                ERR_raise(ERR_LIB_X509V3, X509V3_R_EXTENSION_VALUE_ERROR);
                 X509V3_conf_add_error_name_value(val);
                 goto err;
             }
             if (!X509v3_addr_add_prefix(addr, afi, safi, min, prefixlen)) {
-                X509V3err(X509V3_F_V2I_IPADDRBLOCKS, ERR_R_MALLOC_FAILURE);
+                ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
                 goto err;
             }
             break;
@@ -1003,37 +1001,33 @@ static void *v2i_IPAddrBlocks(const struct v3_ext_method *method,
             i1 = i2 + strspn(s + i2, " \t");
             i2 = i1 + strspn(s + i1, addr_chars);
             if (i1 == i2 || s[i2] != '\0') {
-                X509V3err(X509V3_F_V2I_IPADDRBLOCKS,
-                          X509V3_R_EXTENSION_VALUE_ERROR);
+                ERR_raise(ERR_LIB_X509V3, X509V3_R_EXTENSION_VALUE_ERROR);
                 X509V3_conf_add_error_name_value(val);
                 goto err;
             }
             if (a2i_ipadd(max, s + i1) != length) {
-                X509V3err(X509V3_F_V2I_IPADDRBLOCKS,
-                          X509V3_R_INVALID_IPADDRESS);
+                ERR_raise(ERR_LIB_X509V3, X509V3_R_INVALID_IPADDRESS);
                 X509V3_conf_add_error_name_value(val);
                 goto err;
             }
             if (memcmp(min, max, length_from_afi(afi)) > 0) {
-                X509V3err(X509V3_F_V2I_IPADDRBLOCKS,
-                          X509V3_R_EXTENSION_VALUE_ERROR);
+                ERR_raise(ERR_LIB_X509V3, X509V3_R_EXTENSION_VALUE_ERROR);
                 X509V3_conf_add_error_name_value(val);
                 goto err;
             }
             if (!X509v3_addr_add_range(addr, afi, safi, min, max)) {
-                X509V3err(X509V3_F_V2I_IPADDRBLOCKS, ERR_R_MALLOC_FAILURE);
+                ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
                 goto err;
             }
             break;
         case '\0':
             if (!X509v3_addr_add_prefix(addr, afi, safi, min, length * 8)) {
-                X509V3err(X509V3_F_V2I_IPADDRBLOCKS, ERR_R_MALLOC_FAILURE);
+                ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
                 goto err;
             }
             break;
         default:
-            X509V3err(X509V3_F_V2I_IPADDRBLOCKS,
-                      X509V3_R_EXTENSION_VALUE_ERROR);
+            ERR_raise(ERR_LIB_X509V3, X509V3_R_EXTENSION_VALUE_ERROR);
             X509V3_conf_add_error_name_value(val);
             goto err;
         }
@@ -1210,8 +1204,7 @@ static int addr_validate_path_internal(X509_STORE_CTX *ctx,
         validation_err(X509_V_ERR_INVALID_EXTENSION);
     (void)sk_IPAddressFamily_set_cmp_func(ext, IPAddressFamily_cmp);
     if ((child = sk_IPAddressFamily_dup(ext)) == NULL) {
-        X509V3err(X509V3_F_ADDR_VALIDATE_PATH_INTERNAL,
-                  ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
         if (ctx != NULL)
             ctx->error = X509_V_ERR_OUT_OF_MEM;
         ret = 0;

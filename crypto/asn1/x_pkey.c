@@ -29,7 +29,7 @@ X509_PKEY *X509_PKEY_new(void)
     return ret;
 err:
     X509_PKEY_free(ret);
-    ASN1err(ASN1_F_X509_PKEY_NEW, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
     return NULL;
 }
 

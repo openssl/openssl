@@ -174,9 +174,9 @@ static int def_load(CONF *conf, const char *name, long *line)
 #endif
     if (in == NULL) {
         if (ERR_GET_REASON(ERR_peek_last_error()) == BIO_R_NO_SUCH_FILE)
-            CONFerr(CONF_F_DEF_LOAD, CONF_R_NO_SUCH_FILE);
+            ERR_raise(ERR_LIB_CONF, CONF_R_NO_SUCH_FILE);
         else
-            CONFerr(CONF_F_DEF_LOAD, ERR_R_SYS_LIB);
+            ERR_raise(ERR_LIB_CONF, ERR_R_SYS_LIB);
         return 0;
     }
 
@@ -208,24 +208,24 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
 #endif
 
     if ((buff = BUF_MEM_new()) == NULL) {
-        CONFerr(CONF_F_DEF_LOAD_BIO, ERR_R_BUF_LIB);
+        ERR_raise(ERR_LIB_CONF, ERR_R_BUF_LIB);
         goto err;
     }
 
     section = OPENSSL_strdup("default");
     if (section == NULL) {
-        CONFerr(CONF_F_DEF_LOAD_BIO, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_CONF, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
     if (_CONF_new_data(conf) == 0) {
-        CONFerr(CONF_F_DEF_LOAD_BIO, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_CONF, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
     sv = _CONF_new_section(conf, section);
     if (sv == NULL) {
-        CONFerr(CONF_F_DEF_LOAD_BIO, CONF_R_UNABLE_TO_CREATE_NEW_SECTION);
+        ERR_raise(ERR_LIB_CONF, CONF_R_UNABLE_TO_CREATE_NEW_SECTION);
         goto err;
     }
 
@@ -233,7 +233,7 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
     again = 0;
     for (;;) {
         if (!BUF_MEM_grow(buff, bufnum + CONFBUFSIZE)) {
-            CONFerr(CONF_F_DEF_LOAD_BIO, ERR_R_BUF_LIB);
+            ERR_raise(ERR_LIB_CONF, ERR_R_BUF_LIB);
             goto err;
         }
         p = &(buff->data[bufnum]);
@@ -329,8 +329,7 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
                     ss = p;
                     goto again;
                 }
-                CONFerr(CONF_F_DEF_LOAD_BIO,
-                        CONF_R_MISSING_CLOSE_SQUARE_BRACKET);
+                ERR_raise(ERR_LIB_CONF, CONF_R_MISSING_CLOSE_SQUARE_BRACKET);
                 goto err;
             }
             *end = '\0';
@@ -339,8 +338,7 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
             if ((sv = _CONF_get_section(conf, section)) == NULL)
                 sv = _CONF_new_section(conf, section);
             if (sv == NULL) {
-                CONFerr(CONF_F_DEF_LOAD_BIO,
-                        CONF_R_UNABLE_TO_CREATE_NEW_SECTION);
+                ERR_raise(ERR_LIB_CONF, CONF_R_UNABLE_TO_CREATE_NEW_SECTION);
                 goto err;
             }
             continue;
@@ -370,7 +368,7 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
                 /* Pragma values take the form keyword:value */
                 pval = strchr(p, ':');
                 if (pval == NULL || pval == p || pval[1] == '\0') {
-                    CONFerr(CONF_F_DEF_LOAD_BIO, CONF_R_INVALID_PRAGMA);
+                    ERR_raise(ERR_LIB_CONF, CONF_R_INVALID_PRAGMA);
                     goto err;
                 }
 
@@ -391,7 +389,7 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
                                || strcmp(pval, "false") == 0) {
                         conf->flag_dollarid = 0;
                     } else {
-                        CONFerr(CONF_F_DEF_LOAD_BIO, CONF_R_INVALID_PRAGMA);
+                        ERR_raise(ERR_LIB_CONF, CONF_R_INVALID_PRAGMA);
                         goto err;
                     }
                 }
@@ -449,13 +447,13 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
                     /* push the currently processing BIO onto stack */
                     if (biosk == NULL) {
                         if ((biosk = sk_BIO_new_null()) == NULL) {
-                            CONFerr(CONF_F_DEF_LOAD_BIO, ERR_R_MALLOC_FAILURE);
+                            ERR_raise(ERR_LIB_CONF, ERR_R_MALLOC_FAILURE);
                             BIO_free(next);
                             goto err;
                         }
                     }
                     if (!sk_BIO_push(biosk, in)) {
-                        CONFerr(CONF_F_DEF_LOAD_BIO, ERR_R_MALLOC_FAILURE);
+                        ERR_raise(ERR_LIB_CONF, ERR_R_MALLOC_FAILURE);
                         BIO_free(next);
                         goto err;
                     }
@@ -464,7 +462,7 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
                 }
                 continue;
             } else if (*p != '=') {
-                CONFerr(CONF_F_DEF_LOAD_BIO, CONF_R_MISSING_EQUAL_SIGN);
+                ERR_raise(ERR_LIB_CONF, CONF_R_MISSING_EQUAL_SIGN);
                 ERR_add_error_data(2, "HERE-->", p);
                 goto err;
             }
@@ -474,13 +472,13 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
             trim_ws(conf, start);
 
             if ((v = OPENSSL_malloc(sizeof(*v))) == NULL) {
-                CONFerr(CONF_F_DEF_LOAD_BIO, ERR_R_MALLOC_FAILURE);
+                ERR_raise(ERR_LIB_CONF, ERR_R_MALLOC_FAILURE);
                 goto err;
             }
             v->name = OPENSSL_strdup(pname);
             v->value = NULL;
             if (v->name == NULL) {
-                CONFerr(CONF_F_DEF_LOAD_BIO, ERR_R_MALLOC_FAILURE);
+                ERR_raise(ERR_LIB_CONF, ERR_R_MALLOC_FAILURE);
                 goto err;
             }
             if (!str_copy(conf, psection, &(v->value), start))
@@ -491,14 +489,14 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
                     == NULL)
                     tv = _CONF_new_section(conf, psection);
                 if (tv == NULL) {
-                    CONFerr(CONF_F_DEF_LOAD_BIO,
-                            CONF_R_UNABLE_TO_CREATE_NEW_SECTION);
+                    ERR_raise(ERR_LIB_CONF,
+                              CONF_R_UNABLE_TO_CREATE_NEW_SECTION);
                     goto err;
                 }
             } else
                 tv = sv;
             if (_CONF_add_string(conf, tv, v) == 0) {
-                CONFerr(CONF_F_DEF_LOAD_BIO, ERR_R_MALLOC_FAILURE);
+                ERR_raise(ERR_LIB_CONF, ERR_R_MALLOC_FAILURE);
                 goto err;
             }
             v = NULL;
@@ -681,7 +679,7 @@ static int str_copy(CONF *conf, char *section, char **pto, char *from)
             rp = e;
             if (q) {
                 if (r != q) {
-                    CONFerr(CONF_F_STR_COPY, CONF_R_NO_CLOSE_BRACE);
+                    ERR_raise(ERR_LIB_CONF, CONF_R_NO_CLOSE_BRACE);
                     goto err;
                 }
                 e++;
@@ -701,16 +699,16 @@ static int str_copy(CONF *conf, char *section, char **pto, char *from)
                 *rrp = rr;
             *rp = r;
             if (p == NULL) {
-                CONFerr(CONF_F_STR_COPY, CONF_R_VARIABLE_HAS_NO_VALUE);
+                ERR_raise(ERR_LIB_CONF, CONF_R_VARIABLE_HAS_NO_VALUE);
                 goto err;
             }
             newsize = strlen(p) + buf->length - (e - from);
             if (newsize > MAX_CONF_VALUE_LENGTH) {
-                CONFerr(CONF_F_STR_COPY, CONF_R_VARIABLE_EXPANSION_TOO_LONG);
+                ERR_raise(ERR_LIB_CONF, CONF_R_VARIABLE_EXPANSION_TOO_LONG);
                 goto err;
             }
             if (!BUF_MEM_grow_clean(buf, newsize)) {
-                CONFerr(CONF_F_STR_COPY, ERR_R_MALLOC_FAILURE);
+                ERR_raise(ERR_LIB_CONF, ERR_R_MALLOC_FAILURE);
                 goto err;
             }
             while (*p)
@@ -755,16 +753,14 @@ static BIO *process_include(char *include, OPENSSL_DIR_CTX **dirctx,
     BIO *next;
 
     if (stat(include, &st) < 0) {
-        ERR_raise_data(ERR_LIB_SYS, errno,
-                       "calling stat(%s)",
-                       include);
+        ERR_raise_data(ERR_LIB_SYS, errno, "calling stat(%s)", include);
         /* missing include file is not fatal error */
         return NULL;
     }
 
     if (S_ISDIR(st.st_mode)) {
         if (*dirctx != NULL) {
-            CONFerr(CONF_F_PROCESS_INCLUDE,
+            ERR_raise(ERR_LIB_CONF,
                     CONF_R_RECURSIVE_DIRECTORY_INCLUDE);
             ERR_add_error_data(1, include);
             return NULL;
@@ -804,7 +800,7 @@ static BIO *get_next_file(const char *path, OPENSSL_DIR_CTX **dirctx)
             newlen = pathlen + namelen + 2;
             newpath = OPENSSL_zalloc(newlen);
             if (newpath == NULL) {
-                CONFerr(CONF_F_GET_NEXT_FILE, ERR_R_MALLOC_FAILURE);
+                ERR_raise(ERR_LIB_CONF, ERR_R_MALLOC_FAILURE);
                 break;
             }
 #ifdef OPENSSL_SYS_VMS

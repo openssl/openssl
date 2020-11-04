@@ -44,8 +44,7 @@ int PKCS12_parse(PKCS12 *p12, const char *pass, EVP_PKEY **pkey, X509 **cert,
     /* Check for NULL PKCS12 structure */
 
     if (p12 == NULL) {
-        PKCS12err(PKCS12_F_PKCS12_PARSE,
-                  PKCS12_R_INVALID_NULL_PKCS12_POINTER);
+        ERR_raise(ERR_LIB_PKCS12, PKCS12_R_INVALID_NULL_PKCS12_POINTER);
         return 0;
     }
 
@@ -64,18 +63,18 @@ int PKCS12_parse(PKCS12 *p12, const char *pass, EVP_PKEY **pkey, X509 **cert,
         else if (PKCS12_verify_mac(p12, "", 0))
             pass = "";
         else {
-            PKCS12err(PKCS12_F_PKCS12_PARSE, PKCS12_R_MAC_VERIFY_FAILURE);
+            ERR_raise(ERR_LIB_PKCS12, PKCS12_R_MAC_VERIFY_FAILURE);
             goto err;
         }
     } else if (!PKCS12_verify_mac(p12, pass, -1)) {
-        PKCS12err(PKCS12_F_PKCS12_PARSE, PKCS12_R_MAC_VERIFY_FAILURE);
+        ERR_raise(ERR_LIB_PKCS12, PKCS12_R_MAC_VERIFY_FAILURE);
         goto err;
     }
 
     /* If needed, allocate stack for other certificates */
     if ((cert != NULL || ca != NULL)
             && (ocerts = sk_X509_new_null()) == NULL) {
-        PKCS12err(PKCS12_F_PKCS12_PARSE, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PKCS12, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
@@ -84,7 +83,7 @@ int PKCS12_parse(PKCS12 *p12, const char *pass, EVP_PKEY **pkey, X509 **cert,
 
         if (ERR_GET_LIB(err) != ERR_LIB_EVP
                 && ERR_GET_REASON(err) != EVP_R_UNSUPPORTED_ALGORITHM)
-            PKCS12err(0, PKCS12_R_PARSE_ERROR);
+            ERR_raise(ERR_LIB_PKCS12, PKCS12_R_PARSE_ERROR);
         goto err;
     }
 

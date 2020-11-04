@@ -276,7 +276,7 @@ int CMS_si_check_attributes(const CMS_SignerInfo *si)
                                  si->signedAttrs, have_signed_attrs)
             || !cms_check_attribute(nid, flags, CMS_ATTR_F_UNSIGNED,
                                     si->unsignedAttrs, have_unsigned_attrs)) {
-            CMSerr(CMS_F_CMS_SI_CHECK_ATTRIBUTES, CMS_R_ATTRIBUTE_ERROR);
+            ERR_raise(ERR_LIB_CMS, CMS_R_ATTRIBUTE_ERROR);
             return 0;
         }
     }
