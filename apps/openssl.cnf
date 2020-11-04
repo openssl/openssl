@@ -16,6 +16,10 @@ HOME			= .
  # Use this in order to automatically load providers.
 openssl_conf = openssl_init
 
+# Comment this out if you deliberately want to ignore
+# configuration errors
+config_diagnostics = 1
+
 # Extra OBJECT IDENTIFIER info:
 # oid_file       = $ENV::HOME/.oid
 oid_section = new_oids
