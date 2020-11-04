@@ -3767,7 +3767,7 @@ long ssl3_callback_ctrl(SSL *s, int cmd, void (*fp) (void))
     int ret = 0;
 
     switch (cmd) {
-#if !defined(OPENSSL_NO_DH ) && !defined(OPENSSL_NO_DEPRECATED_3_0)
+#if !defined(OPENSSL_NO_DH) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     case SSL_CTRL_SET_TMP_DH_CB:
         s->cert->dh_tmp_cb = (DH *(*)(SSL *, int, int))fp;
         ret = 1;
