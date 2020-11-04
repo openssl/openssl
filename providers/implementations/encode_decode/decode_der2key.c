@@ -118,7 +118,7 @@ struct keytype_desc_st {
     /*
      * The EVP_PKEY_xxx type macro.  Should be zero for type specific
      * structures, non-zero when the outermost structure is PKCS#8 or
-     * SubjectPublicKeyInfo.  This determines what of the function
+     * SubjectPublicKeyInfo.  This determines which of the function
      * pointers below will be used.
      */
     int evp_type;
@@ -325,9 +325,9 @@ static int der2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
              * Tear out the low-level key pointer from the pkey,
              * but only if it matches the expected key type.
              *
-             * TODO(3.0): The check should be done with EVP_PKEY_is_a(), but
-             * as long as we still have #legacy internal keys, it's safer to
-             * use the type numbers inside the provider.
+             * TODO: The check should be done with EVP_PKEY_is_a(), but
+             * as long as we still have #legacy internal keys, it's safer
+             * to use the type numbers inside the provider.
              */
             if (EVP_PKEY_id(pkey) == ctx->desc->evp_type)
                 key = ctx->desc->extract_key(pkey);
@@ -525,9 +525,7 @@ static int der2key_export_object(void *vctx,
 
 #define DO_type_specific(keytype)                       \
     "type-specific", 0,                                 \
-        ( OSSL_KEYMGMT_SELECT_PRIVATE_KEY               \
-          | OSSL_KEYMGMT_SELECT_PUBLIC_KEY              \
-          | OSSL_KEYMGMT_SELECT_ALL_PARAMETERS ),       \
+        ( OSSL_KEYMGMT_SELECT_ALL ),                    \
         keytype##_d2i_private_key,                      \
         keytype##_d2i_public_key,                       \
         keytype##_d2i_key_params,                       \
@@ -582,9 +580,7 @@ static int der2key_export_object(void *vctx,
 
 #define DO_DSA(keytype)                                 \
     "DSA", 0,                                           \
-        ( OSSL_KEYMGMT_SELECT_PRIVATE_KEY               \
-          | OSSL_KEYMGMT_SELECT_PUBLIC_KEY              \
-          | OSSL_KEYMGMT_SELECT_ALL_PARAMETERS ),       \
+        ( OSSL_KEYMGMT_SELECT_ALL ),                    \
         keytype##_d2i_private_key,                      \
         keytype##_d2i_public_key,                       \
         keytype##_d2i_key_params,                       \
