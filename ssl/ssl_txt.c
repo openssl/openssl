@@ -19,7 +19,7 @@ int SSL_SESSION_print_fp(FILE *fp, const SSL_SESSION *x)
     int ret;
 
     if ((b = BIO_new(BIO_s_file())) == NULL) {
-        SSLerr(SSL_F_SSL_SESSION_PRINT_FP, ERR_R_BUF_LIB);
+        ERR_raise(ERR_LIB_SSL, ERR_R_BUF_LIB);
         return 0;
     }
     BIO_set_fp(b, fp, BIO_NOCLOSE);

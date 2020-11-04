@@ -111,7 +111,7 @@ int OPENSSL_init_ssl(uint64_t opts, const OPENSSL_INIT_SETTINGS * settings)
              * sets an error etc
              */
             stoperrset = 1;
-            SSLerr(SSL_F_OPENSSL_INIT_SSL, ERR_R_INIT_FAIL);
+            ERR_raise(ERR_LIB_SSL, ERR_R_INIT_FAIL);
         }
         return 0;
     }

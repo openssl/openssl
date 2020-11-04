@@ -261,7 +261,7 @@ static int add_provider_groups(const OSSL_PARAM params[], void *data)
                                    + TLS_GROUP_LIST_MALLOC_BLOCK_SIZE)
                                   * sizeof(TLS_GROUP_INFO));
         if (tmp == NULL) {
-            SSLerr(0, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
             return 0;
         }
         ctx->group_list = tmp;
@@ -275,78 +275,78 @@ static int add_provider_groups(const OSSL_PARAM params[], void *data)
 
     p = OSSL_PARAM_locate_const(params, OSSL_CAPABILITY_TLS_GROUP_NAME);
     if (p == NULL || p->data_type != OSSL_PARAM_UTF8_STRING) {
-        SSLerr(0, ERR_R_PASSED_INVALID_ARGUMENT);
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
         goto err;
     }
     ginf->tlsname = OPENSSL_strdup(p->data);
     if (ginf->tlsname == NULL) {
-        SSLerr(0, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
     p = OSSL_PARAM_locate_const(params, OSSL_CAPABILITY_TLS_GROUP_NAME_INTERNAL);
     if (p == NULL || p->data_type != OSSL_PARAM_UTF8_STRING) {
-        SSLerr(0, ERR_R_PASSED_INVALID_ARGUMENT);
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
         goto err;
     }
     ginf->realname = OPENSSL_strdup(p->data);
     if (ginf->realname == NULL) {
-        SSLerr(0, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
     p = OSSL_PARAM_locate_const(params, OSSL_CAPABILITY_TLS_GROUP_ID);
     if (p == NULL || !OSSL_PARAM_get_uint(p, &gid) || gid > UINT16_MAX) {
-        SSLerr(0, ERR_R_PASSED_INVALID_ARGUMENT);
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
         goto err;
     }
     ginf->group_id = (uint16_t)gid;
 
     p = OSSL_PARAM_locate_const(params, OSSL_CAPABILITY_TLS_GROUP_ALG);
     if (p == NULL || p->data_type != OSSL_PARAM_UTF8_STRING) {
-        SSLerr(0, ERR_R_PASSED_INVALID_ARGUMENT);
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
         goto err;
     }
     ginf->algorithm = OPENSSL_strdup(p->data);
     if (ginf->algorithm == NULL) {
-        SSLerr(0, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
     p = OSSL_PARAM_locate_const(params, OSSL_CAPABILITY_TLS_GROUP_SECURITY_BITS);
     if (p == NULL || !OSSL_PARAM_get_uint(p, &ginf->secbits)) {
-        SSLerr(0, ERR_R_PASSED_INVALID_ARGUMENT);
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
         goto err;
     }
 
     p = OSSL_PARAM_locate_const(params, OSSL_CAPABILITY_TLS_GROUP_IS_KEM);
     if (p != NULL && (!OSSL_PARAM_get_uint(p, &is_kem) || is_kem > 1)) {
-        SSLerr(0, ERR_R_PASSED_INVALID_ARGUMENT);
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
         goto err;
     }
     ginf->is_kem = 1 & is_kem;
 
     p = OSSL_PARAM_locate_const(params, OSSL_CAPABILITY_TLS_GROUP_MIN_TLS);
     if (p == NULL || !OSSL_PARAM_get_int(p, &ginf->mintls)) {
-        SSLerr(0, ERR_R_PASSED_INVALID_ARGUMENT);
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
         goto err;
     }
 
     p = OSSL_PARAM_locate_const(params, OSSL_CAPABILITY_TLS_GROUP_MAX_TLS);
     if (p == NULL || !OSSL_PARAM_get_int(p, &ginf->maxtls)) {
-        SSLerr(0, ERR_R_PASSED_INVALID_ARGUMENT);
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
         goto err;
     }
 
     p = OSSL_PARAM_locate_const(params, OSSL_CAPABILITY_TLS_GROUP_MIN_DTLS);
     if (p == NULL || !OSSL_PARAM_get_int(p, &ginf->mindtls)) {
-        SSLerr(0, ERR_R_PASSED_INVALID_ARGUMENT);
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
         goto err;
     }
 
     p = OSSL_PARAM_locate_const(params, OSSL_CAPABILITY_TLS_GROUP_MAX_DTLS);
     if (p == NULL || !OSSL_PARAM_get_int(p, &ginf->maxdtls)) {
-        SSLerr(0, ERR_R_PASSED_INVALID_ARGUMENT);
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
         goto err;
     }
     /*
@@ -655,11 +655,11 @@ int tls1_set_groups(uint16_t **pext, size_t *pextlen,
     unsigned long dup_list_dhgrp = 0;
 
     if (ngroups == 0) {
-        SSLerr(SSL_F_TLS1_SET_GROUPS, SSL_R_BAD_LENGTH);
+        ERR_raise(ERR_LIB_SSL, SSL_R_BAD_LENGTH);
         return 0;
     }
     if ((glist = OPENSSL_malloc(ngroups * sizeof(*glist))) == NULL) {
-        SSLerr(SSL_F_TLS1_SET_GROUPS, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
         return 0;
     }
     for (i = 0; i < ngroups; i++) {
@@ -2169,7 +2169,7 @@ int tls12_copy_sigalgs(SSL *s, WPACKET *pkt,
             rv = 1;
     }
     if (rv == 0)
-        SSLerr(SSL_F_TLS12_COPY_SIGALGS, SSL_R_NO_SUITABLE_SIGNATURE_ALGORITHM);
+        ERR_raise(ERR_LIB_SSL, SSL_R_NO_SUITABLE_SIGNATURE_ALGORITHM);
     return rv;
 }
 
@@ -2234,7 +2234,7 @@ static int tls1_set_shared_sigalgs(SSL *s)
     nmatch = tls12_shared_sigalgs(s, NULL, pref, preflen, allow, allowlen);
     if (nmatch) {
         if ((salgs = OPENSSL_malloc(nmatch * sizeof(*salgs))) == NULL) {
-            SSLerr(SSL_F_TLS1_SET_SHARED_SIGALGS, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
             return 0;
         }
         nmatch = tls12_shared_sigalgs(s, salgs, pref, preflen, allow, allowlen);
@@ -2261,7 +2261,7 @@ int tls1_save_u16(PACKET *pkt, uint16_t **pdest, size_t *pdestlen)
     size >>= 1;
 
     if ((buf = OPENSSL_malloc(size * sizeof(*buf))) == NULL)  {
-        SSLerr(SSL_F_TLS1_SAVE_U16, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
         return 0;
     }
     for (i = 0; i < size && PACKET_get_net_2(pkt, &stmp); i++)
@@ -2491,7 +2491,7 @@ int tls1_set_raw_sigalgs(CERT *c, const uint16_t *psigs, size_t salglen,
     uint16_t *sigalgs;
 
     if ((sigalgs = OPENSSL_malloc(salglen * sizeof(*sigalgs))) == NULL) {
-        SSLerr(SSL_F_TLS1_SET_RAW_SIGALGS, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
         return 0;
     }
     memcpy(sigalgs, psigs, salglen * sizeof(*sigalgs));
@@ -2517,7 +2517,7 @@ int tls1_set_sigalgs(CERT *c, const int *psig_nids, size_t salglen, int client)
     if (salglen & 1)
         return 0;
     if ((sigalgs = OPENSSL_malloc((salglen / 2) * sizeof(*sigalgs))) == NULL) {
-        SSLerr(SSL_F_TLS1_SET_SIGALGS, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
         return 0;
     }
     for (i = 0, sptr = sigalgs; i < salglen; i += 2) {
@@ -3344,7 +3344,7 @@ int SSL_CTX_set_tlsext_max_fragment_length(SSL_CTX *ctx, uint8_t mode)
 {
     if (mode != TLSEXT_max_fragment_length_DISABLED
             && !IS_MAX_FRAGMENT_LENGTH_EXT_VALID(mode)) {
-        SSLerr(SSL_F_SSL_CTX_SET_TLSEXT_MAX_FRAGMENT_LENGTH,
+        ERR_raise(ERR_LIB_SSL,
                SSL_R_SSL3_EXT_INVALID_MAX_FRAGMENT_LENGTH);
         return 0;
     }
@@ -3357,7 +3357,7 @@ int SSL_set_tlsext_max_fragment_length(SSL *ssl, uint8_t mode)
 {
     if (mode != TLSEXT_max_fragment_length_DISABLED
             && !IS_MAX_FRAGMENT_LENGTH_EXT_VALID(mode)) {
-        SSLerr(SSL_F_SSL_SET_TLSEXT_MAX_FRAGMENT_LENGTH,
+        ERR_raise(ERR_LIB_SSL,
                SSL_R_SSL3_EXT_INVALID_MAX_FRAGMENT_LENGTH);
         return 0;
     }

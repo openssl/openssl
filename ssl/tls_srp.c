@@ -95,17 +95,17 @@ int SSL_SRP_CTX_init(struct ssl_st *s)
          ((s->srp_ctx.v = BN_dup(ctx->srp_ctx.v)) == NULL)) ||
         ((ctx->srp_ctx.b != NULL) &&
          ((s->srp_ctx.b = BN_dup(ctx->srp_ctx.b)) == NULL))) {
-        SSLerr(SSL_F_SSL_SRP_CTX_INIT, ERR_R_BN_LIB);
+        ERR_raise(ERR_LIB_SSL, ERR_R_BN_LIB);
         goto err;
     }
     if ((ctx->srp_ctx.login != NULL) &&
         ((s->srp_ctx.login = OPENSSL_strdup(ctx->srp_ctx.login)) == NULL)) {
-        SSLerr(SSL_F_SSL_SRP_CTX_INIT, ERR_R_INTERNAL_ERROR);
+        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         goto err;
     }
     if ((ctx->srp_ctx.info != NULL) &&
         ((s->srp_ctx.info = OPENSSL_strdup(ctx->srp_ctx.info)) == NULL)) {
-        SSLerr(SSL_F_SSL_SRP_CTX_INIT, ERR_R_INTERNAL_ERROR);
+        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         goto err;
     }
     s->srp_ctx.srp_Mask = ctx->srp_ctx.srp_Mask;

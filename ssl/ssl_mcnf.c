@@ -32,7 +32,7 @@ static int ssl_do_config(SSL *s, SSL_CTX *ctx, const char *name, int system)
     OSSL_LIB_CTX *libctx = NULL;
 
     if (s == NULL && ctx == NULL) {
-        SSLerr(SSL_F_SSL_DO_CONFIG, ERR_R_PASSED_NULL_PARAMETER);
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_NULL_PARAMETER);
         goto err;
     }
 
@@ -40,7 +40,7 @@ static int ssl_do_config(SSL *s, SSL_CTX *ctx, const char *name, int system)
         name = "system_default";
     if (!conf_ssl_name_find(name, &idx)) {
         if (!system) {
-            SSLerr(SSL_F_SSL_DO_CONFIG, SSL_R_INVALID_CONFIGURATION_NAME);
+            ERR_raise(ERR_LIB_SSL, SSL_R_INVALID_CONFIGURATION_NAME);
             ERR_add_error_data(2, "name=", name);
         }
         goto err;
@@ -74,9 +74,9 @@ static int ssl_do_config(SSL *s, SSL_CTX *ctx, const char *name, int system)
         rv = SSL_CONF_cmd(cctx, cmdstr, arg);
         if (rv <= 0) {
             if (rv == -2)
-                SSLerr(SSL_F_SSL_DO_CONFIG, SSL_R_UNKNOWN_COMMAND);
+                ERR_raise(ERR_LIB_SSL, SSL_R_UNKNOWN_COMMAND);
             else
-                SSLerr(SSL_F_SSL_DO_CONFIG, SSL_R_BAD_VALUE);
+                ERR_raise(ERR_LIB_SSL, SSL_R_BAD_VALUE);
             ERR_add_error_data(6, "section=", name, ", cmd=", cmdstr,
                                ", arg=", arg);
             goto err;

@@ -71,7 +71,7 @@ SSL_SESSION *SSL_SESSION_new(void)
 
     ss = OPENSSL_zalloc(sizeof(*ss));
     if (ss == NULL) {
-        SSLerr(SSL_F_SSL_SESSION_NEW, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
@@ -81,7 +81,7 @@ SSL_SESSION *SSL_SESSION_new(void)
     ss->time = (unsigned long)time(NULL);
     ss->lock = CRYPTO_THREAD_lock_new();
     if (ss->lock == NULL) {
-        SSLerr(SSL_F_SSL_SESSION_NEW, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
         OPENSSL_free(ss);
         return NULL;
     }
@@ -218,7 +218,7 @@ SSL_SESSION *ssl_session_dup(const SSL_SESSION *src, int ticket)
 
     return dest;
  err:
-    SSLerr(SSL_F_SSL_SESSION_DUP, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
     SSL_SESSION_free(dest);
     return NULL;
 }
@@ -811,7 +811,7 @@ int SSL_SESSION_set1_id(SSL_SESSION *s, const unsigned char *sid,
                         unsigned int sid_len)
 {
     if (sid_len > SSL_MAX_SSL_SESSION_ID_LENGTH) {
-      SSLerr(SSL_F_SSL_SESSION_SET1_ID,
+      ERR_raise(ERR_LIB_SSL,
              SSL_R_SSL_SESSION_ID_TOO_LONG);
       return 0;
     }
@@ -956,7 +956,7 @@ int SSL_SESSION_set1_id_context(SSL_SESSION *s, const unsigned char *sid_ctx,
                                 unsigned int sid_ctx_len)
 {
     if (sid_ctx_len > SSL_MAX_SID_CTX_LENGTH) {
-        SSLerr(SSL_F_SSL_SESSION_SET1_ID_CONTEXT,
+        ERR_raise(ERR_LIB_SSL,
                SSL_R_SSL_SESSION_ID_CONTEXT_TOO_LONG);
         return 0;
     }
@@ -1023,7 +1023,7 @@ int SSL_set_session_ticket_ext(SSL *s, void *ext_data, int ext_len)
         s->ext.session_ticket =
             OPENSSL_malloc(sizeof(TLS_SESSION_TICKET_EXT) + ext_len);
         if (s->ext.session_ticket == NULL) {
-            SSLerr(SSL_F_SSL_SET_SESSION_TICKET_EXT, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
             return 0;
         }
 

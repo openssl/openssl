@@ -60,13 +60,13 @@ static hm_fragment *dtls1_hm_fragment_new(size_t frag_len, int reassembly)
     unsigned char *bitmask = NULL;
 
     if ((frag = OPENSSL_malloc(sizeof(*frag))) == NULL) {
-        SSLerr(SSL_F_DTLS1_HM_FRAGMENT_NEW, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
     if (frag_len) {
         if ((buf = OPENSSL_malloc(frag_len)) == NULL) {
-            SSLerr(SSL_F_DTLS1_HM_FRAGMENT_NEW, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
             OPENSSL_free(frag);
             return NULL;
         }
@@ -79,7 +79,7 @@ static hm_fragment *dtls1_hm_fragment_new(size_t frag_len, int reassembly)
     if (reassembly) {
         bitmask = OPENSSL_zalloc(RSMBLY_BITMASK_SIZE(frag_len));
         if (bitmask == NULL) {
-            SSLerr(SSL_F_DTLS1_HM_FRAGMENT_NEW, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
             OPENSSL_free(buf);
             OPENSSL_free(frag);
             return NULL;
