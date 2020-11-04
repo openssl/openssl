@@ -21,7 +21,7 @@ a set of non-trusted certificates that may be needed for chain construction,
 flags such as X509_V_FLAG_X509_STRICT, and various other optional components
 such as a callback function that allows customizing the verification outcome.
 A complete description of the certificate verification process is contained in
-the L<openssl-verify(1)> manual page.
+the L<openssl-verification-options(1)> manual page.
 
 Applications rarely call this function directly but it is used by
 OpenSSL internally for certificate validation, in both the S/MIME and
