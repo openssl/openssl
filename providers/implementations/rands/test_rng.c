@@ -96,6 +96,7 @@ static int test_rng_uninstantiate(void *vtest)
     PROV_TEST_RNG *t = (PROV_TEST_RNG *)vtest;
 
     t->entropy_pos = 0;
+    t->state = EVP_RAND_STATE_UNINITIALISED;
     return 1;
 }
 

@@ -381,7 +381,7 @@ IF[{- !$disabled{tests} -}]
   DEPEND[recordlentest]=../libcrypto ../libssl libtestutil.a
 
   SOURCE[drbgtest]=drbgtest.c
-  INCLUDE[drbgtest]=../include ../apps/include
+  INCLUDE[drbgtest]=../include ../apps/include ../providers/common/include
   DEPEND[drbgtest]=../libcrypto.a libtestutil.a
 
   SOURCE[rand_status_test]=rand_status_test.c
