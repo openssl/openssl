@@ -187,10 +187,11 @@ int CONF_modules_load_file_ex(OSSL_LIB_CTX *libctx, const char *filename,
     if ((flags & CONF_MFLAGS_IGNORE_RETURN_CODES) != 0 && !diagnostics)
         ret = 1;
 
-    if (ret)
+    if (ret > 0)
         ERR_pop_to_mark();
     else
         ERR_clear_last_mark();
+
     return ret;
 }
 
