@@ -373,8 +373,8 @@ static const OSSL_ALGORITHM deflt_signature[] = {
 #endif
     { "RSA:rsaEncryption", "provider=default", ossl_rsa_signature_functions },
 #ifndef OPENSSL_NO_EC
-    { "ED25519:Ed25519", "provider=default", ossl_ed25519_signature_functions },
-    { "ED448:Ed448", "provider=default", ossl_ed448_signature_functions },
+    { "ED25519", "provider=default", ossl_ed25519_signature_functions },
+    { "ED448", "provider=default", ossl_ed448_signature_functions },
     { "ECDSA", "provider=default", ecossl_dsa_signature_functions },
 # ifndef OPENSSL_NO_SM2
     { "SM2", "provider=default", sm2_signature_functions },
