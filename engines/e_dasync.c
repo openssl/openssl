@@ -348,9 +348,19 @@ void engine_load_dasync_int(void)
     ENGINE *toadd = engine_dasync();
     if (!toadd)
         return;
+    ERR_set_mark();
     ENGINE_add(toadd);
+    /*
+     * If the "add" worked, it gets a structural reference. So either way, we
+     * release our just-created reference.
+     */
     ENGINE_free(toadd);
-    ERR_clear_error();
+    /*
+     * If the "add" didn't work, it was probably a conflict because it was
+     * already added (eg. someone calling ENGINE_load_blah then calling
+     * ENGINE_load_builtin_engines() perhaps).
+     */
+    ERR_pop_to_mark();
 }
 
 static int dasync_init(ENGINE *e)
