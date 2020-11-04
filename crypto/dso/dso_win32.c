@@ -105,8 +105,8 @@ static int win32_load(DSO *dso)
     }
     h = LoadLibraryA(filename);
     if (h == NULL) {
-        ERR_raise(ERR_LIB_DSO, DSO_R_LOAD_FAILED);
-        ERR_add_error_data(3, "filename(", filename, ")");
+        ERR_raise_data(ERR_LIB_DSO, DSO_R_LOAD_FAILED,
+                       "filename(%s)", filename);
         goto err;
     }
     p = OPENSSL_malloc(sizeof(*p));
@@ -181,8 +181,7 @@ static DSO_FUNC_TYPE win32_bind_func(DSO *dso, const char *symname)
     }
     sym.f = GetProcAddress(*ptr, symname);
     if (sym.p == NULL) {
-        ERR_raise(ERR_LIB_DSO, DSO_R_SYM_FAILURE);
-        ERR_add_error_data(3, "symname(", symname, ")");
+        ERR_raise_data(ERR_LIB_DSO, DSO_R_SYM_FAILURE, "symname(%s)", symname);
         return NULL;
     }
     return (DSO_FUNC_TYPE)sym.f;

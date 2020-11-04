@@ -81,9 +81,8 @@ ASN1_BIT_STRING *v2i_ASN1_BIT_STRING(X509V3_EXT_METHOD *method,
             }
         }
         if (!bnam->lname) {
-            ERR_raise(ERR_LIB_X509V3,
-                      X509V3_R_UNKNOWN_BIT_STRING_ARGUMENT);
-            ERR_add_error_data(1, val->name);
+            ERR_raise_data(ERR_LIB_X509V3, X509V3_R_UNKNOWN_BIT_STRING_ARGUMENT,
+                           "%s", val->name);
             ASN1_BIT_STRING_free(bs);
             return NULL;
         }

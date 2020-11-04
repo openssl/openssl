@@ -263,8 +263,7 @@ static int asn1_cb(const char *elem, int len, void *bitstr)
     utype = asn1_str2tag(elem, len);
 
     if (utype == -1) {
-        ERR_raise(ERR_LIB_ASN1, ASN1_R_UNKNOWN_TAG);
-        ERR_add_error_data(2, "tag=", elem);
+        ERR_raise_data(ERR_LIB_ASN1, ASN1_R_UNKNOWN_TAG, "tag=%s", elem);
         return -1;
     }
 
@@ -347,7 +346,6 @@ static int asn1_cb(const char *elem, int len, void *bitstr)
 
 static int parse_tagging(const char *vstart, int vlen, int *ptag, int *pclass)
 {
-    char erch[2];
     long tag_num;
     char *eptr;
     if (!vstart)
@@ -386,10 +384,8 @@ static int parse_tagging(const char *vstart, int vlen, int *ptag, int *pclass)
             break;
 
         default:
-            erch[0] = *eptr;
-            erch[1] = 0;
-            ERR_raise(ERR_LIB_ASN1, ASN1_R_INVALID_MODIFIER);
-            ERR_add_error_data(2, "Char=", erch);
+            ERR_raise_data(ERR_LIB_ASN1, ASN1_R_INVALID_MODIFIER,
+                           "Char=%c", *eptr);
             return 0;
 
         }

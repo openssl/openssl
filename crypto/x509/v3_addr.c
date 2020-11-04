@@ -919,9 +919,8 @@ static void *v2i_IPAddrBlocks(const struct v3_ext_method *method,
             afi = IANA_AFI_IPV6;
             safi = &safi_;
         } else {
-            ERR_raise(ERR_LIB_X509V3,
-                      X509V3_R_EXTENSION_NAME_ERROR);
-            ERR_add_error_data(1, val->name);
+            ERR_raise_data(ERR_LIB_X509V3, X509V3_R_EXTENSION_NAME_ERROR,
+                           "%s", val->name);
             goto err;
         }
 

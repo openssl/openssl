@@ -178,9 +178,8 @@ static int ts_verify_cert(X509_STORE *store, STACK_OF(X509) *untrusted,
     i = X509_verify_cert(cert_ctx);
     if (i <= 0) {
         int j = X509_STORE_CTX_get_error(cert_ctx);
-        ERR_raise(ERR_LIB_TS, TS_R_CERTIFICATE_VERIFY_ERROR);
-        ERR_add_error_data(2, "Verify error:",
-                           X509_verify_cert_error_string(j));
+        ERR_raise_data(ERR_LIB_TS, TS_R_CERTIFICATE_VERIFY_ERROR,
+                       "Verify error:%s", X509_verify_cert_error_string(j));
         goto err;
     }
     *chain = X509_STORE_CTX_get1_chain(cert_ctx);
@@ -400,12 +399,11 @@ static int ts_check_status_info(TS_RESP *response)
     if (failure_text[0] == '\0')
         strcpy(failure_text, "unspecified");
 
-    ERR_raise(ERR_LIB_TS, TS_R_NO_TIME_STAMP_TOKEN);
-    ERR_add_error_data(6,
-                       "status code: ", status_text,
-                       ", status text: ", embedded_status_text ?
-                       embedded_status_text : "unspecified",
-                       ", failure codes: ", failure_text);
+    ERR_raise_data(ERR_LIB_TS, TS_R_NO_TIME_STAMP_TOKEN,
+                   "status code: %s, status text: %s, failure codes: %s",
+                   status_text,
+                   embedded_status_text ? embedded_status_text : "unspecified",
+                   failure_text);
     OPENSSL_free(embedded_status_text);
 
     return 0;

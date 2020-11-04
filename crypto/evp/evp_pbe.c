@@ -94,12 +94,12 @@ int EVP_PBE_CipherInit(ASN1_OBJECT *pbe_obj, const char *pass, int passlen,
                       &cipher_nid, &md_nid, &keygen)) {
         char obj_tmp[80];
 
-        ERR_raise(ERR_LIB_EVP, EVP_R_UNKNOWN_PBE_ALGORITHM);
         if (pbe_obj == NULL)
             OPENSSL_strlcpy(obj_tmp, "NULL", sizeof(obj_tmp));
         else
             i2t_ASN1_OBJECT(obj_tmp, sizeof(obj_tmp), pbe_obj);
-        ERR_add_error_data(2, "TYPE=", obj_tmp);
+        ERR_raise_data(ERR_LIB_EVP, EVP_R_UNKNOWN_PBE_ALGORITHM,
+                       "TYPE=%s", obj_tmp);
         return 0;
     }
 
@@ -113,8 +113,8 @@ int EVP_PBE_CipherInit(ASN1_OBJECT *pbe_obj, const char *pass, int passlen,
     else {
         cipher = EVP_get_cipherbynid(cipher_nid);
         if (!cipher) {
-            ERR_raise(ERR_LIB_EVP, EVP_R_UNKNOWN_CIPHER);
-            ERR_add_error_data(1, OBJ_nid2sn(cipher_nid));
+            ERR_raise_data(ERR_LIB_EVP, EVP_R_UNKNOWN_CIPHER,
+                           OBJ_nid2sn(cipher_nid));
             return 0;
         }
     }

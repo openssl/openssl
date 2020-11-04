@@ -96,12 +96,12 @@ static int do_tcreate(const char *value, const char *name)
     rv = 1;
  err:
     if (rv == 0) {
-        ERR_raise(ERR_LIB_ASN1, ASN1_R_INVALID_STRING_TABLE_VALUE);
         if (cnf)
-            ERR_add_error_data(4, "field=", cnf->name,
-                               ", value=", cnf->value);
+            ERR_raise_data(ERR_LIB_ASN1, ASN1_R_INVALID_STRING_TABLE_VALUE,
+                           "field=%s, value=%s", cnf->name, cnf->value);
         else
-            ERR_add_error_data(4, "name=", name, ", value=", value);
+            ERR_raise_data(ERR_LIB_ASN1, ASN1_R_INVALID_STRING_TABLE_VALUE,
+                           "name=%s, value=%s", name, value);
     } else {
         rv = ASN1_STRING_TABLE_add(nid, tbl_min, tbl_max,
                                    tbl_mask, tbl_flags);

@@ -335,8 +335,7 @@ ENGINE *ENGINE_by_id(const char *id)
     }
  notfound:
     ENGINE_free(iterator);
-    ERR_raise(ERR_LIB_ENGINE, ENGINE_R_NO_SUCH_ENGINE);
-    ERR_add_error_data(2, "id=", id);
+    ERR_raise_data(ERR_LIB_ENGINE, ENGINE_R_NO_SUCH_ENGINE, "id=%s", id);
     return NULL;
     /* EEK! Experimental code ends */
 }

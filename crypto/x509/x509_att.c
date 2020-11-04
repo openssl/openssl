@@ -222,9 +222,8 @@ X509_ATTRIBUTE *X509_ATTRIBUTE_create_by_txt(X509_ATTRIBUTE **attr,
 
     obj = OBJ_txt2obj(atrname, 0);
     if (obj == NULL) {
-        ERR_raise(ERR_LIB_X509,
-                X509_R_INVALID_FIELD_NAME);
-        ERR_add_error_data(2, "name=", atrname);
+        ERR_raise_data(ERR_LIB_X509, X509_R_INVALID_FIELD_NAME,
+                       "name=%s", atrname);
         return NULL;
     }
     nattr = X509_ATTRIBUTE_create_by_OBJ(attr, obj, type, bytes, len);

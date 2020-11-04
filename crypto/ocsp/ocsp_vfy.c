@@ -60,9 +60,8 @@ static int ocsp_verify_signer(X509 *signer, int response,
     ret = X509_verify_cert(ctx);
     if (ret <= 0) {
         ret = X509_STORE_CTX_get_error(ctx);
-        ERR_raise(ERR_LIB_OCSP, OCSP_R_CERTIFICATE_VERIFY_ERROR);
-        ERR_add_error_data(2, "Verify error:",
-                           X509_verify_cert_error_string(ret));
+        ERR_raise_data(ERR_LIB_OCSP, OCSP_R_CERTIFICATE_VERIFY_ERROR,
+                       "Verify error: %s", X509_verify_cert_error_string(ret));
         goto end;
     }
     if (chain != NULL)

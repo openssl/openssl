@@ -133,12 +133,12 @@ static int int_engine_configure(const char *name, const char *value, const CONF 
     ret = 1;
  err:
     if (ret != 1) {
-        ERR_raise(ERR_LIB_ENGINE,
-                  ENGINE_R_ENGINE_CONFIGURATION_ERROR);
-        if (ecmd)
-            ERR_add_error_data(6, "section=", ecmd->section,
-                               ", name=", ecmd->name,
-                               ", value=", ecmd->value);
+        if (ecmd == NULL)
+            ERR_raise(ERR_LIB_ENGINE, ENGINE_R_ENGINE_CONFIGURATION_ERROR);
+        else
+            ERR_raise_data(ERR_LIB_ENGINE, ENGINE_R_ENGINE_CONFIGURATION_ERROR,
+                           "section=%s, name=%s, value=%s",
+                           ecmd->section, ecmd->name, ecmd->value);
     }
     ENGINE_free(e);
     return ret;

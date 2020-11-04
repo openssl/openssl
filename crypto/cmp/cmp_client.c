@@ -169,9 +169,9 @@ static int send_receive_check(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *req,
     ctx->msg_timeout = msg_timeout; /* restore original value */
 
     if (*rep == NULL) {
-        ERR_raise(ERR_LIB_CMP, CMP_R_TRANSFER_ERROR); /* or receiving response */
-        ERR_add_error_data(2, "request sent: ", req_type_str);
-        ERR_add_error_data(2, ", expected response: ", expected_type_str);
+        ERR_raise_data(ERR_LIB_CMP, CMP_R_TRANSFER_ERROR, /* or receiving response */
+                       "request sent: %s, expected response: %s",
+                       req_type_str, expected_type_str);
         return 0;
     }
 
@@ -633,11 +633,14 @@ static int cert_response(OSSL_CMP_CTX *ctx, int sleep, int rid,
 
     /* not throwing failure earlier as transfer_cb may call ERR_clear_error() */
     if (fail_info != 0) {
-        ERR_raise(ERR_LIB_CMP, CMP_R_CERTIFICATE_NOT_ACCEPTED);
-        ERR_add_error_data(2, "rejecting newly enrolled cert with subject: ",
+        if (txt == NULL)
+            ERR_raise_data(ERR_LIB_CMP, CMP_R_CERTIFICATE_NOT_ACCEPTED,
+                           "rejecting newly enrolled cert with subject: %s",
                            subj);
-        if (txt != NULL)
-            ERR_add_error_txt("; ", txt);
+        else
+            ERR_raise_data(ERR_LIB_CMP, CMP_R_CERTIFICATE_NOT_ACCEPTED,
+                           "rejecting newly enrolled cert with subject: %s; %s",
+                           subj, txt);
         ret = 0;
     }
     OPENSSL_free(subj);

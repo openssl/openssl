@@ -100,8 +100,8 @@ static AUTHORITY_KEYID *v2i_AUTHORITY_KEYID(X509V3_EXT_METHOD *method,
             if (cnf->value && strcmp(cnf->value, "always") == 0)
                 issuer = 2;
         } else {
-            ERR_raise(ERR_LIB_X509V3, X509V3_R_UNKNOWN_OPTION);
-            ERR_add_error_data(2, "name=", cnf->name);
+            ERR_raise_data(ERR_LIB_X509V3, X509V3_R_UNKNOWN_OPTION,
+                           "name=%s", cnf->name);
             return NULL;
         }
     }

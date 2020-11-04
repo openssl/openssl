@@ -112,14 +112,12 @@ EVP_PKEY *TS_CONF_load_key(const char *file, const char *pass)
 
 static void ts_CONF_lookup_fail(const char *name, const char *tag)
 {
-    ERR_raise(ERR_LIB_TS, TS_R_VAR_LOOKUP_FAILURE);
-    ERR_add_error_data(3, name, "::", tag);
+    ERR_raise_data(ERR_LIB_TS, TS_R_VAR_LOOKUP_FAILURE, "%s::%s", name, tag);
 }
 
 static void ts_CONF_invalid(const char *name, const char *tag)
 {
-    ERR_raise(ERR_LIB_TS, TS_R_VAR_BAD_VALUE);
-    ERR_add_error_data(3, name, "::", tag);
+    ERR_raise_data(ERR_LIB_TS, TS_R_VAR_BAD_VALUE, "%s::%s", name, tag);
 }
 
 const char *TS_CONF_get_tsa_section(CONF *conf, const char *section)
@@ -184,10 +182,9 @@ int TS_CONF_set_default_engine(const char *name)
     ret = 1;
 
  err:
-    if (!ret) {
-        ERR_raise(ERR_LIB_TS, TS_R_COULD_NOT_SET_ENGINE);
-        ERR_add_error_data(2, "engine:", name);
-    }
+    if (!ret)
+        ERR_raise_data(ERR_LIB_TS, TS_R_COULD_NOT_SET_ENGINE,
+                       "engine:%s", name);
     ENGINE_free(e);
     return ret;
 }

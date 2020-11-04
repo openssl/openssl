@@ -336,17 +336,15 @@ void vms_bind_sym(DSO *dso, const char *symname, void **sym)
         else {
             errstring[length] = '\0';
 
-            ERR_raise(ERR_LIB_DSO, DSO_R_SYM_FAILURE);
             if (ptr->imagename_dsc.dsc$w_length)
-                ERR_add_error_data(9,
-                                   "Symbol ", symname,
-                                   " in ", ptr->filename,
-                                   " (", ptr->imagename, ")",
-                                   ": ", errstring);
+                ERR_raise_data(ERR_LIB_DSO, DSO_R_SYM_FAILURE,
+                               "Symbol %s in %s (%s): %s",
+                               symname, ptr->filename, ptr->imagename,
+                               errstring);
             else
-                ERR_add_error_data(6,
-                                   "Symbol ", symname,
-                                   " in ", ptr->filename, ": ", errstring);
+                ERR_raise_data(ERR_LIB_DSO, DSO_R_SYM_FAILURE,
+                               "Symbol %s in %s: %s",
+                               symname, ptr->filename, errstring);
         }
         return;
     }
@@ -436,10 +434,9 @@ static char *vms_merger(DSO *dso, const char *filespec1,
         else {
             errstring[length] = '\0';
 
-            ERR_raise(ERR_LIB_DSO, DSO_R_FAILURE);
-            ERR_add_error_data(7,
-                               "filespec \"", filespec1, "\", ",
-                               "defaults \"", filespec2, "\": ", errstring);
+            ERR_raise_data(ERR_LIB_DSO, DSO_R_FAILURE,
+                           "filespec \"%s\", default \"%s\": %s",
+                           filespec1, filespec2, errstring);
         }
         return NULL;
     }

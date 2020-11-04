@@ -462,8 +462,8 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
                 }
                 continue;
             } else if (*p != '=') {
-                ERR_raise(ERR_LIB_CONF, CONF_R_MISSING_EQUAL_SIGN);
-                ERR_add_error_data(2, "HERE-->", p);
+                ERR_raise_data(ERR_LIB_CONF, CONF_R_MISSING_EQUAL_SIGN,
+                               "HERE-->%s", p);
                 goto err;
             }
             *end = '\0';
@@ -760,9 +760,8 @@ static BIO *process_include(char *include, OPENSSL_DIR_CTX **dirctx,
 
     if (S_ISDIR(st.st_mode)) {
         if (*dirctx != NULL) {
-            ERR_raise(ERR_LIB_CONF,
-                    CONF_R_RECURSIVE_DIRECTORY_INCLUDE);
-            ERR_add_error_data(1, include);
+            ERR_raise_data(ERR_LIB_CONF, CONF_R_RECURSIVE_DIRECTORY_INCLUDE,
+                           "%s", include);
             return NULL;
         }
         /* a directory, load its contents */

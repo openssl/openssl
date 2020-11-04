@@ -888,14 +888,6 @@ static int suitable_rid(const ASN1_INTEGER *certReqId, int rid)
     return rid == trid;
 }
 
-static void add_expected_rid(int rid)
-{
-    char str[DECIMAL_SIZE(rid) + 1];
-
-    BIO_snprintf(str, sizeof(str), "%d", rid);
-    ERR_add_error_data(2, "expected certReqId = ", str);
-}
-
 /*
  * returns a pointer to the PollResponse with the given CertReqId
  * (or the first one in case -1) inside a PollRepContent
@@ -917,8 +909,8 @@ ossl_cmp_pollrepcontent_get0_pollrep(const OSSL_CMP_POLLREPCONTENT *prc,
             return pollRep;
     }
 
-    ERR_raise(ERR_LIB_CMP, CMP_R_CERTRESPONSE_NOT_FOUND);
-    add_expected_rid(rid);
+    ERR_raise_data(ERR_LIB_CMP, CMP_R_CERTRESPONSE_NOT_FOUND,
+                   "expected certReqId = %d", rid);
     return NULL;
 }
 
@@ -943,8 +935,8 @@ ossl_cmp_certrepmessage_get0_certresponse(const OSSL_CMP_CERTREPMESSAGE *crm,
             return crep;
     }
 
-    ERR_raise(ERR_LIB_CMP, CMP_R_CERTRESPONSE_NOT_FOUND);
-    add_expected_rid(rid);
+    ERR_raise_data(ERR_LIB_CMP, CMP_R_CERTRESPONSE_NOT_FOUND,
+                   "expected certReqId = %d", rid);
     return NULL;
 }
 

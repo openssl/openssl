@@ -156,10 +156,10 @@ static int acpt_state(BIO *b, BIO_ACCEPT *c)
         switch (c->state) {
         case ACPT_S_BEFORE:
             if (c->param_addr == NULL && c->param_serv == NULL) {
-                ERR_raise(ERR_LIB_BIO, BIO_R_NO_ACCEPT_ADDR_OR_SERVICE_SPECIFIED);
-                ERR_add_error_data(4,
-                                   "hostname=", c->param_addr,
-                                   " service=", c->param_serv);
+                ERR_raise_data(ERR_LIB_BIO,
+                               BIO_R_NO_ACCEPT_ADDR_OR_SERVICE_SPECIFIED,
+                               "hostname=%s, service=%s",
+                               c->param_addr, c->param_serv);
                 goto exit_loop;
             }
 

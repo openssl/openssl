@@ -115,8 +115,8 @@ static int dlfcn_load(DSO *dso)
 # endif
     ptr = dlopen(filename, flags);
     if (ptr == NULL) {
-        ERR_raise(ERR_LIB_DSO, DSO_R_LOAD_FAILED);
-        ERR_add_error_data(4, "filename(", filename, "): ", dlerror());
+        ERR_raise_data(ERR_LIB_DSO, DSO_R_LOAD_FAILED,
+                       "filename(%s): %s", filename, dlerror());
         goto err;
     }
     /*
@@ -185,8 +185,8 @@ static DSO_FUNC_TYPE dlfcn_bind_func(DSO *dso, const char *symname)
     }
     u.dlret = dlsym(ptr, symname);
     if (u.dlret == NULL) {
-        ERR_raise(ERR_LIB_DSO, DSO_R_SYM_FAILURE);
-        ERR_add_error_data(4, "symname(", symname, "): ", dlerror());
+        ERR_raise_data(ERR_LIB_DSO, DSO_R_SYM_FAILURE,
+                       "symname(%s): %s", symname, dlerror());
         return NULL;
     }
     return u.sym;
@@ -437,6 +437,7 @@ static int dlfcn_pathbyaddr(void *addr, char *path, int sz)
         return len;
     }
 
+    /* TODO: what error report does this attach to? */
     ERR_add_error_data(2, "dlfcn_pathbyaddr(): ", dlerror());
 # endif
     return -1;
