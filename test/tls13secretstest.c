@@ -198,8 +198,7 @@ const EVP_MD *ssl_md(SSL_CTX *ctx, int idx)
     return EVP_sha256();
 }
 
-void ossl_statem_fatal(SSL *s, int al, int func, int reason, const char *file,
-                           int line)
+void ossl_statem_fatal(SSL *s, int al, int reason, const char *fmt, ...)
 {
 }
 

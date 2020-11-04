@@ -40,8 +40,7 @@ static int tls1_PRF(SSL *s,
     if (md == NULL) {
         /* Should never happen */
         if (fatal)
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS1_PRF,
-                     ERR_R_INTERNAL_ERROR);
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         else
             ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         return 0;
@@ -78,8 +77,7 @@ static int tls1_PRF(SSL *s,
 
  err:
     if (fatal)
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS1_PRF,
-                 ERR_R_INTERNAL_ERROR);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
     else
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
     EVP_KDF_CTX_free(kctx);
@@ -167,8 +165,7 @@ int tls_provider_set_tls_params(SSL *s, EVP_CIPHER_CTX *ctx,
     *pprm = OSSL_PARAM_construct_end();
 
     if (!EVP_CIPHER_CTX_set_params(ctx, params)) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS1_CHANGE_CIPHER_STATE,
-                 ERR_R_INTERNAL_ERROR);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return 0;
     }
 
@@ -240,8 +237,7 @@ int tls1_change_cipher_state(SSL *s, int which)
         if (s->enc_read_ctx != NULL) {
             reuse_dd = 1;
         } else if ((s->enc_read_ctx = EVP_CIPHER_CTX_new()) == NULL) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS1_CHANGE_CIPHER_STATE,
-                     ERR_R_MALLOC_FAILURE);
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
             goto err;
         } else {
             /*
@@ -252,8 +248,7 @@ int tls1_change_cipher_state(SSL *s, int which)
         dd = s->enc_read_ctx;
         mac_ctx = ssl_replace_hash(&s->read_hash, NULL);
         if (mac_ctx == NULL) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS1_CHANGE_CIPHER_STATE,
-                     ERR_R_INTERNAL_ERROR);
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             goto err;
         }
 #ifndef OPENSSL_NO_COMP
@@ -263,7 +258,6 @@ int tls1_change_cipher_state(SSL *s, int which)
             s->expand = COMP_CTX_new(comp->method);
             if (s->expand == NULL) {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR,
-                         SSL_F_TLS1_CHANGE_CIPHER_STATE,
                          SSL_R_COMPRESSION_LIBRARY_ERROR);
                 goto err;
             }
@@ -295,26 +289,21 @@ int tls1_change_cipher_state(SSL *s, int which)
         if (s->enc_write_ctx != NULL && !SSL_IS_DTLS(s)) {
             reuse_dd = 1;
         } else if ((s->enc_write_ctx = EVP_CIPHER_CTX_new()) == NULL) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS1_CHANGE_CIPHER_STATE,
-                     ERR_R_MALLOC_FAILURE);
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
             goto err;
         }
         dd = s->enc_write_ctx;
         if (SSL_IS_DTLS(s)) {
             mac_ctx = EVP_MD_CTX_new();
             if (mac_ctx == NULL) {
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR,
-                         SSL_F_TLS1_CHANGE_CIPHER_STATE,
-                         ERR_R_MALLOC_FAILURE);
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
                 goto err;
             }
             s->write_hash = mac_ctx;
         } else {
             mac_ctx = ssl_replace_hash(&s->write_hash, NULL);
             if (mac_ctx == NULL) {
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR,
-                         SSL_F_TLS1_CHANGE_CIPHER_STATE,
-                         ERR_R_MALLOC_FAILURE);
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
                 goto err;
             }
         }
@@ -325,8 +314,7 @@ int tls1_change_cipher_state(SSL *s, int which)
             s->compress = COMP_CTX_new(comp->method);
             if (s->compress == NULL) {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR,
-                         SSL_F_TLS1_CHANGE_CIPHER_STATE,
-                        SSL_R_COMPRESSION_LIBRARY_ERROR);
+                         SSL_R_COMPRESSION_LIBRARY_ERROR);
                 goto err;
             }
         }
@@ -369,8 +357,7 @@ int tls1_change_cipher_state(SSL *s, int which)
     }
 
     if (n > s->s3.tmp.key_block_length) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS1_CHANGE_CIPHER_STATE,
-                 ERR_R_INTERNAL_ERROR);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto err;
     }
 
@@ -394,8 +381,7 @@ int tls1_change_cipher_state(SSL *s, int which)
             || EVP_DigestSignInit_ex(mac_ctx, NULL, EVP_MD_name(m),
                                      s->ctx->libctx, s->ctx->propq, mac_key) <= 0) {
             EVP_PKEY_free(mac_key);
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS1_CHANGE_CIPHER_STATE,
-                     ERR_R_INTERNAL_ERROR);
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             goto err;
         }
         EVP_PKEY_free(mac_key);
@@ -410,8 +396,7 @@ int tls1_change_cipher_state(SSL *s, int which)
         if (!EVP_CipherInit_ex(dd, c, NULL, key, NULL, (which & SSL3_CC_WRITE))
             || !EVP_CIPHER_CTX_ctrl(dd, EVP_CTRL_GCM_SET_IV_FIXED, (int)k,
                                     iv)) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS1_CHANGE_CIPHER_STATE,
-                     ERR_R_INTERNAL_ERROR);
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             goto err;
         }
     } else if (EVP_CIPHER_mode(c) == EVP_CIPH_CCM_MODE) {
@@ -426,14 +411,12 @@ int tls1_change_cipher_state(SSL *s, int which)
             || !EVP_CIPHER_CTX_ctrl(dd, EVP_CTRL_AEAD_SET_TAG, taglen, NULL)
             || !EVP_CIPHER_CTX_ctrl(dd, EVP_CTRL_CCM_SET_IV_FIXED, (int)k, iv)
             || !EVP_CipherInit_ex(dd, NULL, NULL, key, NULL, -1)) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS1_CHANGE_CIPHER_STATE,
-                     ERR_R_INTERNAL_ERROR);
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             goto err;
         }
     } else {
         if (!EVP_CipherInit_ex(dd, c, NULL, key, iv, (which & SSL3_CC_WRITE))) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS1_CHANGE_CIPHER_STATE,
-                     ERR_R_INTERNAL_ERROR);
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             goto err;
         }
     }
@@ -441,8 +424,7 @@ int tls1_change_cipher_state(SSL *s, int which)
     if ((EVP_CIPHER_flags(c) & EVP_CIPH_FLAG_AEAD_CIPHER) && *mac_secret_size
         && !EVP_CIPHER_CTX_ctrl(dd, EVP_CTRL_AEAD_SET_MAC_KEY,
                                 (int)*mac_secret_size, mac_secret)) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS1_CHANGE_CIPHER_STATE,
-                 ERR_R_INTERNAL_ERROR);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto err;
     }
     if (EVP_CIPHER_provider(c) != NULL
@@ -473,8 +455,7 @@ int tls1_change_cipher_state(SSL *s, int which)
         bio = s->rbio;
 
     if (!ossl_assert(bio != NULL)) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS1_CHANGE_CIPHER_STATE,
-                 ERR_R_INTERNAL_ERROR);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto err;
     }
 
@@ -487,8 +468,7 @@ int tls1_change_cipher_state(SSL *s, int which)
     /* ktls doesn't support renegotiation */
     if ((BIO_get_ktls_send(s->wbio) && (which & SSL3_CC_WRITE)) ||
         (BIO_get_ktls_recv(s->rbio) && (which & SSL3_CC_READ))) {
-        SSLfatal(s, SSL_AD_NO_RENEGOTIATION, SSL_F_TLS1_CHANGE_CIPHER_STATE,
-                 ERR_R_INTERNAL_ERROR);
+        SSLfatal(s, SSL_AD_NO_RENEGOTIATION, ERR_R_INTERNAL_ERROR);
         goto err;
     }
 
@@ -559,8 +539,7 @@ int tls1_setup_key_block(SSL *s)
 
     if (!ssl_cipher_get_evp(s->ctx, s->session, &c, &hash, &mac_type,
                             &mac_secret_size, &comp, s->ext.use_etm)) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS1_SETUP_KEY_BLOCK,
-                 SSL_R_CIPHER_OR_HASH_UNAVAILABLE);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_CIPHER_OR_HASH_UNAVAILABLE);
         return 0;
     }
 
@@ -576,8 +555,7 @@ int tls1_setup_key_block(SSL *s)
     ssl3_cleanup_key_block(s);
 
     if ((p = OPENSSL_malloc(num)) == NULL) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS1_SETUP_KEY_BLOCK,
-                 ERR_R_MALLOC_FAILURE);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 

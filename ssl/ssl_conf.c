@@ -872,17 +872,14 @@ int SSL_CONF_cmd(SSL_CONF_CTX *cctx, const char *cmd, const char *value)
             return 2;
         if (rv == -2)
             return -2;
-        if (cctx->flags & SSL_CONF_FLAG_SHOW_ERRORS) {
-            ERR_raise(ERR_LIB_SSL, SSL_R_BAD_VALUE);
-            ERR_add_error_data(4, "cmd=", cmd, ", value=", value);
-        }
+        if (cctx->flags & SSL_CONF_FLAG_SHOW_ERRORS)
+            ERR_raise_data(ERR_LIB_SSL, SSL_R_BAD_VALUE,
+                           "cmd=%s, value=%s", cmd, value);
         return 0;
     }
 
-    if (cctx->flags & SSL_CONF_FLAG_SHOW_ERRORS) {
-        ERR_raise(ERR_LIB_SSL, SSL_R_UNKNOWN_CMD_NAME);
-        ERR_add_error_data(2, "cmd=", cmd);
-    }
+    if (cctx->flags & SSL_CONF_FLAG_SHOW_ERRORS)
+        ERR_raise_data(ERR_LIB_SSL, SSL_R_UNKNOWN_CMD_NAME, "cmd=%s", cmd);
 
     return -2;
 }
