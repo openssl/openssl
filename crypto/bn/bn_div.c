@@ -24,7 +24,7 @@ int BN_div(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m, const BIGNUM *d,
     bn_check_top(m);
     bn_check_top(d);
     if (BN_is_zero(d)) {
-        BNerr(BN_F_BN_DIV, BN_R_DIV_BY_ZERO);
+        ERR_raise(ERR_LIB_BN, BN_R_DIV_BY_ZERO);
         return 0;
     }
 
@@ -212,7 +212,7 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
     int ret;
 
     if (BN_is_zero(divisor)) {
-        BNerr(BN_F_BN_DIV, BN_R_DIV_BY_ZERO);
+        ERR_raise(ERR_LIB_BN, BN_R_DIV_BY_ZERO);
         return 0;
     }
 
@@ -222,7 +222,7 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
      * BN_DEBUG builds)
      */
     if (divisor->d[divisor->top - 1] == 0) {
-        BNerr(BN_F_BN_DIV, BN_R_NOT_INITIALIZED);
+        ERR_raise(ERR_LIB_BN, BN_R_NOT_INITIALIZED);
         return 0;
     }
 

@@ -99,7 +99,7 @@ int OBJ_NAME_new_index(unsigned long (*hash_func) (const char *),
     for (i = sk_NAME_FUNCS_num(name_funcs_stack); i < names_type_num; i++) {
         name_funcs = OPENSSL_zalloc(sizeof(*name_funcs));
         if (name_funcs == NULL) {
-            OBJerr(OBJ_F_OBJ_NAME_NEW_INDEX, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_OBJ, ERR_R_MALLOC_FAILURE);
             ret = 0;
             goto out;
         }
@@ -108,7 +108,7 @@ int OBJ_NAME_new_index(unsigned long (*hash_func) (const char *),
         push = sk_NAME_FUNCS_push(name_funcs_stack, name_funcs);
 
         if (!push) {
-            OBJerr(OBJ_F_OBJ_NAME_NEW_INDEX, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_OBJ, ERR_R_MALLOC_FAILURE);
             OPENSSL_free(name_funcs);
             ret = 0;
             goto out;

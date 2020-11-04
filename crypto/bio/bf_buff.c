@@ -404,7 +404,7 @@ static long buffer_ctrl(BIO *b, int cmd, long num, void *ptr)
     }
     return ret;
  malloc_error:
-    BIOerr(BIO_F_BUFFER_CTRL, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_BIO, ERR_R_MALLOC_FAILURE);
     return 0;
 }
 

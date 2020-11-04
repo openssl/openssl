@@ -33,7 +33,7 @@ int RSA_padding_add_X931(unsigned char *to, int tlen,
     j = tlen - flen - 2;
 
     if (j < 0) {
-        RSAerr(RSA_F_RSA_PADDING_ADD_X931, RSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE);
+        ERR_raise(ERR_LIB_RSA, RSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE);
         return -1;
     }
 
@@ -64,7 +64,7 @@ int RSA_padding_check_X931(unsigned char *to, int tlen,
 
     p = from;
     if ((num != flen) || ((*p != 0x6A) && (*p != 0x6B))) {
-        RSAerr(RSA_F_RSA_PADDING_CHECK_X931, RSA_R_INVALID_HEADER);
+        ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_HEADER);
         return -1;
     }
 
@@ -75,7 +75,7 @@ int RSA_padding_check_X931(unsigned char *to, int tlen,
             if (c == 0xBA)
                 break;
             if (c != 0xBB) {
-                RSAerr(RSA_F_RSA_PADDING_CHECK_X931, RSA_R_INVALID_PADDING);
+                ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_PADDING);
                 return -1;
             }
         }
@@ -83,7 +83,7 @@ int RSA_padding_check_X931(unsigned char *to, int tlen,
         j -= i;
 
         if (i == 0) {
-            RSAerr(RSA_F_RSA_PADDING_CHECK_X931, RSA_R_INVALID_PADDING);
+            ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_PADDING);
             return -1;
         }
 
@@ -92,7 +92,7 @@ int RSA_padding_check_X931(unsigned char *to, int tlen,
     }
 
     if (p[j] != 0xCC) {
-        RSAerr(RSA_F_RSA_PADDING_CHECK_X931, RSA_R_INVALID_TRAILER);
+        ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_TRAILER);
         return -1;
     }
 

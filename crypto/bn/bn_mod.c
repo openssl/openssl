@@ -291,7 +291,7 @@ int BN_mod_lshift_quick(BIGNUM *r, const BIGNUM *a, int n, const BIGNUM *m)
         /* max_shift >= 0 */
 
         if (max_shift < 0) {
-            BNerr(BN_F_BN_MOD_LSHIFT_QUICK, BN_R_INPUT_NOT_REDUCED);
+            ERR_raise(ERR_LIB_BN, BN_R_INPUT_NOT_REDUCED);
             return 0;
         }
 

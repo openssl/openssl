@@ -25,7 +25,7 @@ SCT_CTX *SCT_CTX_new(OSSL_LIB_CTX *libctx, const char *propq)
     SCT_CTX *sctx = OPENSSL_zalloc(sizeof(*sctx));
 
     if (sctx == NULL) {
-        CTerr(CT_F_SCT_CTX_NEW, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_CT, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
@@ -33,7 +33,7 @@ SCT_CTX *SCT_CTX_new(OSSL_LIB_CTX *libctx, const char *propq)
     if (propq != NULL) {
         sctx->propq = OPENSSL_strdup(propq);
         if (sctx->propq == NULL) {
-            CTerr(CT_F_SCT_CTX_NEW, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_CT, ERR_R_MALLOC_FAILURE);
             OPENSSL_free(sctx);
             return NULL;
         }

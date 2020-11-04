@@ -164,7 +164,7 @@ static void *provider_store_new(OSSL_LIB_CTX *ctx)
             || sk_OSSL_PROVIDER_push(store->providers, prov) == 0) {
             ossl_provider_free(prov);
             provider_store_free(store);
-            CRYPTOerr(CRYPTO_F_PROVIDER_STORE_NEW, ERR_R_INTERNAL_ERROR);
+            ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
             return NULL;
         }
         prov->libctx = ctx;
@@ -191,7 +191,7 @@ static struct provider_store_st *get_provider_store(OSSL_LIB_CTX *libctx)
     store = ossl_lib_ctx_get_data(libctx, OSSL_LIB_CTX_PROVIDER_STORE_INDEX,
                                   &provider_store_method);
     if (store == NULL)
-        CRYPTOerr(CRYPTO_F_GET_PROVIDER_STORE, ERR_R_INTERNAL_ERROR);
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
     return store;
 }
 
@@ -254,7 +254,7 @@ static OSSL_PROVIDER *provider_new(const char *name,
         || !ossl_provider_up_ref(prov) /* +1 One reference to be returned */
         || (prov->name = OPENSSL_strdup(name)) == NULL) {
         ossl_provider_free(prov);
-        CRYPTOerr(CRYPTO_F_PROVIDER_NEW, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
@@ -311,7 +311,7 @@ OSSL_PROVIDER *ossl_provider_new(OSSL_LIB_CTX *libctx, const char *name,
     CRYPTO_THREAD_unlock(store->lock);
 
     if (prov == NULL)
-        CRYPTOerr(CRYPTO_F_OSSL_PROVIDER_NEW, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
 
     /*
      * At this point, the provider is only partially "loaded".  To be
@@ -390,7 +390,7 @@ int ossl_provider_set_module_path(OSSL_PROVIDER *prov, const char *module_path)
         return 1;
     if ((prov->path = OPENSSL_strdup(module_path)) != NULL)
         return 1;
-    CRYPTOerr(CRYPTO_F_OSSL_PROVIDER_SET_MODULE_PATH, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
     return 0;
 }
 
@@ -412,7 +412,7 @@ int ossl_provider_add_parameter(OSSL_PROVIDER *prov,
         OPENSSL_free(pair->value);
         OPENSSL_free(pair);
     }
-    CRYPTOerr(CRYPTO_F_OSSL_PROVIDER_ADD_PARAMETER, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
     return 0;
 }
 
@@ -439,7 +439,7 @@ int OSSL_PROVIDER_set_default_search_path(OSSL_LIB_CTX *libctx,
     if (path != NULL) {
         p = OPENSSL_strdup(path);
         if (p == NULL) {
-            CRYPTOerr(0, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
             return 0;
         }
     }

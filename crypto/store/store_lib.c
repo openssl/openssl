@@ -663,7 +663,7 @@ EVP_PKEY *OSSL_STORE_INFO_get1_PUBKEY(const OSSL_STORE_INFO *info)
         EVP_PKEY_up_ref(info->_.pubkey);
         return info->_.pubkey;
     }
-    OSSL_STOREerr(0, OSSL_STORE_R_NOT_A_PUBLIC_KEY);
+    ERR_raise(ERR_LIB_OSSL_STORE, OSSL_STORE_R_NOT_A_PUBLIC_KEY);
     return NULL;
 }
 

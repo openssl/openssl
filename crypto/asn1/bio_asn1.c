@@ -117,7 +117,7 @@ static int asn1_bio_new(BIO *b)
 static int asn1_bio_init(BIO_ASN1_BUF_CTX *ctx, int size)
 {
     if ((ctx->buf = OPENSSL_malloc(size)) == NULL) {
-        ASN1err(ASN1_F_ASN1_BIO_INIT, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
         return 0;
     }
     ctx->bufsize = size;

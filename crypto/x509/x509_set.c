@@ -206,7 +206,7 @@ static int x509_sig_info_init(X509_SIG_INFO *siginf, const X509_ALGOR *alg,
     siginf->flags = 0;
     if (!OBJ_find_sigid_algs(OBJ_obj2nid(alg->algorithm), &mdnid, &pknid)
             || pknid == NID_undef) {
-        X509err(0, X509_R_UNKNOWN_SIGID_ALGS);
+        ERR_raise(ERR_LIB_X509, X509_R_UNKNOWN_SIGID_ALGS);
         return 0;
     }
     siginf->mdnid = mdnid;
@@ -218,7 +218,7 @@ static int x509_sig_info_init(X509_SIG_INFO *siginf, const X509_ALGOR *alg,
         ameth = EVP_PKEY_asn1_find(NULL, pknid);
         if (ameth == NULL || ameth->siginf_set == NULL
                 || !ameth->siginf_set(siginf, alg, sig)) {
-            X509err(0, X509_R_ERROR_USING_SIGINF_SET);
+            ERR_raise(ERR_LIB_X509, X509_R_ERROR_USING_SIGINF_SET);
             return 0;
         }
         break;
@@ -252,7 +252,7 @@ static int x509_sig_info_init(X509_SIG_INFO *siginf, const X509_ALGOR *alg,
     default:
         /* Security bits: half number of bits in digest */
         if ((md = EVP_get_digestbynid(mdnid)) == NULL) {
-            X509err(0, X509_R_ERROR_GETTING_MD_BY_NID);
+            ERR_raise(ERR_LIB_X509, X509_R_ERROR_GETTING_MD_BY_NID);
             return 0;
         }
         siginf->secbits = EVP_MD_size(md) * 4;

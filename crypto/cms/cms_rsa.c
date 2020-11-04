@@ -54,14 +54,14 @@ static int rsa_cms_decrypt(CMS_RecipientInfo *ri)
     if (nid == NID_rsaEncryption)
         return 1;
     if (nid != NID_rsaesOaep) {
-        CMSerr(0, CMS_R_UNSUPPORTED_ENCRYPTION_TYPE);
+        ERR_raise(ERR_LIB_CMS, CMS_R_UNSUPPORTED_ENCRYPTION_TYPE);
         return -1;
     }
     /* Decode OAEP parameters */
     oaep = rsa_oaep_decode(cmsalg);
 
     if (oaep == NULL) {
-        CMSerr(0, CMS_R_INVALID_OAEP_PARAMETERS);
+        ERR_raise(ERR_LIB_CMS, CMS_R_INVALID_OAEP_PARAMETERS);
         goto err;
     }
 
@@ -76,11 +76,11 @@ static int rsa_cms_decrypt(CMS_RecipientInfo *ri)
         X509_ALGOR *plab = oaep->pSourceFunc;
 
         if (OBJ_obj2nid(plab->algorithm) != NID_pSpecified) {
-            CMSerr(0, CMS_R_UNSUPPORTED_LABEL_SOURCE);
+            ERR_raise(ERR_LIB_CMS, CMS_R_UNSUPPORTED_LABEL_SOURCE);
             goto err;
         }
         if (plab->parameter->type != V_ASN1_OCTET_STRING) {
-            CMSerr(0, CMS_R_INVALID_LABEL);
+            ERR_raise(ERR_LIB_CMS, CMS_R_INVALID_LABEL);
             goto err;
         }
 
@@ -182,7 +182,7 @@ int cms_rsa_envelope(CMS_RecipientInfo *ri, int decrypt)
     if (decrypt == 0)
         return rsa_cms_encrypt(ri);
 
-    CMSerr(0, CMS_R_NOT_SUPPORTED_FOR_THIS_KEY_TYPE);
+    ERR_raise(ERR_LIB_CMS, CMS_R_NOT_SUPPORTED_FOR_THIS_KEY_TYPE);
     return 0;
 }
 
@@ -225,7 +225,7 @@ static int rsa_cms_verify(CMS_SignerInfo *si)
         return ossl_rsa_pss_to_ctx(NULL, pkctx, alg, NULL);
     /* Only PSS allowed for PSS keys */
     if (EVP_PKEY_is_a(pkey, "RSA-PSS")) {
-        RSAerr(RSA_F_RSA_CMS_VERIFY, RSA_R_ILLEGAL_OR_UNSUPPORTED_PADDING_MODE);
+        ERR_raise(ERR_LIB_RSA, RSA_R_ILLEGAL_OR_UNSUPPORTED_PADDING_MODE);
         return 0;
     }
     if (nid == NID_rsaEncryption)
@@ -248,6 +248,6 @@ int cms_rsa_sign(CMS_SignerInfo *si, int verify)
     if (verify == 0)
         return rsa_cms_sign(si);
 
-    CMSerr(0, CMS_R_NOT_SUPPORTED_FOR_THIS_KEY_TYPE);
+    ERR_raise(ERR_LIB_CMS, CMS_R_NOT_SUPPORTED_FOR_THIS_KEY_TYPE);
     return 0;
 }

@@ -19,7 +19,7 @@ X509_INFO *X509_INFO_new(void)
 
     ret = OPENSSL_zalloc(sizeof(*ret));
     if (ret == NULL) {
-        ASN1err(ASN1_F_X509_INFO_NEW, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 

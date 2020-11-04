@@ -25,7 +25,7 @@ int RSA_print_fp(FILE *fp, const RSA *x, int off)
     int ret;
 
     if ((b = BIO_new(BIO_s_file())) == NULL) {
-        RSAerr(RSA_F_RSA_PRINT_FP, ERR_R_BUF_LIB);
+        ERR_raise(ERR_LIB_RSA, ERR_R_BUF_LIB);
         return 0;
     }
     BIO_set_fp(b, fp, BIO_NOCLOSE);

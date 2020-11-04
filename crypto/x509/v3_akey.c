@@ -100,7 +100,7 @@ static AUTHORITY_KEYID *v2i_AUTHORITY_KEYID(X509V3_EXT_METHOD *method,
             if (cnf->value && strcmp(cnf->value, "always") == 0)
                 issuer = 2;
         } else {
-            X509V3err(X509V3_F_V2I_AUTHORITY_KEYID, X509V3_R_UNKNOWN_OPTION);
+            ERR_raise(ERR_LIB_X509V3, X509V3_R_UNKNOWN_OPTION);
             ERR_add_error_data(2, "name=", cnf->name);
             return NULL;
         }
@@ -109,7 +109,7 @@ static AUTHORITY_KEYID *v2i_AUTHORITY_KEYID(X509V3_EXT_METHOD *method,
     if (!ctx || !ctx->issuer_cert) {
         if (ctx && (ctx->flags == CTX_TEST))
             return AUTHORITY_KEYID_new();
-        X509V3err(X509V3_F_V2I_AUTHORITY_KEYID,
+        ERR_raise(ERR_LIB_X509V3,
                   X509V3_R_NO_ISSUER_CERTIFICATE);
         return NULL;
     }
@@ -121,7 +121,7 @@ static AUTHORITY_KEYID *v2i_AUTHORITY_KEYID(X509V3_EXT_METHOD *method,
         if ((i >= 0) && (ext = X509_get_ext(cert, i)))
             ikeyid = X509V3_EXT_d2i(ext);
         if (keyid == 2 && !ikeyid) {
-            X509V3err(X509V3_F_V2I_AUTHORITY_KEYID,
+            ERR_raise(ERR_LIB_X509V3,
                       X509V3_R_UNABLE_TO_GET_ISSUER_KEYID);
             return NULL;
         }
@@ -131,7 +131,7 @@ static AUTHORITY_KEYID *v2i_AUTHORITY_KEYID(X509V3_EXT_METHOD *method,
         isname = X509_NAME_dup(X509_get_issuer_name(cert));
         serial = ASN1_INTEGER_dup(X509_get0_serialNumber(cert));
         if (!isname || !serial) {
-            X509V3err(X509V3_F_V2I_AUTHORITY_KEYID,
+            ERR_raise(ERR_LIB_X509V3,
                       X509V3_R_UNABLE_TO_GET_ISSUER_DETAILS);
             goto err;
         }
@@ -144,7 +144,7 @@ static AUTHORITY_KEYID *v2i_AUTHORITY_KEYID(X509V3_EXT_METHOD *method,
         if ((gens = sk_GENERAL_NAME_new_null()) == NULL
             || (gen = GENERAL_NAME_new()) == NULL
             || !sk_GENERAL_NAME_push(gens, gen)) {
-            X509V3err(X509V3_F_V2I_AUTHORITY_KEYID, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
             goto err;
         }
         gen->type = GEN_DIRNAME;

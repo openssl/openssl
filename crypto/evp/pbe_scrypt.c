@@ -46,7 +46,7 @@ int EVP_PBE_scrypt(const char *pass, size_t passlen,
     OSSL_PARAM params[7], *z = params;
 
     if (r > UINT32_MAX || p > UINT32_MAX) {
-        EVPerr(0, EVP_R_PARAMETER_TOO_LARGE);
+        ERR_raise(ERR_LIB_EVP, EVP_R_PARAMETER_TOO_LARGE);
         return 0;
     }
 

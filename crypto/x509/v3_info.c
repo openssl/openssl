@@ -91,7 +91,7 @@ static STACK_OF(CONF_VALUE) *i2v_AUTHORITY_INFO_ACCESS(
 
     return tret;
  err:
-    X509V3err(X509V3_F_I2V_AUTHORITY_INFO_ACCESS, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
     if (ret == NULL && tret != NULL)
         sk_CONF_VALUE_pop_free(tret, X509V3_conf_free);
     return NULL;
@@ -111,20 +111,20 @@ static AUTHORITY_INFO_ACCESS *v2i_AUTHORITY_INFO_ACCESS(X509V3_EXT_METHOD
     char *objtmp, *ptmp;
 
     if ((ainfo = sk_ACCESS_DESCRIPTION_new_reserve(NULL, num)) == NULL) {
-        X509V3err(X509V3_F_V2I_AUTHORITY_INFO_ACCESS, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
     for (i = 0; i < num; i++) {
         cnf = sk_CONF_VALUE_value(nval, i);
         if ((acc = ACCESS_DESCRIPTION_new()) == NULL) {
-            X509V3err(X509V3_F_V2I_AUTHORITY_INFO_ACCESS,
+            ERR_raise(ERR_LIB_X509V3,
                       ERR_R_MALLOC_FAILURE);
             goto err;
         }
         sk_ACCESS_DESCRIPTION_push(ainfo, acc); /* Cannot fail due to reserve */
         ptmp = strchr(cnf->name, ';');
         if (ptmp == NULL) {
-            X509V3err(X509V3_F_V2I_AUTHORITY_INFO_ACCESS,
+            ERR_raise(ERR_LIB_X509V3,
                       X509V3_R_INVALID_SYNTAX);
             goto err;
         }
@@ -134,13 +134,13 @@ static AUTHORITY_INFO_ACCESS *v2i_AUTHORITY_INFO_ACCESS(X509V3_EXT_METHOD
         if (!v2i_GENERAL_NAME_ex(acc->location, method, ctx, &ctmp, 0))
             goto err;
         if ((objtmp = OPENSSL_strndup(cnf->name, objlen)) == NULL) {
-            X509V3err(X509V3_F_V2I_AUTHORITY_INFO_ACCESS,
+            ERR_raise(ERR_LIB_X509V3,
                       ERR_R_MALLOC_FAILURE);
             goto err;
         }
         acc->method = OBJ_txt2obj(objtmp, 0);
         if (!acc->method) {
-            X509V3err(X509V3_F_V2I_AUTHORITY_INFO_ACCESS,
+            ERR_raise(ERR_LIB_X509V3,
                       X509V3_R_BAD_OBJECT);
             ERR_add_error_data(2, "value=", objtmp);
             OPENSSL_free(objtmp);

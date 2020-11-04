@@ -200,7 +200,7 @@ DH *PEM_read_bio_DHparams(BIO *bp, DH **x, pem_password_cb *cb, void *u)
         ret = d2i_DHparams(x, &p, len);
 
     if (ret == NULL)
-        PEMerr(PEM_F_PEM_READ_BIO_DHPARAMS, ERR_R_ASN1_LIB);
+        ERR_raise(ERR_LIB_PEM, ERR_R_ASN1_LIB);
     OPENSSL_free(nm);
     OPENSSL_free(data);
     return ret;
@@ -213,7 +213,7 @@ DH *PEM_read_DHparams(FILE *fp, DH **x, pem_password_cb *cb, void *u)
     DH *ret;
 
     if ((b = BIO_new(BIO_s_file())) == NULL) {
-        PEMerr(PEM_F_PEM_READ_DHPARAMS, ERR_R_BUF_LIB);
+        ERR_raise(ERR_LIB_PEM, ERR_R_BUF_LIB);
         return 0;
     }
     BIO_set_fp(b, fp, BIO_NOCLOSE);

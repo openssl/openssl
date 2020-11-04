@@ -33,13 +33,13 @@ int PKCS5_pbe_set0_algor(X509_ALGOR *algor, int alg, int iter,
 
     pbe = PBEPARAM_new();
     if (pbe == NULL) {
-        ASN1err(ASN1_F_PKCS5_PBE_SET0_ALGOR, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
         goto err;
     }
     if (iter <= 0)
         iter = PKCS5_DEFAULT_ITER;
     if (!ASN1_INTEGER_set(pbe->iter, iter)) {
-        ASN1err(ASN1_F_PKCS5_PBE_SET0_ALGOR, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
         goto err;
     }
     if (!saltlen)
@@ -47,7 +47,7 @@ int PKCS5_pbe_set0_algor(X509_ALGOR *algor, int alg, int iter,
 
     sstr = OPENSSL_malloc(saltlen);
     if (sstr == NULL) {
-        ASN1err(ASN1_F_PKCS5_PBE_SET0_ALGOR, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
         goto err;
     }
     if (salt)
@@ -59,7 +59,7 @@ int PKCS5_pbe_set0_algor(X509_ALGOR *algor, int alg, int iter,
     sstr = NULL;
 
     if (!ASN1_item_pack(pbe, ASN1_ITEM_rptr(PBEPARAM), &pbe_str)) {
-        ASN1err(ASN1_F_PKCS5_PBE_SET0_ALGOR, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
@@ -84,7 +84,7 @@ X509_ALGOR *PKCS5_pbe_set(int alg, int iter,
     X509_ALGOR *ret;
     ret = X509_ALGOR_new();
     if (ret == NULL) {
-        ASN1err(ASN1_F_PKCS5_PBE_SET, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 

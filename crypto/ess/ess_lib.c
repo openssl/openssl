@@ -46,7 +46,7 @@ ESS_SIGNING_CERT *ESS_SIGNING_CERT_new_init(X509 *signcert,
  err:
     ESS_SIGNING_CERT_free(sc);
     ESS_CERT_ID_free(cid);
-    ESSerr(ESS_F_ESS_SIGNING_CERT_NEW_INIT, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_ESS, ERR_R_MALLOC_FAILURE);
     return NULL;
 }
 
@@ -92,7 +92,7 @@ static ESS_CERT_ID *ESS_CERT_ID_new_init(X509 *cert, int issuer_needed)
  err:
     GENERAL_NAME_free(name);
     ESS_CERT_ID_free(cid);
-    ESSerr(ESS_F_ESS_CERT_ID_NEW_INIT, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_ESS, ERR_R_MALLOC_FAILURE);
     return NULL;
 }
 
@@ -127,7 +127,7 @@ ESS_SIGNING_CERT_V2 *ESS_SIGNING_CERT_V2_new_init(const EVP_MD *hash_alg,
  err:
     ESS_SIGNING_CERT_V2_free(sc);
     ESS_CERT_ID_V2_free(cid);
-    ESSerr(ESS_F_ESS_SIGNING_CERT_V2_NEW_INIT, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_ESS, ERR_R_MALLOC_FAILURE);
     return NULL;
 }
 
@@ -188,7 +188,7 @@ static ESS_CERT_ID_V2 *ESS_CERT_ID_V2_new_init(const EVP_MD *hash_alg,
     X509_ALGOR_free(alg);
     GENERAL_NAME_free(name);
     ESS_CERT_ID_V2_free(cid);
-    ESSerr(ESS_F_ESS_CERT_ID_V2_NEW_INIT, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_ESS, ERR_R_MALLOC_FAILURE);
     return NULL;
 }
 
@@ -224,13 +224,13 @@ int ESS_SIGNING_CERT_add(PKCS7_SIGNER_INFO *si, ESS_SIGNING_CERT *sc)
 
     len = i2d_ESS_SIGNING_CERT(sc, NULL);
     if ((pp = OPENSSL_malloc(len)) == NULL) {
-        ESSerr(ESS_F_ESS_SIGNING_CERT_ADD, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_ESS, ERR_R_MALLOC_FAILURE);
         goto err;
     }
     p = pp;
     i2d_ESS_SIGNING_CERT(sc, &p);
     if ((seq = ASN1_STRING_new()) == NULL || !ASN1_STRING_set(seq, pp, len)) {
-        ESSerr(ESS_F_ESS_SIGNING_CERT_ADD, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_ESS, ERR_R_MALLOC_FAILURE);
         goto err;
     }
     OPENSSL_free(pp);
@@ -253,14 +253,14 @@ int ESS_SIGNING_CERT_V2_add(PKCS7_SIGNER_INFO *si,
     int len = i2d_ESS_SIGNING_CERT_V2(sc, NULL);
 
     if ((pp = OPENSSL_malloc(len)) == NULL) {
-        ESSerr(ESS_F_ESS_SIGNING_CERT_V2_ADD, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_ESS, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
     p = pp;
     i2d_ESS_SIGNING_CERT_V2(sc, &p);
     if ((seq = ASN1_STRING_new()) == NULL || !ASN1_STRING_set(seq, pp, len)) {
-        ESSerr(ESS_F_ESS_SIGNING_CERT_V2_ADD, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_ESS, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 

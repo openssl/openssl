@@ -74,9 +74,9 @@ BIO *BIO_new_file(const char *filename, const char *mode)
             || errno == ENXIO
 #endif
             )
-            BIOerr(BIO_F_BIO_NEW_FILE, BIO_R_NO_SUCH_FILE);
+            ERR_raise(ERR_LIB_BIO, BIO_R_NO_SUCH_FILE);
         else
-            BIOerr(BIO_F_BIO_NEW_FILE, ERR_R_SYS_LIB);
+            ERR_raise(ERR_LIB_BIO, ERR_R_SYS_LIB);
         return NULL;
     }
     if ((ret = BIO_new(BIO_s_file())) == NULL) {
@@ -149,7 +149,7 @@ static int file_read(BIO *b, char *out, int outl)
                 ? UP_ferror((FILE *)b->ptr) : ferror((FILE *)b->ptr))) {
             ERR_raise_data(ERR_LIB_SYS, get_last_sys_error(),
                            "calling fread()");
-            BIOerr(BIO_F_FILE_READ, ERR_R_SYS_LIB);
+            ERR_raise(ERR_LIB_BIO, ERR_R_SYS_LIB);
             ret = -1;
         }
     }
@@ -281,7 +281,7 @@ static long file_ctrl(BIO *b, int cmd, long num, void *ptr)
         else if (num & BIO_FP_READ)
             OPENSSL_strlcpy(p, "r", sizeof(p));
         else {
-            BIOerr(BIO_F_FILE_CTRL, BIO_R_BAD_FOPEN_MODE);
+            ERR_raise(ERR_LIB_BIO, BIO_R_BAD_FOPEN_MODE);
             ret = 0;
             break;
         }
@@ -299,7 +299,7 @@ static long file_ctrl(BIO *b, int cmd, long num, void *ptr)
             ERR_raise_data(ERR_LIB_SYS, get_last_sys_error(),
                            "calling fopen(%s, %s)",
                            ptr, p);
-            BIOerr(BIO_F_FILE_CTRL, ERR_R_SYS_LIB);
+            ERR_raise(ERR_LIB_BIO, ERR_R_SYS_LIB);
             ret = 0;
             break;
         }
@@ -327,7 +327,7 @@ static long file_ctrl(BIO *b, int cmd, long num, void *ptr)
         if (st == EOF) {
             ERR_raise_data(ERR_LIB_SYS, get_last_sys_error(),
                            "calling fflush()");
-            BIOerr(BIO_F_FILE_CTRL, ERR_R_SYS_LIB);
+            ERR_raise(ERR_LIB_BIO, ERR_R_SYS_LIB);
             ret = 0;
         }
         break;

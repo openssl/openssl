@@ -85,7 +85,7 @@ int ENGINE_set_default_string(ENGINE *e, const char *def_list)
 {
     unsigned int flags = 0;
     if (!CONF_parse_list(def_list, ',', 1, int_def_cb, &flags)) {
-        ENGINEerr(ENGINE_F_ENGINE_SET_DEFAULT_STRING,
+        ERR_raise(ERR_LIB_ENGINE,
                   ENGINE_R_INVALID_STRING);
         ERR_add_error_data(2, "str=", def_list);
         return 0;

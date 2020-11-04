@@ -73,14 +73,14 @@ static DH *dh_new_intern(ENGINE *engine, OSSL_LIB_CTX *libctx)
     DH *ret = OPENSSL_zalloc(sizeof(*ret));
 
     if (ret == NULL) {
-        DHerr(0, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_DH, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
     ret->references = 1;
     ret->lock = CRYPTO_THREAD_lock_new();
     if (ret->lock == NULL) {
-        DHerr(0, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_DH, ERR_R_MALLOC_FAILURE);
         OPENSSL_free(ret);
         return NULL;
     }
@@ -91,7 +91,7 @@ static DH *dh_new_intern(ENGINE *engine, OSSL_LIB_CTX *libctx)
     ret->flags = ret->meth->flags;  /* early default init */
     if (engine) {
         if (!ENGINE_init(engine)) {
-            DHerr(0, ERR_R_ENGINE_LIB);
+            ERR_raise(ERR_LIB_DH, ERR_R_ENGINE_LIB);
             goto err;
         }
         ret->engine = engine;
@@ -100,7 +100,7 @@ static DH *dh_new_intern(ENGINE *engine, OSSL_LIB_CTX *libctx)
     if (ret->engine) {
         ret->meth = ENGINE_get_DH(ret->engine);
         if (ret->meth == NULL) {
-            DHerr(0, ERR_R_ENGINE_LIB);
+            ERR_raise(ERR_LIB_DH, ERR_R_ENGINE_LIB);
             goto err;
         }
     }
@@ -114,7 +114,7 @@ static DH *dh_new_intern(ENGINE *engine, OSSL_LIB_CTX *libctx)
 #endif /* FIPS_MODULE */
 
     if ((ret->meth->init != NULL) && !ret->meth->init(ret)) {
-        DHerr(0, ERR_R_INIT_FAIL);
+        ERR_raise(ERR_LIB_DH, ERR_R_INIT_FAIL);
         goto err;
     }
 

@@ -32,14 +32,14 @@ EVP_PKEY *d2i_PublicKey(int type, EVP_PKEY **a, const unsigned char **pp,
 
     if ((a == NULL) || (*a == NULL)) {
         if ((ret = EVP_PKEY_new()) == NULL) {
-            ASN1err(ASN1_F_D2I_PUBLICKEY, ERR_R_EVP_LIB);
+            ERR_raise(ERR_LIB_ASN1, ERR_R_EVP_LIB);
             return NULL;
         }
     } else
         ret = *a;
 
     if (type != EVP_PKEY_id(ret) && !EVP_PKEY_set_type(ret, type)) {
-        ASN1err(ASN1_F_D2I_PUBLICKEY, ERR_R_EVP_LIB);
+        ERR_raise(ERR_LIB_ASN1, ERR_R_EVP_LIB);
         goto err;
     }
 
@@ -47,7 +47,7 @@ EVP_PKEY *d2i_PublicKey(int type, EVP_PKEY **a, const unsigned char **pp,
 #ifndef OPENSSL_NO_RSA
     case EVP_PKEY_RSA:
         if ((ret->pkey.rsa = d2i_RSAPublicKey(NULL, pp, length)) == NULL) {
-            ASN1err(ASN1_F_D2I_PUBLICKEY, ERR_R_ASN1_LIB);
+            ERR_raise(ERR_LIB_ASN1, ERR_R_ASN1_LIB);
             goto err;
         }
         break;
@@ -56,7 +56,7 @@ EVP_PKEY *d2i_PublicKey(int type, EVP_PKEY **a, const unsigned char **pp,
     case EVP_PKEY_DSA:
         /* TMP UGLY CAST */
         if (!d2i_DSAPublicKey(&ret->pkey.dsa, pp, length)) {
-            ASN1err(ASN1_F_D2I_PUBLICKEY, ERR_R_ASN1_LIB);
+            ERR_raise(ERR_LIB_ASN1, ERR_R_ASN1_LIB);
             goto err;
         }
         break;
@@ -64,13 +64,13 @@ EVP_PKEY *d2i_PublicKey(int type, EVP_PKEY **a, const unsigned char **pp,
 #ifndef OPENSSL_NO_EC
     case EVP_PKEY_EC:
         if (!o2i_ECPublicKey(&ret->pkey.ec, pp, length)) {
-            ASN1err(ASN1_F_D2I_PUBLICKEY, ERR_R_ASN1_LIB);
+            ERR_raise(ERR_LIB_ASN1, ERR_R_ASN1_LIB);
             goto err;
         }
         break;
 #endif
     default:
-        ASN1err(ASN1_F_D2I_PUBLICKEY, ASN1_R_UNKNOWN_PUBLIC_KEY_TYPE);
+        ERR_raise(ERR_LIB_ASN1, ASN1_R_UNKNOWN_PUBLIC_KEY_TYPE);
         goto err;
     }
     if (a != NULL)

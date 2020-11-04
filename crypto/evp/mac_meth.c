@@ -54,7 +54,7 @@ static void *evp_mac_from_dispatch(int name_id,
     int fnmaccnt = 0, fnctxcnt = 0;
 
     if ((mac = evp_mac_new()) == NULL) {
-        EVPerr(0, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
     mac->name_id = name_id;

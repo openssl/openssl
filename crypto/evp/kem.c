@@ -117,12 +117,12 @@ int EVP_PKEY_encapsulate(EVP_PKEY_CTX *ctx,
         return 0;
 
     if (ctx->operation != EVP_PKEY_OP_ENCAPSULATE) {
-        EVPerr(0, EVP_R_OPERATON_NOT_INITIALIZED);
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATON_NOT_INITIALIZED);
         return -1;
     }
 
     if (ctx->op.encap.kemprovctx == NULL) {
-        EVPerr(0, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
         return -2;
     }
 
@@ -148,12 +148,12 @@ int EVP_PKEY_decapsulate(EVP_PKEY_CTX *ctx,
         return 0;
 
     if (ctx->operation != EVP_PKEY_OP_DECAPSULATE) {
-        EVPerr(0, EVP_R_OPERATON_NOT_INITIALIZED);
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATON_NOT_INITIALIZED);
         return -1;
     }
 
     if (ctx->op.encap.kemprovctx == NULL) {
-        EVPerr(0, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
         return -2;
     }
     return ctx->op.encap.kem->decapsulate(ctx->op.encap.kemprovctx,

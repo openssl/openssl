@@ -162,7 +162,7 @@ int ec_GFp_mont_group_set_curve(EC_GROUP *group, const BIGNUM *p,
     if (mont == NULL)
         goto err;
     if (!BN_MONT_CTX_set(mont, p, ctx)) {
-        ECerr(EC_F_EC_GFP_MONT_GROUP_SET_CURVE, ERR_R_BN_LIB);
+        ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
         goto err;
     }
     one = BN_new();
@@ -196,7 +196,7 @@ int ec_GFp_mont_field_mul(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a,
                           const BIGNUM *b, BN_CTX *ctx)
 {
     if (group->field_data1 == NULL) {
-        ECerr(EC_F_EC_GFP_MONT_FIELD_MUL, EC_R_NOT_INITIALIZED);
+        ERR_raise(ERR_LIB_EC, EC_R_NOT_INITIALIZED);
         return 0;
     }
 
@@ -207,7 +207,7 @@ int ec_GFp_mont_field_sqr(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a,
                           BN_CTX *ctx)
 {
     if (group->field_data1 == NULL) {
-        ECerr(EC_F_EC_GFP_MONT_FIELD_SQR, EC_R_NOT_INITIALIZED);
+        ERR_raise(ERR_LIB_EC, EC_R_NOT_INITIALIZED);
         return 0;
     }
 
@@ -251,7 +251,7 @@ int ec_GFp_mont_field_inv(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a,
 
     /* throw an error on zero */
     if (BN_is_zero(r)) {
-        ECerr(EC_F_EC_GFP_MONT_FIELD_INV, EC_R_CANNOT_INVERT);
+        ERR_raise(ERR_LIB_EC, EC_R_CANNOT_INVERT);
         goto err;
     }
 
@@ -267,7 +267,7 @@ int ec_GFp_mont_field_encode(const EC_GROUP *group, BIGNUM *r,
                              const BIGNUM *a, BN_CTX *ctx)
 {
     if (group->field_data1 == NULL) {
-        ECerr(EC_F_EC_GFP_MONT_FIELD_ENCODE, EC_R_NOT_INITIALIZED);
+        ERR_raise(ERR_LIB_EC, EC_R_NOT_INITIALIZED);
         return 0;
     }
 
@@ -278,7 +278,7 @@ int ec_GFp_mont_field_decode(const EC_GROUP *group, BIGNUM *r,
                              const BIGNUM *a, BN_CTX *ctx)
 {
     if (group->field_data1 == NULL) {
-        ECerr(EC_F_EC_GFP_MONT_FIELD_DECODE, EC_R_NOT_INITIALIZED);
+        ERR_raise(ERR_LIB_EC, EC_R_NOT_INITIALIZED);
         return 0;
     }
 
@@ -289,7 +289,7 @@ int ec_GFp_mont_field_set_to_one(const EC_GROUP *group, BIGNUM *r,
                                  BN_CTX *ctx)
 {
     if (group->field_data2 == NULL) {
-        ECerr(EC_F_EC_GFP_MONT_FIELD_SET_TO_ONE, EC_R_NOT_INITIALIZED);
+        ERR_raise(ERR_LIB_EC, EC_R_NOT_INITIALIZED);
         return 0;
     }
 

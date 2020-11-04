@@ -68,7 +68,7 @@ static OSSL_PARAM_BLD_DEF *param_push(OSSL_PARAM_BLD *bld, const char *key,
     OSSL_PARAM_BLD_DEF *pd = OPENSSL_zalloc(sizeof(*pd));
 
     if (pd == NULL) {
-        CRYPTOerr(CRYPTO_F_PARAM_PUSH, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
     pd->key = key;
@@ -94,7 +94,7 @@ static int param_push_num(OSSL_PARAM_BLD *bld, const char *key,
     if (pd == NULL)
         return 0;
     if (size > sizeof(pd->num)) {
-        CRYPTOerr(CRYPTO_F_PARAM_PUSH_NUM, CRYPTO_R_TOO_MANY_BYTES);
+        ERR_raise(ERR_LIB_CRYPTO, CRYPTO_R_TOO_MANY_BYTES);
         return 0;
     }
     memcpy(&pd->num, num, size);
@@ -219,11 +219,11 @@ int OSSL_PARAM_BLD_push_BN_pad(OSSL_PARAM_BLD *bld, const char *key,
     if (bn != NULL) {
         n = BN_num_bytes(bn);
         if (n < 0) {
-            CRYPTOerr(0, CRYPTO_R_ZERO_LENGTH_NUMBER);
+            ERR_raise(ERR_LIB_CRYPTO, CRYPTO_R_ZERO_LENGTH_NUMBER);
             return 0;
         }
         if (sz < (size_t)n) {
-            CRYPTOerr(0, CRYPTO_R_TOO_SMALL_BUFFER);
+            ERR_raise(ERR_LIB_CRYPTO, CRYPTO_R_TOO_SMALL_BUFFER);
             return 0;
         }
         if (BN_get_flags(bn, BN_FLG_SECURE) == BN_FLG_SECURE)
@@ -244,7 +244,7 @@ int OSSL_PARAM_BLD_push_utf8_string(OSSL_PARAM_BLD *bld, const char *key,
     if (bsize == 0) {
         bsize = strlen(buf) + 1;
     } else if (bsize > INT_MAX) {
-        CRYPTOerr(CRYPTO_F_OSSL_PARAM_BLD_PUSH_UTF8_STRING,
+        ERR_raise(ERR_LIB_CRYPTO,
                   CRYPTO_R_STRING_TOO_LONG);
         return 0;
     }
@@ -263,7 +263,7 @@ int OSSL_PARAM_BLD_push_utf8_ptr(OSSL_PARAM_BLD *bld, const char *key,
     if (bsize == 0) {
         bsize = strlen(buf) + 1;
     } else if (bsize > INT_MAX) {
-        CRYPTOerr(CRYPTO_F_OSSL_PARAM_BLD_PUSH_UTF8_PTR,
+        ERR_raise(ERR_LIB_CRYPTO,
                   CRYPTO_R_STRING_TOO_LONG);
         return 0;
     }
@@ -280,7 +280,7 @@ int OSSL_PARAM_BLD_push_octet_string(OSSL_PARAM_BLD *bld, const char *key,
     OSSL_PARAM_BLD_DEF *pd;
 
     if (bsize > INT_MAX) {
-        CRYPTOerr(CRYPTO_F_OSSL_PARAM_BLD_PUSH_OCTET_STRING,
+        ERR_raise(ERR_LIB_CRYPTO,
                   CRYPTO_R_STRING_TOO_LONG);
         return 0;
     }
@@ -297,7 +297,7 @@ int OSSL_PARAM_BLD_push_octet_ptr(OSSL_PARAM_BLD *bld, const char *key,
     OSSL_PARAM_BLD_DEF *pd;
 
     if (bsize > INT_MAX) {
-        CRYPTOerr(CRYPTO_F_OSSL_PARAM_BLD_PUSH_OCTET_PTR,
+        ERR_raise(ERR_LIB_CRYPTO,
                   CRYPTO_R_STRING_TOO_LONG);
         return 0;
     }
@@ -368,14 +368,14 @@ OSSL_PARAM *OSSL_PARAM_BLD_to_param(OSSL_PARAM_BLD *bld)
     if (ss > 0) {
         s = OPENSSL_secure_malloc(ss);
         if (s == NULL) {
-            CRYPTOerr(CRYPTO_F_OSSL_PARAM_BLD_TO_PARAM,
+            ERR_raise(ERR_LIB_CRYPTO,
                       CRYPTO_R_SECURE_MALLOC_FAILURE);
             return NULL;
         }
     }
     params = OPENSSL_malloc(total);
     if (params == NULL) {
-        CRYPTOerr(CRYPTO_F_OSSL_PARAM_BLD_TO_PARAM, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
         OPENSSL_secure_free(s);
         return NULL;
     }

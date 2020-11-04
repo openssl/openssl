@@ -57,7 +57,7 @@ static int int_engine_configure(const char *name, const char *value, const CONF 
     ecmds = NCONF_get_section(cnf, value);
 
     if (!ecmds) {
-        ENGINEerr(ENGINE_F_INT_ENGINE_CONFIGURE,
+        ERR_raise(ERR_LIB_ENGINE,
                   ENGINE_R_ENGINE_SECTION_ERROR);
         return 0;
     }
@@ -116,7 +116,7 @@ static int int_engine_configure(const char *name, const char *value, const CONF 
                     if (!int_engine_init(e))
                         goto err;
                 } else if (do_init != 0) {
-                    ENGINEerr(ENGINE_F_INT_ENGINE_CONFIGURE,
+                    ERR_raise(ERR_LIB_ENGINE,
                               ENGINE_R_INVALID_INIT_VALUE);
                     goto err;
                 }
@@ -135,7 +135,7 @@ static int int_engine_configure(const char *name, const char *value, const CONF 
     ret = 1;
  err:
     if (ret != 1) {
-        ENGINEerr(ENGINE_F_INT_ENGINE_CONFIGURE,
+        ERR_raise(ERR_LIB_ENGINE,
                   ENGINE_R_ENGINE_CONFIGURATION_ERROR);
         if (ecmd)
             ERR_add_error_data(6, "section=", ecmd->section,
@@ -157,7 +157,7 @@ static int int_engine_module_init(CONF_IMODULE *md, const CONF *cnf)
     elist = NCONF_get_section(cnf, CONF_imodule_get_value(md));
 
     if (!elist) {
-        ENGINEerr(ENGINE_F_INT_ENGINE_MODULE_INIT,
+        ERR_raise(ERR_LIB_ENGINE,
                   ENGINE_R_ENGINES_SECTION_ERROR);
         return 0;
     }

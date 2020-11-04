@@ -65,7 +65,7 @@ static int by_file_ctrl_ex(X509_LOOKUP *ctx, int cmd, const char *argp,
                          X509_FILETYPE_PEM, libctx, propq) != 0);
 
             if (!ok) {
-                X509err(0, X509_R_LOADING_DEFAULTS);
+                ERR_raise(ERR_LIB_X509, X509_R_LOADING_DEFAULTS);
             }
         } else {
             if (argl == X509_FILETYPE_PEM)
@@ -97,17 +97,17 @@ int X509_load_cert_file_ex(X509_LOOKUP *ctx, const char *file, int type,
     in = BIO_new(BIO_s_file());
 
     if ((in == NULL) || (BIO_read_filename(in, file) <= 0)) {
-        X509err(0, ERR_R_SYS_LIB);
+        ERR_raise(ERR_LIB_X509, ERR_R_SYS_LIB);
         goto err;
     }
 
     if (type != X509_FILETYPE_PEM && type != X509_FILETYPE_ASN1) {
-        X509err(0, X509_R_BAD_X509_FILETYPE);
+        ERR_raise(ERR_LIB_X509, X509_R_BAD_X509_FILETYPE);
         goto err;
     }
     x = X509_new_ex(libctx, propq);
     if (x == NULL) {
-        X509err(0, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
@@ -119,7 +119,7 @@ int X509_load_cert_file_ex(X509_LOOKUP *ctx, const char *file, int type,
                     ERR_clear_error();
                     break;
                 } else {
-                    X509err(0, ERR_R_PEM_LIB);
+                    ERR_raise(ERR_LIB_X509, ERR_R_PEM_LIB);
                     goto err;
                 }
             }
@@ -133,7 +133,7 @@ int X509_load_cert_file_ex(X509_LOOKUP *ctx, const char *file, int type,
         ret = count;
     } else if (type == X509_FILETYPE_ASN1) {
         if (d2i_X509_bio(in, &x) == NULL) {
-            X509err(0, ERR_R_ASN1_LIB);
+            ERR_raise(ERR_LIB_X509, ERR_R_ASN1_LIB);
             goto err;
         }
         i = X509_STORE_add_cert(ctx->store_ctx, x);
@@ -142,7 +142,7 @@ int X509_load_cert_file_ex(X509_LOOKUP *ctx, const char *file, int type,
         ret = i;
     }
     if (ret == 0)
-        X509err(0, X509_R_NO_CERTIFICATE_FOUND);
+        ERR_raise(ERR_LIB_X509, X509_R_NO_CERTIFICATE_FOUND);
  err:
     X509_free(x);
     BIO_free(in);
@@ -164,7 +164,7 @@ int X509_load_crl_file(X509_LOOKUP *ctx, const char *file, int type)
     in = BIO_new(BIO_s_file());
 
     if ((in == NULL) || (BIO_read_filename(in, file) <= 0)) {
-        X509err(X509_F_X509_LOAD_CRL_FILE, ERR_R_SYS_LIB);
+        ERR_raise(ERR_LIB_X509, ERR_R_SYS_LIB);
         goto err;
     }
 
@@ -177,7 +177,7 @@ int X509_load_crl_file(X509_LOOKUP *ctx, const char *file, int type)
                     ERR_clear_error();
                     break;
                 } else {
-                    X509err(X509_F_X509_LOAD_CRL_FILE, ERR_R_PEM_LIB);
+                    ERR_raise(ERR_LIB_X509, ERR_R_PEM_LIB);
                     goto err;
                 }
             }
@@ -192,7 +192,7 @@ int X509_load_crl_file(X509_LOOKUP *ctx, const char *file, int type)
     } else if (type == X509_FILETYPE_ASN1) {
         x = d2i_X509_CRL_bio(in, NULL);
         if (x == NULL) {
-            X509err(X509_F_X509_LOAD_CRL_FILE, ERR_R_ASN1_LIB);
+            ERR_raise(ERR_LIB_X509, ERR_R_ASN1_LIB);
             goto err;
         }
         i = X509_STORE_add_crl(ctx->store_ctx, x);
@@ -200,11 +200,11 @@ int X509_load_crl_file(X509_LOOKUP *ctx, const char *file, int type)
             goto err;
         ret = i;
     } else {
-        X509err(X509_F_X509_LOAD_CRL_FILE, X509_R_BAD_X509_FILETYPE);
+        ERR_raise(ERR_LIB_X509, X509_R_BAD_X509_FILETYPE);
         goto err;
     }
     if (ret == 0)
-        X509err(X509_F_X509_LOAD_CRL_FILE, X509_R_NO_CRL_FOUND);
+        ERR_raise(ERR_LIB_X509, X509_R_NO_CRL_FOUND);
  err:
     X509_CRL_free(x);
     BIO_free(in);
@@ -223,13 +223,13 @@ int X509_load_cert_crl_file_ex(X509_LOOKUP *ctx, const char *file, int type,
         return X509_load_cert_file_ex(ctx, file, type, libctx, propq);
     in = BIO_new_file(file, "r");
     if (!in) {
-        X509err(0, ERR_R_SYS_LIB);
+        ERR_raise(ERR_LIB_X509, ERR_R_SYS_LIB);
         return 0;
     }
     inf = PEM_X509_INFO_read_bio_ex(in, NULL, NULL, "", libctx, propq);
     BIO_free(in);
     if (!inf) {
-        X509err(0, ERR_R_PEM_LIB);
+        ERR_raise(ERR_LIB_X509, ERR_R_PEM_LIB);
         return 0;
     }
     for (i = 0; i < sk_X509_INFO_num(inf); i++) {
@@ -246,7 +246,7 @@ int X509_load_cert_crl_file_ex(X509_LOOKUP *ctx, const char *file, int type,
         }
     }
     if (count == 0)
-        X509err(0, X509_R_NO_CERTIFICATE_OR_CRL_FOUND);
+        ERR_raise(ERR_LIB_X509, X509_R_NO_CERTIFICATE_OR_CRL_FOUND);
  err:
     sk_X509_INFO_pop_free(inf, X509_INFO_free);
     return count;

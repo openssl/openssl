@@ -87,7 +87,7 @@ static int provider_conf_load(OSSL_LIB_CTX *libctx, const char *name,
     ecmds = NCONF_get_section(cnf, value);
 
     if (!ecmds) {
-        CRYPTOerr(CRYPTO_F_PROVIDER_CONF_LOAD, CRYPTO_R_PROVIDER_SECTION_ERROR);
+        ERR_raise(ERR_LIB_CRYPTO, CRYPTO_R_PROVIDER_SECTION_ERROR);
         ERR_add_error_data(3, "section=", value, " not found");
         return 0;
     }
@@ -159,7 +159,7 @@ static int provider_conf_init(CONF_IMODULE *md, const CONF *cnf)
     elist = NCONF_get_section(cnf, CONF_imodule_get_value(md));
 
     if (!elist) {
-        CRYPTOerr(CRYPTO_F_PROVIDER_CONF_INIT,
+        ERR_raise(ERR_LIB_CRYPTO,
                   CRYPTO_R_PROVIDER_SECTION_ERROR);
         return 0;
     }

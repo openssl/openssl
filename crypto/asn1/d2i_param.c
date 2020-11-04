@@ -30,7 +30,7 @@ EVP_PKEY *d2i_KeyParams(int type, EVP_PKEY **a, const unsigned char **pp,
         goto err;
 
     if (ret->ameth == NULL || ret->ameth->param_decode == NULL) {
-        ASN1err(ASN1_F_D2I_KEYPARAMS, ASN1_R_UNSUPPORTED_TYPE);
+        ERR_raise(ERR_LIB_ASN1, ASN1_R_UNSUPPORTED_TYPE);
         goto err;
     }
 

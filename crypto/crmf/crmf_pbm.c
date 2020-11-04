@@ -53,7 +53,7 @@ OSSL_CRMF_PBMPARAMETER *OSSL_CRMF_pbmp_new(OSSL_LIB_CTX *libctx, size_t slen,
     if ((salt = OPENSSL_malloc(slen)) == NULL)
         goto err;
     if (RAND_bytes_ex(libctx, salt, (int)slen) <= 0) {
-        CRMFerr(CRMF_F_OSSL_CRMF_PBMP_NEW, CRMF_R_FAILURE_OBTAINING_RANDOM);
+        ERR_raise(ERR_LIB_CRMF, CRMF_R_FAILURE_OBTAINING_RANDOM);
         goto err;
     }
     if (!ASN1_OCTET_STRING_set(pbm->salt, salt, (int)slen))
@@ -65,7 +65,7 @@ OSSL_CRMF_PBMPARAMETER *OSSL_CRMF_pbmp_new(OSSL_LIB_CTX *libctx, size_t slen,
      * support SHA-1.
      */
     if (!X509_ALGOR_set0(pbm->owf, OBJ_nid2obj(owfnid), V_ASN1_UNDEF, NULL)) {
-        CRMFerr(CRMF_F_OSSL_CRMF_PBMP_NEW, CRMF_R_SETTING_OWF_ALGOR_FAILURE);
+        ERR_raise(ERR_LIB_CRMF, CRMF_R_SETTING_OWF_ALGOR_FAILURE);
         goto err;
     }
 
@@ -80,16 +80,16 @@ OSSL_CRMF_PBMPARAMETER *OSSL_CRMF_pbmp_new(OSSL_LIB_CTX *libctx, size_t slen,
      * this may not be true with all hash functions in the future.
      */
     if (itercnt < 100) {
-        CRMFerr(CRMF_F_OSSL_CRMF_PBMP_NEW, CRMF_R_ITERATIONCOUNT_BELOW_100);
+        ERR_raise(ERR_LIB_CRMF, CRMF_R_ITERATIONCOUNT_BELOW_100);
         goto err;
     }
     if (itercnt > OSSL_CRMF_PBM_MAX_ITERATION_COUNT) {
-        CRMFerr(CRMF_F_OSSL_CRMF_PBMP_NEW, CRMF_R_BAD_PBM_ITERATIONCOUNT);
+        ERR_raise(ERR_LIB_CRMF, CRMF_R_BAD_PBM_ITERATIONCOUNT);
         goto err;
     }
 
     if (!ASN1_INTEGER_set(pbm->iterationCount, itercnt)) {
-        CRMFerr(CRMF_F_OSSL_CRMF_PBMP_NEW, CRMF_R_CRMFERROR);
+        ERR_raise(ERR_LIB_CRMF, CRMF_R_CRMFERROR);
         goto err;
     }
 
@@ -99,7 +99,7 @@ OSSL_CRMF_PBMPARAMETER *OSSL_CRMF_pbmp_new(OSSL_LIB_CTX *libctx, size_t slen,
      * All implementations SHOULD support DES-MAC and Triple-DES-MAC [PKCS11].
      */
     if (!X509_ALGOR_set0(pbm->mac, OBJ_nid2obj(macnid), V_ASN1_UNDEF, NULL)) {
-        CRMFerr(CRMF_F_OSSL_CRMF_PBMP_NEW, CRMF_R_SETTING_MAC_ALGOR_FAILURE);
+        ERR_raise(ERR_LIB_CRMF, CRMF_R_SETTING_MAC_ALGOR_FAILURE);
         goto err;
     }
 
@@ -144,7 +144,7 @@ int OSSL_CRMF_pbm_new(OSSL_LIB_CTX *libctx, const char *propq,
 
     if (out == NULL || pbmp == NULL || pbmp->mac == NULL
             || pbmp->mac->algorithm == NULL || msg == NULL || sec == NULL) {
-        CRMFerr(CRMF_F_OSSL_CRMF_PBM_NEW, CRMF_R_NULL_ARGUMENT);
+        ERR_raise(ERR_LIB_CRMF, CRMF_R_NULL_ARGUMENT);
         goto err;
     }
     if ((mac_res = OPENSSL_malloc(EVP_MAX_MD_SIZE)) == NULL)
@@ -157,7 +157,7 @@ int OSSL_CRMF_pbm_new(OSSL_LIB_CTX *libctx, const char *propq,
      */
     mdname = OBJ_nid2sn(OBJ_obj2nid(pbmp->owf->algorithm));
     if ((owf = EVP_MD_fetch(libctx, mdname, propq)) == NULL) {
-        CRMFerr(CRMF_F_OSSL_CRMF_PBM_NEW, CRMF_R_UNSUPPORTED_ALGORITHM);
+        ERR_raise(ERR_LIB_CRMF, CRMF_R_UNSUPPORTED_ALGORITHM);
         goto err;
     }
 
@@ -178,7 +178,7 @@ int OSSL_CRMF_pbm_new(OSSL_LIB_CTX *libctx, const char *propq,
     if (!ASN1_INTEGER_get_int64(&iterations, pbmp->iterationCount)
             || iterations < 100 /* min from RFC */
             || iterations > OSSL_CRMF_PBM_MAX_ITERATION_COUNT) {
-        CRMFerr(CRMF_F_OSSL_CRMF_PBM_NEW, CRMF_R_BAD_PBM_ITERATIONCOUNT);
+        ERR_raise(ERR_LIB_CRMF, CRMF_R_BAD_PBM_ITERATIONCOUNT);
         goto err;
     }
 
@@ -201,7 +201,7 @@ int OSSL_CRMF_pbm_new(OSSL_LIB_CTX *libctx, const char *propq,
 
     if (!EVP_PBE_find(EVP_PBE_TYPE_PRF, mac_nid, NULL, &hmac_md_nid, NULL)
             || (mdname = OBJ_nid2sn(hmac_md_nid)) == NULL) {
-        CRMFerr(CRMF_F_OSSL_CRMF_PBM_NEW, CRMF_R_UNSUPPORTED_ALGORITHM);
+        ERR_raise(ERR_LIB_CRMF, CRMF_R_UNSUPPORTED_ALGORITHM);
         goto err;
     }
 

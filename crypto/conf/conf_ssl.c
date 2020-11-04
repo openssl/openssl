@@ -69,9 +69,9 @@ static int ssl_module_init(CONF_IMODULE *md, const CONF *cnf)
     cmd_lists = NCONF_get_section(cnf, ssl_conf_section);
     if (sk_CONF_VALUE_num(cmd_lists) <= 0) {
         if (cmd_lists == NULL)
-            CONFerr(CONF_F_SSL_MODULE_INIT, CONF_R_SSL_SECTION_NOT_FOUND);
+            ERR_raise(ERR_LIB_CONF, CONF_R_SSL_SECTION_NOT_FOUND);
         else
-            CONFerr(CONF_F_SSL_MODULE_INIT, CONF_R_SSL_SECTION_EMPTY);
+            ERR_raise(ERR_LIB_CONF, CONF_R_SSL_SECTION_EMPTY);
         ERR_add_error_data(2, "section=", ssl_conf_section);
         goto err;
     }
@@ -88,10 +88,10 @@ static int ssl_module_init(CONF_IMODULE *md, const CONF *cnf)
 
         if (sk_CONF_VALUE_num(cmds) <= 0) {
             if (cmds == NULL)
-                CONFerr(CONF_F_SSL_MODULE_INIT,
+                ERR_raise(ERR_LIB_CONF,
                         CONF_R_SSL_COMMAND_SECTION_NOT_FOUND);
             else
-                CONFerr(CONF_F_SSL_MODULE_INIT,
+                ERR_raise(ERR_LIB_CONF,
                         CONF_R_SSL_COMMAND_SECTION_EMPTY);
             ERR_add_error_data(4, "name=", sect->name, ", value=", sect->value);
             goto err;

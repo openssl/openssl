@@ -77,7 +77,7 @@ static int dh_cms_set_shared_info(EVP_PKEY_CTX *pctx, CMS_RecipientInfo *ri)
      * we will need something cleverer.
      */
     if (OBJ_obj2nid(alg->algorithm) != NID_id_smime_alg_ESDH) {
-        CMSerr(0, CMS_R_KDF_PARAMETER_ERROR);
+        ERR_raise(ERR_LIB_CMS, CMS_R_KDF_PARAMETER_ERROR);
         goto err;
     }
 
@@ -148,13 +148,13 @@ static int dh_cms_decrypt(CMS_RecipientInfo *ri)
         if (alg ==  NULL || pubkey == NULL)
             return 0;
         if (!dh_cms_set_peerkey(pctx, alg, pubkey)) {
-            DHerr(DH_F_DH_CMS_DECRYPT, DH_R_PEER_KEY_ERROR);
+            ERR_raise(ERR_LIB_DH, DH_R_PEER_KEY_ERROR);
             return 0;
         }
     }
     /* Set DH derivation parameters and initialise unwrap context */
     if (!dh_cms_set_shared_info(pctx, ri)) {
-        DHerr(DH_F_DH_CMS_DECRYPT, DH_R_SHARED_INFO_ERROR);
+        ERR_raise(ERR_LIB_DH, DH_R_SHARED_INFO_ERROR);
         return 0;
     }
     return 1;
@@ -311,6 +311,6 @@ int cms_dh_envelope(CMS_RecipientInfo *ri, int decrypt)
     if (decrypt == 0)
         return dh_cms_encrypt(ri);
 
-    CMSerr(0, CMS_R_NOT_SUPPORTED_FOR_THIS_KEY_TYPE);
+    ERR_raise(ERR_LIB_CMS, CMS_R_NOT_SUPPORTED_FOR_THIS_KEY_TYPE);
     return 0;
 }

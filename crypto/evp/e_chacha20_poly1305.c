@@ -503,7 +503,7 @@ static int chacha20_poly1305_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg,
             actx = ctx->cipher_data
                  = OPENSSL_zalloc(sizeof(*actx) + Poly1305_ctx_size());
         if (actx == NULL) {
-            EVPerr(EVP_F_CHACHA20_POLY1305_CTRL, EVP_R_INITIALIZATION_ERROR);
+            ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
             return 0;
         }
         actx->len.aad = 0;
@@ -523,7 +523,7 @@ static int chacha20_poly1305_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg,
             dst->cipher_data =
                    OPENSSL_memdup(actx, sizeof(*actx) + Poly1305_ctx_size());
             if (dst->cipher_data == NULL) {
-                EVPerr(EVP_F_CHACHA20_POLY1305_CTRL, EVP_R_COPY_ERROR);
+                ERR_raise(ERR_LIB_EVP, EVP_R_COPY_ERROR);
                 return 0;
             }
         }

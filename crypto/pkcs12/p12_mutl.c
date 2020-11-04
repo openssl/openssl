@@ -95,7 +95,7 @@ static int pkcs12_gen_mac(PKCS12 *p12, const char *pass, int passlen,
         pkcs12_key_gen = PKCS12_key_gen_utf8;
 
     if (!PKCS7_type_is_data(p12->authsafes)) {
-        PKCS12err(PKCS12_F_PKCS12_GEN_MAC, PKCS12_R_CONTENT_TYPE_NOT_DATA);
+        ERR_raise(ERR_LIB_PKCS12, PKCS12_R_CONTENT_TYPE_NOT_DATA);
         return 0;
     }
 
@@ -108,7 +108,7 @@ static int pkcs12_gen_mac(PKCS12 *p12, const char *pass, int passlen,
     X509_SIG_get0(p12->mac->dinfo, &macalg, NULL);
     X509_ALGOR_get0(&macoid, NULL, NULL, macalg);
     if ((md_type = EVP_get_digestbyobj(macoid)) == NULL) {
-        PKCS12err(PKCS12_F_PKCS12_GEN_MAC, PKCS12_R_UNKNOWN_DIGEST_ALGORITHM);
+        ERR_raise(ERR_LIB_PKCS12, PKCS12_R_UNKNOWN_DIGEST_ALGORITHM);
         return 0;
     }
     md_size = EVP_MD_size(md_type);
@@ -122,13 +122,13 @@ static int pkcs12_gen_mac(PKCS12 *p12, const char *pass, int passlen,
         md_size = TK26_MAC_KEY_LEN;
         if (!pkcs12_gen_gost_mac_key(pass, passlen, salt, saltlen, iter,
                                      md_size, key, md_type)) {
-            PKCS12err(PKCS12_F_PKCS12_GEN_MAC, PKCS12_R_KEY_GEN_ERROR);
+            ERR_raise(ERR_LIB_PKCS12, PKCS12_R_KEY_GEN_ERROR);
             goto err;
         }
     } else
         if (!(*pkcs12_key_gen)(pass, passlen, salt, saltlen, PKCS12_MAC_ID,
                                iter, md_size, key, md_type)) {
-        PKCS12err(PKCS12_F_PKCS12_GEN_MAC, PKCS12_R_KEY_GEN_ERROR);
+        ERR_raise(ERR_LIB_PKCS12, PKCS12_R_KEY_GEN_ERROR);
         goto err;
     }
     if ((hmac = HMAC_CTX_new()) == NULL
@@ -160,12 +160,12 @@ int PKCS12_verify_mac(PKCS12 *p12, const char *pass, int passlen)
     const ASN1_OCTET_STRING *macoct;
 
     if (p12->mac == NULL) {
-        PKCS12err(PKCS12_F_PKCS12_VERIFY_MAC, PKCS12_R_MAC_ABSENT);
+        ERR_raise(ERR_LIB_PKCS12, PKCS12_R_MAC_ABSENT);
         return 0;
     }
     if (!pkcs12_gen_mac(p12, pass, passlen, mac, &maclen,
                         PKCS12_key_gen_utf8)) {
-        PKCS12err(PKCS12_F_PKCS12_VERIFY_MAC, PKCS12_R_MAC_GENERATION_ERROR);
+        ERR_raise(ERR_LIB_PKCS12, PKCS12_R_MAC_GENERATION_ERROR);
         return 0;
     }
     X509_SIG_get0(p12->mac->dinfo, NULL, &macoct);
@@ -189,7 +189,7 @@ int PKCS12_set_mac(PKCS12 *p12, const char *pass, int passlen,
     if (!md_type)
         md_type = EVP_sha1();
     if (PKCS12_setup_mac(p12, iter, salt, saltlen, md_type) == PKCS12_ERROR) {
-        PKCS12err(PKCS12_F_PKCS12_SET_MAC, PKCS12_R_MAC_SETUP_ERROR);
+        ERR_raise(ERR_LIB_PKCS12, PKCS12_R_MAC_SETUP_ERROR);
         return 0;
     }
     /*
@@ -197,12 +197,12 @@ int PKCS12_set_mac(PKCS12 *p12, const char *pass, int passlen,
      */
     if (!pkcs12_gen_mac(p12, pass, passlen, mac, &maclen,
                         PKCS12_key_gen_utf8)) {
-        PKCS12err(PKCS12_F_PKCS12_SET_MAC, PKCS12_R_MAC_GENERATION_ERROR);
+        ERR_raise(ERR_LIB_PKCS12, PKCS12_R_MAC_GENERATION_ERROR);
         return 0;
     }
     X509_SIG_getm(p12->mac->dinfo, NULL, &macoct);
     if (!ASN1_OCTET_STRING_set(macoct, mac, maclen)) {
-        PKCS12err(PKCS12_F_PKCS12_SET_MAC, PKCS12_R_MAC_STRING_SET_ERROR);
+        ERR_raise(ERR_LIB_PKCS12, PKCS12_R_MAC_STRING_SET_ERROR);
         return 0;
     }
     return 1;
@@ -221,18 +221,18 @@ int PKCS12_setup_mac(PKCS12 *p12, int iter, unsigned char *salt, int saltlen,
         return PKCS12_ERROR;
     if (iter > 1) {
         if ((p12->mac->iter = ASN1_INTEGER_new()) == NULL) {
-            PKCS12err(PKCS12_F_PKCS12_SETUP_MAC, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_PKCS12, ERR_R_MALLOC_FAILURE);
             return 0;
         }
         if (!ASN1_INTEGER_set(p12->mac->iter, iter)) {
-            PKCS12err(PKCS12_F_PKCS12_SETUP_MAC, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_PKCS12, ERR_R_MALLOC_FAILURE);
             return 0;
         }
     }
     if (!saltlen)
         saltlen = PKCS12_SALT_LEN;
     if ((p12->mac->salt->data = OPENSSL_malloc(saltlen)) == NULL) {
-        PKCS12err(PKCS12_F_PKCS12_SETUP_MAC, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PKCS12, ERR_R_MALLOC_FAILURE);
         return 0;
     }
     p12->mac->salt->length = saltlen;
@@ -244,7 +244,7 @@ int PKCS12_setup_mac(PKCS12 *p12, int iter, unsigned char *salt, int saltlen,
     X509_SIG_getm(p12->mac->dinfo, &macalg, NULL);
     if (!X509_ALGOR_set0(macalg, OBJ_nid2obj(EVP_MD_type(md_type)),
                          V_ASN1_NULL, NULL)) {
-        PKCS12err(PKCS12_F_PKCS12_SETUP_MAC, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PKCS12, ERR_R_MALLOC_FAILURE);
         return 0;
     }
 

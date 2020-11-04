@@ -33,11 +33,11 @@ int ASN1_digest(i2d_of_void *i2d, const EVP_MD *type, char *data,
 
     inl = i2d(data, NULL);
     if (inl <= 0) {
-        ASN1err(ASN1_F_ASN1_DIGEST, ERR_R_INTERNAL_ERROR);
+        ERR_raise(ERR_LIB_ASN1, ERR_R_INTERNAL_ERROR);
         return 0;
     }
     if ((str = OPENSSL_malloc(inl)) == NULL) {
-        ASN1err(ASN1_F_ASN1_DIGEST, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
         return 0;
     }
     p = str;

@@ -64,7 +64,7 @@ int ec_group_todata(const EC_GROUP *group, OSSL_PARAM_BLD *tmpl,
     size_t genbuf_len, seed_len;
 
     if (group == NULL) {
-        ECerr(0,EC_R_PASSED_NULL_PARAMETER);
+        ERR_raise(ERR_LIB_EC,EC_R_PASSED_NULL_PARAMETER);
         return 0;
     }
 
@@ -74,7 +74,7 @@ int ec_group_todata(const EC_GROUP *group, OSSL_PARAM_BLD *tmpl,
         || !ossl_param_build_set_utf8_string(tmpl, params,
                                              OSSL_PKEY_PARAM_EC_ENCODING,
                                              encoding_name)) {
-        ECerr(0, EC_R_INVALID_ENCODING);
+        ERR_raise(ERR_LIB_EC, EC_R_INVALID_ENCODING);
         return 0;
     }
 
@@ -88,7 +88,7 @@ int ec_group_todata(const EC_GROUP *group, OSSL_PARAM_BLD *tmpl,
         } else if (fid == NID_X9_62_characteristic_two_field) {
             field_type = SN_X9_62_characteristic_two_field;
         } else {
-            ECerr(0, EC_R_INVALID_FIELD);
+            ERR_raise(ERR_LIB_EC, EC_R_INVALID_FIELD);
             return 0;
         }
 
@@ -96,29 +96,29 @@ int ec_group_todata(const EC_GROUP *group, OSSL_PARAM_BLD *tmpl,
         a = BN_CTX_get(bnctx);
         b = BN_CTX_get(bnctx);
         if (b == NULL) {
-            ECerr(0, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
             goto err;
         }
 
         if (!EC_GROUP_get_curve(group, p, a, b, bnctx)) {
-            ECerr(0, EC_R_INVALID_CURVE);
+            ERR_raise(ERR_LIB_EC, EC_R_INVALID_CURVE);
             goto err;
         }
 
         order = EC_GROUP_get0_order(group);
         if (order == NULL) {
-            ECerr(0, EC_R_INVALID_GROUP_ORDER);
+            ERR_raise(ERR_LIB_EC, EC_R_INVALID_GROUP_ORDER);
             goto err;
         }
         genpt = EC_GROUP_get0_generator(group);
         if (genpt == NULL) {
-            ECerr(0, EC_R_INVALID_GENERATOR);
+            ERR_raise(ERR_LIB_EC, EC_R_INVALID_GENERATOR);
             goto err;
         }
         genform = EC_GROUP_get_point_conversion_form(group);
         genbuf_len = EC_POINT_point2buf(group, genpt, genform, genbuf, bnctx);
         if (genbuf_len == 0) {
-            ECerr(0, EC_R_INVALID_GENERATOR);
+            ERR_raise(ERR_LIB_EC, EC_R_INVALID_GENERATOR);
             goto err;
         }
 
@@ -133,7 +133,7 @@ int ec_group_todata(const EC_GROUP *group, OSSL_PARAM_BLD *tmpl,
             || !ossl_param_build_set_octet_string(tmpl, params,
                                                   OSSL_PKEY_PARAM_EC_GENERATOR,
                                                   *genbuf, genbuf_len)) {
-            ECerr(0, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
             goto err;
         }
 
@@ -141,7 +141,7 @@ int ec_group_todata(const EC_GROUP *group, OSSL_PARAM_BLD *tmpl,
         if (cofactor != NULL
             && !ossl_param_build_set_bn(tmpl, params,
                                         OSSL_PKEY_PARAM_EC_COFACTOR, cofactor)) {
-            ECerr(0, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
             goto err;
         }
 
@@ -152,12 +152,12 @@ int ec_group_todata(const EC_GROUP *group, OSSL_PARAM_BLD *tmpl,
             && !ossl_param_build_set_octet_string(tmpl, params,
                                                   OSSL_PKEY_PARAM_EC_SEED,
                                                   seed, seed_len)) {
-            ECerr(0, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
             goto err;
         }
 #ifdef OPENSSL_NO_EC2M
         if (fid == NID_X9_62_characteristic_two_field) {
-            ECerr(0, EC_R_GF2M_NOT_SUPPORTED);
+            ERR_raise(ERR_LIB_EC, EC_R_GF2M_NOT_SUPPORTED);
             goto err;
         }
 #endif
@@ -169,7 +169,7 @@ int ec_group_todata(const EC_GROUP *group, OSSL_PARAM_BLD *tmpl,
             || !ossl_param_build_set_utf8_string(tmpl, params,
                                                  OSSL_PKEY_PARAM_GROUP_NAME,
                                                  curve_name)) {
-            ECerr(0, EC_R_INVALID_CURVE);
+            ERR_raise(ERR_LIB_EC, EC_R_INVALID_CURVE);
             goto err;
         }
     }

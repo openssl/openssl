@@ -89,7 +89,7 @@ static int conn_state(BIO *b, BIO_CONNECT *c)
         switch (c->state) {
         case BIO_CONN_S_BEFORE:
             if (c->param_hostname == NULL && c->param_service == NULL) {
-                BIOerr(BIO_F_CONN_STATE, BIO_R_NO_HOSTNAME_OR_SERVICE_SPECIFIED);
+                ERR_raise(ERR_LIB_BIO, BIO_R_NO_HOSTNAME_OR_SERVICE_SPECIFIED);
                 ERR_add_error_data(4,
                                    "hostname=", c->param_hostname,
                                    " service=", c->param_service);
@@ -111,7 +111,7 @@ static int conn_state(BIO *b, BIO_CONNECT *c)
                         family = AF_INET6;
                     } else {
 #endif
-                        BIOerr(BIO_F_CONN_STATE, BIO_R_UNAVAILABLE_IP_FAMILY);
+                        ERR_raise(ERR_LIB_BIO, BIO_R_UNAVAILABLE_IP_FAMILY);
                         goto exit_loop;
                     }
                     break;
@@ -122,7 +122,7 @@ static int conn_state(BIO *b, BIO_CONNECT *c)
                     family = AF_UNSPEC;
                     break;
                 default:
-                    BIOerr(BIO_F_CONN_STATE, BIO_R_UNSUPPORTED_IP_FAMILY);
+                    ERR_raise(ERR_LIB_BIO, BIO_R_UNSUPPORTED_IP_FAMILY);
                     goto exit_loop;
                 }
                 if (BIO_lookup(c->param_hostname, c->param_service,
@@ -131,7 +131,7 @@ static int conn_state(BIO *b, BIO_CONNECT *c)
                     goto exit_loop;
             }
             if (c->addr_first == NULL) {
-                BIOerr(BIO_F_CONN_STATE, BIO_R_LOOKUP_RETURNED_NOTHING);
+                ERR_raise(ERR_LIB_BIO, BIO_R_LOOKUP_RETURNED_NOTHING);
                 goto exit_loop;
             }
             c->addr_iter = c->addr_first;
@@ -146,7 +146,7 @@ static int conn_state(BIO *b, BIO_CONNECT *c)
                 ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
                                "calling socket(%s, %s)",
                                c->param_hostname, c->param_service);
-                BIOerr(BIO_F_CONN_STATE, BIO_R_UNABLE_TO_CREATE_SOCKET);
+                ERR_raise(ERR_LIB_BIO, BIO_R_UNABLE_TO_CREATE_SOCKET);
                 goto exit_loop;
             }
             b->num = ret;
@@ -202,7 +202,7 @@ static int conn_state(BIO *b, BIO_CONNECT *c)
                 ERR_raise_data(ERR_LIB_SYS, i,
                                "calling connect(%s, %s)",
                                 c->param_hostname, c->param_service);
-                BIOerr(BIO_F_CONN_STATE, BIO_R_NBIO_CONNECT_ERROR);
+                ERR_raise(ERR_LIB_BIO, BIO_R_NBIO_CONNECT_ERROR);
                 ret = 0;
                 goto exit_loop;
             } else
@@ -210,7 +210,7 @@ static int conn_state(BIO *b, BIO_CONNECT *c)
             break;
 
         case BIO_CONN_S_CONNECT_ERROR:
-            BIOerr(BIO_F_CONN_STATE, BIO_R_CONNECT_ERROR);
+            ERR_raise(ERR_LIB_BIO, BIO_R_CONNECT_ERROR);
             ret = 0;
             goto exit_loop;
 
@@ -241,7 +241,7 @@ BIO_CONNECT *BIO_CONNECT_new(void)
     BIO_CONNECT *ret;
 
     if ((ret = OPENSSL_zalloc(sizeof(*ret))) == NULL) {
-        BIOerr(BIO_F_BIO_CONNECT_NEW, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_BIO, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
     ret->state = BIO_CONN_S_BEFORE;

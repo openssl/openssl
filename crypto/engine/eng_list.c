@@ -54,7 +54,7 @@ static int engine_list_add(ENGINE *e)
     ENGINE *iterator = NULL;
 
     if (e == NULL) {
-        ENGINEerr(ENGINE_F_ENGINE_LIST_ADD, ERR_R_PASSED_NULL_PARAMETER);
+        ERR_raise(ERR_LIB_ENGINE, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
     iterator = engine_list_head;
@@ -63,13 +63,13 @@ static int engine_list_add(ENGINE *e)
         iterator = iterator->next;
     }
     if (conflict) {
-        ENGINEerr(ENGINE_F_ENGINE_LIST_ADD, ENGINE_R_CONFLICTING_ENGINE_ID);
+        ERR_raise(ERR_LIB_ENGINE, ENGINE_R_CONFLICTING_ENGINE_ID);
         return 0;
     }
     if (engine_list_head == NULL) {
         /* We are adding to an empty list. */
         if (engine_list_tail) {
-            ENGINEerr(ENGINE_F_ENGINE_LIST_ADD, ENGINE_R_INTERNAL_LIST_ERROR);
+            ERR_raise(ERR_LIB_ENGINE, ENGINE_R_INTERNAL_LIST_ERROR);
             return 0;
         }
         engine_list_head = e;
@@ -81,7 +81,7 @@ static int engine_list_add(ENGINE *e)
     } else {
         /* We are adding to the tail of an existing list. */
         if ((engine_list_tail == NULL) || (engine_list_tail->next != NULL)) {
-            ENGINEerr(ENGINE_F_ENGINE_LIST_ADD, ENGINE_R_INTERNAL_LIST_ERROR);
+            ERR_raise(ERR_LIB_ENGINE, ENGINE_R_INTERNAL_LIST_ERROR);
             return 0;
         }
         engine_list_tail->next = e;
@@ -103,7 +103,7 @@ static int engine_list_remove(ENGINE *e)
     ENGINE *iterator;
 
     if (e == NULL) {
-        ENGINEerr(ENGINE_F_ENGINE_LIST_REMOVE, ERR_R_PASSED_NULL_PARAMETER);
+        ERR_raise(ERR_LIB_ENGINE, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
     /* We need to check that e is in our linked list! */
@@ -111,7 +111,7 @@ static int engine_list_remove(ENGINE *e)
     while (iterator && (iterator != e))
         iterator = iterator->next;
     if (iterator == NULL) {
-        ENGINEerr(ENGINE_F_ENGINE_LIST_REMOVE,
+        ERR_raise(ERR_LIB_ENGINE,
                   ENGINE_R_ENGINE_IS_NOT_IN_LIST);
         return 0;
     }
@@ -135,7 +135,7 @@ ENGINE *ENGINE_get_first(void)
     ENGINE *ret;
 
     if (!RUN_ONCE(&engine_lock_init, do_engine_lock_init)) {
-        ENGINEerr(ENGINE_F_ENGINE_GET_FIRST, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_ENGINE, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
@@ -154,7 +154,7 @@ ENGINE *ENGINE_get_last(void)
     ENGINE *ret;
 
     if (!RUN_ONCE(&engine_lock_init, do_engine_lock_init)) {
-        ENGINEerr(ENGINE_F_ENGINE_GET_LAST, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_ENGINE, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
@@ -173,7 +173,7 @@ ENGINE *ENGINE_get_next(ENGINE *e)
 {
     ENGINE *ret = NULL;
     if (e == NULL) {
-        ENGINEerr(ENGINE_F_ENGINE_GET_NEXT, ERR_R_PASSED_NULL_PARAMETER);
+        ERR_raise(ERR_LIB_ENGINE, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
     CRYPTO_THREAD_write_lock(global_engine_lock);
@@ -193,7 +193,7 @@ ENGINE *ENGINE_get_prev(ENGINE *e)
 {
     ENGINE *ret = NULL;
     if (e == NULL) {
-        ENGINEerr(ENGINE_F_ENGINE_GET_PREV, ERR_R_PASSED_NULL_PARAMETER);
+        ERR_raise(ERR_LIB_ENGINE, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
     CRYPTO_THREAD_write_lock(global_engine_lock);
@@ -214,16 +214,16 @@ int ENGINE_add(ENGINE *e)
 {
     int to_return = 1;
     if (e == NULL) {
-        ENGINEerr(ENGINE_F_ENGINE_ADD, ERR_R_PASSED_NULL_PARAMETER);
+        ERR_raise(ERR_LIB_ENGINE, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
     if ((e->id == NULL) || (e->name == NULL)) {
-        ENGINEerr(ENGINE_F_ENGINE_ADD, ENGINE_R_ID_OR_NAME_MISSING);
+        ERR_raise(ERR_LIB_ENGINE, ENGINE_R_ID_OR_NAME_MISSING);
         return 0;
     }
     CRYPTO_THREAD_write_lock(global_engine_lock);
     if (!engine_list_add(e)) {
-        ENGINEerr(ENGINE_F_ENGINE_ADD, ENGINE_R_INTERNAL_LIST_ERROR);
+        ERR_raise(ERR_LIB_ENGINE, ENGINE_R_INTERNAL_LIST_ERROR);
         to_return = 0;
     }
     CRYPTO_THREAD_unlock(global_engine_lock);
@@ -235,12 +235,12 @@ int ENGINE_remove(ENGINE *e)
 {
     int to_return = 1;
     if (e == NULL) {
-        ENGINEerr(ENGINE_F_ENGINE_REMOVE, ERR_R_PASSED_NULL_PARAMETER);
+        ERR_raise(ERR_LIB_ENGINE, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
     CRYPTO_THREAD_write_lock(global_engine_lock);
     if (!engine_list_remove(e)) {
-        ENGINEerr(ENGINE_F_ENGINE_REMOVE, ENGINE_R_INTERNAL_LIST_ERROR);
+        ERR_raise(ERR_LIB_ENGINE, ENGINE_R_INTERNAL_LIST_ERROR);
         to_return = 0;
     }
     CRYPTO_THREAD_unlock(global_engine_lock);
@@ -282,13 +282,13 @@ ENGINE *ENGINE_by_id(const char *id)
     ENGINE *iterator;
     char *load_dir = NULL;
     if (id == NULL) {
-        ENGINEerr(ENGINE_F_ENGINE_BY_ID, ERR_R_PASSED_NULL_PARAMETER);
+        ERR_raise(ERR_LIB_ENGINE, ERR_R_PASSED_NULL_PARAMETER);
         return NULL;
     }
     ENGINE_load_builtin_engines();
 
     if (!RUN_ONCE(&engine_lock_init, do_engine_lock_init)) {
-        ENGINEerr(ENGINE_F_ENGINE_BY_ID, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_ENGINE, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
@@ -336,7 +336,7 @@ ENGINE *ENGINE_by_id(const char *id)
     }
  notfound:
     ENGINE_free(iterator);
-    ENGINEerr(ENGINE_F_ENGINE_BY_ID, ENGINE_R_NO_SUCH_ENGINE);
+    ERR_raise(ERR_LIB_ENGINE, ENGINE_R_NO_SUCH_ENGINE);
     ERR_add_error_data(2, "id=", id);
     return NULL;
     /* EEK! Experimental code ends */
@@ -346,7 +346,7 @@ int ENGINE_up_ref(ENGINE *e)
 {
     int i;
     if (e == NULL) {
-        ENGINEerr(ENGINE_F_ENGINE_UP_REF, ERR_R_PASSED_NULL_PARAMETER);
+        ERR_raise(ERR_LIB_ENGINE, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
     CRYPTO_UP_REF(&e->struct_ref, &i, global_engine_lock);

@@ -26,7 +26,7 @@ EVP_MAC_CTX *EVP_MAC_CTX_new(EVP_MAC *mac)
     if (ctx == NULL
         || (ctx->data = mac->newctx(ossl_provider_ctx(mac->prov))) == NULL
         || !EVP_MAC_up_ref(mac)) {
-        EVPerr(EVP_F_EVP_MAC_CTX_NEW, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
         if (ctx != NULL)
             mac->freectx(ctx->data);
         OPENSSL_free(ctx);
@@ -57,13 +57,13 @@ EVP_MAC_CTX *EVP_MAC_CTX_dup(const EVP_MAC_CTX *src)
 
     dst = OPENSSL_malloc(sizeof(*dst));
     if (dst == NULL) {
-        EVPerr(EVP_F_EVP_MAC_CTX_DUP, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
     *dst = *src;
     if (!EVP_MAC_up_ref(dst->meth)) {
-        EVPerr(EVP_F_EVP_MAC_CTX_DUP, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
         OPENSSL_free(dst);
         return NULL;
     }

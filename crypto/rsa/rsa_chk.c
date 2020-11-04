@@ -28,7 +28,7 @@ static int rsa_validate_keypair_multiprime(const RSA *key, BN_GENCB *cb)
 
     if (key->p == NULL || key->q == NULL || key->n == NULL
             || key->e == NULL || key->d == NULL) {
-        RSAerr(0, RSA_R_VALUE_MISSING);
+        ERR_raise(ERR_LIB_RSA, RSA_R_VALUE_MISSING);
         return 0;
     }
 
@@ -37,7 +37,7 @@ static int rsa_validate_keypair_multiprime(const RSA *key, BN_GENCB *cb)
         ex_primes = sk_RSA_PRIME_INFO_num(key->prime_infos);
         if (ex_primes <= 0
                 || (ex_primes + 2) > rsa_multip_cap(BN_num_bits(key->n))) {
-            RSAerr(0, RSA_R_INVALID_MULTI_PRIME_KEY);
+            ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_MULTI_PRIME_KEY);
             return 0;
         }
     }
@@ -51,29 +51,29 @@ static int rsa_validate_keypair_multiprime(const RSA *key, BN_GENCB *cb)
     if (i == NULL || j == NULL || k == NULL || l == NULL
             || m == NULL || ctx == NULL) {
         ret = -1;
-        RSAerr(0, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_RSA, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
     if (BN_is_one(key->e)) {
         ret = 0;
-        RSAerr(0, RSA_R_BAD_E_VALUE);
+        ERR_raise(ERR_LIB_RSA, RSA_R_BAD_E_VALUE);
     }
     if (!BN_is_odd(key->e)) {
         ret = 0;
-        RSAerr(0, RSA_R_BAD_E_VALUE);
+        ERR_raise(ERR_LIB_RSA, RSA_R_BAD_E_VALUE);
     }
 
     /* p prime? */
     if (BN_check_prime(key->p, NULL, cb) != 1) {
         ret = 0;
-        RSAerr(0, RSA_R_P_NOT_PRIME);
+        ERR_raise(ERR_LIB_RSA, RSA_R_P_NOT_PRIME);
     }
 
     /* q prime? */
     if (BN_check_prime(key->q, NULL, cb) != 1) {
         ret = 0;
-        RSAerr(0, RSA_R_Q_NOT_PRIME);
+        ERR_raise(ERR_LIB_RSA, RSA_R_Q_NOT_PRIME);
     }
 
     /* r_i prime? */
@@ -81,7 +81,7 @@ static int rsa_validate_keypair_multiprime(const RSA *key, BN_GENCB *cb)
         pinfo = sk_RSA_PRIME_INFO_value(key->prime_infos, idx);
         if (BN_check_prime(pinfo->r, NULL, cb) != 1) {
             ret = 0;
-            RSAerr(0, RSA_R_MP_R_NOT_PRIME);
+            ERR_raise(ERR_LIB_RSA, RSA_R_MP_R_NOT_PRIME);
         }
     }
 
@@ -100,9 +100,9 @@ static int rsa_validate_keypair_multiprime(const RSA *key, BN_GENCB *cb)
     if (BN_cmp(i, key->n) != 0) {
         ret = 0;
         if (ex_primes)
-            RSAerr(0, RSA_R_N_DOES_NOT_EQUAL_PRODUCT_OF_PRIMES);
+            ERR_raise(ERR_LIB_RSA, RSA_R_N_DOES_NOT_EQUAL_PRODUCT_OF_PRIMES);
         else
-            RSAerr(0, RSA_R_N_DOES_NOT_EQUAL_P_Q);
+            ERR_raise(ERR_LIB_RSA, RSA_R_N_DOES_NOT_EQUAL_P_Q);
     }
 
     /* d*e = 1  mod \lambda(n)? */
@@ -150,7 +150,7 @@ static int rsa_validate_keypair_multiprime(const RSA *key, BN_GENCB *cb)
 
     if (!BN_is_one(i)) {
         ret = 0;
-        RSAerr(0, RSA_R_D_E_NOT_CONGRUENT_TO_1);
+        ERR_raise(ERR_LIB_RSA, RSA_R_D_E_NOT_CONGRUENT_TO_1);
     }
 
     if (key->dmp1 != NULL && key->dmq1 != NULL && key->iqmp != NULL) {
@@ -165,7 +165,7 @@ static int rsa_validate_keypair_multiprime(const RSA *key, BN_GENCB *cb)
         }
         if (BN_cmp(j, key->dmp1) != 0) {
             ret = 0;
-            RSAerr(0, RSA_R_DMP1_NOT_CONGRUENT_TO_D);
+            ERR_raise(ERR_LIB_RSA, RSA_R_DMP1_NOT_CONGRUENT_TO_D);
         }
 
         /* dmq1 = d mod (q-1)? */
@@ -179,7 +179,7 @@ static int rsa_validate_keypair_multiprime(const RSA *key, BN_GENCB *cb)
         }
         if (BN_cmp(j, key->dmq1) != 0) {
             ret = 0;
-            RSAerr(0, RSA_R_DMQ1_NOT_CONGRUENT_TO_D);
+            ERR_raise(ERR_LIB_RSA, RSA_R_DMQ1_NOT_CONGRUENT_TO_D);
         }
 
         /* iqmp = q^-1 mod p? */
@@ -189,7 +189,7 @@ static int rsa_validate_keypair_multiprime(const RSA *key, BN_GENCB *cb)
         }
         if (BN_cmp(i, key->iqmp) != 0) {
             ret = 0;
-            RSAerr(0, RSA_R_IQMP_NOT_INVERSE_OF_Q);
+            ERR_raise(ERR_LIB_RSA, RSA_R_IQMP_NOT_INVERSE_OF_Q);
         }
     }
 
@@ -206,7 +206,7 @@ static int rsa_validate_keypair_multiprime(const RSA *key, BN_GENCB *cb)
         }
         if (BN_cmp(j, pinfo->d) != 0) {
             ret = 0;
-            RSAerr(0, RSA_R_MP_EXPONENT_NOT_CONGRUENT_TO_D);
+            ERR_raise(ERR_LIB_RSA, RSA_R_MP_EXPONENT_NOT_CONGRUENT_TO_D);
         }
         /* t_i = R_i ^ -1 mod r_i ? */
         if (!BN_mod_inverse(i, pinfo->pp, pinfo->r, ctx)) {
@@ -215,7 +215,7 @@ static int rsa_validate_keypair_multiprime(const RSA *key, BN_GENCB *cb)
         }
         if (BN_cmp(i, pinfo->t) != 0) {
             ret = 0;
-            RSAerr(0, RSA_R_MP_COEFFICIENT_NOT_INVERSE_OF_R);
+            ERR_raise(ERR_LIB_RSA, RSA_R_MP_COEFFICIENT_NOT_INVERSE_OF_R);
         }
     }
 

@@ -29,7 +29,7 @@ int ossl_rsa_padding_add_SSLv23_ex(OSSL_LIB_CTX *libctx, unsigned char *to,
     unsigned char *p;
 
     if (flen > (tlen - RSA_PKCS1_PADDING_SIZE)) {
-        RSAerr(0, RSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE);
+        ERR_raise(ERR_LIB_RSA, RSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE);
         return 0;
     }
 
@@ -84,13 +84,13 @@ int RSA_padding_check_SSLv23(unsigned char *to, int tlen,
         return -1;
 
     if (flen > num || num < RSA_PKCS1_PADDING_SIZE) {
-        RSAerr(RSA_F_RSA_PADDING_CHECK_SSLV23, RSA_R_DATA_TOO_SMALL);
+        ERR_raise(ERR_LIB_RSA, RSA_R_DATA_TOO_SMALL);
         return -1;
     }
 
     em = OPENSSL_malloc(num);
     if (em == NULL) {
-        RSAerr(RSA_F_RSA_PADDING_CHECK_SSLV23, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_RSA, ERR_R_MALLOC_FAILURE);
         return -1;
     }
     /*
@@ -176,7 +176,7 @@ int RSA_padding_check_SSLv23(unsigned char *to, int tlen,
     }
 
     OPENSSL_clear_free(em, num);
-    RSAerr(RSA_F_RSA_PADDING_CHECK_SSLV23, err);
+    ERR_raise(ERR_LIB_RSA, err);
     err_clear_last_constant_time(1 & good);
 
     return constant_time_select_int(good, mlen, -1);

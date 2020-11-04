@@ -30,7 +30,7 @@ int X509_print_ex_fp(FILE *fp, X509 *x, unsigned long nmflag,
     int ret;
 
     if ((b = BIO_new(BIO_s_file())) == NULL) {
-        X509err(X509_F_X509_PRINT_EX_FP, ERR_R_BUF_LIB);
+        ERR_raise(ERR_LIB_X509, ERR_R_BUF_LIB);
         return 0;
     }
     BIO_set_fp(b, fp, BIO_NOCLOSE);
@@ -509,7 +509,7 @@ int X509_STORE_CTX_print_verify_cb(int ok, X509_STORE_CTX *ctx)
             BIO_printf(bio, "Certs in trust store:\n");
             print_store_certs(bio, X509_STORE_CTX_get0_store(ctx));
         }
-        X509err(0, X509_R_CERTIFICATE_VERIFICATION_FAILED);
+        ERR_raise(ERR_LIB_X509, X509_R_CERTIFICATE_VERIFICATION_FAILED);
         ERR_add_error_mem_bio("\n", bio);
         BIO_free(bio);
     }

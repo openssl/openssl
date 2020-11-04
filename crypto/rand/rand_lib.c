@@ -236,7 +236,7 @@ int RAND_pseudo_bytes(unsigned char *buf, int num)
 
     if (meth != NULL && meth->pseudorand != NULL)
         return meth->pseudorand(buf, num);
-    RANDerr(RAND_F_RAND_PSEUDO_BYTES, RAND_R_FUNC_NOT_IMPLEMENTED);
+    ERR_raise(ERR_LIB_RAND, RAND_R_FUNC_NOT_IMPLEMENTED);
     return -1;
 }
 # endif
@@ -274,7 +274,7 @@ int RAND_priv_bytes_ex(OSSL_LIB_CTX *ctx, unsigned char *buf, int num)
     if (meth != NULL && meth != RAND_OpenSSL()) {
         if (meth->bytes != NULL)
             return meth->bytes(buf, num);
-        RANDerr(RAND_F_RAND_PRIV_BYTES_EX, RAND_R_FUNC_NOT_IMPLEMENTED);
+        ERR_raise(ERR_LIB_RAND, RAND_R_FUNC_NOT_IMPLEMENTED);
         return -1;
     }
 
@@ -298,7 +298,7 @@ int RAND_bytes_ex(OSSL_LIB_CTX *ctx, unsigned char *buf, int num)
     if (meth != NULL && meth != RAND_OpenSSL()) {
         if (meth->bytes != NULL)
             return meth->bytes(buf, num);
-        RANDerr(RAND_F_RAND_BYTES_EX, RAND_R_FUNC_NOT_IMPLEMENTED);
+        ERR_raise(ERR_LIB_RAND, RAND_R_FUNC_NOT_IMPLEMENTED);
         return -1;
     }
 
@@ -465,13 +465,13 @@ static EVP_RAND_CTX *rand_new_drbg(OSSL_LIB_CTX *libctx, EVP_RAND_CTX *parent,
     name = dgbl->rng_name != NULL ? dgbl->rng_name : "CTR-DRBG";
     rand = EVP_RAND_fetch(libctx, name, dgbl->rng_propq);
     if (rand == NULL) {
-        RANDerr(0, RAND_R_UNABLE_TO_FETCH_DRBG);
+        ERR_raise(ERR_LIB_RAND, RAND_R_UNABLE_TO_FETCH_DRBG);
         return NULL;
     }
     ctx = EVP_RAND_CTX_new(rand, parent);
     EVP_RAND_free(rand);
     if (ctx == NULL) {
-        RANDerr(0, RAND_R_UNABLE_TO_CREATE_DRBG);
+        ERR_raise(ERR_LIB_RAND, RAND_R_UNABLE_TO_CREATE_DRBG);
         return NULL;
     }
 
@@ -495,12 +495,12 @@ static EVP_RAND_CTX *rand_new_drbg(OSSL_LIB_CTX *libctx, EVP_RAND_CTX *parent,
                                        &reseed_time_interval);
     *p = OSSL_PARAM_construct_end();
     if (!EVP_RAND_set_ctx_params(ctx, params)) {
-        RANDerr(0, RAND_R_ERROR_INITIALISING_DRBG);
+        ERR_raise(ERR_LIB_RAND, RAND_R_ERROR_INITIALISING_DRBG);
         EVP_RAND_CTX_free(ctx);
         return NULL;
     }
     if (!EVP_RAND_instantiate(ctx, 0, 0, NULL, 0)) {
-        RANDerr(0, RAND_R_ERROR_INSTANTIATING_DRBG);
+        ERR_raise(ERR_LIB_RAND, RAND_R_ERROR_INSTANTIATING_DRBG);
         EVP_RAND_CTX_free(ctx);
         return NULL;
     }
@@ -602,7 +602,7 @@ static int random_set_string(char **p, const char *s)
     char *d = OPENSSL_strdup(s);
 
     if (d == NULL) {
-        CRYPTOerr(0, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
         return 0;
     }
     OPENSSL_free(*p);
@@ -626,7 +626,7 @@ static int random_conf_init(CONF_IMODULE *md, const CONF *cnf)
     /* Value is a section containing RANDOM configuration */
     elist = NCONF_get_section(cnf, CONF_imodule_get_value(md));
     if (elist == NULL) {
-        CRYPTOerr(0, CRYPTO_R_RANDOM_SECTION_ERROR);
+        ERR_raise(ERR_LIB_CRYPTO, CRYPTO_R_RANDOM_SECTION_ERROR);
         return 0;
     }
 
@@ -645,7 +645,7 @@ static int random_conf_init(CONF_IMODULE *md, const CONF *cnf)
             if (!random_set_string(&dgbl->rng_propq, cval->value))
                 return 0;
         } else {
-            CRYPTOerr(0, CRYPTO_R_UNKNOWN_NAME_IN_RANDOM_SECTION);
+            ERR_raise(ERR_LIB_CRYPTO, CRYPTO_R_UNKNOWN_NAME_IN_RANDOM_SECTION);
             ERR_add_error_data(4, "name=", cval->name, ", value=", cval->value);
             r = 0;
         }

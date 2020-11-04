@@ -95,7 +95,7 @@ int X509_check_purpose(X509 *x, int id, int ca)
 int X509_PURPOSE_set(int *p, int purpose)
 {
     if (X509_PURPOSE_get_by_id(purpose) == -1) {
-        X509V3err(X509V3_F_X509_PURPOSE_SET, X509V3_R_INVALID_PURPOSE);
+        ERR_raise(ERR_LIB_X509V3, X509V3_R_INVALID_PURPOSE);
         return 0;
     }
     *p = purpose;
@@ -163,7 +163,7 @@ int X509_PURPOSE_add(int id, int trust, int flags,
     /* Need a new entry */
     if (idx == -1) {
         if ((ptmp = OPENSSL_malloc(sizeof(*ptmp))) == NULL) {
-            X509V3err(X509V3_F_X509_PURPOSE_ADD, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
             return 0;
         }
         ptmp->flags = X509_PURPOSE_DYNAMIC;
@@ -179,7 +179,7 @@ int X509_PURPOSE_add(int id, int trust, int flags,
     ptmp->name = OPENSSL_strdup(name);
     ptmp->sname = OPENSSL_strdup(sname);
     if (ptmp->name == NULL|| ptmp->sname == NULL) {
-        X509V3err(X509V3_F_X509_PURPOSE_ADD, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
         goto err;
     }
     /* Keep the dynamic flag of existing entry */
@@ -196,11 +196,11 @@ int X509_PURPOSE_add(int id, int trust, int flags,
     if (idx == -1) {
         if (xptable == NULL
             && (xptable = sk_X509_PURPOSE_new(xp_cmp)) == NULL) {
-            X509V3err(X509V3_F_X509_PURPOSE_ADD, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
             goto err;
         }
         if (!sk_X509_PURPOSE_push(xptable, ptmp)) {
-            X509V3err(X509V3_F_X509_PURPOSE_ADD, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
             goto err;
         }
     }
@@ -308,7 +308,7 @@ static int setup_dp(const X509 *x, DIST_POINT *dp)
     int i;
 
     if (dp->distpoint == NULL && sk_GENERAL_NAME_num(dp->CRLissuer) <= 0) {
-        X509err(0, X509_R_INVALID_DISTPOINT);
+        ERR_raise(ERR_LIB_X509, X509_R_INVALID_DISTPOINT);
         return 0;
     }
     if (dp->reasons != NULL) {
@@ -436,7 +436,7 @@ int x509v3_cache_extensions(X509 *x)
              * in case ctx->param->flags & X509_V_FLAG_X509_STRICT
              */
             if (bs->pathlen->type == V_ASN1_NEG_INTEGER) {
-                X509err(0, X509V3_R_NEGATIVE_PATHLEN);
+                ERR_raise(ERR_LIB_X509, X509V3_R_NEGATIVE_PATHLEN);
                 x->ex_flags |= EXFLAG_INVALID;
             } else {
                 x->ex_pathlen = ASN1_INTEGER_get(bs->pathlen);
@@ -477,7 +477,7 @@ int x509v3_cache_extensions(X509 *x)
         ASN1_BIT_STRING_free(usage);
         /* Check for empty key usage according to RFC 5280 section 4.2.1.3 */
         if (x->ex_kusage == 0) {
-            X509err(0, X509V3_R_EMPTY_KEY_USAGE);
+            ERR_raise(ERR_LIB_X509, X509V3_R_EMPTY_KEY_USAGE);
             x->ex_flags |= EXFLAG_INVALID;
         }
     } else if (i != -1) {
@@ -629,7 +629,7 @@ int x509v3_cache_extensions(X509 *x)
         CRYPTO_THREAD_unlock(x->lock);
         return 1;
     }
-    X509err(0, X509V3_R_INVALID_CERTIFICATE);
+    ERR_raise(ERR_LIB_X509, X509V3_R_INVALID_CERTIFICATE);
 
  err:
     x->ex_flags |= EXFLAG_SET; /* indicate that cert has been processed */

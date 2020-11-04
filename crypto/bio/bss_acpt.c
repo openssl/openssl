@@ -93,7 +93,7 @@ static BIO_ACCEPT *BIO_ACCEPT_new(void)
     BIO_ACCEPT *ret;
 
     if ((ret = OPENSSL_zalloc(sizeof(*ret))) == NULL) {
-        BIOerr(BIO_F_BIO_ACCEPT_NEW, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_BIO, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
     ret->accept_family = BIO_FAMILY_IPANY;
@@ -156,7 +156,7 @@ static int acpt_state(BIO *b, BIO_ACCEPT *c)
         switch (c->state) {
         case ACPT_S_BEFORE:
             if (c->param_addr == NULL && c->param_serv == NULL) {
-                BIOerr(BIO_F_ACPT_STATE, BIO_R_NO_ACCEPT_ADDR_OR_SERVICE_SPECIFIED);
+                ERR_raise(ERR_LIB_BIO, BIO_R_NO_ACCEPT_ADDR_OR_SERVICE_SPECIFIED);
                 ERR_add_error_data(4,
                                    "hostname=", c->param_addr,
                                    " service=", c->param_serv);
@@ -192,7 +192,7 @@ static int acpt_state(BIO *b, BIO_ACCEPT *c)
                         family = AF_INET6;
                     } else {
 #endif
-                        BIOerr(BIO_F_ACPT_STATE, BIO_R_UNAVAILABLE_IP_FAMILY);
+                        ERR_raise(ERR_LIB_BIO, BIO_R_UNAVAILABLE_IP_FAMILY);
                         goto exit_loop;
                     }
                     break;
@@ -203,7 +203,7 @@ static int acpt_state(BIO *b, BIO_ACCEPT *c)
                     family = AF_UNSPEC;
                     break;
                 default:
-                    BIOerr(BIO_F_ACPT_STATE, BIO_R_UNSUPPORTED_IP_FAMILY);
+                    ERR_raise(ERR_LIB_BIO, BIO_R_UNSUPPORTED_IP_FAMILY);
                     goto exit_loop;
                 }
                 if (BIO_lookup(c->param_addr, c->param_serv, BIO_LOOKUP_SERVER,
@@ -211,7 +211,7 @@ static int acpt_state(BIO *b, BIO_ACCEPT *c)
                     goto exit_loop;
             }
             if (c->addr_first == NULL) {
-                BIOerr(BIO_F_ACPT_STATE, BIO_R_LOOKUP_RETURNED_NOTHING);
+                ERR_raise(ERR_LIB_BIO, BIO_R_LOOKUP_RETURNED_NOTHING);
                 goto exit_loop;
             }
             /* We're currently not iterating, but set this as preparation
@@ -229,7 +229,7 @@ static int acpt_state(BIO *b, BIO_ACCEPT *c)
                 ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
                                "calling socket(%s, %s)",
                                 c->param_addr, c->param_serv);
-                BIOerr(BIO_F_ACPT_STATE, BIO_R_UNABLE_TO_CREATE_SOCKET);
+                ERR_raise(ERR_LIB_BIO, BIO_R_UNABLE_TO_CREATE_SOCKET);
                 goto exit_loop;
             }
             c->accept_sock = s;

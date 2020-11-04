@@ -93,7 +93,7 @@ int EVP_RAND_enable_locking(EVP_RAND_CTX *rand)
 {
     if (rand->meth->enable_locking != NULL)
         return rand->meth->enable_locking(rand->data);
-    EVPerr(0, EVP_R_LOCKING_NOT_SUPPORTED);
+    ERR_raise(ERR_LIB_EVP, EVP_R_LOCKING_NOT_SUPPORTED);
     return 0;
 }
 
@@ -123,7 +123,7 @@ static void *evp_rand_from_dispatch(int name_id,
 #endif
 
     if ((rand = evp_rand_new()) == NULL) {
-        EVPerr(0, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
     rand->name_id = name_id;
@@ -322,25 +322,25 @@ EVP_RAND_CTX *EVP_RAND_CTX_new(EVP_RAND *rand, EVP_RAND_CTX *parent)
     const OSSL_DISPATCH *parent_dispatch = NULL;
 
     if (rand == NULL) {
-        EVPerr(0, EVP_R_INVALID_NULL_ALGORITHM);
+        ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_NULL_ALGORITHM);
         return NULL;
     }
 
     ctx = OPENSSL_zalloc(sizeof(*ctx));
     if (ctx == NULL || (ctx->refcnt_lock = CRYPTO_THREAD_lock_new()) == NULL) {
         OPENSSL_free(ctx);
-        EVPerr(0, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
     if (parent != NULL) {
         if (!EVP_RAND_enable_locking(parent)) {
-            EVPerr(0, EVP_R_UNABLE_TO_ENABLE_PARENT_LOCKING);
+            ERR_raise(ERR_LIB_EVP, EVP_R_UNABLE_TO_ENABLE_PARENT_LOCKING);
             CRYPTO_THREAD_lock_free(ctx->refcnt_lock);
             OPENSSL_free(ctx);
             return NULL;
         }
         if (!evp_rand_ctx_up_ref(parent)) {
-            EVPerr(0, ERR_R_INTERNAL_ERROR);
+            ERR_raise(ERR_LIB_EVP, ERR_R_INTERNAL_ERROR);
             CRYPTO_THREAD_lock_free(ctx->refcnt_lock);
             OPENSSL_free(ctx);
             return NULL;
@@ -351,7 +351,7 @@ EVP_RAND_CTX *EVP_RAND_CTX_new(EVP_RAND *rand, EVP_RAND_CTX *parent)
     if ((ctx->data = rand->newctx(ossl_provider_ctx(rand->prov), parent_ctx,
                                   parent_dispatch)) == NULL
             || !EVP_RAND_up_ref(rand)) {
-        EVPerr(0, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
         rand->freectx(ctx->data);
         CRYPTO_THREAD_lock_free(ctx->refcnt_lock);
         OPENSSL_free(ctx);
@@ -515,14 +515,14 @@ static int evp_rand_generate_locked(EVP_RAND_CTX *ctx, unsigned char *out,
                                             &max_request);
     if (!evp_rand_get_ctx_params_locked(ctx, params)
             || max_request == 0) {
-        EVPerr(0, EVP_R_UNABLE_TO_GET_MAXIMUM_REQUEST_SIZE);
+        ERR_raise(ERR_LIB_EVP, EVP_R_UNABLE_TO_GET_MAXIMUM_REQUEST_SIZE);
         return 0;
     }
     for (; outlen > 0; outlen -= chunk, out += chunk) {
         chunk = outlen > max_request ? max_request : outlen;
         if (!ctx->meth->generate(ctx->data, out, chunk, strength,
                                  prediction_resistance, addin, addin_len)) {
-            EVPerr(0, EVP_R_GENERATE_ERROR);
+            ERR_raise(ERR_LIB_EVP, EVP_R_GENERATE_ERROR);
             return 0;
         }
         /*

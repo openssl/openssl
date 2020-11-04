@@ -20,7 +20,7 @@
 
 static int update(EVP_MD_CTX *ctx, const void *data, size_t datalen)
 {
-    EVPerr(EVP_F_UPDATE, EVP_R_ONLY_ONESHOT_SUPPORTED);
+    ERR_raise(ERR_LIB_EVP, EVP_R_ONLY_ONESHOT_SUPPORTED);
     return 0;
 }
 
@@ -242,7 +242,7 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
         type = evp_get_digestbyname_ex(locpctx->libctx, mdname);
 
     if (ctx->pctx->pmeth == NULL) {
-        EVPerr(0, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
         return 0;
     }
 
@@ -255,7 +255,7 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
         }
 
         if (type == NULL) {
-            EVPerr(EVP_F_DO_SIGVER_INIT, EVP_R_NO_DEFAULT_DIGEST);
+            ERR_raise(ERR_LIB_EVP, EVP_R_NO_DEFAULT_DIGEST);
             return 0;
         }
     }

@@ -88,12 +88,12 @@ int ossl_rsa_fips186_4_gen_prob_primes(RSA *rsa, RSA_ACVP_TEST *test,
      * Signature Generation and Key Agree/Transport.
      */
     if (nbits < RSA_FIPS1864_MIN_KEYGEN_KEYSIZE) {
-        RSAerr(0, RSA_R_KEY_SIZE_TOO_SMALL);
+        ERR_raise(ERR_LIB_RSA, RSA_R_KEY_SIZE_TOO_SMALL);
         return 0;
     }
 
     if (!ossl_rsa_check_public_exponent(e)) {
-        RSAerr(0, RSA_R_PUB_EXPONENT_OUT_OF_RANGE);
+        ERR_raise(ERR_LIB_RSA, RSA_R_PUB_EXPONENT_OUT_OF_RANGE);
         return 0;
     }
 
@@ -175,12 +175,12 @@ int ossl_rsa_sp800_56b_validate_strength(int nbits, int strength)
 #ifdef FIPS_MODULE
     if (s < RSA_FIPS1864_MIN_KEYGEN_STRENGTH
             || s > RSA_FIPS1864_MAX_KEYGEN_STRENGTH) {
-        RSAerr(0, RSA_R_INVALID_MODULUS);
+        ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_MODULUS);
         return 0;
     }
 #endif
     if (strength != -1 && s != strength) {
-        RSAerr(0, RSA_R_INVALID_STRENGTH);
+        ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_STRENGTH);
         return 0;
     }
     return 1;
@@ -406,7 +406,7 @@ int ossl_rsa_sp800_56b_pairwise_test(RSA *rsa, BN_CTX *ctx)
           && BN_mod_exp(tmp, tmp, rsa->d, rsa->n, ctx)
           && BN_cmp(k, tmp) == 0);
     if (ret == 0)
-        RSAerr(0, RSA_R_PAIRWISE_TEST_FAILURE);
+        ERR_raise(ERR_LIB_RSA, RSA_R_PAIRWISE_TEST_FAILURE);
 err:
     BN_CTX_end(ctx);
     return ret;

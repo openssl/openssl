@@ -54,7 +54,7 @@ LHASH_OF(CONF_VALUE) *CONF_load(LHASH_OF(CONF_VALUE) *conf, const char *file,
     in = BIO_new_file(file, "rb");
 #endif
     if (in == NULL) {
-        CONFerr(CONF_F_CONF_LOAD, ERR_R_SYS_LIB);
+        ERR_raise(ERR_LIB_CONF, ERR_R_SYS_LIB);
         return NULL;
     }
 
@@ -71,7 +71,7 @@ LHASH_OF(CONF_VALUE) *CONF_load_fp(LHASH_OF(CONF_VALUE) *conf, FILE *fp,
     BIO *btmp;
     LHASH_OF(CONF_VALUE) *ltmp;
     if ((btmp = BIO_new_fp(fp, BIO_NOCLOSE)) == NULL) {
-        CONFerr(CONF_F_CONF_LOAD_FP, ERR_R_BUF_LIB);
+        ERR_raise(ERR_LIB_CONF, ERR_R_BUF_LIB);
         return NULL;
     }
     ltmp = CONF_load_bio(conf, btmp, eline);
@@ -153,7 +153,7 @@ int CONF_dump_fp(LHASH_OF(CONF_VALUE) *conf, FILE *out)
     int ret;
 
     if ((btmp = BIO_new_fp(out, BIO_NOCLOSE)) == NULL) {
-        CONFerr(CONF_F_CONF_DUMP_FP, ERR_R_BUF_LIB);
+        ERR_raise(ERR_LIB_CONF, ERR_R_BUF_LIB);
         return 0;
     }
     ret = CONF_dump_bio(conf, btmp);
@@ -187,7 +187,7 @@ CONF *NCONF_new_ex(OSSL_LIB_CTX *libctx, CONF_METHOD *meth)
 
     ret = meth->create(meth);
     if (ret == NULL) {
-        CONFerr(0, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_CONF, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
     ret->libctx = libctx;
@@ -217,7 +217,7 @@ void NCONF_free_data(CONF *conf)
 int NCONF_load(CONF *conf, const char *file, long *eline)
 {
     if (conf == NULL) {
-        CONFerr(CONF_F_NCONF_LOAD, CONF_R_NO_CONF);
+        ERR_raise(ERR_LIB_CONF, CONF_R_NO_CONF);
         return 0;
     }
 
@@ -230,7 +230,7 @@ int NCONF_load_fp(CONF *conf, FILE *fp, long *eline)
     BIO *btmp;
     int ret;
     if ((btmp = BIO_new_fp(fp, BIO_NOCLOSE)) == NULL) {
-        CONFerr(CONF_F_NCONF_LOAD_FP, ERR_R_BUF_LIB);
+        ERR_raise(ERR_LIB_CONF, ERR_R_BUF_LIB);
         return 0;
     }
     ret = NCONF_load_bio(conf, btmp, eline);
@@ -242,7 +242,7 @@ int NCONF_load_fp(CONF *conf, FILE *fp, long *eline)
 int NCONF_load_bio(CONF *conf, BIO *bp, long *eline)
 {
     if (conf == NULL) {
-        CONFerr(CONF_F_NCONF_LOAD_BIO, CONF_R_NO_CONF);
+        ERR_raise(ERR_LIB_CONF, CONF_R_NO_CONF);
         return 0;
     }
 
@@ -252,12 +252,12 @@ int NCONF_load_bio(CONF *conf, BIO *bp, long *eline)
 STACK_OF(CONF_VALUE) *NCONF_get_section(const CONF *conf, const char *section)
 {
     if (conf == NULL) {
-        CONFerr(CONF_F_NCONF_GET_SECTION, CONF_R_NO_CONF);
+        ERR_raise(ERR_LIB_CONF, CONF_R_NO_CONF);
         return NULL;
     }
 
     if (section == NULL) {
-        CONFerr(CONF_F_NCONF_GET_SECTION, CONF_R_NO_SECTION);
+        ERR_raise(ERR_LIB_CONF, CONF_R_NO_SECTION);
         return NULL;
     }
 
@@ -276,11 +276,11 @@ char *NCONF_get_string(const CONF *conf, const char *group, const char *name)
         return s;
 
     if (conf == NULL) {
-        CONFerr(CONF_F_NCONF_GET_STRING,
+        ERR_raise(ERR_LIB_CONF,
                 CONF_R_NO_CONF_OR_ENVIRONMENT_VARIABLE);
         return NULL;
     }
-    CONFerr(CONF_F_NCONF_GET_STRING, CONF_R_NO_VALUE);
+    ERR_raise(ERR_LIB_CONF, CONF_R_NO_VALUE);
     ERR_add_error_data(4, "group=", group, " name=", name);
     return NULL;
 }
@@ -304,7 +304,7 @@ int NCONF_get_number_e(const CONF *conf, const char *group, const char *name,
     int (*to_int)(const CONF *, char) = &default_to_int;
 
     if (result == NULL) {
-        CONFerr(CONF_F_NCONF_GET_NUMBER_E, ERR_R_PASSED_NULL_PARAMETER);
+        ERR_raise(ERR_LIB_CONF, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
 
@@ -323,7 +323,7 @@ int NCONF_get_number_e(const CONF *conf, const char *group, const char *name,
         const int d = to_int(conf, *str);
 
         if (res > (LONG_MAX - d) / 10L) {
-            CONFerr(CONF_F_NCONF_GET_NUMBER_E, CONF_R_NUMBER_TOO_LARGE);
+            ERR_raise(ERR_LIB_CONF, CONF_R_NUMBER_TOO_LARGE);
             return 0;
         }
         res = res * 10 + d;
@@ -351,7 +351,7 @@ int NCONF_dump_fp(const CONF *conf, FILE *out)
     BIO *btmp;
     int ret;
     if ((btmp = BIO_new_fp(out, BIO_NOCLOSE)) == NULL) {
-        CONFerr(CONF_F_NCONF_DUMP_FP, ERR_R_BUF_LIB);
+        ERR_raise(ERR_LIB_CONF, ERR_R_BUF_LIB);
         return 0;
     }
     ret = NCONF_dump_bio(conf, btmp);
@@ -363,7 +363,7 @@ int NCONF_dump_fp(const CONF *conf, FILE *out)
 int NCONF_dump_bio(const CONF *conf, BIO *out)
 {
     if (conf == NULL) {
-        CONFerr(CONF_F_NCONF_DUMP_BIO, CONF_R_NO_CONF);
+        ERR_raise(ERR_LIB_CONF, CONF_R_NO_CONF);
         return 0;
     }
 

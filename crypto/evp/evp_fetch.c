@@ -408,7 +408,7 @@ static int evp_set_parsed_default_properties(OSSL_LIB_CTX *libctx,
             ossl_method_store_flush_cache(store, 0);
         return 1;
     }
-    EVPerr(0, ERR_R_INTERNAL_ERROR);
+    ERR_raise(ERR_LIB_EVP, ERR_R_INTERNAL_ERROR);
     return 0;
 }
 
@@ -418,7 +418,7 @@ int evp_set_default_properties_int(OSSL_LIB_CTX *libctx, const char *propq,
     OSSL_PROPERTY_LIST *pl = NULL;
 
     if (propq != NULL && (pl = ossl_parse_query(libctx, propq)) == NULL) {
-        EVPerr(0, EVP_R_DEFAULT_QUERY_PARSE_ERROR);
+        ERR_raise(ERR_LIB_EVP, EVP_R_DEFAULT_QUERY_PARSE_ERROR);
         return 0;
     }
     return evp_set_parsed_default_properties(libctx, pl, loadconfig);
@@ -439,13 +439,13 @@ static int evp_default_properties_merge(OSSL_LIB_CTX *libctx, const char *propq)
     if (plp == NULL || *plp == NULL)
         return EVP_set_default_properties(libctx, propq);
     if ((pl1 = ossl_parse_query(libctx, propq)) == NULL) {
-        EVPerr(0, EVP_R_DEFAULT_QUERY_PARSE_ERROR);
+        ERR_raise(ERR_LIB_EVP, EVP_R_DEFAULT_QUERY_PARSE_ERROR);
         return 0;
     }
     pl2 = ossl_property_merge(pl1, *plp);
     ossl_property_free(pl1);
     if (pl2 == NULL) {
-        EVPerr(0, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
         return 0;
     }
     return evp_set_parsed_default_properties(libctx, pl2, 0);

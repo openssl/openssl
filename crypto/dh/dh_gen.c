@@ -160,12 +160,12 @@ static int dh_builtin_genparams(DH *ret, int prime_len, int generator,
     BN_CTX *ctx = NULL;
 
     if (prime_len > OPENSSL_DH_MAX_MODULUS_BITS) {
-        DHerr(DH_F_DH_BUILTIN_GENPARAMS, DH_R_MODULUS_TOO_LARGE);
+        ERR_raise(ERR_LIB_DH, DH_R_MODULUS_TOO_LARGE);
         return 0;
     }
 
     if (prime_len < DH_MIN_MODULUS_BITS) {
-        DHerr(DH_F_DH_BUILTIN_GENPARAMS, DH_R_MODULUS_TOO_SMALL);
+        ERR_raise(ERR_LIB_DH, DH_R_MODULUS_TOO_SMALL);
         return 0;
     }
 
@@ -185,7 +185,7 @@ static int dh_builtin_genparams(DH *ret, int prime_len, int generator,
         goto err;
 
     if (generator <= 1) {
-        DHerr(DH_F_DH_BUILTIN_GENPARAMS, DH_R_BAD_GENERATOR);
+        ERR_raise(ERR_LIB_DH, DH_R_BAD_GENERATOR);
         goto err;
     }
     if (generator == DH_GENERATOR_2) {
@@ -223,7 +223,7 @@ static int dh_builtin_genparams(DH *ret, int prime_len, int generator,
     ok = 1;
  err:
     if (ok == -1) {
-        DHerr(DH_F_DH_BUILTIN_GENPARAMS, ERR_R_BN_LIB);
+        ERR_raise(ERR_LIB_DH, ERR_R_BN_LIB);
         ok = 0;
     }
 

@@ -25,7 +25,7 @@ ASN1_OBJECT *OBJ_dup(const ASN1_OBJECT *o)
 
     r = ASN1_OBJECT_new();
     if (r == NULL) {
-        OBJerr(OBJ_F_OBJ_DUP, ERR_R_ASN1_LIB);
+        ERR_raise(ERR_LIB_OBJ, ERR_R_ASN1_LIB);
         return NULL;
     }
 
@@ -50,7 +50,7 @@ ASN1_OBJECT *OBJ_dup(const ASN1_OBJECT *o)
     return r;
  err:
     ASN1_OBJECT_free(r);
-    OBJerr(OBJ_F_OBJ_DUP, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_OBJ, ERR_R_MALLOC_FAILURE);
     return NULL;
 }
 

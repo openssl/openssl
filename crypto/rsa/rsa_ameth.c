@@ -65,7 +65,7 @@ static int rsa_param_decode(RSA *rsa, const X509_ALGOR *alg)
     if (algptype == V_ASN1_UNDEF)
         return 1;
     if (algptype != V_ASN1_SEQUENCE) {
-        RSAerr(RSA_F_RSA_PARAM_DECODE, RSA_R_INVALID_PSS_PARAMETERS);
+        ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_PSS_PARAMETERS);
         return 0;
     }
     rsa->pss = rsa_pss_decode(alg);
@@ -177,14 +177,14 @@ static int rsa_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
     rklen = i2d_RSAPrivateKey(pkey->pkey.rsa, &rk);
 
     if (rklen <= 0) {
-        RSAerr(RSA_F_RSA_PRIV_ENCODE, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_RSA, ERR_R_MALLOC_FAILURE);
         ASN1_STRING_free(str);
         return 0;
     }
 
     if (!PKCS8_pkey_set0(p8, OBJ_nid2obj(pkey->ameth->pkey_id), 0,
                          strtype, str, rk, rklen)) {
-        RSAerr(RSA_F_RSA_PRIV_ENCODE, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_RSA, ERR_R_MALLOC_FAILURE);
         ASN1_STRING_free(str);
         return 0;
     }
@@ -203,7 +203,7 @@ static int rsa_priv_decode(EVP_PKEY *pkey, const PKCS8_PRIV_KEY_INFO *p8)
         return 0;
     rsa = d2i_RSAPrivateKey(NULL, &p, pklen);
     if (rsa == NULL) {
-        RSAerr(RSA_F_RSA_PRIV_DECODE, ERR_R_RSA_LIB);
+        ERR_raise(ERR_LIB_RSA, ERR_R_RSA_LIB);
         return 0;
     }
     if (!rsa_param_decode(rsa, alg)) {
@@ -509,7 +509,7 @@ static int rsa_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
         if (pkey->pkey.rsa->pss != NULL) {
             if (!rsa_pss_get_param(pkey->pkey.rsa->pss, &md, &mgf1md,
                                    &min_saltlen)) {
-                RSAerr(0, ERR_R_INTERNAL_ERROR);
+                ERR_raise(ERR_LIB_RSA, ERR_R_INTERNAL_ERROR);
                 return 0;
             }
             *(int *)arg2 = EVP_MD_type(md);
@@ -618,14 +618,14 @@ int ossl_rsa_pss_to_ctx(EVP_MD_CTX *ctx, EVP_PKEY_CTX *pkctx,
 
     /* Sanity check: make sure it is PSS */
     if (OBJ_obj2nid(sigalg->algorithm) != EVP_PKEY_RSA_PSS) {
-        RSAerr(0, RSA_R_UNSUPPORTED_SIGNATURE_TYPE);
+        ERR_raise(ERR_LIB_RSA, RSA_R_UNSUPPORTED_SIGNATURE_TYPE);
         return -1;
     }
     /* Decode PSS parameters */
     pss = rsa_pss_decode(sigalg);
 
     if (!rsa_pss_get_param(pss, &md, &mgf1md, &saltlen)) {
-        RSAerr(0, RSA_R_INVALID_PSS_PARAMETERS);
+        ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_PSS_PARAMETERS);
         goto err;
     }
 
@@ -638,7 +638,7 @@ int ossl_rsa_pss_to_ctx(EVP_MD_CTX *ctx, EVP_PKEY_CTX *pkctx,
         if (EVP_PKEY_CTX_get_signature_md(pkctx, &checkmd) <= 0)
             goto err;
         if (EVP_MD_type(md) != EVP_MD_type(checkmd)) {
-            RSAerr(0, RSA_R_DIGEST_DOES_NOT_MATCH);
+            ERR_raise(ERR_LIB_RSA, RSA_R_DIGEST_DOES_NOT_MATCH);
             goto err;
         }
     }
@@ -770,7 +770,7 @@ static int rsa_item_verify(EVP_MD_CTX *ctx, const ASN1_ITEM *it,
 {
     /* Sanity check: make sure it is PSS */
     if (OBJ_obj2nid(sigalg->algorithm) != EVP_PKEY_RSA_PSS) {
-        RSAerr(RSA_F_RSA_ITEM_VERIFY, RSA_R_UNSUPPORTED_SIGNATURE_TYPE);
+        ERR_raise(ERR_LIB_RSA, RSA_R_UNSUPPORTED_SIGNATURE_TYPE);
         return -1;
     }
     if (ossl_rsa_pss_to_ctx(ctx, NULL, sigalg, pkey) > 0) {

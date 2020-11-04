@@ -73,14 +73,14 @@ static void *v2i_POLICY_MAPPINGS(const X509V3_EXT_METHOD *method,
     int i;
 
     if ((pmaps = sk_POLICY_MAPPING_new_reserve(NULL, num)) == NULL) {
-        X509V3err(X509V3_F_V2I_POLICY_MAPPINGS, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
     for (i = 0; i < num; i++) {
         val = sk_CONF_VALUE_value(nval, i);
         if (!val->value || !val->name) {
-            X509V3err(X509V3_F_V2I_POLICY_MAPPINGS,
+            ERR_raise(ERR_LIB_X509V3,
                       X509V3_R_INVALID_OBJECT_IDENTIFIER);
             ERR_add_error_data(1, val->name);
             goto err;
@@ -88,14 +88,14 @@ static void *v2i_POLICY_MAPPINGS(const X509V3_EXT_METHOD *method,
         obj1 = OBJ_txt2obj(val->name, 0);
         obj2 = OBJ_txt2obj(val->value, 0);
         if (!obj1 || !obj2) {
-            X509V3err(X509V3_F_V2I_POLICY_MAPPINGS,
+            ERR_raise(ERR_LIB_X509V3,
                       X509V3_R_INVALID_OBJECT_IDENTIFIER);
             ERR_add_error_data(1, val->name);
             goto err;
         }
         pmap = POLICY_MAPPING_new();
         if (pmap == NULL) {
-            X509V3err(X509V3_F_V2I_POLICY_MAPPINGS, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
             goto err;
         }
         pmap->issuerDomainPolicy = obj1;

@@ -77,7 +77,7 @@ STACK_OF(X509_ATTRIBUTE) *X509at_add1_attr(STACK_OF(X509_ATTRIBUTE) **x,
     STACK_OF(X509_ATTRIBUTE) *sk = NULL;
 
     if (x == NULL) {
-        X509err(X509_F_X509AT_ADD1_ATTR, ERR_R_PASSED_NULL_PARAMETER);
+        ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
         goto err2;
     }
 
@@ -95,7 +95,7 @@ STACK_OF(X509_ATTRIBUTE) *X509at_add1_attr(STACK_OF(X509_ATTRIBUTE) **x,
         *x = sk;
     return sk;
  err:
-    X509err(X509_F_X509AT_ADD1_ATTR, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
  err2:
     X509_ATTRIBUTE_free(new_attr);
     sk_X509_ATTRIBUTE_free(sk);
@@ -174,7 +174,7 @@ X509_ATTRIBUTE *X509_ATTRIBUTE_create_by_NID(X509_ATTRIBUTE **attr, int nid,
 
     obj = OBJ_nid2obj(nid);
     if (obj == NULL) {
-        X509err(X509_F_X509_ATTRIBUTE_CREATE_BY_NID, X509_R_UNKNOWN_NID);
+        ERR_raise(ERR_LIB_X509, X509_R_UNKNOWN_NID);
         return NULL;
     }
     ret = X509_ATTRIBUTE_create_by_OBJ(attr, obj, atrtype, data, len);
@@ -192,7 +192,7 @@ X509_ATTRIBUTE *X509_ATTRIBUTE_create_by_OBJ(X509_ATTRIBUTE **attr,
 
     if ((attr == NULL) || (*attr == NULL)) {
         if ((ret = X509_ATTRIBUTE_new()) == NULL) {
-            X509err(X509_F_X509_ATTRIBUTE_CREATE_BY_OBJ,
+            ERR_raise(ERR_LIB_X509,
                     ERR_R_MALLOC_FAILURE);
             return NULL;
         }
@@ -223,7 +223,7 @@ X509_ATTRIBUTE *X509_ATTRIBUTE_create_by_txt(X509_ATTRIBUTE **attr,
 
     obj = OBJ_txt2obj(atrname, 0);
     if (obj == NULL) {
-        X509err(X509_F_X509_ATTRIBUTE_CREATE_BY_TXT,
+        ERR_raise(ERR_LIB_X509,
                 X509_R_INVALID_FIELD_NAME);
         ERR_add_error_data(2, "name=", atrname);
         return NULL;
@@ -254,7 +254,7 @@ int X509_ATTRIBUTE_set1_data(X509_ATTRIBUTE *attr, int attrtype,
         stmp = ASN1_STRING_set_by_NID(NULL, data, len, attrtype,
                                       OBJ_obj2nid(attr->object));
         if (!stmp) {
-            X509err(X509_F_X509_ATTRIBUTE_SET1_DATA, ERR_R_ASN1_LIB);
+            ERR_raise(ERR_LIB_X509, ERR_R_ASN1_LIB);
             return 0;
         }
         atype = stmp->type;
@@ -287,7 +287,7 @@ int X509_ATTRIBUTE_set1_data(X509_ATTRIBUTE *attr, int attrtype,
         goto err;
     return 1;
  err:
-    X509err(X509_F_X509_ATTRIBUTE_SET1_DATA, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
     ASN1_TYPE_free(ttmp);
     ASN1_STRING_free(stmp);
     return 0;
@@ -317,7 +317,7 @@ void *X509_ATTRIBUTE_get0_data(X509_ATTRIBUTE *attr, int idx,
     if (atrtype == V_ASN1_BOOLEAN
             || atrtype == V_ASN1_NULL
             || atrtype != ASN1_TYPE_get(ttmp)) {
-        X509err(X509_F_X509_ATTRIBUTE_GET0_DATA, X509_R_WRONG_TYPE);
+        ERR_raise(ERR_LIB_X509, X509_R_WRONG_TYPE);
         return NULL;
     }
     return ttmp->value.ptr;

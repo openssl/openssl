@@ -102,7 +102,7 @@ int OCSP_request_sign(OCSP_REQUEST *req,
         goto err;
     if (key) {
         if (!X509_check_private_key(signer, key)) {
-            OCSPerr(OCSP_F_OCSP_REQUEST_SIGN,
+            ERR_raise(ERR_LIB_OCSP,
                     OCSP_R_PRIVATE_KEY_DOES_NOT_MATCH_CERTIFICATE);
             goto err;
         }
@@ -144,11 +144,11 @@ OCSP_BASICRESP *OCSP_response_get1_basic(OCSP_RESPONSE *resp)
     OCSP_RESPBYTES *rb;
     rb = resp->responseBytes;
     if (!rb) {
-        OCSPerr(OCSP_F_OCSP_RESPONSE_GET1_BASIC, OCSP_R_NO_RESPONSE_DATA);
+        ERR_raise(ERR_LIB_OCSP, OCSP_R_NO_RESPONSE_DATA);
         return NULL;
     }
     if (OBJ_obj2nid(rb->responseType) != NID_id_pkix_OCSP_basic) {
-        OCSPerr(OCSP_F_OCSP_RESPONSE_GET1_BASIC, OCSP_R_NOT_BASIC_RESPONSE);
+        ERR_raise(ERR_LIB_OCSP, OCSP_R_NOT_BASIC_RESPONSE);
         return NULL;
     }
 
@@ -336,12 +336,12 @@ int OCSP_check_validity(ASN1_GENERALIZEDTIME *thisupd,
     time(&t_now);
     /* Check thisUpdate is valid and not more than nsec in the future */
     if (!ASN1_GENERALIZEDTIME_check(thisupd)) {
-        OCSPerr(OCSP_F_OCSP_CHECK_VALIDITY, OCSP_R_ERROR_IN_THISUPDATE_FIELD);
+        ERR_raise(ERR_LIB_OCSP, OCSP_R_ERROR_IN_THISUPDATE_FIELD);
         ret = 0;
     } else {
         t_tmp = t_now + nsec;
         if (X509_cmp_time(thisupd, &t_tmp) > 0) {
-            OCSPerr(OCSP_F_OCSP_CHECK_VALIDITY, OCSP_R_STATUS_NOT_YET_VALID);
+            ERR_raise(ERR_LIB_OCSP, OCSP_R_STATUS_NOT_YET_VALID);
             ret = 0;
         }
 
@@ -352,7 +352,7 @@ int OCSP_check_validity(ASN1_GENERALIZEDTIME *thisupd,
         if (maxsec >= 0) {
             t_tmp = t_now - maxsec;
             if (X509_cmp_time(thisupd, &t_tmp) < 0) {
-                OCSPerr(OCSP_F_OCSP_CHECK_VALIDITY, OCSP_R_STATUS_TOO_OLD);
+                ERR_raise(ERR_LIB_OCSP, OCSP_R_STATUS_TOO_OLD);
                 ret = 0;
             }
         }
@@ -363,19 +363,19 @@ int OCSP_check_validity(ASN1_GENERALIZEDTIME *thisupd,
 
     /* Check nextUpdate is valid and not more than nsec in the past */
     if (!ASN1_GENERALIZEDTIME_check(nextupd)) {
-        OCSPerr(OCSP_F_OCSP_CHECK_VALIDITY, OCSP_R_ERROR_IN_NEXTUPDATE_FIELD);
+        ERR_raise(ERR_LIB_OCSP, OCSP_R_ERROR_IN_NEXTUPDATE_FIELD);
         ret = 0;
     } else {
         t_tmp = t_now - nsec;
         if (X509_cmp_time(nextupd, &t_tmp) < 0) {
-            OCSPerr(OCSP_F_OCSP_CHECK_VALIDITY, OCSP_R_STATUS_EXPIRED);
+            ERR_raise(ERR_LIB_OCSP, OCSP_R_STATUS_EXPIRED);
             ret = 0;
         }
     }
 
     /* Also don't allow nextUpdate to precede thisUpdate */
     if (ASN1_STRING_cmp(nextupd, thisupd) < 0) {
-        OCSPerr(OCSP_F_OCSP_CHECK_VALIDITY,
+        ERR_raise(ERR_LIB_OCSP,
                 OCSP_R_NEXTUPDATE_BEFORE_THISUPDATE);
         ret = 0;
     }

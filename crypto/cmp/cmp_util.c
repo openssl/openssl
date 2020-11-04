@@ -29,7 +29,7 @@ int OSSL_CMP_log_open(void) /* is designed to be idempotent */
         return 1;
     BIO_free(bio);
 #endif
-    CMPerr(0, CMP_R_NO_STDIO);
+    ERR_raise(ERR_LIB_CMP, CMP_R_NO_STDIO);
     return 0;
 }
 
@@ -171,7 +171,7 @@ void OSSL_CMP_print_errors_cb(OSSL_CMP_log_cb_t log_fn)
                 BIO_free(bio);
             }
 #else
-            /* CMPerr(0, CMP_R_NO_STDIO) makes no sense during error printing */
+            /* ERR_raise(ERR_LIB_CMP, CMP_R_NO_STDIO) makes no sense during error printing */
 #endif
         } else {
             if (log_fn(component, file, line, OSSL_CMP_LOG_ERR, msg) <= 0)
@@ -186,7 +186,7 @@ int ossl_cmp_X509_STORE_add1_certs(X509_STORE *store, STACK_OF(X509) *certs,
     int i;
 
     if (store == NULL) {
-        CMPerr(0, CMP_R_NULL_ARGUMENT);
+        ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
         return 0;
     }
     if (certs == NULL)
@@ -226,7 +226,7 @@ STACK_OF(X509)
     X509_STORE_CTX *csc = NULL;
 
     if (ts == NULL || cert == NULL) {
-        CMPerr(0, CMP_R_NULL_ARGUMENT);
+        ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
         goto err;
     }
 
@@ -289,7 +289,7 @@ int ossl_cmp_asn1_octet_string_set1(ASN1_OCTET_STRING **tgt,
 {
     ASN1_OCTET_STRING *new;
     if (tgt == NULL) {
-        CMPerr(0, CMP_R_NULL_ARGUMENT);
+        ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
         return 0;
     }
     if (*tgt == src) /* self-assignment */
@@ -313,7 +313,7 @@ int ossl_cmp_asn1_octet_string_set1_bytes(ASN1_OCTET_STRING **tgt,
     ASN1_OCTET_STRING *new = NULL;
 
     if (tgt == NULL) {
-        CMPerr(0, CMP_R_NULL_ARGUMENT);
+        ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
         return 0;
     }
     if (bytes != NULL) {

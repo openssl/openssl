@@ -30,7 +30,7 @@ static int alg_module_init(CONF_IMODULE *md, const CONF *cnf)
 
     oid_section = CONF_imodule_get_value(md);
     if ((sktmp = NCONF_get_section(cnf, oid_section)) == NULL) {
-        EVPerr(EVP_F_ALG_MODULE_INIT, EVP_R_ERROR_LOADING_SECTION);
+        ERR_raise(ERR_LIB_EVP, EVP_R_ERROR_LOADING_SECTION);
         return 0;
     }
     for (i = 0; i < sk_CONF_VALUE_num(sktmp); i++) {
@@ -39,7 +39,7 @@ static int alg_module_init(CONF_IMODULE *md, const CONF *cnf)
             int m;
 
             if (!X509V3_get_value_bool(oval, &m)) {
-                EVPerr(EVP_F_ALG_MODULE_INIT, EVP_R_INVALID_FIPS_MODE);
+                ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_FIPS_MODE);
                 return 0;
             }
             /*
@@ -47,16 +47,16 @@ static int alg_module_init(CONF_IMODULE *md, const CONF *cnf)
              * configurations.
              */
             if (!EVP_default_properties_enable_fips(cnf->libctx, m > 0)) {
-                EVPerr(EVP_F_ALG_MODULE_INIT, EVP_R_SET_DEFAULT_PROPERTY_FAILURE);
+                ERR_raise(ERR_LIB_EVP, EVP_R_SET_DEFAULT_PROPERTY_FAILURE);
                 return 0;
             }
         } else if (strcmp(oval->name, "default_properties") == 0) {
             if (!evp_set_default_properties_int(cnf->libctx, oval->value, 0)) {
-                EVPerr(EVP_F_ALG_MODULE_INIT, EVP_R_SET_DEFAULT_PROPERTY_FAILURE);
+                ERR_raise(ERR_LIB_EVP, EVP_R_SET_DEFAULT_PROPERTY_FAILURE);
                 return 0;
             }
         } else {
-            EVPerr(EVP_F_ALG_MODULE_INIT, EVP_R_UNKNOWN_OPTION);
+            ERR_raise(ERR_LIB_EVP, EVP_R_UNKNOWN_OPTION);
             ERR_add_error_data(4, "name=", oval->name,
                                ", value=", oval->value);
             return 0;

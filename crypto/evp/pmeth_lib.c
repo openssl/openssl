@@ -119,7 +119,7 @@ EVP_PKEY_METHOD *EVP_PKEY_meth_new(int id, int flags)
 
     pmeth = OPENSSL_zalloc(sizeof(*pmeth));
     if (pmeth == NULL) {
-        EVPerr(EVP_F_EVP_PKEY_METH_NEW, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
@@ -234,7 +234,7 @@ static EVP_PKEY_CTX *int_ctx_new(OSSL_LIB_CTX *libctx,
     /* Try to find an ENGINE which implements this method */
     if (e) {
         if (!ENGINE_init(e)) {
-            EVPerr(EVP_F_INT_CTX_NEW, ERR_R_ENGINE_LIB);
+            ERR_raise(ERR_LIB_EVP, ERR_R_ENGINE_LIB);
             return NULL;
         }
     } else {
@@ -285,7 +285,7 @@ static EVP_PKEY_CTX *int_ctx_new(OSSL_LIB_CTX *libctx,
                      * something is very wrong.
                      */
                     if (!ossl_assert(id == tmp_id)) {
-                        EVPerr(EVP_F_INT_CTX_NEW, ERR_R_INTERNAL_ERROR);
+                        ERR_raise(ERR_LIB_EVP, ERR_R_INTERNAL_ERROR);
                         EVP_KEYMGMT_free(keymgmt);
                         return NULL;
                     }
@@ -296,11 +296,11 @@ static EVP_PKEY_CTX *int_ctx_new(OSSL_LIB_CTX *libctx,
     }
 
     if (pmeth == NULL && keymgmt == NULL) {
-        EVPerr(EVP_F_INT_CTX_NEW, EVP_R_UNSUPPORTED_ALGORITHM);
+        ERR_raise(ERR_LIB_EVP, EVP_R_UNSUPPORTED_ALGORITHM);
     } else {
         ret = OPENSSL_zalloc(sizeof(*ret));
         if (ret == NULL)
-            EVPerr(EVP_F_INT_CTX_NEW, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
     }
 
 #if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODULE)
@@ -458,13 +458,13 @@ EVP_PKEY_CTX *EVP_PKEY_CTX_dup(const EVP_PKEY_CTX *pctx)
 # ifndef OPENSSL_NO_ENGINE
     /* Make sure it's safe to copy a pkey context using an ENGINE */
     if (pctx->engine && !ENGINE_init(pctx->engine)) {
-        EVPerr(EVP_F_EVP_PKEY_CTX_DUP, ERR_R_ENGINE_LIB);
+        ERR_raise(ERR_LIB_EVP, ERR_R_ENGINE_LIB);
         return 0;
     }
 # endif
     rctx = OPENSSL_zalloc(sizeof(*rctx));
     if (rctx == NULL) {
-        EVPerr(EVP_F_EVP_PKEY_CTX_DUP, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
@@ -581,12 +581,12 @@ int EVP_PKEY_meth_add0(const EVP_PKEY_METHOD *pmeth)
     if (app_pkey_methods == NULL) {
         app_pkey_methods = sk_EVP_PKEY_METHOD_new(pmeth_cmp);
         if (app_pkey_methods == NULL){
-            EVPerr(EVP_F_EVP_PKEY_METH_ADD0, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
             return 0;
         }
     }
     if (!sk_EVP_PKEY_METHOD_push(app_pkey_methods, pmeth)) {
-        EVPerr(EVP_F_EVP_PKEY_METH_ADD0, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
         return 0;
     }
     sk_EVP_PKEY_METHOD_sort(app_pkey_methods);
@@ -1455,12 +1455,12 @@ static int evp_pkey_ctx_ctrl_int(EVP_PKEY_CTX *ctx, int keytype, int optype,
      */
     if (ctx->pmeth == NULL || ctx->pmeth->digest_custom == NULL) {
         if (ctx->operation == EVP_PKEY_OP_UNDEFINED) {
-            EVPerr(0, EVP_R_NO_OPERATION_SET);
+            ERR_raise(ERR_LIB_EVP, EVP_R_NO_OPERATION_SET);
             return -1;
         }
 
         if ((optype != -1) && !(ctx->operation & optype)) {
-            EVPerr(0, EVP_R_INVALID_OPERATION);
+            ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_OPERATION);
             return -1;
         }
     }
@@ -1471,7 +1471,7 @@ static int evp_pkey_ctx_ctrl_int(EVP_PKEY_CTX *ctx, int keytype, int optype,
     case EVP_PKEY_STATE_UNKNOWN:
     case EVP_PKEY_STATE_LEGACY:
         if (ctx->pmeth == NULL || ctx->pmeth->ctrl == NULL) {
-            EVPerr(0, EVP_R_COMMAND_NOT_SUPPORTED);
+            ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
             return -2;
         }
         if ((keytype != -1) && (ctx->pmeth->pkey_id != keytype))
@@ -1480,7 +1480,7 @@ static int evp_pkey_ctx_ctrl_int(EVP_PKEY_CTX *ctx, int keytype, int optype,
         ret = ctx->pmeth->ctrl(ctx, cmd, p1, p2);
 
         if (ret == -2)
-            EVPerr(0, EVP_R_COMMAND_NOT_SUPPORTED);
+            ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
         break;
     }
     return ret;
@@ -1492,7 +1492,7 @@ int EVP_PKEY_CTX_ctrl(EVP_PKEY_CTX *ctx, int keytype, int optype,
     int ret = 0;
 
     if (ctx == NULL) {
-        EVPerr(0, EVP_R_COMMAND_NOT_SUPPORTED);
+        ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
         return -2;
     }
     /* If unsupported, we don't want that reported here */
@@ -1619,7 +1619,7 @@ static int evp_pkey_ctx_ctrl_str_int(EVP_PKEY_CTX *ctx,
     int ret = 0;
 
     if (ctx == NULL) {
-        EVPerr(0, EVP_R_COMMAND_NOT_SUPPORTED);
+        ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
         return -2;
     }
 
@@ -1629,7 +1629,7 @@ static int evp_pkey_ctx_ctrl_str_int(EVP_PKEY_CTX *ctx,
     case EVP_PKEY_STATE_UNKNOWN:
     case EVP_PKEY_STATE_LEGACY:
         if (ctx == NULL || ctx->pmeth == NULL || ctx->pmeth->ctrl_str == NULL) {
-            EVPerr(0, EVP_R_COMMAND_NOT_SUPPORTED);
+            ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
             return -2;
         }
         if (strcmp(name, "digest") == 0)
@@ -1805,7 +1805,7 @@ int EVP_PKEY_CTX_md(EVP_PKEY_CTX *ctx, int optype, int cmd, const char *md)
     const EVP_MD *m;
 
     if (md == NULL || (m = EVP_get_digestbyname(md)) == NULL) {
-        EVPerr(EVP_F_EVP_PKEY_CTX_MD, EVP_R_INVALID_DIGEST);
+        ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_DIGEST);
         return 0;
     }
     return EVP_PKEY_CTX_ctrl(ctx, -1, optype, cmd, 0, (void *)m);

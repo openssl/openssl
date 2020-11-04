@@ -21,12 +21,12 @@ int RSA_padding_add_none(unsigned char *to, int tlen,
                          const unsigned char *from, int flen)
 {
     if (flen > tlen) {
-        RSAerr(RSA_F_RSA_PADDING_ADD_NONE, RSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE);
+        ERR_raise(ERR_LIB_RSA, RSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE);
         return 0;
     }
 
     if (flen < tlen) {
-        RSAerr(RSA_F_RSA_PADDING_ADD_NONE, RSA_R_DATA_TOO_SMALL_FOR_KEY_SIZE);
+        ERR_raise(ERR_LIB_RSA, RSA_R_DATA_TOO_SMALL_FOR_KEY_SIZE);
         return 0;
     }
 
@@ -39,7 +39,7 @@ int RSA_padding_check_none(unsigned char *to, int tlen,
 {
 
     if (flen > tlen) {
-        RSAerr(RSA_F_RSA_PADDING_CHECK_NONE, RSA_R_DATA_TOO_LARGE);
+        ERR_raise(ERR_LIB_RSA, RSA_R_DATA_TOO_LARGE);
         return -1;
     }
 

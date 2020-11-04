@@ -44,7 +44,7 @@ BIO_ADDR *BIO_ADDR_new(void)
     BIO_ADDR *ret = OPENSSL_zalloc(sizeof(*ret));
 
     if (ret == NULL) {
-        BIOerr(BIO_F_BIO_ADDR_NEW, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_BIO, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
@@ -213,11 +213,11 @@ static int addr_strings(const BIO_ADDR *ap, int numeric,
             if (ret == EAI_SYSTEM) {
                 ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
                                "calling getnameinfo()");
-                BIOerr(BIO_F_ADDR_STRINGS, ERR_R_SYS_LIB);
+                ERR_raise(ERR_LIB_BIO, ERR_R_SYS_LIB);
             } else
 # endif
             {
-                BIOerr(BIO_F_ADDR_STRINGS, ERR_R_SYS_LIB);
+                ERR_raise(ERR_LIB_BIO, ERR_R_SYS_LIB);
                 ERR_add_error_data(1, gai_strerror(ret));
             }
             return 0;
@@ -259,7 +259,7 @@ static int addr_strings(const BIO_ADDR *ap, int numeric,
             OPENSSL_free(*service);
             *service = NULL;
         }
-        BIOerr(BIO_F_ADDR_STRINGS, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_BIO, ERR_R_MALLOC_FAILURE);
         return 0;
     }
 
@@ -546,13 +546,13 @@ int BIO_parse_hostserv(const char *hostserv, char **host, char **service,
 
     return 1;
  amb_err:
-    BIOerr(BIO_F_BIO_PARSE_HOSTSERV, BIO_R_AMBIGUOUS_HOST_OR_SERVICE);
+    ERR_raise(ERR_LIB_BIO, BIO_R_AMBIGUOUS_HOST_OR_SERVICE);
     return 0;
  spec_err:
-    BIOerr(BIO_F_BIO_PARSE_HOSTSERV, BIO_R_MALFORMED_HOST_OR_SERVICE);
+    ERR_raise(ERR_LIB_BIO, BIO_R_MALFORMED_HOST_OR_SERVICE);
     return 0;
  memerr:
-    BIOerr(BIO_F_BIO_PARSE_HOSTSERV, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_BIO, ERR_R_MALLOC_FAILURE);
     return 0;
 }
 
@@ -571,7 +571,7 @@ static int addrinfo_wrap(int family, int socktype,
                          BIO_ADDRINFO **bai)
 {
     if ((*bai = OPENSSL_zalloc(sizeof(**bai))) == NULL) {
-        BIOerr(BIO_F_ADDRINFO_WRAP, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_BIO, ERR_R_MALLOC_FAILURE);
         return 0;
     }
 
@@ -661,7 +661,7 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
 #endif
         break;
     default:
-        BIOerr(BIO_F_BIO_LOOKUP_EX, BIO_R_UNSUPPORTED_PROTOCOL_FAMILY);
+        ERR_raise(ERR_LIB_BIO, BIO_R_UNSUPPORTED_PROTOCOL_FAMILY);
         return 0;
     }
 
@@ -670,7 +670,7 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
         if (addrinfo_wrap(family, socktype, host, strlen(host), 0, res))
             return 1;
         else
-            BIOerr(BIO_F_BIO_LOOKUP_EX, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_BIO, ERR_R_MALLOC_FAILURE);
         return 0;
     }
 #endif
@@ -709,12 +709,12 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
         case EAI_SYSTEM:
             ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
                            "calling getaddrinfo()");
-            BIOerr(BIO_F_BIO_LOOKUP_EX, ERR_R_SYS_LIB);
+            ERR_raise(ERR_LIB_BIO, ERR_R_SYS_LIB);
             break;
 # endif
 # ifdef EAI_MEMORY
         case EAI_MEMORY:
-            BIOerr(BIO_F_BIO_LOOKUP_EX, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_BIO, ERR_R_MALLOC_FAILURE);
             break;
 # endif
         case 0:
@@ -729,7 +729,7 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
                 goto retry;
             }
 # endif
-            BIOerr(BIO_F_BIO_LOOKUP_EX, ERR_R_SYS_LIB);
+            ERR_raise(ERR_LIB_BIO, ERR_R_SYS_LIB);
             ERR_add_error_data(1, gai_strerror(old_ret ? old_ret : gai_ret));
             break;
         }
@@ -771,7 +771,7 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
 #endif
 
         if (!RUN_ONCE(&bio_lookup_init, do_bio_lookup_init)) {
-            BIOerr(BIO_F_BIO_LOOKUP_EX, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_BIO, ERR_R_MALLOC_FAILURE);
             ret = 0;
             goto err;
         }
@@ -790,7 +790,7 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
             default:
                 /* We forgot to handle a lookup type! */
                 assert("We forgot to handle a lookup type!" == NULL);
-                BIOerr(BIO_F_BIO_LOOKUP_EX, ERR_R_INTERNAL_ERROR);
+                ERR_raise(ERR_LIB_BIO, ERR_R_INTERNAL_ERROR);
                 ret = 0;
                 goto err;
             }
@@ -871,7 +871,7 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
                     goto err;
                 }
             } else {
-                BIOerr(BIO_F_BIO_LOOKUP_EX, BIO_R_MALFORMED_HOST_OR_SERVICE);
+                ERR_raise(ERR_LIB_BIO, BIO_R_MALFORMED_HOST_OR_SERVICE);
                 goto err;
             }
         }
@@ -913,7 +913,7 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
              addrinfo_malloc_err:
                 BIO_ADDRINFO_free(*res);
                 *res = NULL;
-                BIOerr(BIO_F_BIO_LOOKUP_EX, ERR_R_MALLOC_FAILURE);
+                ERR_raise(ERR_LIB_BIO, ERR_R_MALLOC_FAILURE);
                 ret = 0;
                 goto err;
             }
