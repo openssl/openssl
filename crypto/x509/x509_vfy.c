@@ -170,6 +170,10 @@ static int verify_cb_cert(X509_STORE_CTX *ctx, X509 *x, int depth, int err)
     return ctx->verify_cb(0, ctx);
 }
 
+#define CHECK_CB(cond, ctx, cert, depth, err) \
+    if ((cond) && verify_cb_cert(ctx, cert, depth, err) == 0)   \
+        return 0
+
 /*-
  * Inform the verify callback of an error, CRL-specific variant.  Here, the
  * error depth and certificate are already set, we just specify the error
@@ -198,16 +202,14 @@ static int check_auth_level(X509_STORE_CTX *ctx)
          * We've already checked the security of the leaf key, so here we only
          * check the security of issuer keys.
          */
-        if (i > 0 && !check_key_level(ctx, cert) &&
-            verify_cb_cert(ctx, cert, i, X509_V_ERR_CA_KEY_TOO_SMALL) == 0)
-            return 0;
+        CHECK_CB(i > 0 && !check_key_level(ctx, cert),
+                 ctx, cert, i, X509_V_ERR_CA_KEY_TOO_SMALL);
         /*
          * We also check the signature algorithm security of all certificates
          * except those of the trust anchor at index num-1.
          */
-        if (i < num - 1 && !check_sig_level(ctx, cert) &&
-            verify_cb_cert(ctx, cert, i, X509_V_ERR_CA_MD_TOO_WEAK) == 0)
-            return 0;
+        CHECK_CB(i < num - 1 && !check_sig_level(ctx, cert),
+                 ctx, cert, i, X509_V_ERR_CA_MD_TOO_WEAK);
     }
     return 1;
 }
@@ -231,10 +233,7 @@ static int verify_chain(X509_STORE_CTX *ctx)
 
     err = X509_chain_check_suiteb(&ctx->error_depth, NULL, ctx->chain,
                                   ctx->param->flags);
-    if (err != X509_V_OK) {
-        if ((ok = verify_cb_cert(ctx, NULL, ctx->error_depth, err)) == 0)
-            return ok;
-    }
+    CHECK_CB(err != X509_V_OK, ctx, NULL, ctx->error_depth, err);
 
     /* Verify chain signatures and expiration times */
     ok = (ctx->verify != NULL) ? ctx->verify(ctx) : internal_verify(ctx);
@@ -286,9 +285,8 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
     ctx->num_untrusted = 1;
 
     /* If the peer's public key is too weak, we can stop early. */
-    if (!check_key_level(ctx, ctx->cert) &&
-        !verify_cb_cert(ctx, ctx->cert, 0, X509_V_ERR_EE_KEY_TOO_SMALL))
-        return 0;
+    CHECK_CB(!check_key_level(ctx, ctx->cert),
+             ctx, ctx->cert, 0, X509_V_ERR_EE_KEY_TOO_SMALL);
 
     if (DANETLS_ENABLED(dane))
         ret = dane_verify(ctx);
@@ -475,52 +473,37 @@ static int check_chain(X509_STORE_CTX *ctx)
         int ret;
 
         x = sk_X509_value(ctx->chain, i);
-        if (!(ctx->param->flags & X509_V_FLAG_IGNORE_CRITICAL)
-            && (x->ex_flags & EXFLAG_CRITICAL)) {
-            if (!verify_cb_cert(ctx, x, i,
-                                X509_V_ERR_UNHANDLED_CRITICAL_EXTENSION))
-                return 0;
-        }
-        if (!allow_proxy_certs && (x->ex_flags & EXFLAG_PROXY)) {
-            if (!verify_cb_cert(ctx, x, i,
-                                X509_V_ERR_PROXY_CERTIFICATES_NOT_ALLOWED))
-                return 0;
-        }
+        CHECK_CB((ctx->param->flags & X509_V_FLAG_IGNORE_CRITICAL) == 0
+                 && (x->ex_flags & EXFLAG_CRITICAL) != 0,
+                 ctx, x, i, X509_V_ERR_UNHANDLED_CRITICAL_EXTENSION);
+        CHECK_CB(!allow_proxy_certs && (x->ex_flags & EXFLAG_PROXY),
+                 ctx, x, i, X509_V_ERR_PROXY_CERTIFICATES_NOT_ALLOWED);
         ret = X509_check_ca(x);
         switch (must_be_ca) {
         case -1:
-            if ((ctx->param->flags & X509_V_FLAG_X509_STRICT)
-                && (ret != 1) && (ret != 0)) {
-                ret = 0;
-                ctx->error = X509_V_ERR_INVALID_CA;
-            } else
-                ret = 1;
+            CHECK_CB((ctx->param->flags & X509_V_FLAG_X509_STRICT) != 0
+                         && ret != 1 && ret != 0,
+                     ctx, x, i, X509_V_ERR_INVALID_CA);
+            ret = 1;
             break;
         case 0:
-            if (ret != 0) {
-                ret = 0;
-                ctx->error = X509_V_ERR_INVALID_NON_CA;
-            } else
-                ret = 1;
+            CHECK_CB(ret != 0,  ctx, x, i, X509_V_ERR_INVALID_NON_CA);
+            ret = 1;
             break;
         default:
             /* X509_V_FLAG_X509_STRICT is implicit for intermediate CAs */
-            if ((ret == 0)
-                || ((i + 1 < num || ctx->param->flags & X509_V_FLAG_X509_STRICT)
-                    && (ret != 1))) {
-                ret = 0;
-                ctx->error = X509_V_ERR_INVALID_CA;
-            } else
-                ret = 1;
+            CHECK_CB(ret == 0
+                     || ((i + 1 < num
+                          || ctx->param->flags & X509_V_FLAG_X509_STRICT)
+                         && ret != 1), ctx, x, i, X509_V_ERR_INVALID_CA);
+            ret = 1;
             break;
         }
         if (num > 1) {
             /* Check for presence of explicit elliptic curve parameters */
             ret = check_curve(x);
-            if (ret < 0)
-                ctx->error = X509_V_ERR_UNSPECIFIED;
-            else if (ret == 0)
-                ctx->error = X509_V_ERR_EC_KEY_EXPLICIT_PARAMS;
+            CHECK_CB(ret < 0, ctx, x, i, X509_V_ERR_UNSPECIFIED);
+            CHECK_CB(ret == 0, ctx, x, i, X509_V_ERR_EC_KEY_EXPLICIT_PARAMS);
         }
         /*
          * Do the following set of checks only if strict checking is requrested
@@ -591,20 +574,18 @@ static int check_chain(X509_STORE_CTX *ctx)
                 if (sk_X509_EXTENSION_num(X509_get0_extensions(x)) > 0)
                     ctx->error = X509_V_ERR_EXTENSIONS_REQUIRE_VERSION_3;
             }
+            if (ctx->error != X509_V_OK)
+                ret = 0;
+            CHECK_CB(ret == 0, ctx, x, i, X509_V_OK);
         }
-        if (ctx->error != X509_V_OK)
-            ret = 0;
-        if (ret == 0 && !verify_cb_cert(ctx, x, i, X509_V_OK))
-            return 0;
+
         /* check_purpose() makes the callback as needed */
         if (purpose > 0 && !check_purpose(ctx, x, purpose, i, must_be_ca))
             return 0;
         /* Check pathlen */
-        if ((i > 1) && (x->ex_pathlen != -1)
-            && (plen > (x->ex_pathlen + proxy_path_length))) {
-            if (!verify_cb_cert(ctx, x, i, X509_V_ERR_PATH_LENGTH_EXCEEDED))
-                return 0;
-        }
+        CHECK_CB(i > 1 && x->ex_pathlen != -1
+                     && plen > x->ex_pathlen + proxy_path_length,
+                 ctx, x, i, X509_V_ERR_PATH_LENGTH_EXCEEDED);
         /* Increment path length if not a self-issued intermediate CA */
         if (i > 0 && (x->ex_flags & EXFLAG_SI) == 0)
             plen++;
@@ -626,11 +607,8 @@ static int check_chain(X509_STORE_CTX *ctx)
              * increment proxy_path_length.
              */
             if (x->ex_pcpathlen != -1) {
-                if (proxy_path_length > x->ex_pcpathlen) {
-                    if (!verify_cb_cert(ctx, x, i,
-                                        X509_V_ERR_PROXY_PATH_LENGTH_EXCEEDED))
-                        return 0;
-                }
+                CHECK_CB(proxy_path_length > x->ex_pcpathlen,
+                         ctx, x, i, X509_V_ERR_PROXY_PATH_LENGTH_EXCEEDED);
                 proxy_path_length = x->ex_pcpathlen;
             }
             proxy_path_length++;
@@ -742,9 +720,7 @@ static int check_name_constraints(X509_STORE_CTX *ctx)
             X509_NAME_free(tmpsubject);
 
          proxy_name_done:
-            if (err != X509_V_OK
-                && !verify_cb_cert(ctx, x, i, err))
-                return 0;
+            CHECK_CB(err != X509_V_OK, ctx, x, i, err);
         }
 
         /*
@@ -774,8 +750,7 @@ static int check_name_constraints(X509_STORE_CTX *ctx)
                 case X509_V_ERR_OUT_OF_MEM:
                     return 0;
                 default:
-                    if (!verify_cb_cert(ctx, x, i, rv))
-                        return 0;
+                    CHECK_CB(1, ctx, x, i, rv);
                     break;
                 }
             }
@@ -908,9 +883,8 @@ static int check_trust(X509_STORE_CTX *ctx, int num_untrusted)
     return X509_TRUST_UNTRUSTED;
 
  rejected:
-    if (!verify_cb_cert(ctx, x, i, X509_V_ERR_CERT_REJECTED))
-        return X509_TRUST_REJECTED;
-    return X509_TRUST_UNTRUSTED;
+    return verify_cb_cert(ctx, x, i, X509_V_ERR_CERT_REJECTED) == 0
+        ? X509_TRUST_REJECTED : X509_TRUST_UNTRUSTED;
 
  trusted:
     if (!DANETLS_ENABLED(dane))
@@ -1707,11 +1681,8 @@ static int check_policy(X509_STORE_CTX *ctx)
         for (i = 1; i < sk_X509_num(ctx->chain); i++) {
             X509 *x = sk_X509_value(ctx->chain, i);
 
-            if (!(x->ex_flags & EXFLAG_INVALID_POLICY))
-                continue;
-            if (!verify_cb_cert(ctx, x, i,
-                                X509_V_ERR_INVALID_POLICY_EXTENSION))
-                return 0;
+            CHECK_CB((x->ex_flags & EXFLAG_INVALID_POLICY) != 0,
+                     ctx, x, i, X509_V_ERR_INVALID_POLICY_EXTENSION);
         }
         return 1;
     }
@@ -1762,20 +1733,14 @@ int x509_check_cert_time(X509_STORE_CTX *ctx, X509 *x, int depth)
     i = X509_cmp_time(X509_get0_notBefore(x), ptime);
     if (i >= 0 && depth < 0)
         return 0;
-    if (i == 0 && !verify_cb_cert(ctx, x, depth,
-                                  X509_V_ERR_ERROR_IN_CERT_NOT_BEFORE_FIELD))
-        return 0;
-    if (i > 0 && !verify_cb_cert(ctx, x, depth, X509_V_ERR_CERT_NOT_YET_VALID))
-        return 0;
+    CHECK_CB(i == 0, ctx, x, depth, X509_V_ERR_ERROR_IN_CERT_NOT_BEFORE_FIELD);
+    CHECK_CB(i > 0, ctx, x, depth, X509_V_ERR_CERT_NOT_YET_VALID);
 
     i = X509_cmp_time(X509_get0_notAfter(x), ptime);
     if (i <= 0 && depth < 0)
         return 0;
-    if (i == 0 && !verify_cb_cert(ctx, x, depth,
-                                  X509_V_ERR_ERROR_IN_CERT_NOT_AFTER_FIELD))
-        return 0;
-    if (i < 0 && !verify_cb_cert(ctx, x, depth, X509_V_ERR_CERT_HAS_EXPIRED))
-        return 0;
+    CHECK_CB(i == 0, ctx, x, depth, X509_V_ERR_ERROR_IN_CERT_NOT_AFTER_FIELD);
+    CHECK_CB(i < 0, ctx, x, depth, X509_V_ERR_CERT_HAS_EXPIRED);
     return 1;
 }
 
@@ -1805,9 +1770,7 @@ static int internal_verify(X509_STORE_CTX *ctx)
             goto check_cert_time;
         }
         if (n <= 0) {
-            if (!verify_cb_cert(ctx, xi, 0,
-                                X509_V_ERR_UNABLE_TO_VERIFY_LEAF_SIGNATURE))
-                return 0;
+            CHECK_CB(1, ctx, xi, 0, X509_V_ERR_UNABLE_TO_VERIFY_LEAF_SIGNATURE);
 
             xs = xi;
             goto check_cert_time;
@@ -1858,16 +1821,13 @@ static int internal_verify(X509_STORE_CTX *ctx)
             int ret = xs == xi && (xi->ex_flags & EXFLAG_CA) == 0
                 ? X509_V_OK : x509_signing_allowed(xi, xs);
 
-            if (ret != X509_V_OK && !verify_cb_cert(ctx, xi, issuer_depth, ret))
-                return 0;
+            CHECK_CB(ret != X509_V_OK, ctx, xi, issuer_depth, ret);
             if ((pkey = X509_get0_pubkey(xi)) == NULL) {
-                ret = X509_V_ERR_UNABLE_TO_DECODE_ISSUER_PUBLIC_KEY;
-                if (!verify_cb_cert(ctx, xi, issuer_depth, ret))
-                    return 0;
-            } else if (X509_verify(xs, pkey) <= 0) {
-                ret = X509_V_ERR_CERT_SIGNATURE_FAILURE;
-                if (!verify_cb_cert(ctx, xs, n, ret))
-                    return 0;
+                CHECK_CB(1, ctx, xi, issuer_depth,
+                         X509_V_ERR_UNABLE_TO_DECODE_ISSUER_PUBLIC_KEY);
+            } else {
+                CHECK_CB(X509_verify(xs, pkey) <= 0,
+                         ctx, xs, n, X509_V_ERR_CERT_SIGNATURE_FAILURE);
             }
         }
 
@@ -2948,9 +2908,8 @@ static int check_leaf_suiteb(X509_STORE_CTX *ctx, X509 *cert)
 {
     int err = X509_chain_check_suiteb(NULL, cert, NULL, ctx->param->flags);
 
-    if (err == X509_V_OK)
-        return 1;
-    return verify_cb_cert(ctx, cert, 0, err);
+    CHECK_CB(err != X509_V_OK, ctx, cert, 0, err);
+    return 1;
 }
 
 static int dane_verify(X509_STORE_CTX *ctx)
@@ -3394,23 +3353,18 @@ static int build_chain(X509_STORE_CTX *ctx)
     case X509_TRUST_UNTRUSTED:
     default:
         num = sk_X509_num(ctx->chain);
-        if (num > depth)
-            return verify_cb_cert(ctx, NULL, num-1,
-                                  X509_V_ERR_CERT_CHAIN_TOO_LONG);
-        if (DANETLS_ENABLED(dane) &&
-            (!DANETLS_HAS_PKIX(dane) || dane->pdpth >= 0))
-            return verify_cb_cert(ctx, NULL, num-1, X509_V_ERR_DANE_NO_MATCH);
-        if (self_signed && sk_X509_num(ctx->chain) == 1)
-            return verify_cb_cert(ctx, NULL, num-1,
-                                  X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT);
-        if (self_signed)
-            return verify_cb_cert(ctx, NULL, num-1,
-                                  X509_V_ERR_SELF_SIGNED_CERT_IN_CHAIN);
-        if (ctx->num_untrusted < num)
-            return verify_cb_cert(ctx, NULL, num-1,
-                                  X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT);
+        CHECK_CB(num > depth, ctx, NULL, num-1, X509_V_ERR_CERT_CHAIN_TOO_LONG);
+        CHECK_CB(DANETLS_ENABLED(dane)
+                     && (!DANETLS_HAS_PKIX(dane) || dane->pdpth >= 0),
+                 ctx, NULL, num-1, X509_V_ERR_DANE_NO_MATCH);
+        CHECK_CB(self_signed, ctx, NULL, num-1,
+                 sk_X509_num(ctx->chain) == 1
+                 ? X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT
+                 : X509_V_ERR_SELF_SIGNED_CERT_IN_CHAIN);
         return verify_cb_cert(ctx, NULL, num-1,
-                              X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY);
+                              ctx->num_untrusted < num
+                              ? X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT
+                              : X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY);
     }
 }
 
