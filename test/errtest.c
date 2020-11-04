@@ -111,7 +111,7 @@ static int vdata_appends(void)
 {
     const char *data;
 
-    CRYPTOerr(0, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
     ERR_add_error_data(1, "hello ");
     ERR_add_error_data(1, "world");
     ERR_peek_error_data(&data, NULL);
