@@ -208,7 +208,6 @@ DEFINE_RUN_ONCE_STATIC(do_load_builtin_modules)
     /* Need to load ENGINEs */
     ENGINE_load_builtin_engines();
 #endif
-    ERR_clear_error();
     return 1;
 }
 
