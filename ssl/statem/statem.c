@@ -140,12 +140,11 @@ void ossl_statem_fatal(SSL *s, int al, int reason, const char *fmt, ...)
  * a fatal error state. We verify that we are, and set it if not (this would
  * indicate a bug).
  */
-#define check_fatal(s, f) \
+#define check_fatal(s) \
     do { \
         if (!ossl_assert((s)->statem.in_init \
                          && (s)->statem.state == MSG_FLOW_ERROR)) \
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, (f), \
-                     SSL_R_MISSING_FATAL); \
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_MISSING_FATAL); \
     } while (0)
 
 /*
@@ -362,33 +361,28 @@ static int state_machine(SSL *s, int server)
         if (SSL_IS_DTLS(s)) {
             if ((s->version & 0xff00) != (DTLS1_VERSION & 0xff00) &&
                 (server || (s->version & 0xff00) != (DTLS1_BAD_VER & 0xff00))) {
-                SSLfatal(s, SSL_AD_NO_ALERT, SSL_F_STATE_MACHINE,
-                         ERR_R_INTERNAL_ERROR);
+                SSLfatal(s, SSL_AD_NO_ALERT, ERR_R_INTERNAL_ERROR);
                 goto end;
             }
         } else {
             if ((s->version >> 8) != SSL3_VERSION_MAJOR) {
-                SSLfatal(s, SSL_AD_NO_ALERT, SSL_F_STATE_MACHINE,
-                         ERR_R_INTERNAL_ERROR);
+                SSLfatal(s, SSL_AD_NO_ALERT, ERR_R_INTERNAL_ERROR);
                 goto end;
             }
         }
 
         if (!ssl_security(s, SSL_SECOP_VERSION, 0, s->version, NULL)) {
-            SSLfatal(s, SSL_AD_NO_ALERT, SSL_F_STATE_MACHINE,
-                     ERR_R_INTERNAL_ERROR);
+            SSLfatal(s, SSL_AD_NO_ALERT, ERR_R_INTERNAL_ERROR);
             goto end;
         }
 
         if (s->init_buf == NULL) {
             if ((buf = BUF_MEM_new()) == NULL) {
-                SSLfatal(s, SSL_AD_NO_ALERT, SSL_F_STATE_MACHINE,
-                         ERR_R_INTERNAL_ERROR);
+                SSLfatal(s, SSL_AD_NO_ALERT, ERR_R_INTERNAL_ERROR);
                 goto end;
             }
             if (!BUF_MEM_grow(buf, SSL3_RT_MAX_PLAIN_LENGTH)) {
-                SSLfatal(s, SSL_AD_NO_ALERT, SSL_F_STATE_MACHINE,
-                         ERR_R_INTERNAL_ERROR);
+                SSLfatal(s, SSL_AD_NO_ALERT, ERR_R_INTERNAL_ERROR);
                 goto end;
             }
             s->init_buf = buf;
@@ -396,8 +390,7 @@ static int state_machine(SSL *s, int server)
         }
 
         if (!ssl3_setup_buffers(s)) {
-            SSLfatal(s, SSL_AD_NO_ALERT, SSL_F_STATE_MACHINE,
-                     ERR_R_INTERNAL_ERROR);
+            SSLfatal(s, SSL_AD_NO_ALERT, ERR_R_INTERNAL_ERROR);
             goto end;
         }
         s->init_num = 0;
@@ -415,8 +408,7 @@ static int state_machine(SSL *s, int server)
         if (!SSL_IS_DTLS(s) || !BIO_dgram_is_sctp(SSL_get_wbio(s)))
 #endif
             if (!ssl_init_wbio_buffer(s)) {
-                SSLfatal(s, SSL_AD_NO_ALERT, SSL_F_STATE_MACHINE,
-                         ERR_R_INTERNAL_ERROR);
+                SSLfatal(s, SSL_AD_NO_ALERT, ERR_R_INTERNAL_ERROR);
                 goto end;
             }
 
@@ -458,7 +450,7 @@ static int state_machine(SSL *s, int server)
             }
         } else {
             /* Error */
-            check_fatal(s, SSL_F_STATE_MACHINE);
+            check_fatal(s);
             ERR_raise(ERR_LIB_SSL, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
             goto end;
         }
@@ -605,7 +597,7 @@ static SUB_STATE_RETURN read_state_machine(SSL *s)
                 return SUB_STATE_ERROR;
 
             if (s->s3.tmp.message_size > max_message_size(s)) {
-                SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_F_READ_STATE_MACHINE,
+                SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
                          SSL_R_EXCESSIVE_MESSAGE_SIZE);
                 return SUB_STATE_ERROR;
             }
@@ -615,8 +607,7 @@ static SUB_STATE_RETURN read_state_machine(SSL *s)
                     && s->s3.tmp.message_size > 0
                     && !grow_init_buf(s, s->s3.tmp.message_size
                                          + SSL3_HM_HEADER_LENGTH)) {
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_READ_STATE_MACHINE,
-                         ERR_R_BUF_LIB);
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_BUF_LIB);
                 return SUB_STATE_ERROR;
             }
 
@@ -635,8 +626,7 @@ static SUB_STATE_RETURN read_state_machine(SSL *s)
 
             s->first_packet = 0;
             if (!PACKET_buf_init(&pkt, s->init_msg, len)) {
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_READ_STATE_MACHINE,
-                         ERR_R_INTERNAL_ERROR);
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 return SUB_STATE_ERROR;
             }
             ret = process_message(s, &pkt);
@@ -646,7 +636,7 @@ static SUB_STATE_RETURN read_state_machine(SSL *s)
 
             switch (ret) {
             case MSG_PROCESS_ERROR:
-                check_fatal(s, SSL_F_READ_STATE_MACHINE);
+                check_fatal(s);
                 return SUB_STATE_ERROR;
 
             case MSG_PROCESS_FINISHED_READING:
@@ -670,7 +660,7 @@ static SUB_STATE_RETURN read_state_machine(SSL *s)
             st->read_state_work = post_process_message(s, st->read_state_work);
             switch (st->read_state_work) {
             case WORK_ERROR:
-                check_fatal(s, SSL_F_READ_STATE_MACHINE);
+                check_fatal(s);
                 /* Fall through */
             case WORK_MORE_A:
             case WORK_MORE_B:
@@ -691,8 +681,7 @@ static SUB_STATE_RETURN read_state_machine(SSL *s)
 
         default:
             /* Shouldn't happen */
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_READ_STATE_MACHINE,
-                     ERR_R_INTERNAL_ERROR);
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             return SUB_STATE_ERROR;
         }
     }
@@ -807,7 +796,7 @@ static SUB_STATE_RETURN write_state_machine(SSL *s)
                 break;
 
             case WRITE_TRAN_ERROR:
-                check_fatal(s, SSL_F_WRITE_STATE_MACHINE);
+                check_fatal(s);
                 return SUB_STATE_ERROR;
             }
             break;
@@ -815,7 +804,7 @@ static SUB_STATE_RETURN write_state_machine(SSL *s)
         case WRITE_STATE_PRE_WORK:
             switch (st->write_state_work = pre_work(s, st->write_state_work)) {
             case WORK_ERROR:
-                check_fatal(s, SSL_F_WRITE_STATE_MACHINE);
+                check_fatal(s);
                 /* Fall through */
             case WORK_MORE_A:
             case WORK_MORE_B:
@@ -842,20 +831,18 @@ static SUB_STATE_RETURN write_state_machine(SSL *s)
             if (!WPACKET_init(&pkt, s->init_buf)
                     || !ssl_set_handshake_header(s, &pkt, mt)) {
                 WPACKET_cleanup(&pkt);
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_WRITE_STATE_MACHINE,
-                         ERR_R_INTERNAL_ERROR);
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 return SUB_STATE_ERROR;
             }
             if (confunc != NULL && !confunc(s, &pkt)) {
                 WPACKET_cleanup(&pkt);
-                check_fatal(s, SSL_F_WRITE_STATE_MACHINE);
+                check_fatal(s);
                 return SUB_STATE_ERROR;
             }
             if (!ssl_close_construct_packet(s, &pkt, mt)
                     || !WPACKET_finish(&pkt)) {
                 WPACKET_cleanup(&pkt);
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_WRITE_STATE_MACHINE,
-                         ERR_R_INTERNAL_ERROR);
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 return SUB_STATE_ERROR;
             }
 
@@ -876,7 +863,7 @@ static SUB_STATE_RETURN write_state_machine(SSL *s)
         case WRITE_STATE_POST_WORK:
             switch (st->write_state_work = post_work(s, st->write_state_work)) {
             case WORK_ERROR:
-                check_fatal(s, SSL_F_WRITE_STATE_MACHINE);
+                check_fatal(s);
                 /* Fall through */
             case WORK_MORE_A:
             case WORK_MORE_B:
@@ -893,8 +880,7 @@ static SUB_STATE_RETURN write_state_machine(SSL *s)
             break;
 
         default:
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_WRITE_STATE_MACHINE,
-                     ERR_R_INTERNAL_ERROR);
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             return SUB_STATE_ERROR;
         }
     }

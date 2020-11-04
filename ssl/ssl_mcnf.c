@@ -39,10 +39,9 @@ static int ssl_do_config(SSL *s, SSL_CTX *ctx, const char *name, int system)
     if (name == NULL && system)
         name = "system_default";
     if (!conf_ssl_name_find(name, &idx)) {
-        if (!system) {
-            ERR_raise(ERR_LIB_SSL, SSL_R_INVALID_CONFIGURATION_NAME);
-            ERR_add_error_data(2, "name=", name);
-        }
+        if (!system)
+            ERR_raise_data(ERR_LIB_SSL, SSL_R_INVALID_CONFIGURATION_NAME,
+                           "name=%s", name);
         goto err;
     }
     cmds = conf_ssl_get(idx, &name, &cmd_count);
@@ -73,12 +72,10 @@ static int ssl_do_config(SSL *s, SSL_CTX *ctx, const char *name, int system)
         conf_ssl_get_cmd(cmds, i, &cmdstr, &arg);
         rv = SSL_CONF_cmd(cctx, cmdstr, arg);
         if (rv <= 0) {
-            if (rv == -2)
-                ERR_raise(ERR_LIB_SSL, SSL_R_UNKNOWN_COMMAND);
-            else
-                ERR_raise(ERR_LIB_SSL, SSL_R_BAD_VALUE);
-            ERR_add_error_data(6, "section=", name, ", cmd=", cmdstr,
-                               ", arg=", arg);
+            int errcode = rv == -2 ? SSL_R_UNKNOWN_COMMAND : SSL_R_BAD_VALUE;
+
+            ERR_raise_data(ERR_LIB_SSL, errcode,
+                           "section=%s, cmd=%s, arg=%s", name, cmdstr, arg);
             goto err;
         }
     }

@@ -904,10 +904,9 @@ int ssl_build_cert_chain(SSL *s, SSL_CTX *ctx, int flags)
     if (i > 0)
         chain = X509_STORE_CTX_get1_chain(xs_ctx);
     if (i <= 0) {
-        ERR_raise(ERR_LIB_SSL, SSL_R_CERTIFICATE_VERIFY_FAILED);
         i = X509_STORE_CTX_get_error(xs_ctx);
-        ERR_add_error_data(2, "Verify error:",
-                           X509_verify_cert_error_string(i));
+        ERR_raise_data(ERR_LIB_SSL, SSL_R_CERTIFICATE_VERIFY_FAILED,
+                       "Verify error:%s", X509_verify_cert_error_string(i));
 
         goto err;
     }
