@@ -106,9 +106,9 @@ static AUTHORITY_INFO_ACCESS *v2i_AUTHORITY_INFO_ACCESS(X509V3_EXT_METHOD
     AUTHORITY_INFO_ACCESS *ainfo = NULL;
     CONF_VALUE *cnf, ctmp;
     ACCESS_DESCRIPTION *acc;
-    int i, objlen;
+    int i;
     const int num = sk_CONF_VALUE_num(nval);
-    char *objtmp, *ptmp;
+    char *ptmp;
 
     if ((ainfo = sk_ACCESS_DESCRIPTION_new_reserve(NULL, num)) == NULL) {
         ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
@@ -128,26 +128,16 @@ static AUTHORITY_INFO_ACCESS *v2i_AUTHORITY_INFO_ACCESS(X509V3_EXT_METHOD
                       X509V3_R_INVALID_SYNTAX);
             goto err;
         }
-        objlen = ptmp - cnf->name;
         ctmp.name = ptmp + 1;
         ctmp.value = cnf->value;
         if (!v2i_GENERAL_NAME_ex(acc->location, method, ctx, &ctmp, 0))
             goto err;
-        if ((objtmp = OPENSSL_strndup(cnf->name, objlen)) == NULL) {
-            ERR_raise(ERR_LIB_X509V3,
-                      ERR_R_MALLOC_FAILURE);
-            goto err;
-        }
-        acc->method = OBJ_txt2obj(objtmp, 0);
+        acc->method = OBJ_txt2obj(cnf->value, 0);
         if (!acc->method) {
-            ERR_raise(ERR_LIB_X509V3,
-                      X509V3_R_BAD_OBJECT);
-            ERR_add_error_data(2, "value=", objtmp);
-            OPENSSL_free(objtmp);
+            ERR_raise_data(ERR_LIB_X509V3, X509V3_R_BAD_OBJECT,
+                           "value=%s", cnf->value);
             goto err;
         }
-        OPENSSL_free(objtmp);
-
     }
     return ainfo;
  err:

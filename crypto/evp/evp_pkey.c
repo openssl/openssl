@@ -34,9 +34,9 @@ EVP_PKEY *EVP_PKCS82PKEY_ex(const PKCS8_PRIV_KEY_INFO *p8, OSSL_LIB_CTX *libctx,
     }
 
     if (!EVP_PKEY_set_type(pkey, OBJ_obj2nid(algoid))) {
-        ERR_raise(ERR_LIB_EVP, EVP_R_UNSUPPORTED_PRIVATE_KEY_ALGORITHM);
         i2t_ASN1_OBJECT(obj_tmp, 80, algoid);
-        ERR_add_error_data(2, "TYPE=", obj_tmp);
+        ERR_raise_data(ERR_LIB_EVP, EVP_R_UNSUPPORTED_PRIVATE_KEY_ALGORITHM,
+                       "TYPE=%s", obj_tmp);
         goto error;
     }
 

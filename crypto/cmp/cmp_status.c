@@ -53,13 +53,9 @@ const char *ossl_cmp_PKIStatus_to_string(int status)
     case OSSL_CMP_PKISTATUS_keyUpdateWarning:
         return "PKIStatus: key update warning - update already done for the cert";
     default:
-        {
-            char buf[40];
-            BIO_snprintf(buf, sizeof(buf), "PKIStatus: invalid=%d", status);
-            ERR_raise(ERR_LIB_CMP, CMP_R_ERROR_PARSING_PKISTATUS);
-            ERR_add_error_data(1, buf);
-            return NULL;
-        }
+        ERR_raise_data(ERR_LIB_CMP, CMP_R_ERROR_PARSING_PKISTATUS,
+                       "PKIStatus: invalid=%d", status);
+        return NULL;
     }
 }
 

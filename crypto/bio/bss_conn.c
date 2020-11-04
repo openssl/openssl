@@ -89,10 +89,10 @@ static int conn_state(BIO *b, BIO_CONNECT *c)
         switch (c->state) {
         case BIO_CONN_S_BEFORE:
             if (c->param_hostname == NULL && c->param_service == NULL) {
-                ERR_raise(ERR_LIB_BIO, BIO_R_NO_HOSTNAME_OR_SERVICE_SPECIFIED);
-                ERR_add_error_data(4,
-                                   "hostname=", c->param_hostname,
-                                   " service=", c->param_service);
+                ERR_raise_data(ERR_LIB_BIO,
+                               BIO_R_NO_HOSTNAME_OR_SERVICE_SPECIFIED,
+                               "hostname=%s service=%s",
+                               c->param_hostname, c->param_service);
                 goto exit_loop;
             }
             c->state = BIO_CONN_S_GET_ADDR;

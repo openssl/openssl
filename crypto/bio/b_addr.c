@@ -213,12 +213,10 @@ static int addr_strings(const BIO_ADDR *ap, int numeric,
             if (ret == EAI_SYSTEM) {
                 ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
                                "calling getnameinfo()");
-                ERR_raise(ERR_LIB_BIO, ERR_R_SYS_LIB);
             } else
 # endif
             {
-                ERR_raise(ERR_LIB_BIO, ERR_R_SYS_LIB);
-                ERR_add_error_data(1, gai_strerror(ret));
+                ERR_raise_data(ERR_LIB_BIO, ERR_R_SYS_LIB, gai_strerror(ret));
             }
             return 0;
         }
@@ -729,8 +727,8 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
                 goto retry;
             }
 # endif
-            ERR_raise(ERR_LIB_BIO, ERR_R_SYS_LIB);
-            ERR_add_error_data(1, gai_strerror(old_ret ? old_ret : gai_ret));
+            ERR_raise_data(ERR_LIB_BIO, ERR_R_SYS_LIB,
+                           gai_strerror(old_ret ? old_ret : gai_ret));
             break;
         }
     } else {

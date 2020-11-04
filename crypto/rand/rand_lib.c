@@ -645,8 +645,9 @@ static int random_conf_init(CONF_IMODULE *md, const CONF *cnf)
             if (!random_set_string(&dgbl->rng_propq, cval->value))
                 return 0;
         } else {
-            ERR_raise(ERR_LIB_CRYPTO, CRYPTO_R_UNKNOWN_NAME_IN_RANDOM_SECTION);
-            ERR_add_error_data(4, "name=", cval->name, ", value=", cval->value);
+            ERR_raise_data(ERR_LIB_CRYPTO,
+                           CRYPTO_R_UNKNOWN_NAME_IN_RANDOM_SECTION,
+                           "name=%s, value=%s", cval->name, cval->value);
             r = 0;
         }
     }

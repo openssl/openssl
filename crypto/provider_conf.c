@@ -87,8 +87,8 @@ static int provider_conf_load(OSSL_LIB_CTX *libctx, const char *name,
     ecmds = NCONF_get_section(cnf, value);
 
     if (!ecmds) {
-        ERR_raise(ERR_LIB_CRYPTO, CRYPTO_R_PROVIDER_SECTION_ERROR);
-        ERR_add_error_data(3, "section=", value, " not found");
+        ERR_raise_data(ERR_LIB_CRYPTO, CRYPTO_R_PROVIDER_SECTION_ERROR,
+                       "section=%s not found", value);
         return 0;
     }
 

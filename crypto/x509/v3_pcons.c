@@ -73,8 +73,8 @@ static void *v2i_POLICY_CONSTRAINTS(const X509V3_EXT_METHOD *method,
             if (!X509V3_get_value_int(val, &pcons->inhibitPolicyMapping))
                 goto err;
         } else {
-            ERR_raise(ERR_LIB_X509V3, X509V3_R_INVALID_NAME);
-            ERR_add_error_data(1, val->name);
+            ERR_raise_data(ERR_LIB_X509V3, X509V3_R_INVALID_NAME,
+                           "%s", val->name);
             goto err;
         }
     }

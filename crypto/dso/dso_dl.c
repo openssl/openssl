@@ -69,9 +69,13 @@ static int dl_load(DSO *dso)
                     DYNAMIC_PATH), 0L);
     if (ptr == NULL) {
         char errbuf[160];
-        ERR_raise(ERR_LIB_DSO, DSO_R_LOAD_FAILED);
+
         if (openssl_strerror_r(errno, errbuf, sizeof(errbuf)))
-            ERR_add_error_data(4, "filename(", filename, "): ", errbuf);
+            ERR_raise_data(ERR_LIB_DSO, DSO_R_LOAD_FAILED,
+                           "filename(%s): %s", filename, errbuf);
+        else
+            ERR_raise_data(ERR_LIB_DSO, DSO_R_LOAD_FAILED,
+                           "filename(%s): errno %d", filename, errno);
         goto err;
     }
     if (!sk_push(dso->meth_data, (char *)ptr)) {
@@ -135,9 +139,13 @@ static DSO_FUNC_TYPE dl_bind_func(DSO *dso, const char *symname)
     }
     if (shl_findsym(&ptr, symname, TYPE_UNDEFINED, &sym) < 0) {
         char errbuf[160];
-        ERR_raise(ERR_LIB_DSO, DSO_R_SYM_FAILURE);
+
         if (openssl_strerror_r(errno, errbuf, sizeof(errbuf)))
-            ERR_add_error_data(4, "symname(", symname, "): ", errbuf);
+            ERR_raise_data(ERR_LIB_DSO, DSO_R_SYM_FAILURE,
+                           "symname(%s): %s", symname, errbuf);
+        else
+            ERR_raise_data(ERR_LIB_DSO, DSO_R_SYM_FAILURE,
+                           "symname(%s): errno %d", symname, errno);
         return NULL;
     }
     return (DSO_FUNC_TYPE)sym;

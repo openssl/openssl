@@ -282,10 +282,8 @@ static int cms_signerinfo_verify_cert(CMS_SignerInfo *si,
     i = X509_verify_cert(ctx);
     if (i <= 0) {
         j = X509_STORE_CTX_get_error(ctx);
-        ERR_raise(ERR_LIB_CMS,
-               CMS_R_CERTIFICATE_VERIFY_ERROR);
-        ERR_add_error_data(2, "Verify error:",
-                           X509_verify_cert_error_string(j));
+        ERR_raise_data(ERR_LIB_CMS, CMS_R_CERTIFICATE_VERIFY_ERROR,
+                       "Verify error: %s", X509_verify_cert_error_string(j));
         goto err;
     }
     r = 1;

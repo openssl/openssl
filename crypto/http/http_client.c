@@ -383,41 +383,26 @@ static int parse_http_line1(char *line)
         return retcode;
     default:
         if (retcode < 400)
-            ERR_raise(ERR_LIB_HTTP, HTTP_R_STATUS_CODE_UNSUPPORTED);
+            retcode = HTTP_R_STATUS_CODE_UNSUPPORTED;
         else
-            ERR_raise(ERR_LIB_HTTP, HTTP_R_RECEIVED_ERROR);
+            retcode = HTTP_R_RECEIVED_ERROR;
         if (*reason == '\0')
-            ERR_add_error_data(2, "Code=", code);
+            ERR_raise_data(ERR_LIB_HTTP, retcode, "Code=%s", code);
         else
-            ERR_add_error_data(4, "Code=", code, ",Reason=", reason);
+            ERR_raise_data(ERR_LIB_HTTP, retcode,
+                           "Code=%s, Reason=%s", code, reason);
         return 0;
     }
 }
 
 static int check_set_resp_len(OSSL_HTTP_REQ_CTX *rctx, unsigned long len)
 {
-    const char *tag = NULL;
-    unsigned long val = 0;
-
-    if (len > rctx->max_resp_len) {
-        ERR_raise(ERR_LIB_HTTP, HTTP_R_MAX_RESP_LEN_EXCEEDED);
-        tag = ",max=";
-        val = rctx->max_resp_len;
-    }
-    if (rctx->resp_len != 0 && rctx->resp_len != len) {
-        ERR_raise(ERR_LIB_HTTP, HTTP_R_INCONSISTENT_CONTENT_LENGTH);
-        tag = ",before=";
-        val = rctx->resp_len;
-    }
-    if (tag != NULL) {
-        char len_str[32];
-        char str[32];
-
-        BIO_snprintf(len_str, sizeof(len_str), "%lu", len);
-        BIO_snprintf(str, sizeof(str), "%lu", val);
-        ERR_add_error_data(4, "length=", len_str, tag, str);
-        return 0;
-    }
+    if (len > rctx->max_resp_len)
+        ERR_raise_data(ERR_LIB_HTTP, HTTP_R_MAX_RESP_LEN_EXCEEDED,
+                       "length=%lu, max=%lu", len, rctx->max_resp_len);
+    if (rctx->resp_len != 0 && rctx->resp_len != len)
+        ERR_raise_data(ERR_LIB_HTTP, HTTP_R_INCONSISTENT_CONTENT_LENGTH,
+                       "length=%lu, before=%lu", len, rctx->resp_len);
     rctx->resp_len = len;
     return 1;
 }
@@ -585,9 +570,9 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
             if (rctx->expected_ct != NULL
                     && strcasecmp(key, "Content-Type") == 0) {
                 if (strcasecmp(rctx->expected_ct, value) != 0) {
-                    ERR_raise(ERR_LIB_HTTP, HTTP_R_UNEXPECTED_CONTENT_TYPE);
-                    ERR_add_error_data(4, "expected=", rctx->expected_ct,
-                                       ",actual=", value);
+                    ERR_raise_data(ERR_LIB_HTTP, HTTP_R_UNEXPECTED_CONTENT_TYPE,
+                                   "expected=%s, actual=%s",
+                                   rctx->expected_ct, value);
                     return 0;
                 }
                 rctx->expected_ct = NULL; /* content-type has been found */
@@ -595,8 +580,9 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
             if (strcasecmp(key, "Content-Length") == 0) {
                 resp_len = strtoul(value, &line_end, 10);
                 if (line_end == value || *line_end != '\0') {
-                    ERR_raise(ERR_LIB_HTTP, HTTP_R_ERROR_PARSING_CONTENT_LENGTH);
-                    ERR_add_error_data(2, "input=", value);
+                    ERR_raise_data(ERR_LIB_HTTP,
+                                   HTTP_R_ERROR_PARSING_CONTENT_LENGTH,
+                                   "input=%s", value);
                     return 0;
                 }
                 if (!check_set_resp_len(rctx, resp_len))
@@ -613,8 +599,8 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
             goto next_line;
 
         if (rctx->expected_ct != NULL) {
-            ERR_raise(ERR_LIB_HTTP, HTTP_R_MISSING_CONTENT_TYPE);
-            ERR_add_error_data(2, "expected=", rctx->expected_ct);
+            ERR_raise_data(ERR_LIB_HTTP, HTTP_R_MISSING_CONTENT_TYPE,
+                           "expected=%s", rctx->expected_ct);
             return 0;
         }
         if (rctx->state == OHS_REDIRECT) {
@@ -1244,8 +1230,8 @@ int OSSL_HTTP_proxy_connect(BIO *bio, const char *server, const char *port,
             while (read_len > 0 && ossl_isspace(mbuf[read_len - 1]))
                 read_len--;
             mbuf[read_len] = '\0';
-            ERR_raise(ERR_LIB_HTTP, HTTP_R_CONNECT_FAILURE);
-            ERR_add_error_data(2, "Reason=", mbufp);
+            ERR_raise_data(ERR_LIB_HTTP, HTTP_R_CONNECT_FAILURE,
+                           "Reason=%s", mbufp);
             BIO_printf(bio_err, "%s: HTTP CONNECT failed, Reason=%s\n",
                        prog, mbufp);
             goto end;

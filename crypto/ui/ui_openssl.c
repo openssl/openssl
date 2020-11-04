@@ -451,15 +451,12 @@ static int open_console(UI *ui)
              * which seems appropriate.
              */
         if (errno == ENODEV)
-            is_a_tty = 0;
+                is_a_tty = 0;
         else
 #  endif
             {
-                char tmp_num[10];
-                BIO_snprintf(tmp_num, sizeof(tmp_num) - 1, "%d", errno);
-                ERR_raise(ERR_LIB_UI, UI_R_UNKNOWN_TTYGET_ERRNO_VALUE);
-                ERR_add_error_data(2, "errno=", tmp_num);
-
+                ERR_raise_data(ERR_LIB_UI, UI_R_UNKNOWN_TTYGET_ERRNO_VALUE,
+                               "errno=%d", errno);
                 return 0;
             }
     }
@@ -469,11 +466,8 @@ static int open_console(UI *ui)
 
     /* if there isn't a TT device, something is very wrong */
     if (status != SS$_NORMAL) {
-        char tmp_num[12];
-
-        BIO_snprintf(tmp_num, sizeof(tmp_num) - 1, "%%X%08X", status);
-        ERR_raise(ERR_LIB_UI, UI_R_SYSASSIGN_ERROR);
-        ERR_add_error_data(2, "status=", tmp_num);
+        ERR_raise_data(ERR_LIB_UI, UI_R_SYSASSIGN_ERROR,
+                       "status=%%X%08X", status);
         return 0;
     }
 
@@ -506,15 +500,9 @@ static int noecho_console(UI *ui)
         status = sys$qiow(0, channel, IO$_SETMODE, &iosb, 0, 0, tty_new, 12,
                           0, 0, 0, 0);
         if ((status != SS$_NORMAL) || (iosb.iosb$w_value != SS$_NORMAL)) {
-            char tmp_num[2][12];
-
-            BIO_snprintf(tmp_num[0], sizeof(tmp_num[0]) - 1, "%%X%08X",
-                         status);
-            BIO_snprintf(tmp_num[1], sizeof(tmp_num[1]) - 1, "%%X%08X",
-                         iosb.iosb$w_value);
-            ERR_raise(ERR_LIB_UI, UI_R_SYSQIOW_ERROR);
-            ERR_add_error_data(5, "status=", tmp_num[0],
-                               ",", "iosb.iosb$w_value=", tmp_num[1]);
+            ERR_raise_data(ERR_LIB_UI, UI_R_SYSQIOW_ERROR,
+                           "status=%%X%08X, iosb.iosb$w_value=%%X%08X",
+                           status, iosb.iosb$w_value);
             return 0;
         }
     }
@@ -544,15 +532,9 @@ static int echo_console(UI *ui)
         status = sys$qiow(0, channel, IO$_SETMODE, &iosb, 0, 0, tty_new, 12,
                           0, 0, 0, 0);
         if ((status != SS$_NORMAL) || (iosb.iosb$w_value != SS$_NORMAL)) {
-            char tmp_num[2][12];
-
-            BIO_snprintf(tmp_num[0], sizeof(tmp_num[0]) - 1, "%%X%08X",
-                         status);
-            BIO_snprintf(tmp_num[1], sizeof(tmp_num[1]) - 1, "%%X%08X",
-                         iosb.iosb$w_value);
-            ERR_raise(ERR_LIB_UI, UI_R_SYSQIOW_ERROR);
-            ERR_add_error_data(5, "status=", tmp_num[0],
-                               ",", "iosb.iosb$w_value=", tmp_num[1]);
+            ERR_raise_data(ERR_LIB_UI, UI_R_SYSQIOW_ERROR,
+                           "status=%%X%08X, iosb.iosb$w_value=%%X%08X",
+                           status, iosb.iosb$w_value);
             return 0;
         }
     }
@@ -575,11 +557,8 @@ static int close_console(UI *ui)
 # ifdef OPENSSL_SYS_VMS
     status = sys$dassgn(channel);
     if (status != SS$_NORMAL) {
-        char tmp_num[12];
-
-        BIO_snprintf(tmp_num, sizeof(tmp_num) - 1, "%%X%08X", status);
-        ERR_raise(ERR_LIB_UI, UI_R_SYSDASSGN_ERROR);
-        ERR_add_error_data(2, "status=", tmp_num);
+        ERR_raise_data(ERR_LIB_UI, UI_R_SYSDASSGN_ERROR,
+                       "status=%%X%08X", status);
         return 0;
     }
 # endif

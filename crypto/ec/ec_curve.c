@@ -3298,9 +3298,11 @@ EC_GROUP *EC_GROUP_new_by_curve_name_ex(OSSL_LIB_CTX *libctx, const char *propq,
 
     if ((curve = ec_curve_nid2curve(nid)) == NULL
         || (ret = ec_group_new_from_data(libctx, propq, *curve)) == NULL) {
-        ERR_raise(ERR_LIB_EC, EC_R_UNKNOWN_GROUP);
 #ifndef FIPS_MODULE
-        ERR_add_error_data(2, "name=", OBJ_nid2sn(nid));
+        ERR_raise_data(ERR_LIB_EC, EC_R_UNKNOWN_GROUP,
+                       "name=%s", OBJ_nid2sn(nid));
+#else
+        ERR_raise(ERR_LIB_EC, EC_R_UNKNOWN_GROUP);
 #endif
         return NULL;
     }

@@ -524,8 +524,8 @@ GENERAL_NAME *a2i_GENERAL_NAME(GENERAL_NAME *out,
         {
             ASN1_OBJECT *obj;
             if ((obj = OBJ_txt2obj(value, 0)) == NULL) {
-                ERR_raise(ERR_LIB_X509V3, X509V3_R_BAD_OBJECT);
-                ERR_add_error_data(2, "value=", value);
+                ERR_raise_data(ERR_LIB_X509V3, X509V3_R_BAD_OBJECT,
+                               "value=%s", value);
                 goto err;
             }
             gen->d.rid = obj;
@@ -538,8 +538,8 @@ GENERAL_NAME *a2i_GENERAL_NAME(GENERAL_NAME *out,
         else
             gen->d.ip = a2i_IPADDRESS(value);
         if (gen->d.ip == NULL) {
-            ERR_raise(ERR_LIB_X509V3, X509V3_R_BAD_IP_ADDRESS);
-            ERR_add_error_data(2, "value=", value);
+            ERR_raise_data(ERR_LIB_X509V3, X509V3_R_BAD_IP_ADDRESS,
+                           "value=%s", value);
             goto err;
         }
         break;
@@ -612,8 +612,8 @@ GENERAL_NAME *v2i_GENERAL_NAME_ex(GENERAL_NAME *out,
     else if (!v3_name_cmp(name, "otherName"))
         type = GEN_OTHERNAME;
     else {
-        ERR_raise(ERR_LIB_X509V3, X509V3_R_UNSUPPORTED_OPTION);
-        ERR_add_error_data(2, "name=", name);
+        ERR_raise_data(ERR_LIB_X509V3, X509V3_R_UNSUPPORTED_OPTION,
+                       "name=%s", name);
         return NULL;
     }
 
@@ -658,8 +658,8 @@ static int do_dirname(GENERAL_NAME *gen, const char *value, X509V3_CTX *ctx)
         goto err;
     sk = X509V3_get_section(ctx, value);
     if (!sk) {
-        ERR_raise(ERR_LIB_X509V3, X509V3_R_SECTION_NOT_FOUND);
-        ERR_add_error_data(2, "section=", value);
+        ERR_raise_data(ERR_LIB_X509V3, X509V3_R_SECTION_NOT_FOUND,
+                       "section=%s", value);
         goto err;
     }
     /* FIXME: should allow other character types... */

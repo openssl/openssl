@@ -44,12 +44,13 @@ static X509_EXTENSION *X509V3_EXT_nconf_int(CONF *conf, X509V3_CTX *ctx,
         return v3_generic_extension(name, value, crit, ext_type, ctx);
     ret = do_ext_nconf(conf, ctx, OBJ_sn2nid(name), crit, value);
     if (!ret) {
-        ERR_raise(ERR_LIB_X509V3, X509V3_R_ERROR_IN_EXTENSION);
         if (section != NULL)
-            ERR_add_error_data(6, "section=", section,
-                               ", name=", name, ", value=", value);
+            ERR_raise_data(ERR_LIB_X509V3, X509V3_R_ERROR_IN_EXTENSION,
+                           "section=%s, name=%s, value=%s",
+                           section, name, value);
         else
-            ERR_add_error_data(4, "name=", name, ", value=", value);
+            ERR_raise_data(ERR_LIB_X509V3, X509V3_R_ERROR_IN_EXTENSION,
+                           "name=%s, value=%s", name, value);
     }
     return ret;
 }
@@ -98,10 +99,8 @@ static X509_EXTENSION *do_ext_nconf(CONF *conf, X509V3_CTX *ctx, int ext_nid,
         else
             nval = X509V3_parse_list(value);
         if (nval == NULL || sk_CONF_VALUE_num(nval) <= 0) {
-            ERR_raise(ERR_LIB_X509V3,
-                      X509V3_R_INVALID_EXTENSION_STRING);
-            ERR_add_error_data(4, "name=", OBJ_nid2sn(ext_nid), ",section=",
-                               value);
+            ERR_raise_data(ERR_LIB_X509V3, X509V3_R_INVALID_EXTENSION_STRING,
+                           "name=%s,section=%s", OBJ_nid2sn(ext_nid), value);
             if (*value != '@')
                 sk_CONF_VALUE_pop_free(nval, X509V3_conf_free);
             return NULL;
@@ -122,9 +121,8 @@ static X509_EXTENSION *do_ext_nconf(CONF *conf, X509V3_CTX *ctx, int ext_nid,
         if ((ext_struc = method->r2i(method, ctx, value)) == NULL)
             return NULL;
     } else {
-        ERR_raise(ERR_LIB_X509V3,
-                  X509V3_R_EXTENSION_SETTING_NOT_SUPPORTED);
-        ERR_add_error_data(2, "name=", OBJ_nid2sn(ext_nid));
+        ERR_raise_data(ERR_LIB_X509V3, X509V3_R_EXTENSION_SETTING_NOT_SUPPORTED,
+                       "name=%s", OBJ_nid2sn(ext_nid));
         return NULL;
     }
 
@@ -242,9 +240,8 @@ static X509_EXTENSION *v3_generic_extension(const char *ext, const char *value,
     X509_EXTENSION *extension = NULL;
 
     if ((obj = OBJ_txt2obj(ext, 0)) == NULL) {
-        ERR_raise(ERR_LIB_X509V3,
-                  X509V3_R_EXTENSION_NAME_ERROR);
-        ERR_add_error_data(2, "name=", ext);
+        ERR_raise_data(ERR_LIB_X509V3, X509V3_R_EXTENSION_NAME_ERROR,
+                       "name=%s", ext);
         goto err;
     }
 
@@ -254,9 +251,8 @@ static X509_EXTENSION *v3_generic_extension(const char *ext, const char *value,
         ext_der = generic_asn1(value, ctx, &ext_len);
 
     if (ext_der == NULL) {
-        ERR_raise(ERR_LIB_X509V3,
-                  X509V3_R_EXTENSION_VALUE_ERROR);
-        ERR_add_error_data(2, "value=", value);
+        ERR_raise_data(ERR_LIB_X509V3, X509V3_R_EXTENSION_VALUE_ERROR,
+                       "value=%s", value);
         goto err;
     }
 

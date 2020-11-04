@@ -56,9 +56,8 @@ static int alg_module_init(CONF_IMODULE *md, const CONF *cnf)
                 return 0;
             }
         } else {
-            ERR_raise(ERR_LIB_EVP, EVP_R_UNKNOWN_OPTION);
-            ERR_add_error_data(4, "name=", oval->name,
-                               ", value=", oval->value);
+            ERR_raise_data(ERR_LIB_EVP, EVP_R_UNKNOWN_OPTION,
+                           "name=%s, value=%s", oval->name, oval->value);
             return 0;
         }
 

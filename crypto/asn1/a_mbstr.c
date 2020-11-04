@@ -49,7 +49,6 @@ int ASN1_mbstring_ncopy(ASN1_STRING **out, const unsigned char *in, int len,
     ASN1_STRING *dest;
     unsigned char *p;
     int nchar;
-    char strbuf[32];
     int (*cpyfunc) (unsigned long, void *) = NULL;
     if (len == -1)
         len = strlen((const char *)in);
@@ -97,16 +96,14 @@ int ASN1_mbstring_ncopy(ASN1_STRING **out, const unsigned char *in, int len,
     }
 
     if ((minsize > 0) && (nchar < minsize)) {
-        ERR_raise(ERR_LIB_ASN1, ASN1_R_STRING_TOO_SHORT);
-        BIO_snprintf(strbuf, sizeof(strbuf), "%ld", minsize);
-        ERR_add_error_data(2, "minsize=", strbuf);
+        ERR_raise_data(ERR_LIB_ASN1, ASN1_R_STRING_TOO_SHORT,
+                       "minsize=%ld", minsize);
         return -1;
     }
 
     if ((maxsize > 0) && (nchar > maxsize)) {
-        ERR_raise(ERR_LIB_ASN1, ASN1_R_STRING_TOO_LONG);
-        BIO_snprintf(strbuf, sizeof(strbuf), "%ld", maxsize);
-        ERR_add_error_data(2, "maxsize=", strbuf);
+        ERR_raise_data(ERR_LIB_ASN1, ASN1_R_STRING_TOO_LONG,
+                       "maxsize=%ld", maxsize);
         return -1;
     }
 

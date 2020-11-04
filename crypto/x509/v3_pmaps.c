@@ -80,17 +80,15 @@ static void *v2i_POLICY_MAPPINGS(const X509V3_EXT_METHOD *method,
     for (i = 0; i < num; i++) {
         val = sk_CONF_VALUE_value(nval, i);
         if (!val->value || !val->name) {
-            ERR_raise(ERR_LIB_X509V3,
-                      X509V3_R_INVALID_OBJECT_IDENTIFIER);
-            ERR_add_error_data(1, val->name);
+            ERR_raise_data(ERR_LIB_X509V3, X509V3_R_INVALID_OBJECT_IDENTIFIER,
+                           "%s", val->name);
             goto err;
         }
         obj1 = OBJ_txt2obj(val->name, 0);
         obj2 = OBJ_txt2obj(val->value, 0);
         if (!obj1 || !obj2) {
-            ERR_raise(ERR_LIB_X509V3,
-                      X509V3_R_INVALID_OBJECT_IDENTIFIER);
-            ERR_add_error_data(1, val->name);
+            ERR_raise_data(ERR_LIB_X509V3, X509V3_R_INVALID_OBJECT_IDENTIFIER,
+                           "%s", val->name);
             goto err;
         }
         pmap = POLICY_MAPPING_new();

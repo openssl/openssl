@@ -127,8 +127,8 @@ static STACK_OF(POLICYINFO) *r2i_certpol(X509V3_EXT_METHOD *method,
 
             polsect = X509V3_get_section(ctx, pstr + 1);
             if (polsect == NULL) {
-                ERR_raise(ERR_LIB_X509V3, X509V3_R_INVALID_SECTION);
-                ERR_add_error_data(1, cnf->name);
+                ERR_raise_data(ERR_LIB_X509V3, X509V3_R_INVALID_SECTION,
+                               "%s", cnf->name);
                 goto err;
             }
             pol = policy_section(ctx, polsect, ia5org);
@@ -137,9 +137,9 @@ static STACK_OF(POLICYINFO) *r2i_certpol(X509V3_EXT_METHOD *method,
                 goto err;
         } else {
             if ((pobj = OBJ_txt2obj(cnf->name, 0)) == NULL) {
-                ERR_raise(ERR_LIB_X509V3,
-                          X509V3_R_INVALID_OBJECT_IDENTIFIER);
-                ERR_add_error_data(1, cnf->name);
+                ERR_raise_data(ERR_LIB_X509V3,
+                               X509V3_R_INVALID_OBJECT_IDENTIFIER,
+                               "%s", cnf->name);
                 goto err;
             }
             pol = POLICYINFO_new();

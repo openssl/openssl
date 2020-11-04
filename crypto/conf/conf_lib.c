@@ -280,8 +280,8 @@ char *NCONF_get_string(const CONF *conf, const char *group, const char *name)
                 CONF_R_NO_CONF_OR_ENVIRONMENT_VARIABLE);
         return NULL;
     }
-    ERR_raise(ERR_LIB_CONF, CONF_R_NO_VALUE);
-    ERR_add_error_data(4, "group=", group, " name=", name);
+    ERR_raise_data(ERR_LIB_CONF, CONF_R_NO_VALUE,
+                   "group=%s name=%s", group, name);
     return NULL;
 }
 

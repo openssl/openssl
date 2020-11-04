@@ -121,8 +121,9 @@ int CONF_modules_load(const CONF *cnf, const char *appname,
     if (values == NULL) {
         if (!(flags & CONF_MFLAGS_SILENT)) {
             ERR_clear_last_mark();
-            ERR_raise(ERR_LIB_CONF, CONF_R_OPENSSL_CONF_REFERENCES_MISSING_SECTION);
-            ERR_add_error_data(2, "openssl_conf=", vsection);
+            ERR_raise_data(ERR_LIB_CONF,
+                           CONF_R_OPENSSL_CONF_REFERENCES_MISSING_SECTION,
+                           "openssl_conf=%s", vsection);
         } else {
             ERR_pop_to_mark();
         }
@@ -228,8 +229,8 @@ static int module_run(const CONF *cnf, const char *name, const char *value,
 
     if (!md) {
         if (!(flags & CONF_MFLAGS_SILENT)) {
-            ERR_raise(ERR_LIB_CONF, CONF_R_UNKNOWN_MODULE_NAME);
-            ERR_add_error_data(2, "module=", name);
+            ERR_raise_data(ERR_LIB_CONF, CONF_R_UNKNOWN_MODULE_NAME,
+                           "module=%s", name);
         }
         return -1;
     }
@@ -237,14 +238,10 @@ static int module_run(const CONF *cnf, const char *name, const char *value,
     ret = module_init(md, name, value, cnf);
 
     if (ret <= 0) {
-        if (!(flags & CONF_MFLAGS_SILENT)) {
-            char rcode[DECIMAL_SIZE(ret) + 1];
-
-            ERR_raise(ERR_LIB_CONF, CONF_R_MODULE_INITIALIZATION_ERROR);
-            BIO_snprintf(rcode, sizeof(rcode), "%-8d", ret);
-            ERR_add_error_data(6, "module=", name, ", value=", value,
-                               ", retcode=", rcode);
-        }
+        if (!(flags & CONF_MFLAGS_SILENT))
+            ERR_raise_data(ERR_LIB_CONF, CONF_R_MODULE_INITIALIZATION_ERROR,
+                           "module=%s, value=%s retcode=%-8d",
+                           name, value, ret);
     }
 
     return ret;
@@ -287,8 +284,7 @@ static CONF_MODULE *module_load_dso(const CONF *cnf,
 
  err:
     DSO_free(dso);
-    ERR_raise(ERR_LIB_CONF, errcode);
-    ERR_add_error_data(4, "module=", name, ", path=", path);
+    ERR_raise_data(ERR_LIB_CONF, errcode, "module=%s, path=%s", name, path);
     return NULL;
 }
 

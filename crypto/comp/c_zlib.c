@@ -397,8 +397,8 @@ static int bio_zlib_read(BIO *b, char *out, int outl)
         while (zin->avail_in) {
             ret = inflate(zin, 0);
             if ((ret != Z_OK) && (ret != Z_STREAM_END)) {
-                ERR_raise(ERR_LIB_COMP, COMP_R_ZLIB_INFLATE_ERROR);
-                ERR_add_error_data(2, "zlib error:", zError(ret));
+                ERR_raise_data(ERR_LIB_COMP, COMP_R_ZLIB_INFLATE_ERROR,
+                               "zlib error: %s", zError(ret));
                 return 0;
             }
             /* If EOF or we've read everything then return */
@@ -483,8 +483,8 @@ static int bio_zlib_write(BIO *b, const char *in, int inl)
         /* Compress some more */
         ret = deflate(zout, 0);
         if (ret != Z_OK) {
-            ERR_raise(ERR_LIB_COMP, COMP_R_ZLIB_DEFLATE_ERROR);
-            ERR_add_error_data(2, "zlib error:", zError(ret));
+            ERR_raise_data(ERR_LIB_COMP, COMP_R_ZLIB_DEFLATE_ERROR,
+                           "zlib error: %s", zError(ret));
             return 0;
         }
         ctx->ocount = ctx->obufsize - zout->avail_out;
@@ -532,8 +532,8 @@ static int bio_zlib_flush(BIO *b)
         if (ret == Z_STREAM_END)
             ctx->odone = 1;
         else if (ret != Z_OK) {
-            ERR_raise(ERR_LIB_COMP, COMP_R_ZLIB_DEFLATE_ERROR);
-            ERR_add_error_data(2, "zlib error:", zError(ret));
+            ERR_raise_data(ERR_LIB_COMP, COMP_R_ZLIB_DEFLATE_ERROR,
+                           "zlib error: %s", zError(ret));
             return 0;
         }
         ctx->ocount = ctx->obufsize - zout->avail_out;
