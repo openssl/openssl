@@ -115,7 +115,8 @@ EVP_PKEY *load_key(const char *uri, int format, int maybe_stdin,
                    const char *pass, ENGINE *e, const char *desc);
 EVP_PKEY *load_pubkey(const char *uri, int format, int maybe_stdin,
                       const char *pass, ENGINE *e, const char *desc);
-EVP_PKEY *load_keyparams(const char *uri, int maybe_stdin, const char *desc);
+EVP_PKEY *load_keyparams(const char *uri, int maybe_stdin, const char *keytype,
+                         const char *desc);
 int load_certs(const char *uri, STACK_OF(X509) **certs,
                const char *pass, const char *desc);
 int load_crls(const char *uri, STACK_OF(X509_CRL) **crls,

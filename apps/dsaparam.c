@@ -179,14 +179,10 @@ int dsaparam_main(int argc, char **argv)
             goto end;
         }
     } else {
-        params = load_keyparams(infile, 1, "DSA parameters");
-        if (!EVP_PKEY_is_a(params, "DSA")) {
-            EVP_PKEY_free(params);
-            params = NULL;
-        }
+        params = load_keyparams(infile, 1, "DSA", "DSA parameters");
     }
     if (params == NULL) {
-        BIO_printf(bio_err, "Error, unable to load DSA parameters\n");
+        /* Error message should already have been displayed */
         goto end;
     }
 
