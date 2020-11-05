@@ -1298,3 +1298,15 @@ hqc256_2_cca2		1297
 p521_hqc256_2_cca2		1298
 hqc256_3_cca2		1299
 p521_hqc256_3_cca2		1300
+ntrulpr653		1301
+p256_ntrulpr653		1302
+ntrulpr761		1303
+p384_ntrulpr761		1304
+ntrulpr857		1305
+p384_ntrulpr857		1306
+sntrup653		1307
+p256_sntrup653		1308
+sntrup761		1309
+p384_sntrup761		1310
+sntrup857		1311
+p384_sntrup857		1312

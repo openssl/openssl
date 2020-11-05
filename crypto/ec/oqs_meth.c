@@ -147,6 +147,12 @@ int oqssl_kem_nids_list[] = {
         NID_hqc256_1_cca2,
         NID_hqc256_2_cca2,
         NID_hqc256_3_cca2,
+        NID_ntrulpr653,
+        NID_ntrulpr761,
+        NID_ntrulpr857,
+        NID_sntrup653,
+        NID_sntrup761,
+        NID_sntrup857,
 /////// OQS_TEMPLATE_FRAGMENT_LIST_KNOWN_KEM_NIDS_END
 };
 
@@ -331,6 +337,24 @@ char* get_oqs_alg_name(int openssl_nid)
     case NID_hqc256_3_cca2:
     case NID_p521_hqc256_3_cca2:
       return OQS_KEM_alg_hqc_256_3_cca2;
+    case NID_ntrulpr653:
+    case NID_p256_ntrulpr653:
+      return OQS_KEM_alg_ntruprime_ntrulpr653;
+    case NID_ntrulpr761:
+    case NID_p384_ntrulpr761:
+      return OQS_KEM_alg_ntruprime_ntrulpr761;
+    case NID_ntrulpr857:
+    case NID_p384_ntrulpr857:
+      return OQS_KEM_alg_ntruprime_ntrulpr857;
+    case NID_sntrup653:
+    case NID_p256_sntrup653:
+      return OQS_KEM_alg_ntruprime_sntrup653;
+    case NID_sntrup761:
+    case NID_p384_sntrup761:
+      return OQS_KEM_alg_ntruprime_sntrup761;
+    case NID_sntrup857:
+    case NID_p384_sntrup857:
+      return OQS_KEM_alg_ntruprime_sntrup857;
 ///// OQS_TEMPLATE_FRAGMENT_ASSIGN_SIG_ALG_END
     default:
       return NULL;

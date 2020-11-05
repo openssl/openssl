@@ -536,8 +536,14 @@
   (nid == NID_hqc256_1_cca2 ? 0x0235 : \
   (nid == NID_hqc256_2_cca2 ? 0x0236 : \
   (nid == NID_hqc256_3_cca2 ? 0x0237 : \
+  (nid == NID_ntrulpr653 ? 0x0238 : \
+  (nid == NID_ntrulpr761 ? 0x0239 : \
+  (nid == NID_ntrulpr857 ? 0x023A : \
+  (nid == NID_sntrup653 ? 0x023B : \
+  (nid == NID_sntrup761 ? 0x023C : \
+  (nid == NID_sntrup857 ? 0x023D : \
   0 \
-  ))))))))))))))))))))))))))))))))))))))
+  ))))))))))))))))))))))))))))))))))))))))))))
 ///// OQS_TEMPLATE_FRAGMENT_OQS_KEM_CURVEID_END
 
 ///// OQS_TEMPLATE_FRAGMENT_OQS_KEM_HYBRID_CURVEID_START
@@ -580,8 +586,14 @@
     (nid == NID_p521_hqc256_1_cca2 ? 0x2F35 : \
     (nid == NID_p521_hqc256_2_cca2 ? 0x2F36 : \
     (nid == NID_p521_hqc256_3_cca2 ? 0x2F37 : \
+    (nid == NID_p256_ntrulpr653 ? 0x2F38 : \
+    (nid == NID_p384_ntrulpr761 ? 0x2F39 : \
+    (nid == NID_p384_ntrulpr857 ? 0x2F3A : \
+    (nid == NID_p256_sntrup653 ? 0x2F3B : \
+    (nid == NID_p384_sntrup761 ? 0x2F3C : \
+    (nid == NID_p384_sntrup857 ? 0x2F3D : \
   0 \
-  ))))))))))))))))))))))))))))))))))))))
+  ))))))))))))))))))))))))))))))))))))))))))))
 ///// OQS_TEMPLATE_FRAGMENT_OQS_KEM_HYBRID_CURVEID_END
 
   /* Returns the non-hybrid OQS KEM NID for a PQ or hybrid curve ID */
@@ -625,8 +637,14 @@
   (curveID == 0x0235 || curveID == 0x2F35 ? NID_hqc256_1_cca2 : \
   (curveID == 0x0236 || curveID == 0x2F36 ? NID_hqc256_2_cca2 : \
   (curveID == 0x0237 || curveID == 0x2F37 ? NID_hqc256_3_cca2 : \
+  (curveID == 0x0238 || curveID == 0x2F38 ? NID_ntrulpr653 : \
+  (curveID == 0x0239 || curveID == 0x2F39 ? NID_ntrulpr761 : \
+  (curveID == 0x023A || curveID == 0x2F3A ? NID_ntrulpr857 : \
+  (curveID == 0x023B || curveID == 0x2F3B ? NID_sntrup653 : \
+  (curveID == 0x023C || curveID == 0x2F3C ? NID_sntrup761 : \
+  (curveID == 0x023D || curveID == 0x2F3D ? NID_sntrup857 : \
   0 \
-  ))))))))))))))))))))))))))))))))))))))
+  ))))))))))))))))))))))))))))))))))))))))))))
 ///// OQS_TEMPLATE_FRAGMENT_OQS_KEM_NID_END
 
   /* Returns the hybrid OQS KEM NID for a hybrid curve ID */
@@ -670,8 +688,14 @@
     (curveID == 0x2F35 ? NID_p521_hqc256_1_cca2 : \
     (curveID == 0x2F36 ? NID_p521_hqc256_2_cca2 : \
     (curveID == 0x2F37 ? NID_p521_hqc256_3_cca2 : \
+    (curveID == 0x2F38 ? NID_p256_ntrulpr653 : \
+    (curveID == 0x2F39 ? NID_p384_ntrulpr761 : \
+    (curveID == 0x2F3A ? NID_p384_ntrulpr857 : \
+    (curveID == 0x2F3B ? NID_p256_sntrup653 : \
+    (curveID == 0x2F3C ? NID_p384_sntrup761 : \
+    (curveID == 0x2F3D ? NID_p384_sntrup857 : \
   0 \
-  ))))))))))))))))))))))))))))))))))))))
+  ))))))))))))))))))))))))))))))))))))))))))))
 ///// OQS_TEMPLATE_FRAGMENT_OQS_HYBRID_KEM_NID_END
 
 /* Returns true if the curve ID is for an OQS KEM */
@@ -723,8 +747,14 @@
   (nid == NID_hqc256_1_cca2 ? OQS_KEM_alg_hqc_256_1_cca2 : \
   (nid == NID_hqc256_2_cca2 ? OQS_KEM_alg_hqc_256_2_cca2 : \
   (nid == NID_hqc256_3_cca2 ? OQS_KEM_alg_hqc_256_3_cca2 : \
+  (nid == NID_ntrulpr653 ? OQS_KEM_alg_ntruprime_ntrulpr653 : \
+  (nid == NID_ntrulpr761 ? OQS_KEM_alg_ntruprime_ntrulpr761 : \
+  (nid == NID_ntrulpr857 ? OQS_KEM_alg_ntruprime_ntrulpr857 : \
+  (nid == NID_sntrup653 ? OQS_KEM_alg_ntruprime_sntrup653 : \
+  (nid == NID_sntrup761 ? OQS_KEM_alg_ntruprime_sntrup761 : \
+  (nid == NID_sntrup857 ? OQS_KEM_alg_ntruprime_sntrup857 : \
   0 \
-  ))))))))))))))))))))))))))))))))))))))
+  ))))))))))))))))))))))))))))))))))))))))))))
 ///// OQS_TEMPLATE_FRAGMENT_OQS_ALG_NAME_END
 
 /* Returns the classic curve ID for a given hybrid curve */
@@ -768,8 +798,14 @@
   (cid == 0x2F35 ?25: \
   (cid == 0x2F36 ?25: \
   (cid == 0x2F37 ?25: \
+  (cid == 0x2F38 ?23: \
+  (cid == 0x2F39 ?24: \
+  (cid == 0x2F3A ?24: \
+  (cid == 0x2F3B ?23: \
+  (cid == 0x2F3C ?24: \
+  (cid == 0x2F3D ?24: \
   23 \
-  ))))))))))))))))))))))))))))))))))))))
+  ))))))))))))))))))))))))))))))))))))))))))))
 ///// OQS_TEMPLATE_FRAGMENT_OQS_MAP_HYBRID_END
 
 /* Returns the classical nid for an hybrid alg */

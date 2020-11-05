@@ -68,7 +68,7 @@ Some of the KEMs provided in liboqs do provide IND-CCA security; others do not (
 
 ### Supported Algorithms
 
-If an algorithm is provided by liboqs but is not listed below, it might still be possible to use it in the fork through [either one of two ways](https://github.com/open-quantum-safe/openssl/wiki/Using-liboqs-algorithms-that-are-not-in-the-forks).
+If an algorithm is provided by liboqs but is not listed below, it might still be possible to use it in the fork through [either one of two ways](https://github.com/open-quantum-safe/openssl/wiki/Using-liboqs-algorithms-not-in-the-fork).
 
 #### Key Exchange
 
@@ -80,6 +80,7 @@ The following quantum-safe algorithms from liboqs are supported (assuming they h
 - **HQC**: `hqc128_1_cca2`, `hqc192_1_cca2`, `hqc192_2_cca2`, `hqc256_1_cca2`† , `hqc256_2_cca2`†, `hqc256_3_cca2`†
 - **Kyber**: `kyber512`, `kyber768`, `kyber1024`, `kyber90s512`, `kyber90s768`, `kyber90s1024`
 - **NTRU**: `ntru_hps2048509`, `ntru_hps2048677`, `ntru_hps4096821`, `ntru_hrss701`
+- **NTRU-Prime**: `ntrulpr653`, `ntrulpr761`, `ntrulpr857`, `sntrup653`, `sntrup761`, `sntrup857`
 - **Saber**: `lightsaber`, `saber`, `firesaber`
 - **SIDH** and **SIKE**: `sidhp434`, `sidhp503`, `sidhp610`, `sidhp751`, `sikep434`, `sikep503`, `sikep610`, `sikep751`
 

@@ -1753,6 +1753,18 @@ dstu4145le 2 9 : uacurve9 : DSTU curve 9
  : p521_hqc256_2_cca2 : p521_hqc256_2_cca2
  : hqc256_3_cca2 : hqc256_3_cca2
  : p521_hqc256_3_cca2 : p521_hqc256_3_cca2
+ : ntrulpr653 : ntrulpr653
+ : p256_ntrulpr653 : p256_ntrulpr653
+ : ntrulpr761 : ntrulpr761
+ : p384_ntrulpr761 : p384_ntrulpr761
+ : ntrulpr857 : ntrulpr857
+ : p384_ntrulpr857 : p384_ntrulpr857
+ : sntrup653 : sntrup653
+ : p256_sntrup653 : p256_sntrup653
+ : sntrup761 : sntrup761
+ : p384_sntrup761 : p384_sntrup761
+ : sntrup857 : sntrup857
+ : p384_sntrup857 : p384_sntrup857
 ##### OQS_TEMPLATE_FRAGMENT_LIST_KEMS_END
 
 ##### OQS_TEMPLATE_FRAGMENT_ASSIGN_SIG_OIDS_START

@@ -5501,6 +5501,54 @@
 #define LN_p521_hqc256_3_cca2           "p521_hqc256_3_cca2"
 #define NID_p521_hqc256_3_cca2          1300
 
+#define SN_ntrulpr653           "ntrulpr653"
+#define LN_ntrulpr653           "ntrulpr653"
+#define NID_ntrulpr653          1301
+
+#define SN_p256_ntrulpr653              "p256_ntrulpr653"
+#define LN_p256_ntrulpr653              "p256_ntrulpr653"
+#define NID_p256_ntrulpr653             1302
+
+#define SN_ntrulpr761           "ntrulpr761"
+#define LN_ntrulpr761           "ntrulpr761"
+#define NID_ntrulpr761          1303
+
+#define SN_p384_ntrulpr761              "p384_ntrulpr761"
+#define LN_p384_ntrulpr761              "p384_ntrulpr761"
+#define NID_p384_ntrulpr761             1304
+
+#define SN_ntrulpr857           "ntrulpr857"
+#define LN_ntrulpr857           "ntrulpr857"
+#define NID_ntrulpr857          1305
+
+#define SN_p384_ntrulpr857              "p384_ntrulpr857"
+#define LN_p384_ntrulpr857              "p384_ntrulpr857"
+#define NID_p384_ntrulpr857             1306
+
+#define SN_sntrup653            "sntrup653"
+#define LN_sntrup653            "sntrup653"
+#define NID_sntrup653           1307
+
+#define SN_p256_sntrup653               "p256_sntrup653"
+#define LN_p256_sntrup653               "p256_sntrup653"
+#define NID_p256_sntrup653              1308
+
+#define SN_sntrup761            "sntrup761"
+#define LN_sntrup761            "sntrup761"
+#define NID_sntrup761           1309
+
+#define SN_p384_sntrup761               "p384_sntrup761"
+#define LN_p384_sntrup761               "p384_sntrup761"
+#define NID_p384_sntrup761              1310
+
+#define SN_sntrup857            "sntrup857"
+#define LN_sntrup857            "sntrup857"
+#define NID_sntrup857           1311
+
+#define SN_p384_sntrup857               "p384_sntrup857"
+#define LN_p384_sntrup857               "p384_sntrup857"
+#define NID_p384_sntrup857              1312
+
 #define SN_oqs_sig_default              "oqs_sig_default"
 #define LN_oqs_sig_default              "oqs_sig_default"
 #define NID_oqs_sig_default             1195

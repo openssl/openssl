@@ -223,6 +223,42 @@ kems:
     nid_hybrid: "0x2F37"
     oqs_alg: 'OQS_KEM_alg_hqc_256_3_cca2'
     bit_security: 256
+  -
+    name_group: 'ntrulpr653'
+    nid: "0x0238"
+    nid_hybrid: "0x2F38"
+    oqs_alg: 'OQS_KEM_alg_ntruprime_ntrulpr653'
+    bit_security: 128
+  -
+    name_group: 'ntrulpr761'
+    nid: "0x0239"
+    nid_hybrid: "0x2F39"
+    oqs_alg: 'OQS_KEM_alg_ntruprime_ntrulpr761'
+    bit_security: 192
+  -
+    name_group: 'ntrulpr857'
+    nid: "0x023A"
+    nid_hybrid: "0x2F3A"
+    oqs_alg: 'OQS_KEM_alg_ntruprime_ntrulpr857'
+    bit_security: 192
+  -
+    name_group: 'sntrup653'
+    nid: "0x023B"
+    nid_hybrid: "0x2F3B"
+    oqs_alg: 'OQS_KEM_alg_ntruprime_sntrup653'
+    bit_security: 128
+  -
+    name_group: 'sntrup761'
+    nid: "0x023C"
+    nid_hybrid: "0x2F3C"
+    oqs_alg: 'OQS_KEM_alg_ntruprime_sntrup761'
+    bit_security: 192
+  -
+    name_group: 'sntrup857'
+    nid: "0x023D"
+    nid_hybrid: "0x2F3D"
+    oqs_alg: 'OQS_KEM_alg_ntruprime_sntrup857'
+    bit_security: 192
 
 kem_nid_end: "0x0250"
 kem_nid_hybrid_end: "0x2FFF"
