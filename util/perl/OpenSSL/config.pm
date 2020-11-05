@@ -202,8 +202,8 @@ sub is_sco_uname {
     }
     close UNAME;
     return "" if $line eq '';
-    my @fields = split($line);
-    return $fields[2];
+    my @fields = split('\s+', $line);
+    return $fields[2] // '';
 }
 
 sub get_sco_type {
