@@ -113,16 +113,18 @@ test_revoke('both_generalizedtime', {
 sub test_revoke {
     my ($filename, $opts) = @_;
 
-    # Before Perl 5.12.0, the range of times Perl could represent was limited by
-    # the size of time_t, so Time::Local was hamstrung by the Y2038 problem -
-    # Perl 5.12.0 onwards use an internal time implementation with a guaranteed
-    # >32-bit time range on all architectures, so the tests involving post-2038
-    # times won't fail provided we're running under that version or newer
-    if ($] < 5.012000) {
-        plan skip_all => 'Perl >= 5.12.0 required to run certificate revocation tests';
-    }
-
     subtest "Revoke certificate and generate CRL: $filename" => sub {
+        # Before Perl 5.12.0, the range of times Perl could represent was
+        # limited by the size of time_t, so Time::Local was hamstrung by the
+        # Y2038 problem
+        # Perl 5.12.0 onwards use an internal time implementation with a
+        # guaranteed >32-bit time range on all architectures, so the tests
+        # involving post-2038 times won't fail provided we're running under
+        # that version or newer
+        plan skip_all =>
+            'Perl >= 5.12.0 required to run certificate revocation tests'
+            if $] < 5.012000;
+
         $ENV{CN2} = $filename;
         ok(
             run(app(['openssl',
