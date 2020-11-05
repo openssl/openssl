@@ -21,7 +21,7 @@ OpenSSL Releases
 OpenSSL 3.0
 -----------
 
-### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
+### Changes between 1.1.1 and 3.0 alpha 8 [5 Nov 2020]
 
  * Add support for AES Key Wrap inverse ciphers to the EVP layer.
    The algorithms are:
