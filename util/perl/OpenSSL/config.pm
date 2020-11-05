@@ -202,7 +202,7 @@ sub is_sco_uname {
     }
     close UNAME;
     return "" if $line eq '';
-    my @fields = split('\s+', $line);
+    my @fields = split(/\s+/, $line);
     return $fields[2] // '';
 }
 
