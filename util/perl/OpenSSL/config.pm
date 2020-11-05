@@ -704,13 +704,16 @@ EOF
             my $KERNEL_BITS = $ENV{KERNEL_BITS};
             my $ISA64 = `isainfo 2>/dev/null | grep amd64`;
             my $KB = $KERNEL_BITS // '64';
-            return { target => "solaris64-x86_64" }
-                if $ISA64 ne "" && $KB eq '64';
+            if ($ISA64 ne "" && $KB eq '64') {
+                return { target => "solaris64-x86_64-gcc" } if $CCVENDOR eq "gnu";
+                return { target => "solaris64-x86_64-cc" };
+            }
             my $REL = uname('-r');
             $REL =~ s/5\.//;
             my @tmp_disable = ();
             push @tmp_disable, 'sse2' if int($REL) < 10;
-            return { target => "solaris-x86",
+            #There is no solaris-x86-cc target
+            return { target => "solaris-x86-gcc",
                      disable => [ @tmp_disable ] };
         }
       ],
