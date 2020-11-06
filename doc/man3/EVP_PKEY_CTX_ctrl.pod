@@ -457,8 +457,8 @@ Uses a safe prime generator g (PKCS#3 format).
 
 The default in the default provider is B<DH_PARAMGEN_TYPE_GENERATOR> for the
 "DH" keytype, and B<DH_PARAMGEN_TYPE_FIPS_186_2> for the "DHX" keytype. In the
-FIPS provider the default value is B<DH_PARAMGEN_TYPE_FIPS_186_4> for both key
-types.
+FIPS provider the default value is B<DH_PARAMGEN_TYPE_GROUP> for the "DH"
+keytype and <B<DH_PARAMGEN_TYPE_FIPS_186_4> for the "DHX" keytype.
 
 EVP_PKEY_CTX_set_dh_paramgen_gindex() sets the I<gindex> used by the generator G.
 The default value is -1 which uses unverifiable g, otherwise a positive value
