@@ -609,7 +609,9 @@ EVP_PKEY *load_keyparams(const char *uri, int maybe_stdin, const char *keytype,
     (void)load_key_certs_crls(uri, maybe_stdin, NULL, desc,
                               NULL, NULL, &params, NULL, NULL, NULL, NULL);
     if (params != NULL && keytype != NULL && !EVP_PKEY_is_a(params, keytype)) {
-        BIO_printf(bio_err, "Unable to load %s from %s\n", desc, uri);
+        BIO_printf(bio_err,
+                   "Unable to load %s from %s (unexpected paraeters type)\n",
+                   desc, uri);
         ERR_print_errors(bio_err);
         EVP_PKEY_free(params);
         params = NULL;
