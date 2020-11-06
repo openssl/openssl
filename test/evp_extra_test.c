@@ -399,9 +399,9 @@ static APK_DATA keydata[] = {
 };
 
 static APK_DATA keycheckdata[] = {
-    {kExampleRSAKeyDER, sizeof(kExampleRSAKeyDER), EVP_PKEY_RSA, 1, -2, -2, 0},
+    {kExampleRSAKeyDER, sizeof(kExampleRSAKeyDER), EVP_PKEY_RSA, 1, 1, 1, 0},
     {kExampleBadRSAKeyDER, sizeof(kExampleBadRSAKeyDER), EVP_PKEY_RSA,
-     0, -2, -2, 0},
+     0, 1, 1, 0},
 #ifndef OPENSSL_NO_EC
     {kExampleECKeyDER, sizeof(kExampleECKeyDER), EVP_PKEY_EC, 1, 1, 1, 0},
     /* group is also associated in our pub key */
