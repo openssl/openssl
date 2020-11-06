@@ -148,6 +148,124 @@ static int raised_error(void)
     return 1;
 }
 
+static int test_marks(void)
+{
+    unsigned long mallocfail, shouldnot;
+
+    /* Set an initial error */
+    ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
+    mallocfail = ERR_peek_last_error();
+    if (!TEST_ulong_gt(mallocfail, 0))
+        return 0;
+
+    /* Setting and clearing a mark should not affect the error */
+    if (!TEST_true(ERR_set_mark())
+            || !TEST_true(ERR_pop_to_mark())
+            || !TEST_ulong_eq(mallocfail, ERR_peek_last_error())
+            || !TEST_true(ERR_set_mark())
+            || !TEST_true(ERR_clear_last_mark())
+            || !TEST_ulong_eq(mallocfail, ERR_peek_last_error()))
+        return 0;
+
+    /* Test popping errors */
+    if (!TEST_true(ERR_set_mark()))
+        return 0;
+    ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
+    if (!TEST_ulong_ne(mallocfail, ERR_peek_last_error())
+            || !TEST_true(ERR_pop_to_mark())
+            || !TEST_ulong_eq(mallocfail, ERR_peek_last_error()))
+        return 0;
+
+    /* Nested marks should also work */
+    if (!TEST_true(ERR_set_mark())
+            || !TEST_true(ERR_set_mark()))
+        return 0;
+    ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
+    if (!TEST_ulong_ne(mallocfail, ERR_peek_last_error())
+            || !TEST_true(ERR_pop_to_mark())
+            || !TEST_true(ERR_pop_to_mark())
+            || !TEST_ulong_eq(mallocfail, ERR_peek_last_error()))
+        return 0;
+
+    if (!TEST_true(ERR_set_mark()))
+        return 0;
+    ERR_raise(ERR_LIB_CRYPTO, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+    shouldnot = ERR_peek_last_error();
+    if (!TEST_ulong_ne(mallocfail, shouldnot)
+            || !TEST_true(ERR_set_mark()))
+        return 0;
+    ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
+    if (!TEST_ulong_ne(shouldnot, ERR_peek_last_error())
+            || !TEST_true(ERR_pop_to_mark())
+            || !TEST_ulong_eq(shouldnot, ERR_peek_last_error())
+            || !TEST_true(ERR_pop_to_mark())
+            || !TEST_ulong_eq(mallocfail, ERR_peek_last_error()))
+        return 0;
+
+    /* Setting and clearing a mark should not affect the errors on the stack */
+    if (!TEST_true(ERR_set_mark()))
+        return 0;
+    ERR_raise(ERR_LIB_CRYPTO, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+    if (!TEST_true(ERR_clear_last_mark())
+            || !TEST_ulong_eq(shouldnot, ERR_peek_last_error()))
+        return 0;
+
+    /*
+     * Popping where no mark has been set should pop everything - but return
+     * a failure result
+     */
+    if (!TEST_false(ERR_pop_to_mark())
+            || !TEST_ulong_eq(0, ERR_peek_last_error()))
+        return 0;
+
+    /* Clearing where there is no mark should fail */
+    ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
+    if (!TEST_false(ERR_clear_last_mark())
+                /* "get" the last error to remove it */
+            || !TEST_ulong_eq(mallocfail, ERR_get_error())
+            || !TEST_ulong_eq(0, ERR_peek_last_error()))
+        return 0;
+
+    /*
+     * Setting a mark where there are no errors in the stack should fail.
+     * NOTE: This is somewhat surprising behaviour but is historically how this
+     * function behaves. In practice we typically set marks without first
+     * checking whether there is anything on the stack - but we also don't
+     * tend to check the success of this function. It turns out to work anyway
+     * because although setting a mark with no errors fails, a subsequent call
+     * to ERR_pop_to_mark() or ERR_clear_last_mark() will do the right thing
+     * anyway (even though they will report a failure result).
+     */
+    if (!TEST_false(ERR_set_mark()))
+        return 0;
+
+    ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
+    if (!TEST_true(ERR_set_mark()))
+        return 0;
+    ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
+    ERR_raise(ERR_LIB_CRYPTO, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+
+    /* Should be able to "pop" past 2 errors */
+    if (!TEST_true(ERR_pop_to_mark())
+            || !TEST_ulong_eq(mallocfail, ERR_peek_last_error()))
+        return 0;
+
+    if (!TEST_true(ERR_set_mark()))
+        return 0;
+    ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
+    ERR_raise(ERR_LIB_CRYPTO, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+
+    /* Should be able to "clear" past 2 errors */
+    if (!TEST_true(ERR_clear_last_mark())
+            || !TEST_ulong_eq(shouldnot, ERR_peek_last_error()))
+        return 0;
+
+    /* Clear remaining errors from last test */
+    ERR_clear_error();
+
+    return 1;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(preserves_system_error);
@@ -156,5 +274,6 @@ int setup_tests(void)
 #ifndef OPENSSL_NO_DEPRECATED_3_0
     ADD_TEST(test_print_error_format);
 #endif
+    ADD_TEST(test_marks);
     return 1;
 }
