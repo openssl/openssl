@@ -20,7 +20,7 @@ What's New
 
 This is the fourth snapshot release of OQS-OpenSSL_1\_1\_1-stable.  It is based on OpenSSL 1.1.1g.
 
-- Uses the updated NIST Round 2 submissions added to liboqs 0.4.0, as described in the [liboqs release notes](https://github.com/open-quantum-safe/liboqs/blob/master/RELEASE.md).
+- Uses the updated NIST Round 2 submissions added to liboqs 0.4.0, as described in the [liboqs release notes](https://github.com/open-quantum-safe/liboqs/blob/main/RELEASE.md).
 
 Deprecations
 ------------

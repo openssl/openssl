@@ -64,6 +64,6 @@ By default, these jobs will use the current GitHub versions of liboqs and OQS-Op
 where `<NAME>` is one of the following:
 
 - `LIBOQS_REPO`: which repo to check out from, default `https://github.com/open-quantum-safe/liboqs.git`
-- `LIBOQS_BRANCH`: which branch to check out, default `master`
+- `LIBOQS_BRANCH`: which branch to check out, default `main`
 
 Note that as of April 13, 2019, CircleCI has a bug which causes it to fail when trying to locally run with a repository with a large number of files, such as OpenSSL.  A work-around is available by editing `.circleci/config.yml` as indicated by the comments in that file.

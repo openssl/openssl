@@ -51,7 +51,7 @@ For more information, see the [release notes](RELEASE.md).
 
 **WE DO NOT RECOMMEND RELYING ON THIS FORK IN A PRODUCTION ENVIRONMENT OR TO PROTECT ANY SENSITIVE DATA.** This fork is at an experimental stage, and has not received the same level of auditing and analysis that OpenSSL has received. See the [Limitations and Security](#limitations-and-security) section below for more information.
 
-liboqs and our integration into OpenSSL is provided "as is", without warranty of any kind.  See the [LICENSE](https://github.com/open-quantum-safe/liboqs/blob/master/LICENSE.txt) for the full disclaimer.
+liboqs and our integration into OpenSSL is provided "as is", without warranty of any kind.  See the [LICENSE](https://github.com/open-quantum-safe/liboqs/blob/main/LICENSE.txt) for the full disclaimer.
 
 ### Limitations and security
 
@@ -64,7 +64,7 @@ While at the time of this writing there are no vulnerabilities known in any of t
 We realize some parties may want to deploy quantum-safe cryptography prior to the conclusion of the standardization project.  We strongly recommend such attempts make use of so-called **hybrid cryptography**, in which quantum-safe public-key algorithms are combined with traditional public key algorithms (like RSA or elliptic curves) such that the solution is at least no less secure than existing traditional cryptography. This fork provides the ability to use hybrid cryptography.
 
 Proofs of TLS such as [[JKSS12]](https://eprint.iacr.org/2011/219) and [[KPW13]](https://eprint.iacr.org/2013/339) require a key exchange mechanism that has a form of active security, either in the form of the PRF-ODH assumption, or an IND-CCA KEM.
-Some of the KEMs provided in liboqs do provide IND-CCA security; others do not ([these datasheets](https://github.com/open-quantum-safe/liboqs/tree/master/docs/algorithms) specify which provide what security), in which case existing proofs of security of TLS against active attackers do not apply.
+Some of the KEMs provided in liboqs do provide IND-CCA security; others do not ([these datasheets](https://github.com/open-quantum-safe/liboqs/tree/main/docs/algorithms) specify which provide what security), in which case existing proofs of security of TLS against active attackers do not apply.
 
 ### Supported Algorithms
 
@@ -141,7 +141,7 @@ Then, get source code of this fork (`<OPENSSL_DIR>` is a directory of your choos
 
 The following instructions will download and build liboqs, then install it into a subdirectory inside the OpenSSL folder.
 
-	git clone --branch master https://github.com/open-quantum-safe/liboqs.git
+	git clone --branch main https://github.com/open-quantum-safe/liboqs.git
 	cd liboqs
 	mkdir build && cd build
 	cmake -GNinja -DCMAKE_INSTALL_PREFIX=<OPENSSL_DIR>/oqs ..
@@ -178,9 +178,9 @@ The above command uses `git`, but alternatively, an archive of the source code c
 
 #### Step 1: Build and install liboqs
 
-The following instructions will download (using git, alternatively, [download an archive of the source](https://github.com/open-quantum-safe/liboqs/archive/master.zip) and unzip the project) and build the x64 release configuration of liboqs, then copy the required files it into a subdirectory inside the OpenSSL folder.  You may need to install dependencies before building liboqs; see the [liboqs README](https://github.com/open-quantum-safe/liboqs/blob/master/README.md).
+The following instructions will download (using git, alternatively, [download an archive of the source](https://github.com/open-quantum-safe/liboqs/archive/main.zip) and unzip the project) and build the x64 release configuration of liboqs, then copy the required files it into a subdirectory inside the OpenSSL folder.  You may need to install dependencies before building liboqs; see the [liboqs README](https://github.com/open-quantum-safe/liboqs/blob/main/README.md).
 
-	git clone --branch master https://github.com/open-quantum-safe/liboqs.git
+	git clone --branch main https://github.com/open-quantum-safe/liboqs.git
 	cd liboqs
 	mkdir build
 	cd build
