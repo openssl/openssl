@@ -106,7 +106,10 @@ static int dh_gen_type_name2id(const char *name, int type)
 
     if (strcmp(name, "default") == 0) {
 #ifdef FIPS_MODULE
-        return DH_PARAMGEN_TYPE_FIPS_186_4;
+        if (type == DH_FLAG_TYPE_DHX)
+            return DH_PARAMGEN_TYPE_FIPS_186_4;
+
+        return DH_PARAMGEN_TYPE_GROUP;
 #else
         if (type == DH_FLAG_TYPE_DHX)
             return DH_PARAMGEN_TYPE_FIPS_186_2;
@@ -439,7 +442,9 @@ static void *dh_gen_init_base(void *provctx, int selection, int type)
         gctx->qbits = 224;
         gctx->mdname = NULL;
 #ifdef FIPS_MODULE
-        gctx->gen_type = DH_PARAMGEN_TYPE_FIPS_186_4;
+        gctx->gen_type = (type == DH_FLAG_TYPE_DHX)
+                         ? DH_PARAMGEN_TYPE_FIPS_186_4
+                         : DH_PARAMGEN_TYPE_GROUP;
 #else
         gctx->gen_type = (type == DH_FLAG_TYPE_DHX)
                          ? DH_PARAMGEN_TYPE_FIPS_186_2
@@ -601,7 +606,8 @@ static void *dh_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
         return NULL;
 
     /* For parameter generation - If there is a group name just create it */
-    if (gctx->gen_type == DH_PARAMGEN_TYPE_GROUP) {
+    if (gctx->gen_type == DH_PARAMGEN_TYPE_GROUP
+            && gctx->ffc_params == NULL) {
         /* Select a named group if there is not one already */
         if (gctx->group_nid == NID_undef)
             gctx->group_nid = dh_get_named_group_uid_from_size(gctx->pbits);
