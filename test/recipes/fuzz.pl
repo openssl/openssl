@@ -12,20 +12,17 @@ use OpenSSL::Glob;
 use OpenSSL::Test qw/:DEFAULT srctop_dir/;
 
 sub fuzz_test {
-	die "No arguments?" if scalar @_ == 0;
-	die "Too many arguments" if scalar @_ > 1;
+    die "Only one argument accepted" if scalar @_ != 1;
 
-	my $f = $_[0];
-	my @dir = glob(srctop_dir('fuzz', 'corpora', $f));
+    my $f = $_[0];
+    my $d = srctop_dir('fuzz', 'corpora', $f);
 
-	subtest "Fuzzing $f" => sub {
-		plan skip_all => "No directory fuzz/corpora/$f" unless @dir;
-		plan tests => scalar @dir; # likely 1
+    return run(fuzz(["$f-test", $d])) if -d $d;
 
-		foreach (@dir) {
-			ok(run(fuzz(["$f-test", $_])));
-		}
-	};
+    # Directory $d doesn't exist if we reach this point, so write a
+    # diagnostic and return false.
+    diag("No directory $d");
+    return 0;
 }
 
 1;
