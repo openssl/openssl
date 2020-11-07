@@ -905,7 +905,7 @@ EOF
      my %args = @_;
      my $lib = platform->staticlib($args{lib});
      my @objs = map { platform->obj($_) } @{$args{objs}};
-     my $objs = join("\n", @objs);
+     my $objs = join($target{ar_resp_delim}, @objs);
      my $deps = join(" ", @objs);
      return <<"EOF";
 $lib: $deps
