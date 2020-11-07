@@ -117,13 +117,18 @@ int EVP_PKEY_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from)
      * Clean up legacy stuff from this function when legacy support is gone.
      */
 
+    EVP_PKEY *downgraded_from = NULL;
+    int ok = 0;
+
     /*
-     * If |to| is a legacy key and |from| isn't, we must downgrade |from|.
-     * If that fails, this function fails.
+     * If |to| is a legacy key and |from| isn't, we must make a downgraded
+     * copy of |from|.  If that fails, this function fails.
      */
-    if (evp_pkey_is_legacy(to) && evp_pkey_is_provided(from))
-        if (!evp_pkey_downgrade((EVP_PKEY *)from))
-            return 0;
+    if (evp_pkey_is_legacy(to) && evp_pkey_is_provided(from)) {
+        if (!evp_pkey_copy_downgraded(&downgraded_from, from))
+            goto end;
+        from = downgraded_from;
+    }
 
     /*
      * Make sure |to| is typed.  Content is less important at this early
@@ -140,33 +145,36 @@ int EVP_PKEY_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from)
     if (evp_pkey_is_blank(to)) {
         if (evp_pkey_is_legacy(from)) {
             if (EVP_PKEY_set_type(to, from->type) == 0)
-                return 0;
+                goto end;
         } else {
             if (EVP_PKEY_set_type_by_keymgmt(to, from->keymgmt) == 0)
-                return 0;
+                goto end;
         }
     } else if (evp_pkey_is_legacy(to)) {
         if (to->type != from->type) {
             ERR_raise(ERR_LIB_EVP, EVP_R_DIFFERENT_KEY_TYPES);
-            goto err;
+            goto end;
         }
     }
 
     if (EVP_PKEY_missing_parameters(from)) {
         ERR_raise(ERR_LIB_EVP, EVP_R_MISSING_PARAMETERS);
-        goto err;
+        goto end;
     }
 
     if (!EVP_PKEY_missing_parameters(to)) {
         if (EVP_PKEY_parameters_eq(to, from) == 1)
-            return 1;
-        ERR_raise(ERR_LIB_EVP, EVP_R_DIFFERENT_PARAMETERS);
-        return 0;
+            ok = 1;
+        else
+            ERR_raise(ERR_LIB_EVP, EVP_R_DIFFERENT_PARAMETERS);
+        goto end;
     }
 
     /* For purely provided keys, we just call the keymgmt utility */
-    if (to->keymgmt != NULL && from->keymgmt != NULL)
-        return evp_keymgmt_util_copy(to, (EVP_PKEY *)from, SELECT_PARAMETERS);
+    if (to->keymgmt != NULL && from->keymgmt != NULL) {
+        ok = evp_keymgmt_util_copy(to, (EVP_PKEY *)from, SELECT_PARAMETERS);
+        goto end;
+    }
 
     /*
      * If |to| is provided, we know that |from| is legacy at this point.
@@ -183,19 +191,20 @@ int EVP_PKEY_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from)
          * If we get a NULL, it could be an internal error, or it could be
          * that there's a key mismatch.  We're pretending the latter...
          */
-        if (from_keydata == NULL) {
+        if (from_keydata == NULL)
             ERR_raise(ERR_LIB_EVP, EVP_R_DIFFERENT_KEY_TYPES);
-            return 0;
-        }
-        return evp_keymgmt_copy(to->keymgmt, to->keydata, from_keydata,
-                                SELECT_PARAMETERS);
+        else
+            ok = evp_keymgmt_copy(to->keymgmt, to->keydata, from_keydata,
+                                  SELECT_PARAMETERS);
+        goto end;
     }
 
     /* Both keys are legacy */
     if (from->ameth != NULL && from->ameth->param_copy != NULL)
-        return from->ameth->param_copy(to, from);
- err:
-    return 0;
+        ok = from->ameth->param_copy(to, from);
+ end:
+    EVP_PKEY_free(downgraded_from);
+    return ok;
 }
 
 int EVP_PKEY_missing_parameters(const EVP_PKEY *pkey)
