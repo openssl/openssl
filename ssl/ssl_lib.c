@@ -867,6 +867,11 @@ int SSL_up_ref(SSL *s)
     return ((i > 1) ? 1 : 0);
 }
 
+ASYNC_JOB *SSL_get_job(const SSL *s)
+{
+    return s->job;
+}
+
 int SSL_CTX_set_session_id_context(SSL_CTX *ctx, const unsigned char *sid_ctx,
                                    unsigned int sid_ctx_len)
 {
