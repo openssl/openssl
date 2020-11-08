@@ -106,7 +106,7 @@ static UI_STRING *general_allocate_prompt(UI *ui, const char *prompt,
     } else if ((type == UIT_PROMPT || type == UIT_VERIFY
                 || type == UIT_BOOLEAN) && result_buf == NULL) {
         UIerr(UI_F_GENERAL_ALLOCATE_PROMPT, UI_R_NO_RESULT_BUFFER);
-    } else if ((ret = OPENSSL_malloc(sizeof(*ret))) != NULL) {
+    } else if ((ret = OPENSSL_zalloc(sizeof(*ret))) != NULL) {
         ret->out_string = prompt;
         ret->flags = prompt_freeable ? OUT_STRING_FREEABLE : 0;
         ret->input_flags = input_flags;
