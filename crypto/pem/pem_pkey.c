@@ -48,12 +48,9 @@ static EVP_PKEY *pem_read_bio_key(BIO *bp, EVP_PKEY **x,
         return NULL;
     }
 
-    if (u != NULL && cb == NULL)
-        cb = PEM_def_callback;
     if (cb == NULL)
-        ui_method = UI_null();
-    else
-        ui_method = allocated_ui_method = UI_UTIL_wrap_read_pem_callback(cb, 0);
+        cb = PEM_def_callback;
+    ui_method = allocated_ui_method = UI_UTIL_wrap_read_pem_callback(cb, 0);
     if (ui_method == NULL)
         return NULL;
 
