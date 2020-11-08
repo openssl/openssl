@@ -4223,6 +4223,46 @@ X509_STORE *SSL_CTX_get_cert_store(const SSL_CTX *ctx)
     return ctx->cert_store;
 }
 
+X509_STORE *SSL_CTX_get0_chain_cert_store(const SSL_CTX *ctx)
+{
+    return ssl_cert_get_cert_store(ctx->cert, 1, 0);
+}
+
+X509_STORE *SSL_CTX_get1_chain_cert_store(const SSL_CTX *ctx)
+{
+    return ssl_cert_get_cert_store(ctx->cert, 1, 1);
+}
+
+X509_STORE *SSL_CTX_get0_verify_cert_store(const SSL_CTX *ctx)
+{
+    return ssl_cert_get_cert_store(ctx->cert, 0, 0);
+}
+
+X509_STORE *SSL_CTX_get1_verify_cert_store(const SSL_CTX *ctx)
+{
+    return ssl_cert_get_cert_store(ctx->cert, 0, 1);
+}
+
+X509_STORE *SSL_get0_chain_cert_store(const SSL *ssl)
+{
+    return ssl_cert_get_cert_store(ssl->cert, 1, 0);
+}
+
+X509_STORE *SSL_get1_chain_cert_store(const SSL *ssl)
+{
+    return ssl_cert_get_cert_store(ssl->cert, 1, 1);
+}
+
+X509_STORE *SSL_get0_verify_cert_store(const SSL *ssl)
+{
+    return ssl_cert_get_cert_store(ssl->cert, 0, 0);
+}
+
+X509_STORE *SSL_get1_verify_cert_store(const SSL *ssl)
+{
+    return ssl_cert_get_cert_store(ssl->cert, 0, 1);
+}
+
 void SSL_CTX_set_cert_store(SSL_CTX *ctx, X509_STORE *store)
 {
     X509_STORE_free(ctx->cert_store);

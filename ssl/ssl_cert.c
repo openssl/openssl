@@ -876,6 +876,18 @@ int ssl_cert_set_cert_store(CERT *c, X509_STORE *store, int chain, int ref)
     return 1;
 }
 
+X509_STORE* ssl_cert_get_cert_store(CERT *c, int chain, int ref)
+{
+    X509_STORE *pstore;
+    if (chain)
+        pstore = c->chain_store;
+    else
+        pstore = c->verify_store;
+    if (ref && pstore)
+        X509_STORE_up_ref(pstore);
+    return pstore;
+}
+
 static int ssl_security_default_callback(const SSL *s, const SSL_CTX *ctx,
                                          int op, int bits, int nid, void *other,
                                          void *ex)
