@@ -16,10 +16,10 @@ ossl_ends_with_dirsep, ossl_is_absolute_path
 =head1 DESCRIPTION
 
 ossl_ends_with_dirsep() detects whether the I<path> ends with a directory
-separator in platform agnostic way.
+separator in a platform agnostic way.
 
 ossl_is_absolute_path() detects whether the I<path> is absolute path in
-platform agnostic way.
+a platform agnostic way.
 
 =head1 RETURN VALUES
 
