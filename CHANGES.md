@@ -23,6 +23,14 @@ OpenSSL 3.0
 
 ### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
 
+ * Validation of SM2 keys has been separated from the validation of regular EC
+   keys, allowing to improve the SM2 validation process to reject loaded private
+   keys that are not conforming to the SM2 ISO standard.
+   In particular, a private scalar `k` outside the range `1 <= k < n-1` is now
+   correctly rejected.
+
+   *Nicola Tuveri*
+
  * Behavior of the `pkey` app is changed, when using the `-check` or `-pubcheck`
    switches: a validation failure triggers an early exit, returning a failure
    exit status to the parent process.

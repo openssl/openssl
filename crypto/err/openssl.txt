@@ -3103,6 +3103,7 @@ SM2_R_INVALID_DIGEST:102:invalid digest
 SM2_R_INVALID_DIGEST_TYPE:103:invalid digest type
 SM2_R_INVALID_ENCODING:104:invalid encoding
 SM2_R_INVALID_FIELD:105:invalid field
+SM2_R_INVALID_PRIVATE_KEY:113:invalid private key
 SM2_R_NO_PARAMETERS_SET:109:no parameters set
 SM2_R_USER_ID_TOO_LARGE:106:user id too large
 SSL_R_ALGORITHM_FETCH_FAILED:295:algorithm fetch failed

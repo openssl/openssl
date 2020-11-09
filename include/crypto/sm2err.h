@@ -61,6 +61,7 @@ int err_load_SM2_strings_int(void);
 #  define SM2_R_INVALID_DIGEST_TYPE                        103
 #  define SM2_R_INVALID_ENCODING                           104
 #  define SM2_R_INVALID_FIELD                              105
+#  define SM2_R_INVALID_PRIVATE_KEY                        113
 #  define SM2_R_NO_PARAMETERS_SET                          109
 #  define SM2_R_USER_ID_TOO_LARGE                          106
 
