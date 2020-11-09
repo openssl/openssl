@@ -11,18 +11,16 @@ use warnings;
 use OpenSSL::Glob;
 use OpenSSL::Test qw/:DEFAULT srctop_dir/;
 
-sub fuzz_test {
+sub fuzz_ok {
     die "Only one argument accepted" if scalar @_ != 1;
 
     my $f = $_[0];
     my $d = srctop_dir('fuzz', 'corpora', $f);
 
-    return run(fuzz(["$f-test", $d])) if -d $d;
-
-    # Directory $d doesn't exist if we reach this point, so write a
-    # diagnostic and return false.
-    diag("No directory $d");
-    return 0;
+    SKIP: {
+        skip "No directory $d", 1 unless -d $d;
+        ok(run(fuzz(["$f-test", $d])), "Fuzzing $f");
+    }
 }
 
 1;
