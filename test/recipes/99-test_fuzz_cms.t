@@ -9,11 +9,14 @@
 use strict;
 use warnings;
 
-use OpenSSL::Test qw/:DEFAULT srctop_file/;
+use OpenSSL::Test qw/:DEFAULT srctop_file srctop_dir/;
 use OpenSSL::Test::Utils;
 
 my $fuzzer = "cms";
 setup("test_fuzz_${fuzzer}");
+
+plan skip_all => "Missing fuzz corpora"
+    unless -d srctop_dir('fuzz', 'corpora');
 
 plan skip_all => "This test requires $fuzzer support"
     if disabled($fuzzer);
