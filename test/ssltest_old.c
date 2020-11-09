@@ -890,7 +890,11 @@ int main(int argc, char *argv[])
     long bytes = 256L;
     EVP_PKEY *dhpkey;
     int dhe512 = 0, dhe1024dsa = 0;
+#ifndef OPENSSL_NO_DH
     int no_dhe = 0;
+#else
+    int no_dhe = 1;
+#endif
     int no_psk = 0;
     int print_time = 0;
     clock_t s_time = 0, c_time = 0;
