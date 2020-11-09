@@ -82,6 +82,7 @@ int pkey_main(int argc, char **argv)
     BIO *in = NULL, *out = NULL;
     ENGINE *e = NULL;
     EVP_PKEY *pkey = NULL;
+    EVP_PKEY_CTX *ctx = NULL;
     const EVP_CIPHER *cipher = NULL;
     char *infile = NULL, *outfile = NULL, *passin = NULL, *passout = NULL;
     char *passinarg = NULL, *passoutarg = NULL, *prog;
@@ -231,7 +232,6 @@ int pkey_main(int argc, char **argv)
 
     if (check || pub_check) {
         int r;
-        EVP_PKEY_CTX *ctx;
 
         ctx = EVP_PKEY_CTX_new(pkey, e);
         if (ctx == NULL) {
@@ -260,8 +260,8 @@ int pkey_main(int argc, char **argv)
                            ERR_reason_error_string(err));
                 ERR_get_error(); /* remove err from error stack */
             }
+            goto end;
         }
-        EVP_PKEY_CTX_free(ctx);
     }
 
     if (!noout) {
@@ -313,6 +313,7 @@ int pkey_main(int argc, char **argv)
  end:
     if (ret != 0)
         ERR_print_errors(bio_err);
+    EVP_PKEY_CTX_free(ctx);
     EVP_PKEY_free(pkey);
     release_engine(e);
     BIO_free_all(out);
