@@ -17,6 +17,8 @@
 
 #  include <openssl/ec.h>
 
+int sm2_key_private_check(const EC_KEY *eckey);
+
 /* The default user id as specified in GM/T 0009-2012 */
 #  define SM2_DEFAULT_USERID "1234567812345678"
 

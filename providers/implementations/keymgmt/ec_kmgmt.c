@@ -27,7 +27,12 @@
 #include "prov/providercommonerr.h"
 #include "prov/provider_ctx.h"
 #include "internal/param_build_set.h"
-#include "crypto/sm2.h"
+
+#ifndef FIPS_MODULE
+# ifndef OPENSSL_NO_SM2
+#  include "crypto/sm2.h"
+# endif
+#endif
 
 static OSSL_FUNC_keymgmt_new_fn ec_newdata;
 static OSSL_FUNC_keymgmt_gen_init_fn ec_gen_init;
@@ -50,13 +55,16 @@ static OSSL_FUNC_keymgmt_import_types_fn ec_import_types;
 static OSSL_FUNC_keymgmt_export_fn ec_export;
 static OSSL_FUNC_keymgmt_export_types_fn ec_export_types;
 static OSSL_FUNC_keymgmt_query_operation_name_fn ec_query_operation_name;
-#ifndef OPENSSL_NO_SM2
+#ifndef FIPS_MODULE
+# ifndef OPENSSL_NO_SM2
 static OSSL_FUNC_keymgmt_gen_fn sm2_gen;
 static OSSL_FUNC_keymgmt_get_params_fn sm2_get_params;
 static OSSL_FUNC_keymgmt_gettable_params_fn sm2_gettable_params;
 static OSSL_FUNC_keymgmt_settable_params_fn sm2_settable_params;
 static OSSL_FUNC_keymgmt_import_fn sm2_import;
 static OSSL_FUNC_keymgmt_query_operation_name_fn sm2_query_operation_name;
+static OSSL_FUNC_keymgmt_validate_fn sm2_validate;
+# endif
 #endif
 
 #define EC_DEFAULT_MD "SHA256"
@@ -76,7 +84,8 @@ const char *ec_query_operation_name(int operation_id)
     return NULL;
 }
 
-#ifndef OPENSSL_NO_SM2
+#ifndef FIPS_MODULE
+# ifndef OPENSSL_NO_SM2
 static
 const char *sm2_query_operation_name(int operation_id)
 {
@@ -86,6 +95,7 @@ const char *sm2_query_operation_name(int operation_id)
     }
     return NULL;
 }
+# endif
 #endif
 
 /*
@@ -364,12 +374,14 @@ int ec_import(void *keydata, int selection, const OSSL_PARAM params[])
     return common_import(keydata, selection, params, 0);
 }
 
-#ifndef OPENSSL_NO_SM2
+#ifndef FIPS_MODULE
+# ifndef OPENSSL_NO_SM2
 static
 int sm2_import(void *keydata, int selection, const OSSL_PARAM params[])
 {
     return common_import(keydata, selection, params, 1);
 }
+# endif
 #endif
 
 static
@@ -746,7 +758,8 @@ int ec_set_params(void *key, const OSSL_PARAM params[])
     return ec_key_otherparams_fromdata(eck, params);
 }
 
-#ifndef OPENSSL_NO_SM2
+#ifndef FIPS_MODULE
+# ifndef OPENSSL_NO_SM2
 static
 int sm2_get_params(void *key, OSSL_PARAM params[])
 {
@@ -782,6 +795,40 @@ const OSSL_PARAM *sm2_settable_params(ossl_unused void *provctx)
 {
     return sm2_known_settable_params;
 }
+
+static
+int sm2_validate(const void *keydata, int selection)
+{
+    const EC_KEY *eck = keydata;
+    int ok = 0;
+    BN_CTX *ctx = NULL;
+
+    if (!ossl_prov_is_running())
+        return 0;
+
+    ctx = BN_CTX_new_ex(ec_key_get_libctx(eck));
+    if  (ctx == NULL)
+        return 0;
+
+    if ((selection & EC_POSSIBLE_SELECTIONS) != 0)
+        ok = 1;
+
+    if ((selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) != 0)
+        ok = ok && EC_GROUP_check(EC_KEY_get0_group(eck), ctx);
+
+    if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0)
+        ok = ok && ec_key_public_check(eck, ctx);
+
+    if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0)
+        ok = ok && sm2_key_private_check(eck);
+
+    if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) == OSSL_KEYMGMT_SELECT_KEYPAIR)
+        ok = ok && ec_key_pairwise_check(eck, ctx);
+
+    BN_CTX_free(ctx);
+    return ok;
+}
+# endif
 #endif
 
 static
@@ -1084,7 +1131,8 @@ err:
     return NULL;
 }
 
-#ifndef OPENSSL_NO_SM2
+#ifndef FIPS_MODULE
+# ifndef OPENSSL_NO_SM2
 /*
  * The callback arguments (osslcb & cbarg) are not used by EC_KEY generation
  */
@@ -1130,6 +1178,7 @@ err:
     EC_KEY_free(ec);
     return NULL;
 }
+# endif
 #endif
 
 static void ec_gen_cleanup(void *genctx)
@@ -1195,7 +1244,8 @@ const OSSL_DISPATCH ossl_ec_keymgmt_functions[] = {
     { 0, NULL }
 };
 
-#ifndef OPENSSL_NO_SM2
+#ifndef FIPS_MODULE
+# ifndef OPENSSL_NO_SM2
 const OSSL_DISPATCH sm2_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_NEW, (void (*)(void))ec_newdata },
     { OSSL_FUNC_KEYMGMT_GEN_INIT, (void (*)(void))ec_gen_init },
@@ -1213,7 +1263,7 @@ const OSSL_DISPATCH sm2_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_SETTABLE_PARAMS, (void (*) (void))sm2_settable_params },
     { OSSL_FUNC_KEYMGMT_HAS, (void (*)(void))ec_has },
     { OSSL_FUNC_KEYMGMT_MATCH, (void (*)(void))ec_match },
-    { OSSL_FUNC_KEYMGMT_VALIDATE, (void (*)(void))ec_validate },
+    { OSSL_FUNC_KEYMGMT_VALIDATE, (void (*)(void))sm2_validate },
     { OSSL_FUNC_KEYMGMT_IMPORT, (void (*)(void))sm2_import },
     { OSSL_FUNC_KEYMGMT_IMPORT_TYPES, (void (*)(void))ec_import_types },
     { OSSL_FUNC_KEYMGMT_EXPORT, (void (*)(void))ec_export },
@@ -1222,4 +1272,5 @@ const OSSL_DISPATCH sm2_keymgmt_functions[] = {
       (void (*)(void))sm2_query_operation_name },
     { 0, NULL }
 };
+# endif
 #endif
