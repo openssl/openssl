@@ -148,6 +148,7 @@ HMAC_CTX *ssl_hmac_get0_HMAC_CTX(SSL_HMAC *ctx)
 EVP_PKEY *ssl_dh_to_pkey(DH *dh)
 {
     EVP_PKEY *ret;
+
     if (dh == NULL)
         return NULL;
     ret = EVP_PKEY_new();
