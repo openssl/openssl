@@ -562,10 +562,6 @@ EVP_PKEY *load_key(const char *uri, int format, int may_stdin,
                                   &pkey, NULL, NULL, NULL, NULL, NULL, NULL);
     }
 
-    if (pkey == NULL) {
-        BIO_printf(bio_err, "Unable to load %s\n", desc);
-        ERR_print_errors(bio_err);
-    }
     return pkey;
 }
 
@@ -591,10 +587,7 @@ EVP_PKEY *load_pubkey(const char *uri, int format, int maybe_stdin,
         (void)load_key_certs_crls(uri, maybe_stdin, pass, desc,
                                   NULL, &pkey, NULL, NULL, NULL, NULL, NULL);
     }
-    if (pkey == NULL) {
-        BIO_printf(bio_err, "Unable to load %s\n", desc);
-        ERR_print_errors(bio_err);
-    }
+
     return pkey;
 }
 
