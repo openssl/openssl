@@ -92,8 +92,8 @@ struct app_verify_arg {
 };
 
 static EVP_PKEY *get_dh512(OSSL_LIB_CTX *libctx);
-static EVP_PKEY *get_dh1024(OSSL_LIB_CTX *libctx);
 static EVP_PKEY *get_dh1024dsa(OSSL_LIB_CTX *libctx);
+static EVP_PKEY *get_dh2048(OSSL_LIB_CTX *libctx);
 
 static char *psk_key = NULL;    /* by default PSK is not used */
 #ifndef OPENSSL_NO_PSK
@@ -1487,12 +1487,13 @@ int main(int argc, char *argv[])
         goto end;
     }
     if (!no_dhe) {
-        if (dhe1024dsa) {
+        if (dhe1024dsa)
             dhpkey = get_dh1024dsa(libctx);
-        } else if (dhe512)
+        else if (dhe512)
             dhpkey = get_dh512(libctx);
         else
-            dhpkey = get_dh1024(libctx);
+            dhpkey = get_dh2048(libctx);
+
         if (dhpkey == NULL || !EVP_PKEY_up_ref(dhpkey)) {
             EVP_PKEY_free(dhpkey);
             BIO_puts(bio_err, "Error getting DH parameters\n");
@@ -2883,21 +2884,14 @@ static int app_verify_callback(X509_STORE_CTX *ctx, void *arg)
     return ok;
 }
 
-static EVP_PKEY *get_dh_from_pg(OSSL_LIB_CTX *libctx, unsigned char *pdata,
-                                size_t plen, unsigned char *gdata, size_t glen)
+static EVP_PKEY *get_dh_from_pg_bn(OSSL_LIB_CTX *libctx, BIGNUM *p, BIGNUM *g)
 {
     EVP_PKEY_CTX *pctx = EVP_PKEY_CTX_new_from_name(libctx, "DH", NULL);
     OSSL_PARAM_BLD *tmpl = NULL;
     OSSL_PARAM *params = NULL;
     EVP_PKEY *dhpkey = NULL;
-    BIGNUM *p = NULL, *g = NULL;
 
     if (pctx == NULL || !EVP_PKEY_key_fromdata_init(pctx))
-        goto err;
-
-    p = BN_bin2bn(pdata, plen, NULL);
-    g = BN_bin2bn(gdata, glen, NULL);
-    if (p == NULL || g == NULL)
         goto err;
 
     tmpl = OSSL_PARAM_BLD_new();
@@ -2911,11 +2905,27 @@ static EVP_PKEY *get_dh_from_pg(OSSL_LIB_CTX *libctx, unsigned char *pdata,
         goto err;
 
  err:
-    BN_free(p);
-    BN_free(g);
     EVP_PKEY_CTX_free(pctx);
     OSSL_PARAM_BLD_free_params(params);
     OSSL_PARAM_BLD_free(tmpl);
+    return dhpkey;
+}
+static EVP_PKEY *get_dh_from_pg(OSSL_LIB_CTX *libctx, unsigned char *pdata,
+                                size_t plen, unsigned char *gdata, size_t glen)
+{
+    EVP_PKEY *dhpkey = NULL;
+    BIGNUM *p = NULL, *g = NULL;
+
+    p = BN_bin2bn(pdata, plen, NULL);
+    g = BN_bin2bn(gdata, glen, NULL);
+    if (p == NULL || g == NULL)
+        goto err;
+
+    dhpkey = get_dh_from_pg_bn(libctx, p, g);
+
+ err:
+    BN_free(p);
+    BN_free(g);
     return dhpkey;
 }
 
@@ -2941,39 +2951,6 @@ static EVP_PKEY *get_dh512(OSSL_LIB_CTX *libctx)
 
     return get_dh_from_pg(libctx, dh512_p, sizeof(dh512_p), dh512_g,
                           sizeof(dh512_g));
-}
-
-static EVP_PKEY *get_dh1024(OSSL_LIB_CTX *libctx)
-{
-    static unsigned char dh1024_p[] = {
-        0xF8, 0x81, 0x89, 0x7D, 0x14, 0x24, 0xC5, 0xD1, 0xE6, 0xF7, 0xBF,
-        0x3A,
-        0xE4, 0x90, 0xF4, 0xFC, 0x73, 0xFB, 0x34, 0xB5, 0xFA, 0x4C, 0x56,
-        0xA2,
-        0xEA, 0xA7, 0xE9, 0xC0, 0xC0, 0xCE, 0x89, 0xE1, 0xFA, 0x63, 0x3F,
-        0xB0,
-        0x6B, 0x32, 0x66, 0xF1, 0xD1, 0x7B, 0xB0, 0x00, 0x8F, 0xCA, 0x87,
-        0xC2,
-        0xAE, 0x98, 0x89, 0x26, 0x17, 0xC2, 0x05, 0xD2, 0xEC, 0x08, 0xD0,
-        0x8C,
-        0xFF, 0x17, 0x52, 0x8C, 0xC5, 0x07, 0x93, 0x03, 0xB1, 0xF6, 0x2F,
-        0xB8,
-        0x1C, 0x52, 0x47, 0x27, 0x1B, 0xDB, 0xD1, 0x8D, 0x9D, 0x69, 0x1D,
-        0x52,
-        0x4B, 0x32, 0x81, 0xAA, 0x7F, 0x00, 0xC8, 0xDC, 0xE6, 0xD9, 0xCC,
-        0xC1,
-        0x11, 0x2D, 0x37, 0x34, 0x6C, 0xEA, 0x02, 0x97, 0x4B, 0x0E, 0xBB,
-        0xB1,
-        0x71, 0x33, 0x09, 0x15, 0xFD, 0xDD, 0x23, 0x87, 0x07, 0x5E, 0x89,
-        0xAB,
-        0x6B, 0x7C, 0x5F, 0xEC, 0xA6, 0x24, 0xDC, 0x53,
-    };
-    static unsigned char dh1024_g[] = {
-        0x02,
-    };
-
-    return get_dh_from_pg(libctx, dh1024_p, sizeof(dh1024_p), dh1024_g,
-                          sizeof(dh1024_g));
 }
 
 static EVP_PKEY *get_dh1024dsa(OSSL_LIB_CTX *libctx)
@@ -3027,6 +3004,27 @@ static EVP_PKEY *get_dh1024dsa(OSSL_LIB_CTX *libctx)
 
     return get_dh_from_pg(libctx, dh1024_p, sizeof(dh1024_p), dh1024_g,
                           sizeof(dh1024_g));
+}
+
+static EVP_PKEY *get_dh2048(OSSL_LIB_CTX *libctx)
+{
+    BIGNUM *p = NULL, *g = NULL;
+    EVP_PKEY *dhpkey = NULL;
+
+    g = BN_new();
+    if (g == NULL || !BN_set_word(g, 2))
+        goto err;
+
+    p = BN_get_rfc3526_prime_2048(NULL);
+    if (p == NULL)
+        goto err;
+
+    dhpkey = get_dh_from_pg_bn(libctx, p, g);
+
+ err:
+    BN_free(p);
+    BN_free(g);
+    return dhpkey;
 }
 
 #ifndef OPENSSL_NO_PSK
