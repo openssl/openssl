@@ -434,7 +434,7 @@ OSSL_CMP_MSG *ossl_cmp_certrep_new(OSSL_CMP_CTX *ctx, int bodytype,
         if (msg->extraCerts == NULL
                 || !X509_add_certs(msg->extraCerts, chain,
                                    X509_ADD_FLAG_UP_REF | X509_ADD_FLAG_NO_DUP))
-        goto err;
+            goto err;
     }
 
     if (!unprotectedErrors
