@@ -408,7 +408,7 @@ int OSSL_PARAM_get_int64(const OSSL_PARAM *p, int64_t *val)
         switch (p->data_size) {
         case sizeof(double):
             d = *(const double *)p->data;
-            if (d >= INT64_MIN && d <= INT64_MAX && d == (int64_t)d) {
+            if (d >= INT64_MIN && d == (int64_t)d) {
                 *val = (int64_t)d;
                 return 1;
             }
@@ -518,7 +518,7 @@ int OSSL_PARAM_get_uint64(const OSSL_PARAM *p, uint64_t *val)
         switch (p->data_size) {
         case sizeof(double):
             d = *(const double *)p->data;
-            if (d >= 0 && d <= INT64_MAX && d == (uint64_t)d) {
+            if (d >= 0 && d == (uint64_t)d) {
                 *val = (uint64_t)d;
                 return 1;
             }
@@ -760,14 +760,14 @@ int OSSL_PARAM_set_double(OSSL_PARAM *p, double val)
             return 1;
         switch (p->data_size) {
         case sizeof(uint32_t):
-            if (val >= 0 && val <= UINT32_MAX) {
+            if (val >= 0 && val == (uint32_t)val) {
                 p->return_size = sizeof(uint32_t);
                 *(uint32_t *)p->data = (uint32_t)val;
                 return 1;
             }
             break;
         case sizeof(uint64_t):
-            if (val >= 0 && val <= UINT64_MAX) {
+            if (val >= 0 && val == (uint64_t)val) {
                 p->return_size = sizeof(uint64_t);
                 *(uint64_t *)p->data = (uint64_t)val;
                 return 1;
@@ -779,14 +779,14 @@ int OSSL_PARAM_set_double(OSSL_PARAM *p, double val)
             return 1;
         switch (p->data_size) {
         case sizeof(int32_t):
-            if (val >= INT32_MIN && val <= INT32_MAX) {
+            if (val >= INT32_MIN && val == (int32_t)val) {
                 p->return_size = sizeof(int32_t);
                 *(int32_t *)p->data = (int32_t)val;
                 return 1;
             }
             break;
         case sizeof(int64_t):
-            if (val >= INT64_MIN && val <= INT64_MAX) {
+            if (val >= INT64_MIN && val == (int64_t)val) {
                 p->return_size = sizeof(int64_t);
                 *(int64_t *)p->data = (int64_t)val;
                 return 1;
