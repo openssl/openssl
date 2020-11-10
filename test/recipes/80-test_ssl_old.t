@@ -13,7 +13,7 @@ use warnings;
 use POSIX;
 use File::Basename;
 use File::Copy;
-use OpenSSL::Test qw/:DEFAULT with bldtop_file bldtop_dir srctop_file srctop_dir cmdstr/;
+use OpenSSL::Test qw/:DEFAULT with bldtop_file bldtop_dir srctop_file srctop_dir cmdstr data_file/;
 use OpenSSL::Test::Utils;
 
 BEGIN {
@@ -104,7 +104,7 @@ subtest 'test_ss' => sub {
 };
 
 note('test_ssl -- key U');
-testssl("keyU.ss", $Ucert, $CAcert, "default", srctop_file("test","default.cnf"));
+testssl("keyU.ss", $Ucert, $CAcert, "default", srctop_file("test","default-and-legacy.cnf"));
 unless ($no_fips) {
     testssl("keyU.ss", $Ucert, $CAcert, "fips",
             srctop_file("test","fips-and-base.cnf"));
@@ -114,8 +114,8 @@ unless ($no_fips) {
 # subtest functions
 sub testss {
     my @req_dsa = ("-newkey",
-                   "dsa:".srctop_file("apps", "dsa1024.pem"));
-    my $dsaparams = srctop_file("apps", "dsa1024.pem");
+                   "dsa:".data_file("dsa2048.pem"));
+    my $dsaparams = data_file("dsa2048.pem");
     my @req_new;
     if ($no_rsa) {
 	@req_new = @req_dsa;
@@ -327,12 +327,18 @@ sub testss {
 sub testssl {
     my ($key, $cert, $CAtmp, $provider, $configfile) = @_;
     my @CA = $CAtmp ? ("-CAfile", $CAtmp) : ("-CApath", bldtop_dir("certs"));
+    my @providerflags = ("-provider", $provider);
+
+    if ($provider eq "default") {
+        push @providerflags, "-provider", "legacy";
+    }
 
     my @ssltest = ("ssltest_old",
-		   "-s_key", $key, "-s_cert", $cert,
-		   "-c_key", $key, "-c_cert", $cert,
-		   "-provider", $provider,
-		   "-config", $configfile);
+                   "-s_key", $key, "-s_cert", $cert,
+                   "-c_key", $key, "-c_cert", $cert,
+                   "-config", $configfile,
+                   @providerflags);
+
 
     my $serverinfo = srctop_file("test","serverinfo.pem");
 
@@ -415,7 +421,7 @@ sub testssl {
     subtest "Testing ciphersuites" => sub {
 
         my @exkeys = ();
-        my $ciphers = "-PSK:-SRP";
+        my $ciphers = '-PSK:-SRP:@SECLEVEL=0';
 
         if (!$no_dsa) {
             push @exkeys, "-s_cert", "certD.ss", "-s_key", "keyD.ss";
@@ -425,28 +431,33 @@ sub testssl {
             push @exkeys, "-s_cert", "certE.ss", "-s_key", "keyE.ss";
         }
 
-	my @protocols = ();
-	# We only use the flags that ssltest_old understands
-	push @protocols, "-tls1_3" unless $no_tls1_3;
-	push @protocols, "-tls1_2" unless $no_tls1_2;
-	push @protocols, "-tls1" unless $no_tls1 || $provider eq "fips";
-	push @protocols, "-ssl3" unless $no_ssl3 || $provider eq "fips";
-	my $protocolciphersuitecount = 0;
-	my %ciphersuites = ();
-	my %ciphersstatus = ();
-	foreach my $protocol (@protocols) {
-	    my $ciphersstatus = undef;
-	    my @ciphers = run(app(["openssl", "ciphers", "-s", $protocol,
-				   "ALL:$ciphers"]),
-			      capture => 1, statusvar => \$ciphersstatus);
-	    @ciphers = grep {!/CAMELLIA|ARIA|CHACHA/} @ciphers;
-	    $ciphersstatus{$protocol} = $ciphersstatus;
-	    if ($ciphersstatus) {
-		$ciphersuites{$protocol} = [ map { s|\R||; split(/:/, $_) }
-					     @ciphers ];
-		$protocolciphersuitecount += scalar @{$ciphersuites{$protocol}};
-	    }
-	}
+        my @protocols = ();
+        # We only use the flags that ssltest_old understands
+        push @protocols, "-tls1_3" unless $no_tls1_3;
+        push @protocols, "-tls1_2" unless $no_tls1_2;
+        push @protocols, "-tls1" unless $no_tls1 || $provider eq "fips";
+        push @protocols, "-ssl3" unless $no_ssl3 || $provider eq "fips";
+        my $protocolciphersuitecount = 0;
+        my %ciphersuites = ();
+        my %ciphersstatus = ();
+        #There's no "-config" option to the ciphers command so we set the
+        #environment variable instead
+        my $opensslconf = $ENV{OPENSSL_CONF};
+        $ENV{OPENSSL_CONF} = $configfile;
+        foreach my $protocol (@protocols) {
+            my $ciphersstatus = undef;
+            my @ciphers = run(app(["openssl", "ciphers", "-s", $protocol,
+                                   @providerflags,
+                                   "ALL:$ciphers"]),
+                                   capture => 1, statusvar => \$ciphersstatus);
+            $ciphersstatus{$protocol} = $ciphersstatus;
+            if ($ciphersstatus) {
+                $ciphersuites{$protocol} = [ map { s|\R||; split(/:/, $_) }
+                                    @ciphers ];
+                $protocolciphersuitecount += scalar @{$ciphersuites{$protocol}};
+            }
+        }
+        $ENV{OPENSSL_CONF} = $opensslconf;
 
         plan skip_all => "None of the ciphersuites to test are available in this OpenSSL build"
             if $protocolciphersuitecount + scalar(keys %ciphersuites) == 0;
@@ -477,9 +488,13 @@ sub testssl {
                     if ($protocol eq "-tls1_3") {
                         $ciphersuites = $cipher;
                         $cipher = "";
+                    } else {
+                        $cipher = $cipher.':@SECLEVEL=0';
                     }
-                    ok(run(test([@ssltest, @exkeys, "-cipher", $cipher,
-                                 "-ciphersuites", $ciphersuites, $flag || ()])),
+                    ok(run(test([@ssltest, @exkeys, "-cipher",
+                                 $cipher,
+                                 "-ciphersuites", $ciphersuites,
+                                 $flag || ()])),
                        "Testing $cipher");
                 }
             }
