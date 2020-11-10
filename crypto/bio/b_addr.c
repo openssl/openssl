@@ -22,6 +22,14 @@
 #include <openssl/buffer.h>
 #include "internal/thread_once.h"
 
+/*
+ * On Windows, gai_strerror() returns a WCHAR *
+ * to get a const char *, use gai_strerrorA()
+ */
+#ifdef OPENSSL_SYS_WINDOWS
+# define gai_strerror(e) gai_strerrorA((e))
+#endif
+
 CRYPTO_RWLOCK *bio_lookup_lock;
 static CRYPTO_ONCE bio_lookup_init = CRYPTO_ONCE_STATIC_INIT;
 
