@@ -231,18 +231,20 @@ static int pad_unknown(void)
 static int rsa_setkey(RSA** key, unsigned char* ctext, int idx)
 {
     int clen = 0;
+
     *key = RSA_new();
-    switch (idx) {
-    case 0:
-        clen = key1(*key, ctext);
-        break;
-    case 1:
-        clen = key2(*key, ctext);
-        break;
-    case 2:
-        clen = key3(*key, ctext);
-        break;
-    }
+    if (*key != NULL)
+        switch (idx) {
+        case 0:
+            clen = key1(*key, ctext);
+            break;
+        case 1:
+            clen = key2(*key, ctext);
+            break;
+        case 2:
+            clen = key3(*key, ctext);
+            break;
+        }
     return clen;
 }
 
