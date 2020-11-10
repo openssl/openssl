@@ -73,8 +73,7 @@ ASN1_BIT_STRING *v2i_ASN1_BIT_STRING(X509V3_EXT_METHOD *method,
             if (strcmp(bnam->sname, val->name) == 0
                 || strcmp(bnam->lname, val->name) == 0) {
                 if (!ASN1_BIT_STRING_set_bit(bs, bnam->bitnum, 1)) {
-                    ERR_raise(ERR_LIB_X509V3,
-                              ERR_R_MALLOC_FAILURE);
+                    ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
                     ASN1_BIT_STRING_free(bs);
                     return NULL;
                 }

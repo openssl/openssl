@@ -165,8 +165,7 @@ static int pkey_dsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
         return 1;
 
     case EVP_PKEY_CTRL_PEER_KEY:
-        ERR_raise(ERR_LIB_DSA,
-               EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        ERR_raise(ERR_LIB_DSA, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
         return -2;
     default:
         return -2;

@@ -598,8 +598,7 @@ EC_GROUP *EC_GROUP_new_from_ecparameters(const ECPARAMETERS *params)
             tmp_long = ASN1_INTEGER_get(char_two->p.tpBasis);
 
             if (!(char_two->m > tmp_long && tmp_long > 0)) {
-                ERR_raise(ERR_LIB_EC,
-                      EC_R_INVALID_TRINOMIAL_BASIS);
+                ERR_raise(ERR_LIB_EC, EC_R_INVALID_TRINOMIAL_BASIS);
                 goto err;
             }
 
@@ -622,8 +621,7 @@ EC_GROUP *EC_GROUP_new_from_ecparameters(const ECPARAMETERS *params)
             if (!
                 (char_two->m > penta->k3 && penta->k3 > penta->k2
                  && penta->k2 > penta->k1 && penta->k1 > 0)) {
-                ERR_raise(ERR_LIB_EC,
-                      EC_R_INVALID_PENTANOMIAL_BASIS);
+                ERR_raise(ERR_LIB_EC, EC_R_INVALID_PENTANOMIAL_BASIS);
                 goto err;
             }
 
@@ -852,8 +850,7 @@ EC_GROUP *EC_GROUP_new_from_ecpkparameters(const ECPKPARAMETERS *params)
         /* the curve is given by an OID */
         tmp = OBJ_obj2nid(params->value.named_curve);
         if ((ret = EC_GROUP_new_by_curve_name(tmp)) == NULL) {
-            ERR_raise(ERR_LIB_EC,
-                  EC_R_EC_GROUP_NEW_BY_NAME_FAILURE);
+            ERR_raise(ERR_LIB_EC, EC_R_EC_GROUP_NEW_BY_NAME_FAILURE);
             return NULL;
         }
         EC_GROUP_set_asn1_flag(ret, OPENSSL_EC_NAMED_CURVE);

@@ -145,8 +145,7 @@ static ECDSA_SIG *ecdsa_s390x_nistp_sign_sig(const unsigned char *dgst,
     }
 
     if (!EC_KEY_can_sign(eckey)) {
-        ERR_raise(ERR_LIB_EC,
-              EC_R_CURVE_DOES_NOT_SUPPORT_SIGNING);
+        ERR_raise(ERR_LIB_EC, EC_R_CURVE_DOES_NOT_SUPPORT_SIGNING);
         return NULL;
     }
 
@@ -182,8 +181,7 @@ static ECDSA_SIG *ecdsa_s390x_nistp_sign_sig(const unsigned char *dgst,
          */
          if (RAND_priv_bytes_ex(eckey->libctx, param + S390X_OFF_RN(len),
                                 len) != 1) {
-             ERR_raise(ERR_LIB_EC,
-                   EC_R_RANDOM_NUMBER_GENERATION_FAILED);
+             ERR_raise(ERR_LIB_EC, EC_R_RANDOM_NUMBER_GENERATION_FAILED);
              goto ret;
          }
     } else {
@@ -239,8 +237,7 @@ static int ecdsa_s390x_nistp_verify_sig(const unsigned char *dgst, int dgstlen,
     }
 
     if (!EC_KEY_can_sign(eckey)) {
-        ERR_raise(ERR_LIB_EC,
-              EC_R_CURVE_DOES_NOT_SUPPORT_SIGNING);
+        ERR_raise(ERR_LIB_EC, EC_R_CURVE_DOES_NOT_SUPPORT_SIGNING);
         return -1;
     }
 

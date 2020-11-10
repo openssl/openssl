@@ -1931,8 +1931,7 @@ int ec_GFp_nistp256_group_set_curve(EC_GROUP *group, const BIGNUM *p,
     BN_bin2bn(nistp256_curve_params[1], sizeof(felem_bytearray), curve_a);
     BN_bin2bn(nistp256_curve_params[2], sizeof(felem_bytearray), curve_b);
     if ((BN_cmp(curve_p, p)) || (BN_cmp(curve_a, a)) || (BN_cmp(curve_b, b))) {
-        ERR_raise(ERR_LIB_EC,
-              EC_R_WRONG_CURVE_PARAMETERS);
+        ERR_raise(ERR_LIB_EC, EC_R_WRONG_CURVE_PARAMETERS);
         goto err;
     }
     group->field_mod_func = BN_nist_mod_256;
@@ -1959,8 +1958,7 @@ int ec_GFp_nistp256_point_get_affine_coordinates(const EC_GROUP *group,
     longfelem tmp;
 
     if (EC_POINT_is_at_infinity(group, point)) {
-        ERR_raise(ERR_LIB_EC,
-              EC_R_POINT_AT_INFINITY);
+        ERR_raise(ERR_LIB_EC, EC_R_POINT_AT_INFINITY);
         return 0;
     }
     if ((!BN_to_felem(x_in, point->X)) || (!BN_to_felem(y_in, point->Y)) ||
@@ -1974,8 +1972,7 @@ int ec_GFp_nistp256_point_get_affine_coordinates(const EC_GROUP *group,
     felem_contract(x_out, x_in);
     if (x != NULL) {
         if (!smallfelem_to_BN(x, x_out)) {
-            ERR_raise(ERR_LIB_EC,
-                  ERR_R_BN_LIB);
+            ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
             return 0;
         }
     }
@@ -1986,8 +1983,7 @@ int ec_GFp_nistp256_point_get_affine_coordinates(const EC_GROUP *group,
     felem_contract(y_out, y_in);
     if (y != NULL) {
         if (!smallfelem_to_BN(y, y_out)) {
-            ERR_raise(ERR_LIB_EC,
-                  ERR_R_BN_LIB);
+            ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
             return 0;
         }
     }

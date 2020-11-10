@@ -182,8 +182,7 @@ int ENGINE_cmd_is_executable(ENGINE *e, int cmd)
     int flags;
     if ((flags =
          ENGINE_ctrl(e, ENGINE_CTRL_GET_CMD_FLAGS, cmd, NULL, NULL)) < 0) {
-        ERR_raise(ERR_LIB_ENGINE,
-                  ENGINE_R_INVALID_CMD_NUMBER);
+        ERR_raise(ERR_LIB_ENGINE, ENGINE_R_INVALID_CMD_NUMBER);
         return 0;
     }
     if (!(flags & ENGINE_CMD_FLAG_NO_INPUT) &&
@@ -259,8 +258,7 @@ int ENGINE_ctrl_cmd_string(ENGINE *e, const char *cmd_name, const char *arg,
         return 0;
     }
     if (!ENGINE_cmd_is_executable(e, num)) {
-        ERR_raise(ERR_LIB_ENGINE,
-                  ENGINE_R_CMD_NOT_EXECUTABLE);
+        ERR_raise(ERR_LIB_ENGINE, ENGINE_R_CMD_NOT_EXECUTABLE);
         return 0;
     }
 
@@ -270,8 +268,7 @@ int ENGINE_ctrl_cmd_string(ENGINE *e, const char *cmd_name, const char *arg,
          * Shouldn't happen, given that ENGINE_cmd_is_executable() returned
          * success.
          */
-        ERR_raise(ERR_LIB_ENGINE,
-                  ENGINE_R_INTERNAL_LIST_ERROR);
+        ERR_raise(ERR_LIB_ENGINE, ENGINE_R_INTERNAL_LIST_ERROR);
         return 0;
     }
     /*
@@ -279,8 +276,7 @@ int ENGINE_ctrl_cmd_string(ENGINE *e, const char *cmd_name, const char *arg,
      */
     if (flags & ENGINE_CMD_FLAG_NO_INPUT) {
         if (arg != NULL) {
-            ERR_raise(ERR_LIB_ENGINE,
-                      ENGINE_R_COMMAND_TAKES_NO_INPUT);
+            ERR_raise(ERR_LIB_ENGINE, ENGINE_R_COMMAND_TAKES_NO_INPUT);
             return 0;
         }
         /*
@@ -295,8 +291,7 @@ int ENGINE_ctrl_cmd_string(ENGINE *e, const char *cmd_name, const char *arg,
     }
     /* So, we require input */
     if (arg == NULL) {
-        ERR_raise(ERR_LIB_ENGINE,
-                  ENGINE_R_COMMAND_TAKES_INPUT);
+        ERR_raise(ERR_LIB_ENGINE, ENGINE_R_COMMAND_TAKES_INPUT);
         return 0;
     }
     /* If it takes string input, that's easy */
@@ -313,14 +308,12 @@ int ENGINE_ctrl_cmd_string(ENGINE *e, const char *cmd_name, const char *arg,
      * used.
      */
     if (!(flags & ENGINE_CMD_FLAG_NUMERIC)) {
-        ERR_raise(ERR_LIB_ENGINE,
-                  ENGINE_R_INTERNAL_LIST_ERROR);
+        ERR_raise(ERR_LIB_ENGINE, ENGINE_R_INTERNAL_LIST_ERROR);
         return 0;
     }
     l = strtol(arg, &ptr, 10);
     if ((arg == ptr) || (*ptr != '\0')) {
-        ERR_raise(ERR_LIB_ENGINE,
-                  ENGINE_R_ARGUMENT_IS_NOT_A_NUMBER);
+        ERR_raise(ERR_LIB_ENGINE, ENGINE_R_ARGUMENT_IS_NOT_A_NUMBER);
         return 0;
     }
     /*

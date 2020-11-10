@@ -214,13 +214,11 @@ static int pkey_rsa_verifyrecover(EVP_PKEY_CTX *ctx,
                 return 0;
             ret--;
             if (rctx->tbuf[ret] != RSA_X931_hash_id(EVP_MD_type(rctx->md))) {
-                ERR_raise(ERR_LIB_RSA,
-                       RSA_R_ALGORITHM_MISMATCH);
+                ERR_raise(ERR_LIB_RSA, RSA_R_ALGORITHM_MISMATCH);
                 return 0;
             }
             if (ret != EVP_MD_size(rctx->md)) {
-                ERR_raise(ERR_LIB_RSA,
-                       RSA_R_INVALID_DIGEST_LENGTH);
+                ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_DIGEST_LENGTH);
                 return 0;
             }
             if (rout)
@@ -434,8 +432,7 @@ static int pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
             return 1;
         }
  bad_pad:
-        ERR_raise(ERR_LIB_RSA,
-               RSA_R_ILLEGAL_OR_UNSUPPORTED_PADDING_MODE);
+        ERR_raise(ERR_LIB_RSA, RSA_R_ILLEGAL_OR_UNSUPPORTED_PADDING_MODE);
         return -2;
 
     case EVP_PKEY_CTRL_GET_RSA_PADDING:
@@ -586,8 +583,7 @@ static int pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
         return 1;
     /* fall through */
     case EVP_PKEY_CTRL_PEER_KEY:
-        ERR_raise(ERR_LIB_RSA,
-               RSA_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        ERR_raise(ERR_LIB_RSA, RSA_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
         return -2;
 
     default:

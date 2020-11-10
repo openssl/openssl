@@ -146,8 +146,7 @@ void TS_RESP_CTX_free(TS_RESP_CTX *ctx)
 int TS_RESP_CTX_set_signer_cert(TS_RESP_CTX *ctx, X509 *signer)
 {
     if (X509_check_purpose(signer, X509_PURPOSE_TIMESTAMP_SIGN, 0) != 1) {
-        ERR_raise(ERR_LIB_TS,
-              TS_R_INVALID_SIGNER_CERTIFICATE_PURPOSE);
+        ERR_raise(ERR_LIB_TS, TS_R_INVALID_SIGNER_CERTIFICATE_PURPOSE);
         return 0;
     }
     X509_free(ctx->signer_cert);

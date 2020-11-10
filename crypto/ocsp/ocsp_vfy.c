@@ -103,8 +103,7 @@ int OCSP_basic_verify(OCSP_BASICRESP *bs, STACK_OF(X509) *certs,
     int ret = ocsp_find_signer(&signer, bs, certs, flags);
 
     if (ret == 0) {
-        ERR_raise(ERR_LIB_OCSP,
-                OCSP_R_SIGNER_CERTIFICATE_NOT_FOUND);
+        ERR_raise(ERR_LIB_OCSP, OCSP_R_SIGNER_CERTIFICATE_NOT_FOUND);
         goto end;
     }
     if ((ret == 2) && (flags & OCSP_TRUSTOTHER) != 0)
@@ -271,8 +270,7 @@ static int ocsp_check_ids(STACK_OF(OCSP_SINGLERESP) *sresp, OCSP_CERTID **ret)
 
     idcount = sk_OCSP_SINGLERESP_num(sresp);
     if (idcount <= 0) {
-        ERR_raise(ERR_LIB_OCSP,
-                OCSP_R_RESPONSE_CONTAINS_NO_REVOCATION_DATA);
+        ERR_raise(ERR_LIB_OCSP, OCSP_R_RESPONSE_CONTAINS_NO_REVOCATION_DATA);
         return -1;
     }
 
@@ -380,15 +378,13 @@ int OCSP_request_verify(OCSP_REQUEST *req, STACK_OF(X509) *certs,
     }
     gen = req->tbsRequest.requestorName;
     if (!gen || gen->type != GEN_DIRNAME) {
-        ERR_raise(ERR_LIB_OCSP,
-                OCSP_R_UNSUPPORTED_REQUESTORNAME_TYPE);
+        ERR_raise(ERR_LIB_OCSP, OCSP_R_UNSUPPORTED_REQUESTORNAME_TYPE);
         return 0; /* not returning -1 here for backward compatibility*/
     }
     nm = gen->d.directoryName;
     ret = ocsp_req_find_signer(&signer, req, nm, certs, flags);
     if (ret <= 0) {
-        ERR_raise(ERR_LIB_OCSP,
-                OCSP_R_SIGNER_CERTIFICATE_NOT_FOUND);
+        ERR_raise(ERR_LIB_OCSP, OCSP_R_SIGNER_CERTIFICATE_NOT_FOUND);
         return 0; /* not returning -1 here for backward compatibility*/
     }
     if ((ret == 2) && (flags & OCSP_TRUSTOTHER) != 0)

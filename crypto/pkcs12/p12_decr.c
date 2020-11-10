@@ -53,8 +53,7 @@ unsigned char *PKCS12_pbe_crypt(const X509_ALGOR *algor,
             max_out_len += mac_len;
         } else {
             if (inlen < mac_len) {
-                ERR_raise(ERR_LIB_PKCS12,
-                          PKCS12_R_UNSUPPORTED_PKCS12_MODE);
+                ERR_raise(ERR_LIB_PKCS12, PKCS12_R_UNSUPPORTED_PKCS12_MODE);
                 goto err;
             }
             inlen -= mac_len;
@@ -82,8 +81,7 @@ unsigned char *PKCS12_pbe_crypt(const X509_ALGOR *algor,
     if (!EVP_CipherFinal_ex(ctx, out + i, &i)) {
         OPENSSL_free(out);
         out = NULL;
-        ERR_raise(ERR_LIB_PKCS12,
-                  PKCS12_R_PKCS12_CIPHERFINAL_ERROR);
+        ERR_raise(ERR_LIB_PKCS12, PKCS12_R_PKCS12_CIPHERFINAL_ERROR);
         goto err;
     }
     outlen += i;

@@ -49,8 +49,7 @@ int BIO_get_host_ip(const char *str, unsigned char *ip)
         size_t l;
 
         if (BIO_ADDRINFO_family(res) != AF_INET) {
-            ERR_raise(ERR_LIB_BIO,
-                   BIO_R_GETHOSTBYNAME_ADDR_IS_NOT_AF_INET);
+            ERR_raise(ERR_LIB_BIO, BIO_R_GETHOSTBYNAME_ADDR_IS_NOT_AF_INET);
         } else if (BIO_ADDR_rawaddress(BIO_ADDRINFO_address(res), NULL, &l)) {
             /*
              * Because only AF_INET addresses will reach this far, we can assert
@@ -82,8 +81,7 @@ int BIO_get_port(const char *str, unsigned short *port_ptr)
 
     if (BIO_lookup(NULL, str, BIO_LOOKUP_CLIENT, AF_INET, SOCK_STREAM, &res)) {
         if (BIO_ADDRINFO_family(res) != AF_INET) {
-            ERR_raise(ERR_LIB_BIO,
-                   BIO_R_ADDRINFO_ADDR_IS_NOT_AF_INET);
+            ERR_raise(ERR_LIB_BIO, BIO_R_ADDRINFO_ADDR_IS_NOT_AF_INET);
         } else {
             *port_ptr = ntohs(BIO_ADDR_rawport(BIO_ADDRINFO_address(res)));
             ret = 1;

@@ -163,8 +163,7 @@ static int general_allocate_boolean(UI *ui,
     } else {
         for (p = ok_chars; *p != '\0'; p++) {
             if (strchr(cancel_chars, *p) != NULL) {
-                ERR_raise(ERR_LIB_UI,
-                      UI_R_COMMON_OK_AND_CANCEL_CHARACTERS);
+                ERR_raise(ERR_LIB_UI, UI_R_COMMON_OK_AND_CANCEL_CHARACTERS);
             }
         }
 

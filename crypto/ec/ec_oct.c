@@ -26,13 +26,11 @@ int EC_POINT_set_compressed_coordinates(const EC_GROUP *group, EC_POINT *point,
 {
     if (group->meth->point_set_compressed_coordinates == NULL
         && !(group->meth->flags & EC_FLAGS_DEFAULT_OCT)) {
-        ERR_raise(ERR_LIB_EC,
-              ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+        ERR_raise(ERR_LIB_EC, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
         return 0;
     }
     if (!ec_point_is_compat(point, group)) {
-        ERR_raise(ERR_LIB_EC,
-              EC_R_INCOMPATIBLE_OBJECTS);
+        ERR_raise(ERR_LIB_EC, EC_R_INCOMPATIBLE_OBJECTS);
         return 0;
     }
     if (group->meth->flags & EC_FLAGS_DEFAULT_OCT) {
@@ -42,8 +40,7 @@ int EC_POINT_set_compressed_coordinates(const EC_GROUP *group, EC_POINT *point,
         else
 #ifdef OPENSSL_NO_EC2M
         {
-            ERR_raise(ERR_LIB_EC,
-                  EC_R_GF2M_NOT_SUPPORTED);
+            ERR_raise(ERR_LIB_EC, EC_R_GF2M_NOT_SUPPORTED);
             return 0;
         }
 #else

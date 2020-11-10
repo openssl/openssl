@@ -73,8 +73,7 @@ BIO *cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec,
     (void)ERR_pop_to_mark();
 
     if (EVP_CipherInit_ex(ctx, cipher, NULL, NULL, NULL, enc) <= 0) {
-        ERR_raise(ERR_LIB_CMS,
-               CMS_R_CIPHER_INITIALISATION_ERROR);
+        ERR_raise(ERR_LIB_CMS, CMS_R_CIPHER_INITIALISATION_ERROR);
         goto err;
     }
 
@@ -137,8 +136,7 @@ BIO *cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec,
              * which may be useful in MMA.
              */
             if (enc || ec->debug) {
-                ERR_raise(ERR_LIB_CMS,
-                       CMS_R_INVALID_KEY_LENGTH);
+                ERR_raise(ERR_LIB_CMS, CMS_R_INVALID_KEY_LENGTH);
                 goto err;
             } else {
                 /* Use random key */
@@ -152,8 +150,7 @@ BIO *cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec,
     }
 
     if (EVP_CipherInit_ex(ctx, NULL, NULL, ec->key, piv, enc) <= 0) {
-        ERR_raise(ERR_LIB_CMS,
-               CMS_R_CIPHER_INITIALISATION_ERROR);
+        ERR_raise(ERR_LIB_CMS, CMS_R_CIPHER_INITIALISATION_ERROR);
         goto err;
     }
     if (enc) {
@@ -171,8 +168,7 @@ BIO *cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec,
         }
 
         if (evp_cipher_param_to_asn1_ex(ctx, calg->parameter, &aparams) <= 0) {
-            ERR_raise(ERR_LIB_CMS,
-                   CMS_R_CIPHER_PARAMETER_INITIALISATION_ERROR);
+            ERR_raise(ERR_LIB_CMS, CMS_R_CIPHER_PARAMETER_INITIALISATION_ERROR);
             goto err;
         }
         /* If parameter type not set omit parameter */

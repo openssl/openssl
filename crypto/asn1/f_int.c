@@ -119,8 +119,7 @@ int a2i_ASN1_INTEGER(BIO *bp, ASN1_INTEGER *bs, char *buf, int size)
             for (n = 0; n < 2; n++) {
                 m = OPENSSL_hexchar2int(bufp[k + n]);
                 if (m < 0) {
-                    ERR_raise(ERR_LIB_ASN1,
-                            ASN1_R_NON_HEX_CHARACTERS);
+                    ERR_raise(ERR_LIB_ASN1, ASN1_R_NON_HEX_CHARACTERS);
                     goto err;
                 }
                 s[num + j] <<= 4;

@@ -139,8 +139,7 @@ static int rsa_ossl_public_encrypt(int flen, const unsigned char *from,
 
     if (BN_ucmp(f, rsa->n) >= 0) {
         /* usually the padding functions would catch this */
-        ERR_raise(ERR_LIB_RSA,
-               RSA_R_DATA_TOO_LARGE_FOR_MODULUS);
+        ERR_raise(ERR_LIB_RSA, RSA_R_DATA_TOO_LARGE_FOR_MODULUS);
         goto err;
     }
 
@@ -292,8 +291,7 @@ static int rsa_ossl_private_encrypt(int flen, const unsigned char *from,
 
     if (BN_ucmp(f, rsa->n) >= 0) {
         /* usually the padding functions would catch this */
-        ERR_raise(ERR_LIB_RSA,
-               RSA_R_DATA_TOO_LARGE_FOR_MODULUS);
+        ERR_raise(ERR_LIB_RSA, RSA_R_DATA_TOO_LARGE_FOR_MODULUS);
         goto err;
     }
 
@@ -408,8 +406,7 @@ static int rsa_ossl_private_decrypt(int flen, const unsigned char *from,
      * top '0' bytes
      */
     if (flen > num) {
-        ERR_raise(ERR_LIB_RSA,
-               RSA_R_DATA_GREATER_THAN_MOD_LEN);
+        ERR_raise(ERR_LIB_RSA, RSA_R_DATA_GREATER_THAN_MOD_LEN);
         goto err;
     }
 
@@ -418,8 +415,7 @@ static int rsa_ossl_private_decrypt(int flen, const unsigned char *from,
         goto err;
 
     if (BN_ucmp(f, rsa->n) >= 0) {
-        ERR_raise(ERR_LIB_RSA,
-               RSA_R_DATA_TOO_LARGE_FOR_MODULUS);
+        ERR_raise(ERR_LIB_RSA, RSA_R_DATA_TOO_LARGE_FOR_MODULUS);
         goto err;
     }
 
@@ -572,8 +568,7 @@ static int rsa_ossl_public_decrypt(int flen, const unsigned char *from,
         goto err;
 
     if (BN_ucmp(f, rsa->n) >= 0) {
-        ERR_raise(ERR_LIB_RSA,
-               RSA_R_DATA_TOO_LARGE_FOR_MODULUS);
+        ERR_raise(ERR_LIB_RSA, RSA_R_DATA_TOO_LARGE_FOR_MODULUS);
         goto err;
     }
 

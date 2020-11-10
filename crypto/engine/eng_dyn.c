@@ -455,8 +455,7 @@ static int dynamic_load(ENGINE *e, dynamic_data_ctx *ctx)
             ctx->v_check = NULL;
             DSO_free(ctx->dynamic_dso);
             ctx->dynamic_dso = NULL;
-            ERR_raise(ERR_LIB_ENGINE,
-                      ENGINE_R_VERSION_INCOMPATIBILITY);
+            ERR_raise(ERR_LIB_ENGINE, ENGINE_R_VERSION_INCOMPATIBILITY);
             return 0;
         }
     }
@@ -503,8 +502,7 @@ static int dynamic_load(ENGINE *e, dynamic_data_ctx *ctx)
                  * created leaks. We just have to fail where we are, after
                  * the ENGINE has changed.
                  */
-                ERR_raise(ERR_LIB_ENGINE,
-                          ENGINE_R_CONFLICTING_ENGINE_ID);
+                ERR_raise(ERR_LIB_ENGINE, ENGINE_R_CONFLICTING_ENGINE_ID);
                 return 0;
             }
             /* Tolerate */

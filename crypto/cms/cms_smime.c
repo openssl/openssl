@@ -199,8 +199,7 @@ int CMS_EncryptedData_decrypt(CMS_ContentInfo *cms,
     int r;
 
     if (OBJ_obj2nid(CMS_get0_type(cms)) != NID_pkcs7_encrypted) {
-        ERR_raise(ERR_LIB_CMS,
-               CMS_R_TYPE_NOT_ENCRYPTED_DATA);
+        ERR_raise(ERR_LIB_CMS, CMS_R_TYPE_NOT_ENCRYPTED_DATA);
         return 0;
     }
 
@@ -703,8 +702,7 @@ int CMS_decrypt_set1_pkey_and_peer(CMS_ContentInfo *cms, EVP_PKEY *pk,
 
     cms_pkey_ri_type = cms_pkey_get_ri_type(pk);
     if (cms_pkey_ri_type == CMS_RECIPINFO_NONE) {
-         ERR_raise(ERR_LIB_CMS,
-              CMS_R_NOT_SUPPORTED_FOR_THIS_KEY_TYPE);
+         ERR_raise(ERR_LIB_CMS, CMS_R_NOT_SUPPORTED_FOR_THIS_KEY_TYPE);
          return 0;
     }
 

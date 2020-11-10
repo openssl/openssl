@@ -54,15 +54,13 @@ X509_ALGOR *PKCS5_pbe2_set_scrypt(const EVP_CIPHER *cipher,
     }
 
     if (EVP_PBE_scrypt(NULL, 0, NULL, 0, N, r, p, 0, NULL, 0) == 0) {
-        ERR_raise(ERR_LIB_ASN1,
-                ASN1_R_INVALID_SCRYPT_PARAMETERS);
+        ERR_raise(ERR_LIB_ASN1, ASN1_R_INVALID_SCRYPT_PARAMETERS);
         goto err;
     }
 
     alg_nid = EVP_CIPHER_type(cipher);
     if (alg_nid == NID_undef) {
-        ERR_raise(ERR_LIB_ASN1,
-                ASN1_R_CIPHER_HAS_NO_OBJECT_IDENTIFIER);
+        ERR_raise(ERR_LIB_ASN1, ASN1_R_CIPHER_HAS_NO_OBJECT_IDENTIFIER);
         goto err;
     }
 
@@ -94,8 +92,7 @@ X509_ALGOR *PKCS5_pbe2_set_scrypt(const EVP_CIPHER *cipher,
     if (EVP_CipherInit_ex(ctx, cipher, NULL, NULL, iv, 0) == 0)
         goto err;
     if (EVP_CIPHER_param_to_asn1(ctx, scheme->parameter) <= 0) {
-        ERR_raise(ERR_LIB_ASN1,
-                ASN1_R_ERROR_SETTING_CIPHER_PARAMS);
+        ERR_raise(ERR_LIB_ASN1, ASN1_R_ERROR_SETTING_CIPHER_PARAMS);
         goto err;
     }
     EVP_CIPHER_CTX_free(ctx);
@@ -247,8 +244,7 @@ int PKCS5_v2_scrypt_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass,
         uint64_t spkeylen;
         if ((ASN1_INTEGER_get_uint64(&spkeylen, sparam->keyLength) == 0)
             || (spkeylen != keylen)) {
-            ERR_raise(ERR_LIB_EVP,
-                   EVP_R_UNSUPPORTED_KEYLENGTH);
+            ERR_raise(ERR_LIB_EVP, EVP_R_UNSUPPORTED_KEYLENGTH);
             goto err;
         }
     }
@@ -257,8 +253,7 @@ int PKCS5_v2_scrypt_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass,
         || ASN1_INTEGER_get_uint64(&r, sparam->blockSize) == 0
         || ASN1_INTEGER_get_uint64(&p, sparam->parallelizationParameter) == 0
         || EVP_PBE_scrypt(NULL, 0, NULL, 0, N, r, p, 0, NULL, 0) == 0) {
-        ERR_raise(ERR_LIB_EVP,
-               EVP_R_ILLEGAL_SCRYPT_PARAMETERS);
+        ERR_raise(ERR_LIB_EVP, EVP_R_ILLEGAL_SCRYPT_PARAMETERS);
         goto err;
     }
 

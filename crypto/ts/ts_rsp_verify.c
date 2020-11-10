@@ -246,8 +246,7 @@ static int ts_check_signing_certs(PKCS7_SIGNER_INFO *si,
     ret = 1;
  err:
     if (!ret)
-        ERR_raise(ERR_LIB_TS,
-              TS_R_ESS_SIGNING_CERTIFICATE_ERROR);
+        ERR_raise(ERR_LIB_TS, TS_R_ESS_SIGNING_CERTIFICATE_ERROR);
     ESS_SIGNING_CERT_free(ss);
     ESS_SIGNING_CERT_V2_free(ssv2);
     return ret;

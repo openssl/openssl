@@ -99,15 +99,13 @@ int ess_check_signing_certs(CMS_SignerInfo *si, STACK_OF(X509) *chain)
             }
         }
     } else {
-        ERR_raise(ERR_LIB_CMS,
-               CMS_R_ESS_NO_SIGNING_CERTID_ATTRIBUTE);
+        ERR_raise(ERR_LIB_CMS, CMS_R_ESS_NO_SIGNING_CERTID_ATTRIBUTE);
         return 0;
     }
     ret = 1;
  err:
     if (!ret)
-        ERR_raise(ERR_LIB_CMS,
-               CMS_R_ESS_SIGNING_CERTID_MISMATCH_ERROR);
+        ERR_raise(ERR_LIB_CMS, CMS_R_ESS_SIGNING_CERTID_MISMATCH_ERROR);
 
     ESS_SIGNING_CERT_free(ss);
     ESS_SIGNING_CERT_V2_free(ssv2);
@@ -329,8 +327,7 @@ int cms_Receipt_verify(CMS_ContentInfo *cms, CMS_ContentInfo *req_cms)
     }
 
     if (memcmp(dig, msig->data, diglen)) {
-        ERR_raise(ERR_LIB_CMS,
-               CMS_R_MSGSIGDIGEST_VERIFICATION_FAILURE);
+        ERR_raise(ERR_LIB_CMS, CMS_R_MSGSIGDIGEST_VERIFICATION_FAILURE);
         goto err;
     }
 

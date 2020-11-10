@@ -1992,16 +1992,14 @@ int X509_get_pubkey_parameters(EVP_PKEY *pkey, STACK_OF(X509) *chain)
     for (i = 0; i < sk_X509_num(chain); i++) {
         ktmp = X509_get0_pubkey(sk_X509_value(chain, i));
         if (ktmp == NULL) {
-            ERR_raise(ERR_LIB_X509,
-                    X509_R_UNABLE_TO_GET_CERTS_PUBLIC_KEY);
+            ERR_raise(ERR_LIB_X509, X509_R_UNABLE_TO_GET_CERTS_PUBLIC_KEY);
             return 0;
         }
         if (!EVP_PKEY_missing_parameters(ktmp))
             break;
     }
     if (ktmp == NULL) {
-        ERR_raise(ERR_LIB_X509,
-                X509_R_UNABLE_TO_FIND_PARAMETERS_IN_CHAIN);
+        ERR_raise(ERR_LIB_X509, X509_R_UNABLE_TO_FIND_PARAMETERS_IN_CHAIN);
         return 0;
     }
 
@@ -2242,8 +2240,7 @@ int X509_STORE_CTX_purpose_inherit(X509_STORE_CTX *ctx, int def_purpose,
         X509_PURPOSE *ptmp;
         idx = X509_PURPOSE_get_by_id(purpose);
         if (idx == -1) {
-            ERR_raise(ERR_LIB_X509,
-                    X509_R_UNKNOWN_PURPOSE_ID);
+            ERR_raise(ERR_LIB_X509, X509_R_UNKNOWN_PURPOSE_ID);
             return 0;
         }
         ptmp = X509_PURPOSE_get0(idx);
@@ -2255,8 +2252,7 @@ int X509_STORE_CTX_purpose_inherit(X509_STORE_CTX *ctx, int def_purpose,
              * X509_TRUST_DEFAULT case actually supposed to be handled?
              */
             if (idx == -1) {
-                ERR_raise(ERR_LIB_X509,
-                        X509_R_UNKNOWN_PURPOSE_ID);
+                ERR_raise(ERR_LIB_X509, X509_R_UNKNOWN_PURPOSE_ID);
                 return 0;
             }
             ptmp = X509_PURPOSE_get0(idx);
@@ -2268,8 +2264,7 @@ int X509_STORE_CTX_purpose_inherit(X509_STORE_CTX *ctx, int def_purpose,
     if (trust) {
         idx = X509_TRUST_get_by_id(trust);
         if (idx == -1) {
-            ERR_raise(ERR_LIB_X509,
-                    X509_R_UNKNOWN_TRUST_ID);
+            ERR_raise(ERR_LIB_X509, X509_R_UNKNOWN_TRUST_ID);
             return 0;
         }
     }

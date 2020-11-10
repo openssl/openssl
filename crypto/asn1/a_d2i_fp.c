@@ -195,8 +195,7 @@ int asn1_d2i_read_bio(BIO *in, BUF_MEM **pb)
                     while (chunk > 0) {
                         i = BIO_read(in, &(b->data[len]), chunk);
                         if (i <= 0) {
-                            ERR_raise(ERR_LIB_ASN1,
-                                    ASN1_R_NOT_ENOUGH_DATA);
+                            ERR_raise(ERR_LIB_ASN1, ASN1_R_NOT_ENOUGH_DATA);
                             goto err;
                         }
                     /*

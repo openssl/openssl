@@ -90,8 +90,7 @@ int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
         }
         if (pkey->ameth->pub_encode != NULL) {
             if (!pkey->ameth->pub_encode(pk, pkey)) {
-                ERR_raise(ERR_LIB_X509,
-                        X509_R_PUBLIC_KEY_ENCODE_ERROR);
+                ERR_raise(ERR_LIB_X509, X509_R_PUBLIC_KEY_ENCODE_ERROR);
                 goto error;
             }
         } else {

@@ -110,8 +110,7 @@ int a2i_ASN1_STRING(BIO *bp, ASN1_STRING *bs, char *buf, int size)
             for (n = 0; n < 2; n++) {
                 m = OPENSSL_hexchar2int(bufp[k + n]);
                 if (m < 0) {
-                    ERR_raise(ERR_LIB_ASN1,
-                            ASN1_R_NON_HEX_CHARACTERS);
+                    ERR_raise(ERR_LIB_ASN1, ASN1_R_NON_HEX_CHARACTERS);
                     OPENSSL_free(s);
                     return 0;
                 }

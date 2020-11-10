@@ -600,8 +600,7 @@ int EC_KEY_set_public_key_affine_coordinates(EC_KEY *key, BIGNUM *x,
     int ok = 0;
 
     if (key == NULL || key->group == NULL || x == NULL || y == NULL) {
-        ERR_raise(ERR_LIB_EC,
-              ERR_R_PASSED_NULL_PARAMETER);
+        ERR_raise(ERR_LIB_EC, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
     ctx = BN_CTX_new_ex(key->libctx);
@@ -629,8 +628,7 @@ int EC_KEY_set_public_key_affine_coordinates(EC_KEY *key, BIGNUM *x,
      * inside EC_KEY_check_key().
      */
     if (BN_cmp(x, tx) || BN_cmp(y, ty)) {
-        ERR_raise(ERR_LIB_EC,
-              EC_R_COORDINATES_OUT_OF_RANGE);
+        ERR_raise(ERR_LIB_EC, EC_R_COORDINATES_OUT_OF_RANGE);
         goto err;
     }
 

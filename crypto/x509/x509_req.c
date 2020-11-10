@@ -90,8 +90,7 @@ int X509_REQ_check_private_key(X509_REQ *x, EVP_PKEY *k)
         ok = 1;
         break;
     case 0:
-        ERR_raise(ERR_LIB_X509,
-                X509_R_KEY_VALUES_MISMATCH);
+        ERR_raise(ERR_LIB_X509, X509_R_KEY_VALUES_MISMATCH);
         break;
     case -1:
         ERR_raise(ERR_LIB_X509, X509_R_KEY_TYPE_MISMATCH);
@@ -106,8 +105,7 @@ int X509_REQ_check_private_key(X509_REQ *x, EVP_PKEY *k)
 #ifndef OPENSSL_NO_DH
         if (EVP_PKEY_id(k) == EVP_PKEY_DH) {
             /* No idea */
-            ERR_raise(ERR_LIB_X509,
-                    X509_R_CANT_CHECK_DH_KEY);
+            ERR_raise(ERR_LIB_X509, X509_R_CANT_CHECK_DH_KEY);
             break;
         }
 #endif

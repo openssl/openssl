@@ -122,13 +122,12 @@ PKCS7_SIGNER_INFO *PKCS7_sign_add_signer(PKCS7 *p7, X509 *signcert,
 
     if (!X509_check_private_key(signcert, pkey)) {
         ERR_raise(ERR_LIB_PKCS7,
-                 PKCS7_R_PRIVATE_KEY_DOES_NOT_MATCH_CERTIFICATE);
+                  PKCS7_R_PRIVATE_KEY_DOES_NOT_MATCH_CERTIFICATE);
         return NULL;
     }
 
     if ((si = PKCS7_add_signature(p7, signcert, pkey, md)) == NULL) {
-        ERR_raise(ERR_LIB_PKCS7,
-                 PKCS7_R_PKCS7_ADD_SIGNATURE_ERROR);
+        ERR_raise(ERR_LIB_PKCS7, PKCS7_R_PKCS7_ADD_SIGNATURE_ERROR);
         return NULL;
     }
 
@@ -206,8 +205,7 @@ static int pkcs7_copy_existing_digest(PKCS7 *p7, PKCS7_SIGNER_INFO *si)
     if (osdig != NULL)
         return PKCS7_add1_attrib_digest(si, osdig->data, osdig->length);
 
-    ERR_raise(ERR_LIB_PKCS7,
-             PKCS7_R_NO_MATCHING_DIGEST_TYPE_FOUND);
+    ERR_raise(ERR_LIB_PKCS7, PKCS7_R_NO_MATCHING_DIGEST_TYPE_FOUND);
     return 0;
 }
 
@@ -427,8 +425,7 @@ STACK_OF(X509) *PKCS7_get0_signers(PKCS7 *p7, STACK_OF(X509) *certs,
                 X509_find_by_issuer_and_serial(p7->d.sign->cert,
                                                ias->issuer, ias->serial);
         if (!signer) {
-            ERR_raise(ERR_LIB_PKCS7,
-                     PKCS7_R_SIGNER_CERTIFICATE_NOT_FOUND);
+            ERR_raise(ERR_LIB_PKCS7, PKCS7_R_SIGNER_CERTIFICATE_NOT_FOUND);
             sk_X509_free(signers);
             return 0;
         }
@@ -511,7 +508,7 @@ int PKCS7_decrypt(PKCS7 *p7, EVP_PKEY *pkey, X509 *cert, BIO *data, int flags)
 
     if (cert && !X509_check_private_key(cert, pkey)) {
         ERR_raise(ERR_LIB_PKCS7,
-                 PKCS7_R_PRIVATE_KEY_DOES_NOT_MATCH_CERTIFICATE);
+                  PKCS7_R_PRIVATE_KEY_DOES_NOT_MATCH_CERTIFICATE);
         return 0;
     }
 

@@ -111,8 +111,7 @@ static int engine_list_remove(ENGINE *e)
     while (iterator && (iterator != e))
         iterator = iterator->next;
     if (iterator == NULL) {
-        ERR_raise(ERR_LIB_ENGINE,
-                  ENGINE_R_ENGINE_IS_NOT_IN_LIST);
+        ERR_raise(ERR_LIB_ENGINE, ENGINE_R_ENGINE_IS_NOT_IN_LIST);
         return 0;
     }
     /* un-link e from the chain. */

@@ -196,8 +196,7 @@ int EVP_PKEY_encrypt(EVP_PKEY_CTX *ctx,
 
  legacy:
     if (ctx->pmeth == NULL || ctx->pmeth->encrypt == NULL) {
-        ERR_raise(ERR_LIB_EVP,
-               EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
         return -2;
     }
     M_check_autoarg(ctx, out, outlen, EVP_F_EVP_PKEY_ENCRYPT)
@@ -234,8 +233,7 @@ int EVP_PKEY_decrypt(EVP_PKEY_CTX *ctx,
 
  legacy:
     if (ctx->pmeth == NULL || ctx->pmeth->decrypt == NULL) {
-        ERR_raise(ERR_LIB_EVP,
-               EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
         return -2;
     }
     M_check_autoarg(ctx, out, outlen, EVP_F_EVP_PKEY_DECRYPT)

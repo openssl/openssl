@@ -561,8 +561,7 @@ int EVP_PKEY_get_raw_public_key(const EVP_PKEY *pkey, unsigned char *pub,
     }
 
      if (pkey->ameth->get_pub_key == NULL) {
-        ERR_raise(ERR_LIB_EVP,
-               EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
         return 0;
     }
 

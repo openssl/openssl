@@ -74,8 +74,7 @@ CMS_RecipientInfo *CMS_add0_recipient_password(CMS_ContentInfo *cms,
         return NULL;
     }
     if (wrap_nid != NID_id_alg_PWRI_KEK) {
-        ERR_raise(ERR_LIB_CMS,
-               CMS_R_UNSUPPORTED_KEY_ENCRYPTION_ALGORITHM);
+        ERR_raise(ERR_LIB_CMS, CMS_R_UNSUPPORTED_KEY_ENCRYPTION_ALGORITHM);
         return NULL;
     }
 
@@ -106,8 +105,7 @@ CMS_RecipientInfo *CMS_add0_recipient_password(CMS_ContentInfo *cms,
             goto err;
         }
         if (EVP_CIPHER_param_to_asn1(ctx, encalg->parameter) <= 0) {
-            ERR_raise(ERR_LIB_CMS,
-                   CMS_R_CIPHER_PARAMETER_INITIALISATION_ERROR);
+            ERR_raise(ERR_LIB_CMS, CMS_R_CIPHER_PARAMETER_INITIALISATION_ERROR);
             goto err;
         }
     }
@@ -305,8 +303,7 @@ int cms_RecipientInfo_pwri_crypt(const CMS_ContentInfo *cms,
     algtmp = pwri->keyEncryptionAlgorithm;
 
     if (!algtmp || OBJ_obj2nid(algtmp->algorithm) != NID_id_alg_PWRI_KEK) {
-        ERR_raise(ERR_LIB_CMS,
-               CMS_R_UNSUPPORTED_KEY_ENCRYPTION_ALGORITHM);
+        ERR_raise(ERR_LIB_CMS, CMS_R_UNSUPPORTED_KEY_ENCRYPTION_ALGORITHM);
         return 0;
     }
 
@@ -314,8 +311,7 @@ int cms_RecipientInfo_pwri_crypt(const CMS_ContentInfo *cms,
                                        algtmp->parameter);
 
     if (kekalg == NULL) {
-        ERR_raise(ERR_LIB_CMS,
-               CMS_R_INVALID_KEY_ENCRYPTION_PARAMETER);
+        ERR_raise(ERR_LIB_CMS, CMS_R_INVALID_KEY_ENCRYPTION_PARAMETER);
         return 0;
     }
 
@@ -337,8 +333,7 @@ int cms_RecipientInfo_pwri_crypt(const CMS_ContentInfo *cms,
         goto err;
     EVP_CIPHER_CTX_set_padding(kekctx, 0);
     if (EVP_CIPHER_asn1_to_param(kekctx, kekalg->parameter) <= 0) {
-        ERR_raise(ERR_LIB_CMS,
-               CMS_R_CIPHER_PARAMETER_INITIALISATION_ERROR);
+        ERR_raise(ERR_LIB_CMS, CMS_R_CIPHER_PARAMETER_INITIALISATION_ERROR);
         goto err;
     }
 

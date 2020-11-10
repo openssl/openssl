@@ -32,8 +32,7 @@ int RSA_padding_add_PKCS1_type_1(unsigned char *to, int tlen,
     unsigned char *p;
 
     if (flen > (tlen - RSA_PKCS1_PADDING_SIZE)) {
-        ERR_raise(ERR_LIB_RSA,
-               RSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE);
+        ERR_raise(ERR_LIB_RSA, RSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE);
         return 0;
     }
 
@@ -73,16 +72,14 @@ int RSA_padding_check_PKCS1_type_1(unsigned char *to, int tlen,
     /* Accept inputs with and without the leading 0-byte. */
     if (num == flen) {
         if ((*p++) != 0x00) {
-            ERR_raise(ERR_LIB_RSA,
-                   RSA_R_INVALID_PADDING);
+            ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_PADDING);
             return -1;
         }
         flen--;
     }
 
     if ((num != (flen + 1)) || (*(p++) != 0x01)) {
-        ERR_raise(ERR_LIB_RSA,
-               RSA_R_BLOCK_TYPE_IS_NOT_01);
+        ERR_raise(ERR_LIB_RSA, RSA_R_BLOCK_TYPE_IS_NOT_01);
         return -1;
     }
 
@@ -94,8 +91,7 @@ int RSA_padding_check_PKCS1_type_1(unsigned char *to, int tlen,
                 p++;
                 break;
             } else {
-                ERR_raise(ERR_LIB_RSA,
-                       RSA_R_BAD_FIXED_HEADER_DECRYPT);
+                ERR_raise(ERR_LIB_RSA, RSA_R_BAD_FIXED_HEADER_DECRYPT);
                 return -1;
             }
         }
@@ -103,14 +99,12 @@ int RSA_padding_check_PKCS1_type_1(unsigned char *to, int tlen,
     }
 
     if (i == j) {
-        ERR_raise(ERR_LIB_RSA,
-               RSA_R_NULL_BEFORE_BLOCK_MISSING);
+        ERR_raise(ERR_LIB_RSA, RSA_R_NULL_BEFORE_BLOCK_MISSING);
         return -1;
     }
 
     if (i < 8) {
-        ERR_raise(ERR_LIB_RSA,
-               RSA_R_BAD_PAD_BYTE_COUNT);
+        ERR_raise(ERR_LIB_RSA, RSA_R_BAD_PAD_BYTE_COUNT);
         return -1;
     }
     i++;                        /* Skip over the '\0' */
@@ -186,8 +180,7 @@ int RSA_padding_check_PKCS1_type_2(unsigned char *to, int tlen,
      */
 
     if (flen > num || num < RSA_PKCS1_PADDING_SIZE) {
-        ERR_raise(ERR_LIB_RSA,
-               RSA_R_PKCS_DECODING_ERROR);
+        ERR_raise(ERR_LIB_RSA, RSA_R_PKCS_DECODING_ERROR);
         return -1;
     }
 

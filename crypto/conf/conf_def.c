@@ -329,8 +329,7 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
                     ss = p;
                     goto again;
                 }
-                ERR_raise(ERR_LIB_CONF,
-                        CONF_R_MISSING_CLOSE_SQUARE_BRACKET);
+                ERR_raise(ERR_LIB_CONF, CONF_R_MISSING_CLOSE_SQUARE_BRACKET);
                 goto err;
             }
             *end = '\0';
@@ -339,8 +338,7 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
             if ((sv = _CONF_get_section(conf, section)) == NULL)
                 sv = _CONF_new_section(conf, section);
             if (sv == NULL) {
-                ERR_raise(ERR_LIB_CONF,
-                        CONF_R_UNABLE_TO_CREATE_NEW_SECTION);
+                ERR_raise(ERR_LIB_CONF, CONF_R_UNABLE_TO_CREATE_NEW_SECTION);
                 goto err;
             }
             continue;
@@ -492,7 +490,7 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
                     tv = _CONF_new_section(conf, psection);
                 if (tv == NULL) {
                     ERR_raise(ERR_LIB_CONF,
-                            CONF_R_UNABLE_TO_CREATE_NEW_SECTION);
+                              CONF_R_UNABLE_TO_CREATE_NEW_SECTION);
                     goto err;
                 }
             } else
@@ -755,9 +753,7 @@ static BIO *process_include(char *include, OPENSSL_DIR_CTX **dirctx,
     BIO *next;
 
     if (stat(include, &st) < 0) {
-        ERR_raise_data(ERR_LIB_SYS, errno,
-                       "calling stat(%s)",
-                       include);
+        ERR_raise_data(ERR_LIB_SYS, errno, "calling stat(%s)", include);
         /* missing include file is not fatal error */
         return NULL;
     }

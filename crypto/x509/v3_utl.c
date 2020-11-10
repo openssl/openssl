@@ -215,8 +215,7 @@ ASN1_INTEGER *s2i_ASN1_INTEGER(X509V3_EXT_METHOD *method, const char *value)
     aint = BN_to_ASN1_INTEGER(bn, NULL);
     BN_free(bn);
     if (!aint) {
-        ERR_raise(ERR_LIB_X509V3,
-                  X509V3_R_BN_TO_ASN1_INTEGER_ERROR);
+        ERR_raise(ERR_LIB_X509V3, X509V3_R_BN_TO_ASN1_INTEGER_ERROR);
         return NULL;
     }
     if (isneg)
@@ -264,8 +263,7 @@ int X509V3_get_value_bool(const CONF_VALUE *value, int *asn1_bool)
         return 1;
     }
  err:
-    ERR_raise(ERR_LIB_X509V3,
-              X509V3_R_INVALID_BOOLEAN_STRING);
+    ERR_raise(ERR_LIB_X509V3, X509V3_R_INVALID_BOOLEAN_STRING);
     X509V3_conf_add_error_name_value(value);
     return 0;
 }
@@ -316,8 +314,7 @@ STACK_OF(CONF_VALUE) *X509V3_parse_list(const char *line)
                 *p = 0;
                 ntmp = strip_spaces(q);
                 if (!ntmp) {
-                    ERR_raise(ERR_LIB_X509V3,
-                              X509V3_R_INVALID_EMPTY_NAME);
+                    ERR_raise(ERR_LIB_X509V3, X509V3_R_INVALID_EMPTY_NAME);
                     goto err;
                 }
                 q = p + 1;
@@ -326,8 +323,7 @@ STACK_OF(CONF_VALUE) *X509V3_parse_list(const char *line)
                 ntmp = strip_spaces(q);
                 q = p + 1;
                 if (!ntmp) {
-                    ERR_raise(ERR_LIB_X509V3,
-                              X509V3_R_INVALID_EMPTY_NAME);
+                    ERR_raise(ERR_LIB_X509V3, X509V3_R_INVALID_EMPTY_NAME);
                     goto err;
                 }
                 X509V3_add_value(ntmp, NULL, &values);
@@ -340,8 +336,7 @@ STACK_OF(CONF_VALUE) *X509V3_parse_list(const char *line)
                 *p = 0;
                 vtmp = strip_spaces(q);
                 if (!vtmp) {
-                    ERR_raise(ERR_LIB_X509V3,
-                              X509V3_R_INVALID_NULL_VALUE);
+                    ERR_raise(ERR_LIB_X509V3, X509V3_R_INVALID_NULL_VALUE);
                     goto err;
                 }
                 X509V3_add_value(ntmp, vtmp, &values);
@@ -355,8 +350,7 @@ STACK_OF(CONF_VALUE) *X509V3_parse_list(const char *line)
     if (state == HDR_VALUE) {
         vtmp = strip_spaces(q);
         if (!vtmp) {
-            ERR_raise(ERR_LIB_X509V3,
-                      X509V3_R_INVALID_NULL_VALUE);
+            ERR_raise(ERR_LIB_X509V3, X509V3_R_INVALID_NULL_VALUE);
             goto err;
         }
         X509V3_add_value(ntmp, vtmp, &values);

@@ -159,8 +159,7 @@ static int provider_conf_init(CONF_IMODULE *md, const CONF *cnf)
     elist = NCONF_get_section(cnf, CONF_imodule_get_value(md));
 
     if (!elist) {
-        ERR_raise(ERR_LIB_CRYPTO,
-                  CRYPTO_R_PROVIDER_SECTION_ERROR);
+        ERR_raise(ERR_LIB_CRYPTO, CRYPTO_R_PROVIDER_SECTION_ERROR);
         return 0;
     }
 

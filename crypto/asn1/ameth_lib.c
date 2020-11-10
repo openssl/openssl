@@ -169,7 +169,7 @@ int EVP_PKEY_asn1_add0(const EVP_PKEY_ASN1_METHOD *ameth)
     tmp.pkey_id = ameth->pkey_id;
     if (sk_EVP_PKEY_ASN1_METHOD_find(app_methods, &tmp) >= 0) {
         ERR_raise(ERR_LIB_EVP,
-               EVP_R_PKEY_APPLICATION_ASN1_METHOD_ALREADY_REGISTERED);
+                  EVP_R_PKEY_APPLICATION_ASN1_METHOD_ALREADY_REGISTERED);
         return 0;
     }
 

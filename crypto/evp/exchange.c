@@ -127,8 +127,7 @@ static void *evp_keyexch_from_dispatch(int name_id,
          * be present. Same goes for get_ctx_params and gettable_ctx_params.
          * The dupctx and set_peer functions are optional.
          */
-        ERR_raise(ERR_LIB_EVP,
-               EVP_R_INVALID_PROVIDER_FUNCTIONS);
+        ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_PROVIDER_FUNCTIONS);
         goto err;
     }
 
@@ -319,8 +318,7 @@ int EVP_PKEY_derive_set_peer(EVP_PKEY_CTX *ctx, EVP_PKEY *peer)
     void *provkey = NULL;
 
     if (ctx == NULL) {
-        ERR_raise(ERR_LIB_EVP,
-               EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
         return -2;
     }
 
@@ -328,8 +326,7 @@ int EVP_PKEY_derive_set_peer(EVP_PKEY_CTX *ctx, EVP_PKEY *peer)
         goto legacy;
 
     if (ctx->op.kex.exchange->set_peer == NULL) {
-        ERR_raise(ERR_LIB_EVP,
-               EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
         return -2;
     }
 
@@ -356,15 +353,13 @@ int EVP_PKEY_derive_set_peer(EVP_PKEY_CTX *ctx, EVP_PKEY *peer)
              || ctx->pmeth->encrypt != NULL
              || ctx->pmeth->decrypt != NULL)
         || ctx->pmeth->ctrl == NULL) {
-        ERR_raise(ERR_LIB_EVP,
-               EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
         return -2;
     }
     if (ctx->operation != EVP_PKEY_OP_DERIVE
         && ctx->operation != EVP_PKEY_OP_ENCRYPT
         && ctx->operation != EVP_PKEY_OP_DECRYPT) {
-        ERR_raise(ERR_LIB_EVP,
-               EVP_R_OPERATON_NOT_INITIALIZED);
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATON_NOT_INITIALIZED);
         return -1;
     }
 
@@ -419,8 +414,7 @@ int EVP_PKEY_derive(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *pkeylen)
     int ret;
 
     if (ctx == NULL) {
-        ERR_raise(ERR_LIB_EVP,
-               EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
         return -2;
     }
 
@@ -438,8 +432,7 @@ int EVP_PKEY_derive(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *pkeylen)
     return ret;
  legacy:
     if (ctx ==  NULL || ctx->pmeth == NULL || ctx->pmeth->derive == NULL) {
-        ERR_raise(ERR_LIB_EVP,
-               EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
         return -2;
     }
 

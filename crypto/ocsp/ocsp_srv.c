@@ -182,8 +182,7 @@ int OCSP_basic_sign_ctx(OCSP_BASICRESP *brsp,
 
     pkey = EVP_PKEY_CTX_get0_pkey(EVP_MD_CTX_pkey_ctx(ctx));
     if (pkey == NULL || !X509_check_private_key(signer, pkey)) {
-        ERR_raise(ERR_LIB_OCSP,
-                OCSP_R_PRIVATE_KEY_DOES_NOT_MATCH_CERTIFICATE);
+        ERR_raise(ERR_LIB_OCSP, OCSP_R_PRIVATE_KEY_DOES_NOT_MATCH_CERTIFICATE);
         goto err;
     }
 

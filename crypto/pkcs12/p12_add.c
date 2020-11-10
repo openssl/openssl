@@ -72,8 +72,7 @@ PKCS7 *PKCS12_pack_p7data(STACK_OF(PKCS12_SAFEBAG) *sk)
 STACK_OF(PKCS12_SAFEBAG) *PKCS12_unpack_p7data(PKCS7 *p7)
 {
     if (!PKCS7_type_is_data(p7)) {
-        ERR_raise(ERR_LIB_PKCS12,
-                  PKCS12_R_CONTENT_TYPE_NOT_DATA);
+        ERR_raise(ERR_LIB_PKCS12, PKCS12_R_CONTENT_TYPE_NOT_DATA);
         return NULL;
     }
     return ASN1_item_unpack(p7->d.data, ASN1_ITEM_rptr(PKCS12_SAFEBAGS));
@@ -94,8 +93,7 @@ PKCS7 *PKCS12_pack_p7encdata(int pbe_nid, const char *pass, int passlen,
         return NULL;
     }
     if (!PKCS7_set_type(p7, NID_pkcs7_encrypted)) {
-        ERR_raise(ERR_LIB_PKCS12,
-                  PKCS12_R_ERROR_SETTING_ENCRYPTED_DATA_TYPE);
+        ERR_raise(ERR_LIB_PKCS12, PKCS12_R_ERROR_SETTING_ENCRYPTED_DATA_TYPE);
         goto err;
     }
 
@@ -155,8 +153,7 @@ int PKCS12_pack_authsafes(PKCS12 *p12, STACK_OF(PKCS7) *safes)
 STACK_OF(PKCS7) *PKCS12_unpack_authsafes(const PKCS12 *p12)
 {
     if (!PKCS7_type_is_data(p12->authsafes)) {
-        ERR_raise(ERR_LIB_PKCS12,
-                  PKCS12_R_CONTENT_TYPE_NOT_DATA);
+        ERR_raise(ERR_LIB_PKCS12, PKCS12_R_CONTENT_TYPE_NOT_DATA);
         return NULL;
     }
     return ASN1_item_unpack(p12->authsafes->d.data,

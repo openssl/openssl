@@ -113,13 +113,11 @@ int ec_GFp_simple_set_compressed_coordinates(const EC_GROUP *group,
         if (ERR_GET_LIB(err) == ERR_LIB_BN
             && ERR_GET_REASON(err) == BN_R_NOT_A_SQUARE) {
             ERR_clear_error();
-            ERR_raise(ERR_LIB_EC,
-                  EC_R_INVALID_COMPRESSED_POINT);
+            ERR_raise(ERR_LIB_EC, EC_R_INVALID_COMPRESSED_POINT);
         } else
 #endif
         {
-            ERR_raise(ERR_LIB_EC,
-                  ERR_R_BN_LIB);
+            ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
         }
         goto err;
     }
@@ -133,22 +131,19 @@ int ec_GFp_simple_set_compressed_coordinates(const EC_GROUP *group,
                 goto err;
 
             if (kron == 1)
-                ERR_raise(ERR_LIB_EC,
-                      EC_R_INVALID_COMPRESSION_BIT);
+                ERR_raise(ERR_LIB_EC, EC_R_INVALID_COMPRESSION_BIT);
             else
                 /*
                  * BN_mod_sqrt() should have caught this error (not a square)
                  */
-                ERR_raise(ERR_LIB_EC,
-                      EC_R_INVALID_COMPRESSED_POINT);
+                ERR_raise(ERR_LIB_EC, EC_R_INVALID_COMPRESSED_POINT);
             goto err;
         }
         if (!BN_usub(y, group->field, y))
             goto err;
     }
     if (y_bit != BN_is_odd(y)) {
-        ERR_raise(ERR_LIB_EC,
-              ERR_R_INTERNAL_ERROR);
+        ERR_raise(ERR_LIB_EC, ERR_R_INTERNAL_ERROR);
         goto err;
     }
 

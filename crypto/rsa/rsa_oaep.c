@@ -193,8 +193,7 @@ int RSA_padding_check_PKCS1_OAEP_mgf1(unsigned char *to, int tlen,
      * This does not leak any side-channel information.
      */
     if (num < flen || num < 2 * mdlen + 2) {
-        ERR_raise(ERR_LIB_RSA,
-               RSA_R_OAEP_DECODING_ERROR);
+        ERR_raise(ERR_LIB_RSA, RSA_R_OAEP_DECODING_ERROR);
         return -1;
     }
 
@@ -207,8 +206,7 @@ int RSA_padding_check_PKCS1_OAEP_mgf1(unsigned char *to, int tlen,
 
     em = OPENSSL_malloc(num);
     if (em == NULL) {
-        ERR_raise(ERR_LIB_RSA,
-               ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_RSA, ERR_R_MALLOC_FAILURE);
         goto cleanup;
     }
 
@@ -309,8 +307,7 @@ int RSA_padding_check_PKCS1_OAEP_mgf1(unsigned char *to, int tlen,
      * the error stack. Instead we opt not to put an error on the stack at all
      * in case of padding failure in the FIPS provider.
      */
-    ERR_raise(ERR_LIB_RSA,
-           RSA_R_OAEP_DECODING_ERROR);
+    ERR_raise(ERR_LIB_RSA, RSA_R_OAEP_DECODING_ERROR);
     err_clear_last_constant_time(1 & good);
 #endif
  cleanup:

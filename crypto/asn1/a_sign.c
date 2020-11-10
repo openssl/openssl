@@ -67,7 +67,7 @@ int ASN1_sign(i2d_of_void *i2d, X509_ALGOR *algor1, X509_ALGOR *algor2,
         }
         if (a->algorithm->length == 0) {
             ERR_raise(ERR_LIB_ASN1,
-                    ASN1_R_THE_ASN1_OBJECT_IDENTIFIER_IS_NOT_KNOWN_FOR_THIS_MD);
+                      ASN1_R_THE_ASN1_OBJECT_IDENTIFIER_IS_NOT_KNOWN_FOR_THIS_MD);
             goto err;
         }
     }
@@ -187,8 +187,7 @@ int ASN1_item_sign_ctx(const ASN1_ITEM *it, X509_ALGOR *algor1,
             goto err;
 
         if ((aid_len = params[0].return_size) == 0) {
-            ERR_raise(ERR_LIB_ASN1,
-                    ASN1_R_DIGEST_AND_KEY_TYPE_NOT_SUPPORTED);
+            ERR_raise(ERR_LIB_ASN1, ASN1_R_DIGEST_AND_KEY_TYPE_NOT_SUPPORTED);
             goto err;
         }
 
@@ -243,8 +242,7 @@ int ASN1_item_sign_ctx(const ASN1_ITEM *it, X509_ALGOR *algor1,
             pkey->ameth->pkey_id;
 
         if (!OBJ_find_sigid_by_algs(&signid, EVP_MD_nid(md), pkey_id)) {
-            ERR_raise(ERR_LIB_ASN1,
-                    ASN1_R_DIGEST_AND_KEY_TYPE_NOT_SUPPORTED);
+            ERR_raise(ERR_LIB_ASN1, ASN1_R_DIGEST_AND_KEY_TYPE_NOT_SUPPORTED);
             goto err;
         }
 

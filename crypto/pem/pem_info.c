@@ -319,8 +319,7 @@ int PEM_X509_INFO_write_bio(BIO *bp, const X509_INFO *xi, EVP_CIPHER *enc,
              */
             objstr = OBJ_nid2sn(EVP_CIPHER_nid(xi->enc_cipher.cipher));
             if (objstr == NULL) {
-                ERR_raise(ERR_LIB_PEM,
-                       PEM_R_UNSUPPORTED_CIPHER);
+                ERR_raise(ERR_LIB_PEM, PEM_R_UNSUPPORTED_CIPHER);
                 goto err;
             }
 

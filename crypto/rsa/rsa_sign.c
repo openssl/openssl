@@ -253,7 +253,7 @@ static int encode_pkcs1(unsigned char **out, size_t *out_len, int type,
     di_prefix = ossl_rsa_digestinfo_encoding(type, &di_prefix_len);
     if (di_prefix == NULL) {
         ERR_raise(ERR_LIB_RSA,
-               RSA_R_THE_ASN1_OBJECT_IDENTIFIER_IS_NOT_KNOWN_FOR_THIS_MD);
+                  RSA_R_THE_ASN1_OBJECT_IDENTIFIER_IS_NOT_KNOWN_FOR_THIS_MD);
         return 0;
     }
     dig_info_len = di_prefix_len + m_len;

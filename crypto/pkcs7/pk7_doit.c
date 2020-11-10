@@ -437,8 +437,7 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
          */
         data_body = PKCS7_get_octet_string(p7->d.sign->contents);
         if (!PKCS7_is_detached(p7) && data_body == NULL) {
-            ERR_raise(ERR_LIB_PKCS7,
-                     PKCS7_R_INVALID_SIGNED_DATA_TYPE);
+            ERR_raise(ERR_LIB_PKCS7, PKCS7_R_INVALID_SIGNED_DATA_TYPE);
             goto err;
         }
         md_sk = p7->d.sign->md_algs;
@@ -461,8 +460,7 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
 
         if (cipher == NULL) {
             (void)ERR_clear_last_mark();
-            ERR_raise(ERR_LIB_PKCS7,
-                     PKCS7_R_UNSUPPORTED_CIPHER_TYPE);
+            ERR_raise(ERR_LIB_PKCS7, PKCS7_R_UNSUPPORTED_CIPHER_TYPE);
             goto err;
         }
         (void)ERR_pop_to_mark();
@@ -483,8 +481,7 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
 
         if (cipher == NULL) {
             (void)ERR_clear_last_mark();
-            ERR_raise(ERR_LIB_PKCS7,
-                     PKCS7_R_UNSUPPORTED_CIPHER_TYPE);
+            ERR_raise(ERR_LIB_PKCS7, PKCS7_R_UNSUPPORTED_CIPHER_TYPE);
             goto err;
         }
         (void)ERR_pop_to_mark();
@@ -520,8 +517,7 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
 
             if (md == NULL) {
                 (void)ERR_clear_last_mark();
-                ERR_raise(ERR_LIB_PKCS7,
-                         PKCS7_R_UNKNOWN_DIGEST_TYPE);
+                ERR_raise(ERR_LIB_PKCS7, PKCS7_R_UNKNOWN_DIGEST_TYPE);
                 goto err;
             }
             (void)ERR_pop_to_mark();
@@ -561,7 +557,7 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
             }
             if (ri == NULL) {
                 ERR_raise(ERR_LIB_PKCS7,
-                         PKCS7_R_NO_RECIPIENT_MATCHES_CERTIFICATE);
+                          PKCS7_R_NO_RECIPIENT_MATCHES_CERTIFICATE);
                 goto err;
             }
         }
@@ -675,8 +671,7 @@ static BIO *PKCS7_find_digest(EVP_MD_CTX **pmd, BIO *bio, int nid)
     for (;;) {
         bio = BIO_find_type(bio, BIO_TYPE_MD);
         if (bio == NULL) {
-            ERR_raise(ERR_LIB_PKCS7,
-                     PKCS7_R_UNABLE_TO_FIND_MESSAGE_DIGEST);
+            ERR_raise(ERR_LIB_PKCS7, PKCS7_R_UNABLE_TO_FIND_MESSAGE_DIGEST);
             return NULL;
         }
         BIO_get_md_ctx(bio, pmd);
@@ -1032,8 +1027,7 @@ int PKCS7_dataVerify(X509_STORE *cert_store, X509_STORE_CTX *ctx, BIO *bio,
 
     /* were we able to find the cert in passed to us */
     if (x509 == NULL) {
-        ERR_raise(ERR_LIB_PKCS7,
-                 PKCS7_R_UNABLE_TO_FIND_CERTIFICATE);
+        ERR_raise(ERR_LIB_PKCS7, PKCS7_R_UNABLE_TO_FIND_CERTIFICATE);
         goto err;
     }
 
@@ -1087,8 +1081,7 @@ int PKCS7_signatureVerify(BIO *bio, PKCS7 *p7, PKCS7_SIGNER_INFO *si,
     for (;;) {
         if ((btmp == NULL) ||
             ((btmp = BIO_find_type(btmp, BIO_TYPE_MD)) == NULL)) {
-            ERR_raise(ERR_LIB_PKCS7,
-                     PKCS7_R_UNABLE_TO_FIND_MESSAGE_DIGEST);
+            ERR_raise(ERR_LIB_PKCS7, PKCS7_R_UNABLE_TO_FIND_MESSAGE_DIGEST);
             goto err;
         }
         BIO_get_md_ctx(btmp, &mdc);
@@ -1125,8 +1118,7 @@ int PKCS7_signatureVerify(BIO *bio, PKCS7 *p7, PKCS7_SIGNER_INFO *si,
             goto err;
         message_digest = PKCS7_digest_from_attributes(sk);
         if (!message_digest) {
-            ERR_raise(ERR_LIB_PKCS7,
-                     PKCS7_R_UNABLE_TO_FIND_MESSAGE_DIGEST);
+            ERR_raise(ERR_LIB_PKCS7, PKCS7_R_UNABLE_TO_FIND_MESSAGE_DIGEST);
             goto err;
         }
         if ((message_digest->length != (int)md_len) ||

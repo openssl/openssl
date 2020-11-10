@@ -96,8 +96,7 @@ int PKCS7_add_attrib_content_type(PKCS7_SIGNER_INFO *si, ASN1_OBJECT *coid)
 int PKCS7_add0_attrib_signing_time(PKCS7_SIGNER_INFO *si, ASN1_TIME *t)
 {
     if (t == NULL && (t = X509_gmtime_adj(NULL, 0)) == NULL) {
-        ERR_raise(ERR_LIB_PKCS7,
-                 ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PKCS7, ERR_R_MALLOC_FAILURE);
         return 0;
     }
     return PKCS7_add_signed_attribute(si, NID_pkcs9_signingTime,

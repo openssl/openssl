@@ -60,8 +60,7 @@ int ASN1_mbstring_ncopy(ASN1_STRING **out, const unsigned char *in, int len,
 
     case MBSTRING_BMP:
         if (len & 1) {
-            ERR_raise(ERR_LIB_ASN1,
-                    ASN1_R_INVALID_BMPSTRING_LENGTH);
+            ERR_raise(ERR_LIB_ASN1, ASN1_R_INVALID_BMPSTRING_LENGTH);
             return -1;
         }
         nchar = len >> 1;
@@ -69,8 +68,7 @@ int ASN1_mbstring_ncopy(ASN1_STRING **out, const unsigned char *in, int len,
 
     case MBSTRING_UNIV:
         if (len & 3) {
-            ERR_raise(ERR_LIB_ASN1,
-                    ASN1_R_INVALID_UNIVERSALSTRING_LENGTH);
+            ERR_raise(ERR_LIB_ASN1, ASN1_R_INVALID_UNIVERSALSTRING_LENGTH);
             return -1;
         }
         nchar = len >> 2;

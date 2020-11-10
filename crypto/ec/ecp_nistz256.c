@@ -682,8 +682,7 @@ __owur static int ecp_nistz256_windowed_mul(const EC_GROUP *group,
         if (!ecp_nistz256_bignum_to_field_elem(temp[0].X, point[i]->X)
             || !ecp_nistz256_bignum_to_field_elem(temp[0].Y, point[i]->Y)
             || !ecp_nistz256_bignum_to_field_elem(temp[0].Z, point[i]->Z)) {
-            ERR_raise(ERR_LIB_EC,
-                  EC_R_COORDINATES_OUT_OF_RANGE);
+            ERR_raise(ERR_LIB_EC, EC_R_COORDINATES_OUT_OF_RANGE);
             goto err;
         }
 
@@ -902,8 +901,7 @@ __owur static int ecp_nistz256_mult_precompute(EC_GROUP *group, BN_CTX *ctx)
                 goto err;
             if (!ecp_nistz256_bignum_to_field_elem(temp.X, P->X) ||
                 !ecp_nistz256_bignum_to_field_elem(temp.Y, P->Y)) {
-                ERR_raise(ERR_LIB_EC,
-                      EC_R_COORDINATES_OUT_OF_RANGE);
+                ERR_raise(ERR_LIB_EC, EC_R_COORDINATES_OUT_OF_RANGE);
                 goto err;
             }
             ecp_nistz256_scatter_w7(preComputedTable[j], &temp, k);

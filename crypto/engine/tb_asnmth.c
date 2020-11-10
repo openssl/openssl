@@ -88,8 +88,7 @@ const EVP_PKEY_ASN1_METHOD *ENGINE_get_pkey_asn1_meth(ENGINE *e, int nid)
     EVP_PKEY_ASN1_METHOD *ret;
     ENGINE_PKEY_ASN1_METHS_PTR fn = ENGINE_get_pkey_asn1_meths(e);
     if (!fn || !fn(e, &ret, NULL, nid)) {
-        ERR_raise(ERR_LIB_ENGINE,
-                  ENGINE_R_UNIMPLEMENTED_PUBLIC_KEY_METHOD);
+        ERR_raise(ERR_LIB_ENGINE, ENGINE_R_UNIMPLEMENTED_PUBLIC_KEY_METHOD);
         return NULL;
     }
     return ret;

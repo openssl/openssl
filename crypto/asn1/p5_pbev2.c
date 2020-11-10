@@ -49,8 +49,7 @@ X509_ALGOR *PKCS5_pbe2_set_iv(const EVP_CIPHER *cipher, int iter,
 
     alg_nid = EVP_CIPHER_type(cipher);
     if (alg_nid == NID_undef) {
-        ERR_raise(ERR_LIB_ASN1,
-                ASN1_R_CIPHER_HAS_NO_OBJECT_IDENTIFIER);
+        ERR_raise(ERR_LIB_ASN1, ASN1_R_CIPHER_HAS_NO_OBJECT_IDENTIFIER);
         goto err;
     }
 

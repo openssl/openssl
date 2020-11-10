@@ -276,8 +276,7 @@ char *NCONF_get_string(const CONF *conf, const char *group, const char *name)
         return s;
 
     if (conf == NULL) {
-        ERR_raise(ERR_LIB_CONF,
-                CONF_R_NO_CONF_OR_ENVIRONMENT_VARIABLE);
+        ERR_raise(ERR_LIB_CONF, CONF_R_NO_CONF_OR_ENVIRONMENT_VARIABLE);
         return NULL;
     }
     ERR_raise_data(ERR_LIB_CONF, CONF_R_NO_VALUE,

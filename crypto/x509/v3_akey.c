@@ -109,8 +109,7 @@ static AUTHORITY_KEYID *v2i_AUTHORITY_KEYID(X509V3_EXT_METHOD *method,
     if (!ctx || !ctx->issuer_cert) {
         if (ctx && (ctx->flags == CTX_TEST))
             return AUTHORITY_KEYID_new();
-        ERR_raise(ERR_LIB_X509V3,
-                  X509V3_R_NO_ISSUER_CERTIFICATE);
+        ERR_raise(ERR_LIB_X509V3, X509V3_R_NO_ISSUER_CERTIFICATE);
         return NULL;
     }
 
@@ -121,8 +120,7 @@ static AUTHORITY_KEYID *v2i_AUTHORITY_KEYID(X509V3_EXT_METHOD *method,
         if ((i >= 0) && (ext = X509_get_ext(cert, i)))
             ikeyid = X509V3_EXT_d2i(ext);
         if (keyid == 2 && !ikeyid) {
-            ERR_raise(ERR_LIB_X509V3,
-                      X509V3_R_UNABLE_TO_GET_ISSUER_KEYID);
+            ERR_raise(ERR_LIB_X509V3, X509V3_R_UNABLE_TO_GET_ISSUER_KEYID);
             return NULL;
         }
     }
@@ -131,8 +129,7 @@ static AUTHORITY_KEYID *v2i_AUTHORITY_KEYID(X509V3_EXT_METHOD *method,
         isname = X509_NAME_dup(X509_get_issuer_name(cert));
         serial = ASN1_INTEGER_dup(X509_get0_serialNumber(cert));
         if (!isname || !serial) {
-            ERR_raise(ERR_LIB_X509V3,
-                      X509V3_R_UNABLE_TO_GET_ISSUER_DETAILS);
+            ERR_raise(ERR_LIB_X509V3, X509V3_R_UNABLE_TO_GET_ISSUER_DETAILS);
             goto err;
         }
     }

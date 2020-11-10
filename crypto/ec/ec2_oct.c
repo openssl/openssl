@@ -87,13 +87,11 @@ int ec_GF2m_simple_set_compressed_coordinates(const EC_GROUP *group,
             if (ERR_GET_LIB(err) == ERR_LIB_BN
                 && ERR_GET_REASON(err) == BN_R_NO_SOLUTION) {
                 ERR_clear_error();
-                ERR_raise(ERR_LIB_EC,
-                      EC_R_INVALID_COMPRESSED_POINT);
+                ERR_raise(ERR_LIB_EC, EC_R_INVALID_COMPRESSED_POINT);
             } else
 #endif
             {
-                ERR_raise(ERR_LIB_EC,
-                      ERR_R_BN_LIB);
+                ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
             }
             goto err;
         }

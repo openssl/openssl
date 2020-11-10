@@ -963,8 +963,7 @@ static void *v2i_IPAddrBlocks(const struct v3_ext_method *method,
          */
         if (strcmp(s, "inherit") == 0) {
             if (!X509v3_addr_add_inherit(addr, afi, safi)) {
-                ERR_raise(ERR_LIB_X509V3,
-                          X509V3_R_INVALID_INHERITANCE);
+                ERR_raise(ERR_LIB_X509V3, X509V3_R_INVALID_INHERITANCE);
                 X509V3_conf_add_error_name_value(val);
                 goto err;
             }
@@ -988,8 +987,7 @@ static void *v2i_IPAddrBlocks(const struct v3_ext_method *method,
         case '/':
             prefixlen = (int)strtoul(s + i2, &t, 10);
             if (t == s + i2 || *t != '\0') {
-                ERR_raise(ERR_LIB_X509V3,
-                          X509V3_R_EXTENSION_VALUE_ERROR);
+                ERR_raise(ERR_LIB_X509V3, X509V3_R_EXTENSION_VALUE_ERROR);
                 X509V3_conf_add_error_name_value(val);
                 goto err;
             }
@@ -1002,20 +1000,17 @@ static void *v2i_IPAddrBlocks(const struct v3_ext_method *method,
             i1 = i2 + strspn(s + i2, " \t");
             i2 = i1 + strspn(s + i1, addr_chars);
             if (i1 == i2 || s[i2] != '\0') {
-                ERR_raise(ERR_LIB_X509V3,
-                          X509V3_R_EXTENSION_VALUE_ERROR);
+                ERR_raise(ERR_LIB_X509V3, X509V3_R_EXTENSION_VALUE_ERROR);
                 X509V3_conf_add_error_name_value(val);
                 goto err;
             }
             if (a2i_ipadd(max, s + i1) != length) {
-                ERR_raise(ERR_LIB_X509V3,
-                          X509V3_R_INVALID_IPADDRESS);
+                ERR_raise(ERR_LIB_X509V3, X509V3_R_INVALID_IPADDRESS);
                 X509V3_conf_add_error_name_value(val);
                 goto err;
             }
             if (memcmp(min, max, length_from_afi(afi)) > 0) {
-                ERR_raise(ERR_LIB_X509V3,
-                          X509V3_R_EXTENSION_VALUE_ERROR);
+                ERR_raise(ERR_LIB_X509V3, X509V3_R_EXTENSION_VALUE_ERROR);
                 X509V3_conf_add_error_name_value(val);
                 goto err;
             }
@@ -1031,8 +1026,7 @@ static void *v2i_IPAddrBlocks(const struct v3_ext_method *method,
             }
             break;
         default:
-            ERR_raise(ERR_LIB_X509V3,
-                      X509V3_R_EXTENSION_VALUE_ERROR);
+            ERR_raise(ERR_LIB_X509V3, X509V3_R_EXTENSION_VALUE_ERROR);
             X509V3_conf_add_error_name_value(val);
             goto err;
         }
@@ -1209,8 +1203,7 @@ static int addr_validate_path_internal(X509_STORE_CTX *ctx,
         validation_err(X509_V_ERR_INVALID_EXTENSION);
     (void)sk_IPAddressFamily_set_cmp_func(ext, IPAddressFamily_cmp);
     if ((child = sk_IPAddressFamily_dup(ext)) == NULL) {
-        ERR_raise(ERR_LIB_X509V3,
-                  ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
         if (ctx != NULL)
             ctx->error = X509_V_ERR_OUT_OF_MEM;
         ret = 0;

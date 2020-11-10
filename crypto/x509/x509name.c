@@ -303,8 +303,7 @@ X509_NAME_ENTRY *X509_NAME_ENTRY_create_by_OBJ(X509_NAME_ENTRY **ne,
 int X509_NAME_ENTRY_set_object(X509_NAME_ENTRY *ne, const ASN1_OBJECT *obj)
 {
     if ((ne == NULL) || (obj == NULL)) {
-        ERR_raise(ERR_LIB_X509,
-                ERR_R_PASSED_NULL_PARAMETER);
+        ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
     ASN1_OBJECT_free(ne->object);

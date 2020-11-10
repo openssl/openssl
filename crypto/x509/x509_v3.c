@@ -159,8 +159,7 @@ X509_EXTENSION *X509_EXTENSION_create_by_OBJ(X509_EXTENSION **ex,
 
     if ((ex == NULL) || (*ex == NULL)) {
         if ((ret = X509_EXTENSION_new()) == NULL) {
-            ERR_raise(ERR_LIB_X509,
-                    ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
             return NULL;
         }
     } else

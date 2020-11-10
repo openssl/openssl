@@ -831,7 +831,8 @@ int BIO_wait(BIO *bio, time_t max_time, unsigned int nap_milliseconds)
     int rv = bio_wait(bio, max_time, nap_milliseconds);
 
     if (rv <= 0)
-        ERR_raise(ERR_LIB_BIO, rv == 0 ? BIO_R_TRANSFER_TIMEOUT : BIO_R_TRANSFER_ERROR);
+        ERR_raise(ERR_LIB_BIO,
+                  rv == 0 ? BIO_R_TRANSFER_TIMEOUT : BIO_R_TRANSFER_ERROR);
     return rv;
 }
 
@@ -891,7 +892,8 @@ int BIO_do_connect_retry(BIO *bio, int timeout, int nap_milliseconds)
             rv = bio_wait(bio, max_time, nap_milliseconds);
             if (rv > 0)
                 goto retry;
-            ERR_raise(ERR_LIB_BIO, rv == 0 ? BIO_R_CONNECT_TIMEOUT : BIO_R_CONNECT_ERROR);
+            ERR_raise(ERR_LIB_BIO,
+                      rv == 0 ? BIO_R_CONNECT_TIMEOUT : BIO_R_CONNECT_ERROR);
         } else {
             rv = -1;
             if (err == 0) /* missing error queue entry */

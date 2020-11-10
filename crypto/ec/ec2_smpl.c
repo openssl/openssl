@@ -188,8 +188,7 @@ int ec_GF2m_simple_group_check_discriminant(const EC_GROUP *group,
     if (ctx == NULL) {
         ctx = new_ctx = BN_CTX_new();
         if (ctx == NULL) {
-            ERR_raise(ERR_LIB_EC,
-                  ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
             goto err;
         }
     }
@@ -293,8 +292,7 @@ int ec_GF2m_simple_point_set_affine_coordinates(const EC_GROUP *group,
 {
     int ret = 0;
     if (x == NULL || y == NULL) {
-        ERR_raise(ERR_LIB_EC,
-              ERR_R_PASSED_NULL_PARAMETER);
+        ERR_raise(ERR_LIB_EC, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
 
@@ -326,14 +324,12 @@ int ec_GF2m_simple_point_get_affine_coordinates(const EC_GROUP *group,
     int ret = 0;
 
     if (EC_POINT_is_at_infinity(group, point)) {
-        ERR_raise(ERR_LIB_EC,
-              EC_R_POINT_AT_INFINITY);
+        ERR_raise(ERR_LIB_EC, EC_R_POINT_AT_INFINITY);
         return 0;
     }
 
     if (BN_cmp(point->Z, BN_value_one())) {
-        ERR_raise(ERR_LIB_EC,
-              ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+        ERR_raise(ERR_LIB_EC, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
         return 0;
     }
     if (x != NULL) {

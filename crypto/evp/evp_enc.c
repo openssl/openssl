@@ -657,8 +657,7 @@ int EVP_EncryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
     bl = ctx->buf_len;
     if (ctx->flags & EVP_CIPH_NO_PADDING) {
         if (bl) {
-            ERR_raise(ERR_LIB_EVP,
-                   EVP_R_DATA_NOT_MULTIPLE_OF_BLOCK_LENGTH);
+            ERR_raise(ERR_LIB_EVP, EVP_R_DATA_NOT_MULTIPLE_OF_BLOCK_LENGTH);
             return 0;
         }
         *outl = 0;
@@ -862,8 +861,7 @@ int EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
     b = ctx->cipher->block_size;
     if (ctx->flags & EVP_CIPH_NO_PADDING) {
         if (ctx->buf_len) {
-            ERR_raise(ERR_LIB_EVP,
-                   EVP_R_DATA_NOT_MULTIPLE_OF_BLOCK_LENGTH);
+            ERR_raise(ERR_LIB_EVP, EVP_R_DATA_NOT_MULTIPLE_OF_BLOCK_LENGTH);
             return 0;
         }
         *outl = 0;
@@ -1149,8 +1147,7 @@ legacy:
 
  end:
     if (ret == EVP_CTRL_RET_UNSUPPORTED) {
-        ERR_raise(ERR_LIB_EVP,
-               EVP_R_CTRL_OPERATION_NOT_IMPLEMENTED);
+        ERR_raise(ERR_LIB_EVP, EVP_R_CTRL_OPERATION_NOT_IMPLEMENTED);
         return 0;
     }
     return ret;

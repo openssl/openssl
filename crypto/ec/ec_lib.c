@@ -609,8 +609,7 @@ int EC_GROUP_get_degree(const EC_GROUP *group)
 int EC_GROUP_check_discriminant(const EC_GROUP *group, BN_CTX *ctx)
 {
     if (group->meth->group_check_discriminant == 0) {
-        ERR_raise(ERR_LIB_EC,
-              ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+        ERR_raise(ERR_LIB_EC, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
         return 0;
     }
     return group->meth->group_check_discriminant(group, ctx);
@@ -809,8 +808,7 @@ const EC_METHOD *EC_POINT_method_of(const EC_POINT *point)
 int EC_POINT_set_to_infinity(const EC_GROUP *group, EC_POINT *point)
 {
     if (group->meth->point_set_to_infinity == 0) {
-        ERR_raise(ERR_LIB_EC,
-              ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+        ERR_raise(ERR_LIB_EC, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
         return 0;
     }
     if (group->meth != point->meth) {
@@ -827,13 +825,11 @@ int EC_POINT_set_Jprojective_coordinates_GFp(const EC_GROUP *group,
                                              BN_CTX *ctx)
 {
     if (group->meth->field_type != NID_X9_62_prime_field) {
-        ERR_raise(ERR_LIB_EC,
-              ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+        ERR_raise(ERR_LIB_EC, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
         return 0;
     }
     if (!ec_point_is_compat(point, group)) {
-        ERR_raise(ERR_LIB_EC,
-              EC_R_INCOMPATIBLE_OBJECTS);
+        ERR_raise(ERR_LIB_EC, EC_R_INCOMPATIBLE_OBJECTS);
         return 0;
     }
     return ec_GFp_simple_set_Jprojective_coordinates_GFp(group, point, x, y, z, ctx);
@@ -845,13 +841,11 @@ int EC_POINT_get_Jprojective_coordinates_GFp(const EC_GROUP *group,
                                              BN_CTX *ctx)
 {
     if (group->meth->field_type != NID_X9_62_prime_field) {
-        ERR_raise(ERR_LIB_EC,
-              ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+        ERR_raise(ERR_LIB_EC, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
         return 0;
     }
     if (!ec_point_is_compat(point, group)) {
-        ERR_raise(ERR_LIB_EC,
-              EC_R_INCOMPATIBLE_OBJECTS);
+        ERR_raise(ERR_LIB_EC, EC_R_INCOMPATIBLE_OBJECTS);
         return 0;
     }
     return ec_GFp_simple_get_Jprojective_coordinates_GFp(group, point, x, y, z, ctx);
@@ -863,8 +857,7 @@ int EC_POINT_set_affine_coordinates(const EC_GROUP *group, EC_POINT *point,
                                     BN_CTX *ctx)
 {
     if (group->meth->point_set_affine_coordinates == NULL) {
-        ERR_raise(ERR_LIB_EC,
-              ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+        ERR_raise(ERR_LIB_EC, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
         return 0;
     }
     if (!ec_point_is_compat(point, group)) {
@@ -904,8 +897,7 @@ int EC_POINT_get_affine_coordinates(const EC_GROUP *group,
                                     BN_CTX *ctx)
 {
     if (group->meth->point_get_affine_coordinates == NULL) {
-        ERR_raise(ERR_LIB_EC,
-              ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+        ERR_raise(ERR_LIB_EC, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
         return 0;
     }
     if (!ec_point_is_compat(point, group)) {
@@ -982,8 +974,7 @@ int EC_POINT_invert(const EC_GROUP *group, EC_POINT *a, BN_CTX *ctx)
 int EC_POINT_is_at_infinity(const EC_GROUP *group, const EC_POINT *point)
 {
     if (group->meth->is_at_infinity == 0) {
-        ERR_raise(ERR_LIB_EC,
-              ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+        ERR_raise(ERR_LIB_EC, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
         return 0;
     }
     if (!ec_point_is_compat(point, group)) {
@@ -1354,8 +1345,7 @@ int EC_GROUP_get_trinomial_basis(const EC_GROUP *group, unsigned int *k)
     if (EC_GROUP_get_field_type(group) != NID_X9_62_characteristic_two_field
         || !((group->poly[0] != 0) && (group->poly[1] != 0)
              && (group->poly[2] == 0))) {
-        ERR_raise(ERR_LIB_EC,
-              ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+        ERR_raise(ERR_LIB_EC, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
         return 0;
     }
 
@@ -1375,8 +1365,7 @@ int EC_GROUP_get_pentanomial_basis(const EC_GROUP *group, unsigned int *k1,
         || !((group->poly[0] != 0) && (group->poly[1] != 0)
              && (group->poly[2] != 0) && (group->poly[3] != 0)
              && (group->poly[4] == 0))) {
-        ERR_raise(ERR_LIB_EC,
-              ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+        ERR_raise(ERR_LIB_EC, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
         return 0;
     }
 

@@ -103,7 +103,7 @@ int OCSP_request_sign(OCSP_REQUEST *req,
     if (key) {
         if (!X509_check_private_key(signer, key)) {
             ERR_raise(ERR_LIB_OCSP,
-                    OCSP_R_PRIVATE_KEY_DOES_NOT_MATCH_CERTIFICATE);
+                      OCSP_R_PRIVATE_KEY_DOES_NOT_MATCH_CERTIFICATE);
             goto err;
         }
         if (!OCSP_REQUEST_sign(req, key, dgst))
@@ -375,8 +375,7 @@ int OCSP_check_validity(ASN1_GENERALIZEDTIME *thisupd,
 
     /* Also don't allow nextUpdate to precede thisUpdate */
     if (ASN1_STRING_cmp(nextupd, thisupd) < 0) {
-        ERR_raise(ERR_LIB_OCSP,
-                OCSP_R_NEXTUPDATE_BEFORE_THISUPDATE);
+        ERR_raise(ERR_LIB_OCSP, OCSP_R_NEXTUPDATE_BEFORE_THISUPDATE);
         ret = 0;
     }
 

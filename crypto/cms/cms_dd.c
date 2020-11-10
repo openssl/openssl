@@ -78,14 +78,12 @@ int cms_DigestedData_do_final(const CMS_ContentInfo *cms, BIO *chain, int verify
 
     if (verify) {
         if (mdlen != (unsigned int)dd->digest->length) {
-            ERR_raise(ERR_LIB_CMS,
-                   CMS_R_MESSAGEDIGEST_WRONG_LENGTH);
+            ERR_raise(ERR_LIB_CMS, CMS_R_MESSAGEDIGEST_WRONG_LENGTH);
             goto err;
         }
 
         if (memcmp(md, dd->digest->data, mdlen))
-            ERR_raise(ERR_LIB_CMS,
-                   CMS_R_VERIFICATION_FAILURE);
+            ERR_raise(ERR_LIB_CMS, CMS_R_VERIFICATION_FAILURE);
         else
             r = 1;
     } else {

@@ -116,8 +116,7 @@ int a2d_ASN1_OBJECT(unsigned char *out, int olen, const char *buf, int num)
         }
         if (len == 0) {
             if ((first < 2) && (l >= 40)) {
-                ERR_raise(ERR_LIB_ASN1,
-                        ASN1_R_SECOND_NUMBER_TOO_LARGE);
+                ERR_raise(ERR_LIB_ASN1, ASN1_R_SECOND_NUMBER_TOO_LARGE);
                 goto err;
             }
             if (use_bn) {

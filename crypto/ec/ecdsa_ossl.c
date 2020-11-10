@@ -131,14 +131,12 @@ static int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in,
             if (dgst != NULL) {
                 if (!BN_generate_dsa_nonce(k, order, priv_key,
                                            dgst, dlen, ctx)) {
-                    ERR_raise(ERR_LIB_EC,
-                          EC_R_RANDOM_NUMBER_GENERATION_FAILED);
+                    ERR_raise(ERR_LIB_EC, EC_R_RANDOM_NUMBER_GENERATION_FAILED);
                     goto err;
                 }
             } else {
                 if (!BN_priv_rand_range_ex(k, order, ctx)) {
-                    ERR_raise(ERR_LIB_EC,
-                          EC_R_RANDOM_NUMBER_GENERATION_FAILED);
+                    ERR_raise(ERR_LIB_EC, EC_R_RANDOM_NUMBER_GENERATION_FAILED);
                     goto err;
                 }
             }

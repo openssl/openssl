@@ -36,7 +36,7 @@ long PKCS7_ctrl(PKCS7 *p7, int cmd, long larg, char *parg)
             }
         } else {
             ERR_raise(ERR_LIB_PKCS7,
-                     PKCS7_R_OPERATION_NOT_SUPPORTED_ON_THIS_TYPE);
+                      PKCS7_R_OPERATION_NOT_SUPPORTED_ON_THIS_TYPE);
             ret = 0;
         }
         break;
@@ -50,7 +50,7 @@ long PKCS7_ctrl(PKCS7 *p7, int cmd, long larg, char *parg)
             p7->detached = ret;
         } else {
             ERR_raise(ERR_LIB_PKCS7,
-                     PKCS7_R_OPERATION_NOT_SUPPORTED_ON_THIS_TYPE);
+                      PKCS7_R_OPERATION_NOT_SUPPORTED_ON_THIS_TYPE);
             ret = 0;
         }
 
@@ -320,7 +320,7 @@ int PKCS7_SIGNER_INFO_set(PKCS7_SIGNER_INFO *p7i, X509 *x509, EVP_PKEY *pkey,
      */
     if (!evp_pkey_downgrade(pkey)) {
         ERR_raise(ERR_LIB_PKCS7,
-                 PKCS7_R_SIGNING_NOT_SUPPORTED_FOR_THIS_KEY_TYPE);
+                  PKCS7_R_SIGNING_NOT_SUPPORTED_FOR_THIS_KEY_TYPE);
         goto err;
     }
 
@@ -338,13 +338,11 @@ int PKCS7_SIGNER_INFO_set(PKCS7_SIGNER_INFO *p7i, X509 *x509, EVP_PKEY *pkey,
         if (ret > 0)
             return 1;
         if (ret != -2) {
-            ERR_raise(ERR_LIB_PKCS7,
-                     PKCS7_R_SIGNING_CTRL_FAILURE);
+            ERR_raise(ERR_LIB_PKCS7, PKCS7_R_SIGNING_CTRL_FAILURE);
             return 0;
         }
     }
-    ERR_raise(ERR_LIB_PKCS7,
-             PKCS7_R_SIGNING_NOT_SUPPORTED_FOR_THIS_KEY_TYPE);
+    ERR_raise(ERR_LIB_PKCS7, PKCS7_R_SIGNING_NOT_SUPPORTED_FOR_THIS_KEY_TYPE);
  err:
     return 0;
 }
@@ -517,8 +515,7 @@ int PKCS7_add_recipient_info(PKCS7 *p7, PKCS7_RECIP_INFO *ri)
         sk = p7->d.enveloped->recipientinfo;
         break;
     default:
-        ERR_raise(ERR_LIB_PKCS7,
-                 PKCS7_R_WRONG_CONTENT_TYPE);
+        ERR_raise(ERR_LIB_PKCS7, PKCS7_R_WRONG_CONTENT_TYPE);
         return 0;
     }
 
@@ -546,19 +543,18 @@ int PKCS7_RECIP_INFO_set(PKCS7_RECIP_INFO *p7i, X509 *x509)
 
     if (!pkey || !pkey->ameth || !pkey->ameth->pkey_ctrl) {
         ERR_raise(ERR_LIB_PKCS7,
-                 PKCS7_R_ENCRYPTION_NOT_SUPPORTED_FOR_THIS_KEY_TYPE);
+                  PKCS7_R_ENCRYPTION_NOT_SUPPORTED_FOR_THIS_KEY_TYPE);
         goto err;
     }
 
     ret = pkey->ameth->pkey_ctrl(pkey, ASN1_PKEY_CTRL_PKCS7_ENCRYPT, 0, p7i);
     if (ret == -2) {
         ERR_raise(ERR_LIB_PKCS7,
-                 PKCS7_R_ENCRYPTION_NOT_SUPPORTED_FOR_THIS_KEY_TYPE);
+                  PKCS7_R_ENCRYPTION_NOT_SUPPORTED_FOR_THIS_KEY_TYPE);
         goto err;
     }
     if (ret <= 0) {
-        ERR_raise(ERR_LIB_PKCS7,
-                 PKCS7_R_ENCRYPTION_CTRL_FAILURE);
+        ERR_raise(ERR_LIB_PKCS7, PKCS7_R_ENCRYPTION_CTRL_FAILURE);
         goto err;
     }
 
@@ -603,8 +599,7 @@ int PKCS7_set_cipher(PKCS7 *p7, const EVP_CIPHER *cipher)
     /* Check cipher OID exists and has data in it */
     i = EVP_CIPHER_type(cipher);
     if (i == NID_undef) {
-        ERR_raise(ERR_LIB_PKCS7,
-                 PKCS7_R_CIPHER_HAS_NO_OBJECT_IDENTIFIER);
+        ERR_raise(ERR_LIB_PKCS7, PKCS7_R_CIPHER_HAS_NO_OBJECT_IDENTIFIER);
         return 0;
     }
 

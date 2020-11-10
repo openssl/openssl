@@ -83,8 +83,7 @@ static int set_dist_point_name(DIST_POINT_NAME **pdp, X509V3_CTX *ctx,
             return -1;
         dnsect = X509V3_get_section(ctx, cnf->value);
         if (!dnsect) {
-            ERR_raise(ERR_LIB_X509V3,
-                      X509V3_R_SECTION_NOT_FOUND);
+            ERR_raise(ERR_LIB_X509V3, X509V3_R_SECTION_NOT_FOUND);
             return -1;
         }
         ret = X509V3_NAME_from_section(nm, dnsect, MBSTRING_ASC);
@@ -99,16 +98,14 @@ static int set_dist_point_name(DIST_POINT_NAME **pdp, X509V3_CTX *ctx,
          */
         if (sk_X509_NAME_ENTRY_value(rnm,
                                      sk_X509_NAME_ENTRY_num(rnm) - 1)->set) {
-            ERR_raise(ERR_LIB_X509V3,
-                      X509V3_R_INVALID_MULTIPLE_RDNS);
+            ERR_raise(ERR_LIB_X509V3, X509V3_R_INVALID_MULTIPLE_RDNS);
             goto err;
         }
     } else
         return 0;
 
     if (*pdp) {
-        ERR_raise(ERR_LIB_X509V3,
-                  X509V3_R_DISTPOINT_ALREADY_SET);
+        ERR_raise(ERR_LIB_X509V3, X509V3_R_DISTPOINT_ALREADY_SET);
         goto err;
     }
 

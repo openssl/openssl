@@ -419,8 +419,7 @@ BIO *cms_DigestAlgorithm_init_bio(X509_ALGOR *digestAlgorithm,
         digest = EVP_get_digestbyobj(digestoid);
     if (digest == NULL) {
         (void)ERR_clear_last_mark();
-        ERR_raise(ERR_LIB_CMS,
-               CMS_R_UNKNOWN_DIGEST_ALGORITHM);
+        ERR_raise(ERR_LIB_CMS, CMS_R_UNKNOWN_DIGEST_ALGORITHM);
         goto err;
     }
     (void)ERR_pop_to_mark();
@@ -452,8 +451,7 @@ int cms_DigestAlgorithm_find_ctx(EVP_MD_CTX *mctx, BIO *chain,
         EVP_MD_CTX *mtmp;
         chain = BIO_find_type(chain, BIO_TYPE_MD);
         if (chain == NULL) {
-            ERR_raise(ERR_LIB_CMS,
-                   CMS_R_NO_MATCHING_DIGEST);
+            ERR_raise(ERR_LIB_CMS, CMS_R_NO_MATCHING_DIGEST);
             return 0;
         }
         BIO_get_md_ctx(chain, &mtmp);
@@ -487,8 +485,7 @@ static STACK_OF(CMS_CertificateChoices)
         return &cms->d.authEnvelopedData->originatorInfo->certificates;
 
     default:
-        ERR_raise(ERR_LIB_CMS,
-               CMS_R_UNSUPPORTED_CONTENT_TYPE);
+        ERR_raise(ERR_LIB_CMS, CMS_R_UNSUPPORTED_CONTENT_TYPE);
         return NULL;
 
     }
@@ -529,8 +526,7 @@ int CMS_add0_cert(CMS_ContentInfo *cms, X509 *cert)
         cch = sk_CMS_CertificateChoices_value(*pcerts, i);
         if (cch->type == CMS_CERTCHOICE_CERT) {
             if (!X509_cmp(cch->d.certificate, cert)) {
-                ERR_raise(ERR_LIB_CMS,
-                       CMS_R_CERTIFICATE_ALREADY_PRESENT);
+                ERR_raise(ERR_LIB_CMS, CMS_R_CERTIFICATE_ALREADY_PRESENT);
                 return 0;
             }
         }
@@ -571,8 +567,7 @@ static STACK_OF(CMS_RevocationInfoChoice)
         return &cms->d.authEnvelopedData->originatorInfo->crls;
 
     default:
-        ERR_raise(ERR_LIB_CMS,
-               CMS_R_UNSUPPORTED_CONTENT_TYPE);
+        ERR_raise(ERR_LIB_CMS, CMS_R_UNSUPPORTED_CONTENT_TYPE);
         return NULL;
 
     }

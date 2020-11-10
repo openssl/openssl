@@ -113,8 +113,7 @@ static STACK_OF(POLICYINFO) *r2i_certpol(X509V3_EXT_METHOD *method,
     for (i = 0; i < num; i++) {
         cnf = sk_CONF_VALUE_value(vals, i);
         if (cnf->value != NULL || cnf->name == NULL) {
-            ERR_raise(ERR_LIB_X509V3,
-                      X509V3_R_INVALID_POLICY_IDENTIFIER);
+            ERR_raise(ERR_LIB_X509V3, X509V3_R_INVALID_POLICY_IDENTIFIER);
             X509V3_conf_add_error_name_value(cnf);
             goto err;
         }
@@ -180,8 +179,7 @@ static POLICYINFO *policy_section(X509V3_CTX *ctx,
             ASN1_OBJECT *pobj;
 
             if ((pobj = OBJ_txt2obj(cnf->value, 0)) == NULL) {
-                ERR_raise(ERR_LIB_X509V3,
-                          X509V3_R_INVALID_OBJECT_IDENTIFIER);
+                ERR_raise(ERR_LIB_X509V3, X509V3_R_INVALID_OBJECT_IDENTIFIER);
                 X509V3_conf_err(cnf);
                 goto err;
             }
@@ -206,8 +204,7 @@ static POLICYINFO *policy_section(X509V3_CTX *ctx,
         } else if (!v3_name_cmp(cnf->name, "userNotice")) {
             STACK_OF(CONF_VALUE) *unot;
             if (*cnf->value != '@') {
-                ERR_raise(ERR_LIB_X509V3,
-                          X509V3_R_EXPECTED_A_SECTION_NAME);
+                ERR_raise(ERR_LIB_X509V3, X509V3_R_EXPECTED_A_SECTION_NAME);
                 X509V3_conf_err(cnf);
                 goto err;
             }
@@ -358,8 +355,7 @@ static POLICYQUALINFO *notice_section(X509V3_CTX *ctx,
 
     if (not->noticeref &&
         (!not->noticeref->noticenos || !not->noticeref->organization)) {
-        ERR_raise(ERR_LIB_X509V3,
-                  X509V3_R_NEED_ORGANIZATION_AND_NUMBERS);
+        ERR_raise(ERR_LIB_X509V3, X509V3_R_NEED_ORGANIZATION_AND_NUMBERS);
         goto err;
     }
 

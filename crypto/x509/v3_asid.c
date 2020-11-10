@@ -301,16 +301,14 @@ static int ASIdentifierChoice_is_canonical(ASIdentifierChoice *choice)
         if ((bn == NULL && (bn = BN_new()) == NULL) ||
             ASN1_INTEGER_to_BN(a_max, bn) == NULL ||
             !BN_add_word(bn, 1)) {
-            ERR_raise(ERR_LIB_X509V3,
-                      ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
             goto done;
         }
 
         if ((a_max_plus_one =
                 BN_to_ASN1_INTEGER(bn, orig = a_max_plus_one)) == NULL) {
             a_max_plus_one = orig;
-            ERR_raise(ERR_LIB_X509V3,
-                      ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
             goto done;
         }
 
@@ -374,8 +372,7 @@ static int ASIdentifierChoice_canonize(ASIdentifierChoice *choice)
      */
     if (choice->type != ASIdentifierChoice_asIdsOrRanges ||
         sk_ASIdOrRange_num(choice->u.asIdsOrRanges) == 0) {
-        ERR_raise(ERR_LIB_X509V3,
-                  X509V3_R_EXTENSION_VALUE_ERROR);
+        ERR_raise(ERR_LIB_X509V3, X509V3_R_EXTENSION_VALUE_ERROR);
         return 0;
     }
 
@@ -415,8 +412,7 @@ static int ASIdentifierChoice_canonize(ASIdentifierChoice *choice)
          * Check for overlaps.
          */
         if (ASN1_INTEGER_cmp(a_max, b_min) >= 0) {
-            ERR_raise(ERR_LIB_X509V3,
-                      X509V3_R_EXTENSION_VALUE_ERROR);
+            ERR_raise(ERR_LIB_X509V3, X509V3_R_EXTENSION_VALUE_ERROR);
             goto done;
         }
 
@@ -426,16 +422,14 @@ static int ASIdentifierChoice_canonize(ASIdentifierChoice *choice)
         if ((bn == NULL && (bn = BN_new()) == NULL) ||
             ASN1_INTEGER_to_BN(a_max, bn) == NULL ||
             !BN_add_word(bn, 1)) {
-            ERR_raise(ERR_LIB_X509V3,
-                      ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
             goto done;
         }
 
         if ((a_max_plus_one =
                  BN_to_ASN1_INTEGER(bn, orig = a_max_plus_one)) == NULL) {
             a_max_plus_one = orig;
-            ERR_raise(ERR_LIB_X509V3,
-                      ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
             goto done;
         }
 
@@ -447,8 +441,7 @@ static int ASIdentifierChoice_canonize(ASIdentifierChoice *choice)
             switch (a->type) {
             case ASIdOrRange_id:
                 if ((r = OPENSSL_malloc(sizeof(*r))) == NULL) {
-                    ERR_raise(ERR_LIB_X509V3,
-                              ERR_R_MALLOC_FAILURE);
+                    ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
                     goto done;
                 }
                 r->min = a_min;
@@ -540,8 +533,7 @@ static void *v2i_ASIdentifiers(const struct v3_ext_method *method,
         } else if (!v3_name_cmp(val->name, "RDI")) {
             which = V3_ASID_RDI;
         } else {
-            ERR_raise(ERR_LIB_X509V3,
-                      X509V3_R_EXTENSION_NAME_ERROR);
+            ERR_raise(ERR_LIB_X509V3, X509V3_R_EXTENSION_NAME_ERROR);
             X509V3_conf_add_error_name_value(val);
             goto err;
         }
@@ -552,8 +544,7 @@ static void *v2i_ASIdentifiers(const struct v3_ext_method *method,
         if (strcmp(val->value, "inherit") == 0) {
             if (X509v3_asid_add_inherit(asid, which))
                 continue;
-            ERR_raise(ERR_LIB_X509V3,
-                      X509V3_R_INVALID_INHERITANCE);
+            ERR_raise(ERR_LIB_X509V3, X509V3_R_INVALID_INHERITANCE);
             X509V3_conf_add_error_name_value(val);
             goto err;
         }
@@ -568,8 +559,7 @@ static void *v2i_ASIdentifiers(const struct v3_ext_method *method,
             is_range = 1;
             i2 = i1 + strspn(val->value + i1, " \t");
             if (val->value[i2] != '-') {
-                ERR_raise(ERR_LIB_X509V3,
-                          X509V3_R_INVALID_ASNUMBER);
+                ERR_raise(ERR_LIB_X509V3, X509V3_R_INVALID_ASNUMBER);
                 X509V3_conf_add_error_name_value(val);
                 goto err;
             }
@@ -577,8 +567,7 @@ static void *v2i_ASIdentifiers(const struct v3_ext_method *method,
             i2 = i2 + strspn(val->value + i2, " \t");
             i3 = i2 + strspn(val->value + i2, "0123456789");
             if (val->value[i3] != '\0') {
-                ERR_raise(ERR_LIB_X509V3,
-                          X509V3_R_INVALID_ASRANGE);
+                ERR_raise(ERR_LIB_X509V3, X509V3_R_INVALID_ASRANGE);
                 X509V3_conf_add_error_name_value(val);
                 goto err;
             }
@@ -607,8 +596,7 @@ static void *v2i_ASIdentifiers(const struct v3_ext_method *method,
                 goto err;
             }
             if (ASN1_INTEGER_cmp(min, max) > 0) {
-                ERR_raise(ERR_LIB_X509V3,
-                          X509V3_R_EXTENSION_VALUE_ERROR);
+                ERR_raise(ERR_LIB_X509V3, X509V3_R_EXTENSION_VALUE_ERROR);
                 goto err;
             }
         }

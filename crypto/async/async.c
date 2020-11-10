@@ -212,8 +212,7 @@ int ASYNC_start_job(ASYNC_JOB **job, ASYNC_WAIT_CTX *wctx, int *ret,
                 /* Resume previous job */
                 if (!async_fibre_swapcontext(&ctx->dispatcher,
                         &ctx->currjob->fibrectx, 1)) {
-                    ERR_raise(ERR_LIB_ASYNC,
-                             ASYNC_R_FAILED_TO_SWAP_CONTEXT);
+                    ERR_raise(ERR_LIB_ASYNC, ASYNC_R_FAILED_TO_SWAP_CONTEXT);
                     goto err;
                 }
                 /*

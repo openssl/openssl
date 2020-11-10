@@ -144,8 +144,7 @@ static int ts_resp_set_tst_info(TS_RESP *a)
         TS_TST_INFO_free(a->tst_info);
         a->tst_info = PKCS7_to_TS_TST_INFO(a->token);
         if (!a->tst_info) {
-            ERR_raise(ERR_LIB_TS,
-                  TS_R_PKCS7_TO_TS_TST_INFO_FAILED);
+            ERR_raise(ERR_LIB_TS, TS_R_PKCS7_TO_TS_TST_INFO_FAILED);
             return 0;
         }
     } else if (status == 0 || status == 1) {

@@ -110,8 +110,7 @@ int OSSL_CRMF_MSG_set0_SinglePubInfo(OSSL_CRMF_SINGLEPUBINFO *spi,
     if (spi == NULL
             || method < OSSL_CRMF_PUB_METHOD_DONTCARE
             || method > OSSL_CRMF_PUB_METHOD_LDAP) {
-        ERR_raise(ERR_LIB_CRMF,
-                ERR_R_PASSED_INVALID_ARGUMENT);
+        ERR_raise(ERR_LIB_CRMF, ERR_R_PASSED_INVALID_ARGUMENT);
         return 0;
     }
 
@@ -127,8 +126,7 @@ OSSL_CRMF_MSG_PKIPublicationInfo_push0_SinglePubInfo(OSSL_CRMF_PKIPUBLICATIONINF
                                                      OSSL_CRMF_SINGLEPUBINFO *spi)
 {
     if (pi == NULL || spi == NULL) {
-        ERR_raise(ERR_LIB_CRMF,
-                CRMF_R_NULL_ARGUMENT);
+        ERR_raise(ERR_LIB_CRMF, CRMF_R_NULL_ARGUMENT);
         return 0;
     }
     if (pi->pubInfos == NULL)
@@ -145,8 +143,7 @@ int OSSL_CRMF_MSG_set_PKIPublicationInfo_action(OSSL_CRMF_PKIPUBLICATIONINFO *pi
     if (pi == NULL
             || action < OSSL_CRMF_PUB_ACTION_DONTPUBLISH
             || action > OSSL_CRMF_PUB_ACTION_PLEASEPUBLISH) {
-        ERR_raise(ERR_LIB_CRMF,
-                ERR_R_PASSED_INVALID_ARGUMENT);
+        ERR_raise(ERR_LIB_CRMF, ERR_R_PASSED_INVALID_ARGUMENT);
         return 0;
     }
 
@@ -423,8 +420,7 @@ int OSSL_CRMF_MSG_create_popo(int meth, OSSL_CRMF_MSG *crm,
         break;
 
     default:
-        ERR_raise(ERR_LIB_CRMF,
-                CRMF_R_UNSUPPORTED_METHOD_FOR_CREATING_POPO);
+        ERR_raise(ERR_LIB_CRMF, CRMF_R_UNSUPPORTED_METHOD_FOR_CREATING_POPO);
         goto err;
     }
 
@@ -515,8 +511,7 @@ int OSSL_CRMF_MSGS_verify_popo(const OSSL_CRMF_MSGS *reqs,
          */
     case OSSL_CRMF_POPO_KEYAGREE:
     default:
-        ERR_raise(ERR_LIB_CRMF,
-                CRMF_R_UNSUPPORTED_POPO_METHOD);
+        ERR_raise(ERR_LIB_CRMF, CRMF_R_UNSUPPORTED_POPO_METHOD);
         return 0;
     }
     return 1;
@@ -605,19 +600,16 @@ X509
 
     if (ecert == NULL || ecert->symmAlg == NULL || ecert->encSymmKey == NULL
             || ecert->encValue == NULL || pkey == NULL) {
-        ERR_raise(ERR_LIB_CRMF,
-                CRMF_R_NULL_ARGUMENT);
+        ERR_raise(ERR_LIB_CRMF, CRMF_R_NULL_ARGUMENT);
         return NULL;
     }
     if ((symmAlg = OBJ_obj2nid(ecert->symmAlg->algorithm)) == 0) {
-        ERR_raise(ERR_LIB_CRMF,
-                CRMF_R_UNSUPPORTED_CIPHER);
+        ERR_raise(ERR_LIB_CRMF, CRMF_R_UNSUPPORTED_CIPHER);
         return NULL;
     }
     /* select symmetric cipher based on algorithm given in message */
     if ((cipher = EVP_get_cipherbynid(symmAlg)) == NULL) {
-        ERR_raise(ERR_LIB_CRMF,
-                CRMF_R_UNSUPPORTED_CIPHER);
+        ERR_raise(ERR_LIB_CRMF, CRMF_R_UNSUPPORTED_CIPHER);
         goto end;
     }
     cikeysize = EVP_CIPHER_key_length(cipher);
@@ -639,8 +631,7 @@ X509
                                            | constant_time_is_zero(retval));
         failure |= ~constant_time_eq_s(eksize, (size_t)cikeysize);
         if (failure) {
-            ERR_raise(ERR_LIB_CRMF,
-                    CRMF_R_ERROR_DECRYPTING_SYMMETRIC_KEY);
+            ERR_raise(ERR_LIB_CRMF, CRMF_R_ERROR_DECRYPTING_SYMMETRIC_KEY);
             goto end;
         }
     } else {
@@ -651,8 +642,7 @@ X509
     if (ASN1_TYPE_get_octetstring(ecert->symmAlg->parameter, iv,
                                   EVP_CIPHER_iv_length(cipher))
         != EVP_CIPHER_iv_length(cipher)) {
-        ERR_raise(ERR_LIB_CRMF,
-                CRMF_R_MALFORMED_IV);
+        ERR_raise(ERR_LIB_CRMF, CRMF_R_MALFORMED_IV);
         goto end;
     }
 
@@ -671,8 +661,7 @@ X509
                                   ecert->encValue->data,
                                   ecert->encValue->length)
             || !EVP_DecryptFinal(evp_ctx, outbuf + outlen, &n)) {
-        ERR_raise(ERR_LIB_CRMF,
-                CRMF_R_ERROR_DECRYPTING_CERTIFICATE);
+        ERR_raise(ERR_LIB_CRMF, CRMF_R_ERROR_DECRYPTING_CERTIFICATE);
         goto end;
     }
     outlen += n;
@@ -681,8 +670,7 @@ X509
     if ((cert = X509_new_ex(libctx, propq)) == NULL)
         goto end;
     if (d2i_X509(&cert, &p, outlen) == NULL)
-        ERR_raise(ERR_LIB_CRMF,
-                CRMF_R_ERROR_DECODING_CERTIFICATE);
+        ERR_raise(ERR_LIB_CRMF, CRMF_R_ERROR_DECODING_CERTIFICATE);
  end:
     EVP_PKEY_CTX_free(pkctx);
     OPENSSL_free(outbuf);

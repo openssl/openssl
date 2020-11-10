@@ -394,8 +394,7 @@ char *X509V3_get_string(X509V3_CTX *ctx, const char *name, const char *section)
 STACK_OF(CONF_VALUE) *X509V3_get_section(X509V3_CTX *ctx, const char *section)
 {
     if (!ctx->db || !ctx->db_meth || !ctx->db_meth->get_section) {
-        ERR_raise(ERR_LIB_X509V3,
-                  X509V3_R_OPERATION_NOT_DEFINED);
+        ERR_raise(ERR_LIB_X509V3, X509V3_R_OPERATION_NOT_DEFINED);
         return NULL;
     }
     if (ctx->db_meth->get_section)

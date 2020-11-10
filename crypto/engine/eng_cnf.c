@@ -57,8 +57,7 @@ static int int_engine_configure(const char *name, const char *value, const CONF 
     ecmds = NCONF_get_section(cnf, value);
 
     if (!ecmds) {
-        ERR_raise(ERR_LIB_ENGINE,
-                  ENGINE_R_ENGINE_SECTION_ERROR);
+        ERR_raise(ERR_LIB_ENGINE, ENGINE_R_ENGINE_SECTION_ERROR);
         return 0;
     }
 
@@ -116,8 +115,7 @@ static int int_engine_configure(const char *name, const char *value, const CONF 
                     if (!int_engine_init(e))
                         goto err;
                 } else if (do_init != 0) {
-                    ERR_raise(ERR_LIB_ENGINE,
-                              ENGINE_R_INVALID_INIT_VALUE);
+                    ERR_raise(ERR_LIB_ENGINE, ENGINE_R_INVALID_INIT_VALUE);
                     goto err;
                 }
             } else if (strcmp(ctrlname, "default_algorithms") == 0) {
@@ -157,8 +155,7 @@ static int int_engine_module_init(CONF_IMODULE *md, const CONF *cnf)
     elist = NCONF_get_section(cnf, CONF_imodule_get_value(md));
 
     if (!elist) {
-        ERR_raise(ERR_LIB_ENGINE,
-                  ENGINE_R_ENGINES_SECTION_ERROR);
+        ERR_raise(ERR_LIB_ENGINE, ENGINE_R_ENGINES_SECTION_ERROR);
         return 0;
     }
 

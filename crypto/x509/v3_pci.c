@@ -89,14 +89,12 @@ static int process_pci_value(CONF_VALUE *val,
 
     if (strcmp(val->name, "language") == 0) {
         if (*language) {
-            ERR_raise(ERR_LIB_X509V3,
-                      X509V3_R_POLICY_LANGUAGE_ALREADY_DEFINED);
+            ERR_raise(ERR_LIB_X509V3, X509V3_R_POLICY_LANGUAGE_ALREADY_DEFINED);
             X509V3_conf_err(val);
             return 0;
         }
         if ((*language = OBJ_txt2obj(val->value, 0)) == NULL) {
-            ERR_raise(ERR_LIB_X509V3,
-                      X509V3_R_INVALID_OBJECT_IDENTIFIER);
+            ERR_raise(ERR_LIB_X509V3, X509V3_R_INVALID_OBJECT_IDENTIFIER);
             X509V3_conf_err(val);
             return 0;
         }
@@ -108,8 +106,7 @@ static int process_pci_value(CONF_VALUE *val,
             return 0;
         }
         if (!X509V3_get_value_int(val, pathlen)) {
-            ERR_raise(ERR_LIB_X509V3,
-                      X509V3_R_POLICY_PATH_LENGTH);
+            ERR_raise(ERR_LIB_X509V3, X509V3_R_POLICY_PATH_LENGTH);
             X509V3_conf_err(val);
             return 0;
         }
@@ -178,8 +175,7 @@ static int process_pci_value(CONF_VALUE *val,
                     OPENSSL_free((*policy)->data);
                     (*policy)->data = NULL;
                     (*policy)->length = 0;
-                    ERR_raise(ERR_LIB_X509V3,
-                              ERR_R_MALLOC_FAILURE);
+                    ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
                     X509V3_conf_err(val);
                     BIO_free_all(b);
                     goto err;
@@ -220,8 +216,7 @@ static int process_pci_value(CONF_VALUE *val,
                 goto err;
             }
         } else {
-            ERR_raise(ERR_LIB_X509V3,
-                      X509V3_R_INCORRECT_POLICY_SYNTAX_TAG);
+            ERR_raise(ERR_LIB_X509V3, X509V3_R_INCORRECT_POLICY_SYNTAX_TAG);
             X509V3_conf_err(val);
             goto err;
         }
@@ -255,8 +250,7 @@ static PROXY_CERT_INFO_EXTENSION *r2i_pci(X509V3_EXT_METHOD *method,
         CONF_VALUE *cnf = sk_CONF_VALUE_value(vals, i);
 
         if (!cnf->name || (*cnf->name != '@' && !cnf->value)) {
-            ERR_raise(ERR_LIB_X509V3,
-                      X509V3_R_INVALID_PROXY_POLICY_SETTING);
+            ERR_raise(ERR_LIB_X509V3, X509V3_R_INVALID_PROXY_POLICY_SETTING);
             X509V3_conf_err(cnf);
             goto err;
         }

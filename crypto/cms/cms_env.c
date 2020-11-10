@@ -45,8 +45,7 @@ static int cms_get_enveloped_type(const CMS_ContentInfo *cms)
 CMS_EnvelopedData *cms_get0_enveloped(CMS_ContentInfo *cms)
 {
     if (OBJ_obj2nid(cms->contentType) != NID_pkcs7_enveloped) {
-        ERR_raise(ERR_LIB_CMS,
-               CMS_R_CONTENT_TYPE_NOT_ENVELOPED_DATA);
+        ERR_raise(ERR_LIB_CMS, CMS_R_CONTENT_TYPE_NOT_ENVELOPED_DATA);
         return NULL;
     }
     return cms->d.envelopedData;
@@ -134,8 +133,7 @@ int cms_env_asn1_ctrl(CMS_RecipientInfo *ri, int cmd)
         return 1;
     i = pkey->ameth->pkey_ctrl(pkey, ASN1_PKEY_CTRL_CMS_ENVELOPE, cmd, ri);
     if (i == -2) {
-        ERR_raise(ERR_LIB_CMS,
-               CMS_R_NOT_SUPPORTED_FOR_THIS_KEY_TYPE);
+        ERR_raise(ERR_LIB_CMS, CMS_R_NOT_SUPPORTED_FOR_THIS_KEY_TYPE);
         return 0;
     }
     if (i <= 0) {
@@ -371,8 +369,7 @@ CMS_RecipientInfo *CMS_add1_recipient(CMS_ContentInfo *cms, X509 *recip,
         break;
 
     default:
-        ERR_raise(ERR_LIB_CMS,
-               CMS_R_NOT_SUPPORTED_FOR_THIS_KEY_TYPE);
+        ERR_raise(ERR_LIB_CMS, CMS_R_NOT_SUPPORTED_FOR_THIS_KEY_TYPE);
         goto err;
 
     }
@@ -402,8 +399,7 @@ int CMS_RecipientInfo_ktri_get0_algs(CMS_RecipientInfo *ri,
 {
     CMS_KeyTransRecipientInfo *ktri;
     if (ri->type != CMS_RECIPINFO_TRANS) {
-        ERR_raise(ERR_LIB_CMS,
-               CMS_R_NOT_KEY_TRANSPORT);
+        ERR_raise(ERR_LIB_CMS, CMS_R_NOT_KEY_TRANSPORT);
         return 0;
     }
 
@@ -425,8 +421,7 @@ int CMS_RecipientInfo_ktri_get0_signer_id(CMS_RecipientInfo *ri,
 {
     CMS_KeyTransRecipientInfo *ktri;
     if (ri->type != CMS_RECIPINFO_TRANS) {
-        ERR_raise(ERR_LIB_CMS,
-               CMS_R_NOT_KEY_TRANSPORT);
+        ERR_raise(ERR_LIB_CMS, CMS_R_NOT_KEY_TRANSPORT);
         return 0;
     }
     ktri = ri->d.ktri;
@@ -437,8 +432,7 @@ int CMS_RecipientInfo_ktri_get0_signer_id(CMS_RecipientInfo *ri,
 int CMS_RecipientInfo_ktri_cert_cmp(CMS_RecipientInfo *ri, X509 *cert)
 {
     if (ri->type != CMS_RECIPINFO_TRANS) {
-        ERR_raise(ERR_LIB_CMS,
-               CMS_R_NOT_KEY_TRANSPORT);
+        ERR_raise(ERR_LIB_CMS, CMS_R_NOT_KEY_TRANSPORT);
         return -2;
     }
     return cms_SignerIdentifier_cert_cmp(ri->d.ktri->rid, cert);
@@ -694,8 +688,7 @@ CMS_RecipientInfo *CMS_add0_recipient_key(CMS_ContentInfo *cms, int nid,
         size_t exp_keylen = aes_wrap_keylen(nid);
 
         if (!exp_keylen) {
-            ERR_raise(ERR_LIB_CMS,
-                   CMS_R_UNSUPPORTED_KEK_ALGORITHM);
+            ERR_raise(ERR_LIB_CMS, CMS_R_UNSUPPORTED_KEK_ALGORITHM);
             goto err;
         }
 
@@ -924,16 +917,14 @@ static int cms_RecipientInfo_kekri_decrypt(CMS_ContentInfo *cms,
 
     wrap_nid = OBJ_obj2nid(kekri->keyEncryptionAlgorithm->algorithm);
     if (aes_wrap_keylen(wrap_nid) != kekri->keylen) {
-        ERR_raise(ERR_LIB_CMS,
-               CMS_R_INVALID_KEY_LENGTH);
+        ERR_raise(ERR_LIB_CMS, CMS_R_INVALID_KEY_LENGTH);
         return 0;
     }
 
     /* If encrypted key length is invalid don't bother */
 
     if (kekri->encryptedKey->length < 16) {
-        ERR_raise(ERR_LIB_CMS,
-               CMS_R_INVALID_ENCRYPTED_KEY_LENGTH);
+        ERR_raise(ERR_LIB_CMS, CMS_R_INVALID_ENCRYPTED_KEY_LENGTH);
         goto err;
     }
 
@@ -992,8 +983,7 @@ int CMS_RecipientInfo_decrypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri)
         return cms_RecipientInfo_pwri_crypt(cms, ri, 0);
 
     default:
-        ERR_raise(ERR_LIB_CMS,
-               CMS_R_UNSUPPORTED_RECIPIENTINFO_TYPE);
+        ERR_raise(ERR_LIB_CMS, CMS_R_UNSUPPORTED_RECIPIENTINFO_TYPE);
         return 0;
     }
 }
@@ -1014,8 +1004,7 @@ int CMS_RecipientInfo_encrypt(const CMS_ContentInfo *cms, CMS_RecipientInfo *ri)
         return cms_RecipientInfo_pwri_crypt(cms, ri, 1);
 
     default:
-        ERR_raise(ERR_LIB_CMS,
-               CMS_R_UNSUPPORTED_RECIPIENT_TYPE);
+        ERR_raise(ERR_LIB_CMS, CMS_R_UNSUPPORTED_RECIPIENT_TYPE);
         return 0;
     }
 }
@@ -1152,8 +1141,7 @@ static BIO *cms_EnvelopedData_Encryption_init_bio(CMS_ContentInfo *cms)
     /* Now encrypt content key according to each RecipientInfo type */
     rinfos = env->recipientInfos;
     if (cms_env_encrypt_content_key(cms, rinfos) < 0) {
-        ERR_raise(ERR_LIB_CMS,
-               CMS_R_ERROR_SETTING_RECIPIENTINFO);
+        ERR_raise(ERR_LIB_CMS, CMS_R_ERROR_SETTING_RECIPIENTINFO);
         goto err;
     }
 

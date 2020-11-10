@@ -117,15 +117,13 @@ static AUTHORITY_INFO_ACCESS *v2i_AUTHORITY_INFO_ACCESS(X509V3_EXT_METHOD
     for (i = 0; i < num; i++) {
         cnf = sk_CONF_VALUE_value(nval, i);
         if ((acc = ACCESS_DESCRIPTION_new()) == NULL) {
-            ERR_raise(ERR_LIB_X509V3,
-                      ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
             goto err;
         }
         sk_ACCESS_DESCRIPTION_push(ainfo, acc); /* Cannot fail due to reserve */
         ptmp = strchr(cnf->name, ';');
         if (ptmp == NULL) {
-            ERR_raise(ERR_LIB_X509V3,
-                      X509V3_R_INVALID_SYNTAX);
+            ERR_raise(ERR_LIB_X509V3, X509V3_R_INVALID_SYNTAX);
             goto err;
         }
         ctmp.name = ptmp + 1;

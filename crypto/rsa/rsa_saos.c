@@ -36,8 +36,7 @@ int RSA_sign_ASN1_OCTET_STRING(int type,
     i = i2d_ASN1_OCTET_STRING(&sig, NULL);
     j = RSA_size(rsa);
     if (i > (j - RSA_PKCS1_PADDING_SIZE)) {
-        ERR_raise(ERR_LIB_RSA,
-               RSA_R_DIGEST_TOO_BIG_FOR_RSA_KEY);
+        ERR_raise(ERR_LIB_RSA, RSA_R_DIGEST_TOO_BIG_FOR_RSA_KEY);
         return 0;
     }
     s = OPENSSL_malloc((unsigned int)j + 1);
@@ -68,8 +67,7 @@ int RSA_verify_ASN1_OCTET_STRING(int dtype,
     ASN1_OCTET_STRING *sig = NULL;
 
     if (siglen != (unsigned int)RSA_size(rsa)) {
-        ERR_raise(ERR_LIB_RSA,
-               RSA_R_WRONG_SIGNATURE_LENGTH);
+        ERR_raise(ERR_LIB_RSA, RSA_R_WRONG_SIGNATURE_LENGTH);
         return 0;
     }
 

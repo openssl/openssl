@@ -188,22 +188,19 @@ int RSA_padding_add_PKCS1_PSS_mgf1(RSA *rsa, unsigned char *EM,
         emLen--;
     }
     if (emLen < hLen + 2) {
-        ERR_raise(ERR_LIB_RSA,
-               RSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE);
+        ERR_raise(ERR_LIB_RSA, RSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE);
         goto err;
     }
     if (sLen == RSA_PSS_SALTLEN_MAX) {
         sLen = emLen - hLen - 2;
     } else if (sLen > emLen - hLen - 2) {
-        ERR_raise(ERR_LIB_RSA,
-               RSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE);
+        ERR_raise(ERR_LIB_RSA, RSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE);
         goto err;
     }
     if (sLen > 0) {
         salt = OPENSSL_malloc(sLen);
         if (salt == NULL) {
-            ERR_raise(ERR_LIB_RSA,
-                   ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_RSA, ERR_R_MALLOC_FAILURE);
             goto err;
         }
         if (RAND_bytes_ex(rsa->libctx, salt, sLen) <= 0)

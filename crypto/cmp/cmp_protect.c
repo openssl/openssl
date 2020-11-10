@@ -108,7 +108,8 @@ ASN1_BIT_STRING *ossl_cmp_calc_protection(const OSSL_CMP_CTX *ctx,
         const EVP_MD *md = NULL;
 
         if (ctx->pkey == NULL) {
-            ERR_raise(ERR_LIB_CMP, CMP_R_MISSING_KEY_INPUT_FOR_CREATING_PROTECTION);
+            ERR_raise(ERR_LIB_CMP,
+                      CMP_R_MISSING_KEY_INPUT_FOR_CREATING_PROTECTION);
             return NULL;
         }
         if (!OBJ_find_sigid_algs(OBJ_obj2nid(algorOID), &md_nid, NULL)
@@ -305,7 +306,8 @@ int ossl_cmp_msg_protect(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg)
          * from ctx->untrusted, and then ctx->extraCertsOut
          */
     } else {
-        ERR_raise(ERR_LIB_CMP, CMP_R_MISSING_KEY_INPUT_FOR_CREATING_PROTECTION);
+        ERR_raise(ERR_LIB_CMP,
+                  CMP_R_MISSING_KEY_INPUT_FOR_CREATING_PROTECTION);
         goto err;
     }
     if (!ctx->unprotectedSend

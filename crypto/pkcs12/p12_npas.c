@@ -34,8 +34,7 @@ int PKCS12_newpass(PKCS12 *p12, const char *oldpass, const char *newpass)
     /* Check for NULL PKCS12 structure */
 
     if (p12 == NULL) {
-        ERR_raise(ERR_LIB_PKCS12,
-                  PKCS12_R_INVALID_NULL_PKCS12_POINTER);
+        ERR_raise(ERR_LIB_PKCS12, PKCS12_R_INVALID_NULL_PKCS12_POINTER);
         return 0;
     }
 
