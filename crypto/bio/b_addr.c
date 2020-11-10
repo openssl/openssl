@@ -11,6 +11,16 @@
 # define _GNU_SOURCE
 #endif
 
+/*
+ * VC configurations may define UNICODE, to indicate to the C RTL that
+ * WCHAR functions are preferred.
+ * This affects functions like gai_strerror(), which is implemented as
+ * an alias macro for gai_strerrorA() (which returns a const char *) or
+ * gai_strerrorW() (which returns a const WCHAR *).  This source file
+ * assumes POSIX declarations, so prefer the non-UNICODE definitions.
+ */
+#undef UNICODE
+
 #include <assert.h>
 #include <string.h>
 
