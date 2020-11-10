@@ -19,8 +19,7 @@ int dtls1_write_app_data_bytes(SSL *s, int type, const void *buf_, size_t len,
         if (i < 0)
             return i;
         if (i == 0) {
-            ERR_raise(ERR_LIB_SSL,
-                   SSL_R_SSL_HANDSHAKE_FAILURE);
+            ERR_raise(ERR_LIB_SSL, SSL_R_SSL_HANDSHAKE_FAILURE);
             return -1;
         }
     }

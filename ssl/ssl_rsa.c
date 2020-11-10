@@ -976,8 +976,7 @@ int SSL_CTX_use_serverinfo_file(SSL_CTX *ctx, const char *file)
              * There must be at least one extension in this file
              */
             if (num_extensions == 0) {
-                ERR_raise(ERR_LIB_SSL,
-                       SSL_R_NO_PEM_EXTENSIONS);
+                ERR_raise(ERR_LIB_SSL, SSL_R_NO_PEM_EXTENSIONS);
                 goto end;
             } else              /* End of file, we're done */
                 break;
@@ -992,13 +991,11 @@ int SSL_CTX_use_serverinfo_file(SSL_CTX *ctx, const char *file)
             version = SSL_SERVERINFOV1;
         } else {
             if (name_len < sizeof(namePrefix2) - 1) {
-                ERR_raise(ERR_LIB_SSL,
-                       SSL_R_PEM_NAME_TOO_SHORT);
+                ERR_raise(ERR_LIB_SSL, SSL_R_PEM_NAME_TOO_SHORT);
                 goto end;
             }
             if (strncmp(name, namePrefix2, sizeof(namePrefix2) - 1) != 0) {
-                ERR_raise(ERR_LIB_SSL,
-                       SSL_R_PEM_NAME_BAD_PREFIX);
+                ERR_raise(ERR_LIB_SSL, SSL_R_PEM_NAME_BAD_PREFIX);
                 goto end;
             }
             version = SSL_SERVERINFOV2;

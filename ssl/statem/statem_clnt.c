@@ -3458,8 +3458,7 @@ WORK_STATE tls_prepare_client_certificate(SSL *s, WORK_STATE wst)
                 i = 0;
         } else if (i == 1) {
             i = 0;
-            ERR_raise(ERR_LIB_SSL,
-                   SSL_R_BAD_DATA_RETURNED_BY_CALLBACK);
+            ERR_raise(ERR_LIB_SSL, SSL_R_BAD_DATA_RETURNED_BY_CALLBACK);
         }
 
         X509_free(x509);

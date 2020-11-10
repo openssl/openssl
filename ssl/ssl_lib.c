@@ -871,8 +871,7 @@ int SSL_CTX_set_session_id_context(SSL_CTX *ctx, const unsigned char *sid_ctx,
                                    unsigned int sid_ctx_len)
 {
     if (sid_ctx_len > SSL_MAX_SID_CTX_LENGTH) {
-        ERR_raise(ERR_LIB_SSL,
-               SSL_R_SSL_SESSION_ID_CONTEXT_TOO_LONG);
+        ERR_raise(ERR_LIB_SSL, SSL_R_SSL_SESSION_ID_CONTEXT_TOO_LONG);
         return 0;
     }
     ctx->sid_ctx_length = sid_ctx_len;
@@ -885,8 +884,7 @@ int SSL_set_session_id_context(SSL *ssl, const unsigned char *sid_ctx,
                                unsigned int sid_ctx_len)
 {
     if (sid_ctx_len > SSL_MAX_SID_CTX_LENGTH) {
-        ERR_raise(ERR_LIB_SSL,
-               SSL_R_SSL_SESSION_ID_CONTEXT_TOO_LONG);
+        ERR_raise(ERR_LIB_SSL, SSL_R_SSL_SESSION_ID_CONTEXT_TOO_LONG);
         return 0;
     }
     ssl->sid_ctx_length = sid_ctx_len;
@@ -1896,8 +1894,7 @@ int SSL_read_early_data(SSL *s, void *buf, size_t num, size_t *readbytes)
     switch (s->early_data_state) {
     case SSL_EARLY_DATA_NONE:
         if (!SSL_in_before(s)) {
-            ERR_raise(ERR_LIB_SSL,
-                   ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+            ERR_raise(ERR_LIB_SSL, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
             return SSL_READ_EARLY_DATA_ERROR;
         }
         /* fall through */
@@ -2151,8 +2148,7 @@ int SSL_write_early_data(SSL *s, const void *buf, size_t num, size_t *written)
                 || !SSL_in_before(s)
                 || ((s->session == NULL || s->session->ext.max_early_data == 0)
                      && (s->psk_use_session_cb == NULL))) {
-            ERR_raise(ERR_LIB_SSL,
-                   ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+            ERR_raise(ERR_LIB_SSL, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
             return 0;
         }
         /* fall through */
@@ -3616,8 +3612,7 @@ int ssl_check_srvr_ecc_cert_and_alg(X509 *x, SSL *s)
     if (s->s3.tmp.new_cipher->algorithm_auth & SSL_aECDSA) {
         /* key usage, if present, must allow signing */
         if (!(X509_get_key_usage(x) & X509v3_KU_DIGITAL_SIGNATURE)) {
-            ERR_raise(ERR_LIB_SSL,
-                   SSL_R_ECC_CERT_NOT_FOR_SIGNING);
+            ERR_raise(ERR_LIB_SSL, SSL_R_ECC_CERT_NOT_FOR_SIGNING);
             return 0;
         }
     }
@@ -3891,8 +3886,7 @@ int ssl_undefined_function(SSL *s)
 
 int ssl_undefined_void_function(void)
 {
-    ERR_raise(ERR_LIB_SSL,
-           ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+    ERR_raise(ERR_LIB_SSL, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
     return 0;
 }
 
@@ -5103,8 +5097,7 @@ int SSL_set_ct_validation_callback(SSL *s, ssl_ct_validation_cb callback,
     if (callback != NULL && SSL_CTX_has_client_custom_ext(s->ctx,
                                                           TLSEXT_TYPE_signed_certificate_timestamp))
     {
-        ERR_raise(ERR_LIB_SSL,
-               SSL_R_CUSTOM_EXT_HANDLER_ALREADY_INSTALLED);
+        ERR_raise(ERR_LIB_SSL, SSL_R_CUSTOM_EXT_HANDLER_ALREADY_INSTALLED);
         return 0;
     }
 
@@ -5132,8 +5125,7 @@ int SSL_CTX_set_ct_validation_callback(SSL_CTX *ctx,
     if (callback != NULL && SSL_CTX_has_client_custom_ext(ctx,
                                                           TLSEXT_TYPE_signed_certificate_timestamp))
     {
-        ERR_raise(ERR_LIB_SSL,
-               SSL_R_CUSTOM_EXT_HANDLER_ALREADY_INSTALLED);
+        ERR_raise(ERR_LIB_SSL, SSL_R_CUSTOM_EXT_HANDLER_ALREADY_INSTALLED);
         return 0;
     }
 
@@ -5376,8 +5368,7 @@ int SSL_client_hello_get1_extensions_present(SSL *s, int **out, size_t *outlen)
         return 1;
     }
     if ((present = OPENSSL_malloc(sizeof(*present) * num)) == NULL) {
-        ERR_raise(ERR_LIB_SSL,
-               ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
         return 0;
     }
     for (i = 0; i < s->clienthello->pre_proc_exts_len; i++) {
@@ -5634,8 +5625,7 @@ int bytes_to_cipher_list(SSL *s, PACKET *cipher_suites,
             SSLfatal(s, SSL_AD_DECODE_ERROR,
                      SSL_R_ERROR_IN_RECEIVED_CIPHER_LIST);
         else
-            ERR_raise(ERR_LIB_SSL,
-                   SSL_R_ERROR_IN_RECEIVED_CIPHER_LIST);
+            ERR_raise(ERR_LIB_SSL, SSL_R_ERROR_IN_RECEIVED_CIPHER_LIST);
         return 0;
     }
 

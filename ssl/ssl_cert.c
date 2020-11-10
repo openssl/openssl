@@ -743,8 +743,7 @@ int SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
         int r;
 
         if (strlen(dir) + strlen(filename) + 2 > sizeof(buf)) {
-            ERR_raise(ERR_LIB_SSL,
-                   SSL_R_PATH_TOO_LONG);
+            ERR_raise(ERR_LIB_SSL, SSL_R_PATH_TOO_LONG);
             goto err;
         }
 #ifdef OPENSSL_SYS_VMS
@@ -760,8 +759,7 @@ int SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
 
     if (errno) {
         ERR_raise_data(ERR_LIB_SYS, get_last_sys_error(),
-                       "calling OPENSSL_dir_read(%s)",
-                       dir);
+                       "calling OPENSSL_dir_read(%s)", dir);
         ERR_raise(ERR_LIB_SSL, ERR_R_SYS_LIB);
         goto err;
     }

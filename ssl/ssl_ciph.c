@@ -1202,8 +1202,7 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
             } else if (buflen == 10 && strncmp(buf, "SECLEVEL=", 9) == 0) {
                 int level = buf[9] - '0';
                 if (level < 0 || level > 5) {
-                    ERR_raise(ERR_LIB_SSL,
-                           SSL_R_INVALID_COMMAND);
+                    ERR_raise(ERR_LIB_SSL, SSL_R_INVALID_COMMAND);
                 } else {
                     c->sec_level = level;
                     ok = 1;
@@ -1265,8 +1264,7 @@ static int check_suiteb_cipher_list(const SSL_METHOD *meth, CERT *c,
     /* Check version: if TLS 1.2 ciphers allowed we can use Suite B */
 
     if (!(meth->ssl3_enc->enc_flags & SSL_ENC_FLAG_TLS1_2_CIPHERS)) {
-        ERR_raise(ERR_LIB_SSL,
-               SSL_R_AT_LEAST_TLS_1_2_NEEDED_IN_SUITEB_MODE);
+        ERR_raise(ERR_LIB_SSL, SSL_R_AT_LEAST_TLS_1_2_NEEDED_IN_SUITEB_MODE);
         return 0;
     }
 # ifndef OPENSSL_NO_EC
@@ -2014,8 +2012,7 @@ int SSL_COMP_add_compression_method(int id, COMP_METHOD *cm)
      * 193 to 255:  reserved for private use
      */
     if (id < 193 || id > 255) {
-        ERR_raise(ERR_LIB_SSL,
-               SSL_R_COMPRESSION_ID_NOT_WITHIN_PRIVATE_RANGE);
+        ERR_raise(ERR_LIB_SSL, SSL_R_COMPRESSION_ID_NOT_WITHIN_PRIVATE_RANGE);
         return 1;
     }
 
@@ -2030,8 +2027,7 @@ int SSL_COMP_add_compression_method(int id, COMP_METHOD *cm)
     load_builtin_compressions();
     if (ssl_comp_methods && sk_SSL_COMP_find(ssl_comp_methods, comp) >= 0) {
         OPENSSL_free(comp);
-        ERR_raise(ERR_LIB_SSL,
-               SSL_R_DUPLICATE_COMPRESSION_ID);
+        ERR_raise(ERR_LIB_SSL, SSL_R_DUPLICATE_COMPRESSION_ID);
         return 1;
     }
     if (ssl_comp_methods == NULL || !sk_SSL_COMP_push(ssl_comp_methods, comp)) {

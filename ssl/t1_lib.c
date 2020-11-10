@@ -3329,8 +3329,7 @@ int SSL_CTX_set_tlsext_max_fragment_length(SSL_CTX *ctx, uint8_t mode)
 {
     if (mode != TLSEXT_max_fragment_length_DISABLED
             && !IS_MAX_FRAGMENT_LENGTH_EXT_VALID(mode)) {
-        ERR_raise(ERR_LIB_SSL,
-               SSL_R_SSL3_EXT_INVALID_MAX_FRAGMENT_LENGTH);
+        ERR_raise(ERR_LIB_SSL, SSL_R_SSL3_EXT_INVALID_MAX_FRAGMENT_LENGTH);
         return 0;
     }
 
@@ -3342,8 +3341,7 @@ int SSL_set_tlsext_max_fragment_length(SSL *ssl, uint8_t mode)
 {
     if (mode != TLSEXT_max_fragment_length_DISABLED
             && !IS_MAX_FRAGMENT_LENGTH_EXT_VALID(mode)) {
-        ERR_raise(ERR_LIB_SSL,
-               SSL_R_SSL3_EXT_INVALID_MAX_FRAGMENT_LENGTH);
+        ERR_raise(ERR_LIB_SSL, SSL_R_SSL3_EXT_INVALID_MAX_FRAGMENT_LENGTH);
         return 0;
     }
 

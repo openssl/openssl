@@ -68,8 +68,7 @@ static int ssl_ctx_make_profiles(const char *profiles_string,
     SRTP_PROTECTION_PROFILE *p;
 
     if ((profiles = sk_SRTP_PROTECTION_PROFILE_new_null()) == NULL) {
-        ERR_raise(ERR_LIB_SSL,
-               SSL_R_SRTP_COULD_NOT_ALLOCATE_PROFILES);
+        ERR_raise(ERR_LIB_SSL, SSL_R_SRTP_COULD_NOT_ALLOCATE_PROFILES);
         return 1;
     }
 
@@ -79,19 +78,16 @@ static int ssl_ctx_make_profiles(const char *profiles_string,
         if (!find_profile_by_name(ptr, &p, col ? (size_t)(col - ptr)
                                                : strlen(ptr))) {
             if (sk_SRTP_PROTECTION_PROFILE_find(profiles, p) >= 0) {
-                ERR_raise(ERR_LIB_SSL,
-                       SSL_R_BAD_SRTP_PROTECTION_PROFILE_LIST);
+                ERR_raise(ERR_LIB_SSL, SSL_R_BAD_SRTP_PROTECTION_PROFILE_LIST);
                 goto err;
             }
 
             if (!sk_SRTP_PROTECTION_PROFILE_push(profiles, p)) {
-                ERR_raise(ERR_LIB_SSL,
-                       SSL_R_SRTP_COULD_NOT_ALLOCATE_PROFILES);
+                ERR_raise(ERR_LIB_SSL, SSL_R_SRTP_COULD_NOT_ALLOCATE_PROFILES);
                 goto err;
             }
         } else {
-            ERR_raise(ERR_LIB_SSL,
-                   SSL_R_SRTP_UNKNOWN_PROTECTION_PROFILE);
+            ERR_raise(ERR_LIB_SSL, SSL_R_SRTP_UNKNOWN_PROTECTION_PROFILE);
             goto err;
         }
 

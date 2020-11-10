@@ -78,8 +78,7 @@ int SSL_CTX_set_client_cert_engine(SSL_CTX *ctx, ENGINE *e)
         return 0;
     }
     if (!ENGINE_get_ssl_client_cert_function(e)) {
-        ERR_raise(ERR_LIB_SSL,
-               SSL_R_NO_CLIENT_CERT_METHOD);
+        ERR_raise(ERR_LIB_SSL, SSL_R_NO_CLIENT_CERT_METHOD);
         ENGINE_finish(e);
         return 0;
     }
