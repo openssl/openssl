@@ -46,7 +46,9 @@ push(@tests, (
 
 push(@tests, (
     # For SM2 keys the range for the secret scalar `k` is `1 <= k < n-1`
-    "sm2_bad_max.pem", # `k` set to `n-1` (invalid, because SM2 range)
+    "sm2_bad_neg1.pem", # `k` set to `n-1` (invalid, because SM2 range)
+    "sm2_bad_0.pem", # `k` set to `n` (equivalent to `0 mod n`, invalid)
+    "sm2_bad_1.pem", # `k` set to `n+1` (equivalent to `1 mod n`, invalid)
     )) unless disabled("sm2");
 
 plan skip_all => "No tests within the current enabled feature set"
