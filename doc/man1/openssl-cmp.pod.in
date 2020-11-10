@@ -631,7 +631,7 @@ Requires the corresponding key to be given with B<-key>.
 The subject of this certificate will be used as sender of outgoing CMP messages,
 while the subject of B<-oldcert> or B<-subjectName> may provide fallback values.
 The issuer of this certificate is used as one of the recipient fallback values
-and as fallback issuer entry in the certificate template of IR, CR, and KUR.
+and as fallback issuer entry in the certificate template of IR/CR/KUR.
 When using signature-based message protection, this "protection certificate"
 will be included first in the extraCerts field of outgoing messages
 and the signature is done with the corresponding key.

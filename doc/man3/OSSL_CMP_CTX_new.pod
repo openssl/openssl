@@ -551,7 +551,7 @@ Key Update Requests (KUR) or to be revoked in Revocation Requests (RR).
 It must be given for RR, else it defaults to the CMP signer certificate.
 The reference certificate determined in this way, if any, is also used for
 deriving default subject DN and Subject Alternative Names and the
-default issuer entry in the requested certificate template of IR, CR, and KUR.
+default issuer entry in the requested certificate template of IR/CR/KUR.
 The subject of the reference certificate is used as the sender field value
 in CMP message headers.
 Its issuer is used as default recipient in CMP message headers.
