@@ -429,16 +429,27 @@ int ossl_cipher_generic_stream_update(void *vctx, unsigned char *out,
     }
 
     *outl = inl;
-    /*
-     * Remove any TLS padding. Only used by cipher_aes_cbc_hmac_sha1_hw.c and
-     * cipher_aes_cbc_hmac_sha256_hw.c
-     */
-    if (!ctx->enc && ctx->removetlspad > 0) {
-        /* The actual padding length */
-        *outl -= out[inl - 1] + 1;
+    if (!ctx->enc) {
+        /*
+        * Remove any TLS padding. Only used by cipher_aes_cbc_hmac_sha1_hw.c and
+        * cipher_aes_cbc_hmac_sha256_hw.c
+        */
+        if (ctx->removetlspad > 0) {
+            /* The actual padding length */
+            *outl -= out[inl - 1] + 1;
 
-        /* MAC and explicit IV */
-        *outl -= ctx->removetlspad;
+            /* MAC and explicit IV */
+            *outl -= ctx->removetlspad;
+        }
+
+        /* Extract the MAC if there is one */
+        if (ctx->tlsmacsize > 0) {
+            if (*outl < ctx->tlsmacsize)
+                return 0;
+
+            ctx->tlsmac = out + *outl - ctx->tlsmacsize;
+            *outl -= ctx->tlsmacsize;
+        }
     }
 
     return 1;
