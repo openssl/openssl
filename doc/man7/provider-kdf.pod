@@ -27,9 +27,9 @@ provider-kdf - The KDF library E<lt>-E<gt> provider functions
  int OSSL_FUNC_kdf_derive(void *kctx, unsigned char *key, size_t keylen);
 
  /* KDF parameter descriptors */
- const OSSL_PARAM *OSSL_FUNC_kdf_get_params(void *provctx);
- const OSSL_PARAM *OSSL_FUNC_kdf_get_ctx_params(void *provctx);
- const OSSL_PARAM *OSSL_FUNC_kdf_set_ctx_params(void *provctx);
+ const OSSL_PARAM *OSSL_FUNC_kdf_gettable_params(void *provctx);
+ const OSSL_PARAM *OSSL_FUNC_kdf_gettable_ctx_params(void *provctx);
+ const OSSL_PARAM *OSSL_FUNC_kdf_settable_ctx_params(void *provctx);
 
  /* KDF parameters */
  int OSSL_FUNC_kdf_get_params(OSSL_PARAM params[]);
@@ -61,7 +61,7 @@ For example, the "function" OSSL_FUNC_kdf_newctx() has these:
  static ossl_inline OSSL_OSSL_FUNC_kdf_newctx_fn
      OSSL_FUNC_kdf_newctx(const OSSL_DISPATCH *opf);
 
-B<OSSL_DISPATCH> arrays are indexed by numbers that are provided as
+B<OSSL_DISPATCH> array entries are identified by numbers that are provided as
 macros in L<openssl-core_dispatch.h(7)>, as follows:
 
  OSSL_FUNC_kdf_newctx               OSSL_FUNC_KDF_NEWCTX
@@ -82,7 +82,7 @@ macros in L<openssl-core_dispatch.h(7)>, as follows:
 A KDF algorithm implementation may not implement all of these functions.
 In order to be a consistent set of functions, at least the following functions
 must be implemented: OSSL_FUNC_kdf_newctx(), OSSL_FUNC_kdf_freectx(),
-OSSL_FUNC_kdf_derive().
+OSSL_FUNC_kdf_set_ctx_params(), OSSL_FUNC_kdf_derive().
 All other functions are optional.
 
 =head2 Context Management Functions
@@ -108,10 +108,11 @@ I<kctx> parameter and return the duplicate copy.
 OSSL_FUNC_kdf_reset() initialises a KDF operation given a provider
 side KDF context in the I<kctx> parameter.
 
-OSSL_FUNC_kdf_derive() performs the KDF operatin.
+OSSL_FUNC_kdf_derive() performs the KDF operation.
 The I<kctx> parameter contains a pointer to the provider side context.
-The resulting key should be written to I<key> and the amount of data written
-to I<*keylen>.
+The resulting key of the desired I<keylen> should be written to I<key>.
+If the algorithm does not support the requested I<keylen> the function must
+return error.
 
 =head2 KDF Parameters
 
@@ -125,9 +126,8 @@ OSSL_FUNC_kdf_set_ctx_params() sets KDF parameters associated with the given
 provider side KDF context I<kctx> to I<params>.
 Any parameter settings are additional to any that were previously set.
 
-OSSL_FUNC_kdf_get_ctx_params() gets details of currently set parameter values
-associated with the given provider side KDF context I<kctx> and stores them
-in I<params>.
+OSSL_FUNC_kdf_get_ctx_params() retrieves gettable parameter values associated
+with the given provider side KDF context I<kctx> and stores them in I<params>.
 
 OSSL_FUNC_kdf_gettable_params(), OSSL_FUNC_kdf_gettable_ctx_params(), and
 OSSL_FUNC_kdf_settable_ctx_params() all return constant B<OSSL_PARAM> arrays
@@ -139,6 +139,14 @@ Parameters currently recognised by built-in KDFs are as follows. Not all
 parameters are relevant to, or are understood by all KDFs:
 
 =over 4
+
+=item "size" (B<OSSL_KDF_PARAM_SIZE>) <unsigned integer>
+
+Gets the output size from the associated KDF ctx.
+If the algorithm produces a variable amount of output, SIZE_MAX should be
+returned.
+If the input parameters required to calculate the fixed output size have not yet
+been supplied, 0 should be returned indicating an error.
 
 =item "key" (B<OSSL_KDF_PARAM_KEY>) <octet string>
 
@@ -276,10 +284,6 @@ The Integrity Key from client to server
 A single char of value 70 (ASCII char 'F').
 
 =back
-
-=item "size" (B<OSSL_KDF_PARAM_SIZE>) <unsigned integer>
-
-Gets the output size from the associated KDF ctx.
 
 =item "constant" (B<OSSL_KDF_PARAM_CONSTANT>) <octet string>
 
