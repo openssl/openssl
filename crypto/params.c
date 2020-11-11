@@ -13,6 +13,16 @@
 #include "internal/thread_once.h"
 #include "internal/numbers.h"
 
+/*
+ * Return the number of bits in the mantissa of a double.  This is used to
+ * shift a larger integral value to determine if it will exactly fit into a
+ * double.
+ */
+static unsigned int real_shift(void)
+{
+    return sizeof(double) == 4 ? 24 : 53;
+}
+
 OSSL_PARAM *OSSL_PARAM_locate(OSSL_PARAM *p, const char *key)
 {
     if (p != NULL && key != NULL)
@@ -408,7 +418,14 @@ int OSSL_PARAM_get_int64(const OSSL_PARAM *p, int64_t *val)
         switch (p->data_size) {
         case sizeof(double):
             d = *(const double *)p->data;
-            if (d >= INT64_MIN && d <= INT64_MAX && d == (int64_t)d) {
+            if (d >= INT64_MIN
+                    /*
+                     * By subtracting 65535 (2^16-1) we cancel the low order
+                     * 15 bits of INT64_MAX to avoid using imprecise floating
+                     * point values.
+                     */
+                    && d < (double)(INT64_MAX - 65535) + 65536.0
+                    && d == (int64_t)d) {
                 *val = (int64_t)d;
                 return 1;
             }
@@ -464,7 +481,7 @@ int OSSL_PARAM_set_int64(OSSL_PARAM *p, int64_t val)
         switch (p->data_size) {
         case sizeof(double):
             u64 = val < 0 ? -val : val;
-            if ((u64 >> 53) == 0) { /* 53 significant bits in the mantissa */
+            if ((u64 >> real_shift()) == 0) {
                 *(double *)p->data = (double)val;
                 return 1;
             }
@@ -518,7 +535,14 @@ int OSSL_PARAM_get_uint64(const OSSL_PARAM *p, uint64_t *val)
         switch (p->data_size) {
         case sizeof(double):
             d = *(const double *)p->data;
-            if (d >= 0 && d <= INT64_MAX && d == (uint64_t)d) {
+            if (d >= 0
+                    /*
+                     * By subtracting 65535 (2^16-1) we cancel the low order
+                     * 15 bits of UINT64_MAX to avoid using imprecise floating
+                     * point values.
+                     */
+                    && d < (double)(UINT64_MAX - 65535) + 65536.0
+                    && d == (uint64_t)d) {
                 *val = (uint64_t)d;
                 return 1;
             }
@@ -573,7 +597,7 @@ int OSSL_PARAM_set_uint64(OSSL_PARAM *p, uint64_t val)
         p->return_size = sizeof(double);
         switch (p->data_size) {
         case sizeof(double):
-            if ((val >> 53) == 0) { /* 53 significant bits in the mantissa */
+            if ((val >> real_shift()) == 0) {
                 *(double *)p->data = (double)val;
                 return 1;
             }
@@ -714,7 +738,7 @@ int OSSL_PARAM_get_double(const OSSL_PARAM *p, double *val)
             return 1;
         case sizeof(uint64_t):
             u64 = *(const uint64_t *)p->data;
-            if ((u64 >> 53) == 0) { /* 53 significant bits in the mantissa */
+            if ((u64 >> real_shift()) == 0) {
                 *val = (double)u64;
                 return 1;
             }
@@ -728,7 +752,7 @@ int OSSL_PARAM_get_double(const OSSL_PARAM *p, double *val)
         case sizeof(int64_t):
             i64 = *(const int64_t *)p->data;
             u64 = i64 < 0 ? -i64 : i64;
-            if ((u64 >> 53) == 0) { /* 53 significant bits in the mantissa */
+            if ((u64 >> real_shift()) == 0) {
                 *val = 0.0 + i64;
                 return 1;
             }
@@ -767,7 +791,13 @@ int OSSL_PARAM_set_double(OSSL_PARAM *p, double val)
             }
             break;
         case sizeof(uint64_t):
-            if (val >= 0 && val <= UINT64_MAX) {
+            if (val >= 0
+                    /*
+                     * By subtracting 65535 (2^16-1) we cancel the low order
+                     * 15 bits of UINT64_MAX to avoid using imprecise floating
+                     * point values.
+                     */
+                    && (double)(UINT64_MAX - 65535) + 65536.0) {
                 p->return_size = sizeof(uint64_t);
                 *(uint64_t *)p->data = (uint64_t)val;
                 return 1;
@@ -786,7 +816,13 @@ int OSSL_PARAM_set_double(OSSL_PARAM *p, double val)
             }
             break;
         case sizeof(int64_t):
-            if (val >= INT64_MIN && val <= INT64_MAX) {
+            if (val >= INT64_MIN
+                    /*
+                     * By subtracting 65535 (2^16-1) we cancel the low order
+                     * 15 bits of INT64_MAX to avoid using imprecise floating
+                     * point values.
+                     */
+                    && val < (double)(INT64_MAX - 65535) + 65536.0) {
                 p->return_size = sizeof(int64_t);
                 *(int64_t *)p->data = (int64_t)val;
                 return 1;
