@@ -11,6 +11,16 @@
 # define _GNU_SOURCE
 #endif
 
+/*
+ * VC configurations may define UNICODE, to indicate to the C RTL that
+ * WCHAR functions are preferred.
+ * This affects functions like gai_strerror(), which is implemented as
+ * an alias macro for gai_strerrorA() (which returns a const char *) or
+ * gai_strerrorW() (which returns a const WCHAR *).  This source file
+ * assumes POSIX declarations, so prefer the non-UNICODE definitions.
+ */
+#undef UNICODE
+
 #include <assert.h>
 #include <string.h>
 
@@ -21,14 +31,6 @@
 #include <openssl/err.h>
 #include <openssl/buffer.h>
 #include "internal/thread_once.h"
-
-/*
- * On Windows, gai_strerror() returns a WCHAR *
- * to get a const char *, use gai_strerrorA()
- */
-#ifdef OPENSSL_SYS_WINDOWS
-# define gai_strerror(e) gai_strerrorA((e))
-#endif
 
 CRYPTO_RWLOCK *bio_lookup_lock;
 static CRYPTO_ONCE bio_lookup_init = CRYPTO_ONCE_STATIC_INIT;
