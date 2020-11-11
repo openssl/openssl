@@ -17,7 +17,6 @@ B<openssl dhparam>
 [B<-check>]
 [B<-noout>]
 [B<-text>]
-[B<-C>]
 [B<-2>]
 [B<-3>]
 [B<-5>]
@@ -99,11 +98,6 @@ This option inhibits the output of the encoded version of the parameters.
 
 This option prints out the DH parameters in human readable form.
 
-=item B<-C>
-
-This option converts the parameters into C code. The parameters can then
-be loaded by calling the get_dhNNNN() function.
-
 {- $OpenSSL::safe::opt_engine_item -}
 
 {- $OpenSSL::safe::opt_r_item -}
@@ -135,6 +129,8 @@ L<openssl-dsaparam(1)>
 =head1 HISTORY
 
 The B<-dsaparam> and B<-engine> options were deprecated in OpenSSL 3.0.
+
+The B<-C> option was removed in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

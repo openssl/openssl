@@ -15,7 +15,6 @@ B<openssl ecparam>
 [B<-out> I<filename>]
 [B<-noout>]
 [B<-text>]
-[B<-C>]
 [B<-check>]
 [B<-check_named>]
 [B<-name> I<arg>]
@@ -69,11 +68,6 @@ This option inhibits the output of the encoded version of the parameters.
 =item B<-text>
 
 This option prints out the EC parameters in human readable form.
-
-=item B<-C>
-
-This option converts the EC parameters into C code. The parameters can then
-be loaded by calling the get_ec_group_XXX() function.
 
 =item B<-check>
 
@@ -170,6 +164,8 @@ L<openssl-dsaparam(1)>
 =head1 HISTORY
 
 The B<-engine> option was deprecated in OpenSSL 3.0.
+
+The B<-C> option was removed in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
