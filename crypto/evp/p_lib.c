@@ -1368,6 +1368,48 @@ static int evp_pkey_reset_unlocked(EVP_PKEY *pk)
     return 1;
 }
 
+#ifndef FIPS_MODULE
+static int evp_pkey_reset_downgrade(EVP_PKEY *pk)
+{
+    if (pk == NULL)
+        return 0;
+
+    pk->type = EVP_PKEY_NONE;
+    pk->save_type = EVP_PKEY_NONE;
+
+    pk->ameth = NULL;
+    pk->engine = NULL;
+    pk->pmeth_engine = NULL;
+    pk->pkey.ptr = NULL;
+#  ifndef OPENSSL_NO_RSA
+    pk->pkey.rsa = NULL;
+#  endif
+#  ifndef OPENSSL_NO_DSA
+    pk->pkey.dsa = NULL;
+#  endif
+#  ifndef OPENSSL_NO_DH
+    pk->pkey.dh = NULL;
+#  endif
+#  ifndef OPENSSL_NO_EC
+    pk->pkey.ec = NULL;
+    pk->pkey.ecx = NULL;
+#  endif
+
+    pk->references = 1;
+    pk->save_parameters = 1;
+    pk->attributes = NULL;
+    memset(&pk->ex_data, 0, sizeof(CRYPTO_EX_DATA));
+    pk->keymgmt = NULL;
+    pk->keydata = NULL;
+    pk->dirty_cnt = 0;
+    memset(&pk->operation_cache, 0, sizeof(pk->operation_cache));
+    pk->dirty_cnt_copy = 0;
+    memset(&pk->cache, 0, sizeof(pk->cache));
+
+    return 1;
+}
+#endif
+
 EVP_PKEY *EVP_PKEY_new(void)
 {
     EVP_PKEY *ret = OPENSSL_zalloc(sizeof(*ret));
@@ -1880,7 +1922,6 @@ int evp_pkey_copy_downgraded(EVP_PKEY **dest, const EVP_PKEY *src)
 int evp_pkey_downgrade(EVP_PKEY *pk)
 {
     EVP_PKEY tmp_copy;              /* Stack allocated! */
-    CRYPTO_RWLOCK *tmp_lock = NULL; /* Temporary lock */
     int rv = 0;
 
     if (!ossl_assert(pk != NULL))
@@ -1906,14 +1947,11 @@ int evp_pkey_downgrade(EVP_PKEY *pk)
      */
     tmp_copy = *pk;              /* |tmp_copy| now owns THE lock */
 
-    if (evp_pkey_reset_unlocked(pk)
+    if (evp_pkey_reset_downgrade(pk)
         && evp_pkey_copy_downgraded(&pk, &tmp_copy)) {
-        /* Grab the temporary lock to avoid lock leak */
-        tmp_lock = pk->lock;
 
         /* Restore the common attributes, then empty |tmp_copy| */
         pk->references = tmp_copy.references;
-        pk->lock = tmp_copy.lock; /* |pk| now owns THE lock */
         pk->attributes = tmp_copy.attributes;
         pk->save_parameters = tmp_copy.save_parameters;
         pk->ex_data = tmp_copy.ex_data;
@@ -1945,15 +1983,9 @@ int evp_pkey_downgrade(EVP_PKEY *pk)
         evp_pkey_free_it(&tmp_copy);
         rv = 1;
     } else {
-        /* Grab the temporary lock to avoid lock leak */
-        tmp_lock = pk->lock;
-
         /* Restore the original key */
         *pk = tmp_copy;          /* |pk| now owns THE lock */
     }
-
-    /* Free the temporary lock.  It should never be NULL */
-    CRYPTO_THREAD_lock_free(tmp_lock);
 
  end:
     if (!CRYPTO_THREAD_unlock(pk->lock))
