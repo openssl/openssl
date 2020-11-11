@@ -1345,7 +1345,7 @@ size_t EVP_PKEY_get1_encoded_public_key(EVP_PKEY *pkey, unsigned char **ppub)
 /*
  * This reset function must be used very carefully, as it literally throws
  * away everything in an EVP_PKEY without freeing them, and may cause leaks
- * of memory, locks, what have you.
+ * of memory, what have you.
  * The only reason we have this is to have the same code for EVP_PKEY_new()
  * and evp_pkey_downgrade().
  */
@@ -1354,29 +1354,9 @@ static int evp_pkey_reset_unlocked(EVP_PKEY *pk)
     if (pk == NULL)
         return 0;
 
-    memset(pk, 0, sizeof(*pk));
     pk->type = EVP_PKEY_NONE;
     pk->save_type = EVP_PKEY_NONE;
-    pk->references = 1;
-    pk->save_parameters = 1;
-
-    pk->lock = CRYPTO_THREAD_lock_new();
-    if (pk->lock == NULL) {
-        ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
-        return 0;
-    }
-    return 1;
-}
-
 #ifndef FIPS_MODULE
-static int evp_pkey_reset_downgrade(EVP_PKEY *pk)
-{
-    if (pk == NULL)
-        return 0;
-
-    pk->type = EVP_PKEY_NONE;
-    pk->save_type = EVP_PKEY_NONE;
-
     pk->ameth = NULL;
     pk->engine = NULL;
     pk->pmeth_engine = NULL;
@@ -1394,11 +1374,14 @@ static int evp_pkey_reset_downgrade(EVP_PKEY *pk)
     pk->pkey.ec = NULL;
     pk->pkey.ecx = NULL;
 #  endif
-
+#endif
     pk->references = 1;
-    pk->save_parameters = 1;
+    /* pk->lock is intentionally left out */
     pk->attributes = NULL;
+    pk->save_parameters = 1;
+#ifndef FIPS_MODULE
     memset(&pk->ex_data, 0, sizeof(CRYPTO_EX_DATA));
+#endif
     pk->keymgmt = NULL;
     pk->keydata = NULL;
     pk->dirty_cnt = 0;
@@ -1408,7 +1391,6 @@ static int evp_pkey_reset_downgrade(EVP_PKEY *pk)
 
     return 1;
 }
-#endif
 
 EVP_PKEY *EVP_PKEY_new(void)
 {
@@ -1421,6 +1403,12 @@ EVP_PKEY *EVP_PKEY_new(void)
 
     if (!evp_pkey_reset_unlocked(ret))
         goto err;
+
+    ret->lock = CRYPTO_THREAD_lock_new();
+    if (ret->lock == NULL) {
+        EVPerr(0, ERR_R_MALLOC_FAILURE);
+        goto err;
+    }
 
 #ifndef FIPS_MODULE
     if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_EVP_PKEY, ret, &ret->ex_data)) {
@@ -1947,7 +1935,7 @@ int evp_pkey_downgrade(EVP_PKEY *pk)
      */
     tmp_copy = *pk;              /* |tmp_copy| now owns THE lock */
 
-    if (evp_pkey_reset_downgrade(pk)
+    if (evp_pkey_reset_unlocked(pk)
         && evp_pkey_copy_downgraded(&pk, &tmp_copy)) {
 
         /* Restore the common attributes, then empty |tmp_copy| */
