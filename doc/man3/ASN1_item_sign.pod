@@ -1,0 +1,104 @@
+=pod
+
+=head1 NAME
+
+ASN1_item_sign, ASN1_item_sign_ex, ASN1_item_sign_ctx,
+ASN1_item_verify, ASN1_item_verify_ex, ASN1_item_verify_ctx -
+ASN1 sign and verify
+
+=head1 SYNOPSIS
+
+ #include <openssl/x509.h>
+
+ int ASN1_item_sign_ex(const ASN1_ITEM *it, X509_ALGOR *algor1,
+                       X509_ALGOR *algor2, ASN1_BIT_STRING *signature,
+                       const void *data, const ASN1_OCTET_STRING *id,
+                       EVP_PKEY *pkey, const EVP_MD *md, OSSL_LIB_CTX *libctx,
+                       const char *propq);
+
+ int ASN1_item_sign(const ASN1_ITEM *it, X509_ALGOR *algor1, X509_ALGOR *algor2,
+                    ASN1_BIT_STRING *signature, const void *data,
+                    EVP_PKEY *pkey, const EVP_MD *md);
+
+ int ASN1_item_sign_ctx(const ASN1_ITEM *it, X509_ALGOR *algor1,
+                        X509_ALGOR *algor2, ASN1_BIT_STRING *signature,
+                        const void *data, EVP_MD_CTX *ctx);
+
+ int ASN1_item_verify_ex(const ASN1_ITEM *it, const X509_ALGOR *alg,
+                         const ASN1_BIT_STRING *signature, const void *data,
+                         const ASN1_OCTET_STRING *id, EVP_PKEY *pkey,
+                         OSSL_LIB_CTX *libctx, const char *propq);
+
+ int ASN1_item_verify(const ASN1_ITEM *it, const X509_ALGOR *alg,
+                      const ASN1_BIT_STRING *signature, const void *data,
+                      EVP_PKEY *pkey);
+
+ int ASN1_item_verify_ctx(const ASN1_ITEM *it, const X509_ALGOR *alg,
+                          const ASN1_BIT_STRING *signature, const void *data,
+                          EVP_MD_CTX *ctx);
+
+=head1 DESCRIPTION
+
+ASN1_item_sign_ex() is a helper function that is used internally by other
+functions such as X509_sign() to sign an object (such as a certificate) using
+the ASN.1 structure I<it>, algorithm identifiers I<algor1> and I<algor2>,
+private key I<pkey>, message digest I<md> and internal data I<data>.
+The data that is signed is formed by taking the data object in I<data> and
+converting it to der format using the ASN.1 structure I<it>.
+The B<OSSL_LIB_CTX> specified in I<libctx> and the property query string
+specified in I<props> are used when searching for algorithms in providers.
+The generated signature is set into I<signature>.
+The optional parameter I<id> can be NULL, but can be set for special key types.
+See EVP_PKEY_CTX_set1_id() for further info.
+
+ASN1_item_sign() is similar to ASN1_item_sign_ex() but uses default values of
+NULL for the I<id>, I<libctx> and I<propq>.
+
+ASN1_item_sign_ctx() is similiar to ASN1_item_sign() but uses the parameters
+contained in digest context I<ctx>.
+
+ASN1_item_verify_ex() is a helper function that is used internally other
+functions such as X509_verify() to verify the signature I<signature> of internal
+data I<data> using the public key I<pkey> and algorithm identifier I<alg>.
+The data that is verified is formed by taking the data object in I<data> and
+converting it to der format using the ASN.1 structure I<it>.
+The B<OSSL_LIB_CTX> specified in I<libctx> and the property query string
+specified in I<props> are used when searching for algorithms in providers.
+The optional parameter I<id> can be NULL, but can be set for special key types.
+See EVP_PKEY_CTX_set1_id() for further info.
+
+ASN1_item_verify() is similar to ASN1_item_verify_ex() but uses default values of
+NULL for the I<id>, I<libctx> and I<propq>.
+
+ASN1_item_verify_ctx() is similiar to ASN1_item_verify() but uses the parameters
+contained in digest context I<ctx>.
+
+
+=head1 RETURN VALUES
+
+All sign functions return the size of the signature in bytes for success and
+zero for failure.
+
+All verify functions return 1 if the signature is valid and 0 if the signature
+check fails. If the signature could not be checked at all because it was
+ill-formed or some other error occurred then -1 is returned.
+
+=head1 SEE ALSO
+
+L<X509_sign(3)>,
+L<X509_verify(3)>
+
+=head1 HISTORY
+
+ASN1_item_sign_ex() and ASN1_item_verify_ex() were added in OpenSSL 3.0.
+
+=head1 COPYRIGHT
+
+Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut
