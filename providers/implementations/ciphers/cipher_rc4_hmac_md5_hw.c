@@ -42,6 +42,7 @@ static int cipher_hw_rc4_hmac_md5_initkey(PROV_CIPHER_CTX *bctx,
     ctx->tail = ctx->head;
     ctx->md = ctx->head;
     ctx->payload_length = NO_PAYLOAD_LENGTH;
+    bctx->removetlsfixed = MD5_DIGEST_LENGTH;
     return 1;
 }
 
