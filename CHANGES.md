@@ -27,6 +27,10 @@ OpenSSL 3.0
 
    *Paul Dale*
 
+ * The -C option to the dhparam, dsaparam, and ecparam commands were removed.
+
+   *Rich Salz*
+
  * Add support for AES Key Wrap inverse ciphers to the EVP layer.
    The algorithms are:
    "AES-128-WRAP-INV", "AES-192-WRAP-INV", "AES-256-WRAP-INV",
