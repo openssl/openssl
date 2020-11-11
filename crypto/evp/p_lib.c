@@ -1345,7 +1345,7 @@ size_t EVP_PKEY_get1_encoded_public_key(EVP_PKEY *pkey, unsigned char **ppub)
 /*
  * This reset function must be used very carefully, as it literally throws
  * away everything in an EVP_PKEY without freeing them, and may cause leaks
- * of memory, locks, what have you.
+ * of memory, what have you.
  * The only reason we have this is to have the same code for EVP_PKEY_new()
  * and evp_pkey_downgrade().
  */
@@ -1354,17 +1354,21 @@ static int evp_pkey_reset_unlocked(EVP_PKEY *pk)
     if (pk == NULL)
         return 0;
 
-    memset(pk, 0, sizeof(*pk));
+    if (pk->lock != NULL) {
+      const size_t offset = (unsigned char *)&pk->lock - (unsigned char *)pk;
+
+      memset(pk, 0, offset);
+      memset((unsigned char *)pk + offset + sizeof(pk->lock),
+             0,
+             sizeof(*pk) - offset - sizeof(pk->lock));
+    }
+    /* EVP_PKEY_new uses zalloc so no need to call memset if pk->lock is NULL */
+
     pk->type = EVP_PKEY_NONE;
     pk->save_type = EVP_PKEY_NONE;
     pk->references = 1;
     pk->save_parameters = 1;
 
-    pk->lock = CRYPTO_THREAD_lock_new();
-    if (pk->lock == NULL) {
-        ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
-        return 0;
-    }
     return 1;
 }
 
@@ -1379,6 +1383,12 @@ EVP_PKEY *EVP_PKEY_new(void)
 
     if (!evp_pkey_reset_unlocked(ret))
         goto err;
+
+    ret->lock = CRYPTO_THREAD_lock_new();
+    if (ret->lock == NULL) {
+        EVPerr(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
+        goto err;
+    }
 
 #ifndef FIPS_MODULE
     if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_EVP_PKEY, ret, &ret->ex_data)) {
@@ -1880,7 +1890,6 @@ int evp_pkey_copy_downgraded(EVP_PKEY **dest, const EVP_PKEY *src)
 int evp_pkey_downgrade(EVP_PKEY *pk)
 {
     EVP_PKEY tmp_copy;              /* Stack allocated! */
-    CRYPTO_RWLOCK *tmp_lock = NULL; /* Temporary lock */
     int rv = 0;
 
     if (!ossl_assert(pk != NULL))
@@ -1908,12 +1917,9 @@ int evp_pkey_downgrade(EVP_PKEY *pk)
 
     if (evp_pkey_reset_unlocked(pk)
         && evp_pkey_copy_downgraded(&pk, &tmp_copy)) {
-        /* Grab the temporary lock to avoid lock leak */
-        tmp_lock = pk->lock;
 
         /* Restore the common attributes, then empty |tmp_copy| */
         pk->references = tmp_copy.references;
-        pk->lock = tmp_copy.lock; /* |pk| now owns THE lock */
         pk->attributes = tmp_copy.attributes;
         pk->save_parameters = tmp_copy.save_parameters;
         pk->ex_data = tmp_copy.ex_data;
@@ -1945,15 +1951,9 @@ int evp_pkey_downgrade(EVP_PKEY *pk)
         evp_pkey_free_it(&tmp_copy);
         rv = 1;
     } else {
-        /* Grab the temporary lock to avoid lock leak */
-        tmp_lock = pk->lock;
-
         /* Restore the original key */
-        *pk = tmp_copy;          /* |pk| now owns THE lock */
+        *pk = tmp_copy;
     }
-
-    /* Free the temporary lock.  It should never be NULL */
-    CRYPTO_THREAD_lock_free(tmp_lock);
 
  end:
     if (!CRYPTO_THREAD_unlock(pk->lock))
