@@ -36,7 +36,10 @@
 #if defined(__OpenBSD__)
 # include <sys/param.h>
 #endif
-
+#if defined(__DragonFly__)
+# include <sys/param.h>
+# include <sys/random.h>
+#endif
 /*
  * Provide a compile time error if the FIPS module is being built and none
  * of the supported entropy sources are available.
@@ -380,7 +383,8 @@ static ssize_t syscall_random(void *buf, size_t buflen)
      * Note: Sometimes getentropy() can be provided but not implemented
      * internally. So we need to check errno for ENOSYS
      */
-#  if defined(__GNUC__) && __GNUC__>=2 && defined(__ELF__) && !defined(__hpux)
+#  if !defined(__DragonFly__)
+#    if defined(__GNUC__) && __GNUC__>=2 && defined(__ELF__) && !defined(__hpux)
     extern int getentropy(void *buffer, size_t length) __attribute__((weak));
 
     if (getentropy != NULL) {
@@ -389,7 +393,7 @@ static ssize_t syscall_random(void *buf, size_t buflen)
         if (errno != ENOSYS)
             return -1;
     }
-#  elif !defined(FIPS_MODULE)
+#    elif !defined(FIPS_MODULE)
     union {
         void *p;
         int (*f)(void *buffer, size_t length);
@@ -404,13 +408,16 @@ static ssize_t syscall_random(void *buf, size_t buflen)
     ERR_pop_to_mark();
     if (p_getentropy.p != NULL)
         return p_getentropy.f(buf, buflen) == 0 ? (ssize_t)buflen : -1;
-#  endif
+#    endif
+#  endif /* !__DragonFly__ */
 
     /* Linux supports this since version 3.17 */
 #  if defined(__linux) && defined(__NR_getrandom)
     return syscall(__NR_getrandom, buf, buflen, 0);
 #  elif (defined(__FreeBSD__) || defined(__NetBSD__)) && defined(KERN_ARND)
     return sysctl_random(buf, buflen);
+#  elif (defined(__DragonFly__)  && __DragonFly_version >= 500700)
+    return getrandom(buf, buflen, 0);
 #  else
     errno = ENOSYS;
     return -1;
