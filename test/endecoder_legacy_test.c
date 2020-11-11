@@ -447,7 +447,7 @@ static int test_DER(const char *keytype, int evp_type,
                                           &der_provided, &der_provided_len))
         || !TEST_size_t_gt(der_legacy_len = i2d(legacy_key, &der_legacy), 0)
         || !TEST_mem_eq(der_provided, der_provided_len,
-                       der_legacy, der_legacy_len))
+                        der_legacy, der_legacy_len))
         goto end;
 
     if (d2i != NULL) {
