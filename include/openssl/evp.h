@@ -1307,6 +1307,10 @@ int EVP_PKEY_set1_encoded_public_key(EVP_PKEY *pkey,
 
 size_t EVP_PKEY_get1_encoded_public_key(EVP_PKEY *pkey, unsigned char **ppub);
 
+# ifndef OPENSSL_NO_EC
+int EVP_PKEY_get_curve_nid(const EVP_PKEY *pkey);
+# endif
+
 int EVP_CIPHER_type(const EVP_CIPHER *ctx);
 
 /* calls methods */

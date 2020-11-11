@@ -20,7 +20,6 @@
 #include <openssl/bn.h>
 #include <openssl/provider.h>
 #include "internal/nelem.h"
-#include "internal/evp.h"
 #include "internal/tlsgroups.h"
 #include "ssl_local.h"
 #include <openssl/ct.h>
@@ -871,7 +870,7 @@ static int tls1_check_pkey_comp(SSL *s, EVP_PKEY *pkey)
 /* Return group id of a key */
 static uint16_t tls1_get_group_id(EVP_PKEY *pkey)
 {
-    int curve_nid = evp_pkey_get_EC_KEY_curve_nid(pkey);
+    int curve_nid = EVP_PKEY_get_curve_nid(pkey);
 
     if (curve_nid == NID_undef)
         return 0;
@@ -1508,7 +1507,7 @@ int tls12_check_peer_sigalg(SSL *s, uint16_t sig, EVP_PKEY *pkey)
 
         /* For TLS 1.3 or Suite B check curve matches signature algorithm */
         if (SSL_IS_TLS13(s) || tls1_suiteb(s)) {
-            int curve = evp_pkey_get_EC_KEY_curve_nid(pkey);
+            int curve = EVP_PKEY_get_curve_nid(pkey);
 
             if (lu->curve != NID_undef && curve != lu->curve) {
                 SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
@@ -3163,7 +3162,7 @@ static const SIGALG_LOOKUP *find_sig_alg(SSL *s, X509 *x, EVP_PKEY *pkey)
         if (lu->sig == EVP_PKEY_EC) {
 #ifndef OPENSSL_NO_EC
             if (curve == -1)
-                curve = evp_pkey_get_EC_KEY_curve_nid(tmppkey);
+                curve = EVP_PKEY_get_curve_nid(tmppkey);
             if (lu->curve != NID_undef && curve != lu->curve)
                 continue;
 #else
@@ -3227,7 +3226,7 @@ int tls_choose_sigalg(SSL *s, int fatalerrs)
                 /* For Suite B need to match signature algorithm to curve */
                 if (tls1_suiteb(s))
                     curve =
-                        evp_pkey_get_EC_KEY_curve_nid(s->cert->pkeys[SSL_PKEY_ECC]
+                        EVP_PKEY_get_curve_nid(s->cert->pkeys[SSL_PKEY_ECC]
                                                       .privatekey);
 #endif
 

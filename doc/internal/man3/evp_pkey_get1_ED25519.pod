@@ -8,7 +8,7 @@ evp_pkey_get1_X25519, evp_pkey_get1_X448
 
 =head1 SYNOPSIS
 
- #include "internal/evp.h"
+ #include "crypto/ecx.h"
 
  ECX_KEY *evp_pkey_get1_ED25519(EVP_PKEY *pkey);
  ECX_KEY *evp_pkey_get1_ED448(EVP_PKEY *pkey);

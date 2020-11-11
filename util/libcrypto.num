@@ -5005,7 +5005,6 @@ EVP_PKEY_get_utf8_string_param          ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_get_octet_string_param         ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_is_a                           ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_can_sign                       ?	3_0_0	EXIST::FUNCTION:
-evp_pkey_get_EC_KEY_curve_nid           ?	3_0_0	EXIST::FUNCTION:EC
 X509_STORE_CTX_new_ex                   ?	3_0_0	EXIST::FUNCTION:
 CT_POLICY_EVAL_CTX_new_ex               ?	3_0_0	EXIST::FUNCTION:CT
 CTLOG_new_ex                            ?	3_0_0	EXIST::FUNCTION:CT
@@ -5285,3 +5284,4 @@ EVP_PKEY_CTX_get0_libctx                ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_CTX_get0_propq                 ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_set1_encoded_public_key        ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_get1_encoded_public_key        ?	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_get_curve_nid                  ?	3_0_0	EXIST::FUNCTION:EC

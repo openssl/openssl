@@ -14,7 +14,6 @@
 #include "../ssl_local.h"
 #include "statem_local.h"
 #include "internal/cryptlib.h"
-#include "internal/evp.h"
 #include <openssl/buffer.h>
 #include <openssl/objects.h>
 #include <openssl/evp.h>
@@ -1607,8 +1606,7 @@ static int is_tls13_capable(const SSL *s)
          * more restrictive so check that our sig algs are consistent with this
          * EC cert. See section 4.2.3 of RFC8446.
          */
-        curve = evp_pkey_get_EC_KEY_curve_nid(s->cert->pkeys[SSL_PKEY_ECC]
-                                              .privatekey);
+        curve = EVP_PKEY_get_curve_nid(s->cert->pkeys[SSL_PKEY_ECC].privatekey);
         if (tls_check_sigalg_curve(s, curve))
             return 1;
 #else
