@@ -42,11 +42,78 @@ The length of the "size" parameter should not exceed that of a B<size_t>.
 
 =item "xof" (B<OSSL_MAC_PARAM_XOF>) <integer>
 
+The "xof" parameter value is expected to be 1 or 0. Use 1 to enable XOF mode.
+The default value is 0.
+
 =back
 
-The "xof" parameter value is expected to be 1 or 0. Use 1 to enable XOF
-mode. If XOF is enabled then the output length that is encoded as part of
-the input stream is set to zero.
+The "custom" and "key" parameters must be set before EVP_MAC_init().
+The "xof" and "size" parameters can be set at any time before EVP_MAC_final().
+
+=head1 EXAMPLES
+
+  #include <openssl/evp.h>
+  #include <openssl/params.h>
+
+  static int do_kmac(const unsigned char *in, size_t in_len,
+                     const unsigned char *key, size_t key_len,
+                     const unsigned char *custom, size_t custom_len,
+                     int xof_enabled, unsigned char *out, int out_len)
+  {
+      EVP_MAC_CTX *ctx = NULL;
+      EVP_MAC *mac = NULL;
+      OSSL_PARAM params[4], *p;
+      int ret = 0;
+      size_t l = 0;
+
+      mac = EVP_MAC_fetch(NULL, "KMAC-128", NULL);
+      if (mac == NULL)
+          goto err;
+      ctx = EVP_MAC_CTX_new(mac);
+      /* The mac can be freed after it is used by EVP_MAC_CTX_new */
+      EVP_MAC_free(mac);
+      if (ctx == NULL)
+          goto err;
+
+      /*
+       * Setup parameters required before calling EVP_MAC_init()
+       * The parameters OSSL_MAC_PARAM_XOF and OSSL_MAC_PARAM_SIZE may also be
+       * used at this point.
+       */
+      p = params;
+      *p++ = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY,
+                                               (void *)key, key_len);
+      if (custom != NULL && custom_len != 0)
+        *p++ = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_CUSTOM,
+                                                 (void *)custom, custom_len);
+      *p = OSSL_PARAM_construct_end();
+      if (!EVP_MAC_CTX_set_params(ctx, params))
+          goto err;
+
+      if (!EVP_MAC_init(ctx))
+          goto err;
+
+      /*
+       * Note: the following optional parameters can be set any time
+       * before EVP_MAC_final().
+       */
+      p = params;
+      *p++ = OSSL_PARAM_construct_int(OSSL_MAC_PARAM_XOF, &xof_enabled);
+      *p++ = OSSL_PARAM_construct_int(OSSL_MAC_PARAM_SIZE, &out_len);
+      *p = OSSL_PARAM_construct_end();
+      if (!EVP_MAC_CTX_set_params(ctx, params))
+          goto err;
+
+      /* The update may be called multiple times here for streamed input */
+      if (!EVP_MAC_update(ctx, in, in_len))
+          goto err;
+      if (!EVP_MAC_final(ctx, out, &l, out_len))
+          goto err;
+      ret = 1;
+  err:
+      EVP_MAC_CTX_free(ctx);
+      return ret;
+  }
 
 =head1 SEE ALSO
 
