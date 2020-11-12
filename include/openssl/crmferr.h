@@ -16,39 +16,33 @@
 # include <openssl/symhacks.h>
 
 
-# include <openssl/opensslconf.h>
-
 # ifndef OPENSSL_NO_CRMF
 
-#  ifdef  __cplusplus
-extern "C"
-#  endif
-int ERR_load_CRMF_strings(void);
 
 /*
  * CRMF function codes.
  */
-# ifndef OPENSSL_NO_DEPRECATED_3_0
-#   define CRMF_F_CRMF_POPOSIGNINGKEY_INIT                  0
-#   define CRMF_F_OSSL_CRMF_CERTID_GEN                      0
-#   define CRMF_F_OSSL_CRMF_CERTTEMPLATE_FILL               0
-#   define CRMF_F_OSSL_CRMF_ENCRYPTEDVALUE_GET1_ENCCERT     0
-#   define CRMF_F_OSSL_CRMF_MSGS_VERIFY_POPO                0
-#   define CRMF_F_OSSL_CRMF_MSG_CREATE_POPO                 0
-#   define CRMF_F_OSSL_CRMF_MSG_GET0_TMPL                   0
-#   define CRMF_F_OSSL_CRMF_MSG_GET_CERTREQID               0
-#   define CRMF_F_OSSL_CRMF_MSG_PKIPUBLICATIONINFO_PUSH0_SINGLEPUBINFO 0
-#   define CRMF_F_OSSL_CRMF_MSG_PUSH0_EXTENSION             0
-#   define CRMF_F_OSSL_CRMF_MSG_PUSH0_REGCTRL               0
-#   define CRMF_F_OSSL_CRMF_MSG_PUSH0_REGINFO               0
-#   define CRMF_F_OSSL_CRMF_MSG_SET0_EXTENSIONS             0
-#   define CRMF_F_OSSL_CRMF_MSG_SET0_SINGLEPUBINFO          0
-#   define CRMF_F_OSSL_CRMF_MSG_SET_CERTREQID               0
-#   define CRMF_F_OSSL_CRMF_MSG_SET_PKIPUBLICATIONINFO_ACTION 0
-#   define CRMF_F_OSSL_CRMF_MSG_SET0_VALIDITY               0
-#   define CRMF_F_OSSL_CRMF_PBMP_NEW                        0
-#   define CRMF_F_OSSL_CRMF_PBM_NEW                         0
-# endif
+#  ifndef OPENSSL_NO_DEPRECATED_3_0
+#   define CRMF_F_CRMF_POPOSIGNINGKEY_INIT                  100
+#   define CRMF_F_OSSL_CRMF_CERTID_GEN                      101
+#   define CRMF_F_OSSL_CRMF_CERTTEMPLATE_FILL               102
+#   define CRMF_F_OSSL_CRMF_ENCRYPTEDVALUE_GET1_ENCCERT     103
+#   define CRMF_F_OSSL_CRMF_MSGS_VERIFY_POPO                104
+#   define CRMF_F_OSSL_CRMF_MSG_CREATE_POPO                 105
+#   define CRMF_F_OSSL_CRMF_MSG_GET0_TMPL                   106
+#   define CRMF_F_OSSL_CRMF_MSG_GET_CERTREQID               107
+#   define CRMF_F_OSSL_CRMF_MSG_PKIPUBLICATIONINFO_PUSH0_SINGLEPUBINFO 108
+#   define CRMF_F_OSSL_CRMF_MSG_PUSH0_EXTENSION             109
+#   define CRMF_F_OSSL_CRMF_MSG_PUSH0_REGCTRL               110
+#   define CRMF_F_OSSL_CRMF_MSG_PUSH0_REGINFO               111
+#   define CRMF_F_OSSL_CRMF_MSG_SET0_EXTENSIONS             112
+#   define CRMF_F_OSSL_CRMF_MSG_SET0_SINGLEPUBINFO          113
+#   define CRMF_F_OSSL_CRMF_MSG_SET0_VALIDITY               116
+#   define CRMF_F_OSSL_CRMF_MSG_SET_CERTREQID               114
+#   define CRMF_F_OSSL_CRMF_MSG_SET_PKIPUBLICATIONINFO_ACTION 115
+#   define CRMF_F_OSSL_CRMF_PBMP_NEW                        117
+#   define CRMF_F_OSSL_CRMF_PBM_NEW                         118
+#  endif
 
 /*
  * CRMF reason codes.

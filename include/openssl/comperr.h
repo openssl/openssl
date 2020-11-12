@@ -16,25 +16,19 @@
 # include <openssl/symhacks.h>
 
 
-# include <openssl/opensslconf.h>
-
 # ifndef OPENSSL_NO_COMP
 
-#  ifdef  __cplusplus
-extern "C"
-#  endif
-int ERR_load_COMP_strings(void);
 
 /*
  * COMP function codes.
  */
-# ifndef OPENSSL_NO_DEPRECATED_3_0
-#   define COMP_F_BIO_ZLIB_FLUSH                            0
-#   define COMP_F_BIO_ZLIB_NEW                              0
-#   define COMP_F_BIO_ZLIB_READ                             0
-#   define COMP_F_BIO_ZLIB_WRITE                            0
-#   define COMP_F_COMP_CTX_NEW                              0
-# endif
+#  ifndef OPENSSL_NO_DEPRECATED_3_0
+#   define COMP_F_BIO_ZLIB_FLUSH                            99
+#   define COMP_F_BIO_ZLIB_NEW                              100
+#   define COMP_F_BIO_ZLIB_READ                             101
+#   define COMP_F_BIO_ZLIB_WRITE                            102
+#   define COMP_F_COMP_CTX_NEW                              103
+#  endif
 
 /*
  * COMP reason codes.

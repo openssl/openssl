@@ -10,6 +10,7 @@
 
 #include <openssl/err.h>
 #include <openssl/asn1err.h>
+#include "crypto/asn1err.h"
 
 #ifndef OPENSSL_NO_ERR
 
@@ -199,7 +200,7 @@ static const ERR_STRING_DATA ASN1_str_reasons[] = {
 
 #endif
 
-int ERR_load_ASN1_strings(void)
+int err_load_ASN1_strings_int(void)
 {
 #ifndef OPENSSL_NO_ERR
     if (ERR_reason_error_string(ASN1_str_reasons[0].error) == NULL)

@@ -16,10 +16,6 @@
 # include <openssl/symhacks.h>
 
 
-# ifdef  __cplusplus
-extern "C"
-# endif
-int ERR_load_OSSL_ENCODER_strings(void);
 
 /*
  * OSSL_ENCODER function codes.

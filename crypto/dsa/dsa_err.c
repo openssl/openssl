@@ -10,6 +10,7 @@
 
 #include <openssl/err.h>
 #include <openssl/dsaerr.h>
+#include "crypto/dsaerr.h"
 
 #ifndef OPENSSL_NO_ERR
 
@@ -37,7 +38,7 @@ static const ERR_STRING_DATA DSA_str_reasons[] = {
 
 #endif
 
-int ERR_load_DSA_strings(void)
+int err_load_DSA_strings_int(void)
 {
 #ifndef OPENSSL_NO_ERR
     if (ERR_reason_error_string(DSA_str_reasons[0].error) == NULL)

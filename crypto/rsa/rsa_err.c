@@ -10,6 +10,7 @@
 
 #include <openssl/err.h>
 #include <openssl/rsaerr.h>
+#include "crypto/rsaerr.h"
 
 #ifndef OPENSSL_NO_ERR
 
@@ -152,7 +153,7 @@ static const ERR_STRING_DATA RSA_str_reasons[] = {
 
 #endif
 
-int ERR_load_RSA_strings(void)
+int err_load_RSA_strings_int(void)
 {
 #ifndef OPENSSL_NO_ERR
     if (ERR_reason_error_string(RSA_str_reasons[0].error) == NULL)

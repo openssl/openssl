@@ -10,6 +10,7 @@
 
 #include <openssl/err.h>
 #include <openssl/cmserr.h>
+#include "crypto/cmserr.h"
 
 #ifndef OPENSSL_NO_ERR
 
@@ -162,7 +163,7 @@ static const ERR_STRING_DATA CMS_str_reasons[] = {
 
 #endif
 
-int ERR_load_CMS_strings(void)
+int err_load_CMS_strings_int(void)
 {
 #ifndef OPENSSL_NO_ERR
     if (ERR_reason_error_string(CMS_str_reasons[0].error) == NULL)

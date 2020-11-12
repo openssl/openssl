@@ -10,18 +10,19 @@
 
 #include <openssl/err.h>
 #include <openssl/decodererr.h>
+#include "crypto/decodererr.h"
 
 #ifndef OPENSSL_NO_ERR
 
 static const ERR_STRING_DATA OSSL_DECODER_str_reasons[] = {
     {ERR_PACK(ERR_LIB_OSSL_DECODER, 0, OSSL_DECODER_R_MISSING_GET_PARAMS),
-     "missing get params"},
+    "missing get params"},
     {0, NULL}
 };
 
 #endif
 
-int ERR_load_OSSL_DECODER_strings(void)
+int err_load_OSSL_DECODER_strings_int(void)
 {
 #ifndef OPENSSL_NO_ERR
     if (ERR_reason_error_string(OSSL_DECODER_str_reasons[0].error) == NULL)

@@ -10,6 +10,7 @@
 
 #include <openssl/err.h>
 #include <openssl/dherr.h>
+#include "crypto/dherr.h"
 
 #ifndef OPENSSL_NO_ERR
 
@@ -58,7 +59,7 @@ static const ERR_STRING_DATA DH_str_reasons[] = {
 
 #endif
 
-int ERR_load_DH_strings(void)
+int err_load_DH_strings_int(void)
 {
 #ifndef OPENSSL_NO_ERR
     if (ERR_reason_error_string(DH_str_reasons[0].error) == NULL)

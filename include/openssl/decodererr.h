@@ -16,10 +16,6 @@
 # include <openssl/symhacks.h>
 
 
-# ifdef  __cplusplus
-extern "C"
-# endif
-int ERR_load_OSSL_DECODER_strings(void);
 
 /*
  * OSSL_DECODER function codes.
@@ -30,6 +26,6 @@ int ERR_load_OSSL_DECODER_strings(void);
 /*
  * OSSL_DECODER reason codes.
  */
-# define OSSL_DECODER_R_MISSING_GET_PARAMS           100
+# define OSSL_DECODER_R_MISSING_GET_PARAMS                100
 
 #endif

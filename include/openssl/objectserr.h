@@ -16,24 +16,20 @@
 # include <openssl/symhacks.h>
 
 
-# ifdef  __cplusplus
-extern "C"
-# endif
-int ERR_load_OBJ_strings(void);
 
 /*
  * OBJ function codes.
  */
 # ifndef OPENSSL_NO_DEPRECATED_3_0
-#  define OBJ_F_OBJ_ADD_OBJECT                             0
-#  define OBJ_F_OBJ_ADD_SIGID                              0
-#  define OBJ_F_OBJ_CREATE                                 0
-#  define OBJ_F_OBJ_DUP                                    0
-#  define OBJ_F_OBJ_NAME_NEW_INDEX                         0
-#  define OBJ_F_OBJ_NID2LN                                 0
-#  define OBJ_F_OBJ_NID2OBJ                                0
-#  define OBJ_F_OBJ_NID2SN                                 0
-#  define OBJ_F_OBJ_TXT2OBJ                                0
+#  define OBJ_F_OBJ_ADD_OBJECT                             105
+#  define OBJ_F_OBJ_ADD_SIGID                              107
+#  define OBJ_F_OBJ_CREATE                                 100
+#  define OBJ_F_OBJ_DUP                                    101
+#  define OBJ_F_OBJ_NAME_NEW_INDEX                         106
+#  define OBJ_F_OBJ_NID2LN                                 102
+#  define OBJ_F_OBJ_NID2OBJ                                103
+#  define OBJ_F_OBJ_NID2SN                                 104
+#  define OBJ_F_OBJ_TXT2OBJ                                108
 # endif
 
 /*
