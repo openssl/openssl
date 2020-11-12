@@ -97,7 +97,7 @@ int asn1_do_lock(ASN1_VALUE **pval, int op, const ASN1_ITEM *it)
         if (!CRYPTO_DOWN_REF(lck, &ret, *lock))
             return -1;  /* failed */
 #ifdef REF_PRINT
-        fprintf(stderr, "%p:%4d:%s\n", it, ret, it->sname);
+        fprintf(stderr, "%p:%4d:%s\n", (void*)it, ret, it->sname);
 #endif
         REF_ASSERT_ISNT(ret < 0);
         if (ret == 0) {
