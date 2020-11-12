@@ -1361,9 +1361,8 @@ static int evp_pkey_reset_unlocked(EVP_PKEY *pk)
       memset((unsigned char *)pk + offset + sizeof(pk->lock),
              0,
              sizeof(*pk) - offset - sizeof(pk->lock));
-    } else {
-      memset(pk, 0, sizeof(*pk));
     }
+    /* EVP_PKEY_new will have zalloced the memory so no need to call memset */
 
     pk->type = EVP_PKEY_NONE;
     pk->save_type = EVP_PKEY_NONE;
