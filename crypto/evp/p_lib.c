@@ -1354,40 +1354,18 @@ static int evp_pkey_reset_unlocked(EVP_PKEY *pk)
     if (pk == NULL)
         return 0;
 
+    if (pk->lock) {
+      const size_t offset = (unsigned char *)&pk->lock - (unsigned char *)pk;
+      memset(pk, 0, offset);
+      memset(&pk->lock + 1, 0, sizeof(*pk) - offset - sizeof(pk->lock));
+    } else {
+      memset(pk, 0, sizeof(*pk));
+    }
+
     pk->type = EVP_PKEY_NONE;
     pk->save_type = EVP_PKEY_NONE;
-#ifndef FIPS_MODULE
-    pk->ameth = NULL;
-    pk->engine = NULL;
-    pk->pmeth_engine = NULL;
-    pk->pkey.ptr = NULL;
-#  ifndef OPENSSL_NO_RSA
-    pk->pkey.rsa = NULL;
-#  endif
-#  ifndef OPENSSL_NO_DSA
-    pk->pkey.dsa = NULL;
-#  endif
-#  ifndef OPENSSL_NO_DH
-    pk->pkey.dh = NULL;
-#  endif
-#  ifndef OPENSSL_NO_EC
-    pk->pkey.ec = NULL;
-    pk->pkey.ecx = NULL;
-#  endif
-#endif
     pk->references = 1;
-    /* pk->lock is intentionally left out */
-    pk->attributes = NULL;
     pk->save_parameters = 1;
-#ifndef FIPS_MODULE
-    memset(&pk->ex_data, 0, sizeof(CRYPTO_EX_DATA));
-#endif
-    pk->keymgmt = NULL;
-    pk->keydata = NULL;
-    pk->dirty_cnt = 0;
-    memset(&pk->operation_cache, 0, sizeof(pk->operation_cache));
-    pk->dirty_cnt_copy = 0;
-    memset(&pk->cache, 0, sizeof(pk->cache));
 
     return 1;
 }
