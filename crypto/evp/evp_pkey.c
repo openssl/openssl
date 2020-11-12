@@ -89,15 +89,8 @@ PKCS8_PRIV_KEY_INFO *EVP_PKEY2PKCS8(const EVP_PKEY *pkey)
 
         if ((ctx = OSSL_ENCODER_CTX_new_by_EVP_PKEY(pkey, selection,
                                                     "DER", "pkcs8",
-                                                    libctx, NULL)) == NULL)
-            goto error;
-
-        if (OSSL_ENCODER_CTX_get_num_encoders(ctx) == 0) {
-            EVPerr(EVP_F_EVP_PKEY2PKCS8, EVP_R_METHOD_NOT_SUPPORTED);
-            goto error;
-        }
-
-        if (!OSSL_ENCODER_to_data(ctx, &der, &derlen))
+                                                    libctx, NULL)) == NULL
+            || !OSSL_ENCODER_to_data(ctx, &der, &derlen))
             goto error;
 
         pp = der;
@@ -112,8 +105,8 @@ PKCS8_PRIV_KEY_INFO *EVP_PKEY2PKCS8(const EVP_PKEY *pkey)
             return NULL;
         }
 
-        if (pkey->ameth) {
-            if (pkey->ameth->priv_encode) {
+        if (pkey->ameth != NULL) {
+            if (pkey->ameth->priv_encode != NULL) {
                 if (!pkey->ameth->priv_encode(p8, pkey)) {
                     EVPerr(EVP_F_EVP_PKEY2PKCS8,
                            EVP_R_PRIVATE_KEY_ENCODE_ERROR);
