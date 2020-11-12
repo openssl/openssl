@@ -518,7 +518,7 @@ EOF
                     $fassigned{$lib} .= "$findcode:";
                     print STDERR "New Function code $i\n" if $debug;
                 }
-                printf OUT "#${indent} define $i%s $fcodes{$i}\n", " " x $z;
+                printf OUT "#${indent} define $i%s 0\n", " " x $z;
             }
             print OUT "#${indent}endif\n";
 
@@ -552,6 +552,12 @@ EOF
     # Rewrite the public header file
 
     if ($hpubinc{$lib} ne 'NONE') {
+        my $extra_include =
+            $internal
+            ? ($lib ne 'SSL'
+               ? "# include <openssl/cryptoerr_legacy.h>\n"
+               : "# include <openssl/sslerr_legacy.h>\n")
+            : '';
         my $hfile = $hpubinc{$lib};
         my $guard =
             $internal
@@ -576,7 +582,7 @@ EOF
 
 # include <openssl/opensslconf.h>
 # include <openssl/symhacks.h>
-
+$extra_include
 
 EOF
         $indent = ' ';
@@ -626,7 +632,7 @@ EOF
                 $fassigned{$lib} .= "$findcode:";
                 print STDERR "New Function code $i\n" if $debug;
             }
-            printf OUT "#${indent} define $i%s $fcodes{$i}\n", " " x $z;
+            printf OUT "#${indent} define $i%s 0\n", " " x $z;
         }
         print OUT "#${indent}endif\n";
 
