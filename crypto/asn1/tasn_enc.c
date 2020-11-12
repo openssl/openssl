@@ -106,9 +106,25 @@ int ASN1_item_ex_i2d(const ASN1_VALUE **pval, unsigned char **out,
         return asn1_i2d_ex_primitive(pval, out, it, tag, aclass);
 
     case ASN1_ITYPE_MSTRING:
+        /*
+         * It never makes sense for multi-strings to have implicit tagging, so
+         * if tag != -1, then this looks like an error in the template.
+         */
+        if (tag != -1) {
+            ERR_raise(ERR_LIB_ASN1, ASN1_R_BAD_TEMPLATE);
+            return -1;
+        }
         return asn1_i2d_ex_primitive(pval, out, it, -1, aclass);
 
     case ASN1_ITYPE_CHOICE:
+        /*
+         * It never makes sense for CHOICE types to have implicit tagging, so
+         * if tag != -1, then this looks like an error in the template.
+         */
+        if (tag != -1) {
+            ERR_raise(ERR_LIB_ASN1, ASN1_R_BAD_TEMPLATE);
+            return -1;
+        }
         if (asn1_cb && !asn1_cb(ASN1_OP_I2D_PRE, pval, it, NULL))
             return 0;
         i = asn1_get_choice_selector_const(pval, it);
