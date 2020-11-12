@@ -2660,10 +2660,10 @@ int cmp_main(int argc, char **argv)
 
     /* read default values for options from config file */
     configfile = opt_config != NULL ? opt_config : default_config_file;
-    if (configfile && configfile[0] != '\0' /* non-empty string */
-            && (configfile != default_config_file
-                    || access(configfile, F_OK) != -1)) {
-        CMP_info1("using OpenSSL configuration file '%s'", configfile);
+    if (configfile != NULL && configfile[0] != '\0' /* non-empty string */
+            && (configfile != default_config_file || access(configfile, F_OK) != -1)) {
+        CMP_info2("using section(s) '%s' of OpenSSL configuration file '%s'",
+                  opt_section, configfile);
         conf = app_load_config(configfile);
         if (conf == NULL) {
             goto err;
