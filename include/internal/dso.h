@@ -160,6 +160,4 @@ DSO *DSO_dsobyaddr(void *addr, int flags);
  */
 void *DSO_global_lookup(const char *name);
 
-int ERR_load_DSO_strings(void);
-
 #endif

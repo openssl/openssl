@@ -30,6 +30,7 @@ use OpenSSL::stackhash qw(generate_lhash_macros);
 # include <openssl/types.h>
 # include <openssl/bio.h>
 # include <openssl/lhash.h>
+# include <openssl/cryptoerr_legacy.h>
 
 #ifdef  __cplusplus
 extern "C" {
@@ -454,7 +455,6 @@ void ERR_add_error_mem_bio(const char *sep, BIO *bio);
 int ERR_load_strings(int lib, ERR_STRING_DATA *str);
 int ERR_load_strings_const(const ERR_STRING_DATA *str);
 int ERR_unload_strings(int lib, ERR_STRING_DATA *str);
-int ERR_load_ERR_strings(void);
 
 #ifndef OPENSSL_NO_DEPRECATED_1_1_0
 # define ERR_load_crypto_strings() \

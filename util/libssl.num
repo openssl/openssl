@@ -145,7 +145,7 @@ SSL_export_keying_material              145	3_0_0	EXIST::FUNCTION:
 SSL_callback_ctrl                       146	3_0_0	EXIST::FUNCTION:
 SSL_set_security_callback               147	3_0_0	EXIST::FUNCTION:
 SSL_SRP_CTX_init                        148	3_0_0	EXIST::FUNCTION:SRP
-ERR_load_SSL_strings                    149	3_0_0	EXIST::FUNCTION:
+ERR_load_SSL_strings                    149	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 SSL_CTX_SRP_CTX_init                    150	3_0_0	EXIST::FUNCTION:SRP
 SSL_SESSION_set_time                    151	3_0_0	EXIST::FUNCTION:
 i2d_SSL_SESSION                         152	3_0_0	EXIST::FUNCTION:

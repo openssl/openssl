@@ -14,6 +14,7 @@
 #include <openssl/evp.h>
 #include <openssl/trace.h>
 #include "ssl_local.h"
+#include "sslerr.h"
 #include "internal/thread_once.h"
 
 static int stopped;
@@ -53,8 +54,8 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_load_ssl_strings)
      * pulling in all the error strings during static linking
      */
 #if !defined(OPENSSL_NO_ERR) && !defined(OPENSSL_NO_AUTOERRINIT)
-    OSSL_TRACE(INIT, "ossl_init_load_ssl_strings: ERR_load_SSL_strings()\n");
-    ERR_load_SSL_strings();
+    OSSL_TRACE(INIT, "ossl_init_load_ssl_strings: err_load_SSL_strings_int()\n");
+    err_load_SSL_strings_int();
     ssl_strings_inited = 1;
 #endif
     return 1;

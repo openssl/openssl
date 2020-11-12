@@ -23,6 +23,23 @@ OpenSSL 3.0
 
 ### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
 
+ * Deprecated all the libcrypto and libssl error string loading
+   functions: ERR_load_ASN1_strings(), ERR_load_ASYNC_strings(),
+   ERR_load_BIO_strings(), ERR_load_BN_strings(), ERR_load_BUF_strings(),
+   ERR_load_CMS_strings(), ERR_load_COMP_strings(), ERR_load_CONF_strings(),
+   ERR_load_CRYPTO_strings(), ERR_load_CT_strings(), ERR_load_DH_strings(),
+   ERR_load_DSA_strings(), ERR_load_EC_strings(), ERR_load_ENGINE_strings(),
+   ERR_load_ERR_strings(), ERR_load_EVP_strings(), ERR_load_KDF_strings(),
+   ERR_load_OBJ_strings(), ERR_load_OCSP_strings(), ERR_load_PEM_strings(),
+   ERR_load_PKCS12_strings(), ERR_load_PKCS7_strings(), ERR_load_RAND_strings(),
+   ERR_load_RSA_strings(), ERR_load_OSSL_STORE_strings(), ERR_load_TS_strings(),
+   ERR_load_UI_strings(), ERR_load_X509_strings(), ERR_load_X509V3_strings().
+
+   Calling these functions is not necessary since OpenSSL 1.1.0, as OpenSSL
+   now loads error strings automatically.
+
+   *Richard Levitte*
+
  * The functions SSL_CTX_set_tmp_dh_callback and SSL_set_tmp_dh_callback, as
    well as the macros SSL_CTX_set_tmp_dh() and SSL_set_tmp_dh() have been
    deprecated. These are used to set the Diffie-Hellman (DH) parameters that

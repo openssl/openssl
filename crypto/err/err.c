@@ -237,7 +237,7 @@ static int err_load_strings(const ERR_STRING_DATA *str)
     return 1;
 }
 
-int ERR_load_ERR_strings(void)
+int err_load_ERR_strings_int(void)
 {
 #ifndef OPENSSL_NO_ERR
     if (!RUN_ONCE(&err_string_init, do_err_strings_init))
@@ -251,7 +251,7 @@ int ERR_load_ERR_strings(void)
 
 int ERR_load_strings(int lib, ERR_STRING_DATA *str)
 {
-    if (ERR_load_ERR_strings() == 0)
+    if (err_load_ERR_strings_int() == 0)
         return 0;
 
     err_patch(lib, str);
@@ -261,7 +261,7 @@ int ERR_load_strings(int lib, ERR_STRING_DATA *str)
 
 int ERR_load_strings_const(const ERR_STRING_DATA *str)
 {
-    if (ERR_load_ERR_strings() == 0)
+    if (err_load_ERR_strings_int() == 0)
         return 0;
     err_load_strings(str);
     return 1;

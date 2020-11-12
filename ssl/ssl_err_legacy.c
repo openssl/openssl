@@ -7,4 +7,15 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/cryptoerr_legacy.h>
+/* This is the C source file where we include this header directly */
+#include <openssl/sslerr_legacy.h>
+#include "sslerr.h"
+
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+int ERR_load_SSL_strings(void)
+{
+    return err_load_SSL_strings_int();
+}
+#else
+NON_EMPTY_TRANSLATION_UNIT
+#endif
