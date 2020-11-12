@@ -21,12 +21,6 @@
 
 
 /*
- * CMP function codes.
- */
-#  ifndef OPENSSL_NO_DEPRECATED_3_0
-#  endif
-
-/*
  * CMP reason codes.
  */
 #  define CMP_R_ALGORITHM_NOT_SUPPORTED                    139

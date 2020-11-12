@@ -19,19 +19,6 @@
 
 
 /*
- * ASYNC function codes.
- */
-# ifndef OPENSSL_NO_DEPRECATED_3_0
-#  define ASYNC_F_ASYNC_CTX_NEW                            0
-#  define ASYNC_F_ASYNC_INIT_THREAD                        0
-#  define ASYNC_F_ASYNC_JOB_NEW                            0
-#  define ASYNC_F_ASYNC_PAUSE_JOB                          0
-#  define ASYNC_F_ASYNC_START_FUNC                         0
-#  define ASYNC_F_ASYNC_START_JOB                          0
-#  define ASYNC_F_ASYNC_WAIT_CTX_SET_WAIT_FD               0
-# endif
-
-/*
  * ASYNC reason codes.
  */
 # define ASYNC_R_FAILED_TO_SET_POOL                       101

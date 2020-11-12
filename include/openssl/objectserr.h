@@ -19,21 +19,6 @@
 
 
 /*
- * OBJ function codes.
- */
-# ifndef OPENSSL_NO_DEPRECATED_3_0
-#  define OBJ_F_OBJ_ADD_OBJECT                             0
-#  define OBJ_F_OBJ_ADD_SIGID                              0
-#  define OBJ_F_OBJ_CREATE                                 0
-#  define OBJ_F_OBJ_DUP                                    0
-#  define OBJ_F_OBJ_NAME_NEW_INDEX                         0
-#  define OBJ_F_OBJ_NID2LN                                 0
-#  define OBJ_F_OBJ_NID2OBJ                                0
-#  define OBJ_F_OBJ_NID2SN                                 0
-#  define OBJ_F_OBJ_TXT2OBJ                                0
-# endif
-
-/*
  * OBJ reason codes.
  */
 # define OBJ_R_OID_EXISTS                                 102

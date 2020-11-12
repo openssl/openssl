@@ -21,17 +21,6 @@
 
 
 /*
- * COMP function codes.
- */
-#  ifndef OPENSSL_NO_DEPRECATED_3_0
-#   define COMP_F_BIO_ZLIB_FLUSH                            0
-#   define COMP_F_BIO_ZLIB_NEW                              0
-#   define COMP_F_BIO_ZLIB_READ                             0
-#   define COMP_F_BIO_ZLIB_WRITE                            0
-#   define COMP_F_COMP_CTX_NEW                              0
-#  endif
-
-/*
  * COMP reason codes.
  */
 #  define COMP_R_ZLIB_DEFLATE_ERROR                        99

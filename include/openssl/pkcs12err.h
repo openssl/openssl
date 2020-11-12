@@ -19,42 +19,6 @@
 
 
 /*
- * PKCS12 function codes.
- */
-# ifndef OPENSSL_NO_DEPRECATED_3_0
-#  define PKCS12_F_OPENSSL_ASC2UNI                         0
-#  define PKCS12_F_OPENSSL_UNI2ASC                         0
-#  define PKCS12_F_OPENSSL_UNI2UTF8                        0
-#  define PKCS12_F_OPENSSL_UTF82UNI                        0
-#  define PKCS12_F_PKCS12_CREATE                           0
-#  define PKCS12_F_PKCS12_GEN_MAC                          0
-#  define PKCS12_F_PKCS12_INIT                             0
-#  define PKCS12_F_PKCS12_ITEM_DECRYPT_D2I                 0
-#  define PKCS12_F_PKCS12_ITEM_I2D_ENCRYPT                 0
-#  define PKCS12_F_PKCS12_ITEM_PACK_SAFEBAG                0
-#  define PKCS12_F_PKCS12_KEY_GEN_ASC                      0
-#  define PKCS12_F_PKCS12_KEY_GEN_UNI                      0
-#  define PKCS12_F_PKCS12_KEY_GEN_UTF8                     0
-#  define PKCS12_F_PKCS12_NEWPASS                          0
-#  define PKCS12_F_PKCS12_PACK_P7DATA                      0
-#  define PKCS12_F_PKCS12_PACK_P7ENCDATA                   0
-#  define PKCS12_F_PKCS12_PARSE                            0
-#  define PKCS12_F_PKCS12_PBE_CRYPT                        0
-#  define PKCS12_F_PKCS12_PBE_KEYIVGEN                     0
-#  define PKCS12_F_PKCS12_SAFEBAG_CREATE0_P8INF            0
-#  define PKCS12_F_PKCS12_SAFEBAG_CREATE0_PKCS8            0
-#  define PKCS12_F_PKCS12_SAFEBAG_CREATE_PKCS8_ENCRYPT     0
-#  define PKCS12_F_PKCS12_SAFEBAG_CREATE_SECRET            0
-#  define PKCS12_F_PKCS12_SETUP_MAC                        0
-#  define PKCS12_F_PKCS12_SET_MAC                          0
-#  define PKCS12_F_PKCS12_UNPACK_AUTHSAFES                 0
-#  define PKCS12_F_PKCS12_UNPACK_P7DATA                    0
-#  define PKCS12_F_PKCS12_VERIFY_MAC                       0
-#  define PKCS12_F_PKCS8_ENCRYPT                           0
-#  define PKCS12_F_PKCS8_SET0_PBE                          0
-# endif
-
-/*
  * PKCS12 reason codes.
  */
 # define PKCS12_R_CANT_PACK_STRUCTURE                     100

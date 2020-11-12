@@ -5,9 +5,5 @@
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
 
-# Function codes
-OSSLTEST_F_BIND_OSSLTEST:100:bind_ossltest
-OSSLTEST_F_OSSLTEST_AES128_INIT_KEY:101:*
-
 #Reason codes
 OSSLTEST_R_INIT_FAILED:100:init failed

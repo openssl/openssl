@@ -21,40 +21,6 @@
 
 
 /*
- * DH function codes.
- */
-#  ifndef OPENSSL_NO_DEPRECATED_3_0
-#   define DH_F_COMPUTE_KEY                                 0
-#   define DH_F_DHPARAMS_PRINT_FP                           0
-#   define DH_F_DH_BUF2KEY                                  0
-#   define DH_F_DH_BUILTIN_GENPARAMS                        0
-#   define DH_F_DH_CHECK_EX                                 0
-#   define DH_F_DH_CHECK_PARAMS_EX                          0
-#   define DH_F_DH_CHECK_PUB_KEY_EX                         0
-#   define DH_F_DH_CMS_DECRYPT                              0
-#   define DH_F_DH_CMS_SET_PEERKEY                          0
-#   define DH_F_DH_CMS_SET_SHARED_INFO                      0
-#   define DH_F_DH_KEY2BUF                                  0
-#   define DH_F_DH_METH_DUP                                 0
-#   define DH_F_DH_METH_NEW                                 0
-#   define DH_F_DH_METH_SET1_NAME                           0
-#   define DH_F_DH_NEW_BY_NID                               0
-#   define DH_F_DH_NEW_METHOD                               0
-#   define DH_F_DH_PARAM_DECODE                             0
-#   define DH_F_DH_PKEY_PUBLIC_CHECK                        0
-#   define DH_F_DH_PRIV_DECODE                              0
-#   define DH_F_DH_PRIV_ENCODE                              0
-#   define DH_F_DH_PUB_DECODE                               0
-#   define DH_F_DH_PUB_ENCODE                               0
-#   define DH_F_DO_DH_PRINT                                 0
-#   define DH_F_GENERATE_KEY                                0
-#   define DH_F_PKEY_DH_CTRL_STR                            0
-#   define DH_F_PKEY_DH_DERIVE                              0
-#   define DH_F_PKEY_DH_INIT                                0
-#   define DH_F_PKEY_DH_KEYGEN                              0
-#  endif
-
-/*
  * DH reason codes.
  */
 #  define DH_R_BAD_FFC_PARAMETERS                          127

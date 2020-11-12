@@ -21,31 +21,6 @@
 
 
 /*
- * CRMF function codes.
- */
-#  ifndef OPENSSL_NO_DEPRECATED_3_0
-#   define CRMF_F_CRMF_POPOSIGNINGKEY_INIT                  0
-#   define CRMF_F_OSSL_CRMF_CERTID_GEN                      0
-#   define CRMF_F_OSSL_CRMF_CERTTEMPLATE_FILL               0
-#   define CRMF_F_OSSL_CRMF_ENCRYPTEDVALUE_GET1_ENCCERT     0
-#   define CRMF_F_OSSL_CRMF_MSGS_VERIFY_POPO                0
-#   define CRMF_F_OSSL_CRMF_MSG_CREATE_POPO                 0
-#   define CRMF_F_OSSL_CRMF_MSG_GET0_TMPL                   0
-#   define CRMF_F_OSSL_CRMF_MSG_GET_CERTREQID               0
-#   define CRMF_F_OSSL_CRMF_MSG_PKIPUBLICATIONINFO_PUSH0_SINGLEPUBINFO 0
-#   define CRMF_F_OSSL_CRMF_MSG_PUSH0_EXTENSION             0
-#   define CRMF_F_OSSL_CRMF_MSG_PUSH0_REGCTRL               0
-#   define CRMF_F_OSSL_CRMF_MSG_PUSH0_REGINFO               0
-#   define CRMF_F_OSSL_CRMF_MSG_SET0_EXTENSIONS             0
-#   define CRMF_F_OSSL_CRMF_MSG_SET0_SINGLEPUBINFO          0
-#   define CRMF_F_OSSL_CRMF_MSG_SET0_VALIDITY               0
-#   define CRMF_F_OSSL_CRMF_MSG_SET_CERTREQID               0
-#   define CRMF_F_OSSL_CRMF_MSG_SET_PKIPUBLICATIONINFO_ACTION 0
-#   define CRMF_F_OSSL_CRMF_PBMP_NEW                        0
-#   define CRMF_F_OSSL_CRMF_PBM_NEW                         0
-#  endif
-
-/*
  * CRMF reason codes.
  */
 #  define CRMF_R_BAD_PBM_ITERATIONCOUNT                    100
