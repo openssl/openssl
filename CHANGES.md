@@ -27,7 +27,8 @@ OpenSSL 3.0
 
    *Paul Dale*
 
- * The -C option to the dhparam, dsaparam, and ecparam commands were removed.
+ * The -C option to the x509, dhparam, dsaparam, and ecparam commands
+   were removed.
 
    *Rich Salz*
 

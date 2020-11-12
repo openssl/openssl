@@ -65,7 +65,6 @@ B<openssl> B<x509>
 [B<-checkhost> I<host>]
 [B<-checkemail> I<host>]
 [B<-checkip> I<ipaddr>]
-[B<-C>]
 [B<-I<digest>>]
 [B<-clrext>]
 [B<-extfile> I<filename>]
@@ -270,10 +269,6 @@ certificate (see digest options).
 This is commonly called a "fingerprint". Because of the nature of message
 digests, the fingerprint of a certificate is unique to that certificate and
 two certificates with the same fingerprint can be considered to be the same.
-
-=item B<-C>
-
-This outputs the certificate in the form of a C source file.
 
 =back
 
@@ -842,6 +837,8 @@ have become obsolete in OpenSSL 3.0.0 and have no effect.
 The B<-CAform> option has become obsolete in OpenSSL 3.0.0 and has no effect.
 
 The B<-engine> option was deprecated in OpenSSL 3.0.
+
+The B<-C> option was removed in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
