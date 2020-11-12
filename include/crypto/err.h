@@ -10,6 +10,7 @@
 #ifndef OSSL_CRYPTO_ERR_H
 # define OSSL_CRYPTO_ERR_H
 
+int err_load_ERR_strings_int(void);
 int err_load_crypto_strings_int(void);
 void err_cleanup(void);
 int err_shelve_state(void **);
