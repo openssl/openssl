@@ -421,7 +421,7 @@ int OSSL_PARAM_get_int64(const OSSL_PARAM *p, int64_t *val)
             if (d >= INT64_MIN
                     /*
                      * By subtracting 65535 (2^16-1) we cancel the low order
-                     * 15 bits of ULONG_MAX to avoid using imprecise floating
+                     * 15 bits of INT64_MAX to avoid using imprecise floating
                      * point values.
                      */
                     && d < (double)(INT64_MAX - 65535) + 65536.0
@@ -794,7 +794,7 @@ int OSSL_PARAM_set_double(OSSL_PARAM *p, double val)
             if (val >= 0
                     /*
                      * By subtracting 65535 (2^16-1) we cancel the low order
-                     * 15 bits of ULONG_MAX to avoid using imprecise floating
+                     * 15 bits of UINT64_MAX to avoid using imprecise floating
                      * point values.
                      */
                     && (double)(UINT64_MAX - 65535) + 65536.0) {
@@ -819,7 +819,7 @@ int OSSL_PARAM_set_double(OSSL_PARAM *p, double val)
             if (val >= INT64_MIN
                     /*
                      * By subtracting 65535 (2^16-1) we cancel the low order
-                     * 15 bits of ULONG_MAX to avoid using imprecise floating
+                     * 15 bits of INT64_MAX to avoid using imprecise floating
                      * point values.
                      */
                     && val < (double)(INT64_MAX - 65535) + 65536.0) {
