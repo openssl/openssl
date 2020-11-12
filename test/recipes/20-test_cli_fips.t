@@ -23,7 +23,9 @@ use lib srctop_dir('Configurations');
 use lib bldtop_dir('.');
 use platform;
 
-plan skip_all => "Test only supported in a fips build" if disabled("fips");
+my $no_check = disabled('fips-securitychecks');
+plan skip_all => "Test only supported in a fips build with security checks"
+    if disabled("fips") || disabled("fips-securitychecks");
 plan tests => 13;
 
 my $fipsmodule = bldtop_file('providers', platform->dso('fips'));
@@ -235,10 +237,7 @@ SKIP: {
                      '-out', $testtext_prefix.'.fail.priv.pem'])),
            $testtext);
 
-        TODO : {
-             local $TODO = "see issue #12629";
-             tsignverify($testtext_prefix, $fips_key, $nonfips_key);
-        }
+        tsignverify($testtext_prefix, $fips_key, $nonfips_key);
     };
 }
 
@@ -315,9 +314,6 @@ SKIP : {
                      '-out', $testtext_prefix.'.fail.priv.pem'])),
            $testtext);
 
-       TODO : {
-            local $TODO = "see issues #12626, #12627";
-            tsignverify($testtext_prefix, $fips_key, $nonfips_key);
-       }
+        tsignverify($testtext_prefix, $fips_key, $nonfips_key);
     };
 }

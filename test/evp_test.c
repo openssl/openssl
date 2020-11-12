@@ -3284,6 +3284,7 @@ static char *take_value(PAIR *pp)
     return p;
 }
 
+#if !defined(OPENSSL_NO_FIPS_SECURITYCHECKS)
 static int securitycheck_enabled(void)
 {
     static int enabled = -1;
@@ -3310,6 +3311,7 @@ static int securitycheck_enabled(void)
     }
     return enabled;
 }
+#endif
 
 /*
  * Return 1 if one of the providers named in the string is available.
