@@ -23,8 +23,8 @@
  * OSSLTEST function codes.
  */
 # ifndef OPENSSL_NO_DEPRECATED_3_0
-#  define OSSLTEST_F_BIND_OSSLTEST                         100
-#  define OSSLTEST_F_OSSLTEST_AES128_INIT_KEY              101
+#  define OSSLTEST_F_BIND_OSSLTEST                         0
+#  define OSSLTEST_F_OSSLTEST_AES128_INIT_KEY              0
 # endif
 
 /*

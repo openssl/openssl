@@ -25,14 +25,14 @@ int err_load_PROP_strings_int(void);
  * PROP function codes.
  */
 # ifndef OPENSSL_NO_DEPRECATED_3_0
-#  define PROP_F_OSSL_PARSE_PROPERTY                       100
-#  define PROP_F_OSSL_PARSE_QUERY                          101
-#  define PROP_F_PARSE_HEX                                 102
-#  define PROP_F_PARSE_NAME                                103
-#  define PROP_F_PARSE_NUMBER                              104
-#  define PROP_F_PARSE_OCT                                 105
-#  define PROP_F_PARSE_STRING                              106
-#  define PROP_F_PARSE_UNQUOTED                            107
+#  define PROP_F_OSSL_PARSE_PROPERTY                       0
+#  define PROP_F_OSSL_PARSE_QUERY                          0
+#  define PROP_F_PARSE_HEX                                 0
+#  define PROP_F_PARSE_NAME                                0
+#  define PROP_F_PARSE_NUMBER                              0
+#  define PROP_F_PARSE_OCT                                 0
+#  define PROP_F_PARSE_STRING                              0
+#  define PROP_F_PARSE_UNQUOTED                            0
 # endif
 
 /*

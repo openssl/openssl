@@ -25,26 +25,26 @@ int err_load_PROV_strings_int(void);
  * PROV function codes.
  */
 # ifndef OPENSSL_NO_DEPRECATED_3_0
-#  define PROV_F_AESNI_INIT_KEY                            101
-#  define PROV_F_AES_BLOCK_FINAL                           102
-#  define PROV_F_AES_BLOCK_UPDATE                          103
-#  define PROV_F_AES_CIPHER                                104
-#  define PROV_F_AES_DINIT                                 107
-#  define PROV_F_AES_DUPCTX                                108
-#  define PROV_F_AES_EINIT                                 109
-#  define PROV_F_AES_GET_CTX_PARAMS                        105
-#  define PROV_F_AES_INIT_KEY                              110
-#  define PROV_F_AES_SET_CTX_PARAMS                        106
-#  define PROV_F_AES_STREAM_UPDATE                         111
-#  define PROV_F_AES_T4_INIT_KEY                           112
-#  define PROV_F_BLAKE2_MAC_INIT                           115
-#  define PROV_F_BLAKE2_MAC_SET_PARAMS                     116
-#  define PROV_F_GMAC_SET_PARAMS                           117
-#  define PROV_F_KMAC_SET_PARAMS                           118
-#  define PROV_F_POLY1305_SET_PARAMS                       119
-#  define PROV_F_PROV_AES_KEY_GENERIC_INIT                 113
-#  define PROV_F_TRAILINGDATA                              114
-#  define PROV_F_UNPADBLOCK                                100
+#  define PROV_F_AESNI_INIT_KEY                            0
+#  define PROV_F_AES_BLOCK_FINAL                           0
+#  define PROV_F_AES_BLOCK_UPDATE                          0
+#  define PROV_F_AES_CIPHER                                0
+#  define PROV_F_AES_DINIT                                 0
+#  define PROV_F_AES_DUPCTX                                0
+#  define PROV_F_AES_EINIT                                 0
+#  define PROV_F_AES_GET_CTX_PARAMS                        0
+#  define PROV_F_AES_INIT_KEY                              0
+#  define PROV_F_AES_SET_CTX_PARAMS                        0
+#  define PROV_F_AES_STREAM_UPDATE                         0
+#  define PROV_F_AES_T4_INIT_KEY                           0
+#  define PROV_F_BLAKE2_MAC_INIT                           0
+#  define PROV_F_BLAKE2_MAC_SET_PARAMS                     0
+#  define PROV_F_GMAC_SET_PARAMS                           0
+#  define PROV_F_KMAC_SET_PARAMS                           0
+#  define PROV_F_POLY1305_SET_PARAMS                       0
+#  define PROV_F_PROV_AES_KEY_GENERIC_INIT                 0
+#  define PROV_F_TRAILINGDATA                              0
+#  define PROV_F_UNPADBLOCK                                0
 # endif
 
 /*

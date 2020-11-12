@@ -14,6 +14,7 @@
 
 # include <openssl/opensslconf.h>
 # include <openssl/symhacks.h>
+# include <openssl/cryptoerr_legacy.h>
 
 
 
@@ -21,30 +22,30 @@
  * RAND function codes.
  */
 # ifndef OPENSSL_NO_DEPRECATED_3_0
-#  define RAND_F_DRBG_BYTES                                101
-#  define RAND_F_DRBG_CTR_INIT                             125
-#  define RAND_F_DRBG_GET_ENTROPY                          105
-#  define RAND_F_DRBG_SETUP                                117
-#  define RAND_F_GET_ENTROPY                               106
-#  define RAND_F_RAND_BYTES                                100
-#  define RAND_F_RAND_BYTES_EX                             126
-#  define RAND_F_RAND_DRBG_ENABLE_LOCKING                  119
-#  define RAND_F_RAND_DRBG_GET_ENTROPY                     120
-#  define RAND_F_RAND_DRBG_GET_NONCE                       123
-#  define RAND_F_RAND_DRBG_INIT_METHOD                     130
-#  define RAND_F_RAND_DRBG_RESTART                         102
-#  define RAND_F_RAND_LOAD_FILE                            111
-#  define RAND_F_RAND_POOL_ACQUIRE_ENTROPY                 122
-#  define RAND_F_RAND_POOL_ADD                             103
-#  define RAND_F_RAND_POOL_ADD_BEGIN                       113
-#  define RAND_F_RAND_POOL_ADD_END                         114
-#  define RAND_F_RAND_POOL_ATTACH                          124
-#  define RAND_F_RAND_POOL_BYTES_NEEDED                    115
-#  define RAND_F_RAND_POOL_GROW                            127
-#  define RAND_F_RAND_POOL_NEW                             116
-#  define RAND_F_RAND_PRIV_BYTES_EX                        128
-#  define RAND_F_RAND_PSEUDO_BYTES                         129
-#  define RAND_F_RAND_WRITE_FILE                           112
+#  define RAND_F_DRBG_BYTES                                0
+#  define RAND_F_DRBG_CTR_INIT                             0
+#  define RAND_F_DRBG_GET_ENTROPY                          0
+#  define RAND_F_DRBG_SETUP                                0
+#  define RAND_F_GET_ENTROPY                               0
+#  define RAND_F_RAND_BYTES                                0
+#  define RAND_F_RAND_BYTES_EX                             0
+#  define RAND_F_RAND_DRBG_ENABLE_LOCKING                  0
+#  define RAND_F_RAND_DRBG_GET_ENTROPY                     0
+#  define RAND_F_RAND_DRBG_GET_NONCE                       0
+#  define RAND_F_RAND_DRBG_INIT_METHOD                     0
+#  define RAND_F_RAND_DRBG_RESTART                         0
+#  define RAND_F_RAND_LOAD_FILE                            0
+#  define RAND_F_RAND_POOL_ACQUIRE_ENTROPY                 0
+#  define RAND_F_RAND_POOL_ADD                             0
+#  define RAND_F_RAND_POOL_ADD_BEGIN                       0
+#  define RAND_F_RAND_POOL_ADD_END                         0
+#  define RAND_F_RAND_POOL_ATTACH                          0
+#  define RAND_F_RAND_POOL_BYTES_NEEDED                    0
+#  define RAND_F_RAND_POOL_GROW                            0
+#  define RAND_F_RAND_POOL_NEW                             0
+#  define RAND_F_RAND_PRIV_BYTES_EX                        0
+#  define RAND_F_RAND_PSEUDO_BYTES                         0
+#  define RAND_F_RAND_WRITE_FILE                           0
 # endif
 
 /*

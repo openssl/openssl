@@ -14,6 +14,7 @@
 
 # include <openssl/opensslconf.h>
 # include <openssl/symhacks.h>
+# include <openssl/cryptoerr_legacy.h>
 
 
 
@@ -21,12 +22,12 @@
  * ESS function codes.
  */
 # ifndef OPENSSL_NO_DEPRECATED_3_0
-#  define ESS_F_ESS_CERT_ID_NEW_INIT                       100
-#  define ESS_F_ESS_CERT_ID_V2_NEW_INIT                    101
-#  define ESS_F_ESS_SIGNING_CERT_ADD                       104
-#  define ESS_F_ESS_SIGNING_CERT_NEW_INIT                  102
-#  define ESS_F_ESS_SIGNING_CERT_V2_ADD                    105
-#  define ESS_F_ESS_SIGNING_CERT_V2_NEW_INIT               103
+#  define ESS_F_ESS_CERT_ID_NEW_INIT                       0
+#  define ESS_F_ESS_CERT_ID_V2_NEW_INIT                    0
+#  define ESS_F_ESS_SIGNING_CERT_ADD                       0
+#  define ESS_F_ESS_SIGNING_CERT_NEW_INIT                  0
+#  define ESS_F_ESS_SIGNING_CERT_V2_ADD                    0
+#  define ESS_F_ESS_SIGNING_CERT_V2_NEW_INIT               0
 # endif
 
 /*
