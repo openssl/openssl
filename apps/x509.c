@@ -54,7 +54,7 @@ typedef enum OPTION_choice {
     OPT_EXTENSIONS, OPT_IN, OPT_OUT, OPT_SIGNKEY, OPT_CA, OPT_CAKEY,
     OPT_CASERIAL, OPT_SET_SERIAL, OPT_NEW, OPT_FORCE_PUBKEY, OPT_SUBJ,
     OPT_ADDTRUST, OPT_ADDREJECT, OPT_SETALIAS, OPT_CERTOPT, OPT_NAMEOPT,
-    OPT_C, OPT_EMAIL, OPT_OCSP_URI, OPT_SERIAL, OPT_NEXT_SERIAL,
+    OPT_EMAIL, OPT_OCSP_URI, OPT_SERIAL, OPT_NEXT_SERIAL,
     OPT_MODULUS, OPT_PUBKEY, OPT_X509TOREQ, OPT_TEXT, OPT_HASH,
     OPT_ISSUER_HASH, OPT_SUBJECT, OPT_ISSUER, OPT_FINGERPRINT, OPT_DATES,
     OPT_PURPOSE, OPT_STARTDATE, OPT_ENDDATE, OPT_CHECKEND, OPT_CHECKHOST,
@@ -110,7 +110,6 @@ const OPTIONS x509_options[] = {
     {OPT_MORE_STR, 1, 1, "Exit 1 if so, 0 if not"},
     {"text", OPT_TEXT, '-', "Print the certificate in text form"},
     {"ext", OPT_EXT, 's', "Print various X509V3 extensions"},
-    {"C", OPT_C, '-', "Print out C code forms"},
 #ifndef OPENSSL_NO_MD5
     {"subject_hash_old", OPT_SUBJECT_HASH_OLD, '-',
      "Print old-style (MD5) subject hash value"},
@@ -188,7 +187,7 @@ int x509_main(int argc, char **argv)
     char *infile = NULL, *outfile = NULL, *keyfile = NULL, *CAfile = NULL;
     char *prog;
     int x509req = 0, days = DEF_DAYS, modulus = 0, pubkey = 0, pprint = 0;
-    int C = 0, CAformat = FORMAT_PEM, CAkeyformat = FORMAT_PEM;
+    int CAformat = FORMAT_PEM, CAkeyformat = FORMAT_PEM;
     int fingerprint = 0, reqfile = 0, checkend = 0;
     int informat = FORMAT_PEM, outformat = FORMAT_PEM, keyformat = FORMAT_PEM;
     int next_serial = 0, subject_hash = 0, issuer_hash = 0, ocspid = 0;
@@ -359,9 +358,6 @@ int x509_main(int argc, char **argv)
             break;
         case OPT_ENGINE:
             e = setup_engine(opt_arg(), 0);
-            break;
-        case OPT_C:
-            C = ++num;
             break;
         case OPT_EMAIL:
             email = ++num;
@@ -788,28 +784,6 @@ int x509_main(int argc, char **argv)
                     goto end;
                 }
                 PEM_write_bio_PUBKEY(out, pkey);
-            } else if (C == i) {
-                unsigned char *d;
-                char *m;
-                int len;
-
-                print_name(out, "/*\n"
-                                " * Subject: ", X509_get_subject_name(x), get_nameopt());
-                print_name(out, " * Issuer:  ", X509_get_issuer_name(x), get_nameopt());
-                BIO_puts(out, " */\n");
-
-                len = i2d_X509(x, NULL);
-                m = app_malloc(len, "x509 name buffer");
-                d = (unsigned char *)m;
-                len = i2d_X509_NAME(X509_get_subject_name(x), &d);
-                print_array(out, "the_subject_name", len, (unsigned char *)m);
-                d = (unsigned char *)m;
-                len = i2d_X509_PUBKEY(X509_get_X509_PUBKEY(x), &d);
-                print_array(out, "the_public_key", len, (unsigned char *)m);
-                d = (unsigned char *)m;
-                len = i2d_X509(x, &d);
-                print_array(out, "the_certificate", len, (unsigned char *)m);
-                OPENSSL_free(m);
             } else if (text == i) {
                 X509_print_ex(out, x, get_nameopt(), certflag);
             } else if (startdate == i) {
