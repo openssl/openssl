@@ -1358,7 +1358,9 @@ static int evp_pkey_reset_unlocked(EVP_PKEY *pk)
       const size_t offset = (unsigned char *)&pk->lock - (unsigned char *)pk;
 
       memset(pk, 0, offset);
-      memset(&pk->lock + 1, 0, sizeof(*pk) - offset - sizeof(pk->lock));
+      memset((unsigned char *)pk + offset + sizeof(pk->lock),
+             0,
+             sizeof(*pk) - offset - sizeof(pk->lock));
     } else {
       memset(pk, 0, sizeof(*pk));
     }
