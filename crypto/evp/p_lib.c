@@ -1362,7 +1362,7 @@ static int evp_pkey_reset_unlocked(EVP_PKEY *pk)
              0,
              sizeof(*pk) - offset - sizeof(pk->lock));
     }
-    /* EVP_PKEY_new will have zalloced the memory so no need to call memset */
+    /* EVP_PKEY_new uses zalloc so no need to call memset if pk->lock is NULL */
 
     pk->type = EVP_PKEY_NONE;
     pk->save_type = EVP_PKEY_NONE;
