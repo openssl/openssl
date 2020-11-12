@@ -1354,8 +1354,9 @@ static int evp_pkey_reset_unlocked(EVP_PKEY *pk)
     if (pk == NULL)
         return 0;
 
-    if (pk->lock) {
+    if (pk->lock != NULL) {
       const size_t offset = (unsigned char *)&pk->lock - (unsigned char *)pk;
+
       memset(pk, 0, offset);
       memset(&pk->lock + 1, 0, sizeof(*pk) - offset - sizeof(pk->lock));
     } else {
