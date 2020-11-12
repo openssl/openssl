@@ -19,36 +19,6 @@
 
 
 /*
- * RAND function codes.
- */
-# ifndef OPENSSL_NO_DEPRECATED_3_0
-#  define RAND_F_DRBG_BYTES                                0
-#  define RAND_F_DRBG_CTR_INIT                             0
-#  define RAND_F_DRBG_GET_ENTROPY                          0
-#  define RAND_F_DRBG_SETUP                                0
-#  define RAND_F_GET_ENTROPY                               0
-#  define RAND_F_RAND_BYTES                                0
-#  define RAND_F_RAND_BYTES_EX                             0
-#  define RAND_F_RAND_DRBG_ENABLE_LOCKING                  0
-#  define RAND_F_RAND_DRBG_GET_ENTROPY                     0
-#  define RAND_F_RAND_DRBG_GET_NONCE                       0
-#  define RAND_F_RAND_DRBG_INIT_METHOD                     0
-#  define RAND_F_RAND_DRBG_RESTART                         0
-#  define RAND_F_RAND_LOAD_FILE                            0
-#  define RAND_F_RAND_POOL_ACQUIRE_ENTROPY                 0
-#  define RAND_F_RAND_POOL_ADD                             0
-#  define RAND_F_RAND_POOL_ADD_BEGIN                       0
-#  define RAND_F_RAND_POOL_ADD_END                         0
-#  define RAND_F_RAND_POOL_ATTACH                          0
-#  define RAND_F_RAND_POOL_BYTES_NEEDED                    0
-#  define RAND_F_RAND_POOL_GROW                            0
-#  define RAND_F_RAND_POOL_NEW                             0
-#  define RAND_F_RAND_PRIV_BYTES_EX                        0
-#  define RAND_F_RAND_PSEUDO_BYTES                         0
-#  define RAND_F_RAND_WRITE_FILE                           0
-# endif
-
-/*
  * RAND reason codes.
  */
 # define RAND_R_ADDITIONAL_INPUT_TOO_LONG                 102

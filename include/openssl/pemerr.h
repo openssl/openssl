@@ -19,54 +19,6 @@
 
 
 /*
- * PEM function codes.
- */
-# ifndef OPENSSL_NO_DEPRECATED_3_0
-#  define PEM_F_B2I_DSS                                    0
-#  define PEM_F_B2I_PVK_BIO                                0
-#  define PEM_F_B2I_RSA                                    0
-#  define PEM_F_CHECK_BITLEN_DSA                           0
-#  define PEM_F_CHECK_BITLEN_RSA                           0
-#  define PEM_F_D2I_PKCS8PRIVATEKEY_BIO                    0
-#  define PEM_F_D2I_PKCS8PRIVATEKEY_FP                     0
-#  define PEM_F_DO_B2I                                     0
-#  define PEM_F_DO_B2I_BIO                                 0
-#  define PEM_F_DO_I2B                                     0
-#  define PEM_F_DO_PK8PKEY                                 0
-#  define PEM_F_DO_PK8PKEY_FP                              0
-#  define PEM_F_DO_PVK_BODY                                0
-#  define PEM_F_GET_HEADER_AND_DATA                        0
-#  define PEM_F_GET_NAME                                   0
-#  define PEM_F_I2B_PVK                                    0
-#  define PEM_F_I2B_PVK_BIO                                0
-#  define PEM_F_LOAD_IV                                    0
-#  define PEM_F_OSSL_DO_BLOB_HEADER                        0
-#  define PEM_F_OSSL_DO_PVK_HEADER                         0
-#  define PEM_F_PEM_ASN1_READ                              0
-#  define PEM_F_PEM_ASN1_READ_BIO                          0
-#  define PEM_F_PEM_ASN1_WRITE                             0
-#  define PEM_F_PEM_ASN1_WRITE_BIO                         0
-#  define PEM_F_PEM_DEF_CALLBACK                           0
-#  define PEM_F_PEM_DO_HEADER                              0
-#  define PEM_F_PEM_GET_EVP_CIPHER_INFO                    0
-#  define PEM_F_PEM_READ                                   0
-#  define PEM_F_PEM_READ_BIO                               0
-#  define PEM_F_PEM_READ_BIO_DHPARAMS                      0
-#  define PEM_F_PEM_READ_BIO_EX                            0
-#  define PEM_F_PEM_READ_BIO_PARAMETERS                    0
-#  define PEM_F_PEM_READ_BIO_PRIVATEKEY                    0
-#  define PEM_F_PEM_READ_DHPARAMS                          0
-#  define PEM_F_PEM_READ_PRIVATEKEY                        0
-#  define PEM_F_PEM_SIGNFINAL                              0
-#  define PEM_F_PEM_WRITE                                  0
-#  define PEM_F_PEM_WRITE_BIO                              0
-#  define PEM_F_PEM_WRITE_PRIVATEKEY                       0
-#  define PEM_F_PEM_X509_INFO_READ                         0
-#  define PEM_F_PEM_X509_INFO_READ_BIO                     0
-#  define PEM_F_PEM_X509_INFO_WRITE_BIO                    0
-# endif
-
-/*
  * PEM reason codes.
  */
 # define PEM_R_BAD_BASE64_DECODE                          100

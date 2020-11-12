@@ -19,50 +19,6 @@
 
 
 /*
- * OSSL_STORE function codes.
- */
-# ifndef OPENSSL_NO_DEPRECATED_3_0
-#  define OSSL_STORE_F_FILE_ATTACH                         0
-#  define OSSL_STORE_F_FILE_CTRL                           0
-#  define OSSL_STORE_F_FILE_FIND                           0
-#  define OSSL_STORE_F_FILE_GET_PASS                       0
-#  define OSSL_STORE_F_FILE_LOAD                           0
-#  define OSSL_STORE_F_FILE_LOAD_TRY_DECODE                0
-#  define OSSL_STORE_F_FILE_NAME_TO_URI                    0
-#  define OSSL_STORE_F_FILE_OPEN                           0
-#  define OSSL_STORE_F_OSSL_STORE_ATTACH                   0
-#  define OSSL_STORE_F_OSSL_STORE_EXPECT                   0
-#  define OSSL_STORE_F_OSSL_STORE_FIND                     0
-#  define OSSL_STORE_F_OSSL_STORE_GET0_LOADER_INT          0
-#  define OSSL_STORE_F_OSSL_STORE_INFO_GET1_CERT           0
-#  define OSSL_STORE_F_OSSL_STORE_INFO_GET1_CRL            0
-#  define OSSL_STORE_F_OSSL_STORE_INFO_GET1_NAME           0
-#  define OSSL_STORE_F_OSSL_STORE_INFO_GET1_NAME_DESCRIPTION 0
-#  define OSSL_STORE_F_OSSL_STORE_INFO_GET1_PARAMS         0
-#  define OSSL_STORE_F_OSSL_STORE_INFO_GET1_PKEY           0
-#  define OSSL_STORE_F_OSSL_STORE_INFO_NEW_CERT            0
-#  define OSSL_STORE_F_OSSL_STORE_INFO_NEW_CRL             0
-#  define OSSL_STORE_F_OSSL_STORE_INFO_NEW_EMBEDDED        0
-#  define OSSL_STORE_F_OSSL_STORE_INFO_NEW_NAME            0
-#  define OSSL_STORE_F_OSSL_STORE_INFO_NEW_PARAMS          0
-#  define OSSL_STORE_F_OSSL_STORE_INFO_NEW_PKEY            0
-#  define OSSL_STORE_F_OSSL_STORE_INFO_SET0_NAME_DESCRIPTION 0
-#  define OSSL_STORE_F_OSSL_STORE_INIT_ONCE                0
-#  define OSSL_STORE_F_OSSL_STORE_LOADER_NEW               0
-#  define OSSL_STORE_F_OSSL_STORE_OPEN                     0
-#  define OSSL_STORE_F_OSSL_STORE_OPEN_INT                 0
-#  define OSSL_STORE_F_OSSL_STORE_REGISTER_LOADER_INT      0
-#  define OSSL_STORE_F_OSSL_STORE_SEARCH_BY_ALIAS          0
-#  define OSSL_STORE_F_OSSL_STORE_SEARCH_BY_ISSUER_SERIAL  0
-#  define OSSL_STORE_F_OSSL_STORE_SEARCH_BY_KEY_FINGERPRINT 0
-#  define OSSL_STORE_F_OSSL_STORE_SEARCH_BY_NAME           0
-#  define OSSL_STORE_F_OSSL_STORE_UNREGISTER_LOADER_INT    0
-#  define OSSL_STORE_F_TRY_DECODE_PARAMS                   0
-#  define OSSL_STORE_F_TRY_DECODE_PKCS12                   0
-#  define OSSL_STORE_F_TRY_DECODE_PKCS8ENCRYPTED           0
-# endif
-
-/*
  * OSSL_STORE reason codes.
  */
 # define OSSL_STORE_R_AMBIGUOUS_CONTENT_TYPE              107

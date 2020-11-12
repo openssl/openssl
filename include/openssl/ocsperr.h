@@ -21,26 +21,6 @@
 
 
 /*
- * OCSP function codes.
- */
-#  ifndef OPENSSL_NO_DEPRECATED_3_0
-#   define OCSP_F_D2I_OCSP_NONCE                            0
-#   define OCSP_F_OCSP_BASIC_ADD1_STATUS                    0
-#   define OCSP_F_OCSP_BASIC_SIGN                           0
-#   define OCSP_F_OCSP_BASIC_SIGN_CTX                       0
-#   define OCSP_F_OCSP_BASIC_VERIFY                         0
-#   define OCSP_F_OCSP_CERT_ID_NEW                          0
-#   define OCSP_F_OCSP_CHECK_DELEGATED                      0
-#   define OCSP_F_OCSP_CHECK_IDS                            0
-#   define OCSP_F_OCSP_CHECK_ISSUER                         0
-#   define OCSP_F_OCSP_CHECK_VALIDITY                       0
-#   define OCSP_F_OCSP_MATCH_ISSUERID                       0
-#   define OCSP_F_OCSP_REQUEST_SIGN                         0
-#   define OCSP_F_OCSP_REQUEST_VERIFY                       0
-#   define OCSP_F_OCSP_RESPONSE_GET1_BASIC                  0
-#  endif
-
-/*
  * OCSP reason codes.
  */
 #  define OCSP_R_CERTIFICATE_VERIFY_ERROR                  101

@@ -19,12 +19,6 @@
 
 
 /*
- * OSSL_ENCODER function codes.
- */
-# ifndef OPENSSL_NO_DEPRECATED_3_0
-# endif
-
-/*
  * OSSL_ENCODER reason codes.
  */
 # define OSSL_ENCODER_R_ENCODER_NOT_FOUND                 101

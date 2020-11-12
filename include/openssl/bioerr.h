@@ -19,68 +19,6 @@
 
 
 /*
- * BIO function codes.
- */
-# ifndef OPENSSL_NO_DEPRECATED_3_0
-#  define BIO_F_ACPT_STATE                                 0
-#  define BIO_F_ADDRINFO_WRAP                              0
-#  define BIO_F_ADDR_STRINGS                               0
-#  define BIO_F_BIO_ACCEPT                                 0
-#  define BIO_F_BIO_ACCEPT_EX                              0
-#  define BIO_F_BIO_ACCEPT_NEW                             0
-#  define BIO_F_BIO_ADDR_NEW                               0
-#  define BIO_F_BIO_BIND                                   0
-#  define BIO_F_BIO_CALLBACK_CTRL                          0
-#  define BIO_F_BIO_CONNECT                                0
-#  define BIO_F_BIO_CONNECT_NEW                            0
-#  define BIO_F_BIO_CTRL                                   0
-#  define BIO_F_BIO_GETS                                   0
-#  define BIO_F_BIO_GET_HOST_IP                            0
-#  define BIO_F_BIO_GET_NEW_INDEX                          0
-#  define BIO_F_BIO_GET_PORT                               0
-#  define BIO_F_BIO_LISTEN                                 0
-#  define BIO_F_BIO_LOOKUP                                 0
-#  define BIO_F_BIO_LOOKUP_EX                              0
-#  define BIO_F_BIO_MAKE_PAIR                              0
-#  define BIO_F_BIO_METH_NEW                               0
-#  define BIO_F_BIO_NEW                                    0
-#  define BIO_F_BIO_NEW_DGRAM_SCTP                         0
-#  define BIO_F_BIO_NEW_FILE                               0
-#  define BIO_F_BIO_NEW_MEM_BUF                            0
-#  define BIO_F_BIO_NREAD                                  0
-#  define BIO_F_BIO_NREAD0                                 0
-#  define BIO_F_BIO_NWRITE                                 0
-#  define BIO_F_BIO_NWRITE0                                0
-#  define BIO_F_BIO_PARSE_HOSTSERV                         0
-#  define BIO_F_BIO_PUTS                                   0
-#  define BIO_F_BIO_READ                                   0
-#  define BIO_F_BIO_READ_EX                                0
-#  define BIO_F_BIO_READ_INTERN                            0
-#  define BIO_F_BIO_SOCKET                                 0
-#  define BIO_F_BIO_SOCKET_NBIO                            0
-#  define BIO_F_BIO_SOCK_INFO                              0
-#  define BIO_F_BIO_SOCK_INIT                              0
-#  define BIO_F_BIO_WRITE                                  0
-#  define BIO_F_BIO_WRITE_EX                               0
-#  define BIO_F_BIO_WRITE_INTERN                           0
-#  define BIO_F_BUFFER_CTRL                                0
-#  define BIO_F_CONN_CTRL                                  0
-#  define BIO_F_CONN_STATE                                 0
-#  define BIO_F_DGRAM_SCTP_NEW                             0
-#  define BIO_F_DGRAM_SCTP_READ                            0
-#  define BIO_F_DGRAM_SCTP_WRITE                           0
-#  define BIO_F_DOAPR_OUTCH                                0
-#  define BIO_F_FILE_CTRL                                  0
-#  define BIO_F_FILE_READ                                  0
-#  define BIO_F_LINEBUFFER_CTRL                            0
-#  define BIO_F_LINEBUFFER_NEW                             0
-#  define BIO_F_MEM_WRITE                                  0
-#  define BIO_F_NBIOF_NEW                                  0
-#  define BIO_F_SLG_WRITE                                  0
-#  define BIO_F_SSL_NEW                                    0
-# endif
-
-/*
  * BIO reason codes.
  */
 # define BIO_R_ACCEPT_ERROR                               100

@@ -20,32 +20,6 @@
 
 
 /*
- * CAPI function codes.
- */
-# ifndef OPENSSL_NO_DEPRECATED_3_0
-#  define CAPI_F_CAPI_CERT_GET_FNAME                       0
-#  define CAPI_F_CAPI_CTRL                                 0
-#  define CAPI_F_CAPI_CTX_NEW                              0
-#  define CAPI_F_CAPI_CTX_SET_PROVNAME                     0
-#  define CAPI_F_CAPI_DSA_DO_SIGN                          0
-#  define CAPI_F_CAPI_GET_KEY                              0
-#  define CAPI_F_CAPI_GET_PKEY                             0
-#  define CAPI_F_CAPI_GET_PROVNAME                         0
-#  define CAPI_F_CAPI_GET_PROV_INFO                        0
-#  define CAPI_F_CAPI_INIT                                 0
-#  define CAPI_F_CAPI_LIST_CONTAINERS                      0
-#  define CAPI_F_CAPI_LOAD_PRIVKEY                         0
-#  define CAPI_F_CAPI_OPEN_STORE                           0
-#  define CAPI_F_CAPI_RSA_PRIV_DEC                         0
-#  define CAPI_F_CAPI_RSA_PRIV_ENC                         0
-#  define CAPI_F_CAPI_RSA_SIGN                             0
-#  define CAPI_F_CAPI_VTRACE                               0
-#  define CAPI_F_CERT_SELECT_DIALOG                        0
-#  define CAPI_F_CLIENT_CERT_SELECT                        0
-#  define CAPI_F_WIDE_TO_ASC                               0
-# endif
-
-/*
  * CAPI reason codes.
  */
 # define CAPI_R_CANT_CREATE_HASH_OBJECT                   100

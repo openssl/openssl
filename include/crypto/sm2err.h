@@ -24,30 +24,6 @@ extern "C" {
 int err_load_SM2_strings_int(void);
 
 /*
- * SM2 function codes.
- */
-#  ifndef OPENSSL_NO_DEPRECATED_3_0
-#   define SM2_F_PKEY_SM2_COPY                              0
-#   define SM2_F_PKEY_SM2_CTRL                              0
-#   define SM2_F_PKEY_SM2_CTRL_STR                          0
-#   define SM2_F_PKEY_SM2_DIGEST_CUSTOM                     0
-#   define SM2_F_PKEY_SM2_INIT                              0
-#   define SM2_F_PKEY_SM2_SIGN                              0
-#   define SM2_F_SM2_COMPUTE_MSG_HASH                       0
-#   define SM2_F_SM2_COMPUTE_USERID_DIGEST                  0
-#   define SM2_F_SM2_COMPUTE_Z_DIGEST                       0
-#   define SM2_F_SM2_DECRYPT                                0
-#   define SM2_F_SM2_ENCRYPT                                0
-#   define SM2_F_SM2_INTERNAL_SIGN                          0
-#   define SM2_F_SM2_INTERNAL_VERIFY                        0
-#   define SM2_F_SM2_PLAINTEXT_SIZE                         0
-#   define SM2_F_SM2_SIGN                                   0
-#   define SM2_F_SM2_SIG_GEN                                0
-#   define SM2_F_SM2_SIG_VERIFY                             0
-#   define SM2_F_SM2_VERIFY                                 0
-#  endif
-
-/*
  * SM2 reason codes.
  */
 #  define SM2_R_ASN1_ERROR                                 100

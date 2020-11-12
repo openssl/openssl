@@ -20,12 +20,6 @@
 
 
 /*
- * ATTIC function codes.
- */
-# ifndef OPENSSL_NO_DEPRECATED_3_0
-# endif
-
-/*
  * ATTIC reason codes.
  */
 # define ATTIC_R_AMBIGUOUS_CONTENT_TYPE                   100
