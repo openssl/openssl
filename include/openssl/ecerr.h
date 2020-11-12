@@ -14,21 +14,16 @@
 
 # include <openssl/opensslconf.h>
 # include <openssl/symhacks.h>
+# include <openssl/cryptoerr_legacy.h>
 
-
-# include <openssl/opensslconf.h>
 
 # ifndef OPENSSL_NO_EC
 
-#  ifdef  __cplusplus
-extern "C"
-#  endif
-int ERR_load_EC_strings(void);
 
 /*
  * EC function codes.
  */
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+#  ifndef OPENSSL_NO_DEPRECATED_3_0
 #   define EC_F_BN_TO_FELEM                                 0
 #   define EC_F_D2I_ECPARAMETERS                            0
 #   define EC_F_D2I_ECPKPARAMETERS                          0
@@ -219,7 +214,7 @@ int ERR_load_EC_strings(void);
 #   define EC_F_S390X_PKEY_ECX_KEYGEN25519                  0
 #   define EC_F_S390X_PKEY_ECX_KEYGEN448                    0
 #   define EC_F_VALIDATE_ECX_DERIVE                         0
-# endif
+#  endif
 
 /*
  * EC reason codes.

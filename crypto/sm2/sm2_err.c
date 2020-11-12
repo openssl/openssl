@@ -11,7 +11,9 @@
 #include <openssl/err.h>
 #include "crypto/sm2err.h"
 
-#ifndef OPENSSL_NO_ERR
+#ifndef OPENSSL_NO_SM2
+
+# ifndef OPENSSL_NO_ERR
 
 static const ERR_STRING_DATA SM2_str_reasons[] = {
     {ERR_PACK(ERR_LIB_SM2, 0, SM2_R_ASN1_ERROR), "asn1 error"},
@@ -31,13 +33,16 @@ static const ERR_STRING_DATA SM2_str_reasons[] = {
     {0, NULL}
 };
 
-#endif
+# endif
 
-int ERR_load_SM2_strings(void)
+int err_load_SM2_strings_int(void)
 {
-#ifndef OPENSSL_NO_ERR
+# ifndef OPENSSL_NO_ERR
     if (ERR_reason_error_string(SM2_str_reasons[0].error) == NULL)
         ERR_load_strings_const(SM2_str_reasons);
-#endif
+# endif
     return 1;
 }
+#else
+NON_EMPTY_TRANSLATION_UNIT
+#endif

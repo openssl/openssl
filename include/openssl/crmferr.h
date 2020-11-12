@@ -14,21 +14,16 @@
 
 # include <openssl/opensslconf.h>
 # include <openssl/symhacks.h>
+# include <openssl/cryptoerr_legacy.h>
 
-
-# include <openssl/opensslconf.h>
 
 # ifndef OPENSSL_NO_CRMF
 
-#  ifdef  __cplusplus
-extern "C"
-#  endif
-int ERR_load_CRMF_strings(void);
 
 /*
  * CRMF function codes.
  */
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+#  ifndef OPENSSL_NO_DEPRECATED_3_0
 #   define CRMF_F_CRMF_POPOSIGNINGKEY_INIT                  0
 #   define CRMF_F_OSSL_CRMF_CERTID_GEN                      0
 #   define CRMF_F_OSSL_CRMF_CERTTEMPLATE_FILL               0
@@ -43,12 +38,12 @@ int ERR_load_CRMF_strings(void);
 #   define CRMF_F_OSSL_CRMF_MSG_PUSH0_REGINFO               0
 #   define CRMF_F_OSSL_CRMF_MSG_SET0_EXTENSIONS             0
 #   define CRMF_F_OSSL_CRMF_MSG_SET0_SINGLEPUBINFO          0
+#   define CRMF_F_OSSL_CRMF_MSG_SET0_VALIDITY               0
 #   define CRMF_F_OSSL_CRMF_MSG_SET_CERTREQID               0
 #   define CRMF_F_OSSL_CRMF_MSG_SET_PKIPUBLICATIONINFO_ACTION 0
-#   define CRMF_F_OSSL_CRMF_MSG_SET0_VALIDITY               0
 #   define CRMF_F_OSSL_CRMF_PBMP_NEW                        0
 #   define CRMF_F_OSSL_CRMF_PBM_NEW                         0
-# endif
+#  endif
 
 /*
  * CRMF reason codes.

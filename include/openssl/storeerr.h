@@ -8,18 +8,15 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef OPENSSL_OSSL_STOREERR_H
-# define OPENSSL_OSSL_STOREERR_H
+#ifndef OPENSSL_STOREERR_H
+# define OPENSSL_STOREERR_H
 # pragma once
 
 # include <openssl/opensslconf.h>
 # include <openssl/symhacks.h>
+# include <openssl/cryptoerr_legacy.h>
 
 
-# ifdef  __cplusplus
-extern "C"
-# endif
-int ERR_load_OSSL_STORE_strings(void);
 
 /*
  * OSSL_STORE function codes.

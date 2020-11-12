@@ -8,8 +8,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef OPENSSL_ATTICERR_H
-# define OPENSSL_ATTICERR_H
+#ifndef OSSL_E_LOADER_ATTIC_ERR_H
+# define OSSL_E_LOADER_ATTIC_ERR_H
 # pragma once
 
 # include <openssl/opensslconf.h>

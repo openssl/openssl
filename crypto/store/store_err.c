@@ -10,6 +10,7 @@
 
 #include <openssl/err.h>
 #include <openssl/storeerr.h>
+#include "crypto/storeerr.h"
 
 #ifndef OPENSSL_NO_ERR
 
@@ -62,7 +63,7 @@ static const ERR_STRING_DATA OSSL_STORE_str_reasons[] = {
 
 #endif
 
-int ERR_load_OSSL_STORE_strings(void)
+int err_load_OSSL_STORE_strings_int(void)
 {
 #ifndef OPENSSL_NO_ERR
     if (ERR_reason_error_string(OSSL_STORE_str_reasons[0].error) == NULL)

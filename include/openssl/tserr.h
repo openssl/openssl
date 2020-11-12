@@ -14,21 +14,16 @@
 
 # include <openssl/opensslconf.h>
 # include <openssl/symhacks.h>
+# include <openssl/cryptoerr_legacy.h>
 
-
-# include <openssl/opensslconf.h>
 
 # ifndef OPENSSL_NO_TS
 
-#  ifdef  __cplusplus
-extern "C"
-#  endif
-int ERR_load_TS_strings(void);
 
 /*
  * TS function codes.
  */
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+#  ifndef OPENSSL_NO_DEPRECATED_3_0
 #   define TS_F_DEF_SERIAL_CB                               0
 #   define TS_F_DEF_TIME_CB                                 0
 #   define TS_F_INT_TS_RESP_VERIFY_TOKEN                    0
@@ -80,7 +75,7 @@ int ERR_load_TS_strings(void);
 #   define TS_F_TS_VERIFY                                   0
 #   define TS_F_TS_VERIFY_CERT                              0
 #   define TS_F_TS_VERIFY_CTX_NEW                           0
-# endif
+#  endif
 
 /*
  * TS reason codes.

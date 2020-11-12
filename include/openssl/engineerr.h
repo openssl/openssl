@@ -14,21 +14,16 @@
 
 # include <openssl/opensslconf.h>
 # include <openssl/symhacks.h>
+# include <openssl/cryptoerr_legacy.h>
 
-
-# include <openssl/opensslconf.h>
 
 # ifndef OPENSSL_NO_ENGINE
 
-#  ifdef  __cplusplus
-extern "C"
-#  endif
-int ERR_load_ENGINE_strings(void);
 
 /*
  * ENGINE function codes.
  */
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+#  ifndef OPENSSL_NO_DEPRECATED_3_0
 #   define ENGINE_F_DIGEST_UPDATE                           0
 #   define ENGINE_F_DYNAMIC_CTRL                            0
 #   define ENGINE_F_DYNAMIC_GET_DATA_CTX                    0
@@ -69,7 +64,7 @@ int ERR_load_ENGINE_strings(void);
 #   define ENGINE_F_INT_ENGINE_CONFIGURE                    0
 #   define ENGINE_F_INT_ENGINE_MODULE_INIT                  0
 #   define ENGINE_F_OSSL_HMAC_INIT                          0
-# endif
+#  endif
 
 /*
  * ENGINE reason codes.

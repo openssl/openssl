@@ -14,21 +14,16 @@
 
 # include <openssl/opensslconf.h>
 # include <openssl/symhacks.h>
+# include <openssl/cryptoerr_legacy.h>
 
-
-# include <openssl/opensslconf.h>
 
 # ifndef OPENSSL_NO_DH
 
-#  ifdef  __cplusplus
-extern "C"
-#  endif
-int ERR_load_DH_strings(void);
 
 /*
  * DH function codes.
  */
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+#  ifndef OPENSSL_NO_DEPRECATED_3_0
 #   define DH_F_COMPUTE_KEY                                 0
 #   define DH_F_DHPARAMS_PRINT_FP                           0
 #   define DH_F_DH_BUF2KEY                                  0
@@ -57,7 +52,7 @@ int ERR_load_DH_strings(void);
 #   define DH_F_PKEY_DH_DERIVE                              0
 #   define DH_F_PKEY_DH_INIT                                0
 #   define DH_F_PKEY_DH_KEYGEN                              0
-# endif
+#  endif
 
 /*
  * DH reason codes.

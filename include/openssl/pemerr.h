@@ -14,12 +14,9 @@
 
 # include <openssl/opensslconf.h>
 # include <openssl/symhacks.h>
+# include <openssl/cryptoerr_legacy.h>
 
 
-# ifdef  __cplusplus
-extern "C"
-# endif
-int ERR_load_PEM_strings(void);
 
 /*
  * PEM function codes.
@@ -34,17 +31,17 @@ int ERR_load_PEM_strings(void);
 #  define PEM_F_D2I_PKCS8PRIVATEKEY_FP                     0
 #  define PEM_F_DO_B2I                                     0
 #  define PEM_F_DO_B2I_BIO                                 0
-#  define PEM_F_DO_BLOB_HEADER                             0
 #  define PEM_F_DO_I2B                                     0
 #  define PEM_F_DO_PK8PKEY                                 0
 #  define PEM_F_DO_PK8PKEY_FP                              0
 #  define PEM_F_DO_PVK_BODY                                0
-#  define PEM_F_DO_PVK_HEADER                              0
 #  define PEM_F_GET_HEADER_AND_DATA                        0
 #  define PEM_F_GET_NAME                                   0
 #  define PEM_F_I2B_PVK                                    0
 #  define PEM_F_I2B_PVK_BIO                                0
 #  define PEM_F_LOAD_IV                                    0
+#  define PEM_F_OSSL_DO_BLOB_HEADER                        0
+#  define PEM_F_OSSL_DO_PVK_HEADER                         0
 #  define PEM_F_PEM_ASN1_READ                              0
 #  define PEM_F_PEM_ASN1_READ_BIO                          0
 #  define PEM_F_PEM_ASN1_WRITE                             0

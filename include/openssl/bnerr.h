@@ -14,12 +14,9 @@
 
 # include <openssl/opensslconf.h>
 # include <openssl/symhacks.h>
+# include <openssl/cryptoerr_legacy.h>
 
 
-# ifdef  __cplusplus
-extern "C"
-# endif
-int ERR_load_BN_strings(void);
 
 /*
  * BN function codes.
@@ -46,6 +43,7 @@ int ERR_load_BN_strings(void);
 #  define BN_F_BN_GENCB_NEW                                0
 #  define BN_F_BN_GENERATE_DSA_NONCE                       0
 #  define BN_F_BN_GENERATE_PRIME_EX                        0
+#  define BN_F_BN_GENERATE_PRIME_EX2                       0
 #  define BN_F_BN_GF2M_MOD                                 0
 #  define BN_F_BN_GF2M_MOD_EXP                             0
 #  define BN_F_BN_GF2M_MOD_MUL                             0

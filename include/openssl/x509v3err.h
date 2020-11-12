@@ -14,12 +14,9 @@
 
 # include <openssl/opensslconf.h>
 # include <openssl/symhacks.h>
+# include <openssl/cryptoerr_legacy.h>
 
 
-# ifdef  __cplusplus
-extern "C"
-# endif
-int ERR_load_X509V3_strings(void);
 
 /*
  * X509V3 function codes.
@@ -123,13 +120,13 @@ int ERR_load_X509V3_strings(void);
 # define X509V3_R_INVALID_ASRANGE                         163
 # define X509V3_R_INVALID_BOOLEAN_STRING                  104
 # define X509V3_R_INVALID_CERTIFICATE                     158
+# define X509V3_R_INVALID_EMPTY_NAME                      108
 # define X509V3_R_INVALID_EXTENSION_STRING                105
 # define X509V3_R_INVALID_INHERITANCE                     165
 # define X509V3_R_INVALID_IPADDRESS                       166
 # define X509V3_R_INVALID_MULTIPLE_RDNS                   161
 # define X509V3_R_INVALID_NAME                            106
 # define X509V3_R_INVALID_NULL_ARGUMENT                   107
-# define X509V3_R_INVALID_EMPTY_NAME                      108
 # define X509V3_R_INVALID_NULL_VALUE                      109
 # define X509V3_R_INVALID_NUMBER                          140
 # define X509V3_R_INVALID_NUMBERS                         141

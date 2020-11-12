@@ -14,21 +14,16 @@
 
 # include <openssl/opensslconf.h>
 # include <openssl/symhacks.h>
+# include <openssl/cryptoerr_legacy.h>
 
-
-# include <openssl/opensslconf.h>
 
 # ifndef OPENSSL_NO_CMS
 
-#  ifdef  __cplusplus
-extern "C"
-#  endif
-int ERR_load_CMS_strings(void);
 
 /*
  * CMS function codes.
  */
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+#  ifndef OPENSSL_NO_DEPRECATED_3_0
 #   define CMS_F_CHECK_CONTENT                              0
 #   define CMS_F_CMS_ADD0_CERT                              0
 #   define CMS_F_CMS_ADD0_RECIPIENT_KEY                     0
@@ -121,7 +116,7 @@ int ERR_load_CMS_strings(void);
 #   define CMS_F_CMS_VERIFY                                 0
 #   define CMS_F_ESS_CHECK_SIGNING_CERTS                    0
 #   define CMS_F_KEK_UNWRAP_KEY                             0
-# endif
+#  endif
 
 /*
  * CMS reason codes.

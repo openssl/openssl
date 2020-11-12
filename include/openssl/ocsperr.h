@@ -14,21 +14,16 @@
 
 # include <openssl/opensslconf.h>
 # include <openssl/symhacks.h>
+# include <openssl/cryptoerr_legacy.h>
 
-
-# include <openssl/opensslconf.h>
 
 # ifndef OPENSSL_NO_OCSP
 
-#  ifdef  __cplusplus
-extern "C"
-#  endif
-int ERR_load_OCSP_strings(void);
 
 /*
  * OCSP function codes.
  */
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+#  ifndef OPENSSL_NO_DEPRECATED_3_0
 #   define OCSP_F_D2I_OCSP_NONCE                            0
 #   define OCSP_F_OCSP_BASIC_ADD1_STATUS                    0
 #   define OCSP_F_OCSP_BASIC_SIGN                           0
@@ -43,7 +38,7 @@ int ERR_load_OCSP_strings(void);
 #   define OCSP_F_OCSP_REQUEST_SIGN                         0
 #   define OCSP_F_OCSP_REQUEST_VERIFY                       0
 #   define OCSP_F_OCSP_RESPONSE_GET1_BASIC                  0
-# endif
+#  endif
 
 /*
  * OCSP reason codes.

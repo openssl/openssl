@@ -14,21 +14,16 @@
 
 # include <openssl/opensslconf.h>
 # include <openssl/symhacks.h>
+# include <openssl/cryptoerr_legacy.h>
 
-
-# include <openssl/opensslconf.h>
 
 # ifndef OPENSSL_NO_DSA
 
-#  ifdef  __cplusplus
-extern "C"
-#  endif
-int ERR_load_DSA_strings(void);
 
 /*
  * DSA function codes.
  */
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+#  ifndef OPENSSL_NO_DEPRECATED_3_0
 #   define DSA_F_DSAPARAMS_PRINT                            0
 #   define DSA_F_DSAPARAMS_PRINT_FP                         0
 #   define DSA_F_DSA_BUILTIN_PARAMGEN                       0
@@ -52,7 +47,7 @@ int ERR_load_DSA_strings(void);
 #   define DSA_F_PKEY_DSA_CTRL                              0
 #   define DSA_F_PKEY_DSA_CTRL_STR                          0
 #   define DSA_F_PKEY_DSA_KEYGEN                            0
-# endif
+#  endif
 
 /*
  * DSA reason codes.

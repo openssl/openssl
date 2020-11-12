@@ -14,21 +14,16 @@
 
 # include <openssl/opensslconf.h>
 # include <openssl/symhacks.h>
+# include <openssl/cryptoerr_legacy.h>
 
-
-# include <openssl/opensslconf.h>
 
 # ifndef OPENSSL_NO_CT
 
-#  ifdef  __cplusplus
-extern "C"
-#  endif
-int ERR_load_CT_strings(void);
 
 /*
  * CT function codes.
  */
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+#  ifndef OPENSSL_NO_DEPRECATED_3_0
 #   define CT_F_CTLOG_NEW                                   0
 #   define CT_F_CTLOG_NEW_FROM_BASE64                       0
 #   define CT_F_CTLOG_NEW_FROM_CONF                         0
@@ -56,7 +51,7 @@ int ERR_load_CT_strings(void);
 #   define CT_F_SCT_SET_LOG_ENTRY_TYPE                      0
 #   define CT_F_SCT_SET_SIGNATURE_NID                       0
 #   define CT_F_SCT_SET_VERSION                             0
-# endif
+#  endif
 
 /*
  * CT reason codes.

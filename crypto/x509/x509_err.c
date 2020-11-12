@@ -10,6 +10,7 @@
 
 #include <openssl/err.h>
 #include <openssl/x509err.h>
+#include "crypto/x509err.h"
 
 #ifndef OPENSSL_NO_ERR
 
@@ -83,7 +84,7 @@ static const ERR_STRING_DATA X509_str_reasons[] = {
 
 #endif
 
-int ERR_load_X509_strings(void)
+int err_load_X509_strings_int(void)
 {
 #ifndef OPENSSL_NO_ERR
     if (ERR_reason_error_string(X509_str_reasons[0].error) == NULL)
