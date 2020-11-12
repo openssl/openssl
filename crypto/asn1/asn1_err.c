@@ -21,6 +21,7 @@ static const ERR_STRING_DATA ASN1_str_reasons[] = {
     "asn1 sig parse error"},
     {ERR_PACK(ERR_LIB_ASN1, 0, ASN1_R_AUX_ERROR), "aux error"},
     {ERR_PACK(ERR_LIB_ASN1, 0, ASN1_R_BAD_OBJECT_HEADER), "bad object header"},
+    {ERR_PACK(ERR_LIB_ASN1, 0, ASN1_R_BAD_TEMPLATE), "bad template"},
     {ERR_PACK(ERR_LIB_ASN1, 0, ASN1_R_BMPSTRING_IS_WRONG_LENGTH),
     "bmpstring is wrong length"},
     {ERR_PACK(ERR_LIB_ASN1, 0, ASN1_R_BN_LIB), "bn lib"},
