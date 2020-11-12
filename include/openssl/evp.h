@@ -102,8 +102,8 @@
 const char *OQSKEM_options(void);
 const char *OQSSIG_options(void);
 int oqs_size(const EVP_PKEY *pkey);
-int* get_oqssl_sig_nids();
-int* get_oqssl_kem_nids();
+int* get_oqssl_sig_nids(void);
+int* get_oqssl_kem_nids(void);
 char* get_oqs_alg_name(int openssl_nid);
 
 

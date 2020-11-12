@@ -102,13 +102,11 @@
 #ifndef OPENSSL_NO_OQSKEM
 # include <oqs/oqs.h>
 extern const char *OQSKEM_options(void);
-extern int* get_oqssl_kem_nids(); 
 #endif
 #include <openssl/modes.h>
 #ifndef OPENSSL_NO_OQSSIG
 # include <oqs/oqs.h>
 extern const char *OQSSIG_options(void);
-extern int* get_oqssl_sig_nids(); 
 extern int oqs_size(const EVP_PKEY *pkey);
 #endif
 #include <openssl/modes.h>
