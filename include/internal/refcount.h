@@ -166,7 +166,7 @@ typedef int CRYPTO_REF_COUNT;
 
 # ifdef REF_PRINT
 #  define REF_PRINT_COUNT(a, b) \
-        fprintf(stderr, "%p:%4d:%s\n", b, b->references, a)
+        fprintf(stderr, "%p:%4d:%s\n", (void*)b, b->references, a)
 # else
 #  define REF_PRINT_COUNT(a, b)
 # endif
