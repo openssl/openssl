@@ -1,8 +1,8 @@
 OpenSSL User Support resources
 ==============================
 
-See the OpenSSL website www.openssl.org for details on how to obtain
-commercial technical support.
+See the <https://www.openssl.org/support/contracts.html> for details on how to
+obtain commercial technical support.
 
 If you have general questions about using OpenSSL
 -------------------------------------------------
