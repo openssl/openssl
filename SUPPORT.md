@@ -15,7 +15,12 @@ An overview over the [mailing lists](#mailing-lists) can be found below.
 If you think you found a Bug
 ----------------------------
 
-If you have any problems with OpenSSL then please take the following steps first:
+*NOTE: this section assumes that you want to report it or figure it out and
+fix it.  What's written here is not to be taken as a recipe for how to get a
+working production installation*
+
+If you have any problems with OpenSSL then please take the following steps
+first:
 
 - Search the mailing lists and/or the GitHub issues to find out whether
   the problem has already been reported.
