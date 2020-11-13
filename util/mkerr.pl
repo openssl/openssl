@@ -542,10 +542,20 @@ EOF
             print OUT "\n";
         }
 
-        while (length($indent) > 0) {
+        # This doesn't go all the way down to zero, to allow for the ending
+        # brace for 'extern "C" {'.
+        while (length($indent) > 1) {
             $indent = substr $indent, 0, -1;
             print OUT "#${indent}endif\n";
         }
+
+        print OUT <<"EOF";
+
+# ifdef  __cplusplus
+}
+# endif
+#endif
+EOF
         close OUT;
     }
 
