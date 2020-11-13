@@ -686,6 +686,51 @@ static int test_EVP_DigestVerifyInit(void)
     return ret;
 }
 
+/*
+ * Test corner cases of EVP_DigestInit/Update/Final API call behavior.
+ */
+static int test_EVP_Digest(void)
+{
+    int ret = 0;
+    EVP_MD_CTX *md_ctx = NULL;
+    unsigned char md[EVP_MAX_MD_SIZE];
+
+    if (!TEST_ptr(md_ctx = EVP_MD_CTX_new()))
+        goto out;
+
+    if (!TEST_true(EVP_DigestInit_ex(md_ctx, EVP_sha256(), NULL))
+            || !TEST_true(EVP_DigestUpdate(md_ctx, kMsg, sizeof(kMsg)))
+            || !TEST_true(EVP_DigestFinal(md_ctx, md, NULL))
+            /* EVP_DigestFinal resets the EVP_MD_CTX. */
+            || !TEST_ptr_eq(EVP_MD_CTX_md(md_ctx), NULL))
+        goto out;
+
+    if (!TEST_true(EVP_DigestInit_ex(md_ctx, EVP_sha256(), NULL))
+            || !TEST_true(EVP_DigestUpdate(md_ctx, kMsg, sizeof(kMsg)))
+            || !TEST_true(EVP_DigestFinal_ex(md_ctx, md, NULL))
+            /* EVP_DigestFinal_ex does not reset the EVP_MD_CTX. */
+            || !TEST_ptr(EVP_MD_CTX_md(md_ctx))
+            /*
+             * EVP_DigestInit_ex with NULL type should work on
+             * pre-initialized context.
+             */
+            || !TEST_true(EVP_DigestInit_ex(md_ctx, NULL, NULL)))
+        goto out;
+
+    if (!TEST_true(EVP_DigestInit_ex(md_ctx, EVP_shake256(), NULL))
+            || !TEST_true(EVP_DigestUpdate(md_ctx, kMsg, sizeof(kMsg)))
+            || !TEST_true(EVP_DigestFinalXOF(md_ctx, md, sizeof(md)))
+            /* EVP_DigestFinalXOF does not reset the EVP_MD_CTX. */
+            || !TEST_ptr(EVP_MD_CTX_md(md_ctx))
+            || !TEST_true(EVP_DigestInit_ex(md_ctx, NULL, NULL)))
+        goto out;
+    ret = 1;
+
+ out:
+    EVP_MD_CTX_free(md_ctx);
+    return ret;
+}
+
 static int test_d2i_AutoPrivateKey(int i)
 {
     int ret = 0;
@@ -2109,6 +2154,7 @@ int setup_tests(void)
     ADD_TEST(test_EVP_set_default_properties);
     ADD_ALL_TESTS(test_EVP_DigestSignInit, 9);
     ADD_TEST(test_EVP_DigestVerifyInit);
+    ADD_TEST(test_EVP_Digest);
     ADD_TEST(test_EVP_Enveloped);
     ADD_ALL_TESTS(test_d2i_AutoPrivateKey, OSSL_NELEM(keydata));
     ADD_TEST(test_privatekey_to_pkcs8);
