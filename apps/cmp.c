@@ -1834,8 +1834,10 @@ static int setup_client_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
         CMP_err("missing -server option");
         goto err;
     }
-    if (!OSSL_HTTP_parse_url(opt_server, &server, &port, &portnum, &path, &ssl))
+    if (!OSSL_HTTP_parse_url(opt_server, &server, &port, &portnum, &path, &ssl)) {
+        CMP_err1("cannot parse -server URL: %s", opt_server);
         goto err;
+    }
     if (ssl && !opt_tls_used) {
         CMP_err("missing -tls_used option since -server URL indicates https");
         goto err;
