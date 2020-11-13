@@ -170,8 +170,15 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
         ctx->provctx = NULL;
     }
 
-    if (type != NULL)
+    if (type != NULL) {
         ctx->reqdigest = type;
+    } else {
+        if (ctx->digest == NULL) {
+            ERR_raise(ERR_LIB_EVP, EVP_R_NO_DIGEST_SET);
+            return 0;
+        }
+        type = ctx->digest;
+    }
 
     /* TODO(3.0): Legacy work around code below. Remove this */
 #if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODULE)
@@ -292,12 +299,6 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
             ctx->engine = impl;
         } else
             ctx->engine = NULL;
-    } else {
-        if (!ctx->digest) {
-            ERR_raise(ERR_LIB_EVP, EVP_R_NO_DIGEST_SET);
-            return 0;
-        }
-        type = ctx->digest;
     }
 #endif
     if (ctx->digest != type) {
