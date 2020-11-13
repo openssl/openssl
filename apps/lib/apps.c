@@ -562,6 +562,10 @@ EVP_PKEY *load_key(const char *uri, int format, int may_stdin,
     if (desc == NULL)
         desc = "private key";
 
+    if (strncmp(uri, ENGINE_SCHEME, ENGINE_SCHEME_LEN) == 0) {
+        uri += ENGINE_SCHEME_LEN;
+        format = FORMAT_ENGINE;
+    }
     if (format == FORMAT_ENGINE) {
         if (e == NULL) {
             BIO_printf(bio_err, "No engine specified for loading %s\n", desc);
@@ -588,6 +592,10 @@ EVP_PKEY *load_pubkey(const char *uri, int format, int maybe_stdin,
     if (desc == NULL)
         desc = "public key";
 
+    if (strncmp(uri, ENGINE_SCHEME, ENGINE_SCHEME_LEN) == 0) {
+        uri += ENGINE_SCHEME_LEN;
+        format = FORMAT_ENGINE;
+    }
     if (format == FORMAT_ENGINE) {
         if (e == NULL) {
             BIO_printf(bio_err, "No engine specified for loading %s\n", desc);

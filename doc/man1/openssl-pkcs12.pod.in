@@ -12,12 +12,12 @@ B<openssl> B<pkcs12>
 [B<-export>]
 [B<-chain>]
 [B<-untrusted> I<filename>]
-[B<-inkey> I<file_or_id>]
+[B<-inkey> I<uri>]
 [B<-certfile> I<filename>]
 [B<-passcerts> I<arg>]
 [B<-name> I<name>]
 [B<-caname> I<name>]
-[B<-in> I<filename>]
+[B<-in> I<uri>]
 [B<-out> I<filename>]
 [B<-noout>]
 [B<-nomacver>]
@@ -85,12 +85,13 @@ Many further options such as B<-chain> make sense only with B<-export>.
 
 Print out a usage message.
 
-=item B<-in> I<filename>
+=item B<-in> I<uri>
 
 This specifies the input filename or URI.
 Standard input is used by default.
 Without the B<-export> option this is a PKCS#12 file to be parsed.
-With the B<-export> option this is a file with certificates and possibly a key.
+With the B<-export> option this is a file with certificates and possibly a key,
+or a URI that refers to a key accessed via an engine.
 
 =item B<-out> I<filename>
 
@@ -205,12 +206,13 @@ The order doesn't matter but one private key and
 its corresponding certificate should be present. If additional
 certificates are present they will also be included in the PKCS#12 file.
 
-=item B<-inkey> I<file_or_id>
+=item B<-inkey> I<uri>
 
-File to read private key from for PKCS12 output.
-If not present then the input file (B<-in> argument) must contain a private key.
-If no engine is used, the argument is taken as a file; if an engine is
-specified, the argument is given to the engine as a key identifier.
+The private key input for PKCS12 output. If this option is not specified then
+the input file (B<-in> argument) must contain a private key.
+If no engine is used, the argument is taken as a file;
+if the B<-engine> option is used or the URI has prefix C<org.openssl.engine:>
+then the rest of the URI is taken as key identifier for the given engine.
 
 =item B<-name> I<friendlyname>
 

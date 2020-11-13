@@ -527,6 +527,10 @@ of formats.
 Since OpenSSL 3.0 keys, single certificates, and CRLs can be read from
 files in any of the B<DER>, B<PEM> or B<P12> formats,
 while specifying their input format is no more needed.
+In order to access a key via an engine the input format B<ENGINE> may be used;
+alternatively the key identifier in the <uri> argument of the respective key
+option may be preceded by C<org.openssl.engine:>.
+See L<openssl(1)/Engine Options> for an example usage of the latter.
 
 The list of acceptable formats, and the default, is
 described in each command documentation.  The list of formats is
@@ -543,9 +547,7 @@ A binary format, encoded or parsed according to Distinguished Encoding Rules
 
 Used to specify that the cryptographic material is in an OpenSSL B<engine>.
 An engine must be configured or specified using the B<-engine> option.
-In addition, the B<-input> flag can be used to name a specific object in
-the engine.
-A password, such as the B<-passin> flag often must be specified as well.
+A password or PIN may be supplied to the engine using the B<-passin> option.
 
 =item B<P12>
 
@@ -1300,10 +1302,19 @@ respectively.
 
 =item B<-engine> I<id>
 
-Use the engine identified by I<id> and use all the methods it
-implements (algorithms, key storage, etc.), unless specified otherwise in
-the command-specific documentation or it is configured to do so, as described
-in L<config(5)/Engine Configuration Module>.
+Load the engine identified by I<id>
+and use all the methods it implements (algorithms, key storage, etc.),
+unless specified otherwise in the command-specific documentation
+or it is configured to do so, as described in L<config(5)/Engine Configuration>.
+
+The engine will be used for keys specified with prefix C<org.openssl.engine:>,
+as well as for keys for which an option like B<-keyform engine> is given.
+
+Options specifying keys, like B<-key>, B<-keyfile>, and B<-signkey> can prefix
+C<org.openssl.engine:> to identifiers for tokens held by the engine.
+The following example utilizes the RFC 7512 PKCS #11 URI scheme
+as supported, e.g., by libp11:
+C<-key org.openssl.engine:pkcs11:object=some-private-key;pin-value=1234>
 
 =back
 

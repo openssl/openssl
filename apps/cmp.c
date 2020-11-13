@@ -413,7 +413,7 @@ const OPTIONS cmp_options[] = {
     {OPT_MORE_STR, 0, 0,
      "Options like -key specifying keys held in the engine can give key IDs"},
     {OPT_MORE_STR, 0, 0,
-     "prefixed by 'engine:', e.g. '-key engine:pkcs11:object=mykey;pin-value=1234'"},
+     "with prefix such as 'org.openssl.engine:pkcs11:object=mykey;pin-value=1234'"},
 #endif
     OPT_PROV_OPTIONS,
 

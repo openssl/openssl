@@ -150,6 +150,8 @@ __owur int ctx_set_ctlog_list_file(SSL_CTX *ctx, const char *path);
 
 # endif
 
+#define ENGINE_SCHEME "org.openssl.engine:" /* this is a private URI scheme */
+#define ENGINE_SCHEME_LEN 19 /* strlen(ENGINE_SCHEME) */
 ENGINE *setup_engine_methods(const char *id, unsigned int methods, int debug);
 # define setup_engine(e, debug) setup_engine_methods(e, (unsigned int)-1, debug)
 void release_engine(ENGINE *e);
