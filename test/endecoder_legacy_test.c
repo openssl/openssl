@@ -86,6 +86,7 @@ static struct test_stanza_st {
     PEM_read_bio_of_void *pem_read_bio_params;
     PEM_read_bio_of_void *pem_read_bio_PUBKEY;
 } test_stanzas[] = {
+#ifndef OPENSSL_NO_DH
     { "DH", { "DH", "type-specific" }, EVP_PKEY_DH,
       NULL,                      /* No i2d_DHPrivateKey */
       NULL,                      /* No i2d_DHPublicKey */
@@ -120,6 +121,8 @@ static struct test_stanza_st {
       NULL,                      /* No PEM_read_bio_DHxPublicKey */
       NULL,                      /* No PEM_read_bio_DHxparams */
       NULL },                    /* No PEM_read_bio_DHx_PUBKEY */
+#endif
+#ifndef OPENSSL_NO_DSA
     { "DSA", { "DSA", "type-specific" }, EVP_PKEY_DSA,
       (i2d_of_void *)i2d_DSAPrivateKey,
       (i2d_of_void *)i2d_DSAPublicKey,
@@ -137,6 +140,8 @@ static struct test_stanza_st {
       NULL,                      /* No PEM_write_bio_DSAPublicKey */
       (PEM_read_bio_of_void *)PEM_read_bio_DSAparams,
       (PEM_read_bio_of_void *)PEM_read_bio_DSA_PUBKEY },
+#endif
+#ifndef OPENSSL_NO_EC
     { "EC", { "EC", "type-specific" }, EVP_PKEY_EC,
       (i2d_of_void *)i2d_ECPrivateKey,
       NULL,                      /* No i2d_ECPublicKey */
@@ -154,6 +159,7 @@ static struct test_stanza_st {
       NULL,                      /* No PEM_read_bio_ECPublicKey */
       NULL,                      /* No PEM_read_bio_ECParameters */
       (PEM_read_bio_of_void *)PEM_read_bio_EC_PUBKEY, },
+#endif
 #ifndef OPENSSL_NO_DEPRECATED_3_0
     { "RSA", { "RSA", "type-specific" }, EVP_PKEY_RSA,
       (i2d_of_void *)i2d_RSAPrivateKey,
