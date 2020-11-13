@@ -50,4 +50,8 @@ int err_load_PROP_strings_int(void);
 # define PROP_R_STRING_TOO_LONG                           109
 # define PROP_R_TRAILING_CHARACTERS                       110
 
+
+# ifdef  __cplusplus
+}
+# endif
 #endif

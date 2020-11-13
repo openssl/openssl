@@ -85,4 +85,8 @@ int err_load_DSO_strings_int(void);
 #  define DSO_R_UNSUPPORTED                                108
 
 # endif
+
+# ifdef  __cplusplus
+}
+# endif
 #endif

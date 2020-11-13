@@ -20,4 +20,8 @@ extern "C" {
 # endif
 
 int err_load_HTTP_strings_int(void);
+
+# ifdef  __cplusplus
+}
+# endif
 #endif

@@ -179,4 +179,8 @@ int err_load_PROV_strings_int(void);
 # define PROV_R_XTS_DATA_UNIT_IS_TOO_LARGE                148
 # define PROV_R_XTS_DUPLICATED_KEYS                       149
 
+
+# ifdef  __cplusplus
+}
+# endif
 #endif

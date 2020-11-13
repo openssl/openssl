@@ -20,4 +20,8 @@ extern "C" {
 # endif
 
 int err_load_RSA_strings_int(void);
+
+# ifdef  __cplusplus
+}
+# endif
 #endif

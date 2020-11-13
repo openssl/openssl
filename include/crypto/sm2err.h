@@ -65,4 +65,8 @@ int err_load_SM2_strings_int(void);
 #  define SM2_R_USER_ID_TOO_LARGE                          106
 
 # endif
+
+# ifdef  __cplusplus
+}
+# endif
 #endif

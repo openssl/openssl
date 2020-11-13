@@ -23,4 +23,8 @@ extern "C" {
 
 int err_load_COMP_strings_int(void);
 # endif
+
+# ifdef  __cplusplus
+}
+# endif
 #endif
