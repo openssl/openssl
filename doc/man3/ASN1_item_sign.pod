@@ -39,17 +39,22 @@ ASN1 sign and verify
 
 =head1 DESCRIPTION
 
-ASN1_item_sign_ex() is a helper function that is used internally by other
-functions such as X509_sign() to sign an object (such as a certificate) using
-the ASN.1 structure I<it>, algorithm identifiers I<algor1> and I<algor2>,
-private key I<pkey>, message digest I<md> and internal data I<data>.
+ASN1_item_sign_ex() is used to sign arbitrary ASN1 data using a data object
+I<data>, the ASN.1 structure I<it>, algorithm identifiers I<algor1> and I<algor2>,
+private key I<pkey> and message digest I<md>.
 The data that is signed is formed by taking the data object in I<data> and
 converting it to der format using the ASN.1 structure I<it>.
+Valid values that can be used by the ASN.1 structure I<it> are
+ASN1_ITEM_rptr(X509_CINF), ASN1_ITEM_rptr(X509_REQ_INFO) and
+ASN1_ITEM_rptr(X509_CRL_INFO).
 The B<OSSL_LIB_CTX> specified in I<libctx> and the property query string
 specified in I<props> are used when searching for algorithms in providers.
 The generated signature is set into I<signature>.
 The optional parameter I<id> can be NULL, but can be set for special key types.
-See EVP_PKEY_CTX_set1_id() for further info.
+See EVP_PKEY_CTX_set1_id() for further info. If I<algor1> or I<algor2> are not
+NULL then they are set to the AlgorithmIdentifier that corresponds to the
+combination of signature algorithm and digest algorithm for the signature
+operation of the I<pkey>.
 
 ASN1_item_sign() is similar to ASN1_item_sign_ex() but uses default values of
 NULL for the I<id>, I<libctx> and I<propq>.
@@ -57,8 +62,7 @@ NULL for the I<id>, I<libctx> and I<propq>.
 ASN1_item_sign_ctx() is similiar to ASN1_item_sign() but uses the parameters
 contained in digest context I<ctx>.
 
-ASN1_item_verify_ex() is a helper function that is used internally other
-functions such as X509_verify() to verify the signature I<signature> of internal
+ASN1_item_verify_ex() is used to verify the signature I<signature> of internal
 data I<data> using the public key I<pkey> and algorithm identifier I<alg>.
 The data that is verified is formed by taking the data object in I<data> and
 converting it to der format using the ASN.1 structure I<it>.
@@ -82,6 +86,31 @@ zero for failure.
 All verify functions return 1 if the signature is valid and 0 if the signature
 check fails. If the signature could not be checked at all because it was
 ill-formed or some other error occurred then -1 is returned.
+
+=head1 EXAMPLES
+
+In the following example a certificate is signed using the key contained in an
+md_ctx. The signature is written to cert->signature.
+
+    int do_sign_cert(X509 *cert, EVP_MD_CTX *md_ctx)
+    {
+      /* 'it' contains the mapping between ASN.1 data and an object X509_CINF */
+      const ASN1_ITEM *it = ASN1_ITEM_rptr(X509_CINF);
+
+      /*
+       * cert->cert_info is the X509_CINF object that will be
+       * converted into DER data and then signed.
+       * cert->cert_info.signature is filled with the private key's signing
+       * algorithm id.
+       * cert->sig_alg is another copy of the signing algorithm id that sits
+       * within the cert object (it must match the cert->cert_info.signature)
+       * when verifying.
+       */
+      return ASN1_item_sign_ctx(it,
+                                &cert->cert_info.signature, &cert->sig_alg,
+                                &cert->signature,
+                                &cert->cert_info, md_ctx);
+    }
 
 =head1 SEE ALSO
 
