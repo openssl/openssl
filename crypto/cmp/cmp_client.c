@@ -886,6 +886,7 @@ STACK_OF(OSSL_CMP_ITAV) *OSSL_CMP_exec_GENM_ses(OSSL_CMP_CTX *ctx)
         ERR_raise(ERR_LIB_CMP, CMP_R_INVALID_ARGS);
         return 0;
     }
+    ctx->status = -1;
 
     if ((genm = ossl_cmp_genm_new(ctx)) == NULL)
         goto err;
