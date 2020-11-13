@@ -63,7 +63,7 @@ typedef int EVP_PKEY_print_fn(BIO *out, const EVP_PKEY *pkey,
                               int indent, ASN1_PCTX *pctx);
 typedef int EVP_PKEY_eq_fn(const EVP_PKEY *a, const EVP_PKEY *b);
 
-struct test_stanza_st {
+static struct test_stanza_st {
     const char *keytype;
     const char *structure[2];
     int evp_type;
