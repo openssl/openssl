@@ -28,6 +28,7 @@
 #include <openssl/err.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
+#include <openssl/http.h>
 #include <openssl/pem.h>
 #include <openssl/store.h>
 #include <openssl/pkcs12.h>
@@ -468,6 +469,11 @@ CONF *app_load_config_modules(const char *configfile)
     return conf;
 }
 
+#define IS_HTTP(uri) \
+    (strncmp(uri, OSSL_HTTP_PREFIX, strlen(OSSL_HTTP_PREFIX)) == 0)
+#define IS_HTTPS(uri) \
+    (strncmp(uri, OSSL_HTTPS_PREFIX, strlen(OSSL_HTTPS_PREFIX)) == 0)
+
 X509 *load_cert_pass(const char *uri, int maybe_stdin,
                      const char *pass, const char *desc)
 {
@@ -475,8 +481,13 @@ X509 *load_cert_pass(const char *uri, int maybe_stdin,
 
     if (desc == NULL)
         desc = "certificate";
-    (void)load_key_certs_crls(uri, maybe_stdin, pass, desc,
-                              NULL, NULL, NULL, &cert, NULL, NULL, NULL);
+    if (IS_HTTPS(uri))
+        BIO_printf(bio_err, "Loading %s over HTTPS is unsupported\n", desc);
+    else if (IS_HTTP(uri))
+        cert = X509_load_http(uri, NULL, NULL, 0 /* timeout */);
+    else
+        (void)load_key_certs_crls(uri, maybe_stdin, pass, desc,
+                                  NULL, NULL, NULL, &cert, NULL, NULL, NULL);
     if (cert == NULL) {
         BIO_printf(bio_err, "Unable to load %s\n", desc);
         ERR_print_errors(bio_err);
@@ -484,15 +495,19 @@ X509 *load_cert_pass(const char *uri, int maybe_stdin,
     return cert;
 }
 
-/* the format parameter is meanwhile not needed anymore and thus ignored */
 X509_CRL *load_crl(const char *uri, const char *desc)
 {
     X509_CRL *crl = NULL;
 
     if (desc == NULL)
         desc = "CRL";
-    (void)load_key_certs_crls(uri, 0, NULL, desc,
-                              NULL, NULL,  NULL, NULL, NULL, &crl, NULL);
+    if (IS_HTTPS(uri))
+        BIO_printf(bio_err, "Loading %s over HTTPS is unsupported\n", desc);
+    else if (IS_HTTP(uri))
+        crl = X509_CRL_load_http(uri, NULL, NULL, 0 /* timeout */);
+    else
+        (void)load_key_certs_crls(uri, 0, NULL, desc,
+                                  NULL, NULL,  NULL, NULL, NULL, &crl, NULL);
     if (crl == NULL) {
         BIO_printf(bio_err, "Unable to load %s\n", desc);
         ERR_print_errors(bio_err);
@@ -1894,7 +1909,8 @@ static const char *get_dp_url(DIST_POINT *dp)
         uri = GENERAL_NAME_get0_value(gen, &gtype);
         if (gtype == GEN_URI && ASN1_STRING_length(uri) > 6) {
             const char *uptr = (const char *)ASN1_STRING_get0_data(uri);
-            if (strncmp(uptr, "http://", 7) == 0)
+
+            if (IS_HTTP(uptr)) /* can/should not use HTTPS here */
                 return uptr;
         }
     }
