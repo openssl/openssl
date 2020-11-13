@@ -78,9 +78,9 @@ Only subscribers can post to [openssl-users] or [openssl-project].  The
 archives are made public, however.  For more information, see the [mailing
 lists] page.
 
-There was an [openssl-dev] list has been discontinued since development is now
-taking place in form of GitHub pull requests. Although not active anymore, the
-searchable archive may still contain useful information.
+There was an [openssl-dev] list that has been discontinued since development
+is now taking place in the form of GitHub pull requests. Although not active
+anymore, the searchable archive may still contain useful information.
 
 <!-- Links -->
 
