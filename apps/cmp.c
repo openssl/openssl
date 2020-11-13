@@ -2870,6 +2870,8 @@ int cmp_main(int argc, char **argv)
         default:
             break;
         }
+        if (OSSL_CMP_CTX_get_status(cmp_ctx) < 0)
+            goto err; /* we got no response, maybe even did not send request */
 
         {
             /* print PKIStatusInfo */
