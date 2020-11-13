@@ -455,7 +455,7 @@ int EVP_DigestFinalXOF(EVP_MD_CTX *ctx, unsigned char *md, size_t size)
 
     if (EVP_MD_CTX_set_params(ctx, params) > 0)
         ret = ctx->digest->dfinal(ctx->provctx, md, &size, size);
-    EVP_MD_CTX_reset(ctx);
+
     return ret;
 
 legacy:
