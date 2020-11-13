@@ -32,6 +32,9 @@
 # include <sys/types.h>
 # if defined(OPENSSL_SYS_UNIX)
 #  include <sys/mman.h>
+#  if defined(__FreeBSD__)
+#    define MADV_DONTDUMP MADV_NOCORE
+#  endif
 # endif
 # if defined(OPENSSL_SYS_LINUX)
 #  include <sys/syscall.h>
