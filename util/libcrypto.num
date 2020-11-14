@@ -2832,7 +2832,7 @@ CMS_add_simple_smimecap                 2893	3_0_0	EXIST::FUNCTION:CMS
 IPAddressChoice_free                    2894	3_0_0	EXIST::FUNCTION:RFC3779
 d2i_X509_AUX                            2895	3_0_0	EXIST::FUNCTION:
 X509_get_default_cert_area              2896	3_0_0	EXIST::FUNCTION:
-ERR_load_DSO_strings                    2897	3_0_0	EXIST::FUNCTION:
+ERR_load_DSO_strings                    2897	3_0_0	NOEXIST::FUNCTION:
 ASIdentifiers_it                        2898	3_0_0	EXIST::FUNCTION:RFC3779
 BN_mod_lshift                           2899	3_0_0	EXIST::FUNCTION:
 ENGINE_get_last                         2900	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,ENGINE
