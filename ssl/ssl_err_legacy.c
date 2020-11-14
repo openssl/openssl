@@ -11,7 +11,11 @@
 #include <openssl/sslerr_legacy.h>
 #include "sslerr.h"
 
+#ifndef OPENSSL_NO_DEPRECATED_3_0
 int ERR_load_SSL_strings(void)
 {
     return err_load_SSL_strings_int();
 }
+#else
+NON_EMPTY_TRANSLATION_UNIT
+#endif
