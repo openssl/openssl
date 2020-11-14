@@ -417,7 +417,7 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
 
                     include_path = OPENSSL_malloc(newlen);
                     if (include_path == NULL) {
-                        CONFerr(CONF_F_DEF_LOAD_BIO, ERR_R_MALLOC_FAILURE);
+                        ERR_raise(ERR_LIB_CONF, ERR_R_MALLOC_FAILURE);
                         OPENSSL_free(include);
                         goto err;
                     }
