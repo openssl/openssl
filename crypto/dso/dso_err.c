@@ -11,7 +11,9 @@
 #include <openssl/err.h>
 #include "internal/dsoerr.h"
 
-#ifndef OPENSSL_NO_ERR
+#ifndef OPENSSL_NO_DSO
+
+# ifndef OPENSSL_NO_ERR
 
 static const ERR_STRING_DATA DSO_str_reasons[] = {
     {ERR_PACK(ERR_LIB_DSO, 0, DSO_R_CTRL_FAILED), "control command failed"},
@@ -44,13 +46,16 @@ static const ERR_STRING_DATA DSO_str_reasons[] = {
     {0, NULL}
 };
 
-#endif
+# endif
 
 int err_load_DSO_strings_int(void)
 {
-#ifndef OPENSSL_NO_ERR
+# ifndef OPENSSL_NO_ERR
     if (ERR_reason_error_string(DSO_str_reasons[0].error) == NULL)
         ERR_load_strings_const(DSO_str_reasons);
-#endif
+# endif
     return 1;
 }
+#else
+NON_EMPTY_TRANSLATION_UNIT
+#endif

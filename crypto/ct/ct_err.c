@@ -12,7 +12,9 @@
 #include <openssl/cterr.h>
 #include "crypto/cterr.h"
 
-#ifndef OPENSSL_NO_ERR
+#ifndef OPENSSL_NO_CT
+
+# ifndef OPENSSL_NO_ERR
 
 static const ERR_STRING_DATA CT_str_reasons[] = {
     {ERR_PACK(ERR_LIB_CT, 0, CT_R_BASE64_DECODE_ERROR), "base64 decode error"},
@@ -44,13 +46,16 @@ static const ERR_STRING_DATA CT_str_reasons[] = {
     {0, NULL}
 };
 
-#endif
+# endif
 
 int err_load_CT_strings_int(void)
 {
-#ifndef OPENSSL_NO_ERR
+# ifndef OPENSSL_NO_ERR
     if (ERR_reason_error_string(CT_str_reasons[0].error) == NULL)
         ERR_load_strings_const(CT_str_reasons);
-#endif
+# endif
     return 1;
 }
+#else
+NON_EMPTY_TRANSLATION_UNIT
+#endif

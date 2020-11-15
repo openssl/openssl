@@ -12,7 +12,9 @@
 #include <openssl/engineerr.h>
 #include "crypto/engineerr.h"
 
-#ifndef OPENSSL_NO_ERR
+#ifndef OPENSSL_NO_ENGINE
+
+# ifndef OPENSSL_NO_ERR
 
 static const ERR_STRING_DATA ENGINE_str_reasons[] = {
     {ERR_PACK(ERR_LIB_ENGINE, 0, ENGINE_R_ALREADY_LOADED), "already loaded"},
@@ -77,13 +79,16 @@ static const ERR_STRING_DATA ENGINE_str_reasons[] = {
     {0, NULL}
 };
 
-#endif
+# endif
 
 int err_load_ENGINE_strings_int(void)
 {
-#ifndef OPENSSL_NO_ERR
+# ifndef OPENSSL_NO_ERR
     if (ERR_reason_error_string(ENGINE_str_reasons[0].error) == NULL)
         ERR_load_strings_const(ENGINE_str_reasons);
-#endif
+# endif
     return 1;
 }
+#else
+NON_EMPTY_TRANSLATION_UNIT
+#endif
