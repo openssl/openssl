@@ -778,7 +778,8 @@ sub check {
 
     open my $OUT, '>', $temp
         or die "Can't open $temp, $!";
-    podchecker($filename, $OUT);
+    err($id, "POD errors")
+        if podchecker($filename, $OUT) != 0;
     close $OUT;
     open $OUT, '<', $temp
         or die "Can't read $temp, $!";
