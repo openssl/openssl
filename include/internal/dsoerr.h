@@ -19,72 +19,69 @@
 extern "C" {
 # endif
 
-# ifndef OPENSSL_NO_DSO
-
 int err_load_DSO_strings_int(void);
 
 /*
  * DSO function codes.
  */
-#  ifndef OPENSSL_NO_DEPRECATED_3_0
-#   define DSO_F_DLFCN_BIND_FUNC                            0
-#   define DSO_F_DLFCN_LOAD                                 0
-#   define DSO_F_DLFCN_MERGER                               0
-#   define DSO_F_DLFCN_NAME_CONVERTER                       0
-#   define DSO_F_DLFCN_UNLOAD                               0
-#   define DSO_F_DL_BIND_FUNC                               0
-#   define DSO_F_DL_LOAD                                    0
-#   define DSO_F_DL_MERGER                                  0
-#   define DSO_F_DL_NAME_CONVERTER                          0
-#   define DSO_F_DL_UNLOAD                                  0
-#   define DSO_F_DSO_BIND_FUNC                              0
-#   define DSO_F_DSO_CONVERT_FILENAME                       0
-#   define DSO_F_DSO_CTRL                                   0
-#   define DSO_F_DSO_FREE                                   0
-#   define DSO_F_DSO_GET_FILENAME                           0
-#   define DSO_F_DSO_GLOBAL_LOOKUP                          0
-#   define DSO_F_DSO_LOAD                                   0
-#   define DSO_F_DSO_MERGE                                  0
-#   define DSO_F_DSO_NEW_METHOD                             0
-#   define DSO_F_DSO_PATHBYADDR                             0
-#   define DSO_F_DSO_SET_FILENAME                           0
-#   define DSO_F_DSO_UP_REF                                 0
-#   define DSO_F_VMS_BIND_SYM                               0
-#   define DSO_F_VMS_LOAD                                   0
-#   define DSO_F_VMS_MERGER                                 0
-#   define DSO_F_VMS_UNLOAD                                 0
-#   define DSO_F_WIN32_BIND_FUNC                            0
-#   define DSO_F_WIN32_GLOBALLOOKUP                         0
-#   define DSO_F_WIN32_JOINER                               0
-#   define DSO_F_WIN32_LOAD                                 0
-#   define DSO_F_WIN32_MERGER                               0
-#   define DSO_F_WIN32_NAME_CONVERTER                       0
-#   define DSO_F_WIN32_PATHBYADDR                           0
-#   define DSO_F_WIN32_SPLITTER                             0
-#   define DSO_F_WIN32_UNLOAD                               0
-#  endif
+# ifndef OPENSSL_NO_DEPRECATED_3_0
+#  define DSO_F_DLFCN_BIND_FUNC                            0
+#  define DSO_F_DLFCN_LOAD                                 0
+#  define DSO_F_DLFCN_MERGER                               0
+#  define DSO_F_DLFCN_NAME_CONVERTER                       0
+#  define DSO_F_DLFCN_UNLOAD                               0
+#  define DSO_F_DL_BIND_FUNC                               0
+#  define DSO_F_DL_LOAD                                    0
+#  define DSO_F_DL_MERGER                                  0
+#  define DSO_F_DL_NAME_CONVERTER                          0
+#  define DSO_F_DL_UNLOAD                                  0
+#  define DSO_F_DSO_BIND_FUNC                              0
+#  define DSO_F_DSO_CONVERT_FILENAME                       0
+#  define DSO_F_DSO_CTRL                                   0
+#  define DSO_F_DSO_FREE                                   0
+#  define DSO_F_DSO_GET_FILENAME                           0
+#  define DSO_F_DSO_GLOBAL_LOOKUP                          0
+#  define DSO_F_DSO_LOAD                                   0
+#  define DSO_F_DSO_MERGE                                  0
+#  define DSO_F_DSO_NEW_METHOD                             0
+#  define DSO_F_DSO_PATHBYADDR                             0
+#  define DSO_F_DSO_SET_FILENAME                           0
+#  define DSO_F_DSO_UP_REF                                 0
+#  define DSO_F_VMS_BIND_SYM                               0
+#  define DSO_F_VMS_LOAD                                   0
+#  define DSO_F_VMS_MERGER                                 0
+#  define DSO_F_VMS_UNLOAD                                 0
+#  define DSO_F_WIN32_BIND_FUNC                            0
+#  define DSO_F_WIN32_GLOBALLOOKUP                         0
+#  define DSO_F_WIN32_JOINER                               0
+#  define DSO_F_WIN32_LOAD                                 0
+#  define DSO_F_WIN32_MERGER                               0
+#  define DSO_F_WIN32_NAME_CONVERTER                       0
+#  define DSO_F_WIN32_PATHBYADDR                           0
+#  define DSO_F_WIN32_SPLITTER                             0
+#  define DSO_F_WIN32_UNLOAD                               0
+# endif
 
 /*
  * DSO reason codes.
  */
-#  define DSO_R_CTRL_FAILED                                100
-#  define DSO_R_DSO_ALREADY_LOADED                         110
-#  define DSO_R_EMPTY_FILE_STRUCTURE                       113
-#  define DSO_R_FAILURE                                    114
-#  define DSO_R_FILENAME_TOO_BIG                           101
-#  define DSO_R_FINISH_FAILED                              102
-#  define DSO_R_INCORRECT_FILE_SYNTAX                      115
-#  define DSO_R_LOAD_FAILED                                103
-#  define DSO_R_NAME_TRANSLATION_FAILED                    109
-#  define DSO_R_NO_FILENAME                                111
-#  define DSO_R_NULL_HANDLE                                104
-#  define DSO_R_SET_FILENAME_FAILED                        112
-#  define DSO_R_STACK_ERROR                                105
-#  define DSO_R_SYM_FAILURE                                106
-#  define DSO_R_UNLOAD_FAILED                              107
-#  define DSO_R_UNSUPPORTED                                108
+# define DSO_R_CTRL_FAILED                                100
+# define DSO_R_DSO_ALREADY_LOADED                         110
+# define DSO_R_EMPTY_FILE_STRUCTURE                       113
+# define DSO_R_FAILURE                                    114
+# define DSO_R_FILENAME_TOO_BIG                           101
+# define DSO_R_FINISH_FAILED                              102
+# define DSO_R_INCORRECT_FILE_SYNTAX                      115
+# define DSO_R_LOAD_FAILED                                103
+# define DSO_R_NAME_TRANSLATION_FAILED                    109
+# define DSO_R_NO_FILENAME                                111
+# define DSO_R_NULL_HANDLE                                104
+# define DSO_R_SET_FILENAME_FAILED                        112
+# define DSO_R_STACK_ERROR                                105
+# define DSO_R_SYM_FAILURE                                106
+# define DSO_R_UNLOAD_FAILED                              107
+# define DSO_R_UNSUPPORTED                                108
 
-# endif
 
 # ifdef  __cplusplus
 }
