@@ -450,8 +450,11 @@ foreach my $lib ( keys %errorfile ) {
     my $indent = " ";
 
     # Flag if the sub-library is disablable
+    # There are a few exceptions, where disabling the sub-library
+    # doesn't actually remove the whole sub-library, but rather implements
+    # it with a NULL backend.
     my $disablable =
-        ($lib ne "SSL" && $lib ne "ASYNC"
+        ($lib ne "SSL" && $lib ne "ASYNC" && $lib ne "DSO"
          && (grep { $lib eq uc $_ } @disablables, @disablables_int));
 
     # Rewrite the internal header file if there is one ($internal only!)
