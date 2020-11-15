@@ -617,7 +617,7 @@ reconfigure reconf:
 
 {-
  use File::Basename;
- use File::Spec::Functions qw/:DEFAULT abs2rel rel2abs/;
+ use File::Spec::Functions qw/:DEFAULT abs2rel rel2abs file_name_is_absolute/;
 
  # Helper function to figure out dependencies on libraries
  # It takes a list of library names and outputs a list of dependencies
@@ -645,7 +645,10 @@ EOF
       my $incs = join("", map { " -I\"$_\"" } @{$args{incs}});
       my $defs = join("", map { " -D".$_ } @{$args{defs}});
       my $deps = @{$args{deps}} ?
-          '"'.join('" "', @{$args{generator_deps}}, @{$args{deps}}).'"' : '';
+          join(' ',
+               map { file_name_is_absolute($_) || ($_ =~ m|^../|) ? "\"$_\"" : $_ }
+               (@{$args{generator_deps}}, @{$args{deps}}))
+          : '';
 
       if ($args{src} =~ /\.html$/) {
           #
@@ -783,7 +786,9 @@ EOF
                ? platform->asm($x) : $x }
          ( @{$args{srcs}} );
      my $srcs = '"'.join('" "',  @srcs).'"';
-     my $deps = '"'.join('" "', @srcs, @{$args{deps}}).'"';
+     my $deps = join(' ',
+                     map { file_name_is_absolute($_) || ($_ =~ m|^../|) ? "\"$_\"" : $_ }
+                     (@srcs, @{$args{deps}}));
      my $incs = join("", map { ' -I"'.$_.'"' } @{$args{incs}});
      my $defs = join("", map { " -D".$_ } @{$args{defs}});
      my $cflags = { shlib => ' $(LIB_CFLAGS)',
