@@ -449,6 +449,11 @@ foreach my $lib ( keys %errorfile ) {
     # indent level for innermost preprocessor lines
     my $indent = " ";
 
+    # Flag if the sub-library is disablable
+    my $disablable =
+        ($lib ne "SSL" && $lib ne "ASYNC"
+         && (grep { $lib eq uc $_ } @disablables, @disablables_int));
+
     # Rewrite the internal header file if there is one ($internal only!)
 
     if ($hprivinc{$lib} ne 'NONE') {
@@ -487,8 +492,7 @@ extern \"C\" {
 
 EOF
         $indent = ' ';
-        if ($lib ne "SSL" && $lib ne "ASYNC"
-            && (grep { $lib eq uc $_ } @disablables, @disablables_int)) {
+        if ($disablable) {
             print OUT <<"EOF";
 # ifndef OPENSSL_NO_${lib}
 
@@ -597,8 +601,7 @@ $extra_include
 EOF
         $indent = ' ';
         if ( $internal ) {
-            if ($lib ne "SSL" && $lib ne "ASYNC"
-                && (grep { $lib eq uc $_ } @disablables, @disablables_int)) {
+            if ($disablable) {
                 print OUT <<"EOF";
 # ifndef OPENSSL_NO_${lib}
 
@@ -715,7 +718,19 @@ EOF
 
 #include <openssl/err.h>
 $includes
-#ifndef OPENSSL_NO_ERR
+EOF
+        $indent = '';
+        if ( $internal ) {
+            if ($disablable) {
+                print OUT <<"EOF";
+#ifndef OPENSSL_NO_${lib}
+
+EOF
+                $indent .= ' ';
+            }
+        }
+        print OUT <<"EOF";
+#${indent}ifndef OPENSSL_NO_ERR
 
 static ${const}ERR_STRING_DATA ${lib}_str_reasons[] = {
 EOF
@@ -743,17 +758,17 @@ EOF
     {0, NULL}
 };
 
-#endif
+#${indent}endif
 EOF
         if ( $internal ) {
             print OUT <<"EOF";
 
 int err_load_${lib}_strings_int(void)
 {
-#ifndef OPENSSL_NO_ERR
+#${indent}ifndef OPENSSL_NO_ERR
     if (ERR_reason_error_string(${lib}_str_reasons[0].error) == NULL)
         ERR_load_strings_const(${lib}_str_reasons);
-#endif
+#${indent}endif
     return 1;
 }
 EOF
@@ -799,6 +814,17 @@ EOF
 
         }
 
+        while (length($indent) > 1) {
+            $indent = substr $indent, 0, -1;
+            print OUT "#${indent}endif\n";
+        }
+        if ($internal && $disablable) {
+            print OUT <<"EOF";
+#else
+NON_EMPTY_TRANSLATION_UNIT
+#endif
+EOF
+        }
         close OUT;
     }
 }
