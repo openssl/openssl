@@ -43,7 +43,7 @@ static const OSSL_DISPATCH *find_call(const OSSL_DISPATCH *dispatch,
 
 static int rand_drbg_restart(PROV_DRBG *drbg);
 
-int drbg_lock(void *vctx)
+int ossl_drbg_lock(void *vctx)
 {
     PROV_DRBG *drbg = vctx;
 
@@ -52,7 +52,7 @@ int drbg_lock(void *vctx)
     return CRYPTO_THREAD_write_lock(drbg->lock);
 }
 
-void drbg_unlock(void *vctx)
+void ossl_drbg_unlock(void *vctx)
 {
     PROV_DRBG *drbg = vctx;
 
@@ -60,7 +60,7 @@ void drbg_unlock(void *vctx)
         CRYPTO_THREAD_unlock(drbg->lock);
 }
 
-static int drbg_lock_parent(PROV_DRBG *drbg)
+static int ossl_drbg_lock_parent(PROV_DRBG *drbg)
 {
     void *parent = drbg->parent;
 
@@ -73,7 +73,7 @@ static int drbg_lock_parent(PROV_DRBG *drbg)
     return 1;
 }
 
-static void drbg_unlock_parent(PROV_DRBG *drbg)
+static void ossl_drbg_unlock_parent(PROV_DRBG *drbg)
 {
     void *parent = drbg->parent;
 
@@ -93,12 +93,12 @@ static int get_parent_strength(PROV_DRBG *drbg, unsigned int *str)
     }
 
     *params = OSSL_PARAM_construct_uint(OSSL_RAND_PARAM_STRENGTH, str);
-    if (!drbg_lock_parent(drbg)) {
+    if (!ossl_drbg_lock_parent(drbg)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_UNABLE_TO_LOCK_PARENT);
         return 0;
     }
     res = drbg->parent_get_ctx_params(parent, params);
-    drbg_unlock_parent(drbg);
+    ossl_drbg_unlock_parent(drbg);
     if (!res) {
         ERR_raise(ERR_LIB_PROV, PROV_R_UNABLE_TO_GET_PARENT_STRENGTH);
         return 0;
@@ -113,16 +113,16 @@ static unsigned int get_parent_reseed_count(PROV_DRBG *drbg)
     unsigned int r;
 
     *params = OSSL_PARAM_construct_uint(OSSL_DRBG_PARAM_RESEED_COUNTER, &r);
-    if (!drbg_lock_parent(drbg)) {
+    if (!ossl_drbg_lock_parent(drbg)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_UNABLE_TO_LOCK_PARENT);
         goto err;
     }
     if (!drbg->parent_get_ctx_params(parent, params)) {
-        drbg_unlock_parent(drbg);
+        ossl_drbg_unlock_parent(drbg);
         ERR_raise(ERR_LIB_PROV, PROV_R_UNABLE_TO_GET_RESEED_PROP_CTR);
         goto err;
     }
-    drbg_unlock_parent(drbg);
+    ossl_drbg_unlock_parent(drbg);
     return r;
 
  err:
@@ -191,7 +191,7 @@ static size_t prov_drbg_get_entropy(PROV_DRBG *drbg, unsigned char **pout,
              * generating bits from it. (Note: taking the lock will be a no-op
              * if locking if drbg->parent->lock == NULL.)
              */
-            drbg_lock_parent(drbg);
+            ossl_drbg_lock_parent(drbg);
             /*
              * Get random data from parent.  Include our DRBG address as
              * additional input, in order to provide a distinction between
@@ -206,7 +206,7 @@ static size_t prov_drbg_get_entropy(PROV_DRBG *drbg, unsigned char **pout,
                                       (unsigned char *)&drbg,
                                       sizeof(drbg)) != 0)
                 bytes = bytes_needed;
-            drbg_unlock_parent(drbg);
+            ossl_drbg_unlock_parent(drbg);
             drbg->parent_reseed_counter = get_parent_reseed_count(drbg);
 
             rand_pool_add_end(pool, bytes, 8 * bytes);
@@ -780,7 +780,7 @@ static const OSSL_DISPATCH *find_call(const OSSL_DISPATCH *dispatch,
     return NULL;
 }
 
-int drbg_enable_locking(void *vctx)
+int ossl_drbg_enable_locking(void *vctx)
 {
     PROV_DRBG *drbg = vctx;
 
@@ -897,7 +897,7 @@ void ossl_rand_drbg_free(PROV_DRBG *drbg)
     OPENSSL_free(drbg);
 }
 
-int drbg_get_ctx_params(PROV_DRBG *drbg, OSSL_PARAM params[])
+int ossl_drbg_get_ctx_params(PROV_DRBG *drbg, OSSL_PARAM params[])
 {
     OSSL_PARAM *p;
 
@@ -956,7 +956,7 @@ int drbg_get_ctx_params(PROV_DRBG *drbg, OSSL_PARAM params[])
     return 1;
 }
 
-int drbg_set_ctx_params(PROV_DRBG *drbg, const OSSL_PARAM params[])
+int ossl_drbg_set_ctx_params(PROV_DRBG *drbg, const OSSL_PARAM params[])
 {
     const OSSL_PARAM *p;
 

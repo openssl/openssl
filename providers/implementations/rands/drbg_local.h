@@ -230,13 +230,13 @@ int ossl_prov_drbg_generate(PROV_DRBG *drbg, unsigned char *out, size_t outlen,
     }
 
 /* locking api */
-OSSL_FUNC_rand_enable_locking_fn drbg_enable_locking;
-OSSL_FUNC_rand_lock_fn drbg_lock;
-OSSL_FUNC_rand_unlock_fn drbg_unlock;
+OSSL_FUNC_rand_enable_locking_fn ossl_drbg_enable_locking;
+OSSL_FUNC_rand_lock_fn ossl_drbg_lock;
+OSSL_FUNC_rand_unlock_fn ossl_drbg_unlock;
 
 /* Common parameters for all of our DRBGs */
-int drbg_get_ctx_params(PROV_DRBG *drbg, OSSL_PARAM params[]);
-int drbg_set_ctx_params(PROV_DRBG *drbg, const OSSL_PARAM params[]);
+int ossl_drbg_get_ctx_params(PROV_DRBG *drbg, OSSL_PARAM params[]);
+int ossl_drbg_set_ctx_params(PROV_DRBG *drbg, const OSSL_PARAM params[]);
 
 #define OSSL_PARAM_DRBG_SETTABLE_CTX_COMMON                                      \
     OSSL_PARAM_uint(OSSL_DRBG_PARAM_RESEED_REQUESTS, NULL),             \
