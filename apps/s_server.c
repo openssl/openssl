@@ -2040,6 +2040,10 @@ int s_server_main(int argc, char *argv[])
         if (dhpkey == NULL) {
             SSL_CTX_set_dh_auto(ctx, 1);
         } else {
+            /*
+             * We need 2 references: one for use by ctx and one for use by
+             * ctx2
+             */
             if (!EVP_PKEY_up_ref(dhpkey)) {
                 EVP_PKEY_free(dhpkey);
                 goto end;
