@@ -15,6 +15,6 @@
 
 int sha512_224_init(SHA512_CTX *);
 int sha512_256_init(SHA512_CTX *);
-int sha1_ctrl(SHA_CTX *ctx, int cmd, int mslen, void *ms);
+int ossl_sha1_ctrl(SHA_CTX *ctx, int cmd, int mslen, void *ms);
 
 #endif

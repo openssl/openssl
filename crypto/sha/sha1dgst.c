@@ -25,7 +25,7 @@
 #include "sha_local.h"
 #include "crypto/sha.h"
 
-int sha1_ctrl(SHA_CTX *sha1, int cmd, int mslen, void *ms)
+int ossl_sha1_ctrl(SHA_CTX *sha1, int cmd, int mslen, void *ms)
 {
     unsigned char padtmp[40];
     unsigned char sha1tmp[SHA_DIGEST_LENGTH];
