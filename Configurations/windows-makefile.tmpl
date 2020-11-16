@@ -388,11 +388,15 @@ PROCESSOR= {- $config{processor} -}
 
 build_docs: build_html_docs
 build_html_docs: $(HTMLDOCS1) $(HTMLDOCS3) $(HTMLDOCS5) $(HTMLDOCS7)
-
+	@
 build_generated: $(GENERATED_MANDATORY)
+	@
 build_libs_nodep: $(LIBS) {- join(" ",map { platform->sharedlib_import($_) // () } @{$unified_info{libraries}}) -}
+	@
 build_modules_nodep: $(MODULES)
+	@
 build_programs_nodep: $(PROGRAMS) $(SCRIPTS)
+	@
 
 # Kept around for backward compatibility
 build_apps build_tests: build_programs
