@@ -98,10 +98,10 @@ static int mac_digest_sign_init(void *vpmacctx, const char *mdname, void *vkey)
     if (!ossl_prov_is_running()
             || pmacctx == NULL
             || vkey == NULL
-            || !mac_key_up_ref(vkey))
+            || !ossl_mac_key_up_ref(vkey))
         return 0;
 
-    mac_key_free(pmacctx->key);
+    ossl_mac_key_free(pmacctx->key);
     pmacctx->key = vkey;
 
     if (pmacctx->key->cipher.cipher != NULL)
@@ -154,7 +154,7 @@ static void mac_freectx(void *vpmacctx)
 
     OPENSSL_free(ctx->propq);
     EVP_MAC_CTX_free(ctx->macctx);
-    mac_key_free(ctx->key);
+    ossl_mac_key_free(ctx->key);
     OPENSSL_free(ctx);
 }
 
@@ -174,7 +174,7 @@ static void *mac_dupctx(void *vpmacctx)
     dstctx->key = NULL;
     dstctx->macctx = NULL;
 
-    if (srcctx->key != NULL && !mac_key_up_ref(srcctx->key))
+    if (srcctx->key != NULL && !ossl_mac_key_up_ref(srcctx->key))
         goto err;
     dstctx->key = srcctx->key;
 

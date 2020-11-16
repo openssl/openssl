@@ -57,7 +57,7 @@ struct mac_gen_ctx {
     PROV_CIPHER cipher;
 };
 
-MAC_KEY *mac_key_new(OSSL_LIB_CTX *libctx, int cmac)
+MAC_KEY *ossl_mac_key_new(OSSL_LIB_CTX *libctx, int cmac)
 {
     MAC_KEY *mackey;
 
@@ -80,7 +80,7 @@ MAC_KEY *mac_key_new(OSSL_LIB_CTX *libctx, int cmac)
     return mackey;
 }
 
-void mac_key_free(MAC_KEY *mackey)
+void ossl_mac_key_free(MAC_KEY *mackey)
 {
     int ref = 0;
 
@@ -98,7 +98,7 @@ void mac_key_free(MAC_KEY *mackey)
     OPENSSL_free(mackey);
 }
 
-int mac_key_up_ref(MAC_KEY *mackey)
+int ossl_mac_key_up_ref(MAC_KEY *mackey)
 {
     int ref = 0;
 
@@ -118,17 +118,17 @@ int mac_key_up_ref(MAC_KEY *mackey)
 
 static void *mac_new(void *provctx)
 {
-    return mac_key_new(PROV_LIBCTX_OF(provctx), 0);
+    return ossl_mac_key_new(PROV_LIBCTX_OF(provctx), 0);
 }
 
 static void *mac_new_cmac(void *provctx)
 {
-    return mac_key_new(PROV_LIBCTX_OF(provctx), 1);
+    return ossl_mac_key_new(PROV_LIBCTX_OF(provctx), 1);
 }
 
 static void mac_free(void *mackey)
 {
-    mac_key_free(mackey);
+    ossl_mac_key_free(mackey);
 }
 
 static int mac_has(const void *keydata, int selection)
@@ -454,7 +454,7 @@ static void *mac_gen(void *genctx, OSSL_CALLBACK *cb, void *cbarg)
     if (!ossl_prov_is_running() || gctx == NULL)
         return NULL;
 
-    if ((key = mac_key_new(gctx->libctx, 0)) == NULL) {
+    if ((key = ossl_mac_key_new(gctx->libctx, 0)) == NULL) {
         ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
@@ -465,7 +465,7 @@ static void *mac_gen(void *genctx, OSSL_CALLBACK *cb, void *cbarg)
 
     if (gctx->priv_key == NULL) {
         ERR_raise(ERR_LIB_PROV, EVP_R_INVALID_KEY);
-        mac_key_free(key);
+        ossl_mac_key_free(key);
         return NULL;
     }
 
