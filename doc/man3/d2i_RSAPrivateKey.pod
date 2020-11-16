@@ -148,7 +148,7 @@ L<d2i_PrivateKey(3)> recognises and unpacks a PKCS#8 structures.
 
 =item *
 
-Use L<OSSL_DECODER> and L<OSSL_ENCODER>.  How to migrate is described
+Use L<OSSL_DECODER(3)> and L<OSSL_ENCODER(3)>.  How to migrate is described
 below.  All those descriptions assume that the key to be encoded is in the
 variable I<pkey>.
 
