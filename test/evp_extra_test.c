@@ -1705,11 +1705,9 @@ static int test_RSA_get_set_params(void)
         || !TEST_ptr(e = BN_new())
         || !TEST_ptr(d = BN_new()))
         goto err;
-    if (!TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_RSA_N, n)))
-        goto err;
-    if (!TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_RSA_E, e)))
-        goto err;
-    if (!TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_RSA_D, d)))
+    if (!TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_RSA_N, n))
+        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_RSA_E, e))
+        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_RSA_D, d)))
         goto err;
     if (!TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld)))
         goto err;
