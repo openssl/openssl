@@ -183,7 +183,7 @@ static int test_rng_get_ctx_params(void *vdrbg, OSSL_PARAM params[])
 {
     PROV_DRBG *drbg = (PROV_DRBG *)vdrbg;
 
-    return drbg_get_ctx_params(drbg, params);
+    return ossl_drbg_get_ctx_params(drbg, params);
 }
 
 static const OSSL_PARAM *test_rng_gettable_ctx_params(ossl_unused void *provctx)
@@ -261,7 +261,7 @@ static int test_rng_set_ctx_params(void *vdrbg, const OSSL_PARAM params[])
             || !set_size_t(params, OSSL_DRBG_PARAM_MAX_ADINLEN,
                            &drbg->max_adinlen))
         return 0;
-    return drbg_set_ctx_params(drbg, params);
+    return ossl_drbg_set_ctx_params(drbg, params);
 }
 
 static const OSSL_PARAM *test_rng_settable_ctx_params(ossl_unused void *provctx)
@@ -309,9 +309,9 @@ const OSSL_DISPATCH ossl_test_rng_functions[] = {
     { OSSL_FUNC_RAND_GENERATE, (void(*)(void))test_rng_generate_wrapper },
     { OSSL_FUNC_RAND_RESEED, (void(*)(void))test_rng_reseed_wrapper },
     { OSSL_FUNC_RAND_NONCE, (void(*)(void))test_rng_nonce },
-    { OSSL_FUNC_RAND_ENABLE_LOCKING, (void(*)(void))drbg_enable_locking },
-    { OSSL_FUNC_RAND_LOCK, (void(*)(void))drbg_lock },
-    { OSSL_FUNC_RAND_UNLOCK, (void(*)(void))drbg_unlock },
+    { OSSL_FUNC_RAND_ENABLE_LOCKING, (void(*)(void))ossl_drbg_enable_locking },
+    { OSSL_FUNC_RAND_LOCK, (void(*)(void))ossl_drbg_lock },
+    { OSSL_FUNC_RAND_UNLOCK, (void(*)(void))ossl_drbg_unlock },
     { OSSL_FUNC_RAND_SETTABLE_CTX_PARAMS,
       (void(*)(void))test_rng_settable_ctx_params },
     { OSSL_FUNC_RAND_SET_CTX_PARAMS, (void(*)(void))test_rng_set_ctx_params },
