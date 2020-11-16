@@ -50,7 +50,7 @@ static int keccak_init(void *vctx)
     if (!ossl_prov_is_running())
         return 0;
     /* The newctx() handles most of the ctx fixed setup. */
-    sha3_reset((KECCAK1600_CTX *)vctx);
+    ossl_sha3_reset((KECCAK1600_CTX *)vctx);
     return 1;
 }
 
@@ -118,7 +118,7 @@ static size_t generic_sha3_absorb(void *vctx, const void *inp, size_t len)
 
 static int generic_sha3_final(unsigned char *md, void *vctx)
 {
-    return sha3_final(md, (KECCAK1600_CTX *)vctx);
+    return ossl_sha3_final(md, (KECCAK1600_CTX *)vctx);
 }
 
 static PROV_SHA3_METHOD sha3_generic_md =
@@ -198,7 +198,7 @@ static void *name##_newctx(void *provctx)                                      \
                                                                                \
     if (ctx == NULL)                                                           \
         return NULL;                                                           \
-    sha3_init(ctx, pad, bitlen);                                               \
+    ossl_sha3_init(ctx, pad, bitlen);                                          \
     SHA3_SET_MD(uname, typ)                                                    \
     return ctx;                                                                \
 }
@@ -212,7 +212,7 @@ static void *uname##_newctx(void *provctx)                                     \
                                                                                \
     if (ctx == NULL)                                                           \
         return NULL;                                                           \
-    keccak_kmac_init(ctx, pad, bitlen);                                        \
+    ossl_keccak_kmac_init(ctx, pad, bitlen);                                   \
     ctx->meth = sha3_generic_md;                                               \
     return ctx;                                                                \
 }
