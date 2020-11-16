@@ -216,9 +216,9 @@ $code.=<<___;
 SPARC_PIC_THUNK(%g1)
 #endif
 
-.globl	md5_block_asm_data_order
+.globl	ossl_md5_block_asm_data_order
 .align	32
-md5_block_asm_data_order:
+ossl_md5_block_asm_data_order:
 	SPARC_LOAD_ADDRESS_LEAF(OPENSSL_sparcv9cap_P,%g1,%g5)
 	ld	[%g1+4],%g1		! OPENSSL_sparcv9cap_P[1]
 
@@ -371,8 +371,8 @@ $code.=<<___;
 	wr	%g0,$saved_asi,%asi
 	ret
 	restore
-.type	md5_block_asm_data_order,#function
-.size	md5_block_asm_data_order,(.-md5_block_asm_data_order)
+.type	ossl_md5_block_asm_data_order,#function
+.size	ossl_md5_block_asm_data_order,(.-ossl_md5_block_asm_data_order)
 
 .asciz	"MD5 block transform for SPARCv9, CRYPTOGAMS by <appro\@openssl.org>"
 .align	4
