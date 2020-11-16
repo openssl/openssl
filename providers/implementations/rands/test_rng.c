@@ -61,7 +61,7 @@ static void test_rng_free(void *vdrbg)
     OPENSSL_free(t->entropy);
     OPENSSL_free(t->nonce);
     OPENSSL_free(drbg->data);
-    prov_rand_drbg_free(drbg);
+    ossl_rand_drbg_free(drbg);
 }
 
 static int test_rng_instantiate(PROV_DRBG *drbg,
@@ -293,7 +293,7 @@ static int test_rng_verify_zeroization(void *vdrbg)
 static void *test_rng_new_wrapper(void *provctx, void *parent,
                                    const OSSL_DISPATCH *parent_dispatch)
 {
-    return prov_rand_drbg_new(provctx, parent, parent_dispatch,
+    return ossl_rand_drbg_new(provctx, parent, parent_dispatch,
                               &test_rng_new, &test_rng_instantiate,
                               &test_rng_uninstantiate, &test_rng_reseed,
                               &test_rng_generate);

@@ -125,7 +125,7 @@ int RAND_poll(void)
         if (pool == NULL)
             return 0;
 
-        if (prov_pool_acquire_entropy(pool) == 0)
+        if (ossl_pool_acquire_entropy(pool) == 0)
             goto err;
 
         if (meth->add == NULL

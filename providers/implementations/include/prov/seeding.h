@@ -18,8 +18,8 @@ size_t prov_drbg_get_additional_data(RAND_POOL *pool, unsigned char **pout);
 
 void prov_drbg_cleanup_additional_data(RAND_POOL *pool, unsigned char *out);
 
-size_t prov_pool_acquire_entropy(RAND_POOL *pool);
-int prov_pool_add_nonce_data(RAND_POOL *pool);
+size_t ossl_pool_acquire_entropy(RAND_POOL *pool);
+int ossl_pool_add_nonce_data(RAND_POOL *pool);
 
 /*
  * Add some platform specific additional data

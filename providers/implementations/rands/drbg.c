@@ -139,7 +139,7 @@ static unsigned int get_parent_reseed_count(PROV_DRBG *drbg)
  * is fetched using the parent's ossl_prov_drbg_generate().
  *
  * Otherwise, the entropy is polled from the system entropy sources
- * using prov_pool_acquire_entropy().
+ * using ossl_pool_acquire_entropy().
  *
  * If a random pool has been added to the DRBG using RAND_add(), then
  * its entropy will be used up first.
@@ -214,7 +214,7 @@ static size_t prov_drbg_get_entropy(PROV_DRBG *drbg, unsigned char **pout,
         }
     } else {
         /* Get entropy by polling system entropy sources. */
-        entropy_available = prov_pool_acquire_entropy(pool);
+        entropy_available = ossl_pool_acquire_entropy(pool);
     }
 
     if (entropy_available > 0) {
@@ -246,7 +246,7 @@ static size_t get_entropy(PROV_DRBG *drbg, unsigned char **pout, int entropy,
 {
 #ifdef FIPS_MODULE
     if (drbg->parent == NULL)
-        return prov_crngt_get_entropy(drbg, pout, entropy, min_len, max_len,
+        return ossl_crngt_get_entropy(drbg, pout, entropy, min_len, max_len,
                                       prediction_resistance);
 #endif
 
@@ -258,7 +258,7 @@ static void cleanup_entropy(PROV_DRBG *drbg, unsigned char *out, size_t outlen)
 {
 #ifdef FIPS_MODULE
     if (drbg->parent == NULL)
-        prov_crngt_cleanup_entropy(drbg, out, outlen);
+        ossl_crngt_cleanup_entropy(drbg, out, outlen);
     else
 #endif
         prov_drbg_cleanup_entropy(drbg, out, outlen);
@@ -353,7 +353,7 @@ static size_t prov_drbg_get_nonce(PROV_DRBG *drbg,
     if (pool == NULL)
         return 0;
 
-    if (prov_pool_add_nonce_data(pool) == 0)
+    if (ossl_pool_add_nonce_data(pool) == 0)
         goto err;
 
     data.instance = drbg;
@@ -807,7 +807,7 @@ int drbg_enable_locking(void *vctx)
  *
  * Returns a pointer to the new DRBG instance on success, NULL on failure.
  */
-PROV_DRBG *prov_rand_drbg_new
+PROV_DRBG *ossl_rand_drbg_new
     (void *provctx, void *parent, const OSSL_DISPATCH *p_dispatch,
      int (*dnew)(PROV_DRBG *ctx),
      int (*instantiate)(PROV_DRBG *drbg,
@@ -883,11 +883,11 @@ PROV_DRBG *prov_rand_drbg_new
     return drbg;
 
  err:
-    prov_rand_drbg_free(drbg);
+    ossl_rand_drbg_free(drbg);
     return NULL;
 }
 
-void prov_rand_drbg_free(PROV_DRBG *drbg)
+void ossl_rand_drbg_free(PROV_DRBG *drbg)
 {
     if (drbg == NULL)
         return;

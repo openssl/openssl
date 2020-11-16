@@ -606,7 +606,7 @@ static int drbg_ctr_new(PROV_DRBG *drbg)
 static void *drbg_ctr_new_wrapper(void *provctx, void *parent,
                                    const OSSL_DISPATCH *parent_dispatch)
 {
-    return prov_rand_drbg_new(provctx, parent, parent_dispatch, &drbg_ctr_new,
+    return ossl_rand_drbg_new(provctx, parent, parent_dispatch, &drbg_ctr_new,
                               &drbg_ctr_instantiate, &drbg_ctr_uninstantiate,
                               &drbg_ctr_reseed, &drbg_ctr_generate);
 }
@@ -625,7 +625,7 @@ static void drbg_ctr_free(void *vdrbg)
 
         OPENSSL_secure_clear_free(ctr, sizeof(*ctr));
     }
-    prov_rand_drbg_free(drbg);
+    ossl_rand_drbg_free(drbg);
 }
 
 static int drbg_ctr_get_ctx_params(void *vdrbg, OSSL_PARAM params[])

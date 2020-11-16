@@ -41,7 +41,7 @@ static int crngt_get_entropy(OSSL_LIB_CTX *ctx, RAND_POOL *pool,
     if (pool == NULL)
         return 0;
 
-    n = prov_pool_acquire_entropy(pool);
+    n = ossl_pool_acquire_entropy(pool);
     if (n >= CRNGT_BUFSIZ) {
         fmd = EVP_MD_fetch(ctx, "SHA256", "");
         if (fmd == NULL)
@@ -104,7 +104,7 @@ static int prov_crngt_compare_previous(const unsigned char *prev,
     return res;
 }
 
-size_t prov_crngt_get_entropy(PROV_DRBG *drbg,
+size_t ossl_crngt_get_entropy(PROV_DRBG *drbg,
                               unsigned char **pout,
                               int entropy, size_t min_len, size_t max_len,
                               int prediction_resistance)
@@ -164,7 +164,7 @@ err:
     return r;
 }
 
-void prov_crngt_cleanup_entropy(PROV_DRBG *drbg,
+void ossl_crngt_cleanup_entropy(PROV_DRBG *drbg,
                                 unsigned char *out, size_t outlen)
 {
     OPENSSL_secure_clear_free(out, outlen);

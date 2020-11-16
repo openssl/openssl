@@ -191,7 +191,7 @@ struct prov_drbg_st {
     OSSL_CALLBACK *cleanup_nonce_fn;
 };
 
-PROV_DRBG *prov_rand_drbg_new
+PROV_DRBG *ossl_rand_drbg_new
     (void *provctx, void *parent, const OSSL_DISPATCH *parent_dispatch,
      int (*dnew)(PROV_DRBG *ctx),
      int (*instantiate)(PROV_DRBG *drbg,
@@ -203,7 +203,7 @@ PROV_DRBG *prov_rand_drbg_new
                    const unsigned char *adin, size_t adin_len),
      int (*generate)(PROV_DRBG *, unsigned char *out, size_t outlen,
                      const unsigned char *adin, size_t adin_len));
-void prov_rand_drbg_free(PROV_DRBG *drbg);
+void ossl_rand_drbg_free(PROV_DRBG *drbg);
 
 int ossl_prov_drbg_instantiate(PROV_DRBG *drbg, unsigned int strength,
                                int prediction_resistance,
@@ -258,11 +258,11 @@ int drbg_set_ctx_params(PROV_DRBG *drbg, const OSSL_PARAM params[]);
     OSSL_PARAM_uint64(OSSL_DRBG_PARAM_RESEED_TIME_INTERVAL, NULL)
 
 /* Continuous test "entropy" calls */
-size_t prov_crngt_get_entropy(PROV_DRBG *drbg,
+size_t ossl_crngt_get_entropy(PROV_DRBG *drbg,
                               unsigned char **pout,
                               int entropy, size_t min_len, size_t max_len,
                               int prediction_resistance);
-void prov_crngt_cleanup_entropy(PROV_DRBG *drbg,
+void ossl_crngt_cleanup_entropy(PROV_DRBG *drbg,
                                 unsigned char *out, size_t outlen);
 
 #endif
