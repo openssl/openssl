@@ -328,7 +328,10 @@ static const OSSL_ALGORITHM fips_kdfs[] = {
     { "SSKDF", FIPS_DEFAULT_PROPERTIES, ossl_kdf_sskdf_functions },
     { "PBKDF2", FIPS_DEFAULT_PROPERTIES, ossl_kdf_pbkdf2_functions },
     { "SSHKDF", FIPS_DEFAULT_PROPERTIES, ossl_kdf_sshkdf_functions },
-    { "X963KDF", FIPS_DEFAULT_PROPERTIES, ossl_kdf_x963_kdf_functions },
+    { "X963KDF:X942KDF-CONCAT", FIPS_DEFAULT_PROPERTIES,
+      ossl_kdf_x963_kdf_functions },
+    { "X942KDF-ASN1:X942KDF", FIPS_DEFAULT_PROPERTIES,
+      ossl_kdf_x942_kdf_functions },
     { "TLS1-PRF", FIPS_DEFAULT_PROPERTIES, ossl_kdf_tls1_prf_functions },
     { "KBKDF", FIPS_DEFAULT_PROPERTIES, ossl_kdf_kbkdf_functions },
     { NULL, NULL, NULL }

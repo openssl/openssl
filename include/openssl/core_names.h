@@ -203,18 +203,24 @@ extern "C" {
 #define OSSL_KDF_PARAM_PKCS12_ID    "id"        /* int */
 #define OSSL_KDF_PARAM_KBKDF_USE_L  "use-l"             /* int */
 #define OSSL_KDF_PARAM_KBKDF_USE_SEPARATOR  "use-separator"     /* int */
+#define OSSL_KDF_PARAM_X942_PARTYUINFO      "partyu-info"
+#define OSSL_KDF_PARAM_X942_PARTYVINFO      "partyv-info"
+#define OSSL_KDF_PARAM_X942_SUPP_PUBINFO    "supp-pubinfo"
+#define OSSL_KDF_PARAM_X942_SUPP_PRIVINFO   "supp-privinfo"
+#define OSSL_KDF_PARAM_X942_USE_KEYBITS     "use-keybits"
 
 /* Known KDF names */
-#define OSSL_KDF_NAME_HKDF          "HKDF"
-#define OSSL_KDF_NAME_PBKDF2        "PBKDF2"
-#define OSSL_KDF_NAME_SCRYPT        "SCRYPT"
-#define OSSL_KDF_NAME_SSHKDF        "SSHKDF"
-#define OSSL_KDF_NAME_SSKDF         "SSKDF"
-#define OSSL_KDF_NAME_TLS1_PRF      "TLS1-PRF"
-#define OSSL_KDF_NAME_X942KDF       "X942KDF"
-#define OSSL_KDF_NAME_X963KDF       "X963KDF"
-#define OSSL_KDF_NAME_KBKDF         "KBKDF"
-#define OSSL_KDF_NAME_KRB5KDF       "KRB5KDF"
+#define OSSL_KDF_NAME_HKDF           "HKDF"
+#define OSSL_KDF_NAME_PBKDF2         "PBKDF2"
+#define OSSL_KDF_NAME_SCRYPT         "SCRYPT"
+#define OSSL_KDF_NAME_SSHKDF         "SSHKDF"
+#define OSSL_KDF_NAME_SSKDF          "SSKDF"
+#define OSSL_KDF_NAME_TLS1_PRF       "TLS1-PRF"
+#define OSSL_KDF_NAME_X942KDF_ASN1   "X942KDF-ASN1"
+#define OSSL_KDF_NAME_X942KDF_CONCAT "X942KDF-CONCAT"
+#define OSSL_KDF_NAME_X963KDF        "X963KDF"
+#define OSSL_KDF_NAME_KBKDF          "KBKDF"
+#define OSSL_KDF_NAME_KRB5KDF        "KRB5KDF"
 
 /* Known RAND names */
 #define OSSL_RAND_PARAM_STATE                   "state"

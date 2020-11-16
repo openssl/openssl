@@ -260,9 +260,7 @@ extern const OSSL_DISPATCH ossl_kdf_sshkdf_functions[];
 extern const OSSL_DISPATCH ossl_kdf_sskdf_functions[];
 extern const OSSL_DISPATCH ossl_kdf_x963_kdf_functions[];
 extern const OSSL_DISPATCH ossl_kdf_kbkdf_functions[];
-#ifndef OPENSSL_NO_CMS
 extern const OSSL_DISPATCH ossl_kdf_x942_kdf_functions[];
-#endif
 extern const OSSL_DISPATCH ossl_kdf_krb5kdf_functions[];
 
 /* RNGs */

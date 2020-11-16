@@ -105,6 +105,7 @@ int err_load_PROV_strings_int(void);
 # define PROV_R_INVALID_MODE_INT                          126
 # define PROV_R_INVALID_PADDING_MODE                      168
 # define PROV_R_INVALID_PSS_SALTLEN                       169
+# define PROV_R_INVALID_PUBINFO                           198
 # define PROV_R_INVALID_RSA_KEY                           217
 # define PROV_R_INVALID_SALT_LENGTH                       112
 # define PROV_R_INVALID_SEED_LENGTH                       154
@@ -112,6 +113,7 @@ int err_load_PROV_strings_int(void);
 # define PROV_R_INVALID_STATE                             212
 # define PROV_R_INVALID_TAG                               110
 # define PROV_R_INVALID_TAGLEN                            118
+# define PROV_R_INVALID_UKM_LENGTH                        200
 # define PROV_R_INVALID_X931_DIGEST                       170
 # define PROV_R_IN_ERROR_STATE                            192
 # define PROV_R_KEY_SIZE_TOO_SMALL                        171

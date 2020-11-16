@@ -331,12 +331,10 @@ static const OSSL_ALGORITHM deflt_kdfs[] = {
     { "PBKDF2", "provider=default", ossl_kdf_pbkdf2_functions },
     { "PKCS12KDF", "provider=default", ossl_kdf_pkcs12_functions },
     { "SSHKDF", "provider=default", ossl_kdf_sshkdf_functions },
-    { "X963KDF", "provider=default", ossl_kdf_x963_kdf_functions },
+    { "X963KDF:X942KDF-CONCAT", "provider=default", ossl_kdf_x963_kdf_functions },
     { "TLS1-PRF", "provider=default", ossl_kdf_tls1_prf_functions },
     { "KBKDF", "provider=default", ossl_kdf_kbkdf_functions },
-#ifndef OPENSSL_NO_CMS
-    { "X942KDF", "provider=default", ossl_kdf_x942_kdf_functions },
-#endif
+    { "X942KDF-ASN1:X942KDF", "provider=default", ossl_kdf_x942_kdf_functions },
 #ifndef OPENSSL_NO_SCRYPT
     { "SCRYPT:id-scrypt", "provider=default", ossl_kdf_scrypt_functions },
 #endif

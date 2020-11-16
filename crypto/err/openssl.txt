@@ -2879,6 +2879,7 @@ PROV_R_INVALID_MODE:125:invalid mode
 PROV_R_INVALID_MODE_INT:126:invalid mode int
 PROV_R_INVALID_PADDING_MODE:168:invalid padding mode
 PROV_R_INVALID_PSS_SALTLEN:169:invalid pss saltlen
+PROV_R_INVALID_PUBINFO:198:invalid pubinfo
 PROV_R_INVALID_RSA_KEY:217:invalid rsa key
 PROV_R_INVALID_SALT_LENGTH:112:invalid salt length
 PROV_R_INVALID_SEED_LENGTH:154:invalid seed length
@@ -2886,6 +2887,7 @@ PROV_R_INVALID_SIGNATURE_SIZE:179:invalid signature size
 PROV_R_INVALID_STATE:212:invalid state
 PROV_R_INVALID_TAG:110:invalid tag
 PROV_R_INVALID_TAGLEN:118:invalid taglen
+PROV_R_INVALID_UKM_LENGTH:200:invalid ukm length
 PROV_R_INVALID_X931_DIGEST:170:invalid x931 digest
 PROV_R_IN_ERROR_STATE:192:in error state
 PROV_R_KEY_SIZE_TOO_SMALL:171:key size too small
@@ -2917,7 +2919,7 @@ PROV_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE:178:\
 	operation not supported for this keytype
 PROV_R_OUTPUT_BUFFER_TOO_SMALL:106:output buffer too small
 PROV_R_PARENT_CANNOT_GENERATE_RANDOM_NUMBERS:228:\
-        parent cannot generate random numbers
+	parent cannot generate random numbers
 PROV_R_PARENT_LOCKING_NOT_ENABLED:182:parent locking not enabled
 PROV_R_PARENT_STRENGTH_TOO_WEAK:194:parent strength too weak
 PROV_R_PATH_MUST_BE_ABSOLUTE:219:path must be absolute
