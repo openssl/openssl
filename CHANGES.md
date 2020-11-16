@@ -31,7 +31,7 @@ OpenSSL 3.0
    calling SSL_CTX_set_dh_auto() or SSL_set_dh_auto(). If custom parameters are
    necessary then applications can use the alternative functions
    SSL_CTX_set0_tmp_dh_pkey() and SSL_set0_tmp_dh_pkey(). There is no direct
-   replace for the "callback" functions. The callback was originally useful
+   replacement for the "callback" functions. The callback was originally useful
    in order to have different parameters for export and non-export ciphersuites.
    Export ciphersuites are no longer supported by OpenSSL. Use of the callback
    functions should be replaced by one of the other methods described above.
