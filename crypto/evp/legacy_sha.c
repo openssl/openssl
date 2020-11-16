@@ -60,12 +60,13 @@ IMPLEMENT_LEGACY_EVP_MD_METH(sha384, SHA384)
 IMPLEMENT_LEGACY_EVP_MD_METH(sha512, SHA512)
 IMPLEMENT_LEGACY_EVP_MD_METH(sha512_224_int, sha512_224)
 IMPLEMENT_LEGACY_EVP_MD_METH(sha512_256_int, sha512_256)
-IMPLEMENT_LEGACY_EVP_MD_METH_SHA3(sha3_int, sha3, '\x06')
-IMPLEMENT_LEGACY_EVP_MD_METH_SHAKE(shake, sha3, '\x1f')
+IMPLEMENT_LEGACY_EVP_MD_METH_SHA3(sha3_int, ossl_sha3, '\x06')
+IMPLEMENT_LEGACY_EVP_MD_METH_SHAKE(shake, ossl_sha3, '\x1f')
 
 static int sha1_int_ctrl(EVP_MD_CTX *ctx, int cmd, int p1, void *p2)
 {
-    return sha1_ctrl(ctx != NULL ? EVP_MD_CTX_md_data(ctx) : NULL, cmd, p1, p2);
+    return ossl_sha1_ctrl(ctx != NULL ? EVP_MD_CTX_md_data(ctx) : NULL,
+                          cmd, p1, p2);
 }
 
 static int shake_ctrl(EVP_MD_CTX *evp_ctx, int cmd, int p1, void *p2)
