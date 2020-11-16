@@ -237,7 +237,7 @@ int EVP_PKEY_CTX_set_dh_kdf_type(EVP_PKEY_CTX *ctx, int kdf)
             kdf_type = "";
             break;
         case EVP_PKEY_DH_KDF_X9_42:
-            kdf_type = OSSL_KDF_NAME_X942KDF;
+            kdf_type = OSSL_KDF_NAME_X942KDF_ASN1;
             break;
         default:
             return -2;
@@ -289,7 +289,7 @@ int EVP_PKEY_CTX_get_dh_kdf_type(EVP_PKEY_CTX *ctx)
 
     if (kdf_type[0] == '\0')
         return EVP_PKEY_DH_KDF_NONE;
-    else if (strcmp(kdf_type, OSSL_KDF_NAME_X942KDF) == 0)
+    else if (strcmp(kdf_type, OSSL_KDF_NAME_X942KDF_ASN1) == 0)
         return EVP_PKEY_DH_KDF_X9_42;
 
     return -1;

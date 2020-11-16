@@ -87,7 +87,7 @@ To see the list of supported digests, use the command I<list -digest-commands>.
 
 Specifies the name of a supported KDF algorithm which will be used.
 The supported algorithms names include TLS1-PRF, HKDF, SSKDF, PBKDF2,
-SSHKDF, X942KDF, X963KDF and SCRYPT.
+SSHKDF, X942KDF-ASN1, X942KDF-CONCAT, X963KDF and SCRYPT.
 
 =back
 
@@ -156,7 +156,8 @@ L<EVP_KDF-PBKDF2(7)>,
 L<EVP_KDF-HKDF(7)>,
 L<EVP_KDF-SS(7)>,
 L<EVP_KDF-SSHKDF(7)>,
-L<EVP_KDF-X942(7)>,
+L<EVP_KDF-X942-ASN1(7)>,
+L<EVP_KDF-X942-CONCAT(7)>,
 L<EVP_KDF-X963(7)>
 
 =head1 HISTORY

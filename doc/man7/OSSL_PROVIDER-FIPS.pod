@@ -90,9 +90,17 @@ The OpenSSL FIPS provider supports these operations and algorithms:
 
 =item PBKDF2, see L<EVP_KDF-PBKDF2(7)>
 
+=item SSHKDF, see L<EVP_KDF-SSHKDF(7)>
+
 =item TLS1-PRF, see L<EVP_KDF-TLS1-PRF(7)>
 
 =item KBKDF, see L<EVP_KDF-KBKDF(7)>
+
+=item X942KDF-ASN1, see L<EVP_KDF-X942-ASN1(7)>
+
+=item X942KDF-CONCAT, see L<EVP_KDF-X942-CONCAT(7)>
+
+=item X963KDF, see L<EVP_KDF-X963(7)>
 
 =back
 

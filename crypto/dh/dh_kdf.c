@@ -37,7 +37,7 @@ int dh_KDF_X9_42_asn1(unsigned char *out, size_t outlen,
     OSSL_PARAM params[5], *p = params;
     const char *mdname = EVP_MD_name(md);
 
-    kdf = EVP_KDF_fetch(libctx, OSSL_KDF_NAME_X942KDF, propq);
+    kdf = EVP_KDF_fetch(libctx, OSSL_KDF_NAME_X942KDF_ASN1, propq);
     kctx = EVP_KDF_CTX_new(kdf);
     if (kctx == NULL)
         goto err;

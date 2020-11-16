@@ -1324,7 +1324,7 @@ static int test_kdf_x942_asn1(void)
     *p = OSSL_PARAM_construct_end();
 
     ret =
-        TEST_ptr(kctx = get_kdfbyname(OSSL_KDF_NAME_X942KDF))
+        TEST_ptr(kctx = get_kdfbyname(OSSL_KDF_NAME_X942KDF_ASN1))
         && TEST_true(EVP_KDF_CTX_set_params(kctx, params))
         && TEST_int_gt(EVP_KDF_derive(kctx, out, sizeof(out)), 0)
         && TEST_mem_eq(out, sizeof(out), expected, sizeof(expected));
