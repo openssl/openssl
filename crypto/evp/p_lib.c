@@ -1386,7 +1386,7 @@ EVP_PKEY *EVP_PKEY_new(void)
 
     ret->lock = CRYPTO_THREAD_lock_new();
     if (ret->lock == NULL) {
-        EVPerr(0, ERR_R_MALLOC_FAILURE);
+        EVPerr(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
@@ -1952,7 +1952,7 @@ int evp_pkey_downgrade(EVP_PKEY *pk)
         rv = 1;
     } else {
         /* Restore the original key */
-        *pk = tmp_copy;          /* |pk| now owns THE lock */
+        *pk = tmp_copy;
     }
 
  end:
