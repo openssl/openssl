@@ -362,11 +362,11 @@ could fill in the parameters like this:
 
     OSSL_PARAM *p;
 
-    if ((p = OSSL_PARAM_locate(params, "foo")) == NULL)
+    if ((p = OSSL_PARAM_locate(params, "foo")) != NULL)
         OSSL_PARAM_set_utf8_ptr(p, "foo value");
-    if ((p = OSSL_PARAM_locate(params, "bar")) == NULL)
+    if ((p = OSSL_PARAM_locate(params, "bar")) != NULL)
         OSSL_PARAM_set_utf8_ptr(p, "bar value");
-    if ((p = OSSL_PARAM_locate(params, "cookie")) == NULL)
+    if ((p = OSSL_PARAM_locate(params, "cookie")) != NULL)
         OSSL_PARAM_set_utf8_ptr(p, "cookie value");
 
 =head1 SEE ALSO
