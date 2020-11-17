@@ -147,8 +147,8 @@ struct prov_drbg_st {
 
     /*
      * Counts the number of generate requests since the last reseed
-     * (Starts at 1). This value is the reseed_counter as defined in
-     * NIST SP 800-90Ar1
+     * (starting at 1). This value is the reseed_counter as defined
+     * in NIST SP 800-90Ar1
      */
     unsigned int generate_counter;
     /*
@@ -163,19 +163,23 @@ struct prov_drbg_st {
      * This value is ignored if it is zero.
      */
     time_t reseed_time_interval;
+
+    /*
+     * Enables reseed propagation (see following comment)
+     */
+    unsigned int enable_reseed_propagation;
+
     /*
      * Counts the number of reseeds since instantiation.
-     * This value is ignored if it is zero.
+     * This value is ignored if enable_reseed_propagation is zero.
      *
-     * This counter is used only for seed propagation from the <master> DRBG
+     * This counter is used only for seed propagation from the <primary> DRBG
      * to its two children, the <public> and <private> DRBG. This feature is
      * very special and its sole purpose is to ensure that any randomness which
-     * is added by PROV_add() or PROV_seed() will have an immediate effect on
-     * the output of PROV_bytes() resp. PROV_priv_bytes().
+     * is added by RAND_add() or RAND_seed() will have an immediate effect on
+     * the output of RAND_bytes() resp. RAND_priv_bytes().
      */
     TSAN_QUALIFIER unsigned int reseed_counter;
-    unsigned int reseed_next_counter;
-    unsigned int parent_reseed_counter;
 
     size_t seedlen;
     DRBG_STATUS state;

@@ -113,22 +113,12 @@ static unsigned int get_parent_reseed_count(PROV_DRBG *drbg)
     unsigned int r;
 
     *params = OSSL_PARAM_construct_uint(OSSL_DRBG_PARAM_RESEED_COUNTER, &r);
-    if (!drbg_lock_parent(drbg)) {
-        ERR_raise(ERR_LIB_PROV, PROV_R_UNABLE_TO_LOCK_PARENT);
-        goto err;
-    }
+    /* we don't call drbg_lock_parent(drbg), because an atomic read is used */
     if (!drbg->parent_get_ctx_params(parent, params)) {
-        drbg_unlock_parent(drbg);
         ERR_raise(ERR_LIB_PROV, PROV_R_UNABLE_TO_GET_RESEED_PROP_CTR);
-        goto err;
+        /* in case of error, return my own counter + 1 to enforce a reseed */
+        return drbg->reseed_counter + 1;
     }
-    drbg_unlock_parent(drbg);
-    return r;
-
- err:
-    r = tsan_load(&drbg->reseed_counter) - 2;
-    if (r == 0)
-        r = UINT_MAX;
     return r;
 }
 
@@ -207,7 +197,6 @@ static size_t prov_drbg_get_entropy(PROV_DRBG *drbg, unsigned char **pout,
                                       sizeof(drbg)) != 0)
                 bytes = bytes_needed;
             drbg_unlock_parent(drbg);
-            drbg->parent_reseed_counter = get_parent_reseed_count(drbg);
 
             rand_pool_add_end(pool, bytes, 8 * bytes);
             entropy_available = rand_pool_entropy_available(pool);
@@ -477,13 +466,6 @@ int ossl_prov_drbg_instantiate(PROV_DRBG *drbg, unsigned int strength,
 #endif
     }
 
-    drbg->reseed_next_counter = tsan_load(&drbg->reseed_counter);
-    if (drbg->reseed_next_counter) {
-        drbg->reseed_next_counter++;
-        if (!drbg->reseed_next_counter)
-            drbg->reseed_next_counter = 1;
-    }
-
     entropylen = get_entropy(drbg, &entropy, min_entropy,
                              min_entropylen, max_entropylen,
                              prediction_resistance);
@@ -502,7 +484,13 @@ int ossl_prov_drbg_instantiate(PROV_DRBG *drbg, unsigned int strength,
     drbg->state = EVP_RAND_STATE_READY;
     drbg->generate_counter = 1;
     drbg->reseed_time = time(NULL);
-    tsan_store(&drbg->reseed_counter, drbg->reseed_next_counter);
+    if (drbg->enable_reseed_propagation) {
+        if (drbg->parent == NULL)
+            tsan_counter(&drbg->reseed_counter);
+        else
+            tsan_store(&drbg->reseed_counter,
+                       get_parent_reseed_count(drbg));
+    }
 
  end:
     if (entropy != NULL)
@@ -579,13 +567,6 @@ int ossl_prov_drbg_reseed(PROV_DRBG *drbg, int prediction_resistance,
 
     drbg->state = EVP_RAND_STATE_ERROR;
 
-    drbg->reseed_next_counter = tsan_load(&drbg->reseed_counter);
-    if (drbg->reseed_next_counter) {
-        drbg->reseed_next_counter++;
-        if (!drbg->reseed_next_counter)
-            drbg->reseed_next_counter = 1;
-    }
-
     if (ent != NULL) {
 #ifdef FIPS_MODULE
         /*
@@ -626,9 +607,13 @@ int ossl_prov_drbg_reseed(PROV_DRBG *drbg, int prediction_resistance,
     drbg->state = EVP_RAND_STATE_READY;
     drbg->generate_counter = 1;
     drbg->reseed_time = time(NULL);
-    tsan_store(&drbg->reseed_counter, drbg->reseed_next_counter);
-    if (drbg->parent != NULL)
-        drbg->parent_reseed_counter = get_parent_reseed_count(drbg);
+    if (drbg->enable_reseed_propagation) {
+        if (drbg->parent == NULL)
+            tsan_counter(&drbg->reseed_counter);
+        else
+            tsan_store(&drbg->reseed_counter,
+                       get_parent_reseed_count(drbg));
+    }
 
  end:
     cleanup_entropy(drbg, entropy, entropylen);
@@ -701,9 +686,10 @@ int ossl_prov_drbg_generate(PROV_DRBG *drbg, unsigned char *out, size_t outlen,
             || now - drbg->reseed_time >= drbg->reseed_time_interval)
             reseed_required = 1;
     }
-    if (drbg->parent != NULL
-            && get_parent_reseed_count(drbg) != drbg->parent_reseed_counter)
-        reseed_required = 1;
+    if (drbg->enable_reseed_propagation && drbg->parent != NULL) {
+        if (drbg->reseed_counter != get_parent_reseed_count(drbg))
+            reseed_required = 1;
+    }
 
     if (reseed_required || prediction_resistance) {
         if (!ossl_prov_drbg_reseed(drbg, prediction_resistance, NULL, 0,
