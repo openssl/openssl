@@ -475,8 +475,8 @@ SSL_CTX_set1_sigalgs                    define
 SSL_CTX_set1_sigalgs_list               define
 SSL_CTX_set1_verify_cert_store          define
 SSL_CTX_set_current_cert                define
-SSL_CTX_set_ecdh_auto                   define
 SSL_CTX_set_dh_auto                     define
+SSL_CTX_set_ecdh_auto                   define
 SSL_CTX_set_max_cert_list               define
 SSL_CTX_set_max_pipelines               define
 SSL_CTX_set_max_proto_version           define
