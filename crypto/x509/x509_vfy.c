@@ -486,7 +486,7 @@ static int check_chain(X509_STORE_CTX *ctx)
                      ctx, x, i, X509_V_ERR_INVALID_CA);
             break;
         case 0:
-            CHECK_CB(ret != 0,  ctx, x, i, X509_V_ERR_INVALID_NON_CA);
+            CHECK_CB(ret != 0, ctx, x, i, X509_V_ERR_INVALID_NON_CA);
             break;
         default:
             /* X509_V_FLAG_X509_STRICT is implicit for intermediate CAs */
