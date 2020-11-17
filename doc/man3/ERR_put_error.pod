@@ -144,7 +144,7 @@ code.
 
 Reason codes should consist of uppercase characters, numbers and underscores
 only. The error file generation script translates the trailing section of a
-reason code (after the "_R_") into lowercase and underscores changed to
+reason code (after the "_R_") into lowercase with underscores changed to
 spaces.
 
 Although a library will normally report errors using its own specific
