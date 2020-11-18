@@ -208,6 +208,10 @@ value explicitly fetched with EVP_MD_fetch().
 If I<impl> is non-NULL, its implementation of the digest I<type> is used if
 there is one, and if not, the default implementation is used.
 
+The I<type> parameter can be NULL if I<ctx> has been already initialized
+with another EVP_DigestInit_ex() call and has not been reset with
+EVP_MD_CTX_reset().
+
 =item EVP_DigestUpdate()
 
 Hashes I<cnt> bytes of data at I<d> into the digest context I<ctx>. This
@@ -239,12 +243,13 @@ few bytes.
 =item EVP_DigestInit()
 
 Behaves in the same way as EVP_DigestInit_ex() except it always uses the
-default digest implementation and calls EVP_MD_CTX_reset().
+default digest implementation and calls EVP_MD_CTX_reset() so it cannot
+be used with an I<type> of NULL.
 
 =item EVP_DigestFinal()
 
-Similar to EVP_DigestFinal_ex() except the digest context I<ctx> is
-automatically cleaned up.
+Similar to EVP_DigestFinal_ex() except after computing the digest
+the digest context I<ctx> is automatically cleaned up with EVP_MD_CTX_reset().
 
 =item EVP_MD_CTX_copy()
 
