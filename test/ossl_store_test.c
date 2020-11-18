@@ -15,10 +15,12 @@ typedef enum OPTION_choice {
     OPT_ERR = -1,
     OPT_EOF = 0,
     OPT_INFILE,
+    OPT_DATADIR,
     OPT_TEST_ENUM
 } OPTION_CHOICE;
 
 static const char *infile = NULL;
+static const char *datadir = NULL;
 
 static int test_store_open(void)
 {
@@ -50,11 +52,84 @@ static int test_store_search_by_key_fingerprint_fail(void)
     return ret;
 }
 
+static int get_params(const char *uri, const char *type)
+{
+    EVP_PKEY *pkey = NULL;
+    OSSL_STORE_CTX *ctx = NULL;
+    OSSL_STORE_INFO *info;
+    int ret = 0;
+
+    ctx = OSSL_STORE_open_ex(uri, NULL, NULL, NULL, NULL, NULL, NULL);
+    if (!TEST_ptr(ctx))
+        goto err;
+
+    while (!OSSL_STORE_eof(ctx)
+            && (info = OSSL_STORE_load(ctx)) != NULL
+            && pkey == NULL) {
+        if (OSSL_STORE_INFO_get_type(info) == OSSL_STORE_INFO_PARAMS) {
+            pkey = OSSL_STORE_INFO_get1_PARAMS(info);
+        }
+        OSSL_STORE_INFO_free(info);
+        info = NULL;
+    }
+
+    if (pkey != NULL)
+        ret = EVP_PKEY_is_a(pkey, type);
+    EVP_PKEY_free(pkey);
+
+ err:
+    OSSL_STORE_close(ctx);
+    return ret;
+}
+
+static int test_store_get_params(int idx)
+{
+    const char *type;
+    char uri[80];
+
+    switch(idx) {
+#ifndef OPENSSL_NO_DH
+    case 0:
+        type = "DH";
+        break;
+    case 1:
+        type = "DHX";
+        break;
+#else
+    case 0:
+    case 1:
+        return 1;
+#endif
+    case 2:
+#ifndef OPENSSL_NO_DSA
+        type = "DSA";
+        break;
+#else
+        return 1;
+#endif
+    default:
+        TEST_error("Invalid test index");
+        return 0;
+    }
+
+    if (!TEST_true(BIO_snprintf(uri, sizeof(uri), "%s/%s-params.pem",
+                                datadir, type)))
+        return 0;
+
+    TEST_info("Testing uri: %s", uri);
+    if (!TEST_true(get_params(uri, type)))
+        return 0;
+
+    return 1;
+}
+
+
 const OPTIONS *test_get_options(void)
 {
     static const OPTIONS test_options[] = {
         OPT_TEST_OPTIONS_DEFAULT_USAGE,
         { "in", OPT_INFILE, '<', },
+        { "data", OPT_DATADIR, 's' },
         { NULL }
     };
     return test_options;
@@ -69,6 +144,9 @@ int setup_tests(void)
         case OPT_INFILE:
             infile = opt_arg();
             break;
+        case OPT_DATADIR:
+            datadir = opt_arg();
+            break;
         case OPT_TEST_CASES:
            break;
         default:
@@ -77,7 +155,13 @@ int setup_tests(void)
         }
     }
 
+    if (datadir == NULL) {
+        TEST_error("No datadir specified");
+        return 0;
+    }
+
     ADD_TEST(test_store_open);
     ADD_TEST(test_store_search_by_key_fingerprint_fail);
+    ADD_ALL_TESTS(test_store_get_params, 3);
     return 1;
 }
