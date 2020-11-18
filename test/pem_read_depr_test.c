@@ -34,6 +34,7 @@ static BIO *getfile(const char *filename)
     return infile;
 }
 
+#ifndef OPENSSL_NO_DH
 static int test_read_dh_params(void)
 {
     int testresult = 0;
@@ -75,7 +76,9 @@ static int test_read_dh_x942_params(void)
     DH_free(dh);
     return testresult;
 }
+#endif
 
+#ifndef OPENSSL_NO_DSA
 static int test_read_dsa_params(void)
 {
     int testresult = 0;
@@ -138,6 +141,7 @@ static int test_read_dsa_public(void)
     DSA_free(dsa);
     return testresult;
 }
+#endif
 
 static int test_read_rsa_private(void)
 {
@@ -193,11 +197,15 @@ int setup_tests(void)
         return 0;
     }
 
+#ifndef OPENSSL_NO_DH
     ADD_TEST(test_read_dh_params);
     ADD_TEST(test_read_dh_x942_params);
+#endif
+#ifndef OPENSSL_NO_DSA
     ADD_TEST(test_read_dsa_params);
     ADD_TEST(test_read_dsa_private);
     ADD_TEST(test_read_dsa_public);
+#endif
     ADD_TEST(test_read_rsa_private);
     ADD_TEST(test_read_rsa_public);
 
