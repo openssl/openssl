@@ -1708,6 +1708,9 @@ OpenSSL 1.1.1
    The maximal error rate for primes with more than 1080 bits is lowered
    to 2^-128.
 
+   A consequence of this is that prime number generation will be slower.  This
+   impacts RSA key generation and DSA and DH parameter generation.
+
    *Kurt Roeckx, Annie Yousar*
 
  * Increase the number of Miller-Rabin rounds for DSA key generating to 64.
