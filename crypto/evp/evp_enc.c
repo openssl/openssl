@@ -948,6 +948,8 @@ int EVP_CIPHER_CTX_set_padding(EVP_CIPHER_CTX *ctx, int pad)
     else
         ctx->flags |= EVP_CIPH_NO_PADDING;
 
+    if (ctx->cipher != NULL && ctx->cipher->prov == NULL)
+        return 1;
     params[0] = OSSL_PARAM_construct_uint(OSSL_CIPHER_PARAM_PADDING, &pd);
     ok = evp_do_ciph_ctx_setparams(ctx->cipher, ctx->provctx, params);
 
