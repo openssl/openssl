@@ -12,3 +12,6 @@
 const PKCS7_CTX *pkcs7_get0_ctx(const PKCS7 *p7);
 OSSL_LIB_CTX *pkcs7_ctx_get0_libctx(const PKCS7_CTX *ctx);
 const char *pkcs7_ctx_get0_propq(const PKCS7_CTX *ctx);
+int pkcs7_rsa_sign(PKCS7_SIGNER_INFO *si, int verify);
+int pkcs7_rsa_encrypt(PKCS7_RECIP_INFO *ri, int decrypt);
+int pkcs7_ecdsa_dsa_sign(PKCS7_SIGNER_INFO *si, int verify);

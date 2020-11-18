@@ -472,23 +472,6 @@ static int old_ec_priv_encode(const EVP_PKEY *pkey, unsigned char **pder)
 static int ec_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 {
     switch (op) {
-    case ASN1_PKEY_CTRL_PKCS7_SIGN:
-        if (arg1 == 0) {
-            int snid, hnid;
-            X509_ALGOR *alg1, *alg2;
-
-            PKCS7_SIGNER_INFO_get0_algs(arg2, NULL, &alg1, &alg2);
-            if (alg1 == NULL || alg1->algorithm == NULL)
-                return -1;
-            hnid = OBJ_obj2nid(alg1->algorithm);
-            if (hnid == NID_undef)
-                return -1;
-            if (!OBJ_find_sigid_by_algs(&snid, hnid, EVP_PKEY_id(pkey)))
-                return -1;
-            X509_ALGOR_set0(alg2, OBJ_nid2obj(snid), V_ASN1_UNDEF, 0);
-        }
-        return 1;
-
     case ASN1_PKEY_CTRL_DEFAULT_MD_NID:
         if (EVP_PKEY_id(pkey) == EVP_PKEY_SM2) {
             /* For SM2, the only valid digest-alg is SM3 */
@@ -507,9 +490,7 @@ static int ec_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 
     default:
         return -2;
-
     }
-
 }
 
 static int ec_pkey_check(const EVP_PKEY *pkey)

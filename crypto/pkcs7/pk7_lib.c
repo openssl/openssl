@@ -313,17 +313,6 @@ int PKCS7_SIGNER_INFO_set(PKCS7_SIGNER_INFO *p7i, X509 *x509, EVP_PKEY *pkey,
           ASN1_INTEGER_dup(X509_get0_serialNumber(x509))))
         goto err;
 
-    /*
-     * TODO(3.0) Adapt for provider-native keys
-     * Meanwhile, we downgrade the key.
-     * #legacy
-     */
-    if (!evp_pkey_downgrade(pkey)) {
-        ERR_raise(ERR_LIB_PKCS7,
-                  PKCS7_R_SIGNING_NOT_SUPPORTED_FOR_THIS_KEY_TYPE);
-        goto err;
-    }
-
     /* lets keep the pkey around for a while */
     EVP_PKEY_up_ref(pkey);
     p7i->pkey = pkey;
@@ -333,7 +322,12 @@ int PKCS7_SIGNER_INFO_set(PKCS7_SIGNER_INFO *p7i, X509 *x509, EVP_PKEY *pkey,
     X509_ALGOR_set0(p7i->digest_alg, OBJ_nid2obj(EVP_MD_type(dgst)),
                     V_ASN1_NULL, NULL);
 
-    if (pkey->ameth && pkey->ameth->pkey_ctrl) {
+    if (EVP_PKEY_is_a(pkey, "EC") || EVP_PKEY_is_a(pkey, "DSA"))
+        return pkcs7_ecdsa_dsa_sign(p7i, 0);
+    if (EVP_PKEY_is_a(pkey, "RSA"))
+        return pkcs7_rsa_sign(p7i, 0);
+
+    if (pkey->ameth != NULL && pkey->ameth->pkey_ctrl != NULL) {
         ret = pkey->ameth->pkey_ctrl(pkey, ASN1_PKEY_CTRL_PKCS7_SIGN, 0, p7i);
         if (ret > 0)
             return 1;
@@ -540,8 +534,18 @@ int PKCS7_RECIP_INFO_set(PKCS7_RECIP_INFO *p7i, X509 *x509)
         return 0;
 
     pkey = X509_get0_pubkey(x509);
+    if (pkey == NULL)
+        return 0;
 
-    if (!pkey || !pkey->ameth || !pkey->ameth->pkey_ctrl) {
+    if (EVP_PKEY_is_a(pkey, "RSA-PSS"))
+        return -2;
+    if (EVP_PKEY_is_a(pkey, "RSA")) {
+        if (pkcs7_rsa_encrypt(p7i, 0) <= 0)
+            goto err;
+        goto finished;
+    }
+
+    if (pkey->ameth == NULL || pkey->ameth->pkey_ctrl == NULL) {
         ERR_raise(ERR_LIB_PKCS7,
                   PKCS7_R_ENCRYPTION_NOT_SUPPORTED_FOR_THIS_KEY_TYPE);
         goto err;
@@ -557,7 +561,7 @@ int PKCS7_RECIP_INFO_set(PKCS7_RECIP_INFO *p7i, X509 *x509)
         ERR_raise(ERR_LIB_PKCS7, PKCS7_R_ENCRYPTION_CTRL_FAILURE);
         goto err;
     }
-
+finished:
     X509_up_ref(x509);
     p7i->cert = x509;
 
