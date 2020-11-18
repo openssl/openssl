@@ -19,7 +19,7 @@ setup("test_gendsa");
 plan skip_all => "This test is unsupported in a no-dsa build"
     if disabled("dsa");
 
-plan tests => 10;
+plan tests => 11;
 
 ok(run(app([ 'openssl', 'genpkey', '-genparam',
              '-algorithm', 'DSA',
@@ -33,6 +33,14 @@ ok(run(app([ 'openssl', 'genpkey', '-genparam',
              '-pkeyopt', 'type:fips186_4',
              '-text'])),
    "genpkey DSA params fips186_4 with unverifiable g");
+
+ok(run(app([ 'openssl', 'genpkey', '-genparam',
+             '-algorithm', 'DSA',
+             '-pkeyopt', 'pbits:2048',
+             '-pkeyopt', 'qbits:224',
+             '-pkeyopt', 'digest:SHA512-256',
+             '-pkeyopt', 'type:fips186_4'])),
+   "genpkey DSA params fips186_4 with truncated SHA");
 
 ok(run(app([ 'openssl', 'genpkey', '-genparam',
              '-algorithm', 'DSA',
