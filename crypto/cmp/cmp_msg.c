@@ -334,6 +334,11 @@ OSSL_CMP_MSG *ossl_cmp_certreq_new(OSSL_CMP_CTX *ctx, int type,
     if (type != OSSL_CMP_PKIBODY_P10CR) {
         EVP_PKEY *privkey = OSSL_CMP_CTX_get0_newPkey(ctx, 1);
 
+        /*
+         * privkey is NULL in case ctx->newPkey does not include a private key.
+         * We then may try to use ctx->pkey as fallback/default, but only
+         * if ctx-> newPkey does not include a (non-matching) public key:
+         */
         if (privkey == NULL && OSSL_CMP_CTX_get0_newPkey(ctx, 0) == NULL)
             privkey = ctx->pkey; /* default is independent of ctx->oldCert */
         if (ctx->popoMethod == OSSL_CRMF_POPO_SIGNATURE && privkey == NULL) {
