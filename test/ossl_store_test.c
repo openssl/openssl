@@ -87,15 +87,25 @@ static int test_store_get_params(int idx)
     char uri[80];
 
     switch(idx) {
+#ifndef OPENSSL_NO_DH
     case 0:
         type = "DH";
         break;
     case 1:
         type = "DHX";
         break;
+#else
+    case 0:
+    case 1:
+        return 1;
+#endif
     case 2:
+#ifndef OPENSSL_NO_DSA
         type = "DSA";
         break;
+#else
+        return 1;
+#endif
     default:
         TEST_error("Invalid test index");
         return 0;
