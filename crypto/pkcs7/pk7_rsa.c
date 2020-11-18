@@ -8,6 +8,7 @@
  */
 
 #include <openssl/pkcs7.h>
+#include <openssl/x509.h>
 #include "crypto/asn1.h"
 #include "pk7_local.h"
 
