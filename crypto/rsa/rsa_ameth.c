@@ -492,19 +492,6 @@ static int rsa_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
     int min_saltlen;
 
     switch (op) {
-
-    case ASN1_PKEY_CTRL_PKCS7_SIGN:
-        if (arg1 == 0)
-            PKCS7_SIGNER_INFO_get0_algs(arg2, NULL, NULL, &alg);
-        break;
-
-    case ASN1_PKEY_CTRL_PKCS7_ENCRYPT:
-        if (pkey_is_pss(pkey))
-            return -2;
-        if (arg1 == 0)
-            PKCS7_RECIP_INFO_get0_alg(arg2, &alg);
-        break;
-
     case ASN1_PKEY_CTRL_DEFAULT_MD_NID:
         if (pkey->pkey.rsa->pss != NULL) {
             if (!rsa_pss_get_param(pkey->pkey.rsa->pss, &md, &mgf1md,
