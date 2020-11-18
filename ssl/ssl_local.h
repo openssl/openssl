@@ -807,6 +807,8 @@ int ssl_hmac_final(SSL_HMAC *ctx, unsigned char *md, size_t *len,
                    size_t max_size);
 size_t ssl_hmac_size(const SSL_HMAC *ctx);
 
+int ssl_get_EC_curve_nid(const EVP_PKEY *pkey);
+
 typedef struct tls_group_info_st {
     char *tlsname;           /* Curve Name as in TLS specs */
     char *realname;          /* Curve Name according to provider */

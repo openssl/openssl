@@ -21,7 +21,7 @@
 #include <openssl/provider.h>
 #include <openssl/param_build.h>
 #include "internal/nelem.h"
-#include "internal/evp.h"
+#include "internal/sizes.h"
 #include "internal/tlsgroups.h"
 #include "ssl_local.h"
 #include <openssl/ct.h>
@@ -865,7 +865,7 @@ static int tls1_check_pkey_comp(SSL *s, EVP_PKEY *pkey)
 /* Return group id of a key */
 static uint16_t tls1_get_group_id(EVP_PKEY *pkey)
 {
-    int curve_nid = evp_pkey_get_EC_KEY_curve_nid(pkey);
+    int curve_nid = ssl_get_EC_curve_nid(pkey);
 
     if (curve_nid == NID_undef)
         return 0;
@@ -1498,7 +1498,7 @@ int tls12_check_peer_sigalg(SSL *s, uint16_t sig, EVP_PKEY *pkey)
 
         /* For TLS 1.3 or Suite B check curve matches signature algorithm */
         if (SSL_IS_TLS13(s) || tls1_suiteb(s)) {
-            int curve = evp_pkey_get_EC_KEY_curve_nid(pkey);
+            int curve = ssl_get_EC_curve_nid(pkey);
 
             if (lu->curve != NID_undef && curve != lu->curve) {
                 SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_WRONG_CURVE);
@@ -3151,14 +3151,10 @@ static const SIGALG_LOOKUP *find_sig_alg(SSL *s, X509 *x, EVP_PKEY *pkey)
                                  : s->cert->pkeys[lu->sig_idx].privatekey;
 
         if (lu->sig == EVP_PKEY_EC) {
-#ifndef OPENSSL_NO_EC
             if (curve == -1)
-                curve = evp_pkey_get_EC_KEY_curve_nid(tmppkey);
+                curve = ssl_get_EC_curve_nid(tmppkey);
             if (lu->curve != NID_undef && curve != lu->curve)
                 continue;
-#else
-            continue;
-#endif
         } else if (lu->sig == EVP_PKEY_RSA_PSS) {
             /* validate that key is large enough for the signature algorithm */
             if (!rsa_pss_check_min_key_size(s->ctx, tmppkey, lu))
@@ -3211,15 +3207,12 @@ int tls_choose_sigalg(SSL *s, int fatalerrs)
         if (SSL_USE_SIGALGS(s)) {
             size_t i;
             if (s->s3.tmp.peer_sigalgs != NULL) {
-#ifndef OPENSSL_NO_EC
                 int curve = -1;
 
                 /* For Suite B need to match signature algorithm to curve */
                 if (tls1_suiteb(s))
-                    curve =
-                        evp_pkey_get_EC_KEY_curve_nid(s->cert->pkeys[SSL_PKEY_ECC]
-                                                      .privatekey);
-#endif
+                    curve = ssl_get_EC_curve_nid(s->cert->pkeys[SSL_PKEY_ECC]
+                                                 .privatekey);
 
                 /*
                  * Find highest preference signature algorithm matching
@@ -3248,9 +3241,7 @@ int tls_choose_sigalg(SSL *s, int fatalerrs)
                         if (!rsa_pss_check_min_key_size(s->ctx, pkey, lu))
                             continue;
                     }
-#ifndef OPENSSL_NO_EC
                     if (curve == -1 || lu->curve == curve)
-#endif
                         break;
                 }
 #ifndef OPENSSL_NO_GOST
@@ -3454,3 +3445,12 @@ size_t ssl_hmac_size(const SSL_HMAC *ctx)
     return 0;
 }
 
+int ssl_get_EC_curve_nid(const EVP_PKEY *pkey)
+{
+    char gname[OSSL_MAX_NAME_SIZE];
+
+    if (EVP_PKEY_get_group_name(pkey, gname, sizeof(gname), NULL) > 0)
+        return OBJ_txt2nid(gname);
+
+    return NID_undef;
+}
