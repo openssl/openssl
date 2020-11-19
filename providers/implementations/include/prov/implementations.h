@@ -265,6 +265,7 @@ extern const OSSL_DISPATCH ossl_kdf_krb5kdf_functions[];
 
 /* RNGs */
 extern const OSSL_DISPATCH ossl_test_rng_functions[];
+extern const OSSL_DISPATCH ossl_seed_src_functions[];
 extern const OSSL_DISPATCH ossl_drbg_hash_functions[];
 extern const OSSL_DISPATCH ossl_drbg_ossl_hmac_functions[];
 extern const OSSL_DISPATCH ossl_drbg_ctr_functions[];

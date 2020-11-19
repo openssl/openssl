@@ -438,6 +438,16 @@ generators will use.  Other random bit generators ignore this name.
 This sets the property query used when fetching the random bit generator and
 any underlying algorithms.
 
+=item B<seed>
+
+This sets the randomness source that should be used.  By default B<SEED-SRC>
+will be used outside of the FIPS provider.  The FIPS provider uses call backs
+to access the same randomness sources from outside the validated boundary.
+
+=item B<seed_properties>
+
+This sets the property query used when fetching the randomness source.
+
 =back
 
 =head1 EXAMPLES

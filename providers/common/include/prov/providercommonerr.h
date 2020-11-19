@@ -154,6 +154,7 @@ int err_load_PROV_strings_int(void);
 # define PROV_R_REQUIRE_CTR_MODE_CIPHER                   206
 # define PROV_R_RESEED_ERROR                              197
 # define PROV_R_SEARCH_ONLY_SUPPORTED_FOR_DIRECTORIES     222
+# define PROV_R_SEED_SOURCES_MUST_NOT_HAVE_A_PARENT       200
 # define PROV_R_SELF_TEST_KAT_FAILURE                     215
 # define PROV_R_SELF_TEST_POST_FAILURE                    216
 # define PROV_R_TAG_NOTSET                                119
