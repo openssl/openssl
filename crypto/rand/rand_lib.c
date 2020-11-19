@@ -325,6 +325,8 @@ typedef struct rand_global_st {
      */
     CRYPTO_RWLOCK *lock;
 
+    EVP_RAND_CTX *seed;
+
     /*
      * The <primary> DRBG
      *
@@ -363,6 +365,10 @@ typedef struct rand_global_st {
     char *rng_cipher;
     char *rng_digest;
     char *rng_propq;
+
+    /* Allow the randomness source to be changed */
+    char *seed_name;
+    char *seed_propq;
 } RAND_GLOBAL;
 
 /*
@@ -412,13 +418,16 @@ static void rand_ossl_ctx_free(void *vdgbl)
         return;
 
     CRYPTO_THREAD_lock_free(dgbl->lock);
-    EVP_RAND_CTX_free(dgbl->primary);
     CRYPTO_THREAD_cleanup_local(&dgbl->private);
     CRYPTO_THREAD_cleanup_local(&dgbl->public);
+    EVP_RAND_CTX_free(dgbl->primary);
+    EVP_RAND_CTX_free(dgbl->seed);
     OPENSSL_free(dgbl->rng_name);
     OPENSSL_free(dgbl->rng_cipher);
     OPENSSL_free(dgbl->rng_digest);
     OPENSSL_free(dgbl->rng_propq);
+    OPENSSL_free(dgbl->seed_name);
+    OPENSSL_free(dgbl->seed_propq);
 
     OPENSSL_free(dgbl);
 }
@@ -451,6 +460,35 @@ static void rand_delete_thread_state(void *arg)
     CRYPTO_THREAD_set_local(&dgbl->private, NULL);
     EVP_RAND_CTX_free(rand);
 }
+
+#ifndef FIPS_MODULE
+static EVP_RAND_CTX *rand_new_seed(OSSL_LIB_CTX *libctx)
+{
+    EVP_RAND *rand;
+    RAND_GLOBAL *dgbl = rand_get_global(libctx);
+    EVP_RAND_CTX *ctx;
+    char *name;
+
+    name = dgbl->seed_name != NULL ? dgbl->seed_name : "SEED-SRC";
+    rand = EVP_RAND_fetch(libctx, name, dgbl->seed_propq);
+    if (rand == NULL) {
+        ERR_raise(ERR_LIB_RAND, RAND_R_UNABLE_TO_FETCH_DRBG);
+        return NULL;
+    }
+    ctx = EVP_RAND_CTX_new(rand, NULL);
+    EVP_RAND_free(rand);
+    if (ctx == NULL) {
+        ERR_raise(ERR_LIB_RAND, RAND_R_UNABLE_TO_CREATE_DRBG);
+        return NULL;
+    }
+    if (!EVP_RAND_instantiate(ctx, 0, 0, NULL, 0)) {
+        ERR_raise(ERR_LIB_RAND, RAND_R_ERROR_INSTANTIATING_DRBG);
+        EVP_RAND_CTX_free(ctx);
+        return NULL;
+    }
+    return ctx;
+}
+#endif
 
 static EVP_RAND_CTX *rand_new_drbg(OSSL_LIB_CTX *libctx, EVP_RAND_CTX *parent,
                                    unsigned int reseed_interval,
@@ -522,8 +560,13 @@ EVP_RAND_CTX *RAND_get0_primary(OSSL_LIB_CTX *ctx)
     if (dgbl->primary == NULL) {
         if (!CRYPTO_THREAD_write_lock(dgbl->lock))
             return NULL;
+#ifndef FIPS_MODULE
+        if (dgbl->seed == NULL)
+            dgbl->seed = rand_new_seed(ctx);
+#endif
         if (dgbl->primary == NULL)
-            dgbl->primary = rand_new_drbg(ctx, NULL, PRIMARY_RESEED_INTERVAL,
+            dgbl->primary = rand_new_drbg(ctx, dgbl->seed,
+                                          PRIMARY_RESEED_INTERVAL,
                                           PRIMARY_RESEED_TIME_INTERVAL);
         CRYPTO_THREAD_unlock(dgbl->lock);
     }
@@ -643,6 +686,12 @@ static int random_conf_init(CONF_IMODULE *md, const CONF *cnf)
                 return 0;
         } else if (strcasecmp(cval->name, "properties") == 0) {
             if (!random_set_string(&dgbl->rng_propq, cval->value))
+                return 0;
+        } else if (strcasecmp(cval->name, "seed") == 0) {
+            if (!random_set_string(&dgbl->seed_name, cval->value))
+                return 0;
+        } else if (strcasecmp(cval->name, "seed_properties") == 0) {
+            if (!random_set_string(&dgbl->seed_propq, cval->value))
                 return 0;
         } else {
             ERR_raise_data(ERR_LIB_CRYPTO,

@@ -2931,6 +2931,8 @@ PROV_R_REQUIRE_CTR_MODE_CIPHER:206:require ctr mode cipher
 PROV_R_RESEED_ERROR:197:reseed error
 PROV_R_SEARCH_ONLY_SUPPORTED_FOR_DIRECTORIES:222:\
 	search only supported for directories
+PROV_R_SEED_SOURCES_MUST_NOT_HAVE_A_PARENT:200:\
+	seed sources must not have a parent
 PROV_R_SELF_TEST_KAT_FAILURE:215:self test kat failure
 PROV_R_SELF_TEST_POST_FAILURE:216:self test post failure
 PROV_R_TAG_NOTSET:119:tag notset

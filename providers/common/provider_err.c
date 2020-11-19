@@ -175,6 +175,8 @@ static const ERR_STRING_DATA PROV_str_reasons[] = {
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_RESEED_ERROR), "reseed error"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_SEARCH_ONLY_SUPPORTED_FOR_DIRECTORIES),
     "search only supported for directories"},
+    {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_SEED_SOURCES_MUST_NOT_HAVE_A_PARENT),
+    "seed sources must not have a parent"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_SELF_TEST_KAT_FAILURE),
     "self test kat failure"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_SELF_TEST_POST_FAILURE),
