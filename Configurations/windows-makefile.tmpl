@@ -854,8 +854,8 @@ EOF
                 @{$args{objs}};
      my @deps = compute_lib_depends(@{$args{deps}});
      die "More than one exported symbols list" if scalar @defs > 1;
-     my $linklibs = join("", map { "$_\n" } @deps);
-     my $objs = join("\n", @objs);
+     my $linklibs = join("", map { "$_$target{ld_resp_delim}" } @deps);
+     my $objs = join($target{ld_resp_delim}, @objs);
      my $deps = join(" ", @objs, @defs, @deps);
      my $import = platform->sharedlib_import($lib);
      my $dll =  platform->sharedlib($lib);
@@ -870,8 +870,7 @@ $dll: $deps
 	IF EXIST \$@ DEL /F /Q \$@
 	\$(LD) \$(LDFLAGS) \$(LIB_LDFLAGS) \\
 		/implib:$import \$(LDOUTFLAG)$dll$shared_def @<< || (DEL /Q \$(\@B).* $import; EXIT 1)
-$objs
-$linklibs\$(LIB_EX_LIBS)
+$objs$target{ld_resp_delim}$linklibs\$(LIB_EX_LIBS)
 <<
 	IF EXIST $dll.manifest \\
 	   \$(MT) \$(MTFLAGS) \$(MTINFLAG)$dll.manifest \$(MTOUTFLAG)$dll
@@ -894,8 +893,8 @@ EOF
                 grep { platform->isdef($_) }
                 @{$args{objs}};
      my @deps = compute_lib_depends(@{$args{deps}});
-     my $objs = join("\n", @objs);
-     my $linklibs = join("", map { "$_\n" } @deps);
+     my $objs = join($target{ld_resp_delim}, @objs);
+     my $linklibs = join("", map { "$_$target{ld_resp_delim}" } @deps);
      my $deps = join(" ", @objs, @defs, @deps);
      my $shared_def = join("", map { " /def:$_" } @defs);
      return <<"EOF";
@@ -903,8 +902,7 @@ $dso: $deps
 	IF EXIST $dso.manifest DEL /F /Q $dso.manifest
 	\$(LD) \$(LDFLAGS) \$(DSO_LDFLAGS) \\
 		\$(LDOUTFLAG)$dso$shared_def @<< || (DEL /Q \$(\@B).* $dso_n.*; EXIT 1)
-$objs
-$linklibs \$(DSO_EX_LIBS)
+$objs$target{ld_resp_delim}$linklibs \$(DSO_EX_LIBS)
 <<
 	IF EXIST $dso.manifest \\
 	   \$(MT) \$(MTFLAGS) \$(MTINFLAG)$dso.manifest \$(MTOUTFLAG)$dso
@@ -930,16 +928,14 @@ EOF
                 grep { platform->isobj($_) || platform->isres($_) }
                 @{$args{objs}};
      my @deps = compute_lib_depends(@{$args{deps}});
-     my $objs = join("\n", @objs);
-     my $linklibs = join("", map { "$_\n" } @deps);
+     my $objs = join($target{ld_resp_delim}, @objs);
+     my $linklibs = join("", map { "$_$target{ld_resp_delim}" } @deps);
      my $deps = join(" ", @objs, @deps);
      return <<"EOF";
 $bin: $deps
 	IF EXIST $bin.manifest DEL /F /Q $bin.manifest
-	\$(LD) \$(LDFLAGS) \$(BIN_LDFLAGS) \$(LDOUTFLAG)$bin @<<
-$objs
-setargv.obj
-$linklibs\$(BIN_EX_LIBS)
+	\$(LD) \$(LDFLAGS) \$(BIN_LDFLAGS) @<<
+$objs$target{ld_resp_delim}$target{ld_wildcard_args}$target{ld_resp_delim}\$(LDOUTFLAG)$bin$target{ldpostoutflag}$target{ld_resp_delim}$linklibs\$(BIN_EX_LIBS)
 <<
 	IF EXIST $bin.manifest \\
 	   \$(MT) \$(MTFLAGS) \$(MTINFLAG)$bin.manifest \$(MTOUTFLAG)$bin
