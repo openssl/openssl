@@ -162,12 +162,21 @@ static int der_encode_sharedinfo(WPACKET *pkt, unsigned char *buf, size_t buflen
 }
  *
  * |keylen| is the length (in bytes) of the generated KEK. It is stored into
- * suppPubInfo (in bits).
+ * suppPubInfo (in bits). It is ignored if the value is 0.
  * |cek_oid| The oid of the key wrapping algorithm.
  * |cek_oidlen| The length (in bytes) of the key wrapping algorithm oid,
- * |ukm| is the optional user keying material that is stored into partyAInfo. It
+ * |partyu| is the optional public info contributed by the initiator. It
+ * can be NULL. (It is also used as the ukm by CMS).
+ * |partyu_len| is the |partyu| length (in bytes).
+ * |partyv| is the optional public info contributed by the responder. It
  * can be NULL.
- * |ukmlen| is the user keying material length (in bytes).
+ * |partyv_len| is the |partyv| length (in bytes).
+ * |supp_pub| is the optional additional, mutually-known public information. It
+ * can be NULL. |keylen| should be 0 if this is not NULL.
+ * |supp_pub_len| is the |supp_pub| length (in bytes).
+ * |supp_priv| is the optional additional, mutually-known private information. It
+ * can be NULL.
+ * |supp_priv_len| is the |supp_priv| length (in bytes).
  * |der| is the returned encoded data. It must be freed by the caller.
  * |der_len| is the returned size of the encoded data.
  * |out_ctr| returns a pointer to the counter data which is embedded inside the

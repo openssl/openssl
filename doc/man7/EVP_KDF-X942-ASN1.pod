@@ -36,7 +36,7 @@ The shared secret used for key derivation.  This parameter sets the secret.
 
 =item "partyu-info" (B<OSSL_KDF_PARAM_X942_PARTYUINFO>) <octet string>
 
-An optional octect string containing public info contributed by the initiator.
+An optional octet string containing public info contributed by the initiator.
 
 =item "ukm" (B<OSSL_KDF_PARAM_UKM>) <octet string>
 
@@ -81,7 +81,7 @@ parameter to the L<EVP_KDF_derive(3)> function.
 
 =head1 EXAMPLES
 
-This example derives 24 bytes, with the secret key "secret" and a random user
+This example derives 24 bytes, with the secret key "secret" and random user
 keying material:
 
   EVP_KDF_CTX *kctx;

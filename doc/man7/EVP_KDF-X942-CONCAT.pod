@@ -7,7 +7,7 @@ EVP_KDF-X942-CONCAT - The X942 Concat EVP_KDF implementation
 =head1 DESCRIPTION
 
 The EVP_KDF-X942-CONCAT algorithm is identical to EVP_KDF-X963. It is
-used for Keyagreement to derive a key using input such as a shared secret key
+used for key agreement to derive a key using input such as a shared secret key
 and shared info.
 
 =head2 Identity
