@@ -8,8 +8,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef OPENSSL_BUFERR_H
-# define OPENSSL_BUFERR_H
+#ifndef OPENSSL_BUFFERERR_H
+# define OPENSSL_BUFFERERR_H
 # pragma once
 
 # include <openssl/opensslconf.h>

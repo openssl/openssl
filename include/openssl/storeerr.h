@@ -8,8 +8,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef OPENSSL_OSSL_STOREERR_H
-# define OPENSSL_OSSL_STOREERR_H
+#ifndef OPENSSL_STOREERR_H
+# define OPENSSL_STOREERR_H
 # pragma once
 
 # include <openssl/opensslconf.h>

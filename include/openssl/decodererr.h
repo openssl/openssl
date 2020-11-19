@@ -8,8 +8,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef OPENSSL_OSSL_DECODERERR_H
-# define OPENSSL_OSSL_DECODERERR_H
+#ifndef OPENSSL_DECODERERR_H
+# define OPENSSL_DECODERERR_H
 # pragma once
 
 # include <openssl/opensslconf.h>
