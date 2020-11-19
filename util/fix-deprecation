@@ -3,6 +3,8 @@
 use strict;
 use warnings;
 
+my $debug = $ENV{DEBUG};
+
 # This scripts finds DEPRECATEDIN declarations and converts them to
 # C declarations with the corresponding OSSL_DEPRECATEDIN attribute
 # macro.  It also makes sure they are guarded them with a corresponding
@@ -42,6 +44,7 @@ my $headertext;
 $headertext =~ s/\R/\n/g;
 
 my $cppspaces = '';
+my $last_cppspaces = '';
 my $currentguard = "";
 my $cnt = 0;
 while ( $headertext =~ m/(.*?)                          # $1
@@ -60,27 +63,36 @@ while ( $headertext =~ m/(.*?)                          # $1
                          )
                         /msx ) {
     my $before = $1;
-    my $deprecation = '';
-    my $test = $2.$';
+    my $capture = $2;
     my $after = $';
+
+    my $deprecation = '';
+    my $test = $capture.$';
     my $version = undef;
+
+    print STDERR "DEBUG: captured:\n$capture"
+        if $debug;
 
     if ($3 eq '#') {
         # Treat preprocessor lines (count spaces)
         $cppspaces = $4;
         $cppspaces .= ' ' if (defined $5 && $5 eq 'if');
-        $before .= $2;
-    } elsif ($test =~ m/^\s*$deprecated_re\s*?\n/) {
+        print STDERR "DEBUG: cpp spaces set to ", length($cppspaces), "\n"
+            if $debug;
+        $before .= $capture;
+    } elsif ($test =~ m/^\s*$deprecated_re(.*?\n)/) {
         # Treat DEPRECATEDIN_...
         $version = $2;
-        $deprecation = "OSSL_DEPRECATEDIN_$version $3;\n";
+        $deprecation = "OSSL_DEPRECATEDIN_$version $3;$5";
         $after = $';            # Different from the previous!
+        print STDERR "DEBUG: changed to:\n$deprecation\n"
+            if $debug;
     }
 
     if ($currentguard ne ''
         && (defined $version && $currentguard ne $version
             || $before !~ /^\s*$/s)) {
-        print "#${cppspaces}endif\n";
+        print "#${last_cppspaces}endif\n";
         $currentguard = "";
     }
     print $before;
@@ -88,6 +100,10 @@ while ( $headertext =~ m/(.*?)                          # $1
         if ($currentguard eq '' && defined $version) {
             $currentguard = $version;
             print "#${cppspaces}ifndef OPENSSL_NO_DEPRECATED_$version\n";
+            $last_cppspaces = $cppspaces;
+            $cppspaces .= ' ';
+            print STDERR "DEBUG: cpp spaces set to ", length($cppspaces), "\n"
+                if $debug;
         }
         print $deprecation;
     }
