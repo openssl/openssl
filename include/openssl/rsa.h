@@ -246,13 +246,17 @@ OSSL_DEPRECATEDIN_3_0 int RSA_test_flags(const RSA *r, int flags);
 OSSL_DEPRECATEDIN_3_0 void RSA_set_flags(RSA *r, int flags);
 OSSL_DEPRECATEDIN_3_0 int RSA_get_version(RSA *r);
 OSSL_DEPRECATEDIN_3_0 ENGINE *RSA_get0_engine(const RSA *r);
+#  endif  /* !OPENSSL_NO_DEPRECATED_3_0 */
 
 /* Deprecated version */
+#  ifndef OPENSSL_NO_DEPRECATED_0_9_8
 OSSL_DEPRECATEDIN_0_9_8 RSA *RSA_generate_key(int bits, unsigned long e, void
                                               (*callback) (int, int, void *),
                                               void *cb_arg);
+#  endif
 
 /* New version */
+#  ifndef OPENSSL_NO_DEPRECATED_3_0
 OSSL_DEPRECATEDIN_3_0 int RSA_generate_key_ex(RSA *rsa, int bits, BIGNUM *e,
                                               BN_GENCB *cb);
 /* Multi-prime version */
