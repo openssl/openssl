@@ -955,7 +955,7 @@ EOF
       return <<"EOF";
 $script: $sources
 	"\$(PERL)" "-I\$(BLDDIR)" -Mconfigdata "$dofile" \\
-	    "-o$target{build_file}" $sources > "$script"
+	    "-o$target{build_file}" $sources > \$@
 EOF
   }
   sub generatedir {
