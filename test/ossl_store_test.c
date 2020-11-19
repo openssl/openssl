@@ -57,6 +57,7 @@ static int get_params(const char *uri, const char *type)
     EVP_PKEY *pkey = NULL;
     OSSL_STORE_CTX *ctx = NULL;
     OSSL_STORE_INFO *info;
+    int ret = 0;
 
     ctx = OSSL_STORE_open_ex(uri, NULL, NULL, NULL, NULL, NULL, NULL);
     if (!TEST_ptr(ctx))
@@ -76,9 +77,10 @@ static int get_params(const char *uri, const char *type)
     OSSL_STORE_close(ctx);
 
     if (pkey != NULL)
-        return EVP_PKEY_is_a(pkey, type);
+        ret = EVP_PKEY_is_a(pkey, type);
+    EVP_PKEY_free(pkey);
 
-    return 0;
+    return ret;
 }
 
 static int test_store_get_params(int idx)
