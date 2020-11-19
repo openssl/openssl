@@ -14,8 +14,8 @@
  * time in the future.
  */
 
-#ifndef OPENSSL_ERR_LEGACY_H
-# define OPENSSL_ERR_LEGACY_H
+#ifndef OPENSSL_SSLERR_LEGACY_H
+# define OPENSSL_SSLERR_LEGACY_H
 # pragma once
 
 # include <openssl/macros.h>
