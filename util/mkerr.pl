@@ -576,10 +576,10 @@ EOF
                : "# include <openssl/sslerr_legacy.h>\n")
             : '';
         my $hfile = $hpubinc{$lib};
-        my $guard =
-            $internal
-            ? "OPENSSL_${lib}ERR_H"
-            : "OSSL_" . join('_', split(m|[./]|, uc $hfile));
+        my $guard = $hfile;
+        $guard =~ s|^include/||;
+        $guard = join('_', split(m|[./]|, uc $guard));
+        $guard = "OSSL_" . $guard unless $internal;
 
         open( OUT, ">$hfile" ) || die "Can't write to $hfile, $!,";
         print OUT <<"EOF";
