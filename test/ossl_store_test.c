@@ -73,13 +73,12 @@ static int get_params(const char *uri, const char *type)
         info = NULL;
     }
 
- err:
-    OSSL_STORE_close(ctx);
-
     if (pkey != NULL)
         ret = EVP_PKEY_is_a(pkey, type);
     EVP_PKEY_free(pkey);
 
+ err:
+    OSSL_STORE_close(ctx);
     return ret;
 }
 
