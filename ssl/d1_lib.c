@@ -487,7 +487,7 @@ int DTLSv1_listen(SSL *s, BIO_ADDR *client)
     }
 
     if (!ssl3_setup_buffers(s)) {
-        /* SSLerr already called */
+        /* ERR_raise() already called */
         return -1;
     }
     buf = RECORD_LAYER_get_rbuf(&s->rlayer)->buf;
