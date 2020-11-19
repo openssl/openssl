@@ -18,7 +18,7 @@
 
 #include "testutil.h"
 
-const char *datadir;
+static const char *datadir;
 
 static BIO *getfile(const char *filename)
 {
