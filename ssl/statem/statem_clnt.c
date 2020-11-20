@@ -2557,7 +2557,8 @@ MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL *s, PACKET *pkt)
      */
     sha256 = EVP_MD_fetch(s->ctx->libctx, "SHA2-256", s->ctx->propq);
     if (sha256 == NULL) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_ALGORITHM_FETCH_FAILED);
+        /* Error is already recorded */
+        SSLfatal_alert(s, SSL_AD_INTERNAL_ERROR);
         goto err;
     }
     /*

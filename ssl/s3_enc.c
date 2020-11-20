@@ -251,7 +251,8 @@ int ssl3_setup_key_block(SSL *s)
 
     if (!ssl_cipher_get_evp(s->ctx, s->session, &c, &hash, NULL, NULL, &comp,
                             0)) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_CIPHER_OR_HASH_UNAVAILABLE);
+        /* Error is already recorded */
+        SSLfatal_alert(s, SSL_AD_INTERNAL_ERROR);
         return 0;
     }
 

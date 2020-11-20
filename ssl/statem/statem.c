@@ -111,6 +111,18 @@ void ossl_statem_set_renegotiate(SSL *s)
     s->statem.request_state = TLS_ST_SW_HELLO_REQ;
 }
 
+void ossl_statem_send_fatal(SSL *s, int al)
+{
+    /* We shouldn't call SSLfatal() twice. Once is enough */
+    if (s->statem.in_init && s->statem.state == MSG_FLOW_ERROR)
+      return;
+    s->statem.in_init = 1;
+    s->statem.state = MSG_FLOW_ERROR;
+    if (al != SSL_AD_NO_ALERT
+            && s->statem.enc_write_state != ENC_WRITE_STATE_INVALID)
+        ssl3_send_alert(s, SSL3_AL_FATAL, al);
+}
+
 /*
  * Error reporting building block that's used instead of ERR_set_error().
  * In addition to what ERR_set_error() does, this puts the state machine
@@ -125,14 +137,7 @@ void ossl_statem_fatal(SSL *s, int al, int reason, const char *fmt, ...)
     ERR_vset_error(ERR_LIB_SSL, reason, fmt, args);
     va_end(args);
 
-    /* We shouldn't call SSLfatal() twice. Once is enough */
-    if (s->statem.in_init && s->statem.state == MSG_FLOW_ERROR)
-      return;
-    s->statem.in_init = 1;
-    s->statem.state = MSG_FLOW_ERROR;
-    if (al != SSL_AD_NO_ALERT
-            && s->statem.enc_write_state != ENC_WRITE_STATE_INVALID)
-        ssl3_send_alert(s, SSL3_AL_FATAL, al);
+    ossl_statem_send_fatal(s, al);
 }
 
 /*

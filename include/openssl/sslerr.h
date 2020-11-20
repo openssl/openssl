@@ -458,7 +458,6 @@
 /*
  * SSL reason codes.
  */
-# define SSL_R_ALGORITHM_FETCH_FAILED                     295
 # define SSL_R_APPLICATION_DATA_AFTER_CLOSE_NOTIFY        291
 # define SSL_R_APP_DATA_IN_HANDSHAKE                      100
 # define SSL_R_ATTEMPT_TO_REUSE_SESSION_IN_DIFFERENT_CONTEXT 272
@@ -513,7 +512,6 @@
 # define SSL_R_CERT_LENGTH_MISMATCH                       135
 # define SSL_R_CIPHERSUITE_DIGEST_HAS_CHANGED             218
 # define SSL_R_CIPHER_CODE_WRONG_LENGTH                   137
-# define SSL_R_CIPHER_OR_HASH_UNAVAILABLE                 138
 # define SSL_R_CLIENTHELLO_TLSEXT                         226
 # define SSL_R_COMPRESSED_LENGTH_TOO_LONG                 140
 # define SSL_R_COMPRESSION_DISABLED                       343
