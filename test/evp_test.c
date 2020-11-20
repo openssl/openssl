@@ -2422,11 +2422,12 @@ static int kdf_test_ctrl(EVP_TEST *t, EVP_KDF_CTX *kctx,
             t->skip = 1;
         }
     }
-    if (p != NULL && strcmp(name, "cipher") == 0) {
-        if (is_cipher_disabled(p)) {
-            TEST_info("skipping, '%s' is disabled", p);
-            t->skip = 1;
-        }
+    if (p != NULL
+        && (strcmp(name, "cipher") == 0
+            || strcmp(name, "cekalg") == 0)
+        && is_cipher_disabled(p)) {
+        TEST_info("skipping, '%s' is disabled", p);
+        t->skip = 1;
     }
     OPENSSL_free(name);
     return 1;
@@ -3707,10 +3708,6 @@ static int is_kdf_disabled(const char *name)
     if (STR_ENDS_WITH(name, "SCRYPT"))
         return 1;
 #endif
-#ifdef OPENSSL_NO_CMS
-    if (strcasecmp(name, "X942KDF") == 0)
-        return 1;
-#endif /* OPENSSL_NO_CMS */
     return 0;
 }
 
@@ -3742,6 +3739,8 @@ static int is_cipher_disabled(const char *name)
 #endif
 #ifdef OPENSSL_NO_DES
     if (STR_STARTS_WITH(name, "DES"))
+        return 1;
+    if (STR_ENDS_WITH(name, "3DESwrap"))
         return 1;
 #endif
 #ifdef OPENSSL_NO_OCB
