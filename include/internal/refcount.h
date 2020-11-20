@@ -1,13 +1,13 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-#ifndef HEADER_INTERNAL_REFCOUNT_H
-# define HEADER_INTERNAL_REFCOUNT_H
+#ifndef OSSL_INTERNAL_REFCOUNT_H
+# define OSSL_INTERNAL_REFCOUNT_H
 
 /* Used to checking reference counts, most while doing perl5 stuff :-) */
 # if defined(OPENSSL_NO_STDIO)
@@ -73,6 +73,21 @@ static __inline__ int CRYPTO_DOWN_REF(int *val, int *ret, void *lock)
         __atomic_thread_fence(__ATOMIC_ACQUIRE);
     return 1;
 }
+#  elif defined(__ICL) && defined(_WIN32)
+#   define HAVE_ATOMICS 1
+typedef volatile int CRYPTO_REF_COUNT;
+
+static __inline int CRYPTO_UP_REF(volatile int *val, int *ret, void *lock)
+{
+    *ret = _InterlockedExchangeAdd((void *)val, 1) + 1;
+    return 1;
+}
+
+static __inline int CRYPTO_DOWN_REF(volatile int *val, int *ret, void *lock)
+{
+    *ret = _InterlockedExchangeAdd((void *)val, -1) - 1;
+    return 1;
+}
 
 #  elif defined(_MSC_VER) && _MSC_VER>=1200
 
@@ -130,7 +145,7 @@ static __inline int CRYPTO_DOWN_REF(volatile int *val, int *ret, void *lock)
 
 /*
  * All the refcounting implementations above define HAVE_ATOMICS, so if it's
- * still undefined here (such as when OPENSSL_DEV_NO_ATMOICS is defined), it
+ * still undefined here (such as when OPENSSL_DEV_NO_ATOMICS is defined), it
  * means we need to implement a fallback.  This fallback uses locks.
  */
 # ifndef HAVE_ATOMICS
@@ -151,7 +166,7 @@ typedef int CRYPTO_REF_COUNT;
 
 # ifdef REF_PRINT
 #  define REF_PRINT_COUNT(a, b) \
-        fprintf(stderr, "%p:%4d:%s\n", b, b->references, a)
+        fprintf(stderr, "%p:%4d:%s\n", (void*)b, b->references, a)
 # else
 #  define REF_PRINT_COUNT(a, b)
 # endif

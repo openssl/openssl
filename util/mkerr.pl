@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 1999-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 1999-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -220,8 +220,6 @@ if ( ! $reindex && $statefile ) {
             }
             $rcodes{$name} = $code;
         } elsif ( $name =~ /^(?:OSSL_|OPENSSL_)?[A-Z0-9]{2,}_F_/ ) {
-            die "$lib function code $code collision at $name\n"
-                if $fassigned{$lib} =~ /:$code:/;
             $fassigned{$lib} .= "$code:";
             $fmax{$lib} = $code if $code > $fmax{$lib};
             $fcodes{$name} = $code;
@@ -265,7 +263,9 @@ while ( ( my $hdr, my $lib ) = each %libinc ) {
     my $linenr = 0;
     my $cpp = 0;
 
-    open(IN, "<$hdr") || die "Can't open $hdr, $!,";
+    open(IN, "<$hdr")
+        || open(IN, "<$hdr.in")
+        || die "Can't open $hdr or $hdr.in, $!,";
     while ( <IN> ) {
         $linenr++;
 
@@ -317,7 +317,7 @@ while ( ( my $hdr, my $lib ) = each %libinc ) {
         s/[\n\s]*$//g;
 
         # Skip over recognized non-function declarations
-        next if /typedef\W/ or /DECLARE_STACK_OF/ or /TYPEDEF_.*_OF/;
+        next if /typedef\W/;
 
         # Remove STACK_OF(foo)
         s/STACK_OF\(\w+\)/void/;
@@ -419,6 +419,7 @@ foreach my $lib ( keys %errorfile ) {
     next if ! $fnew{$lib} && ! $rnew{$lib} && ! $rebuild;
     next if scalar keys %modules > 0 && !$modules{$lib};
     next if $nowrite;
+    next if $hinc{$lib} eq 'NONE';
     print STDERR "$lib: $fnew{$lib} new functions\n" if $fnew{$lib};
     print STDERR "$lib: $rnew{$lib} new reasons\n" if $rnew{$lib};
     $newstate = 1;
@@ -449,8 +450,9 @@ foreach my $lib ( keys %errorfile ) {
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_${lib}ERR_H
-# define HEADER_${lib}ERR_H
+#ifndef OPENSSL_${lib}ERR_H
+# define OPENSSL_${lib}ERR_H
+# pragma once
 
 # include <openssl/opensslconf.h>
 # include <openssl/symhacks.h>
@@ -498,7 +500,7 @@ EOF
     }
 
     print OUT "\n/*\n * $lib function codes.\n */\n";
-    print OUT "# if !OPENSSL_API_3\n";
+    print OUT "# ifndef OPENSSL_NO_DEPRECATED_3_0\n";
     foreach my $i ( @function ) {
         my $z = 48 - length($i);
         $z = 0 if $z < 0;
@@ -609,7 +611,7 @@ EOF
 int ERR_load_${lib}_strings(void)
 {
 #ifndef OPENSSL_NO_ERR
-    if (ERR_func_error_string(${lib}_str_reasons[0].error) == NULL)
+    if (ERR_reason_error_string(${lib}_str_reasons[0].error) == NULL)
         ERR_load_strings_const(${lib}_str_reasons);
 #endif
     return 1;
@@ -650,7 +652,8 @@ ${st}void ERR_${lib}_error(int function, int reason, char *file, int line)
 {
     if (lib_code == 0)
         lib_code = ERR_get_next_error_library();
-    ERR_PUT_error(lib_code, function, reason, file, line);
+    ERR_raise(lib_code, reason);
+    ERR_set_debug(file, line, NULL);
 }
 EOF
 

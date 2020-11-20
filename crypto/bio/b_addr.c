@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,10 +7,24 @@
  * https://www.openssl.org/source/license.html
  */
 
+#ifndef _GNU_SOURCE
+# define _GNU_SOURCE
+#endif
+
+/*
+ * VC configurations may define UNICODE, to indicate to the C RTL that
+ * WCHAR functions are preferred.
+ * This affects functions like gai_strerror(), which is implemented as
+ * an alias macro for gai_strerrorA() (which returns a const char *) or
+ * gai_strerrorW() (which returns a const WCHAR *).  This source file
+ * assumes POSIX declarations, so prefer the non-UNICODE definitions.
+ */
+#undef UNICODE
+
 #include <assert.h>
 #include <string.h>
 
-#include "bio_lcl.h"
+#include "bio_local.h"
 #include <openssl/crypto.h>
 
 #ifndef OPENSSL_NO_SOCK
@@ -22,7 +36,7 @@ CRYPTO_RWLOCK *bio_lookup_lock;
 static CRYPTO_ONCE bio_lookup_init = CRYPTO_ONCE_STATIC_INIT;
 
 /*
- * Throughout this file and bio_lcl.h, the existence of the macro
+ * Throughout this file and bio_local.h, the existence of the macro
  * AI_PASSIVE is used to detect the availability of struct addrinfo,
  * getnameinfo() and getaddrinfo().  If that macro doesn't exist,
  * we use our own implementation instead, using gethostbyname,
@@ -40,7 +54,7 @@ BIO_ADDR *BIO_ADDR_new(void)
     BIO_ADDR *ret = OPENSSL_zalloc(sizeof(*ret));
 
     if (ret == NULL) {
-        BIOerr(BIO_F_BIO_ADDR_NEW, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_BIO, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
@@ -207,13 +221,12 @@ static int addr_strings(const BIO_ADDR *ap, int numeric,
                                flags)) != 0) {
 # ifdef EAI_SYSTEM
             if (ret == EAI_SYSTEM) {
-                FUNCerr("getnameinfo", get_last_socket_error());
-                BIOerr(BIO_F_ADDR_STRINGS, ERR_R_SYS_LIB);
+                ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
+                               "calling getnameinfo()");
             } else
 # endif
             {
-                BIOerr(BIO_F_ADDR_STRINGS, ERR_R_SYS_LIB);
-                ERR_add_error_data(1, gai_strerror(ret));
+                ERR_raise_data(ERR_LIB_BIO, ERR_R_SYS_LIB, gai_strerror(ret));
             }
             return 0;
         }
@@ -254,7 +267,7 @@ static int addr_strings(const BIO_ADDR *ap, int numeric,
             OPENSSL_free(*service);
             *service = NULL;
         }
-        BIOerr(BIO_F_ADDR_STRINGS, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_BIO, ERR_R_MALLOC_FAILURE);
         return 0;
     }
 
@@ -541,13 +554,13 @@ int BIO_parse_hostserv(const char *hostserv, char **host, char **service,
 
     return 1;
  amb_err:
-    BIOerr(BIO_F_BIO_PARSE_HOSTSERV, BIO_R_AMBIGUOUS_HOST_OR_SERVICE);
+    ERR_raise(ERR_LIB_BIO, BIO_R_AMBIGUOUS_HOST_OR_SERVICE);
     return 0;
  spec_err:
-    BIOerr(BIO_F_BIO_PARSE_HOSTSERV, BIO_R_MALFORMED_HOST_OR_SERVICE);
+    ERR_raise(ERR_LIB_BIO, BIO_R_MALFORMED_HOST_OR_SERVICE);
     return 0;
  memerr:
-    BIOerr(BIO_F_BIO_PARSE_HOSTSERV, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_BIO, ERR_R_MALLOC_FAILURE);
     return 0;
 }
 
@@ -566,7 +579,7 @@ static int addrinfo_wrap(int family, int socktype,
                          BIO_ADDRINFO **bai)
 {
     if ((*bai = OPENSSL_zalloc(sizeof(**bai))) == NULL) {
-        BIOerr(BIO_F_ADDRINFO_WRAP, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_BIO, ERR_R_MALLOC_FAILURE);
         return 0;
     }
 
@@ -656,7 +669,7 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
 #endif
         break;
     default:
-        BIOerr(BIO_F_BIO_LOOKUP_EX, BIO_R_UNSUPPORTED_PROTOCOL_FAMILY);
+        ERR_raise(ERR_LIB_BIO, BIO_R_UNSUPPORTED_PROTOCOL_FAMILY);
         return 0;
     }
 
@@ -665,7 +678,7 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
         if (addrinfo_wrap(family, socktype, host, strlen(host), 0, res))
             return 1;
         else
-            BIOerr(BIO_F_BIO_LOOKUP_EX, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_BIO, ERR_R_MALLOC_FAILURE);
         return 0;
     }
 #endif
@@ -675,7 +688,7 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
 
     if (1) {
 #ifdef AI_PASSIVE
-        int gai_ret = 0;
+        int gai_ret = 0, old_ret = 0;
         struct addrinfo hints;
 
         memset(&hints, 0, sizeof(hints));
@@ -683,46 +696,49 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
         hints.ai_family = family;
         hints.ai_socktype = socktype;
         hints.ai_protocol = protocol;
-#ifdef AI_ADDRCONFIG
-#ifdef AF_UNSPEC
+# ifdef AI_ADDRCONFIG
+#  ifdef AF_UNSPEC
         if (family == AF_UNSPEC)
-#endif
+#  endif
             hints.ai_flags |= AI_ADDRCONFIG;
-#endif
+# endif
 
         if (lookup_type == BIO_LOOKUP_SERVER)
             hints.ai_flags |= AI_PASSIVE;
 
         /* Note that |res| SHOULD be a 'struct addrinfo **' thanks to
-         * macro magic in bio_lcl.h
+         * macro magic in bio_local.h
          */
+# if defined(AI_ADDRCONFIG) && defined(AI_NUMERICHOST)
       retry:
+# endif
         switch ((gai_ret = getaddrinfo(host, service, &hints, res))) {
 # ifdef EAI_SYSTEM
         case EAI_SYSTEM:
-            FUNCerr("getaddrinfo", get_last_socket_error());
-            BIOerr(BIO_F_BIO_LOOKUP_EX, ERR_R_SYS_LIB);
+            ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
+                           "calling getaddrinfo()");
+            ERR_raise(ERR_LIB_BIO, ERR_R_SYS_LIB);
+            break;
+# endif
+# ifdef EAI_MEMORY
+        case EAI_MEMORY:
+            ERR_raise(ERR_LIB_BIO, ERR_R_MALLOC_FAILURE);
             break;
 # endif
         case 0:
             ret = 1;             /* Success */
             break;
-# if (defined(EAI_FAMILY) || defined(EAI_ADDRFAMILY)) && defined(AI_ADDRCONFIG)
-#  ifdef EAI_FAMILY
-        case EAI_FAMILY:
-#  endif
-#  ifdef EAI_ADDRFAMILY
-        case EAI_ADDRFAMILY:
-#  endif
+        default:
+# if defined(AI_ADDRCONFIG) && defined(AI_NUMERICHOST)
             if (hints.ai_flags & AI_ADDRCONFIG) {
                 hints.ai_flags &= ~AI_ADDRCONFIG;
+                hints.ai_flags |= AI_NUMERICHOST;
+                old_ret = gai_ret;
                 goto retry;
             }
 # endif
-            /* fall through */
-        default:
-            BIOerr(BIO_F_BIO_LOOKUP_EX, ERR_R_SYS_LIB);
-            ERR_add_error_data(1, gai_strerror(gai_ret));
+            ERR_raise_data(ERR_LIB_BIO, ERR_R_SYS_LIB,
+                           gai_strerror(old_ret ? old_ret : gai_ret));
             break;
         }
     } else {
@@ -763,7 +779,7 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
 #endif
 
         if (!RUN_ONCE(&bio_lookup_init, do_bio_lookup_init)) {
-            BIOerr(BIO_F_BIO_LOOKUP_EX, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_BIO, ERR_R_MALLOC_FAILURE);
             ret = 0;
             goto err;
         }
@@ -782,7 +798,7 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
             default:
                 /* We forgot to handle a lookup type! */
                 assert("We forgot to handle a lookup type!" == NULL);
-                BIOerr(BIO_F_BIO_LOOKUP_EX, ERR_R_INTERNAL_ERROR);
+                ERR_raise(ERR_LIB_BIO, ERR_R_INTERNAL_ERROR);
                 ret = 0;
                 goto err;
             }
@@ -804,12 +820,15 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
                  */
 # if defined(OPENSSL_SYS_VXWORKS)
                 /* h_errno doesn't exist on VxWorks */
-                FUNCerr("gethostbyname", 1000 );
+                ERR_raise_data(ERR_LIB_SYS, 1000,
+                               "calling gethostbyname()");
 # else
-                FUNCerr("gethostbyname", 1000 + h_errno);
+                ERR_raise_data(ERR_LIB_SYS, 1000 + h_errno,
+                               "calling gethostbyname()");
 # endif
 #else
-                FUNCerr("gethostbyname", get_last_socket_error());
+                ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
+                               "calling gethostbyname()");
 #endif
                 ret = 0;
                 goto err;
@@ -855,11 +874,12 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
                 se = getservbyname(service, proto);
 
                 if (se == NULL) {
-                    FUNCerr("getservbyname", get_last_socket_error());
+                    ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
+                                   "calling getservbyname()");
                     goto err;
                 }
             } else {
-                BIOerr(BIO_F_BIO_LOOKUP_EX, BIO_R_MALFORMED_HOST_OR_SERVICE);
+                ERR_raise(ERR_LIB_BIO, BIO_R_MALFORMED_HOST_OR_SERVICE);
                 goto err;
             }
         }
@@ -901,7 +921,7 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
              addrinfo_malloc_err:
                 BIO_ADDRINFO_free(*res);
                 *res = NULL;
-                BIOerr(BIO_F_BIO_LOOKUP_EX, ERR_R_MALLOC_FAILURE);
+                ERR_raise(ERR_LIB_BIO, ERR_R_MALLOC_FAILURE);
                 ret = 0;
                 goto err;
             }

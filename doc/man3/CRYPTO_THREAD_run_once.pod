@@ -93,11 +93,20 @@ On Windows platforms the CRYPTO_THREAD_* types and functions in the
 openssl/crypto.h header are dependent on some of the types customarily
 made available by including windows.h. The application developer is
 likely to require control over when the latter is included, commonly as
-one of the first included headers. Therefore it is defined as an
+one of the first included headers. Therefore, it is defined as an
 application developer's responsibility to include windows.h prior to
 crypto.h where use of CRYPTO_THREAD_* types and functions is required.
 
-=head1 EXAMPLE
+=head1 EXAMPLES
+
+You can find out if OpenSSL was configured with thread support:
+
+ #include <openssl/opensslconf.h>
+ #if defined(OPENSSL_THREADS)
+     /* thread support enabled */
+ #else
+     /* no thread support */
+ #endif
 
 This example safely initializes and uses a lock.
 
@@ -144,24 +153,13 @@ no longer in use and is unloaded.
 The simplest solution is to just "leak" the lock in applications and not
 repeatedly load/unload shared libraries that allocate locks.
 
-=head1 NOTES
-
-You can find out if OpenSSL was configured with thread support:
-
- #include <openssl/opensslconf.h>
- #if defined(OPENSSL_THREADS)
-     /* thread support enabled */
- #else
-     /* no thread support */
- #endif
-
 =head1 SEE ALSO
 
 L<crypto(7)>
 
 =head1 COPYRIGHT
 
-Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

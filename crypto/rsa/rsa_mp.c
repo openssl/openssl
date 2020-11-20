@@ -10,7 +10,7 @@
 
 #include <openssl/bn.h>
 #include <openssl/err.h>
-#include "rsa_locl.h"
+#include "rsa_local.h"
 
 void rsa_multip_info_free_ex(RSA_PRIME_INFO *pinfo)
 {
@@ -34,7 +34,7 @@ RSA_PRIME_INFO *rsa_multip_info_new(void)
 
     /* create a RSA_PRIME_INFO structure */
     if ((pinfo = OPENSSL_zalloc(sizeof(RSA_PRIME_INFO))) == NULL) {
-        RSAerr(RSA_F_RSA_MULTIP_INFO_NEW, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_RSA, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
     if ((pinfo->r = BN_secure_new()) == NULL)

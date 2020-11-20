@@ -9,8 +9,14 @@
 
 #include <stdlib.h>
 
-#ifndef HEADER_ASYNC_H
-# define HEADER_ASYNC_H
+#ifndef OPENSSL_ASYNC_H
+# define OPENSSL_ASYNC_H
+# pragma once
+
+# include <openssl/macros.h>
+# ifndef OPENSSL_NO_DEPRECATED_3_0
+#  define HEADER_ASYNC_H
+# endif
 
 #if defined(_WIN32)
 # if defined(BASETYPES) || defined(_WINDEF_H)

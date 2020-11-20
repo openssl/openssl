@@ -30,7 +30,7 @@ int NETSCAPE_SPKI_print(BIO *out, NETSCAPE_SPKI *spki)
     BIO_printf(out, "  Public Key Algorithm: %s\n",
                (i == NID_undef) ? "UNKNOWN" : OBJ_nid2ln(i));
     pkey = X509_PUBKEY_get(spki->spkac->pubkey);
-    if (!pkey)
+    if (pkey == NULL)
         BIO_printf(out, "  Unable to load public key\n");
     else {
         EVP_PKEY_print_public(out, pkey, 4, NULL);

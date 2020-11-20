@@ -6,22 +6,27 @@ ossl_provider_find, ossl_provider_new, ossl_provider_up_ref,
 ossl_provider_free,
 ossl_provider_set_fallback, ossl_provider_set_module_path,
 ossl_provider_add_parameter,
-ossl_provider_activate,
+ossl_provider_activate, ossl_provider_available,
 ossl_provider_ctx,
 ossl_provider_forall_loaded,
 ossl_provider_name, ossl_provider_dso,
 ossl_provider_module_name, ossl_provider_module_path,
-ossl_provider_teardown, ossl_provider_get_param_types,
-ossl_provider_get_params, ossl_provider_query_operation
+ossl_provider_libctx,
+ossl_provider_teardown, ossl_provider_gettable_params,
+ossl_provider_get_params, ossl_provider_query_operation,
+ossl_provider_set_operation_bit, ossl_provider_test_operation_bit,
+ossl_provider_get_capabilities
 - internal provider routines
 
 =head1 SYNOPSIS
 
  #include "internal/provider.h"
 
- OSSL_PROVIDER *ossl_provider_find(OPENSSL_CTX *libctx, const char *name);
- OSSL_PROVIDER *ossl_provider_new(OPENSSL_CTX *libctx, const char *name,
-                                  ossl_provider_init_fn *init_function);
+ OSSL_PROVIDER *ossl_provider_find(OSSL_LIB_CTX *libctx, const char *name,
+                                   int noconfig);
+ OSSL_PROVIDER *ossl_provider_new(OSSL_LIB_CTX *libctx, const char *name,
+                                  ossl_provider_init_fn *init_function
+                                  int noconfig);
  int ossl_provider_up_ref(OSSL_PROVIDER *prov);
  void ossl_provider_free(OSSL_PROVIDER *prov);
 
@@ -33,12 +38,14 @@ ossl_provider_get_params, ossl_provider_query_operation
 
  /* Load and initialize the Provider */
  int ossl_provider_activate(OSSL_PROVIDER *prov);
+ /* Check if provider is available */
+ int ossl_provider_available(OSSL_PROVIDER *prov);
 
  /* Return pointer to the provider's context */
  void *ossl_provider_ctx(const OSSL_PROVIDER *prov);
 
  /* Iterate over all loaded providers */
- int ossl_provider_forall_loaded(OPENSSL_CTX *,
+ int ossl_provider_forall_loaded(OSSL_LIB_CTX *,
                                  int (*cb)(OSSL_PROVIDER *provider,
                                            void *cbdata),
                                  void *cbdata);
@@ -48,14 +55,23 @@ ossl_provider_get_params, ossl_provider_query_operation
  const DSO *ossl_provider_dso(OSSL_PROVIDER *prov);
  const char *ossl_provider_module_name(OSSL_PROVIDER *prov);
  const char *ossl_provider_module_path(OSSL_PROVIDER *prov);
+ OSSL_LIB_CTX *ossl_provider_libctx(const OSSL_PROVIDER *prov);
 
  /* Thin wrappers around calls to the provider */
  void ossl_provider_teardown(const OSSL_PROVIDER *prov);
- const OSSL_PARAM *ossl_provider_get_param_types(const OSSL_PROVIDER *prov);
+ const OSSL_PARAM *ossl_provider_gettable_params(const OSSL_PROVIDER *prov);
  int ossl_provider_get_params(const OSSL_PROVIDER *prov, OSSL_PARAM params[]);
+ int ossl_provider_get_capabilities(const OSSL_PROVIDER *prov,
+                                   const char *capability,
+                                   OSSL_CALLBACK *cb,
+                                   void *arg);
  const OSSL_ALGORITHM *ossl_provider_query_operation(const OSSL_PROVIDER *prov,
                                                      int operation_id,
                                                      int *no_cache);
+
+ int ossl_provider_set_operation_bit(OSSL_PROVIDER *provider, size_t bitnum);
+ int ossl_provider_test_operation_bit(OSSL_PROVIDER *provider, size_t bitnum,
+                                      int *result);
 
 =head1 DESCRIPTION
 
@@ -79,7 +95,11 @@ times as ossl_provider_activate() has.
 =head2 Functions
 
 ossl_provider_find() finds an existing provider object in the provider
-object store by I<name>. 
+object store by I<name>.
+The config file will be automatically loaded unless I<noconfig> is set.
+Typically I<noconfig> should be 0.
+We set I<noconfig> to 1 only when calling these functions while processing a
+config file in order to avoid recursively attempting to load the file.
 The provider object it finds has its reference count incremented.
 
 ossl_provider_new() creates a new provider object named I<name> and
@@ -87,6 +107,10 @@ stores it in the provider object store, unless there already is one
 there with the same name.
 If there already is one with the same name, it's returned with its
 reference count incremented.
+The config file will be automatically loaded unless I<noconfig> is set.
+Typically I<noconfig> should be 0.
+We set I<noconfig> to 1 only when calling these functions while processing a
+config file in order to avoid recursively attempting to load the file.
 The reference count of a newly created provider object will always
 be 2; one for being added to the store, and one for the returned
 reference.
@@ -120,6 +144,9 @@ This will be used in preference to automatically trying to figure out
 the path from the provider name and the default module directory (more
 on this in L</NOTES>).
 
+ossl_provider_libctx() returns the library context the given
+provider I<prov> is registered in.
+
 ossl_provider_add_parameter() adds a global parameter for the provider
 to retrieve as it sees fit.
 The parameters are a combination of I<name> and I<value>, and the
@@ -148,6 +175,10 @@ be located in that module, and called.
 
 =back
 
+ossl_provider_available() activates all fallbacks if no provider is
+activated yet, then checks if given provider object I<prov> is
+activated.
+
 ossl_provider_ctx() returns a context created by the provider.
 Outside of the provider, it's completely opaque, but it needs to be
 passed back to some of the provider functions.
@@ -163,7 +194,7 @@ ossl_provider_new().
 ossl_provider_dso() returns a reference to the module, for providers
 that come in the form of loadable modules.
 
-ossl_provider_module_name() returns the file name of the module, for
+ossl_provider_module_name() returns the filename of the module, for
 providers that come in the form of loadable modules.
 
 ossl_provider_module_path() returns the full path of the module file,
@@ -172,7 +203,7 @@ for providers that come in the form of loadable modules.
 ossl_provider_teardown() calls the provider's I<teardown> function, if
 the provider has one.
 
-ossl_provider_get_param_types() calls the provider's I<get_param_types>
+ossl_provider_gettable_params() calls the provider's I<gettable_params>
 function, if the provider has one.
 It should return an array of I<OSSL_PARAM> to describe all the
 parameters that the provider has for the provider object.
@@ -182,10 +213,23 @@ responder.
 It should treat the given I<OSSL_PARAM> array as described in
 L<OSSL_PARAM(3)>.
 
+ossl_provider_get_capabilities() calls the provider's I<get_capabilities> function,
+if the provider has one. It provides the name of the I<capability> and a
+callback I<cb> parameter to call for each capability that has a matching name in
+the provider. The callback gets passed OSSL_PARAM details about the capability as
+well as the caller supplied argument I<arg>.
+
 ossl_provider_query_operation() calls the provider's
 I<query_operation> function, if the provider has one.
 It should return an array of I<OSSL_ALGORITHM> for the given
 I<operation_id>.
+
+ossl_provider_set_operation_bit() registers a 1 for operation I<bitnum>
+in a bitstring that's internal to I<provider>.
+
+ossl_provider_tests_operation_bit() checks if the bit operation I<bitnum>
+is set (1) or not (0) in the internal I<provider> bitstring, and sets
+I<*result> to 1 or 0 accorddingly. 
 
 =head1 NOTES
 
@@ -228,19 +272,33 @@ ossl_provider_free() doesn't return any value.
 ossl_provider_set_module_path(), ossl_provider_set_fallback() and
 ossl_provider_activate() return 1 on success, or 0 on error.
 
+ossl_provider_available() return 1 if the provider is available,
+otherwise 0.
+
 ossl_provider_name(), ossl_provider_dso(),
 ossl_provider_module_name(), and ossl_provider_module_path() return a
 pointer to their respective data if it's available, otherwise NULL
 is returned.
 
-ossl_provider_teardown() doesnt't return any value.
+ossl_provider_libctx() return a pointer to the library context.
+This may be NULL, and is perfectly valid, as it denotes the default
+global library context.
 
-ossl_provider_get_param_types() returns a pointer to a constant
+ossl_provider_teardown() doesn't return any value.
+
+ossl_provider_gettable_params() returns a pointer to a constant
 I<OSSL_PARAM> array if this function is available in the provider,
 otherwise NULL.
 
 ossl_provider_get_params() returns 1 on success, or 0 on error.
 If this function isn't available in the provider, 0 is returned.
+
+ossl_provider_set_operation_bit() and ossl_provider_test_operation_bit()
+return 1 on success, or 0 on error.
+
+ossl_provider_get_capabilities() returns 1 on success, or 0 on error.
+If this function isn't available in the provider or the provider does not
+support the requested capability then 0 is returned.
 
 =head1 SEE ALSO
 
@@ -252,7 +310,7 @@ The functions described here were all added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

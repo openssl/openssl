@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,8 +7,15 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * IDEA low level APIs are deprecated for public use, but still ok for internal
+ * use where we're using them to implement the higher level EVP interface, as is
+ * the case here.
+ */
+#include "internal/deprecated.h"
+
 #include <openssl/idea.h>
-#include "idea_lcl.h"
+#include "idea_local.h"
 
 /*
  * The input and output encrypted as though 64bit ofb mode is being used.

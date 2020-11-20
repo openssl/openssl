@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,8 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_E_OS2_H
-# define HEADER_E_OS2_H
+#ifndef OPENSSL_E_OS2_H
+# define OPENSSL_E_OS2_H
+# pragma once
+
+# include <openssl/macros.h>
+# ifndef OPENSSL_NO_DEPRECATED_3_0
+#  define HEADER_E_OS2_H
+# endif
 
 # include <openssl/opensslconf.h>
 
@@ -132,6 +138,21 @@ extern "C" {
 #  endif
 # endif
 
+/* ---------------------------- HP NonStop -------------------------------- */
+# ifdef __TANDEM
+#  ifdef _STRING
+#   include <strings.h>
+#  endif
+# define OPENSSL_USE_BUILD_DATE
+# if defined(OPENSSL_THREADS) && defined(_SPT_MODEL_)
+#  define  SPT_THREAD_SIGNAL 1
+#  define  SPT_THREAD_AWARE 1
+#  include <spthread.h>
+# elif defined(OPENSSL_THREADS) && defined(_PUT_MODEL_)
+#  include <pthread.h>
+# endif
+# endif
+
 /**
  * That's it for OS-specific stuff
  *****************************************************************************/
@@ -214,7 +235,7 @@ typedef UINT64 uint64_t;
 #  undef OPENSSL_NO_INTTYPES_H
 /* Because the specs say that inttypes.h includes stdint.h if present */
 #  undef OPENSSL_NO_STDINT_H
-# elif defined(_MSC_VER) && _MSC_VER<=1500
+# elif defined(_MSC_VER) && _MSC_VER<1600
 /*
  * minimally required typdefs for systems not supporting inttypes.h or
  * stdint.h: currently just older VC++

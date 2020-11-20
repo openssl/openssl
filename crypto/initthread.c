@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -8,12 +8,12 @@
  */
 
 #include <openssl/crypto.h>
-#include <openssl/core_numbers.h>
-#include "internal/cryptlib_int.h"
-#include "internal/providercommon.h"
+#include <openssl/core_dispatch.h>
+#include "crypto/cryptlib.h"
+#include "prov/providercommon.h"
 #include "internal/thread_once.h"
 
-#ifdef FIPS_MODE
+#ifdef FIPS_MODULE
 /*
  * Thread aware code may want to be told about thread stop events. We register
  * to hear about those thread stop events when we see a new thread has started.
@@ -26,7 +26,7 @@
  * by calling "c_thread_start" which is a function pointer created during
  * provider initialisation (i.e. OSSL_init_provider).
  */
-extern OSSL_core_thread_start_fn *c_thread_start;
+extern OSSL_FUNC_core_thread_start_fn *c_thread_start;
 #endif
 
 typedef struct thread_event_handler_st THREAD_EVENT_HANDLER;
@@ -37,7 +37,7 @@ struct thread_event_handler_st {
     THREAD_EVENT_HANDLER *next;
 };
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
 DEFINE_SPECIAL_STACK_OF(THREAD_EVENT_HANDLER_PTR, THREAD_EVENT_HANDLER *)
 
 typedef struct global_tevent_register_st GLOBAL_TEVENT_REGISTER;
@@ -77,7 +77,7 @@ static GLOBAL_TEVENT_REGISTER *get_global_tevent_register(void)
 }
 #endif
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
 static int  init_thread_push_handlers(THREAD_EVENT_HANDLER **hands);
 static void init_thread_remove_handlers(THREAD_EVENT_HANDLER **handsin);
 static void init_thread_destructor(void *hands);
@@ -101,7 +101,7 @@ init_get_thread_local(CRYPTO_THREAD_LOCAL *local, int alloc, int keep)
                 return NULL;
             }
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
             if (!init_thread_push_handlers(hands)) {
                 CRYPTO_THREAD_set_local(local, NULL);
                 OPENSSL_free(hands);
@@ -116,7 +116,7 @@ init_get_thread_local(CRYPTO_THREAD_LOCAL *local, int alloc, int keep)
     return hands;
 }
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
 /*
  * Since per-thread-specific-data destructors are not universally
  * available, i.e. not on Windows, only below CRYPTO_THREAD_LOCAL key
@@ -208,12 +208,12 @@ void ossl_cleanup_thread(void)
     destructor_key.sane = -1;
 }
 
-void OPENSSL_thread_stop_ex(OPENSSL_CTX *ctx)
+void OPENSSL_thread_stop_ex(OSSL_LIB_CTX *ctx)
 {
-    ctx = openssl_ctx_get_concrete(ctx);
+    ctx = ossl_lib_ctx_get_concrete(ctx);
     /*
      * TODO(3.0). It would be nice if we could figure out a way to do this on
-     * all threads that have used the OPENSSL_CTX when the OPENSSL_CTX is freed.
+     * all threads that have used the OSSL_LIB_CTX when the context is freed.
      * This is currently not possible due to the use of thread local variables.
      */
     ossl_ctx_thread_stop(ctx);
@@ -242,7 +242,7 @@ void ossl_ctx_thread_stop(void *arg)
 
 #else
 
-static void *thread_event_ossl_ctx_new(OPENSSL_CTX *libctx)
+static void *thread_event_ossl_ctx_new(OSSL_LIB_CTX *libctx)
 {
     THREAD_EVENT_HANDLER **hands = NULL;
     CRYPTO_THREAD_LOCAL *tlocal = OPENSSL_zalloc(sizeof(*tlocal));
@@ -273,7 +273,7 @@ static void thread_event_ossl_ctx_free(void *tlocal)
     OPENSSL_free(tlocal);
 }
 
-static const OPENSSL_CTX_METHOD thread_event_ossl_ctx_method = {
+static const OSSL_LIB_CTX_METHOD thread_event_ossl_ctx_method = {
     thread_event_ossl_ctx_new,
     thread_event_ossl_ctx_free,
 };
@@ -281,10 +281,10 @@ static const OPENSSL_CTX_METHOD thread_event_ossl_ctx_method = {
 void ossl_ctx_thread_stop(void *arg)
 {
     THREAD_EVENT_HANDLER **hands;
-    OPENSSL_CTX *ctx = arg;
+    OSSL_LIB_CTX *ctx = arg;
     CRYPTO_THREAD_LOCAL *local
-        = openssl_ctx_get_data(ctx, OPENSSL_CTX_THREAD_EVENT_HANDLER_INDEX,
-                               &thread_event_ossl_ctx_method);
+        = ossl_lib_ctx_get_data(ctx, OSSL_LIB_CTX_THREAD_EVENT_HANDLER_INDEX,
+                                &thread_event_ossl_ctx_method);
 
     if (local == NULL)
         return;
@@ -292,12 +292,12 @@ void ossl_ctx_thread_stop(void *arg)
     init_thread_stop(arg, hands);
     OPENSSL_free(hands);
 }
-#endif /* FIPS_MODE */
+#endif /* FIPS_MODULE */
 
 
 static void init_thread_stop(void *arg, THREAD_EVENT_HANDLER **hands)
 {
-    THREAD_EVENT_HANDLER *curr, *prev = NULL;
+    THREAD_EVENT_HANDLER *curr, *prev = NULL, *tmp;
 
     /* Can't do much about this */
     if (hands == NULL)
@@ -306,15 +306,20 @@ static void init_thread_stop(void *arg, THREAD_EVENT_HANDLER **hands)
     curr = *hands;
     while (curr != NULL) {
         if (arg != NULL && curr->arg != arg) {
+            prev = curr;
             curr = curr->next;
             continue;
         }
         curr->handfn(curr->arg);
-        prev = curr;
+        if (prev == NULL)
+            *hands = curr->next;
+        else
+            prev->next = curr->next;
+
+        tmp = curr;
         curr = curr->next;
-        if (prev == *hands)
-            *hands = curr;
-        OPENSSL_free(prev);
+
+        OPENSSL_free(tmp);
     }
 }
 
@@ -323,23 +328,23 @@ int ossl_init_thread_start(const void *index, void *arg,
 {
     THREAD_EVENT_HANDLER **hands;
     THREAD_EVENT_HANDLER *hand;
-#ifdef FIPS_MODE
-    OPENSSL_CTX *ctx = arg;
+#ifdef FIPS_MODULE
+    OSSL_LIB_CTX *ctx = arg;
 
     /*
      * In FIPS mode the list of THREAD_EVENT_HANDLERs is unique per combination
-     * of OPENSSL_CTX and thread. This is because in FIPS mode each OPENSSL_CTX
-     * gets informed about thread stop events individually.
+     * of OSSL_LIB_CTX and thread. This is because in FIPS mode each
+     * OSSL_LIB_CTX gets informed about thread stop events individually.
      */
     CRYPTO_THREAD_LOCAL *local
-        = openssl_ctx_get_data(ctx, OPENSSL_CTX_THREAD_EVENT_HANDLER_INDEX,
-                               &thread_event_ossl_ctx_method);
+        = ossl_lib_ctx_get_data(ctx, OSSL_LIB_CTX_THREAD_EVENT_HANDLER_INDEX,
+                                &thread_event_ossl_ctx_method);
 #else
     /*
      * Outside of FIPS mode the list of THREAD_EVENT_HANDLERs is unique per
-     * thread, but may hold multiple OPENSSL_CTXs. We only get told about
+     * thread, but may hold multiple OSSL_LIB_CTXs. We only get told about
      * thread stop events globally, so we have to ensure all affected
-     * OPENSSL_CTXs are informed.
+     * OSSL_LIB_CTXs are informed.
      */
     CRYPTO_THREAD_LOCAL *local = &destructor_key.value;
 #endif
@@ -348,14 +353,14 @@ int ossl_init_thread_start(const void *index, void *arg,
     if (hands == NULL)
         return 0;
 
-#ifdef FIPS_MODE
+#ifdef FIPS_MODULE
     if (*hands == NULL) {
         /*
          * We've not yet registered any handlers for this thread. We need to get
          * libcrypto to tell us about later thread stop events. c_thread_start
          * is a callback to libcrypto defined in fipsprov.c
          */
-        if (!c_thread_start(FIPS_get_provider(ctx), ossl_ctx_thread_stop))
+        if (!c_thread_start(FIPS_get_core_handle(ctx), ossl_ctx_thread_stop))
             return 0;
     }
 #endif
@@ -373,25 +378,30 @@ int ossl_init_thread_start(const void *index, void *arg,
     return 1;
 }
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
 static int init_thread_deregister(void *index, int all)
 {
     GLOBAL_TEVENT_REGISTER *gtr;
     int i;
 
     gtr = get_global_tevent_register();
+    if (gtr == NULL)
+        return 0;
     if (!all)
         CRYPTO_THREAD_write_lock(gtr->lock);
+    else
+        glob_tevent_reg = NULL;
     for (i = 0; i < sk_THREAD_EVENT_HANDLER_PTR_num(gtr->skhands); i++) {
         THREAD_EVENT_HANDLER **hands
             = sk_THREAD_EVENT_HANDLER_PTR_value(gtr->skhands, i);
-        THREAD_EVENT_HANDLER *curr = *hands, *prev = NULL, *tmp;
+        THREAD_EVENT_HANDLER *curr = NULL, *prev = NULL, *tmp;
 
         if (hands == NULL) {
             if (!all)
                 CRYPTO_THREAD_unlock(gtr->lock);
             return 0;
         }
+        curr = *hands;
         while (curr != NULL) {
             if (all || curr->index == index) {
                 if (prev != NULL)

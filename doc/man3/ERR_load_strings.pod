@@ -34,7 +34,7 @@ ERR_PACK() is a macro.
 The last entry in the array is {0,0}.
 
 ERR_get_next_error_library() can be used to assign library numbers
-to user libraries at runtime.
+to user libraries at run time.
 
 =head1 RETURN VALUES
 

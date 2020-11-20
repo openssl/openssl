@@ -15,8 +15,7 @@
 # pass runs slower than expected... Overall result is 15.6 cpb, two
 # cycles more than theoretical estimate.
 
-$output = pop;
-open STDOUT, ">$output" if $output;
+$output = pop and open STDOUT, ">$output";
 
 my @k = map("r$_",(16..31));
 my @x = map("r$_",(38..53));
@@ -289,4 +288,4 @@ stringz "ChaCha20 for IA64, CRYPTOGAMS by \@dot-asm"
 ___
 
 print $code;
-close STDOUT;
+close STDOUT or die "error closing STDOUT: $!";

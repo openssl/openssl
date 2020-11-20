@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -150,7 +150,7 @@ while(my $line=<>) {
     if ($line =~ m/^\s*(#|@|\/\/)/)	{ print $line; next; }
 
     $line =~ s|/\*.*\*/||;	# get rid of C-style comments...
-    $line =~ s|^\s+||;		# ... and skip white spaces in beginning...
+    $line =~ s|^\s+||;		# ... and skip whitespace in beginning...
     $line =~ s|\s+$||;		# ... and at the end
 
     {
@@ -191,4 +191,4 @@ while(my $line=<>) {
     print "\n";
 }
 
-close STDOUT;
+close STDOUT or die "error closing STDOUT: $!";

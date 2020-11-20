@@ -27,7 +27,7 @@ OSSL_default_ciphersuites
 
 SSL_CTX_set_cipher_list() sets the list of available ciphers (TLSv1.2 and below)
 for B<ctx> using the control string B<str>. The format of the string is described
-in L<ciphers(1)>. The list of ciphers is inherited by all
+in L<openssl-ciphers(1)>. The list of ciphers is inherited by all
 B<ssl> objects created from B<ctx>. This function does not impact TLSv1.3
 ciphersuites. Use SSL_CTX_set_ciphersuites() to configure those.
 
@@ -111,7 +111,7 @@ ciphersuite list was configured, and 0 otherwise.
 L<ssl(7)>, L<SSL_get_ciphers(3)>,
 L<SSL_CTX_use_certificate(3)>,
 L<SSL_CTX_set_tmp_dh_callback(3)>,
-L<ciphers(1)>
+L<openssl-ciphers(1)>
 
 =head1 HISTORY
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -32,6 +32,7 @@ int init_client(int *sock, const char *host, const char *port,
                 const char *bindhost, const char *bindport,
                 int family, int type, int protocol);
 int should_retry(int i);
+void do_ssl_shutdown(SSL *ssl);
 
 long bio_dump_callback(BIO *bio, int cmd, const char *argp,
                        int argi, long argl, long ret);
@@ -69,8 +70,9 @@ int config_ctx(SSL_CONF_CTX *cctx, STACK_OF(OPENSSL_STRING) *str, SSL_CTX *ctx);
 int ssl_ctx_add_crls(SSL_CTX *ctx, STACK_OF(X509_CRL) *crls,
                      int crl_download);
 int ssl_load_stores(SSL_CTX *ctx, const char *vfyCApath,
-                    const char *vfyCAfile, const char *chCApath,
-                    const char *chCAfile, STACK_OF(X509_CRL) *crls,
+                    const char *vfyCAfile, const char *vfyCAstore,
+                    const char *chCApath, const char *chCAfile,
+                    const char *chCAstore, STACK_OF(X509_CRL) *crls,
                     int crl_download);
 void ssl_ctx_security_debug(SSL_CTX *ctx, int verbose);
 int set_keylog_file(SSL_CTX *ctx, const char *keylog_file);

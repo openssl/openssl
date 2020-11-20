@@ -1,11 +1,17 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+
+/*
+ * DES low level APIs are deprecated for public use, but still ok for internal
+ * use.
+ */
+#include "internal/deprecated.h"
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
@@ -14,8 +20,9 @@
 
 # include <openssl/evp.h>
 # include <openssl/objects.h>
-# include "internal/evp_int.h"
+# include "crypto/evp.h"
 # include <openssl/des.h>
+# include "evp_local.h"
 
 static int desx_cbc_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                              const unsigned char *iv, int enc);
@@ -66,7 +73,7 @@ static int desx_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 {
     while (inl >= EVP_MAXCHUNK) {
         DES_xcbc_encrypt(in, out, (long)EVP_MAXCHUNK, &data(ctx)->ks,
-                         (DES_cblock *)EVP_CIPHER_CTX_iv_noconst(ctx),
+                         (DES_cblock *)ctx->iv,
                          &data(ctx)->inw, &data(ctx)->outw,
                          EVP_CIPHER_CTX_encrypting(ctx));
         inl -= EVP_MAXCHUNK;
@@ -75,7 +82,7 @@ static int desx_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     }
     if (inl)
         DES_xcbc_encrypt(in, out, (long)inl, &data(ctx)->ks,
-                         (DES_cblock *)EVP_CIPHER_CTX_iv_noconst(ctx),
+                         (DES_cblock *)ctx->iv,
                          &data(ctx)->inw, &data(ctx)->outw,
                          EVP_CIPHER_CTX_encrypting(ctx));
     return 1;

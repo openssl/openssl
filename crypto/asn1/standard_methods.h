@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -30,10 +30,6 @@ static const EVP_PKEY_ASN1_METHOD *standard_methods[] = {
 #ifndef OPENSSL_NO_EC
     &eckey_asn1_meth,
 #endif
-    &hmac_asn1_meth,
-#ifndef OPENSSL_NO_CMAC
-    &cmac_asn1_meth,
-#endif
 #ifndef OPENSSL_NO_RSA
     &rsa_pss_asn1_meth,
 #endif
@@ -43,12 +39,6 @@ static const EVP_PKEY_ASN1_METHOD *standard_methods[] = {
 #ifndef OPENSSL_NO_EC
     &ecx25519_asn1_meth,
     &ecx448_asn1_meth,
-#endif
-#ifndef OPENSSL_NO_POLY1305
-    &poly1305_asn1_meth,
-#endif
-#ifndef OPENSSL_NO_SIPHASH
-    &siphash_asn1_meth,
 #endif
 #ifndef OPENSSL_NO_EC
     &ed25519_asn1_meth,

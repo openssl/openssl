@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2020 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2017, Oracle and/or its affiliates.  All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -13,11 +13,10 @@
 # include <openssl/evp.h>
 # include <openssl/modes.h>
 # include <openssl/rand.h>
-# include <openssl/rand_drbg.h>
-# include "internal/aria.h"
-# include "internal/evp_int.h"
-# include "internal/modes_int.h"
-# include "evp_locl.h"
+# include "crypto/aria.h"
+# include "crypto/evp.h"
+# include "crypto/modes.h"
+# include "evp_local.h"
 
 /* ARIA subkey Structure */
 typedef struct {
@@ -70,7 +69,7 @@ static int aria_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
         ret = aria_set_decrypt_key(key, EVP_CIPHER_CTX_key_length(ctx) * 8,
                                         EVP_CIPHER_CTX_get_cipher_data(ctx));
     if (ret < 0) {
-        EVPerr(EVP_F_ARIA_INIT_KEY,EVP_R_ARIA_KEY_SETUP_FAILED);
+        ERR_raise(ERR_LIB_EVP,EVP_R_ARIA_KEY_SETUP_FAILED);
         return 0;
     }
     return 1;
@@ -174,8 +173,7 @@ static int aria_ctr_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     unsigned int num = EVP_CIPHER_CTX_num(ctx);
     EVP_ARIA_KEY *dat = EVP_C_DATA(EVP_ARIA_KEY,ctx);
 
-    CRYPTO_ctr128_encrypt(in, out, len, &dat->ks,
-                          EVP_CIPHER_CTX_iv_noconst(ctx),
+    CRYPTO_ctr128_encrypt(in, out, len, &dat->ks, ctx->iv,
                           EVP_CIPHER_CTX_buf_noconst(ctx), &num,
                           (block128_f) aria_encrypt);
     EVP_CIPHER_CTX_set_num(ctx, num);
@@ -218,7 +216,7 @@ static int aria_gcm_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
         CRYPTO_gcm128_init(&gctx->gcm, &gctx->ks,
                            (block128_f) aria_encrypt);
         if (ret < 0) {
-            EVPerr(EVP_F_ARIA_GCM_INIT_KEY,EVP_R_ARIA_KEY_SETUP_FAILED);
+            ERR_raise(ERR_LIB_EVP,EVP_R_ARIA_KEY_SETUP_FAILED);
             return 0;
         }
 
@@ -252,11 +250,15 @@ static int aria_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
     case EVP_CTRL_INIT:
         gctx->key_set = 0;
         gctx->iv_set = 0;
-        gctx->ivlen = EVP_CIPHER_CTX_iv_length(c);
-        gctx->iv = EVP_CIPHER_CTX_iv_noconst(c);
+        gctx->ivlen = EVP_CIPHER_iv_length(c->cipher);
+        gctx->iv = c->iv;
         gctx->taglen = -1;
         gctx->iv_gen = 0;
         gctx->tls_aad_len = -1;
+        return 1;
+
+    case EVP_CTRL_GET_IVLEN:
+        *(int *)ptr = gctx->ivlen;
         return 1;
 
     case EVP_CTRL_AEAD_SET_IVLEN:
@@ -264,10 +266,10 @@ static int aria_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
             return 0;
         /* Allocate memory for IV if needed */
         if ((arg > EVP_MAX_IV_LENGTH) && (arg > gctx->ivlen)) {
-            if (gctx->iv != EVP_CIPHER_CTX_iv_noconst(c))
+            if (gctx->iv != c->iv)
                 OPENSSL_free(gctx->iv);
             if ((gctx->iv = OPENSSL_malloc(arg)) == NULL) {
-                EVPerr(EVP_F_ARIA_GCM_CTRL, ERR_R_MALLOC_FAILURE);
+                ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
                 return 0;
             }
         }
@@ -368,11 +370,11 @@ static int aria_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
                     return 0;
                 gctx_out->gcm.key = &gctx_out->ks;
             }
-            if (gctx->iv == EVP_CIPHER_CTX_iv_noconst(c))
-                gctx_out->iv = EVP_CIPHER_CTX_iv_noconst(out);
+            if (gctx->iv == c->iv)
+                gctx_out->iv = out->iv;
             else {
                 if ((gctx_out->iv = OPENSSL_malloc(gctx->ivlen)) == NULL) {
-                    EVPerr(EVP_F_ARIA_GCM_CTRL, ERR_R_MALLOC_FAILURE);
+                    ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
                     return 0;
                 }
                 memcpy(gctx_out->iv, gctx->iv, gctx->ivlen);
@@ -490,7 +492,7 @@ static int aria_gcm_cleanup(EVP_CIPHER_CTX *ctx)
 {
     EVP_ARIA_GCM_CTX *gctx = EVP_C_DATA(EVP_ARIA_GCM_CTX, ctx);
 
-    if (gctx->iv != EVP_CIPHER_CTX_iv_noconst(ctx))
+    if (gctx->iv != ctx->iv)
         OPENSSL_free(gctx->iv);
 
     return 1;
@@ -511,14 +513,14 @@ static int aria_ccm_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
         CRYPTO_ccm128_init(&cctx->ccm, cctx->M, cctx->L,
                            &cctx->ks, (block128_f) aria_encrypt);
         if (ret < 0) {
-            EVPerr(EVP_F_ARIA_CCM_INIT_KEY,EVP_R_ARIA_KEY_SETUP_FAILED);
+            ERR_raise(ERR_LIB_EVP,EVP_R_ARIA_KEY_SETUP_FAILED);
             return 0;
         }
         cctx->str = NULL;
         cctx->key_set = 1;
     }
     if (iv) {
-        memcpy(EVP_CIPHER_CTX_iv_noconst(ctx), iv, 15 - cctx->L);
+        memcpy(ctx->iv, iv, 15 - cctx->L);
         cctx->iv_set = 1;
     }
     return 1;
@@ -537,6 +539,10 @@ static int aria_ccm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
         cctx->tag_set = 0;
         cctx->len_set = 0;
         cctx->tls_aad_len = -1;
+        return 1;
+
+    case EVP_CTRL_GET_IVLEN:
+        *(int *)ptr = 15 - cctx->L;
         return 1;
 
     case EVP_CTRL_AEAD_TLS1_AAD:
@@ -570,7 +576,7 @@ static int aria_ccm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
         if (arg != EVP_CCM_TLS_FIXED_IV_LEN)
             return 0;
         /* Just copy to first part of IV */
-        memcpy(EVP_CIPHER_CTX_iv_noconst(c), ptr, arg);
+        memcpy(c->iv, ptr, arg);
         return 1;
 
     case EVP_CTRL_AEAD_SET_IVLEN:
@@ -634,11 +640,11 @@ static int aria_ccm_tls_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
         memcpy(out, EVP_CIPHER_CTX_buf_noconst(ctx),
                EVP_CCM_TLS_EXPLICIT_IV_LEN);
     /* Get rest of IV from explicit IV */
-    memcpy(EVP_CIPHER_CTX_iv_noconst(ctx) + EVP_CCM_TLS_FIXED_IV_LEN, in,
+    memcpy(ctx->iv + EVP_CCM_TLS_FIXED_IV_LEN, in,
            EVP_CCM_TLS_EXPLICIT_IV_LEN);
     /* Correct length value */
     len -= EVP_CCM_TLS_EXPLICIT_IV_LEN + cctx->M;
-    if (CRYPTO_ccm128_setiv(ccm, EVP_CIPHER_CTX_iv_noconst(ctx), 15 - cctx->L,
+    if (CRYPTO_ccm128_setiv(ccm, ctx->iv, 15 - cctx->L,
                             len))
             return -1;
     /* Use saved AAD */
@@ -687,12 +693,9 @@ static int aria_ccm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     if (!cctx->iv_set)
         return -1;
 
-    if (!EVP_CIPHER_CTX_encrypting(ctx) && !cctx->tag_set)
-        return -1;
     if (!out) {
         if (!in) {
-            if (CRYPTO_ccm128_setiv(ccm, EVP_CIPHER_CTX_iv_noconst(ctx),
-                                    15 - cctx->L, len))
+            if (CRYPTO_ccm128_setiv(ccm, ctx->iv, 15 - cctx->L, len))
                 return -1;
             cctx->len_set = 1;
             return len;
@@ -703,10 +706,14 @@ static int aria_ccm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
         CRYPTO_ccm128_aad(ccm, in, len);
         return len;
     }
+
+    /* The tag must be set before actually decrypting data */
+    if (!EVP_CIPHER_CTX_encrypting(ctx) && !cctx->tag_set)
+        return -1;
+
     /* If not set length yet do it */
     if (!cctx->len_set) {
-        if (CRYPTO_ccm128_setiv(ccm, EVP_CIPHER_CTX_iv_noconst(ctx),
-                                15 - cctx->L, len))
+        if (CRYPTO_ccm128_setiv(ccm, ctx->iv, 15 - cctx->L, len))
             return -1;
         cctx->len_set = 1;
     }
@@ -742,7 +749,8 @@ static int aria_ccm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 #define ARIA_AUTH_FLAGS  (EVP_CIPH_FLAG_DEFAULT_ASN1 \
                           | EVP_CIPH_CUSTOM_IV | EVP_CIPH_FLAG_CUSTOM_CIPHER \
                           | EVP_CIPH_ALWAYS_CALL_INIT | EVP_CIPH_CTRL_INIT \
-                          | EVP_CIPH_CUSTOM_COPY | EVP_CIPH_FLAG_AEAD_CIPHER)
+                          | EVP_CIPH_CUSTOM_COPY | EVP_CIPH_FLAG_AEAD_CIPHER \
+                          | EVP_CIPH_CUSTOM_IV_LENGTH)
 
 #define BLOCK_CIPHER_aead(nid,keylen,blocksize,ivlen,nmode,mode,MODE,flags) \
 static const EVP_CIPHER aria_##keylen##_##mode = { \

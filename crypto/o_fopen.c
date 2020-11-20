@@ -88,7 +88,7 @@ FILE *openssl_fopen(const char *filename, const char *mode)
             char lastchar;
 
             if ((newname = OPENSSL_malloc(strlen(filename) + 1)) == NULL) {
-                CRYPTOerr(CRYPTO_F_OPENSSL_FOPEN, ERR_R_MALLOC_FAILURE);
+                ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
                 return NULL;
             }
 

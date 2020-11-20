@@ -1,5 +1,0 @@
-LIBS=../../../libcrypto
-IF[{- !$disabled{dh} -}]
-  SOURCE[../../../libcrypto]=\
-          dh_kmgmt.c
-ENDIF

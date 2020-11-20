@@ -70,7 +70,7 @@ IF[{- !$disabled{"engine"} -}]
       ENDIF
     ENDIF
 
-    MODULES{noinst,engine}=ossltest dasync
+    MODULES{noinst,engine}=ossltest dasync loader_attic
     SOURCE[dasync]=e_dasync.c
     DEPEND[dasync]=../libcrypto
     INCLUDE[dasync]=../include
@@ -78,6 +78,7 @@ IF[{- !$disabled{"engine"} -}]
       SOURCE[dasync]=dasync.ld
       GENERATE[dasync.ld]=../util/engines.num
     ENDIF
+
     SOURCE[ossltest]=e_ossltest.c
     DEPEND[ossltest]=../libcrypto
     INCLUDE[ossltest]=../include
@@ -85,8 +86,15 @@ IF[{- !$disabled{"engine"} -}]
       SOURCE[ossltest]=ossltest.ld
       GENERATE[ossltest.ld]=../util/engines.num
     ENDIF
+
+    SOURCE[loader_attic]=e_loader_attic.c ../crypto/pem/pvkfmt.c
+    DEPEND[loader_attic]=../libcrypto
+    INCLUDE[loader_attic]=../include
+    IF[{- defined $target{shared_defflag} -}]
+      SOURCE[loader_attic]=loader_attic.ld
+      GENERATE[loader_attic.ld]=../util/engines.num
+    ENDIF
   ENDIF
-  GENERATE[e_padlock-x86.s]=asm/e_padlock-x86.pl \
-    $(PERLASM_SCHEME) $(LIB_CFLAGS) $(LIB_CPPFLAGS) $(PROCESSOR)
-  GENERATE[e_padlock-x86_64.s]=asm/e_padlock-x86_64.pl $(PERLASM_SCHEME)
+  GENERATE[e_padlock-x86.s]=asm/e_padlock-x86.pl
+  GENERATE[e_padlock-x86_64.s]=asm/e_padlock-x86_64.pl
 ENDIF

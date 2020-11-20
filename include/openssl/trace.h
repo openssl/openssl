@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef OSSL_TRACE_H
-# define OSSL_TRACE_H
+#ifndef OPENSSL_TRACE_H
+# define OPENSSL_TRACE_H
 
 # include <stdarg.h>
 
@@ -42,14 +42,20 @@ extern "C" {
 # define OSSL_TRACE_CATEGORY_TLS                 3
 # define OSSL_TRACE_CATEGORY_TLS_CIPHER          4
 # define OSSL_TRACE_CATEGORY_CONF                5
-# define OSSL_TRACE_CATEGORY_ENGINE_TABLE        6
-# define OSSL_TRACE_CATEGORY_ENGINE_REF_COUNT    7
+# ifndef OPENSSL_NO_ENGINE
+#  define OSSL_TRACE_CATEGORY_ENGINE_TABLE       6
+#  define OSSL_TRACE_CATEGORY_ENGINE_REF_COUNT   7
+# endif
 # define OSSL_TRACE_CATEGORY_PKCS5V2             8
 # define OSSL_TRACE_CATEGORY_PKCS12_KEYGEN       9
 # define OSSL_TRACE_CATEGORY_PKCS12_DECRYPT     10
 # define OSSL_TRACE_CATEGORY_X509V3_POLICY      11
 # define OSSL_TRACE_CATEGORY_BN_CTX             12
-# define OSSL_TRACE_CATEGORY_NUM                13
+# define OSSL_TRACE_CATEGORY_CMP                13
+# define OSSL_TRACE_CATEGORY_STORE              14
+# define OSSL_TRACE_CATEGORY_DECODER            15
+# define OSSL_TRACE_CATEGORY_ENCODER            16
+# define OSSL_TRACE_CATEGORY_NUM                17
 
 /* Returns the trace category number for the given |name| */
 int OSSL_trace_get_category_num(const char *name);

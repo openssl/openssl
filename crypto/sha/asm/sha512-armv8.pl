@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2014-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2014-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -54,8 +54,10 @@
 # deliver much less improvement, likely *negative* on Cortex-A5x.
 # Which is why NEON support is limited to SHA256.]
 
-$output=pop;
-$flavour=pop;
+# $output is the last argument if it looks like a file (it has an extension)
+# $flavour is the first argument if it doesn't look like a file
+$output = $#ARGV >= 0 && $ARGV[$#ARGV] =~ m|\.\w+$| ? pop : undef;
+$flavour = $#ARGV >= 0 && $ARGV[0] !~ m|\.| ? shift : undef;
 
 if ($flavour && $flavour ne "void") {
     $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
@@ -63,10 +65,11 @@ if ($flavour && $flavour ne "void") {
     ( $xlate="${dir}../../perlasm/arm-xlate.pl" and -f $xlate) or
     die "can't locate arm-xlate.pl";
 
-    open OUT,"| \"$^X\" $xlate $flavour $output";
+    open OUT,"| \"$^X\" $xlate $flavour \"$output\""
+        or die "can't call $xlate: $!";
     *STDOUT=*OUT;
 } else {
-    open STDOUT,">$output";
+    $output and open STDOUT,">$output";
 }
 
 if ($output =~ /512/) {
@@ -190,6 +193,7 @@ $code.=<<___;
 #ifndef	__KERNEL__
 # include "arm_arch.h"
 .extern	OPENSSL_armcap_P
+.hidden	OPENSSL_armcap_P
 #endif
 
 .text
@@ -826,12 +830,6 @@ $code.=<<___;
 ___
 }
 
-$code.=<<___;
-#if !defined(__KERNEL__) && !defined(_WIN64)
-.comm	OPENSSL_armcap_P,4,4
-#endif
-___
-
 {   my  %opcode = (
 	"sha256h"	=> 0x5e004000,	"sha256h2"	=> 0x5e005000,
 	"sha256su0"	=> 0x5e282800,	"sha256su1"	=> 0x5e006000	);
@@ -888,4 +886,4 @@ foreach(split("\n",$code)) {
 	print $_,"\n";
 }
 
-close STDOUT;
+close STDOUT or die "error closing STDOUT: $!";

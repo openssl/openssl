@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2009-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -29,8 +29,8 @@
 #include <openssl/crypto.h>
 #include <openssl/bn.h>
 #include <internal/cryptlib.h>
-#include <internal/chacha.h>
-#include "bn/bn_lcl.h"
+#include <crypto/chacha.h>
+#include "bn/bn_local.h"
 
 #include "ppc_arch.h"
 
@@ -87,7 +87,7 @@ void sha512_block_data_order(void *ctx, const void *inp, size_t len)
  * TODO(3.0): Temporarily disabled some assembler that hasn't been brought into
  * the FIPS module yet.
  */
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
 # ifndef OPENSSL_NO_CHACHA
 void ChaCha20_ctr32_int(unsigned char *out, const unsigned char *inp,
                         size_t len, const unsigned int key[8],
@@ -145,8 +145,9 @@ int poly1305_init(void *ctx, const unsigned char key[16], void *func[2])
     return 1;
 }
 # endif
+#endif /* FIPS_MODULE */
 
-# ifdef ECP_NISTZ256_ASM
+#ifdef ECP_NISTZ256_ASM
 void ecp_nistz256_mul_mont(unsigned long res[4], const unsigned long a[4],
                            const unsigned long b[4]);
 
@@ -168,8 +169,7 @@ void ecp_nistz256_from_mont(unsigned long res[4], const unsigned long in[4])
 
     ecp_nistz256_mul_mont(res, in, one);
 }
-# endif
-#endif /* FIPS_MODE */
+#endif
 
 static sigjmp_buf ill_jmp;
 static void ill_handler(int sig)

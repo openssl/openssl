@@ -17,6 +17,9 @@ sub objext              { '.obj' }
 sub libext              { '.a' }
 sub dsoext              { '.dll' }
 sub defext              { '.def' }
+
+# Other extra that aren't defined in platform::BASE
+sub resext              { '.res.obj' }
 sub shlibext            { '.dll' }
 sub shlibextimport      { $target{shared_import_extension} || '.dll.a' }
 sub shlibextsimple      { undef }

@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -8,8 +8,8 @@
  */
 
 
-#ifndef HEADER_INTERNAL_SOCKETS
-# define HEADER_INTERNAL_SOCKETS
+#ifndef OSSL_INTERNAL_SOCKETS_H
+# define OSSL_INTERNAL_SOCKETS_H
 
 # if defined(OPENSSL_SYS_VXWORKS) || defined(OPENSSL_SYS_UEFI)
 #  define NO_SYS_PARAM_H
@@ -145,11 +145,29 @@ struct servent *PASCAL getservbyname(const char *, const char *);
 #  define closesocket(s)              close(s)
 #  define readsocket(s,b,n)           read((s),(b),(n))
 #  define writesocket(s,b,n)          write((s),(char *)(b),(n))
+# elif defined(OPENSSL_SYS_TANDEM)
+#  if defined(OPENSSL_TANDEM_FLOSS)
+#   include <floss.h(floss_read, floss_write)>
+#   define readsocket(s,b,n)       floss_read((s),(b),(n))
+#   define writesocket(s,b,n)      floss_write((s),(b),(n))
+#  else
+#   define readsocket(s,b,n)       read((s),(b),(n))
+#   define writesocket(s,b,n)      write((s),(b),(n))
+#  endif
+#  define ioctlsocket(a,b,c)      ioctl(a,b,c)
+#  define closesocket(s)          close(s)
 # else
 #  define ioctlsocket(a,b,c)      ioctl(a,b,c)
 #  define closesocket(s)          close(s)
 #  define readsocket(s,b,n)       read((s),(b),(n))
 #  define writesocket(s,b,n)      write((s),(b),(n))
+# endif
+
+/* also in apps/include/apps.h */
+# if defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_WINCE)
+#  define openssl_fdset(a, b) FD_SET((unsigned int)(a), b)
+# else
+#  define openssl_fdset(a, b) FD_SET(a, b)
 # endif
 
 #endif

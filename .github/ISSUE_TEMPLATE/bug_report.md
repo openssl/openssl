@@ -1,18 +1,19 @@
 ---
 name: Bug report
-labels: bug
+labels: 'issue: bug report'
 about: Report a defect in the software
 
 ---
 
 <!--
-Thank you for your bug report.
+Thank you for your bug report. If this is your first one,
+please take the time to read the following lines before posting it.
 
 NOTE:
 
     If you're asking about how to use OpenSSL, this isn't the right 
     forum.  Please see our User Support resources:
-    https://github.com/openssl/openssl/blob/master/.github/SUPPORT.md
+    https://github.com/openssl/openssl/blob/master/SUPPORT.md
 
 Please remember to tell us in what OpenSSL version you found the issue.
 

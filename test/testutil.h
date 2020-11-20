@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2014-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,15 +7,16 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_TESTUTIL_H
-# define HEADER_TESTUTIL_H
+#ifndef OSSL_TESTUTIL_H
+# define OSSL_TESTUTIL_H
 
-#include <stdarg.h>
+# include <stdarg.h>
 
-#include <openssl/err.h>
-#include <openssl/e_os2.h>
-#include <openssl/bn.h>
-#include "opt.h"
+# include <openssl/provider.h>
+# include <openssl/err.h>
+# include <openssl/e_os2.h>
+# include <openssl/bn.h>
+# include "opt.h"
 
 /*-
  * Simple unit tests should implement setup_tests().
@@ -67,6 +68,7 @@
  * object called "fixture". It will also allocate the "result" variable used
  * by EXECUTE_TEST. set_up() should take a const char* specifying the test
  * case name and return a TEST_FIXTURE_TYPE by reference.
+ * If case set_up() fails then 0 is returned.
  *
  * EXECUTE_TEST will pass fixture to execute_func() by reference, call
  * tear_down(), and return the result of execute_func(). execute_func() should
@@ -94,7 +96,11 @@
  */
 # define SETUP_TEST_FIXTURE(TEST_FIXTURE_TYPE, set_up)\
     TEST_FIXTURE_TYPE *fixture = set_up(TEST_CASE_NAME); \
-    int result = 0
+    int result = 0; \
+\
+    if (fixture == NULL) \
+        return 0
+
 
 # define EXECUTE_TEST(execute_func, tear_down)\
     if (fixture != NULL) {\
@@ -120,7 +126,7 @@
 
 
 /* The default test enum which should be common to all tests */
-#define OPT_TEST_ENUM \
+# define OPT_TEST_ENUM \
     OPT_TEST_HELP = 500, \
     OPT_TEST_LIST, \
     OPT_TEST_SINGLE, \
@@ -129,7 +135,7 @@
     OPT_TEST_SEED
 
 /* The Default test OPTIONS common to all tests (without a usage string) */
-#define OPT_TEST_OPTIONS \
+# define OPT_TEST_OPTIONS \
     { OPT_HELP_STR, 1,  '-', "Valid options are:\n" }, \
     { "help", OPT_TEST_HELP, '-', "Display this summary" }, \
     { "list", OPT_TEST_LIST, '-', "Display the list of tests available" }, \
@@ -139,12 +145,12 @@
     { "seed", OPT_TEST_SEED, 'n', "Seed value to randomize tests with" }
 
 /* The Default test OPTIONS common to all tests starting with an additional usage string */
-#define OPT_TEST_OPTIONS_WITH_EXTRA_USAGE(usage) \
+# define OPT_TEST_OPTIONS_WITH_EXTRA_USAGE(usage) \
     { OPT_HELP_STR, 1, '-', "Usage: %s [options] " usage }, \
     OPT_TEST_OPTIONS
 
 /* The Default test OPTIONS common to all tests with an default usage string */
-#define OPT_TEST_OPTIONS_DEFAULT_USAGE \
+# define OPT_TEST_OPTIONS_DEFAULT_USAGE \
     { OPT_HELP_STR, 1, '-', "Usage: %s [options]\n" }, \
     OPT_TEST_OPTIONS
 
@@ -152,7 +158,7 @@
  * Optional Cases that need to be ignored by the test app when using opt_next(),
  * (that are handled internally).
  */
-#define OPT_TEST_CASES \
+# define OPT_TEST_CASES \
          OPT_TEST_HELP: \
     case OPT_TEST_LIST: \
     case OPT_TEST_SINGLE: \
@@ -174,7 +180,7 @@
  *      well as the additional options that need to be handled.
  *  (3) case OPT_TEST_CASES: break; inside the opt_next() handling code.
  */
-#define OPT_TEST_DECLARE_USAGE(usage_str) \
+# define OPT_TEST_DECLARE_USAGE(usage_str) \
 const OPTIONS *test_get_options(void) \
 { \
     enum { OPT_TEST_ENUM }; \
@@ -192,6 +198,16 @@ const OPTIONS *test_get_options(void) \
 char *test_get_argument(size_t n);
 /* Return the number of additional non optional command line arguments */
 size_t test_get_argument_count(void);
+
+/*
+ * Skip over common test options. Should be called before calling
+ * test_get_argument()
+ */
+int test_skip_common_options(void);
+
+int test_get_libctx(OSSL_LIB_CTX **libctx,
+                    OSSL_PROVIDER **default_null_provider,
+                    OSSL_PROVIDER **provider, int argn, const char *usage);
 
 /*
  * Internal helpers. Test programs shouldn't use these directly, but should
@@ -224,17 +240,17 @@ const OPTIONS *test_get_options(void);
  *  Test assumption verification helpers.
  */
 
-#define PRINTF_FORMAT(a, b)
-#if defined(__GNUC__) && defined(__STDC_VERSION__)
+# define PRINTF_FORMAT(a, b)
+# if defined(__GNUC__) && defined(__STDC_VERSION__)
   /*
    * Because we support the 'z' modifier, which made its appearance in C99,
    * we can't use __attribute__ with pre C99 dialects.
    */
-# if __STDC_VERSION__ >= 199901L
-#  undef PRINTF_FORMAT
-#  define PRINTF_FORMAT(a, b)   __attribute__ ((format(printf, a, b)))
+#  if __STDC_VERSION__ >= 199901L
+#   undef PRINTF_FORMAT
+#   define PRINTF_FORMAT(a, b)   __attribute__ ((format(printf, a, b)))
+#  endif
 # endif
-#endif
 
 # define DECLARE_COMPARISON(type, name, opname)                         \
     int test_ ## name ## _ ## opname(const char *, int,                 \
@@ -290,9 +306,9 @@ DECLARE_COMPARISON(char *, str, ne)
  * Same as above, but for strncmp.
  */
 int test_strn_eq(const char *file, int line, const char *, const char *,
-                 const char *a, const char *b, size_t s);
+                 const char *a, size_t an, const char *b, size_t bn);
 int test_strn_ne(const char *file, int line, const char *, const char *,
-                 const char *a, const char *b, size_t s);
+                 const char *a, size_t an, const char *b, size_t bn);
 
 /*
  * Equality test for memory blocks where NULL is a legitimate value.
@@ -432,8 +448,10 @@ void test_perror(const char *s);
 
 # define TEST_str_eq(a, b)    test_str_eq(__FILE__, __LINE__, #a, #b, a, b)
 # define TEST_str_ne(a, b)    test_str_ne(__FILE__, __LINE__, #a, #b, a, b)
-# define TEST_strn_eq(a, b, n) test_strn_eq(__FILE__, __LINE__, #a, #b, a, b, n)
-# define TEST_strn_ne(a, b, n) test_strn_ne(__FILE__, __LINE__, #a, #b, a, b, n)
+# define TEST_strn_eq(a, b, n) test_strn_eq(__FILE__, __LINE__, #a, #b, a, n, b, n)
+# define TEST_strn_ne(a, b, n) test_strn_ne(__FILE__, __LINE__, #a, #b, a, n, b, n)
+# define TEST_strn2_eq(a, m, b, n) test_strn_eq(__FILE__, __LINE__, #a, #b, a, m, b, n)
+# define TEST_strn2_ne(a, m, b, n) test_strn_ne(__FILE__, __LINE__, #a, #b, a, m, b, n)
 
 # define TEST_mem_eq(a, m, b, n) test_mem_eq(__FILE__, __LINE__, #a, #b, a, m, b, n)
 # define TEST_mem_ne(a, m, b, n) test_mem_ne(__FILE__, __LINE__, #a, #b, a, m, b, n)
@@ -490,7 +508,7 @@ void test_output_memory(const char *name, const unsigned char *m, size_t l);
 /*
  * Utilities to parse a test file.
  */
-#define TESTMAXPAIRS        20
+# define TESTMAXPAIRS        150
 
 typedef struct pair_st {
     char *key;
@@ -537,4 +555,15 @@ void test_clearstanza(STANZA *s);
  */
 char *glue_strings(const char *list[], size_t *out_len);
 
-#endif                          /* HEADER_TESTUTIL_H */
+/*
+ * Pseudo random number generator of low quality but having repeatability
+ * across platforms.  The two calls are replacements for random(3) and
+ * srandom(3).
+ */
+uint32_t test_random(void);
+void test_random_seed(uint32_t sd);
+
+/* Create a file path from a directory and a filename */
+char *test_mk_file_path(const char *dir, const char *file);
+
+#endif                          /* OSSL_TESTUTIL_H */

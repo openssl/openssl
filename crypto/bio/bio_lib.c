@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -10,7 +10,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <openssl/crypto.h>
-#include "bio_lcl.h"
+#include "bio_local.h"
 #include "internal/cryptlib.h"
 
 
@@ -73,7 +73,7 @@ BIO *BIO_new(const BIO_METHOD *method)
     BIO *bio = OPENSSL_zalloc(sizeof(*bio));
 
     if (bio == NULL) {
-        BIOerr(BIO_F_BIO_NEW, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_BIO, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
@@ -86,13 +86,13 @@ BIO *BIO_new(const BIO_METHOD *method)
 
     bio->lock = CRYPTO_THREAD_lock_new();
     if (bio->lock == NULL) {
-        BIOerr(BIO_F_BIO_NEW, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_BIO, ERR_R_MALLOC_FAILURE);
         CRYPTO_free_ex_data(CRYPTO_EX_INDEX_BIO, bio, &bio->ex_data);
         goto err;
     }
 
     if (method->create != NULL && !method->create(bio)) {
-        BIOerr(BIO_F_BIO_NEW, ERR_R_INIT_FAIL);
+        ERR_raise(ERR_LIB_BIO, ERR_R_INIT_FAIL);
         CRYPTO_free_ex_data(CRYPTO_EX_INDEX_BIO, bio, &bio->ex_data);
         CRYPTO_THREAD_lock_free(bio->lock);
         goto err;
@@ -253,7 +253,7 @@ static int bio_read_intern(BIO *b, void *data, size_t dlen, size_t *readbytes)
     int ret;
 
     if ((b == NULL) || (b->method == NULL) || (b->method->bread == NULL)) {
-        BIOerr(BIO_F_BIO_READ_INTERN, BIO_R_UNSUPPORTED_METHOD);
+        ERR_raise(ERR_LIB_BIO, BIO_R_UNSUPPORTED_METHOD);
         return -2;
     }
 
@@ -263,7 +263,7 @@ static int bio_read_intern(BIO *b, void *data, size_t dlen, size_t *readbytes)
         return ret;
 
     if (!b->init) {
-        BIOerr(BIO_F_BIO_READ_INTERN, BIO_R_UNINITIALIZED);
+        ERR_raise(ERR_LIB_BIO, BIO_R_UNINITIALIZED);
         return -2;
     }
 
@@ -278,7 +278,7 @@ static int bio_read_intern(BIO *b, void *data, size_t dlen, size_t *readbytes)
 
     /* Shouldn't happen */
     if (ret > 0 && *readbytes > dlen) {
-        BIOerr(BIO_F_BIO_READ_INTERN, ERR_R_INTERNAL_ERROR);
+        ERR_raise(ERR_LIB_BIO, ERR_R_INTERNAL_ERROR);
         return -1;
     }
 
@@ -326,7 +326,7 @@ static int bio_write_intern(BIO *b, const void *data, size_t dlen,
         return 0;
 
     if ((b->method == NULL) || (b->method->bwrite == NULL)) {
-        BIOerr(BIO_F_BIO_WRITE_INTERN, BIO_R_UNSUPPORTED_METHOD);
+        ERR_raise(ERR_LIB_BIO, BIO_R_UNSUPPORTED_METHOD);
         return -2;
     }
 
@@ -336,7 +336,7 @@ static int bio_write_intern(BIO *b, const void *data, size_t dlen,
         return ret;
 
     if (!b->init) {
-        BIOerr(BIO_F_BIO_WRITE_INTERN, BIO_R_UNINITIALIZED);
+        ERR_raise(ERR_LIB_BIO, BIO_R_UNINITIALIZED);
         return -2;
     }
 
@@ -390,7 +390,7 @@ int BIO_puts(BIO *b, const char *buf)
     size_t written = 0;
 
     if ((b == NULL) || (b->method == NULL) || (b->method->bputs == NULL)) {
-        BIOerr(BIO_F_BIO_PUTS, BIO_R_UNSUPPORTED_METHOD);
+        ERR_raise(ERR_LIB_BIO, BIO_R_UNSUPPORTED_METHOD);
         return -2;
     }
 
@@ -401,7 +401,7 @@ int BIO_puts(BIO *b, const char *buf)
     }
 
     if (!b->init) {
-        BIOerr(BIO_F_BIO_PUTS, BIO_R_UNINITIALIZED);
+        ERR_raise(ERR_LIB_BIO, BIO_R_UNINITIALIZED);
         return -2;
     }
 
@@ -419,7 +419,7 @@ int BIO_puts(BIO *b, const char *buf)
 
     if (ret > 0) {
         if (written > INT_MAX) {
-            BIOerr(BIO_F_BIO_PUTS, BIO_R_LENGTH_TOO_LONG);
+            ERR_raise(ERR_LIB_BIO, BIO_R_LENGTH_TOO_LONG);
             ret = -1;
         } else {
             ret = (int)written;
@@ -435,12 +435,12 @@ int BIO_gets(BIO *b, char *buf, int size)
     size_t readbytes = 0;
 
     if ((b == NULL) || (b->method == NULL) || (b->method->bgets == NULL)) {
-        BIOerr(BIO_F_BIO_GETS, BIO_R_UNSUPPORTED_METHOD);
+        ERR_raise(ERR_LIB_BIO, BIO_R_UNSUPPORTED_METHOD);
         return -2;
     }
 
     if (size < 0) {
-        BIOerr(BIO_F_BIO_GETS, BIO_R_INVALID_ARGUMENT);
+        ERR_raise(ERR_LIB_BIO, BIO_R_INVALID_ARGUMENT);
         return 0;
     }
 
@@ -451,7 +451,7 @@ int BIO_gets(BIO *b, char *buf, int size)
     }
 
     if (!b->init) {
-        BIOerr(BIO_F_BIO_GETS, BIO_R_UNINITIALIZED);
+        ERR_raise(ERR_LIB_BIO, BIO_R_UNINITIALIZED);
         return -2;
     }
 
@@ -515,7 +515,7 @@ long BIO_ctrl(BIO *b, int cmd, long larg, void *parg)
         return 0;
 
     if ((b->method == NULL) || (b->method->ctrl == NULL)) {
-        BIOerr(BIO_F_BIO_CTRL, BIO_R_UNSUPPORTED_METHOD);
+        ERR_raise(ERR_LIB_BIO, BIO_R_UNSUPPORTED_METHOD);
         return -2;
     }
 
@@ -543,7 +543,7 @@ long BIO_callback_ctrl(BIO *b, int cmd, BIO_info_cb *fp)
 
     if ((b->method == NULL) || (b->method->callback_ctrl == NULL)
             || (cmd != BIO_CTRL_SET_CALLBACK)) {
-        BIOerr(BIO_F_BIO_CALLBACK_CTRL, BIO_R_UNSUPPORTED_METHOD);
+        ERR_raise(ERR_LIB_BIO, BIO_R_UNSUPPORTED_METHOD);
         return -2;
     }
 
@@ -750,7 +750,7 @@ int BIO_set_ex_data(BIO *bio, int idx, void *data)
     return CRYPTO_set_ex_data(&(bio->ex_data), idx, data);
 }
 
-void *BIO_get_ex_data(BIO *bio, int idx)
+void *BIO_get_ex_data(const BIO *bio, int idx)
 {
     return CRYPTO_get_ex_data(&(bio->ex_data), idx);
 }
@@ -783,4 +783,123 @@ void bio_cleanup(void)
 #endif
     CRYPTO_THREAD_lock_free(bio_type_lock);
     bio_type_lock = NULL;
+}
+
+/* Internal variant of the below BIO_wait() not calling BIOerr() */
+static int bio_wait(BIO *bio, time_t max_time, unsigned int nap_milliseconds)
+{
+#ifndef OPENSSL_NO_SOCK
+    int fd;
+#endif
+    long sec_diff;
+
+    if (max_time == 0) /* no timeout */
+        return 1;
+
+#ifndef OPENSSL_NO_SOCK
+    if (BIO_get_fd(bio, &fd) > 0 && fd < FD_SETSIZE)
+        return BIO_socket_wait(fd, BIO_should_read(bio), max_time);
+#endif
+    /* fall back to polling since no sockets are available */
+
+    sec_diff = (long)(max_time - time(NULL)); /* might overflow */
+    if (sec_diff < 0)
+        return 0; /* clearly timeout */
+
+    /* now take a nap at most the given number of milliseconds */
+    if (sec_diff == 0) { /* we are below the 1 seconds resolution of max_time */
+        if (nap_milliseconds > 1000)
+            nap_milliseconds = 1000;
+    } else { /* for sec_diff > 0, take min(sec_diff * 1000, nap_milliseconds) */
+        if ((unsigned long)sec_diff * 1000 < nap_milliseconds)
+            nap_milliseconds = (unsigned int)sec_diff * 1000;
+    }
+    ossl_sleep(nap_milliseconds);
+    return 1;
+}
+
+/*-
+ * Wait on (typically socket-based) BIO at most until max_time.
+ * Succeed immediately if max_time == 0.
+ * If sockets are not available support polling: succeed after waiting at most
+ * the number of nap_milliseconds in order to avoid a tight busy loop.
+ * Call BIOerr(...) on timeout or error.
+ * Returns -1 on error, 0 on timeout, and 1 on success.
+ */
+int BIO_wait(BIO *bio, time_t max_time, unsigned int nap_milliseconds)
+{
+    int rv = bio_wait(bio, max_time, nap_milliseconds);
+
+    if (rv <= 0)
+        ERR_raise(ERR_LIB_BIO,
+                  rv == 0 ? BIO_R_TRANSFER_TIMEOUT : BIO_R_TRANSFER_ERROR);
+    return rv;
+}
+
+/*
+ * Connect via given BIO using BIO_do_connect() until success/timeout/error.
+ * Parameter timeout == 0 means no timeout, < 0 means exactly one try.
+ * For non-blocking and potentially even non-socket BIOs perform polling with
+ * the given density: between polls sleep nap_milliseconds using BIO_wait()
+ * in order to avoid a tight busy loop.
+ * Returns -1 on error, 0 on timeout, and 1 on success.
+ */
+int BIO_do_connect_retry(BIO *bio, int timeout, int nap_milliseconds)
+{
+    int blocking = timeout <= 0;
+    time_t max_time = timeout > 0 ? time(NULL) + timeout : 0;
+    int rv;
+
+    if (bio == NULL) {
+        ERR_raise(ERR_LIB_BIO, ERR_R_PASSED_NULL_PARAMETER);
+        return -1;
+    }
+
+    if (nap_milliseconds < 0)
+        nap_milliseconds = 100;
+    BIO_set_nbio(bio, !blocking);
+
+ retry:
+    rv = BIO_do_connect(bio); /* This may indirectly call ERR_clear_error(); */
+
+    if (rv <= 0) { /* could be timeout or retryable error or fatal error */
+        int err = ERR_peek_last_error();
+        int reason = ERR_GET_REASON(err);
+        int do_retry = BIO_should_retry(bio); /* may be 1 only if !blocking */
+
+        if (ERR_GET_LIB(err) == ERR_LIB_BIO) {
+            switch (reason) {
+            case ERR_R_SYS_LIB:
+                /*
+                 * likely retryable system error occurred, which may be
+                 * EAGAIN (resource temporarily unavailable) some 40 secs after
+                 * calling getaddrinfo(): Temporary failure in name resolution
+                 * or a premature ETIMEDOUT, some 30 seconds after connect()
+                 */
+            case BIO_R_CONNECT_ERROR:
+            case BIO_R_NBIO_CONNECT_ERROR:
+                /* some likely retryable connection error occurred */
+                (void)BIO_reset(bio); /* often needed to avoid retry failure */
+                do_retry = 1;
+                break;
+            default:
+                break;
+            }
+        }
+        if (timeout >= 0 && do_retry) {
+            ERR_clear_error(); /* using ERR_pop_to_mark() would be cleaner */
+            /* will not actually wait if timeout == 0 (i.e., blocking BIO): */
+            rv = bio_wait(bio, max_time, nap_milliseconds);
+            if (rv > 0)
+                goto retry;
+            ERR_raise(ERR_LIB_BIO,
+                      rv == 0 ? BIO_R_CONNECT_TIMEOUT : BIO_R_CONNECT_ERROR);
+        } else {
+            rv = -1;
+            if (err == 0) /* missing error queue entry */
+                ERR_raise(ERR_LIB_BIO, BIO_R_CONNECT_ERROR); /* workaround: general error */
+        }
+    }
+
+    return rv;
 }

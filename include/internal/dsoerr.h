@@ -8,8 +8,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_DSOERR_H
-# define HEADER_DSOERR_H
+#ifndef OSSL_INTERNAL_DSOERR_H
+# define OSSL_INTERNAL_DSOERR_H
 
 # include <openssl/opensslconf.h>
 # include <openssl/symhacks.h>
@@ -23,7 +23,7 @@ int ERR_load_DSO_strings(void);
 /*
  * DSO function codes.
  */
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define DSO_F_DLFCN_BIND_FUNC                            0
 #  define DSO_F_DLFCN_LOAD                                 0
 #  define DSO_F_DLFCN_MERGER                               0

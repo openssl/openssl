@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,7 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-int name_cmp(const char *name, const char *cmp);
+int v3_name_cmp(const char *name, const char *cmp);
 
 extern const X509V3_EXT_METHOD v3_bcons, v3_nscert, v3_key_usage, v3_ext_ku;
 extern const X509V3_EXT_METHOD v3_pkey_usage_period, v3_sxnet, v3_info, v3_sinfo;
@@ -23,3 +23,5 @@ extern const X509V3_EXT_METHOD v3_addr, v3_asid;
 extern const X509V3_EXT_METHOD v3_ct_scts[3];
 extern const X509V3_EXT_METHOD v3_tls_feature;
 extern const X509V3_EXT_METHOD v3_ext_admission;
+extern const X509V3_EXT_METHOD v3_utf8_list[1];
+extern const X509V3_EXT_METHOD v3_issuer_sign_tool;

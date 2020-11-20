@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -76,27 +76,6 @@ void add_all_tests(const char *test_case_name, int(*test_fn)(int idx),
     num_test_cases += num;
 }
 
-int subtest_level(void)
-{
-    return level;
-}
-
-#ifndef OPENSSL_NO_CRYPTO_MDEBUG
-static int should_report_leaks(void)
-{
-    /*
-     * When compiled with enable-crypto-mdebug, OPENSSL_DEBUG_MEMORY=0
-     * can be used to disable leak checking at runtime.
-     * Note this only works when running the test binary manually;
-     * the test harness always enables OPENSSL_DEBUG_MEMORY.
-     */
-    char *mem_debug_env = getenv("OPENSSL_DEBUG_MEMORY");
-
-    return mem_debug_env == NULL
-        || (strcmp(mem_debug_env, "0") && strcmp(mem_debug_env, ""));
-}
-#endif
-
 static int gcd(int a, int b)
 {
     while (b != 0) {
@@ -112,9 +91,9 @@ static void set_seed(int s)
     seed = s;
     if (seed <= 0)
         seed = (int)time(NULL);
-    test_printf_stdout("%*s# RAND SEED %d\n", subtest_level(), "", seed);
+    test_printf_stdout("RAND SEED %d\n", seed);
     test_flush_stdout();
-    srand(seed);
+    test_random_seed(seed);
 }
 
 
@@ -125,15 +104,9 @@ int setup_test_framework(int argc, char *argv[])
 
     if (TAP_levels != NULL)
         level = 4 * atoi(TAP_levels);
+    test_adjust_streams_tap_level(level);
     if (test_seed != NULL)
         set_seed(atoi(test_seed));
-
-#ifndef OPENSSL_NO_CRYPTO_MDEBUG
-    if (should_report_leaks()) {
-        CRYPTO_set_mem_debug(1);
-        CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
-    }
-#endif
 
 #if defined(OPENSSL_SYS_VMS) && defined(__DECC)
     argv = copy_argv(&argc, argv);
@@ -237,6 +210,7 @@ static int process_shared_options(void)
             if (!opt_int(opt_arg(), &value))
                 goto end;
             level = 4 * value;
+            test_adjust_streams_tap_level(level);
             break;
         case OPT_TEST_SEED:
             if (!opt_int(opt_arg(), &value))
@@ -256,11 +230,6 @@ end:
 int pulldown_test_framework(int ret)
 {
     set_test_title(NULL);
-#ifndef OPENSSL_NO_CRYPTO_MDEBUG
-    if (should_report_leaks()
-        && CRYPTO_mem_leaks_cb(openssl_error_cb, NULL) <= 0)
-        return EXIT_FAILURE;
-#endif
     return ret;
 }
 
@@ -288,13 +257,13 @@ PRINTF_FORMAT(2, 3) static void test_verdict(int verdict,
     test_flush_stdout();
     test_flush_stderr();
 
-    test_printf_stdout("%*s%s ", level, "", verdict != 0 ? "ok" : "not ok");
+    test_printf_tapout("%s ", verdict != 0 ? "ok" : "not ok");
     va_start(ap, description);
-    test_vprintf_stdout(description, ap);
+    test_vprintf_tapout(description, ap);
     va_end(ap);
     if (verdict == TEST_SKIP_CODE)
-        test_printf_stdout(" # skipped");
-    test_printf_stdout("\n");
+        test_printf_tapout(" # skipped");
+    test_printf_tapout("\n");
     test_flush_stdout();
 }
 
@@ -312,12 +281,11 @@ int run_tests(const char *test_prog_name)
         return EXIT_FAILURE;
 
     if (num_tests < 1) {
-        test_printf_stdout("%*s1..0 # Skipped: %s\n", level, "",
-                           test_prog_name);
+        test_printf_tapout("1..0 # Skipped: %s\n", test_prog_name);
     } else if (show_list == 0 && single_test == -1) {
         if (level > 0)
-            test_printf_stdout("%*s# Subtest: %s\n", level, "", test_prog_name);
-        test_printf_stdout("%*s1..%d\n", level, "", num_tests);
+            test_printf_stdout("Subtest: %s\n", test_prog_name);
+        test_printf_tapout("1..%d\n", num_tests);
     }
 
     test_flush_stdout();
@@ -326,7 +294,7 @@ int run_tests(const char *test_prog_name)
         permute[i] = i;
     if (seed != 0)
         for (i = num_tests - 1; i >= 1; i--) {
-            j = rand() % (1 + i);
+            j = test_random() % (1 + i);
             ii = permute[j];
             permute[j] = permute[i];
             permute[i] = ii;
@@ -340,11 +308,11 @@ int run_tests(const char *test_prog_name)
         }
         else if (show_list) {
             if (all_tests[i].num != -1) {
-                test_printf_stdout("%d - %s (%d..%d)\n", ii + 1,
+                test_printf_tapout("%d - %s (%d..%d)\n", ii + 1,
                                    all_tests[i].test_case_name, 1,
                                    all_tests[i].num);
             } else {
-                test_printf_stdout("%d - %s\n", ii + 1,
+                test_printf_tapout("%d - %s\n", ii + 1,
                                    all_tests[i].test_case_name);
             }
             test_flush_stdout();
@@ -360,11 +328,11 @@ int run_tests(const char *test_prog_name)
 
             verdict = TEST_SKIP_CODE;
             level += 4;
+            test_adjust_streams_tap_level(level);
             if (all_tests[i].subtest && single_iter == -1) {
-                test_printf_stdout("%*s# Subtest: %s\n", level, "",
+                test_printf_stdout("Subtest: %s\n",
                                    all_tests[i].test_case_name);
-                test_printf_stdout("%*s%d..%d\n", level, "", 1,
-                                   all_tests[i].num);
+                test_printf_tapout("%d..%d\n", 1, all_tests[i].num);
                 test_flush_stdout();
             }
 
@@ -373,7 +341,7 @@ int run_tests(const char *test_prog_name)
                 jstep = 1;
             else
                 do
-                    jstep = rand() % all_tests[i].num;
+                    jstep = test_random() % all_tests[i].num;
                 while (jstep == 0 || gcd(all_tests[i].num, jstep) != 1);
 
             for (jj = 0; jj < all_tests[i].num; jj++) {
@@ -403,6 +371,7 @@ int run_tests(const char *test_prog_name)
             }
 
             level -= 4;
+            test_adjust_streams_tap_level(level);
             if (verdict == 0)
                 ++num_failed;
             test_verdict(verdict, "%d - %s", ii + 1,
@@ -439,3 +408,21 @@ char *glue_strings(const char *list[], size_t *out_len)
     return ret;
 }
 
+char *test_mk_file_path(const char *dir, const char *file)
+{
+# ifndef OPENSSL_SYS_VMS
+    const char *sep = "/";
+# else
+    const char *sep = "";
+# endif
+    size_t len = strlen(dir) + strlen(sep) + strlen(file) + 1;
+    char *full_file = OPENSSL_zalloc(len);
+
+    if (full_file != NULL) {
+        OPENSSL_strlcpy(full_file, dir, len);
+        OPENSSL_strlcat(full_file, sep, len);
+        OPENSSL_strlcat(full_file, file, len);
+    }
+
+    return full_file;
+}

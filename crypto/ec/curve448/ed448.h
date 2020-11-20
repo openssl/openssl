@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2020 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright 2015-2016 Cryptography Research, Inc.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -10,8 +10,8 @@
  * Originally written by Mike Hamburg
  */
 
-#ifndef HEADER_ED448_H
-# define HEADER_ED448_H
+#ifndef OSSL_CRYPTO_EC_CURVE448_ED448_H
+# define OSSL_CRYPTO_EC_CURVE448_ED448_H
 
 # include "point_448.h"
 
@@ -38,8 +38,10 @@
  * privkey (in): The private key.
  */
 c448_error_t c448_ed448_derive_public_key(
+                        OSSL_LIB_CTX *ctx,
                         uint8_t pubkey [EDDSA_448_PUBLIC_BYTES],
-                        const uint8_t privkey [EDDSA_448_PRIVATE_BYTES]);
+                        const uint8_t privkey [EDDSA_448_PRIVATE_BYTES],
+                        const char *propq);
 
 /*
  * EdDSA signing.
@@ -59,12 +61,14 @@ c448_error_t c448_ed448_derive_public_key(
  * disambiguation.  For Ed448 it is safe.
  */
 c448_error_t c448_ed448_sign(
+                        OSSL_LIB_CTX *ctx,
                         uint8_t signature[EDDSA_448_SIGNATURE_BYTES],
                         const uint8_t privkey[EDDSA_448_PRIVATE_BYTES],
                         const uint8_t pubkey[EDDSA_448_PUBLIC_BYTES],
                         const uint8_t *message, size_t message_len,
                         uint8_t prehashed, const uint8_t *context,
-                        size_t context_len);
+                        size_t context_len,
+                        const char *propq);
 
 /*
  * EdDSA signing with prehash.
@@ -83,12 +87,14 @@ c448_error_t c448_ed448_sign(
  * disambiguation.  For Ed448 it is safe.
  */
 c448_error_t c448_ed448_sign_prehash(
+                        OSSL_LIB_CTX *ctx,
                         uint8_t signature[EDDSA_448_SIGNATURE_BYTES],
                         const uint8_t privkey[EDDSA_448_PRIVATE_BYTES],
                         const uint8_t pubkey[EDDSA_448_PUBLIC_BYTES],
                         const uint8_t hash[64],
                         const uint8_t *context,
-                        size_t context_len);
+                        size_t context_len,
+                        const char *propq);
 
 /*
  * EdDSA signature verification.
@@ -108,13 +114,15 @@ c448_error_t c448_ed448_sign_prehash(
  * non-prehashed messages, at least without some very careful protocol-level
  * disambiguation.  For Ed448 it is safe.
  */
-c448_error_t c448_ed448_verify(const uint8_t
-                                 signature[EDDSA_448_SIGNATURE_BYTES],
-                                 const uint8_t
-                                 pubkey[EDDSA_448_PUBLIC_BYTES],
-                                 const uint8_t *message, size_t message_len,
-                                 uint8_t prehashed, const uint8_t *context,
-                                 uint8_t context_len);
+c448_error_t c448_ed448_verify(OSSL_LIB_CTX *ctx,
+                               const uint8_t
+                               signature[EDDSA_448_SIGNATURE_BYTES],
+                               const uint8_t
+                               pubkey[EDDSA_448_PUBLIC_BYTES],
+                               const uint8_t *message, size_t message_len,
+                               uint8_t prehashed, const uint8_t *context,
+                               uint8_t context_len,
+                               const char *propq);
 
 /*
  * EdDSA signature verification.
@@ -134,11 +142,13 @@ c448_error_t c448_ed448_verify(const uint8_t
  * disambiguation.  For Ed448 it is safe.
  */
 c448_error_t c448_ed448_verify_prehash(
+                    OSSL_LIB_CTX *ctx,
                     const uint8_t signature[EDDSA_448_SIGNATURE_BYTES],
                     const uint8_t pubkey[EDDSA_448_PUBLIC_BYTES],
                     const uint8_t hash[64],
                     const uint8_t *context,
-                    uint8_t context_len);
+                    uint8_t context_len,
+                    const char *propq);
 
 /*
  * EdDSA point encoding.  Used internally, exposed externally.
@@ -189,7 +199,9 @@ c448_error_t curve448_point_decode_like_eddsa_and_mul_by_ratio(
  * ed (in): The EdDSA private key
  */
 c448_error_t c448_ed448_convert_private_key_to_x448(
+                            OSSL_LIB_CTX *ctx,
                             uint8_t x[X448_PRIVATE_BYTES],
-                            const uint8_t ed[EDDSA_448_PRIVATE_BYTES]);
+                            const uint8_t ed[EDDSA_448_PRIVATE_BYTES],
+                            const char *propq);
 
-#endif                          /* HEADER_ED448_H */
+#endif                          /* OSSL_CRYPTO_EC_CURVE448_ED448_H */

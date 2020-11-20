@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -11,6 +11,7 @@
 #include "internal/cryptlib.h"
 #include <openssl/conf.h>
 #include <openssl/x509v3.h>
+#include <openssl/bio.h>
 #include "ext_dat.h"
 
 static GENERAL_NAMES *v2i_subject_alt(X509V3_EXT_METHOD *method,
@@ -52,11 +53,24 @@ STACK_OF(CONF_VALUE) *i2v_GENERAL_NAMES(X509V3_EXT_METHOD *method,
 {
     int i;
     GENERAL_NAME *gen;
+    STACK_OF(CONF_VALUE) *tmpret = NULL, *origret = ret;
+
     for (i = 0; i < sk_GENERAL_NAME_num(gens); i++) {
         gen = sk_GENERAL_NAME_value(gens, i);
-        ret = i2v_GENERAL_NAME(method, gen, ret);
+        /*
+         * i2v_GENERAL_NAME allocates ret if it is NULL. If something goes
+         * wrong we need to free the stack - but only if it was empty when we
+         * originally entered this function.
+         */
+        tmpret = i2v_GENERAL_NAME(method, gen, ret);
+        if (tmpret == NULL) {
+            if (origret == NULL)
+                sk_CONF_VALUE_pop_free(ret, X509V3_conf_free);
+            return NULL;
+        }
+        ret = tmpret;
     }
-    if (!ret)
+    if (ret == NULL)
         return sk_CONF_VALUE_new_null();
     return ret;
 }
@@ -65,14 +79,71 @@ STACK_OF(CONF_VALUE) *i2v_GENERAL_NAME(X509V3_EXT_METHOD *method,
                                        GENERAL_NAME *gen,
                                        STACK_OF(CONF_VALUE) *ret)
 {
-    unsigned char *p;
-    char oline[256], htmp[5];
-    int i;
+    char othername[300];
+    char oline[256], *tmp;
 
     switch (gen->type) {
     case GEN_OTHERNAME:
-        if (!X509V3_add_value("othername", "<unsupported>", &ret))
-            return NULL;
+        switch (OBJ_obj2nid(gen->d.otherName->type_id)) {
+        case NID_id_on_SmtpUTF8Mailbox:
+            if (gen->d.otherName->value->type != V_ASN1_UTF8STRING
+                    || !X509V3_add_value_uchar("othername: SmtpUTF8Mailbox:",
+                            gen->d.otherName->value->value.utf8string->data,
+                            &ret))
+                return NULL;
+            break;
+        case NID_XmppAddr:
+            if (gen->d.otherName->value->type != V_ASN1_UTF8STRING
+                    || !X509V3_add_value_uchar("othername: XmppAddr:",
+                            gen->d.otherName->value->value.utf8string->data,
+                            &ret))
+                return NULL;
+            break;
+        case NID_SRVName:
+            if (gen->d.otherName->value->type != V_ASN1_IA5STRING
+                    || !X509V3_add_value_uchar("othername: SRVName:",
+                            gen->d.otherName->value->value.ia5string->data,
+                            &ret))
+                return NULL;
+            break;
+        case NID_ms_upn:
+            if (gen->d.otherName->value->type != V_ASN1_UTF8STRING
+                    || !X509V3_add_value_uchar("othername: UPN:",
+                            gen->d.otherName->value->value.utf8string->data,
+                            &ret))
+                return NULL;
+            break;
+        case NID_NAIRealm:
+            if (gen->d.otherName->value->type != V_ASN1_UTF8STRING
+                    || !X509V3_add_value_uchar("othername: NAIRealm:",
+                            gen->d.otherName->value->value.utf8string->data,
+                            &ret))
+                return NULL;
+            break;
+        default:
+            if (OBJ_obj2txt(oline, sizeof(oline), gen->d.otherName->type_id, 0) > 0) 
+                BIO_snprintf(othername, sizeof(othername), "othername: %s:",
+                             oline);
+            else
+                OPENSSL_strlcpy(othername, "othername:", sizeof(othername));
+
+            /* check if the value is something printable */
+            if (gen->d.otherName->value->type == V_ASN1_IA5STRING) {
+                if (X509V3_add_value_uchar(othername,
+                             gen->d.otherName->value->value.ia5string->data,
+                             &ret)) 
+                    return ret;
+            }
+            if (gen->d.otherName->value->type == V_ASN1_UTF8STRING) {
+                if (X509V3_add_value_uchar(othername,
+                             gen->d.otherName->value->value.utf8string->data,
+                             &ret)) 
+                    return ret;
+            }
+            if (!X509V3_add_value(othername, "<unsupported>", &ret))
+                return NULL;
+            break;
+        }
         break;
 
     case GEN_X400:
@@ -107,26 +178,10 @@ STACK_OF(CONF_VALUE) *i2v_GENERAL_NAME(X509V3_EXT_METHOD *method,
         break;
 
     case GEN_IPADD:
-        p = gen->d.ip->data;
-        if (gen->d.ip->length == 4)
-            BIO_snprintf(oline, sizeof(oline), "%d.%d.%d.%d",
-                         p[0], p[1], p[2], p[3]);
-        else if (gen->d.ip->length == 16) {
-            oline[0] = 0;
-            for (i = 0; i < 8; i++) {
-                BIO_snprintf(htmp, sizeof(htmp), "%X", p[0] << 8 | p[1]);
-                p += 2;
-                strcat(oline, htmp);
-                if (i != 7)
-                    strcat(oline, ":");
-            }
-        } else {
-            if (!X509V3_add_value("IP Address", "<invalid>", &ret))
-                return NULL;
-            break;
-        }
-        if (!X509V3_add_value("IP Address", oline, &ret))
-            return NULL;
+        tmp = ipaddr_to_asc(gen->d.ip->data, gen->d.ip->length);
+        if (tmp == NULL || !X509V3_add_value("IP Address", tmp, &ret))
+            ret = NULL;
+        OPENSSL_free(tmp);
         break;
 
     case GEN_RID:
@@ -140,11 +195,46 @@ STACK_OF(CONF_VALUE) *i2v_GENERAL_NAME(X509V3_EXT_METHOD *method,
 
 int GENERAL_NAME_print(BIO *out, GENERAL_NAME *gen)
 {
-    unsigned char *p;
-    int i;
+    char *tmp;
+    int nid;
+
     switch (gen->type) {
     case GEN_OTHERNAME:
-        BIO_printf(out, "othername:<unsupported>");
+        nid = OBJ_obj2nid(gen->d.otherName->type_id);
+        /* Validate the types are as we expect before we use them */
+        if ((nid == NID_SRVName
+             && gen->d.otherName->value->type != V_ASN1_IA5STRING)
+                || (nid != NID_SRVName
+                    && gen->d.otherName->value->type != V_ASN1_UTF8STRING)) {
+            BIO_printf(out, "othername:<unsupported>");
+            break;
+        }
+
+        switch (nid) {
+        case NID_id_on_SmtpUTF8Mailbox:
+            BIO_printf(out, "othername:SmtpUTF8Mailbox:%s",
+                       gen->d.otherName->value->value.utf8string->data);
+            break;
+        case NID_XmppAddr:
+            BIO_printf(out, "othername:XmppAddr:%s",
+                       gen->d.otherName->value->value.utf8string->data);
+            break;
+        case NID_SRVName:
+            BIO_printf(out, "othername:SRVName:%s",
+                       gen->d.otherName->value->value.ia5string->data);
+            break;
+        case NID_ms_upn:
+            BIO_printf(out, "othername:UPN:%s",
+                       gen->d.otherName->value->value.utf8string->data);
+            break;
+        case NID_NAIRealm:
+            BIO_printf(out, "othername:NAIRealm:%s",
+                       gen->d.otherName->value->value.utf8string->data);
+            break;
+        default:
+            BIO_printf(out, "othername:<unsupported>");
+            break;
+        }
         break;
 
     case GEN_X400:
@@ -177,19 +267,11 @@ int GENERAL_NAME_print(BIO *out, GENERAL_NAME *gen)
         break;
 
     case GEN_IPADD:
-        p = gen->d.ip->data;
-        if (gen->d.ip->length == 4)
-            BIO_printf(out, "IP Address:%d.%d.%d.%d", p[0], p[1], p[2], p[3]);
-        else if (gen->d.ip->length == 16) {
-            BIO_printf(out, "IP Address");
-            for (i = 0; i < 8; i++) {
-                BIO_printf(out, ":%X", p[0] << 8 | p[1]);
-                p += 2;
-            }
-        } else {
-            BIO_printf(out, "IP Address:<invalid>");
-            break;
-        }
+        tmp = ipaddr_to_asc(gen->d.ip->data, gen->d.ip->length);
+        if (tmp == NULL)
+            return 0;
+        BIO_printf(out, "IP Address:%s", tmp);
+        OPENSSL_free(tmp);
         break;
 
     case GEN_RID:
@@ -209,14 +291,14 @@ static GENERAL_NAMES *v2i_issuer_alt(X509V3_EXT_METHOD *method,
     int i;
 
     if (gens == NULL) {
-        X509V3err(X509V3_F_V2I_ISSUER_ALT, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
         sk_GENERAL_NAME_free(gens);
         return NULL;
     }
     for (i = 0; i < num; i++) {
         CONF_VALUE *cnf = sk_CONF_VALUE_value(nval, i);
 
-        if (!name_cmp(cnf->name, "issuer")
+        if (!v3_name_cmp(cnf->name, "issuer")
             && cnf->value && strcmp(cnf->value, "copy") == 0) {
             if (!copy_issuer(ctx, gens))
                 goto err;
@@ -246,7 +328,7 @@ static int copy_issuer(X509V3_CTX *ctx, GENERAL_NAMES *gens)
     if (ctx && (ctx->flags == CTX_TEST))
         return 1;
     if (!ctx || !ctx->issuer_cert) {
-        X509V3err(X509V3_F_COPY_ISSUER, X509V3_R_NO_ISSUER_DETAILS);
+        ERR_raise(ERR_LIB_X509V3, X509V3_R_NO_ISSUER_DETAILS);
         goto err;
     }
     i = X509_get_ext_by_NID(ctx->issuer_cert, NID_subject_alt_name, -1);
@@ -254,13 +336,13 @@ static int copy_issuer(X509V3_CTX *ctx, GENERAL_NAMES *gens)
         return 1;
     if ((ext = X509_get_ext(ctx->issuer_cert, i)) == NULL
         || (ialt = X509V3_EXT_d2i(ext)) == NULL) {
-        X509V3err(X509V3_F_COPY_ISSUER, X509V3_R_ISSUER_DECODE_ERROR);
+        ERR_raise(ERR_LIB_X509V3, X509V3_R_ISSUER_DECODE_ERROR);
         goto err;
     }
 
     num = sk_GENERAL_NAME_num(ialt);
     if (!sk_GENERAL_NAME_reserve(gens, num)) {
-        X509V3err(X509V3_F_COPY_ISSUER, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
@@ -288,18 +370,18 @@ static GENERAL_NAMES *v2i_subject_alt(X509V3_EXT_METHOD *method,
 
     gens = sk_GENERAL_NAME_new_reserve(NULL, num);
     if (gens == NULL) {
-        X509V3err(X509V3_F_V2I_SUBJECT_ALT, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
         sk_GENERAL_NAME_free(gens);
         return NULL;
     }
 
     for (i = 0; i < num; i++) {
         cnf = sk_CONF_VALUE_value(nval, i);
-        if (!name_cmp(cnf->name, "email")
+        if (!v3_name_cmp(cnf->name, "email")
             && cnf->value && strcmp(cnf->value, "copy") == 0) {
             if (!copy_email(ctx, gens, 0))
                 goto err;
-        } else if (!name_cmp(cnf->name, "email")
+        } else if (!v3_name_cmp(cnf->name, "email")
                    && cnf->value && strcmp(cnf->value, "move") == 0) {
             if (!copy_email(ctx, gens, 1))
                 goto err;
@@ -332,7 +414,7 @@ static int copy_email(X509V3_CTX *ctx, GENERAL_NAMES *gens, int move_p)
         return 1;
     if (ctx == NULL
         || (ctx->subject_cert == NULL && ctx->subject_req == NULL)) {
-        X509V3err(X509V3_F_COPY_EMAIL, X509V3_R_NO_SUBJECT_DETAILS);
+        ERR_raise(ERR_LIB_X509V3, X509V3_R_NO_SUBJECT_DETAILS);
         goto err;
     }
     /* Find the subject name */
@@ -352,14 +434,14 @@ static int copy_email(X509V3_CTX *ctx, GENERAL_NAMES *gens, int move_p)
             i--;
         }
         if (email == NULL || (gen = GENERAL_NAME_new()) == NULL) {
-            X509V3err(X509V3_F_COPY_EMAIL, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
             goto err;
         }
         gen->d.ia5 = email;
         email = NULL;
         gen->type = GEN_EMAIL;
         if (!sk_GENERAL_NAME_push(gens, gen)) {
-            X509V3err(X509V3_F_COPY_EMAIL, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
             goto err;
         }
         gen = NULL;
@@ -385,7 +467,7 @@ GENERAL_NAMES *v2i_GENERAL_NAMES(const X509V3_EXT_METHOD *method,
 
     gens = sk_GENERAL_NAME_new_reserve(NULL, num);
     if (gens == NULL) {
-        X509V3err(X509V3_F_V2I_GENERAL_NAMES, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
         sk_GENERAL_NAME_free(gens);
         return NULL;
     }
@@ -417,7 +499,7 @@ GENERAL_NAME *a2i_GENERAL_NAME(GENERAL_NAME *out,
     GENERAL_NAME *gen = NULL;
 
     if (!value) {
-        X509V3err(X509V3_F_A2I_GENERAL_NAME, X509V3_R_MISSING_VALUE);
+        ERR_raise(ERR_LIB_X509V3, X509V3_R_MISSING_VALUE);
         return NULL;
     }
 
@@ -426,7 +508,7 @@ GENERAL_NAME *a2i_GENERAL_NAME(GENERAL_NAME *out,
     else {
         gen = GENERAL_NAME_new();
         if (gen == NULL) {
-            X509V3err(X509V3_F_A2I_GENERAL_NAME, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
             return NULL;
         }
     }
@@ -442,8 +524,8 @@ GENERAL_NAME *a2i_GENERAL_NAME(GENERAL_NAME *out,
         {
             ASN1_OBJECT *obj;
             if ((obj = OBJ_txt2obj(value, 0)) == NULL) {
-                X509V3err(X509V3_F_A2I_GENERAL_NAME, X509V3_R_BAD_OBJECT);
-                ERR_add_error_data(2, "value=", value);
+                ERR_raise_data(ERR_LIB_X509V3, X509V3_R_BAD_OBJECT,
+                               "value=%s", value);
                 goto err;
             }
             gen->d.rid = obj;
@@ -456,27 +538,27 @@ GENERAL_NAME *a2i_GENERAL_NAME(GENERAL_NAME *out,
         else
             gen->d.ip = a2i_IPADDRESS(value);
         if (gen->d.ip == NULL) {
-            X509V3err(X509V3_F_A2I_GENERAL_NAME, X509V3_R_BAD_IP_ADDRESS);
-            ERR_add_error_data(2, "value=", value);
+            ERR_raise_data(ERR_LIB_X509V3, X509V3_R_BAD_IP_ADDRESS,
+                           "value=%s", value);
             goto err;
         }
         break;
 
     case GEN_DIRNAME:
         if (!do_dirname(gen, value, ctx)) {
-            X509V3err(X509V3_F_A2I_GENERAL_NAME, X509V3_R_DIRNAME_ERROR);
+            ERR_raise(ERR_LIB_X509V3, X509V3_R_DIRNAME_ERROR);
             goto err;
         }
         break;
 
     case GEN_OTHERNAME:
         if (!do_othername(gen, value, ctx)) {
-            X509V3err(X509V3_F_A2I_GENERAL_NAME, X509V3_R_OTHERNAME_ERROR);
+            ERR_raise(ERR_LIB_X509V3, X509V3_R_OTHERNAME_ERROR);
             goto err;
         }
         break;
     default:
-        X509V3err(X509V3_F_A2I_GENERAL_NAME, X509V3_R_UNSUPPORTED_TYPE);
+        ERR_raise(ERR_LIB_X509V3, X509V3_R_UNSUPPORTED_TYPE);
         goto err;
     }
 
@@ -484,7 +566,7 @@ GENERAL_NAME *a2i_GENERAL_NAME(GENERAL_NAME *out,
         if ((gen->d.ia5 = ASN1_IA5STRING_new()) == NULL ||
             !ASN1_STRING_set(gen->d.ia5, (unsigned char *)value,
                              strlen(value))) {
-            X509V3err(X509V3_F_A2I_GENERAL_NAME, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
             goto err;
         }
     }
@@ -511,27 +593,27 @@ GENERAL_NAME *v2i_GENERAL_NAME_ex(GENERAL_NAME *out,
     value = cnf->value;
 
     if (!value) {
-        X509V3err(X509V3_F_V2I_GENERAL_NAME_EX, X509V3_R_MISSING_VALUE);
+        ERR_raise(ERR_LIB_X509V3, X509V3_R_MISSING_VALUE);
         return NULL;
     }
 
-    if (!name_cmp(name, "email"))
+    if (!v3_name_cmp(name, "email"))
         type = GEN_EMAIL;
-    else if (!name_cmp(name, "URI"))
+    else if (!v3_name_cmp(name, "URI"))
         type = GEN_URI;
-    else if (!name_cmp(name, "DNS"))
+    else if (!v3_name_cmp(name, "DNS"))
         type = GEN_DNS;
-    else if (!name_cmp(name, "RID"))
+    else if (!v3_name_cmp(name, "RID"))
         type = GEN_RID;
-    else if (!name_cmp(name, "IP"))
+    else if (!v3_name_cmp(name, "IP"))
         type = GEN_IPADD;
-    else if (!name_cmp(name, "dirName"))
+    else if (!v3_name_cmp(name, "dirName"))
         type = GEN_DIRNAME;
-    else if (!name_cmp(name, "otherName"))
+    else if (!v3_name_cmp(name, "otherName"))
         type = GEN_OTHERNAME;
     else {
-        X509V3err(X509V3_F_V2I_GENERAL_NAME_EX, X509V3_R_UNSUPPORTED_OPTION);
-        ERR_add_error_data(2, "name=", name);
+        ERR_raise_data(ERR_LIB_X509V3, X509V3_R_UNSUPPORTED_OPTION,
+                       "name=%s", name);
         return NULL;
     }
 
@@ -576,8 +658,8 @@ static int do_dirname(GENERAL_NAME *gen, const char *value, X509V3_CTX *ctx)
         goto err;
     sk = X509V3_get_section(ctx, value);
     if (!sk) {
-        X509V3err(X509V3_F_DO_DIRNAME, X509V3_R_SECTION_NOT_FOUND);
-        ERR_add_error_data(2, "section=", value);
+        ERR_raise_data(ERR_LIB_X509V3, X509V3_R_SECTION_NOT_FOUND,
+                       "section=%s", value);
         goto err;
     }
     /* FIXME: should allow other character types... */

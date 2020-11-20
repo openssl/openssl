@@ -104,7 +104,7 @@ int OBJ_add_sigid(int signid, int dig_id, int pkey_id)
     if (sigx_app == NULL)
         return 0;
     if ((ntr = OPENSSL_malloc(sizeof(*ntr))) == NULL) {
-        OBJerr(OBJ_F_OBJ_ADD_SIGID, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_OBJ, ERR_R_MALLOC_FAILURE);
         return 0;
     }
     ntr->sign_id = signid;

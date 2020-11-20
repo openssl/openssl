@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2007-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2007-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -26,8 +26,7 @@
 # by over 40%, while code increases by only 10% or 32 bytes. But once
 # again, the goal was to establish _size_ benchmark, not performance.
 
-$output=shift;
-open STDOUT,">$output";
+$output=pop and open STDOUT,">$output";
 
 $inline=0;
 #$cheat_on_binutils=1;
@@ -263,4 +262,4 @@ $code.=<<___;
 ___
 
 print $code;
-close STDOUT; # enforce flush
+close STDOUT or die "error closing STDOUT: $!"; # enforce flush

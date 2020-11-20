@@ -1,11 +1,17 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+
+/*
+ * RC2 low level APIs are deprecated for public use, but still ok for internal
+ * use.
+ */
+#include "internal/deprecated.h"
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
@@ -14,8 +20,9 @@
 
 # include <openssl/evp.h>
 # include <openssl/objects.h>
-# include "internal/evp_int.h"
+# include "crypto/evp.h"
 # include <openssl/rc2.h>
+# include "evp_local.h"
 
 static int rc2_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                         const unsigned char *iv, int enc);
@@ -113,7 +120,7 @@ static int rc2_magic_to_meth(int i)
     else if (i == RC2_40_MAGIC)
         return 40;
     else {
-        EVPerr(EVP_F_RC2_MAGIC_TO_METH, EVP_R_UNSUPPORTED_KEY_SIZE);
+        ERR_raise(ERR_LIB_EVP, EVP_R_UNSUPPORTED_KEY_SIZE);
         return 0;
     }
 }
@@ -153,9 +160,7 @@ static int rc2_set_asn1_type_and_iv(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
     if (type != NULL) {
         num = rc2_meth_to_magic(c);
         j = EVP_CIPHER_CTX_iv_length(c);
-        i = ASN1_TYPE_set_int_octetstring(type, num,
-                                          (unsigned char *)EVP_CIPHER_CTX_original_iv(c),
-                                          j);
+        i = ASN1_TYPE_set_int_octetstring(type, num, c->oiv, j);
     }
     return i;
 }

@@ -1,0 +1,62 @@
+=pod
+
+=head1 NAME
+
+PEM_X509_INFO_read_bio_ex, PEM_X509_INFO_read_ex
+- read a PEM-encoded data structure from a bio into one or more B<X509_INFO>
+object's
+
+=head1 SYNOPSIS
+
+ #include <openssl/pem.h>
+
+ STACK_OF(X509_INFO) *PEM_X509_INFO_read_ex(FILE *fp, STACK_OF(X509_INFO) *sk,
+                                            pem_password_cb *cb, void *u,
+                                            OSSL_LIB_CTX *libctx,
+                                            const char *propq);
+
+ STACK_OF(X509_INFO) *PEM_X509_INFO_read_bio_ex(BIO *bio,
+                                                STACK_OF(X509_INFO) *sk,
+                                                pem_password_cb *cb, void *u,
+                                                OSSL_LIB_CTX *libctx,
+                                                const char *propq);
+
+=head1 DESCRIPTION
+
+The loaded B<X509_INFO> object's can contain a CRL, a certificate and a
+corresponding private key.
+
+PEM_X509_INFO_read_ex() loads the B<X509_INFO> objects from a file I<fp>.
+The library context I<libctx> and property query <propq> are used for fetching
+algorithms from providers.
+
+PEM_X509_INFO_read_bio_ex loads the B<X509_INFO> objects using a bio
+I<bp>. The library context I<libctx> and property query <propq> are used for
+fetching algorithms from providers.
+
+
+=head1 RETURN VALUES
+
+PEM_X509_INFO_read_ex() and PEM_X509_INFO_read_bio_ex() return
+a stack of B<X509_INFO> objects or NULL on failure.
+
+=head1 SEE ALSO
+
+L<PEM_read_bio_ex(3)>,
+L<passphrase-encoding(7)>
+
+=head1 HISTORY
+
+The functions PEM_X509_INFO_read_ex() and
+PEM_X509_INFO_read_bio_ex() were added in OpenSSL 3.0.
+
+=head1 COPYRIGHT
+
+Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

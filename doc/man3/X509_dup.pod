@@ -29,6 +29,7 @@ CERTIFICATEPOLICIES_free,
 CERTIFICATEPOLICIES_new,
 CMS_ContentInfo_free,
 CMS_ContentInfo_new,
+CMS_ContentInfo_new_ex,
 CMS_ContentInfo_print_ctx,
 CMS_ReceiptRequest_free,
 CMS_ReceiptRequest_new,
@@ -52,12 +53,18 @@ EDIPARTYNAME_new,
 ESS_CERT_ID_dup,
 ESS_CERT_ID_free,
 ESS_CERT_ID_new,
+ESS_CERT_ID_V2_dup,
+ESS_CERT_ID_V2_free,
+ESS_CERT_ID_V2_new,
 ESS_ISSUER_SERIAL_dup,
 ESS_ISSUER_SERIAL_free,
 ESS_ISSUER_SERIAL_new,
 ESS_SIGNING_CERT_dup,
 ESS_SIGNING_CERT_free,
 ESS_SIGNING_CERT_new,
+ESS_SIGNING_CERT_V2_dup,
+ESS_SIGNING_CERT_V2_free,
+ESS_SIGNING_CERT_V2_new,
 EXTENDED_KEY_USAGE_free,
 EXTENDED_KEY_USAGE_new,
 GENERAL_NAMES_free,
@@ -75,7 +82,11 @@ IPAddressOrRange_free,
 IPAddressOrRange_new,
 IPAddressRange_free,
 IPAddressRange_new,
+ISSUER_SIGN_TOOL_free,
+ISSUER_SIGN_TOOL_it,
+ISSUER_SIGN_TOOL_new,
 ISSUING_DIST_POINT_free,
+ISSUING_DIST_POINT_it,
 ISSUING_DIST_POINT_new,
 NAME_CONSTRAINTS_free,
 NAME_CONSTRAINTS_new,
@@ -116,15 +127,20 @@ OCSP_SIGNATURE_free,
 OCSP_SIGNATURE_new,
 OCSP_SINGLERESP_free,
 OCSP_SINGLERESP_new,
+OSSL_CMP_ITAV_dup,
 OSSL_CMP_ITAV_free,
 OSSL_CMP_MSG_dup,
-OSSL_CMP_MSG_free,
 OSSL_CMP_MSG_it,
+OSSL_CMP_MSG_free,
 OSSL_CMP_PKIHEADER_free,
 OSSL_CMP_PKIHEADER_it,
 OSSL_CMP_PKIHEADER_new,
+OSSL_CMP_PKISI_dup,
 OSSL_CMP_PKISI_free,
+OSSL_CMP_PKISI_it,
+OSSL_CMP_PKISI_new,
 OSSL_CMP_PKISTATUS_it,
+OSSL_CRMF_CERTID_dup,
 OSSL_CRMF_CERTID_free,
 OSSL_CRMF_CERTID_it,
 OSSL_CRMF_CERTID_new,
@@ -137,6 +153,7 @@ OSSL_CRMF_ENCRYPTEDVALUE_new,
 OSSL_CRMF_MSGS_free,
 OSSL_CRMF_MSGS_it,
 OSSL_CRMF_MSGS_new,
+OSSL_CRMF_MSG_dup,
 OSSL_CRMF_MSG_free,
 OSSL_CRMF_MSG_it,
 OSSL_CRMF_MSG_new,
@@ -185,6 +202,7 @@ PKCS7_SIGN_ENVELOPE_free,
 PKCS7_SIGN_ENVELOPE_new,
 PKCS7_dup,
 PKCS7_free,
+PKCS7_new_ex,
 PKCS7_new,
 PKCS7_print_ctx,
 PKCS8_PRIV_KEY_INFO_free,
@@ -242,17 +260,15 @@ TS_TST_INFO_new,
 USERNOTICE_free,
 USERNOTICE_new,
 X509_ALGOR_free,
+X509_ALGOR_it,
 X509_ALGOR_new,
 X509_ATTRIBUTE_dup,
 X509_ATTRIBUTE_free,
 X509_ATTRIBUTE_new,
-X509_CERT_AUX_dup,
 X509_CERT_AUX_free,
 X509_CERT_AUX_new,
-X509_CINF_dup,
 X509_CINF_free,
 X509_CINF_new,
-X509_CRL_INFO_dup,
 X509_CRL_INFO_free,
 X509_CRL_INFO_new,
 X509_CRL_dup,
@@ -267,7 +283,6 @@ X509_NAME_ENTRY_new,
 X509_NAME_dup,
 X509_NAME_free,
 X509_NAME_new,
-X509_REQ_INFO_dup,
 X509_REQ_INFO_free,
 X509_REQ_INFO_new,
 X509_REQ_dup,
@@ -276,7 +291,6 @@ X509_REQ_new,
 X509_REVOKED_dup,
 X509_REVOKED_free,
 X509_REVOKED_new,
-X509_SIG_dup,
 X509_SIG_free,
 X509_SIG_new,
 X509_VAL_free,
@@ -286,7 +300,7 @@ X509_dup,
 
 =head1 SYNOPSIS
 
-=for comment generic
+=for openssl generic
 
  #include <openssl/asn1t.h>
 
@@ -303,8 +317,8 @@ X509_dup,
 
 =head1 DESCRIPTION
 
-In the description below, I<TYPE> is used
-as a placeholder for any of the OpenSSL datatypes, such as I<X509>.
+In the description below, B<I<TYPE>> is used
+as a placeholder for any of the OpenSSL datatypes, such as B<X509>.
 
 The OpenSSL ASN1 parsing library templates are like a data-driven bytecode
 interpreter.
@@ -320,29 +334,39 @@ The macro IMPLEMENT_ASN1_FUNCTIONS() is used once in a source file
 to generate the function bodies.
 
 
-TYPE_new() allocates an empty object of the indicated type.
-The object returned must be released by calling TYPE_free().
+B<I<TYPE>_new>() allocates an empty object of the indicated type.
+The object returned must be released by calling B<I<TYPE>_free>().
 
-TYPE_dup() copies an existing object, leaving it untouched.
+B<I<TYPE>_new_ex>() is similiar to B<I<TYPE>_new>() but also passes the
+library context I<libctx> and the property query I<propq> to use when retrieving
+algorithms from providers.
 
-TYPE_free() releases the object and all pointers and sub-objects
+B<I<TYPE>_dup>() copies an existing object, leaving it untouched.
+
+B<I<TYPE>_free>() releases the object and all pointers and sub-objects
 within it.
 
-TYPE_print_ctx() prints the object B<a> on the specified BIO B<out>.
-Each line will be prefixed with B<indent> spaces.
-The B<pctx> specifies the printing context and is for internal
+B<I<TYPE>_print_ctx>() prints the object I<a> on the specified BIO I<out>.
+Each line will be prefixed with I<indent> spaces.
+The I<pctx> specifies the printing context and is for internal
 use; use NULL to get the default behavior.  If a print function is
-user-defined, then pass in any B<pctx> down to any nested calls.
+user-defined, then pass in any I<pctx> down to any nested calls.
 
 =head1 RETURN VALUES
 
-TYPE_new() and TYPE_dup() return a pointer to the object or NULL on failure.
+B<I<TYPE>_new>(), B<I<TYPE>_new_ex>() and B<I<TYPE>_dup>() return a pointer to
+the object or NULL on failure.
 
-TYPE_print_ctx() returns 1 on success or zero on failure.
+B<I<TYPE>_print_ctx>() returns 1 on success or zero on failure.
+
+=head1 HISTORY
+
+The functions PKCS7_new_ex() and CMS_ContentInfo_new_ex() were
+added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

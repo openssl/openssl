@@ -71,7 +71,7 @@ the extension is found its index is returned otherwise B<-1> is returned.
 
 X509v3_get_ext_by_critical() is similar to X509v3_get_ext_by_NID() except it
 looks for an extension of criticality B<crit>. A zero value for B<crit>
-looks for a non-critical extension a non-zero value looks for a critical
+looks for a non-critical extension a nonzero value looks for a critical
 extension.
 
 X509v3_delete_ext() deletes the extension with index B<loc> from B<x>. The

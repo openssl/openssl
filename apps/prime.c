@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2004-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -15,27 +15,35 @@
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
-    OPT_HEX, OPT_GENERATE, OPT_BITS, OPT_SAFE, OPT_CHECKS
+    OPT_HEX, OPT_GENERATE, OPT_BITS, OPT_SAFE, OPT_CHECKS,
+    OPT_PROV_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS prime_options[] = {
     {OPT_HELP_STR, 1, '-', "Usage: %s [options] [number...]\n"},
-    {OPT_HELP_STR, 1, '-',
-        "  number Number to check for primality\n"},
+
+    OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
+    {"bits", OPT_BITS, 'p', "Size of number in bits"},
+    {"checks", OPT_CHECKS, 'p', "Number of checks"},
+
+    OPT_SECTION("Output"),
     {"hex", OPT_HEX, '-', "Hex output"},
     {"generate", OPT_GENERATE, '-', "Generate a prime"},
-    {"bits", OPT_BITS, 'p', "Size of number in bits"},
     {"safe", OPT_SAFE, '-',
      "When used with -generate, generate a safe prime"},
-    {"checks", OPT_CHECKS, 'p', "Number of checks"},
+
+    OPT_PROV_OPTIONS,
+
+    OPT_PARAMETERS(),
+    {"number", 0, 0, "Number(s) to check for primality if not generating"},
     {NULL}
 };
 
 int prime_main(int argc, char **argv)
 {
     BIGNUM *bn = NULL;
-    int hex = 0, checks = 20, generate = 0, bits = 0, safe = 0, ret = 1;
+    int hex = 0, generate = 0, bits = 0, safe = 0, ret = 1;
     char *prog;
     OPTION_CHOICE o;
 
@@ -64,7 +72,12 @@ opthelp:
             safe = 1;
             break;
         case OPT_CHECKS:
-            checks = atoi(opt_arg());
+            /* ignore parameter and argument */
+            opt_arg();
+            break;
+        case OPT_PROV_CASES:
+            if (!opt_provider(o))
+                goto end;
             break;
         }
     }
@@ -121,7 +134,7 @@ opthelp:
             BN_print(bio_out, bn);
             BIO_printf(bio_out, " (%s) %s prime\n",
                        argv[0],
-                       BN_is_prime_ex(bn, checks, NULL, NULL)
+                       BN_check_prime(bn, NULL, NULL)
                            ? "is" : "is not");
         }
     }

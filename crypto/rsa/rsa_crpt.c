@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,12 +7,18 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * RSA low level APIs are deprecated for public use, but still ok for
+ * internal use.
+ */
+#include "internal/deprecated.h"
+
 #include <stdio.h>
 #include <openssl/crypto.h>
 #include "internal/cryptlib.h"
-#include "internal/bn_int.h"
+#include "crypto/bn.h"
 #include <openssl/rand.h>
-#include "rsa_locl.h"
+#include "rsa_local.h"
 
 int RSA_bits(const RSA *r)
 {
@@ -114,7 +120,7 @@ BN_BLINDING *RSA_setup_blinding(RSA *rsa, BN_CTX *in_ctx)
     BN_BLINDING *ret = NULL;
 
     if (in_ctx == NULL) {
-        if ((ctx = BN_CTX_new()) == NULL)
+        if ((ctx = BN_CTX_new_ex(rsa->libctx)) == NULL)
             return 0;
     } else {
         ctx = in_ctx;
@@ -123,14 +129,14 @@ BN_BLINDING *RSA_setup_blinding(RSA *rsa, BN_CTX *in_ctx)
     BN_CTX_start(ctx);
     e = BN_CTX_get(ctx);
     if (e == NULL) {
-        RSAerr(RSA_F_RSA_SETUP_BLINDING, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_RSA, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
     if (rsa->e == NULL) {
         e = rsa_get_public_exp(rsa->d, rsa->p, rsa->q, ctx);
         if (e == NULL) {
-            RSAerr(RSA_F_RSA_SETUP_BLINDING, RSA_R_NO_PUBLIC_EXPONENT);
+            ERR_raise(ERR_LIB_RSA, RSA_R_NO_PUBLIC_EXPONENT);
             goto err;
         }
     } else {
@@ -141,7 +147,7 @@ BN_BLINDING *RSA_setup_blinding(RSA *rsa, BN_CTX *in_ctx)
         BIGNUM *n = BN_new();
 
         if (n == NULL) {
-            RSAerr(RSA_F_RSA_SETUP_BLINDING, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_RSA, ERR_R_MALLOC_FAILURE);
             goto err;
         }
         BN_with_flags(n, rsa->n, BN_FLG_CONSTTIME);
@@ -152,7 +158,7 @@ BN_BLINDING *RSA_setup_blinding(RSA *rsa, BN_CTX *in_ctx)
         BN_free(n);
     }
     if (ret == NULL) {
-        RSAerr(RSA_F_RSA_SETUP_BLINDING, ERR_R_BN_LIB);
+        ERR_raise(ERR_LIB_RSA, ERR_R_BN_LIB);
         goto err;
     }
 

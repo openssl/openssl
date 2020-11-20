@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -14,7 +14,7 @@
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
 #include <openssl/x509.h>
-#include "internal/x509_int.h"
+#include "crypto/x509.h"
 #include <openssl/objects.h>
 #include <openssl/buffer.h>
 #include <openssl/pem.h>
@@ -28,7 +28,7 @@ X509_REQ *X509_to_X509_REQ(X509 *x, EVP_PKEY *pkey, const EVP_MD *md)
 
     ret = X509_REQ_new();
     if (ret == NULL) {
-        X509err(X509_F_X509_TO_X509_REQ, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
@@ -85,33 +85,31 @@ int X509_REQ_check_private_key(X509_REQ *x, EVP_PKEY *k)
     int ok = 0;
 
     xk = X509_REQ_get_pubkey(x);
-    switch (EVP_PKEY_cmp(xk, k)) {
+    switch (EVP_PKEY_eq(xk, k)) {
     case 1:
         ok = 1;
         break;
     case 0:
-        X509err(X509_F_X509_REQ_CHECK_PRIVATE_KEY,
-                X509_R_KEY_VALUES_MISMATCH);
+        ERR_raise(ERR_LIB_X509, X509_R_KEY_VALUES_MISMATCH);
         break;
     case -1:
-        X509err(X509_F_X509_REQ_CHECK_PRIVATE_KEY, X509_R_KEY_TYPE_MISMATCH);
+        ERR_raise(ERR_LIB_X509, X509_R_KEY_TYPE_MISMATCH);
         break;
     case -2:
 #ifndef OPENSSL_NO_EC
         if (EVP_PKEY_id(k) == EVP_PKEY_EC) {
-            X509err(X509_F_X509_REQ_CHECK_PRIVATE_KEY, ERR_R_EC_LIB);
+            ERR_raise(ERR_LIB_X509, ERR_R_EC_LIB);
             break;
         }
 #endif
 #ifndef OPENSSL_NO_DH
         if (EVP_PKEY_id(k) == EVP_PKEY_DH) {
             /* No idea */
-            X509err(X509_F_X509_REQ_CHECK_PRIVATE_KEY,
-                    X509_R_CANT_CHECK_DH_KEY);
+            ERR_raise(ERR_LIB_X509, X509_R_CANT_CHECK_DH_KEY);
             break;
         }
 #endif
-        X509err(X509_F_X509_REQ_CHECK_PRIVATE_KEY, X509_R_UNKNOWN_KEY_TYPE);
+        ERR_raise(ERR_LIB_X509, X509_R_UNKNOWN_KEY_TYPE);
     }
 
     EVP_PKEY_free(xk);
@@ -284,6 +282,18 @@ void X509_REQ_get0_signature(const X509_REQ *req, const ASN1_BIT_STRING **psig,
         *psig = req->signature;
     if (palg != NULL)
         *palg = &req->sig_alg;
+}
+
+void X509_REQ_set0_signature(X509_REQ *req, ASN1_BIT_STRING *psig)
+{
+    if (req->signature)
+           ASN1_BIT_STRING_free(req->signature);
+    req->signature = psig;
+}
+
+int X509_REQ_set1_signature_algo(X509_REQ *req, X509_ALGOR *palg)
+{
+    return X509_ALGOR_copy(&req->sig_alg, palg);
 }
 
 int X509_REQ_get_signature_nid(const X509_REQ *req)

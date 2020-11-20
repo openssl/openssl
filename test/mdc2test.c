@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,10 +7,16 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * MDC2 low level APIs are deprecated for public use, but still ok for
+ * internal use.
+ */
+#include "internal/deprecated.h"
+
 #include <string.h>
 #include <openssl/provider.h>
 #include <openssl/params.h>
-#include <openssl/ossl_typ.h>
+#include <openssl/types.h>
 #include <openssl/core_names.h>
 #include "internal/nelem.h"
 #include "testutil.h"
@@ -39,7 +45,8 @@ static unsigned char pad2[16] = {
 
 static int test_mdc2(void)
 {
-    int testresult = 0, pad_type = 2;
+    int testresult = 0;
+    unsigned int pad_type = 2;
     unsigned char md[MDC2_DIGEST_LENGTH];
     EVP_MD_CTX *c;
     static char text[] = "Now is the time for all ";
@@ -47,8 +54,8 @@ static int test_mdc2(void)
     OSSL_PROVIDER *prov = NULL;
     OSSL_PARAM params[2];
 
-    params[i++] = OSSL_PARAM_construct_int(OSSL_DIGEST_PARAM_PAD_TYPE,
-                                           &pad_type),
+    params[i++] = OSSL_PARAM_construct_uint(OSSL_DIGEST_PARAM_PAD_TYPE,
+                                            &pad_type),
     params[i++] = OSSL_PARAM_construct_end();
 
     prov = OSSL_PROVIDER_load(NULL, "legacy");

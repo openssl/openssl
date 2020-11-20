@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -126,6 +126,11 @@ int setup_tests(void)
         {"encode", ASN1_ENCODE},
         {"compare", ASN1_COMPARE}
     };
+
+    if (!test_skip_common_options()) {
+        TEST_error("Error parsing test options\n");
+        return 0;
+    }
 
     if (!TEST_ptr(test_type_name = test_get_argument(0))
             || !TEST_ptr(expected_error_string = test_get_argument(1))

@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2018-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -65,14 +65,17 @@ my @opensslcpphandlers = (
     # These are used to convert certain pre-precessor expressions into
     # others that @cpphandlers have a better chance to understand.
 
-    { regexp   => qr/#if (!?)OPENSSL_API_([0-9_]+)$/,
+    # This changes any OPENSSL_NO_DEPRECATED_x_y[_z] check to a check of
+    # OPENSSL_NO_DEPRECATEDIN_x_y[_z].  That's due to <openssl/macros.h>
+    # creating OPENSSL_NO_DEPRECATED_x_y[_z], but the ordinals files using
+    # DEPRECATEDIN_x_y[_z].
+    { regexp   => qr/#if(def|ndef) OPENSSL_NO_DEPRECATED_(\d+_\d+(?:_\d+)?)$/,
       massager => sub {
-          my $cnd = $1 eq '!' ? 'ndef' : 'def';
           return (<<"EOF");
-#if$cnd DEPRECATEDIN_$2
+#if$1 OPENSSL_NO_DEPRECATEDIN_$2
 EOF
       }
-   }
+    }
 );
 my @cpphandlers = (
     ##################################################################
@@ -259,13 +262,36 @@ my @opensslchandlers = (
     # Deprecated stuff, by OpenSSL release.
 
     # We trick the parser by pretending that the declaration is wrapped in a
-    # check if the DEPRECATEDIN macro is defined or not.  Callers of parse()
-    # will have to decide what to do with it.
-    { regexp   => qr/(DEPRECATEDIN_\d+(?:_\d+_\d+)?)<<<\((.*)\)>>>/,
+    # check if the OPENSSL_NO_DEPRECATEDIN_x_y[_z] macro is defined or not.
+    # Callers of parse() will have to decide what to do with it.
+    { regexp   => qr/(DEPRECATEDIN_\d+_\d+(?:_\d+)?)<<<\((.*)\)>>>/,
       massager => sub { return (<<"EOF");
-#ifndef $1
+#ifndef OPENSSL_NO_$1
 $2;
 #endif
+EOF
+      },
+    },
+
+    # OSSL_DEPRECATEDIN_x_y[_z] is simply ignored.  Such declarations are
+    # supposed to be guarded with an '#ifdef OPENSSL_NO_DEPRECATED_x_y[_z]'
+    { regexp   => qr/OSSL_DEPRECATEDIN_\d+_\d+(?:_\d+)?\s+(.*)/,
+      massager => sub { return $1; },
+    },
+    { regexp   => qr/(.*?)\s+OSSL_DEPRECATEDIN_\d+_\d+(?:_\d+)?\s+(.*)/,
+      massager => sub { return "$1 $2"; },
+    },
+
+    #####
+    # Core stuff
+
+    # OSSL_CORE_MAKE_FUNC is a macro to create the necessary data and inline
+    # function the libcrypto<->provider interface
+    { regexp   => qr/OSSL_CORE_MAKE_FUNC<<<\((.*?),(.*?),(.*?)\)>>>/,
+      massager => sub {
+          return (<<"EOF");
+typedef $1 OSSL_FUNC_$2_fn$3;
+static ossl_inline OSSL_FUNC_$2_fn *OSSL_FUNC_$2(const OSSL_DISPATCH *opf);
 EOF
       },
     },
@@ -278,7 +304,7 @@ EOF
     { regexp   => qr/(.*)\bLHASH_OF<<<\((.*?)\)>>>(.*)/,
       massager => sub { return ("$1struct lhash_st_$2$3"); }
     },
-    { regexp   => qr/DEFINE_LHASH_OF<<<\((.*)\)>>>/,
+    { regexp   => qr/DEFINE_LHASH_OF(?:_INTERNAL)?<<<\((.*)\)>>>/,
       massager => sub {
           return (<<"EOF");
 static ossl_inline LHASH_OF($1) * lh_$1_new(unsigned long (*hfn)(const $1 *),
@@ -357,6 +383,21 @@ static ossl_inline sk_$1_compfunc sk_$1_set_cmp_func(STACK_OF($1) *sk,
 EOF
       }
     },
+    { regexp   => qr/SKM_DEFINE_STACK_OF_INTERNAL<<<\((.*),\s*(.*),\s*(.*)\)>>>/,
+      massager => sub {
+          return (<<"EOF");
+STACK_OF($1);
+typedef int (*sk_$1_compfunc)(const $3 * const *a, const $3 *const *b);
+typedef void (*sk_$1_freefunc)($3 *a);
+typedef $3 * (*sk_$1_copyfunc)(const $3 *a);
+static ossl_unused ossl_inline $2 *ossl_check_$1_type($2 *ptr);
+static ossl_unused ossl_inline const OPENSSL_STACK *ossl_check_const_$1_sk_type(const STACK_OF($1) *sk);
+static ossl_unused ossl_inline OPENSSL_sk_compfunc ossl_check_$1_compfunc_type(sk_$1_compfunc cmp);
+static ossl_unused ossl_inline OPENSSL_sk_copyfunc ossl_check_$1_copyfunc_type(sk_$1_copyfunc cpy);
+static ossl_unused ossl_inline OPENSSL_sk_freefunc ossl_check_$1_freefunc_type(sk_$1_freefunc fr);
+EOF
+      }
+    },
     { regexp   => qr/DEFINE_SPECIAL_STACK_OF<<<\((.*),\s*(.*)\)>>>/,
       massager => sub { return ("SKM_DEFINE_STACK_OF($1,$2,$2)"); },
     },
@@ -369,34 +410,9 @@ EOF
     { regexp   => qr/DEFINE_STACK_OF_CONST<<<\((.*)\)>>>/,
       massager => sub { return ("SKM_DEFINE_STACK_OF($1,const $1,$1)"); },
     },
-    { regexp   => qr/PREDECLARE_STACK_OF<<<\((.*)\)>>>/,
-      massager => sub { return ("STACK_OF($1);"); }
-    },
-    { regexp   => qr/DECLARE_STACK_OF<<<\((.*)\)>>>/,
-      massager => sub { return ("STACK_OF($1);"); }
-    },
-    { regexp   => qr/DECLARE_SPECIAL_STACK_OF<<<\((.*?),\s*(.*?)\)>>>/,
-      massager => sub { return ("STACK_OF($1);"); }
-     },
 
     #####
     # ASN1 stuff
-
-    { regexp   => qr/TYPEDEF_D2I_OF<<<\((.*)\)>>>/,
-      massager => sub {
-          return ("typedef $1 *d2i_of_$1($1 **,const unsigned char **,long)");
-      },
-    },
-    { regexp   => qr/TYPEDEF_I2D_OF<<<\((.*)\)>>>/,
-      massager => sub {
-          return ("typedef $1 *i2d_of_$1($1 *,unsigned char **)");
-      },
-    },
-    { regexp   => qr/TYPEDEF_D2I2D_OF<<<\((.*)\)>>>/,
-      massager => sub {
-          return ("TYPEDEF_D2I_OF($1); TYPEDEF_I2D_OF($1)");
-      },
-    },
     { regexp   => qr/DECLARE_ASN1_ITEM<<<\((.*)\)>>>/,
       massager => sub {
           return (<<"EOF");
@@ -505,9 +521,27 @@ int $2_dup(void);
 EOF
       }
     },
+    # Universal translator of attributed PEM declarators
+    { regexp   => qr/
+          DECLARE_ASN1
+          (_ENCODE_FUNCTIONS_only|_ENCODE_FUNCTIONS|_ENCODE_FUNCTIONS_name
+           |_ALLOC_FUNCTIONS_name|_ALLOC_FUNCTIONS|_FUNCTIONS_name|_FUNCTIONS
+           |_NDEF_FUNCTION|_PRINT_FUNCTION|_PRINT_FUNCTION_name
+           |_DUP_FUNCTION|_DUP_FUNCTION_name)
+          _attr
+          <<<\(\s*OSSL_DEPRECATEDIN_(.*?)\s*,(.*?)\)>>>
+      /x,
+      massager => sub { return (<<"EOF");
+DECLARE_ASN1$1($3)
+EOF
+      },
+    },
     { regexp   => qr/DECLARE_PKCS12_SET_OF<<<\((.*)\)>>>/,
       massager => sub { return (); }
     },
+
+    #####
+    # PEM stuff
     { regexp   => qr/DECLARE_PEM(?|_rw|_rw_cb|_rw_const)<<<\((.*?),.*\)>>>/,
       massager => sub { return (<<"EOF");
 #ifndef OPENSSL_NO_STDIO
@@ -519,9 +553,6 @@ int PEM_write_bio_$1(void);
 EOF
       },
     },
-
-    #####
-    # PEM stuff
     { regexp   => qr/DECLARE_PEM(?|_write|_write_cb|_write_const)<<<\((.*?),.*\)>>>/,
       massager => sub { return (<<"EOF");
 #ifndef OPENSSL_NO_STDIO
@@ -537,6 +568,18 @@ EOF
 int PEM_read_$1(void);
 #endif
 int PEM_read_bio_$1(void);
+EOF
+      },
+    },
+    # Universal translator of attributed PEM declarators
+    { regexp   => qr/
+          DECLARE_PEM
+          (_rw|_rw_cb|_rw_const|_write|_write_cb|_write_const|_read|_read_cb)
+          _attr
+          <<<\(\s*OSSL_DEPRECATEDIN_(.*?)\s*,(.*?)\)>>>
+      /x,
+      massager => sub { return (<<"EOF");
+DECLARE_PEM$1($3)
 EOF
       },
     },
@@ -558,7 +601,7 @@ my @chandlers = (
     # Note that the main parse function has a special hack for 'extern "C" {'
     # which can't be done in handlers
     # We simply ignore it.
-    { regexp   => qr/extern "C" (.*;)/,
+    { regexp   => qr/^extern "C" (.*(?:;|>>>))/,
       massager => sub { return ($1); },
     },
     # any other extern is just ignored
@@ -608,6 +651,7 @@ my @chandlers = (
       massager => sub { return (); }
     },
     # Function returning function pointer declaration
+    # This sort of declaration may have a body (inline functions, for example)
     { regexp   => qr/(?:(typedef)\s?)?          # Possible typedef      ($1)
                      ((?:\w|\*|\s)*?)           # Return type           ($2)
                      \s?                        # Possible space
@@ -616,14 +660,15 @@ my @chandlers = (
                      (\(.*\))                   # Parameters            ($4)
                      \)>>>
                      <<<(\(.*\))>>>             # F.p. parameters       ($5)
-                     ;
+                     (?:<<<\{.*\}>>>|;)         # Body or semicolon
                     /x,
       massager => sub {
-          return ("", $3, 'F', "", "$2(*$4)$5", all_conds())
+          return ("", $3, 'T', "", "$2(*$4)$5", all_conds())
               if defined $1;
           return ("", $3, 'F', "$2(*)$5", "$2(*$4)$5", all_conds()); }
     },
     # Function pointer declaration, or typedef thereof
+    # This sort of declaration never has a function body
     { regexp   => qr/(?:(typedef)\s?)?          # Possible typedef      ($1)
                      ((?:\w|\*|\s)*?)           # Return type           ($2)
                      <<<\(\*([[:alpha:]_]\w*)\)>>> # T.d. or var name   ($3)
@@ -637,12 +682,13 @@ my @chandlers = (
       },
     },
     # Function declaration, or typedef thereof
+    # This sort of declaration may have a body (inline functions, for example)
     { regexp   => qr/(?:(typedef)\s?)?          # Possible typedef      ($1)
                      ((?:\w|\*|\s)*?)           # Return type           ($2)
                      \s?                        # Possible space
                      ([[:alpha:]_]\w*)          # Function name         ($3)
                      <<<(\(.*\))>>>             # Parameters            ($4)
-                     ;
+                     (?:<<<\{.*\}>>>|;)         # Body or semicolon
                     /x,
       massager => sub {
           return ("", $3, 'T', "", "$2$4", all_conds())

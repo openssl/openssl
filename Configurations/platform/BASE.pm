@@ -52,11 +52,13 @@ sub isdef       { return $_[1] =~ m|\.ld$|;   }
 sub isobj       { return $_[1] =~ m|\.o$|;    }
 sub isres       { return $_[1] =~ m|\.res$|;  }
 sub isasm       { return $_[1] =~ m|\.[Ss]$|; }
+sub isstaticlib { return $_[1] =~ m|\.a$|;    }
 sub convertext {
-    if ($_[0]->isdef($_[1]))    { return $_[0]->def($_[1]); }
-    if ($_[0]->isobj($_[1]))    { return $_[0]->obj($_[1]); }
-    if ($_[0]->isres($_[1]))    { return $_[0]->res($_[1]); }
-    if ($_[0]->isasm($_[1]))    { return $_[0]->asm($_[1]); }
+    if ($_[0]->isdef($_[1]))        { return $_[0]->def($_[1]); }
+    if ($_[0]->isobj($_[1]))        { return $_[0]->obj($_[1]); }
+    if ($_[0]->isres($_[1]))        { return $_[0]->res($_[1]); }
+    if ($_[0]->isasm($_[1]))        { return $_[0]->asm($_[1]); }
+    if ($_[0]->isstaticlib($_[1]))  { return $_[0]->staticlib($_[1]); }
     return $_[1];
 }
 

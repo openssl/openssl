@@ -8,7 +8,7 @@
  */
 
 #include "internal/cryptlib.h"
-#include "bn_lcl.h"
+#include "bn_local.h"
 
 /* signed add of b to a. */
 int BN_add(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
@@ -136,7 +136,7 @@ int BN_usub(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
     dif = max - min;
 
     if (dif < 0) {              /* hmm... should not be happening */
-        BNerr(BN_F_BN_USUB, BN_R_ARG2_LT_ARG3);
+        ERR_raise(ERR_LIB_BN, BN_R_ARG2_LT_ARG3);
         return 0;
     }
 

@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -8,10 +8,8 @@
 
 my $obj_dat_h = $ARGV[0];
 
-# Output year depends on the date on the input file and the script.
-my $YEAR = [localtime([stat($0)]->[9])]->[5] + 1900;
-my $iYEAR = [localtime([stat($obj_dat_h)]->[9])]->[5] + 1900;
-$YEAR = $iYEAR if $iYEAR > $YEAR;
+# The year the output file is generated.
+my $YEAR = [localtime()]->[5] + 1900;
 
 open IN, '<', $obj_dat_h
     || die "Couldn't open $obj_dat_h : $!\n";

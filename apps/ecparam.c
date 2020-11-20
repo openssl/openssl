@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2002-2020 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -9,57 +9,61 @@
  */
 
 #include <openssl/opensslconf.h>
-#ifdef OPENSSL_NO_EC
-NON_EMPTY_TRANSLATION_UNIT
-#else
 
-# include <stdio.h>
-# include <stdlib.h>
-# include <time.h>
-# include <string.h>
-# include "apps.h"
-# include "progs.h"
-# include <openssl/bio.h>
-# include <openssl/err.h>
-# include <openssl/bn.h>
-# include <openssl/ec.h>
-# include <openssl/x509.h>
-# include <openssl/pem.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <string.h>
+#include "apps.h"
+#include "progs.h"
+#include <openssl/bio.h>
+#include <openssl/err.h>
+#include <openssl/bn.h>
+#include <openssl/ec.h>
+#include <openssl/x509.h>
+#include <openssl/pem.h>
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
-    OPT_INFORM, OPT_OUTFORM, OPT_IN, OPT_OUT, OPT_TEXT, OPT_C,
+    OPT_INFORM, OPT_OUTFORM, OPT_IN, OPT_OUT, OPT_TEXT,
     OPT_CHECK, OPT_LIST_CURVES, OPT_NO_SEED, OPT_NOOUT, OPT_NAME,
     OPT_CONV_FORM, OPT_PARAM_ENC, OPT_GENKEY, OPT_ENGINE, OPT_CHECK_NAMED,
-    OPT_R_ENUM
+    OPT_R_ENUM, OPT_PROV_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS ecparam_options[] = {
+    OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
-    {"inform", OPT_INFORM, 'F', "Input format - default PEM (DER or PEM)"},
-    {"outform", OPT_OUTFORM, 'F', "Output format - default PEM"},
+    {"list_curves", OPT_LIST_CURVES, '-',
+     "Prints a list of all curve 'short names'"},
+#ifndef OPENSSL_NO_ENGINE
+    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
+#endif
+
+    {"genkey", OPT_GENKEY, '-', "Generate ec key"},
     {"in", OPT_IN, '<', "Input file  - default stdin"},
+    {"inform", OPT_INFORM, 'F', "Input format - default PEM (DER or PEM)"},
     {"out", OPT_OUT, '>', "Output file - default stdout"},
+    {"outform", OPT_OUTFORM, 'F', "Output format - default PEM"},
+
+    OPT_SECTION("Output"),
     {"text", OPT_TEXT, '-', "Print the ec parameters in text form"},
-    {"C", OPT_C, '-', "Print a 'C' function creating the parameters"},
+    {"noout", OPT_NOOUT, '-', "Do not print the ec parameter"},
+    {"param_enc", OPT_PARAM_ENC, 's',
+     "Specifies the way the ec parameters are encoded"},
+
+    OPT_SECTION("Parameter"),
     {"check", OPT_CHECK, '-', "Validate the ec parameters"},
     {"check_named", OPT_CHECK_NAMED, '-',
      "Check that named EC curve parameters have not been modified"},
-    {"list_curves", OPT_LIST_CURVES, '-',
-     "Prints a list of all curve 'short names'"},
     {"no_seed", OPT_NO_SEED, '-',
      "If 'explicit' parameters are chosen do not use the seed"},
-    {"noout", OPT_NOOUT, '-', "Do not print the ec parameter"},
     {"name", OPT_NAME, 's',
      "Use the ec parameters with specified 'short name'"},
     {"conv_form", OPT_CONV_FORM, 's', "Specifies the point conversion form "},
-    {"param_enc", OPT_PARAM_ENC, 's',
-     "Specifies the way the ec parameters are encoded"},
-    {"genkey", OPT_GENKEY, '-', "Generate ec key"},
+
     OPT_R_OPTIONS,
-# ifndef OPENSSL_NO_ENGINE
-    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
-# endif
+    OPT_PROV_OPTIONS,
     {NULL}
 };
 
@@ -89,7 +93,7 @@ int ecparam_main(int argc, char **argv)
     unsigned char *buffer = NULL;
     OPTION_CHOICE o;
     int asn1_flag = OPENSSL_EC_NAMED_CURVE, new_asn1_flag = 0;
-    int informat = FORMAT_PEM, outformat = FORMAT_PEM, noout = 0, C = 0;
+    int informat = FORMAT_PEM, outformat = FORMAT_PEM, noout = 0;
     int ret = 1, private = 0;
     int list_curves = 0, no_seed = 0, check = 0, new_form = 0;
     int text = 0, i, genkey = 0, check_named = 0;
@@ -122,9 +126,6 @@ int ecparam_main(int argc, char **argv)
             break;
         case OPT_TEXT:
             text = 1;
-            break;
-        case OPT_C:
-            C = 1;
             break;
         case OPT_CHECK:
             check = 1;
@@ -160,6 +161,10 @@ int ecparam_main(int argc, char **argv)
             break;
         case OPT_R_CASES:
             if (!opt_rand(o))
+                goto end;
+            break;
+        case OPT_PROV_CASES:
+            if (!opt_provider(o))
                 goto end;
             break;
         case OPT_ENGINE:
@@ -273,7 +278,7 @@ int ecparam_main(int argc, char **argv)
 
     if (check_named) {
         BIO_printf(bio_err, "validating named elliptic curve parameters: ");
-        if (EC_GROUP_check_named_curve(group, 0) <= 0) {
+        if (EC_GROUP_check_named_curve(group, 0, NULL) <= 0) {
             BIO_printf(bio_err, "failed\n");
             ERR_print_errors(bio_err);
             goto end;
@@ -290,113 +295,6 @@ int ecparam_main(int argc, char **argv)
         }
         BIO_printf(bio_err, "ok\n");
 
-    }
-
-    if (C) {
-        size_t buf_len = 0, tmp_len = 0;
-        const EC_POINT *point;
-        int is_prime, len = 0;
-        const EC_METHOD *meth = EC_GROUP_method_of(group);
-
-        if ((ec_p = BN_new()) == NULL
-                || (ec_a = BN_new()) == NULL
-                || (ec_b = BN_new()) == NULL
-                || (ec_gen = BN_new()) == NULL
-                || (ec_order = BN_new()) == NULL
-                || (ec_cofactor = BN_new()) == NULL) {
-            perror("Can't allocate BN");
-            goto end;
-        }
-
-        is_prime = (EC_METHOD_get_field_type(meth) == NID_X9_62_prime_field);
-        if (!is_prime) {
-            BIO_printf(bio_err, "Can only handle X9.62 prime fields\n");
-            goto end;
-        }
-
-        if (!EC_GROUP_get_curve(group, ec_p, ec_a, ec_b, NULL))
-            goto end;
-
-        if ((point = EC_GROUP_get0_generator(group)) == NULL)
-            goto end;
-        if (!EC_POINT_point2bn(group, point,
-                               EC_GROUP_get_point_conversion_form(group),
-                               ec_gen, NULL))
-            goto end;
-        if (!EC_GROUP_get_order(group, ec_order, NULL))
-            goto end;
-        if (!EC_GROUP_get_cofactor(group, ec_cofactor, NULL))
-            goto end;
-
-        if (!ec_p || !ec_a || !ec_b || !ec_gen || !ec_order || !ec_cofactor)
-            goto end;
-
-        len = BN_num_bits(ec_order);
-
-        if ((tmp_len = (size_t)BN_num_bytes(ec_p)) > buf_len)
-            buf_len = tmp_len;
-        if ((tmp_len = (size_t)BN_num_bytes(ec_a)) > buf_len)
-            buf_len = tmp_len;
-        if ((tmp_len = (size_t)BN_num_bytes(ec_b)) > buf_len)
-            buf_len = tmp_len;
-        if ((tmp_len = (size_t)BN_num_bytes(ec_gen)) > buf_len)
-            buf_len = tmp_len;
-        if ((tmp_len = (size_t)BN_num_bytes(ec_order)) > buf_len)
-            buf_len = tmp_len;
-        if ((tmp_len = (size_t)BN_num_bytes(ec_cofactor)) > buf_len)
-            buf_len = tmp_len;
-
-        buffer = app_malloc(buf_len, "BN buffer");
-
-        BIO_printf(out, "EC_GROUP *get_ec_group_%d(void)\n{\n", len);
-        print_bignum_var(out, ec_p, "ec_p", len, buffer);
-        print_bignum_var(out, ec_a, "ec_a", len, buffer);
-        print_bignum_var(out, ec_b, "ec_b", len, buffer);
-        print_bignum_var(out, ec_gen, "ec_gen", len, buffer);
-        print_bignum_var(out, ec_order, "ec_order", len, buffer);
-        print_bignum_var(out, ec_cofactor, "ec_cofactor", len, buffer);
-        BIO_printf(out, "    int ok = 0;\n"
-                        "    EC_GROUP *group = NULL;\n"
-                        "    EC_POINT *point = NULL;\n"
-                        "    BIGNUM *tmp_1 = NULL;\n"
-                        "    BIGNUM *tmp_2 = NULL;\n"
-                        "    BIGNUM *tmp_3 = NULL;\n"
-                        "\n");
-
-        BIO_printf(out, "    if ((tmp_1 = BN_bin2bn(ec_p_%d, sizeof(ec_p_%d), NULL)) == NULL)\n"
-                        "        goto err;\n", len, len);
-        BIO_printf(out, "    if ((tmp_2 = BN_bin2bn(ec_a_%d, sizeof(ec_a_%d), NULL)) == NULL)\n"
-                        "        goto err;\n", len, len);
-        BIO_printf(out, "    if ((tmp_3 = BN_bin2bn(ec_b_%d, sizeof(ec_b_%d), NULL)) == NULL)\n"
-                        "        goto err;\n", len, len);
-        BIO_printf(out, "    if ((group = EC_GROUP_new_curve_GFp(tmp_1, tmp_2, tmp_3, NULL)) == NULL)\n"
-                        "        goto err;\n"
-                        "\n");
-        BIO_printf(out, "    /* build generator */\n");
-        BIO_printf(out, "    if ((tmp_1 = BN_bin2bn(ec_gen_%d, sizeof(ec_gen_%d), tmp_1)) == NULL)\n"
-                        "        goto err;\n", len, len);
-        BIO_printf(out, "    point = EC_POINT_bn2point(group, tmp_1, NULL, NULL);\n");
-        BIO_printf(out, "    if (point == NULL)\n"
-                        "        goto err;\n");
-        BIO_printf(out, "    if ((tmp_2 = BN_bin2bn(ec_order_%d, sizeof(ec_order_%d), tmp_2)) == NULL)\n"
-                        "        goto err;\n", len, len);
-        BIO_printf(out, "    if ((tmp_3 = BN_bin2bn(ec_cofactor_%d, sizeof(ec_cofactor_%d), tmp_3)) == NULL)\n"
-                        "        goto err;\n", len, len);
-        BIO_printf(out, "    if (!EC_GROUP_set_generator(group, point, tmp_2, tmp_3))\n"
-                        "        goto err;\n"
-                        "ok = 1;"
-                        "\n");
-        BIO_printf(out, "err:\n"
-                        "    BN_free(tmp_1);\n"
-                        "    BN_free(tmp_2);\n"
-                        "    BN_free(tmp_3);\n"
-                        "    EC_POINT_free(point);\n"
-                        "    if (!ok) {\n"
-                        "        EC_GROUP_free(group);\n"
-                        "        return NULL;\n"
-                        "    }\n"
-                        "    return (group);\n"
-                        "}\n");
     }
 
     if (outformat == FORMAT_ASN1 && genkey)
@@ -461,5 +359,3 @@ int ecparam_main(int argc, char **argv)
     BIO_free_all(out);
     return ret;
 }
-
-#endif

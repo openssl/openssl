@@ -4,9 +4,9 @@
 
 X509_PUBKEY_new, X509_PUBKEY_free, X509_PUBKEY_dup,
 X509_PUBKEY_set, X509_PUBKEY_get0, X509_PUBKEY_get,
-d2i_PUBKEY, i2d_PUBKEY, d2i_PUBKEY_bio, d2i_PUBKEY_fp,
-i2d_PUBKEY_fp, i2d_PUBKEY_bio, X509_PUBKEY_set0_param,
-X509_PUBKEY_get0_param - SubjectPublicKeyInfo public key functions
+d2i_PUBKEY_ex, d2i_PUBKEY, i2d_PUBKEY, d2i_PUBKEY_bio, d2i_PUBKEY_fp,
+i2d_PUBKEY_fp, i2d_PUBKEY_bio, X509_PUBKEY_set0_param, X509_PUBKEY_get0_param,
+X509_PUBKEY_eq - SubjectPublicKeyInfo public key functions
 
 =head1 SYNOPSIS
 
@@ -17,9 +17,11 @@ X509_PUBKEY_get0_param - SubjectPublicKeyInfo public key functions
  X509_PUBKEY *X509_PUBKEY_dup(const X509_PUBKEY *a);
 
  int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey);
- EVP_PKEY *X509_PUBKEY_get0(X509_PUBKEY *key);
- EVP_PKEY *X509_PUBKEY_get(X509_PUBKEY *key);
+ EVP_PKEY *X509_PUBKEY_get0(const X509_PUBKEY *key);
+ EVP_PKEY *X509_PUBKEY_get(const X509_PUBKEY *key);
 
+ EVP_PKEY *d2i_PUBKEY_ex(EVP_PKEY **a, const unsigned char **pp, long length,
+                         OSSL_LIB_CTX *libctx, const char *propq);
  EVP_PKEY *d2i_PUBKEY(EVP_PKEY **a, const unsigned char **pp, long length);
  int i2d_PUBKEY(const EVP_PKEY *a, unsigned char **pp);
 
@@ -34,7 +36,8 @@ X509_PUBKEY_get0_param - SubjectPublicKeyInfo public key functions
                             unsigned char *penc, int penclen);
  int X509_PUBKEY_get0_param(ASN1_OBJECT **ppkalg,
                             const unsigned char **pk, int *ppklen,
-                            X509_ALGOR **pa, X509_PUBKEY *pub);
+                            X509_ALGOR **pa, const X509_PUBKEY *pub);
+ int X509_PUBKEY_eq(X509_PUBKEY *a, X509_PUBKEY *b);
 
 =head1 DESCRIPTION
 
@@ -57,9 +60,15 @@ X509_PUBKEY_get() is similar to X509_PUBKEY_get0() except the reference
 count on the returned key is incremented so it B<MUST> be freed using
 EVP_PKEY_free() after use.
 
-d2i_PUBKEY() and i2d_PUBKEY() decode and encode an B<EVP_PKEY> structure
-using B<SubjectPublicKeyInfo> format. They otherwise follow the conventions of
-other ASN.1 functions such as d2i_X509().
+d2i_PUBKEY_ex() decodes an B<EVP_PKEY> structure using B<SubjectPublicKeyInfo>
+format.  Some public key decoding implementations may use cryptographic
+algorithms. In this case the supplied library context I<libctx> and property
+query string I<propq> are used.
+d2i_PUBKEY() does the same as d2i_PUBKEY_ex() except that the default
+library context and property query string are used.
+
+i2d_PUBKEY() encodes an B<EVP_PKEY> structure using B<SubjectPublicKeyInfo>
+format.
 
 d2i_PUBKEY_bio(), d2i_PUBKEY_fp(), i2d_PUBKEY_bio() and i2d_PUBKEY_fp() are
 similar to d2i_PUBKEY() and i2d_PUBKEY() except they decode or encode using a
@@ -80,6 +89,8 @@ AlgorithmIdentifier for the public key. If the value of any of these
 parameters is not required it can be set to B<NULL>. All of the
 retrieved pointers are internal and must not be freed after the
 call.
+
+X509_PUBKEY_eq() compares two B<X509_PUBKEY> values.
 
 =head1 NOTES
 
@@ -104,15 +115,21 @@ structure or B<NULL> if an error occurs.
 X509_PUBKEY_set(), X509_PUBKEY_set0_param() and X509_PUBKEY_get0_param()
 return 1 for success and 0 if an error occurred.
 
+X509_PUBKEY_eq() returns 1 for equal, 0 for different, and < 0 on error.
+
 =head1 SEE ALSO
 
 L<d2i_X509(3)>,
 L<ERR_get_error(3)>,
 L<X509_get_pubkey(3)>,
 
+=head1 HISTORY
+
+The X509_PUBKEY_eq() function was added in OpenSSL 3.0.
+
 =head1 COPYRIGHT
 
-Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

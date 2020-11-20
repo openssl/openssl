@@ -68,7 +68,7 @@ been initialized.
 BIO_new_fd() returns the newly allocated BIO or NULL is an error
 occurred.
 
-=head1 EXAMPLE
+=head1 EXAMPLES
 
 This is a file descriptor BIO version of "Hello World":
 

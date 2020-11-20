@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,9 +7,15 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * MD4 low level APIs are deprecated for public use, but still ok for
+ * internal use.
+ */
+#include "internal/deprecated.h"
+
 #include <stdio.h>
 #include <openssl/opensslv.h>
-#include "md4_locl.h"
+#include "md4_local.h"
 
 /*
  * Implemented from RFC1186 The MD4 Message-Digest Algorithm
@@ -39,7 +45,7 @@ void md4_block_data_order(MD4_CTX *c, const void *data_, size_t num)
     const unsigned char *data = data_;
     register unsigned MD32_REG_T A, B, C, D, l;
 # ifndef MD32_XARRAY
-    /* See comment in crypto/sha/sha_locl.h for details. */
+    /* See comment in crypto/sha/sha_local.h for details. */
     unsigned MD32_REG_T XX0, XX1, XX2, XX3, XX4, XX5, XX6, XX7,
         XX8, XX9, XX10, XX11, XX12, XX13, XX14, XX15;
 #  define X(i)   XX##i

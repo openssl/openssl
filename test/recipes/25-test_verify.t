@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -27,7 +27,7 @@ sub verify {
     run(app([@args]));
 }
 
-plan tests => 137;
+plan tests => 151;
 
 # Canonical success
 ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"]),
@@ -44,6 +44,15 @@ ok(!verify("ee-cert", "sslserver", [qw(root-cert2)], [qw(ca-cert)]),
    "fail wrong root key");
 ok(!verify("ee-cert", "sslserver", [qw(root-name2)], [qw(ca-cert)]),
    "fail wrong root DN");
+
+# Critical extensions
+
+ok(verify("ee-cert-noncrit-unknown-ext", "sslserver", [qw(root-cert)], [qw(ca-cert)]),
+   "accept non-critical unknown extension");
+ok(!verify("ee-cert-crit-unknown-ext", "sslserver", [qw(root-cert)], [qw(ca-cert)]),
+   "reject critical unknown extension");
+ok(verify("ee-cert-ocsp-nocheck", "sslserver", [qw(root-cert)], [qw(ca-cert)]),
+   "accept critical OCSP No Check");
 
 # Explicit trust/purpose combinations
 #
@@ -222,6 +231,10 @@ ok(verify("ee-client", "sslclient", [qw(ee+clientAuth)], [], "-partial_chain"),
    "accept direct match with client trust");
 ok(!verify("ee-client", "sslclient", [qw(ee-clientAuth)], [], "-partial_chain"),
    "reject direct match with client mistrust");
+ok(verify("ee-pathlen", "sslserver", [qw(root-cert)], [qw(ca-cert)]),
+   "accept non-ca with pathlen:0 by default");
+ok(!verify("ee-pathlen", "sslserver", [qw(root-cert)], [qw(ca-cert)], "-x509_strict"),
+   "reject non-ca with pathlen:0 with strict flag");
 
 # Proxy certificates
 ok(!verify("pc1-cert", "sslclient", [qw(root-cert)], [qw(ee-client ca-cert)]),
@@ -275,6 +288,21 @@ ok(verify("ee-cert-md5", "sslserver", ["root-cert"], ["ca-cert"], "-auth_level",
    "accept md5 leaf at auth level 0");
 ok(!verify("ee-cert-md5", "sslserver", ["root-cert"], ["ca-cert"]),
    "reject md5 leaf at auth level 1");
+
+# Explicit vs named curve tests
+SKIP: {
+    skip "EC is not supported by this OpenSSL build", 3
+        if disabled("ec");
+    ok(!verify("ee-cert-ec-explicit", "sslserver", ["root-cert"],
+               ["ca-cert-ec-named"]),
+        "reject explicit curve leaf with named curve intermediate");
+    ok(!verify("ee-cert-ec-named-explicit", "sslserver", ["root-cert"],
+               ["ca-cert-ec-explicit"]),
+        "reject named curve leaf with explicit curve intermediate");
+    ok(verify("ee-cert-ec-named-named", "sslserver", ["root-cert"],
+              ["ca-cert-ec-named"]),
+        "accept named curve leaf with named curve intermediate");
+}
 
 # Depth tests, note the depth limit bounds the number of CA certificates
 # between the trust-anchor and the leaf, so, for example, with a root->ca->leaf
@@ -336,14 +364,14 @@ ok(!verify("badalt9-cert", "sslserver", ["root-cert"], ["ncca1-cert", "ncca3-cer
 ok(!verify("badalt10-cert", "sslserver", ["root-cert"], ["ncca1-cert", "ncca3-cert"], ),
    "Name constraints nested DNS name excluded");
 
-ok(verify("ee-pss-sha1-cert", "sslserver", ["root-cert"], ["ca-cert"], ),
-    "Certificate PSS signature using SHA1");
+ok(verify("ee-pss-sha1-cert", "sslserver", ["root-cert"], ["ca-cert"], "-auth_level", "0"),
+    "Accept PSS signature using SHA1 at auth level 0");
 
 ok(verify("ee-pss-sha256-cert", "sslserver", ["root-cert"], ["ca-cert"], ),
     "CA with PSS signature using SHA256");
 
-ok(!verify("ee-pss-sha1-cert", "sslserver", ["root-cert"], ["ca-cert"], "-auth_level", "2"),
-    "Reject PSS signature using SHA1 and auth level 2");
+ok(!verify("ee-pss-sha1-cert", "sslserver", ["root-cert"], ["ca-cert"], "-auth_level", "1"),
+    "Reject PSS signature using SHA1 and auth level 1");
 
 ok(verify("ee-pss-sha256-cert", "sslserver", ["root-cert"], ["ca-cert"], "-auth_level", "2"),
     "PSS signature using SHA256 and auth level 2");
@@ -364,13 +392,31 @@ ok(verify("some-names2", "sslserver", ["many-constraints"], ["many-constraints"]
 ok(verify("root-cert-rsa2", "sslserver", ["root-cert-rsa2"], [], "-check_ss_sig"),
     "Public Key Algorithm rsa instead of rsaEncryption");
 
+    ok(verify("ee-self-signed", "sslserver", ["ee-self-signed"], []),
+       "accept trusted self-signed EE cert excluding key usage keyCertSign");
+
 SKIP: {
-    skip "Ed25519 is not supported by this OpenSSL build", 1
+    skip "Ed25519 is not supported by this OpenSSL build", 6
 	      if disabled("ec");
 
     # ED25519 certificate from draft-ietf-curdle-pkix-04
     ok(verify("ee-ed25519", "sslserver", ["root-ed25519"], []),
-       "ED25519 signature");
+       "accept X25519 EE cert issued by trusted Ed25519 self-signed CA cert");
+
+    ok(!verify("ee-ed25519", "sslserver", ["root-ed25519"], [], "-x509_strict"),
+       "reject X25519 EE cert in strict mode since AKID is missing");
+
+    ok(!verify("root-ed25519", "sslserver", ["ee-ed25519"], []),
+       "fail Ed25519 CA and EE certs swapped");
+
+    ok(verify("root-ed25519", "sslserver", ["root-ed25519"], []),
+       "accept trusted Ed25519 self-signed CA cert");
+
+    ok(!verify("ee-ed25519", "sslserver", ["ee-ed25519"], []),
+       "fail trusted Ed25519-signed self-issued X25519 cert");
+
+    ok(verify("ee-ed25519", "sslserver", ["ee-ed25519"], [], "-partial_chain"),
+       "accept last-resort direct leaf match Ed25519-signed self-issued cert");
 
 }
 
@@ -378,10 +424,8 @@ SKIP: {
     skip "SM2 is not supported by this OpenSSL build", 2
 	      if disabled("sm2");
 
-   # Test '-sm2-id' and '-sm2-hex-id'  option
-   ok_nofips(verify("sm2", "any", ["sm2-ca-cert"], [], "-sm2-id", "1234567812345678"),
+   ok_nofips(verify("sm2", "any", ["sm2-ca-cert"], [], "-vfyopt", "distid:1234567812345678"),
        "SM2 ID test");
-   ok_nofips(verify("sm2", "any", ["sm2-ca-cert"], [], "-sm2-hex-id",
-             "31323334353637383132333435363738"),
+   ok_nofips(verify("sm2", "any", ["sm2-ca-cert"], [], "-vfyopt", "hexdistid:31323334353637383132333435363738"),
        "SM2 hex ID test");
 }

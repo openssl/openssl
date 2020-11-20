@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,11 +7,13 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_TEST_CONFIG
-#define HEADER_TEST_CONFIG
+#ifndef OSSL_TEST_SHIM_TEST_CONFIG_H
+#define OSSL_TEST_SHIM_TEST_CONFIG_H
 
 #include <string>
 #include <vector>
+
+#include <openssl/configuration.h>
 
 
 struct TestConfig {
@@ -85,4 +87,4 @@ struct TestConfig {
 bool ParseConfig(int argc, char **argv, TestConfig *out_config);
 
 
-#endif  // HEADER_TEST_CONFIG
+#endif  // OSSL_TEST_SHIM_TEST_CONFIG_H

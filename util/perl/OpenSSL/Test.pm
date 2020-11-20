@@ -1,4 +1,4 @@
-# Copyright 2016-2019 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -21,6 +21,7 @@ $VERSION = "1.0";
 @EXPORT_OK = (@Test::More::EXPORT_OK, qw(bldtop_dir bldtop_file
                                          srctop_dir srctop_file
                                          data_file data_dir
+                                         result_file result_dir
                                          pipe with cmdstr quotify
                                          openssl_versions
                                          ok_nofips is_nofips isnt_nofips));
@@ -34,6 +35,8 @@ OpenSSL::Test - a private extension of Test::More
   use OpenSSL::Test;
 
   setup("my_test_name");
+
+  plan tests => 2;
 
   ok(run(app(["openssl", "version"])), "check for openssl presence");
 
@@ -66,7 +69,7 @@ use File::Spec::Functions qw/file_name_is_absolute curdir canonpath splitdir
                              rel2abs/;
 use File::Path 2.00 qw/rmtree mkpath/;
 use File::Basename;
-use Cwd qw/abs_path/;
+use Cwd qw/getcwd abs_path/;
 
 my $level = 0;
 
@@ -122,8 +125,8 @@ most likely refuse to run.
 C<setup> checks for environment variables (see L</ENVIRONMENT> below),
 checks that C<$TOP/Configure> or C<$SRCTOP/Configure> exists, C<chdir>
 into the results directory (defined by the C<$RESULT_D> environment
-variable if defined, otherwise C<$BLDTOP/test> or C<$TOP/test>, whichever
-is defined).
+variable if defined, otherwise C<$BLDTOP/test-runs> or C<$TOP/test-runs>,
+whichever is defined).
 
 =back
 
@@ -132,6 +135,7 @@ is defined).
 sub setup {
     my $old_test_name = $test_name;
     $test_name = shift;
+    my %opts = @_;
 
     BAIL_OUT("setup() must receive a name") unless $test_name;
     warn "setup() detected test name change.  Innocuous, so we continue...\n"
@@ -148,6 +152,9 @@ sub setup {
 
     BAIL_OUT("setup() expects the file Configure in the source top directory")
         unless -f srctop_file("Configure");
+
+    note "The results of this test will end up in $directories{RESULTS}"
+        unless $opts{quiet};
 
     __cwd($directories{RESULTS});
 }
@@ -170,12 +177,6 @@ When set to 1 (or any value that perl perceives as true), the subdirectory
 will be created if it doesn't already exist.  This happens before BLOCK
 is executed.
 
-=item B<cleanup =E<gt> 0|1>
-
-When set to 1 (or any value that perl perceives as true), the subdirectory
-will be cleaned out and removed.  This happens both before and after BLOCK
-is executed.
-
 =back
 
 An example:
@@ -188,7 +189,7 @@ An example:
           is($line, qr/^OpenSSL 1\./,
              "check that we're using OpenSSL 1.x.x");
       }
-  }, create => 1, cleanup => 1;
+  }, create => 1;
 
 =back
 
@@ -206,10 +207,6 @@ sub indir {
     $codeblock->();
 
     __cwd($reverse);
-
-    if ($opts{cleanup}) {
-	rmtree($subdir, { safe => 0 });
-    }
 }
 
 =over 4
@@ -225,7 +222,8 @@ used (currently only on Unix).
 
 It returns a CODEREF to be used by C<run>, C<pipe> or C<cmdstr>.
 
-The options that C<cmd> can take are in the form of hash values:
+The options that C<cmd> (as well as its derivatives described below) can take
+are in the form of hash values:
 
 =over 4
 
@@ -393,7 +391,7 @@ derivatives, anything else will most likely cause an error unless you
 know what you're doing.
 
 C<run> executes the command returned by CODEREF and return either the
-resulting output (if the option C<capture> is set true) or a boolean
+resulting standard output (if the option C<capture> is set true) or a boolean
 indicating if the command succeeded or not.
 
 The options that C<run> can take are in the form of hash values:
@@ -402,10 +400,10 @@ The options that C<run> can take are in the form of hash values:
 
 =item B<capture =E<gt> 0|1>
 
-If true, the command will be executed with a perl backtick, and C<run> will
-return the resulting output as an array of lines.  If false or not given,
-the command will be executed with C<system()>, and C<run> will return 1 if
-the command was successful or 0 if it wasn't.
+If true, the command will be executed with a perl backtick,
+and C<run> will return the resulting standard output as an array of lines.
+If false or not given, the command will be executed with C<system()>,
+and C<run> will return 1 if the command was successful or 0 if it wasn't.
 
 =item B<prefix =E<gt> EXPR>
 
@@ -421,6 +419,7 @@ particularly useful together with B<capture>.
 
 =back
 
+Usually 1 indicates that the command was successful and 0 indicates failure.
 For further discussion on what is considered a successful command or not, see
 the function C<with> further down.
 
@@ -446,16 +445,21 @@ sub run {
     die "OpenSSL::Test::run(): statusvar value not a scalar reference"
         if $opts{statusvar} && ref($opts{statusvar}) ne "SCALAR";
 
-    # In non-verbose, we want to shut up the command interpreter, in case
-    # it has something to complain about.  On VMS, it might complain both
-    # on stdout and stderr
+    # For some reason, program output, or even output from this function
+    # somehow isn't caught by TAP::Harness (TAP::Parser?) on VMS, so we're
+    # silencing it specifically there until further notice.
     my $save_STDOUT;
     my $save_STDERR;
-    if ($ENV{HARNESS_ACTIVE} && !$ENV{HARNESS_VERBOSE}) {
-        open $save_STDOUT, '>&', \*STDOUT or die "Can't dup STDOUT: $!";
-        open $save_STDERR, '>&', \*STDERR or die "Can't dup STDERR: $!";
-        open STDOUT, ">", devnull();
-        open STDERR, ">", devnull();
+    if ($^O eq 'VMS') {
+        # In non-verbose, we want to shut up the command interpreter, in case
+        # it has something to complain about.  On VMS, it might complain both
+        # on stdout and stderr
+        if ($ENV{HARNESS_ACTIVE} && !$ENV{HARNESS_VERBOSE}) {
+            open $save_STDOUT, '>&', \*STDOUT or die "Can't dup STDOUT: $!";
+            open $save_STDERR, '>&', \*STDERR or die "Can't dup STDERR: $!";
+            open STDOUT, ">", devnull();
+            open STDERR, ">", devnull();
+        }
     }
 
     $ENV{HARNESS_OSSL_LEVEL} = $level + 1;
@@ -489,15 +493,20 @@ sub run {
         ${$opts{statusvar}} = $r;
     }
 
-    if ($ENV{HARNESS_ACTIVE} && !$ENV{HARNESS_VERBOSE}) {
-        close STDOUT;
-        close STDERR;
-        open STDOUT, '>&', $save_STDOUT or die "Can't restore STDOUT: $!";
-        open STDERR, '>&', $save_STDERR or die "Can't restore STDERR: $!";
-    }
+    # Restore STDOUT / STDERR on VMS
+    if ($^O eq 'VMS') {
+        if ($ENV{HARNESS_ACTIVE} && !$ENV{HARNESS_VERBOSE}) {
+            close STDOUT;
+            close STDERR;
+            open STDOUT, '>&', $save_STDOUT or die "Can't restore STDOUT: $!";
+            open STDERR, '>&', $save_STDERR or die "Can't restore STDERR: $!";
+        }
 
-    print STDERR "$prefix$display_cmd => $e\n"
-        if !$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE};
+        print STDERR "$prefix$display_cmd => $e\n"
+            if !$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE};
+    } else {
+        print STDERR "$prefix$display_cmd => $e\n";
+    }
 
     # At this point, $? stops being interesting, and unfortunately,
     # there are Test::More versions that get picky if we leave it
@@ -639,6 +648,43 @@ file path as a string, adapted to the local operating system.
 
 sub data_file {
     return __data_file(@_);
+}
+
+=over 4
+
+=item B<result_dir>
+
+C<result_dir> returns the directory where test output files should be placed
+as a string, adapted to the local operating system.
+
+=back
+
+=cut
+
+sub result_dir {
+    BAIL_OUT("Must run setup() first") if (! $test_name);
+
+    return catfile($directories{RESULTS});
+}
+
+=over 4
+
+=item B<result_file FILENAME>
+
+FILENAME is the name of a test output file.
+C<result_file> returns the path of the given file as a string,
+prepending to the file name the path to the directory where test output files
+should be placed, adapted to the local operating system.
+
+=back
+
+=cut
+
+sub result_file {
+    BAIL_OUT("Must run setup() first") if (! $test_name);
+
+    my $f = pop;
+    return catfile(result_dir(),@_,$f);
 }
 
 =over 4
@@ -933,17 +979,22 @@ i.e. Some tests may only work in non FIPS mode.
 sub __env {
     (my $recipe_datadir = basename($0)) =~ s/\.t$/_data/i;
 
-    $directories{SRCTOP}  = abs_path($ENV{SRCTOP} || $ENV{TOP});
-    $directories{BLDTOP}  = abs_path($ENV{BLDTOP} || $ENV{TOP});
-    $directories{BLDAPPS} = $ENV{BIN_D}  || __bldtop_dir("apps");
-    $directories{SRCAPPS} =                 __srctop_dir("apps");
-    $directories{BLDFUZZ} =                 __bldtop_dir("fuzz");
-    $directories{SRCFUZZ} =                 __srctop_dir("fuzz");
-    $directories{BLDTEST} = $ENV{TEST_D} || __bldtop_dir("test");
-    $directories{SRCTEST} =                 __srctop_dir("test");
-    $directories{SRCDATA} =                 __srctop_dir("test", "recipes",
-                                                         $recipe_datadir);
-    $directories{RESULTS} = $ENV{RESULT_D} || $directories{BLDTEST};
+    $directories{SRCTOP}    = abs_path($ENV{SRCTOP} || $ENV{TOP});
+    $directories{BLDTOP}    = abs_path($ENV{BLDTOP} || $ENV{TOP});
+    $directories{BLDAPPS}   = $ENV{BIN_D}  || __bldtop_dir("apps");
+    $directories{SRCAPPS}   =                 __srctop_dir("apps");
+    $directories{BLDFUZZ}   =                 __bldtop_dir("fuzz");
+    $directories{SRCFUZZ}   =                 __srctop_dir("fuzz");
+    $directories{BLDTEST}   = $ENV{TEST_D} || __bldtop_dir("test");
+    $directories{SRCTEST}   =                 __srctop_dir("test");
+    $directories{SRCDATA}   =                 __srctop_dir("test", "recipes",
+                                                           $recipe_datadir);
+    $directories{RESULTTOP} = $ENV{RESULT_D} || __bldtop_dir("test-runs");
+    $directories{RESULTS}   = catdir($directories{RESULTTOP}, $test_name);
+
+    # Create result directory dynamically
+    rmtree($directories{RESULTS}, { safe => 0, keep_root => 1 });
+    mkpath($directories{RESULTS});
 
     push @direnv, "TOP"       if $ENV{TOP};
     push @direnv, "SRCTOP"    if $ENV{SRCTOP};
@@ -952,7 +1003,7 @@ sub __env {
     push @direnv, "TEST_D"    if $ENV{TEST_D};
     push @direnv, "RESULT_D"  if $ENV{RESULT_D};
 
-    $end_with_bailout	  = $ENV{STOPTEST} ? 1 : 0;
+    $end_with_bailout = $ENV{STOPTEST} ? 1 : 0;
 };
 
 # __srctop_file and __srctop_dir are helpers to build file and directory
@@ -967,26 +1018,26 @@ sub __srctop_file {
     BAIL_OUT("Must run setup() first") if (! $test_name);
 
     my $f = pop;
-    return catfile($directories{SRCTOP},@_,$f);
+    return abs2rel(catfile($directories{SRCTOP},@_,$f),getcwd);
 }
 
 sub __srctop_dir {
     BAIL_OUT("Must run setup() first") if (! $test_name);
 
-    return catdir($directories{SRCTOP},@_);
+    return abs2rel(catdir($directories{SRCTOP},@_), getcwd);
 }
 
 sub __bldtop_file {
     BAIL_OUT("Must run setup() first") if (! $test_name);
 
     my $f = pop;
-    return catfile($directories{BLDTOP},@_,$f);
+    return abs2rel(catfile($directories{BLDTOP},@_,$f), getcwd);
 }
 
 sub __bldtop_dir {
     BAIL_OUT("Must run setup() first") if (! $test_name);
 
-    return catdir($directories{BLDTOP},@_);
+    return abs2rel(catdir($directories{BLDTOP},@_), getcwd);
 }
 
 # __exeext is a function that returns the platform dependent file extension
@@ -1054,13 +1105,6 @@ sub __data_dir {
     return catdir($directories{SRCDATA},@_);
 }
 
-sub __results_file {
-    BAIL_OUT("Must run setup() first") if (! $test_name);
-
-    my $f = pop;
-    return catfile($directories{RESULTS},@_,$f);
-}
-
 # __cwd DIR
 # __cwd DIR, OPTS
 #
@@ -1069,7 +1113,6 @@ sub __results_file {
 # hash style arguments to alter __cwd's behavior:
 #
 #    create = 0|1       The directory we move to is created if 1, not if 0.
-#    cleanup = 0|1      The directory we move from is removed if 1, not if 0.
 
 sub __cwd {
     my $dir = catdir(shift);
@@ -1127,10 +1170,6 @@ sub __cwd {
     # Should we just bail out here as well?  I'm unsure.
     return undef unless chdir($dir);
 
-    if ($opts{cleanup}) {
-	rmtree(".", { safe => 0, keep_root => 1 });
-    }
-
     # We put back new values carefully.  Doing the obvious
     # %directories = ( %tmp_directories )
     # will clear out any value that happens to be an absolute path
@@ -1174,13 +1213,31 @@ sub __wrap_cmd {
     my $cmd = shift;
     my $exe_shell = shift;
 
-    my @prefix = ( __bldtop_file("util", "shlib_wrap.sh") );
+    my @prefix = ();
 
-    if(defined($exe_shell)) {
-	@prefix = ( $exe_shell );
-    } elsif ($^O eq "VMS" || $^O eq "MSWin32") {
-	# VMS and Windows don't use any wrapper script for the moment
-	@prefix = ();
+    if (defined($exe_shell)) {
+        # If $exe_shell is defined, trust it
+        @prefix = ( $exe_shell );
+    } else {
+        # Otherwise, use the standard wrapper
+        my $std_wrapper = __bldtop_file("util", "wrap.pl");
+
+        if ($^O eq "VMS") {
+            # On VMS, running random executables without having a command
+            # symbol means running them with the MCR command.  This is an
+            # old PDP-11 command that stuck around.  So we get a command
+            # running perl running the script.
+            @prefix = ( "MCR", $^X, $std_wrapper );
+        } elsif ($^O eq "MSWin32") {
+            # In the Windows case, we run perl explicitly.  We might not
+            # need it, but that depends on if the user has associated the
+            # '.pl' extension with a perl interpreter, so better be safe.
+            @prefix = ( $^X, $std_wrapper );
+        } else {
+            # Otherwise, we assume Unix semantics, and trust that the #!
+            # line activates perl for us.
+            @prefix = ( $std_wrapper );
+        }
     }
 
     return (@prefix, $cmd);
@@ -1244,8 +1301,11 @@ sub __decorate_cmd {
 
     my $display_cmd = "$cmdstr$stdin$stdout$stderr";
 
-    $stderr=" 2> ".$null
-        unless $stderr || !$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE};
+    # VMS program output escapes TAP::Parser
+    if ($^O eq 'VMS') {
+        $stderr=" 2> ".$null
+            unless $stderr || !$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE};
+    }
 
     $cmdstr .= "$stdin$stdout$stderr";
 

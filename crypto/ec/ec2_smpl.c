@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2002-2020 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -8,10 +8,16 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * ECDSA low level APIs are deprecated for public use, but still ok for
+ * internal use.
+ */
+#include "internal/deprecated.h"
+
 #include <openssl/err.h>
 
-#include "internal/bn_int.h"
-#include "ec_lcl.h"
+#include "crypto/bn.h"
+#include "ec_local.h"
 
 #ifndef OPENSSL_NO_EC2M
 
@@ -103,7 +109,7 @@ int ec_GF2m_simple_group_set_curve(EC_GROUP *group,
         goto err;
     i = BN_GF2m_poly2arr(group->field, group->poly, 6) - 1;
     if ((i != 5) && (i != 3)) {
-        ECerr(EC_F_EC_GF2M_SIMPLE_GROUP_SET_CURVE, EC_R_UNSUPPORTED_FIELD);
+        ERR_raise(ERR_LIB_EC, EC_R_UNSUPPORTED_FIELD);
         goto err;
     }
 
@@ -176,16 +182,17 @@ int ec_GF2m_simple_group_check_discriminant(const EC_GROUP *group,
 {
     int ret = 0;
     BIGNUM *b;
+#ifndef FIPS_MODULE
     BN_CTX *new_ctx = NULL;
 
     if (ctx == NULL) {
         ctx = new_ctx = BN_CTX_new();
         if (ctx == NULL) {
-            ECerr(EC_F_EC_GF2M_SIMPLE_GROUP_CHECK_DISCRIMINANT,
-                  ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
             goto err;
         }
     }
+#endif
     BN_CTX_start(ctx);
     b = BN_CTX_get(ctx);
     if (b == NULL)
@@ -205,7 +212,9 @@ int ec_GF2m_simple_group_check_discriminant(const EC_GROUP *group,
 
  err:
     BN_CTX_end(ctx);
+#ifndef FIPS_MODULE
     BN_CTX_free(new_ctx);
+#endif
     return ret;
 }
 
@@ -283,8 +292,7 @@ int ec_GF2m_simple_point_set_affine_coordinates(const EC_GROUP *group,
 {
     int ret = 0;
     if (x == NULL || y == NULL) {
-        ECerr(EC_F_EC_GF2M_SIMPLE_POINT_SET_AFFINE_COORDINATES,
-              ERR_R_PASSED_NULL_PARAMETER);
+        ERR_raise(ERR_LIB_EC, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
 
@@ -316,14 +324,12 @@ int ec_GF2m_simple_point_get_affine_coordinates(const EC_GROUP *group,
     int ret = 0;
 
     if (EC_POINT_is_at_infinity(group, point)) {
-        ECerr(EC_F_EC_GF2M_SIMPLE_POINT_GET_AFFINE_COORDINATES,
-              EC_R_POINT_AT_INFINITY);
+        ERR_raise(ERR_LIB_EC, EC_R_POINT_AT_INFINITY);
         return 0;
     }
 
     if (BN_cmp(point->Z, BN_value_one())) {
-        ECerr(EC_F_EC_GF2M_SIMPLE_POINT_GET_AFFINE_COORDINATES,
-              ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+        ERR_raise(ERR_LIB_EC, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
         return 0;
     }
     if (x != NULL) {
@@ -349,9 +355,11 @@ int ec_GF2m_simple_point_get_affine_coordinates(const EC_GROUP *group,
 int ec_GF2m_simple_add(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a,
                        const EC_POINT *b, BN_CTX *ctx)
 {
-    BN_CTX *new_ctx = NULL;
     BIGNUM *x0, *y0, *x1, *y1, *x2, *y2, *s, *t;
     int ret = 0;
+#ifndef FIPS_MODULE
+    BN_CTX *new_ctx = NULL;
+#endif
 
     if (EC_POINT_is_at_infinity(group, a)) {
         if (!EC_POINT_copy(r, b))
@@ -365,11 +373,13 @@ int ec_GF2m_simple_add(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a,
         return 1;
     }
 
+#ifndef FIPS_MODULE
     if (ctx == NULL) {
         ctx = new_ctx = BN_CTX_new();
         if (ctx == NULL)
             return 0;
     }
+#endif
 
     BN_CTX_start(ctx);
     x0 = BN_CTX_get(ctx);
@@ -453,7 +463,9 @@ int ec_GF2m_simple_add(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a,
 
  err:
     BN_CTX_end(ctx);
+#ifndef FIPS_MODULE
     BN_CTX_free(new_ctx);
+#endif
     return ret;
 }
 
@@ -473,7 +485,8 @@ int ec_GF2m_simple_invert(const EC_GROUP *group, EC_POINT *point, BN_CTX *ctx)
         /* point is its own inverse */
         return 1;
 
-    if (!EC_POINT_make_affine(group, point, ctx))
+    if (group->meth->make_affine == NULL
+        || !group->meth->make_affine(group, point, ctx))
         return 0;
     return BN_GF2m_add(point->Y, point->X, point->Y);
 }
@@ -494,11 +507,13 @@ int ec_GF2m_simple_is_on_curve(const EC_GROUP *group, const EC_POINT *point,
                                BN_CTX *ctx)
 {
     int ret = -1;
-    BN_CTX *new_ctx = NULL;
     BIGNUM *lh, *y2;
     int (*field_mul) (const EC_GROUP *, BIGNUM *, const BIGNUM *,
                       const BIGNUM *, BN_CTX *);
     int (*field_sqr) (const EC_GROUP *, BIGNUM *, const BIGNUM *, BN_CTX *);
+#ifndef FIPS_MODULE
+    BN_CTX *new_ctx = NULL;
+#endif
 
     if (EC_POINT_is_at_infinity(group, point))
         return 1;
@@ -510,11 +525,13 @@ int ec_GF2m_simple_is_on_curve(const EC_GROUP *group, const EC_POINT *point,
     if (!point->Z_is_one)
         return -1;
 
+#ifndef FIPS_MODULE
     if (ctx == NULL) {
         ctx = new_ctx = BN_CTX_new();
         if (ctx == NULL)
             return -1;
     }
+#endif
 
     BN_CTX_start(ctx);
     y2 = BN_CTX_get(ctx);
@@ -546,7 +563,9 @@ int ec_GF2m_simple_is_on_curve(const EC_GROUP *group, const EC_POINT *point,
 
  err:
     BN_CTX_end(ctx);
+#ifndef FIPS_MODULE
     BN_CTX_free(new_ctx);
+#endif
     return ret;
 }
 
@@ -561,8 +580,10 @@ int ec_GF2m_simple_cmp(const EC_GROUP *group, const EC_POINT *a,
                        const EC_POINT *b, BN_CTX *ctx)
 {
     BIGNUM *aX, *aY, *bX, *bY;
-    BN_CTX *new_ctx = NULL;
     int ret = -1;
+#ifndef FIPS_MODULE
+    BN_CTX *new_ctx = NULL;
+#endif
 
     if (EC_POINT_is_at_infinity(group, a)) {
         return EC_POINT_is_at_infinity(group, b) ? 0 : 1;
@@ -575,11 +596,13 @@ int ec_GF2m_simple_cmp(const EC_GROUP *group, const EC_POINT *a,
         return ((BN_cmp(a->X, b->X) == 0) && BN_cmp(a->Y, b->Y) == 0) ? 0 : 1;
     }
 
+#ifndef FIPS_MODULE
     if (ctx == NULL) {
         ctx = new_ctx = BN_CTX_new();
         if (ctx == NULL)
             return -1;
     }
+#endif
 
     BN_CTX_start(ctx);
     aX = BN_CTX_get(ctx);
@@ -597,7 +620,9 @@ int ec_GF2m_simple_cmp(const EC_GROUP *group, const EC_POINT *a,
 
  err:
     BN_CTX_end(ctx);
+#ifndef FIPS_MODULE
     BN_CTX_free(new_ctx);
+#endif
     return ret;
 }
 
@@ -605,18 +630,22 @@ int ec_GF2m_simple_cmp(const EC_GROUP *group, const EC_POINT *a,
 int ec_GF2m_simple_make_affine(const EC_GROUP *group, EC_POINT *point,
                                BN_CTX *ctx)
 {
-    BN_CTX *new_ctx = NULL;
     BIGNUM *x, *y;
     int ret = 0;
+#ifndef FIPS_MODULE
+    BN_CTX *new_ctx = NULL;
+#endif
 
     if (point->Z_is_one || EC_POINT_is_at_infinity(group, point))
         return 1;
 
+#ifndef FIPS_MODULE
     if (ctx == NULL) {
         ctx = new_ctx = BN_CTX_new();
         if (ctx == NULL)
             return 0;
     }
+#endif
 
     BN_CTX_start(ctx);
     x = BN_CTX_get(ctx);
@@ -638,7 +667,9 @@ int ec_GF2m_simple_make_affine(const EC_GROUP *group, EC_POINT *point,
 
  err:
     BN_CTX_end(ctx);
+#ifndef FIPS_MODULE
     BN_CTX_free(new_ctx);
+#endif
     return ret;
 }
 
@@ -696,9 +727,9 @@ int ec_GF2m_simple_ladder_pre(const EC_GROUP *group,
 
     /* s blinding: make sure lambda (s->Z here) is not zero */
     do {
-        if (!BN_priv_rand(s->Z, BN_num_bits(group->field) - 1,
-                          BN_RAND_TOP_ANY, BN_RAND_BOTTOM_ANY)) {
-            ECerr(EC_F_EC_GF2M_SIMPLE_LADDER_PRE, ERR_R_BN_LIB);
+        if (!BN_priv_rand_ex(s->Z, BN_num_bits(group->field) - 1,
+                             BN_RAND_TOP_ANY, BN_RAND_BOTTOM_ANY, ctx)) {
+            ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
             return 0;
         }
     } while (BN_is_zero(s->Z));
@@ -711,9 +742,9 @@ int ec_GF2m_simple_ladder_pre(const EC_GROUP *group,
 
     /* r blinding: make sure lambda (r->Y here for storage) is not zero */
     do {
-        if (!BN_priv_rand(r->Y, BN_num_bits(group->field) - 1,
-                          BN_RAND_TOP_ANY, BN_RAND_BOTTOM_ANY)) {
-            ECerr(EC_F_EC_GF2M_SIMPLE_LADDER_PRE, ERR_R_BN_LIB);
+        if (!BN_priv_rand_ex(r->Y, BN_num_bits(group->field) - 1,
+                             BN_RAND_TOP_ANY, BN_RAND_BOTTOM_ANY, ctx)) {
+            ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
             return 0;
         }
     } while (BN_is_zero(r->Y));
@@ -782,7 +813,7 @@ int ec_GF2m_simple_ladder_post(const EC_GROUP *group,
     if (BN_is_zero(s->Z)) {
         if (!EC_POINT_copy(r, p)
             || !EC_POINT_invert(group, r, ctx)) {
-            ECerr(EC_F_EC_GF2M_SIMPLE_LADDER_POST, ERR_R_EC_LIB);
+            ERR_raise(ERR_LIB_EC, ERR_R_EC_LIB);
             return 0;
         }
         return 1;
@@ -793,7 +824,7 @@ int ec_GF2m_simple_ladder_post(const EC_GROUP *group,
     t1 = BN_CTX_get(ctx);
     t2 = BN_CTX_get(ctx);
     if (t2 == NULL) {
-        ECerr(EC_F_EC_GF2M_SIMPLE_LADDER_POST, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
@@ -872,7 +903,7 @@ int ec_GF2m_simple_points_mul(const EC_GROUP *group, EC_POINT *r,
      */
 
     if ((t = EC_POINT_new(group)) == NULL) {
-        ECerr(EC_F_EC_GF2M_SIMPLE_POINTS_MUL, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
         return 0;
     }
 
@@ -899,7 +930,7 @@ static int ec_GF2m_simple_field_inv(const EC_GROUP *group, BIGNUM *r,
     int ret;
 
     if (!(ret = BN_GF2m_mod_inv(r, a, group->field, ctx)))
-        ECerr(EC_F_EC_GF2M_SIMPLE_FIELD_INV, EC_R_CANNOT_INVERT);
+        ERR_raise(ERR_LIB_EC, EC_R_CANNOT_INVERT);
     return ret;
 }
 
@@ -922,8 +953,6 @@ const EC_METHOD *EC_GF2m_simple_method(void)
         ec_GF2m_simple_point_clear_finish,
         ec_GF2m_simple_point_copy,
         ec_GF2m_simple_point_set_to_infinity,
-        0, /* set_Jprojective_coordinates_GFp */
-        0, /* get_Jprojective_coordinates_GFp */
         ec_GF2m_simple_point_set_affine_coordinates,
         ec_GF2m_simple_point_get_affine_coordinates,
         0, /* point_set_compressed_coordinates */
@@ -956,6 +985,9 @@ const EC_METHOD *EC_GF2m_simple_method(void)
         0, /* keycopy */
         0, /* keyfinish */
         ecdh_simple_compute_key,
+        ecdsa_simple_sign_setup,
+        ecdsa_simple_sign_sig,
+        ecdsa_simple_verify_sig,
         0, /* field_inverse_mod_ord */
         0, /* blind_coordinates */
         ec_GF2m_simple_ladder_pre,

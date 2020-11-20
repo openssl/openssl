@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -44,15 +44,18 @@
 #
 # (*)	slower than 4+1:-(
 
-$flavour=shift;
-$output=shift;
+# $output is the last argument if it looks like a file (it has an extension)
+# $flavour is the first argument if it doesn't look like a file
+$output = $#ARGV >= 0 && $ARGV[$#ARGV] =~ m|\.\w+$| ? pop : undef;
+$flavour = $#ARGV >= 0 && $ARGV[0] !~ m|\.| ? shift : undef;
 
 $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 ( $xlate="${dir}arm-xlate.pl" and -f $xlate ) or
 ( $xlate="${dir}../../perlasm/arm-xlate.pl" and -f $xlate) or
 die "can't locate arm-xlate.pl";
 
-open OUT,"| \"$^X\" $xlate $flavour $output";
+open OUT,"| \"$^X\" $xlate $flavour \"$output\""
+    or die "can't call $xlate: $!";
 *STDOUT=*OUT;
 
 sub AUTOLOAD()		# thunk [simplified] x86-style perlasm
@@ -132,6 +135,7 @@ $code.=<<___;
 #ifndef	__KERNEL__
 # include "arm_arch.h"
 .extern	OPENSSL_armcap_P
+.hidden	OPENSSL_armcap_P
 #endif
 
 .text
@@ -1229,8 +1233,7 @@ $code.=<<___;
 	adds	$len,$len,#512
 	ushr	$ONE,$ONE,#1			// 4 -> 2
 
-	ldp	d8,d9,[sp,#128+0]		// meet ABI requirements
-	ldp	d10,d11,[sp,#128+16]
+	ldp	d10,d11,[sp,#128+16]		// meet ABI requirements
 	ldp	d12,d13,[sp,#128+32]
 	ldp	d14,d15,[sp,#128+48]
 
@@ -1247,6 +1250,7 @@ $code.=<<___;
 	ld1	{$CTR,$ROT24},[$key]
 	b.hs	.Loop_outer_neon
 
+	ldp	d8,d9,[sp,#0]			// meet ABI requirements
 	eor	@K[1],@K[1],@K[1]
 	eor	@K[2],@K[2],@K[2]
 	eor	@K[3],@K[3],@K[3]
@@ -1256,6 +1260,7 @@ $code.=<<___;
 	b	.Loop_outer
 
 .Ldone_512_neon:
+	ldp	d8,d9,[sp,#128+0]		// meet ABI requirements
 	ldp	x19,x20,[x29,#16]
 	add	sp,sp,#128+64
 	ldp	x21,x22,[x29,#32]
@@ -1285,4 +1290,4 @@ foreach (split("\n",$code)) {
 
 	print $_,"\n";
 }
-close STDOUT;	# flush
+close STDOUT or die "error closing STDOUT: $!";	# flush

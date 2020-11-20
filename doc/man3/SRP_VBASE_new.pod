@@ -43,7 +43,7 @@ The verifier file is a text file containing multiple entries, whose format is:
 flag base64(verifier) base64(salt) username gNid userinfo(optional)
 where the flag can be 'V' (valid) or 'R' (revoked).
 Note that the base64 encoding used here is non-standard so it is recommended
-to use L<srp(1)> to generate this file.
+to use L<openssl-srp(1)> to generate this file.
 
 The SRP_VBASE_add0_user() function adds the B<user_pwd> verifier information
 to the B<vb> structure. See L<SRP_user_pwd_new(3)> to create and populate this
@@ -76,7 +76,7 @@ SRP_VBASE_add0_user() returns 1 on success and 0 on failure.
 
 =head1 SEE ALSO
 
-L<srp(1)>,
+L<openssl-srp(1)>,
 L<SRP_create_verifier(3)>,
 L<SRP_user_pwd_new(3)>,
 L<SSL_CTX_set_srp_password(3)>

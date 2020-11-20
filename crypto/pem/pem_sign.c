@@ -19,7 +19,8 @@ int PEM_SignInit(EVP_MD_CTX *ctx, EVP_MD *type)
     return EVP_DigestInit_ex(ctx, type, NULL);
 }
 
-int PEM_SignUpdate(EVP_MD_CTX *ctx, unsigned char *data, unsigned int count)
+int PEM_SignUpdate(EVP_MD_CTX *ctx,
+                   const unsigned char *data, unsigned int count)
 {
     return EVP_DigestUpdate(ctx, data, count);
 }
@@ -33,7 +34,7 @@ int PEM_SignFinal(EVP_MD_CTX *ctx, unsigned char *sigret,
 
     m = OPENSSL_malloc(EVP_PKEY_size(pkey));
     if (m == NULL) {
-        PEMerr(PEM_F_PEM_SIGNFINAL, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PEM, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 

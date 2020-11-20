@@ -17,8 +17,6 @@ is the compression algorithm to use or B<NID_undef> to use the default
 algorithm (zlib compression). B<in> is the content to be compressed.
 B<flags> is an optional set of flags.
 
-=head1 NOTES
-
 The only currently supported compression algorithm is zlib using the NID
 NID_zlib_compression.
 
@@ -40,8 +38,6 @@ returned suitable for streaming I/O: no data is read from the BIO B<in>.
 The compressed data is included in the CMS_ContentInfo structure, unless
 B<CMS_DETACHED> is set in which case it is omitted. This is rarely used in
 practice and is not supported by SMIME_write_CMS().
-
-=head1 NOTES
 
 If the flag B<CMS_STREAM> is set the returned B<CMS_ContentInfo> structure is
 B<not> complete and outputting its contents via a function that does not

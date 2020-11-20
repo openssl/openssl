@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2020 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -8,7 +8,10 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "eng_int.h"
+/* We need to use some engine deprecated APIs */
+#define OPENSSL_SUPPRESS_DEPRECATED
+
+#include "eng_local.h"
 #include <openssl/conf.h>
 
 int ENGINE_set_default(ENGINE *e, unsigned int flags)
@@ -82,9 +85,8 @@ int ENGINE_set_default_string(ENGINE *e, const char *def_list)
 {
     unsigned int flags = 0;
     if (!CONF_parse_list(def_list, ',', 1, int_def_cb, &flags)) {
-        ENGINEerr(ENGINE_F_ENGINE_SET_DEFAULT_STRING,
-                  ENGINE_R_INVALID_STRING);
-        ERR_add_error_data(2, "str=", def_list);
+        ERR_raise_data(ERR_LIB_ENGINE, ENGINE_R_INVALID_STRING,
+                       "str=%s", def_list);
         return 0;
     }
     return ENGINE_set_default(e, flags);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -16,13 +16,49 @@
 #include "internal/provider.h"
 
 struct construct_data_st {
-    OPENSSL_CTX *libctx;
+    OSSL_LIB_CTX *libctx;
     OSSL_METHOD_STORE *store;
     int operation_id;
     int force_store;
     OSSL_METHOD_CONSTRUCT_METHOD *mcm;
     void *mcm_data;
 };
+
+static int ossl_method_construct_precondition(OSSL_PROVIDER *provider,
+                                              int operation_id, void *cbdata,
+                                              int *result)
+{
+    if (!ossl_assert(result != NULL)) {
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
+    if (!ossl_provider_test_operation_bit(provider, operation_id, result))
+        return 0;
+
+    /*
+     * The result we get tells if methods have already been constructed.
+     * However, we want to tell whether construction should happen (true)
+     * or not (false), which is the opposite of what we got.
+     */
+    *result = !*result;
+
+    return 1;
+}
+
+static int ossl_method_construct_postcondition(OSSL_PROVIDER *provider,
+                                               int operation_id, int no_store,
+                                               void *cbdata, int *result)
+{
+    if (!ossl_assert(result != NULL)) {
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
+    *result = 1;
+    return no_store != 0
+        || ossl_provider_set_operation_bit(provider, operation_id);
+}
 
 static void ossl_method_construct_this(OSSL_PROVIDER *provider,
                                        const OSSL_ALGORITHM *algo,
@@ -31,9 +67,8 @@ static void ossl_method_construct_this(OSSL_PROVIDER *provider,
     struct construct_data_st *data = cbdata;
     void *method = NULL;
 
-    if ((method = data->mcm->construct(algo->algorithm_name,
-                                       algo->implementation, provider,
-                                       data->mcm_data)) == NULL)
+    if ((method = data->mcm->construct(algo, provider, data->mcm_data))
+        == NULL)
         return;
 
     /*
@@ -52,29 +87,26 @@ static void ossl_method_construct_this(OSSL_PROVIDER *provider,
          * If we haven't been told not to store,
          * add to the global store
          */
-        data->mcm->put(data->libctx, NULL, method, data->operation_id,
-                       algo->algorithm_name,
+        data->mcm->put(data->libctx, NULL, method, provider,
+                       data->operation_id, algo->algorithm_names,
                        algo->property_definition, data->mcm_data);
     }
 
-    data->mcm->put(data->libctx, data->store, method, data->operation_id,
-                   algo->algorithm_name, algo->property_definition,
-                   data->mcm_data);
+    data->mcm->put(data->libctx, data->store, method, provider,
+                   data->operation_id, algo->algorithm_names,
+                   algo->property_definition, data->mcm_data);
 
     /* refcnt-- because we're dropping the reference */
     data->mcm->destruct(method, data->mcm_data);
 }
 
-void *ossl_method_construct(OPENSSL_CTX *libctx, int operation_id,
-                            const char *name, const char *propquery,
+void *ossl_method_construct(OSSL_LIB_CTX *libctx, int operation_id,
                             int force_store,
                             OSSL_METHOD_CONSTRUCT_METHOD *mcm, void *mcm_data)
 {
     void *method = NULL;
 
-    if ((method =
-         mcm->get(libctx, NULL, operation_id, name, propquery, mcm_data))
-        == NULL) {
+    if ((method = mcm->get(libctx, NULL, mcm_data)) == NULL) {
         struct construct_data_st cbdata;
 
         /*
@@ -90,10 +122,12 @@ void *ossl_method_construct(OPENSSL_CTX *libctx, int operation_id,
         cbdata.mcm = mcm;
         cbdata.mcm_data = mcm_data;
         ossl_algorithm_do_all(libctx, operation_id, NULL,
-                              ossl_method_construct_this, &cbdata);
+                              ossl_method_construct_precondition,
+                              ossl_method_construct_this,
+                              ossl_method_construct_postcondition,
+                              &cbdata);
 
-        method = mcm->get(libctx, cbdata.store, operation_id, name,
-                          propquery, mcm_data);
+        method = mcm->get(libctx, cbdata.store, mcm_data);
         mcm->dealloc_tmp_store(cbdata.store);
     }
 

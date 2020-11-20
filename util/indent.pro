@@ -162,6 +162,9 @@
 -T CONF_METHOD
 -T CONF_MODULE
 -T CONF_VALUE
+-T CRYPTO_malloc_fn
+-T CRYPTO_realloc_fn
+-T CRYPTO_free_fn
 -T CRYPTO_EX_DATA
 -T CRYPTO_EX_dup
 -T CRYPTO_EX_free

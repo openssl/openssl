@@ -19,13 +19,13 @@ decode and encode Signed Certificate Timestamp lists in TLS wire format
 
 The SCT_LIST and SCT functions are very similar to the i2d and d2i family of
 functions, except that they convert to and from TLS wire format, as described in
-RFC 6962. See L<d2i_SCT_LIST> for more information about how the parameters are
+RFC 6962. See L<d2i_SCT_LIST(3)> for more information about how the parameters are
 treated and the return values.
 
 =head1 RETURN VALUES
 
 All of the functions have return values consistent with those stated for
-L<d2i_SCT_LIST> and L<i2d_SCT_LIST>.
+L<d2i_SCT_LIST(3)> and L<i2d_SCT_LIST(3)>.
 
 =head1 SEE ALSO
 

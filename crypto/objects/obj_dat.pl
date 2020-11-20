@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 1995-2019 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -36,10 +36,8 @@ sub der_it
     return $ret;
 }
 
-# Output year depends on the year of the script and the input file.
-my $YEAR = [localtime([stat($0)]->[9])]->[5] + 1900;
-my $iYEAR = [localtime([stat($ARGV[0])]->[9])]->[5] + 1900;
-$YEAR = $iYEAR if $iYEAR > $YEAR;
+# The year the output file is generated.
+my $YEAR = [localtime()]->[5] + 1900;
 
 # Read input, parse all #define's into OID name and value.
 # Populate %ln and %sn with long and short names (%dupln and %dupsn)

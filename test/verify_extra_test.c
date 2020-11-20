@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -16,10 +16,23 @@
 #include <openssl/err.h>
 #include "testutil.h"
 
+static const char *root_f;
 static const char *roots_f;
 static const char *untrusted_f;
 static const char *bad_f;
 static const char *req_f;
+
+static X509 *load_cert_from_file(const char *filename)
+{
+    X509 *cert = NULL;
+    BIO *bio;
+
+    bio = BIO_new_file(filename, "r");
+    if (bio != NULL)
+        cert = PEM_read_bio_X509(bio, NULL, 0, NULL);
+    BIO_free(bio);
+    return cert;
+}
 
 static STACK_OF(X509) *load_certs_from_file(const char *filename)
 {
@@ -95,7 +108,6 @@ static int test_alt_chains_cert_forgery(void)
     int i;
     X509 *x = NULL;
     STACK_OF(X509) *untrusted = NULL;
-    BIO *bio = NULL;
     X509_STORE_CTX *sctx = NULL;
     X509_STORE *store = NULL;
     X509_LOOKUP *lookup = NULL;
@@ -112,10 +124,7 @@ static int test_alt_chains_cert_forgery(void)
 
     untrusted = load_certs_from_file(untrusted_f);
 
-    if ((bio = BIO_new_file(bad_f, "r")) == NULL)
-        goto err;
-
-    if ((x = PEM_read_bio_X509(bio, NULL, 0, NULL)) == NULL)
+    if ((x = load_cert_from_file(bad_f)) == NULL)
         goto err;
 
     sctx = X509_STORE_CTX_new();
@@ -134,7 +143,6 @@ static int test_alt_chains_cert_forgery(void)
  err:
     X509_STORE_CTX_free(sctx);
     X509_free(x);
-    BIO_free(bio);
     sk_X509_pop_free(untrusted, X509_free);
     X509_STORE_free(store);
     return ret;
@@ -144,14 +152,9 @@ static int test_store_ctx(void)
 {
     X509_STORE_CTX *sctx = NULL;
     X509 *x = NULL;
-    BIO *bio = NULL;
     int testresult = 0, ret;
 
-    bio = BIO_new_file(bad_f, "r");
-    if (bio == NULL)
-        goto err;
-
-    x = PEM_read_bio_X509(bio, NULL, 0, NULL);
+    x = load_cert_from_file(bad_f);
     if (x == NULL)
         goto err;
 
@@ -173,27 +176,19 @@ static int test_store_ctx(void)
  err:
     X509_STORE_CTX_free(sctx);
     X509_free(x);
-    BIO_free(bio);
     return testresult;
 }
 
 OPT_TEST_DECLARE_USAGE("roots.pem untrusted.pem bad.pem\n")
 
-#ifndef OPENSSL_NO_SM2
-static int test_sm2_id(void)
+static int test_distinguishing_id(void)
 {
-    /* we only need an X509 structure, no matter if it's a real SM2 cert */
     X509 *x = NULL;
-    BIO *bio = NULL;
     int ret = 0;
     ASN1_OCTET_STRING *v = NULL, *v2 = NULL;
-    char *sm2id = "this is an ID";
+    char *distid = "this is an ID";
 
-    bio = BIO_new_file(bad_f, "r");
-    if (bio == NULL)
-        goto err;
-
-    x = PEM_read_bio_X509(bio, NULL, 0, NULL);
+    x = load_cert_from_file(bad_f);
     if (x == NULL)
         goto err;
 
@@ -201,14 +196,15 @@ static int test_sm2_id(void)
     if (v == NULL)
         goto err;
 
-    if (!ASN1_OCTET_STRING_set(v, (unsigned char *)sm2id, (int)strlen(sm2id))) {
+    if (!ASN1_OCTET_STRING_set(v, (unsigned char *)distid,
+                               (int)strlen(distid))) {
         ASN1_OCTET_STRING_free(v);
         goto err;
     }
 
-    X509_set0_sm2_id(x, v);
+    X509_set0_distinguishing_id(x, v);
 
-    v2 = X509_get0_sm2_id(x);
+    v2 = X509_get0_distinguishing_id(x);
     if (!TEST_ptr(v2)
             || !TEST_int_eq(ASN1_OCTET_STRING_cmp(v, v2), 0))
         goto err;
@@ -216,18 +212,16 @@ static int test_sm2_id(void)
     ret = 1;
  err:
     X509_free(x);
-    BIO_free(bio);
     return ret;
 }
 
-static int test_req_sm2_id(void)
+static int test_req_distinguishing_id(void)
 {
-    /* we only need an X509_REQ structure, no matter if it's a real SM2 cert */
     X509_REQ *x = NULL;
     BIO *bio = NULL;
     int ret = 0;
     ASN1_OCTET_STRING *v = NULL, *v2 = NULL;
-    char *sm2id = "this is an ID";
+    char *distid = "this is an ID";
 
     bio = BIO_new_file(req_f, "r");
     if (bio == NULL)
@@ -241,14 +235,15 @@ static int test_req_sm2_id(void)
     if (v == NULL)
         goto err;
 
-    if (!ASN1_OCTET_STRING_set(v, (unsigned char *)sm2id, (int)strlen(sm2id))) {
+    if (!ASN1_OCTET_STRING_set(v, (unsigned char *)distid,
+                               (int)strlen(distid))) {
         ASN1_OCTET_STRING_free(v);
         goto err;
     }
 
-    X509_REQ_set0_sm2_id(x, v);
+    X509_REQ_set0_distinguishing_id(x, v);
 
-    v2 = X509_REQ_get0_sm2_id(x);
+    v2 = X509_REQ_get0_distinguishing_id(x);
     if (!TEST_ptr(v2)
             || !TEST_int_eq(ASN1_OCTET_STRING_cmp(v, v2), 0))
         goto err;
@@ -259,21 +254,53 @@ static int test_req_sm2_id(void)
     BIO_free(bio);
     return ret;
 }
-#endif
+
+static int test_self_signed(const char *filename, int expected)
+{
+    X509 *cert;
+    int ret;
+
+    cert = load_cert_from_file(filename); /* may result in NULL */
+    ret = TEST_int_eq(X509_self_signed(cert, 1), expected);
+    X509_free(cert);
+    return ret;
+}
+
+static int test_self_signed_good(void)
+{
+    return test_self_signed(root_f, 1);
+}
+
+static int test_self_signed_bad(void)
+{
+    return test_self_signed(bad_f, 0);
+}
+
+static int test_self_signed_error(void)
+{
+    return test_self_signed("nonexistent file name", -1);
+}
 
 int setup_tests(void)
 {
-    if (!TEST_ptr(roots_f = test_get_argument(0))
-            || !TEST_ptr(untrusted_f = test_get_argument(1))
-            || !TEST_ptr(bad_f = test_get_argument(2))
-            || !TEST_ptr(req_f = test_get_argument(3)))
+    if (!test_skip_common_options()) {
+        TEST_error("Error parsing test options\n");
+        return 0;
+    }
+
+    if (!TEST_ptr(root_f = test_get_argument(0))
+            || !TEST_ptr(roots_f = test_get_argument(1))
+            || !TEST_ptr(untrusted_f = test_get_argument(2))
+            || !TEST_ptr(bad_f = test_get_argument(3))
+            || !TEST_ptr(req_f = test_get_argument(4)))
         return 0;
 
     ADD_TEST(test_alt_chains_cert_forgery);
     ADD_TEST(test_store_ctx);
-#ifndef OPENSSL_NO_SM2
-    ADD_TEST(test_sm2_id);
-    ADD_TEST(test_req_sm2_id);
-#endif
+    ADD_TEST(test_distinguishing_id);
+    ADD_TEST(test_req_distinguishing_id);
+    ADD_TEST(test_self_signed_good);
+    ADD_TEST(test_self_signed_bad);
+    ADD_TEST(test_self_signed_error);
     return 1;
 }

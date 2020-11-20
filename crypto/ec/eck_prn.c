@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2020 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -21,7 +21,7 @@ int ECPKParameters_print_fp(FILE *fp, const EC_GROUP *x, int off)
     int ret;
 
     if ((b = BIO_new(BIO_s_file())) == NULL) {
-        ECerr(EC_F_ECPKPARAMETERS_PRINT_FP, ERR_R_BUF_LIB);
+        ERR_raise(ERR_LIB_EC, ERR_R_BUF_LIB);
         return 0;
     }
     BIO_set_fp(b, fp, BIO_NOCLOSE);
@@ -36,7 +36,7 @@ int EC_KEY_print_fp(FILE *fp, const EC_KEY *x, int off)
     int ret;
 
     if ((b = BIO_new(BIO_s_file())) == NULL) {
-        ECerr(EC_F_EC_KEY_PRINT_FP, ERR_R_BIO_LIB);
+        ERR_raise(ERR_LIB_EC, ERR_R_BIO_LIB);
         return 0;
     }
     BIO_set_fp(b, fp, BIO_NOCLOSE);
@@ -51,7 +51,7 @@ int ECParameters_print_fp(FILE *fp, const EC_KEY *x)
     int ret;
 
     if ((b = BIO_new(BIO_s_file())) == NULL) {
-        ECerr(EC_F_ECPARAMETERS_PRINT_FP, ERR_R_BIO_LIB);
+        ERR_raise(ERR_LIB_EC, ERR_R_BIO_LIB);
         return 0;
     }
     BIO_set_fp(b, fp, BIO_NOCLOSE);
@@ -115,7 +115,7 @@ int ECPKParameters_print(BIO *bp, const EC_GROUP *x, int off)
         /* explicit parameters */
         int is_char_two = 0;
         point_conversion_form_t form;
-        int tmp_nid = EC_METHOD_get_field_type(EC_GROUP_method_of(x));
+        int tmp_nid = EC_GROUP_get_field_type(x);
 
         if (tmp_nid == NID_X9_62_characteristic_two_field)
             is_char_two = 1;
@@ -211,7 +211,7 @@ int ECPKParameters_print(BIO *bp, const EC_GROUP *x, int off)
     ret = 1;
  err:
     if (!ret)
-        ECerr(EC_F_ECPKPARAMETERS_PRINT, reason);
+        ERR_raise(ERR_LIB_EC, reason);
     BN_free(p);
     BN_free(a);
     BN_free(b);

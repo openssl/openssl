@@ -13,8 +13,17 @@
 #include <setjmp.h>
 #include <signal.h>
 #include "internal/cryptlib.h"
-#include "internal/ctype.h"
+#include "crypto/ctype.h"
 #include "s390x_arch.h"
+
+#if defined(__GLIBC__) && defined(__GLIBC_PREREQ)
+# if __GLIBC_PREREQ(2, 16)
+#  include <sys/auxv.h>
+#  if defined(HWCAP_S390_STFLE) && defined(HWCAP_S390_VX)
+#   define OSSL_IMPLEMENT_GETAUXVAL
+#  endif
+# endif
+#endif
 
 #define LEN     128
 #define STR_(S) #S
@@ -47,25 +56,26 @@
             memcpy(cap, &NAME, sizeof(*cap));                           \
     }
 
+#ifndef OSSL_IMPLEMENT_GETAUXVAL
 static sigjmp_buf ill_jmp;
 static void ill_handler(int sig)
 {
     siglongjmp(ill_jmp, sig);
 }
 
+void OPENSSL_vx_probe(void);
+#endif
+
 static const char *env;
 static int parse_env(struct OPENSSL_s390xcap_st *cap);
 
 void OPENSSL_s390x_facilities(void);
 void OPENSSL_s390x_functions(void);
-void OPENSSL_vx_probe(void);
 
 struct OPENSSL_s390xcap_st OPENSSL_s390xcap_P;
 
 void OPENSSL_cpuid_setup(void)
 {
-    sigset_t oset;
-    struct sigaction ill_act, oact_ill, oact_fpe;
     struct OPENSSL_s390xcap_st cap;
 
     if (OPENSSL_s390xcap_P.stfle[0])
@@ -74,25 +84,62 @@ void OPENSSL_cpuid_setup(void)
     /* set a bit that will not be tested later */
     OPENSSL_s390xcap_P.stfle[0] |= S390X_CAPBIT(0);
 
+#if defined(OSSL_IMPLEMENT_GETAUXVAL)
+    {
+        const unsigned long hwcap = getauxval(AT_HWCAP);
+
+        /* protection against missing store-facility-list-extended */
+        if (hwcap & HWCAP_S390_STFLE)
+            OPENSSL_s390x_facilities();
+
+        /* protection against disabled vector facility */
+        if (!(hwcap & HWCAP_S390_VX)) {
+            OPENSSL_s390xcap_P.stfle[2] &= ~(S390X_CAPBIT(S390X_VX)
+                                             | S390X_CAPBIT(S390X_VXD)
+                                             | S390X_CAPBIT(S390X_VXE));
+        }
+    }
+#else
+    {
+        sigset_t oset;
+        struct sigaction ill_act, oact_ill, oact_fpe;
+
+        memset(&ill_act, 0, sizeof(ill_act));
+        ill_act.sa_handler = ill_handler;
+        sigfillset(&ill_act.sa_mask);
+        sigdelset(&ill_act.sa_mask, SIGILL);
+        sigdelset(&ill_act.sa_mask, SIGFPE);
+        sigdelset(&ill_act.sa_mask, SIGTRAP);
+
+        sigprocmask(SIG_SETMASK, &ill_act.sa_mask, &oset);
+        sigaction(SIGILL, &ill_act, &oact_ill);
+        sigaction(SIGFPE, &ill_act, &oact_fpe);
+
+        /* protection against missing store-facility-list-extended */
+        if (sigsetjmp(ill_jmp, 1) == 0)
+            OPENSSL_s390x_facilities();
+
+        /* protection against disabled vector facility */
+        if ((OPENSSL_s390xcap_P.stfle[2] & S390X_CAPBIT(S390X_VX))
+            && (sigsetjmp(ill_jmp, 1) == 0)) {
+            OPENSSL_vx_probe();
+        } else {
+            OPENSSL_s390xcap_P.stfle[2] &= ~(S390X_CAPBIT(S390X_VX)
+                                             | S390X_CAPBIT(S390X_VXD)
+                                             | S390X_CAPBIT(S390X_VXE));
+        }
+
+        sigaction(SIGFPE, &oact_fpe, NULL);
+        sigaction(SIGILL, &oact_ill, NULL);
+        sigprocmask(SIG_SETMASK, &oset, NULL);
+    }
+#endif
+
     env = getenv("OPENSSL_s390xcap");
     if (env != NULL) {
         if (!parse_env(&cap))
             env = NULL;
     }
-
-    memset(&ill_act, 0, sizeof(ill_act));
-    ill_act.sa_handler = ill_handler;
-    sigfillset(&ill_act.sa_mask);
-    sigdelset(&ill_act.sa_mask, SIGILL);
-    sigdelset(&ill_act.sa_mask, SIGFPE);
-    sigdelset(&ill_act.sa_mask, SIGTRAP);
-    sigprocmask(SIG_SETMASK, &ill_act.sa_mask, &oset);
-    sigaction(SIGILL, &ill_act, &oact_ill);
-    sigaction(SIGFPE, &ill_act, &oact_fpe);
-
-    /* protection against missing store-facility-list-extended */
-    if (sigsetjmp(ill_jmp, 1) == 0)
-        OPENSSL_s390x_facilities();
 
     if (env != NULL) {
         OPENSSL_s390xcap_P.stfle[0] &= cap.stfle[0];
@@ -100,21 +147,7 @@ void OPENSSL_cpuid_setup(void)
         OPENSSL_s390xcap_P.stfle[2] &= cap.stfle[2];
     }
 
-    /* protection against disabled vector facility */
-    if ((OPENSSL_s390xcap_P.stfle[2] & S390X_CAPBIT(S390X_VX))
-        && (sigsetjmp(ill_jmp, 1) == 0)) {
-        OPENSSL_vx_probe();
-    } else {
-        OPENSSL_s390xcap_P.stfle[2] &= ~(S390X_CAPBIT(S390X_VX)
-                                         | S390X_CAPBIT(S390X_VXD)
-                                         | S390X_CAPBIT(S390X_VXE));
-    }
-
-    sigaction(SIGFPE, &oact_fpe, NULL);
-    sigaction(SIGILL, &oact_ill, NULL);
-    sigprocmask(SIG_SETMASK, &oset, NULL);
-
-    OPENSSL_s390x_functions();
+    OPENSSL_s390x_functions(); /* check OPENSSL_s390xcap_P.stfle */
 
     if (env != NULL) {
         OPENSSL_s390xcap_P.kimd[0] &= cap.kimd[0];
@@ -547,7 +580,8 @@ static int parse_env(struct OPENSSL_s390xcap_st *cap)
                        S390X_CAPBIT(S390X_VX)
                        | S390X_CAPBIT(S390X_VXD)
                        | S390X_CAPBIT(S390X_VXE)
-                       | S390X_CAPBIT(S390X_MSA8),
+                       | S390X_CAPBIT(S390X_MSA8)
+                       | S390X_CAPBIT(S390X_MSA9),
                        0ULL},
         /*.kimd   = */{S390X_CAPBIT(S390X_QUERY)
                        | S390X_CAPBIT(S390X_SHA_1)
@@ -611,18 +645,25 @@ static int parse_env(struct OPENSSL_s390xcap_st *cap)
                        | S390X_CAPBIT(S390X_AES_192)
                        | S390X_CAPBIT(S390X_AES_256),
                        0ULL},
-        /*.pcc    = */{S390X_CAPBIT(S390X_QUERY)
-                       | S390X_CAPBIT(S390X_SCALAR_MULTIPLY_P256)
+        /*.pcc    = */{S390X_CAPBIT(S390X_QUERY),
+                       S390X_CAPBIT(S390X_SCALAR_MULTIPLY_P256)
                        | S390X_CAPBIT(S390X_SCALAR_MULTIPLY_P384)
-                       | S390X_CAPBIT(S390X_SCALAR_MULTIPLY_P521),
-                       0ULL},
+                       | S390X_CAPBIT(S390X_SCALAR_MULTIPLY_P521)
+                       | S390X_CAPBIT(S390X_SCALAR_MULTIPLY_ED25519)
+                       | S390X_CAPBIT(S390X_SCALAR_MULTIPLY_ED448)
+                       | S390X_CAPBIT(S390X_SCALAR_MULTIPLY_X25519)
+                       | S390X_CAPBIT(S390X_SCALAR_MULTIPLY_X448)},
         /*.kdsa   = */{S390X_CAPBIT(S390X_QUERY)
                        | S390X_CAPBIT(S390X_ECDSA_VERIFY_P256)
                        | S390X_CAPBIT(S390X_ECDSA_VERIFY_P384)
                        | S390X_CAPBIT(S390X_ECDSA_VERIFY_P521)
                        | S390X_CAPBIT(S390X_ECDSA_SIGN_P256)
                        | S390X_CAPBIT(S390X_ECDSA_SIGN_P384)
-                       | S390X_CAPBIT(S390X_ECDSA_SIGN_P521),
+                       | S390X_CAPBIT(S390X_ECDSA_SIGN_P521)
+                       | S390X_CAPBIT(S390X_EDDSA_VERIFY_ED25519)
+                       | S390X_CAPBIT(S390X_EDDSA_VERIFY_ED448)
+                       | S390X_CAPBIT(S390X_EDDSA_SIGN_ED25519)
+                       | S390X_CAPBIT(S390X_EDDSA_SIGN_ED448),
                        0ULL},
     };
 

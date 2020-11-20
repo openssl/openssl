@@ -75,7 +75,8 @@
 # To generate code, pass the file name with either 256 or 512 in its
 # name and compiler flags.
 
-$output=pop;
+# $output is the last argument if it looks like a file (it has an extension)
+$output = $#ARGV >= 0 && $ARGV[$#ARGV] =~ m|\.\w+$| ? pop : undef;
 
 if ($output =~ /512.*\.[s|asm]/) {
 	$SZ=8;
@@ -107,7 +108,7 @@ if ($output =~ /512.*\.[s|asm]/) {
 	$rounds=64;
 } else { die "nonsense $output"; }
 
-open STDOUT,">$output" || die "can't open $output: $!";
+$output and (open STDOUT,">$output" or die "can't open $output: $!");
 
 if ($^O eq "hpux") {
     $ADDP="addp4";

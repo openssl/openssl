@@ -13,9 +13,9 @@
 #include <openssl/crypto.h>
 #include <openssl/lhash.h>
 #include <openssl/err.h>
-#include "internal/ctype.h"
-#include "internal/lhash.h"
-#include "lhash_lcl.h"
+#include "crypto/ctype.h"
+#include "crypto/lhash.h"
+#include "lhash_local.h"
 
 /*
  * A hashing implementation that appears to be based on the linear hashing
@@ -52,7 +52,7 @@ OPENSSL_LHASH *OPENSSL_LH_new(OPENSSL_LH_HASHFUNC h, OPENSSL_LH_COMPFUNC c)
         /*
          * Do not set the error code, because the ERR code uses LHASH
          * and we want to avoid possible endless error loop.
-         * CRYPTOerr(CRYPTO_F_OPENSSL_LH_NEW, ERR_R_MALLOC_FAILURE);
+         * ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
          */
         return NULL;
     }

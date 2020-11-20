@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2002-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -13,6 +13,12 @@
  */
 
 /*
+ * DSA low level APIs are deprecated for public use, but still ok for
+ * internal use.
+ */
+#include "internal/deprecated.h"
+
+/*
  * Parameter generation follows the updated Appendix 2.2 for FIPS PUB 186,
  * also Appendix 2.2 of FIPS PUB 186-1 (i.e. use SHA as defined in FIPS PUB
  * 180-1)
@@ -20,17 +26,14 @@
 #define xxxHASH    EVP_sha1()
 
 #include <openssl/opensslconf.h>
-#if OPENSSL_API_0_9_8
-NON_EMPTY_TRANSLATION_UNIT
-#else
 
-# include <stdio.h>
-# include <time.h>
-# include "internal/cryptlib.h"
-# include <openssl/evp.h>
-# include <openssl/bn.h>
-# include <openssl/dsa.h>
-# include <openssl/sha.h>
+#include <stdio.h>
+#include <time.h>
+#include "internal/cryptlib.h"
+#include <openssl/evp.h>
+#include <openssl/bn.h>
+#include <openssl/dsa.h>
+#include <openssl/sha.h>
 
 DSA *DSA_generate_parameters(int bits,
                              unsigned char *seed_in, int seed_len,
@@ -59,4 +62,3 @@ err:
     DSA_free(ret);
     return NULL;
 }
-#endif

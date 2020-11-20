@@ -8,8 +8,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_OSSLTESTERR_H
-# define HEADER_OSSLTESTERR_H
+#ifndef OSSL_ENGINES_E_OSSLTEST_ERR_H
+# define OSSL_ENGINES_E_OSSLTEST_ERR_H
 
 # include <openssl/opensslconf.h>
 # include <openssl/symhacks.h>
@@ -21,7 +21,7 @@
 /*
  * OSSLTEST function codes.
  */
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define OSSLTEST_F_BIND_OSSLTEST                         0
 #  define OSSLTEST_F_OSSLTEST_AES128_INIT_KEY              0
 # endif

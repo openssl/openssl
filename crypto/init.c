@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,26 +7,30 @@
  * https://www.openssl.org/source/license.html
  */
 
+/* We need to use some engine deprecated APIs */
+#define OPENSSL_SUPPRESS_DEPRECATED
+
 #include "e_os.h"
-#include "internal/cryptlib_int.h"
+#include "crypto/cryptlib.h"
 #include <openssl/err.h>
-#include "internal/rand_int.h"
+#include "crypto/rand.h"
 #include "internal/bio.h"
 #include <openssl/evp.h>
-#include "internal/evp_int.h"
+#include "crypto/evp.h"
 #include "internal/conf.h"
-#include "internal/async.h"
-#include "internal/engine.h"
+#include "crypto/async.h"
+#include "crypto/engine.h"
 #include "internal/comp.h"
 #include "internal/err.h"
-#include "internal/err_int.h"
-#include "internal/objects.h"
+#include "crypto/err.h"
+#include "crypto/objects.h"
 #include <stdlib.h>
 #include <assert.h>
 #include "internal/thread_once.h"
-#include "internal/dso_conf.h"
+#include "crypto/dso_conf.h"
 #include "internal/dso.h"
-#include "internal/store.h"
+#include "crypto/store.h"
+#include <openssl/cmp_util.h> /* for OSSL_CMP_log_close() */
 #include <openssl/trace.h>
 
 static int stopped = 0;
@@ -44,8 +48,7 @@ static CRYPTO_ONCE base = CRYPTO_ONCE_STATIC_INIT;
 static int base_inited = 0;
 DEFINE_RUN_ONCE_STATIC(ossl_init_base)
 {
-    if (ossl_trace_init() == 0)
-        return 0;
+    /* no need to init trace */
 
     OSSL_TRACE(INIT, "ossl_init_base: setting up stop handlers\n");
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
@@ -226,46 +229,6 @@ DEFINE_RUN_ONCE_STATIC_ALT(ossl_init_no_add_all_digests,
     return 1;
 }
 
-static CRYPTO_ONCE add_all_macs = CRYPTO_ONCE_STATIC_INIT;
-DEFINE_RUN_ONCE_STATIC(ossl_init_add_all_macs)
-{
-    /*
-     * OPENSSL_NO_AUTOALGINIT is provided here to prevent at compile time
-     * pulling in all the macs during static linking
-     */
-#ifndef OPENSSL_NO_AUTOALGINIT
-    OSSL_TRACE(INIT, "openssl_add_all_macs_int()\n");
-    openssl_add_all_macs_int();
-#endif
-    return 1;
-}
-
-DEFINE_RUN_ONCE_STATIC_ALT(ossl_init_no_add_all_macs, ossl_init_add_all_macs)
-{
-    /* Do nothing */
-    return 1;
-}
-
-static CRYPTO_ONCE add_all_kdfs = CRYPTO_ONCE_STATIC_INIT;
-DEFINE_RUN_ONCE_STATIC(ossl_init_add_all_kdfs)
-{
-    /*
-     * OPENSSL_NO_AUTOALGINIT is provided here to prevent at compile time
-     * pulling in all the macs during static linking
-     */
-#ifndef OPENSSL_NO_AUTOALGINIT
-    OSSL_TRACE(INIT, "openssl_add_all_kdfs_int()\n");
-    openssl_add_all_kdfs_int();
-#endif
-    return 1;
-}
-
-DEFINE_RUN_ONCE_STATIC_ALT(ossl_init_no_add_all_kdfs, ossl_init_add_all_kdfs)
-{
-    /* Do nothing */
-    return 1;
-}
-
 static CRYPTO_ONCE config = CRYPTO_ONCE_STATIC_INIT;
 static int config_inited = 0;
 static const OPENSSL_INIT_SETTINGS *conf_settings = NULL;
@@ -376,7 +339,7 @@ void OPENSSL_cleanup(void)
 
     /*
      * TODO(3.0): This function needs looking at with a view to moving most/all
-     * of this into onfree handlers in OPENSSL_CTX.
+     * of this into onfree handlers in OSSL_LIB_CTX.
      */
 
     /* If we've not been inited then no need to deinit */
@@ -433,7 +396,7 @@ void OPENSSL_cleanup(void)
      * - rand_cleanup_int could call an ENGINE's RAND cleanup function so
      * must be called before engine_cleanup_int()
      * - ENGINEs use CRYPTO_EX_DATA and therefore, must be cleaned up
-     * before the ex data handlers are wiped during default openssl_ctx deinit.
+     * before the ex data handlers are wiped during default ossl_lib_ctx deinit.
      * - conf_modules_free_int() can end up in ENGINE code so must be called
      * before engine_cleanup_int()
      * - ENGINEs and additional EVP algorithms might use added OIDs names so
@@ -449,11 +412,14 @@ void OPENSSL_cleanup(void)
     OSSL_TRACE(INIT, "OPENSSL_cleanup: engine_cleanup_int()\n");
     engine_cleanup_int();
 #endif
+
+#ifndef OPENSSL_NO_DEPRECATED_3_0
     OSSL_TRACE(INIT, "OPENSSL_cleanup: ossl_store_cleanup_int()\n");
     ossl_store_cleanup_int();
+#endif
 
-    OSSL_TRACE(INIT, "OPENSSL_cleanup: openssl_ctx_default_deinit()\n");
-    openssl_ctx_default_deinit();
+    OSSL_TRACE(INIT, "OPENSSL_cleanup: ossl_lib_ctx_default_deinit()\n");
+    ossl_lib_ctx_default_deinit();
 
     ossl_cleanup_thread();
 
@@ -472,6 +438,11 @@ void OPENSSL_cleanup(void)
     OSSL_TRACE(INIT, "OPENSSL_cleanup: CRYPTO_secure_malloc_done()\n");
     CRYPTO_secure_malloc_done();
 
+#ifndef OPENSSL_NO_CMP
+    OSSL_TRACE(INIT, "OPENSSL_cleanup: OSSL_CMP_log_close()\n");
+    OSSL_CMP_log_close();
+#endif
+
     OSSL_TRACE(INIT, "OPENSSL_cleanup: ossl_trace_cleanup()\n");
     ossl_trace_cleanup();
 
@@ -487,12 +458,12 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
 {
     /*
      * TODO(3.0): This function needs looking at with a view to moving most/all
-     * of this into OPENSSL_CTX.
+     * of this into OSSL_LIB_CTX.
      */
 
     if (stopped) {
         if (!(opts & OPENSSL_INIT_BASE_ONLY))
-            CRYPTOerr(CRYPTO_F_OPENSSL_INIT_CRYPTO, ERR_R_INIT_FAIL);
+            ERR_raise(ERR_LIB_CRYPTO, ERR_R_INIT_FAIL);
         return 0;
     }
 
@@ -556,24 +527,6 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
 
     if ((opts & OPENSSL_INIT_ADD_ALL_DIGESTS)
             && !RUN_ONCE(&add_all_digests, ossl_init_add_all_digests))
-        return 0;
-
-    if ((opts & OPENSSL_INIT_NO_ADD_ALL_MACS)
-            && !RUN_ONCE_ALT(&add_all_macs, ossl_init_no_add_all_macs,
-                             ossl_init_add_all_macs))
-        return 0;
-
-    if ((opts & OPENSSL_INIT_ADD_ALL_MACS)
-            && !RUN_ONCE(&add_all_macs, ossl_init_add_all_macs))
-        return 0;
-
-    if ((opts & OPENSSL_INIT_NO_ADD_ALL_KDFS)
-            && !RUN_ONCE_ALT(&add_all_kdfs, ossl_init_no_add_all_kdfs,
-                             ossl_init_add_all_kdfs))
-        return 0;
-
-    if ((opts & OPENSSL_INIT_ADD_ALL_KDFS)
-            && !RUN_ONCE(&add_all_kdfs, ossl_init_add_all_kdfs))
         return 0;
 
     if ((opts & OPENSSL_INIT_ATFORK)
@@ -702,7 +655,7 @@ int OPENSSL_atexit(void (*handler)(void))
 #endif
 
     if ((newhand = OPENSSL_malloc(sizeof(*newhand))) == NULL) {
-        CRYPTOerr(CRYPTO_F_OPENSSL_ATEXIT, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
         return 0;
     }
 
@@ -713,29 +666,3 @@ int OPENSSL_atexit(void (*handler)(void))
     return 1;
 }
 
-#ifdef OPENSSL_SYS_UNIX
-/*
- * The following three functions are for OpenSSL developers.  This is
- * where we set/reset state across fork (called via pthread_atfork when
- * it exists, or manually by the application when it doesn't).
- *
- * WARNING!  If you put code in either OPENSSL_fork_parent or
- * OPENSSL_fork_child, you MUST MAKE SURE that they are async-signal-
- * safe.  See this link, for example:
- *      http://man7.org/linux/man-pages/man7/signal-safety.7.html
- */
-
-void OPENSSL_fork_prepare(void)
-{
-}
-
-void OPENSSL_fork_parent(void)
-{
-}
-
-void OPENSSL_fork_child(void)
-{
-    rand_fork();
-    /* TODO(3.0): Inform all providers about a fork event */
-}
-#endif

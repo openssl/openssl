@@ -21,7 +21,8 @@
 # Performance under big-endian OS such as HP-UX is 179MBps*1GHz, which
 # is >50% better than HP C and >2x better than gcc.
 
-$output = pop;
+# $output is the last argument if it looks like a file (it has an extension)
+$output = $#ARGV >= 0 && $ARGV[$#ARGV] =~ m|\.\w+$| ? pop : undef;
 
 $code=<<___;
 .ident  \"sha1-ia64.s, version 1.3\"

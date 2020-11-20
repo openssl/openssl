@@ -90,13 +90,6 @@ static int test_load_config(void)
         return 0;
     }
 
-    /* verify whether RANDFILE is set correctly */
-    str = NCONF_get_string(conf, "", "RANDFILE");
-    if (!TEST_ptr(str) || !TEST_str_eq(str, "./.rnd")) {
-        TEST_note("RANDFILE incorrect");
-        return 0;
-    }
-
     /* verify whether CA_default/default_days is set */
     val = 0;
     if (!TEST_int_eq(NCONF_get_number(conf, "CA_default", "default_days", &val), 1)

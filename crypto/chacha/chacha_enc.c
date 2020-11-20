@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -11,7 +11,9 @@
 
 #include <string.h>
 
-#include "internal/chacha.h"
+#include "internal/endian.h"
+#include "crypto/chacha.h"
+#include "crypto/ctype.h"
 
 typedef unsigned int u32;
 typedef unsigned char u8;
@@ -42,10 +44,7 @@ static void chacha20_core(chacha_buf *output, const u32 input[16])
 {
     u32 x[16];
     int i;
-    const union {
-        long one;
-        char little;
-    } is_endian = { 1 };
+    DECLARE_IS_ENDIAN;
 
     memcpy(x, input, sizeof(x));
 
@@ -60,7 +59,7 @@ static void chacha20_core(chacha_buf *output, const u32 input[16])
         QUARTERROUND(3, 4, 9, 14);
     }
 
-    if (is_endian.little) {
+    if (IS_LITTLE_ENDIAN) {
         for (i = 0; i < 16; ++i)
             output->u[i] = x[i] + input[i];
     } else {
@@ -78,10 +77,18 @@ void ChaCha20_ctr32(unsigned char *out, const unsigned char *inp,
     size_t todo, i;
 
     /* sigma constant "expand 32-byte k" in little-endian encoding */
-    input[0] = ((u32)'e') | ((u32)'x'<<8) | ((u32)'p'<<16) | ((u32)'a'<<24);
-    input[1] = ((u32)'n') | ((u32)'d'<<8) | ((u32)' '<<16) | ((u32)'3'<<24);
-    input[2] = ((u32)'2') | ((u32)'-'<<8) | ((u32)'b'<<16) | ((u32)'y'<<24);
-    input[3] = ((u32)'t') | ((u32)'e'<<8) | ((u32)' '<<16) | ((u32)'k'<<24);
+    input[0] = ((u32)ossl_toascii('e')) | ((u32)ossl_toascii('x') << 8)
+               | ((u32)ossl_toascii('p') << 16)
+               | ((u32)ossl_toascii('a') << 24);
+    input[1] = ((u32)ossl_toascii('n')) | ((u32)ossl_toascii('d') << 8)
+               | ((u32)ossl_toascii(' ') << 16)
+               | ((u32)ossl_toascii('3') << 24);
+    input[2] = ((u32)ossl_toascii('2')) | ((u32)ossl_toascii('-') << 8)
+               | ((u32)ossl_toascii('b') << 16)
+               | ((u32)ossl_toascii('y') << 24);
+    input[3] = ((u32)ossl_toascii('t')) | ((u32)ossl_toascii('e') << 8)
+               | ((u32)ossl_toascii(' ') << 16)
+               | ((u32)ossl_toascii('k') << 24);
 
     input[4] = key[0];
     input[5] = key[1];

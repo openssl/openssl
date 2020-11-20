@@ -34,19 +34,22 @@ L CRMF          include/openssl/crmf.h          crypto/crmf/crmf_err.c
 L CMP           include/openssl/cmp.h           crypto/cmp/cmp_err.c
 L CT            include/openssl/ct.h            crypto/ct/ct_err.c
 L ASYNC         include/openssl/async.h         crypto/async/async_err.c
-L KDF           include/openssl/kdf.h           crypto/kdf/kdf_err.c
-L SM2           crypto/include/internal/sm2.h   crypto/sm2/sm2_err.c
+L KDF           NONE                            crypto/kdf/kdf_err.c
+L SM2           include/crypto/sm2.h            crypto/sm2/sm2_err.c
 L OSSL_STORE    include/openssl/store.h         crypto/store/store_err.c
 L ESS           include/openssl/ess.h           crypto/ess/ess_err.c
 L PROP          include/internal/property.h     crypto/property/property_err.c
-L PROV          providers/common/include/internal/providercommon.h providers/common/provider_err.c
+L PROV          providers/common/include/prov/providercommon.h providers/common/provider_err.c
+L OSSL_ENCODER  include/openssl/encoder.h       crypto/encode_decode/encoder_err.c
+L OSSL_DECODER  include/openssl/decoder.h       crypto/encode_decode/decoder_err.c
+L HTTP          include/openssl/http.h          crypto/http/http_err.c
 
 # additional header files to be scanned for function names
 L NONE          include/openssl/x509_vfy.h      NONE
-L NONE          crypto/ec/ec_lcl.h              NONE
-L NONE          crypto/cms/cms_lcl.h            NONE
-L NONE          crypto/ct/ct_locl.h             NONE
-L NONE          ssl/ssl_locl.h                  NONE
+L NONE          crypto/ec/ec_local.h            NONE
+L NONE          crypto/cms/cms_local.h          NONE
+L NONE          crypto/ct/ct_local.h            NONE
+L NONE          ssl/ssl_local.h                 NONE
 
 # SSL/TLS alerts
 R SSL_R_SSLV3_ALERT_UNEXPECTED_MESSAGE          1010

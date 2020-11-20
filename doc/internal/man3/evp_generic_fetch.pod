@@ -2,35 +2,60 @@
 
 =head1 NAME
 
-evp_generic_fetch - generic algorithm fetcher and method creator for EVP
+evp_generic_fetch, evp_generic_fetch_by_number
+- generic algorithm fetchers and method creators for EVP
 
 =head1 SYNOPSIS
 
  /* Only for EVP source */
- #include "evp_locl.h"
+ #include "evp_local.h"
 
- void *evp_generic_fetch(OPENSSL_CTX *libctx, int operation_id,
+ void *evp_generic_fetch(OSSL_LIB_CTX *libctx, int operation_id,
                          const char *name, const char *properties,
-                         void *(*new_method)(const OSSL_DISPATCH *fns,
-                                             OSSL_PROVIDER *prov),
+                         void *(*new_method)(int name_id,
+                                             const OSSL_DISPATCH *fns,
+                                             OSSL_PROVIDER *prov,
+                                             void *method_data),
+                         void *method_data,
                          int (*up_ref_method)(void *),
                          void (*free_method)(void *));
+
+ void *evp_generic_fetch_by_number(OSSL_LIB_CTX *ctx, int operation_id,
+                                   int name_id, const char *properties,
+                                   void *(*new_method)(int name_id,
+                                                       const OSSL_DISPATCH *fns,
+                                                       OSSL_PROVIDER *prov,
+                                                       void *method_data),
+                                   void *method_data,
+                                   int (*up_ref_method)(void *),
+                                   void (*free_method)(void *));
 
 =head1 DESCRIPTION
 
 evp_generic_fetch() calls ossl_method_construct() with the given
-C<libctx>, C<operation_id>, C<name>, and C<properties> and uses
+I<libctx>, I<operation_id>, I<name>, and I<properties> and uses
 it to create an EVP method with the help of the functions
-C<new_method>, C<up_ref_method>, and C<free_method>.
+I<new_method>, I<up_ref_method>, and I<free_method>.
 
-The three functions are supposed to:
+evp_generic_fetch_by_number() does the same thing as evp_generic_fetch(), 
+but takes a numeric I<name_id> instead of a name.
+I<name_id> must always be nonzero; as a matter of fact, it being zero
+is considered a programming error.
+This is meant to be used when one method needs to fetch an associated
+other method, and is typically called from inside the given function
+I<new_method>.
+
+The three functions I<new_method>, I<up_ref_method>, and
+I<free_method> are supposed to:
 
 =over 4
 
 =item new_method()
 
 creates an internal method from function pointers found in the
-dispatch table C<fns>.
+dispatch table I<fns>, with name identity I<name_id>.
+The provider I<prov> and I<method_data> are also passed to be used as
+new_method() sees fit.
 
 =item up_ref_method()
 
@@ -45,72 +70,78 @@ frees the given method.
 
 =head1 RETURN VALUES
 
-evp_generic_fetch() returns a method on success, or B<NULL> on error.
+evp_generic_fetch() returns a method on success, or NULL on error.
 
 =head1 EXAMPLES
 
 This is a short example of the fictitious EVP API and operation called
-C<EVP_FOO>.
+B<EVP_FOO>.
 
 To begin with, let's assume something like this in
-C<include/openssl/core_numbers.h>:
+F<include/openssl/core_dispatch.h>:
 
-    #define OSSL_OP_FOO                         100
+    #define OSSL_OP_FOO                           100
 
-    #define OSSL_OP_FOO_NEWCTX_FUNC            2001
-    #define OSSL_OP_FOO_INIT                   2002
-    #define OSSL_OP_FOO_OPERATE                2003
-    #define OSSL_OP_FOO_CLEANCTX_FUNC          2004
-    #define OSSL_OP_FOO_FREECTX_FUNC           2005
-    OSSL_CORE_MAKE_FUNC(void *,OP_foo_newctx,(void))
-    OSSL_CORE_MAKE_FUNC(int,OP_foo_init,(void *vctx))
-    OSSL_CORE_MAKE_FUNC(int,OP_foo_operate,(void *vctx,
-                                            unsigned char *out, size_t *out_l,
-                                            unsigned char *in, size_t in_l))
-    OSSL_CORE_MAKE_FUNC(void,OP_foo_cleanctx,(void *vctx))
-    OSSL_CORE_MAKE_FUNC(void,OP_foo_freectx,(void *vctx))
+    #define OSSL_FUNC_FOO_NEWCTX_FUNC            2001
+    #define OSSL_FUNC_FOO_INIT                   2002
+    #define OSSL_FUNC_FOO_OPERATE                2003
+    #define OSSL_FUNC_FOO_CLEANCTX_FUNC          2004
+    #define OSSL_FUNC_FOO_FREECTX_FUNC           2005
+
+    OSSL_CORE_MAKE_FUNC(void *, foo_newctx, (void))
+    OSSL_CORE_MAKE_FUNC(int, foo_init, (void *vctx))
+    OSSL_CORE_MAKE_FUNC(int, foo_operate, (void *vctx,
+                                           unsigned char *out, size_t *out_l,
+                                           unsigned char *in, size_t in_l))
+    OSSL_CORE_MAKE_FUNC(void, foo_cleanctx, (void *vctx))
+    OSSL_CORE_MAKE_FUNC(void, foo_freectx, (void *vctx))
 
 And here's the implementation of the FOO method fetcher:
 
     /* typedef struct evp_foo_st EVP_FOO */
     struct evp_foo_st {
         OSSL_PROVIDER *prov;
+        int name_id;
 	CRYPTO_REF_COUNT refcnt;
-        OSSL_OP_foo_newctx_fn *newctx;
-        OSSL_OP_foo_init_fn *init;
-        OSSL_OP_foo_operate_fn *operate;
-        OSSL_OP_foo_cleanctx_fn *cleanctx;
-        OSSL_OP_foo_freectx_fn *freectx;
+        OSSL_FUNC_foo_newctx_fn *newctx;
+        OSSL_FUNC_foo_init_fn *init;
+        OSSL_FUNC_foo_operate_fn *operate;
+        OSSL_FUNC_foo_cleanctx_fn *cleanctx;
+        OSSL_FUNC_foo_freectx_fn *freectx;
     };
 
     /*
      * In this example, we have a public method creator and destructor.
      * It's not absolutely necessary, but is in the spirit of OpenSSL.
      */
-    EVP_FOO *EVP_FOO_meth_from_dispatch(const OSSL_DISPATCH *fns,
-                                        OSSL_PROVIDER *prov)
+    EVP_FOO *EVP_FOO_meth_from_dispatch(int name_id,
+                                        const OSSL_DISPATCH *fns,
+                                        OSSL_PROVIDER *prov,
+                                        void *data)
     {
         EVP_FOO *foo = NULL;
 
         if ((foo = OPENSSL_zalloc(sizeof(*foo))) == NULL)
             return NULL;
 
+        foo->name_id = name_id;
+
         for (; fns->function_id != 0; fns++) {
             switch (fns->function_id) {
-            case OSSL_OP_FOO_NEWCTX_FUNC:
-                foo->newctx = OSSL_get_OP_foo_newctx(fns);
+            case OSSL_FUNC_FOO_NEWCTX:
+                foo->newctx = OSSL_FUNC_foo_newctx(fns);
                 break;
-            case OSSL_OP_FOO_INIT:
-                foo->init = OSSL_get_OP_foo_init(fns);
+            case OSSL_FUNC_FOO_INIT:
+                foo->init = OSSL_FUNC_foo_init(fns);
                 break;
-            case OSSL_OP_FOO_OPERATE:
-                foo->operate = OSSL_get_OP_foo_operate(fns);
+            case OSSL_FUNC_FOO_OPERATE:
+                foo->operate = OSSL_FUNC_foo_operate(fns);
                 break;
-            case OSSL_OP_FOO_CLEANCTX_FUNC:
-                foo->cleanctx = OSSL_get_OP_foo_cleanctx(fns);
+            case OSSL_FUNC_FOO_CLEANCTX:
+                foo->cleanctx = OSSL_FUNC_foo_cleanctx(fns);
                 break;
-            case OSSL_OP_FOO_FREECTX_FUNC:
-                foo->freectx = OSSL_get_OP_foo_freectx(fns);
+            case OSSL_FUNC_FOO_FREECTX:
+                foo->freectx = OSSL_FUNC_foo_freectx(fns);
                 break;
             }
         }
@@ -151,7 +182,7 @@ And here's the implementation of the FOO method fetcher:
         EVP_FOO_meth_free(vfoo);
     }
 
-    EVP_FOO *EVP_FOO_fetch(OPENSSL_CTX *ctx,
+    EVP_FOO *EVP_FOO_fetch(OSSL_LIB_CTX *ctx,
                            const char *name,
                            const char *properties)
     {
@@ -222,7 +253,7 @@ And finally, the library functions:
 
 =head1 SEE ALSO
 
-L<ossl_method_construct>
+L<ossl_method_construct(3)>
 
 =head1 HISTORY
 
@@ -230,7 +261,7 @@ The functions described here were all added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

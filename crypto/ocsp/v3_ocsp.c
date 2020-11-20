@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -12,7 +12,7 @@
 # include <openssl/conf.h>
 # include <openssl/asn1.h>
 # include <openssl/ocsp.h>
-# include "ocsp_lcl.h"
+# include "ocsp_local.h"
 # include <openssl/x509v3.h>
 # include "../x509/ext_dat.h"
 
@@ -203,7 +203,7 @@ static void *d2i_ocsp_nonce(void *a, const unsigned char **pp, long length)
  err:
     if ((pos == NULL) || (*pos != os))
         ASN1_OCTET_STRING_free(os);
-    OCSPerr(OCSP_F_D2I_OCSP_NONCE, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_OCSP, ERR_R_MALLOC_FAILURE);
     return NULL;
 }
 
