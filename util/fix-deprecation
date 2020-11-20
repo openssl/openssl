@@ -93,6 +93,7 @@ while ( $headertext =~ m/(.*?)                          # $1
         && (defined $version && $currentguard ne $version
             || $before !~ /^\s*$/s)) {
         print "#${last_cppspaces}endif\n";
+        $cppspaces = substr($cppspaces, 0, -1);
         $currentguard = "";
     }
     print $before;
