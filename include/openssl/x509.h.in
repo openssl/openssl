@@ -647,15 +647,18 @@ void X509_INFO_free(X509_INFO *a);
 char *X509_NAME_oneline(const X509_NAME *a, char *buf, int size);
 
 /* TODO move this block of decls to asn1.h when 'breaking change' is possible */
-DEPRECATEDIN_3_0(int ASN1_verify(i2d_of_void *i2d, X509_ALGOR *algor1,
-                                 ASN1_BIT_STRING *signature, char *data,
-                                 EVP_PKEY *pkey))
-DEPRECATEDIN_3_0(int ASN1_digest(i2d_of_void *i2d, const EVP_MD *type,
-                                 char *data,
-                                 unsigned char *md, unsigned int *len))
-DEPRECATEDIN_3_0(int ASN1_sign(i2d_of_void *i2d, X509_ALGOR *algor1,
-                               X509_ALGOR *algor2, ASN1_BIT_STRING *signature,
-                               char *data, EVP_PKEY *pkey, const EVP_MD *type))
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+OSSL_DEPRECATEDIN_3_0
+int ASN1_verify(i2d_of_void *i2d, X509_ALGOR *algor1,
+                ASN1_BIT_STRING *signature, char *data, EVP_PKEY *pkey);
+OSSL_DEPRECATEDIN_3_0
+int ASN1_digest(i2d_of_void *i2d, const EVP_MD *type, char *data,
+                unsigned char *md, unsigned int *len);
+OSSL_DEPRECATEDIN_3_0
+int ASN1_sign(i2d_of_void *i2d, X509_ALGOR *algor1, X509_ALGOR *algor2,
+              ASN1_BIT_STRING *signature, char *data, EVP_PKEY *pkey,
+              const EVP_MD *type);
+#endif
 int ASN1_item_digest(const ASN1_ITEM *it, const EVP_MD *type, void *data,
                      unsigned char *md, unsigned int *len);
 int ASN1_item_verify(const ASN1_ITEM *it, const X509_ALGOR *alg,
@@ -766,8 +769,10 @@ int X509_CRL_up_ref(X509_CRL *crl);
 long X509_CRL_get_version(const X509_CRL *crl);
 const ASN1_TIME *X509_CRL_get0_lastUpdate(const X509_CRL *crl);
 const ASN1_TIME *X509_CRL_get0_nextUpdate(const X509_CRL *crl);
-DEPRECATEDIN_1_1_0(ASN1_TIME *X509_CRL_get_lastUpdate(X509_CRL *crl))
-DEPRECATEDIN_1_1_0(ASN1_TIME *X509_CRL_get_nextUpdate(X509_CRL *crl))
+#ifndef OPENSSL_NO_DEPRECATED_1_1_0
+OSSL_DEPRECATEDIN_1_1_0 ASN1_TIME *X509_CRL_get_lastUpdate(X509_CRL *crl);
+OSSL_DEPRECATEDIN_1_1_0 ASN1_TIME *X509_CRL_get_nextUpdate(X509_CRL *crl);
+#endif
 X509_NAME *X509_CRL_get_issuer(const X509_CRL *crl); /* TODO change to get0_ */
 const STACK_OF(X509_EXTENSION) *X509_CRL_get0_extensions(const X509_CRL *crl);
 STACK_OF(X509_REVOKED) *X509_CRL_get_REVOKED(X509_CRL *crl);
