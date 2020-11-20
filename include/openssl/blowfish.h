@@ -46,29 +46,29 @@ typedef struct bf_key_st {
 } BF_KEY;
 
 # endif /* OPENSSL_NO_DEPRECATED_3_0 */
-
-DEPRECATEDIN_3_0(void BF_set_key(BF_KEY *key, int len,
-                                 const unsigned char *data))
-
-DEPRECATEDIN_3_0(void BF_encrypt(BF_LONG *data, const BF_KEY *key))
-DEPRECATEDIN_3_0(void BF_decrypt(BF_LONG *data, const BF_KEY *key))
-
-DEPRECATEDIN_3_0(void BF_ecb_encrypt(const unsigned char *in,
-                                     unsigned char *out, const BF_KEY *key,
-                                     int enc))
-DEPRECATEDIN_3_0(void BF_cbc_encrypt(const unsigned char *in,
-                                     unsigned char *out, long length,
-                                     const BF_KEY *schedule,
-                                     unsigned char *ivec, int enc))
-DEPRECATEDIN_3_0(void BF_cfb64_encrypt(const unsigned char *in,
-                                       unsigned char *out,
-                                       long length, const BF_KEY *schedule,
-                                       unsigned char *ivec, int *num, int enc))
-DEPRECATEDIN_3_0(void BF_ofb64_encrypt(const unsigned char *in,
-                                       unsigned char *out,
-                                       long length, const BF_KEY *schedule,
-                                       unsigned char *ivec, int *num))
-DEPRECATEDIN_3_0(const char *BF_options(void))
+# ifndef OPENSSL_NO_DEPRECATED_3_0
+OSSL_DEPRECATEDIN_3_0 void BF_set_key(BF_KEY *key, int len,
+                                      const unsigned char *data);
+OSSL_DEPRECATEDIN_3_0 void BF_encrypt(BF_LONG *data, const BF_KEY *key);
+OSSL_DEPRECATEDIN_3_0 void BF_decrypt(BF_LONG *data, const BF_KEY *key);
+OSSL_DEPRECATEDIN_3_0 void BF_ecb_encrypt(const unsigned char *in,
+                                          unsigned char *out, const BF_KEY *key,
+                                          int enc);
+OSSL_DEPRECATEDIN_3_0 void BF_cbc_encrypt(const unsigned char *in,
+                                          unsigned char *out, long length,
+                                          const BF_KEY *schedule,
+                                          unsigned char *ivec, int enc);
+OSSL_DEPRECATEDIN_3_0 void BF_cfb64_encrypt(const unsigned char *in,
+                                            unsigned char *out,
+                                            long length, const BF_KEY *schedule,
+                                            unsigned char *ivec, int *num,
+                                            int enc);
+OSSL_DEPRECATEDIN_3_0 void BF_ofb64_encrypt(const unsigned char *in,
+                                            unsigned char *out,
+                                            long length, const BF_KEY *schedule,
+                                            unsigned char *ivec, int *num);
+OSSL_DEPRECATEDIN_3_0 const char *BF_options(void);
+# endif
 
 # ifdef  __cplusplus
 }
