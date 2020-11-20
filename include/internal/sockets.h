@@ -160,7 +160,11 @@ struct servent *PASCAL getservbyname(const char *, const char *);
 #  define ioctlsocket(a,b,c)      ioctl(a,b,c)
 #  define closesocket(s)          close(s)
 #  define readsocket(s,b,n)       read((s),(b),(n))
-#  define writesocket(s,b,n)      write((s),(b),(n))
+#  if defined(MSG_NOSIGNAL)
+#   define writesocket(s,b,n)     send((s),(b),(n),MSG_NOSIGNAL)
+#  else
+#   define writesocket(s,b,n)     write((s),(b),(n))
+#  endif
 # endif
 
 /* also in apps/include/apps.h */
