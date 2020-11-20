@@ -101,8 +101,9 @@ void CONF_free(LHASH_OF(CONF_VALUE) *conf);
 int CONF_dump_fp(LHASH_OF(CONF_VALUE) *conf, FILE *out);
 #endif
 int CONF_dump_bio(LHASH_OF(CONF_VALUE) *conf, BIO *out);
-
-DEPRECATEDIN_1_1_0(void OPENSSL_config(const char *config_name))
+#ifndef OPENSSL_NO_DEPRECATED_1_1_0
+OSSL_DEPRECATEDIN_1_1_0 void OPENSSL_config(const char *config_name);
+#endif
 
 #ifndef OPENSSL_NO_DEPRECATED_1_1_0
 # define OPENSSL_no_config() \
@@ -125,7 +126,9 @@ struct conf_st {
 CONF *NCONF_new_ex(OSSL_LIB_CTX *libctx, CONF_METHOD *meth);
 CONF *NCONF_new(CONF_METHOD *meth);
 CONF_METHOD *NCONF_default(void);
-DEPRECATEDIN_3_0(CONF_METHOD *NCONF_WIN32(void))
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+OSSL_DEPRECATEDIN_3_0 CONF_METHOD *NCONF_WIN32(void);
+#endif
 void NCONF_free(CONF *conf);
 void NCONF_free_data(CONF *conf);
 
