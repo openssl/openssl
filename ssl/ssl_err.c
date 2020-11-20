@@ -15,8 +15,6 @@
 #ifndef OPENSSL_NO_ERR
 
 static const ERR_STRING_DATA SSL_str_reasons[] = {
-    {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_ALGORITHM_FETCH_FAILED),
-    "algorithm fetch failed"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_APPLICATION_DATA_AFTER_CLOSE_NOTIFY),
     "application data after close notify"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_APP_DATA_IN_HANDSHAKE),
@@ -90,8 +88,6 @@ static const ERR_STRING_DATA SSL_str_reasons[] = {
     "ciphersuite digest has changed"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_CIPHER_CODE_WRONG_LENGTH),
     "cipher code wrong length"},
-    {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_CIPHER_OR_HASH_UNAVAILABLE),
-    "cipher or hash unavailable"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_CLIENTHELLO_TLSEXT), "clienthello tlsext"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_COMPRESSED_LENGTH_TOO_LONG),
     "compressed length too long"},

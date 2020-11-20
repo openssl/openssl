@@ -3776,7 +3776,8 @@ static int construct_stateless_ticket(SSL *s, WPACKET *pkt, uint32_t age_add,
                                               s->ctx->propq);
 
         if (cipher == NULL) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_ALGORITHM_FETCH_FAILED);
+            /* Error is already recorded */
+            SSLfatal_alert(s, SSL_AD_INTERNAL_ERROR);
             goto err;
         }
 
