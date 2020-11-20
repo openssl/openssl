@@ -392,23 +392,16 @@ void ERR_vset_error(int lib, int reason, const char *fmt, va_list args);
 void ERR_set_error_data(char *data, int flags);
 
 unsigned long ERR_get_error(void);
-/*
- * TODO(3.0) consider if the following three functions should be deprecated.
- * They all drop the error record from the error queue, so regardless of which
- * one is used, the rest of the information is lost, making them not so useful.
- * The recommendation should be to use the peek functions to extract all the
- * additional data.
- */
-unsigned long ERR_get_error_line(const char **file, int *line);
-unsigned long ERR_get_error_func(const char **func);
-unsigned long ERR_get_error_data(const char **data, int *flags);
 unsigned long ERR_get_error_all(const char **file, int *line,
                                 const char **func,
                                 const char **data, int *flags);
-DEPRECATEDIN_3_0(unsigned long ERR_get_error_line_data(const char **file,
-                                                     int *line,
-                                                     const char **data,
-                                                     int *flags))
+# ifndef OPENSSL_NO_DEPRECATED_3_0
+OSSL_DEPRECATEDIN_3_0
+unsigned long ERR_get_error_line(const char **file, int *line);
+OSSL_DEPRECATEDIN_3_0
+unsigned long ERR_get_error_line_data(const char **file, int *line,
+                                      const char **data, int *flags);
+#endif
 unsigned long ERR_peek_error(void);
 unsigned long ERR_peek_error_line(const char **file, int *line);
 unsigned long ERR_peek_error_func(const char **func);
@@ -416,10 +409,11 @@ unsigned long ERR_peek_error_data(const char **data, int *flags);
 unsigned long ERR_peek_error_all(const char **file, int *line,
                                  const char **func,
                                  const char **data, int *flags);
-DEPRECATEDIN_3_0(unsigned long ERR_peek_error_line_data(const char **file,
-                                                      int *line,
-                                                      const char **data,
-                                                      int *flags))
+# ifndef OPENSSL_NO_DEPRECATED_3_0
+OSSL_DEPRECATEDIN_3_0
+unsigned long ERR_peek_error_line_data(const char **file, int *line,
+                                       const char **data, int *flags);
+# endif
 unsigned long ERR_peek_last_error(void);
 unsigned long ERR_peek_last_error_line(const char **file, int *line);
 unsigned long ERR_peek_last_error_func(const char **func);
@@ -427,10 +421,11 @@ unsigned long ERR_peek_last_error_data(const char **data, int *flags);
 unsigned long ERR_peek_last_error_all(const char **file, int *line,
                                       const char **func,
                                       const char **data, int *flags);
-DEPRECATEDIN_3_0(unsigned long ERR_peek_last_error_line_data(const char **file,
-                                                           int *line,
-                                                           const char **data,
-                                                           int *flags))
+# ifndef OPENSSL_NO_DEPRECATED_3_0
+OSSL_DEPRECATEDIN_3_0
+unsigned long ERR_peek_last_error_line_data(const char **file, int *line,
+                                            const char **data, int *flags);
+# endif
 
 void ERR_clear_error(void);
 

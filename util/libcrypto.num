@@ -3176,7 +3176,7 @@ ERR_load_EVP_strings                    3241	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_
 X509_ATTRIBUTE_set1_data                3242	3_0_0	EXIST::FUNCTION:
 d2i_X509_fp                             3243	3_0_0	EXIST::FUNCTION:STDIO
 MD2_Init                                3244	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,MD2
-ERR_get_error_line                      3245	3_0_0	EXIST::FUNCTION:
+ERR_get_error_line                      3245	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 X509_CRL_get_ext_by_NID                 3246	3_0_0	EXIST::FUNCTION:
 OPENSSL_INIT_free                       3247	3_0_0	EXIST::FUNCTION:
 PBE2PARAM_free                          3248	3_0_0	EXIST::FUNCTION:
@@ -4693,8 +4693,6 @@ EVP_PKEY_CTX_get_params                 ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_CTX_gettable_params            ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_CTX_settable_params            ?	3_0_0	EXIST::FUNCTION:
 EVP_CIPHER_CTX_tag_length               ?	3_0_0	EXIST::FUNCTION:
-ERR_get_error_func                      ?	3_0_0	EXIST::FUNCTION:
-ERR_get_error_data                      ?	3_0_0	EXIST::FUNCTION:
 ERR_get_error_all                       ?	3_0_0	EXIST::FUNCTION:
 ERR_peek_error_func                     ?	3_0_0	EXIST::FUNCTION:
 ERR_peek_error_data                     ?	3_0_0	EXIST::FUNCTION:

@@ -47,7 +47,9 @@ OpenSSL 3.0
   * Added OSSL_ENCODER, a generic encoder API.
   * Added OSSL_PARAM_BLD, an easier to use API to OSSL_PARAM.
   * Added error raising macros, ERR_raise() and ERR_raise_data().
-  * Deprecated ERR_put_error().
+  * Deprecated ERR_put_error(), ERR_get_error_line(), ERR_get_error_line_data(),
+    ERR_peek_error_line_data(), ERR_peek_last_error_line_data() and
+    ERR_func_error_string().
   * Added OSSL_PROVIDER_available(), to check provider availibility.
   * Added 'openssl mac' that uses the EVP_MAC API.
   * Added 'openssl kdf' that uses the EVP_KDF API.
