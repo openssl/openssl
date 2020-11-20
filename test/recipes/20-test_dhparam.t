@@ -17,6 +17,8 @@ use OpenSSL::Test::Utils;
 
 setup("test_dhparam");
 
+plan skip_all => "DH is not supported in this build"
+    if disabled("dh");
 plan tests => 16;
 
 sub checkdhparams {
