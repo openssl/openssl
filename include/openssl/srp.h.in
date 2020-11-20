@@ -98,7 +98,10 @@ int SRP_VBASE_init(SRP_VBASE *vb, char *verifier_file);
 
 int SRP_VBASE_add0_user(SRP_VBASE *vb, SRP_user_pwd *user_pwd);
 /* This method ignores the configured seed and fails for an unknown user. */
-DEPRECATEDIN_1_1_0(SRP_user_pwd *SRP_VBASE_get_by_user(SRP_VBASE *vb, char *username))
+# ifndef OPENSSL_NO_DEPRECATED_1_1_0
+OSSL_DEPRECATEDIN_1_1_0
+SRP_user_pwd *SRP_VBASE_get_by_user(SRP_VBASE *vb, char *username);
+# endif
 /* NOTE: unlike in SRP_VBASE_get_by_user, caller owns the returned pointer.*/
 SRP_user_pwd *SRP_VBASE_get1_by_user(SRP_VBASE *vb, char *username);
 
