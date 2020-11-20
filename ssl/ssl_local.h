@@ -1187,6 +1187,12 @@ struct ssl_ctx_st {
     TLS_GROUP_INFO *group_list;
     size_t group_list_len;
     size_t group_list_max_len;
+
+    /* masks of disabled algorithms */
+    uint32_t disabled_enc_mask;
+    uint32_t disabled_mac_mask;
+    uint32_t disabled_mkey_mask;
+    uint32_t disabled_auth_mask;
 };
 
 typedef struct cert_pkey_st CERT_PKEY;
@@ -2389,7 +2395,7 @@ __owur int ssl_cipher_id_cmp(const SSL_CIPHER *a, const SSL_CIPHER *b);
 DECLARE_OBJ_BSEARCH_GLOBAL_CMP_FN(SSL_CIPHER, SSL_CIPHER, ssl_cipher_id);
 __owur int ssl_cipher_ptr_id_cmp(const SSL_CIPHER *const *ap,
                                  const SSL_CIPHER *const *bp);
-__owur STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
+__owur STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(SSL_CTX *ctx,
                                                     STACK_OF(SSL_CIPHER) *tls13_ciphersuites,
                                                     STACK_OF(SSL_CIPHER) **cipher_list,
                                                     STACK_OF(SSL_CIPHER) **cipher_list_by_id,
@@ -2410,7 +2416,7 @@ __owur int ssl_cipher_get_evp(SSL_CTX *ctxc, const SSL_SESSION *s,
 __owur int ssl_cipher_get_overhead(const SSL_CIPHER *c, size_t *mac_overhead,
                                    size_t *int_overhead, size_t *blocksize,
                                    size_t *ext_overhead);
-__owur int ssl_cert_is_disabled(size_t idx);
+__owur int ssl_cert_is_disabled(SSL_CTX *ctx, size_t idx);
 __owur const SSL_CIPHER *ssl_get_cipher_by_char(SSL *ssl,
                                                 const unsigned char *ptr,
                                                 int all);

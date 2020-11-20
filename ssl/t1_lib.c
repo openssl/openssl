@@ -2050,7 +2050,7 @@ static int tls12_sigalg_allowed(const SSL *s, int op, const SIGALG_LOOKUP *lu)
         return 0;
 
     /* See if public key algorithm allowed */
-    if (ssl_cert_is_disabled(lu->sig_idx))
+    if (ssl_cert_is_disabled(s->ctx, lu->sig_idx))
         return 0;
 
     if (lu->sig == NID_id_GostR3410_2012_256
@@ -2307,7 +2307,7 @@ int tls1_process_sigalgs(SSL *s)
         if (SSL_IS_TLS13(s) && sigptr->sig == EVP_PKEY_RSA)
             continue;
         /* If not disabled indicate we can explicitly sign */
-        if (pvalid[idx] == 0 && !ssl_cert_is_disabled(idx))
+        if (pvalid[idx] == 0 && !ssl_cert_is_disabled(s->ctx, idx))
             pvalid[idx] = CERT_PKEY_EXPLICIT_SIGN | CERT_PKEY_SIGN;
     }
     return 1;

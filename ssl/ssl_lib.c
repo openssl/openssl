@@ -656,7 +656,7 @@ int SSL_CTX_set_ssl_version(SSL_CTX *ctx, const SSL_METHOD *meth)
         ERR_raise(ERR_LIB_SSL, SSL_R_SSL_LIBRARY_HAS_NO_CIPHERS);
         return 0;
     }
-    sk = ssl_create_cipher_list(ctx->method,
+    sk = ssl_create_cipher_list(ctx,
                                 ctx->tls13_ciphersuites,
                                 &(ctx->cipher_list),
                                 &(ctx->cipher_list_by_id),
@@ -2701,7 +2701,7 @@ int SSL_CTX_set_cipher_list(SSL_CTX *ctx, const char *str)
 {
     STACK_OF(SSL_CIPHER) *sk;
 
-    sk = ssl_create_cipher_list(ctx->method, ctx->tls13_ciphersuites,
+    sk = ssl_create_cipher_list(ctx, ctx->tls13_ciphersuites,
                                 &ctx->cipher_list, &ctx->cipher_list_by_id, str,
                                 ctx->cert);
     /*
@@ -2725,7 +2725,7 @@ int SSL_set_cipher_list(SSL *s, const char *str)
 {
     STACK_OF(SSL_CIPHER) *sk;
 
-    sk = ssl_create_cipher_list(s->ctx->method, s->tls13_ciphersuites,
+    sk = ssl_create_cipher_list(s->ctx, s->tls13_ciphersuites,
                                 &s->cipher_list, &s->cipher_list_by_id, str,
                                 s->cert);
     /* see comment in SSL_CTX_set_cipher_list */
@@ -3190,7 +3190,7 @@ SSL_CTX *SSL_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
     if (!SSL_CTX_set_ciphersuites(ret, OSSL_default_ciphersuites()))
         goto err;
 
-    if (!ssl_create_cipher_list(ret->method,
+    if (!ssl_create_cipher_list(ret,
                                 ret->tls13_ciphersuites,
                                 &ret->cipher_list, &ret->cipher_list_by_id,
                                 OSSL_default_cipher_list(), ret->cert)
