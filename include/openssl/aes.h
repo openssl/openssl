@@ -82,17 +82,13 @@ OSSL_DEPRECATEDIN_3_0
 void AES_ofb128_encrypt(const unsigned char *in, unsigned char *out,
                         size_t length, const AES_KEY *key,
                         unsigned char *ivec, int *num);
-# endif
 
 /* NB: the IV is _two_ blocks long */
-# ifndef OPENSSL_NO_DEPRECATED_3_0
 OSSL_DEPRECATEDIN_3_0
 void AES_ige_encrypt(const unsigned char *in, unsigned char *out,
                      size_t length, const AES_KEY *key,
                      unsigned char *ivec, const int enc);
-# endif
 /* NB: the IV is _four_ blocks long */
-# ifndef OPENSSL_NO_DEPRECATED_3_0
 OSSL_DEPRECATEDIN_3_0
 void AES_bi_ige_encrypt(const unsigned char *in, unsigned char *out,
                         size_t length, const AES_KEY *key, const AES_KEY *key2,
