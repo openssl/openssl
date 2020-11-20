@@ -484,11 +484,9 @@ static int check_chain(X509_STORE_CTX *ctx)
             CHECK_CB((ctx->param->flags & X509_V_FLAG_X509_STRICT) != 0
                          && ret != 1 && ret != 0,
                      ctx, x, i, X509_V_ERR_INVALID_CA);
-            ret = 1;
             break;
         case 0:
-            CHECK_CB(ret != 0,  ctx, x, i, X509_V_ERR_INVALID_NON_CA);
-            ret = 1;
+            CHECK_CB(ret != 0, ctx, x, i, X509_V_ERR_INVALID_NON_CA);
             break;
         default:
             /* X509_V_FLAG_X509_STRICT is implicit for intermediate CAs */
@@ -496,7 +494,6 @@ static int check_chain(X509_STORE_CTX *ctx)
                      || ((i + 1 < num
                           || ctx->param->flags & X509_V_FLAG_X509_STRICT)
                          && ret != 1), ctx, x, i, X509_V_ERR_INVALID_CA);
-            ret = 1;
             break;
         }
         if (num > 1) {
