@@ -3200,7 +3200,7 @@ d2i_ASN1_OCTET_STRING                   3265	3_0_0	EXIST::FUNCTION:
 ENGINE_set_load_pubkey_function         3266	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,ENGINE
 BIO_vprintf                             3267	3_0_0	EXIST::FUNCTION:
 CMS_RecipientInfo_decrypt               3268	3_0_0	EXIST::FUNCTION:CMS
-RSA_generate_key                        3269	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,RSA
+RSA_generate_key                        3269	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_0_9_8,RSA
 PKCS7_set0_type_other                   3270	3_0_0	EXIST::FUNCTION:
 OCSP_REQUEST_new                        3271	3_0_0	EXIST::FUNCTION:OCSP
 BIO_lookup                              3272	3_0_0	EXIST::FUNCTION:SOCK
