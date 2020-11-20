@@ -1173,7 +1173,8 @@ if ( $opt_n ) {
     # If not given args, check that all man1 commands are named properly.
     if ( scalar @ARGV == 0 ) {
         foreach ( files(TAGS => [ 'public_manual', 'man1' ]) ) {
-            next if /CA.pl/ || /openssl\.pod/ || /tsget\.pod/;
+            next if /openssl\.pod/
+                || /CA\.pl/ || /tsget\.pod/; # these commands are special cases
             err("$_ doesn't start with openssl-") unless /openssl-/;
         }
     }
