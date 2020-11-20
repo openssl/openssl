@@ -64,8 +64,9 @@ int RAND_priv_bytes_ex(OSSL_LIB_CTX *ctx, unsigned char *buf, int num);
 
 /* Equivalent of RAND_bytes() but additionally taking an OSSL_LIB_CTX */
 int RAND_bytes_ex(OSSL_LIB_CTX *ctx, unsigned char *buf, int num);
-
-DEPRECATEDIN_1_1_0(int RAND_pseudo_bytes(unsigned char *buf, int num))
+# ifndef OPENSSL_NO_DEPRECATED_1_1_0
+OSSL_DEPRECATEDIN_1_1_0 int RAND_pseudo_bytes(unsigned char *buf, int num);
+# endif
 
 EVP_RAND_CTX *RAND_get0_primary(OSSL_LIB_CTX *ctx);
 EVP_RAND_CTX *RAND_get0_public(OSSL_LIB_CTX *ctx);
@@ -93,8 +94,10 @@ int RAND_poll(void);
 
 # if defined(_WIN32) && (defined(BASETYPES) || defined(_WINDEF_H))
 /* application has to include <windows.h> in order to use these */
-DEPRECATEDIN_1_1_0(void RAND_screen(void))
-DEPRECATEDIN_1_1_0(int RAND_event(UINT, WPARAM, LPARAM))
+#  ifndef OPENSSL_NO_DEPRECATED_1_1_0
+OSSL_DEPRECATEDIN_1_1_0 void RAND_screen(void);
+OSSL_DEPRECATEDIN_1_1_0 int RAND_event(UINT, WPARAM, LPARAM);
+#  endif
 # endif
 
 #ifdef  __cplusplus
