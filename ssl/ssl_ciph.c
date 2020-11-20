@@ -319,18 +319,12 @@ static int get_optional_pkey_id(const char *pkey_name)
 
 #endif
 
-/* masks of disabled algorithms */
-static uint32_t disabled_enc_mask;
-static uint32_t disabled_mac_mask;
-static uint32_t disabled_mkey_mask;
-static uint32_t disabled_auth_mask;
-
 int ssl_load_ciphers(SSL_CTX *ctx)
 {
     size_t i;
     const ssl_cipher_table *t;
 
-    disabled_enc_mask = 0;
+    ctx->disabled_enc_mask = 0;
     for (i = 0, t = ssl_cipher_table_cipher; i < SSL_ENC_NUM_IDX; i++, t++) {
         if (t->nid != NID_undef) {
             const EVP_CIPHER *cipher
@@ -338,17 +332,17 @@ int ssl_load_ciphers(SSL_CTX *ctx)
 
             ctx->ssl_cipher_methods[i] = cipher;
             if (cipher == NULL)
-                disabled_enc_mask |= t->mask;
+                ctx->disabled_enc_mask |= t->mask;
         }
     }
-    disabled_mac_mask = 0;
+    ctx->disabled_mac_mask = 0;
     for (i = 0, t = ssl_cipher_table_mac; i < SSL_MD_NUM_IDX; i++, t++) {
         const EVP_MD *md
             = ssl_evp_md_fetch(ctx->libctx, t->nid, ctx->propq);
 
         ctx->ssl_digest_methods[i] = md;
         if (md == NULL) {
-            disabled_mac_mask |= t->mask;
+            ctx->disabled_mac_mask |= t->mask;
         } else {
             int tmpsize = EVP_MD_size(md);
             if (!ossl_assert(tmpsize >= 0))
@@ -357,29 +351,29 @@ int ssl_load_ciphers(SSL_CTX *ctx)
         }
     }
 
-    disabled_mkey_mask = 0;
-    disabled_auth_mask = 0;
+    ctx->disabled_mkey_mask = 0;
+    ctx->disabled_auth_mask = 0;
 
 #ifdef OPENSSL_NO_RSA
-    disabled_mkey_mask |= SSL_kRSA | SSL_kRSAPSK;
-    disabled_auth_mask |= SSL_aRSA;
+    ctx->disabled_mkey_mask |= SSL_kRSA | SSL_kRSAPSK;
+    dctx->isabled_auth_mask |= SSL_aRSA;
 #endif
 #ifdef OPENSSL_NO_DSA
-    disabled_auth_mask |= SSL_aDSS;
+    ctx->disabled_auth_mask |= SSL_aDSS;
 #endif
 #ifdef OPENSSL_NO_DH
-    disabled_mkey_mask |= SSL_kDHE | SSL_kDHEPSK;
+    ctx->disabled_mkey_mask |= SSL_kDHE | SSL_kDHEPSK;
 #endif
 #ifdef OPENSSL_NO_EC
-    disabled_mkey_mask |= SSL_kECDHE | SSL_kECDHEPSK;
-    disabled_auth_mask |= SSL_aECDSA;
+    ctx->disabled_mkey_mask |= SSL_kECDHE | SSL_kECDHEPSK;
+    ctx->disabled_auth_mask |= SSL_aECDSA;
 #endif
 #ifdef OPENSSL_NO_PSK
-    disabled_mkey_mask |= SSL_PSK;
-    disabled_auth_mask |= SSL_aPSK;
+    ctx->disabled_mkey_mask |= SSL_PSK;
+    ctx->disabled_auth_mask |= SSL_aPSK;
 #endif
 #ifdef OPENSSL_NO_SRP
-    disabled_mkey_mask |= SSL_kSRP;
+    ctx->disabled_mkey_mask |= SSL_kSRP;
 #endif
 
     /*
@@ -390,44 +384,44 @@ int ssl_load_ciphers(SSL_CTX *ctx)
     if (ssl_mac_pkey_id[SSL_MD_GOST89MAC_IDX])
         ctx->ssl_mac_secret_size[SSL_MD_GOST89MAC_IDX] = 32;
     else
-        disabled_mac_mask |= SSL_GOST89MAC;
+        ctx->disabled_mac_mask |= SSL_GOST89MAC;
 
     ssl_mac_pkey_id[SSL_MD_GOST89MAC12_IDX] =
         get_optional_pkey_id(SN_gost_mac_12);
     if (ssl_mac_pkey_id[SSL_MD_GOST89MAC12_IDX])
         ctx->ssl_mac_secret_size[SSL_MD_GOST89MAC12_IDX] = 32;
     else
-        disabled_mac_mask |= SSL_GOST89MAC12;
+        ctx->disabled_mac_mask |= SSL_GOST89MAC12;
 
     ssl_mac_pkey_id[SSL_MD_MAGMAOMAC_IDX] =
         get_optional_pkey_id(SN_magma_mac);
     if (ssl_mac_pkey_id[SSL_MD_MAGMAOMAC_IDX])
         ctx->ssl_mac_secret_size[SSL_MD_MAGMAOMAC_IDX] = 32;
     else
-        disabled_mac_mask |= SSL_MAGMAOMAC;
+        ctx->disabled_mac_mask |= SSL_MAGMAOMAC;
 
     ssl_mac_pkey_id[SSL_MD_KUZNYECHIKOMAC_IDX] =
         get_optional_pkey_id(SN_kuznyechik_mac);
     if (ssl_mac_pkey_id[SSL_MD_KUZNYECHIKOMAC_IDX])
         ctx->ssl_mac_secret_size[SSL_MD_KUZNYECHIKOMAC_IDX] = 32;
     else
-        disabled_mac_mask |= SSL_KUZNYECHIKOMAC;
+        ctx->disabled_mac_mask |= SSL_KUZNYECHIKOMAC;
 
     if (!get_optional_pkey_id(SN_id_GostR3410_2001))
-        disabled_auth_mask |= SSL_aGOST01 | SSL_aGOST12;
+        ctx->disabled_auth_mask |= SSL_aGOST01 | SSL_aGOST12;
     if (!get_optional_pkey_id(SN_id_GostR3410_2012_256))
-        disabled_auth_mask |= SSL_aGOST12;
+        ctx->disabled_auth_mask |= SSL_aGOST12;
     if (!get_optional_pkey_id(SN_id_GostR3410_2012_512))
-        disabled_auth_mask |= SSL_aGOST12;
+        ctx->disabled_auth_mask |= SSL_aGOST12;
     /*
      * Disable GOST key exchange if no GOST signature algs are available *
      */
-    if ((disabled_auth_mask & (SSL_aGOST01 | SSL_aGOST12)) ==
+    if ((ctx->disabled_auth_mask & (SSL_aGOST01 | SSL_aGOST12)) ==
         (SSL_aGOST01 | SSL_aGOST12))
-        disabled_mkey_mask |= SSL_kGOST;
+        ctx->disabled_mkey_mask |= SSL_kGOST;
 
-    if ((disabled_auth_mask & SSL_aGOST12) ==  SSL_aGOST12)
-        disabled_mkey_mask |= SSL_kGOST18;
+    if ((ctx->disabled_auth_mask & SSL_aGOST12) ==  SSL_aGOST12)
+        ctx->disabled_mkey_mask |= SSL_kGOST18;
 
     return 1;
 }
@@ -1417,7 +1411,7 @@ int SSL_set_ciphersuites(SSL *s, const char *str)
     return ret;
 }
 
-STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
+STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(SSL_CTX *ctx,
                                              STACK_OF(SSL_CIPHER) *tls13_ciphersuites,
                                              STACK_OF(SSL_CIPHER) **cipher_list,
                                              STACK_OF(SSL_CIPHER) **cipher_list_by_id,
@@ -1430,6 +1424,7 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
     const char *rule_p;
     CIPHER_ORDER *co_list = NULL, *head = NULL, *tail = NULL, *curr;
     const SSL_CIPHER **ca_list = NULL;
+    const SSL_METHOD *ssl_method = ctx->method;
 
     /*
      * Return with error if nothing to do.
@@ -1446,10 +1441,10 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
      * in algorithms, so we first get the mask of disabled ciphers.
      */
 
-    disabled_mkey = disabled_mkey_mask;
-    disabled_auth = disabled_auth_mask;
-    disabled_enc = disabled_enc_mask;
-    disabled_mac = disabled_mac_mask;
+    disabled_mkey = ctx->disabled_mkey_mask;
+    disabled_auth = ctx->disabled_auth_mask;
+    disabled_enc = ctx->disabled_enc_mask;
+    disabled_mac = ctx->disabled_mac_mask;
 
     /*
      * Now we have to collect the available ciphers from the compiled
@@ -1622,7 +1617,7 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
         if ((sslc->algorithm_enc & disabled_enc) != 0
                 || (ssl_cipher_table_mac[sslc->algorithm2
                                          & SSL_HANDSHAKE_MAC_MASK].mask
-                    & disabled_mac_mask) != 0)
+                    & ctx->disabled_mac_mask) != 0)
             continue;
 
         if (!sk_SSL_CIPHER_push(cipherstack, sslc)) {
@@ -2185,11 +2180,11 @@ int ssl_cipher_get_overhead(const SSL_CIPHER *c, size_t *mac_overhead,
     return 1;
 }
 
-int ssl_cert_is_disabled(size_t idx)
+int ssl_cert_is_disabled(SSL_CTX *ctx, size_t idx)
 {
     const SSL_CERT_LOOKUP *cl = ssl_cert_lookup_by_idx(idx);
 
-    if (cl == NULL || (cl->amask & disabled_auth_mask) != 0)
+    if (cl == NULL || (cl->amask & ctx->disabled_auth_mask) != 0)
         return 1;
     return 0;
 }
