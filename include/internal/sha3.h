@@ -38,6 +38,8 @@ struct keccak_st {
     unsigned char buf[KECCAK1600_WIDTH / 8 - 32];
     unsigned char pad;
     PROV_SHA3_METHOD meth;
+    size_t last_byte;
+    int final_done;
 };
 
 void ossl_sha3_reset(KECCAK1600_CTX *ctx);

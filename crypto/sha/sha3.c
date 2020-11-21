@@ -10,12 +10,14 @@
 #include <string.h>
 #include "internal/sha3.h"
 
-void SHA3_squeeze(uint64_t A[5][5], unsigned char *out, size_t len, size_t r);
+void SHA3_squeeze(uint64_t A[5][5], unsigned char *out, size_t len, size_t r, size_t *last_byte);
 
 void ossl_sha3_reset(KECCAK1600_CTX *ctx)
 {
     memset(ctx->A, 0, sizeof(ctx->A));
     ctx->bufsz = 0;
+    ctx->final_done = 0;
+    ctx->last_byte = 0;
 }
 
 int ossl_sha3_init(KECCAK1600_CTX *ctx, unsigned char pad, size_t bitlen)
@@ -92,18 +94,21 @@ int ossl_sha3_final(unsigned char *md, KECCAK1600_CTX *ctx)
     if (ctx->md_size == 0)
         return 1;
 
-    /*
-     * Pad the data with 10*1. Note that |num| can be |bsz - 1|
-     * in which case both byte operations below are performed on
-     * same byte...
-     */
-    memset(ctx->buf + num, 0, bsz - num);
-    ctx->buf[num] = ctx->pad;
-    ctx->buf[bsz - 1] |= 0x80;
+    if (ctx->final_done == 0) {
+        /*
+         * Pad the data with 10*1. Note that |num| can be |bsz - 1|
+         * in which case both byte operations below are performed on
+         * same byte...
+         */
+        memset(ctx->buf + num, 0, bsz - num);
+        ctx->buf[num] = ctx->pad;
+        ctx->buf[bsz - 1] |= 0x80;
 
-    (void)SHA3_absorb(ctx->A, ctx->buf, bsz, bsz);
+        (void)SHA3_absorb(ctx->A, ctx->buf, bsz, bsz);
+        ctx->final_done = 1;
+    }
 
-    SHA3_squeeze(ctx->A, md, ctx->md_size, bsz);
+    SHA3_squeeze(ctx->A, md, ctx->md_size, bsz, &ctx->last_byte);
 
     return 1;
 }

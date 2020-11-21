@@ -13,7 +13,7 @@
 
 size_t SHA3_absorb(uint64_t A[5][5], const unsigned char *inp, size_t len,
                    size_t r);
-void SHA3_squeeze(uint64_t A[5][5], unsigned char *out, size_t len, size_t r);
+void SHA3_squeeze(uint64_t A[5][5], unsigned char *out, size_t len, size_t r, size_t *last_byte);
 
 #if !defined(KECCAK1600_ASM) || !defined(SELFTEST)
 
@@ -1090,42 +1090,45 @@ size_t SHA3_absorb(uint64_t A[5][5], const unsigned char *inp, size_t len,
 }
 
 /*
- * sha3_squeeze is called once at the end to generate |out| hash value
+ * sha3_squeeze is called at the end to generate |out| hash value
  * of |len| bytes.
  */
-void SHA3_squeeze(uint64_t A[5][5], unsigned char *out, size_t len, size_t r)
+void SHA3_squeeze(uint64_t A[5][5], unsigned char *out, size_t len, size_t r, size_t *last_byte)
 {
     uint64_t *A_flat = (uint64_t *)A;
-    size_t i, w = r / 8;
+    size_t w = r / 8, i = *last_byte / w, w_done = *last_byte % w;
 
     assert(r < (25 * sizeof(A[0][0])) && (r % 8) == 0);
 
     while (len != 0) {
-        for (i = 0; i < w && len != 0; i++) {
+        for (; i < w && len != 0; i++) {
             uint64_t Ai = BitDeinterleave(A_flat[i]);
+            int size = (len > 8 ? 8 : len);
+            int j;
 
-            if (len < 8) {
-                for (i = 0; i < len; i++) {
-                    *out++ = (unsigned char)Ai;
-                    Ai >>= 8;
-                }
-                return;
+            if (w_done != 0)
+                Ai >>= (8 * w_done);
+            if (size + w_done > 8)
+                size = 8 - w_done;
+            if (size + w_done != 8)
+                w_done = w_done + size;
+            else
+                w_done = 0;
+
+            for (j = 0; j < size; j++) {
+                *out++ = (unsigned char)Ai;
+                Ai >>= 8;
             }
-
-            out[0] = (unsigned char)(Ai);
-            out[1] = (unsigned char)(Ai >> 8);
-            out[2] = (unsigned char)(Ai >> 16);
-            out[3] = (unsigned char)(Ai >> 24);
-            out[4] = (unsigned char)(Ai >> 32);
-            out[5] = (unsigned char)(Ai >> 40);
-            out[6] = (unsigned char)(Ai >> 48);
-            out[7] = (unsigned char)(Ai >> 56);
-            out += 8;
-            len -= 8;
+            len -= size;
         }
-        if (len)
+        if (i == w && w_done == 0) {
             KeccakF1600(A);
+            i = 0;
+        }
     }
+    if (w_done != 0)
+        i--;
+    *last_byte = i * w + w_done;
 }
 #endif
 

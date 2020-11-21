@@ -452,7 +452,11 @@ static int digest_test_run(EVP_TEST *t)
         EVP_MD_CTX_free(mctx_cpy);
 
         got_len = expected->output_len;
-        if (!EVP_DigestFinalXOF(mctx, got, got_len)) {
+        if (!EVP_DigestFinalXOF(mctx, got, got_len/2)) {
+            t->err = "DIGESTFINALXOF_ERROR";
+            goto err;
+        }
+        if (!EVP_DigestFinalXOF(mctx, got+got_len/2, got_len-got_len/2)) {
             t->err = "DIGESTFINALXOF_ERROR";
             goto err;
         }
