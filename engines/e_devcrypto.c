@@ -1172,16 +1172,28 @@ static int devcrypto_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f) (void))
  */
 static int open_devcrypto(void)
 {
+    int fd;
+
     if (cfd >= 0)
         return 1;
 
-    if ((cfd = open("/dev/crypto", O_RDWR, 0)) < 0) {
+    if ((fd = open("/dev/crypto", O_RDWR, 0)) < 0) {
 #ifndef ENGINE_DEVCRYPTO_DEBUG
         if (errno != ENOENT)
 #endif
             fprintf(stderr, "Could not open /dev/crypto: %s\n", strerror(errno));
         return 0;
     }
+
+#ifdef CRIOGET
+    if (ioctl(fd, CRIOGET, &cfd) < 0) {
+        fprintf(stderr, "Could not create crypto fd: %s\n", strerror(errno));
+        cfd = -1;
+        return 0;
+    }
+#else
+    cfd = fd;
+#endif
 
     return 1;
 }
