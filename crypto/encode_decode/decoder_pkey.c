@@ -267,7 +267,6 @@ static void collect_decoder(OSSL_DECODER *decoder, void *arg)
     size_t i, end_i;
     const OSSL_PROVIDER *prov = OSSL_DECODER_provider(decoder);
     void *provctx = OSSL_PROVIDER_get0_provider_ctx(prov);
-    void *decoderctx = NULL;
 
     if (data->error_occured)
         return;
@@ -279,6 +278,7 @@ static void collect_decoder(OSSL_DECODER *decoder, void *arg)
     end_i = sk_OPENSSL_CSTRING_num(data->names);
     for (i = 0; i < end_i; i++) {
         const char *name = sk_OPENSSL_CSTRING_value(data->names, i);
+        void *decoderctx = NULL;
         OSSL_DECODER_INSTANCE *di = NULL;
 
         if (OSSL_DECODER_is_a(decoder, name)
