@@ -272,6 +272,18 @@ static int test_print_key_using_encoder(const char *alg, const EVP_PKEY *pk)
     return ret;
 }
 
+static int test_print_key_using_encoder_public(const char *alg, const EVP_PKEY *pk)
+{
+    int i;
+    int ret = 1;
+
+    for (i = PUB_TEXT; i < 6; i++)
+        ret = ret && test_print_key_type_using_encoder(alg, i, pk);
+
+    return ret;
+}
+
+
 /* Array indexes used in test_fromdata_rsa */
 #define N       0
 #define E       1
@@ -709,15 +721,23 @@ err:
 # define ED25519_IDX     2
 # define ED448_IDX       3
 
+/*
+ * tst uses indexes 0 ... (3 * 4 - 1)
+ * For the 4 ECX key types (X25519_IDX..ED448_IDX)
+ * 0..3  = public + private key.
+ * 4..7  = private key (This will generate the public key from the private key)
+ * 8..11 = public key
+ */
 static int test_fromdata_ecx(int tst)
 {
     int ret = 0;
-    EVP_PKEY_CTX *ctx = NULL;
+    EVP_PKEY_CTX *ctx = NULL, *ctx2 = NULL;
     EVP_PKEY *pk = NULL, *copy_pk = NULL;
     const char *alg = NULL;
     size_t len;
     unsigned char out_pub[ED448_KEYLEN];
     unsigned char out_priv[ED448_KEYLEN];
+    OSSL_PARAM params[3] = { OSSL_PARAM_END, OSSL_PARAM_END, OSSL_PARAM_END };
 
     /* ED448_KEYLEN > X448_KEYLEN > X25519_KEYLEN == ED25519_KEYLEN */
     static unsigned char key_numbers[4][2][ED448_KEYLEN] = {
@@ -836,8 +856,9 @@ static int test_fromdata_ecx(int tst)
     };
     OSSL_PARAM *fromdata_params = NULL;
     int bits = 0, security_bits = 0, size = 0;
+    OSSL_PARAM *orig_fromdata_params = NULL;
 
-    switch (tst) {
+    switch (tst & 3) {
     case X25519_IDX:
         fromdata_params = x25519_fromdata_params;
         bits = X25519_BITS;
@@ -877,6 +898,17 @@ static int test_fromdata_ecx(int tst)
     if (!TEST_ptr(ctx))
         goto err;
 
+    orig_fromdata_params = fromdata_params;
+    if (tst > 7) {
+        /* public key only */
+        fromdata_params++;
+    } else if (tst > 3) {
+        /* private key only */
+        params[0] = fromdata_params[0];
+        params[1] = fromdata_params[2];
+        fromdata_params = params;
+    }
+
     if (!TEST_true(EVP_PKEY_key_fromdata_init(ctx))
         || !TEST_true(EVP_PKEY_fromdata(ctx, &pk, fromdata_params))
         || !TEST_int_eq(EVP_PKEY_bits(pk), bits)
@@ -884,32 +916,48 @@ static int test_fromdata_ecx(int tst)
         || !TEST_int_eq(EVP_PKEY_size(pk), size))
         goto err;
 
+    if (!TEST_ptr(ctx2 = EVP_PKEY_CTX_new_from_pkey(NULL, pk, NULL)))
+        goto err;
+    if (tst <= 7) {
+        if (!TEST_true(EVP_PKEY_check(ctx2)))
+            goto err;
+        if (!TEST_true(EVP_PKEY_get_octet_string_param(
+                           pk, orig_fromdata_params[PRIV_KEY].key,
+                           out_priv, sizeof(out_priv), &len))
+            || !TEST_mem_eq(out_priv, len,
+                            orig_fromdata_params[PRIV_KEY].data,
+                            orig_fromdata_params[PRIV_KEY].data_size)
+            || !TEST_true(EVP_PKEY_get_octet_string_param(
+                              pk, orig_fromdata_params[PUB_KEY].key,
+                              out_pub, sizeof(out_pub), &len))
+            || !TEST_mem_eq(out_pub, len,
+                            orig_fromdata_params[PUB_KEY].data,
+                            orig_fromdata_params[PUB_KEY].data_size))
+            goto err;
+    } else {
+        /* The private key check should fail if there is only a public key */
+        if (!TEST_true(EVP_PKEY_public_check(ctx2))
+            || !TEST_false(EVP_PKEY_private_check(ctx2))
+            || !TEST_false(EVP_PKEY_check(ctx2)))
+            goto err;
+    }
+
     if (!TEST_ptr(copy_pk = EVP_PKEY_new())
            /* This should succeed because there are no parameters to copy */
         || !TEST_true(EVP_PKEY_copy_parameters(copy_pk, pk)))
         goto err;
 
-    if (!TEST_true(EVP_PKEY_get_octet_string_param(
-                       pk, fromdata_params[PRIV_KEY].key,
-                       out_priv, sizeof(out_priv), &len))
-        || !TEST_mem_eq(out_priv, len,
-                        fromdata_params[PRIV_KEY].data,
-                        fromdata_params[PRIV_KEY].data_size)
-        || !TEST_true(EVP_PKEY_get_octet_string_param(
-                          pk, fromdata_params[PUB_KEY].key,
-                          out_pub, sizeof(out_pub), &len))
-        || !TEST_mem_eq(out_pub, len,
-                        fromdata_params[PUB_KEY].data,
-                        fromdata_params[PUB_KEY].data_size))
-        goto err;
-
-    ret = test_print_key_using_pem(alg, pk)
-          && test_print_key_using_encoder(alg, pk);
+    if (tst > 7)
+        ret = test_print_key_using_encoder_public(alg, pk);
+    else
+        ret = test_print_key_using_pem(alg, pk)
+              && test_print_key_using_encoder(alg, pk);
 
 err:
     EVP_PKEY_free(pk);
     EVP_PKEY_free(copy_pk);
     EVP_PKEY_CTX_free(ctx);
+    EVP_PKEY_CTX_free(ctx2);
 
     return ret;
 }
@@ -1286,7 +1334,7 @@ int setup_tests(void)
     ADD_TEST(test_fromdata_dsa_fips186_4);
 #endif
 #ifndef OPENSSL_NO_EC
-    ADD_ALL_TESTS(test_fromdata_ecx, 4);
+    ADD_ALL_TESTS(test_fromdata_ecx, 4 * 3);
     ADD_TEST(test_fromdata_ec);
 #endif
     return 1;

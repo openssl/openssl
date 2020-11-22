@@ -674,34 +674,6 @@ void *ecx_load(const void *reference, size_t reference_sz)
     return NULL;
 }
 
-static int ecx_key_public_check(const ECX_KEY *ecx, size_t len)
-{
-    return ecx->haspubkey && len == ecx->keylen;
-}
-
-static int ecx_key_private_check(const ECX_KEY *ecx, int type, size_t len)
-{
-    const unsigned char *priv = ecx->privkey;
-
-    if (priv == NULL || len != ecx->keylen)
-        return 0;
-
-    switch (type) {
-    case ECX_KEY_TYPE_X25519:
-        return (priv[0] & ~248) == 0
-                && (priv[len - 1] & ~127) == 0
-                && (priv[len - 1] & 64) != 0;
-    case ECX_KEY_TYPE_X448:
-        return (priv[0] & ~252) == 0
-                && (priv[len - 1] & 128) != 0;
-    case ECX_KEY_TYPE_ED25519:
-    case ECX_KEY_TYPE_ED448:
-        return 1;
-    default:
-        return 0;
-    }
-}
-
 static int ecx_key_pairwise_check(const ECX_KEY *ecx, int type)
 {
     uint8_t pub[64];
@@ -731,23 +703,25 @@ static int ecx_key_pairwise_check(const ECX_KEY *ecx, int type)
 
 static int ecx_validate(const void *keydata, int selection, int type, size_t keylen)
 {
-    const ECX_KEY *eck = keydata;
+    const ECX_KEY *ecx = keydata;
     int ok = 0;
 
     if (!ossl_prov_is_running())
         return 0;
 
+    assert(keylen == ecx->keylen);
+
     if ((selection & ECX_POSSIBLE_SELECTIONS) != 0)
         ok = 1;
 
     if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0)
-        ok = ok && ecx_key_public_check(eck, keylen);
+        ok = ok && (ecx->haspubkey && ecx->pubkey != NULL);
 
     if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0)
-        ok = ok && ecx_key_private_check(eck, type, keylen);
+        ok = ok && ecx->privkey != NULL;
 
     if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) == OSSL_KEYMGMT_SELECT_KEYPAIR)
-        ok = ok && ecx_key_pairwise_check(eck, type);
+        ok = ok && ecx_key_pairwise_check(ecx, type);
 
     return ok;
 }
