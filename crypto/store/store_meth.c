@@ -237,7 +237,7 @@ static void *construct_loader(const OSSL_ALGORITHM *algodef,
      * namemap entry, this is it.  Should the scheme already exist there, we
      * know that ossl_namemap_add() will return its corresponding number.
      */
-    struct evp_method_data_st *methdata = data;
+    struct loader_data_st *methdata = data;
     OSSL_LIB_CTX *libctx = ossl_provider_libctx(prov);
     OSSL_NAMEMAP *namemap = ossl_namemap_stored(libctx);
     const char *scheme = algodef->algorithm_names;
