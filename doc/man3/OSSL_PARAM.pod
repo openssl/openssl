@@ -64,6 +64,13 @@ Normally, the order of the an B<OSSL_PARAM> array is not relevant.
 However, if the I<responder> can handle multiple elements with the
 same key, those elements must be handled in the order they are in.
 
+An B<OSSL_PARAM> array must have a terminating element, where I<key>
+is NULL.  The usual full terminating template is:
+
+    { NULL, 0, NULL, 0, 0 }
+
+This can also be specified using L<OSSL_PARAM_END(3)>.
+
 =head2 B<OSSL_PARAM> fields
 
 =over 4
@@ -71,6 +78,9 @@ same key, those elements must be handled in the order they are in.
 =item I<key>
 
 The identity of the parameter in the form of a string.
+
+In an B<OSSL_PARAM> array, an item with this field set to NULL is
+considered a terminating item.
 
 =item I<data_type>
 
@@ -288,7 +298,7 @@ This example is for setting parameters on some object:
     OSSL_PARAM set[] = {
         { "foo", OSSL_PARAM_UTF8_STRING_PTR, &foo, foo_l, 0 },
         { "bar", OSSL_PARAM_UTF8_STRING, &bar, sizeof(bar), 0 },
-        { NULL, 0, NULL, 0, NULL }
+        { NULL, 0, NULL, 0, 0 }
     };
 
 =head3 Example 2
@@ -302,7 +312,7 @@ This example is for requesting parameters on some object:
     OSSL_PARAM request[] = {
         { "foo", OSSL_PARAM_UTF8_STRING_PTR, &foo, 0 /*irrelevant*/, 0 },
         { "bar", OSSL_PARAM_UTF8_STRING, &bar, sizeof(bar), 0 },
-        { NULL, 0, NULL, 0, NULL }
+        { NULL, 0, NULL, 0, 0 }
     };
 
 A I<responder> that receives this array (as I<params> in this example)
