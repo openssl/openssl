@@ -166,7 +166,9 @@ int init_client(int *sock, const char *host, const char *port,
     if (*sock == INVALID_SOCKET) {
         if (bindaddr != NULL && !found) {
             BIO_printf(bio_err, "Can't bind %saddress for %s%s%s\n",
+#ifdef AF_INET6
                        BIO_ADDRINFO_family(res) == AF_INET6 ? "IPv6 " :
+#endif
                        BIO_ADDRINFO_family(res) == AF_INET ? "IPv4 " :
                        BIO_ADDRINFO_family(res) == AF_UNIX ? "unix " : "",
                        bindhost != NULL ? bindhost : "",
@@ -243,6 +245,7 @@ int do_server(int *accept_sock, const char *host, const char *port,
     sock_protocol = BIO_ADDRINFO_protocol(res);
     sock_address = BIO_ADDRINFO_address(res);
     next = BIO_ADDRINFO_next(res);
+#ifdef AF_INET6
     if (sock_family == AF_INET6)
         sock_options |= BIO_SOCK_V6_ONLY;
     if (next != NULL
@@ -257,6 +260,7 @@ int do_server(int *accept_sock, const char *host, const char *port,
             sock_options &= ~BIO_SOCK_V6_ONLY;
         }
     }
+#endif
 
     asock = BIO_socket(sock_family, sock_type, sock_protocol, 0);
     if (asock == INVALID_SOCKET
