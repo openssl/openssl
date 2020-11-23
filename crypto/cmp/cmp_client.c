@@ -633,12 +633,7 @@ static int cert_response(OSSL_CMP_CTX *ctx, int sleep, int rid,
 
     /* not throwing failure earlier as transfer_cb may call ERR_clear_error() */
     if (fail_info != 0) {
-        if (txt == NULL)
-            ERR_raise_data(ERR_LIB_CMP, CMP_R_CERTIFICATE_NOT_ACCEPTED,
-                           "rejecting newly enrolled cert with subject: %s",
-                           subj);
-        else
-            ERR_raise_data(ERR_LIB_CMP, CMP_R_CERTIFICATE_NOT_ACCEPTED,
+        ERR_raise_data(ERR_LIB_CMP, CMP_R_CERTIFICATE_NOT_ACCEPTED,
                            "rejecting newly enrolled cert with subject: %s; %s",
                            subj, txt);
         ret = 0;
