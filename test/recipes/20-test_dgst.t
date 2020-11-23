@@ -24,8 +24,8 @@ sub tsignverify {
     my $privkey = shift;
     my $pubkey = shift;
 
-    my $data_to_sign = srctop_file('test', 'data.txt');
-    my $other_data = srctop_file('test', 'data2.txt');
+    my $data_to_sign = srctop_file('test', 'data.bin');
+    my $other_data = srctop_file('test', 'data2.bin');
 
     my $sigfile = basename($privkey, '.pem') . '.sig';
     plan tests => 4;
@@ -106,12 +106,12 @@ SKIP: {
 subtest "HMAC generation with `dgst` CLI" => sub {
     plan tests => 2;
 
-    my $testdata = srctop_file('test', 'data.txt');
+    my $testdata = srctop_file('test', 'data.bin');
     #HMAC the data twice to check consistency
     my @hmacdata = run(app(['openssl', 'dgst', '-sha256', '-hmac', '123456',
                             $testdata, $testdata]), capture => 1);
     chomp(@hmacdata);
-    my $expected = qr/HMAC-SHA256\([^\)]*data.txt\)= 6f12484129c4a761747f13d8234a1ff0e074adb34e9e9bf3a155c391b97b9a7c/;
+    my $expected = qr/HMAC-SHA256\([^\)]*data.bin\)= 6f12484129c4a761747f13d8234a1ff0e074adb34e9e9bf3a155c391b97b9a7c/;
     ok($hmacdata[0] =~ $expected, "HMAC: Check HMAC value is as expected ($hmacdata[0]) vs ($expected)");
     ok($hmacdata[1] =~ $expected,
        "HMAC: Check second HMAC value is consistent with the first ($hmacdata[1]) vs ($expected)");
