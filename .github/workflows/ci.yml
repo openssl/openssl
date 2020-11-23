@@ -1,0 +1,83 @@
+name: GitHub CI
+
+on: [pull_request]
+
+jobs:
+  basic_gcc:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: config
+      run: ./config --strict-warnings
+    - name: make
+      run: make
+    - name: make test
+      run: make test
+    - name: make doc-nits
+      run: make doc-nits
+
+  basic_clang:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: config
+      run: CC=clang ./config --strict-warnings
+    - name: make
+      run: make
+    - name: make test
+      run: make test
+
+  minimal:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: config
+      run: ./config --strict-warnings no-shared no-dso no-pic no-aria no-async no-autoload-config no-blake2 no-bf no-camellia no-cast no-chacha no-cmac no-cms no-comp no-ct no-des no-dgram no-dh no-dsa no-dtls no-ec2m no-engine no-filenames no-gost no-idea no-mdc2 no-md4 no-multiblock no-nextprotoneg no-ocsp no-ocb no-poly1305 no-psk no-rc2 no-rc4 no-rmd160 no-seed no-siphash no-sm2 no-sm3 no-sm4 no-srp no-srtp no-ssl3 no-ssl3-method no-ts no-ui-console no-whirlpool no-asm -DOPENSSL_NO_SECURE_MEMORY -DOPENSSL_SMALL_FOOTPRINT
+    - name: make
+      run: make
+    - name: make test
+      run: make test
+
+  sanitizers:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: config
+      run: ./config --debug no-asm enable-asan enable-ubsan enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128
+    - name: make
+      run: make
+    - name: make test
+      run: OPENSSL_TEST_RAND_ORDER=0 make test
+
+  enable_non-default_options:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: config
+      run: ./config --strict-warnings no-ec enable-ssl-trace enable-zlib enable-zlib-dynamic enable-crypto-mdebug enable-crypto-mdebug-backtrace enable-egd
+    - name: make
+      run: make
+    - name: make test
+      run: make test
+
+  legacy_and_no-asm:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: config
+      run: ./config no-asm -Werror --debug no-afalgeng no-shared enable-crypto-mdebug enable-rc5 enable-md2
+    - name: make
+      run: make
+    - name: make test
+      run: make test
+
+  buildtest:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: config
+      run: ./config no-asm no-makedepend enable-buildtest-c++ --strict-warnings -D_DEFAULT_SOURCE
+    - name: make
+      run: make
+    - name: make test
+      run: make test
