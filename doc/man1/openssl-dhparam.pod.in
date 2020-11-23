@@ -57,8 +57,6 @@ as the input filename.
 
 =item B<-dsaparam>
 
-This option is deprecated.
-
 If this option is used, DSA rather than DH parameters are read or created;
 they are converted to DH format.  Otherwise, "strong" primes (such
 that (p-1)/2 is also prime) will be used for DH parameter generation.
