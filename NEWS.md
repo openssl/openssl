@@ -20,6 +20,9 @@ OpenSSL 3.0
 
 ### Major changes between OpenSSL 1.1.1 and OpenSSL 3.0 [under development]
 
+  * Deprecated ERR_get_error_line(), ERR_get_error_line_data(),
+    ERR_peek_error_line_data(), ERR_peek_last_error_line_data() and
+    ERR_func_error_string().
   * Deprecated the `ERR_load_` functions.
   * Remove the `RAND_DRBG` API.
   * Deprecated the `ENGINE` API.

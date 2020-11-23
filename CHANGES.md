@@ -23,6 +23,16 @@ OpenSSL 3.0
 
 ### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
 
+ * Deprecated ERR_get_error_line(), as it's considered incomplete and confusing.
+   Dropped the new functions ERR_get_error_func() and ERR_get_error_data() for
+   the same reason, and because they were new in 3.0.0.
+
+   Users are recommended to use ERR_get_error_all(), or to pick information
+   with ERR_peek functions and finish off with getting the error code by using
+   ERR_get_error().
+
+   *Richard Levitte*
+
  * Deprecated all the libcrypto and libssl error string loading
    functions: ERR_load_ASN1_strings(), ERR_load_ASYNC_strings(),
    ERR_load_BIO_strings(), ERR_load_BN_strings(), ERR_load_BUF_strings(),

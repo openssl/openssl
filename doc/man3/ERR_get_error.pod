@@ -102,7 +102,7 @@ of the above.
 ERR_get_error_line(), ERR_get_error_line_data(), ERR_peek_error_line_data()
 and ERR_peek_last_error_line_data() are older variants of ERR_get_error_all(),
 ERR_peek_error_all() and ERR_peek_last_error_all(), and may give confusing
-results.  They should no longer be used.
+results.  They should no longer be used and are therefore deprecated.
 
 An application B<MUST NOT> free the *I<data> pointer (or any other pointers
 returned by these functions) with OPENSSL_free() as freeing is handled
