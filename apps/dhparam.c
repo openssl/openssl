@@ -124,11 +124,7 @@ int dhparam_main(int argc, char **argv)
             text = 1;
             break;
         case OPT_DSAPARAM:
-# ifdef OPENSSL_NO_DEPRECATED_3_0
-            BIO_printf(bio_err, "The dsaparam option is deprecated.\n");
-# else
             dsaparam = 1;
-# endif
             break;
         case OPT_2:
             g = 2;

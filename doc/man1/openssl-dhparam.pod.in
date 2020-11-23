@@ -57,8 +57,6 @@ as the input filename.
 
 =item B<-dsaparam>
 
-This option is deprecated.
-
 If this option is used, DSA rather than DH parameters are read or created;
 they are converted to DH format.  Otherwise, "strong" primes (such
 that (p-1)/2 is also prime) will be used for DH parameter generation.
@@ -128,7 +126,7 @@ L<openssl-dsaparam(1)>
 
 =head1 HISTORY
 
-The B<-dsaparam> and B<-engine> options were deprecated in OpenSSL 3.0.
+The B<-engine> option was deprecated in OpenSSL 3.0.
 
 The B<-C> option was removed in OpenSSL 3.0.
 
