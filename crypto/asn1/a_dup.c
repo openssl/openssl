@@ -48,8 +48,7 @@ void *ASN1_dup(i2d_of_void *i2d, d2i_of_void *d2i, const void *x)
 
 void *ASN1_item_dup(const ASN1_ITEM *it, const void *x)
 {
-    const ASN1_AUX *aux = it->funcs;
-    ASN1_aux_cb *asn1_cb = aux != NULL ? aux->asn1_cb : NULL;
+    ASN1_aux_cb *asn1_cb = NULL;
     unsigned char *b = NULL;
     const unsigned char *p;
     long i;
@@ -57,6 +56,13 @@ void *ASN1_item_dup(const ASN1_ITEM *it, const void *x)
 
     if (x == NULL)
         return NULL;
+
+    if (it->itype == ASN1_ITYPE_SEQUENCE || it->itype == ASN1_ITYPE_CHOICE
+        || it->itype == ASN1_ITYPE_NDEF_SEQUENCE) {
+        const ASN1_AUX *aux = it->funcs;
+
+        asn1_cb = aux != NULL ? aux->asn1_cb : NULL;
+    }
 
     if (asn1_cb != NULL
         && !asn1_cb(ASN1_OP_DUP_PRE, (ASN1_VALUE **)&x, it, NULL))
