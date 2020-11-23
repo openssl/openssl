@@ -17,6 +17,7 @@
 #include <string.h> /* strcmp */
 
 #include <openssl/types.h> /* Ensure we have the ENGINE type, regardless */
+#include <openssl/err.h>
 #ifndef OPENSSL_NO_ENGINE
 # include <openssl/engine.h>
 #endif
