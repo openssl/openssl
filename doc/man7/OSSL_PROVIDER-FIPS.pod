@@ -299,6 +299,18 @@ Key agreement tests used with the "KAT_KA" type.
 
 =item "SSKDF" (B<OSSL_SELF_TEST_DESC_KDF_SSKDF>)
 
+=item "X963KDF" (B<OSSL_SELF_TEST_DESC_KDF_X963KDF>)
+
+=item "X942KDF" (B<OSSL_SELF_TEST_DESC_KDF_X942KDF>)
+
+=item "PBKDF2" (B<OSSL_SELF_TEST_DESC_KDF_PBKDF2>)
+
+=item "SSHKDF" (B<OSSL_SELF_TEST_DESC_KDF_SSHKDF>)
+
+=item "TLS12_PRF" (B<OSSL_SELF_TEST_DESC_KDF_TLS12_PRF>)
+
+=item "KBKDF" (B<OSSL_SELF_TEST_DESC_KDF_KBKDF>)
+
 Key Derivation Function tests used with the "KAT_KDF" type.
 
 =item "CTR" (B<OSSL_SELF_TEST_DESC_DRBG_CTR>)
