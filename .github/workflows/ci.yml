@@ -1,0 +1,23 @@
+name: GitHub CI
+
+on:
+  push:
+    branches: [ $default-branch ]
+  pull_request:
+    branches: [ $default-branch ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: config
+      run: ./config
+    - name: make
+      run: make
+    - name: make test
+      run: make test
+    - name: make doc-nits
+      run: make doc-nits
