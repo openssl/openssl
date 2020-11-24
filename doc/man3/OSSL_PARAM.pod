@@ -69,6 +69,8 @@ is NULL.  The usual full terminating template is:
 
     { NULL, 0, NULL, 0, 0 }
 
+This can also be specified using L<OSSL_PARAM_END(3)>.
+
 =head2 B<OSSL_PARAM> fields
 
 =over 4
