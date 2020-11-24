@@ -136,7 +136,7 @@ void destroy_ui_method(void)
     }
 }
 
-const UI_METHOD *get_ui_method(void)
+UI_METHOD *get_ui_method(void)
 {
     return ui_method;
 }
