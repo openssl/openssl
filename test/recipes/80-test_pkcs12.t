@@ -90,13 +90,17 @@ ok(run(app(["openssl", "pkcs12", "-export",
             "-out", $outfile2])),
    "test_pkcs12_passcerts");
 
-# Test reading legacy PKCS#12 file
-ok(run(app(["openssl", "pkcs12", "-export",
-            "-in", srctop_file(@path, "v3-certs-RC2.p12"),
-            "-passin", "pass:v3-certs",
-            "-provider", "default", "-provider", "legacy",
-            "-nokeys", "-passout", "pass:v3-certs", "-descert",
-            "-out", $outfile3])),
-   "test_pkcs12_passcerts_legacy");
+SKIP: {
+    skip "Skipping legacy PKCS#12 test because RC2 is disabled in this build", 1
+        if disabled("rc2");
+    # Test reading legacy PKCS#12 file
+    ok(run(app(["openssl", "pkcs12", "-export",
+                "-in", srctop_file(@path, "v3-certs-RC2.p12"),
+                "-passin", "pass:v3-certs",
+                "-provider", "default", "-provider", "legacy",
+                "-nokeys", "-passout", "pass:v3-certs", "-descert",
+                "-out", $outfile3])),
+    "test_pkcs12_passcerts_legacy");
+}
 
 SetConsoleOutputCP($savedcp) if (defined($savedcp));
