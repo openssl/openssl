@@ -34,8 +34,13 @@ static int test_print_error_format(void)
     const char *file = "";
     const int line = 0;
 # endif
+# ifndef OPENSSL_NO_ERR
+    const char *lib = "system library";
+# else
+    const char *lib = "<NULL>";
+# endif
     /* The format for OpenSSL error lines */
-    const char *expected_format = ":error::system library:%s:%s:%s:%d";
+    const char *expected_format = ":error::%s:%s:%s:%s:%d";
     /*-
      *                                                    ^^ ^^ ^^ ^^
      * function name -------------------------------------++ || || ||
@@ -67,7 +72,7 @@ static int test_print_error_format(void)
     }
 
     BIO_snprintf(expected, sizeof(expected), expected_format,
-                 func, strerror(syserr), file, line);
+                 lib, func, strerror(syserr), file, line);
 
     if (!TEST_ptr(bio = BIO_new(BIO_s_mem())))
         goto err;
