@@ -2698,13 +2698,10 @@ int cmp_main(int argc, char **argv)
     ret = 0;
 
     if (opt_batch) {
-        UI_METHOD *ui_fallback_method;
 #ifndef OPENSSL_NO_UI_CONSOLE
-        ui_fallback_method = UI_OpenSSL();
-#else
-        ui_fallback_method = (UI_METHOD *)UI_null();
+        UI_method_set_reader(UI_OpenSSL(), NULL);
+        /* can't change get_ui_method() here as load_key_certs_crls() uses it */
 #endif
-        UI_method_set_reader(ui_fallback_method, NULL);
     }
 
     if (opt_engine != NULL)
