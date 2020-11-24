@@ -86,7 +86,6 @@ static int unprotected_exception(const OSSL_CMP_CTX *ctx,
     return 1;
 }
 
-
 /* Save error info from PKIStatusInfo field of a certresponse into ctx */
 static int save_statusInfo(OSSL_CMP_CTX *ctx, OSSL_CMP_PKISI *si)
 {
@@ -199,7 +198,7 @@ static int send_receive_check(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *req,
 
     /* received message type is not one of the expected ones (e.g., error) */
     ERR_raise(ERR_LIB_CMP, bt == OSSL_CMP_PKIBODY_ERROR ? CMP_R_RECEIVED_ERROR :
-           CMP_R_UNEXPECTED_PKIBODY); /* in next line for mkerr.pl */
+              CMP_R_UNEXPECTED_PKIBODY); /* in next line for mkerr.pl */
 
     if (bt != OSSL_CMP_PKIBODY_ERROR) {
         ERR_add_error_data(3, "message type is '",
@@ -634,8 +633,8 @@ static int cert_response(OSSL_CMP_CTX *ctx, int sleep, int rid,
     /* not throwing failure earlier as transfer_cb may call ERR_clear_error() */
     if (fail_info != 0) {
         ERR_raise_data(ERR_LIB_CMP, CMP_R_CERTIFICATE_NOT_ACCEPTED,
-                           "rejecting newly enrolled cert with subject: %s; %s",
-                           subj, txt);
+                       "rejecting newly enrolled cert with subject: %s; %s",
+                       subj, txt);
         ret = 0;
     }
     OPENSSL_free(subj);
