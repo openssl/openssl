@@ -581,7 +581,7 @@ my @disable_cascades = (
 
     "module"            => [ "fips", "dso" ],
 
-    "engine"            => [ grep /eng$/, @disablables ],
+    "engine"            => [ "dynamic-engine", grep(/eng$/, @disablables) ],
     "hw"                => [ "padlockeng" ],
 
     # no-autoalginit is only useful when building non-shared
