@@ -2697,12 +2697,8 @@ int cmp_main(int argc, char **argv)
         goto err;
     ret = 0;
 
-    if (opt_batch) {
-#ifndef OPENSSL_NO_UI_CONSOLE
-        UI_method_set_reader(UI_OpenSSL(), NULL);
-        /* can't change get_ui_method() here as load_key_certs_crls() uses it */
-#endif
-    }
+    if (opt_batch)
+        set_base_ui_method(UI_null());
 
     if (opt_engine != NULL)
         engine = setup_engine_methods(opt_engine, 0 /* not: ENGINE_METHOD_ALL */, 0);
