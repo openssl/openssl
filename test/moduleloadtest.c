@@ -37,13 +37,13 @@ int main(int argc, char *argv[])
 {
     const char *m, *s;
 
-    if (argc != 3) {
-        fprintf(stderr, "Incorrect number of arguments\n");
+    if (argc != 2 && argc != 3) {
+        fprintf(stderr, "Usage: %s sharedobject [ entrypoint ]\n", argv[0]);
         return 1;
     }
 
     m = argv[1];
-    s = argv[2];
+    s = argc == 3 ? argv[2] : NULL;
 
     return test_load(m, s) ? 0 : 1;
 }
