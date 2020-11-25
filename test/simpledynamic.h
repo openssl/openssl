@@ -1,0 +1,39 @@
+/*
+ * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
+ */
+
+#ifndef OSSL_TEST_SIMPLEDYNAMIC_H
+# define OSSL_TEST_SIMPLEDYNAMIC_H
+
+# include "crypto/dso_conf.h"
+
+# if defined(DSO_DLFCN)
+
+#  include <dlfcn.h>
+
+#  define SD_INIT NULL
+
+typedef void *SD;
+typedef void *SD_SYM;
+
+# elif defined(DSO_WIN32)
+
+#  include <windows.h>
+
+#  define SD_INIT 0
+
+typedef HINSTANCE SD;
+typedef void *SD_SYM;
+
+# endif
+
+int sd_load(const char *filename, SD *sd);
+int sd_sym(SD sd, const char *symname, SD_SYM *sym);
+int sd_close(SD lib);
+
+#endif
