@@ -2,7 +2,7 @@
 
 =begin comment
 
-Any deprecated keypair function from d2i_X509.pod are collected in this file.
+Any deprecated keypair/params d2i or i2d functions are collected on this page.
 
 =end comment
 
@@ -17,6 +17,9 @@ d2i_RSAPublicKey_fp,
 d2i_RSA_PUBKEY,
 d2i_RSA_PUBKEY_bio,
 d2i_RSA_PUBKEY_fp,
+d2i_DHparams,
+d2i_DHparams_bio,
+d2i_DHparams_fp,
 i2d_RSAPrivateKey,
 i2d_RSAPrivateKey_bio,
 i2d_RSAPrivateKey_fp,
@@ -25,7 +28,10 @@ i2d_RSAPublicKey_bio,
 i2d_RSAPublicKey_fp,
 i2d_RSA_PUBKEY,
 i2d_RSA_PUBKEY_bio,
-i2d_RSA_PUBKEY_fp
+i2d_RSA_PUBKEY_fp,
+i2d_DHparams,
+i2d_DHparams_bio,
+i2d_DHparams_fp
 - DEPRECATED
 
 =head1 SYNOPSIS
