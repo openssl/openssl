@@ -1609,12 +1609,13 @@ static int setup_request_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
         const char *file = opt_newkey;
         const int format = opt_keyform;
         const char *pass = opt_newkeypass;
-        const char *desc = "new private or public key for cert to be enrolled";
-        EVP_PKEY *pkey = load_key_pwd(file, format, pass, engine, NULL);
+        const char *desc = "new private key for cert to be enrolled";
+        EVP_PKEY *pkey = load_key_pwd(file, format, pass, engine, desc);
         int priv = 1;
 
         if (pkey == NULL) {
             ERR_clear_error();
+            desc = "fallback public key for cert to be enrolled";
             pkey = load_pubkey(file, format, 0, pass, engine, desc);
             priv = 0;
         }
