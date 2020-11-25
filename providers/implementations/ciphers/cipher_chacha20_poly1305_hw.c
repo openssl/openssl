@@ -120,9 +120,6 @@ static int chacha20_poly1305_tls_cipher(PROV_CIPHER_CTX *bctx,
 
     DECLARE_IS_ENDIAN;
 
-    if (len != plen + POLY1305_BLOCK_SIZE)
-        return 0;
-
     buf = storage + ((0 - (size_t)storage) & 15);   /* align */
     ctr = buf + CHACHA_BLK_SIZE;
     tohash = buf + CHACHA_BLK_SIZE - POLY1305_BLOCK_SIZE;
@@ -274,11 +271,14 @@ static int chacha20_poly1305_aead_cipher(PROV_CIPHER_CTX *bctx,
     DECLARE_IS_ENDIAN;
 
     if (!ctx->mac_inited) {
-#if !defined(OPENSSL_SMALL_FOOTPRINT)
         if (plen != NO_TLS_PAYLOAD_LENGTH && out != NULL) {
+            if (inl != plen + POLY1305_BLOCK_SIZE)
+                return 0;
+#if !defined(OPENSSL_SMALL_FOOTPRINT)
             return chacha20_poly1305_tls_cipher(bctx, out, outl, in, inl);
-        }
 #endif
+        }
+
         ctx->chacha.counter[0] = 0;
         ChaCha20_ctr32(ctx->chacha.buf, zero, CHACHA_BLK_SIZE,
                        ctx->chacha.key.d, ctx->chacha.counter);
@@ -375,6 +375,8 @@ static int chacha20_poly1305_aead_cipher(PROV_CIPHER_CTX *bctx,
                     memset(out - plen, 0, plen);
                     goto err;
                 }
+                /* Strip the tag */
+                inl -= POLY1305_BLOCK_SIZE;
             }
         }
         else if (!bctx->enc) {
