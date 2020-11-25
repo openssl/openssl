@@ -79,8 +79,14 @@ static void twos_complement(unsigned char *dst, const unsigned char *src,
     unsigned int carry = pad & 1;
 
     /* Begin at the end of the encoding */
-    dst += len;
-    src += len;
+    if (len != 0) {
+        /*
+         * if len == 0 then src/dst could be NULL, and this would be undefined
+         * behaviour.
+         */
+        dst += len;
+        src += len;
+    }
     /* two's complement value: ~value + 1 */
     while (len-- != 0) {
         *(--dst) = (unsigned char)(carry += *(--src) ^ pad);

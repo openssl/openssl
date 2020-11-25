@@ -167,7 +167,7 @@ int filter_provider_set_filter(int operation, const char *filterstr)
     if (globs->num_dispatch >= MAX_FILTERS)
         goto err;
 
-    for (name = filterstrtmp; !last; name = sep + 1) {
+    for (name = filterstrtmp; !last; name = (sep == NULL ? NULL : sep + 1)) {
         sep = strstr(name, ":");
         if (sep != NULL)
             *sep = '\0';
