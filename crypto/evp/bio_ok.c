@@ -204,7 +204,7 @@ static int ok_read(BIO *b, char *out, int outl)
                 /*
                  * copy start of the next block into proper place
                  */
-                if (ctx->buf_len_save - ctx->buf_off_save > 0) {
+                if (ctx->buf_len_save > ctx->buf_off_save) {
                     ctx->buf_len = ctx->buf_len_save - ctx->buf_off_save;
                     memmove(ctx->buf, &(ctx->buf[ctx->buf_off_save]),
                             ctx->buf_len);
