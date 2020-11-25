@@ -28,8 +28,10 @@ static int test_print_error_format(void)
     /* Variables used to construct an error line */
     char *lib;
     const char *func = OPENSSL_FUNC;
-    char reasonbuf[255];
     char *reason;
+# ifdef OPENSSL_NO_ERR
+    char reasonbuf[255];
+# endif
 # ifndef OPENSSL_NO_FILENAMES
     const char *file = OPENSSL_FILE;
     const int line = OPENSSL_LINE;
