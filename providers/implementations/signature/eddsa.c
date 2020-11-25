@@ -23,6 +23,27 @@
 #include "prov/der_ecx.h"
 #include "crypto/ecx.h"
 
+#ifdef S390X_EC_ASM
+# include "s390x_arch.h"
+
+# define S390X_CAN_SIGN(edtype)                                                \
+((OPENSSL_s390xcap_P.pcc[1] & S390X_CAPBIT(S390X_SCALAR_MULTIPLY_##edtype))    \
+&& (OPENSSL_s390xcap_P.kdsa[0] & S390X_CAPBIT(S390X_EDDSA_SIGN_##edtype))      \
+&& (OPENSSL_s390xcap_P.kdsa[0] & S390X_CAPBIT(S390X_EDDSA_VERIFY_##edtype)))
+
+static int s390x_ed25519_digestsign(const ECX_KEY *edkey, unsigned char *sig,
+                                    const unsigned char *tbs, size_t tbslen);
+static int s390x_ed448_digestsign(const ECX_KEY *edkey, unsigned char *sig,
+                                  const unsigned char *tbs, size_t tbslen);
+static int s390x_ed25519_digestverify(const ECX_KEY *edkey,
+                                      const unsigned char *sig,
+                                      const unsigned char *tbs, size_t tbslen);
+static int s390x_ed448_digestverify(const ECX_KEY *edkey,
+                                    const unsigned char *sig,
+                                    const unsigned char *tbs, size_t tbslen);
+
+#endif /* S390X_EC_ASM */
+
 static OSSL_FUNC_signature_newctx_fn eddsa_newctx;
 static OSSL_FUNC_signature_digest_sign_init_fn eddsa_digest_signverify_init;
 static OSSL_FUNC_signature_digest_sign_fn ed25519_digest_sign;
@@ -133,7 +154,10 @@ int ed25519_digest_sign(void *vpeddsactx, unsigned char *sigret,
         ERR_raise(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
         return 0;
     }
-
+#ifdef S390X_EC_ASM
+    if (S390X_CAN_SIGN(ED25519))
+        return s390x_ed25519_digestsign(edkey, sigret, tbs, tbslen);
+#endif /* S390X_EC_ASM */
     if (ED25519_sign(sigret, tbs, tbslen, edkey->pubkey, edkey->privkey,
                      peddsactx->libctx, NULL) == 0) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SIGN);
@@ -161,7 +185,10 @@ int ed448_digest_sign(void *vpeddsactx, unsigned char *sigret,
         ERR_raise(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
         return 0;
     }
-
+#ifdef S390X_EC_ASM
+    if (S390X_CAN_SIGN(ED448))
+        return s390x_ed448_digestsign(edkey, sigret, tbs, tbslen);
+#endif /* S390X_EC_ASM */
     if (ED448_sign(peddsactx->libctx, sigret, tbs, tbslen, edkey->pubkey,
                    edkey->privkey, NULL, 0, edkey->propq) == 0) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SIGN);
@@ -181,6 +208,11 @@ int ed25519_digest_verify(void *vpeddsactx, const unsigned char *sig,
     if (!ossl_prov_is_running() || siglen != ED25519_SIGSIZE)
         return 0;
 
+#ifdef S390X_EC_ASM
+    if (S390X_CAN_SIGN(ED25519))
+        return s390x_ed25519_digestverify(edkey, sig, tbs, tbslen);
+#endif /* S390X_EC_ASM */
+
     return ED25519_verify(tbs, tbslen, sig, edkey->pubkey, peddsactx->libctx,
                           edkey->propq);
 }
@@ -194,6 +226,11 @@ int ed448_digest_verify(void *vpeddsactx, const unsigned char *sig,
 
     if (!ossl_prov_is_running() || siglen != ED448_SIGSIZE)
         return 0;
+
+#ifdef S390X_EC_ASM
+    if (S390X_CAN_SIGN(ED448))
+        return s390x_ed448_digestverify(edkey, sig, tbs, tbslen);
+#endif /* S390X_EC_ASM */
 
     return ED448_verify(peddsactx->libctx, tbs, tbslen, sig, edkey->pubkey,
                         NULL, 0, edkey->propq);
@@ -296,3 +333,105 @@ const OSSL_DISPATCH ossl_ed448_signature_functions[] = {
       (void (*)(void))eddsa_gettable_ctx_params },
     { 0, NULL }
 };
+
+#ifdef S390X_EC_ASM
+
+static int s390x_ed25519_digestsign(const ECX_KEY *edkey, unsigned char *sig,
+                                    const unsigned char *tbs, size_t tbslen)
+{
+    int rc;
+    union {
+        struct {
+            unsigned char sig[64];
+            unsigned char priv[32];
+        } ed25519;
+        unsigned long long buff[512];
+    } param;
+
+    memset(&param, 0, sizeof(param));
+    memcpy(param.ed25519.priv, edkey->privkey, sizeof(param.ed25519.priv));
+
+    rc = s390x_kdsa(S390X_EDDSA_SIGN_ED25519, &param.ed25519, tbs, tbslen);
+    OPENSSL_cleanse(param.ed25519.priv, sizeof(param.ed25519.priv));
+    if (rc != 0)
+        return 0;
+
+    s390x_flip_endian32(sig, param.ed25519.sig);
+    s390x_flip_endian32(sig + 32, param.ed25519.sig + 32);
+    return 1;
+}
+
+static int s390x_ed448_digestsign(const ECX_KEY *edkey, unsigned char *sig,
+                                  const unsigned char *tbs, size_t tbslen)
+{
+    int rc;
+    union {
+        struct {
+            unsigned char sig[128];
+            unsigned char priv[64];
+        } ed448;
+        unsigned long long buff[512];
+    } param;
+
+    memset(&param, 0, sizeof(param));
+    memcpy(param.ed448.priv + 64 - 57, edkey->privkey, 57);
+
+    rc = s390x_kdsa(S390X_EDDSA_SIGN_ED448, &param.ed448, tbs, tbslen);
+    OPENSSL_cleanse(param.ed448.priv, sizeof(param.ed448.priv));
+    if (rc != 0)
+        return 0;
+
+    s390x_flip_endian64(param.ed448.sig, param.ed448.sig);
+    s390x_flip_endian64(param.ed448.sig + 64, param.ed448.sig + 64);
+    memcpy(sig, param.ed448.sig, 57);
+    memcpy(sig + 57, param.ed448.sig + 64, 57);
+    return 1;
+}
+
+static int s390x_ed25519_digestverify(const ECX_KEY *edkey,
+                                      const unsigned char *sig,
+                                      const unsigned char *tbs, size_t tbslen)
+{
+    union {
+        struct {
+            unsigned char sig[64];
+            unsigned char pub[32];
+        } ed25519;
+        unsigned long long buff[512];
+    } param;
+
+    memset(&param, 0, sizeof(param));
+    s390x_flip_endian32(param.ed25519.sig, sig);
+    s390x_flip_endian32(param.ed25519.sig + 32, sig + 32);
+    s390x_flip_endian32(param.ed25519.pub, edkey->pubkey);
+
+    return s390x_kdsa(S390X_EDDSA_VERIFY_ED25519,
+                      &param.ed25519, tbs, tbslen) == 0 ? 1 : 0;
+}
+
+static int s390x_ed448_digestverify(const ECX_KEY *edkey,
+                                    const unsigned char *sig,
+                                    const unsigned char *tbs,
+                                    size_t tbslen)
+{
+    union {
+        struct {
+            unsigned char sig[128];
+            unsigned char pub[64];
+        } ed448;
+        unsigned long long buff[512];
+    } param;
+
+    memset(&param, 0, sizeof(param));
+    memcpy(param.ed448.sig, sig, 57);
+    s390x_flip_endian64(param.ed448.sig, param.ed448.sig);
+    memcpy(param.ed448.sig + 64, sig + 57, 57);
+    s390x_flip_endian64(param.ed448.sig + 64, param.ed448.sig + 64);
+    memcpy(param.ed448.pub, edkey->pubkey, 57);
+    s390x_flip_endian64(param.ed448.pub, param.ed448.pub);
+
+    return s390x_kdsa(S390X_EDDSA_VERIFY_ED448,
+                      &param.ed448, tbs, tbslen) == 0 ? 1 : 0;
+}
+
+#endif /* S390X_EC_ASM */
