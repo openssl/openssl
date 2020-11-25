@@ -435,6 +435,10 @@ IF[{- !$disabled{tests} -}]
     PROGRAMS{noinst}=shlibloadtest
     SOURCE[shlibloadtest]=shlibloadtest.c simpledynamic.c
     INCLUDE[shlibloadtest]=../include ../apps/include
+
+    PROGRAMS{noinst}=moduleloadtest
+    SOURCE[moduleloadtest]=moduleloadtest.c simpledynamic.c
+    INCLUDE[moduleloadtest]=../include ../apps/include
   ENDIF
 
   # cipher_overhead_test uses internal symbols, so it must be linked with
