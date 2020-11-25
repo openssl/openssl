@@ -1230,11 +1230,13 @@ int EVP_PKEY_set1_DSA(EVP_PKEY *pkey, struct dsa_st *key);
 struct dsa_st *EVP_PKEY_get0_DSA(const EVP_PKEY *pkey);
 struct dsa_st *EVP_PKEY_get1_DSA(EVP_PKEY *pkey);
 # endif
-# ifndef OPENSSL_NO_DH
+# ifndef OPENSSL_NO_DEPRECATED_3_0
+#  ifndef OPENSSL_NO_DH
 struct dh_st;
-DEPRECATEDIN_3_0(int EVP_PKEY_set1_DH(EVP_PKEY *pkey, struct dh_st *key))
-DEPRECATEDIN_3_0(struct dh_st *EVP_PKEY_get0_DH(const EVP_PKEY *pkey))
-DEPRECATEDIN_3_0(struct dh_st *EVP_PKEY_get1_DH(EVP_PKEY *pkey))
+OSSL_DEPRECATEDIN_3_0 int EVP_PKEY_set1_DH(EVP_PKEY *pkey, struct dh_st *key);
+OSSL_DEPRECATEDIN_3_0 struct dh_st *EVP_PKEY_get0_DH(const EVP_PKEY *pkey);
+OSSL_DEPRECATEDIN_3_0 struct dh_st *EVP_PKEY_get1_DH(EVP_PKEY *pkey);
+#  endif
 # endif
 # ifndef OPENSSL_NO_EC
 struct ec_key_st;
