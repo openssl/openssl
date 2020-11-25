@@ -26,7 +26,12 @@
 static int test_print_error_format(void)
 {
     /* Variables used to construct an error line */
+    char *lib;
     const char *func = OPENSSL_FUNC;
+    char *reason;
+# ifdef OPENSSL_NO_ERR
+    char reasonbuf[255];
+# endif
 # ifndef OPENSSL_NO_FILENAMES
     const char *file = OPENSSL_FILE;
     const int line = OPENSSL_LINE;
@@ -35,13 +40,14 @@ static int test_print_error_format(void)
     const int line = 0;
 # endif
     /* The format for OpenSSL error lines */
-    const char *expected_format = ":error::system library:%s:%s:%s:%d";
+    const char *expected_format = ":error:%08lX:%s:%s:%s:%s:%d";
     /*-
-     *                                                    ^^ ^^ ^^ ^^
-     * function name -------------------------------------++ || || ||
-     * reason string (system error string) ------------------++ || ||
-     * file name -----------------------------------------------++ ||
-     * line number ------------------------------------------------++
+     *                                          ^^ ^^ ^^ ^^ ^^
+     * "library" name --------------------------++ || || || ||
+     * function name ------------------------------++ || || ||
+     * reason string (system error string) -----------++ || ||
+     * file name ----------------------------------------++ ||
+     * line number -----------------------------------------++
      */
     char expected[512];
 
@@ -49,7 +55,8 @@ static int test_print_error_format(void)
     int ret = 0, len;
     BIO *bio = NULL;
     const int syserr = EPERM;
-    int reasoncode;
+    unsigned long errorcode;
+    unsigned long reasoncode;
 
     /*
      * We set a mark here so we can clear the system error that we generate
@@ -59,15 +66,25 @@ static int test_print_error_format(void)
     ERR_set_mark();
 
     ERR_PUT_error(ERR_LIB_SYS, 0, syserr, file, line);
-    reasoncode = ERR_GET_REASON(ERR_peek_error());
+    errorcode = ERR_peek_error();
+    reasoncode = ERR_GET_REASON(errorcode);
 
     if (!TEST_int_eq(reasoncode, syserr)) {
         ERR_pop_to_mark();
         goto err;
     }
 
+# ifndef OPENSSL_NO_ERR
+    lib = "system library";
+    reason = strerror(syserr);
+# else
+    lib = "lib(2)";
+    BIO_snprintf(reasonbuf, sizeof(reasonbuf), "reason(%lu)", reasoncode);
+    reason = reasonbuf;
+# endif
+
     BIO_snprintf(expected, sizeof(expected), expected_format,
-                 func, strerror(syserr), file, line);
+                 errorcode, lib, func, reason, file, line);
 
     if (!TEST_ptr(bio = BIO_new(BIO_s_mem())))
         goto err;
