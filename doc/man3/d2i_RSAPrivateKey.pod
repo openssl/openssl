@@ -2,7 +2,7 @@
 
 =begin comment
 
-Any deprecated keypair/params d2i function are collected on this page.
+Any deprecated keypair/params d2i or i2d functions are collected on this page.
 
 =end comment
 
