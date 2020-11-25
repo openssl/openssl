@@ -36,6 +36,7 @@ static int test_load(const char *path, const char *symbol)
 int main(int argc, char *argv[])
 {
     const char *m, *s;
+    int ok;
 
     if (argc != 2 && argc != 3) {
         fprintf(stderr, "Usage: %s sharedobject [ entrypoint ]\n", argv[0]);
@@ -45,5 +46,8 @@ int main(int argc, char *argv[])
     m = argv[1];
     s = argc == 3 ? argv[2] : NULL;
 
-    return test_load(m, s) ? 0 : 1;
+    ok = test_load(m, s);
+    if (!ok)
+        fprintf(stderr, "ERROR: %s\n", sd_error());
+    return ok ? 0 : 1;
 }

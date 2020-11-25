@@ -35,6 +35,11 @@ int sd_close(SD lib)
     return dlclose(lib) != 0 ? 0 : 1;
 }
 
+const char *sd_error(void)
+{
+    return dlerror();
+}
+
 #elif defined(DSO_WIN32)
 
 nt sd_load(const char *filename, SD *lib, ossl_unused int type)
@@ -52,6 +57,16 @@ int sd_sym(SD lib, const char *symname, SD_SYM *sym)
 int sd_close(SD lib)
 {
     return FreeLibrary(lib) == 0 ? 0 : 1;
+}
+
+const char *sd_error(void)
+{
+    static char buffer[255];
+
+    buffer[0] = '\0';
+    FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM, NULL, GetLastError(), 0,
+                   buffer, sizeof(buffer), NULL);
+    return buffer;
 }
 
 #else
