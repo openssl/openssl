@@ -38,12 +38,12 @@ jobs:
     - name: make test
       run: make test
 
-  sanitizers:
+  asan:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
     - name: config
-      run: ./config --debug no-asm enable-asan enable-ubsan enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128
+      run: ./config --debug no-asm enable-asan enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128
     - name: make
       run: make
     - name: make test
