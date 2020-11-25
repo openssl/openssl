@@ -193,8 +193,6 @@ static const TLS_GROUP_INFO oqs_nid_list[] = {
     {NID_frodo1344shake, 256, TLS_CURVE_CUSTOM}, /* frodo1344shake (0x0205) */
     {NID_bike1l1cpa, 128, TLS_CURVE_CUSTOM}, /* bike1l1cpa (0x0206) */
     {NID_bike1l3cpa, 192, TLS_CURVE_CUSTOM}, /* bike1l3cpa (0x0207) */
-    {NID_bike1l1fo, 128, TLS_CURVE_CUSTOM}, /* bike1l1fo (0x0223) */
-    {NID_bike1l3fo, 192, TLS_CURVE_CUSTOM}, /* bike1l3fo (0x0224) */
     {NID_kyber512, 128, TLS_CURVE_CUSTOM}, /* kyber512 (0x020F) */
     {NID_kyber768, 192, TLS_CURVE_CUSTOM}, /* kyber768 (0x0210) */
     {NID_kyber1024, 256, TLS_CURVE_CUSTOM}, /* kyber1024 (0x0211) */
@@ -213,21 +211,20 @@ static const TLS_GROUP_INFO oqs_nid_list[] = {
     {NID_sikep503, 128, TLS_CURVE_CUSTOM}, /* sikep503 (0x0220) */
     {NID_sikep610, 192, TLS_CURVE_CUSTOM}, /* sikep610 (0x0221) */
     {NID_sikep751, 256, TLS_CURVE_CUSTOM}, /* sikep751 (0x0222) */
+    {NID_bike1l1fo, 128, TLS_CURVE_CUSTOM}, /* bike1l1fo (0x0223) */
+    {NID_bike1l3fo, 192, TLS_CURVE_CUSTOM}, /* bike1l3fo (0x0224) */
     {NID_kyber90s512, 128, TLS_CURVE_CUSTOM}, /* kyber90s512 (0x0229) */
     {NID_kyber90s768, 192, TLS_CURVE_CUSTOM}, /* kyber90s768 (0x022A) */
     {NID_kyber90s1024, 256, TLS_CURVE_CUSTOM}, /* kyber90s1024 (0x022B) */
-    {NID_hqc128_1_cca2, 128, TLS_CURVE_CUSTOM}, /* hqc128_1_cca2 (0x0232) */
-    {NID_hqc192_1_cca2, 192, TLS_CURVE_CUSTOM}, /* hqc192_1_cca2 (0x0233) */
-    {NID_hqc192_2_cca2, 192, TLS_CURVE_CUSTOM}, /* hqc192_2_cca2 (0x0234) */
-    {NID_hqc256_1_cca2, 256, TLS_CURVE_CUSTOM}, /* hqc256_1_cca2 (0x0235) */
-    {NID_hqc256_2_cca2, 256, TLS_CURVE_CUSTOM}, /* hqc256_2_cca2 (0x0236) */
-    {NID_hqc256_3_cca2, 256, TLS_CURVE_CUSTOM}, /* hqc256_3_cca2 (0x0237) */
-    {NID_ntrulpr653, 128, TLS_CURVE_CUSTOM}, /* ntrulpr653 (0x0238) */
-    {NID_ntrulpr761, 192, TLS_CURVE_CUSTOM}, /* ntrulpr761 (0x0239) */
-    {NID_ntrulpr857, 192, TLS_CURVE_CUSTOM}, /* ntrulpr857 (0x023A) */
-    {NID_sntrup653, 128, TLS_CURVE_CUSTOM}, /* sntrup653 (0x023B) */
-    {NID_sntrup761, 192, TLS_CURVE_CUSTOM}, /* sntrup761 (0x023C) */
-    {NID_sntrup857, 192, TLS_CURVE_CUSTOM}, /* sntrup857 (0x023D) */
+    {NID_hqc128, 128, TLS_CURVE_CUSTOM}, /* hqc128 (0x022C) */
+    {NID_hqc192, 192, TLS_CURVE_CUSTOM}, /* hqc192 (0x022D) */
+    {NID_hqc256, 256, TLS_CURVE_CUSTOM}, /* hqc256 (0x022E) */
+    {NID_ntrulpr653, 128, TLS_CURVE_CUSTOM}, /* ntrulpr653 (0x022F) */
+    {NID_ntrulpr761, 192, TLS_CURVE_CUSTOM}, /* ntrulpr761 (0x0230) */
+    {NID_ntrulpr857, 192, TLS_CURVE_CUSTOM}, /* ntrulpr857 (0x0231) */
+    {NID_sntrup653, 128, TLS_CURVE_CUSTOM}, /* sntrup653 (0x0232) */
+    {NID_sntrup761, 192, TLS_CURVE_CUSTOM}, /* sntrup761 (0x0233) */
+    {NID_sntrup857, 192, TLS_CURVE_CUSTOM}, /* sntrup857 (0x0234) */
 ///// OQS_TEMPLATE_FRAGMENT_OQS_NID_LIST_END
 };
     /* Hybrid OQS groups. Security level is classical. */
@@ -242,8 +239,6 @@ static const TLS_GROUP_INFO oqs_hybrid_nid_list[] = {
  {NID_p521_frodo1344shake, 256, TLS_CURVE_CUSTOM}, /* p256/384/521 + frodo1344shake hybrid (0x0205) */
  {NID_p256_bike1l1cpa, 128, TLS_CURVE_CUSTOM}, /* p256/384/521 + bike1l1cpa hybrid (0x0206) */
  {NID_p384_bike1l3cpa, 192, TLS_CURVE_CUSTOM}, /* p256/384/521 + bike1l3cpa hybrid (0x0207) */
- {NID_p256_bike1l1fo, 128, TLS_CURVE_CUSTOM}, /* p256/384/521 + bike1l1fo hybrid (0x0223) */
- {NID_p384_bike1l3fo, 192, TLS_CURVE_CUSTOM}, /* p256/384/521 + bike1l3fo hybrid (0x0224) */
  {NID_p256_kyber512, 128, TLS_CURVE_CUSTOM}, /* p256/384/521 + kyber512 hybrid (0x020F) */
  {NID_p384_kyber768, 192, TLS_CURVE_CUSTOM}, /* p256/384/521 + kyber768 hybrid (0x0210) */
  {NID_p521_kyber1024, 256, TLS_CURVE_CUSTOM}, /* p256/384/521 + kyber1024 hybrid (0x0211) */
@@ -262,21 +257,20 @@ static const TLS_GROUP_INFO oqs_hybrid_nid_list[] = {
  {NID_p256_sikep503, 128, TLS_CURVE_CUSTOM}, /* p256/384/521 + sikep503 hybrid (0x0220) */
  {NID_p384_sikep610, 192, TLS_CURVE_CUSTOM}, /* p256/384/521 + sikep610 hybrid (0x0221) */
  {NID_p521_sikep751, 256, TLS_CURVE_CUSTOM}, /* p256/384/521 + sikep751 hybrid (0x0222) */
+ {NID_p256_bike1l1fo, 128, TLS_CURVE_CUSTOM}, /* p256/384/521 + bike1l1fo hybrid (0x0223) */
+ {NID_p384_bike1l3fo, 192, TLS_CURVE_CUSTOM}, /* p256/384/521 + bike1l3fo hybrid (0x0224) */
  {NID_p256_kyber90s512, 128, TLS_CURVE_CUSTOM}, /* p256/384/521 + kyber90s512 hybrid (0x0229) */
  {NID_p384_kyber90s768, 192, TLS_CURVE_CUSTOM}, /* p256/384/521 + kyber90s768 hybrid (0x022A) */
  {NID_p521_kyber90s1024, 256, TLS_CURVE_CUSTOM}, /* p256/384/521 + kyber90s1024 hybrid (0x022B) */
- {NID_p256_hqc128_1_cca2, 128, TLS_CURVE_CUSTOM}, /* p256/384/521 + hqc128_1_cca2 hybrid (0x0232) */
- {NID_p384_hqc192_1_cca2, 192, TLS_CURVE_CUSTOM}, /* p256/384/521 + hqc192_1_cca2 hybrid (0x0233) */
- {NID_p384_hqc192_2_cca2, 192, TLS_CURVE_CUSTOM}, /* p256/384/521 + hqc192_2_cca2 hybrid (0x0234) */
- {NID_p521_hqc256_1_cca2, 256, TLS_CURVE_CUSTOM}, /* p256/384/521 + hqc256_1_cca2 hybrid (0x0235) */
- {NID_p521_hqc256_2_cca2, 256, TLS_CURVE_CUSTOM}, /* p256/384/521 + hqc256_2_cca2 hybrid (0x0236) */
- {NID_p521_hqc256_3_cca2, 256, TLS_CURVE_CUSTOM}, /* p256/384/521 + hqc256_3_cca2 hybrid (0x0237) */
- {NID_p256_ntrulpr653, 128, TLS_CURVE_CUSTOM}, /* p256/384/521 + ntrulpr653 hybrid (0x0238) */
- {NID_p384_ntrulpr761, 192, TLS_CURVE_CUSTOM}, /* p256/384/521 + ntrulpr761 hybrid (0x0239) */
- {NID_p384_ntrulpr857, 192, TLS_CURVE_CUSTOM}, /* p256/384/521 + ntrulpr857 hybrid (0x023A) */
- {NID_p256_sntrup653, 128, TLS_CURVE_CUSTOM}, /* p256/384/521 + sntrup653 hybrid (0x023B) */
- {NID_p384_sntrup761, 192, TLS_CURVE_CUSTOM}, /* p256/384/521 + sntrup761 hybrid (0x023C) */
- {NID_p384_sntrup857, 192, TLS_CURVE_CUSTOM}, /* p256/384/521 + sntrup857 hybrid (0x023D) */
+ {NID_p256_hqc128, 128, TLS_CURVE_CUSTOM}, /* p256/384/521 + hqc128 hybrid (0x022C) */
+ {NID_p384_hqc192, 192, TLS_CURVE_CUSTOM}, /* p256/384/521 + hqc192 hybrid (0x022D) */
+ {NID_p521_hqc256, 256, TLS_CURVE_CUSTOM}, /* p256/384/521 + hqc256 hybrid (0x022E) */
+ {NID_p256_ntrulpr653, 128, TLS_CURVE_CUSTOM}, /* p256/384/521 + ntrulpr653 hybrid (0x022F) */
+ {NID_p384_ntrulpr761, 192, TLS_CURVE_CUSTOM}, /* p256/384/521 + ntrulpr761 hybrid (0x0230) */
+ {NID_p384_ntrulpr857, 192, TLS_CURVE_CUSTOM}, /* p256/384/521 + ntrulpr857 hybrid (0x0231) */
+ {NID_p256_sntrup653, 128, TLS_CURVE_CUSTOM}, /* p256/384/521 + sntrup653 hybrid (0x0232) */
+ {NID_p384_sntrup761, 192, TLS_CURVE_CUSTOM}, /* p256/384/521 + sntrup761 hybrid (0x0233) */
+ {NID_p384_sntrup857, 192, TLS_CURVE_CUSTOM}, /* p256/384/521 + sntrup857 hybrid (0x0234) */
 ///// OQS_TEMPLATE_FRAGMENT_OQS_NID_LIST_HYBRID_END
 };
 
@@ -297,7 +291,6 @@ static const uint16_t eccurves_default[] = {
     0x2F00, /* OQS frodo640aes hybrid */
     0x2F01, /* OQS frodo640shake hybrid */
     0x2F06, /* OQS bike1l1cpa hybrid */
-    0x2F23, /* OQS bike1l1fo hybrid */
     0x2F0F, /* OQS kyber512 hybrid */
     0x2F14, /* OQS ntru_hps2048509 hybrid */
     0x2F18, /* OQS lightsaber hybrid */
@@ -305,10 +298,11 @@ static const uint16_t eccurves_default[] = {
     0x2F1C, /* OQS sidhp503 hybrid */
     0x2F1F, /* OQS sikep434 hybrid */
     0x2F20, /* OQS sikep503 hybrid */
+    0x2F23, /* OQS bike1l1fo hybrid */
     0x2F29, /* OQS kyber90s512 hybrid */
-    0x2F32, /* OQS hqc128_1_cca2 hybrid */
-    0x2F38, /* OQS ntrulpr653 hybrid */
-    0x2F3B, /* OQS sntrup653 hybrid */
+    0x2F2C, /* OQS hqc128 hybrid */
+    0x2F2F, /* OQS ntrulpr653 hybrid */
+    0x2F32, /* OQS sntrup653 hybrid */
 ///// OQS_TEMPLATE_FRAGMENT_ECCURVES_DEFAULT_HYBRID_END
 };
 
@@ -342,10 +336,6 @@ static const uint16_t oqs_all_tls13_server_groups[] = {
     0x2F06, /* OQS bike1l1cpa hybrid */
     0x0207, /* bike1l3cpa */
     0x2F07, /* OQS bike1l3cpa hybrid */
-    0x0223, /* bike1l1fo */
-    0x2F23, /* OQS bike1l1fo hybrid */
-    0x0224, /* bike1l3fo */
-    0x2F24, /* OQS bike1l3fo hybrid */
     0x020F, /* kyber512 */
     0x2F0F, /* OQS kyber512 hybrid */
     0x0210, /* kyber768 */
@@ -382,36 +372,34 @@ static const uint16_t oqs_all_tls13_server_groups[] = {
     0x2F21, /* OQS sikep610 hybrid */
     0x0222, /* sikep751 */
     0x2F22, /* OQS sikep751 hybrid */
+    0x0223, /* bike1l1fo */
+    0x2F23, /* OQS bike1l1fo hybrid */
+    0x0224, /* bike1l3fo */
+    0x2F24, /* OQS bike1l3fo hybrid */
     0x0229, /* kyber90s512 */
     0x2F29, /* OQS kyber90s512 hybrid */
     0x022A, /* kyber90s768 */
     0x2F2A, /* OQS kyber90s768 hybrid */
     0x022B, /* kyber90s1024 */
     0x2F2B, /* OQS kyber90s1024 hybrid */
-    0x0232, /* hqc128_1_cca2 */
-    0x2F32, /* OQS hqc128_1_cca2 hybrid */
-    0x0233, /* hqc192_1_cca2 */
-    0x2F33, /* OQS hqc192_1_cca2 hybrid */
-    0x0234, /* hqc192_2_cca2 */
-    0x2F34, /* OQS hqc192_2_cca2 hybrid */
-    0x0235, /* hqc256_1_cca2 */
-    0x2F35, /* OQS hqc256_1_cca2 hybrid */
-    0x0236, /* hqc256_2_cca2 */
-    0x2F36, /* OQS hqc256_2_cca2 hybrid */
-    0x0237, /* hqc256_3_cca2 */
-    0x2F37, /* OQS hqc256_3_cca2 hybrid */
-    0x0238, /* ntrulpr653 */
-    0x2F38, /* OQS ntrulpr653 hybrid */
-    0x0239, /* ntrulpr761 */
-    0x2F39, /* OQS ntrulpr761 hybrid */
-    0x023A, /* ntrulpr857 */
-    0x2F3A, /* OQS ntrulpr857 hybrid */
-    0x023B, /* sntrup653 */
-    0x2F3B, /* OQS sntrup653 hybrid */
-    0x023C, /* sntrup761 */
-    0x2F3C, /* OQS sntrup761 hybrid */
-    0x023D, /* sntrup857 */
-    0x2F3D, /* OQS sntrup857 hybrid */
+    0x022C, /* hqc128 */
+    0x2F2C, /* OQS hqc128 hybrid */
+    0x022D, /* hqc192 */
+    0x2F2D, /* OQS hqc192 hybrid */
+    0x022E, /* hqc256 */
+    0x2F2E, /* OQS hqc256 hybrid */
+    0x022F, /* ntrulpr653 */
+    0x2F2F, /* OQS ntrulpr653 hybrid */
+    0x0230, /* ntrulpr761 */
+    0x2F30, /* OQS ntrulpr761 hybrid */
+    0x0231, /* ntrulpr857 */
+    0x2F31, /* OQS ntrulpr857 hybrid */
+    0x0232, /* sntrup653 */
+    0x2F32, /* OQS sntrup653 hybrid */
+    0x0233, /* sntrup761 */
+    0x2F33, /* OQS sntrup761 hybrid */
+    0x0234, /* sntrup857 */
+    0x2F34, /* OQS sntrup857 hybrid */
 ///// OQS_TEMPLATE_FRAGMENT_ALL_OQS_CURVEIDS_END
 };
 

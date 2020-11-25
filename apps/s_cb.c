@@ -468,8 +468,6 @@ static const char* OQS_CURVE_ID_NAME_STR(int id) {
   case 0x0205: return "frodo1344shake";
   case 0x0206: return "bike1l1cpa";
   case 0x0207: return "bike1l3cpa";
-  case 0x0223: return "bike1l1fo";
-  case 0x0224: return "bike1l3fo";
   case 0x020F: return "kyber512";
   case 0x0210: return "kyber768";
   case 0x0211: return "kyber1024";
@@ -488,21 +486,20 @@ static const char* OQS_CURVE_ID_NAME_STR(int id) {
   case 0x0220: return "sikep503";
   case 0x0221: return "sikep610";
   case 0x0222: return "sikep751";
+  case 0x0223: return "bike1l1fo";
+  case 0x0224: return "bike1l3fo";
   case 0x0229: return "kyber90s512";
   case 0x022A: return "kyber90s768";
   case 0x022B: return "kyber90s1024";
-  case 0x0232: return "hqc128_1_cca2";
-  case 0x0233: return "hqc192_1_cca2";
-  case 0x0234: return "hqc192_2_cca2";
-  case 0x0235: return "hqc256_1_cca2";
-  case 0x0236: return "hqc256_2_cca2";
-  case 0x0237: return "hqc256_3_cca2";
-  case 0x0238: return "ntrulpr653";
-  case 0x0239: return "ntrulpr761";
-  case 0x023A: return "ntrulpr857";
-  case 0x023B: return "sntrup653";
-  case 0x023C: return "sntrup761";
-  case 0x023D: return "sntrup857";
+  case 0x022C: return "hqc128";
+  case 0x022D: return "hqc192";
+  case 0x022E: return "hqc256";
+  case 0x022F: return "ntrulpr653";
+  case 0x0230: return "ntrulpr761";
+  case 0x0231: return "ntrulpr857";
+  case 0x0232: return "sntrup653";
+  case 0x0233: return "sntrup761";
+  case 0x0234: return "sntrup857";
   ///// OQS_TEMPLATE_FRAGMENT_OQS_CURVE_ID_NAME_STR_END
   case 0x2FFF: return "p256_oqs_kem_default hybrid";
   ///// OQS_TEMPLATE_FRAGMENT_OQS_CURVE_ID_NAME_STR_HYBRID_START
@@ -514,8 +511,6 @@ static const char* OQS_CURVE_ID_NAME_STR(int id) {
    case 0x2F05: return "p521_frodo1344shake hybrid";
    case 0x2F06: return "p256_bike1l1cpa hybrid";
    case 0x2F07: return "p384_bike1l3cpa hybrid";
-   case 0x2F23: return "p256_bike1l1fo hybrid";
-   case 0x2F24: return "p384_bike1l3fo hybrid";
    case 0x2F0F: return "p256_kyber512 hybrid";
    case 0x2F10: return "p384_kyber768 hybrid";
    case 0x2F11: return "p521_kyber1024 hybrid";
@@ -534,21 +529,20 @@ static const char* OQS_CURVE_ID_NAME_STR(int id) {
    case 0x2F20: return "p256_sikep503 hybrid";
    case 0x2F21: return "p384_sikep610 hybrid";
    case 0x2F22: return "p521_sikep751 hybrid";
+   case 0x2F23: return "p256_bike1l1fo hybrid";
+   case 0x2F24: return "p384_bike1l3fo hybrid";
    case 0x2F29: return "p256_kyber90s512 hybrid";
    case 0x2F2A: return "p384_kyber90s768 hybrid";
    case 0x2F2B: return "p521_kyber90s1024 hybrid";
-   case 0x2F32: return "p256_hqc128_1_cca2 hybrid";
-   case 0x2F33: return "p384_hqc192_1_cca2 hybrid";
-   case 0x2F34: return "p384_hqc192_2_cca2 hybrid";
-   case 0x2F35: return "p521_hqc256_1_cca2 hybrid";
-   case 0x2F36: return "p521_hqc256_2_cca2 hybrid";
-   case 0x2F37: return "p521_hqc256_3_cca2 hybrid";
-   case 0x2F38: return "p256_ntrulpr653 hybrid";
-   case 0x2F39: return "p384_ntrulpr761 hybrid";
-   case 0x2F3A: return "p384_ntrulpr857 hybrid";
-   case 0x2F3B: return "p256_sntrup653 hybrid";
-   case 0x2F3C: return "p384_sntrup761 hybrid";
-   case 0x2F3D: return "p384_sntrup857 hybrid";
+   case 0x2F2C: return "p256_hqc128 hybrid";
+   case 0x2F2D: return "p384_hqc192 hybrid";
+   case 0x2F2E: return "p521_hqc256 hybrid";
+   case 0x2F2F: return "p256_ntrulpr653 hybrid";
+   case 0x2F30: return "p384_ntrulpr761 hybrid";
+   case 0x2F31: return "p384_ntrulpr857 hybrid";
+   case 0x2F32: return "p256_sntrup653 hybrid";
+   case 0x2F33: return "p384_sntrup761 hybrid";
+   case 0x2F34: return "p384_sntrup857 hybrid";
   ///// OQS_TEMPLATE_FRAGMENT_OQS_CURVE_ID_NAME_STR_HYBRID_END
   default: return "";
   }

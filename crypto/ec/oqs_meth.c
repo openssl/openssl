@@ -118,8 +118,6 @@ int oqssl_kem_nids_list[] = {
         NID_frodo1344shake,
         NID_bike1l1cpa,
         NID_bike1l3cpa,
-        NID_bike1l1fo,
-        NID_bike1l3fo,
         NID_kyber512,
         NID_kyber768,
         NID_kyber1024,
@@ -138,15 +136,14 @@ int oqssl_kem_nids_list[] = {
         NID_sikep503,
         NID_sikep610,
         NID_sikep751,
+        NID_bike1l1fo,
+        NID_bike1l3fo,
         NID_kyber90s512,
         NID_kyber90s768,
         NID_kyber90s1024,
-        NID_hqc128_1_cca2,
-        NID_hqc192_1_cca2,
-        NID_hqc192_2_cca2,
-        NID_hqc256_1_cca2,
-        NID_hqc256_2_cca2,
-        NID_hqc256_3_cca2,
+        NID_hqc128,
+        NID_hqc192,
+        NID_hqc256,
         NID_ntrulpr653,
         NID_ntrulpr761,
         NID_ntrulpr857,
@@ -250,12 +247,6 @@ char* get_oqs_alg_name(int openssl_nid)
     case NID_bike1l3cpa:
     case NID_p384_bike1l3cpa:
       return OQS_KEM_alg_bike1_l3_cpa;
-    case NID_bike1l1fo:
-    case NID_p256_bike1l1fo:
-      return OQS_KEM_alg_bike1_l1_fo;
-    case NID_bike1l3fo:
-    case NID_p384_bike1l3fo:
-      return OQS_KEM_alg_bike1_l3_fo;
     case NID_kyber512:
     case NID_p256_kyber512:
       return OQS_KEM_alg_kyber_512;
@@ -310,6 +301,12 @@ char* get_oqs_alg_name(int openssl_nid)
     case NID_sikep751:
     case NID_p521_sikep751:
       return OQS_KEM_alg_sike_p751;
+    case NID_bike1l1fo:
+    case NID_p256_bike1l1fo:
+      return OQS_KEM_alg_bike1_l1_fo;
+    case NID_bike1l3fo:
+    case NID_p384_bike1l3fo:
+      return OQS_KEM_alg_bike1_l3_fo;
     case NID_kyber90s512:
     case NID_p256_kyber90s512:
       return OQS_KEM_alg_kyber_512_90s;
@@ -319,24 +316,15 @@ char* get_oqs_alg_name(int openssl_nid)
     case NID_kyber90s1024:
     case NID_p521_kyber90s1024:
       return OQS_KEM_alg_kyber_1024_90s;
-    case NID_hqc128_1_cca2:
-    case NID_p256_hqc128_1_cca2:
-      return OQS_KEM_alg_hqc_128_1_cca2;
-    case NID_hqc192_1_cca2:
-    case NID_p384_hqc192_1_cca2:
-      return OQS_KEM_alg_hqc_192_1_cca2;
-    case NID_hqc192_2_cca2:
-    case NID_p384_hqc192_2_cca2:
-      return OQS_KEM_alg_hqc_192_2_cca2;
-    case NID_hqc256_1_cca2:
-    case NID_p521_hqc256_1_cca2:
-      return OQS_KEM_alg_hqc_256_1_cca2;
-    case NID_hqc256_2_cca2:
-    case NID_p521_hqc256_2_cca2:
-      return OQS_KEM_alg_hqc_256_2_cca2;
-    case NID_hqc256_3_cca2:
-    case NID_p521_hqc256_3_cca2:
-      return OQS_KEM_alg_hqc_256_3_cca2;
+    case NID_hqc128:
+    case NID_p256_hqc128:
+      return OQS_KEM_alg_hqc_128;
+    case NID_hqc192:
+    case NID_p384_hqc192:
+      return OQS_KEM_alg_hqc_192;
+    case NID_hqc256:
+    case NID_p521_hqc256:
+      return OQS_KEM_alg_hqc_256;
     case NID_ntrulpr653:
     case NID_p256_ntrulpr653:
       return OQS_KEM_alg_ntruprime_ntrulpr653;

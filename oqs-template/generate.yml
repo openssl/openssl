@@ -50,18 +50,6 @@ kems:
     oqs_alg: "OQS_KEM_alg_bike1_l3_cpa"
     bit_security: 192
   -
-    name_group: "bike1l1fo"
-    nid: "0x0223"
-    nid_hybrid: "0x2F23"
-    oqs_alg: "OQS_KEM_alg_bike1_l1_fo"
-    bit_security: 128
-  -
-    name_group: "bike1l3fo"
-    nid: "0x0224"
-    nid_hybrid: "0x2F24"
-    oqs_alg: "OQS_KEM_alg_bike1_l3_fo"
-    bit_security: 192
-  -
     name_group: "kyber512"
     nid: "0x020F"
     nid_hybrid: "0x2F0F"
@@ -170,6 +158,18 @@ kems:
     oqs_alg: "OQS_KEM_alg_sike_p751"
     bit_security: 256
   -
+    name_group: "bike1l1fo"
+    nid: "0x0223"
+    nid_hybrid: "0x2F23"
+    oqs_alg: "OQS_KEM_alg_bike1_l1_fo"
+    bit_security: 128
+  -
+    name_group: "bike1l3fo"
+    nid: "0x0224"
+    nid_hybrid: "0x2F24"
+    oqs_alg: "OQS_KEM_alg_bike1_l3_fo"
+    bit_security: 192
+  -
     name_group: "kyber90s512"
     nid: "0x0229"
     nid_hybrid: "0x2F29"
@@ -188,75 +188,57 @@ kems:
     oqs_alg: "OQS_KEM_alg_kyber_1024_90s"
     bit_security: 256
   -
-    name_group: "hqc128_1_cca2"
-    nid: "0x0232"
-    nid_hybrid: "0x2F32"
-    oqs_alg: 'OQS_KEM_alg_hqc_128_1_cca2'
+    name_group: "hqc128"
+    nid: "0x022C"
+    nid_hybrid: "0x2F2C"
+    oqs_alg: 'OQS_KEM_alg_hqc_128'
     bit_security: 128
   -
-    name_group: 'hqc192_1_cca2'
-    nid: "0x0233"
-    nid_hybrid: "0x2F33"
-    oqs_alg: 'OQS_KEM_alg_hqc_192_1_cca2'
+    name_group: 'hqc192'
+    nid: "0x022D"
+    nid_hybrid: "0x2F2D"
+    oqs_alg: 'OQS_KEM_alg_hqc_192'
     bit_security: 192
   -
-    name_group: 'hqc192_2_cca2'
-    nid: "0x0234"
-    nid_hybrid: "0x2F34"
-    oqs_alg: 'OQS_KEM_alg_hqc_192_2_cca2'
-    bit_security: 192
-  -
-    name_group: 'hqc256_1_cca2'
-    nid: "0x0235"
-    nid_hybrid: "0x2F35"
-    oqs_alg: 'OQS_KEM_alg_hqc_256_1_cca2'
-    bit_security: 256
-  -
-    name_group: 'hqc256_2_cca2'
-    nid: "0x0236"
-    nid_hybrid: "0x2F36"
-    oqs_alg: 'OQS_KEM_alg_hqc_256_2_cca2'
-    bit_security: 256
-  -
-    name_group: 'hqc256_3_cca2'
-    nid: "0x0237"
-    nid_hybrid: "0x2F37"
-    oqs_alg: 'OQS_KEM_alg_hqc_256_3_cca2'
+    name_group: 'hqc256'
+    nid: "0x022E"
+    nid_hybrid: "0x2F2E"
+    oqs_alg: 'OQS_KEM_alg_hqc_256'
     bit_security: 256
   -
     name_group: 'ntrulpr653'
-    nid: "0x0238"
-    nid_hybrid: "0x2F38"
+    nid: "0x022F"
+    nid_hybrid: "0x2F2F"
     oqs_alg: 'OQS_KEM_alg_ntruprime_ntrulpr653'
     bit_security: 128
   -
     name_group: 'ntrulpr761'
-    nid: "0x0239"
-    nid_hybrid: "0x2F39"
+    nid: "0x0230"
+    nid_hybrid: "0x2F30"
     oqs_alg: 'OQS_KEM_alg_ntruprime_ntrulpr761'
     bit_security: 192
   -
     name_group: 'ntrulpr857'
-    nid: "0x023A"
-    nid_hybrid: "0x2F3A"
+    nid: "0x0231"
+    nid_hybrid: "0x2F31"
     oqs_alg: 'OQS_KEM_alg_ntruprime_ntrulpr857'
     bit_security: 192
   -
     name_group: 'sntrup653'
-    nid: "0x023B"
-    nid_hybrid: "0x2F3B"
+    nid: "0x0232"
+    nid_hybrid: "0x2F32"
     oqs_alg: 'OQS_KEM_alg_ntruprime_sntrup653'
     bit_security: 128
   -
     name_group: 'sntrup761'
-    nid: "0x023C"
-    nid_hybrid: "0x2F3C"
+    nid: "0x0233"
+    nid_hybrid: "0x2F33"
     oqs_alg: 'OQS_KEM_alg_ntruprime_sntrup761'
     bit_security: 192
   -
     name_group: 'sntrup857'
-    nid: "0x023D"
-    nid_hybrid: "0x2F3D"
+    nid: "0x0234"
+    nid_hybrid: "0x2F34"
     oqs_alg: 'OQS_KEM_alg_ntruprime_sntrup857'
     bit_security: 192
 
