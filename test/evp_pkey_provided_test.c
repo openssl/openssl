@@ -1017,6 +1017,70 @@ err:
     return ret;
 }
 
+static int test_ec_dup_no_operation(void)
+{
+    int ret = 0;
+    EVP_PKEY_CTX *pctx = NULL, *ctx = NULL, *kctx = NULL;
+    EVP_PKEY *param = NULL, *pkey = NULL;
+
+    if (!TEST_ptr(pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_EC, NULL))
+        || !TEST_int_gt(EVP_PKEY_paramgen_init(pctx), 0)
+        || !TEST_int_gt(EVP_PKEY_CTX_set_ec_paramgen_curve_nid(pctx,
+                        NID_X9_62_prime256v1), 0)
+        || !TEST_int_gt(EVP_PKEY_paramgen(pctx, &param), 0)
+        || !TEST_ptr(param))
+        goto err;
+
+    EVP_PKEY_CTX_free(pctx);
+    pctx = NULL;
+
+    if (!TEST_ptr(ctx = EVP_PKEY_CTX_new_from_pkey(NULL, param, NULL))
+        || !TEST_ptr(kctx = EVP_PKEY_CTX_dup(ctx))
+        || !TEST_int_gt(EVP_PKEY_keygen_init(kctx), 0)
+        || !TEST_int_gt(EVP_PKEY_keygen(kctx, &pkey), 0))
+        goto err;
+    ret = 1;
+err:
+    EVP_PKEY_free(pkey);
+    EVP_PKEY_free(param);
+    EVP_PKEY_CTX_free(ctx);
+    EVP_PKEY_CTX_free(kctx);
+    EVP_PKEY_CTX_free(pctx);
+    return ret;
+}
+
+/* Test that keygen doesn't support EVP_PKEY_CTX_dup */
+static int test_ec_dup_keygen_operation(void)
+{
+    int ret = 0;
+    EVP_PKEY_CTX *pctx = NULL, *ctx = NULL, *kctx = NULL;
+    EVP_PKEY *param = NULL, *pkey = NULL;
+
+    if (!TEST_ptr(pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_EC, NULL))
+        || !TEST_int_gt(EVP_PKEY_paramgen_init(pctx), 0)
+        || !TEST_int_gt(EVP_PKEY_CTX_set_ec_paramgen_curve_nid(pctx,
+                        NID_X9_62_prime256v1), 0)
+        || !TEST_int_gt(EVP_PKEY_paramgen(pctx, &param), 0)
+        || !TEST_ptr(param))
+        goto err;
+
+    EVP_PKEY_CTX_free(pctx);
+    pctx = NULL;
+
+    if (!TEST_ptr(ctx = EVP_PKEY_CTX_new_from_pkey(NULL, param, NULL))
+        || !TEST_int_gt(EVP_PKEY_keygen_init(ctx), 0)
+        || !TEST_ptr_null(kctx = EVP_PKEY_CTX_dup(ctx)))
+        goto err;
+    ret = 1;
+err:
+    EVP_PKEY_free(pkey);
+    EVP_PKEY_free(param);
+    EVP_PKEY_CTX_free(ctx);
+    EVP_PKEY_CTX_free(kctx);
+    EVP_PKEY_CTX_free(pctx);
+    return ret;
+}
+
 #endif /* OPENSSL_NO_EC */
 
 #ifndef OPENSSL_NO_DSA
@@ -1288,6 +1352,8 @@ int setup_tests(void)
 #ifndef OPENSSL_NO_EC
     ADD_ALL_TESTS(test_fromdata_ecx, 4);
     ADD_TEST(test_fromdata_ec);
+    ADD_TEST(test_ec_dup_no_operation);
+    ADD_TEST(test_ec_dup_keygen_operation);
 #endif
     return 1;
 }
