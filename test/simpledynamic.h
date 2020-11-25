@@ -16,7 +16,9 @@
 
 #  include <dlfcn.h>
 
-#  define SD_INIT NULL
+#  define SD_INIT       NULL
+#  define SD_SHLIB      (RTLD_GLOBAL|RTLD_LAZY)
+#  define SD_MODULE     (RTLD_LOCAL|RTLD_NOW)
 
 typedef void *SD;
 typedef void *SD_SYM;
@@ -25,14 +27,16 @@ typedef void *SD_SYM;
 
 #  include <windows.h>
 
-#  define SD_INIT 0
+#  define SD_INIT       0
+#  define SD_SHLIB      0
+#  define SD_MODULE     0
 
 typedef HINSTANCE SD;
 typedef void *SD_SYM;
 
 # endif
 
-int sd_load(const char *filename, SD *sd);
+int sd_load(const char *filename, SD *sd, int type);
 int sd_sym(SD sd, const char *symname, SD_SYM *sym);
 int sd_close(SD lib);
 
