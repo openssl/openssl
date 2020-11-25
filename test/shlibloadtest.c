@@ -82,7 +82,7 @@ static int test_lib(void)
     case DSO_REFTEST:
     case NO_ATEXIT:
     case CRYPTO_FIRST:
-        if (!sd_load(path_crypto, &cryptolib)) {
+        if (!sd_load(path_crypto, &cryptolib, SD_SHLIB)) {
             fprintf(stderr, "Failed to load libcrypto\n");
             goto end;
         }
@@ -91,13 +91,13 @@ static int test_lib(void)
         /* Fall through */
 
     case SSL_FIRST:
-        if (!sd_load(path_ssl, &ssllib)) {
+        if (!sd_load(path_ssl, &ssllib, SD_SHLIB)) {
             fprintf(stderr, "Failed to load libssl\n");
             goto end;
         }
         if (test_type != SSL_FIRST)
             break;
-        if (!sd_load(path_crypto, &cryptolib)) {
+        if (!sd_load(path_crypto, &cryptolib, SD_SHLIB)) {
             fprintf(stderr, "Failed to load libcrypto\n");
             goto end;
         }

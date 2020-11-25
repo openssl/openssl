@@ -13,9 +13,9 @@
 
 #if defined(DSO_DLFCN)
 
-int sd_load(const char *filename, SD *lib)
+int sd_load(const char *filename, SD *lib, int type)
 {
-    int dl_flags = (RTLD_GLOBAL|RTLD_LAZY);
+    int dl_flags = type;
 #ifdef _AIX
     if (filename[strlen(filename) - 1] == ')')
         dl_flags |= RTLD_MEMBER;
@@ -37,7 +37,7 @@ int sd_close(SD lib)
 
 #elif defined(DSO_WIN32)
 
-nt sd_load(const char *filename, SD *lib)
+nt sd_load(const char *filename, SD *lib, ossl_unused int type)
 {
     *lib = LoadLibraryA(filename);
     return *lib == NULL ? 0 : 1;
