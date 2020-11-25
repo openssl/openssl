@@ -299,7 +299,7 @@ static long mem_ctrl(BIO *b, int cmd, long num, void *ptr)
         ret = (long)bm->length;
         if (ptr != NULL) {
             pptr = (char **)ptr;
-            *pptr = (char *)&(bm->data[0]);
+            *pptr = (char *)(bm->data);
         }
         break;
     case BIO_C_SET_BUF_MEM:
