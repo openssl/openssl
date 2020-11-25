@@ -432,7 +432,7 @@ IF[{- !$disabled{tests} -}]
 
   IF[{- !$disabled{shared} -}]
     PROGRAMS{noinst}=shlibloadtest
-    SOURCE[shlibloadtest]=shlibloadtest.c
+    SOURCE[shlibloadtest]=shlibloadtest.c simpledynamic.c
     INCLUDE[shlibloadtest]=../include ../apps/include
   ENDIF
 
