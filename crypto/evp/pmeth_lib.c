@@ -488,87 +488,79 @@ EVP_PKEY_CTX *EVP_PKEY_CTX_dup(const EVP_PKEY_CTX *pctx)
             return NULL;
         }
     }
+    rctx->legacy_keytype = pctx->legacy_keytype;
 
     if (EVP_PKEY_CTX_IS_DERIVE_OP(pctx)) {
         if (pctx->op.kex.exchange != NULL) {
             rctx->op.kex.exchange = pctx->op.kex.exchange;
-            if (!EVP_KEYEXCH_up_ref(rctx->op.kex.exchange)) {
-                OPENSSL_free(rctx);
-                return NULL;
-            }
+            if (!EVP_KEYEXCH_up_ref(rctx->op.kex.exchange))
+                goto end;
         }
         if (pctx->op.kex.exchprovctx != NULL) {
             if (!ossl_assert(pctx->op.kex.exchange != NULL))
-                return NULL;
+                goto end;
             rctx->op.kex.exchprovctx
                 = pctx->op.kex.exchange->dupctx(pctx->op.kex.exchprovctx);
             if (rctx->op.kex.exchprovctx == NULL) {
                 EVP_KEYEXCH_free(rctx->op.kex.exchange);
-                OPENSSL_free(rctx);
-                return NULL;
+                goto end;
             }
             return rctx;
         }
     } else if (EVP_PKEY_CTX_IS_SIGNATURE_OP(pctx)) {
         if (pctx->op.sig.signature != NULL) {
             rctx->op.sig.signature = pctx->op.sig.signature;
-            if (!EVP_SIGNATURE_up_ref(rctx->op.sig.signature)) {
-                OPENSSL_free(rctx);
-                return NULL;
-            }
+            if (!EVP_SIGNATURE_up_ref(rctx->op.sig.signature))
+                goto end;
         }
         if (pctx->op.sig.sigprovctx != NULL) {
             if (!ossl_assert(pctx->op.sig.signature != NULL))
-                return NULL;
+                goto end;
             rctx->op.sig.sigprovctx
                 = pctx->op.sig.signature->dupctx(pctx->op.sig.sigprovctx);
             if (rctx->op.sig.sigprovctx == NULL) {
                 EVP_SIGNATURE_free(rctx->op.sig.signature);
-                OPENSSL_free(rctx);
-                return NULL;
+                goto end;
             }
             return rctx;
         }
     } else if (EVP_PKEY_CTX_IS_ASYM_CIPHER_OP(pctx)) {
         if (pctx->op.ciph.cipher != NULL) {
             rctx->op.ciph.cipher = pctx->op.ciph.cipher;
-            if (!EVP_ASYM_CIPHER_up_ref(rctx->op.ciph.cipher)) {
-                OPENSSL_free(rctx);
-                return NULL;
-            }
+            if (!EVP_ASYM_CIPHER_up_ref(rctx->op.ciph.cipher))
+                goto end;
         }
         if (pctx->op.ciph.ciphprovctx != NULL) {
             if (!ossl_assert(pctx->op.ciph.cipher != NULL))
-                return NULL;
+                goto end;
             rctx->op.ciph.ciphprovctx
                 = pctx->op.ciph.cipher->dupctx(pctx->op.ciph.ciphprovctx);
             if (rctx->op.ciph.ciphprovctx == NULL) {
                 EVP_ASYM_CIPHER_free(rctx->op.ciph.cipher);
-                OPENSSL_free(rctx);
-                return NULL;
+                goto end;
             }
             return rctx;
         }
     } else if (EVP_PKEY_CTX_IS_KEM_OP(pctx)) {
         if (pctx->op.encap.kem != NULL) {
             rctx->op.encap.kem = pctx->op.encap.kem;
-            if (!EVP_KEM_up_ref(rctx->op.encap.kem)) {
-                OPENSSL_free(rctx);
-                return NULL;
-            }
+            if (!EVP_KEM_up_ref(rctx->op.encap.kem))
+                goto end;
         }
         if (pctx->op.encap.kemprovctx != NULL) {
             if (!ossl_assert(pctx->op.encap.kem != NULL))
-                return NULL;
+                goto end;
             rctx->op.encap.kemprovctx
                 = pctx->op.encap.kem->dupctx(pctx->op.encap.kemprovctx);
             if (rctx->op.encap.kemprovctx == NULL) {
                 EVP_KEM_free(rctx->op.encap.kem);
-                OPENSSL_free(rctx);
-                return NULL;
+                goto end;
             }
             return rctx;
         }
+    } else if (EVP_PKEY_CTX_IS_GEN_OP(pctx)) {
+        /* Not supported - This would need a gen_dupctx() to work */
+        goto end;
     }
 
     rctx->pmeth = pctx->pmeth;
@@ -576,17 +568,36 @@ EVP_PKEY_CTX *EVP_PKEY_CTX_dup(const EVP_PKEY_CTX *pctx)
     rctx->engine = pctx->engine;
 # endif
 
-    if (pctx->peerkey)
+    if (pctx->peerkey != NULL)
         EVP_PKEY_up_ref(pctx->peerkey);
     rctx->peerkey = pctx->peerkey;
 
+    if (pctx->pmeth == NULL) {
+        if (rctx->operation == EVP_PKEY_OP_UNDEFINED) {
+            EVP_KEYMGMT *tmp_keymgmt = pctx->keymgmt;
+            void *provkey;
+
+            provkey = evp_pkey_export_to_provider(pctx->pkey, pctx->libctx,
+                                                  &tmp_keymgmt, pctx->propquery);
+            if (provkey == NULL)
+                goto err;
+            if (!EVP_KEYMGMT_up_ref(tmp_keymgmt))
+                goto err;
+            EVP_KEYMGMT_free(rctx->keymgmt);
+            rctx->keymgmt = tmp_keymgmt;
+            return rctx;
+        }
+        goto err;
+    }
     if (pctx->pmeth->copy(rctx, pctx) > 0)
         return rctx;
-
+err:
     rctx->pmeth = NULL;
     EVP_PKEY_CTX_free(rctx);
     return NULL;
-
+end:
+    OPENSSL_free(rctx);
+    return NULL;
 }
 
 int EVP_PKEY_meth_add0(const EVP_PKEY_METHOD *pmeth)
