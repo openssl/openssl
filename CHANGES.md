@@ -23,16 +23,6 @@ OpenSSL 3.0
 
 ### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
 
- * Deprecated ERR_get_error_line(), as it's considered incomplete and confusing.
-   Dropped the new functions ERR_get_error_func() and ERR_get_error_data() for
-   the same reason, and because they were new in 3.0.0.
-
-   Users are recommended to use ERR_get_error_all(), or to pick information
-   with ERR_peek functions and finish off with getting the error code by using
-   ERR_get_error().
-
-   *Richard Levitte*
-
  * Deprecated all the libcrypto and libssl error string loading
    functions: ERR_load_ASN1_strings(), ERR_load_ASYNC_strings(),
    ERR_load_BIO_strings(), ERR_load_BN_strings(), ERR_load_BUF_strings(),
@@ -862,14 +852,17 @@ OpenSSL 3.0
  * Added ERR functionality to give callers access to the stored function
    names that have replaced the older function code based functions.
 
-   New functions are ERR_get_error_func(), ERR_peek_error_func(),
-   ERR_peek_last_error_func(), ERR_get_error_data(), ERR_peek_error_data(),
-   ERR_peek_last_error_data(), ERR_get_error_all(), ERR_peek_error_all()
-   and ERR_peek_last_error_all().
+   New functions are ERR_peek_error_func(), ERR_peek_last_error_func(),
+   ERR_peek_error_data(), ERR_peek_last_error_data(), ERR_get_error_all(),
+   ERR_peek_error_all() and ERR_peek_last_error_all().
 
-   These functions have become deprecated: ERR_get_error_line_data(),
-   ERR_peek_error_line_data(), ERR_peek_last_error_line_data() and
-   ERR_func_error_string().
+   These functions have become deprecated: ERR_get_error_line(),
+   ERR_get_error_line_data(), ERR_peek_error_line_data(),
+   ERR_peek_last_error_line_data() and ERR_func_error_string().
+
+   Users are recommended to use ERR_get_error_all(), or to pick information
+   with ERR_peek functions and finish off with getting the error code by using
+   ERR_get_error().
 
    *Richard Levitte*
 
