@@ -21,7 +21,7 @@ OpenSSL Releases
 OpenSSL 3.0
 -----------
 
-### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
+### Changes between 1.1.1 and 3.0 alpha 9 [26 Nov 2020]
 
  * Deprecated all the libcrypto and libssl error string loading
    functions: ERR_load_ASN1_strings(), ERR_load_ASYNC_strings(),
