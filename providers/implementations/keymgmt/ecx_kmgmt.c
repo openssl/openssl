@@ -715,7 +715,7 @@ static int ecx_validate(const void *keydata, int selection, int type, size_t key
         ok = 1;
 
     if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0)
-        ok = ok && (ecx->haspubkey && ecx->pubkey != NULL);
+        ok = ok && ecx->haspubkey;
 
     if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0)
         ok = ok && ecx->privkey != NULL;
