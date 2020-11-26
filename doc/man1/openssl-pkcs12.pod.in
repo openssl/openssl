@@ -76,6 +76,7 @@ There are a lot of options the meaning of some depends of whether a PKCS#12 file
 is being created or parsed. By default a PKCS#12 file is parsed.
 A PKCS#12 file can be created by using the B<-export> option (see below).
 Many further options such as B<-chain> make sense only with B<-export>.
+The default encryption algorithm is AES-256-CBC with PBKDF2 for key derivation.
 
 =head1 PARSING OPTIONS
 
@@ -134,7 +135,7 @@ Use DES to encrypt private keys before outputting.
 
 =item B<-des3>
 
-Use triple DES to encrypt private keys before outputting, this is the default.
+Use triple DES to encrypt private keys before outputting.
 
 =item B<-idea>
 
@@ -263,7 +264,7 @@ as well as any untrusted CA certificates given with the B<-untrusted> option.
 
 Encrypt the certificate using triple DES, this may render the PKCS#12
 file unreadable by some "export grade" software. By default the private
-key is encrypted using AES and the certificate using triple DES unless
+key and the certificates are encrypted using AES-256-CBC unless
 the '-legacy' option is used. If '-descert' is used with the '-legacy'
 then both, the private key and the certificate are encrypted using triple DES.
 
@@ -405,7 +406,7 @@ Include some extra certificates:
  openssl pkcs12 -export -in file.pem -out file.p12 -name "My Certificate" \
   -certfile othercerts.pem
 
-Export a PKCS#12 file with default encryption algorithms as in the legacy provider:
+Export a PKCS#12 file with default algorithms as in the legacy provider:
 
  openssl pkcs12 -export -in cert.pem -inkey key.pem -out file.p12 -legacy
 
