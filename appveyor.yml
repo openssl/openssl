@@ -12,8 +12,28 @@ environment:
 
 configuration:
     - shared
-    - plain
     - minimal
+
+for:
+    -
+        only_commits:
+            message: /\[extended tests\]/
+        configuration:
+            - shared
+            - plain
+            - minimal
+        environment:
+            EXTENDED_TESTS: yes
+    -
+        branches:
+            only:
+                - master
+        configuration:
+            - shared
+            - plain
+            - minimal
+        environment:
+            EXTENDED_TESTS: yes
 
 before_build:
     - ps: >-
@@ -43,12 +63,6 @@ before_build:
     - perl configdata.pm --dump
     - cd ..
     - ps: >-
-        If (-not $env:APPVEYOR_PULL_REQUEST_NUMBER`
-            -or (&git log -1 $env:APPVEYOR_PULL_REQUEST_HEAD_COMMIT |
-                 Select-String "\[extended tests\]") ) {
-            $env:EXTENDED_TESTS="yes"
-        }
-    - ps: >-
         If ($env:BUILDONLY -or $env:MAKEVERBOSE) {
             $env:NMAKE="nmake"
         } Else {
@@ -59,24 +73,17 @@ before_build:
 
 build_script:
     - cd _build
-    - ps: >-
-        If ($env:Configuration -Match "shared" -or $env:EXTENDED_TESTS) {
-            cmd /c "%NMAKE% build_all_generated 2>&1"
-            # Unfortunately, CL=/MP would not have parallelizing effect
-            cmd /c "%NMAKE% PERL=no-perl 2>&1"
-        }
+    - "%NMAKE% build_all_generated"
+    - "%NMAKE% PERL=no-perl"
     - cd ..
 
 test_script:
     - cd _build
     - ps: >-
-        If ($env:Configuration -Match "shared" -or $env:EXTENDED_TESTS) {
-            # Unfortunately, HARNESS_JOBS=4 would not have parallelizing effect
-            if ($env:EXTENDED_TESTS) {
-                cmd /c "%NMAKE% test HARNESS_VERBOSE_FAILURE=yes 2>&1"
-            } Else {
-                cmd /c "%NMAKE% test HARNESS_VERBOSE_FAILURE=yes TESTS=-test_fuzz 2>&1"
-            }
+        if ($env:EXTENDED_TESTS) {
+            cmd /c "%NMAKE% test VERBOSE_FAILURE=yes 2>&1"
+        } Else {
+            cmd /c "%NMAKE% test VERBOSE_FAILURE=yes TESTS=-test_fuzz 2>&1"
         }
     - ps: >-
         if ($env:EXTENDED_TESTS) {
