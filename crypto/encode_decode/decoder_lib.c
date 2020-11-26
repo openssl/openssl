@@ -13,6 +13,7 @@
 #include <openssl/provider.h>
 #include <openssl/evperr.h>
 #include <openssl/ecerr.h>
+#include <openssl/pkcs12err.h>
 #include <openssl/x509err.h>
 #include <openssl/trace.h>
 #include "internal/passphrase.h"
@@ -511,7 +512,7 @@ static int decoder_process(const OSSL_PARAM params[], void *arg)
     BIO *bio = data->bio;
     long loc;
     size_t i;
-    int err, ok = 0;
+    int err, lib, reason, ok = 0;
     /* For recursions */
     struct decoder_process_data_st new_data;
     const char *data_type = NULL;
@@ -750,14 +751,16 @@ static int decoder_process(const OSSL_PARAM params[], void *arg)
          * errors, so we preserve them in the error queue and stop.
          */
         err = ERR_peek_last_error();
-        if ((ERR_GET_LIB(err) == ERR_LIB_EVP
-             && ERR_GET_REASON(err) == EVP_R_UNSUPPORTED_PRIVATE_KEY_ALGORITHM)
+        lib = ERR_GET_LIB(err);
+        reason = ERR_GET_REASON(err);
+        if ((lib == ERR_LIB_EVP
+             && reason == EVP_R_UNSUPPORTED_PRIVATE_KEY_ALGORITHM)
 #ifndef OPENSSL_NO_EC
-            || (ERR_GET_LIB(err) == ERR_LIB_EC
-                && ERR_GET_REASON(err) == EC_R_UNKNOWN_GROUP)
+            || (lib == ERR_LIB_EC && reason == EC_R_UNKNOWN_GROUP)
 #endif
-            || (ERR_GET_LIB(err) == ERR_LIB_X509
-                && ERR_GET_REASON(err) == X509_R_UNSUPPORTED_ALGORITHM))
+            || (lib == ERR_LIB_X509 && reason == X509_R_UNSUPPORTED_ALGORITHM)
+            || (lib == ERR_LIB_PKCS12
+                && reason == PKCS12_R_PKCS12_CIPHERFINAL_ERROR))
             goto end;
     }
 

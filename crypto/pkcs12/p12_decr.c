@@ -81,7 +81,9 @@ unsigned char *PKCS12_pbe_crypt(const X509_ALGOR *algor,
     if (!EVP_CipherFinal_ex(ctx, out + i, &i)) {
         OPENSSL_free(out);
         out = NULL;
-        ERR_raise(ERR_LIB_PKCS12, PKCS12_R_PKCS12_CIPHERFINAL_ERROR);
+        ERR_raise_data(ERR_LIB_PKCS12, PKCS12_R_PKCS12_CIPHERFINAL_ERROR,
+                       passlen == 0 ? "empty password"
+                       : "maybe wrong password");
         goto err;
     }
     outlen += i;
