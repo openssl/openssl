@@ -85,7 +85,6 @@ typedef struct {
     /* main digest */
     EVP_MD *md;
     EVP_MD_CTX *mdctx;
-    size_t mdsize;
     int operation;
 } PROV_DSA_CTX;
 
@@ -361,7 +360,6 @@ static void dsa_freectx(void *vpdsactx)
     ctx->propq = NULL;
     ctx->mdctx = NULL;
     ctx->md = NULL;
-    ctx->mdsize = 0;
     DSA_free(ctx->dsa);
     OPENSSL_free(ctx);
 }
@@ -382,6 +380,7 @@ static void *dsa_dupctx(void *vpdsactx)
     dstctx->dsa = NULL;
     dstctx->md = NULL;
     dstctx->mdctx = NULL;
+    dstctx->propq = NULL;
 
     if (srcctx->dsa != NULL && !DSA_up_ref(srcctx->dsa))
         goto err;
@@ -395,6 +394,11 @@ static void *dsa_dupctx(void *vpdsactx)
         dstctx->mdctx = EVP_MD_CTX_new();
         if (dstctx->mdctx == NULL
                 || !EVP_MD_CTX_copy_ex(dstctx->mdctx, srcctx->mdctx))
+            goto err;
+    }
+    if (srcctx->propq != NULL) {
+        dstctx->propq = OPENSSL_strdup(srcctx->propq);
+        if (dstctx->propq == NULL)
             goto err;
     }
 
