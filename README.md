@@ -207,11 +207,11 @@ All rights reserved.
     "OpenSSL Logo"
 
 [travis badge]:
-    <https://travis-ci.org/openssl/openssl.svg?branch=master>
+    <https://travis-ci.com/openssl/openssl.svg?branch=master>
     "Travis Build Status"
 
 [travis jobs]:
-    <https://travis-ci.org/openssl/openssl>
+    <https://travis-ci.com/openssl/openssl>
     "Travis Jobs"
 
 [appveyor badge]:
