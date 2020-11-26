@@ -17,16 +17,35 @@
 # endif
 
 # include <openssl/opensslconf.h>
+# include <openssl/types.h>
+
+# ifdef  __cplusplus
+extern "C" {
+# endif
+
+# include <stdlib.h>
+
+int EVP_PKEY_CTX_set_dsa_paramgen_bits(EVP_PKEY_CTX *ctx, int nbits);
+int EVP_PKEY_CTX_set_dsa_paramgen_q_bits(EVP_PKEY_CTX *ctx, int qbits);
+int EVP_PKEY_CTX_set_dsa_paramgen_md_props(EVP_PKEY_CTX *ctx,
+                                           const char *md_name,
+                                           const char *md_properties);
+int EVP_PKEY_CTX_set_dsa_paramgen_gindex(EVP_PKEY_CTX *ctx, int gindex);
+int EVP_PKEY_CTX_set_dsa_paramgen_type(EVP_PKEY_CTX *ctx, const char *name);
+int EVP_PKEY_CTX_set_dsa_paramgen_seed(EVP_PKEY_CTX *ctx,
+                                       const unsigned char *seed,
+                                       size_t seedlen);
+int EVP_PKEY_CTX_set_dsa_paramgen_md(EVP_PKEY_CTX *ctx, const EVP_MD *md);
+
+# define EVP_PKEY_CTRL_DSA_PARAMGEN_BITS         (EVP_PKEY_ALG_CTRL + 1)
+# define EVP_PKEY_CTRL_DSA_PARAMGEN_Q_BITS       (EVP_PKEY_ALG_CTRL + 2)
+# define EVP_PKEY_CTRL_DSA_PARAMGEN_MD           (EVP_PKEY_ALG_CTRL + 3)
 
 # ifndef OPENSSL_NO_DSA
-#  ifdef  __cplusplus
-extern "C" {
-#  endif
 #  include <openssl/e_os2.h>
 #  include <openssl/asn1.h>
 #  include <openssl/bio.h>
 #  include <openssl/crypto.h>
-#  include <openssl/types.h>
 #  include <openssl/bn.h>
 #  ifndef OPENSSL_NO_DEPRECATED_1_1_0
 #   include <openssl/dh.h>
@@ -182,22 +201,6 @@ DEPRECATEDIN_3_0(int DSA_print_fp(FILE *bp, const DSA *x, int off))
 DEPRECATEDIN_3_0(DH *DSA_dup_DH(const DSA *r))
 #  endif
 
-int EVP_PKEY_CTX_set_dsa_paramgen_bits(EVP_PKEY_CTX *ctx, int nbits);
-int EVP_PKEY_CTX_set_dsa_paramgen_q_bits(EVP_PKEY_CTX *ctx, int qbits);
-int EVP_PKEY_CTX_set_dsa_paramgen_md_props(EVP_PKEY_CTX *ctx,
-                                           const char *md_name,
-                                           const char *md_properties);
-int EVP_PKEY_CTX_set_dsa_paramgen_gindex(EVP_PKEY_CTX *ctx, int gindex);
-int EVP_PKEY_CTX_set_dsa_paramgen_type(EVP_PKEY_CTX *ctx, const char *name);
-int EVP_PKEY_CTX_set_dsa_paramgen_seed(EVP_PKEY_CTX *ctx,
-                                       const unsigned char *seed,
-                                       size_t seedlen);
-int EVP_PKEY_CTX_set_dsa_paramgen_md(EVP_PKEY_CTX *ctx, const EVP_MD *md);
-
-#  define EVP_PKEY_CTRL_DSA_PARAMGEN_BITS         (EVP_PKEY_ALG_CTRL + 1)
-#  define EVP_PKEY_CTRL_DSA_PARAMGEN_Q_BITS       (EVP_PKEY_ALG_CTRL + 2)
-#  define EVP_PKEY_CTRL_DSA_PARAMGEN_MD           (EVP_PKEY_ALG_CTRL + 3)
-
 void DSA_get0_pqg(const DSA *d,
                   const BIGNUM **p, const BIGNUM **q, const BIGNUM **g);
 int DSA_set0_pqg(DSA *d, BIGNUM *p, BIGNUM *q, BIGNUM *g);
@@ -261,8 +264,8 @@ DEPRECATEDIN_3_0(int DSA_meth_set_paramgen(DSA_METHOD *dsam,
 DEPRECATEDIN_3_0(int (*DSA_meth_get_keygen(const DSA_METHOD *dsam)) (DSA *))
 DEPRECATEDIN_3_0(int DSA_meth_set_keygen(DSA_METHOD *dsam, int (*keygen) (DSA *)))
 
-#  ifdef  __cplusplus
+# endif
+# ifdef  __cplusplus
 }
-#  endif
 # endif
 #endif
