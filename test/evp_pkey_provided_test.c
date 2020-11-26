@@ -272,7 +272,9 @@ static int test_print_key_using_encoder(const char *alg, const EVP_PKEY *pk)
     return ret;
 }
 
-static int test_print_key_using_encoder_public(const char *alg, const EVP_PKEY *pk)
+#ifndef OPENSSL_NO_EC
+static int test_print_key_using_encoder_public(const char *alg,
+                                               const EVP_PKEY *pk)
 {
     int i;
     int ret = 1;
@@ -282,7 +284,7 @@ static int test_print_key_using_encoder_public(const char *alg, const EVP_PKEY *
 
     return ret;
 }
-
+#endif
 
 /* Array indexes used in test_fromdata_rsa */
 #define N       0
