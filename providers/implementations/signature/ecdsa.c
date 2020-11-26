@@ -66,6 +66,14 @@ typedef struct {
     EC_KEY *ec;
     char mdname[OSSL_MAX_NAME_SIZE];
 
+    /*
+     * Flag to determine if the hash function can be changed (1) or not (0)
+     * Because it's dangerous to change during a DigestSign or DigestVerify
+     * operation, this flag is cleared by their Init function, and set again
+     * by their Final function.
+     */
+    unsigned int flag_allow_md : 1;
+
     /* The Algorithm Identifier of the combined signature algorithm */
     unsigned char aid_buf[OSSL_MAX_ALGORITHM_ID_SIZE];
     unsigned char *aid;
@@ -107,6 +115,7 @@ static void *ecdsa_newctx(void *provctx, const char *propq)
     if (ctx == NULL)
         return NULL;
 
+    ctx->flag_allow_md = 1;
     ctx->libctx = PROV_LIBCTX_OF(provctx);
     if (propq != NULL && (ctx->propq = OPENSSL_strdup(propq)) == NULL) {
         OPENSSL_free(ctx);
@@ -187,50 +196,43 @@ static int ecdsa_verify(void *vctx, const unsigned char *sig, size_t siglen,
     return ECDSA_verify(0, tbs, tbslen, sig, siglen, ctx->ec);
 }
 
-static void free_md(PROV_ECDSA_CTX *ctx)
+static int ecdsa_setup_md(PROV_ECDSA_CTX *ctx, const char *mdname,
+                          const char *mdprops)
 {
-    OPENSSL_free(ctx->propq);
+    EVP_MD *md = NULL;
+    size_t mdname_len;
+    int md_nid, sha1_allowed;
+    WPACKET pkt;
+
+    if (mdname == NULL)
+        return 1;
+
+    mdname_len = strlen(mdname);
+    if (mdname_len >= sizeof(ctx->mdname)) {
+        ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_DIGEST,
+                       "%s exceeds name buffer length", mdname);
+        return 0;
+    }
+    if (mdprops == NULL)
+        mdprops = ctx->propq;
+    md = EVP_MD_fetch(ctx->libctx, mdname, mdprops);
+    if (md == NULL) {
+        ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_DIGEST,
+                       "%s could not be fetched", mdname);
+        return 0;
+    }
+    sha1_allowed = (ctx->operation != EVP_PKEY_OP_SIGN);
+    md_nid = digest_get_approved_nid_with_sha1(md, sha1_allowed);
+    if (md_nid == NID_undef) {
+        ERR_raise_data(ERR_LIB_PROV, PROV_R_DIGEST_NOT_ALLOWED,
+                       "digest=%s", mdname);
+        EVP_MD_free(md);
+        return 0;
+    }
+
     EVP_MD_CTX_free(ctx->mdctx);
     EVP_MD_free(ctx->md);
-    ctx->propq = NULL;
-    ctx->mdctx = NULL;
-    ctx->md = NULL;
-    ctx->mdsize = 0;
-}
 
-static int ecdsa_digest_signverify_init(void *vctx, const char *mdname,
-                                        void *ec, int operation)
-{
-    PROV_ECDSA_CTX *ctx = (PROV_ECDSA_CTX *)vctx;
-    int md_nid = NID_undef;
-    WPACKET pkt;
-    int sha1_allowed = (ctx->operation != EVP_PKEY_OP_SIGN);
-
-    if (!ossl_prov_is_running())
-        return 0;
-
-    free_md(ctx);
-
-    if (!ecdsa_signverify_init(vctx, ec, operation))
-        return 0;
-
-    ctx->md = EVP_MD_fetch(ctx->libctx, mdname, ctx->propq);
-    md_nid = digest_get_approved_nid_with_sha1(ctx->md, sha1_allowed);
-    if (md_nid == NID_undef)
-        goto error;
-
-    ctx->mdsize = EVP_MD_size(ctx->md);
-    ctx->mdctx = EVP_MD_CTX_new();
-    if (ctx->mdctx == NULL)
-        goto error;
-
-    /*
-     * TODO(3.0) Should we care about DER writing errors?
-     * All it really means is that for some reason, there's no
-     * AlgorithmIdentifier to be had, but the operation itself is
-     * still valid, just as long as it's not used to construct
-     * anything that needs an AlgorithmIdentifier.
-     */
     ctx->aid_len = 0;
     if (WPACKET_init_der(&pkt, ctx->aid_buf, sizeof(ctx->aid_buf))
         && ossl_DER_w_algorithmIdentifier_ECDSA_with_MD(&pkt, -1, ctx->ec,
@@ -240,12 +242,39 @@ static int ecdsa_digest_signverify_init(void *vctx, const char *mdname,
         ctx->aid = WPACKET_get_curr(&pkt);
     }
     WPACKET_cleanup(&pkt);
+    ctx->mdctx = NULL;
+    ctx->md = md;
+    ctx->mdsize = EVP_MD_size(ctx->md);
+    OPENSSL_strlcpy(ctx->mdname, mdname, sizeof(ctx->mdname));
+
+    return 1;
+}
+
+static int ecdsa_digest_signverify_init(void *vctx, const char *mdname,
+                                        void *ec, int operation)
+{
+    PROV_ECDSA_CTX *ctx = (PROV_ECDSA_CTX *)vctx;
+
+    if (!ossl_prov_is_running())
+        return 0;
+
+    ctx->flag_allow_md = 0;
+    if (!ecdsa_signverify_init(vctx, ec, operation)
+        || !ecdsa_setup_md(ctx, mdname, NULL))
+        return 0;
+
+    ctx->mdctx = EVP_MD_CTX_new();
+    if (ctx->mdctx == NULL)
+        goto error;
 
     if (!EVP_DigestInit_ex(ctx->mdctx, ctx->md, NULL))
         goto error;
     return 1;
 error:
-    free_md(ctx);
+    EVP_MD_CTX_free(ctx->mdctx);
+    EVP_MD_free(ctx->md);
+    ctx->mdctx = NULL;
+    ctx->md = NULL;
     return 0;
 }
 
@@ -284,16 +313,10 @@ int ecdsa_digest_sign_final(void *vctx, unsigned char *sig, size_t *siglen,
      * If sig is NULL then we're just finding out the sig size. Other fields
      * are ignored. Defer to ecdsa_sign.
      */
-    if (sig != NULL) {
-        /*
-         * TODO(3.0): There is the possibility that some externally provided
-         * digests exceed EVP_MAX_MD_SIZE. We should probably handle that somehow -
-         * but that problem is much larger than just in DSA.
-         */
-        if (!EVP_DigestFinal_ex(ctx->mdctx, digest, &dlen))
-            return 0;
-    }
-
+    if (sig != NULL
+        && !EVP_DigestFinal_ex(ctx->mdctx, digest, &dlen))
+        return 0;
+    ctx->flag_allow_md = 1;
     return ecdsa_sign(vctx, sig, siglen, sigsize, digest, (size_t)dlen);
 }
 
@@ -307,14 +330,9 @@ int ecdsa_digest_verify_final(void *vctx, const unsigned char *sig,
     if (!ossl_prov_is_running() || ctx == NULL || ctx->mdctx == NULL)
         return 0;
 
-    /*
-     * TODO(3.0): There is the possibility that some externally provided
-     * digests exceed EVP_MAX_MD_SIZE. We should probably handle that somehow -
-     * but that problem is much larger than just in DSA.
-     */
     if (!EVP_DigestFinal_ex(ctx->mdctx, digest, &dlen))
         return 0;
-
+    ctx->flag_allow_md = 1;
     return ecdsa_verify(ctx, sig, siglen, digest, (size_t)dlen);
 }
 
@@ -322,7 +340,13 @@ static void ecdsa_freectx(void *vctx)
 {
     PROV_ECDSA_CTX *ctx = (PROV_ECDSA_CTX *)vctx;
 
-    free_md(ctx);
+    OPENSSL_free(ctx->propq);
+    EVP_MD_CTX_free(ctx->mdctx);
+    EVP_MD_free(ctx->md);
+    ctx->propq = NULL;
+    ctx->mdctx = NULL;
+    ctx->md = NULL;
+    ctx->mdsize = 0;
     EC_KEY_free(ctx->ec);
     BN_clear_free(ctx->kinv);
     BN_clear_free(ctx->r);
@@ -345,6 +369,7 @@ static void *ecdsa_dupctx(void *vctx)
     dstctx->ec = NULL;
     dstctx->md = NULL;
     dstctx->mdctx = NULL;
+    dstctx->propq = NULL;
 
     if (srcctx->ec != NULL && !EC_KEY_up_ref(srcctx->ec))
         goto err;
@@ -361,6 +386,12 @@ static void *ecdsa_dupctx(void *vctx)
         dstctx->mdctx = EVP_MD_CTX_new();
         if (dstctx->mdctx == NULL
                 || !EVP_MD_CTX_copy_ex(dstctx->mdctx, srcctx->mdctx))
+            goto err;
+    }
+
+    if (srcctx->propq != NULL) {
+        dstctx->propq = OPENSSL_strdup(srcctx->propq);
+        if (dstctx->propq == NULL)
             goto err;
     }
 
@@ -411,37 +442,40 @@ static int ecdsa_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
     PROV_ECDSA_CTX *ctx = (PROV_ECDSA_CTX *)vctx;
     const OSSL_PARAM *p;
-    char *mdname;
 
     if (ctx == NULL || params == NULL)
         return 0;
 
-    if (ctx->md != NULL) {
-        /*
-         * You cannot set the digest name/size when doing a DigestSign or
-         * DigestVerify.
-         */
-        return 1;
-    }
 #if !defined(OPENSSL_NO_ACVP_TESTS)
     p = OSSL_PARAM_locate_const(params, OSSL_SIGNATURE_PARAM_KAT);
     if (p != NULL && !OSSL_PARAM_get_uint(p, &ctx->kattest))
         return 0;
 #endif
 
-    p = OSSL_PARAM_locate_const(params, OSSL_SIGNATURE_PARAM_DIGEST_SIZE);
-    if (p != NULL && !OSSL_PARAM_get_size_t(p, &ctx->mdsize))
-        return 0;
-
-    /*
-     * We never actually use the mdname, but we do support getting it later.
-     * This can be useful for applications that want to know the MD that they
-     * previously set.
-     */
     p = OSSL_PARAM_locate_const(params, OSSL_SIGNATURE_PARAM_DIGEST);
-    mdname = ctx->mdname;
+    /* Not allowed during certain operations */
+    if (p != NULL && !ctx->flag_allow_md)
+        return 0;
+    if (p != NULL) {
+        char mdname[OSSL_MAX_NAME_SIZE] = "", *pmdname = mdname;
+        char mdprops[OSSL_MAX_PROPQUERY_SIZE] = "", *pmdprops = mdprops;
+        const OSSL_PARAM *propsp =
+            OSSL_PARAM_locate_const(params,
+                                    OSSL_SIGNATURE_PARAM_PROPERTIES);
+
+        if (!OSSL_PARAM_get_utf8_string(p, &pmdname, sizeof(mdname)))
+            return 0;
+        if (propsp != NULL
+            && !OSSL_PARAM_get_utf8_string(propsp, &pmdprops, sizeof(mdprops)))
+            return 0;
+        if (!ecdsa_setup_md(ctx, mdname, mdprops))
+            return 0;
+    }
+
+    p = OSSL_PARAM_locate_const(params, OSSL_SIGNATURE_PARAM_DIGEST_SIZE);
     if (p != NULL
-            && !OSSL_PARAM_get_utf8_string(p, &mdname, sizeof(ctx->mdname)))
+        && (!ctx->flag_allow_md
+            || !OSSL_PARAM_get_size_t(p, &ctx->mdsize)))
         return 0;
 
     return 1;
@@ -450,18 +484,13 @@ static int ecdsa_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 static const OSSL_PARAM known_settable_ctx_params[] = {
     OSSL_PARAM_size_t(OSSL_SIGNATURE_PARAM_DIGEST_SIZE, NULL),
     OSSL_PARAM_utf8_string(OSSL_SIGNATURE_PARAM_DIGEST, NULL, 0),
+    OSSL_PARAM_utf8_string(OSSL_SIGNATURE_PARAM_PROPERTIES, NULL, 0),
     OSSL_PARAM_uint(OSSL_SIGNATURE_PARAM_KAT, NULL),
     OSSL_PARAM_END
 };
 
 static const OSSL_PARAM *ecdsa_settable_ctx_params(ossl_unused void *provctx)
 {
-    /*
-     * TODO(3.0): Should this function return a different set of settable ctx
-     * params if the ctx is being used for a DigestSign/DigestVerify? In that
-     * case it is not allowed to set the digest size/digest name because the
-     * digest is explicitly set as part of the init.
-     */
     return known_settable_ctx_params;
 }
 
