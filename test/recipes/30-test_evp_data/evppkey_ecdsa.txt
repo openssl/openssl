@@ -108,6 +108,12 @@ Key = P-256-PUBLIC
 Input = "Hello World"
 Output = 3046022100e7515177ec3817b77a4a94066ab3070817b7aa9d44a8a09f040da250116e8972022100ba59b0f631258e59a9026be5d84f60685f4cf22b9165a0c2736d5c21c8ec1862
 
+# Test that mdsize != tbssize fails
+Sign = P-256
+Ctrl = digest:SHA256
+Input = "0123456789ABCDEF1234"
+Result = KEYOP_ERROR
+
 PrivateKey = P-256_NAMED_CURVE_EXPLICIT
 -----BEGIN PRIVATE KEY-----
 MIIBeQIBADCCAQMGByqGSM49AgEwgfcCAQEwLAYHKoZIzj0BAQIhAP////8AAAAB
@@ -192,3 +198,18 @@ Securitycheck = 1
 Key = secp256k1
 Input = "Hello World"
 Result = DIGESTSIGNINIT_ERROR
+
+# Test that SHA1 is not allowed in fips mode for signing
+Availablein = fips
+DigestSign = SHA1
+Securitycheck = 1
+Key = B-163
+Input = "Hello World"
+Result = DIGESTSIGNINIT_ERROR
+
+# Test that SHA1 is not allowed in fips mode for signing
+Availablein = fips
+Sign = P-256
+Ctrl = digest:SHA1
+Input = "0123456789ABCDEF1234"
+Result = PKEY_CTRL_ERROR
