@@ -25,6 +25,7 @@
 
 #ifdef S390X_EC_ASM
 # include "s390x_arch.h"
+
 static int s390x_eddsa_digestsign_25519(const ECX_KEY *edkey,
                                         unsigned char *sig,
                                         const unsigned char *tbs, size_t tbslen);
@@ -154,8 +155,7 @@ int ed25519_digest_sign(void *vpeddsactx, unsigned char *sigret,
 #ifdef S390X_EC_ASM
     if (OPENSSL_s390xcap_P.pcc[1] & S390X_CAPBIT(S390X_SCALAR_MULTIPLY_ED25519)
         && OPENSSL_s390xcap_P.kdsa[0] & S390X_CAPBIT(S390X_EDDSA_SIGN_ED25519)
-        && OPENSSL_s390xcap_P.kdsa[0]
-           & S390X_CAPBIT(S390X_EDDSA_VERIFY_ED25519))
+        && OPENSSL_s390xcap_P.kdsa[0] & S390X_CAPBIT(S390X_EDDSA_VERIFY_ED25519))
         return s390x_eddsa_digestsign_25519(edkey, sigret, tbs, tbslen);
 #endif /* S390X_EC_ASM */
     if (ED25519_sign(sigret, tbs, tbslen, edkey->pubkey, edkey->privkey,
@@ -186,7 +186,9 @@ int ed448_digest_sign(void *vpeddsactx, unsigned char *sigret,
         return 0;
     }
 #ifdef S390X_EC_ASM
-    if (OPENSSL_s390xcap_P.pcc[1] & S390X_CAPBIT(S390X_SCALAR_MULTIPLY_X448))
+    if (OPENSSL_s390xcap_P.pcc[1] & S390X_CAPBIT(S390X_SCALAR_MULTIPLY_X448)
+        && OPENSSL_s390xcap_P.kdsa[0] & S390X_CAPBIT(S390X_EDDSA_SIGN_ED448)
+        && OPENSSL_s390xcap_P.kdsa[0] & S390X_CAPBIT(S390X_EDDSA_VERIFY_ED448)
         return s390x_eddsa_digestsign_x448(edkey, sigret, tbs, tbslen);
 #endif /* S390X_EC_ASM */
     if (ED448_sign(peddsactx->libctx, sigret, tbs, tbslen, edkey->pubkey,
@@ -211,8 +213,7 @@ int ed25519_digest_verify(void *vpeddsactx, const unsigned char *sig,
 #ifdef S390X_EC_ASM
     if (OPENSSL_s390xcap_P.pcc[1] & S390X_CAPBIT(S390X_SCALAR_MULTIPLY_ED25519)
         && OPENSSL_s390xcap_P.kdsa[0] & S390X_CAPBIT(S390X_EDDSA_SIGN_ED25519)
-        && OPENSSL_s390xcap_P.kdsa[0]
-           & S390X_CAPBIT(S390X_EDDSA_VERIFY_ED25519))
+        && OPENSSL_s390xcap_P.kdsa[0] & S390X_CAPBIT(S390X_EDDSA_VERIFY_ED25519))
         return s390x_eddsa_digestverify_25519(edkey, sig, tbs, tbslen);
 #endif /* S390X_EC_ASM */
 
@@ -231,7 +232,9 @@ int ed448_digest_verify(void *vpeddsactx, const unsigned char *sig,
         return 0;
 
 #ifdef S390X_EC_ASM
-    if (OPENSSL_s390xcap_P.pcc[1] & S390X_CAPBIT(S390X_SCALAR_MULTIPLY_X448))
+    if (OPENSSL_s390xcap_P.pcc[1] & S390X_CAPBIT(S390X_SCALAR_MULTIPLY_X448)
+        && OPENSSL_s390xcap_P.kdsa[0] & S390X_CAPBIT(S390X_EDDSA_SIGN_ED448)
+        && OPENSSL_s390xcap_P.kdsa[0] & S390X_CAPBIT(S390X_EDDSA_VERIFY_ED448)
         return s390x_eddsa_digestverify_x448(edkey, sig, tbs, tbslen);
 #endif /* S390X_EC_ASM */
 
