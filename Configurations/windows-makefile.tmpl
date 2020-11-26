@@ -415,19 +415,14 @@ all: build_sw build_docs
 test: tests
 {- dependmagic('tests'); -}: build_programs_nodep build_modules_nodep copy-utils
 	@{- output_off() if $disabled{tests}; "" -}
-	set SRCTOP=$(SRCDIR)
-	set BLDTOP=$(BLDDIR)
-	set PERL=$(PERL)
-	set FIPSKEY=$(FIPSKEY)
-	"$(PERL)" "$(SRCDIR)\test\run_tests.pl" $(TESTS)
+	cmd /C "set "SRCTOP=$(SRCDIR)" & set "BLDTOP=$(BLDDIR)" & set "PERL=$(PERL)" & set "FIPSKEY=$(FIPSKEY)" & "$(PERL)" "$(SRCDIR)\test\run_tests.pl" $(TESTS)"
 	@{- if ($disabled{tests}) { output_on(); } else { output_off(); } "" -}
 	@$(ECHO) "Tests are not supported with your chosen Configure options"
 	@{- output_on() if !$disabled{tests}; "" -}
 
 list-tests:
 	@{- output_off() if $disabled{tests}; "" -}
-	@set SRCTOP=$(SRCDIR)
-	@"$(PERL)" "$(SRCDIR)\test\run_tests.pl" list
+	@cmd /C "set "SRCTOP=$(SRCDIR)" & "$(PERL)" "$(SRCDIR)\test\run_tests.pl" list"
 	@{- if ($disabled{tests}) { output_on(); } else { output_off(); } "" -}
 	@$(ECHO) "Tests are not supported with your chosen Configure options"
 	@{- output_on() if !$disabled{tests}; "" -}
@@ -711,8 +706,7 @@ EOF
               if ($args{src} =~ /\.S$/) {
                    return <<"EOF";
 $target: "$gen0" $deps
-	set ASM=\$(AS)
-	$generator \$@.S
+	cmd /C "set "ASM=\$(AS)" & $generator \$@.S"
 	\$(CPP) $incs $cppflags $defs \$@.S > \$@.i
 	move /Y \$@.i \$@
         del /Q \$@.S
@@ -721,8 +715,7 @@ EOF
               # Otherwise....
               return <<"EOF";
 $target: "$gen0" $deps
-	set ASM=\$(AS)
-	$generator \$@
+	cmd /C "set "ASM=\$(AS)" & $generator \$@"
 EOF
           }
           return <<"EOF";
