@@ -26,7 +26,8 @@ for:
             EXTENDED_TESTS: yes
     -
         branches:
-            only: master
+            only:
+                - master
         configuration:
             - shared
             - plain
