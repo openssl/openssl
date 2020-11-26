@@ -140,8 +140,7 @@ my $guess_patterns = [
     [ 'Paragon.*?:.*',              'i860-intel-osf1' ],
     [ 'Rhapsody:.*',                'ppc-apple-rhapsody' ],
     [ 'Darwin:.*?:.*?:Power.*',     'ppc-apple-darwin' ],
-    [ 'Darwin:.*?:.*?:x86_64',      'x86_64-apple-darwin' ],
-    [ 'Darwin:.*',                  'i686-apple-darwin' ],
+    [ 'Darwin:.*',                  '${MACHINE}-apple-darwin' ],
     [ 'SunOS:5\..*',                '${MACHINE}-whatever-solaris2' ],
     [ 'SunOS:.*',                   '${MACHINE}-sun-sunos4' ],
     [ 'UNIX_System_V:4\..*?:.*',    '${MACHINE}-whatever-sysv4' ],
@@ -483,6 +482,7 @@ EOF
             return { target => "darwin64-x86_64" };
         }
       ],
+      [ 'arm64-apple-darwin.*', { target => "darwin64-arm64" } ],
       [ 'armv6\+7-.*-iphoneos',
         { target => "iphoneos-cross",
           cflags => [ qw(-arch armv6 -arch armv7) ],
