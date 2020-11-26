@@ -211,6 +211,5 @@ Result = DIGESTSIGNINIT_ERROR
 Availablein = fips
 Sign = P-256
 Ctrl = digest:SHA1
-Ctrl = properties:fips=true
 Input = "0123456789ABCDEF1234"
 Result = PKEY_CTRL_ERROR
