@@ -346,6 +346,7 @@ err:
     return ret;
 }
 
+#if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC)
 static int self_test_ka(const ST_KAT_KAS *t,
                         OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx)
 {
@@ -421,6 +422,7 @@ err:
     OSSL_SELF_TEST_onend(st, ret);
     return ret;
 }
+#endif /* !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC) */
 
 static int self_test_sign(const ST_KAT_SIGN *t,
                          OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx)
@@ -655,12 +657,16 @@ static int self_test_drbgs(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx)
 
 static int self_test_kas(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx)
 {
-    int i, ret = 1;
+    int ret = 1;
+#if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC)
+    int i;
 
     for (i = 0; i < (int)OSSL_NELEM(st_kat_kas_tests); ++i) {
         if (!self_test_ka(&st_kat_kas_tests[i], st, libctx))
             ret = 0;
     }
+#endif
+
     return ret;
 }
 
