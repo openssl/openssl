@@ -217,7 +217,7 @@ static int test_print_key_type_using_encoder(const char *alg, int type,
     if (!TEST_ptr(ctx = OSSL_ENCODER_CTX_new_by_EVP_PKEY(pk, selection,
                                                          output_type,
                                                          output_structure,
-                                                         NULL, NULL))
+                                                         NULL))
         /* Check that this operation is supported */
         || !TEST_int_ne(OSSL_ENCODER_CTX_get_num_encoders(ctx), 0))
         goto err;

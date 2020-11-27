@@ -98,14 +98,12 @@ int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
             goto error;
         }
     } else if (evp_pkey_is_provided(pkey)) {
-        const OSSL_PROVIDER *pkprov = EVP_KEYMGMT_provider(pkey->keymgmt);
-        OSSL_LIB_CTX *libctx = ossl_provider_libctx(pkprov);
         unsigned char *der = NULL;
         size_t derlen = 0;
         OSSL_ENCODER_CTX *ectx =
             OSSL_ENCODER_CTX_new_by_EVP_PKEY(pkey, EVP_PKEY_PUBLIC_KEY,
                                              "DER", "SubjectPublicKeyInfo",
-                                             libctx, NULL);
+                                             NULL);
 
         if (OSSL_ENCODER_to_data(ectx, &der, &derlen)) {
             const unsigned char *pder = der;
@@ -306,12 +304,10 @@ int i2d_PUBKEY(const EVP_PKEY *a, unsigned char **pp)
         }
         X509_PUBKEY_free(xpk);
     } else if (a->keymgmt != NULL) {
-        const OSSL_PROVIDER *pkprov = EVP_KEYMGMT_provider(a->keymgmt);
-        OSSL_LIB_CTX *libctx = ossl_provider_libctx(pkprov);
         OSSL_ENCODER_CTX *ctx =
             OSSL_ENCODER_CTX_new_by_EVP_PKEY(a, EVP_PKEY_PUBLIC_KEY,
                                              "DER", "SubjectPublicKeyInfo",
-                                             libctx, NULL);
+                                             NULL);
         BIO *out = BIO_new(BIO_s_mem());
         BUF_MEM *buf = NULL;
 
