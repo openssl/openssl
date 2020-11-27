@@ -136,7 +136,6 @@ int tls1_clear(SSL *s)
     return 1;
 }
 
-#if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC)
 /* Legacy NID to group_id mapping. Only works for groups we know about */
 static struct {
     int nid;
@@ -185,7 +184,6 @@ static struct {
     {NID_ffdhe6144, OSSL_TLS_GROUP_ID_ffdhe6144},
     {NID_ffdhe8192, OSSL_TLS_GROUP_ID_ffdhe8192}
 };
-#endif
 
 #ifndef OPENSSL_NO_EC
 static const unsigned char ecformats_default[] = {
@@ -421,7 +419,8 @@ static uint16_t tls1_group_name2id(SSL_CTX *ctx, const char *name)
         if (strcmp(ctx->group_list[i].tlsname, name) == 0
                 || (nid != NID_undef
                     && nid == tls1_group_id2nid(ctx->group_list[i].group_id,
-                                                0)))
+                                                0))
+           )
             return ctx->group_list[i].group_id;
     }
 
@@ -440,7 +439,6 @@ const TLS_GROUP_INFO *tls1_group_id_lookup(SSL_CTX *ctx, uint16_t group_id)
     return NULL;
 }
 
-#if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC)
 int tls1_group_id2nid(uint16_t group_id, int include_unknown)
 {
     size_t i;
@@ -478,7 +476,6 @@ static uint16_t tls1_nid2group_id(int nid)
 
     return 0;
 }
-#endif /* !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH) */
 
 /*
  * Set *pgroups to the supported groups list and *pgroupslen to
@@ -644,7 +641,6 @@ uint16_t tls1_shared_group(SSL *s, int nmatch)
 int tls1_set_groups(uint16_t **pext, size_t *pextlen,
                     int *groups, size_t ngroups)
 {
-#if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH)
     uint16_t *glist;
     size_t i;
     /*
@@ -683,9 +679,6 @@ int tls1_set_groups(uint16_t **pext, size_t *pextlen,
 err:
     OPENSSL_free(glist);
     return 0;
-#else
-    return 0;
-#endif /* !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH) */
 }
 
 /* TODO(3.0): An arbitrary amount for now. Take another look at this */

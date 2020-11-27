@@ -769,9 +769,10 @@ static const unsigned char ecdh_secret_expected[] = {
 };
 #endif /* OPENSSL_NO_EC */
 
+#if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC)
 static const ST_KAT_KAS st_kat_kas_tests[] =
 {
-#ifndef OPENSSL_NO_DH
+# ifndef OPENSSL_NO_DH
     {
         OSSL_SELF_TEST_DESC_KA_DH,
         "DH",
@@ -780,8 +781,8 @@ static const ST_KAT_KAS st_kat_kas_tests[] =
         dh_peer_key,
         ITM(dh_secret_expected)
     },
-#endif /* OPENSSL_NO_DH */
-#ifndef OPENSSL_NO_EC
+# endif /* OPENSSL_NO_DH */
+# ifndef OPENSSL_NO_EC
     {
         OSSL_SELF_TEST_DESC_KA_ECDH,
         "EC",
@@ -790,8 +791,9 @@ static const ST_KAT_KAS st_kat_kas_tests[] =
         ecdh_peer_key,
         ITM(ecdh_secret_expected)
     },
-#endif /* OPENSSL_NO_EC */
+# endif /* OPENSSL_NO_EC */
 };
+#endif /* !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC) */
 
 #if !defined(OPENSSL_NO_RSA)
 /* RSA key data */
