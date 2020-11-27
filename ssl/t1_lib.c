@@ -435,22 +435,24 @@ const TLS_GROUP_INFO *tls1_group_id_lookup(uint16_t group_id)
     return &nid_list[group_id - 1];
 }
 
+# define MAX_CURVELIST   (OSSL_NELEM(nid_list) + \
+                          OSSL_NELEM(oqs_nid_list) + \
+                          OSSL_NELEM(oqs_hybrid_nid_list))
+
+
 static uint16_t tls1_nid2group_id(int nid)
 {
     size_t i;
-
-    /* check if it is an OQS group */
-    int oqs_group_id = OQS_KEM_CURVEID(nid);
-    if (oqs_group_id != 0) {
-      return oqs_group_id;
-    }
-    oqs_group_id = OQS_KEM_HYBRID_CURVEID(nid);
-    if (oqs_group_id != 0) {
-      return oqs_group_id;
-    }
-
     for (i = 0; i < OSSL_NELEM(nid_list); i++) {
         if (nid_list[i].nid == nid)
+            return (uint16_t)(i + 1);
+    }
+    for (; i < OSSL_NELEM(nid_list)+OSSL_NELEM(oqs_nid_list); i++) {
+        if (oqs_nid_list[i-OSSL_NELEM(nid_list)].nid == nid)
+            return (uint16_t)(i + 1);
+    }
+    for (; i < MAX_CURVELIST; i++) {
+        if (oqs_hybrid_nid_list[i-(OSSL_NELEM(nid_list)+OSSL_NELEM(oqs_nid_list))].nid == nid)
             return (uint16_t)(i + 1);
     }
     return 0;
@@ -613,7 +615,6 @@ int tls1_set_groups(uint16_t **pext, size_t *pextlen,
      * Bitmap of groups included to detect duplicates: only works while group
      * ids < 32
      */
-    unsigned long dup_list = 0;
 
     if (ngroups == 0) {
         SSLerr(SSL_F_TLS1_SET_GROUPS, SSL_R_BAD_LENGTH);
@@ -623,28 +624,30 @@ int tls1_set_groups(uint16_t **pext, size_t *pextlen,
         SSLerr(SSL_F_TLS1_SET_GROUPS, ERR_R_MALLOC_FAILURE);
         return 0;
     }
+    uint16_t dup_list[MAX_CURVELIST];
+    memset(dup_list,0,sizeof(dup_list));
     for (i = 0; i < ngroups; i++) {
-        unsigned long idmask;
         uint16_t id;
         /* TODO(TLS1.3): Convert for DH groups */
         id = tls1_nid2group_id(groups[i]);
-        idmask = 1L << id;
-        if (!id || (dup_list & idmask)) {
+        if (!id || dup_list[(id-1)]) {
             OPENSSL_free(glist);
             return 0;
         }
-        dup_list |= idmask;
+        dup_list[(id-1)] = i;
         glist[i] = id;
+        int oqs_group_id = OQS_KEM_CURVEID(groups[i]);
+        if (oqs_group_id != 0)
+            glist[i] = oqs_group_id;
+        oqs_group_id = OQS_KEM_HYBRID_CURVEID(groups[i]);
+        if (oqs_group_id != 0)
+            glist[i] = oqs_group_id;
     }
     OPENSSL_free(*pext);
     *pext = glist;
     *pextlen = ngroups;
     return 1;
 }
-
-# define MAX_CURVELIST   (OSSL_NELEM(nid_list) + \
-		          OSSL_NELEM(oqs_nid_list) + \
-			  OSSL_NELEM(oqs_hybrid_nid_list))
 
 typedef struct {
     size_t nidcnt;
