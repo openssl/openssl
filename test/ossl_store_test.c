@@ -7,9 +7,18 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <limits.h>
 #include <openssl/store.h>
 #include <openssl/ui.h>
 #include "testutil.h"
+
+#ifndef PATH_MAX
+# if defined(_WIN32) && defined(_MAX_PATH)
+#  define PATH_MAX _MAX_PATH
+# else
+#  define PATH_MAX 4096
+# endif
+#endif
 
 typedef enum OPTION_choice {
     OPT_ERR = -1,
@@ -85,7 +94,7 @@ static int get_params(const char *uri, const char *type)
 static int test_store_get_params(int idx)
 {
     const char *type;
-    char uri[80];
+    char uri[PATH_MAX];
 
     switch(idx) {
 #ifndef OPENSSL_NO_DH
