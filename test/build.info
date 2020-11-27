@@ -700,7 +700,7 @@ IF[{- !$disabled{tests} -}]
     INCLUDE[mdc2_internal_test]=.. ../include ../apps/include
     DEPEND[mdc2_internal_test]=../libcrypto.a libtestutil.a
 
-    SOURCE[ssltest_old]=ssltest_old.c
+    SOURCE[ssltest_old]=ssltest_old.c predefined_dhparams.c
     INCLUDE[ssltest_old]=.. ../include ../apps/include
     DEPEND[ssltest_old]=../libcrypto.a ../libssl.a
   ENDIF
@@ -789,7 +789,7 @@ IF[{- !$disabled{tests} -}]
   DEPEND[hexstr_test]=../libcrypto.a libtestutil.a
 
   PROGRAMS{noinst}=endecode_test
-  SOURCE[endecode_test]=endecode_test.c
+  SOURCE[endecode_test]=endecode_test.c predefined_dhparams.c
   INCLUDE[endecode_test]=.. ../include ../apps/include
   DEPEND[endecode_test]=../libcrypto.a libtestutil.a
 

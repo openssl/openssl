@@ -57,8 +57,6 @@
 # include <openssl/ct.h>
 #endif
 #include <openssl/provider.h>
-#include <openssl/core_names.h>
-#include <openssl/param_build.h>
 
 /*
  * Or gethostname won't be declared properly
@@ -73,6 +71,8 @@
 #else
 # include <unistd.h>
 #endif
+
+#include "predefined_dhparams.h"
 
 static SSL_CTX *s_ctx = NULL;
 static SSL_CTX *s_ctx2 = NULL;
@@ -90,10 +90,6 @@ struct app_verify_arg {
     char *string;
     int app_verify;
 };
-
-static EVP_PKEY *get_dh512(OSSL_LIB_CTX *libctx);
-static EVP_PKEY *get_dh1024dsa(OSSL_LIB_CTX *libctx);
-static EVP_PKEY *get_dh2048(OSSL_LIB_CTX *libctx);
 
 static char *psk_key = NULL;    /* by default PSK is not used */
 #ifndef OPENSSL_NO_PSK
@@ -632,12 +628,14 @@ static void sv_usage(void)
     fprintf(stderr, " -num <val>    - number of connections to perform\n");
     fprintf(stderr,
             " -bytes <val>  - number of bytes to swap between client/server\n");
+#ifndef OPENSSL_NO_DH
     fprintf(stderr,
             " -dhe512       - use 512 bit key for DHE (to test failure)\n");
     fprintf(stderr,
             " -dhe1024      - use 1024 bit key (safe prime) for DHE (default, no-op)\n");
     fprintf(stderr,
             " -dhe1024dsa   - use 1024 bit key (with 160-bit subprime) for DHE\n");
+#endif
     fprintf(stderr, " -no_dhe       - disable DHE\n");
 #ifndef OPENSSL_NO_EC
     fprintf(stderr, " -no_ecdhe     - disable ECDHE\nTODO(openssl-team): no_ecdhe was broken by auto ecdh. Make this work again.\n");
@@ -888,12 +886,10 @@ int main(int argc, char *argv[])
     int should_reuse = -1;
     int no_ticket = 0;
     long bytes = 256L;
+#ifndef OPENSSL_NO_DH
     EVP_PKEY *dhpkey;
     int dhe512 = 0, dhe1024dsa = 0;
-#ifndef OPENSSL_NO_DH
     int no_dhe = 0;
-#else
-    int no_dhe = 1;
 #endif
     int no_psk = 0;
     int print_time = 0;
@@ -978,12 +974,16 @@ int main(int argc, char *argv[])
             debug = 1;
         else if (strcmp(*argv, "-reuse") == 0)
             reuse = 1;
-        else if (strcmp(*argv, "-dhe512") == 0) {
-            dhe512 = 1;
-        } else if (strcmp(*argv, "-dhe1024dsa") == 0) {
-            dhe1024dsa = 1;
-        } else if (strcmp(*argv, "-no_dhe") == 0)
+        else if (strcmp(*argv, "-no_dhe") == 0)
+#ifdef OPENSSL_NO_DH
+            /* unused in this case */;
+#else
             no_dhe = 1;
+        else if (strcmp(*argv, "-dhe512") == 0)
+            dhe512 = 1;
+        else if (strcmp(*argv, "-dhe1024dsa") == 0)
+            dhe1024dsa = 1;
+#endif
         else if (strcmp(*argv, "-no_ecdhe") == 0)
             /* obsolete */;
         else if (strcmp(*argv, "-psk") == 0) {
@@ -1486,6 +1486,7 @@ int main(int argc, char *argv[])
         ERR_print_errors(bio_err);
         goto end;
     }
+#ifndef OPENSSL_NO_DH
     if (!no_dhe) {
         if (dhe1024dsa)
             dhpkey = get_dh1024dsa(libctx);
@@ -1503,6 +1504,7 @@ int main(int argc, char *argv[])
         SSL_CTX_set0_tmp_dh_pkey(s_ctx, dhpkey);
         SSL_CTX_set0_tmp_dh_pkey(s_ctx2, dhpkey);
     }
+#endif
 
     if (!(SSL_CTX_load_verify_file(s_ctx, CAfile)
           || SSL_CTX_load_verify_dir(s_ctx, CApath))
@@ -2882,149 +2884,6 @@ static int app_verify_callback(X509_STORE_CTX *ctx, void *arg)
     ok = X509_verify_cert(ctx);
 
     return ok;
-}
-
-static EVP_PKEY *get_dh_from_pg_bn(OSSL_LIB_CTX *libctx, BIGNUM *p, BIGNUM *g)
-{
-    EVP_PKEY_CTX *pctx = EVP_PKEY_CTX_new_from_name(libctx, "DH", NULL);
-    OSSL_PARAM_BLD *tmpl = NULL;
-    OSSL_PARAM *params = NULL;
-    EVP_PKEY *dhpkey = NULL;
-
-    if (pctx == NULL || !EVP_PKEY_key_fromdata_init(pctx))
-        goto err;
-
-    tmpl = OSSL_PARAM_BLD_new();
-    if (tmpl == NULL
-            || !OSSL_PARAM_BLD_push_BN(tmpl, OSSL_PKEY_PARAM_FFC_P, p)
-            || !OSSL_PARAM_BLD_push_BN(tmpl, OSSL_PKEY_PARAM_FFC_G, g))
-        goto err;
-
-    params = OSSL_PARAM_BLD_to_param(tmpl);
-    if (params == NULL || !EVP_PKEY_fromdata(pctx, &dhpkey, params))
-        goto err;
-
- err:
-    EVP_PKEY_CTX_free(pctx);
-    OSSL_PARAM_BLD_free_params(params);
-    OSSL_PARAM_BLD_free(tmpl);
-    return dhpkey;
-}
-static EVP_PKEY *get_dh_from_pg(OSSL_LIB_CTX *libctx, unsigned char *pdata,
-                                size_t plen, unsigned char *gdata, size_t glen)
-{
-    EVP_PKEY *dhpkey = NULL;
-    BIGNUM *p = NULL, *g = NULL;
-
-    p = BN_bin2bn(pdata, plen, NULL);
-    g = BN_bin2bn(gdata, glen, NULL);
-    if (p == NULL || g == NULL)
-        goto err;
-
-    dhpkey = get_dh_from_pg_bn(libctx, p, g);
-
- err:
-    BN_free(p);
-    BN_free(g);
-    return dhpkey;
-}
-
-/* These DH parameters were generated using the dhparam command line app */
-static EVP_PKEY *get_dh512(OSSL_LIB_CTX *libctx)
-{
-    static unsigned char dh512_p[] = {
-        0xCB, 0xC8, 0xE1, 0x86, 0xD0, 0x1F, 0x94, 0x17, 0xA6, 0x99, 0xF0,
-        0xC6,
-        0x1F, 0x0D, 0xAC, 0xB6, 0x25, 0x3E, 0x06, 0x39, 0xCA, 0x72, 0x04,
-        0xB0,
-        0x6E, 0xDA, 0xC0, 0x61, 0xE6, 0x7A, 0x77, 0x25, 0xE8, 0x3B, 0xB9,
-        0x5F,
-        0x9A, 0xB6, 0xB5, 0xFE, 0x99, 0x0B, 0xA1, 0x93, 0x4E, 0x35, 0x33,
-        0xB8,
-        0xE1, 0xF1, 0x13, 0x4F, 0x59, 0x1A, 0xD2, 0x57, 0xC0, 0x26, 0x21,
-        0x33,
-        0x02, 0xC5, 0xAE, 0x23,
-    };
-    static unsigned char dh512_g[] = {
-        0x02,
-    };
-
-    return get_dh_from_pg(libctx, dh512_p, sizeof(dh512_p), dh512_g,
-                          sizeof(dh512_g));
-}
-
-static EVP_PKEY *get_dh1024dsa(OSSL_LIB_CTX *libctx)
-{
-    static unsigned char dh1024_p[] = {
-        0xC8, 0x00, 0xF7, 0x08, 0x07, 0x89, 0x4D, 0x90, 0x53, 0xF3, 0xD5,
-        0x00,
-        0x21, 0x1B, 0xF7, 0x31, 0xA6, 0xA2, 0xDA, 0x23, 0x9A, 0xC7, 0x87,
-        0x19,
-        0x3B, 0x47, 0xB6, 0x8C, 0x04, 0x6F, 0xFF, 0xC6, 0x9B, 0xB8, 0x65,
-        0xD2,
-        0xC2, 0x5F, 0x31, 0x83, 0x4A, 0xA7, 0x5F, 0x2F, 0x88, 0x38, 0xB6,
-        0x55,
-        0xCF, 0xD9, 0x87, 0x6D, 0x6F, 0x9F, 0xDA, 0xAC, 0xA6, 0x48, 0xAF,
-        0xFC,
-        0x33, 0x84, 0x37, 0x5B, 0x82, 0x4A, 0x31, 0x5D, 0xE7, 0xBD, 0x52,
-        0x97,
-        0xA1, 0x77, 0xBF, 0x10, 0x9E, 0x37, 0xEA, 0x64, 0xFA, 0xCA, 0x28,
-        0x8D,
-        0x9D, 0x3B, 0xD2, 0x6E, 0x09, 0x5C, 0x68, 0xC7, 0x45, 0x90, 0xFD,
-        0xBB,
-        0x70, 0xC9, 0x3A, 0xBB, 0xDF, 0xD4, 0x21, 0x0F, 0xC4, 0x6A, 0x3C,
-        0xF6,
-        0x61, 0xCF, 0x3F, 0xD6, 0x13, 0xF1, 0x5F, 0xBC, 0xCF, 0xBC, 0x26,
-        0x9E,
-        0xBC, 0x0B, 0xBD, 0xAB, 0x5D, 0xC9, 0x54, 0x39,
-    };
-    static unsigned char dh1024_g[] = {
-        0x3B, 0x40, 0x86, 0xE7, 0xF3, 0x6C, 0xDE, 0x67, 0x1C, 0xCC, 0x80,
-        0x05,
-        0x5A, 0xDF, 0xFE, 0xBD, 0x20, 0x27, 0x74, 0x6C, 0x24, 0xC9, 0x03,
-        0xF3,
-        0xE1, 0x8D, 0xC3, 0x7D, 0x98, 0x27, 0x40, 0x08, 0xB8, 0x8C, 0x6A,
-        0xE9,
-        0xBB, 0x1A, 0x3A, 0xD6, 0x86, 0x83, 0x5E, 0x72, 0x41, 0xCE, 0x85,
-        0x3C,
-        0xD2, 0xB3, 0xFC, 0x13, 0xCE, 0x37, 0x81, 0x9E, 0x4C, 0x1C, 0x7B,
-        0x65,
-        0xD3, 0xE6, 0xA6, 0x00, 0xF5, 0x5A, 0x95, 0x43, 0x5E, 0x81, 0xCF,
-        0x60,
-        0xA2, 0x23, 0xFC, 0x36, 0xA7, 0x5D, 0x7A, 0x4C, 0x06, 0x91, 0x6E,
-        0xF6,
-        0x57, 0xEE, 0x36, 0xCB, 0x06, 0xEA, 0xF5, 0x3D, 0x95, 0x49, 0xCB,
-        0xA7,
-        0xDD, 0x81, 0xDF, 0x80, 0x09, 0x4A, 0x97, 0x4D, 0xA8, 0x22, 0x72,
-        0xA1,
-        0x7F, 0xC4, 0x70, 0x56, 0x70, 0xE8, 0x20, 0x10, 0x18, 0x8F, 0x2E,
-        0x60,
-        0x07, 0xE7, 0x68, 0x1A, 0x82, 0x5D, 0x32, 0xA2,
-    };
-
-    return get_dh_from_pg(libctx, dh1024_p, sizeof(dh1024_p), dh1024_g,
-                          sizeof(dh1024_g));
-}
-
-static EVP_PKEY *get_dh2048(OSSL_LIB_CTX *libctx)
-{
-    BIGNUM *p = NULL, *g = NULL;
-    EVP_PKEY *dhpkey = NULL;
-
-    g = BN_new();
-    if (g == NULL || !BN_set_word(g, 2))
-        goto err;
-
-    p = BN_get_rfc3526_prime_2048(NULL);
-    if (p == NULL)
-        goto err;
-
-    dhpkey = get_dh_from_pg_bn(libctx, p, g);
-
- err:
-    BN_free(p);
-    BN_free(g);
-    return dhpkey;
 }
 
 #ifndef OPENSSL_NO_PSK
