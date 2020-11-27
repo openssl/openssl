@@ -74,6 +74,61 @@ valid. If any operation fails then the certificate is not valid.
 
 =head1 OPTIONS
 
+=head2 Trusted Certificate Options
+
+The following options specify how to select the trusted root certificates,
+also known as trust anchors.
+A collection of trusted roots is called a I<trust store>.
+
+Note that OpenSSL does not provide a default set of trust anchors.  Many
+Linux distributions include a system default and configure OpenSSL to point
+to that.  Mozilla maintains an influential trust store that can be found at
+L<https://www.mozilla.org/en-US/about/governance/policies/security-group/certs/>.
+
+The certificates to trust can be specified using following options.
+
+=over 4
+
+=item B<-CAfile> I<file>
+
+Load the specified file which contains one or more PEM-format certificates
+of CA's that are trusted.
+
+=item B<-no-CAfile>
+
+Do not load the default file of trusted certificates.
+
+=item B<-CApath> I<dir>
+
+Use the specified directory as a list of trust certificates. That is,
+files should be named with the hash of the X.509 SubjectName of each
+certificate. This is so that the library can extract the IssuerName,
+hash it, and directly lookup the file to get the issuer certificate.
+See L<openssl-rehash(1)> for information on creating this type of directory.
+
+=item B<-no-CApath>
+
+Do not use the default directory of trusted certificates.
+
+=item B<-CAstore> I<uri>
+
+Use I<uri> as a store of trusted CA certificates.  The URI may
+indicate a single certificate, as well as a collection of them.
+With URIs in the C<file:> scheme, this acts as B<-CAfile> or
+B<-CApath>, depending on if the URI indicates a single file or
+directory.
+See L<ossl_store-file(7)> for more information on the C<file:> scheme.
+
+These certificates are also used when building the server certificate
+chain (for example with L<openssl-s_server(1)>) or client certificate
+chain (for example with L<openssl-s_time(1)>).
+
+=item B<-no-CAstore>
+
+Do not use the default store.
+
+=back
+
 =head2 Verification Options
 
 The certificate verification can be fine-tuned with the following flags.

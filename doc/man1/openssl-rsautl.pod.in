@@ -60,7 +60,7 @@ if this option is not specified.
 =item B<-passin> I<arg>
 
 The passphrase used in the output file.
-See see L<openssl(1)/Pass Phrase Options>.
+See see L<openssl-passphrase-options(1)/Pass Phrase Options>.
 
 =item B<-rev>
 
@@ -79,7 +79,7 @@ The input key, by default it should be an RSA private key.
 
 The key format; the default is B<PEM>.
 The only value with effect is B<ENGINE>; all others have become obsolete.
-See L<openssl(1)/Format Options> for details.
+See L<openssl-format-options(1)/Format Options> for details.
 
 =item B<-pubin>
 

@@ -55,7 +55,7 @@ this option prevents output of the PEM data.
 =item B<-passin> I<arg>
 
 the key password source. For more information about the format of I<arg>
-see L<openssl(1)/Pass Phrase Options>.
+see L<openssl-passphrase-options(1)/Pass Phrase Options>.
 
 =item B<-text>
 
