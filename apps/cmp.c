@@ -2716,8 +2716,13 @@ int cmp_main(int argc, char **argv)
     if (opt_batch)
         set_base_ui_method(UI_null());
 
-    if (opt_engine != NULL)
+    if (opt_engine != NULL) {
         engine = setup_engine_methods(opt_engine, 0 /* not: ENGINE_METHOD_ALL */, 0);
+        if (engine == NULL) {
+            CMP_err1("cannot load engine %s", opt_engine);
+            goto err;
+        }
+    }
 
     if (opt_port != NULL) {
         if (opt_use_mock_srv) {
