@@ -615,6 +615,11 @@ L<config(5)/Engine Configuration>.
 The engine will be used for key ids specified with B<-key> and similar
 options when an option like B<-keyform engine> is given.
 
+A special case is the C<loader_attic> engine, which supports loading keys,
+parameters, certificates, and CRLs from files.
+When this engine is used, files with such credentials are read via this engine.
+Using the C<file:> schema is optional; a plain file (path) name will do.
+
 =back
 
 Options specifying keys, like B<-key> and similar, can use the generic
