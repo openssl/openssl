@@ -307,6 +307,8 @@ static int send_record(BIO *rbio, unsigned char type, uint64_t seqnr,
     hmac = EVP_MAC_fetch(NULL, "HMAC", NULL);
     ctx = EVP_MAC_CTX_new(hmac);
     if(ctx == NULL){
+        OPENSSL_free(enc);
+        EVP_MAC_free(hmac);
         return 0;
     }
     EVP_MAC_free(hmac);
