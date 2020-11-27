@@ -57,8 +57,7 @@ IF[{- !$disabled{tests} -}]
           http_test servername_test ocspapitest fatalerrtest tls13ccstest \
           sysdefaulttest errtest ssl_ctx_test gosttest \
           context_internal_test aesgcmtest params_test evp_pkey_dparams_test \
-          keymgmt_internal_test hexstr_test provider_status_test defltfips_test \
-          pem_read_depr_test
+          keymgmt_internal_test hexstr_test provider_status_test defltfips_test
 
   IF[{- !$disabled{'deprecated-3.0'} -}]
     PROGRAMS{noinst}=enginetest
@@ -810,6 +809,7 @@ IF[{- !$disabled{tests} -}]
   DEPEND[bio_prefix_text]=../libcrypto
 
   IF[{- !$disabled{'deprecated-3.0'} -}]
+    PROGRAMS{noinst}=pem_read_depr_test
     SOURCE[pem_read_depr_test]=pem_read_depr_test.c
     INCLUDE[pem_read_depr_test]=../include ../apps/include
     DEPEND[pem_read_depr_test]=../libcrypto libtestutil.a
