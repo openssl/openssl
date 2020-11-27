@@ -391,8 +391,14 @@ sub testssl {
 	       'test sslv2/sslv3 w/o (EC)DHE via BIO pair');
 	  }
 
-	  ok(run(test([@ssltest, "-bio_pair", "-dhe1024dsa", "-v"])),
-	     'test sslv2/sslv3 with 1024bit DHE via BIO pair');
+	SKIP: {
+	    skip "skipping dhe1024dsa test", 1
+                if ($no_dh);
+
+            ok(run(test([@ssltest, "-bio_pair", "-dhe1024dsa", "-v"])),
+               'test sslv2/sslv3 with 1024bit DHE via BIO pair');
+          }
+
 	  ok(run(test([@ssltest, "-bio_pair", "-server_auth", @CA])),
 	     'test sslv2/sslv3 with server authentication');
 	  ok(run(test([@ssltest, "-bio_pair", "-client_auth", @CA])),
@@ -499,12 +505,18 @@ sub testssl {
                 }
             }
             next if $protocol eq "-tls1_3";
-            is(run(test([@ssltest,
-                         "-s_cipher", "EDH",
-                         "-c_cipher", 'EDH:@SECLEVEL=1',
-                         "-dhe512",
-                         $protocol])), 0,
-               "testing connection with weak DH, expecting failure");
+
+          SKIP: {
+              skip "skipping dhe512 test", 1
+                  if ($no_dh);
+
+              is(run(test([@ssltest,
+                           "-s_cipher", "EDH",
+                           "-c_cipher", 'EDH:@SECLEVEL=1',
+                           "-dhe512",
+                           $protocol])), 0,
+                 "testing connection with weak DH, expecting failure");
+            }
         }
     };
 

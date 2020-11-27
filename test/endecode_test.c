@@ -22,6 +22,7 @@
 #include "internal/cryptlib.h"   /* ossl_assert */
 #include "crypto/pem.h"          /* For PVK and "blob" PEM headers */
 
+#include "predefined_dhparams.h"
 #include "testutil.h"
 
 #ifndef OPENSSL_NO_EC
@@ -42,13 +43,21 @@ static OSSL_PARAM *ec_explicit_tri_params_explicit = NULL;
 static EVP_PKEY *make_template(const char *type, OSSL_PARAM *genparams)
 {
     EVP_PKEY *pkey = NULL;
-    EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new_from_name(NULL, type, NULL);
+    EVP_PKEY_CTX *ctx = NULL;
+
+#ifndef OPENSSL_NO_DH
+    /* use DH(X) keys with predetermined parameters for efficiency */
+    if (strcmp(type, "DH") == 0)
+        return get_dh512(NULL);
+    if (strcmp(type, "X9.42 DH") == 0)
+        return get_dhx512(NULL);
+#endif
 
     /*
      * No real need to check the errors other than for the cascade
      * effect.  |pkey| will simply remain NULL if something goes wrong.
      */
-    (void)(ctx != NULL
+    (void)((ctx = EVP_PKEY_CTX_new_from_name(NULL, type, NULL)) != NULL
            && EVP_PKEY_paramgen_init(ctx) > 0
            && (genparams == NULL
                || EVP_PKEY_CTX_set_params(ctx, genparams) > 0)
@@ -1193,9 +1202,11 @@ int setup_tests(void)
 #ifndef OPENSSL_NO_DH
     MAKE_DOMAIN_KEYS(DH, "DH", NULL);
     MAKE_DOMAIN_KEYS(DHX, "X9.42 DH", NULL);
+    TEST_info("Generating keys...DH done");
 #endif
 #ifndef OPENSSL_NO_DSA
     MAKE_DOMAIN_KEYS(DSA, "DSA", DSA_params);
+    TEST_info("Generating keys...DSA done");
 #endif
 #ifndef OPENSSL_NO_EC
     MAKE_DOMAIN_KEYS(EC, "EC", EC_params);
@@ -1209,10 +1220,12 @@ int setup_tests(void)
     MAKE_KEYS(ED448, "ED448", NULL);
     MAKE_KEYS(X25519, "X25519", NULL);
     MAKE_KEYS(X448, "X448", NULL);
+    TEST_info("Generating keys...EC done");
 #endif
     MAKE_KEYS(RSA, "RSA", NULL);
+    TEST_info("Generating keys...RSA done");
     MAKE_KEYS(RSA_PSS, "RSA-PSS", RSA_PSS_params);
-    TEST_info("Generating key... done");
+    TEST_info("Generating keys...RSA_PSS done");
 
     if (ok) {
 #ifndef OPENSSL_NO_DH
