@@ -210,10 +210,11 @@ static void encoder_destruct_EVP_PKEY(void *arg)
 static int ossl_encoder_ctx_setup_for_EVP_PKEY(OSSL_ENCODER_CTX *ctx,
                                                const EVP_PKEY *pkey,
                                                int selection,
-                                               OSSL_LIB_CTX *libctx,
                                                const char *propquery)
 {
     struct construct_data_st *data = NULL;
+    const OSSL_PROVIDER *prov = EVP_KEYMGMT_provider(pkey->keymgmt);
+    OSSL_LIB_CTX *libctx = ossl_provider_libctx(prov);
     int ok = 0;
 
     if (!ossl_assert(ctx != NULL) || !ossl_assert(pkey != NULL)) {
@@ -280,10 +281,11 @@ OSSL_ENCODER_CTX *OSSL_ENCODER_CTX_new_by_EVP_PKEY(const EVP_PKEY *pkey,
                                                    int selection,
                                                    const char *output_type,
                                                    const char *output_struct,
-                                                   OSSL_LIB_CTX *libctx,
                                                    const char *propquery)
 {
     OSSL_ENCODER_CTX *ctx = NULL;
+    const OSSL_PROVIDER *prov = EVP_KEYMGMT_provider(pkey->keymgmt);
+    OSSL_LIB_CTX *libctx = ossl_provider_libctx(prov);
 
     if ((ctx = OSSL_ENCODER_CTX_new()) == NULL) {
         ERR_raise(ERR_LIB_OSSL_ENCODER, ERR_R_MALLOC_FAILURE);
@@ -302,8 +304,7 @@ OSSL_ENCODER_CTX *OSSL_ENCODER_CTX_new_by_EVP_PKEY(const EVP_PKEY *pkey,
         && (output_struct == NULL
             || OSSL_ENCODER_CTX_set_output_structure(ctx, output_struct))
         && OSSL_ENCODER_CTX_set_selection(ctx, selection)
-        && ossl_encoder_ctx_setup_for_EVP_PKEY(ctx, pkey, selection,
-                                               libctx, propquery)
+        && ossl_encoder_ctx_setup_for_EVP_PKEY(ctx, pkey, selection, propquery)
         && OSSL_ENCODER_CTX_add_extra(ctx, libctx, propquery)) {
         OSSL_TRACE_BEGIN(ENCODER) {
             BIO_printf(trc_out, "(ctx %p) Got %d encoders\n",
