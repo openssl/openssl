@@ -325,7 +325,7 @@ int dhparam_main(int argc, char **argv)
                                              OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS,
                                              outformat == FORMAT_ASN1
                                              ? "DER" : "PEM",
-                                             NULL, NULL, NULL);
+                                             NULL, NULL);
 
         if (ectx == NULL || !OSSL_ENCODER_to_bio(ectx, out)) {
             OSSL_ENCODER_CTX_free(ectx);

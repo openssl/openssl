@@ -183,7 +183,7 @@ static int encode_EVP_PKEY_prov(void **encoded, long *encoded_len,
     if (!TEST_ptr(ectx = OSSL_ENCODER_CTX_new_by_EVP_PKEY(pkey, selection,
                                                           output_type,
                                                           output_structure,
-                                                          NULL, NULL))
+                                                          NULL))
         || !TEST_int_gt(OSSL_ENCODER_CTX_get_num_encoders(ectx), 0)
         || (pass != NULL
             && !TEST_true(OSSL_ENCODER_CTX_set_passphrase(ectx, upass,

@@ -461,7 +461,7 @@ static int rsa_keygen(int bits, EVP_PKEY **pub, EVP_PKEY **priv)
                      OSSL_ENCODER_CTX_new_by_EVP_PKEY(*priv,
                                                       EVP_PKEY_PUBLIC_KEY,
                                                       "DER", "type-specific",
-                                                      libctx, NULL))
+                                                      NULL))
         || !TEST_true(OSSL_ENCODER_to_data(ectx, &pub_der, &len)))
         goto err;
     pp = pub_der;

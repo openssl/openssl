@@ -49,7 +49,7 @@
     OSSL_ENCODER_CTX *ctx =                                             \
         OSSL_ENCODER_CTX_new_by_##type(x, PEM_SELECTION_##asn1,         \
                                        "PEM", PEM_STRUCTURE_##asn1,     \
-                                       NULL, NULL);                     \
+                                       NULL);                           \
                                                                         \
     if (OSSL_ENCODER_CTX_get_num_encoders(ctx) == 0) {                  \
         OSSL_ENCODER_CTX_free(ctx);                                     \
