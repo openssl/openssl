@@ -95,9 +95,10 @@ Print out a usage message.
 
 =item B<-passin> I<arg>
 
-The password source for input files.
+The password source for the input, and for encrypting any private keys that
+are output.
 For more information about the format of B<arg>
-see L<openssl(1)/Pass Phrase Options>.
+see L<openssl-passphrase-options(1)/Pass Phrase Options>.
 
 =item B<-passout> I<arg>
 

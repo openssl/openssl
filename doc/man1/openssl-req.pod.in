@@ -72,7 +72,7 @@ Print out a usage message.
 =item B<-inform> B<DER>|B<PEM>, B<-outform> B<DER>|B<PEM>
 
 The input and formats; the default is B<PEM>.
-See L<openssl(1)/Format Options> for details.
+See L<openssl-format-options(1)/Format Options> for details.
 
 The data is a PKCS#10 object.
 
@@ -104,7 +104,7 @@ which supports both options for good reasons.
 
 The password source for the input and output file.
 For more information about the format of B<arg>
-see L<openssl(1)/Pass Phrase Options>.
+see L<openssl-passphrase-options(1)/Pass Phrase Options>.
 
 =item B<-out> I<filename>
 
@@ -190,7 +190,7 @@ accepts PKCS#8 format private keys for PEM format files.
 
 The format of the private key; the default is B<PEM>.
 The only value with effect is B<ENGINE>; all others have become obsolete.
-See L<openssl(1)/Format Options> for details.
+See L<openssl-format-options(1)/Format Options> for details.
 
 =item B<-keyout> I<filename>
 

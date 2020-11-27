@@ -228,25 +228,25 @@ format message that has been signed or verified.
 
 The input format of the CMS structure (if one is being read);
 the default is B<SMIME>.
-See L<openssl(1)/Format Options> for details.
+See L<openssl-format-options(1)/Format Options> for details.
 
 =item B<-outform> B<DER>|B<PEM>|B<SMIME>
 
 The output format of the CMS structure (if one is being written);
 the default is B<SMIME>.
-See L<openssl(1)/Format Options> for details.
+See L<openssl-format-options(1)/Format Options> for details.
 
 =item B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
 
 The format of the private key file; the default is B<PEM>.
 The only value with effect is B<ENGINE>; all others have become obsolete.
-See L<openssl(1)/Format Options> for details.
+See L<openssl-format-options(1)/Format Options> for details.
 
 =item B<-rctform> B<DER>|B<PEM>|B<SMIME>
 
 The signed receipt format for use with the B<-receipt_verify>; the default
 is B<SMIME>.
-See L<openssl(1)/Format Options> for details.
+See L<openssl-format-options(1)/Format Options> for details.
 
 =item B<-stream>, B<-indef>
 
@@ -293,7 +293,7 @@ is mainly useful for testing purposes.
 
 For the B<-cmsout> operation when B<-print> option is in use, specifies
 printing options for string fields. For most cases B<utf8> is reasonable value.
-See L<openssl(1)/Name Format Options> for details.
+See L<openssl-namefmt-options(1)/Name Format Options> for details.
 
 =item B<-md> I<digest>
 
@@ -484,7 +484,7 @@ or to modify default parameters for ECDH.
 =item B<-passin> I<arg>
 
 The private key password source. For more information about the format of B<arg>
-see L<openssl(1)/Pass Phrase Options>.
+see L<openssl-passphrase-options(1)/Pass Phrase Options>.
 
 =item B<-to>, B<-from>, B<-subject>
 

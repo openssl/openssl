@@ -336,8 +336,8 @@ all intermediate CA certificates unless the response includes them.
 
 =item B<-CAfile> I<file>, B<-CApath> I<dir>, B<-CAstore> I<uri>
 
-See L<openssl(1)/Trusted Certificate Options> for details.
-At least one of B<-CApath>, B<-CAfile> or B<-CAstore> must be specified.
+See L<openssl-verification-options(1)/Trusted Certificate Options> for details.
+At least one of B<-CAfile>, B<-CApath> or B<-CAstore> must be specified.
 
 {- $OpenSSL::safe::opt_v_item -}
 

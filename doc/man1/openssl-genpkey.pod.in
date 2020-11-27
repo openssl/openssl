@@ -47,14 +47,14 @@ standard output is used.
 =item B<-outform> B<DER>|B<PEM>
 
 The output format, except when B<-genparam> is given; the default is B<PEM>.
-See L<openssl(1)/Format Options> for details.
+See L<openssl-format-options(1)/Format Options> for details.
 
 When B<-genparam> is given, B<-outform> is ignored.
 
 =item B<-pass> I<arg>
 
 The output file password source. For more information about the format of I<arg>
-see L<openssl(1)/Pass Phrase Options>.
+see L<openssl-passphrase-options(1)/Pass Phrase Options>.
 
 =item B<-I<cipher>>
 

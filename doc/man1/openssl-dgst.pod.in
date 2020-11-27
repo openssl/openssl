@@ -110,7 +110,7 @@ command instead for this.
 
 The format of the key to sign with; the default is B<PEM>.
 The only value with effect is B<ENGINE>; all others have become obsolete.
-See L<openssl(1)/Format Options> for details.
+See L<openssl-format-options(1)/Format Options> for details.
 
 =item B<-sigopt> I<nm>:I<v>
 
@@ -120,7 +120,7 @@ Names and values of these options are algorithm-specific.
 =item B<-passin> I<arg>
 
 The private key password source. For more information about the format of I<arg>
-see L<openssl(1)/Pass Phrase Options>.
+see L<openssl-passphrase-options(1)/Pass Phrase Options>.
 
 =item B<-verify> I<filename>
 

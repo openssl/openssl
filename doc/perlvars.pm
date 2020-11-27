@@ -79,7 +79,7 @@ $OpenSSL::safe::opt_name_item = ""
 . "=item B<-nameopt> I<option>\n"
 . "\n"
 . "This specifies how the subject or issuer names are displayed.\n"
-. "See L<openssl(1)/Name Format Options> for details.";
+. "See L<openssl-namefmt-options(1)/Name Format Options> for details.";
 
 # Random State Options
 $OpenSSL::safe::opt_r_synopsis = ""
@@ -134,7 +134,7 @@ $OpenSSL::safe::opt_trust_item = ""
 . "=item B<-CAfile> I<file>, B<-no-CAfile>, B<-CApath> I<dir>, B<-no-CApath>,\n"
 . "B<-CAstore> I<uri>, B<-no-CAstore>\n"
 . "\n"
-. "See L<openssl(1)/Trusted Certificate Options> for details.";
+. "See L<openssl-verification-options(1)/Trusted Certificate Options> for details.";
 
 # TLS Version Options
 $OpenSSL::safe::opt_versiontls_synopsis = ""
