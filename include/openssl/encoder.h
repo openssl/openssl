@@ -117,7 +117,6 @@ OSSL_ENCODER_CTX *OSSL_ENCODER_CTX_new_by_EVP_PKEY(const EVP_PKEY *pkey,
                                                    int selection,
                                                    const char *output_type,
                                                    const char *output_struct,
-                                                   OSSL_LIB_CTX *libctx,
                                                    const char *propquery);
 
 # ifdef __cplusplus
