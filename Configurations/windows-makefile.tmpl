@@ -639,6 +639,10 @@ $args{target}: $deps
 EOF
   }
 
+  # This function (and the next) avoids quoting paths of generated dependencies
+  # (in the build tree), but quotes paths of non-generated dependencies (in the
+  # source tree). This is a workaround for a limitation of C++Builder's make.exe
+  # in handling quoted paths: https://quality.embarcadero.com/browse/RSP-31756
   sub generatesrc {
       my %args = @_;
       my $gen0 = $args{generator}->[0];
