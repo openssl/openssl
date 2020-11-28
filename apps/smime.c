@@ -356,11 +356,18 @@ int smime_main(int argc, char **argv)
             break;
         }
     }
+
+    /* Extra arguments are files with recipient keys. */
     argc = opt_num_rest();
     argv = opt_rest();
 
     if (!(operation & SMIME_SIGNERS) && (skkeys != NULL || sksigners != NULL)) {
         BIO_puts(bio_err, "Multiple signers or keys not allowed\n");
+        goto opthelp;
+    }
+    if (!operation) {
+        BIO_puts(bio_err,
+                "No operation (-encrypt|-sign|...) specified\n");
         goto opthelp;
     }
 
@@ -398,8 +405,6 @@ int smime_main(int argc, char **argv)
             BIO_printf(bio_err, "No recipient(s) certificate(s) specified\n");
             goto opthelp;
         }
-    } else if (!operation) {
-        goto opthelp;
     }
 
     if (!app_passwd(passinarg, NULL, &passin, NULL)) {

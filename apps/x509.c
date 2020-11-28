@@ -490,12 +490,11 @@ int x509_main(int argc, char **argv)
                 goto opthelp;
         }
     }
+
+    /* No extra arguments. */
     argc = opt_num_rest();
-    argv = opt_rest();
-    if (argc != 0) {
-        BIO_printf(bio_err, "%s: Unknown parameter %s\n", prog, argv[0]);
+    if (argc != 0)
         goto opthelp;
-    }
 
     if (!app_passwd(passinarg, NULL, &passin, NULL)) {
         BIO_printf(bio_err, "Error getting password\n");

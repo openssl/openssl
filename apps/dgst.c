@@ -220,6 +220,8 @@ int dgst_main(int argc, char **argv)
             break;
         }
     }
+
+    /* Remaining args are files to digest. */
     argc = opt_num_rest();
     argv = opt_rest();
     if (keyfile != NULL && argc > 1) {

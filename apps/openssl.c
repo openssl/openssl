@@ -347,6 +347,7 @@ int help_main(int argc, char **argv)
         }
     }
 
+    /* One optional argument, the command to get help for. */
     if (opt_num_rest() == 1) {
         new_argv[0] = opt_rest()[0];
         new_argv[1] = "--help";

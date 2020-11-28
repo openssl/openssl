@@ -201,6 +201,8 @@ int crl_main(int argc, char **argv)
             break;
         }
     }
+
+    /* No remaining args. */
     argc = opt_num_rest();
     if (argc != 0)
         goto opthelp;

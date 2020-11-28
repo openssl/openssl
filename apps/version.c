@@ -97,10 +97,12 @@ opthelp:
             break;
         }
     }
-    if (opt_num_rest() != 0) {
-        BIO_printf(bio_err, "Extra parameters given.\n");
+
+    /* No extra arguments. */
+    argc = opt_num_rest();
+    if (argc != 0)
         goto opthelp;
-    }
+
     if (!dirty)
         version = 1;
 

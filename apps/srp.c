@@ -301,6 +301,8 @@ int srp_main(int argc, char **argv)
             break;
         }
     }
+
+    /* Optional parameters are usernames. */
     argc = opt_num_rest();
     argv = opt_rest();
 

@@ -1807,10 +1807,11 @@ int speed_main(int argc, char **argv)
             break;
         }
     }
+
+    /* Remaining arguments are algorithms. */
     argc = opt_num_rest();
     argv = opt_rest();
 
-    /* Remaining arguments are algorithms. */
     for (; *argv; argv++) {
         const char *algo = *argv;
 

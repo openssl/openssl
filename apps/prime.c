@@ -81,16 +81,14 @@ opthelp:
             break;
         }
     }
+
+    /* Optional arguments are numbers to check. */
     argc = opt_num_rest();
     argv = opt_rest();
-
     if (generate) {
-        if (argc != 0) {
-            BIO_printf(bio_err, "Extra arguments given.\n");
+        if (argc != 0)
             goto opthelp;
-        }
     } else if (argc == 0) {
-        BIO_printf(bio_err, "%s: No prime specified\n", prog);
         goto opthelp;
     }
 

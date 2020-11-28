@@ -146,11 +146,17 @@ int dhparam_main(int argc, char **argv)
             break;
         }
     }
+
+    /* One optional argument, bitsize to generate. */
     argc = opt_num_rest();
     argv = opt_rest();
+    if (argc == 1) {
+        if (!opt_int(argv[0], &num) || num <= 0)
+            goto opthelp;
+    } else if (argc != 0) {
+        goto opthelp;
+    }
 
-    if (argv[0] != NULL && (!opt_int(argv[0], &num) || num <= 0))
-        goto end;
 
     if (g && !num)
         num = DEFBITS;

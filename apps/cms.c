@@ -699,6 +699,8 @@ int cms_main(int argc, char **argv)
             break;
         }
     }
+
+    /* Remaining args are files to process. */
     argc = opt_num_rest();
     argv = opt_rest();
 

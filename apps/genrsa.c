@@ -146,6 +146,8 @@ opthelp:
             break;
         }
     }
+
+    /* One optional argument, the bitsize. */
     argc = opt_num_rest();
     argv = opt_rest();
 

@@ -514,14 +514,17 @@ int ocsp_main(int argc, char **argv)
             break;
         }
     }
+
+    /* No extra arguments. */
+    argc = opt_num_rest();
+    if (argc != 0)
+        goto opthelp;
+
     if (trailing_md) {
         BIO_printf(bio_err, "%s: Digest must be before -cert or -serial\n",
                    prog);
         goto opthelp;
     }
-    argc = opt_num_rest();
-    if (argc != 0)
-        goto opthelp;
 
     /* Have we anything to do? */
     if (req == NULL && reqin == NULL

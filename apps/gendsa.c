@@ -102,13 +102,15 @@ int gendsa_main(int argc, char **argv)
             break;
         }
     }
+
+    /* One argument, the params file. */
     argc = opt_num_rest();
     argv = opt_rest();
-    private = 1;
-
     if (argc != 1)
         goto opthelp;
-    dsaparams = *argv;
+
+    dsaparams = argv[0];
+    private = 1;
 
     if (!app_passwd(NULL, passoutarg, NULL, &passout)) {
         BIO_printf(bio_err, "Error getting password\n");

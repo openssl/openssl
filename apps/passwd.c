@@ -184,9 +184,10 @@ int passwd_main(int argc, char **argv)
             break;
         }
     }
+
+    /* All remaining arguments are the password text */
     argc = opt_num_rest();
     argv = opt_rest();
-
     if (*argv != NULL) {
         if (pw_source_defined)
             goto opthelp;

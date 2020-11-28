@@ -2289,7 +2289,9 @@ static int get_opts(int argc, char **argv)
         switch (o) {
         case OPT_EOF:
         case OPT_ERR:
-            goto opt_err;
+ opthelp:
+            BIO_printf(bio_err, "%s: Use -help for summary.\n", prog);
+            return 0;
         case OPT_HELP:
             opt_help(cmp_options);
             return -1;
@@ -2311,11 +2313,11 @@ static int get_opts(int argc, char **argv)
             break;
         case OPT_MSG_TIMEOUT:
             if ((opt_msg_timeout = opt_nat()) < 0)
-                goto opt_err;
+                goto opthelp;
             break;
         case OPT_TOTAL_TIMEOUT:
             if ((opt_total_timeout = opt_nat()) < 0)
-                goto opt_err;
+                goto opthelp;
             break;
         case OPT_TLS_USED:
             opt_tls_used = 1;
@@ -2399,7 +2401,7 @@ static int get_opts(int argc, char **argv)
 
         case OPT_V_CASES:
             if (!opt_verify(o, vpm))
-                goto opt_err;
+                goto opthelp;
             break;
         case OPT_CMD:
             opt_cmd_s = opt_str("cmd");
@@ -2425,7 +2427,7 @@ static int get_opts(int argc, char **argv)
             break;
         case OPT_DAYS:
             if ((opt_days = opt_nat()) < 0)
-                goto opt_err;
+                goto opthelp;
             break;
         case OPT_REQEXTS:
             opt_reqexts = opt_str("reqexts");
@@ -2450,7 +2452,7 @@ static int get_opts(int argc, char **argv)
                     || opt_popo < OSSL_CRMF_POPO_NONE
                     || opt_popo > OSSL_CRMF_POPO_KEYENC) {
                 CMP_err("invalid popo spec. Valid values are -1 .. 2");
-                goto opt_err;
+                goto opthelp;
             }
             break;
         case OPT_CSR:
@@ -2480,7 +2482,7 @@ static int get_opts(int argc, char **argv)
                     || opt_revreason > CRL_REASON_AA_COMPROMISE
                     || opt_revreason == 7) {
                 CMP_err("invalid revreason. Valid values are -1 .. 6, 8 .. 10");
-                goto opt_err;
+                goto opthelp;
             }
             break;
         case OPT_CERTFORM:
@@ -2499,7 +2501,7 @@ static int get_opts(int argc, char **argv)
 #endif
         case OPT_PROV_CASES:
             if (!opt_provider(o))
-                goto opt_err;
+                goto opthelp;
             break;
 
         case OPT_BATCH:
@@ -2531,7 +2533,7 @@ static int get_opts(int argc, char **argv)
             break;
         case OPT_MAX_MSGS:
             if ((opt_max_msgs = opt_nat()) < 0)
-                goto opt_err;
+                goto opthelp;
             break;
         case OPT_SRV_REF:
             opt_srv_ref = opt_str("srv_ref");
@@ -2604,17 +2606,13 @@ static int get_opts(int argc, char **argv)
             break;
         }
     }
+
+    /* No extra args. */
     argc = opt_num_rest();
     argv = opt_rest();
-    if (argc != 0) {
-        CMP_err1("unknown parameter %s", argv[0]);
-        goto opt_err;
-    }
+    if (argc != 0)
+        goto opthelp;
     return 1;
-
- opt_err:
-    CMP_err1("use -help for summary of '%s' options", prog);
-    return 0;
 }
 
 int cmp_main(int argc, char **argv)
