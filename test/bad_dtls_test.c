@@ -67,19 +67,27 @@ static int do_PRF(const void *seed1, int seed1_len,
                   const void *seed3, int seed3_len,
                   unsigned char *out, int olen)
 {
-    EVP_PKEY_CTX *pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_TLS1_PRF, NULL);
+    int ret;
     size_t outlen = olen;
+    EVP_PKEY_CTX *pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_TLS1_PRF, NULL);
 
-    /* No error handling. If it all screws up, the test will fail anyway */
-    EVP_PKEY_derive_init(pctx);
-    EVP_PKEY_CTX_set_tls1_prf_md(pctx, EVP_md5_sha1());
-    EVP_PKEY_CTX_set1_tls1_prf_secret(pctx, master_secret, sizeof(master_secret));
-    EVP_PKEY_CTX_add1_tls1_prf_seed(pctx, seed1, seed1_len);
-    EVP_PKEY_CTX_add1_tls1_prf_seed(pctx, seed2, seed2_len);
-    EVP_PKEY_CTX_add1_tls1_prf_seed(pctx, seed3, seed3_len);
-    EVP_PKEY_derive(pctx, out, &outlen);
+    if (!TEST_ptr(pctx))
+        return 0;
+
+    ret = TEST_int_gt(EVP_PKEY_derive_init(pctx), 0)
+          && TEST_int_gt(EVP_PKEY_CTX_set_tls1_prf_md(pctx, EVP_md5_sha1()), 0)
+          && TEST_int_gt(EVP_PKEY_CTX_set1_tls1_prf_secret(pctx, master_secret,
+                                                           sizeof(master_secret)),
+                                                           0)
+          && TEST_int_gt(EVP_PKEY_CTX_add1_tls1_prf_seed(pctx, seed1,
+                                                         seed1_len), 0)
+          && TEST_int_gt(EVP_PKEY_CTX_add1_tls1_prf_seed(pctx, seed2,
+                                                         seed2_len), 0)
+          && TEST_int_gt(EVP_PKEY_CTX_add1_tls1_prf_seed(pctx, seed3,
+                                                         seed3_len), 0)
+          && TEST_int_gt(EVP_PKEY_derive(pctx, out, &outlen), 0);
     EVP_PKEY_CTX_free(pctx);
-    return 1;
+    return ret;
 }
 
 static SSL_SESSION *client_session(void)
@@ -259,14 +267,12 @@ static int send_server_hello(BIO *rbio)
     memcpy(server_hello + SH_RANDOM_OFS, server_random, sizeof(server_random));
     memcpy(server_hello + SH_SESSID_OFS, session_id, sizeof(session_id));
 
-    if (!EVP_DigestUpdate(handshake_md, server_hello + MAC_OFFSET,
-                          sizeof(server_hello) - MAC_OFFSET))
-        return 0;
-
-    BIO_write(rbio, server_hello, sizeof(server_hello));
-    BIO_write(rbio, change_cipher_spec, sizeof(change_cipher_spec));
-
-    return 1;
+    return TEST_true(EVP_DigestUpdate(handshake_md, server_hello + MAC_OFFSET,
+                                      sizeof(server_hello) - MAC_OFFSET))
+           && TEST_int_gt(BIO_write(rbio, server_hello,
+                                    sizeof(server_hello)), 0)
+           && TEST_int_gt(BIO_write(rbio, change_cipher_spec,
+                                    sizeof(change_cipher_spec)), 0);
 }
 
 /* Create header, HMAC, pad, encrypt and send a record */
@@ -280,13 +286,14 @@ static int send_record(BIO *rbio, unsigned char type, uint64_t seqnr,
     static unsigned char seq[6] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
     static unsigned char ver[2] = { 0x01, 0x00 }; /* DTLS1_BAD_VER */
     unsigned char lenbytes[2];
-    EVP_MAC *hmac;
-    EVP_MAC_CTX *ctx;
-    EVP_CIPHER_CTX *enc_ctx;
+    EVP_MAC *hmac = NULL;
+    EVP_MAC_CTX *ctx = NULL;
+    EVP_CIPHER_CTX *enc_ctx = NULL;
+    unsigned char *enc = NULL;
     unsigned char iv[16];
     unsigned char pad;
-    unsigned char *enc;
     OSSL_PARAM params[3];
+    int ret = 0;
 
     seq[0] = (seqnr >> 40) & 0xff;
     seq[1] = (seqnr >> 32) & 0xff;
@@ -305,30 +312,30 @@ static int send_record(BIO *rbio, unsigned char type, uint64_t seqnr,
 
     /* Append HMAC to data */
     hmac = EVP_MAC_fetch(NULL, "HMAC", NULL);
+    if (hmac == NULL)
+        goto err;
     ctx = EVP_MAC_CTX_new(hmac);
-    if(ctx == NULL){
-        OPENSSL_free(enc);
-        EVP_MAC_free(hmac);
-        return 0;
-    }
-    EVP_MAC_free(hmac);
+    if(ctx == NULL)
+        goto err;
+
+    lenbytes[0] = (unsigned char)(len >> 8);
+    lenbytes[1] = (unsigned char)(len);
+
     params[0] = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
                                                  "SHA1", 0);
     params[1] = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY,
                                                   mac_key, 20);
     params[2] = OSSL_PARAM_construct_end();
-    EVP_MAC_CTX_set_params(ctx, params);
-    EVP_MAC_init(ctx);
-    EVP_MAC_update(ctx, epoch, 2);
-    EVP_MAC_update(ctx, seq, 6);
-    EVP_MAC_update(ctx, &type, 1);
-    EVP_MAC_update(ctx, ver, 2); /* Version */
-    lenbytes[0] = (unsigned char)(len >> 8);
-    lenbytes[1] = (unsigned char)(len);
-    EVP_MAC_update(ctx, lenbytes, 2); /* Length */
-    EVP_MAC_update(ctx, enc, len); /* Finally the data itself */
-    EVP_MAC_final(ctx, enc + len, NULL, SHA_DIGEST_LENGTH);
-    EVP_MAC_CTX_free(ctx);
+    if (!TEST_true(EVP_MAC_CTX_set_params(ctx, params))
+        || !TEST_true(EVP_MAC_init(ctx))
+        || !TEST_true(EVP_MAC_update(ctx, epoch, 2))
+        || !TEST_true(EVP_MAC_update(ctx, seq, 6))
+        || !TEST_true(EVP_MAC_update(ctx, &type, 1))
+        || !TEST_true(EVP_MAC_update(ctx, ver, 2)) /* Version */
+        || !TEST_true(EVP_MAC_update(ctx, lenbytes, 2)) /* Length */
+        || !TEST_true(EVP_MAC_update(ctx, enc, len)) /* Finally the data itself */
+        || !TEST_true(EVP_MAC_final(ctx, enc + len, NULL, SHA_DIGEST_LENGTH)))
+        goto err;
 
     /* Append padding bytes */
     len += SHA_DIGEST_LENGTH;
@@ -337,26 +344,31 @@ static int send_record(BIO *rbio, unsigned char type, uint64_t seqnr,
     } while (len % 16);
 
     /* Generate IV, and encrypt */
-    RAND_bytes(iv, sizeof(iv));
-    enc_ctx = EVP_CIPHER_CTX_new();
-    EVP_CipherInit_ex(enc_ctx, EVP_aes_128_cbc(), NULL, enc_key, iv, 1);
-    EVP_Cipher(enc_ctx, enc, enc, len);
-    EVP_CIPHER_CTX_free(enc_ctx);
+    if (!TEST_true(RAND_bytes(iv, sizeof(iv)))
+         || !TEST_ptr(enc_ctx = EVP_CIPHER_CTX_new())
+         || !TEST_true(EVP_CipherInit_ex(enc_ctx, EVP_aes_128_cbc(), NULL,
+                                         enc_key, iv, 1))
+         || !TEST_true(EVP_Cipher(enc_ctx, enc, enc, len)))
+        goto err;
 
     /* Finally write header (from fragmented variables), IV and encrypted record */
-    BIO_write(rbio, &type, 1);
-    BIO_write(rbio, ver, 2);
-    BIO_write(rbio, epoch, 2);
-    BIO_write(rbio, seq, 6);
     lenbytes[0] = (unsigned char)((len + sizeof(iv)) >> 8);
     lenbytes[1] = (unsigned char)(len + sizeof(iv));
-    BIO_write(rbio, lenbytes, 2);
-
-    BIO_write(rbio, iv, sizeof(iv));
-    BIO_write(rbio, enc, len);
-
+    if (!TEST_int_gt(BIO_write(rbio, &type, 1), 0)
+        || !TEST_int_gt(BIO_write(rbio, ver, 2), 0)
+        || !TEST_int_gt(BIO_write(rbio, epoch, 2), 0)
+        || !TEST_int_gt(BIO_write(rbio, seq, 6), 0)
+        || !TEST_int_gt(BIO_write(rbio, lenbytes, 2), 0)
+        || !TEST_int_gt(BIO_write(rbio, iv, sizeof(iv)), 0)
+        || !TEST_int_gt(BIO_write(rbio, enc, len), 0))
+        goto err;
+    ret = 1;
+err:
+    EVP_CIPHER_CTX_free(enc_ctx);
+    EVP_MAC_CTX_free(ctx);
     OPENSSL_free(enc);
-    return 1;
+    EVP_MAC_free(hmac);
+    return ret;
 }
 
 static int send_finished(SSL *s, BIO *rbio)
@@ -373,19 +385,20 @@ static int send_finished(SSL *s, BIO *rbio)
     unsigned char handshake_hash[EVP_MAX_MD_SIZE];
 
     /* Derive key material */
-    do_PRF(TLS_MD_KEY_EXPANSION_CONST, TLS_MD_KEY_EXPANSION_CONST_SIZE,
-           server_random, SSL3_RANDOM_SIZE,
-           client_random, SSL3_RANDOM_SIZE,
-           key_block, sizeof(key_block));
-
-    /* Generate Finished MAC */
-    if (!EVP_DigestFinal_ex(handshake_md, handshake_hash, NULL))
+    if (!do_PRF(TLS_MD_KEY_EXPANSION_CONST, TLS_MD_KEY_EXPANSION_CONST_SIZE,
+                server_random, SSL3_RANDOM_SIZE,
+                client_random, SSL3_RANDOM_SIZE,
+                key_block, sizeof(key_block)))
         return 0;
 
-    do_PRF(TLS_MD_SERVER_FINISH_CONST, TLS_MD_SERVER_FINISH_CONST_SIZE,
-           handshake_hash, EVP_MD_CTX_size(handshake_md),
-           NULL, 0,
-           finished_msg + DTLS1_HM_HEADER_LENGTH, TLS1_FINISH_MAC_LENGTH);
+    /* Generate Finished MAC */
+    if (!TEST_true(EVP_DigestFinal_ex(handshake_md, handshake_hash, NULL)))
+        return 0;
+
+    if (!do_PRF(TLS_MD_SERVER_FINISH_CONST, TLS_MD_SERVER_FINISH_CONST_SIZE,
+                handshake_hash, EVP_MD_CTX_size(handshake_md), NULL, 0,
+                finished_msg + DTLS1_HM_HEADER_LENGTH, TLS1_FINISH_MAC_LENGTH))
+        return 0;
 
     return send_record(rbio, SSL3_RT_HANDSHAKE, 0,
                        finished_msg, sizeof(finished_msg));
