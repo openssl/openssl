@@ -936,7 +936,7 @@ EOF
 $bin: $deps
 	IF EXIST $bin.manifest DEL /F /Q $bin.manifest
 	\$(LD) \$(LDFLAGS) \$(BIN_LDFLAGS) @<<
-$objs$target{ld_resp_delim}$target{ld_wildcard_args}$target{ld_resp_delim}\$(LDOUTFLAG)$bin$target{ldpostoutflag}$target{ld_resp_delim}$linklibs\$(BIN_EX_LIBS)
+$objs$target{ld_resp_delim}\$(LDOUTFLAG)$bin$target{ldpostoutflag}$target{ld_resp_delim}$linklibs\$(BIN_EX_LIBS)
 <<
 	IF EXIST $bin.manifest \\
 	   \$(MT) \$(MTFLAGS) \$(MTINFLAG)$bin.manifest \$(MTOUTFLAG)$bin
