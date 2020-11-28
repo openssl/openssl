@@ -284,12 +284,17 @@ OSSL_ENCODER_CTX *OSSL_ENCODER_CTX_new_by_EVP_PKEY(const EVP_PKEY *pkey,
                                                    const char *propquery)
 {
     OSSL_ENCODER_CTX *ctx = NULL;
-    const OSSL_PROVIDER *prov = EVP_KEYMGMT_provider(pkey->keymgmt);
-    OSSL_LIB_CTX *libctx = ossl_provider_libctx(prov);
+    OSSL_LIB_CTX *libctx = NULL;
 
     if ((ctx = OSSL_ENCODER_CTX_new()) == NULL) {
         ERR_raise(ERR_LIB_OSSL_ENCODER, ERR_R_MALLOC_FAILURE);
         return NULL;
+    }
+
+    if (pkey != NULL) {
+        const OSSL_PROVIDER *prov = EVP_KEYMGMT_provider(pkey->keymgmt);
+
+        libctx = ossl_provider_libctx(prov);
     }
 
     OSSL_TRACE_BEGIN(ENCODER) {
