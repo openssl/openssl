@@ -193,6 +193,8 @@ int pkcs8_main(int argc, char **argv)
 #endif
         }
     }
+
+    /* No extra arguments. */
     argc = opt_num_rest();
     if (argc != 0)
         goto opthelp;

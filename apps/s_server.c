@@ -1660,8 +1660,11 @@ int s_server_main(int argc, char *argv[])
             break;
         }
     }
+
+    /* No extra arguments. */
     argc = opt_num_rest();
-    argv = opt_rest();
+    if (argc != 0)
+        goto opthelp;
 
 #ifndef OPENSSL_NO_NEXTPROTONEG
     if (min_version == TLS1_3_VERSION && next_proto_neg_in != NULL) {

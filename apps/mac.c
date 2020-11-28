@@ -98,13 +98,12 @@ opthelp:
             break;
         }
     }
+
+    /* One argument, the MAC name. */
     argc = opt_num_rest();
     argv = opt_rest();
-
-    if (argc != 1) {
-        BIO_printf(bio_err, "Invalid number of extra arguments\n");
+    if (argc != 1)
         goto opthelp;
-    }
 
     mac = EVP_MAC_fetch(NULL, argv[0], NULL);
     if (mac == NULL) {

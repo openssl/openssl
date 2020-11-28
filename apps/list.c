@@ -1480,10 +1480,10 @@ opthelp:
         }
         done = 1;
     }
-    if (opt_num_rest() != 0) {
-        BIO_printf(bio_err, "Extra arguments given.\n");
+
+    /* No extra arguments. */
+    if (opt_num_rest() != 0)
         goto opthelp;
-    }
 
     if (todo.commands)
         list_type(FT_general, one);

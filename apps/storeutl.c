@@ -256,17 +256,12 @@ int storeutl_main(int argc, char *argv[])
             break;
         }
     }
+
+    /* One argument, the URI */
     argc = opt_num_rest();
     argv = opt_rest();
-
-    if (argc == 0) {
-        BIO_printf(bio_err, "%s: No URI given, nothing to do...\n", prog);
+    if (argc != 1)
         goto opthelp;
-    }
-    if (argc > 1) {
-        BIO_printf(bio_err, "%s: Unknown extra parameters after URI\n", prog);
-        goto opthelp;
-    }
 
     if (criterion != 0) {
         switch (criterion) {

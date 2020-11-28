@@ -295,10 +295,11 @@ int enc_main(int argc, char **argv)
             break;
         }
     }
-    if (opt_num_rest() != 0) {
-        BIO_printf(bio_err, "Extra arguments given.\n");
+
+    /* No extra arguments. */
+    argc = opt_num_rest();
+    if (argc != 0)
         goto opthelp;
-    }
 
     if (cipher && EVP_CIPHER_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER) {
         BIO_printf(bio_err, "%s: AEAD ciphers not supported\n", prog);

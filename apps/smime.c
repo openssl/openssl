@@ -356,6 +356,8 @@ int smime_main(int argc, char **argv)
             break;
         }
     }
+
+    /* Extra arguements are files with recipient keys. */
     argc = opt_num_rest();
     argv = opt_rest();
 

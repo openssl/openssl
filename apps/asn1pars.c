@@ -157,6 +157,8 @@ int asn1parse_main(int argc, char **argv)
             break;
         }
     }
+
+    /* No extra args. */
     argc = opt_num_rest();
     if (argc != 0)
         goto opthelp;

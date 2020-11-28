@@ -331,7 +331,11 @@ int pkcs12_main(int argc, char **argv)
             break;
         }
     }
+
+    /* No extra arguments. */
     argc = opt_num_rest();
+    if (argc != 0)
+        goto opthelp;
 
     if (!export_cert) {
         if (chain)
@@ -386,8 +390,6 @@ int pkcs12_main(int argc, char **argv)
         enc = EVP_des_ede3_cbc();
     }
 
-    if (argc != 0)
-        goto opthelp;
 
     private = 1;
 

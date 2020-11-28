@@ -193,8 +193,11 @@ int verify_main(int argc, char **argv)
             break;
         }
     }
+
+    /* Extra arguments are certificates to verify. */
     argc = opt_num_rest();
     argv = opt_rest();
+
     if (trusted != NULL
         && (CAfile != NULL || CApath != NULL || CAstore != NULL)) {
         BIO_printf(bio_err,

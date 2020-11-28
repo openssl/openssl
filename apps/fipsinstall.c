@@ -373,7 +373,11 @@ opthelp:
             break;
         }
     }
+
+    /* No extra arguments. */
     argc = opt_num_rest();
+    if (argc != 0)
+        goto opthelp;
 
     if (parent_config != NULL) {
         /* Test that a parent config can load the module */
@@ -386,9 +390,8 @@ opthelp:
         goto end;
     }
     if (module_fname == NULL
-        || (verify && in_fname == NULL)
-        || (!verify && out_fname == NULL)
-        || argc != 0)
+            || (verify && in_fname == NULL)
+            || (!verify && out_fname == NULL))
         goto opthelp;
 
     tail = opt_path_end(module_fname);

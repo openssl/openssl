@@ -286,7 +286,10 @@ int ts_main(int argc, char **argv)
             break;
         }
     }
-    if (mode == OPT_ERR || opt_num_rest() != 0)
+
+    /* No extra arguments. */
+    argc = opt_num_rest();
+    if (argc != 0 || mode == OPT_ERR)
         goto opthelp;
 
     if (mode == OPT_REPLY && passin &&

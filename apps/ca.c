@@ -488,7 +488,9 @@ opthelp:
             break;
         }
     }
+
 end_of_options:
+    /* Remaining args are files to certify. */
     argc = opt_num_rest();
     argv = opt_rest();
 

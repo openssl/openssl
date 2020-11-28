@@ -176,11 +176,12 @@ int ciphers_main(int argc, char **argv)
             break;
         }
     }
+
+    /* Optional arg is cipher name. */
     argv = opt_rest();
     argc = opt_num_rest();
-
     if (argc == 1)
-        ciphers = *argv;
+        ciphers = argv[0];
     else if (argc != 0)
         goto opthelp;
 
