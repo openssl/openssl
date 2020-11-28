@@ -279,9 +279,11 @@ static int send_server_hello(BIO *rbio)
 static int send_record(BIO *rbio, unsigned char type, uint64_t seqnr,
                        const void *msg, size_t len)
 {
-    /* Note that the order of the record header fields on the wire,
+    /*
+     * Note that the order of the record header fields on the wire,
      * and in the HMAC, is different. So we just keep them in separate
-     * variables and handle them individually. */
+     * variables and handle them individually.
+     */
     static unsigned char epoch[2] = { 0x00, 0x01 };
     static unsigned char seq[6] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
     static unsigned char ver[2] = { 0x01, 0x00 }; /* DTLS1_BAD_VER */
@@ -303,19 +305,15 @@ static int send_record(BIO *rbio, unsigned char type, uint64_t seqnr,
     seq[5] = seqnr & 0xff;
 
     pad = 15 - ((len + SHA_DIGEST_LENGTH) % 16);
-    enc = OPENSSL_malloc(len + SHA_DIGEST_LENGTH + 1 + pad);
-    if (enc == NULL)
+    if (!TEST_ptr(enc = OPENSSL_malloc(len + SHA_DIGEST_LENGTH + 1 + pad)))
         return 0;
 
     /* Copy record to encryption buffer */
     memcpy(enc, msg, len);
 
     /* Append HMAC to data */
-    hmac = EVP_MAC_fetch(NULL, "HMAC", NULL);
-    if (hmac == NULL)
-        goto err;
-    ctx = EVP_MAC_CTX_new(hmac);
-    if(ctx == NULL)
+    if (!TEST_ptr(hmac = EVP_MAC_fetch(NULL, "HMAC", NULL))
+        || !TEST_ptr(ctx = EVP_MAC_CTX_new(hmac)))
         goto err;
 
     lenbytes[0] = (unsigned char)(len >> 8);
@@ -428,8 +426,10 @@ static int validate_ccs(BIO *wbio)
     /* Check ChangeCipherSpec message */
     if (!PACKET_get_1(&pkt, &u) || u != SSL3_MT_CCS)
         return 0;
-    /* A DTLS1_BAD_VER ChangeCipherSpec also contains the
-     * handshake sequence number (which is 2 here) */
+    /*
+     * A DTLS1_BAD_VER ChangeCipherSpec also contains the
+     * handshake sequence number (which is 2 here)
+     */
     if (!PACKET_get_net_2(&pkt, &u) || u != 0x0002)
         return 0;
 
@@ -443,11 +443,13 @@ static int validate_ccs(BIO *wbio)
     if (!PACKET_get_net_2(&pkt, &u) || u != 0x0001)
         return 0;
 
-    /* That'll do for now. If OpenSSL accepted *our* Finished packet
+    /*
+     * That'll do for now. If OpenSSL accepted *our* Finished packet
      * then it's evidently remembered that DTLS1_BAD_VER doesn't
      * include the handshake header in the MAC. There's not a lot of
      * point in implementing decryption here, just to check that it
-     * continues to get it right for one more packet. */
+     * continues to get it right for one more packet.
+     */
 
     return 1;
 }
@@ -565,18 +567,21 @@ static int test_bad_dtls(void)
             || !TEST_true(validate_ccs(wbio)))
         goto end;
 
-    /* While we're here and crafting packets by hand, we might as well do a
-       bit of a stress test on the DTLS record replay handling. Not Cisco-DTLS
-       specific but useful anyway for the general case. It's been broken
-       before, and in fact was broken even for a basic 0, 2, 1 test case
-       when this test was first added.... */
+    /*
+     * While we're here and crafting packets by hand, we might as well do a
+     * bit of a stress test on the DTLS record replay handling. Not Cisco-DTLS
+     * specific but useful anyway for the general case. It's been broken
+     * before, and in fact was broken even for a basic 0, 2, 1 test case
+     * when this test was first added....
+     */
     for (i = 0; i < (int)OSSL_NELEM(tests); i++) {
         uint64_t recv_buf[2];
 
         if (!TEST_true(send_record(rbio, SSL3_RT_APPLICATION_DATA, tests[i].seq,
                                    &tests[i].seq, sizeof(uint64_t)))) {
             TEST_error("Failed to send data seq #0x%x%08x (%d)\n",
-                       (unsigned int)(tests[i].seq >> 32), (unsigned int)tests[i].seq, i);
+                       (unsigned int)(tests[i].seq >> 32),
+                       (unsigned int)tests[i].seq, i);
             goto end;
         }
 
@@ -586,7 +591,8 @@ static int test_bad_dtls(void)
         ret = SSL_read(con, recv_buf, 2 * sizeof(uint64_t));
         if (!TEST_int_eq(ret, (int)sizeof(uint64_t))) {
             TEST_error("SSL_read failed or wrong size on seq#0x%x%08x (%d)\n",
-                       (unsigned int)(tests[i].seq >> 32), (unsigned int)tests[i].seq, i);
+                       (unsigned int)(tests[i].seq >> 32),
+                       (unsigned int)tests[i].seq, i);
             goto end;
         }
         if (!TEST_true(recv_buf[0] == tests[i].seq))
