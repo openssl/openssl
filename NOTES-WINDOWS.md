@@ -2,6 +2,8 @@ Notes for Windows platforms
 ===========================
 
  - [Native builds using Visual C++](#native-builds-using-visual-c++)
+ - [Native builds using Embarcadero C++Builder](
+   #native-builds-using-embarcadero-c++-builder)
  - [Native builds using MinGW](#native-builds-using-mingw)
  - [Linking native applications](#linking-native-applications)
  - [Hosted builds using Cygwin](#hosted-builds-using-cygwin)
@@ -13,6 +15,8 @@ There are various options to build and run OpenSSL on the Windows platforms.
 To build a native OpenSSL you can either use:
 
     Microsoft Visual C++ (MSVC) C compiler on the command line
+or
+    Embarcadero C++Builder
 or
     MinGW cross compiler
     run on the GNU-like development environment MSYS2
@@ -118,6 +122,30 @@ Special notes for Universal Windows Platform builds, aka VC-*-UWP
  - You should define the platform type to "uwp" and the target arch via
    "vcvarsall.bat" before you compile. For example, if you want to build
    "arm64" builds, you should run "vcvarsall.bat x86_arm64 uwp".
+
+Native builds using Embarcadero C++Builder
+=========================================
+
+This toolchain (a descendant of Turbo/Borland C++) is an alternative to MSVC.
+OpenSSL currently includes an experimental 32-bit static-build configuration
+targeting the Clang-based compiler (bcc32c.exe) in v10.3.3 Community Edition.
+<https://www.embarcadero.com/products/cbuilder/starter>
+
+ 1. Install Perl.
+
+ 2. Open the RAD Studio Command Prompt.
+
+ 3. Go to the root of the OpenSSL source directory and run:
+    perl Configure BC-32 --prefix=%CD%
+
+ 4. make -N
+
+ 5. Build your program against this OpenSSL:
+    * Set your include search path to the "include" subdirectory of OpenSSL.
+    * Set your library search path to the OpenSSL source directory.
+
+Note that this is very experimental. Support for 64-bit, dynamic library, and
+other Configure options is still pending.
 
 Native builds using MinGW
 =========================
