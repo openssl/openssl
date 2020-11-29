@@ -126,6 +126,7 @@ err:
 /* Number of octets per line */
 #define LABELED_BUF_PRINT_WIDTH    15
 
+#if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_DSA) || !defined(OPENSSL_NO_EC)
 static int print_labeled_buf(BIO *out, const char *label,
                              const unsigned char *buf, size_t buflen)
 {
@@ -151,6 +152,7 @@ static int print_labeled_buf(BIO *out, const char *label,
 
     return 1;
 }
+#endif
 
 #if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_DSA)
 static int ffc_params_to_text(BIO *out, const FFC_PARAMS *ffc)
