@@ -330,6 +330,8 @@ static int key_to_type_specific_pem_pub_bio(BIO *out, const void *key,
                                            p2s, k2d, ctx, NULL, NULL);
 }
 
+#if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_DSA) \
+    || !defined(OPENSSL_NO_EC)
 static int key_to_type_specific_pem_param_bio(BIO *out, const void *key,
                                               int key_nid, const char *pemname,
                                               key_to_paramstring_fn *p2s,
@@ -339,6 +341,7 @@ static int key_to_type_specific_pem_param_bio(BIO *out, const void *key,
     return key_to_type_specific_pem_bio_cb(out, key, key_nid, pemname,
                                            p2s, k2d, ctx, NULL, NULL);
 }
+#endif
 
 #define der_output_type         "DER"
 #define pem_output_type         "PEM"
