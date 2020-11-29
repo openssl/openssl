@@ -521,7 +521,10 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
     RSA *privkey;
 #endif
     const uint8_t *bufp;
+#if !defined(OPENSSL_NO_DSA) || !defined(OPENSSL_NO_EC) \
+    || !defined(OPENSSL_NO_DEPRECATED_3_0)
     EVP_PKEY *pkey;
+#endif
     X509 *cert;
 #ifndef OPENSSL_NO_EC
     EC_KEY *ecdsakey = NULL;
