@@ -57,7 +57,7 @@ int errstr_main(int argc, char **argv)
      * we're still interested in SSL error strings
      */
     OPENSSL_init_ssl(OPENSSL_INIT_LOAD_SSL_STRINGS
-            | OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL);
+                    | OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL);
 
     /* All remaining arg are error code. */
     ret = 0;

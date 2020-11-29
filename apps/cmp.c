@@ -2293,7 +2293,9 @@ static int get_opts(int argc, char **argv)
         switch (o) {
         case OPT_EOF:
         case OPT_ERR:
-            goto opthelp;
+ opthelp:
+            BIO_printf(bio_err, "%s: Use -help for summary.\n", prog);
+            return 0;
         case OPT_HELP:
             opt_help(cmp_options);
             return -1;
@@ -2612,13 +2614,9 @@ static int get_opts(int argc, char **argv)
     /* No extra args. */
     argc = opt_num_rest();
     argv = opt_rest();
-    if (argc == 0)
-        return 1;
-
-    CMP_err1("unknown parameter %s", argv[0]);
- opthelp:
-    CMP_err1("use -help for summary of '%s' options", prog);
-    return 0;
+    if (argc != 0)
+        goto opthelp;
+    return 1;
 }
 
 int cmp_main(int argc, char **argv)
