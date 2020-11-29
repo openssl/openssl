@@ -40,12 +40,14 @@ static OSSL_PARAM *ec_explicit_tri_params_explicit = NULL;
 # endif
 #endif
 
+#if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_DSA) \
+    || !defined(OPENSSL_NO_EC)
 static EVP_PKEY *make_template(const char *type, OSSL_PARAM *genparams)
 {
     EVP_PKEY *pkey = NULL;
     EVP_PKEY_CTX *ctx = NULL;
 
-#ifndef OPENSSL_NO_DH
+# ifndef OPENSSL_NO_DH
     /*
      * Use 512-bit DH(X) keys with predetermined parameters for efficiency,
      * for testing only. Use a minimum key size of 2048 for security purposes.
@@ -54,7 +56,7 @@ static EVP_PKEY *make_template(const char *type, OSSL_PARAM *genparams)
         return get_dh512(NULL);
     if (strcmp(type, "X9.42 DH") == 0)
         return get_dhx512(NULL);
-#endif
+# endif
 
     /*
      * No real need to check the errors other than for the cascade
@@ -69,6 +71,7 @@ static EVP_PKEY *make_template(const char *type, OSSL_PARAM *genparams)
 
     return pkey;
 }
+#endif
 
 static EVP_PKEY *make_key(const char *type, EVP_PKEY *template,
                           OSSL_PARAM *genparams)
@@ -514,6 +517,8 @@ static int test_unprotected_via_PEM(const char *type, EVP_PKEY *key)
                               dump_pem, 0);
 }
 
+#if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_DSA) \
+    || !defined(OPENSSL_NO_EC)
 static int check_params_DER(const char *type, const void *data, size_t data_len)
 {
     const unsigned char *datap = data;
@@ -568,6 +573,7 @@ static int test_params_via_PEM(const char *type, EVP_PKEY *key)
                               test_text, check_params_PEM,
                               dump_pem, 0);
 }
+#endif /* ndef(OPENSSL_NO_DH) || ndef(OPENSSL_NO_DSA) || ndef(OPENSSL_NO_EC) */
 
 static int check_unprotected_legacy_PEM(const char *type,
                                         const void *data, size_t data_len)
