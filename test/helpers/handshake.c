@@ -16,11 +16,11 @@
 #include <openssl/srp.h>
 #endif
 
-#include "../ssl/ssl_local.h"
+#include "../../ssl/ssl_local.h"
 #include "internal/sockets.h"
 #include "internal/nelem.h"
-#include "handshake_helper.h"
-#include "testutil.h"
+#include "handshake.h"
+#include "../testutil.h"
 
 #if !defined(OPENSSL_NO_SCTP) && !defined(OPENSSL_NO_SOCK)
 #include <netinet/sctp.h>

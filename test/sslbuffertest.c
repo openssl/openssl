@@ -15,7 +15,7 @@
 
 #include "internal/packet.h"
 
-#include "ssltestlib.h"
+#include "helpers/ssltestlib.h"
 #include "testutil.h"
 
 struct async_ctrs {

@@ -12,7 +12,7 @@
 #include "internal/nelem.h"
 #include "internal/cryptlib.h" /* for ossl_sleep() */
 #include "ssltestlib.h"
-#include "testutil.h"
+#include "../testutil.h"
 #include "e_os.h"
 
 #ifdef OPENSSL_SYS_UNIX

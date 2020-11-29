@@ -8,7 +8,7 @@
  */
 
 #include <string.h>
-#include "ssltestlib.h"
+#include "helpers/ssltestlib.h"
 #include "testutil.h"
 
 static int docorrupt = 0;

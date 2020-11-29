@@ -15,8 +15,8 @@
 #include <openssl/ssl.h>
 #include <openssl/provider.h>
 
-#include "handshake_helper.h"
-#include "ssl_test_ctx.h"
+#include "helpers/handshake.h"
+#include "helpers/ssl_test_ctx.h"
 #include "testutil.h"
 
 static CONF *conf = NULL;

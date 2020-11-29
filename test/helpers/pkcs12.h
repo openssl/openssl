@@ -18,7 +18,7 @@
 #include <openssl/x509v3.h>
 #include <openssl/pem.h>
 
-#include "testutil.h"
+#include "../testutil.h"
 
 /* Set this to > 0 write test data to file */
 extern int write_files;

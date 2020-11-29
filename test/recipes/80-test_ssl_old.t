@@ -75,7 +75,7 @@ my $P2intermediate="tmp_intP2.ss";
 my $server_sess="server.ss";
 my $client_sess="client.ss";
 
-# ssltest_old.c is deprecated in favour of the new framework in ssl_test.c
+# ssl_old_test.c is deprecated in favour of the new framework in ssl_test.c
 # If you're adding tests here, you probably want to convert them to the
 # new format in ssl_test.c and add recipes to 80-test_ssl_new.t instead.
 plan tests =>
@@ -333,7 +333,7 @@ sub testssl {
         push @providerflags, "-provider", "legacy";
     }
 
-    my @ssltest = ("ssltest_old",
+    my @ssltest = ("ssl_old_test",
                    "-s_key", $key, "-s_cert", $cert,
                    "-c_key", $key, "-c_cert", $cert,
                    "-config", $configfile,
@@ -438,7 +438,7 @@ sub testssl {
         }
 
         my @protocols = ();
-        # We only use the flags that ssltest_old understands
+        # We only use the flags that ssl_old_test understands
         push @protocols, "-tls1_3" unless $no_tls1_3;
         push @protocols, "-tls1_2" unless $no_tls1_2;
         push @protocols, "-tls1" unless $no_tls1 || $provider eq "fips";
@@ -482,7 +482,7 @@ sub testssl {
 
         foreach my $protocol (sort keys %ciphersuites) {
             note "Testing ciphersuites for $protocol";
-            # ssltest_old doesn't know -tls1_3, but that's fine, since that's
+            # ssl_old_test doesn't know -tls1_3, but that's fine, since that's
             # the default choice if TLSv1.3 enabled
             my $flag = $protocol eq "-tls1_3" ? "" : $protocol;
             my $ciphersuites = "";
@@ -541,13 +541,13 @@ sub testssl {
 	    skip "skipping RSA tests", 2
 		if $no_rsa;
 
-	    ok(run(test(["ssltest_old", "-provider", "default", "-v", "-bio_pair", "-tls1", "-s_cert", srctop_file("apps","server2.pem"), "-no_dhe", "-no_ecdhe", "-num", "10", "-f", "-time"])),
+	    ok(run(test(["ssl_old_test", "-provider", "default", "-v", "-bio_pair", "-tls1", "-s_cert", srctop_file("apps","server2.pem"), "-no_dhe", "-no_ecdhe", "-num", "10", "-f", "-time"])),
 	       'test tlsv1 with 1024bit RSA, no (EC)DHE, multiple handshakes');
 
 	    skip "skipping RSA+DHE tests", 1
 		if $no_dh;
 
-	    ok(run(test(["ssltest_old", "-provider", "default", "-v", "-bio_pair", "-tls1", "-s_cert", srctop_file("apps","server2.pem"), "-dhe1024dsa", "-num", "10", "-f", "-time"])),
+	    ok(run(test(["ssl_old_test", "-provider", "default", "-v", "-bio_pair", "-tls1", "-s_cert", srctop_file("apps","server2.pem"), "-dhe1024dsa", "-num", "10", "-f", "-time"])),
 	       'test tlsv1 with 1024bit RSA, 1024bit DHE, multiple handshakes');
 	  }
 

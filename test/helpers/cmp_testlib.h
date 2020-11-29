@@ -17,9 +17,8 @@
 # include <openssl/rand.h>
 # include "crypto/x509.h" /* for x509_set0_libctx() and x509_dup_ex() */
 
-# include "../crypto/cmp/cmp_local.h"
-
-# include "testutil.h"
+# include "../../crypto/cmp/cmp_local.h"
+# include "../testutil.h"
 
 # ifndef OPENSSL_NO_CMP
 #  define CMP_TEST_REFVALUE_LENGTH 15 /* arbitrary value */
