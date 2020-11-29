@@ -334,7 +334,7 @@ static const OSSL_ALGORITHM deflt_kdfs[] = {
     { "X963KDF:X942KDF-CONCAT", "provider=default", ossl_kdf_x963_kdf_functions },
     { "TLS1-PRF", "provider=default", ossl_kdf_tls1_prf_functions },
     { "KBKDF", "provider=default", ossl_kdf_kbkdf_functions },
-    { "X942KDF:X942KDF-ASN1", "provider=default", ossl_kdf_x942_kdf_functions },
+    { "X942KDF-ASN1:X942KDF", "provider=default", ossl_kdf_x942_kdf_functions },
 #ifndef OPENSSL_NO_SCRYPT
     { "SCRYPT:id-scrypt", "provider=default", ossl_kdf_scrypt_functions },
 #endif
