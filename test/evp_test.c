@@ -26,7 +26,9 @@
 #include "internal/nelem.h"
 #include "crypto/evp.h"
 #include "testutil.h"
-#include "evp_test.h"
+
+typedef struct evp_test_buffer_st EVP_TEST_BUFFER;
+DEFINE_STACK_OF(EVP_TEST_BUFFER)
 
 #define AAD_NUM 4
 

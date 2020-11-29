@@ -9,7 +9,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "cmp_testlib.h"
+#include "helpers/cmp_testlib.h"
 #include "../crypto/crmf/crmf_local.h" /* for manipulating POPO signature */
 
 static const char *server_f;

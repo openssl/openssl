@@ -14,7 +14,7 @@
 
 #include "internal/nelem.h"
 #include "ssl_test_ctx.h"
-#include "testutil.h"
+#include "../testutil.h"
 
 #ifdef OPENSSL_SYS_WINDOWS
 # define strcasecmp _stricmp

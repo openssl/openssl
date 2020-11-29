@@ -72,7 +72,7 @@
 # include <unistd.h>
 #endif
 
-#include "predefined_dhparams.h"
+#include "helpers/predefined_dhparams.h"
 
 static SSL_CTX *s_ctx = NULL;
 static SSL_CTX *s_ctx2 = NULL;

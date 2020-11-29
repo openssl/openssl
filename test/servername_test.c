@@ -22,7 +22,7 @@
 
 #include "testutil.h"
 #include "internal/nelem.h"
-#include "ssltestlib.h"
+#include "helpers/ssltestlib.h"
 
 #define CLIENT_VERSION_LEN      2
 

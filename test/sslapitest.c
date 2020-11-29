@@ -32,7 +32,7 @@
 #include <openssl/provider.h>
 #include <openssl/param_build.h>
 
-#include "ssltestlib.h"
+#include "helpers/ssltestlib.h"
 #include "testutil.h"
 #include "testutil/output.h"
 #include "internal/nelem.h"

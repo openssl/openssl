@@ -22,7 +22,7 @@
 #include "internal/cryptlib.h"   /* ossl_assert */
 #include "crypto/pem.h"          /* For PVK and "blob" PEM headers */
 
-#include "predefined_dhparams.h"
+#include "helpers/predefined_dhparams.h"
 #include "testutil.h"
 
 #ifndef OPENSSL_NO_EC

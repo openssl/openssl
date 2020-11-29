@@ -18,8 +18,8 @@
 #include <openssl/x509v3.h>
 #include <openssl/pem.h>
 
-#include "testutil.h"
-#include "pkcs12_helper.h"
+#include "../testutil.h"
+#include "pkcs12.h" /* from the same directory */
 
 /* Set this to > 0 write test data to file */
 int write_files = 0;
