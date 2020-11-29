@@ -89,6 +89,7 @@ static const unsigned char ecparam_bin[] = {
 };
 #endif
 
+#if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_DSA) || !defined(OPENSSL_NO_EC)
 static const struct {
     int type;
     const unsigned char *param_bin;
@@ -105,7 +106,6 @@ static const struct {
 #endif
 };
 
-#if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_DSA) || !defined(OPENSSL_NO_EC)
 static int params_bio_test(int id)
 {
     int ret, out_len;
