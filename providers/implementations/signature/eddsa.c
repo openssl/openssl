@@ -26,20 +26,22 @@
 #ifdef S390X_EC_ASM
 # include "s390x_arch.h"
 
-static int s390x_eddsa_digestsign_25519(const ECX_KEY *edkey,
-                                        unsigned char *sig,
-                                        const unsigned char *tbs, size_t tbslen);
-static int s390x_eddsa_digestsign_x448(const ECX_KEY *edkey,
-                                       unsigned char *sig,
-                                       const unsigned char *tbs, size_t tbslen);
-static int s390x_eddsa_digestverify_25519(const ECX_KEY *edkey,
-                                          const unsigned char *sig,
-                                          const unsigned char *tbs,
-                                          size_t tbslen);
-static int s390x_eddsa_digestverify_x448(const ECX_KEY *edkey,
-                                         const unsigned char *sig,
-                                         const unsigned char *tbs,
-                                         size_t tbslen);
+# define S390X_CAN_SIGN(edtype)                                                \
+(OPENSSL_s390xcap_P.pcc[1] & S390X_CAPBIT(S390X_SCALAR_MULTIPLY_##edtype))     \
+&& (OPENSSL_s390xcap_P.kdsa[0] & S390X_CAPBIT(S390X_EDDSA_SIGN_##edtype))      \
+&& (OPENSSL_s390xcap_P.kdsa[0] & S390X_CAPBIT(S390X_EDDSA_VERIFY_##edtype))
+
+static int s390x_ed25519_digestsign(const ECX_KEY *edkey, unsigned char *sig,
+                                    const unsigned char *tbs, size_t tbslen);
+static int s390x_ed448_digestsign(const ECX_KEY *edkey, unsigned char *sig,
+                                  const unsigned char *tbs, size_t tbslen);
+static int s390x_ed25519_digestverify(const ECX_KEY *edkey,
+                                      const unsigned char *sig,
+                                      const unsigned char *tbs, size_t tbslen);
+static int s390x_ed448_digestverify(const ECX_KEY *edkey,
+                                    const unsigned char *sig,
+                                    const unsigned char *tbs, size_t tbslen);
+
 #endif /* S390X_EC_ASM */
 
 static OSSL_FUNC_signature_newctx_fn eddsa_newctx;
@@ -153,10 +155,8 @@ int ed25519_digest_sign(void *vpeddsactx, unsigned char *sigret,
         return 0;
     }
 #ifdef S390X_EC_ASM
-    if (OPENSSL_s390xcap_P.pcc[1] & S390X_CAPBIT(S390X_SCALAR_MULTIPLY_ED25519)
-        && OPENSSL_s390xcap_P.kdsa[0] & S390X_CAPBIT(S390X_EDDSA_SIGN_ED25519)
-        && OPENSSL_s390xcap_P.kdsa[0] & S390X_CAPBIT(S390X_EDDSA_VERIFY_ED25519))
-        return s390x_eddsa_digestsign_25519(edkey, sigret, tbs, tbslen);
+    if (S390X_CAN_SIGN(ED25519))
+        return s390x_ed25519_digestsign(edkey, sigret, tbs, tbslen);
 #endif /* S390X_EC_ASM */
     if (ED25519_sign(sigret, tbs, tbslen, edkey->pubkey, edkey->privkey,
                      peddsactx->libctx, NULL) == 0) {
@@ -186,10 +186,8 @@ int ed448_digest_sign(void *vpeddsactx, unsigned char *sigret,
         return 0;
     }
 #ifdef S390X_EC_ASM
-    if (OPENSSL_s390xcap_P.pcc[1] & S390X_CAPBIT(S390X_SCALAR_MULTIPLY_X448)
-        && OPENSSL_s390xcap_P.kdsa[0] & S390X_CAPBIT(S390X_EDDSA_SIGN_ED448)
-        && OPENSSL_s390xcap_P.kdsa[0] & S390X_CAPBIT(S390X_EDDSA_VERIFY_ED448)
-        return s390x_eddsa_digestsign_x448(edkey, sigret, tbs, tbslen);
+    if (S390X_CAN_SIGN(ED448))
+        return s390x_ed448_digestsign(edkey, sigret, tbs, tbslen);
 #endif /* S390X_EC_ASM */
     if (ED448_sign(peddsactx->libctx, sigret, tbs, tbslen, edkey->pubkey,
                    edkey->privkey, NULL, 0, edkey->propq) == 0) {
@@ -211,10 +209,8 @@ int ed25519_digest_verify(void *vpeddsactx, const unsigned char *sig,
         return 0;
 
 #ifdef S390X_EC_ASM
-    if (OPENSSL_s390xcap_P.pcc[1] & S390X_CAPBIT(S390X_SCALAR_MULTIPLY_ED25519)
-        && OPENSSL_s390xcap_P.kdsa[0] & S390X_CAPBIT(S390X_EDDSA_SIGN_ED25519)
-        && OPENSSL_s390xcap_P.kdsa[0] & S390X_CAPBIT(S390X_EDDSA_VERIFY_ED25519))
-        return s390x_eddsa_digestverify_25519(edkey, sig, tbs, tbslen);
+    if (S390X_CAN_SIGN(ED25519))
+        return s390x_ed25519_digestverify(edkey, sig, tbs, tbslen);
 #endif /* S390X_EC_ASM */
 
     return ED25519_verify(tbs, tbslen, sig, edkey->pubkey, peddsactx->libctx,
@@ -232,10 +228,8 @@ int ed448_digest_verify(void *vpeddsactx, const unsigned char *sig,
         return 0;
 
 #ifdef S390X_EC_ASM
-    if (OPENSSL_s390xcap_P.pcc[1] & S390X_CAPBIT(S390X_SCALAR_MULTIPLY_X448)
-        && OPENSSL_s390xcap_P.kdsa[0] & S390X_CAPBIT(S390X_EDDSA_SIGN_ED448)
-        && OPENSSL_s390xcap_P.kdsa[0] & S390X_CAPBIT(S390X_EDDSA_VERIFY_ED448)
-        return s390x_eddsa_digestverify_x448(edkey, sig, tbs, tbslen);
+    if (S390X_CAN_SIGN(ED448))
+        return s390x_ed448_digestverify(edkey, sig, tbs, tbslen);
 #endif /* S390X_EC_ASM */
 
     return ED448_verify(peddsactx->libctx, tbs, tbslen, sig, edkey->pubkey,
@@ -342,9 +336,8 @@ const OSSL_DISPATCH ossl_ed448_signature_functions[] = {
 
 #ifdef S390X_EC_ASM
 
-static int s390x_eddsa_digestsign_25519(const ECX_KEY *edkey,
-                                        unsigned char *sig,
-                                        const unsigned char *tbs, size_t tbslen)
+static int s390x_ed25519_digestsign(const ECX_KEY *edkey, unsigned char *sig,
+                                    const unsigned char *tbs, size_t tbslen)
 {
     int rc;
     union {
@@ -368,9 +361,8 @@ static int s390x_eddsa_digestsign_25519(const ECX_KEY *edkey,
     return 1;
 }
 
-static int s390x_eddsa_digestsign_x448(const ECX_KEY *edkey,
-                                       unsigned char *sig,
-                                       const unsigned char *tbs, size_t tbslen)
+static int s390x_ed448_digestsign(const ECX_KEY *edkey, unsigned char *sig,
+                                  const unsigned char *tbs, size_t tbslen)
 {
     int rc;
     union {
@@ -396,10 +388,9 @@ static int s390x_eddsa_digestsign_x448(const ECX_KEY *edkey,
     return 1;
 }
 
-static int s390x_eddsa_digestverify_25519(const ECX_KEY *edkey,
-                                          const unsigned char *sig,
-                                          const unsigned char *tbs,
-                                          size_t tbslen)
+static int s390x_ed25519_digestverify(const ECX_KEY *edkey,
+                                      const unsigned char *sig,
+                                      const unsigned char *tbs, size_t tbslen)
 {
     union {
         struct {
@@ -418,10 +409,10 @@ static int s390x_eddsa_digestverify_25519(const ECX_KEY *edkey,
                       &param.ed25519, tbs, tbslen) == 0 ? 1 : 0;
 }
 
-static int s390x_eddsa_digestverify_x448(const ECX_KEY *edkey,
-                                         const unsigned char *sig,
-                                         const unsigned char *tbs,
-                                         size_t tbslen)
+static int s390x_ed448_digestverify(const ECX_KEY *edkey,
+                                    const unsigned char *sig,
+                                    const unsigned char *tbs,
+                                    size_t tbslen)
 {
     union {
         struct {
