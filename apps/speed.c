@@ -155,8 +155,12 @@ static int usertime = 1;
 
 static double Time_F(int s);
 static void print_message(const char *s, long num, int length, int tm);
+#if (!defined(OPENSSL_NO_RSA) && !defined(OPENSSL_NO_DEPRECATED_3_0)) \
+    || (!defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_DEPRECATED_3_0)) \
+    || !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH)
 static void pkey_print_message(const char *str, const char *str2,
                                long num, unsigned int bits, int sec);
+#endif
 static void print_result(int alg, int run_no, int count, double time_used);
 #ifndef NO_FORK
 static int do_multi(int multi, int size_num);
@@ -1509,9 +1513,10 @@ int speed_main(int argc, char **argv)
 #ifndef NO_FORK
     int multi = 0;
 #endif
-#if !defined(OPENSSL_NO_RSA) || !defined(OPENSSL_NO_DSA) \
-    || !defined(OPENSSL_NO_EC)
-    long rsa_count = 1;
+#if (!defined(OPENSSL_NO_RSA) && !defined(OPENSSL_NO_DEPRECATED_3_0)) \
+    || (!defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_DEPRECATED_3_0)) \
+    || !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH)
+     long rsa_count = 1;
 #endif
     openssl_speed_sec_t seconds = { SECONDS, RSA_SECONDS, DSA_SECONDS,
                                     ECDSA_SECONDS, ECDH_SECONDS,
@@ -3222,7 +3227,7 @@ int speed_main(int argc, char **argv)
             }
         }
     }
-# endif
+# endif /* OPENSSL_NO_DEPRECATED_3_0 */
 
     for (testnum = 0; testnum < EC_NUM; testnum++) {
         int ecdh_checks = 1;
@@ -4103,23 +4108,27 @@ static void print_message(const char *s, long num, int length, int tm)
 #endif
 }
 
+#if (!defined(OPENSSL_NO_RSA) && !defined(OPENSSL_NO_DEPRECATED_3_0)) \
+    || (!defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_DEPRECATED_3_0)) \
+    || !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH)
 static void pkey_print_message(const char *str, const char *str2, long num,
                                unsigned int bits, int tm)
 {
-#ifdef SIGALRM
+# ifdef SIGALRM
     BIO_printf(bio_err,
                mr ? "+DTP:%d:%s:%s:%d\n"
                : "Doing %u bits %s %s's for %ds: ", bits, str, str2, tm);
     (void)BIO_flush(bio_err);
     run = 1;
     alarm(tm);
-#else
+# else
     BIO_printf(bio_err,
                mr ? "+DNP:%ld:%d:%s:%s\n"
                : "Doing %ld %u bits %s %s's: ", num, bits, str, str2);
     (void)BIO_flush(bio_err);
-#endif
+# endif
 }
+#endif
 
 static void print_result(int alg, int run_no, int count, double time_used)
 {
