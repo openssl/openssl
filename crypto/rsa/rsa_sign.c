@@ -114,11 +114,11 @@ static const unsigned char digestinfo_mdc2_der[] = {
 };
 # endif
 # ifndef OPENSSL_NO_RMD160
-/* RIPEMD160 (1 3 36 3 3 1 2) */
+/* RIPEMD160 (1 3 36 3 2 1) */
 static const unsigned char digestinfo_ripemd160_der[] = {
-    ASN1_SEQUENCE, 0x0e + RIPEMD160_DIGEST_LENGTH,
-      ASN1_SEQUENCE, 0x0a,
-        ASN1_OID, 0x06, 1 * 40 + 3, 36, 3, 3, 1, 2,
+    ASN1_SEQUENCE, 0x0d + RIPEMD160_DIGEST_LENGTH,
+      ASN1_SEQUENCE, 0x09,
+        ASN1_OID, 0x05, 1 * 40 + 3, 36, 3, 2, 1,
         ASN1_NULL, 0x00,
       ASN1_OCTET_STRING, RIPEMD160_DIGEST_LENGTH
 };
