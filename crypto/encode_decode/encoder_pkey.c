@@ -213,14 +213,17 @@ static int ossl_encoder_ctx_setup_for_EVP_PKEY(OSSL_ENCODER_CTX *ctx,
                                                const char *propquery)
 {
     struct construct_data_st *data = NULL;
-    const OSSL_PROVIDER *prov = EVP_KEYMGMT_provider(pkey->keymgmt);
-    OSSL_LIB_CTX *libctx = ossl_provider_libctx(prov);
+    const OSSL_PROVIDER *prov = NULL;
+    OSSL_LIB_CTX *libctx = NULL;
     int ok = 0;
 
     if (!ossl_assert(ctx != NULL) || !ossl_assert(pkey != NULL)) {
         ERR_raise(ERR_LIB_OSSL_ENCODER, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
+
+    prov = EVP_KEYMGMT_provider(pkey->keymgmt);
+    libctx = ossl_provider_libctx(prov);
 
     if (pkey->keymgmt != NULL) {
         struct collected_encoder_st encoder_data;
