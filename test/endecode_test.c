@@ -46,7 +46,10 @@ static EVP_PKEY *make_template(const char *type, OSSL_PARAM *genparams)
     EVP_PKEY_CTX *ctx = NULL;
 
 #ifndef OPENSSL_NO_DH
-    /* use DH(X) keys with predetermined parameters for efficiency */
+    /*
+     * Use 512-bit DH(X) keys with predetermined parameters for efficiency,
+     * for testing only. Use a minimum key size of 2048 for security purposes.
+     */
     if (strcmp(type, "DH") == 0)
         return get_dh512(NULL);
     if (strcmp(type, "X9.42 DH") == 0)
