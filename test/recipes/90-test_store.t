@@ -127,8 +127,7 @@ indir "store_$$" => sub {
     if ($do_test_ossltest_store) {
         # ossltest loads PEM files, with names prefixed with 'ot:'.
         # This prefix ensures that the files are, in fact, loaded through
-        # that engines and not mistakenly going through the 'file:'
-        # loader.
+        # that engine and not mistakenly going through the 'file:' loader.
 
         my $engine_scheme = 'org.openssl.engine:';
         $ENV{OPENSSL_ENGINES} = bldtop_dir("engines");

@@ -323,8 +323,8 @@ static void destroy_ciphers(void)
 }
 
 /* Key loading */
-static EVP_PKEY *ossltest_load_privkey(ENGINE *eng, const char *key_id,
-				       UI_METHOD *ui_method, void *ui_data)
+static EVP_PKEY *load_key(ENGINE *eng, const char *key_id, int pub,
+                          UI_METHOD *ui_method, void *ui_data)
 {
     BIO *in;
     EVP_PKEY *key;
@@ -333,32 +333,29 @@ static EVP_PKEY *ossltest_load_privkey(ENGINE *eng, const char *key_id,
         return NULL;
     key_id += 3;
 
-    fprintf(stderr, "[ossltest]Loading Private key %s\n", key_id);
+    fprintf(stderr, "[ossltest]Loading %s key %s\n",
+            pub ? "Public" : "Private", key_id);
     in = BIO_new_file(key_id, "r");
     if (!in)
         return NULL;
-    key = PEM_read_bio_PrivateKey(in, NULL, 0, NULL);
+    if (pub)
+        key = PEM_read_bio_PUBKEY(in, NULL, 0, NULL);
+    else
+        key = PEM_read_bio_PrivateKey(in, NULL, 0, NULL);
     BIO_free(in);
     return key;
 }
 
-static EVP_PKEY *ossltest_load_pubkey(ENGINE *eng, const char *key_id,
-				      UI_METHOD *ui_method, void *ui_data)
+static EVP_PKEY *ossltest_load_privkey(ENGINE *eng, const char *key_id,
+                                       UI_METHOD *ui_method, void *ui_data)
 {
-    BIO *in;
-    EVP_PKEY *key;
+    return load_key(eng, key_id, 0, ui_method, ui_data);
+}
 
-    if (strncasecmp(key_id, "ot:", 3) != 0)
-        return NULL;
-    key_id += 3;
-
-    fprintf(stderr, "[ossltest]Loading Private key %s\n", key_id);
-    in = BIO_new_file(key_id, "r");
-    if (!in)
-        return NULL;
-    key = PEM_read_bio_PUBKEY(in, NULL, 0, NULL);
-    BIO_free(in);
-    return key;
+static EVP_PKEY *ossltest_load_pubkey(ENGINE *eng, const char *key_id,
+                                      UI_METHOD *ui_method, void *ui_data)
+{
+    return load_key(eng, key_id, 1, ui_method, ui_data);
 }
 
 
