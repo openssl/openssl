@@ -66,7 +66,7 @@ static int sxnet_i2r(X509V3_EXT_METHOD *method, SXNET *sx, BIO *out,
      * Since we add 1 to the version number to display it, we don't support
      * LONG_MAX since that would cause on overflow.
      */
-    if (ASN1_INTEGER_get_int64(&v, sx->version) == 0
+    if (!ASN1_INTEGER_get_int64(&v, sx->version)
             || v >= LONG_MAX
             || v < LONG_MIN) {
         BIO_printf(out, "%*sVersion: <unsupported>", indent, "");
