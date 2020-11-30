@@ -23,7 +23,6 @@
 # include <openssl/engine.h>
 # include <openssl/store.h>
 
-
 /*
  * Support for legacy private engine keys via the 'org.openssl.engine:' scheme
  *
@@ -39,7 +38,7 @@ struct ossl_store_loader_ctx_st {
     ENGINE *e;                   /* Structural reference */
     char *keyid;
     int expected;
-    int state;                   /* 0 = key not loaded yet, 1 = key loaded */
+    int loaded;                  /* 0 = key not loaded yet, 1 = key loaded */
 };
 
 static OSSL_STORE_LOADER_CTX *OSSL_STORE_LOADER_CTX_new(ENGINE *e, char *keyid)
@@ -95,8 +94,10 @@ static OSSL_STORE_LOADER_CTX *engine_open(const OSSL_STORE_LOADER *loader,
     if (e != NULL)
         ctx = OSSL_STORE_LOADER_CTX_new(e, keyid);
 
-    if (ctx == NULL)
+    if (ctx == NULL) {
         OPENSSL_free(keyid);
+        ENGINE_free(e);
+    }
 
     return ctx;
 }
@@ -116,35 +117,40 @@ static OSSL_STORE_INFO *engine_load(OSSL_STORE_LOADER_CTX *ctx,
                                     const UI_METHOD *ui_method, void *ui_data)
 {
     EVP_PKEY *pkey = NULL, *pubkey = NULL;
+    OSSL_STORE_INFO *info = NULL;
 
-    if (ctx->state == 0) {
+    if (ctx->loaded == 0) {
         if (ENGINE_init(ctx->e)) {
             if (ctx->expected == 0
-                || ctx->expected == OSSL_STORE_INFO_PUBKEY)
-                pubkey =
-                    ENGINE_load_public_key(ctx->e, ctx->keyid,
-                                           (UI_METHOD *)ui_method, ui_data);
-            if ((pubkey == NULL && ctx->expected == 0)
                 || ctx->expected == OSSL_STORE_INFO_PKEY)
                 pkey =
                     ENGINE_load_private_key(ctx->e, ctx->keyid,
                                             (UI_METHOD *)ui_method, ui_data);
+            if ((pkey == NULL && ctx->expected == 0)
+                || ctx->expected == OSSL_STORE_INFO_PUBKEY)
+                pubkey =
+                    ENGINE_load_public_key(ctx->e, ctx->keyid,
+                                           (UI_METHOD *)ui_method, ui_data);
             ENGINE_finish(ctx->e);
         }
     }
 
-    ctx->state = 1;
+    ctx->loaded = 1;
 
     if (pubkey != NULL)
-        return OSSL_STORE_INFO_new_PUBKEY(pubkey);
+        info = OSSL_STORE_INFO_new_PUBKEY(pubkey);
     else if (pkey != NULL)
-        return OSSL_STORE_INFO_new_PKEY(pkey);
-    return NULL;
+        info = OSSL_STORE_INFO_new_PKEY(pkey);
+    if (info == NULL) {
+        EVP_PKEY_free(pkey);
+        EVP_PKEY_free(pubkey);
+    }
+    return info;
 }
 
 static int engine_eof(OSSL_STORE_LOADER_CTX *ctx)
 {
-    return ctx->state != 0;
+    return ctx->loaded != 0;
 }
 
 static int engine_error(OSSL_STORE_LOADER_CTX *ctx)
