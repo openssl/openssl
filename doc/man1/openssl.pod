@@ -1322,9 +1322,10 @@ form:
 Where C<{engineid}> is the identity/name of the engine, and C<{keyid}> is a
 key identifier that's acceptable by that engine.  For example, when using an
 engine that interfaces against a PKCS#11 implementation, the generic key URI
-would be something like this:
+would be something like this (this happens to be an example for the PKCS#11
+engine that's part of OpenSC):
 
-    -key org.openssl.engine:pkcs11:object=some-private-key;pin-value=1234
+    -key org.openssl.engine:pkcs11:label_some-private-key
 
 As a third possibility, for engines and providers that have implemented
 their own L<OSSL_STORE(3)> loader, C<org.openssl.engine:> should not be
