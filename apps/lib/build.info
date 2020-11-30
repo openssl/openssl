@@ -12,7 +12,8 @@ $LIBAPPSSRC=apps.c apps_ui.c opt.c fmt.c s_cb.c s_socket.c app_rand.c \
         columns.c app_params.c names.c app_provider.c app_x509.c http_server.c \
         engine.c
 
-IF[{- !disabled{'deprecated-3.0'} && !disabled{engine} -}]
+# When configured 'no-deprecated', 'engine' is also disabled.
+IF[{- !$disabled{engine} -}]
   $LIBAPPSSRC=$LIBAPPSSRC engine_loader.c
 ENDIF
 
