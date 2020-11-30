@@ -158,7 +158,6 @@ This option is deprecated.
 
 Display a list of loaded engines.
 
-{- output_on() if $disabled{"deprecated-3.0"}; "" -}
 =item B<-disabled>
 
 Display a list of disabled features, those that were compiled out

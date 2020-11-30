@@ -409,11 +409,7 @@ const OPTIONS cmp_options[] = {
     {"engine", OPT_ENGINE, 's',
      "Use crypto engine with given identifier, possibly a hardware device."},
     {OPT_MORE_STR, 0, 0,
-     "Engines may be defined in OpenSSL config file engine section."},
-    {OPT_MORE_STR, 0, 0,
-     "Options like -key specifying keys held in the engine can give key IDs"},
-    {OPT_MORE_STR, 0, 0,
-     "prefixed by 'engine:', e.g. '-key engine:pkcs11:object=mykey;pin-value=1234'"},
+     "Engines may also be defined in OpenSSL config file engine section."},
 #endif
     OPT_PROV_OPTIONS,
 

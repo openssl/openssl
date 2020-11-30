@@ -25,7 +25,7 @@ B<openssl> B<req>
 [B<-pkeyopt> I<opt>:I<value>]
 [B<-noenc>]
 [B<-nodes>]
-[B<-key> I<filename>]
+[B<-key> I<filename>|I<uri>]
 [B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>]
 [B<-keyout> I<filename>]
 [B<-keygen_engine> I<id>]
@@ -181,9 +181,9 @@ options supported depends on the public key algorithm used and its
 implementation.
 See L<openssl-genpkey(1)/KEY GENERATION OPTIONS> for more details.
 
-=item B<-key> I<filename>
+=item B<-key> I<filename>|I<uri>
 
-This specifies the file to read the private key from. It also
+This specifies the private key to use. It also
 accepts PKCS#8 format private keys for PEM format files.
 
 =item B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>

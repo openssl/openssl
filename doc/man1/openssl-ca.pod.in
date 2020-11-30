@@ -33,7 +33,7 @@ B<openssl> B<ca>
 [B<-days> I<arg>]
 [B<-md> I<arg>]
 [B<-policy> I<arg>]
-[B<-keyfile> I<arg>]
+[B<-keyfile> I<filename>|I<uri>]
 [B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>]
 [B<-key> I<arg>]
 [B<-passin> I<arg>]
@@ -148,7 +148,7 @@ The CA certificate, which must match with B<-keyfile>.
 The format of the data in certificate input files.
 This option has no effect and is retained for backward compatibility only.
 
-=item B<-keyfile> I<filename>
+=item B<-keyfile> I<filename>|I<uri>
 
 The CA private key to sign requests with. This must match with B<-cert>.
 

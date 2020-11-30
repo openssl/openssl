@@ -15,7 +15,7 @@ B<openssl> B<ec>
 [B<-help>]
 [B<-inform> B<DER>|B<PEM>|B<P12>|B<ENGINE>]
 [B<-outform> B<DER>|B<PEM>]
-[B<-in> I<filename>]
+[B<-in> I<filename>|I<uri>]
 [B<-passin> I<arg>]
 [B<-out> I<filename>]
 [B<-passout> I<arg>]
@@ -65,9 +65,9 @@ See L<openssl(1)/Format Options> for details.
 Private keys are an SEC1 private key or PKCS#8 format.
 Public keys are a B<SubjectPublicKeyInfo> as specified in IETF RFC 3280.
 
-=item B<-in> I<filename>
+=item B<-in> I<filename>|I<uri>
 
-This specifies the input filename to read a key from or standard input if this
+This specifies the input to read a key from or standard input if this
 option is not specified. If the key is encrypted a pass phrase will be
 prompted for.
 

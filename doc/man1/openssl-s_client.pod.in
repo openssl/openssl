@@ -35,7 +35,7 @@ B<openssl> B<s_client>
 [B<-CRL> I<filename>]
 [B<-CRLform> B<DER>|B<PEM>]
 [B<-crl_download>]
-[B<-key> I<filename>]
+[B<-key> I<filename>|I<uri>]
 [B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>]
 [B<-pass> I<arg>]
 [B<-chainCAfile> I<filename>]
@@ -269,9 +269,9 @@ See L<openssl(1)/Format Options> for details.
 
 Download CRL from distribution points in the certificate.
 
-=item B<-key> I<keyfile>
+=item B<-key> I<filename>|I<uri>
 
-The client private key file to use.
+The client private key to use.
 If not specified then the certificate file will be used to read also the key.
 
 =item B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
@@ -786,9 +786,11 @@ Set the minimal acceptable length, in bits, for B<N>.
 
 {- $OpenSSL::safe::opt_engine_item -}
 
+{- output_off() if $disabled{"deprecated-3.0"}; "" -}
 =item B<-ssl_client_engine> I<id>
 
 Specify engine to be used for client certificate operations.
+{- output_on() if $disabled{"deprecated-3.0"}; "" -}
 
 {- $OpenSSL::safe::opt_v_item -}
 

@@ -527,6 +527,10 @@ of formats.
 Since OpenSSL 3.0 keys, single certificates, and CRLs can be read from
 files in any of the B<DER>, B<PEM> or B<P12> formats,
 while specifying their input format is no more needed.
+In order to access a key via an engine the input format B<ENGINE> may be used;
+alternatively the key identifier in the <uri> argument of the respective key
+option may be preceded by C<org.openssl.engine:>.
+See L<openssl(1)/Engine Options> for an example usage of the latter.
 
 The list of acceptable formats, and the default, is
 described in each command documentation.  The list of formats is
@@ -543,9 +547,7 @@ A binary format, encoded or parsed according to Distinguished Encoding Rules
 
 Used to specify that the cryptographic material is in an OpenSSL B<engine>.
 An engine must be configured or specified using the B<-engine> option.
-In addition, the B<-input> flag can be used to name a specific object in
-the engine.
-A password, such as the B<-passin> flag often must be specified as well.
+A password or PIN may be supplied to the engine using the B<-passin> option.
 
 =item B<P12>
 
@@ -1300,12 +1302,37 @@ respectively.
 
 =item B<-engine> I<id>
 
-Use the engine identified by I<id> and use all the methods it
-implements (algorithms, key storage, etc.), unless specified otherwise in
-the command-specific documentation or it is configured to do so, as described
-in L<config(5)/Engine Configuration Module>.
+Load the engine identified by I<id> and use all the methods it implements
+(algorithms, key storage, etc.), unless specified otherwise in the
+command-specific documentation or it is configured to do so, as described in
+L<config(5)/Engine Configuration>.
+
+The engine will be used for key ids specified with B<-key> and similar
+options when an option like B<-keyform engine> is given.
 
 =back
+
+Options specifying keys, like B<-key> and similar, can use the generic
+OpenSSL engine key loading URI scheme C<org.openssl.engine:> to retrieve
+private keys and public keys.  The URI syntax is as follows, in simplified
+form:
+
+    org.openssl.engine:{engineid}:{keyid}
+
+Where C<{engineid}> is the identity/name of the engine, and C<{keyid}> is a
+key identifier that's acceptable by that engine.  For example, when using an
+engine that interfaces against a PKCS#11 implementation, the generic key URI
+would be something like this (this happens to be an example for the PKCS#11
+engine that's part of OpenSC):
+
+    -key org.openssl.engine:pkcs11:label_some-private-key
+
+As a third possibility, for engines and providers that have implemented
+their own L<OSSL_STORE_LOADER(3)>, C<org.openssl.engine:> should not be
+necessary.  For a PKCS#11 implementation that has implemented such a loader,
+the PKCS#11 URI as defined in RFC 7512 should be possible to use directly:
+
+    -key pkcs11:object=some-private-key;pin-value=1234
 
 =head1 ENVIRONMENT
 

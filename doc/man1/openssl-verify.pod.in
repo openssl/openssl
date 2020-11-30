@@ -79,9 +79,11 @@ Names and values of these options are algorithm-specific.
 {- $OpenSSL::safe::opt_name_item -}
 
 {- $OpenSSL::safe::opt_engine_item -}
+{- output_off() if $disabled{"deprecated-3.0"}; "" -}
 To load certificates or CRLs that require engine support, specify the
 B<-engine> option before any of the
 B<-trusted>, B<-untrusted> or B<-CRLfile> options.
+{- output_on() if $disabled{"deprecated-3.0"}; "" -}
 
 {- $OpenSSL::safe::opt_trust_item -}
 

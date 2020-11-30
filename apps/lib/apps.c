@@ -560,25 +560,18 @@ EVP_PKEY *load_key(const char *uri, int format, int may_stdin,
                    const char *pass, ENGINE *e, const char *desc)
 {
     EVP_PKEY *pkey = NULL;
+    char *allocated_uri = NULL;
 
     if (desc == NULL)
         desc = "private key";
 
     if (format == FORMAT_ENGINE) {
-        if (e == NULL) {
-            BIO_printf(bio_err, "No engine specified for loading %s\n", desc);
-        } else {
-            pkey = load_engine_private_key(e, uri, pass, desc);
-            if (pkey == NULL) {
-                BIO_printf(bio_err, "Cannot load %s from engine\n", desc);
-                ERR_print_errors(bio_err);
-            }
-        }
-    } else {
-        (void)load_key_certs_crls(uri, may_stdin, pass, desc,
-                                  &pkey, NULL, NULL, NULL, NULL, NULL, NULL);
+        uri = allocated_uri = make_engine_uri(e, uri, desc);
     }
+    (void)load_key_certs_crls(uri, may_stdin, pass, desc,
+                              &pkey, NULL, NULL, NULL, NULL, NULL, NULL);
 
+    OPENSSL_free(allocated_uri);
     return pkey;
 }
 
@@ -586,25 +579,18 @@ EVP_PKEY *load_pubkey(const char *uri, int format, int maybe_stdin,
                       const char *pass, ENGINE *e, const char *desc)
 {
     EVP_PKEY *pkey = NULL;
+    char *allocated_uri = NULL;
 
     if (desc == NULL)
         desc = "public key";
 
     if (format == FORMAT_ENGINE) {
-        if (e == NULL) {
-            BIO_printf(bio_err, "No engine specified for loading %s\n", desc);
-        } else {
-            pkey = load_engine_public_key(e, uri, pass, desc);
-            if (pkey == NULL) {
-                BIO_printf(bio_err, "Cannot load %s from engine\n", desc);
-                ERR_print_errors(bio_err);
-            }
-        }
-    } else {
-        (void)load_key_certs_crls(uri, maybe_stdin, pass, desc,
-                                  NULL, &pkey, NULL, NULL, NULL, NULL, NULL);
+        uri = allocated_uri = make_engine_uri(e, uri, desc);
     }
+    (void)load_key_certs_crls(uri, maybe_stdin, pass, desc,
+                              NULL, &pkey, NULL, NULL, NULL, NULL, NULL);
 
+    OPENSSL_free(allocated_uri);
     return pkey;
 }
 
@@ -717,14 +703,25 @@ int load_key_certs_crls(const char *uri, int maybe_stdin,
         pparams != NULL ? "params" : pcert != NULL ? "cert" :
         pcrl != NULL ? "CRL" : pcerts != NULL ? "certs" :
         pcrls != NULL ? "CRLs" : NULL;
+    int cnt_expectations = 0;
+    int expect = 0;
     /* TODO make use of the engine reference 'eng' when loading pkeys */
 
-    if (ppkey != NULL)
+    if (ppkey != NULL) {
         *ppkey = NULL;
-    if (ppubkey != NULL)
+        cnt_expectations++;
+        expect = OSSL_STORE_INFO_PKEY;
+    }
+    if (ppubkey != NULL) {
         *ppubkey = NULL;
-    if (pcert != NULL)
+        cnt_expectations++;
+        expect = OSSL_STORE_INFO_PUBKEY;
+    }
+    if (pcert != NULL) {
         *pcert = NULL;
+        cnt_expectations++;
+        expect = OSSL_STORE_INFO_CERT;
+    }
     if (failed == NULL) {
         BIO_printf(bio_err, "Internal error: nothing to load into from %s\n",
                    uri != NULL ? uri : "<stdin>");
@@ -735,13 +732,22 @@ int load_key_certs_crls(const char *uri, int maybe_stdin,
             && (*pcerts = sk_X509_new_null()) == NULL) {
         BIO_printf(bio_err, "Out of memory loading");
         goto end;
+    } else {
+        cnt_expectations++;
+        expect = OSSL_STORE_INFO_CERT;
     }
-    if (pcrl != NULL)
+    if (pcrl != NULL) {
         *pcrl = NULL;
+        cnt_expectations++;
+        expect = OSSL_STORE_INFO_CRL;
+    }
     if (pcrls != NULL && *pcrls == NULL
             && (*pcrls = sk_X509_CRL_new_null()) == NULL) {
         BIO_printf(bio_err, "Out of memory loading");
         goto end;
+    } else {
+        cnt_expectations++;
+        expect = OSSL_STORE_INFO_CRL;
     }
 
     uidata.password = pass;
@@ -768,6 +774,11 @@ int load_key_certs_crls(const char *uri, int maybe_stdin,
         BIO_printf(bio_err, "Could not open file or uri for loading");
         goto end;
     }
+
+    if (cnt_expectations != 1)
+        expect = 0;
+    if (!OSSL_STORE_expect(ctx, expect))
+        goto end;
 
     failed = NULL;
     while (!OSSL_STORE_eof(ctx)) {

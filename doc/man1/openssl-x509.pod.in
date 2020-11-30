@@ -45,13 +45,13 @@ B<openssl> B<x509>
 [B<-setalias> I<arg>]
 [B<-days> I<arg>]
 [B<-set_serial> I<n>]
-[B<-signkey> I<arg>]
+[B<-signkey> I<filename>|I<uri>]
 [B<-badsig>]
 [B<-passin> I<arg>]
 [B<-x509toreq>]
 [B<-req>]
 [B<-CA> I<filename>]
-[B<-CAkey> I<filename>]
+[B<-CAkey> I<filename>|I<uri>]
 [B<-CAcreateserial>]
 [B<-CAserial> I<filename>]
 [B<-new>]
@@ -351,10 +351,10 @@ can thus behave like a "mini CA".
 
 =over 4
 
-=item B<-signkey> I<arg>
+=item B<-signkey> I<filename>|I<uri>
 
 This option causes the input file to be self signed using the supplied
-private key or engine.
+private key.
 
 It sets the issuer name to the subject name (i.e., makes it self-issued)
 and changes the public key to the supplied value (unless overridden by
@@ -442,7 +442,7 @@ of the CA and it is digitally signed using the CAs private key.
 This option is normally combined with the B<-req> option. Without the
 B<-req> option the input is a certificate which must be self signed.
 
-=item B<-CAkey> I<filename>
+=item B<-CAkey> I<filename>|I<uri>
 
 Sets the CA private key to sign a certificate with. If this option is
 not specified then it is assumed that the CA private key is present in

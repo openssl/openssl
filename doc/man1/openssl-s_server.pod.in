@@ -24,14 +24,14 @@ B<openssl> B<s_server>
 [B<-cert_chain> I<infile>]
 [B<-build_chain>]
 [B<-serverinfo> I<val>]
-[B<-key> I<infile>]
-[B<-key2> I<infile>]
+[B<-key> I<filename>|I<uri>]
+[B<-key2> I<filename>|I<uri>]
 [B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>]
 [B<-pass> I<val>]
 [B<-dcert> I<infile>]
 [B<-dcertform> B<DER>|B<PEM>|B<P12>]
 [B<-dcert_chain> I<infile>]
-[B<-dkey> I<infile>]
+[B<-dkey> I<filename>|I<uri>]
 [B<-dkeyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>]
 [B<-dpass> I<val>]
 [B<-nbio_test>]
@@ -220,6 +220,10 @@ certificate and some require a certificate with a certain public key type:
 for example the DSS cipher suites require a certificate containing a DSS
 (DSA) key. If not specified then the filename F<server.pem> will be used.
 
+=item B<-cert2> I<infile>
+
+The certificate file to use for servername; default is C<server2.pem>.
+
 =item B<-certform> B<DER>|B<PEM>|B<P12>
 
 The server certificate file format.
@@ -244,10 +248,14 @@ followed by "length" bytes of extension data).  If the client sends
 an empty TLS ClientHello extension matching the type, the corresponding
 ServerHello extension will be returned.
 
-=item B<-key> I<infile>
+=item B<-key> I<filename>|I<uri>
 
 The private key to use. If not specified then the certificate file will
 be used.
+
+=item B<-key2> I<filename>|I<uri>
+
+The private Key file to use for servername if not given via B<-cert2>.
 
 =item B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
 
@@ -261,7 +269,7 @@ The private key and certificate file password source.
 For more information about the format of I<val>,
 see L<openssl(1)/Pass Phrase Options>.
 
-=item B<-dcert> I<infile>, B<-dkey> I<infile>
+=item B<-dcert> I<infile>, B<-dkey> I<filename>|I<uri>
 
 Specify an additional certificate and private key, these behave in the
 same manner as the B<-cert> and B<-key> options except there is no default

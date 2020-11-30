@@ -102,48 +102,37 @@ int finish_engine(ENGINE *e)
     return rv;
 }
 
-EVP_PKEY *load_engine_private_key(ENGINE *e, const char *keyid,
-                                  const char *pass, const char *desc)
+char *make_engine_uri(ENGINE *e, const char *key_id, const char *desc)
 {
-    EVP_PKEY *rv = NULL;
+    char *new_uri = NULL;
 
 #ifndef OPENSSL_NO_ENGINE
-    if (init_engine(e)) {
-        PW_CB_DATA cb_data;
+    if (e == NULL) {
+        BIO_printf(bio_err, "No engine specified for loading %s\n", desc);
+    } else if (key_id == NULL) {
+        BIO_printf(bio_err, "No engine key id specified for loading %s\n", desc);
+    } else {
+        const char *engineid = ENGINE_get_id(e);
+        size_t uri_sz =
+            sizeof(ENGINE_SCHEME_COLON) - 1
+            + strlen(engineid)
+            + 1 /* : */
+            + strlen(key_id)
+            + 1 /* \0 */
+            ;
 
-        cb_data.password = pass;
-        cb_data.prompt_info = keyid;
-
-        rv = ENGINE_load_private_key(e, keyid,
-                                     (UI_METHOD *)get_ui_method(), &cb_data);
-        finish_engine(e);
+        new_uri = OPENSSL_malloc(uri_sz);
+        if (new_uri != NULL) {
+            OPENSSL_strlcpy(new_uri, ENGINE_SCHEME_COLON, uri_sz);
+            OPENSSL_strlcat(new_uri, engineid, uri_sz);
+            OPENSSL_strlcat(new_uri, ":", uri_sz);
+            OPENSSL_strlcat(new_uri, key_id, uri_sz);
+        }
     }
 #else
     BIO_printf(bio_err, "Engines not supported for loading %s\n", desc);
 #endif
-    return rv;
-}
-
-EVP_PKEY *load_engine_public_key(ENGINE *e, const char *keyid,
-                                 const char *pass, const char *desc)
-{
-    EVP_PKEY *rv = NULL;
-
-#ifndef OPENSSL_NO_ENGINE
-    if (init_engine(e)) {
-        PW_CB_DATA cb_data;
-
-        cb_data.password = pass;
-        cb_data.prompt_info = keyid;
-
-        rv = ENGINE_load_public_key(e, keyid,
-                                    (UI_METHOD *)get_ui_method(), &cb_data);
-        finish_engine(e);
-    }
-#else
-    BIO_printf(bio_err, "Engines not supported for loading %s\n", desc);
-#endif
-    return rv;
+    return new_uri;
 }
 
 int get_legacy_pkey_id(OSSL_LIB_CTX *libctx, const char *algname, ENGINE *e)
