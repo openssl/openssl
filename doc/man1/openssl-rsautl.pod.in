@@ -13,7 +13,7 @@ B<openssl> B<rsautl>
 [B<-passin> I<arg>]
 [B<-rev>]
 [B<-out> I<file>]
-[B<-inkey> I<file>]
+[B<-inkey> I<filename>|I<uri>]
 [B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>]
 [B<-pubin>]
 [B<-certin>]
@@ -71,9 +71,9 @@ Reverse the order of the input.
 Specifies the output filename to write to or standard output by
 default.
 
-=item B<-inkey> I<file>
+=item B<-inkey> I<filename>|I<uri>
 
-The input key file, by default it should be an RSA private key.
+The input key, by default it should be an RSA private key.
 
 =item B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
 

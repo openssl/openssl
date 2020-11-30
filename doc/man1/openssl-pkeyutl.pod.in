@@ -14,7 +14,7 @@ B<openssl> B<pkeyutl>
 [B<-digest> I<algorithm>]
 [B<-out> I<file>]
 [B<-sigfile> I<file>]
-[B<-inkey> I<file>]
+[B<-inkey> I<filename>|I<uri>]
 [B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>]
 [B<-passin> I<arg>]
 [B<-peerkey> I<file>]
@@ -85,9 +85,9 @@ default.
 
 Signature file, required for B<-verify> operations only
 
-=item B<-inkey> I<file>
+=item B<-inkey> I<filename>|I<uri>
 
-The input key file, by default it should be a private key.
+The input key, by default it should be a private key.
 
 =item B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
 
@@ -184,10 +184,12 @@ B<-verifyrecover> option when an ASN1 structure is signed.
 
 {- $OpenSSL::safe::opt_engine_item -}
 
+{- output_off() if $disabled{"deprecated-3.0"}; "" -}
 =item B<-engine_impl>
 
 When used with the B<-engine> option, it specifies to also use
 engine I<id> for crypto operations.
+{- output_on() if $disabled{"deprecated-3.0"}; "" -}
 
 {- $OpenSSL::safe::opt_r_item -}
 

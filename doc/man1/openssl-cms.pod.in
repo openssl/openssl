@@ -72,7 +72,7 @@ B<openssl> B<cms>
 [B<-secretkey> I<key>]
 [B<-secretkeyid> I<id>]
 [B<-econtent_type> I<type>]
-[B<-inkey> I<file>]
+[B<-inkey> I<filename>|I<uri>]
 [B<-keyopt> I<name>:I<parameter>]
 [B<-passin> I<arg>]
 [B<-to> I<addr>]
@@ -466,7 +466,7 @@ Set the encapsulated content type to I<type> if not supplied the B<Data> type
 is used. The I<type> argument can be any valid OID name in either text or
 numerical format.
 
-=item B<-inkey> I<file>
+=item B<-inkey> I<filename>|I<uri>
 
 The private key to use when signing or decrypting. This must match the
 corresponding certificate. If this option is not specified then the

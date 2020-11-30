@@ -18,7 +18,7 @@ B<openssl> B<dgst>|I<digest>
 [B<-binary>]
 [B<-r>]
 [B<-out> I<filename>]
-[B<-sign> I<filename>]
+[B<-sign> I<filename>|I<uri>]
 [B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>]
 [B<-passin> I<arg>]
 [B<-verify> I<filename>]
@@ -95,9 +95,9 @@ Used by programs like L<sha1sum(1)>.
 
 Filename to output to, or standard output by default.
 
-=item B<-sign> I<filename>
+=item B<-sign> I<filename>|I<uri>
 
-Digitally sign the digest using the private key in "filename". Note this option
+Digitally sign the digest using the given private key. Note this option
 does not support Ed25519 or Ed448 private keys. Use the L<openssl-pkeyutl(1)>
 command instead for this.
 
