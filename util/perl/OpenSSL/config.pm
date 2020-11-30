@@ -139,6 +139,7 @@ my $guess_patterns = [
     ],
     [ 'Paragon.*?:.*',              'i860-intel-osf1' ],
     [ 'Rhapsody:.*',                'ppc-apple-rhapsody' ],
+    [ 'Darwin:.*?:.*?:Power.*',     'ppc-apple-darwin' ],
     [ 'Darwin:.*',                  '${MACHINE}-apple-darwin' ],
     [ 'SunOS:5\..*',                '${MACHINE}-whatever-solaris2' ],
     [ 'SunOS:.*',                   '${MACHINE}-sun-sunos4' ],
