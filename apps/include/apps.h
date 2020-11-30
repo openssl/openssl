@@ -156,10 +156,7 @@ ENGINE *setup_engine_methods(const char *id, unsigned int methods, int debug);
 void release_engine(ENGINE *e);
 int init_engine(ENGINE *e);
 int finish_engine(ENGINE *e);
-EVP_PKEY *load_engine_private_key(ENGINE *e, const char *keyid,
-                                  const char *pass, const char *desc);
-EVP_PKEY *load_engine_public_key(ENGINE *e, const char *keyid,
-                                 const char *pass, const char *desc);
+char *make_engine_uri(ENGINE *e, const char *key_id, const char *desc);
 
 int get_legacy_pkey_id(OSSL_LIB_CTX *libctx, const char *algname, ENGINE *e);
 
