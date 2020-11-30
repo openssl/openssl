@@ -91,8 +91,6 @@ static void set_seed(int s)
     seed = s;
     if (seed <= 0)
         seed = (int)time(NULL);
-    test_printf_stdout("RAND SEED %d\n", seed);
-    test_flush_stdout();
     test_random_seed(seed);
 }
 
@@ -257,6 +255,8 @@ PRINTF_FORMAT(2, 3) static void test_verdict(int verdict,
     test_flush_stdout();
     test_flush_stderr();
 
+    if (verdict == 0 && seed != 0)
+        test_printf_tapout("# random seed: %d\n", seed);
     test_printf_tapout("%s ", verdict != 0 ? "ok" : "not ok");
     va_start(ap, description);
     test_vprintf_tapout(description, ap);
@@ -264,7 +264,7 @@ PRINTF_FORMAT(2, 3) static void test_verdict(int verdict,
     if (verdict == TEST_SKIP_CODE)
         test_printf_tapout(" # skipped");
     test_printf_tapout("\n");
-    test_flush_stdout();
+    test_flush_tapout();
 }
 
 int run_tests(const char *test_prog_name)
@@ -283,12 +283,14 @@ int run_tests(const char *test_prog_name)
     if (num_tests < 1) {
         test_printf_tapout("1..0 # Skipped: %s\n", test_prog_name);
     } else if (show_list == 0 && single_test == -1) {
-        if (level > 0)
+        if (level > 0) {
             test_printf_stdout("Subtest: %s\n", test_prog_name);
+            test_flush_stdout();
+        }
         test_printf_tapout("1..%d\n", num_tests);
     }
 
-    test_flush_stdout();
+    test_flush_tapout();
 
     for (i = 0; i < num_tests; i++)
         permute[i] = i;
@@ -315,7 +317,7 @@ int run_tests(const char *test_prog_name)
                 test_printf_tapout("%d - %s\n", ii + 1,
                                    all_tests[i].test_case_name);
             }
-            test_flush_stdout();
+            test_flush_tapout();
         } else if (all_tests[i].num == -1) {
             set_test_title(all_tests[i].test_case_name);
             verdict = all_tests[i].test_fn();
@@ -334,6 +336,7 @@ int run_tests(const char *test_prog_name)
                                    all_tests[i].test_case_name);
                 test_printf_tapout("%d..%d\n", 1, all_tests[i].num);
                 test_flush_stdout();
+                test_flush_tapout();
             }
 
             j = -1;
