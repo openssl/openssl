@@ -7,16 +7,16 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "apps.h"
-
-#ifndef OPENSSL_NO_ENGINE
-
 /*
  * Here is an STORE loader for ENGINE backed keys.  It relies on deprecated
  * functions, and therefore need to have deprecation warnings suppressed.
  * This file is not compiled at all in a '--api=3 no-deprecated' configuration.
  */
-# define OPENSSL_SUPPRESS_DEPRECATED
+#define OPENSSL_SUPPRESS_DEPRECATED
+
+#include "apps.h"
+
+#ifndef OPENSSL_NO_ENGINE
 
 # include <stdarg.h>
 # include <string.h>
