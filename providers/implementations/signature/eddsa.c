@@ -27,9 +27,9 @@
 # include "s390x_arch.h"
 
 # define S390X_CAN_SIGN(edtype)                                                \
-(OPENSSL_s390xcap_P.pcc[1] & S390X_CAPBIT(S390X_SCALAR_MULTIPLY_##edtype))     \
+((OPENSSL_s390xcap_P.pcc[1] & S390X_CAPBIT(S390X_SCALAR_MULTIPLY_##edtype))    \
 && (OPENSSL_s390xcap_P.kdsa[0] & S390X_CAPBIT(S390X_EDDSA_SIGN_##edtype))      \
-&& (OPENSSL_s390xcap_P.kdsa[0] & S390X_CAPBIT(S390X_EDDSA_VERIFY_##edtype))
+&& (OPENSSL_s390xcap_P.kdsa[0] & S390X_CAPBIT(S390X_EDDSA_VERIFY_##edtype)))
 
 static int s390x_ed25519_digestsign(const ECX_KEY *edkey, unsigned char *sig,
                                     const unsigned char *tbs, size_t tbslen);
