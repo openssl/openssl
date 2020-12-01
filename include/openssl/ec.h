@@ -18,6 +18,55 @@
 # endif
 
 # include <openssl/opensslconf.h>
+# include <openssl/types.h>
+
+# ifdef  __cplusplus
+extern "C" {
+# endif
+
+/* Values for EVP_PKEY_CTX_set_ec_param_enc() */
+# define OPENSSL_EC_EXPLICIT_CURVE  0x000
+# define OPENSSL_EC_NAMED_CURVE     0x001
+
+int EVP_PKEY_CTX_set_ec_paramgen_curve_nid(EVP_PKEY_CTX *ctx, int nid);
+int EVP_PKEY_CTX_set_ec_param_enc(EVP_PKEY_CTX *ctx, int param_enc);
+int EVP_PKEY_CTX_set_ecdh_cofactor_mode(EVP_PKEY_CTX *ctx, int cofactor_mode);
+int EVP_PKEY_CTX_get_ecdh_cofactor_mode(EVP_PKEY_CTX *ctx);
+
+int EVP_PKEY_CTX_set_ecdh_kdf_type(EVP_PKEY_CTX *ctx, int kdf);
+int EVP_PKEY_CTX_get_ecdh_kdf_type(EVP_PKEY_CTX *ctx);
+
+int EVP_PKEY_CTX_set_ecdh_kdf_md(EVP_PKEY_CTX *ctx, const EVP_MD *md);
+int EVP_PKEY_CTX_get_ecdh_kdf_md(EVP_PKEY_CTX *ctx, const EVP_MD **md);
+
+int EVP_PKEY_CTX_set_ecdh_kdf_outlen(EVP_PKEY_CTX *ctx, int len);
+int EVP_PKEY_CTX_get_ecdh_kdf_outlen(EVP_PKEY_CTX *ctx, int *len);
+
+int EVP_PKEY_CTX_set0_ecdh_kdf_ukm(EVP_PKEY_CTX *ctx, unsigned char *ukm,
+                                   int len);
+int EVP_PKEY_CTX_get0_ecdh_kdf_ukm(EVP_PKEY_CTX *ctx, unsigned char **ukm);
+
+# define EVP_PKEY_CTRL_EC_PARAMGEN_CURVE_NID    (EVP_PKEY_ALG_CTRL + 1)
+# define EVP_PKEY_CTRL_EC_PARAM_ENC             (EVP_PKEY_ALG_CTRL + 2)
+# define EVP_PKEY_CTRL_EC_ECDH_COFACTOR         (EVP_PKEY_ALG_CTRL + 3)
+# define EVP_PKEY_CTRL_EC_KDF_TYPE              (EVP_PKEY_ALG_CTRL + 4)
+# define EVP_PKEY_CTRL_EC_KDF_MD                (EVP_PKEY_ALG_CTRL + 5)
+# define EVP_PKEY_CTRL_GET_EC_KDF_MD            (EVP_PKEY_ALG_CTRL + 6)
+# define EVP_PKEY_CTRL_EC_KDF_OUTLEN            (EVP_PKEY_ALG_CTRL + 7)
+# define EVP_PKEY_CTRL_GET_EC_KDF_OUTLEN        (EVP_PKEY_ALG_CTRL + 8)
+# define EVP_PKEY_CTRL_EC_KDF_UKM               (EVP_PKEY_ALG_CTRL + 9)
+# define EVP_PKEY_CTRL_GET_EC_KDF_UKM           (EVP_PKEY_ALG_CTRL + 10)
+
+/* KDF types */
+# define EVP_PKEY_ECDH_KDF_NONE                      1
+# define EVP_PKEY_ECDH_KDF_X9_63                     2
+/*
+ * The old name for EVP_PKEY_ECDH_KDF_X9_63
+ *  The ECDH KDF specification has been mistakenly attributed to ANSI X9.62,
+ *  it is actually specified in ANSI X9.63.
+ *  This identifier is retained for backwards compatibility
+ */
+# define EVP_PKEY_ECDH_KDF_X9_62   EVP_PKEY_ECDH_KDF_X9_63
 
 # ifndef OPENSSL_NO_EC
 #  include <openssl/asn1.h>
@@ -26,9 +75,6 @@
 #   include <openssl/bn.h>
 #  endif
 #  include <openssl/ecerr.h>
-#  ifdef  __cplusplus
-extern "C" {
-#  endif
 
 #  ifndef OPENSSL_ECC_MAX_FIELD_BITS
 #   define OPENSSL_ECC_MAX_FIELD_BITS 661
@@ -847,9 +893,6 @@ int EC_GROUP_get_pentanomial_basis(const EC_GROUP *, unsigned int *k1,
                                    unsigned int *k2, unsigned int *k3);
 #  endif
 
-#  define OPENSSL_EC_EXPLICIT_CURVE  0x000
-#  define OPENSSL_EC_NAMED_CURVE     0x001
-
 EC_GROUP *d2i_ECPKParameters(EC_GROUP **, const unsigned char **in, long len);
 int i2d_ECPKParameters(const EC_GROUP *, unsigned char **out);
 
@@ -1478,47 +1521,8 @@ DEPRECATEDIN_3_0(void EC_KEY_METHOD_get_verify
 #   endif
 #  endif
 
-int EVP_PKEY_CTX_set_ec_paramgen_curve_nid(EVP_PKEY_CTX *ctx, int nid);
-int EVP_PKEY_CTX_set_ec_param_enc(EVP_PKEY_CTX *ctx, int param_enc);
-int EVP_PKEY_CTX_set_ecdh_cofactor_mode(EVP_PKEY_CTX *ctx, int cofactor_mode);
-int EVP_PKEY_CTX_get_ecdh_cofactor_mode(EVP_PKEY_CTX *ctx);
-
-int EVP_PKEY_CTX_set_ecdh_kdf_type(EVP_PKEY_CTX *ctx, int kdf);
-int EVP_PKEY_CTX_get_ecdh_kdf_type(EVP_PKEY_CTX *ctx);
-
-int EVP_PKEY_CTX_set_ecdh_kdf_md(EVP_PKEY_CTX *ctx, const EVP_MD *md);
-int EVP_PKEY_CTX_get_ecdh_kdf_md(EVP_PKEY_CTX *ctx, const EVP_MD **md);
-
-int EVP_PKEY_CTX_set_ecdh_kdf_outlen(EVP_PKEY_CTX *ctx, int len);
-int EVP_PKEY_CTX_get_ecdh_kdf_outlen(EVP_PKEY_CTX *ctx, int *len);
-
-int EVP_PKEY_CTX_set0_ecdh_kdf_ukm(EVP_PKEY_CTX *ctx, unsigned char *ukm,
-                                   int len);
-int EVP_PKEY_CTX_get0_ecdh_kdf_ukm(EVP_PKEY_CTX *ctx, unsigned char **ukm);
-
-#  define EVP_PKEY_CTRL_EC_PARAMGEN_CURVE_NID         (EVP_PKEY_ALG_CTRL + 1)
-#  define EVP_PKEY_CTRL_EC_PARAM_ENC                  (EVP_PKEY_ALG_CTRL + 2)
-#  define EVP_PKEY_CTRL_EC_ECDH_COFACTOR              (EVP_PKEY_ALG_CTRL + 3)
-#  define EVP_PKEY_CTRL_EC_KDF_TYPE                   (EVP_PKEY_ALG_CTRL + 4)
-#  define EVP_PKEY_CTRL_EC_KDF_MD                     (EVP_PKEY_ALG_CTRL + 5)
-#  define EVP_PKEY_CTRL_GET_EC_KDF_MD                 (EVP_PKEY_ALG_CTRL + 6)
-#  define EVP_PKEY_CTRL_EC_KDF_OUTLEN                 (EVP_PKEY_ALG_CTRL + 7)
-#  define EVP_PKEY_CTRL_GET_EC_KDF_OUTLEN             (EVP_PKEY_ALG_CTRL + 8)
-#  define EVP_PKEY_CTRL_EC_KDF_UKM                    (EVP_PKEY_ALG_CTRL + 9)
-#  define EVP_PKEY_CTRL_GET_EC_KDF_UKM                (EVP_PKEY_ALG_CTRL + 10)
-
-/* KDF types */
-#  define EVP_PKEY_ECDH_KDF_NONE                      1
-#  define EVP_PKEY_ECDH_KDF_X9_63                     2
-/** The old name for EVP_PKEY_ECDH_KDF_X9_63
- *  The ECDH KDF specification has been mistakingly attributed to ANSI X9.62,
- *  it is actually specified in ANSI X9.63.
- *  This identifier is retained for backwards compatibility
- */
-#  define EVP_PKEY_ECDH_KDF_X9_62   EVP_PKEY_ECDH_KDF_X9_63
-
-#  ifdef  __cplusplus
+# endif
+# ifdef  __cplusplus
 }
-#  endif
 # endif
 #endif

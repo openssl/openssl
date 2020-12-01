@@ -12,6 +12,13 @@
 #ifndef OSSL_CRYPTO_EC_H
 # define OSSL_CRYPTO_EC_H
 # include <openssl/opensslconf.h>
+# include <openssl/evp.h>
+
+const char *ec_curve_nid2name(int nid);
+int ec_curve_name2nid(const char *name);
+const char *ec_curve_nid2nist_int(int nid);
+int ec_curve_nist2nid_int(const char *name);
+int evp_pkey_ctx_set_ec_param_enc_prov(EVP_PKEY_CTX *ctx, int param_enc);
 
 # ifndef OPENSSL_NO_EC
 #  include <openssl/core.h>
@@ -54,8 +61,6 @@ int ec_key_private_check(const EC_KEY *eckey);
 int ec_key_pairwise_check(const EC_KEY *eckey, BN_CTX *ctx);
 OSSL_LIB_CTX *ec_key_get_libctx(const EC_KEY *eckey);
 const char *ec_key_get0_propq(const EC_KEY *eckey);
-const char *ec_curve_nid2name(int nid);
-int ec_curve_name2nid(const char *name);
 
 /* Backend support */
 int ec_group_todata(const EC_GROUP *group, OSSL_PARAM_BLD *tmpl,
@@ -67,8 +72,6 @@ int ec_key_fromdata(EC_KEY *ecx, const OSSL_PARAM params[], int include_private)
 int ec_key_otherparams_fromdata(EC_KEY *ec, const OSSL_PARAM params[]);
 int ec_set_ecdh_cofactor_mode(EC_KEY *ec, int mode);
 int ec_encoding_name2id(const char *name);
-
-int evp_pkey_ctx_set_ec_param_enc_prov(EVP_PKEY_CTX *ctx, int param_enc);
 
 # endif /* OPENSSL_NO_EC */
 #endif

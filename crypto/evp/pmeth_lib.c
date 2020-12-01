@@ -1278,7 +1278,6 @@ static int legacy_ctrl_to_param(EVP_PKEY_CTX *ctx, int keytype, int optype,
         }
     }
 # endif
-# ifndef OPENSSL_NO_EC
     if (keytype == EVP_PKEY_EC) {
         switch (cmd) {
         case EVP_PKEY_CTRL_EC_PARAM_ENC:
@@ -1314,7 +1313,6 @@ static int legacy_ctrl_to_param(EVP_PKEY_CTX *ctx, int keytype, int optype,
             return EVP_PKEY_CTX_set0_ecdh_kdf_ukm(ctx, p2, p1);
         }
     }
-# endif
     if (keytype == EVP_PKEY_RSA) {
         switch (cmd) {
         case EVP_PKEY_CTRL_RSA_OAEP_MD:
@@ -1572,7 +1570,6 @@ static int legacy_ctrl_str_to_param(EVP_PKEY_CTX *ctx, const char *name,
             ossl_ffc_named_group_get_name(ossl_ffc_uid_to_dh_named_group(num));
     } else if (strcmp(name, "dh_pad") == 0)
         name = OSSL_EXCHANGE_PARAM_PAD;
-# ifndef OPENSSL_NO_EC
     else if (strcmp(name, "ec_paramgen_curve") == 0)
         name = OSSL_PKEY_PARAM_GROUP_NAME;
     else if (strcmp(name, "ecdh_cofactor_mode") == 0)
@@ -1581,7 +1578,6 @@ static int legacy_ctrl_str_to_param(EVP_PKEY_CTX *ctx, const char *name,
         name = OSSL_EXCHANGE_PARAM_KDF_DIGEST;
     else if (strcmp(name, "ec_param_enc") == 0)
         name = OSSL_PKEY_PARAM_EC_ENCODING;
-# endif
     else if (strcmp(name, "N") == 0)
         name = OSSL_KDF_PARAM_SCRYPT_N;
 
