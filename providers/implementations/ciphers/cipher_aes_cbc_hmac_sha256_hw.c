@@ -655,8 +655,9 @@ static int aesni_cbc_hmac_sha256_cipher(PROV_CIPHER_CTX *vctx,
                 size_t off = out - p;
                 unsigned int c, cmask;
 
-                maxpad += SHA256_DIGEST_LENGTH;
-                for (res = 0, i = 0, j = 0; j < maxpad; j++) {
+                for (res = 0, i = 0, j = 0;
+                     j < maxpad + SHA256_DIGEST_LENGTH;
+                     j++) {
                     c = p[j];
                     cmask =
                         ((int)(j - off - SHA256_DIGEST_LENGTH)) >>
@@ -666,7 +667,6 @@ static int aesni_cbc_hmac_sha256_cipher(PROV_CIPHER_CTX *vctx,
                     res |= (c ^ pmac->c[i]) & cmask;
                     i += 1 & cmask;
                 }
-                maxpad -= SHA256_DIGEST_LENGTH;
 
                 res = 0 - ((0 - res) >> (sizeof(res) * 8 - 1));
                 ret &= (int)~res;

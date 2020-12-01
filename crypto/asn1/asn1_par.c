@@ -72,10 +72,8 @@ static int asn1_print_info(BIO *bp, long offset, int depth, int hl, long len,
     if (saved_indent >= 0)
         BIO_set_indent(bp, saved_indent);
     if (pop_f_prefix) {
-        BIO *next = BIO_pop(bp);
-
+        BIO_pop(bp);
         BIO_free(bp);
-        bp = next;
     }
     return i;
 }
