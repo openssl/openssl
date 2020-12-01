@@ -58,6 +58,7 @@ before_build:
         }
 
 build_script:
+    - $env:CL=/MP
     - cd _build
     - ps: >-
         If ($env:Configuration -Match "shared" -or $env:EXTENDED_TESTS) {
