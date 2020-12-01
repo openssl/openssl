@@ -19,7 +19,7 @@ SOURCE[../../libcrypto]=$COMMON\
 
 # Diverse type specific ctrl functions.  They are kinda sorta legacy, kinda
 # sorta not.
-SOURCE[../../libcrypto]=dh_ctrl.c dsa_ctrl.c
+SOURCE[../../libcrypto]=dh_ctrl.c dsa_ctrl.c ec_ctrl.c
 
 IF[{- !$disabled{'deprecated-3.0'} -}]
   SOURCE[../../libcrypto]=p_enc.c p_dec.c

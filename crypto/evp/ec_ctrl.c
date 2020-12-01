@@ -9,13 +9,11 @@
 
 #include <string.h>
 
-#include <openssl/err.h>
-#include <openssl/opensslv.h>
-
 #include <openssl/core_names.h>
+#include <openssl/err.h>
+#include <openssl/ec.h>
 #include "crypto/evp.h"
-
-#include "ec_local.h"
+#include "crypto/ec.h"
 
 /*
  * This file is meant to contain functions to provide EVP_PKEY support for EC
