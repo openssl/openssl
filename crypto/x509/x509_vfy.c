@@ -303,8 +303,20 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
     return ret;
 }
 
+static int sk_X509_contains(STACK_OF(X509) *sk, X509 *cert)
+{
+    int i, n = sk_X509_num(sk);
+
+    for (i = 0; i < n; i++)
+        if (X509_cmp(sk_X509_value(sk, i), cert) == 0)
+            return 1;
+    return 0;
+}
+
 /*
- * Given a STACK_OF(X509) find the issuer of cert (if any)
+ * Find in given STACK_OF(X509) sk a non-expired issuer cert (if any) of given cert x.
+ * The issuer must not be the same as x and must not yet be in ctx->chain, where the
+ * exceptional case x is self-issued and ctx->chain has just one element is allowed.
  */
 static X509 *find_issuer(X509_STORE_CTX *ctx, STACK_OF(X509) *sk, X509 *x)
 {
@@ -317,7 +329,9 @@ static X509 *find_issuer(X509_STORE_CTX *ctx, STACK_OF(X509) *sk, X509 *x)
          * Below check 'issuer != x' is an optimization and safety precaution:
          * Candidate issuer cert cannot be the same as the subject cert 'x'.
          */
-        if (issuer != x && ctx->check_issued(ctx, x, issuer)) {
+        if (issuer != x && ctx->check_issued(ctx, x, issuer)
+            && (((x->ex_flags & EXFLAG_SI) != 0 && sk_X509_num(ctx->chain) == 1)
+                || !sk_X509_contains(ctx->chain, issuer))) {
             rv = issuer;
             if (x509_check_cert_time(ctx, rv, -1))
                 break;
@@ -326,26 +340,10 @@ static X509 *find_issuer(X509_STORE_CTX *ctx, STACK_OF(X509) *sk, X509 *x)
     return rv;
 }
 
-/*
- * Check that the given certificate 'x' is issued by the certificate 'issuer'
- * and the issuer is not yet in ctx->chain, where the exceptional case
- * that 'x' is self-issued and ctx->chain has just one element is allowed.
- */
-static int check_issued(X509_STORE_CTX *ctx, X509 *x, X509 *issuer)
+/* Check that the given certificate 'x' is issued by the certificate 'issuer' */
+static int check_issued(ossl_unused X509_STORE_CTX *ctx, X509 *x, X509 *issuer)
 {
-    if (x509_likely_issued(issuer, x) != X509_V_OK)
-        return 0;
-    if ((x->ex_flags & EXFLAG_SI) == 0 || sk_X509_num(ctx->chain) != 1) {
-        int i;
-        X509 *ch;
-
-        for (i = 0; i < sk_X509_num(ctx->chain); i++) {
-            ch = sk_X509_value(ctx->chain, i);
-            if (ch == issuer || X509_cmp(ch, issuer) == 0)
-                return 0;
-        }
-    }
-    return 1;
+    return x509_likely_issued(issuer, x) == X509_V_OK;
 }
 
 /* Alternative lookup method: look from a STACK stored in other_ctx */
@@ -1827,7 +1825,7 @@ static int internal_verify(X509_STORE_CTX *ctx)
             }
         }
 
- check_cert_time:
+    check_cert_time: /* in addition to RFC 5280, do also for trusted (root) cert */
         /* Calls verify callback as needed */
         if (!x509_check_cert_time(ctx, xs, n))
             return 0;
