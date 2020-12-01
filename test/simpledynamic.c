@@ -9,6 +9,7 @@
 
 #include <stdlib.h>              /* For NULL */
 #include <openssl/macros.h>      /* For NON_EMPTY_TRANSLATION_UNIT */
+#include <openssl/e_os2.h>
 #include "simpledynamic.h"
 
 #if defined(DSO_DLFCN)
@@ -42,7 +43,7 @@ const char *sd_error(void)
 
 #elif defined(DSO_WIN32)
 
-nt sd_load(const char *filename, SD *lib, ossl_unused int type)
+int sd_load(const char *filename, SD *lib, ossl_unused int type)
 {
     *lib = LoadLibraryA(filename);
     return *lib == NULL ? 0 : 1;
