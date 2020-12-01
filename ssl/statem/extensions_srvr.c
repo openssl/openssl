@@ -267,8 +267,10 @@ int tls_parse_ctos_session_ticket(SSL *s, PACKET *pkt, unsigned int context,
     return 1;
 }
 
-int tls_parse_ctos_sig_algs_cert(SSL *s, PACKET *pkt, unsigned int context,
-                                 X509 *x, size_t chainidx)
+int tls_parse_ctos_sig_algs_cert(SSL *s, PACKET *pkt,
+                                 ossl_unused unsigned int context,
+                                 ossl_unused X509 *x,
+                                 ossl_unused size_t chainidx)
 {
     PACKET supported_sig_algs;
 
@@ -1214,8 +1216,10 @@ err:
     return 0;
 }
 
-int tls_parse_ctos_post_handshake_auth(SSL *s, PACKET *pkt, unsigned int context,
-                                       X509 *x, size_t chainidx)
+int tls_parse_ctos_post_handshake_auth(SSL *s, PACKET *pkt,
+                                       ossl_unused unsigned int context,
+                                       ossl_unused X509 *x,
+                                       ossl_unused size_t chainidx)
 {
     if (PACKET_remaining(pkt) != 0) {
         SSLfatal(s, SSL_AD_DECODE_ERROR,

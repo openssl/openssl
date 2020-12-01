@@ -1129,7 +1129,7 @@ static int init_sig_algs(SSL *s, unsigned int context)
     return 1;
 }
 
-static int init_sig_algs_cert(SSL *s, unsigned int context)
+static int init_sig_algs_cert(SSL *s, ossl_unused unsigned int context)
 {
     /* Clear any signature algorithms extension received */
     OPENSSL_free(s->s3.tmp.peer_cert_sigalgs);
@@ -1674,7 +1674,7 @@ static int final_maxfragmentlen(SSL *s, unsigned int context, int sent)
     return 1;
 }
 
-static int init_post_handshake_auth(SSL *s, unsigned int context)
+static int init_post_handshake_auth(SSL *s, ossl_unused unsigned int context)
 {
     s->post_handshake_auth = SSL_PHA_NONE;
 
