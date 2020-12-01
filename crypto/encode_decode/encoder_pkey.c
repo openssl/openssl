@@ -213,7 +213,6 @@ static int ossl_encoder_ctx_setup_for_EVP_PKEY(OSSL_ENCODER_CTX *ctx,
                                                const char *propquery)
 {
     struct construct_data_st *data = NULL;
-    const OSSL_PROVIDER *prov = NULL;
     OSSL_LIB_CTX *libctx = NULL;
     int ok = 0;
 
@@ -222,8 +221,11 @@ static int ossl_encoder_ctx_setup_for_EVP_PKEY(OSSL_ENCODER_CTX *ctx,
         return 0;
     }
 
-    prov = EVP_KEYMGMT_provider(pkey->keymgmt);
-    libctx = ossl_provider_libctx(prov);
+    if (evp_pkey_is_provided(pkey)) {
+        const OSSL_PROVIDER *prov = EVP_KEYMGMT_provider(pkey->keymgmt);
+
+        libctx = ossl_provider_libctx(prov);
+    }
 
     if (pkey->keymgmt != NULL) {
         struct collected_encoder_st encoder_data;
@@ -289,12 +291,23 @@ OSSL_ENCODER_CTX *OSSL_ENCODER_CTX_new_by_EVP_PKEY(const EVP_PKEY *pkey,
     OSSL_ENCODER_CTX *ctx = NULL;
     OSSL_LIB_CTX *libctx = NULL;
 
+    if (pkey == NULL) {
+        ERR_raise(ERR_LIB_OSSL_ENCODER, ERR_R_PASSED_NULL_PARAMETER);
+        return NULL;
+    }
+
+    if (!evp_pkey_is_assigned(pkey)) {
+        ERR_raise_data(ERR_LIB_OSSL_ENCODER, ERR_R_PASSED_INVALID_ARGUMENT,
+                       "The passed EVP_PKEY must be assigned a key");
+        return NULL;
+    }
+
     if ((ctx = OSSL_ENCODER_CTX_new()) == NULL) {
         ERR_raise(ERR_LIB_OSSL_ENCODER, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
-    if (pkey != NULL) {
+    if (evp_pkey_is_provided(pkey)) {
         const OSSL_PROVIDER *prov = EVP_KEYMGMT_provider(pkey->keymgmt);
 
         libctx = ossl_provider_libctx(prov);
