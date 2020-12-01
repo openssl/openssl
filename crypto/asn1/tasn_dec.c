@@ -344,7 +344,6 @@ static int asn1_item_embed_d2i(ASN1_VALUE **pval, const unsigned char **in,
                 }
                 len -= p - q;
                 seq_eoc = 0;
-                q = p;
                 break;
             }
             /*
@@ -519,7 +518,6 @@ static int asn1_template_noexp_d2i(ASN1_VALUE **val,
     aclass = flags & ASN1_TFLG_TAG_CLASS;
 
     p = *in;
-    q = p;
 
     /*
      * If field is embedded then val needs fixing so it is a pointer to

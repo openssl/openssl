@@ -328,7 +328,7 @@ _dopr(char **sbuffer,
                 break;
             case 'w':
                 /* not supported yet, treat as next char */
-                ch = *format++;
+                format++;
                 break;
             default:
                 /* unknown, skip */
