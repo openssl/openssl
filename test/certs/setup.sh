@@ -1,10 +1,11 @@
-#! /bin/sh
+#! /bin/bash
 
 # Primary root: root-cert
 # root cert variants: CA:false, key2, DN2
 # trust variants: +serverAuth -serverAuth +clientAuth -clientAuth +anyEKU -anyEKU
 #
 ./mkcert.sh genroot "Root CA" root-key root-cert
+DAYS=-1 ./mkcert.sh genroot "Root CA" root-key root-expired
 ./mkcert.sh genss "Root CA" root-key root-nonca
 ./mkcert.sh genroot "Root CA" root-key2 root-cert2
 ./mkcert.sh genroot "Root Cert 2" root-key root-name2
@@ -168,7 +169,7 @@ openssl x509 -in sca-cert.pem -trustout \
 ./mkcert.sh genee server.example ee-key ee-name2 ca-key ca-name2
 ./mkcert.sh genee -p clientAuth server.example ee-key ee-client ca-key ca-cert
 ./mkcert.sh genee server.example ee-key ee-pathlen ca-key ca-cert \
-    -extfile <(echo "basicConstraints=CA:FALSE,pathlen:0")
+    -extfile <(echo "basicConstraints=CA:FALSE,pathlen:0") # bash needed here
 #
 openssl x509 -in ee-cert.pem -trustout \
     -addtrust serverAuth -out ee+serverAuth.pem

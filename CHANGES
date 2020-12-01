@@ -19,6 +19,10 @@
      pass an EVP_PKEY instead.
      [Matt Caswell]
 
+  *) In 1.1.1h, an expired trusted (root) certificate was not anymore rejected
+     when validating a certificate path. This check is restored in 1.1.1i.
+     [David von Oheimb]
+
  Changes between 1.1.1g and 1.1.1h [22 Sep 2020]
 
   *) Certificates with explicit curve parameters are now disallowed in
@@ -43,6 +47,10 @@
   *) Handshake now fails if Extended Master Secret extension is dropped
      on renegotiation.
      [Tomas Mraz]
+
+  *) Accidentally, an expired trusted (root) certificate is not anymore rejected
+     when validating a certificate path.
+     [David von Oheimb]
 
   *) The Oracle Developer Studio compiler will start reporting deprecated APIs
 
