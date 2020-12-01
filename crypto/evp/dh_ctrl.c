@@ -7,22 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
-/*
- * DH low level APIs are deprecated for public use, but still ok for
- * internal use.
- */
-#include "internal/deprecated.h"
-
 #include <stdio.h>
-#include "crypto/evp.h"
-#include <openssl/bn.h>
-#include <openssl/engine.h>
-#include <openssl/obj_mac.h>
+#include <string.h>
 #include <openssl/core_names.h>
-#include "internal/cryptlib.h"
-#include "internal/refcount.h"
+#include <openssl/params.h>
+#include <openssl/err.h>
+#include <openssl/dh.h>
 #include "crypto/dh.h"
-#include "dh_local.h"
+#include "crypto/evp.h"
 
 static int dh_paramgen_check(EVP_PKEY_CTX *ctx)
 {
