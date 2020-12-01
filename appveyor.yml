@@ -1,5 +1,5 @@
 image:
-  - Visual Studio 2017
+    - Visual Studio 2017
 
 platform:
     - x64
@@ -58,11 +58,11 @@ before_build:
         }
 
 build_script:
-    - $env:CL=/MP
     - cd _build
     - ps: >-
         If ($env:Configuration -Match "shared" -or $env:EXTENDED_TESTS) {
             cmd /c "%NMAKE% build_all_generated 2>&1"
+            # Unfortunately, CL=/MP would not have parallelizing effect
             cmd /c "%NMAKE% PERL=no-perl 2>&1"
         }
     - cd ..
@@ -71,6 +71,7 @@ test_script:
     - cd _build
     - ps: >-
         If ($env:Configuration -Match "shared" -or $env:EXTENDED_TESTS) {
+            # Unfortunately, HARNESS_JOBS=4 would not have parallelizing effect
             if ($env:EXTENDED_TESTS) {
                 cmd /c "%NMAKE% test HARNESS_VERBOSE_FAILURE=yes 2>&1"
             } Else {
