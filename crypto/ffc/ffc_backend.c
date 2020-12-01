@@ -29,14 +29,16 @@ int ossl_ffc_params_fromdata(FFC_PARAMS *ffc, const OSSL_PARAM params[])
 
     prm  = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_GROUP_NAME);
     if (prm != NULL) {
-        if (prm->data_type != OSSL_PARAM_UTF8_STRING)
-            goto err;
-#ifndef OPENSSL_NO_DH
         /*
          * In a no-dh build we just go straight to err because we have no
          * support for this.
          */
-        if (!ossl_ffc_set_group_pqg(ffc, prm->data))
+#ifndef OPENSSL_NO_DH
+        const DH_NAMED_GROUP *group = NULL;
+
+        if (prm->data_type != OSSL_PARAM_UTF8_STRING
+            || (group = ossl_ffc_name_to_dh_named_group(prm->data)) == NULL
+            || !ossl_ffc_named_group_set_pqg(ffc, group))
 #endif
             goto err;
     }

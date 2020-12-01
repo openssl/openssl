@@ -834,30 +834,6 @@ int evp_pkey_ctx_get_params_strict(EVP_PKEY_CTX *ctx, OSSL_PARAM *params)
     return EVP_PKEY_CTX_get_params(ctx, params);
 }
 
-# ifndef OPENSSL_NO_DH
-int EVP_PKEY_CTX_set_dh_pad(EVP_PKEY_CTX *ctx, int pad)
-{
-    OSSL_PARAM dh_pad_params[2];
-    unsigned int upad = pad;
-
-    /* We use EVP_PKEY_CTX_ctrl return values */
-    if (ctx == NULL || !EVP_PKEY_CTX_IS_DERIVE_OP(ctx)) {
-        ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
-        return -2;
-    }
-
-    /* TODO(3.0): Remove this eventually when no more legacy */
-    if (ctx->op.kex.exchprovctx == NULL)
-        return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DH, EVP_PKEY_OP_DERIVE,
-                                 EVP_PKEY_CTRL_DH_PAD, pad, NULL);
-
-    dh_pad_params[0] = OSSL_PARAM_construct_uint(OSSL_EXCHANGE_PARAM_PAD, &upad);
-    dh_pad_params[1] = OSSL_PARAM_construct_end();
-
-    return EVP_PKEY_CTX_set_params(ctx, dh_pad_params);
-}
-# endif
-
 int EVP_PKEY_CTX_get_signature_md(EVP_PKEY_CTX *ctx, const EVP_MD **md)
 {
     OSSL_PARAM sig_md_params[2], *p = sig_md_params;
@@ -1252,7 +1228,6 @@ static int legacy_ctrl_to_param(EVP_PKEY_CTX *ctx, int keytype, int optype,
         return evp_pkey_ctx_get1_id_len_prov(ctx, p2);
     }
 
-# ifndef OPENSSL_NO_DH
     if (keytype == EVP_PKEY_DHX) {
         switch (cmd) {
         case EVP_PKEY_CTRL_DH_KDF_TYPE:
@@ -1291,7 +1266,6 @@ static int legacy_ctrl_to_param(EVP_PKEY_CTX *ctx, int keytype, int optype,
                 return EVP_PKEY_CTX_set_dh_rfc5114(ctx, p1);
         }
     }
-# endif
 # ifndef OPENSSL_NO_DSA
     if (keytype == EVP_PKEY_DSA) {
         switch (cmd) {
@@ -1579,7 +1553,6 @@ static int legacy_ctrl_str_to_param(EVP_PKEY_CTX *ctx, const char *name,
     else if (strcmp(name, "dsa_paramgen_md") == 0)
         name = OSSL_PKEY_PARAM_FFC_DIGEST;
 # endif
-# ifndef OPENSSL_NO_DH
     else if (strcmp(name, "dh_paramgen_generator") == 0)
         name = OSSL_PKEY_PARAM_DH_GENERATOR;
     else if (strcmp(name, "dh_paramgen_prime_len") == 0)
@@ -1592,11 +1565,13 @@ static int legacy_ctrl_str_to_param(EVP_PKEY_CTX *ctx, const char *name,
     } else if (strcmp(name, "dh_param") == 0)
         name = OSSL_PKEY_PARAM_GROUP_NAME;
     else if (strcmp(name, "dh_rfc5114") == 0) {
+        int num = atoi(value);
+
         name = OSSL_PKEY_PARAM_GROUP_NAME;
-        value = ossl_ffc_named_group_from_uid(atoi(value));
+        value =
+            ossl_ffc_named_group_get_name(ossl_ffc_uid_to_dh_named_group(num));
     } else if (strcmp(name, "dh_pad") == 0)
         name = OSSL_EXCHANGE_PARAM_PAD;
-# endif
 # ifndef OPENSSL_NO_EC
     else if (strcmp(name, "ec_paramgen_curve") == 0)
         name = OSSL_PKEY_PARAM_GROUP_NAME;

@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,22 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
-/*
- * DH low level APIs are deprecated for public use, but still ok for
- * internal use.
- */
-#include "internal/deprecated.h"
-
 #include <stdio.h>
-#include "crypto/evp.h"
-#include <openssl/bn.h>
-#include <openssl/engine.h>
-#include <openssl/obj_mac.h>
+#include <string.h>
 #include <openssl/core_names.h>
-#include "internal/cryptlib.h"
-#include "internal/refcount.h"
+#include <openssl/params.h>
+#include <openssl/err.h>
+#include <openssl/dh.h>
 #include "crypto/dh.h"
-#include "dh_local.h"
+#include "crypto/evp.h"
 
 static int dh_paramgen_check(EVP_PKEY_CTX *ctx)
 {
@@ -179,7 +171,7 @@ int EVP_PKEY_CTX_set_dh_rfc5114(EVP_PKEY_CTX *ctx, int gen)
     if (ctx->op.keymgmt.genctx == NULL)
         return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DHX, EVP_PKEY_OP_PARAMGEN,
                                  EVP_PKEY_CTRL_DH_RFC5114, gen, NULL);
-    name = ossl_ffc_named_group_from_uid(gen);
+    name = ossl_ffc_named_group_get_name(ossl_ffc_uid_to_dh_named_group(gen));
     if (name == NULL)
         return 0;
 
@@ -208,7 +200,7 @@ int EVP_PKEY_CTX_set_dh_nid(EVP_PKEY_CTX *ctx, int nid)
         return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DH,
                                  EVP_PKEY_OP_PARAMGEN | EVP_PKEY_OP_KEYGEN,
                                  EVP_PKEY_CTRL_DH_NID, nid, NULL);
-    name = ossl_ffc_named_group_from_uid(nid);
+    name = ossl_ffc_named_group_get_name(ossl_ffc_uid_to_dh_named_group(nid));
     if (name == NULL)
         return 0;
 
@@ -216,6 +208,28 @@ int EVP_PKEY_CTX_set_dh_nid(EVP_PKEY_CTX *ctx, int nid)
                                             (void *)name, 0);
     *p = OSSL_PARAM_construct_end();
     return EVP_PKEY_CTX_set_params(ctx, params);
+}
+
+int EVP_PKEY_CTX_set_dh_pad(EVP_PKEY_CTX *ctx, int pad)
+{
+    OSSL_PARAM dh_pad_params[2];
+    unsigned int upad = pad;
+
+    /* We use EVP_PKEY_CTX_ctrl return values */
+    if (ctx == NULL || !EVP_PKEY_CTX_IS_DERIVE_OP(ctx)) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
+        return -2;
+    }
+
+    /* TODO(3.0): Remove this eventually when no more legacy */
+    if (ctx->op.kex.exchprovctx == NULL)
+        return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DH, EVP_PKEY_OP_DERIVE,
+                                 EVP_PKEY_CTRL_DH_PAD, pad, NULL);
+
+    dh_pad_params[0] = OSSL_PARAM_construct_uint(OSSL_EXCHANGE_PARAM_PAD, &upad);
+    dh_pad_params[1] = OSSL_PARAM_construct_end();
+
+    return EVP_PKEY_CTX_set_params(ctx, dh_pad_params);
 }
 
 int EVP_PKEY_CTX_set_dh_kdf_type(EVP_PKEY_CTX *ctx, int kdf)
