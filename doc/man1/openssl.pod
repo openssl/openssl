@@ -1328,7 +1328,7 @@ engine that's part of OpenSC):
     -key org.openssl.engine:pkcs11:label_some-private-key
 
 As a third possibility, for engines and providers that have implemented
-their own L<OSSL_STORE(3)> loader, C<org.openssl.engine:> should not be
+their own L<OSSL_STORE_LOADER(3)>, C<org.openssl.engine:> should not be
 necessary.  For a PKCS#11 implementation that has implemented such a loader,
 the PKCS#11 URI as defined in RFC 7512 should be possible to use directly:
 
