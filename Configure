@@ -391,6 +391,7 @@ my @disablables = (
     "bf",
     "blake2",
     "buildtest-c++",
+    "bulk",
     "camellia",
     "capieng",
     "cast",
@@ -539,13 +540,29 @@ our %disabled = ( # "what"         => "comment"
 # Note: => pair form used for aesthetics, not to truly make a hash table
 my @disable_cascades = (
     # "what"            => [ "cascade", ... ]
+    "bulk"              => [ "deprecated", "shared", "dso",
+                             "aria", "async", "autoload-config",
+                             "blake2", "bf", "camellia", "cast", "chacha",
+                             "cmac", "cms", "cmp", "comp", "ct",
+                             "des", "dgram", "dh", "dsa",
+                             "ec", "engine",
+                             "filenames",
+                             "idea", "ktls",
+                             "md4", "multiblock", "nextprotoneg",
+                             "ocsp", "ocb", "poly1305", "psk",
+                             "rc2", "rc4", "rmd160",
+                             "seed", "siphash", "siv",
+                             "sm3", "sm4", "srp",
+                             "srtp", "ssl3-method",
+                             "ts", "ui-console", "whirlpool",
+                             "fips-securitychecks" ],
     sub { $config{processor} eq "386" }
                         => [ "sse2" ],
     "ssl"               => [ "ssl3" ],
     "ssl3-method"       => [ "ssl3" ],
     "zlib"              => [ "zlib-dynamic" ],
     "des"               => [ "mdc2" ],
-    "ec"                => [ "ecdsa", "ecdh", "sm2", "gost" ],
+    "ec"                => [ "ec2m", "ecdsa", "ecdh", "sm2", "gost" ],
     sub { $disabled{"ec"} && $disabled{"dh"} }
                         => [ "tls1_3" ],
     "dgram"             => [ "dtls", "sctp" ],
