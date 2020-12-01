@@ -50,7 +50,7 @@ void AES_ige_encrypt(const unsigned char *in, unsigned char *out,
                      unsigned char *ivec, const int enc)
 {
     size_t n;
-    size_t len = length;
+    size_t len;
 
     if (length == 0)
         return;

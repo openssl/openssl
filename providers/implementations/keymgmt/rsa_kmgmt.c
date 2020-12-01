@@ -327,16 +327,13 @@ static int rsa_get_params(void *key, OSSL_PARAM params[])
      */
     if ((p = OSSL_PARAM_locate(params,
                                OSSL_PKEY_PARAM_MANDATORY_DIGEST)) != NULL
-        && rsa_type == RSA_FLAG_TYPE_RSASSAPSS) {
-        const char *mdname = RSA_PSS_DEFAULT_MD;
+        && rsa_type == RSA_FLAG_TYPE_RSASSAPSS
+        && !ossl_rsa_pss_params_30_is_unrestricted(pss_params)) {
+        const char *mdname =
+            ossl_rsa_oaeppss_nid2name(ossl_rsa_pss_params_30_hashalg(pss_params));
 
-        if (!ossl_rsa_pss_params_30_is_unrestricted(pss_params)) {
-            mdname =
-                ossl_rsa_oaeppss_nid2name(ossl_rsa_pss_params_30_hashalg(pss_params));
-
-            if (mdname == NULL || !OSSL_PARAM_set_utf8_string(p, mdname))
-                return 0;
-        }
+        if (mdname == NULL || !OSSL_PARAM_set_utf8_string(p, mdname))
+            return 0;
     }
     return (rsa_type != RSA_FLAG_TYPE_RSASSAPSS
             || ossl_rsa_pss_params_30_todata(pss_params, NULL, params))
