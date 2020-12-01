@@ -121,7 +121,7 @@ static int ndef_prefix(BIO *b, unsigned char **pbuf, int *plen, void *parg)
 
     ndef_aux->derbuf = p;
     *pbuf = p;
-    derlen = ASN1_item_ndef_i2d(ndef_aux->val, &p, ndef_aux->it);
+    ASN1_item_ndef_i2d(ndef_aux->val, &p, ndef_aux->it);
 
     if (*ndef_aux->boundary == NULL)
         return 0;

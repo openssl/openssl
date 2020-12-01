@@ -176,7 +176,7 @@ static void init_thread_remove_handlers(THREAD_EVENT_HANDLER **handsin)
             = sk_THREAD_EVENT_HANDLER_PTR_value(gtr->skhands, i);
 
         if (hands == handsin) {
-            hands = sk_THREAD_EVENT_HANDLER_PTR_delete(gtr->skhands, i);
+            sk_THREAD_EVENT_HANDLER_PTR_delete(gtr->skhands, i);
             CRYPTO_THREAD_unlock(gtr->lock);
             return;
         }
