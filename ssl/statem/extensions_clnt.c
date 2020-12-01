@@ -1158,8 +1158,9 @@ EXT_RETURN tls_construct_ctos_psk(SSL *s, WPACKET *pkt, unsigned int context,
 }
 
 EXT_RETURN tls_construct_ctos_post_handshake_auth(SSL *s, WPACKET *pkt,
-                                                  unsigned int context,
-                                                  X509 *x, size_t chainidx)
+                                                  ossl_unused unsigned int context,
+                                                  ossl_unused X509 *x,
+                                                  ossl_unused size_t chainidx)
 {
 #ifndef OPENSSL_NO_TLS1_3
     if (!s->pha_enabled)
