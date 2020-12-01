@@ -237,7 +237,6 @@ static int get_cert_by_subject_ex(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
     if (type == X509_LU_X509) {
         data.st_x509.cert_info.subject = (X509_NAME *)name; /* won't modify it */
         stmp.data.x509 = &data.st_x509;
-        postfix = "";
     } else if (type == X509_LU_CRL) {
         data.crl.crl.issuer = (X509_NAME *)name; /* won't modify it */
         stmp.data.crl = &data.crl;
