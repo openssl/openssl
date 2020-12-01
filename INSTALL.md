@@ -577,6 +577,11 @@ as configuration option, you must ensure that it's valid for both the C and
 the C++ compiler.  If not, the C++ build test will most likely break.  As an
 alternative, you can use the language specific variables, `CFLAGS` and `CXXFLAGS`.
 
+### no-bulk
+
+Build only some minimal set of features.
+This is a developer option used internally for CI build tests of the project.
+
 ### no-capieng
 
 Don't build the CAPI engine.
