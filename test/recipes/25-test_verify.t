@@ -27,7 +27,7 @@ sub verify {
     run(app([@args]));
 }
 
-plan tests => 143;
+plan tests => 145;
 
 # Canonical success
 ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"]),
@@ -132,6 +132,10 @@ ok(!verify("ee-cert", "sslserver", [], [qw(ca-cert)], "-partial_chain"),
    "fail untrusted partial chain");
 ok(verify("ee-cert", "sslserver", [qw(ca-cert)], [], "-partial_chain"),
    "accept trusted partial chain");
+ok(!verify("ee-cert", "sslserver", [qw(ca-expired)], [], "-partial_chain"),
+   "reject expired trusted partial chain"); # this check is beyond RFC 5280
+ok(!verify("ee-cert", "sslserver", [qw(root-expired)], [qw(ca-cert)]),
+   "reject expired trusted root"); # this check is beyond RFC 5280
 ok(verify("ee-cert", "sslserver", [qw(sca-cert)], [], "-partial_chain"),
    "accept partial chain with server purpose");
 ok(!verify("ee-cert", "sslserver", [qw(cca-cert)], [], "-partial_chain"),

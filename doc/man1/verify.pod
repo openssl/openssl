@@ -382,10 +382,14 @@ should be trusted for the supplied purpose.
 For compatibility with previous versions of OpenSSL, a certificate with no
 trust settings is considered to be valid for all purposes.
 
-The final operation is to check the validity of the certificate chain. The validity
-period is checked against the current system time and the notBefore and notAfter
-dates in the certificate. The certificate signatures are also checked at this
-point.
+The final operation is to check the validity of the certificate chain.
+For each element in the chain, including the root CA certificate,
+the validity period as specified by the C<notBefore> and C<notAfter> fields
+is checked against the current system time.
+The B<-attime> flag may be used to use a reference time other than "now."
+The certificate signature is checked as well
+(except for the signature of the typically self-signed root CA certificate,
+which is verified only if the B<-check_ss_sig> option is given).
 
 If all operations complete successfully then certificate is considered valid. If
 any operation fails then the certificate is not valid.
