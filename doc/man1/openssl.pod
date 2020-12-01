@@ -847,11 +847,12 @@ For compatibility with previous versions of OpenSSL,
 a certificate with no trust settings is considered to be valid for all purposes.
 
 The fourth, and final, step is to check the validity of the certificate chain.
-The validity period is checked against the system time
-and the C<notBefore> and C<notAfter> dates in each certificate.
-The B<-attime> flag may be used to specify a time other than "now."
-The certificate signatures are also checked at this point
-(except for the signature of the self-signed "root CA" certificate,
+For each element in the chain, including the root CA certificate,
+the validity period as specified by the C<notBefore> and C<notAfter> fields
+is checked against the current system time.
+The B<-attime> flag may be used to use a reference time other than "now."
+The certificate signature is checked as well
+(except for the signature of the typically self-signed root CA certificate,
 which is verified only if the B<-check_ss_sig> option is given).
 When verifying a certificate signature
 the keyUsage extension (if present) of the candidate issuer certificate

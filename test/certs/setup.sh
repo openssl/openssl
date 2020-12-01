@@ -81,6 +81,7 @@ openssl x509 -in sroot-cert.pem -trustout \
 # trust variants: +serverAuth, -serverAuth, +clientAuth, -clientAuth, -anyEKU, +anyEKU
 #
 ./mkcert.sh genca "CA" ca-key ca-cert root-key root-cert
+DAYS=-1 ./mkcert.sh genroot "Root CA" root-key root-expired
 ./mkcert.sh genee "CA" ca-key ca-nonca root-key root-cert
 ./mkcert.sh gen_nonbc_ca "CA" ca-key ca-nonbc root-key root-cert
 ./mkcert.sh genca "CA" ca-key2 ca-cert2 root-key root-cert
