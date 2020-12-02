@@ -44,7 +44,7 @@
 
 /* Alternative IMPLEMENT macros for provided encoders */
 
-# define IMPLEMENT_PEM_provided_write_body_vars(type, asn1, libctx, pq) \
+# define IMPLEMENT_PEM_provided_write_body_vars(type, asn1, pq)         \
     int ret = 0;                                                        \
     OSSL_ENCODER_CTX *ctx =                                             \
         OSSL_ENCODER_CTX_new_by_##type(x, PEM_SELECTION_##asn1,         \
@@ -102,15 +102,14 @@
                                          OUTTYPE, outtype, writename)   \
     PEM_write_fnsig(name, type, OUTTYPE, writename)                     \
     {                                                                   \
-        IMPLEMENT_PEM_provided_write_body_vars(type, asn1, NULL, NULL); \
+        IMPLEMENT_PEM_provided_write_body_vars(type, asn1, NULL);       \
         IMPLEMENT_PEM_provided_write_body_main(type, outtype);          \
         IMPLEMENT_PEM_provided_write_body_fallback(str, asn1,           \
                                                    writename);          \
     }                                                                   \
     PEM_write_ex_fnsig(name, type, OUTTYPE, writename)                  \
     {                                                                   \
-        IMPLEMENT_PEM_provided_write_body_vars(type, asn1,              \
-                                               libctx, propq);          \
+        IMPLEMENT_PEM_provided_write_body_vars(type, asn1, propq);      \
         IMPLEMENT_PEM_provided_write_body_main(type, outtype);          \
         IMPLEMENT_PEM_provided_write_body_fallback(str, asn1,           \
                                                    writename);          \

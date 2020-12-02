@@ -153,7 +153,7 @@ EVP_PKEY *PEM_read_bio_PrivateKey(BIO *bp, EVP_PKEY **x, pem_password_cb *cb,
 
 PEM_write_cb_ex_fnsig(PrivateKey, EVP_PKEY, BIO, write_bio)
 {
-    IMPLEMENT_PEM_provided_write_body_vars(EVP_PKEY, PrivateKey, libctx, propq);
+    IMPLEMENT_PEM_provided_write_body_vars(EVP_PKEY, PrivateKey, propq);
 
     IMPLEMENT_PEM_provided_write_body_pass();
     IMPLEMENT_PEM_provided_write_body_main(EVP_PKEY, bio);
@@ -218,7 +218,8 @@ EVP_PKEY *PEM_read_bio_Parameters(BIO *bp, EVP_PKEY **x)
 PEM_write_fnsig(Parameters, EVP_PKEY, BIO, write_bio)
 {
     char pem_str[80];
-    IMPLEMENT_PEM_provided_write_body_vars(EVP_PKEY, Parameters, NULL, NULL);
+    IMPLEMENT_PEM_provided_write_body_vars(EVP_PKEY, Parameters, NULL);
+
     IMPLEMENT_PEM_provided_write_body_main(EVP_PKEY, bio);
 
  legacy:
