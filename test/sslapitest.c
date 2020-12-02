@@ -7957,8 +7957,17 @@ static int test_pluggable_group(int idx)
     OSSL_PROVIDER *legacyprov = OSSL_PROVIDER_load(libctx, "legacy");
     const char *group_name = idx == 0 ? "xorgroup" : "xorkemgroup";
 
-    if (!TEST_ptr(tlsprov) || !TEST_ptr(legacyprov))
+    if (!TEST_ptr(tlsprov))
         goto end;
+
+    if (legacyprov == NULL) {
+        /*
+         * In this case we assume we've been built with "no-legacy" and skip
+         * this test (there is no OPENSSL_NO_LEGACY)
+         */
+        testresult = 1;
+        goto end;
+    }
 
     if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
                                        TLS_client_method(),
