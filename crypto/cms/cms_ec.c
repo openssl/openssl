@@ -14,7 +14,6 @@
 #include "cms_local.h"
 #include "crypto/evp.h"
 
-#ifndef OPENSSL_NO_EC
 static EVP_PKEY *pkey_type2param(int ptype, const void *pval,
                                  OSSL_LIB_CTX *libctx, const char *propq)
 {
@@ -384,7 +383,6 @@ int cms_ecdh_envelope(CMS_RecipientInfo *ri, int decrypt)
     ERR_raise(ERR_LIB_CMS, CMS_R_NOT_SUPPORTED_FOR_THIS_KEY_TYPE);
     return 0;
 }
-#endif
 
 /* ECDSA and DSA implementation is the same */
 int cms_ecdsa_dsa_sign(CMS_SignerInfo *si, int verify)

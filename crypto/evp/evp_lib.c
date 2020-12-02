@@ -1008,20 +1008,16 @@ int EVP_PKEY_CTX_set_group_name(EVP_PKEY_CTX *ctx, const char *name)
 
         /* Could be a legacy key, try and convert to a ctrl */
         if (ctx->pmeth != NULL && (nid = OBJ_txt2nid(name)) != NID_undef) {
-# ifndef OPENSSL_NO_DH
             if (ctx->pmeth->pkey_id == EVP_PKEY_DH)
                 return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DH,
                                          EVP_PKEY_OP_PARAMGEN
                                          | EVP_PKEY_OP_KEYGEN,
                                          EVP_PKEY_CTRL_DH_NID, nid, NULL);
-# endif
-# ifndef OPENSSL_NO_EC
             if (ctx->pmeth->pkey_id == EVP_PKEY_EC)
                 return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_EC,
                                          EVP_PKEY_OP_PARAMGEN|EVP_PKEY_OP_KEYGEN,
                                          EVP_PKEY_CTRL_EC_PARAMGEN_CURVE_NID,
                                          nid, NULL);
-# endif
         }
 #endif
         ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);

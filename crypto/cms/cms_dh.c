@@ -148,13 +148,13 @@ static int dh_cms_decrypt(CMS_RecipientInfo *ri)
         if (alg ==  NULL || pubkey == NULL)
             return 0;
         if (!dh_cms_set_peerkey(pctx, alg, pubkey)) {
-            ERR_raise(ERR_LIB_DH, DH_R_PEER_KEY_ERROR);
+            ERR_raise(ERR_LIB_CMS, CMS_R_PEER_KEY_ERROR);
             return 0;
         }
     }
     /* Set DH derivation parameters and initialise unwrap context */
     if (!dh_cms_set_shared_info(pctx, ri)) {
-        ERR_raise(ERR_LIB_DH, DH_R_SHARED_INFO_ERROR);
+        ERR_raise(ERR_LIB_CMS, CMS_R_SHARED_INFO_ERROR);
         return 0;
     }
     return 1;
