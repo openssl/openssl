@@ -17,6 +17,15 @@ configuration:
 
 before_build:
     - ps: >-
+        if (-not $env:APPVEYOR_PULL_REQUEST_NUMBER`
+            -or (&git log -1 $env:APPVEYOR_PULL_REQUEST_HEAD_COMMIT |
+                 Select-String "\[extended tests\]") ) {
+            $env:EXTENDED_TESTS="yes"
+        } ElseIf (-not $env:Configuration -Match "shared") {
+            echo "Skipping non-shared build since [extended tests] is not set"
+            Exit-AppVeyorBuild
+        }
+    - ps: >-
         Install-Module VSSetup -Scope CurrentUser
     - ps: >-
         Get-VSSetupInstance -All
@@ -44,12 +53,6 @@ before_build:
     - perl ..\Configure %TARGET% %SHARED%
     - perl configdata.pm --dump
     - cd ..
-    - ps: >-
-        if (-not $env:APPVEYOR_PULL_REQUEST_NUMBER`
-            -or (&git log -1 $env:APPVEYOR_PULL_REQUEST_HEAD_COMMIT |
-                 Select-String "\[extended tests\]") ) {
-            $env:EXTENDED_TESTS="yes"
-        }
 
 build_script:
     - cd _build
@@ -64,11 +67,9 @@ test_script:
     - cd _build
     - ps: >-
         If ($env:Configuration -Match "shared" -or $env:EXTENDED_TESTS) {
-            if ($env:EXTENDED_TESTS) {
                 cmd /c "nmake test HARNESS_VERBOSE_FAILURE=yes 2>&1"
-            } Else {
+        } Else {
                 cmd /c "nmake test HARNESS_VERBOSE_FAILURE=yes TESTS=-test_fuzz 2>&1"
-            }
         }
     - ps: >-
         if ($env:EXTENDED_TESTS) {
