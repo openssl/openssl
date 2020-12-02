@@ -312,9 +312,14 @@ static EVP_PKEY_CTX *int_ctx_new(OSSL_LIB_CTX *libctx,
         EVP_KEYMGMT_free(keymgmt);
         return NULL;
     }
-
+    if (propquery != NULL) {
+        ret->propquery = OPENSSL_strdup(propquery);
+        if (ret->propquery == NULL) {
+            EVP_KEYMGMT_free(keymgmt);
+            return NULL;
+        }
+    }
     ret->libctx = libctx;
-    ret->propquery = propquery;
     ret->keytype = keytype;
     ret->keymgmt = keymgmt;
     ret->legacy_keytype = id;   /* TODO: Remove when #legacy key are gone */
@@ -397,6 +402,7 @@ void EVP_PKEY_CTX_free(EVP_PKEY_CTX *ctx)
 #endif
     EVP_KEYMGMT_free(ctx->keymgmt);
 
+    OPENSSL_free(ctx->propquery);
     EVP_PKEY_free(ctx->pkey);
     EVP_PKEY_free(ctx->peerkey);
 #if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODULE)
@@ -474,7 +480,14 @@ EVP_PKEY_CTX *EVP_PKEY_CTX_dup(const EVP_PKEY_CTX *pctx)
     rctx->operation = pctx->operation;
     rctx->libctx = pctx->libctx;
     rctx->keytype = pctx->keytype;
-    rctx->propquery = pctx->propquery;
+    rctx->propquery = NULL;
+    if (pctx->propquery != NULL) {
+        rctx->propquery = OPENSSL_strdup(pctx->propquery);
+        if (rctx->propquery == NULL) {
+            OPENSSL_free(rctx);
+            return NULL;
+        }
+    }
 
     if (EVP_PKEY_CTX_IS_DERIVE_OP(pctx)) {
         if (pctx->op.kex.exchange != NULL) {
