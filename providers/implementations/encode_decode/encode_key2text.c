@@ -376,12 +376,12 @@ static int ec_param_explicit_curve_to_text(BIO *out, const EC_GROUP *group,
 static int ec_param_explicit_gen_to_text(BIO *out, const EC_GROUP *group,
                                          BN_CTX *ctx)
 {
-    int ret = 0;
+    int ret;
+    size_t buflen;
+    point_conversion_form_t form;
     const EC_POINT *point = NULL;
     const char *glabel = NULL;
-    point_conversion_form_t form;
     unsigned char *buf = NULL;
-    size_t buflen = 0;
 
     form = EC_GROUP_get_point_conversion_form(group);
     point = EC_GROUP_get0_generator(group);
