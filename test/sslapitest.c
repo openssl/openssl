@@ -7820,7 +7820,8 @@ static int test_servername(int tst)
     return testresult;
 }
 
-#ifndef OPENSSL_NO_EC
+#if !defined(OPENSSL_NO_EC) \
+    && (!defined(OPENSSL_NO_TLS1_3) || !defined(OPENSSL_NO_TLS1_2))
 /*
  * Test that if signature algorithms are not available, then we do not offer or
  * accept them.
@@ -7889,6 +7890,17 @@ static int test_sigalgs_available(int idx)
                                        &sctx, &cctx, cert, privkey)))
         goto end;
 
+    /* Ensure we only use TLSv1.2 ciphersuites based on SHA256 */
+    if (idx < 4) {
+        if (!TEST_true(SSL_CTX_set_cipher_list(cctx,
+                                               "ECDHE-RSA-AES128-GCM-SHA256")))
+            goto end;
+    } else {
+        if (!TEST_true(SSL_CTX_set_cipher_list(cctx,
+                                               "ECDHE-ECDSA-AES128-GCM-SHA256")))
+            goto end;
+    }
+
     if (idx < 3) {
         if (!SSL_CTX_set1_sigalgs_list(cctx,
                                        "rsa_pss_rsae_sha384"
@@ -7944,7 +7956,10 @@ static int test_sigalgs_available(int idx)
 
     return testresult;
 }
-#endif /* OPENSSL_NO_EC */
+#endif /*
+        * !defined(OPENSSL_NO_EC) \
+        * && (!defined(OPENSSL_NO_TLS1_3) || !defined(OPENSSL_NO_TLS1_2))
+        */
 
 #ifndef OPENSSL_NO_TLS1_3
 static int test_pluggable_group(int idx)
@@ -8586,7 +8601,8 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_multiblock_write, OSSL_NELEM(multiblock_cipherlist_data));
 #endif
     ADD_ALL_TESTS(test_servername, 10);
-#ifndef OPENSSL_NO_EC
+#if !defined(OPENSSL_NO_EC) \
+    && (!defined(OPENSSL_NO_TLS1_3) || !defined(OPENSSL_NO_TLS1_2))
     ADD_ALL_TESTS(test_sigalgs_available, 6);
 #endif
 #ifndef OPENSSL_NO_TLS1_3
