@@ -49,6 +49,8 @@ my $smcont_zero = srctop_file("test", "smcont_zero.txt");
 my ($no_des, $no_dh, $no_dsa, $no_ec, $no_ec2m, $no_rc2, $no_zlib)
     = disabled qw/des dh dsa ec ec2m rc2 zlib/;
 
+$no_rc2 = 1 if disabled("legacy");
+
 plan tests =>
     ($no_fips ? 0 : 1)          # FIPS install test
     + 10;
