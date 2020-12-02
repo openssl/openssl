@@ -104,7 +104,12 @@ subtest 'test_ss' => sub {
 };
 
 note('test_ssl -- key U');
-testssl("keyU.ss", $Ucert, $CAcert, "default", srctop_file("test","default-and-legacy.cnf"));
+my $configfile = srctop_file("test","default-and-legacy.cnf");
+if (disabled("legacy")) {
+    $configfile = srctop_file("test","default.cnf");
+}
+
+testssl("keyU.ss", $Ucert, $CAcert, "default", $configfile);
 unless ($no_fips) {
     testssl("keyU.ss", $Ucert, $CAcert, "fips",
             srctop_file("test","fips-and-base.cnf"));
@@ -329,7 +334,7 @@ sub testssl {
     my @CA = $CAtmp ? ("-CAfile", $CAtmp) : ("-CApath", bldtop_dir("certs"));
     my @providerflags = ("-provider", $provider);
 
-    if ($provider eq "default") {
+    if ($provider eq "default" && !disabled("legacy")) {
         push @providerflags, "-provider", "legacy";
     }
 
