@@ -8,60 +8,74 @@
 
 Title = MD2 tests
 
+Availablein = legacy
 Digest = MD2
 Input =
 Output = 8350e5a3e24c153df2275c9f80692773
 
+Availablein = legacy
 Digest = MD2
 Input = "a"
 Output = 32ec01ec4a6dac72c0ab96fb34c0b5d1
 
+Availablein = legacy
 Digest = MD2
 Input = "abc"
 Output = da853b0d3f88d99b30283a69e6ded6bb
 
+Availablein = legacy
 Digest = MD2
 Input = "message digest"
 Output = ab4f496bfb2a530b219ff33031fe06b0
 
+Availablein = legacy
 Digest = MD2
 Input = "abcdefghijklmnopqrstuvwxyz"
 Output = 4e8ddff3650292ab5a4108c3aa47940b
 
+Availablein = legacy
 Digest = MD2
 Input = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
 Output = da33def2a42df13975352846c30338cd
 
+Availablein = legacy
 Digest = MD2
 Input = "12345678901234567890123456789012345678901234567890123456789012345678901234567890"
 Output = d5976f79d83d3a0dc9806c3c66f3efd8
 
 Title = MD4 tests
 
+Availablein = legacy
 Digest = MD4
 Input = ""
 Output = 31d6cfe0d16ae931b73c59d7e0c089c0
 
+Availablein = legacy
 Digest = MD4
 Input = "a"
 Output = bde52cb31de33e46245e05fbdbd6fb24
 
+Availablein = legacy
 Digest = MD4
 Input = "abc"
 Output = a448017aaf21d8525fc10ae87aa6729d
 
+Availablein = legacy
 Digest = MD4
 Input = "message digest"
 Output = d9130a8164549fe818874806e1c7014b
 
+Availablein = legacy
 Digest = MD4
 Input = "abcdefghijklmnopqrstuvwxyz"
 Output = d79e1c308aa5bbcdeea8ed63df412da9
 
+Availablein = legacy
 Digest = MD4
 Input = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
 Output = 043f8582f241db351ce627e153e7f0e4
 
+Availablein = legacy
 Digest = MD4
 Input = "12345678901234567890123456789012345678901234567890123456789012345678901234567890"
 Output = e33b4ddc9c38f2199c3e7b164fcc0536
