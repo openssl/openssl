@@ -43,7 +43,7 @@ struct evp_pkey_ctx_st {
      * this context
      */
     OSSL_LIB_CTX *libctx;
-    const char *propquery;
+    char *propquery;
     const char *keytype;
     EVP_KEYMGMT *keymgmt;
 
