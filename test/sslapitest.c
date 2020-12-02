@@ -8627,7 +8627,7 @@ int setup_tests(void)
 
 void cleanup_tests(void)
 {
-# ifndef OPENSSL_NO_DH
+# if !defined(OPENSSL_NO_TLS1_2) && !defined(OPENSSL_NO_DH)
     EVP_PKEY_free(tmp_dh_params);
 #endif
     OPENSSL_free(cert);
