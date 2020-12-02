@@ -36,6 +36,10 @@
 #include "prov/der_rsa.h"
 #include "endecoder_local.h"
 
+#if defined(OPENSSL_NO_DH) && defined(OPENSSL_NO_DSA) && defined(OPENSSL_NO_EC)
+# define OPENSSL_NO_KEYPARAMS
+#endif
+
 struct key2any_ctx_st {
     PROV_CTX *provctx;
 
@@ -330,8 +334,7 @@ static int key_to_type_specific_pem_pub_bio(BIO *out, const void *key,
                                            p2s, k2d, ctx, NULL, NULL);
 }
 
-#if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_DSA) \
-    || !defined(OPENSSL_NO_EC)
+#ifndef OPENSSL_NO_KEYPARAMS
 static int key_to_type_specific_pem_param_bio(BIO *out, const void *key,
                                               int key_nid, const char *pemname,
                                               key_to_paramstring_fn *p2s,

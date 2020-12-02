@@ -123,8 +123,9 @@ err:
     return ret;
 }
 
+#if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC)
 /* Number of octets per line */
-#define LABELED_BUF_PRINT_WIDTH    15
+# define LABELED_BUF_PRINT_WIDTH    15
 
 #if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_DSA) || !defined(OPENSSL_NO_EC)
 static int print_labeled_buf(BIO *out, const char *label,
