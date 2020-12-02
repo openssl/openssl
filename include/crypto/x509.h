@@ -116,7 +116,7 @@ struct X509_crl_st {
     CRYPTO_RWLOCK *lock;
 
     OSSL_LIB_CTX *libctx;
-    const char *propq;
+    char *propq;
 };
 
 struct x509_revoked_st {
