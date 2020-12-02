@@ -7821,7 +7821,7 @@ static int test_servername(int tst)
 }
 
 #if !defined(OPENSSL_NO_EC) \
-    || (!defined(OPENSSL_NO_TLS1_3) && !defined(OPENSSL_NO_TLS1_2))
+    && (!defined(OPENSSL_NO_TLS1_3) || !defined(OPENSSL_NO_TLS1_2))
 /*
  * Test that if signature algorithms are not available, then we do not offer or
  * accept them.
@@ -7956,7 +7956,7 @@ static int test_sigalgs_available(int idx)
 }
 #endif /*
         * !defined(OPENSSL_NO_EC) \
-        * || (!defined(OPENSSL_NO_TLS1_3) && !defined(OPENSSL_NO_TLS1_2))
+        * && (!defined(OPENSSL_NO_TLS1_3) || !defined(OPENSSL_NO_TLS1_2))
         */
 
 #ifndef OPENSSL_NO_TLS1_3
@@ -8600,7 +8600,7 @@ int setup_tests(void)
 #endif
     ADD_ALL_TESTS(test_servername, 10);
 #if !defined(OPENSSL_NO_EC) \
-    || (!defined(OPENSSL_NO_TLS1_3) && !defined(OPENSSL_NO_TLS1_2))
+    && (!defined(OPENSSL_NO_TLS1_3) || !defined(OPENSSL_NO_TLS1_2))
     ADD_ALL_TESTS(test_sigalgs_available, 6);
 #endif
 #ifndef OPENSSL_NO_TLS1_3
