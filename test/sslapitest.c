@@ -7892,11 +7892,13 @@ static int test_sigalgs_available(int idx)
 
     /* Ensure we only use TLSv1.2 ciphersuites based on SHA256 */
     if (idx < 4) {
-    if (!TEST_true(SSL_CTX_set_cipher_list(cctx, "ECDHE-RSA-AES128-GCM-SHA256")))
-        goto end;
+        if (!TEST_true(SSL_CTX_set_cipher_list(cctx,
+                                               "ECDHE-RSA-AES128-GCM-SHA256")))
+            goto end;
     } else {
-    if (!TEST_true(SSL_CTX_set_cipher_list(cctx, "ECDHE-ECDSA-AES128-GCM-SHA256")))
-        goto end;
+        if (!TEST_true(SSL_CTX_set_cipher_list(cctx,
+                                               "ECDHE-ECDSA-AES128-GCM-SHA256")))
+            goto end;
     }
 
     if (idx < 3) {
