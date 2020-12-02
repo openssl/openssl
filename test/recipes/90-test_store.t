@@ -18,7 +18,7 @@ setup($test_name);
 my $mingw = config('target') =~ m|^mingw|;
 
 my $use_md5 = !disabled("md5");
-my $use_des = !disabled("des"); # also affects 3des and pkcs12 app
+my $use_des = !(disabled("des") || disabled("legacy")); # also affects 3des and pkcs12 app
 my $use_dsa = !disabled("dsa");
 my $use_ecc = !disabled("ec");
 
@@ -93,7 +93,11 @@ my @noexist_file_files =
 # @methods is a collection of extra 'openssl storeutl' arguments used to
 # try the different methods.
 my @methods;
-push @methods, [qw(-provider default -provider legacy)];
+if (disabled('legacy')) {
+    push @methods, [qw(-provider default)];
+} else {
+    push @methods, [qw(-provider default -provider legacy)];
+}
 push @methods, [qw(-engine loader_attic)]
     unless disabled('dynamic-engine') || disabled('deprecated-3.0');
 
@@ -252,7 +256,9 @@ indir "store_$$" => sub {
 sub init {
     my $cnf = srctop_file('test', 'ca-and-certs.cnf');
     my $cakey = srctop_file('test', 'certs', 'ca-key.pem');
-    my @std_args = qw(-provider default -provider legacy);
+    my @std_args = qw(-provider default);
+    push @std_args, qw(-provider legacy)
+        unless disabled('legacy');
     return (
             # rsa-key-pkcs1.pem
             run(app(["openssl", "pkey", @std_args,
