@@ -188,10 +188,22 @@ int ossl_ffc_validate_private_key(const BIGNUM *upper, const BIGNUM *priv_key,
 int ossl_ffc_params_todata(const FFC_PARAMS *ffc, OSSL_PARAM_BLD *tmpl,
                            OSSL_PARAM params[]);
 int ossl_ffc_params_fromdata(FFC_PARAMS *ffc, const OSSL_PARAM params[]);
-int ossl_ffc_set_group_pqg(FFC_PARAMS *ffc, const char *group_name);
-int ossl_ffc_named_group_to_uid(const char *name);
-const char *ossl_ffc_named_group_from_uid(int nid);
-int ossl_ffc_set_group_pqg(FFC_PARAMS *ffc, const char *group_name);
+
+typedef struct dh_named_group_st DH_NAMED_GROUP;
+const DH_NAMED_GROUP *ossl_ffc_name_to_dh_named_group(const char *name);
+const DH_NAMED_GROUP *ossl_ffc_uid_to_dh_named_group(int uid);
+#ifndef OPENSSL_NO_DH
+const DH_NAMED_GROUP *ossl_ffc_numbers_to_dh_named_group(const BIGNUM *p,
+                                                         const BIGNUM *q,
+                                                         const BIGNUM *g);
+#endif
+int ossl_ffc_named_group_get_uid(const DH_NAMED_GROUP *group);
+const char *ossl_ffc_named_group_get_name(const DH_NAMED_GROUP *);
+#ifndef OPENSSL_NO_DH
+const BIGNUM *ossl_ffc_named_group_get_q(const DH_NAMED_GROUP *group);
+int ossl_ffc_named_group_set_pqg(FFC_PARAMS *ffc, const DH_NAMED_GROUP *group);
+#endif
+
 const char *ossl_ffc_params_flags_to_name(int flags);
 int ossl_ffc_params_flags_from_name(const char *name);
 

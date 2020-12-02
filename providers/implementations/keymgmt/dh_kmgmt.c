@@ -23,7 +23,6 @@
 #include "prov/provider_ctx.h"
 #include "crypto/dh.h"
 #include "internal/sizes.h"
-#include "internal/nelem.h"
 
 static OSSL_FUNC_keymgmt_new_fn dh_newdata;
 static OSSL_FUNC_keymgmt_free_fn dh_freedata;
@@ -76,34 +75,8 @@ struct dh_gen_ctx {
     int dh_type;
 };
 
-typedef struct dh_name2id_st{
-    const char *name;
-    int id;
-} DH_GENTYPE_NAME2ID;
-
-static const DH_GENTYPE_NAME2ID dhtype2id[]=
+static int dh_gen_type_name2id_w_default(const char *name, int type)
 {
-    { "fips186_4", DH_PARAMGEN_TYPE_FIPS_186_4 },
-    { "fips186_2", DH_PARAMGEN_TYPE_FIPS_186_2 },
-    { "group", DH_PARAMGEN_TYPE_GROUP },
-    { "generator", DH_PARAMGEN_TYPE_GENERATOR }
-};
-
-const char *dh_gen_type_id2name(int id)
-{
-    size_t i;
-
-    for (i = 0; i < OSSL_NELEM(dhtype2id); ++i) {
-        if (dhtype2id[i].id == id)
-            return dhtype2id[i].name;
-    }
-    return NULL;
-}
-
-static int dh_gen_type_name2id(const char *name, int type)
-{
-    size_t i;
-
     if (strcmp(name, "default") == 0) {
 #ifdef FIPS_MODULE
         if (type == DH_FLAG_TYPE_DHX)
@@ -118,11 +91,7 @@ static int dh_gen_type_name2id(const char *name, int type)
 #endif
     }
 
-    for (i = 0; i < OSSL_NELEM(dhtype2id); ++i) {
-        if (strcmp(dhtype2id[i].name, name) == 0)
-            return dhtype2id[i].id;
-    }
-    return -1;
+    return dh_gen_type_name2id(name);
 }
 
 static void *dh_newdata(void *provctx)
@@ -506,16 +475,21 @@ static int dh_gen_set_params(void *genctx, const OSSL_PARAM params[])
     p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_FFC_TYPE);
     if (p != NULL) {
         if (p->data_type != OSSL_PARAM_UTF8_STRING
-            || ((gctx->gen_type = dh_gen_type_name2id(p->data,
-                                                      gctx->dh_type)) == -1)) {
+            || ((gctx->gen_type =
+                 dh_gen_type_name2id_w_default(p->data,
+                                               gctx->dh_type)) == -1)) {
             ERR_raise(ERR_LIB_PROV, ERR_R_PASSED_INVALID_ARGUMENT);
             return 0;
         }
     }
     p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_GROUP_NAME);
     if (p != NULL) {
+        const DH_NAMED_GROUP *group = NULL;
+
         if (p->data_type != OSSL_PARAM_UTF8_STRING
-           || ((gctx->group_nid = ossl_ffc_named_group_to_uid(p->data)) == NID_undef)) {
+            || (group = ossl_ffc_name_to_dh_named_group(p->data)) == NULL
+            || ((gctx->group_nid =
+                 ossl_ffc_named_group_get_uid(group)) == NID_undef)) {
             ERR_raise(ERR_LIB_PROV, ERR_R_PASSED_INVALID_ARGUMENT);
             return 0;
         }

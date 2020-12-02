@@ -21,6 +21,7 @@ int dh_generate_public_key(BN_CTX *ctx, const DH *dh, const BIGNUM *priv_key,
                            BIGNUM *pub_key);
 int dh_get_named_group_uid_from_size(int pbits);
 const char *dh_gen_type_id2name(int id);
+int dh_gen_type_name2id(const char *name);
 void dh_cache_named_group(DH *dh);
 
 FFC_PARAMS *dh_get0_params(DH *dh);
