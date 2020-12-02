@@ -120,6 +120,13 @@ const char *ec_curve_nid2name(int nid)
     if (nid <= 0)
         return NULL;
 
+    /*
+     * TODO(3.0) Figure out if we should try to find the nid with
+     * EC_curve_nid2nist() first, i.e. make it a priority to return
+     * NIST names if there is one for the NID.  This is related to
+     * the TODO comment in ec_curve_name2nid().
+     */
+
     for (i = 0; i < OSSL_NELEM(curve_list); i++) {
         if (curve_list[i].nid == nid)
             return curve_list[i].name;
@@ -130,8 +137,22 @@ const char *ec_curve_nid2name(int nid)
 int ec_curve_name2nid(const char *name)
 {
     size_t i;
+    int nid;
 
     if (name != NULL) {
+        if ((nid = EC_curve_nist2nid(name)) != NID_undef)
+            return nid;
+
+#ifndef FIPS_MODULE
+        /*
+         * TODO(3.0) Figure out if we can use other names than the NIST names
+         * ("B-163", "K-163" & "P-192") in the FIPS module, or if other names
+         * are allowed as well as long as they lead to the same curve data.
+         * If only the NIST names are allowed in the FIPS module, we should
+         * move '#endif' to just before 'return NID_undef'.
+         */
+#endif
+
         for (i = 0; i < OSSL_NELEM(curve_list); i++) {
             if (strcasecmp(curve_list[i].name, name) == 0)
                 return curve_list[i].nid;
