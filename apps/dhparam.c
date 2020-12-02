@@ -47,10 +47,8 @@ const OPTIONS dhparam_options[] = {
     OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
     {"check", OPT_CHECK, '-', "Check the DH parameters"},
-#ifndef OPENSSL_NO_DSA
     {"dsaparam", OPT_DSAPARAM, '-',
      "Read or generate DSA parameters, convert to DH"},
-#endif
 #ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine e, possibly a hardware device"},
 #endif
