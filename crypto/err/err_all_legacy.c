@@ -43,13 +43,20 @@
 #include "crypto/x509err.h"
 #include "crypto/x509v3err.h"
 
+#ifdef OPENSSL_NO_ERR
+# define IMPLEMENT_LEGACY_ERR_LOAD(lib)         \
+    int ERR_load_##lib##_strings(void)          \
+    {                                           \
+        return 1;                               \
+    }
+#else
 # define IMPLEMENT_LEGACY_ERR_LOAD(lib)         \
     int ERR_load_##lib##_strings(void)          \
     {                                           \
         return err_load_##lib##_strings_int();  \
     }
+#endif
 
-# ifndef OPENSSL_NO_ERR
 IMPLEMENT_LEGACY_ERR_LOAD(ASN1)
 IMPLEMENT_LEGACY_ERR_LOAD(ASYNC)
 IMPLEMENT_LEGACY_ERR_LOAD(BIO)
@@ -97,5 +104,3 @@ IMPLEMENT_LEGACY_ERR_LOAD(UI)
 IMPLEMENT_LEGACY_ERR_LOAD(X509)
 IMPLEMENT_LEGACY_ERR_LOAD(X509V3)
 # endif
-
-#endif
