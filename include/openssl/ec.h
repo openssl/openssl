@@ -24,6 +24,10 @@
 extern "C" {
 # endif
 
+/* Values for EVP_PKEY_CTX_set_ec_param_enc() */
+# define OPENSSL_EC_EXPLICIT_CURVE  0x000
+# define OPENSSL_EC_NAMED_CURVE     0x001
+
 int EVP_PKEY_CTX_set_ec_paramgen_curve_nid(EVP_PKEY_CTX *ctx, int nid);
 int EVP_PKEY_CTX_set_ec_param_enc(EVP_PKEY_CTX *ctx, int param_enc);
 int EVP_PKEY_CTX_set_ecdh_cofactor_mode(EVP_PKEY_CTX *ctx, int cofactor_mode);
@@ -890,9 +894,6 @@ int EC_GROUP_get_trinomial_basis(const EC_GROUP *, unsigned int *k);
 int EC_GROUP_get_pentanomial_basis(const EC_GROUP *, unsigned int *k1,
                                    unsigned int *k2, unsigned int *k3);
 #  endif
-
-#  define OPENSSL_EC_EXPLICIT_CURVE  0x000
-#  define OPENSSL_EC_NAMED_CURVE     0x001
 
 EC_GROUP *d2i_ECPKParameters(EC_GROUP **, const unsigned char **in, long len);
 int i2d_ECPKParameters(const EC_GROUP *, unsigned char **out);

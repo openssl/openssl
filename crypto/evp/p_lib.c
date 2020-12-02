@@ -35,6 +35,7 @@
 #include "internal/ffc.h"
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
+#include "crypto/ec.h"
 #include "crypto/ecx.h"
 #include "internal/provider.h"
 #include "evp_local.h"
