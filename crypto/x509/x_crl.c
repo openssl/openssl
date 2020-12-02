@@ -264,6 +264,15 @@ static int crl_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         ASN1_INTEGER_free(crl->crl_number);
         ASN1_INTEGER_free(crl->base_crl_number);
         sk_GENERAL_NAMES_pop_free(crl->issuers, GENERAL_NAMES_free);
+        OPENSSL_free(crl->propq);
+        break;
+    case ASN1_OP_DUP_POST:
+        {
+            X509_CRL *old = exarg;
+
+            if (!x509_crl_set0_libctx(crl, old->libctx, old->propq))
+                return 0;
+        }
         break;
     }
     return 1;
@@ -494,7 +503,13 @@ int x509_crl_set0_libctx(X509_CRL *x, OSSL_LIB_CTX *libctx, const char *propq)
 {
     if (x != NULL) {
         x->libctx = libctx;
-        x->propq = propq;
+        OPENSSL_free(x->propq);
+        x->propq = NULL;
+        if (propq != NULL) {
+            x->propq = OPENSSL_strdup(propq);
+            if (x->propq == NULL)
+                return 0;
+        }
     }
     return 1;
 }
