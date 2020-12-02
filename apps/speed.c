@@ -1516,7 +1516,7 @@ int speed_main(int argc, char **argv)
 #if (!defined(OPENSSL_NO_RSA) && !defined(OPENSSL_NO_DEPRECATED_3_0)) \
     || (!defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_DEPRECATED_3_0)) \
     || !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH)
-     long rsa_count = 1;
+     long op_count = 1;
 #endif
     openssl_speed_sec_t seconds = { SECONDS, RSA_SECONDS, DSA_SECONDS,
                                     ECDSA_SECONDS, ECDH_SECONDS,
@@ -3025,7 +3025,7 @@ int speed_main(int argc, char **argv)
             BIO_printf(bio_err,
                        "RSA sign failure.  No RSA sign will be done.\n");
             ERR_print_errors(bio_err);
-            rsa_count = 1;
+            op_count = 1;
         } else {
             pkey_print_message("private", "rsa",
                                rsa_c[testnum][0], rsa_keys[testnum].bits,
@@ -3039,7 +3039,7 @@ int speed_main(int argc, char **argv)
                        : "%ld %u bits private RSA's in %.2fs\n",
                        count, rsa_keys[testnum].bits, d);
             rsa_results[testnum][0] = (double)count / d;
-            rsa_count = count;
+            op_count = count;
         }
 
         for (i = 0; i < loopargs_len; i++) {
@@ -3067,7 +3067,7 @@ int speed_main(int argc, char **argv)
             rsa_results[testnum][1] = (double)count / d;
         }
 
-        if (rsa_count <= 1) {
+        if (op_count <= 1) {
             /* if longer than 10s, don't do any more */
             stop_it(rsa_doit, testnum);
         }
@@ -3096,7 +3096,7 @@ int speed_main(int argc, char **argv)
             BIO_printf(bio_err,
                        "DSA sign failure.  No DSA sign will be done.\n");
             ERR_print_errors(bio_err);
-            rsa_count = 1;
+            op_count = 1;
         } else {
             pkey_print_message("sign", "dsa",
                                dsa_c[testnum][0], dsa_bits[testnum],
@@ -3109,7 +3109,7 @@ int speed_main(int argc, char **argv)
                        : "%ld %u bits DSA signs in %.2fs\n",
                        count, dsa_bits[testnum], d);
             dsa_results[testnum][0] = (double)count / d;
-            rsa_count = count;
+            op_count = count;
         }
 
         for (i = 0; i < loopargs_len; i++) {
@@ -3137,7 +3137,7 @@ int speed_main(int argc, char **argv)
             dsa_results[testnum][1] = (double)count / d;
         }
 
-        if (rsa_count <= 1) {
+        if (op_count <= 1) {
             /* if longer than 10s, don't do any more */
             stop_it(dsa_doit, testnum);
         }
@@ -3162,7 +3162,7 @@ int speed_main(int argc, char **argv)
         if (st == 0) {
             BIO_printf(bio_err, "ECDSA failure.\n");
             ERR_print_errors(bio_err);
-            rsa_count = 1;
+            op_count = 1;
         } else {
             for (i = 0; i < loopargs_len; i++) {
                 /* Perform ECDSA signature test */
@@ -3177,7 +3177,7 @@ int speed_main(int argc, char **argv)
                 BIO_printf(bio_err,
                            "ECDSA sign failure.  No ECDSA sign will be done.\n");
                 ERR_print_errors(bio_err);
-                rsa_count = 1;
+                op_count = 1;
             } else {
                 pkey_print_message("sign", "ecdsa",
                                    ecdsa_c[testnum][0],
@@ -3191,7 +3191,7 @@ int speed_main(int argc, char **argv)
                            "%ld %u bits ECDSA signs in %.2fs \n",
                            count, ec_curves[testnum].bits, d);
                 ecdsa_results[testnum][0] = (double)count / d;
-                rsa_count = count;
+                op_count = count;
             }
 
             /* Perform ECDSA verification test */
@@ -3221,7 +3221,7 @@ int speed_main(int argc, char **argv)
                 ecdsa_results[testnum][1] = (double)count / d;
             }
 
-            if (rsa_count <= 1) {
+            if (op_count <= 1) {
                 /* if longer than 10s, don't do any more */
                 stop_it(ecdsa_doit, testnum);
             }
@@ -3276,7 +3276,7 @@ int speed_main(int argc, char **argv)
                     BIO_printf(bio_err,
                                "Unhandled error in the error queue during ECDH init.\n");
                     ERR_print_errors(bio_err);
-                    rsa_count = 1;
+                    op_count = 1;
                     break;
                 }
 
@@ -3293,7 +3293,7 @@ int speed_main(int argc, char **argv)
                     ecdh_checks = 0;
                     BIO_printf(bio_err, "ECDH EC params init failure.\n");
                     ERR_print_errors(bio_err);
-                    rsa_count = 1;
+                    op_count = 1;
                     break;
                 }
                 /* Create the context for the key generation */
@@ -3309,7 +3309,7 @@ int speed_main(int argc, char **argv)
                 ecdh_checks = 0;
                 BIO_printf(bio_err, "ECDH keygen failure.\n");
                 ERR_print_errors(bio_err);
-                rsa_count = 1;
+                op_count = 1;
                 break;
             }
 
@@ -3324,7 +3324,7 @@ int speed_main(int argc, char **argv)
                 ecdh_checks = 0;
                 BIO_printf(bio_err, "ECDH key generation failure.\n");
                 ERR_print_errors(bio_err);
-                rsa_count = 1;
+                op_count = 1;
                 break;
             }
 
@@ -3342,7 +3342,7 @@ int speed_main(int argc, char **argv)
                 ecdh_checks = 0;
                 BIO_printf(bio_err, "ECDH computation failure.\n");
                 ERR_print_errors(bio_err);
-                rsa_count = 1;
+                op_count = 1;
                 break;
             }
 
@@ -3352,7 +3352,7 @@ int speed_main(int argc, char **argv)
                 ecdh_checks = 0;
                 BIO_printf(bio_err, "ECDH computations don't match.\n");
                 ERR_print_errors(bio_err);
-                rsa_count = 1;
+                op_count = 1;
                 break;
             }
 
@@ -3379,10 +3379,10 @@ int speed_main(int argc, char **argv)
                        "%ld %u-bits ECDH ops in %.2fs\n", count,
                        ec_curves[testnum].bits, d);
             ecdh_results[testnum][0] = (double)count / d;
-            rsa_count = count;
+            op_count = count;
         }
 
-        if (rsa_count <= 1) {
+        if (op_count <= 1) {
             /* if longer than 10s, don't do any more */
             stop_it(ecdh_doit, testnum);
         }
@@ -3436,7 +3436,7 @@ int speed_main(int argc, char **argv)
         if (st == 0) {
             BIO_printf(bio_err, "EdDSA failure.\n");
             ERR_print_errors(bio_err);
-            rsa_count = 1;
+            op_count = 1;
         } else {
             for (i = 0; i < loopargs_len; i++) {
                 /* Perform EdDSA signature test */
@@ -3451,7 +3451,7 @@ int speed_main(int argc, char **argv)
                 BIO_printf(bio_err,
                            "EdDSA sign failure.  No EdDSA sign will be done.\n");
                 ERR_print_errors(bio_err);
-                rsa_count = 1;
+                op_count = 1;
             } else {
                 pkey_print_message("sign", ed_curves[testnum].name,
                                    eddsa_c[testnum][0],
@@ -3466,7 +3466,7 @@ int speed_main(int argc, char **argv)
                            count, ed_curves[testnum].bits,
                            ed_curves[testnum].name, d);
                 eddsa_results[testnum][0] = (double)count / d;
-                rsa_count = count;
+                op_count = count;
             }
             /* Perform EdDSA verification test */
             for (i = 0; i < loopargs_len; i++) {
@@ -3496,7 +3496,7 @@ int speed_main(int argc, char **argv)
                 eddsa_results[testnum][1] = (double)count / d;
             }
 
-            if (rsa_count <= 1) {
+            if (op_count <= 1) {
                 /* if longer than 10s, don't do any more */
                 stop_it(eddsa_doit, testnum);
             }
@@ -3568,7 +3568,7 @@ int speed_main(int argc, char **argv)
         if (st == 0) {
             BIO_printf(bio_err, "SM2 init failure.\n");
             ERR_print_errors(bio_err);
-            rsa_count = 1;
+            op_count = 1;
         } else {
             for (i = 0; i < loopargs_len; i++) {
                 size_t sm2_sigsize = loopargs[i].sigsize;
@@ -3584,7 +3584,7 @@ int speed_main(int argc, char **argv)
                 BIO_printf(bio_err,
                            "SM2 sign failure.  No SM2 sign will be done.\n");
                 ERR_print_errors(bio_err);
-                rsa_count = 1;
+                op_count = 1;
             } else {
                 pkey_print_message("sign", sm2_curves[testnum].name,
                                    sm2_c[testnum][0],
@@ -3599,7 +3599,7 @@ int speed_main(int argc, char **argv)
                            count, sm2_curves[testnum].bits,
                            sm2_curves[testnum].name, d);
                 sm2_results[testnum][0] = (double)count / d;
-                rsa_count = count;
+                op_count = count;
             }
 
             /* Perform SM2 verification test */
@@ -3630,7 +3630,7 @@ int speed_main(int argc, char **argv)
                 sm2_results[testnum][1] = (double)count / d;
             }
 
-            if (rsa_count <= 1) {
+            if (op_count <= 1) {
                 /* if longer than 10s, don't do any more */
                 for (testnum++; testnum < SM2_NUM; testnum++)
                     sm2_doit[testnum] = 0;
@@ -3666,7 +3666,7 @@ int speed_main(int argc, char **argv)
             if (!pkey_A) {
                 BIO_printf(bio_err, "Error while initialising EVP_PKEY (out of memory?).\n");
                 ERR_print_errors(bio_err);
-                rsa_count = 1;
+                op_count = 1;
                 ffdh_checks = 0;
                 break;
             }
@@ -3674,7 +3674,7 @@ int speed_main(int argc, char **argv)
             if (!pkey_B) {
                 BIO_printf(bio_err, "Error while initialising EVP_PKEY (out of memory?).\n");
                 ERR_print_errors(bio_err);
-                rsa_count = 1;
+                op_count = 1;
                 ffdh_checks = 0;
                 break;
             }
@@ -3683,7 +3683,7 @@ int speed_main(int argc, char **argv)
             if (!ffdh_ctx) {
                 BIO_printf(bio_err, "Error while allocating EVP_PKEY_CTX.\n");
                 ERR_print_errors(bio_err);
-                rsa_count = 1;
+                op_count = 1;
                 ffdh_checks = 0;
                 break;
             }
@@ -3691,14 +3691,14 @@ int speed_main(int argc, char **argv)
             if (EVP_PKEY_keygen_init(ffdh_ctx) <= 0) {
                 BIO_printf(bio_err, "Error while initialising EVP_PKEY_CTX.\n");
                 ERR_print_errors(bio_err);
-                rsa_count = 1;
+                op_count = 1;
                 ffdh_checks = 0;
                 break;
             }
             if (EVP_PKEY_CTX_set_dh_nid(ffdh_ctx, ffdh_params[testnum].nid) <= 0) {
                 BIO_printf(bio_err, "Error setting DH key size for keygen.\n");
                 ERR_print_errors(bio_err);
-                rsa_count = 1;
+                op_count = 1;
                 ffdh_checks = 0;
                 break;
             }
@@ -3707,7 +3707,7 @@ int speed_main(int argc, char **argv)
                 EVP_PKEY_keygen(ffdh_ctx, &pkey_B) <= 0) {
                 BIO_printf(bio_err, "FFDH key generation failure.\n");
                 ERR_print_errors(bio_err);
-                rsa_count = 1;
+                op_count = 1;
                 ffdh_checks = 0;
                 break;
             }
@@ -3721,34 +3721,34 @@ int speed_main(int argc, char **argv)
             if (!ffdh_ctx) {
                 BIO_printf(bio_err, "Error while allocating EVP_PKEY_CTX.\n");
                 ERR_print_errors(bio_err);
-                rsa_count = 1;
+                op_count = 1;
                 ffdh_checks = 0;
                 break;
             }
             if (EVP_PKEY_derive_init(ffdh_ctx) <= 0) {
                 BIO_printf(bio_err, "FFDH derivation context init failure.\n");
                 ERR_print_errors(bio_err);
-                rsa_count = 1;
+                op_count = 1;
                 ffdh_checks = 0;
                 break;
             }
             if (EVP_PKEY_derive_set_peer(ffdh_ctx, pkey_B) <= 0) {
                 BIO_printf(bio_err, "Assigning peer key for derivation failed.\n");
                 ERR_print_errors(bio_err);
-                rsa_count = 1;
+                op_count = 1;
                 ffdh_checks = 0;
                 break;
             }
             if (EVP_PKEY_derive(ffdh_ctx, NULL, &secret_size) <= 0) {
                 BIO_printf(bio_err, "Checking size of shared secret failed.\n");
                 ERR_print_errors(bio_err);
-                rsa_count = 1;
+                op_count = 1;
                 ffdh_checks = 0;
                 break;
             }
             if (secret_size > MAX_FFDH_SIZE) {
                 BIO_printf(bio_err, "Assertion failure: shared secret too large.\n");
-                rsa_count = 1;
+                op_count = 1;
                 ffdh_checks = 0;
                 break;
             }
@@ -3757,7 +3757,7 @@ int speed_main(int argc, char **argv)
                                 &secret_size) <= 0) {
                 BIO_printf(bio_err, "Shared secret derive failure.\n");
                 ERR_print_errors(bio_err);
-                rsa_count = 1;
+                op_count = 1;
                 ffdh_checks = 0;
                 break;
             }
@@ -3766,7 +3766,7 @@ int speed_main(int argc, char **argv)
             if (!test_ctx) {
                 BIO_printf(bio_err, "Error while allocating EVP_PKEY_CTX.\n");
                 ERR_print_errors(bio_err);
-                rsa_count = 1;
+                op_count = 1;
                 ffdh_checks = 0;
                 break;
             }
@@ -3776,7 +3776,7 @@ int speed_main(int argc, char **argv)
                 !EVP_PKEY_derive(test_ctx, loopargs[i].secret_ff_b, &test_out) ||
                 test_out != secret_size) {
                 BIO_printf(bio_err, "FFDH computation failure.\n");
-                rsa_count = 1;
+                op_count = 1;
                 ffdh_checks = 0;
                 break;
             }
@@ -3786,7 +3786,7 @@ int speed_main(int argc, char **argv)
                               loopargs[i].secret_ff_b, secret_size)) {
                 BIO_printf(bio_err, "FFDH computations don't match.\n");
                 ERR_print_errors(bio_err);
-                rsa_count = 1;
+                op_count = 1;
                 ffdh_checks = 0;
                 break;
             }
@@ -3812,9 +3812,9 @@ int speed_main(int argc, char **argv)
                        "%ld %u-bits FFDH ops in %.2fs\n", count,
                        ffdh_params[testnum].bits, d);
             ffdh_results[testnum][0] = (double)count / d;
-            rsa_count = count;
+            op_count = count;
         };
-        if (rsa_count <= 1) {
+        if (op_count <= 1) {
             /* if longer than 10s, don't do any more */
             stop_it(ffdh_doit, testnum);
         }
