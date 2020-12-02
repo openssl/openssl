@@ -1266,7 +1266,6 @@ static int legacy_ctrl_to_param(EVP_PKEY_CTX *ctx, int keytype, int optype,
                 return EVP_PKEY_CTX_set_dh_rfc5114(ctx, p1);
         }
     }
-# ifndef OPENSSL_NO_DSA
     if (keytype == EVP_PKEY_DSA) {
         switch (cmd) {
         case EVP_PKEY_CTRL_DSA_PARAMGEN_BITS:
@@ -1277,7 +1276,6 @@ static int legacy_ctrl_to_param(EVP_PKEY_CTX *ctx, int keytype, int optype,
             return EVP_PKEY_CTX_set_dsa_paramgen_md(ctx, p2);
         }
     }
-# endif
     if (keytype == EVP_PKEY_EC) {
         switch (cmd) {
         case EVP_PKEY_CTRL_EC_PARAM_ENC:
@@ -1543,14 +1541,12 @@ static int legacy_ctrl_str_to_param(EVP_PKEY_CTX *ctx, const char *name,
         name = OSSL_PKEY_PARAM_RSA_MGF1_DIGEST;
     else if (strcmp(name, "rsa_pss_keygen_saltlen") == 0)
         name = OSSL_PKEY_PARAM_RSA_PSS_SALTLEN;
-# ifndef OPENSSL_NO_DSA
     else if (strcmp(name, "dsa_paramgen_bits") == 0)
         name = OSSL_PKEY_PARAM_FFC_PBITS;
     else if (strcmp(name, "dsa_paramgen_q_bits") == 0)
         name = OSSL_PKEY_PARAM_FFC_QBITS;
     else if (strcmp(name, "dsa_paramgen_md") == 0)
         name = OSSL_PKEY_PARAM_FFC_DIGEST;
-# endif
     else if (strcmp(name, "dh_paramgen_generator") == 0)
         name = OSSL_PKEY_PARAM_DH_GENERATOR;
     else if (strcmp(name, "dh_paramgen_prime_len") == 0)

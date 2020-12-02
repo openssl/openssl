@@ -115,17 +115,11 @@ int cms_env_asn1_ctrl(CMS_RecipientInfo *ri, int cmd)
     } else
         return 0;
 
-#ifndef OPENSSL_NO_DH
     if (EVP_PKEY_is_a(pkey, "DHX"))
         return cms_dh_envelope(ri, cmd);
-    else
-#endif
-#ifndef OPENSSL_NO_EC
-    if (EVP_PKEY_is_a(pkey, "EC"))
+    else if (EVP_PKEY_is_a(pkey, "EC"))
         return cms_ecdh_envelope(ri, cmd);
-    else
-#endif
-    if (EVP_PKEY_is_a(pkey, "RSA"))
+    else if (EVP_PKEY_is_a(pkey, "RSA"))
         return cms_rsa_envelope(ri, cmd);
 
     /* Something else? We'll give engines etc a chance to handle this */

@@ -94,12 +94,8 @@ EVP_MD_CTX *evp_md_ctx_new_ex(EVP_PKEY *pkey, const ASN1_OCTET_STRING *id,
         goto err;
     }
 
-# ifndef OPENSSL_NO_EC
-    if (id != NULL && EVP_PKEY_CTX_set1_id(pctx, id->data, id->length) <= 0) {
-        ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
+    if (id != NULL && EVP_PKEY_CTX_set1_id(pctx, id->data, id->length) <= 0)
         goto err;
-    }
-# endif
 
     EVP_MD_CTX_set_pkey_ctx(ctx, pctx);
     return ctx;
