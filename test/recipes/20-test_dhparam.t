@@ -141,27 +141,31 @@ subtest "Generate: 512 bit PKCS3 params, generator 2, explicit PEM file" => sub 
                  '-outform', 'PEM', '512' ])));
     checkdhparams("gen-pkcs3-2-512.exp.pem", "PKCS3", 2, "PEM", 512);
 };
-subtest "Generate: 512 bit X9.42 params, generator 0, PEM file" => sub {
-    plan tests => 5;
-    ok(run(app([ 'openssl', 'dhparam', '-out', 'gen-x942-0-512.pem',
-                 '-dsaparam', '512' ])));
-    checkdhparams("gen-x942-0-512.pem", "X9.42", 0, "PEM", 512);
-};
-subtest "Generate: 512 bit X9.42 params, explicit generator 2, PEM file" => sub {
-    plan tests => 1;
-    #Expected to fail - you cannot select a generator with '-dsaparam'
-    ok(!run(app([ 'openssl', 'dhparam', '-out', 'gen-x942-exp2-512.pem', '-2',
-                  '-dsaparam', '512' ])));
-};
-subtest "Generate: 512 bit X9.42 params, generator 5, PEM file" => sub {
-    plan tests => 1;
-    #Expected to fail - you cannot select a generator with '-dsaparam'
-    ok(!run(app([ 'openssl', 'dhparam', '-out', 'gen-x942-5-512.pem',
-                  '-5', '-dsaparam', '512' ])));
-};
-subtest "Generate: 512 bit X9.42 params, generator 0, DER file" => sub {
-    plan tests => 5;
-    ok(run(app([ 'openssl', 'dhparam', '-out', 'gen-x942-0-512.der',
-                 '-dsaparam', '-outform', 'DER', '512' ])));
-    checkdhparams("gen-x942-0-512.der", "X9.42", 0, "DER", 512);
-};
+SKIP: {
+    skip "Skipping tests that require DSA", 4 if disabled("dsa");
+
+    subtest "Generate: 512 bit X9.42 params, generator 0, PEM file" => sub {
+        plan tests => 5;
+        ok(run(app([ 'openssl', 'dhparam', '-out', 'gen-x942-0-512.pem',
+                    '-dsaparam', '512' ])));
+        checkdhparams("gen-x942-0-512.pem", "X9.42", 0, "PEM", 512);
+    };
+    subtest "Generate: 512 bit X9.42 params, explicit generator 2, PEM file" => sub {
+        plan tests => 1;
+        #Expected to fail - you cannot select a generator with '-dsaparam'
+        ok(!run(app([ 'openssl', 'dhparam', '-out', 'gen-x942-exp2-512.pem', '-2',
+                    '-dsaparam', '512' ])));
+    };
+    subtest "Generate: 512 bit X9.42 params, generator 5, PEM file" => sub {
+        plan tests => 1;
+        #Expected to fail - you cannot select a generator with '-dsaparam'
+        ok(!run(app([ 'openssl', 'dhparam', '-out', 'gen-x942-5-512.pem',
+                    '-5', '-dsaparam', '512' ])));
+    };
+    subtest "Generate: 512 bit X9.42 params, generator 0, DER file" => sub {
+        plan tests => 5;
+        ok(run(app([ 'openssl', 'dhparam', '-out', 'gen-x942-0-512.der',
+                    '-dsaparam', '-outform', 'DER', '512' ])));
+        checkdhparams("gen-x942-0-512.der", "X9.42", 0, "DER", 512);
+    };
+}
