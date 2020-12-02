@@ -3284,49 +3284,14 @@ size_t EC_get_builtin_curves(EC_builtin_curve *r, size_t nitems)
     return curve_list_length;
 }
 
-/* Functions to translate between common NIST curve names and NIDs */
-
-typedef struct {
-    const char *name;           /* NIST Name of curve */
-    int nid;                    /* Curve NID */
-} EC_NIST_NAME;
-
-static EC_NIST_NAME nist_curves[] = {
-    {"B-163", NID_sect163r2},
-    {"B-233", NID_sect233r1},
-    {"B-283", NID_sect283r1},
-    {"B-409", NID_sect409r1},
-    {"B-571", NID_sect571r1},
-    {"K-163", NID_sect163k1},
-    {"K-233", NID_sect233k1},
-    {"K-283", NID_sect283k1},
-    {"K-409", NID_sect409k1},
-    {"K-571", NID_sect571k1},
-    {"P-192", NID_X9_62_prime192v1},
-    {"P-224", NID_secp224r1},
-    {"P-256", NID_X9_62_prime256v1},
-    {"P-384", NID_secp384r1},
-    {"P-521", NID_secp521r1}
-};
-
 const char *EC_curve_nid2nist(int nid)
 {
-    size_t i;
-    for (i = 0; i < OSSL_NELEM(nist_curves); i++) {
-        if (nist_curves[i].nid == nid)
-            return nist_curves[i].name;
-    }
-    return NULL;
+    return ec_curve_nid2nist_int(nid);
 }
 
 int EC_curve_nist2nid(const char *name)
 {
-    size_t i;
-    for (i = 0; i < OSSL_NELEM(nist_curves); i++) {
-        if (strcmp(nist_curves[i].name, name) == 0)
-            return nist_curves[i].nid;
-    }
-    return NID_undef;
+    return ec_curve_nist2nid_int(name);
 }
 
 #define NUM_BN_FIELDS 6

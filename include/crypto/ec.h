@@ -16,6 +16,8 @@
 
 const char *ec_curve_nid2name(int nid);
 int ec_curve_name2nid(const char *name);
+const char *ec_curve_nid2nist_int(int nid);
+int ec_curve_nist2nid_int(const char *name);
 int evp_pkey_ctx_set_ec_param_enc_prov(EVP_PKEY_CTX *ctx, int param_enc);
 
 # ifndef OPENSSL_NO_EC

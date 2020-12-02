@@ -7,6 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <string.h>
+#include <openssl/ec.h>
 #include "crypto/ec.h"
 #include "e_os.h" /* strcasecmp required by windows */
 
@@ -140,7 +142,7 @@ int ec_curve_name2nid(const char *name)
     int nid;
 
     if (name != NULL) {
-        if ((nid = EC_curve_nist2nid(name)) != NID_undef)
+        if ((nid = ec_curve_nist2nid_int(name)) != NID_undef)
             return nid;
 
 #ifndef FIPS_MODULE
@@ -159,5 +161,45 @@ int ec_curve_name2nid(const char *name)
         }
     }
 
+    return NID_undef;
+}
+
+/* Functions to translate between common NIST curve names and NIDs */
+
+static EC_NAME2NID nist_curves[] = {
+    {"B-163", NID_sect163r2},
+    {"B-233", NID_sect233r1},
+    {"B-283", NID_sect283r1},
+    {"B-409", NID_sect409r1},
+    {"B-571", NID_sect571r1},
+    {"K-163", NID_sect163k1},
+    {"K-233", NID_sect233k1},
+    {"K-283", NID_sect283k1},
+    {"K-409", NID_sect409k1},
+    {"K-571", NID_sect571k1},
+    {"P-192", NID_X9_62_prime192v1},
+    {"P-224", NID_secp224r1},
+    {"P-256", NID_X9_62_prime256v1},
+    {"P-384", NID_secp384r1},
+    {"P-521", NID_secp521r1}
+};
+
+const char *ec_curve_nid2nist_int(int nid)
+{
+    size_t i;
+    for (i = 0; i < OSSL_NELEM(nist_curves); i++) {
+        if (nist_curves[i].nid == nid)
+            return nist_curves[i].name;
+    }
+    return NULL;
+}
+
+int ec_curve_nist2nid_int(const char *name)
+{
+    size_t i;
+    for (i = 0; i < OSSL_NELEM(nist_curves); i++) {
+        if (strcmp(nist_curves[i].name, name) == 0)
+            return nist_curves[i].nid;
+    }
     return NID_undef;
 }
