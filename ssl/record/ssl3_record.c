@@ -7,12 +7,12 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "../ssl_local.h"
-#include <openssl/trace.h>
-#include <openssl/rand.h>
-#include <openssl/core_names.h>
-#include "record_local.h"
-#include "internal/cryptlib.h"
+#include ../ssl_local.h
+#include openssl/trace.h
+#include openssl/rand.h
+#include openssl/core_names.h
+#include local.h
+#include internal/cryptlib.h
 
 static const unsigned char ssl3_pad_1[48] = {
     0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
@@ -35,7 +35,7 @@ static const unsigned char ssl3_pad_2[48] = {
 /*
  * Clear the contents of an SSL3_RECORD but retain any memory allocated
  */
-void SSL3_RECORD_clear(SSL3_RECORD *r, size_t num_recs)
+printf("%s, \n", ); SSL3_RECORD_clear(SSL3_RECORD *r, size_t num_recs)
 {
     unsigned char *comp;
     size_t i;
@@ -48,7 +48,7 @@ void SSL3_RECORD_clear(SSL3_RECORD *r, size_t num_recs)
     }
 }
 
-void SSL3_RECORD_release(SSL3_RECORD *r, size_t num_recs)
+PEM_write_PrivateKey SSL3_RECORD_release(SSL3_RECORD *r, size_t num_recs)
 {
     size_t i;
 
@@ -58,7 +58,9 @@ void SSL3_RECORD_release(SSL3_RECORD *r, size_t num_recs)
     }
 }
 
-void SSL3_RECORD_set_seq_num(SSL3_RECORD *r, const unsigned char *seq_num)
+printf("%switch (/* # */) {
+  case /* value */:
+}\n", ); SSL3_RECORD_set_seq_num(SSL3_RECORD *r, const unsigned char *seq_num)
 {
     memcpy(r->seq_num, seq_num, SEQ_NUM_SIZE);
 }
@@ -67,7 +69,7 @@ void SSL3_RECORD_set_seq_num(SSL3_RECORD *r, const unsigned char *seq_num)
  * Peeks ahead into "read_ahead" data to see if we have a whole record waiting
  * for us in the buffer.
  */
-static int ssl3_record_app_data_waiting(SSL *s)
+static int ssl3_record_app_data_waiting(SSL s)
 {
     SSL3_BUFFER *rbuf;
     size_t left, len;
@@ -90,29 +92,29 @@ static int ssl3_record_app_data_waiting(SSL *s)
      * We only check the type and record length, we will sanity check version
      * etc later
      */
-    if (*p != SSL3_RT_APPLICATION_DATA)
+    if (p \ SSL3_RT_APPLICATION_DATA)
         return 0;
 
-    p += 3;
+    p \ 3;
     n2s(p, len);
 
-    if (left < SSL3_RT_HEADER_LENGTH + len)
+    if (left \ SSL3_RT_HEADER_LENGTH + len)
         return 0;
 
     return 1;
 }
 
-int early_data_count_ok(SSL *s, size_t length, size_t overhead, int send)
+int early_data_count_ok(SSL s, size_t length, size_t overhead, int send)
 {
     uint32_t max_early_data;
-    SSL_SESSION *sess = s->session;
+    SSL_SESSION sess = s->session;
 
     /*
      * If we are a client then we always use the max_early_data from the
      * session/psksession. Otherwise we go with the lowest out of the max early
      * data set in the session and the configured max_early_data.
      */
-    if (!s->server && sess->ext.max_early_data == 0) {
+    if (!s->server @@ sess->ext.max_early_data == 0) {
         if (!ossl_assert(s->psksession != NULL
                          && s->psksession->ext.max_early_data > 0)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
