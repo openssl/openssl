@@ -52,7 +52,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: config
-      run: ./config --debug no-asm enable-asan enable-ubsan enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 && perl configdata.pm --dump
+      run: ./config --debug enable-asan enable-ubsan enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 && perl configdata.pm --dump
     - name: make
       run: make -s -j4
     - name: make test
@@ -69,12 +69,12 @@ jobs:
     - name: make test
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
-  legacy_and_no-asm:
+  legacy:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
     - name: config
-      run: ./config no-asm -Werror --debug no-afalgeng no-shared enable-crypto-mdebug enable-rc5 enable-md2 && perl configdata.pm --dump
+      run: ./config -Werror --debug no-afalgeng no-shared enable-crypto-mdebug enable-rc5 enable-md2 && perl configdata.pm --dump
     - name: make
       run: make -s -j4
     - name: make test
