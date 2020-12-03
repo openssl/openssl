@@ -19,7 +19,8 @@
 /apps/tsget.pl
 /apps/md4.c
 
-# Auto generated headers
+# Auto generated source
+/providers/fips/fipsprov.c
 /crypto/buildinf.h
 /include/crypto/*_conf.h
 /include/openssl/asn1.h

@@ -1,2 +1,19 @@
 SOURCE[../fips]=fipsprov.c self_test.c self_test_kats.c
 INCLUDE[../fips]=../implementations/include ../common/include ../..
+
+DEPEND[fipsprov.c]=\
+        ../implementations/digests/sha1.desc\
+        ../implementations/digests/sha2.desc\
+        ../implementations/digests/sha3.desc\
+        ../implementations/ciphers/aes.desc\
+        ../implementations/ciphers/des.desc\
+        ../implementations/macs/cmac.desc\
+        ../implementations/macs/gmac.desc\
+        ../implementations/macs/hmac.desc\
+        ../implementations/macs/kmac.desc\
+        ../implementations/kdfs/hkdf.desc\
+        ../implementations/kdfs/kbkdf.desc\
+        ../implementations/kdfs/pbkdf2.desc\
+        ../implementations/kdfs/sskdf.desc\
+        ../implementations/kdfs/tls1_prf.desc
+GENERATE[fipsprov.c]=fipsprov.c.in
