@@ -154,9 +154,9 @@ static X509 *lookup_cert_match(X509_STORE_CTX *ctx, X509 *x)
 
 /*-
  * Inform the verify callback of an error.
- * If B<x> is not NULL it is the error cert, otherwise use the chain cert at
- * B<depth>.
- * If B<err> is not X509_V_OK, that's the error value, otherwise leave
+ * If 'x' is not NULL it is the error cert, otherwise use the chain cert at
+ * 'depth'
+ * If 'err' is not X509_V_OK, that's the error value, otherwise leave
  * unchanged (presumably set by the caller).
  *
  * Returns 0 to abort verification with an error, non-zero to continue.
@@ -501,7 +501,7 @@ static int check_chain(X509_STORE_CTX *ctx)
             CHECK_CB(ret == 0, ctx, x, i, X509_V_ERR_EC_KEY_EXPLICIT_PARAMS);
         }
         /*
-         * Do the following set of checks only if strict checking is requrested
+         * Do the following set of checks only if strict checking is requested
          * and not for self-issued (including self-signed) EE (non-CA) certs
          * because RFC 5280 does not apply to them according RFC 6818 section 2.
          */
@@ -576,7 +576,7 @@ static int check_chain(X509_STORE_CTX *ctx)
         /* check_purpose() makes the callback as needed */
         if (purpose > 0 && !check_purpose(ctx, x, purpose, i, must_be_ca))
             return 0;
-        /* Check pathlen */
+        /* Check path length */
         CHECK_CB(i > 1 && x->ex_pathlen != -1
                      && plen > x->ex_pathlen + proxy_path_length,
                  ctx, x, i, X509_V_ERR_PATH_LENGTH_EXCEEDED);
@@ -679,7 +679,7 @@ static int check_name_constraints(X509_STORE_CTX *ctx)
 
             /*
              * Check that the last subject component isn't part of a
-             * multivalued RDN
+             * multi-valued RDN
              */
             if (X509_NAME_ENTRY_set(X509_NAME_get_entry(tmpsubject,
                                                         last_object_loc))
@@ -1026,7 +1026,7 @@ static int check_crl_time(X509_STORE_CTX *ctx, X509_CRL *crl, int notify)
             if (!verify_cb_crl(ctx, X509_V_ERR_ERROR_IN_CRL_NEXT_UPDATE_FIELD))
                 return 0;
         }
-        /* Ignore expiry of base CRL is delta is valid */
+        /* Ignore expiration of base CRL is delta is valid */
         if ((i < 0) && !(ctx->current_crl_score & CRL_SCORE_TIME_DELTA)) {
             if (!notify)
                 return 0;
@@ -1230,7 +1230,7 @@ static int get_crl_score(X509_STORE_CTX *ctx, X509 **pissuer,
     if (!(crl->flags & EXFLAG_CRITICAL))
         crl_score |= CRL_SCORE_NOCRITICAL;
 
-    /* Check expiry */
+    /* Check expiration */
     if (check_crl_time(ctx, crl, 0))
         crl_score |= CRL_SCORE_TIME;
 
@@ -1351,7 +1351,7 @@ static int check_crl_path(X509_STORE_CTX *ctx, X509 *x)
 /*
  * RFC3280 says nothing about the relationship between CRL path and
  * certificate path, which could lead to situations where a certificate could
- * be revoked or validated by a CA not authorised to do so. RFC5280 is more
+ * be revoked or validated by a CA not authorized to do so. RFC5280 is more
  * strict and states that the two paths must end in the same trust anchor,
  * though some discussions remain... until this is resolved we use the
  * RFC5280 version
@@ -1804,8 +1804,8 @@ static int internal_verify(X509_STORE_CTX *ctx)
              * step (n) we must check any given key usage extension in a CA cert
              * when preparing the verification of a certificate issued by it.
              * According to https://tools.ietf.org/html/rfc5280#section-4.2.1.3
-             * we must not verify a certifiate signature if the key usage of the
-             * CA certificate that issued the certificate prohibits signing.
+             * we must not verify a certificate signature if the key usage of
+             * the CA certificate that issued the certificate prohibits signing.
              * In case the 'issuing' certificate is the last in the chain and is
              * not a CA certificate but a 'self-issued' end-entity cert (i.e.,
              * xs == xi && !(xi->ex_flags & EXFLAG_CA)) RFC 5280 does not apply
@@ -2009,7 +2009,7 @@ int X509_get_pubkey_parameters(EVP_PKEY *pkey, STACK_OF(X509) *chain)
     return 1;
 }
 
-/* Make a delta CRL as the diff between two full CRLs */
+/* Make a delta CRL as the difference between two full CRLs */
 
 X509_CRL *X509_CRL_diff(X509_CRL *base, X509_CRL *newer,
                         EVP_PKEY *skey, const EVP_MD *md, unsigned int flags)
@@ -3199,7 +3199,7 @@ static int build_chain(X509_STORE_CTX *ctx)
                 }
 
                 /*
-                 * We've added a new trusted certificate to the chain, recheck
+                 * We've added a new trusted certificate to the chain, re-check
                  * trust.  If not done, and not self-signed look deeper.
                  * Whether or not we're doing "trusted first", we no longer
                  * look for untrusted certificates from the peer's chain.
