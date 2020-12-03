@@ -9,6 +9,9 @@
 
  Changes between 1.1.1h and 1.1.1i [xx XXX xxxx]
 
+  *) Add support for Apple Silicon M1 Macs with the darwin64-arm64-cc target.
+     [Stuart Carnie]
+
   *) The security callback, which can be customised by application code, supports
      the security operation SSL_SECOP_TMP_DH. This is defined to take an EVP_PKEY
      in the "other" parameter. In most places this is what is passed. All these
@@ -45,9 +48,6 @@
      [Tomas Mraz]
 
   *) The Oracle Developer Studio compiler will start reporting deprecated APIs
-
-  *) Add support for Apple Silicon M1 Macs with the darwin64-arm64-cc target.
-     [Stuart Carnie]
 
  Changes between 1.1.1f and 1.1.1g [21 Apr 2020]
 
