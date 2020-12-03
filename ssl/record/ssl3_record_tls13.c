@@ -54,7 +54,7 @@
      * plaintext alerts. If we're reading and ctx != NULL then we allow
      * plaintext alerts at certain points in the handshake. If we've got this
      * far then we have already validated that a plaintext alert is ok here.
-     */
+     *
     if (ctx == NULL || rec->type == SSL3_RT_ALERT) {
         memmove(rec->data, rec->input, rec->length);
         rec->input = rec->data;
