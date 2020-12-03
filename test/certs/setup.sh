@@ -1,4 +1,4 @@
-#! /bin/sh
+#! /bin/bash
 
 # Primary root: root-cert
 # root cert variants: CA:false, key2, DN2
@@ -169,7 +169,7 @@ openssl x509 -in sca-cert.pem -trustout \
 ./mkcert.sh genee server.example ee-key ee-name2 ca-key ca-name2
 ./mkcert.sh genee -p clientAuth server.example ee-key ee-client ca-key ca-cert
 ./mkcert.sh genee server.example ee-key ee-pathlen ca-key ca-cert \
-    -extfile <(echo "basicConstraints=CA:FALSE,pathlen:0")
+    -extfile <(echo "basicConstraints=CA:FALSE,pathlen:0") # bash needed here
 #
 openssl x509 -in ee-cert.pem -trustout \
     -addtrust serverAuth -out ee+serverAuth.pem
@@ -211,7 +211,7 @@ OPENSSL_KEYBITS=8192 \
 ./mkcert.sh genee server.example ee-key-8192 ee-cert-8192 ca-key ca-cert
 
 # self-signed end-entity cert with explicit keyUsage not including KeyCertSign
-openssl req -new -x509 -key ee-key.pem -subj /CN=ee-self-signed -out ee-self-signed.pem -addext keyUsage=digitalSignature -days 36500
+openssl req -new -x509 -key ee-key.pem -subj /CN=ee-self-signed -out ee-self-signed.pem -addext keyUsage=digitalSignature -days 36525
 
 # Proxy certificates, off of ee-client
 # Start with some good ones
