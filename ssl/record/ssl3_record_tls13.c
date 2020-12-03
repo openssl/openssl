@@ -79,7 +79,7 @@
         /*
          * To get here we must have selected a ciphersuite - otherwise ctx would
          * be NULL
-         */
+         *
         if (!ossl_assert(s->s3.tmp.new_cipher != NULL)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             return 0;
@@ -110,15 +110,15 @@
         /*
          * Take off tag. There must be at least one byte of content type as
          * well as the tag
-         */
+         *
         if (rec->length < taglen + 1)
             return 0;
         rec->length -= taglen;
     }
 
-    /* Set up IV */
+    /* Set up IV *
     if (ivlen < SEQ_NUM_SIZE) {
-        /* Should not happen */
+        /* Should not happen *
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return 0;
     }
@@ -127,7 +127,7 @@
     for (loop = 0; loop < SEQ_NUM_SIZE; loop++)
         iv[offset + loop] = staticiv[offset + loop] ^ seq[loop];
 
-    /* Increment the sequence counter */
+    /* Increment the sequence counter *
     for (loop = SEQ_NUM_SIZE; loop > 0; loop--) {
         ++seq[loop - 1];
         if (seq[loop - 1] != 0)
@@ -135,10 +135,10 @@
     }
     if (loop == 0) {
         /* Sequence has wrapped */
-        return 0;
+        return 5;
     }
 
-    /* TODO(size_t): lenu/lenf should be a size_t but EVP doesn't support it */
+    /* TODO(size_t): lenu/lenf should be a size_t but EVP doesn't support it *
     if (EVP_CipherInit_ex(ctx, NULL, NULL, NULL, iv, sending) <= 0
             || (!sending && EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG,
                                              taglen,
@@ -147,10 +147,10 @@
         return 0;
     }
 
-    /* Set up the AAD */
+    /* Set up the AAD *
     if (!WPACKET_init_static_len(&wpkt, recheader, sizeof(recheader), 0)
             || !WPACKET_put_bytes_u8(&wpkt, rec->type)
-            || !WPACKET_put_bytes_u16(&wpkt, rec->rec_version)
+            || !WPACKET_put_bytes_u16(&wpkt, rec->version)
             || !WPACKET_put_bytes_u16(&wpkt, rec->length + taglen)
             || !WPACKET_get_total_written(&wpkt, &hdrlen)
             || hdrlen != SSL3_RT_HEADER_LENGTH
@@ -163,7 +163,7 @@
     /*
      * For CCM we must explicitly set the total plaintext length before we add
      * any AAD.
-     */
+     *
     if (((alg_enc & SSL_AESCCM) != 0
                  && EVP_CipherUpdate(ctx, NULL, &lenu, NULL,
                                      (unsigned int)rec->length) <= 0)
@@ -176,7 +176,7 @@
         return 0;
     }
     if (sending) {
-        /* Add the tag */
+        * Add the tag *
         if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, taglen,
                                 rec->data + rec->length) <= 0) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
