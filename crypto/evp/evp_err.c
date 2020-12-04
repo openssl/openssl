@@ -176,6 +176,8 @@ static const ERR_STRING_DATA EVP_str_reasons[] = {
     "unsupported key derivation function"},
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_UNSUPPORTED_KEY_SIZE),
     "unsupported key size"},
+    {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_UNSUPPORTED_KEY_TYPE),
+    "unsupported key type"},
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_UNSUPPORTED_NUMBER_OF_ROUNDS),
     "unsupported number of rounds"},
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_UNSUPPORTED_PRF), "unsupported prf"},
