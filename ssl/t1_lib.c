@@ -3153,14 +3153,10 @@ static const SIGALG_LOOKUP *find_sig_alg(SSL *s, X509 *x, EVP_PKEY *pkey)
                                  : s->cert->pkeys[lu->sig_idx].privatekey;
 
         if (lu->sig == EVP_PKEY_EC) {
-#ifndef OPENSSL_NO_EC
             if (curve == -1)
                 curve = ssl_get_EC_curve_nid(tmppkey);
             if (lu->curve != NID_undef && curve != lu->curve)
                 continue;
-#else
-            continue;
-#endif
         } else if (lu->sig == EVP_PKEY_RSA_PSS) {
             /* validate that key is large enough for the signature algorithm */
             if (!rsa_pss_check_min_key_size(s->ctx, tmppkey, lu))
@@ -3213,14 +3209,12 @@ int tls_choose_sigalg(SSL *s, int fatalerrs)
         if (SSL_USE_SIGALGS(s)) {
             size_t i;
             if (s->s3.tmp.peer_sigalgs != NULL) {
-#ifndef OPENSSL_NO_EC
                 int curve = -1;
 
                 /* For Suite B need to match signature algorithm to curve */
                 if (tls1_suiteb(s))
                     curve = ssl_get_EC_curve_nid(s->cert->pkeys[SSL_PKEY_ECC]
                                                  .privatekey);
-#endif
 
                 /*
                  * Find highest preference signature algorithm matching
@@ -3249,9 +3243,7 @@ int tls_choose_sigalg(SSL *s, int fatalerrs)
                         if (!rsa_pss_check_min_key_size(s->ctx, pkey, lu))
                             continue;
                     }
-#ifndef OPENSSL_NO_EC
                     if (curve == -1 || lu->curve == curve)
-#endif
                         break;
                 }
 #ifndef OPENSSL_NO_GOST
