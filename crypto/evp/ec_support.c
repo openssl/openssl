@@ -145,16 +145,6 @@ int ec_curve_name2nid(const char *name)
         if ((nid = ec_curve_nist2nid_int(name)) != NID_undef)
             return nid;
 
-#ifndef FIPS_MODULE
-        /*
-         * TODO(3.0) Figure out if we can use other names than the NIST names
-         * ("B-163", "K-163" & "P-192") in the FIPS module, or if other names
-         * are allowed as well as long as they lead to the same curve data.
-         * If only the NIST names are allowed in the FIPS module, we should
-         * move '#endif' to just before 'return NID_undef'.
-         */
-#endif
-
         for (i = 0; i < OSSL_NELEM(curve_list); i++) {
             if (strcasecmp(curve_list[i].name, name) == 0)
                 return curve_list[i].nid;
