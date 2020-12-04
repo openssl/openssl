@@ -118,14 +118,16 @@ int i2d_DSA_SIG(const DSA_SIG *sig, unsigned char **ppout)
 
 int DSA_size(const DSA *dsa)
 {
-    int ret;
+    int ret = -1;
     DSA_SIG sig;
 
-    sig.r = sig.s = dsa->params.q;
-    ret = i2d_DSA_SIG(&sig, NULL);
+    if (dsa->params.q != NULL) {
+        sig.r = sig.s = dsa->params.q;
+        ret = i2d_DSA_SIG(&sig, NULL);
 
-    if (ret < 0)
-        ret = 0;
+        if (ret < 0)
+            ret = 0;
+    }
     return ret;
 }
 
