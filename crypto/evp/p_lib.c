@@ -55,24 +55,26 @@ static void evp_pkey_free_it(EVP_PKEY *key);
 
 int EVP_PKEY_bits(const EVP_PKEY *pkey)
 {
+    int size = 0;
+
     if (pkey != NULL) {
-        if (pkey->ameth == NULL)
-            return pkey->cache.bits;
-        else if (pkey->ameth->pkey_bits)
-            return pkey->ameth->pkey_bits(pkey);
+        size = pkey->cache.bits;
+        if (pkey->ameth != NULL && pkey->ameth->pkey_bits != NULL)
+            size = pkey->ameth->pkey_bits(pkey);
     }
-    return 0;
+    return size < 0 ? 0 : size;
 }
 
 int EVP_PKEY_security_bits(const EVP_PKEY *pkey)
 {
-    if (pkey == NULL)
-        return 0;
-    if (pkey->ameth == NULL)
-        return pkey->cache.security_bits;
-    if (pkey->ameth->pkey_security_bits == NULL)
-        return -2;
-    return pkey->ameth->pkey_security_bits(pkey);
+    int size = 0;
+
+    if (pkey != NULL) {
+        size = pkey->cache.security_bits;
+        if (pkey->ameth != NULL && pkey->ameth->pkey_security_bits != NULL)
+            size = pkey->ameth->pkey_security_bits(pkey);
+    }
+    return size < 0 ? 0 : size;
 }
 
 int EVP_PKEY_save_parameters(EVP_PKEY *pkey, int mode)
@@ -1656,7 +1658,7 @@ int EVP_PKEY_size(const EVP_PKEY *pkey)
             size = pkey->ameth->pkey_size(pkey);
 #endif
     }
-    return size;
+    return size < 0 ? 0 : size;
 }
 
 void *evp_pkey_export_to_provider(EVP_PKEY *pk, OSSL_LIB_CTX *libctx,
