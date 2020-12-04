@@ -74,9 +74,6 @@ int EVP_PKEY_CTX_get0_ecdh_kdf_ukm(EVP_PKEY_CTX *ctx, unsigned char **ukm);
 #   include <openssl/bn.h>
 #  endif
 #  include <openssl/ecerr.h>
-#  ifdef  __cplusplus
-extern "C" {
-#  endif
 
 #  ifndef OPENSSL_ECC_MAX_FIELD_BITS
 #   define OPENSSL_ECC_MAX_FIELD_BITS 661
