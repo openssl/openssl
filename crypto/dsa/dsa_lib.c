@@ -335,7 +335,9 @@ int DSA_security_bits(const DSA *d)
 
 int DSA_bits(const DSA *dsa)
 {
-    return BN_num_bits(dsa->params.p);
+    if (dsa->params.p != NULL)
+        return BN_num_bits(dsa->params.p);
+    return -1;
 }
 
 FFC_PARAMS *dsa_get0_params(DSA *dsa)
