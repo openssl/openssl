@@ -1224,6 +1224,7 @@ int EVP_PKEY_get_group_name(const EVP_PKEY *pkey, char *gname, size_t gname_sz,
         const char *name = NULL;
 
         switch (EVP_PKEY_base_id(pkey)) {
+#ifndef OPENSSL_NO_EC
         case EVP_PKEY_EC:
             {
                 EC_KEY *ec = EVP_PKEY_get0_EC_KEY(pkey);
@@ -1233,6 +1234,8 @@ int EVP_PKEY_get_group_name(const EVP_PKEY *pkey, char *gname, size_t gname_sz,
                     name = ec_curve_nid2name(nid);
             }
             break;
+#endif
+#ifndef OPENSSL_NO_DH
         case EVP_PKEY_DH:
             {
                 DH *dh = EVP_PKEY_get0_DH(pkey);
@@ -1241,6 +1244,9 @@ int EVP_PKEY_get_group_name(const EVP_PKEY *pkey, char *gname, size_t gname_sz,
                 if (uid != NID_undef)
                     name = ossl_ffc_named_group_from_uid(uid);
             }
+            break;
+#endif
+        default:
             break;
         }
 
