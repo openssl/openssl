@@ -2623,6 +2623,7 @@ EVP_R_UNSUPPORTED_KEYLENGTH:123:unsupported keylength
 EVP_R_UNSUPPORTED_KEY_DERIVATION_FUNCTION:124:\
 	unsupported key derivation function
 EVP_R_UNSUPPORTED_KEY_SIZE:108:unsupported key size
+EVP_R_UNSUPPORTED_KEY_TYPE:224:unsupported key type
 EVP_R_UNSUPPORTED_NUMBER_OF_ROUNDS:135:unsupported number of rounds
 EVP_R_UNSUPPORTED_PRF:125:unsupported prf
 EVP_R_UNSUPPORTED_PRIVATE_KEY_ALGORITHM:118:unsupported private key algorithm
