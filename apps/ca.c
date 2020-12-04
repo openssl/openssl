@@ -1650,12 +1650,6 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
     if ((ret = X509_new_ex(app_get0_libctx(), app_get0_propq())) == NULL)
         goto end;
 
-#ifdef X509_V3
-    /* Make it an X509 v3 certificate. */
-    if (!X509_set_version(ret, 2))
-        goto end;
-#endif
-
     if (BN_to_ASN1_INTEGER(serial, X509_get_serialNumber(ret)) == NULL)
         goto end;
     if (selfsign) {
@@ -1737,15 +1731,6 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
     if (!copy_extensions(ret, req, ext_copy)) {
         BIO_printf(bio_err, "ERROR: adding extensions from request\n");
         goto end;
-    }
-
-    {
-        const STACK_OF(X509_EXTENSION) *exts = X509_get0_extensions(ret);
-
-        if (exts != NULL && sk_X509_EXTENSION_num(exts) > 0)
-            /* Make it an X509 v3 certificate. */
-            if (!X509_set_version(ret, 2))
-                goto end;
     }
 
     if (verbose)
