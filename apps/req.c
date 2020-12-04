@@ -744,9 +744,6 @@ int req_main(int argc, char **argv)
                 goto end;
 
             /* Set version to V3 */
-            if ((extensions != NULL || addext_conf != NULL)
-                && !X509_set_version(x509ss, 2))
-                goto end;
             if (serial != NULL) {
                 if (!X509_set_serialNumber(x509ss, serial))
                     goto end;
@@ -1708,14 +1705,25 @@ static int do_sign_init(EVP_MD_CTX *ctx, EVP_PKEY *pkey,
         && do_pkey_ctx_init(pkctx, sigopts);
 }
 
-int do_X509_sign(X509 *x, EVP_PKEY *pkey, const EVP_MD *md,
+/* Ensure RFC 5280 compliance and then sign the certificate info */
+int do_X509_sign(X509 *cert, EVP_PKEY *pkey, const EVP_MD *md,
                  STACK_OF(OPENSSL_STRING) *sigopts)
 {
-    int rv = 0;
+    const STACK_OF(X509_EXTENSION) *exts = X509_get0_extensions(cert);
     EVP_MD_CTX *mctx = EVP_MD_CTX_new();
+    int rv = 0;
 
-    if (do_sign_init(mctx, pkey, md, sigopts) > 0)
-        rv = (X509_sign_ctx(x, mctx) > 0);
+    if (sk_X509_EXTENSION_num(exts /* may be NULL */) > 0) {
+        /* Prevent X509_V_ERR_EXTENSIONS_REQUIRE_VERSION_3 */
+        if (!X509_set_version(cert, 2)) /* Make sure cert is X509 v3 */
+            goto end;
+
+        /* TODO any further measures for ensuring default RFC 5280 compliance */
+    }
+
+    if (mctx != NULL && do_sign_init(mctx, pkey, md, sigopts) > 0)
+        rv = (X509_sign_ctx(cert, mctx) > 0);
+ end:
     EVP_MD_CTX_free(mctx);
     return rv;
 }

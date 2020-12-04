@@ -1034,7 +1034,7 @@ static int x509_certify(X509_STORE *ctx, const char *CAfile, const EVP_MD *diges
 
     if (conf != NULL) {
         X509V3_CTX ctx2;
-        X509_set_version(x, 2); /* version 3 certificate */
+
         X509V3_set_ctx(&ctx2, xca, x, NULL, NULL, 0);
         X509V3_set_nconf(&ctx2, conf);
         if (!X509V3_EXT_add_nconf(conf, &ctx2, section, x))
@@ -1105,7 +1105,7 @@ static int sign(X509 *x, EVP_PKEY *pkey, EVP_PKEY *fkey,
     }
     if (conf != NULL) {
         X509V3_CTX ctx;
-        X509_set_version(x, 2); /* version 3 certificate */
+
         X509V3_set_ctx(&ctx, x, x, NULL, NULL, 0);
         X509V3_set_nconf(&ctx, conf);
         if (!X509V3_EXT_add_nconf(conf, &ctx, section, x))
