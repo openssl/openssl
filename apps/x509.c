@@ -33,7 +33,7 @@
 #define DEF_DAYS        30
 
 static int callb(int ok, X509_STORE_CTX *ctx);
-static int sign(X509 *x, EVP_PKEY *pkey, EVP_PKEY *fkey,
+static int sign(X509 *x, EVP_PKEY *pkey, X509 *issuer,
                 STACK_OF(OPENSSL_STRING) *sigopts,
                 int days, int clrext,
                 const EVP_MD *digest, CONF *conf, const char *section,
@@ -827,10 +827,13 @@ int x509_main(int argc, char **argv)
                     if (Upkey == NULL)
                         goto end;
                 }
-
-                if (!sign(x, Upkey, fkey, sigopts, days, clrext, digest,
-                          extconf, extsect, preserve_dates))
+                if (fkey == NULL && !X509_set_pubkey(x, Upkey))
                     goto end;
+                if (!sign(x, Upkey, x /* self-issuing */, sigopts, days, clrext,
+                          digest, extconf, extsect, preserve_dates)) {
+                    ERR_print_errors(bio_err);
+                    goto end;
+                }
             } else if (CA_flag == i) {
                 BIO_printf(bio_err, "Getting CA Private Key\n");
                 if (CAkeyfile != NULL) {
@@ -1019,30 +1022,13 @@ static int x509_certify(X509_STORE *ctx, const char *CAfile, const EVP_MD *diges
         goto end;
     }
 
-    if (!X509_set_issuer_name(x, X509_get_subject_name(xca)))
-        goto end;
     if (!X509_set_serialNumber(x, bs))
         goto end;
 
-    if (!preserve_dates && !set_cert_times(x, NULL, NULL, days))
+    if (!sign(x, pkey, xca, sigopts, days, clrext, digest,
+              conf, section, preserve_dates))
         goto end;
 
-    if (clrext) {
-        while (X509_get_ext_count(x) > 0)
-            X509_delete_ext(x, 0);
-    }
-
-    if (conf != NULL) {
-        X509V3_CTX ctx2;
-
-        X509V3_set_ctx(&ctx2, xca, x, NULL, NULL, 0);
-        X509V3_set_nconf(&ctx2, conf);
-        if (!X509V3_EXT_add_nconf(conf, &ctx2, section, x))
-            goto end;
-    }
-
-    if (!do_X509_sign(x, pkey, digest, sigopts))
-        goto end;
     ret = 1;
  end:
     X509_STORE_CTX_free(xsc);
@@ -1086,19 +1072,18 @@ static int callb(int ok, X509_STORE_CTX *ctx)
     }
 }
 
-/* self-issue; self-sign unless a forced public key (fkey) is given */
-static int sign(X509 *x, EVP_PKEY *pkey, EVP_PKEY *fkey,
+static int sign(X509 *x, EVP_PKEY *pkey, X509 *issuer,
                 STACK_OF(OPENSSL_STRING) *sigopts,
                 int days, int clrext,
                 const EVP_MD *digest, CONF *conf, const char *section,
                 int preserve_dates)
 {
-    if (!X509_set_issuer_name(x, X509_get_subject_name(x)))
-        goto err;
+    if (!X509_set_issuer_name(x, X509_get_subject_name(issuer)))
+        return 0;
+
     if (!preserve_dates && !set_cert_times(x, NULL, NULL, days))
-        goto err;
-    if (fkey == NULL && !X509_set_pubkey(x, pkey))
-        goto err;
+        return 0;
+
     if (clrext) {
         while (X509_get_ext_count(x) > 0)
             X509_delete_ext(x, 0);
@@ -1106,17 +1091,12 @@ static int sign(X509 *x, EVP_PKEY *pkey, EVP_PKEY *fkey,
     if (conf != NULL) {
         X509V3_CTX ctx;
 
-        X509V3_set_ctx(&ctx, x, x, NULL, NULL, 0);
+        X509V3_set_ctx(&ctx, issuer, x, NULL, NULL, 0);
         X509V3_set_nconf(&ctx, conf);
         if (!X509V3_EXT_add_nconf(conf, &ctx, section, x))
-            goto err;
+            return 0;
     }
-    if (!do_X509_sign(x, pkey, digest, sigopts))
-        goto err;
-    return 1;
- err:
-    ERR_print_errors(bio_err);
-    return 0;
+    return do_X509_sign(x, pkey, digest, sigopts);
 }
 
 static int purpose_print(BIO *bio, X509 *cert, X509_PURPOSE *pt)
