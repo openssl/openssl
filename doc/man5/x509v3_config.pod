@@ -164,11 +164,14 @@ Examples:
 
 =head2 Subject Key Identifier
 
-This is a string extension with one of two legal values. If it is the word
-B<hash>, then OpenSSL will follow the process in RFC 5280 to calculate the
-hash value.
-Otherwise, the value should be a hex string to output directly, however, this
-is strongly discouraged.
+This SKID extension is a string with one of two legal values.
+If it is the word B<hash>, then OpenSSL will follow
+the process specified in RFC 5280 section 4.2.1.2. (1):
+The keyIdentifier is composed of the 160-bit SHA-1 hash of the value of the BIT
+STRING subjectPublicKey (excluding the tag, length, and number of unused bits).
+
+Otherwise, the value must be a hex string (possibly with C<:> separating bytes)
+to output directly, however, this is strongly discouraged.
 
 Example:
 
@@ -176,16 +179,19 @@ Example:
 
 =head2 Authority Key Identifier
 
-This extension has two options, B<keyid> and B<issuer>. Either or both
-can have the value B<always>, indicated by putting a colon between
-the option and its value.
+The AKID extension specification may have the value B<keyid> or B<issuer>
+or both of them, separated by C<,>.
+Either or both can have the option B<always>,
+indicated by putting a colon C<:> between the value and this opton.
 
-If B<keyid> is present, than an attempt is made to copy the subject key
-identifier from the parent certificate. If the value B<always> is present,
-then an error can be returned if the option fails.  If B<issuer> is present,
-an attempt is made to copy the issuer and serial number from the parent
-certificate. This is done if the B<keyid> option fails, or if B<issuer>
-has B<always> specified.
+If B<keyid> is present, an attempt is made to copy the subject key identifier
+(SKID) from the issuer certificate, which is the default behavior.
+If this fails and the option B<always> is present, an error is returned.
+For self-issued certs the specification for the SKID must be given before.
+
+If B<issuer> is present and no B<keyid> has been added
+or it has the option B<always> specified, then
+the issuer DN and serial number are copied from the issuer certificate.
 
 Examples:
 
