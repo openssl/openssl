@@ -3127,9 +3127,7 @@ static const SIGALG_LOOKUP *find_sig_alg(SSL *s, X509 *x, EVP_PKEY *pkey)
 {
     const SIGALG_LOOKUP *lu = NULL;
     size_t i;
-#ifndef OPENSSL_NO_EC
     int curve = -1;
-#endif
     EVP_PKEY *tmppkey;
 
     /* Look for a shared sigalgs matching possible certificates */

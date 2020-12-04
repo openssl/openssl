@@ -12,14 +12,18 @@ EVP_PKEY_get_octet_string_param
  #include <openssl/evp.h>
 
  const OSSL_PARAM *EVP_PKEY_gettable_params(EVP_PKEY *pkey);
- int EVP_PKEY_get_int_param(EVP_PKEY *pkey, const char *key_name, int *out);
- int EVP_PKEY_get_size_t_param(EVP_PKEY *pkey, const char *key_name, size_t *out);
- int EVP_PKEY_get_bn_param(EVP_PKEY *pkey, const char *key_name, BIGNUM **bn);
- int EVP_PKEY_get_utf8_string_param(EVP_PKEY *pkey, const char *key_name,
-                                    char *str, size_t max_buf_sz, size_t *out_sz);
- int EVP_PKEY_get_octet_string_param(EVP_PKEY *pkey, const char *key_name,
-                                    unsigned char *buf, size_t max_buf_sz,
+ int EVP_PKEY_get_int_param(const EVP_PKEY *pkey, const char *key_name,
+                            int *out);
+ int EVP_PKEY_get_size_t_param(const EVP_PKEY *pkey, const char *key_name,
+                               size_t *out);
+ int EVP_PKEY_get_bn_param(const EVP_PKEY *pkey, const char *key_name,
+                           BIGNUM **bn);
+ int EVP_PKEY_get_utf8_string_param(const EVP_PKEY *pkey, const char *key_name,
+                                    char *str, size_t max_buf_sz,
                                     size_t *out_sz);
+ int EVP_PKEY_get_octet_string_param(const EVP_PKEY *pkey, const char *key_name,
+                                     unsigned char *buf, size_t max_buf_sz,
+                                     size_t *out_sz);
 
 =head1 DESCRIPTION
 

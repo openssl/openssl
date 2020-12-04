@@ -1963,7 +1963,7 @@ int evp_pkey_downgrade(EVP_PKEY *pk)
 }
 #endif  /* FIPS_MODULE */
 
-const OSSL_PARAM *EVP_PKEY_gettable_params(EVP_PKEY *pkey)
+const OSSL_PARAM *EVP_PKEY_gettable_params(const EVP_PKEY *pkey)
 {
     if (pkey == NULL
         || pkey->keymgmt == NULL
@@ -1972,7 +1972,8 @@ const OSSL_PARAM *EVP_PKEY_gettable_params(EVP_PKEY *pkey)
     return EVP_KEYMGMT_gettable_params(pkey->keymgmt);
 }
 
-int EVP_PKEY_get_bn_param(EVP_PKEY *pkey, const char *key_name, BIGNUM **bn)
+int EVP_PKEY_get_bn_param(const EVP_PKEY *pkey, const char *key_name,
+                          BIGNUM **bn)
 {
     int ret = 0;
     OSSL_PARAM params[2];
@@ -2016,7 +2017,7 @@ err:
     return ret;
 }
 
-int EVP_PKEY_get_octet_string_param(EVP_PKEY *pkey, const char *key_name,
+int EVP_PKEY_get_octet_string_param(const EVP_PKEY *pkey, const char *key_name,
                                     unsigned char *buf, size_t max_buf_sz,
                                     size_t *out_sz)
 {
@@ -2038,7 +2039,7 @@ int EVP_PKEY_get_octet_string_param(EVP_PKEY *pkey, const char *key_name,
     return 1;
 }
 
-int EVP_PKEY_get_utf8_string_param(EVP_PKEY *pkey, const char *key_name,
+int EVP_PKEY_get_utf8_string_param(const EVP_PKEY *pkey, const char *key_name,
                                     char *str, size_t max_buf_sz,
                                     size_t *out_sz)
 {
@@ -2060,7 +2061,8 @@ int EVP_PKEY_get_utf8_string_param(EVP_PKEY *pkey, const char *key_name,
     return 1;
 }
 
-int EVP_PKEY_get_int_param(EVP_PKEY *pkey, const char *key_name, int *out)
+int EVP_PKEY_get_int_param(const EVP_PKEY *pkey, const char *key_name,
+                           int *out)
 {
     OSSL_PARAM params[2];
 
@@ -2078,7 +2080,8 @@ int EVP_PKEY_get_int_param(EVP_PKEY *pkey, const char *key_name, int *out)
     return 1;
 }
 
-int EVP_PKEY_get_size_t_param(EVP_PKEY *pkey, const char *key_name, size_t *out)
+int EVP_PKEY_get_size_t_param(const EVP_PKEY *pkey, const char *key_name,
+                              size_t *out)
 {
     OSSL_PARAM params[2];
 
