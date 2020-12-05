@@ -13,11 +13,13 @@
 
 #ifndef OPENSSL_NO_OCSP
 
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 int OCSP_REQ_CTX_set1_req(OCSP_REQ_CTX *rctx, const OCSP_REQUEST *req)
 {
     return OCSP_REQ_CTX_i2d(rctx, "application/ocsp-request",
                             ASN1_ITEM_rptr(OCSP_REQUEST), (ASN1_VALUE *)req);
 }
+# endif
 
 OCSP_REQ_CTX *OCSP_sendreq_new(BIO *io, const char *path, OCSP_REQUEST *req,
                                int maxline)

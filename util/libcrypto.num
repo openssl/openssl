@@ -3334,7 +3334,7 @@ EVP_PKEY_meth_get_verify                3403	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_
 CRYPTO_128_wrap                         3404	3_0_0	EXIST::FUNCTION:
 X509_STORE_set_lookup_crls              3405	3_0_0	EXIST::FUNCTION:
 EVP_CIPHER_meth_get_ctrl                3406	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
-OCSP_REQ_CTX_set1_req                   3407	3_0_0	EXIST::FUNCTION:OCSP
+OCSP_REQ_CTX_set1_req                   3407	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,OCSP
 CONF_imodule_get_usr_data               3408	3_0_0	EXIST::FUNCTION:
 CRYPTO_new_ex_data                      3409	3_0_0	EXIST::FUNCTION:
 PEM_read_PKCS8_PRIV_KEY_INFO            3410	3_0_0	EXIST::FUNCTION:STDIO
