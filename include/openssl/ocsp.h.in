@@ -198,8 +198,10 @@ OCSP_REQ_CTX *OCSP_sendreq_new(BIO *io, const char *path, OCSP_REQUEST *req,
                                int maxline);
 int OCSP_sendreq_nbio(OCSP_RESPONSE **presp, OCSP_REQ_CTX *rctx);
 
-/* TODO: remove this (documented but) meanwhile obsolete function? */
+#  ifndef OPENSSL_NO_DEPRECATED_3_0
+OSSL_DEPRECATEDIN_3_0
 int OCSP_REQ_CTX_set1_req(OCSP_REQ_CTX *rctx, const OCSP_REQUEST *req);
+#  endif
 
 OCSP_CERTID *OCSP_cert_to_id(const EVP_MD *dgst, const X509 *subject,
                              const X509 *issuer);
