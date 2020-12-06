@@ -127,8 +127,8 @@ Native builds using Embarcadero C++Builder
 =========================================
 
 This toolchain (a descendant of Turbo/Borland C++) is an alternative to MSVC.
-OpenSSL currently includes an experimental 32-bit static-build configuration
-targeting the Clang-based compiler (bcc32c.exe) in v10.3.3 Community Edition.
+OpenSSL currently includes an experimental 32-bit configuration targeting the
+Clang-based compiler (bcc32c.exe) in v10.3.3 Community Edition.
 <https://www.embarcadero.com/products/cbuilder/starter>
 
  1. Install Perl.
@@ -140,12 +140,14 @@ targeting the Clang-based compiler (bcc32c.exe) in v10.3.3 Community Edition.
 
  4. make -N
 
- 5. Build your program against this OpenSSL:
+ 5. make -N test
+
+ 6. Build your program against this OpenSSL:
     * Set your include search path to the "include" subdirectory of OpenSSL.
     * Set your library search path to the OpenSSL source directory.
 
-Note that this is very experimental. Support for 64-bit, dynamic library, and
-other Configure options is still pending.
+Note that this is very experimental. Support for 64-bit and other Configure
+options is still pending.
 
 Native builds using MinGW
 =========================

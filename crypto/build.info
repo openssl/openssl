@@ -116,6 +116,6 @@ INCLUDE[armv4cpuid.o]=.
 GENERATE[s390xcpuid.S]=s390xcpuid.pl
 INCLUDE[s390xcpuid.o]=.
 
-IF[{- $config{target} =~ /^(?:Cygwin|mingw|VC-)/ -}]
+IF[{- $config{target} =~ /^(?:Cygwin|mingw|VC-|BC-)/ -}]
   SHARED_SOURCE[../libcrypto]=dllmain.c
 ENDIF
