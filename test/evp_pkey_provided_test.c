@@ -22,6 +22,11 @@
 
 static char *datadir = NULL;
 
+/*
+ * Do not change the order of the following defines unless you also
+ * update the for loop bounds used inside test_print_key_using_encoder() and
+ * test_print_key_using_encoder_public().
+ */
 #define PRIV_TEXT    0
 #define PRIV_PEM     1
 #define PRIV_DER     2
@@ -266,7 +271,7 @@ static int test_print_key_using_encoder(const char *alg, const EVP_PKEY *pk)
     int i;
     int ret = 1;
 
-    for (i = 0; i < 6; i++)
+    for (i = PRIV_TEXT; i <= PUB_DER; i++)
         ret = ret && test_print_key_type_using_encoder(alg, i, pk);
 
     return ret;
@@ -279,7 +284,7 @@ static int test_print_key_using_encoder_public(const char *alg,
     int i;
     int ret = 1;
 
-    for (i = PUB_TEXT; i < 6; i++)
+    for (i = PUB_TEXT; i <= PUB_DER; i++)
         ret = ret && test_print_key_type_using_encoder(alg, i, pk);
 
     return ret;
