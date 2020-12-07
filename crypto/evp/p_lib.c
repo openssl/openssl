@@ -1251,7 +1251,7 @@ int EVP_PKEY_get_group_name(const EVP_PKEY *pkey, char *gname, size_t gname_sz,
         }
 
         if (gname_len != NULL)
-            *gname_len = strlen(name);
+            *gname_len = (name == NULL ? 0 : strlen(name));
         if (name != NULL) {
             if (gname != NULL)
                 OPENSSL_strlcpy(gname, name, gname_sz);
