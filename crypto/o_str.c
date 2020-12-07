@@ -187,7 +187,12 @@ unsigned char *openssl_hexstr2buf_sep(const char *str, long *buflen,
     unsigned char *buf;
     size_t buf_n, tmp_buflen;
 
-    buf_n = strlen(str) >> 1;
+    buf_n = strlen(str);
+    if (buf_n <= 1) {
+        ERR_raise(ERR_LIB_CRYPTO, CRYPTO_R_HEX_STRING_TOO_SHORT);
+        return NULL;
+    }
+    buf_n /= 2;
     if ((buf = OPENSSL_malloc(buf_n)) == NULL) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
         return NULL;
