@@ -7,8 +7,9 @@ x509v3_config - X509 V3 certificate extension configuration format
 =head1 DESCRIPTION
 
 Several OpenSSL commands can add extensions to a certificate or
-certificate request based on the contents of a configuration file.
-The syntax of this file is described in L<config(5)>.
+certificate request based on the contents of a configuration file
+and CLI options such as B<-addext>.
+The syntax of configuration files is described in L<config(5)>.
 The commands typically have an option to specify the name of the configuration
 file, and a section within that file; see the documentation of the
 individual command for details.
@@ -21,6 +22,9 @@ Each entry in the extension section takes the form:
  name = [critical, ]value(s)
 
 If B<critical> is present then the extension will be marked as critical.
+
+If multiple entries are processed for the same extension name,
+later entries override earlier ones with the same name.
 
 The format of B<values> depends on the value of B<name>, many have a
 type-value pairing where the type and value are separated by a colon.

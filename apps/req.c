@@ -525,7 +525,7 @@ int req_main(int argc, char **argv)
         X509V3_set_nconf(&ctx, req_conf);
         if (!X509V3_EXT_add_nconf(req_conf, &ctx, extensions, NULL)) {
             BIO_printf(bio_err,
-                       "Error loading extension section %s\n", extensions);
+                       "Error checking x509 extension section %s\n", extensions);
             goto end;
         }
     }
@@ -535,7 +535,7 @@ int req_main(int argc, char **argv)
         X509V3_set_ctx_test(&ctx);
         X509V3_set_nconf(&ctx, addext_conf);
         if (!X509V3_EXT_add_nconf(addext_conf, &ctx, "default", NULL)) {
-            BIO_printf(bio_err, "Error loading extensions defined using -addext\n");
+            BIO_printf(bio_err, "Error checking extensions defined using -addext\n");
             goto end;
         }
     }
@@ -583,7 +583,7 @@ int req_main(int argc, char **argv)
         X509V3_set_nconf(&ctx, req_conf);
         if (!X509V3_EXT_add_nconf(req_conf, &ctx, req_exts, NULL)) {
             BIO_printf(bio_err,
-                       "Error loading request extension section %s\n",
+                       "Error checking request extension section %s\n",
                        req_exts);
             goto end;
         }
@@ -769,21 +769,21 @@ int req_main(int argc, char **argv)
 
             /* Set up V3 context struct */
 
-            X509V3_set_ctx(&ext_ctx, x509ss, x509ss, NULL, NULL, 0);
+            X509V3_set_ctx(&ext_ctx, x509ss, x509ss, NULL, NULL, X509V3_CTX_REPLACE);
             X509V3_set_nconf(&ext_ctx, req_conf);
 
             /* Add extensions */
             if (extensions != NULL && !X509V3_EXT_add_nconf(req_conf,
                                                             &ext_ctx, extensions,
                                                             x509ss)) {
-                BIO_printf(bio_err, "Error loading extension section %s\n",
+                BIO_printf(bio_err, "Error adding x509 extensions from section %s\n",
                            extensions);
                 goto end;
             }
             if (addext_conf != NULL
                 && !X509V3_EXT_add_nconf(addext_conf, &ext_ctx, "default",
                                          x509ss)) {
-                BIO_printf(bio_err, "Error loading extensions defined via -addext\n");
+                BIO_printf(bio_err, "Error adding extensions defined via -addext\n");
                 goto end;
             }
 
@@ -813,14 +813,14 @@ int req_main(int argc, char **argv)
             if (req_exts != NULL
                 && !X509V3_EXT_REQ_add_nconf(req_conf, &ext_ctx,
                                              req_exts, req)) {
-                BIO_printf(bio_err, "Error loading extension section %s\n",
+                BIO_printf(bio_err, "Error adding request extensions from section %s\n",
                            req_exts);
                 goto end;
             }
             if (addext_conf != NULL
                 && !X509V3_EXT_REQ_add_nconf(addext_conf, &ext_ctx, "default",
                                              req)) {
-                BIO_printf(bio_err, "Error loading extensions defined via -addext\n");
+                BIO_printf(bio_err, "Error adding extensions defined via -addext\n");
                 goto end;
             }
             i = do_X509_REQ_sign(req, pkey, digest, sigopts);
