@@ -2,6 +2,7 @@
 
 =head1 NAME
 
+EVP_PKEY,
 EVP_PKEY_new,
 EVP_PKEY_up_ref,
 EVP_PKEY_free,
@@ -19,6 +20,8 @@ EVP_PKEY_get_raw_public_key
 =head1 SYNOPSIS
 
  #include <openssl/evp.h>
+
+ typedef evp_pkey_st EVP_PKEY;
 
  EVP_PKEY *EVP_PKEY_new(void);
  int EVP_PKEY_up_ref(EVP_PKEY *key);
@@ -53,6 +56,25 @@ EVP_PKEY_get_raw_public_key
 
 =head1 DESCRIPTION
 
+B<EVP_PKEY> is a generic structure to hold diverse types of asymmetric keys
+(also known as "key pairs"), and can be used for diverse operations, like
+signing, verifying signatures, key derivation, etc.  The asymmetric keys
+themselves are often refered to as the "internal key", and are handled by
+backends, such as providers (through L<EVP_KEYMGMT(3)>) or B<ENGINE>s.
+
+Conceptually, an B<EVP_PKEY> internal key may hold a private key, a public
+key, or both (a keypair), and along with those, key parameters if the key type
+requires them.  The presence of these components determine what operations can
+be made; for example, signing normally requires the presence of a private key,
+and verifying normally requires the presence of a public key.
+
+=for comment ED signature require both the private and public key...
+
+B<EVP_PKEY> has also been used for MAC algorithm that were conceived as
+producing signatures, although not being public key algorithms; "POLY1305",
+"SIPHASH", "HMAC", "CMAC".  This usage is considered legacy and is discouraged
+in favor of the L<EVP_MAC(3)> API.
+
 The EVP_PKEY_new() function allocates an empty B<EVP_PKEY> structure which is
 used by OpenSSL to store public and private keys. The reference count is set to
 B<1>.
@@ -62,28 +84,30 @@ EVP_PKEY_up_ref() increments the reference count of I<key>.
 EVP_PKEY_free() decrements the reference count of I<key> and, if the reference
 count is zero, frees it up. If I<key> is NULL, nothing is done.
 
-EVP_PKEY_new_raw_private_key_ex() allocates a new B<EVP_PKEY>. Unless
-an engine should be used for the key type, a provider for the key is found using
+EVP_PKEY_new_raw_private_key_ex() allocates a new B<EVP_PKEY>. Unless an
+engine should be used for the key type, a provider for the key is found using
 the library context I<libctx> and the property query string I<propq>. The
 I<keytype> argument indicates what kind of key this is. The value should be a
 string for a public key algorithm that supports raw private keys, i.e one of
-"POLY1305", "SIPHASH", "X25519", "ED25519", "X448" or "ED448". Note that you may
-also use "HMAC" which is not a public key algorithm but is treated as such by
-some OpenSSL APIs. You are encouraged to use the EVP_MAC APIs instead for HMAC
-(see L<EVP_MAC(3)>). I<key> points to the raw private key data for this
-B<EVP_PKEY> which should be of length I<keylen>. The length should be
-appropriate for the type of the key. The public key data will be automatically
-derived from the given private key data (if appropriate for the algorithm type).
+"X25519", "ED25519", "X448" or "ED448". I<key> points to the raw private key
+data for this B<EVP_PKEY> which should be of length I<keylen>. The length
+should be appropriate for the type of the key. The public key data will be
+automatically derived from the given private key data (if appropriate for the
+algorithm type).
 
 EVP_PKEY_new_raw_private_key() does the same as
-EVP_PKEY_new_raw_private_key_ex() except that the default library
-context and default property query are used instead. If I<e> is non-NULL then
-the new B<EVP_PKEY> structure is associated with the engine I<e>. The I<type>
-argument indicates what kind of key this is. The value should be a NID for a
-public key algorithm that supports raw private keys, i.e. one of
-B<EVP_PKEY_POLY1305>, B<EVP_PKEY_SIPHASH>, B<EVP_PKEY_X25519>,
-B<EVP_PKEY_ED25519>, B<EVP_PKEY_X448> or B<EVP_PKEY_ED448>. As for
-EVP_PKEY_new_raw_private_key_ex() you may also use B<EVP_PKEY_HMAC>.
+EVP_PKEY_new_raw_private_key_ex() except that the default library context and
+default property query are used instead. If I<e> is non-NULL then the new
+B<EVP_PKEY> structure is associated with the engine I<e>. The I<type> argument
+indicates what kind of key this is. The value should be a NID for a public key
+algorithm that supports raw private keys, i.e. one of B<EVP_PKEY_X25519>,
+B<EVP_PKEY_ED25519>, B<EVP_PKEY_X448> or B<EVP_PKEY_ED448>.
+
+EVP_PKEY_new_raw_private_key_ex() and EVP_PKEY_new_raw_private_key() may also
+be used with most MACs implemented as public key algorithms, so key types such
+as "HMAC", "POLY1305", "SIPHASH", or their NID form B<EVP_PKEY_POLY1305>,
+B<EVP_PKEY_SIPHASH>, B<EVP_PKEY_HMAC> are also accepted.  This usage is,
+as mentioned above, discouraged in favor of the L<EVP_MAC(3)> API.
 
 EVP_PKEY_new_raw_public_key_ex() works in the same way as
 EVP_PKEY_new_raw_private_key_ex() except that I<key> points to the raw
@@ -108,6 +132,9 @@ algorithms which may be NULL to use the default values.
 
 EVP_PKEY_new_CMAC_key() is the same as EVP_PKEY_new_CMAC_key_ex()
 except that the default values are used for I<libctx> and I<propq>.
+
+Using EVP_PKEY_new_CMAC_key_ex() or EVP_PKEY_new_CMAC_key() is discouraged in
+favor of the L<EVP_MAC(3)> API.
 
 EVP_PKEY_new_mac_key() works in the same way as EVP_PKEY_new_raw_private_key().
 New applications should use EVP_PKEY_new_raw_private_key() instead.
@@ -171,6 +198,10 @@ EVP_PKEY_get_raw_public_key() functions were added in OpenSSL 1.1.1.
 The EVP_PKEY_new_raw_private_key_ex(),
 EVP_PKEY_new_raw_public_key_ex() and
 EVP_PKEY_new_CMAC_key_ex() functions were added in OpenSSL 3.0.
+
+The documentation of B<EVP_PKEY> was amended in OpenSSL 3.0 to allow there to
+be the private part of the keypair without the public part, where this was
+previously implied to be disallowed.
 
 =head1 COPYRIGHT
 

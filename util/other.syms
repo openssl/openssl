@@ -32,6 +32,7 @@ EVP_KDF_CTX                             datatype
 EVP_KEYMGMT                             datatype
 EVP_MAC                                 datatype
 EVP_MAC_CTX                             datatype
+EVP_PKEY                                datatype
 EVP_PKEY_gen_cb                         datatype
 EVP_PKEY_METHOD                         datatype
 EVP_PKEY_ASN1_METHOD                    datatype
