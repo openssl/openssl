@@ -506,8 +506,8 @@ static const ST_KAT_KDF st_kat_kdf_tests[] =
         ITM(x963kdf_expected)
     },
     {
-        OSSL_SELF_TEST_DESC_KDF_X942KDF_ASN1,
-        OSSL_KDF_NAME_X942KDF,
+        OSSL_SELF_TEST_DESC_KDF_X942KDF,
+        OSSL_KDF_NAME_X942KDF_ASN1,
         x942kdf_params,
         ITM(x942kdf_expected)
     },
