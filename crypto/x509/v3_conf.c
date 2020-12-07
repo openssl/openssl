@@ -305,7 +305,7 @@ static void delete_ext(STACK_OF(X509_EXTENSION) *sk, X509_EXTENSION *dext)
 
 /*
  * This is the main function: add a bunch of extensions based on a config
- * file section to an extension STACK.
+ * file section to an extension STACK. Just check in case sk == NULL.
  */
 
 int X509V3_EXT_add_nconf_sk(CONF *conf, X509V3_CTX *ctx, const char *section,
@@ -323,9 +323,9 @@ int X509V3_EXT_add_nconf_sk(CONF *conf, X509V3_CTX *ctx, const char *section,
         if ((ext = X509V3_EXT_nconf_int(conf, ctx, val->section,
                                         val->name, val->value)) == NULL)
             return 0;
-        if (ctx->flags == X509V3_CTX_REPLACE)
-            delete_ext(*sk, ext);
         if (sk != NULL) {
+            if (ctx->flags == X509V3_CTX_REPLACE)
+                delete_ext(*sk, ext);
             if (X509v3_add_ext(sk, ext, -1) == NULL) {
                 X509_EXTENSION_free(ext);
                 return 0;
