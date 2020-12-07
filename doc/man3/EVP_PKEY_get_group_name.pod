@@ -14,7 +14,7 @@ EVP_PKEY_get_group_name - get private key group name
 =head1 DESCRIPTION
 
 EVP_PKEY_get_group_name() fills in the group name of the I<pkey> into
-I<mdname>, up to at most I<mdname_sz> bytes including the ending NUL byte
+I<gname>, up to at most I<gname_sz> bytes including the ending NUL byte
 and assigns I<*gname_len> the actual size of the name, if I<pkey>'s key type
 supports it.
 I<gname> as well as I<gname_len> may individually be NULL, and won't be
@@ -22,7 +22,7 @@ filled in or assigned in that case.
 
 =head1 NOTES
 
-Among the standard OpenSSL key types, this is only support for DH, EC and
+Among the standard OpenSSL key types, this is only supported for DH, EC and
 SM2 keys.  Other providers may support this for additional key types.
 
 =head1 RETURN VALUES
