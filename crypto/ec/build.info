@@ -57,7 +57,7 @@ IF[{- !$disabled{'ec_nistp_64_gcc_128'} -}]
 ENDIF
 
 SOURCE[../../libcrypto]=$COMMON ec_ameth.c ec_pmeth.c ecx_meth.c ecx_key.c \
-                        ec_err.c eck_prn.c ec_ctrl.c
+                        ec_err.c eck_prn.c
 SOURCE[../../providers/libfips.a]=$COMMON
 
 # Implementations are now spread across several libraries, so the defines

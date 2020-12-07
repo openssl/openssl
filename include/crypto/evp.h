@@ -837,13 +837,18 @@ int evp_pkey_ctx_get1_id_len_prov(EVP_PKEY_CTX *ctx, size_t *id_len);
 
 int evp_pkey_ctx_use_cached_data(EVP_PKEY_CTX *ctx);
 #endif /* !defined(FIPS_MODULE) */
+
 void evp_method_store_flush(OSSL_LIB_CTX *libctx);
 int evp_set_default_properties_int(OSSL_LIB_CTX *libctx, const char *propq,
                                    int loadconfig);
 
 void evp_md_ctx_clear_digest(EVP_MD_CTX *ctx, int force);
 
+#ifdef FIPS_MODULE
+# define LEGACY_EVP_PKEY_CTX_CTRL(_cond, _ctx, _ktype, _op, _cmd, _p1, _p2)
+#else
 /* Remove this eventually when no more legacy */
 # define LEGACY_EVP_PKEY_CTX_CTRL(_cond, _ctx, _ktype, _op, _cmd, _p1, _p2)    \
 if (_cond)                                                                     \
     return EVP_PKEY_CTX_ctrl(_ctx, _ktype, _op, _cmd, _p1, _p2);
+#endif

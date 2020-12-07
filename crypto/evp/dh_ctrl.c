@@ -272,7 +272,7 @@ int EVP_PKEY_CTX_get_dh_kdf_type(EVP_PKEY_CTX *ctx)
 
     if (kdf_type[0] == '\0')
         return EVP_PKEY_DH_KDF_NONE;
-    else if (strcmp(kdf_type, OSSL_KDF_NAME_X942KDF_ASN1) == 0)
+    else if (strcasecmp(kdf_type, OSSL_KDF_NAME_X942KDF_ASN1) == 0)
         return EVP_PKEY_DH_KDF_X9_42;
 
     return -1;

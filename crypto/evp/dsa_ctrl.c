@@ -14,6 +14,10 @@
 #include <openssl/evp.h>
 #include "crypto/evp.h"
 
+#define LEGACY_SET_DSA_PARAMGEN(_ctx, _cmd, _p1, _p2)                          \
+LEGACY_EVP_PKEY_CTX_CTRL(ctx->op.keymgmt.genctx == NULL, ctx, EVP_PKEY_DSA,    \
+                         EVP_PKEY_OP_PARAMGEN, _cmd, _p1, _p2)
+
 static int dsa_paramgen_check(EVP_PKEY_CTX *ctx)
 {
     if (ctx == NULL || !EVP_PKEY_CTX_IS_GEN_OP(ctx)) {
@@ -82,12 +86,7 @@ int EVP_PKEY_CTX_set_dsa_paramgen_bits(EVP_PKEY_CTX *ctx, int nbits)
     if ((ret = dsa_paramgen_check(ctx)) <= 0)
         return ret;
 
-#if !defined(FIPS_MODULE)
-    /* TODO(3.0): Remove this eventually when no more legacy */
-    if (ctx->op.keymgmt.genctx == NULL)
-        return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DSA,  EVP_PKEY_OP_PARAMGEN,
-                                 EVP_PKEY_CTRL_DSA_PARAMGEN_BITS, nbits, NULL);
-#endif
+    LEGACY_SET_DSA_PARAMGEN(ctx, EVP_PKEY_CTRL_DSA_PARAMGEN_BITS, nbits, NULL);
 
     *p++ = OSSL_PARAM_construct_size_t(OSSL_PKEY_PARAM_FFC_PBITS, &bits);
     *p++ = OSSL_PARAM_construct_end();
@@ -104,12 +103,7 @@ int EVP_PKEY_CTX_set_dsa_paramgen_q_bits(EVP_PKEY_CTX *ctx, int qbits)
     if ((ret = dsa_paramgen_check(ctx)) <= 0)
         return ret;
 
-#if !defined(FIPS_MODULE)
-    /* TODO(3.0): Remove this eventually when no more legacy */
-    if (ctx->op.keymgmt.genctx == NULL)
-        return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DSA,  EVP_PKEY_OP_PARAMGEN,
-                                 EVP_PKEY_CTRL_DSA_PARAMGEN_Q_BITS, qbits, NULL);
-#endif
+    LEGACY_SET_DSA_PARAMGEN(ctx, EVP_PKEY_CTRL_DSA_PARAMGEN_Q_BITS, qbits, NULL);
 
     *p++ = OSSL_PARAM_construct_size_t(OSSL_PKEY_PARAM_FFC_QBITS, &bits2);
     *p++ = OSSL_PARAM_construct_end();
@@ -123,19 +117,12 @@ int EVP_PKEY_CTX_set_dsa_paramgen_md_props(EVP_PKEY_CTX *ctx,
 {
     int ret;
     OSSL_PARAM params[3], *p = params;
+    const EVP_MD *md = EVP_get_digestbyname(md_name);
 
     if ((ret = dsa_paramgen_check(ctx)) <= 0)
         return ret;
 
-#if !defined(FIPS_MODULE)
-    /* TODO(3.0): Remove this eventually when no more legacy */
-    if (ctx->op.keymgmt.genctx == NULL) {
-        const EVP_MD *md = EVP_get_digestbyname(md_name);
-
-         EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DSA, EVP_PKEY_OP_PARAMGEN,
-                           EVP_PKEY_CTRL_DSA_PARAMGEN_MD, 0, (void *)(md));
-    }
-#endif
+    LEGACY_SET_DSA_PARAMGEN(ctx, EVP_PKEY_CTRL_DSA_PARAMGEN_MD, 0, (void *)(md));
 
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_FFC_DIGEST,
                                             (char *)md_name, 0);
