@@ -13,6 +13,7 @@
 
 #ifndef OPENSSL_NO_OCSP
 
+/* Could deprecate this, once OCSP_REQ_CTX_i2d is documented. */
 int OCSP_REQ_CTX_set1_req(OCSP_REQ_CTX *rctx, const OCSP_REQUEST *req)
 {
     return OCSP_REQ_CTX_i2d(rctx, "application/ocsp-request",
