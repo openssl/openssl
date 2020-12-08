@@ -14,7 +14,7 @@ OSSL_DECODER_CTX_set_passphrase_cb
  #include <openssl/decoder.h>
 
  OSSL_DECODER_CTX *
- OSSL_DECODER_CTX_new_by_EVP_PKEY(const EVP_PKEY *pkey,
+ OSSL_DECODER_CTX_new_by_EVP_PKEY(EVP_PKEY **pkey,
                                   const char *input_type,
                                   const char *input_struct,
                                   const char *keytype, int selection,
