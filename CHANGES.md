@@ -65,6 +65,11 @@ OpenSSL 3.1
 
    *Dmitry Belyavskiy*
 
+ * Parallel dual-prime 1536/2048-bit modular exponentiation for
+   AVX512_IFMA capable processors.
+
+   *Sergey Kirillov, Andrey Matyukov (Intel Corp)*
+
 OpenSSL 3.0
 -----------
 
