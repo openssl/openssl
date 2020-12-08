@@ -636,13 +636,6 @@ static EVP_PKEY *new_cmac_key_int(const unsigned char *priv, size_t len,
 # endif
 }
 
-EVP_PKEY *EVP_PKEY_new_CMAC_key_ex(const unsigned char *priv, size_t len,
-                                   const char *cipher_name, OSSL_LIB_CTX *libctx,
-                                   const char *propq)
-{
-    return new_cmac_key_int(priv, len, cipher_name, NULL, libctx, propq, NULL);
-}
-
 EVP_PKEY *EVP_PKEY_new_CMAC_key(ENGINE *e, const unsigned char *priv,
                                 size_t len, const EVP_CIPHER *cipher)
 {

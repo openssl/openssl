@@ -10,7 +10,6 @@ EVP_PKEY_new_raw_private_key_ex,
 EVP_PKEY_new_raw_private_key,
 EVP_PKEY_new_raw_public_key_ex,
 EVP_PKEY_new_raw_public_key,
-EVP_PKEY_new_CMAC_key_ex,
 EVP_PKEY_new_CMAC_key,
 EVP_PKEY_new_mac_key,
 EVP_PKEY_get_raw_private_key,
@@ -41,11 +40,6 @@ EVP_PKEY_get_raw_public_key
                                           size_t keylen);
  EVP_PKEY *EVP_PKEY_new_raw_public_key(int type, ENGINE *e,
                                        const unsigned char *key, size_t keylen);
- EVP_PKEY *EVP_PKEY_new_CMAC_key_ex(const unsigned char *priv, size_t len,
-                                    const char *cipher_name,
-                                    OSSL_LIB_CTX *libctx, const char *propq);
- EVP_PKEY *EVP_PKEY_new_CMAC_key(ENGINE *e, const unsigned char *priv,
-                                 size_t len, const EVP_CIPHER *cipher);
  EVP_PKEY *EVP_PKEY_new_mac_key(int type, ENGINE *e, const unsigned char *key,
                                 int keylen);
 
@@ -53,6 +47,13 @@ EVP_PKEY_get_raw_public_key
                                   size_t *len);
  int EVP_PKEY_get_raw_public_key(const EVP_PKEY *pkey, unsigned char *pub,
                                  size_t *len);
+
+Deprecated since OpenSSL 3.0, can be hidden entirely by defining
+B<OPENSSL_API_COMPAT> with a suitable version value, see
+L<openssl_user_macros(7)>:
+
+ EVP_PKEY *EVP_PKEY_new_CMAC_key(ENGINE *e, const unsigned char *priv,
+                                 size_t len, const EVP_CIPHER *cipher);
 
 =head1 DESCRIPTION
 
@@ -121,21 +122,6 @@ data. The B<EVP_PKEY> structure will be initialised without any private key
 information. Algorithm types that support raw public keys are
 B<EVP_PKEY_X25519>, B<EVP_PKEY_ED25519>, B<EVP_PKEY_X448> or B<EVP_PKEY_ED448>.
 
-EVP_PKEY_new_CMAC_key_ex() works in the same way as
-EVP_PKEY_new_raw_private_key() except it is only for the B<EVP_PKEY_CMAC>
-algorithm type. In addition to the raw private key data, it also takes a cipher
-algorithm to be used during creation of a CMAC in the I<cipher> argument. The
-cipher should be a standard encryption only cipher. For example AEAD and XTS
-ciphers should not be used. Finally it also takes a library context I<libctx>
-and property query I<propq> which are used when fetching any cryptographic
-algorithms which may be NULL to use the default values.
-
-EVP_PKEY_new_CMAC_key() is the same as EVP_PKEY_new_CMAC_key_ex()
-except that the default values are used for I<libctx> and I<propq>.
-
-Using EVP_PKEY_new_CMAC_key_ex() or EVP_PKEY_new_CMAC_key() is discouraged in
-favor of the L<EVP_MAC(3)> API.
-
 EVP_PKEY_new_mac_key() works in the same way as EVP_PKEY_new_raw_private_key().
 New applications should use EVP_PKEY_new_raw_private_key() instead.
 
@@ -158,6 +144,16 @@ responsible for ensuring that the buffer is large enough to receive the public
 key data. This function only works for algorithms that support raw public  keys.
 Currently this is: B<EVP_PKEY_X25519>, B<EVP_PKEY_ED25519>, B<EVP_PKEY_X448> or
 B<EVP_PKEY_ED448>.
+
+EVP_PKEY_new_CMAC_key() works in the same way as EVP_PKEY_new_raw_private_key()
+except it is only for the B<EVP_PKEY_CMAC> algorithm type. In addition to the
+raw private key data, it also takes a cipher algorithm to be used during
+creation of a CMAC in the B<cipher> argument. The cipher should be a standard
+encryption-only cipher. For example AEAD and XTS ciphers should not be used.
+
+Applications should use the L<EVP_MAC(3)> API instead
+and set the B<OSSL_MAC_PARAM_CIPHER> parameter on the B<EVP_MAC_CTX> object
+with the name of the cipher being used.
 
 =head1 NOTES
 
@@ -195,9 +191,11 @@ EVP_PKEY_new_raw_private_key(), EVP_PKEY_new_raw_public_key(),
 EVP_PKEY_new_CMAC_key(), EVP_PKEY_new_raw_private_key() and
 EVP_PKEY_get_raw_public_key() functions were added in OpenSSL 1.1.1.
 
-The EVP_PKEY_new_raw_private_key_ex(),
-EVP_PKEY_new_raw_public_key_ex() and
-EVP_PKEY_new_CMAC_key_ex() functions were added in OpenSSL 3.0.
+The EVP_PKEY_new_raw_private_key_ex() and
+EVP_PKEY_new_raw_public_key_ex()
+functions were added in OpenSSL 3.0.
+
+The EVP_PKEY_new_CMAC_key() was deprecated in OpenSSL 3.0.
 
 The documentation of B<EVP_PKEY> was amended in OpenSSL 3.0 to allow there to
 be the private part of the keypair without the public part, where this was

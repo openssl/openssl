@@ -4338,7 +4338,7 @@ OSSL_STORE_SEARCH_free                  4450	3_0_0	EXIST::FUNCTION:
 OSSL_STORE_SEARCH_get0_digest           4451	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_new_raw_private_key            4453	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_new_raw_public_key             4454	3_0_0	EXIST::FUNCTION:
-EVP_PKEY_new_CMAC_key                   4455	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_new_CMAC_key                   4455	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 EVP_PKEY_asn1_set_set_priv_key          4456	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_asn1_set_set_pub_key           4457	3_0_0	EXIST::FUNCTION:
 conf_ssl_name_find                      4469	3_0_0	EXIST::FUNCTION:
@@ -5221,7 +5221,6 @@ OSSL_PARAM_get_utf8_string_ptr          ?	3_0_0	EXIST::FUNCTION:
 OSSL_PARAM_get_octet_string_ptr         ?	3_0_0	EXIST::FUNCTION:
 OSSL_DECODER_CTX_set_passphrase_cb      ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_CTX_set_mac_key                ?	3_0_0	EXIST::FUNCTION:
-EVP_PKEY_new_CMAC_key_ex                ?	3_0_0	EXIST::FUNCTION:
 OSSL_STORE_INFO_new                     ?	3_0_0	EXIST::FUNCTION:
 OSSL_STORE_INFO_get0_data               ?	3_0_0	EXIST::FUNCTION:
 asn1_d2i_read_bio                       ?	3_0_0	EXIST::FUNCTION:

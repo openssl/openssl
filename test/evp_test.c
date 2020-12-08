@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#define OPENSSL_SUPPRESS_DEPRECATED /* EVP_PKEY_new_CMAC_key */
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -1152,6 +1153,14 @@ static int mac_test_run_pkey(EVP_TEST *t)
                   OBJ_nid2sn(expected->type), expected->alg);
 
     if (expected->type == EVP_PKEY_CMAC) {
+#ifdef OPENSSL_NO_DEPRECATED_3_0
+        TEST_info("skipping, PKEY CMAC '%s' is disabled", expected->alg);
+        t->skip = 1;
+        t->err = NULL;
+        goto err;
+#else
+        OSSL_LIB_CTX *tmpctx;
+
         if (expected->alg != NULL && is_cipher_disabled(expected->alg)) {
             TEST_info("skipping, PKEY CMAC '%s' is disabled", expected->alg);
             t->skip = 1;
@@ -1162,8 +1171,11 @@ static int mac_test_run_pkey(EVP_TEST *t)
             t->err = "MAC_KEY_CREATE_ERROR";
             goto err;
         }
-        key = EVP_PKEY_new_CMAC_key_ex(expected->key, expected->key_len,
-                                       EVP_CIPHER_name(cipher), libctx, NULL);
+        tmpctx = OSSL_LIB_CTX_set0_default(libctx);
+        key = EVP_PKEY_new_CMAC_key(NULL, expected->key, expected->key_len,
+                                    cipher);
+        OSSL_LIB_CTX_set0_default(tmpctx);
+#endif
     } else {
         key = EVP_PKEY_new_raw_private_key_ex(libctx,
                                               OBJ_nid2sn(expected->type), NULL,
