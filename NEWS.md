@@ -77,7 +77,7 @@ OpenSSL 1.1.1
 
 ### Major changes between OpenSSL 1.1.1h and OpenSSL 1.1.1i [under development]
 
-  *
+  * Fixed NULL pointer deref in GENERAL_NAME_cmp ([CVE-2020-1971])
 
 ### Major changes between OpenSSL 1.1.1g and OpenSSL 1.1.1h [22 Sep 2020]
 
@@ -1328,6 +1328,7 @@ OpenSSL 0.9.x
 
 <!-- Links -->
 
+[CVE-2020-1971]: https://www.openssl.org/news/vulnerabilities.html#CVE-2020-1971
 [CVE-2020-1967]: https://www.openssl.org/news/vulnerabilities.html#CVE-2020-1967
 [CVE-2019-1563]: https://www.openssl.org/news/vulnerabilities.html#CVE-2019-1563
 [CVE-2019-1559]: https://www.openssl.org/news/vulnerabilities.html#CVE-2019-1559
