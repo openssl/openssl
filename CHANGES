@@ -7,6 +7,10 @@
  https://github.com/openssl/openssl/commits/ and pick the appropriate
  release branch.
 
+ Changes between 1.1.1i and 1.1.1j [xx XXX xxxx]
+
+  *)
+
  Changes between 1.1.1h and 1.1.1i [8 Dec 2020]
 
   *) Fixed NULL pointer deref in the GENERAL_NAME_cmp function
