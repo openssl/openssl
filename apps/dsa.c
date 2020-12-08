@@ -250,7 +250,7 @@ int dsa_main(int argc, char **argv)
 
     /* Perform the encoding */
     ectx = OSSL_ENCODER_CTX_new_by_EVP_PKEY(pkey, selection, output_type,
-                                            output_structure, NULL, NULL);
+                                            output_structure, NULL);
     if (OSSL_ENCODER_CTX_get_num_encoders(ectx) == 0) {
         BIO_printf(bio_err, "%s format not supported\n", output_type);
         goto end;
@@ -271,64 +271,10 @@ int dsa_main(int argc, char **argv)
         BIO_printf(bio_err, "unable to write key\n");
         goto end;
     }
-/*
-    if (outformat == FORMAT_ASN1) {
-        if (pubin || pubout) {
-            i = i2d_DSA_PUBKEY_bio(out, dsa);
-        } else {
-            assert(private);
-            i = i2d_DSAPrivateKey_bio(out, dsa);
-        }
-    } else if (outformat == FORMAT_PEM) {
-        if (pubin || pubout) {
-            i = PEM_write_bio_DSA_PUBKEY(out, dsa);
-        } else {
-            assert(private);
-            i = PEM_write_bio_DSAPrivateKey(out, dsa, enc,
-                                            NULL, 0, NULL, passout);
-        }
-#ifndef OPENSSL_NO_RSA
-    } else if (outformat == FORMAT_MSBLOB || outformat == FORMAT_PVK) {
-        EVP_PKEY *pk;
-        pk = EVP_PKEY_new();
-        if (pk == NULL)
-           goto end;
-
-        EVP_PKEY_set1_DSA(pk, dsa);
-        if (outformat == FORMAT_PVK) {
-            if (pubin) {
-                BIO_printf(bio_err, "PVK form impossible with public key input\n");
-                EVP_PKEY_free(pk);
-                goto end;
-            }
-            assert(private);
-# ifdef OPENSSL_NO_RC4
-            BIO_printf(bio_err, "PVK format not supported\n");
-            EVP_PKEY_free(pk);
-            goto end;
-# else
-            i = i2b_PVK_bio(out, pk, pvk_encr, 0, passout);
-# endif
-        } else if (pubin || pubout) {
-            i = i2b_PublicKey_bio(out, pk);
-        } else {
-            assert(private);
-            i = i2b_PrivateKey_bio(out, pk);
-        }
-        EVP_PKEY_free(pk);
-#endif
-    } else {
-        BIO_printf(bio_err, "bad output format specified for outfile\n");
-        goto end;
-    }
-    if (i <= 0) {
-        BIO_printf(bio_err, "unable to write private key\n");
-        ERR_print_errors(bio_err);
-        goto end;
-    }
-*/
     ret = 0;
  end:
+    if (ret != 0)
+        ERR_print_errors(bio_err);
     OSSL_ENCODER_CTX_free(ectx);
     BIO_free_all(out);
     EVP_PKEY_free(pkey);

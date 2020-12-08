@@ -75,6 +75,7 @@ const OPTIONS rsa_options[] = {
     {"pvk-strong", OPT_PVK_STRONG, '-', "Enable 'Strong' PVK encoding level (default)"},
     {"pvk-weak", OPT_PVK_WEAK, '-', "Enable 'Weak' PVK encoding level"},
     {"pvk-none", OPT_PVK_NONE, '-', "Don't enforce PVK encoding"},
+#endif
 
     OPT_PROV_OPTIONS,
     {NULL}
@@ -95,6 +96,7 @@ int rsa_main(int argc, char **argv)
 #if (!defined(OPENSSL_NO_DSA) || !defined(OPENSSL_NO_DEPRECATED_3_0)) \
     && !defined(OPENSSL_NO_RC4)
     int pvk_encr = 2;
+#endif
     OPTION_CHOICE o;
     int traditional = 0;
     const char *output_type = NULL;
@@ -156,6 +158,7 @@ int rsa_main(int argc, char **argv)
     && !defined(OPENSSL_NO_RC4)
             pvk_encr = (o - OPT_PVK_NONE);
             break;
+#endif
         case OPT_NOOUT:
             noout = 1;
             break;
