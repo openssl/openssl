@@ -312,6 +312,11 @@ int BN_mod_exp2_mont(BIGNUM *r, const BIGNUM *a1, const BIGNUM *p1,
                      BN_CTX *ctx, BN_MONT_CTX *m_ctx);
 int BN_mod_exp_simple(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
                       const BIGNUM *m, BN_CTX *ctx);
+int BN_mod_exp_mont_consttime_x2(BIGNUM *rr1, const BIGNUM *a1, const BIGNUM *p1,
+                                 const BIGNUM *m1, BN_MONT_CTX *in_mont1,
+                                 BIGNUM *rr2, const BIGNUM *a2, const BIGNUM *p2,
+                                 const BIGNUM *m2, BN_MONT_CTX *in_mont2,
+                                 BN_CTX *ctx);
 
 int BN_mask_bits(BIGNUM *a, int n);
 # ifndef OPENSSL_NO_STDIO

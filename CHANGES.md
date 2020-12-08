@@ -169,6 +169,11 @@ OpenSSL 3.0
 
    *Tomáš Mráz*
 
+ * Parallel dual-prime 1024-bit modular exponentiation for AVX512_IFMA
+   capable processors.
+
+   *Ilya Albrekht, Sergey Kirillov, Andrey Matyukov (Intel Corp)*
+
  * Combining the Configure options no-ec and no-dh no longer disables TLSv1.3.
    Typically if OpenSSL has no EC or DH algorithms then it cannot support
    connections with TLSv1.3. However OpenSSL now supports "pluggable" groups
