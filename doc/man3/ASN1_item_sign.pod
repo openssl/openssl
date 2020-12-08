@@ -89,28 +89,56 @@ ill-formed or some other error occurred then -1 is returned.
 
 =head1 EXAMPLES
 
-In the following example a certificate is signed using the key contained in an
-md_ctx. The signature is written to cert->signature.
+In the following example an 'MyObject' object is signed using the key contained
+in an md_ctx. The signature is written to MyObject.signature.
 
-    int do_sign_cert(X509 *cert, EVP_MD_CTX *md_ctx)
-    {
-      /* 'it' contains the mapping between ASN.1 data and an object X509_CINF */
-      const ASN1_ITEM *it = ASN1_ITEM_rptr(X509_CINF);
+ #include <openssl/x509.h>
 
-      /*
-       * cert->cert_info is the X509_CINF object that will be
-       * converted into DER data and then signed.
-       * cert->cert_info.signature is filled with the private key's signing
-       * algorithm id.
-       * cert->sig_alg is another copy of the signing algorithm id that sits
-       * within the cert object (it must match the cert->cert_info.signature)
-       * when verifying.
-       */
-      return ASN1_item_sign_ctx(it,
-                                &cert->cert_info.signature, &cert->sig_alg,
-                                &cert->signature,
-                                &cert->cert_info, md_ctx);
-    }
+ /* An object used to store the ASN1 data fields to sign */
+ typedef struct MySignObject_st
+ {
+     ASN1_INTEGER version;
+     X509_ALGOR sig_alg;
+ } MySignObject;
+
+ /*
+  * A higher level object containing the ASN1 fields, signature alg and
+  * output signature.
+  */
+ typedef struct MyObject_st
+ {
+     MySignObject info;
+     X509_ALGOR sig_alg;
+     ASN1_BIT_STRING signature;
+ } MyObject;
+
+ ASN1_SEQUENCE_cb(MySignObject, NULL) = {
+     ASN1_EMBED(MySignObject, version, ASN1_INTEGER),
+     ASN1_EMBED(MySignObject, sig_alg, X509_ALGOR),
+ } static_ASN1_SEQUENCE_END_cb(MySignObject, MySignObject)
+
+ static int test_asn1_item_sign(MyObject *obj, EVP_PKEY *pkey, EVP_MD *md)
+ {
+     EVP_PKEY *pkey = NULL;
+     EVP_PKEY_CTX *gctx = EVP_PKEY_CTX_new_from_name(NULL, "EC", NULL);
+
+     /* 'it' contains the mapping between ASN.1 data and an object MySignObject */
+     const ASN1_ITEM *it = ASN1_ITEM_rptr(MySignObject);
+     EVP_MD_CTX *mdctx = EVP_MD_CTX_new();
+
+     memset(obj, 0, sizeof(*obj));
+     EVP_DigestSignInit(mdctx, NULL, md, NULL, pkey);
+     /*
+      * obj->info is the 'MySignObject' object that will be
+      * converted into DER data and then signed.
+      * obj->signature will contain the output signature.
+      * obj->sig_alg is filled with the private key's signing algorithm id.
+      * obj->info.sig_alg is another copy of the signing algorithm id that sits
+      * within the MyObject object.
+      */
+     return ASN1_item_sign_ctx(it, &obj->sig_alg, &obj->info.sig_alg,
+                               &obj->signature, &obj->info, mdctx);
+ }
 
 =head1 SEE ALSO
 
