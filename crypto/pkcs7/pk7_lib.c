@@ -11,6 +11,7 @@
 #include "internal/cryptlib.h"
 #include <openssl/objects.h>
 #include <openssl/x509.h>
+#include <openssl/pkcs7.h>
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
 #include "crypto/x509.h" /* for sk_X509_add1_cert() */
@@ -292,6 +293,39 @@ int PKCS7_add_crl(PKCS7 *p7, X509_CRL *crl)
     return 1;
 }
 
+static int pkcs7_ecdsa_or_dsa_sign_verify_setup(PKCS7_SIGNER_INFO *si,
+                                                int verify)
+{
+    if (verify == 0) {
+        int snid, hnid;
+        X509_ALGOR *alg1, *alg2;
+        EVP_PKEY *pkey = si->pkey;
+
+        PKCS7_SIGNER_INFO_get0_algs(si, NULL, &alg1, &alg2);
+        if (alg1 == NULL || alg1->algorithm == NULL)
+            return -1;
+        hnid = OBJ_obj2nid(alg1->algorithm);
+        if (hnid == NID_undef)
+            return -1;
+        if (!OBJ_find_sigid_by_algs(&snid, hnid, EVP_PKEY_id(pkey)))
+            return -1;
+        X509_ALGOR_set0(alg2, OBJ_nid2obj(snid), V_ASN1_UNDEF, 0);
+    }
+    return 1;
+}
+
+static int pkcs7_rsa_sign_verify_setup(PKCS7_SIGNER_INFO *si, int verify)
+{
+    if (verify == 0) {
+        X509_ALGOR *alg = NULL;
+
+        PKCS7_SIGNER_INFO_get0_algs(si, NULL, NULL, &alg);
+        if (alg != NULL)
+            X509_ALGOR_set0(alg, OBJ_nid2obj(NID_rsaEncryption), V_ASN1_NULL, 0);
+    }
+    return 1;
+}
+
 int PKCS7_SIGNER_INFO_set(PKCS7_SIGNER_INFO *p7i, X509 *x509, EVP_PKEY *pkey,
                           const EVP_MD *dgst)
 {
@@ -323,9 +357,9 @@ int PKCS7_SIGNER_INFO_set(PKCS7_SIGNER_INFO *p7i, X509 *x509, EVP_PKEY *pkey,
                     V_ASN1_NULL, NULL);
 
     if (EVP_PKEY_is_a(pkey, "EC") || EVP_PKEY_is_a(pkey, "DSA"))
-        return pkcs7_ecdsa_dsa_sign(p7i, 0);
+        return pkcs7_ecdsa_or_dsa_sign_verify_setup(p7i, 0);
     if (EVP_PKEY_is_a(pkey, "RSA"))
-        return pkcs7_rsa_sign(p7i, 0);
+        return pkcs7_rsa_sign_verify_setup(p7i, 0);
 
     if (pkey->ameth != NULL && pkey->ameth->pkey_ctrl != NULL) {
         ret = pkey->ameth->pkey_ctrl(pkey, ASN1_PKEY_CTRL_PKCS7_SIGN, 0, p7i);
@@ -518,6 +552,18 @@ int PKCS7_add_recipient_info(PKCS7 *p7, PKCS7_RECIP_INFO *ri)
     return 1;
 }
 
+static int pkcs7_rsa_encrypt_decrypt_setup(PKCS7_RECIP_INFO *ri, int decrypt)
+{
+    X509_ALGOR *alg = NULL;
+
+    if (decrypt == 0) {
+        PKCS7_RECIP_INFO_get0_alg(ri, &alg);
+        if (alg != NULL)
+            X509_ALGOR_set0(alg, OBJ_nid2obj(NID_rsaEncryption), V_ASN1_NULL, 0);
+    }
+    return 1;
+}
+
 int PKCS7_RECIP_INFO_set(PKCS7_RECIP_INFO *p7i, X509 *x509)
 {
     int ret;
@@ -540,7 +586,7 @@ int PKCS7_RECIP_INFO_set(PKCS7_RECIP_INFO *p7i, X509 *x509)
     if (EVP_PKEY_is_a(pkey, "RSA-PSS"))
         return -2;
     if (EVP_PKEY_is_a(pkey, "RSA")) {
-        if (pkcs7_rsa_encrypt(p7i, 0) <= 0)
+        if (pkcs7_rsa_encrypt_decrypt_setup(p7i, 0) <= 0)
             goto err;
         goto finished;
     }
