@@ -24,7 +24,7 @@ IF[{- !$disabled{asm} -}]
 
   $BNASM_x86_64=\
           x86_64-mont.s x86_64-mont5.s x86_64-gf2m.s rsaz_exp.c rsaz-x86_64.s \
-          rsaz-avx2.s rsaz_exp_x2.c rsaz-avx512.s
+          rsaz-avx2.s rsaz_exp_x2.c rsaz-2k-avx512.s rsaz-3k-avx512.s rsaz-4k-avx512.s
   IF[{- $config{target} !~ /^VC/ -}]
     $BNASM_x86_64=asm/x86_64-gcc.c $BNASM_x86_64
   ELSE
@@ -160,7 +160,9 @@ GENERATE[x86_64-mont5.s]=asm/x86_64-mont5.pl
 GENERATE[x86_64-gf2m.s]=asm/x86_64-gf2m.pl
 GENERATE[rsaz-x86_64.s]=asm/rsaz-x86_64.pl
 GENERATE[rsaz-avx2.s]=asm/rsaz-avx2.pl
-GENERATE[rsaz-avx512.s]=asm/rsaz-avx512.pl
+GENERATE[rsaz-2k-avx512.s]=asm/rsaz-2k-avx512.pl
+GENERATE[rsaz-3k-avx512.s]=asm/rsaz-3k-avx512.pl
+GENERATE[rsaz-4k-avx512.s]=asm/rsaz-4k-avx512.pl
 
 GENERATE[bn-ia64.s]=asm/ia64.S
 GENERATE[ia64-mont.s]=asm/ia64-mont.pl
