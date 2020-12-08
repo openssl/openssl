@@ -698,6 +698,10 @@ DEPEND[html/man3/BN_generate_prime.html]=man3/BN_generate_prime.pod
 GENERATE[html/man3/BN_generate_prime.html]=man3/BN_generate_prime.pod
 DEPEND[man/man3/BN_generate_prime.3]=man3/BN_generate_prime.pod
 GENERATE[man/man3/BN_generate_prime.3]=man3/BN_generate_prime.pod
+DEPEND[html/man3/BN_mod_exp_mont.html]=man3/BN_mod_exp_mont.pod
+GENERATE[html/man3/BN_mod_exp_mont.html]=man3/BN_mod_exp_mont.pod
+DEPEND[man/man3/BN_mod_exp_mont.3]=man3/BN_mod_exp_mont.pod
+GENERATE[man/man3/BN_mod_exp_mont.3]=man3/BN_mod_exp_mont.pod
 DEPEND[html/man3/BN_mod_inverse.html]=man3/BN_mod_inverse.pod
 GENERATE[html/man3/BN_mod_inverse.html]=man3/BN_mod_inverse.pod
 DEPEND[man/man3/BN_mod_inverse.3]=man3/BN_mod_inverse.pod
@@ -2808,6 +2812,7 @@ html/man3/BN_bn2bin.html \
 html/man3/BN_cmp.html \
 html/man3/BN_copy.html \
 html/man3/BN_generate_prime.html \
+html/man3/BN_mod_exp_mont.html \
 html/man3/BN_mod_inverse.html \
 html/man3/BN_mod_mul_montgomery.html \
 html/man3/BN_mod_mul_reciprocal.html \
@@ -3379,6 +3384,7 @@ man/man3/BN_bn2bin.3 \
 man/man3/BN_cmp.3 \
 man/man3/BN_copy.3 \
 man/man3/BN_generate_prime.3 \
+man/man3/BN_mod_exp_mont.3 \
 man/man3/BN_mod_inverse.3 \
 man/man3/BN_mod_mul_montgomery.3 \
 man/man3/BN_mod_mul_reciprocal.3 \

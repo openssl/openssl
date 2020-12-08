@@ -215,7 +215,7 @@ OPENSSL_ia32_cpuid:
 	cmp	\$0xe6,%eax
 	je	.Ldone
 	andl	\$0x3fdeffff,8(%rdi)	# ~(1<<31|1<<30|1<<21|1<<16)
-					# clear AVX512F+BW+VL+FIMA, all of
+					# clear AVX512F+BW+VL+IFMA, all of
 					# them are EVEX-encoded, which requires
 					# ZMM state support even if one uses
 					# only XMM and YMM :-(
