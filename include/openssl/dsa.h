@@ -58,6 +58,14 @@ int EVP_PKEY_CTX_set_dsa_paramgen_md(EVP_PKEY_CTX *ctx, const EVP_MD *md);
 
 #  define OPENSSL_DSA_FIPS_MIN_MODULUS_BITS 1024
 
+typedef struct DSA_SIG_st DSA_SIG;
+DSA_SIG *DSA_SIG_new(void);
+void DSA_SIG_free(DSA_SIG *a);
+DECLARE_ASN1_ENCODE_FUNCTIONS_only(DSA_SIG, DSA_SIG)
+void DSA_SIG_get0(const DSA_SIG *sig, const BIGNUM **pr, const BIGNUM **ps);
+int DSA_SIG_set0(DSA_SIG *sig, BIGNUM *r, BIGNUM *s);
+
+
 #  ifndef OPENSSL_NO_DEPRECATED_1_1_0
 /*
  * Does nothing. Previously this switched off constant time behaviour.
@@ -90,8 +98,6 @@ int EVP_PKEY_CTX_set_dsa_paramgen_md(EVP_PKEY_CTX *ctx, const EVP_MD *md);
 /* typedef struct dsa_st DSA; */
 /* typedef struct dsa_method DSA_METHOD; */
 
-typedef struct DSA_SIG_st DSA_SIG;
-
 /*
  * TODO(3.0): consider removing the ASN.1 encoding and decoding when
  * deserialization is completed elsewhere.
@@ -107,14 +113,7 @@ typedef struct DSA_SIG_st DSA_SIG;
 #   define i2d_DSAparams_bio(bp, x) \
         ASN1_i2d_bio_of(DSA, i2d_DSAparams, bp, x)
 
-OSSL_DEPRECATEDIN_3_0 DECLARE_ASN1_DUP_FUNCTION_name(DSA, DSAparams)
-OSSL_DEPRECATEDIN_3_0 DSA_SIG *DSA_SIG_new(void);
-OSSL_DEPRECATEDIN_3_0 void DSA_SIG_free(DSA_SIG *a);
-DECLARE_ASN1_ENCODE_FUNCTIONS_only(DSA_SIG, DSA_SIG)
-OSSL_DEPRECATEDIN_3_0 void DSA_SIG_get0(const DSA_SIG *sig,
-                                        const BIGNUM **pr, const BIGNUM **ps);
-OSSL_DEPRECATEDIN_3_0 int DSA_SIG_set0(DSA_SIG *sig, BIGNUM *r, BIGNUM *s);
-
+DECLARE_ASN1_DUP_FUNCTION_name_attr(OSSL_DEPRECATEDIN_3_0, DSA, DSAparams)
 OSSL_DEPRECATEDIN_3_0 DSA_SIG *DSA_do_sign(const unsigned char *dgst, int dlen,
                                            DSA *dsa);
 OSSL_DEPRECATEDIN_3_0 int DSA_do_verify(const unsigned char *dgst, int dgst_len,
@@ -150,9 +149,12 @@ OSSL_DEPRECATEDIN_3_0 int DSA_verify(int type, const unsigned char *dgst,
 OSSL_DEPRECATEDIN_3_0 int DSA_set_ex_data(DSA *d, int idx, void *arg);
 OSSL_DEPRECATEDIN_3_0 void *DSA_get_ex_data(const DSA *d, int idx);
 
-DECLARE_ASN1_ENCODE_FUNCTIONS_only(DSA, DSAPublicKey)
-DECLARE_ASN1_ENCODE_FUNCTIONS_only(DSA, DSAPrivateKey)
-DECLARE_ASN1_ENCODE_FUNCTIONS_only(DSA, DSAparams)
+DECLARE_ASN1_ENCODE_FUNCTIONS_only_attr(OSSL_DEPRECATEDIN_3_0,
+                                        DSA, DSAPublicKey)
+DECLARE_ASN1_ENCODE_FUNCTIONS_only_attr(OSSL_DEPRECATEDIN_3_0,
+                                        DSA, DSAPrivateKey)
+DECLARE_ASN1_ENCODE_FUNCTIONS_only_attr(OSSL_DEPRECATEDIN_3_0,
+                                        DSA, DSAparams)
 #  endif
 
 #  ifndef OPENSSL_NO_DEPRECATED_0_9_8
@@ -269,6 +271,7 @@ OSSL_DEPRECATEDIN_3_0 int (*DSA_meth_get_keygen(const DSA_METHOD *dsam))(DSA *);
 OSSL_DEPRECATEDIN_3_0 int DSA_meth_set_keygen(DSA_METHOD *dsam,
                                               int (*keygen) (DSA *));
 
+#  endif
 # endif
 # ifdef  __cplusplus
 }
