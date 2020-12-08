@@ -153,17 +153,18 @@ OSSL_DEPRECATEDIN_3_0 void *DSA_get_ex_data(const DSA *d, int idx);
 DECLARE_ASN1_ENCODE_FUNCTIONS_only(DSA, DSAPublicKey)
 DECLARE_ASN1_ENCODE_FUNCTIONS_only(DSA, DSAPrivateKey)
 DECLARE_ASN1_ENCODE_FUNCTIONS_only(DSA, DSAparams)
+#  endif
 
+#  ifndef OPENSSL_NO_DEPRECATED_0_9_8
 /* Deprecated version */
-DEPRECATEDIN_0_9_8(DSA *DSA_generate_parameters(int bits,
-                                                unsigned char *seed,
-                                                int seed_len,
-                                                int *counter_ret,
-                                                unsigned long *h_ret, void
-                                                 (*callback) (int, int,
-                                                              void *),
-                                                void *cb_arg))
+OSSL_DEPRECATEDIN_0_9_8
+DSA *DSA_generate_parameters(int bits, unsigned char *seed, int seed_len,
+                             int *counter_ret, unsigned long *h_ret,
+                             void (*callback) (int, int, void *),
+                             void *cb_arg);
+#  endif
 
+#  ifndef OPENSSL_NO_DEPRECATED_3_0
 /* New version */
 OSSL_DEPRECATEDIN_3_0 int DSA_generate_parameters_ex(DSA *dsa, int bits,
                                                      const unsigned char *seed,
