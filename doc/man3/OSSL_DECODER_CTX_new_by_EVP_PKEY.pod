@@ -52,8 +52,9 @@ The search of decoder implementations can be limited with I<input_type> and
 I<input_struct> which specifies a starting input type and input structure.
 NULL is valid for both of them and signifies that the decoder implementations
 will find out the input type on their own.
-This is further explained in L<OSSL_DECODER_CTX_set_input_type(3)>
-and L<OSSL_DECODER_CTX_set_input_structure(3)>.
+They are set with L<OSSL_DECODER_CTX_set_input_type(3)> and
+L<OSSL_DECODER_CTX_set_input_structure(3)>.
+See L</Input Types> and L</Input Structures> below for further information.
 
 The search of decoder implementations can also be limited with I<keytype>
 and I<selection>, which specifies the expected resulting keytype and contents.
@@ -80,6 +81,64 @@ through an internal B<OSSL_PASSPHRASE_CALLBACK> function.
 The internal B<OSSL_PASSPHRASE_CALLBACK> function caches the pass phrase, to
 be re-used in all decodings that are performed in the same decoding run (for
 example, within one L<OSSL_DECODER_from_bio(3)> call).
+
+=head2 Input Types
+
+Available input types depend on the implementations that available providers
+offer, and provider documentation should have the details.
+
+The known input types that OpenSSL decoder implementations offer for
+B<EVP_PKEY>s are:
+
+=over 4
+
+=item "PEM"
+
+PEM is the term used for encoding of binary content, first defined in IETF
+RFC 1421.  The content is a series of base64-encoded lines, surrounded by
+begin/end markers each on their own line.  For example:
+
+ -----BEGIN PRIVATE KEY-----
+ MIICdg....
+ ... bhTQ==
+ -----END PRIVATE KEY-----
+
+Optional header line(s) may appear after the begin line, and their existence
+depends on the type of object being written or read.
+
+For all OpenSSL uses, the binary content is expected to be a DER encoded
+structure.
+
+=item "DER"
+
+DER is a binary encoding of data, structured according to an ASN.1
+specification.
+
+=back
+
+=head2 Input Structures
+
+Available input structures depend on the implementations that available
+providers offer, and provider documentation should have the details.
+
+The known input structures that OpenSSL decoder implementations offer for
+B<EVP_PKEY>s are:
+
+=over 4
+
+=item "type-specific"
+
+This is the structure used for keys encoded according to key type specific
+specifications.  For example, RSA keys encoded according to PKCS#1.
+
+=item "pkcs8"
+
+For keys wrapped in a PKCS#8 structure.  Both encrypted and unencrypted
+encodings are supported.  This only supports private keys.
+
+=item "SubjectPublicKeyInfo"
+
+=back
 
 =head1 RETURN VALUES
 
