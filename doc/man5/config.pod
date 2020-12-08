@@ -368,6 +368,7 @@ system-default minimum TLS and DTLS versions, respectively:
 
  [system_default_section]
  MinProtocol = TLSv1.3
+ MinProtocol = DTLSv1.2
 
 The minimum TLS protocol is applied to B<SSL_CTX> objects that are TLS-based,
 and the minimum DTLS protocol to those are DTLS-based.

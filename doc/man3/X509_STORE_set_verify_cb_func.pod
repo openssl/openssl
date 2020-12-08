@@ -137,9 +137,7 @@ I<If no function to get the issuer is provided, the internal default
 function will be used instead.>
 
 X509_STORE_set_check_issued() sets the function to check that a given
-certificate B<x> is issued by the issuer certificate B<issuer> and
-the issuer is not yet in the chain contained in <ctx>, where the exceptional
-case that B<x> is self-issued and ctx->chain has just one element is allowed.
+certificate B<x> is issued by the issuer certificate B<issuer>.
 This function must return 0 on failure (among others if B<x> hasn't
 been issued with B<issuer>) and 1 on success.
 I<If no function to get the issuer is provided, the internal default

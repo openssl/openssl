@@ -63,12 +63,15 @@ typedef u32 u32_a1;
                         asm ("bswapl %0"                \
                         : "+r"(ret_));   ret_;          })
 #  elif defined(__aarch64__)
-#   define BSWAP8(x) ({ u64 ret_;                       \
+#   if defined(__BYTE_ORDER__) && defined(__ORDER_LITTLE_ENDIAN__) && \
+       __BYTE_ORDER__==__ORDER_LITTLE_ENDIAN__
+#    define BSWAP8(x) ({ u64 ret_;                       \
                         asm ("rev %0,%1"                \
                         : "=r"(ret_) : "r"(x)); ret_;   })
-#   define BSWAP4(x) ({ u32 ret_;                       \
+#    define BSWAP4(x) ({ u32 ret_;                       \
                         asm ("rev %w0,%w1"              \
                         : "=r"(ret_) : "r"(x)); ret_;   })
+#   endif
 #  elif (defined(__arm__) || defined(__arm)) && !defined(STRICT_ALIGNMENT)
 #   define BSWAP8(x) ({ u32 lo_=(u64)(x)>>32,hi_=(x);   \
                         asm ("rev %0,%0; rev %1,%1"     \
