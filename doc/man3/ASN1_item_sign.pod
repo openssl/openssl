@@ -51,10 +51,10 @@ The B<OSSL_LIB_CTX> specified in I<libctx> and the property query string
 specified in I<props> are used when searching for algorithms in providers.
 The generated signature is set into I<signature>.
 The optional parameter I<id> can be NULL, but can be set for special key types.
-See EVP_PKEY_CTX_set1_id() for further info. If I<algor1> or I<algor2> are not
-NULL then they are set to the AlgorithmIdentifier that corresponds to the
+See EVP_PKEY_CTX_set1_id() for further info. The output parameters <algor1> and
+I<algor2> are set to the AlgorithmIdentifier that corresponds to the
 combination of signature algorithm and digest algorithm for the signature
-operation of the I<pkey>.
+operation of the I<pkey>. <algor1> and/or <algor2> are ignored if they are NULL.
 
 ASN1_item_sign() is similar to ASN1_item_sign_ex() but uses default values of
 NULL for the I<id>, I<libctx> and I<propq>.
