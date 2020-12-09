@@ -101,7 +101,7 @@ Print out a usage message.
 =item B<-inform> B<DER>|B<PEM>
 
 The CSR input format; the default is B<PEM>.
-See L<openssl-format-options(1)/Format Options> for details.
+See L<openssl-format-options(1)> for details.
 
 The input is normally an X.509 certificate file of any format,
 but this can change if other options such as B<-req> are used.
@@ -109,7 +109,7 @@ but this can change if other options such as B<-req> are used.
 B<-outform> B<DER>|B<PEM>
 
 The output format; the default is B<PEM>.
-See L<openssl-format-options(1)/Format Options> for details.
+See L<openssl-format-options(1)> for details.
 
 =item B<-in> I<filename>
 
@@ -382,7 +382,7 @@ Names and values of these options are algorithm-specific.
 
 The key and certificate file password source.
 For more information about the format of I<arg>
-see L<openssl-passphrase-options(1)/Pass Phrase Options>.
+see L<openssl-passphrase-options(1)>.
 
 =item B<-clrext>
 
@@ -395,7 +395,7 @@ retained.
 
 The key format; the default is B<PEM>.
 The only value with effect is B<ENGINE>; all others have become obsolete.
-See L<openssl-format-options(1)/Format Options> for details.
+See L<openssl-format-options(1)> for details.
 
 =item B<-CAform> B<DER>|B<PEM>|B<P12>,
 
@@ -406,7 +406,7 @@ This option has no effect and is retained for backward compatibility.
 
 The format for the CA key; the default is B<PEM>.
 The only value with effect is B<ENGINE>; all others have become obsolete.
-See L<openssl-format-options(1)/Format Options> for details.
+See L<openssl-format-options(1)> for details.
 
 =item B<-days> I<arg>
 

@@ -314,7 +314,7 @@ specified in the B<-rsigner> option is used.
 =item B<-passin> I<arg>
 
 The private key password source. For more information about the format of I<arg>
-see L<openssl-passphrase-options(1)/Pass Phrase Options>.
+see L<openssl-passphrase-options(1)>.
 
 =item B<-rother> I<file>
 

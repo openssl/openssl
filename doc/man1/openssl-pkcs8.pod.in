@@ -55,7 +55,7 @@ reversed: it reads a private key and writes a PKCS#8 format key.
 =item B<-inform> B<DER>|B<PEM>, B<-outform> B<DER>|B<PEM>
 
 The input and formats; the default is B<PEM>.
-See L<openssl-format-options(1)/Format Options> for details.
+See L<openssl-format-options(1)> for details.
 
 If a key is being converted from PKCS#8 form (i.e. the B<-topk8> option is
 not used) then the input file must be in PKCS#8 format. An encrypted
@@ -88,7 +88,7 @@ prompted for.
 
 The password source for the input and output file.
 For more information about the format of B<arg>
-see L<openssl-passphrase-options(1)/Pass Phrase Options>.
+see L<openssl-passphrase-options(1)>.
 
 =item B<-out> I<filename>
 

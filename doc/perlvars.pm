@@ -79,7 +79,7 @@ $OpenSSL::safe::opt_name_item = ""
 . "=item B<-nameopt> I<option>\n"
 . "\n"
 . "This specifies how the subject or issuer names are displayed.\n"
-. "See L<openssl-namefmt-options(1)/Name Format Options> for details.";
+. "See L<openssl-namedisplay-options(1)> for details.";
 
 # Random State Options
 $OpenSSL::safe::opt_r_synopsis = ""

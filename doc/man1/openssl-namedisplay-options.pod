@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-openssl-namefmt-options - DN display options
+openssl-namedisplay-options - Distinguished name display options
 
 =head1 SYNOPSIS
 
