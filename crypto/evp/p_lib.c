@@ -1243,7 +1243,7 @@ int EVP_PKEY_get_group_name(const EVP_PKEY *pkey, char *gname, size_t gname_sz,
                 int uid = DH_get_nid(dh);
 
                 if (uid != NID_undef)
-                    name = ossl_ffc_named_group_from_uid(uid);
+                    name = ossl_ffc_uid_to_dh_named_group(uid);
             }
             break;
 #endif
