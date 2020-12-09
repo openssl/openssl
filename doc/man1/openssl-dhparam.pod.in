@@ -42,7 +42,7 @@ Print out a usage message.
 
 The input format and output format; the default is B<PEM>.
 The object is compatible with the PKCS#3 B<DHparameter> structure.
-See L<openssl-format-options(1)/Format Options> for details.
+See L<openssl-format-options(1)> for details.
 
 =item B<-in> I<filename>
 

@@ -51,7 +51,7 @@ standard output is used.
 =item B<-passout> I<arg>
 
 The passphrase used for the output file.
-See L<openssl-passphrase-options(1)/Pass Phrase Options>.
+See L<openssl-passphrase-options(1)>.
 
 =item B<-aes128>, B<-aes192>, B<-aes256>, B<-aria128>, B<-aria192>, B<-aria256>, B<-camellia128>, B<-camellia192>, B<-camellia256>, B<-des>, B<-des3>, B<-idea>
 

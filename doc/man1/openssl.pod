@@ -565,7 +565,7 @@ See the L<openssl-verification-options(1)> manual page.
 
 =head2 Name Format Options
 
-See the L<openssl-namefmt-options(1)> manual page.
+See the L<openssl-namedisplay-options(1)> manual page.
 
 =head2 TLS Version Options
 

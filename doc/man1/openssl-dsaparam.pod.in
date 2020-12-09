@@ -39,7 +39,7 @@ Print out a usage message.
 =item B<-inform> B<DER>|B<PEM>, B<-outform> B<DER>|B<PEM>
 
 This option has become obsolete.
-See L<openssl-format-options(1)/Format Options> for details.
+See L<openssl-format-options(1)> for details.
 
 Parameters are a sequence of B<ASN.1 INTEGER>s: B<p>, B<q>, and B<g>.
 This is compatible with RFC 2459 B<DSS-Parms> structure.

@@ -293,6 +293,10 @@ displays them.
 =item B<-CSP> I<name>
 
 Write I<name> as a Microsoft CSP name.
+The password source for the input, and for encrypting any private keys that
+are output.
+For more information about the format of B<arg>
+see L<openssl-passphrase-options(1)>.
 
 =item B<-LMK>
 

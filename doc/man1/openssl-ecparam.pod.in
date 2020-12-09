@@ -46,7 +46,7 @@ Print out a usage message.
 =item B<-inform> B<DER>|B<PEM>, B<-outform> B<DER>|B<PEM>
 
 The input and formats; the default is B<PEM>.
-See L<openssl-format-options(1)/Format Options> for details.
+See L<openssl-format-options(1)> for details.
 
 Parameters are encoded as B<EcpkParameters> as specified in IETF RFC 3279.
 

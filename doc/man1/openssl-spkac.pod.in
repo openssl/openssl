@@ -62,12 +62,12 @@ present.
 
 The key format; the default is B<PEM>.
 The only value with effect is B<ENGINE>; all others have become obsolete.
-See L<openssl-format-options(1)/Format Options> for details.
+See L<openssl-format-options(1)> for details.
 
 =item B<-passin> I<arg>
 
 The input file password source. For more information about the format of I<arg>
-see L<openssl-passphrase-options(1)/Pass Phrase Options>.
+see L<openssl-passphrase-options(1)>.
 
 =item B<-challenge> I<string>
 
