@@ -310,9 +310,9 @@ int rsa_main(int argc, char **argv)
     if (outformat == FORMAT_ASN1 || outformat == FORMAT_PEM) {
         if (pubout || pubin) {
             if (pubout == 2)
-                output_structure = "SubjectPublicKeyInfo";
-            else
                 output_structure = "pkcs1"; /* "type-specific" would work too */
+            else
+                output_structure = "SubjectPublicKeyInfo";
         } else {
             assert(private);
             if (traditional)
