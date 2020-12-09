@@ -93,11 +93,9 @@ my @noexist_file_files =
 # @methods is a collection of extra 'openssl storeutl' arguments used to
 # try the different methods.
 my @methods;
-if (disabled('legacy')) {
-    push @methods, [qw(-provider default)];
-} else {
-    push @methods, [qw(-provider default -provider legacy)];
-}
+my @prov_method = qw(-provider default);
+push @prov_method, qw(-provider legacy) unless disabled('legacy');
+push @methods, [ @prov_method ];
 push @methods, [qw(-engine loader_attic)]
     unless disabled('dynamic-engine') || disabled('deprecated-3.0');
 
