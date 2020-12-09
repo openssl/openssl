@@ -15,18 +15,10 @@ openssl-glossary - An OpenSSL Glossary
 ASN.1 ("Abstract Syntax Notation One") is a notation for describing
 abstract types and values.  It is defined in the ITU-T documents X.680
 to X.683:
-
-=over 4
-
-=item L<https://www.itu.int/rec/T-REC-X.680>
-
-=item L<https://www.itu.int/rec/T-REC-X.681>
-
-=item L<https://www.itu.int/rec/T-REC-X.682>
-
-=item L<https://www.itu.int/rec/T-REC-X.683>
-
-=back
+L<https://www.itu.int/rec/T-REC-X.680>,
+L<https://www.itu.int/rec/T-REC-X.681>,
+L<https://www.itu.int/rec/T-REC-X.682>,
+L<https://www.itu.int/rec/T-REC-X.683>
 
 =item DER ("Distinguished Encoding Rules")
 
