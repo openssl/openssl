@@ -693,6 +693,7 @@ int ossl_do_PVK_header(const unsigned char **in, unsigned int length,
     return 1;
 }
 
+#ifndef OPENSSL_NO_RC4
 static int derive_pvk_key(unsigned char *key,
                           const unsigned char *salt, unsigned int saltlen,
                           const unsigned char *pass, int passlen)
@@ -710,6 +711,7 @@ static int derive_pvk_key(unsigned char *key,
     EVP_MD_CTX_free(mctx);
     return rv;
 }
+#endif
 
 static EVP_PKEY *do_PVK_body(const unsigned char **in,
                              unsigned int saltlen, unsigned int keylen,
@@ -717,7 +719,7 @@ static EVP_PKEY *do_PVK_body(const unsigned char **in,
 {
     EVP_PKEY *ret = NULL;
     const unsigned char *p = *in;
-    unsigned char *enctmp = NULL, *q;
+    unsigned char *enctmp = NULL;
     unsigned char keybuf[20];
 
     EVP_CIPHER_CTX *cctx = EVP_CIPHER_CTX_new();
@@ -726,6 +728,7 @@ static EVP_PKEY *do_PVK_body(const unsigned char **in,
         unsigned int magic;
         char psbuf[PEM_BUFSIZE];
         int enctmplen, inlen;
+        unsigned char *q;
 
         if (cb)
             inlen = cb(psbuf, PEM_BUFSIZE, 0, u);
@@ -830,8 +833,11 @@ static int i2b_PVK(unsigned char **out, const EVP_PKEY *pk, int enclevel,
                    pem_password_cb *cb, void *u)
 {
     int outlen = 24, pklen;
-    unsigned char *p = NULL, *start = NULL, *salt = NULL;
+    unsigned char *p = NULL, *start = NULL;
     EVP_CIPHER_CTX *cctx = NULL;
+#ifndef OPENSSL_NO_RC4
+    unsigned char *salt = NULL;
+#endif
 
     if (enclevel)
         outlen += PVK_SALTLEN;
@@ -867,10 +873,12 @@ static int i2b_PVK(unsigned char **out, const EVP_PKEY *pk, int enclevel,
     write_ledword(&p, enclevel ? PVK_SALTLEN : 0);
     write_ledword(&p, pklen);
     if (enclevel) {
+#ifndef OPENSSL_NO_RC4
         if (RAND_bytes(p, PVK_SALTLEN) <= 0)
             goto error;
         salt = p;
         p += PVK_SALTLEN;
+#endif
     }
     do_i2b(&p, pk, 0);
     if (enclevel != 0) {
@@ -878,6 +886,7 @@ static int i2b_PVK(unsigned char **out, const EVP_PKEY *pk, int enclevel,
         char psbuf[PEM_BUFSIZE];
         unsigned char keybuf[20];
         int enctmplen, inlen;
+
         if (cb)
             inlen = cb(psbuf, PEM_BUFSIZE, 1, u);
         else
