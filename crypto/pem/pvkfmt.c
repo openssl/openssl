@@ -254,7 +254,8 @@ EVP_PKEY *ossl_b2i_bio(BIO *in, int *ispub)
     else
         ret = b2i_dss(&p, bitlen, *ispub);
 #endif
-    else
+
+    if (ret == NULL)
         ERR_raise(ERR_LIB_PEM, PEM_R_UNSUPPORTED_PUBLIC_KEY_TYPE);
 
  err:
