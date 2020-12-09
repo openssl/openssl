@@ -85,7 +85,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: config
-      run: ./config no-makedepend enable-buildtest-c++ --strict-warnings -D_DEFAULT_SOURCE && perl configdata.pm --dump
+      run: ./config no-asm no-makedepend enable-buildtest-c++ --strict-warnings -D_DEFAULT_SOURCE && perl configdata.pm --dump
     - name: make
       run: make -s -j4
     - name: make test
