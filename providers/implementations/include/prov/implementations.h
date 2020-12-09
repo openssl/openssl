@@ -328,6 +328,8 @@ extern const OSSL_DISPATCH ossl_rsa_to_RSA_der_encoder_functions[];
 extern const OSSL_DISPATCH ossl_rsa_to_RSA_pem_encoder_functions[];
 extern const OSSL_DISPATCH ossl_rsa_to_SubjectPublicKeyInfo_der_encoder_functions[];
 extern const OSSL_DISPATCH ossl_rsa_to_SubjectPublicKeyInfo_pem_encoder_functions[];
+extern const OSSL_DISPATCH ossl_rsa_to_msblob_encoder_functions[];
+extern const OSSL_DISPATCH ossl_rsa_to_pvk_encoder_functions[];
 extern const OSSL_DISPATCH ossl_rsa_to_text_encoder_functions[];
 extern const OSSL_DISPATCH ossl_rsa_to_type_specific_keypair_der_encoder_functions[];
 extern const OSSL_DISPATCH ossl_rsa_to_type_specific_keypair_pem_encoder_functions[];
@@ -372,6 +374,8 @@ extern const OSSL_DISPATCH ossl_dsa_to_SubjectPublicKeyInfo_der_encoder_function
 extern const OSSL_DISPATCH ossl_dsa_to_SubjectPublicKeyInfo_pem_encoder_functions[];
 extern const OSSL_DISPATCH ossl_dsa_to_type_specific_pem_encoder_functions[];
 extern const OSSL_DISPATCH ossl_dsa_to_type_specific_der_encoder_functions[];
+extern const OSSL_DISPATCH ossl_dsa_to_msblob_encoder_functions[];
+extern const OSSL_DISPATCH ossl_dsa_to_pvk_encoder_functions[];
 extern const OSSL_DISPATCH ossl_dsa_to_text_encoder_functions[];
 
 extern const OSSL_DISPATCH ossl_ec_to_EC_der_encoder_functions[];

@@ -32,7 +32,11 @@
     { _name,                                                            \
       "provider=" ENCODER_PROVIDER ",fips=" #_fips ",output=text",      \
       (ossl_##_sym##_to_text_encoder_functions) }
-#define ENCODER(_name, _sym, _fips, _output, _structure)                \
+#define ENCODER(_name, _sym, _fips, _output)                            \
+    { _name,                                                            \
+      "provider=" ENCODER_PROVIDER ",fips=" #_fips ",output=" #_output, \
+      (ossl_##_sym##_to_##_output##_encoder_functions) }
+#define ENCODER_w_structure(_name, _sym, _fips, _output, _structure)    \
     { _name,                                                            \
       "provider=" ENCODER_PROVIDER ",fips=" #_fips ",output=" #_output  \
       ",structure=" ENCODER_STRUCTURE_##_structure,                     \
@@ -83,23 +87,33 @@ ENCODER_TEXT("X448", x448, yes),
  */
 
 /* The RSA encoders only support private key and public key output */
-ENCODER("RSA", rsa, yes, der, type_specific_keypair),
-ENCODER("RSA", rsa, yes, pem, type_specific_keypair),
+ENCODER_w_structure("RSA", rsa, yes, der, type_specific_keypair),
+ENCODER_w_structure("RSA", rsa, yes, pem, type_specific_keypair),
 #ifndef OPENSSL_NO_DH
 /* DH and X9.42 DH only support key parameters output. */
-ENCODER("DH", dh, yes, der, type_specific_params),
-ENCODER("DH", dh, yes, pem, type_specific_params),
-ENCODER("DHX", dhx, yes, der, type_specific_params),
-ENCODER("DHX", dhx, yes, pem, type_specific_params),
+ENCODER_w_structure("DH", dh, yes, der, type_specific_params),
+ENCODER_w_structure("DH", dh, yes, pem, type_specific_params),
+ENCODER_w_structure("DHX", dhx, yes, der, type_specific_params),
+ENCODER_w_structure("DHX", dhx, yes, pem, type_specific_params),
 #endif
 #ifndef OPENSSL_NO_DSA
-ENCODER("DSA", dsa, yes, der, type_specific),
-ENCODER("DSA", dsa, yes, pem, type_specific),
+ENCODER_w_structure("DSA", dsa, yes, der, type_specific),
+ENCODER_w_structure("DSA", dsa, yes, pem, type_specific),
 #endif
 #ifndef OPENSSL_NO_EC
 /* EC only supports keypair and parameters output. */
-ENCODER("EC", ec, yes, der, type_specific_no_pub),
-ENCODER("EC", ec, yes, pem, type_specific_no_pub),
+ENCODER_w_structure("EC", ec, yes, der, type_specific_no_pub),
+ENCODER_w_structure("EC", ec, yes, pem, type_specific_no_pub),
+#endif
+
+/*
+ * Entries for the output formats MSBLOB and PVK
+ */
+ENCODER("RSA", rsa, yes, msblob),
+ENCODER("RSA", rsa, yes, pvk),
+#ifndef OPENSSL_NO_DSA
+ENCODER("DSA", dsa, yes, msblob),
+ENCODER("DSA", dsa, yes, pvk),
 #endif
 
 /*
@@ -109,60 +123,60 @@ ENCODER("EC", ec, yes, pem, type_specific_no_pub),
  * The "pem" ones also support PEM_write_bio_PrivateKey() and
  * PEM_write_bio_PUBKEY().
  */
-ENCODER("RSA", rsa, yes, der, PKCS8),
-ENCODER("RSA", rsa, yes, pem, PKCS8),
-ENCODER("RSA", rsa, yes, der, SubjectPublicKeyInfo),
-ENCODER("RSA", rsa, yes, pem, SubjectPublicKeyInfo),
+ENCODER_w_structure("RSA", rsa, yes, der, PKCS8),
+ENCODER_w_structure("RSA", rsa, yes, pem, PKCS8),
+ENCODER_w_structure("RSA", rsa, yes, der, SubjectPublicKeyInfo),
+ENCODER_w_structure("RSA", rsa, yes, pem, SubjectPublicKeyInfo),
 
-ENCODER("RSA-PSS", rsapss, yes, der, PKCS8),
-ENCODER("RSA-PSS", rsapss, yes, pem, PKCS8),
-ENCODER("RSA-PSS", rsapss, yes, der, SubjectPublicKeyInfo),
-ENCODER("RSA-PSS", rsapss, yes, pem, SubjectPublicKeyInfo),
+ENCODER_w_structure("RSA-PSS", rsapss, yes, der, PKCS8),
+ENCODER_w_structure("RSA-PSS", rsapss, yes, pem, PKCS8),
+ENCODER_w_structure("RSA-PSS", rsapss, yes, der, SubjectPublicKeyInfo),
+ENCODER_w_structure("RSA-PSS", rsapss, yes, pem, SubjectPublicKeyInfo),
 
 #ifndef OPENSSL_NO_DH
-ENCODER("DH", dh, yes, der, PKCS8),
-ENCODER("DH", dh, yes, pem, PKCS8),
-ENCODER("DH", dh, yes, der, SubjectPublicKeyInfo),
-ENCODER("DH", dh, yes, pem, SubjectPublicKeyInfo),
+ENCODER_w_structure("DH", dh, yes, der, PKCS8),
+ENCODER_w_structure("DH", dh, yes, pem, PKCS8),
+ENCODER_w_structure("DH", dh, yes, der, SubjectPublicKeyInfo),
+ENCODER_w_structure("DH", dh, yes, pem, SubjectPublicKeyInfo),
 
-ENCODER("DHX", dhx, yes, der, PKCS8),
-ENCODER("DHX", dhx, yes, pem, PKCS8),
-ENCODER("DHX", dhx, yes, der, SubjectPublicKeyInfo),
-ENCODER("DHX", dhx, yes, pem, SubjectPublicKeyInfo),
+ENCODER_w_structure("DHX", dhx, yes, der, PKCS8),
+ENCODER_w_structure("DHX", dhx, yes, pem, PKCS8),
+ENCODER_w_structure("DHX", dhx, yes, der, SubjectPublicKeyInfo),
+ENCODER_w_structure("DHX", dhx, yes, pem, SubjectPublicKeyInfo),
 #endif
 
 #ifndef OPENSSL_NO_DSA
-ENCODER("DSA", dsa, yes, der, PKCS8),
-ENCODER("DSA", dsa, yes, pem, PKCS8),
-ENCODER("DSA", dsa, yes, der, SubjectPublicKeyInfo),
-ENCODER("DSA", dsa, yes, pem, SubjectPublicKeyInfo),
+ENCODER_w_structure("DSA", dsa, yes, der, PKCS8),
+ENCODER_w_structure("DSA", dsa, yes, pem, PKCS8),
+ENCODER_w_structure("DSA", dsa, yes, der, SubjectPublicKeyInfo),
+ENCODER_w_structure("DSA", dsa, yes, pem, SubjectPublicKeyInfo),
 #endif
 
 #ifndef OPENSSL_NO_EC
-ENCODER("EC", ec, yes, der, PKCS8),
-ENCODER("EC", ec, yes, pem, PKCS8),
-ENCODER("EC", ec, yes, der, SubjectPublicKeyInfo),
-ENCODER("EC", ec, yes, pem, SubjectPublicKeyInfo),
+ENCODER_w_structure("EC", ec, yes, der, PKCS8),
+ENCODER_w_structure("EC", ec, yes, pem, PKCS8),
+ENCODER_w_structure("EC", ec, yes, der, SubjectPublicKeyInfo),
+ENCODER_w_structure("EC", ec, yes, pem, SubjectPublicKeyInfo),
 
-ENCODER("X25519", x25519, yes, der, PKCS8),
-ENCODER("X25519", x25519, yes, pem, PKCS8),
-ENCODER("X25519", x25519, yes, der, SubjectPublicKeyInfo),
-ENCODER("X25519", x25519, yes, pem, SubjectPublicKeyInfo),
+ENCODER_w_structure("X25519", x25519, yes, der, PKCS8),
+ENCODER_w_structure("X25519", x25519, yes, pem, PKCS8),
+ENCODER_w_structure("X25519", x25519, yes, der, SubjectPublicKeyInfo),
+ENCODER_w_structure("X25519", x25519, yes, pem, SubjectPublicKeyInfo),
 
-ENCODER("X448", x448, yes, der, PKCS8),
-ENCODER("X448", x448, yes, pem, PKCS8),
-ENCODER("X448", x448, yes, der, SubjectPublicKeyInfo),
-ENCODER("X448", x448, yes, pem, SubjectPublicKeyInfo),
+ENCODER_w_structure("X448", x448, yes, der, PKCS8),
+ENCODER_w_structure("X448", x448, yes, pem, PKCS8),
+ENCODER_w_structure("X448", x448, yes, der, SubjectPublicKeyInfo),
+ENCODER_w_structure("X448", x448, yes, pem, SubjectPublicKeyInfo),
 
-ENCODER("ED25519", ed25519, yes, der, PKCS8),
-ENCODER("ED25519", ed25519, yes, pem, PKCS8),
-ENCODER("ED25519", ed25519, yes, der, SubjectPublicKeyInfo),
-ENCODER("ED25519", ed25519, yes, pem, SubjectPublicKeyInfo),
+ENCODER_w_structure("ED25519", ed25519, yes, der, PKCS8),
+ENCODER_w_structure("ED25519", ed25519, yes, pem, PKCS8),
+ENCODER_w_structure("ED25519", ed25519, yes, der, SubjectPublicKeyInfo),
+ENCODER_w_structure("ED25519", ed25519, yes, pem, SubjectPublicKeyInfo),
 
-ENCODER("ED448", ed448, yes, der, PKCS8),
-ENCODER("ED448", ed448, yes, pem, PKCS8),
-ENCODER("ED448", ed448, yes, der, SubjectPublicKeyInfo),
-ENCODER("ED448", ed448, yes, pem, SubjectPublicKeyInfo),
+ENCODER_w_structure("ED448", ed448, yes, der, PKCS8),
+ENCODER_w_structure("ED448", ed448, yes, pem, PKCS8),
+ENCODER_w_structure("ED448", ed448, yes, der, SubjectPublicKeyInfo),
+ENCODER_w_structure("ED448", ed448, yes, pem, SubjectPublicKeyInfo),
 #endif
 
 /*
@@ -173,22 +187,22 @@ ENCODER("ED448", ed448, yes, pem, SubjectPublicKeyInfo),
  */
 
 /* The RSA encoders only support private key and public key output */
-ENCODER("RSA", rsa, yes, der, RSA),
-ENCODER("RSA", rsa, yes, pem, RSA),
+ENCODER_w_structure("RSA", rsa, yes, der, RSA),
+ENCODER_w_structure("RSA", rsa, yes, pem, RSA),
 #ifndef OPENSSL_NO_DH
 /* DH and X9.42 DH only support key parameters output. */
-ENCODER("DH", dh, yes, der, DH),
-ENCODER("DH", dh, yes, pem, DH),
-ENCODER("DHX", dhx, yes, der, DHX),
-ENCODER("DHX", dhx, yes, pem, DHX),
+ENCODER_w_structure("DH", dh, yes, der, DH),
+ENCODER_w_structure("DH", dh, yes, pem, DH),
+ENCODER_w_structure("DHX", dhx, yes, der, DHX),
+ENCODER_w_structure("DHX", dhx, yes, pem, DHX),
 #endif
 #ifndef OPENSSL_NO_DSA
-ENCODER("DSA", dsa, yes, der, DSA),
-ENCODER("DSA", dsa, yes, pem, DSA),
+ENCODER_w_structure("DSA", dsa, yes, der, DSA),
+ENCODER_w_structure("DSA", dsa, yes, pem, DSA),
 #endif
 #ifndef OPENSSL_NO_EC
-ENCODER("EC", ec, yes, der, EC),
-ENCODER("EC", ec, yes, pem, EC),
+ENCODER_w_structure("EC", ec, yes, der, EC),
+ENCODER_w_structure("EC", ec, yes, pem, EC),
 #endif
 
 /*
@@ -198,20 +212,20 @@ ENCODER("EC", ec, yes, pem, EC),
  * on libcrypto functionality in any way.
  */
 /* PKCS#1 is a well known for plain RSA keys, so we add that too */
-ENCODER("RSA", rsa, yes, der, PKCS1),
-ENCODER("RSA", rsa, yes, pem, PKCS1),
-ENCODER("RSA-PSS", rsapss, yes, der, PKCS1),
-ENCODER("RSA-PSS", rsapss, yes, pem, PKCS1),
+ENCODER_w_structure("RSA", rsa, yes, der, PKCS1),
+ENCODER_w_structure("RSA", rsa, yes, pem, PKCS1),
+ENCODER_w_structure("RSA-PSS", rsapss, yes, der, PKCS1),
+ENCODER_w_structure("RSA-PSS", rsapss, yes, pem, PKCS1),
 #ifndef OPENSSL_NO_DH
 /* PKCS#3 defines the format for DH parameters */
-ENCODER("DH", dh, yes, der, PKCS3),
-ENCODER("DH", dh, yes, pem, PKCS3),
+ENCODER_w_structure("DH", dh, yes, der, PKCS3),
+ENCODER_w_structure("DH", dh, yes, pem, PKCS3),
 /* X9.42 defines the format for DHX parameters */
-ENCODER("DHX", dhx, yes, der, X9_42),
-ENCODER("DHX", dhx, yes, pem, X9_42),
+ENCODER_w_structure("DHX", dhx, yes, der, X9_42),
+ENCODER_w_structure("DHX", dhx, yes, pem, X9_42),
 #endif
 #ifndef OPENSSL_NO_EC
 /* RFC 5915 defines the format for EC keys and parameters */
-ENCODER("EC", ec, yes, der, X9_62),
-ENCODER("EC", ec, yes, pem, X9_62),
+ENCODER_w_structure("EC", ec, yes, der, X9_62),
+ENCODER_w_structure("EC", ec, yes, pem, X9_62),
 #endif
