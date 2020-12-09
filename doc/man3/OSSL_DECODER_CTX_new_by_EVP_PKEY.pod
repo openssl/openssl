@@ -87,58 +87,23 @@ example, within one L<OSSL_DECODER_from_bio(3)> call).
 Available input types depend on the implementations that available providers
 offer, and provider documentation should have the details.
 
-The known input types that OpenSSL decoder implementations offer for
-B<EVP_PKEY>s are:
-
-=over 4
-
-=item "PEM"
-
-PEM is the term used for encoding of binary content, first defined in IETF
-RFC 1421.  The content is a series of base64-encoded lines, surrounded by
-begin/end markers each on their own line.  For example:
-
- -----BEGIN PRIVATE KEY-----
- MIICdg....
- ... bhTQ==
- -----END PRIVATE KEY-----
-
-Optional header line(s) may appear after the begin line, and their existence
-depends on the type of object being written or read.
-
-For all OpenSSL uses, the binary content is expected to be a DER encoded
-structure.
-
-=item "DER"
-
-DER is a binary encoding of data, structured according to an ASN.1
-specification.
-
-=back
+Among the known input types that OpenSSL decoder implementations offer
+for B<EVP_PKEY>s are C<DER>, C<PEM>, C<MSBLOB> and C<PVK>.
+See L<openssl-glossary(7)> for further information on what these input
+types mean.
 
 =head2 Input Structures
 
 Available input structures depend on the implementations that available
 providers offer, and provider documentation should have the details.
 
-The known input structures that OpenSSL decoder implementations offer for
-B<EVP_PKEY>s are:
+Among the known input structures that OpenSSL decoder implementations
+offer for B<EVP_PKEY>s are C<pkcs8> and C<SubjectPublicKeyInfo>.
 
-=over 4
-
-=item "type-specific"
-
-This is the structure used for keys encoded according to key type specific
-specifications.  For example, RSA keys encoded according to PKCS#1.
-
-=item "pkcs8"
-
-For keys wrapped in a PKCS#8 structure.  Both encrypted and unencrypted
-encodings are supported.  This only supports private keys.
-
-=item "SubjectPublicKeyInfo"
-
-=back
+OpenSSL decoder implementations also support the input structure
+C<type-specific>.  This is the structure used for keys encoded
+according to key type specific specifications.  For example, RSA keys
+encoded according to PKCS#1.
 
 =head1 RETURN VALUES
 
