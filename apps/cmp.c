@@ -20,7 +20,7 @@
 #include "cmp_mock_srv.h"
 
 /* tweaks needed due to missing unistd.h on Windows */
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(__BORLANDC__)
 # define access _access
 #endif
 #ifndef F_OK

@@ -50,7 +50,7 @@ static int WIN32_rename(const char *from, const char *to);
 # include <conio.h>
 #endif
 
-#if defined(OPENSSL_SYS_MSDOS) && !defined(_WIN32)
+#if defined(OPENSSL_SYS_MSDOS) && !defined(_WIN32) || defined(__BORLANDC__)
 # define _kbhit kbhit
 #endif
 

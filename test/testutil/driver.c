@@ -19,7 +19,7 @@
 
 #include "platform.h"            /* From libapps */
 
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(__BORLANDC__)
 # define strdup _strdup
 #endif
 
