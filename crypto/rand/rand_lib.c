@@ -561,8 +561,11 @@ EVP_RAND_CTX *RAND_get0_primary(OSSL_LIB_CTX *ctx)
         if (!CRYPTO_THREAD_write_lock(dgbl->lock))
             return NULL;
 #ifndef FIPS_MODULE
-        if (dgbl->seed == NULL)
+        if (dgbl->seed == NULL) {
+            ERR_set_mark();
             dgbl->seed = rand_new_seed(ctx);
+            ERR_pop_to_mark();
+        }
 #endif
         if (dgbl->primary == NULL)
             dgbl->primary = rand_new_drbg(ctx, dgbl->seed,
