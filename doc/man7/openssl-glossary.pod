@@ -86,7 +86,7 @@ RFC 5280: L<https://tools.ietf.org/html/rfc5280>
 
 =head1 HISTORY
 
-This page was added in OpenSSL 3.0.
+This glossary was added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
