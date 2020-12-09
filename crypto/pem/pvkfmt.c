@@ -460,7 +460,7 @@ static void write_dsa(unsigned char **out, DSA *dsa, int ispub);
 static int do_i2b(unsigned char **out, const EVP_PKEY *pk, int ispub)
 {
     unsigned char *p;
-    unsigned int bitlen = 0, magic = 0, keyalg;
+    unsigned int bitlen = 0, magic = 0, keyalg = 0;
     int outlen, noinc = 0;
     int pktype = EVP_PKEY_id(pk);
 
