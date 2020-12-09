@@ -71,7 +71,7 @@ IF[{- !$disabled{apps} -}]
   # always depend on a changed configuration.
   DEPEND[progs.c]=../configdata.pm
 
-  IF[{- $config{target} =~ /^(?:Cygwin|mingw|VC-)/ -}]
+  IF[{- $config{target} =~ /^(?:Cygwin|mingw|VC-|BC-)/ -}]
     GENERATE[openssl.rc]=../util/mkrc.pl openssl
     SOURCE[openssl]=openssl.rc
   ENDIF

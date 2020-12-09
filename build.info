@@ -79,7 +79,7 @@ IF[{- defined $target{shared_defflag} -}]
   GENERATE[libssl.ld]=util/libssl.num libssl
 ENDIF
 
-IF[{- $config{target} =~ /^(?:Cygwin|mingw|VC-)/ -}]
+IF[{- $config{target} =~ /^(?:Cygwin|mingw|VC-|BC-)/ -}]
   GENERATE[libcrypto.rc]=util/mkrc.pl libcrypto
   GENERATE[libssl.rc]=util/mkrc.pl libssl
 
