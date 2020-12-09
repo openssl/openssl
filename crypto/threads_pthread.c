@@ -200,21 +200,6 @@ int CRYPTO_atomic_add(int *val, int amount, int *ret, CRYPTO_RWLOCK *lock)
 # ifndef FIPS_MODULE
 #  ifdef OPENSSL_SYS_UNIX
 
-#   ifndef OPENSSL_NO_DEPRECATED_3_0
-
-void OPENSSL_fork_prepare(void)
-{
-}
-
-void OPENSSL_fork_parent(void)
-{
-}
-
-void OPENSSL_fork_child(void)
-{
-}
-
-#   endif
 static pthread_once_t fork_once_control = PTHREAD_ONCE_INIT;
 
 static void fork_once_func(void)
