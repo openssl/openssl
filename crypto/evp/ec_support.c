@@ -156,7 +156,7 @@ int ec_curve_name2nid(const char *name)
 
 /* Functions to translate between common NIST curve names and NIDs */
 
-static EC_NAME2NID nist_curves[] = {
+static const EC_NAME2NID nist_curves[] = {
     {"B-163", NID_sect163r2},
     {"B-233", NID_sect233r1},
     {"B-283", NID_sect283r1},

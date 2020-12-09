@@ -60,8 +60,9 @@ int EVP_PKEY_CTX_get0_ecdh_kdf_ukm(EVP_PKEY_CTX *ctx, unsigned char **ukm);
 /* KDF types */
 # define EVP_PKEY_ECDH_KDF_NONE                      1
 # define EVP_PKEY_ECDH_KDF_X9_63                     2
-/** The old name for EVP_PKEY_ECDH_KDF_X9_63
- *  The ECDH KDF specification has been mistakingly attributed to ANSI X9.62,
+/*
+ * The old name for EVP_PKEY_ECDH_KDF_X9_63
+ *  The ECDH KDF specification has been mistakenly attributed to ANSI X9.62,
  *  it is actually specified in ANSI X9.63.
  *  This identifier is retained for backwards compatibility
  */
