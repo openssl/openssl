@@ -873,6 +873,7 @@ static int i2b_PVK(unsigned char **out, const EVP_PKEY *pk, int enclevel,
     }
     do_i2b(&p, pk, 0);
     if (enclevel != 0) {
+#ifndef OPENSSL_NO_RC4
         char psbuf[PEM_BUFSIZE];
         unsigned char keybuf[20];
         int enctmplen, inlen;
@@ -897,6 +898,10 @@ static int i2b_PVK(unsigned char **out, const EVP_PKEY *pk, int enclevel,
             goto error;
         if (!EVP_EncryptFinal_ex(cctx, p + enctmplen, &enctmplen))
             goto error;
+#else
+        ERR_raise(ERR_LIB_PEM, PEM_R_UNSUPPORTED_CIPHER);
+        goto error;
+#endif
     }
 
     EVP_CIPHER_CTX_free(cctx);
