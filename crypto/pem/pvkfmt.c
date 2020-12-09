@@ -717,15 +717,16 @@ static EVP_PKEY *do_PVK_body(const unsigned char **in,
 {
     EVP_PKEY *ret = NULL;
     const unsigned char *p = *in;
-    unsigned int magic;
     unsigned char *enctmp = NULL, *q;
     unsigned char keybuf[20];
 
     EVP_CIPHER_CTX *cctx = EVP_CIPHER_CTX_new();
     if (saltlen) {
 #ifndef OPENSSL_NO_RC4
+        unsigned int magic;
         char psbuf[PEM_BUFSIZE];
         int enctmplen, inlen;
+
         if (cb)
             inlen = cb(psbuf, PEM_BUFSIZE, 0, u);
         else
