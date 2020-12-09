@@ -33,6 +33,9 @@ static int tls12_sigalg_allowed(const SSL *s, int op, const SIGALG_LOOKUP *lu);
 static const SIGALG_LOOKUP *find_sig_alg(SSL *s, X509 *x, EVP_PKEY *pkey);
 static int tls12_sigalg_allowed(const SSL *s, int op, const SIGALG_LOOKUP *lu);
 
+static const SIGALG_LOOKUP *find_sig_alg(SSL *s, X509 *x, EVP_PKEY *pkey);
+static int tls12_sigalg_allowed(const SSL *s, int op, const SIGALG_LOOKUP *lu);
+
 SSL3_ENC_METHOD const TLSv1_enc_data = {
     tls1_enc,
     tls1_mac,

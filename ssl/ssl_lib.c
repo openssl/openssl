@@ -2678,7 +2678,7 @@ const char *SSL_get_servername(const SSL *s, const int type)
          *  - Otherwise it returns NULL
          *
          * During/after the handshake (TLSv1.2 or below resumption occurred):
-         * - If the session from the orignal handshake had a servername accepted
+         * - If the session from the original handshake had a servername accepted
          *   by the server then it will return that servername.
          * - Otherwise it returns the servername set via
          *   SSL_set_tlsext_host_name() (or NULL if it was not called).

@@ -365,12 +365,19 @@ static ssize_t syscall_random(void *buf, size_t buflen)
      * - OpenBSD since 5.6
      * - Linux since 3.17 with glibc 2.25
      * - FreeBSD since 12.0 (1200061)
+     *
+     * Note: Sometimes getentropy() can be provided but not implemented
+     * internally. So we need to check errno for ENOSYS
      */
 #  if defined(__GNUC__) && __GNUC__>=2 && defined(__ELF__) && !defined(__hpux)
     extern int getentropy(void *buffer, size_t length) __attribute__((weak));
 
-    if (getentropy != NULL)
-        return getentropy(buf, buflen) == 0 ? (ssize_t)buflen : -1;
+    if (getentropy != NULL) {
+        if (getentropy(buf, buflen) == 0)
+            return (ssize_t)buflen;
+        if (errno != ENOSYS)
+            return -1;
+    }
 #  else
     union {
         void *p;
