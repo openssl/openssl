@@ -7,7 +7,7 @@ SUBDIRS=ossl_shim
 # be useful here.
 #
 # Auxiliary program source (copied from ../apps/build.info)
-IF[{- $config{target} =~ /^(?:VC-|mingw)/ -}]
+IF[{- $config{target} =~ /^(?:VC-|mingw|BC-)/ -}]
   # It's called 'init', but doesn't have much 'init' in it...
   $AUXLIBAPPSSRC=../apps/lib/win32_init.c
 ENDIF
