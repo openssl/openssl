@@ -28,26 +28,24 @@ to X.683:
 
 =back
 
-=item DER
+=item DER ("Distinguished Encoding Rules")
 
-DER ("Distinguished Encoding Rules") is a binary encoding of data,
-structured according to an ASN.1 specification.  This is a common
-encoding used for cryptographic objects such as private and public
-keys, certificates, CRLs, ...
+DER is a binary encoding of data, structured according to an ASN.1
+specification.  This is a common encoding used for cryptographic objects
+such as private and public keys, certificates, CRLs, ...
 
-It is defined in ITU-T document X.690:
-L<https://www.itu.int/rec/T-REC-X.690>
+It is defined in ITU-T document X.690: L<https://www.itu.int/rec/T-REC-X.690>
 
 =item MSBLOB
 
-MSBLOB is a Microsoft specific binary format for RSA and DSA keys,
-both private and public.  This form is never passphrase protected.
+MSBLOB is a Microsoft specific binary format for RSA and DSA keys, both
+private and public.  This form is never passphrase protected.
 
-=item PEM
+=item PEM ("Privacy Enhanced Message")
 
-PEM is the term used for encoding of binary content, first defined in IETF
-RFC 1421.  The content is a series of base64-encoded lines, surrounded by
-begin/end markers each on their own line.  For example:
+PEM is a format used for encoding of binary content into an mail and ASCII
+friendly form.  The content is a series of base64-encoded lines, surrounded
+by begin/end markers each on their own line.  For example:
 
  -----BEGIN PRIVATE KEY-----
  MIICdg....
@@ -59,6 +57,8 @@ depends on the type of object being written or read.
 
 For all OpenSSL uses, the binary content is expected to be a DER encoded
 structure.
+
+This is defined in IETF RFC 1421: L<https://tools.ietf.org/html/rfc1421>
 
 =item PKCS#8 (also known as "pkcs8" in some parts of OpenSSL)
 
