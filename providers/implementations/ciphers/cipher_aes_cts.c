@@ -7,7 +7,12 @@
  * https://www.openssl.org/source/license.html
  */
 
-/* Helper functions for AES CBC CTS ciphers related to fips */
+/*
+ * Helper functions for AES CBC CTS ciphers.
+ *
+ * The function dispatch tables are embedded into cipher_aes.c
+ * using cipher_aes_cts.inc
+ */
 
 /*
  * Refer to SP800-38A-Addendum
@@ -66,10 +71,8 @@ typedef struct cts_mode_name2id_st {
 static CTS_MODE_NAME2ID cts_modes[] =
 {
     { CTS_CS1, OSSL_CIPHER_CTS_MODE_CS1 },
-#ifndef FIPS_MODULE
     { CTS_CS2, OSSL_CIPHER_CTS_MODE_CS2 },
     { CTS_CS3, OSSL_CIPHER_CTS_MODE_CS3 },
-#endif
 };
 
 const char *ossl_aes_cbc_cts_mode_id2name(unsigned int id)
@@ -185,7 +188,6 @@ static size_t cts128_cs1_decrypt(PROV_CIPHER_CTX *ctx, const unsigned char *in,
     return len + AES_BLOCK_SIZE + residue;
 }
 
-#ifndef FIPS_MODULE
 static size_t cts128_cs3_encrypt(PROV_CIPHER_CTX *ctx, const unsigned char *in,
                                  unsigned char *out, size_t len)
 {
@@ -305,11 +307,10 @@ static size_t cts128_cs2_decrypt(PROV_CIPHER_CTX *ctx, const unsigned char *in,
     /* For partial blocks CS2 is equivalent to CS3 */
     return cts128_cs3_decrypt(ctx, in, out, len);
 }
-#endif
 
 int ossl_aes_cbc_cts_block_update(void *vctx, unsigned char *out, size_t *outl,
-                             size_t outsize, const unsigned char *in,
-                             size_t inl)
+                                  size_t outsize, const unsigned char *in,
+                                  size_t inl)
 {
     PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
     size_t sz = 0;
@@ -331,27 +332,19 @@ int ossl_aes_cbc_cts_block_update(void *vctx, unsigned char *out, size_t *outl,
         return 0;
 
     if (ctx->enc) {
-#ifdef FIPS_MODULE
-        sz = cts128_cs1_encrypt(ctx, in, out, inl);
-#else
         if (ctx->cts_mode == CTS_CS1)
             sz = cts128_cs1_encrypt(ctx, in, out, inl);
         else if (ctx->cts_mode == CTS_CS2)
             sz = cts128_cs2_encrypt(ctx, in, out, inl);
         else if (ctx->cts_mode == CTS_CS3)
             sz = cts128_cs3_encrypt(ctx, in, out, inl);
-#endif
     } else {
-#ifdef FIPS_MODULE
-        sz = cts128_cs1_decrypt(ctx, in, out, inl);
-#else
         if (ctx->cts_mode == CTS_CS1)
             sz = cts128_cs1_decrypt(ctx, in, out, inl);
         else if (ctx->cts_mode == CTS_CS2)
             sz = cts128_cs2_decrypt(ctx, in, out, inl);
         else if (ctx->cts_mode == CTS_CS3)
             sz = cts128_cs3_decrypt(ctx, in, out, inl);
-#endif
     }
     if (sz == 0)
         return 0;
@@ -361,7 +354,7 @@ int ossl_aes_cbc_cts_block_update(void *vctx, unsigned char *out, size_t *outl,
 }
 
 int ossl_aes_cbc_cts_block_final(void *vctx, unsigned char *out, size_t *outl,
-                            size_t outsize)
+                                 size_t outsize)
 {
     *outl = 0;
     return 1;
