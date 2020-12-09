@@ -333,7 +333,6 @@ static int encode_EVP_PKEY_legacy_PEM(void **encoded, long *encoded_len,
     return ok;
 }
 
-#ifndef OPENSSL_NO_DSA
 static int encode_EVP_PKEY_MSBLOB(void **encoded, long *encoded_len,
                                   void *object, int selection,
                                   ossl_unused const char *output_type,
@@ -371,7 +370,6 @@ static int encode_EVP_PKEY_MSBLOB(void **encoded, long *encoded_len,
     return ok;
 }
 
-# ifndef OPENSSL_NO_RC4
 static pem_password_cb pass_pw;
 static int pass_pw(char *buf, int size, int rwflag, void *userdata)
 {
@@ -410,8 +408,6 @@ static int encode_EVP_PKEY_PVK(void **encoded, long *encoded_len,
     BIO_free(mem_ser);
     return ok;
 }
-# endif
-#endif
 
 static int test_text(const void *data1, size_t data1_len,
                      const void *data2, size_t data2_len)
@@ -598,7 +594,6 @@ static int test_unprotected_via_legacy_PEM(const char *type, EVP_PKEY *key)
                               dump_pem, 0);
 }
 
-#ifndef OPENSSL_NO_DSA
 static int check_MSBLOB(const char *type, const void *data, size_t data_len)
 {
     const unsigned char *datap = data;
@@ -620,7 +615,6 @@ static int test_unprotected_via_MSBLOB(const char *type, EVP_PKEY *key)
                               dump_der, 0);
 }
 
-# ifndef OPENSSL_NO_RC4
 static int check_PVK(const char *type, const void *data, size_t data_len)
 {
     const unsigned char *in = data;
@@ -640,8 +634,6 @@ static int test_unprotected_via_PVK(const char *type, EVP_PKEY *key)
                               test_mem, check_PVK,
                               dump_der, 0);
 }
-# endif
-#endif
 
 static const char *pass_cipher = "AES-256-CBC";
 static const char *pass = "the holy handgrenade of antioch";
@@ -713,7 +705,7 @@ static int test_protected_via_legacy_PEM(const char *type, EVP_PKEY *key)
                               dump_pem, 0);
 }
 
-#if !defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_RC4)
+#ifndef OPENSSL_NO_RC4
 static int test_protected_via_PVK(const char *type, EVP_PKEY *key)
 {
     return test_encode_decode(type, key,
@@ -765,7 +757,6 @@ static int test_public_via_PEM(const char *type, EVP_PKEY *key)
                               test_text, check_public_PEM, dump_pem, 0);
 }
 
-#ifndef OPENSSL_NO_DSA
 static int check_public_MSBLOB(const char *type,
                                const void *data, size_t data_len)
 {
@@ -785,7 +776,6 @@ static int test_public_via_MSBLOB(const char *type, EVP_PKEY *key)
                               encode_EVP_PKEY_MSBLOB, decode_EVP_PKEY_prov,
                               test_mem, check_public_MSBLOB, dump_der, 0);
 }
-#endif
 
 #define KEYS(KEYTYPE)                           \
     static EVP_PKEY *key_##KEYTYPE = NULL
@@ -868,12 +858,11 @@ static int test_public_via_MSBLOB(const char *type, EVP_PKEY *key)
             test_protected_via_legacy_PEM(KEYTYPEstr, key_##KEYTYPE);   \
     }
 
-#define ADD_TEST_SUITE_LEGACY(KEYTYPE)                                 \
-    ADD_TEST(test_unprotected_##KEYTYPE##_via_legacy_PEM);             \
+#define ADD_TEST_SUITE_LEGACY(KEYTYPE)                                  \
+    ADD_TEST(test_unprotected_##KEYTYPE##_via_legacy_PEM);              \
     ADD_TEST(test_protected_##KEYTYPE##_via_legacy_PEM)
 
-#ifndef OPENSSL_NO_DSA
-# define IMPLEMENT_TEST_SUITE_MSBLOB(KEYTYPE, KEYTYPEstr)               \
+#define IMPLEMENT_TEST_SUITE_MSBLOB(KEYTYPE, KEYTYPEstr)                \
     static int test_unprotected_##KEYTYPE##_via_MSBLOB(void)            \
     {                                                                   \
         return test_unprotected_via_MSBLOB(KEYTYPEstr, key_##KEYTYPE);  \
@@ -883,12 +872,12 @@ static int test_public_via_MSBLOB(const char *type, EVP_PKEY *key)
         return test_public_via_MSBLOB(KEYTYPEstr, key_##KEYTYPE);       \
     }
 
-# define ADD_TEST_SUITE_MSBLOB(KEYTYPE)                         \
-    ADD_TEST(test_unprotected_##KEYTYPE##_via_MSBLOB);          \
+#define ADD_TEST_SUITE_MSBLOB(KEYTYPE)                                  \
+    ADD_TEST(test_unprotected_##KEYTYPE##_via_MSBLOB);                  \
     ADD_TEST(test_public_##KEYTYPE##_via_MSBLOB)
 
-# ifndef OPENSSL_NO_RC4
-#  define IMPLEMENT_TEST_SUITE_PVK(KEYTYPE, KEYTYPEstr)                 \
+#ifndef OPENSSL_NO_RC4
+# define IMPLEMENT_TEST_SUITE_PVK(KEYTYPE, KEYTYPEstr)                  \
     static int test_unprotected_##KEYTYPE##_via_PVK(void)               \
     {                                                                   \
         return test_unprotected_via_PVK(KEYTYPEstr, key_##KEYTYPE);     \
@@ -898,10 +887,18 @@ static int test_public_via_MSBLOB(const char *type, EVP_PKEY *key)
         return test_protected_via_PVK(KEYTYPEstr, key_##KEYTYPE);       \
     }
 
-#  define ADD_TEST_SUITE_PVK(KEYTYPE)                           \
-    ADD_TEST(test_unprotected_##KEYTYPE##_via_PVK);             \
+# define ADD_TEST_SUITE_PVK(KEYTYPE)                                    \
+    ADD_TEST(test_unprotected_##KEYTYPE##_via_PVK);                     \
     ADD_TEST(test_protected_##KEYTYPE##_via_PVK)
-# endif
+#else
+# define IMPLEMENT_TEST_SUITE_PVK(KEYTYPE, KEYTYPEstr)                  \
+    static int test_unprotected_##KEYTYPE##_via_PVK(void)               \
+    {                                                                   \
+        return test_unprotected_via_PVK(KEYTYPEstr, key_##KEYTYPE);     \
+    }
+
+# define ADD_TEST_SUITE_PVK(KEYTYPE)                                    \
+    ADD_TEST(test_unprotected_##KEYTYPE##_via_PVK)
 #endif
 
 #ifndef OPENSSL_NO_DH
@@ -922,9 +919,7 @@ IMPLEMENT_TEST_SUITE(DSA, "DSA")
 IMPLEMENT_TEST_SUITE_PARAMS(DSA, "DSA")
 IMPLEMENT_TEST_SUITE_LEGACY(DSA, "DSA")
 IMPLEMENT_TEST_SUITE_MSBLOB(DSA, "DSA")
-# ifndef OPENSSL_NO_RC4
 IMPLEMENT_TEST_SUITE_PVK(DSA, "DSA")
-# endif
 #endif
 #ifndef OPENSSL_NO_EC
 DOMAIN_KEYS(EC);
@@ -967,12 +962,8 @@ IMPLEMENT_TEST_SUITE(RSA_PSS, "RSA-PSS")
  * RSA-PSS has no support for PEM_write_bio_PrivateKey_traditional(),
  * so no legacy tests.
  */
-#ifndef OPENSSL_NO_DSA
 IMPLEMENT_TEST_SUITE_MSBLOB(RSA, "RSA")
-# ifndef OPENSSL_NO_RC4
 IMPLEMENT_TEST_SUITE_PVK(RSA, "RSA")
-# endif
-#endif
 
 #ifndef OPENSSL_NO_EC
 /* Explicit parameters that match a named curve */
@@ -1252,9 +1243,7 @@ int setup_tests(void)
         ADD_TEST_SUITE_PARAMS(DSA);
         ADD_TEST_SUITE_LEGACY(DSA);
         ADD_TEST_SUITE_MSBLOB(DSA);
-# ifndef OPENSSL_NO_RC4
         ADD_TEST_SUITE_PVK(DSA);
-# endif
 #endif
 #ifndef OPENSSL_NO_EC
         ADD_TEST_SUITE(EC);
@@ -1286,12 +1275,8 @@ int setup_tests(void)
          * RSA-PSS has no support for PEM_write_bio_PrivateKey_traditional(),
          * so no legacy tests.
          */
-#ifndef OPENSSL_NO_DSA
         ADD_TEST_SUITE_MSBLOB(RSA);
-# ifndef OPENSSL_NO_RC4
         ADD_TEST_SUITE_PVK(RSA);
-# endif
-#endif
     }
 
     return 1;

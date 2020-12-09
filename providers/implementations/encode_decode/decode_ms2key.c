@@ -28,7 +28,6 @@
 #include "prov/implementations.h"
 #include "endecoder_local.h"
 
-#ifndef OPENSSL_NO_DSA
 static EVP_PKEY *read_msblob(PROV_CTX *provctx, OSSL_CORE_BIO *cin, int *ispub)
 {
     BIO *in = bio_new_from_core_bio(provctx, cin);
@@ -38,7 +37,6 @@ static EVP_PKEY *read_msblob(PROV_CTX *provctx, OSSL_CORE_BIO *cin, int *ispub)
     return pkey;
 }
 
-# ifndef OPENSSL_NO_RC4
 static EVP_PKEY *read_pvk(PROV_CTX *provctx, OSSL_CORE_BIO *cin,
                           OSSL_PASSPHRASE_CALLBACK *pw_cb, void *pw_cbarg)
 {
@@ -56,19 +54,13 @@ static EVP_PKEY *read_pvk(PROV_CTX *provctx, OSSL_CORE_BIO *cin,
 
     return pkey;
 }
-# endif
-#endif
 
 static OSSL_FUNC_decoder_freectx_fn ms2key_freectx;
 static OSSL_FUNC_decoder_gettable_params_fn ms2key_gettable_params;
 static OSSL_FUNC_decoder_get_params_fn msblob2key_get_params;
-#ifndef OPENSSL_NO_RC4
 static OSSL_FUNC_decoder_get_params_fn pvk2key_get_params;
-#endif
 static OSSL_FUNC_decoder_decode_fn msblob2key_decode;
-#ifndef OPENSSL_NO_RC4
 static OSSL_FUNC_decoder_decode_fn pvk2key_decode;
-#endif
 static OSSL_FUNC_decoder_export_object_fn ms2key_export_object;
 
 typedef void *(extract_key_fn)(EVP_PKEY *);
@@ -134,7 +126,6 @@ static int msblob2key_get_params(OSSL_PARAM params[])
     return 1;
 }
 
-#ifndef OPENSSL_NO_RC4
 static int pvk2key_get_params(OSSL_PARAM params[])
 {
     OSSL_PARAM *p;
@@ -145,7 +136,6 @@ static int pvk2key_get_params(OSSL_PARAM params[])
 
     return 1;
 }
-#endif
 
 static int ms2key_post(struct ms2key_ctx_st *ctx, EVP_PKEY *pkey,
                        OSSL_CALLBACK *data_cb, void *data_cbarg)
@@ -207,7 +197,6 @@ static int msblob2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
     return ok;
 }
 
-#ifndef OPENSSL_NO_RC4
 static int pvk2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
                           OSSL_CALLBACK *data_cb, void *data_cbarg,
                           OSSL_PASSPHRASE_CALLBACK *pw_cb, void *pw_cbarg)
@@ -223,7 +212,6 @@ static int pvk2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
     EVP_PKEY_free(pkey);
     return ok;
 }
-#endif
 
 static int ms2key_export_object(void *vctx,
                                 const void *reference, size_t reference_sz,
@@ -278,12 +266,8 @@ static int ms2key_export_object(void *vctx,
 #ifndef OPENSSL_NO_DSA
 IMPLEMENT_TYPE("DSA", DSA, dsa, EVP_PKEY_get1_DSA, DSA_free);
 IMPLEMENT_MS(msblob, dsa);
-# ifndef OPENSSL_NO_RC4
 IMPLEMENT_MS(pvk, dsa);
-# endif
 #endif
 IMPLEMENT_TYPE("RSA", RSA, rsa, EVP_PKEY_get1_RSA, RSA_free);
 IMPLEMENT_MS(msblob, rsa);
-#ifndef OPENSSL_NO_RC4
 IMPLEMENT_MS(pvk, rsa);
-#endif

@@ -50,9 +50,7 @@ DECODER_w_structure("DSA", der, SubjectPublicKeyInfo, dsa, yes),
 DECODER_w_structure("DSA", der, type_specific, dsa, yes),
 DECODER_w_structure("DSA", der, DSA, dsa, yes),
 DECODER("DSA", msblob, dsa, yes),
-# ifndef OPENSSL_NO_RC4
 DECODER("DSA", pvk, dsa, yes),
-# endif
 #endif
 #ifndef OPENSSL_NO_EC
 DECODER_w_structure("EC", der, PKCS8, ec, yes),
@@ -74,11 +72,7 @@ DECODER_w_structure("RSA", der, type_specific_keypair, rsa, yes),
 DECODER_w_structure("RSA", der, RSA, rsa, yes),
 DECODER_w_structure("RSA-PSS", der, PKCS8, rsapss, yes),
 DECODER_w_structure("RSA-PSS", der, SubjectPublicKeyInfo, rsapss, yes),
-#ifndef OPENSSL_NO_DSA
 DECODER("RSA", msblob, rsa, yes),
-# ifndef OPENSSL_NO_RC4
 DECODER("RSA", pvk, rsa, yes),
-# endif
-#endif
 
 DECODER("DER", pem, der, yes),
