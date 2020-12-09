@@ -49,7 +49,7 @@ sub run_rsa_tests {
 
      SKIP: {
          skip "Skipping msblob conversion test", 1
-	     if disabled($cmd) || disabled("dsa") || $cmd == 'pkey';
+	     if disabled($cmd) || $cmd eq 'pkey';
 
          subtest "$cmd conversions -- public key" => sub {
 	     tconversion( -type => 'msb', -prefix => "$cmd-msb-pub",
