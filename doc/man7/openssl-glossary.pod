@@ -1,6 +1,6 @@
 =pod
 
-=head1 NAMES
+=head1 NAME
 
 openssl-glossary - An OpenSSL Glossary
 
