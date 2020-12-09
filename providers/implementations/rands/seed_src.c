@@ -111,7 +111,7 @@ static int seed_src_generate(void *vseed, unsigned char *out, size_t outlen,
     entropy_available = ossl_pool_acquire_entropy(pool);
 
     if (entropy_available > 0)
-        memcpy(out, rand_pool_detach(pool), rand_pool_length(pool));
+        memcpy(out, rand_pool_buffer(pool), rand_pool_length(pool));
 
     rand_pool_free(pool);
     return entropy_available > 0;
