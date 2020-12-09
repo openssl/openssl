@@ -15,6 +15,7 @@ openssl-glossary - An OpenSSL Glossary
 ASN.1 ("Abstract Syntax Notation One") is a notation for describing
 abstract types and values.  It is defined in the ITU-T documents X.680
 to X.683:
+
 L<https://www.itu.int/rec/T-REC-X.680>,
 L<https://www.itu.int/rec/T-REC-X.681>,
 L<https://www.itu.int/rec/T-REC-X.682>,
@@ -26,7 +27,9 @@ DER is a binary encoding of data, structured according to an ASN.1
 specification.  This is a common encoding used for cryptographic objects
 such as private and public keys, certificates, CRLs, ...
 
-It is defined in ITU-T document X.690: L<https://www.itu.int/rec/T-REC-X.690>
+It is defined in ITU-T document X.690:
+
+L<https://www.itu.int/rec/T-REC-X.690>
 
 =item MSBLOB
 
@@ -50,7 +53,9 @@ depends on the type of object being written or read.
 For all OpenSSL uses, the binary content is expected to be a DER encoded
 structure.
 
-This is defined in IETF RFC 1421: L<https://tools.ietf.org/html/rfc1421>
+This is defined in IETF RFC 1421:
+
+L<https://tools.ietf.org/html/rfc1421>
 
 =item PKCS#8 (also known as "pkcs8" in some parts of OpenSSL)
 
@@ -58,7 +63,9 @@ PKCS#8 is a specification an ASN.1 structure that OpenSSL uses for
 storing or transmitting any private key in a key type agnostic
 manner, and has both an unencrypted and an encrypted form.
 
-This is specified in RFC 5208: L<https://tools.ietf.org/html/rfc5208>
+This is specified in RFC 5208:
+
+L<https://tools.ietf.org/html/rfc5208>
 
 =item PVK
 
@@ -72,7 +79,9 @@ storing and transmitting any public key in a key type agnostic
 manner.
 
 This is specified as part of the specification for certificates,
-RFC 5280: L<https://tools.ietf.org/html/rfc5280>
+RFC 5280:
+
+L<https://tools.ietf.org/html/rfc5280>
 
 =back
 
