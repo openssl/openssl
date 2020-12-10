@@ -142,10 +142,11 @@ void dtls1_free(SSL *s)
 
     ssl3_free(s);
 
-    dtls1_clear_queues(s);
-
-    pqueue_free(s->d1->buffered_messages);
-    pqueue_free(s->d1->sent_messages);
+    if (s->d1 != NULL) {
+        dtls1_clear_queues(s);
+        pqueue_free(s->d1->buffered_messages);
+        pqueue_free(s->d1->sent_messages);
+    }
 
     OPENSSL_free(s->d1);
     s->d1 = NULL;
