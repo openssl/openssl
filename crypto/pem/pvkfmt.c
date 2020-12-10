@@ -18,13 +18,14 @@
  */
 #include "internal/deprecated.h"
 
-#include "internal/cryptlib.h"
 #include <openssl/pem.h>
-#include "crypto/pem.h"
 #include <openssl/rand.h>
 #include <openssl/bn.h>
 #include <openssl/dsa.h>
 #include <openssl/rsa.h>
+#include "internal/cryptlib.h"
+#include "crypto/pem.h"
+#include "crypto/evp.h"
 
 /*
  * Utility function: read a DWORD (4 byte unsigned integer) in little endian
@@ -461,9 +462,19 @@ static int do_i2b(unsigned char **out, const EVP_PKEY *pk, int ispub)
 {
     unsigned char *p;
     unsigned int bitlen = 0, magic = 0, keyalg = 0;
-    int outlen, noinc = 0;
-    int pktype = EVP_PKEY_id(pk);
+    int outlen = -1, noinc = 0;
+    int pktype;
+#ifndef OPENSSL_NO_PROVIDER_CODE
+    EVP_PKEY *pkcopy = NULL;
 
+    if (evp_pkey_is_provided(pk)) {
+        if (!evp_pkey_copy_downgraded(&pkcopy, pk))
+            goto end;
+        pk = pkcopy;
+    }
+#endif
+
+    pktype = EVP_PKEY_id(pk);
     if (pktype == EVP_PKEY_RSA) {
         bitlen = check_bitlen_rsa(EVP_PKEY_get0_RSA(pk), ispub, &magic);
         keyalg = MS_KEYALG_RSA_KEYX;
@@ -473,18 +484,20 @@ static int do_i2b(unsigned char **out, const EVP_PKEY *pk, int ispub)
         keyalg = MS_KEYALG_DSS_SIGN;
 #endif
     }
-    if (bitlen == 0)
-        return -1;
+    if (bitlen == 0) {
+        goto end;
+    }
     outlen = 16 + blob_length(bitlen,
                               keyalg == MS_KEYALG_DSS_SIGN ? 1 : 0, ispub);
     if (out == NULL)
-        return outlen;
+        goto end;
     if (*out)
         p = *out;
     else {
         if ((p = OPENSSL_malloc(outlen)) == NULL) {
             ERR_raise(ERR_LIB_PEM, ERR_R_MALLOC_FAILURE);
-            return -1;
+            outlen = -1;
+            goto end;
         }
         *out = p;
         noinc = 1;
@@ -507,6 +520,10 @@ static int do_i2b(unsigned char **out, const EVP_PKEY *pk, int ispub)
 #endif
     if (!noinc)
         *out += outlen;
+ end:
+#ifndef OPENSSL_NO_PROVIDER_CODE
+    EVP_PKEY_free(pkcopy);
+#endif
     return outlen;
 }
 
