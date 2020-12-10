@@ -38,7 +38,7 @@ OSSL_DECODER_CTX_set_passphrase_cb
 OSSL_DECODER_CTX_new_by_EVP_PKEY() is a utility function that creates a
 B<OSSL_DECODER_CTX>, finds all applicable decoder implementations and sets
 them up, so all the caller has to do next is call functions like
-L<OSSL_DECODER_from_bio(3)>.  The caller may used the optional I<input_type>,
+L<OSSL_DECODER_from_bio(3)>.  The caller may use the optional I<input_type>,
 I<input_struct>, I<keytype> and I<selection> to specify what the input is
 expected to contain.
 
@@ -58,7 +58,7 @@ See L</Input Types> and L</Input Structures> below for further information.
 
 The search of decoder implementations can also be limited with I<keytype>
 and I<selection>, which specifies the expected resulting keytype and contents.
-NULL and zero are valid and signifies that the decoder implementations will
+NULL and zero are valid and signify that the decoder implementations will
 find out the keytype and key contents on their own from the input they get.
 
 If no suitable decoder implementation is found,

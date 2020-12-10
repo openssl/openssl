@@ -12,9 +12,8 @@ openssl-glossary - An OpenSSL Glossary
 
 =item ASN.1, ASN1
 
-ASN.1 ("Abstract Syntax Notation One") is a notation for describing
-abstract types and values.  It is defined in the ITU-T documents X.680
-to X.683:
+ASN.1 ("Abstract Syntax Notation One") is a notation for describing abstract
+types and values.  It is defined in the ITU-T documents X.680 to X.683:
 
 L<https://www.itu.int/rec/T-REC-X.680>,
 L<https://www.itu.int/rec/T-REC-X.681>,
@@ -38,7 +37,7 @@ private and public.  This form is never passphrase protected.
 
 =item PEM ("Privacy Enhanced Message")
 
-PEM is a format used for encoding of binary content into an mail and ASCII
+PEM is a format used for encoding of binary content into a mail and ASCII
 friendly form.  The content is a series of base64-encoded lines, surrounded
 by begin/end markers each on their own line.  For example:
 
@@ -59,9 +58,9 @@ L<https://tools.ietf.org/html/rfc1421>
 
 =item PKCS#8 (also known as "pkcs8" in some parts of OpenSSL)
 
-PKCS#8 is a specification an ASN.1 structure that OpenSSL uses for
-storing or transmitting any private key in a key type agnostic
-manner, and has both an unencrypted and an encrypted form.
+PKCS#8 is a specification of an ASN.1 structure that OpenSSL uses for
+storing or transmitting any private key in a key type agnostic manner, and
+has both an unencrypted and an encrypted form.
 
 This is specified in RFC 5208:
 
@@ -69,17 +68,15 @@ L<https://tools.ietf.org/html/rfc5208>
 
 =item PVK
 
-MSBLOB is a Microsoft specific binary format for RSA and DSA private
-keys.  This form may be passphrase protected.
+PVK is a Microsoft specific binary format for RSA and DSA private keys.
+This form may be passphrase protected.
 
 =item SubjectPublicKeyInfo
 
-SubjectPublicKeyInfo is an ASN.1 structure that OpenSSL uses for
-storing and transmitting any public key in a key type agnostic
-manner.
+SubjectPublicKeyInfo is an ASN.1 structure that OpenSSL uses for storing and
+transmitting any public key in a key type agnostic manner.
 
-This is specified as part of the specification for certificates,
-RFC 5280:
+This is specified as part of the specification for certificates, RFC 5280:
 
 L<https://tools.ietf.org/html/rfc5280>
 
