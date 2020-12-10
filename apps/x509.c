@@ -128,14 +128,14 @@ const OPTIONS x509_options[] = {
     {"setalias", OPT_SETALIAS, 's', "Set certificate alias"},
     {"days", OPT_DAYS, 'n',
      "How long till expiry of a signed certificate - def 30 days"},
-    {"signkey", OPT_SIGNKEY, 's', "Self-sign cert with arg"},
+    {"signkey", OPT_SIGNKEY, 's', "Sign cert with arg"},
     {"set_serial", OPT_SET_SERIAL, 's', "Serial number to use"},
     {"extensions", OPT_EXTENSIONS, 's', "Section from config file to use"},
     {"certopt", OPT_CERTOPT, 's', "Various certificate text options"},
     {"checkhost", OPT_CHECKHOST, 's', "Check certificate matches host"},
     {"checkemail", OPT_CHECKEMAIL, 's', "Check certificate matches email"},
     {"checkip", OPT_CHECKIP, 's', "Check certificate matches ipaddr"},
-    {"force_pubkey", OPT_FORCE_PUBKEY, '<', "Force the key to put inside certificate"},
+    {"force_pubkey", OPT_FORCE_PUBKEY, '<', "Place the given key in new certificate"},
     {"subj", OPT_SUBJ, 's', "Set or override certificate subject (and issuer)"},
 
     OPT_SECTION("CA"),
@@ -500,18 +500,11 @@ int x509_main(int argc, char **argv)
     }
 
     if (!X509_STORE_set_default_paths_ex(ctx, app_get0_libctx(),
-                                         app_get0_propq())) {
-        ERR_print_errors(bio_err);
+                                         app_get0_propq()))
         goto end;
-    }
 
     if (newcert && infile != NULL) {
         BIO_printf(bio_err, "The -in option must not be used since -new is set\n");
-        goto end;
-    }
-    if (newcert && fkeyfile == NULL) {
-        BIO_printf(bio_err,
-                   "The -new option requires a public key to be set using -force_pubkey\n");
         goto end;
     }
     if (fkeyfile != NULL) {
@@ -556,7 +549,6 @@ int x509_main(int argc, char **argv)
         if (!X509V3_EXT_add_nconf(extconf, &ctx2, extsect, NULL)) {
             BIO_printf(bio_err,
                        "Error checking extension section %s\n", extsect);
-            ERR_print_errors(bio_err);
             goto end;
         }
     }
@@ -575,7 +567,6 @@ int x509_main(int argc, char **argv)
         i = do_X509_REQ_verify(req, pkey, vfyopts);
         if (i < 0) {
             BIO_printf(bio_err, "Request self-signature verification error\n");
-            ERR_print_errors(bio_err);
             goto end;
         }
         if (i == 0) {
@@ -619,7 +610,9 @@ int x509_main(int argc, char **argv)
         if (!set_cert_times(x, NULL, NULL, days))
             goto end;
 
-        if (!X509_set_pubkey(x, fkey != NULL ? fkey : X509_REQ_get0_pubkey(req)))
+        if ((fkey != NULL || req != NULL)
+            && !X509_set_pubkey(x, fkey != NULL ? fkey :
+                                X509_REQ_get0_pubkey(req)))
             goto end;
     } else {
         x = load_cert_pass(infile, 1, passin, "certificate");
@@ -749,7 +742,6 @@ int x509_main(int argc, char **argv)
                 pkey = X509_get0_pubkey(x);
                 if (pkey == NULL) {
                     BIO_printf(bio_err, "Modulus=unavailable\n");
-                    ERR_print_errors(bio_err);
                     goto end;
                 }
                 BIO_printf(out, "Modulus=");
@@ -777,7 +769,6 @@ int x509_main(int argc, char **argv)
                 pkey = X509_get0_pubkey(x);
                 if (pkey == NULL) {
                     BIO_printf(bio_err, "Error getting public key\n");
-                    ERR_print_errors(bio_err);
                     goto end;
                 }
                 PEM_write_bio_PUBKEY(out, pkey);
@@ -824,7 +815,6 @@ int x509_main(int argc, char **argv)
                     goto end;
                 if (!sign(x, Upkey, x /* self-issuing */, sigopts, days, clrext,
                           digest, extconf, extsect, preserve_dates)) {
-                    ERR_print_errors(bio_err);
                     goto end;
                 }
             } else if (CA_flag == i) {
@@ -855,10 +845,8 @@ int x509_main(int argc, char **argv)
 
                 rq = X509_to_X509_REQ(x, pk, digest);
                 EVP_PKEY_free(pk);
-                if (rq == NULL) {
-                    ERR_print_errors(bio_err);
+                if (rq == NULL)
                     goto end;
-                }
                 if (!noout) {
                     X509_REQ_print_ex(out, rq, get_nameopt(), X509_FLAG_COMPAT);
                     PEM_write_bio_X509_REQ(out, rq);
@@ -905,11 +893,13 @@ int x509_main(int argc, char **argv)
     }
     if (!i) {
         BIO_printf(bio_err, "Unable to write certificate\n");
-        ERR_print_errors(bio_err);
         goto end;
     }
     ret = 0;
+
  end:
+    if (ret != 0)
+        ERR_print_errors(bio_err);
     NCONF_free(extconf);
     BIO_free_all(out);
     X509_STORE_free(ctx);
@@ -1021,8 +1011,6 @@ static int x509_certify(X509_STORE *ctx, const char *CAfile, const EVP_MD *diges
     ret = 1;
  end:
     X509_STORE_CTX_free(xsc);
-    if (!ret)
-        ERR_print_errors(bio_err);
     if (!sno)
         ASN1_INTEGER_free(bs);
     return ret;
