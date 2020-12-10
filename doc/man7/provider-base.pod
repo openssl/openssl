@@ -18,8 +18,11 @@ provider-base
  /* Functions offered by libcrypto to the providers */
  const OSSL_ITEM *core_gettable_params(const OSSL_CORE_HANDLE *handle);
  int core_get_params(const OSSL_CORE_HANDLE *handle, OSSL_PARAM params[]);
+
+ typedef void (*OSSL_thread_stop_handler_fn)(void *arg);
  int core_thread_start(const OSSL_CORE_HANDLE *handle,
                        OSSL_thread_stop_handler_fn handfn);
+
  OPENSSL_CORE_CTX *core_get_libctx(const OSSL_CORE_HANDLE *handle);
  void core_new_error(const OSSL_CORE_HANDLE *handle);
  void core_set_error_debug(const OSSL_CORE_HANDLE *handle,
@@ -164,7 +167,13 @@ core_get_params() retrieves parameters from the core for the given I<handle>.
 See L</Core parameters> below for a description of currently known
 parameters.
 
-=for comment core_thread_start() TBA
+The core_thread_start() function informs the core that the provider has started
+an interest in the current thread. The core will inform the provider when the
+thread eventually stops. It must be passed the I<handle> for this provider, as
+well as a callback I<handfn> which will be called when the thread stops. The
+callback will subsequently be called from the thread that is stopping and gets
+passed the provider context as an argument. This may be useful to perform thread
+specific clean up such as freeing thread local variables.
 
 core_get_libctx() retrieves the library context in which the library
 object for the current provider is stored, accessible through the I<handle>.
