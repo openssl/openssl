@@ -18,22 +18,22 @@ setup("test_x509");
 
 plan tests => 15;
 
-require_ok(srctop_file('test','recipes','tconversion.pl'));
+require_ok(srctop_file("test", "recipes", "tconversion.pl"));
 
 my @certs = qw(test certs);
-my $pem = srctop_file("test/certs", "cyrillic.pem");
+my $pem = srctop_file(@certs, "cyrillic.pem");
 my $out_msb = "out-cyrillic.msb";
 my $out_utf8 = "out-cyrillic.utf8";
-my $msb = srctop_file("test/certs", "cyrillic.msb");
-my $utf = srctop_file("test/certs", "cyrillic.utf8");
+my $msb = srctop_file(@certs, "cyrillic.msb");
+my $utf = srctop_file(@certs, "cyrillic.utf8");
 
 ok(run(app(["openssl", "x509", "-text", "-in", $pem, "-out", $out_msb,
             "-nameopt", "esc_msb"])));
-is(cmp_text($out_msb, srctop_file("test/certs", "cyrillic.msb")),
+is(cmp_text($out_msb, srctop_file(@certs, "cyrillic.msb")),
    0, 'Comparing esc_msb output');
 ok(run(app(["openssl", "x509", "-text", "-in", $pem, "-out", $out_utf8,
             "-nameopt", "utf8"])));
-is(cmp_text($out_utf8, srctop_file("test/certs", "cyrillic.utf8")),
+is(cmp_text($out_utf8, srctop_file(@certs, "cyrillic.utf8")),
    0, 'Comparing utf8 output');
 
  SKIP: {
@@ -51,15 +51,14 @@ SKIP: {
     skip "EC disabled", 1 if disabled("ec");
 
     # producing and checking self-issued (but not self-signed) cert
-    my @path = qw(test certs);
     my $subj = "/CN=CA"; # using same DN as in issuer of ee-cert.pem
     my $extfile = srctop_file("test", "v3_ca_exts.cnf");
-    my $pkey = srctop_file(@path, "ca-key.pem"); #  issuer private key
+    my $pkey = srctop_file(@certs, "ca-key.pem"); #  issuer private key
     my $pubkey = "ca-pubkey.pem"; # the corresponding issuer public key
     # use any (different) key for signing our self-issued cert:
-    my $signkey = srctop_file(@path, "ee-ecdsa-key.pem");
+    my $signkey = srctop_file(@certs, "ee-ecdsa-key.pem");
     my $selfout = "self-issued.out";
-    my $testcert = srctop_file(@path, "ee-cert.pem");
+    my $testcert = srctop_file(@certs, "ee-cert.pem");
     ok(run(app(["openssl", "pkey", "-in", $pkey, "-pubout", "-out", $pubkey]))
        &&
        run(app(["openssl", "x509", "-new", "-force_pubkey", $pubkey,
@@ -74,19 +73,19 @@ SKIP: {
 
 subtest 'x509 -- x.509 v1 certificate' => sub {
     tconversion( -type => 'x509', -prefix => 'x509v1',
-                 -in => srctop_file("test","testx509.pem") );
+                 -in => srctop_file("test", "testx509.pem") );
 };
 subtest 'x509 -- first x.509 v3 certificate' => sub {
     tconversion( -type => 'x509', -prefix => 'x509v3-1',
-                 -in => srctop_file("test","v3-cert1.pem") );
+                 -in => srctop_file("test", "v3-cert1.pem") );
 };
 subtest 'x509 -- second x.509 v3 certificate' => sub {
     tconversion( -type => 'x509', -prefix => 'x509v3-2',
-                 -in => srctop_file("test","v3-cert2.pem") );
+                 -in => srctop_file("test", "v3-cert2.pem") );
 };
 
 subtest 'x509 -- pathlen' => sub {
-    ok(run(test(["v3ext", srctop_file("test/certs", "pathlen.pem")])));
+    ok(run(test(["v3ext", srctop_file(@certs, "pathlen.pem")])));
 };
 
 cert_contains(srctop_file(@certs, "fake-gp.pem"),
@@ -95,7 +94,7 @@ cert_contains(srctop_file(@certs, "fake-gp.pem"),
 
 sub test_errors { # actually tests diagnostics of OSSL_STORE
     my ($expected, $cert, @opts) = @_;
-    my $infile = srctop_file('test', 'certs', $cert);
+    my $infile = srctop_file(@certs, $cert);
     my @args = qw(openssl x509 -in);
     push(@args, $infile, @opts);
     my $tmpfile = 'out.txt';
