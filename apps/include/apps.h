@@ -48,7 +48,7 @@
 void app_RAND_load_conf(CONF *c, const char *section);
 void app_RAND_write(void);
 
-extern char *default_config_file;
+extern char *default_config_file; /* may be "" */
 extern BIO *bio_in;
 extern BIO *bio_out;
 extern BIO *bio_err;
@@ -63,8 +63,10 @@ BIO *bio_open_owner(const char *filename, int format, int private);
 BIO *bio_open_default(const char *filename, char mode, int format);
 BIO *bio_open_default_quiet(const char *filename, char mode, int format);
 CONF *app_load_config_bio(BIO *in, const char *filename);
-CONF *app_load_config(const char *filename);
-CONF *app_load_config_quiet(const char *filename);
+#define app_load_config(filename) app_load_config_internal(filename, 0)
+#define app_load_config_quiet(filename) app_load_config_internal(filename, 1)
+CONF *app_load_config_internal(const char *filename, int quiet);
+CONF *app_load_config_verbose(const char *filename, int verbose);
 int app_load_modules(const CONF *config);
 CONF *app_load_config_modules(const char *configfile);
 void unbuffer(FILE *fp);

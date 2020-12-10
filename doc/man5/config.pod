@@ -502,7 +502,7 @@ F<sample>.
 
 =item B<OPENSSL_CONF>
 
-The path to the config file.
+The path to the config file, or the empty string for none.
 Ignored in set-user-ID and set-group-ID programs.
 
 =item B<OPENSSL_ENGINES>

@@ -338,10 +338,7 @@ int srp_main(int argc, char **argv)
         if (configfile == NULL)
             configfile = default_config_file;
 
-        if (verbose)
-            BIO_printf(bio_err, "Using configuration from %s\n",
-                       configfile);
-        conf = app_load_config(configfile);
+        conf = app_load_config_verbose(configfile, verbose);
         if (conf == NULL)
             goto end;
         if (configfile != default_config_file && !app_load_modules(conf))

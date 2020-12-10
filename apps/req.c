@@ -466,9 +466,7 @@ int req_main(int argc, char **argv)
         goto end;
     }
 
-    if (verbose)
-        BIO_printf(bio_err, "Using configuration from %s\n", template);
-    if ((req_conf = app_load_config(template)) == NULL)
+    if ((req_conf = app_load_config_verbose(template, verbose)) == NULL)
         goto end;
     if (addext_bio != NULL) {
         if (verbose)
@@ -635,7 +633,7 @@ int req_main(int argc, char **argv)
         if (genctx == NULL) {
             genctx = set_keygen_ctx(NULL, &pkey_type, &newkey,
                                     &keyalgstr, gen_eng);
-            if (!genctx)
+            if (genctx == NULL)
                 goto end;
         }
 
@@ -645,7 +643,6 @@ int req_main(int argc, char **argv)
                 genopt = sk_OPENSSL_STRING_value(pkeyopts, i);
                 if (pkey_ctrl_string(genctx, genopt) <= 0) {
                     BIO_printf(bio_err, "parameter error \"%s\"\n", genopt);
-                    ERR_print_errors(bio_err);
                     goto end;
                 }
             }
@@ -743,7 +740,6 @@ int req_main(int argc, char **argv)
             if ((x509ss = X509_new_ex(app_get0_libctx(), app_get0_propq())) == NULL)
                 goto end;
 
-            /* Set version to V3 */
             if (serial != NULL) {
                 if (!X509_set_serialNumber(x509ss, serial))
                     goto end;
@@ -768,7 +764,6 @@ int req_main(int argc, char **argv)
                 goto end;
 
             /* Set up V3 context struct */
-
             X509V3_set_ctx(&ext_ctx, x509ss, x509ss, NULL, NULL, X509V3_CTX_REPLACE);
             X509V3_set_nconf(&ext_ctx, req_conf);
 
@@ -797,10 +792,8 @@ int req_main(int argc, char **argv)
             }
 
             i = do_X509_sign(x509ss, pkey, digest, sigopts, &ext_ctx);
-            if (!i) {
-                ERR_print_errors(bio_err);
+            if (!i)
                 goto end;
-            }
         } else {
             X509V3_CTX ext_ctx;
 
@@ -824,10 +817,8 @@ int req_main(int argc, char **argv)
                 goto end;
             }
             i = do_X509_REQ_sign(req, pkey, digest, sigopts);
-            if (!i) {
-                ERR_print_errors(bio_err);
+            if (!i)
                 goto end;
-            }
         }
     }
 
@@ -893,7 +884,6 @@ int req_main(int argc, char **argv)
 
         if (tpubkey == NULL) {
             BIO_printf(bio_err, "Error getting public key\n");
-            ERR_print_errors(bio_err);
             goto end;
         }
         PEM_write_bio_PUBKEY(out, tpubkey);
@@ -911,7 +901,6 @@ int req_main(int argc, char **argv)
             else
               BIO_printf(bio_err, "Error printing certificate request\n");
 
-            ERR_print_errors(bio_err);
             goto end;
         }
     }
@@ -1008,7 +997,7 @@ static int make_REQ(X509_REQ *req, EVP_PKEY *pkey, char *subj, int multirdn,
 {
     int ret = 0, i;
     char no_prompt = 0;
-    STACK_OF(CONF_VALUE) *dn_sk, *attr_sk = NULL;
+    STACK_OF(CONF_VALUE) *dn_sk = NULL, *attr_sk = NULL;
     char *tmp, *dn_sect, *attr_sect;
 
     tmp = NCONF_get_string(req_conf, section, PROMPT);
@@ -1019,20 +1008,18 @@ static int make_REQ(X509_REQ *req, EVP_PKEY *pkey, char *subj, int multirdn,
 
     dn_sect = NCONF_get_string(req_conf, section, DISTINGUISHED_NAME);
     if (dn_sect == NULL) {
-        BIO_printf(bio_err, "unable to find '%s' in config\n",
-                   DISTINGUISHED_NAME);
-        goto err;
-    }
-    dn_sk = NCONF_get_section(req_conf, dn_sect);
-    if (dn_sk == NULL) {
-        BIO_printf(bio_err, "unable to get '%s' section\n", dn_sect);
-        goto err;
+        ERR_clear_error();
+    } else {
+        dn_sk = NCONF_get_section(req_conf, dn_sect);
+        if (dn_sk == NULL) {
+            BIO_printf(bio_err, "unable to get '%s' section\n", dn_sect);
+            goto err;
+        }
     }
 
     attr_sect = NCONF_get_string(req_conf, section, ATTRIBUTES);
     if (attr_sect == NULL) {
         ERR_clear_error();
-        attr_sk = NULL;
     } else {
         attr_sk = NCONF_get_section(req_conf, attr_sect);
         if (attr_sk == NULL) {
@@ -1583,20 +1570,17 @@ static EVP_PKEY_CTX *set_keygen_ctx(const char *gstr,
 
     if (gctx == NULL) {
         BIO_puts(bio_err, "Error allocating keygen context\n");
-        ERR_print_errors(bio_err);
         return NULL;
     }
 
     if (EVP_PKEY_keygen_init(gctx) <= 0) {
         BIO_puts(bio_err, "Error initializing keygen context\n");
-        ERR_print_errors(bio_err);
         EVP_PKEY_CTX_free(gctx);
         return NULL;
     }
     if ((*pkey_type == EVP_PKEY_RSA) && (keylen != -1)) {
         if (EVP_PKEY_CTX_set_rsa_keygen_bits(gctx, keylen) <= 0) {
             BIO_puts(bio_err, "Error setting RSA keysize\n");
-            ERR_print_errors(bio_err);
             EVP_PKEY_CTX_free(gctx);
             return NULL;
         }

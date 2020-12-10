@@ -2,6 +2,7 @@
 
 =head1 NAME
 
+CONF_get1_default_config_file,
 CONF_modules_load_file_ex, CONF_modules_load_file, CONF_modules_load
 - OpenSSL configuration functions
 
@@ -9,6 +10,7 @@ CONF_modules_load_file_ex, CONF_modules_load_file, CONF_modules_load
 
  #include <openssl/conf.h>
 
+ char *CONF_get1_default_config_file(void);
  int CONF_modules_load_file_ex(OSSL_LIB_CTX *libctx, const char *filename,
                                const char *appname, unsigned long flags);
  int CONF_modules_load_file(const char *filename, const char *appname,
@@ -18,9 +20,17 @@ CONF_modules_load_file_ex, CONF_modules_load_file, CONF_modules_load
 
 =head1 DESCRIPTION
 
+The function CONF_get1_default_config_file() determines the default
+configuration file pathname as follows.
+If the B<OPENSSL_CONF> environment variable is set its value is returned.
+Else the function returns the path obtained using
+L<X509_get_default_cert_area(3)> with the filename C<"openssl.cnf"> appended.
+The caller is responsible for freeing any string returned.
+
 The function CONF_modules_load_file_ex() configures OpenSSL using
 library context B<libctx> file B<filename> and application name B<appname>.
-If B<filename> is NULL the standard OpenSSL configuration file is used.
+If B<filename> is NULL the standard OpenSSL configuration file is used
+as determined by calling CONF_get1_default_config_file().
 If B<appname> is NULL the standard OpenSSL application name B<openssl_conf> is
 used.
 The behaviour can be customized using B<flags>. Note that, the error suppressing
