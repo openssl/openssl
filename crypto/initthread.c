@@ -14,6 +14,8 @@
 #include "internal/thread_once.h"
 
 #ifdef FIPS_MODULE
+#include "prov/provider_ctx.h"
+
 /*
  * Thread aware code may want to be told about thread stop events. We register
  * to hear about those thread stop events when we see a new thread has started.
@@ -281,7 +283,7 @@ static const OSSL_LIB_CTX_METHOD thread_event_ossl_ctx_method = {
 void ossl_ctx_thread_stop(void *arg)
 {
     THREAD_EVENT_HANDLER **hands;
-    OSSL_LIB_CTX *ctx = arg;
+    OSSL_LIB_CTX *ctx = PROV_LIBCTX_OF(arg);
     CRYPTO_THREAD_LOCAL *local
         = ossl_lib_ctx_get_data(ctx, OSSL_LIB_CTX_THREAD_EVENT_HANDLER_INDEX,
                                 &thread_event_ossl_ctx_method);
