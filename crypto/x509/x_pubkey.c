@@ -99,11 +99,10 @@ int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
 {
     X509_PUBKEY *pk = NULL;
 
-    if (x == NULL)
+    if (x == NULL || pkey == NULL) {
+        ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
-
-    if (pkey == NULL)
-        goto unsupported;
+    }
 
     if (pkey->ameth != NULL) {
         if ((pk = X509_PUBKEY_new()) == NULL) {
