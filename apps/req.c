@@ -796,7 +796,7 @@ int req_main(int argc, char **argv)
                 }
             }
 
-            i = do_X509_sign(x509ss, pkey, digest, sigopts);
+            i = do_X509_sign(x509ss, pkey, digest, sigopts, &ext_ctx);
             if (!i) {
                 ERR_print_errors(bio_err);
                 goto end;

@@ -1482,6 +1482,7 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
     OPENSSL_STRING *irow = NULL;
     OPENSSL_STRING *rrow = NULL;
     char buf[25];
+    X509V3_CTX ext_ctx;
 
     for (i = 0; i < DB_NUMBER; i++)
         row[i] = NULL;
@@ -1699,8 +1700,6 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
 
     /* Lets add the extensions, if there are any */
     if (ext_sect) {
-        X509V3_CTX ext_ctx;
-
         /* Initialize the context structure */
         X509V3_set_ctx(&ext_ctx, selfsign ? ret : x509,
                        ret, req, NULL, X509V3_CTX_REPLACE);
@@ -1903,7 +1902,7 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
         !EVP_PKEY_missing_parameters(pkey))
         EVP_PKEY_copy_parameters(pktmp, pkey);
 
-    if (!do_X509_sign(ret, pkey, dgst, sigopts))
+    if (!do_X509_sign(ret, pkey, dgst, sigopts, &ext_ctx))
         goto end;
 
     /* We now just add it to the database as DB_TYPE_VAL('V') */
