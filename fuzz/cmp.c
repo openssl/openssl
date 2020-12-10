@@ -16,14 +16,13 @@
 #include "../crypto/cmp/cmp_local.h"
 #include <openssl/err.h>
 #include "fuzzer.h"
-#include "rand.inc"
 
 int FuzzerInitialize(int *argc, char ***argv)
 {
+    FuzzerSetRand();
     OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL);
     ERR_clear_error();
     CRYPTO_free_ex_index(0, -1);
-    FuzzerSetRand();
     return 1;
 }
 
@@ -200,4 +199,5 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
 
 void FuzzerCleanup(void)
 {
+    FuzzerClearRand();
 }
