@@ -46,6 +46,9 @@ int DTLS_RECORD_LAYER_new(RECORD_LAYER *rl)
 
 void DTLS_RECORD_LAYER_free(RECORD_LAYER *rl)
 {
+    if (rl->d == NULL)
+        return;
+
     DTLS_RECORD_LAYER_clear(rl);
     pqueue_free(rl->d->unprocessed_rcds.q);
     pqueue_free(rl->d->processed_rcds.q);
