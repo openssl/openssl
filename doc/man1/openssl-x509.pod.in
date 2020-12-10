@@ -488,7 +488,10 @@ extension section format.
 
 Generate a certificate from scratch, not using an input certificate
 or certificate request. So the B<-in> option must not be used in this case.
-Instead, the B<-subj> and <-force_pubkey> options need to be given.
+Instead, the B<-subj> option needs to be given.
+The public key to include defaults to the key given with the B<-signkey> option,
+which implies self-signature.
+It may also be given explicity using the B<-force_pubkey> option.
 
 =item B<-next_serial>
 
