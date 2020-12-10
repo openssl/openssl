@@ -47,29 +47,23 @@ is(cmp_text($out_utf8, srctop_file(@certs, "cyrillic.utf8")),
     # not unlinking $out_pem
 }
 
-SKIP: {
-    skip "EC disabled", 1 if disabled("ec");
-
-    # producing and checking self-issued (but not self-signed) cert
-    my $subj = "/CN=CA"; # using same DN as in issuer of ee-cert.pem
-    my $extfile = srctop_file("test", "v3_ca_exts.cnf");
-    my $pkey = srctop_file(@certs, "ca-key.pem"); #  issuer private key
-    my $pubkey = "ca-pubkey.pem"; # the corresponding issuer public key
-    # use any (different) key for signing our self-issued cert:
-    my $signkey = srctop_file(@certs, "ee-ecdsa-key.pem");
-    my $selfout = "self-issued.out";
-    my $testcert = srctop_file(@certs, "ee-cert.pem");
-    ok(run(app(["openssl", "pkey", "-in", $pkey, "-pubout", "-out", $pubkey]))
-       &&
-       run(app(["openssl", "x509", "-new", "-force_pubkey", $pubkey,
-                "-subj", $subj, "-extfile", $extfile,
-                "-signkey", $signkey, "-out", $selfout]))
-       &&
-       run(app(["openssl", "verify", "-no_check_time",
-                "-trusted", $selfout, "-partial_chain", $testcert])));
-    # not unlinking $pubkey
-    # not unlinking $selfout
-}
+# producing and checking self-issued (but not self-signed) cert
+my $subj = "/CN=CA"; # using same DN as in issuer of ee-cert.pem
+my $extfile = srctop_file("test", "v3_ca_exts.cnf");
+my $pkey = srctop_file(@certs, "ca-key.pem"); # issuer private key
+my $pubkey = "ca-pubkey.pem"; # the corresponding issuer public key
+# use any (different) key for signing our self-issued cert:
+my $signkey = srctop_file(@certs, "serverkey.pem");
+my $selfout = "self-issued.out";
+my $testcert = srctop_file(@certs, "ee-cert.pem");
+ok(run(app(["openssl", "pkey", "-in", $pkey, "-pubout", "-out", $pubkey]))
+&& run(app(["openssl", "x509", "-new", "-force_pubkey", $pubkey,
+            "-subj", $subj, "-extfile", $extfile,
+            "-signkey", $signkey, "-out", $selfout]))
+&& run(app(["openssl", "verify", "-no_check_time",
+            "-trusted", $selfout, "-partial_chain", $testcert])));
+# not unlinking $pubkey
+# not unlinking $selfout
 
 subtest 'x509 -- x.509 v1 certificate' => sub {
     tconversion( -type => 'x509', -prefix => 'x509v1',
