@@ -78,7 +78,7 @@ static AUTHORITY_KEYID *v2i_AUTHORITY_KEYID(X509V3_EXT_METHOD *method,
                                             STACK_OF(CONF_VALUE) *values)
 {
     char keyid = 0, issuer = 0;
-    int i;
+    int i, n = sk_CONF_VALUE_num(values);
     CONF_VALUE *cnf;
     ASN1_OCTET_STRING *ikeyid = NULL;
     X509_NAME *isname = NULL;
@@ -92,7 +92,11 @@ static AUTHORITY_KEYID *v2i_AUTHORITY_KEYID(X509V3_EXT_METHOD *method,
     if (akeyid == NULL)
         goto err;
 
-    for (i = 0; i < sk_CONF_VALUE_num(values); i++) {
+    if (n == 1 && strcmp(sk_CONF_VALUE_value(values, 0)->name, "none") == 0) {
+        return akeyid;
+    }
+
+    for (i = 0; i < n; i++) {
         cnf = sk_CONF_VALUE_value(values, i);
         if (strcmp(cnf->name, "keyid") == 0) {
             keyid = 1;
@@ -115,14 +119,15 @@ static AUTHORITY_KEYID *v2i_AUTHORITY_KEYID(X509V3_EXT_METHOD *method,
         ERR_raise(ERR_LIB_X509V3, X509V3_R_NO_ISSUER_CERTIFICATE);
         goto err;
     }
-
     cert = ctx->issuer_cert;
 
     if (keyid) {
         i = X509_get_ext_by_NID(cert, NID_subject_key_identifier, -1);
         if ((i >= 0) && (ext = X509_get_ext(cert, i)))
             ikeyid = X509V3_EXT_d2i(ext);
-        if ((keyid == 2 || issuer == 0) && ikeyid == NULL) {
+        if ((keyid == 2 || issuer == 0)
+            && (ikeyid == NULL
+                || ASN1_STRING_length(ikeyid) <= 2)  /* indicating "none" */ ) {
             ERR_raise(ERR_LIB_X509V3, X509V3_R_UNABLE_TO_GET_ISSUER_KEYID);
             goto err;
         }

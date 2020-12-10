@@ -168,9 +168,10 @@ Examples:
 
 =head2 Subject Key Identifier
 
-This SKID extension is a string with one of two legal values.
-If it is the word B<hash>, then OpenSSL will follow
-the process specified in RFC 5280 section 4.2.1.2. (1):
+The SKID extension specification has a value with three choices.
+If the value is the word B<none>, then no SKID extension will be included.
+If the value is the word B<hash>, or by default for the B<x509>, B<req>, and
+B<ca> apps, the process specified in RFC 5280 section 4.2.1.2. (1) is followed:
 The keyIdentifier is composed of the 160-bit SHA-1 hash of the value of the BIT
 STRING subjectPublicKey (excluding the tag, length, and number of unused bits).
 
@@ -183,10 +184,14 @@ Example:
 
 =head2 Authority Key Identifier
 
-The AKID extension specification may have the value B<keyid> or B<issuer>
+The AKID extension specification may have the value B<none>
+indicating that no AKID shall be included.
+Otherwise it may have the value B<keyid> or B<issuer>
 or both of them, separated by C<,>.
 Either or both can have the option B<always>,
-indicated by putting a colon C<:> between the value and this opton.
+indicated by putting a colon C<:> between the value and this option.
+By default the B<x509>, B<req>, and B<ca> apps behave as if
+"none" was given for self-signed certificates and "keyid, issuer" otherwise.
 
 If B<keyid> is present, an attempt is made to copy the subject key identifier
 (SKID) from the issuer certificate, which is the default behavior.

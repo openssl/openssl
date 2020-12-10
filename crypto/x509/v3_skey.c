@@ -62,7 +62,10 @@ static ASN1_OCTET_STRING *s2i_skey_id(X509V3_EXT_METHOD *method,
     unsigned char pkey_dig[EVP_MAX_MD_SIZE];
     unsigned int diglen;
 
-    if (strcmp(str, "hash"))
+    if (strcmp(str, "none") == 0)
+        return ASN1_OCTET_STRING_new(); /* dummy */
+
+    if (strcmp(str, "hash") != 0)
         return s2i_ASN1_OCTET_STRING(method, ctx, str);
 
     if ((oct = ASN1_OCTET_STRING_new()) == NULL) {
@@ -78,11 +81,9 @@ static ASN1_OCTET_STRING *s2i_skey_id(X509V3_EXT_METHOD *method,
         goto err;
     }
 
-    if (ctx->subject_req)
-        pubkey = ctx->subject_req->req_info.pubkey;
-    else
-        pubkey = ctx->subject_cert->cert_info.key;
-
+    pubkey = ctx->subject_req != NULL ?
+        ctx->subject_req->req_info.pubkey :
+        ctx->subject_cert->cert_info.key;
     if (pubkey == NULL) {
         ERR_raise(ERR_LIB_X509V3, X509V3_R_NO_PUBLIC_KEY);
         goto err;

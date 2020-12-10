@@ -42,9 +42,9 @@ OpenSSL 3.0
 
    *Otto Hollmann*
 
- * The -cipher-commands and -digest-commands options of the command line
-   utility list has been deprecated.
-   Instead use the -cipher-algorithms and -digest-algorithms options.
+ * The `-cipher-commands` and `-digest-commands` options
+   of the command line utility `list` have been deprecated.
+   Instead use the `-cipher-algorithms` and `-digest-algorithms` options.
 
    *Dmitry Belyavskiy*
 
@@ -80,11 +80,11 @@ OpenSSL 3.0
 
    *Matt Caswell*
 
- * The -crypt option to the passwd command line tool has been removed.
+ * The `-crypt` option to the `passwd` command line tool has been removed.
 
    *Paul Dale*
 
- * The -C option to the x509, dhparam, dsaparam, and ecparam commands
+ * The -C option to the `x509`, `dhparam`, `dsaparam`, and `ecparam` commands
    were removed.
 
    *Rich Salz*
@@ -139,8 +139,8 @@ OpenSSL 3.0
 
    *Richard Levitte*
 
- * Deprecated EVP_PKEY_CTX_set_rsa_keygen_pubexp() & introduced
-   EVP_PKEY_CTX_set1_rsa_keygen_pubexp(), which is now preferred.
+ * Deprecated `EVP_PKEY_CTX_set_rsa_keygen_pubexp()` and introduced
+   `EVP_PKEY_CTX_set1_rsa_keygen_pubexp()`, which is now preferred.
 
    *Jeremy Walch*
 
@@ -156,7 +156,7 @@ OpenSSL 3.0
    implemented by EVP_RAND and EVP_RAND_CTX. The main reason is that the
    RAND_DRBG API is a mixture of 'front end' and 'back end' API calls
    and some of its API calls are rather low-level. This holds in particular
-   for the callback mechanism (RAND_DRBG_set_callbacks()).
+   for the callback mechanism (`RAND_DRBG_set_callbacks()`).
 
    Adding a compatibility layer to continue supporting the RAND_DRBG API as
    a legacy API for a regular deprecation period turned out to come at the
@@ -166,7 +166,7 @@ OpenSSL 3.0
 
    *Paul Dale and Matthias St. Pierre*
 
- * Allow SSL_set1_host() and SSL_add1_host() to take IP literal addresses
+ * Allow `SSL_set1_host()` and `SSL_add1_host()` to take IP literal addresses
    as well as actual hostnames.
 
    *David Woodhouse*
@@ -180,7 +180,7 @@ OpenSSL 3.0
    and DTLS.
 
    SSL_CTX instances that are created for a fixed protocol version (e.g.
-   TLSv1_server_method()) also silently ignore version bounds.  Previously
+   `TLSv1_server_method()`) also silently ignore version bounds.  Previously
    attempts to apply bounds to these protocol versions would result in an
    error.  Now only the "version-flexible" SSL_CTX instances are subject to
    limits in configuration files in command-line options.
@@ -244,14 +244,13 @@ OpenSSL 3.0
 
    *Tomas Mraz*
 
- * Dropped interactive mode from the 'openssl' program.  From now on,
-   the `openssl` command without arguments is equivalent to `openssl
-   help`.
+ * Dropped interactive mode from the `openssl` program.  From now on,
+   running it without arguments is equivalent to `openssl help`.
 
    *Richard Levitte*
 
- * Renamed EVP_PKEY_cmp() to EVP_PKEY_eq() and
-   EVP_PKEY_cmp_parameters() to EVP_PKEY_parameters_eq().
+ * Renamed `EVP_PKEY_cmp()` to `EVP_PKEY_eq()` and
+   `EVP_PKEY_cmp_parameters()` to `EVP_PKEY_parameters_eq()`.
    While the old function names have been retained for backward compatibility
    they should not be used in new developments
    because their return values are confusing: Unlike other `_cmp()` functions
@@ -259,8 +258,8 @@ OpenSSL 3.0
 
    *David von Oheimb*
 
- * Deprecated EC_METHOD_get_field_type(). Applications should switch to
-   EC_GROUP_get_field_type().
+ * Deprecated `EC_METHOD_get_field_type()`. Applications should switch to
+   `EC_GROUP_get_field_type()`.
 
    *Billy Bob Brumley*
 
@@ -339,7 +338,7 @@ OpenSSL 3.0
    reduced. This results in SSL 3, TLS 1.0, TLS 1.1 and DTLS 1.0 no longer
    working at the default security level of 1 and instead requires security
    level 0. The security level can be changed either using the cipher string
-   with @SECLEVEL, or calling SSL_CTX_set_security_level().
+   with `@SECLEVEL`, or calling `SSL_CTX_set_security_level()`.
 
    *Kurt Roeckx*
 
@@ -396,14 +395,14 @@ OpenSSL 3.0
    *Richard Levitte*
 
  * Added an implementation of CMP and CRMF (RFC 4210, RFC 4211 RFC 6712).
-   This adds crypto/cmp/, crpyto/crmf/, apps/cmp.c, and test/cmp_*.
+   This adds `crypto/cmp/`, `crpyto/crmf/`, `apps/cmp.c`, and `test/cmp_*`.
    See L<openssl-cmp(1)> and L<OSSL_CMP_exec_IR_ses(3)> as starting points.
 
    *David von Oheimb, Martin Peylo*
 
- * Generalized the HTTP client code from crypto/ocsp/ into crpyto/http/.
-   The legacy OCSP-focused and only partly documented API is retained.
-   See L<OSSL_CMP_MSG_http_perform(3)> etc. for details.
+ * Generalized the HTTP client code from `crypto/ocsp/` into `crpyto/http/`.
+   The legacy OCSP-focused and only partly documented API is retained for
+   backward compatibility. See L<OSSL_CMP_MSG_http_perform(3)> etc. for details.
 
    *David von Oheimb*
 
@@ -414,9 +413,9 @@ OpenSSL 3.0
 
    *David von Oheimb*
 
- * BIO_do_connect and BIO_do_handshake have been extended:
+ * `BIO_do_connect()` and `BIO_do_handshake()` have been extended:
    If domain name resolution yields multiple IP addresses all of them are tried
-   after connect() failures.
+   after `connect()` failures.
 
    *David von Oheimb*
 
@@ -461,13 +460,13 @@ OpenSSL 3.0
  * X509 certificates signed using SHA1 are no longer allowed at security
    level 1 and above.
    In TLS/SSL the default security level is 1. It can be set either
-   using the cipher string with @SECLEVEL, or calling
-   SSL_CTX_set_security_level(). If the leaf certificate is signed with SHA-1,
-   a call to SSL_CTX_use_certificate() will fail if the security level is not
+   using the cipher string with `@SECLEVEL`, or calling
+   `SSL_CTX_set_security_level()`. If the leaf certificate is signed with SHA-1,
+   a call to `SSL_CTX_use_certificate()` will fail if the security level is not
    lowered first.
    Outside TLS/SSL, the default security level is -1 (effectively 0). It can
-   be set using X509_VERIFY_PARAM_set_auth_level() or using the -auth_level
-   options of the apps.
+   be set using `X509_VERIFY_PARAM_set_auth_level()` or using the `-auth_level`
+   options of the commands.
 
    *Kurt Roeckx*
 
@@ -514,10 +513,11 @@ OpenSSL 3.0
    OSSL_DECODER and OSSL_ENCODER APIs to read and write DH files.
 
    Finaly functions that assign or obtain DH objects from an EVP_PKEY such as
-   EVP_PKEY_assign_DH(), EVP_PKEY_get0_DH, EVP_PKEY_get1_DH, EVP_PKEY_set1_DH
-   are also deprecated. Applications should instead either read or write an
-   EVP_PKEY directly using the OSSL_DECODER and OSSL_ENCODER APIs. Or load an
-   EVP_PKEY directly from DH data using EVP_PKEY_fromdata().
+   `EVP_PKEY_assign_DH()`, `EVP_PKEY_get0_DH()`, `EVP_PKEY_get1_DH()`, and
+   `EVP_PKEY_set1_DH()` are also deprecated.
+   Applications should instead either read or write an
+   EVP_PKEY directly using the OSSL_DECODER and OSSL_ENCODER APIs.
+   Or load an    EVP_PKEY directly from DH data using `EVP_PKEY_fromdata()`.
 
    *Paul Dale and Matt Caswell*
 
@@ -551,7 +551,7 @@ OpenSSL 3.0
    automatically become EVP_PKEY_SM2 rather than EVP_PKEY_EC.
    This means that applications don't have to look at the curve NID and
    `EVP_PKEY_set_alias_type(pkey, EVP_PKEY_SM2)` to get SM2 computations.
-   However, they still can, that EVP_PKEY_set_alias_type() call acts as
+   However, they still can, that `EVP_PKEY_set_alias_type()` call acts as
    a no-op when the EVP_PKEY is already of the given type.
 
    Parameter and key generation is also reworked to make it possible
@@ -882,8 +882,8 @@ OpenSSL 3.0
 
    *Jon Spillett*
 
- * Deprecated the public definition of ERR_STATE as well as the function
-   ERR_get_state().  This is done in preparation of making ERR_STATE an
+ * Deprecated the public definition of `ERR_STATE` as well as the function
+   `ERR_get_state()`.  This is done in preparation of making `ERR_STATE` an
    opaque type.
 
    *Richard Levitte*
@@ -914,7 +914,17 @@ OpenSSL 3.0
 
    *Richard Levitte*
 
- * Added several checks to X509_verify_cert() according to requirements in
+ * The `x509`, `req`, and `ca` commands now make sure that certificates they
+   generate are RFC 5280 compliant by default: For X.509 version 3 certs they ensure that
+   a subjectKeyIdentifier extension is included containing a hash value of the public key
+   and an authorityKeyIdentifier extension is included for not self-signed certs
+   containing a keyIdentifier field with the hash value identifying the signing key.
+   This is done unless some configuration overrides the new default behavior,
+   e.g. `authorityKeyIdentifier = none`.
+
+   *David von Oheimb*
+
+ * Added several checks to `X509_verify_cert()` according to requirements in
    RFC 5280 in case `X509_V_FLAG_X509_STRICT` is set
    (which may be done by using the CLI option `-x509_strict`):
    * The basicConstraints of CA certificates must be marked critical.
@@ -933,7 +943,7 @@ OpenSSL 3.0
 
    *David von Oheimb*
 
- * Certificate verification using X509_verify_cert() meanwhile rejects EC keys
+ * Certificate verification using `X509_verify_cert()` meanwhile rejects EC keys
    with explicit curve parameters (specifiedCurve) as required by RFC 5480.
 
    *Tomas Mraz*
@@ -1004,20 +1014,20 @@ OpenSSL 3.0
  * Changed the library initialisation so that the config file is now loaded
    by default. This was already the case for libssl. It now occurs for both
    libcrypto and libssl. Use the OPENSSL_INIT_NO_LOAD_CONFIG option to
-   OPENSSL_init_crypto() to suppress automatic loading of a config file.
+   `OPENSSL_init_crypto()` to suppress automatic loading of a config file.
 
    *Matt Caswell*
 
- * Introduced new error raising macros, ERR_raise() and ERR_raise_data(),
-   where the former acts as a replacement for ERR_put_error(), and the
-   latter replaces the combination ERR_put_error()+ERR_add_error_data().
-   ERR_raise_data() adds more flexibility by taking a format string and
+ * Introduced new error raising macros, `ERR_raise()` and `ERR_raise_data()`,
+   where the former acts as a replacement for `ERR_put_error()`, and the
+   latter replaces the combination `ERR_put_error()` + `ERR_add_error_data()`.
+   `ERR_raise_data()` adds more flexibility by taking a format string and
    an arbitrary number of arguments following it, to be processed with
-   BIO_snprintf().
+   `BIO_snprintf()`.
 
    *Richard Levitte*
 
- * Introduced a new function, OSSL_PROVIDER_available(), which can be used
+ * Introduced a new function, `OSSL_PROVIDER_available()`, which can be used
    to check if a named provider is loaded and available.  When called, it
    will also activate all fallback providers if such are still present.
 
@@ -1081,7 +1091,7 @@ OpenSSL 3.0
 
    *Paul Yang*
 
- * Use SHA256 as the default digest for TS query in the ts app.
+ * Use SHA256 as the default digest for TS query in the `ts` app.
 
    *Tomas Mraz*
 
@@ -1109,13 +1119,6 @@ OpenSSL 3.0
  * Join the directories crypto/x509 and crypto/x509v3
 
    *Richard Levitte*
-
- * Change the default RSA, DSA and DH size to 2048 bit instead of 1024.
-   This changes the size when using the genpkey app when no size is given. It
-   fixes an omission in earlier changes that changed all RSA, DSA and DH
-   generation apps to use 2048 bits by default.
-
-   *Kurt Roeckx*
 
  * Added command 'openssl kdf' that uses the EVP_KDF API.
 
@@ -1178,7 +1181,7 @@ OpenSSL 3.0
    by registering BIOs as trace channels for a number of tracing and debugging
    categories.
 
-   The 'openssl' application has been expanded to enable any of the types
+   The `openssl` program has been expanded to enable any of the types
    available via environment variables defined by the user, and serves as
    one possible example on how to use this functionality.
 
@@ -1629,9 +1632,9 @@ OpenSSL 1.1.1
    *Patrick Steuer*
 
  * Change the default RSA, DSA and DH size to 2048 bit instead of 1024.
-   This changes the size when using the genpkey app when no size is given. It
-   fixes an omission in earlier changes that changed all RSA, DSA and DH
-   generation apps to use 2048 bits by default.
+   This changes the size when using the `genpkey` command when no size is given.
+   It fixes an omission in earlier changes that changed all RSA, DSA and DH
+   generation commands to use 2048 bits by default.
 
    *Kurt Roeckx*
 
@@ -1645,7 +1648,7 @@ OpenSSL 1.1.1
 
    *Matt Caswell*
 
- * Have apps like 's_client' and 's_server' output the signature scheme
+ * Have commands like `s_client` and `s_server` output the signature scheme
    along with other cipher suite parameters when debugging.
 
    *Lorinczy Zsigmond*
@@ -1870,7 +1873,7 @@ OpenSSL 1.1.1
 
    *Matt Caswell*
 
- * Enforce checking in the pkeyutl command line app to ensure that the input
+ * Enforce checking in the `pkeyutl` command to ensure that the input
    length does not exceed the maximum supported digest length when performing
    a sign, verify or verifyrecover operation.
 
@@ -2343,9 +2346,9 @@ OpenSSL 1.1.0
 ### Changes between 1.1.0j and 1.1.0k [28 May 2019]
 
  * Change the default RSA, DSA and DH size to 2048 bit instead of 1024.
-   This changes the size when using the genpkey app when no size is given. It
-   fixes an omission in earlier changes that changed all RSA, DSA and DH
-   generation apps to use 2048 bits by default.
+   This changes the size when using the `genpkey` command when no size is given.
+   It fixes an omission in earlier changes that changed all RSA, DSA and DH
+   generation commands to use 2048 bits by default.
 
    *Kurt Roeckx*
 
@@ -3136,7 +3139,7 @@ OpenSSL 1.1.0
 
  * Configuration change; it's now possible to build dynamic engines
    without having to build shared libraries and vice versa.  This
-   only applies to the engines in engines/, those in crypto/engine/
+   only applies to the engines in `engines/`, those in `crypto/engine/`
    will always be built into libcrypto (i.e. "static").
 
    Building dynamic engines is enabled by default; to disable, use
@@ -4140,9 +4143,9 @@ OpenSSL 1.0.2
 ### Changes between 1.0.2r and 1.0.2s [28 May 2019]
 
  * Change the default RSA, DSA and DH size to 2048 bit instead of 1024.
-   This changes the size when using the genpkey app when no size is given. It
-   fixes an omission in earlier changes that changed all RSA, DSA and DH
-   generation apps to use 2048 bits by default.
+   This changes the size when using the `genpkey` command when no size is given.
+   It fixes an omission in earlier changes that changed all RSA, DSA and DH
+   generation commands to use 2048 bits by default.
 
    *Kurt Roeckx*
 
@@ -4877,10 +4880,10 @@ OpenSSL 1.0.2
 
    *Andy Polyakov*
 
- * Change the req app to generate a 2048-bit RSA/DSA key by default,
+ * Change the `req` command to generate a 2048-bit RSA/DSA key by default,
    if no keysize is specified with default_bits. This fixes an
    omission in an earlier change that changed all RSA/DSA key generation
-   apps to use 2048 bits by default.
+   commands to use 2048 bits by default.
 
    *Emilia Käsper*
 
@@ -6079,10 +6082,10 @@ OpenSSL 1.0.1
 
    *Andy Polyakov*
 
- * Change the req app to generate a 2048-bit RSA/DSA key by default,
+ * Change the req command to generate a 2048-bit RSA/DSA key by default,
    if no keysize is specified with default_bits. This fixes an
    omission in an earlier change that changed all RSA/DSA key generation
-   apps to use 2048 bits by default.
+   commands to use 2048 bits by default.
 
    *Emilia Käsper*
 
@@ -7975,7 +7978,7 @@ OpenSSL 1.0.1.]
 
    *Steve Henson*
 
- * Add load_crls() function to apps tidying load_certs() too. Add option
+ * Add load_crls() function to commands tidying load_certs() too. Add option
    to verify utility to allow additional CRLs to be included.
 
    *Steve Henson*
@@ -7990,7 +7993,7 @@ OpenSSL 1.0.1.]
 
    *Julia Lawall <julia@diku.dk>*
 
- * Update verify callback code in apps/s_cb.c and apps/verify.c, it
+ * Update verify callback code in `apps/s_cb.c` and `apps/verify.c`, it
    needlessly dereferenced structures, used obsolete functions and
    didn't handle all updated verify codes correctly.
 
@@ -8420,7 +8423,7 @@ OpenSSL 1.0.1.]
    arranges the ciphersuites in reasonable order before starting
    to process the rule string.  Thus, the definition for "DEFAULT"
    (SSL_DEFAULT_CIPHER_LIST) now is just "ALL:!aNULL:!eNULL", but
-   remains equivalent to "AES:ALL:!aNULL:!eNULL:+aECDH:+kRSA:+RC4:@STRENGTH".
+   remains equivalent to `"AES:ALL:!aNULL:!eNULL:+aECDH:+kRSA:+RC4:@STRENGTH"`.
    This makes it much easier to arrive at a reasonable default order
    in applications for which anonymous ciphers are OK (meaning
    that you can't actually use DEFAULT).
@@ -9442,7 +9445,7 @@ OpenSSL 0.9.x
    - fixed x86nasm.pl to create correct asm files for NASM COFF output
    - added AES, WHIRLPOOL and CPUID assembler code to build files
    - added missing AES assembler make rules to mk1mf.pl
-   - fixed order of includes in apps/ocsp.c so that e_os.h settings apply
+   - fixed order of includes in `apps/ocsp.c` so that `e_os.h` settings apply
 
    *Guenter Knauf <eflash@gmx.net>*
 
@@ -9951,7 +9954,7 @@ OpenSSL 0.9.8.]
    *Nils Larsch*
 
  * Use SHA-1 instead of MD5 as the default digest algorithm for
-   the apps/openssl applications.
+   the `apps/openssl` commands.
 
    *Nils Larsch*
 
@@ -11734,7 +11737,7 @@ OpenSSL 0.9.7.]
 
  * Add the configuration target debug-linux-ppro.
    Make 'openssl rsa' use the general key loading routines
-   implemented in apps.c, and make those routines able to
+   implemented in `apps.c`, and make those routines able to
    handle the key format FORMAT_NETSCAPE and the variant
    FORMAT_IISSGC.
 
@@ -12229,12 +12232,13 @@ s-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
 
    *"Brian Havard" <brianh@kheldar.apana.org.au> and Richard Levitte*
 
- * Rewrite apps to use NCONF routines instead of the old CONF. New functions
-   to support NCONF routines in extension code. New function CONF_set_nconf()
-   to allow functions which take an NCONF to also handle the old LHASH
-   structure: this means that the old CONF compatible routines can be
-   retained (in particular wrt extensions) without having to duplicate the
-   code. New function X509V3_add_ext_nconf_sk to add extensions to a stack.
+ * Rewrite commands to use `NCONF` routines instead of the old `CONF`.
+   New functions to support `NCONF `routines in extension code.
+   New function `CONF_set_nconf()`
+   to allow functions which take an `NCONF` to also handle the old `LHASH`
+   structure: this means that the old `CONF` compatible routines can be
+   retained (in particular w.rt. extensions) without having to duplicate the
+   code. New function `X509V3_add_ext_nconf_sk()` to add extensions to a stack.
 
    *Steve Henson*
 
@@ -12739,7 +12743,7 @@ s-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
 
    *Steve Henson*
 
- * Disable stdin buffering in load_cert (apps/apps.c) so that no certs are
+ * Disable stdin buffering in `load_cert()` (`apps/apps.c`) so that no certs are
    skipped when using openssl x509 multiple times on a single input file,
    e.g. `(openssl x509 -out cert1; openssl x509 -out cert2) <certs`.
 
@@ -13099,7 +13103,7 @@ s-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
 
    *Steve Henson*
 
- * Add functionality to apps/openssl.c for detecting locking
+ * Add functionality to `apps/openssl.c` for detecting locking
    problems: As the program is single-threaded, all we have
    to do is register a locking callback using an array for
    storing which locks are currently held by the program.
@@ -13707,7 +13711,7 @@ s-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
 
    *Nils Larsch <nla@trustcenter.de>; problem pointed out by Bodo Moeller*
 
- * Check various `X509_...()` return values in apps/req.c.
+ * Check various `X509_...()` return values in `apps/req.c`.
 
    *Nils Larsch <nla@trustcenter.de>*
 
@@ -15268,7 +15272,7 @@ s-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
 
    *Steve Henson*
 
- * Bugfixes in apps/x509.c: Avoid a memory leak; and don't use
+ * Bugfixes in `apps/x509.c`: Avoid a memory leak; and don't use
    perror when PEM_read_bio_X509_REQ fails, the error message must
    be obtained from the error queue.
 
@@ -15833,7 +15837,7 @@ s-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
 
    The syntax for the cipher sorting has been extended to support sorting by
    cipher-strength (using the strength_bits hard coded in the tables).
-   The new command is "@STRENGTH" (see also doc/apps/ciphers.pod).
+   The new command is `@STRENGTH` (see also `doc/apps/ciphers.pod`).
 
    Fix a bug in the cipher-command parser: when supplying a cipher command
    string with an "undefined" symbol (neither command nor alphanumeric
@@ -16286,7 +16290,7 @@ s-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
    because it isn't possible to mix certificates and CRLs in DER format
    without choking one or the other routine. Changed this to just read
    a certificate: this is the best we can do. Also modified the code
-   in apps/verify.c to take notice of return codes: it was previously
+   in `apps/verify.c` to take notice of return codes: it was previously
    attempting to read in certificates from NULL pointers and ignoring
    any errors: this is one reason why the cert and CRL reader seemed
    to work. It doesn't check return codes from the default certificate
@@ -16459,7 +16463,7 @@ s-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
 
    *Bodo Moeller*
 
- * New file apps/app_rand.c with commonly needed functionality
+ * New file `apps/app_rand.c` with commonly needed functionality
    for handling the random seed file.
 
    Use the random seed file in some applications that previously did not:
@@ -17190,7 +17194,7 @@ ndif
 
    *Steve Henson*
 
- * Set #! path to perl in apps/der_chop to where we found it
+ * Set #! path to perl in `apps/der_chop` to where we found it
    instead of using a fixed path.
 
    *Bodo Moeller*
@@ -18065,14 +18069,14 @@ ndif
 
    *Eric A. Young, (from changes to C2Net SSLeay, integrated by Mark Cox)*
 
- * Run extensive memory leak checks on SSL apps. Fixed *lots* of memory
-   leaks in ssl/ relating to new X509_get_pubkey() behaviour. Also fixes
-   in apps/ and an unrelated leak in crypto/dsa/dsa_vrf.c
+ * Run extensive memory leak checks on SSL commands. Fixed *lots* of memory
+   leaks in `ssl/` relating to new `X509_get_pubkey()` behaviour. Also fixes
+   in `apps/` and an unrelated leak in `crypto/dsa/dsa_vrf.c`.
 
    *Steve Henson*
 
  * Support for RAW extensions where an arbitrary extension can be
-   created by including its DER encoding. See apps/openssl.cnf for
+   created by including its DER encoding. See `apps/openssl.cnf` for
    an example.
 
    *Steve Henson*
@@ -18331,7 +18335,7 @@ ndif
 
    *Ben Laurie*
 
- * Get the gendsa program working (hopefully) and add it to app list. Remove
+ * Get the `gendsa` command working and add it to the `list` command. Remove
    encryption from sample DSA keys (in case anyone is interested the password
    was "1234").
 
@@ -18350,7 +18354,7 @@ ndif
 
    *Bodo Moeller <3moeller@informatik.uni-hamburg.de>*
 
- * Don't blow it for numeric -newkey arguments to apps/req.
+ * Don't blow it for numeric `-newkey` arguments to `apps/req`.
 
    *Bodo Moeller <3moeller@informatik.uni-hamburg.de>*
 
@@ -18390,7 +18394,7 @@ ndif
 
    *Ralf S. Engelschall*
 
- * Fix the various library and apps files to free up pkeys obtained from
+ * Fix the various library and `apps/` files to free up pkeys obtained from
    X509_PUBKEY_get() et al. Also allow x509.c to handle netscape extensions.
 
    *Steve Henson*
@@ -18400,7 +18404,7 @@ ndif
 
    *Steve Henson and Ben Laurie*
 
- * First cut of a cleanup for apps/. First the `ssleay` program is now named
+ * First cut of a cleanup for `apps/`. First the `ssleay` program is now named
    `openssl` and second, the shortcut symlinks for the `openssl <command>`
    are no longer created. This way we have a single and consistent command
    line interface `openssl <command>`, similar to `cvs <command>`.
@@ -18550,11 +18554,13 @@ ndif
    *Ralf S. Engelschall*
 
  * Removed dummy files from the 0.9.1b source tree:
+   ```
    crypto/asn1/x crypto/bio/cd crypto/bio/fg crypto/bio/grep crypto/bio/vi
    crypto/bn/asm/......add.c crypto/bn/asm/a.out crypto/dsa/f crypto/md5/f
    crypto/pem/gmon.out crypto/perlasm/f crypto/pkcs7/build crypto/rsa/f
    crypto/sha/asm/f crypto/threads/f ms/zzz ssl/f ssl/f.mak test/f
    util/f.mak util/pl/f util/pl/f.mak crypto/bf/bf_locl.old apps/f
+   ```
 
    *Ralf S. Engelschall*
 
