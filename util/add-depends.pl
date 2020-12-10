@@ -161,14 +161,22 @@ my %procedures = (
         },
     'VC' =>
         sub {
-            # For the moment, we only support Visual C on native Windows, or
-            # compatible compilers.  With those, the flags /Zs /showIncludes
+            # On Windows, with Microsoft Visual C the flags /Zs /showIncludes
             # give us the necessary output to be able to create dependencies
             # that nmake (or any 'make' implementation) should be able to read,
             # with a bit of help.  The output we're interested in looks like
             # this (it always starts the same)
             #
             #   Note: including file: {whatever header file}
+            #
+            # With Embarcadero C++Builder's preprocessor (cpp32.exe) the -Hp
+            # flag gives us the preprocessed output annotated with the following
+            # note whenever a #include file is read:
+            #
+            #    Including ->->{whatever header file}
+            #
+            # where each "->" indicates the nesting level of the #include.  The
+            # logic here is otherwise the same as the 'VC' case.
             #
             # Since there's no object file name at all in that information,
             # we must construct it ourselves.
@@ -180,13 +188,14 @@ my %procedures = (
             # warnings, so we simply discard anything that doesn't start with
             # the Note:
 
-            if (/^Note: including file: */) {
+            if (/^Note: including file: */ or /^Including (->)*/) {
                 (my $tail = $') =~ s/\s*\R$//;
 
                 # VC gives us absolute paths for all include files, so to
                 # remove system header dependencies, we need to check that
-                # they don't match $abs_srcdir or $abs_blddir.
-                $tail = canonpath($tail);
+                # they don't match $abs_srcdir or $abs_blddir.  C++Builder gives
+                # us relative paths when possible, so convert to absolute paths.
+                $tail = rel2abs($tail);
 
                 unless (defined $depconv_cache{$tail}) {
                     my $dep = $tail;

@@ -226,7 +226,7 @@ libdir={- file_name_is_absolute($libdir)
 ##### User defined commands and flags ################################
 
 CC="{- $config{CC} -}"
-CPP="{- $config{CPP} -}"
+CPP={- $config{CPP} -}
 CPPFLAGS={- our $cppflags1 = join(" ",
                                   (map { "-D".$_} @{$config{CPPDEFINES}}),
                                   (map { " -I".$_} @{$config{CPPINCLUDES}}),
@@ -836,7 +836,7 @@ $obj: $deps
 	\$(CC) $cflags $defs -c \$(COUTFLAG)\$\@ $srcs
 EOF
      $recipe .= <<"EOF"	unless $disabled{makedepend};
-	\$(CC) $cflags $defs /Zs /showIncludes $srcs 2>&1 > $dep
+	cmd /C "\$(CPP) $cflags $defs $target{cpp_depend_flags} $srcs > $dep 2>&1"
 EOF
      return $recipe;
  }
