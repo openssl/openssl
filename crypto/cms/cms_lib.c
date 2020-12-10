@@ -30,7 +30,7 @@ CMS_ContentInfo *d2i_CMS_ContentInfo(CMS_ContentInfo **a,
 
     ci = (CMS_ContentInfo *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
                                           (CMS_ContentInfo_it()));
-    if (ci != NULL && a != NULL)
+    if (ci != NULL)
         cms_resolve_libctx(ci);
     return ci;
 }
