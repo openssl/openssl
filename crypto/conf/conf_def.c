@@ -239,11 +239,12 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
         p = &(buff->data[bufnum]);
         *p = '\0';
  read_retry:
-        BIO_gets(in, p, CONFBUFSIZE - 1);
+        if (in != NULL && BIO_gets(in, p, CONFBUFSIZE - 1) < 0)
+            goto err;
         p[CONFBUFSIZE - 1] = '\0';
         ii = i = strlen(p);
         if (i == 0 && !again) {
-            /* the currently processed BIO is at EOF */
+            /* the currently processed BIO is NULL or at EOF */
             BIO *parent;
 
 #ifndef OPENSSL_NO_POSIX_IO

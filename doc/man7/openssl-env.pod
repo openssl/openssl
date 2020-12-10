@@ -28,7 +28,7 @@ and by the B<CA.pl> script (see L<CA.pl(1)/NOTES>
 
 Specifies the path to a configuration file and the directory for
 included files.
-See L<openssl(1)> and L<config(5)>.
+See L<config(5)>.
 
 =item B<OPENSSL_CONFIG>
 

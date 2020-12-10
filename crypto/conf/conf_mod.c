@@ -156,11 +156,6 @@ int CONF_modules_load_file_ex(OSSL_LIB_CTX *libctx, const char *filename,
     CONF *conf = NULL;
     int ret = 0, diagnostics = 0;
 
-    ERR_set_mark();
-    conf = NCONF_new_ex(libctx, NULL);
-    if (conf == NULL)
-        goto err;
-
     if (filename == NULL) {
         file = CONF_get1_default_config_file();
         if (file == NULL)
@@ -168,6 +163,11 @@ int CONF_modules_load_file_ex(OSSL_LIB_CTX *libctx, const char *filename,
     } else {
         file = (char *)filename;
     }
+
+    ERR_set_mark();
+    conf = NCONF_new_ex(libctx, NULL);
+    if (conf == NULL)
+        goto err;
 
     if (NCONF_load(conf, file, NULL) <= 0) {
         if ((flags & CONF_MFLAGS_IGNORE_MISSING_FILE) &&
@@ -539,7 +539,6 @@ void CONF_module_set_usr_data(CONF_MODULE *pmod, void *usr_data)
 }
 
 /* Return default config file name */
-
 char *CONF_get1_default_config_file(void)
 {
     const char *t;

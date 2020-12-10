@@ -54,6 +54,9 @@ static int WIN32_rename(const char *from, const char *to);
 # define _kbhit kbhit
 #endif
 
+static BIO *bio_open_default_(const char *filename, char mode, int format,
+                              int quiet);
+
 #define PASS_SOURCE_SIZE_MAX 4
 
 DEFINE_STACK_OF(CONF)
@@ -379,29 +382,25 @@ CONF *app_load_config_bio(BIO *in, const char *filename)
     return NULL;
 }
 
-CONF *app_load_config(const char *filename)
+CONF *app_load_config_verbose(const char *filename, int verbose)
 {
-    BIO *in;
-    CONF *conf;
-
-    in = bio_open_default(filename, 'r', FORMAT_TEXT);
-    if (in == NULL)
-        return NULL;
-
-    conf = app_load_config_bio(in, filename);
-    BIO_free(in);
-    return conf;
+    if (verbose) {
+        if (*filename == '\0')
+            BIO_printf(bio_err, "No configuration used\n");
+        else
+            BIO_printf(bio_err, "Using configuration from %s\n", filename);
+    }
+    return app_load_config_internal(filename, 0);
 }
 
-CONF *app_load_config_quiet(const char *filename)
+CONF *app_load_config_internal(const char *filename, int quiet)
 {
-    BIO *in;
+    BIO *in = NULL; /* leads to empty config in case filename == "" */
     CONF *conf;
 
-    in = bio_open_default_quiet(filename, 'r', FORMAT_TEXT);
-    if (in == NULL)
+    if (*filename != '\0'
+        && (in = bio_open_default_(filename, 'r', FORMAT_TEXT, quiet)) == NULL)
         return NULL;
-
     conf = app_load_config_bio(in, filename);
     BIO_free(in);
     return conf;
@@ -457,9 +456,7 @@ CONF *app_load_config_modules(const char *configfile)
     CONF *conf = NULL;
 
     if (configfile != NULL) {
-        BIO_printf(bio_err, "Using configuration from %s\n", configfile);
-
-        if ((conf = app_load_config(configfile)) == NULL)
+        if ((conf = app_load_config_verbose(configfile, 1)) == NULL)
             return NULL;
         if (configfile != default_config_file && !app_load_modules(conf)) {
             NCONF_free(conf);
@@ -2789,7 +2786,7 @@ static BIO *bio_open_default_(const char *filename, char mode, int format,
         if (ret != NULL)
             return ret;
         BIO_printf(bio_err,
-                   "Can't open %s for %s, %s\n",
+                   "Can't open \"%s\" for %s, %s\n",
                    filename, modeverb(mode), strerror(errno));
     }
     ERR_print_errors(bio_err);

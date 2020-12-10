@@ -494,9 +494,7 @@ end_of_options:
     argc = opt_num_rest();
     argv = opt_rest();
 
-    BIO_printf(bio_err, "Using configuration from %s\n", configfile);
-
-    if ((conf = app_load_config(configfile)) == NULL)
+    if ((conf = app_load_config_verbose(configfile, 1)) == NULL)
         goto end;
     if (configfile != default_config_file && !app_load_modules(conf))
         goto end;

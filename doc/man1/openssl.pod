@@ -83,10 +83,13 @@ Many commands use an external configuration file for some or all of their
 arguments and have a B<-config> option to specify that file.
 The default name of the file is F<openssl.cnf> in the default certificate
 storage area, which can be determined from the L<openssl-version(1)>
-command. This can be used to load modules.
-The environment variable B<OPENSSL_CONF> can be used to specify
-a different location of the file.
-See L<openssl-env(7)>.
+command using the B<-d> or B<-a> option.
+The environment variable B<OPENSSL_CONF> can be used to specify a different
+file location or to disable loading a configuration (using the empty string).
+
+Among others, the configuration file can be used to load modules
+and to specify parameters for generating certificates and random numbers.
+See L<config(5)> for details.
 
 =head2 Standard Commands
 
