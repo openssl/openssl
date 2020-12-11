@@ -266,7 +266,8 @@ int PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store,
 
     /* Now verify the certificates */
     p7_ctx = pkcs7_get0_ctx(p7);
-    cert_ctx = X509_STORE_CTX_new_ex(p7_ctx->libctx, p7_ctx->propq);
+    cert_ctx = X509_STORE_CTX_new_ex(pkcs7_ctx_get0_libctx(p7_ctx),
+                                     pkcs7_ctx_get0_propq(p7_ctx));
     if (cert_ctx == NULL)
         goto err;
     if (!(flags & PKCS7_NOVERIFY))

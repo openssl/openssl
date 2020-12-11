@@ -401,6 +401,8 @@ void pkcs7_resolve_libctx(PKCS7 *p7)
 {
     int i;
     const PKCS7_CTX *ctx = pkcs7_get0_ctx(p7);
+    OSSL_LIB_CTX *libctx = pkcs7_ctx_get0_libctx(ctx);
+    const char *propq = pkcs7_ctx_get0_propq(ctx);
     STACK_OF(PKCS7_RECIP_INFO) *rinfos = pkcs7_get_recipient_info(p7);
     STACK_OF(PKCS7_SIGNER_INFO) *sinfos = PKCS7_get_signer_info(p7);
     STACK_OF(X509) *certs = pkcs7_get_signer_certs(p7);
@@ -409,12 +411,12 @@ void pkcs7_resolve_libctx(PKCS7 *p7)
         return;
 
     for (i = 0; i < sk_X509_num(certs); i++)
-        x509_set0_libctx(sk_X509_value(certs, i), ctx->libctx, ctx->propq);
+        x509_set0_libctx(sk_X509_value(certs, i), libctx, propq);
 
     for (i = 0; i < sk_PKCS7_RECIP_INFO_num(rinfos); i++) {
         PKCS7_RECIP_INFO *ri = sk_PKCS7_RECIP_INFO_value(rinfos, i);
 
-        x509_set0_libctx(ri->cert, ctx->libctx, ctx->propq);
+        x509_set0_libctx(ri->cert, libctx, propq);
     }
 
     for (i = 0; i < sk_PKCS7_SIGNER_INFO_num(sinfos); i++) {
