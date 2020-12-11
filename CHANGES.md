@@ -280,6 +280,15 @@ OpenSSL 3.0
 
    *Rich Salz*
 
+ * Strict checking of certificates (when `X509_V_FLAG_X509_STRICT` is set
+   or the `-x509_strict` option is used, respectively) has been improved:
+   `check_chain()` now allows self-signed X.509 v1 certs also in strict mode,
+   extends checking single root CA certs also to strict mode, and unknown
+   critical extensions in certs used only as trust anchors are now rejected only
+   in strict mode because they are explicitly exempted from RFC requirements.
+
+   *David von Oheimb*
+
  * Deprecated the type OCSP_REQ_CTX and the functions OCSP_REQ_CTX_new(),
    OCSP_REQ_CTX_free(), OCSP_REQ_CTX_http(), OCSP_REQ_CTX_add1_header(),
    OCSP_REQ_CTX_i2d(), OCSP_REQ_CTX_nbio(), OCSP_REQ_CTX_nbio_d2i(),
