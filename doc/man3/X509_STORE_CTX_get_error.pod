@@ -345,7 +345,8 @@ Unhandled critical CRL extension.
 
 =item B<X509_V_ERR_INVALID_NON_CA: invalid non-CA certificate (has CA markings)>
 
-Invalid non-CA certificate has CA markings.
+
+Non-CA certificate required but has CA markings.
 
 =item B<X509_V_ERR_PROXY_PATH_LENGTH_EXCEEDED: proxy path length constraint exceeded>
 

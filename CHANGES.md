@@ -152,6 +152,15 @@ OpenSSL 3.1
 
    *David von Oheimb*
 
+ * Strict checking of certificates (when `X509_V_FLAG_X509_STRICT` is set
+   or the `-x509_strict` option is used, respectively) has been improved:
+   `check_chain()` now allows self-signed X.509 v1 certs also in strict mode
+   and extends checking single root CA certs also to strict mode. Unknown
+   critical extensions in certs used only as trust anchors are now rejected only
+   in strict mode because they are explicitly exempted from RFC requirements.
+
+   *David von Oheimb*
+
  * Various fixes and extensions to the CMP+CRMF implementation and the `cmp` app
    in particular supporting requests for central key generation, generalized
    polling, and various types of genm/genp exchanges defined in CMP Updates.

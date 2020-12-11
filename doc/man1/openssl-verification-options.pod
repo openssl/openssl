@@ -323,6 +323,11 @@ The subjectKeyIdentifier must be given for all X.509v3 CA certs.
 
 =back
 
+Unknown critical extensions are generally rejected as required by RFC 5280,
+but for certificates used solely as trust anchors,
+which are explicitly exempted from X.509 and RFC requirements,
+this is done only in strict mode.
+
 =item B<-ignore_critical>
 
 Normally if an unhandled critical extension is present that is not

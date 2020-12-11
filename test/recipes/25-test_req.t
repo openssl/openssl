@@ -15,7 +15,7 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_req");
 
-plan tests => 92;
+plan tests => 95;
 
 require_ok(srctop_file('test', 'recipes', 'tconversion.pl'));
 
@@ -431,7 +431,7 @@ has_SKID($cert, 1); # explicit hash SKID
 $cert = "self-signed_v3_CA_no_SKID.pem";
 generate_cert($cert, @v3_ca, "-addext", "subjectKeyIdentifier = none");
 cert_ext_has_n_different_lines($cert, 0, $SKID_AKID); # no SKID and no AKID
-#TODO strict_verify($cert, 0);
+strict_verify($cert, 0);
 
 $cert = "self-signed_v3_CA_given_SKID.pem";
 generate_cert($cert, @v3_ca, "-addext", "subjectKeyIdentifier = 45");
@@ -443,7 +443,7 @@ strict_verify($cert, 1);
 $cert = "self-signed_v1_CA_no_KIDs.pem";
 generate_cert($cert);
 cert_ext_has_n_different_lines($cert, 0, $SKID_AKID); # no SKID and no AKID
-#TODO strict_verify($cert, 1); # self-signed v1 root cert should be accepted as CA
+strict_verify($cert, 1); # self-signed v1 root cert should be accepted as CA
 
 $ca_cert = "self-signed_v3_CA_default_SKID.pem"; # will also be used below
 generate_cert($ca_cert, @v3_ca);
@@ -491,7 +491,7 @@ cert_contains($cert, "Authority Key Identifier: keyid(:[0-9A-Fa-f]{2})+ DirName:
 
 $cert = "self-signed_v3_EE_wrong_keyUsage.pem";
 generate_cert($cert, "-addext", "keyUsage = keyCertSign");
-#TODO strict_verify($cert, 1); # should be accepted because RFC 5280 does not apply
+strict_verify($cert, 1); # should be accepted because RFC 5280 does not apply
 
 # AKID of self-issued but not self-signed certs
 

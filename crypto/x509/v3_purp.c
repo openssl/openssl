@@ -670,7 +670,7 @@ static int check_ca(const X509 *x)
         if ((x->ex_flags & EXFLAG_V1_SS) == EXFLAG_V1_SS)
             return X509_CA_TYPE_V1_SELF_SIGNED; /* well, could also be an EE */
         /*
-         * If key usage present it must have certSign so tolerate it
+         * If key usage present it must have keyCertSign so tolerate it
          */
         else if ((x->ex_flags & EXFLAG_KUSAGE) != 0)
             return X509_CA_TYPE_V3_KEY_CERT_SIGN;

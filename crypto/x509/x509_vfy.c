@@ -465,10 +465,10 @@ static int check_extensions(X509_STORE_CTX *ctx)
 
     /*-
      *  must_be_ca can have 1 of 3 values:
-     * -1: we accept both CA and non-CA certificates, to allow direct
-     *     use of self-signed certificates (which are marked as CA).
-     * 0:  we only accept non-CA certificates.  This is currently not
-     *     used, but the possibility is present for future extensions.
+     * -1: we accept both CA and non-CA certificates, to allow direct use
+     *     of self-signed certificates (which may be marked as CA or not).
+     * 0:  we only accept non-CA certificates.
+     *     This is used for the issuer of proxy certs.
      * 1:  we only accept CA certificates.  This is currently used for
      *     all certificates in the chain except the leaf certificate.
      */
@@ -486,16 +486,23 @@ static int check_extensions(X509_STORE_CTX *ctx)
 
     for (i = 0; i < num; i++) {
         x = sk_X509_value(ctx->chain, i);
-        CB_FAIL_IF((ctx->param->flags & X509_V_FLAG_IGNORE_CRITICAL) == 0
-                       && (x->ex_flags & EXFLAG_CRITICAL) != 0,
-                   ctx, x, i, X509_V_ERR_UNHANDLED_CRITICAL_EXTENSION);
         CB_FAIL_IF(!allow_proxy_certs && (x->ex_flags & EXFLAG_PROXY) != 0,
                    ctx, x, i, X509_V_ERR_PROXY_CERTIFICATES_NOT_ALLOWED);
+
+        /*
+         * Skip further checks for directly trusted self-issued EE certs
+         * because RFC 5280 does not apply to them according RFC 6818 section 2.
+         */
+        if (num == 1 && (x->ex_flags & EXFLAG_CA) == 0
+                && (x->ex_flags & EXFLAG_SI) != 0)
+            continue;
+
         ret = X509_check_ca(x);
         switch (must_be_ca) {
-        case -1:
+        case -1: /*  we accept both CA and non-CA certificates */
             CB_FAIL_IF((ctx->param->flags & X509_V_FLAG_X509_STRICT) != 0
-                           && ret != 1 && ret != 0,
+                           && ret != X509_CA_TYPE_V3
+                           && ret != X509_CA_TYPE_NON_CA_OR_ERROR,
                        ctx, x, i, X509_V_ERR_INVALID_CA);
             break;
         case 0: /* we only accept non-CA certificates */
@@ -511,23 +518,21 @@ static int check_extensions(X509_STORE_CTX *ctx)
                        ctx, x, i, X509_V_ERR_INVALID_CA);
             break;
         }
-        if (num > 1) {
+
+        /* Reject unknown critical extensions due to RFC 5280 section 4.2 */
+        CB_FAIL_IF((ctx->param->flags & X509_V_FLAG_IGNORE_CRITICAL) == 0
+                   && (x->ex_flags & EXFLAG_CRITICAL) != 0,
+                   ctx, x, i, X509_V_ERR_UNHANDLED_CRITICAL_EXTENSION);
+
+        if (num > 1) { /* TODO: this guard is questionable */
             /* Check for presence of explicit elliptic curve parameters */
             ret = check_curve(x);
             CB_FAIL_IF(ret < 0, ctx, x, i, X509_V_ERR_UNSPECIFIED);
             CB_FAIL_IF(ret == 0, ctx, x, i, X509_V_ERR_EC_KEY_EXPLICIT_PARAMS);
         }
-        /*
-         * Do the following set of checks only if strict checking is requested
-         * and not for self-issued (including self-signed) EE (non-CA) certs
-         * because RFC 5280 does not apply to them according RFC 6818 section 2.
-         */
-        if ((ctx->param->flags & X509_V_FLAG_X509_STRICT) != 0
-            && num > 1) { /*
-                           * this should imply
-                           * !(i == 0 && (x->ex_flags & EXFLAG_CA) == 0
-                           *          && (x->ex_flags & EXFLAG_SI) != 0)
-                           */
+
+        /* Do the following checks only if strict checking is requested */
+        if ((ctx->param->flags & X509_V_FLAG_X509_STRICT) != 0) {
             /* Check Basic Constraints according to RFC 5280 section 4.2.1.9 */
             if (x->ex_pathlen != -1) {
                 CB_FAIL_IF((x->ex_flags & EXFLAG_CA) == 0,
