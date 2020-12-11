@@ -37,6 +37,8 @@ BIO *cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec,
     size_t tkeylen = 0;
     int ok = 0;
     int enc, keep_key = 0;
+    OSSL_LIB_CTX *libctx = cms_ctx_get0_libctx(cms_ctx);
+    const char *propq = cms_ctx_get0_propq(cms_ctx);
 
     enc = ec->cipher ? 1 : 0;
 
@@ -60,8 +62,7 @@ BIO *cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec,
         cipher = EVP_get_cipherbyobj(calg->algorithm);
     }
     if (cipher != NULL) {
-        fetched_ciph = EVP_CIPHER_fetch(cms_ctx->libctx, EVP_CIPHER_name(cipher),
-                                        cms_ctx->propq);
+        fetched_ciph = EVP_CIPHER_fetch(libctx, EVP_CIPHER_name(cipher), propq);
         if (fetched_ciph != NULL)
             cipher = fetched_ciph;
     }
@@ -82,7 +83,7 @@ BIO *cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec,
         /* Generate a random IV if we need one */
         ivlen = EVP_CIPHER_CTX_iv_length(ctx);
         if (ivlen > 0) {
-            if (RAND_bytes_ex(cms_ctx->libctx, iv, ivlen) <= 0)
+            if (RAND_bytes_ex(libctx, iv, ivlen) <= 0)
                 goto err;
             piv = iv;
         }

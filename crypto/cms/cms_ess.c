@@ -219,8 +219,9 @@ static int cms_msgSigDigest(CMS_SignerInfo *si,
     if (md == NULL)
         return 0;
     if (!asn1_item_digest_ex(ASN1_ITEM_rptr(CMS_Attributes_Verify), md,
-                             si->signedAttrs, dig, diglen, si->cms_ctx->libctx,
-                             si->cms_ctx->propq))
+                             si->signedAttrs, dig, diglen,
+                             cms_ctx_get0_libctx(si->cms_ctx),
+                             cms_ctx_get0_propq(si->cms_ctx)))
         return 0;
     return 1;
 }

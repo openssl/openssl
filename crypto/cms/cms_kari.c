@@ -168,8 +168,8 @@ int CMS_RecipientInfo_kari_set0_pkey_and_peer(CMS_RecipientInfo *ri, EVP_PKEY *p
     if (pk == NULL)
         return 1;
 
-    pctx = EVP_PKEY_CTX_new_from_pkey(kari->cms_ctx->libctx, pk,
-                                      kari->cms_ctx->propq);
+    pctx = EVP_PKEY_CTX_new_from_pkey(cms_ctx_get0_libctx(kari->cms_ctx), pk,
+                                      cms_ctx_get0_propq(kari->cms_ctx));
     if (pctx == NULL || EVP_PKEY_derive_init(pctx) <= 0)
         goto err;
 
@@ -284,8 +284,10 @@ static int cms_kari_create_ephemeral_key(CMS_KeyAgreeRecipientInfo *kari,
     EVP_PKEY *ekey = NULL;
     int rv = 0;
     const CMS_CTX *ctx = kari->cms_ctx;
+    OSSL_LIB_CTX *libctx = cms_ctx_get0_libctx(ctx);
+    const char *propq = cms_ctx_get0_propq(ctx);
 
-    pctx = EVP_PKEY_CTX_new_from_pkey(ctx->libctx, pk, ctx->propq);
+    pctx = EVP_PKEY_CTX_new_from_pkey(libctx, pk, propq);
     if (pctx == NULL)
         goto err;
     if (EVP_PKEY_keygen_init(pctx) <= 0)
@@ -293,7 +295,7 @@ static int cms_kari_create_ephemeral_key(CMS_KeyAgreeRecipientInfo *kari,
     if (EVP_PKEY_keygen(pctx, &ekey) <= 0)
         goto err;
     EVP_PKEY_CTX_free(pctx);
-    pctx = EVP_PKEY_CTX_new_from_pkey(ctx->libctx, ekey, ctx->propq);
+    pctx = EVP_PKEY_CTX_new_from_pkey(libctx, ekey, propq);
     if (pctx == NULL)
         goto err;
     if (EVP_PKEY_derive_init(pctx) <= 0)
@@ -315,7 +317,9 @@ static int cms_kari_set_originator_private_key(CMS_KeyAgreeRecipientInfo *kari,
     int rv = 0;
     const CMS_CTX *ctx = kari->cms_ctx;
 
-    pctx = EVP_PKEY_CTX_new_from_pkey(ctx->libctx, originatorPrivKey, ctx->propq);
+    pctx = EVP_PKEY_CTX_new_from_pkey(cms_ctx_get0_libctx(ctx),
+                                      originatorPrivKey,
+                                      cms_ctx_get0_propq(ctx));
     if (pctx == NULL)
         goto err;
     if (EVP_PKEY_derive_init(pctx) <= 0)
@@ -455,8 +459,9 @@ static int cms_wrap_init(CMS_KeyAgreeRecipientInfo *kari,
     else
         kekcipher_name = SN_id_aes256_wrap;
 enc:
-    fetched_kekcipher = EVP_CIPHER_fetch(cms_ctx->libctx, kekcipher_name,
-                                         cms_ctx->propq);
+    fetched_kekcipher = EVP_CIPHER_fetch(cms_ctx_get0_libctx(cms_ctx),
+                                         kekcipher_name,
+                                         cms_ctx_get0_propq(cms_ctx));
     if (fetched_kekcipher == NULL)
         return 0;
     ret = EVP_EncryptInit_ex(ctx, fetched_kekcipher, NULL, NULL, NULL);

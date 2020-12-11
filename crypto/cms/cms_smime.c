@@ -264,7 +264,8 @@ static int cms_signerinfo_verify_cert(CMS_SignerInfo *si,
     X509 *signer;
     int i, j, r = 0;
 
-    ctx = X509_STORE_CTX_new_ex(cms_ctx->libctx, cms_ctx->propq);
+    ctx = X509_STORE_CTX_new_ex(cms_ctx_get0_libctx(cms_ctx),
+                                cms_ctx_get0_propq(cms_ctx));
     if (ctx == NULL) {
         ERR_raise(ERR_LIB_CMS, ERR_R_MALLOC_FAILURE);
         goto err;
@@ -567,7 +568,8 @@ CMS_ContentInfo *CMS_sign_receipt(CMS_SignerInfo *si,
 
     /* Initialize signed data */
 
-    cms = CMS_sign_ex(NULL, NULL, certs, NULL, flags, ctx->libctx, ctx->propq);
+    cms = CMS_sign_ex(NULL, NULL, certs, NULL, flags, cms_ctx_get0_libctx(ctx),
+                      cms_ctx_get0_propq(ctx));
     if (cms == NULL)
         goto err;
 

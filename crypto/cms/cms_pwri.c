@@ -93,7 +93,7 @@ CMS_RecipientInfo *CMS_add0_recipient_password(CMS_ContentInfo *cms,
     ivlen = EVP_CIPHER_CTX_iv_length(ctx);
 
     if (ivlen > 0) {
-        if (RAND_bytes_ex(cms_ctx->libctx, iv, ivlen) <= 0)
+        if (RAND_bytes_ex(cms_ctx_get0_libctx(cms_ctx), iv, ivlen) <= 0)
             goto err;
         if (EVP_EncryptInit_ex(ctx, NULL, NULL, NULL, iv) <= 0) {
             ERR_raise(ERR_LIB_CMS, ERR_R_EVP_LIB);
@@ -262,7 +262,7 @@ static int kek_wrap_key(unsigned char *out, size_t *outlen,
         memcpy(out + 4, in, inlen);
         /* Add random padding to end */
         if (olen > inlen + 4
-            && RAND_bytes_ex(cms_ctx->libctx, out + 4 + inlen,
+            && RAND_bytes_ex(cms_ctx_get0_libctx(cms_ctx), out + 4 + inlen,
                              olen - 4 - inlen) <= 0)
             return 0;
         /* Encrypt twice */
@@ -316,7 +316,8 @@ int cms_RecipientInfo_pwri_crypt(const CMS_ContentInfo *cms,
     }
 
     name = OBJ_nid2sn(OBJ_obj2nid(kekalg->algorithm));
-    kekcipher = EVP_CIPHER_fetch(cms_ctx->libctx, name, cms_ctx->propq);
+    kekcipher = EVP_CIPHER_fetch(cms_ctx_get0_libctx(cms_ctx), name,
+                                 cms_ctx_get0_propq(cms_ctx));
 
     if (kekcipher == NULL) {
         ERR_raise(ERR_LIB_CMS, CMS_R_UNKNOWN_CIPHER);
