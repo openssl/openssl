@@ -40,8 +40,7 @@ push @configs, 'fips-and-base.cnf' unless $no_fips;
 my @files = qw(
                 evpciph_aes_ccm_cavs.txt
                 evpciph_aes_common.txt
-                evpciph_aes_cts1.txt
-                evpciph_aes_cts23.txt
+                evpciph_aes_cts.txt
                 evpciph_aes_wrap.txt
                 evpciph_des3_common.txt
                 evpkdf_hkdf.txt
