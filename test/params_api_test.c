@@ -48,8 +48,16 @@ static const struct {
     size_t len;
     unsigned char value[MAX_LEN];
 } raw_values[] = {
+    { 1, { 0x47 } },
+    { 1, { 0xd0 } },
+    { 2, { 0x01, 0xe9 } },
+    { 2, { 0xff, 0x53 } },
+    { 3, { 0x16, 0xff, 0x7c } },
+    { 3, { 0xa8, 0x9c, 0x0e } },
     { 4, { 0x38, 0x27, 0xbf, 0x3b } },
     { 4, { 0x9f, 0x26, 0x48, 0x22 } },
+    { 5, { 0x30, 0x65, 0xfa, 0xe4, 0x81 } },
+    { 5, { 0xd1, 0x76, 0x01, 0x1b, 0xcd } },
     { 8, { 0x59, 0xb2, 0x1a, 0xe9, 0x2a, 0xd8, 0x46, 0x40 } },
     { 8, { 0xb4, 0xae, 0xbd, 0xb4, 0xdd, 0x04, 0xb1, 0x4c } },
     { 16, { 0x61, 0xe8, 0x7e, 0x31, 0xe9, 0x33, 0x83, 0x3d,
@@ -65,8 +73,8 @@ static int test_param_type_extra(OSSL_PARAM *param, const unsigned char *cmp,
     int64_t i64;
     size_t s, sz;
     unsigned char buf[MAX_LEN];
-    const int bit32 = param->data_size == sizeof(int32_t);
-    const int sizet = bit32 && sizeof(size_t) > sizeof(int32_t);
+    const int bit32 = param->data_size <= sizeof(int32_t);
+    const int sizet = param->data_size <= sizeof(size_t);
     const int signd = param->data_type == OSSL_PARAM_INTEGER;
 
     /*
@@ -96,7 +104,7 @@ static int test_param_type_extra(OSSL_PARAM *param, const unsigned char *cmp,
             return 0;
     }
     le_copy(buf, &i64, sizeof(i64));
-        sz = sizeof(i64) < width ? sizeof(i64) : width;
+    sz = sizeof(i64) < width ? sizeof(i64) : width;
     if (!TEST_mem_eq(buf, sz, cmp, sz))
         return 0;
     if (sizet && !signd) {
