@@ -163,3 +163,31 @@ int get_legacy_pkey_id(OSSL_LIB_CTX *libctx, const char *algname, ENGINE *e)
 
     return pkey_id;
 }
+
+const EVP_MD *get_digest_from_engine(const char *name)
+{
+#ifndef OPENSSL_NO_ENGINE
+    ENGINE *eng;
+
+    eng = ENGINE_get_digest_engine(OBJ_sn2nid(name));
+    if (eng != NULL) {
+        ENGINE_finish(eng);
+        return EVP_get_digestbyname(name);
+    }
+#endif
+    return NULL;
+}
+
+const EVP_CIPHER *get_cipher_from_engine(const char *name)
+{
+#ifndef OPENSSL_NO_ENGINE
+    ENGINE *eng;
+
+    eng = ENGINE_get_cipher_engine(OBJ_sn2nid(name));
+    if (eng != NULL) {
+        ENGINE_finish(eng);
+        return EVP_get_cipherbyname(name);
+    }
+#endif
+    return NULL;
+}

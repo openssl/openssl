@@ -945,6 +945,38 @@ static void list_options_for_command(const char *command)
     BIO_printf(bio_out, "- -\n");
 }
 
+static int is_md_available(const char *name)
+{
+    EVP_MD *md;
+
+    /* Look through providers' digests */
+    ERR_set_mark();
+    md = EVP_MD_fetch(NULL, name, NULL);
+    ERR_pop_to_mark();
+    if (md != NULL) {
+        EVP_MD_free(md);
+        return 1;
+    }
+
+    return (get_digest_from_engine(name) == NULL) ? 0 : 1;
+}
+
+static int is_cipher_available(const char *name)
+{
+    EVP_CIPHER *cipher;
+
+    /* Look through providers' ciphers */
+    ERR_set_mark();
+    cipher = EVP_CIPHER_fetch(NULL, name, NULL);
+    ERR_pop_to_mark();
+    if (cipher != NULL) {
+        EVP_CIPHER_free(cipher);
+        return 1;
+    }
+
+    return (get_cipher_from_engine(name) == NULL) ? 0 : 1;
+}
+
 static void list_type(FUNC_TYPE ft, int one)
 {
     FUNCTION *fp;
@@ -958,6 +990,18 @@ static void list_type(FUNC_TYPE ft, int one)
     for (fp = functions; fp->name != NULL; fp++) {
         if (fp->type != ft)
             continue;
+        switch (ft) {
+        case FT_cipher:
+            if (!is_cipher_available(fp->name))
+                continue;
+            break;
+        case FT_md:
+            if (!is_md_available(fp->name))
+                continue;
+            break;
+        default:
+            break;
+        }
         if (one) {
             BIO_printf(bio_out, "%s\n", fp->name);
         } else {
