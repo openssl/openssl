@@ -291,7 +291,7 @@ void ossl_ctx_thread_stop(void *arg)
     if (local == NULL)
         return;
     hands = init_get_thread_local(local, 0, 0);
-    init_thread_stop(arg, hands);
+    init_thread_stop(ctx, hands);
     OPENSSL_free(hands);
 }
 #endif /* FIPS_MODULE */
