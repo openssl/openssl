@@ -14,13 +14,17 @@ B<openssl list>
 [B<-1>]
 [B<-commands>]
 [B<-digest-commands>]
-[B<-digest-algorithms>]
-[B<-kdf-algorithms>]
+{- output_off() if $disabled{"deprecated-3.0"}; ""
+-}[B<-digest-algorithms>]
+{- output_on() if $disabled{"deprecated-3.0"}; ""
+-}[B<-kdf-algorithms>]
 [B<-mac-algorithms>]
 [B<-random-generators>]
 [B<-cipher-commands>]
-[B<-cipher-algorithms>]
-[B<-encoders>]
+{- output_off() if $disabled{"deprecated-3.0"}; ""
+-}[B<-cipher-algorithms>]
+{- output_on() if $disabled{"deprecated-3.0"}; ""
+-}[B<-encoders>]
 [B<-decoders>]
 [B<-key-managers>]
 [B<-key-exchange-algorithms>]
@@ -71,13 +75,17 @@ Display a list of standard commands.
 
 =item B<-digest-commands>
 
+This option is deprecated. Use B<digest-algorithms> instead.
+
 Display a list of message digest commands, which are typically used
 as input to the L<openssl-dgst(1)> or L<openssl-speed(1)> commands.
 
 =item B<-cipher-commands>
 
+This option is deprecated. Use B<cipher-algorithms> instead.
+
 Display a list of cipher commands, which are typically used as input
-to the L<openssl-dgst(1)> or L<openssl-speed(1)> commands.
+to the L<openssl-enc(1)> or L<openssl-speed(1)> commands.
 
 =item B<-digest-algorithms>, B<-kdf-algorithms>, B<-mac-algorithms>,
 B<-cipher-algorithms>
@@ -209,7 +217,8 @@ In both cases, C<bar> is the name of the provider.
 
 =head1 HISTORY
 
-The B<-engines> option was deprecated in OpenSSL 3.0.
+The B<-engines>, B<-digest-commands>, and B<-cipher-commands> options
+were deprecated in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
