@@ -168,6 +168,11 @@ int DH_up_ref(DH *r)
     return ((i > 1) ? 1 : 0);
 }
 
+void ossl_dh_set0_libctx(DH *d, OSSL_LIB_CTX *libctx)
+{
+    d->libctx = libctx;
+}
+
 #ifndef FIPS_MODULE
 int DH_set_ex_data(DH *d, int idx, void *arg)
 {

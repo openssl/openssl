@@ -61,6 +61,7 @@ int ec_key_private_check(const EC_KEY *eckey);
 int ec_key_pairwise_check(const EC_KEY *eckey, BN_CTX *ctx);
 OSSL_LIB_CTX *ec_key_get_libctx(const EC_KEY *eckey);
 const char *ec_key_get0_propq(const EC_KEY *eckey);
+void ec_key_set0_libctx(EC_KEY *key, OSSL_LIB_CTX *libctx);
 
 /* Backend support */
 int ec_group_todata(const EC_GROUP *group, OSSL_PARAM_BLD *tmpl,

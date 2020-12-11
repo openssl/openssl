@@ -73,6 +73,11 @@ void ecx_key_free(ECX_KEY *key)
     OPENSSL_free(key);
 }
 
+void ecx_key_set0_libctx(ECX_KEY *key, OSSL_LIB_CTX *libctx)
+{
+    key->libctx = libctx;
+}
+
 int ecx_key_up_ref(ECX_KEY *key)
 {
     int i;

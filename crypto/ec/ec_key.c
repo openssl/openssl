@@ -659,6 +659,12 @@ const char *ec_key_get0_propq(const EC_KEY *key)
     return key->propq;
 }
 
+void ec_key_set0_libctx(EC_KEY *key, OSSL_LIB_CTX *libctx)
+{
+    key->libctx = libctx;
+    /* Do we need to propagate this to the group? */
+}
+
 const EC_GROUP *EC_KEY_get0_group(const EC_KEY *key)
 {
     return key->group;
