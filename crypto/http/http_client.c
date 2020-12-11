@@ -39,7 +39,7 @@
 /* Stateful HTTP request code, supporting blocking and non-blocking I/O */
 
 /* Opaque HTTP request status structure */
-struct ossl_http_req_ctx_st {
+struct ocsp_req_ctx_st {
     int state;                  /* Current I/O state */
     unsigned char *iobuf;       /* Line buffer */
     int iobuflen;               /* Line buffer length */
@@ -73,14 +73,14 @@ struct ossl_http_req_ctx_st {
 #define OHS_DONE           (8 | OHS_NOREAD) /* Completed */
 #define OHS_HTTP_HEADER    (9 | OHS_NOREAD) /* Headers set, w/o final \r\n */
 
-OSSL_HTTP_REQ_CTX *OCSP_REQ_CTX_new(BIO *wbio, BIO *rbio,
-                                    int method_GET, int maxline,
-                                    unsigned long max_resp_len,
-                                    int timeout,
-                                    const char *expected_content_type,
-                                    int expect_asn1)
+OCSP_REQ_CTX *OCSP_REQ_CTX_new(BIO *wbio, BIO *rbio,
+                               int method_GET, int maxline,
+                               unsigned long max_resp_len,
+                               int timeout,
+                               const char *expected_content_type,
+                               int expect_asn1)
 {
-    OSSL_HTTP_REQ_CTX *rctx;
+    OCSP_REQ_CTX *rctx;
 
     if (wbio == NULL || rbio == NULL) {
         ERR_raise(ERR_LIB_HTTP, ERR_R_PASSED_NULL_PARAMETER);
@@ -108,7 +108,7 @@ OSSL_HTTP_REQ_CTX *OCSP_REQ_CTX_new(BIO *wbio, BIO *rbio,
     return rctx;
 }
 
-void OCSP_REQ_CTX_free(OSSL_HTTP_REQ_CTX *rctx)
+void OCSP_REQ_CTX_free(OCSP_REQ_CTX *rctx)
 {
     if (rctx == NULL)
         return;
@@ -117,7 +117,7 @@ void OCSP_REQ_CTX_free(OSSL_HTTP_REQ_CTX *rctx)
     OPENSSL_free(rctx);
 }
 
-BIO *OCSP_REQ_CTX_get0_mem_bio(OSSL_HTTP_REQ_CTX *rctx)
+BIO *OCSP_REQ_CTX_get0_mem_bio(OCSP_REQ_CTX *rctx)
 {
     if (rctx == NULL) {
         ERR_raise(ERR_LIB_HTTP, ERR_R_PASSED_NULL_PARAMETER);
@@ -126,7 +126,7 @@ BIO *OCSP_REQ_CTX_get0_mem_bio(OSSL_HTTP_REQ_CTX *rctx)
     return rctx->mem;
 }
 
-void OCSP_set_max_response_length(OSSL_HTTP_REQ_CTX *rctx, unsigned long len)
+void OCSP_set_max_response_length(OCSP_REQ_CTX *rctx, unsigned long len)
 {
     if (rctx == NULL) {
         ERR_raise(ERR_LIB_HTTP, ERR_R_PASSED_NULL_PARAMETER);
@@ -139,7 +139,7 @@ void OCSP_set_max_response_length(OSSL_HTTP_REQ_CTX *rctx, unsigned long len)
  * Create HTTP header using given op and path (or "/" in case path is NULL).
  * Server name (and port) must be given if and only if plain HTTP proxy is used.
  */
-int OCSP_REQ_CTX_http(OSSL_HTTP_REQ_CTX *rctx, const char *server,
+int OCSP_REQ_CTX_http(OCSP_REQ_CTX *rctx, const char *server,
                       const char *port, const char *path)
 {
     if (rctx == NULL) {
@@ -173,7 +173,7 @@ int OCSP_REQ_CTX_http(OSSL_HTTP_REQ_CTX *rctx, const char *server,
     return 1;
 }
 
-int OCSP_REQ_CTX_add1_header(OSSL_HTTP_REQ_CTX *rctx,
+int OCSP_REQ_CTX_add1_header(OCSP_REQ_CTX *rctx,
                              const char *name, const char *value)
 {
     if (rctx == NULL || name == NULL) {
@@ -195,7 +195,7 @@ int OCSP_REQ_CTX_add1_header(OSSL_HTTP_REQ_CTX *rctx,
     return 1;
 }
 
-static int OCSP_REQ_CTX_content(OSSL_HTTP_REQ_CTX *rctx,
+static int OCSP_REQ_CTX_content(OCSP_REQ_CTX *rctx,
                                 const char *content_type, BIO *req_mem)
 {
     const unsigned char *req;
@@ -236,7 +236,7 @@ BIO *HTTP_asn1_item2bio(const ASN1_ITEM *it, const ASN1_VALUE *val)
     return res;
 }
 
-int OCSP_REQ_CTX_i2d(OSSL_HTTP_REQ_CTX *rctx, const char *content_type,
+int OCSP_REQ_CTX_i2d(OCSP_REQ_CTX *rctx, const char *content_type,
                      const ASN1_ITEM *it, ASN1_VALUE *req)
 {
     BIO *mem;
@@ -253,7 +253,7 @@ int OCSP_REQ_CTX_i2d(OSSL_HTTP_REQ_CTX *rctx, const char *content_type,
     return res;
 }
 
-static int OCSP_REQ_CTX_add1_headers(OSSL_HTTP_REQ_CTX *rctx,
+static int OCSP_REQ_CTX_add1_headers(OCSP_REQ_CTX *rctx,
                                      const STACK_OF(CONF_VALUE) *headers,
                                      const char *host)
 {
@@ -275,21 +275,21 @@ static int OCSP_REQ_CTX_add1_headers(OSSL_HTTP_REQ_CTX *rctx,
 }
 
 /*-
- * Create OSSL_HTTP_REQ_CTX structure using the values provided.
+ * Create OCSP_REQ_CTX structure using the values provided.
  * If !use_http_proxy then the 'server' and 'port' parameters are ignored.
  * If req_mem == NULL then use GET and ignore content_type, else POST.
  */
-OSSL_HTTP_REQ_CTX *HTTP_REQ_CTX_new(BIO *wbio, BIO *rbio, int use_http_proxy,
-                                    const char *server, const char *port,
-                                    const char *path,
-                                    const STACK_OF(CONF_VALUE) *headers,
-                                    const char *content_type, BIO *req_mem,
-                                    int maxline, unsigned long max_resp_len,
-                                    int timeout,
-                                    const char *expected_content_type,
-                                    int expect_asn1)
+OCSP_REQ_CTX *HTTP_REQ_CTX_new(BIO *wbio, BIO *rbio, int use_http_proxy,
+                               const char *server, const char *port,
+                               const char *path,
+                               const STACK_OF(CONF_VALUE) *headers,
+                               const char *content_type, BIO *req_mem,
+                               int maxline, unsigned long max_resp_len,
+                               int timeout,
+                               const char *expected_content_type,
+                               int expect_asn1)
 {
-    OSSL_HTTP_REQ_CTX *rctx;
+    OCSP_REQ_CTX *rctx;
 
     if (use_http_proxy && (server == NULL || port == NULL)) {
         ERR_raise(ERR_LIB_HTTP, ERR_R_PASSED_NULL_PARAMETER);
@@ -392,7 +392,7 @@ static int parse_http_line1(char *line)
     }
 }
 
-static int check_set_resp_len(OSSL_HTTP_REQ_CTX *rctx, unsigned long len)
+static int check_set_resp_len(OCSP_REQ_CTX *rctx, unsigned long len)
 {
     if (len > rctx->max_resp_len)
         ERR_raise_data(ERR_LIB_HTTP, HTTP_R_MAX_RESP_LEN_EXCEEDED,
@@ -408,7 +408,7 @@ static int check_set_resp_len(OSSL_HTTP_REQ_CTX *rctx, unsigned long len)
  * Try exchanging request and response via HTTP on (non-)blocking BIO in rctx.
  * Returns 1 on success, 0 on error or redirection, -1 on BIO_should_retry.
  */
-int OCSP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
+int OCSP_REQ_CTX_nbio(OCSP_REQ_CTX *rctx)
 {
     int i;
     long n, n_to_send = 0;
@@ -726,7 +726,7 @@ static ASN1_VALUE *BIO_mem_d2i(BIO *mem, const ASN1_ITEM *it)
     return resp;
 }
 
-static BIO *OCSP_REQ_CTX_transfer(OSSL_HTTP_REQ_CTX *rctx)
+static BIO *OCSP_REQ_CTX_transfer(OCSP_REQ_CTX *rctx)
 {
     int sending = 1;
     int rv;
@@ -762,7 +762,7 @@ static BIO *OCSP_REQ_CTX_transfer(OSSL_HTTP_REQ_CTX *rctx)
 }
 
 /* Exchange ASN.1-encoded request and response via HTTP on (non-)blocking BIO */
-ASN1_VALUE *OCSP_REQ_CTX_nbio_d2i(OSSL_HTTP_REQ_CTX *rctx,
+ASN1_VALUE *OCSP_REQ_CTX_nbio_d2i(OCSP_REQ_CTX *rctx,
                                           const ASN1_ITEM *it)
 {
     if (rctx == NULL || it == NULL) {
@@ -821,7 +821,7 @@ BIO *OSSL_HTTP_transfer(const char *server, const char *port, const char *path,
 {
     time_t start_time = timeout > 0 ? time(NULL) : 0;
     BIO *cbio; /* = bio if present, used as connection BIO if rbio is NULL */
-    OSSL_HTTP_REQ_CTX *rctx;
+    OCSP_REQ_CTX *rctx;
     BIO *resp = NULL;
 
     if (redirection_url != NULL)

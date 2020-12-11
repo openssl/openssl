@@ -13,19 +13,16 @@
 
 # include <openssl/ocsp.h>
 
-/* name aliases for legacy names with name prefix "OCSP_" */
-typedef OCSP_REQ_CTX OSSL_HTTP_REQ_CTX;
-
 BIO *HTTP_asn1_item2bio(const ASN1_ITEM *it, const ASN1_VALUE *val);
-OSSL_HTTP_REQ_CTX *HTTP_REQ_CTX_new(BIO *wbio, BIO *rbio, int use_http_proxy,
-                                    const char *server, const char *port,
-                                    const char *path,
-                                    const STACK_OF(CONF_VALUE) *headers,
-                                    const char *content_type, BIO *req_mem,
-                                    int maxline, unsigned long max_resp_len,
-                                    int timeout,
-                                    const char *expected_content_type,
-                                    int expect_asn1);
+OCSP_REQ_CTX *HTTP_REQ_CTX_new(BIO *wbio, BIO *rbio, int use_http_proxy,
+                               const char *server, const char *port,
+                               const char *path,
+                               const STACK_OF(CONF_VALUE) *headers,
+                               const char *content_type, BIO *req_mem,
+                               int maxline, unsigned long max_resp_len,
+                               int timeout,
+                               const char *expected_content_type,
+                               int expect_asn1);
 ASN1_VALUE *HTTP_sendreq_bio(BIO *bio, OSSL_HTTP_bio_cb_t bio_update_fn,
                              void *arg, const char *server, const char *port,
                              const char *path, int use_ssl, int use_proxy,
