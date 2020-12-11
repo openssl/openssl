@@ -85,6 +85,7 @@ struct ossl_provider_st {
      */
     unsigned char *operation_bits;
     size_t operation_bits_sz;
+    CRYPTO_RWLOCK *opbits_lock;
 
     /* Provider side data */
     void *provctx;
@@ -252,6 +253,7 @@ static OSSL_PROVIDER *provider_new(const char *name,
         || (prov->activatecnt_lock = CRYPTO_THREAD_lock_new()) == NULL
 #endif
         || !ossl_provider_up_ref(prov) /* +1 One reference to be returned */
+        || (prov->opbits_lock = CRYPTO_THREAD_lock_new()) == NULL
         || (prov->name = OPENSSL_strdup(name)) == NULL) {
         ossl_provider_free(prov);
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
@@ -371,6 +373,7 @@ void ossl_provider_free(OSSL_PROVIDER *prov)
             OPENSSL_free(prov->name);
             OPENSSL_free(prov->path);
             sk_INFOPAIR_pop_free(prov->parameters, free_infopair);
+            CRYPTO_THREAD_lock_free(prov->opbits_lock);
 #ifndef HAVE_ATOMICS
             CRYPTO_THREAD_lock_free(prov->refcnt_lock);
             CRYPTO_THREAD_lock_free(prov->activatecnt_lock);
@@ -907,11 +910,13 @@ int ossl_provider_set_operation_bit(OSSL_PROVIDER *provider, size_t bitnum)
     size_t byte = bitnum / 8;
     unsigned char bit = (1 << (bitnum % 8)) & 0xFF;
 
+    CRYPTO_THREAD_write_lock(provider->opbits_lock);
     if (provider->operation_bits_sz <= byte) {
         unsigned char *tmp = OPENSSL_realloc(provider->operation_bits,
                                              byte + 1);
 
         if (tmp == NULL) {
+            CRYPTO_THREAD_unlock(provider->opbits_lock);
             ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
             return 0;
         }
@@ -921,6 +926,7 @@ int ossl_provider_set_operation_bit(OSSL_PROVIDER *provider, size_t bitnum)
         provider->operation_bits_sz = byte + 1;
     }
     provider->operation_bits[byte] |= bit;
+    CRYPTO_THREAD_unlock(provider->opbits_lock);
     return 1;
 }
 
@@ -936,8 +942,10 @@ int ossl_provider_test_operation_bit(OSSL_PROVIDER *provider, size_t bitnum,
     }
 
     *result = 0;
+    CRYPTO_THREAD_read_lock(provider->opbits_lock);
     if (provider->operation_bits_sz > byte)
         *result = ((provider->operation_bits[byte] & bit) != 0);
+    CRYPTO_THREAD_unlock(provider->opbits_lock);
     return 1;
 }
 
