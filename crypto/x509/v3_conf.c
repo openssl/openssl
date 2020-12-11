@@ -306,8 +306,8 @@ static void delete_ext(STACK_OF(X509_EXTENSION) *sk, X509_EXTENSION *dext)
 /*
  * This is the main function: add a bunch of extensions based on a config
  * file section to an extension STACK. Just check in case sk == NULL.
+ * Note that on error new elements may have been added to *sk if sk != NULL.
  */
-
 int X509V3_EXT_add_nconf_sk(CONF *conf, X509V3_CTX *ctx, const char *section,
                             STACK_OF(X509_EXTENSION) **sk)
 {
@@ -337,45 +337,45 @@ int X509V3_EXT_add_nconf_sk(CONF *conf, X509V3_CTX *ctx, const char *section,
 }
 
 /*
- * Convenience functions to add extensions to a certificate, CRL and request
+ * Add extensions to a certificate. Just check in case cert == NULL.
+ * Note that on error new elements may remain added to cert if cert != NULL.
  */
-
 int X509V3_EXT_add_nconf(CONF *conf, X509V3_CTX *ctx, const char *section,
                          X509 *cert)
 {
     STACK_OF(X509_EXTENSION) **sk = NULL;
-    if (cert)
+    if (cert != NULL)
         sk = &cert->cert_info.extensions;
     return X509V3_EXT_add_nconf_sk(conf, ctx, section, sk);
 }
 
-/* Same as above but for a CRL */
-
+/*
+ * Add extensions to a CRL. Just check in case crl == NULL.
+ * Note that on error new elements may remain added to crl if crl != NULL.
+ */
 int X509V3_EXT_CRL_add_nconf(CONF *conf, X509V3_CTX *ctx, const char *section,
                              X509_CRL *crl)
 {
     STACK_OF(X509_EXTENSION) **sk = NULL;
-    if (crl)
+    if (crl != NULL)
         sk = &crl->crl.extensions;
     return X509V3_EXT_add_nconf_sk(conf, ctx, section, sk);
 }
 
-/* Add extensions to certificate request */
-
+/*
+ * Add extensions to certificate request. Just check in case req is NULL.
+ * Note that on error new elements may remain added to req if req != NULL.
+ */
 int X509V3_EXT_REQ_add_nconf(CONF *conf, X509V3_CTX *ctx, const char *section,
                              X509_REQ *req)
 {
-    STACK_OF(X509_EXTENSION) *extlist = NULL, **sk = NULL;
-    int i;
+    STACK_OF(X509_EXTENSION) *exts = NULL;
+    int ret = X509V3_EXT_add_nconf_sk(conf, ctx, section, &exts);
 
-    if (req)
-        sk = &extlist;
-    i = X509V3_EXT_add_nconf_sk(conf, ctx, section, sk);
-    if (!i || !sk)
-        return i;
-    i = X509_REQ_add_extensions(req, extlist);
-    sk_X509_EXTENSION_pop_free(extlist, X509_EXTENSION_free);
-    return i;
+    if (ret && req != NULL && exts != NULL)
+        ret = X509_REQ_add_extensions(req, exts);
+    sk_X509_EXTENSION_pop_free(exts, X509_EXTENSION_free);
+    return ret;
 }
 
 /* Config database functions */
