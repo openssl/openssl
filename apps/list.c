@@ -1295,8 +1295,10 @@ const OPTIONS list_options[] = {
     {"select", OPT_SELECT_NAME, 's', "Select a single algorithm"},
     {"commands", OPT_COMMANDS, '-', "List of standard commands"},
     {"standard-commands", OPT_COMMANDS, '-', "List of standard commands"},
+#ifndef OPENSSL_NO_DEPRECATED_3_0
     {"digest-commands", OPT_DIGEST_COMMANDS, '-',
-     "List of message digest commands"},
+     "List of message digest commands (deprecated)"},
+#endif
     {"digest-algorithms", OPT_DIGEST_ALGORITHMS, '-',
      "List of message digest algorithms"},
     {"kdf-algorithms", OPT_KDF_ALGORITHMS, '-',
@@ -1307,7 +1309,10 @@ const OPTIONS list_options[] = {
      "List of random number generators"},
     {"mac-algorithms", OPT_MAC_ALGORITHMS, '-',
      "List of message authentication code algorithms"},
-    {"cipher-commands", OPT_CIPHER_COMMANDS, '-', "List of cipher commands"},
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+    {"cipher-commands", OPT_CIPHER_COMMANDS, '-', 
+    "List of cipher commands (deprecated)"},
+#endif
     {"cipher-algorithms", OPT_CIPHER_ALGORITHMS, '-',
      "List of cipher algorithms"},
     {"encoders", OPT_ENCODERS, '-', "List of encoding methods" },
