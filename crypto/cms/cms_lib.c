@@ -30,7 +30,7 @@ CMS_ContentInfo *d2i_CMS_ContentInfo(CMS_ContentInfo **a,
 
     ci = (CMS_ContentInfo *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
                                           (CMS_ContentInfo_it()));
-    if (ci != NULL && a != NULL)
+    if (ci != NULL)
         cms_resolve_libctx(ci);
     return ci;
 }
@@ -80,12 +80,12 @@ const CMS_CTX *cms_get0_cmsctx(const CMS_ContentInfo *cms)
 
 OSSL_LIB_CTX *cms_ctx_get0_libctx(const CMS_CTX *ctx)
 {
-    return ctx->libctx;
+    return ctx != NULL ? ctx->libctx : NULL;
 }
 
 const char *cms_ctx_get0_propq(const CMS_CTX *ctx)
 {
-    return ctx->propq;
+    return ctx != NULL ? ctx->propq : NULL;
 }
 
 void cms_resolve_libctx(CMS_ContentInfo *ci)
@@ -93,12 +93,10 @@ void cms_resolve_libctx(CMS_ContentInfo *ci)
     int i;
     CMS_CertificateChoices *cch;
     STACK_OF(CMS_CertificateChoices) **pcerts;
-    const CMS_CTX *ctx;
+    const CMS_CTX *ctx = cms_get0_cmsctx(ci);
+    OSSL_LIB_CTX *libctx = cms_ctx_get0_libctx(ctx);
+    const char *propq = cms_ctx_get0_propq(ctx);
 
-    if (ci == NULL)
-        return;
-
-    ctx = cms_get0_cmsctx(ci);
     cms_SignerInfos_set_cmsctx(ci);
     cms_RecipientInfos_set_cmsctx(ci);
 
@@ -107,7 +105,7 @@ void cms_resolve_libctx(CMS_ContentInfo *ci)
         for (i = 0; i < sk_CMS_CertificateChoices_num(*pcerts); i++) {
             cch = sk_CMS_CertificateChoices_value(*pcerts, i);
             if (cch->type == CMS_CERTCHOICE_CERT)
-                x509_set0_libctx(cch->d.certificate, ctx->libctx, ctx->propq);
+                x509_set0_libctx(cch->d.certificate, libctx, propq);
         }
     }
 }
@@ -411,7 +409,8 @@ BIO *cms_DigestAlgorithm_init_bio(X509_ALGOR *digestAlgorithm,
     alg = OBJ_nid2sn(OBJ_obj2nid(digestoid));
 
     (void)ERR_set_mark();
-    fetched_digest = EVP_MD_fetch(ctx->libctx, alg, ctx->propq);
+    fetched_digest = EVP_MD_fetch(cms_ctx_get0_libctx(ctx), alg,
+                                  cms_ctx_get0_propq(ctx));
 
     if (fetched_digest != NULL)
         digest = fetched_digest;
