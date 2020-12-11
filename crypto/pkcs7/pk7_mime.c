@@ -52,7 +52,7 @@ PKCS7 *SMIME_read_PKCS7_ex(BIO *bio, BIO **bcont, PKCS7 **p7)
 
     ret = (PKCS7 *)SMIME_read_ASN1_ex(bio, bcont, ASN1_ITEM_rptr(PKCS7),
                                       (ASN1_VALUE **)p7);
-    if (ret != NULL && p7 != NULL)
+    if (ret != NULL)
         pkcs7_resolve_libctx(ret);
     return ret;
 }
