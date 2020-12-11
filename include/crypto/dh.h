@@ -14,6 +14,7 @@
 
 DH *dh_new_by_nid_ex(OSSL_LIB_CTX *libctx, int nid);
 DH *dh_new_ex(OSSL_LIB_CTX *libctx);
+void ossl_dh_set0_libctx(DH *d, OSSL_LIB_CTX *libctx);
 
 int dh_generate_ffc_parameters(DH *dh, int type, int pbits, int qbits,
                                BN_GENCB *cb);

@@ -51,6 +51,7 @@ const char *ossl_rsa_oaeppss_nid2name(int md);
 
 RSA *ossl_rsa_new_with_ctx(OSSL_LIB_CTX *libctx);
 OSSL_LIB_CTX *ossl_rsa_get0_libctx(RSA *r);
+void ossl_rsa_set0_libctx(RSA *r, OSSL_LIB_CTX *libctx);
 
 int ossl_rsa_set0_all_params(RSA *r, const STACK_OF(BIGNUM) *primes,
                              const STACK_OF(BIGNUM) *exps,

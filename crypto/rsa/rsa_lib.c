@@ -194,6 +194,11 @@ OSSL_LIB_CTX *ossl_rsa_get0_libctx(RSA *r)
     return r->libctx;
 }
 
+void ossl_rsa_set0_libctx(RSA *r, OSSL_LIB_CTX *libctx)
+{
+    r->libctx = libctx;
+}
+
 #ifndef FIPS_MODULE
 int RSA_set_ex_data(RSA *r, int idx, void *arg)
 {
