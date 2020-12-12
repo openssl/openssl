@@ -100,10 +100,12 @@ genroot() {
     local cn=$1; shift
     local key=$1; shift
     local cert=$1; shift
+    local bcon="basicConstraints = critical,CA:true"
+    local ku="keyUsage = keyCertSign,cRLSign"
     local skid="subjectKeyIdentifier = hash"
     local akid="authorityKeyIdentifier = keyid"
 
-    exts=$(printf "%s\n%s\n%s\n" "$skid" "$akid" "basicConstraints = critical,CA:true")
+    exts=$(printf "%s\n%s\n%s\n" "$bcon" "$ku" "$skid" "$akid")
     for eku in "$@"
     do
         exts=$(printf "%s\nextendedKeyUsage = %s\n" "$exts" "$eku")
@@ -119,10 +121,12 @@ genca() {
     local cert=$1; shift
     local cakey=$1; shift
     local cacert=$1; shift
+    local bcon="basicConstraints = critical,CA:true"
+    local ku="keyUsage = keyCertSign,cRLSign"
     local skid="subjectKeyIdentifier = hash"
     local akid="authorityKeyIdentifier = keyid"
 
-    exts=$(printf "%s\n%s\n%s\n" "$skid" "$akid" "basicConstraints = critical,CA:true")
+    exts=$(printf "%s\n%s\n%s\n" "$bcon" "$ku" "$skid" "$akid")
     for eku in "$@"
     do
         exts=$(printf "%s\nextendedKeyUsage = %s\n" "$exts" "$eku")
