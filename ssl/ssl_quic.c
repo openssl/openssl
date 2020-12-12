@@ -35,8 +35,45 @@ void SSL_get_peer_quic_transport_params(const SSL *ssl,
                                         const uint8_t **out_params,
                                         size_t *out_params_len)
 {
-    *out_params = ssl->ext.peer_quic_transport_params;
-    *out_params_len = ssl->ext.peer_quic_transport_params_len;
+    if (ssl->ext.peer_quic_transport_params_len) {
+        *out_params = ssl->ext.peer_quic_transport_params;
+        *out_params_len = ssl->ext.peer_quic_transport_params_len;
+    } else {
+        *out_params = ssl->ext.peer_quic_transport_params_draft;
+        *out_params_len = ssl->ext.peer_quic_transport_params_draft_len;
+    }
+}
+
+/* Returns the negotiated version, or -1 on error */
+int SSL_get_peer_quic_transport_version(const SSL *ssl)
+{
+    if (ssl->ext.peer_quic_transport_params_len != 0
+            && ssl->ext.peer_quic_transport_params_draft_len != 0)
+        return -1;
+    if (ssl->ext.peer_quic_transport_params_len != 0)
+        return TLSEXT_TYPE_quic_transport_parameters;
+    if (ssl->ext.peer_quic_transport_params_draft_len != 0)
+        return TLSEXT_TYPE_quic_transport_parameters_draft;
+
+    return -1;
+}
+
+void SSL_set_quic_use_legacy_codepoint(SSL *ssl, int use_legacy)
+{
+    if (use_legacy)
+        ssl->quic_transport_version = TLSEXT_TYPE_quic_transport_parameters_draft;
+    else
+        ssl->quic_transport_version = TLSEXT_TYPE_quic_transport_parameters;
+}
+
+void SSL_set_quic_transport_version(SSL *ssl, int version)
+{
+    ssl->quic_transport_version = version;
+}
+
+int SSL_get_quic_transport_version(const SSL *ssl)
+{
+    return ssl->quic_transport_version;
 }
 
 size_t SSL_quic_max_handshake_flight_len(const SSL *ssl, OSSL_ENCRYPTION_LEVEL level)

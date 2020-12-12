@@ -8511,7 +8511,13 @@ static SSL_QUIC_METHOD quic_method = {
     test_quic_send_alert,
 };
 
-static int test_quic_api(void)
+static int test_quic_api_set_versions(SSL *ssl, int ver)
+{
+    SSL_set_quic_transport_version(ssl, ver);
+    return 1;
+}
+
+static int test_quic_api_version(int clnt, int srvr)
 {
     SSL_CTX *cctx = NULL, *sctx = NULL;
     SSL *clientssl = NULL, *serverssl = NULL;
@@ -8522,29 +8528,7 @@ static int test_quic_api(void)
     const uint8_t *peer_str;
     size_t peer_str_len;
 
-    /* Clean up logging space */
-    memset(client_log_buffer, 0, sizeof(client_log_buffer));
-    memset(server_log_buffer, 0, sizeof(server_log_buffer));
-    client_log_buffer_index = 0;
-    server_log_buffer_index = 0;
-    error_writing_log = 0;
-
-
-    if (!TEST_ptr(sctx = SSL_CTX_new_ex(libctx, NULL, TLS_server_method()))
-            || !TEST_true(SSL_CTX_set_quic_method(sctx, &quic_method))
-            || !TEST_ptr(sctx->quic_method)
-            || !TEST_ptr(serverssl = SSL_new(sctx))
-            || !TEST_true(SSL_IS_QUIC(serverssl))
-            || !TEST_true(SSL_set_quic_method(serverssl, NULL))
-            || !TEST_false(SSL_IS_QUIC(serverssl))
-            || !TEST_true(SSL_set_quic_method(serverssl, &quic_method))
-            || !TEST_true(SSL_IS_QUIC(serverssl)))
-        goto end;
-
-    SSL_CTX_free(sctx);
-    sctx = NULL;
-    SSL_free(serverssl);
-    serverssl = NULL;
+    TEST_info("original clnt=0x%X, srvr=0x%X\n", clnt, srvr);
 
     if (!TEST_true(create_ssl_ctx_pair(libctx,
                                        TLS_server_method(),
@@ -8563,6 +8547,8 @@ static int test_quic_api(void)
                                                         sizeof(client_str)))
             || !TEST_true(SSL_set_app_data(serverssl, clientssl))
             || !TEST_true(SSL_set_app_data(clientssl, serverssl))
+            || !TEST_true(test_quic_api_set_versions(clientssl, clnt))
+            || !TEST_true(test_quic_api_set_versions(serverssl, srvr))
             || !TEST_true(create_ssl_connection(serverssl, clientssl,
                                                 SSL_ERROR_NONE))
             || !TEST_true(SSL_version(serverssl) == TLS1_3_VERSION)
@@ -8596,6 +8582,19 @@ static int test_quic_api(void)
             || !TEST_int_le(SSL_do_handshake(serverssl), 0))
         goto end;
 
+    TEST_info("original clnt=0x%X, srvr=0x%X\n", clnt, srvr);
+    if (srvr == 0 && clnt == 0)
+        srvr = clnt = TLSEXT_TYPE_quic_transport_parameters;
+    else if (srvr == 0)
+        srvr = clnt;
+    else if (clnt == 0)
+        clnt = srvr;
+    TEST_info("expected clnt=0x%X, srvr=0x%X\n", clnt, srvr);
+    if (!TEST_int_eq(SSL_get_peer_quic_transport_version(serverssl), clnt))
+        goto end;
+    if (!TEST_int_eq(SSL_get_peer_quic_transport_version(clientssl), srvr))
+        goto end;
+
     testresult = 1;
 
  end:
@@ -8604,6 +8603,67 @@ static int test_quic_api(void)
     SSL_CTX_free(sctx);
     SSL_CTX_free(cctx);
 
+    return testresult;
+}
+
+static int test_quic_api(int tst)
+{
+    SSL_CTX *sctx = NULL;
+    SSL *serverssl = NULL;
+    int testresult = 0;
+    static int clnt_params[] = { 0,
+                                 TLSEXT_TYPE_quic_transport_parameters_draft,
+                                 TLSEXT_TYPE_quic_transport_parameters,
+                                 0,
+                                 TLSEXT_TYPE_quic_transport_parameters_draft,
+                                 TLSEXT_TYPE_quic_transport_parameters,
+                                 0,
+                                 TLSEXT_TYPE_quic_transport_parameters_draft,
+                                 TLSEXT_TYPE_quic_transport_parameters };
+    static int srvr_params[] = { 0,
+                                 0,
+                                 0,
+                                 TLSEXT_TYPE_quic_transport_parameters_draft,
+                                 TLSEXT_TYPE_quic_transport_parameters_draft,
+                                 TLSEXT_TYPE_quic_transport_parameters_draft,
+                                 TLSEXT_TYPE_quic_transport_parameters,
+                                 TLSEXT_TYPE_quic_transport_parameters,
+                                 TLSEXT_TYPE_quic_transport_parameters };
+    static int results[] = { 1, 1, 1, 1, 1, 0, 1, 0, 1 };
+
+    /* Failure cases:
+     * test 6/[5] clnt = parameters, srvr = draft
+     * test 8/[7] clnt = draft, srvr = parameters
+     */
+
+    /* Clean up logging space */
+    memset(client_log_buffer, 0, sizeof(client_log_buffer));
+    memset(server_log_buffer, 0, sizeof(server_log_buffer));
+    client_log_buffer_index = 0;
+    server_log_buffer_index = 0;
+    error_writing_log = 0;
+
+    if (!TEST_ptr(sctx = SSL_CTX_new_ex(libctx, NULL, TLS_server_method()))
+            || !TEST_true(SSL_CTX_set_quic_method(sctx, &quic_method))
+            || !TEST_ptr(sctx->quic_method)
+            || !TEST_ptr(serverssl = SSL_new(sctx))
+            || !TEST_true(SSL_IS_QUIC(serverssl))
+            || !TEST_true(SSL_set_quic_method(serverssl, NULL))
+            || !TEST_false(SSL_IS_QUIC(serverssl))
+            || !TEST_true(SSL_set_quic_method(serverssl, &quic_method))
+            || !TEST_true(SSL_IS_QUIC(serverssl)))
+        goto end;
+
+    if (!TEST_int_eq(test_quic_api_version(clnt_params[tst], srvr_params[tst]), results[tst]))
+        goto end;
+
+    testresult = 1;
+
+end:
+    SSL_CTX_free(sctx);
+    sctx = NULL;
+    SSL_free(serverssl);
+    serverssl = NULL;
     return testresult;
 }
 #endif /* OPENSSL_NO_QUIC */
@@ -8855,7 +8915,7 @@ int setup_tests(void)
     ADD_TEST(test_sni_tls13);
 #endif
 #ifndef OPENSSL_NO_QUIC
-    ADD_TEST(test_quic_api);
+    ADD_ALL_TESTS(test_quic_api, 9);
 #endif
     return 1;
 
