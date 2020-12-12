@@ -88,6 +88,7 @@ static EVP_PKEY *make_template(const char *type, OSSL_PARAM *genparams)
 }
 #endif
 
+#if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_DSA) || !defined(OPENSSL_NO_EC)
 static EVP_PKEY *make_key(const char *type, EVP_PKEY *template,
                           OSSL_PARAM *genparams)
 {
@@ -109,6 +110,7 @@ static EVP_PKEY *make_key(const char *type, EVP_PKEY *template,
     EVP_PKEY_CTX_free(ctx);
     return pkey;
 }
+#endif
 
 /* Main test driver */
 
@@ -1182,6 +1184,9 @@ static int create_ec_explicit_trinomial_params(OSSL_PARAM_BLD *bld)
 # endif /* OPENSSL_NO_EC2M */
 #endif /* OPENSSL_NO_EC */
 
+#define USAGE "rsa-key.pem rsa-pss-key.pem\n"
+OPT_TEST_DECLARE_USAGE(USAGE)
+
 int setup_tests(void)
 {
 # ifndef OPENSSL_NO_RC4
@@ -1207,12 +1212,14 @@ int setup_tests(void)
     };
 #endif
 
-    /* 7 is the default magic number */
-    static unsigned int rsapss_min_saltlen = 7;
-    OSSL_PARAM RSA_PSS_params[] = {
-        OSSL_PARAM_uint("saltlen", &rsapss_min_saltlen),
-        OSSL_PARAM_END
-    };
+    if (!test_skip_common_options()) {
+        TEST_error("Error parsing test options\n");
+        return 0;
+    }
+    if (test_get_argument_count() != 2) {
+        TEST_error("usage: endecode_test %s", USAGE);
+        return 0;
+    }
 
 #ifndef OPENSSL_NO_EC
     if (!TEST_ptr(bnctx = BN_CTX_new_ex(NULL))
@@ -1237,15 +1244,16 @@ int setup_tests(void)
     TEST_info("Generating keys...");
 
 #ifndef OPENSSL_NO_DH
+    TEST_info("Generating DH keys...");
     MAKE_DOMAIN_KEYS(DH, "DH", NULL);
     MAKE_DOMAIN_KEYS(DHX, "X9.42 DH", NULL);
-    TEST_info("Generating keys...DH done");
 #endif
 #ifndef OPENSSL_NO_DSA
+    TEST_info("Generating DSA keys...");
     MAKE_DOMAIN_KEYS(DSA, "DSA", DSA_params);
-    TEST_info("Generating keys...DSA done");
 #endif
 #ifndef OPENSSL_NO_EC
+    TEST_info("Generating EC keys...");
     MAKE_DOMAIN_KEYS(EC, "EC", EC_params);
     MAKE_DOMAIN_KEYS(ECExplicitPrimeNamedCurve, "EC", ec_explicit_prime_params_nc);
     MAKE_DOMAIN_KEYS(ECExplicitPrime2G, "EC", ec_explicit_prime_params_explicit);
@@ -1257,12 +1265,12 @@ int setup_tests(void)
     MAKE_KEYS(ED448, "ED448", NULL);
     MAKE_KEYS(X25519, "X25519", NULL);
     MAKE_KEYS(X448, "X448", NULL);
-    TEST_info("Generating keys...EC done");
 #endif
-    MAKE_KEYS(RSA, "RSA", NULL);
-    TEST_info("Generating keys...RSA done");
-    MAKE_KEYS(RSA_PSS, "RSA-PSS", RSA_PSS_params);
-    TEST_info("Generating keys...RSA_PSS done");
+    TEST_info("Loading RSA key...");
+    ok = ok && TEST_ptr(key_RSA = load_pkey_pem(test_get_argument(0), NULL));
+    TEST_info("Loading RSA_PSS key...");
+    ok = ok && TEST_ptr(key_RSA_PSS = load_pkey_pem(test_get_argument(1), NULL));
+    TEST_info("Generating keys done");
 
     if (ok) {
 #ifndef OPENSSL_NO_DH

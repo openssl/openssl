@@ -29,15 +29,18 @@ rmtree("demoCA", { safe => 0 });
 
 plan tests => 15;
  SKIP: {
+     my $cakey = srctop_file("test", "certs", "ca-key.pem");
      $ENV{OPENSSL_CONFIG} = '-config ' . $cnf;
      skip "failed creating CA structure", 4
-	 if !ok(run(perlapp(["CA.pl","-newca"], stdin => undef)),
+	 if !ok(run(perlapp(["CA.pl","-newca",
+                             "-extra-req", "-key $cakey"], stdin => undef)),
 		'creating CA structure');
 
+     my $eekey = srctop_file("test", "certs", "ee-key.pem");
      $ENV{OPENSSL_CONFIG} = '-config ' . $cnf;
      skip "failed creating new certificate request", 3
 	 if !ok(run(perlapp(["CA.pl","-newreq",
-                             '-extra-req', '-outform DER -section userreq'])),
+                             '-extra-req', "-outform DER -section userreq -key $eekey"])),
 		'creating certificate request');
      $ENV{OPENSSL_CONFIG} = '-rand_serial -inform DER -config '.$std_openssl_cnf;
      skip "failed to sign certificate request", 2
@@ -50,8 +53,9 @@ plan tests => 15;
      skip "CT not configured, can't use -precert", 1
          if disabled("ct");
 
+     my $eekey2 = srctop_file("test", "certs", "ee-key-3072.pem");
      $ENV{OPENSSL_CONFIG} = '-config ' . $cnf;
-     ok(run(perlapp(["CA.pl", "-precert", '-extra-req', '-section userreq'], stderr => undef)),
+     ok(run(perlapp(["CA.pl", "-precert", '-extra-req', "-section userreq -key $eekey2"], stderr => undef)),
         'creating new pre-certificate');
 }
 

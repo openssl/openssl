@@ -530,15 +530,16 @@ static int kem_rsa_gen_recover(void)
     unsigned char ct[256] = { 0, };
     unsigned char unwrap[256] = { 0, };
     size_t ctlen = 0, unwraplen = 0, secretlen = 0;
+    int bits = 2048;
 
-    ret = TEST_true(rsa_keygen(2048, &pub, &priv))
+    ret = TEST_true(rsa_keygen(bits, &pub, &priv))
           && TEST_ptr(sctx = EVP_PKEY_CTX_new_from_pkey(libctx, pub, NULL))
           && TEST_int_eq(EVP_PKEY_encapsulate_init(sctx, NULL), 1)
           && TEST_int_eq(EVP_PKEY_CTX_set_kem_op(sctx, "RSASVE"), 1)
           && TEST_int_eq(EVP_PKEY_encapsulate(sctx, NULL, &ctlen, NULL,
                                               &secretlen), 1)
           && TEST_int_eq(ctlen, secretlen)
-          && TEST_int_eq(ctlen, 2048 / 8)
+          && TEST_int_eq(ctlen, bits / 8)
           && TEST_int_eq(EVP_PKEY_encapsulate(sctx, ct, &ctlen, secret,
                                               &secretlen), 1)
           && TEST_ptr(rctx = EVP_PKEY_CTX_new_from_pkey(libctx, priv, NULL))
