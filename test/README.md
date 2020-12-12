@@ -148,3 +148,23 @@ for `TAP::Harness` to know more.
 To run up to four tests in parallel at any given time:
 
     $ make HARNESS_JOBS=4 test
+
+Randomisation of Test Ordering
+------------------------------
+
+By default, the test harness will execute tests in the order they were added.
+By setting the `OPENSSL_TEST_RAND_ORDER` environment variable to zero, the
+test ordering will be randomised.  If a randomly ordered test fails, the
+seed value used will be reported.  Setting the `OPENSSL_TEST_RAND_ORDER`
+environment variable to this value will rerun the tests in the same
+order.  This assures repeatability of randomly ordered test runs.
+This repeatability is independent of the operating system, processor or
+platform used.
+
+To randomise the test ordering:
+
+    $ make OPENSSL_TEST_RAND_ORDER=0 test
+
+To run the tests using the order defined by the random seed `42`:
+
+    $ make OPENSSL_TEST_RAND_ORDER=42 test
