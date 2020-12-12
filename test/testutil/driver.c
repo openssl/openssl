@@ -256,7 +256,7 @@ PRINTF_FORMAT(2, 3) static void test_verdict(int verdict,
     test_flush_stderr();
 
     if (verdict == 0 && seed != 0)
-        test_printf_tapout("# random seed: %d\n", seed);
+        test_printf_tapout("# OPENSSL_TEST_RAND_ORDER=%d\n", seed);
     test_printf_tapout("%s ", verdict != 0 ? "ok" : "not ok");
     va_start(ap, description);
     test_vprintf_tapout(description, ap);
