@@ -121,7 +121,7 @@ static int copy_integer(unsigned char *dest, size_t dest_len,
             if (!check_sign_bytes(src + dest_len, n, pad)
                     /*
                      * Shortening a signed value must retain the correct sign.
-                     * Avoiding this kind of thing: -253 = 0xff03 -> 0x03 = 3
+                     * Avoiding this kind of thing: 130 = 0x0082 -> 0x82 = -126
                      */
                     || (signed_int && ((pad ^ src[dest_len - 1]) & 0x80) != 0))
                 return 0;
