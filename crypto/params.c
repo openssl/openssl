@@ -69,7 +69,7 @@ static int is_negative(const void *number, size_t s)
     const unsigned char *n = number;
     DECLARE_IS_ENDIAN;
 
-    return 0x80 & (IS_BIG_ENDIAN ? *n : n[s - 1]);
+    return 0x80 & (IS_BIG_ENDIAN ? n[0] : n[s - 1]);
 }
 
 /* Check that all the bytes specified match the expected sign byte */
@@ -103,6 +103,10 @@ static int copy_integer(unsigned char *dest, size_t dest_len,
         } else {
             n = src_len - dest_len;
             if (!check_sign_bytes(src, n, pad)
+                    /*
+                     * Shortening a signed value must retain the correct sign.
+                     * Avoiding this kind of thing: -253 = 0xff03 -> 0x03 = 3
+                     */
                     || (signed_int && ((pad ^ src[n]) & 0x80) != 0))
                 return 0;
             memcpy(dest, src + n, dest_len);
@@ -115,6 +119,10 @@ static int copy_integer(unsigned char *dest, size_t dest_len,
         } else {
             n = src_len - dest_len;
             if (!check_sign_bytes(src + dest_len, n, pad)
+                    /*
+                     * Shortening a signed value must retain the correct sign.
+                     * Avoiding this kind of thing: -253 = 0xff03 -> 0x03 = 3
+                     */
                     || (signed_int && ((pad ^ src[dest_len - 1]) & 0x80) != 0))
                 return 0;
             memcpy(dest, src, dest_len);
