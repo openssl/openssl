@@ -20,4 +20,7 @@ plan tests => 1;
 $ENV{OPENSSL_MODULES} = abs_path(bldtop_dir("providers"));
 $ENV{OPENSSL_CONF} = abs_path(srctop_file("test", "default-and-legacy.cnf"));
 
-ok(run(test(["endecode_test"])));
+my $rsa_key = srctop_file("test", "certs", "ee-key.pem");
+my $pss_key = srctop_file("test", "certs", "ca-pss-key.pem");
+
+ok(run(test(["endecode_test", $rsa_key, $pss_key])));
