@@ -2,10 +2,15 @@
 
 =head1 NAME
 
-OCSP_sendreq_new, OCSP_sendreq_nbio, OCSP_REQ_CTX_free,
-OCSP_set_max_response_length, OCSP_REQ_CTX_add1_header,
+OCSP_sendreq_new,
+OCSP_sendreq_nbio,
+OCSP_REQ_CTX_free,
+OCSP_set_max_response_length,
+OCSP_REQ_CTX_add1_header,
+OCSP_sendreq_bio,
 OCSP_REQ_CTX_i2d,
-OCSP_REQ_CTX_set1_req, OCSP_sendreq_bio - OCSP responder query functions
+OCSP_REQ_CTX_set1_req
+- OCSP responder query functions
 
 =head1 SYNOPSIS
 
@@ -63,11 +68,11 @@ path B<path>, the OCSP request B<req> and with a response header maximum line
 length 4k. It waits indefinitely on a response.
 
 OCSP_REQ_CTX_i2d() sets the request context B<rctx> to have the request
-B<req>, which is the ASN.1 type B<it>.
-The B<content_type>, if not NULL, it will be included in the HTTP request.
+B<req>, which has the ASN.1 type B<it>.
+The B<content_type>, if not NULL, will be included in the HTTP request.
 The function should be called after all other headers have already been added.
 
-OCSP_REQ_CTX_set1_req() is equivalent to the following:
+OCSP_REQ_CTX_set1_req(rctx, req) is equivalent to the following:
 
  OCSP_REQ_CTX_i2d(rctx, "application/ocsp-request",
                         ASN1_ITEM_rptr(OCSP_REQUEST), (ASN1_VALUE *)req)
