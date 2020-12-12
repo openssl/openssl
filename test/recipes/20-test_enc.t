@@ -18,6 +18,8 @@ use OpenSSL::Test qw/:DEFAULT srctop_file bldtop_dir/;
 use OpenSSL::Test::Utils;
 
 setup("test_enc");
+plan skip_all => "Deprecated functions are disabled in this OpenSSL build"
+    if disabled("deprecated");
 
 # We do it this way, because setup() may have moved us around,
 # so the directory portion of $0 might not be correct any more.
