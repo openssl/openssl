@@ -409,7 +409,7 @@ openssl req -new -noenc -subj "/CN=localhost" \
 # CT entry
 ./mkcert.sh genct server.example embeddedSCTs1-key embeddedSCTs1 embeddedSCTs1_issuer-key embeddedSCTs1_issuer ct-server-key
 
-OPENSSL_SIGALG=ED448 OPENSSL_KEYALG=ed448 ./mkcert.sh genroot "Root Ed448" \
+OPENSSL_SIGALG= OPENSSL_KEYALG=ed448 ./mkcert.sh genroot "Root Ed448" \
     root-ed448-key root-ed448-cert
 OPENSSL_SIGALG=ED448 OPENSSL_KEYALG=ed448 ./mkcert.sh genee ed448 \
     server-ed448-key server-ed448-cert root-ed448-key root-ed448-cert
