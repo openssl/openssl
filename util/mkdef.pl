@@ -295,12 +295,16 @@ sub writer_windows {
 ; Definition file for the DLL version of the $libname library from OpenSSL
 ;
 
-LIBRARY         $libname
+LIBRARY         "$libname"
 
 EXPORTS
 _____
     for (@_) {
-        print "    ",$_->name(),"\n";
+        print "    ",$_->name();
+        if (platform->can('export2internal')) {
+            print "=". platform->export2internal($_->name());
+        }
+        print "\n";
     }
 }
 
