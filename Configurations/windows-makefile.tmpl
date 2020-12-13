@@ -874,7 +874,7 @@ $import: $dll
 $dll: $deps
 	IF EXIST $full.manifest DEL /F /Q $full.manifest
 	IF EXIST \$@ DEL /F /Q \$@
-	\$(LD) \$(LDFLAGS) \$(LIB_LDFLAGS) @<< $implib_flag || (DEL /Q \$(\@B).* $import; EXIT 1)
+	cmd /C "\$(LD) \$(LDFLAGS) \$(LIB_LDFLAGS) @<< $implib_flag || (DEL /Q \$(\@B).* $import & EXIT 1)"
 $objs$target{ld_resp_delim}\$(LDOUTFLAG)$dll$target{ldpostoutflag}$target{ld_resp_delim}$linklibs\$(LIB_EX_LIBS)$target{ld_resp_delim}$shared_def$target{ldresflag}$ress
 <<
 	IF EXIST $dll.manifest \\
@@ -910,7 +910,7 @@ EOF
      return <<"EOF";
 $dso: $deps
 	IF EXIST $dso.manifest DEL /F /Q $dso.manifest
-	\$(LD) \$(LDFLAGS) \$(DSO_LDFLAGS) @<< || (DEL /Q \$(\@B).* $dso_n.*; EXIT 1)
+	cmd /C "\$(LD) \$(LDFLAGS) \$(DSO_LDFLAGS) @<< || (DEL /Q \$(\@B).* $dso_n.* & EXIT 1)"
 $objs$target{ld_resp_delim}\$(LDOUTFLAG)$dso$target{ldpostoutflag}$target{ld_resp_delim}$linklibs \$(DSO_EX_LIBS)$target{ld_resp_delim}$shared_def$target{ldresflag}$ress
 <<
 	IF EXIST $dso.manifest \\
