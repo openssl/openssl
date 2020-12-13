@@ -38,6 +38,12 @@
 # include <io.h>
 # include <fcntl.h>
 
+# ifdef __BORLANDC__
+   /* _lseek in <io.h> is a function-like macro so we can't take its address */
+#  undef _lseek
+#  define _lseek lseek
+# endif
+
 static void *app_stdin(void)
 {
     return stdin;
