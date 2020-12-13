@@ -35,7 +35,6 @@ struct key2ms_ctx_st {
     struct ossl_passphrase_data_st pwdata;
 };
 
-#ifndef OPENSSL_NO_DSA
 static int write_msblob(struct key2ms_ctx_st *ctx, OSSL_CORE_BIO *cout,
                         EVP_PKEY *pkey, int ispub)
 {
@@ -47,7 +46,6 @@ static int write_msblob(struct key2ms_ctx_st *ctx, OSSL_CORE_BIO *cout,
     return ret;
 }
 
-# ifndef OPENSSL_NO_RC4
 static int write_pvk(struct key2ms_ctx_st *ctx, OSSL_CORE_BIO *cout,
                      EVP_PKEY *pkey,
                      OSSL_PASSPHRASE_CALLBACK *pw_cb, void *pw_cbarg)
@@ -62,8 +60,6 @@ static int write_pvk(struct key2ms_ctx_st *ctx, OSSL_CORE_BIO *cout,
 
     return ret;
 }
-# endif
-#endif
 
 static OSSL_FUNC_encoder_freectx_fn key2ms_freectx;
 static OSSL_FUNC_encoder_gettable_params_fn key2ms_gettable_params;
@@ -109,7 +105,6 @@ static int key2msblob_get_params(OSSL_PARAM params[])
     return 1;
 }
 
-#ifndef OPENSSL_NO_RC4
 static int key2pvk_get_params(OSSL_PARAM params[])
 {
     OSSL_PARAM *p;
@@ -120,7 +115,6 @@ static int key2pvk_get_params(OSSL_PARAM params[])
 
     return 1;
 }
-#endif
 
 static const OSSL_PARAM *key2pvk_settable_ctx_params(ossl_unused void *provctx)
 {
@@ -181,7 +175,6 @@ static int key2msblob_encode(void *vctx, const void *key, int selection,
     return ok;
 }
 
-#ifndef OPENSSL_NO_RC4
 static int key2pvk_encode(void *vctx, const void *key, int selection,
                           OSSL_CORE_BIO *cout, evp_pkey_set1_fn *set1_key,
                           OSSL_PASSPHRASE_CALLBACK *pw_cb, void *pw_cbarg)
@@ -198,7 +191,6 @@ static int key2pvk_encode(void *vctx, const void *key, int selection,
     EVP_PKEY_free(pkey);
     return ok;
 }
-#endif
 
 #define dsa_set1        (evp_pkey_set1_fn *)EVP_PKEY_set1_DSA
 #define rsa_set1        (evp_pkey_set1_fn *)EVP_PKEY_set1_RSA
@@ -264,13 +256,9 @@ static int key2pvk_encode(void *vctx, const void *key, int selection,
     }
 
 #ifndef OPENSSL_NO_DSA
-# ifndef OPENSSL_NO_RC4
 MAKE_MS_ENCODER(dsa, pvk, dsa);
-# endif
 MAKE_MS_ENCODER(dsa, msblob, dsa);
 #endif
 
-#ifndef OPENSSL_NO_RC4
 MAKE_MS_ENCODER(rsa, pvk, rsa);
-#endif
 MAKE_MS_ENCODER(rsa, msblob, rsa);

@@ -110,14 +110,10 @@ ENCODER_w_structure("EC", ec, yes, pem, type_specific_no_pub),
  * Entries for the output formats MSBLOB and PVK
  */
 ENCODER("RSA", rsa, yes, msblob),
-#ifndef OPENSSL_NO_RC4
 ENCODER("RSA", rsa, yes, pvk),
-#endif
 #ifndef OPENSSL_NO_DSA
 ENCODER("DSA", dsa, yes, msblob),
-# ifndef OPENSSL_NO_RC4
 ENCODER("DSA", dsa, yes, pvk),
-# endif
 #endif
 
 /*
