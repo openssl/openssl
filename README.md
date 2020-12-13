@@ -67,6 +67,10 @@ of the OpenSSL toolkit are available. In particular on Linux and other
 Unix operating systems it is normally recommended to link against the
 precompiled shared libraries provided by the distributor or vendor.
 
+Some people have offered to provide OpenSSL binary distributions for
+selected operating systems. See the OpenSSL wiki page at [wiki.openssl.org/index.php/Binaries](https://wiki.openssl.org/index.php/Binaries)
+for more information.
+
 For Testing and Development
 ---------------------------
 
