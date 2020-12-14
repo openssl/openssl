@@ -146,12 +146,14 @@ extern "C" {
 #define OSSL_DIGEST_NAME_SM3            "SM3"
 
 /* MAC parameters */
-#define OSSL_MAC_PARAM_KEY          "key"        /* octet string */
-#define OSSL_MAC_PARAM_IV           "iv"         /* octet string */
-#define OSSL_MAC_PARAM_CUSTOM       "custom"     /* utf8 string */
-#define OSSL_MAC_PARAM_SALT         "salt"       /* octet string */
-#define OSSL_MAC_PARAM_XOF          "xof"        /* int, 0 or 1 */
-#define OSSL_MAC_PARAM_FLAGS        "flags"      /* int */
+#define OSSL_MAC_PARAM_KEY            "key"            /* octet string */
+#define OSSL_MAC_PARAM_IV             "iv"             /* octet string */
+#define OSSL_MAC_PARAM_CUSTOM         "custom"         /* utf8 string */
+#define OSSL_MAC_PARAM_SALT           "salt"           /* octet string */
+#define OSSL_MAC_PARAM_XOF            "xof"            /* int, 0 or 1 */
+#define OSSL_MAC_PARAM_DIGEST_NOINIT  "digest-noinit"  /* int, 0 or 1 */
+#define OSSL_MAC_PARAM_DIGEST_ONESHOT "digest-oneshot" /* int, 0 or 1 */
+
 /*
  * If "engine" or "properties" are specified, they should always be paired
  * with "cipher" or "digest".
