@@ -4132,6 +4132,26 @@ EVP_PKEY *SSL_CTX_get0_privatekey(const SSL_CTX *ctx)
         return NULL;
 }
 
+int *SSL_CTX_remove_cert_and_key(SSL_CTX *ctx)
+{
+    if(!ctx) {
+        return 0;
+    }
+
+    if(!CRYPTO_THREAD_write_lock(ctx->cert->lock)) {
+        return 0;
+    }
+
+    ssl_cert_clear_certs(ctx->cert);
+
+    /* reset key to the first element */
+    ctx->cert->key = &(ctx->cert->pkeys[SSL_PKEY_RSA]);
+
+    CRYPTO_THREAD_unlock(ctx->cert->lock);
+    
+    return 1;
+} 
+
 const SSL_CIPHER *SSL_get_current_cipher(const SSL *s)
 {
     if ((s->session != NULL) && (s->session->cipher != NULL))
