@@ -3,18 +3,30 @@
 =head1 NAME
 
 OSSL_DECODER,
-OSSL_DECODER_fetch,
-OSSL_DECODER_up_ref,
+OSSL_DECODER_new,
+OSSL_DECODER_set_params,
 OSSL_DECODER_free,
-OSSL_DECODER_provider,
-OSSL_DECODER_properties,
-OSSL_DECODER_is_a,
-OSSL_DECODER_number,
-OSSL_DECODER_do_all_provided,
-OSSL_DECODER_names_do_all,
-OSSL_DECODER_gettable_params,
-OSSL_DECODER_get_params
-- Decoder method routines
+OSSL_DECODER_set_selection,
+OSSL_DECODER_set_input_type,
+OSSL_DECODER_set_input_structure,
+OSSL_DECODER_add_method,
+OSSL_DECODER_add_extra_methods,
+OSSL_DECODER_get_num_methods,
+OSSL_DECODER_INSTANCE,
+OSSL_DECODER_CONSTRUCT,
+OSSL_DECODER_CLEANUP,
+OSSL_DECODER_set_construct,
+OSSL_DECODER_set_construct_data,
+OSSL_DECODER_set_cleanup,
+OSSL_DECODER_get_construct,
+OSSL_DECODER_get_construct_data,
+OSSL_DECODER_get_cleanup,
+OSSL_DECODER_export,
+OSSL_DECODER_INSTANCE_get_method,
+OSSL_DECODER_INSTANCE_get_method_ctx,
+OSSL_DECODER_INSTANCE_get_input_type,
+OSSL_DECODER_INSTANCE_get_input_structure
+- Decoder routines
 
 =head1 SYNOPSIS
 
@@ -22,109 +34,210 @@ OSSL_DECODER_get_params
 
  typedef struct ossl_decoder_st OSSL_DECODER;
 
- OSSL_DECODER *OSSL_DECODER_fetch(OSSL_LIB_CTX *ctx, const char *name,
-                                  const char *properties);
- int OSSL_DECODER_up_ref(OSSL_DECODER *decoder);
+ OSSL_DECODER *OSSL_DECODER_new(void);
+ int OSSL_DECODER_set_params(OSSL_DECODER *decoder,
+                                 const OSSL_PARAM params[]);
  void OSSL_DECODER_free(OSSL_DECODER *decoder);
- const OSSL_PROVIDER *OSSL_DECODER_provider(const OSSL_DECODER *decoder);
- const char *OSSL_DECODER_properties(const OSSL_DECODER *decoder);
- int OSSL_DECODER_is_a(const OSSL_DECODER *decoder, const char *name);
- int OSSL_DECODER_number(const OSSL_DECODER *decoder);
- void OSSL_DECODER_do_all_provided(OSSL_LIB_CTX *libctx,
-                                   void (*fn)(OSSL_DECODER *decoder, void *arg),
-                                   void *arg);
- void OSSL_DECODER_names_do_all(const OSSL_DECODER *decoder,
-                                void (*fn)(const char *name, void *data),
-                                void *data);
- const OSSL_PARAM *OSSL_DECODER_gettable_params(OSSL_DECODER *decoder);
- int OSSL_DECODER_get_params(OSSL_DECODER_CTX *ctx, const OSSL_PARAM params[]);
+
+ int OSSL_DECODER_set_selection(OSSL_DECODER *decoder, int selection);
+ int OSSL_DECODER_set_input_type(OSSL_DECODER *decoder,
+                                     const char *input_type);
+ int OSSL_DECODER_set_input_structure(OSSL_DECODER *decoder,
+                                          const char *input_structure);
+ int OSSL_DECODER_add_method(OSSL_DECODER *decoder, OSSL_DECODER *decoder);
+ int OSSL_DECODER_add_extra_methods(OSSL_DECODER *decoder);
+ int OSSL_DECODER_get_num_methods(OSSL_DECODER *decoder);
+
+ typedef struct ossl_decoder_instance_st OSSL_DECODER_INSTANCE;
+ OSSL_DECODER *
+ OSSL_DECODER_INSTANCE_get_method(OSSL_DECODER_INSTANCE *decoder_inst);
+ void *
+ OSSL_DECODER_INSTANCE_get_method_ctx(OSSL_DECODER_INSTANCE *decoder_inst);
+ const char *
+ OSSL_DECODER_INSTANCE_get_input_type(OSSL_DECODER_INSTANCE *decoder_inst);
+ OSSL_DECODER_INSTANCE_get_input_structure(OSSL_DECODER_INSTANCE *decoder_inst,
+                                           int *was_set);
+
+ typedef int OSSL_DECODER_CONSTRUCT(OSSL_DECODER_INSTANCE *decoder_inst,
+                                    const OSSL_PARAM *object,
+                                    void *construct_data);
+ typedef void OSSL_DECODER_CLEANUP(void *construct_data);
+
+ int OSSL_DECODER_set_construct(OSSL_DECODER *decoder,
+                                OSSL_DECODER_CONSTRUCT *construct);
+ int OSSL_DECODER_set_construct_data(OSSL_DECODER *decoder,
+                                     void *construct_data);
+ int OSSL_DECODER_set_cleanup(OSSL_DECODER *decoder,
+                              OSSL_DECODER_CLEANUP *cleanup);
+ OSSL_DECODER_CONSTRUCT *OSSL_DECODER_get_construct(OSSL_DECODER *decoder);
+ void *OSSL_DECODER_get_construct_data(OSSL_DECODER *decoder);
+ OSSL_DECODER_CLEANUP *OSSL_DECODER_get_cleanup(OSSL_DECODER *decoder);
+
+ int OSSL_DECODER_export(OSSL_DECODER_INSTANCE *decoder_inst,
+                         void *reference, size_t reference_sz,
+                         OSSL_CALLBACK *export_cb, void *export_cbarg);
 
 =head1 DESCRIPTION
 
-B<OSSL_DECODER> is a method for decoders, which know how to
-decode encoded data into an object of some type that the rest
-of OpenSSL knows how to handle.
+The B<OSSL_DECODER> holds data about multiple decoders, as needed to
+figure out what the input data is and to attempt to unpack it into one of
+several possible related results.  This also includes chaining decoders, so
+the output from one can become the input for another.  This allows having
+generic format decoders such as PEM to DER, as well as more specialized
+decoders like DER to RSA.
 
-OSSL_DECODER_fetch() looks for an algorithm within the provider that
-has been loaded into the B<OSSL_LIB_CTX> given by I<ctx>, having the
-name given by I<name> and the properties given by I<properties>.
-The I<name> determines what type of object the fetched decoder
-method is expected to be able to decode, and the properties are
-used to determine the expected output type.
-For known properties and the values they may have, please have a look
-in L<provider-encoder(7)/Names and properties>.
+The chains may be limited by specifying an input type, which is considered a
+starting point.  This is both considered by OSSL_DECODER_add_extra(),
+which will stop adding one more decoder implementations when it has already
+added those that take the specified input type, and functions like
+L<OSSL_DECODER_from_bio(3)>, which will only start the decoding process with
+the decoder implementations that take that input type.  For example, if the
+input type is set to C<DER>, a PEM to DER decoder will be ignored.
 
-OSSL_DECODER_up_ref() increments the reference count for the given
-I<decoder>.
+The input type can also be NULL, which means that the caller doesn't know
+what type of input they have.  In this case, OSSL_DECODER_from_bio() will
+simply try with one decoder implementation after the other, and thereby
+discover what kind of input the caller gave it.
 
-OSSL_DECODER_free() decrements the reference count for the given
-I<decoder>, and when the count reaches zero, frees it.
+For every decoding done, even an intermediary one, a constructor provided by
+the caller is called to attempt to construct an appropriate type / structure
+that the caller knows how to handle from the current decoding result.
+The constructor is set with OSSL_DECODER_set_construct().
 
-OSSL_DECODER_provider() returns the provider of the given
-I<decoder>.
+B<OSSL_DECODER_INSTANCE> is an opaque structure that contains data about the
+decoder that was just used, and that may be useful for the constructor.
+There are some functions to extract data from this type, described further
+down.
 
-OSSL_DECODER_properties() returns the property definition associated
-with the given I<decoder>.
+=head2 Functions
 
-OSSL_DECODER_is_a() checks if I<decoder> is an implementation
-of an algorithm that's identifiable with I<name>.
+OSSL_DECODER_new() creates a new empty B<OSSL_DECODER>.
 
-OSSL_DECODER_number() returns the internal dynamic number assigned
-to the given I<decoder>.
+OSSL_DECODER_settable_params() returns an L<OSSL_PARAM(3)> array of
+parameter descriptors.
 
-OSSL_DECODER_names_do_all() traverses all names for the given
-I<decoder>, and calls I<fn> with each name and I<data>.
+OSSL_DECODER_set_params() attempts to set parameters specified with an
+L<OSSL_PARAM(3)> array I<params>.  These parameters are passed to all
+decoders that have been added to the I<decoder> so far.  Parameters that an
+implementation doesn't recognise should be ignored by it.
 
-OSSL_DECODER_do_all_provided() traverses all encoder
-implementations by all activated providers in the library context
-I<libctx>, and for each of the implementations, calls I<fn> with the
-implementation method and I<data> as arguments.
+OSSL_DECODER_free() frees the given I<decoder>.
 
-OSSL_DECODER_gettable_params() returns an L<OSSL_PARAM(3)>
-array of parameter descriptors.
+OSSL_DECODER_add_method() populates the I<decoder> with a decoder, to be
+used to attempt to decode some encoded input.
 
-OSSL_DECODER_get_params() attempts to get parameters specified
-with an L<OSSL_PARAM(3)> array I<params>.  Parameters that the
-implementation doesn't recognise should be ignored.
+OSSL_DECODER_add_extra_methods() finds decoders that generate input for already
+added decoders, and adds them as well.  This is used to build decoder
+chains.
+
+OSSL_DECODER_set_input_type() sets the starting input type.  This limits
+the decoder chains to be considered, as explained in the general description
+above.
+
+OSSL_DECODER_set_input_structure() sets the name of the structure that
+the input is expected to have.  This may be used to determines what decoder
+implementations may be used.  NULL is a valid input structure, when it's not
+relevant, or when the decoder implementations are expected to figure it out.
+
+OSSL_DECODER_get_num_methods() gets the number of decoders currently
+added to the I<decoder>.
+
+OSSL_DECODER_set_construct() sets the constructor I<construct>.
+
+OSSL_DECODER_set_construct_data() sets the constructor data that is
+passed to the constructor every time it's called.
+
+OSSL_DECODER_set_cleanup() sets the constructor data I<cleanup>
+function.  This is called by OSSL_DECODER_free().
+
+OSSL_DECODER_get_construct(), OSSL_DECODER_get_construct_data() and
+OSSL_DECODER_get_cleanup() return the values that have been set by
+OSSL_DECODER_set_construct(), OSSL_DECODER_set_construct_data() and
+OSSL_DECODER_set_cleanup() respectively.
+
+OSSL_DECODER_export() is a fallback function for constructors that cannot
+use the data they get directly for diverse reasons.  It takes the same
+decode instance I<decoder_inst> that the constructor got and an object 
+I<reference>, unpacks the object which it refers to, and exports it by
+creating an L<OSSL_PARAM(3)> array that it then passes to I<export_cb>,
+along with I<export_arg>.
+
+=head2 Constructor
+
+A B<OSSL_DECODER_CONSTRUCT> gets the following arguments:
+
+=over 4
+
+=item I<decoder_inst>
+
+The B<OSSL_DECODER_INSTANCE> for the decoder from which the constructor gets
+its data.
+
+=item I<object>
+
+A provider-native object abstraction produced by the decoder.  Further
+information on the provider-native object abstraction can be found in
+L<provider-object(7)>.
+
+=item I<construct_data>
+
+The pointer that was set with OSSL_DECODE_set_construct_data().
+
+=back
+
+The constructor is expected to return 1 when the data it receives can be
+constructed, otherwise 0.
+
+These utility functions may be used by a constructor:
+
+OSSL_DECODER_INSTANCE_get_method be used to get the decoder
+implementation from a decoder instance I<decoder_inst>.
+
+OSSL_DECODER_INSTANCE_get_method_ctx() can be used to get the decoder
+implementation's provider context from a decoder instance I<decoder_inst>.
+
+OSSL_DECODER_INSTANCE_get_input_type() can be used to get the decoder
+implementation's input type from a decoder instance I<decoder_inst>.
+
+OSSL_DECODER_INSTANCE_get_input_structure() can be used to get the input
+structure for the decoder implementation from a decoder instance
+I<decoder_inst>.
+This may be NULL.
 
 =head1 RETURN VALUES
 
-OSSL_DECODER_fetch() returns a pointer to an OSSL_DECODER object,
-or NULL on error.
+OSSL_DECODER_new() returns a pointer to a B<OSSL_DECODER>, or NULL if the
+structure couldn't be allocated.
 
-OSSL_DECODER_up_ref() returns 1 on success, or 0 on error.
+OSSL_DECODER_settable_params() returns an L<OSSL_PARAM(3)> array, or
+NULL if none is available.
 
-OSSL_DECODER_free() doesn't return any value.
+OSSL_DECODER_set_params() returns 1 if all recognised parameters were
+valid, or 0 if one of them was invalid or caused some other failure in the
+implementation.
 
-OSSL_DECODER_provider() returns a pointer to a provider object, or
-NULL on error.
+OSSL_DECODER_add_method(), OSSL_DECODER_add_extra_methods(),
+OSSL_DECODER_set_construct(), OSSL_DECODER_set_construct_data() and
+OSSL_DECODER_set_cleanup() return 1 on success, or 0 on failure.
 
-OSSL_DECODER_properties() returns a pointer to a property
-definition string, or NULL on error.
+OSSL_DECODER_get_construct(), OSSL_DECODER_get_construct_data() and
+OSSL_DECODER_get_cleanup() return the current pointers to the
+constructor, the constructor data and the cleanup functions, respectively.
 
-OSSL_DECODER_is_a() returns 1 if I<decoder> was identifiable,
-otherwise 0.
+OSSL_DECODER_num_methods() returns the current number of decoders.  It
+returns 0 if I<decoder> is NULL.
 
-OSSL_DECODER_number() returns an integer.
+OSSL_DECODER_export() returns 1 on success, or 0 on failure.
 
-=head1 NOTES
+OSSL_DECODER_INSTANCE_get_method() returns an B<OSSL_DECODER_METHOD> pointer
+on success, or NULL on failure.
 
-OSSL_DECODER_fetch() may be called implicitly by other fetching
-functions, using the same library context and properties.
-Any other API that uses keys will typically do this.
-
-=begin comment TODO(3.0) Add examples!
-
-=head1 EXAMPLES
-
-Text, because pod2xxx doesn't like empty sections
-
-=end comment
+OSSL_DECODER_INSTANCE_get_methoid_ctx() returns a provider context pointer on
+success, or NULL on failure.
 
 =head1 SEE ALSO
 
-L<provider(7)>, L<OSSL_DECODER_CTX(3)>, L<OSSL_DECODER_from_bio(3)>,
-L<OSSL_DECODER_CTX_new_by_EVP_PKEY(3)>, L<OSSL_LIB_CTX(3)>
+L<provider(7)>, L<OSSL_DECODER_METHOD(3)>, L<OSSL_DECODER_from_bio(3)>
 
 =head1 HISTORY
 

@@ -11,10 +11,10 @@ OSSL_ENCODER_to_fp
 
  #include <openssl/encoder.h>
 
- int OSSL_ENCODER_to_data(OSSL_ENCODER_CTX *ctx, unsigned char **pdata,
+ int OSSL_ENCODER_to_data(OSSL_ENCODER *encoder, unsigned char **pdata,
                           size_t *pdata_len);
- int OSSL_ENCODER_to_bio(OSSL_ENCODER_CTX *ctx, BIO *out);
- int OSSL_ENCODER_to_fp(OSSL_ENCODER_CTX *ctx, FILE *fp);
+ int OSSL_ENCODER_to_bio(OSSL_ENCODER *encoder, BIO *out);
+ int OSSL_ENCODER_to_fp(OSSL_ENCODER *encoder, FILE *fp);
 
 Feature availability macros:
 
@@ -27,7 +27,7 @@ is undefined.
 
 =head1 DESCRIPTION
 
-OSSL_ENCODER_to_data() runs the encoding process for the context I<ctx>,
+OSSL_ENCODER_to_data() runs the encoding process for the context I<encoder>,
 with the output going to the I<*pdata> and I<*pdata_len>.
 If I<*pdata> is NULL when OSSL_ENCODER_to_data() is called, a buffer will be
 allocated using L<OPENSSL_zalloc(3)>, and I<*pdata> will be set to point at
@@ -38,8 +38,8 @@ is assumed to have its size.  In this case, I<*pdata> will be set to point
 after the encoded bytes, and I<*pdata_len> will be assigned the number of
 remaining bytes.
 
-OSSL_ENCODER_to_bio() runs the encoding process for the context I<ctx>, with
-the output going to the B<BIO> I<out>.
+OSSL_ENCODER_to_bio() runs the encoding process for the context I<encoder>,
+with the output going to the B<BIO> I<out>.
 
 OSSL_ENCODER_to_fp() does the same thing as OSSL_ENCODER_to_bio(), except
 that the output is going to the B<FILE> I<fp>.
@@ -65,7 +65,7 @@ Text, because pod2xxx doesn't like empty sections
 
 =head1 SEE ALSO
 
-L<provider(7)>, L<OSSL_ENCODER_CTX(3)>
+L<provider(7)>, L<OSSL_ENCODER(3)>
 
 =head1 HISTORY
 

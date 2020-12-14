@@ -21,11 +21,10 @@
 #include "crypto/evp.h"
 #include "encoder_local.h"
 
-DEFINE_STACK_OF(OSSL_ENCODER)
+DEFINE_STACK_OF(OSSL_ENCODER_METHOD)
 
-int OSSL_ENCODER_CTX_set_cipher(OSSL_ENCODER_CTX *ctx,
-                                const char *cipher_name,
-                                const char *propquery)
+int OSSL_ENCODER_set_cipher(OSSL_ENCODER *encoder,
+                            const char *cipher_name, const char *propquery)
 {
     OSSL_PARAM params[] = { OSSL_PARAM_END, OSSL_PARAM_END, OSSL_PARAM_END };
 
@@ -36,38 +35,35 @@ int OSSL_ENCODER_CTX_set_cipher(OSSL_ENCODER_CTX *ctx,
         OSSL_PARAM_construct_utf8_string(OSSL_ENCODER_PARAM_PROPERTIES,
                                          (void *)propquery, 0);
 
-    return OSSL_ENCODER_CTX_set_params(ctx, params);
+    return OSSL_ENCODER_set_params(encoder, params);
 }
 
-int OSSL_ENCODER_CTX_set_passphrase(OSSL_ENCODER_CTX *ctx,
-                                    const unsigned char *kstr,
-                                    size_t klen)
+int OSSL_ENCODER_set_passphrase(OSSL_ENCODER *encoder,
+                                const unsigned char *kstr, size_t klen)
 {
-    return ossl_pw_set_passphrase(&ctx->pwdata, kstr, klen);
+    return ossl_pw_set_passphrase(&encoder->pwdata, kstr, klen);
 }
 
-int OSSL_ENCODER_CTX_set_passphrase_ui(OSSL_ENCODER_CTX *ctx,
-                                       const UI_METHOD *ui_method,
-                                       void *ui_data)
+int OSSL_ENCODER_set_passphrase_ui(OSSL_ENCODER *encoder,
+                                   const UI_METHOD *ui_method, void *ui_data)
 {
-    return ossl_pw_set_ui_method(&ctx->pwdata, ui_method, ui_data);
+    return ossl_pw_set_ui_method(&encoder->pwdata, ui_method, ui_data);
 }
 
-int OSSL_ENCODER_CTX_set_pem_password_cb(OSSL_ENCODER_CTX *ctx,
-                                         pem_password_cb *cb, void *cbarg)
+int OSSL_ENCODER_set_pem_password_cb(OSSL_ENCODER *encoder,
+                                     pem_password_cb *cb, void *cbarg)
 {
-    return ossl_pw_set_pem_password_cb(&ctx->pwdata, cb, cbarg);
+    return ossl_pw_set_pem_password_cb(&encoder->pwdata, cb, cbarg);
 }
 
-int OSSL_ENCODER_CTX_set_passphrase_cb(OSSL_ENCODER_CTX *ctx,
-                                       OSSL_PASSPHRASE_CALLBACK *cb,
-                                       void *cbarg)
+int OSSL_ENCODER_set_passphrase_cb(OSSL_ENCODER *encoder,
+                                   OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
-    return ossl_pw_set_ossl_passphrase_cb(&ctx->pwdata, cb, cbarg);
+    return ossl_pw_set_ossl_passphrase_cb(&encoder->pwdata, cb, cbarg);
 }
 
 /*
- * Support for OSSL_ENCODER_CTX_new_by_TYPE:
+ * Support for OSSL_ENCODER_new_by_TYPE:
  * finding a suitable encoder
  */
 
@@ -76,12 +72,12 @@ struct collected_encoder_st {
     const char *output_structure;
     const char *output_type;
 
-    OSSL_ENCODER_CTX *ctx;
+    OSSL_ENCODER *encoder;
 
     int error_occured;
 };
 
-static void collect_encoder(OSSL_ENCODER *encoder, void *arg)
+static void collect_encoder(OSSL_ENCODER_METHOD *encoder_meth, void *arg)
 {
     struct collected_encoder_st *data = arg;
     size_t i, end_i;
@@ -97,16 +93,18 @@ static void collect_encoder(OSSL_ENCODER *encoder, void *arg)
     end_i = sk_OPENSSL_CSTRING_num(data->names);
     for (i = 0; i < end_i; i++) {
         const char *name = sk_OPENSSL_CSTRING_value(data->names, i);
-        const OSSL_PROVIDER *prov = OSSL_ENCODER_provider(encoder);
+        const OSSL_PROVIDER *prov =
+            OSSL_ENCODER_METHOD_provider(encoder_meth);
         void *provctx = OSSL_PROVIDER_get0_provider_ctx(prov);
 
-        if (!OSSL_ENCODER_is_a(encoder, name)
-            || (encoder->does_selection != NULL
-                && !encoder->does_selection(provctx, data->ctx->selection)))
+        if (!OSSL_ENCODER_METHOD_is_a(encoder_meth, name)
+            || (encoder_meth->does_selection != NULL
+                && !encoder_meth->does_selection(provctx,
+                                                 data->encoder->selection)))
             continue;
 
         /* Only add each encoder implementation once */
-        if (OSSL_ENCODER_CTX_add_encoder(data->ctx, encoder))
+        if (OSSL_ENCODER_add_method(data->encoder, encoder_meth))
             break;
     }
 
@@ -152,11 +150,13 @@ static int encoder_import_cb(const OSSL_PARAM params[], void *arg)
 {
     struct construct_data_st *construct_data = arg;
     OSSL_ENCODER_INSTANCE *encoder_inst = construct_data->encoder_inst;
-    OSSL_ENCODER *encoder = OSSL_ENCODER_INSTANCE_get_encoder(encoder_inst);
-    void *encoderctx = OSSL_ENCODER_INSTANCE_get_encoder_ctx(encoder_inst);
+    OSSL_ENCODER_METHOD *encoder_meth =
+        OSSL_ENCODER_INSTANCE_get_method(encoder_inst);
+    void *encoderctx = OSSL_ENCODER_INSTANCE_get_method_ctx(encoder_inst);
 
     construct_data->constructed_obj =
-        encoder->import_object(encoderctx, construct_data->selection, params);
+        encoder_meth->import_object(encoderctx, construct_data->selection,
+                                    params);
 
     return (construct_data->constructed_obj != NULL);
 }
@@ -167,11 +167,13 @@ encoder_construct_EVP_PKEY(OSSL_ENCODER_INSTANCE *encoder_inst, void *arg)
     struct construct_data_st *data = arg;
 
     if (data->obj == NULL) {
-        OSSL_ENCODER *encoder =
-            OSSL_ENCODER_INSTANCE_get_encoder(encoder_inst);
         const EVP_PKEY *pk = data->pk;
-        const OSSL_PROVIDER *k_prov = EVP_KEYMGMT_provider(pk->keymgmt);
-        const OSSL_PROVIDER *e_prov = OSSL_ENCODER_provider(encoder);
+        OSSL_ENCODER_METHOD *encoder_meth =
+            OSSL_ENCODER_INSTANCE_get_method(encoder_inst);
+        const OSSL_PROVIDER *e_prov =
+            OSSL_ENCODER_METHOD_provider(encoder_meth);
+        const OSSL_PROVIDER *k_prov =
+            EVP_KEYMGMT_provider(pk->keymgmt);
 
         if (k_prov != e_prov) {
             data->encoder_inst = encoder_inst;
@@ -193,30 +195,29 @@ static void encoder_destruct_EVP_PKEY(void *arg)
     struct construct_data_st *data = arg;
 
     if (data->encoder_inst != NULL) {
-        OSSL_ENCODER *encoder =
-            OSSL_ENCODER_INSTANCE_get_encoder(data->encoder_inst);
+        OSSL_ENCODER_METHOD *encoder_meth =
+            OSSL_ENCODER_INSTANCE_get_method(data->encoder_inst);
 
-        encoder->free_object(data->constructed_obj);
+        encoder_meth->free_object(data->constructed_obj);
     }
     data->constructed_obj = NULL;
 }
 
 /*
- * OSSL_ENCODER_CTX_new_by_EVP_PKEY() returns a ctx with no encoder if
+ * OSSL_ENCODER_new_by_EVP_PKEY() returns a encoder with no encoder if
  * it couldn't find a suitable encoder.  This allows a caller to detect if
- * a suitable encoder was found, with OSSL_ENCODER_CTX_get_num_encoder(),
+ * a suitable encoder was found, with OSSL_ENCODER_get_num_encoder(),
  * and to use fallback methods if the result is NULL.
  */
-static int ossl_encoder_ctx_setup_for_EVP_PKEY(OSSL_ENCODER_CTX *ctx,
-                                               const EVP_PKEY *pkey,
-                                               int selection,
-                                               const char *propquery)
+static int ossl_encoder_setup_for_EVP_PKEY(OSSL_ENCODER *encoder,
+                                           const EVP_PKEY *pkey, int selection,
+                                           const char *propquery)
 {
     struct construct_data_st *data = NULL;
     OSSL_LIB_CTX *libctx = NULL;
     int ok = 0;
 
-    if (!ossl_assert(ctx != NULL) || !ossl_assert(pkey != NULL)) {
+    if (!ossl_assert(encoder != NULL) || !ossl_assert(pkey != NULL)) {
         ERR_raise(ERR_LIB_OSSL_ENCODER, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
@@ -249,11 +250,11 @@ static int ossl_encoder_ctx_setup_for_EVP_PKEY(OSSL_ENCODER_CTX *ctx,
         }
 
         encoder_data.names = keymgmt_data.names;
-        encoder_data.output_type = ctx->output_type;
-        encoder_data.output_structure = ctx->output_structure;
+        encoder_data.output_type = encoder->output_type;
+        encoder_data.output_structure = encoder->output_structure;
         encoder_data.error_occured = 0;
-        encoder_data.ctx = ctx;
-        OSSL_ENCODER_do_all_provided(libctx, collect_encoder, &encoder_data);
+        encoder_data.encoder = encoder;
+        OSSL_ENCODER_METHOD_do_all_provided(libctx, collect_encoder, &encoder_data);
         sk_OPENSSL_CSTRING_free(keymgmt_data.names);
         if (encoder_data.error_occured) {
             ERR_raise(ERR_LIB_OSSL_ENCODER, ERR_R_MALLOC_FAILURE);
@@ -261,10 +262,10 @@ static int ossl_encoder_ctx_setup_for_EVP_PKEY(OSSL_ENCODER_CTX *ctx,
         }
     }
 
-    if (OSSL_ENCODER_CTX_get_num_encoders(ctx) != 0) {
-        if (!OSSL_ENCODER_CTX_set_construct(ctx, encoder_construct_EVP_PKEY)
-            || !OSSL_ENCODER_CTX_set_construct_data(ctx, data)
-            || !OSSL_ENCODER_CTX_set_cleanup(ctx, encoder_destruct_EVP_PKEY))
+    if (OSSL_ENCODER_get_num_methods(encoder) != 0) {
+        if (!OSSL_ENCODER_set_construct(encoder, encoder_construct_EVP_PKEY)
+            || !OSSL_ENCODER_set_construct_data(encoder, data)
+            || !OSSL_ENCODER_set_cleanup(encoder, encoder_destruct_EVP_PKEY))
             goto err;
 
         data->pk = pkey;
@@ -276,19 +277,18 @@ static int ossl_encoder_ctx_setup_for_EVP_PKEY(OSSL_ENCODER_CTX *ctx,
     ok = 1;
  err:
     if (data != NULL) {
-        OSSL_ENCODER_CTX_set_construct_data(ctx, NULL);
+        OSSL_ENCODER_set_construct_data(encoder, NULL);
         OPENSSL_free(data);
     }
     return ok;
 }
 
-OSSL_ENCODER_CTX *OSSL_ENCODER_CTX_new_by_EVP_PKEY(const EVP_PKEY *pkey,
-                                                   int selection,
-                                                   const char *output_type,
-                                                   const char *output_struct,
-                                                   const char *propquery)
+OSSL_ENCODER *OSSL_ENCODER_new_by_EVP_PKEY(const EVP_PKEY *pkey, int selection,
+                                           const char *output_type,
+                                           const char *output_struct,
+                                           const char *propquery)
 {
-    OSSL_ENCODER_CTX *ctx = NULL;
+    OSSL_ENCODER *encoder = NULL;
     OSSL_LIB_CTX *libctx = NULL;
 
     if (pkey == NULL) {
@@ -302,7 +302,7 @@ OSSL_ENCODER_CTX *OSSL_ENCODER_CTX_new_by_EVP_PKEY(const EVP_PKEY *pkey,
         return NULL;
     }
 
-    if ((ctx = OSSL_ENCODER_CTX_new()) == NULL) {
+    if ((encoder = OSSL_ENCODER_new()) == NULL) {
         ERR_raise(ERR_LIB_OSSL_ENCODER, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
@@ -315,25 +315,26 @@ OSSL_ENCODER_CTX *OSSL_ENCODER_CTX_new_by_EVP_PKEY(const EVP_PKEY *pkey,
 
     OSSL_TRACE_BEGIN(ENCODER) {
         BIO_printf(trc_out,
-                   "(ctx %p) Looking for %s encoders with selection %d\n",
-                   (void *)ctx, EVP_PKEY_get0_first_alg_name(pkey), selection);
+                   "(encoder %p) Looking for %s encoders with selection %d\n",
+                   (void *)encoder, EVP_PKEY_get0_first_alg_name(pkey),
+                   selection);
         BIO_printf(trc_out, "    output type: %s, output structure: %s\n",
                    output_type, output_struct);
     } OSSL_TRACE_END(ENCODER);
 
-    if (OSSL_ENCODER_CTX_set_output_type(ctx, output_type)
+    if (OSSL_ENCODER_set_output_type(encoder, output_type)
         && (output_struct == NULL
-            || OSSL_ENCODER_CTX_set_output_structure(ctx, output_struct))
-        && OSSL_ENCODER_CTX_set_selection(ctx, selection)
-        && ossl_encoder_ctx_setup_for_EVP_PKEY(ctx, pkey, selection, propquery)
-        && OSSL_ENCODER_CTX_add_extra(ctx, libctx, propquery)) {
+            || OSSL_ENCODER_set_output_structure(encoder, output_struct))
+        && OSSL_ENCODER_set_selection(encoder, selection)
+        && ossl_encoder_setup_for_EVP_PKEY(encoder, pkey, selection, propquery)
+        && OSSL_ENCODER_add_extra_methods(encoder, libctx, propquery)) {
         OSSL_TRACE_BEGIN(ENCODER) {
-            BIO_printf(trc_out, "(ctx %p) Got %d encoders\n",
-                       (void *)ctx, OSSL_ENCODER_CTX_get_num_encoders(ctx));
+            BIO_printf(trc_out, "(encoder %p) Got %d methods\n",
+                       (void *)encoder, OSSL_ENCODER_get_num_methods(encoder));
         } OSSL_TRACE_END(ENCODER);
-        return ctx;
+        return encoder;
     }
 
-    OSSL_ENCODER_CTX_free(ctx);
+    OSSL_ENCODER_free(encoder);
     return NULL;
 }

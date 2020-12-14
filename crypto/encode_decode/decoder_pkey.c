@@ -20,35 +20,32 @@
 #include "encoder_local.h"
 #include "e_os.h"                /* strcasecmp on Windows */
 
-int OSSL_DECODER_CTX_set_passphrase(OSSL_DECODER_CTX *ctx,
-                                    const unsigned char *kstr,
-                                    size_t klen)
+int OSSL_DECODER_set_passphrase(OSSL_DECODER *decoder,
+                                const unsigned char *kstr, size_t klen)
 {
-    return ossl_pw_set_passphrase(&ctx->pwdata, kstr, klen);
+    return ossl_pw_set_passphrase(&decoder->pwdata, kstr, klen);
 }
 
-int OSSL_DECODER_CTX_set_passphrase_ui(OSSL_DECODER_CTX *ctx,
-                                       const UI_METHOD *ui_method,
-                                       void *ui_data)
+int OSSL_DECODER_set_passphrase_ui(OSSL_DECODER *decoder,
+                                   const UI_METHOD *ui_method, void *ui_data)
 {
-    return ossl_pw_set_ui_method(&ctx->pwdata, ui_method, ui_data);
+    return ossl_pw_set_ui_method(&decoder->pwdata, ui_method, ui_data);
 }
 
-int OSSL_DECODER_CTX_set_pem_password_cb(OSSL_DECODER_CTX *ctx,
-                                         pem_password_cb *cb, void *cbarg)
+int OSSL_DECODER_set_pem_password_cb(OSSL_DECODER *decoder,
+                                     pem_password_cb *cb, void *cbarg)
 {
-    return ossl_pw_set_pem_password_cb(&ctx->pwdata, cb, cbarg);
+    return ossl_pw_set_pem_password_cb(&decoder->pwdata, cb, cbarg);
 }
 
-int OSSL_DECODER_CTX_set_passphrase_cb(OSSL_DECODER_CTX *ctx,
-                                       OSSL_PASSPHRASE_CALLBACK *cb,
-                                       void *cbarg)
+int OSSL_DECODER_set_passphrase_cb(OSSL_DECODER *decoder,
+                                   OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
-    return ossl_pw_set_ossl_passphrase_cb(&ctx->pwdata, cb, cbarg);
+    return ossl_pw_set_ossl_passphrase_cb(&decoder->pwdata, cb, cbarg);
 }
 
 /*
- * Support for OSSL_DECODER_CTX_new_by_EVP_PKEY:
+ * Support for OSSL_DECODER_new_by_EVP_PKEY:
  * The construct data, and collecting keymgmt information for it
  */
 
@@ -67,8 +64,10 @@ static int decoder_construct_EVP_PKEY(OSSL_DECODER_INSTANCE *decoder_inst,
                                       void *construct_data)
 {
     struct decoder_EVP_PKEY_data_st *data = construct_data;
-    OSSL_DECODER *decoder = OSSL_DECODER_INSTANCE_get_decoder(decoder_inst);
-    void *decoderctx = OSSL_DECODER_INSTANCE_get_decoder_ctx(decoder_inst);
+    OSSL_DECODER_METHOD *decoder_meth =
+        OSSL_DECODER_INSTANCE_get_method(decoder_inst);
+    void *decoderctx =
+        OSSL_DECODER_INSTANCE_get_method_ctx(decoder_inst);
     EVP_KEYMGMT *keymgmt = NULL;
     /*
      * |object_ref| points to a provider reference to an object, its exact
@@ -109,10 +108,11 @@ static int decoder_construct_EVP_PKEY(OSSL_DECODER_INSTANCE *decoder_inst,
         EVP_PKEY *pkey = NULL;
         void *keydata = NULL;
         const OSSL_PROVIDER *keymgmt_prov = EVP_KEYMGMT_provider(keymgmt);
-        const OSSL_PROVIDER *decoder_prov = OSSL_DECODER_provider(decoder);
+        const OSSL_PROVIDER *decoder_prov =
+            OSSL_DECODER_METHOD_provider(decoder_meth);
 
         /*
-         * If the EVP_KEYMGMT and the OSSL_DECODER are from the
+         * If the EVP_KEYMGMT and the OSSL_DECODER_METHOD are from the
          * same provider, we assume that the KEYMGMT has a key loading
          * function that can handle the provider reference we hold.
          *
@@ -132,10 +132,10 @@ static int decoder_construct_EVP_PKEY(OSSL_DECODER_INSTANCE *decoder_inst,
              * No need to check for errors here, the value of
              * |import_data.keydata| is as much an indicator.
              */
-            (void)decoder->export_object(decoderctx,
-                                         object_ref, object_ref_sz,
-                                         &evp_keymgmt_util_try_import,
-                                         &import_data);
+            (void)decoder_meth->export_object(decoderctx,
+                                              object_ref, object_ref_sz,
+                                              &evp_keymgmt_util_try_import,
+                                              &import_data);
             keydata = import_data.keydata;
             import_data.keydata = NULL;
         }
@@ -153,7 +153,7 @@ static int decoder_construct_EVP_PKEY(OSSL_DECODER_INSTANCE *decoder_inst,
         EVP_KEYMGMT_free(keymgmt);
     }
     /*
-     * We successfully looked through, |*ctx->object| determines if we
+     * We successfully looked through, |*decoder->object| determines if we
      * actually found something.
      */
     return (*data->object != NULL);
@@ -193,7 +193,7 @@ static void collect_keymgmt(EVP_KEYMGMT *keymgmt, void *arg)
  * The input structure check is only done on the initial decoder
  * implementations.
  */
-static int decoder_check_input_structure(OSSL_DECODER_CTX *ctx,
+static int decoder_check_input_structure(OSSL_DECODER *decoder,
                                          OSSL_DECODER_INSTANCE *di)
 {
     int di_is_was_set = 0;
@@ -204,29 +204,29 @@ static int decoder_check_input_structure(OSSL_DECODER_CTX *ctx,
      * If caller didn't give an input structure name, the decoder is accepted
      * unconditionally with regards to the input structure.
      */
-    if (ctx->input_structure == NULL)
+    if (decoder->input_structure == NULL)
         return 1;
     /*
      * If the caller did give an input structure name, the decoder must have
      * a matching input structure to be accepted.
      */
-    if (di_is != NULL && strcasecmp(ctx->input_structure, di_is) == 0)
+    if (di_is != NULL && strcasecmp(decoder->input_structure, di_is) == 0)
         return 1;
     return 0;
 }
 
 struct collect_decoder_data_st {
     STACK_OF(OPENSSL_CSTRING) *names;
-    OSSL_DECODER_CTX *ctx;
+    OSSL_DECODER *decoder;
 
     unsigned int error_occured:1;
 };
 
-static void collect_decoder(OSSL_DECODER *decoder, void *arg)
+static void collect_decoder(OSSL_DECODER_METHOD *decoder_meth, void *arg)
 {
     struct collect_decoder_data_st *data = arg;
     size_t i, end_i;
-    const OSSL_PROVIDER *prov = OSSL_DECODER_provider(decoder);
+    const OSSL_PROVIDER *prov = OSSL_DECODER_METHOD_provider(decoder_meth);
     void *provctx = OSSL_PROVIDER_get0_provider_ctx(prov);
 
     if (data->error_occured)
@@ -242,37 +242,38 @@ static void collect_decoder(OSSL_DECODER *decoder, void *arg)
         void *decoderctx = NULL;
         OSSL_DECODER_INSTANCE *di = NULL;
 
-        if (OSSL_DECODER_is_a(decoder, name)
+        if (OSSL_DECODER_METHOD_is_a(decoder_meth, name)
             /*
              * Either the caller didn't give a selection, or if they did,
              * the decoder must tell us if it supports that selection to
              * be accepted.  If the decoder doesn't have |does_selection|,
              * it's seen as taking anything.
              */
-            && (decoder->does_selection == NULL
-                || decoder->does_selection(provctx, data->ctx->selection))
-            && (decoderctx = decoder->newctx(provctx)) != NULL
-            && (di = ossl_decoder_instance_new(decoder, decoderctx)) != NULL) {
+            && (decoder_meth->does_selection == NULL
+                || decoder_meth->does_selection(provctx,
+                                                data->decoder->selection))
+            && (decoderctx = decoder_meth->newctx(provctx)) != NULL
+            && (di = ossl_decoder_instance_new(decoder_meth,
+                                               decoderctx)) != NULL) {
             /* If successful so far, don't free these directly */
             decoderctx = NULL;
 
-            if (decoder_check_input_structure(data->ctx, di)
-                && ossl_decoder_ctx_add_decoder_inst(data->ctx, di))
+            if (decoder_check_input_structure(data->decoder, di)
+                && ossl_decoder_add_decoder_inst(data->decoder, di))
                 di = NULL;      /* If successfully added, don't free it */
         }
 
         /* Free what can be freed */
         ossl_decoder_instance_free(di);
-        decoder->freectx(decoderctx);
+        decoder_meth->freectx(decoderctx);
     }
 
     data->error_occured = 0;         /* All is good now */
 }
 
-int ossl_decoder_ctx_setup_for_EVP_PKEY(OSSL_DECODER_CTX *ctx,
-                                        EVP_PKEY **pkey, const char *keytype,
-                                        OSSL_LIB_CTX *libctx,
-                                        const char *propquery)
+int ossl_decoder_setup_for_EVP_PKEY(OSSL_DECODER *decoder,
+                                    EVP_PKEY **pkey, const char *keytype,
+                                    OSSL_LIB_CTX *libctx, const char *propquery)
 {
     struct decoder_EVP_PKEY_data_st *process_data = NULL;
     STACK_OF(EVP_KEYMGMT) *keymgmts = NULL;
@@ -317,20 +318,20 @@ int ossl_decoder_ctx_setup_for_EVP_PKEY(OSSL_DECODER_CTX *ctx,
         struct collect_decoder_data_st collect_decoder_data = { NULL, };
 
         collect_decoder_data.names = names;
-        collect_decoder_data.ctx = ctx;
-        OSSL_DECODER_do_all_provided(libctx,
-                                     collect_decoder, &collect_decoder_data);
+        collect_decoder_data.decoder = decoder;
+        OSSL_DECODER_METHOD_do_all_provided(libctx, collect_decoder,
+                                            &collect_decoder_data);
         sk_OPENSSL_CSTRING_free(names);
 
         if (collect_decoder_data.error_occured)
             goto err;
     }
 
-    if (OSSL_DECODER_CTX_get_num_decoders(ctx) != 0) {
-        if (!OSSL_DECODER_CTX_set_construct(ctx, decoder_construct_EVP_PKEY)
-            || !OSSL_DECODER_CTX_set_construct_data(ctx, process_data)
-            || !OSSL_DECODER_CTX_set_cleanup(ctx,
-                                             decoder_clean_EVP_PKEY_construct_arg))
+    if (OSSL_DECODER_get_num_methods(decoder) != 0) {
+        if (!OSSL_DECODER_set_construct(decoder, decoder_construct_EVP_PKEY)
+            || !OSSL_DECODER_set_construct_data(decoder, process_data)
+            || !OSSL_DECODER_set_cleanup(decoder,
+                                         decoder_clean_EVP_PKEY_construct_arg))
             goto err;
 
         process_data = NULL; /* Avoid it being freed */
@@ -342,41 +343,41 @@ int ossl_decoder_ctx_setup_for_EVP_PKEY(OSSL_DECODER_CTX *ctx,
     return ok;
 }
 
-OSSL_DECODER_CTX *
-OSSL_DECODER_CTX_new_by_EVP_PKEY(EVP_PKEY **pkey,
-                                 const char *input_type,
-                                 const char *input_structure,
-                                 const char *keytype, int selection,
-                                 OSSL_LIB_CTX *libctx, const char *propquery)
+OSSL_DECODER *OSSL_DECODER_new_by_EVP_PKEY(EVP_PKEY **pkey,
+                                           const char *input_type,
+                                           const char *input_structure,
+                                           const char *keytype, int selection,
+                                           OSSL_LIB_CTX *libctx,
+                                           const char *propquery)
 {
-    OSSL_DECODER_CTX *ctx = NULL;
+    OSSL_DECODER *decoder = NULL;
 
-    if ((ctx = OSSL_DECODER_CTX_new()) == NULL) {
+    if ((decoder = OSSL_DECODER_new()) == NULL) {
         ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
     OSSL_TRACE_BEGIN(DECODER) {
         BIO_printf(trc_out,
-                   "(ctx %p) Looking for %s decoders with selection %d\n",
-                   (void *)ctx, keytype, selection);
+                   "(decoder %p) Looking for %s decoders with selection %d\n",
+                   (void *)decoder, keytype, selection);
         BIO_printf(trc_out, "    input type: %s, input structure: %s\n",
                    input_type, input_structure);
     } OSSL_TRACE_END(DECODER);
 
-    if (OSSL_DECODER_CTX_set_input_type(ctx, input_type)
-        && OSSL_DECODER_CTX_set_input_structure(ctx, input_structure)
-        && OSSL_DECODER_CTX_set_selection(ctx, selection)
-        && ossl_decoder_ctx_setup_for_EVP_PKEY(ctx, pkey, keytype,
-                                               libctx, propquery)
-        && OSSL_DECODER_CTX_add_extra(ctx, libctx, propquery)) {
+    if (OSSL_DECODER_set_input_type(decoder, input_type)
+        && OSSL_DECODER_set_input_structure(decoder, input_structure)
+        && OSSL_DECODER_set_selection(decoder, selection)
+        && ossl_decoder_setup_for_EVP_PKEY(decoder, pkey, keytype,
+                                           libctx, propquery)
+        && OSSL_DECODER_add_extra_methods(decoder, libctx, propquery)) {
         OSSL_TRACE_BEGIN(DECODER) {
-            BIO_printf(trc_out, "(ctx %p) Got %d decoders\n",
-                       (void *)ctx, OSSL_DECODER_CTX_get_num_decoders(ctx));
+            BIO_printf(trc_out, "(decoder %p) Got %d methods\n",
+                       (void *)decoder, OSSL_DECODER_get_num_methods(decoder));
         } OSSL_TRACE_END(DECODER);
-        return ctx;
+        return decoder;
     }
 
-    OSSL_DECODER_CTX_free(ctx);
+    OSSL_DECODER_free(decoder);
     return NULL;
 }

@@ -16,7 +16,7 @@
 #include "internal/passphrase.h"
 #include "internal/refcount.h"
 
-struct ossl_endecode_base_st {
+struct ossl_endecode_method_base_st {
     OSSL_PROVIDER *prov;
     int id;
     const char *propdef;
@@ -25,8 +25,8 @@ struct ossl_endecode_base_st {
     CRYPTO_RWLOCK *lock;
 };
 
-struct ossl_encoder_st {
-    struct ossl_endecode_base_st base;
+struct ossl_encoder_method_st {
+    struct ossl_endecode_method_base_st base;
     OSSL_FUNC_encoder_newctx_fn *newctx;
     OSSL_FUNC_encoder_freectx_fn *freectx;
     OSSL_FUNC_encoder_get_params_fn *get_params;
@@ -39,8 +39,8 @@ struct ossl_encoder_st {
     OSSL_FUNC_encoder_free_object_fn *free_object;
 };
 
-struct ossl_decoder_st {
-    struct ossl_endecode_base_st base;
+struct ossl_decoder_method_st {
+    struct ossl_endecode_method_base_st base;
     OSSL_FUNC_decoder_newctx_fn *newctx;
     OSSL_FUNC_decoder_freectx_fn *freectx;
     OSSL_FUNC_decoder_get_params_fn *get_params;
@@ -53,18 +53,18 @@ struct ossl_decoder_st {
 };
 
 struct ossl_encoder_instance_st {
-    OSSL_ENCODER *encoder;        /* Never NULL */
-    void *encoderctx;             /* Never NULL */
-    const char *input_type;       /* May be NULL */
-    const char *output_type;      /* Never NULL */
-    const char *output_structure; /* May be NULL */
+    OSSL_ENCODER_METHOD *encoder_meth; /* Never NULL */
+    void *encoderctx;                  /* Never NULL */
+    const char *input_type;            /* May be NULL */
+    const char *output_type;           /* Never NULL */
+    const char *output_structure;      /* May be NULL */
 };
 
 DEFINE_STACK_OF(OSSL_ENCODER_INSTANCE)
 
 void ossl_encoder_instance_free(OSSL_ENCODER_INSTANCE *encoder_inst);
 
-struct ossl_encoder_ctx_st {
+struct ossl_encoder_st {
     /*
      * Select what parts of an object will be encoded.  This selection is
      * bit encoded, and the bits correspond to selection bits available with
@@ -102,17 +102,17 @@ struct ossl_encoder_ctx_st {
 };
 
 struct ossl_decoder_instance_st {
-    OSSL_DECODER *decoder;       /* Never NULL */
-    void *decoderctx;            /* Never NULL */
-    const char *input_type;      /* Never NULL */
-    const char *input_structure; /* May be NULL */
+    OSSL_DECODER_METHOD *decoder_meth; /* Never NULL */
+    void *decoderctx;                  /* Never NULL */
+    const char *input_type;            /* Never NULL */
+    const char *input_structure;       /* May be NULL */
 
     unsigned int flag_input_structure_was_set : 1;
 };
 
 DEFINE_STACK_OF(OSSL_DECODER_INSTANCE)
 
-struct ossl_decoder_ctx_st {
+struct ossl_decoder_st {
     /*
      * The caller may know the input type of the data they pass.  If not,
      * this will remain NULL and the decoding functionality will start

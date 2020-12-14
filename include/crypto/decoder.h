@@ -12,9 +12,9 @@
 
 # include <openssl/decoder.h>
 
-OSSL_DECODER *ossl_decoder_fetch_by_number(OSSL_LIB_CTX *libctx,
-                                                     int id,
-                                                     const char *properties);
+OSSL_DECODER_METHOD *ossl_decoder_method_fetch_by_number(OSSL_LIB_CTX *libctx,
+                                                         int id,
+                                                         const char *properties);
 
 /*
  * These are specially made for the 'file:' provider-native loader, which
@@ -22,19 +22,18 @@ OSSL_DECODER *ossl_decoder_fetch_by_number(OSSL_LIB_CTX *libctx,
  * except read a DER blob and pass it on as a provider object abstraction
  * (provider-object(7)).
  */
-void *ossl_decoder_from_dispatch(int id, const OSSL_ALGORITHM *algodef,
-                                 OSSL_PROVIDER *prov);
+void *ossl_decoder_method_from_dispatch(int id, const OSSL_ALGORITHM *algodef,
+                                        OSSL_PROVIDER *prov);
 
-OSSL_DECODER_INSTANCE *
-ossl_decoder_instance_new(OSSL_DECODER *decoder, void *decoderctx);
+OSSL_DECODER_INSTANCE *ossl_decoder_instance_new(OSSL_DECODER_METHOD *dec_meth,
+                                                 void *decoderctx);
 void ossl_decoder_instance_free(OSSL_DECODER_INSTANCE *decoder_inst);
-int ossl_decoder_ctx_add_decoder_inst(OSSL_DECODER_CTX *ctx,
-                                      OSSL_DECODER_INSTANCE *di);
+int ossl_decoder_add_decoder_inst(OSSL_DECODER *decoder,
+                                  OSSL_DECODER_INSTANCE *di);
 
-int ossl_decoder_ctx_setup_for_EVP_PKEY(OSSL_DECODER_CTX *ctx,
-                                        EVP_PKEY **pkey, const char *keytype,
-                                        OSSL_LIB_CTX *libctx,
-                                        const char *propquery);
+int ossl_decoder_setup_for_EVP_PKEY(OSSL_DECODER *decoder, EVP_PKEY **pkey,
+                                    const char *keytype, OSSL_LIB_CTX *libctx,
+                                    const char *propquery);
 
 #endif
 

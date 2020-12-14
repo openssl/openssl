@@ -43,7 +43,7 @@ OPENSSL_Applink                         external
 OSSL_LIB_CTX                            datatype
 NAMING_AUTHORITY                        datatype
 OSSL_DECODER                            datatype
-OSSL_DECODER_CTX                        datatype
+OSSL_DECODER_METHOD                     datatype
 OSSL_DECODER_CONSTRUCT                  datatype
 OSSL_DECODER_CLEANUP                    datatype
 OSSL_DECODER_INSTANCE                   datatype
@@ -51,7 +51,7 @@ OSSL_HTTP_bio_cb_t                      datatype
 OSSL_PARAM                              datatype
 OSSL_PROVIDER                           datatype
 OSSL_ENCODER                            datatype
-OSSL_ENCODER_CTX                        datatype
+OSSL_ENCODER_METHOD                     datatype
 OSSL_ENCODER_CONSTRUCT                  datatype
 OSSL_ENCODER_CLEANUP                    datatype
 OSSL_ENCODER_INSTANCE                   datatype
