@@ -135,7 +135,6 @@ static int kdf_sshkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     const OSSL_PARAM *p;
     KDF_SSHKDF *ctx = vctx;
     OSSL_LIB_CTX *provctx = PROV_LIBCTX_OF(ctx->provctx);
-    int t;
 
     if (!ossl_prov_digest_load_from_params(&ctx->digest, params, provctx))
         return 0;
@@ -156,14 +155,17 @@ static int kdf_sshkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 
     if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_SSHKDF_TYPE))
         != NULL) {
-        if (p->data == NULL || p->data_size == 0)
+        const char *kdftype;
+
+        if (!OSSL_PARAM_get_utf8_string_ptr(p, &kdftype))
             return 0;
-        t = *(unsigned char *)p->data;
-        if (t < 65 || t > 70) {
+        if (kdftype == NULL || kdftype[0] == '\0' || kdftype[1] != '\0')
+            return 0;
+        if (kdftype[0] < 65 || kdftype[0] > 70) {
             ERR_raise(ERR_LIB_PROV, PROV_R_VALUE_ERROR);
             return 0;
         }
-        ctx->type = (char)t;
+        ctx->type = kdftype[0];
     }
     return 1;
 }
