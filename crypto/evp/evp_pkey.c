@@ -72,7 +72,7 @@ EVP_PKEY *EVP_PKCS82PKEY(const PKCS8_PRIV_KEY_INFO *p8)
 PKCS8_PRIV_KEY_INFO *EVP_PKEY2PKCS8(const EVP_PKEY *pkey)
 {
     PKCS8_PRIV_KEY_INFO *p8 = NULL;
-    OSSL_ENCODER_CTX *ctx = NULL;
+    OSSL_ENCODER *encoder = NULL;
 
     /*
      * The implementation for provider-native keys is to encode the
@@ -85,10 +85,10 @@ PKCS8_PRIV_KEY_INFO *EVP_PKEY2PKCS8(const EVP_PKEY *pkey)
         size_t derlen = 0;
         const unsigned char *pp;
 
-        if ((ctx = OSSL_ENCODER_CTX_new_by_EVP_PKEY(pkey, selection,
+        if ((encoder = OSSL_ENCODER_new_by_EVP_PKEY(pkey, selection,
                                                     "DER", "pkcs8",
                                                     NULL)) == NULL
-            || !OSSL_ENCODER_to_data(ctx, &der, &derlen))
+            || !OSSL_ENCODER_to_data(encoder, &der, &derlen))
             goto error;
 
         pp = der;
@@ -123,7 +123,7 @@ PKCS8_PRIV_KEY_INFO *EVP_PKEY2PKCS8(const EVP_PKEY *pkey)
     PKCS8_PRIV_KEY_INFO_free(p8);
     p8 = NULL;
  end:
-    OSSL_ENCODER_CTX_free(ctx);
+    OSSL_ENCODER_free(encoder);
     return p8;
 
 }

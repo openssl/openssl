@@ -72,11 +72,11 @@ static int do_pk8pkey(BIO *bp, const EVP_PKEY *x, int isder, int nid,
 {
     int ret = 0;
     const char *outtype = isder ? "DER" : "PEM";
-    OSSL_ENCODER_CTX *ctx =
-        OSSL_ENCODER_CTX_new_by_EVP_PKEY(x, OSSL_KEYMGMT_SELECT_ALL,
-                                         outtype, "pkcs8", propq);
+    OSSL_ENCODER *encoder =
+        OSSL_ENCODER_new_by_EVP_PKEY(x, OSSL_KEYMGMT_SELECT_ALL,
+                                     outtype, "pkcs8", propq);
 
-    if (ctx == NULL)
+    if (encoder == NULL)
         return 0;
 
     /*
@@ -93,11 +93,11 @@ static int do_pk8pkey(BIO *bp, const EVP_PKEY *x, int isder, int nid,
         }
     }
 
-    if (OSSL_ENCODER_CTX_get_num_encoders(ctx) != 0) {
+    if (OSSL_ENCODER_get_num_methods(encoder) != 0) {
         ret = 1;
         if (enc != NULL) {
             ret = 0;
-            if (OSSL_ENCODER_CTX_set_cipher(ctx, EVP_CIPHER_name(enc), NULL)) {
+            if (OSSL_ENCODER_set_cipher(encoder, EVP_CIPHER_name(enc), NULL)) {
                 const unsigned char *ukstr = (const unsigned char *)kstr;
 
                 /*
@@ -108,14 +108,14 @@ static int do_pk8pkey(BIO *bp, const EVP_PKEY *x, int isder, int nid,
                  */
                 ret = 1;
                 if (kstr != NULL
-                    && !OSSL_ENCODER_CTX_set_passphrase(ctx, ukstr, klen))
+                    && !OSSL_ENCODER_set_passphrase(encoder, ukstr, klen))
                     ret = 0;
                 else if (cb != NULL
-                         && !OSSL_ENCODER_CTX_set_pem_password_cb(ctx, cb, u))
+                         && !OSSL_ENCODER_set_pem_password_cb(encoder, cb, u))
                     ret = 0;
             }
         }
-        ret = ret && OSSL_ENCODER_to_bio(ctx, bp);
+        ret = ret && OSSL_ENCODER_to_bio(encoder, bp);
     } else {
         X509_SIG *p8;
         PKCS8_PRIV_KEY_INFO *p8inf;
@@ -155,7 +155,7 @@ static int do_pk8pkey(BIO *bp, const EVP_PKEY *x, int isder, int nid,
      legacy_end:
         PKCS8_PRIV_KEY_INFO_free(p8inf);
     }
-    OSSL_ENCODER_CTX_free(ctx);
+    OSSL_ENCODER_free(encoder);
     return ret;
 }
 

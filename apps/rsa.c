@@ -104,7 +104,7 @@ int rsa_main(int argc, char **argv)
     const char *output_type = NULL;
     const char *output_structure = NULL;
     int selection = 0;
-    OSSL_ENCODER_CTX *ectx = NULL;
+    OSSL_ENCODER *encoder = NULL;
 
     prog = opt_init(argc, argv, rsa_options);
     while ((o = opt_next()) != OPT_EOF) {
@@ -331,10 +331,9 @@ int rsa_main(int argc, char **argv)
     }
 
     /* Now, perform the encoding */
-    ectx = OSSL_ENCODER_CTX_new_by_EVP_PKEY(pkey, selection,
-                                            output_type, output_structure,
-                                            NULL);
-    if (OSSL_ENCODER_CTX_get_num_encoders(ectx) == 0) {
+    encoder = OSSL_ENCODER_new_by_EVP_PKEY(pkey, selection, output_type,
+                                           output_structure, NULL);
+    if (OSSL_ENCODER_get_num_methods(encoder) == 0) {
         BIO_printf(bio_err, "%s format not supported\n", output_type);
         goto end;
     }
@@ -344,20 +343,20 @@ int rsa_main(int argc, char **argv)
         OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
 
         params[0] = OSSL_PARAM_construct_int("encrypt-level", &pvk_encr);
-        if (!OSSL_ENCODER_CTX_set_params(ectx, params)) {
+        if (!OSSL_ENCODER_set_params(encoder, params)) {
             BIO_printf(bio_err, "invalid PVK encryption level\n");
             goto end;
         }
     }
 
-    if (!OSSL_ENCODER_to_bio(ectx, out)) {
+    if (!OSSL_ENCODER_to_bio(encoder, out)) {
         BIO_printf(bio_err, "unable to write key\n");
         ERR_print_errors(bio_err);
         goto end;
     }
     ret = 0;
  end:
-    OSSL_ENCODER_CTX_free(ectx);
+    OSSL_ENCODER_free(encoder);
     release_engine(e);
     BIO_free_all(out);
     EVP_PKEY_free(pkey);

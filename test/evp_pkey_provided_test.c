@@ -162,7 +162,7 @@ static int test_print_key_type_using_encoder(const char *alg, int type,
 {
     const char *output_type, *output_structure;
     int selection;
-    OSSL_ENCODER_CTX *ctx = NULL;
+    OSSL_ENCODER *encoder = NULL;
     BIO *membio = BIO_new(BIO_s_mem());
     int ret = 0;
 
@@ -219,50 +219,50 @@ static int test_print_key_type_using_encoder(const char *alg, int type,
 
     /* Make a context, it's valid for several prints */
     TEST_note("Setting up a OSSL_ENCODER context with passphrase");
-    if (!TEST_ptr(ctx = OSSL_ENCODER_CTX_new_by_EVP_PKEY(pk, selection,
+    if (!TEST_ptr(encoder = OSSL_ENCODER_new_by_EVP_PKEY(pk, selection,
                                                          output_type,
                                                          output_structure,
                                                          NULL))
         /* Check that this operation is supported */
-        || !TEST_int_ne(OSSL_ENCODER_CTX_get_num_encoders(ctx), 0))
+        || !TEST_int_ne(OSSL_ENCODER_get_num_methods(encoder), 0))
         goto err;
 
     /* Use no cipher.  This should give us an unencrypted PEM */
     TEST_note("Testing with no encryption");
-    if (!TEST_true(OSSL_ENCODER_to_bio(ctx, membio))
+    if (!TEST_true(OSSL_ENCODER_to_bio(encoder, membio))
         || !TEST_true(compare_with_file(alg, type, membio)))
         goto err;
 
     if (type == PRIV_PEM) {
         /* Set a passphrase to be used later */
-        if (!TEST_true(OSSL_ENCODER_CTX_set_passphrase(ctx,
-                                                          (unsigned char *)"pass",
-                                                          4)))
+        if (!TEST_true(OSSL_ENCODER_set_passphrase(encoder,
+                                                   (unsigned char *)"pass",
+                                                   4)))
             goto err;
 
         /* Use a valid cipher name */
         TEST_note("Displaying PEM encrypted with AES-256-CBC");
-        if (!TEST_true(OSSL_ENCODER_CTX_set_cipher(ctx, "AES-256-CBC", NULL))
-            || !TEST_true(OSSL_ENCODER_to_bio(ctx, bio_out)))
+        if (!TEST_true(OSSL_ENCODER_set_cipher(encoder, "AES-256-CBC", NULL))
+            || !TEST_true(OSSL_ENCODER_to_bio(encoder, bio_out)))
             goto err;
 
         /* Use an invalid cipher name, which should generate no output */
         TEST_note("NOT Displaying PEM encrypted with (invalid) FOO");
-        if (!TEST_false(OSSL_ENCODER_CTX_set_cipher(ctx, "FOO", NULL))
-            || !TEST_false(OSSL_ENCODER_to_bio(ctx, bio_out)))
+        if (!TEST_false(OSSL_ENCODER_set_cipher(encoder, "FOO", NULL))
+            || !TEST_false(OSSL_ENCODER_to_bio(encoder, bio_out)))
             goto err;
 
         /* Clear the cipher.  This should give us an unencrypted PEM again */
         TEST_note("Testing with encryption cleared (no encryption)");
-        if (!TEST_true(OSSL_ENCODER_CTX_set_cipher(ctx, NULL, NULL))
-            || !TEST_true(OSSL_ENCODER_to_bio(ctx, membio))
+        if (!TEST_true(OSSL_ENCODER_set_cipher(encoder, NULL, NULL))
+            || !TEST_true(OSSL_ENCODER_to_bio(encoder, membio))
             || !TEST_true(compare_with_file(alg, type, membio)))
             goto err;
     }
     ret = 1;
 err:
     BIO_free(membio);
-    OSSL_ENCODER_CTX_free(ctx);
+    OSSL_ENCODER_free(encoder);
     return ret;
 }
 

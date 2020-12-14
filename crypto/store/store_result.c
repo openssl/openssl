@@ -250,7 +250,7 @@ static EVP_PKEY *try_key_value(struct extracted_param_data_st *data,
                                OSSL_LIB_CTX *libctx, const char *propq)
 {
     EVP_PKEY *pk = NULL;
-    OSSL_DECODER_CTX *decoderctx = NULL;
+    OSSL_DECODER *decoder = NULL;
     const unsigned char *pdata = data->octet_data;
     size_t pdatalen = data->octet_data_size;
     int selection = 0;
@@ -273,15 +273,14 @@ static EVP_PKEY *try_key_value(struct extracted_param_data_st *data,
         return NULL;
     }
 
-    decoderctx =
-        OSSL_DECODER_CTX_new_by_EVP_PKEY(&pk, "DER", NULL, data->data_type,
-                                         selection, libctx, propq);
-    (void)OSSL_DECODER_CTX_set_passphrase_cb(decoderctx, cb, cbarg);
+    decoder = OSSL_DECODER_new_by_EVP_PKEY(&pk, "DER", NULL, data->data_type,
+                                           selection, libctx, propq);
+    (void)OSSL_DECODER_set_passphrase_cb(decoder, cb, cbarg);
 
     /* No error if this couldn't be decoded */
-    (void)OSSL_DECODER_from_data(decoderctx, &pdata, &pdatalen);
+    (void)OSSL_DECODER_from_data(decoder, &pdata, &pdatalen);
 
-    OSSL_DECODER_CTX_free(decoderctx);
+    OSSL_DECODER_free(decoder);
 
     return pk;
 }

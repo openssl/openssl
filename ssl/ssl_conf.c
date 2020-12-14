@@ -581,7 +581,7 @@ static int cmd_DHParameters(SSL_CONF_CTX *cctx, const char *value)
     EVP_PKEY *dhpkey = NULL;
     BIO *in = NULL;
     SSL_CTX *sslctx = (cctx->ssl != NULL) ? cctx->ssl->ctx : cctx->ctx;
-    OSSL_DECODER_CTX *decoderctx = NULL;
+    OSSL_DECODER *decoder = NULL;
 
     if (cctx->ctx != NULL || cctx->ssl != NULL) {
         in = BIO_new(BIO_s_file());
@@ -590,16 +590,15 @@ static int cmd_DHParameters(SSL_CONF_CTX *cctx, const char *value)
         if (BIO_read_filename(in, value) <= 0)
             goto end;
 
-        decoderctx
-            = OSSL_DECODER_CTX_new_by_EVP_PKEY(&dhpkey, "PEM", NULL, "DH",
-                                               OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS,
-                                               sslctx->libctx, sslctx->propq);
-        if (decoderctx == NULL
-                || !OSSL_DECODER_from_bio(decoderctx, in)) {
-            OSSL_DECODER_CTX_free(decoderctx);
+        decoder =
+            OSSL_DECODER_new_by_EVP_PKEY(&dhpkey, "PEM", NULL, "DH",
+                                         OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS,
+                                         sslctx->libctx, sslctx->propq);
+        if (decoder == NULL || !OSSL_DECODER_from_bio(decoder, in)) {
+            OSSL_DECODER_free(decoder);
             goto end;
         }
-        OSSL_DECODER_CTX_free(decoderctx);
+        OSSL_DECODER_free(decoder);
 
         if (dhpkey == NULL)
             goto end;

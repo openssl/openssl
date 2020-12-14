@@ -59,7 +59,7 @@ static OSSL_FUNC_store_close_fn file_close;
  * internal OpenSSL functions, thereby bypassing the need for a surrounding
  * provider.  This is ok, since this is a local decoder, not meant for
  * public consumption.  It also uses the libcrypto internal decoder
- * setup function ossl_decoder_ctx_setup_for_EVP_PKEY(), to allow the
+ * setup function ossl_decoder_setup_for_EVP_PKEY(), to allow the
  * last resort decoder to be added first (and thereby be executed last).
  * Finally, it sets up its own construct and cleanup functions.
  *
@@ -83,7 +83,7 @@ struct file_ctx_st {
         struct {
             BIO *file;
 
-            OSSL_DECODER_CTX *decoderctx;
+            OSSL_DECODER *decoder;
             char *input_type;
             char *propq;    /* The properties we got as a parameter */
         } file;
@@ -121,7 +121,7 @@ static void free_file_ctx(struct file_ctx_st *ctx)
 
     OPENSSL_free(ctx->uri);
     if (ctx->type != IS_DIR) {
-        OSSL_DECODER_CTX_free(ctx->_.file.decoderctx);
+        OSSL_DECODER_free(ctx->_.file.decoder);
         OPENSSL_free(ctx->_.file.propq);
         OPENSSL_free(ctx->_.file.input_type);
     }
@@ -530,24 +530,24 @@ void file_load_cleanup(void *construct_data)
 
 static int file_setup_decoders(struct file_ctx_st *ctx)
 {
-    EVP_PKEY *dummy; /* for OSSL_DECODER_CTX_new_by_EVP_PKEY() */
+    EVP_PKEY *dummy; /* for OSSL_DECODER_new_by_EVP_PKEY() */
     OSSL_LIB_CTX *libctx = ossl_prov_ctx_get0_libctx(ctx->provctx);
-    OSSL_DECODER *to_obj = NULL; /* Last resort decoder */
+    OSSL_DECODER_METHOD *to_obj = NULL; /* Last resort decoder */
     OSSL_DECODER_INSTANCE *to_obj_inst = NULL;
     OSSL_DECODER_CLEANUP *old_cleanup = NULL;
     void *old_construct_data = NULL;
     int ok = 0;
 
     /* Setup for this session, so only if not already done */
-    if (ctx->_.file.decoderctx == NULL) {
-        if ((ctx->_.file.decoderctx = OSSL_DECODER_CTX_new()) == NULL) {
+    if (ctx->_.file.decoder == NULL) {
+        if ((ctx->_.file.decoder = OSSL_DECODER_new()) == NULL) {
             ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
             goto err;
         }
 
         /* Make sure the input type is set */
-        if (!OSSL_DECODER_CTX_set_input_type(ctx->_.file.decoderctx,
-                                             ctx->_.file.input_type)) {
+        if (!OSSL_DECODER_set_input_type(ctx->_.file.decoder,
+                                         ctx->_.file.input_type)) {
             ERR_raise(ERR_LIB_PROV, ERR_R_OSSL_DECODER_LIB);
             goto err;
         }
@@ -558,23 +558,23 @@ static int file_setup_decoders(struct file_ctx_st *ctx)
          * The decoder doesn't need any identification or to be attached to
          * any provider, since it's only used locally.
          */
-        to_obj = ossl_decoder_from_dispatch(0, &ossl_der_to_obj_algorithm,
-                                            NULL);
+        to_obj =
+            ossl_decoder_method_from_dispatch(0, &ossl_der_to_obj_algorithm,
+                                              NULL);
         if (to_obj == NULL)
             goto err;
         to_obj_inst = ossl_decoder_instance_new(to_obj, ctx->provctx);
         if (to_obj_inst == NULL)
             goto err;
 
-        if (!ossl_decoder_ctx_add_decoder_inst(ctx->_.file.decoderctx,
-                                               to_obj_inst)) {
+        if (!ossl_decoder_add_decoder_inst(ctx->_.file.decoder, to_obj_inst)) {
             ERR_raise(ERR_LIB_PROV, ERR_R_OSSL_DECODER_LIB);
             goto err;
         }
 
         /*
          * OSSL_DECODER_INSTANCE shouldn't be freed from this point on.
-         * That's going to happen whenever the OSSL_DECODER_CTX is freed.
+         * That's going to happen whenever the OSSL_DECODER is freed.
          */
         to_obj_inst = NULL;
 
@@ -583,11 +583,10 @@ static int file_setup_decoders(struct file_ctx_st *ctx)
          * Since we're setting up our own constructor, we don't need to care
          * more than that...
          */
-        if (!ossl_decoder_ctx_setup_for_EVP_PKEY(ctx->_.file.decoderctx,
-                                                 &dummy, NULL,
-                                                 libctx, ctx->_.file.propq)
-            || !OSSL_DECODER_CTX_add_extra(ctx->_.file.decoderctx,
-                                           libctx, ctx->_.file.propq)) {
+        if (!ossl_decoder_setup_for_EVP_PKEY(ctx->_.file.decoder, &dummy,
+                                             NULL, libctx, ctx->_.file.propq)
+            || !OSSL_DECODER_add_extra_methods(ctx->_.file.decoder,
+                                               libctx, ctx->_.file.propq)) {
             ERR_raise(ERR_LIB_PROV, ERR_R_OSSL_DECODER_LIB);
             goto err;
         }
@@ -596,19 +595,19 @@ static int file_setup_decoders(struct file_ctx_st *ctx)
          * Then we throw away the installed finalizer data, and install our
          * own instead.
          */
-        old_cleanup = OSSL_DECODER_CTX_get_cleanup(ctx->_.file.decoderctx);
+        old_cleanup = OSSL_DECODER_get_cleanup(ctx->_.file.decoder);
         old_construct_data =
-            OSSL_DECODER_CTX_get_construct_data(ctx->_.file.decoderctx);
+            OSSL_DECODER_get_construct_data(ctx->_.file.decoder);
         if (old_cleanup != NULL)
             old_cleanup(old_construct_data);
 
         /*
          * Set the hooks.
          */
-        if (!OSSL_DECODER_CTX_set_construct(ctx->_.file.decoderctx,
-                                            file_load_construct)
-            || !OSSL_DECODER_CTX_set_cleanup(ctx->_.file.decoderctx,
-                                             file_load_cleanup)) {
+        if (!OSSL_DECODER_set_construct(ctx->_.file.decoder,
+                                        file_load_construct)
+            || !OSSL_DECODER_set_cleanup(ctx->_.file.decoder,
+                                         file_load_cleanup)) {
             ERR_raise(ERR_LIB_PROV, ERR_R_OSSL_DECODER_LIB);
             goto err;
         }
@@ -616,7 +615,7 @@ static int file_setup_decoders(struct file_ctx_st *ctx)
 
     ok = 1;
  err:
-    OSSL_DECODER_free(to_obj);
+    OSSL_DECODER_METHOD_free(to_obj);
     return ok;
 }
 
@@ -635,12 +634,12 @@ static int file_load_file(struct file_ctx_st *ctx,
 
     data.object_cb = object_cb;
     data.object_cbarg = object_cbarg;
-    OSSL_DECODER_CTX_set_construct_data(ctx->_.file.decoderctx, &data);
-    OSSL_DECODER_CTX_set_passphrase_cb(ctx->_.file.decoderctx, pw_cb, pw_cbarg);
+    OSSL_DECODER_set_construct_data(ctx->_.file.decoder, &data);
+    OSSL_DECODER_set_passphrase_cb(ctx->_.file.decoder, pw_cb, pw_cbarg);
 
     /* Launch */
 
-    return OSSL_DECODER_from_bio(ctx->_.file.decoderctx, ctx->_.file.file);
+    return OSSL_DECODER_from_bio(ctx->_.file.decoder, ctx->_.file.file);
 }
 
 /*-

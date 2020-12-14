@@ -122,18 +122,18 @@ int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
     } else if (evp_pkey_is_provided(pkey)) {
         unsigned char *der = NULL;
         size_t derlen = 0;
-        OSSL_ENCODER_CTX *ectx =
-            OSSL_ENCODER_CTX_new_by_EVP_PKEY(pkey, EVP_PKEY_PUBLIC_KEY,
-                                             "DER", "SubjectPublicKeyInfo",
-                                             NULL);
+        OSSL_ENCODER *encoder =
+            OSSL_ENCODER_new_by_EVP_PKEY(pkey, EVP_PKEY_PUBLIC_KEY,
+                                         "DER", "SubjectPublicKeyInfo",
+                                         NULL);
 
-        if (OSSL_ENCODER_to_data(ectx, &der, &derlen)) {
+        if (OSSL_ENCODER_to_data(encoder, &der, &derlen)) {
             const unsigned char *pder = der;
 
             pk = d2i_X509_PUBKEY(NULL, &pder, (long)derlen);
         }
 
-        OSSL_ENCODER_CTX_free(ectx);
+        OSSL_ENCODER_free(encoder);
         OPENSSL_free(der);
     }
 
@@ -326,16 +326,16 @@ int i2d_PUBKEY(const EVP_PKEY *a, unsigned char **pp)
         }
         X509_PUBKEY_free(xpk);
     } else if (a->keymgmt != NULL) {
-        OSSL_ENCODER_CTX *ctx =
-            OSSL_ENCODER_CTX_new_by_EVP_PKEY(a, EVP_PKEY_PUBLIC_KEY,
-                                             "DER", "SubjectPublicKeyInfo",
-                                             NULL);
+        OSSL_ENCODER *encoder =
+            OSSL_ENCODER_new_by_EVP_PKEY(a, EVP_PKEY_PUBLIC_KEY,
+                                         "DER", "SubjectPublicKeyInfo",
+                                         NULL);
         BIO *out = BIO_new(BIO_s_mem());
         BUF_MEM *buf = NULL;
 
-        if (OSSL_ENCODER_CTX_get_num_encoders(ctx) != 0
+        if (OSSL_ENCODER_get_num_methods(encoder) != 0
             && out != NULL
-            && OSSL_ENCODER_to_bio(ctx, out)
+            && OSSL_ENCODER_to_bio(encoder, out)
             && BIO_get_mem_ptr(out, &buf) > 0) {
             ret = buf->length;
 
@@ -351,7 +351,7 @@ int i2d_PUBKEY(const EVP_PKEY *a, unsigned char **pp)
             }
         }
         BIO_free(out);
-        OSSL_ENCODER_CTX_free(ctx);
+        OSSL_ENCODER_free(encoder);
     }
 
     return ret;

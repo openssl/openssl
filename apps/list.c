@@ -434,128 +434,133 @@ static void list_random_instances(void)
 }
 
 /*
- * Encoders
+ * Encoder methods
  */
-DEFINE_STACK_OF(OSSL_ENCODER)
-static int encoder_cmp(const OSSL_ENCODER * const *a,
-                       const OSSL_ENCODER * const *b)
+DEFINE_STACK_OF(OSSL_ENCODER_METHOD)
+static int encoder_meth_cmp(const OSSL_ENCODER_METHOD * const *a,
+                            const OSSL_ENCODER_METHOD * const *b)
 {
-    int ret = OSSL_ENCODER_number(*a) - OSSL_ENCODER_number(*b);
+    int ret = OSSL_ENCODER_METHOD_number(*a) - OSSL_ENCODER_METHOD_number(*b);
 
     if (ret == 0)
-        ret = strcmp(OSSL_PROVIDER_name(OSSL_ENCODER_provider(*a)),
-                     OSSL_PROVIDER_name(OSSL_ENCODER_provider(*b)));
+        ret = strcmp(OSSL_PROVIDER_name(OSSL_ENCODER_METHOD_provider(*a)),
+                     OSSL_PROVIDER_name(OSSL_ENCODER_METHOD_provider(*b)));
     return ret;
 }
 
-static void collect_encoders(OSSL_ENCODER *encoder, void *stack)
+static void collect_encoder_meths(OSSL_ENCODER_METHOD *encoder_meth,
+                                  void *stack)
 {
-    STACK_OF(OSSL_ENCODER) *encoder_stack = stack;
+    STACK_OF(OSSL_ENCODER_METHOD) *encoder_meth_stack = stack;
 
-    sk_OSSL_ENCODER_push(encoder_stack, encoder);
-    OSSL_ENCODER_up_ref(encoder);
+    sk_OSSL_ENCODER_METHOD_push(encoder_meth_stack, encoder_meth);
+    OSSL_ENCODER_METHOD_up_ref(encoder_meth);
 }
 
-static void list_encoders(void)
+static void list_encoder_meths(void)
 {
-    STACK_OF(OSSL_ENCODER) *encoders;
+    STACK_OF(OSSL_ENCODER_METHOD) *encoder_meths;
     int i;
 
-    encoders = sk_OSSL_ENCODER_new(encoder_cmp);
-    if (encoders == NULL) {
+    encoder_meths = sk_OSSL_ENCODER_METHOD_new(encoder_meth_cmp);
+    if (encoder_meths == NULL) {
         BIO_printf(bio_err, "ERROR: Memory allocation\n");
         return;
     }
-    BIO_printf(bio_out, "Provided ENCODERs:\n");
-    OSSL_ENCODER_do_all_provided(NULL, collect_encoders, encoders);
-    sk_OSSL_ENCODER_sort(encoders);
+    BIO_printf(bio_out, "Provided ENCODER methods:\n");
+    OSSL_ENCODER_METHOD_do_all_provided(NULL, collect_encoder_meths,
+                                        encoder_meths);
+    sk_OSSL_ENCODER_METHOD_sort(encoder_meths);
 
-    for (i = 0; i < sk_OSSL_ENCODER_num(encoders); i++) {
-        OSSL_ENCODER *k = sk_OSSL_ENCODER_value(encoders, i);
+    for (i = 0; i < sk_OSSL_ENCODER_METHOD_num(encoder_meths); i++) {
+        OSSL_ENCODER_METHOD *k =
+            sk_OSSL_ENCODER_METHOD_value(encoder_meths, i);
         STACK_OF(OPENSSL_CSTRING) *names = NULL;
 
-        if (select_name != NULL && !OSSL_ENCODER_is_a(k, select_name))
+        if (select_name != NULL && !OSSL_ENCODER_METHOD_is_a(k, select_name))
             continue;
 
         names = sk_OPENSSL_CSTRING_new(name_cmp);
-        OSSL_ENCODER_names_do_all(k, collect_names, names);
+        OSSL_ENCODER_METHOD_names_do_all(k, collect_names, names);
         BIO_printf(bio_out, "  ");
         print_names(bio_out, names);
         sk_OPENSSL_CSTRING_free(names);
 
         BIO_printf(bio_out, " @ %s (%s)\n",
-                   OSSL_PROVIDER_name(OSSL_ENCODER_provider(k)),
-                   OSSL_ENCODER_properties(k));
+                   OSSL_PROVIDER_name(OSSL_ENCODER_METHOD_provider(k)),
+                   OSSL_ENCODER_METHOD_properties(k));
 
         if (verbose) {
             print_param_types("settable operation parameters",
-                              OSSL_ENCODER_settable_ctx_params(k), 4);
+                              OSSL_ENCODER_METHOD_settable_ctx_params(k), 4);
         }
     }
-    sk_OSSL_ENCODER_pop_free(encoders, OSSL_ENCODER_free);
+    sk_OSSL_ENCODER_METHOD_pop_free(encoder_meths, OSSL_ENCODER_METHOD_free);
 }
 
 /*
- * Decoders
+ * Decoder methods
  */
-DEFINE_STACK_OF(OSSL_DECODER)
-static int decoder_cmp(const OSSL_DECODER * const *a,
-                       const OSSL_DECODER * const *b)
+DEFINE_STACK_OF(OSSL_DECODER_METHOD)
+static int decoder_meth_cmp(const OSSL_DECODER_METHOD * const *a,
+                       const OSSL_DECODER_METHOD * const *b)
 {
-    int ret = OSSL_DECODER_number(*a) - OSSL_DECODER_number(*b);
+    int ret = OSSL_DECODER_METHOD_number(*a) - OSSL_DECODER_METHOD_number(*b);
 
     if (ret == 0)
-        ret = strcmp(OSSL_PROVIDER_name(OSSL_DECODER_provider(*a)),
-                     OSSL_PROVIDER_name(OSSL_DECODER_provider(*b)));
+        ret = strcmp(OSSL_PROVIDER_name(OSSL_DECODER_METHOD_provider(*a)),
+                     OSSL_PROVIDER_name(OSSL_DECODER_METHOD_provider(*b)));
     return ret;
 }
 
-static void collect_decoders(OSSL_DECODER *decoder, void *stack)
+static void collect_decoder_meths(OSSL_DECODER_METHOD *decoder_meth,
+                                  void *stack)
 {
-    STACK_OF(OSSL_DECODER) *decoder_stack = stack;
+    STACK_OF(OSSL_DECODER_METHOD) *decoder_meth_stack = stack;
 
-    sk_OSSL_DECODER_push(decoder_stack, decoder);
-    OSSL_DECODER_up_ref(decoder);
+    sk_OSSL_DECODER_METHOD_push(decoder_meth_stack, decoder_meth);
+    OSSL_DECODER_METHOD_up_ref(decoder_meth);
 }
 
-static void list_decoders(void)
+static void list_decoder_meths(void)
 {
-    STACK_OF(OSSL_DECODER) *decoders;
+    STACK_OF(OSSL_DECODER_METHOD) *decoder_meths;
     int i;
 
-    decoders = sk_OSSL_DECODER_new(decoder_cmp);
-    if (decoders == NULL) {
+    decoder_meths = sk_OSSL_DECODER_METHOD_new(decoder_meth_cmp);
+    if (decoder_meths == NULL) {
         BIO_printf(bio_err, "ERROR: Memory allocation\n");
         return;
     }
-    BIO_printf(bio_out, "Provided DECODERs:\n");
-    OSSL_DECODER_do_all_provided(NULL, collect_decoders,
-                                 decoders);
-    sk_OSSL_DECODER_sort(decoders);
+    BIO_printf(bio_out, "Provided DECODER methods:\n");
+    OSSL_DECODER_METHOD_do_all_provided(NULL, collect_decoder_meths,
+                                 decoder_meths);
+    sk_OSSL_DECODER_METHOD_sort(decoder_meths);
 
-    for (i = 0; i < sk_OSSL_DECODER_num(decoders); i++) {
-        OSSL_DECODER *k = sk_OSSL_DECODER_value(decoders, i);
+    for (i = 0; i < sk_OSSL_DECODER_METHOD_num(decoder_meths); i++) {
+        OSSL_DECODER_METHOD *k =
+            sk_OSSL_DECODER_METHOD_value(decoder_meths, i);
         STACK_OF(OPENSSL_CSTRING) *names = NULL;
 
-        if (select_name != NULL && !OSSL_DECODER_is_a(k, select_name))
+        if (select_name != NULL && !OSSL_DECODER_METHOD_is_a(k, select_name))
             continue;
 
         names = sk_OPENSSL_CSTRING_new(name_cmp);
-        OSSL_DECODER_names_do_all(k, collect_names, names);
+        OSSL_DECODER_METHOD_names_do_all(k, collect_names, names);
         BIO_printf(bio_out, "  ");
         print_names(bio_out, names);
         sk_OPENSSL_CSTRING_free(names);
 
         BIO_printf(bio_out, " @ %s (%s)\n",
-                   OSSL_PROVIDER_name(OSSL_DECODER_provider(k)),
-                   OSSL_DECODER_properties(k));
+                   OSSL_PROVIDER_name(OSSL_DECODER_METHOD_provider(k)),
+                   OSSL_DECODER_METHOD_properties(k));
 
         if (verbose) {
             print_param_types("settable operation parameters",
-                              OSSL_DECODER_settable_ctx_params(k), 4);
+                              OSSL_DECODER_METHOD_settable_ctx_params(k), 4);
         }
     }
-    sk_OSSL_DECODER_pop_free(decoders, OSSL_DECODER_free);
+    sk_OSSL_DECODER_METHOD_pop_free(decoder_meths, OSSL_DECODER_METHOD_free);
 }
 
 DEFINE_STACK_OF(EVP_KEYMGMT)
@@ -1550,9 +1555,9 @@ opthelp:
     if (todo.cipher_algorithms)
         list_ciphers();
     if (todo.encoder_algorithms)
-        list_encoders();
+        list_encoder_meths();
     if (todo.decoder_algorithms)
-        list_decoders();
+        list_decoder_meths();
     if (todo.keymanager_algorithms)
         list_keymanagers();
     if (todo.signature_algorithms)

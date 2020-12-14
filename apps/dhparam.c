@@ -233,7 +233,7 @@ int dhparam_main(int argc, char **argv)
         }
         tmppkey = NULL;
     } else {
-        OSSL_DECODER_CTX *decoderctx = NULL;
+        OSSL_DECODER *decoder = NULL;
         const char *keytype = "DH";
         int done;
 
@@ -252,18 +252,18 @@ int dhparam_main(int argc, char **argv)
             * if we're going to get DH or DHX (or DSA in the event of dsaparam).
             * We check that we got one of those key types afterwards.
             */
-            decoderctx
-                = OSSL_DECODER_CTX_new_by_EVP_PKEY(&tmppkey,
-                                                    (informat == FORMAT_ASN1)
-                                                    ? "DER" : "PEM",
-                                                    NULL,
-                                                    (informat == FORMAT_ASN1)
-                                                    ? keytype : NULL,
-                                                    OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS,
-                                                    NULL, NULL);
+            decoder
+                = OSSL_DECODER_new_by_EVP_PKEY(&tmppkey,
+                                               (informat == FORMAT_ASN1)
+                                               ? "DER" : "PEM",
+                                               NULL,
+                                               (informat == FORMAT_ASN1)
+                                               ? keytype : NULL,
+                                               OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS,
+                                               NULL, NULL);
 
-            if (decoderctx != NULL
-                    && !OSSL_DECODER_from_bio(decoderctx, in)
+            if (decoder != NULL
+                    && !OSSL_DECODER_from_bio(decoder, in)
                     && informat == FORMAT_ASN1
                     && strcmp(keytype, "DH") == 0) {
                 /*
@@ -283,7 +283,7 @@ int dhparam_main(int argc, char **argv)
                 if (BIO_reset(in) == 0)
                     done = 0;
             }
-            OSSL_DECODER_CTX_free(decoderctx);
+            OSSL_DECODER_free(decoder);
         } while (!done);
         if (tmppkey == NULL) {
             BIO_printf(bio_err, "Error, unable to load parameters\n");
@@ -326,19 +326,18 @@ int dhparam_main(int argc, char **argv)
     }
 
     if (!noout) {
-        OSSL_ENCODER_CTX *ectx =
-            OSSL_ENCODER_CTX_new_by_EVP_PKEY(pkey,
-                                             OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS,
-                                             outformat == FORMAT_ASN1
-                                             ? "DER" : "PEM",
-                                             NULL, NULL);
+        OSSL_ENCODER *encoder =
+            OSSL_ENCODER_new_by_EVP_PKEY(pkey,
+                                         OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS,
+                                         outformat == FORMAT_ASN1 ? "DER" : "PEM",
+                                         NULL, NULL);
 
-        if (ectx == NULL || !OSSL_ENCODER_to_bio(ectx, out)) {
-            OSSL_ENCODER_CTX_free(ectx);
+        if (encoder == NULL || !OSSL_ENCODER_to_bio(encoder, out)) {
+            OSSL_ENCODER_free(encoder);
             BIO_printf(bio_err, "Error, unable to write DH parameters\n");
             goto end;
         }
-        OSSL_ENCODER_CTX_free(ectx);
+        OSSL_ENCODER_free(encoder);
     }
     ret = 0;
  end:

@@ -24,16 +24,16 @@ static EVP_PKEY *pkey_type2param(int ptype, const void *pval,
         const ASN1_STRING *pstr = pval;
         const unsigned char *pm = pstr->data;
         size_t pmlen = (size_t)pstr->length;
-        OSSL_DECODER_CTX *ctx = NULL;
+        OSSL_DECODER *decoder = NULL;
         int selection = OSSL_KEYMGMT_SELECT_ALL_PARAMETERS;
 
-        ctx = OSSL_DECODER_CTX_new_by_EVP_PKEY(&pkey, "DER", NULL, "EC",
-                                               selection, libctx, propq);
-        if (ctx == NULL)
+        decoder = OSSL_DECODER_new_by_EVP_PKEY(&pkey, "DER", NULL, "EC",
+                                           selection, libctx, propq);
+        if (decoder == NULL)
             goto err;
 
-        OSSL_DECODER_from_data(ctx, &pm, &pmlen);
-        OSSL_DECODER_CTX_free(ctx);
+        OSSL_DECODER_from_data(decoder, &pm, &pmlen);
+        OSSL_DECODER_free(decoder);
     } else if (ptype == V_ASN1_OBJECT) {
         const ASN1_OBJECT *poid = pval;
         const char *groupname;

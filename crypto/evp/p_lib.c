@@ -1108,17 +1108,17 @@ static int print_pkey(const EVP_PKEY *pkey, BIO *out, int indent,
 {
     int pop_f_prefix;
     long saved_indent;
-    OSSL_ENCODER_CTX *ctx = NULL;
+    OSSL_ENCODER *encoder = NULL;
     int ret = -2;                /* default to unsupported */
 
     if (!print_set_indent(&out, &pop_f_prefix, &saved_indent, indent))
         return 0;
 
-    ctx = OSSL_ENCODER_CTX_new_by_EVP_PKEY(pkey, selection, "TEXT", NULL,
+    encoder = OSSL_ENCODER_new_by_EVP_PKEY(pkey, selection, "TEXT", NULL,
                                            propquery);
-    if (OSSL_ENCODER_CTX_get_num_encoders(ctx) != 0)
-        ret = OSSL_ENCODER_to_bio(ctx, out);
-    OSSL_ENCODER_CTX_free(ctx);
+    if (OSSL_ENCODER_get_num_methods(encoder) != 0)
+        ret = OSSL_ENCODER_to_bio(encoder, out);
+    OSSL_ENCODER_free(encoder);
 
     if (ret != -2)
         goto end;

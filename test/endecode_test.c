@@ -107,17 +107,17 @@ static EVP_PKEY *make_key(const char *type, EVP_PKEY *template,
  * (TEST_strn2_eq(), for example).
  */
 
-typedef int (encoder)(void **encoded, long *encoded_len,
-                      void *object, int selection,
-                      const char *output_type, const char *output_structure,
-                      const char *pass, const char *pcipher);
-typedef int (decoder)(void **object, void *encoded, long encoded_len,
-                      const char *keytype, const char *input_type,
-                      int selection, const char *pass);
-typedef int (tester)(const void *data1, size_t data1_len,
-                     const void *data2, size_t data2_len);
-typedef int (checker)(const char *type, const void *data, size_t data_len);
-typedef void (dumper)(const char *label, const void *data, size_t data_len);
+typedef int (encoder_fn)(void **encoded, long *encoded_len,
+                         void *object, int selection,
+                         const char *output_type, const char *output_structure,
+                         const char *pass, const char *pcipher);
+typedef int (decoder_fn)(void **object, void *encoded, long encoded_len,
+                         const char *keytype, const char *input_type,
+                         int selection, const char *pass);
+typedef int (tester_fn)(const void *data1, size_t data1_len,
+                        const void *data2, size_t data2_len);
+typedef int (checker_fn)(const char *type, const void *data, size_t data_len);
+typedef void (dumper_fn)(const char *label, const void *data, size_t data_len);
 
 #define FLAG_DECODE_WITH_TYPE   0x0001
 
@@ -125,9 +125,9 @@ static int test_encode_decode(const char *type, EVP_PKEY *pkey,
                               int selection, const char *output_type,
                               const char *output_structure,
                               const char *pass, const char *pcipher,
-                              encoder *encode_cb, decoder *decode_cb,
-                              tester *test_cb, checker *check_cb,
-                              dumper *dump_cb, int flags)
+                              encoder_fn *encode_cb, decoder_fn *decode_cb,
+                              tester_fn *test_cb, checker_fn *check_cb,
+                              dumper_fn *dump_cb, int flags)
 {
     void *encoded = NULL;
     long encoded_len = 0;
@@ -192,24 +192,24 @@ static int encode_EVP_PKEY_prov(void **encoded, long *encoded_len,
                                 const char *pass, const char *pcipher)
 {
     EVP_PKEY *pkey = object;
-    OSSL_ENCODER_CTX *ectx = NULL;
+    OSSL_ENCODER *encoder = NULL;
     BIO *mem_ser = NULL;
     BUF_MEM *mem_buf = NULL;
     const unsigned char *upass = (const unsigned char *)pass;
     int ok = 0;
 
-    if (!TEST_ptr(ectx = OSSL_ENCODER_CTX_new_by_EVP_PKEY(pkey, selection,
-                                                          output_type,
-                                                          output_structure,
-                                                          NULL))
-        || !TEST_int_gt(OSSL_ENCODER_CTX_get_num_encoders(ectx), 0)
+    if (!TEST_ptr(encoder = OSSL_ENCODER_new_by_EVP_PKEY(pkey, selection,
+                                                         output_type,
+                                                         output_structure,
+                                                         NULL))
+        || !TEST_int_gt(OSSL_ENCODER_get_num_methods(encoder), 0)
         || (pass != NULL
-            && !TEST_true(OSSL_ENCODER_CTX_set_passphrase(ectx, upass,
-                                                          strlen(pass))))
+            && !TEST_true(OSSL_ENCODER_set_passphrase(encoder, upass,
+                                                      strlen(pass))))
         || (pcipher != NULL
-            && !TEST_true(OSSL_ENCODER_CTX_set_cipher(ectx, pcipher, NULL)))
+            && !TEST_true(OSSL_ENCODER_set_cipher(encoder, pcipher, NULL)))
         || !TEST_ptr(mem_ser = BIO_new(BIO_s_mem()))
-        || !TEST_true(OSSL_ENCODER_to_bio(ectx, mem_ser))
+        || !TEST_true(OSSL_ENCODER_to_bio(encoder, mem_ser))
         || !TEST_true(BIO_get_mem_ptr(mem_ser, &mem_buf) > 0)
         || !TEST_ptr(*encoded = mem_buf->data)
         || !TEST_long_gt(*encoded_len = mem_buf->length, 0))
@@ -221,7 +221,7 @@ static int encode_EVP_PKEY_prov(void **encoded, long *encoded_len,
     ok = 1;
  end:
     BIO_free(mem_ser);
-    OSSL_ENCODER_CTX_free(ectx);
+    OSSL_ENCODER_free(encoder);
     return ok;
 }
 
@@ -230,7 +230,7 @@ static int decode_EVP_PKEY_prov(void **object, void *encoded, long encoded_len,
                                 int selection, const char *pass)
 {
     EVP_PKEY *pkey = NULL, *testpkey = NULL;
-    OSSL_DECODER_CTX *dctx = NULL;
+    OSSL_DECODER *decoder = NULL;
     BIO *encoded_bio = NULL;
     const unsigned char *upass = (const unsigned char *)pass;
     int ok = 0;
@@ -256,21 +256,21 @@ static int decode_EVP_PKEY_prov(void **object, void *encoded, long encoded_len,
         const char *testtype = (i == 0) ? input_type
                                         : ((i == 1) ? NULL : badtype);
 
-        if (!TEST_ptr(dctx = OSSL_DECODER_CTX_new_by_EVP_PKEY(&testpkey,
-                                                              testtype,
-                                                              NULL,
-                                                              keytype,
-                                                              selection,
-                                                              NULL, NULL))
+        if (!TEST_ptr(decoder = OSSL_DECODER_new_by_EVP_PKEY(&testpkey,
+                                                             testtype,
+                                                             NULL,
+                                                             keytype,
+                                                             selection,
+                                                             NULL, NULL))
             || (pass != NULL
-                && !OSSL_DECODER_CTX_set_passphrase(dctx, upass, strlen(pass)))
+                && !OSSL_DECODER_set_passphrase(decoder, upass, strlen(pass)))
             || !TEST_int_gt(BIO_reset(encoded_bio), 0)
                /* We expect to fail when using a bad input type */
-            || !TEST_int_eq(OSSL_DECODER_from_bio(dctx, encoded_bio),
+            || !TEST_int_eq(OSSL_DECODER_from_bio(decoder, encoded_bio),
                             (i == 2) ? 0 : 1))
             goto end;
-        OSSL_DECODER_CTX_free(dctx);
-        dctx = NULL;
+        OSSL_DECODER_free(decoder);
+        decoder = NULL;
 
         if (i == 0) {
             pkey = testpkey;
@@ -293,7 +293,7 @@ static int decode_EVP_PKEY_prov(void **object, void *encoded, long encoded_len,
     EVP_PKEY_free(pkey);
     EVP_PKEY_free(testpkey);
     BIO_free(encoded_bio);
-    OSSL_DECODER_CTX_free(dctx);
+    OSSL_DECODER_free(decoder);
     return ok;
 }
 

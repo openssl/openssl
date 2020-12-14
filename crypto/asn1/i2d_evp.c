@@ -29,7 +29,7 @@ static int i2d_provided(const EVP_PKEY *a, int selection,
                         const char *output_structures[],
                         unsigned char **pp)
 {
-    OSSL_ENCODER_CTX *ctx = NULL;
+    OSSL_ENCODER *encoder = NULL;
     int ret;
 
     for (ret = -1;
@@ -42,14 +42,14 @@ static int i2d_provided(const EVP_PKEY *a, int selection,
          */
         size_t len = INT_MAX;
 
-        ctx = OSSL_ENCODER_CTX_new_by_EVP_PKEY(a, selection, "DER",
+        encoder = OSSL_ENCODER_new_by_EVP_PKEY(a, selection, "DER",
                                                *output_structures, NULL);
-        if (ctx == NULL)
+        if (encoder == NULL)
             return -1;
-        if (OSSL_ENCODER_to_data(ctx, pp, &len))
+        if (OSSL_ENCODER_to_data(encoder, pp, &len))
             ret = (int)len;
-        OSSL_ENCODER_CTX_free(ctx);
-        ctx = NULL;
+        OSSL_ENCODER_free(encoder);
+        encoder = NULL;
     }
 
     if (ret == -1)

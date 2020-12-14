@@ -46,13 +46,12 @@
 
 # define IMPLEMENT_PEM_provided_write_body_vars(type, asn1, pq)         \
     int ret = 0;                                                        \
-    OSSL_ENCODER_CTX *ctx =                                             \
-        OSSL_ENCODER_CTX_new_by_##type(x, PEM_SELECTION_##asn1,         \
-                                       "PEM", PEM_STRUCTURE_##asn1,     \
-                                       (pq));                           \
+    OSSL_ENCODER *encoder =                                             \
+        OSSL_ENCODER_new_by_##type(x, PEM_SELECTION_##asn1,             \
+                                   "PEM", PEM_STRUCTURE_##asn1, (pq));  \
                                                                         \
-    if (OSSL_ENCODER_CTX_get_num_encoders(ctx) == 0) {                  \
-        OSSL_ENCODER_CTX_free(ctx);                                     \
+    if (OSSL_ENCODER_get_num_methods(encoder) == 0) {                   \
+        OSSL_ENCODER_free(encoder);                                     \
         goto legacy;                                                    \
     }
 # define IMPLEMENT_PEM_provided_write_body_pass()                       \
@@ -67,25 +66,25 @@
     }                                                                   \
     if (enc != NULL) {                                                  \
         ret = 0;                                                        \
-        if (OSSL_ENCODER_CTX_set_cipher(ctx, EVP_CIPHER_name(enc),      \
-                                        NULL)) {                        \
+        if (OSSL_ENCODER_set_cipher(encoder, EVP_CIPHER_name(enc),      \
+                                    NULL)) {                            \
             ret = 1;                                                    \
             if (kstr != NULL                                            \
-                && !OSSL_ENCODER_CTX_set_passphrase(ctx, kstr, klen))   \
+                && !OSSL_ENCODER_set_passphrase(encoder, kstr, klen))   \
                 ret = 0;                                                \
             else if (cb != NULL                                         \
-                     && !OSSL_ENCODER_CTX_set_pem_password_cb(ctx,      \
-                                                              cb, u))   \
+                     && !OSSL_ENCODER_set_pem_password_cb(encoder,      \
+                                                          cb, u))       \
                 ret = 0;                                                \
         }                                                               \
     }                                                                   \
     if (!ret) {                                                         \
-        OSSL_ENCODER_CTX_free(ctx);                                     \
+        OSSL_ENCODER_free(encoder);                                     \
         return 0;                                                       \
     }
 # define IMPLEMENT_PEM_provided_write_body_main(type, outtype)          \
-    ret = OSSL_ENCODER_to_##outtype(ctx, out);                          \
-    OSSL_ENCODER_CTX_free(ctx);                                         \
+    ret = OSSL_ENCODER_to_##outtype(encoder, out);                      \
+    OSSL_ENCODER_free(encoder);                                         \
     return ret
 # define IMPLEMENT_PEM_provided_write_body_fallback(str, asn1,          \
                                                     writename)          \
