@@ -246,7 +246,7 @@ Sets the xcghash in the associated KDF ctx.
 
 Sets the session ID in the associated KDF ctx.
 
-=item "type" (B<OSSL_KDF_PARAM_SSHKDF_TYPE>) <integer>
+=item "type" (B<OSSL_KDF_PARAM_SSHKDF_TYPE>) <UTF8 string>
 
 Sets the SSH KDF type parameter in the associated KDF ctx.
 There are six supported types:

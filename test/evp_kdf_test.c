@@ -1207,7 +1207,7 @@ static int test_kdf_sshkdf(void)
     int ret;
     EVP_KDF_CTX *kctx;
     OSSL_PARAM params[6], *p = params;
-    char kdftype = EVP_KDF_SSHKDF_TYPE_INITIAL_IV_CLI_TO_SRV;
+    char kdftype[] = EVP_KDF_SSHKDF_TYPE_INITIAL_IV_CLI_TO_SRV;
     unsigned char out[8];
     /* Test data from NIST CAVS 14.1 test vectors */
     static unsigned char key[] = {
@@ -1247,7 +1247,7 @@ static int test_kdf_sshkdf(void)
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SSHKDF_SESSION_ID,
                                              sessid, sizeof(sessid));
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_SSHKDF_TYPE,
-                                            &kdftype, sizeof(kdftype));
+                                            kdftype, sizeof(kdftype));
     *p = OSSL_PARAM_construct_end();
 
     ret =
