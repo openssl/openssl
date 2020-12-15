@@ -4132,7 +4132,7 @@ EVP_PKEY *SSL_CTX_get0_privatekey(const SSL_CTX *ctx)
         return NULL;
 }
 
-int *SSL_CTX_remove_cert_and_key(SSL_CTX *ctx)
+int SSL_CTX_remove_cert_and_key(SSL_CTX *ctx)
 {
     if(!ctx) {
         return 0;
@@ -4148,7 +4148,7 @@ int *SSL_CTX_remove_cert_and_key(SSL_CTX *ctx)
     ctx->cert->key = &(ctx->cert->pkeys[SSL_PKEY_RSA]);
 
     CRYPTO_THREAD_unlock(ctx->cert->lock);
-    
+
     return 1;
 } 
 

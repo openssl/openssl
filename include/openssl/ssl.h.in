@@ -2029,7 +2029,7 @@ struct evp_pkey_st *SSL_get_privatekey(const SSL *ssl);
 
 __owur X509 *SSL_CTX_get0_certificate(const SSL_CTX *ctx);
 __owur EVP_PKEY *SSL_CTX_get0_privatekey(const SSL_CTX *ctx);
-__owur int *SSL_CTX_remove_cert_and_key(SSL_CTX *ctx);
+__owur int SSL_CTX_remove_cert_and_key(SSL_CTX *ctx);
 
 void SSL_CTX_set_quiet_shutdown(SSL_CTX *ctx, int mode);
 __owur int SSL_CTX_get_quiet_shutdown(const SSL_CTX *ctx);
