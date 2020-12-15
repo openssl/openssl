@@ -66,7 +66,7 @@ const OPTIONS pkey_options[] = {
 
     OPT_SECTION("Output"),
     {"outform", OPT_OUTFORM, 'F', "Output format (DER or PEM)"},
-    {"passout", OPT_PASSOUT, 's', "Output file pass phrase source"},
+    {"passout", OPT_PASSOUT, 's', "Output PEM file pass phrase source"},
     {"out", OPT_OUT, '>', "Output file"},
     {"pubout", OPT_PUBOUT, '-', "Output public key, not private"},
     {"text_pub", OPT_TEXT_PUB, '-', "Only output public key components"},
@@ -194,6 +194,11 @@ int pkey_main(int argc, char **argv)
     private = !noout && !pubout ? 1 : 0;
     if (text && !pubtext)
         private = 1;
+
+    if (outformat == FORMAT_ASN1 && passoutarg != NULL) {
+        BIO_printf(bio_err, "The -passout option is not supported for DER output\n");
+        goto end;
+    }
 
     if (!app_passwd(passinarg, passoutarg, &passin, &passout)) {
         BIO_printf(bio_err, "Error getting passwords\n");

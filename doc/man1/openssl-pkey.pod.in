@@ -67,6 +67,8 @@ prompted for.
 =item B<-passin> I<arg>, B<-passout> I<arg>
 
 The password source for the input and output file.
+The -passout option is not supported for DER output.
+
 For more information about the format of B<arg>
 see L<openssl-passphrase-options(1)>.
 
