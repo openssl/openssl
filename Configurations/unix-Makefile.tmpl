@@ -589,7 +589,8 @@ uninstall_docs: uninstall_man_docs uninstall_html_docs
 install_fips: install_sw
 	@$(ECHO) "*** Installing FIPS module configuration"
 	@$(ECHO) "fipsinstall $(DESTDIR)$(MODULESDIR)/$(FIPSMODULENAME).cnf"
-	@openssl fipsinstall -module $(DESTDIR)$(MODULESDIR)/$(FIPSMODULENAME) \
+	@$(PERL) $(BLDDIR)/util/wrap.pl $(BLDDIR)/apps/openssl fipsinstall \
+		-module $(DESTDIR)$(MODULESDIR)/$(FIPSMODULENAME) \
 		-out $(DESTDIR)$(MODULESDIR)/$(FIPSMODULENAME).cnf \
 		-macopt 'hexkey:$(FIPSKEY)'
 
