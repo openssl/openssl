@@ -236,8 +236,12 @@ int dsa_main(int argc, char **argv)
         goto end;
     }
 
-    if (outformat == FORMAT_ASN1 || outformat == FORMAT_PEM)
-        output_structure = "type-specific";
+    if (outformat == FORMAT_ASN1 || outformat == FORMAT_PEM) {
+        if (pubout || pubin)
+            output_structure = "SubjectPublicKeyInfo";
+        else
+            output_structure = "type-specific";
+    }
 
     /* Select what you want in the output */
     if (pubout || pubin) {
