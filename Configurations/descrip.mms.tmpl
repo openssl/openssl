@@ -544,7 +544,7 @@ install_fips: install_sw
 	openssl fipsinstall -
 		-module ossl_installroot:[MODULES{- $sover_dirname.$target{pointer_size} -}.'arch']$(FIPSMODULENAME) -
 		-out ossl_installroot:[MODULES{- $sover_dirname.$target{pointer_size} -}.'arch']$(FIPSMODULENAME).cnf -
-		-macopt "key:$(FIPSKEY)"
+		-macopt "hexkey:$(FIPSKEY)"
 
 uninstall_fips: uninstall_sw
 	@ WRITE SYS$OUTPUT "*** Uninstalling FIPS module configuration"

@@ -591,7 +591,7 @@ install_fips: install_sw
 	@$(ECHO) "fipsinstall $(DESTDIR)$(MODULESDIR)/$(FIPSMODULENAME).cnf"
 	@openssl fipsinstall -module $(DESTDIR)$(MODULESDIR)/$(FIPSMODULENAME) \
 		-out $(DESTDIR)$(MODULESDIR)/$(FIPSMODULENAME).cnf \
-		-macopt 'key:$(FIPSKEY)'
+		-macopt 'hexkey:$(FIPSKEY)'
 
 uninstall_fips: uninstall_sw
 	@$(ECHO) "*** Uninstalling FIPS module configuration"
