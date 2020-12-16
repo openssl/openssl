@@ -30,6 +30,12 @@
  */
 #include <openssl/core_dispatch.h>
 
+#ifndef OPENSSL_NO_RC4
+# define DEFAULT_PVK_ENCR_STRENGTH      2
+#else
+# define DEFAULT_PVK_ENCR_STRENGTH      0
+#endif
+
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_INFORM, OPT_OUTFORM, OPT_ENGINE, OPT_IN, OPT_OUT,
@@ -69,8 +75,7 @@ const OPTIONS rsa_options[] = {
     {"traditional", OPT_TRADITIONAL, '-',
      "Use traditional format for private keys"},
 
-#if (!defined(OPENSSL_NO_DSA) || !defined(OPENSSL_NO_DEPRECATED_3_0)) \
-    && !defined(OPENSSL_NO_RC4)
+#ifndef OPENSSL_NO_RC4
     OPT_SECTION("PVK"),
     {"pvk-strong", OPT_PVK_STRONG, '-', "Enable 'Strong' PVK encoding level (default)"},
     {"pvk-weak", OPT_PVK_WEAK, '-', "Enable 'Weak' PVK encoding level"},
@@ -93,10 +98,7 @@ int rsa_main(int argc, char **argv)
     int private = 0;
     int informat = FORMAT_PEM, outformat = FORMAT_PEM, text = 0, check = 0;
     int noout = 0, modulus = 0, pubin = 0, pubout = 0, ret = 1;
-#if (!defined(OPENSSL_NO_DSA) || !defined(OPENSSL_NO_DEPRECATED_3_0)) \
-    && !defined(OPENSSL_NO_RC4)
-    int pvk_encr = 2;
-#endif
+    int pvk_encr = DEFAULT_PVK_ENCR_STRENGTH;
     OPTION_CHOICE o;
     int traditional = 0;
     const char *output_type = NULL;
@@ -154,11 +156,8 @@ int rsa_main(int argc, char **argv)
         case OPT_PVK_STRONG:    /* pvk_encr:= 2 */
         case OPT_PVK_WEAK:      /* pvk_encr:= 1 */
         case OPT_PVK_NONE:      /* pvk_encr:= 0 */
-#if (!defined(OPENSSL_NO_DSA) || !defined(OPENSSL_NO_DEPRECATED_3_0)) \
-    && !defined(OPENSSL_NO_RC4)
             pvk_encr = (o - OPT_PVK_NONE);
             break;
-#endif
         case OPT_NOOUT:
             noout = 1;
             break;

@@ -26,6 +26,12 @@
 #include <openssl/core_names.h>
 #include <openssl/core_dispatch.h>
 
+#ifndef OPENSSL_NO_RC4
+# define DEFAULT_PVK_ENCR_STRENGTH      2
+#else
+# define DEFAULT_PVK_ENCR_STRENGTH      0
+#endif
+
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_INFORM, OPT_OUTFORM, OPT_IN, OPT_OUT, OPT_ENGINE,
@@ -79,9 +85,7 @@ int dsa_main(int argc, char **argv)
     OPTION_CHOICE o;
     int informat = FORMAT_PEM, outformat = FORMAT_PEM, text = 0, noout = 0;
     int modulus = 0, pubin = 0, pubout = 0, ret = 1;
-#ifndef OPENSSL_NO_RC4
-    int pvk_encr = 2;
-#endif
+    int pvk_encr = DEFAULT_PVK_ENCR_STRENGTH;
     int private = 0;
     const char *output_type = NULL;
     const char *output_structure = NULL;
