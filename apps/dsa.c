@@ -187,7 +187,7 @@ int dsa_main(int argc, char **argv)
         goto end;
     }
     if (!EVP_PKEY_is_a(pkey, "DSA")) {
-        BIO_printf(bio_err, "Not an DSA key\n");
+        BIO_printf(bio_err, "Not a DSA key\n");
         goto end;
     }
 
