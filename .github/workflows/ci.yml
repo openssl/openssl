@@ -1,6 +1,6 @@
 name: GitHub CI
 
-on: [pull_request]
+on: [pull_request, push]
 
 # for some reason, this does not work:
 # variables:
