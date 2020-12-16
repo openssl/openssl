@@ -527,7 +527,7 @@ static varref cmp_vars[] = { /* must be in same order as enumerated above! */
 
     {&opt_oldcert}, {(char **)&opt_revreason},
 
-    {&opt_server}, {&opt_proxy}, {&opt_no_proxy}, {&opt_path},
+    {&opt_server}, {&opt_path}, {&opt_proxy}, {&opt_no_proxy},
     {(char **)&opt_msg_timeout}, {(char **)&opt_total_timeout},
 
     {&opt_trusted}, {&opt_untrusted}, {&opt_srvcert},
