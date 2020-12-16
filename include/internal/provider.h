@@ -47,10 +47,10 @@ int ossl_provider_disable_fallback_loading(OSSL_LIB_CTX *libctx);
 /*
  * Activate the Provider
  * If the Provider is a module, the module will be loaded
- * Inactivation is done by freeing the Provider
  */
 int ossl_provider_activate(OSSL_PROVIDER *prov);
-/* Check if the provider is available */
+int ossl_provider_deactivate(OSSL_PROVIDER *prov);
+/* Check if the provider is available (activated) */
 int ossl_provider_available(OSSL_PROVIDER *prov);
 
 /* Return pointer to the provider's context */

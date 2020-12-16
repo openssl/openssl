@@ -6,7 +6,7 @@ ossl_provider_find, ossl_provider_new, ossl_provider_up_ref,
 ossl_provider_free,
 ossl_provider_set_fallback, ossl_provider_set_module_path,
 ossl_provider_add_parameter,
-ossl_provider_activate, ossl_provider_available,
+ossl_provider_activate, ossl_provider_deactivate, ossl_provider_available,
 ossl_provider_ctx,
 ossl_provider_forall_loaded,
 ossl_provider_name, ossl_provider_dso,
@@ -36,9 +36,13 @@ ossl_provider_get_capabilities
  int ossl_provider_add_parameter(OSSL_PROVIDER *prov, const char *name,
                                  const char *value);
 
- /* Load and initialize the Provider */
+ /*
+  * Activate the Provider
+  * If the Provider is a module, the module will be loaded
+  */
  int ossl_provider_activate(OSSL_PROVIDER *prov);
- /* Check if provider is available */
+ int ossl_provider_deactivate(OSSL_PROVIDER *prov);
+ /* Check if provider is available (activated) */
  int ossl_provider_available(OSSL_PROVIDER *prov);
 
  /* Return pointer to the provider's context */
@@ -89,8 +93,8 @@ Provider objects are reference counted.
 Provider objects are initially inactive, i.e. they are only recorded
 in the store, but are not used.
 They are activated with the first call to ossl_provider_activate(),
-and are inactivated when ossl_provider_free() has been called as many
-times as ossl_provider_activate() has.
+and are deactivated with the last call to ossl_provider_deactivate().
+Activation affects a separate counter.
 
 =head2 Functions
 
@@ -127,11 +131,10 @@ ossl_provider_up_ref() increments the provider object I<prov>'s
 reference count.
 
 ossl_provider_free() decrements the provider object I<prov>'s
-reference count; if it drops below 2, the provider object is assumed
-to have fallen out of use and will be deactivated (its I<teardown>
-function is called); if it drops down to zero, I<prov> is assumed to
-have been taken out of the store, and the associated module will be
-unloaded if one was loaded, and I<prov> itself will be freed.
+reference count; when it drops to zero, the provider object is assumed
+to have fallen out of use and will be deinitialized (its I<teardown>
+function is called), and the associated module will be unloaded if one
+was loaded, and I<prov> itself will be freed.
 
 ossl_provider_set_fallback() marks an available provider I<prov> as
 fallback.
@@ -155,9 +158,9 @@ Only text parameters can be given, and it's up to the provider to
 interpret them.
 
 ossl_provider_activate() "activates" the provider for the given
-provider object I<prov>.
-What "activates" means depends on what type of provider object it
-is:
+provider object I<prov> by incrementing its activation count, flagging
+it as activated, and initializing it if it isn't already initialized.
+Initializing means one of the following:
 
 =over 4
 
@@ -174,6 +177,10 @@ will be located and loaded, then the symbol B<OSSL_provider_init> will
 be located in that module, and called.
 
 =back
+
+ossl_provider_deactivate() "deactivates" the provider for the given
+provider object I<prov> by decrementing its activation count.  When
+that count reaches zero, the activation flag is cleared.
 
 ossl_provider_available() activates all fallbacks if no provider is
 activated yet, then checks if given provider object I<prov> is
@@ -269,8 +276,9 @@ it has been incremented.
 
 ossl_provider_free() doesn't return any value.
 
-ossl_provider_set_module_path(), ossl_provider_set_fallback() and
-ossl_provider_activate() return 1 on success, or 0 on error.
+ossl_provider_set_module_path(), ossl_provider_set_fallback(),
+ossl_provider_activate() and ossl_provider_deactivate() return 1 on
+success, or 0 on error.
 
 ossl_provider_available() return 1 if the provider is available,
 otherwise 0.
