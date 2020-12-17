@@ -15,6 +15,10 @@
 # include <openssl/params.h>
 # include "prov/providercommon.h"
 
+/* Internal flags that can be queried */
+#define PROV_DIGEST_FLAG_XOF             0x0001
+#define PROV_DIGEST_FLAG_ALGID_ABSENT    0x0002
+
 # ifdef __cplusplus
 extern "C" {
 # endif
