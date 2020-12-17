@@ -226,9 +226,7 @@ int i2d_X509_REQ_bio(BIO *bp, const X509_REQ *req)
     return ASN1_item_i2d_bio(ASN1_ITEM_rptr(X509_REQ), bp, req);
 }
 
-#ifndef OPENSSL_NO_RSA
-
-# ifndef OPENSSL_NO_STDIO
+#ifndef OPENSSL_NO_STDIO
 RSA *d2i_RSAPrivateKey_fp(FILE *fp, RSA **rsa)
 {
     return ASN1_item_d2i_fp(ASN1_ITEM_rptr(RSAPrivateKey), fp, rsa);
@@ -260,7 +258,7 @@ int i2d_RSA_PUBKEY_fp(FILE *fp, const RSA *rsa)
 {
     return ASN1_i2d_fp((I2D_OF(void))i2d_RSA_PUBKEY, fp, rsa);
 }
-# endif
+#endif
 
 RSA *d2i_RSAPrivateKey_bio(BIO *bp, RSA **rsa)
 {
@@ -291,7 +289,6 @@ int i2d_RSA_PUBKEY_bio(BIO *bp, const RSA *rsa)
 {
     return ASN1_i2d_bio_of(RSA, i2d_RSA_PUBKEY, bp, rsa);
 }
-#endif
 
 #ifndef OPENSSL_NO_DSA
 # ifndef OPENSSL_NO_STDIO

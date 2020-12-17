@@ -2808,7 +2808,6 @@ static int tls_construct_cke_psk_preamble(SSL *s, WPACKET *pkt)
 
 static int tls_construct_cke_rsa(SSL *s, WPACKET *pkt)
 {
-#ifndef OPENSSL_NO_RSA
     unsigned char *encdata = NULL;
     EVP_PKEY *pkey = NULL;
     EVP_PKEY_CTX *pctx = NULL;
@@ -2886,10 +2885,6 @@ static int tls_construct_cke_rsa(SSL *s, WPACKET *pkt)
     EVP_PKEY_CTX_free(pctx);
 
     return 0;
-#else
-    SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-    return 0;
-#endif
 }
 
 static int tls_construct_cke_dhe(SSL *s, WPACKET *pkt)
@@ -3556,13 +3551,11 @@ int ssl3_check_cert_and_algorithm(SSL *s)
         return 0;
     }
 #endif
-#ifndef OPENSSL_NO_RSA
     if (alg_k & (SSL_kRSA | SSL_kRSAPSK) && idx != SSL_PKEY_RSA) {
         SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE,
                  SSL_R_MISSING_RSA_ENCRYPTING_CERT);
         return 0;
     }
-#endif
 #ifndef OPENSSL_NO_DH
     if ((alg_k & SSL_kDHE) && (s->s3.peer_tmp == NULL)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);

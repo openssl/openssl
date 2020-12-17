@@ -58,8 +58,6 @@ const OPTIONS *test_get_options(void)
     return test_options;
 }
 
-#if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DSA)                       \
-    || !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_RSA)
 static int pkey_get_bn_bytes(EVP_PKEY *pkey, const char *name,
                              unsigned char **out, size_t *out_len)
 {
@@ -85,10 +83,7 @@ err:
     BN_free(bn);
     return 0;
 }
-#endif
 
-#if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DSA)                        \
-    || !defined(OPENSSL_NO_RSA)
 static int sig_gen(EVP_PKEY *pkey, OSSL_PARAM *params, const char *digest_name,
                    const unsigned char *msg, size_t msg_len,
                    unsigned char **sig_out, size_t *sig_out_len)
@@ -114,7 +109,6 @@ err:
     EVP_MD_CTX_free(md_ctx);
     return ret;
 }
-#endif
 
 #ifndef OPENSSL_NO_EC
 static int ecdsa_keygen_test(int id)
@@ -1010,7 +1004,6 @@ err:
 #endif /* OPENSSL_NO_DH */
 
 
-#ifndef OPENSSL_NO_RSA
 static EVP_PKEY *rsa_keygen(int bits)
 {
     EVP_PKEY *key = NULL;
@@ -1302,7 +1295,6 @@ err:
     BN_CTX_free(bn_ctx);
     return ret;
 }
-#endif /* OPENSSL_NO_RSA */
 
 static int self_test_events(const OSSL_PARAM params[], void *varg)
 {
@@ -1443,13 +1435,11 @@ int setup_tests(void)
     ADD_ALL_TESTS(aes_ccm_enc_dec_test, OSSL_NELEM(aes_ccm_enc_data));
     ADD_ALL_TESTS(aes_gcm_enc_dec_test, OSSL_NELEM(aes_gcm_enc_data));
 
-#ifndef OPENSSL_NO_RSA
     ADD_ALL_TESTS(rsa_keygen_test, OSSL_NELEM(rsa_keygen_data));
     ADD_ALL_TESTS(rsa_siggen_test, OSSL_NELEM(rsa_siggen_data));
     ADD_ALL_TESTS(rsa_sigver_test, OSSL_NELEM(rsa_sigver_data));
     ADD_ALL_TESTS(rsa_decryption_primitive_test,
                   OSSL_NELEM(rsa_decrypt_prim_data));
-#endif /* OPENSSL_NO_RSA */
 
 #ifndef OPENSSL_NO_DH
     ADD_ALL_TESTS(dh_safe_prime_keygen_test,

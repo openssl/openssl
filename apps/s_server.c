@@ -48,9 +48,7 @@ typedef unsigned int u_int;
 #ifndef OPENSSL_NO_DH
 # include <openssl/dh.h>
 #endif
-#ifndef OPENSSL_NO_RSA
-# include <openssl/rsa.h>
-#endif
+#include <openssl/rsa.h>
 #ifndef OPENSSL_NO_SRP
 # include <openssl/srp.h>
 #endif

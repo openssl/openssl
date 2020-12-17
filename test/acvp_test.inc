@@ -1010,7 +1010,6 @@ static const struct dh_safe_prime_keyver_st dh_safe_prime_keyver_data[] = {
 
 #endif /* OPENSSL_NO_DH */
 
-#ifndef OPENSSL_NO_RSA
 struct rsa_keygen_st {
     size_t mod;
     const unsigned char *e;
@@ -1980,8 +1979,6 @@ static const struct rsa_decrypt_prim_st rsa_decrypt_prim_data[] = {
         ITM(rsa_decrypt_prim_1_ct),
     },
 };
-
-#endif /* OPENSSL_NO_RSA */
 
 struct drbg_st {
     const char *drbg_name;

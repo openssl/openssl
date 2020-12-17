@@ -25,9 +25,7 @@
 #include <openssl/pem.h>
 #include <openssl/bn.h>
 #include <openssl/lhash.h>
-#ifndef OPENSSL_NO_RSA
-# include <openssl/rsa.h>
-#endif
+#include <openssl/rsa.h>
 #ifndef OPENSSL_NO_DSA
 # include <openssl/dsa.h>
 #endif
@@ -939,7 +937,6 @@ int req_main(int argc, char **argv)
             goto end;
         }
         fprintf(stdout, "Modulus=");
-#ifndef OPENSSL_NO_RSA
         if (EVP_PKEY_is_a(tpubkey, "RSA")) {
             BIGNUM *n;
 
@@ -947,9 +944,9 @@ int req_main(int argc, char **argv)
             EVP_PKEY_get_bn_param(pkey, "n", &n);
             BN_print(out, n);
             BN_free(n);
-        } else
-#endif
+        } else {
             fprintf(stdout, "Wrong Algorithm type");
+        }
         fprintf(stdout, "\n");
     }
 
@@ -1596,7 +1593,6 @@ static EVP_PKEY_CTX *set_keygen_ctx(const char *gstr,
         EVP_PKEY_CTX_free(gctx);
         return NULL;
     }
-#ifndef OPENSSL_NO_RSA
     if ((*pkey_type == EVP_PKEY_RSA) && (keylen != -1)) {
         if (EVP_PKEY_CTX_set_rsa_keygen_bits(gctx, keylen) <= 0) {
             BIO_puts(bio_err, "Error setting RSA keysize\n");
@@ -1605,7 +1601,6 @@ static EVP_PKEY_CTX *set_keygen_ctx(const char *gstr,
             return NULL;
         }
     }
-#endif
 
     return gctx;
 }

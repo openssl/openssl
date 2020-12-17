@@ -1008,7 +1008,6 @@ static const ST_KAT_KAS st_kat_kas_tests[] =
 };
 #endif /* !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC) */
 
-#if !defined(OPENSSL_NO_RSA)
 /* RSA key data */
 static const unsigned char rsa_n[] = {
     0xDB, 0x10, 0x1A, 0xC2, 0xA3, 0xF1, 0xDC, 0xFF,
@@ -1275,8 +1274,6 @@ static const unsigned char rsa_asym_expected_encrypt[256] = {
     0x05, 0x52, 0x55, 0xc1, 0xc6, 0x06, 0x90, 0xab,
 };
 
-#endif /* OPENSSL_NO_RSA */
-
 #ifndef OPENSSL_NO_EC
 /* ECDSA key data */
 static const char ecd_curve_name[] = "secp224r1";
@@ -1433,7 +1430,6 @@ static const ST_KAT_PARAM dsa_key[] = {
 #endif /* OPENSSL_NO_DSA */
 
 static const ST_KAT_SIGN st_kat_sign_tests[] = {
-#ifndef OPENSSL_NO_RSA
     {
         OSSL_SELF_TEST_DESC_SIGN_RSA,
         "RSA",
@@ -1441,7 +1437,6 @@ static const ST_KAT_SIGN st_kat_sign_tests[] = {
         rsa_crt_key,
         ITM(rsa_expected_sig)
     },
-#endif /* OPENSSL_NO_RSA */
 #ifndef OPENSSL_NO_EC
     {
         OSSL_SELF_TEST_DESC_SIGN_ECDSA,
@@ -1469,7 +1464,6 @@ static const ST_KAT_SIGN st_kat_sign_tests[] = {
 };
 
 static const ST_KAT_ASYM_CIPHER st_kat_asym_cipher_tests[] = {
-#ifndef OPENSSL_NO_RSA
     {
         OSSL_SELF_TEST_DESC_ASYM_RSA_ENC,
         "RSA",
@@ -1497,5 +1491,4 @@ static const ST_KAT_ASYM_CIPHER st_kat_asym_cipher_tests[] = {
         ITM(rsa_asym_expected_encrypt),
         ITM(rsa_asym_plaintext_encrypt),
     },
-#endif /* OPENSSL_NO_RSA */
 };

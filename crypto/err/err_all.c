@@ -51,9 +51,7 @@ int err_load_crypto_strings_int(void)
 #ifndef OPENSSL_NO_ERR
         || err_load_ERR_strings_int() == 0 /* include error strings for SYSerr */
         || err_load_BN_strings_int() == 0
-# ifndef OPENSSL_NO_RSA
         || err_load_RSA_strings_int() == 0
-# endif
 # ifndef OPENSSL_NO_DH
         || err_load_DH_strings_int() == 0
 # endif

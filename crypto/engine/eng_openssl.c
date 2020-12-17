@@ -98,9 +98,7 @@ static int bind_helper(ENGINE *e)
         || !ENGINE_set_name(e, engine_openssl_name)
         || !ENGINE_set_destroy_function(e, openssl_destroy)
 #ifndef TEST_ENG_OPENSSL_NO_ALGORITHMS
-# ifndef OPENSSL_NO_RSA
         || !ENGINE_set_RSA(e, RSA_get_default_method())
-# endif
 # ifndef OPENSSL_NO_DSA
         || !ENGINE_set_DSA(e, DSA_get_default_method())
 # endif

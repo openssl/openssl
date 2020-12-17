@@ -481,10 +481,8 @@ typedef int (EVP_PBE_KEYGEN) (EVP_CIPHER_CTX *ctx, const char *pass,
                               int en_de);
 
 # ifndef OPENSSL_NO_DEPRECATED_3_0
-#  ifndef OPENSSL_NO_RSA
-#   define EVP_PKEY_assign_RSA(pkey,rsa) EVP_PKEY_assign((pkey),EVP_PKEY_RSA,\
+#  define EVP_PKEY_assign_RSA(pkey,rsa) EVP_PKEY_assign((pkey),EVP_PKEY_RSA,\
                                                          (rsa))
-#  endif
 # endif
 
 # ifndef OPENSSL_NO_DSA
@@ -765,7 +763,6 @@ int EVP_DigestVerifyUpdate(EVP_MD_CTX *ctx, const void *data, size_t dsize);
 __owur int EVP_DigestVerifyFinal(EVP_MD_CTX *ctx, const unsigned char *sig,
                                  size_t siglen);
 
-# ifndef OPENSSL_NO_RSA
 __owur int EVP_OpenInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
                         const unsigned char *ek, int ekl,
                         const unsigned char *iv, EVP_PKEY *priv);
@@ -775,7 +772,6 @@ __owur int EVP_SealInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
                         unsigned char **ek, int *ekl, unsigned char *iv,
                         EVP_PKEY **pubk, int npubk);
 __owur int EVP_SealFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl);
-# endif
 
 EVP_ENCODE_CTX *EVP_ENCODE_CTX_new(void);
 void EVP_ENCODE_CTX_free(EVP_ENCODE_CTX *ctx);
@@ -1243,7 +1239,6 @@ const unsigned char *EVP_PKEY_get0_siphash(const EVP_PKEY *pkey, size_t *len);
 # endif
 
 # ifndef OPENSSL_NO_DEPRECATED_3_0
-#  ifndef OPENSSL_NO_RSA
 struct rsa_st;
 OSSL_DEPRECATEDIN_3_0
 int EVP_PKEY_set1_RSA(EVP_PKEY *pkey, struct rsa_st *key);
@@ -1251,7 +1246,6 @@ OSSL_DEPRECATEDIN_3_0
 struct rsa_st *EVP_PKEY_get0_RSA(const EVP_PKEY *pkey);
 OSSL_DEPRECATEDIN_3_0
 struct rsa_st *EVP_PKEY_get1_RSA(EVP_PKEY *pkey);
-#  endif
 # endif
 # ifndef OPENSSL_NO_DSA
 struct dsa_st;

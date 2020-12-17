@@ -44,14 +44,12 @@ EVP_PKEY *d2i_PublicKey(int type, EVP_PKEY **a, const unsigned char **pp,
     }
 
     switch (EVP_PKEY_id(ret)) {
-#ifndef OPENSSL_NO_RSA
     case EVP_PKEY_RSA:
         if ((ret->pkey.rsa = d2i_RSAPublicKey(NULL, pp, length)) == NULL) {
             ERR_raise(ERR_LIB_ASN1, ERR_R_ASN1_LIB);
             goto err;
         }
         break;
-#endif
 #ifndef OPENSSL_NO_DSA
     case EVP_PKEY_DSA:
         /* TMP UGLY CAST */

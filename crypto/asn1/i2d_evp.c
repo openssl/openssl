@@ -107,10 +107,8 @@ int i2d_PublicKey(const EVP_PKEY *a, unsigned char **pp)
         return i2d_provided(a, EVP_PKEY_PUBLIC_KEY, output_structures, pp);
     }
     switch (EVP_PKEY_id(a)) {
-#ifndef OPENSSL_NO_RSA
     case EVP_PKEY_RSA:
         return i2d_RSAPublicKey(EVP_PKEY_get0_RSA(a), pp);
-#endif
 #ifndef OPENSSL_NO_DSA
     case EVP_PKEY_DSA:
         return i2d_DSAPublicKey(EVP_PKEY_get0_DSA(a), pp);

@@ -360,7 +360,6 @@ int i2d_PUBKEY(const EVP_PKEY *a, unsigned char **pp)
 /*
  * The following are equivalents but which return RSA and DSA keys
  */
-#ifndef OPENSSL_NO_RSA
 RSA *d2i_RSA_PUBKEY(RSA **a, const unsigned char **pp, long length)
 {
     EVP_PKEY *pkey;
@@ -400,7 +399,6 @@ int i2d_RSA_PUBKEY(const RSA *a, unsigned char **pp)
     EVP_PKEY_free(pktmp);
     return ret;
 }
-#endif
 
 #ifndef OPENSSL_NO_DSA
 DSA *d2i_DSA_PUBKEY(DSA **a, const unsigned char **pp, long length)

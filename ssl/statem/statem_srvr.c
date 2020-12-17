@@ -2856,7 +2856,6 @@ static int tls_process_cke_psk_preamble(SSL *s, PACKET *pkt)
 
 static int tls_process_cke_rsa(SSL *s, PACKET *pkt)
 {
-#ifndef OPENSSL_NO_RSA
     size_t outlen;
     PACKET enc_premaster;
     EVP_PKEY *rsa = NULL;
@@ -2950,11 +2949,6 @@ static int tls_process_cke_rsa(SSL *s, PACKET *pkt)
     OPENSSL_free(rsa_decrypt);
     EVP_PKEY_CTX_free(ctx);
     return ret;
-#else
-    /* Should never happen */
-    SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-    return 0;
-#endif
 }
 
 static int tls_process_cke_dhe(SSL *s, PACKET *pkt)

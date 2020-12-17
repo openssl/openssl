@@ -600,9 +600,7 @@ struct evp_pkey_st {
     ENGINE *pmeth_engine; /* If not NULL public key ENGINE to use */
     union {
         void *ptr;
-#  ifndef OPENSSL_NO_RSA
         struct rsa_st *rsa;     /* RSA */
-#  endif
 #  ifndef OPENSSL_NO_DSA
         struct dsa_st *dsa;     /* DSA */
 #  endif

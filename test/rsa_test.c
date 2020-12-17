@@ -27,16 +27,9 @@
 
 #include "testutil.h"
 
-#ifdef OPENSSL_NO_RSA
-int setup_tests(void)
-{
-    /* No tests */
-    return 1;
-}
-#else
-# include <openssl/rsa.h>
+#include <openssl/rsa.h>
 
-# define SetKey \
+#define SetKey \
     RSA_set0_key(key,                                           \
                  BN_bin2bn(n, sizeof(n)-1, NULL),               \
                  BN_bin2bn(e, sizeof(e)-1, NULL),               \
@@ -436,4 +429,3 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_rsa_security_bit, OSSL_NELEM(rsa_security_bits_cases));
     return 1;
 }
-#endif

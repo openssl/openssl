@@ -34,9 +34,7 @@
 #include <openssl/pkcs12.h>
 #include <openssl/ui.h>
 #include <openssl/safestack.h>
-#ifndef OPENSSL_NO_RSA
-# include <openssl/rsa.h>
-#endif
+#include <openssl/rsa.h>
 #include <openssl/bn.h>
 #include <openssl/ssl.h>
 #include <openssl/store.h>
