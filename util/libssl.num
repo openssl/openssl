@@ -18,14 +18,14 @@ SSL_CTX_sess_get_get_cb                 18	3_0_0	EXIST::FUNCTION:
 SSL_CTX_get_default_passwd_cb_userdata  19	3_0_0	EXIST::FUNCTION:
 SSL_set_tmp_dh_callback                 20	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,DH
 SSL_CTX_get_verify_depth                21	3_0_0	EXIST::FUNCTION:
-SSL_CTX_use_RSAPrivateKey_file          22	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,RSA
+SSL_CTX_use_RSAPrivateKey_file          22	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 SSL_use_PrivateKey_file                 23	3_0_0	EXIST::FUNCTION:
 SSL_set_generate_session_id             24	3_0_0	EXIST::FUNCTION:
 SSL_get_ex_data_X509_STORE_CTX_idx      25	3_0_0	EXIST::FUNCTION:
 SSL_get_quiet_shutdown                  26	3_0_0	EXIST::FUNCTION:
 SSL_dane_enable                         27	3_0_0	EXIST::FUNCTION:
 SSL_COMP_add_compression_method         28	3_0_0	EXIST::FUNCTION:
-SSL_CTX_use_RSAPrivateKey               29	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,RSA
+SSL_CTX_use_RSAPrivateKey               29	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 SSL_CTX_sess_get_new_cb                 30	3_0_0	EXIST::FUNCTION:
 d2i_SSL_SESSION                         31	3_0_0	EXIST::FUNCTION:
 SSL_use_PrivateKey_ASN1                 32	3_0_0	EXIST::FUNCTION:
@@ -65,7 +65,7 @@ SSL_set_security_level                  65	3_0_0	EXIST::FUNCTION:
 DTLSv1_2_method                         66	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_1_1_0,DTLS1_2_METHOD
 SSL_get_fd                              67	3_0_0	EXIST::FUNCTION:
 SSL_get1_session                        68	3_0_0	EXIST::FUNCTION:
-SSL_use_RSAPrivateKey                   69	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,RSA
+SSL_use_RSAPrivateKey                   69	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 SSL_CTX_set_srp_cb_arg                  70	3_0_0	EXIST::FUNCTION:SRP
 SSL_CTX_add_session                     71	3_0_0	EXIST::FUNCTION:
 SSL_get_srp_N                           72	3_0_0	EXIST::FUNCTION:SRP
@@ -168,7 +168,7 @@ TLSv1_1_server_method                   168	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_1
 PEM_write_bio_SSL_SESSION               169	3_0_0	EXIST::FUNCTION:
 SSL_write                               170	3_0_0	EXIST::FUNCTION:
 SSL_set1_host                           171	3_0_0	EXIST::FUNCTION:
-SSL_use_RSAPrivateKey_file              172	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,RSA
+SSL_use_RSAPrivateKey_file              172	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 SSL_CTX_get_info_callback               173	3_0_0	EXIST::FUNCTION:
 SSL_get0_peername                       174	3_0_0	EXIST::FUNCTION:
 SSL_set_srp_server_param                175	3_0_0	EXIST::FUNCTION:SRP
@@ -193,7 +193,7 @@ SSL_CTX_dane_mtype_set                  193	3_0_0	EXIST::FUNCTION:
 SSL_get_wfd                             194	3_0_0	EXIST::FUNCTION:
 SSL_get_ssl_method                      195	3_0_0	EXIST::FUNCTION:
 SSL_set_verify_result                   196	3_0_0	EXIST::FUNCTION:
-SSL_use_RSAPrivateKey_ASN1              197	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,RSA
+SSL_use_RSAPrivateKey_ASN1              197	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 SSL_CIPHER_get_name                     198	3_0_0	EXIST::FUNCTION:
 OPENSSL_init_ssl                        199	3_0_0	EXIST::FUNCTION:
 SSL_dup                                 200	3_0_0	EXIST::FUNCTION:
@@ -320,7 +320,7 @@ SSL_clear_options                       320	3_0_0	EXIST::FUNCTION:
 SSL_CTX_use_PrivateKey                  321	3_0_0	EXIST::FUNCTION:
 SSL_get_info_callback                   322	3_0_0	EXIST::FUNCTION:
 SSL_CTX_use_psk_identity_hint           323	3_0_0	EXIST::FUNCTION:PSK
-SSL_CTX_use_RSAPrivateKey_ASN1          324	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,RSA
+SSL_CTX_use_RSAPrivateKey_ASN1          324	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 SSL_CTX_use_PrivateKey_ASN1             325	3_0_0	EXIST::FUNCTION:
 SSL_CTX_get0_privatekey                 326	3_0_0	EXIST::FUNCTION:
 BIO_f_ssl                               327	3_0_0	EXIST::FUNCTION:
