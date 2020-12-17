@@ -830,23 +830,27 @@ static void set_legacy_nid(const char *name, void *vlegacy_nid)
 
 static int evp_md_cache_constants(EVP_MD *md)
 {
-    int ok;
+    int ok, xof = 0, algid_absent = 0;
     size_t blksz = 0;
     size_t mdsize = 0;
-    unsigned long flags = 0;
-    OSSL_PARAM params[4];
+    OSSL_PARAM params[5];
 
     params[0] = OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_BLOCK_SIZE, &blksz);
     params[1] = OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_SIZE, &mdsize);
-    params[2] = OSSL_PARAM_construct_ulong(OSSL_DIGEST_PARAM_FLAGS, &flags);
-    params[3] = OSSL_PARAM_construct_end();
+    params[2] = OSSL_PARAM_construct_int(OSSL_DIGEST_PARAM_XOF, &xof);
+    params[3] = OSSL_PARAM_construct_int(OSSL_DIGEST_PARAM_ALGID_ABSENT,
+                                         &algid_absent);
+    params[4] = OSSL_PARAM_construct_end();
     ok = evp_do_md_getparams(md, params);
     if (mdsize > INT_MAX || blksz > INT_MAX)
         ok = 0;
     if (ok) {
         md->block_size = (int)blksz;
         md->md_size = (int)mdsize;
-        md->flags = flags;
+        if (xof)
+            md->flags |= EVP_MD_FLAG_XOF;
+        if (algid_absent)
+            md->flags |= EVP_MD_FLAG_DIGALGID_ABSENT;
     }
     return ok;
 }

@@ -731,30 +731,6 @@ unsigned long EVP_MD_flags(const EVP_MD *md)
     return md->flags;
 }
 
-int evp_md_cache_constants(EVP_MD *md)
-{
-    int ok, xof = 0, algid_absent = 0;
-    size_t sz = 0, blksz = 0;
-    OSSL_PARAM params[5];
-
-    params[0] = OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_BLOCK_SIZE, &blksz);
-    params[1] = OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_SIZE, &sz);
-    params[2] = OSSL_PARAM_construct_int(OSSL_DIGEST_PARAM_XOF, &xof);
-    params[3] = OSSL_PARAM_construct_int(OSSL_DIGEST_PARAM_ALGID_ABSENT,
-                                         &algid_absent);
-    params[4] = OSSL_PARAM_construct_end();
-    ok = evp_do_md_getparams(md, params);
-    if (ok) {
-        md->block_size = blksz;
-        md->md_size = sz;
-        if (xof)
-            md->flags |= EVP_MD_FLAG_XOF;
-        if (algid_absent)
-            md->flags |= EVP_MD_FLAG_DIGALGID_ABSENT;
-    }
-    return ok;
-}
-
 EVP_MD *EVP_MD_meth_new(int md_type, int pkey_type)
 {
     EVP_MD *md = evp_md_new();
