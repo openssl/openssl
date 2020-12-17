@@ -26,9 +26,8 @@
 
 #include "testutil.h"
 
-#ifndef OPENSSL_NO_RSA
-# include <openssl/rsa.h>
-# include "crypto/rsa.h"
+#include <openssl/rsa.h>
+#include "crypto/rsa.h"
 
 #define NUM_EXTRA_PRIMES 1
 
@@ -289,12 +288,9 @@ err:
     RSA_free(key);
     return ret;
 }
-#endif
 
 int setup_tests(void)
 {
-#ifndef OPENSSL_NO_RSA
     ADD_ALL_TESTS(test_rsa_mp, 2);
-#endif
     return 1;
 }

@@ -354,10 +354,6 @@ int ssl_load_ciphers(SSL_CTX *ctx)
     ctx->disabled_mkey_mask = 0;
     ctx->disabled_auth_mask = 0;
 
-#ifdef OPENSSL_NO_RSA
-    ctx->disabled_mkey_mask |= SSL_kRSA | SSL_kRSAPSK;
-    dctx->isabled_auth_mask |= SSL_aRSA;
-#endif
 #ifdef OPENSSL_NO_DSA
     ctx->disabled_auth_mask |= SSL_aDSS;
 #endif

@@ -1252,9 +1252,7 @@ static int bind_devcrypto(ENGINE *e) {
  * /Richard Levitte, 2017-05-11
  */
 #if 0
-# ifndef OPENSSL_NO_RSA
         && ENGINE_set_RSA(e, devcrypto_rsa)
-# endif
 # ifndef OPENSSL_NO_DSA
         && ENGINE_set_DSA(e, devcrypto_dsa)
 # endif

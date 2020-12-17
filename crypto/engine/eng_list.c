@@ -250,9 +250,7 @@ static void engine_cpy(ENGINE *dest, const ENGINE *src)
 {
     dest->id = src->id;
     dest->name = src->name;
-#ifndef OPENSSL_NO_RSA
     dest->rsa_meth = src->rsa_meth;
-#endif
 #ifndef OPENSSL_NO_DSA
     dest->dsa_meth = src->dsa_meth;
 #endif

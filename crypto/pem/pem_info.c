@@ -124,9 +124,7 @@ STACK_OF(X509_INFO)
                 goto start;
             }
             pp = &(xi->crl);
-        } else
-#ifndef OPENSSL_NO_RSA
-        if (strcmp(name, PEM_STRING_RSA) == 0) {
+        } else if (strcmp(name, PEM_STRING_RSA) == 0) {
             d2i = (D2I_OF(void)) d2i_RSAPrivateKey;
             if (xi->x_pkey != NULL) {
                 if (!sk_X509_INFO_push(ret, xi))
@@ -147,7 +145,6 @@ STACK_OF(X509_INFO)
             if ((int)strlen(header) > 10) /* assume encrypted */
                 raw = 1;
         } else
-#endif
 #ifndef OPENSSL_NO_DSA
         if (strcmp(name, PEM_STRING_DSA) == 0) {
             d2i = (D2I_OF(void)) d2i_DSAPrivateKey;
@@ -335,13 +332,11 @@ int PEM_X509_INFO_write_bio(BIO *bp, const X509_INFO *xi, EVP_CIPHER *enc,
                 goto err;
         } else {
             /* Add DSA/DH */
-#ifndef OPENSSL_NO_RSA
             /* normal optionally encrypted stuff */
             if (PEM_write_bio_RSAPrivateKey(bp,
                                             EVP_PKEY_get0_RSA(xi->x_pkey->dec_pkey),
                                             enc, kstr, klen, cb, u) <= 0)
                 goto err;
-#endif
         }
     }
 

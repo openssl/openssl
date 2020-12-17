@@ -13,10 +13,8 @@
  * is used to search it.
  */
 static const EVP_PKEY_ASN1_METHOD *standard_methods[] = {
-#ifndef OPENSSL_NO_RSA
     &rsa_asn1_meths[0],
     &rsa_asn1_meths[1],
-#endif
 #ifndef OPENSSL_NO_DH
     &dh_asn1_meth,
 #endif
@@ -30,9 +28,7 @@ static const EVP_PKEY_ASN1_METHOD *standard_methods[] = {
 #ifndef OPENSSL_NO_EC
     &eckey_asn1_meth,
 #endif
-#ifndef OPENSSL_NO_RSA
     &rsa_pss_asn1_meth,
-#endif
 #ifndef OPENSSL_NO_DH
     &dhx_asn1_meth,
 #endif

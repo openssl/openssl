@@ -25,15 +25,8 @@
 
 #include "testutil.h"
 
-#ifdef OPENSSL_NO_RSA
-int setup_tests(void)
-{
-    /* No tests */
-    return 1;
-}
-#else
-# include "rsa_local.h"
-# include <openssl/rsa.h>
+#include "rsa_local.h"
+#include <openssl/rsa.h>
 
 /* taken from RSA2 cavs data */
 static const unsigned char cav_e[] = {
@@ -550,4 +543,3 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_sp80056b_keygen, (int)OSSL_NELEM(keygen_size));
     return 1;
 }
-#endif

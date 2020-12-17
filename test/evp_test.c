@@ -3654,10 +3654,6 @@ static int is_digest_disabled(const char *name)
 
 static int is_pkey_disabled(const char *name)
 {
-#ifdef OPENSSL_NO_RSA
-    if (STR_STARTS_WITH(name, "RSA"))
-        return 1;
-#endif
 #ifdef OPENSSL_NO_EC
     if (STR_STARTS_WITH(name, "EC"))
         return 1;

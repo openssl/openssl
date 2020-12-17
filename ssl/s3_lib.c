@@ -4386,20 +4386,16 @@ int ssl3_get_req_cert_type(SSL *s, WPACKET *pkt)
 
     if ((s->version == SSL3_VERSION) && (alg_k & SSL_kDHE)) {
 #ifndef OPENSSL_NO_DH
-# ifndef OPENSSL_NO_RSA
         if (!WPACKET_put_bytes_u8(pkt, SSL3_CT_RSA_EPHEMERAL_DH))
             return 0;
-# endif
 # ifndef OPENSSL_NO_DSA
         if (!WPACKET_put_bytes_u8(pkt, SSL3_CT_DSS_EPHEMERAL_DH))
             return 0;
 # endif
 #endif                          /* !OPENSSL_NO_DH */
     }
-#ifndef OPENSSL_NO_RSA
     if (!(alg_a & SSL_aRSA) && !WPACKET_put_bytes_u8(pkt, SSL3_CT_RSA_SIGN))
         return 0;
-#endif
 #ifndef OPENSSL_NO_DSA
     if (!(alg_a & SSL_aDSS) && !WPACKET_put_bytes_u8(pkt, SSL3_CT_DSS_SIGN))
         return 0;
