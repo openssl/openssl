@@ -24,7 +24,6 @@ typedef struct prov_cipher_hw_aes_siv_st {
 typedef struct prov_siv_ctx_st {
     unsigned int mode;       /* The mode that we are using */
     unsigned int enc : 1;    /* Set to 1 if we are encrypting or 0 otherwise */
-    uint64_t flags;
     size_t keylen;           /* The input keylength (twice the alg key length) */
     size_t taglen;           /* the taglen is the same as the sivlen */
     SIV128_CONTEXT siv;
