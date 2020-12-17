@@ -13,9 +13,7 @@
 
 #define DES_BLOCK_SIZE 8
 #define TDES_IVLEN 8
-
-/* TODO(3.0) Figure out what flags need to be here */
-#define TDES_FLAGS (EVP_CIPH_RAND_KEY)
+#define TDES_FLAGS 0
 
 typedef struct prov_tdes_ctx_st {
     PROV_CIPHER_CTX base;      /* Must be first */

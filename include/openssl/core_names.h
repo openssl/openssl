@@ -69,7 +69,10 @@ extern "C" {
 #define OSSL_CIPHER_PARAM_TLS_MAC_SIZE         "tls-mac-size" /* size_t */
 #define OSSL_CIPHER_PARAM_MODE                 "mode"         /* uint */
 #define OSSL_CIPHER_PARAM_BLOCK_SIZE           "blocksize"    /* size_t */
-#define OSSL_CIPHER_PARAM_FLAGS                "flags"        /* ulong */
+#define OSSL_CIPHER_PARAM_AEAD                 "aead"         /* int, 0 or 1 */
+#define OSSL_CIPHER_PARAM_CUSTOM_IV            "custom-iv"    /* int, 0 or 1 */
+#define OSSL_CIPHER_PARAM_CTS                  "cts"          /* int, 0 or 1 */
+#define OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK      "tls-multi"    /* int, 0 or 1 */
 #define OSSL_CIPHER_PARAM_KEYLEN               "keylen"       /* size_t */
 #define OSSL_CIPHER_PARAM_IVLEN                "ivlen"        /* size_t */
 #define OSSL_CIPHER_PARAM_IV                   "iv"           /* octet_string OR octet_ptr */
@@ -115,13 +118,14 @@ extern "C" {
 #define OSSL_CIPHER_CTS_MODE_CS3 "CS3"
 
 /* digest parameters */
-#define OSSL_DIGEST_PARAM_XOFLEN     "xoflen"    /* size_t */
-#define OSSL_DIGEST_PARAM_SSL3_MS    "ssl3-ms"   /* octet string */
-#define OSSL_DIGEST_PARAM_PAD_TYPE   "pad_type"  /* uint */
-#define OSSL_DIGEST_PARAM_MICALG     "micalg"    /* utf8 string */
-#define OSSL_DIGEST_PARAM_BLOCK_SIZE "blocksize" /* size_t */
-#define OSSL_DIGEST_PARAM_SIZE       "size"      /* size_t */
-#define OSSL_DIGEST_PARAM_FLAGS      "flags"     /* ulong */
+#define OSSL_DIGEST_PARAM_XOFLEN       "xoflen"        /* size_t */
+#define OSSL_DIGEST_PARAM_SSL3_MS      "ssl3-ms"       /* octet string */
+#define OSSL_DIGEST_PARAM_PAD_TYPE     "pad-type"      /* uint */
+#define OSSL_DIGEST_PARAM_MICALG       "micalg"        /* utf8 string */
+#define OSSL_DIGEST_PARAM_BLOCK_SIZE   "blocksize"     /* size_t */
+#define OSSL_DIGEST_PARAM_SIZE         "size"          /* size_t */
+#define OSSL_DIGEST_PARAM_XOF          "xof"           /* int, 0 or 1 */
+#define OSSL_DIGEST_PARAM_ALGID_ABSENT "algid-absent"  /* int, 0 or 1 */
 
 /* Known DIGEST names (not a complete list) */
 #define OSSL_DIGEST_NAME_MD5            "MD5"

@@ -20,8 +20,7 @@
 #include "prov/providercommon.h"
 #include "prov/providercommonerr.h"
 
-/* TODO(3.0) Figure out what flags need to be here */
-#define DES_FLAGS (EVP_CIPH_RAND_KEY)
+#define DES_FLAGS 0
 
 static OSSL_FUNC_cipher_freectx_fn des_freectx;
 static OSSL_FUNC_cipher_encrypt_init_fn des_einit;

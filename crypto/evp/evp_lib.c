@@ -333,29 +333,41 @@ int EVP_CIPHER_type(const EVP_CIPHER *ctx)
 
 int evp_cipher_cache_constants(EVP_CIPHER *cipher)
 {
-    int ok;
+    int ok, aead = 0, custom_iv = 0, cts = 0, multiblock = 0;
     size_t ivlen = 0;
     size_t blksz = 0;
     size_t keylen = 0;
     unsigned int mode = 0;
-    unsigned long flags = 0;
-    OSSL_PARAM params[6];
+    OSSL_PARAM params[9];
 
     params[0] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_BLOCK_SIZE, &blksz);
     params[1] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_IVLEN, &ivlen);
     params[2] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_KEYLEN, &keylen);
     params[3] = OSSL_PARAM_construct_uint(OSSL_CIPHER_PARAM_MODE, &mode);
-    params[4] = OSSL_PARAM_construct_ulong(OSSL_CIPHER_PARAM_FLAGS, &flags);
-    params[5] = OSSL_PARAM_construct_end();
+    params[4] = OSSL_PARAM_construct_int(OSSL_CIPHER_PARAM_AEAD, &aead);
+    params[5] = OSSL_PARAM_construct_int(OSSL_CIPHER_PARAM_CUSTOM_IV,
+                                         &custom_iv);
+    params[6] = OSSL_PARAM_construct_int(OSSL_CIPHER_PARAM_CTS, &cts);
+    params[7] = OSSL_PARAM_construct_int(OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK,
+                                         &multiblock);
+    params[8] = OSSL_PARAM_construct_end();
     ok = evp_do_ciph_getparams(cipher, params);
     if (ok) {
-        /* Provided implementations may have a custom cipher_cipher */
-        if (cipher->prov != NULL && cipher->ccipher != NULL)
-            flags |= EVP_CIPH_FLAG_CUSTOM_CIPHER;
         cipher->block_size = blksz;
         cipher->iv_len = ivlen;
         cipher->key_len = keylen;
-        cipher->flags = flags | mode;
+        cipher->flags = mode;
+        if (aead)
+            cipher->flags |= EVP_CIPH_FLAG_AEAD_CIPHER;
+        if (custom_iv)
+            cipher->flags |= EVP_CIPH_CUSTOM_IV;
+        if (cts)
+            cipher->flags |= EVP_CIPH_FLAG_CTS;
+        if (multiblock)
+            cipher->flags |= EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK;
+        /* Provided implementations may have a custom cipher_cipher */
+        if (cipher->prov != NULL && cipher->ccipher != NULL)
+            cipher->flags |= EVP_CIPH_FLAG_CUSTOM_CIPHER;
     }
     return ok;
 }
@@ -686,11 +698,6 @@ const OSSL_PROVIDER *EVP_MD_provider(const EVP_MD *md)
     return md->prov;
 }
 
-int EVP_MD_block_size(const EVP_MD *md)
-{
-    return md->block_size;
-}
-
 int EVP_MD_type(const EVP_MD *md)
 {
     return md->type;
@@ -699,6 +706,15 @@ int EVP_MD_type(const EVP_MD *md)
 int EVP_MD_pkey_type(const EVP_MD *md)
 {
     return md->pkey_type;
+}
+
+int EVP_MD_block_size(const EVP_MD *md)
+{
+    if (md == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_MESSAGE_DIGEST_IS_NULL);
+        return -1;
+    }
+    return md->block_size;
 }
 
 int EVP_MD_size(const EVP_MD *md)
@@ -713,6 +729,30 @@ int EVP_MD_size(const EVP_MD *md)
 unsigned long EVP_MD_flags(const EVP_MD *md)
 {
     return md->flags;
+}
+
+int evp_md_cache_constants(EVP_MD *md)
+{
+    int ok, xof = 0, algid_absent = 0;
+    size_t sz = 0, blksz = 0;
+    OSSL_PARAM params[5];
+
+    params[0] = OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_BLOCK_SIZE, &blksz);
+    params[1] = OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_SIZE, &sz);
+    params[2] = OSSL_PARAM_construct_int(OSSL_DIGEST_PARAM_XOF, &xof);
+    params[3] = OSSL_PARAM_construct_int(OSSL_DIGEST_PARAM_ALGID_ABSENT,
+                                         &algid_absent);
+    params[4] = OSSL_PARAM_construct_end();
+    ok = evp_do_md_getparams(md, params);
+    if (ok) {
+        md->block_size = blksz;
+        md->md_size = sz;
+        if (xof)
+            md->flags |= EVP_MD_FLAG_XOF;
+        if (algid_absent)
+            md->flags |= EVP_MD_FLAG_DIGALGID_ABSENT;
+    }
+    return ok;
 }
 
 EVP_MD *EVP_MD_meth_new(int md_type, int pkey_type)

@@ -19,14 +19,8 @@
 #define CHACHA20_POLY1305_BLKLEN 1
 #define CHACHA20_POLY1305_MAX_IVLEN 12
 #define CHACHA20_POLY1305_MODE 0
-/* TODO(3.0) Figure out what flags are required */
-#define CHACHA20_POLY1305_FLAGS (EVP_CIPH_FLAG_AEAD_CIPHER                     \
-                                | EVP_CIPH_ALWAYS_CALL_INIT                    \
-                                | EVP_CIPH_CTRL_INIT                           \
-                                | EVP_CIPH_CUSTOM_COPY                         \
-                                | EVP_CIPH_FLAG_CUSTOM_CIPHER                  \
-                                | EVP_CIPH_CUSTOM_IV                           \
-                                | EVP_CIPH_CUSTOM_IV_LENGTH)
+#define CHACHA20_POLY1305_FLAGS (PROV_CIPHER_FLAG_AEAD                         \
+                                 | PROV_CIPHER_FLAG_CUSTOM_IV)
 
 static OSSL_FUNC_cipher_newctx_fn chacha20_poly1305_newctx;
 static OSSL_FUNC_cipher_freectx_fn chacha20_poly1305_freectx;
