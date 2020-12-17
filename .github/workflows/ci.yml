@@ -13,6 +13,30 @@ on: [pull_request, push]
 #     - make="make -s"
 
 jobs:
+  check_update:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: config
+      run: ./config --strict-warnings && perl configdata.pm --dump
+    - name: make build_generated
+      run: make -s build_generated
+    - name: make update
+      run: make -s update
+    - name: git diff
+      run: git diff --exit-code
+
+  check_docs:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: config
+      run: ./config --strict-warnings && perl configdata.pm --dump
+    - name: make build_generated
+      run: make -s build_generated
+    - name: make doc-nits
+      run: make doc-nits
+
   basic_gcc:
     runs-on: ubuntu-latest
     steps:
@@ -23,8 +47,6 @@ jobs:
         run: make -s -j4
       - name: make test
         run: make test
-      - name: make doc-nits
-        run: make doc-nits
 
   basic_clang:
     runs-on: ubuntu-latest
