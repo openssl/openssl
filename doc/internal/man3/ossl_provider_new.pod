@@ -158,9 +158,9 @@ Only text parameters can be given, and it's up to the provider to
 interpret them.
 
 ossl_provider_activate() "activates" the provider for the given
-provider object I<prov>, by incrementing its activation count, flags
-it as activated, and initialized it if it isn't already initialized.
-Initializing means on of the following:
+provider object I<prov> by incrementing its activation count, flagging
+it as activated, and initializing it if it isn't already initialized.
+Initializing means one of the following:
 
 =over 4
 
@@ -179,7 +179,7 @@ be located in that module, and called.
 =back
 
 ossl_provider_deactivate() "deactivates" the provider for the given
-provider object I<prov>, by decrementing its activation count.  When
+provider object I<prov> by decrementing its activation count.  When
 that count reaches zero, the activation flag is cleared.
 
 ossl_provider_available() activates all fallbacks if no provider is
