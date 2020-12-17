@@ -74,6 +74,7 @@ static void *mac_newctx(void *provctx, const char *propq, const char *macname)
     return pmacctx;
 
  err:
+    OPENSSL_free(pmacctx->propq);
     OPENSSL_free(pmacctx);
     EVP_MAC_free(mac);
     return NULL;
