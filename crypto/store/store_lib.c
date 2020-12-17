@@ -103,13 +103,12 @@ OSSL_STORE_open_ex(const char *uri, OSSL_LIB_CTX *libctx, const char *propq,
                 OSSL_STORE_LOADER_free(fetched_loader);
                 fetched_loader = NULL;
             } else if (propq != NULL) {
-                OSSL_PARAM params[] = {
-                    OSSL_PARAM_utf8_string(OSSL_STORE_PARAM_PROPERTIES,
-                                           NULL, 0),
-                    OSSL_PARAM_END
-                };
+                OSSL_PARAM params[2];
 
-                params[0].data = (void *)propq;
+                params[0] = OSSL_PARAM_construct_utf8_string(
+                                OSSL_STORE_PARAM_PROPERTIES, (char *)propq, 0);
+                params[1] = OSSL_PARAM_construct_end();
+
                 if (!fetched_loader->p_set_ctx_params(loader_ctx, params)) {
                     (void)fetched_loader->p_close(loader_ctx);
                     OSSL_STORE_LOADER_free(fetched_loader);
