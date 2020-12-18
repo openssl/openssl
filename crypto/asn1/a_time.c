@@ -476,7 +476,9 @@ int ASN1_TIME_print(BIO *bp, const ASN1_TIME *tm)
 
     if (!asn1_time_to_tm(&stm, tm)) {
         /* asn1_time_to_tm will check the time type */
-        goto err;
+        (void)BIO_write(bp, "Bad time value", 14);
+        return 0;
+        /* It would have been more consistent to return BIO_write(...) */
     }
 
     l = tm->length;
@@ -509,9 +511,6 @@ int ASN1_TIME_print(BIO *bp, const ASN1_TIME *tm)
                           stm.tm_min, stm.tm_sec, stm.tm_year + 1900,
                           (gmt ? " GMT" : "")) > 0;
     }
- err:
-    BIO_write(bp, "Bad time value", 14);
-    return 0;
 }
 
 int ASN1_TIME_cmp_time_t(const ASN1_TIME *s, time_t t)
