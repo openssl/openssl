@@ -878,29 +878,21 @@ static int test_public_via_MSBLOB(const char *type, EVP_PKEY *key)
     ADD_TEST(test_unprotected_##KEYTYPE##_via_MSBLOB);                  \
     ADD_TEST(test_public_##KEYTYPE##_via_MSBLOB)
 
-#ifndef OPENSSL_NO_RC4
-# define IMPLEMENT_TEST_SUITE_PVK(KEYTYPE, KEYTYPEstr)                  \
+#define IMPLEMENT_TEST_SUITE_UNPROTECTED_PVK(KEYTYPE, KEYTYPEstr)       \
     static int test_unprotected_##KEYTYPE##_via_PVK(void)               \
     {                                                                   \
         return test_unprotected_via_PVK(KEYTYPEstr, key_##KEYTYPE);     \
-    }                                                                   \
+    }
+# define ADD_TEST_SUITE_UNPROTECTED_PVK(KEYTYPE)                        \
+    ADD_TEST(test_unprotected_##KEYTYPE##_via_PVK)
+#ifndef OPENSSL_NO_RC4
+# define IMPLEMENT_TEST_SUITE_PROTECTED_PVK(KEYTYPE, KEYTYPEstr)        \
     static int test_protected_##KEYTYPE##_via_PVK(void)                 \
     {                                                                   \
         return test_protected_via_PVK(KEYTYPEstr, key_##KEYTYPE);       \
     }
-
-# define ADD_TEST_SUITE_PVK(KEYTYPE)                                    \
-    ADD_TEST(test_unprotected_##KEYTYPE##_via_PVK);                     \
+# define ADD_TEST_SUITE_PROTECTED_PVK(KEYTYPE)                          \
     ADD_TEST(test_protected_##KEYTYPE##_via_PVK)
-#else
-# define IMPLEMENT_TEST_SUITE_PVK(KEYTYPE, KEYTYPEstr)                  \
-    static int test_unprotected_##KEYTYPE##_via_PVK(void)               \
-    {                                                                   \
-        return test_unprotected_via_PVK(KEYTYPEstr, key_##KEYTYPE);     \
-    }
-
-# define ADD_TEST_SUITE_PVK(KEYTYPE)                                    \
-    ADD_TEST(test_unprotected_##KEYTYPE##_via_PVK)
 #endif
 
 #ifndef OPENSSL_NO_DH
@@ -921,7 +913,10 @@ IMPLEMENT_TEST_SUITE(DSA, "DSA")
 IMPLEMENT_TEST_SUITE_PARAMS(DSA, "DSA")
 IMPLEMENT_TEST_SUITE_LEGACY(DSA, "DSA")
 IMPLEMENT_TEST_SUITE_MSBLOB(DSA, "DSA")
-IMPLEMENT_TEST_SUITE_PVK(DSA, "DSA")
+IMPLEMENT_TEST_SUITE_UNPROTECTED_PVK(DSA, "DSA")
+# ifndef OPENSSL_NO_RC4
+IMPLEMENT_TEST_SUITE_PROTECTED_PVK(DSA, "DSA")
+# endif
 #endif
 #ifndef OPENSSL_NO_EC
 DOMAIN_KEYS(EC);
@@ -965,7 +960,10 @@ IMPLEMENT_TEST_SUITE(RSA_PSS, "RSA-PSS")
  * so no legacy tests.
  */
 IMPLEMENT_TEST_SUITE_MSBLOB(RSA, "RSA")
-IMPLEMENT_TEST_SUITE_PVK(RSA, "RSA")
+IMPLEMENT_TEST_SUITE_UNPROTECTED_PVK(RSA, "RSA")
+#ifndef OPENSSL_NO_RC4
+IMPLEMENT_TEST_SUITE_PROTECTED_PVK(RSA, "RSA")
+#endif
 
 #ifndef OPENSSL_NO_EC
 /* Explicit parameters that match a named curve */
@@ -1152,6 +1150,9 @@ static int create_ec_explicit_trinomial_params(OSSL_PARAM_BLD *bld)
 
 int setup_tests(void)
 {
+# ifndef OPENSSL_NO_RC4
+    int use_legacy = OSSL_PROVIDER_available(NULL, "legacy");
+#endif
     int ok = 1;
 
 #ifndef OPENSSL_NO_DSA
@@ -1245,7 +1246,12 @@ int setup_tests(void)
         ADD_TEST_SUITE_PARAMS(DSA);
         ADD_TEST_SUITE_LEGACY(DSA);
         ADD_TEST_SUITE_MSBLOB(DSA);
-        ADD_TEST_SUITE_PVK(DSA);
+        ADD_TEST_SUITE_UNPROTECTED_PVK(DSA);
+# ifndef OPENSSL_NO_RC4
+        if (use_legacy) {
+            ADD_TEST_SUITE_PROTECTED_PVK(DSA);
+        }
+# endif
 #endif
 #ifndef OPENSSL_NO_EC
         ADD_TEST_SUITE(EC);
@@ -1278,7 +1284,12 @@ int setup_tests(void)
          * so no legacy tests.
          */
         ADD_TEST_SUITE_MSBLOB(RSA);
-        ADD_TEST_SUITE_PVK(RSA);
+        ADD_TEST_SUITE_UNPROTECTED_PVK(RSA);
+# ifndef OPENSSL_NO_RC4
+        if (use_legacy) {
+            ADD_TEST_SUITE_PROTECTED_PVK(RSA);
+        }
+# endif
     }
 
     return 1;
