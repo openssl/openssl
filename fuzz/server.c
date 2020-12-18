@@ -512,8 +512,8 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
     SSL *server;
     BIO *in;
     BIO *out;
-#if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DSA) \
-    || !defined(OPENSSL_NO_DEPRECATED_3_0)
+#if !defined(OPENSSL_NO_EC)                     \
+    || (!defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_DEPRECATED_3_0))
     BIO *bio_buf;
 #endif
     SSL_CTX *ctx;
@@ -522,7 +522,8 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
     RSA *privkey;
 #endif
     const uint8_t *bufp;
-#if (!defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_DEPRECATED_3_0)) \
+#if !defined(OPENSSL_NO_DEPRECATED_3_0)         \
+    || !defined(OPENSSL_NO_DSA)                 \
     || !defined(OPENSSL_NO_EC)
     EVP_PKEY *pkey;
 #endif
