@@ -540,7 +540,7 @@ our %disabled = ( # "what"         => "comment"
 # Note: => pair form used for aesthetics, not to truly make a hash table
 my @disable_cascades = (
     # "what"            => [ "cascade", ... ]
-    "bulk"              => [ "deprecated", "shared", "dso",
+    "bulk"              => [ "shared", "dso",
                              "aria", "async", "autoload-config",
                              "blake2", "bf", "camellia", "cast", "chacha",
                              "cmac", "cms", "cmp", "comp", "ct",
