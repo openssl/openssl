@@ -1150,7 +1150,9 @@ static int create_ec_explicit_trinomial_params(OSSL_PARAM_BLD *bld)
 
 int setup_tests(void)
 {
+# ifndef OPENSSL_NO_RC4
     int use_legacy = OSSL_PROVIDER_available(NULL, "legacy");
+#endif
     int ok = 1;
 
 #ifndef OPENSSL_NO_DSA
