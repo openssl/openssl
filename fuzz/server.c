@@ -292,7 +292,7 @@ static const char ECDSACertPEM[] = {
 };
 #endif
 
-#if !defined(OPENSSL_NO_DSA) || !defined(OPENSSL_NO_DEPRECATED_3_0)
+#if !defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_DEPRECATED_3_0)
 /*
  * -----BEGIN DSA PRIVATE KEY-----
  * MIIBuwIBAAKBgQDdkFKzNABLOha7Eqj7004+p5fhtR6bxpujToMmSZTYi8igVVXP
@@ -512,8 +512,8 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
     SSL *server;
     BIO *in;
     BIO *out;
-#if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DSA) \
-    || !defined(OPENSSL_NO_DEPRECATED_3_0)
+#if !defined(OPENSSL_NO_EC)                     \
+    || (!defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_DEPRECATED_3_0))
     BIO *bio_buf;
 #endif
     SSL_CTX *ctx;
@@ -522,15 +522,16 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
     RSA *privkey;
 #endif
     const uint8_t *bufp;
-#if !defined(OPENSSL_NO_DSA) || !defined(OPENSSL_NO_EC) \
-    || !defined(OPENSSL_NO_DEPRECATED_3_0)
+#if !defined(OPENSSL_NO_DEPRECATED_3_0)         \
+    || !defined(OPENSSL_NO_DSA)                 \
+    || !defined(OPENSSL_NO_EC)
     EVP_PKEY *pkey;
 #endif
     X509 *cert;
 #ifndef OPENSSL_NO_EC
     EC_KEY *ecdsakey = NULL;
 #endif
-#if !defined(OPENSSL_NO_DSA) || !defined(OPENSSL_NO_DEPRECATED_3_0)
+#if !defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     DSA *dsakey = NULL;
 #endif
     uint8_t opt;
@@ -593,7 +594,7 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
     X509_free(cert);
 #endif
 
-#if !defined(OPENSSL_NO_DSA) || !defined(OPENSSL_NO_DEPRECATED_3_0)
+#if !defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     /* DSA */
     bio_buf = BIO_new(BIO_s_mem());
     OPENSSL_assert((size_t)BIO_write(bio_buf, DSAPrivateKeyPEM, sizeof(DSAPrivateKeyPEM)) == sizeof(DSAPrivateKeyPEM));
