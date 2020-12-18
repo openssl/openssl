@@ -155,8 +155,9 @@ static int usertime = 1;
 
 static double Time_F(int s);
 static void print_message(const char *s, long num, int length, int tm);
-#if !defined(OPENSSL_NO_DEPRECATED_3_0) || !defined(OPENSSL_NO_DSA) \
-    || !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH)
+#if (!defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_DEPRECATED_3_0))   \
+    || !(defined(OPENSSL_NO_DH) && !defined(OPENSSL_NO_DEPRECATED_3_0)) \
+    || !defined(OPENSSL_NO_EC)
 static void pkey_print_message(const char *str, const char *str2,
                                long num, unsigned int bits, int sec);
 #endif
@@ -1512,8 +1513,9 @@ int speed_main(int argc, char **argv)
 #ifndef NO_FORK
     int multi = 0;
 #endif
-#if !defined(OPENSSL_NO_DEPRECATED_3_0) || !defined(OPENSSL_NO_DSA) \
-    || !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH)
+#if (!defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_DEPRECATED_3_0))   \
+    || !(defined(OPENSSL_NO_DH) && !defined(OPENSSL_NO_DEPRECATED_3_0)) \
+    || !defined(OPENSSL_NO_EC)
      long op_count = 1;
 #endif
     openssl_speed_sec_t seconds = { SECONDS, RSA_SECONDS, DSA_SECONDS,
@@ -4107,8 +4109,9 @@ static void print_message(const char *s, long num, int length, int tm)
 #endif
 }
 
-#if !defined(OPENSSL_NO_DEPRECATED_3_0) || !defined(OPENSSL_NO_DSA) \
-    || !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH)
+#if (!defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_DEPRECATED_3_0))   \
+    || !(defined(OPENSSL_NO_DH) && !defined(OPENSSL_NO_DEPRECATED_3_0)) \
+    || !defined(OPENSSL_NO_EC)
 static void pkey_print_message(const char *str, const char *str2, long num,
                                unsigned int bits, int tm)
 {
