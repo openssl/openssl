@@ -242,9 +242,9 @@ struct s_type
 
 #define X  1          + 1
 #define Y  /* .. */ 2 + 2
-#define Z  3          + 3
+#define Z  3          + 3 * (*a++)
 
-static varref cmp_vars[] = { /* comment */
+static varref cmp_vars[] = { /* comment.  comment?  comment!  */
     {&opt_config}, {&opt_section},
 
     {&opt_server}, {&opt_proxy}, {&opt_path},
