@@ -108,4 +108,25 @@ sub cmp_text {
     });
 }
 
+sub file_contains {
+    $_ = shift @_;
+    my $pattern = shift @_;
+    open(DATA,$_) or return 0;
+    $_= join('',<DATA>);
+    close(DATA);
+    return m/$pattern/ ? 1 : 0;
+}
+
+sub cert_contains {
+    my $cert = shift @_;
+    my $pattern = shift @_;
+    my $expected = shift @_;
+    my $name = shift @_;
+    my $out = "tmp.out";
+    run(app(["openssl", "x509", "-noout", "-text", "-in", $cert, "-out", $out]));
+    is(file_contains($out, $pattern), $expected, ($name ? "$name: " : "").
+       "$cert should ".($expected ? "" : "not ")."contain $pattern");
+    # not unlinking $out
+}
+
 1;

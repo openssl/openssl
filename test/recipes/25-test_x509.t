@@ -20,6 +20,7 @@ plan tests => 15;
 
 require_ok(srctop_file('test','recipes','tconversion.pl'));
 
+my @certs = qw(test certs);
 my $pem = srctop_file("test/certs", "cyrillic.pem");
 my $out_msb = "out-cyrillic.msb";
 my $out_utf8 = "out-cyrillic.utf8";
@@ -88,21 +89,9 @@ subtest 'x509 -- pathlen' => sub {
     ok(run(test(["v3ext", srctop_file("test/certs", "pathlen.pem")])));
 };
 
-subtest 'x500 -- subjectAltName' => sub {
-     my $fp = srctop_file("test/certs", "fake-gp.pem");
-     my $out = "ext.out";
-     ok(run(app(["openssl", "x509", "-text", "-in", $fp, "-out", $out])));
-     ok(has_doctor_id($out));
-     unlink $out;
-};
-
-sub has_doctor_id { 
-    $_ = shift @_;
-    open(DATA,$_) or return 0;
-    $_= join('',<DATA>); 
-    close(DATA);
-    return m/2.16.528.1.1003.1.3.5.5.2-1-0000006666-Z-12345678-01.015-12345678/;
-}
+cert_contains(srctop_file(@certs, "fake-gp.pem"),
+              "2.16.528.1.1003.1.3.5.5.2-1-0000006666-Z-12345678-01.015-12345678",
+              1, 'x500 -- subjectAltName');
 
 sub test_errors { # actually tests diagnostics of OSSL_STORE
     my ($expected, $cert, @opts) = @_;

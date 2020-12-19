@@ -15,9 +15,11 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_req");
 
-plan tests => 16;
+plan tests => 39;
 
 require_ok(srctop_file('test','recipes','tconversion.pl'));
+
+my @certs = qw(test certs);
 
 # What type of key to generate?
 my @req_new;
@@ -190,7 +192,7 @@ subtest "generating SM2 certificate requests" => sub {
         if disabled("sm2");
         ok(run(app(["openssl", "req",
                     "-config", srctop_file("test", "test.cnf"),
-                    "-new", "-key", srctop_file("test", "certs", "sm2.key"),
+                    "-new", "-key", srctop_file(@certs, "sm2.key"),
                     "-sigopt", "distid:1234567812345678",
                     "-out", "testreq-sm2.pem", "-sm3"])),
            "Generating SM2 certificate request");
@@ -203,7 +205,7 @@ subtest "generating SM2 certificate requests" => sub {
 
         ok(run(app(["openssl", "req",
                     "-config", srctop_file("test", "test.cnf"),
-                    "-new", "-key", srctop_file("test", "certs", "sm2.key"),
+                    "-new", "-key", srctop_file(@certs, "sm2.key"),
                     "-sigopt", "hexdistid:DEADBEEF",
                     "-out", "testreq-sm2.pem", "-sm3"])),
            "Generating SM2 certificate request with hex id");
@@ -246,3 +248,81 @@ sub run_conversion {
         done_testing();
     };
 }
+
+# Test both generation and verification of certs w.r.t. RFC 5280 requirements
+
+my $ca_cert; # will be set below
+sub generate_cert {
+    my $cert = shift @_;
+    my $ss = $cert =~ m/self-signed/;
+    my $is_ca = $cert =~ m/CA/;
+    my $cn = $is_ca ? "CA" : "EE";
+    my $ca_key = srctop_file(@certs, "ca-key.pem");
+    my $key = $is_ca ? $ca_key : srctop_file(@certs, "ee-key.pem");
+    my @cmd = ("openssl", "req", "-config", "\"\"","-x509",
+               "-key", $key, "-subj", "/CN=$cn", @_, "-out", $cert);
+    push(@cmd, ("-CA", $ca_cert, "-CAkey", $ca_key)) unless $ss;
+    ok(run(app([@cmd])), "generate $cert");
+}
+sub has_SKID {
+    my $cert = shift @_;
+    my $expect = shift @_;
+    cert_contains($cert, "Subject Key Identifier", $expect);
+}
+sub has_AKID {
+    my $cert = shift @_;
+    my $expect = shift @_;
+    cert_contains($cert, "Authority Key Identifier", $expect);
+}
+sub strict_verify {
+    my $cert = shift @_;
+    my $expect = shift @_;
+    my $trusted = shift @_;
+    $trusted = $cert unless $trusted;
+    ok(run(app(["openssl", "verify", "-x509_strict", "-trusted", $trusted,
+                "-partial_chain", $cert])) == $expect,
+       "strict verify allow $cert");
+}
+
+my @v3_ca = ("-addext", "basicConstraints = critical,CA:true",
+             "-addext", "keyUsage = keyCertSign");
+my $cert = "self-signed_v1_CA_no_KIDs.pem";
+generate_cert($cert);
+has_SKID($ca_cert, 0);
+has_AKID($ca_cert, 0);
+#TODO strict_verify($cert, 1); # self-signed v1 root cert should be accepted as CA
+
+$ca_cert = "self-signed_v3_CA_default_SKID.pem";
+generate_cert($ca_cert, @v3_ca);
+has_SKID($ca_cert, 1);
+has_AKID($ca_cert, 0);
+strict_verify($ca_cert, 1);
+
+$cert = "self-signed_v3_CA_no_SKID.pem";
+generate_cert($cert, @v3_ca, "-addext", "subjectKeyIdentifier = none");
+has_SKID($cert, 0);
+has_AKID($cert, 0);
+#TODO strict_verify($cert, 0);
+
+$cert = "self-signed_v3_CA_both_KIDs.pem";
+generate_cert($cert, @v3_ca, "-addext", "subjectKeyIdentifier = hash",
+            "-addext", "authorityKeyIdentifier = keyid");
+has_SKID($cert, 1);
+has_AKID($cert, 1);
+strict_verify($cert, 1);
+
+$cert = "self-signed_v3_EE_wrong_keyUsage.pem";
+generate_cert($cert, "-addext", "keyUsage = keyCertSign");
+#TODO strict_verify($cert, 1); # should be accepted because RFC 5280 does not apply
+
+$cert = "v3_EE_default_KIDs.pem";
+generate_cert($cert, "-addext", "keyUsage = dataEncipherment");
+has_SKID($cert, 1);
+has_AKID($cert, 1);
+strict_verify($cert, 1, $ca_cert);
+
+$cert = "v3_EE_no_AKID.pem";
+generate_cert($cert, "-addext", "authorityKeyIdentifier = none");
+has_SKID($cert, 1);
+has_AKID($cert, 0);
+strict_verify($cert, 0, $ca_cert);
