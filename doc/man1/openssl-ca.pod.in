@@ -69,15 +69,20 @@ B<openssl> B<ca>
 
 =head1 DESCRIPTION
 
-This command is a minimal CA application. It can be used
-to sign certificate requests in a variety of forms and generate
-CRLs. It also maintains a text database of issued certificates
-and their status.
-When signing certificates, a single certificate request can be specified
+This command emulates a CA application.
+See the B<WARNINGS> especially when considering to use it productively.
+It can be used to sign certificate requests (CSRs) in a variety of forms
+and generate certificate revocation lists (CRLs).
+It also maintains a text database of issued certificates and their status.
+When signing certificates, a single request can be specified
 with the B<-in> option, or multiple requests can be processed by
 specifying a set of B<certreq> files after all options.
 
-The options descriptions will be divided into each purpose.
+Note that there are also very lean ways of generating certificates:
+the B<req> and B<x509> commands can be used for directly creating certificates.
+See L<openssl-req(1)> and L<openssl-x509(1)> for details.
+
+The descriptions of the B<ca> command options are divided into each purpose.
 
 =head1 OPTIONS
 
@@ -104,12 +109,12 @@ B<default_ca> in the B<ca> section).
 
 =item B<-in> I<filename>
 
-An input filename containing a single certificate request to be
+An input filename containing a single certificate request (CSR) to be
 signed by the CA.
 
 =item B<-inform> B<DER>|B<PEM>
 
-The format of the data in CSR input files.
+The format of the data in certificate request input files.
 The default is PEM.
 
 =item B<-ss_cert> I<filename>
@@ -150,7 +155,8 @@ This option has no effect and is retained for backward compatibility only.
 
 =item B<-keyfile> I<filename>|I<uri>
 
-The CA private key to sign requests with. This must match with B<-cert>.
+The CA private key to sign certificate requests with.
+This must match with B<-cert>.
 
 =item B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
 
@@ -168,8 +174,8 @@ Names and values of these options are algorithm-specific.
 Pass options to the signature algorithm during verify operations.
 Names and values of these options are algorithm-specific.
 
-This often needs to be given while signing too, because the input
-certificate signature request is verified against its own public key,
+This often needs to be given while signing too, because the self-signature of
+a certificate signing request (CSR) is verified against the included public key,
 and that verification may need its own set of options.
 
 =item B<-key> I<password>
@@ -192,9 +198,8 @@ see L<openssl-passphrase-options(1)>.
 
 Indicates the issued certificates are to be signed with the key
 the certificate requests were signed with (given with B<-keyfile>).
-Certificate requests signed with a different key are ignored.  If
-B<-spkac>, B<-ss_cert> or B<-gencrl> are given, B<-selfsign> is
-ignored.
+Certificate requests signed with a different key are ignored.
+If B<-spkac>, B<-ss_cert> or B<-gencrl> are given, B<-selfsign> is ignored.
 
 A consequence of using B<-selfsign> is that the self-signed
 certificate appears among the entries in the certificate database
@@ -739,6 +744,8 @@ possible to include one SPKAC or self-signed certificate.
 
 =head1 BUGS
 
+This command is quirky and at times downright unfriendly.
+
 The use of an in-memory text database can cause problems when large
 numbers of certificates are present because, as the name implies
 the database has to be kept in memory.
@@ -760,11 +767,14 @@ create an empty file.
 
 =head1 WARNINGS
 
-This command is quirky and at times downright unfriendly.
-
-This command was originally meant as an example of how to do
-things in a CA. It was not supposed to be used as a full blown CA itself:
-nevertheless some people are using it for this purpose.
+This command was originally meant as an example of how to do things in a CA.
+Its code does not have production quality.
+It was not supposed to be used as a full blown CA itself,
+nevertheless some people are using it for this purpose at least internally.
+When doing so, specific care should be taken to
+properly secure the private key(s) used for signing certificates.
+It is advisable to keep them in a secure HW storage such as a smart card or HSM
+and access them via a suitable engine or crypto provider.
 
 This command command is effectively a single user command: no locking
 is done on the various files and attempts to run more than one B<openssl ca>
@@ -776,7 +786,6 @@ request contains a basicConstraints extension with CA:TRUE and the
 B<copy_extensions> value is set to B<copyall> and the user does not spot
 this when the certificate is displayed then this will hand the requester
 a valid CA certificate.
-
 This situation can be avoided by setting B<copy_extensions> to B<copy>
 and including basicConstraints with CA:FALSE in the configuration file.
 Then if the request contains a basicConstraints extension it will be
