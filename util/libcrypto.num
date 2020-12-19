@@ -62,7 +62,7 @@ BIO_free_all                            63	3_0_0	EXIST::FUNCTION:
 EVP_idea_ofb                            64	3_0_0	EXIST::FUNCTION:IDEA
 DSO_bind_func                           65	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_meth_get_copy                  66	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
-RSA_up_ref                              67	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,RSA
+RSA_up_ref                              67	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 EVP_PKEY_meth_set_ctrl                  68	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 OCSP_basic_sign                         69	3_0_0	EXIST::FUNCTION:OCSP
 BN_GENCB_set                            70	3_0_0	EXIST::FUNCTION:
@@ -608,7 +608,7 @@ RC2_cfb64_encrypt                       622	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3
 EVP_EncryptFinal_ex                     623	3_0_0	EXIST::FUNCTION:
 ERR_load_RSA_strings                    624	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 CRYPTO_secure_malloc_done               625	3_0_0	EXIST::FUNCTION:
-RSA_OAEP_PARAMS_new                     626	3_0_0	EXIST::FUNCTION:RSA
+RSA_OAEP_PARAMS_new                     626	3_0_0	EXIST::FUNCTION:
 X509_NAME_free                          627	3_0_0	EXIST::FUNCTION:
 PKCS12_set_mac                          628	3_0_0	EXIST::FUNCTION:
 UI_get0_result_string                   629	3_0_0	EXIST::FUNCTION:
