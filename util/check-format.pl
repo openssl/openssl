@@ -241,7 +241,7 @@ sub blind_nonspace { # blind non-space text of comment as @, preserving length a
     # the @ character is used because it cannot occur in normal program code so there is no confusion
     # comment text is not blinded to whitespace in order to be able to check double SPC also in comments
     my $comment_text = shift;
-    $comment_text =~ s/\.\s\s/.. /g; # in double SPC checks allow one extra space after period '.' in comments
+    $comment_text =~ s/([\.\?\!])\s\s/$1. /g; # in double SPC checks allow one extra space after period '.', '?', or '!' in comments
     return $comment_text =~ tr/ /@/cr;
 }
 
@@ -675,17 +675,17 @@ while (<>) { # loop over all lines of all input files
         report("no SPC before '=' or '<op>='") if $intra_line =~ m/\S(=)/;   # '=' etc. without preceding space
         report("no SPC before '$1'")  if $intra_line =~ m/\S([|\/%<>^\?])/;  # |/%<>^? without preceding space
         # TODO ternary ':' without preceding SPC, while allowing no SPC before ':' after 'case'
-        report("no SPC before '$1'")  if $intra_line =~ m/[^\s{()\[]([+\-])/;# +/- without preceding space or {()[
+        report("no SPC before binary '$1'")  if $intra_line =~ m/[^\s{()\[]([+\-])/;# +/- without preceding space or {()[
                                                                              # or ')' (which is used f type casts)
-        report("no SPC before '$1'")  if $intra_line =~ m/[^\s{()\[*]([*])/; # '*' without preceding space or {()[*
-        report("no SPC before '$1'")  if $intra_line =~ m/[^\s{()\[]([&])/;  # '&' without preceding space or {()[
+        report("no SPC before binary '$1'")  if $intra_line =~ m/[^\s{()\[*]([*])/; # '*' without preceding space or {()[*
+        report("no SPC before binary '$1'")  if $intra_line =~ m/[^\s{()\[]([&])/;  # '&' without preceding space or {()[
         report("no SPC after ternary '$1'") if $intra_line =~ m/(:)[^\s\d]/; # ':' without following space or digit
         report("no SPC after '$1'")   if $intra_line =~ m/([,;=|\/%<>^\?])\S/; # ,;=|/%<>^? without following space
-        report("no SPC after binary '$1'") if $intra_line=~m/([*])[^\sa-zA-Z_(),*]/;# '*' w/o space or \w(),* after
+        report("no SPC after binary '$1'") if $intra_line=~m/[^{(\[]([*])[^\sa-zA-Z_(),*]/;# '*' w/o space or \w(),* after
         # TODO unary '*' must not be followed by SPC
         report("no SPC after binary '$1'") if $intra_line=~m/([&])[^\sa-zA-Z_(]/;  # '&' w/o following space or \w(
         # TODO unary '&' must not be followed by SPC
-        report("no SPC after binary '$1'") if $intra_line=~m/([+\-])[^\s\d(]/;  # +/- w/o following space or \d(
+        report("no SPC after binary '$1'") if $intra_line=~m/[^{(\[]([+\-])[^\s\d(]/;  # +/- w/o following space or \d(
         # TODO unary '+' and '-' must not be followed by SPC
         report("no SPC after '$2'")   if $intra_line =~ m/(^|\W)(if|while|for|switch|case)[^\w\s]/; # kw w/o SPC
         report("no SPC after '$2'")   if $intra_line =~ m/(^|\W)(return)[^\w\s;]/;  # return w/o SPC or ';'
