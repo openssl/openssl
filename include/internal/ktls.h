@@ -192,15 +192,12 @@ static ossl_inline int ktls_read_record(int fd, void *data, size_t length)
 static ossl_inline ossl_ssize_t ktls_sendfile(int s, int fd, off_t off,
                                               size_t size, int flags)
 {
-    off_t sbytes;
+    off_t sbytes = 0;
     int ret;
 
     ret = sendfile(fd, s, off, size, NULL, &sbytes, flags);
-    if (ret == -1) {
-	    if (errno == EAGAIN && sbytes != 0)
-		    return sbytes;
-	    return -1;
-    }
+    if (ret == -1 && sbytes == 0)
+        return -1;
     return sbytes;
 }
 
