@@ -99,11 +99,10 @@ int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
 {
     X509_PUBKEY *pk = NULL;
 
-    if (x == NULL)
+    if (x == NULL || pkey == NULL) {
+        ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
-
-    if (pkey == NULL)
-        goto unsupported;
+    }
 
     if (pkey->ameth != NULL) {
         if ((pk = X509_PUBKEY_new()) == NULL) {
@@ -137,8 +136,10 @@ int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
         OPENSSL_free(der);
     }
 
-    if (pk == NULL)
-        goto unsupported;
+    if (pk == NULL) {
+        ERR_raise(ERR_LIB_X509, X509_R_UNSUPPORTED_ALGORITHM);
+        goto error;
+    }
 
     X509_PUBKEY_free(*x);
     if (!EVP_PKEY_up_ref(pkey)) {
@@ -164,9 +165,6 @@ int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
 
     pk->pkey = pkey;
     return 1;
-
- unsupported:
-    ERR_raise(ERR_LIB_X509, X509_R_UNSUPPORTED_ALGORITHM);
 
  error:
     X509_PUBKEY_free(pk);
