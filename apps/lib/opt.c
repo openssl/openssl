@@ -370,7 +370,8 @@ int opt_md(const char *name, const EVP_MD **mdp)
     *mdp = EVP_get_digestbyname(name);
     if (*mdp != NULL)
         return 1;
-    opt_printf_stderr("%s: Unknown message digest: %s\n", prog, name);
+    opt_printf_stderr("%s: Unknown option or message digest: %s\n", prog,
+                      name != NULL ? name : "\"\"");
     return 0;
 }
 
