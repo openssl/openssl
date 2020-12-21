@@ -253,7 +253,7 @@ static int bio_read_intern(BIO *b, void *data, size_t dlen, size_t *readbytes)
     int ret;
 
     if (b == NULL) {
-        ERR_raise(ERR_LIB_BIO, BIO_R_NULL_PARAMETER);
+        ERR_raise(ERR_LIB_BIO, ERR_R_PASSED_NULL_PARAMETER);
         return -1;
     }
     if (b->method == NULL || b->method->bread == NULL) {
@@ -318,7 +318,7 @@ static int bio_write_intern(BIO *b, const void *data, size_t dlen,
     int ret;
 
     if (b == NULL) {
-        ERR_raise(ERR_LIB_BIO, BIO_R_NULL_PARAMETER);
+        ERR_raise(ERR_LIB_BIO, ERR_R_PASSED_NULL_PARAMETER);
         return -1;
     }
     if (b->method == NULL || b->method->bwrite == NULL) {
@@ -377,7 +377,7 @@ int BIO_puts(BIO *b, const char *buf)
     size_t written = 0;
 
     if (b == NULL) {
-        ERR_raise(ERR_LIB_BIO, BIO_R_NULL_PARAMETER);
+        ERR_raise(ERR_LIB_BIO, ERR_R_PASSED_NULL_PARAMETER);
         return -1;
     }
     if (b->method == NULL || b->method->bputs == NULL) {
@@ -426,7 +426,7 @@ int BIO_gets(BIO *b, char *buf, int size)
     size_t readbytes = 0;
 
     if (b == NULL) {
-        ERR_raise(ERR_LIB_BIO, BIO_R_NULL_PARAMETER);
+        ERR_raise(ERR_LIB_BIO, ERR_R_PASSED_NULL_PARAMETER);
         return -1;
     }
     if (b->method == NULL || b->method->bgets == NULL) {
@@ -507,7 +507,7 @@ long BIO_ctrl(BIO *b, int cmd, long larg, void *parg)
     long ret;
 
     if (b == NULL) {
-        ERR_raise(ERR_LIB_BIO, BIO_R_NULL_PARAMETER);
+        ERR_raise(ERR_LIB_BIO, ERR_R_PASSED_NULL_PARAMETER);
         return -1;
     }
     if (b->method == NULL || b->method->ctrl == NULL) {
@@ -535,8 +535,8 @@ long BIO_callback_ctrl(BIO *b, int cmd, BIO_info_cb *fp)
     long ret;
 
     if (b == NULL) {
-        ERR_raise(ERR_LIB_BIO, BIO_R_NULL_PARAMETER);
-        return -1;
+        ERR_raise(ERR_LIB_BIO, ERR_R_PASSED_NULL_PARAMETER);
+        return -2;
     }
     if (b->method == NULL || b->method->callback_ctrl == NULL
             || cmd != BIO_CTRL_SET_CALLBACK) {
@@ -599,7 +599,7 @@ BIO *BIO_pop(BIO *b)
     BIO *ret;
 
     if (b == NULL) {
-        ERR_raise(ERR_LIB_BIO, BIO_R_NULL_PARAMETER);
+        ERR_raise(ERR_LIB_BIO, ERR_R_PASSED_NULL_PARAMETER);
         return NULL;
     }
     ret = b->next_bio;
@@ -649,7 +649,7 @@ BIO *BIO_find_type(BIO *bio, int type)
     int mt, mask;
 
     if (bio == NULL) {
-        ERR_raise(ERR_LIB_BIO, BIO_R_NULL_PARAMETER);
+        ERR_raise(ERR_LIB_BIO, ERR_R_PASSED_NULL_PARAMETER);
         return NULL;
     }
     mask = type & 0xff;
@@ -672,7 +672,7 @@ BIO *BIO_find_type(BIO *bio, int type)
 BIO *BIO_next(BIO *b)
 {
     if (b == NULL) {
-        ERR_raise(ERR_LIB_BIO, BIO_R_NULL_PARAMETER);
+        ERR_raise(ERR_LIB_BIO, ERR_R_PASSED_NULL_PARAMETER);
         return NULL;
     }
     return b->next_bio;
@@ -855,7 +855,7 @@ int BIO_do_connect_retry(BIO *bio, int timeout, int nap_milliseconds)
     int rv;
 
     if (bio == NULL) {
-        ERR_raise(ERR_LIB_BIO, BIO_R_NULL_PARAMETER);
+        ERR_raise(ERR_LIB_BIO, ERR_R_PASSED_NULL_PARAMETER);
         return -1;
     }
 

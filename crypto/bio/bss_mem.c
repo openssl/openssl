@@ -91,7 +91,7 @@ BIO *BIO_new_mem_buf(const void *buf, int len)
     size_t sz;
 
     if (buf == NULL) {
-        ERR_raise(ERR_LIB_BIO, BIO_R_NULL_PARAMETER);
+        ERR_raise(ERR_LIB_BIO, ERR_R_PASSED_NULL_PARAMETER);
         return NULL;
     }
     sz = (len < 0) ? strlen(buf) : (size_t)len;
@@ -222,7 +222,7 @@ static int mem_write(BIO *b, const char *in, int inl)
     BIO_BUF_MEM *bbm = (BIO_BUF_MEM *)b->ptr;
 
     if (in == NULL) {
-        ERR_raise(ERR_LIB_BIO, BIO_R_NULL_PARAMETER);
+        ERR_raise(ERR_LIB_BIO, ERR_R_PASSED_NULL_PARAMETER);
         goto end;
     }
     if (b->flags & BIO_FLAGS_MEM_RDONLY) {
