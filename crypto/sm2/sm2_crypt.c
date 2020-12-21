@@ -83,7 +83,7 @@ int sm2_plaintext_size(const EC_KEY *key, const EVP_MD *digest, size_t msg_len,
         return 0;
     }
 
-    overhead = 10 + 2 * field_size + (size_t)md_size;
+    overhead = 10 + 2 * (field_size - 1) + (size_t)md_size;
     if (msg_len <= overhead) {
         ERR_raise(ERR_LIB_SM2, SM2_R_INVALID_ENCODING);
         return 0;
