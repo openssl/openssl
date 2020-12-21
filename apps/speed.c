@@ -1003,7 +1003,9 @@ static int EVP_Update_loop_aead(void *args)
     return count;
 }
 
-static const EVP_MD *evp_md = NULL;
+static EVP_MD *evp_md = NULL;
+static int fetched_alg = 0;
+
 static int EVP_Digest_loop(void *args)
 {
     loopargs_t *tempargs = *(loopargs_t **) args;
@@ -1491,6 +1493,38 @@ static int run_benchmark(int async_jobs,
     return error ? -1 : total_op_count;
 }
 
+static EVP_MD *obtain_md(const char *name)
+{
+    EVP_MD *md = NULL;
+
+    /* Look through providers' digests */
+    ERR_set_mark();
+    md = EVP_MD_fetch(NULL, name, NULL);
+    ERR_pop_to_mark();
+    if (md != NULL) {
+        fetched_alg = 1;
+        return md;
+    }
+
+    return (EVP_MD *)EVP_get_digestbyname(name);
+}
+
+static EVP_CIPHER *obtain_cipher(const char *name)
+{
+    EVP_CIPHER *cipher = NULL;
+
+    /* Look through providers' ciphers */
+    ERR_set_mark();
+    cipher = EVP_CIPHER_fetch(NULL, name, NULL);
+    ERR_pop_to_mark();
+    if (cipher != NULL) {
+        fetched_alg = 1;
+        return cipher;
+    }
+
+    return (EVP_CIPHER *)EVP_get_cipherbyname(name);
+}
+
 #define stop_it(do_it, test_num)\
     memset(do_it + test_num, 0, OSSL_NELEM(do_it) - test_num);
 
@@ -1500,7 +1534,7 @@ int speed_main(int argc, char **argv)
     loopargs_t *loopargs = NULL;
     const char *prog;
     const char *engine_id = NULL;
-    const EVP_CIPHER *evp_cipher = NULL;
+    EVP_CIPHER *evp_cipher = NULL;
     double d = 0.0;
     OPTION_CHOICE o;
     int async_init = 0, multiblock = 0, pr_header = 0;
@@ -1694,10 +1728,14 @@ int speed_main(int argc, char **argv)
             usertime = 0;
             break;
         case OPT_EVP:
+            if (doit[D_EVP]) {
+                BIO_printf(bio_err, "%s: -evp option cannot be used more than once\n", prog);
+                goto opterr;
+            }
             evp_md = NULL;
-            evp_cipher = EVP_get_cipherbyname(opt_arg());
+            evp_cipher = obtain_cipher(opt_arg());
             if (evp_cipher == NULL)
-                evp_md = EVP_get_digestbyname(opt_arg());
+                evp_md = obtain_md(opt_arg());
             if (evp_cipher == NULL && evp_md == NULL) {
                 BIO_printf(bio_err,
                            "%s: %s is an unknown cipher or digest\n",
@@ -4091,6 +4129,10 @@ int speed_main(int argc, char **argv)
     }
     OPENSSL_free(loopargs);
     release_engine(e);
+    if (fetched_alg) {
+        EVP_MD_free(evp_md);
+        EVP_CIPHER_free(evp_cipher);
+    }
     return ret;
 }
 
