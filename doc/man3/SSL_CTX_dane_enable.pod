@@ -18,10 +18,10 @@ TLS client
                             uint8_t mtype, uint8_t ord);
  int SSL_dane_enable(SSL *s, const char *basedomain);
  int SSL_dane_tlsa_add(SSL *s, uint8_t usage, uint8_t selector,
-                       uint8_t mtype, unsigned const char *data, size_t dlen);
+                       uint8_t mtype, const unsigned char *data, size_t dlen);
  int SSL_get0_dane_authority(SSL *s, X509 **mcert, EVP_PKEY **mspki);
  int SSL_get0_dane_tlsa(SSL *s, uint8_t *usage, uint8_t *selector,
-                        uint8_t *mtype, unsigned const char **data,
+                        uint8_t *mtype, const unsigned char **data,
                         size_t *dlen);
  unsigned long SSL_CTX_dane_set_flags(SSL_CTX *ctx, unsigned long flags);
  unsigned long SSL_CTX_dane_clear_flags(SSL_CTX *ctx, unsigned long flags);
