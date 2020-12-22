@@ -36,7 +36,7 @@ typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_INFORM, OPT_OUTFORM, OPT_PASSIN, OPT_PASSOUT, OPT_ENGINE,
     OPT_IN, OPT_OUT, OPT_PUBIN, OPT_PUBOUT, OPT_TEXT_PUB,
-    OPT_TEXT, OPT_NOOUT, OPT_MD, OPT_TRADITIONAL, OPT_CHECK, OPT_PUB_CHECK,
+    OPT_TEXT, OPT_NOOUT, OPT_CIPHER, OPT_TRADITIONAL, OPT_CHECK, OPT_PUB_CHECK,
     OPT_EC_PARAM_ENC, OPT_EC_CONV_FORM,
     OPT_PROV_ENUM
 } OPTION_CHOICE;
@@ -47,33 +47,36 @@ const OPTIONS pkey_options[] = {
 #ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 #endif
+    OPT_PROV_OPTIONS,
+
     {"check", OPT_CHECK, '-', "Check key consistency"},
     {"pubcheck", OPT_PUB_CHECK, '-', "Check public key consistency"},
-    {"", OPT_MD, '-', "Any supported cipher"},
-    {"ec_param_enc", OPT_EC_PARAM_ENC, 's',
-     "Specifies the way the ec parameters are encoded"},
-    {"ec_conv_form", OPT_EC_CONV_FORM, 's',
-     "Specifies the point conversion form "},
 
     OPT_SECTION("Input"),
     {"in", OPT_IN, 's', "Input key"},
-    {"inform", OPT_INFORM, 'f', "Input format (DER/PEM/P12/ENGINE)"},
-    {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
+    {"inform", OPT_INFORM, 'f',
+     "Key input format (ENGINE, other values ignored)"},
+    {"passin", OPT_PASSIN, 's', "Key input pass phrase source"},
     {"pubin", OPT_PUBIN, '-',
      "Read public key from input (default is private key)"},
-    {"traditional", OPT_TRADITIONAL, '-',
-     "Use traditional format for private keys"},
 
     OPT_SECTION("Output"),
-    {"outform", OPT_OUTFORM, 'F', "Output format (DER or PEM)"},
-    {"passout", OPT_PASSOUT, 's', "Output PEM file pass phrase source"},
     {"out", OPT_OUT, '>', "Output file"},
-    {"pubout", OPT_PUBOUT, '-', "Output public key, not private"},
-    {"text_pub", OPT_TEXT_PUB, '-', "Only output public key components"},
-    {"text", OPT_TEXT, '-', "Output in plaintext as well"},
+    {"outform", OPT_OUTFORM, 'F', "Output format (DER or PEM)"},
+    {"", OPT_CIPHER, '-', "Any supported cipher to be used for encryption"},
+    {"passout", OPT_PASSOUT, 's', "Output PEM file pass phrase source"},
+    {"traditional", OPT_TRADITIONAL, '-',
+     "Use traditional format for private key PEM output"},
+    {"pubout", OPT_PUBOUT, '-', "Output public key components only"},
     {"noout", OPT_NOOUT, '-', "Don't output the key"},
+    {"text_pub", OPT_TEXT_PUB, '-',
+     "Output public key components in text form"},
+    {"text", OPT_TEXT, '-', "Output private components in plaintext as well"},
+    {"ec_conv_form", OPT_EC_CONV_FORM, 's',
+     "Specifies the point conversion form "},
+    {"ec_param_enc", OPT_EC_PARAM_ENC, 's',
+     "Specifies the way the ec parameters are encoded"},
 
-    OPT_PROV_OPTIONS,
     {NULL}
 };
 
@@ -156,7 +159,7 @@ int pkey_main(int argc, char **argv)
         case OPT_PUB_CHECK:
             pub_check = 1;
             break;
-        case OPT_MD:
+        case OPT_CIPHER:
             if (!opt_cipher(opt_unknown(), &cipher))
                 goto opthelp;
             break;
