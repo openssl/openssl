@@ -688,19 +688,7 @@ const OSSL_PROVIDER *EVP_MD_provider(const EVP_MD *md)
 
 int EVP_MD_block_size(const EVP_MD *md)
 {
-    int ok;
-    size_t v;
-    OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
-
-    if (md == NULL) {
-        ERR_raise(ERR_LIB_EVP, EVP_R_MESSAGE_DIGEST_IS_NULL);
-        return -1;
-    }
-    v = md->block_size;
-    params[0] = OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_BLOCK_SIZE, &v);
-    ok = evp_do_md_getparams(md, params);
-
-    return ok != 0 ? (int)v : -1;
+    return md->block_size;
 }
 
 int EVP_MD_type(const EVP_MD *md)
@@ -715,31 +703,16 @@ int EVP_MD_pkey_type(const EVP_MD *md)
 
 int EVP_MD_size(const EVP_MD *md)
 {
-    int ok;
-    size_t v;
-    OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
-
     if (md == NULL) {
         ERR_raise(ERR_LIB_EVP, EVP_R_MESSAGE_DIGEST_IS_NULL);
         return -1;
     }
-    v = md->md_size;
-    params[0] = OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_SIZE, &v);
-    ok = evp_do_md_getparams(md, params);
-
-    return ok != 0 ? (int)v : -1;
+    return md->md_size;
 }
 
 unsigned long EVP_MD_flags(const EVP_MD *md)
 {
-    int ok;
-    unsigned long v = md->flags;
-    OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
-
-    params[0] = OSSL_PARAM_construct_ulong(OSSL_CIPHER_PARAM_FLAGS, &v);
-    ok = evp_do_md_getparams(md, params);
-
-    return ok != 0 ? v : 0;
+    return md->flags;
 }
 
 EVP_MD *EVP_MD_meth_new(int md_type, int pkey_type)

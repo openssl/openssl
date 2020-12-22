@@ -827,6 +827,29 @@ static void set_legacy_nid(const char *name, void *vlegacy_nid)
 }
 #endif
 
+static int evp_md_cache_constants(EVP_MD *md)
+{
+    int ok;
+    size_t blksz = 0;
+    size_t mdsize = 0;
+    unsigned long flags = 0;
+    OSSL_PARAM params[4];
+
+    params[0] = OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_BLOCK_SIZE, &blksz);
+    params[1] = OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_SIZE, &mdsize);
+    params[2] = OSSL_PARAM_construct_ulong(OSSL_DIGEST_PARAM_FLAGS, &flags);
+    params[3] = OSSL_PARAM_construct_end();
+    ok = evp_do_md_getparams(md, params);
+    if (mdsize > INT_MAX || blksz > INT_MAX)
+        ok = 0;
+    if (ok) {
+        md->block_size = (int)blksz;
+        md->md_size = (int)mdsize;
+        md->flags = flags;
+    }
+    return ok;
+}
+
 static void *evp_md_from_dispatch(int name_id,
                                   const OSSL_DISPATCH *fns,
                                   OSSL_PROVIDER *prov)
@@ -937,6 +960,12 @@ static void *evp_md_from_dispatch(int name_id,
     md->prov = prov;
     if (prov != NULL)
         ossl_provider_up_ref(prov);
+
+    if (!evp_md_cache_constants(md)) {
+        EVP_MD_free(md);
+        ERR_raise(ERR_LIB_EVP, EVP_R_CACHE_CONSTANTS_FAILED);
+        md = NULL;
+    }
 
     return md;
 }
