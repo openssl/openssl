@@ -28,6 +28,8 @@ static const ERR_STRING_DATA SM2_str_reasons[] = {
     "invalid digest type"},
     {ERR_PACK(ERR_LIB_SM2, 0, SM2_R_INVALID_ENCODING), "invalid encoding"},
     {ERR_PACK(ERR_LIB_SM2, 0, SM2_R_INVALID_FIELD), "invalid field"},
+    {ERR_PACK(ERR_LIB_SM2, 0, SM2_R_INVALID_PRIVATE_KEY),
+    "invalid private key"},
     {ERR_PACK(ERR_LIB_SM2, 0, SM2_R_NO_PARAMETERS_SET), "no parameters set"},
     {ERR_PACK(ERR_LIB_SM2, 0, SM2_R_USER_ID_TOO_LARGE), "user id too large"},
     {0, NULL}
