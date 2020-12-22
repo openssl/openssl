@@ -58,24 +58,24 @@ const OPTIONS pkey_options[] = {
      "Key input format (ENGINE, other values ignored)"},
     {"passin", OPT_PASSIN, 's', "Key input pass phrase source"},
     {"pubin", OPT_PUBIN, '-',
-     "Read public key from input (default is private key)"},
+     "Read only public components from key input"},
 
     OPT_SECTION("Output"),
-    {"out", OPT_OUT, '>', "Output file"},
-    {"outform", OPT_OUTFORM, 'F', "Output format (DER or PEM)"},
+    {"out", OPT_OUT, '>', "Output file for encoded and/or text output"},
+    {"outform", OPT_OUTFORM, 'F', "Output encoding format (DER or PEM)"},
     {"", OPT_CIPHER, '-', "Any supported cipher to be used for encryption"},
     {"passout", OPT_PASSOUT, 's', "Output PEM file pass phrase source"},
     {"traditional", OPT_TRADITIONAL, '-',
      "Use traditional format for private key PEM output"},
-    {"pubout", OPT_PUBOUT, '-', "Output public key components only"},
-    {"noout", OPT_NOOUT, '-', "Don't output the key"},
+    {"pubout", OPT_PUBOUT, '-', "Restrict encoded output to public components"},
+    {"noout", OPT_NOOUT, '-', "Do not output the key in encoded form"},
+    {"text", OPT_TEXT, '-', "Output key components in plaintext"},
     {"text_pub", OPT_TEXT_PUB, '-',
-     "Output public key components in text form"},
-    {"text", OPT_TEXT, '-', "Output private components in plaintext as well"},
+     "Output only public key components in text form"},
     {"ec_conv_form", OPT_EC_CONV_FORM, 's',
-     "Specifies the point conversion form "},
+     "Specifies the EC point conversion form in the encoding"},
     {"ec_param_enc", OPT_EC_PARAM_ENC, 's',
-     "Specifies the way the ec parameters are encoded"},
+     "Specifies the way the EC parameters are encoded"},
 
     {NULL}
 };
@@ -91,7 +91,7 @@ int pkey_main(int argc, char **argv)
     char *passinarg = NULL, *passoutarg = NULL, *prog;
     OPTION_CHOICE o;
     int informat = FORMAT_PEM, outformat = FORMAT_PEM;
-    int pubin = 0, pubout = 0, pubtext = 0, text = 0, noout = 0, ret = 1;
+    int pubin = 0, pubout = 0, text_pub = 0, text = 0, noout = 0, ret = 1;
     int private = 0, traditional = 0, check = 0, pub_check = 0;
 #ifndef OPENSSL_NO_EC
     EC_KEY *eckey;
@@ -136,13 +136,13 @@ int pkey_main(int argc, char **argv)
             outfile = opt_arg();
             break;
         case OPT_PUBIN:
-            pubin = pubout = pubtext = 1;
+            pubin = pubout = 1;
             break;
         case OPT_PUBOUT:
             pubout = 1;
             break;
         case OPT_TEXT_PUB:
-            pubtext = text = 1;
+            text_pub = 1;
             break;
         case OPT_TEXT:
             text = 1;
@@ -195,15 +195,28 @@ int pkey_main(int argc, char **argv)
     if (argc != 0)
         goto opthelp;
 
-    private = !noout && !pubout ? 1 : 0;
-    if (text && !pubtext)
-        private = 1;
+    if (noout && pubout)
+        BIO_printf(bio_err,
+                   "Warning: The -pubout option is ignored with -noout\n");
+    if (text && text_pub)
+        BIO_printf(bio_err,
+                   "Warning: The -text option is ignored with -text_pub\n");
+    if (traditional && (noout || outformat != FORMAT_PEM))
+        BIO_printf(bio_err,
+                   "Warning: The -traditional is ignored since there is no PEM output\n");
+    private = (!noout && !pubout) || (text && !text_pub);
 
-    if (outformat == FORMAT_ASN1 && passoutarg != NULL) {
-        BIO_printf(bio_err, "The -passout option is not supported for DER output\n");
-        goto end;
+    if (cipher == NULL) {
+        if (passoutarg != NULL)
+            BIO_printf(bio_err,
+                       "Warning: The -passout option is ignored without a cipher option\n");
+    } else {
+        if (noout || outformat != FORMAT_PEM) {
+            BIO_printf(bio_err,
+                       "Error: Cipher options are supported only for PEM output\n");
+            goto end;
+        }
     }
-
     if (!app_passwd(passinarg, passoutarg, &passin, &passout)) {
         BIO_printf(bio_err, "Error getting passwords\n");
         goto end;
@@ -291,6 +304,11 @@ int pkey_main(int argc, char **argv)
                 }
             }
         } else if (outformat == FORMAT_ASN1) {
+            if (text || text_pub) {
+                BIO_printf(bio_err,
+                           "Error: Text output cannot be combined with DER output\n");
+                goto end;
+            }
             if (pubout) {
                 if (!i2d_PUBKEY_bio(out, pkey))
                     goto end;
@@ -305,15 +323,13 @@ int pkey_main(int argc, char **argv)
         }
     }
 
-    if (text) {
-        if (pubtext) {
-            if (EVP_PKEY_print_public(out, pkey, 0, NULL) <= 0)
-                goto end;
-        } else {
-            assert(private);
-            if (EVP_PKEY_print_private(out, pkey, 0, NULL) <= 0)
-                goto end;
-        }
+    if (text_pub) {
+        if (EVP_PKEY_print_public(out, pkey, 0, NULL) <= 0)
+            goto end;
+    } else if (text) {
+        assert(private);
+        if (EVP_PKEY_print_private(out, pkey, 0, NULL) <= 0)
+            goto end;
     }
 
     ret = 0;
