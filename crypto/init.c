@@ -234,7 +234,15 @@ static int config_inited = 0;
 static const OPENSSL_INIT_SETTINGS *conf_settings = NULL;
 DEFINE_RUN_ONCE_STATIC(ossl_init_config)
 {
+    int ret = openssl_config_int(NULL);
+
+    config_inited = 1;
+    return ret;
+}
+DEFINE_RUN_ONCE_STATIC_ALT(ossl_init_config_settings, ossl_init_config)
+{
     int ret = openssl_config_int(conf_settings);
+
     config_inited = 1;
     return ret;
 }
@@ -539,11 +547,18 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
 
     if (opts & OPENSSL_INIT_LOAD_CONFIG) {
         int ret;
-        CRYPTO_THREAD_write_lock(init_lock);
-        conf_settings = settings;
-        ret = RUN_ONCE(&config, ossl_init_config);
-        conf_settings = NULL;
-        CRYPTO_THREAD_unlock(init_lock);
+
+        if (settings == NULL) {
+            ret = RUN_ONCE(&config, ossl_init_config);
+        } else {
+            CRYPTO_THREAD_write_lock(init_lock);
+            conf_settings = settings;
+            ret = RUN_ONCE_ALT(&config, ossl_init_config_settings,
+                               ossl_init_config);
+            conf_settings = NULL;
+            CRYPTO_THREAD_unlock(init_lock);
+        }
+
         if (ret <= 0)
             return 0;
     }
