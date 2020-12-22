@@ -8,9 +8,9 @@
  */
 
 #include <openssl/err.h>
-#include <openssl/ec.h>
-#include "crypto/bn.h"
+#include "crypto/sm2err.h"
 #include "crypto/sm2.h"
+#include <openssl/ec.h> /* EC_KEY and EC_GROUP functions */
 
 /*
  * SM2 key generation is implemented within ec_generate_key() in
@@ -38,7 +38,7 @@ int sm2_key_private_check(const EC_KEY *eckey)
         goto end;
     if (BN_cmp(priv_key, BN_value_one()) < 0
         || BN_cmp(priv_key, max) >= 0) {
-        ERR_raise(ERR_LIB_SM2, EC_R_INVALID_PRIVATE_KEY);
+        ERR_raise(ERR_LIB_SM2, SM2_R_INVALID_PRIVATE_KEY);
         goto end;
     }
     ret = 1;
