@@ -2528,6 +2528,7 @@ EVP_R_BAD_ALGORITHM_NAME:200:bad algorithm name
 EVP_R_BAD_DECRYPT:100:bad decrypt
 EVP_R_BAD_KEY_LENGTH:195:bad key length
 EVP_R_BUFFER_TOO_SMALL:155:buffer too small
+EVP_R_CACHE_CONSTANTS_FAILED:225:cache constants failed
 EVP_R_CAMELLIA_KEY_SETUP_FAILED:157:camellia key setup failed
 EVP_R_CANNOT_GET_PARAMETERS:197:cannot get parameters
 EVP_R_CANNOT_SET_PARAMETERS:198:cannot set parameters
