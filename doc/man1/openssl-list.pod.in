@@ -13,16 +13,16 @@ B<openssl list>
 [B<-select> I<name>]
 [B<-1>]
 [B<-commands>]
-[B<-digest-commands>]
+[B<-digest-algorithms>]
 {- output_off() if $disabled{"deprecated-3.0"}; ""
--}[B<-digest-algorithms>]
+-}[B<-digest-commands>]
 {- output_on() if $disabled{"deprecated-3.0"}; ""
 -}[B<-kdf-algorithms>]
 [B<-mac-algorithms>]
 [B<-random-generators>]
-[B<-cipher-commands>]
+[B<-cipher-algorithms>]
 {- output_off() if $disabled{"deprecated-3.0"}; ""
--}[B<-cipher-algorithms>]
+-}[B<-cipher-commands>]
 {- output_on() if $disabled{"deprecated-3.0"}; ""
 -}[B<-encoders>]
 [B<-decoders>]
