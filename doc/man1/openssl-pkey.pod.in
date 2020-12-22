@@ -27,8 +27,8 @@ B<openssl> B<pkey>
 [B<-traditional>]
 [B<-pubout>]
 [B<-noout>]
-[B<-text_pub>]
 [B<-text>]
+[B<-text_pub>]
 [B<-ec_conv_form> I<arg>]
 [B<-ec_param_enc> I<arg>]
 
@@ -73,7 +73,7 @@ or the public component of a key pair.
 
 This specifies the input to read a key from
 or standard input if this option is not specified.
-If the key is encrypted and B<-passin> is not given
+If the key input is encrypted and B<-passin> is not given
 a pass phrase will be prompted for.
 
 =item B<-inform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
@@ -91,8 +91,8 @@ see L<openssl-passphrase-options(1)>.
 
 =item B<-pubin>
 
-By default a private key is read from the input file: with this
-option a public key is read instead.
+By default a private key is read from the input.
+With this option only the public components are read.
 
 =back
 
@@ -102,9 +102,9 @@ option a public key is read instead.
 
 =item B<-out> I<filename>
 
-This specifies the output filename to write a key to
+This specifies the output filename to save the encoded and/or text output of key
 or standard output if this option is not specified.
-If any encryption option is set but no B<-passout> is given
+If any cipher option is set but no B<-passout> is given
 then a pass phrase will be prompted for.
 The output filename should B<not> be the same as the input filename.
 
@@ -115,13 +115,13 @@ See L<openssl-format-options(1)> for details.
 
 =item B<-I<cipher>>
 
-These options encrypt the private key with the supplied cipher. Any algorithm
+Encrypt the PEM encoded private key with the supplied cipher. Any algorithm
 name accepted by EVP_get_cipherbyname() is acceptable such as B<aes128>.
+Encryption is not supported for DER output.
 
 =item B<-passout> I<arg>
 
 The password source for the output file.
-The -passout option is not supported for DER output.
 
 For more information about the format of B<arg>
 see L<openssl-passphrase-options(1)>.
@@ -134,22 +134,24 @@ option is specified then the older "traditional" format is used instead.
 
 =item B<-pubout>
 
-By default the encoded private key is output:
-with this option the encoded public key will be output instead.
+By default the encoded private and public key is output;
+this option restricts the encoded output to the public components.
 This option is automatically set if the input is a public key.
 
 =item B<-noout>
 
-Do not output the encoded version of the key.
+Do not output the key in encoded form.
 
 =item B<-text>
 
-Output the various public or private key components in
-plain text (possibly in addition to the encoded version).
+Output the various key components in plain text
+(possibly in addition to the PEM encoded form).
+This cannot be combined with encoded output in DER format.
 
 =item B<-text_pub>
 
-Output in text form the public key components (also for private keys).
+Output in text form only the public key components (also for private keys).
+This cannot be combined with encoded output in DER format.
 
 =item B<-ec_conv_form> I<arg>
 
