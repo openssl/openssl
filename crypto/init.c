@@ -34,6 +34,7 @@
 #include <openssl/trace.h>
 
 static int stopped = 0;
+static uint64_t optsdone = 0;
 
 typedef struct ossl_init_stop_st OPENSSL_INIT_STOP;
 struct ossl_init_stop_st {
@@ -464,6 +465,28 @@ void OPENSSL_cleanup(void)
  */
 int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
 {
+    uint64_t tmp;
+    int aloaddone = 0;
+
+    /*
+     * We ignore failures from this function. It is probably because we are
+     * on a platform that doesn't support lockless atomic loads (we may not
+     * have created init_lock yet so we can't use it). This is just an
+     * optimisation to skip the full checks in this function if we don't need
+     * to, so we carry on regardless in the event of failure.
+     *
+     * There could be a race here with other threads, so that optsdone has not
+     * been updated yet, even though the options have in fact been initialised.
+     * This doesn't matter - it just means we will run the full function
+     * unnecessarily - but all the critical code is contained in RUN_ONCE
+     * functions anyway so we are safe.
+     */
+    if (CRYPTO_atomic_load(&optsdone, &tmp, NULL)) {
+        if ((tmp & opts) == opts)
+            return 1;
+        aloaddone = 1;
+    }
+
     /*
      * TODO(3.0): This function needs looking at with a view to moving most/all
      * of this into OSSL_LIB_CTX.
@@ -491,6 +514,18 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
 
     if (opts & OPENSSL_INIT_BASE_ONLY)
         return 1;
+
+    /*
+     * init_lock should definitely be set up now, so we can now repeat the
+     * same check from above but be sure that it will work even on platforms
+     * without lockless CRYPTO_atomic_load
+     */
+    if (!aloaddone) {
+        if (!CRYPTO_atomic_load(&optsdone, &tmp, init_lock))
+            return 0;
+        if ((tmp & opts) == opts)
+            return 1;
+    }
 
     /*
      * Now we don't always set up exit handlers, the INIT_BASE_ONLY calls
@@ -613,6 +648,9 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
             && !RUN_ONCE(&zlib, ossl_init_zlib))
         return 0;
 #endif
+
+    if (!CRYPTO_atomic_or(&optsdone, opts, &tmp, init_lock))
+        return 0;
 
     return 1;
 }
