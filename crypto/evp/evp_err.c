@@ -23,6 +23,8 @@ static const ERR_STRING_DATA EVP_str_reasons[] = {
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_BAD_DECRYPT), "bad decrypt"},
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_BAD_KEY_LENGTH), "bad key length"},
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_BUFFER_TOO_SMALL), "buffer too small"},
+    {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_CACHE_CONSTANTS_FAILED),
+    "cache constants failed"},
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_CAMELLIA_KEY_SETUP_FAILED),
     "camellia key setup failed"},
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_CANNOT_GET_PARAMETERS),
