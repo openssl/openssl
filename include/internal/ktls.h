@@ -41,12 +41,6 @@
 #   define OPENSSL_KTLS_AES_GCM_256
 #   define OPENSSL_KTLS_TLS13
 
-/*
- * Only used by the tests in sslapitest.c.
- */
-#   define TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE             8
-#   define TLS_CIPHER_AES_GCM_256_REC_SEQ_SIZE             8
-
 typedef struct tls_enable ktls_crypto_info_t;
 
 /*
