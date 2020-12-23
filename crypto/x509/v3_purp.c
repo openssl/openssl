@@ -894,10 +894,10 @@ static int no_check_purpose(const X509_PURPOSE *xp, const X509 *x,
  * This can be used to prune a set of possible issuer certificates which
  * have been looked up using some simple method such as by subject name.
  * These are:
- * 1. Check issuer_name(subject) == subject_name(issuer)
- * 2. If akid(subject) exists, check that it matches issuer
- * 3. Check that issuer public key algorithm matches subject signature algorithm
- * 4. Check that any key_usage(issuer) allows certificate signing
+ * 1. issuer_name(subject) == subject_name(issuer)
+ * 2. If akid(subject) exists, it matches the respective issuer fields.
+ * 3. subject signature algorithm == issuer public key algorithm
+ * 4. If key_usage(issuer) exists, it allows for signing subject.
  * Note that this does not include actually checking the signature.
  * Returns 0 for OK, or positive for reason for mismatch
  * where reason codes match those for X509_verify_cert().

@@ -460,6 +460,12 @@ If an unrecognised error code is passed to X509_verify_cert_error_string() the
 numerical value of the unknown code is returned in a static buffer. This is not
 thread safe but will never happen unless an invalid code is passed.
 
+=head1 BUGS
+
+Previous versions of this documentation swapped the meaning of the
+B<X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT> and
+B<X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY> error codes.
+
 =head1 SEE ALSO
 
 L<X509_verify_cert(3)>, L<X509_STORE_CTX_verify(3)>,
