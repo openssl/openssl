@@ -556,7 +556,7 @@ int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
     if (ctx->cipher->prov == NULL)
         goto legacy;
 
-    blocksize = EVP_CIPHER_CTX_block_size(ctx);
+    blocksize = ctx->cipher->block_size;
 
     if (ctx->cipher->cupdate == NULL  || blocksize < 1) {
         ERR_raise(ERR_LIB_EVP, EVP_R_UPDATE_ERROR);
