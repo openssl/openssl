@@ -184,10 +184,86 @@ static int test_thread_local(void)
     return 1;
 }
 
+static int test_atomic(void)
+{
+    int val = 0, ret = 0, testresult = 0;
+    uint64_t val64 = 1, ret64 = 0;
+    CRYPTO_RWLOCK *lock = CRYPTO_THREAD_lock_new();
+
+    if (!TEST_ptr(lock))
+        return 0;
+
+    if (CRYPTO_atomic_add(&val, 1, &ret, NULL)) {
+        /* This succeeds therefore we're on a platform with lockless atomics */
+        if (!TEST_int_eq(val, 1) || !TEST_int_eq(val, ret))
+            goto err;
+    } else {
+        /* This failed therefore we're on a platform without lockless atomics */
+        if (!TEST_int_eq(val, 0) || !TEST_int_eq(val, ret))
+            goto err;
+    }
+    val = 0;
+    ret = 0;
+
+    if (!TEST_true(CRYPTO_atomic_add(&val, 1, &ret, lock)))
+        goto err;
+    if (!TEST_int_eq(val, 1) || !TEST_int_eq(val, ret))
+        goto err;
+
+    if (CRYPTO_atomic_or(&val64, 2, &ret64, NULL)) {
+        /* This succeeds therefore we're on a platform with lockless atomics */
+        if (!TEST_uint_eq((unsigned int)val64, 3)
+                || !TEST_uint_eq((unsigned int)val64, (unsigned int)ret64))
+            goto err;
+    } else {
+        /* This failed therefore we're on a platform without lockless atomics */
+        if (!TEST_uint_eq((unsigned int)val64, 1)
+                || !TEST_int_eq((unsigned int)ret64, 0))
+            goto err;
+    }
+    val64 = 1;
+    ret64 = 0;
+
+    if (!TEST_true(CRYPTO_atomic_or(&val64, 2, &ret64, lock)))
+        goto err;
+
+    if (!TEST_uint_eq((unsigned int)val64, 3)
+            || !TEST_uint_eq((unsigned int)val64, (unsigned int)ret64))
+        goto err;
+
+    ret64 = 0;
+    if (CRYPTO_atomic_load(&val64, &ret64, NULL)) {
+        /* This succeeds therefore we're on a platform with lockless atomics */
+        if (!TEST_uint_eq((unsigned int)val64, 3)
+                || !TEST_uint_eq((unsigned int)val64, (unsigned int)ret64))
+            goto err;
+    } else {
+        /* This failed therefore we're on a platform without lockless atomics */
+        if (!TEST_uint_eq((unsigned int)val64, 3)
+                || !TEST_int_eq((unsigned int)ret64, 0))
+            goto err;
+    }
+
+    ret64 = 0;
+    if (!TEST_true(CRYPTO_atomic_load(&val64, &ret64, lock)))
+        goto err;
+
+    if (!TEST_uint_eq((unsigned int)val64, 3)
+            || !TEST_uint_eq((unsigned int)val64, (unsigned int)ret64))
+        goto err;
+
+    testresult = 1;
+ err:
+
+    CRYPTO_THREAD_lock_free(lock);
+    return testresult;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(test_lock);
     ADD_TEST(test_once);
     ADD_TEST(test_thread_local);
+    ADD_TEST(test_atomic);
     return 1;
 }
