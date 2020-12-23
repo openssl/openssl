@@ -29,7 +29,7 @@ def test_kex_sig_pair(kex_name, parametrized_sig_server, bssl_alg_to_id, client_
             kex_full_name = "{} hybrid".format(kex_name)
         else:
             kex_full_name = kex_name
-        if (not "Server Temp Key: {}".format(kex_full_name) in client_output) or (not "issuer=C = US, O = BoringSSL" in client_output):
+        if (not "Server Temp Key: {}".format(kex_full_name) in client_output) or (not "Peer signature type:" in client_output) or (not "Server certificate" in client_output):
             print(client_output)
             assert False
 

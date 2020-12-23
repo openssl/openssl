@@ -97,13 +97,15 @@ def gen_openssl_keys(ossl, sig_alg, test_artifacts_dir, filename_prefix):
                 shutil.copyfileobj(in_file, out_file)
 
 def start_server(client_type, test_artifacts_dir, sig_alg, worker_id):
+    gen_openssl_keys(OSSL, sig_alg, test_artifacts_dir, worker_id)
+
     if client_type == "ossl":
         server_command = [BSSL, 'server',
                                 '-accept', '0',
-                                '-sig-alg', sig_alg,
+                                '-cert', os.path.join(test_artifacts_dir, '{}_{}_srv.crt'.format(worker_id, sig_alg)),
+                                '-key', os.path.join(test_artifacts_dir, '{}_{}_srv.key'.format(worker_id, sig_alg)),
                                 '-loop']
     elif client_type == "bssl":
-        gen_openssl_keys(OSSL, sig_alg, test_artifacts_dir, worker_id)
         server_command = [OSSL, 's_server',
                                 '-cert', os.path.join(test_artifacts_dir, '{}_{}_srv.crt'.format(worker_id, sig_alg)),
                                 '-key', os.path.join(test_artifacts_dir, '{}_{}_srv.key'.format(worker_id, sig_alg)),
