@@ -3011,7 +3011,8 @@ static int build_chain(X509_STORE_CTX *ctx)
 #define S_DOTRUSTED   (1 << 1) /* Search trusted store */
 #define S_DOALTERNATE (1 << 2) /* Retry with pruned alternate chain */
     /*
-     * Set up search policy, untrusted if possible, trusted-first if enabled.
+     * Set up search policy, untrusted if possible, trusted-first if enabled,
+     * which is the default.
      * If we're doing DANE and not doing PKIX-TA/PKIX-EE, we never look in the
      * trust_store, otherwise we might look there first.  If not trusted-first,
      * and alternate chains are not disabled, try building an alternate chain

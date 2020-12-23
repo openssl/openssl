@@ -317,7 +317,7 @@ trust store to be treated as trust anchors, in the same way as self-signed
 root CA certificates.
 This makes it possible to trust self-issued certificates as well as certificates
 issued by an intermediate CA without having to trust their ancestor root CA.
-With OpenSSL 1.1.0 and later and <X509_V_FLAG_PARTIAL_CHAIN> set, chain
+With OpenSSL 1.1.0 and later and B<X509_V_FLAG_PARTIAL_CHAIN> set, chain
 construction stops as soon as the first certificate contained in the trust store
 is added to the chain, whether that certificate is a self-signed "root"
 certificate or a not self-signed "intermediate" or self-issued certificate.
