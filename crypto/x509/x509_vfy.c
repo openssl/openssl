@@ -3004,7 +3004,7 @@ static int build_chain(X509_STORE_CTX *ctx)
      * typically the content of the peer's certificate message) so can make
      * multiple passes over it, while free to remove elements as we go.
      */
-    if (ctx->untrusted && (sktmp = sk_X509_dup(ctx->untrusted)) == NULL) {
+    if ((sktmp = sk_X509_dup(ctx->untrusted)) == NULL) {
         ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
         ctx->error = X509_V_ERR_OUT_OF_MEM;
         return 0;

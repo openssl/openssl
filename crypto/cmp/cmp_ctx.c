@@ -462,8 +462,6 @@ STACK_OF(X509) *OSSL_CMP_CTX_get1_newChain(const OSSL_CMP_CTX *ctx)
         ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
         return NULL;
     }
-    if (ctx->newChain == NULL)
-        return sk_X509_new_null();
     return X509_chain_up_ref(ctx->newChain);
 }
 
@@ -477,10 +475,9 @@ int ossl_cmp_ctx_set1_newChain(OSSL_CMP_CTX *ctx, STACK_OF(X509) *newChain)
         return 0;
 
     sk_X509_pop_free(ctx->newChain, X509_free);
-    ctx->newChain= NULL;
-    if (newChain == NULL)
-        return 1;
-    return (ctx->newChain = X509_chain_up_ref(newChain)) != NULL;
+    ctx->newChain = NULL;
+    return newChain == NULL ||
+        (ctx->newChain = X509_chain_up_ref(newChain)) != NULL;
 }
 
 /* Returns the stack of extraCerts received in CertRepMessage, NULL on error */
@@ -490,8 +487,6 @@ STACK_OF(X509) *OSSL_CMP_CTX_get1_extraCertsIn(const OSSL_CMP_CTX *ctx)
         ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
         return NULL;
     }
-    if (ctx->extraCertsIn == NULL)
-        return sk_X509_new_null();
     return X509_chain_up_ref(ctx->extraCertsIn);
 }
 
@@ -507,9 +502,8 @@ int ossl_cmp_ctx_set1_extraCertsIn(OSSL_CMP_CTX *ctx,
 
     sk_X509_pop_free(ctx->extraCertsIn, X509_free);
     ctx->extraCertsIn = NULL;
-    if (extraCertsIn == NULL)
-        return 1;
-    return (ctx->extraCertsIn = X509_chain_up_ref(extraCertsIn)) != NULL;
+    return extraCertsIn == NULL
+        || (ctx->extraCertsIn = X509_chain_up_ref(extraCertsIn)) != NULL;
 }
 
 /*
@@ -526,9 +520,8 @@ int OSSL_CMP_CTX_set1_extraCertsOut(OSSL_CMP_CTX *ctx,
 
     sk_X509_pop_free(ctx->extraCertsOut, X509_free);
     ctx->extraCertsOut = NULL;
-    if (extraCertsOut == NULL)
-        return 1;
-    return (ctx->extraCertsOut = X509_chain_up_ref(extraCertsOut)) != NULL;
+    return extraCertsOut == NULL
+        || (ctx->extraCertsOut = X509_chain_up_ref(extraCertsOut)) != NULL;
 }
 
 /*
@@ -580,8 +573,6 @@ STACK_OF(X509) *OSSL_CMP_CTX_get1_caPubs(const OSSL_CMP_CTX *ctx)
         ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
         return NULL;
     }
-    if (ctx->caPubs == NULL)
-        return sk_X509_new_null();
     return X509_chain_up_ref(ctx->caPubs);
 }
 
@@ -596,9 +587,7 @@ int ossl_cmp_ctx_set1_caPubs(OSSL_CMP_CTX *ctx, STACK_OF(X509) *caPubs)
 
     sk_X509_pop_free(ctx->caPubs, X509_free);
     ctx->caPubs = NULL;
-    if (caPubs == NULL)
-        return 1;
-    return (ctx->caPubs = X509_chain_up_ref(caPubs)) != NULL;
+    return caPubs == NULL || (ctx->caPubs = X509_chain_up_ref(caPubs)) != NULL;
 }
 
 #define char_dup OPENSSL_strdup

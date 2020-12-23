@@ -183,17 +183,10 @@ int TS_RESP_CTX_set_def_policy(TS_RESP_CTX *ctx, const ASN1_OBJECT *def_policy)
 
 int TS_RESP_CTX_set_certs(TS_RESP_CTX *ctx, STACK_OF(X509) *certs)
 {
-
     sk_X509_pop_free(ctx->certs, X509_free);
     ctx->certs = NULL;
-    if (!certs)
-        return 1;
-    if ((ctx->certs = X509_chain_up_ref(certs)) == NULL) {
-        ERR_raise(ERR_LIB_TS, ERR_R_MALLOC_FAILURE);
-        return 0;
-    }
 
-    return 1;
+    return certs == NULL || (ctx->certs = X509_chain_up_ref(certs)) != NULL;
 }
 
 int TS_RESP_CTX_add_policy(TS_RESP_CTX *ctx, const ASN1_OBJECT *policy)
