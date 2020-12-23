@@ -81,16 +81,17 @@ supported and I<lock> is NULL, then the function will fail.
 
 =item *
 
-CRYPTO_atomic_or() atomically ors I<op> to I<*val> and returns the
-result of the operation in I<*ret>. I<lock> will be locked, unless atomic
-operations are supported on the specific platform. Because of this, if a
-variable is modified by CRYPTO_atomic_or() or read by CRYPTO_atomic_load() then
-CRYPTO_atomic_or() must be the only way that the variable is modified. If atomic
-operations are not supported and I<lock> is NULL, then the function will fail.
+CRYPTO_atomic_or() performs an atomic bitwise or of I<op> and I<*val> and stores
+the result back in I<*val>. It also returns the result of the operation in
+I<*ret>. I<lock> will be locked, unless atomic operations are supported on the
+specific platform. Because of this, if a variable is modified by
+CRYPTO_atomic_or() or read by CRYPTO_atomic_load() then CRYPTO_atomic_or() must
+be the only way that the variable is modified. If atomic operations are not
+supported and I<lock> is NULL, then the function will fail.
 
 =item *
 
-CRYPTO_atomic_load() atomically loads the contents of I<*val> and into I<*ret>.
+CRYPTO_atomic_load() atomically loads the contents of I<*val> into I<*ret>.
 I<lock> will be locked, unless atomic operations are supported on the specific
 platform. Because of this, if a variable is modified by CRYPTO_atomic_or() or
 read by CRYPTO_atomic_load() then CRYPTO_atomic_load() must be the only way that
