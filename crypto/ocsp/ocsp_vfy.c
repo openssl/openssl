@@ -118,10 +118,6 @@ int OCSP_basic_verify(OCSP_BASICRESP *bs, STACK_OF(X509) *certs,
                 goto end;
             if (!X509_add_certs(untrusted, certs, X509_ADD_FLAG_DEFAULT))
                 goto end;
-        } else if (certs != NULL) {
-            untrusted = certs;
-        } else {
-            untrusted = bs->certs;
         }
         ret = ocsp_verify_signer(signer, 1, st, flags, untrusted, &chain);
         if (ret <= 0)
