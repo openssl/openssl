@@ -38,6 +38,7 @@ B<openssl> B<req>
 [B<-days> I<n>]
 [B<-set_serial> I<n>]
 [B<-newhdr>]
+[B<-copy_extensions> I<arg>]
 [B<-addext> I<ext>]
 [B<-extensions> I<section>]
 [B<-reqexts> I<section>]
@@ -267,6 +268,7 @@ to the a certificate; otherwise a request is created from scratch.
 Unless specified using the B<-set_serial> option,
 a large random number will be used for the serial number.
 
+Unless the B<-copy_extensions> option is used,
 X.509 extensions are not copied from any provided request input file.
 X.509 extensions to be added can be specified in the configuration file
 or using the B<-addext> option.
@@ -294,6 +296,17 @@ be a positive integer. The default is 30 days.
 
 Serial number to use when outputting a self-signed certificate. This
 may be specified as a decimal value or a hex value if preceded by C<0x>.
+
+=item B<-copy_extensions> I<arg>
+
+Determines how extensions in certificate requests should be handled when B<-x509> is given.
+If I<arg> is B<none> or this option is not present
+then extensions present in the request are ignored.
+If I<arg> is B<copy> or B<copyall> then
+any extensions present in the request are copied to the certificate.
+
+The main use of this option is to allow a certificate request to supply
+values for certain extensions such as subjectAltName.
 
 =item B<-addext> I<ext>
 
