@@ -1407,6 +1407,9 @@ static struct ktls_test_cipher {
 #  ifdef OPENSSL_KTLS_AES_GCM_256
     { TLS1_2_VERSION, "AES256-GCM-SHA384"},
 #  endif
+#  ifdef OPENSSL_KTLS_CHACHA20_POLY1305
+    { TLS1_2_VERSION, "ECDHE-RSA-CHACHA20-POLY1305"},
+#  endif
 # endif
 # if !defined(OSSL_NO_USABLE_TLS1_3)
 #  ifdef OPENSSL_KTLS_AES_GCM_128
@@ -1417,6 +1420,9 @@ static struct ktls_test_cipher {
 #  endif
 #  ifdef OPENSSL_KTLS_AES_GCM_256
     { TLS1_3_VERSION, "TLS_AES_256_GCM_SHA384" },
+#  endif
+#  ifdef OPENSSL_KTLS_CHACHA20_POLY1305
+    { TLS1_3_VERSION, "TLS_CHACHA20_POLY1305_SHA256" },
 #  endif
 # endif
 };
