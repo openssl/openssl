@@ -13,6 +13,7 @@
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
 #include <openssl/x509v3.h>
+#include "crypto/x509.h"
 #include "ext_dat.h"
 
 static STACK_OF(CONF_VALUE) *i2v_AUTHORITY_KEYID(X509V3_EXT_METHOD *method,
@@ -86,7 +87,7 @@ static AUTHORITY_KEYID *v2i_AUTHORITY_KEYID(X509V3_EXT_METHOD *method,
     GENERAL_NAME *gen = NULL;
     ASN1_INTEGER *serial = NULL;
     X509_EXTENSION *ext;
-    X509 *cert;
+    X509 *issuer_cert;
     AUTHORITY_KEYID *akeyid = AUTHORITY_KEYID_new();
 
     if (akeyid == NULL)
@@ -113,36 +114,49 @@ static AUTHORITY_KEYID *v2i_AUTHORITY_KEYID(X509V3_EXT_METHOD *method,
         }
     }
 
-    if (!ctx || !ctx->issuer_cert) {
-        if (ctx && (ctx->flags == CTX_TEST))
-            return akeyid;
+    if (ctx != NULL && (ctx->flags & CTX_TEST) != 0)
+        return akeyid;
+
+    if (ctx == NULL) {
+        ERR_raise(ERR_LIB_X509V3, ERR_R_PASSED_NULL_PARAMETER);
+        goto err;
+    }
+    if ((issuer_cert = ctx->issuer_cert) == NULL) {
         ERR_raise(ERR_LIB_X509V3, X509V3_R_NO_ISSUER_CERTIFICATE);
         goto err;
     }
-    cert = ctx->issuer_cert;
 
-    if (keyid) {
-        i = X509_get_ext_by_NID(cert, NID_subject_key_identifier, -1);
-        if ((i >= 0) && (ext = X509_get_ext(cert, i)))
+    if (keyid != 0) {
+        /* prefer any pre-existing subject key identifier of the issuer cert */
+        i = X509_get_ext_by_NID(issuer_cert, NID_subject_key_identifier, -1);
+        if (i >= 0 && (ext = X509_get_ext(issuer_cert, i)) != NULL)
             ikeyid = X509V3_EXT_d2i(ext);
+        if (ikeyid == NULL && ctx->issuer_pkey != NULL) { /* fallback */
+            /* generate AKID from scratch, emulating s2i_skey_id(..., "hash") */
+            X509_PUBKEY *pubkey = NULL;
+
+            if (X509_PUBKEY_set(&pubkey, ctx->issuer_pkey))
+                ikeyid = x509_pubkey_hash(pubkey);
+            X509_PUBKEY_free(pubkey);
+        }
         if ((keyid == 2 || issuer == 0)
             && (ikeyid == NULL
-                || ASN1_STRING_length(ikeyid) <= 2)  /* indicating "none" */ ) {
+                || ASN1_STRING_length(ikeyid) <= 2) /* indicating "none" */) {
             ERR_raise(ERR_LIB_X509V3, X509V3_R_UNABLE_TO_GET_ISSUER_KEYID);
             goto err;
         }
     }
 
-    if ((issuer && !ikeyid) || (issuer == 2)) {
-        isname = X509_NAME_dup(X509_get_issuer_name(cert));
-        serial = ASN1_INTEGER_dup(X509_get0_serialNumber(cert));
-        if (!isname || !serial) {
+    if (issuer == 2 || (issuer == 1 && ikeyid == NULL)) {
+        isname = X509_NAME_dup(X509_get_issuer_name(issuer_cert));
+        serial = ASN1_INTEGER_dup(X509_get0_serialNumber(issuer_cert));
+        if (isname == NULL || serial == NULL) {
             ERR_raise(ERR_LIB_X509V3, X509V3_R_UNABLE_TO_GET_ISSUER_DETAILS);
             goto err;
         }
     }
 
-    if (isname) {
+    if (isname != NULL) {
         if ((gens = sk_GENERAL_NAME_new_null()) == NULL
             || (gen = GENERAL_NAME_new()) == NULL
             || !sk_GENERAL_NAME_push(gens, gen)) {

@@ -15,9 +15,9 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_req");
 
-plan tests => 39;
+plan tests => 38;
 
-require_ok(srctop_file('test','recipes','tconversion.pl'));
+require_ok(srctop_file('test', 'recipes', 'tconversion.pl'));
 
 my @certs = qw(test certs);
 
@@ -259,7 +259,7 @@ sub generate_cert {
     my $cn = $is_ca ? "CA" : "EE";
     my $ca_key = srctop_file(@certs, "ca-key.pem");
     my $key = $is_ca ? $ca_key : srctop_file(@certs, "ee-key.pem");
-    my @cmd = ("openssl", "req", "-config", "\"\"","-x509",
+    my @cmd = ("openssl", "req", "-config", "\"\"", "-x509",
                "-key", $key, "-subj", "/CN=$cn", @_, "-out", $cert);
     push(@cmd, ("-CA", $ca_cert, "-CAkey", $ca_key)) unless $ss;
     ok(run(app([@cmd])), "generate $cert");
@@ -286,10 +286,10 @@ sub strict_verify {
 
 my @v3_ca = ("-addext", "basicConstraints = critical,CA:true",
              "-addext", "keyUsage = keyCertSign");
+my $SKID_AKID = "subjectKeyIdentifier,authorityKeyIdentifier";
 my $cert = "self-signed_v1_CA_no_KIDs.pem";
 generate_cert($cert);
-has_SKID($ca_cert, 0);
-has_AKID($ca_cert, 0);
+cert_ext_has_n_different_lines($cert, 0, $SKID_AKID); # no SKID and no AKID
 #TODO strict_verify($cert, 1); # self-signed v1 root cert should be accepted as CA
 
 $ca_cert = "self-signed_v3_CA_default_SKID.pem";
@@ -300,15 +300,13 @@ strict_verify($ca_cert, 1);
 
 $cert = "self-signed_v3_CA_no_SKID.pem";
 generate_cert($cert, @v3_ca, "-addext", "subjectKeyIdentifier = none");
-has_SKID($cert, 0);
-has_AKID($cert, 0);
+cert_ext_has_n_different_lines($cert, 0, $SKID_AKID); # no SKID and no AKID
 #TODO strict_verify($cert, 0);
 
 $cert = "self-signed_v3_CA_both_KIDs.pem";
 generate_cert($cert, @v3_ca, "-addext", "subjectKeyIdentifier = hash",
             "-addext", "authorityKeyIdentifier = keyid");
-has_SKID($cert, 1);
-has_AKID($cert, 1);
+cert_ext_has_n_different_lines($cert, 3, $SKID_AKID); # SKID == AKID
 strict_verify($cert, 1);
 
 $cert = "self-signed_v3_EE_wrong_keyUsage.pem";
@@ -317,8 +315,7 @@ generate_cert($cert, "-addext", "keyUsage = keyCertSign");
 
 $cert = "v3_EE_default_KIDs.pem";
 generate_cert($cert, "-addext", "keyUsage = dataEncipherment");
-has_SKID($cert, 1);
-has_AKID($cert, 1);
+cert_ext_has_n_different_lines($cert, 4, $SKID_AKID); # SKID != AKID
 strict_verify($cert, 1, $ca_cert);
 
 $cert = "v3_EE_no_AKID.pem";
@@ -326,3 +323,9 @@ generate_cert($cert, "-addext", "authorityKeyIdentifier = none");
 has_SKID($cert, 1);
 has_AKID($cert, 0);
 strict_verify($cert, 0, $ca_cert);
+
+$cert = "self-issued_v3_EE_default_KIDs.pem";
+generate_cert($cert, "-addext", "keyUsage = dataEncipherment",
+    "-in", srctop_file(@certs, "x509-check.csr"));
+cert_ext_has_n_different_lines($cert, 4, $SKID_AKID); # SKID != AKID
+strict_verify($cert, 1);

@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-ASN1_generate_nconf, ASN1_generate_v3 - ASN1 generation functions
+ASN1_generate_nconf, ASN1_generate_v3 - ASN1 string generation functions
 
 =head1 SYNOPSIS
 
@@ -16,10 +16,10 @@ ASN1_generate_nconf, ASN1_generate_v3 - ASN1 generation functions
 These functions generate the ASN1 encoding of a string
 in an B<ASN1_TYPE> structure.
 
-I<str> contains the string to encode I<nconf> or I<cnf> contains
+I<str> contains the string to encode. I<nconf> or I<cnf> contains
 the optional configuration information where additional strings
 will be read from. I<nconf> will typically come from a config
-file whereas I<cnf> is obtained from an B<X509V3_CTX> structure
+file whereas I<cnf> is obtained from an B<X509V3_CTX> structure,
 which will typically be used by X509 v3 certificate extension
 functions. I<cnf> or I<nconf> can be set to NULL if no additional
 configuration will be used.

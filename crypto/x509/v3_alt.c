@@ -325,7 +325,7 @@ static int copy_issuer(X509V3_CTX *ctx, GENERAL_NAMES *gens)
     X509_EXTENSION *ext;
     int i, num;
 
-    if (ctx && (ctx->flags == CTX_TEST))
+    if (ctx != NULL && (ctx->flags & CTX_TEST) != 0)
         return 1;
     if (!ctx || !ctx->issuer_cert) {
         ERR_raise(ERR_LIB_X509V3, X509V3_R_NO_ISSUER_DETAILS);
@@ -410,12 +410,12 @@ static int copy_email(X509V3_CTX *ctx, GENERAL_NAMES *gens, int move_p)
     GENERAL_NAME *gen = NULL;
     int i = -1;
 
-    if (ctx != NULL && ctx->flags == CTX_TEST)
+    if (ctx != NULL && (ctx->flags & CTX_TEST) != 0)
         return 1;
     if (ctx == NULL
         || (ctx->subject_cert == NULL && ctx->subject_req == NULL)) {
         ERR_raise(ERR_LIB_X509V3, X509V3_R_NO_SUBJECT_DETAILS);
-        goto err;
+        return 0;
     }
     /* Find the subject name */
     if (ctx->subject_cert)

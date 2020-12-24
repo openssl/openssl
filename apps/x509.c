@@ -1079,7 +1079,13 @@ static int sign(X509 *x, EVP_PKEY *pkey, X509 *issuer,
         while (X509_get_ext_count(x) > 0)
             X509_delete_ext(x, 0);
     }
+
     X509V3_set_ctx(&ext_ctx, issuer, x, NULL, NULL, X509V3_CTX_REPLACE);
+    if (issuer == x
+        /* prepare the correct AKID of self-issued, possibly self-signed cert */
+            && !X509V3_set_issuer_pkey(&ext_ctx, pkey))
+        return 0;
+
     if (conf != NULL) {
         X509V3_set_nconf(&ext_ctx, conf);
         if (!X509V3_EXT_add_nconf(conf, &ext_ctx, section, x)) {
@@ -1149,7 +1155,7 @@ static int print_x509v3_exts(BIO *bio, X509 *x, const char *ext_names)
 
     exts = X509_get0_extensions(x);
     if ((num = sk_X509_EXTENSION_num(exts)) <= 0) {
-        BIO_printf(bio, "No extensions in certificate\n");
+        BIO_printf(bio_err, "No extensions in certificate\n");
         ret = 1;
         goto end;
     }

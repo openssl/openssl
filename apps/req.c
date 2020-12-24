@@ -532,6 +532,7 @@ int req_main(int argc, char **argv)
     if (extensions != NULL) {
         /* Check syntax of file */
         X509V3_CTX ctx;
+
         X509V3_set_ctx_test(&ctx);
         X509V3_set_nconf(&ctx, req_conf);
         if (!X509V3_EXT_add_nconf(req_conf, &ctx, extensions, NULL)) {
@@ -544,6 +545,7 @@ int req_main(int argc, char **argv)
     if (addext_conf != NULL) {
         /* Check syntax of command line extensions */
         X509V3_CTX ctx;
+
         X509V3_set_ctx_test(&ctx);
         X509V3_set_nconf(&ctx, addext_conf);
         if (!X509V3_EXT_add_nconf(addext_conf, &ctx, "default", NULL)) {
@@ -591,6 +593,7 @@ int req_main(int argc, char **argv)
     if (req_exts != NULL) {
         /* Check syntax of file */
         X509V3_CTX ctx;
+
         X509V3_set_ctx_test(&ctx);
         X509V3_set_nconf(&ctx, req_conf);
         if (!X509V3_EXT_add_nconf(req_conf, &ctx, req_exts, NULL)) {
@@ -773,7 +776,7 @@ int req_main(int argc, char **argv)
     }
     if (newreq || gen_x509) {
         if (pkey == NULL /* can happen only if !newreq */) {
-            BIO_printf(bio_err, "Must provide the corresponding private key using -key\n");
+            BIO_printf(bio_err, "Must provide a signature key using -key\n");
             goto end;
         }
 
@@ -793,7 +796,8 @@ int req_main(int argc, char **argv)
             X509V3_CTX ext_ctx;
             X509_NAME *issuer = CAcert != NULL ? X509_get_subject_name(CAcert) :
                 X509_REQ_get_subject_name(req);
-            X509_NAME *n_subj = X509_REQ_get_subject_name(req);
+            X509_NAME *n_subj = fsubj != NULL ? fsubj :
+                X509_REQ_get_subject_name(req);
 
             if ((new_x509 = X509_new_ex(app_get0_libctx(),
                                         app_get0_propq())) == NULL)
@@ -823,6 +827,15 @@ int req_main(int argc, char **argv)
             /* Set up V3 context struct */
             X509V3_set_ctx(&ext_ctx, CAcert != NULL ? CAcert : new_x509,
                            new_x509, NULL, NULL, X509V3_CTX_REPLACE);
+            if (CAcert == NULL) { /* self-issued, possibly self-signed */
+                if (!X509V3_set_issuer_pkey(&ext_ctx, pkey)) /* prepare right AKID */
+                    goto end;
+                ERR_set_mark();
+                if (!X509_check_private_key(new_x509, pkey))
+                    BIO_printf(bio_err,
+                               "Warning: Signature key and public key of cert do not match\n");
+                ERR_pop_to_mark();
+            }
             X509V3_set_nconf(&ext_ctx, req_conf);
 
             /* Add extensions */
