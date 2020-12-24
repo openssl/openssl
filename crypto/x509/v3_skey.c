@@ -52,56 +52,49 @@ ASN1_OCTET_STRING *s2i_ASN1_OCTET_STRING(X509V3_EXT_METHOD *method,
 
 }
 
-static ASN1_OCTET_STRING *s2i_skey_id(X509V3_EXT_METHOD *method,
-                                      X509V3_CTX *ctx, char *str)
+ASN1_OCTET_STRING *x509_pubkey_hash(X509_PUBKEY *pubkey)
 {
     ASN1_OCTET_STRING *oct;
-    X509_PUBKEY *pubkey;
     const unsigned char *pk;
     int pklen;
     unsigned char pkey_dig[EVP_MAX_MD_SIZE];
     unsigned int diglen;
 
+    if (pubkey == NULL) {
+        ERR_raise(ERR_LIB_X509V3, X509V3_R_NO_PUBLIC_KEY);
+        return NULL;
+    }
+    if ((oct = ASN1_OCTET_STRING_new()) == NULL)
+        return NULL;
+
+    X509_PUBKEY_get0_param(NULL, &pk, &pklen, NULL, pubkey);
+    /* TODO(3.0) - explicitly fetch the digest */
+    if (EVP_Digest(pk, pklen, pkey_dig, &diglen, EVP_sha1(), NULL)
+            && ASN1_OCTET_STRING_set(oct, pkey_dig, diglen))
+        return oct;
+
+    ASN1_OCTET_STRING_free(oct);
+    return NULL;
+}
+
+static ASN1_OCTET_STRING *s2i_skey_id(X509V3_EXT_METHOD *method,
+                                      X509V3_CTX *ctx, char *str)
+{
     if (strcmp(str, "none") == 0)
         return ASN1_OCTET_STRING_new(); /* dummy */
 
     if (strcmp(str, "hash") != 0)
-        return s2i_ASN1_OCTET_STRING(method, ctx, str);
+        return s2i_ASN1_OCTET_STRING(method, ctx /* not used */, str);
 
-    if ((oct = ASN1_OCTET_STRING_new()) == NULL) {
-        ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
+    if (ctx != NULL && (ctx->flags & CTX_TEST) != 0)
+        return ASN1_OCTET_STRING_new();
+    if (ctx == NULL
+        || (ctx->subject_cert == NULL && ctx->subject_req == NULL)) {
+        ERR_raise(ERR_LIB_X509V3, X509V3_R_NO_SUBJECT_DETAILS);
         return NULL;
     }
 
-    if (ctx && (ctx->flags == CTX_TEST))
-        return oct;
-
-    if (!ctx || (!ctx->subject_req && !ctx->subject_cert)) {
-        ERR_raise(ERR_LIB_X509V3, X509V3_R_NO_PUBLIC_KEY);
-        goto err;
-    }
-
-    pubkey = ctx->subject_req != NULL ?
-        ctx->subject_req->req_info.pubkey :
-        ctx->subject_cert->cert_info.key;
-    if (pubkey == NULL) {
-        ERR_raise(ERR_LIB_X509V3, X509V3_R_NO_PUBLIC_KEY);
-        goto err;
-    }
-
-    X509_PUBKEY_get0_param(NULL, &pk, &pklen, NULL, pubkey);
-
-    if (!EVP_Digest(pk, pklen, pkey_dig, &diglen, EVP_sha1(), NULL))
-        goto err;
-
-    if (!ASN1_OCTET_STRING_set(oct, pkey_dig, diglen)) {
-        ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
-        goto err;
-    }
-
-    return oct;
-
- err:
-    ASN1_OCTET_STRING_free(oct);
-    return NULL;
+    return x509_pubkey_hash(ctx->subject_req != NULL ?
+                            ctx->subject_req->req_info.pubkey :
+                            ctx->subject_cert->cert_info.key);
 }

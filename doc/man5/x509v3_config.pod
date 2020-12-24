@@ -169,7 +169,7 @@ Examples:
 =head2 Subject Key Identifier
 
 The SKID extension specification has a value with three choices.
-If the value is the word B<none>, then no SKID extension will be included.
+If the value is the word B<none> then no SKID extension will be included.
 If the value is the word B<hash>, or by default for the B<x509>, B<req>, and
 B<ca> apps, the process specified in RFC 5280 section 4.2.1.2. (1) is followed:
 The keyIdentifier is composed of the 160-bit SHA-1 hash of the value of the BIT
@@ -193,14 +193,14 @@ indicated by putting a colon C<:> between the value and this option.
 By default the B<x509>, B<req>, and B<ca> apps behave as if
 "none" was given for self-signed certificates and "keyid, issuer" otherwise.
 
-If B<keyid> is present, an attempt is made to copy the subject key identifier
-(SKID) from the issuer certificate, which is the default behavior.
+If B<keyid> is present, an attempt is made to compute the hash of the public key
+corresponding to the signing key in case the certificate is self-signed,
+or else to copy the subject key identifier (SKID) from the issuer certificate.
 If this fails and the option B<always> is present, an error is returned.
-For self-issued certs the specification for the SKID must be given before.
 
-If B<issuer> is present and no B<keyid> has been added
-or it has the option B<always> specified, then
-the issuer DN and serial number are copied from the issuer certificate.
+If B<issuer> is present, and in addition it has the option B<always> specified
+or B<keyid> is not present,
+then the issuer DN and serial number are copied from the issuer certificate.
 
 Examples:
 

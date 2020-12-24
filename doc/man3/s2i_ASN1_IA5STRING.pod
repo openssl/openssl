@@ -10,11 +10,13 @@ i2s_ASN1_OCTET_STRING,
 s2i_ASN1_OCTET_STRING,
 i2s_ASN1_ENUMERATED,
 i2s_ASN1_ENUMERATED_TABLE,
+i2s_ASN1_UTF8STRING,
+s2i_ASN1_UTF8STRING
 - convert objects from/to ASN.1/string representation
 
 =head1 SYNOPSIS
 
-=for openssl generic
+ #include <openssl/x509v3.h>
 
  char *i2s_ASN1_IA5STRING(X509V3_EXT_METHOD *method, ASN1_IA5STRING *ia5);
  ASN1_IA5STRING *s2i_ASN1_IA5STRING(X509V3_EXT_METHOD *method,
@@ -29,6 +31,11 @@ i2s_ASN1_ENUMERATED_TABLE,
  char *i2s_ASN1_ENUMERATED_TABLE(X509V3_EXT_METHOD *method,
                                 const ASN1_ENUMERATED *e);
 
+ char *i2s_ASN1_UTF8STRING(X509V3_EXT_METHOD *method,
+                           ASN1_UTF8STRING *utf8);
+ ASN1_UTF8STRING *s2i_ASN1_UTF8STRING(X509V3_EXT_METHOD *method,
+                                      X509V3_CTX *ctx, const char *str);
+
 =head1 DESCRIPTION
 
 These functions convert OpenSSL objects to and from their ASN.1/string
@@ -36,7 +43,7 @@ representation. This function is used for B<X509v3> extensions.
 
 =head1 NOTES
 
-The letters B<i> and B<s> in B<i2s_ASN1_IA5STRING>() stand for
+The letters B<i> and B<s> in B<i2s> and B<s2i> stand for
 "internal" (that is, an internal C structure) and string respectively.
 So B<i2s_ASN1_IA5STRING>() converts from internal to string.
 
@@ -69,6 +76,16 @@ string or NULL if an error occurs.
 
 B<s2i_ASN1_ENUMERATED>() returns the pointer to a B<ASN1_ENUMERATED>
 structure or NULL if an error occurs.
+
+B<s2i_ASN1_UTF8STRING>() return a valid
+B<ASN1_UTF8STRING> structure or NULL if an error occurs.
+
+B<i2s_ASN1_UTF8STRING>() returns the pointer to a UTF-8 string
+or NULL if an error occurs.
+
+=head1 HISTORY
+
+i2s_ASN1_UTF8STRING() and s2i_ASN1_UTF8STRING() were made public in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
