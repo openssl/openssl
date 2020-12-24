@@ -45,10 +45,8 @@
 #define DEFAULT_DAYS       30 /* default cert validity period in days */
 #define UNSET_DAYS         -2 /* -1 may be used for testing expiration checks */
 
-static int make_REQ(X509_REQ *req, EVP_PKEY *pkey, char *dn, int mutlirdn,
-                    int attribs, unsigned long chtype);
-static int build_subject(X509_REQ *req, const char *fsubj, unsigned long chtype,
-                         int multirdn);
+static int make_REQ(X509_REQ *req, EVP_PKEY *pkey, X509_NAME *fsubj,
+                    int mutlirdn, int attribs, unsigned long chtype);
 static int prompt_info(X509_REQ *req,
                        STACK_OF(CONF_VALUE) *dn_sk, const char *dn_sect,
                        STACK_OF(CONF_VALUE) *attr_sk, const char *attr_sect,
@@ -246,7 +244,8 @@ int req_main(int argc, char **argv)
     char *keyalgstr = NULL, *p, *prog, *passargin = NULL, *passargout = NULL;
     char *passin = NULL, *passout = NULL;
     char *nofree_passin = NULL, *nofree_passout = NULL;
-    char *req_exts = NULL, *fsubj = NULL;
+    char *req_exts = NULL, *subj = NULL;
+    X509_NAME *fsubj = NULL;
     char *template = default_config_file, *keyout = NULL;
     const char *keyalg = NULL;
     OPTION_CHOICE o;
@@ -426,7 +425,7 @@ int req_main(int argc, char **argv)
             subject = 1;
             break;
         case OPT_SUBJ:
-            fsubj = opt_arg();
+            subj = opt_arg();
             break;
         case OPT_MULTIVALUE_RDN:
             /* obsolete */
@@ -726,6 +725,14 @@ int req_main(int argc, char **argv)
         BIO_printf(bio_err, "-----\n");
     }
 
+    /*
+     * subj is expected to be in the format /type0=value0/type1=value1/type2=...
+     * where characters may be escaped by \
+     */
+    if (subj != NULL
+            && (fsubj = parse_name(subj, chtype, multirdn, "subject")) == NULL)
+        goto end;
+
     if (!newreq) {
         req = load_csr(infile, informat, "X509 request");
         if (req == NULL)
@@ -776,18 +783,17 @@ int req_main(int argc, char **argv)
                 goto end;
             }
 
-            i = make_REQ(req, pkey, fsubj, multirdn, !gen_x509, chtype);
-            fsubj = NULL; /* done processing '-subj' option */
-            if (!i) {
+            if (!make_REQ(req, pkey, fsubj, multirdn, !gen_x509, chtype)){
                 BIO_printf(bio_err, "Error making certificate request\n");
                 goto end;
             }
         }
         if (gen_x509) {
-            EVP_PKEY *tmppkey;
+            EVP_PKEY *pub_key = X509_REQ_get0_pubkey(req);
             X509V3_CTX ext_ctx;
             X509_NAME *issuer = CAcert != NULL ? X509_get_subject_name(CAcert) :
                 X509_REQ_get_subject_name(req);
+            X509_NAME *n_subj = X509_REQ_get_subject_name(req);
 
             if ((new_x509 = X509_new_ex(app_get0_libctx(),
                                         app_get0_propq())) == NULL)
@@ -808,11 +814,9 @@ int req_main(int argc, char **argv)
             }
             if (!set_cert_times(new_x509, NULL, NULL, days))
                 goto end;
-            if (!X509_set_subject_name(new_x509,
-                                       X509_REQ_get_subject_name(req)))
+            if (!X509_set_subject_name(new_x509, n_subj))
                 goto end;
-            tmppkey = X509_REQ_get0_pubkey(req);
-            if (!tmppkey || !X509_set_pubkey(new_x509, tmppkey))
+            if (!pub_key || !X509_set_pubkey(new_x509, pub_key))
                 goto end;
             /* TODO: (optionally) copy X.509 extensions from req */
 
@@ -876,19 +880,14 @@ int req_main(int argc, char **argv)
         }
     }
 
-    if (fsubj != NULL){
-        if (gen_x509) {
-            BIO_printf(bio_err, "Modifying subject of cert with -x509 option is not supported\n");
-            goto end;
-        }
-
+    if (subj != NULL && !newreq && !gen_x509) {
         if (verbose) {
             BIO_printf(bio_err, "Modifying subject of certificate request\n");
             print_name(bio_err, "Old subject=",
                        X509_REQ_get_subject_name(req), get_nameopt());
         }
 
-        if (build_subject(req, fsubj, chtype, multirdn) == 0) {
+        if (!X509_REQ_set_subject_name(req, fsubj)) {
             BIO_printf(bio_err, "Error modifying subject of certificate request\n");
             goto end;
         }
@@ -1034,6 +1033,7 @@ int req_main(int argc, char **argv)
 #endif
     OPENSSL_free(keyalgstr);
     X509_REQ_free(req);
+    X509_NAME_free(fsubj);
     X509_free(new_x509);
     X509_free(CAcert);
     EVP_PKEY_free(CAkey);
@@ -1046,8 +1046,8 @@ int req_main(int argc, char **argv)
     return ret;
 }
 
-static int make_REQ(X509_REQ *req, EVP_PKEY *pkey, char *subj, int multirdn,
-                    int attribs, unsigned long chtype)
+static int make_REQ(X509_REQ *req, EVP_PKEY *pkey, X509_NAME *fsubj,
+                    int multirdn, int attribs, unsigned long chtype)
 {
     int ret = 0, i;
     char no_prompt = 0;
@@ -1086,8 +1086,8 @@ static int make_REQ(X509_REQ *req, EVP_PKEY *pkey, char *subj, int multirdn,
     if (!X509_REQ_set_version(req, 0L))
         goto err;
 
-    if (subj)
-        i = build_subject(req, subj, chtype, multirdn);
+    if (fsubj != NULL)
+        i = X509_REQ_set_subject_name(req, fsubj);
     else if (no_prompt)
         i = auto_info(req, dn_sk, attr_sk, attribs, chtype);
     else
@@ -1102,26 +1102,6 @@ static int make_REQ(X509_REQ *req, EVP_PKEY *pkey, char *subj, int multirdn,
     ret = 1;
  err:
     return ret;
-}
-
-/*
- * subject is expected to be in the format /type0=value0/type1=value1/type2=...
- * where characters may be escaped by \
- */
-static int build_subject(X509_REQ *req, const char *subject,
-                         unsigned long chtype, int multirdn)
-{
-    X509_NAME *n;
-
-    if ((n = parse_name(subject, chtype, multirdn, "subject")) == NULL)
-        return 0;
-
-    if (!X509_REQ_set_subject_name(req, n)) {
-        X509_NAME_free(n);
-        return 0;
-    }
-    X509_NAME_free(n);
-    return 1;
 }
 
 static int prompt_info(X509_REQ *req,

@@ -73,7 +73,7 @@ Print out a usage message.
 
 =item B<-inform> B<DER>|B<PEM>, B<-outform> B<DER>|B<PEM>
 
-The input and formats; the default is B<PEM>.
+The input and output formats; the default is B<PEM>.
 See L<openssl-format-options(1)> for details.
 
 The data is a PKCS#10 object.
@@ -190,7 +190,8 @@ See L<openssl-genpkey(1)/KEY GENERATION OPTIONS> for more details.
 
 =item B<-key> I<filename>|I<uri>
 
-This specifies the private key to use for self-signature.
+This specifies the private key to use for request self-signature
+and signing certificates produced using the B<-x509> option.
 It also accepts PKCS#8 format private keys for PEM format files.
 
 =item B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
