@@ -44,6 +44,7 @@
 #define MIN_KEY_LENGTH     512
 #define DEFAULT_DAYS       30 /* default cert validity period in days */
 #define UNSET_DAYS         -2 /* -1 may be used for testing expiration checks */
+#define EXT_COPY_UNSET     -1
 
 static int make_REQ(X509_REQ *req, EVP_PKEY *pkey, X509_NAME *fsubj,
                     int mutlirdn, int attribs, unsigned long chtype);
@@ -86,7 +87,8 @@ typedef enum OPTION_choice {
     OPT_VERIFY, OPT_NOENC, OPT_NODES, OPT_NOOUT, OPT_VERBOSE, OPT_UTF8,
     OPT_NAMEOPT, OPT_REQOPT, OPT_SUBJ, OPT_SUBJECT, OPT_TEXT, OPT_X509,
     OPT_CA, OPT_CAKEY,
-    OPT_MULTIVALUE_RDN, OPT_DAYS, OPT_SET_SERIAL, OPT_ADDEXT, OPT_EXTENSIONS,
+    OPT_MULTIVALUE_RDN, OPT_DAYS, OPT_SET_SERIAL,
+    OPT_COPY_EXTENSIONS, OPT_ADDEXT, OPT_EXTENSIONS,
     OPT_REQEXTS, OPT_PRECERT, OPT_MD,
     OPT_SECTION,
     OPT_R_ENUM, OPT_PROV_ENUM
@@ -125,6 +127,8 @@ const OPTIONS req_options[] = {
      "Deprecated; multi-valued RDNs support is always on."},
     {"days", OPT_DAYS, 'p', "Number of days cert is valid for"},
     {"set_serial", OPT_SET_SERIAL, 's', "Serial number to use"},
+    {"copy_extensions", OPT_COPY_EXTENSIONS, 's',
+     "copy extensions from request when using -x509"},
     {"addext", OPT_ADDEXT, 's',
      "Additional cert extension key=value pair (may be given more than once)"},
     {"extensions", OPT_EXTENSIONS, 's',
@@ -237,6 +241,7 @@ int req_main(int argc, char **argv)
     X509_REQ *req = NULL;
     const EVP_CIPHER *cipher = NULL;
     const EVP_MD *md_alg = NULL, *digest = NULL;
+    int ext_copy = EXT_COPY_UNSET;
     BIO *addext_bio = NULL;
     char *extensions = NULL;
     const char *infile = NULL, *CAfile = NULL, *CAkeyfile = NULL;
@@ -430,6 +435,12 @@ int req_main(int argc, char **argv)
         case OPT_MULTIVALUE_RDN:
             /* obsolete */
             break;
+        case OPT_COPY_EXTENSIONS:
+            if (!set_ext_copy(&ext_copy, opt_arg())) {
+                BIO_printf(bio_err, "Invalid extension copy option: \"%s\"\n", opt_arg());
+                goto end;
+            }
+            break;
         case OPT_ADDEXT:
             p = opt_arg();
             if (addexts == NULL) {
@@ -468,8 +479,12 @@ int req_main(int argc, char **argv)
     if (argc != 0)
         goto opthelp;
 
-    if (days != UNSET_DAYS && !gen_x509)
-        BIO_printf(bio_err, "Ignoring -days; not generating a certificate\n");
+    if (!gen_x509) {
+        if (days != UNSET_DAYS)
+            BIO_printf(bio_err, "Ignoring -days without -x509; not generating a certificate\n");
+        if (ext_copy == EXT_COPY_NONE)
+            BIO_printf(bio_err, "Ignoring -copy_extensions 'none' when -x509 is not given\n");
+    }
     if (gen_x509 && infile == NULL)
         newreq = 1;
 
@@ -822,6 +837,12 @@ int req_main(int argc, char **argv)
                 goto end;
             if (!pub_key || !X509_set_pubkey(new_x509, pub_key))
                 goto end;
+            if (ext_copy == EXT_COPY_UNSET)
+                BIO_printf(bio_err, "Warning: No -copy_extensions given; ignoring any extensions in the request\n");
+            else if (!copy_extensions(new_x509, req, ext_copy)) {
+                BIO_printf(bio_err, "Error copying extensions from request\n");
+                goto end;
+            }
             /* TODO: (optionally) copy X.509 extensions from req */
 
             /* Set up V3 context struct */

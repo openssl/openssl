@@ -914,6 +914,12 @@ OpenSSL 3.0
 
    *Richard Levitte*
 
+ * Added the `<-copy_extensions` option to the `req` command for use with `-x509`.
+   When given with the `copy` or `copyall` argument,
+   any extensions present in the certification request are copied to the certificate.
+
+   *David von Oheimb*
+
  * The `x509`, `req`, and `ca` commands now make sure that certificates they
    generate are RFC 5280 compliant by default: For X.509 version 3 certs they ensure that
    a subjectKeyIdentifier extension is included containing a hash value of the public key

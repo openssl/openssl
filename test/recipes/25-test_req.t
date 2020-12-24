@@ -15,7 +15,7 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_req");
 
-plan tests => 38;
+plan tests => 42;
 
 require_ok(srctop_file('test', 'recipes', 'tconversion.pl'));
 
@@ -274,6 +274,11 @@ sub has_AKID {
     my $expect = shift @_;
     cert_contains($cert, "Authority Key Identifier", $expect);
 }
+sub has_keyUsage {
+    my $cert = shift @_;
+    my $expect = shift @_;
+    cert_contains($cert, "Key Usage", $expect);
+}
 sub strict_verify {
     my $cert = shift @_;
     my $expect = shift @_;
@@ -329,3 +334,11 @@ generate_cert($cert, "-addext", "keyUsage = dataEncipherment",
     "-in", srctop_file(@certs, "x509-check.csr"));
 cert_ext_has_n_different_lines($cert, 4, $SKID_AKID); # SKID != AKID
 strict_verify($cert, 1);
+
+my $cert = "self-signed_CA_no_keyUsage.pem";
+generate_cert($cert, "-in", srctop_file(@certs, "ext-check.csr"));
+has_keyUsage($cert, 0);
+my $cert = "self-signed_CA_with_keyUsages.pem";
+generate_cert($cert, "-in", srctop_file(@certs, "ext-check.csr"),
+    "-copy_extensions", "copy");
+has_keyUsage($cert, 1);
