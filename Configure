@@ -2242,6 +2242,11 @@ EOF
                 }
                 # We recognise C++, C and asm files
                 if ($s =~ /\.(cc|cpp|c|s|S)$/) {
+                    die "source file '$s' does not exist\n"
+                        unless ($s =~ m/^providers.common.der.der_/ ||
+                                $s =~ m/^test.buildtest_/ ||
+                                $s =~ m/^apps.progs\.c$/ ||
+                                $s =~ m/\.[sS]$/ || -e $s);
                     my $o = $_;
                     $o =~ s/\.[csS]$/.o/; # C and assembler
                     $o =~ s/\.(cc|cpp)$/_cc.o/; # C++
