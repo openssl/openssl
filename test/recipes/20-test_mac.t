@@ -78,6 +78,11 @@ my @mac_fail_tests = (
       input => '00',
       err => 'EVP_MAC_Init',
       desc => 'KMAC128 Fail no key' },
+    { cmd => [qw{openssl mac -propquery unknown -macopt hexkey:404142434445464748494A4B4C4D4E4F505152535455565758595A5B5C5D5E5F}],
+      type => 'KMAC128',
+      input => '00',
+      err => 'Invalid MAC name KMAC128',
+      desc => 'KMAC128 Fail unknown property' },
 );
 
 my @siphash_fail_tests = (

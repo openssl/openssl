@@ -68,7 +68,6 @@ int genpkey_main(int argc, char **argv)
     int outformat = FORMAT_PEM, text = 0, ret = 1, rv, do_param = 0;
     int private = 0;
     OSSL_LIB_CTX *libctx = app_get0_libctx();
-    const char *propq = app_get0_propq();
 
     prog = opt_init(argc, argv, genpkey_options);
     while ((o = opt_next()) != OPT_EOF) {
@@ -98,11 +97,11 @@ int genpkey_main(int argc, char **argv)
         case OPT_PARAMFILE:
             if (do_param == 1)
                 goto opthelp;
-            if (!init_keygen_file(&ctx, opt_arg(), e, libctx, propq))
+            if (!init_keygen_file(&ctx, opt_arg(), e, libctx, app_get0_propq()))
                 goto end;
             break;
         case OPT_ALGORITHM:
-            if (!init_gen_str(&ctx, opt_arg(), e, do_param, libctx, propq))
+            if (!init_gen_str(&ctx, opt_arg(), e, do_param, libctx, app_get0_propq()))
                 goto end;
             break;
         case OPT_PKEYOPT:

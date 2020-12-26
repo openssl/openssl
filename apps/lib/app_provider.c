@@ -70,6 +70,8 @@ int opt_provider(int opt)
         return app_provider_load(app_get0_libctx(), opt_arg());
     case OPT_PROV_PROVIDER_PATH:
         return opt_provider_path(opt_arg());
+    case OPT_PROV_PROPQUERY:
+        return app_set_propq(opt_arg());
     }
     return 0;
 }
