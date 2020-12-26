@@ -23,6 +23,21 @@ OpenSSL 3.0
 
 ### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
 
+ * Deprecated the type OCSP_REQ_CTX and the functions OCSP_REQ_CTX_new(), 
+   OCSP_REQ_CTX_free(), OCSP_REQ_CTX_http(), OCSP_REQ_CTX_add1_header(),
+   OCSP_REQ_CTX_i2d(), OCSP_REQ_CTX_nbio(), OCSP_REQ_CTX_nbio_d2i(),
+   OCSP_REQ_CTX_get0_mem_bio() and OCSP_set_max_response_length().  These
+   were used to collect all necessary data to form a HTTP request, and to
+   perform the HTTP transfer with that request.  With OpenSSL 3.0, the
+   type is OSSL_HTTP_REQ_CTX, and the deprecated functions are replaced
+   with OSSL_HTTP_REQ_CTX_new(), OSSL_HTTP_REQ_CTX_free(), 
+   OSSL_HTTP_REQ_CTX_header(), OSSL_HTTP_REQ_CTX_add1_header(),
+   OSSL_HTTP_REQ_CTX_i2d(), OSSL_HTTP_REQ_CTX_nbio(),
+   OSSL_HTTP_REQ_CTX_sendreq_d2i(), OSSL_HTTP_REQ_CTX_get0_mem_bio() and
+   OSSL_HTTP_REQ_CTX_set_max_response_length().
+
+   *Rich Salz and Richard Levitte*
+
  * Validation of SM2 keys has been separated from the validation of regular EC
    keys, allowing to improve the SM2 validation process to reject loaded private
    keys that are not conforming to the SM2 ISO standard.

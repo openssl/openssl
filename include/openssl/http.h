@@ -35,6 +35,27 @@ typedef BIO *(*OSSL_HTTP_bio_cb_t)(BIO *bio, void *arg, int connect, int detail)
 # define OPENSSL_HTTP_PROXY "HTTP_PROXY"
 # define OPENSSL_HTTPS_PROXY "HTTPS_PROXY"
 
+OSSL_HTTP_REQ_CTX *OSSL_HTTP_REQ_CTX_new(BIO *wbio, BIO *rbio,
+                                         int method_GET, int maxline,
+                                         unsigned long max_resp_len,
+                                         int timeout,
+                                         const char *expected_content_type,
+                                         int expect_asn1);
+void OSSL_HTTP_REQ_CTX_free(OSSL_HTTP_REQ_CTX *rctx);
+int OSSL_HTTP_REQ_CTX_header(OSSL_HTTP_REQ_CTX *rctx,
+                             const char *server,
+                             const char *port, const char *path);
+int OSSL_HTTP_REQ_CTX_add1_header(OSSL_HTTP_REQ_CTX *rctx,
+                                  const char *name, const char *value);
+int OSSL_HTTP_REQ_CTX_i2d(OSSL_HTTP_REQ_CTX *rctx, const char *content_type,
+                          const ASN1_ITEM *it, ASN1_VALUE *req);
+int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx);
+ASN1_VALUE *OSSL_HTTP_REQ_CTX_sendreq_d2i(OSSL_HTTP_REQ_CTX *rctx,
+                                          const ASN1_ITEM *it);
+BIO *OSSL_HTTP_REQ_CTX_get0_mem_bio(OSSL_HTTP_REQ_CTX *rctx);
+void OSSL_HTTP_REQ_CTX_set_max_response_length(OSSL_HTTP_REQ_CTX *rctx,
+                                               unsigned long len);
+
 BIO *OSSL_HTTP_get(const char *url, const char *proxy, const char *no_proxy,
                    BIO *bio, BIO *rbio,
                    OSSL_HTTP_bio_cb_t bio_update_fn, void *arg,

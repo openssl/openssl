@@ -14,19 +14,20 @@
 #ifndef OPENSSL_NO_OCSP
 
 # ifndef OPENSSL_NO_DEPRECATED_3_0
-int OCSP_REQ_CTX_set1_req(OCSP_REQ_CTX *rctx, const OCSP_REQUEST *req)
+int OCSP_REQ_CTX_set1_req(OSSL_HTTP_REQ_CTX *rctx, const OCSP_REQUEST *req)
 {
-    return OCSP_REQ_CTX_i2d(rctx, "application/ocsp-request",
-                            ASN1_ITEM_rptr(OCSP_REQUEST), (ASN1_VALUE *)req);
+    return OSSL_HTTP_REQ_CTX_i2d(rctx, "application/ocsp-request",
+                                 ASN1_ITEM_rptr(OCSP_REQUEST),
+                                 (ASN1_VALUE *)req);
 }
 # endif
 
-OCSP_REQ_CTX *OCSP_sendreq_new(BIO *io, const char *path, OCSP_REQUEST *req,
-                               int maxline)
+OSSL_HTTP_REQ_CTX *OCSP_sendreq_new(BIO *io, const char *path,
+                                    OCSP_REQUEST *req, int maxline)
 {
     BIO *req_mem = HTTP_asn1_item2bio(ASN1_ITEM_rptr(OCSP_REQUEST),
                                       (ASN1_VALUE *)req);
-    OCSP_REQ_CTX *res =
+    OSSL_HTTP_REQ_CTX *res =
         HTTP_REQ_CTX_new(io, io, 0 /* no HTTP proxy used */, NULL, NULL, path,
                          NULL /* headers */, "application/ocsp-request",
                          req_mem /* may be NULL */,
@@ -37,17 +38,17 @@ OCSP_REQ_CTX *OCSP_sendreq_new(BIO *io, const char *path, OCSP_REQUEST *req,
     return res;
 }
 
-int OCSP_sendreq_nbio(OCSP_RESPONSE **presp, OCSP_REQ_CTX *rctx)
+int OCSP_sendreq_nbio(OCSP_RESPONSE **presp, OSSL_HTTP_REQ_CTX *rctx)
 {
     *presp = (OCSP_RESPONSE *)
-        OCSP_REQ_CTX_nbio_d2i(rctx, ASN1_ITEM_rptr(OCSP_RESPONSE));
+        OSSL_HTTP_REQ_CTX_sendreq_d2i(rctx, ASN1_ITEM_rptr(OCSP_RESPONSE));
     return *presp != NULL;
 }
 
 OCSP_RESPONSE *OCSP_sendreq_bio(BIO *b, const char *path, OCSP_REQUEST *req)
 {
     OCSP_RESPONSE *resp = NULL;
-    OCSP_REQ_CTX *ctx;
+    OSSL_HTTP_REQ_CTX *ctx;
     int rv;
 
     ctx = OCSP_sendreq_new(b, path, req, -1 /* default max resp line length */);
@@ -57,7 +58,7 @@ OCSP_RESPONSE *OCSP_sendreq_bio(BIO *b, const char *path, OCSP_REQUEST *req)
     rv = OCSP_sendreq_nbio(&resp, ctx);
 
     /* this indirectly calls ERR_clear_error(): */
-    OCSP_REQ_CTX_free(ctx);
+    OSSL_HTTP_REQ_CTX_free(ctx);
 
     return rv == 1 ? resp : NULL;
 }
