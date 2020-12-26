@@ -270,7 +270,7 @@
  */
 # define OPT_PROV_ENUM \
         OPT_PROV__FIRST=1600, \
-        OPT_PROV_PROVIDER, OPT_PROV_PROVIDER_PATH, \
+        OPT_PROV_PROVIDER, OPT_PROV_PROVIDER_PATH, OPT_PROV_PROPQUERY, \
         OPT_PROV__LAST
 
 # define OPT_CONFIG_OPTION \
@@ -279,12 +279,14 @@
 # define OPT_PROV_OPTIONS \
         OPT_SECTION("Provider"), \
         { "provider-path", OPT_PROV_PROVIDER_PATH, 's', "Provider load path (must be before 'provider' argument if required)" }, \
-        { "provider", OPT_PROV_PROVIDER, 's', "Provider to load (can be specified multiple times)" }
+        { "provider", OPT_PROV_PROVIDER, 's', "Provider to load (can be specified multiple times)" }, \
+        { "propquery", OPT_PROV_PROPQUERY, 's', "Property query used when fetching algorithms" }
 
 # define OPT_PROV_CASES \
         OPT_PROV__FIRST: case OPT_PROV__LAST: break; \
         case OPT_PROV_PROVIDER: \
-        case OPT_PROV_PROVIDER_PATH
+        case OPT_PROV_PROVIDER_PATH: \
+        case OPT_PROV_PROPQUERY
 
 /*
  * Option parsing.

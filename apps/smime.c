@@ -155,7 +155,6 @@ int smime_main(int argc, char **argv)
     ENGINE *e = NULL;
     const char *mime_eol = "\n";
     OSSL_LIB_CTX *libctx = app_get0_libctx();
-    const char *propq = app_get0_propq();
 
     if ((vpm = X509_VERIFY_PARAM_new()) == NULL)
         return 1;
@@ -487,7 +486,7 @@ int smime_main(int argc, char **argv)
     if (operation & SMIME_IP) {
         PKCS7 *p7_in = NULL;
 
-        p7 = PKCS7_new_ex(libctx, propq);
+        p7 = PKCS7_new_ex(libctx, app_get0_propq());
         if (p7 == NULL) {
             BIO_printf(bio_err, "Error allocating PKCS7 object\n");
             goto end;
@@ -534,7 +533,7 @@ int smime_main(int argc, char **argv)
     if (operation == SMIME_ENCRYPT) {
         if (indef)
             flags |= PKCS7_STREAM;
-        p7 = PKCS7_encrypt_ex(encerts, in, cipher, flags, libctx, propq);
+        p7 = PKCS7_encrypt_ex(encerts, in, cipher, flags, libctx, app_get0_propq());
     } else if (operation & SMIME_SIGNERS) {
         int i;
         /*
@@ -549,7 +548,7 @@ int smime_main(int argc, char **argv)
                 flags |= PKCS7_STREAM;
             }
             flags |= PKCS7_PARTIAL;
-            p7 = PKCS7_sign_ex(NULL, NULL, other, in, flags, libctx, propq);
+            p7 = PKCS7_sign_ex(NULL, NULL, other, in, flags, libctx, app_get0_propq());
             if (p7 == NULL)
                 goto end;
             if (flags & PKCS7_NOCERTS) {

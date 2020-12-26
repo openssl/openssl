@@ -93,11 +93,14 @@ $OpenSSL::safe::opt_r_item = ""
 # Provider options
 $OpenSSL::safe::opt_provider_synopsis = ""
 . "[B<-provider> I<name>]\n"
-. "[B<-provider-path> I<path>]";
+. "[B<-provider-path> I<path>]\n"
+. "[B<-propquery> I<propq>]";
 $OpenSSL::safe::opt_provider_item = ""
 . "=item B<-provider> I<name>\n"
 . "\n"
 . "=item B<-provider-path> I<path>\n"
+. "\n"
+. "=item B<-propquery> I<propq>\n"
 . "\n"
 . "See L<openssl(1)/Provider Options>.";
 

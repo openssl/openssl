@@ -645,6 +645,26 @@ the PKCS#11 URI as defined in RFC 7512 should be possible to use directly:
 
     -key pkcs11:object=some-private-key;pin-value=1234
 
+=head2 Provider Options
+
+=over 4
+
+=item B<-provider> I<name>
+
+Load and initialize the provider identified by I<name>.
+
+=item B<-provider-path> I<path>
+
+Specifies the search path that is to be used for looking for providers.
+
+=item B<-propquery> I<propq>
+
+Specifies the I<property query clause> to be used when fetching algorithms
+from the loaded providers.
+See L<property(7)> for a more detailed description.
+
+=back
+
 =head1 ENVIRONMENT
 
 The OpenSSL library can be take some configuration parameters from the
