@@ -196,11 +196,8 @@ static ossl_inline ossl_ssize_t ktls_sendfile(int s, int fd, off_t off,
     int ret;
 
     ret = sendfile(fd, s, off, size, NULL, &sbytes, flags);
-    if (ret == -1) {
-	    if ((errno == EAGAIN || errno == EBUSY) && sbytes != 0)
-		    return sbytes;
-	    return -1;
-    }
+    if (ret == -1 && sbytes == 0)
+        return -1;
     return sbytes;
 }
 
