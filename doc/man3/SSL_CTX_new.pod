@@ -73,13 +73,13 @@ functions
 
 =head1 DESCRIPTION
 
-SSL_CTX_new_ex() creates a new B<SSL_CTX> object as a framework to
-establish TLS/SSL or DTLS enabled connections using the library context
-I<libctx> (see L<OSSL_LIB_CTX(3)>). Any cryptographic algorithms that are used
-by any B<SSL> objects created from this B<SSL_CTX> will be fetched from the
-I<libctx> using the property query string I<propq> (see
-L<provider(7)/Fetching algorithms>. Either or both the I<libctx> or I<propq>
-parameters may be NULL.
+SSL_CTX_new_ex() creates a new B<SSL_CTX> object, which stores various options
+relevant to a TLS/SSL or DTLS session establishment. The library context
+I<libctx> (see L<OSSL_LIB_CTX(3)>) is used to provide the cryptographic algorithms
+needed for the session. Any cryptographic algorithms that are used by any B<SSL> objects
+created from this B<SSL_CTX> will be fetched from the I<libctx> using the property query
+string I<propq> (see L<provider(7)/Fetching algorithms>. Either or both the I<libctx> or
+I<propq> parameters may be NULL.
 
 SSL_CTX_new() does the same as SSL_CTX_new_ex() except that the default
 library context is used and no property query string is specified.
@@ -89,6 +89,9 @@ first time increments the reference count. Freeing the B<SSL_CTX> (using
 SSL_CTX_free) decrements it. When the reference count drops to zero, any memory
 or resources allocated to the B<SSL_CTX> object are freed. SSL_CTX_up_ref()
 increments the reference count for an existing B<SSL_CTX> structure.
+
+SSL_CTX should not be changed after it is used to create any B<SSL> objects or from multiple
+threads. This can cause threading issues.
 
 =head1 NOTES
 
