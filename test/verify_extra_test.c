@@ -22,56 +22,7 @@ static const char *untrusted_f;
 static const char *bad_f;
 static const char *req_f;
 
-static X509 *load_cert_from_file(const char *filename)
-{
-    X509 *cert = NULL;
-    BIO *bio;
-
-    bio = BIO_new_file(filename, "r");
-    if (bio != NULL)
-        cert = PEM_read_bio_X509(bio, NULL, 0, NULL);
-    BIO_free(bio);
-    return cert;
-}
-
-static STACK_OF(X509) *load_certs_from_file(const char *filename)
-{
-    STACK_OF(X509) *certs;
-    BIO *bio;
-    X509 *x;
-
-    bio = BIO_new_file(filename, "r");
-
-    if (bio == NULL) {
-        return NULL;
-    }
-
-    certs = sk_X509_new_null();
-    if (certs == NULL) {
-        BIO_free(bio);
-        return NULL;
-    }
-
-    ERR_set_mark();
-    do {
-        x = PEM_read_bio_X509(bio, NULL, 0, NULL);
-        if (x != NULL && !sk_X509_push(certs, x)) {
-            sk_X509_pop_free(certs, X509_free);
-            BIO_free(bio);
-            return NULL;
-        } else if (x == NULL) {
-            /*
-             * We probably just ran out of certs, so ignore any errors
-             * generated
-             */
-            ERR_pop_to_mark();
-        }
-    } while (x != NULL);
-
-    BIO_free(bio);
-
-    return certs;
-}
+#define load_cert_from_file(file) load_cert_pem(file, NULL)
 
 /*
  * Test for CVE-2015-1793 (Alternate Chains Certificate Forgery)
@@ -122,7 +73,7 @@ static int test_alt_chains_cert_forgery(void)
     if (!X509_LOOKUP_load_file(lookup, roots_f, X509_FILETYPE_PEM))
         goto err;
 
-    untrusted = load_certs_from_file(untrusted_f);
+    untrusted = load_certs_pem(untrusted_f);
 
     if ((x = load_cert_from_file(bad_f)) == NULL)
         goto err;

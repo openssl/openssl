@@ -28,9 +28,6 @@ int write_files = 0;
  * Local function declarations
  */
 
-static X509 *load_cert(const unsigned char *bytes, int len);
-static EVP_PKEY *load_pkey(const unsigned char *bytes, int len);
-
 static int add_attributes(PKCS12_SAFEBAG *bag, const PKCS12_ATTR *attrs);
 
 static void generate_p12(PKCS12_BUILDER *pb, const PKCS12_ENC *mac);
@@ -47,7 +44,7 @@ static int check_attrs(const STACK_OF(X509_ATTRIBUTE) *bag_attrs, const PKCS12_A
  * Test data load functions
  */
 
-static X509 *load_cert(const unsigned char *bytes, int len)
+static X509 *load_cert_asn1(const unsigned char *bytes, int len)
 {
     X509 *cert = NULL;
 
@@ -58,7 +55,7 @@ err:
     return cert;
 }
 
-static EVP_PKEY *load_pkey(const unsigned char *bytes, int len)
+static EVP_PKEY *load_pkey_asn1(const unsigned char *bytes, int len)
 {
     EVP_PKEY *pkey = NULL;
 
@@ -68,7 +65,6 @@ static EVP_PKEY *load_pkey(const unsigned char *bytes, int len)
 err:
     return pkey;
 }
-
 
 /* -------------------------------------------------------------------------
  * PKCS12 builder
@@ -333,7 +329,7 @@ void add_certbag(PKCS12_BUILDER *pb, const unsigned char *bytes, int len,
     if (!pb->success)
         return;
 
-    cert = load_cert(bytes, len);
+    cert = load_cert_asn1(bytes, len);
     if (!TEST_ptr(cert)) {
         pb->success = 0;
         return;
@@ -368,7 +364,7 @@ void add_keybag(PKCS12_BUILDER *pb, const unsigned char *bytes, int len,
 
     TEST_info("Adding key");
 
-    pkey = load_pkey(bytes, len);
+    pkey = load_pkey_asn1(bytes, len);
     if (!TEST_ptr(pkey)) {
         pb->success = 0;
         return;
@@ -511,7 +507,7 @@ void check_certbag(PKCS12_BUILDER *pb, const unsigned char *bytes, int len,
         pb->success = 0;
         goto err;
     }
-    ref_x509 = load_cert(bytes, len);
+    ref_x509 = load_cert_asn1(bytes, len);
     if (!TEST_false(X509_cmp(x509, ref_x509)))
         pb->success = 0;
 err:
@@ -574,7 +570,7 @@ void check_keybag(PKCS12_BUILDER *pb, const unsigned char *bytes, int len,
     }
 
     /* PKEY compare returns 1 for match */
-    ref_pkey = load_pkey(bytes, len);
+    ref_pkey = load_pkey_asn1(bytes, len);
     if (!TEST_true(EVP_PKEY_eq(pkey, ref_pkey)))
         pb->success = 0;
 err:

@@ -20,7 +20,7 @@ IF[{- !$disabled{tests} -}]
   LIBS{noinst,has_main}=libtestutil.a
   SOURCE[libtestutil.a]=testutil/basic_output.c testutil/output.c \
           testutil/driver.c testutil/tests.c testutil/cb.c testutil/stanza.c \
-          testutil/format_output.c \
+          testutil/format_output.c testutil/load.c \
           testutil/test_cleanup.c testutil/main.c testutil/testutil_init.c \
           testutil/options.c testutil/test_options.c testutil/provider.c \
           testutil/apps_mem.c testutil/random.c $LIBAPPSSRC

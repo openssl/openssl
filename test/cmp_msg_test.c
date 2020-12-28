@@ -226,7 +226,7 @@ static int test_cmp_create_p10cr(void)
     fixture->bodytype = OSSL_CMP_PKIBODY_P10CR;
     fixture->err_code = CMP_R_ERROR_CREATING_CERTREQ;
     fixture->expected = 1;
-    if (!TEST_ptr(p10cr = load_csr(pkcs10_f))
+    if (!TEST_ptr(p10cr = load_csr_der(pkcs10_f))
             || !TEST_true(set1_newPkey(ctx, newkey))
             || !TEST_true(OSSL_CMP_CTX_set1_p10CSR(ctx, p10cr))) {
         tear_down(fixture);
@@ -504,8 +504,8 @@ static int test_cmp_pkimessage_create(int bodytype)
     switch (fixture->bodytype = bodytype) {
     case OSSL_CMP_PKIBODY_P10CR:
         fixture->expected = 1;
-        if (!TEST_true(OSSL_CMP_CTX_set1_p10CSR(fixture->cmp_ctx,
-                                                p10cr = load_csr(pkcs10_f)))) {
+        p10cr = load_csr_der(pkcs10_f);
+        if (!TEST_true(OSSL_CMP_CTX_set1_p10CSR(fixture->cmp_ctx, p10cr))) {
             tear_down(fixture);
             fixture = NULL;
         }
@@ -564,8 +564,8 @@ int setup_tests(void)
     if (!test_arg_libctx(&libctx, &default_null_provider, &provider, 3, USAGE))
         return 0;
 
-    if (!TEST_ptr(newkey = load_pem_key(newkey_f, libctx))
-            || !TEST_ptr(cert = load_pem_cert(server_cert_f, libctx))
+    if (!TEST_ptr(newkey = load_pkey_pem(newkey_f, libctx))
+            || !TEST_ptr(cert = load_cert_pem(server_cert_f, libctx))
             || !TEST_int_eq(1, RAND_bytes_ex(libctx, ref, sizeof(ref)))) {
         cleanup_tests();
         return 0;

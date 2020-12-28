@@ -12,54 +12,12 @@
 #include "cmp_testlib.h"
 #include <openssl/rsa.h> /* needed in case config no-deprecated */
 
-EVP_PKEY *load_pem_key(const char *file, OSSL_LIB_CTX *libctx)
-{
-    EVP_PKEY *key = NULL;
-    BIO *bio = NULL;
-
-    if (!TEST_ptr(bio = BIO_new(BIO_s_file())))
-        return NULL;
-    if (TEST_int_gt(BIO_read_filename(bio, file), 0))
-        (void)TEST_ptr(key = PEM_read_bio_PrivateKey_ex(bio, NULL, NULL, NULL,
-                                                        libctx, NULL));
-
-    BIO_free(bio);
-    return key;
-}
-
-X509 *load_pem_cert(const char *file, OSSL_LIB_CTX *libctx)
-{
-    X509 *cert = NULL;
-    BIO *bio = NULL;
-
-    if (!TEST_ptr(bio = BIO_new(BIO_s_file())))
-        return NULL;
-    if (TEST_int_gt(BIO_read_filename(bio, file), 0)
-            && TEST_ptr(cert = X509_new_ex(libctx, NULL)))
-        (void)TEST_ptr(cert = PEM_read_bio_X509(bio, &cert, NULL, NULL));
-
-    BIO_free(bio);
-    return cert;
-}
-
 OSSL_CMP_MSG *load_pkimsg(const char *file)
 {
     OSSL_CMP_MSG *msg;
 
     (void)TEST_ptr((msg = OSSL_CMP_MSG_read(file)));
     return msg;
-}
-
-X509_REQ *load_csr(const char *file)
-{
-    X509_REQ *csr = NULL;
-    BIO *bio = NULL;
-
-    if (!TEST_ptr(file) || !TEST_ptr(bio = BIO_new_file(file, "rb")))
-        return NULL;
-    (void)TEST_ptr(csr = d2i_X509_REQ_bio(bio, NULL));
-    BIO_free(bio);
-    return csr;
 }
 
 /*
