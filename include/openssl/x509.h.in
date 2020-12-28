@@ -824,7 +824,11 @@ int X509_add_certs(STACK_OF(X509) *sk, STACK_OF(X509) *certs, int flags);
 
 int X509_cmp(const X509 *a, const X509 *b);
 int X509_NAME_cmp(const X509_NAME *a, const X509_NAME *b);
-unsigned long X509_NAME_hash(const X509_NAME *x);
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+# define X509_NAME_hash(x) X509_NAME_hash_ex(x, NULL, NULL, NULL)
+#endif
+unsigned long X509_NAME_hash_ex(const X509_NAME *x, OSSL_LIB_CTX *libctx,
+                                const char *propq, int *ok);
 unsigned long X509_NAME_hash_old(const X509_NAME *x);
 
 int X509_CRL_cmp(const X509_CRL *a, const X509_CRL *b);

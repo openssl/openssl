@@ -93,7 +93,7 @@ X509_NAME *X509_get_issuer_name(const X509 *a)
 
 unsigned long X509_issuer_name_hash(X509 *x)
 {
-    return X509_NAME_hash(x->cert_info.issuer);
+    return X509_NAME_hash_ex(x->cert_info.issuer, NULL, NULL, NULL);
 }
 
 #ifndef OPENSSL_NO_MD5
@@ -120,7 +120,7 @@ const ASN1_INTEGER *X509_get0_serialNumber(const X509 *a)
 
 unsigned long X509_subject_name_hash(X509 *x)
 {
-    return X509_NAME_hash(x->cert_info.subject);
+    return X509_NAME_hash_ex(x->cert_info.subject, NULL, NULL, NULL);
 }
 
 #ifndef OPENSSL_NO_MD5
@@ -250,20 +250,26 @@ int X509_NAME_cmp(const X509_NAME *a, const X509_NAME *b)
     return ret < 0 ? -1 : ret > 0;
 }
 
-unsigned long X509_NAME_hash(const X509_NAME *x)
+unsigned long X509_NAME_hash_ex(const X509_NAME *x, OSSL_LIB_CTX *libctx,
+                                const char *propq, int *ok)
 {
     unsigned long ret = 0;
     unsigned char md[SHA_DIGEST_LENGTH];
+    EVP_MD *sha1 = EVP_MD_fetch(libctx, "SHA1", propq);
 
     /* Make sure X509_NAME structure contains valid cached encoding */
     i2d_X509_NAME(x, NULL);
-    if (!EVP_Digest(x->canon_enc, x->canon_enclen, md, NULL, EVP_sha1(),
-                    NULL))
-        return 0;
-
-    ret = (((unsigned long)md[0]) | ((unsigned long)md[1] << 8L) |
-           ((unsigned long)md[2] << 16L) | ((unsigned long)md[3] << 24L)
-        ) & 0xffffffffL;
+    if (ok != NULL)
+        *ok = 0;
+    if (sha1 != NULL
+        && EVP_Digest(x->canon_enc, x->canon_enclen, md, NULL, sha1, NULL)) {
+        ret = (((unsigned long)md[0]) | ((unsigned long)md[1] << 8L) |
+               ((unsigned long)md[2] << 16L) | ((unsigned long)md[3] << 24L)
+               ) & 0xffffffffL;
+        if (ok != NULL)
+            *ok = 1;
+    }
+    EVP_MD_free(sha1);
     return ret;
 }
 
@@ -272,7 +278,6 @@ unsigned long X509_NAME_hash(const X509_NAME *x)
  * I now DER encode the name and hash it.  Since I cache the DER encoding,
  * this is reasonably efficient.
  */
-
 unsigned long X509_NAME_hash_old(const X509_NAME *x)
 {
     EVP_MD *md5 = EVP_MD_fetch(NULL, OSSL_DIGEST_NAME_MD5, "-fips");

@@ -136,7 +136,9 @@ static X509 *lookup_cert_match(X509_STORE_CTX *ctx, X509 *x)
     X509 *xtmp = NULL;
     int i;
     /* Lookup all certs with matching subject name */
+    ERR_set_mark();
     certs = ctx->lookup_certs(ctx, X509_get_subject_name(x));
+    ERR_pop_to_mark();
     if (certs == NULL)
         return NULL;
     /* Look for exact match */

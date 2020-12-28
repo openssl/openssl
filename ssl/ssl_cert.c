@@ -601,7 +601,8 @@ static int xname_sk_cmp(const X509_NAME *const *a, const X509_NAME *const *b)
 
 static unsigned long xname_hash(const X509_NAME *a)
 {
-    return X509_NAME_hash((X509_NAME *)a);
+    /* This returns 0 also if SHA1 is not available */
+    return X509_NAME_hash_ex((X509_NAME *)a, NULL, NULL, NULL);
 }
 
 STACK_OF(X509_NAME) *SSL_load_client_CA_file_ex(const char *file,

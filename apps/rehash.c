@@ -291,10 +291,23 @@ static int do_file(const char *filename, const char *fullpath, enum Hash h)
         goto end;
     }
     if (name != NULL) {
-        if ((h == HASH_NEW) || (h == HASH_BOTH))
-            errs += add_entry(type, X509_NAME_hash(name), filename, digest, 1, ~0);
+        if (h == HASH_NEW || h == HASH_BOTH) {
+            int ok;
+            unsigned long hash_value =
+                X509_NAME_hash_ex(name,
+                                  app_get0_libctx(), app_get0_propq(), &ok);
+
+            if (ok) {
+                errs += add_entry(type, hash_value, filename, digest, 1, ~0);
+            } else {
+                BIO_printf(bio_err, "%s: error calculating SHA1 hash value\n",
+                           opt_getprog());
+                errs++;
+            }
+        }
         if ((h == HASH_OLD) || (h == HASH_BOTH))
-            errs += add_entry(type, X509_NAME_hash_old(name), filename, digest, 1, ~0);
+            errs += add_entry(type, X509_NAME_hash_old(name),
+                              filename, digest, 1, ~0);
     }
 
 end:

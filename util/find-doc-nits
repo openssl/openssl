@@ -885,7 +885,7 @@ sub checkstate () {
 
         err("$_ is supposedly public but is documented as internal")
             if ( $declared_public && $name_map{$_} =~ /\/internal\// );
-        err("$_ is supposedly internal but is documented as public")
+        err("$_ is supposedly internal (maybe missing from other.syms) but is documented as public")
             if ( $declared_internal && $name_map{$_} !~ /\/internal\// );
     }
 }

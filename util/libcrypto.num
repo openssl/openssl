@@ -1345,7 +1345,7 @@ EVP_PKEY_asn1_free                      1375	3_0_0	EXIST::FUNCTION:
 ENGINE_unregister_DH                    1376	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,ENGINE
 PROXY_CERT_INFO_EXTENSION_it            1377	3_0_0	EXIST::FUNCTION:
 CT_POLICY_EVAL_CTX_set1_cert            1378	3_0_0	EXIST::FUNCTION:CT
-X509_NAME_hash                          1379	3_0_0	EXIST::FUNCTION:
+X509_NAME_hash_ex                       1379	3_0_0	EXIST::FUNCTION:
 SCT_set_timestamp                       1380	3_0_0	EXIST::FUNCTION:CT
 UI_new                                  1381	3_0_0	EXIST::FUNCTION:
 TS_REQ_get_msg_imprint                  1382	3_0_0	EXIST::FUNCTION:TS
