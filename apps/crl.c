@@ -287,22 +287,33 @@ int crl_main(int argc, char **argv)
             }
             if (crlnumber == i) {
                 ASN1_INTEGER *crlnum;
+
                 crlnum = X509_CRL_get_ext_d2i(x, NID_crl_number, NULL, NULL);
                 BIO_printf(bio_out, "crlNumber=");
                 if (crlnum) {
                     BIO_puts(bio_out, "0x");
                     i2a_ASN1_INTEGER(bio_out, crlnum);
                     ASN1_INTEGER_free(crlnum);
-                } else
+                } else {
                     BIO_puts(bio_out, "<NONE>");
+                }
                 BIO_printf(bio_out, "\n");
             }
             if (hash == i) {
-                BIO_printf(bio_out, "%08lx\n",
-                           X509_NAME_hash(X509_CRL_get_issuer(x)));
+                int ok;
+                unsigned long hash_value =
+                    X509_NAME_hash_ex(X509_CRL_get_issuer(x), app_get0_libctx(),
+                                      app_get0_propq(), &ok);
+
+                BIO_printf(bio_out, "issuer name hash=");
+                if (ok)
+                    BIO_printf(bio_out, "%08lx\n", hash_value);
+                else
+                    BIO_puts(bio_out, "<ERROR>");
             }
 #ifndef OPENSSL_NO_MD5
             if (hash_old == i) {
+                BIO_printf(bio_out, "issuer name old hash=");
                 BIO_printf(bio_out, "%08lx\n",
                            X509_NAME_hash_old(X509_CRL_get_issuer(x)));
             }

@@ -87,8 +87,8 @@ the directory.
 The directory should contain one certificate or CRL per file in PEM format,
 with a filename of the form I<hash>.I<N> for a certificate, or
 I<hash>.B<r>I<N> for a CRL.
-The I<hash> is the value returned by the L<X509_NAME_hash(3)> function applied
-to the subject name for certificates or issuer name for CRLs.
+The I<hash> is the value returned by the L<X509_NAME_hash_ex(3)> function
+applied to the subject name for certificates or issuer name for CRLs.
 The hash can also be obtained via the B<-hash> option of the
 L<openssl-x509(1)> or L<openssl-crl(1)> commands.
 

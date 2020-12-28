@@ -588,6 +588,7 @@ X509_LOOKUP_load_file                   define
 X509_LOOKUP_load_file_ex                define
 X509_LOOKUP_load_store                  define
 X509_LOOKUP_load_store_ex               define
+X509_NAME_hash                          define
 X509_STORE_set_lookup_crls_cb           define
 X509_STORE_set_verify_func              define
 EVP_PKEY_CTX_set1_id                    define

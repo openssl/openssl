@@ -471,6 +471,7 @@ static int file_set_ctx_params(void *loaderctx, const OSSL_PARAM params[])
         size_t der_len = 0;
         X509_NAME *x509_name;
         unsigned long hash;
+        int ok;
 
         if (ctx->type != IS_DIR) {
             ERR_raise(ERR_LIB_PROV,
@@ -481,10 +482,14 @@ static int file_set_ctx_params(void *loaderctx, const OSSL_PARAM params[])
         if (!OSSL_PARAM_get_octet_string_ptr(p, (const void **)&der, &der_len)
             || (x509_name = d2i_X509_NAME(NULL, &der, der_len)) == NULL)
             return 0;
-        hash = X509_NAME_hash(x509_name);
+        hash = X509_NAME_hash_ex(x509_name,
+                                 ossl_prov_ctx_get0_libctx(ctx->provctx), NULL,
+                                 &ok);
         BIO_snprintf(ctx->_.dir.search_name, sizeof(ctx->_.dir.search_name),
                      "%08lx", hash);
         X509_NAME_free(x509_name);
+        if (ok == 0)
+            return 0;
     }
     return 1;
 }

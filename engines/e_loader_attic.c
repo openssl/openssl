@@ -1155,7 +1155,8 @@ static int file_find(OSSL_STORE_LOADER_CTX *ctx,
             return 0;
         }
 
-        hash = X509_NAME_hash(OSSL_STORE_SEARCH_get0_name(search));
+        hash = X509_NAME_hash_ex(OSSL_STORE_SEARCH_get0_name(search),
+                                 NULL, NULL, NULL);
         BIO_snprintf(ctx->_.dir.search_name, sizeof(ctx->_.dir.search_name),
                      "%08lx", hash);
         return 1;
