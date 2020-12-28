@@ -5098,6 +5098,7 @@ X509_STORE_load_file_ex                 ?	3_0_0	EXIST::FUNCTION:
 X509_STORE_load_store_ex                ?	3_0_0	EXIST::FUNCTION:
 X509_STORE_load_locations_ex            ?	3_0_0	EXIST::FUNCTION:
 X509_STORE_set_default_paths_ex         ?	3_0_0	EXIST::FUNCTION:
+X509_build_chain                        ?	3_0_0	EXIST::FUNCTION:
 X509V3_set_issuer_pkey                  ?	3_0_0	EXIST::FUNCTION:
 i2s_ASN1_UTF8STRING                     ?	3_0_0	EXIST::FUNCTION:
 s2i_ASN1_UTF8STRING                     ?	3_0_0	EXIST::FUNCTION:

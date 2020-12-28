@@ -874,6 +874,5 @@ int setup_tests(void)
     ADD_TEST(test_CTX_set1_get0_transactionID);
     ADD_TEST(test_CTX_set1_get0_senderNonce);
     ADD_TEST(test_CTX_set1_get0_recipNonce);
-    /* ossl_cmp_build_cert_chain() is tested in cmp_protect.c */
     return 1;
 }
