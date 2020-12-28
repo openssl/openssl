@@ -333,6 +333,7 @@ static int execute_cmp_build_cert_chain_test(CMP_PROTECT_TEST_FIXTURE *fixture)
     int ret = 0;
     OSSL_CMP_CTX *ctx = fixture->cmp_ctx;
     X509_STORE *store;
+    /* At first, builds the chain as far down as possible, ignoring errors */
     STACK_OF(X509) *chain =
         X509_build_chain(fixture->cert, fixture->certs, NULL,
                          fixture->with_ss, ctx->libctx, ctx->propq);

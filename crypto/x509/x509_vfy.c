@@ -108,7 +108,7 @@ int X509_self_signed(X509 *cert, int verify_signature)
 
 /*
  * Given a certificate, try and find an exact match in the store.
- * Returns 1 on success, 0 on not found, -1 on internal error.
+ * Returns 1 on success, 0 on not found or internal error, -1 on internal error.
  */
 static int lookup_cert_match(X509 **result, X509_STORE_CTX *ctx, X509 *x)
 {
@@ -122,7 +122,7 @@ static int lookup_cert_match(X509 **result, X509_STORE_CTX *ctx, X509 *x)
     certs = ctx->lookup_certs(ctx, X509_get_subject_name(x));
     ERR_pop_to_mark();
     if (certs == NULL)
-        return -1;
+        return 0; /* Unfortunately, this can happen also on internal error */
     /* Look for exact match */
     for (i = 0; i < sk_X509_num(certs); i++) {
         xtmp = sk_X509_value(certs, i);
@@ -314,9 +314,8 @@ static int sk_X509_contains(STACK_OF(X509) *sk, X509 *cert)
 }
 
 /*
- * Find in given STACK_OF(X509) |sk| an issuer cert (if any) of given cert |x|.
- * The issuer must not yet be in |ctx->chain|, yet allowing the exception that
- *     |x| is self-issued and |ctx->chain| has just one element.
+ * Find in given STACK_OF(X509) |sk| an issuer cert (if any) of given cert |x|
+ * that is not yet in ctx->chain.
  * Prefer the first non-expired one, else take the most recently expired one.
  */
 static X509 *find_issuer(X509_STORE_CTX *ctx, STACK_OF(X509) *sk, X509 *x)
@@ -327,8 +326,7 @@ static X509 *find_issuer(X509_STORE_CTX *ctx, STACK_OF(X509) *sk, X509 *x)
     for (i = 0; i < sk_X509_num(sk); i++) {
         issuer = sk_X509_value(sk, i);
         if (ctx->check_issued(ctx, x, issuer)
-            && (((x->ex_flags & EXFLAG_SI) != 0 && sk_X509_num(ctx->chain) == 1)
-                || !sk_X509_contains(ctx->chain, issuer))) {
+                && !sk_X509_contains(ctx->chain, issuer)) {
             if (ossl_x509_check_cert_time(ctx, issuer, -1))
                 return issuer;
             if (rv == NULL || ASN1_TIME_compare(X509_get0_notAfter(issuer),
@@ -813,6 +811,8 @@ static int check_trust(X509_STORE_CTX *ctx, int num_untrusted)
     X509 *mx;
     SSL_DANE *dane = ctx->dane;
     int num = sk_X509_num(ctx->chain);
+    int flags = (ctx->param->flags & X509_V_FLAG_PARTIAL_CHAIN) != 0
+        ? X509_TRUST_DO_PC_COMPAT : 0;
     int trust;
 
     /*
@@ -826,60 +826,60 @@ static int check_trust(X509_STORE_CTX *ctx, int num_untrusted)
     }
 
     /*
-     * Check trusted certificates in chain at depth num_untrusted and up.
-     * Note, that depths 0..num_untrusted-1 may also contain trusted
+     * Check newly added trust store element(s) in chain at depth num_untrusted
+     * and up.  Note, that depths 0..num_untrusted-1 may also contain trusted
      * certificates, but the caller is expected to have already checked those,
      * and wants to incrementally check just any added since.
      */
     for (i = num_untrusted; i < num; i++) {
         x = sk_X509_value(ctx->chain, i);
-        trust = X509_check_trust(x, ctx->param->trust, 0);
-        /* If explicitly trusted return trusted */
+        trust = X509_check_trust(x, ctx->param->trust, flags);
+        /*
+         * The chain is PKIX trusted if the cert is explicitly trusted or
+         * is implicitly trusted (self-signed or partial chains are allowed).
+         */
         if (trust == X509_TRUST_TRUSTED)
             goto trusted;
         if (trust == X509_TRUST_REJECTED)
             goto rejected;
     }
 
-    /*
-     * If we are looking at a trusted certificate, and accept partial chains,
-     * the chain is PKIX trusted.
-     */
-    if (num_untrusted < num) {
-        if ((ctx->param->flags & X509_V_FLAG_PARTIAL_CHAIN) != 0)
-            goto trusted;
-        return X509_TRUST_UNTRUSTED;
-    }
-
-    if (num_untrusted == num
-            && (ctx->param->flags & X509_V_FLAG_PARTIAL_CHAIN) != 0) {
+    if (num_untrusted == num) {
         /*
-         * Last-resort call with no new trusted certificates, check the leaf
-         * for a direct trust store match.
+         * Check the current cert for a direct trust store match.
+         * It is PKIX trusted if is
+         * is explicitly trusted or self-signed or partial chains are allowed.
          */
-        i = 0;
+        i = num_untrusted - 1;
         x = sk_X509_value(ctx->chain, i);
+        /*
+         * We check for an exact match to avoid
+         * possible impersonation via key substitution etc.
+         */
         res = lookup_cert_match(&mx, ctx, x);
         if (res < 0)
-            return res;
-        if (mx == NULL)
-            return X509_TRUST_UNTRUSTED;
+            return res; /* TODO -1 makes test_asyncio and test_comp go astray */
 
-        /*
-         * Check explicit auxiliary trust/reject settings.  If none are set,
-         * we'll accept X509_TRUST_UNTRUSTED when not self-signed.
-         */
-        trust = X509_check_trust(mx, ctx->param->trust, 0);
-        if (trust == X509_TRUST_REJECTED) {
+        if (mx != NULL) {
+            /*
+             * Check explicit auxiliary trust/reject settings.  If none are set,
+             * we'll accept X509_TRUST_UNTRUSTED if X509_V_FLAG_PARTIAL_CHAIN.
+             */
+            trust = X509_check_trust(mx, ctx->param->trust, flags);
+            if (trust == X509_TRUST_REJECTED) {
+                X509_free(mx);
+                goto rejected;
+            }
+
+            if (trust == X509_TRUST_TRUSTED /* explicitly or implicitly */
+                || (ctx->param->flags & X509_V_FLAG_PARTIAL_CHAIN) != 0) {
+                /* Replace cert 'x' in chain with trusted match */
+                (void) sk_X509_set(ctx->chain, i, mx);
+                X509_free(x);
+                goto trusted;
+            }
             X509_free(mx);
-            goto rejected;
         }
-
-        /* Replace leaf with trusted match */
-        (void)sk_X509_set(ctx->chain, 0, mx);
-        X509_free(x);
-        ctx->num_untrusted = 0;
-        goto trusted;
     }
 
     /*
@@ -1748,17 +1748,16 @@ static int internal_verify(X509_STORE_CTX *ctx)
     } else if (ossl_x509_likely_issued(xi, xi) != X509_V_OK
                /* exceptional case: last cert in the chain is not self-issued */
                && ((ctx->param->flags & X509_V_FLAG_PARTIAL_CHAIN) == 0)) {
-        if (n > 0) {
-            n--;
-            ctx->error_depth = n;
-            xs = sk_X509_value(ctx->chain, n);
-        } else {
+               /*
+                * Exceptional case: trust anchor is not self-issued
+                * and X509_V_FLAG_PARTIAL_CHAIN is not set.
+                */
+        if (n == 0)
             CB_FAIL_IF(1, ctx, xi, 0,
                        X509_V_ERR_UNABLE_TO_VERIFY_LEAF_SIGNATURE);
-        }
         /*
-         * The below code will certainly not do a
-         * self-signature check on xi because it is not self-issued.
+         * The below code will certainly not do a self-signature check on xi as
+         * it is not self-issued and thus not self-signed. Still check validity.
          */
     }
 
@@ -2823,11 +2822,10 @@ static int dane_match(X509_STORE_CTX *ctx, X509 *cert, int depth)
 /* Returns -1 on internal error */
 static int check_dane_issuer(X509_STORE_CTX *ctx, int depth)
 {
-    SSL_DANE *dane = ctx->dane;
     int matched = 0;
     X509 *cert;
 
-    if (!DANETLS_HAS_TA(dane) || depth == 0)
+    if (depth == 0)
         return X509_TRUST_UNTRUSTED;
 
     /*
@@ -3058,6 +3056,15 @@ static int build_chain(X509_STORE_CTX *ctx)
 
         num = sk_X509_num(ctx->chain);
         ctx->error_depth = num - 1;
+
+        /*
+         * Stop immediately if target cert is directly trusted/rejected.
+         * This improves completeness and prevents inefficiency and spurious
+         * errors, which can occur when it makes no sense to look for an issuer.
+         */
+        if (num == 1 && (trust = check_trust(ctx, 1)) != X509_TRUST_UNTRUSTED)
+            break;
+
         /*
          * Look in the trust store if enabled for first lookup, or we've run
          * out of untrusted issuers and search here is not disabled.  When we
@@ -3095,7 +3102,6 @@ static int build_chain(X509_STORE_CTX *ctx)
             curr = sk_X509_value(ctx->chain, i - 1);
 
             ok = num > depth ? 0 : get_issuer(&issuer, ctx, curr);
-
             if (ok < 0) {
                 trust = -1;
                 ctx->error = X509_V_ERR_STORE_LOOKUP;
@@ -3139,8 +3145,7 @@ static int build_chain(X509_STORE_CTX *ctx)
                 }
 
                 /*
-                 * Self-signed untrusted certificates get replaced by their
-                 * trusted matching issuer.  Otherwise, grow the chain.
+                 * If not self-signed, grow the chain.
                  */
                 if (!self_signed) {
                     curr = issuer;
@@ -3150,31 +3155,43 @@ static int build_chain(X509_STORE_CTX *ctx)
                         X509_free(issuer);
                         goto memerr;
                     }
+#if 0
+                    /*-
+                     * This part was used only in two degenerate cases:
+                     * * for direct trust of EE cert
+                     * * if X509_V_FLAG_TRUSTED_FIRST unset and
+                     *   trust anchor is also in untrusted
+                     * It is now covered by the generalized check_trust()
+                     * called above, which checks direct trust for
+                     * current cert (at index num_trusted - 1)
+                     */
                 } else if (num == ctx->num_untrusted) {
                     /*
                      * We have a self-signed certificate that has the same
                      * subject name (and perhaps keyid and/or serial number) as
-                     * a trust anchor.  We must have an exact match to avoid
-                     * possible impersonation via key substitution etc.
+                     * a trust store element.  We must have an exact match to
+                     * avoid possible impersonation via key substitution etc.
                      */
                     if (X509_cmp(curr, issuer) != 0) {
                         /* Self-signed untrusted mimic. */
                         X509_free(issuer);
                         ok = 0;
                     } else { /* curr "==" issuer */
+                        /* Replace by matching 'issuer' from trust store. */
                         X509_free(curr);
                         ctx->num_untrusted = --num;
                         (void)sk_X509_set(ctx->chain, num, issuer);
                         curr = issuer;
                         /* no need to update self_signed */
                     }
+#endif
                 }
 
                 /*
-                 * We've added a new trusted certificate to the chain, re-check
-                 * trust.  If not done, and not self-signed look deeper.
                  * Whether or not we're doing "trusted first", we no longer
                  * look for untrusted certificates from the peer's chain.
+                 * We've added a trust store element to the chain, re-check
+                 * trust.  If not finished, and not self-signed check further.
                  *
                  * At this point ctx->num_trusted and num must reflect the
                  * correct number of untrusted certificates, since the DANE
@@ -3196,8 +3213,8 @@ static int build_chain(X509_STORE_CTX *ctx)
             }
 
             /*
-             * No dispositive decision, and either self-signed or no match, if
-             * we were doing untrusted-first, and alt-chains are not disabled,
+             * No dispositive decision, and either self-signed or no trust store
+             * match.  If untrusted-first, and alt-chains are not disabled,
              * do that, by repeatedly losing one untrusted element at a time,
              * and trying to extend the shorted chain.
              */
@@ -3217,7 +3234,7 @@ static int build_chain(X509_STORE_CTX *ctx)
         }
 
         /*
-         * Extend chain with peer-provided untrusted certificates
+         * Extend chain with (peer-provided) untrusted certificate
          */
         if ((search & S_DOUNTRUSTED) != 0) {
             num = sk_X509_num(ctx->chain);
@@ -3249,10 +3266,12 @@ static int build_chain(X509_STORE_CTX *ctx)
             if ((self_signed = X509_self_signed(curr, 0)) < 0)
                 goto int_err;
 
-            /* Check for DANE-TA trust of the topmost untrusted certificate. */
-            trust = check_dane_issuer(ctx, ctx->num_untrusted - 1);
-            if (trust == X509_TRUST_TRUSTED || trust == X509_TRUST_REJECTED)
-                break;
+            if (DANETLS_HAS_TA(dane)) {
+                /* Check for DANE-TA trust of the topmost untrusted cert. */
+                trust = check_dane_issuer(ctx, ctx->num_untrusted - 1);
+                if (trust != X509_TRUST_UNTRUSTED)
+                    break;
+            }
         }
     }
     sk_X509_free(sk_untrusted);
@@ -3260,17 +3279,11 @@ static int build_chain(X509_STORE_CTX *ctx)
     if (trust < 0) /* internal error */
         return trust;
 
-    /*
-     * Last chance to make a trusted chain, either bare DANE-TA public-key
-     * signers, or else direct leaf PKIX trust.
-     */
     num = sk_X509_num(ctx->chain);
-    if (num <= depth) {
-        if (trust == X509_TRUST_UNTRUSTED && DANETLS_HAS_DANE_TA(dane))
-            trust = check_dane_pkeys(ctx);
-        if (trust == X509_TRUST_UNTRUSTED && num == ctx->num_untrusted)
-            trust = check_trust(ctx, num);
-    }
+    if (trust == X509_TRUST_UNTRUSTED && num <= depth
+        && DANETLS_HAS_DANE_TA(dane))
+        /* Last chance to make trust for bare DANE-TA public-key signers */
+        trust = check_dane_pkeys(ctx);
 
     switch (trust) {
     case X509_TRUST_TRUSTED:

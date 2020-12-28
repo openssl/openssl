@@ -21,9 +21,9 @@ Certificate verification is a complicated process, consisting of
 a number of separate steps that are detailed in the following paragraphs.
 
 First, a certificate chain is built up starting from the target certificate
-and typically ending in a self-signed "root" CA certificate.
-It is an error if the whole chain cannot be built up
-unless the B<-partial_chain> option is given.
+and typically ending in a trusted self-signed "root" CA certificate.
+It is an error if the whole chain cannot be built up to a self-signed
+certificate unless the B<-partial_chain> option is given.
 The chain is built up iteratively, looking up in turn
 the certificate of the signer ("issuer") of the current certificate.
 If a certificate is found that appears to be its own issuer
@@ -267,9 +267,8 @@ keys shorter than 1024 bits.
 
 =item B<-partial_chain>
 
-Allow verification to succeed even if a I<complete> chain cannot be built to a
-self-signed trust-anchor, provided it is possible to construct a chain to a
-trusted certificate that might not be self-signed.
+Allow verification to succeed also if an incomplete> chain can be built,
+i.e., to a trust anchor that is not self-signed.
 This certificate may be self-issued or belong to an intermediate CA.
 
 =item B<-check_ss_sig>

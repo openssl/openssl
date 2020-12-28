@@ -6,12 +6,8 @@
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
 
-
-use strict;
-use warnings;
-
-use File::Spec::Functions qw/canonpath/;
-use OpenSSL::Test qw/:DEFAULT srctop_file ok_nofips/;
+use File::Spec::Functions;
+use OpenSSL::Test qw/:DEFAULT srctop_file data_file srctop_file ok_nofips/;
 use OpenSSL::Test::Utils;
 
 setup("test_verify");
@@ -27,7 +23,7 @@ sub verify {
     run(app([@args]));
 }
 
-plan tests => 155;
+plan tests => 158;
 
 # Canonical success
 ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"]),
@@ -438,3 +434,10 @@ SKIP: {
    ok_nofips(verify("sm2", "any", ["sm2-ca-cert"], [], "-vfyopt", "hexdistid:31323334353637383132333435363738"),
        "SM2 hex ID test");
 }
+
+ok(verify("ee-noKID-cert1", "any", ["ee-noKID-certs"], [], "-no_check_time"),
+    "accept ee-cert1 matching first cert in ee-certs");
+ok(verify("ee-noKID-cert2", "any", ["ee-noKID-certs"], [], "-no_check_time"),
+   "accept ee-cert although deceptively matching also first cert in ee-certs");
+ok(verify("ee-KID-cert2", "any", ["ee-KID-certs"], [], "-no_check_time"),
+   "accept ee-KID-cert2 selected with the help of its AKID from ee-KID-certs");

@@ -1,0 +1,10 @@
+
+prompt = no
+distinguished_name = my_server
+x509_extensions = my_exts
+[my_server]
+commonName = test
+[my_exts]
+basicConstraints = CA:false
+subjectKeyIdentifier=hash
+authorityKeyIdentifier = keyid

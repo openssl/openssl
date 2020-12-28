@@ -237,15 +237,20 @@ static int trust_1oid(X509_TRUST *trust, X509 *x, int flags)
     return obj_trust(trust->arg1, x, flags);
 }
 
+/* Determine default implicit trust in case no explicit trust EKUs are given */
 static int trust_compat(X509_TRUST *trust, X509 *x, int flags)
 {
     /* Call for side-effect of computing hash and caching extensions */
     if (X509_check_purpose(x, -1, 0) != 1)
         return X509_TRUST_UNTRUSTED;
-    if ((flags & X509_TRUST_NO_SS_COMPAT) == 0 && (x->ex_flags & EXFLAG_SS))
+    /* With PARTIAL_CHAIN, any cert in the trust store is a trust anchor */
+    if ((flags & X509_TRUST_DO_PC_COMPAT) != 0)
         return X509_TRUST_TRUSTED;
-    else
-        return X509_TRUST_UNTRUSTED;
+    /* Else check if self-signed certs in the trust store are trust anchors */
+    if ((x->ex_flags & EXFLAG_SS) != 0
+            && (flags & X509_TRUST_NO_SS_COMPAT) == 0)
+        return X509_TRUST_TRUSTED;
+    return X509_TRUST_UNTRUSTED;
 }
 
 static int obj_trust(int id, X509 *x, int flags)
