@@ -3322,6 +3322,48 @@ static int build_chain(X509_STORE_CTX *ctx)
     return -1;
 }
 
+STACK_OF(X509) *X509_build_chain(X509 *target, STACK_OF(X509) *certs,
+                                 X509_STORE *store, int with_self_signed,
+                                 OSSL_LIB_CTX *libctx, const char *propq)
+{
+    int finish_chain = store != NULL;
+    X509_STORE_CTX *ctx;
+    int flags = X509_ADD_FLAG_UP_REF;
+    STACK_OF(X509) *result = NULL;
+
+    if (target == NULL) {
+        ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
+        return NULL;
+    }
+
+    if ((ctx = X509_STORE_CTX_new_ex(libctx, propq)) == NULL)
+        return NULL;
+    if (!X509_STORE_CTX_init(ctx, store, target, finish_chain ? certs : NULL))
+        goto err;
+    if (!finish_chain)
+        X509_STORE_CTX_set0_trusted_stack(ctx, certs);
+    if (!ossl_x509_add_cert_new(&ctx->chain, target, X509_ADD_FLAG_UP_REF)) {
+        ctx->error = X509_V_ERR_OUT_OF_MEM;
+        goto err;
+    }
+    ctx->num_untrusted = 1;
+
+    if (!build_chain(ctx) && finish_chain)
+        goto err;
+
+    /* result list to store the up_ref'ed certificates */
+    if (sk_X509_num(ctx->chain) > 1 && !with_self_signed)
+        flags |= X509_ADD_FLAG_NO_SS;
+    if (!ossl_x509_add_certs_new(&result, ctx->chain, flags)) {
+        sk_X509_free(result);
+        result = NULL;
+    }
+
+ err:
+    X509_STORE_CTX_free(ctx);
+    return result;
+}
+
 static const int minbits_table[] = { 80, 112, 128, 192, 256 };
 static const int NUM_AUTH_LEVELS = OSSL_NELEM(minbits_table);
 

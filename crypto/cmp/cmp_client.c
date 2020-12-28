@@ -496,9 +496,8 @@ int OSSL_CMP_certConf_cb(OSSL_CMP_CTX *ctx, X509 *cert, int fail_info,
         return fail_info;
 
     ossl_cmp_debug(ctx, "trying to build chain for newly enrolled cert");
-    chain = ossl_cmp_build_cert_chain(ctx->libctx, ctx->propq,
-                                      out_trusted /* may be NULL */,
-                                      ctx->untrusted, cert);
+    chain = X509_build_chain(cert, ctx->untrusted, out_trusted /* maybe NULL */,
+                             0, ctx->libctx, ctx->propq);
     if (sk_X509_num(chain) > 0)
         X509_free(sk_X509_shift(chain)); /* remove leaf (EE) cert */
     if (out_trusted != NULL) {
