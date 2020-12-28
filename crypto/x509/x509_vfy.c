@@ -316,9 +316,10 @@ static int sk_X509_contains(STACK_OF(X509) *sk, X509 *cert)
 }
 
 /*
- * Find in given STACK_OF(X509) sk a non-expired issuer cert (if any) of given cert x.
- * The issuer must not be the same as x and must not yet be in ctx->chain, where the
- * exceptional case x is self-issued and ctx->chain has just one element is allowed.
+ * Find in given STACK_OF(X509) sk an issuer cert of given cert x.
+ * The issuer must not yet be in ctx->chain, where the exceptional case
+ * that x is self-issued and ctx->chain has just one element is allowed.
+ * Prefer the first one that is not expired, else take the last expired one.
  */
 static X509 *find_issuer(X509_STORE_CTX *ctx, STACK_OF(X509) *sk, X509 *x)
 {
@@ -327,16 +328,12 @@ static X509 *find_issuer(X509_STORE_CTX *ctx, STACK_OF(X509) *sk, X509 *x)
 
     for (i = 0; i < sk_X509_num(sk); i++) {
         issuer = sk_X509_value(sk, i);
-        /*
-         * Below check 'issuer != x' is an optimization and safety precaution:
-         * Candidate issuer cert cannot be the same as the subject cert 'x'.
-         */
-        if (issuer != x && ctx->check_issued(ctx, x, issuer)
+        if (ctx->check_issued(ctx, x, issuer)
             && (((x->ex_flags & EXFLAG_SI) != 0 && sk_X509_num(ctx->chain) == 1)
                 || !sk_X509_contains(ctx->chain, issuer))) {
+            if (x509_check_cert_time(ctx, issuer, -1))
+                return issuer;
             rv = issuer;
-            if (x509_check_cert_time(ctx, rv, -1))
-                break;
         }
     }
     return rv;
