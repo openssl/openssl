@@ -604,19 +604,19 @@ int setup_tests(void)
         return 0;
 
     /* Load certificates for cert chain */
-    if (!TEST_ptr(endentity1 = load_pem_cert(endentity1_f, libctx))
-            || !TEST_ptr(endentity2 = load_pem_cert(endentity2_f, libctx))
-            || !TEST_ptr(root = load_pem_cert(root_f, NULL))
-            || !TEST_ptr(intermediate = load_pem_cert(intermediate_f, libctx)))
+    if (!TEST_ptr(endentity1 = load_cert_pem(endentity1_f, libctx))
+            || !TEST_ptr(endentity2 = load_cert_pem(endentity2_f, libctx))
+            || !TEST_ptr(root = load_cert_pem(root_f, NULL))
+            || !TEST_ptr(intermediate = load_cert_pem(intermediate_f, libctx)))
         goto err;
 
-    if (!TEST_ptr(insta_cert = load_pem_cert(instacert_f, libctx))
-            || !TEST_ptr(instaca_cert = load_pem_cert(instaca_f, libctx)))
+    if (!TEST_ptr(insta_cert = load_cert_pem(instacert_f, libctx))
+            || !TEST_ptr(instaca_cert = load_cert_pem(instaca_f, libctx)))
         goto err;
 
     /* Load certificates for message validation */
-    if (!TEST_ptr(srvcert = load_pem_cert(server_f, libctx))
-            || !TEST_ptr(clcert = load_pem_cert(client_f, libctx)))
+    if (!TEST_ptr(srvcert = load_cert_pem(server_f, libctx))
+            || !TEST_ptr(clcert = load_cert_pem(client_f, libctx)))
         goto err;
     if (!TEST_int_eq(1, RAND_bytes(rand_data, OSSL_CMP_TRANSACTIONID_LENGTH)))
         goto err;

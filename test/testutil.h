@@ -16,6 +16,7 @@
 # include <openssl/err.h>
 # include <openssl/e_os2.h>
 # include <openssl/bn.h>
+# include <openssl/x509.h>
 # include "opt.h"
 
 /*-
@@ -567,5 +568,11 @@ void test_random_seed(uint32_t sd);
 
 /* Create a file path from a directory and a filename */
 char *test_mk_file_path(const char *dir, const char *file);
+
+EVP_PKEY *load_pkey_pem(const char *file, OSSL_LIB_CTX *libctx);
+X509 *load_cert_pem(const char *file, OSSL_LIB_CTX *libctx);
+X509 *load_cert_der(const unsigned char *bytes, int len);
+STACK_OF(X509) *load_certs_pem(const char *file);
+X509_REQ *load_csr_der(const char *file);
 
 #endif                          /* OSSL_TESTUTIL_H */

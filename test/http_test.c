@@ -22,20 +22,6 @@ static X509 *x509 = NULL;
 #define RPATH  "path/any.crt"
 static const char *rpath;
 
-static X509 *load_pem_cert(const char *file)
-{
-    X509 *cert = NULL;
-    BIO *bio = NULL;
-
-    if (!TEST_ptr(bio = BIO_new(BIO_s_file())))
-        return NULL;
-    if (TEST_int_gt(BIO_read_filename(bio, file), 0))
-        (void)TEST_ptr(cert = PEM_read_bio_X509(bio, NULL, NULL, NULL));
-
-    BIO_free(bio);
-    return cert;
-}
-
 /*
  * pretty trivial HTTP mock server:
  * for POST, copy request headers+body from mem BIO 'in' as response to 'out'
@@ -238,7 +224,7 @@ int setup_tests(void)
     }
 
     x509_it = ASN1_ITEM_rptr(X509);
-    if (!TEST_ptr((x509 = load_pem_cert(test_get_argument(0)))))
+    if (!TEST_ptr((x509 = load_cert_pem(test_get_argument(0), NULL))))
         return 1;
 
     ADD_TEST(test_http_url_dns);
