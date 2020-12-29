@@ -48,10 +48,10 @@ STACK_OF(X509_INFO) *PEM_X509_INFO_read(FILE *fp, STACK_OF(X509_INFO) *sk,
 }
 #endif
 
-STACK_OF(X509_INFO)
-*PEM_X509_INFO_read_bio_ex(BIO *bp, STACK_OF(X509_INFO) *sk,
-                           pem_password_cb *cb, void *u, OSSL_LIB_CTX *libctx,
-                           const char *propq)
+STACK_OF(X509_INFO) *PEM_X509_INFO_read_bio_ex(BIO *bp, STACK_OF(X509_INFO) *sk,
+                                               pem_password_cb *cb, void *u,
+                                               OSSL_LIB_CTX *libctx,
+                                               const char *propq)
 {
     X509_INFO *xi = NULL;
     char *name = NULL, *header = NULL;
@@ -77,15 +77,18 @@ STACK_OF(X509_INFO)
     for (;;) {
         raw = 0;
         ptype = 0;
+        ERR_set_mark();
         i = PEM_read_bio(bp, &name, &header, &data, &len);
         if (i == 0) {
             error = ERR_GET_REASON(ERR_peek_last_error());
             if (error == PEM_R_NO_START_LINE) {
-                ERR_clear_error();
+                ERR_pop_to_mark();
                 break;
             }
+            ERR_clear_last_mark();
             goto err;
         }
+        ERR_clear_last_mark();
  start:
         if ((strcmp(name, PEM_STRING_X509) == 0) ||
             (strcmp(name, PEM_STRING_X509_OLD) == 0)) {
