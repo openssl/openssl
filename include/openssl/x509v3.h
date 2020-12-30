@@ -364,8 +364,9 @@ struct ISSUING_DIST_POINT_st {
 
 # define EXFLAG_INVALID_POLICY   0x800
 # define EXFLAG_FRESHEST         0x1000
-/* Self signed */
-# define EXFLAG_SS               0x2000
+# define EXFLAG_SS               0x2000 /* cert is apparently self-signed */
+
+# define EXFLAG_NO_FINGERPRINT   0x100000
 
 # define KU_DIGITAL_SIGNATURE    0x0080
 # define KU_NON_REPUDIATION      0x0040
