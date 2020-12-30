@@ -133,10 +133,10 @@ poly1305_init:
 #  ifdef __thumb2__
 	itete	eq
 #  endif
-	addeq	r12,r11,#(poly1305_emit-.Lpoly1305_init)
-	addne	r12,r11,#(poly1305_emit_neon-.Lpoly1305_init)
-	addeq	r11,r11,#(poly1305_blocks-.Lpoly1305_init)
-	addne	r11,r11,#(poly1305_blocks_neon-.Lpoly1305_init)
+	addeq	r12,r11,#(.Lpoly1305_emit-.Lpoly1305_init)
+	addne	r12,r11,#(.Lpoly1305_emit_neon-.Lpoly1305_init)
+	addeq	r11,r11,#(.Lpoly1305_blocks-.Lpoly1305_init)
+	addne	r11,r11,#(.Lpoly1305_blocks_neon-.Lpoly1305_init)
 # endif
 # ifdef	__thumb2__
 	orr	r12,r12,#1	@ thumb-ify address
@@ -352,6 +352,7 @@ $code.=<<___;
 .type	poly1305_emit,%function
 .align	5
 poly1305_emit:
+.Lpoly1305_emit:
 	stmdb	sp!,{r4-r11}
 .Lpoly1305_emit_enter:
 
@@ -671,6 +672,7 @@ poly1305_init_neon:
 .type	poly1305_blocks_neon,%function
 .align	5
 poly1305_blocks_neon:
+.Lpoly1305_blocks_neon:
 	ldr	ip,[$ctx,#36]		@ is_base2_26
 	ands	$len,$len,#-16
 	beq	.Lno_data_neon
@@ -1157,6 +1159,7 @@ poly1305_blocks_neon:
 .type	poly1305_emit_neon,%function
 .align	5
 poly1305_emit_neon:
+.Lpoly1305_emit_neon:
 	ldr	ip,[$ctx,#36]		@ is_base2_26
 
 	stmdb	sp!,{r4-r11}
