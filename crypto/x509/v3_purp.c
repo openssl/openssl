@@ -387,6 +387,7 @@ static int check_sig_alg_match(const EVP_PKEY *pkey, const X509 *subject)
 /*
  * Cache info on various X.509v3 extensions and further derived information,
  * e.g., if cert 'x' is self-issued, in x->ex_flags and other internal fields.
+ * x->sha1_hash is filled in, or else EXFLAG_NO_FINGERPRINT is set in x->flags.
  * X509_SIG_INFO_VALID is set in x->flags if x->siginf was filled successfully.
  * Set EXFLAG_INVALID and return 0 in case the certificate is invalid.
  */
@@ -411,15 +412,12 @@ int x509v3_cache_extensions(X509 *x)
         CRYPTO_THREAD_unlock(x->lock);
         return (x->ex_flags & EXFLAG_INVALID) == 0;
     }
-    ERR_set_mark();
 
     /* Cache the SHA1 digest of the cert */
     if (!X509_digest(x, EVP_sha1(), x->sha1_hash, NULL))
-        /*
-         * Note that the cert is marked invalid also on internal malloc failure
-         * or on failure of EVP_MD_fetch(), potentially called by X509_digest().
-         */
-        x->ex_flags |= EXFLAG_INVALID;
+        x->ex_flags |= EXFLAG_NO_FINGERPRINT;
+
+    ERR_set_mark();
 
     /* V1 should mean no extensions ... */
     if (X509_get_version(x) == 0)
@@ -625,11 +623,13 @@ int x509v3_cache_extensions(X509 *x)
      */
 #endif
     ERR_pop_to_mark();
-    if ((x->ex_flags & EXFLAG_INVALID) == 0) {
+    if ((x->ex_flags & (EXFLAG_INVALID | EXFLAG_NO_FINGERPRINT)) == 0) {
         CRYPTO_THREAD_unlock(x->lock);
         return 1;
     }
-    ERR_raise(ERR_LIB_X509, X509V3_R_INVALID_CERTIFICATE);
+    if ((x->ex_flags & EXFLAG_INVALID) != 0)
+        ERR_raise(ERR_LIB_X509, X509V3_R_INVALID_CERTIFICATE);
+    /* If computing sha1_hash failed the error queue already reflects this. */
 
  err:
     x->ex_flags |= EXFLAG_SET; /* indicate that cert has been processed */

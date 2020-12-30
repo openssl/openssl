@@ -55,7 +55,8 @@ The B<X509> comparison functions return B<-1>, B<0>, or B<1> if object I<a> is
 found to be less than, to match, or be greater than object I<b>, respectively.
 
 X509_NAME_cmp(), X509_issuer_and_serial_cmp(), X509_issuer_name_cmp(),
-X509_subject_name_cmp() and X509_CRL_cmp() may return B<-2> to indicate an error.
+X509_subject_name_cmp(), X509_CRL_cmp(), and X509_CRL_match()
+may return B<-2> to indicate an error.
 
 =head1 NOTES
 

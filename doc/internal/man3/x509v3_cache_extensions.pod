@@ -17,7 +17,8 @@ This function processes any X509v3 extensions present in an X509 object I<x>
 and caches the result of that processing as well as further derived info,
 for instance whether the certificate is self-issued or has version X.509v1.
 It computes the SHA1 digest of the certificate using the default library context
-and property query string and stores the result in x->sha1_hash.
+and property query string and stores the result in x->sha1_hash,
+or on failure sets B<EXFLAG_NO_FINGERPRINT> in x->flags.
 It sets B<X509_SIG_INFO_VALID> in x->flags if x->siginf was filled successfully,
 which may not be possible if a referenced algorithm is unknown or not available.
 Many OpenSSL functions that use an X509 object call this function implicitly.

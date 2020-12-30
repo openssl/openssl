@@ -147,7 +147,7 @@ static int crl_set_issuers(X509_CRL *crl)
 
 /*
  * The X509_CRL structure needs a bit of customisation. Cache some extensions
- * and hash of the whole CRL.
+ * and hash of the whole CRL or set EXFLAG_NO_FINGERPRINT if this fails.
  */
 static int crl_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
                   void *exarg)
@@ -185,7 +185,7 @@ static int crl_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
 
     case ASN1_OP_D2I_POST:
         if (!X509_CRL_digest(crl, EVP_sha1(), crl->sha1_hash, NULL))
-            crl->flags |= EXFLAG_INVALID;
+            crl->flags |= EXFLAG_NO_FINGERPRINT;
         crl->idp = X509_CRL_get_ext_d2i(crl,
                                         NID_issuing_distribution_point, &i,
                                         NULL);
