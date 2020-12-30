@@ -78,11 +78,16 @@ The certificate contains an unhandled critical extension.
 
 =item B<EXFLAG_INVALID>
 
-Some certificate extension values are invalid or inconsistent. The
-certificate should be rejected.
+Some certificate extension values are invalid or inconsistent.
+The certificate should be rejected.
 This bit may also be raised after an out-of-memory error while
 processing the X509 object, so it may not be related to the processed
 ASN1 object itself.
+
+=item B<EXFLAG_NO_FINGERPRINT>
+
+Failed to compute the internal SHA1 hash value of the certificate or CRL.
+This may be due to malloc failure or because no SHA1 implementation was found.
 
 =item B<EXFLAG_INVALID_POLICY>
 

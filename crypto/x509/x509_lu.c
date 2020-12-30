@@ -702,7 +702,7 @@ X509_OBJECT *X509_OBJECT_retrieve_match(STACK_OF(X509_OBJECT) *h,
             if (!X509_cmp(obj->data.x509, x->data.x509))
                 return obj;
         } else if (x->type == X509_LU_CRL) {
-            if (!X509_CRL_match(obj->data.crl, x->data.crl))
+            if (X509_CRL_match(obj->data.crl, x->data.crl) == 0)
                 return obj;
         } else
             return obj;
