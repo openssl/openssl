@@ -290,22 +290,34 @@ static const char *get_sigtype(int nid)
         return "ECDSA p256 - Picnic3 L1";
     case NID_rsa3072_picnic3l1:
         return "RSA3072 - Picnic3 L1";
-    case NID_rainbowIaclassic:
-        return "Rainbow-Ia-Classic";
-    case NID_p256_rainbowIaclassic:
-        return "ECDSA p256 - Rainbow-Ia-Classic";
-    case NID_rsa3072_rainbowIaclassic:
-        return "RSA3072 - Rainbow-Ia-Classic";
-    case NID_rainbowVcclassic:
-        return "Rainbow-Vc-Classic";
-    case NID_p521_rainbowVcclassic:
-        return "ECDSA p521 - Rainbow-Vc-Classic";
+    case NID_rainbowIclassic:
+        return "Rainbow-I-Classic";
+    case NID_p256_rainbowIclassic:
+        return "ECDSA p256 - Rainbow-I-Classic";
+    case NID_rsa3072_rainbowIclassic:
+        return "RSA3072 - Rainbow-I-Classic";
+    case NID_rainbowVclassic:
+        return "Rainbow-V-Classic";
+    case NID_p521_rainbowVclassic:
+        return "ECDSA p521 - Rainbow-V-Classic";
     case NID_sphincsharaka128frobust:
         return "SPHINCS+-Haraka-128f-robust";
     case NID_p256_sphincsharaka128frobust:
         return "ECDSA p256 - SPHINCS+-Haraka-128f-robust";
     case NID_rsa3072_sphincsharaka128frobust:
         return "RSA3072 - SPHINCS+-Haraka-128f-robust";
+    case NID_sphincssha256128frobust:
+        return "SPHINCS+-SHA256-128f-robust";
+    case NID_p256_sphincssha256128frobust:
+        return "ECDSA p256 - SPHINCS+-SHA256-128f-robust";
+    case NID_rsa3072_sphincssha256128frobust:
+        return "RSA3072 - SPHINCS+-SHA256-128f-robust";
+    case NID_sphincsshake256128frobust:
+        return "SPHINCS+-SHAKE256-128f-robust";
+    case NID_p256_sphincsshake256128frobust:
+        return "ECDSA p256 - SPHINCS+-SHAKE256-128f-robust";
+    case NID_rsa3072_sphincsshake256128frobust:
+        return "RSA3072 - SPHINCS+-SHAKE256-128f-robust";
 ///// OQS_TEMPLATE_FRAGMENT_SIG_NAME_STR_END
     default:
         return NULL;

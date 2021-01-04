@@ -97,14 +97,20 @@ int oqssl_sig_nids_list[] = {
         NID_picnic3l1,
         NID_p256_picnic3l1,
         NID_rsa3072_picnic3l1,
-        NID_rainbowIaclassic,
-        NID_p256_rainbowIaclassic,
-        NID_rsa3072_rainbowIaclassic,
-        NID_rainbowVcclassic,
-        NID_p521_rainbowVcclassic,
+        NID_rainbowIclassic,
+        NID_p256_rainbowIclassic,
+        NID_rsa3072_rainbowIclassic,
+        NID_rainbowVclassic,
+        NID_p521_rainbowVclassic,
         NID_sphincsharaka128frobust,
         NID_p256_sphincsharaka128frobust,
         NID_rsa3072_sphincsharaka128frobust,
+        NID_sphincssha256128frobust,
+        NID_p256_sphincssha256128frobust,
+        NID_rsa3072_sphincssha256128frobust,
+        NID_sphincsshake256128frobust,
+        NID_p256_sphincsshake256128frobust,
+        NID_rsa3072_sphincsshake256128frobust,
 /////// OQS_TEMPLATE_FRAGMENT_LIST_KNOWN_NIDS_END
 };
 
@@ -210,17 +216,25 @@ char* get_oqs_alg_name(int openssl_nid)
     case NID_p256_picnic3l1:
     case NID_rsa3072_picnic3l1:
       return OQS_SIG_alg_picnic3_L1;
-    case NID_rainbowIaclassic:
-    case NID_p256_rainbowIaclassic:
-    case NID_rsa3072_rainbowIaclassic:
-      return OQS_SIG_alg_rainbow_Ia_classic;
-    case NID_rainbowVcclassic:
-    case NID_p521_rainbowVcclassic:
-      return OQS_SIG_alg_rainbow_Vc_classic;
+    case NID_rainbowIclassic:
+    case NID_p256_rainbowIclassic:
+    case NID_rsa3072_rainbowIclassic:
+      return OQS_SIG_alg_rainbow_I_classic;
+    case NID_rainbowVclassic:
+    case NID_p521_rainbowVclassic:
+      return OQS_SIG_alg_rainbow_V_classic;
     case NID_sphincsharaka128frobust:
     case NID_p256_sphincsharaka128frobust:
     case NID_rsa3072_sphincsharaka128frobust:
       return OQS_SIG_alg_sphincs_haraka_128f_robust;
+    case NID_sphincssha256128frobust:
+    case NID_p256_sphincssha256128frobust:
+    case NID_rsa3072_sphincssha256128frobust:
+      return OQS_SIG_alg_sphincs_sha256_128f_robust;
+    case NID_sphincsshake256128frobust:
+    case NID_p256_sphincsshake256128frobust:
+    case NID_rsa3072_sphincsshake256128frobust:
+      return OQS_SIG_alg_sphincs_shake256_128f_robust;
     case NID_oqs_kem_default:
       return OQS_KEM_alg_default;
     case NID_frodo640aes:
@@ -368,11 +382,15 @@ static int is_oqs_hybrid_alg(int openssl_nid)
     case NID_rsa3072_picnicl1full:
     case NID_p256_picnic3l1:
     case NID_rsa3072_picnic3l1:
-    case NID_p256_rainbowIaclassic:
-    case NID_rsa3072_rainbowIaclassic:
-    case NID_p521_rainbowVcclassic:
+    case NID_p256_rainbowIclassic:
+    case NID_rsa3072_rainbowIclassic:
+    case NID_p521_rainbowVclassic:
     case NID_p256_sphincsharaka128frobust:
     case NID_rsa3072_sphincsharaka128frobust:
+    case NID_p256_sphincssha256128frobust:
+    case NID_rsa3072_sphincssha256128frobust:
+    case NID_p256_sphincsshake256128frobust:
+    case NID_rsa3072_sphincsshake256128frobust:
 ///// OQS_TEMPLATE_FRAGMENT_LIST_HYBRID_NIDS_END
       return 1;
     default:
@@ -392,8 +410,10 @@ static int get_classical_nid(int hybrid_id)
     case NID_rsa3072_falcon512:
     case NID_rsa3072_picnicl1full:
     case NID_rsa3072_picnic3l1:
-    case NID_rsa3072_rainbowIaclassic:
+    case NID_rsa3072_rainbowIclassic:
     case NID_rsa3072_sphincsharaka128frobust:
+    case NID_rsa3072_sphincssha256128frobust:
+    case NID_rsa3072_sphincsshake256128frobust:
       return NID_rsaEncryption;
     case NID_p256_oqs_sig_default:
     case NID_p256_dilithium2:
@@ -401,13 +421,15 @@ static int get_classical_nid(int hybrid_id)
     case NID_p256_falcon512:
     case NID_p256_picnicl1full:
     case NID_p256_picnic3l1:
-    case NID_p256_rainbowIaclassic:
+    case NID_p256_rainbowIclassic:
     case NID_p256_sphincsharaka128frobust:
+    case NID_p256_sphincssha256128frobust:
+    case NID_p256_sphincsshake256128frobust:
       return NID_X9_62_prime256v1;
     case NID_p384_dilithium4:
       return NID_secp384r1;
     case NID_p521_falcon1024:
-    case NID_p521_rainbowVcclassic:
+    case NID_p521_rainbowVclassic:
       return NID_secp521r1;///// OQS_TEMPLATE_FRAGMENT_ASSIGN_CLASSICAL_NIDS_END
     default:
       return 0;
@@ -441,14 +463,20 @@ static int get_oqs_nid(int hybrid_id)
     case NID_p256_picnic3l1:
     case NID_rsa3072_picnic3l1:
       return NID_picnic3l1;
-    case NID_p256_rainbowIaclassic:
-    case NID_rsa3072_rainbowIaclassic:
-      return NID_rainbowIaclassic;
-    case NID_p521_rainbowVcclassic:
-      return NID_rainbowVcclassic;
+    case NID_p256_rainbowIclassic:
+    case NID_rsa3072_rainbowIclassic:
+      return NID_rainbowIclassic;
+    case NID_p521_rainbowVclassic:
+      return NID_rainbowVclassic;
     case NID_p256_sphincsharaka128frobust:
     case NID_rsa3072_sphincsharaka128frobust:
       return NID_sphincsharaka128frobust;
+    case NID_p256_sphincssha256128frobust:
+    case NID_rsa3072_sphincssha256128frobust:
+      return NID_sphincssha256128frobust;
+    case NID_p256_sphincsshake256128frobust:
+    case NID_rsa3072_sphincsshake256128frobust:
+      return NID_sphincsshake256128frobust;
 ///// OQS_TEMPLATE_FRAGMENT_ASSIGN_OQS_NID_END
     default:
       return 0;
@@ -596,16 +624,24 @@ static int get_oqs_security_bits(int openssl_nid)
     case NID_p256_picnic3l1:
     case NID_rsa3072_picnic3l1:
       return 128;
-    case NID_rainbowIaclassic:
-    case NID_p256_rainbowIaclassic:
-    case NID_rsa3072_rainbowIaclassic:
+    case NID_rainbowIclassic:
+    case NID_p256_rainbowIclassic:
+    case NID_rsa3072_rainbowIclassic:
       return 128;
-    case NID_rainbowVcclassic:
-    case NID_p521_rainbowVcclassic:
+    case NID_rainbowVclassic:
+    case NID_p521_rainbowVclassic:
       return 256;
     case NID_sphincsharaka128frobust:
     case NID_p256_sphincsharaka128frobust:
     case NID_rsa3072_sphincsharaka128frobust:
+      return 128;
+    case NID_sphincssha256128frobust:
+    case NID_p256_sphincssha256128frobust:
+    case NID_rsa3072_sphincssha256128frobust:
+      return 128;
+    case NID_sphincsshake256128frobust:
+    case NID_p256_sphincsshake256128frobust:
+    case NID_rsa3072_sphincsshake256128frobust:
       return 128;
 ///// OQS_TEMPLATE_FRAGMENT_GET_SIG_SECURITY_BITS_END
     default:
@@ -1201,14 +1237,20 @@ static int oqs_item_verify(EVP_MD_CTX *ctx, const ASN1_ITEM *it, void *asn,
         nid != NID_picnic3l1 &&
         nid != NID_p256_picnic3l1 &&
         nid != NID_rsa3072_picnic3l1 &&
-        nid != NID_rainbowIaclassic &&
-        nid != NID_p256_rainbowIaclassic &&
-        nid != NID_rsa3072_rainbowIaclassic &&
-        nid != NID_rainbowVcclassic &&
-        nid != NID_p521_rainbowVcclassic &&
+        nid != NID_rainbowIclassic &&
+        nid != NID_p256_rainbowIclassic &&
+        nid != NID_rsa3072_rainbowIclassic &&
+        nid != NID_rainbowVclassic &&
+        nid != NID_p521_rainbowVclassic &&
         nid != NID_sphincsharaka128frobust &&
         nid != NID_p256_sphincsharaka128frobust &&
         nid != NID_rsa3072_sphincsharaka128frobust &&
+        nid != NID_sphincssha256128frobust &&
+        nid != NID_p256_sphincssha256128frobust &&
+        nid != NID_rsa3072_sphincssha256128frobust &&
+        nid != NID_sphincsshake256128frobust &&
+        nid != NID_p256_sphincsshake256128frobust &&
+        nid != NID_rsa3072_sphincsshake256128frobust &&
         1 /* This is just to faciliate templating. */
 ///// OQS_TEMPLATE_FRAGMENT_CHECK_IF_KNOWN_NID_END
     ) || ptype != V_ASN1_UNDEF) {
@@ -1734,12 +1776,18 @@ DEFINE_OQS_EVP_METHODS(rsa3072_picnicl1full, NID_rsa3072_picnicl1full, "rsa3072_
 DEFINE_OQS_EVP_METHODS(picnic3l1, NID_picnic3l1, "picnic3l1", "OpenSSL Picnic3 L1 algorithm")
 DEFINE_OQS_EVP_METHODS(p256_picnic3l1, NID_p256_picnic3l1, "p256_picnic3l1", "OpenSSL ECDSA p256 Picnic3 L1 algorithm")
 DEFINE_OQS_EVP_METHODS(rsa3072_picnic3l1, NID_rsa3072_picnic3l1, "rsa3072_picnic3l1", "OpenSSL RSA3072 Picnic3 L1 algorithm")
-DEFINE_OQS_EVP_METHODS(rainbowIaclassic, NID_rainbowIaclassic, "rainbowIaclassic", "OpenSSL Rainbow-Ia-Classic algorithm")
-DEFINE_OQS_EVP_METHODS(p256_rainbowIaclassic, NID_p256_rainbowIaclassic, "p256_rainbowIaclassic", "OpenSSL ECDSA p256 Rainbow-Ia-Classic algorithm")
-DEFINE_OQS_EVP_METHODS(rsa3072_rainbowIaclassic, NID_rsa3072_rainbowIaclassic, "rsa3072_rainbowIaclassic", "OpenSSL RSA3072 Rainbow-Ia-Classic algorithm")
-DEFINE_OQS_EVP_METHODS(rainbowVcclassic, NID_rainbowVcclassic, "rainbowVcclassic", "OpenSSL Rainbow-Vc-Classic algorithm")
-DEFINE_OQS_EVP_METHODS(p521_rainbowVcclassic, NID_p521_rainbowVcclassic, "p521_rainbowVcclassic", "OpenSSL ECDSA p521 Rainbow-Vc-Classic algorithm")
+DEFINE_OQS_EVP_METHODS(rainbowIclassic, NID_rainbowIclassic, "rainbowIclassic", "OpenSSL Rainbow-I-Classic algorithm")
+DEFINE_OQS_EVP_METHODS(p256_rainbowIclassic, NID_p256_rainbowIclassic, "p256_rainbowIclassic", "OpenSSL ECDSA p256 Rainbow-I-Classic algorithm")
+DEFINE_OQS_EVP_METHODS(rsa3072_rainbowIclassic, NID_rsa3072_rainbowIclassic, "rsa3072_rainbowIclassic", "OpenSSL RSA3072 Rainbow-I-Classic algorithm")
+DEFINE_OQS_EVP_METHODS(rainbowVclassic, NID_rainbowVclassic, "rainbowVclassic", "OpenSSL Rainbow-V-Classic algorithm")
+DEFINE_OQS_EVP_METHODS(p521_rainbowVclassic, NID_p521_rainbowVclassic, "p521_rainbowVclassic", "OpenSSL ECDSA p521 Rainbow-V-Classic algorithm")
 DEFINE_OQS_EVP_METHODS(sphincsharaka128frobust, NID_sphincsharaka128frobust, "sphincsharaka128frobust", "OpenSSL SPHINCS+-Haraka-128f-robust algorithm")
 DEFINE_OQS_EVP_METHODS(p256_sphincsharaka128frobust, NID_p256_sphincsharaka128frobust, "p256_sphincsharaka128frobust", "OpenSSL ECDSA p256 SPHINCS+-Haraka-128f-robust algorithm")
 DEFINE_OQS_EVP_METHODS(rsa3072_sphincsharaka128frobust, NID_rsa3072_sphincsharaka128frobust, "rsa3072_sphincsharaka128frobust", "OpenSSL RSA3072 SPHINCS+-Haraka-128f-robust algorithm")
+DEFINE_OQS_EVP_METHODS(sphincssha256128frobust, NID_sphincssha256128frobust, "sphincssha256128frobust", "OpenSSL SPHINCS+-SHA256-128f-robust algorithm")
+DEFINE_OQS_EVP_METHODS(p256_sphincssha256128frobust, NID_p256_sphincssha256128frobust, "p256_sphincssha256128frobust", "OpenSSL ECDSA p256 SPHINCS+-SHA256-128f-robust algorithm")
+DEFINE_OQS_EVP_METHODS(rsa3072_sphincssha256128frobust, NID_rsa3072_sphincssha256128frobust, "rsa3072_sphincssha256128frobust", "OpenSSL RSA3072 SPHINCS+-SHA256-128f-robust algorithm")
+DEFINE_OQS_EVP_METHODS(sphincsshake256128frobust, NID_sphincsshake256128frobust, "sphincsshake256128frobust", "OpenSSL SPHINCS+-SHAKE256-128f-robust algorithm")
+DEFINE_OQS_EVP_METHODS(p256_sphincsshake256128frobust, NID_p256_sphincsshake256128frobust, "p256_sphincsshake256128frobust", "OpenSSL ECDSA p256 SPHINCS+-SHAKE256-128f-robust algorithm")
+DEFINE_OQS_EVP_METHODS(rsa3072_sphincsshake256128frobust, NID_rsa3072_sphincsshake256128frobust, "rsa3072_sphincsshake256128frobust", "OpenSSL RSA3072 SPHINCS+-SHAKE256-128f-robust algorithm")
 ///// OQS_TEMPLATE_FRAGMENT_DEFINE_OQS_EVP_METHS_END

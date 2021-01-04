@@ -1,0 +1,4 @@
+{%- for family, kems in config['kems'][1:] | groupby('family') %}
+- **{{ family }}**: {% for kem in kems -%} `{{ kem['name_group'] }}` {%- if not loop.last %}, {% endif -%}{%- if loop.last and family == 'HQC' -%}†{%- endif -%}{%- endfor -%}
+{%- endfor %}
+

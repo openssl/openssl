@@ -2,248 +2,288 @@
 # https://docs.google.com/spreadsheets/d/12YarzaNv3XQNLnvDsWLlRKwtZFhRrDdWf36YlzwrPeg/edit#gid=0
 kems:
   -
-    name_group: "frodo640aes"
-    nid: "0x0200"
-    nid_hybrid: "0x2F00"
-    oqs_alg: "OQS_KEM_alg_frodokem_640_aes"
+    family: 'FrodoKEM'
+    name_group: 'frodo640aes'
+    nid: '0x0200'
+    nid_hybrid: '0x2F00'
+    oqs_alg: 'OQS_KEM_alg_frodokem_640_aes'
     bit_security: 128
   -
-    name_group: "frodo640shake"
-    nid: "0x0201"
-    nid_hybrid: "0x2F01"
-    oqs_alg: "OQS_KEM_alg_frodokem_640_shake"
+    family: 'FrodoKEM'
+    name_group: 'frodo640shake'
+    nid: '0x0201'
+    nid_hybrid: '0x2F01'
+    oqs_alg: 'OQS_KEM_alg_frodokem_640_shake'
     bit_security: 128
   -
-    name_group: "frodo976aes"
-    nid: "0x0202"
-    nid_hybrid: "0x2F02"
-    oqs_alg: "OQS_KEM_alg_frodokem_976_aes"
+    family: 'FrodoKEM'
+    name_group: 'frodo976aes'
+    nid: '0x0202'
+    nid_hybrid: '0x2F02'
+    oqs_alg: 'OQS_KEM_alg_frodokem_976_aes'
     bit_security: 192
   -
-    name_group: "frodo976shake"
-    nid: "0x0203"
-    nid_hybrid: "0x2F03"
-    oqs_alg: "OQS_KEM_alg_frodokem_976_shake"
+    family: 'FrodoKEM'
+    name_group: 'frodo976shake'
+    nid: '0x0203'
+    nid_hybrid: '0x2F03'
+    oqs_alg: 'OQS_KEM_alg_frodokem_976_shake'
     bit_security: 192
   -
-    name_group: "frodo1344aes"
-    nid: "0x0204"
-    nid_hybrid: "0x2F04"
-    oqs_alg: "OQS_KEM_alg_frodokem_1344_aes"
+    family: 'FrodoKEM'
+    name_group: 'frodo1344aes'
+    nid: '0x0204'
+    nid_hybrid: '0x2F04'
+    oqs_alg: 'OQS_KEM_alg_frodokem_1344_aes'
     bit_security: 256
   -
-    name_group: "frodo1344shake"
-    nid: "0x0205"
-    nid_hybrid: "0x2F05"
-    oqs_alg: "OQS_KEM_alg_frodokem_1344_shake"
+    family: 'FrodoKEM'
+    name_group: 'frodo1344shake'
+    nid: '0x0205'
+    nid_hybrid: '0x2F05'
+    oqs_alg: 'OQS_KEM_alg_frodokem_1344_shake'
     bit_security: 256
   -
-    name_group: "bike1l1cpa"
-    nid: "0x0206"
-    nid_hybrid: "0x2F06"
-    oqs_alg: "OQS_KEM_alg_bike1_l1_cpa"
+    family: 'BIKE'
+    name_group: 'bike1l1cpa'
+    nid: '0x0206'
+    nid_hybrid: '0x2F06'
+    oqs_alg: 'OQS_KEM_alg_bike1_l1_cpa'
     bit_security: 128
   -
-    name_group: "bike1l3cpa"
-    nid: "0x0207"
-    nid_hybrid: "0x2F07"
-    oqs_alg: "OQS_KEM_alg_bike1_l3_cpa"
+    family: 'BIKE'
+    name_group: 'bike1l3cpa'
+    nid: '0x0207'
+    nid_hybrid: '0x2F07'
+    oqs_alg: 'OQS_KEM_alg_bike1_l3_cpa'
     bit_security: 192
   -
-    name_group: "kyber512"
-    nid: "0x020F"
-    nid_hybrid: "0x2F0F"
-    oqs_alg: "OQS_KEM_alg_kyber_512"
+    family: 'CRYSTALS-Kyber'
+    name_group: 'kyber512'
+    nid: '0x020F'
+    nid_hybrid: '0x2F0F'
+    oqs_alg: 'OQS_KEM_alg_kyber_512'
     bit_security: 128
   -
-    name_group: "kyber768"
-    nid: "0x0210"
-    nid_hybrid: "0x2F10"
-    oqs_alg: "OQS_KEM_alg_kyber_768"
+    family: 'CRYSTALS-Kyber'
+    name_group: 'kyber768'
+    nid: '0x0210'
+    nid_hybrid: '0x2F10'
+    oqs_alg: 'OQS_KEM_alg_kyber_768'
     bit_security: 192
   -
-    name_group: "kyber1024"
-    nid: "0x0211"
-    nid_hybrid: "0x2F11"
-    oqs_alg: "OQS_KEM_alg_kyber_1024"
+    family: 'CRYSTALS-Kyber'
+    name_group: 'kyber1024'
+    nid: '0x0211'
+    nid_hybrid: '0x2F11'
+    oqs_alg: 'OQS_KEM_alg_kyber_1024'
     bit_security: 256
   -
-    name_group: "ntru_hps2048509"
-    nid: "0x0214"
-    nid_hybrid: "0x2F14"
-    oqs_alg: "OQS_KEM_alg_ntru_hps2048509"
+    family: 'NTRU'
+    name_group: 'ntru_hps2048509'
+    nid: '0x0214'
+    nid_hybrid: '0x2F14'
+    oqs_alg: 'OQS_KEM_alg_ntru_hps2048509'
     bit_security: 128
   -
-    name_group: "ntru_hps2048677"
-    nid: "0x0215"
-    nid_hybrid: "0x2F15"
-    oqs_alg: "OQS_KEM_alg_ntru_hps2048677"
+    family: 'NTRU'
+    name_group: 'ntru_hps2048677'
+    nid: '0x0215'
+    nid_hybrid: '0x2F15'
+    oqs_alg: 'OQS_KEM_alg_ntru_hps2048677'
     bit_security: 192
   -
-    name_group: "ntru_hps4096821"
-    nid: "0x0216"
-    nid_hybrid: "0x2F16"
-    oqs_alg: "OQS_KEM_alg_ntru_hps4096821"
+    family: 'NTRU'
+    name_group: 'ntru_hps4096821'
+    nid: '0x0216'
+    nid_hybrid: '0x2F16'
+    oqs_alg: 'OQS_KEM_alg_ntru_hps4096821'
     bit_security: 256
   -
-    name_group: "ntru_hrss701"
-    nid: "0x0217"
-    nid_hybrid: "0x2F17"
-    oqs_alg: "OQS_KEM_alg_ntru_hrss701"
+    family: 'NTRU'
+    name_group: 'ntru_hrss701'
+    nid: '0x0217'
+    nid_hybrid: '0x2F17'
+    oqs_alg: 'OQS_KEM_alg_ntru_hrss701'
     bit_security: 192
   -
-    name_group: "lightsaber"
-    nid: "0x0218"
-    nid_hybrid: "0x2F18"
-    oqs_alg: "OQS_KEM_alg_saber_lightsaber"
+    family: 'SABER'
+    name_group: 'lightsaber'
+    nid: '0x0218'
+    nid_hybrid: '0x2F18'
+    oqs_alg: 'OQS_KEM_alg_saber_lightsaber'
     bit_security: 128
   -
-    name_group: "saber"
-    nid: "0x0219"
-    nid_hybrid: "0x2F19"
-    oqs_alg: "OQS_KEM_alg_saber_saber"
+    family: 'SABER'
+    name_group: 'saber'
+    nid: '0x0219'
+    nid_hybrid: '0x2F19'
+    oqs_alg: 'OQS_KEM_alg_saber_saber'
     bit_security: 192
   -
-    name_group: "firesaber"
-    nid: "0x021A"
-    nid_hybrid: "0x2F1A"
-    oqs_alg: "OQS_KEM_alg_saber_firesaber"
+    family: 'SABER'
+    name_group: 'firesaber'
+    nid: '0x021A'
+    nid_hybrid: '0x2F1A'
+    oqs_alg: 'OQS_KEM_alg_saber_firesaber'
     bit_security: 256
   -
-    name_group: "sidhp434"
-    nid: "0x021B"
-    nid_hybrid: "0x2F1B"
-    oqs_alg: "OQS_KEM_alg_sidh_p434"
+    family: 'SIDH'
+    name_group: 'sidhp434'
+    nid: '0x021B'
+    nid_hybrid: '0x2F1B'
+    oqs_alg: 'OQS_KEM_alg_sidh_p434'
     bit_security: 128
   -
-    name_group: "sidhp503"
-    nid: "0x021C"
-    nid_hybrid: "0x2F1C"
-    oqs_alg: "OQS_KEM_alg_sidh_p503"
+    family: 'SIDH'
+    name_group: 'sidhp503'
+    nid: '0x021C'
+    nid_hybrid: '0x2F1C'
+    oqs_alg: 'OQS_KEM_alg_sidh_p503'
     bit_security: 128
   -
-    name_group: "sidhp610"
-    nid: "0x021D"
-    nid_hybrid: "0x2F1D"
-    oqs_alg: "OQS_KEM_alg_sidh_p610"
+    family: 'SIDH'
+    name_group: 'sidhp610'
+    nid: '0x021D'
+    nid_hybrid: '0x2F1D'
+    oqs_alg: 'OQS_KEM_alg_sidh_p610'
     bit_security: 192
   -
-    name_group: "sidhp751"
-    nid: "0x021E"
-    nid_hybrid: "0x2F1E"
-    oqs_alg: "OQS_KEM_alg_sidh_p751"
+    family: 'SIDH'
+    name_group: 'sidhp751'
+    nid: '0x021E'
+    nid_hybrid: '0x2F1E'
+    oqs_alg: 'OQS_KEM_alg_sidh_p751'
     bit_security: 256
   -
-    name_group: "sikep434"
-    nid: "0x021F"
-    nid_hybrid: "0x2F1F"
-    oqs_alg: "OQS_KEM_alg_sike_p434"
+    family: 'SIKE'
+    name_group: 'sikep434'
+    nid: '0x021F'
+    nid_hybrid: '0x2F1F'
+    oqs_alg: 'OQS_KEM_alg_sike_p434'
     bit_security: 128
   -
-    name_group: "sikep503"
-    nid: "0x0220"
-    nid_hybrid: "0x2F20"
-    oqs_alg: "OQS_KEM_alg_sike_p503"
+    family: 'SIKE'
+    name_group: 'sikep503'
+    nid: '0x0220'
+    nid_hybrid: '0x2F20'
+    oqs_alg: 'OQS_KEM_alg_sike_p503'
     bit_security: 128
   -
-    name_group: "sikep610"
-    nid: "0x0221"
-    nid_hybrid: "0x2F21"
-    oqs_alg: "OQS_KEM_alg_sike_p610"
+    family: 'SIKE'
+    name_group: 'sikep610'
+    nid: '0x0221'
+    nid_hybrid: '0x2F21'
+    oqs_alg: 'OQS_KEM_alg_sike_p610'
     bit_security: 192
   -
-    name_group: "sikep751"
-    nid: "0x0222"
-    nid_hybrid: "0x2F22"
-    oqs_alg: "OQS_KEM_alg_sike_p751"
+    family: 'SIKE'
+    name_group: 'sikep751'
+    nid: '0x0222'
+    nid_hybrid: '0x2F22'
+    oqs_alg: 'OQS_KEM_alg_sike_p751'
     bit_security: 256
   -
-    name_group: "bike1l1fo"
-    nid: "0x0223"
-    nid_hybrid: "0x2F23"
-    oqs_alg: "OQS_KEM_alg_bike1_l1_fo"
+    family: 'BIKE'
+    name_group: 'bike1l1fo'
+    nid: '0x0223'
+    nid_hybrid: '0x2F23'
+    oqs_alg: 'OQS_KEM_alg_bike1_l1_fo'
     bit_security: 128
   -
-    name_group: "bike1l3fo"
-    nid: "0x0224"
-    nid_hybrid: "0x2F24"
-    oqs_alg: "OQS_KEM_alg_bike1_l3_fo"
+    family: 'BIKE'
+    name_group: 'bike1l3fo'
+    nid: '0x0224'
+    nid_hybrid: '0x2F24'
+    oqs_alg: 'OQS_KEM_alg_bike1_l3_fo'
     bit_security: 192
   -
-    name_group: "kyber90s512"
-    nid: "0x0229"
-    nid_hybrid: "0x2F29"
-    oqs_alg: "OQS_KEM_alg_kyber_512_90s"
+    family: 'CRYSTALS-Kyber'
+    name_group: 'kyber90s512'
+    nid: '0x0229'
+    nid_hybrid: '0x2F29'
+    oqs_alg: 'OQS_KEM_alg_kyber_512_90s'
     bit_security: 128
   -
-    name_group: "kyber90s768"
-    nid: "0x022A"
-    nid_hybrid: "0x2F2A"
-    oqs_alg: "OQS_KEM_alg_kyber_768_90s"
+    family: 'CRYSTALS-Kyber'
+    name_group: 'kyber90s768'
+    nid: '0x022A'
+    nid_hybrid: '0x2F2A'
+    oqs_alg: 'OQS_KEM_alg_kyber_768_90s'
     bit_security: 192
   -
-    name_group: "kyber90s1024"
-    nid: "0x022B"
-    nid_hybrid: "0x2F2B"
-    oqs_alg: "OQS_KEM_alg_kyber_1024_90s"
+    family: 'CRYSTALS-Kyber'
+    name_group: 'kyber90s1024'
+    nid: '0x022B'
+    nid_hybrid: '0x2F2B'
+    oqs_alg: 'OQS_KEM_alg_kyber_1024_90s'
     bit_security: 256
   -
-    name_group: "hqc128"
-    nid: "0x022C"
-    nid_hybrid: "0x2F2C"
+    family: 'HQC'
+    name_group: 'hqc128'
+    nid: '0x022C'
+    nid_hybrid: '0x2F2C'
     oqs_alg: 'OQS_KEM_alg_hqc_128'
     bit_security: 128
   -
+    family: 'HQC'
     name_group: 'hqc192'
-    nid: "0x022D"
-    nid_hybrid: "0x2F2D"
+    nid: '0x022D'
+    nid_hybrid: '0x2F2D'
     oqs_alg: 'OQS_KEM_alg_hqc_192'
     bit_security: 192
   -
+    family: 'HQC'
     name_group: 'hqc256'
-    nid: "0x022E"
-    nid_hybrid: "0x2F2E"
+    nid: '0x022E'
+    nid_hybrid: '0x2F2E'
     oqs_alg: 'OQS_KEM_alg_hqc_256'
     bit_security: 256
   -
+    family: 'NTRU-Prime'
     name_group: 'ntrulpr653'
-    nid: "0x022F"
-    nid_hybrid: "0x2F2F"
+    nid: '0x022F'
+    nid_hybrid: '0x2F2F'
     oqs_alg: 'OQS_KEM_alg_ntruprime_ntrulpr653'
     bit_security: 128
   -
+    family: 'NTRU-Prime'
     name_group: 'ntrulpr761'
-    nid: "0x0230"
-    nid_hybrid: "0x2F30"
+    nid: '0x0230'
+    nid_hybrid: '0x2F30'
     oqs_alg: 'OQS_KEM_alg_ntruprime_ntrulpr761'
     bit_security: 192
   -
+    family: 'NTRU-Prime'
     name_group: 'ntrulpr857'
-    nid: "0x0231"
-    nid_hybrid: "0x2F31"
+    nid: '0x0231'
+    nid_hybrid: '0x2F31'
     oqs_alg: 'OQS_KEM_alg_ntruprime_ntrulpr857'
     bit_security: 192
   -
+    family: 'NTRU-Prime'
     name_group: 'sntrup653'
-    nid: "0x0232"
-    nid_hybrid: "0x2F32"
+    nid: '0x0232'
+    nid_hybrid: '0x2F32'
     oqs_alg: 'OQS_KEM_alg_ntruprime_sntrup653'
     bit_security: 128
   -
+    family: 'NTRU-Prime'
     name_group: 'sntrup761'
-    nid: "0x0233"
-    nid_hybrid: "0x2F33"
+    nid: '0x0233'
+    nid_hybrid: '0x2F33'
     oqs_alg: 'OQS_KEM_alg_ntruprime_sntrup761'
     bit_security: 192
   -
+    family: 'NTRU-Prime'
     name_group: 'sntrup857'
-    nid: "0x0234"
-    nid_hybrid: "0x2F34"
+    nid: '0x0234'
+    nid_hybrid: '0x2F34'
     oqs_alg: 'OQS_KEM_alg_ntruprime_sntrup857'
     bit_security: 192
 
-kem_nid_end: "0x0250"
-kem_nid_hybrid_end: "0x2FFF"
+kem_nid_end: '0x0250'
+kem_nid_hybrid_end: '0x2FFF'
 # need to edit ssl_local.h macros IS_OQS_KEM_CURVEID and IS_OQS_KEM_HYBRID_CURVEID with the above _end values
 
 # N.B: For interoperability, code-points and OIDs must match those used in
@@ -256,21 +296,21 @@ sigs:
     # oqs_sig_default (1)
     variants:
       -
-        name: "oqs_sig_default"
-        pretty_name: "OQS Default Signature Algorithm"
-        oqs_meth: "OQS_SIG_alg_default"
+        name: 'oqs_sig_default'
+        pretty_name: 'OQS Default Signature Algorithm'
+        oqs_meth: 'OQS_SIG_alg_default'
         security: 128
-        oid: "1.3.9999.1.1"
-        code_point: "0xfe00"
+        oid: '1.3.9999.1.1'
+        code_point: '0xfe00'
         enable: true
-        mix_with: [{"name": "p256",
-                    "pretty_name": "ECDSA p256",
-                    "oid": "1.3.9999.1.2",
-                    "code_point": "0xfe01"},
-                   {"name": "rsa3072",
-                    "pretty_name": "RSA3072",
-                    "oid": "1.3.9999.1.3",
-                    "code_point": "0xfe02"}]
+        mix_with: [{'name': 'p256',
+                    'pretty_name': 'ECDSA p256',
+                    'oid': '1.3.9999.1.2',
+                    'code_point': '0xfe01'},
+                   {'name': 'rsa3072',
+                    'pretty_name': 'RSA3072',
+                    'oid': '1.3.9999.1.3',
+                    'code_point': '0xfe02'}]
   -
     # OID scheme for hybrid variants of Dilithium:
     # iso (1)
@@ -287,85 +327,87 @@ sigs:
     # IBM (2)
     # qsc (267)
     # Dilithium-raw (6)
+    family: 'CRYSTALS-DILITHIUM'
     variants:
       -
-        name: "dilithium2"
-        pretty_name: "Dilithium-2"
-        oqs_meth: "OQS_SIG_alg_dilithium_2"
+        name: 'dilithium2'
+        pretty_name: 'Dilithium-2'
+        oqs_meth: 'OQS_SIG_alg_dilithium_2'
         security: 128
-        oid: "1.3.6.1.4.1.2.267.6.4.3"
-        code_point: "0xfe03"
+        oid: '1.3.6.1.4.1.2.267.6.4.3'
+        code_point: '0xfe03'
         enable: true
-        mix_with: [{"name": "p256",
-                    "pretty_name": "ECDSA p256",
-                    "oid": "1.3.9999.2.2",
-                    "code_point": "0xfe04"},
-                   {"name": "rsa3072",
-                    "pretty_name": "RSA3072",
-                    "oid": "1.3.9999.2.3",
-                    "code_point": "0xfe05"}]
+        mix_with: [{'name': 'p256',
+                    'pretty_name': 'ECDSA p256',
+                    'oid': '1.3.9999.2.2',
+                    'code_point': '0xfe04'},
+                   {'name': 'rsa3072',
+                    'pretty_name': 'RSA3072',
+                    'oid': '1.3.9999.2.3',
+                    'code_point': '0xfe05'}]
       -
-        name: "dilithium3"
-        pretty_name: "Dilithium-3"
-        oqs_meth: "OQS_SIG_alg_dilithium_3"
+        name: 'dilithium3'
+        pretty_name: 'Dilithium-3'
+        oqs_meth: 'OQS_SIG_alg_dilithium_3'
         security: 128
-        oid: "1.3.6.1.4.1.2.267.6.5.4"
-        code_point: "0xfe06"
+        oid: '1.3.6.1.4.1.2.267.6.5.4'
+        code_point: '0xfe06'
         enable: true
-        mix_with: [{"name": "p256",
-                    "pretty_name": "ECDSA p256",
-                    "oid": "1.3.9999.2.4",
-                    "code_point": "0xfe07"},
-                   {"name": "rsa3072",
-                    "pretty_name": "RSA3072",
-                    "oid": "1.3.9999.2.5",
-                    "code_point": "0xfe08"}]
+        mix_with: [{'name': 'p256',
+                    'pretty_name': 'ECDSA p256',
+                    'oid': '1.3.9999.2.4',
+                    'code_point': '0xfe07'},
+                   {'name': 'rsa3072',
+                    'pretty_name': 'RSA3072',
+                    'oid': '1.3.9999.2.5',
+                    'code_point': '0xfe08'}]
       -
-        name: "dilithium4"
-        pretty_name: "Dilithium-4"
-        oqs_meth: "OQS_SIG_alg_dilithium_4"
+        name: 'dilithium4'
+        pretty_name: 'Dilithium-4'
+        oqs_meth: 'OQS_SIG_alg_dilithium_4'
         security: 192
-        oid: "1.3.6.1.4.1.2.267.6.6.5"
-        code_point: "0xfe09"
+        oid: '1.3.6.1.4.1.2.267.6.6.5'
+        code_point: '0xfe09'
         enable: true
-        mix_with: [{"name": "p384",
-                    "pretty_name": "ECDSA p384",
-                    "oid": "1.3.9999.2.6",
-                    "code_point": "0xfe0a"}]
+        mix_with: [{'name': 'p384',
+                    'pretty_name': 'ECDSA p384',
+                    'oid': '1.3.9999.2.6',
+                    'code_point': '0xfe0a'}]
   -
     # iso (1)
     # identified-organization (3)
     # reserved (9999)
     # falcon (3)
+    family: 'Falcon'
     variants:
       -
-        name: "falcon512"
-        pretty_name: "Falcon-512"
-        oqs_meth: "OQS_SIG_alg_falcon_512"
+        name: 'falcon512'
+        pretty_name: 'Falcon-512'
+        oqs_meth: 'OQS_SIG_alg_falcon_512'
         security: 128
-        oid: "1.3.9999.3.1"
-        code_point: "0xfe0b"
+        oid: '1.3.9999.3.1'
+        code_point: '0xfe0b'
         enable: true
-        mix_with: [{"name": "p256",
-                    "pretty_name": "ECDSA p256",
-                    "oid": "1.3.9999.3.2",
-                    "code_point": "0xfe0c"},
-                   {"name": "rsa3072",
-                    "pretty_name": "RSA3072",
-                    "oid": "1.3.9999.3.3",
-                    "code_point": "0xfe0d"}]
+        mix_with: [{'name': 'p256',
+                    'pretty_name': 'ECDSA p256',
+                    'oid': '1.3.9999.3.2',
+                    'code_point': '0xfe0c'},
+                   {'name': 'rsa3072',
+                    'pretty_name': 'RSA3072',
+                    'oid': '1.3.9999.3.3',
+                    'code_point': '0xfe0d'}]
       -
-        name: "falcon1024"
-        pretty_name: "Falcon-1024"
-        oqs_meth: "OQS_SIG_alg_falcon_1024"
+        name: 'falcon1024'
+        pretty_name: 'Falcon-1024'
+        oqs_meth: 'OQS_SIG_alg_falcon_1024'
         security: 256
-        oid: "1.3.9999.3.4"
-        code_point: "0xfe0e"
+        oid: '1.3.9999.3.4'
+        code_point: '0xfe0e'
         enable: true
-        mix_with: [{"name": "p521",
-                    "pretty_name": "ECDSA p521",
-                    "oid": "1.3.9999.3.5",
-                    "code_point": "0xfe0f"}]
+        mix_with: [{'name': 'p521',
+                    'pretty_name': 'ECDSA p521',
+                    'oid': '1.3.9999.3.5',
+                    'code_point': '0xfe0f'}]
   -
     # iso (1)
     # identified-organization (3)
@@ -377,696 +419,705 @@ sigs:
     # MSRCrypto (89)
     # PQC (2)
     # picnic (1)
+    family: 'Picnic'
     variants:
       -
-        name: "picnicl1fs"
-        pretty_name: "Picnic L1 FS"
-        oqs_meth: "OQS_SIG_alg_picnic_L1_FS"
+        name: 'picnicl1fs'
+        pretty_name: 'Picnic L1 FS'
+        oqs_meth: 'OQS_SIG_alg_picnic_L1_FS'
         security: 128
-        oid: "1.3.6.1.4.1.311.89.2.1.1"
-        code_point: "0xfe15"
+        oid: '1.3.6.1.4.1.311.89.2.1.1'
+        code_point: '0xfe15'
         enable: false
-        mix_with: [{"name": "p256",
-                    "pretty_name": "ECDSA p256",
-                    "oid": "1.3.6.1.4.1.311.89.2.1.2",
-                    "code_point": "0xfe16"},
-                   {"name": "rsa3072",
-                    "pretty_name": "RSA3072",
-                    "oid": "1.3.6.1.4.1.311.89.2.1.3",
-                    "code_point": "0xfe17"}]
+        mix_with: [{'name': 'p256',
+                    'pretty_name': 'ECDSA p256',
+                    'oid': '1.3.6.1.4.1.311.89.2.1.2',
+                    'code_point': '0xfe16'},
+                   {'name': 'rsa3072',
+                    'pretty_name': 'RSA3072',
+                    'oid': '1.3.6.1.4.1.311.89.2.1.3',
+                    'code_point': '0xfe17'}]
       -
-        name: "picnicl1ur"
-        pretty_name: "Picnic L1 UR"
-        oqs_meth: "OQS_SIG_alg_picnic_L1_UR"
+        name: 'picnicl1ur'
+        pretty_name: 'Picnic L1 UR'
+        oqs_meth: 'OQS_SIG_alg_picnic_L1_UR'
         security: 128
-        oid: "1.3.6.1.4.1.311.89.2.1.4"
-        code_point: "0xfe18"
+        oid: '1.3.6.1.4.1.311.89.2.1.4'
+        code_point: '0xfe18'
         enable: false
-        mix_with: [{"name": "p256",
-                    "pretty_name": "ECDSA p256",
-                    "oid": "1.3.6.1.4.1.311.89.2.1.5",
-                    "code_point": "0xfe19"},
-                   {"name": "rsa3072",
-                    "pretty_name": "RSA3072",
-                    "oid": "1.3.6.1.4.1.311.89.2.1.6",
-                    "code_point": "0xfe1a"}]
+        mix_with: [{'name': 'p256',
+                    'pretty_name': 'ECDSA p256',
+                    'oid': '1.3.6.1.4.1.311.89.2.1.5',
+                    'code_point': '0xfe19'},
+                   {'name': 'rsa3072',
+                    'pretty_name': 'RSA3072',
+                    'oid': '1.3.6.1.4.1.311.89.2.1.6',
+                    'code_point': '0xfe1a'}]
       -
-        name: "picnicl1full"
-        pretty_name: "Picnic L1 full"
-        oqs_meth: "OQS_SIG_alg_picnic_L1_full"
+        name: 'picnicl1full'
+        pretty_name: 'Picnic L1 full'
+        oqs_meth: 'OQS_SIG_alg_picnic_L1_full'
         security: 128
-        oid: "1.3.6.1.4.1.311.89.2.1.7"
-        code_point: "0xfe96"
+        oid: '1.3.6.1.4.1.311.89.2.1.7'
+        code_point: '0xfe96'
         enable: true
-        mix_with: [{"name": "p256",
-                    "pretty_name": "ECDSA p256",
-                    "oid": "1.3.6.1.4.1.311.89.2.1.8",
-                    "code_point": "0xfe97"},
-                   {"name": "rsa3072",
-                    "pretty_name": "RSA3072",
-                    "oid": "1.3.6.1.4.1.311.89.2.1.9",
-                    "code_point": "0xfe98"}]
+        mix_with: [{'name': 'p256',
+                    'pretty_name': 'ECDSA p256',
+                    'oid': '1.3.6.1.4.1.311.89.2.1.8',
+                    'code_point': '0xfe97'},
+                   {'name': 'rsa3072',
+                    'pretty_name': 'RSA3072',
+                    'oid': '1.3.6.1.4.1.311.89.2.1.9',
+                    'code_point': '0xfe98'}]
       -
-        name: "picnic3l1"
-        pretty_name: "Picnic3 L1"
-        oqs_meth: "OQS_SIG_alg_picnic3_L1"
+        name: 'picnic3l1'
+        pretty_name: 'Picnic3 L1'
+        oqs_meth: 'OQS_SIG_alg_picnic3_L1'
         security: 128
-        oid: "1.3.6.1.4.1.311.89.2.1.21"
-        code_point: "0xfe1b"
+        oid: '1.3.6.1.4.1.311.89.2.1.21'
+        code_point: '0xfe1b'
         enable: true
-        mix_with: [{"name": "p256",
-                    "pretty_name": "ECDSA p256",
-                    "oid": "1.3.6.1.4.1.311.89.2.1.22",
-                    "code_point": "0xfe1c"},
-                   {"name": "rsa3072",
-                    "pretty_name": "RSA3072",
-                    "oid": "1.3.6.1.4.1.311.89.2.1.23",
-                    "code_point": "0xfe1d"}]
+        mix_with: [{'name': 'p256',
+                    'pretty_name': 'ECDSA p256',
+                    'oid': '1.3.6.1.4.1.311.89.2.1.22',
+                    'code_point': '0xfe1c'},
+                   {'name': 'rsa3072',
+                    'pretty_name': 'RSA3072',
+                    'oid': '1.3.6.1.4.1.311.89.2.1.23',
+                    'code_point': '0xfe1d'}]
       -
-        name: "picnic3l3"
-        pretty_name: "Picnic3 L3"
-        oqs_meth: "OQS_SIG_alg_picnic3_L3"
+        name: 'picnic3l3'
+        pretty_name: 'Picnic3 L3'
+        oqs_meth: 'OQS_SIG_alg_picnic3_L3'
         security: 192
-        oid: "1.3.6.1.4.1.311.89.2.1.24"
-        code_point: "0xfe1e"
+        oid: '1.3.6.1.4.1.311.89.2.1.24'
+        code_point: '0xfe1e'
         enable: false
-        mix_with: [{"name": "p384",
-                    "pretty_name": "ECDSA p384",
-                    "oid": "1.3.6.1.4.1.311.89.2.1.25",
-                    "code_point": "0xfe1f"}]
+        mix_with: [{'name': 'p384',
+                    'pretty_name': 'ECDSA p384',
+                    'oid': '1.3.6.1.4.1.311.89.2.1.25',
+                    'code_point': '0xfe1f'}]
       -
-        name: "picnic3l5"
-        pretty_name: "Picnic3 L5"
-        oqs_meth: "OQS_SIG_alg_picnic3_L5"
+        name: 'picnic3l5'
+        pretty_name: 'Picnic3 L5'
+        oqs_meth: 'OQS_SIG_alg_picnic3_L5'
         security: 256
-        oid: "1.3.6.1.4.1.311.89.2.1.26"
-        code_point: "0xfe20"
+        oid: '1.3.6.1.4.1.311.89.2.1.26'
+        code_point: '0xfe20'
         enable: false
-        mix_with: [{"name": "p521",
-                    "pretty_name": "ECDSA p521",
-                    "oid": "1.3.6.1.4.1.311.89.2.1.27",
-                    "code_point": "0xfe21"}]
+        mix_with: [{'name': 'p521',
+                    'pretty_name': 'ECDSA p521',
+                    'oid': '1.3.6.1.4.1.311.89.2.1.27',
+                    'code_point': '0xfe21'}]
   -
+    family: 'Rainbow'
     variants:
       -
-        name: "rainbowIaclassic"
-        pretty_name: "Rainbow-Ia-Classic"
-        oqs_meth: "OQS_SIG_alg_rainbow_Ia_classic"
+        name: 'rainbowIclassic'
+        pretty_name: 'Rainbow-I-Classic'
+        oqs_meth: 'OQS_SIG_alg_rainbow_I_classic'
         security: 128
-        oid: "1.3.9999.5.1.1"
-        code_point: "0xfe27"
+        oid: '1.3.9999.5.1.1'
+        code_point: '0xfe27'
         enable: true
-        mix_with: [{"name": "p256",
-                    "pretty_name": "ECDSA p256",
-                    "oid": "1.3.9999.5.1.2",
-                    "code_point": "0xfe28"},
-                   {"name": "rsa3072",
-                    "pretty_name": "RSA3072",
-                    "oid": "1.3.9999.5.1.3",
-                    "code_point": "0xfe29"}]
+        mix_with: [{'name': 'p256',
+                    'pretty_name': 'ECDSA p256',
+                    'oid': '1.3.9999.5.1.2',
+                    'code_point': '0xfe28'},
+                   {'name': 'rsa3072',
+                    'pretty_name': 'RSA3072',
+                    'oid': '1.3.9999.5.1.3',
+                    'code_point': '0xfe29'}]
       -
-        name: "rainbowIacyclic"
-        pretty_name: "Rainbow-Ia-Cyclic"
-        oqs_meth: 'OQS_SIG_alg_rainbow_Ia_cyclic'
+        name: 'rainbowIcircumzenithal'
+        pretty_name: 'Rainbow-I-Circumzenithal'
+        oqs_meth: 'OQS_SIG_alg_rainbow_I_circumzenithal'
         security: 128
-        oid: "1.3.9999.5.1.4"
-        code_point: "0xfe30"
+        oid: '1.3.9999.5.1.4'
+        code_point: '0xfe30'
         enable: false
-        mix_with: [{"name": "p256",
-                    "pretty_name": "ECDSA p256",
-                    "oid": "1.3.9999.5.1.5",
-                    "code_point": "0xfe31"},
-                   {"name": "rsa3072",
-                    "pretty_name": "RSA3072",
-                    "oid": "1.3.9999.5.1.6",
-                    "code_point": "0xfe32"}]
+        mix_with: [{'name': 'p256',
+                    'pretty_name': 'ECDSA p256',
+                    'oid': '1.3.9999.5.1.5',
+                    'code_point': '0xfe31'},
+                   {'name': 'rsa3072',
+                    'pretty_name': 'RSA3072',
+                    'oid': '1.3.9999.5.1.6',
+                    'code_point': '0xfe32'}]
       -
-        name: "rainbowIacycliccompressed"
-        pretty_name: "Rainbow-Ia-Cyclic-Compressed"
-        oqs_meth: 'OQS_SIG_alg_rainbow_Ia_cyclic_compressed'
+        name: 'rainbowIcompressed'
+        pretty_name: 'Rainbow-I-Compressed'
+        oqs_meth: 'OQS_SIG_alg_rainbow_I_compressed'
         security: 128
-        oid: "1.3.9999.5.1.7"
-        code_point: "0xfe33"
+        oid: '1.3.9999.5.1.7'
+        code_point: '0xfe33'
         enable: false
-        mix_with: [{"name": "p256",
-                    "pretty_name": "ECDSA p256",
-                    "oid": "1.3.9999.5.1.8",
-                    "code_point": "0xfe34"},
-                   {"name": "rsa3072",
-                    "pretty_name": "RSA3072",
-                    "oid": "1.3.9999.5.1.9",
-                    "code_point": "0xfe35"}]
+        mix_with: [{'name': 'p256',
+                    'pretty_name': 'ECDSA p256',
+                    'oid': '1.3.9999.5.1.8',
+                    'code_point': '0xfe34'},
+                   {'name': 'rsa3072',
+                    'pretty_name': 'RSA3072',
+                    'oid': '1.3.9999.5.1.9',
+                    'code_point': '0xfe35'}]
       -
-        name: "rainbowIIIcclassic"
-        pretty_name: "Rainbow-IIIc-Classic"
-        oqs_meth: "OQS_SIG_alg_rainbow_IIIc_classic"
+        name: 'rainbowIIIclassic'
+        pretty_name: 'Rainbow-III-Classic'
+        oqs_meth: 'OQS_SIG_alg_rainbow_III_classic'
         security: 192
-        oid: "1.3.9999.5.2.1"
-        code_point: "0xfe36"
+        oid: '1.3.9999.5.2.1'
+        code_point: '0xfe36'
         enable: false
-        mix_with: [{"name": "p384",
-                    "pretty_name": "ECDSA p256",
-                    "oid": "1.3.9999.5.2.2",
-                    "code_point": "0xfe37"}]
+        mix_with: [{'name': 'p384',
+                    'pretty_name': 'ECDSA p256',
+                    'oid': '1.3.9999.5.2.2',
+                    'code_point': '0xfe37'}]
       -
-        name: "rainbowIIIccyclic"
-        pretty_name: "Rainbow-IIIc-Cyclic"
-        oqs_meth: "OQS_SIG_alg_rainbow_IIIc_cyclic"
+        name: 'rainbowIIIcircumzenithal'
+        pretty_name: 'Rainbow-III-Circumzenithal'
+        oqs_meth: 'OQS_SIG_alg_rainbow_III_circumzenithal'
         security: 192
-        oid: "1.3.9999.5.2.3"
-        code_point: "0xfe38"
+        oid: '1.3.9999.5.2.3'
+        code_point: '0xfe38'
         enable: false
-        mix_with: [{"name": "p384",
-                    "pretty_name": "ECDSA p384",
-                    "oid": "1.3.9999.5.2.4",
-                    "code_point": "0xfe39"}]
+        mix_with: [{'name': 'p384',
+                    'pretty_name': 'ECDSA p384',
+                    'oid': '1.3.9999.5.2.4',
+                    'code_point': '0xfe39'}]
       -
-        name: "rainbowIIIccycliccompressed"
-        pretty_name: "Rainbow-IIIc-Cyclic-Compressed"
-        oqs_meth: "OQS_SIG_alg_rainbow_IIIc_cyclic_compressed"
+        name: 'rainbowIIIcompressed'
+        pretty_name: 'Rainbow-III-Compressed'
+        oqs_meth: 'OQS_SIG_alg_rainbow_III_compressed'
         security: 192
-        oid: "1.3.9999.5.2.5"
-        code_point: "0xfe3a"
+        oid: '1.3.9999.5.2.5'
+        code_point: '0xfe3a'
         enable: false
-        mix_with: [{"name": "p384",
-                    "pretty_name": "ECDSA p384",
-                    "oid": "1.3.9999.5.2.6",
-                    "code_point": "0xfe3b"}]
+        mix_with: [{'name': 'p384',
+                    'pretty_name': 'ECDSA p384',
+                    'oid': '1.3.9999.5.2.6',
+                    'code_point': '0xfe3b'}]
       -
-        name: "rainbowVcclassic"
-        pretty_name: "Rainbow-Vc-Classic"
-        oqs_meth: "OQS_SIG_alg_rainbow_Vc_classic"
+        name: 'rainbowVclassic'
+        pretty_name: 'Rainbow-V-Classic'
+        oqs_meth: 'OQS_SIG_alg_rainbow_V_classic'
         security: 256
-        oid: "1.3.9999.5.3.1"
-        code_point: "0xfe3c"
+        oid: '1.3.9999.5.3.1'
+        code_point: '0xfe3c'
         enable: true
-        mix_with: [{"name": "p521",
-                    "pretty_name": "ECDSA p521",
-                    "oid": "1.3.9999.5.3.2",
-                    "code_point": "0xfe3d"}]
+        mix_with: [{'name': 'p521',
+                    'pretty_name': 'ECDSA p521',
+                    'oid': '1.3.9999.5.3.2',
+                    'code_point': '0xfe3d'}]
       -
-        name: "rainbowVccyclic"
-        pretty_name: "Rainbow-Vc-Cyclic"
-        oqs_meth: "OQS_SIG_alg_rainbow_Vc_cyclic"
+        name: 'rainbowVcircumzenithal'
+        pretty_name: 'Rainbow-V-Circumzenithal'
+        oqs_meth: 'OQS_SIG_alg_rainbow_V_circumzenithal'
         security: 256
-        oid: "1.3.9999.5.3.3"
-        code_point: "0xfe3e"
+        oid: '1.3.9999.5.3.3'
+        code_point: '0xfe3e'
         enable: false
-        mix_with: [{"name": "p521",
-                    "pretty_name": "ECDSA p521",
-                    "oid": "1.3.9999.5.3.4",
-                    "code_point": "0xfe3f"}]
+        mix_with: [{'name': 'p521',
+                    'pretty_name': 'ECDSA p521',
+                    'oid': '1.3.9999.5.3.4',
+                    'code_point': '0xfe3f'}]
       -
-        name: "rainbowVccycliccompressed"
-        pretty_name: "Rainbow-Vc-Cyclic-Compressed"
-        oqs_meth: "OQS_SIG_alg_rainbow_Vc_cyclic_compressed"
+        name: 'rainbowVcompressed'
+        pretty_name: 'Rainbow-V-Compressed'
+        oqs_meth: 'OQS_SIG_alg_rainbow_V_compressed'
         security: 256
-        oid: "1.3.9999.5.3.5"
-        code_point: "0xfe40"
+        oid: '1.3.9999.5.3.5'
+        code_point: '0xfe40'
         enable: false
-        mix_with: [{"name": "p521",
-                    "pretty_name": "ECDSA p521",
-                    "oid": "1.3.9999.5.3.6",
-                    "code_point": "0xfe41"}]
+        mix_with: [{'name': 'p521',
+                    'pretty_name': 'ECDSA p521',
+                    'oid': '1.3.9999.5.3.6',
+                    'code_point': '0xfe41'}]
   -
+    family: 'SPHINCS-Haraka'
     variants:
       -
-        name: "sphincsharaka128frobust"
-        pretty_name: "SPHINCS+-Haraka-128f-robust"
-        oqs_meth: "OQS_SIG_alg_sphincs_haraka_128f_robust"
+        name: 'sphincsharaka128frobust'
+        pretty_name: 'SPHINCS+-Haraka-128f-robust'
+        oqs_meth: 'OQS_SIG_alg_sphincs_haraka_128f_robust'
         security: 128
-        oid: "1.3.9999.6.1.1"
-        code_point: "0xfe42"
+        oid: '1.3.9999.6.1.1'
+        code_point: '0xfe42'
         enable: true
-        mix_with: [{"name": "p256",
-                    "pretty_name": "ECDSA p256",
-                    "oid": "1.3.9999.6.1.2",
-                    "code_point": "0xfe43"},
-                   {"name": "rsa3072",
-                    "pretty_name": "RSA3072",
-                    "oid": "1.3.9999.6.1.3",
-                    "code_point": "0xfe44"}]
+        mix_with: [{'name': 'p256',
+                    'pretty_name': 'ECDSA p256',
+                    'oid': '1.3.9999.6.1.2',
+                    'code_point': '0xfe43'},
+                   {'name': 'rsa3072',
+                    'pretty_name': 'RSA3072',
+                    'oid': '1.3.9999.6.1.3',
+                    'code_point': '0xfe44'}]
       -
-        name: "sphincsharaka128fsimple"
-        pretty_name: "SPHINCS+-Haraka-128f-simple"
-        oqs_meth: "OQS_SIG_alg_sphincs_haraka_128f_simple"
+        name: 'sphincsharaka128fsimple'
+        pretty_name: 'SPHINCS+-Haraka-128f-simple'
+        oqs_meth: 'OQS_SIG_alg_sphincs_haraka_128f_simple'
         security: 128
-        oid: "1.3.9999.6.1.4"
-        code_point: "0xfe45"
+        oid: '1.3.9999.6.1.4'
+        code_point: '0xfe45'
         enable: false
-        mix_with: [{"name": "p256",
-                    "pretty_name": "ECDSA p256",
-                    "oid": "1.3.9999.6.1.5",
-                    "code_point": "0xfe46"},
-                   {"name": "rsa3072",
-                    "pretty_name": "RSA3072",
-                    "oid": "1.3.9999.6.1.6",
-                    "code_point": "0xfe47"}]
+        mix_with: [{'name': 'p256',
+                    'pretty_name': 'ECDSA p256',
+                    'oid': '1.3.9999.6.1.5',
+                    'code_point': '0xfe46'},
+                   {'name': 'rsa3072',
+                    'pretty_name': 'RSA3072',
+                    'oid': '1.3.9999.6.1.6',
+                    'code_point': '0xfe47'}]
       -
-        name: "sphincsharaka128srobust"
-        pretty_name: "SPHINCS+-Haraka-128s-robust"
-        oqs_meth: "OQS_SIG_alg_sphincs_haraka_128s_robust"
+        name: 'sphincsharaka128srobust'
+        pretty_name: 'SPHINCS+-Haraka-128s-robust'
+        oqs_meth: 'OQS_SIG_alg_sphincs_haraka_128s_robust'
         security: 128
-        oid: "1.3.9999.6.1.7"
-        code_point: "0xfe48"
+        oid: '1.3.9999.6.1.7'
+        code_point: '0xfe48'
         enable: false
-        mix_with: [{"name": "p256",
-                    "pretty_name": "ECDSA p256",
-                    "oid": "1.3.9999.6.1.8",
-                    "code_point": "0xfe49"},
-                   {"name": "rsa3072",
-                    "pretty_name": "RSA3072",
-                    "oid": "1.3.9999.6.1.9",
-                    "code_point": "0xfe4a"}]
+        mix_with: [{'name': 'p256',
+                    'pretty_name': 'ECDSA p256',
+                    'oid': '1.3.9999.6.1.8',
+                    'code_point': '0xfe49'},
+                   {'name': 'rsa3072',
+                    'pretty_name': 'RSA3072',
+                    'oid': '1.3.9999.6.1.9',
+                    'code_point': '0xfe4a'}]
       -
-        name: "sphincsharaka128ssimple"
-        pretty_name: "SPHINCS+-Haraka-128s-simple"
-        oqs_meth: "OQS_SIG_alg_sphincs_haraka_128s_simple"
+        name: 'sphincsharaka128ssimple'
+        pretty_name: 'SPHINCS+-Haraka-128s-simple'
+        oqs_meth: 'OQS_SIG_alg_sphincs_haraka_128s_simple'
         security: 128
-        oid: "1.3.9999.6.1.10"
-        code_point: "0xfe4b"
+        oid: '1.3.9999.6.1.10'
+        code_point: '0xfe4b'
         enable: false
-        mix_with: [{"name": "p256",
-                    "pretty_name": "ECDSA p256",
-                    "oid": "1.3.9999.6.1.11",
-                    "code_point": "0xfe4c"},
-                   {"name": "rsa3072",
-                    "pretty_name": "RSA3072",
-                    "oid": "1.3.9999.6.1.12",
-                    "code_point": "0xfe4d"}]
+        mix_with: [{'name': 'p256',
+                    'pretty_name': 'ECDSA p256',
+                    'oid': '1.3.9999.6.1.11',
+                    'code_point': '0xfe4c'},
+                   {'name': 'rsa3072',
+                    'pretty_name': 'RSA3072',
+                    'oid': '1.3.9999.6.1.12',
+                    'code_point': '0xfe4d'}]
       -
-        name: "sphincsharaka192frobust"
-        pretty_name: "SPHINCS+-Haraka-192f-robust"
-        oqs_meth: "OQS_SIG_alg_sphincs_haraka_192f_robust"
+        name: 'sphincsharaka192frobust'
+        pretty_name: 'SPHINCS+-Haraka-192f-robust'
+        oqs_meth: 'OQS_SIG_alg_sphincs_haraka_192f_robust'
         security: 192
-        oid: "1.3.9999.6.2.1"
-        code_point: "0xfe4e"
+        oid: '1.3.9999.6.2.1'
+        code_point: '0xfe4e'
         enable: false
-        mix_with: [{"name": "p384",
-                    "pretty_name": "ECDSA p384",
-                    "oid": "1.3.9999.6.2.2",
-                    "code_point": "0xfe4f"}]
+        mix_with: [{'name': 'p384',
+                    'pretty_name': 'ECDSA p384',
+                    'oid': '1.3.9999.6.2.2',
+                    'code_point': '0xfe4f'}]
       -
-        name: "sphincsharaka192fsimple"
-        pretty_name: "SPHINCS+-Haraka-192f-simple"
-        oqs_meth: "OQS_SIG_alg_sphincs_haraka_192f_simple"
+        name: 'sphincsharaka192fsimple'
+        pretty_name: 'SPHINCS+-Haraka-192f-simple'
+        oqs_meth: 'OQS_SIG_alg_sphincs_haraka_192f_simple'
         security: 192
-        oid: "1.3.9999.6.2.3"
-        code_point: "0xfe50"
+        oid: '1.3.9999.6.2.3'
+        code_point: '0xfe50'
         enable: false
-        mix_with: [{"name": "p384",
-                    "pretty_name": "ECDSA p384",
-                    "oid": "1.3.9999.6.2.4",
-                    "code_point": "0xfe51"}]
+        mix_with: [{'name': 'p384',
+                    'pretty_name': 'ECDSA p384',
+                    'oid': '1.3.9999.6.2.4',
+                    'code_point': '0xfe51'}]
       -
-        name: "sphincsharaka192srobust"
-        pretty_name: "SPHINCS+-Haraka-192s-robust"
-        oqs_meth: "OQS_SIG_alg_sphincs_haraka_192s_robust"
+        name: 'sphincsharaka192srobust'
+        pretty_name: 'SPHINCS+-Haraka-192s-robust'
+        oqs_meth: 'OQS_SIG_alg_sphincs_haraka_192s_robust'
         security: 192
-        oid: "1.3.9999.6.2.5"
-        code_point: "0xfe52"
+        oid: '1.3.9999.6.2.5'
+        code_point: '0xfe52'
         enable: false
-        mix_with: [{"name": "p384",
-                    "pretty_name": "ECDSA p384",
-                    "oid": "1.3.9999.6.2.6",
-                    "code_point": "0xfe53"}]
+        mix_with: [{'name': 'p384',
+                    'pretty_name': 'ECDSA p384',
+                    'oid': '1.3.9999.6.2.6',
+                    'code_point': '0xfe53'}]
       -
-        name: "sphincsharaka192ssimple"
-        pretty_name: "SPHINCS+-Haraka-192s-simple"
-        oqs_meth: "OQS_SIG_alg_sphincs_haraka_192s_simple"
+        name: 'sphincsharaka192ssimple'
+        pretty_name: 'SPHINCS+-Haraka-192s-simple'
+        oqs_meth: 'OQS_SIG_alg_sphincs_haraka_192s_simple'
         security: 192
-        oid: "1.3.9999.6.2.7"
-        code_point: "0xfe54"
+        oid: '1.3.9999.6.2.7'
+        code_point: '0xfe54'
         enable: false
-        mix_with: [{"name": "p384",
-                    "pretty_name": "ECDSA p384",
-                    "oid": "1.3.9999.6.2.8",
-                    "code_point": "0xfe55"}]
+        mix_with: [{'name': 'p384',
+                    'pretty_name': 'ECDSA p384',
+                    'oid': '1.3.9999.6.2.8',
+                    'code_point': '0xfe55'}]
       -
-        name: "sphincsharaka256frobust"
-        pretty_name: "SPHINCS+-Haraka-256f-robust"
-        oqs_meth: "OQS_SIG_alg_sphincs_haraka_256f_robust"
+        name: 'sphincsharaka256frobust'
+        pretty_name: 'SPHINCS+-Haraka-256f-robust'
+        oqs_meth: 'OQS_SIG_alg_sphincs_haraka_256f_robust'
         security: 256
-        oid: "1.3.9999.6.3.1"
-        code_point: "0xfe56"
+        oid: '1.3.9999.6.3.1'
+        code_point: '0xfe56'
         enable: false
-        mix_with: [{"name": "p521",
-                    "pretty_name": "ECDSA p521",
-                    "oid": "1.3.9999.6.3.2",
-                    "code_point": "0xfe57"}]
+        mix_with: [{'name': 'p521',
+                    'pretty_name': 'ECDSA p521',
+                    'oid': '1.3.9999.6.3.2',
+                    'code_point': '0xfe57'}]
       -
-        name: "sphincsharaka256fsimple"
-        pretty_name: "SPHINCS+-Haraka-256f-simple"
-        oqs_meth: "OQS_SIG_alg_sphincs_haraka_256f_simple"
+        name: 'sphincsharaka256fsimple'
+        pretty_name: 'SPHINCS+-Haraka-256f-simple'
+        oqs_meth: 'OQS_SIG_alg_sphincs_haraka_256f_simple'
         security: 256
-        oid: "1.3.9999.6.3.3"
-        code_point: "0xfe58"
+        oid: '1.3.9999.6.3.3'
+        code_point: '0xfe58'
         enable: false
-        mix_with: [{"name": "p521",
-                    "pretty_name": "ECDSA p521",
-                    "oid": "1.3.9999.6.3.4",
-                    "code_point": "0xfe59"}]
+        mix_with: [{'name': 'p521',
+                    'pretty_name': 'ECDSA p521',
+                    'oid': '1.3.9999.6.3.4',
+                    'code_point': '0xfe59'}]
       -
-        name: "sphincsharaka256srobust"
-        pretty_name: "SPHINCS+-Haraka-256s-robust"
-        oqs_meth: "OQS_SIG_alg_sphincs_haraka_256s_robust"
+        name: 'sphincsharaka256srobust'
+        pretty_name: 'SPHINCS+-Haraka-256s-robust'
+        oqs_meth: 'OQS_SIG_alg_sphincs_haraka_256s_robust'
         security: 256
-        oid: "1.3.9999.6.3.5"
-        code_point: "0xfe5a"
+        oid: '1.3.9999.6.3.5'
+        code_point: '0xfe5a'
         enable: false
-        mix_with: [{"name": "p521",
-                    "pretty_name": "ECDSA p521",
-                    "oid": "1.3.9999.6.3.6",
-                    "code_point": "0xfe5b"}]
+        mix_with: [{'name': 'p521',
+                    'pretty_name': 'ECDSA p521',
+                    'oid': '1.3.9999.6.3.6',
+                    'code_point': '0xfe5b'}]
       -
-        name: "sphincsharaka256ssimple"
-        pretty_name: "SPHINCS+-Haraka-256s-simple"
-        oqs_meth: "OQS_SIG_alg_sphincs_haraka_256s_simple"
+        name: 'sphincsharaka256ssimple'
+        pretty_name: 'SPHINCS+-Haraka-256s-simple'
+        oqs_meth: 'OQS_SIG_alg_sphincs_haraka_256s_simple'
         security: 256
-        oid: "1.3.9999.6.3.7"
-        code_point: "0xfe5c"
+        oid: '1.3.9999.6.3.7'
+        code_point: '0xfe5c'
         enable: false
-        mix_with: [{"name": "p521",
-                    "pretty_name": "ECDSA p521",
-                    "oid": "1.3.9999.6.3.8",
-                    "code_point": "0xfe5d"}]
+        mix_with: [{'name': 'p521',
+                    'pretty_name': 'ECDSA p521',
+                    'oid': '1.3.9999.6.3.8',
+                    'code_point': '0xfe5d'}]
+  -
+    family: 'SPHINCS-SHA256'
+    variants:
       -
-        name: "sphincssha256128frobust"
-        pretty_name: "SPHINCS+-SHA256-128f-robust"
-        oqs_meth: "OQS_SIG_alg_sphincs_sha256_128f_robust"
+        name: 'sphincssha256128frobust'
+        pretty_name: 'SPHINCS+-SHA256-128f-robust'
+        oqs_meth: 'OQS_SIG_alg_sphincs_sha256_128f_robust'
         security: 128
-        oid: "1.3.9999.6.4.1"
-        code_point: "0xfe5e"
-        enable: false
-        mix_with: [{"name": "p256",
-                    "pretty_name": "ECDSA p256",
-                    "oid": "1.3.9999.6.4.2",
-                    "code_point": "0xfe5f"},
-                   {"name": "rsa3072",
-                    "pretty_name": "RSA3072",
-                    "oid": "1.3.9999.6.4.3",
-                    "code_point": "0xfe60"}]
+        oid: '1.3.9999.6.4.1'
+        code_point: '0xfe5e'
+        enable: true
+        mix_with: [{'name': 'p256',
+                    'pretty_name': 'ECDSA p256',
+                    'oid': '1.3.9999.6.4.2',
+                    'code_point': '0xfe5f'},
+                   {'name': 'rsa3072',
+                    'pretty_name': 'RSA3072',
+                    'oid': '1.3.9999.6.4.3',
+                    'code_point': '0xfe60'}]
       -
-        name: "sphincssha256128fsimple"
-        pretty_name: "SPHINCS+-SHA256-128f-simple"
-        oqs_meth: "OQS_SIG_alg_sphincs_sha256_128f_simple"
+        name: 'sphincssha256128fsimple'
+        pretty_name: 'SPHINCS+-SHA256-128f-simple'
+        oqs_meth: 'OQS_SIG_alg_sphincs_sha256_128f_simple'
         security: 128
-        oid: "1.3.9999.6.4.4"
-        code_point: "0xfe61"
+        oid: '1.3.9999.6.4.4'
+        code_point: '0xfe61'
         enable: false
-        mix_with: [{"name": "p256",
-                    "pretty_name": "ECDSA p256",
-                    "oid": "1.3.9999.6.4.5",
-                    "code_point": "0xfe62"},
-                   {"name": "rsa3072",
-                    "pretty_name": "RSA3072",
-                    "oid": "1.3.9999.6.4.6",
-                    "code_point": "0xfe63"}]
+        mix_with: [{'name': 'p256',
+                    'pretty_name': 'ECDSA p256',
+                    'oid': '1.3.9999.6.4.5',
+                    'code_point': '0xfe62'},
+                   {'name': 'rsa3072',
+                    'pretty_name': 'RSA3072',
+                    'oid': '1.3.9999.6.4.6',
+                    'code_point': '0xfe63'}]
       -
-        name: "sphincssha256128srobust"
-        pretty_name: "SPHINCS+-SHA256-128s-robust"
-        oqs_meth: "OQS_SIG_alg_sphincs_sha256_128s_robust"
+        name: 'sphincssha256128srobust'
+        pretty_name: 'SPHINCS+-SHA256-128s-robust'
+        oqs_meth: 'OQS_SIG_alg_sphincs_sha256_128s_robust'
         security: 128
-        oid: "1.3.9999.6.4.7"
-        code_point: "0xfe64"
+        oid: '1.3.9999.6.4.7'
+        code_point: '0xfe64'
         enable: false
-        mix_with: [{"name": "p256",
-                    "pretty_name": "ECDSA p256",
-                    "oid": "1.3.9999.6.4.8",
-                    "code_point": "0xfe65"},
-                   {"name": "rsa3072",
-                    "pretty_name": "RSA3072",
-                    "oid": "1.3.9999.6.4.9",
-                    "code_point": "0xfe66"}]
+        mix_with: [{'name': 'p256',
+                    'pretty_name': 'ECDSA p256',
+                    'oid': '1.3.9999.6.4.8',
+                    'code_point': '0xfe65'},
+                   {'name': 'rsa3072',
+                    'pretty_name': 'RSA3072',
+                    'oid': '1.3.9999.6.4.9',
+                    'code_point': '0xfe66'}]
       -
-        name: "sphincssha256128ssimple"
-        pretty_name: "SPHINCS+-SHA256-128s-simple"
-        oqs_meth: "OQS_SIG_alg_sphincs_sha256_128s_simple"
+        name: 'sphincssha256128ssimple'
+        pretty_name: 'SPHINCS+-SHA256-128s-simple'
+        oqs_meth: 'OQS_SIG_alg_sphincs_sha256_128s_simple'
         security: 128
-        oid: "1.3.9999.6.4.10"
-        code_point: "0xfe67"
+        oid: '1.3.9999.6.4.10'
+        code_point: '0xfe67'
         enable: false
-        mix_with: [{"name": "p256",
-                    "pretty_name": "ECDSA p256",
-                    "oid": "1.3.9999.6.4.11",
-                    "code_point": "0xfe68"},
-                   {"name": "rsa3072",
-                    "pretty_name": "RSA3072",
-                    "oid": "1.3.9999.6.4.12",
-                    "code_point": "0xfe69"}]
+        mix_with: [{'name': 'p256',
+                    'pretty_name': 'ECDSA p256',
+                    'oid': '1.3.9999.6.4.11',
+                    'code_point': '0xfe68'},
+                   {'name': 'rsa3072',
+                    'pretty_name': 'RSA3072',
+                    'oid': '1.3.9999.6.4.12',
+                    'code_point': '0xfe69'}]
       -
-        name: "sphincssha256192frobust"
-        pretty_name: "SPHINCS+-SHA256-192f-robust"
-        oqs_meth: "OQS_SIG_alg_sphincs_sha256_192f_robust"
+        name: 'sphincssha256192frobust'
+        pretty_name: 'SPHINCS+-SHA256-192f-robust'
+        oqs_meth: 'OQS_SIG_alg_sphincs_sha256_192f_robust'
         security: 192
-        oid: "1.3.9999.6.5.1"
-        code_point: "0xfe6a"
+        oid: '1.3.9999.6.5.1'
+        code_point: '0xfe6a'
         enable: false
-        mix_with: [{"name": "p384",
-                    "pretty_name": "ECDSA p384",
-                    "oid": "1.3.9999.6.5.2",
-                    "code_point": "0xfe6b"}]
+        mix_with: [{'name': 'p384',
+                    'pretty_name': 'ECDSA p384',
+                    'oid': '1.3.9999.6.5.2',
+                    'code_point': '0xfe6b'}]
       -
-        name: "sphincssha256192fsimple"
-        pretty_name: "SPHINCS+-SHA256-192f-simple"
-        oqs_meth: "OQS_SIG_alg_sphincs_sha256_192f_simple"
+        name: 'sphincssha256192fsimple'
+        pretty_name: 'SPHINCS+-SHA256-192f-simple'
+        oqs_meth: 'OQS_SIG_alg_sphincs_sha256_192f_simple'
         security: 192
-        oid: "1.3.9999.6.5.3"
-        code_point: "0xfe6c"
+        oid: '1.3.9999.6.5.3'
+        code_point: '0xfe6c'
         enable: false
-        mix_with: [{"name": "p384",
-                    "pretty_name": "ECDSA p384",
-                    "oid": "1.3.9999.6.5.4",
-                    "code_point": "0xfe6d"}]
+        mix_with: [{'name': 'p384',
+                    'pretty_name': 'ECDSA p384',
+                    'oid': '1.3.9999.6.5.4',
+                    'code_point': '0xfe6d'}]
       -
-        name: "sphincssha256192srobust"
-        pretty_name: "SPHINCS+-SHA256-192s-robust"
-        oqs_meth: "OQS_SIG_alg_sphincs_sha256_192s_robust"
+        name: 'sphincssha256192srobust'
+        pretty_name: 'SPHINCS+-SHA256-192s-robust'
+        oqs_meth: 'OQS_SIG_alg_sphincs_sha256_192s_robust'
         security: 192
-        oid: "1.3.9999.6.5.5"
-        code_point: "0xfe6e"
+        oid: '1.3.9999.6.5.5'
+        code_point: '0xfe6e'
         enable: false
-        mix_with: [{"name": "p384",
-                    "pretty_name": "ECDSA p384",
-                    "oid": "1.3.9999.6.5.6",
-                    "code_point": "0xfe6f"}]
+        mix_with: [{'name': 'p384',
+                    'pretty_name': 'ECDSA p384',
+                    'oid': '1.3.9999.6.5.6',
+                    'code_point': '0xfe6f'}]
       -
-        name: "sphincssha256192ssimple"
-        pretty_name: "SPHINCS+-SHA256-192s-simple"
-        oqs_meth: "OQS_SIG_alg_sphincs_sha256_192s_simple"
+        name: 'sphincssha256192ssimple'
+        pretty_name: 'SPHINCS+-SHA256-192s-simple'
+        oqs_meth: 'OQS_SIG_alg_sphincs_sha256_192s_simple'
         security: 192
-        oid: "1.3.9999.6.5.7"
-        code_point: "0xfe70"
+        oid: '1.3.9999.6.5.7'
+        code_point: '0xfe70'
         enable: false
-        mix_with: [{"name": "p384",
-                    "pretty_name": "ECDSA p384",
-                    "oid": "1.3.9999.6.5.8",
-                    "code_point": "0xfe71"}]
+        mix_with: [{'name': 'p384',
+                    'pretty_name': 'ECDSA p384',
+                    'oid': '1.3.9999.6.5.8',
+                    'code_point': '0xfe71'}]
       -
-        name: "sphincssha256256frobust"
-        pretty_name: "SPHINCS+-SHA256-256f-robust"
-        oqs_meth: "OQS_SIG_alg_sphincs_sha256_256f_robust"
+        name: 'sphincssha256256frobust'
+        pretty_name: 'SPHINCS+-SHA256-256f-robust'
+        oqs_meth: 'OQS_SIG_alg_sphincs_sha256_256f_robust'
         security: 256
-        oid: "1.3.9999.6.6.1"
-        code_point: "0xfe72"
+        oid: '1.3.9999.6.6.1'
+        code_point: '0xfe72'
         enable: false
-        mix_with: [{"name": "p521",
-                    "pretty_name": "ECDSA p521",
-                    "oid": "1.3.9999.6.6.2",
-                    "code_point": "0xfe73"}]
+        mix_with: [{'name': 'p521',
+                    'pretty_name': 'ECDSA p521',
+                    'oid': '1.3.9999.6.6.2',
+                    'code_point': '0xfe73'}]
       -
-        name: "sphincssha256256fsimple"
-        pretty_name: "SPHINCS+-SHA256-256f-simple"
-        oqs_meth: "OQS_SIG_alg_sphincs_sha256_256f_simple"
+        name: 'sphincssha256256fsimple'
+        pretty_name: 'SPHINCS+-SHA256-256f-simple'
+        oqs_meth: 'OQS_SIG_alg_sphincs_sha256_256f_simple'
         security: 256
-        oid: "1.3.9999.6.6.3"
-        code_point: "0xfe74"
+        oid: '1.3.9999.6.6.3'
+        code_point: '0xfe74'
         enable: false
-        mix_with: [{"name": "p521",
-                    "pretty_name": "ECDSA p521",
-                    "oid": "1.3.9999.6.6.4",
-                    "code_point": "0xfe75"}]
+        mix_with: [{'name': 'p521',
+                    'pretty_name': 'ECDSA p521',
+                    'oid': '1.3.9999.6.6.4',
+                    'code_point': '0xfe75'}]
       -
-        name: "sphincssha256256srobust"
-        pretty_name: "SPHINCS+-SHA256-256s-robust"
-        oqs_meth: "OQS_SIG_alg_sphincs_sha256_256s_robust"
+        name: 'sphincssha256256srobust'
+        pretty_name: 'SPHINCS+-SHA256-256s-robust'
+        oqs_meth: 'OQS_SIG_alg_sphincs_sha256_256s_robust'
         security: 256
-        oid: "1.3.9999.6.6.5"
-        code_point: "0xfe76"
+        oid: '1.3.9999.6.6.5'
+        code_point: '0xfe76'
         enable: false
-        mix_with: [{"name": "p521",
-                    "pretty_name": "ECDSA p521",
-                    "oid": "1.3.9999.6.6.6",
-                    "code_point": "0xfe77"}]
+        mix_with: [{'name': 'p521',
+                    'pretty_name': 'ECDSA p521',
+                    'oid': '1.3.9999.6.6.6',
+                    'code_point': '0xfe77'}]
       -
-        name: "sphincssha256256ssimple"
-        pretty_name: "SPHINCS+-SHA256-256s-simple"
-        oqs_meth: "OQS_SIG_alg_sphincs_sha256_256s_simple"
+        name: 'sphincssha256256ssimple'
+        pretty_name: 'SPHINCS+-SHA256-256s-simple'
+        oqs_meth: 'OQS_SIG_alg_sphincs_sha256_256s_simple'
         security: 256
-        oid: "1.3.9999.6.6.7"
-        code_point: "0xfe78"
+        oid: '1.3.9999.6.6.7'
+        code_point: '0xfe78'
         enable: false
-        mix_with: [{"name": "p521",
-                    "pretty_name": "ECDSA p521",
-                    "oid": "1.3.9999.6.6.8",
-                    "code_point": "0xfe79"}]
+        mix_with: [{'name': 'p521',
+                    'pretty_name': 'ECDSA p521',
+                    'oid': '1.3.9999.6.6.8',
+                    'code_point': '0xfe79'}]
+  -
+    family: 'SPHINCS-SHAKE256'
+    variants:
       -
-        name: "sphincsshake256128frobust"
-        pretty_name: "SPHINCS+-SHAKE256-128f-robust"
-        oqs_meth: "OQS_SIG_alg_sphincs_shake256_128f_robust"
+        name: 'sphincsshake256128frobust'
+        pretty_name: 'SPHINCS+-SHAKE256-128f-robust'
+        oqs_meth: 'OQS_SIG_alg_sphincs_shake256_128f_robust'
         security: 128
-        oid: "1.3.9999.6.7.1"
-        code_point: "0xfe7a"
-        enable: false
-        mix_with: [{"name": "p256",
-                    "pretty_name": "ECDSA p256",
-                    "oid": "1.3.9999.6.7.2",
-                    "code_point": "0xfe7b"},
-                   {"name": "rsa3072",
-                    "pretty_name": "RSA3072",
-                    "oid": "1.3.9999.6.7.3",
-                    "code_point": "0xfe7c"}]
+        oid: '1.3.9999.6.7.1'
+        code_point: '0xfe7a'
+        enable: true
+        mix_with: [{'name': 'p256',
+                    'pretty_name': 'ECDSA p256',
+                    'oid': '1.3.9999.6.7.2',
+                    'code_point': '0xfe7b'},
+                   {'name': 'rsa3072',
+                    'pretty_name': 'RSA3072',
+                    'oid': '1.3.9999.6.7.3',
+                    'code_point': '0xfe7c'}]
       -
-        name: "sphincsshake256128fsimple"
-        pretty_name: "SPHINCS+-SHAKE256-128f-simple"
-        oqs_meth: "OQS_SIG_alg_sphincs_shake256_128f_simple"
+        name: 'sphincsshake256128fsimple'
+        pretty_name: 'SPHINCS+-SHAKE256-128f-simple'
+        oqs_meth: 'OQS_SIG_alg_sphincs_shake256_128f_simple'
         security: 128
-        oid: "1.3.9999.6.7.4"
-        code_point: "0xfe7d"
+        oid: '1.3.9999.6.7.4'
+        code_point: '0xfe7d'
         enable: false
-        mix_with: [{"name": "p256",
-                    "pretty_name": "ECDSA p256",
-                    "oid": "1.3.9999.6.7.5",
-                    "code_point": "0xfe7e"},
-                   {"name": "rsa3072",
-                    "pretty_name": "RSA3072",
-                    "oid": "1.3.9999.6.7.6",
-                    "code_point": "0xfe7f"}]
+        mix_with: [{'name': 'p256',
+                    'pretty_name': 'ECDSA p256',
+                    'oid': '1.3.9999.6.7.5',
+                    'code_point': '0xfe7e'},
+                   {'name': 'rsa3072',
+                    'pretty_name': 'RSA3072',
+                    'oid': '1.3.9999.6.7.6',
+                    'code_point': '0xfe7f'}]
       -
-        name: "sphincsshake256128srobust"
-        pretty_name: "SPHINCS+-SHAKE256-128s-robust"
-        oqs_meth: "OQS_SIG_alg_sphincs_shake256_128s_robust"
+        name: 'sphincsshake256128srobust'
+        pretty_name: 'SPHINCS+-SHAKE256-128s-robust'
+        oqs_meth: 'OQS_SIG_alg_sphincs_shake256_128s_robust'
         security: 128
-        oid: "1.3.9999.6.7.7"
-        code_point: "0xfe80"
+        oid: '1.3.9999.6.7.7'
+        code_point: '0xfe80'
         enable: false
-        mix_with: [{"name": "p256",
-                    "pretty_name": "ECDSA p256",
-                    "oid": "1.3.9999.6.7.8",
-                    "code_point": "0xfe81"},
-                   {"name": "rsa3072",
-                    "pretty_name": "RSA3072",
-                    "oid": "1.3.9999.6.7.9",
-                    "code_point": "0xfe82"}]
+        mix_with: [{'name': 'p256',
+                    'pretty_name': 'ECDSA p256',
+                    'oid': '1.3.9999.6.7.8',
+                    'code_point': '0xfe81'},
+                   {'name': 'rsa3072',
+                    'pretty_name': 'RSA3072',
+                    'oid': '1.3.9999.6.7.9',
+                    'code_point': '0xfe82'}]
       -
-        name: "sphincsshake256128ssimple"
-        pretty_name: "SPHINCS+-SHAKE256-128s-simple"
-        oqs_meth: "OQS_SIG_alg_sphincs_shake256_128s_simple"
+        name: 'sphincsshake256128ssimple'
+        pretty_name: 'SPHINCS+-SHAKE256-128s-simple'
+        oqs_meth: 'OQS_SIG_alg_sphincs_shake256_128s_simple'
         security: 128
-        oid: "1.3.9999.6.7.10"
-        code_point: "0xfe83"
+        oid: '1.3.9999.6.7.10'
+        code_point: '0xfe83'
         enable: false
-        mix_with: [{"name": "p256",
-                    "pretty_name": "ECDSA p256",
-                    "oid": "1.3.9999.6.7.11",
-                    "code_point": "0xfe84"},
-                   {"name": "rsa3072",
-                    "pretty_name": "RSA3072",
-                    "oid": "1.3.9999.6.7.12",
-                    "code_point": "0xfe85"}]
+        mix_with: [{'name': 'p256',
+                    'pretty_name': 'ECDSA p256',
+                    'oid': '1.3.9999.6.7.11',
+                    'code_point': '0xfe84'},
+                   {'name': 'rsa3072',
+                    'pretty_name': 'RSA3072',
+                    'oid': '1.3.9999.6.7.12',
+                    'code_point': '0xfe85'}]
       -
-        name: "sphincsshake256192frobust"
-        pretty_name: "SPHINCS+-SHAKE256-192f-robust"
-        oqs_meth: "OQS_SIG_alg_sphincs_shake256_192f_robust"
+        name: 'sphincsshake256192frobust'
+        pretty_name: 'SPHINCS+-SHAKE256-192f-robust'
+        oqs_meth: 'OQS_SIG_alg_sphincs_shake256_192f_robust'
         security: 192
-        oid: "1.3.9999.6.8.1"
-        code_point: "0xfe86"
+        oid: '1.3.9999.6.8.1'
+        code_point: '0xfe86'
         enable: false
-        mix_with: [{"name": "p384",
-                    "pretty_name": "ECDSA p384",
-                    "oid": "1.3.9999.6.8.2",
-                    "code_point": "0xfe87"}]
+        mix_with: [{'name': 'p384',
+                    'pretty_name': 'ECDSA p384',
+                    'oid': '1.3.9999.6.8.2',
+                    'code_point': '0xfe87'}]
       -
-        name: "sphincsshake256192fsimple"
-        pretty_name: "SPHINCS+-SHAKE256-192f-simple"
-        oqs_meth: "OQS_SIG_alg_sphincs_shake256_192f_simple"
+        name: 'sphincsshake256192fsimple'
+        pretty_name: 'SPHINCS+-SHAKE256-192f-simple'
+        oqs_meth: 'OQS_SIG_alg_sphincs_shake256_192f_simple'
         security: 192
-        oid: "1.3.9999.6.8.3"
-        code_point: "0xfe88"
+        oid: '1.3.9999.6.8.3'
+        code_point: '0xfe88'
         enable: false
-        mix_with: [{"name": "p384",
-                    "pretty_name": "ECDSA p384",
-                    "oid": "1.3.9999.6.8.4",
-                    "code_point": "0xfe89"}]
+        mix_with: [{'name': 'p384',
+                    'pretty_name': 'ECDSA p384',
+                    'oid': '1.3.9999.6.8.4',
+                    'code_point': '0xfe89'}]
       -
-        name: "sphincsshake256192srobust"
-        pretty_name: "SPHINCS+-SHAKE256-192s-robust"
-        oqs_meth: "OQS_SIG_alg_sphincs_shake256_192s_robust"
+        name: 'sphincsshake256192srobust'
+        pretty_name: 'SPHINCS+-SHAKE256-192s-robust'
+        oqs_meth: 'OQS_SIG_alg_sphincs_shake256_192s_robust'
         security: 192
-        oid: "1.3.9999.6.8.5"
-        code_point: "0xfe8a"
+        oid: '1.3.9999.6.8.5'
+        code_point: '0xfe8a'
         enable: false
-        mix_with: [{"name": "p384",
-                    "pretty_name": "ECDSA p384",
-                    "oid": "1.3.9999.6.8.6",
-                    "code_point": "0xfe8b"}]
+        mix_with: [{'name': 'p384',
+                    'pretty_name': 'ECDSA p384',
+                    'oid': '1.3.9999.6.8.6',
+                    'code_point': '0xfe8b'}]
       -
-        name: "sphincsshake256192ssimple"
-        pretty_name: "SPHINCS+-SHAKE256-192s-simple"
-        oqs_meth: "OQS_SIG_alg_sphincs_shake256_192s_simple"
+        name: 'sphincsshake256192ssimple'
+        pretty_name: 'SPHINCS+-SHAKE256-192s-simple'
+        oqs_meth: 'OQS_SIG_alg_sphincs_shake256_192s_simple'
         security: 192
-        oid: "1.3.9999.6.8.7"
-        code_point: "0xfe8c"
+        oid: '1.3.9999.6.8.7'
+        code_point: '0xfe8c'
         enable: false
-        mix_with: [{"name": "p384",
-                    "pretty_name": "ECDSA p384",
-                    "oid": "1.3.9999.6.8.8",
-                    "code_point": "0xfe8d"}]
+        mix_with: [{'name': 'p384',
+                    'pretty_name': 'ECDSA p384',
+                    'oid': '1.3.9999.6.8.8',
+                    'code_point': '0xfe8d'}]
       -
-        name: "sphincsshake256256frobust"
-        pretty_name: "SPHINCS+-SHAKE256-256f-robust"
-        oqs_meth: "OQS_SIG_alg_sphincs_shake256_256f_robust"
+        name: 'sphincsshake256256frobust'
+        pretty_name: 'SPHINCS+-SHAKE256-256f-robust'
+        oqs_meth: 'OQS_SIG_alg_sphincs_shake256_256f_robust'
         security: 256
-        oid: "1.3.9999.6.9.1"
-        code_point: "0xfe8e"
+        oid: '1.3.9999.6.9.1'
+        code_point: '0xfe8e'
         enable: false
-        mix_with: [{"name": "p521",
-                    "pretty_name": "ECDSA p521",
-                    "oid": "1.3.9999.6.9.2",
-                    "code_point": "0xfe8f"}]
+        mix_with: [{'name': 'p521',
+                    'pretty_name': 'ECDSA p521',
+                    'oid': '1.3.9999.6.9.2',
+                    'code_point': '0xfe8f'}]
       -
-        name: "sphincsshake256256fsimple"
-        pretty_name: "SPHINCS+-SHAKE256-256f-simple"
-        oqs_meth: "OQS_SIG_alg_sphincs_shake256_256f_simple"
+        name: 'sphincsshake256256fsimple'
+        pretty_name: 'SPHINCS+-SHAKE256-256f-simple'
+        oqs_meth: 'OQS_SIG_alg_sphincs_shake256_256f_simple'
         security: 256
-        oid: "1.3.9999.6.9.3"
-        code_point: "0xfe90"
+        oid: '1.3.9999.6.9.3'
+        code_point: '0xfe90'
         enable: false
-        mix_with: [{"name": "p521",
-                    "pretty_name": "ECDSA p521",
-                    "oid": "1.3.9999.6.9.4",
-                    "code_point": "0xfe91"}]
+        mix_with: [{'name': 'p521',
+                    'pretty_name': 'ECDSA p521',
+                    'oid': '1.3.9999.6.9.4',
+                    'code_point': '0xfe91'}]
       -
-        name: "sphincsshake256256srobust"
-        pretty_name: "SPHINCS+-SHAKE256-256s-robust"
-        oqs_meth: "OQS_SIG_alg_sphincs_shake256_256s_robust"
+        name: 'sphincsshake256256srobust'
+        pretty_name: 'SPHINCS+-SHAKE256-256s-robust'
+        oqs_meth: 'OQS_SIG_alg_sphincs_shake256_256s_robust'
         security: 256
-        oid: "1.3.9999.6.9.5"
-        code_point: "0xfe92"
+        oid: '1.3.9999.6.9.5'
+        code_point: '0xfe92'
         enable: false
-        mix_with: [{"name": "p521",
-                    "pretty_name": "ECDSA p521",
-                    "oid": "1.3.9999.6.9.6",
-                    "code_point": "0xfe93"}]
+        mix_with: [{'name': 'p521',
+                    'pretty_name': 'ECDSA p521',
+                    'oid': '1.3.9999.6.9.6',
+                    'code_point': '0xfe93'}]
       -
-        name: "sphincsshake256256ssimple"
-        pretty_name: "SPHINCS+-SHAKE256-256s-simple"
-        oqs_meth: "OQS_SIG_alg_sphincs_shake256_256s_simple"
+        name: 'sphincsshake256256ssimple'
+        pretty_name: 'SPHINCS+-SHAKE256-256s-simple'
+        oqs_meth: 'OQS_SIG_alg_sphincs_shake256_256s_simple'
         security: 256
-        oid: "1.3.9999.6.9.7"
-        code_point: "0xfe94"
+        oid: '1.3.9999.6.9.7'
+        code_point: '0xfe94'
         enable: false
-        mix_with: [{"name": "p521",
-                    "pretty_name": "ECDSA p521",
-                    "oid": "1.3.9999.6.9.8",
-                    "code_point": "0xfe95"}]
+        mix_with: [{'name': 'p521',
+                    'pretty_name': 'ECDSA p521',
+                    'oid': '1.3.9999.6.9.8',
+                    'code_point': '0xfe95'}]

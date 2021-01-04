@@ -21,5 +21,5 @@ make clean
 if [ "x${CIRCLECI}" == "xtrue" ]; then
     make -j2
 else
-    make -j
+    make -j2
 fi
