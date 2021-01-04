@@ -429,7 +429,7 @@ int ossl_cipher_generic_stream_update(void *vctx, unsigned char *out,
     }
 
     *outl = inl;
-    if (!ctx->enc) {
+    if (!ctx->enc && ctx->tlsversion > 0) {
         /*
         * Remove any TLS padding. Only used by cipher_aes_cbc_hmac_sha1_hw.c and
         * cipher_aes_cbc_hmac_sha256_hw.c
