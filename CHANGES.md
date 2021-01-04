@@ -23,6 +23,10 @@ OpenSSL 3.0
 
 ### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
 
+ * Drop BIO_R_NULL_PARAMETER error code.
+
+   zsugabubus
+
  * The -cipher-commands and -digest-commands options of the command line
    utility list has been deprecated.
    Instead use the -cipher-algorithms and -digest-algorithms options.
