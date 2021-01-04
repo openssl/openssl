@@ -356,8 +356,8 @@ static int check_issued(ossl_unused X509_STORE_CTX *ctx, X509 *x, X509 *issuer)
     return 0;
 }
 
-/*
- * Alternative lookup method: look from a STACK stored in other_ctx.
+/*-
+ * Alternative get_issuer method: look up from a STACK_OF(X509) in other_ctx.
  * Returns -1 on internal error.
  */
 static int get_issuer_sk(X509 **issuer, X509_STORE_CTX *ctx, X509 *x)
@@ -368,7 +368,10 @@ static int get_issuer_sk(X509 **issuer, X509_STORE_CTX *ctx, X509 *x)
     return 0;
 }
 
-/* Returns NULL on internal error (such as out of memory) */
+/*-
+ * Alternative lookup method: look from a STACK stored in other_ctx.
+ * Returns NULL on internal error (such as out of memory).
+ */
 static STACK_OF(X509) *lookup_certs_sk(X509_STORE_CTX *ctx,
                                        const X509_NAME *nm)
 {
@@ -834,7 +837,7 @@ static int check_trust(X509_STORE_CTX *ctx, int num_untrusted)
     for (i = num_untrusted; i < num; i++) {
         x = sk_X509_value(ctx->chain, i);
         trust = X509_check_trust(x, ctx->param->trust, 0);
-        /* If explicitly trusted return trusted */
+        /* If explicitly trusted (so not neutral nor rejected) return trusted */
         if (trust == X509_TRUST_TRUSTED)
             goto trusted;
         if (trust == X509_TRUST_REJECTED)
@@ -1816,7 +1819,7 @@ static int internal_verify(X509_STORE_CTX *ctx)
             }
         }
 
-        /* in addition to RFC 5280, do also for trusted (root) cert */
+        /* In addition to RFC 5280 requirements do also for trust anchor cert */
         /* Calls verify callback as needed */
         if (!ossl_x509_check_cert_time(ctx, xs, n))
             return 0;
@@ -2451,8 +2454,8 @@ int X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
 }
 
 /*
- * Set alternative lookup method: just a STACK of trusted certificates. This
- * avoids X509_STORE nastiness where it isn't needed.
+ * Set alternative get_issuer method: just from a STACK of trusted certificates.
+ * This avoids the complexity of X509_STORE where it is not needed.
  */
 void X509_STORE_CTX_set0_trusted_stack(X509_STORE_CTX *ctx, STACK_OF(X509) *sk)
 {
