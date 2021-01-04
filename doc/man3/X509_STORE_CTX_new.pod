@@ -24,11 +24,11 @@ X509_STORE_CTX_verify_fn
  void X509_STORE_CTX_free(X509_STORE_CTX *ctx);
 
  int X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *trust_store,
-                         X509 *target, STACK_OF(X509) *chain);
+                         X509 *target, STACK_OF(X509) *untrusted);
 
  void X509_STORE_CTX_set0_trusted_stack(X509_STORE_CTX *ctx, STACK_OF(X509) *sk);
 
- void X509_STORE_CTX_set_cert(X509_STORE_CTX *ctx, X509 *x);
+ void X509_STORE_CTX_set_cert(X509_STORE_CTX *ctx, X509 *target);
  STACK_OF(X509) *X509_STORE_CTX_get0_chain(const X509_STORE_CTX *ctx);
  void X509_STORE_CTX_set0_verified_chain(X509_STORE_CTX *ctx, STACK_OF(X509) *chain);
  void X509_STORE_CTX_set0_crls(X509_STORE_CTX *ctx, STACK_OF(X509_CRL) *sk);
@@ -75,9 +75,9 @@ The trusted certificate store is set to I<trust_store> of type B<X509_STORE>.
 This may be NULL because there are no trusted certificates or because
 they are provided simply as a list using X509_STORE_CTX_set0_trusted_stack().
 The certificate to be verified is set to I<target>,
-and a list of additional certificates may be provided in I<chain>,
+and a list of additional certificates may be provided in I<untrusted>,
 which will be untrusted but may be used to build the chain.
-Each of the I<trust_store>, I<target> and I<chain> parameters can be NULL.
+Each of the I<trust_store>, I<target> and I<untrusted> parameters can be NULL.
 Yet note that L<X509_verify_cert(3)> and L<X509_STORE_CTX_verify(3)>
 will need a verification target.
 This can also be set using X509_STORE_CTX_set_cert().
@@ -87,10 +87,10 @@ this can be also set indirectly using X509_STORE_CTX_set0_untrusted().
 
 X509_STORE_CTX_set0_trusted_stack() sets the set of trusted certificates of
 I<ctx> to I<sk>. This is an alternative way of specifying trusted certificates
-instead of using an B<X509_STORE>.
+instead of using an B<X509_STORE> where its complexity is not needed.
 
 X509_STORE_CTX_set_cert() sets the target certificate to be verified in I<ctx>
-to I<x>.
+to I<target>.
 
 X509_STORE_CTX_set0_verified_chain() sets the validated chain used
 by I<ctx> to be I<chain>.
