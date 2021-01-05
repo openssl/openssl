@@ -179,7 +179,7 @@ repeatedly load/unload shared libraries that allocate locks.
 
 =head1 SEE ALSO
 
-L<crypto(7)>
+L<crypto(7)>, L<openssl-threads(7)>.
 
 =head1 COPYRIGHT
 
