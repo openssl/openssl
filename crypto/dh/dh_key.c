@@ -86,26 +86,53 @@ static int compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
         goto err;
     }
 
-    ret = BN_bn2bin(tmp, key);
+    /* return the padded key, i.e. same number of bytes as the modulus */
+    ret = BN_bn2binpad(tmp, key, BN_num_bytes(dh->params.p));
  err:
     BN_CTX_end(ctx);
     BN_CTX_free(ctx);
     return ret;
 }
 
+/*-
+ * NB: This function is inherently not constant time due to the
+ * RFC 5246 (8.1.2) padding style that strips leading zero bytes.
+ */
 int DH_compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
 {
+    int ret = 0, i;
+    volatile size_t npad = 0, mask = 1;
+
+    /* compute the key; ret is constant unless compute_key is external */
 #ifdef FIPS_MODULE
-    return compute_key(key, pub_key, dh);
+    ret = compute_key(key, pub_key, dh);
 #else
-    return dh->meth->compute_key(key, pub_key, dh);
+    ret = dh->meth->compute_key(key, pub_key, dh);
 #endif
+    if (ret <= 0)
+        return ret;
+
+    /* count leading zero bytes, yet still touch all bytes */
+    for (i = 0; i < ret; i++) {
+        mask &= !key[i];
+        npad += mask;
+    }
+
+    /* unpad key */
+    ret -= npad;
+    /* key-dependent memory access, potentially leaking npad / ret */
+    memmove(key, key + npad, ret);
+    /* key-dependent memory access, potentially leaking npad / ret */
+    memset(key + ret, 0, npad);
+
+    return ret;
 }
 
 int DH_compute_key_padded(unsigned char *key, const BIGNUM *pub_key, DH *dh)
 {
     int rv, pad;
 
+    /* rv is constant unless compute_key is external */
 #ifdef FIPS_MODULE
     rv = compute_key(key, pub_key, dh);
 #else
@@ -114,6 +141,7 @@ int DH_compute_key_padded(unsigned char *key, const BIGNUM *pub_key, DH *dh)
     if (rv <= 0)
         return rv;
     pad = BN_num_bytes(dh->params.p) - rv;
+    /* pad is constant (zero) unless compute_key is external */
     if (pad > 0) {
         memmove(key + pad, key, rv);
         memset(key, 0, pad);
