@@ -309,6 +309,10 @@ int SSL_process_quic_post_handshake(SSL *ssl)
         return 0;
     }
 
+    /* if there is no data, return success as BoringSSL */
+    if (ssl->quic_input_data_head == NULL)
+        return 1;
+    
     /*
      * This is always safe (we are sure to be at a record boundary) because
      * SSL_read()/SSL_write() are never used for QUIC connections -- the
