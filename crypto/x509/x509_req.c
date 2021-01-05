@@ -164,15 +164,15 @@ STACK_OF(X509_EXTENSION) *X509_REQ_get_extensions(X509_REQ *req)
  * Add a STACK_OF extensions to a certificate request: allow alternative OIDs
  * in case we want to create a non standard one.
  */
-
-int X509_REQ_add_extensions_nid(X509_REQ *req, STACK_OF(X509_EXTENSION) *exts,
-                                int nid)
+int X509_REQ_add_extensions_nid(X509_REQ *req,
+                                const STACK_OF(X509_EXTENSION) *exts, int nid)
 {
     int extlen;
     int rv = 0;
     unsigned char *ext = NULL;
+
     /* Generate encoding of extensions */
-    extlen = ASN1_item_i2d((ASN1_VALUE *)exts, &ext,
+    extlen = ASN1_item_i2d((const ASN1_VALUE *)exts, &ext,
                            ASN1_ITEM_rptr(X509_EXTENSIONS));
     if (extlen <= 0)
         return 0;
@@ -182,7 +182,7 @@ int X509_REQ_add_extensions_nid(X509_REQ *req, STACK_OF(X509_EXTENSION) *exts,
 }
 
 /* This is the normal usage: use the "official" OID */
-int X509_REQ_add_extensions(X509_REQ *req, STACK_OF(X509_EXTENSION) *exts)
+int X509_REQ_add_extensions(X509_REQ *req, const STACK_OF(X509_EXTENSION) *exts)
 {
     return X509_REQ_add_extensions_nid(req, exts, NID_ext_req);
 }
