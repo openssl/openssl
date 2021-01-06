@@ -104,7 +104,7 @@ const OPTIONS req_options[] = {
 #endif
     {"in", OPT_IN, '<', "X.509 request input file"},
     {"inform", OPT_INFORM, 'F', "Input format - DER or PEM"},
-    {"verify", OPT_VERIFY, '-', "Verify signature on REQ"},
+    {"verify", OPT_VERIFY, '-', "Verify self-signature on the request"},
 
     OPT_SECTION("Certificate"),
     {"new", OPT_NEW, '-', "New request"},
@@ -932,7 +932,7 @@ int req_main(int argc, char **argv)
         }
     }
 
-    if (verify && !gen_x509) {
+    if (verify) {
         EVP_PKEY *tpubkey = pkey;
 
         if (tpubkey == NULL) {

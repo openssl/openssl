@@ -142,7 +142,7 @@ Prints out the value of the modulus of the public key contained in the request.
 
 =item B<-verify>
 
-Verifies the signature on the request.
+Verifies the self-signature on the request.
 
 =item B<-new>
 
