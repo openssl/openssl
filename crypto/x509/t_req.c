@@ -108,7 +108,7 @@ int X509_REQ_print_ex(BIO *bp, X509_REQ *x, unsigned long nmflags,
             goto err;
 
         if (X509_REQ_get_attr_count(x) == 0) {
-            if (BIO_printf(bp, "%12sa0:00\n", "") <= 0)
+            if (BIO_printf(bp, "%12s(none)\n", "") <= 0)
                 goto err;
         } else {
             for (i = 0; i < X509_REQ_get_attr_count(x); i++) {
