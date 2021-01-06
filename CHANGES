@@ -9,7 +9,15 @@
 
  Changes between 1.1.1i and 1.1.1j [xx XXX xxxx]
 
-  *)
+  *) Fixed SRP_Calc_client_key so that it uses constant time. The previous
+     implementation called BN_mod_exp without setting BN_FLG_CONSTTIME. This
+     could be exploited in a side channel attack to recover the password. Since
+     the attack is local host only this is outside of the current OpenSSL
+     threat model and therefore no CVE is assigned.
+
+     Thanks to Mohammed Sabt and Daniel De Almeida Braga for reporting this
+     issue.
+     [Matt Caswell]
 
  Changes between 1.1.1h and 1.1.1i [8 Dec 2020]
 
