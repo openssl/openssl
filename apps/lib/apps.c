@@ -968,26 +968,29 @@ int set_ext_copy(int *copy_type, const char *arg)
 
 int copy_extensions(X509 *x, X509_REQ *req, int copy_type)
 {
-    STACK_OF(X509_EXTENSION) *exts = NULL;
-    X509_EXTENSION *ext, *tmpext;
-    ASN1_OBJECT *obj;
-    int i, idx, ret = 0;
-    if (!x || !req || (copy_type == EXT_COPY_NONE))
+    STACK_OF(X509_EXTENSION) *exts;
+    int i, ret = 0;
+
+    if (x == NULL || req == NULL)
+        return 0;
+    if (copy_type == EXT_COPY_NONE)
         return 1;
     exts = X509_REQ_get_extensions(req);
 
     for (i = 0; i < sk_X509_EXTENSION_num(exts); i++) {
-        ext = sk_X509_EXTENSION_value(exts, i);
-        obj = X509_EXTENSION_get_object(ext);
-        idx = X509_get_ext_by_OBJ(x, obj, -1);
-        /* Does extension exist? */
+        X509_EXTENSION *ext = sk_X509_EXTENSION_value(exts, i);
+        ASN1_OBJECT *obj = X509_EXTENSION_get_object(ext);
+        int idx = X509_get_ext_by_OBJ(x, obj, -1);
+
+        /* Does extension exist in target? */
         if (idx != -1) {
             /* If normal copy don't override existing extension */
             if (copy_type == EXT_COPY_ADD)
                 continue;
             /* Delete all extensions of same type */
             do {
-                tmpext = X509_get_ext(x, idx);
+                X509_EXTENSION *tmpext = X509_get_ext(x, idx);
+
                 X509_delete_ext(x, idx);
                 X509_EXTENSION_free(tmpext);
                 idx = X509_get_ext_by_OBJ(x, obj, -1);
@@ -996,13 +999,10 @@ int copy_extensions(X509 *x, X509_REQ *req, int copy_type)
         if (!X509_add_ext(x, ext, -1))
             goto end;
     }
-
     ret = 1;
 
  end:
-
     sk_X509_EXTENSION_pop_free(exts, X509_EXTENSION_free);
-
     return ret;
 }
 
