@@ -30,6 +30,7 @@
 #define POSTFIX ".srl"
 #define DEFAULT_DAYS    30 /* default cert validity period in days */
 #define UNSET_DAYS      -2 /* -1 is used for testing expiration checks */
+#define EXT_COPY_UNSET     -1
 
 static int callb(int ok, X509_STORE_CTX *ctx);
 static int sign(X509 *x, EVP_PKEY *pkey, X509 *issuer,
@@ -45,7 +46,7 @@ static int x509_certify(X509_STORE *ctx, const char *CAfile,
                         int days, int clrext, CONF *conf, const char *section,
                         ASN1_INTEGER *sno, int preserve_dates);
 static int purpose_print(BIO *bio, X509 *cert, X509_PURPOSE *pt);
-static int print_x509v3_exts(BIO *bio, X509 *x, const char *exts);
+static int print_x509v3_exts(BIO *bio, X509 *x, const char *ext_names);
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
@@ -60,8 +61,7 @@ typedef enum OPTION_choice {
     OPT_PURPOSE, OPT_STARTDATE, OPT_ENDDATE, OPT_CHECKEND, OPT_CHECKHOST,
     OPT_CHECKEMAIL, OPT_CHECKIP, OPT_NOOUT, OPT_TRUSTOUT, OPT_CLRTRUST,
     OPT_CLRREJECT, OPT_ALIAS, OPT_CACREATESERIAL, OPT_CLREXT, OPT_OCSPID,
-    OPT_SUBJECT_HASH_OLD,
-    OPT_ISSUER_HASH_OLD,
+    OPT_SUBJECT_HASH_OLD, OPT_ISSUER_HASH_OLD, OPT_COPY_EXTENSIONS,
     OPT_BADSIG, OPT_MD, OPT_ENGINE, OPT_NOCERT, OPT_PRESERVE_DATES,
     OPT_R_ENUM, OPT_PROV_ENUM, OPT_EXT
 } OPTION_CHOICE;
@@ -77,6 +77,8 @@ const OPTIONS x509_options[] = {
     {"x509toreq", OPT_X509TOREQ, '-',
      "Output a certification request (rather than a certificate)"},
     {"req", OPT_REQ, '-', "Input is a CSR file (rather than a certificate)"},
+    {"copy_extensions", OPT_COPY_EXTENSIONS, 's',
+     "copy extensions when converting from CSR to x509 or vice versa"},
     {"inform", OPT_INFORM, 'f',
      "CSR input file format (DER or PEM) - default PEM"},
     {"vfyopt", OPT_VFYOPT, 's', "CSR verification parameter in n:v form"},
@@ -144,7 +146,7 @@ const OPTIONS x509_options[] = {
     {"subj", OPT_SUBJ, 's', "Set or override certificate subject (and issuer)"},
     {"force_pubkey", OPT_FORCE_PUBKEY, '<',
      "Place the given key in new certificate"},
-    {"clrext", OPT_CLREXT, '-', "Clear all certificate extensions"},
+    {"clrext", OPT_CLREXT, '-', "Clear all extensions when producing a certificate "},
     {"extfile", OPT_EXTFILE, '<', "Config file with X509V3 extensions to add"},
     {"extensions", OPT_EXTENSIONS, 's',
      "Section of extfile to use - default: unnamed section"},
@@ -189,6 +191,7 @@ int x509_main(int argc, char **argv)
     ASN1_OBJECT *objtmp = NULL;
     BIO *out = NULL;
     CONF *extconf = NULL;
+    int ext_copy = EXT_COPY_UNSET;
     EVP_PKEY *signkey = NULL, *CAkey = NULL, *pubkey = NULL;
     int newcert = 0;
     char *subj = NULL;
@@ -202,7 +205,8 @@ int x509_main(int argc, char **argv)
     X509_STORE *ctx = NULL;
     const EVP_MD *digest = NULL;
     char *CAkeyfile = NULL, *CAserial = NULL, *pubkeyfile = NULL, *alias = NULL;
-    char *checkhost = NULL, *checkemail = NULL, *checkip = NULL, *exts = NULL;
+    char *checkhost = NULL, *checkemail = NULL, *checkip = NULL;
+    char *ext_names = NULL;
     char *extsect = NULL, *extfile = NULL, *passin = NULL, *passinarg = NULL;
     char *infile = NULL, *outfile = NULL, *signkeyfile = NULL, *CAfile = NULL;
     char *prog;
@@ -271,6 +275,13 @@ int x509_main(int argc, char **argv)
             break;
         case OPT_REQ:
             reqfile = 1;
+            break;
+        case OPT_COPY_EXTENSIONS:
+            if (!set_ext_copy(&ext_copy, opt_arg())) {
+                BIO_printf(bio_err,
+                           "Invalid extension copy option: %s\n", opt_arg());
+                goto end;
+            }
             break;
 
         case OPT_SIGOPT:
@@ -434,7 +445,7 @@ int x509_main(int argc, char **argv)
             break;
         case OPT_EXT:
             ext = ++num;
-            exts = opt_arg();
+            ext_names = opt_arg();
             break;
         case OPT_NOCERT:
             nocert = 1;
@@ -632,6 +643,8 @@ int x509_main(int argc, char **argv)
 
         print_name(bio_err, "subject=", X509_REQ_get_subject_name(req),
                    get_nameopt());
+    } else if (!x509toreq && ext_copy != EXT_COPY_UNSET) {
+        BIO_printf(bio_err, "Ignoring -copy_extensions since neither -x509toreq nor -req is given\n");
     }
 
     if (reqfile || newcert) {
@@ -657,7 +670,18 @@ int x509_main(int argc, char **argv)
         } else if (!X509_set_serialNumber(x, sno)) {
             goto end;
         }
-        /* TODO: (optionally) copy X.509 extensions from req */
+        if (req != NULL) {
+            if (ext_copy == EXT_COPY_UNSET) {
+                BIO_printf(bio_err,
+                           "Warning: ignoring any extensions in the request since -copy_extensions is not given\n");
+            } else if (clrext && ext_copy != EXT_COPY_NONE) {
+                BIO_printf(bio_err, "Must not use -clrext together with -copy_extensions\n");
+                goto end;
+            } else if (!copy_extensions(x, req, ext_copy)) {
+                BIO_printf(bio_err, "Error copying extensions from request\n");
+                goto end;
+            }
+        }
     } else {
         x = load_cert_pass(infile, 1, passin, "certificate");
         if (x == NULL)
@@ -712,14 +736,32 @@ int x509_main(int argc, char **argv)
     }
 
     if (x509toreq) { /* also works but makes little sense together with -req */
+        const STACK_OF(X509_EXTENSION) *exts;
+
         if (signkey == NULL) {
             BIO_printf(bio_err, "Must specify request key using -signkey\n");
             goto end;
         }
+        if (clrext)
+            BIO_printf(bio_err,
+                       "Warning: the -clrext option is ignored when producing a request\n");
 
-        if ((rq = X509_to_X509_REQ(x, signkey, digest)) == NULL)
+        if ((rq = X509_to_X509_REQ(x, NULL, NULL)) == NULL)
             goto end;
-        /* TODO: (optionally) copy X.509 extensions from x */
+        exts = X509_get0_extensions(x);
+        if (sk_X509_EXTENSION_num(exts /* may be NULL */) > 0) {
+            if (ext_copy == EXT_COPY_UNSET) {
+                BIO_printf(bio_err,
+                           "Warning: ignoring extensions in the certificate since -copy_extensions is not given\n");
+            } else if (ext_copy != EXT_COPY_NONE
+                       && !X509_REQ_add_extensions(rq, exts)) {
+                BIO_printf(bio_err,
+                           "Error copying extensions from certificate\n");
+                goto end;
+            }
+        }
+        if (!X509_REQ_sign(rq, signkey, digest))
+            goto end;
         if (!noout) {
             if (outformat == FORMAT_ASN1) {
                 X509_REQ_print_ex(out, rq, get_nameopt(), X509_FLAG_COMPAT);
@@ -907,7 +949,7 @@ int x509_main(int argc, char **argv)
             } else if (ocspid == i) {
                 X509_ocspid_print(out, x);
             } else if (ext == i) {
-                print_x509v3_exts(out, x, exts);
+                print_x509v3_exts(out, x, ext_names);
             }
         }
     }
