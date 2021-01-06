@@ -17,7 +17,7 @@ use OpenSSL::Test qw/:DEFAULT with bldtop_file bldtop_dir srctop_file srctop_dir
 use OpenSSL::Test::Utils;
 
 BEGIN {
-setup("test_ssl");
+setup("test_ssl_old");
 }
 
 use lib srctop_dir('Configurations');
@@ -103,15 +103,15 @@ subtest 'test_ss' => sub {
     }
 };
 
-note('test_ssl -- key U');
+note('test_ssl_old -- key U');
 my $configfile = srctop_file("test","default-and-legacy.cnf");
 if (disabled("legacy")) {
     $configfile = srctop_file("test","default.cnf");
 }
 
-testssl("keyU.ss", $Ucert, $CAcert, "default", $configfile);
+testssl($Ukey, $Ucert, $CAcert, "default", $configfile);
 unless ($no_fips) {
-    testssl("keyU.ss", $Ucert, $CAcert, "fips",
+    testssl($Ukey, $Ucert, $CAcert, "fips",
             srctop_file("test","fips-and-base.cnf"));
 }
 
