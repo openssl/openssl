@@ -166,14 +166,14 @@ int X509_REQ_print_ex(BIO *bp, X509_REQ *x, unsigned long nmflags,
     if (!(cflag & X509_FLAG_NO_EXTENSIONS)) {
         exts = X509_REQ_get_extensions(x);
         if (exts) {
-            if (BIO_printf(bp, "%8sRequested Extensions:\n", "") <= 0)
+            if (BIO_printf(bp, "%12sRequested Extensions:\n", "") <= 0)
                 goto err;
             for (i = 0; i < sk_X509_EXTENSION_num(exts); i++) {
                 ASN1_OBJECT *obj;
                 X509_EXTENSION *ex;
                 int critical;
                 ex = sk_X509_EXTENSION_value(exts, i);
-                if (BIO_printf(bp, "%12s", "") <= 0)
+                if (BIO_printf(bp, "%16s", "") <= 0)
                     goto err;
                 obj = X509_EXTENSION_get_object(ex);
                 if (i2a_ASN1_OBJECT(bp, obj) <= 0)
@@ -181,8 +181,8 @@ int X509_REQ_print_ex(BIO *bp, X509_REQ *x, unsigned long nmflags,
                 critical = X509_EXTENSION_get_critical(ex);
                 if (BIO_printf(bp, ": %s\n", critical ? "critical" : "") <= 0)
                     goto err;
-                if (!X509V3_EXT_print(bp, ex, cflag, 16)) {
-                    if (BIO_printf(bp, "%16s", "") <= 0
+                if (!X509V3_EXT_print(bp, ex, cflag, 20)) {
+                    if (BIO_printf(bp, "%20s", "") <= 0
                         || ASN1_STRING_print(bp,
                                              X509_EXTENSION_get_data(ex)) <= 0)
                         goto err;
