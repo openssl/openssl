@@ -437,7 +437,8 @@ int req_main(int argc, char **argv)
             break;
         case OPT_COPY_EXTENSIONS:
             if (!set_ext_copy(&ext_copy, opt_arg())) {
-                BIO_printf(bio_err, "Invalid extension copy option: \"%s\"\n", opt_arg());
+                BIO_printf(bio_err, "Invalid extension copy option: \"%s\"\n",
+                           opt_arg());
                 goto end;
             }
             break;
@@ -837,13 +838,12 @@ int req_main(int argc, char **argv)
                 goto end;
             if (!pub_key || !X509_set_pubkey(new_x509, pub_key))
                 goto end;
-            if (ext_copy == EXT_COPY_UNSET)
+            if (ext_copy == EXT_COPY_UNSET) {
                 BIO_printf(bio_err, "Warning: No -copy_extensions given; ignoring any extensions in the request\n");
-            else if (!copy_extensions(new_x509, req, ext_copy)) {
+            } else if (!copy_extensions(new_x509, req, ext_copy)) {
                 BIO_printf(bio_err, "Error copying extensions from request\n");
                 goto end;
             }
-            /* TODO: (optionally) copy X.509 extensions from req */
 
             /* Set up V3 context struct */
             X509V3_set_ctx(&ext_ctx, CAcert != NULL ? CAcert : new_x509,
@@ -1116,8 +1116,7 @@ static int make_REQ(X509_REQ *req, EVP_PKEY *pkey, X509_NAME *fsubj,
         }
     }
 
-    /* tentatively set X.509 version 1 */
-    if (!X509_REQ_set_version(req, 0L))
+    if (!X509_REQ_set_version(req, 0L)) /* so far there is only version 1 */
         goto err;
 
     if (fsubj != NULL)
