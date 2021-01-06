@@ -14,6 +14,7 @@ B<openssl> B<x509>
 [B<-new>]
 [B<-x509toreq>]
 [B<-req>]
+[B<-copy_extensions> I<arg>]
 [B<-inform> B<DER>|B<PEM>]
 [B<-vfyopt> I<nm>:I<v>]
 [B<-signkey> I<filename>|I<uri>]
@@ -122,21 +123,29 @@ which implies self-signature.
 
 =item B<-x509toreq>
 
-Output a certificate request (rather than a certificate).
+Output a PKCS#10 certificate request (rather than a certificate).
 The B<-signkey> option must be used to provide the private key for self-signing;
 the corresponding public key is placed in the subjectPKInfo field.
 
-Any X.509 extensions included in an input file are ignored.
+X.509 extensions included in a certificate input are not copied by default.
 X.509 extensions to be added can be specified using the B<-extfile> option.
 
 =item B<-req>
 
 By default a certificate is expected on input.
-With this option a certificate request is expected instead,
-which is transformed into a certificate.
+With this option a PKCS#10 certificate request is expected instead,
+which must be correctly self-signed.
 
-Any X.509 extensions included in the request file are ignored.
+X.509 extensions included in the request are not copied by default.
 X.509 extensions to be added can be specified using the B<-extfile> option.
+
+=item B<-copy_extensions> I<arg>
+
+Determines how to handle X.509 extensions
+when converting from a certificate to a request using the B<-x509toreq> option
+or converting from a request to a certificate using the B<-req> option.
+If I<arg> is B<none> or this option is not present then extensions are ignored.
+If I<arg> is B<copy> or B<copyall> then all extensions are copied.
 
 =item B<-inform> B<DER>|B<PEM>
 
@@ -160,9 +169,6 @@ by B<-force_pubkey>).
 Unless the B<-preserve_dates> option is supplied,
 it sets the validity start date to the current time
 and the end date to a value determined by the B<-days> option.
-Unless the B<-clrext> option is supplied, it retains all certificate extensions
-except for any subject identifier and authority key identifier.
-For those, new values are generated unless prohibited by configuration.
 
 =item B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
 
@@ -389,10 +395,14 @@ generate a certificate containing any desired public key.
 
 =item B<-clrext>
 
-Delete any extensions from a certificate. This option is used when a
-certificate is being created from another certificate (for example with
-either the B<-signkey> or the B<-CA> option).
-Normally all extensions are retained.
+When a transforming a certificate to a new certificate
+(for example with the B<-signkey> or B<-CA> option)
+by default all certificate extensions are retained
+except for any subject identifier and authority key identifier.
+For those, new values are generated unless prohibited by configuration.
+
+When producing a certificate with the B<-clrext> option,
+any extensions are deleted.
 
 =item B<-extfile> I<filename>
 
@@ -830,12 +840,9 @@ must be present.
 
 =head1 BUGS
 
-Extensions in certificates are not transferred to certificate requests and
-vice versa.
-
 It is possible to produce invalid certificates or requests by specifying the
-wrong private key or using inconsistent options in some cases: these should
-be checked.
+wrong private key, using unsuitable X.509 extensions,
+or using inconsistent options in some cases: these should be checked.
 
 There should be options to explicitly set such things as start and end
 dates rather than an offset from the current time.
