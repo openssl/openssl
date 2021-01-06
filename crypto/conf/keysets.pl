@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -8,6 +8,9 @@
 
 use strict;
 use warnings;
+use FindBin;
+use lib "$FindBin::Bin/../../util/perl";
+use OpenSSL::copyright;
 
 my $NUMBER      = 0x0001;
 my $UPPER       = 0x0002;
@@ -58,7 +61,7 @@ foreach (0 .. 127) {
 }
 
 # The year the output file is generated.
-my $YEAR = [localtime()]->[5] + 1900;
+my $YEAR = OpenSSL::copyright::year_of($0);
 print <<"EOF";
 /*
  * WARNING: do not edit!
