@@ -112,7 +112,7 @@ int DH_compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
     if (ret <= 0)
         return ret;
 
-    /* count leading zero bytes */
+    /* count leading zero bytes, yet still touch all bytes */
     for (i = 0; i < ret; i++) {
         mask &= !key[i];
         npad += mask;
@@ -120,7 +120,10 @@ int DH_compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
 
     /* unpad key */
     ret -= npad;
+    /* key-dependent memory access, potentially leaking npad / ret */
     memmove(key, key + npad, ret);
+    /* key-dependent memory access, potentially leaking npad / ret */
+    memset(key + ret, 0, npad);
 
     return ret;
 }
