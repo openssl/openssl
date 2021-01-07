@@ -21,7 +21,7 @@ OpenSSL Releases
 OpenSSL 3.0
 -----------
 
-### Changes between 1.1.1 and 3.0 alpha 10 [7 Jan 2021]
+### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
 
  * The -cipher-commands and -digest-commands options of the command line
    utility list has been deprecated.
