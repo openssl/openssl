@@ -771,9 +771,11 @@ void engine_load_devcrypto_int()
 #ifdef CRIOGET
     if (ioctl(fd, CRIOGET, &cfd) < 0) {
         fprintf(stderr, "Could not create crypto fd: %s\n", strerror(errno));
+        close(fd);
         cfd = -1;
         return;
     }
+    close(fd);
 #else
     cfd = fd;
 #endif
