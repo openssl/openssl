@@ -36,6 +36,8 @@ name of the current certificate are subject to further tests.
 The relevant authority key identifier components of the current certificate
 (if present) must match the subject key identifier (if present)
 and issuer and serial number of the candidate issuer certificate.
+If there is such a certificate, the first one found that is currently valid
+is taken, otherwise the one that expired most recently of all such certificates.
 
 The lookup first searches for issuer certificates in the trust store.
 If it does not find a match there it consults
