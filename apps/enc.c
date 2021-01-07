@@ -112,7 +112,7 @@ int enc_main(int argc, char **argv)
     const EVP_CIPHER *cipher = NULL, *c;
     const EVP_MD *dgst = NULL;
     char *hkey = NULL, *hiv = NULL, *hsalt = NULL, *p;
-    char *infile = NULL, *outfile = NULL, *prog;
+    char *infile = NULL, *outfile = NULL, *prog, *arg0;
     char *str = NULL, *passarg = NULL, *pass = NULL, *strbuf = NULL;
     char mbuf[sizeof(magic) - 1];
     OPTION_CHOICE o;
@@ -131,18 +131,18 @@ int enc_main(int argc, char **argv)
     BIO *bzl = NULL;
 #endif
 
-    /* first check the program name */
-    prog = opt_progname(argv[0]);
-    if (strcmp(prog, "base64") == 0) {
+    /* first check the command name */
+    arg0 = argv[0];
+    if (strcmp(arg0, "base64") == 0) {
         base64 = 1;
 #ifdef ZLIB
-    } else if (strcmp(prog, "zlib") == 0) {
+    } else if (strcmp(arg0, "zlib") == 0) {
         do_zlib = 1;
 #endif
     } else {
-        cipher = EVP_get_cipherbyname(prog);
-        if (cipher == NULL && strcmp(prog, "enc") != 0) {
-            BIO_printf(bio_err, "%s is not a known cipher\n", prog);
+        cipher = EVP_get_cipherbyname(arg0);
+        if (cipher == NULL && strcmp(arg0, "enc") != 0) {
+            BIO_printf(bio_err, "%s is not a known cipher\n", arg0);
             goto end;
         }
     }

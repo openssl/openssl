@@ -42,16 +42,13 @@
 #include <openssl/objects.h>
 #include <openssl/x509.h>
 
+static char *prog;
 static char *opt_config = NULL;
 #define CMP_SECTION "cmp"
 #define SECTION_NAME_MAX 40 /* max length of section name */
 #define DEFAULT_SECTION "default"
 static char *opt_section = CMP_SECTION;
 static int opt_verbosity = OSSL_CMP_LOG_INFO;
-
-#undef PROG
-#define PROG cmp_main
-static char *prog = "cmp";
 
 static int read_config(void);
 
@@ -2625,6 +2622,7 @@ int cmp_main(int argc, char **argv)
     int ret = 0; /* default: failure */
 
     if (argc <= 1) {
+        prog = opt_appname(argv[0]);
         opt_help(cmp_options);
         goto err;
     }

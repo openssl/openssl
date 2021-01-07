@@ -341,6 +341,7 @@ typedef struct string_int_pair_st {
 
 const char *opt_path_end(const char *filename);
 char *opt_progname(const char *argv0);
+char *opt_appname(const char *arg0);
 char *opt_getprog(void);
 char *opt_init(int ac, char **av, const OPTIONS * o);
 int opt_next(void);

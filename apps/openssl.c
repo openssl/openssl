@@ -235,6 +235,7 @@ int main(int argc, char *argv[])
     FUNCTION f, *fp;
     LHASH_OF(FUNCTION) *prog = NULL;
     char *pname;
+    const char *fname;
     ARGS arg;
     int ret = 0;
 
@@ -249,9 +250,7 @@ int main(int argc, char *argv[])
 #if defined(OPENSSL_SYS_VMS) && defined(__DECC)
     argv = copy_argv(&argc, argv);
 #elif defined(_WIN32)
-    /*
-     * Replace argv[] with UTF-8 encoded strings.
-     */
+    /* Replace argv[] with UTF-8 encoded strings. */
     win32_utf8argv(&argc, &argv);
 #endif
 
@@ -259,18 +258,11 @@ int main(int argc, char *argv[])
     setup_trace(getenv("OPENSSL_TRACE"));
 #endif
 
-    if (!apps_startup()) {
+    if ((fname = "apps_startup", !apps_startup())
+            || (fname = "prog_init", (prog = prog_init()) == NULL)) {
         BIO_printf(bio_err,
-                   "FATAL: Startup failure (dev note: apps_startup() failed)\n");
-        ERR_print_errors(bio_err);
-        ret = 1;
-        goto end;
-    }
-
-    prog = prog_init();
-    if (prog == NULL) {
-        BIO_printf(bio_err,
-                   "FATAL: Startup failure (dev note: prog_init() failed)\n");
+                   "FATAL: Startup failure (dev note: %s()) for %s\n",
+                   fname, argv[0]);
         ERR_print_errors(bio_err);
         ret = 1;
         goto end;
@@ -288,6 +280,9 @@ int main(int argc, char *argv[])
         /* We assume we've been called as 'openssl cmd' */
         argc--;
         argv++;
+        opt_appname(argv[0]);
+    } else {
+        argv[0] = pname;
     }
 
     /* If there's a command, run with that, otherwise "help". */
@@ -360,7 +355,7 @@ int help_main(int argc, char **argv)
     }
 
     calculate_columns(functions, &dc);
-    BIO_printf(bio_err, "Standard commands");
+    BIO_printf(bio_err, "%s:\n\nStandard commands", prog);
     i = 0;
     tp = FT_none;
     for (fp = functions; fp->name != NULL; fp++) {
