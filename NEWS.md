@@ -18,7 +18,7 @@ OpenSSL Releases
 OpenSSL 3.0
 -----------
 
-### Major changes between OpenSSL 1.1.1 and OpenSSL 3.0 [under development]
+### Major changes between OpenSSL 1.1.1 and OpenSSL 3.0 alpha 10 [in pre-release]
 
   * Deprecated the `DSA_` functions.
   * Deprecated the `ERR_load_` functions.
