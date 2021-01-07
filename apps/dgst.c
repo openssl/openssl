@@ -111,9 +111,8 @@ int dgst_main(int argc, char **argv)
     int engine_impl = 0;
     struct doall_dgst_digests dec;
 
-    prog = opt_progname(argv[0]);
     buf = app_malloc(BUFSIZE, "I/O buffer");
-    md = EVP_get_digestbyname(prog);
+    md = EVP_get_digestbyname(argv[0]);
 
     prog = opt_init(argc, argv, dgst_options);
     while ((o = opt_next()) != OPT_EOF) {
