@@ -103,10 +103,17 @@ INSTALL_ENGINEPDBS={-
                          && $unified_info{attributes}->{modules}->{$_}->{engine} }
                   @{$unified_info{modules}})
 -}
-INSTALL_MODULES={-
-        join(" ", map { platform->dso($_) }
+INSTALL_FIPS={-
+        join(" ", map { quotify1(platform->dso($_)) }
                   grep { !$unified_info{attributes}->{modules}->{$_}->{noinst}
-                          && !$unified_info{attributes}->{modules}->{$_}->{engine} }
+                          && $unified_info{attributes}->{modules}->{$_}->{fips} }
+                  @{$unified_info{modules}})
+-}
+INSTALL_MODULES={-
+        join(" ", map { quotify1(platform->dso($_)) }
+                  grep { !$unified_info{attributes}->{modules}->{$_}->{noinst}
+                          && !$unified_info{attributes}->{modules}->{$_}->{engine}
+                          && !$unified_info{attributes}->{modules}->{$_}->{fips} }
                   @{$unified_info{modules}})
 -}
 INSTALL_MODULEPDBS={-
@@ -470,17 +477,26 @@ install_docs: install_html_docs
 
 uninstall_docs: uninstall_html_docs
 
-install_fips: install_sw
+install_fips:
+#	@[ -n "$(INSTALLTOP)" ] || (echo INSTALLTOP should not be empty; exit 1)
+	@$(PERL) $(SRCDIR)\util\mkdir-p.pl $(MODULESDIR)
+	@$(ECHO) "*** Installing FIPS module"
+	@$(ECHO) "install $(INSTALL_FIPS) -> $(MODULESDIR)\$(FIPSMODULENAME)"
+	@copy "$(INSTALL_FIPS)" $(MODULESDIR)\$(FIPSMODULENAME).new
+	@move /Y $(MODULESDIR)\$(FIPSMODULENAME).new \
+	       $(MODULESDIR)\$(FIPSMODULENAME)
 	@$(ECHO) "*** Installing FIPS module configuration"
-	@$(ECHO) "fipsinstall $(MODULESDIR)\$(FIPSMODULENAME).cnf"
+	@$(ECHO) "fipsinstall $(OPENSSLDIR)\fipsmodule.cnf"
 	@$(PERL) "$(BLDDIR)\util\wrap.pl" "$(BLDDIR)\apps\openssl" fipsinstall \
 		-module "$(MODULESDIR)\$(FIPSMODULENAME)" \
 		-out "$(OPENSSLDIR)\fipsmodule.cnf" \
 		-macopt "hexkey:$(FIPSKEY)"
 
-uninstall_fips: uninstall_sw
+uninstall_fips:
 	@$(ECHO) "*** Uninstalling FIPS module configuration"
 	$(RM) "$(OPENSSLDIR)\fipsmodule.cnf"
+	@$(ECHO) "*** Uninstalling FIPS module"
+	$(RM) "$(MODULESDIR)\$(FIPSMODULENAME)"
 
 install_ssldirs:
 	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(OPENSSLDIR)\certs"
