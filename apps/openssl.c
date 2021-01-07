@@ -237,6 +237,7 @@ int main(int argc, char *argv[])
     char *pname;
     const char *fname;
     ARGS arg;
+    int global_help = 0;
     int ret = 0;
 
     arg.argv = NULL;
@@ -277,18 +278,21 @@ int main(int argc, char *argv[])
     f.name = pname;
     fp = lh_FUNCTION_retrieve(prog, &f);
     if (fp == NULL) {
-        /* We assume we've been called as 'openssl cmd' */
+        /* We assume we've been called as 'openssl ...' */
+        global_help = argc > 1
+            && (strcmp(argv[1], "-help") == 0 || strcmp(argv[1], "--help") == 0
+                || strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--h") == 0);
         argc--;
         argv++;
-        opt_appname(argv[0]);
+        opt_appname(argc == 1 || global_help ? "help" : argv[0]);
     } else {
         argv[0] = pname;
     }
 
     /* If there's a command, run with that, otherwise "help". */
-    ret = argc > 0
-        ? do_cmd(prog, argc, argv)
-        : do_cmd(prog, 1, help_argv);
+    ret = argc == 0 || global_help
+        ? do_cmd(prog, 1, help_argv)
+        : do_cmd(prog, argc, argv);
 
  end:
     OPENSSL_free(default_config_file);
