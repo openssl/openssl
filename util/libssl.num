@@ -519,3 +519,4 @@ SSL_get1_peer_certificate               ?	3_0_0	EXIST::FUNCTION:
 SSL_load_client_CA_file_ex              ?	3_0_0	EXIST::FUNCTION:
 SSL_set0_tmp_dh_pkey                    ?	3_0_0	EXIST::FUNCTION:
 SSL_CTX_set0_tmp_dh_pkey                ?	3_0_0	EXIST::FUNCTION:
+SSL_group_to_name                       ?	3_0_0	EXIST::FUNCTION:
