@@ -4318,6 +4318,7 @@ static int test_key_exchange(int idx)
     int *kexch_groups = &kexch_alg;
     int kexch_groups_size = 1;
     int max_version = TLS1_3_VERSION;
+    char *kexch_name0 = NULL;
 
     switch (idx) {
 # ifndef OPENSSL_NO_EC
@@ -4329,47 +4330,60 @@ static int test_key_exchange(int idx)
         case 0:
             kexch_groups = ecdhe_kexch_groups;
             kexch_groups_size = OSSL_NELEM(ecdhe_kexch_groups);
+            kexch_name0 = "secp256r1";
             break;
         case 1:
             kexch_alg = NID_X9_62_prime256v1;
+            kexch_name0 = "secp256r1";
             break;
         case 2:
             kexch_alg = NID_secp384r1;
+            kexch_name0 = "secp384r1";
             break;
         case 3:
             kexch_alg = NID_secp521r1;
+            kexch_name0 = "secp521r1";
             break;
         case 4:
             kexch_alg = NID_X25519;
+            kexch_name0 = "x25519";
             break;
         case 5:
             kexch_alg = NID_X448;
+            kexch_name0 = "x448";
             break;
 # endif
 # ifndef OPENSSL_NO_DH
 # ifndef OPENSSL_NO_TLS1_2
         case 13:
             max_version = TLS1_2_VERSION;
+            kexch_name0 = "ffdhe2048";
 # endif
             /* Fall through */
         case 6:
             kexch_groups = ffdhe_kexch_groups;
             kexch_groups_size = OSSL_NELEM(ffdhe_kexch_groups);
+            kexch_name0 = "ffdhe2048";
             break;
         case 7:
             kexch_alg = NID_ffdhe2048;
+            kexch_name0 = "ffdhe2048";
             break;
         case 8:
             kexch_alg = NID_ffdhe3072;
+            kexch_name0 = "ffdhe3072";
             break;
         case 9:
             kexch_alg = NID_ffdhe4096;
+            kexch_name0 = "ffdhe4096";
             break;
         case 10:
             kexch_alg = NID_ffdhe6144;
+            kexch_name0 = "ffdhe6144";
             break;
         case 11:
             kexch_alg = NID_ffdhe8192;
+            kexch_name0 = "ffdhe8192";
             break;
 # endif
         default:
@@ -4425,6 +4439,11 @@ static int test_key_exchange(int idx)
     if (!TEST_int_eq(SSL_get_shared_group(serverssl, 0),
                      idx == 13 ? 0 : kexch_groups[0]))
         goto end;
+
+    if (!TEST_str_eq(SSL_group_to_name(serverssl, kexch_groups[0]),
+                     kexch_name0))
+        goto end;
+
     if (max_version == TLS1_3_VERSION) {
         if (!TEST_int_eq(SSL_get_negotiated_group(serverssl), kexch_groups[0]))
             goto end;
@@ -7998,6 +8017,10 @@ static int test_pluggable_group(int idx)
         goto end;
 
     if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
+        goto end;
+
+    if (!TEST_str_eq(group_name,
+                     SSL_group_to_name(serverssl, SSL_get_shared_group(serverssl, 0))))
         goto end;
 
     testresult = 1;

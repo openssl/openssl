@@ -460,7 +460,7 @@ int tls1_group_id2nid(uint16_t group_id, int include_unknown)
     return TLSEXT_nid_unknown | (int)group_id;
 }
 
-static uint16_t tls1_nid2group_id(int nid)
+uint16_t tls1_nid2group_id(int nid)
 {
     size_t i;
 

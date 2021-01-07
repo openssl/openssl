@@ -345,7 +345,6 @@ int ssl_print_point_formats(BIO *out, SSL *s)
 int ssl_print_groups(BIO *out, SSL *s, int noshared)
 {
     int i, ngroups, *groups, nid;
-    const char *gname;
 
     ngroups = SSL_get1_groups(s, NULL);
     if (ngroups <= 0)
@@ -353,39 +352,25 @@ int ssl_print_groups(BIO *out, SSL *s, int noshared)
     groups = app_malloc(ngroups * sizeof(int), "groups to print");
     SSL_get1_groups(s, groups);
 
-    BIO_puts(out, "Supported Elliptic Groups: ");
+    BIO_puts(out, "Supported groups: ");
     for (i = 0; i < ngroups; i++) {
         if (i)
             BIO_puts(out, ":");
         nid = groups[i];
-        /* If unrecognised print out hex version */
-        if (nid & TLSEXT_nid_unknown) {
-            BIO_printf(out, "0x%04X", nid & 0xFFFF);
-        } else {
-            /* TODO(TLS1.3): Get group name here */
-            /* Use NIST name for curve if it exists */
-            gname = EC_curve_nid2nist(nid);
-            if (gname == NULL)
-                gname = OBJ_nid2sn(nid);
-            BIO_printf(out, "%s", gname);
-        }
+        BIO_printf(out, "%s", SSL_group_to_name(s, nid));
     }
     OPENSSL_free(groups);
     if (noshared) {
         BIO_puts(out, "\n");
         return 1;
     }
-    BIO_puts(out, "\nShared Elliptic groups: ");
+    BIO_puts(out, "\nShared groups: ");
     ngroups = SSL_get_shared_group(s, -1);
     for (i = 0; i < ngroups; i++) {
         if (i)
             BIO_puts(out, ":");
         nid = SSL_get_shared_group(s, i);
-        /* TODO(TLS1.3): Convert for DH groups */
-        gname = EC_curve_nid2nist(nid);
-        if (gname == NULL)
-            gname = OBJ_nid2sn(nid);
-        BIO_printf(out, "%s", gname);
+        BIO_printf(out, "%s", SSL_group_to_name(s, nid));
     }
     if (ngroups == 0)
         BIO_puts(out, "NONE");

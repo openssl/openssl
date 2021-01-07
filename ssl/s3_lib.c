@@ -4986,3 +4986,21 @@ int ssl_encapsulate(SSL *s, EVP_PKEY *pubkey,
     EVP_PKEY_CTX_free(pctx);
     return rv;
 }
+
+const char *SSL_group_to_name(SSL *s, int nid) {
+    int group_id = 0;
+    const TLS_GROUP_INFO *cinf = NULL;
+
+    /* first convert to real group id for internal and external IDs */
+    if (nid & TLSEXT_nid_unknown)
+        group_id = nid & 0xFFFF;
+    else
+        group_id = tls1_nid2group_id(nid);
+
+    /* then look up */
+    cinf = tls1_group_id_lookup(s->ctx, group_id);
+
+    if (cinf != NULL)
+        return cinf->tlsname;
+    return NULL;
+}
