@@ -8019,8 +8019,8 @@ static int test_pluggable_group(int idx)
     if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
         goto end;
 
-    if (!TEST_str_eq(group_name, SSL_group_to_name(serverssl,
-                                         SSL_get_shared_group(serverssl, 0))))
+    if (!TEST_str_eq(group_name,
+                     SSL_group_to_name(serverssl, SSL_get_shared_group(serverssl, 0))))
         goto end;
 
     testresult = 1;
