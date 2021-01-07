@@ -169,6 +169,14 @@ static int rc4_hmac_md5_set_ctx_params(void *vctx, const OSSL_PARAM params[])
         }
         GET_HW(ctx)->init_mackey(&ctx->base, p->data, p->data_size);
     }
+    p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_TLS_VERSION);
+    if (p != NULL) {
+        if (!OSSL_PARAM_get_uint(p, &ctx->base.tlsversion)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
+            return 0;
+        }
+    }
+
     return 1;
 }
 
