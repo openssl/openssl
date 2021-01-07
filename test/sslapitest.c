@@ -4440,8 +4440,8 @@ static int test_key_exchange(int idx)
                      idx == 13 ? 0 : kexch_groups[0]))
         goto end;
 
-    if (!TEST_true(!strcmp(SSL_group_to_name(serverssl, kexch_groups[0]),
-                           kexch_name0)))
+    if (!TEST_str_eq(SSL_group_to_name(serverssl, kexch_groups[0]),
+                     kexch_name0))
         goto end;
 
     if (max_version == TLS1_3_VERSION) {
@@ -8019,8 +8019,8 @@ static int test_pluggable_group(int idx)
     if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
         goto end;
 
-    if (!TEST_true(!strcmp(group_name, SSL_group_to_name(serverssl,
-                                         SSL_get_shared_group(serverssl, 0)))))
+    if (!TEST_str_eq(group_name, SSL_group_to_name(serverssl,
+                                         SSL_get_shared_group(serverssl, 0))))
         goto end;
 
     testresult = 1;

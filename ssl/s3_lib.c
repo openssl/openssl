@@ -5002,6 +5002,5 @@ const char *SSL_group_to_name(SSL *s, int nid) {
 
     if (cinf != NULL)
         return cinf->tlsname;
-    else
-        return NULL;
+    return NULL;
 }
