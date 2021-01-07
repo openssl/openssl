@@ -13,7 +13,7 @@ use OpenSSL::Test;
 
 setup("test_app");
 
-plan tests => 3;
+plan tests => 5;
 
 ok(run(app(["openssl"])),
    "Run openssl app with no args");
@@ -21,5 +21,11 @@ ok(run(app(["openssl"])),
 ok(run(app(["openssl", "help"])),
    "Run openssl app with help");
 
-ok(!run(app(["openssl", "-help"])),
+ok(!run(app(["openssl", "-wrong"])),
    "Run openssl app with incorrect arg");
+
+ok(run(app(["openssl", "-help"])),
+   "Run openssl app with -help");
+
+ok(run(app(["openssl", "--help"])),
+   "Run openssl app with --help");

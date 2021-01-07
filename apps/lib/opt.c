@@ -732,7 +732,8 @@ int opt_next(void)
         *arg++ = '\0';
     for (o = opts; o->name; ++o) {
         /* If not this option, move on to the next one. */
-        if (strcmp(p, o->name) != 0)
+        if (!(strcmp(p, "h") == 0 && strcmp(o->name, "help") == 0)
+                && strcmp(p, o->name) != 0)
             continue;
 
         /* If it doesn't take a value, make sure none was given. */
