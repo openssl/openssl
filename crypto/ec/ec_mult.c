@@ -835,6 +835,7 @@ int ec_wNAF_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
     EC_POINT **points = NULL;
     EC_PRE_COMP *pre_comp;
     int ret = 0;
+    int used_ctx = 0;
 #ifndef FIPS_MODULE
     BN_CTX *new_ctx = NULL;
 #endif
@@ -858,6 +859,7 @@ int ec_wNAF_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
         goto err;
 
     BN_CTX_start(ctx);
+    used_ctx = 1;
 
     order = EC_GROUP_get0_order(group);
     if (order == NULL)
@@ -967,7 +969,8 @@ int ec_wNAF_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
     ret = 1;
 
  err:
-    BN_CTX_end(ctx);
+    if (used_ctx)
+        BN_CTX_end(ctx);
 #ifndef FIPS_MODULE
     BN_CTX_free(new_ctx);
 #endif

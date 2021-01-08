@@ -22,6 +22,7 @@ BIGNUM *BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
     int r;
     BIGNUM *A, *b, *q, *t, *x, *y;
     int e, i, j;
+    int used_ctx = 0;
 
     if (!BN_is_odd(p) || BN_abs_is_word(p, 1)) {
         if (BN_abs_is_word(p, 2)) {
@@ -57,6 +58,7 @@ BIGNUM *BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
     }
 
     BN_CTX_start(ctx);
+    used_ctx = 1;
     A = BN_CTX_get(ctx);
     b = BN_CTX_get(ctx);
     q = BN_CTX_get(ctx);
@@ -353,7 +355,8 @@ BIGNUM *BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
             BN_clear_free(ret);
         ret = NULL;
     }
-    BN_CTX_end(ctx);
+    if (used_ctx)
+        BN_CTX_end(ctx);
     bn_check_top(ret);
     return ret;
 }
