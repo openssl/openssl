@@ -673,6 +673,14 @@ static X509_REQ *load_csr_autofmt(const char *infile, const char *desc)
         ERR_print_errors(bio_err);
         BIO_printf(bio_err, "error: unable to load %s from file '%s'\n", desc,
                    infile);
+    } else {
+        EVP_PKEY *pkey = X509_REQ_get0_pubkey(csr);
+        int ret = do_X509_REQ_verify(csr, pkey, NULL /* vfyopts */);
+
+        if (pkey == NULL || ret < 0)
+            CMP_warn("error while verifying CSR self-signature");
+        else if (ret == 0)
+            CMP_warn("CSR self-signature does not match the contents");
     }
     return csr;
 }
