@@ -167,7 +167,9 @@ STACK_OF(X509_EXTENSION) *X509_REQ_get_extensions(X509_REQ *req)
         ext = X509_ATTRIBUTE_get0_type(attr, 0);
         break;
     }
-    if (!ext || (ext->type != V_ASN1_SEQUENCE))
+    if (ext == NULL) /* no extensions is not an error */
+        return sk_X509_EXTENSION_new_null();
+    if (ext->type != V_ASN1_SEQUENCE)
         return NULL;
     p = ext->value.sequence->data;
     return (STACK_OF(X509_EXTENSION) *)
