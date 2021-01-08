@@ -18,7 +18,7 @@
 #include <openssl/rsa.h>
 #include "testutil.h"
 
-static int dofips = 0;
+static int do_fips = 0;
 
 #if !defined(OPENSSL_THREADS) || defined(CRYPTO_TDEBUG)
 
@@ -264,15 +264,15 @@ static int test_atomic(void)
     return testresult;
 }
 
-static OSSL_LIB_CTX *multilibctx = NULL;
-static int multisuccess;
+static OSSL_LIB_CTX *multi_libctx = NULL;
+static int multi_success;
 
 static void thread_multi_worker(void)
 {
     EVP_MD_CTX *mdctx = EVP_MD_CTX_new();
-    EVP_MD *md = EVP_MD_fetch(multilibctx, "SHA2-256", NULL);
+    EVP_MD *md = EVP_MD_fetch(multi_libctx, "SHA2-256", NULL);
     EVP_CIPHER_CTX *cipherctx = EVP_CIPHER_CTX_new();
-    EVP_CIPHER *ciph = EVP_CIPHER_fetch(multilibctx, "AES-128-CBC", NULL);
+    EVP_CIPHER *ciph = EVP_CIPHER_fetch(multi_libctx, "AES-128-CBC", NULL);
     const char *message = "Hello World";
     size_t messlen = strlen(message);
     /* Should be big enough for encryption output too */
@@ -292,7 +292,7 @@ static void thread_multi_worker(void)
     int testresult = 0;
     int i, isfips;
 
-    isfips = OSSL_PROVIDER_available(multilibctx, "fips");
+    isfips = OSSL_PROVIDER_available(multi_libctx, "fips");
 
     if (!TEST_ptr(mdctx)
             || !TEST_ptr(md)
@@ -316,7 +316,7 @@ static void thread_multi_worker(void)
             goto err;
     }
 
-    pctx = EVP_PKEY_CTX_new_from_name(multilibctx, "RSA", NULL);
+    pctx = EVP_PKEY_CTX_new_from_name(multi_libctx, "RSA", NULL);
     if (!TEST_ptr(pctx)
             || !TEST_int_gt(EVP_PKEY_keygen_init(pctx), 0)
                /*
@@ -330,7 +330,6 @@ static void thread_multi_worker(void)
             || !TEST_int_gt(EVP_PKEY_keygen(pctx, &pkey), 0))
         goto err;
 
-
     testresult = 1;
  err:
     EVP_MD_CTX_free(mdctx);
@@ -340,7 +339,7 @@ static void thread_multi_worker(void)
     EVP_PKEY_CTX_free(pctx);
     EVP_PKEY_free(pkey);
     if (!testresult)
-        multisuccess = 0;
+        multi_success = 0;
 }
 
 /*
@@ -354,14 +353,14 @@ static int test_multi(int idx)
     int testresult = 0;
     OSSL_PROVIDER *prov = NULL;
 
-    if (idx == 1 && !dofips)
+    if (idx == 1 && !do_fips)
         return TEST_skip("FIPS not supported");
 
-    multisuccess = 1;
-    multilibctx = OSSL_LIB_CTX_new();
-    if (!TEST_ptr(multilibctx))
+    multi_success = 1;
+    multi_libctx = OSSL_LIB_CTX_new();
+    if (!TEST_ptr(multi_libctx))
         goto err;
-    prov = OSSL_PROVIDER_load(multilibctx, (idx == 0) ? "default" : "fips");
+    prov = OSSL_PROVIDER_load(multi_libctx, (idx == 0) ? "default" : "fips");
     if (!TEST_ptr(prov))
         goto err;
 
@@ -373,14 +372,14 @@ static int test_multi(int idx)
 
     if (!TEST_true(wait_for_thread(thread1))
             || !TEST_true(wait_for_thread(thread2))
-            || !TEST_true(multisuccess))
+            || !TEST_true(multi_success))
         goto err;
 
     testresult = 1;
 
  err:
     OSSL_PROVIDER_unload(prov);
-    OSSL_LIB_CTX_free(multilibctx);
+    OSSL_LIB_CTX_free(multi_libctx);
     return testresult;
 }
 
@@ -408,7 +407,7 @@ int setup_tests(void)
     while ((o = opt_next()) != OPT_EOF) {
         switch (o) {
         case OPT_FIPS:
-            dofips = 1;
+            do_fips = 1;
             break;
         case OPT_TEST_CASES:
             break;
