@@ -4,7 +4,14 @@
 # see https://hub.docker.com/_/gcc/
 image: gcc
 
-build:
+check_update:
+  stage: build
+  script:
+  - ./config --strict-warnings
+  - make -s update
+  - git diff --exit-code
+
+basic_gcc  
   stage: build
   # instead of calling g++ directly you can also use some build toolkit like make
   # install the necessary build tools when needed
