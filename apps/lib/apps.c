@@ -989,10 +989,7 @@ int copy_extensions(X509 *x, X509_REQ *req, int copy_type)
                 continue;
             /* Delete all extensions of same type */
             do {
-                X509_EXTENSION *tmpext = X509_get_ext(x, idx);
-
-                X509_delete_ext(x, idx);
-                X509_EXTENSION_free(tmpext);
+                X509_EXTENSION_free(X509_delete_ext(x, idx));
                 idx = X509_get_ext_by_OBJ(x, obj, -1);
             } while (idx != -1);
         }
