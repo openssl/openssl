@@ -4,6 +4,9 @@
 # see https://hub.docker.com/_/gcc/
 image: gcc
 
+stages:
+  - build
+
 check_update:
   stage: build
   script:
