@@ -174,7 +174,7 @@ int BN_X931_generate_Xpq(BIGNUM *Xp, BIGNUM *Xq, int nbits, BN_CTX *ctx)
      * exceeded.
      */
     if (!BN_priv_rand_ex(Xp, nbits, BN_RAND_TOP_TWO, BN_RAND_BOTTOM_ANY, ctx))
-        goto err;
+        return 0;
 
     BN_CTX_start(ctx);
     t = BN_CTX_get(ctx);

@@ -145,8 +145,10 @@ int BN_generate_prime_ex2(BIGNUM *ret, int bits, int safe,
     }
 
     mods = OPENSSL_zalloc(sizeof(*mods) * NUMPRIMES);
-    if (mods == NULL)
-        goto err;
+    if (mods == NULL) {
+        ERR_raise(ERR_LIB_BN, ERR_R_MALLOC_FAILURE);
+        return 0;
+    }
 
     BN_CTX_start(ctx);
     t = BN_CTX_get(ctx);
