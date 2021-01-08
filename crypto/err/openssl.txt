@@ -2609,7 +2609,7 @@ EVP_R_PRIVATE_KEY_ENCODE_ERROR:146:private key encode error
 EVP_R_PUBLIC_KEY_NOT_RSA:106:public key not rsa
 EVP_R_SET_DEFAULT_PROPERTY_FAILURE:209:set default property failure
 EVP_R_TOO_MANY_RECORDS:183:too many records
-EVP_R_UNABLE_TO_ENABLE_PARENT_LOCKING:212:unable to enable parent locking
+EVP_R_UNABLE_TO_ENABLE_LOCKING:212:unable to enable locking
 EVP_R_UNABLE_TO_GET_MAXIMUM_REQUEST_SIZE:215:unable to get maximum request size
 EVP_R_UNABLE_TO_GET_RANDOM_STRENGTH:216:unable to get random strength
 EVP_R_UNABLE_TO_LOCK_CONTEXT:211:unable to lock context

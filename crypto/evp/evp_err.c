@@ -152,7 +152,7 @@ static const ERR_STRING_DATA EVP_str_reasons[] = {
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_SET_DEFAULT_PROPERTY_FAILURE),
     "set default property failure"},
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_TOO_MANY_RECORDS), "too many records"},
-    {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_UNABLE_TO_ENABLE_PARENT_LOCKING),
+    {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_UNABLE_TO_ENABLE_LOCKING),
     "unable to enable parent locking"},
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_UNABLE_TO_GET_MAXIMUM_REQUEST_SIZE),
     "unable to get maximum request size"},

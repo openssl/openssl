@@ -152,7 +152,9 @@ appropriate size.
 
 EVP_RAND_enable_locking() enables locking for the RAND I<ctx> and all of
 its parents.  After this I<ctx> will operate in a thread safe manner, albeit
-more slowly.
+more slowly. This function is not itself thread safe if called with the same
+I<ctx> from multiple threads. Typically locking should be enabled before a
+I<ctx> is shared across multiple threads.
 
 EVP_RAND_get_params() retrieves details about the implementation
 I<rand>.
