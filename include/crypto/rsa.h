@@ -68,6 +68,10 @@ int ossl_rsa_pss_params_30_fromdata(RSA_PSS_PARAMS_30 *pss_params,
                                     const OSSL_PARAM params[],
                                     OSSL_LIB_CTX *libctx);
 
+int ossl_rsa_padding_check_PKCS1_type_2(OSSL_LIB_CTX *ctx,
+                                        unsigned char *to, int tlen,
+                                        const unsigned char *from, int flen,
+                                        int num, unsigned char *kdk);
 int ossl_rsa_padding_check_PKCS1_type_2_TLS(OSSL_LIB_CTX *ctx, unsigned char *to,
                                             size_t tlen,
                                             const unsigned char *from,

@@ -114,6 +114,11 @@ special padding used in SSL v2 backwards compatible handshakes,
 or no padding, respectively.
 For signatures, only B<-pkcs> and B<-raw> can be used.
 
+Note: because of protection against Bleichenbacher attacks, decryption
+using PKCS#1 v1.5 mode will not return errors in case padding check failed.
+Use B<-raw> and inspect the returned value manually to check if the
+padding is correct.
+
 =item B<-hexdump>
 
 Hex dump the output data.
