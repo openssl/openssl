@@ -8,7 +8,6 @@ stages:
   - build
 
 check_update:
-  stage: build
   script:
   - ./config --strict-warnings
   - make -s update
@@ -16,20 +15,49 @@ check_update:
 
 
 check_docs:
-  stage: build
   script:
   - ./config --strict-warnings && perl configdata.pm --dump
   - make -s build_generated
   - make doc-nits
 
 basic_gcc:
-  stage: build
-  # instead of calling g++ directly you can also use some build toolkit like make
-  # install the necessary build tools when needed
-  # before_script:
-  #   - apt update && apt -y install make autoconf
   script:
     - ./config --strict-warnings
     - make -s -j4
     - make test
   
+  minimal:
+    script:
+      - ./config --strict-warnings no-bulk no-pic no-asm -DOPENSSL_NO_SECURE_MEMORY -DOPENSSL_SMALL_FOOTPRINT && perl configdata.pm --dump
+      - make -s -j4
+      - make test HARNESS_JOBS=${HARNESS_JOBS:-4}
+
+ no-deprecated:
+    script:
+      - ./config --strict-warnings no-deprecated && perl configdata.pm --dump
+      - make -s -j4
+      - make test HARNESS_JOBS=${HARNESS_JOBS:-4}
+
+  sanitizers:
+    script:
+      - ./config --debug enable-asan enable-ubsan enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 && perl configdata.pm --dump
+      - make -s -j4
+      - make test HARNESS_JOBS=${HARNESS_JOBS:-4} OPENSSL_TEST_RAND_ORDER=0
+
+  enable_non-default_options:
+    script:
+      - ./config --strict-warnings no-ec enable-ssl-trace enable-zlib enable-zlib-dynamic enable-crypto-mdebug enable-crypto-mdebug-backtrace enable-egd && perl configdata.pm --dump
+      - make -s -j4
+      - make test HARNESS_JOBS=${HARNESS_JOBS:-4}
+
+  legacy:
+    script:
+      - ./config -Werror --debug no-afalgeng no-shared enable-crypto-mdebug enable-rc5 enable-md2 && perl configdata.pm --dump
+      - make -s -j4
+      - make test HARNESS_JOBS=${HARNESS_JOBS:-4}
+
+  buildtest:
+    script:
+      - ./config no-asm no-makedepend enable-buildtest-c++ --strict-warnings -D_DEFAULT_SOURCE && perl configdata.pm --dump
+      - make -s -j4
+      - make test HARNESS_JOBS=${HARNESS_JOBS:-4}
