@@ -339,7 +339,7 @@ int X509_STORE_CTX_get_by_subject(const X509_STORE_CTX *vs,
             return 0;
     }
 
-    if (!X509_OBJECT_up_ref_count(tmp))
+    if (!X509_OBJECT_up_ref(tmp))
         return 0;
 
     ret->type = tmp->type;
@@ -365,7 +365,7 @@ static int x509_store_add(X509_STORE *store, void *x, int crl) {
         obj->type = X509_LU_X509;
         obj->data.x509 = (X509 *)x;
     }
-    if (!X509_OBJECT_up_ref_count(obj)) {
+    if (!X509_OBJECT_up_ref(obj)) {
         obj->type = X509_LU_NONE;
         X509_OBJECT_free(obj);
         return 0;
@@ -404,7 +404,7 @@ int X509_STORE_add_crl(X509_STORE *ctx, X509_CRL *x)
     return 1;
 }
 
-int X509_OBJECT_up_ref_count(X509_OBJECT *a)
+int X509_OBJECT_up_ref(X509_OBJECT *a)
 {
     switch (a->type) {
     case X509_LU_NONE:

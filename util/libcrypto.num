@@ -319,7 +319,7 @@ EVP_whirlpool                           324	3_0_0	EXIST::FUNCTION:WHIRLPOOL
 OCSP_ONEREQ_get1_ext_d2i                325	3_0_0	EXIST::FUNCTION:OCSP
 d2i_ESS_SIGNING_CERT                    326	3_0_0	EXIST::FUNCTION:
 EC_KEY_set_default_method               327	3_0_0	EXIST::FUNCTION:EC
-X509_OBJECT_up_ref_count                328	3_0_0	EXIST::FUNCTION:
+X509_OBJECT_up_ref                      328	3_0_0	EXIST::FUNCTION:
 RAND_load_file                          329	3_0_0	EXIST::FUNCTION:
 BIO_ctrl_reset_read_request             330	3_0_0	EXIST::FUNCTION:
 CRYPTO_ccm128_tag                       331	3_0_0	EXIST::FUNCTION:
