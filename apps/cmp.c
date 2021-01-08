@@ -1603,12 +1603,18 @@ static int setup_request_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
         const int format = opt_keyform;
         const char *pass = opt_newkeypass;
         const char *desc = "new private key for cert to be enrolled";
-        EVP_PKEY *pkey = load_key_pwd(file, format, pass, engine, desc);
+        EVP_PKEY *pkey;
         int priv = 1;
+        BIO *bio_bak = bio_err;
 
+        bio_err = NULL; /* suppress diagnostics on first try loading key */
+        pkey = load_key_pwd(file, format, pass, engine, desc);
+        bio_err = bio_bak;
         if (pkey == NULL) {
             ERR_clear_error();
-            desc = "fallback public key for cert to be enrolled";
+            desc = opt_csr == NULL
+            ? "fallback public key for cert to be enrolled"
+            : "public key for checking cert resulting from p10cr";
             pkey = load_pubkey(file, format, 0, pass, engine, desc);
             priv = 0;
         }
