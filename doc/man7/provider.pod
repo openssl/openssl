@@ -324,34 +324,34 @@ Fetch any available implementation of SHA2-256 in the default context:
 
  EVP_MD *md = EVP_MD_fetch(NULL, "SHA2-256", NULL);
  ...
- EVP_MD_meth_free(md);
+ EVP_MD_free(md);
 
 Fetch any available implementation of AES-128-CBC in the default context:
 
  EVP_CIPHER *cipher = EVP_CIPHER_fetch(NULL, "AES-128-CBC", NULL);
  ...
- EVP_CIPHER_meth_free(cipher);
+ EVP_CIPHER_free(cipher);
 
 Fetch an implementation of SHA2-256 from the default provider in the default
 context:
 
  EVP_MD *md = EVP_MD_fetch(NULL, "SHA2-256", "provider=default");
  ...
- EVP_MD_meth_free(md);
+ EVP_MD_free(md);
 
 Fetch an implementation of SHA2-256 that is not from the default provider in the
 default context:
 
  EVP_MD *md = EVP_MD_fetch(NULL, "SHA2-256", "provider!=default");
  ...
- EVP_MD_meth_free(md);
+ EVP_MD_free(md);
 
 Fetch an implementation of SHA2-256 from the default provider in the specified
 context:
 
  EVP_MD *md = EVP_MD_fetch(ctx, "SHA2-256", "provider=default");
  ...
- EVP_MD_meth_free(md);
+ EVP_MD_free(md);
 
 Load the legacy provider into the default context and then fetch an
 implementation of WHIRLPOOL from it:
@@ -361,7 +361,7 @@ implementation of WHIRLPOOL from it:
 
  EVP_MD *md = EVP_MD_fetch(NULL, "WHIRLPOOL", "provider=legacy");
  ...
- EVP_MD_meth_free(md);
+ EVP_MD_free(md);
 
 Note that in the above example the property string "provider=legacy" is optional
 since, assuming no other providers have been loaded, the only implementation of
@@ -376,8 +376,8 @@ other providers:
  EVP_MD *md_whirlpool = EVP_MD_fetch(NULL, "whirlpool", NULL);
  EVP_MD *md_sha256 = EVP_MD_fetch(NULL, "SHA2-256", NULL);
  ...
- EVP_MD_meth_free(md_whirlpool);
- EVP_MD_meth_free(md_sha256);
+ EVP_MD_free(md_whirlpool);
+ EVP_MD_free(md_sha256);
 
 
 =head1 SEE ALSO
