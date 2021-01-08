@@ -295,12 +295,8 @@ static void delete_ext(STACK_OF(X509_EXTENSION) *sk, X509_EXTENSION *dext)
     ASN1_OBJECT *obj;
 
     obj = X509_EXTENSION_get_object(dext);
-    while ((idx = X509v3_get_ext_by_OBJ(sk, obj, -1)) >= 0) {
-        X509_EXTENSION *tmpext = X509v3_get_ext(sk, idx);
-
-        X509v3_delete_ext(sk, idx);
-        X509_EXTENSION_free(tmpext);
-    }
+    while ((idx = X509v3_get_ext_by_OBJ(sk, obj, -1)) >= 0)
+        X509_EXTENSION_free(X509v3_delete_ext(sk, idx));
 }
 
 /*

@@ -168,15 +168,12 @@ int SCT_CTX_set1_cert(SCT_CTX *sctx, X509 *cert, X509 *presigner)
      * SCT.
      */
     if (idx >= 0) {
-        X509_EXTENSION *ext;
-
         /* Take a copy of certificate so we don't modify passed version */
         pretmp = X509_dup(cert);
         if (pretmp == NULL)
             goto err;
 
-        ext = X509_delete_ext(pretmp, idx);
-        X509_EXTENSION_free(ext);
+        X509_EXTENSION_free(X509_delete_ext(pretmp, idx));
 
         if (!ct_x509_cert_fixup(pretmp, presigner))
             goto err;
