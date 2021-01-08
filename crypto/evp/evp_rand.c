@@ -333,12 +333,6 @@ EVP_RAND_CTX *EVP_RAND_CTX_new(EVP_RAND *rand, EVP_RAND_CTX *parent)
         return NULL;
     }
     if (parent != NULL) {
-        if (!EVP_RAND_enable_locking(parent)) {
-            ERR_raise(ERR_LIB_EVP, EVP_R_UNABLE_TO_ENABLE_PARENT_LOCKING);
-            CRYPTO_THREAD_lock_free(ctx->refcnt_lock);
-            OPENSSL_free(ctx);
-            return NULL;
-        }
         if (!evp_rand_ctx_up_ref(parent)) {
             ERR_raise(ERR_LIB_EVP, ERR_R_INTERNAL_ERROR);
             CRYPTO_THREAD_lock_free(ctx->refcnt_lock);

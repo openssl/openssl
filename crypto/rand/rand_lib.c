@@ -571,6 +571,17 @@ EVP_RAND_CTX *RAND_get0_primary(OSSL_LIB_CTX *ctx)
             dgbl->primary = rand_new_drbg(ctx, dgbl->seed,
                                           PRIMARY_RESEED_INTERVAL,
                                           PRIMARY_RESEED_TIME_INTERVAL);
+        /*
+         * The primary DRBG may be shared between multiple threads so we must
+         * enable locking.
+         */
+        if (dgbl->primary != NULL && !EVP_RAND_enable_locking(dgbl->primary)) {
+            ERR_raise(ERR_LIB_EVP, EVP_R_UNABLE_TO_ENABLE_LOCKING);
+            EVP_RAND_CTX_free(dgbl->primary);
+            dgbl->primary = NULL;
+            CRYPTO_THREAD_lock_free(dgbl->lock);
+            return NULL;
+        }
         CRYPTO_THREAD_unlock(dgbl->lock);
     }
     return dgbl->primary;
