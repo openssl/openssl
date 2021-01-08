@@ -145,7 +145,11 @@ Determines how to handle X.509 extensions
 when converting from a certificate to a request using the B<-x509toreq> option
 or converting from a request to a certificate using the B<-req> option.
 If I<arg> is B<none> or this option is not present then extensions are ignored.
-If I<arg> is B<copy> or B<copyall> then all extensions are copied.
+If I<arg> is B<copy> or B<copyall> then all extensions are copied,
+except that subject identifier and authority key identifier extensions
+are not taken over when producing a certificate request.
+
+The B<-ext> option can be used to further restrict which extensions to copy.
 
 =item B<-inform> B<DER>|B<PEM>
 
@@ -283,7 +287,9 @@ as used by OpenSSL before version 1.0.0.
 
 =item B<-ext> I<extensions>
 
-Prints out the certificate extensions in text form. Extensions are specified
+Prints out the certificate extensions in text form.
+Can also be used to restrict which extensions to copy.
+Extensions are specified
 with a comma separated string, e.g., "subjectAltName,subjectKeyIdentifier".
 See the L<x509v3_config(5)> manual page for the extension names.
 
@@ -395,22 +401,21 @@ generate a certificate containing any desired public key.
 
 =item B<-clrext>
 
-When a transforming a certificate to a new certificate
-(for example with the B<-signkey> or B<-CA> option)
-by default all certificate extensions are retained
-except for any subject identifier and authority key identifier.
-For those, new values are generated unless prohibited by configuration.
+When transforming a certificate to a new certificate
+by default all certificate extensions are retained.
 
-When producing a certificate with the B<-clrext> option,
-any extensions are deleted.
+When transforming a certificate or certificate request,
+the B<-clrext> option prevents taking over any extensions from the source.
+In any case, when producing a certificate request,
+neither subject identifier nor authority key identifier extensions are included.
 
 =item B<-extfile> I<filename>
 
-Configuration file containing certificate extensions to add.
+Configuration file containing certificate and request X.509 extensions to add.
 
 =item B<-extensions> I<section>
 
-The section in the extfile to add certificate extensions from.
+The section in the extfile to add X.509 extensions from.
 If this option is not
 specified then the extensions should either be contained in the unnamed
 (default) section or the default section should contain a variable called
@@ -421,7 +426,8 @@ extension section format.
 =item B<-sigopt> I<nm>:I<v>
 
 Pass options to the signature algorithm during sign operations.
-Names and values of these options are algorithm-specific.
+This option may be given multiple times.
+Names and values provided using this option are algorithm-specific.
 
 =item B<-badsig>
 
