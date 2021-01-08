@@ -228,10 +228,14 @@ static void ossl_lib_ctx_generic_new(void *parent_ign, void *ptr_ign,
                                      long argl_ign, void *argp)
 {
     const OSSL_LIB_CTX_METHOD *meth = argp;
-    void *ptr = meth->new_func(crypto_ex_data_get_ossl_lib_ctx(ad));
+    OSSL_LIB_CTX *ctx = crypto_ex_data_get_ossl_lib_ctx(ad);
+    void *ptr = meth->new_func(ctx);
 
-    if (ptr != NULL)
+    if (ptr != NULL) {
+        CRYPTO_THREAD_write_lock(ctx->lock);
         CRYPTO_set_ex_data(ad, index, ptr);
+        CRYPTO_THREAD_unlock(ctx->lock);
+    }
 }
 static void ossl_lib_ctx_generic_free(void *parent_ign, void *ptr,
                                       CRYPTO_EX_DATA *ad, int index,
