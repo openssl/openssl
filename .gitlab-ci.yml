@@ -14,6 +14,14 @@ check_update:
   - make -s update
   - git diff --exit-code
 
+
+check_docs:
+  stage: build
+  script:
+  - ./config --strict-warnings && perl configdata.pm --dump
+  - make -s build_generated
+  - make doc-nits
+
 basic_gcc:
   stage: build
   # instead of calling g++ directly you can also use some build toolkit like make
