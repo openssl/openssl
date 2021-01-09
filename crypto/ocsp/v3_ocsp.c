@@ -7,14 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
-# include <stdio.h>
-# include "internal/cryptlib.h"
-# include <openssl/conf.h>
-# include <openssl/asn1.h>
-# include <openssl/ocsp.h>
-# include "ocsp_local.h"
-# include <openssl/x509v3.h>
-# include "../x509/ext_dat.h"
+#include <stdio.h>
+#include "internal/cryptlib.h"
+#include <openssl/conf.h>
+#include <openssl/asn1.h>
+#include <openssl/ocsp.h>
+#include "ocsp_local.h"
+#include <openssl/x509v3.h>
+#include "../x509/ext_dat.h"
 
 /*
  * OCSP extensions and a couple of CRL entry extensions
