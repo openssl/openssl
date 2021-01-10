@@ -68,7 +68,6 @@ GENERATE[include/openssl/x509v3.h]=include/openssl/x509v3.h.in
 GENERATE[include/openssl/x509_vfy.h]=include/openssl/x509_vfy.h.in
 GENERATE[include/crypto/bn_conf.h]=include/crypto/bn_conf.h.in
 GENERATE[include/crypto/dso_conf.h]=include/crypto/dso_conf.h.in
-GENERATE[doc/man7/openssl_user_macros.pod]=doc/man7/openssl_user_macros.pod.in
 
 IF[{- defined $target{shared_defflag} -}]
   SHARED_SOURCE[libcrypto]=libcrypto.ld
