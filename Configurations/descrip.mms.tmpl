@@ -460,25 +460,9 @@ install : install_sw install_ssldirs install_docs
         @ WRITE SYS$OUTPUT "######################################################################"
         @ WRITE SYS$OUTPUT ""
         @ IF "$(DESTDIR)" .EQS. "" THEN -
-             PIPE ( WRITE SYS$OUTPUT "Installation complete" ; -
-                    WRITE SYS$OUTPUT "" ; -
-                    WRITE SYS$OUTPUT "Run @$(SYSTARTUP)openssl_startup{- $osslver -} to set up logical names" ; -
-                    WRITE SYS$OUTPUT "then run @$(SYSTARTUP)openssl_utils{- $osslver -} to define commands" ; -
-                    WRITE SYS$OUTPUT "" )
+             @{- sourcefile("VMS", "msg_install.com") -} "$(SYSTARTUP)" "{- $osslver -}"
         @ IF "$(DESTDIR)" .NES. "" THEN -
-             PIPE ( WRITE SYS$OUTPUT "Staging installation complete" ; -
-                    WRITE SYS$OUTPUT "" ; -
-                    WRITE SYS$OUTPUT "Finish or package in such a way that the contents of the directory tree" ; -
-                    WRITE SYS$OUTPUT staging_instdir ; -
-                    WRITE SYS$OUTPUT "ends up in $(INSTALLTOP)," ; -
-                    WRITE SYS$OUTPUT "and that the contents of the contents of the directory tree" ; -
-                    WRITE SYS$OUTPUT staging_datadir ; -
-                    WRITE SYS$OUTPUT "ends up in $(OPENSSLDIR)" ; -
-                    WRITE SYS$OUTPUT "" ; -
-                    WRITE SYS$OUTPUT "When in its final destination," ; -
-                    WRITE SYS$OUTPUT "Run @$(SYSTARTUP)openssl_startup{- $osslver -} to set up logical names" ; -
-                    WRITE SYS$OUTPUT "then run @$(SYSTARTUP)openssl_utils{- $osslver -} to define commands" ; -
-                    WRITE SYS$OUTPUT "" )
+             @{- sourcefile("VMS", "msg_staging.com") -} "$(SYSTARTUP)" "{- $osslver -}"
 
 check_install :
         spawn/nolog @ossl_installroot:[SYSTEST]openssl_ivp{- $osslver -}.com
