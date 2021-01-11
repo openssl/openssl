@@ -1538,7 +1538,10 @@ static int test_CMAC_keygen(void)
     EVP_PKEY_CTX *kctx = EVP_PKEY_CTX_new_id(EVP_PKEY_CMAC, NULL);
     int ret = 0;
     EVP_PKEY *pkey = NULL;
-    unsigned char mac[AES_BLOCK_SIZE], mac2[AES_BLOCK_SIZE];
+    unsigned char mac[AES_BLOCK_SIZE];
+# if !defined(OPENSSL_NO_DEPRECATED_3_0)
+    unsigned char mac2[AES_BLOCK_SIZE];
+# endif
 
     /* Test a CMAC key created using the "generated" method */
     if (!TEST_int_gt(EVP_PKEY_keygen_init(kctx), 0)
@@ -1553,6 +1556,7 @@ static int test_CMAC_keygen(void)
             || !TEST_true(get_cmac_val(pkey, mac)))
         goto done;
 
+# if !defined(OPENSSL_NO_DEPRECATED_3_0)
     EVP_PKEY_free(pkey);
 
     /*
@@ -1564,6 +1568,7 @@ static int test_CMAC_keygen(void)
             || !TEST_true(get_cmac_val(pkey, mac2))
             || !TEST_mem_eq(mac, sizeof(mac), mac2, sizeof(mac2)))
         goto done;
+# endif
 
     ret = 1;
 
