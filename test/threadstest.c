@@ -267,7 +267,7 @@ static int test_atomic(void)
 static OSSL_LIB_CTX *multi_libctx = NULL;
 static int multi_success;
 
-static void thread_multi_worker(void)
+static void thread_general_worker(void)
 {
     EVP_MD_CTX *mdctx = EVP_MD_CTX_new();
     EVP_MD *md = EVP_MD_fetch(multi_libctx, "SHA2-256", NULL);
@@ -342,16 +342,28 @@ static void thread_multi_worker(void)
         multi_success = 0;
 }
 
+static void thread_multi_simple_fetch(void)
+{
+    EVP_MD *md = EVP_MD_fetch(NULL, "SHA2-256", NULL);
+
+    if (md != NULL)
+        EVP_MD_free(md);
+    else
+        multi_success = 0;
+}
+
 /*
  * Do work in multiple worker threads at the same time.
- * Test 0: Use the default provider
- * Test 1: Use the fips provider
+ * Test 0: General worker, using the default provider
+ * Test 1: General worker, using the fips provider
+ * Test 2: Simple fetch worker
  */
 static int test_multi(int idx)
 {
     thread_t thread1, thread2;
     int testresult = 0;
     OSSL_PROVIDER *prov = NULL;
+    void (*worker)(void);
 
     if (idx == 1 && !do_fips)
         return TEST_skip("FIPS not supported");
@@ -360,15 +372,28 @@ static int test_multi(int idx)
     multi_libctx = OSSL_LIB_CTX_new();
     if (!TEST_ptr(multi_libctx))
         goto err;
-    prov = OSSL_PROVIDER_load(multi_libctx, (idx == 0) ? "default" : "fips");
+    prov = OSSL_PROVIDER_load(multi_libctx, (idx == 1) ? "fips" : "default");
     if (!TEST_ptr(prov))
         goto err;
 
-    if (!TEST_true(run_thread(&thread1, thread_multi_worker))
-            || !TEST_true(run_thread(&thread2, thread_multi_worker)))
+    switch (idx) {
+    case 0:
+    case 1:
+        worker = thread_general_worker;
+        break;
+    case 2:
+        worker = thread_multi_simple_fetch;
+        break;
+    default:
+        TEST_error("Invalid test index");
+        goto err;
+    }
+
+    if (!TEST_true(run_thread(&thread1, worker))
+            || !TEST_true(run_thread(&thread2, worker)))
         goto err;
 
-    thread_multi_worker();
+    worker();
 
     if (!TEST_true(wait_for_thread(thread1))
             || !TEST_true(wait_for_thread(thread2))
@@ -420,6 +445,6 @@ int setup_tests(void)
     ADD_TEST(test_once);
     ADD_TEST(test_thread_local);
     ADD_TEST(test_atomic);
-    ADD_ALL_TESTS(test_multi, 2);
+    ADD_ALL_TESTS(test_multi, 3);
     return 1;
 }
