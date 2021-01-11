@@ -3,7 +3,7 @@
 =head1 NAME
 
 X509V3_set_ctx,
-X509V3_set_issuer_pkey - X.509v3 extension generation utility functions
+X509V3_set_issuer_pkey - X.509 v3 extension generation utilities
 
 =head1 SYNOPSIS
 
@@ -16,15 +16,16 @@ X509V3_set_issuer_pkey - X.509v3 extension generation utility functions
 =head1 DESCRIPTION
 
 X509V3_set_ctx() fills in the basic fields of I<ctx> of type B<X509V3_CTX>,
-providing details potentially needed by functions producing X509 v3 certificate
-extensions, e.g., to look up values for filling in authority key identifiers.
+providing details potentially needed by functions producing X509 v3 extensions,
+e.g., to look up values for filling in authority key identifiers.
 Any of I<subj>, I<req>, or I<crl> may be provided, pointing to a certificate,
 certification request, or certificate revocation list, respectively.
 If I<subj> or I<crl> is provided, I<issuer> should point to its issuer,
 for instance to help generating an authority key identifier extension.
 Note that if I<subj> is provided, I<issuer> may be the same as I<subj>,
 which means that I<subj> is self-issued (or even self-signed).
-I<flags> may be 0 or contain B<CTX_TEST>, which means that just the syntax of
+I<flags> may be 0
+or contain B<X509V3_CTX_TEST>, which means that just the syntax of
 extension definitions is to be checked without actually producing an extension,
 or B<X509V3_CTX_REPLACE>, which means that each X.509v3 extension added as
 defined in some configuration section shall replace any already existing
@@ -47,6 +48,8 @@ L<X509_add_ext(3)>
 =head1 HISTORY
 
 X509V3_set_issuer_pkey() was added in OpenSSL 3.0.
+
+CTX_TEST was deprecated in OpenSSL 3.0; use X509V3_CTX_TEST instead.
 
 =head1 COPYRIGHT
 
