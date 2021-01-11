@@ -69,7 +69,8 @@ B<openssl> B<ca>
 
 =head1 DESCRIPTION
 
-This command emulates a CA application but should not be used in production.
+This command emulates a CA application.
+See the B<WARNINGS> especially when considering to use it productively.
 It can be used to sign certificate requests (CSRs) in a variety of forms
 and generate certificate revocation lists (CRLs).
 It also maintains a text database of issued certificates and their status.
@@ -743,6 +744,8 @@ possible to include one SPKAC or self-signed certificate.
 
 =head1 BUGS
 
+This command is quirky and at times downright unfriendly.
+
 The use of an in-memory text database can cause problems when large
 numbers of certificates are present because, as the name implies
 the database has to be kept in memory.
@@ -764,11 +767,14 @@ create an empty file.
 
 =head1 WARNINGS
 
-This command is quirky and at times downright unfriendly.
-
-This command was originally meant as an example of how to do
-things in a CA. It was not supposed to be used as a full blown CA itself:
-nevertheless some people are using it for this purpose.
+This command was originally meant as an example of how to do things in a CA.
+Its code does not have production quality.
+It was not supposed to be used as a full blown CA itself,
+nevertheless some people are using it for this purpose at least internally.
+When doing so, specific care should be taken to
+properly secure the private key(s) used for signing certificates.
+It is advisable to keep them in a secure HW storage such as a smart card or HSM
+and access them via a suitable engine or crypto provider.
 
 This command command is effectively a single user command: no locking
 is done on the various files and attempts to run more than one B<openssl ca>
@@ -780,7 +786,6 @@ request contains a basicConstraints extension with CA:TRUE and the
 B<copy_extensions> value is set to B<copyall> and the user does not spot
 this when the certificate is displayed then this will hand the requester
 a valid CA certificate.
-
 This situation can be avoided by setting B<copy_extensions> to B<copy>
 and including basicConstraints with CA:FALSE in the configuration file.
 Then if the request contains a basicConstraints extension it will be
