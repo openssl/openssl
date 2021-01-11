@@ -114,7 +114,7 @@ static AUTHORITY_KEYID *v2i_AUTHORITY_KEYID(X509V3_EXT_METHOD *method,
         }
     }
 
-    if (ctx != NULL && (ctx->flags & CTX_TEST) != 0)
+    if (ctx != NULL && (ctx->flags & X509V3_CTX_TEST) != 0)
         return akeyid;
 
     if (ctx == NULL) {

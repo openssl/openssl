@@ -86,7 +86,7 @@ static ASN1_OCTET_STRING *s2i_skey_id(X509V3_EXT_METHOD *method,
     if (strcmp(str, "hash") != 0)
         return s2i_ASN1_OCTET_STRING(method, ctx /* not used */, str);
 
-    if (ctx != NULL && (ctx->flags & CTX_TEST) != 0)
+    if (ctx != NULL && (ctx->flags & X509V3_CTX_TEST) != 0)
         return ASN1_OCTET_STRING_new();
     if (ctx == NULL
         || (ctx->subject_cert == NULL && ctx->subject_req == NULL)) {

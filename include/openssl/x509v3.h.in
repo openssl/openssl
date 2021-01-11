@@ -87,9 +87,12 @@ typedef struct X509V3_CONF_METHOD_st {
     void (*free_section) (void *db, STACK_OF(CONF_VALUE) *section);
 } X509V3_CONF_METHOD;
 
-/* Context specific info */
+/* Context specific info for producing X509 v3 extensions*/
 struct v3_ext_ctx {
-# define CTX_TEST 0x1
+# define X509V3_CTX_TEST 0x1
+# ifndef OPENSSL_NO_DEPRECATED_3_0
+#  define CTX_TEST X509V3_CTX_TEST
+# endif
 # define X509V3_CTX_REPLACE 0x2
     int flags;
     X509 *issuer_cert;
@@ -363,7 +366,7 @@ struct ISSUING_DIST_POINT_st {
                         ",name:", (val)->name, ",value:", (val)->value)
 
 # define X509V3_set_ctx_test(ctx) \
-                        X509V3_set_ctx(ctx, NULL, NULL, NULL, NULL, CTX_TEST)
+    X509V3_set_ctx(ctx, NULL, NULL, NULL, NULL, X509V3_CTX_TEST)
 # define X509V3_set_ctx_nodb(ctx) (ctx)->db = NULL;
 
 # define EXT_BITSTRING(nid, table) { nid, 0, ASN1_ITEM_ref(ASN1_BIT_STRING), \
