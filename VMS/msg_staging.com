@@ -18,14 +18,20 @@ $       osslver = p6
 $
 $       WRITE SYS$OUTPUT "Staging installation complete"
 $       WRITE SYS$OUTPUT ""
-$       WRITE SYS$OUTPUT "Finish or package in such a way that the contents of the directory tree"
-$       WRITE SYS$OUTPUT staging_instdir
-$       WRITE SYS$OUTPUT "ends up in ''final_instdir',"
-$       WRITE SYS$OUTPUT "and that the contents of the contents of the directory tree"
-$       WRITE SYS$OUTPUT staging_datadir
-$       WRITE SYS$OUTPUT "ends up in ''final_datadir"
+$       WRITE SYS$OUTPUT "Finish or package in such a way that the contents of the following directory"
+$       WRITE SYS$OUTPUT "trees end up being copied:"
 $       WRITE SYS$OUTPUT ""
-$       WRITE SYS$OUTPUT "When in its final destination,"
-$       WRITE SYS$OUTPUT "Run @''systartup'openssl_startup''osslver' to set up logical names"
-$       WRITE SYS$OUTPUT "then run @''systartup'openssl_utils''osslver' to define commands"
+$       WRITE SYS$OUTPUT "- from ", staging_instdir
+$       WRITE SYS$OUTPUT "  to   ", final_instdir
+$       WRITE SYS$OUTPUT "- from ", staging_datadir
+$       WRITE SYS$OUTPUT "  to   ", final_datadir
+$       WRITE SYS$OUTPUT ""
+$       WRITE SYS$OUTPUT "When in its final destination, the following commands need to be executed"
+$       WRITE SYS$OUTPUT "to use OpenSSL:"
+$       WRITE SYS$OUTPUT ""
+$       WRITE SYS$OUTPUT "- to set up OpenSSL logical names:"
+$       WRITE SYS$OUTPUT "  @''systartup'openssl_startup''osslver'"
+$       WRITE SYS$OUTPUT ""
+$       WRITE SYS$OUTPUT "- to define the OpenSSL command"
+$       WRITE SYS$OUTPUT "  @''systartup'openssl_utils''osslver'"
 $       WRITE SYS$OUTPUT ""

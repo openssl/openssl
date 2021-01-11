@@ -84,9 +84,9 @@ NOTES FOR THE OPENVMS PLATFORM
  Unix mount point.
 
  The easiest way to check if everything got through as it should is to
- check for one of the following files:
+ check that this file exists:
 
-    [.crypto]opensslconf^.h.in
+    [.include.openssl]configuration^.h.in
 
  The best way to get a correct distribution is to download the gzipped
  tar file from ftp://ftp.openssl.org/source/, use `GZIP -d` to uncompress
@@ -99,3 +99,10 @@ NOTES FOR THE OPENVMS PLATFORM
  Should you need it, you can find UnZip for VMS here:
 
    <http://www.info-zip.org/UnZip.html>
+
+ How the value of 'arch' is determined
+ -------------------------------------
+
+ 'arch' is mentioned in INSTALL.  It's value is determined like this:
+
+    arch = f$edit( f$getsyi( "arch_name"), "upcase")
