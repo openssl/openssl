@@ -295,11 +295,13 @@ err:
 
 static int test_cipher_reinit(int test_id)
 {
-    int ret = 0, out1_len = 0, out2_len = 0, diff, ccm;
+    int ret = 0, diff, ccm, siv;
+    int out1_len = 0, out2_len = 0, out3_len = 0;
     EVP_CIPHER *cipher = NULL;
     EVP_CIPHER_CTX *ctx = NULL;
     unsigned char out1[256];
     unsigned char out2[256];
+    unsigned char out3[256];
     unsigned char in[16] = {
         0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
         0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10
@@ -330,6 +332,9 @@ static int test_cipher_reinit(int test_id)
     /* ccm fails on the second update - this matches OpenSSL 1_1_1 behaviour */
     ccm = (EVP_CIPHER_mode(cipher) == EVP_CIPH_CCM_MODE);
 
+    /* siv cannot be called with NULL key as the iv is irrelevant */
+    siv = (EVP_CIPHER_mode(cipher) == EVP_CIPH_SIV_MODE);
+
     /* DES3-WRAP uses random every update - so it will give a different value */
     diff = EVP_CIPHER_is_a(cipher, "DES3-WRAP");
 
@@ -337,15 +342,21 @@ static int test_cipher_reinit(int test_id)
         || !TEST_true(EVP_EncryptUpdate(ctx, out1, &out1_len, in, sizeof(in)))
         || !TEST_true(EVP_EncryptInit_ex(ctx, NULL, NULL, key, iv))
         || !TEST_int_eq(EVP_EncryptUpdate(ctx, out2, &out2_len, in, sizeof(in)),
-                        ccm ? 0 : 1))
+                        ccm ? 0 : 1)
+        || !TEST_true(EVP_EncryptInit_ex(ctx, NULL, NULL, NULL, iv))
+        || !TEST_int_eq(EVP_EncryptUpdate(ctx, out3, &out3_len, in, sizeof(in)),
+                        ccm || siv ? 0 : 1))
         goto err;
 
     if (ccm == 0) {
         if (diff) {
-            if (!TEST_mem_ne(out1, out1_len, out2, out2_len))
+            if (!TEST_mem_ne(out1, out1_len, out2, out2_len)
+                || !TEST_mem_ne(out1, out1_len, out3, out3_len)
+                || !TEST_mem_ne(out2, out2_len, out3, out3_len))
                 goto err;
         } else {
-            if (!TEST_mem_eq(out1, out1_len, out2, out2_len))
+            if (!TEST_mem_eq(out1, out1_len, out2, out2_len)
+                || (!siv && !TEST_mem_eq(out1, out1_len, out3, out3_len)))
                 goto err;
         }
     }
@@ -364,11 +375,13 @@ err:
  */
 static int test_cipher_reinit_partialupdate(int test_id)
 {
-    int ret = 0, out1_len = 0, out2_len = 0, in_len;
+    int ret = 0, in_len;
+    int out1_len = 0, out2_len = 0, out3_len = 0;
     EVP_CIPHER *cipher = NULL;
     EVP_CIPHER_CTX *ctx = NULL;
     unsigned char out1[256];
     unsigned char out2[256];
+    unsigned char out3[256];
     static const unsigned char in[32] = {
         0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
         0xba, 0xbe, 0xba, 0xbe, 0x00, 0x00, 0xba, 0xbe,
@@ -416,12 +429,15 @@ static int test_cipher_reinit_partialupdate(int test_id)
         || !TEST_true(EVP_EncryptUpdate(ctx, out2, &out2_len, in, in_len)))
         goto err;
 
-    /* DES3-WRAP uses random every update - so it will give a different value */
-    if (EVP_CIPHER_is_a(cipher, "DES3-WRAP")) {
-        if (!TEST_mem_ne(out1, out1_len, out2, out2_len))
+    if (!TEST_mem_eq(out1, out1_len, out2, out2_len))
+        goto err;
+
+    if (EVP_CIPHER_mode(cipher) != EVP_CIPH_SIV_MODE) {
+        if (!TEST_true(EVP_EncryptInit_ex(ctx, NULL, NULL, NULL, iv))
+            || !TEST_true(EVP_EncryptUpdate(ctx, out3, &out3_len, in, in_len)))
             goto err;
-    } else {
-        if (!TEST_mem_eq(out1, out1_len, out2, out2_len))
+
+        if (!TEST_mem_eq(out1, out1_len, out3, out3_len))
             goto err;
     }
     ret = 1;

@@ -34,6 +34,7 @@ static int chacha20_initiv(PROV_CIPHER_CTX *bctx)
         for (i = 0; i < CHACHA_CTR_SIZE; i += 4)
             ctx->counter[i / 4] = CHACHA_U8TOU32(bctx->oiv + i);
     }
+    ctx->partial_len = 0;
     return 1;
 }
 
