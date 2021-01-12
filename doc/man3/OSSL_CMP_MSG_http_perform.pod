@@ -14,8 +14,8 @@ OSSL_CMP_MSG_http_perform
 
 =head1 DESCRIPTION
 
-OSSL_CMP_MSG_http_perform() sends the given PKIMessage B<req>
-to the CMP server specified in B<ctx> via L<OSSL_CMP_CTX_set1_server(3)>
+OSSL_CMP_MSG_http_perform() sends the given PKIMessage I<req>
+to the CMP server specified in I<ctx> via L<OSSL_CMP_CTX_set1_server(3)>
 and optionally L<OSSL_CMP_CTX_set_serverPort(3)>, using
 any "CMP alias" optionally specified via L<OSSL_CMP_CTX_set1_serverPath(3)>.
 The default port is 80 for HTTP and 443 for HTTPS; the default path is "/".

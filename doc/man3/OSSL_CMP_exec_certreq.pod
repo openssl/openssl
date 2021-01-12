@@ -46,7 +46,7 @@ credentials the client can use for authenticating itself to the client.
 In order to authenticate the server the client typically needs a trust store.
 The functions return their respective main results directly, while there are
 also accessor functions for retrieving various results and status information
-from the B<ctx>. See L<OSSL_CMP_CTX_new(3)> etc. for details.
+from the I<ctx>. See L<OSSL_CMP_CTX_new(3)> etc. for details.
 
 The default conveying protocol is HTTP.
 Timeout values may be given per request-response pair and per transaction.
@@ -64,10 +64,10 @@ These four types of certificate enrollment are implemented as macros
 calling OSSL_CMP_exec_certreq().
 
 OSSL_CMP_exec_certreq() performs a certificate request of the type specified
-by the B<req_type> parameter, which may be IR, CR, P10CR, or KUR.
+by the I<req_type> parameter, which may be IR, CR, P10CR, or KUR.
 For IR, CR, and KUR, the certificate template to be used in the request
-may be supplied via the B<crm> parameter pointing to a CRMF structure.
-Typically B<crm> is NULL, then the template ingredients are taken from B<ctx>
+may be supplied via the I<crm> parameter pointing to a CRMF structure.
+Typically I<crm> is NULL, then the template ingredients are taken from I<ctx>
 and need to be filled in using L<OSSL_CMP_CTX_set1_subjectName(3)>,
 L<OSSL_CMP_CTX_set0_newPkey(3)>, L<OSSL_CMP_CTX_set1_oldCert(3)>, etc.
 For P10CR, L<OSSL_CMP_CTX_set1_p10CSR(3)> needs to be used instead.
@@ -77,11 +77,11 @@ CA (or an intermedate PKI component) can fully process and answer the request.
 OSSL_CMP_try_certreq() is an alternative to the above functions that is
 more flexible regarding what to do after receiving a checkAfter value.
 When called for the first time (with no certificate request in progress for
-the given B<ctx>) it starts a new transaction by sending a certificate request
-constructed as stated above using the B<req_type> and optional B<crm> parameter.
-Otherwise (when according to B<ctx> a 'waiting' status has been received before)
+the given I<ctx>) it starts a new transaction by sending a certificate request
+constructed as stated above using the I<req_type> and optional I<crm> parameter.
+Otherwise (when according to I<ctx> a 'waiting' status has been received before)
 it continues polling for the pending request
-unless the B<req_type> argument is < 0, which aborts the request.
+unless the I<req_type> argument is < 0, which aborts the request.
 If the requested certificate is available the function returns 1 and the
 caller can use L<OSSL_CMP_CTX_get0_newCert(3)> to retrieve the new certificate.
 If no error occurred but no certificate is available yet then
@@ -95,11 +95,11 @@ OSSL_CMP_try_certreq() again with the same parameter values as before.
 OSSL_CMP_try_certreq() then polls
 to see whether meanwhile the requested certificate is available.
 If the caller decides to abort the pending certificate request and provides
-a negative value as the B<req_type> argument then OSSL_CMP_try_certreq()
+a negative value as the I<req_type> argument then OSSL_CMP_try_certreq()
 aborts the CMP transaction by sending an error message to the server.
 
 OSSL_CMP_exec_RR_ses() requests the revocation of the certificate
-specified in the B<ctx> using L<OSSL_CMP_CTX_set1_oldCert(3)>.
+specified in the I<ctx> using L<OSSL_CMP_CTX_set1_oldCert(3)>.
 RFC 4210 is vague in which PKIStatus should be returned by the server.
 We take "accepted" and "grantedWithMods" as clear success and handle
 "revocationWarning" and "revocationNotification" just as warnings because CAs
@@ -109,7 +109,7 @@ make no sense for revocation and thus are treated as an error as well.
 
 OSSL_CMP_exec_GENM_ses() sends a general message containing the sequence of
 infoType and infoValue pairs (InfoTypeAndValue; short: B<ITAV>)
-provided in the B<ctx> using L<OSSL_CMP_CTX_push0_genm_ITAV(3)>.
+provided in the I<ctx> using L<OSSL_CMP_CTX_push0_genm_ITAV(3)>.
 It returns the list of B<ITAV>s received in the GenRep.
 This can be used, for instance, to poll for CRLs or CA Key Updates.
 See RFC 4210 section 5.3.19 and appendix E.5 for details.
@@ -125,7 +125,7 @@ So far the CMP client implementation is limited to one request per CMP message
 
 OSSL_CMP_exec_certreq(), OSSL_CMP_exec_IR_ses(), OSSL_CMP_exec_CR_ses(),
 OSSL_CMP_exec_P10CR_ses(), and OSSL_CMP_exec_KUR_ses() return a
-pointer to the newly obtained X509 certificate on success, B<NULL> on error.
+pointer to the newly obtained X509 certificate on success, NULL on error.
 This pointer will be freed implicitly by OSSL_CMP_CTX_free() or
 CSSL_CMP_CTX_reinit().
 
@@ -134,15 +134,15 @@ via L<OSSL_CMP_CTX_get0_newCert(3)>
 or on successfully aborting a pending certificate request, 0 on error, and -1
 in case a 'waiting' status has been received and checkAfter value is available.
 In the latter case L<OSSL_CMP_CTX_get0_newCert(3)> yields NULL
-and the output parameter B<checkAfter> has been used to
-assign the received value unless B<checkAfter> is NULL.
+and the output parameter I<checkAfter> has been used to
+assign the received value unless I<checkAfter> is NULL.
 
 OSSL_CMP_exec_RR_ses() returns the
-pointer to the revoked certificate on success, B<NULL> on error.
+pointer to the revoked certificate on success, NULL on error.
 This pointer will be freed implicitly by OSSL_CMP_CTX_free().
 
 OSSL_CMP_exec_GENM_ses() returns a
-pointer to the received B<ITAV> sequence on success, B<NULL> on error.
+pointer to the received B<ITAV> sequence on success, NULL on error.
 This pointer must be freed by the caller.
 
 =head1 EXAMPLES

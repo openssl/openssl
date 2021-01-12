@@ -39,9 +39,9 @@ then it copies the subject DN from there
 if I<for_KUR> is set or the I<ctx> does not include a subjectAltName.
 The I<rid> defines the request identifier to use, which typically is 0.
 
-OSSL_CMP_MSG_read() loads a DER-encoded OSSL_CMP_MSG from B<file>.
+OSSL_CMP_MSG_read() loads a DER-encoded OSSL_CMP_MSG from I<file>.
 
-OSSL_CMP_MSG_write() stores the given OSSL_CMP_MSG to B<file> in DER encoding.
+OSSL_CMP_MSG_write() stores the given OSSL_CMP_MSG to I<file> in DER encoding.
 
 d2i_OSSL_CMP_MSG_bio() parses an ASN.1-encoded OSSL_CMP_MSG from the BIO I<bio>.
 It assigns a pointer to the new structure to I<*msg> if I<msg> is not NULL.
