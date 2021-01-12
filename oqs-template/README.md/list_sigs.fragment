@@ -1,7 +1,9 @@
 {%- for sig in config['sigs'][1:] %}
 - **{{ sig['family'] }}**:
     {%- for variant in sig['variants'] -%}
-`{{ variant['name'] }}` {%- if not loop.last %}, {% endif -%}
+`{{ variant['name'] }}`
+{%- if variant['enable'] -%} * {%- endif -%}
+{%- if not loop.last %}, {% endif -%}
     {%- endfor -%}
 {%- endfor %}
 

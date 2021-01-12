@@ -101,15 +101,15 @@ Note that algorithms marked with a dagger (†) have large stack usage and may c
 
 The following digital signature algorithms from liboqs are supported by the fork. **Note that not all variants of all algorithms are enabled by default; algorithms that are enabled by default are marked with an asterisk, and should you wish to enable additional variants, consult [the "Code Generation" section of the documentation in the wiki](https://github.com/open-quantum-safe/openssl/wiki/Using-liboqs-algorithms-not-in-the-fork#code-generation)**.
 
-- `oqs_sig_default*` (see [here](https://github.com/open-quantum-safe/openssl/wiki/Using-liboqs-algorithms-that-are-not-in-the-forks#oqsdefault) for what this denotes)
+- `oqs_sig_default`* (see [here](https://github.com/open-quantum-safe/openssl/wiki/Using-liboqs-algorithms-that-are-not-in-the-forks#oqsdefault) for what this denotes)
 <!--- OQS_TEMPLATE_FRAGMENT_LIST_SIGS_START -->
-- **CRYSTALS-DILITHIUM**:`dilithium2`, `dilithium3`, `dilithium4`
-- **Falcon**:`falcon512`, `falcon1024`
-- **Picnic**:`picnicl1fs`, `picnicl1ur`, `picnicl1full`, `picnic3l1`, `picnic3l3`, `picnic3l5`
-- **Rainbow**:`rainbowIclassic`, `rainbowIcircumzenithal`, `rainbowIcompressed`, `rainbowIIIclassic`, `rainbowIIIcircumzenithal`, `rainbowIIIcompressed`, `rainbowVclassic`, `rainbowVcircumzenithal`, `rainbowVcompressed`
-- **SPHINCS-Haraka**:`sphincsharaka128frobust`, `sphincsharaka128fsimple`, `sphincsharaka128srobust`, `sphincsharaka128ssimple`, `sphincsharaka192frobust`, `sphincsharaka192fsimple`, `sphincsharaka192srobust`, `sphincsharaka192ssimple`, `sphincsharaka256frobust`, `sphincsharaka256fsimple`, `sphincsharaka256srobust`, `sphincsharaka256ssimple`
-- **SPHINCS-SHA256**:`sphincssha256128frobust`, `sphincssha256128fsimple`, `sphincssha256128srobust`, `sphincssha256128ssimple`, `sphincssha256192frobust`, `sphincssha256192fsimple`, `sphincssha256192srobust`, `sphincssha256192ssimple`, `sphincssha256256frobust`, `sphincssha256256fsimple`, `sphincssha256256srobust`, `sphincssha256256ssimple`
-- **SPHINCS-SHAKE256**:`sphincsshake256128frobust`, `sphincsshake256128fsimple`, `sphincsshake256128srobust`, `sphincsshake256128ssimple`, `sphincsshake256192frobust`, `sphincsshake256192fsimple`, `sphincsshake256192srobust`, `sphincsshake256192ssimple`, `sphincsshake256256frobust`, `sphincsshake256256fsimple`, `sphincsshake256256srobust`, `sphincsshake256256ssimple`
+- **CRYSTALS-DILITHIUM**:`dilithium2`*, `dilithium3`*, `dilithium4`*
+- **Falcon**:`falcon512`*, `falcon1024`*
+- **Picnic**:`picnicl1fs`, `picnicl1ur`, `picnicl1full`*, `picnic3l1`*, `picnic3l3`, `picnic3l5`
+- **Rainbow**:`rainbowIclassic`*, `rainbowIcircumzenithal`, `rainbowIcompressed`, `rainbowIIIclassic`, `rainbowIIIcircumzenithal`, `rainbowIIIcompressed`, `rainbowVclassic`*, `rainbowVcircumzenithal`, `rainbowVcompressed`
+- **SPHINCS-Haraka**:`sphincsharaka128frobust`*, `sphincsharaka128fsimple`, `sphincsharaka128srobust`, `sphincsharaka128ssimple`, `sphincsharaka192frobust`, `sphincsharaka192fsimple`, `sphincsharaka192srobust`, `sphincsharaka192ssimple`, `sphincsharaka256frobust`, `sphincsharaka256fsimple`, `sphincsharaka256srobust`, `sphincsharaka256ssimple`
+- **SPHINCS-SHA256**:`sphincssha256128frobust`*, `sphincssha256128fsimple`, `sphincssha256128srobust`, `sphincssha256128ssimple`, `sphincssha256192frobust`, `sphincssha256192fsimple`, `sphincssha256192srobust`, `sphincssha256192ssimple`, `sphincssha256256frobust`, `sphincssha256256fsimple`, `sphincssha256256srobust`, `sphincssha256256ssimple`
+- **SPHINCS-SHAKE256**:`sphincsshake256128frobust`*, `sphincsshake256128fsimple`, `sphincsshake256128srobust`, `sphincsshake256128ssimple`, `sphincsshake256192frobust`, `sphincsshake256192fsimple`, `sphincsshake256192srobust`, `sphincsshake256192ssimple`, `sphincsshake256256frobust`, `sphincsshake256256fsimple`, `sphincsshake256256srobust`, `sphincsshake256256ssimple`
 <!--- OQS_TEMPLATE_FRAGMENT_LIST_SIGS_END -->
 
 The following hybrid algorithms are supported; they combine a quantum-safe algorithm listed above with a traditional digital signature algorithm (`<SIG>` is any one of the algorithms listed above):
