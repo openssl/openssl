@@ -79,6 +79,12 @@ static int chacha20_poly1305_initiv(PROV_CIPHER_CTX *bctx)
     unsigned char tempiv[CHACHA_CTR_SIZE] = { 0 };
     int ret = 1;
 
+    ctx->len.aad = 0;
+    ctx->len.text = 0;
+    ctx->aad = 0;
+    ctx->mac_inited = 0;
+    ctx->tls_payload_length = NO_TLS_PAYLOAD_LENGTH;
+
         /* pad on the left */
     if (ctx->nonce_len <= CHACHA_CTR_SIZE) {
             memcpy(tempiv + CHACHA_CTR_SIZE - ctx->nonce_len, bctx->oiv,
