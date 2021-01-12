@@ -146,7 +146,7 @@ functional references (etc), will generate trace summaries.
 
 =item B<OSSL_TRACE_CATEGORY_ENGINE_REF_COUNT>
 
-Tracds the ENGINE reference counting.
+Traces the ENGINE reference counting.
 
 More precisely, both reference counts in the ENGINE structure will be
 monitored with a line of trace output generated for each change.
