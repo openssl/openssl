@@ -344,10 +344,10 @@ static void thread_general_worker(void)
 
 static void thread_multi_simple_fetch(void)
 {
-    EVP_KEYEXCH* kx = EVP_KEYEXCH_fetch(NULL, "ECDH", NULL);
+    EVP_MD *md = EVP_MD_fetch(NULL, "SHA2-256", NULL);
 
-    if (kx != NULL)
-        EVP_KEYEXCH_free(kx);
+    if (md != NULL)
+        EVP_MD_free(md);
     else
         multi_success = 0;
 }
