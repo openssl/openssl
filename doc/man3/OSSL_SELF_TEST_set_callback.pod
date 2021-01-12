@@ -24,7 +24,8 @@ See L<openssl-core.h(7)> for further information on the callback.
 =head1 RETURN VALUES
 
 OSSL_SELF_TEST_get_callback() returns the callback and callback argument that
-has been set via OSSL_SELF_TEST_set_callback() for the given library context B<ctx>.
+has been set via OSSL_SELF_TEST_set_callback() for the given library context
+I<ctx>.
 These returned parameters will be NULL if OSSL_SELF_TEST_set_callback() has
 not been called.
 
