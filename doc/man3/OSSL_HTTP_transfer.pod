@@ -198,15 +198,15 @@ where IPv6 addresses should be enclosed in square brackets C<[> and C<]>.
 The port component is optional and defaults to "443" for HTTPS, else "80".
 If the I<pport_num> argument is NULL the port specification
 can be in mnemonic form such as "http" like with L<BIO_set_conn_port(3)>, else
-it must be in numerical form and its integer value is assigned to B<*pport_num>.
+it must be in numerical form and its integer value is assigned to I<*pport_num>.
 The path component is also optional and defaults to "/".
 On success the function assigns via each non-NULL result pointer argument
 I<phost>, I<pport>, I<pport_num>, I<ppath>, and I<pssl>
 the respective url component.
-On error, B<*phost>, B<*pport>, and B<*ppath> are assigned to NULL,
+On error, I<*phost>, I<*pport>, and I<*ppath> are assigned to NULL,
 else they are guaranteed to contain non-NULL string pointers.
 It is the reponsibility of the caller to free them using L<OPENSSL_free(3)>.
-A string returned via B<*ppath> is guaranteed to begin with a C</> character.
+A string returned via I<*ppath> is guaranteed to begin with a C</> character.
 
 =head1 NOTES
 
