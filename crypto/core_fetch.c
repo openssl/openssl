@@ -128,6 +128,16 @@ void *ossl_method_construct(OSSL_LIB_CTX *libctx, int operation_id,
                               &cbdata);
 
         method = mcm->get(libctx, cbdata.store, mcm_data);
+        if (method == NULL) {
+            /*
+             * If we get here then we did not construct the method that we
+             * attempted to construct. Its possible that another thread got
+             * there first and so we skipped construction (pre-condition
+             * failed). We check the global store as well to see if its already
+             * there.
+             */
+            method = mcm->get(libctx, NULL, mcm_data);
+        }
         mcm->dealloc_tmp_store(cbdata.store);
     }
 
