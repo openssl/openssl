@@ -61,8 +61,8 @@ L<OSSL_LIB_CTX(3)> for further details.
 
 =head2 Functions
 
-OSSL_PROVIDER_set_default_search_path() specifies the default search B<path>
-that is to be used for looking for providers in the specified B<libctx>.
+OSSL_PROVIDER_set_default_search_path() specifies the default search I<path>
+that is to be used for looking for providers in the specified I<libctx>.
 If left unspecified, an environment variable and a fall back default value will
 be used instead.
 
@@ -138,7 +138,7 @@ OSSL_PROVIDER_add(), OSSL_PROVIDER_unload(), OSSL_PROVIDER_get_params() and
 OSSL_PROVIDER_get_capabilities() return 1 on success, or 0 on error.
 
 OSSL_PROVIDER_load() and OSSL_PROVIDER_try_load() return a pointer to a
-provider object on success, or B<NULL> on error.
+provider object on success, or NULL on error.
 
 OSSL_PROVIDER_available() returns 1 if the named provider is available,
 otherwise 0.
