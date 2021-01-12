@@ -272,7 +272,7 @@ const OPTIONS cmp_options[] = {
     {"subject", OPT_SUBJECT, 's',
      "Distinguished Name (DN) of subject to use in the requested cert template"},
     {OPT_MORE_STR, 0, 0,
-     "For kur, default is the subject DN of the reference cert (see -oldcert);"},
+     "For kur, default is subject of -csr arg or else of reference cert (see -oldcert)"},
     {OPT_MORE_STR, 0, 0,
      "this default is used for ir and cr only if no Subject Alt Names are set"},
     {"issuer", OPT_ISSUER, 's',
@@ -282,7 +282,9 @@ const OPTIONS cmp_options[] = {
     {"days", OPT_DAYS, 'n',
      "Requested validity time of the new certificate in number of days"},
     {"reqexts", OPT_REQEXTS, 's',
-     "Name of config file section defining certificate request extensions"},
+     "Name of config file section defining certificate request extensions."},
+    {OPT_MORE_STR, 0, 0,
+     "Augments or replaces any extensions contained CSR given with -csr"},
     {"sans", OPT_SANS, 's',
      "Subject Alt Names (IPADDR/DNS/URI) to add as (critical) cert req extension"},
     {"san_nodefault", OPT_SAN_NODEFAULT, '-',
@@ -298,7 +300,7 @@ const OPTIONS cmp_options[] = {
     {OPT_MORE_STR, 0, 0,
      "-1 = NONE, 0 = RAVERIFIED, 1 = SIGNATURE (default), 2 = KEYENC"},
     {"csr", OPT_CSR, 's',
-     "PKCS#10 CSR file in PEM or DER format to use in p10cr for legacy support"},
+     "PKCS#10 CSR file in PEM or DER format to convert or to use in p10cr"},
     {"out_trusted", OPT_OUT_TRUSTED, 's',
      "Certificates to trust when verifying newly enrolled certificates"},
     {"implicit_confirm", OPT_IMPLICIT_CONFIRM, '-',
@@ -383,7 +385,7 @@ const OPTIONS cmp_options[] = {
      "Optional certs to verify chain building for own CMP signer cert"},
     {"key", OPT_KEY, 's', "CMP signer private key, not used when -secret given"},
     {"keypass", OPT_KEYPASS, 's',
-     "Client private key (and cert and old cert file) pass phrase source"},
+     "Client private key (and cert and old cert) pass phrase source"},
     {"digest", OPT_DIGEST, 's',
      "Digest to use in message protection and POPO signatures. Default \"sha256\""},
     {"mac", OPT_MAC, 's',
@@ -418,7 +420,7 @@ const OPTIONS cmp_options[] = {
     {"tls_key", OPT_TLS_KEY, 's',
      "Private key for the client's TLS certificate"},
     {"tls_keypass", OPT_TLS_KEYPASS, 's',
-     "Pass phrase source for the client's private TLS key (and TLS cert file)"},
+     "Pass phrase source for the client's private TLS key (and TLS cert)"},
     {"tls_extra", OPT_TLS_EXTRA, 's',
      "Extra certificates to provide to TLS server during TLS handshake"},
     {"tls_trusted", OPT_TLS_TRUSTED, 's',
@@ -455,7 +457,7 @@ const OPTIONS cmp_options[] = {
     {"srv_key", OPT_SRV_KEY, 's',
      "Private key used by the server for signing messages"},
     {"srv_keypass", OPT_SRV_KEYPASS, 's',
-     "Server private key (and cert) file pass phrase source"},
+     "Server private key (and cert) pass phrase source"},
 
     {"srv_trusted", OPT_SRV_TRUSTED, 's',
      "Trusted certificates for client authentication"},
@@ -1599,9 +1601,10 @@ static int setup_protection_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
  */
 static int setup_request_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
 {
-    if (opt_subject == NULL && opt_oldcert == NULL && opt_cert == NULL
+    if (opt_subject == NULL
+            && opt_csr == NULL && opt_oldcert == NULL && opt_cert == NULL
             && opt_cmd != CMP_RR && opt_cmd != CMP_GENM)
-        CMP_warn("no -subject given, neither -oldcert nor -cert available as default");
+        CMP_warn("no -subject given; no -csr or -oldcert or -cert available for fallback");
     if (!set_name(opt_subject, OSSL_CMP_CTX_set1_subjectName, ctx, "subject")
             || !set_name(opt_issuer, OSSL_CMP_CTX_set1_issuer, ctx, "issuer"))
         return 0;
@@ -1718,11 +1721,10 @@ static int setup_request_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
         (void)OSSL_CMP_CTX_set_option(ctx, OSSL_CMP_OPT_POPO_METHOD, opt_popo);
 
     if (opt_csr != NULL) {
-        if (opt_cmd != CMP_P10CR) {
-            CMP_warn("-csr option is ignored for command other than p10cr");
+        if (opt_cmd == CMP_GENM) {
+            CMP_warn("-csr option is ignored for genm command");
         } else {
-            X509_REQ *csr =
-                load_csr_autofmt(opt_csr, "PKCS#10 CSR for p10cr");
+            X509_REQ *csr = load_csr_autofmt(opt_csr, "PKCS#10 CSR for p10cr");
 
             if (csr == NULL)
                 return 0;
@@ -1735,17 +1737,21 @@ static int setup_request_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
     }
 
     if (opt_oldcert != NULL) {
-        X509 *oldcert = load_cert_pwd(opt_oldcert, opt_keypass,
-                                      "certificate to be updated/revoked");
-        /* opt_keypass is needed if opt_oldcert is an encrypted PKCS#12 file */
+        if (opt_cmd == CMP_GENM) {
+            CMP_warn("-oldcert option is ignored for genm command");
+        } else {
+            X509 *oldcert = load_cert_pwd(opt_oldcert, opt_keypass,
+                                          "certificate to be updated/revoked");
+            /* opt_keypass needed if opt_oldcert is an encrypted PKCS#12 file */
 
-        if (oldcert == NULL)
-            return 0;
-        if (!OSSL_CMP_CTX_set1_oldCert(ctx, oldcert)) {
+            if (oldcert == NULL)
+                return 0;
+            if (!OSSL_CMP_CTX_set1_oldCert(ctx, oldcert)) {
+                X509_free(oldcert);
+                goto oom;
+            }
             X509_free(oldcert);
-            goto oom;
         }
-        X509_free(oldcert);
     }
     cleanse(opt_keypass);
     if (opt_revreason > CRL_REASON_NONE)
@@ -1883,17 +1889,21 @@ static int setup_client_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
     if (opt_cmd == CMP_KUR) {
         char *ref_cert = opt_oldcert != NULL ? opt_oldcert : opt_cert;
 
-        if (ref_cert == NULL) {
-            CMP_err("missing -oldcert option for certificate to be updated");
+        if (ref_cert == NULL && opt_csr == NULL) {
+            CMP_err("missing -oldcert or -csr option for certificate to be updated");
             goto err;
         }
         if (opt_subject != NULL)
-            CMP_warn2("-subject '%s' given, which overrides the subject of '%s' in KUR",
-                      opt_subject, ref_cert);
+            CMP_warn2("given -subject '%s' overrides the subject of '%s' for KUR",
+                      opt_subject, ref_cert != NULL ? ref_cert : opt_csr);
     }
-    if (opt_cmd == CMP_RR && opt_oldcert == NULL) {
-        CMP_err("missing certificate to be revoked");
-        goto err;
+    if (opt_cmd == CMP_RR) {
+        if (opt_oldcert == NULL && opt_csr == NULL) {
+            CMP_err("missing certificate to be revoked and no fallback -csr given");
+            goto err;
+        }
+        if (opt_oldcert != NULL && opt_csr != NULL)
+            CMP_warn("Ignoring -csr since certificate to be revoked is given");
     }
     if (opt_cmd == CMP_P10CR && opt_csr == NULL) {
         CMP_err("missing PKCS#10 CSR for p10cr");
@@ -2845,8 +2855,7 @@ int cmp_main(int argc, char **argv)
                 ret = 1;
             break;
         case CMP_RR:
-            if (OSSL_CMP_exec_RR_ses(cmp_ctx) != NULL)
-                ret = 1;
+            ret = OSSL_CMP_exec_RR_ses(cmp_ctx);
             break;
         case CMP_GENM:
             {

@@ -248,7 +248,7 @@ static OSSL_CMP_MSG *process_rr(OSSL_CMP_SRV_CTX *srv_ctx,
 {
     OSSL_CMP_MSG *msg = NULL;
     OSSL_CMP_REVDETAILS *details;
-    OSSL_CRMF_CERTID *certId;
+    OSSL_CRMF_CERTID *certId = NULL;
     OSSL_CRMF_CERTTEMPLATE *tmpl;
     const X509_NAME *issuer;
     ASN1_INTEGER *serial;
@@ -272,8 +272,8 @@ static OSSL_CMP_MSG *process_rr(OSSL_CMP_SRV_CTX *srv_ctx,
     tmpl = details->certDetails;
     issuer = OSSL_CRMF_CERTTEMPLATE_get0_issuer(tmpl);
     serial = OSSL_CRMF_CERTTEMPLATE_get0_serialNumber(tmpl);
-    /* here issuer and serial may safely be NULL */
-    if ((certId = OSSL_CRMF_CERTID_gen(issuer, serial)) == NULL)
+    if (issuer != NULL && serial != NULL
+            && (certId = OSSL_CRMF_CERTID_gen(issuer, serial)) == NULL)
         return NULL;
     if ((si = srv_ctx->process_rr(srv_ctx, req, issuer, serial)) == NULL)
         goto err;

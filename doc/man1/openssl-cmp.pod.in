@@ -34,7 +34,7 @@ Certificate enrollment options:
 [B<-policy_oids_critical>]
 [B<-popo> I<number>]
 [B<-csr> I<filename>]
-[B<-out_trusted> I<filenames>]
+[B<-out_trusted> I<filenames>|I<uris>]
 [B<-implicit_confirm>]
 [B<-disable_confirm>]
 [B<-certout> I<filename>]
@@ -42,7 +42,7 @@ Certificate enrollment options:
 
 Certificate enrollment and revocation options:
 
-[B<-oldcert> I<filename>]
+[B<-oldcert> I<filename>|I<uri>]
 [B<-revreason> I<number>]
 
 Message transfer options:
@@ -56,9 +56,9 @@ Message transfer options:
 
 Server authentication options:
 
-[B<-trusted> I<filenames>]
+[B<-trusted> I<filenames>|I<uris>]
 [B<-untrusted> I<sources>]
-[B<-srvcert> I<filename>]
+[B<-srvcert> I<filename>|I<uri>]
 [B<-recipient> I<name>]
 [B<-expect_sender> I<name>]
 [B<-ignore_keyusage>]
@@ -70,9 +70,9 @@ Client authentication options:
 
 [B<-ref> I<value>]
 [B<-secret> I<arg>]
-[B<-cert> I<filename>]
-[B<-own_trusted> I<filenames>]
-[B<-key> I<filename>]
+[B<-cert> I<filename>|I<uri>]
+[B<-own_trusted> I<filenames>|I<uris>]
+[B<-key> I<filename>|I<uri>]
 [B<-keypass> I<arg>]
 [B<-digest> I<name>]
 [B<-mac> I<name>]
@@ -89,11 +89,11 @@ Credentials format options:
 TLS connection options:
 
 [B<-tls_used>]
-[B<-tls_cert> I<filename>]
+[B<-tls_cert> I<filename>|I<uri>]
 [B<-tls_key> I<filename>|I<uri>]
 [B<-tls_keypass> I<arg>]
-[B<-tls_extra> I<filenames>]
-[B<-tls_trusted> I<filenames>]
+[B<-tls_extra> I<filenames>|I<uris>]
+[B<-tls_trusted> I<filenames>|I<uris>]
 [B<-tls_host> I<name>]
 
 Client-side debugging options:
@@ -113,14 +113,14 @@ Mock server options:
 [B<-max_msgs> I<number>]
 [B<-srv_ref> I<value>]
 [B<-srv_secret> I<arg>]
-[B<-srv_cert> I<filename>]
-[B<-srv_key> I<filename>]
+[B<-srv_cert> I<filename>|I<uri>]
+[B<-srv_key> I<filename>|I<uri>]
 [B<-srv_keypass> I<arg>]
-[B<-srv_trusted> I<filenames>]
-[B<-srv_untrusted> I<filenames>]
-[B<-rsp_cert> I<filename>]
-[B<-rsp_extracerts> I<filenames>]
-[B<-rsp_capubs> I<filenames>]
+[B<-srv_trusted> I<filenames>|I<uris>]
+[B<-srv_untrusted> I<filenames>|I<uris>]
+[B<-rsp_cert> I<filename>|I<uri>]
+[B<-rsp_extracerts> I<filenames>|I<uris>]
+[B<-rsp_capubs> I<filenames>|I<uris>]
 [B<-poll_count> I<number>]
 [B<-check_after> I<number>]
 [B<-grant_implicitconf>]
@@ -216,7 +216,7 @@ B<cr> requests issuing an additional certificate for an End Entity already
 initialized to the PKI hierarchy.
 
 B<p10cr> requests issuing an additional certificate similarly to B<cr>
-but uses PKCS#10 CSR format.
+but using PKCS#10 CSR format.
 
 B<kur> requests a (key) update for an existing, given certificate.
 
@@ -263,11 +263,11 @@ L<openssl-passphrase-options(1)>.
 
 X509 Distinguished Name (DN) of subject to use in the requested certificate
 template.
-For KUR, it defaults to the subject DN of the reference certificate
-(see B<-oldcert>).
+For KUR, it defaults to the subject DN of any given CSR
+or of the reference certificate (see B<-oldcert>) if provided.
 This default is used for IR and CR only if no SANs are set.
 
-The subject DN is also used as fallback sender of outgoing CMP messages
+The provided subject DN is also used as fallback sender of outgoing CMP messages
 if no B<-cert> and no B<-oldcert> are given.
 
 The argument must be formatted as I</type0=value0/type1=value1/type2=...>.
@@ -341,13 +341,18 @@ is provided via the B<-newkey> or B<-key> options.
 
 =item B<-csr> I<filename>
 
-PKCS#10 CSR in PEM or DER format to use in legacy P10CR messages.
+PKCS#10 CSR in PEM or DER format containing a certificate request.
+When used with a with B<-cmd> I<p10cr> used directly in a legacy P10CR message.
+When used with B<-cmd> I<ir>, I<cr>, or I<kur>, it is tranformed into the
+respective regular CMP request.
+It may also be used with B<-cmd> I<rr> to specifiy the certificate to be revoked
+via the included subject and public key.
 
-=item B<-out_trusted> I<filenames>
+=item B<-out_trusted> I<filenames>|I<uris>
 
 Trusted certificate(s) to use for verifying the newly enrolled certificate.
 
-Multiple filenames may be given, separated by commas and/or whitespace
+Multiple sources may be given, separated by commas and/or whitespace
 (where in the latter case the whole argument must be enclosed in "...").
 Each source may contain multiple certificates.
 
@@ -380,15 +385,17 @@ The file where the chain of the newly enrolled certificate should be saved.
 
 =over 4
 
-=item B<-oldcert> I<filename>
+=item B<-oldcert> I<filename>|I<uri>]
 
 The certificate to be updated (i.e., renewed or re-keyed) in Key Update Request
 (KUR) messages or to be revoked in Revocation Request (RR) messages.
-It must be given for RR, while for KUR it defaults to B<-cert>.
+For RR the certificate to be revoked can also be specified using B<-csr>.
+For KUR certificate to be updated defaults to B<-cert>, and the resulting certificate is called
+I<reference certificate>.
 
-The reference certificate determined in this way, if any, is also used for
+The reference certificate, if any, is also used for
 deriving default subject DN and Subject Alternative Names and the
-default issuer entry in the requested certificate template of IR/CR/KUR.
+default issuer entry in the requested certificate template of a IR/CR/KUR.
 Its subject is used as sender of outgoing messages if B<-cert> is not given.
 Its issuer is used as default recipient in CMP message headers
 if neither B<-recipient>, B<-srvcert>, nor B<-issuer> is given.
@@ -465,7 +472,7 @@ Default is 0 (infinite).
 
 =over 4
 
-=item B<-trusted> I<filenames>
+=item B<-trusted> I<filenames>|I<uris>
 
 When verifying signature-based protection of CMP response messages,
 these are the CA certificate(s) to trust while checking certificate chains
@@ -477,7 +484,7 @@ for which a chain to one of the given trusted certificates can be constructed.
 If no B<-trusted>, B<-srvcert>, and B<-secret> option is given
 then protected response messages from the server are not authenticated.
 
-Multiple filenames may be given, separated by commas and/or whitespace
+Multiple sources may be given, separated by commas and/or whitespace
 (where in the latter case the whole argument must be enclosed in "...").
 Each source may contain multiple certificates.
 
@@ -496,10 +503,10 @@ as well as for chain building
 when verifying the CMP server certificate (checking signature-based
 CMP message protection) and when verifying newly enrolled certificates.
 
-Multiple filenames may be given, separated by commas and/or whitespace.
+Multiple sources may be given, separated by commas and/or whitespace.
 Each file may contain multiple certificates.
 
-=item B<-srvcert> I<filename>
+=item B<-srvcert> I<filename>|I<uri>]
 
 The specific CMP server certificate to expect and directly trust (even if it is
 expired) when verifying signature-based protection of CMP response messages.
@@ -609,7 +616,7 @@ This takes precedence over the B<-cert> and B<-key> options.
 For more information about the format of B<arg> see
 L<openssl-passphrase-options(1)>.
 
-=item B<-cert> I<filename>
+=item B<-cert> I<filename>|I<uri>]
 
 The client's current CMP signer certificate.
 Requires the corresponding key to be given with B<-key>.
@@ -628,13 +635,13 @@ If the file includes further certs, they are appended to the untrusted certs
 because they typically constitute the chain of the client certificate, which
 is included in the extraCerts field in signature-protected request messages.
 
-=item B<-own_trusted> I<filenames>
+=item B<-own_trusted> I<filenames>|I<uris>
 
 If this list of certificates is provided then the chain built for
 the client-side CMP signer certificate given with the B<-cert> option
 is verified using the given certificates as trust anchors.
 
-Multiple filenames may be given, separated by commas and/or whitespace
+Multiple sources may be given, separated by commas and/or whitespace
 (where in the latter case the whole argument must be enclosed in "...").
 Each source may contain multiple certificates.
 
@@ -642,7 +649,7 @@ The certificate verification options
 B<-verify_hostname>, B<-verify_ip>, and B<-verify_email>
 have no effect on the certificate verification enabled via this option.
 
-=item B<-key> I<filename>
+=item B<-key> I<filename>|I<uri>]
 
 The corresponding private key file for the client's current certificate given in
 the B<-cert> option.
@@ -680,7 +687,7 @@ Defaults to C<hmac-sha1> as per RFC 4210.
 Certificates to append in the extraCerts field when sending messages.
 They can be used as the default CMP signer certificate chain to include.
 
-Multiple filenames or URLs may be given, separated by commas and/or whitespace
+Multiple sources may be given, separated by commas and/or whitespace
 (where in the latter case the whole argument must be enclosed in "...").
 Each source may contain multiple certificates.
 
@@ -743,10 +750,10 @@ B<-tls_key>.
 Enable using TLS (even when other TLS_related options are not set)
 when connecting to CMP server.
 
-=item B<-tls_cert> I<filename>
+=item B<-tls_cert> I<filename>|I<uri>]
 
 Client's TLS certificate.
-If the file includes further certs they are used (along with B<-untrusted>
+If the source includes further certs they are used (along with B<-untrusted>
 certs) for constructing the client cert chain provided to the TLS server.
 
 =item B<-tls_key> I<filename>|I<uri>
@@ -762,16 +769,16 @@ If not given here, the password will be prompted for if needed.
 For more information about the format of B<arg> see
 L<openssl-passphrase-options(1)>.
 
-=item B<-tls_extra> I<filenames>
+=item B<-tls_extra> I<filenames>|I<uris>
 
 Extra certificates to provide to TLS server during TLS handshake
 
-=item B<-tls_trusted> I<filenames>
+=item B<-tls_trusted> I<filenames>|I<uris>
 
 Trusted certificate(s) to use for verifying the TLS server certificate.
 This implies hostname validation.
 
-Multiple filenames may be given, separated by commas and/or whitespace
+Multiple sources may be given, separated by commas and/or whitespace
 (where in the latter case the whole argument must be enclosed in "...").
 Each source may contain multiple certificates.
 
@@ -868,11 +875,11 @@ Reference value to use as senderKID of server in case no B<-srv_cert> is given.
 
 Password source for server authentication with a pre-shared key (secret).
 
-=item B<-srv_cert> I<filename>
+=item B<-srv_cert> I<filename>|I<uri>]
 
 Certificate of the server.
 
-=item B<-srv_key> I<filename>
+=item B<-srv_key> I<filename>|I<uri>]
 
 Private key used by the server for signing messages.
 
@@ -880,7 +887,7 @@ Private key used by the server for signing messages.
 
 Server private key (and cert) file pass phrase source.
 
-=item B<-srv_trusted> I<filenames>
+=item B<-srv_trusted> I<filenames>|I<uris>
 
 Trusted certificates for client authentication.
 
@@ -888,19 +895,19 @@ The certificate verification options
 B<-verify_hostname>, B<-verify_ip>, and B<-verify_email>
 have no effect on the certificate verification enabled via this option.
 
-=item B<-srv_untrusted> I<filenames>
+=item B<-srv_untrusted> I<filenames>|I<uris>
 
 Intermediate CA certs that may be useful when verifying client certificates.
 
-=item B<-rsp_cert> I<filename>
+=item B<-rsp_cert> I<filename>|I<uri>]
 
 Certificate to be returned as mock enrollment result.
 
-=item B<-rsp_extracerts> I<filenames>
+=item B<-rsp_extracerts> I<filenames>|I<uris>
 
 Extra certificates to be included in mock certification responses.
 
-=item B<-rsp_capubs> I<filenames>
+=item B<-rsp_capubs> I<filenames>|I<uris>
 
 CA certificates to be included in mock Initialization Response (IP) message.
 

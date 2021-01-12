@@ -457,7 +457,7 @@ X509 *OSSL_CMP_exec_certreq(OSSL_CMP_CTX *ctx, int req_type,
     OSSL_CMP_exec_certreq(ctx, OSSL_CMP_KUR, NULL)
 int OSSL_CMP_try_certreq(OSSL_CMP_CTX *ctx, int req_type,
                          const OSSL_CRMF_MSG *crm, int *checkAfter);
-X509 *OSSL_CMP_exec_RR_ses(OSSL_CMP_CTX *ctx);
+int OSSL_CMP_exec_RR_ses(OSSL_CMP_CTX *ctx);
 STACK_OF(OSSL_CMP_ITAV) *OSSL_CMP_exec_GENM_ses(OSSL_CMP_CTX *ctx);
 
 #  ifdef  __cplusplus

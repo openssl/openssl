@@ -234,7 +234,7 @@ static OSSL_CMP_PKISI *process_rr(OSSL_CMP_SRV_CTX *srv_ctx,
 {
     mock_srv_ctx *ctx = OSSL_CMP_SRV_CTX_get0_custom_ctx(srv_ctx);
 
-    if (ctx == NULL || rr == NULL || issuer == NULL || serial == NULL) {
+    if (ctx == NULL || rr == NULL) {
         ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
         return NULL;
     }
@@ -242,6 +242,10 @@ static OSSL_CMP_PKISI *process_rr(OSSL_CMP_SRV_CTX *srv_ctx,
         ERR_raise(ERR_LIB_CMP, CMP_R_ERROR_PROCESSING_MESSAGE);
         return NULL;
     }
+
+    /* Allow any RR derived from CSR, which may include subject and serial */
+    if (issuer == NULL || serial == NULL)
+        return OSSL_CMP_PKISI_dup(ctx->statusOut);
 
     /* accept revocation only for the certificate we sent in ir/cr/kur */
     if (X509_NAME_cmp(issuer, X509_get_issuer_name(ctx->certOut)) != 0

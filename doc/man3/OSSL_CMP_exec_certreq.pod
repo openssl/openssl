@@ -32,7 +32,7 @@ OSSL_CMP_exec_GENM_ses
  #define OSSL_CMP_KUR
  int OSSL_CMP_try_certreq(OSSL_CMP_CTX *ctx, int req_type,
                           const OSSL_CRMF_MSG *crm, int *checkAfter);
- X509 *OSSL_CMP_exec_RR_ses(OSSL_CMP_CTX *ctx);
+ int OSSL_CMP_exec_RR_ses(OSSL_CMP_CTX *ctx);
  STACK_OF(OSSL_CMP_ITAV) *OSSL_CMP_exec_GENM_ses(OSSL_CMP_CTX *ctx);
 
 =head1 DESCRIPTION
@@ -137,9 +137,7 @@ In the latter case L<OSSL_CMP_CTX_get0_newCert(3)> yields NULL
 and the output parameter I<checkAfter> has been used to
 assign the received value unless I<checkAfter> is NULL.
 
-OSSL_CMP_exec_RR_ses() returns the
-pointer to the revoked certificate on success, NULL on error.
-This pointer will be freed implicitly by OSSL_CMP_CTX_free().
+OSSL_CMP_exec_RR_ses() returns 1 on success, 0 on error.
 
 OSSL_CMP_exec_GENM_ses() returns a
 pointer to the received B<ITAV> sequence on success, NULL on error.
