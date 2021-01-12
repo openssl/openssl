@@ -46,9 +46,9 @@ examining B<ctx> using, for example L<X509_STORE_CTX_get_error(3)>.
 
 =head1 BUGS
 
-This function uses the header F<< <x509.h> >>
+This function uses the header F<< <openssl/x509.h> >>
 as opposed to most chain verification
-functions which use F<< <x509_vfy.h> >>.
+functions which use F<< <openssl/x509_vfy.h> >>.
 
 =head1 SEE ALSO
 

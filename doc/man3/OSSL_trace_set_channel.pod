@@ -288,7 +288,7 @@ use the tracing functionality documented here, it is therefore
 necessary to configure and build OpenSSL with the 'enable-trace' option.
 
 When the library is built with tracing disabled, the macro
-B<OPENSSL_NO_TRACE> is defined in C<openssl/opensslconf.h> and all
+B<OPENSSL_NO_TRACE> is defined in F<< <openssl/opensslconf.h> >> and all
 functions described here are inoperational, i.e. will do nothing.
 
 =head1 HISTORY

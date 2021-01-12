@@ -192,12 +192,12 @@ ASYNC_WAIT_CTX_get_status() returns the engine status.
 
 =head1 NOTES
 
-On Windows platforms the openssl/async.h header is dependent on some
-of the types customarily made available by including windows.h. The
+On Windows platforms the F<< <openssl/async.h> >> header is dependent on some
+of the types customarily made available by including F<< <windows.h> >>. The
 application developer is likely to require control over when the latter
 is included, commonly as one of the first included headers. Therefore,
 it is defined as an application developer's responsibility to include
-windows.h prior to async.h.
+F<< <windows.h> >> prior to F<< <openssl/async.h> >>.
 
 =head1 SEE ALSO
 

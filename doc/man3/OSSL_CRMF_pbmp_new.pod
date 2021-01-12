@@ -42,7 +42,7 @@ for the random number generation (DRBG) and may be NULL for the default.
 =head1 NOTES
 
 The algorithms for the OWF (one-way function) and for the MAC (message
-authentication code) may be any with a NID defined in C<openssl/objects.h>.
+authentication code) may be any with a NID defined in F<< <openssl/objects.h> >>.
 As specified by RFC 4210, these should include NID_hmac_sha1.
 
 RFC 4210 recommends that the salt SHOULD be at least 8 bytes (64 bits) long,

@@ -24,7 +24,7 @@ found.
 The following general types are defined:
 B<BIO_TYPE_DESCRIPTOR>, B<BIO_TYPE_FILTER>, and B<BIO_TYPE_SOURCE_SINK>.
 
-For a list of the specific types, see the B<openssl/bio.h> header file.
+For a list of the specific types, see the F<< <openssl/bio.h> >> header file.
 
 BIO_next() returns the next BIO in a chain. It can be used to traverse all BIOs
 in a chain or used in conjunction with BIO_find_type() to find all BIOs of a

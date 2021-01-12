@@ -62,8 +62,8 @@ The specific structures are:
 
 In addition, the B<APP> name is reserved for use by application code.
 
-Each is identified by an B<CRYPTO_EX_INDEX_xxx> define in the B<crypto.h>
-header file.  In addition, B<CRYPTO_EX_INDEX_APP> is reserved for
+Each is identified by an B<CRYPTO_EX_INDEX_xxx> define in the header file
+F<< <openssl/crypto.h> >>.  In addition, B<CRYPTO_EX_INDEX_APP> is reserved for
 applications to use this facility for their own structures.
 
 The API described here is used by OpenSSL to manipulate exdata for specific
