@@ -107,7 +107,7 @@ OSSL_PARAM_UNMODIFIED, OSSL_PARAM_modified, OSSL_PARAM_set_all_unmodified
 =head1 DESCRIPTION
 
 A collection of utility functions that simplify and add type safety to the
-OSSL_PARAM arrays.  The following B<TYPE> names are supported:
+OSSL_PARAM arrays.  The following B<I<TYPE>> names are supported:
 
 =over 1
 
@@ -159,124 +159,125 @@ unsigned long int (ulong)
 
 OSSL_PARAM_TYPE() are a series of macros designed to assist initialising an
 array of OSSL_PARAM structures.
-Each of these macros defines a parameter of the specified B<TYPE> with the
-provided B<key> and parameter variable B<address>.
+Each of these macros defines a parameter of the specified B<I<TYPE>> with the
+provided I<key> and parameter variable I<address>.
 
 OSSL_PARAM_utf8_string(), OSSL_PARAM_octet_string(), OSSL_PARAM_utf8_ptr(),
 OSSL_PARAM_octet_ptr(), OSSL_PARAM_BN() are macros that provide support
 for defining UTF8 strings, OCTET strings and big numbers.
-A parameter with name B<key> is defined.
-The storage for this parameter is at B<address> and is of B<size> bytes.
+A parameter with name I<key> is defined.
+The storage for this parameter is at I<address> and is of I<size> bytes.
 
 OSSL_PARAM_END provides an end of parameter list marker.
 This should terminate all OSSL_PARAM arrays.
 
 OSSL_PARAM_construct_TYPE() are a series of functions that create OSSL_PARAM
 records dynamically.
-A parameter with name B<key> is created.
-The parameter will use storage pointed to by B<buf> and return size of B<ret>.
+A parameter with name I<key> is created.
+The parameter will use storage pointed to by I<buf> and return size of I<ret>.
 
 OSSL_PARAM_construct_BN() is a function that constructs a large integer
 OSSL_PARAM structure.
-A parameter with name B<key>, storage B<buf>, size B<bsize> and return
-size B<rsize> is created.
+A parameter with name I<key>, storage I<buf>, size I<bsize> and return
+size I<rsize> is created.
 
 OSSL_PARAM_construct_utf8_string() is a function that constructs a UTF8
 string OSSL_PARAM structure.
-A parameter with name B<key>, storage B<buf> and size B<bsize> is created.
-If B<bsize> is zero, the string length is determined using strlen(3) + 1 for the
+A parameter with name I<key>, storage I<buf> and size I<bsize> is created.
+If I<bsize> is zero, the string length is determined using strlen(3) + 1 for the
 null termination byte.
-Generally pass zero for B<bsize> instead of calling strlen(3) yourself.
+Generally pass zero for I<bsize> instead of calling strlen(3) yourself.
 
 OSSL_PARAM_construct_octet_string() is a function that constructs an OCTET
 string OSSL_PARAM structure.
-A parameter with name B<key>, storage B<buf> and size B<bsize> is created.
+A parameter with name I<key>, storage I<buf> and size I<bsize> is created.
 
 OSSL_PARAM_construct_utf8_ptr() is a function that constructs a UTF string
 pointer OSSL_PARAM structure.
-A parameter with name B<key>, storage pointer B<*buf> and size B<bsize>
+A parameter with name I<key>, storage pointer I<*buf> and size I<bsize>
 is created.
 
 OSSL_PARAM_construct_octet_ptr() is a function that constructs an OCTET string
 pointer OSSL_PARAM structure.
-A parameter with name B<key>, storage pointer B<*buf> and size B<bsize>
+A parameter with name I<key>, storage pointer I<*buf> and size I<bsize>
 is created.
 
 OSSL_PARAM_construct_end() is a function that constructs the terminating
 OSSL_PARAM structure.
 
-OSSL_PARAM_locate() is a function that searches an B<array> of parameters for
-the one matching the B<key> name.
+OSSL_PARAM_locate() is a function that searches an I<array> of parameters for
+the one matching the I<key> name.
 
 OSSL_PARAM_locate_const() behaves exactly like OSSL_PARAM_locate() except for
-the presence of I<const> for the B<array> argument and its return value.
+the presence of I<const> for the I<array> argument and its return value.
 
-OSSL_PARAM_get_TYPE() retrieves a value of type B<TYPE> from the parameter B<p>.
-The value is copied to the address B<val>.
+OSSL_PARAM_get_TYPE() retrieves a value of type B<I<TYPE>> from the parameter
+I<p>.
+The value is copied to the address I<val>.
 Type coercion takes place as discussed in the NOTES section.
 
-OSSL_PARAM_set_TYPE() stores a value B<val> of type B<TYPE> into the parameter
-B<p>.
+OSSL_PARAM_set_TYPE() stores a value I<val> of type B<I<TYPE>> into the
+parameter I<p>.
 If the parameter's I<data> field is NULL, then only its I<return_size> field
 will be assigned the size the parameter's I<data> buffer should have.
 Type coercion takes place as discussed in the NOTES section.
 
-OSSL_PARAM_get_BN() retrieves a BIGNUM from the parameter pointed to by B<p>.
-The BIGNUM referenced by B<val> is updated and is allocated if B<*val> is
-B<NULL>.
+OSSL_PARAM_get_BN() retrieves a BIGNUM from the parameter pointed to by I<p>.
+The BIGNUM referenced by I<val> is updated and is allocated if I<*val> is
+NULL.
 
-OSSL_PARAM_set_BN() stores the BIGNUM B<val> into the parameter B<p>.
+OSSL_PARAM_set_BN() stores the BIGNUM I<val> into the parameter I<p>.
 If the parameter's I<data> field is NULL, then only its I<return_size> field
 will be assigned the size the parameter's I<data> buffer should have.
 
 OSSL_PARAM_get_utf8_string() retrieves a UTF8 string from the parameter
-pointed to by B<p>.
-The string is either stored into B<*val> with a length limit of B<max_len> or,
-in the case when B<*val> is B<NULL>, memory is allocated for the string and
-B<max_len> is ignored.
+pointed to by I<p>.
+The string is either stored into I<*val> with a length limit of I<max_len> or,
+in the case when I<*val> is NULL, memory is allocated for the string and
+I<max_len> is ignored.
 If memory is allocated by this function, it must be freed by the caller.
 
 OSSL_PARAM_set_utf8_string() sets a UTF8 string from the parameter pointed to
-by B<p> to the value referenced by B<val>.
+by I<p> to the value referenced by I<val>.
 If the parameter's I<data> field is NULL, then only its I<return_size> field
 will be assigned the size the parameter's I<data> buffer should have.
 
 OSSL_PARAM_get_octet_string() retrieves an OCTET string from the parameter
-pointed to by B<p>.
-The OCTETs are either stored into B<*val> with a length limit of B<max_len> or,
-in the case when B<*val> is B<NULL>, memory is allocated and
-B<max_len> is ignored. B<*used_len> is populated with the number of OCTETs
-stored. If B<val> is NULL then the OCTETS are not stored, but B<*used_len> is
+pointed to by I<p>.
+The OCTETs are either stored into I<*val> with a length limit of I<max_len> or,
+in the case when I<*val> is NULL, memory is allocated and
+I<max_len> is ignored. I<*used_len> is populated with the number of OCTETs
+stored. If I<val> is NULL then the OCTETS are not stored, but I<*used_len> is
 still populated.
 If memory is allocated by this function, it must be freed by the caller.
 
 OSSL_PARAM_set_octet_string() sets an OCTET string from the parameter
-pointed to by B<p> to the value referenced by B<val>.
+pointed to by I<p> to the value referenced by I<val>.
 If the parameter's I<data> field is NULL, then only its I<return_size> field
 will be assigned the size the parameter's I<data> buffer should have.
 
 OSSL_PARAM_get_utf8_ptr() retrieves the UTF8 string pointer from the parameter
-referenced by B<p> and stores it in B<*val>.
+referenced by I<p> and stores it in I<*val>.
 
 OSSL_PARAM_set_utf8_ptr() sets the UTF8 string pointer in the parameter
-referenced by B<p> to the values B<val>.
+referenced by I<p> to the values I<val>.
 
 OSSL_PARAM_get_octet_ptr() retrieves the OCTET string pointer from the parameter
-referenced by B<p> and stores it in B<*val>.
-The length of the OCTET string is stored in B<*used_len>.
+referenced by I<p> and stores it in I<*val>.
+The length of the OCTET string is stored in I<*used_len>.
 
 OSSL_PARAM_set_octet_ptr() sets the OCTET string pointer in the parameter
-referenced by B<p> to the values B<val>.
-The length of the OCTET string is provided by B<used_len>.
+referenced by I<p> to the values I<val>.
+The length of the OCTET string is provided by I<used_len>.
 
 OSSL_PARAM_get_utf8_string_ptr() retrieves the pointer to a UTF8 string from
-the parameter pointed to by B<p>, and stores that pointer in B<*val>.
+the parameter pointed to by I<p>, and stores that pointer in I<*val>.
 This is different from OSSL_PARAM_get_utf8_string(), which copies the
 string.
 
 OSSL_PARAM_get_octet_string_ptr() retrieves the pointer to a octet string
-from the parameter pointed to by B<p>, and stores that pointer in B<*val>,
-along with the string's length in B<*used_len>.
+from the parameter pointed to by I<p>, and stores that pointer in I<*val>,
+along with the string's length in I<*used_len>.
 This is different from OSSL_PARAM_get_octet_string(), which copies the
 string.
 
@@ -285,11 +286,11 @@ creation, via either the macros or construct calls, the I<return_size> field
 is set to this.  If the parameter is set using the calls defined herein, the
 I<return_size> field is changed.
 
-OSSL_PARAM_modified() queries if the parameter B<param> has been set or not
+OSSL_PARAM_modified() queries if the parameter I<param> has been set or not
 using the calls defined herein.
 
 OSSL_PARAM_set_all_unmodified() resets the unused indicator for all parameters
-in the array B<params>.
+in the array I<params>.
 
 =head1 RETURN VALUES
 
@@ -299,12 +300,12 @@ OSSL_PARAM_construct_utf8_ptr() and OSSL_PARAM_construct_octet_ptr()
 return a populated OSSL_PARAM structure.
 
 OSSL_PARAM_locate() and OSSL_PARAM_locate_const() return a pointer to
-the matching OSSL_PARAM object.  They return B<NULL> on error or when
-no object matching B<key> exists in the B<array>.
+the matching OSSL_PARAM object.  They return NULL on error or when
+no object matching I<key> exists in the I<array>.
 
-OSSL_PARAM_modified() returns B<1> if the parameter was set and B<0> otherwise.
+OSSL_PARAM_modified() returns 1 if the parameter was set and 0 otherwise.
 
-All other functions return B<1> on success and B<0> on failure.
+All other functions return 1 on success and 0 on failure.
 
 =head1 NOTES
 
@@ -314,9 +315,9 @@ Apart from that, the functions must be used appropriately for the
 expected type of the parameter.
 
 For OSSL_PARAM_construct_utf8_ptr() and OSSL_PARAM_consstruct_octet_ptr(),
-B<bsize> is not relevant if the purpose is to send the B<OSSL_PARAM> array
+I<bsize> is not relevant if the purpose is to send the B<OSSL_PARAM> array
 to a I<responder>, i.e. to get parameter data back.
-In that case, B<bsize> can safely be given zero.
+In that case, I<bsize> can safely be given zero.
 See L<OSSL_PARAM(3)/DESCRIPTION> for further information on the
 possible purposes.
 
