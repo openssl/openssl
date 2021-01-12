@@ -214,7 +214,7 @@ EC_GROUP_get_degree() returns the degree for B<group> or 0 if the operation is n
 
 EC_GROUP_get_field_type() returns either B<NID_X9_62_prime_field> for prime curves
 or B<NID_X9_62_characteristic_two_field> for binary curves;
-these values are defined in the obj_mac.h header file.
+these values are defined in the F<< <openssl/obj_mac.h> >> header file.
 
 EC_GROUP_check_named_curve() returns the nid of the matching named curve, otherwise it returns 0 for no match, or -1 on error.
 
@@ -232,7 +232,7 @@ EC_GROUP_set_seed() returns the length of the seed that has been set. If the sup
 
 EC_GROUP_cmp() returns 0 if the curves are equal, 1 if they are not equal, or -1 on error.
 
-EC_GROUP_get_basis_type() returns the values NID_X9_62_tpBasis or NID_X9_62_ppBasis (as defined in <openssl/obj_mac.h>) for a
+EC_GROUP_get_basis_type() returns the values NID_X9_62_tpBasis or NID_X9_62_ppBasis (as defined in F<< <openssl/obj_mac.h> >>) for a
 trinomial or pentanomial respectively. Alternatively in the event of an error a 0 is returned.
 
 =head1 SEE ALSO

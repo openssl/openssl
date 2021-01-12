@@ -61,7 +61,7 @@ I<iv>, and set the cipher context I<ctx> and the hash context I<hctx>.
 The I<name> is 16 characters long and is used as a key identifier.
 
 The I<iv> length is the length of the IV of the corresponding cipher. The
-maximum IV length is B<EVP_MAX_IV_LENGTH> bytes defined in B<evp.h>.
+maximum IV length is B<EVP_MAX_IV_LENGTH> bytes defined in F<< <openssl/evp.h> >>.
 
 The initialization vector I<iv> should be a random value. The cipher context
 I<ctx> should use the initialisation vector I<iv>. The cipher context can be

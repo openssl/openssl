@@ -67,13 +67,13 @@ unique integer B<type> and a string that represents its B<name>.
 Use BIO_get_new_index() to get the value for B<type>.
 
 The set of
-standard OpenSSL provided BIO types is provided in B<bio.h>. Some examples
-include B<BIO_TYPE_BUFFER> and B<BIO_TYPE_CIPHER>. Filter BIOs should have a
-type which have the "filter" bit set (B<BIO_TYPE_FILTER>). Source/sink BIOs
-should have the "source/sink" bit set (B<BIO_TYPE_SOURCE_SINK>). File descriptor
-based BIOs (e.g. socket, fd, connect, accept etc) should additionally have the
-"descriptor" bit set (B<BIO_TYPE_DESCRIPTOR>). See the L<BIO_find_type(3)> page for
-more information.
+standard OpenSSL provided BIO types is provided in F<< <openssl/bio.h> >>.
+Some examples include B<BIO_TYPE_BUFFER> and B<BIO_TYPE_CIPHER>. Filter BIOs
+should have a type which have the "filter" bit set (B<BIO_TYPE_FILTER>).
+Source/sink BIOs should have the "source/sink" bit set (B<BIO_TYPE_SOURCE_SINK>).
+File descriptor based BIOs (e.g. socket, fd, connect, accept etc) should
+additionally have the "descriptor" bit set (B<BIO_TYPE_DESCRIPTOR>). See the
+L<BIO_find_type(3)> page for more information.
 
 BIO_meth_free() destroys a B<BIO_METHOD> structure and frees up any memory
 associated with it.

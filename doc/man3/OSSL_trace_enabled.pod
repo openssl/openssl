@@ -230,7 +230,7 @@ When the library is built with tracing disabled:
 
 =item *
 
-The macro C<OPENSSL_NO_TRACE> is defined in C<openssl/opensslconf.h>.
+The macro C<OPENSSL_NO_TRACE> is defined in F<< <openssl/opensslconf.h> >>.
 
 =item *
 
