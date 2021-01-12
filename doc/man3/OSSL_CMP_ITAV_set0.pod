@@ -29,21 +29,21 @@ ITAV is short for InfoTypeAndValue. This type is defined in RFC 4210
 section 5.3.19 and Appendix F. It is used at various places in CMP messages,
 e.g., in the generalInfo PKIHeader field, to hold a key-value pair.
 
-OSSL_CMP_ITAV_create() creates a new OSSL_CMP_ITAV structure and fills it in.
-It combines B<OSSL_CMP_ITAV_new()> and B<OSSL_CMP_ITAV_set0>.
+OSSL_CMP_ITAV_create() creates a new B<OSSL_CMP_ITAV> structure and fills it in.
+It combines OSSL_CMP_ITAV_new() and OSSL_CMP_ITAV_set0().
 
-OSSL_CMP_ITAV_set0() sets the B<itav> with an infoType of B<type> and an
-infoValue of B<value>. This function uses the pointers B<type> and B<value>
+OSSL_CMP_ITAV_set0() sets the I<itav> with an infoType of I<type> and an
+infoValue of I<value>. This function uses the pointers I<type> and I<value>
 internally, so they must B<not> be freed up after the call.
 
 OSSL_CMP_ITAV_get0_type() returns a direct pointer to the infoType in the
-B<itav>.
+I<itav>.
 
 OSSL_CMP_ITAV_get0_value() returns a direct pointer to the infoValue in
-the B<itav> as generic ASN1_TYPE*.
+the I<itav> as generic B<ASN1_TYPE> pointer.
 
-OSSL_CMP_ITAV_push0_stack_item() pushes B<itav> to the stack pointed to
-by B<*itav_sk_p>. It creates a new stack if B<*itav_sk_p> points to NULL.
+OSSL_CMP_ITAV_push0_stack_item() pushes I<itav> to the stack pointed to
+by I<*itav_sk_p>. It creates a new stack if I<*itav_sk_p> points to NULL.
 
 =head1 NOTES
 
@@ -65,7 +65,7 @@ OSSL_CMP_ITAV_push0_stack_item() returns 1 on success, 0 on error.
 
 The following code creates and sets a structure representing a generic
 InfoTypeAndValue sequence, using an OID created from text as type, and an
-integer as value. Afterwards, it is pushed to the OSSL_CMP_CTX to be later
+integer as value. Afterwards, it is pushed to the B<OSSL_CMP_CTX> to be later
 included in the requests' PKIHeader's genInfo field.
 
     ASN1_OBJECT *type = OBJ_txt2obj("1.2.3.4.5", 1);

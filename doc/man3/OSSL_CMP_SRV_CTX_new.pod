@@ -91,8 +91,8 @@ the respective callback function (if present) for more specific processing,
 and then assembles a result message, which may be a CMP error message.
 
 OSSL_CMP_CTX_server_perform() is an interface to
-B<OSSL_CMP_SRV_process_request()> that can be used by a CMP client
-in the same way as B<OSSL_CMP_MSG_http_perform()>.
+OSSL_CMP_SRV_process_request() that can be used by a CMP client
+in the same way as L<OSSL_CMP_MSG_http_perform(3)>.
 The B<OSSL_CMP_SRV_CTX> must be set as I<transfer_cb_arg> of I<client_ctx>.
 
 OSSL_CMP_SRV_CTX_new() creates and initializes an B<OSSL_CMP_SRV_CTX> structure
@@ -112,7 +112,7 @@ type of CMP message is not supported by the server.
 OSSL_CMP_SRV_CTX_get0_cmp_ctx() returns the B<OSSL_CMP_CTX> from the I<srv_ctx>.
 
 OSSL_CMP_SRV_CTX_get0_custom_ctx() returns the custom server context from
-I<srv_ctx> that has been set using B<OSSL_CMP_SRV_CTX_init()>.
+I<srv_ctx> that has been set using OSSL_CMP_SRV_CTX_init().
 
 OSSL_CMP_SRV_CTX_set_send_unprotected_errors() enables sending error messages
 and other forms of negative responses unprotected.
@@ -144,7 +144,7 @@ OSSL_CMP_SRV_CTX_get0_cmp_ctx() returns a B<OSSL_CMP_CTX> structure on success,
 NULL on error.
 
 OSSL_CMP_SRV_CTX_get0_custom_ctx() returns the custom server context
-that has been set using B<OSSL_CMP_SRV_CTX_init()>.
+that has been set using OSSL_CMP_SRV_CTX_init().
 
 All other functions return 1 on success, 0 on error.
 

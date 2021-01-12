@@ -313,7 +313,7 @@ OSSL_CMP_OPT_LOG_VERBOSITY context option to the given level.
 
 OSSL_CMP_CTX_print_errors() outputs any entries in the OpenSSL error queue. It
 is similar to L<ERR_print_errors_cb(3)> but uses the CMP log callback function
-if set in the C<ctx> for uniformity with CMP logging if given. Otherwise it uses
+if set in the I<ctx> for uniformity with CMP logging if given. Otherwise it uses
 L<ERR_print_errors(3)> to print to STDERR (unless OPENSSL_NO_STDIO is defined).
 
 OSSL_CMP_CTX_set1_serverPath() sets the HTTP path of the CMP server on the host,

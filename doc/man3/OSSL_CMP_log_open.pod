@@ -72,10 +72,10 @@ a message string describing the nature of the event, terminated by '\n'.
 
 Even when an activity is successful some warnings may be useful and some degree
 of auditing may be required. Therefore, the logging facility supports a severity
-level and the callback function has a B<level> parameter indicating such a
+level and the callback function has a I<level> parameter indicating such a
 level, such that error, warning, info, debug, etc. can be treated differently.
 The callback is activated only when the severity level is sufficient according
-to the current level of verbosity, which by default is OSSL_CMP_LOG_INFO.
+to the current level of verbosity, which by default is B<OSSL_CMP_LOG_INFO>.
 
 The callback function may itself do non-trivial tasks like writing to
 a log file or remote stream, which in turn may fail.
@@ -92,14 +92,15 @@ any pending CMP-specific log output and deallocate related resources.
 It may be called multiple times. It does get called at OpenSSL stutdown.
 
 OSSL_CMP_print_to_bio() prints the given component info, filename, line number,
-severity level, and log message or error queue message to the given B<bio>.
-B<component> usually is a function or module name.
+severity level, and log message or error queue message to the given I<bio>.
+I<component> usually is a function or module name.
 If it is NULL, empty, or "(unknown function)" then "CMP" is used as fallback.
 
 OSSL_CMP_print_errors_cb() outputs any entries in the OpenSSL error queue.
-It is similar to B<ERR_print_errors_cb()> but uses the CMP log callback function
-C<log_fn> for uniformity with CMP logging if not B<NULL>. Otherwise it prints to
-STDERR using B<OSSL_CMP_print_to_bio(3)> (unless OPENSSL_NO_STDIO is defined).
+It is similar to L<ERR_print_errors_cb(3)> but uses the CMP log callback
+function I<log_fn> for uniformity with CMP logging if not NULL. Otherwise it
+prints to STDERR using L<OSSL_CMP_print_to_bio(3)> (unless B<OPENSSL_NO_STDIO>
+is defined).
 
 =head1 RETURN VALUES
 
