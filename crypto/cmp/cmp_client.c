@@ -742,7 +742,7 @@ X509 *OSSL_CMP_exec_certreq(OSSL_CMP_CTX *ctx, int req_type,
     return result;
 }
 
-X509 *OSSL_CMP_exec_RR_ses(OSSL_CMP_CTX *ctx)
+int OSSL_CMP_exec_RR_ses(OSSL_CMP_CTX *ctx)
 {
     OSSL_CMP_MSG *rr = NULL;
     OSSL_CMP_MSG *rp = NULL;
@@ -751,13 +751,13 @@ X509 *OSSL_CMP_exec_RR_ses(OSSL_CMP_CTX *ctx)
     OSSL_CMP_REVREPCONTENT *rrep = NULL;
     OSSL_CMP_PKISI *si = NULL;
     char buf[OSSL_CMP_PKISI_BUFLEN];
-    X509 *result = NULL;
+    int ret = 0;
 
     if (ctx == NULL) {
         ERR_raise(ERR_LIB_CMP, CMP_R_INVALID_ARGS);
         return 0;
     }
-    if (ctx->oldCert == NULL) {
+    if (ctx->oldCert == NULL && ctx->p10CSR == NULL) {
         ERR_raise(ERR_LIB_CMP, CMP_R_MISSING_REFERENCE_CERT);
         return 0;
     }
@@ -790,24 +790,24 @@ X509 *OSSL_CMP_exec_RR_ses(OSSL_CMP_CTX *ctx)
     switch (ossl_cmp_pkisi_get_status(si)) {
     case OSSL_CMP_PKISTATUS_accepted:
         ossl_cmp_info(ctx, "revocation accepted (PKIStatus=accepted)");
-        result = ctx->oldCert;
+        ret = 1;
         break;
     case OSSL_CMP_PKISTATUS_grantedWithMods:
         ossl_cmp_info(ctx, "revocation accepted (PKIStatus=grantedWithMods)");
-        result = ctx->oldCert;
+        ret = 1;
         break;
     case OSSL_CMP_PKISTATUS_rejection:
         ERR_raise(ERR_LIB_CMP, CMP_R_REQUEST_REJECTED_BY_SERVER);
         goto err;
     case OSSL_CMP_PKISTATUS_revocationWarning:
         ossl_cmp_info(ctx, "revocation accepted (PKIStatus=revocationWarning)");
-        result = ctx->oldCert;
+        ret = 1;
         break;
     case OSSL_CMP_PKISTATUS_revocationNotification:
         /* interpretation as warning or error depends on CA */
         ossl_cmp_warn(ctx,
                       "revocation accepted (PKIStatus=revocationNotification)");
-        result = ctx->oldCert;
+        ret = 1;
         break;
     case OSSL_CMP_PKISTATUS_waiting:
     case OSSL_CMP_PKISTATUS_keyUpdateWarning:
@@ -818,8 +818,8 @@ X509 *OSSL_CMP_exec_RR_ses(OSSL_CMP_CTX *ctx)
         goto err;
     }
 
-    /* check any present CertId in optional revCerts field */
-    if (rrep->revCerts != NULL) {
+    /* check any pretent CertId in optional revCerts field */
+    if (sk_OSSL_CRMF_CERTID_num(rrep->revCerts) >= 1) {
         OSSL_CRMF_CERTID *cid;
         OSSL_CRMF_CERTTEMPLATE *tmpl =
             sk_OSSL_CMP_REVDETAILS_value(rr->body->value.rr, rsid)->certDetails;
@@ -828,17 +828,17 @@ X509 *OSSL_CMP_exec_RR_ses(OSSL_CMP_CTX *ctx)
 
         if (sk_OSSL_CRMF_CERTID_num(rrep->revCerts) != num_RevDetails) {
             ERR_raise(ERR_LIB_CMP, CMP_R_WRONG_RP_COMPONENT_COUNT);
-            result = NULL;
+            ret = 0;
             goto err;
         }
         if ((cid = ossl_cmp_revrepcontent_get_CertId(rrep, rsid)) == NULL) {
-            result = NULL;
+            ret = 0;
             goto err;
         }
         if (X509_NAME_cmp(issuer, OSSL_CRMF_CERTID_get0_issuer(cid)) != 0) {
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
             ERR_raise(ERR_LIB_CMP, CMP_R_WRONG_CERTID_IN_RP);
-            result = NULL;
+            ret = 0;
             goto err;
 #endif
         }
@@ -846,7 +846,7 @@ X509 *OSSL_CMP_exec_RR_ses(OSSL_CMP_CTX *ctx)
                              OSSL_CRMF_CERTID_get0_serialNumber(cid)) != 0) {
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
             ERR_raise(ERR_LIB_CMP, CMP_R_WRONG_SERIAL_IN_RP);
-            result = NULL;
+            ret = 0;
             goto err;
 #endif
         }
@@ -855,19 +855,19 @@ X509 *OSSL_CMP_exec_RR_ses(OSSL_CMP_CTX *ctx)
     /* check number of any optionally present crls */
     if (rrep->crls != NULL && sk_X509_CRL_num(rrep->crls) != num_RevDetails) {
         ERR_raise(ERR_LIB_CMP, CMP_R_WRONG_RP_COMPONENT_COUNT);
-        result = NULL;
+        ret = 0;
         goto err;
     }
 
  err:
-    if (result == NULL
+    if (ret == 0
             && OSSL_CMP_CTX_snprint_PKIStatus(ctx, buf, sizeof(buf)) != NULL)
         ERR_add_error_data(1, buf);
 
  end:
     OSSL_CMP_MSG_free(rr);
     OSSL_CMP_MSG_free(rp);
-    return result;
+    return ret;
 }
 
 STACK_OF(OSSL_CMP_ITAV) *OSSL_CMP_exec_GENM_ses(OSSL_CMP_CTX *ctx)
