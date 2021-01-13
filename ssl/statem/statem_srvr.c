@@ -2466,7 +2466,7 @@ int tls_construct_server_key_exchange(SSL *s, WPACKET *pkt)
         } else {
             pkdhp = cert->dh_tmp;
         }
-#if !defined(OPENSSL_NO_DH) && !defined(OPENSSL_NO_DEPRECATED_3_0)
+#if !defined(OPENSSL_NO_DEPRECATED_3_0)
         if ((pkdhp == NULL) && (s->cert->dh_tmp_cb != NULL)) {
             pkdh = ssl_dh_to_pkey(s->cert->dh_tmp_cb(s, 0, 1024));
             if (pkdh == NULL) {

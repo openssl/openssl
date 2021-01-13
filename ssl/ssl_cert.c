@@ -95,9 +95,8 @@ CERT *ssl_cert_dup(CERT *cert)
         ret->dh_tmp = cert->dh_tmp;
         EVP_PKEY_up_ref(ret->dh_tmp);
     }
-#ifndef OPENSSL_NO_DH
+
     ret->dh_tmp_cb = cert->dh_tmp_cb;
-#endif
     ret->dh_tmp_auto = cert->dh_tmp_auto;
 
     for (i = 0; i < SSL_PKEY_NUM; i++) {

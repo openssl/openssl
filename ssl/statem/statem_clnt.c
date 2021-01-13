@@ -1725,11 +1725,7 @@ static MSG_PROCESS_RETURN tls_process_as_hello_retry_request(SSL *s,
     OPENSSL_free(extensions);
     extensions = NULL;
 
-    if (s->ext.tls13_cookie_len == 0
-#if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH)
-        && s->s3.tmp.pkey != NULL
-#endif
-        ) {
+    if (s->ext.tls13_cookie_len == 0 && s->s3.tmp.pkey != NULL) {
         /*
          * We didn't receive a cookie or a new key_share so the next
          * ClientHello will not change
@@ -2186,10 +2182,8 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
 
     save_param_start = *pkt;
 
-#if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH)
     EVP_PKEY_free(s->s3.peer_tmp);
     s->s3.peer_tmp = NULL;
-#endif
 
     if (alg_k & SSL_PSK) {
         if (!tls_process_ske_psk_preamble(s, pkt)) {
@@ -3569,12 +3563,11 @@ int ssl3_check_cert_and_algorithm(SSL *s)
                  SSL_R_MISSING_RSA_ENCRYPTING_CERT);
         return 0;
     }
-#ifndef OPENSSL_NO_DH
+
     if ((alg_k & SSL_kDHE) && (s->s3.peer_tmp == NULL)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return 0;
     }
-#endif
 
     return 1;
 }
