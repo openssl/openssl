@@ -69,15 +69,6 @@ int dh_key_fromdata(DH *dh, const OSSL_PARAM params[])
     param_priv_key = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_PRIV_KEY);
     param_pub_key = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_PUB_KEY);
 
-    /*
-     * DH documentation says that a public key must be present if a
-     * private key is present.
-     * We want to have at least a public key either way, so we end up
-     * requiring it unconditionally.
-     */
-    if (param_priv_key != NULL && param_pub_key == NULL)
-        return 0;
-
     if ((param_priv_key != NULL
          && !OSSL_PARAM_get_BN(param_priv_key, &priv_key))
         || (param_pub_key != NULL

@@ -39,13 +39,6 @@ int dsa_key_fromdata(DSA *dsa, const OSSL_PARAM params[])
     if (param_priv_key == NULL && param_pub_key == NULL)
         return 1;
 
-    /*
-     * DSA documentation says that a public key must be present if a
-     * private key is present.
-     */
-    if (param_priv_key != NULL && param_pub_key == NULL)
-        return 0;
-
     if (param_pub_key != NULL && !OSSL_PARAM_get_BN(param_pub_key, &pub_key))
         goto err;
     if (param_priv_key != NULL && !OSSL_PARAM_get_BN(param_priv_key, &priv_key))
