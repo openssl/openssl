@@ -391,15 +391,17 @@ static int discover_provider_groups(OSSL_PROVIDER *provider, void *vctx)
 int ssl_load_groups(SSL_CTX *ctx)
 {
     size_t i, j, num_deflt_grps = 0;
-    uint16_t tmp_supp_groups[sizeof(supported_groups_default)];
+    uint16_t tmp_supp_groups[OSSL_NELEM(supported_groups_default)];
 
     if (!OSSL_PROVIDER_do_all(ctx->libctx, discover_provider_groups, ctx))
         return 0;
 
-    for (i = 0; i < sizeof(supported_groups_default); i++) {
+    for (i = 0; i < OSSL_NELEM(supported_groups_default); i++) {
         for (j = 0; j < ctx->group_list_len; j++) {
-            if (ctx->group_list[j].group_id == supported_groups_default[i])
+            if (ctx->group_list[j].group_id == supported_groups_default[i]) {
                 tmp_supp_groups[num_deflt_grps++] = ctx->group_list[j].group_id;
+                break;
+            }
         }
     }
 
@@ -414,7 +416,9 @@ int ssl_load_groups(SSL_CTX *ctx)
         return 0;
     }
 
-    memcpy(ctx->ext.supported_groups_default, tmp_supp_groups, num_deflt_grps);
+    memcpy(ctx->ext.supported_groups_default,
+           tmp_supp_groups,
+           num_deflt_grps * sizeof(tmp_supp_groups[0]));
     ctx->ext.supported_groups_default_len = num_deflt_grps;
 
     return 1;
@@ -534,10 +538,14 @@ void tls1_get_supported_groups(SSL *s, const uint16_t **pgroups,
     }
 }
 
-int tls_valid_group(SSL *s, uint16_t group_id, int minversion, int maxversion)
+int tls_valid_group(SSL *s, uint16_t group_id, int minversion, int maxversion,
+                    int isec, int *okfortls13)
 {
     const TLS_GROUP_INFO *ginfo = tls1_group_id_lookup(s->ctx, group_id);
     int ret;
+
+    if (okfortls13 != NULL)
+        okfortls13 = 0;
 
     if (ginfo == NULL)
         return 0;
@@ -560,7 +568,14 @@ int tls_valid_group(SSL *s, uint16_t group_id, int minversion, int maxversion)
             ret = (minversion <= ginfo->maxtls);
         if (ginfo->mintls > 0)
             ret &= (maxversion >= ginfo->mintls);
+        if (ret && okfortls13 != NULL && maxversion == TLS1_3_VERSION)
+            *okfortls13 = (ginfo->maxtls == 0)
+                          || (ginfo->maxtls >= TLS1_3_VERSION);
     }
+    ret &= !isec
+           || strcmp(ginfo->algorithm, "EC") == 0
+           || strcmp(ginfo->algorithm, "X25519") == 0
+           || strcmp(ginfo->algorithm, "X448") == 0;
 
     return ret;
 }

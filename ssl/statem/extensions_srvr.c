@@ -1355,7 +1355,7 @@ EXT_RETURN tls_construct_stoc_supported_groups(SSL *s, WPACKET *pkt,
     for (i = 0; i < numgroups; i++) {
         uint16_t group = groups[i];
 
-        if (tls_valid_group(s, group, version, version)
+        if (tls_valid_group(s, group, version, version, 0, NULL)
                 && tls_group_allowed(s, group, SSL_SECOP_CURVE_SUPPORTED)) {
             if (first) {
                 /*
