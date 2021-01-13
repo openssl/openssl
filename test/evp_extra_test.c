@@ -485,6 +485,133 @@ err:
     return res;
 }
 
+/*
+ * Test combinations of private, public, missing and private + public key 
+ * params to ensure they are all accepted
+ */
+static int test_EVP_PKEY_ffc_priv_pub(char *keytype)
+{
+    OSSL_PARAM_BLD *bld = NULL;
+    OSSL_PARAM *params = NULL;
+    BIGNUM *p = NULL, *q = NULL, *g = NULL, *pub = NULL, *priv = NULL;
+    EVP_PKEY_CTX *pctx = NULL;
+    EVP_PKEY *pkey = NULL;
+    int ret = 0;
+
+    /*
+     * Setup the parameters for our pkey object. For our purposes they don't
+     * have to actually be *valid* parameters. We just need to set something.
+     */
+    if (!TEST_ptr(pctx = EVP_PKEY_CTX_new_from_name(testctx, keytype, NULL))
+        || !TEST_ptr(p = BN_new())
+        || !TEST_ptr(q = BN_new())
+        || !TEST_ptr(g = BN_new())
+        || !TEST_ptr(pub = BN_new())
+        || !TEST_ptr(priv = BN_new()))
+        goto err;
+
+    /* Test !priv and !pub */
+    if (!TEST_ptr(bld = OSSL_PARAM_BLD_new())
+        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_P, p))
+        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_Q, q))
+        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_G, g)))
+        goto err;
+    if (!TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld)))
+        goto err;
+
+    if (!TEST_int_gt(EVP_PKEY_key_fromdata_init(pctx), 0)
+        || !TEST_int_gt(EVP_PKEY_fromdata(pctx, &pkey, params), 0))
+        goto err;
+
+    if (!TEST_ptr(pkey))
+        goto err;
+
+    EVP_PKEY_free(pkey);
+    pkey = NULL;
+    OSSL_PARAM_BLD_free_params(params);
+    OSSL_PARAM_BLD_free(bld);
+
+    /* Test priv and !pub */
+    if (!TEST_ptr(bld = OSSL_PARAM_BLD_new())
+        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_P, p))
+        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_Q, q))
+        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_G, g))
+        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_PRIV_KEY,
+                                             priv)))
+        goto err;
+    if (!TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld)))
+        goto err;
+
+    if (!TEST_int_gt(EVP_PKEY_key_fromdata_init(pctx), 0)
+        || !TEST_int_gt(EVP_PKEY_fromdata(pctx, &pkey, params), 0))
+        goto err;
+
+    if (!TEST_ptr(pkey))
+        goto err;
+
+    EVP_PKEY_free(pkey);
+    pkey = NULL;
+    OSSL_PARAM_BLD_free_params(params);
+    OSSL_PARAM_BLD_free(bld);
+
+    /* Test !priv and pub */
+    if (!TEST_ptr(bld = OSSL_PARAM_BLD_new())
+        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_P, p))
+        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_Q, q))
+        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_G, g))
+        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_PUB_KEY,
+                                             pub)))
+        goto err;
+    if (!TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld)))
+        goto err;
+
+    if (!TEST_int_gt(EVP_PKEY_key_fromdata_init(pctx), 0)
+        || !TEST_int_gt(EVP_PKEY_fromdata(pctx, &pkey, params), 0))
+        goto err;
+
+    if (!TEST_ptr(pkey))
+        goto err;
+
+    EVP_PKEY_free(pkey);
+    pkey = NULL;
+    OSSL_PARAM_BLD_free_params(params);
+    OSSL_PARAM_BLD_free(bld);
+
+    /* Test priv and pub */
+    if (!TEST_ptr(bld = OSSL_PARAM_BLD_new())
+        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_P, p))
+        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_Q, q))
+        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_G, g))
+        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_PUB_KEY,
+                                             pub))
+        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_PRIV_KEY,
+                                             priv)))
+        goto err;
+    if (!TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld)))
+        goto err;
+
+    if (!TEST_int_gt(EVP_PKEY_key_fromdata_init(pctx), 0)
+        || !TEST_int_gt(EVP_PKEY_fromdata(pctx, &pkey, params), 0))
+        goto err;
+
+    if (!TEST_ptr(pkey))
+        goto err;
+
+    ret = 1;
+ err:
+    EVP_PKEY_free(pkey);
+    EVP_PKEY_CTX_free(pctx);
+    OSSL_PARAM_BLD_free_params(params);
+    OSSL_PARAM_BLD_free(bld);
+    BN_free(p);
+    BN_free(q);
+    BN_free(g);
+    BN_free(pub);
+    BN_free(priv);
+
+    return ret;
+}
+
 static int test_EVP_Enveloped(void)
 {
     int ret = 0;
@@ -1719,129 +1846,13 @@ static int test_DSA_get_set_params(void)
     return ret;
 }
 
-/* Test combinations of private, public, missing and private + public key 
- * params to ensure they are all accepted */
+/*
+ * Test combinations of private, public, missing and private + public key 
+ * params to ensure they are all accepted
+ */
 static int test_DSA_priv_pub(void)
 {
-    OSSL_PARAM_BLD *bld = NULL;
-    OSSL_PARAM *params = NULL;
-    BIGNUM *p = NULL, *q = NULL, *g = NULL, *pub = NULL, *priv = NULL;
-    EVP_PKEY_CTX *pctx = NULL;
-    EVP_PKEY *pkey = NULL;
-    int ret = 0;
-
-    /*
-     * Setup the parameters for our DSA object. For our purposes they don't
-     * have to actually be *valid* parameters. We just need to set something.
-     */
-    if (!TEST_ptr(pctx = EVP_PKEY_CTX_new_from_name(testctx, "DSA", NULL))
-        || !TEST_ptr(p = BN_new())
-        || !TEST_ptr(q = BN_new())
-        || !TEST_ptr(g = BN_new())
-        || !TEST_ptr(pub = BN_new())
-        || !TEST_ptr(priv = BN_new()))
-        goto err;
-
-    /* Test !priv and !pub */
-    if (!TEST_ptr(bld = OSSL_PARAM_BLD_new())
-        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_P, p))
-        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_Q, q))
-        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_G, g)))
-        goto err;
-    if (!TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld)))
-        goto err;
-
-    if (!TEST_int_gt(EVP_PKEY_key_fromdata_init(pctx), 0)
-        || !TEST_int_gt(EVP_PKEY_fromdata(pctx, &pkey, params), 0))
-        goto err;
-
-    if (!TEST_ptr(pkey))
-        goto err;
-
-    EVP_PKEY_free(pkey);
-    pkey = NULL;
-    OSSL_PARAM_BLD_free_params(params);
-    OSSL_PARAM_BLD_free(bld);
-    
-    /* Test priv and !pub */
-    if (!TEST_ptr(bld = OSSL_PARAM_BLD_new())
-        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_P, p))
-        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_Q, q))
-        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_G, g))
-        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_PRIV_KEY,
-                                             priv)))
-        goto err;
-    if (!TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld)))
-        goto err;
-
-    if (!TEST_int_gt(EVP_PKEY_key_fromdata_init(pctx), 0)
-        || !TEST_int_gt(EVP_PKEY_fromdata(pctx, &pkey, params), 0))
-        goto err;
-
-    if (!TEST_ptr(pkey))
-        goto err;
-
-    EVP_PKEY_free(pkey);
-    pkey = NULL;
-    OSSL_PARAM_BLD_free_params(params);
-    OSSL_PARAM_BLD_free(bld);
-
-    /* Test !priv and pub */
-    if (!TEST_ptr(bld = OSSL_PARAM_BLD_new())
-        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_P, p))
-        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_Q, q))
-        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_G, g))
-        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_PUB_KEY,
-                                             pub)))
-        goto err;
-    if (!TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld)))
-        goto err;
-
-    if (!TEST_int_gt(EVP_PKEY_key_fromdata_init(pctx), 0)
-        || !TEST_int_gt(EVP_PKEY_fromdata(pctx, &pkey, params), 0))
-        goto err;
-
-    if (!TEST_ptr(pkey))
-        goto err;
-
-    EVP_PKEY_free(pkey);
-    pkey = NULL;
-    OSSL_PARAM_BLD_free_params(params);
-    OSSL_PARAM_BLD_free(bld);
-
-    /* Test priv and pub */
-    if (!TEST_ptr(bld = OSSL_PARAM_BLD_new())
-        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_P, p))
-        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_Q, q))
-        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_G, g))
-        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_PUB_KEY,
-                                             pub))
-        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_PRIV_KEY,
-                                             priv)))
-        goto err;
-    if (!TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld)))
-        goto err;
-
-    if (!TEST_int_gt(EVP_PKEY_key_fromdata_init(pctx), 0)
-        || !TEST_int_gt(EVP_PKEY_fromdata(pctx, &pkey, params), 0))
-        goto err;
-
-    if (!TEST_ptr(pkey))
-        goto err;
-
-    ret = 1;
- err:
-    EVP_PKEY_free(pkey);
-    EVP_PKEY_CTX_free(pctx);
-    OSSL_PARAM_BLD_free_params(params);
-    OSSL_PARAM_BLD_free(bld);
-    BN_free(p);
-    BN_free(q);
-    BN_free(g);
-    BN_free(pub);
-    BN_free(priv);
-
-    return ret;
+    return test_EVP_PKEY_ffc_priv_pub("DSA");
 }
 
 #endif /* !OPENSSL_NO_DSA */
@@ -1960,132 +1971,16 @@ static int test_decrypt_null_chunks(void)
 #endif /* !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305) */
 
 #ifndef OPENSSL_NO_DH
-/* Test combinations of private, public, missing and private + public key 
- * params to ensure they are all accepted */
+/*
+ * Test combinations of private, public, missing and private + public key 
+ * params to ensure they are all accepted
+ */
 static int test_DH_priv_pub(void)
 {
-    OSSL_PARAM_BLD *bld = NULL;
-    OSSL_PARAM *params = NULL;
-    BIGNUM *p = NULL, *q = NULL, *g = NULL, *pub = NULL, *priv = NULL;
-    EVP_PKEY_CTX *pctx = NULL;
-    EVP_PKEY *pkey = NULL;
-    int ret = 0;
-
-    /*
-     * Setup the parameters for our DH object. For our purposes they don't
-     * have to actually be *valid* parameters. We just need to set something.
-     */
-    if (!TEST_ptr(pctx = EVP_PKEY_CTX_new_from_name(testctx, "DH", NULL))
-        || !TEST_ptr(p = BN_new())
-        || !TEST_ptr(q = BN_new())
-        || !TEST_ptr(g = BN_new())
-        || !TEST_ptr(pub = BN_new())
-        || !TEST_ptr(priv = BN_new()))
-        goto err;
-
-    /* Test !priv and !pub */
-    if (!TEST_ptr(bld = OSSL_PARAM_BLD_new())
-        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_P, p))
-        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_Q, q))
-        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_G, g)))
-        goto err;
-    if (!TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld)))
-        goto err;
-
-    if (!TEST_int_gt(EVP_PKEY_key_fromdata_init(pctx), 0)
-        || !TEST_int_gt(EVP_PKEY_fromdata(pctx, &pkey, params), 0))
-        goto err;
-
-    if (!TEST_ptr(pkey))
-        goto err;
-
-    EVP_PKEY_free(pkey);
-    pkey = NULL;
-    OSSL_PARAM_BLD_free_params(params);
-    OSSL_PARAM_BLD_free(bld);
-
-    /* Test priv and !pub */
-    if (!TEST_ptr(bld = OSSL_PARAM_BLD_new())
-        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_P, p))
-        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_Q, q))
-        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_G, g))
-        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_PRIV_KEY,
-                                             priv)))
-        goto err;
-    if (!TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld)))
-        goto err;
-
-    if (!TEST_int_gt(EVP_PKEY_key_fromdata_init(pctx), 0)
-        || !TEST_int_gt(EVP_PKEY_fromdata(pctx, &pkey, params), 0))
-        goto err;
-
-    if (!TEST_ptr(pkey))
-        goto err;
-
-    EVP_PKEY_free(pkey);
-    pkey = NULL;
-    OSSL_PARAM_BLD_free_params(params);
-    OSSL_PARAM_BLD_free(bld);
-
-    /* Test !priv and pub */
-    if (!TEST_ptr(bld = OSSL_PARAM_BLD_new())
-        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_P, p))
-        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_Q, q))
-        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_G, g))
-        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_PUB_KEY,
-                                             pub)))
-        goto err;
-    if (!TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld)))
-        goto err;
-
-    if (!TEST_int_gt(EVP_PKEY_key_fromdata_init(pctx), 0)
-        || !TEST_int_gt(EVP_PKEY_fromdata(pctx, &pkey, params), 0))
-        goto err;
-
-    if (!TEST_ptr(pkey))
-        goto err;
-
-    EVP_PKEY_free(pkey);
-    pkey = NULL;
-    OSSL_PARAM_BLD_free_params(params);
-    OSSL_PARAM_BLD_free(bld);
-
-    /* Test priv and pub */
-    if (!TEST_ptr(bld = OSSL_PARAM_BLD_new())
-        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_P, p))
-        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_Q, q))
-        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_G, g))
-        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_PUB_KEY,
-                                             pub))
-        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_PRIV_KEY,
-                                             priv)))
-        goto err;
-    if (!TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld)))
-        goto err;
-
-    if (!TEST_int_gt(EVP_PKEY_key_fromdata_init(pctx), 0)
-        || !TEST_int_gt(EVP_PKEY_fromdata(pctx, &pkey, params), 0))
-        goto err;
-
-    if (!TEST_ptr(pkey))
-        goto err;
-
-    ret = 1;
- err:
-    EVP_PKEY_free(pkey);
-    EVP_PKEY_CTX_free(pctx);
-    OSSL_PARAM_BLD_free_params(params);
-    OSSL_PARAM_BLD_free(bld);
-    BN_free(p);
-    BN_free(q);
-    BN_free(g);
-    BN_free(pub);
-    BN_free(priv);
-
-    return ret;
+    return test_EVP_PKEY_ffc_priv_pub("DH");
 }
 
-#ifndef OPENSSL_NO_DEPRECATED_3_0
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 static int test_EVP_PKEY_set1_DH(void)
 {
     DH *x942dh = NULL, *noqdh = NULL;
@@ -2130,7 +2025,7 @@ static int test_EVP_PKEY_set1_DH(void)
 
     return ret;
 }
-#endif /* !OPENSSL_NO_DEPRECATED_3_0 */
+# endif /* !OPENSSL_NO_DEPRECATED_3_0 */
 #endif /* !OPENSSL_NO_DH */
 
 /*
@@ -2442,9 +2337,9 @@ int setup_tests(void)
 #endif
 #ifndef OPENSSL_NO_DH
     ADD_TEST(test_DH_priv_pub);
-#ifndef OPENSSL_NO_DEPRECATED_3_0
+# ifndef OPENSSL_NO_DEPRECATED_3_0
     ADD_TEST(test_EVP_PKEY_set1_DH);
-#endif
+# endif
 #endif
     ADD_ALL_TESTS(test_keygen_with_empty_template, 2);
     ADD_ALL_TESTS(test_pkey_ctx_fail_without_provider, 2);
