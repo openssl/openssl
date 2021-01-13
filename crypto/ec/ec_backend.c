@@ -245,10 +245,6 @@ int ec_key_fromdata(EC_KEY *ec, const OSSL_PARAM params[], int include_private)
     if (ctx == NULL)
         goto err;
 
-    /* OpenSSL decree: If there's a private key, there must be a public key */
-    if (param_priv_key != NULL && param_pub_key == NULL)
-        goto err;
-
     if (param_pub_key != NULL)
         if (!OSSL_PARAM_get_octet_string(param_pub_key,
                                          (void **)&pub_key, 0, &pub_key_len)
