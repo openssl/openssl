@@ -78,9 +78,9 @@ or load a provider module with the given name and run its provider
 entry point, C<OSSL_provider_init>.
 
 OSSL_PROVIDER_try_load() functions like OSSL_PROVIDER_load(), except that
-it does not disable the fall-back providers if the provider cannot be
+it does not disable the fallback providers if the provider cannot be
 loaded and initialized.
-If the provider loads successfully, however, the fall-back providers are
+If the provider loads successfully, however, the fallback providers are
 disabled.
 
 OSSL_PROVIDER_unload() unloads the given provider.
@@ -92,7 +92,11 @@ for use.
 
 OSSL_PROVIDER_do_all() iterates over all loaded providers, calling
 I<cb> for each one, with the current provider in I<provider> and the
-I<cbdata> that comes from the caller.
+I<cbdata> that comes from the caller. If no other provider has been loaded
+before calling this function, the default provider is still available as
+fallback.
+See L<OSSL_PROVIDER-default(7)> for more information on this fallback
+behaviour.
 
 OSSL_PROVIDER_gettable_params() is used to get a provider parameter
 descriptor set as a constant B<OSSL_PARAM> array.
@@ -139,6 +143,11 @@ OSSL_PROVIDER_get_capabilities() return 1 on success, or 0 on error.
 
 OSSL_PROVIDER_load() and OSSL_PROVIDER_try_load() return a pointer to a
 provider object on success, or NULL on error.
+
+OSSL_PROVIDER_do_all() returns 1 if the callback I<cb> returns 1 for every
+provider it is called with, or 0 if any provider callback invocation returns 0;
+callback processing stops at the first callback invocation on a provider
+that returns 0.
 
 OSSL_PROVIDER_available() returns 1 if the named provider is available,
 otherwise 0.
