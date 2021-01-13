@@ -7,8 +7,11 @@ OSSL_PROVIDER-default - OpenSSL default provider
 =head1 DESCRIPTION
 
 The OpenSSL default provider supplies the majority of OpenSSL's diverse
-algorithm implementations.  It also acts as a fallback when no other
-provider has been loaded.
+algorithm implementations. If an application doesn't specify anything else
+explicitly (e.g. in the application or via config), then this is the
+provider that will be used as fall-back: It is loaded automatically the
+first time that an algorithm is requested from a provider or a function
+acting on providers is called and no other provider has been loaded yet.
 
 =head2 Properties
 

@@ -92,7 +92,11 @@ for use.
 
 OSSL_PROVIDER_do_all() iterates over all loaded providers, calling
 I<cb> for each one, with the current provider in I<provider> and the
-I<cbdata> that comes from the caller.
+I<cbdata> that comes from the caller. If no other provider has been loaded
+before calling this function, the default provider is still available as
+fall-back.
+See L<OSSL_PROVIDER-default(7)> for more information on this fall-back
+behaviour.
 
 OSSL_PROVIDER_gettable_params() is used to get a provider parameter
 descriptor set as a constant B<OSSL_PARAM> array.
@@ -139,6 +143,10 @@ OSSL_PROVIDER_get_capabilities() return 1 on success, or 0 on error.
 
 OSSL_PROVIDER_load() and OSSL_PROVIDER_try_load() return a pointer to a
 provider object on success, or B<NULL> on error.
+
+OSSL_PROVIDER_do_all() returns 1 if all callback functions return 1, or 0 if
+any callback I<cb> returns 0; callback processing is stopped if a first
+callback returns 0.
 
 OSSL_PROVIDER_available() returns 1 if the named provider is available,
 otherwise 0.
