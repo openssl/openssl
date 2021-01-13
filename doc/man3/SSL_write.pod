@@ -120,7 +120,8 @@ For SSL_sendfile(), the following return values can occur:
 =item Z<>>= 0
 
 The write operation was successful, the return value is the number
-of bytes of the file written to the TLS/SSL connection.
+of bytes of the file written to the TLS/SSL connection. The return
+value can be less than B<size> for a partial write.
 
 =item E<lt> 0
 
