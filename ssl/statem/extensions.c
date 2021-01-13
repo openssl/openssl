@@ -163,7 +163,6 @@ static const EXTENSION_DEFINITION ext_defs[] = {
 #else
     INVALID_EXTENSION,
 #endif
-#if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH)
     {
         /*
          * "supported_groups" is spread across several specifications.
@@ -197,9 +196,6 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         tls_construct_stoc_supported_groups,
         tls_construct_ctos_supported_groups, NULL
     },
-#else
-    INVALID_EXTENSION,
-#endif
     {
         TLSEXT_TYPE_session_ticket,
         SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS1_2_SERVER_HELLO

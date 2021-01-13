@@ -194,16 +194,12 @@ static const unsigned char ecformats_default[] = {
 #endif /* !defined(OPENSSL_NO_EC) */
 
 /* The default curves */
-#if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC)
 static const uint16_t supported_groups_default[] = {
-# ifndef OPENSSL_NO_EC
     29,                      /* X25519 (29) */
     23,                      /* secp256r1 (23) */
     30,                      /* X448 (30) */
     25,                      /* secp521r1 (25) */
     24,                      /* secp384r1 (24) */
-# endif
-# ifndef OPENSSL_NO_GOST
     34,                      /* GC256A (34) */
     35,                      /* GC256B (35) */
     36,                      /* GC256C (36) */
@@ -211,16 +207,12 @@ static const uint16_t supported_groups_default[] = {
     38,                      /* GC512A (38) */
     39,                      /* GC512B (39) */
     40,                      /* GC512C (40) */
-# endif
-# ifndef OPENSSL_NO_DH
     0x100,                   /* ffdhe2048 (0x100) */
     0x101,                   /* ffdhe3072 (0x101) */
     0x102,                   /* ffdhe4096 (0x102) */
     0x103,                   /* ffdhe6144 (0x103) */
     0x104,                   /* ffdhe8192 (0x104) */
-# endif
 };
-#endif /* !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH) */
 
 #ifndef OPENSSL_NO_EC
 static const uint16_t suiteb_curves[] = {
@@ -398,7 +390,34 @@ static int discover_provider_groups(OSSL_PROVIDER *provider, void *vctx)
 
 int ssl_load_groups(SSL_CTX *ctx)
 {
-    return OSSL_PROVIDER_do_all(ctx->libctx, discover_provider_groups, ctx);
+    size_t i, j, num_deflt_grps = 0;
+    uint16_t tmp_supp_groups[sizeof(supported_groups_default)];
+
+    if (!OSSL_PROVIDER_do_all(ctx->libctx, discover_provider_groups, ctx))
+        return 0;
+
+    for (i = 0; i < sizeof(supported_groups_default); i++) {
+        for (j = 0; j < ctx->group_list_len; j++) {
+            if (ctx->group_list[j].group_id == supported_groups_default[i])
+                tmp_supp_groups[num_deflt_grps++] = ctx->group_list[j].group_id;
+        }
+    }
+
+    if (num_deflt_grps == 0)
+        return 1;
+
+    ctx->ext.supported_groups_default
+        = OPENSSL_malloc(sizeof(uint16_t) * num_deflt_grps);
+
+    if (ctx->ext.supported_groups_default == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+        return 0;
+    }
+
+    memcpy(ctx->ext.supported_groups_default, tmp_supp_groups, num_deflt_grps);
+    ctx->ext.supported_groups_default_len = num_deflt_grps;
+
+    return 1;
 }
 
 static uint16_t tls1_group_name2id(SSL_CTX *ctx, const char *name)
@@ -484,7 +503,6 @@ uint16_t tls1_nid2group_id(int nid)
 void tls1_get_supported_groups(SSL *s, const uint16_t **pgroups,
                                size_t *pgroupslen)
 {
-#if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH)
     /* For Suite B mode only include P-256, P-384 */
     switch (tls1_suiteb(s)) {
 # ifndef OPENSSL_NO_EC
@@ -506,18 +524,14 @@ void tls1_get_supported_groups(SSL *s, const uint16_t **pgroups,
 
     default:
         if (s->ext.supportedgroups == NULL) {
-            *pgroups = supported_groups_default;
-            *pgroupslen = OSSL_NELEM(supported_groups_default);
+            *pgroups = s->ctx->ext.supported_groups_default;
+            *pgroupslen = s->ctx->ext.supported_groups_default_len;
         } else {
             *pgroups = s->ext.supportedgroups;
             *pgroupslen = s->ext.supportedgroups_len;
         }
         break;
     }
-#else
-    *pgroups = NULL;
-    *pgroupslen = 0;
-#endif /* !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH) */
 }
 
 int tls_valid_group(SSL *s, uint16_t group_id, int minversion, int maxversion)
