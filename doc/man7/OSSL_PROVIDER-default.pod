@@ -12,13 +12,14 @@ explicitly (e.g. in the application or via config), then this is the
 provider that will be used as fallback: It is loaded automatically the
 first time that an algorithm is fetched from a provider or a function
 acting on providers is called and no other provider has been loaded yet.
-If another provider has already been loaded then the default provider
-won't be loaded automatically. Therefore if it is to be used in
-conjunction with other providers then it must be loaded explicitly.
-Automatic loading of the default provider only occurs once; if the default
-provider is explicitly unloaded or the explicit provider load function
-L<OSSL_PROVIDER_load(3)> is called successfully or unsuccessfully,
-the default provider will not be automatically loaded again.
+
+If an attempt to load a provider has already been made (whether successful
+or not) then the default provider won't be loaded automatically. Therefore
+if the default provider is to be used in conjunction with other providers
+then it must be loaded explicitly. Automatic loading of the default
+provider only occurs a maximum of once; if the default provider is
+explicitly unloaded then the default provider will not be automatically
+loaded again.
 
 =head2 Properties
 

@@ -146,8 +146,8 @@ provider object on success, or B<NULL> on error.
 
 OSSL_PROVIDER_do_all() returns 1 if the callback I<cb> returns 1 for every
 provider it is called with, or 0 if any provider callback invocation returns 0;
-callback processing stops if the first callback invocation on a provider
-returns 0.
+callback processing stops at the first callback invocation on a provider
+that returns 0.
 
 OSSL_PROVIDER_available() returns 1 if the named provider is available,
 otherwise 0.
