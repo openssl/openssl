@@ -609,6 +609,7 @@ my %preferred_words = (
     'bitmask'       => 'bit mask',
     'builtin'       => 'built-in',
    #'epoch'         => 'Epoch', # handled specially, below
+    'fall-back'     => 'fallback',
     'file name'     => 'filename',
     'file system'   => 'filesystem',
     'host name'     => 'hostname',
