@@ -2009,9 +2009,7 @@ typedef struct cert_st {
     CERT_PKEY *key;
 
     EVP_PKEY *dh_tmp;
-#ifndef OPENSSL_NO_DH
     DH *(*dh_tmp_cb) (SSL *ssl, int is_export, int keysize);
-#endif
     int dh_tmp_auto;
     /* Flags related to certificates */
     uint32_t cert_flags;

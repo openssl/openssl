@@ -191,7 +191,7 @@ static const unsigned char ecformats_default[] = {
     TLSEXT_ECPOINTFORMAT_ansiX962_compressed_prime,
     TLSEXT_ECPOINTFORMAT_ansiX962_compressed_char2
 };
-#endif /* !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH) */
+#endif /* !defined(OPENSSL_NO_EC) */
 
 /* The default curves */
 #if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC)

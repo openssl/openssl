@@ -3360,12 +3360,10 @@ void ssl3_free(SSL *s)
 
     ssl3_cleanup_key_block(s);
 
-#if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH)
     EVP_PKEY_free(s->s3.peer_tmp);
     s->s3.peer_tmp = NULL;
     EVP_PKEY_free(s->s3.tmp.pkey);
     s->s3.tmp.pkey = NULL;
-#endif
 
     ssl_evp_cipher_free(s->s3.tmp.new_sym_enc);
     ssl_evp_md_free(s->s3.tmp.new_hash);
@@ -3396,10 +3394,8 @@ int ssl3_clear(SSL *s)
     OPENSSL_free(s->s3.tmp.peer_sigalgs);
     OPENSSL_free(s->s3.tmp.peer_cert_sigalgs);
 
-#if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH)
     EVP_PKEY_free(s->s3.tmp.pkey);
     EVP_PKEY_free(s->s3.peer_tmp);
-#endif                          /* !OPENSSL_NO_EC */
 
     ssl3_free_digest_list(s);
 
@@ -3452,7 +3448,7 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
     case SSL_CTRL_GET_FLAGS:
         ret = (int)(s->s3.flags);
         break;
-#if !defined(OPENSSL_NO_DH) && !defined(OPENSSL_NO_DEPRECATED_3_0)
+#if !defined(OPENSSL_NO_DEPRECATED_3_0)
     case SSL_CTRL_SET_TMP_DH:
         {
             EVP_PKEY *pkdh = NULL;
@@ -3477,7 +3473,7 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
     case SSL_CTRL_SET_DH_AUTO:
         s->cert->dh_tmp_auto = larg;
         return 1;
-#if !defined(OPENSSL_NO_EC) && !defined(OPENSSL_NO_DEPRECATED_3_0)
+#if !defined(OPENSSL_NO_DEPRECATED_3_0)
     case SSL_CTRL_SET_TMP_ECDH:
         {
             if (parg == NULL) {
@@ -3610,7 +3606,6 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
         }
         return ssl_cert_set_current(s->cert, larg);
 
-#if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH)
     case SSL_CTRL_GET_GROUPS:
         {
             uint16_t *clist;
@@ -3656,7 +3651,6 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
     case SSL_CTRL_GET_NEGOTIATED_GROUP:
         ret = tls1_group_id2nid(s->s3.group_id, 1);
         break;
-#endif /* !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH) */
 
     case SSL_CTRL_SET_SIGALGS:
         return tls1_set_sigalgs(s->cert, parg, larg, 0);
@@ -3707,7 +3701,6 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
         return 1;
 
     case SSL_CTRL_GET_PEER_TMP_KEY:
-#if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC)
         if (s->session == NULL || s->s3.peer_tmp == NULL) {
             return 0;
         } else {
@@ -3715,12 +3708,8 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
             *(EVP_PKEY **)parg = s->s3.peer_tmp;
             return 1;
         }
-#else
-        return 0;
-#endif
 
     case SSL_CTRL_GET_TMP_KEY:
-#if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC)
         if (s->session == NULL || s->s3.tmp.pkey == NULL) {
             return 0;
         } else {
@@ -3728,9 +3717,6 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
             *(EVP_PKEY **)parg = s->s3.tmp.pkey;
             return 1;
         }
-#else
-        return 0;
-#endif
 
 #ifndef OPENSSL_NO_EC
     case SSL_CTRL_GET_EC_POINT_FORMATS:
@@ -3755,7 +3741,7 @@ long ssl3_callback_ctrl(SSL *s, int cmd, void (*fp) (void))
     int ret = 0;
 
     switch (cmd) {
-#if !defined(OPENSSL_NO_DH) && !defined(OPENSSL_NO_DEPRECATED_3_0)
+#if !defined(OPENSSL_NO_DEPRECATED_3_0)
     case SSL_CTRL_SET_TMP_DH_CB:
         s->cert->dh_tmp_cb = (DH *(*)(SSL *, int, int))fp;
         ret = 1;
@@ -3780,7 +3766,7 @@ long ssl3_callback_ctrl(SSL *s, int cmd, void (*fp) (void))
 long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 {
     switch (cmd) {
-#if !defined(OPENSSL_NO_DH) && !defined(OPENSSL_NO_DEPRECATED_3_0)
+#if !defined(OPENSSL_NO_DEPRECATED_3_0)
     case SSL_CTRL_SET_TMP_DH:
         {
             EVP_PKEY *pkdh = NULL;
@@ -3804,7 +3790,7 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
     case SSL_CTRL_SET_DH_AUTO:
         ctx->cert->dh_tmp_auto = larg;
         return 1;
-#if !defined(OPENSSL_NO_EC) && !defined(OPENSSL_NO_DEPRECATED_3_0)
+#if !defined(OPENSSL_NO_DEPRECATED_3_0)
     case SSL_CTRL_SET_TMP_ECDH:
         {
             if (parg == NULL) {
@@ -3911,7 +3897,6 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
         break;
 #endif
 
-#if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH)
     case SSL_CTRL_SET_GROUPS:
         return tls1_set_groups(&ctx->ext.supportedgroups,
                                &ctx->ext.supportedgroups_len,
@@ -3921,7 +3906,6 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
         return tls1_set_groups_list(ctx, &ctx->ext.supportedgroups,
                                     &ctx->ext.supportedgroups_len,
                                     parg);
-#endif /* !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH) */
 
     case SSL_CTRL_SET_SIGALGS:
         return tls1_set_sigalgs(ctx->cert, parg, larg, 0);
@@ -4004,7 +3988,7 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 long ssl3_ctx_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp) (void))
 {
     switch (cmd) {
-#if !defined(OPENSSL_NO_DH) && !defined(OPENSSL_NO_DEPRECATED_3_0)
+#if !defined(OPENSSL_NO_DEPRECATED_3_0)
     case SSL_CTRL_SET_TMP_DH_CB:
         {
             ctx->cert->dh_tmp_cb = (DH *(*)(SSL *, int, int))fp;
@@ -4820,10 +4804,8 @@ int ssl_derive(SSL *s, EVP_PKEY *privkey, EVP_PKEY *pubkey, int gensecret)
         goto err;
     }
 
-#ifndef OPENSSL_NO_DH
-    if (SSL_IS_TLS13(s) &&  EVP_PKEY_id(privkey) == EVP_PKEY_DH)
+    if (SSL_IS_TLS13(s) &&  EVP_PKEY_is_a(privkey, "DH"))
         EVP_PKEY_CTX_set_dh_pad(pctx, 1);
-#endif
 
     pms = OPENSSL_malloc(pmslen);
     if (pms == NULL) {
