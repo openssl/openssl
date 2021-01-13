@@ -133,8 +133,8 @@ void *ossl_method_construct(OSSL_LIB_CTX *libctx, int operation_id,
              * If we get here then we did not construct the method that we
              * attempted to construct. It's possible that another thread got
              * there first and so we skipped construction (pre-condition
-             * failed). We check the global store as well to see if it's already
-             * there.
+             * failed). We check the global store again to see if it has
+             * appeared by now.
              */
             method = mcm->get(libctx, NULL, mcm_data);
         }
