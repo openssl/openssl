@@ -1273,7 +1273,6 @@ SSL_R_CERT_CB_ERROR:377:cert cb error
 SSL_R_CERT_LENGTH_MISMATCH:135:cert length mismatch
 SSL_R_CIPHERSUITE_DIGEST_HAS_CHANGED:218:ciphersuite digest has changed
 SSL_R_CIPHER_CODE_WRONG_LENGTH:137:cipher code wrong length
-SSL_R_CIPHER_OR_HASH_UNAVAILABLE:138:cipher or hash unavailable
 SSL_R_CLIENTHELLO_TLSEXT:226:clienthello tlsext
 SSL_R_COMPRESSED_LENGTH_TOO_LONG:140:compressed length too long
 SSL_R_COMPRESSION_DISABLED:343:compression disabled
@@ -1399,6 +1398,7 @@ SSL_R_NO_SHARED_GROUPS:410:no shared groups
 SSL_R_NO_SHARED_SIGNATURE_ALGORITHMS:376:no shared signature algorithms
 SSL_R_NO_SRTP_PROFILES:359:no srtp profiles
 SSL_R_NO_SUITABLE_DIGEST_ALGORITHM:297:no suitable digest algorithm
+SSL_R_NO_SUITABLE_GROUPS:295:no suitable groups
 SSL_R_NO_SUITABLE_KEY_SHARE:101:no suitable key share
 SSL_R_NO_SUITABLE_SIGNATURE_ALGORITHM:118:no suitable signature algorithm
 SSL_R_NO_VALID_SCTS:216:no valid scts
