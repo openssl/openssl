@@ -485,6 +485,7 @@ err:
     return res;
 }
 
+#if !defined(OPENSSL_NO_DH) && !defined(OPENSSL_NO_DSA)
 /*
  * Test combinations of private, public, missing and private + public key 
  * params to ensure they are all accepted
@@ -611,6 +612,7 @@ static int test_EVP_PKEY_ffc_priv_pub(char *keytype)
 
     return ret;
 }
+#endif /* !OPENSSL_NO_DH && !OPENSSL_NO_DSA */
 
 static int test_EVP_Enveloped(void)
 {
