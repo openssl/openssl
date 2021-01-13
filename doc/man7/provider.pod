@@ -196,7 +196,9 @@ This may be NULL to signify the default (global) library context, or a
 context created by the user.
 Only providers loaded in this library context (see
 L<OSSL_PROVIDER_load(3)>) will be considered by the fetching
-function.
+function. In case no provider has been loaded in this library context
+the default provider will be loaded as fallback (see
+L<OSSL_PROVIDER-default(7)>).
 
 =item An identifier
 

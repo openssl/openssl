@@ -9,9 +9,16 @@ OSSL_PROVIDER-default - OpenSSL default provider
 The OpenSSL default provider supplies the majority of OpenSSL's diverse
 algorithm implementations. If an application doesn't specify anything else
 explicitly (e.g. in the application or via config), then this is the
-provider that will be used as fall-back: It is loaded automatically the
-first time that an algorithm is requested from a provider or a function
+provider that will be used as fallback: It is loaded automatically the
+first time that an algorithm is fetched from a provider or a function
 acting on providers is called and no other provider has been loaded yet.
+If another provider has already been loaded then the default provider
+won't be loaded automatically. Therefore if it is to be used in
+conjunction with other providers then it must be loaded explicitly.
+Automatic loading of the default provider only occurs once; if the default
+provider is explicitly unloaded or the explicit provider load function
+L<OSSL_PROVIDER_load(3)> is called successfully or unsuccessfully,
+the default provider will not be automatically loaded again.
 
 =head2 Properties
 
