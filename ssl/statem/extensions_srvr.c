@@ -893,7 +893,6 @@ int tls_parse_ctos_cookie(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
     return 1;
 }
 
-#if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH)
 int tls_parse_ctos_supported_groups(SSL *s, PACKET *pkt, unsigned int context,
                                     X509 *x, size_t chainidx)
 {
@@ -921,7 +920,6 @@ int tls_parse_ctos_supported_groups(SSL *s, PACKET *pkt, unsigned int context,
 
     return 1;
 }
-#endif
 
 int tls_parse_ctos_ems(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
                        size_t chainidx)
@@ -1333,7 +1331,6 @@ EXT_RETURN tls_construct_stoc_ec_pt_formats(SSL *s, WPACKET *pkt,
 }
 #endif
 
-#if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH)
 EXT_RETURN tls_construct_stoc_supported_groups(SSL *s, WPACKET *pkt,
                                                unsigned int context, X509 *x,
                                                size_t chainidx)
@@ -1393,7 +1390,6 @@ EXT_RETURN tls_construct_stoc_supported_groups(SSL *s, WPACKET *pkt,
 
     return EXT_RETURN_SENT;
 }
-#endif
 
 EXT_RETURN tls_construct_stoc_session_ticket(SSL *s, WPACKET *pkt,
                                              unsigned int context, X509 *x,

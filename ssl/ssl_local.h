@@ -1060,6 +1060,8 @@ struct ssl_ctx_st {
         size_t supportedgroups_len;
         uint16_t *supportedgroups;
 
+        uint16_t *supported_groups_default;
+        size_t supported_groups_default_len;
         /*
          * ALPN information (we are in the process of transitioning from NPN to
          * ALPN.)
