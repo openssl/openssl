@@ -8157,7 +8157,7 @@ static EVP_PKEY *get_tmp_dh_params(void)
     return tmp_dh_params;
 }
 
-#  ifndef OPENSSL_NO_DEPRECATED
+#  ifndef OPENSSL_NO_DEPRECATED_3_0
 /* Callback used by test_set_tmp_dh() */
 static DH *tmp_dh_callback(SSL *s, int is_export, int keylen)
 {
