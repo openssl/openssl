@@ -685,18 +685,19 @@ static int always_retry_puts(BIO *bio, const char *str)
 }
 
 int create_ssl_ctx_pair(OSSL_LIB_CTX *libctx, const SSL_METHOD *sm,
-const SSL_METHOD *cm,
-                        int min_proto_version, int max_proto_version,
-                        SSL_CTX **sctx, SSL_CTX **cctx, char *certfile,
-                        char *privkeyfile)
+                        const SSL_METHOD *cm, int min_proto_version,
+                        int max_proto_version, SSL_CTX **sctx, SSL_CTX **cctx,
+                        char *certfile, char *privkeyfile)
 {
     SSL_CTX *serverctx = NULL;
     SSL_CTX *clientctx = NULL;
 
-    if (*sctx != NULL)
-        serverctx = *sctx;
-    else if (!TEST_ptr(serverctx = SSL_CTX_new_ex(libctx, NULL, sm)))
-        goto err;
+    if (sctx != NULL) {
+        if (*sctx != NULL)
+            serverctx = *sctx;
+        else if (!TEST_ptr(serverctx = SSL_CTX_new_ex(libctx, NULL, sm)))
+            goto err;
+    }
 
     if (cctx != NULL) {
         if (*cctx != NULL)
@@ -705,12 +706,25 @@ const SSL_METHOD *cm,
             goto err;
     }
 
-    if ((min_proto_version > 0
-         && !TEST_true(SSL_CTX_set_min_proto_version(serverctx,
-                                                     min_proto_version)))
-        || (max_proto_version > 0
-            && !TEST_true(SSL_CTX_set_max_proto_version(serverctx,
-                                                        max_proto_version))))
+#if !defined(OPENSSL_NO_TLS1_3) \
+    && defined(OPENSSL_NO_EC) \
+    && defined(OPENSSL_NO_DH)
+    /*
+     * There are no usable built-in TLSv1.3 groups if ec and dh are both
+     * disabled
+     */
+    if (max_proto_version == 0
+            && (sm == TLS_server_method() || cm == TLS_client_method()))
+        max_proto_version = TLS1_2_VERSION;
+#endif
+
+    if (serverctx != NULL
+            && ((min_proto_version > 0
+                 && !TEST_true(SSL_CTX_set_min_proto_version(serverctx,
+                                                            min_proto_version)))
+                || (max_proto_version > 0
+                    && !TEST_true(SSL_CTX_set_max_proto_version(serverctx,
+                                                                max_proto_version)))))
         goto err;
     if (clientctx != NULL
         && ((min_proto_version > 0
@@ -721,7 +735,7 @@ const SSL_METHOD *cm,
                                                             max_proto_version)))))
         goto err;
 
-    if (certfile != NULL && privkeyfile != NULL) {
+    if (serverctx != NULL && certfile != NULL && privkeyfile != NULL) {
         if (!TEST_int_eq(SSL_CTX_use_certificate_file(serverctx, certfile,
                                                       SSL_FILETYPE_PEM), 1)
                 || !TEST_int_eq(SSL_CTX_use_PrivateKey_file(serverctx,
@@ -731,13 +745,14 @@ const SSL_METHOD *cm,
             goto err;
     }
 
-    *sctx = serverctx;
+    if (sctx != NULL)
+        *sctx = serverctx;
     if (cctx != NULL)
         *cctx = clientctx;
     return 1;
 
  err:
-    if (*sctx == NULL)
+    if (sctx != NULL && *sctx == NULL)
         SSL_CTX_free(serverctx);
     if (cctx != NULL && *cctx == NULL)
         SSL_CTX_free(clientctx);

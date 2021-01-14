@@ -23,6 +23,17 @@ OpenSSL 3.0
 
 ### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
 
+ * Combining the Configure options no-ec and no-dh no longer disables TLSv1.3.
+   Typically if OpenSSL has no EC or DH algorithms then it cannot support
+   connections with TLSv1.3. However OpenSSL now supports "pluggable" groups
+   through providers. Therefore third party providers may supply group
+   implementations even where there are no built-in ones. Attempting to create
+   TLS connections in such a build without also disabling TLSv1.3 at run time or
+   using third party provider groups may result in handshake failures. TLSv1.3
+   can be disabled at compile time using the "no-tls1_3" Configure option.
+
+   *Matt Caswell*
+
  * The undocumented function X509_certificate_type() has been deprecated;
    applications can use X509_get0_pubkey() and X509_get0_signature() to
    get the same information.

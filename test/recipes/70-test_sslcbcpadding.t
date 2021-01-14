@@ -43,6 +43,7 @@ my @test_offsets = (0, 128, 254, 255);
 # Test that maximally-padded records are accepted.
 my $bad_padding_offset = -1;
 $proxy->serverflags("-tls1_2");
+$proxy->clientflags("-no_tls1_3");
 $proxy->serverconnects(1 + scalar(@test_offsets));
 $proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
 plan tests => 1 + scalar(@test_offsets);
@@ -55,6 +56,7 @@ foreach my $offset (@test_offsets) {
     $bad_padding_offset = $offset;
     $fatal_alert = 0;
     $proxy->clearClient();
+    $proxy->clientflags("-no_tls1_3");
     $proxy->clientstart();
     ok($fatal_alert, "Invalid padding byte $bad_padding_offset");
 }

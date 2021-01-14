@@ -31,6 +31,13 @@ static const char *host = "dummy-host";
 static char *cert = NULL;
 static char *privkey = NULL;
 
+#if defined(OPENSSL_NO_TLS1_3) || \
+    (defined(OPENSSL_NO_EC) && defined(OPENSSL_NO_DH))
+static int maxversion = TLS1_2_VERSION;
+#else
+static int maxversion = 0;
+#endif
+
 static int get_sni_from_client_hello(BIO *bio, char **sni)
 {
     long len;
@@ -101,6 +108,10 @@ static int client_setup_sni_before_state(void)
     if (!TEST_ptr(ctx))
         goto end;
 
+    if (maxversion > 0
+            && !TEST_true(SSL_CTX_set_max_proto_version(ctx, maxversion)))
+        goto end;
+
     con = SSL_new(ctx);
     if (!TEST_ptr(con))
         goto end;
@@ -147,6 +158,10 @@ static int client_setup_sni_after_state(void)
     /* use TLS_method to blur 'side' */
     ctx = SSL_CTX_new(TLS_method());
     if (!TEST_ptr(ctx))
+        goto end;
+
+    if (maxversion > 0
+            && !TEST_true(SSL_CTX_set_max_proto_version(ctx, maxversion)))
         goto end;
 
     con = SSL_new(ctx);
