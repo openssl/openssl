@@ -33,6 +33,8 @@ my ($no_rsa, $no_dsa, $no_dh, $no_ec, $no_psk,
     anydisabled qw/rsa dsa dh ec psk
                    ssl3 tls1 tls1_1 tls1_2 tls1_3
                    dtls dtls1 dtls1_2 ct/;
+#If ec and dh are disabled then don't use TLSv1.3
+$no_tls1_3 = 1 if (!$no_tls1_3 && $no_ec && $no_dh);
 my $no_anytls = alldisabled(available_protocols("tls"));
 my $no_anydtls = alldisabled(available_protocols("dtls"));
 

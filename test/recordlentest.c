@@ -94,7 +94,8 @@ static int test_record_overflow(int idx)
             || idx == TEST_ENCRYPTED_OVERFLOW_TLS1_2_NOT_OK)
         return 1;
 #endif
-#ifdef OPENSSL_NO_TLS1_3
+#if defined(OPENSSL_NO_TLS1_3) \
+    || (defined(OPENSSL_NO_EC) && defined(OPENSSL_NO_DH))
     if (idx == TEST_ENCRYPTED_OVERFLOW_TLS1_3_OK
             || idx == TEST_ENCRYPTED_OVERFLOW_TLS1_3_NOT_OK)
         return 1;

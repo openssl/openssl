@@ -24,7 +24,7 @@ plan skip_all => "$test_name needs the sock feature enabled"
     if disabled("sock");
 
 plan skip_all => "$test_name needs TLS1.3 enabled"
-    if disabled("tls1_3");
+    if disabled("tls1_3") || (disabled("ec") && disabled("dh"));
 
 $ENV{OPENSSL_ia32cap} = '~0x200000200000000';
 

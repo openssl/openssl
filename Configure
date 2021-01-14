@@ -563,8 +563,6 @@ my @disable_cascades = (
     "zlib"              => [ "zlib-dynamic" ],
     "des"               => [ "mdc2" ],
     "ec"                => [ "ec2m", "ecdsa", "ecdh", "sm2", "gost" ],
-    sub { $disabled{"ec"} && $disabled{"dh"} }
-                        => [ "tls1_3" ],
     "dgram"             => [ "dtls", "sctp" ],
     "sock"              => [ "dgram" ],
     "dtls"              => [ @dtls ],
