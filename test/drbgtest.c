@@ -38,7 +38,6 @@
 #endif
 
 #include "testutil.h"
-#include "drbgtest.h"
 
 /*
  * DRBG generate wrappers
