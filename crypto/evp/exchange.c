@@ -183,7 +183,7 @@ int EVP_PKEY_derive_init(EVP_PKEY_CTX *ctx)
     const char *supported_exch = NULL;
 
     if (ctx == NULL) {
-        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
         return -2;
     }
 
@@ -318,8 +318,8 @@ int EVP_PKEY_derive_set_peer(EVP_PKEY_CTX *ctx, EVP_PKEY *peer)
     void *provkey = NULL;
 
     if (ctx == NULL) {
-        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
-        return -2;
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+        return -1;
     }
 
     if (!EVP_PKEY_CTX_IS_DERIVE_OP(ctx) || ctx->op.kex.exchprovctx == NULL)
@@ -413,9 +413,9 @@ int EVP_PKEY_derive(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *pkeylen)
 {
     int ret;
 
-    if (ctx == NULL) {
-        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
-        return -2;
+    if (ctx == NULL || pkeylen == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+        return -1;
     }
 
     if (!EVP_PKEY_CTX_IS_DERIVE_OP(ctx)) {
@@ -427,11 +427,11 @@ int EVP_PKEY_derive(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *pkeylen)
         goto legacy;
 
     ret = ctx->op.kex.exchange->derive(ctx->op.kex.exchprovctx, key, pkeylen,
-                                       SIZE_MAX);
+                                       key != NULL ? *pkeylen : 0);
 
     return ret;
  legacy:
-    if (ctx ==  NULL || ctx->pmeth == NULL || ctx->pmeth->derive == NULL) {
+    if (ctx->pmeth == NULL || ctx->pmeth->derive == NULL) {
         ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
         return -2;
     }
