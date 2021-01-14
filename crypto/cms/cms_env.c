@@ -115,7 +115,7 @@ int cms_env_asn1_ctrl(CMS_RecipientInfo *ri, int cmd)
     } else
         return 0;
 
-    if (EVP_PKEY_is_a(pkey, "DHX"))
+    if (EVP_PKEY_is_a(pkey, "DHX") || EVP_PKEY_is_a(pkey, "DH"))
         return cms_dh_envelope(ri, cmd);
     else if (EVP_PKEY_is_a(pkey, "EC"))
         return cms_ecdh_envelope(ri, cmd);
@@ -1293,6 +1293,8 @@ int cms_pkey_get_ri_type(EVP_PKEY *pk)
 {
     /* Check types that we know about */
     if (EVP_PKEY_is_a(pk, "DH"))
+        return CMS_RECIPINFO_AGREE;
+    else if (EVP_PKEY_is_a(pk, "DHX"))
         return CMS_RECIPINFO_AGREE;
     else if (EVP_PKEY_is_a(pk, "DSA"))
         return CMS_RECIPINFO_NONE;
