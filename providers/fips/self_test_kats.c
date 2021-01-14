@@ -361,7 +361,7 @@ static int self_test_ka(const ST_KAT_KAS *t,
     OSSL_PARAM *params = NULL;
     OSSL_PARAM *params_peer = NULL;
     unsigned char secret[256];
-    size_t secret_len;
+    size_t secret_len = sizeof(secret);
     OSSL_PARAM_BLD *bld = NULL;
     BN_CTX *bnctx = NULL;
 
