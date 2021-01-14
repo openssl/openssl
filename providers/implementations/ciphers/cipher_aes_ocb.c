@@ -432,7 +432,7 @@ static int aes_ocb_get_ctx_params(void *vctx, OSSL_PARAM params[])
             return 0;
         }
     }
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_IV_STATE);
+    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_UPDATED_IV);
     if (p != NULL) {
         if (ctx->base.ivlen > p->data_size) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_IV_LENGTH);
@@ -464,7 +464,7 @@ static const OSSL_PARAM cipher_ocb_known_gettable_ctx_params[] = {
     OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_IVLEN, NULL),
     OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_AEAD_TAGLEN, NULL),
     OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_IV, NULL, 0),
-    OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_IV_STATE, NULL, 0),
+    OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_UPDATED_IV, NULL, 0),
     OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG, NULL, 0),
     OSSL_PARAM_END
 };

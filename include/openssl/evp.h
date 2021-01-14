@@ -573,8 +573,8 @@ OSSL_DEPRECATEDIN_3_0 const unsigned char *EVP_CIPHER_CTX_iv(const EVP_CIPHER_CT
 OSSL_DEPRECATEDIN_3_0 const unsigned char *EVP_CIPHER_CTX_original_iv(const EVP_CIPHER_CTX *ctx);
 OSSL_DEPRECATEDIN_3_0 unsigned char *EVP_CIPHER_CTX_iv_noconst(EVP_CIPHER_CTX *ctx);
 # endif
-int EVP_CIPHER_CTX_get_iv_state(EVP_CIPHER_CTX *ctx, void *buf, size_t len);
-int EVP_CIPHER_CTX_get_iv(EVP_CIPHER_CTX *ctx, void *buf, size_t len);
+int EVP_CIPHER_CTX_get_updated_iv(EVP_CIPHER_CTX *ctx, void *buf, size_t len);
+int EVP_CIPHER_CTX_get_original_iv(EVP_CIPHER_CTX *ctx, void *buf, size_t len);
 unsigned char *EVP_CIPHER_CTX_buf_noconst(EVP_CIPHER_CTX *ctx);
 int EVP_CIPHER_CTX_num(const EVP_CIPHER_CTX *ctx);
 int EVP_CIPHER_CTX_set_num(EVP_CIPHER_CTX *ctx, int num);

@@ -257,9 +257,10 @@ static int aes_get_ctx_params(void *vctx, OSSL_PARAM params[])
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_IV_STATE);
+    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_UPDATED_IV);
     if (p != NULL
-        && !OSSL_PARAM_set_octet_string(p, ctx->base.iv, ctx->base.ivlen)) {
+        && !OSSL_PARAM_set_octet_string(p, ctx->base.iv, ctx->base.ivlen)
+        && !OSSL_PARAM_set_octet_ptr(p, &ctx->base.iv, ctx->base.ivlen)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
@@ -277,7 +278,7 @@ static const OSSL_PARAM cipher_aes_known_gettable_ctx_params[] = {
     OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_KEYLEN, NULL),
     OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_IVLEN, NULL),
     OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_IV, NULL, 0),
-    OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_IV_STATE, NULL, 0),
+    OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_UPDATED_IV, NULL, 0),
     OSSL_PARAM_END
 };
 const OSSL_PARAM *aes_gettable_ctx_params(ossl_unused void *provctx)

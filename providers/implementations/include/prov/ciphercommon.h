@@ -317,7 +317,7 @@ static const OSSL_PARAM name##_known_gettable_ctx_params[] = {                 \
     OSSL_PARAM_uint(OSSL_CIPHER_PARAM_PADDING, NULL),                          \
     OSSL_PARAM_uint(OSSL_CIPHER_PARAM_NUM, NULL),                              \
     OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_IV, NULL, 0),                    \
-    OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_IV_STATE, NULL, 0),
+    OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_UPDATED_IV, NULL, 0),
 
 #define CIPHER_DEFAULT_GETTABLE_CTX_PARAMS_END(name)                           \
     OSSL_PARAM_END                                                             \

@@ -58,7 +58,7 @@ static int do_encrypt(unsigned char *iv_gen, unsigned char *ct, int *ct_len,
           && TEST_true(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, 16,
                                            tag) > 0)
           && TEST_true(iv_gen == NULL
-                  || EVP_CIPHER_CTX_get_iv(ctx, iv_gen, 12));
+                  || EVP_CIPHER_CTX_get_original_iv(ctx, iv_gen, 12));
     EVP_CIPHER_CTX_free(ctx);
     return ret;
 }
