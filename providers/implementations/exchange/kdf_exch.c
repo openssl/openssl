@@ -95,7 +95,13 @@ static int kdf_derive(void *vpkdfctx, unsigned char *secret, size_t *secretlen,
 
     if (!ossl_prov_is_running())
         return 0;
-    return EVP_KDF_derive(pkdfctx->kdfctx, secret, *secretlen);
+
+    if (secret == NULL) {
+        *secretlen = EVP_KDF_CTX_get_kdf_size(pkdfctx->kdfctx);
+        return 1;
+    }
+
+    return EVP_KDF_derive(pkdfctx->kdfctx, secret, outlen);
 }
 
 static void kdf_freectx(void *vpkdfctx)
