@@ -972,6 +972,8 @@ int evp_pkey_name2type(const char *name)
         type = EVP_PKEY_DH;
     else if (strcasecmp(name, "X9.42 DH") == 0)
         type = EVP_PKEY_DHX;
+    else if (strcasecmp(name, "DHX") == 0)
+        type = EVP_PKEY_DHX;
     else if (strcasecmp(name, "DSA") == 0)
         type = EVP_PKEY_DSA;
 
