@@ -242,9 +242,9 @@ The length of the "ivlen" parameter should not exceed that of a B<size_t>.
 
 Gets the IV used to initialize the associated cipher ctx.
 
-=item "iv-state" (B<OSSL_CIPHER_PARAM_IV_STATE>) <octet string OR octet ptr>
+=item "updated-iv" (B<OSSL_CIPHER_PARAM_UPDATED_IV>) <octet string OR octet ptr>
 
-Gets the current pseudo-IV state for the associated cipher ctx, e.g.,
+Gets the updated pseudo-IV state for the associated cipher ctx, e.g.,
 the previous ciphertext block for CBC mode or the iteratively encrypted IV
 value for OFB mode.  Note that octet pointer access is deprecated and is
 provided only for backwards compatibility with historical libcrypto APIs.

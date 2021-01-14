@@ -764,7 +764,7 @@ static int cipher_test_enc(EVP_TEST *t, int enc,
     if (expected->iv != NULL) {
         /* Some (e.g., GCM) tests use IVs longer than EVP_MAX_IV_LENGTH. */
         unsigned char iv[128];
-        if (!TEST_true(EVP_CIPHER_CTX_get_iv_state(ctx_base, iv, sizeof(iv)))
+        if (!TEST_true(EVP_CIPHER_CTX_get_updated_iv(ctx_base, iv, sizeof(iv)))
                 || ((EVP_CIPHER_flags(expected->cipher) & EVP_CIPH_CUSTOM_IV) == 0
                     && !TEST_mem_eq(expected->iv, expected->iv_len, iv,
                                     expected->iv_len))) {

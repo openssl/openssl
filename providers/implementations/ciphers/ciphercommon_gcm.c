@@ -171,7 +171,7 @@ int gcm_get_ctx_params(void *vctx, OSSL_PARAM params[])
         }
     }
 
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_IV_STATE);
+    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_UPDATED_IV);
     if (p != NULL) {
         if (ctx->iv_state == IV_STATE_UNINITIALISED)
             return 0;

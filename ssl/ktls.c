@@ -158,9 +158,9 @@ int ktls_configure_crypto(const SSL *s, const EVP_CIPHER *c, EVP_CIPHER_CTX *dd,
 
     if (s->version == TLS1_2_VERSION &&
         EVP_CIPHER_mode(c) == EVP_CIPH_GCM_MODE) {
-        if (!EVP_CIPHER_CTX_get_iv_state(dd, geniv,
-                                         EVP_GCM_TLS_FIXED_IV_LEN
-                                         + EVP_GCM_TLS_EXPLICIT_IV_LEN))
+        if (!EVP_CIPHER_CTX_get_updated_iv(dd, geniv,
+                                           EVP_GCM_TLS_FIXED_IV_LEN
+                                           + EVP_GCM_TLS_EXPLICIT_IV_LEN))
             return 0;
         iiv = geniv;
     }
