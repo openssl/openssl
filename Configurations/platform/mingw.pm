@@ -37,10 +37,13 @@ sub sharedname {
                                          ? "-x64" : ""));
 }
 
-# With Mingw and other DLL producers, there isn't really any "simpler"
-# shared library name.  However, there is a static import library, so
-# we return that instead.
+# With Mingw and other DLL producers, there isn't any "simpler" shared
+# library name.  However, there is a static import library.
 sub sharedlib_simple {
+    return undef;
+}
+
+sub sharedlib_import {
     return platform::BASE::__concat(platform::BASE->sharedname($_[1]),
                                     $_[0]->shlibextimport());
 }

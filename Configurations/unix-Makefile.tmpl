@@ -80,8 +80,9 @@ SHLIBS={- join(" \\\n" . ' ' x 7,
 SHLIB_INFO={- join(" \\\n" . ' ' x 11,
                    fill_lines(" ", $COLUMNS - 11,
                           map { my $x = platform->sharedlib($_);
-                                my $y = platform->sharedlib_simple($_);
-                                $x ? "\"$x;$y\"" : () }
+                                my $y = platform->sharedlib_simple($_) // '';
+                                my $z = platform->sharedlib_import($_) // '';
+                                $x ? "\"$x;$y;$z\"" : () }
                           @{$unified_info{libraries}})) -}
 MODULES={- join(" \\\n" . ' ' x 8,
                 fill_lines(" ", $COLUMNS - 8,
@@ -134,8 +135,9 @@ INSTALL_SHLIB_INFO={-
         join(" \\\n" . ' ' x 19,
              fill_lines(" ", $COLUMNS - 19,
                         map { my $x = platform->sharedlib($_);
-                              my $y = platform->sharedlib_simple($_);
-                              $x ? "\"$x;$y\"" : () }
+                              my $y = platform->sharedlib_simple($_) // '';
+                              my $z = platform->sharedlib_import($_) // '';
+                              $x ? "\"$x;$y;$z\"" : () }
                         grep { !$unified_info{attributes}->{libraries}->{$_}->{noinst} }
                         @{$unified_info{libraries}}))
 -}
@@ -508,14 +510,19 @@ libclean:
 		if [ "$$s" = ";" ]; then continue; fi; \
 		s1=`echo "$$s" | cut -f1 -d";"`; \
 		s2=`echo "$$s" | cut -f2 -d";"`; \
+		s3=`echo "$$s" | cut -f3 -d";"`; \
 		$(ECHO) $(RM) $$s1; {- output_off() unless windowsdll(); "" -}\
 		$(RM) apps/$$s1; \
 		$(RM) test/$$s1; \
 		$(RM) fuzz/$$s1; {- output_on() unless windowsdll(); "" -}\
 		$(RM) $$s1; \
-		if [ "$$s1" != "$$s2" ]; then \
+		if [ "$$s2" != "" ]; then \
 			$(ECHO) $(RM) $$s2; \
 			$(RM) $$s2; \
+		fi; \
+		if [ "$$s3" != "" ]; then \
+			$(ECHO) $(RM) $$s3; \
+			$(RM) $$s3; \
 		fi; \
 	done
 	$(RM) $(LIBS)
@@ -646,19 +653,21 @@ install_dev: install_runtime_libs
 	@set -e; for s in $(INSTALL_SHLIB_INFO); do \
 		s1=`echo "$$s" | cut -f1 -d";"`; \
 		s2=`echo "$$s" | cut -f2 -d";"`; \
+		s3=`echo "$$s" | cut -f3 -d";"`; \
 		fn1=`basename $$s1`; \
 		fn2=`basename $$s2`; \
+		fn3=`basename $$s3`; \
 		: {- output_off(); output_on() unless windowsdll() or sharedaix(); "" -}; \
-		if [ "$$fn1" != "$$fn2" ]; then \
+		if [ "$$fn2" != "" ]; then \
 			$(ECHO) "link $(DESTDIR)$(libdir)/$$fn2 -> $(DESTDIR)$(libdir)/$$fn1"; \
 			ln -sf $$fn1 $(DESTDIR)$(libdir)/$$fn2; \
 		fi; \
 		: {- output_off() unless windowsdll() or sharedaix(); output_on() if windowsdll(); "" -}; \
-		$(ECHO) "install $$s2 -> $(DESTDIR)$(libdir)/$$fn2"; \
-		cp $$s2 $(DESTDIR)$(libdir)/$$fn2.new; \
-		chmod 755 $(DESTDIR)$(libdir)/$$fn2.new; \
-		mv -f $(DESTDIR)$(libdir)/$$fn2.new \
-		      $(DESTDIR)$(libdir)/$$fn2; \
+		$(ECHO) "install $$s3 -> $(DESTDIR)$(libdir)/$$fn3"; \
+		cp $$s3 $(DESTDIR)$(libdir)/$$fn3.new; \
+		chmod 755 $(DESTDIR)$(libdir)/$$fn3.new; \
+		mv -f $(DESTDIR)$(libdir)/$$fn3.new \
+		      $(DESTDIR)$(libdir)/$$fn3; \
 		: {- output_off() if windowsdll(); output_on() if sharedaix(); "" -}; \
 		a=$(DESTDIR)$(libdir)/$$fn2; \
 		$(ECHO) "install $$s1 -> $$a"; \
@@ -711,18 +720,20 @@ uninstall_dev: uninstall_runtime_libs
 	@set -e; for s in $(INSTALL_SHLIB_INFO); do \
 		s1=`echo "$$s" | cut -f1 -d";"`; \
 		s2=`echo "$$s" | cut -f2 -d";"`; \
+		s3=`echo "$$s" | cut -f3 -d";"`; \
 		fn1=`basename $$s1`; \
 		fn2=`basename $$s2`; \
+		fn3=`basename $$s3`; \
 		: {- output_off() if windowsdll(); "" -}; \
-		$(ECHO) "$(RM) $(DESTDIR)$(libdir)/$$fn2"; \
-		$(RM) $(DESTDIR)$(libdir)/$$fn2; \
-		if [ "$$fn1" != "$$fn2" -a -f "$(DESTDIR)$(libdir)/$$fn1" ]; then \
-			$(ECHO) "$(RM) $(DESTDIR)$(libdir)/$$fn1"; \
-			$(RM) $(DESTDIR)$(libdir)/$$fn1; \
+		$(ECHO) "$(RM) $(DESTDIR)$(libdir)/$$fn1"; \
+		$(RM) $(DESTDIR)$(libdir)/$$fn1; \
+		if [ -n "$$fn2" ]; then \
+			$(ECHO) "$(RM) $(DESTDIR)$(libdir)/$$fn2"; \
+			$(RM) $(DESTDIR)$(libdir)/$$fn2; \
 		fi; \
 		: {- output_on() if windowsdll(); "" -}{- output_off() unless windowsdll(); "" -}; \
-		$(ECHO) "$(RM) $(DESTDIR)$(libdir)/$$fn2"; \
-		$(RM) $(DESTDIR)$(libdir)/$$fn2; \
+		$(ECHO) "$(RM) $(DESTDIR)$(libdir)/$$fn3"; \
+		$(RM) $(DESTDIR)$(libdir)/$$fn3; \
 		: {- output_on() unless windowsdll(); "" -}; \
 	done
 	@ : {- output_on() if $disabled{shared}; "" -}
@@ -1173,7 +1184,7 @@ FORCE:
 
 # Building targets ###################################################
 
-libcrypto.pc libssl.pc openssl.pc: configdata.pm $(LIBS) {- join(" ",map { platform->sharedlib_simple($_) // () } @{$unified_info{libraries}}) -}
+libcrypto.pc libssl.pc openssl.pc: configdata.pm $(LIBS) {- join(" ",map { platform->sharedlib_simple($_) // platform->sharedlib_import($_) // () } @{$unified_info{libraries}}) -}
 libcrypto.pc:
 	@ ( echo 'prefix=$(INSTALLTOP)'; \
 	    echo 'exec_prefix=$${prefix}'; \
@@ -1252,7 +1263,10 @@ reconfigure reconf:
       # Depending on shared libraries:
       # On Windows POSIX layers, we depend on {libname}.dll.a
       # On Unix platforms, we depend on {shlibname}.so
-      return map { platform->sharedlib_simple($_) // platform->staticlib($_) } @_;
+      return map { platform->sharedlib_simple($_)
+                   // platform->sharedlib_import($_)
+                   // platform->staticlib($_)
+                 } @_;
   }
 
   sub generatesrc {
@@ -1450,15 +1464,25 @@ EOF
       my @deps = compute_lib_depends(@{$args{deps}});
       die "More than one exported symbol map" if scalar @defs > 1;
 
-      my $simple = platform->sharedlib_simple($args{lib});
       my $full = platform->sharedlib($args{lib});
+      # $import is for Windows and subsystems thereof, where static import
+      # libraries for DLLs are a thing.  On platforms that have this mechanism,
+      # $import has the name of this import library.  On platforms that don't
+      # have this mechanism, $import will be |undef|.
+      my $import = platform->sharedlib_import($args{lib});
+      # $simple is for platforms where full shared library names include the
+      # shared library version, and there's a simpler name that doesn't include
+      # that version.  On such platforms, $simple has the simpler name.  On
+      # other platforms, it will be |undef|.
+      my $simple = platform->sharedlib_simple($args{lib});
+
       my $argfile = defined $target{shared_argfileflag} ? $full.".args" : undef;
       my $shared_soname = "";
       $shared_soname .= ' '.$target{shared_sonameflag}.basename($full)
           if defined $target{shared_sonameflag};
       my $shared_imp = "";
-      $shared_imp .= ' '.$target{shared_impflag}.basename($simple)
-          if defined $target{shared_impflag};
+      $shared_imp .= ' '.$target{shared_impflag}.basename($import)
+          if defined $target{shared_impflag} && defined $import;
       my $shared_def = join("", map { ' '.$target{shared_defflag}.$_ } @defs);
 
       # There is at least one platform where the compiler-as-linker needs to
@@ -1489,7 +1513,7 @@ EOF
 
       my $recipe = '';
 
-      if ($simple ne $full) {
+      if (defined $simple) {
           if (sharedaix()) {
               $recipe .= <<"EOF";
 $simple: $full
@@ -1503,6 +1527,11 @@ $simple: $full
 	ln -s $full $simple
 EOF
           }
+      }
+      if (defined $import) {
+      $recipe .= <<"EOF";
+$import: $full
+EOF
       }
       $recipe .= <<"EOF";
 $full: $fulldeps
