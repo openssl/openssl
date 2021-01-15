@@ -13,6 +13,7 @@
 #include <openssl/err.h>
 #include <openssl/core_names.h>
 #include "cms_local.h"
+#include "crypto/evp.h"
 
 static int dh_cms_set_peerkey(EVP_PKEY_CTX *pctx,
                               X509_ALGOR *alg, ASN1_BIT_STRING *pubkey)
@@ -80,8 +81,9 @@ static int dh_cms_set_shared_info(EVP_PKEY_CTX *pctx, CMS_RecipientInfo *ri)
     unsigned char *dukm = NULL;
     size_t dukmlen = 0;
     int keylen, plen;
-    const EVP_CIPHER *kekcipher;
+    EVP_CIPHER *kekcipher = NULL;
     EVP_CIPHER_CTX *kekctx;
+    const char *name;
 
     if (!CMS_RecipientInfo_kari_get0_alg(ri, &alg, &ukm))
         goto err;
@@ -110,7 +112,12 @@ static int dh_cms_set_shared_info(EVP_PKEY_CTX *pctx, CMS_RecipientInfo *ri)
     kekctx = CMS_RecipientInfo_kari_get0_ctx(ri);
     if (kekctx == NULL)
         goto err;
-    kekcipher = EVP_get_cipherbyobj(kekalg->algorithm);
+
+    name = OBJ_nid2sn(OBJ_obj2nid(kekalg->algorithm));
+    if (name == NULL)
+        goto err;
+
+    kekcipher = EVP_CIPHER_fetch(pctx->libctx, name, pctx->propquery);
     if (kekcipher == NULL || EVP_CIPHER_mode(kekcipher) != EVP_CIPH_WRAP_MODE)
         goto err;
     if (!EVP_EncryptInit_ex(kekctx, kekcipher, NULL, NULL, NULL))
@@ -141,6 +148,7 @@ static int dh_cms_set_shared_info(EVP_PKEY_CTX *pctx, CMS_RecipientInfo *ri)
     rv = 1;
  err:
     X509_ALGOR_free(kekalg);
+    EVP_CIPHER_free(kekcipher);
     OPENSSL_free(dukm);
     return rv;
 }
