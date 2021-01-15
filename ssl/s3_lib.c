@@ -4347,22 +4347,17 @@ int ssl3_get_req_cert_type(SSL *s, WPACKET *pkt)
 #endif
 
     if ((s->version == SSL3_VERSION) && (alg_k & SSL_kDHE)) {
-#ifndef OPENSSL_NO_DH
         if (!WPACKET_put_bytes_u8(pkt, SSL3_CT_RSA_EPHEMERAL_DH))
             return 0;
-# ifndef OPENSSL_NO_DSA
-        if (!WPACKET_put_bytes_u8(pkt, SSL3_CT_DSS_EPHEMERAL_DH))
+        if (!(alg_a & SSL_aDSS)
+                && !WPACKET_put_bytes_u8(pkt, SSL3_CT_DSS_EPHEMERAL_DH))
             return 0;
-# endif
-#endif                          /* !OPENSSL_NO_DH */
     }
     if (!(alg_a & SSL_aRSA) && !WPACKET_put_bytes_u8(pkt, SSL3_CT_RSA_SIGN))
         return 0;
-#ifndef OPENSSL_NO_DSA
     if (!(alg_a & SSL_aDSS) && !WPACKET_put_bytes_u8(pkt, SSL3_CT_DSS_SIGN))
         return 0;
-#endif
-#ifndef OPENSSL_NO_EC
+
     /*
      * ECDSA certs can be used with RSA cipher suites too so we don't
      * need to check for SSL_kECDH or SSL_kECDHE
@@ -4371,7 +4366,7 @@ int ssl3_get_req_cert_type(SSL *s, WPACKET *pkt)
             && !(alg_a & SSL_aECDSA)
             && !WPACKET_put_bytes_u8(pkt, TLS_CT_ECDSA_SIGN))
         return 0;
-#endif
+
     return 1;
 }
 
