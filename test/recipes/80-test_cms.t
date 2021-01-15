@@ -616,7 +616,7 @@ my @smime_cms_param_tests = (
       [ "{cmd1}", @prov, "-encrypt", "-in", $smcont,
         "-stream", "-out", "{output}.cms",
         "-recip", catfile($smdir, "smdh.pem"), "-aes128" ],
-      [ "{cmd2}", "-decrypt", "-recip", catfile($smdir, "smdh.pem"),
+      [ "{cmd2}", @prov, "-decrypt", "-recip", catfile($smdir, "smdh.pem"),
         "-in", "{output}.cms", "-out", "{output}.txt" ],
       \&final_compare
     ]
