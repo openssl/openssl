@@ -23,7 +23,9 @@ static int dh_cms_set_peerkey(EVP_PKEY_CTX *pctx,
     ASN1_INTEGER *public_key = NULL;
     int rv = 0;
     EVP_PKEY *pkpeer = NULL, *pk = NULL;
+    BIGNUM *bnpub = NULL;
     const unsigned char *p;
+    unsigned char *buf = NULL;
     int plen;
 
     X509_ALGOR_get0(&aoid, &atype, &aval, alg);
@@ -43,16 +45,28 @@ static int dh_cms_set_peerkey(EVP_PKEY_CTX *pctx,
     if (p == NULL || plen == 0)
         goto err;
 
+    if ((public_key = d2i_ASN1_INTEGER(NULL, &p, plen)) == NULL)
+        goto err;
+    plen = ASN1_STRING_length((ASN1_STRING *)public_key);
+    if ((bnpub = ASN1_INTEGER_to_BN(public_key, NULL)) == NULL)
+        goto err;
+    if ((buf = OPENSSL_malloc(plen)) == NULL)
+        goto err;
+    if (BN_bn2binpad(bnpub, buf, plen) < 0)
+        goto err;
+
     pkpeer = EVP_PKEY_new();
     if (pkpeer == NULL
             || !EVP_PKEY_copy_parameters(pkpeer, pk)
-            || !EVP_PKEY_set1_encoded_public_key(pkpeer, p, plen))
+            || !EVP_PKEY_set1_encoded_public_key(pkpeer, buf, plen))
         goto err;
 
     if (EVP_PKEY_derive_set_peer(pctx, pkpeer) > 0)
         rv = 1;
  err:
     ASN1_INTEGER_free(public_key);
+    BN_free(bnpub);
+    OPENSSL_free(buf);
     EVP_PKEY_free(pkpeer);
     return rv;
 }
