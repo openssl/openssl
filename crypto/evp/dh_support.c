@@ -22,7 +22,8 @@ static const DH_GENTYPE_NAME2ID dhtype2id[]=
     { "fips186_4", DH_PARAMGEN_TYPE_FIPS_186_4 },
     { "fips186_2", DH_PARAMGEN_TYPE_FIPS_186_2 },
     { "group", DH_PARAMGEN_TYPE_GROUP },
-    { "generator", DH_PARAMGEN_TYPE_GENERATOR }
+    { "generator", DH_PARAMGEN_TYPE_GENERATOR },
+    { "rfc5114", DH_PARAMGEN_TYPE_RFC5114 },
 };
 
 const char *dh_gen_type_id2name(int id)

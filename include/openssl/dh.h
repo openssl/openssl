@@ -30,6 +30,7 @@ extern "C" {
 # define DH_PARAMGEN_TYPE_FIPS_186_2    1   /* Use FIPS186-2 standard */
 # define DH_PARAMGEN_TYPE_FIPS_186_4    2   /* Use FIPS186-4 standard */
 # define DH_PARAMGEN_TYPE_GROUP         3   /* Use a named safe prime group */
+# define DH_PARAMGEN_TYPE_RFC5114       4   /* Use predefined RFC5114 parameters */
 
 int EVP_PKEY_CTX_set_dh_paramgen_type(EVP_PKEY_CTX *ctx, int typ);
 int EVP_PKEY_CTX_set_dh_paramgen_gindex(EVP_PKEY_CTX *ctx, int gindex);

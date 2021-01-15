@@ -17,6 +17,7 @@
 #include "internal/cryptlib.h"
 #include "dh_local.h"
 #include <openssl/bn.h>
+#include "crypto/dh.h"
 #include "crypto/bn_dh.h"
 
 /*
@@ -26,20 +27,24 @@
  */
 
 #define make_dh(x) \
-DH *DH_get_##x(void) \
+DH *dh_get_##x##_ex(OSSL_LIB_CTX *libctx) \
 { \
-    DH *dh = DH_new(); \
+    DH *dh = dh_new_ex(libctx); \
 \
     if (dh == NULL) \
         return NULL; \
     dh->params.p = BN_dup(&_bignum_dh##x##_p); \
     dh->params.g = BN_dup(&_bignum_dh##x##_g); \
     dh->params.q = BN_dup(&_bignum_dh##x##_q); \
-    if (dh->params.p == NULL || dh->params.q == NULL || dh->params.g == NULL) {\
+    if (dh->params.p == NULL || dh->params.q == NULL || dh->params.g == NULL) { \
         DH_free(dh); \
         return NULL; \
     } \
     return dh; \
+} \
+DH *DH_get_##x(void) \
+{ \
+ return dh_get_##x##_ex(NULL); \
 }
 
 make_dh(1024_160)

@@ -56,6 +56,7 @@ struct dh_gen_ctx {
     int selection;
     /* All these parameters are used for parameter generation only */
     /* If there is a group name then the remaining parameters are not needed */
+    int rfc5114_section;         /* 1 = 2.1, 2 = 2.2, 3 = 2.3 */
     int group_nid;
     size_t pbits;
     size_t qbits;
@@ -495,6 +496,17 @@ static int dh_gen_set_params(void *genctx, const OSSL_PARAM params[])
         }
         gctx->gen_type = DH_PARAMGEN_TYPE_GROUP;
     }
+    p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_DH_RFC5114);
+    if (p != NULL) {
+        int num = 0;
+
+        if (!OSSL_PARAM_get_int(p, &num) || num < 1 || num > 3) {
+            ERR_raise(ERR_LIB_PROV, ERR_R_PASSED_INVALID_ARGUMENT);
+            return 0;
+        }
+        gctx->rfc5114_section = num;
+        gctx->gen_type = DH_PARAMGEN_TYPE_RFC5114;
+    }
     p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_DH_GENERATOR);
     if (p != NULL && !OSSL_PARAM_get_int(p, &gctx->generator))
         return 0;
@@ -547,6 +559,7 @@ static const OSSL_PARAM *dh_gen_settable_params(void *provctx)
 {
     static OSSL_PARAM settable[] = {
         OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME, NULL, 0),
+        OSSL_PARAM_int(OSSL_PKEY_PARAM_DH_RFC5114, NULL),
         OSSL_PARAM_int(OSSL_PKEY_PARAM_DH_PRIV_LEN, NULL),
         OSSL_PARAM_int(OSSL_PKEY_PARAM_DH_GENERATOR, NULL),
         OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_FFC_TYPE, NULL, 0),
@@ -597,6 +610,22 @@ static void *dh_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
         if (dh == NULL)
             return NULL;
         ffc = dh_get0_params(dh);
+    } else if (gctx->gen_type == DH_PARAMGEN_TYPE_RFC5114
+               && gctx->ffc_params == NULL) {
+        switch (gctx->rfc5114_section) {
+        default:
+            /* This is an error */
+            goto end;
+        case 1:
+            dh = DH_get_1024_160();
+            break;
+        case 2:
+            dh = DH_get_2048_224();
+            break;
+        case 3:
+            dh = DH_get_2048_256();
+            break;
+        }
     } else {
         dh = dh_new_ex(gctx->libctx);
         if (dh == NULL)

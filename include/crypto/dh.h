@@ -46,3 +46,6 @@ int dh_KDF_X9_42_asn1(unsigned char *out, size_t outlen,
                       const char *cek_alg,
                       const unsigned char *ukm, size_t ukmlen, const EVP_MD *md,
                       OSSL_LIB_CTX *libctx, const char *propq);
+DH *dh_get_1024_160_ex(OSSL_LIB_CTX *libctx);
+DH *dh_get_2048_224_ex(OSSL_LIB_CTX *libctx);
+DH *dh_get_2048_256_ex(OSSL_LIB_CTX *libctx);

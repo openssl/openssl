@@ -158,11 +158,10 @@ int EVP_PKEY_CTX_set_dh_paramgen_generator(EVP_PKEY_CTX *ctx, int gen)
     return EVP_PKEY_CTX_set_params(ctx, params);
 }
 
-int EVP_PKEY_CTX_set_dh_rfc5114(EVP_PKEY_CTX *ctx, int gen)
+int EVP_PKEY_CTX_set_dh_rfc5114(EVP_PKEY_CTX *ctx, int num)
 {
     int ret;
     OSSL_PARAM params[2], *p = params;
-    const char *name;
 
     if ((ret = dh_paramgen_check(ctx)) <= 0)
         return ret;
@@ -170,13 +169,9 @@ int EVP_PKEY_CTX_set_dh_rfc5114(EVP_PKEY_CTX *ctx, int gen)
     /* TODO(3.0): Remove this eventually when no more legacy */
     if (ctx->op.keymgmt.genctx == NULL)
         return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DHX, EVP_PKEY_OP_PARAMGEN,
-                                 EVP_PKEY_CTRL_DH_RFC5114, gen, NULL);
-    name = ossl_ffc_named_group_get_name(ossl_ffc_uid_to_dh_named_group(gen));
-    if (name == NULL)
-        return 0;
+                                 EVP_PKEY_CTRL_DH_RFC5114, num, NULL);
 
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME,
-                                            (void *)name, 0);
+    *p++ = OSSL_PARAM_construct_int(OSSL_PKEY_PARAM_DH_RFC5114, &num);
     *p = OSSL_PARAM_construct_end();
     return EVP_PKEY_CTX_set_params(ctx, params);
 }

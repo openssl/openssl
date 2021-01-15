@@ -295,6 +295,7 @@ extern "C" {
 /* Diffie-Hellman params */
 #define OSSL_PKEY_PARAM_DH_GENERATOR        "safeprime-generator"
 #define OSSL_PKEY_PARAM_DH_PRIV_LEN         "priv_len"
+#define OSSL_PKEY_PARAM_DH_RFC5114          "rfc5114"
 
 /* Elliptic Curve Domain Parameters */
 #define OSSL_PKEY_PARAM_EC_PUB_X     "qx"
