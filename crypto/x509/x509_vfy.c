@@ -497,6 +497,14 @@ static int check_extensions(X509_STORE_CTX *ctx)
                 && (x->ex_flags & EXFLAG_SI) != 0)
             continue;
 
+        /*
+         * Check the validity of the cert representation beforehand
+         * because otherwise the return code of X509_check_ca(x)
+         * and various other checks actually have no (useful) value
+         */
+        CB_FAIL_IF((x->ex_flags & EXFLAG_INVALID) != 0,
+                   ctx, x, i, X509_V_ERR_INVALID_CERTIFICATE_FORMAT);
+
         ret = X509_check_ca(x);
         switch (must_be_ca) {
         case -1: /*  we accept both CA and non-CA certificates */

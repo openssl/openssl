@@ -105,6 +105,10 @@ The operation was successful.
 
 Unspecified error; should not happen.
 
+=item B<X509_V_ERR_INVALID_CERTIFICATE_FORMAT: invalid certificate format>
+
+Certificate representation has invalid format (i.e, syntax errors).
+
 =item B<X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT: unable to get issuer certificate>
 
 The issuer certificate of a locally looked up certificate could not be found.
@@ -345,8 +349,7 @@ Unhandled critical CRL extension.
 
 =item B<X509_V_ERR_INVALID_NON_CA: invalid non-CA certificate (has CA markings)>
 
-
-Non-CA certificate required but has CA markings.
+CA certificate was encountered where only a non-CA certificate is expected.
 
 =item B<X509_V_ERR_PROXY_PATH_LENGTH_EXCEEDED: proxy path length constraint exceeded>
 

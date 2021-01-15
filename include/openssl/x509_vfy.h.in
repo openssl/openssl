@@ -315,6 +315,9 @@ X509_LOOKUP_ctrl_ex((x), X509_L_ADD_STORE, (name), 0, NULL,           \
 # define X509_V_ERR_EXTENSIONS_REQUIRE_VERSION_3         93
 # define X509_V_ERR_EC_KEY_EXPLICIT_PARAMS               94
 
+# define X509_V_ERR_INVALID_CERTIFICATE_FORMAT           95
+/* NOTE: keep in sync with x509_txt.c and X509_STORE_CTX_get_error.pod */
+
 /* Certificate verify flags */
 # ifndef OPENSSL_NO_DEPRECATED_1_1_0
 #  define X509_V_FLAG_CB_ISSUER_CHECK             0x0   /* Deprecated */
