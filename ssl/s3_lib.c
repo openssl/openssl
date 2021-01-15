@@ -3484,7 +3484,7 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
                                            &s->ext.supportedgroups_len,
                                            parg);
         }
-#endif
+#endif                          /* !OPENSSL_NO_DEPRECATED_3_0 */
     case SSL_CTRL_SET_TLSEXT_HOSTNAME:
         /*
          * This API is only used for a client to set what SNI it will request
@@ -3718,7 +3718,6 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
             return 1;
         }
 
-#ifndef OPENSSL_NO_EC
     case SSL_CTRL_GET_EC_POINT_FORMATS:
         {
             const unsigned char **pformat = parg;
@@ -3728,7 +3727,6 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
             *pformat = s->ext.peer_ecpointformats;
             return (int)s->ext.peer_ecpointformats_len;
         }
-#endif
 
     default:
         break;
@@ -3801,7 +3799,7 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
                                            &ctx->ext.supportedgroups_len,
                                            parg);
         }
-#endif
+#endif                          /* !OPENSSL_NO_DEPRECATED_3_0 */
     case SSL_CTRL_SET_TLSEXT_SERVERNAME_ARG:
         ctx->ext.servername_arg = parg;
         break;
@@ -4266,14 +4264,12 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
                         "%d:[%08lX:%08lX:%08lX:%08lX]%p:%s\n",
                         ok, alg_k, alg_a, mask_k, mask_a, (void *)c, c->name);
 
-#ifndef OPENSSL_NO_EC
             /*
              * if we are considering an ECC cipher suite that uses an ephemeral
              * EC key check it
              */
             if (alg_k & SSL_kECDHE)
                 ok = ok && tls1_check_ec_tmp_key(s, c->id);
-#endif                          /* OPENSSL_NO_EC */
 
             if (!ok)
                 continue;
@@ -4284,14 +4280,14 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
             if (!ssl_security(s, SSL_SECOP_CIPHER_SHARED,
                               c->strength_bits, 0, (void *)c))
                 continue;
-#if !defined(OPENSSL_NO_EC)
+
             if ((alg_k & SSL_kECDHE) && (alg_a & SSL_aECDSA)
                 && s->s3.is_probably_safari) {
                 if (!ret)
                     ret = sk_SSL_CIPHER_value(allow, ii);
                 continue;
             }
-#endif
+
             if (prefer_sha256) {
                 const SSL_CIPHER *tmp = sk_SSL_CIPHER_value(allow, ii);
 

@@ -66,6 +66,7 @@
 # define SSL_R_BN_LIB                                     130
 # define SSL_R_CALLBACK_FAILED                            234
 # define SSL_R_CANNOT_CHANGE_CIPHER                       109
+# define SSL_R_CANNOT_GET_GROUP_NAME                      299
 # define SSL_R_CA_DN_LENGTH_MISMATCH                      131
 # define SSL_R_CA_KEY_TOO_SMALL                           397
 # define SSL_R_CA_MD_TOO_WEAK                             398

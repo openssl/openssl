@@ -239,12 +239,12 @@ static int ssl_set_cert(CERT *c, X509 *x)
         ERR_raise(ERR_LIB_SSL, SSL_R_UNKNOWN_CERTIFICATE_TYPE);
         return 0;
     }
-#ifndef OPENSSL_NO_EC
+
     if (i == SSL_PKEY_ECC && !EVP_PKEY_can_sign(pkey)) {
         ERR_raise(ERR_LIB_SSL, SSL_R_ECC_CERT_NOT_FOR_SIGNING);
         return 0;
     }
-#endif
+
     if (c->pkeys[i].privatekey != NULL) {
         /*
          * The return code from EVP_PKEY_copy_parameters is deliberately
