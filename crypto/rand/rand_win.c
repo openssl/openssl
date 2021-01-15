@@ -18,36 +18,52 @@
 # endif
 
 # include <windows.h>
-/* On Windows Vista or higher use BCrypt instead of the legacy CryptoAPI */
-# if defined(_MSC_VER) && _MSC_VER > 1500 /* 1500 = Visual Studio 2008 */ \
-     && defined(_WIN32_WINNT) && _WIN32_WINNT >= 0x0600
-#  define USE_BCRYPTGENRANDOM
+# include <wincrypt.h>
+
+# ifndef STATUS_SUCCESS
+#  define STATUS_SUCCESS ((NTSTATUS)0x00000000L)
 # endif
 
-# ifdef USE_BCRYPTGENRANDOM
-#  include <bcrypt.h>
-#  pragma comment(lib, "bcrypt.lib")
-#  ifndef STATUS_SUCCESS
-#   define STATUS_SUCCESS ((NTSTATUS)0x00000000L)
-#  endif
-# else
-#  include <wincrypt.h>
+# ifndef GET_MODULE_HANDLE_EX_FLAG_PIN
+# define GET_MODULE_HANDLE_EX_FLAG_PIN 0x00000001
+# endif
+
+# ifndef BCRYPT_USE_SYSTEM_PREFERRED_RNG
+# define BCRYPT_USE_SYSTEM_PREFERRED_RNG 0x00000002
+# endif
+
+/* prototype of GetModuleHandleExA used to pin bcrypt.dll in memory */
+typedef BOOL (WINAPI *GetModuleHandleExAFn)(
+    DWORD        dwFlags,
+    LPCSTR     lpModuleName,
+    HMODULE*    phModule
+);
+
+/* prototype of BCryptGenRandom function from bcrypt.dll */
+typedef long (WINAPI *BCryptGenRandomFn)(
+    void* hAlgorithm,
+    unsigned char* pbBuffer,
+    unsigned long cbBuffer,
+    unsigned long dwFlags
+);
+
 /*
  * Intel hardware RNG CSP -- available from
  * http://developer.intel.com/design/security/rng/redist_license.htm
  */
-#  define PROV_INTEL_SEC 22
-#  define INTEL_DEF_PROV L"Intel Hardware Cryptographic Service Provider"
-# endif
+# define PROV_INTEL_SEC 22
+# define INTEL_DEF_PROV L"Intel Hardware Cryptographic Service Provider"
 
 size_t rand_pool_acquire_entropy(RAND_POOL *pool)
 {
-# ifndef USE_BCRYPTGENRANDOM
     HCRYPTPROV hProvider;
-# endif
     unsigned char *buffer;
     size_t bytes_needed;
     size_t entropy_available = 0;
+    HMODULE hBCryptDll = NULL;
+    char system32_path[MAX_PATH];
+    GetModuleHandleExAFn GetModuleHandleExAPtr = NULL;
+    BCryptGenRandomFn BCryptGenRandomPtr  = NULL;
 
 
 # ifdef OPENSSL_RAND_SEED_RDTSC
@@ -62,21 +78,62 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
         return entropy_available;
 # endif
 
-# ifdef USE_BCRYPTGENRANDOM
-    bytes_needed = rand_pool_bytes_needed(pool, 1 /*entropy_factor*/);
-    buffer = rand_pool_add_begin(pool, bytes_needed);
-    if (buffer != NULL) {
-        size_t bytes = 0;
-        if (BCryptGenRandom(NULL, buffer, bytes_needed,
-                            BCRYPT_USE_SYSTEM_PREFERRED_RNG) == STATUS_SUCCESS)
-            bytes = bytes_needed;
-
-        rand_pool_add_end(pool, bytes, 8 * bytes);
-        entropy_available = rand_pool_entropy_available(pool);
+	/* We get pointer to GetModuleHandleExA dynamically in case it's not 
+	 * defined in the compiler's headers
+	 */
+	GetModuleHandleExAPtr = 
+        (GetModuleHandleExAFn) GetProcAddress (
+            GetModuleHandleA ("kernel32.dll"), 
+            "GetModuleHandleExA");
+    if (GetModuleHandleExAPtr != NULL) {
+        /* we load bcrypt.dll using absolute path to protect from
+         * possible dll hijacking since bcrypt.dll is not part of 
+         * the KnownDlls list protected by Windows from such attacks
+         */
+        if (GetSystemDirectoryA (system32_path, MAX_PATH) 
+                && (strlen(system32_path) < (MAX_PATH - 11))) {
+            /* we have enough room for "\bcrypt.dll" */
+            strcat (system32_path, "\\bcrypt.dll");
+        }
+        else {
+            strcpy (system32_path, "C:\\Windows\\System32\\bcrypt.dll");
+        }
+        /* Load bcrypt.dll if it is not already loaded and ensure that 
+         * it remains loaded in memory to replicate previous behavior 
+         * where it was linked against explicitely
+         */
+        if (!GetModuleHandleExAPtr (GET_MODULE_HANDLE_EX_FLAG_PIN, 
+                                    system32_path, 
+                                    &hBCryptDll)) {
+            hBCryptDll = LoadLibraryA (system32_path);
+            if (hBCryptDll != NULL) {
+                GetModuleHandleExAPtr ( GET_MODULE_HANDLE_EX_FLAG_PIN, 
+                                        system32_path, 
+                                        &hBCryptDll);
+            }
+        }
     }
-    if (entropy_available > 0)
-        return entropy_available;
-# else
+
+    if (hBCryptDll != NULL) {
+        BCryptGenRandomPtr  = (BCryptGenRandomFn) 
+            GetProcAddress (hBCryptDll, "BCryptGenRandom");
+        if (BCryptGenRandomPtr != NULL) {
+            bytes_needed = rand_pool_bytes_needed(pool, 1 /*entropy_factor*/);
+            buffer = rand_pool_add_begin(pool, bytes_needed);
+            if (buffer != NULL) {
+                size_t bytes = 0;
+                if (BCryptGenRandomPtr(NULL, buffer, bytes_needed,
+                        BCRYPT_USE_SYSTEM_PREFERRED_RNG) == STATUS_SUCCESS)
+                    bytes = bytes_needed;
+
+                rand_pool_add_end(pool, bytes, 8 * bytes);
+                entropy_available = rand_pool_entropy_available(pool);
+            }
+            if (entropy_available > 0)
+                return entropy_available;
+        }
+    }
+
     bytes_needed = rand_pool_bytes_needed(pool, 1 /*entropy_factor*/);
     buffer = rand_pool_add_begin(pool, bytes_needed);
     if (buffer != NULL) {
@@ -114,7 +171,6 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
     }
     if (entropy_available > 0)
         return entropy_available;
-# endif
 
     return rand_pool_entropy_available(pool);
 }
