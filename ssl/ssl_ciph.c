@@ -323,6 +323,8 @@ int ssl_load_ciphers(SSL_CTX *ctx)
 {
     size_t i;
     const ssl_cipher_table *t;
+    EVP_KEYEXCH *kex = NULL;
+    EVP_SIGNATURE *sig = NULL;
 
     ctx->disabled_enc_mask = 0;
     for (i = 0, t = ssl_cipher_table_cipher; i < SSL_ENC_NUM_IDX; i++, t++) {
@@ -354,16 +356,33 @@ int ssl_load_ciphers(SSL_CTX *ctx)
     ctx->disabled_mkey_mask = 0;
     ctx->disabled_auth_mask = 0;
 
-#ifdef OPENSSL_NO_DSA
-    ctx->disabled_auth_mask |= SSL_aDSS;
-#endif
-#ifdef OPENSSL_NO_DH
-    ctx->disabled_mkey_mask |= SSL_kDHE | SSL_kDHEPSK;
-#endif
-#ifdef OPENSSL_NO_EC
-    ctx->disabled_mkey_mask |= SSL_kECDHE | SSL_kECDHEPSK;
-    ctx->disabled_auth_mask |= SSL_aECDSA;
-#endif
+    /*
+     * We ignore any errors from the fetches below. They are expected to fail
+     * if theose algorithms are not available.
+     */
+    ERR_set_mark();
+    sig = EVP_SIGNATURE_fetch(ctx->libctx, "DSA", ctx->propq);
+    if (sig == NULL)
+        ctx->disabled_auth_mask |= SSL_aDSS;
+    else
+        EVP_SIGNATURE_free(sig);
+    kex = EVP_KEYEXCH_fetch(ctx->libctx, "DH", ctx->propq);
+    if (kex == NULL)
+        ctx->disabled_mkey_mask |= SSL_kDHE | SSL_kDHEPSK;
+    else
+        EVP_KEYEXCH_free(kex);
+    kex = EVP_KEYEXCH_fetch(ctx->libctx, "ECDH", ctx->propq);
+    if (kex == NULL)
+        ctx->disabled_mkey_mask |= SSL_kECDHE | SSL_kECDHEPSK;
+    else
+        EVP_KEYEXCH_free(kex);
+    sig = EVP_SIGNATURE_fetch(ctx->libctx, "ECDSA", ctx->propq);
+    if (sig == NULL)
+        ctx->disabled_auth_mask |= SSL_aECDSA;
+    else
+        EVP_SIGNATURE_free(sig);
+    ERR_pop_to_mark();
+
 #ifdef OPENSSL_NO_PSK
     ctx->disabled_mkey_mask |= SSL_PSK;
     ctx->disabled_auth_mask |= SSL_aPSK;
