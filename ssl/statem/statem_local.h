@@ -19,13 +19,16 @@
 /* The spec allows for a longer length than this, but we limit it */
 #define HELLO_VERIFY_REQUEST_MAX_LENGTH 258
 #define END_OF_EARLY_DATA_MAX_LENGTH    0
-#define SERVER_HELLO_MAX_LENGTH         20000
 #define HELLO_RETRY_REQUEST_MAX_LENGTH  20000
 #define ENCRYPTED_EXTENSIONS_MAX_LENGTH 20000
 #define SERVER_KEY_EXCH_MAX_LENGTH      102400
 #define SERVER_HELLO_DONE_MAX_LENGTH    0
 #define KEY_UPDATE_MAX_LENGTH           1
 #define CCS_MAX_LENGTH                  1
+
+/* Max ServerHello size permitted by RFC 8446 */
+#define SERVER_HELLO_MAX_LENGTH         65607
+
 /* Max should actually be 36 but we are generous */
 #define FINISHED_MAX_LENGTH             64
 
