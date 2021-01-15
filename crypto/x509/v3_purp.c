@@ -386,7 +386,7 @@ static int check_sig_alg_match(const EVP_PKEY *issuer_key, const X509 *subject)
     return X509_V_ERR_SIGNATURE_ALGORITHM_MISMATCH;
 }
 
-#define V1_ROOT (EXFLAG_V1 | EXFLAG_SS)
+#define EXFLAG_V1_SS (EXFLAG_V1|EXFLAG_SS)
 #define ku_reject(x, usage) \
     (((x)->ex_flags & EXFLAG_KUSAGE) != 0 && ((x)->ex_kusage & (usage)) == 0)
 #define xku_reject(x, usage) \
@@ -645,38 +645,41 @@ int ossl_x509v3_cache_extensions(X509 *x)
 /*-
  * CA checks common to all purposes
  * return codes:
- * 0 not a CA
- * 1 is a CA
- * 2 Only possible in older versions of openSSL when basicConstraints are absent
- *   new versions will not return this value. May be a CA
+ * 0 not a CA, or we do not know (error during detection)
+ * 1 is a properly flagged V3 CA
+ * 2 Only possible in older OpenSSL versions when basicConstraints are absent.
+ *   New versions will not return this value. May be a CA
  * 3 basicConstraints absent but self-signed V1.
  * 4 basicConstraints absent but keyUsage present and keyCertSign asserted.
- * 5 Netscape specific CA Flags present
+ * 5 Netscape specific CA flags present
  */
 
 static int check_ca(const X509 *x)
 {
     /* keyUsage if present should allow cert signing */
     if (ku_reject(x, KU_KEY_CERT_SIGN))
-        return 0;
+        return X509_CA_TYPE_NON_CA_OR_ERROR; /* well, actually not ERROR */
     if ((x->ex_flags & EXFLAG_BCONS) != 0) {
+        if ((x->ex_flags & EXFLAG_CA) != 0)
+            return X509_CA_TYPE_V3;
         /* If basicConstraints says not a CA then say so */
-        return (x->ex_flags & EXFLAG_CA) != 0;
+        else
+            return X509_CA_TYPE_NON_CA_OR_ERROR; /* well, actually not ERROR */;
     } else {
         /* We support V1 roots for...  uh, I don't really know why. */
-        if ((x->ex_flags & V1_ROOT) == V1_ROOT)
-            return 3;
+        if ((x->ex_flags & EXFLAG_V1_SS) == EXFLAG_V1_SS)
+            return X509_CA_TYPE_V1_SELF_SIGNED; /* well, could also be an EE */
         /*
          * If key usage present it must have certSign so tolerate it
          */
         else if ((x->ex_flags & EXFLAG_KUSAGE) != 0)
-            return 4;
+            return X509_CA_TYPE_V3_KEY_CERT_SIGN;
         /* Older certificates could have Netscape-specific CA types */
         else if ((x->ex_flags & EXFLAG_NSCERT) != 0
                  && (x->ex_nscert & NS_ANY_CA) != 0)
-            return 5;
-        /* Can this still be regarded a CA certificate?  I doubt it. */
-        return 0;
+            return X509_CA_TYPE_NETSCAPE;
+        /* can this still be regarded a CA certificate?  I doubt it */
+        return X509_CA_TYPE_NON_CA_OR_ERROR;
     }
 }
 
@@ -695,9 +698,9 @@ void X509_set_proxy_pathlen(X509 *x, long l)
 
 int X509_check_ca(X509 *x)
 {
-    /* Note 0 normally means "not a CA" - but in this case means error. */
     if (!ossl_x509v3_cache_extensions(x))
-        return 0;
+        return X509_CA_TYPE_NON_CA_OR_ERROR; /* very uncertain if it is a CA */
+    /* Note this normally means "not a CA" - but in this case means error. */
 
     return check_ca(x);
 }
@@ -707,7 +710,7 @@ static int check_ssl_ca(const X509 *x)
 {
     int ca_ret = check_ca(x);
 
-    if (ca_ret == 0)
+    if (ca_ret == X509_CA_TYPE_NON_CA_OR_ERROR)
         return 0;
     /* Check nsCertType if present */
     return ca_ret != 5 || (x->ex_nscert & NS_SSL_CA) != 0;
@@ -773,11 +776,12 @@ static int purpose_smime(const X509 *x, int require_ca)
     if (require_ca) {
         int ca_ret = check_ca(x);
 
-        if (ca_ret == 0)
+        if (ca_ret == X509_CA_TYPE_NON_CA_OR_ERROR)
             return 0;
-        /* Check nsCertType if present */
-        if (ca_ret != 5 || (x->ex_nscert & NS_SMIME_CA) != 0)
-            return ca_ret;
+        /* check nsCertType if present */
+        if (ca_ret != X509_CA_TYPE_NETSCAPE
+                || (x->ex_nscert & NS_SMIME_CA) != 0)
+            return ca_ret; /* maybe better return ca_ret != 0 */
         else
             return 0;
     }
@@ -785,7 +789,9 @@ static int purpose_smime(const X509 *x, int require_ca)
         if ((x->ex_nscert & NS_SMIME) != 0)
             return 1;
         /* Workaround for some buggy certificates */
-        return (x->ex_nscert & NS_SSL_CLIENT) != 0 ? 2 : 0;
+        if ((x->ex_nscert & NS_SSL_CLIENT) != 0)
+            return 2; /* maybe better return 1 */
+        return 0;
     }
     return 1;
 }
@@ -795,7 +801,7 @@ static int check_purpose_smime_sign(const X509_PURPOSE *xp, const X509 *x,
 {
     int ret = purpose_smime(x, require_ca);
 
-    if (!ret || require_ca)
+    if (ret == 0 || require_ca)
         return ret;
     return ku_reject(x, KU_DIGITAL_SIGNATURE | KU_NON_REPUDIATION) ? 0 : ret;
 }
@@ -805,7 +811,7 @@ static int check_purpose_smime_encrypt(const X509_PURPOSE *xp, const X509 *x,
 {
     int ret = purpose_smime(x, require_ca);
 
-    if (!ret || require_ca)
+    if (ret == 0 || require_ca)
         return ret;
     return ku_reject(x, KU_KEY_ENCIPHERMENT) ? 0 : ret;
 }
@@ -816,7 +822,10 @@ static int check_purpose_crl_sign(const X509_PURPOSE *xp, const X509 *x,
     if (require_ca) {
         int ca_ret = check_ca(x);
 
-        return ca_ret == 2 ? 0 : ca_ret;
+        if (ca_ret != 2) /* will always hold, since 2 is meanwhile unused */
+            return ca_ret; /* better return ca_ret != 0 ? */
+        else
+            return 0;
     }
     return !ku_reject(x, KU_CRL_SIGN);
 }
@@ -833,7 +842,7 @@ static int check_purpose_ocsp_helper(const X509_PURPOSE *xp, const X509 *x,
      * (2)?
      */
     if (require_ca)
-        return check_ca(x);
+        return check_ca(x); /* maybe better return check_ca(x) != 0 */
     /* Leaf certificate is checked in OCSP_verify() */
     return 1;
 }
@@ -845,7 +854,7 @@ static int check_purpose_timestamp_sign(const X509_PURPOSE *xp, const X509 *x,
 
     /* If ca is true we must return if this is a valid CA certificate. */
     if (require_ca)
-        return check_ca(x);
+        return check_ca(x); /* maybe better return check_ca(x) != 0 */
 
     /*
      * Check the optional key usage field:
@@ -905,6 +914,7 @@ static int check_purpose_code_sign(const X509_PURPOSE *xp, const X509 *x,
         return 0;
     if (i_ext >= 0) {
         X509_EXTENSION *ext = X509_get_ext((X509 *)x, i_ext);
+
         if (!X509_EXTENSION_get_critical(ext))
             return 0;
     }

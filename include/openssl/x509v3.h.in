@@ -714,6 +714,12 @@ int X509V3_extensions_print(BIO *out, const char *title,
                             unsigned long flag, int indent);
 
 int X509_check_ca(X509 *x);
+#define X509_CA_TYPE_NON_CA_OR_ERROR  0
+#define X509_CA_TYPE_V3               1
+/* code 2 is unused */
+#define X509_CA_TYPE_V1_SELF_SIGNED   3
+#define X509_CA_TYPE_V3_KEY_CERT_SIGN 4
+#define X509_CA_TYPE_NETSCAPE         5
 int X509_check_purpose(X509 *x, int id, int ca);
 int X509_supported_extension(X509_EXTENSION *ex);
 int X509_PURPOSE_set(int *p, int purpose);

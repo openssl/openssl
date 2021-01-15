@@ -12,20 +12,23 @@ X509_check_ca - check if given certificate is CA certificate
 
 =head1 DESCRIPTION
 
-This function checks if given certificate is CA certificate (can be used
-to sign other certificates). The certificate must be a complete certificate
-otherwise an error is returned.
+This function checks if the given certificate (likely) is CA certificate
+and thus is acceptable for signing other certificates.
 
 =head1 RETURN VALUES
 
-Function return 0, if it is not CA certificate, 1 if it is proper X509v3
-CA certificate with B<basicConstraints> extension CA:TRUE,
-3, if it is self-signed X509 v1 certificate, 4, if it is certificate with
-B<keyUsage> extension with bit B<keyCertSign> set, but without
-B<basicConstraints>, and 5 if it has outdated Netscape Certificate Type
-extension telling that it is CA certificate.
+The function returns
+X509_CA_TYPE_NON_CA_OR_ERROR if it is not CA certificate or we do not know
+X509_CA_TYPE_V3 if it is proper X509v3 CA certificate
+with B<basicConstraints> extension CA:TRUE,
+X509_CA_TYPE_V1_SELF_SIGNED if it is a self-signed X509 v1 certificate,
+which usually indicates this is a CA cert, but might be an end-entity cert,
+X509_CA_TYPE_V3_KEY_CERT_SIGN, if it is certificate with B<keyUsage> extension
+with bit B<keyCertSign> set, but without B<basicConstraints>, and
+X509_CA_TYPE_NETSCAPE if it has outdated Netscape Certificate Type extension
+telling that it is CA certificate.
 
-This function will also return 0 on error.
+This function also returns X509_CA_TYPE_NON_CA_OR_ERROR (equaling 0) on error.
 
 Actually, any nonzero value means that this certificate could have been
 used to sign other certificates.
