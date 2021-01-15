@@ -66,4 +66,8 @@ sub sharedlib_simple {
                                     $_[0]->shlibextsimple());
 }
 
+sub sharedlib_import {
+    return undef;
+}
+
 1;
