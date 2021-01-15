@@ -105,6 +105,10 @@ The operation was successful.
 
 Unspecified error; should not happen.
 
+=item B<X509_V_ERR_INVALID_CERTIFICATE_FORMAT: certificate representation has invalid format>
+
+Certificate representation has invalid format (i.e, syntax errors).
+
 =item B<X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT: unable to get issuer certificate>
 
 The issuer certificate of a locally looked up certificate could not be found.
