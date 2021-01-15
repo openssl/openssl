@@ -1521,9 +1521,7 @@ static int ssl_method_error(const SSL *s, const SSL_METHOD *method)
 static int is_tls13_capable(const SSL *s)
 {
     int i;
-#ifndef OPENSSL_NO_EC
     int curve;
-#endif
 
     if (!ossl_assert(s->ctx != NULL) || !ossl_assert(s->session_ctx != NULL))
         return 0;
@@ -1557,7 +1555,6 @@ static int is_tls13_capable(const SSL *s)
         }
         if (!ssl_has_cert(s, i))
             continue;
-#ifndef OPENSSL_NO_EC
         if (i != SSL_PKEY_ECC)
             return 1;
         /*
@@ -1568,9 +1565,6 @@ static int is_tls13_capable(const SSL *s)
         curve = ssl_get_EC_curve_nid(s->cert->pkeys[SSL_PKEY_ECC].privatekey);
         if (tls_check_sigalg_curve(s, curve))
             return 1;
-#else
-        return 1;
-#endif
     }
 
     return 0;

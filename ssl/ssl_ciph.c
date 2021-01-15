@@ -1245,7 +1245,6 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
     return retval;
 }
 
-#ifndef OPENSSL_NO_EC
 static int check_suiteb_cipher_list(const SSL_METHOD *meth, CERT *c,
                                     const char **prule_str)
 {
@@ -1276,7 +1275,7 @@ static int check_suiteb_cipher_list(const SSL_METHOD *meth, CERT *c,
         ERR_raise(ERR_LIB_SSL, SSL_R_AT_LEAST_TLS_1_2_NEEDED_IN_SUITEB_MODE);
         return 0;
     }
-# ifndef OPENSSL_NO_EC
+
     switch (suiteb_flags) {
     case SSL_CERT_FLAG_SUITEB_128_LOS:
         if (suiteb_comb2)
@@ -1293,12 +1292,7 @@ static int check_suiteb_cipher_list(const SSL_METHOD *meth, CERT *c,
         break;
     }
     return 1;
-# else
-    ERR_raise(ERR_LIB_SSL, SSL_R_ECDH_REQUIRED_FOR_SUITEB_MODE);
-    return 0;
-# endif
 }
-#endif
 
 static int ciphersuite_cb(const char *elem, int len, void *arg)
 {
@@ -1446,10 +1440,9 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(SSL_CTX *ctx,
      */
     if (rule_str == NULL || cipher_list == NULL || cipher_list_by_id == NULL)
         return NULL;
-#ifndef OPENSSL_NO_EC
+
     if (!check_suiteb_cipher_list(ssl_method, c, &rule_str))
         return NULL;
-#endif
 
     /*
      * To reduce the work to do we only want to process the compiled

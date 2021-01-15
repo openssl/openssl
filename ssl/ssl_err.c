@@ -74,6 +74,8 @@ static const ERR_STRING_DATA SSL_str_reasons[] = {
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_CALLBACK_FAILED), "callback failed"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_CANNOT_CHANGE_CIPHER),
     "cannot change cipher"},
+    {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_CANNOT_GET_GROUP_NAME),
+    "cannot get group name"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_CA_DN_LENGTH_MISMATCH),
     "ca dn length mismatch"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_CA_KEY_TOO_SMALL), "ca key too small"},

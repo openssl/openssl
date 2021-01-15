@@ -1181,7 +1181,6 @@ static int ssl_print_server_keyex(BIO *bio, int indent, const SSL *ssl,
             return 0;
         break;
 
-# ifndef OPENSSL_NO_EC
     case SSL_kECDHE:
     case SSL_kECDHEPSK:
         if (msglen < 1)
@@ -1207,7 +1206,6 @@ static int ssl_print_server_keyex(BIO *bio, int indent, const SSL *ssl,
             return 0;
         }
         break;
-# endif
 
     case SSL_kPSK:
     case SSL_kRSAPSK:

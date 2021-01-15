@@ -185,13 +185,11 @@ static struct {
     {NID_ffdhe8192, OSSL_TLS_GROUP_ID_ffdhe8192}
 };
 
-#ifndef OPENSSL_NO_EC
 static const unsigned char ecformats_default[] = {
     TLSEXT_ECPOINTFORMAT_uncompressed,
     TLSEXT_ECPOINTFORMAT_ansiX962_compressed_prime,
     TLSEXT_ECPOINTFORMAT_ansiX962_compressed_char2
 };
-#endif /* !defined(OPENSSL_NO_EC) */
 
 /* The default curves */
 static const uint16_t supported_groups_default[] = {
@@ -214,12 +212,10 @@ static const uint16_t supported_groups_default[] = {
     0x104,                   /* ffdhe8192 (0x104) */
 };
 
-#ifndef OPENSSL_NO_EC
 static const uint16_t suiteb_curves[] = {
     TLSEXT_curve_P_256,
     TLSEXT_curve_P_384
 };
-#endif
 
 struct provider_group_data_st {
     SSL_CTX *ctx;
@@ -427,16 +423,6 @@ int ssl_load_groups(SSL_CTX *ctx)
 static uint16_t tls1_group_name2id(SSL_CTX *ctx, const char *name)
 {
     size_t i;
-    int nid = NID_undef;
-
-    /* See if we can identify a nid for this name */
-#ifndef OPENSSL_NO_EC
-    nid = EC_curve_nist2nid(name);
-#endif
-    if (nid == NID_undef)
-        nid = OBJ_sn2nid(name);
-    if (nid == NID_undef)
-        nid = OBJ_ln2nid(name);
 
     for (i = 0; i < ctx->group_list_len; i++) {
         if (strcmp(ctx->group_list[i].tlsname, name) == 0
@@ -506,7 +492,6 @@ void tls1_get_supported_groups(SSL *s, const uint16_t **pgroups,
 {
     /* For Suite B mode only include P-256, P-384 */
     switch (tls1_suiteb(s)) {
-# ifndef OPENSSL_NO_EC
     case SSL_CERT_FLAG_SUITEB_128_LOS:
         *pgroups = suiteb_curves;
         *pgroupslen = OSSL_NELEM(suiteb_curves);
@@ -521,7 +506,6 @@ void tls1_get_supported_groups(SSL *s, const uint16_t **pgroups,
         *pgroups = suiteb_curves + 1;
         *pgroupslen = 1;
         break;
-# endif
 
     default:
         if (s->ext.supportedgroups == NULL) {
@@ -821,7 +805,6 @@ int tls1_check_group_id(SSL *s, uint16_t group_id, int check_own_groups)
     return tls1_in_list(group_id, groups, groups_len);
 }
 
-#ifndef OPENSSL_NO_EC
 void tls1_get_formatlist(SSL *s, const unsigned char **pformats,
                          size_t *num_formats)
 {
@@ -974,24 +957,13 @@ int tls1_check_ec_tmp_key(SSL *s, unsigned long cid)
     return 0;
 }
 
-#else
-
-static int tls1_check_cert_param(SSL *s, X509 *x, int set_ee_md)
-{
-    return 1;
-}
-
-#endif                          /* OPENSSL_NO_EC */
-
 /* Default sigalg schemes */
 static const uint16_t tls12_sigalgs[] = {
-#ifndef OPENSSL_NO_EC
     TLSEXT_SIGALG_ecdsa_secp256r1_sha256,
     TLSEXT_SIGALG_ecdsa_secp384r1_sha384,
     TLSEXT_SIGALG_ecdsa_secp521r1_sha512,
     TLSEXT_SIGALG_ed25519,
     TLSEXT_SIGALG_ed448,
-#endif
 
     TLSEXT_SIGALG_rsa_pss_pss_sha256,
     TLSEXT_SIGALG_rsa_pss_pss_sha384,
@@ -1004,10 +976,9 @@ static const uint16_t tls12_sigalgs[] = {
     TLSEXT_SIGALG_rsa_pkcs1_sha384,
     TLSEXT_SIGALG_rsa_pkcs1_sha512,
 
-#ifndef OPENSSL_NO_EC
     TLSEXT_SIGALG_ecdsa_sha224,
     TLSEXT_SIGALG_ecdsa_sha1,
-#endif
+
     TLSEXT_SIGALG_rsa_pkcs1_sha224,
     TLSEXT_SIGALG_rsa_pkcs1_sha1,
 #ifndef OPENSSL_NO_DSA
@@ -1027,15 +998,13 @@ static const uint16_t tls12_sigalgs[] = {
 #endif
 };
 
-#ifndef OPENSSL_NO_EC
+
 static const uint16_t suiteb_sigalgs[] = {
     TLSEXT_SIGALG_ecdsa_secp256r1_sha256,
     TLSEXT_SIGALG_ecdsa_secp384r1_sha384
 };
-#endif
 
 static const SIGALG_LOOKUP sigalg_lookup_tbl[] = {
-#ifndef OPENSSL_NO_EC
     {"ecdsa_secp256r1_sha256", TLSEXT_SIGALG_ecdsa_secp256r1_sha256,
      NID_sha256, SSL_MD_SHA256_IDX, EVP_PKEY_EC, SSL_PKEY_ECC,
      NID_ecdsa_with_SHA256, NID_X9_62_prime256v1, 1},
@@ -1057,7 +1026,6 @@ static const SIGALG_LOOKUP sigalg_lookup_tbl[] = {
     {NULL, TLSEXT_SIGALG_ecdsa_sha1,
      NID_sha1, SSL_MD_SHA1_IDX, EVP_PKEY_EC, SSL_PKEY_ECC,
      NID_ecdsa_with_SHA1, NID_undef, 1},
-#endif
     {"rsa_pss_rsae_sha256", TLSEXT_SIGALG_rsa_pss_rsae_sha256,
      NID_sha256, SSL_MD_SHA256_IDX, EVP_PKEY_RSA_PSS, SSL_PKEY_RSA,
      NID_undef, NID_undef, 1},
@@ -1362,7 +1330,6 @@ size_t tls12_get_psigalgs(SSL *s, int sent, const uint16_t **psigs)
      * If Suite B mode use Suite B sigalgs only, ignore any other
      * preferences.
      */
-#ifndef OPENSSL_NO_EC
     switch (tls1_suiteb(s)) {
     case SSL_CERT_FLAG_SUITEB_128_LOS:
         *psigs = suiteb_sigalgs;
@@ -1376,7 +1343,6 @@ size_t tls12_get_psigalgs(SSL *s, int sent, const uint16_t **psigs)
         *psigs = suiteb_sigalgs + 1;
         return 1;
     }
-#endif
     /*
      *  We use client_sigalgs (if not NULL) if we're a server
      *  and sending a certificate request or if we're a client and
@@ -1394,7 +1360,6 @@ size_t tls12_get_psigalgs(SSL *s, int sent, const uint16_t **psigs)
     }
 }
 
-#ifndef OPENSSL_NO_EC
 /*
  * Called by servers only. Checks that we have a sig alg that supports the
  * specified EC curve.
@@ -1425,7 +1390,6 @@ int tls_check_sigalg_curve(const SSL *s, int curve)
 
     return 0;
 }
-#endif
 
 /*
  * Return the number of security bits for the signature algorithm, or 0 on
@@ -1518,7 +1482,6 @@ int tls12_check_peer_sigalg(SSL *s, uint16_t sig, EVP_PKEY *pkey)
         return 0;
     }
 
-#ifndef OPENSSL_NO_EC
     if (pkeyid == EVP_PKEY_EC) {
 
         /* Check point compression is permitted */
@@ -1557,7 +1520,6 @@ int tls12_check_peer_sigalg(SSL *s, uint16_t sig, EVP_PKEY *pkey)
         SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE, SSL_R_WRONG_SIGNATURE_TYPE);
         return 0;
     }
-#endif
 
     /* Check signature matches a type we sent */
     sent_sigslen = tls12_get_psigalgs(s, 1, &sent_sigs);
