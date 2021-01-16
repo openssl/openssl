@@ -927,12 +927,14 @@ __owur int SSL_extension_supported(unsigned int ext_type);
 # define SSL_ASYNC_PAUSED       5
 # define SSL_ASYNC_NO_JOBS      6
 # define SSL_CLIENT_HELLO_CB    7
+# define SSL_RETRY_VERIFY       8
 
 /* These will only be used when doing non-blocking IO */
 # define SSL_want_nothing(s)         (SSL_want(s) == SSL_NOTHING)
 # define SSL_want_read(s)            (SSL_want(s) == SSL_READING)
 # define SSL_want_write(s)           (SSL_want(s) == SSL_WRITING)
 # define SSL_want_x509_lookup(s)     (SSL_want(s) == SSL_X509_LOOKUP)
+# define SSL_want_retry_verify(s)    (SSL_want(s) == SSL_RETRY_VERIFY)
 # define SSL_want_async(s)           (SSL_want(s) == SSL_ASYNC_PAUSED)
 # define SSL_want_async_job(s)       (SSL_want(s) == SSL_ASYNC_NO_JOBS)
 # define SSL_want_client_hello_cb(s) (SSL_want(s) == SSL_CLIENT_HELLO_CB)
@@ -1227,6 +1229,7 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 # define SSL_ERROR_WANT_ASYNC            9
 # define SSL_ERROR_WANT_ASYNC_JOB       10
 # define SSL_ERROR_WANT_CLIENT_HELLO_CB 11
+# define SSL_ERROR_WANT_RETRY_VERIFY    12
 
 # ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define SSL_CTRL_SET_TMP_DH                    3

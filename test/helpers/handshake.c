@@ -314,6 +314,14 @@ static int verify_reject_cb(X509_STORE_CTX *ctx, void *arg) {
     return 0;
 }
 
+static int n_retries = 0;
+static int verify_retry_cb(X509_STORE_CTX *ctx, void *arg) {
+    if (--n_retries < 0)
+        return 1;
+    X509_STORE_CTX_set_error(ctx, X509_V_ERR_APPLICATION_VERIFICATION);
+    return -1;
+}
+
 static int verify_accept_cb(X509_STORE_CTX *ctx, void *arg) {
     return 1;
 }
@@ -526,6 +534,10 @@ static int configure_handshake_ctx(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
     switch (extra->client.verify_callback) {
     case SSL_TEST_VERIFY_ACCEPT_ALL:
         SSL_CTX_set_cert_verify_callback(client_ctx, &verify_accept_cb, NULL);
+        break;
+    case SSL_TEST_VERIFY_RETRY_ONCE:
+        n_retries = 1;
+        SSL_CTX_set_cert_verify_callback(client_ctx, &verify_retry_cb, NULL);
         break;
     case SSL_TEST_VERIFY_REJECT_ALL:
         SSL_CTX_set_cert_verify_callback(client_ctx, &verify_reject_cb, NULL);
@@ -807,8 +819,10 @@ static void do_handshake_step(PEER *peer)
             peer->status = PEER_ERROR;
         } else {
             int error = SSL_get_error(peer->ssl, ret);
+
             /* Memory bios should never block with SSL_ERROR_WANT_WRITE. */
-            if (error != SSL_ERROR_WANT_READ)
+            if (error != SSL_ERROR_WANT_READ
+                    && error != SSL_ERROR_WANT_RETRY_VERIFY)
                 peer->status = PEER_ERROR;
         }
     }
@@ -1673,6 +1687,10 @@ static HANDSHAKE_RESULT *do_handshake_internal(
     else
         ret->session_id = SSL_TEST_SESSION_ID_YES;
     ret->session_ticket_do_not_call = server_ex_data.session_ticket_do_not_call;
+
+    if (extra->client.verify_callback == SSL_TEST_VERIFY_RETRY_ONCE
+            && n_retries != -1)
+        ret->result = SSL_TEST_SERVER_FAIL;
 
 #ifndef OPENSSL_NO_NEXTPROTONEG
     SSL_get0_next_proto_negotiated(client.ssl, &proto, &proto_len);

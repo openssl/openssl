@@ -51,6 +51,20 @@ our @tests = (
         },
     },
 
+    # Same test as above but with a custom callback that requests retry once.
+    {
+        name => "verify-custom-retry",
+        server => { },
+        client => {
+            extra => {
+                "VerifyCallback" => "RetryOnce",
+            },
+        },
+        test   => {
+            "ExpectedResult" => "Success",
+        },
+    },
+
     # Sanity-check that verification indeed succeeds if peer verification
     # is not requested.
     {

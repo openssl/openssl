@@ -3808,6 +3808,8 @@ int SSL_get_error(const SSL *s, int i)
     }
     if (SSL_want_x509_lookup(s))
         return SSL_ERROR_WANT_X509_LOOKUP;
+    if (SSL_want_retry_verify(s))
+        return SSL_ERROR_WANT_RETRY_VERIFY;
     if (SSL_want_async(s))
         return SSL_ERROR_WANT_ASYNC;
     if (SSL_want_async_job(s))

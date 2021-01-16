@@ -157,12 +157,12 @@ sub test_conf {
            "Getting output from generate_ssl_tests.pl.");
 
     SKIP: {
-        # Test 2. Compare against existing output in test/ssl_tests.cnf.
+        # Test 2. Compare against existing output in test/ssl-tests/
         skip "Skipping generated source test for $conf", 1
           if !$check_source;
 
         $run_test = is(cmp_text($output_file, $conf_file), 0,
-                       "Comparing generated sources.");
+                       "Comparing generated $output_file with $conf_file.");
       }
 
       # Test 3. Run the test.
