@@ -19,6 +19,7 @@
 
 # include <windows.h>
 # include <wincrypt.h>
+# include "internal/thread_once.h"
 
 # ifndef STATUS_SUCCESS
 #  define STATUS_SUCCESS ((NTSTATUS)0x00000000L)
@@ -47,41 +48,18 @@ typedef long (WINAPI *BCryptGenRandomFn)(
     unsigned long dwFlags
 );
 
-/*
- * Intel hardware RNG CSP -- available from
- * http://developer.intel.com/design/security/rng/redist_license.htm
- */
-# define PROV_INTEL_SEC 22
-# define INTEL_DEF_PROV L"Intel Hardware Cryptographic Service Provider"
-
-size_t rand_pool_acquire_entropy(RAND_POOL *pool)
+static BCryptGenRandomFn BCryptGenRandomPtr = NULL;
+static CRYPTO_ONCE load_bcrypt_dll = CRYPTO_ONCE_STATIC_INIT;
+DEFINE_RUN_ONCE_STATIC(do_load_bcrypt_dll)
 {
-    HCRYPTPROV hProvider;
-    unsigned char *buffer;
-    size_t bytes_needed;
-    size_t entropy_available = 0;
     HMODULE hBCryptDll = NULL;
     char system32_path[MAX_PATH];
     GetModuleHandleExAFn GetModuleHandleExAPtr = NULL;
-    BCryptGenRandomFn BCryptGenRandomPtr  = NULL;
-
-
-# ifdef OPENSSL_RAND_SEED_RDTSC
-    entropy_available = rand_acquire_entropy_from_tsc(pool);
-    if (entropy_available > 0)
-        return entropy_available;
-# endif
-
-# ifdef OPENSSL_RAND_SEED_RDCPU
-    entropy_available = rand_acquire_entropy_from_cpu(pool);
-    if (entropy_available > 0)
-        return entropy_available;
-# endif
-
-	/* We get pointer to GetModuleHandleExA dynamically in case it's not 
-	 * defined in the compiler's headers
-	 */
-	GetModuleHandleExAPtr = 
+    
+    /* We get pointer to GetModuleHandleExA dynamically in case it's not 
+     * defined in the compiler's headers
+     */
+    GetModuleHandleExAPtr = 
         (GetModuleHandleExAFn) GetProcAddress (
             GetModuleHandleA ("kernel32.dll"), 
             "GetModuleHandleExA");
@@ -117,6 +95,38 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
     if (hBCryptDll != NULL) {
         BCryptGenRandomPtr  = (BCryptGenRandomFn) 
             GetProcAddress (hBCryptDll, "BCryptGenRandom");
+    }
+
+    return 1;
+}
+
+/*
+ * Intel hardware RNG CSP -- available from
+ * http://developer.intel.com/design/security/rng/redist_license.htm
+ */
+# define PROV_INTEL_SEC 22
+# define INTEL_DEF_PROV L"Intel Hardware Cryptographic Service Provider"
+
+size_t rand_pool_acquire_entropy(RAND_POOL *pool)
+{
+    HCRYPTPROV hProvider;
+    unsigned char *buffer;
+    size_t bytes_needed;
+    size_t entropy_available = 0;
+
+# ifdef OPENSSL_RAND_SEED_RDTSC
+    entropy_available = rand_acquire_entropy_from_tsc(pool);
+    if (entropy_available > 0)
+        return entropy_available;
+# endif
+
+# ifdef OPENSSL_RAND_SEED_RDCPU
+    entropy_available = rand_acquire_entropy_from_cpu(pool);
+    if (entropy_available > 0)
+        return entropy_available;
+# endif
+
+    if (RUN_ONCE(&load_bcrypt_dll, do_load_bcrypt_dll)) {
         if (BCryptGenRandomPtr != NULL) {
             bytes_needed = rand_pool_bytes_needed(pool, 1 /*entropy_factor*/);
             buffer = rand_pool_add_begin(pool, bytes_needed);
