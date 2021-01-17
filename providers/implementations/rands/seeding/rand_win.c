@@ -20,35 +20,90 @@
 #endif
 
 #include <windows.h>
-/* On Windows Vista or higher use BCrypt instead of the legacy CryptoAPI */
-#if defined(_MSC_VER) && _MSC_VER > 1500 /* 1500 = Visual Studio 2008 */ \
-    && defined(_WIN32_WINNT) && _WIN32_WINNT >= 0x0600
-#define USE_BCRYPTGENRANDOM
-#endif
+#include <wincrypt.h>
+#include "internal/thread_once.h"
 
-#ifdef USE_BCRYPTGENRANDOM
-#include <bcrypt.h>
-#ifdef _MSC_VER
-#pragma comment(lib, "bcrypt.lib")
-#endif
 #ifndef STATUS_SUCCESS
 #define STATUS_SUCCESS ((NTSTATUS)0x00000000L)
 #endif
-#else
-#include <wincrypt.h>
+
+#ifndef GET_MODULE_HANDLE_EX_FLAG_PIN
+#define GET_MODULE_HANDLE_EX_FLAG_PIN 0x00000001
+#endif
+
+#ifndef BCRYPT_USE_SYSTEM_PREFERRED_RNG
+#define BCRYPT_USE_SYSTEM_PREFERRED_RNG 0x00000002
+#endif
+
+typedef BOOL(WINAPI *GetModuleHandleExAFn)(DWORD dwFlags,
+    LPCSTR lpModuleName,
+    HMODULE *phModule);
+typedef long(WINAPI *BCryptGenRandomFn)(void *hAlgorithm,
+    unsigned char *pbBuffer,
+    unsigned long cbBuffer,
+    unsigned long dwFlags);
+
+static BCryptGenRandomFn BCryptGenRandomPtr = NULL;
+static CRYPTO_ONCE load_bcrypt_dll = CRYPTO_ONCE_STATIC_INIT;
+
+DEFINE_RUN_ONCE_STATIC(do_load_bcrypt_dll)
+{
+    HMODULE hBCryptDll = NULL;
+    HMODULE hKernel32 = GetModuleHandleA("kernel32.dll");
+    GetModuleHandleExAFn GetModuleHandleExAPtr = NULL;
+    char system32_path[MAX_PATH];
+    UINT system_dir_len = 0;
+
+    if (hKernel32 != NULL) {
+        /* Resolve GetModuleHandleExA dynamically for older SDK headers. */
+        GetModuleHandleExAPtr = (GetModuleHandleExAFn)GetProcAddress(hKernel32,
+            "GetModuleHandleExA");
+    }
+    if (GetModuleHandleExAPtr != NULL) {
+        /*
+         * Load bcrypt.dll from the Windows system directory to avoid DLL
+         * hijacking. It is not protected by the KnownDLLs list.
+         */
+        system_dir_len = GetSystemDirectoryA(system32_path, MAX_PATH);
+        if (system_dir_len > 0 && system_dir_len < MAX_PATH - 11) {
+            OPENSSL_strlcat(system32_path, "\\bcrypt.dll",
+                sizeof(system32_path));
+        } else {
+            OPENSSL_strlcpy(system32_path,
+                "C:\\Windows\\System32\\bcrypt.dll",
+                sizeof(system32_path));
+        }
+
+        /*
+         * Keep bcrypt.dll pinned to match the previous explicit link-time
+         * dependency and prevent unexpected unloading.
+         */
+        if (!GetModuleHandleExAPtr(GET_MODULE_HANDLE_EX_FLAG_PIN,
+                system32_path, &hBCryptDll)) {
+            hBCryptDll = LoadLibraryA(system32_path);
+            if (hBCryptDll != NULL) {
+                (void)GetModuleHandleExAPtr(GET_MODULE_HANDLE_EX_FLAG_PIN,
+                    system32_path, &hBCryptDll);
+            }
+        }
+    }
+
+    if (hBCryptDll != NULL) {
+        BCryptGenRandomPtr = (BCryptGenRandomFn)GetProcAddress(hBCryptDll, "BCryptGenRandom");
+    }
+
+    return 1;
+}
 /*
  * Intel hardware RNG CSP -- available from
  * http://developer.intel.com/design/security/rng/redist_license.htm
  */
 #define PROV_INTEL_SEC 22
 #define INTEL_DEF_PROV L"Intel Hardware Cryptographic Service Provider"
-#endif
 
 size_t ossl_pool_acquire_entropy(RAND_POOL *pool)
 {
-#ifndef USE_BCRYPTGENRANDOM
     HCRYPTPROV hProvider;
-#endif
     unsigned char *buffer;
     size_t bytes_needed;
     size_t entropy_available = 0;
@@ -65,22 +120,24 @@ size_t ossl_pool_acquire_entropy(RAND_POOL *pool)
         return entropy_available;
 #endif
 
-#ifdef USE_BCRYPTGENRANDOM
-    bytes_needed = ossl_rand_pool_bytes_needed(pool, 1 /*entropy_factor*/);
-    buffer = ossl_rand_pool_add_begin(pool, bytes_needed);
-    if (buffer != NULL) {
-        size_t bytes = 0;
-        if (BCryptGenRandom(NULL, buffer, bytes_needed,
-                BCRYPT_USE_SYSTEM_PREFERRED_RNG)
-            == STATUS_SUCCESS)
-            bytes = bytes_needed;
+    if (RUN_ONCE(&load_bcrypt_dll, do_load_bcrypt_dll)) {
+        if (BCryptGenRandomPtr != NULL) {
+            bytes_needed = ossl_rand_pool_bytes_needed(pool, 1 /*entropy_factor*/);
+            buffer = ossl_rand_pool_add_begin(pool, bytes_needed);
+            if (buffer != NULL) {
+                size_t bytes = 0;
+                if (BCryptGenRandomPtr(NULL, buffer, (ULONG)bytes_needed,
+                        BCRYPT_USE_SYSTEM_PREFERRED_RNG)
+                    == STATUS_SUCCESS)
+                    bytes = bytes_needed;
 
-        ossl_rand_pool_add_end(pool, bytes, 8 * bytes);
-        entropy_available = ossl_rand_pool_entropy_available(pool);
+                ossl_rand_pool_add_end(pool, bytes, 8 * bytes);
+                entropy_available = ossl_rand_pool_entropy_available(pool);
+            }
+            if (entropy_available > 0)
+                return entropy_available;
+        }
     }
-    if (entropy_available > 0)
-        return entropy_available;
-#else
     bytes_needed = ossl_rand_pool_bytes_needed(pool, 1 /*entropy_factor*/);
     buffer = ossl_rand_pool_add_begin(pool, bytes_needed);
     if (buffer != NULL) {
@@ -120,7 +177,6 @@ size_t ossl_pool_acquire_entropy(RAND_POOL *pool)
     }
     if (entropy_available > 0)
         return entropy_available;
-#endif
 
     return ossl_rand_pool_entropy_available(pool);
 }
