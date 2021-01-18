@@ -47,7 +47,7 @@ struct ossl_http_req_ctx_st {
     BIO *wbio;                  /* BIO to send request to */
     BIO *rbio;                  /* BIO to read response from */
     BIO *mem;                   /* Memory BIO response is built into */
-    int method_GET;             /* HTTP method "GET" or "POST" */
+    int method_POST;            /* HTTP method is "POST" (else "GET") */
     const char *expected_ct;    /* expected Content-Type, or NULL */
     int expect_asn1;            /* response must be ASN.1-encoded */
     unsigned long resp_len;     /* length of response */
@@ -75,7 +75,7 @@ struct ossl_http_req_ctx_st {
 #define OHS_HTTP_HEADER    (9 | OHS_NOREAD) /* Headers set, w/o final \r\n */
 
 OSSL_HTTP_REQ_CTX *OSSL_HTTP_REQ_CTX_new(BIO *wbio, BIO *rbio,
-                                         int method_GET, int maxline,
+                                         int method_POST, int maxline,
                                          unsigned long max_resp_len,
                                          int timeout,
                                          const char *expected_content_type,
@@ -100,7 +100,7 @@ OSSL_HTTP_REQ_CTX *OSSL_HTTP_REQ_CTX_new(BIO *wbio, BIO *rbio,
         OSSL_HTTP_REQ_CTX_free(rctx);
         return NULL;
     }
-    rctx->method_GET = method_GET;
+    rctx->method_POST = method_POST;
     rctx->expected_ct = expected_content_type;
     rctx->expect_asn1 = expect_asn1;
     rctx->resp_len = 0;
@@ -150,7 +150,7 @@ int OSSL_HTTP_REQ_CTX_set_request_line(OSSL_HTTP_REQ_CTX *rctx,
         return 0;
     }
 
-    if (BIO_printf(rctx->mem, "%s ", rctx->method_GET ? "GET" : "POST") <= 0)
+    if (BIO_printf(rctx->mem, "%s ", rctx->method_POST ? "POST" : "GET") <= 0)
         return 0;
 
     if (server != NULL) { /* HTTP (but not HTTPS) proxy is used */
@@ -208,7 +208,7 @@ static int OSSL_HTTP_REQ_CTX_content(OSSL_HTTP_REQ_CTX *rctx,
         ERR_raise(ERR_LIB_HTTP, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
-    if (rctx->method_GET) {
+    if (!rctx->method_POST) {
         ERR_raise(ERR_LIB_HTTP, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
         return 0;
     }
@@ -304,7 +304,7 @@ OSSL_HTTP_REQ_CTX *HTTP_REQ_CTX_new(BIO *wbio, BIO *rbio, int use_http_proxy,
     }
     /* remaining parameters are checked indirectly by the functions called */
 
-    if ((rctx = OSSL_HTTP_REQ_CTX_new(wbio, rbio, req_mem == NULL, maxline,
+    if ((rctx = OSSL_HTTP_REQ_CTX_new(wbio, rbio, req_mem != NULL, maxline,
                                       max_resp_len, timeout,
                                       expected_content_type, expect_asn1))
         == NULL)
@@ -543,7 +543,7 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
                 goto next_line;
             case HTTP_STATUS_CODE_MOVED_PERMANENTLY:
             case HTTP_STATUS_CODE_FOUND: /* i.e., moved temporarily */
-                if (rctx->method_GET) {
+                if (!rctx->method_POST) { /* method is GET */
                     rctx->state = OHS_REDIRECT;
                     goto next_line;
                 }
