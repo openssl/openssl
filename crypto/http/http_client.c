@@ -207,6 +207,10 @@ static int OSSL_HTTP_REQ_CTX_content(OSSL_HTTP_REQ_CTX *rctx,
         ERR_raise(ERR_LIB_HTTP, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
+    if (rctx->method_GET) {
+        ERR_raise(ERR_LIB_HTTP, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+        return 0;
+    }
 
     if (content_type != NULL
             && BIO_printf(rctx->mem, "Content-Type: %s\r\n", content_type) <= 0)
