@@ -42,9 +42,9 @@ OSSL_HTTP_REQ_CTX *OSSL_HTTP_REQ_CTX_new(BIO *wbio, BIO *rbio,
                                          const char *expected_content_type,
                                          int expect_asn1);
 void OSSL_HTTP_REQ_CTX_free(OSSL_HTTP_REQ_CTX *rctx);
-int OSSL_HTTP_REQ_CTX_header(OSSL_HTTP_REQ_CTX *rctx,
-                             const char *server,
-                             const char *port, const char *path);
+int OSSL_HTTP_REQ_CTX_set_request_line(OSSL_HTTP_REQ_CTX *rctx,
+                                       const char *server, const char *port,
+                                       const char *path);
 int OSSL_HTTP_REQ_CTX_add1_header(OSSL_HTTP_REQ_CTX *rctx,
                                   const char *name, const char *value);
 int OSSL_HTTP_REQ_CTX_i2d(OSSL_HTTP_REQ_CTX *rctx, const char *content_type,

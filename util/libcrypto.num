@@ -1379,7 +1379,7 @@ BIO_set_ex_data                         1411	3_0_0	EXIST::FUNCTION:
 SHA512                                  1412	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 X509_STORE_CTX_get_explicit_policy      1413	3_0_0	EXIST::FUNCTION:
 EVP_DecodeBlock                         1414	3_0_0	EXIST::FUNCTION:
-OSSL_HTTP_REQ_CTX_header                1415	3_0_0	EXIST::FUNCTION:
+OSSL_HTTP_REQ_CTX_set_request_line      1415	3_0_0	EXIST::FUNCTION:
 EVP_MD_CTX_reset                        1416	3_0_0	EXIST::FUNCTION:
 X509_NAME_new                           1417	3_0_0	EXIST::FUNCTION:
 ASN1_item_pack                          1418	3_0_0	EXIST::FUNCTION:

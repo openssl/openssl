@@ -5,7 +5,7 @@
 OSSL_HTTP_REQ_CTX,
 OSSL_HTTP_REQ_CTX_new,
 OSSL_HTTP_REQ_CTX_free,
-OSSL_HTTP_REQ_CTX_header,
+OSSL_HTTP_REQ_CTX_set_request_line,
 OSSL_HTTP_REQ_CTX_add1_header,
 OSSL_HTTP_REQ_CTX_i2d,
 OSSL_HTTP_REQ_CTX_nbio,
@@ -28,9 +28,9 @@ OSSL_HTTP_REQ_CTX_set_max_response_length
                                           int expect_asn1);
  void OSSL_HTTP_REQ_CTX_free(OSSL_HTTP_REQ_CTX *rctx);
 
- int OSSL_HTTP_REQ_CTX_header(OSSL_HTTP_REQ_CTX *rctx,
-                              const char *server,
-                              const char *port, const char *path);
+ int OSSL_HTTP_REQ_CTX_set_request_line(OSSL_HTTP_REQ_CTX *rctx,
+                                        const char *server, const char *port,
+                                        const char *path);
  int OSSL_HTTP_REQ_CTX_add1_header(OSSL_HTTP_REQ_CTX *rctx,
                                    const char *name, const char *value);
 
@@ -72,7 +72,7 @@ OSSL_HTTP_REQ_CTX_free() frees up the HTTP request context I<rctx>.
 The I<wbio> and I<rbio> are not free'd and it is up to the application
 to do so.
 
-OSSL_HTTP_REQ_CTX_header() adds an HTTP request line to the request context.
+OSSL_HTTP_REQ_CTX_set_request_line() adds the HTTP request line to the context.
 The request command itself becomes C<GET> or C<POST> depending on the value
 of I<method_GET> in the OSSL_HTTP_REQ_CTX_new() call.  I<server> and I<port>
 may be set to indicate a proxy server and port that the request should go
@@ -129,7 +129,7 @@ Then, the HTTP request must be prepared with request data:
 
 =item 1.
 
-Calling OSSL_HTTP_REQ_CTX_header().  This must be done exactly once.
+Calling OSSL_HTTP_REQ_CTX_set_request_line().  This must be done exactly once.
 
 =item 2.
 
@@ -146,7 +146,7 @@ exactly once in that case.
 When the request context is fully prepared, the HTTP exchange may be performed
 with OSSL_HTTP_REQ_CTX_nbio() or OSSL_HTTP_REQ_CTX_sendreq_d2i().
 
-Furthermore, all calls of OSSL_HTTP_REQ_CTX_header() and
+Furthermore, all calls of OSSL_HTTP_REQ_CTX_set_request_line() and
 OSSL_HTTP_REQ_CTX_add1_header() must be done before any call to
 int OSSL_HTTP_REQ_CTX_nbio() or OSSL_HTTP_REQ_CTX_sendreq_d2i().
 
@@ -158,7 +158,7 @@ on error.
 OSSL_HTTP_REQ_CTX_free() and OSSL_HTTP_REQ_CTX_set_max_response_length()
 do not return values.
 
-OSSL_HTTP_REQ_CTX_header(), OSSL_HTTP_REQ_CTX_add1_header(),
+OSSL_HTTP_REQ_CTX_set_request_line(), OSSL_HTTP_REQ_CTX_add1_header(),
 OSSL_HTTP_REQ_CTX_i2d() and OSSL_HTTP_REQ_CTX_nbio return 1 for success and 0
 for failure.
 
