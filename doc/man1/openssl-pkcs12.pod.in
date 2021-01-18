@@ -98,7 +98,7 @@ Print out a usage message.
 The password source for the input, and for encrypting any private keys that
 are output.
 For more information about the format of B<arg>
-see L<openssl-passphrase-options(1)/Pass Phrase Options>.
+see L<openssl-passphrase-options(1)>.
 
 =item B<-passout> I<arg>
 
@@ -257,8 +257,8 @@ if the B<-export> option is given.
 
 The password source for certificate input such as B<-certfile>
 and B<-untrusted>.
-For more information about the format of B<arg>
-see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
+For more information about the format of B<arg> see
+L<openssl-passphrase-options(1)>.
 
 =item B<-chain>
 

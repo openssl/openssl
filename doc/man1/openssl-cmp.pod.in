@@ -256,8 +256,8 @@ if any, or else the current client key, if given.
 Pass phrase source for the key given with the B<-newkey> option.
 If not given here, the password will be prompted for if needed.
 
-For more information about the format of B<arg> see the
-B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
+For more information about the format of B<arg> see
+L<openssl-passphrase-options(1)>.
 
 =item B<-subject> I<name>
 
@@ -606,8 +606,8 @@ and (as far as needed) for verifying PBM-based protection of incoming messages.
 PBM stands for Password-Based Message Authentication Code.
 This takes precedence over the B<-cert> and B<-key> options.
 
-For more information about the format of B<arg> see the
-B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
+For more information about the format of B<arg> see
+L<openssl-passphrase-options(1)>.
 
 =item B<-cert> I<filename>
 
@@ -655,8 +655,8 @@ Pass phrase source for the private key given with the B<-key> option.
 Also used for B<-cert> and B<-oldcert> in case it is an encrypted PKCS#12 file.
 If not given here, the password will be prompted for if needed.
 
-For more information about the format of B<arg> see the
-B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
+For more information about the format of B<arg> see
+L<openssl-passphrase-options(1)>.
 
 =item B<-digest> I<name>
 
@@ -713,8 +713,8 @@ B<-srv_trusted>, B<-srv_untrusted>, B<-rsp_extracerts>, B<-rsp_capubs>,
 B<-tls_extra>, and B<-tls_trusted> options.
 If not given here, the password will be prompted for if needed.
 
-For more information about the format of B<arg> see the
-B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
+For more information about the format of B<arg> see
+L<openssl-passphrase-options(1)>.
 
 {- $OpenSSL::safe::opt_engine_item -}
 
@@ -759,8 +759,8 @@ Pass phrase source for client's private TLS key B<tls_key>.
 Also used for B<-tls_cert> in case it is an encrypted PKCS#12 file.
 If not given here, the password will be prompted for if needed.
 
-For more information about the format of B<arg> see the
-B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
+For more information about the format of B<arg> see
+L<openssl-passphrase-options(1)>.
 
 =item B<-tls_extra> I<filenames>
 
