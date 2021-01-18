@@ -258,7 +258,7 @@ Extra certificate and private key format respectively.
 =item B<-pass arg>
 
 the private key password source. For more information about the format of B<arg>
-see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
+see L<openssl(1)/Pass Phrase Options>.
 
 =item B<-verify depth>
 
