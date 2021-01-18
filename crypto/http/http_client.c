@@ -138,11 +138,12 @@ void OSSL_HTTP_REQ_CTX_set_max_response_length(OSSL_HTTP_REQ_CTX *rctx,
 }
 
 /*
- * Create HTTP header using given op and path (or "/" in case path is NULL).
+ * Create request line using |ctx| and |path| (or "/" in case |path| is NULL).
  * Server name (and port) must be given if and only if plain HTTP proxy is used.
  */
-int OSSL_HTTP_REQ_CTX_header(OSSL_HTTP_REQ_CTX *rctx, const char *server,
-                             const char *port, const char *path)
+int OSSL_HTTP_REQ_CTX_set_request_line(OSSL_HTTP_REQ_CTX *rctx,
+                                       const char *server, const char *port,
+                                       const char *path)
 {
     if (rctx == NULL) {
         ERR_raise(ERR_LIB_HTTP, ERR_R_PASSED_NULL_PARAMETER);
@@ -309,8 +310,9 @@ OSSL_HTTP_REQ_CTX *HTTP_REQ_CTX_new(BIO *wbio, BIO *rbio, int use_http_proxy,
         == NULL)
         return NULL;
 
-    if (OSSL_HTTP_REQ_CTX_header(rctx, use_http_proxy ? server : NULL,
-                                 port, path)
+    if (OSSL_HTTP_REQ_CTX_set_request_line(rctx,
+                                           use_http_proxy ? server : NULL, port,
+                                           path)
         && OSSL_HTTP_REQ_CTX_add1_headers(rctx, headers, server)
         && (req_mem == NULL
             || OSSL_HTTP_REQ_CTX_content(rctx, content_type, req_mem)))

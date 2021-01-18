@@ -184,8 +184,8 @@ int OCSP_REQ_CTX_set1_req(OSSL_HTTP_REQ_CTX *rctx, const OCSP_REQUEST *req);
         OSSL_HTTP_REQ_CTX_new(wb, rb, m, ml, mrl, t, ect, ea)
 #   define OCSP_REQ_CTX_free(r) \
         OSSL_HTTP_REQ_CTX_free(r)
-#   define OCSP_REQ_CTX_http(r, s, po, pa) \
-        OSSL_HTTP_REQ_CTX_header(r, s, po, pa)
+#   define OCSP_REQ_CTX_http(r, s, p, path) \
+        OSSL_HTTP_REQ_CTX_set_request_line(r, s, p, path)
 #   define OCSP_REQ_CTX_add1_header(r, n, v) \
         OSSL_HTTP_REQ_CTX_add1_header(r, n, v)
 #   define OCSP_REQ_CTX_i2d(r, c, i, req) \
