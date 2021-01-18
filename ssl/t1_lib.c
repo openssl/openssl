@@ -820,22 +820,19 @@ static int tls1_check_pkey_comp(SSL *s, EVP_PKEY *pkey)
 {
     unsigned char comp_id;
     size_t i;
-    char name[80];
-    size_t name_len;
-
+    int point_conv;
 
     /* If not an EC key nothing to check */
     if (!EVP_PKEY_is_a(pkey, "EC"))
         return 1;
 
-    if (!EVP_PKEY_get_utf8_string_param(pkey,
-                                        OSSL_PKEY_PARAM_EC_POINT_CONVERSION_FORMAT,
-                                        name, sizeof(name), &name_len))
-        return 0;
 
     /* Get required compression id */
-    if (strcasecmp(name, "uncompressed") == 0) {
-        comp_id = TLSEXT_ECPOINTFORMAT_uncompressed;
+    point_conv = EVP_PKEY_get_ec_point_conv_form(pkey);
+    if (point_conv == 0)
+        return 0;
+    if (point_conv == POINT_CONVERSION_UNCOMPRESSED) {
+            comp_id = TLSEXT_ECPOINTFORMAT_uncompressed;
     } else if (SSL_IS_TLS13(s)) {
         /*
          * ec_point_formats extension is not used in TLSv1.3 so we ignore
@@ -843,14 +840,11 @@ static int tls1_check_pkey_comp(SSL *s, EVP_PKEY *pkey)
          */
         return 1;
     } else {
-        if (!EVP_PKEY_get_utf8_string_param(pkey,
-                                            OSSL_PKEY_PARAM_EC_FIELD_TYPE,
-                                            name, sizeof(name), &name_len))
-            return 0;
+        int field_type = EVP_PKEY_get_field_type(pkey);
 
-        if (strcasecmp(name, SN_X9_62_prime_field) == 0)
+        if (field_type == NID_X9_62_prime_field)
             comp_id = TLSEXT_ECPOINTFORMAT_ansiX962_compressed_prime;
-        else if (strcasecmp(name, SN_X9_62_characteristic_two_field) == 0)
+        else if (field_type == NID_X9_62_characteristic_two_field)
             comp_id = TLSEXT_ECPOINTFORMAT_ansiX962_compressed_char2;
         else
             return 0;

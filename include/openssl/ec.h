@@ -68,18 +68,6 @@ int EVP_PKEY_CTX_get0_ecdh_kdf_ukm(EVP_PKEY_CTX *ctx, unsigned char **ukm);
  */
 # define EVP_PKEY_ECDH_KDF_X9_62   EVP_PKEY_ECDH_KDF_X9_63
 
-# ifndef OPENSSL_NO_EC
-#  include <openssl/asn1.h>
-#  include <openssl/symhacks.h>
-#  ifndef OPENSSL_NO_DEPRECATED_1_1_0
-#   include <openssl/bn.h>
-#  endif
-#  include <openssl/ecerr.h>
-
-#  ifndef OPENSSL_ECC_MAX_FIELD_BITS
-#   define OPENSSL_ECC_MAX_FIELD_BITS 661
-#  endif
-
 /** Enum for the point conversion form as defined in X9.62 (ECDSA)
  *  for the encoding of a elliptic curve point (x,y) */
 typedef enum {
@@ -92,6 +80,18 @@ typedef enum {
          *  which solution of the quadratic equation y is  */
     POINT_CONVERSION_HYBRID = 6
 } point_conversion_form_t;
+
+# ifndef OPENSSL_NO_EC
+#  include <openssl/asn1.h>
+#  include <openssl/symhacks.h>
+#  ifndef OPENSSL_NO_DEPRECATED_1_1_0
+#   include <openssl/bn.h>
+#  endif
+#  include <openssl/ecerr.h>
+
+#  ifndef OPENSSL_ECC_MAX_FIELD_BITS
+#   define OPENSSL_ECC_MAX_FIELD_BITS 661
+#  endif
 
 #  include <openssl/params.h>
 #  ifndef OPENSSL_NO_DEPRECATED_3_0

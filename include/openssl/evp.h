@@ -1812,6 +1812,9 @@ int EVP_PKEY_set_utf8_string_param(EVP_PKEY *pkey, const char *key_name,
 int EVP_PKEY_set_octet_string_param(EVP_PKEY *pkey, const char *key_name,
                                     unsigned char *buf, size_t bsize);
 
+int EVP_PKEY_get_ec_point_conv_form(const EVP_PKEY *pkey);
+int EVP_PKEY_get_field_type(const EVP_PKEY *pkey);
+
 int EVP_PKEY_paramgen_init(EVP_PKEY_CTX *ctx);
 int EVP_PKEY_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey);
 int EVP_PKEY_keygen_init(EVP_PKEY_CTX *ctx);

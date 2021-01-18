@@ -2211,3 +2211,82 @@ int EVP_PKEY_set_params(EVP_PKEY *pkey, OSSL_PARAM params[])
         return 0;
     return evp_keymgmt_set_params(pkey->keymgmt, pkey->keydata, params);
 }
+
+#ifndef FIPS_MODULE
+int EVP_PKEY_get_ec_point_conv_form(const EVP_PKEY *pkey)
+{
+    char name[80];
+    size_t name_len;
+
+    if (pkey == NULL)
+        return 0;
+
+    if (pkey->keymgmt == NULL
+            || pkey->keydata == NULL) {
+#ifndef OPENSSL_NO_EC
+        /* Might work through the legacy route */
+        EC_KEY *ec = EVP_PKEY_get0_EC_KEY(pkey);
+
+        if (ec == NULL)
+            return 0;
+
+        return EC_KEY_get_conv_form(ec);
+#else
+        return 0;
+#endif
+    }
+
+    if (!EVP_PKEY_get_utf8_string_param(pkey,
+                                        OSSL_PKEY_PARAM_EC_POINT_CONVERSION_FORMAT,
+                                        name, sizeof(name), &name_len))
+        return 0;
+
+    if (strcmp(name, "uncompressed") == 0)
+        return POINT_CONVERSION_UNCOMPRESSED;
+
+    if (strcmp(name, "compressed") == 0)
+        return POINT_CONVERSION_COMPRESSED;
+
+    if (strcmp(name, "hybrid") == 0)
+        return POINT_CONVERSION_HYBRID;
+
+    return 0;
+}
+
+int EVP_PKEY_get_field_type(const EVP_PKEY *pkey)
+{
+    char fstr[80];
+    size_t fstrlen;
+
+    if (pkey == NULL)
+        return 0;
+
+    if (pkey->keymgmt == NULL
+            || pkey->keydata == NULL) {
+#ifndef OPENSSL_NO_EC
+        /* Might work through the legacy route */
+        EC_KEY *ec = EVP_PKEY_get0_EC_KEY(pkey);
+        const EC_GROUP *grp;
+
+        if (ec == NULL)
+            return 0;
+        grp = EC_KEY_get0_group(ec);
+
+        return EC_GROUP_get_field_type(grp);
+#else
+        return 0;
+#endif
+    }
+
+    if (!EVP_PKEY_get_utf8_string_param(pkey, OSSL_PKEY_PARAM_EC_FIELD_TYPE,
+                                        fstr, sizeof(fstr), &fstrlen))
+        return 0;
+
+    if (strcmp(fstr, SN_X9_62_prime_field) == 0)
+        return NID_X9_62_prime_field;
+    else if (strcmp(fstr, SN_X9_62_characteristic_two_field))
+        return NID_X9_62_characteristic_two_field;
+
+    return 0;
+}
+#endif

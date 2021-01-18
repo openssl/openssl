@@ -5294,3 +5294,5 @@ EVP_PKEY_set_size_t_param               ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_set_bn_param                   ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_set_utf8_string_param          ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_set_octet_string_param         ?	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_get_ec_point_conv_form         ?	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_get_field_type                 ?	3_0_0	EXIST::FUNCTION:
