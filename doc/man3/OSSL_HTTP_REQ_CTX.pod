@@ -135,7 +135,8 @@ Calling OSSL_HTTP_REQ_CTX_set_request_line().  This must be done exactly once.
 
 =item 2.
 
-Adding extra headers with OSSL_HTTP_REQ_CTX_add1_header().  This is optional.
+Adding extra headers with OSSL_HTTP_REQ_CTX_add1_header().
+This is optional and may be done multiple times with different names.
 
 =item 3.
 
@@ -147,10 +148,6 @@ exactly once in that case.
 
 When the request context is fully prepared, the HTTP exchange may be performed
 with OSSL_HTTP_REQ_CTX_nbio() or OSSL_HTTP_REQ_CTX_sendreq_d2i().
-
-Furthermore, all calls of OSSL_HTTP_REQ_CTX_set_request_line() and
-OSSL_HTTP_REQ_CTX_add1_header() must be done before any call to
-int OSSL_HTTP_REQ_CTX_nbio() or OSSL_HTTP_REQ_CTX_sendreq_d2i().
 
 =head1 RETURN VALUES
 
