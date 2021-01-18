@@ -221,10 +221,6 @@ static int mem_write(BIO *b, const char *in, int inl)
     int blen;
     BIO_BUF_MEM *bbm = (BIO_BUF_MEM *)b->ptr;
 
-    if (in == NULL) {
-        ERR_raise(ERR_LIB_BIO, ERR_R_PASSED_NULL_PARAMETER);
-        goto end;
-    }
     if (b->flags & BIO_FLAGS_MEM_RDONLY) {
         ERR_raise(ERR_LIB_BIO, BIO_R_WRITE_TO_READ_ONLY_BIO);
         goto end;
@@ -232,6 +228,10 @@ static int mem_write(BIO *b, const char *in, int inl)
     BIO_clear_retry_flags(b);
     if (inl == 0)
         return 0;
+    if (in == NULL) {
+        ERR_raise(ERR_LIB_BIO, ERR_R_PASSED_NULL_PARAMETER);
+        goto end;
+    }
     blen = bbm->readp->length;
     mem_buf_sync(b);
     if (BUF_MEM_grow_clean(bbm->buf, blen + inl) == 0)
