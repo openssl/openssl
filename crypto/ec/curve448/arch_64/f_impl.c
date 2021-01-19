@@ -9,14 +9,15 @@
  *
  * Originally written by Mike Hamburg
  */
+
 #include "field.h"
 
-void gf_mul(gf_s * __restrict__ cs, const gf as, const gf bs)
+void gf_mul(gf_s * RESTRICT cs, const gf as, const gf bs)
 {
     const uint64_t *a = as->limb, *b = bs->limb;
     uint64_t *c = cs->limb;
-    __uint128_t accum0 = 0, accum1 = 0, accum2;
-    uint64_t mask = (1ull << 56) - 1;
+    uint128_t accum0 = 0, accum1 = 0, accum2;
+    uint64_t mask = (1ULL << 56) - 1;
     uint64_t aa[4], bb[4], bbb[4];
     unsigned int i;
 
@@ -171,12 +172,12 @@ void gf_mul(gf_s * __restrict__ cs, const gf as, const gf bs)
     c[1] += ((uint64_t)(accum1));
 }
 
-void gf_mulw_unsigned(gf_s * __restrict__ cs, const gf as, uint32_t b)
+void gf_mulw_unsigned(gf_s * RESTRICT cs, const gf as, uint32_t b)
 {
     const uint64_t *a = as->limb;
     uint64_t *c = cs->limb;
-    __uint128_t accum0 = 0, accum4 = 0;
-    uint64_t mask = (1ull << 56) - 1;
+    uint128_t accum0 = 0, accum4 = 0;
+    uint64_t mask = (1ULL << 56) - 1;
     int i;
 
     for (i = 0; i < 4; i++) {
@@ -197,19 +198,18 @@ void gf_mulw_unsigned(gf_s * __restrict__ cs, const gf as, uint32_t b)
     c[1] += accum4 >> 56;
 }
 
-void gf_sqr(gf_s * __restrict__ cs, const gf as)
+void gf_sqr(gf_s * RESTRICT cs, const gf as)
 {
     const uint64_t *a = as->limb;
     uint64_t *c = cs->limb;
-    __uint128_t accum0 = 0, accum1 = 0, accum2;
-    uint64_t mask = (1ull << 56) - 1;
+    uint128_t accum0 = 0, accum1 = 0, accum2;
+    uint64_t mask = (1ULL << 56) - 1;
     uint64_t aa[4];
+    unsigned int i;
 
     /* For some reason clang doesn't vectorize this without prompting? */
-    unsigned int i;
-    for (i = 0; i < 4; i++) {
+    for (i = 0; i < 4; i++)
         aa[i] = a[i] + a[i + 4];
-    }
 
     accum2 = widemul(a[0], a[3]);
     accum0 = widemul(aa[0], aa[3]);
