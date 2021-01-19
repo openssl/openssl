@@ -16,6 +16,7 @@
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include "internal/refcount.h"
+#include "internal/namemap.h"
 #include <openssl/bn.h>
 #include <openssl/err.h>
 #include <openssl/objects.h>
@@ -1153,6 +1154,18 @@ int EVP_PKEY_print_params(BIO *out, const EVP_PKEY *pkey,
                       pctx);
 }
 
+static void find_md_nid(const char *mdname, void *data)
+{
+    int *nid = (int *)data;
+
+    if (*nid != NID_undef)
+        return;
+
+    *nid = OBJ_sn2nid(mdname);
+    if (*nid == NID_undef)
+        *nid = OBJ_ln2nid(mdname);
+}
+
 static int legacy_asn1_ctrl_to_param(EVP_PKEY *pkey, int op,
                                      int arg1, void *arg2)
 {
@@ -1166,11 +1179,27 @@ static int legacy_asn1_ctrl_to_param(EVP_PKEY *pkey, int op,
                                                       sizeof(mdname));
 
             if (rv > 0) {
-                int nid;
+                int mdnum;
+                OSSL_LIB_CTX *libctx = ossl_provider_libctx(pkey->keymgmt->prov);
+                /* Make sure the MD is in the namemap if available */
+                EVP_MD *md = EVP_MD_fetch(libctx, mdname, NULL);
+                OSSL_NAMEMAP *namemap = ossl_namemap_stored(libctx);
+                int nid = NID_undef;
 
-                nid = OBJ_sn2nid(mdname);
-                if (nid == NID_undef)
-                    nid = OBJ_ln2nid(mdname);
+                /*
+                 * The only reason to fetch the MD was to make sure it is in the
+                 * namemap. We can immediately free it.
+                 */
+                EVP_MD_free(md);
+                mdnum = ossl_namemap_name2num(namemap, mdname);
+                if (mdnum == 0)
+                    return 0;
+
+                /*
+                 * We have the namemap number - now we need to find the
+                 * associated nid
+                 */
+                ossl_namemap_doall_names(namemap, mdnum, find_md_nid, &nid);
                 *(int *)arg2 = nid;
             }
             return rv;
