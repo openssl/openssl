@@ -10,7 +10,7 @@
  * Originally written by Mike Hamburg
  */
 
-#include "field.h"
+#include "../field.h"
 
 void gf_mul(gf_s * RESTRICT cs, const gf as, const gf bs)
 {
