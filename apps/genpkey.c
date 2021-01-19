@@ -252,7 +252,7 @@ static int init_keygen_file(EVP_PKEY_CTX **pctx, const char *file, ENGINE *e,
         return 0;
     }
 
-    pkey = PEM_read_bio_Parameters(pbio, NULL);
+    pkey = PEM_read_bio_Parameters_ex(pbio, NULL, libctx, propq);
     BIO_free(pbio);
 
     if (pkey == NULL) {
