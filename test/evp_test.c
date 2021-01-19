@@ -7,7 +7,6 @@
  * https://www.openssl.org/source/license.html
  */
 
-#define OPENSSL_SUPPRESS_DEPRECATED /* For EVP_PKEY_new_CMAC_key */
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>

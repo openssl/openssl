@@ -151,6 +151,10 @@ raw private key data, it also takes a cipher algorithm to be used during
 creation of a CMAC in the B<cipher> argument. The cipher should be a standard
 encryption-only cipher. For example AEAD and XTS ciphers should not be used.
 
+Applications should use the L<EVP_MAC(3)> API instead
+and set the B<OSSL_MAC_PARAM_CIPHER> parameter on the B<EVP_MAC_CTX> object
+with the name of the cipher being used.
+
 =head1 NOTES
 
 The B<EVP_PKEY> structure is used by various OpenSSL functions which require a
@@ -192,9 +196,6 @@ EVP_PKEY_new_raw_public_key_ex()
 functions were added in OpenSSL 3.0.
 
 The EVP_PKEY_new_CMAC_key() was deprecated in OpenSSL 3.0.
-Applications should use the L<EVP_MAC(3)> API instead
-and set the B<OSSL_MAC_PARAM_CIPHER> parameter on the B<EVP_MAC_CTX> object
-with the name of the cipher being used.
 
 The documentation of B<EVP_PKEY> was amended in OpenSSL 3.0 to allow there to
 be the private part of the keypair without the public part, where this was
