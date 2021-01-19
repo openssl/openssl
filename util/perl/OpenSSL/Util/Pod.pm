@@ -116,6 +116,7 @@ sub extract_pod_info {
 
     my @invisible_names = ();
     my %podinfo = ( section => $defaults{section});
+    $podinfo{lastsecttext} = ""; # init needed in case input file is empty
 
     # Regexp to split a text into paragraphs found at
     # https://www.perlmonks.org/?node_id=584367
