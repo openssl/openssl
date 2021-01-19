@@ -19,7 +19,7 @@ void gf_mul(gf_s * RESTRICT cs, const gf as, const gf bs)
     uint128_t accum0 = 0, accum1 = 0, accum2;
     uint64_t mask = (1ULL << 56) - 1;
     uint64_t aa[4], bb[4], bbb[4];
-    unsigned int i;
+    unsigned int i, j;
 
     for (i = 0; i < 4; i++) {
         aa[i] = a[i] + a[i + 4];
@@ -27,137 +27,29 @@ void gf_mul(gf_s * RESTRICT cs, const gf as, const gf bs)
         bbb[i] = bb[i] + b[i + 4];
     }
 
-    int I_HATE_UNROLLED_LOOPS = 0;
+    for (i = 0; i < 4; i++) {
+        accum2 = 0;
 
-    if (I_HATE_UNROLLED_LOOPS) {
-        /*
-         * The compiler probably won't unroll this, so it's like 80% slower.
-         */
-        for (i = 0; i < 4; i++) {
-            accum2 = 0;
-
-            unsigned int j;
-            for (j = 0; j <= i; j++) {
-                accum2 += widemul(a[j], b[i - j]);
-                accum1 += widemul(aa[j], bb[i - j]);
-                accum0 += widemul(a[j + 4], b[i - j + 4]);
-            }
-            for (; j < 4; j++) {
-                accum2 += widemul(a[j], b[i - j + 8]);
-                accum1 += widemul(aa[j], bbb[i - j + 4]);
-                accum0 += widemul(a[j + 4], bb[i - j + 4]);
-            }
-
-            accum1 -= accum2;
-            accum0 += accum2;
-
-            c[i] = ((uint64_t)(accum0)) & mask;
-            c[i + 4] = ((uint64_t)(accum1)) & mask;
-
-            accum0 >>= 56;
-            accum1 >>= 56;
+        for (j = 0; j <= i; j++) {
+            accum2 += widemul(a[j], b[i - j]);
+            accum1 += widemul(aa[j], bb[i - j]);
+            accum0 += widemul(a[j + 4], b[i - j + 4]);
         }
-    } else {
-        accum2 = widemul(a[0], b[0]);
-        accum1 += widemul(aa[0], bb[0]);
-        accum0 += widemul(a[4], b[4]);
-
-        accum2 += widemul(a[1], b[7]);
-        accum1 += widemul(aa[1], bbb[3]);
-        accum0 += widemul(a[5], bb[3]);
-
-        accum2 += widemul(a[2], b[6]);
-        accum1 += widemul(aa[2], bbb[2]);
-        accum0 += widemul(a[6], bb[2]);
-
-        accum2 += widemul(a[3], b[5]);
-        accum1 += widemul(aa[3], bbb[1]);
-        accum0 += widemul(a[7], bb[1]);
+        for (; j < 4; j++) {
+            accum2 += widemul(a[j], b[i - j + 8]);
+            accum1 += widemul(aa[j], bbb[i - j + 4]);
+            accum0 += widemul(a[j + 4], bb[i - j + 4]);
+        }
 
         accum1 -= accum2;
         accum0 += accum2;
 
-        c[0] = ((uint64_t)(accum0)) & mask;
-        c[4] = ((uint64_t)(accum1)) & mask;
+        c[i] = ((uint64_t)(accum0)) & mask;
+        c[i + 4] = ((uint64_t)(accum1)) & mask;
 
         accum0 >>= 56;
         accum1 >>= 56;
-
-        accum2 = widemul(a[0], b[1]);
-        accum1 += widemul(aa[0], bb[1]);
-        accum0 += widemul(a[4], b[5]);
-
-        accum2 += widemul(a[1], b[0]);
-        accum1 += widemul(aa[1], bb[0]);
-        accum0 += widemul(a[5], b[4]);
-
-        accum2 += widemul(a[2], b[7]);
-        accum1 += widemul(aa[2], bbb[3]);
-        accum0 += widemul(a[6], bb[3]);
-
-        accum2 += widemul(a[3], b[6]);
-        accum1 += widemul(aa[3], bbb[2]);
-        accum0 += widemul(a[7], bb[2]);
-
-        accum1 -= accum2;
-        accum0 += accum2;
-
-        c[1] = ((uint64_t)(accum0)) & mask;
-        c[5] = ((uint64_t)(accum1)) & mask;
-
-        accum0 >>= 56;
-        accum1 >>= 56;
-
-        accum2 = widemul(a[0], b[2]);
-        accum1 += widemul(aa[0], bb[2]);
-        accum0 += widemul(a[4], b[6]);
-
-        accum2 += widemul(a[1], b[1]);
-        accum1 += widemul(aa[1], bb[1]);
-        accum0 += widemul(a[5], b[5]);
-
-        accum2 += widemul(a[2], b[0]);
-        accum1 += widemul(aa[2], bb[0]);
-        accum0 += widemul(a[6], b[4]);
-
-        accum2 += widemul(a[3], b[7]);
-        accum1 += widemul(aa[3], bbb[3]);
-        accum0 += widemul(a[7], bb[3]);
-
-        accum1 -= accum2;
-        accum0 += accum2;
-
-        c[2] = ((uint64_t)(accum0)) & mask;
-        c[6] = ((uint64_t)(accum1)) & mask;
-
-        accum0 >>= 56;
-        accum1 >>= 56;
-
-        accum2 = widemul(a[0], b[3]);
-        accum1 += widemul(aa[0], bb[3]);
-        accum0 += widemul(a[4], b[7]);
-
-        accum2 += widemul(a[1], b[2]);
-        accum1 += widemul(aa[1], bb[2]);
-        accum0 += widemul(a[5], b[6]);
-
-        accum2 += widemul(a[2], b[1]);
-        accum1 += widemul(aa[2], bb[1]);
-        accum0 += widemul(a[6], b[5]);
-
-        accum2 += widemul(a[3], b[0]);
-        accum1 += widemul(aa[3], bb[0]);
-        accum0 += widemul(a[7], b[4]);
-
-        accum1 -= accum2;
-        accum0 += accum2;
-
-        c[3] = ((uint64_t)(accum0)) & mask;
-        c[7] = ((uint64_t)(accum1)) & mask;
-
-        accum0 >>= 56;
-        accum1 >>= 56;
-    }                           /* !I_HATE_UNROLLED_LOOPS */
+    }
 
     accum0 += accum1;
     accum0 += c[4];
