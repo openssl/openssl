@@ -92,8 +92,7 @@ encoding of I<req>, using the ASN.1 template I<it> to do the encoding.  The
 HTTP header C<Content-Length> is automatically filled out, and if
 I<content_type> isn't NULL, the HTTP header C<Content-Type> is also added with
 its content as value.  All of this ends up in the internal memory B<BIO>.
-This requires that the request type be C<POST>,
-i.e., that I<method_POST> is 1 in the OSSL_HTTP_REQ_CTX_new() call.
+This requires that I<method_POST> was 1 in the OSSL_HTTP_REQ_CTX_new() call.
 
 OSSL_HTTP_REQ_CTX_nbio() attempts the exchange of request and response via HTTP,
 using the I<rbio> and I<wbio> that were given in the OSSL_HTTP_REQ_CTX_new()
