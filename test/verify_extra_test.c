@@ -200,7 +200,7 @@ static int test_self_signed(const char *filename, int expected)
     ret = TEST_ptr(cert)
         && TEST_true(sk_X509_push(trusted, cert))
         && TEST_true(X509_STORE_CTX_init(ctx, NULL, cert, NULL));
-    X509_STORE_CTX_trusted_stack(ctx, trusted);
+    X509_STORE_CTX_set0_trusted_stack(ctx, trusted);
     ret = ret && TEST_int_eq(X509_verify_cert(ctx), expected);
 
     X509_STORE_CTX_free(ctx);
