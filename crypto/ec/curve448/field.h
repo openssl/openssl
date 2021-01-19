@@ -66,10 +66,15 @@ void gf_serialize(uint8_t *serial, const gf x, int with_highbit);
 mask_t gf_deserialize(gf x, const uint8_t serial[SER_BYTES], int with_hibit,
                       uint8_t hi_nmask);
 
-# include "arch_32/f_impl.h"    /* Bring in the inline implementations */
 
 # define LIMBPERM(i) (i)
-# define LIMB_MASK(i) (((1)<<LIMB_PLACE_VALUE(i))-1)
+# if (ARCH_WORD_BITS == 32)
+#  include "arch_32/f_impl.h"    /* Bring in the inline implementations */
+#  define LIMB_MASK(i) (((1)<<LIMB_PLACE_VALUE(i))-1)
+# elif (ARCH_WORD_BITS == 64)
+#  include "arch_64/f_impl.h"    /* Bring in the inline implementations */
+#  define LIMB_MASK(i) (((1ULL)<<LIMB_PLACE_VALUE(i))-1)
+# endif
 
 static const gf ZERO = {{{0}}}, ONE = {{{1}}};
 

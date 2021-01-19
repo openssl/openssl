@@ -48,9 +48,15 @@ $COMMON=ec_lib.c ecp_smpl.c ecp_mont.c ecp_nist.c ec_cvt.c ec_mult.c \
         ec2_smpl.c ec_deprecated.c \
         ecp_oct.c ec2_oct.c ec_oct.c ec_kmeth.c ecdh_ossl.c \
         ecdsa_ossl.c ecdsa_sign.c ecdsa_vrf.c curve25519.c \
-        curve448/arch_32/f_impl.c curve448/f_generic.c curve448/scalar.c \
+        curve448/f_generic.c curve448/scalar.c \
         curve448/curve448_tables.c curve448/eddsa.c curve448/curve448.c \
         $ECASM ec_backend.c ecx_backend.c ecdh_kdf.c
+
+IF[{- $config{'use_int128'} eq "1" -}]
+  $COMMON=$COMMON curve448/arch_64/f_impl.c
+ELSE
+  $COMMON=$COMMON curve448/arch_32/f_impl.c
+ENDIF
 
 IF[{- !$disabled{'ec_nistp_64_gcc_128'} -}]
   $COMMON=$COMMON ecp_nistp224.c ecp_nistp256.c ecp_nistp521.c ecp_nistputil.c
