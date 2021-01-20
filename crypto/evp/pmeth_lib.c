@@ -655,65 +655,83 @@ int EVP_PKEY_CTX_is_a(EVP_PKEY_CTX *ctx, const char *keytype)
 
 int EVP_PKEY_CTX_set_params(EVP_PKEY_CTX *ctx, OSSL_PARAM *params)
 {
-    if (EVP_PKEY_CTX_IS_DERIVE_OP(ctx)
-            && ctx->op.kex.exchprovctx != NULL
+    switch (evp_pkey_ctx_state(ctx)) {
+    case EVP_PKEY_STATE_PROVIDER:
+        if (EVP_PKEY_CTX_IS_DERIVE_OP(ctx)
             && ctx->op.kex.exchange != NULL
             && ctx->op.kex.exchange->set_ctx_params != NULL)
-        return ctx->op.kex.exchange->set_ctx_params(ctx->op.kex.exchprovctx,
-                                                    params);
-    if (EVP_PKEY_CTX_IS_SIGNATURE_OP(ctx)
-            && ctx->op.sig.sigprovctx != NULL
+            return
+                ctx->op.kex.exchange->set_ctx_params(ctx->op.kex.exchprovctx,
+                                                     params);
+        if (EVP_PKEY_CTX_IS_SIGNATURE_OP(ctx)
             && ctx->op.sig.signature != NULL
             && ctx->op.sig.signature->set_ctx_params != NULL)
-        return ctx->op.sig.signature->set_ctx_params(ctx->op.sig.sigprovctx,
-                                                     params);
-    if (EVP_PKEY_CTX_IS_ASYM_CIPHER_OP(ctx)
-            && ctx->op.ciph.ciphprovctx != NULL
+            return
+                ctx->op.sig.signature->set_ctx_params(ctx->op.sig.sigprovctx,
+                                                      params);
+        if (EVP_PKEY_CTX_IS_ASYM_CIPHER_OP(ctx)
             && ctx->op.ciph.cipher != NULL
             && ctx->op.ciph.cipher->set_ctx_params != NULL)
-        return ctx->op.ciph.cipher->set_ctx_params(ctx->op.ciph.ciphprovctx,
-                                                     params);
-    if (EVP_PKEY_CTX_IS_GEN_OP(ctx)
-        && ctx->op.keymgmt.genctx != NULL
-        && ctx->keymgmt != NULL
-        && ctx->keymgmt->gen_set_params != NULL)
-        return evp_keymgmt_gen_set_params(ctx->keymgmt, ctx->op.keymgmt.genctx,
-                                          params);
-    if (EVP_PKEY_CTX_IS_KEM_OP(ctx)
-        && ctx->op.encap.kemprovctx != NULL
-        && ctx->op.encap.kem != NULL
-        && ctx->op.encap.kem->set_ctx_params != NULL)
-        return ctx->op.encap.kem->set_ctx_params(ctx->op.encap.kemprovctx,
-                                                 params);
+            return
+                ctx->op.ciph.cipher->set_ctx_params(ctx->op.ciph.ciphprovctx,
+                                                    params);
+        if (EVP_PKEY_CTX_IS_GEN_OP(ctx)
+            && ctx->keymgmt != NULL
+            && ctx->keymgmt->gen_set_params != NULL)
+            return
+                evp_keymgmt_gen_set_params(ctx->keymgmt, ctx->op.keymgmt.genctx,
+                                           params);
+        if (EVP_PKEY_CTX_IS_KEM_OP(ctx)
+            && ctx->op.encap.kem != NULL
+            && ctx->op.encap.kem->set_ctx_params != NULL)
+            return
+                ctx->op.encap.kem->set_ctx_params(ctx->op.encap.kemprovctx,
+                                                  params);
+        break;
+#ifndef FIPS_MODULE
+    case EVP_PKEY_STATE_UNKNOWN:
+    case EVP_PKEY_STATE_LEGACY:
+        return evp_pkey_ctx_set_params_to_ctrl(ctx, params);
+#endif
+    }
     return 0;
 }
 
 int EVP_PKEY_CTX_get_params(EVP_PKEY_CTX *ctx, OSSL_PARAM *params)
 {
-    if (EVP_PKEY_CTX_IS_DERIVE_OP(ctx)
-            && ctx->op.kex.exchprovctx != NULL
+    switch (evp_pkey_ctx_state(ctx)) {
+    case EVP_PKEY_STATE_PROVIDER:
+        if (EVP_PKEY_CTX_IS_DERIVE_OP(ctx)
             && ctx->op.kex.exchange != NULL
             && ctx->op.kex.exchange->get_ctx_params != NULL)
-        return ctx->op.kex.exchange->get_ctx_params(ctx->op.kex.exchprovctx,
-                                                    params);
-    if (EVP_PKEY_CTX_IS_SIGNATURE_OP(ctx)
-            && ctx->op.sig.sigprovctx != NULL
+            return
+                ctx->op.kex.exchange->get_ctx_params(ctx->op.kex.exchprovctx,
+                                                     params);
+        if (EVP_PKEY_CTX_IS_SIGNATURE_OP(ctx)
             && ctx->op.sig.signature != NULL
             && ctx->op.sig.signature->get_ctx_params != NULL)
-        return ctx->op.sig.signature->get_ctx_params(ctx->op.sig.sigprovctx,
-                                                     params);
-    if (EVP_PKEY_CTX_IS_ASYM_CIPHER_OP(ctx)
-            && ctx->op.ciph.ciphprovctx != NULL
+            return
+                ctx->op.sig.signature->get_ctx_params(ctx->op.sig.sigprovctx,
+                                                      params);
+        if (EVP_PKEY_CTX_IS_ASYM_CIPHER_OP(ctx)
             && ctx->op.ciph.cipher != NULL
             && ctx->op.ciph.cipher->get_ctx_params != NULL)
-        return ctx->op.ciph.cipher->get_ctx_params(ctx->op.ciph.ciphprovctx,
-                                                   params);
-    if (EVP_PKEY_CTX_IS_KEM_OP(ctx)
-        && ctx->op.encap.kemprovctx != NULL
-        && ctx->op.encap.kem != NULL
-        && ctx->op.encap.kem->get_ctx_params != NULL)
-        return ctx->op.encap.kem->get_ctx_params(ctx->op.encap.kemprovctx,
-                                                 params);
+            return
+                ctx->op.ciph.cipher->get_ctx_params(ctx->op.ciph.ciphprovctx,
+                                                    params);
+        if (EVP_PKEY_CTX_IS_KEM_OP(ctx)
+            && ctx->op.encap.kem != NULL
+            && ctx->op.encap.kem->get_ctx_params != NULL)
+            return
+                ctx->op.encap.kem->get_ctx_params(ctx->op.encap.kemprovctx,
+                                                  params);
+        break;
+#ifndef FIPS_MODULE
+    case EVP_PKEY_STATE_UNKNOWN:
+    case EVP_PKEY_STATE_LEGACY:
+        return evp_pkey_ctx_get_params_to_ctrl(ctx, params);
+#endif
+    }
     return 0;
 }
 

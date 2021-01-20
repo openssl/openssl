@@ -1228,60 +1228,8 @@ int EVP_PKEY_get_default_digest_name(EVP_PKEY *pkey,
 int EVP_PKEY_get_group_name(const EVP_PKEY *pkey, char *gname, size_t gname_sz,
                             size_t *gname_len)
 {
-    if (evp_pkey_is_legacy(pkey)) {
-        const char *name = NULL;
-
-        switch (EVP_PKEY_base_id(pkey)) {
-#ifndef OPENSSL_NO_EC
-        case EVP_PKEY_EC:
-            {
-                const EC_GROUP *grp = EC_KEY_get0_group(EVP_PKEY_get0_EC_KEY(pkey));
-                int nid = NID_undef;
-
-                if (grp != NULL)
-                    nid = EC_GROUP_get_curve_name(grp);
-                if (nid != NID_undef)
-                    name = ec_curve_nid2name(nid);
-            }
-            break;
-#endif
-#ifndef OPENSSL_NO_DH
-        case EVP_PKEY_DH:
-            {
-                DH *dh = EVP_PKEY_get0_DH(pkey);
-                int uid = DH_get_nid(dh);
-
-                if (uid != NID_undef) {
-                    const DH_NAMED_GROUP *dh_group =
-                        ossl_ffc_uid_to_dh_named_group(uid);
-
-                    name = ossl_ffc_named_group_get_name(dh_group);
-                }
-            }
-            break;
-#endif
-        default:
-            break;
-        }
-
-        if (gname_len != NULL)
-            *gname_len = (name == NULL ? 0 : strlen(name));
-        if (name != NULL) {
-            if (gname != NULL)
-                OPENSSL_strlcpy(gname, name, gname_sz);
-            return 1;
-        }
-    } else if (evp_pkey_is_provided(pkey)) {
-        if (EVP_PKEY_get_utf8_string_param(pkey, OSSL_PKEY_PARAM_GROUP_NAME,
-                                           gname, gname_sz, gname_len))
-            return 1;
-    } else {
-        ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_KEY);
-        return 0;
-    }
-
-    ERR_raise(ERR_LIB_EVP, EVP_R_UNSUPPORTED_KEY_TYPE);
-    return 0;
+    return EVP_PKEY_get_utf8_string_param(pkey, OSSL_PKEY_PARAM_GROUP_NAME,
+                                          gname, gname_sz, gname_len);
 }
 
 int EVP_PKEY_supports_digest_nid(EVP_PKEY *pkey, int nid)
@@ -2144,7 +2092,7 @@ int EVP_PKEY_set_bn_param(EVP_PKEY *pkey, const char *key_name,
     if (key_name == NULL
         || bn == NULL
         || pkey == NULL
-        || !evp_pkey_is_provided(pkey))
+        || !evp_pkey_is_assigned(pkey))
         return 0;
 
     bsize = BN_num_bytes(bn);
@@ -2194,12 +2142,21 @@ const OSSL_PARAM *EVP_PKEY_settable_params(const EVP_PKEY *pkey)
 
 int EVP_PKEY_set_params(EVP_PKEY *pkey, OSSL_PARAM params[])
 {
-    if (pkey == NULL)
-        return 0;
-
-    pkey->dirty_cnt++;
-    return evp_pkey_is_provided(pkey)
-        && evp_keymgmt_set_params(pkey->keymgmt, pkey->keydata, params);
+    if (pkey != NULL) {
+        if (evp_pkey_is_provided(pkey)) {
+            pkey->dirty_cnt++;
+            return evp_keymgmt_set_params(pkey->keymgmt, pkey->keydata, params);
+        }
+#ifndef FIPS_MODULE
+# if 0                           /* TODO? */
+        else if (evp_pkey_is_legacy(pkey)) {
+            return evp_pkey_set_params_to_ctrl(pkey, params);
+        }
+# endif
+#endif
+    }
+    ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_KEY);
+    return 0;
 }
 
 const OSSL_PARAM *EVP_PKEY_gettable_params(const EVP_PKEY *pkey)
@@ -2211,9 +2168,16 @@ const OSSL_PARAM *EVP_PKEY_gettable_params(const EVP_PKEY *pkey)
 
 int EVP_PKEY_get_params(const EVP_PKEY *pkey, OSSL_PARAM params[])
 {
-    return pkey != NULL
-        && evp_pkey_is_provided(pkey)
-        && evp_keymgmt_get_params(pkey->keymgmt, pkey->keydata, params);
+    if (pkey != NULL) {
+        if (evp_pkey_is_provided(pkey))
+            return evp_keymgmt_get_params(pkey->keymgmt, pkey->keydata, params);
+#ifndef FIPS_MODULE
+        else if (evp_pkey_is_legacy(pkey))
+            return evp_pkey_get_params_to_ctrl(pkey, params);
+#endif
+    }
+    ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_KEY);
+    return 0;
 }
 
 #ifndef FIPS_MODULE
