@@ -1159,7 +1159,7 @@ int EVP_PKEY_print_params(BIO *out, const EVP_PKEY *pkey,
                       pctx);
 }
 
-static void find_md_nid(const char *mdname, void *data)
+static void mdname2nid(const char *mdname, void *data)
 {
     int *nid = (int *)data;
 
@@ -1204,7 +1204,7 @@ static int legacy_asn1_ctrl_to_param(EVP_PKEY *pkey, int op,
                  * We have the namemap number - now we need to find the
                  * associated nid
                  */
-                ossl_namemap_doall_names(namemap, mdnum, find_md_nid, &nid);
+                ossl_namemap_doall_names(namemap, mdnum, mdname2nid, &nid);
                 *(int *)arg2 = nid;
             }
             return rv;
