@@ -218,9 +218,9 @@ initialized to the PKI hierarchy.
 B<p10cr> requests issuing an additional certificate similarly to B<cr>
 but using PKCS#10 CSR format.
 
-B<kur> requests a (key) update for an existing, given certificate.
+B<kur> requests a (key) update for an existing certificate.
 
-B<rr> requests revocation of an existing, given certificate.
+B<rr> requests revocation of an existing certificate.
 
 B<genm> requests information using a General Message, where optionally
 included B<InfoTypeAndValue>s may be used to state which info is of interest.
@@ -344,10 +344,10 @@ is provided via the B<-newkey> or B<-key> options.
 =item B<-csr> I<filename>
 
 PKCS#10 CSR in PEM or DER format containing a certificate request.
-When used with a with B<-cmd> I<p10cr> used directly in a legacy P10CR message.
-When used with B<-cmd> I<ir>, I<cr>, or I<kur>, it is tranformed into the
+With B<-cmd> I<p10cr> it is used directly in a legacy P10CR message.
+When used with B<-cmd> I<ir>, I<cr>, or I<kur>, it is transformed into the
 respective regular CMP request.
-It may also be used with B<-cmd> I<rr> to specifiy the certificate to be revoked
+It may also be used with B<-cmd> I<rr> to specify the certificate to be revoked
 via the included subject and public key.
 
 =item B<-out_trusted> I<filenames>|I<uris>
@@ -392,12 +392,12 @@ The file where the chain of the newly enrolled certificate should be saved.
 The certificate to be updated (i.e., renewed or re-keyed) in Key Update Request
 (KUR) messages or to be revoked in Revocation Request (RR) messages.
 For RR the certificate to be revoked can also be specified using B<-csr>.
-For KUR certificate to be updated defaults to B<-cert>, and the resulting certificate is called
-I<reference certificate>.
+For KUR the certificate to be updated defaults to B<-cert>,
+and the resulting certificate is called I<reference certificate>.
 
 The reference certificate, if any, is also used for
 deriving default subject DN and Subject Alternative Names and the
-default issuer entry in the requested certificate template of a IR/CR/KUR.
+default issuer entry in the requested certificate template of an IR/CR/KUR.
 Its subject is used as sender of outgoing messages if B<-cert> is not given.
 Its issuer is used as default recipient in CMP message headers
 if neither B<-recipient>, B<-srvcert>, nor B<-issuer> is given.

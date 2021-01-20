@@ -352,6 +352,10 @@ OSSL_CMP_MSG *ossl_cmp_certreq_new(OSSL_CMP_CTX *ctx, int type,
         ERR_raise(ERR_LIB_CMP, CMP_R_INVALID_ARGS);
         return NULL;
     }
+    if (type == OSSL_CMP_PKIBODY_P10CR && crm != NULL) {
+        ERR_raise(ERR_LIB_CMP, CMP_R_INVALID_ARGS);
+        return NULL;
+    }
 
     if ((msg = ossl_cmp_msg_create(ctx, type)) == NULL)
         goto err;
