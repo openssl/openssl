@@ -981,14 +981,14 @@ static const uint16_t tls12_sigalgs[] = {
 
     TLSEXT_SIGALG_rsa_pkcs1_sha224,
     TLSEXT_SIGALG_rsa_pkcs1_sha1,
-#ifndef OPENSSL_NO_DSA
+
     TLSEXT_SIGALG_dsa_sha224,
     TLSEXT_SIGALG_dsa_sha1,
 
     TLSEXT_SIGALG_dsa_sha256,
     TLSEXT_SIGALG_dsa_sha384,
     TLSEXT_SIGALG_dsa_sha512,
-#endif
+
 #ifndef OPENSSL_NO_GOST
     TLSEXT_SIGALG_gostr34102012_256_intrinsic,
     TLSEXT_SIGALG_gostr34102012_512_intrinsic,
@@ -1059,7 +1059,6 @@ static const SIGALG_LOOKUP sigalg_lookup_tbl[] = {
     {"rsa_pkcs1_sha1", TLSEXT_SIGALG_rsa_pkcs1_sha1,
      NID_sha1, SSL_MD_SHA1_IDX, EVP_PKEY_RSA, SSL_PKEY_RSA,
      NID_sha1WithRSAEncryption, NID_undef, 1},
-#ifndef OPENSSL_NO_DSA
     {NULL, TLSEXT_SIGALG_dsa_sha256,
      NID_sha256, SSL_MD_SHA256_IDX, EVP_PKEY_DSA, SSL_PKEY_DSA_SIGN,
      NID_dsa_with_SHA256, NID_undef, 1},
@@ -1075,7 +1074,6 @@ static const SIGALG_LOOKUP sigalg_lookup_tbl[] = {
     {NULL, TLSEXT_SIGALG_dsa_sha1,
      NID_sha1, SSL_MD_SHA1_IDX, EVP_PKEY_DSA, SSL_PKEY_DSA_SIGN,
      NID_dsaWithSHA1, NID_undef, 1},
-#endif
 #ifndef OPENSSL_NO_GOST
     {NULL, TLSEXT_SIGALG_gostr34102012_256_intrinsic,
      NID_id_GostR3411_2012_256, SSL_MD_GOST12_256_IDX,
