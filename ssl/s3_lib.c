@@ -3430,29 +3430,6 @@ static char *srp_password_from_info_cb(SSL *s, void *arg)
 }
 #endif
 
-#if !defined(OPENSSL_NO_EC) && !defined(OPENSSL_NO_DEPRECATED_3_0)
-static int ssl_set_tmp_ecdh_groups(uint16_t **pext, size_t *pextlen,
-                                   EVP_PKEY *pkey)
-{
-    char name[80];
-    int nid, ret = 0;
-    size_t name_len;
-
-    if (!EVP_PKEY_get_utf8_string_param(pkey, OSSL_PKEY_PARAM_GROUP_NAME,
-                                        name, sizeof(name), &name_len)) {
-        SSLerr(0, EC_R_MISSING_PARAMETERS);
-        return 0;
-    }
-    nid = OBJ_txt2nid(name);
-    if (nid == NID_undef)
-        goto end;
-    ret = tls1_set_groups(pext, pextlen, &nid, 1);
-end:
-    EVP_PKEY_free(pkey);
-    return ret;
-}
-#endif
-
 static int ssl3_set_req_cert_type(CERT *c, const unsigned char *p, size_t len);
 
 long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
@@ -3503,22 +3480,15 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 #if !defined(OPENSSL_NO_EC) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     case SSL_CTRL_SET_TMP_ECDH:
         {
-            EVP_PKEY *pkecdh = NULL;
-
             if (parg == NULL) {
                 ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_NULL_PARAMETER);
                 return 0;
             }
-            pkecdh = ssl_ecdh_to_pkey(parg);
-            if (pkecdh == NULL) {
-                ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
-                return 0;
-            }
             return ssl_set_tmp_ecdh_groups(&s->ext.supportedgroups,
                                            &s->ext.supportedgroups_len,
-                                           pkecdh);
+                                           parg);
         }
-#endif                          /* !OPENSSL_NO_EC */
+#endif
     case SSL_CTRL_SET_TLSEXT_HOSTNAME:
         /*
          * TODO(OpenSSL1.2)
@@ -3838,22 +3808,15 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 #if !defined(OPENSSL_NO_EC) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     case SSL_CTRL_SET_TMP_ECDH:
         {
-            EVP_PKEY *pkecdh = NULL;
-
             if (parg == NULL) {
                 ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_NULL_PARAMETER);
                 return 0;
             }
-            pkecdh = ssl_ecdh_to_pkey(parg);
-            if (pkecdh == NULL) {
-                ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
-                return 0;
-            }
             return ssl_set_tmp_ecdh_groups(&ctx->ext.supportedgroups,
                                            &ctx->ext.supportedgroups_len,
-                                           pkecdh);
+                                           parg);
         }
-#endif                          /* !OPENSSL_NO_EC */
+#endif
     case SSL_CTRL_SET_TLSEXT_SERVERNAME_ARG:
         ctx->ext.servername_arg = parg;
         break;

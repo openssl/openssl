@@ -407,9 +407,8 @@ static int check_suite_b(EVP_PKEY *pkey, int sign_nid, unsigned long *pflags)
     if (pkey == NULL || !EVP_PKEY_is_a(pkey, "EC"))
         return X509_V_ERR_SUITE_B_INVALID_ALGORITHM;
 
-    if (!EVP_PKEY_get_utf8_string_param(pkey, OSSL_PKEY_PARAM_GROUP_NAME,
-                                        curve_name, sizeof(curve_name),
-                                        &curve_name_len))
+    if (!EVP_PKEY_get_group_name(pkey, curve_name, sizeof(curve_name),
+                                 &curve_name_len))
         return X509_V_ERR_SUITE_B_INVALID_CURVE;
 
     curve_nid = OBJ_txt2nid(curve_name);

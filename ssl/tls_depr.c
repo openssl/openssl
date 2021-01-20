@@ -162,18 +162,20 @@ EVP_PKEY *ssl_dh_to_pkey(DH *dh)
 
 /* Some deprecated public APIs pass EC_KEY objects */
 # ifndef OPENSSL_NO_EC
-EVP_PKEY *ssl_ecdh_to_pkey(EC_KEY *ec)
+int ssl_set_tmp_ecdh_groups(uint16_t **pext, size_t *pextlen,
+                            void *key)
 {
-    EVP_PKEY *ret;
+    const EC_GROUP *group = EC_KEY_get0_group((const EC_KEY *)key);
+    int nid;
 
-    if (ec == NULL)
-        return NULL;
-    ret = EVP_PKEY_new();
-    if (EVP_PKEY_set1_EC_KEY(ret, ec) <= 0) {
-        EVP_PKEY_free(ret);
-        return NULL;
+    if (group == NULL) {
+        ERR_raise(ERR_LIB_SSL, SSL_R_MISSING_PARAMETERS);
+        return 0;
     }
-    return ret;
+    nid = EC_GROUP_get_curve_name(group);
+    if (nid == NID_undef)
+        return 0;
+    return tls1_set_groups(pext, pextlen, &nid, 1);
 }
 # endif
 #endif

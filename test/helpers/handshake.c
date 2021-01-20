@@ -1271,17 +1271,14 @@ static char *dup_str(const unsigned char *in, size_t len)
 
 static int pkey_type(EVP_PKEY *pkey)
 {
-#ifndef OPENSSL_NO_EC
     if (EVP_PKEY_is_a(pkey, "EC")) {
         char name[80];
         size_t name_len;
 
-        if (!EVP_PKEY_get_utf8_string_param(pkey, OSSL_PKEY_PARAM_GROUP_NAME,
-                                            name, sizeof(name), &name_len))
+        if (!EVP_PKEY_get_group_name(pkey, name, sizeof(name), &name_len))
             return NID_undef;
         return OBJ_txt2nid(name);
     }
-#endif
     return EVP_PKEY_id(pkey);
 }
 
