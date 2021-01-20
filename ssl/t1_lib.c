@@ -1219,8 +1219,11 @@ static const SIGALG_LOOKUP *tls1_lookup_sigalg(const SSL *s, uint16_t sigalg)
          /* cache should have the same number of elements as sigalg_lookup_tbl */
          i < OSSL_NELEM(sigalg_lookup_tbl);
          lu++, i++) {
-        if (lu->sigalg == sigalg)
+        if (lu->sigalg == sigalg) {
+            if (!lu->enabled)
+                return NULL;
             return lu;
+        }
     }
     return NULL;
 }
@@ -1326,6 +1329,8 @@ static const SIGALG_LOOKUP *tls1_get_legacy_sigalg(const SSL *s, int idx)
     if (SSL_USE_SIGALGS(s) || idx != SSL_PKEY_RSA) {
         const SIGALG_LOOKUP *lu = tls1_lookup_sigalg(s, tls_default_sigalg[idx]);
 
+        if (lu == NULL)
+            return NULL;
         if (!tls1_lookup_md(s->ctx, lu, NULL))
             return NULL;
         if (!tls12_sigalg_allowed(s, SSL_SECOP_SIGALG_SUPPORTED, lu))
@@ -2166,7 +2171,8 @@ int tls12_copy_sigalgs(SSL *s, WPACKET *pkt,
     for (i = 0; i < psiglen; i++, psig++) {
         const SIGALG_LOOKUP *lu = tls1_lookup_sigalg(s, *psig);
 
-        if (!tls12_sigalg_allowed(s, SSL_SECOP_SIGALG_SUPPORTED, lu))
+        if (lu == NULL
+                || !tls12_sigalg_allowed(s, SSL_SECOP_SIGALG_SUPPORTED, lu))
             continue;
         if (!WPACKET_put_bytes_u16(pkt, *psig))
             return 0;
@@ -2196,7 +2202,8 @@ static size_t tls12_shared_sigalgs(SSL *s, const SIGALG_LOOKUP **shsig,
         const SIGALG_LOOKUP *lu = tls1_lookup_sigalg(s, *ptmp);
 
         /* Skip disabled hashes or signature algorithms */
-        if (!tls12_sigalg_allowed(s, SSL_SECOP_SIGALG_SHARED, lu))
+        if (lu == NULL
+                || !tls12_sigalg_allowed(s, SSL_SECOP_SIGALG_SHARED, lu))
             continue;
         for (j = 0, atmp = allow; j < allowlen; j++, atmp++) {
             if (*ptmp == *atmp) {
