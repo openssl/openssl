@@ -597,10 +597,8 @@ int tls1_setup_key_block(SSL *s)
             if (s->session->cipher->algorithm_enc == SSL_eNULL)
                 s->s3.need_empty_fragments = 0;
 
-#ifndef OPENSSL_NO_RC4
             if (s->session->cipher->algorithm_enc == SSL_RC4)
                 s->s3.need_empty_fragments = 0;
-#endif
         }
     }
 

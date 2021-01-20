@@ -66,7 +66,6 @@ static SSL_CIPHER tls13_ciphers[] = {
         256,
         256,
     },
-#if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
     {
         1,
         TLS1_3_RFC_CHACHA20_POLY1305_SHA256,
@@ -83,7 +82,6 @@ static SSL_CIPHER tls13_ciphers[] = {
         256,
         256,
     },
-#endif
     {
         1,
         TLS1_3_RFC_AES_128_CCM_SHA256,
@@ -2036,7 +2034,6 @@ static SSL_CIPHER ssl3_ciphers[] = {
      256,
      },
 
-#if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
     {
      1,
      TLS1_TXT_DHE_RSA_WITH_CHACHA20_POLY1305,
@@ -2149,10 +2146,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
      256,
      256,
      },
-#endif                          /* !defined(OPENSSL_NO_CHACHA) &&
-                                 * !defined(OPENSSL_NO_POLY1305) */
 
-#ifndef OPENSSL_NO_CAMELLIA
     {
      1,
      TLS1_TXT_RSA_WITH_CAMELLIA_128_CBC_SHA256,
@@ -2601,7 +2595,6 @@ static SSL_CIPHER ssl3_ciphers[] = {
      256,
      256,
      },
-#endif                          /* OPENSSL_NO_CAMELLIA */
 
 #ifndef OPENSSL_NO_GOST
     {
@@ -2718,7 +2711,6 @@ static SSL_CIPHER ssl3_ciphers[] = {
      },
 #endif                          /* OPENSSL_NO_GOST */
 
-#ifndef OPENSSL_NO_IDEA
     {
      1,
      SSL3_TXT_RSA_IDEA_128_SHA,
@@ -2735,9 +2727,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
      128,
      128,
      },
-#endif
 
-#ifndef OPENSSL_NO_SEED
     {
      1,
      TLS1_TXT_RSA_WITH_SEED_SHA,
@@ -2802,7 +2792,6 @@ static SSL_CIPHER ssl3_ciphers[] = {
      128,
      128,
      },
-#endif                          /* OPENSSL_NO_SEED */
 
 #ifndef OPENSSL_NO_WEAK_SSL_CIPHERS
     {
@@ -2967,7 +2956,6 @@ static SSL_CIPHER ssl3_ciphers[] = {
      },
 #endif                          /* OPENSSL_NO_WEAK_SSL_CIPHERS */
 
-#ifndef OPENSSL_NO_ARIA
     {
      1,
      TLS1_TXT_RSA_WITH_ARIA_128_GCM_SHA256,
@@ -3224,7 +3212,6 @@ static SSL_CIPHER ssl3_ciphers[] = {
      256,
      256,
      },
-#endif /* OPENSSL_NO_ARIA */
 };
 
 /*
@@ -4120,9 +4107,7 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
     STACK_OF(SSL_CIPHER) *prio, *allow;
     int i, ii, ok, prefer_sha256 = 0;
     unsigned long alg_k = 0, alg_a = 0, mask_k = 0, mask_a = 0;
-#ifndef OPENSSL_NO_CHACHA
     STACK_OF(SSL_CIPHER) *prio_chacha = NULL;
-#endif
 
     /* Let's see which ciphers we can support */
 
@@ -4155,7 +4140,7 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
     } else if (s->options & SSL_OP_CIPHER_SERVER_PREFERENCE) {
         prio = srvr;
         allow = clnt;
-#ifndef OPENSSL_NO_CHACHA
+
         /* If ChaCha20 is at the top of the client preference list,
            and there are ChaCha20 ciphers in the server list, then
            temporarily prioritize all ChaCha20 ciphers in the servers list. */
@@ -4194,7 +4179,6 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
                 }
             }
         }
-# endif
     } else {
         prio = clnt;
         allow = srvr;
@@ -4308,9 +4292,9 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
             break;
         }
     }
-#ifndef OPENSSL_NO_CHACHA
+
     sk_SSL_CIPHER_free(prio_chacha);
-#endif
+
     return ret;
 }
 
