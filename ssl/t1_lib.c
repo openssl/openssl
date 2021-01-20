@@ -440,10 +440,7 @@ static uint16_t tls1_group_name2id(SSL_CTX *ctx, const char *name)
 
     for (i = 0; i < ctx->group_list_len; i++) {
         if (strcmp(ctx->group_list[i].tlsname, name) == 0
-                || (nid != NID_undef
-                    && nid == tls1_group_id2nid(ctx->group_list[i].group_id,
-                                                0))
-           )
+                || strcmp(ctx->group_list[i].realname, name) == 0)
             return ctx->group_list[i].group_id;
     }
 

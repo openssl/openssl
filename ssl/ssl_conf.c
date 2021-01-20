@@ -226,7 +226,6 @@ static int cmd_Curves(SSL_CONF_CTX *cctx, const char *value)
 static int cmd_ECDHParameters(SSL_CONF_CTX *cctx, const char *value)
 {
     int rv = 1;
-    int nid;
 
     /* Ignore values supported by 1.0.2 for the automatic selection */
     if ((cctx->flags & SSL_CONF_FLAG_FILE)
