@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-EVP_PKEY_get_group_name - get private key group name
+EVP_PKEY_get_group_name - get group name of a key
 
 =head1 SYNOPSIS
 
