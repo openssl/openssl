@@ -114,7 +114,7 @@ jobs:
           name: Test OpenSSL client against BoringSSL server
           command: python3 -m pytest --numprocesses=auto oqs-interop-test/test_full.py --client-type=ossl
 
-  trigger-oqs-demos-ci:
+  trigger-downstream-ci:
     docker:
       - image: cimg/base:2020.01
         auth:
@@ -129,6 +129,14 @@ jobs:
                  --header "Content-Type: application/json" \
                  -d '{ "branch": "main", "parameters": { "new_openssl_commit": true } }' \
                  https://circleci.com/api/v2/project/gh/open-quantum-safe/oqs-demos/pipeline
+      - run:
+          name: Trigger profiling CI
+          command: |
+            curl -u ${BUILD_TRIGGER_TOKEN}: \
+                 -X POST \
+                 --header "Content-Type: application/json" \
+                 -d '{ "branch": "main", "parameters": { "new_openssl_commit": true } }' \
+                 https://circleci.com/api/v2/project/gh/open-quantum-safe/profiling/pipeline
 
 workflows:
   version: 2.1
@@ -157,5 +165,5 @@ workflows:
         - equal: [ OQS-OpenSSL_1_1_1-stable , << pipeline.git.branch >> ]
         - equal: [ true , << pipeline.parameters.run_downstream_tests >> ]
     jobs:
-      - trigger-oqs-demos-ci:
+      - trigger-downstream-ci:
           context: openquantumsafe
