@@ -568,7 +568,7 @@ ERR_load_CONF_strings                   581	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3
 ESS_ISSUER_SERIAL_dup                   582	3_0_0	EXIST::FUNCTION:
 BN_GF2m_mod_exp_arr                     583	3_0_0	EXIST::FUNCTION:EC2M
 ASN1_UTF8STRING_free                    584	3_0_0	EXIST::FUNCTION:
-BN_X931_generate_prime_ex               585	3_0_0	EXIST::FUNCTION:
+BN_X931_generate_prime_ex               585	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 ENGINE_get_RAND                         586	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,ENGINE
 EVP_DecryptInit                         587	3_0_0	EXIST::FUNCTION:
 BN_bin2bn                               588	3_0_0	EXIST::FUNCTION:
@@ -980,7 +980,7 @@ CRYPTO_cbc128_encrypt                   1004	3_0_0	EXIST::FUNCTION:
 i2d_RSAPublicKey_bio                    1005	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 X509_chain_check_suiteb                 1006	3_0_0	EXIST::FUNCTION:
 i2d_OCSP_REQUEST                        1007	3_0_0	EXIST::FUNCTION:OCSP
-BN_X931_generate_Xpq                    1008	3_0_0	EXIST::FUNCTION:
+BN_X931_generate_Xpq                    1008	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 ASN1_item_digest                        1009	3_0_0	EXIST::FUNCTION:
 X509_VERIFY_PARAM_set_trust             1010	3_0_0	EXIST::FUNCTION:
 X509_STORE_CTX_get_error                1011	3_0_0	EXIST::FUNCTION:
@@ -1976,7 +1976,7 @@ EC_KEY_get0_private_key                 2021	3_0_0	EXIST::FUNCTION:EC
 SCT_get0_extensions                     2022	3_0_0	EXIST::FUNCTION:CT
 OPENSSL_LH_node_stats_bio               2023	3_0_0	EXIST::FUNCTION:
 i2d_DIRECTORYSTRING                     2024	3_0_0	EXIST::FUNCTION:
-BN_X931_derive_prime_ex                 2025	3_0_0	EXIST::FUNCTION:
+BN_X931_derive_prime_ex                 2025	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 ENGINE_get_pkey_asn1_meth_str           2026	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,ENGINE
 PKCS7_signatureVerify                   2027	3_0_0	EXIST::FUNCTION:
 CRYPTO_ocb128_new                       2028	3_0_0	EXIST::FUNCTION:OCB
