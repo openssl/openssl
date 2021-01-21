@@ -353,7 +353,7 @@ int common_import(void *keydata, int selection, const OSSL_PARAM params[],
      * following combinations:
      *   - domain parameters (+optional other params)
      *   - public key with associated domain parameters (+optional other params)
-     *   - private key with associated public key and domain parameters
+     *   - private key with associated domain parameters and optional public key
      *         (+optional other params)
      *
      * This means:
@@ -363,12 +363,8 @@ int common_import(void *keydata, int selection, const OSSL_PARAM params[],
      */
     if ((selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) == 0)
         return 0;
-    if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0
-            && (selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) == 0)
-        return 0;
 
-    if ((selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) != 0)
-        ok = ok && ec_group_fromdata(ec, params);
+    ok = ok && ec_group_fromdata(ec, params);
 
     /*
      * sm2_curve: import the keys or domparams only on SM2 Curve
