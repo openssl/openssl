@@ -485,9 +485,9 @@ err:
     return res;
 }
 
-#if !defined(OPENSSL_NO_DH) && !defined(OPENSSL_NO_DSA)
+#if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_DSA)
 /*
- * Test combinations of private, public, missing and private + public key 
+ * Test combinations of private, public, missing and private + public key
  * params to ensure they are all accepted
  */
 static int test_EVP_PKEY_ffc_priv_pub(char *keytype)
@@ -612,7 +612,7 @@ static int test_EVP_PKEY_ffc_priv_pub(char *keytype)
 
     return ret;
 }
-#endif /* !OPENSSL_NO_DH && !OPENSSL_NO_DSA */
+#endif /* !OPENSSL_NO_DH || !OPENSSL_NO_DSA */
 
 static int test_EVP_Enveloped(void)
 {
@@ -1854,7 +1854,7 @@ static int test_DSA_get_set_params(void)
 }
 
 /*
- * Test combinations of private, public, missing and private + public key 
+ * Test combinations of private, public, missing and private + public key
  * params to ensure they are all accepted
  */
 static int test_DSA_priv_pub(void)
@@ -1979,7 +1979,7 @@ static int test_decrypt_null_chunks(void)
 
 #ifndef OPENSSL_NO_DH
 /*
- * Test combinations of private, public, missing and private + public key 
+ * Test combinations of private, public, missing and private + public key
  * params to ensure they are all accepted
  */
 static int test_DH_priv_pub(void)
