@@ -189,6 +189,9 @@ L<openssl-rsa(1)>
 
 The B<-engine> option was deprecated in OpenSSL 3.0.
 
+The B<-conv_form> and B<-no_public> options are no longer supported
+with keys loaded from an engine in OpenSSL 3.0.
+
 =head1 COPYRIGHT
 
 Copyright 2003-2020 The OpenSSL Project Authors. All Rights Reserved.
