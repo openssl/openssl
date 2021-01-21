@@ -277,8 +277,10 @@ int pkey_main(int argc, char **argv)
             BIO_printf(out, "Key is invalid\n");
 
             while ((err = ERR_peek_error()) != 0) {
-                BIO_printf(out, "Detailed error: %s\n",
-                           ERR_reason_error_string(err));
+                const char *reason = ERR_reason_error_string(err);
+
+                if (reason != NULL)
+                    BIO_printf(out, "Detailed error: %s\n", reason);
                 ERR_get_error(); /* remove err from error stack */
             }
             goto end;

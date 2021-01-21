@@ -271,8 +271,10 @@ int rsa_main(int argc, char **argv)
             while ((err = ERR_peek_error()) != 0 &&
                    ERR_GET_LIB(err) == ERR_LIB_RSA &&
                    ERR_GET_REASON(err) != ERR_R_MALLOC_FAILURE) {
+                const char *reason = ERR_reason_error_string(err);
+
                 BIO_printf(out, "RSA key error: %s\n",
-                           ERR_reason_error_string(err));
+                           reason != NULL ? reason : "<unknown reason>");
                 ERR_get_error(); /* remove err from error stack */
             }
         } else if (r == -1) {
