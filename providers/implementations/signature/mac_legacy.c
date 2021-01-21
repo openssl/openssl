@@ -172,8 +172,12 @@ static void *mac_dupctx(void *vpmacctx)
         return NULL;
 
     *dstctx = *srcctx;
+    dstctx->propq = NULL;
     dstctx->key = NULL;
     dstctx->macctx = NULL;
+
+    if (srcctx->propq != NULL && (dstctx->propq = OPENSSL_strdup(srcctx->propq)) == NULL)
+        goto err;
 
     if (srcctx->key != NULL && !ossl_mac_key_up_ref(srcctx->key))
         goto err;
