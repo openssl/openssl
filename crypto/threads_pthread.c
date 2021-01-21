@@ -51,12 +51,15 @@ CRYPTO_RWLOCK *CRYPTO_THREAD_lock_new(void)
         return NULL;
     }
 
+    /*
+     * We don't use recursive mutexes, but try to catch errors if we do.
+     */
     pthread_mutexattr_init(&attr);
-    #if defined(__TANDEM) && defined(_SPT_MODEL_)
-      pthread_mutexattr_setkind_np(&attr,MUTEX_RECURSIVE_NP);
-    #else
-      pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
-    #endif
+#  if defined(NDEBUG) && defined(PTHREAD_MUTEX_ERRORCHECK)
+    pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK);
+# else
+    pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_NORMAL);
+#  endif
 
     if (pthread_mutex_init(lock, &attr) != 0) {
         pthread_mutexattr_destroy(&attr);
@@ -76,8 +79,10 @@ int CRYPTO_THREAD_read_lock(CRYPTO_RWLOCK *lock)
     if (pthread_rwlock_rdlock(lock) != 0)
         return 0;
 # else
-    if (pthread_mutex_lock(lock) != 0)
+    if (pthread_mutex_lock(lock) != 0) {
+        assert(errno != EDEADLK && errno != EBUSY);
         return 0;
+    }
 # endif
 
     return 1;
@@ -89,8 +94,10 @@ int CRYPTO_THREAD_write_lock(CRYPTO_RWLOCK *lock)
     if (pthread_rwlock_wrlock(lock) != 0)
         return 0;
 # else
-    if (pthread_mutex_lock(lock) != 0)
+    if (pthread_mutex_lock(lock) != 0) {
+        assert(errno != EDEADLK && errno != EBUSY);
         return 0;
+    }
 # endif
 
     return 1;
@@ -102,8 +109,10 @@ int CRYPTO_THREAD_unlock(CRYPTO_RWLOCK *lock)
     if (pthread_rwlock_unlock(lock) != 0)
         return 0;
 # else
-    if (pthread_mutex_unlock(lock) != 0)
+    if (pthread_mutex_unlock(lock) != 0) {
+        assert(errno != EPERM);
         return 0;
+    }
 # endif
 
     return 1;
