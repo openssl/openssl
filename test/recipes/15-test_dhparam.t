@@ -76,7 +76,7 @@ my $num_tests = scalar @valid;# + scalar @invalid;
 plan tests => 2 * $num_tests;
 
  SKIP: {
-    skip "Skipping DH tests", 2 * $num_tests
+    skip "Skipping DH tests", $num_tests
         if disabled('deprecated-3.0');
 
     foreach (@valid) {
