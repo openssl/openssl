@@ -232,8 +232,9 @@ static int rsa_setkey(RSA** key, unsigned char *ctext, int idx)
     return clen;
 }
 
-static int test_rsa_simple(int idx, int pad_type, unsigned char *ctext_ex,
-                           int *clen, RSA **retkey)
+static int test_rsa_simple(int idx, int en_pad_type, int de_pad_type,
+                           int success, unsigned char *ctext_ex, int *clen,
+                           RSA **retkey)
 {
     int ret = 0;
     RSA *key;
@@ -249,13 +250,18 @@ static int test_rsa_simple(int idx, int pad_type, unsigned char *ctext_ex,
     if (clen != NULL)
         *clen = clentmp;
 
-    num = RSA_public_encrypt(plen, ptext_ex, ctext, key, pad_type);
+    num = RSA_public_encrypt(plen, ptext_ex, ctext, key, en_pad_type);
     if (!TEST_int_eq(num, clentmp))
         goto err;
 
-    num = RSA_private_decrypt(num, ctext, ptext, key, pad_type);
-    if (!TEST_mem_eq(ptext, num, ptext_ex, plen))
-        goto err;
+    num = RSA_private_decrypt(num, ctext, ptext, key, de_pad_type);
+    if (success) {
+        if (!TEST_int_gt(num, 0) || !TEST_mem_eq(ptext, num, ptext_ex, plen))
+            goto err;
+    } else {
+        if (!TEST_int_lt(num, 0))
+            goto err;
+    }
 
     ret = 1;
     if (retkey != NULL) {
@@ -269,12 +275,30 @@ err:
 
 static int test_rsa_pkcs1(int idx)
 {
-    return test_rsa_simple(idx, RSA_PKCS1_PADDING, NULL, NULL, NULL);
+    return test_rsa_simple(idx, RSA_PKCS1_PADDING, RSA_PKCS1_PADDING, 1, NULL,
+                           NULL, NULL);
 }
 
 static int test_rsa_sslv23(int idx)
 {
-    return test_rsa_simple(idx, RSA_SSLV23_PADDING, NULL, NULL, NULL);
+    int ret;
+
+    /* Simulate an SSLv2 only client talking to a TLS capable server */
+    ret = test_rsa_simple(idx, RSA_PKCS1_PADDING, RSA_SSLV23_PADDING, 1, NULL,
+                          NULL, NULL);
+
+    /* Simulate a TLS capable client talking to an SSLv2 only server */
+    ret &= test_rsa_simple(idx, RSA_SSLV23_PADDING, RSA_PKCS1_PADDING, 1, NULL,
+                           NULL, NULL);
+
+    /*
+     * Simulate a TLS capable client talking to a TLS capable server. Should
+     * fail due to detecting a rollback attack.
+     */
+    ret &= test_rsa_simple(idx, RSA_SSLV23_PADDING, RSA_SSLV23_PADDING, 0, NULL,
+                           NULL, NULL);
+
+    return ret;
 }
 
 static int test_rsa_oaep(int idx)
@@ -290,7 +314,8 @@ static int test_rsa_oaep(int idx)
     int num;
     int n;
 
-    if (!test_rsa_simple(idx, RSA_PKCS1_OAEP_PADDING, ctext_ex, &clen, &key))
+    if (!test_rsa_simple(idx, RSA_PKCS1_OAEP_PADDING, RSA_PKCS1_OAEP_PADDING, 1,
+                         ctext_ex, &clen, &key))
         goto err;
 
     plen = sizeof(ptext_ex) - 1;
