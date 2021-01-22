@@ -63,7 +63,7 @@ I<encoder>, and when the count reaches zero, frees it.
 OSSL_ENCODER_provider() returns the provider of the given
 I<encoder>.
 
-OSSL_ENCODER_provider() returns the property definition associated
+OSSL_ENCODER_properties() returns the property definition associated
 with the given I<encoder>.
 
 OSSL_ENCODER_is_a() checks if I<encoder> is an implementation of an
