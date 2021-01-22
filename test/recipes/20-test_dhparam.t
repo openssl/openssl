@@ -36,7 +36,7 @@ sub checkdhparams {
         #Text file. Check it looks like PEM
         open(PEMFILE, '<', $file) or die $!;
         if (my $firstline = <PEMFILE>) {
-            $firstline =~ s/\r|\n//g;
+            $firstline =~ s/\R$//;
             if ($firstline eq "-----BEGIN DH PARAMETERS-----") {
                 $pemtype = "PKCS3";
             } elsif ($firstline eq "-----BEGIN X9.42 DH PARAMETERS-----") {
