@@ -1221,9 +1221,11 @@ int EVP_PKEY_get_group_name(const EVP_PKEY *pkey, char *gname, size_t gname_sz,
 #ifndef OPENSSL_NO_EC
         case EVP_PKEY_EC:
             {
-                EC_KEY *ec = EVP_PKEY_get0_EC_KEY(pkey);
-                int nid = EC_GROUP_get_curve_name(EC_KEY_get0_group(ec));
+                const EC_GROUP *grp = EC_KEY_get0_group(EVP_PKEY_get0_EC_KEY(pkey));
+                int nid = NID_undef;
 
+                if (grp != NULL)
+                    nid = EC_GROUP_get_curve_name(grp);
                 if (nid != NID_undef)
                     name = ec_curve_nid2name(nid);
             }
@@ -2271,6 +2273,8 @@ int EVP_PKEY_get_field_type(const EVP_PKEY *pkey)
         if (ec == NULL)
             return 0;
         grp = EC_KEY_get0_group(ec);
+        if (grp == NULL)
+            return 0;
 
         return EC_GROUP_get_field_type(grp);
 #else

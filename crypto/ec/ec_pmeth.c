@@ -172,6 +172,9 @@ static int pkey_ec_derive(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *keylen)
     if (!key) {
         const EC_GROUP *group;
         group = EC_KEY_get0_group(eckey);
+
+        if (group == NULL)
+            return 0;
         *keylen = (EC_GROUP_get_degree(group) + 7) / 8;
         return 1;
     }
