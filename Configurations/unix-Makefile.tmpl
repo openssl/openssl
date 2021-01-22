@@ -654,20 +654,22 @@ install_dev: install_runtime_libs
 		s1=`echo "$$s" | cut -f1 -d";"`; \
 		s2=`echo "$$s" | cut -f2 -d";"`; \
 		s3=`echo "$$s" | cut -f3 -d";"`; \
-		fn1=`basename $$s1`; \
-		fn2=`basename $$s2`; \
-		fn3=`basename $$s3`; \
+		fn1=`basename "$$s1"`; \
+		fn2=`basename "$$s2"`; \
+		fn3=`basename "$$s3"`; \
 		: {- output_off(); output_on() unless windowsdll() or sharedaix(); "" -}; \
 		if [ "$$fn2" != "" ]; then \
 			$(ECHO) "link $(DESTDIR)$(libdir)/$$fn2 -> $(DESTDIR)$(libdir)/$$fn1"; \
 			ln -sf $$fn1 $(DESTDIR)$(libdir)/$$fn2; \
 		fi; \
 		: {- output_off() unless windowsdll() or sharedaix(); output_on() if windowsdll(); "" -}; \
-		$(ECHO) "install $$s3 -> $(DESTDIR)$(libdir)/$$fn3"; \
-		cp $$s3 $(DESTDIR)$(libdir)/$$fn3.new; \
-		chmod 755 $(DESTDIR)$(libdir)/$$fn3.new; \
-		mv -f $(DESTDIR)$(libdir)/$$fn3.new \
-		      $(DESTDIR)$(libdir)/$$fn3; \
+		if [ "$$fn3" != "" ]; then \
+			$(ECHO) "install $$s3 -> $(DESTDIR)$(libdir)/$$fn3"; \
+			cp $$s3 $(DESTDIR)$(libdir)/$$fn3.new; \
+			chmod 755 $(DESTDIR)$(libdir)/$$fn3.new; \
+			mv -f $(DESTDIR)$(libdir)/$$fn3.new \
+			      $(DESTDIR)$(libdir)/$$fn3; \
+		fi; \
 		: {- output_off() if windowsdll(); output_on() if sharedaix(); "" -}; \
 		a=$(DESTDIR)$(libdir)/$$fn2; \
 		$(ECHO) "install $$s1 -> $$a"; \
@@ -721,9 +723,9 @@ uninstall_dev: uninstall_runtime_libs
 		s1=`echo "$$s" | cut -f1 -d";"`; \
 		s2=`echo "$$s" | cut -f2 -d";"`; \
 		s3=`echo "$$s" | cut -f3 -d";"`; \
-		fn1=`basename $$s1`; \
-		fn2=`basename $$s2`; \
-		fn3=`basename $$s3`; \
+		fn1=`basename "$$s1"`; \
+		fn2=`basename "$$s2"`; \
+		fn3=`basename "$$s3"`; \
 		: {- output_off() if windowsdll(); "" -}; \
 		$(ECHO) "$(RM) $(DESTDIR)$(libdir)/$$fn1"; \
 		$(RM) $(DESTDIR)$(libdir)/$$fn1; \
@@ -732,8 +734,10 @@ uninstall_dev: uninstall_runtime_libs
 			$(RM) $(DESTDIR)$(libdir)/$$fn2; \
 		fi; \
 		: {- output_on() if windowsdll(); "" -}{- output_off() unless windowsdll(); "" -}; \
-		$(ECHO) "$(RM) $(DESTDIR)$(libdir)/$$fn3"; \
-		$(RM) $(DESTDIR)$(libdir)/$$fn3; \
+		if [ -n "$$fn3" ]; then \
+			$(ECHO) "$(RM) $(DESTDIR)$(libdir)/$$fn3"; \
+			$(RM) $(DESTDIR)$(libdir)/$$fn3; \
+		fi; \
 		: {- output_on() unless windowsdll(); "" -}; \
 	done
 	@ : {- output_on() if $disabled{shared}; "" -}
