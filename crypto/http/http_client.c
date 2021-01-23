@@ -68,11 +68,10 @@ struct ossl_http_req_ctx_st {
 #define OHS_HEADERS         2 /* MIME headers being read */
 #define OHS_ASN1_HEADER     3 /* HTTP initial header (tag+length) being read */
 #define OHS_CONTENT         4 /* HTTP content octets being read */
-#define OHS_WRITE_INIT     (5 | OHS_NOREAD) /* 1st call: ready to start I/O */
-#define OHS_WRITE          (6 | OHS_NOREAD) /* Request being sent */
-#define OHS_FLUSH          (7 | OHS_NOREAD) /* Request being flushed */
-#define OHS_DONE           (8 | OHS_NOREAD) /* Completed */
-#define OHS_HTTP_HEADER    (9 | OHS_NOREAD) /* Headers set, w/o final \r\n */
+#define OHS_WRITE          (5 | OHS_NOREAD) /* Request being sent */
+#define OHS_FLUSH          (6 | OHS_NOREAD) /* Request being flushed */
+#define OHS_DONE           (7 | OHS_NOREAD) /* Completed */
+#define OHS_HTTP_HEADER    (8 | OHS_NOREAD) /* Headers set, w/o final \r\n */
 
 OSSL_HTTP_REQ_CTX *OSSL_HTTP_REQ_CTX_new(BIO *wbio, BIO *rbio,
                                          int method_POST, int maxline,
@@ -219,7 +218,7 @@ static int OSSL_HTTP_REQ_CTX_content(OSSL_HTTP_REQ_CTX *rctx,
 
     if ((req_len = BIO_get_mem_data(req_mem, &req)) <= 0)
         return 0;
-    rctx->state = OHS_WRITE_INIT;
+    rctx->state = OHS_WRITE;
 
     return BIO_printf(rctx->mem, "Content-Length: %ld\r\n\r\n", req_len) > 0
         && BIO_write(rctx->mem, req, req_len) == (int)req_len;
@@ -452,15 +451,11 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
             rctx->state = OHS_ERROR;
             return 0;
         }
-        rctx->state = OHS_WRITE_INIT;
-
-        /* fall thru */
-    case OHS_WRITE_INIT:
-        n_to_send = BIO_get_mem_data(rctx->mem, NULL);
         rctx->state = OHS_WRITE;
 
         /* fall thru */
     case OHS_WRITE:
+        n_to_send = BIO_get_mem_data(rctx->mem, NULL);
         n = BIO_get_mem_data(rctx->mem, &p);
 
         i = BIO_write(rctx->wbio, p + (n - n_to_send), n_to_send);
