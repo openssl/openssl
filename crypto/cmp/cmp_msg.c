@@ -218,7 +218,7 @@ static const X509_NAME *determine_subj(OSSL_CMP_CTX *ctx,
                                        int for_KUR)
 {
     if (ctx->subjectName != NULL)
-        return ctx->subjectName;
+        return IS_NULL_DN(ctx->subjectName) ? NULL : ctx->subjectName;
 
     if (ref_subj != NULL && (for_KUR || !HAS_SAN(ctx)))
         /*
@@ -241,7 +241,8 @@ OSSL_CRMF_MSG *OSSL_CMP_CTX_setup_CRM(OSSL_CMP_CTX *ctx, int for_KUR, int rid)
         refcert != NULL ? X509_get_subject_name(refcert) : NULL;
     const X509_NAME *subject = determine_subj(ctx, ref_subj, for_KUR);
     const X509_NAME *issuer = ctx->issuer != NULL || refcert == NULL
-        ? ctx->issuer : X509_get_issuer_name(refcert);
+        ? (IS_NULL_DN(ctx->issuer) ? NULL : ctx->issuer)
+        : X509_get_issuer_name(refcert);
     int crit = ctx->setSubjectAltNameCritical || subject == NULL;
     /* RFC5280: subjectAltName MUST be critical if subject is null */
     X509_EXTENSIONS *exts = NULL;

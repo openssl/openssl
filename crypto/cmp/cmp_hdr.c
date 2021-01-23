@@ -72,15 +72,11 @@ ASN1_OCTET_STRING *OSSL_CMP_HDR_get0_recipNonce(const OSSL_CMP_PKIHEADER *hdr)
     return hdr->recipNonce;
 }
 
+/* a NULL-DN as an empty sequence of RDNs */
 int ossl_cmp_general_name_is_NULL_DN(GENERAL_NAME *name)
 {
-    X509_NAME *null = X509_NAME_new();
-    int res = name == NULL || null == NULL
-        || (name->type == GEN_DIRNAME
-                && X509_NAME_cmp(name->d.directoryName, null) == 0);
-
-    X509_NAME_free(null);
-    return res;
+    return name == NULL
+        || (name->type == GEN_DIRNAME && IS_NULL_DN(name->d.directoryName));
 }
 
 /* assign to *tgt a copy of src (which may be NULL to indicate an empty DN) */
@@ -273,6 +269,20 @@ int ossl_cmp_hdr_has_implicitConfirm(const OSSL_CMP_PKIHEADER *hdr)
  */
 int ossl_cmp_hdr_set_transactionID(OSSL_CMP_CTX *ctx, OSSL_CMP_PKIHEADER *hdr)
 {
+    if (ctx->transactionID == NULL) {
+        char *tid;
+
+        if (!set_random(&ctx->transactionID, ctx,
+                        OSSL_CMP_TRANSACTIONID_LENGTH))
+            return 0;
+        tid = OPENSSL_buf2hexstr(ctx->transactionID->data,
+                                 ctx->transactionID->length);
+        if (tid != NULL)
+            ossl_cmp_log1(DEBUG, ctx,
+                          "Starting new transaction with ID=%s", tid);
+        OPENSSL_free(tid);
+    }
+
     if (ctx->transactionID == NULL
         && !set_random(&ctx->transactionID, ctx, OSSL_CMP_TRANSACTIONID_LENGTH))
         return 0;
