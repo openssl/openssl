@@ -129,7 +129,9 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: extra preparations
-      run: mkdir ./install
+      run: |
+        mkdir ./build
+        mkdir ./install
     - name: config
       run: ../config --strict-warnings --prefix=$(cd ../install; pwd) && perl configdata.pm --dump
       working-directory: ./build
