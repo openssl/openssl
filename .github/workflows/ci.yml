@@ -128,11 +128,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-      working-directory: ./source
+    - name: extra preparations
+      run: mkdir ./install
     - name: config
-      run: |
-        mkdir ../install
-        ../source/config --strict-warnings --prefix=$(cd ../install; pwd) && perl configdata.pm --dump
+      run: ../config --strict-warnings --prefix=$(cd ../install; pwd) && perl configdata.pm --dump
       working-directory: ./build
     - name: make
       run: make -s -j4
