@@ -123,3 +123,24 @@ jobs:
       run: make -s -j4
     - name: make test
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
+
+  out-of-source-and-install:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: extra preparations
+      run: |
+        mkdir ./build
+        mkdir ./install
+    - name: config
+      run: ../config --strict-warnings --prefix=$(cd ../install; pwd) && perl configdata.pm --dump
+      working-directory: ./build
+    - name: make
+      run: make -s -j4
+      working-directory: ./build
+    - name: make test
+      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
+      working-directory: ./build
+    - name: make install
+      run: make install
+      working-directory: ./build
