@@ -25,6 +25,8 @@
 # include <openssl/x509v3.h>
 # include "crypto/x509.h"
 
+#define IS_NULL_DN(name) (X509_NAME_get_entry(name, 0) == NULL)
+
 /*
  * this structure is used to store the context for CMP sessions
  */
@@ -778,6 +780,7 @@ int ossl_cmp_print_log(OSSL_CMP_severity level, const OSSL_CMP_CTX *ctx,
 # define ossl_cmp_warn(ctx, msg)  ossl_cmp_log(WARN,  ctx, msg)
 # define ossl_cmp_info(ctx, msg)  ossl_cmp_log(INFO,  ctx, msg)
 # define ossl_cmp_debug(ctx, msg) ossl_cmp_log(DEBUG, ctx, msg)
+# define ossl_cmp_trace(ctx, msg) ossl_cmp_log(TRACE, ctx, msg)
 int ossl_cmp_ctx_set0_validatedSrvCert(OSSL_CMP_CTX *ctx, X509 *cert);
 int ossl_cmp_ctx_set_status(OSSL_CMP_CTX *ctx, int status);
 int ossl_cmp_ctx_set0_statusString(OSSL_CMP_CTX *ctx,
