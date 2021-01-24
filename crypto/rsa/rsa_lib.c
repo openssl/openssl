@@ -1233,7 +1233,7 @@ int EVP_PKEY_CTX_get0_rsa_oaep_label(EVP_PKEY_CTX *ctx, unsigned char **label)
     if (!EVP_PKEY_CTX_get_params(ctx, rsa_params))
         return -1;
 
-    labellen = params[0].return_size;
+    labellen = rsa_params[0].return_size;
     if (labellen > INT_MAX)
         return -1;
 

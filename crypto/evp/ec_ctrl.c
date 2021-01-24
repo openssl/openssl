@@ -385,7 +385,7 @@ int EVP_PKEY_CTX_get0_ecdh_kdf_ukm(EVP_PKEY_CTX *ctx, unsigned char **pukm)
 {
     size_t ukmlen;
     int ret;
-    OSSL_PARAM params[3], *p = params;
+    OSSL_PARAM params[2], *p = params;
 
     ret = evp_pkey_ctx_getset_ecdh_param_checks(ctx);
     if (ret != 1)
@@ -400,8 +400,6 @@ int EVP_PKEY_CTX_get0_ecdh_kdf_ukm(EVP_PKEY_CTX *ctx, unsigned char **pukm)
 
     *p++ = OSSL_PARAM_construct_octet_ptr(OSSL_EXCHANGE_PARAM_KDF_UKM,
                                           (void **)pukm, 0);
-    *p++ = OSSL_PARAM_construct_size_t(OSSL_EXCHANGE_PARAM_KDF_UKM_LEN,
-                                       &ukmlen);
     *p++ = OSSL_PARAM_construct_end();
 
     ret = evp_pkey_ctx_get_params_strict(ctx, params);
@@ -413,6 +411,7 @@ int EVP_PKEY_CTX_get0_ecdh_kdf_ukm(EVP_PKEY_CTX *ctx, unsigned char **pukm)
         return -1;
     }
 
+    ukmlen = params[0].return_size;
     if (ukmlen > INT_MAX)
         return -1;
 
