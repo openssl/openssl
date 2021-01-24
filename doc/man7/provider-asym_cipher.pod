@@ -219,10 +219,6 @@ Gets or sets the properties to use when fetching the MGF1 digest algorithm.
 
 Gets or sets the OAEP label used when OAEP padding is in use.
 
-=item "oaep-label-len" (B<OSSL_ASYM_CIPHER_PARAM_OAEP_LABEL_LEN>) <size_t>
-
-Gets the length of an OAEP label when OAEP padding is in use.
-
 =item "tls-client-version" (B<OSSL_ASYM_CIPHER_PARAM_TLS_CLIENT_VERSION>) <unsigned integer>
 
 The TLS protocol version first requested by the client. See

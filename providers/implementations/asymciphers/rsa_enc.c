@@ -382,11 +382,9 @@ static int rsa_get_ctx_params(void *vprsactx, OSSL_PARAM *params)
     }
 
     p = OSSL_PARAM_locate(params, OSSL_ASYM_CIPHER_PARAM_OAEP_LABEL);
-    if (p != NULL && !OSSL_PARAM_set_octet_ptr(p, prsactx->oaep_label, 0))
-        return 0;
-
-    p = OSSL_PARAM_locate(params, OSSL_ASYM_CIPHER_PARAM_OAEP_LABEL_LEN);
-    if (p != NULL && !OSSL_PARAM_set_size_t(p, prsactx->oaep_labellen))
+    if (p != NULL &&
+        !OSSL_PARAM_set_octet_ptr(p, prsactx->oaep_label,
+                                  prsactx->oaep_labellen))
         return 0;
 
     p = OSSL_PARAM_locate(params, OSSL_ASYM_CIPHER_PARAM_TLS_CLIENT_VERSION);
@@ -406,7 +404,6 @@ static const OSSL_PARAM known_gettable_ctx_params[] = {
     OSSL_PARAM_utf8_string(OSSL_ASYM_CIPHER_PARAM_MGF1_DIGEST, NULL, 0),
     OSSL_PARAM_DEFN(OSSL_ASYM_CIPHER_PARAM_OAEP_LABEL, OSSL_PARAM_OCTET_PTR,
                     NULL, 0),
-    OSSL_PARAM_size_t(OSSL_ASYM_CIPHER_PARAM_OAEP_LABEL_LEN, NULL),
     OSSL_PARAM_uint(OSSL_ASYM_CIPHER_PARAM_TLS_CLIENT_VERSION, NULL),
     OSSL_PARAM_uint(OSSL_ASYM_CIPHER_PARAM_TLS_NEGOTIATED_VERSION, NULL),
     OSSL_PARAM_END
