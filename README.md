@@ -3,7 +3,7 @@ Welcome to the OpenSSL Project
 
 [![openssl logo]][www.openssl.org]
 
-[![travis badge]][travis jobs]
+[![github actions ci badge]][github actions ci]
 [![appveyor badge]][appveyor jobs]
 
 OpenSSL is a robust, commercial-grade, full-featured Open Source Toolkit
@@ -206,13 +206,13 @@ All rights reserved.
     doc/images/openssl.svg
     "OpenSSL Logo"
 
-[travis badge]:
-    <https://travis-ci.com/openssl/openssl.svg?branch=master>
-    "Travis Build Status"
+[github actions ci badge]:
+    <https://github.com/openssl/openssl/workflows/GitHub%20CI/badge.svg>
+    "GitHub Actions CI Status"
 
-[travis jobs]:
-    <https://travis-ci.com/openssl/openssl>
-    "Travis Jobs"
+[github actions ci]:
+    <https://github.com/openssl/openssl/actions?query=workflow%3A%22GitHub+CI%22>
+    "GitHub Actions CI"
 
 [appveyor badge]:
     <https://ci.appveyor.com/api/projects/status/8e10o7xfrg73v98f/branch/master?svg=true>
