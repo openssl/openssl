@@ -427,7 +427,6 @@ extern "C" {
  * EVP_PKEY_CTX_{set0,get0}_rsa_oaep_label().
  */
 #define OSSL_EXCHANGE_PARAM_KDF_UKM               "kdf-ukm" /* see note above */
-#define OSSL_EXCHANGE_PARAM_KDF_UKM_LEN           "kdf-ukm-len" /* size_t */
 
 /* Signature parameters */
 #define OSSL_SIGNATURE_PARAM_ALGORITHM_ID       "algorithm-id"
@@ -452,7 +451,6 @@ extern "C" {
 #define OSSL_ASYM_CIPHER_PARAM_OAEP_DIGEST              OSSL_ALG_PARAM_DIGEST
 #define OSSL_ASYM_CIPHER_PARAM_OAEP_DIGEST_PROPS        "digest-props"
 #define OSSL_ASYM_CIPHER_PARAM_OAEP_LABEL               "oaep-label"
-#define OSSL_ASYM_CIPHER_PARAM_OAEP_LABEL_LEN           "oaep-label-len"
 #define OSSL_ASYM_CIPHER_PARAM_TLS_CLIENT_VERSION       "tls-client-version"
 #define OSSL_ASYM_CIPHER_PARAM_TLS_NEGOTIATED_VERSION   "tls-negotiated-version"
 

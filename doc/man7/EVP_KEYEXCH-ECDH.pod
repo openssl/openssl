@@ -62,11 +62,6 @@ Function associated with the given key exchange ctx.
 Gets a pointer to the User Key Material to be used as part of the selected
 Key Derivation Function associated with the given key exchange ctx.
 
-=item "kdf-ukm-len" (B<OSSL_EXCHANGE_PARAM_KDF_UKM_LEN>) <size_t>
-
-Gets the size of the User Key Material to be used as part of the selected
-Key Derivation Function associated with the given key exchange ctx.
-
 =back
 
 =head1 EXAMPLES

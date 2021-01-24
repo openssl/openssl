@@ -395,7 +395,6 @@ static const OSSL_PARAM known_gettable_ctx_params[] = {
     OSSL_PARAM_size_t(OSSL_EXCHANGE_PARAM_KDF_OUTLEN, NULL),
     OSSL_PARAM_DEFN(OSSL_EXCHANGE_PARAM_KDF_UKM, OSSL_PARAM_OCTET_PTR,
                     NULL, 0),
-    OSSL_PARAM_size_t(OSSL_EXCHANGE_PARAM_KDF_UKM_LEN, NULL),
     OSSL_PARAM_END
 };
 
@@ -444,11 +443,8 @@ static int dh_get_ctx_params(void *vpdhctx, OSSL_PARAM params[])
         return 0;
 
     p = OSSL_PARAM_locate(params, OSSL_EXCHANGE_PARAM_KDF_UKM);
-    if (p != NULL && !OSSL_PARAM_set_octet_ptr(p, pdhctx->kdf_ukm, 0))
-        return 0;
-
-    p = OSSL_PARAM_locate(params, OSSL_EXCHANGE_PARAM_KDF_UKM_LEN);
-    if (p != NULL && !OSSL_PARAM_set_size_t(p, pdhctx->kdf_ukmlen))
+    if (p != NULL
+        && !OSSL_PARAM_set_octet_ptr(p, pdhctx->kdf_ukm, pdhctx->kdf_ukmlen))
         return 0;
 
     p = OSSL_PARAM_locate(params, OSSL_KDF_PARAM_CEK_ALG);
