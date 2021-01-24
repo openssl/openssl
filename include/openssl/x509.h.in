@@ -1066,6 +1066,14 @@ int PKCS8_pkey_set0(PKCS8_PRIV_KEY_INFO *priv, ASN1_OBJECT *aobj,
 int PKCS8_pkey_get0(const ASN1_OBJECT **ppkalg,
                     const unsigned char **pk, int *ppklen,
                     const X509_ALGOR **pa, const PKCS8_PRIV_KEY_INFO *p8);
+int PKCS8_pkey_set0_ex(PKCS8_PRIV_KEY_INFO *priv, ASN1_OBJECT *aobj,
+                       int version, int ptype, void *pval,
+                       unsigned char *privenc, int privenclen,
+                       unsigned char *pubenc, int pubenclen);
+int PKCS8_pkey_get0_ex(const ASN1_OBJECT **ppkalg,
+                       const unsigned char **pprivk, int *pprivklen,
+                       const unsigned char **ppubk, int *ppubklen,
+                       const X509_ALGOR **pa, const PKCS8_PRIV_KEY_INFO *p8);
 
 const STACK_OF(X509_ATTRIBUTE) *
 PKCS8_pkey_get0_attrs(const PKCS8_PRIV_KEY_INFO *p8);

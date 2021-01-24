@@ -286,12 +286,16 @@ struct x509_store_ctx_st {      /* X509_STORE_CTX */
 };
 
 /* PKCS#8 private key info structure */
-
+/*
+ * According to RFC 5958 PrivateKeyInfo ::= OneAsymmetricKey
+ * We don't rename it for backward compatibility but want to have it greppable
+ */
 struct pkcs8_priv_key_info_st {
     ASN1_INTEGER *version;
     X509_ALGOR *pkeyalg;
     ASN1_OCTET_STRING *pkey;
     STACK_OF(X509_ATTRIBUTE) *attributes;
+    ASN1_BIT_STRING *pubkey;
 };
 
 struct X509_sig_st {
