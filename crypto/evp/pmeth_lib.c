@@ -135,31 +135,6 @@ EVP_PKEY_METHOD *EVP_PKEY_meth_new(int id, int flags)
     return pmeth;
 }
 
-/* Three possible states: */
-# define EVP_PKEY_STATE_UNKNOWN         0
-# define EVP_PKEY_STATE_LEGACY          1
-# define EVP_PKEY_STATE_PROVIDER        2
-
-static int evp_pkey_ctx_state(EVP_PKEY_CTX *ctx)
-{
-    if (ctx->operation == EVP_PKEY_OP_UNDEFINED)
-        return EVP_PKEY_STATE_UNKNOWN;
-
-    if ((EVP_PKEY_CTX_IS_DERIVE_OP(ctx)
-         && ctx->op.kex.exchprovctx != NULL)
-        || (EVP_PKEY_CTX_IS_SIGNATURE_OP(ctx)
-            && ctx->op.sig.sigprovctx != NULL)
-        || (EVP_PKEY_CTX_IS_ASYM_CIPHER_OP(ctx)
-            && ctx->op.ciph.ciphprovctx != NULL)
-        || (EVP_PKEY_CTX_IS_GEN_OP(ctx)
-            && ctx->op.keymgmt.genctx != NULL)
-        || (EVP_PKEY_CTX_IS_KEM_OP(ctx)
-            && ctx->op.encap.kemprovctx != NULL))
-        return EVP_PKEY_STATE_PROVIDER;
-
-    return EVP_PKEY_STATE_LEGACY;
-}
-
 static void help_get_legacy_alg_type_from_keymgmt(const char *keytype,
                                                   void *arg)
 {
@@ -178,6 +153,26 @@ static int get_legacy_alg_type_from_keymgmt(const EVP_KEYMGMT *keymgmt)
     return type;
 }
 #endif /* FIPS_MODULE */
+
+int evp_pkey_ctx_state(const EVP_PKEY_CTX *ctx)
+{
+    if (ctx->operation == EVP_PKEY_OP_UNDEFINED)
+        return EVP_PKEY_STATE_UNKNOWN;
+
+    if ((EVP_PKEY_CTX_IS_DERIVE_OP(ctx)
+         && ctx->op.kex.exchprovctx != NULL)
+        || (EVP_PKEY_CTX_IS_SIGNATURE_OP(ctx)
+            && ctx->op.sig.sigprovctx != NULL)
+        || (EVP_PKEY_CTX_IS_ASYM_CIPHER_OP(ctx)
+            && ctx->op.ciph.ciphprovctx != NULL)
+        || (EVP_PKEY_CTX_IS_GEN_OP(ctx)
+            && ctx->op.keymgmt.genctx != NULL)
+        || (EVP_PKEY_CTX_IS_KEM_OP(ctx)
+            && ctx->op.encap.kemprovctx != NULL))
+        return EVP_PKEY_STATE_PROVIDER;
+
+    return EVP_PKEY_STATE_LEGACY;
+}
 
 static EVP_PKEY_CTX *int_ctx_new(OSSL_LIB_CTX *libctx,
                                  EVP_PKEY *pkey, ENGINE *e,

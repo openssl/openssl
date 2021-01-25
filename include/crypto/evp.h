@@ -858,4 +858,10 @@ EVP_PKEY *evp_privatekey_from_binary(int keytype, EVP_PKEY **a,
                                      const unsigned char **pp, long length,
                                      OSSL_LIB_CTX *libctx, const char *propq);
 
+/* Three possible states: */
+# define EVP_PKEY_STATE_UNKNOWN         0
+# define EVP_PKEY_STATE_LEGACY          1
+# define EVP_PKEY_STATE_PROVIDER        2
+int evp_pkey_ctx_state(const EVP_PKEY_CTX *ctx);
+
 #endif /* OSSL_CRYPTO_EVP_H */
