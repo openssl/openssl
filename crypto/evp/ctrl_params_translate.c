@@ -89,9 +89,11 @@ struct translation_st;           /* Forwarding */
  *                              The return value from the fixup_args call
  *                              with the POST_CTRL_TO_PARAMS state becomes
  *                              the return value back to EVP_PKEY_CTX_ctrl().
+ *
  * CLEANUP_CTRL_TO_PARAMS       The cleanup_args functions has been called
  *                              from EVP_PKEY_CTX_ctrl(), to clean up what
  *                              the fixup_args function has done, if needed.
+ *
  *
  * PRE_CTRL_STR_TO_PARAMS       The fixup_args function has been called
  * POST_CTRL_STR_TO_PARAMS      from EVP_PKEY_CTX_ctrl_str(), to help with
@@ -111,6 +113,7 @@ struct translation_st;           /* Forwarding */
  *                              With the POST_CTRL_STR_TO_PARAMS state,
  *                              the fixup_args function is only expected
  *                              to return a value.
+ *
  * CLEANUP_CTRL_STR_TO_PARAMS   The cleanup_args functions has been called
  *                              from EVP_PKEY_CTX_ctrl_str(), to clean up
  *                              what the fixup_args function has done, if
@@ -136,6 +139,7 @@ struct translation_st;           /* Forwarding */
  *                              fixup_args function is expected to
  *                              modify the passed |*params| in whatever
  *                              way necessary, when |action_type == GET|.
+ *
  * CLEANUP_PARAMS_TO_CTRL       The cleanup_args functions has been called
  *                              from EVP_PKEY_CTX_get_params() or
  *                              EVP_PKEY_CTX_set_params(), to clean up what
@@ -198,7 +202,7 @@ struct translation_ctx_st {
      */
 
     /*
-     * copy of the ctrl-style void* argument, if the the fixup_args function
+     * Copy of the ctrl-style void* argument, if the the fixup_args function
      * needs to manipulate |p2| but wants to remember original.
      */
     void *orig_p2;
