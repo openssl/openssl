@@ -73,12 +73,12 @@ OSSL_ENCODER_number() returns the internal dynamic number assigned to
 the given I<encoder>.
 
 OSSL_ENCODER_names_do_all() traverses all names for the given
-I<encoder>, and calls I<fn> with each name and I<data>.
+I<encoder>, and calls I<fn> with each name and I<data> as arguments.
 
 OSSL_ENCODER_do_all_provided() traverses all encoder
 implementations by all activated providers in the library context
 I<libctx>, and for each of the implementations, calls I<fn> with the
-implementation method and I<data> as arguments.
+implementation method and I<arg> as arguments.
 
 OSSL_ENCODER_gettable_params() returns an L<OSSL_PARAM(3)>
 array of parameter descriptors.
