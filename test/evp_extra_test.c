@@ -2415,6 +2415,47 @@ err:
     return ret;
 }
 
+#ifndef OPENSSL_NO_EC
+static int ecpub_nids[] = { NID_brainpoolP256r1, NID_X9_62_prime256v1,
+    NID_secp384r1, NID_secp521r1, NID_sect233k1, NID_sect233r1, NID_sect283r1,
+    NID_sect409k1, NID_sect409r1, NID_sect571k1, NID_sect571r1,
+    NID_brainpoolP384r1, NID_brainpoolP512r1};
+
+static int test_ecpub(int idx)
+{
+    int ret = 0, len;
+    int nid;
+    unsigned char buf[1024];
+    unsigned char *p;
+    EVP_PKEY *pkey = NULL;
+    EVP_PKEY_CTX *ctx = NULL;
+
+    nid = ecpub_nids[idx];
+
+    ctx = EVP_PKEY_CTX_new_id(EVP_PKEY_EC, NULL);
+    if (!TEST_ptr(ctx)
+        || !TEST_true(EVP_PKEY_keygen_init(ctx))
+        || !TEST_true(EVP_PKEY_CTX_set_ec_paramgen_curve_nid(ctx, nid))
+        || !TEST_true(EVP_PKEY_keygen(ctx, &pkey)))
+        goto done;
+    len = i2d_PublicKey(pkey, NULL);
+    if (!TEST_int_ge(len, 1)
+        || !TEST_int_lt(len, 1024))
+        goto done;
+    p = buf;
+    len = i2d_PublicKey(pkey, &p);
+    if (!TEST_int_ge(len, 1))
+        goto done;
+
+    ret = 1;
+
+ done:
+    EVP_PKEY_CTX_free(ctx);
+    EVP_PKEY_free(pkey);
+    return ret;
+}
+#endif
+
 static int test_EVP_rsa_pss_with_keygen_bits(void)
 {
     int ret;
@@ -2556,6 +2597,9 @@ int setup_tests(void)
     ADD_TEST(test_rand_agglomeration);
     ADD_ALL_TESTS(test_evp_iv, 10);
     ADD_TEST(test_EVP_rsa_pss_with_keygen_bits);
+#ifndef OPENSSL_NO_EC
+    ADD_ALL_TESTS(test_ecpub, OSSL_NELEM(ecpub_nids));
+#endif
 
     ADD_TEST(test_names_do_all);
 
