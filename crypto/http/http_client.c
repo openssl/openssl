@@ -93,9 +93,8 @@ OSSL_HTTP_REQ_CTX *OSSL_HTTP_REQ_CTX_new(BIO *wbio, BIO *rbio,
     rctx->readbuf = OPENSSL_malloc(rctx->readbuflen);
     rctx->wbio = wbio;
     rctx->rbio = rbio;
-    rctx->mem = BIO_new(BIO_s_mem());
-    if (rctx->readbuf == NULL || rctx->mem == NULL) {
-        OSSL_HTTP_REQ_CTX_free(rctx);
+    if (rctx->readbuf == NULL) {
+        OPENSSL_free(rctx);
         return NULL;
     }
     rctx->method_POST = method_POST;
@@ -104,6 +103,7 @@ OSSL_HTTP_REQ_CTX *OSSL_HTTP_REQ_CTX_new(BIO *wbio, BIO *rbio,
     rctx->resp_len = 0;
     OSSL_HTTP_REQ_CTX_set_max_response_length(rctx, max_resp_len);
     rctx->max_time = timeout > 0 ? time(NULL) + timeout : 0;
+    /* everything else is 0, e.g. rctx->len_to_send, or NULL, e.g. rctx->mem  */
     return rctx;
 }
 
@@ -147,6 +147,9 @@ int OSSL_HTTP_REQ_CTX_set_request_line(OSSL_HTTP_REQ_CTX *rctx,
         ERR_raise(ERR_LIB_HTTP, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
+    BIO_free(rctx->mem);
+    if ((rctx->mem = BIO_new(BIO_s_mem())) == NULL)
+        return 0;
 
     if (BIO_printf(rctx->mem, "%s ", rctx->method_POST ? "POST" : "GET") <= 0)
         return 0;
@@ -181,6 +184,10 @@ int OSSL_HTTP_REQ_CTX_add1_header(OSSL_HTTP_REQ_CTX *rctx,
         ERR_raise(ERR_LIB_HTTP, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
+    if (rctx->mem == NULL) {
+        ERR_raise(ERR_LIB_HTTP, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+        return 0;
+    }
 
     if (BIO_puts(rctx->mem, name) <= 0)
         return 0;
@@ -196,8 +203,8 @@ int OSSL_HTTP_REQ_CTX_add1_header(OSSL_HTTP_REQ_CTX *rctx,
     return 1;
 }
 
-static int OSSL_HTTP_REQ_CTX_content(OSSL_HTTP_REQ_CTX *rctx,
-                                     const char *content_type, BIO *req_mem)
+static int OSSL_HTTP_REQ_CTX_set_content(OSSL_HTTP_REQ_CTX *rctx,
+                                         const char *content_type, BIO *req_mem)
 {
     const unsigned char *req;
     long req_len;
@@ -206,7 +213,7 @@ static int OSSL_HTTP_REQ_CTX_content(OSSL_HTTP_REQ_CTX *rctx,
         ERR_raise(ERR_LIB_HTTP, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
-    if (!rctx->method_POST) {
+    if (rctx->mem == NULL || !rctx->method_POST) {
         ERR_raise(ERR_LIB_HTTP, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
         return 0;
     }
@@ -253,7 +260,7 @@ int OSSL_HTTP_REQ_CTX_i2d(OSSL_HTTP_REQ_CTX *rctx, const char *content_type,
     }
 
     res = (mem = HTTP_asn1_item2bio(it, req)) != NULL
-        && OSSL_HTTP_REQ_CTX_content(rctx, content_type, mem);
+        && OSSL_HTTP_REQ_CTX_set_content(rctx, content_type, mem);
     BIO_free(mem);
     return res;
 }
@@ -313,7 +320,7 @@ OSSL_HTTP_REQ_CTX *HTTP_REQ_CTX_new(BIO *wbio, BIO *rbio, int use_http_proxy,
                                            path)
         && OSSL_HTTP_REQ_CTX_add1_headers(rctx, headers, server)
         && (req_mem == NULL
-            || OSSL_HTTP_REQ_CTX_content(rctx, content_type, req_mem)))
+            || OSSL_HTTP_REQ_CTX_set_content(rctx, content_type, req_mem)))
         return rctx;
 
     OSSL_HTTP_REQ_CTX_free(rctx);
@@ -428,6 +435,10 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
         ERR_raise(ERR_LIB_HTTP, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
+    if (rctx->mem == NULL || rctx->wbio == NULL || rctx->rbio == NULL) {
+        ERR_raise(ERR_LIB_HTTP, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+        return 0;
+    }
 
     rctx->redirection_url = NULL;
  next_io:
@@ -436,6 +447,7 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
         if (n <= 0) {
             if (BIO_should_retry(rctx->rbio))
                 return -1;
+            ERR_raise(ERR_LIB_HTTP, HTTP_R_FAILED_READING_DATA);
             return 0;
         }
 
@@ -1175,7 +1187,7 @@ int OSSL_HTTP_proxy_connect(BIO *bio, const char *server, const char *port,
             BIO_printf(fbio, "Proxy-Authorization: Basic %s\r\n", proxyauthenc);
             OPENSSL_clear_free(proxyauthenc, strlen(proxyauthenc));
         }
-     proxy_end:
+    proxy_end:
         OPENSSL_clear_free(proxyauth, len);
         if (proxyauthenc == NULL)
             goto end;

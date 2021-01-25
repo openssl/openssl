@@ -34,6 +34,7 @@
 # define HTTP_R_ERROR_PARSING_URL                         101
 # define HTTP_R_ERROR_RECEIVING                           103
 # define HTTP_R_ERROR_SENDING                             102
+# define HTTP_R_FAILED_READING_DATA                       128
 # define HTTP_R_INCONSISTENT_CONTENT_LENGTH               120
 # define HTTP_R_INVALID_PORT_NUMBER                       123
 # define HTTP_R_INVALID_URL_PATH                          125
