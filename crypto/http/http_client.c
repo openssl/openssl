@@ -42,8 +42,8 @@
 
 struct ossl_http_req_ctx_st {
     int state;                  /* Current I/O state */
-    unsigned char *iobuf;       /* Line buffer */
-    int iobuflen;               /* Line buffer length */
+    unsigned char *readbuf;     /* Buffer for reading response by line */
+    int readbuflen;             /* Buffer length, equals maxline */
     BIO *wbio;                  /* BIO to send request to */
     BIO *rbio;                  /* BIO to read response from */
     BIO *mem;                   /* Memory BIO response is built into */
@@ -56,9 +56,6 @@ struct ossl_http_req_ctx_st {
     time_t max_time;            /* Maximum end time of the transfer, or 0 */
     char *redirection_url;      /* Location given with HTTP status 301/302 */
 };
-
-#define HTTP_DEFAULT_MAX_LINE_LENGTH (4 * 1024)
-#define HTTP_DEFAULT_MAX_RESP_LEN (100 * 1024)
 
 /* HTTP states */
 
@@ -92,12 +89,12 @@ OSSL_HTTP_REQ_CTX *OSSL_HTTP_REQ_CTX_new(BIO *wbio, BIO *rbio,
     if ((rctx = OPENSSL_zalloc(sizeof(*rctx))) == NULL)
         return NULL;
     rctx->state = OHS_ERROR;
-    rctx->iobuflen = maxline > 0 ? maxline : HTTP_DEFAULT_MAX_LINE_LENGTH;
-    rctx->iobuf = OPENSSL_malloc(rctx->iobuflen);
+    rctx->readbuflen = maxline > 0 ? maxline : HTTP_DEFAULT_MAX_LINE_LENGTH;
+    rctx->readbuf = OPENSSL_malloc(rctx->readbuflen);
     rctx->wbio = wbio;
     rctx->rbio = rbio;
     rctx->mem = BIO_new(BIO_s_mem());
-    if (rctx->iobuf == NULL || rctx->mem == NULL) {
+    if (rctx->readbuf == NULL || rctx->mem == NULL) {
         OSSL_HTTP_REQ_CTX_free(rctx);
         return NULL;
     }
@@ -115,7 +112,7 @@ void OSSL_HTTP_REQ_CTX_free(OSSL_HTTP_REQ_CTX *rctx)
     if (rctx == NULL)
         return;
     BIO_free(rctx->mem); /* this may indirectly call ERR_clear_error() */
-    OPENSSL_free(rctx->iobuf);
+    OPENSSL_free(rctx->readbuf);
     OPENSSL_free(rctx);
 }
 
@@ -409,7 +406,8 @@ static int check_set_resp_len(OSSL_HTTP_REQ_CTX *rctx, unsigned long len)
                        "length=%lu, max=%lu", len, rctx->max_resp_len);
     if (rctx->resp_len != 0 && rctx->resp_len != len)
         ERR_raise_data(ERR_LIB_HTTP, HTTP_R_INCONSISTENT_CONTENT_LENGTH,
-                       "length=%lu, before=%lu", len, rctx->resp_len);
+                       "ASN.1 length=%lu, Content-Length=%lu",
+                       len, rctx->resp_len);
     rctx->resp_len = len;
     return 1;
 }
@@ -434,7 +432,7 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
     rctx->redirection_url = NULL;
  next_io:
     if ((rctx->state & OHS_NOREAD) == 0) {
-        n = BIO_read(rctx->rbio, rctx->iobuf, rctx->iobuflen);
+        n = BIO_read(rctx->rbio, rctx->readbuf, rctx->readbuflen);
         if (n <= 0) {
             if (BIO_should_retry(rctx->rbio))
                 return -1;
@@ -442,7 +440,7 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
         }
 
         /* Write data to memory BIO */
-        if (BIO_write(rctx->mem, rctx->iobuf, n) != n)
+        if (BIO_write(rctx->mem, rctx->readbuf, n) != n)
             return 0;
     }
 
@@ -513,13 +511,13 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
          */
         n = BIO_get_mem_data(rctx->mem, &p);
         if (n <= 0 || memchr(p, '\n', n) == 0) {
-            if (n >= rctx->iobuflen) {
+            if (n >= rctx->readbuflen) {
                 rctx->state = OHS_ERROR;
                 return 0;
             }
             goto next_io;
         }
-        n = BIO_gets(rctx->mem, (char *)rctx->iobuf, rctx->iobuflen);
+        n = BIO_gets(rctx->mem, (char *)rctx->readbuf, rctx->readbuflen);
 
         if (n <= 0) {
             if (BIO_should_retry(rctx->mem))
@@ -529,7 +527,7 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
         }
 
         /* Don't allow excessive lines */
-        if (n == rctx->iobuflen) {
+        if (n == rctx->readbuflen) {
             ERR_raise(ERR_LIB_HTTP, HTTP_R_RESPONSE_LINE_TOO_LONG);
             rctx->state = OHS_ERROR;
             return 0;
@@ -537,7 +535,7 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
 
         /* First line */
         if (rctx->state == OHS_FIRSTLINE) {
-            switch (parse_http_line1((char *)rctx->iobuf)) {
+            switch (parse_http_line1((char *)rctx->readbuf)) {
             case HTTP_STATUS_CODE_OK:
                 rctx->state = OHS_HEADERS;
                 goto next_line;
@@ -555,7 +553,7 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
                 return 0;
             }
         }
-        key = (char *)rctx->iobuf;
+        key = (char *)rctx->readbuf;
         value = strchr(key, ':');
         if (value != NULL) {
             *(value++) = '\0';
@@ -596,8 +594,8 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
             }
         }
 
-        /* Look for blank line: end of headers */
-        for (p = rctx->iobuf; *p != '\0'; p++) {
+        /* Look for blank line indicating end of headers */
+        for (p = rctx->readbuf; *p != '\0'; p++) {
             if (*p != '\r' && *p != '\n')
                 break;
         }

@@ -123,9 +123,10 @@ while using a proxy for HTTPS connections requires a suitable callback function
 such as OSSL_HTTP_proxy_connect(), described below.
 
 The I<maxline> parameter specifies the response header maximum line length,
-where 0 indicates the default value, which currently is 4k.
+where a value <= 0 indicates using the B<HTTP_DEFAULT_MAX_LINE_LENGTH> of 4KiB.
+This length is also used as the number of content bytes read at a time.
 The I<max_resp_len> parameter specifies the maximum response length,
-where 0 indicates the default value, which currently is 100k.
+where 0 indicates the B<HTTP_DEFAULT_MAX_RESP_LEN>, which currently is 100 KiB.
 
 An ASN.1-encoded response is expected by OSSL_HTTP_get_asn1() and
 OSSL_HTTP_post_asn1(), while for OSSL_HTTP_get() or OSSL_HTTP_transfer()

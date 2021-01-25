@@ -56,10 +56,13 @@ should be preferred.
 OSSL_HTTP_REQ_CTX_new() allocates a new HTTP request context structure,
 which gets populated with the B<BIO> to send the request to (I<wbio>),
 the B<BIO> to read the response from (I<rbio>, which may be equal to I<wbio>),
+the maximum expected response header line length (I<maxline>, where any
+zero or less indicates using the B<HTTP_DEFAULT_MAX_LINE_LENGTH> of 4KiB;
+this length is also used as the number of content bytes read at a time),
 the request method (I<method_POST>, which may be 1 to indicate that the C<POST>
 method is to be used, or 0 to indicate that the C<GET> method is to be used),
-the maximum expected response header length (I<max_resp_len>,
-where any zero or less indicates the default of 4KiB),
+the maximum allowed response content length (I<max_resp_len>, where 0 means
+that the B<HTTP_DEFAULT_MAX_RESP_LEN> is used, which currently is 100 KiB),
 a response timeout measure in seconds (I<timeout>,
 where 0 indicates no timeout, i.e., waiting indefinitely),
 the expected MIME content type of the response (I<expected_content_type>,
@@ -106,12 +109,15 @@ OSSL_HTTP_REQ_CTX_sendreq_d2i() calls OSSL_HTTP_REQ_CTX_nbio(), possibly
 several times until a timeout is reached, and DER decodes the received
 response using the ASN.1 template I<it>.
 
-OSSL_HTTP_REQ_CTX_set_max_response_length() sets the maximum response length
-for I<rctx> to I<len>. If the response exceeds this length an error occurs.
-If not set a default value of 100k is used.
-
 OSSL_HTTP_REQ_CTX_get0_mem_bio() returns the internal memory B<BIO>.  This can
 be used to affect the HTTP request text.  I<Use with caution!>
+
+OSSL_HTTP_REQ_CTX_set_max_response_length() sets the maximum allowed
+response content length for I<rctx> to I<len>. If not set or I<len> is 0
+then the B<HTTP_DEFAULT_MAX_RESP_LEN> is used, which currently is 100 KiB.
+If the C<Content-Length> header is present and exceeds this value or
+the content is an ASN.1 encoded structure with a length exceeding this value
+or both length indications are present but disagree then an error occurs.
 
 =head1 WARNINGS
 
