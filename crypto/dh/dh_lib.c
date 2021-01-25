@@ -187,12 +187,16 @@ void *DH_get_ex_data(const DH *d, int idx)
 
 int DH_bits(const DH *dh)
 {
-    return BN_num_bits(dh->params.p);
+    if (dh->params.p != NULL)
+        return BN_num_bits(dh->params.p);
+    return -1;
 }
 
 int DH_size(const DH *dh)
 {
-    return BN_num_bytes(dh->params.p);
+    if (dh->params.p != NULL)
+        return BN_num_bytes(dh->params.p);
+    return -1;
 }
 
 int DH_security_bits(const DH *dh)
@@ -204,7 +208,9 @@ int DH_security_bits(const DH *dh)
         N = dh->length;
     else
         N = -1;
-    return BN_security_bits(BN_num_bits(dh->params.p), N);
+    if (dh->params.p != NULL)
+        return BN_security_bits(BN_num_bits(dh->params.p), N);
+    return -1;
 }
 
 void DH_get0_pqg(const DH *dh,
