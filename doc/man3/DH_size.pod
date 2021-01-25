@@ -38,11 +38,14 @@ key. See L<BN_security_bits(3)>.
 
 =head1 RETURN VALUES
 
-DH_bits() returns the number of bits in the key.
+DH_bits() returns the number of bits in the key, or -1 if
+B<dh> doesn't hold any key parameters.
 
-DH_size() returns the prime size of Diffie-Hellman in bytes.
+DH_size() returns the prime size of Diffie-Hellman in bytes, or -1 if
+B<dh> doesn't hold any key parameters.
 
-DH_security_bits() returns the number of security bits.
+DH_security_bits() returns the number of security bits, or -1 if
+B<dh> doesn't hold any key parameters.
 
 =head1 SEE ALSO
 
