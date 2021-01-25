@@ -48,7 +48,11 @@ static int dh_cms_set_peerkey(EVP_PKEY_CTX *pctx,
 
     if ((public_key = d2i_ASN1_INTEGER(NULL, &p, plen)) == NULL)
         goto err;
-    plen = ASN1_STRING_length((ASN1_STRING *)public_key);
+    /*
+     * Pad to full p parameter size as that is checked by
+     * EVP_PKEY_set1_encoded_public_key()
+     */
+    plen = EVP_PKEY_size(pk);
     if ((bnpub = ASN1_INTEGER_to_BN(public_key, NULL)) == NULL)
         goto err;
     if ((buf = OPENSSL_malloc(plen)) == NULL)
