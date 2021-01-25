@@ -50,6 +50,7 @@ struct ossl_http_req_ctx_st {
     int method_POST;            /* HTTP method is "POST" (else "GET") */
     const char *expected_ct;    /* expected Content-Type, or NULL */
     int expect_asn1;            /* response must be ASN.1-encoded */
+    long len_to_send;           /* number of bytes in request still to send */
     unsigned long resp_len;     /* length of response */
     unsigned long max_resp_len; /* Maximum length of response */
     time_t max_time;            /* Maximum end time of the transfer, or 0 */
@@ -68,7 +69,7 @@ struct ossl_http_req_ctx_st {
 #define OHS_HEADERS         2 /* MIME headers being read */
 #define OHS_ASN1_HEADER     3 /* HTTP initial header (tag+length) being read */
 #define OHS_CONTENT         4 /* HTTP content octets being read */
-#define OHS_WRITE_INIT     (5 | OHS_NOREAD) /* 1st call: ready to start I/O */
+#define OHS_WRITE_INIT     (5 | OHS_NOREAD) /* 1st call: ready to start send */
 #define OHS_WRITE          (6 | OHS_NOREAD) /* Request being sent */
 #define OHS_FLUSH          (7 | OHS_NOREAD) /* Request being flushed */
 #define OHS_DONE           (8 | OHS_NOREAD) /* Completed */
@@ -420,7 +421,7 @@ static int check_set_resp_len(OSSL_HTTP_REQ_CTX *rctx, unsigned long len)
 int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
 {
     int i;
-    long n, n_to_send = 0;
+    long n;
     unsigned long resp_len;
     const unsigned char *p;
     char *key, *value, *line_end = NULL;
@@ -456,14 +457,13 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
 
         /* fall thru */
     case OHS_WRITE_INIT:
-        n_to_send = BIO_get_mem_data(rctx->mem, NULL);
+        rctx->len_to_send = BIO_get_mem_data(rctx->mem, NULL);
         rctx->state = OHS_WRITE;
 
         /* fall thru */
     case OHS_WRITE:
-        n = BIO_get_mem_data(rctx->mem, &p);
-
-        i = BIO_write(rctx->wbio, p + (n - n_to_send), n_to_send);
+        n = BIO_get_mem_data(rctx->mem, &p) - rctx->len_to_send;
+        i = BIO_write(rctx->wbio, p + n, rctx->len_to_send);
 
         if (i <= 0) {
             if (BIO_should_retry(rctx->wbio))
@@ -472,9 +472,9 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
             return 0;
         }
 
-        n_to_send -= i;
+        rctx->len_to_send -= i;
 
-        if (n_to_send > 0)
+        if (rctx->len_to_send > 0)
             goto next_io;
 
         rctx->state = OHS_FLUSH;
