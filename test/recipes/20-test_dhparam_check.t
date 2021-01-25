@@ -15,7 +15,7 @@ use OpenSSL::Glob;
 use OpenSSL::Test qw/:DEFAULT data_file/;
 use OpenSSL::Test::Utils;
 
-setup("test_dhparam");
+setup("test_dhparam_check");
 
 plan skip_all => "DH isn't supported in this build"
     if disabled("dh");
