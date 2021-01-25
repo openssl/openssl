@@ -24,7 +24,7 @@ plan skip_all => "DH isn't supported in this build"
 
 #!/bin/sh
 
-TESTDIR=test/recipes/15-test_dhparam_data/valid
+TESTDIR=test/recipes/20-test_dhparam_check_data/valid
 rm -rf $TESTDIR
 mkdir -p $TESTDIR
 
@@ -32,40 +32,27 @@ mkdir -p $TESTDIR
 ./util/opensslwrap.sh genpkey -genparam -algorithm DH -pkeyopt dh_rfc5114:2 -out $TESTDIR/dh5114_2.pem
 ./util/opensslwrap.sh genpkey -genparam -algorithm DH -pkeyopt dh_rfc5114:3 -out $TESTDIR/dh5114_3.pem
 
-./util/opensslwrap.sh genpkey -genparam -algorithm DH -pkeyopt pbits:1024 -pkeyopt qbits:160 -pkeyopt type:fips186_2 -pkeyopt dh_paramgen_type:0 -out $TESTDIR/p1024_q160_t1862_pgen0.pem
-./util/opensslwrap.sh genpkey -genparam -algorithm DH -pkeyopt pbits:1024 -pkeyopt qbits:224 -pkeyopt type:fips186_2 -pkeyopt dh_paramgen_type:0 -out $TESTDIR/p1024_q224_t1862_pgen0.pem
-./util/opensslwrap.sh genpkey -genparam -algorithm DH -pkeyopt pbits:1024 -pkeyopt qbits:256 -pkeyopt type:fips186_2 -pkeyopt dh_paramgen_type:0 -out $TESTDIR/p1024_q256_t1862_pgen0.pem
+./util/opensslwrap.sh genpkey -genparam -algorithm DH -pkeyopt pbits:1024 -pkeyopt type:fips186_2 -out $TESTDIR/dh_p1024_t1862.pem
+./util/opensslwrap.sh genpkey -genparam -algorithm DH -pkeyopt pbits:2048 -pkeyopt type:fips186_2 -out $TESTDIR/dh_p2048_t1862.pem
+./util/opensslwrap.sh genpkey -genparam -algorithm DH -pkeyopt pbits:2048 -pkeyopt type:fips186_4 -out $TESTDIR/dh_p2048_t1864.pem
+./util/opensslwrap.sh genpkey -genparam -algorithm DH -pkeyopt pbits:3072 -pkeyopt type:fips186_2 -out $TESTDIR/dh_p3072_t1862.pem
 
-./util/opensslwrap.sh genpkey -genparam -algorithm DH -pkeyopt pbits:1024 -pkeyopt qbits:160 -pkeyopt type:fips186_4 -pkeyopt dh_paramgen_type:0 -out $TESTDIR/p1024_q160_t1864_pgen0.pem
+./util/opensslwrap.sh genpkey -genparam -algorithm DHX -pkeyopt pbits:1024 -pkeyopt qbits:160 -pkeyopt type:fips186_2 -out $TESTDIR/dhx_p1024_q160_t1862.pem
+./util/opensslwrap.sh genpkey -genparam -algorithm DHX -pkeyopt pbits:1024 -pkeyopt qbits:224 -pkeyopt type:fips186_2 -out $TESTDIR/dhx_p1024_q224_t1862.pem
+./util/opensslwrap.sh genpkey -genparam -algorithm DHX -pkeyopt pbits:1024 -pkeyopt qbits:256 -pkeyopt type:fips186_2 -out $TESTDIR/dhx_p1024_q256_t1862.pem
 
-./util/opensslwrap.sh genpkey -genparam -algorithm DH -pkeyopt pbits:2048 -pkeyopt qbits:160 -pkeyopt type:fips186_2 -pkeyopt dh_paramgen_type:0 -out $TESTDIR/p2048_q160_t1862_pgen0.pem
-./util/opensslwrap.sh genpkey -genparam -algorithm DH -pkeyopt pbits:2048 -pkeyopt qbits:224 -pkeyopt type:fips186_2 -pkeyopt dh_paramgen_type:0 -out $TESTDIR/p2048_q224_t1862_pgen0.pem
-./util/opensslwrap.sh genpkey -genparam -algorithm DH -pkeyopt pbits:2048 -pkeyopt qbits:256 -pkeyopt type:fips186_2 -pkeyopt dh_paramgen_type:0 -out $TESTDIR/p2048_q256_t1862_pgen0.pem
+./util/opensslwrap.sh genpkey -genparam -algorithm DHX -pkeyopt pbits:1024 -pkeyopt qbits:160 -pkeyopt type:fips186_4 -out $TESTDIR/dhx_p1024_q160_t1864.pem
 
-./util/opensslwrap.sh genpkey -genparam -algorithm DH -pkeyopt pbits:2048 -pkeyopt qbits:224 -pkeyopt type:fips186_4 -pkeyopt dh_paramgen_type:0 -out $TESTDIR/p2048_q224_t1864_pgen0.pem
-./util/opensslwrap.sh genpkey -genparam -algorithm DH -pkeyopt pbits:2048 -pkeyopt qbits:256 -pkeyopt type:fips186_4 -pkeyopt dh_paramgen_type:0 -out $TESTDIR/p2048_q256_t1864_pgen0.pem
+./util/opensslwrap.sh genpkey -genparam -algorithm DHX -pkeyopt pbits:2048 -pkeyopt qbits:160 -pkeyopt type:fips186_2 -out $TESTDIR/dhx_p2048_q160_t1862.pem
+./util/opensslwrap.sh genpkey -genparam -algorithm DHX -pkeyopt pbits:2048 -pkeyopt qbits:224 -pkeyopt type:fips186_2 -out $TESTDIR/dhx_p2048_q224_t1862.pem
+./util/opensslwrap.sh genpkey -genparam -algorithm DHX -pkeyopt pbits:2048 -pkeyopt qbits:256 -pkeyopt type:fips186_2 -out $TESTDIR/dhx_p2048_q256_t1862.pem
 
-./util/opensslwrap.sh genpkey -genparam -algorithm DH -pkeyopt pbits:3072 -pkeyopt qbits:160 -pkeyopt type:fips186_2 -pkeyopt dh_paramgen_type:0 -out $TESTDIR/p3072_q160_t1862_pgen0.pem
-./util/opensslwrap.sh genpkey -genparam -algorithm DH -pkeyopt pbits:3072 -pkeyopt qbits:224 -pkeyopt type:fips186_2 -pkeyopt dh_paramgen_type:0 -out $TESTDIR/p3072_q224_t1862_pgen0.pem
-./util/opensslwrap.sh genpkey -genparam -algorithm DH -pkeyopt pbits:3072 -pkeyopt qbits:256 -pkeyopt type:fips186_2 -pkeyopt dh_paramgen_type:0 -out $TESTDIR/p3072_q256_t1862_pgen0.pem
+./util/opensslwrap.sh genpkey -genparam -algorithm DHX -pkeyopt pbits:2048 -pkeyopt qbits:224 -pkeyopt type:fips186_4 -out $TESTDIR/dhx_p2048_q224_t1864.pem
+./util/opensslwrap.sh genpkey -genparam -algorithm DHX -pkeyopt pbits:2048 -pkeyopt qbits:256 -pkeyopt type:fips186_4 -out $TESTDIR/dhx_p2048_q256_t1864.pem
 
-
-./util/opensslwrap.sh genpkey -genparam -algorithm DH -pkeyopt pbits:1024 -pkeyopt qbits:160 -pkeyopt type:fips186_2 -pkeyopt dh_paramgen_type:1 -out $TESTDIR/p1024_q160_t1862_pgen1.pem
-./util/opensslwrap.sh genpkey -genparam -algorithm DH -pkeyopt pbits:1024 -pkeyopt qbits:224 -pkeyopt type:fips186_2 -pkeyopt dh_paramgen_type:1 -out $TESTDIR/p1024_q224_t1862_pgen1.pem
-./util/opensslwrap.sh genpkey -genparam -algorithm DH -pkeyopt pbits:1024 -pkeyopt qbits:256 -pkeyopt type:fips186_2 -pkeyopt dh_paramgen_type:1 -out $TESTDIR/p1024_q256_t1862_pgen1.pem
-
-./util/opensslwrap.sh genpkey -genparam -algorithm DH -pkeyopt pbits:1024 -pkeyopt qbits:160 -pkeyopt type:fips186_4 -pkeyopt dh_paramgen_type:1 -out $TESTDIR/p1024_q160_t1864_pgen1.pem
-
-./util/opensslwrap.sh genpkey -genparam -algorithm DH -pkeyopt pbits:2048 -pkeyopt qbits:160 -pkeyopt type:fips186_2 -pkeyopt dh_paramgen_type:1 -out $TESTDIR/p2048_q160_t1862_pgen1.pem
-./util/opensslwrap.sh genpkey -genparam -algorithm DH -pkeyopt pbits:2048 -pkeyopt qbits:224 -pkeyopt type:fips186_2 -pkeyopt dh_paramgen_type:1 -out $TESTDIR/p2048_q224_t1862_pgen1.pem
-./util/opensslwrap.sh genpkey -genparam -algorithm DH -pkeyopt pbits:2048 -pkeyopt qbits:256 -pkeyopt type:fips186_2 -pkeyopt dh_paramgen_type:1 -out $TESTDIR/p2048_q256_t1862_pgen1.pem
-
-./util/opensslwrap.sh genpkey -genparam -algorithm DH -pkeyopt pbits:2048 -pkeyopt qbits:224 -pkeyopt type:fips186_4 -pkeyopt dh_paramgen_type:1 -out $TESTDIR/p2048_q224_t1864_pgen1.pem
-./util/opensslwrap.sh genpkey -genparam -algorithm DH -pkeyopt pbits:2048 -pkeyopt qbits:256 -pkeyopt type:fips186_4 -pkeyopt dh_paramgen_type:1 -out $TESTDIR/p2048_q256_t1864_pgen1.pem
-
-./util/opensslwrap.sh genpkey -genparam -algorithm DH -pkeyopt pbits:3072 -pkeyopt qbits:160 -pkeyopt type:fips186_2 -pkeyopt dh_paramgen_type:1 -out $TESTDIR/p3072_q160_t1862_pgen1.pem
-./util/opensslwrap.sh genpkey -genparam -algorithm DH -pkeyopt pbits:3072 -pkeyopt qbits:224 -pkeyopt type:fips186_2 -pkeyopt dh_paramgen_type:1 -out $TESTDIR/p3072_q224_t1862_pgen1.pem
-./util/opensslwrap.sh genpkey -genparam -algorithm DH -pkeyopt pbits:3072 -pkeyopt qbits:256 -pkeyopt type:fips186_2 -pkeyopt dh_paramgen_type:1 -out $TESTDIR/p3072_q256_t1862_pgen1.pem
+./util/opensslwrap.sh genpkey -genparam -algorithm DHX -pkeyopt pbits:3072 -pkeyopt qbits:160 -pkeyopt type:fips186_2 -out $TESTDIR/dhx_p3072_q160_t1862.pem
+./util/opensslwrap.sh genpkey -genparam -algorithm DHX -pkeyopt pbits:3072 -pkeyopt qbits:224 -pkeyopt type:fips186_2 -out $TESTDIR/dhx_p3072_q224_t1862.pem
+./util/opensslwrap.sh genpkey -genparam -algorithm DHX -pkeyopt pbits:3072 -pkeyopt qbits:256 -pkeyopt type:fips186_2 -out $TESTDIR/dhx_p3072_q256_t1862.pem
 
 =cut
 
