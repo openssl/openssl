@@ -35,6 +35,9 @@ typedef BIO *(*OSSL_HTTP_bio_cb_t)(BIO *bio, void *arg, int connect, int detail)
 # define OPENSSL_HTTP_PROXY "HTTP_PROXY"
 # define OPENSSL_HTTPS_PROXY "HTTPS_PROXY"
 
+#define HTTP_DEFAULT_MAX_LINE_LENGTH (4 * 1024)
+#define HTTP_DEFAULT_MAX_RESP_LEN (100 * 1024)
+
 OSSL_HTTP_REQ_CTX *OSSL_HTTP_REQ_CTX_new(BIO *wbio, BIO *rbio,
                                          int method_GET, int maxline,
                                          unsigned long max_resp_len,
