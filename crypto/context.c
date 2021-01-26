@@ -283,7 +283,9 @@ void *ossl_lib_ctx_get_data(OSSL_LIB_CTX *ctx, int index,
 
     if (dynidx != -1) {
         CRYPTO_THREAD_read_lock(ctx->index_locks[index]);
+        CRYPTO_THREAD_read_lock(ctx->lock);
         data = CRYPTO_get_ex_data(&ctx->data, dynidx);
+        CRYPTO_THREAD_unlock(ctx->lock);
         CRYPTO_THREAD_unlock(ctx->index_locks[index]);
         return data;
     }
@@ -293,8 +295,8 @@ void *ossl_lib_ctx_get_data(OSSL_LIB_CTX *ctx, int index,
 
     dynidx = ctx->dyn_indexes[index];
     if (dynidx != -1) {
-        CRYPTO_THREAD_unlock(ctx->lock);
         data = CRYPTO_get_ex_data(&ctx->data, dynidx);
+        CRYPTO_THREAD_unlock(ctx->lock);
         CRYPTO_THREAD_unlock(ctx->index_locks[index]);
         return data;
     }
@@ -307,10 +309,22 @@ void *ossl_lib_ctx_get_data(OSSL_LIB_CTX *ctx, int index,
 
     CRYPTO_THREAD_unlock(ctx->lock);
 
-    /* The alloc call ensures there's a value there */
-    if (CRYPTO_alloc_ex_data(CRYPTO_EX_INDEX_OSSL_LIB_CTX, NULL,
-                             &ctx->data, ctx->dyn_indexes[index]))
+    /*
+     * The alloc call ensures there's a value there. We release the ctx->lock
+     * for this, because the allocation itself may recursively call
+     * ossl_lib_ctx_get_data for other indexes (never this one). The allocation
+     * will itself aquire the ctx->lock when it actually comes to store the
+     * allocated data (see ossl_lib_ctx_generic_new() above). We call
+     * ossl_crypto_alloc_ex_data_intern() here instead of CRYPTO_alloc_ex_data().
+     * They do the same thing except that the latter calls CRYPTO_get_ex_data()
+     * as well - which we must not do without holding the ctx->lock.
+     */
+    if (ossl_crypto_alloc_ex_data_intern(CRYPTO_EX_INDEX_OSSL_LIB_CTX, NULL,
+                                         &ctx->data, ctx->dyn_indexes[index])) {
+        CRYPTO_THREAD_read_lock(ctx->lock);
         data = CRYPTO_get_ex_data(&ctx->data, ctx->dyn_indexes[index]);
+        CRYPTO_THREAD_unlock(ctx->lock);
+    }
 
     CRYPTO_THREAD_unlock(ctx->index_locks[index]);
 
