@@ -362,18 +362,20 @@ static int setup_crldp(X509 *x)
 }
 
 /* Check that issuer public key algorithm matches subject signature algorithm */
-static int check_sig_alg_match(const EVP_PKEY *pkey, const X509 *subject)
+static int check_sig_alg_match(const EVP_PKEY *issuer_key, const X509 *subject)
 {
-    int pkey_nid;
+    int signer_nid, subj_sig_nid;
 
-    if (pkey == NULL)
+    if (issuer_key == NULL)
         return X509_V_ERR_NO_ISSUER_PUBLIC_KEY;
+    signer_nid = EVP_PKEY_base_id(issuer_key);
     if (OBJ_find_sigid_algs(OBJ_obj2nid(subject->cert_info.signature.algorithm),
-                            NULL, &pkey_nid) == 0)
-        return X509_V_ERR_UNSUPPORTED_SIGNATURE_ALGORITHM;
-    if (EVP_PKEY_type(pkey_nid) != EVP_PKEY_base_id(pkey))
-        return X509_V_ERR_SIGNATURE_ALGORITHM_MISMATCH;
-    return X509_V_OK;
+                            NULL, &subj_sig_nid) == 0)
+         return X509_V_ERR_UNSUPPORTED_SIGNATURE_ALGORITHM;
+    if (signer_nid == EVP_PKEY_type(subj_sig_nid)
+        || (signer_nid == NID_rsaEncryption && subj_sig_nid == NID_rsassaPss))
+        return X509_V_OK;
+    return X509_V_ERR_SIGNATURE_ALGORITHM_MISMATCH;
 }
 
 #define V1_ROOT (EXFLAG_V1|EXFLAG_SS)

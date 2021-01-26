@@ -27,7 +27,7 @@ sub verify {
     run(app([@args]));
 }
 
-plan tests => 153;
+plan tests => 155;
 
 # Canonical success
 ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"]),
@@ -379,6 +379,11 @@ ok(!verify("ee-pss-sha1-cert", "sslserver", ["root-cert"], ["ca-cert"], "-auth_l
 
 ok(verify("ee-pss-sha256-cert", "sslserver", ["root-cert"], ["ca-cert"], "-auth_level", "2"),
     "PSS signature using SHA256 and auth level 2");
+
+ok(verify("ee-pss-cert", "sslserver", ["root-cert"], ["ca-pss-cert"], ),
+    "CA PSS signature");
+ok(!verify("ee-pss-wrong1.5-cert", "sslserver", ["root-cert"], ["ca-pss-cert"], ),
+    "CA producing regular PKCS#1 v1.5 signature with PSA-PSS key");
 
 ok(!verify("many-names1", "sslserver", ["many-constraints"], ["many-constraints"], ),
     "Too many names and constraints to check (1)");
