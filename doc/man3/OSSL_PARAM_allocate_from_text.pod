@@ -73,8 +73,10 @@ considers that an error.
 If I<key> started with "hex", OSSL_PARAM_allocate_from_text()
 considers that an error.
 
-Otherwise, I<value> is considered a C string and is copied with no
-further checks to the I<< to->data >> storage.
+Otherwise, I<value> is considered a C string and is copied to the
+I<< to->data >> storage.
+On systems where the native character encoding is EBCDIC, the bytes in
+I<< to->data >> are converted to ASCII.
 
 =item B<OSSL_PARAM_OCTET_STRING>
 

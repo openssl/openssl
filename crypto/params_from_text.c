@@ -9,6 +9,7 @@
  */
 
 #include <string.h>
+#include <openssl/ebcdic.h>
 #include <openssl/err.h>
 #include <openssl/params.h>
 
@@ -139,7 +140,11 @@ static int construct_from_text(OSSL_PARAM *to, const OSSL_PARAM *paramdef,
             }
             break;
         case OSSL_PARAM_UTF8_STRING:
+#ifdef CHARSET_EBCDIC
+            ebcdic2ascii(buf, value, buf_n);
+#else
             strncpy(buf, value, buf_n);
+#endif
             break;
         case OSSL_PARAM_OCTET_STRING:
             if (ishex) {
