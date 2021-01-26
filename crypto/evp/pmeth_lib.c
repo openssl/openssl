@@ -255,6 +255,7 @@ static EVP_PKEY_CTX *int_ctx_new(OSSL_LIB_CTX *libctx,
      */
     if (e != NULL)
         pmeth = ENGINE_get_pkey_meth(e, id);
+    else
 # endif
         pmeth = evp_pkey_meth_find_added_by_application(id);
 
