@@ -23,6 +23,16 @@ static int pkey_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         if (key->pkey)
             OPENSSL_cleanse(key->pkey->data, key->pkey->length);
     }
+
+    if (operation == ASN1_OP_D2I_POST) {
+        PKCS8_PRIV_KEY_INFO *key = (PKCS8_PRIV_KEY_INFO *)*pval;
+
+        if (key->version == 0 && key->pubkey != NULL) {
+            ERR_raise_data(ERR_LIB_ASN1, ERR_R_UNSUPPORTED,
+                           "Version 1 PKCS#8 doesn't support public key");
+            return 0;
+        }
+    }
     return 1;
 }
 
