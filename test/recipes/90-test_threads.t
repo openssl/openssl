@@ -8,7 +8,7 @@
 
 
 use OpenSSL::Test::Simple;
-use OpenSSL::Test qw/:DEFAULT srctop_file srctop_dir bldtop_dir bldtop_file/;
+use OpenSSL::Test qw/:DEFAULT srctop_file srctop_dir bldtop_dir bldtop_file data_dir/;
 use OpenSSL::Test::Utils;
 use Cwd qw(abs_path);
 
@@ -35,8 +35,8 @@ if (!$no_fips) {
 
 if ($no_fips) {
     $ENV{OPENSSL_CONF} = abs_path(srctop_file("test", "default.cnf"));
-    ok(run(test(["threadstest"])), "running test_threads");
+    ok(run(test(["threadstest", data_dir()])), "running test_threads");
 } else {
     $ENV{OPENSSL_CONF} = abs_path(srctop_file("test", "default-and-fips.cnf"));
-    ok(run(test(["threadstest", "-fips"])), "running test_threads");
+    ok(run(test(["threadstest", "-fips", data_dir()])), "running test_threads");
 }
