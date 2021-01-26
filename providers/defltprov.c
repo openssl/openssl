@@ -472,7 +472,6 @@ static const OSSL_ALGORITHM *deflt_query(void *provctx, int operation_id,
     case OSSL_OP_DIGEST:
         return deflt_digests;
     case OSSL_OP_CIPHER:
-        ossl_prov_cache_exported_algorithms(deflt_ciphers, exported_ciphers);
         return exported_ciphers;
     case OSSL_OP_MAC:
         return deflt_macs;
@@ -570,6 +569,7 @@ int ossl_default_provider_init(const OSSL_CORE_HANDLE *handle,
     ossl_prov_ctx_set0_core_bio_method(*provctx, corebiometh);
 
     *out = deflt_dispatch_table;
+    ossl_prov_cache_exported_algorithms(deflt_ciphers, exported_ciphers);
 
     return 1;
 }
