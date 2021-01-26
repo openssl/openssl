@@ -88,22 +88,34 @@ static int pmeth_cmp(const EVP_PKEY_METHOD *const *a,
     return ((*a)->pkey_id - (*b)->pkey_id);
 }
 
-const EVP_PKEY_METHOD *EVP_PKEY_meth_find(int type)
+static const EVP_PKEY_METHOD *evp_pkey_meth_find_added_by_application(int type)
 {
-    pmeth_fn *ret;
     EVP_PKEY_METHOD tmp;
-    const EVP_PKEY_METHOD *t = &tmp;
 
     tmp.pkey_id = type;
     if (app_pkey_methods) {
         int idx;
+
         idx = sk_EVP_PKEY_METHOD_find(app_pkey_methods, &tmp);
         if (idx >= 0)
             return sk_EVP_PKEY_METHOD_value(app_pkey_methods, idx);
     }
+    return NULL;
+}
+
+const EVP_PKEY_METHOD *EVP_PKEY_meth_find(int type)
+{
+    pmeth_fn *ret;
+    EVP_PKEY_METHOD tmp;
+    const EVP_PKEY_METHOD *t;
+
+    if ((t = evp_pkey_meth_find_added_by_application(type)) != NULL)
+        return t;
+
+    tmp.pkey_id = type;
+    t = &tmp;
     ret = OBJ_bsearch_pmeth_func(&t, standard_methods,
-                                 sizeof(standard_methods) /
-                                 sizeof(pmeth_fn));
+                                 OSSL_NELEM(standard_methods));
     if (ret == NULL || *ret == NULL)
         return NULL;
     return (**ret)();
@@ -243,9 +255,8 @@ static EVP_PKEY_CTX *int_ctx_new(OSSL_LIB_CTX *libctx,
      */
     if (e != NULL)
         pmeth = ENGINE_get_pkey_meth(e, id);
-    else
 # endif
-        pmeth = EVP_PKEY_meth_find(id);
+        pmeth = evp_pkey_meth_find_added_by_application(id);
 
     /* END legacy */
 #endif /* FIPS_MODULE */
