@@ -18,7 +18,7 @@
 #if !defined(FIPS_MODULE) || defined(ALLOW_RUN_ONCE_IN_FIPS)
 /*
  * DEFINE_RUN_ONCE: Define an initialiser function that should be run exactly
- * once. It takes no arguments and returns and int result (1 for success or
+ * once. It takes no arguments and returns an int result (1 for success or
  * 0 for failure). Typical usage might be:
  *
  * DEFINE_RUN_ONCE(myinitfunc)
@@ -50,7 +50,7 @@
 /*
  * DEFINE_RUN_ONCE_STATIC: Define an initialiser function that should be run
  * exactly once. This function will be declared as static within the file. It
- * takes no arguments and returns and int result (1 for success or 0 for
+ * takes no arguments and returns an int result (1 for success or 0 for
  * failure). Typical usage might be:
  *
  * DEFINE_RUN_ONCE_STATIC(myinitfunc)
@@ -74,7 +74,7 @@
 /*
  * DEFINE_RUN_ONCE_STATIC_ALT: Define an alternative initialiser function. This
  * function will be declared as static within the file. It takes no arguments
- * and returns and int result (1 for success or 0 for failure). An alternative
+ * and returns an int result (1 for success or 0 for failure). An alternative
  * initialiser function is expected to be associated with a primary initialiser
  * function defined via DEFINE_ONCE_STATIC where both functions use the same
  * CRYPTO_ONCE object to synchronise. Where an alternative initialiser function
