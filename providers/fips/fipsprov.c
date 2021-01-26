@@ -434,8 +434,6 @@ static const OSSL_ALGORITHM *fips_query(void *provctx, int operation_id,
     case OSSL_OP_DIGEST:
         return fips_digests;
     case OSSL_OP_CIPHER:
-        ossl_prov_cache_exported_algorithms(fips_ciphers,
-                                            exported_fips_ciphers);
         return exported_fips_ciphers;
     case OSSL_OP_MAC:
         return fips_macs;
@@ -625,6 +623,8 @@ int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
         goto err;
 
     fgbl->handle = handle;
+
+    ossl_prov_cache_exported_algorithms(fips_ciphers, exported_fips_ciphers);
 
     selftest_params.libctx = libctx;
     if (!SELF_TEST_post(&selftest_params, 0)) {
