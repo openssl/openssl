@@ -15,7 +15,7 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_req");
 
-plan tests => 42;
+plan tests => 43;
 
 require_ok(srctop_file('test', 'recipes', 'tconversion.pl'));
 
@@ -88,6 +88,39 @@ subtest "generating certificate requests with RSA" => sub {
         ok(run(app(["openssl", "req",
                     "-config", srctop_file("test", "test.cnf"),
                     "-verify", "-in", "testreq-rsa.pem", "-noout"])),
+           "Verifying signature on request");
+    }
+};
+
+subtest "generating certificate requests with RSA-PSS" => sub {
+    plan tests => 4;
+
+    SKIP: {
+        skip "RSA is not supported by this OpenSSL build", 2
+            if disabled("rsa");
+
+        ok(run(app(["openssl", "req",
+                    "-config", srctop_file("test", "test.cnf"),
+                    "-new", "-out", "testreq-rsapss.pem", "-utf8",
+                    "-key", srctop_file("test", "testrsapss.pem")])),
+           "Generating request");
+
+        ok(run(app(["openssl", "req",
+                    "-config", srctop_file("test", "test.cnf"),
+                    "-verify", "-in", "testreq-rsapss.pem", "-noout"])),
+           "Verifying signature on request");
+
+        ok(run(app(["openssl", "req",
+                    "-config", srctop_file("test", "test.cnf"),
+                    "-new", "-out", "testreq-rsapss2.pem", "-utf8",
+                    "-sigopt", "rsa_padding_mode:pss",
+                    "-sigopt", "rsa_pss_saltlen:-1",
+                    "-key", srctop_file("test", "testrsapss.pem")])),
+           "Generating request");
+
+        ok(run(app(["openssl", "req",
+                    "-config", srctop_file("test", "test.cnf"),
+                    "-verify", "-in", "testreq-rsapss2.pem", "-noout"])),
            "Verifying signature on request");
     }
 };

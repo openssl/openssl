@@ -312,18 +312,19 @@ static int rsa_get_params(void *key, OSSL_PARAM params[])
         return 0;
 
     /*
-     * For RSA-PSS keys, we ignore the default digest request
-     * TODO(3.0) with RSA-OAEP keys, this may need to be amended
+     * For restricted RSA-PSS keys, we ignore the default digest request.
+     * With RSA-OAEP keys, this may need to be amended.
      */
     if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_DEFAULT_DIGEST)) != NULL
-        && rsa_type != RSA_FLAG_TYPE_RSASSAPSS) {
+        && (rsa_type != RSA_FLAG_TYPE_RSASSAPSS
+            || ossl_rsa_pss_params_30_is_unrestricted(pss_params))) {
         if (!OSSL_PARAM_set_utf8_string(p, RSA_DEFAULT_MD))
             return 0;
     }
 
     /*
-     * For non-RSA-PSS keys, we ignore the mandatory digest request
-     * TODO(3.0) with RSA-OAEP keys, this may need to be amended
+     * For non-RSA-PSS keys, we ignore the mandatory digest request.
+     * With RSA-OAEP keys, this may need to be amended.
      */
     if ((p = OSSL_PARAM_locate(params,
                                OSSL_PKEY_PARAM_MANDATORY_DIGEST)) != NULL
