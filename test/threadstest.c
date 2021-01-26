@@ -19,6 +19,7 @@
 #include "testutil.h"
 
 static int do_fips = 0;
+static char *privkey;
 
 #if !defined(OPENSSL_THREADS) || defined(CRYPTO_TDEBUG)
 
@@ -352,17 +353,66 @@ static void thread_multi_simple_fetch(void)
         multi_success = 0;
 }
 
+static EVP_PKEY *shared_evp_pkey = NULL;
+
+static void thread_shared_evp_pkey(void)
+{
+    char *msg = "Hello World";
+    unsigned char ctbuf[256];
+    unsigned char ptbuf[256];
+    size_t ptlen = sizeof(ptbuf), ctlen = sizeof(ctbuf);
+    EVP_PKEY_CTX *ctx = NULL;
+    int success = 0;
+    int i;
+
+    for (i = 0; i < 1 + do_fips; i++) {
+        if (i > 0)
+            EVP_PKEY_CTX_free(ctx);
+        ctx = EVP_PKEY_CTX_new_from_pkey(multi_libctx, shared_evp_pkey,
+                                         i == 0 ? "provider=default"
+                                                : "provider=fips");
+        if (!TEST_ptr(ctx))
+            goto err;
+
+        if (!TEST_int_ge(EVP_PKEY_encrypt_init(ctx), 0)
+                || !TEST_int_ge(EVP_PKEY_encrypt(ctx, ctbuf, &ctlen,
+                                                (unsigned char *)msg, strlen(msg)),
+                                                0))
+            goto err;
+
+        EVP_PKEY_CTX_free(ctx);
+        ctx = EVP_PKEY_CTX_new_from_pkey(multi_libctx, shared_evp_pkey, NULL);
+
+        if (!TEST_ptr(ctx))
+            goto err;
+
+        if (!TEST_int_ge(EVP_PKEY_decrypt_init(ctx), 0)
+                || !TEST_int_ge(EVP_PKEY_decrypt(ctx, ptbuf, &ptlen, ctbuf, ctlen),
+                                                0)
+                || !TEST_mem_eq(msg, strlen(msg), ptbuf, ptlen))
+            goto err;
+    }
+
+    success = 1;
+
+ err:
+    EVP_PKEY_CTX_free(ctx);
+    if (!success)
+        multi_success = 0;
+}
+
 /*
  * Do work in multiple worker threads at the same time.
  * Test 0: General worker, using the default provider
  * Test 1: General worker, using the fips provider
  * Test 2: Simple fetch worker
+ * Test 3: Worker using a shared EVP_PKEY
  */
 static int test_multi(int idx)
 {
     thread_t thread1, thread2;
     int testresult = 0;
-    OSSL_PROVIDER *prov = NULL;
+    OSSL_PROVIDER *prov = NULL, *prov2 = NULL;
     void (*worker)(void);
 
     if (idx == 1 && !do_fips)
@@ -384,6 +434,18 @@ static int test_multi(int idx)
     case 2:
         worker = thread_multi_simple_fetch;
         break;
+    case 3:
+        /*
+         * If available we have both the default and fips providers for this
+         * test
+         */
+        if (do_fips
+                && !TEST_ptr(prov2 = OSSL_PROVIDER_load(multi_libctx, "fips")))
+            goto err;
+        if (!TEST_ptr(shared_evp_pkey = load_pkey_pem(privkey, multi_libctx)))
+            goto err;
+        worker = thread_shared_evp_pkey;
+        break;
     default:
         TEST_error("Invalid test index");
         goto err;
@@ -404,7 +466,10 @@ static int test_multi(int idx)
 
  err:
     OSSL_PROVIDER_unload(prov);
+    OSSL_PROVIDER_unload(prov2);
     OSSL_LIB_CTX_free(multi_libctx);
+    EVP_PKEY_free(shared_evp_pkey);
+    shared_evp_pkey = NULL;
     return testresult;
 }
 
@@ -428,6 +493,7 @@ const OPTIONS *test_get_options(void)
 int setup_tests(void)
 {
     OPTION_CHOICE o;
+    char *datadir;
 
     while ((o = opt_next()) != OPT_EOF) {
         switch (o) {
@@ -441,10 +507,22 @@ int setup_tests(void)
         }
     }
 
+    if (!TEST_ptr(datadir = test_get_argument(0)))
+        return 0;
+
+    privkey = test_mk_file_path(datadir, "rsakey.pem");
+    if (!TEST_ptr(privkey))
+        return 0;
+
     ADD_TEST(test_lock);
     ADD_TEST(test_once);
     ADD_TEST(test_thread_local);
     ADD_TEST(test_atomic);
-    ADD_ALL_TESTS(test_multi, 3);
+    ADD_ALL_TESTS(test_multi, 4);
     return 1;
+}
+
+void cleanup_tests(void)
+{
+    OPENSSL_free(privkey);
 }
