@@ -553,38 +553,52 @@ static EVP_RAND_CTX *rand_new_drbg(OSSL_LIB_CTX *libctx, EVP_RAND_CTX *parent,
 EVP_RAND_CTX *RAND_get0_primary(OSSL_LIB_CTX *ctx)
 {
     RAND_GLOBAL *dgbl = rand_get_global(ctx);
+    EVP_RAND_CTX *ret;
 
     if (dgbl == NULL)
         return NULL;
 
-    if (dgbl->primary == NULL) {
-        if (!CRYPTO_THREAD_write_lock(dgbl->lock))
-            return NULL;
-#ifndef FIPS_MODULE
-        if (dgbl->seed == NULL) {
-            ERR_set_mark();
-            dgbl->seed = rand_new_seed(ctx);
-            ERR_pop_to_mark();
-        }
-#endif
-        if (dgbl->primary == NULL)
-            dgbl->primary = rand_new_drbg(ctx, dgbl->seed,
-                                          PRIMARY_RESEED_INTERVAL,
-                                          PRIMARY_RESEED_TIME_INTERVAL);
-        /*
-         * The primary DRBG may be shared between multiple threads so we must
-         * enable locking.
-         */
-        if (dgbl->primary != NULL && !EVP_RAND_enable_locking(dgbl->primary)) {
-            ERR_raise(ERR_LIB_EVP, EVP_R_UNABLE_TO_ENABLE_LOCKING);
-            EVP_RAND_CTX_free(dgbl->primary);
-            dgbl->primary = NULL;
-            CRYPTO_THREAD_lock_free(dgbl->lock);
-            return NULL;
-        }
+    if (!CRYPTO_THREAD_read_lock(dgbl->lock))
+        return NULL;
+
+    ret = dgbl->primary;
+    CRYPTO_THREAD_unlock(dgbl->lock);
+
+    if (ret != NULL)
+        return ret;
+
+    if (!CRYPTO_THREAD_write_lock(dgbl->lock))
+        return NULL;
+
+    ret = dgbl->primary;
+    if (ret != NULL) {
         CRYPTO_THREAD_unlock(dgbl->lock);
+        return ret;
     }
-    return dgbl->primary;
+
+#ifndef FIPS_MODULE
+    if (dgbl->seed == NULL) {
+        ERR_set_mark();
+        dgbl->seed = rand_new_seed(ctx);
+        ERR_pop_to_mark();
+    }
+#endif
+
+    ret = dgbl->primary = rand_new_drbg(ctx, dgbl->seed,
+                                        PRIMARY_RESEED_INTERVAL,
+                                        PRIMARY_RESEED_TIME_INTERVAL);
+    /*
+    * The primary DRBG may be shared between multiple threads so we must
+    * enable locking.
+    */
+    if (ret != NULL && !EVP_RAND_enable_locking(ret)) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_UNABLE_TO_ENABLE_LOCKING);
+        EVP_RAND_CTX_free(ret);
+        ret = dgbl->primary = NULL;
+    }
+    CRYPTO_THREAD_unlock(dgbl->lock);
+
+    return ret;
 }
 
 /*
