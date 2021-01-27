@@ -1,7 +1,7 @@
 /*
  * {- join("\n * ", @autowarntext) -}
  *
- * Copyright 1995-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2023 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  * Copyright 2005 Nokia. All rights reserved.
  *
@@ -258,29 +258,31 @@ typedef int (*tls_session_secret_cb_fn)(SSL *s, void *secret, int *secret_len,
 
 /* Extension context codes */
 /* This extension is only allowed in TLS */
-#define SSL_EXT_TLS_ONLY                        0x0001
+#define SSL_EXT_TLS_ONLY                        0x00001
 /* This extension is only allowed in DTLS */
-#define SSL_EXT_DTLS_ONLY                       0x0002
+#define SSL_EXT_DTLS_ONLY                       0x00002
 /* Some extensions may be allowed in DTLS but we don't implement them for it */
-#define SSL_EXT_TLS_IMPLEMENTATION_ONLY         0x0004
+#define SSL_EXT_TLS_IMPLEMENTATION_ONLY         0x00004
 /* Most extensions are not defined for SSLv3 but EXT_TYPE_renegotiate is */
-#define SSL_EXT_SSL3_ALLOWED                    0x0008
+#define SSL_EXT_SSL3_ALLOWED                    0x00008
 /* Extension is only defined for TLS1.2 and below */
-#define SSL_EXT_TLS1_2_AND_BELOW_ONLY           0x0010
+#define SSL_EXT_TLS1_2_AND_BELOW_ONLY           0x00010
 /* Extension is only defined for TLS1.3 and above */
-#define SSL_EXT_TLS1_3_ONLY                     0x0020
+#define SSL_EXT_TLS1_3_ONLY                     0x00020
 /* Ignore this extension during parsing if we are resuming */
-#define SSL_EXT_IGNORE_ON_RESUMPTION            0x0040
-#define SSL_EXT_CLIENT_HELLO                    0x0080
+#define SSL_EXT_IGNORE_ON_RESUMPTION            0x00040
+#define SSL_EXT_CLIENT_HELLO                    0x00080
 /* Really means TLS1.2 or below */
-#define SSL_EXT_TLS1_2_SERVER_HELLO             0x0100
-#define SSL_EXT_TLS1_3_SERVER_HELLO             0x0200
-#define SSL_EXT_TLS1_3_ENCRYPTED_EXTENSIONS     0x0400
-#define SSL_EXT_TLS1_3_HELLO_RETRY_REQUEST      0x0800
-#define SSL_EXT_TLS1_3_CERTIFICATE              0x1000
-#define SSL_EXT_TLS1_3_NEW_SESSION_TICKET       0x2000
-#define SSL_EXT_TLS1_3_CERTIFICATE_REQUEST      0x4000
-#define SSL_EXT_TLS1_3_CERTIFICATE_COMPRESSION  0x8000
+#define SSL_EXT_TLS1_2_SERVER_HELLO             0x00100
+#define SSL_EXT_TLS1_3_SERVER_HELLO             0x00200
+#define SSL_EXT_TLS1_3_ENCRYPTED_EXTENSIONS     0x00400
+#define SSL_EXT_TLS1_3_HELLO_RETRY_REQUEST      0x00800
+#define SSL_EXT_TLS1_3_CERTIFICATE              0x01000
+#define SSL_EXT_TLS1_3_NEW_SESSION_TICKET       0x02000
+#define SSL_EXT_TLS1_3_CERTIFICATE_REQUEST      0x04000
+#define SSL_EXT_TLS1_3_CERTIFICATE_COMPRESSION  0x08000
+/* When sending a raw public key in a certificate message */
+#define SSL_EXT_TLS1_3_RAW_PUBLIC_KEY           0x10000
 
 /* Typedefs for handling custom extensions */
 
@@ -566,6 +568,8 @@ typedef int (*SSL_async_callback_fn)(SSL *s, void *arg);
 # define CERT_PKEY_CERT_TYPE     0x400
 /* Cert chain suitable to Suite B */
 # define CERT_PKEY_SUITEB        0x800
+/* Cert pkey valid for raw public key use */
+# define CERT_PKEY_RPK           0x1000
 
 # define SSL_CONF_FLAG_CMDLINE           0x1
 # define SSL_CONF_FLAG_FILE              0x2
@@ -1734,6 +1738,9 @@ __owur int SSL_has_matching_session_id(const SSL *s,
                                        unsigned int id_len);
 SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
                              long length);
+SSL_SESSION *d2i_SSL_SESSION_ex(SSL_SESSION **a, const unsigned char **pp,
+                                long length, OSSL_LIB_CTX *libctx,
+                                const char *propq);
 
 # ifdef OPENSSL_X509_H
 __owur X509 *SSL_get0_peer_certificate(const SSL *s);
@@ -2592,6 +2599,20 @@ int SSL_set1_compressed_cert(SSL *ssl, int algorithm, unsigned char *comp_data,
 size_t SSL_CTX_get1_compressed_cert(SSL_CTX *ctx, int alg, unsigned char **data, size_t *orig_len);
 size_t SSL_get1_compressed_cert(SSL *ssl, int alg, unsigned char **data, size_t *orig_len);
 
+__owur int SSL_add_expected_rpk(SSL *s, EVP_PKEY *rpk);
+__owur EVP_PKEY *SSL_get0_peer_rpk(const SSL *s);
+__owur EVP_PKEY *SSL_SESSION_get0_peer_rpk(SSL_SESSION *s);
+__owur int SSL_get_negotiated_client_cert_type(const SSL *s);
+__owur int SSL_get_negotiated_server_cert_type(const SSL *s);
+
+__owur int SSL_set1_client_cert_type(SSL *s, const unsigned char *val, size_t len);
+__owur int SSL_set1_server_cert_type(SSL *s, const unsigned char *val, size_t len);
+__owur int SSL_CTX_set1_client_cert_type(SSL_CTX *ctx, const unsigned char *val, size_t len);
+__owur int SSL_CTX_set1_server_cert_type(SSL_CTX *ctx, const unsigned char *val, size_t len);
+__owur int SSL_get0_client_cert_type(const SSL *s, unsigned char **t, size_t *len);
+__owur int SSL_get0_server_cert_type(const SSL *s, unsigned char **t, size_t *len);
+__owur int SSL_CTX_get0_client_cert_type(const SSL_CTX *ctx, unsigned char **t, size_t *len);
+__owur int SSL_CTX_get0_server_cert_type(const SSL_CTX *s, unsigned char **t, size_t *len);
 
 # ifdef  __cplusplus
 }

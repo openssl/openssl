@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2023 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright 2005 Nokia. All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -165,6 +165,7 @@ SSL_SESSION *ssl_session_dup(const SSL_SESSION *src, int ticket)
 #endif
     dest->peer_chain = NULL;
     dest->peer = NULL;
+    dest->peer_rpk = NULL;
     dest->ticket_appdata = NULL;
     memset(&dest->ex_data, 0, sizeof(dest->ex_data));
 
@@ -200,6 +201,13 @@ SSL_SESSION *ssl_session_dup(const SSL_SESSION *src, int ticket)
             goto err;
         }
     }
+
+    if (src->peer_rpk != NULL) {
+        if (!EVP_PKEY_up_ref(src->peer_rpk))
+            goto err;
+        dest->peer_rpk = src->peer_rpk;
+    }
+
 #ifndef OPENSSL_NO_PSK
     if (src->psk_identity_hint) {
         dest->psk_identity_hint = OPENSSL_strdup(src->psk_identity_hint);
@@ -823,6 +831,7 @@ void SSL_SESSION_free(SSL_SESSION *ss)
     OPENSSL_cleanse(ss->master_key, sizeof(ss->master_key));
     OPENSSL_cleanse(ss->session_id, sizeof(ss->session_id));
     X509_free(ss->peer);
+    EVP_PKEY_free(ss->peer_rpk);
     OSSL_STACK_OF_X509_free(ss->peer_chain);
     OPENSSL_free(ss->ext.hostname);
     OPENSSL_free(ss->ext.tick);
@@ -1040,6 +1049,11 @@ int SSL_SESSION_set1_alpn_selected(SSL_SESSION *s, const unsigned char *alpn,
 X509 *SSL_SESSION_get0_peer(SSL_SESSION *s)
 {
     return s->peer;
+}
+
+EVP_PKEY *SSL_SESSION_get0_peer_rpk(SSL_SESSION *s)
+{
+    return s->peer_rpk;
 }
 
 int SSL_SESSION_set1_id_context(SSL_SESSION *s, const unsigned char *sid_ctx,

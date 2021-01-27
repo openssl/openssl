@@ -151,6 +151,8 @@ B<openssl> B<s_server>
 {- $OpenSSL::safe::opt_trust_synopsis -}
 {- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
+[B<-enable_server_rpk>]
+[B<-enable_client_rpk>]
 
 =head1 DESCRIPTION
 
@@ -867,6 +869,26 @@ If the server requests a client certificate, then
 verification errors are displayed, for debugging, but the command will
 proceed unless the B<-verify_return_error> option is used.
 
+=item B<-enable_server_rpk>
+
+Enable support for sending raw public keys (RFC7250) to the client.
+A raw public key will be sent by the server, if solicited by the client,
+provided a suitable key and public certificate pair is configured.
+Clients that don't support raw public keys or prefer to use X.509
+certificates can still elect to receive X.509 certificates as usual.
+
+Raw public keys are extracted from the configured certificate/private key.
+
+=item B<-enable_client_rpk>
+
+Enable support for receiving raw public keys (RFC7250) from the client.
+Use of X.509 certificates by the client becomes optional, and clients that
+support raw public keys may elect to use them.
+Clients that don't support raw public keys or prefer to use X.509
+certificates can still elect to send X.509 certificates as usual.
+
+Raw public keys are extracted from the configured certificate/private key.
+
 =back
 
 =head1 CONNECTED COMMANDS
@@ -971,12 +993,17 @@ The
 The B<-srpvfile>, B<-srpuserseed>, and B<-engine>
 option were deprecated in OpenSSL 3.0.
 
-The B<-tfo>, B<-no_tx_cert_comp>, and B<-no_rx_cert_comp> options were added
-in OpenSSL 3.2.
+The
+B<-enable_client_rpk>,
+B<-enable_server_rpk>,
+B<-no_rx_cert_comp>,
+B<-no_tx_cert_comp>,
+and B<-tfo>
+options were added in OpenSSL 3.2.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2022 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2023 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

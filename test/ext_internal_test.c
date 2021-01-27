@@ -61,6 +61,8 @@ static EXT_LIST ext_list[] = {
     EXT_ENTRY(extended_master_secret),
     EXT_ENTRY(signature_algorithms_cert),
     EXT_ENTRY(post_handshake_auth),
+    EXT_ENTRY(client_cert_type),
+    EXT_ENTRY(server_cert_type),
     EXT_ENTRY(signature_algorithms),
     EXT_ENTRY(supported_versions),
     EXT_ENTRY(psk_kex_modes),

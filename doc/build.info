@@ -2483,6 +2483,10 @@ DEPEND[html/man3/SSL_free.html]=man3/SSL_free.pod
 GENERATE[html/man3/SSL_free.html]=man3/SSL_free.pod
 DEPEND[man/man3/SSL_free.3]=man3/SSL_free.pod
 GENERATE[man/man3/SSL_free.3]=man3/SSL_free.pod
+DEPEND[html/man3/SSL_get0_peer_rpk.html]=man3/SSL_get0_peer_rpk.pod
+GENERATE[html/man3/SSL_get0_peer_rpk.html]=man3/SSL_get0_peer_rpk.pod
+DEPEND[man/man3/SSL_get0_peer_rpk.3]=man3/SSL_get0_peer_rpk.pod
+GENERATE[man/man3/SSL_get0_peer_rpk.3]=man3/SSL_get0_peer_rpk.pod
 DEPEND[html/man3/SSL_get0_peer_scts.html]=man3/SSL_get0_peer_scts.pod
 GENERATE[html/man3/SSL_get0_peer_scts.html]=man3/SSL_get0_peer_scts.pod
 DEPEND[man/man3/SSL_get0_peer_scts.3]=man3/SSL_get0_peer_scts.pod
@@ -2627,6 +2631,10 @@ DEPEND[html/man3/SSL_set1_host.html]=man3/SSL_set1_host.pod
 GENERATE[html/man3/SSL_set1_host.html]=man3/SSL_set1_host.pod
 DEPEND[man/man3/SSL_set1_host.3]=man3/SSL_set1_host.pod
 GENERATE[man/man3/SSL_set1_host.3]=man3/SSL_set1_host.pod
+DEPEND[html/man3/SSL_set1_server_cert_type.html]=man3/SSL_set1_server_cert_type.pod
+GENERATE[html/man3/SSL_set1_server_cert_type.html]=man3/SSL_set1_server_cert_type.pod
+DEPEND[man/man3/SSL_set1_server_cert_type.3]=man3/SSL_set1_server_cert_type.pod
+GENERATE[man/man3/SSL_set1_server_cert_type.3]=man3/SSL_set1_server_cert_type.pod
 DEPEND[html/man3/SSL_set_async_callback.html]=man3/SSL_set_async_callback.pod
 GENERATE[html/man3/SSL_set_async_callback.html]=man3/SSL_set_async_callback.pod
 DEPEND[man/man3/SSL_set_async_callback.3]=man3/SSL_set_async_callback.pod
@@ -3468,6 +3476,7 @@ html/man3/SSL_do_handshake.html \
 html/man3/SSL_export_keying_material.html \
 html/man3/SSL_extension_supported.html \
 html/man3/SSL_free.html \
+html/man3/SSL_get0_peer_rpk.html \
 html/man3/SSL_get0_peer_scts.html \
 html/man3/SSL_get_SSL_CTX.html \
 html/man3/SSL_get_all_async_fds.html \
@@ -3504,6 +3513,7 @@ html/man3/SSL_read_early_data.html \
 html/man3/SSL_rstate_string.html \
 html/man3/SSL_session_reused.html \
 html/man3/SSL_set1_host.html \
+html/man3/SSL_set1_server_cert_type.html \
 html/man3/SSL_set_async_callback.html \
 html/man3/SSL_set_bio.html \
 html/man3/SSL_set_blocking_mode.html \
@@ -4092,6 +4102,7 @@ man/man3/SSL_do_handshake.3 \
 man/man3/SSL_export_keying_material.3 \
 man/man3/SSL_extension_supported.3 \
 man/man3/SSL_free.3 \
+man/man3/SSL_get0_peer_rpk.3 \
 man/man3/SSL_get0_peer_scts.3 \
 man/man3/SSL_get_SSL_CTX.3 \
 man/man3/SSL_get_all_async_fds.3 \
@@ -4128,6 +4139,7 @@ man/man3/SSL_read_early_data.3 \
 man/man3/SSL_rstate_string.3 \
 man/man3/SSL_session_reused.3 \
 man/man3/SSL_set1_host.3 \
+man/man3/SSL_set1_server_cert_type.3 \
 man/man3/SSL_set_async_callback.3 \
 man/man3/SSL_set_bio.3 \
 man/man3/SSL_set_blocking_mode.3 \

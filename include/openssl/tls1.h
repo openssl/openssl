@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2023 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  * Copyright 2005 Nokia. All rights reserved.
  *
@@ -123,6 +123,14 @@ extern "C" {
 # define TLSEXT_TYPE_signed_certificate_timestamp    18
 
 /*
+ * Extension type for Raw Public Keys
+ * https://tools.ietf.org/html/rfc7250
+ * https://www.iana.org/assignments/tls-extensiontype-values/tls-extensiontype-values.xhtml
+ */
+# define TLSEXT_TYPE_client_cert_type   19
+# define TLSEXT_TYPE_server_cert_type   20
+
+/*
  * ExtensionType value for TLS padding extension.
  * http://tools.ietf.org/html/draft-agl-tls-padding
  */
@@ -223,6 +231,15 @@ extern "C" {
 # define TLSEXT_max_fragment_length_1024        2
 # define TLSEXT_max_fragment_length_2048        3
 # define TLSEXT_max_fragment_length_4096        4
+
+/*
+ * TLS Certificate Type (for RFC7250)
+ * https://www.iana.org/assignments/tls-extensiontype-values/tls-extensiontype-values.xhtml#tls-extensiontype-values-3
+ */
+# define TLSEXT_cert_type_x509         0
+# define TLSEXT_cert_type_pgp          1 /* recognized, but not supported */
+# define TLSEXT_cert_type_rpk          2
+# define TLSEXT_cert_type_1609dot2     3 /* recognized, but not supported */
 
 int SSL_CTX_set_tlsext_max_fragment_length(SSL_CTX *ctx, uint8_t mode);
 int SSL_set_tlsext_max_fragment_length(SSL *ssl, uint8_t mode);

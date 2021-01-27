@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2023 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -20,6 +20,7 @@
 #include <openssl/rsa.h>
 #include <openssl/x509.h>
 #include <openssl/trace.h>
+#include <openssl/encoder.h>
 
 /*
  * Map error codes to TLS/SSL alart types.
@@ -447,7 +448,6 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL_CONNECTION *s, PACKET *pkt)
     MSG_PROCESS_RETURN ret = MSG_PROCESS_ERROR;
     int j;
     unsigned int len;
-    X509 *peer;
     const EVP_MD *md = NULL;
     size_t hdatalen = 0;
     void *hdata;
@@ -461,8 +461,7 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL_CONNECTION *s, PACKET *pkt)
         goto err;
     }
 
-    peer = s->session->peer;
-    pkey = X509_get0_pubkey(peer);
+    pkey = tls_get_peer_pkey(s);
     if (pkey == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto err;
@@ -1090,6 +1089,291 @@ static int ssl_add_cert_chain(SSL_CONNECTION *s, WPACKET *pkt, CERT_PKEY *cpk, i
         }
     }
     return 1;
+}
+
+EVP_PKEY* tls_get_peer_pkey(const SSL_CONNECTION *sc)
+{
+    if (sc->session->peer_rpk != NULL)
+        return sc->session->peer_rpk;
+    if (sc->session->peer != NULL)
+        return X509_get0_pubkey(sc->session->peer);
+    return NULL;
+}
+
+int tls_process_rpk(SSL_CONNECTION *sc, PACKET *pkt, EVP_PKEY **peer_rpk)
+{
+    EVP_PKEY *pkey = NULL;
+    int ret = 0;
+    RAW_EXTENSION *rawexts = NULL;
+    PACKET extensions;
+    PACKET context;
+    unsigned long cert_len = 0, spki_len = 0;
+    const unsigned char *spki, *spkistart;
+    SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(sc);
+
+    /*-
+     * ----------------------------
+     * TLS 1.3 Certificate message:
+     * ----------------------------
+     * https://datatracker.ietf.org/doc/html/rfc8446#section-4.4.2
+     *
+     *   enum {
+     *       X509(0),
+     *       RawPublicKey(2),
+     *       (255)
+     *   } CertificateType;
+     *
+     *   struct {
+     *       select (certificate_type) {
+     *           case RawPublicKey:
+     *             // From RFC 7250 ASN.1_subjectPublicKeyInfo
+     *             opaque ASN1_subjectPublicKeyInfo<1..2^24-1>;
+     *
+     *           case X509:
+     *             opaque cert_data<1..2^24-1>;
+     *       };
+     *       Extension extensions<0..2^16-1>;
+     *   } CertificateEntry;
+     *
+     *   struct {
+     *       opaque certificate_request_context<0..2^8-1>;
+     *       CertificateEntry certificate_list<0..2^24-1>;
+     *   } Certificate;
+     *
+     * The client MUST send a Certificate message if and only if the server
+     * has requested client authentication via a CertificateRequest message
+     * (Section 4.3.2).  If the server requests client authentication but no
+     * suitable certificate is available, the client MUST send a Certificate
+     * message containing no certificates (i.e., with the "certificate_list"
+     * field having length 0).
+     *
+     * ----------------------------
+     * TLS 1.2 Certificate message:
+     * ----------------------------
+     * https://datatracker.ietf.org/doc/html/rfc7250#section-3
+     *
+     *   opaque ASN.1Cert<1..2^24-1>;
+     *
+     *   struct {
+     *       select(certificate_type){
+     *
+     *            // certificate type defined in this document.
+     *            case RawPublicKey:
+     *              opaque ASN.1_subjectPublicKeyInfo<1..2^24-1>;
+     *
+     *           // X.509 certificate defined in RFC 5246
+     *           case X.509:
+     *             ASN.1Cert certificate_list<0..2^24-1>;
+     *
+     *           // Additional certificate type based on
+     *           // "TLS Certificate Types" subregistry
+     *       };
+     *   } Certificate;
+     *
+     * -------------
+     * Consequently:
+     * -------------
+     * After the (TLS 1.3 only) context octet string (1 byte length + data) the
+     * Certificate message has a 3-byte length that is zero in the client to
+     * server message when the client has no RPK to send.  In that case, there
+     * are no (TLS 1.3 only) per-certificate extensions either, because the
+     * [CertificateEntry] list is empty.
+     *
+     * In the server to client direction, or when the client had an RPK to send,
+     * the TLS 1.3 message just prepends the length of the RPK+extensions,
+     * while TLS <= 1.2 sends just the RPK (octet-string).
+     *
+     * The context must be zero-length in the server to client direction, and
+     * must match the value recorded in the certificate request in the client
+     * to server direction.
+     */
+    if (SSL_CONNECTION_IS_TLS13(sc)) {
+        if (!PACKET_get_length_prefixed_1(pkt, &context)) {
+            SSLfatal(sc, SSL_AD_DECODE_ERROR, SSL_R_INVALID_CONTEXT);
+            goto err;
+        }
+        if (sc->server) {
+            if (sc->pha_context == NULL) {
+                if (PACKET_remaining(&context) != 0) {
+                    SSLfatal(sc, SSL_AD_DECODE_ERROR, SSL_R_INVALID_CONTEXT);
+                    goto err;
+                }
+            } else {
+                if (!PACKET_equal(&context, sc->pha_context, sc->pha_context_len)) {
+                    SSLfatal(sc, SSL_AD_DECODE_ERROR, SSL_R_INVALID_CONTEXT);
+                    goto err;
+                }
+            }
+        } else {
+            if (PACKET_remaining(&context) != 0) {
+                SSLfatal(sc, SSL_AD_DECODE_ERROR, SSL_R_INVALID_CONTEXT);
+                goto err;
+            }
+        }
+    }
+
+    if (!PACKET_get_net_3(pkt, &cert_len)
+        || PACKET_remaining(pkt) != cert_len) {
+        SSLfatal(sc, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
+        goto err;
+    }
+
+    /*
+     * The list length may be zero when there is no RPK.  In the case of TLS
+     * 1.2 this is actually the RPK length, which cannot be zero as specified,
+     * but that breaks the ability of the client to decline client auth. We
+     * overload the 0 RPK length to mean "no RPK".  This interpretation is
+     * also used some other (reference?) implementations, but is not supported
+     * by the verbatim RFC7250 text.
+     */
+    if (cert_len == 0)
+        return 1;
+
+    if (SSL_CONNECTION_IS_TLS13(sc)) {
+        /*
+         * With TLS 1.3, a non-empty explicit-length RPK octet-string followed
+         * by a possibly empty extension block.
+         */
+        if (!PACKET_get_net_3(pkt, &spki_len)) {
+            SSLfatal(sc, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
+            goto err;
+        }
+        if (spki_len == 0) {
+            /* empty RPK */
+            SSLfatal(sc, SSL_AD_DECODE_ERROR, SSL_R_EMPTY_RAW_PUBLIC_KEY);
+            goto err;
+        }
+    } else {
+        spki_len = cert_len;
+    }
+
+    if (!PACKET_get_bytes(pkt, &spki, spki_len)) {
+        SSLfatal(sc, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
+        goto err;
+    }
+    spkistart = spki;
+    if ((pkey = d2i_PUBKEY_ex(NULL, &spki, spki_len, sctx->libctx, sctx->propq)) == NULL
+            || spki != (spkistart + spki_len)) {
+        SSLfatal(sc, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
+        goto err;
+    }
+    if (EVP_PKEY_missing_parameters(pkey)) {
+        SSLfatal(sc, SSL_AD_INTERNAL_ERROR,
+                 SSL_R_UNABLE_TO_FIND_PUBLIC_KEY_PARAMETERS);
+        goto err;
+    }
+
+    /* Process the Extensions block */
+    if (SSL_CONNECTION_IS_TLS13(sc)) {
+        if (PACKET_remaining(pkt) != (cert_len - 3 - spki_len)) {
+            SSLfatal(sc, SSL_AD_DECODE_ERROR, SSL_R_BAD_LENGTH);
+            goto err;
+        }
+        if (!PACKET_as_length_prefixed_2(pkt, &extensions)
+                || PACKET_remaining(pkt) != 0) {
+            SSLfatal(sc, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
+            goto err;
+        }
+        if (!tls_collect_extensions(sc, &extensions, SSL_EXT_TLS1_3_RAW_PUBLIC_KEY,
+                                    &rawexts, NULL, 1)) {
+            /* SSLfatal already called */
+            goto err;
+        }
+        /* chain index is always zero and fin always 1 for RPK */
+        if (!tls_parse_all_extensions(sc, SSL_EXT_TLS1_3_RAW_PUBLIC_KEY,
+                                      rawexts, NULL, 0, 1)) {
+            /* SSLfatal already called */
+            goto err;
+        }
+    }
+    ret = 1;
+    if (peer_rpk != NULL) {
+        *peer_rpk = pkey;
+        pkey = NULL;
+    }
+
+ err:
+    OPENSSL_free(rawexts);
+    EVP_PKEY_free(pkey);
+    return ret;
+}
+
+unsigned long tls_output_rpk(SSL_CONNECTION *sc, WPACKET *pkt, CERT_PKEY *cpk)
+{
+    int pdata_len = 0;
+    unsigned char *pdata = NULL;
+    X509_PUBKEY *xpk = NULL;
+    unsigned long ret = 0;
+    X509 *x509 = NULL;
+
+    if (cpk != NULL && cpk->x509 != NULL) {
+        x509 = cpk->x509;
+        /* Get the RPK from the certificate */
+        xpk = X509_get_X509_PUBKEY(cpk->x509);
+        if (xpk == NULL) {
+            SSLfatal(sc, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            goto err;
+        }
+        pdata_len = i2d_X509_PUBKEY(xpk, &pdata);
+    } else if (cpk != NULL && cpk->privatekey != NULL) {
+        /* Get the RPK from the private key */
+        pdata_len = i2d_PUBKEY(cpk->privatekey, &pdata);
+    } else {
+        /* The server RPK is not optional */
+        if (sc->server) {
+            SSLfatal(sc, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            goto err;
+        }
+        /* The client can send a zero length certificate list */
+        if (!WPACKET_sub_memcpy_u24(pkt, pdata, pdata_len)) {
+            SSLfatal(sc, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            goto err;
+        }
+        return 1;
+    }
+
+    if (pdata_len <= 0) {
+        SSLfatal(sc, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
+    /*
+     * TLSv1.2 is _just_ the raw public key
+     * TLSv1.3 includes extensions, so there's a length wrapper
+     */
+    if (SSL_CONNECTION_IS_TLS13(sc)) {
+        if (!WPACKET_start_sub_packet_u24(pkt)) {
+            SSLfatal(sc, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            goto err;
+        }
+    }
+
+    if (!WPACKET_sub_memcpy_u24(pkt, pdata, pdata_len)) {
+        SSLfatal(sc, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
+    if (SSL_CONNECTION_IS_TLS13(sc)) {
+        /*
+         * Only send extensions relevent to raw public keys. Until such
+         * extensions are defined, this will be an empty set of extensions.
+         * |x509| may be NULL, which raw public-key extensions need to handle.
+         */
+        if (!tls_construct_extensions(sc, pkt, SSL_EXT_TLS1_3_RAW_PUBLIC_KEY,
+                                      x509, 0)) {
+            /* SSLfatal() already called */
+            goto err;
+        }
+        if (!WPACKET_close(pkt)) {
+            SSLfatal(sc, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            goto err;
+        }
+    }
+
+    ret = 1;
+ err:
+    OPENSSL_free(pdata);
+    return ret;
 }
 
 unsigned long ssl3_output_cert_chain(SSL_CONNECTION *s, WPACKET *pkt,
