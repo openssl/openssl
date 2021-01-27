@@ -323,10 +323,10 @@ follows.
 
 =item "digest" (B<OSSL_SIGNATURE_PARAM_DIGEST>) <UTF8 string>
 
-Get or sets the name of the digest algorithm used for the input to the signature
-functions. It is required in order to calculate the "algorithm-id".
+Get or sets the name of the digest algorithm used for the input to the
+signature functions. It is required in order to calculate the "algorithm-id".
 
-= item "properties" (B<OSSL_SIGNATURE_PARAM_PROPERTIES>) <UTF8 string>
+=item "properties" (B<OSSL_SIGNATURE_PARAM_PROPERTIES>) <UTF8 string>
 
 Sets the name of the property query associated with the "digest" algorithm.
 NULL is used if this optional value is not set.
@@ -337,7 +337,7 @@ Gets or sets the output size of the digest algorithm used for the input to the
 signature functions.
 The length of the "digest-size" parameter should not exceed that of a B<size_t>.
 
-= item "algorithm-id" (B<OSSL_SIGNATURE_PARAM_ALGORITHM_ID>) <octet string>
+=item "algorithm-id" (B<OSSL_SIGNATURE_PARAM_ALGORITHM_ID>) <octet string>
 
 Gets the DER encoded AlgorithmIdentifier that corresponds to the combination of
 signature algorithm and digest algorithm for the signature operation.
