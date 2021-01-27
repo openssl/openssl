@@ -55,7 +55,6 @@ static int s390x_aes_ofb128_initkey(PROV_CIPHER_CTX *dat,
 {
     PROV_AES_CTX *adat = (PROV_AES_CTX *)dat;
 
-    memcpy(adat->plat.s390x.param.kmo_kmf.cv, dat->iv, dat->ivlen);
     memcpy(adat->plat.s390x.param.kmo_kmf.k, key, keylen);
     adat->plat.s390x.fc = S390X_AES_FC(keylen);
     adat->plat.s390x.res = 0;
@@ -69,6 +68,7 @@ static int s390x_aes_ofb128_cipher_hw(PROV_CIPHER_CTX *dat, unsigned char *out,
     int n = adat->plat.s390x.res;
     int rem;
 
+    memcpy(adat->plat.s390x.param.kmo_kmf.cv, dat->iv, dat->ivlen);
     while (n && len) {
         *out = *in ^ adat->plat.s390x.param.kmo_kmf.cv[n];
         n = (n + 1) & 0xf;
@@ -115,7 +115,6 @@ static int s390x_aes_cfb128_initkey(PROV_CIPHER_CTX *dat,
         adat->plat.s390x.fc |= S390X_DECRYPT;
 
     adat->plat.s390x.res = 0;
-    memcpy(adat->plat.s390x.param.kmo_kmf.cv, dat->iv, dat->ivlen);
     memcpy(adat->plat.s390x.param.kmo_kmf.k, key, keylen);
     return 1;
 }
@@ -128,6 +127,7 @@ static int s390x_aes_cfb128_cipher_hw(PROV_CIPHER_CTX *dat, unsigned char *out,
     int rem;
     unsigned char tmp;
 
+    memcpy(adat->plat.s390x.param.kmo_kmf.cv, dat->iv, dat->ivlen);
     while (n && len) {
         tmp = *in;
         *out = adat->plat.s390x.param.kmo_kmf.cv[n] ^ tmp;
@@ -177,7 +177,6 @@ static int s390x_aes_cfb8_initkey(PROV_CIPHER_CTX *dat,
     if (!dat->enc)
         adat->plat.s390x.fc |= S390X_DECRYPT;
 
-    memcpy(adat->plat.s390x.param.kmo_kmf.cv, dat->iv, dat->ivlen);
     memcpy(adat->plat.s390x.param.kmo_kmf.k, key, keylen);
     return 1;
 }
@@ -187,6 +186,7 @@ static int s390x_aes_cfb8_cipher_hw(PROV_CIPHER_CTX *dat, unsigned char *out,
 {
     PROV_AES_CTX *adat = (PROV_AES_CTX *)dat;
 
+    memcpy(adat->plat.s390x.param.kmo_kmf.cv, dat->iv, dat->ivlen);
     s390x_kmf(in, len, out, adat->plat.s390x.fc,
               &adat->plat.s390x.param.kmo_kmf);
     memcpy(dat->iv, adat->plat.s390x.param.kmo_kmf.cv, dat->ivlen);
