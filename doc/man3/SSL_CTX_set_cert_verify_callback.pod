@@ -32,11 +32,11 @@ By setting I<callback> to NULL, the default behaviour is restored.
 
 I<callback> should return 1 to indicate verification success
 and 0 to indicate verification failure.
-In server mode, a return value other than 1 leads to handshake failure.
+In server mode, a return value of 0 leads to handshake failure.
 In client mode, the behaviour is as follows.
-A return value greater than 1 leads to handshake failure.
-Other values are ignored if the verification mode is B<SSL_VERIFY_NONE>.
-On return value 0 the handshake will fail.
+All values, including 0, are ignored
+if the verification mode is B<SSL_VERIFY_NONE>.
+Otherwise, when the return value is 0, the handshake will fail.
 
 In client mode I<callback> may also return -1,
 typically on failure verifying the server certificate.
