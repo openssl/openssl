@@ -3099,6 +3099,11 @@ static int tls12_get_cert_sigalg_idx(const SSL *s, const SIGALG_LOOKUP *lu)
                 && (s->s3.tmp.new_cipher->algorithm_mkey & SSL_kRSA) != 0))
         return -1;
 
+#ifndef OPENSSL_NO_RPK
+    /* If doing RPK, the CERT_PKEY won't be "valid" */
+    if (tls12_rpk_and_privkey(s, sig_idx))
+        return sig_idx;
+#endif
     return s->s3.tmp.valid_flags[sig_idx] & CERT_PKEY_VALID ? sig_idx : -1;
 }
 

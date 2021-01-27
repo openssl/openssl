@@ -20,6 +20,7 @@
 #include <openssl/rsa.h>
 #include <openssl/x509.h>
 #include <openssl/trace.h>
+#include <openssl/encoder.h>
 
 /*
  * Map error codes to TLS/SSL alart types.
@@ -404,7 +405,6 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
     MSG_PROCESS_RETURN ret = MSG_PROCESS_ERROR;
     int j;
     unsigned int len;
-    X509 *peer;
     const EVP_MD *md = NULL;
     size_t hdatalen = 0;
     void *hdata;
@@ -417,8 +417,7 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
         goto err;
     }
 
-    peer = s->session->peer;
-    pkey = X509_get0_pubkey(peer);
+    pkey = tls_get_peer_pkey(s);
     if (pkey == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto err;
@@ -1014,6 +1013,206 @@ static int ssl_add_cert_chain(SSL *s, WPACKET *pkt, CERT_PKEY *cpk)
     }
     return 1;
 }
+
+EVP_PKEY* tls_get_peer_pkey(const SSL *s)
+{
+#ifndef OPENSSL_NO_RPK
+    if (s->session->peer_rpk != NULL)
+        return s->session->peer_rpk;
+#endif
+    if (s->session->peer != NULL)
+        return X509_get0_pubkey(s->session->peer);
+    return NULL;
+}
+
+# ifndef OPENSSL_NO_RPK
+int tls_process_rpk(SSL *s, PACKET *pkt, EVP_PKEY **match)
+{
+    int ret = 0;
+    EVP_PKEY *pkey = NULL;
+    RAW_EXTENSION *rawexts = NULL;
+    PACKET extensions;
+    int i;
+    PACKET context;
+    unsigned long cert_list_len, spki_len;
+    const unsigned char *spki, *spkistart;
+
+    *match = NULL;
+    if (SSL_IS_TLS13(s)) {
+        if (!PACKET_get_length_prefixed_1(pkt, &context)) {
+            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_INVALID_CONTEXT);
+            goto err;
+        }
+        if (s->server) {
+            if (s->pha_context == NULL) {
+                if (PACKET_remaining(&context) != 0) {
+                    SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_INVALID_CONTEXT);
+                    goto err;
+                }
+            } else {
+                if (!PACKET_equal(&context, s->pha_context, s->pha_context_len)) {
+                    SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_INVALID_CONTEXT);
+                    goto err;
+                }
+            }
+        } else {
+            if (PACKET_remaining(&context) != 0) {
+                SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_INVALID_CONTEXT);
+                goto err;
+            }
+        }
+    }
+
+    if (!PACKET_get_net_3(pkt, &cert_list_len)
+            || PACKET_remaining(pkt) != cert_list_len
+            || PACKET_remaining(pkt) == 0) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
+        goto err;
+    }
+
+    /* RPK only admits a single CertificateEntry in the list, so no loop. */
+    if (!PACKET_get_net_3(pkt, &spki_len)
+            || spki_len == 0
+            || !PACKET_get_bytes(pkt, &spki, spki_len)) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
+        goto err;
+    }
+    spkistart = spki;
+    if ((pkey = d2i_PUBKEY_ex(NULL, &spki, spki_len, s->ctx->libctx, s->ctx->propq)) == NULL
+            || spki != (spkistart + spki_len)) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
+        goto err;
+    }
+    if (EVP_PKEY_missing_parameters(pkey)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                 SSL_R_UNABLE_TO_FIND_PUBLIC_KEY_PARAMETERS);
+        goto err;
+    }
+    /* Verify the received key is a configured one. */
+    for (i = 0; i < sk_EVP_PKEY_num(s->peer_rpks); i++) {
+        EVP_PKEY *conf_pkey = sk_EVP_PKEY_value(s->peer_rpks, i);
+
+        /*
+         * EVP_PKEY_eq() will throw an error for different types,
+         * so, check that first, and then explicitly check for 1
+         */
+        if (EVP_PKEY_get_id(pkey) == EVP_PKEY_get_id(conf_pkey)
+                && EVP_PKEY_eq(conf_pkey, pkey) == 1) {
+            *match = conf_pkey;
+            break;
+        }
+    }
+    if (*match == NULL) {
+        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
+                 SSL_R_INVALID_CERTIFICATE_OR_ALG);
+        goto err;
+    }
+
+    /* Process the Extensions block */
+    if (SSL_IS_TLS13(s)) {
+        if (!PACKET_get_length_prefixed_2(pkt, &extensions)) {
+            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_LENGTH);
+            goto err;
+        }
+        if (!tls_collect_extensions(s, &extensions,
+                                    SSL_EXT_TLS1_3_CERTIFICATE, &rawexts,
+                                    NULL, 1)) {
+            /* SSLfatal already called */
+            goto err;
+        }
+        if (PACKET_remaining(pkt) != 0) {
+            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
+            goto err;
+        }
+        /* chain index is always zero and fin always 1 for RPK */
+        if (!tls_parse_all_extensions(s, SSL_EXT_TLS1_3_CERTIFICATE,
+                                      rawexts, NULL, 0, 1)) {
+            /* SSLfatal already called */
+            goto err;
+        }
+    }
+    ret = 1;
+
+ err:
+    OPENSSL_free(rawexts);
+    EVP_PKEY_free(pkey);
+    return ret;
+}
+
+static int tls_add_rpk(SSL *s, WPACKET *pkt, CERT_PKEY *cpk)
+{
+    int pdata_len;
+    unsigned char *pdata = NULL;
+    X509_PUBKEY *xpk = NULL;
+    int ret = 0;
+
+    if (cpk == NULL)
+        return 1;
+
+    if (cpk->x509 != NULL) {
+        /* Get the RPK from the certificate */
+        xpk = X509_get_X509_PUBKEY(cpk->x509);
+        if (xpk == NULL) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            goto err;
+        }
+        pdata_len = i2d_X509_PUBKEY(xpk, &pdata);
+    } else if (cpk->privatekey != NULL) {
+        /* Get the RPK from the private key */
+        pdata_len = i2d_PUBKEY(cpk->privatekey, &pdata);
+    } else {
+        return 1;
+    }
+    if (pdata_len <= 0) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_BUF_LIB);
+        goto err;
+    }
+    if (!WPACKET_sub_memcpy_u24(pkt, pdata, pdata_len)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
+    if (SSL_IS_TLS13(s)) {
+        if (cpk->x509 != NULL) {
+            if (!tls_construct_extensions(s, pkt, SSL_EXT_TLS1_3_CERTIFICATE, cpk->x509, 0)) {
+                /* SSLfatal() already called */
+                goto err;
+            }
+        } else {
+            /* No cert means no certificate extensions... add an empty one */
+            if (!WPACKET_start_sub_packet_u16(pkt) || !WPACKET_close(pkt)) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                goto err;
+            }
+        }
+    }
+
+    ret = 1;
+ err:
+    OPENSSL_free(pdata);
+    return ret;
+}
+
+unsigned long tls_output_rpk(SSL *s, WPACKET *pkt, CERT_PKEY *cpk)
+{
+    if (!WPACKET_start_sub_packet_u24(pkt)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    if (!tls_add_rpk(s, pkt, cpk)) {
+        /* SSLfatal() already called */
+        return 0;
+    }
+
+    if (!WPACKET_close(pkt)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    return 1;
+}
+# endif /* ifndef OPENSSL_NO_RPK */
 
 unsigned long ssl3_output_cert_chain(SSL *s, WPACKET *pkt, CERT_PKEY *cpk)
 {

@@ -21,6 +21,7 @@ OpenSSL 3.1
 
 ### Major changes between OpenSSL 3.0 and OpenSSL 3.1 [under development]
 
+  * Add Raw Public Key (RFC7250) support.
   * Subject or issuer names in X.509 objects are now displayed as UTF-8 strings
     by default.
   * TCP Fast Open (RFC7413) support is available on Linux, macOS, and FreeBSD

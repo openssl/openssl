@@ -665,6 +665,10 @@ static STRINT_PAIR tlsext_types[] = {
     {"session ticket", TLSEXT_TYPE_session_ticket},
     {"renegotiation info", TLSEXT_TYPE_renegotiate},
     {"signed certificate timestamps", TLSEXT_TYPE_signed_certificate_timestamp},
+#ifndef OPENSSL_NO_RPK
+    {"client cert type", TLSEXT_TYPE_client_cert_type},
+    {"server cert type", TLSEXT_TYPE_server_cert_type},
+#endif
     {"TLS padding", TLSEXT_TYPE_padding},
 #ifdef TLSEXT_TYPE_next_proto_neg
     {"next protocol", TLSEXT_TYPE_next_proto_neg},

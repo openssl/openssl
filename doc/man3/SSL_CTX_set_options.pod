@@ -305,6 +305,26 @@ those clients (e.g. mobile) use ChaCha20-Poly1305 if that cipher is anywhere
 in the server cipher list; but still allows other clients to use AES and other
 ciphers. Requires B<SSL_OP_CIPHER_SERVER_PREFERENCE>.
 
+=item SSL_OP_RPK_CLIENT
+
+Enable the use of raw public keys (RFC7250) from the client to the server.
+Both ends of the connection must enable this for RPK client-to-server use.
+
+The raw public key is normally taken from the certificate assigned to the
+connection (e.g. via SSL_use_certificate()), but if a certificate is not
+configured, then the public key will be extracted from the assigned
+private key.
+
+=item SSL_OP_RPK_SERVER
+
+Enable the use of raw public keys (RFC7250) from the server to the client.
+Both ends of the connection must enable this for RPK server-to-client use.
+
+The raw public key is normally taken from the certificate assigned to the
+connection (e.g. via SSL_use_certificate()), but if a certificate is not
+configured, then the public key will be extracted from the assigned
+private key.
+
 =item SSL_OP_TLS_ROLLBACK_BUG
 
 Disable version rollback attack detection.

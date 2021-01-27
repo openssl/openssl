@@ -521,3 +521,8 @@ SSL_set0_tmp_dh_pkey                    521	3_0_0	EXIST::FUNCTION:
 SSL_CTX_set0_tmp_dh_pkey                522	3_0_0	EXIST::FUNCTION:
 SSL_group_to_name                       523	3_0_0	EXIST::FUNCTION:
 SSL_client_hello_get_extension_order    ?	3_1_0	EXIST::FUNCTION:
+SSL_add1_expected_peer_rpk              ?	3_1_0	EXIST::FUNCTION:RPK
+SSL_get0_peer_rpk                       ?	3_1_0	EXIST::FUNCTION:RPK
+SSL_SESSION_get0_peer_rpk               ?	3_1_0	EXIST::FUNCTION:RPK
+SSL_rpk_send_negotiated                 ?	3_1_0	EXIST::FUNCTION:RPK
+SSL_rpk_receive_negotiated              ?	3_1_0	EXIST::FUNCTION:RPK

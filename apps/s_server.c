@@ -100,6 +100,10 @@ static int use_sendfile = 0;
 
 static const char *session_id_prefix = NULL;
 
+#ifndef OPENSSL_NO_RPK
+static EVP_PKEY *peer_rpk = NULL;
+#endif
+
 #ifndef OPENSSL_NO_DTLS
 static int enable_timeouts = 0;
 static long socket_mtu;
@@ -718,6 +722,11 @@ typedef enum OPTION_choice {
     OPT_S_NUM_TICKETS, OPT_ANTI_REPLAY, OPT_NO_ANTI_REPLAY, OPT_SCTP_LABEL_BUG,
     OPT_HTTP_SERVER_BINMODE, OPT_NOCANAMES, OPT_IGNORE_UNEXPECTED_EOF, OPT_KTLS,
     OPT_TFO,
+#ifndef OPENSSL_NO_RPK
+    OPT_ENABLE_SERVER_RPK,
+    OPT_ENABLE_CLIENT_RPK,
+    OPT_PEER_RPK,
+#endif
     OPT_R_ENUM,
     OPT_S_ENUM,
     OPT_V_ENUM,
@@ -965,6 +974,11 @@ const OPTIONS s_server_options[] = {
     {"ktls", OPT_KTLS, '-', "Enable Kernel TLS for sending and receiving"},
     {"sendfile", OPT_SENDFILE, '-', "Use sendfile to response file with -WWW"},
 #endif
+#ifndef OPENSSL_NO_RPK
+    {"enable_server_rpk", OPT_ENABLE_SERVER_RPK, '-', "Enable raw public keys (RFC7250) from the server"},
+    {"enable_client_rpk", OPT_ENABLE_CLIENT_RPK, '-', "Enable raw public keys (RFC7250) from the client"},
+    {"peer_rpk", OPT_PEER_RPK, '<', "PEM-encoded public-key or certificate with client RPK"},
+#endif
 
     OPT_R_OPTIONS,
     OPT_S_OPTIONS,
@@ -1062,6 +1076,12 @@ int s_server_main(int argc, char *argv[])
     int enable_ktls = 0;
 #endif
     int tfo = 0;
+#ifndef OPENSSL_NO_RPK
+    int enable_server_rpk = 0;
+    int enable_client_rpk = 0;
+    char *peer_rpk_file = NULL;
+    X509 *peer_rpk_cert = NULL;
+#endif
 
     /* Init of few remaining global variables */
     local_argc = argc;
@@ -1657,6 +1677,17 @@ int s_server_main(int argc, char *argv[])
         case OPT_TFO:
             tfo = 1;
             break;
+#ifndef OPENSSL_NO_RPK
+        case OPT_ENABLE_SERVER_RPK:
+            enable_server_rpk = 1;
+            break;
+        case OPT_ENABLE_CLIENT_RPK:
+            enable_client_rpk = 1;
+            break;
+        case OPT_PEER_RPK:
+            peer_rpk_file = opt_arg();
+            break;
+#endif
         }
     }
 
@@ -1744,6 +1775,23 @@ int s_server_main(int argc, char *argv[])
 
     if (!load_excert(&exc))
         goto end;
+
+#ifndef OPENSSL_NO_RPK
+    if (peer_rpk_file != NULL) {
+        peer_rpk = load_pubkey(peer_rpk_file, s_key_format, 0, pass, engine, "client RPK file");
+        if (peer_rpk == NULL) {
+            peer_rpk_cert = load_cert(peer_rpk_file, s_cert_format, "client RPK file");
+            if (peer_rpk_cert != NULL) {
+                peer_rpk = X509_get_pubkey(peer_rpk_cert);
+            }
+        }
+        if (peer_rpk == NULL) {
+            BIO_printf(bio_err, "Error loading server RPK file\n");
+            ERR_print_errors(bio_err);
+            goto end;
+        }
+    }
+#endif
 
     if (nocert == 0) {
         s_key = load_key(s_key_file, s_key_format, 0, pass, engine,
@@ -2242,6 +2290,13 @@ int s_server_main(int argc, char *argv[])
     if (recv_max_early_data >= 0)
         SSL_CTX_set_recv_max_early_data(ctx, recv_max_early_data);
 
+#ifndef OPENSSL_NO_RPK
+    if (enable_server_rpk)
+        SSL_CTX_set_options(ctx, SSL_OP_RPK_SERVER);
+    if (enable_client_rpk)
+        SSL_CTX_set_options(ctx, SSL_OP_RPK_CLIENT);
+#endif
+
     if (rev)
         server_cb = rev_body;
     else if (www)
@@ -2284,6 +2339,11 @@ int s_server_main(int argc, char *argv[])
     EVP_PKEY_free(s_key2);
 #ifndef OPENSSL_NO_NEXTPROTONEG
     OPENSSL_free(next_proto.data);
+#endif
+#ifndef OPENSSL_NO_RPK
+    EVP_PKEY_free(peer_rpk);
+    peer_rpk = NULL;
+    X509_free(peer_rpk_cert);
 #endif
     OPENSSL_free(alpn_ctx.data);
     ssl_excert_free(exc);
@@ -2474,6 +2534,14 @@ static int sv_body(int s, int stype, int prot, unsigned char *context)
         SSL_set_tlsext_debug_callback(con, tlsext_cb);
         SSL_set_tlsext_debug_arg(con, bio_s_out);
     }
+
+#ifndef OPENSSL_NO_RPK
+    if (peer_rpk != NULL && !SSL_add1_expected_peer_rpk(con, peer_rpk)) {
+        BIO_printf(bio_err, "Error setting expected client RPK\n");
+        ERR_print_errors(bio_err);
+        goto err;
+    }
+#endif
 
     if (early_data) {
         int write_header = 1, edret = SSL_READ_EARLY_DATA_ERROR;
@@ -2954,6 +3022,21 @@ static void print_connection_info(SSL *con)
         dump_cert_text(bio_s_out, peer);
         peer = NULL;
     }
+#ifndef OPENSSL_NO_RPK
+    /* Only display RPK information if configured */
+    if (SSL_rpk_send_negotiated(con))
+        BIO_printf(bio_s_out, "Server-to-client raw public key negotiated\n");
+    if (SSL_rpk_receive_negotiated(con))
+        BIO_printf(bio_s_out, "Client-to-server raw public key negotiated\n");
+    if (SSL_get_options(con) & SSL_OP_RPK_CLIENT) {
+        EVP_PKEY *client_rpk = SSL_get0_peer_rpk(con);
+
+        if (client_rpk != NULL) {
+            BIO_printf(bio_s_out, "Client raw public key\n");
+            EVP_PKEY_print_public(bio_s_out, client_rpk, 2, NULL);
+        }
+    }
+#endif
 
     if (SSL_get_shared_ciphers(con, buf, sizeof(buf)) != NULL)
         BIO_printf(bio_s_out, "Shared ciphers:%s\n", buf);
@@ -3099,6 +3182,14 @@ static int www_body(int s, int stype, int prot, unsigned char *context)
     }
     SSL_set_bio(con, sbio, sbio);
     SSL_set_accept_state(con);
+
+#ifndef OPENSSL_NO_RPK
+    if (peer_rpk != NULL && !SSL_add1_expected_peer_rpk(con, peer_rpk)) {
+        BIO_printf(bio_err, "Error setting expected client RPK\n");
+        ERR_print_errors(bio_err);
+        goto err;
+    }
+#endif
 
     /* No need to free |con| after this. Done by BIO_free(ssl_bio) */
     BIO_set_ssl(ssl_bio, con, BIO_CLOSE);
@@ -3507,6 +3598,14 @@ static int rev_body(int s, int stype, int prot, unsigned char *context)
         ERR_print_errors(bio_err);
         goto err;
     }
+
+#ifndef OPENSSL_NO_RPK
+    if (peer_rpk != NULL && !SSL_add1_expected_peer_rpk(con, peer_rpk)) {
+        BIO_printf(bio_err, "Error setting expected client RPK\n");
+        ERR_print_errors(bio_err);
+        goto err;
+    }
+#endif
 
     sbio = BIO_new_socket(s, BIO_NOCLOSE);
     if (sbio == NULL) {

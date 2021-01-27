@@ -131,6 +131,12 @@ __owur int tls_client_key_exchange_post_work(SSL *s);
 __owur int tls_construct_cert_status_body(SSL *s, WPACKET *pkt);
 __owur int tls_construct_cert_status(SSL *s, WPACKET *pkt);
 __owur MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt);
+#ifndef OPENSSL_NO_RPK
+__owur MSG_PROCESS_RETURN tls_process_server_rpk(SSL *s, PACKET *pkt);
+__owur MSG_PROCESS_RETURN tls_process_client_rpk(SSL *s, PACKET *pkt);
+__owur unsigned long tls_output_rpk(SSL *s, WPACKET *pkt, CERT_PKEY *cpk);
+__owur int tls_process_rpk(SSL *s, PACKET *pkt, EVP_PKEY **match);
+#endif
 __owur MSG_PROCESS_RETURN tls_process_server_certificate(SSL *s, PACKET *pkt);
 __owur WORK_STATE tls_post_process_server_certificate(SSL *s, WORK_STATE wst);
 __owur int ssl3_check_cert_and_algorithm(SSL *s);
@@ -423,3 +429,24 @@ int tls_handle_alpn(SSL *s);
 
 int tls13_save_handshake_digest_for_pha(SSL *s);
 int tls13_restore_handshake_digest_for_pha(SSL *s);
+
+__owur EVP_PKEY* tls_get_peer_pkey(const SSL *s);
+#ifndef OPENSSL_NO_RPK
+/* RFC7250 */
+EXT_RETURN tls_construct_ctos_client_cert_type(SSL *s, WPACKET *pkt, unsigned int context,
+                                               X509 *x, size_t chainidx);
+EXT_RETURN tls_construct_stoc_client_cert_type(SSL *s, WPACKET *pkt, unsigned int context,
+                                               X509 *x, size_t chainidx);
+int tls_parse_ctos_client_cert_type(SSL *s, PACKET *pkt, unsigned int context,
+                                    X509 *x, size_t chainidx);
+int tls_parse_stoc_client_cert_type(SSL *s, PACKET *pkt, unsigned int context,
+                               X509 *x, size_t chainidx);
+EXT_RETURN tls_construct_ctos_server_cert_type(SSL *s, WPACKET *pkt, unsigned int context,
+                                               X509 *x, size_t chainidx);
+EXT_RETURN tls_construct_stoc_server_cert_type(SSL *s, WPACKET *pkt, unsigned int context,
+                                               X509 *x, size_t chainidx);
+int tls_parse_ctos_server_cert_type(SSL *s, PACKET *pkt, unsigned int context,
+                                    X509 *x, size_t chainidx);
+int tls_parse_stoc_server_cert_type(SSL *s, PACKET *pkt, unsigned int context,
+                                    X509 *x, size_t chainidx);
+#endif

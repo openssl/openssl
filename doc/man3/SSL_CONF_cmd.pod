@@ -532,6 +532,12 @@ B<KTLS>: Enables kernel TLS if support has been compiled in, and it is supported
 by the negotiated ciphersuites and extensions. Equivalent to
 B<SSL_OP_ENABLE_KTLS>.
 
+B<ClientRPK>: Enables use of raw public keys (RFC7250) by the client for identity.
+Equivalent to B<SSL_OP_RPK_CLIENT>.
+
+B<ServerRPK>: Enables use of raw public keys (RFC7250) by the server for identity.
+Equivalent to B<SSL_OP_RPK_SERVER>.
+
 =item B<VerifyMode>
 
 The B<value> argument is a comma separated list of flags to set.

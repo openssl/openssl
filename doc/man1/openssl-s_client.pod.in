@@ -129,6 +129,9 @@ B<openssl> B<s_client>
 {- $OpenSSL::safe::opt_provider_synopsis -}
 {- $OpenSSL::safe::opt_engine_synopsis -}[B<-ssl_client_engine> I<id>]
 {- $OpenSSL::safe::opt_v_synopsis -}
+[B<-enable_server_rpk>]
+[B<-enable_client_rpk>]
+[B<-peer_rpk> I<file>]
 [I<host>:I<port>]
 
 =head1 DESCRIPTION
@@ -813,6 +816,18 @@ Specify engine to be used for client certificate operations.
 
 Verification errors are displayed, for debugging, but the command will
 proceed unless the B<-verify_return_error> option is used.
+
+=item B<-enable_server_rpk>
+
+Enable the use of server delivered raw public keys (RFC7250).
+
+=item B<-enable_client_rpk>
+
+Enable the use of client delivered raw public keys (RFC7250).
+
+=item B<-peer_rpk> I<file>
+
+File containing a validated peer raw public key (RFC7250).
 
 =item I<host>:I<port>
 

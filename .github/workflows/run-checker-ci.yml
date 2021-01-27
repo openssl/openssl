@@ -21,6 +21,7 @@ jobs:
           no-ec,
           no-ec2m,
           no-legacy,
+          no-rpk,
           no-sock,
           no-srp,
           no-srtp,

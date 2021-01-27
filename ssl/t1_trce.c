@@ -475,6 +475,10 @@ static const ssl_trace_tbl ssl_exts_tbl[] = {
     {TLSEXT_TYPE_application_layer_protocol_negotiation,
      "application_layer_protocol_negotiation"},
     {TLSEXT_TYPE_signed_certificate_timestamp, "signed_certificate_timestamps"},
+#ifndef OPENSSL_NO_RPK
+    {TLSEXT_TYPE_client_cert_type, "client_cert_type"},
+    {TLSEXT_TYPE_server_cert_type, "server_cert_type"},
+#endif
     {TLSEXT_TYPE_padding, "padding"},
     {TLSEXT_TYPE_encrypt_then_mac, "encrypt_then_mac"},
     {TLSEXT_TYPE_extended_master_secret, "extended_master_secret"},
@@ -613,6 +617,20 @@ static const ssl_trace_tbl ssl_key_update_tbl[] = {
     {SSL_KEY_UPDATE_NOT_REQUESTED, "update_not_requested"},
     {SSL_KEY_UPDATE_REQUESTED, "update_requested"}
 };
+
+#ifndef OPENSSL_NO_RPK
+/*
+ * "pgp" and "1609dot2" are defined in RFC7250,
+ * although OpenSSL doesn't support them, it can
+ * at least report them in traces
+ */
+static const ssl_trace_tbl ssl_cert_type_tbl[] = {
+    {TLSEXT_cert_type_x509, "x509"},
+    {TLSEXT_cert_type_pgp, "pgp"},
+    {TLSEXT_cert_type_rpk, "rpk"},
+    {TLSEXT_cert_type_1609dot2, "1609dot2"}
+};
+#endif
 
 static void ssl_print_hex(BIO *bio, int indent, const char *name,
                           const unsigned char *msg, size_t msglen)
@@ -888,6 +906,22 @@ static int ssl_print_extension(BIO *bio, int indent, int server,
         BIO_indent(bio, indent + 2, 80);
         BIO_printf(bio, "max_early_data=%u\n", max_early_data);
         break;
+
+#ifndef OPENSSL_NO_RPK
+    case TLSEXT_TYPE_server_cert_type:
+    case TLSEXT_TYPE_client_cert_type:
+        if (server) {
+            if (extlen != 1)
+                return 0;
+            return ssl_trace_list(bio, indent + 2, ext, 1, 1, ssl_cert_type_tbl);
+        }
+        if (extlen < 1)
+            return 0;
+        xlen = ext[0];
+        if (extlen != xlen + 1)
+            return 0;
+        return ssl_trace_list(bio, indent + 2, ext + 1, xlen, 1, ssl_cert_type_tbl);
+#endif
 
     default:
         BIO_dump_indent(bio, (const char *)ext, extlen, indent + 2);
@@ -1254,6 +1288,39 @@ static int ssl_print_certificate(BIO *bio, int indent,
     return 1;
 }
 
+#ifndef OPENSSL_NO_RPK
+static int ssl_print_raw_public_key(BIO *bio, const SSL *ssl, int server,
+                                    int indent, const unsigned char **pmsg,
+                                    size_t *pmsglen)
+{
+    EVP_PKEY *pkey;
+    size_t clen;
+    const unsigned char *msg = *pmsg;
+    size_t msglen = *pmsglen;
+
+    if (msglen < 3)
+        return 0;
+    clen = (msg[0] << 16) | (msg[1] << 8) | msg[2];
+    if (msglen < clen + 3)
+        return 0;
+
+    msg += 3;
+
+    BIO_indent(bio, indent, 80);
+    BIO_printf(bio, "raw_public_key, length=%d\n", (int)clen);
+
+    pkey = d2i_PUBKEY_ex(NULL, &msg, clen, ssl->ctx->libctx, NULL);
+    if (pkey == NULL) {
+        return 0;
+    }
+    EVP_PKEY_print_public(bio, pkey, indent + 2, NULL);
+    EVP_PKEY_free(pkey);
+    *pmsg += clen + 3;
+    *pmsglen -= clen + 3;
+    return 1;
+}
+#endif
+
 static int ssl_print_certificates(BIO *bio, const SSL *ssl, int server,
                                   int indent, const unsigned char *msg,
                                   size_t msglen)
@@ -1270,6 +1337,18 @@ static int ssl_print_certificates(BIO *bio, const SSL *ssl, int server,
     if (msglen != clen + 3)
         return 0;
     msg += 3;
+#ifndef OPENSSL_NO_RPK
+    if ((server && ssl->ext.server_cert_type == TLSEXT_cert_type_rpk)
+            || (!server && ssl->ext.client_cert_type == TLSEXT_cert_type_rpk)) {
+        if (!ssl_print_raw_public_key(bio, ssl, server, indent, &msg, &clen))
+            return 0;
+        if (SSL_IS_TLS13(ssl)
+            && !ssl_print_extensions(bio, indent + 2, server,
+                                     SSL3_MT_CERTIFICATE, &msg, &clen))
+            return 0;
+        return 1;
+    }
+#endif
     BIO_indent(bio, indent, 80);
     BIO_printf(bio, "certificate_list, length=%d\n", (int)clen);
     while (clen > 0) {

@@ -473,6 +473,7 @@ my @disablables = (
     "rdrand",
     "rfc3779",
     "rmd160",
+    "rpk",
     "scrypt",
     "sctp",
     "secure-memory",
@@ -644,7 +645,10 @@ my @disable_cascades = (
 
     "fips"              => [ "fips-securitychecks", "acvp-tests" ],
 
-    "deprecated-3.0"    => [ "engine", "srp" ]
+    "deprecated-3.0"    => [ "engine", "srp" ],
+
+    sub { $disabled{"tls1_2"} && $disabled{"tls1_3"} }
+                        => [ "rpk" ]
     );
 
 # Avoid protocol support holes.  Also disable all versions below N, if version

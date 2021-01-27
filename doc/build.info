@@ -2367,6 +2367,10 @@ DEPEND[html/man3/SSL_accept.html]=man3/SSL_accept.pod
 GENERATE[html/man3/SSL_accept.html]=man3/SSL_accept.pod
 DEPEND[man/man3/SSL_accept.3]=man3/SSL_accept.pod
 GENERATE[man/man3/SSL_accept.3]=man3/SSL_accept.pod
+DEPEND[html/man3/SSL_add1_expected_peer_rpk.html]=man3/SSL_add1_expected_peer_rpk.pod
+GENERATE[html/man3/SSL_add1_expected_peer_rpk.html]=man3/SSL_add1_expected_peer_rpk.pod
+DEPEND[man/man3/SSL_add1_expected_peer_rpk.3]=man3/SSL_add1_expected_peer_rpk.pod
+GENERATE[man/man3/SSL_add1_expected_peer_rpk.3]=man3/SSL_add1_expected_peer_rpk.pod
 DEPEND[html/man3/SSL_alert_type_string.html]=man3/SSL_alert_type_string.pod
 GENERATE[html/man3/SSL_alert_type_string.html]=man3/SSL_alert_type_string.pod
 DEPEND[man/man3/SSL_alert_type_string.3]=man3/SSL_alert_type_string.pod
@@ -3319,6 +3323,7 @@ html/man3/SSL_SESSION_is_resumable.html \
 html/man3/SSL_SESSION_print.html \
 html/man3/SSL_SESSION_set1_id.html \
 html/man3/SSL_accept.html \
+html/man3/SSL_add1_expected_peer_rpk.html \
 html/man3/SSL_alert_type_string.html \
 html/man3/SSL_alloc_buffers.html \
 html/man3/SSL_check_chain.html \
@@ -3913,6 +3918,7 @@ man/man3/SSL_SESSION_is_resumable.3 \
 man/man3/SSL_SESSION_print.3 \
 man/man3/SSL_SESSION_set1_id.3 \
 man/man3/SSL_accept.3 \
+man/man3/SSL_add1_expected_peer_rpk.3 \
 man/man3/SSL_alert_type_string.3 \
 man/man3/SSL_alloc_buffers.3 \
 man/man3/SSL_check_chain.3 \

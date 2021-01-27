@@ -187,6 +187,9 @@ SSL_SESSION *ssl_session_dup(const SSL_SESSION *src, int ticket)
 #endif
     dest->peer_chain = NULL;
     dest->peer = NULL;
+#ifndef OPENSSL_NO_RPK
+    dest->peer_rpk = NULL;
+#endif
     dest->ticket_appdata = NULL;
     memset(&dest->ex_data, 0, sizeof(dest->ex_data));
 
@@ -214,6 +217,15 @@ SSL_SESSION *ssl_session_dup(const SSL_SESSION *src, int ticket)
         if (dest->peer_chain == NULL)
             goto err;
     }
+
+#ifndef OPENSSL_NO_RPK
+    if (src->peer_rpk != NULL) {
+        if (!EVP_PKEY_up_ref(src->peer_rpk))
+            goto err;
+        dest->peer_rpk = src->peer_rpk;
+    }
+#endif
+
 #ifndef OPENSSL_NO_PSK
     if (src->psk_identity_hint) {
         dest->psk_identity_hint = OPENSSL_strdup(src->psk_identity_hint);
@@ -829,6 +841,9 @@ void SSL_SESSION_free(SSL_SESSION *ss)
     OPENSSL_cleanse(ss->master_key, sizeof(ss->master_key));
     OPENSSL_cleanse(ss->session_id, sizeof(ss->session_id));
     X509_free(ss->peer);
+#ifndef OPENSSL_NO_RPK
+    EVP_PKEY_free(ss->peer_rpk);
+#endif
     OSSL_STACK_OF_X509_free(ss->peer_chain);
     OPENSSL_free(ss->ext.hostname);
     OPENSSL_free(ss->ext.tick);
@@ -1042,6 +1057,13 @@ X509 *SSL_SESSION_get0_peer(SSL_SESSION *s)
 {
     return s->peer;
 }
+
+#ifndef OPENSSL_NO_RPK
+EVP_PKEY *SSL_SESSION_get0_peer_rpk(SSL_SESSION *s)
+{
+    return s->peer_rpk;
+}
+#endif
 
 int SSL_SESSION_set1_id_context(SSL_SESSION *s, const unsigned char *sid_ctx,
                                 unsigned int sid_ctx_len)

@@ -1,0 +1,88 @@
+=pod
+
+=head1 NAME
+
+SSL_get0_peer_rpk,
+SSL_rpk_send_negotiated,
+SSL_rpk_receive_negotiated,
+SSL_SESSION_get0_peer_rpk,
+SSL_add1_expected_peer_rpk - raw public key (RFC7250) support
+
+=head1 SYNOPSIS
+
+ #include <openssl/ssl.h>
+
+ EVP_PKEY *SSL_get0_peer_rpk(const SSL *s);
+ EVP_PKEY *SSL_SESSION_get0_peer_rpk(const SSL_SESSION *ss);
+ int SSL_rpk_send_negotiated(const SSL *s);
+ int SSL_rpk_receive_negotiated(const SSL *s);
+ int SSL_add1_expected_peer_rpk(SSL *s, EVP_PKEY *pkey);
+
+=head1 DESCRIPTION
+
+SSL_get0_peer_rpk() returns the peer's raw public key from SSL B<s>.
+
+SSL_rpk_send_negotiated() indicates whether sending a raw public key was
+negotiated with the peer.
+
+SSL_rpk_receive_negotiated() indicates whether receiving a raw public key
+was negotiated with the peer.
+
+SSL_SESSION_get0_peer_rpk() returns the peer's raw public key from
+SSL_SESSION B<ss> in the case of resumption.
+
+SSL_add1_expected_peer_rpk() configures the given B<pkey>
+as a public key that the peer is expected to present after negotiating
+raw public keys (RFC7250). The reference count on the provided B<pkey> is
+incremented when added to the SSL B<s>.
+
+=head1 NOTES
+
+Raw public keys are used in place of certificates when the option is
+negotiated. Adding more than one key is possible to allow for key rotation,
+where a peer might be expected to offer an "old" or "new" key and the endpoint
+must be able to accept either one.  It also enables the use of different
+types of keys along with signature-algorithm negotiation.
+
+When raw public keys are used, the certificate verify callback is not called.
+Raw public keys have no subject, issuer, validity dates nor digital signature.
+The peer's raw public key must be added via SSL_add1_expected_peer_rpk()
+for the handshake to succeed. Multiple public keys may be added to the SSL B<s>.
+
+The SSL_SESSION_get0_peer_rpk() and SSL_get0_peer_rpk() functions can be
+used to retrieve a key that is then used in SSL_add1_expected_peer_rpk().
+
+The following options enable negotiation of raw public keys:
+
+=over 4
+
+=item SSL_OP_RPK_CLIENT
+
+=item SSL_OP_RPK_SERVER
+
+=back
+
+The raw public key is normally taken from the certificate assigned to the
+connection (e.g. via SSL_use_certificate()), but if a certificate is not
+configured, then the public key will be extracted from the assigned
+private key.
+
+=head1 RETURN VALUES
+
+SSL_get0_peer_rpk() and SSL_SESSION_get0_peer_rpk() return the peer's raw
+public key as an EVP_PKEY or NULL when the raw public key is not available.
+
+SSL_rpk_send_negotiated() and SSL_rpk_receive_negotiated() return 0 for false,
+and 1 for true.
+
+SSL_add1_expected_peer_rpk() returns 1 on success and 0 on failure.
+
+=head1 HISTORY
+
+These functions were added in OpenSSL 3.1.0.
+
+=head1 COPYRIGHT
+
+Copyright 2021 The OpenSSL Project Authors. All Rights Reserved.
+
+=cut

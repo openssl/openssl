@@ -34,6 +34,10 @@ static int init_alpn(SSL *s, unsigned int context);
 static int final_alpn(SSL *s, unsigned int context, int sent);
 static int init_sig_algs_cert(SSL *s, unsigned int context);
 static int init_sig_algs(SSL *s, unsigned int context);
+#ifndef OPENSSL_NO_RPK
+static int init_server_cert_type(SSL *s, unsigned int context);
+static int init_client_cert_type(SSL *s, unsigned int context);
+#endif
 static int init_certificate_authorities(SSL *s, unsigned int context);
 static EXT_RETURN tls_construct_certificate_authorities(SSL *s, WPACKET *pkt,
                                                         unsigned int context,
@@ -294,6 +298,29 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         NULL, tls_construct_ctos_post_handshake_auth,
         NULL,
     },
+#ifndef OPENSSL_NO_RPK
+    {
+        TLSEXT_TYPE_client_cert_type,
+        SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS1_3_ENCRYPTED_EXTENSIONS
+        | SSL_EXT_TLS1_2_SERVER_HELLO,
+        init_client_cert_type,
+        tls_parse_ctos_client_cert_type, tls_parse_stoc_client_cert_type,
+        tls_construct_stoc_client_cert_type, tls_construct_ctos_client_cert_type,
+        NULL
+    },
+    {
+        TLSEXT_TYPE_server_cert_type,
+        SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS1_3_ENCRYPTED_EXTENSIONS
+        | SSL_EXT_TLS1_2_SERVER_HELLO,
+        init_server_cert_type,
+        tls_parse_ctos_server_cert_type, tls_parse_stoc_server_cert_type,
+        tls_construct_stoc_server_cert_type, tls_construct_ctos_server_cert_type,
+        NULL
+    },
+#else
+    INVALID_EXTENSION,
+    INVALID_EXTENSION,
+#endif
     {
         TLSEXT_TYPE_signature_algorithms,
         SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS1_3_CERTIFICATE_REQUEST,
@@ -1710,3 +1737,24 @@ static int final_psk(SSL *s, unsigned int context, int sent)
 
     return 1;
 }
+#ifndef OPENSSL_NO_RPK
+static int init_server_cert_type(SSL *s, unsigned int context)
+{
+    /* Only reset when parsing client hello */
+    if (s->server) {
+        s->ext.server_cert_type_ctos = 0;
+        s->ext.server_cert_type = TLSEXT_cert_type_x509;
+    }
+    return 1;
+}
+
+static int init_client_cert_type(SSL *s, unsigned int context)
+{
+    /* Only reset when parsing client hello */
+    if (s->server) {
+        s->ext.client_cert_type_ctos = 0;
+        s->ext.client_cert_type = TLSEXT_cert_type_x509;
+    }
+    return 1;
+}
+#endif

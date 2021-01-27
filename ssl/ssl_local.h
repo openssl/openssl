@@ -41,6 +41,8 @@
 #  define OPENSSL_EXTERN OPENSSL_EXPORT
 # endif
 
+DEFINE_STACK_OF(EVP_PKEY)
+
 # define c2l(c,l)        (l = ((unsigned long)(*((c)++)))     , \
                          l|=(((unsigned long)(*((c)++)))<< 8), \
                          l|=(((unsigned long)(*((c)++)))<<16), \
@@ -583,6 +585,9 @@ struct ssl_session_st {
      * to disable session caching and tickets.
      */
     int not_resumable;
+# ifndef OPENSSL_NO_RPK
+    EVP_PKEY *peer_rpk;
+# endif
     /* This is the cert and type for the other end. */
     X509 *peer;
     /* Certificate chain peer sent. */
@@ -758,6 +763,8 @@ typedef enum tlsext_index_en {
     TLSEXT_IDX_extended_master_secret,
     TLSEXT_IDX_signature_algorithms_cert,
     TLSEXT_IDX_post_handshake_auth,
+    TLSEXT_IDX_client_cert_type,
+    TLSEXT_IDX_server_cert_type,
     TLSEXT_IDX_signature_algorithms,
     TLSEXT_IDX_supported_versions,
     TLSEXT_IDX_psk_kex_modes,
@@ -1539,6 +1546,10 @@ struct ssl_st {
     /* Verified chain of peer */
     STACK_OF(X509) *verified_chain;
     long verify_result;
+# ifndef OPENSSL_NO_RPK
+    /* The configured raw public keys we will accept from the peer */
+    STACK_OF(EVP_PKEY) *peer_rpks;
+# endif
     /* extra application data */
     CRYPTO_EX_DATA ex_data;
     /*
@@ -1680,6 +1691,12 @@ struct ssl_st {
          * selected.
          */
         int tick_identity;
+#ifndef OPENSSL_NO_RPK
+        uint8_t client_cert_type;
+        uint8_t client_cert_type_ctos;
+        uint8_t server_cert_type;
+        uint8_t server_cert_type_ctos;
+#endif
     } ext;
 
     /*
@@ -2360,11 +2377,33 @@ struct openssl_ssl_test_functions {
 
 const char *ssl_protocol_to_string(int version);
 
+#ifndef OPENSSL_NO_RPK
+static ossl_inline int tls12_rpk_and_privkey(const SSL *s, int idx)
+{
+    /*
+     * This is to check for special cases when using RPK with just
+     * a private key, and NO CERTIFICATE
+     */
+    return ((s->server && s->ext.server_cert_type == TLSEXT_cert_type_rpk)
+            || (!s->server && s->ext.client_cert_type == TLSEXT_cert_type_rpk))
+        && s->cert->pkeys[idx].privatekey != NULL
+        && s->cert->pkeys[idx].x509 == NULL;
+}
+
+#endif
+
 /* Returns true if certificate and private key for 'idx' are present */
 static ossl_inline int ssl_has_cert(const SSL *s, int idx)
 {
     if (idx < 0 || idx >= SSL_PKEY_NUM)
         return 0;
+#ifndef OPENSSL_NO_RPK
+    /* If RPK is enabled for this SSL... only require private key */
+    if ((s->server && (s->options & SSL_OP_RPK_SERVER))
+            || (!s->server && (s->options & SSL_OP_RPK_CLIENT))) {
+        return s->cert->pkeys[idx].privatekey != NULL;
+    }
+#endif
     return s->cert->pkeys[idx].x509 != NULL
         && s->cert->pkeys[idx].privatekey != NULL;
 }

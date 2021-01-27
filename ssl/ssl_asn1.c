@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include "ssl_local.h"
 #include <openssl/asn1t.h>
+#include <openssl/encoder.h>
 #include <openssl/x509.h>
 
 typedef struct {
@@ -44,6 +45,9 @@ typedef struct {
     uint32_t tlsext_max_fragment_len_mode;
     ASN1_OCTET_STRING *ticket_appdata;
     uint32_t kex_group;
+#ifndef OPENSSL_NO_RPK
+    ASN1_OCTET_STRING *peer_rpk;
+#endif
 } SSL_SESSION_ASN1;
 
 ASN1_SEQUENCE(SSL_SESSION_ASN1) = {
@@ -76,6 +80,9 @@ ASN1_SEQUENCE(SSL_SESSION_ASN1) = {
     ASN1_EXP_OPT_EMBED(SSL_SESSION_ASN1, tlsext_max_fragment_len_mode, ZUINT32, 17),
     ASN1_EXP_OPT(SSL_SESSION_ASN1, ticket_appdata, ASN1_OCTET_STRING, 18),
     ASN1_EXP_OPT_EMBED(SSL_SESSION_ASN1, kex_group, UINT32, 19)
+#ifndef OPENSSL_NO_RPK
+    ,ASN1_EXP_OPT(SSL_SESSION_ASN1, peer_rpk, ASN1_OCTET_STRING, 20)
+#endif
 } static_ASN1_SEQUENCE_END(SSL_SESSION_ASN1)
 
 IMPLEMENT_STATIC_ASN1_ENCODE_FUNCTIONS(SSL_SESSION_ASN1)
@@ -125,8 +132,12 @@ int i2d_SSL_SESSION(const SSL_SESSION *in, unsigned char **pp)
 #endif
     ASN1_OCTET_STRING alpn_selected;
     ASN1_OCTET_STRING ticket_appdata;
+#ifndef OPENSSL_NO_RPK
+    ASN1_OCTET_STRING peer_rpk;
+#endif
 
     long l;
+    int ret;
 
     if ((in == NULL) || ((in->cipher == NULL) && (in->cipher_id == 0)))
         return 0;
@@ -169,6 +180,16 @@ int i2d_SSL_SESSION(const SSL_SESSION *in, unsigned char **pp)
 
     as.peer = in->peer;
 
+#ifndef OPENSSL_NO_RPK
+    as.peer_rpk = NULL;
+    peer_rpk.data = NULL;
+    if (in->peer_rpk != NULL) {
+        peer_rpk.length = i2d_PUBKEY(in->peer_rpk, &peer_rpk.data);
+        if (peer_rpk.length > 0 && peer_rpk.data != NULL)
+            as.peer_rpk = &peer_rpk;
+    }
+#endif
+
     ssl_session_sinit(&as.tlsext_hostname, &tlsext_hostname,
                       in->ext.hostname);
     if (in->ext.tick) {
@@ -204,8 +225,11 @@ int i2d_SSL_SESSION(const SSL_SESSION *in, unsigned char **pp)
         ssl_session_oinit(&as.ticket_appdata, &ticket_appdata,
                           in->ticket_appdata, in->ticket_appdata_len);
 
-    return i2d_SSL_SESSION_ASN1(&as, pp);
-
+    ret = i2d_SSL_SESSION_ASN1(&as, pp);
+#ifndef OPENSSL_NO_RPK
+    OPENSSL_free(peer_rpk.data);
+#endif
+    return ret;
 }
 
 /* Utility functions for d2i_SSL_SESSION */
@@ -315,6 +339,20 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
     X509_free(ret->peer);
     ret->peer = as->peer;
     as->peer = NULL;
+
+#ifndef OPENSSL_NO_RPK
+    EVP_PKEY_free(ret->peer_rpk);
+    ret->peer_rpk = NULL;
+    if (as->peer_rpk != NULL) {
+        const unsigned char *data = as->peer_rpk->data;
+
+        /*
+         * |data| is incremented; we don't want to lose original ptr
+         * No libctx/propq available, so use non-ex version
+         */
+        ret->peer_rpk = d2i_PUBKEY(NULL, &data, as->peer_rpk->length);
+    }
+#endif
 
     if (!ssl_session_memcpy(ret->sid_ctx, &ret->sid_ctx_length,
                             as->session_id_context, SSL_MAX_SID_CTX_LENGTH))

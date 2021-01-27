@@ -148,6 +148,9 @@ B<openssl> B<s_server>
 {- $OpenSSL::safe::opt_trust_synopsis -}
 {- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
+[B<-enable_server_rpk>]
+[B<-enable_client_rpk>]
+[B<-peer_rpk> I<file>]
 
 =head1 DESCRIPTION
 
@@ -843,6 +846,18 @@ Enable acceptance of TCP Fast Open (RFC7413) connections.
 If the server requests a client certificate, then
 verification errors are displayed, for debugging, but the command will
 proceed unless the B<-verify_return_error> option is used.
+
+=item B<-enable_server_rpk>
+
+Enable the use of server delivered raw public keys (RFC7250).
+
+=item B<-enable_client_rpk>
+
+Enable the use of client delivered raw public keys (RFC7250).
+
+=item B<-peer_rpk> I<file>
+
+File containing a validated peer raw public key (RFC7250).
 
 =back
 

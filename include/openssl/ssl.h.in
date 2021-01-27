@@ -408,6 +408,8 @@ typedef int (*SSL_async_callback_fn)(SSL *s, void *arg);
      */
 # define SSL_OP_CRYPTOPRO_TLSEXT_BUG                     SSL_OP_BIT(31)
 
+# define SSL_OP_RPK_SERVER                               SSL_OP_BIT(32)
+# define SSL_OP_RPK_CLIENT                               SSL_OP_BIT(33)
 /*
  * Option "collections."
  */
@@ -2525,6 +2527,14 @@ void SSL_set_allow_early_data_cb(SSL *s,
 /* store the default cipher strings inside the library */
 const char *OSSL_default_cipher_list(void);
 const char *OSSL_default_ciphersuites(void);
+
+#  ifndef OPENSSL_NO_RPK
+__owur EVP_PKEY *SSL_get0_peer_rpk(const SSL *s);
+__owur EVP_PKEY *SSL_SESSION_get0_peer_rpk(SSL_SESSION *s);
+__owur int SSL_add1_expected_peer_rpk(SSL *s, EVP_PKEY *pkey);
+__owur int SSL_rpk_send_negotiated(const SSL *s);
+__owur int SSL_rpk_receive_negotiated(const SSL *s);
+#  endif
 
 # ifdef  __cplusplus
 }
