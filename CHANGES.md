@@ -253,6 +253,11 @@ OpenSSL 3.0
 
    *Rich Salz*
 
+ * While a callback function set via `SSL_CTX_set_cert_verify_callback()`
+   is not allowed to return a value > 1, this is no more taken as failure.
+
+   *Viktor Dukhovni and David von Oheimb*
+
  * Deprecated the obsolete X9.31 RSA key generation related functions
    BN_X931_generate_Xpq(), BN_X931_derive_prime_ex(), and
    BN_X931_generate_prime_ex().
