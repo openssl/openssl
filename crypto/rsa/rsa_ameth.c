@@ -1108,7 +1108,7 @@ const EVP_PKEY_ASN1_METHOD rsa_pss_asn1_meth = {
      0, 0,
      rsa_item_verify,
      rsa_item_sign,
-     0,
+     rsa_sig_info_set,
      rsa_pkey_check,
 
      0, 0,
