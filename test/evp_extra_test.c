@@ -718,6 +718,7 @@ static int test_EC_priv_pub(void)
 }
 
 /* Test that using a legacy EC key with only a private key in it works */
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 static int test_EC_priv_only_legacy(void)
 {
     BIGNUM *priv = NULL;
@@ -766,6 +767,7 @@ static int test_EC_priv_only_legacy(void)
 
     return ret;
 }
+# endif /* OPENSSL_NO_DEPRECATED_3_0 */
 #endif /* OPENSSL_NO_EC */
 
 static int test_EVP_Enveloped(void)
@@ -2471,7 +2473,9 @@ int setup_tests(void)
 #endif
 #ifndef OPENSSL_NO_EC
     ADD_TEST(test_EC_priv_pub);
+# ifndef OPENSSL_NO_DEPRECATED_3_0
     ADD_TEST(test_EC_priv_only_legacy);
+# endif
 #endif
     ADD_ALL_TESTS(test_keygen_with_empty_template, 2);
     ADD_ALL_TESTS(test_pkey_ctx_fail_without_provider, 2);
