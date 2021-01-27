@@ -47,18 +47,19 @@
 static int FIPS_conditional_error_check = 1;
 static int FIPS_state = FIPS_STATE_INIT;
 static CRYPTO_RWLOCK *self_test_lock = NULL;
+static CRYPTO_RWLOCK *fips_state_lock = NULL;
 static unsigned char fixed_key[32] = { FIPS_KEY_ELEMENTS };
 
 static CRYPTO_ONCE fips_self_test_init = CRYPTO_ONCE_STATIC_INIT;
 DEFINE_RUN_ONCE_STATIC(do_fips_self_test_init)
 {
     /*
-     * This lock gets freed in platform specific ways that may occur after we
+     * These locks get freed in platform specific ways that may occur after we
      * do mem leak checking. If we don't know how to free it for a particular
-     * platform then we just leak it deliberately. So we temporarily disable the
-     * mem leak checking while we allocate this.
+     * platform then we just leak it deliberately.
      */
     self_test_lock = CRYPTO_THREAD_lock_new();
+    fips_state_lock = CRYPTO_THREAD_lock_new();
     return self_test_lock != NULL;
 }
 
@@ -150,6 +151,7 @@ DEP_INIT_ATTRIBUTE void init(void)
 DEP_FINI_ATTRIBUTE void cleanup(void)
 {
     CRYPTO_THREAD_lock_free(self_test_lock);
+    CRYPTO_THREAD_lock_free(fips_state_lock);
 }
 #endif
 
@@ -212,6 +214,13 @@ err:
     return ret;
 }
 
+static void set_fips_state(int state)
+{
+    CRYPTO_THREAD_write_lock(fips_state_lock);
+    FIPS_state = state;
+    CRYPTO_THREAD_unlock(fips_state_lock);
+}
+
 /* This API is triggered either on loading of the FIPS module or on demand */
 int SELF_TEST_post(SELF_TEST_POST_PARAMS *st, int on_demand_test)
 {
@@ -227,9 +236,9 @@ int SELF_TEST_post(SELF_TEST_POST_PARAMS *st, int on_demand_test)
     if (!RUN_ONCE(&fips_self_test_init, do_fips_self_test_init))
         return 0;
 
-    CRYPTO_THREAD_read_lock(self_test_lock);
+    CRYPTO_THREAD_read_lock(fips_state_lock);
     loclstate = FIPS_state;
-    CRYPTO_THREAD_unlock(self_test_lock);
+    CRYPTO_THREAD_unlock(fips_state_lock);
 
     if (loclstate == FIPS_STATE_RUNNING) {
         if (!on_demand_test)
@@ -240,17 +249,23 @@ int SELF_TEST_post(SELF_TEST_POST_PARAMS *st, int on_demand_test)
     }
 
     CRYPTO_THREAD_write_lock(self_test_lock);
+    CRYPTO_THREAD_read_lock(fips_state_lock);
     if (FIPS_state == FIPS_STATE_RUNNING) {
+        CRYPTO_THREAD_unlock(fips_state_lock);
         if (!on_demand_test) {
             CRYPTO_THREAD_unlock(self_test_lock);
             return 1;
         }
-        FIPS_state = FIPS_STATE_SELFTEST;
+        set_fips_state(FIPS_STATE_SELFTEST);
     } else if (FIPS_state != FIPS_STATE_SELFTEST) {
+        CRYPTO_THREAD_unlock(fips_state_lock);
         CRYPTO_THREAD_unlock(self_test_lock);
         ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_STATE);
         return 0;
+    } else {
+        CRYPTO_THREAD_unlock(fips_state_lock);
     }
+
     if (st == NULL
             || st->module_checksum_data == NULL) {
         ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_CONFIG_DATA);
@@ -328,7 +343,7 @@ end:
         (*st->bio_free_cb)(bio_module);
     }
     if (ok)
-        FIPS_state = FIPS_STATE_RUNNING;
+        set_fips_state(FIPS_STATE_RUNNING);
     else
         ossl_set_error_state(OSSL_SELF_TEST_TYPE_NONE);
     CRYPTO_THREAD_unlock(self_test_lock);
@@ -346,7 +361,7 @@ void ossl_set_error_state(const char *type)
     int cond_test = (type != NULL && strcmp(type, OSSL_SELF_TEST_TYPE_PCT) == 0);
 
     if (!cond_test || (FIPS_conditional_error_check == 1)) {
-        FIPS_state = FIPS_STATE_ERROR;
+        set_fips_state(FIPS_STATE_ERROR);
         ERR_raise(ERR_LIB_PROV, PROV_R_FIPS_MODULE_ENTERING_ERROR_STATE);
     } else {
         ERR_raise(ERR_LIB_PROV, PROV_R_FIPS_MODULE_CONDITIONAL_ERROR);
@@ -355,15 +370,20 @@ void ossl_set_error_state(const char *type)
 
 int ossl_prov_is_running(void)
 {
-    const int res = FIPS_state == FIPS_STATE_RUNNING
-                    || FIPS_state == FIPS_STATE_SELFTEST;
+    int res;
     static unsigned int rate_limit = 0;
 
-    if (res) {
-        rate_limit = 0;
-    } else if (FIPS_state == FIPS_STATE_ERROR) {
+    if (!CRYPTO_THREAD_read_lock(fips_state_lock))
+        return 0;
+    res = FIPS_state == FIPS_STATE_RUNNING
+                        || FIPS_state == FIPS_STATE_SELFTEST;
+    if (FIPS_state == FIPS_STATE_ERROR) {
+        CRYPTO_THREAD_unlock(fips_state_lock);
+        if (!CRYPTO_THREAD_write_lock(fips_state_lock))
+            return 0;
         if (rate_limit++ < FIPS_ERROR_REPORTING_RATE_LIMIT)
             ERR_raise(ERR_LIB_PROV, PROV_R_FIPS_MODULE_IN_ERROR_STATE);
     }
+    CRYPTO_THREAD_unlock(fips_state_lock);
     return res;
 }
