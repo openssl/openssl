@@ -38,11 +38,7 @@ _armv7_neon_probe:
 .globl	_armv7_tick
 .type	_armv7_tick,%function
 _armv7_tick:
-#ifdef	__APPLE__
-	mrs	x0, CNTPCT_EL0
-#else
 	mrs	x0, CNTVCT_EL0
-#endif
 	ret
 .size	_armv7_tick,.-_armv7_tick
 
