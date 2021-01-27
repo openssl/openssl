@@ -1621,7 +1621,7 @@ static void evp_pkey_free_it(EVP_PKEY *x)
 {
     /* internal function; x is never NULL */
 
-    evp_keymgmt_util_clear_operation_cache(x);
+    evp_keymgmt_util_clear_operation_cache(x, 1);
 #ifndef FIPS_MODULE
     evp_pkey_free_legacy(x);
 #endif
@@ -1735,6 +1735,8 @@ void *evp_pkey_export_to_provider(EVP_PKEY *pk, OSSL_LIB_CTX *libctx,
          * |i| remains zero, and we will clear the cache further down.
          */
         if (pk->ameth->dirty_cnt(pk) == pk->dirty_cnt_copy) {
+            if (!CRYPTO_THREAD_read_lock(pk->lock))
+                goto end;
             i = evp_keymgmt_util_find_operation_cache_index(pk, tmp_keymgmt);
 
             /*
@@ -1746,8 +1748,10 @@ void *evp_pkey_export_to_provider(EVP_PKEY *pk, OSSL_LIB_CTX *libctx,
             if (i < OSSL_NELEM(pk->operation_cache)
                 && pk->operation_cache[i].keymgmt != NULL) {
                 keydata = pk->operation_cache[i].keydata;
+                CRYPTO_THREAD_unlock(pk->lock);
                 goto end;
             }
+            CRYPTO_THREAD_unlock(pk->lock);
         }
 
         /*
@@ -1782,12 +1786,22 @@ void *evp_pkey_export_to_provider(EVP_PKEY *pk, OSSL_LIB_CTX *libctx,
             keydata = NULL;
             goto end;
         }
-        if (pk->ameth->dirty_cnt(pk) != pk->dirty_cnt_copy)
-            evp_keymgmt_util_clear_operation_cache(pk);
+
+        if (!CRYPTO_THREAD_write_lock(pk->lock))
+            goto end;
+        if (pk->ameth->dirty_cnt(pk) != pk->dirty_cnt_copy
+                && !evp_keymgmt_util_clear_operation_cache(pk, 0)) {
+            CRYPTO_THREAD_unlock(pk->lock);
+            evp_keymgmt_freedata(tmp_keymgmt, keydata);
+            keydata = NULL;
+            EVP_KEYMGMT_free(tmp_keymgmt);
+            goto end;
+        }
         EVP_KEYMGMT_free(tmp_keymgmt); /* refcnt-- */
 
         /* Add the new export to the operation cache */
         if (!evp_keymgmt_util_cache_keydata(pk, i, tmp_keymgmt, keydata)) {
+            CRYPTO_THREAD_unlock(pk->lock);
             evp_keymgmt_freedata(tmp_keymgmt, keydata);
             keydata = NULL;
             goto end;
@@ -1795,6 +1809,8 @@ void *evp_pkey_export_to_provider(EVP_PKEY *pk, OSSL_LIB_CTX *libctx,
 
         /* Synchronize the dirty count */
         pk->dirty_cnt_copy = pk->ameth->dirty_cnt(pk);
+    
+        CRYPTO_THREAD_unlock(pk->lock);
         goto end;
     }
 #endif  /* FIPS_MODULE */

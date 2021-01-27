@@ -20,9 +20,9 @@ evp_keymgmt_util_fromdata
  void *evp_keymgmt_util_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt);
  size_t evp_keymgmt_util_find_operation_cache_index(EVP_PKEY *pk,
                                                     EVP_KEYMGMT *keymgmt);
- void evp_keymgmt_util_clear_operation_cache(EVP_PKEY *pk);
- void evp_keymgmt_util_cache_keydata(EVP_PKEY *pk, size_t index,
-                                     EVP_KEYMGMT *keymgmt, void *keydata);
+ int evp_keymgmt_util_clear_operation_cache(EVP_PKEY *pk, int locking);
+ int evp_keymgmt_util_cache_keydata(EVP_PKEY *pk, size_t index,
+                                    EVP_KEYMGMT *keymgmt, void *keydata);
  void evp_keymgmt_util_cache_keyinfo(EVP_PKEY *pk);
  void *evp_keymgmt_util_fromdata(EVP_PKEY *target, EVP_KEYMGMT *keymgmt,
                                  int selection, const OSSL_PARAM params[]);
@@ -44,10 +44,13 @@ as this function ignores any legacy key data.
 evp_keymgmt_util_find_operation_cache_index() finds the location if
 I<keymgmt> in I<pk>'s cache of provided keys for operations.  If
 I<keymgmt> is NULL or couldn't be found in the cache, it finds the
-first empty slot instead if there is any.
+first empty slot instead if there is any. It should only be called while
+holding I<pk>'s lock (read or write).
 
 evp_keymgmt_util_clear_operation_cache() can be used to explicitly
-clear the cache of operation key references.
+clear the cache of operation key references. If I<locking> is set to 1 then
+then I<pk>'s lock will be obtained while doing the clear. Otherwise it will be
+assumed that the lock has already been obtained or is not required.
 
 evp_keymgmt_util_cache_keydata() can be used to assign a provider key
 object to a specific cache slot in the given I<target>.
@@ -71,6 +74,9 @@ evp_keymgmt_util_find_operation_cache_index() returns the index of the
 operation cache slot.  If I<keymgmt> is NULL, or if there is no slot
 with a match for I<keymgmt>, the index of the first empty slot is
 returned, or the maximum number of slots if there isn't an empty one.
+
+evp_keymgmt_util_cache_keydata() and evp_keymgmt_util_clear_operation_cache()
+return 1 on success or 0 otherwise.
 
 =head1 NOTES
 

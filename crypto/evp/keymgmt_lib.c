@@ -102,10 +102,16 @@ void *evp_keymgmt_util_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt)
         return pk->keydata;
 
     /* If this key is already exported to |keymgmt|, no more to do */
+    CRYPTO_THREAD_read_lock(pk->lock);
     i = evp_keymgmt_util_find_operation_cache_index(pk, keymgmt);
     if (i < OSSL_NELEM(pk->operation_cache)
-        && pk->operation_cache[i].keymgmt != NULL)
-        return pk->operation_cache[i].keydata;
+        && pk->operation_cache[i].keymgmt != NULL) {
+        void *ret = pk->operation_cache[i].keydata;
+
+        CRYPTO_THREAD_unlock(pk->lock);
+        return ret;
+    }
+    CRYPTO_THREAD_unlock(pk->lock);
 
     /* If the "origin" |keymgmt| doesn't support exporting, give up */
     /*
@@ -153,20 +159,42 @@ void *evp_keymgmt_util_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt)
         return NULL;
     }
 
+    CRYPTO_THREAD_write_lock(pk->lock);
+    /* Check to make sure some other thread didn't get there first */
+    i = evp_keymgmt_util_find_operation_cache_index(pk, keymgmt);
+    if (i < OSSL_NELEM(pk->operation_cache)
+        && pk->operation_cache[i].keymgmt != NULL) {
+        void *ret = pk->operation_cache[i].keydata;
+
+        CRYPTO_THREAD_unlock(pk->lock);
+
+        /*
+         * Another thread seemms to have already exported this so we abandon
+         * all the work we just did.
+         */
+        evp_keymgmt_freedata(keymgmt, import_data.keydata);
+
+        return ret;
+    }
+
     /* Add the new export to the operation cache */
     if (!evp_keymgmt_util_cache_keydata(pk, i, keymgmt, import_data.keydata)) {
         evp_keymgmt_freedata(keymgmt, import_data.keydata);
         return NULL;
     }
 
+    CRYPTO_THREAD_unlock(pk->lock);
+
     return import_data.keydata;
 }
 
-void evp_keymgmt_util_clear_operation_cache(EVP_PKEY *pk)
+int evp_keymgmt_util_clear_operation_cache(EVP_PKEY *pk, int locking)
 {
     size_t i, end = OSSL_NELEM(pk->operation_cache);
 
     if (pk != NULL) {
+        if (locking && pk->lock != NULL && !CRYPTO_THREAD_write_lock(pk->lock))
+            return 0;
         for (i = 0; i < end && pk->operation_cache[i].keymgmt != NULL; i++) {
             EVP_KEYMGMT *keymgmt = pk->operation_cache[i].keymgmt;
             void *keydata = pk->operation_cache[i].keydata;
@@ -176,7 +204,11 @@ void evp_keymgmt_util_clear_operation_cache(EVP_PKEY *pk)
             evp_keymgmt_freedata(keymgmt, keydata);
             EVP_KEYMGMT_free(keymgmt);
         }
+        if (locking && pk->lock != NULL)
+            CRYPTO_THREAD_unlock(pk->lock);
     }
+
+    return 1;
 }
 
 size_t evp_keymgmt_util_find_operation_cache_index(EVP_PKEY *pk,
@@ -198,6 +230,7 @@ int evp_keymgmt_util_cache_keydata(EVP_PKEY *pk, size_t index,
     if (keydata != NULL) {
         if (!EVP_KEYMGMT_up_ref(keymgmt))
             return 0;
+
         pk->operation_cache[index].keydata = keydata;
         pk->operation_cache[index].keymgmt = keymgmt;
     }
