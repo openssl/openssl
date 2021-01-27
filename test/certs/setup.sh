@@ -400,6 +400,8 @@ REQMASK=MASK:0x800 ./mkcert.sh req badalt7-key "O = Bad NC Test Certificate 7" \
             -sha256 -sigopt rsa_padding_mode:pss -sigopt rsa_pss_saltlen:-1
 ./mkcert.sh genee "EE-PSS" ee-key ee-pss-cert ca-pss-key ca-pss-cert \
             -sha256 -sigopt rsa_padding_mode:pss -sigopt rsa_pss_saltlen:-1
+# Should not have been possible to produce, see issue #13968:
+#./mkcert.sh genee "EE-PSS-wrong1.5" ee-key ee-pss-wrong1.5-cert ca-pss-key ca-pss-cert -sha256
 
 OPENSSL_KEYALG=ec OPENSSL_KEYBITS=brainpoolP256r1 ./mkcert.sh genee \
     "Server ECDSA brainpoolP256r1 cert" server-ecdsa-brainpoolP256r1-key \
