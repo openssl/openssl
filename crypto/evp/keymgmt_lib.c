@@ -173,7 +173,7 @@ int evp_keymgmt_util_clear_operation_cache(EVP_PKEY *pk)
     size_t i, end = OSSL_NELEM(pk->operation_cache);
 
     if (pk != NULL) {
-        if (!CRYPTO_THREAD_write_lock(pk->lock))
+        if (pk->lock != NULL && !CRYPTO_THREAD_write_lock(pk->lock))
             return 0;
         for (i = 0; i < end && pk->operation_cache[i].keymgmt != NULL; i++) {
             EVP_KEYMGMT *keymgmt = pk->operation_cache[i].keymgmt;
@@ -184,7 +184,8 @@ int evp_keymgmt_util_clear_operation_cache(EVP_PKEY *pk)
             evp_keymgmt_freedata(keymgmt, keydata);
             EVP_KEYMGMT_free(keymgmt);
         }
-        CRYPTO_THREAD_unlock(pk->lock);
+        if (pk->lock != NULL)
+            CRYPTO_THREAD_unlock(pk->lock);
     }
 
     return 1;
