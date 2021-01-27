@@ -3524,10 +3524,6 @@ MSG_PROCESS_RETURN tls_process_client_certificate(SSL *s, PACKET *pkt)
                      SSL_R_CERTIFICATE_VERIFY_FAILED);
             goto err;
         }
-        if (i > 1) {
-            SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE, i);
-            goto err;
-        }
         pkey = X509_get0_pubkey(sk_X509_value(sk, 0));
         if (pkey == NULL) {
             SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE,

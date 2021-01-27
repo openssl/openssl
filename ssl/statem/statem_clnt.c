@@ -1884,10 +1884,6 @@ WORK_STATE tls_post_process_server_certificate(SSL *s, WORK_STATE wst)
         return WORK_ERROR;
     }
     ERR_clear_error();          /* but we keep s->verify_result */
-    if (i > 1) {
-        SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE, i);
-        return WORK_ERROR;
-    }
 
     /*
      * Inconsistency alert: cert_chain does include the peer's certificate,
