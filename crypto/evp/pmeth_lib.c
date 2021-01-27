@@ -1684,8 +1684,33 @@ static int evp_pkey_ctx_store_cached_data(EVP_PKEY_CTX *ctx,
                                           int cmd, const char *name,
                                           const void *data, size_t data_len)
 {
-    if ((keytype != -1 && ctx->pmeth->pkey_id != keytype)
-        || ((optype != -1) && !(ctx->operation & optype))) {
+    if (keytype != -1) {
+        switch (evp_pkey_ctx_state(ctx)) {
+        case EVP_PKEY_STATE_PROVIDER:
+            if (ctx->keymgmt == NULL) {
+                ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
+                return -2;
+            }
+            if (!EVP_KEYMGMT_is_a(ctx->keymgmt,
+                                  evp_pkey_type2name(keytype))) {
+                ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_OPERATION);
+                return -1;
+            }
+            break;
+        case EVP_PKEY_STATE_UNKNOWN:
+        case EVP_PKEY_STATE_LEGACY:
+            if (ctx->pmeth == NULL) {
+                ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
+                return -2;
+            }
+            if (ctx->pmeth->pkey_id != keytype) {
+                ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_OPERATION);
+                return -1;
+            }
+            break;
+        }
+    }
+    if (optype != -1 && (ctx->operation & optype) == 0) {
         ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_OPERATION);
         return -1;
     }

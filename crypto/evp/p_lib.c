@@ -906,53 +906,58 @@ int EVP_PKEY_base_id(const EVP_PKEY *pkey)
 }
 
 #ifndef FIPS_MODULE
+/*
+ * These hard coded cases are pure hackery to get around the fact
+ * that names in crypto/objects/objects.txt are a mess.  There is
+ * no "EC", and "RSA" leads to the NID for 2.5.8.1.1, an OID that's
+ * fallen out in favor of { pkcs-1 1 }, i.e. 1.2.840.113549.1.1.1,
+ * the NID of which is used for EVP_PKEY_RSA.  Strangely enough,
+ * "DSA" is accurate...  but still, better be safe and hard-code
+ * names that we know.
+ * On a similar topic, EVP_PKEY_type(EVP_PKEY_SM2) will result in
+ * EVP_PKEY_EC, because of aliasing.
+ * TODO Clean this away along with all other #legacy support.
+ */
+static const OSSL_ITEM standard_name2type[] = {
+    { EVP_PKEY_RSA,     "RSA" },
+    { EVP_PKEY_RSA_PSS, "RSA-PSS" },
+    { EVP_PKEY_EC,      "EC" },
+    { EVP_PKEY_ED25519, "ED25519" },
+    { EVP_PKEY_ED448,   "ED448" },
+    { EVP_PKEY_X25519,  "X25519" },
+    { EVP_PKEY_X448,    "X448" },
+    { EVP_PKEY_SM2,     "SM2" },
+    { EVP_PKEY_DH,      "DH" },
+    { EVP_PKEY_DHX,     "X9.42 DH" },
+    { EVP_PKEY_DHX,     "DHX" },
+    { EVP_PKEY_DSA,     "DSA" },
+};
+
 int evp_pkey_name2type(const char *name)
 {
-    /*
-     * These hard coded cases are pure hackery to get around the fact
-     * that names in crypto/objects/objects.txt are a mess.  There is
-     * no "EC", and "RSA" leads to the NID for 2.5.8.1.1, an OID that's
-     * fallen out in favor of { pkcs-1 1 }, i.e. 1.2.840.113549.1.1.1,
-     * the NID of which is used for EVP_PKEY_RSA.  Strangely enough,
-     * "DSA" is accurate...  but still, better be safe and hard-code
-     * names that we know.
-     * On a similar topic, EVP_PKEY_type(EVP_PKEY_SM2) will result in
-     * EVP_PKEY_EC, because of aliasing.
-     * TODO Clean this away along with all other #legacy support.
-     */
-    int type = NID_undef;
+    int type;
+    size_t i;
 
-    if (strcasecmp(name, "RSA") == 0)
-        type = EVP_PKEY_RSA;
-    else if (strcasecmp(name, "RSA-PSS") == 0)
-        type = EVP_PKEY_RSA_PSS;
-    else if (strcasecmp(name, "EC") == 0)
-        type = EVP_PKEY_EC;
-    else if (strcasecmp(name, "ED25519") == 0)
-        type = EVP_PKEY_ED25519;
-    else if (strcasecmp(name, "ED448") == 0)
-        type = EVP_PKEY_ED448;
-    else if (strcasecmp(name, "X25519") == 0)
-        type = EVP_PKEY_X25519;
-    else if (strcasecmp(name, "X448") == 0)
-        type = EVP_PKEY_X448;
-    else if (strcasecmp(name, "SM2") == 0)
-        type = EVP_PKEY_SM2;
-    else if (strcasecmp(name, "DH") == 0)
-        type = EVP_PKEY_DH;
-    else if (strcasecmp(name, "X9.42 DH") == 0)
-        type = EVP_PKEY_DHX;
-    else if (strcasecmp(name, "DHX") == 0)
-        type = EVP_PKEY_DHX;
-    else if (strcasecmp(name, "DSA") == 0)
-        type = EVP_PKEY_DSA;
+    for (i = 0; i < OSSL_NELEM(standard_name2type); i++) {
+        if (strcasecmp(name, standard_name2type[i].ptr) == 0)
+            return (int)standard_name2type[i].id;
+    }
 
-    if (type == NID_undef)
-        type = EVP_PKEY_type(OBJ_sn2nid(name));
-    if (type == NID_undef)
-        type = EVP_PKEY_type(OBJ_ln2nid(name));
+    if ((type = EVP_PKEY_type(OBJ_sn2nid(name))) != NID_undef)
+        return type;
+    return EVP_PKEY_type(OBJ_ln2nid(name));
+}
 
-    return type;
+const char *evp_pkey_type2name(int type)
+{
+    size_t i;
+
+    for (i = 0; i < OSSL_NELEM(standard_name2type); i++) {
+        if (type == (int)standard_name2type[i].id)
+            return standard_name2type[i].ptr;
+    }
+
+    return OBJ_nid2sn(type);
 }
 #endif
 
