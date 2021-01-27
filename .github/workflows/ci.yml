@@ -91,6 +91,17 @@ jobs:
     - name: make test
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4} OPENSSL_TEST_RAND_ORDER=0
 
+  threads_sanitizer:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: config
+      run: CC=clang ./config --strict-warnings -fsanitize=thread && perl configdata.pm --dump
+    - name: make
+      run: make -s -j4
+    - name: make test
+      run: make TESTS=test_threads test HARNESS_JOBS=${HARNESS_JOBS:-4}
+
   enable_non-default_options:
     runs-on: ubuntu-latest
     steps:
