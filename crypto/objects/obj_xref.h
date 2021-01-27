@@ -53,7 +53,7 @@ static const nid_triple sigoid_srt[] = {
      NID_id_GostR3410_94_cc},
     {NID_id_GostR3411_94_with_GostR3410_2001_cc, NID_id_GostR3411_94,
      NID_id_GostR3410_2001_cc},
-    {NID_rsassaPss, NID_undef, NID_rsaEncryption},
+    {NID_rsassaPss, NID_undef, NID_rsassaPss},
     {NID_dhSinglePass_stdDH_sha1kdf_scheme, NID_sha1, NID_dh_std_kdf},
     {NID_dhSinglePass_stdDH_sha224kdf_scheme, NID_sha224, NID_dh_std_kdf},
     {NID_dhSinglePass_stdDH_sha256kdf_scheme, NID_sha256, NID_dh_std_kdf},
