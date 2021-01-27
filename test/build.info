@@ -66,6 +66,10 @@ IF[{- !$disabled{tests} -}]
           bio_tfo_test membio_test bio_dgram_test list_test fips_version_test \
           x509_test hpke_test pairwise_fail_test nodefltctxtest
 
+  IF[{- !$disabled{'rpk'} -}]
+    PROGRAMS{noinst}=rpktest
+  ENDIF
+
   IF[{- !$disabled{'deprecated-3.0'} -}]
     PROGRAMS{noinst}=enginetest
   ENDIF
@@ -484,6 +488,10 @@ IF[{- !$disabled{tests} -}]
   SOURCE[sslapitest]=sslapitest.c helpers/ssltestlib.c filterprov.c tls-provider.c
   INCLUDE[sslapitest]=../include ../apps/include ..
   DEPEND[sslapitest]=../libcrypto ../libssl libtestutil.a
+
+  SOURCE[rpktest]=rpktest.c helpers/ssltestlib.c
+  INCLUDE[rpktest]=../include ../apps/include ..
+  DEPEND[rpktest]=../libcrypto ../libssl libtestutil.a
 
   SOURCE[defltfips_test]=defltfips_test.c
   INCLUDE[defltfips_test]=../include  ../apps/include

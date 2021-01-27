@@ -5514,3 +5514,6 @@ ASN1_item_unpack_ex                     ?	3_2_0	EXIST::FUNCTION:
 PKCS12_SAFEBAG_get1_cert_ex             ?	3_2_0	EXIST::FUNCTION:
 PKCS12_SAFEBAG_get1_crl_ex              ?	3_2_0	EXIST::FUNCTION:
 EC_GROUP_to_params                      ?	3_2_0	EXIST::FUNCTION:EC
+X509_STORE_CTX_init_rpk                 ?	3_2_0	EXIST::FUNCTION:
+X509_STORE_CTX_get0_rpk                 ?	3_2_0	EXIST::FUNCTION:
+X509_STORE_CTX_set0_rpk                 ?	3_2_0	EXIST::FUNCTION:

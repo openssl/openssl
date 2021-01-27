@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2023 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  * Copyright 2005 Nokia. All rights reserved.
  *
@@ -510,6 +510,8 @@ struct ssl_session_st {
      * to disable session caching and tickets.
      */
     int not_resumable;
+    /* Peer raw public key, if available */
+    EVP_PKEY *peer_rpk;
     /* This is the cert and type for the other end. */
     X509 *peer;
     /* Certificate chain peer sent. */
@@ -684,6 +686,8 @@ typedef enum tlsext_index_en {
     TLSEXT_IDX_extended_master_secret,
     TLSEXT_IDX_signature_algorithms_cert,
     TLSEXT_IDX_post_handshake_auth,
+    TLSEXT_IDX_client_cert_type,
+    TLSEXT_IDX_server_cert_type,
     TLSEXT_IDX_signature_algorithms,
     TLSEXT_IDX_supported_versions,
     TLSEXT_IDX_psk_kex_modes,
@@ -1170,6 +1174,12 @@ struct ssl_ctx_st {
     /* certificate compression preferences */
     int cert_comp_prefs[TLSEXT_comp_cert_limit];
 #endif
+
+    /* Certificate Type stuff - for RPK vs X.509 */
+    unsigned char *client_cert_type;
+    size_t client_cert_type_len;
+    unsigned char *server_cert_type;
+    size_t server_cert_type_len;
 };
 
 typedef struct cert_pkey_st CERT_PKEY;
@@ -1651,6 +1661,11 @@ struct ssl_connection_st {
         int compress_certificate_from_peer[TLSEXT_comp_cert_limit];
         /* indicate that we sent the extension, so we'll accept it */
         int compress_certificate_sent;
+
+        uint8_t client_cert_type;
+        uint8_t client_cert_type_ctos;
+        uint8_t server_cert_type;
+        uint8_t server_cert_type_ctos;
     } ext;
 
     /*
@@ -1771,6 +1786,12 @@ struct ssl_connection_st {
     /* certificate compression preferences */
     int cert_comp_prefs[TLSEXT_comp_cert_limit];
 #endif
+
+    /* Certificate Type stuff - for RPK vs X.509 */
+    unsigned char *client_cert_type;
+    size_t client_cert_type_len;
+    unsigned char *server_cert_type;
+    size_t server_cert_type_len;
 };
 
 # define SSL_CONNECTION_FROM_SSL_ONLY_int(ssl, c) \
@@ -2380,11 +2401,47 @@ struct openssl_ssl_test_functions {
 
 const char *ssl_protocol_to_string(int version);
 
+static ossl_inline int tls12_rpk_and_privkey(const SSL_CONNECTION *sc, int idx)
+{
+    /*
+     * This is to check for special cases when using RPK with just
+     * a private key, and NO CERTIFICATE
+     */
+    return ((sc->server && sc->ext.server_cert_type == TLSEXT_cert_type_rpk)
+            || (!sc->server && sc->ext.client_cert_type == TLSEXT_cert_type_rpk))
+        && sc->cert->pkeys[idx].privatekey != NULL
+        && sc->cert->pkeys[idx].x509 == NULL;
+}
+
+static ossl_inline int ssl_has_cert_type(const SSL_CONNECTION *sc, unsigned char ct)
+{
+    unsigned char *ptr;
+    size_t len;
+
+    if (sc->server) {
+        ptr = sc->server_cert_type;
+        len = sc->server_cert_type_len;
+    } else {
+        ptr = sc->client_cert_type;
+        len = sc->client_cert_type_len;
+    }
+
+    if (ptr == NULL)
+        return 0;
+
+    return memchr(ptr, ct, len) != NULL;
+}
+
 /* Returns true if certificate and private key for 'idx' are present */
 static ossl_inline int ssl_has_cert(const SSL_CONNECTION *s, int idx)
 {
     if (idx < 0 || idx >= (int)s->ssl_pkey_num)
         return 0;
+
+    /* If RPK is enabled for this SSL... only require private key */
+    if (ssl_has_cert_type(s, TLSEXT_cert_type_rpk))
+        return s->cert->pkeys[idx].privatekey != NULL;
+
     return s->cert->pkeys[idx].x509 != NULL
         && s->cert->pkeys[idx].privatekey != NULL;
 }
@@ -2461,6 +2518,7 @@ __owur int ssl_cert_set_current(CERT *c, long arg);
 void ssl_cert_set_cert_cb(CERT *c, int (*cb) (SSL *ssl, void *arg), void *arg);
 
 __owur int ssl_verify_cert_chain(SSL_CONNECTION *s, STACK_OF(X509) *sk);
+__owur int ssl_verify_rpk(SSL_CONNECTION *s, EVP_PKEY *rpk);
 __owur int ssl_build_cert_chain(SSL_CONNECTION *s, SSL_CTX *ctx, int flags);
 __owur int ssl_cert_set_cert_store(CERT *c, X509_STORE *store, int chain,
                                    int ref);

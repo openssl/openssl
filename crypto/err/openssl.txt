@@ -1280,6 +1280,7 @@ SSL_R_ATTEMPT_TO_REUSE_SESSION_IN_DIFFERENT_CONTEXT:272:\
 	attempt to reuse session in different context
 SSL_R_AT_LEAST_TLS_1_2_NEEDED_IN_SUITEB_MODE:158:\
 	at least (D)TLS 1.2 needed in Suite B mode
+SSL_R_BAD_CERTIFICATE:346:bad certificate
 SSL_R_BAD_CHANGE_CIPHER_SPEC:103:bad change cipher spec
 SSL_R_BAD_CIPHER:186:bad cipher
 SSL_R_BAD_COMPRESSION_ALGORITHM:326:bad compression algorithm
@@ -1369,6 +1370,7 @@ SSL_R_DUPLICATE_COMPRESSION_ID:309:duplicate compression id
 SSL_R_ECC_CERT_NOT_FOR_SIGNING:318:ecc cert not for signing
 SSL_R_ECDH_REQUIRED_FOR_SUITEB_MODE:374:ecdh required for suiteb mode
 SSL_R_EE_KEY_TOO_SMALL:399:ee key too small
+SSL_R_EMPTY_RAW_PUBLIC_KEY:350:empty raw public key
 SSL_R_EMPTY_SRTP_PROTECTION_PROFILE_LIST:354:empty srtp protection profile list
 SSL_R_ENCRYPTED_LENGTH_TOO_LONG:150:encrypted length too long
 SSL_R_ERROR_IN_RECEIVED_CIPHER_LIST:151:error in received cipher list
@@ -1404,6 +1406,7 @@ SSL_R_INVALID_CT_VALIDATION_TYPE:212:invalid ct validation type
 SSL_R_INVALID_KEY_UPDATE_TYPE:120:invalid key update type
 SSL_R_INVALID_MAX_EARLY_DATA:174:invalid max early data
 SSL_R_INVALID_NULL_CMD_NAME:385:invalid null cmd name
+SSL_R_INVALID_RAW_PUBLIC_KEY:348:invalid raw public key
 SSL_R_INVALID_RECORD:317:invalid record
 SSL_R_INVALID_SEQUENCE_NUMBER:402:invalid sequence number
 SSL_R_INVALID_SERVERINFO_DATA:388:invalid serverinfo data
@@ -1612,6 +1615,7 @@ SSL_R_VERSION_TOO_LOW:396:version too low
 SSL_R_WRONG_CERTIFICATE_TYPE:383:wrong certificate type
 SSL_R_WRONG_CIPHER_RETURNED:261:wrong cipher returned
 SSL_R_WRONG_CURVE:378:wrong curve
+SSL_R_WRONG_RPK_TYPE:349:wrong rpk type
 SSL_R_WRONG_SIGNATURE_LENGTH:264:wrong signature length
 SSL_R_WRONG_SIGNATURE_SIZE:265:wrong signature size
 SSL_R_WRONG_SIGNATURE_TYPE:370:wrong signature type

@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2023 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -414,13 +414,13 @@ void ssl_cert_set_cert_cb(CERT *c, int (*cb) (SSL *ssl, void *arg), void *arg)
 }
 
 /*
- * Verify a certificate chain
+ * Verify a certificate chain/raw public key
  * Return codes:
  *  1: Verify success
  *  0: Verify failure or error
  * -1: Retry required
  */
-int ssl_verify_cert_chain(SSL_CONNECTION *s, STACK_OF(X509) *sk)
+static int ssl_verify_internal(SSL_CONNECTION *s, STACK_OF(X509) *sk, EVP_PKEY *rpk)
 {
     X509 *x;
     int i = 0;
@@ -429,7 +429,12 @@ int ssl_verify_cert_chain(SSL_CONNECTION *s, STACK_OF(X509) *sk)
     X509_VERIFY_PARAM *param;
     SSL_CTX *sctx;
 
-    if ((sk == NULL) || (sk_X509_num(sk) == 0))
+    /* Something must be passed in */
+    if ((sk == NULL || sk_X509_num(sk) == 0) && rpk == NULL)
+        return 0;
+
+    /* Only one can be set */
+    if (sk != NULL && rpk != NULL)
         return 0;
 
     sctx = SSL_CONNECTION_GET_CTX(s);
@@ -444,10 +449,17 @@ int ssl_verify_cert_chain(SSL_CONNECTION *s, STACK_OF(X509) *sk)
         return 0;
     }
 
-    x = sk_X509_value(sk, 0);
-    if (!X509_STORE_CTX_init(ctx, verify_store, x, sk)) {
-        ERR_raise(ERR_LIB_SSL, ERR_R_X509_LIB);
-        goto end;
+    if (sk != NULL) {
+        x = sk_X509_value(sk, 0);
+        if (!X509_STORE_CTX_init(ctx, verify_store, x, sk)) {
+            ERR_raise(ERR_LIB_SSL, ERR_R_X509_LIB);
+            goto end;
+        }
+    } else {
+        if (!X509_STORE_CTX_init_rpk(ctx, verify_store, rpk)) {
+            ERR_raise(ERR_LIB_SSL, ERR_R_X509_LIB);
+            goto end;
+        }
     }
     param = X509_STORE_CTX_get0_param(ctx);
     /*
@@ -496,7 +508,8 @@ int ssl_verify_cert_chain(SSL_CONNECTION *s, STACK_OF(X509) *sk)
     s->verify_result = X509_STORE_CTX_get_error(ctx);
     OSSL_STACK_OF_X509_free(s->verified_chain);
     s->verified_chain = NULL;
-    if (X509_STORE_CTX_get0_chain(ctx) != NULL) {
+
+    if (sk != NULL && X509_STORE_CTX_get0_chain(ctx) != NULL) {
         s->verified_chain = X509_STORE_CTX_get1_chain(ctx);
         if (s->verified_chain == NULL) {
             ERR_raise(ERR_LIB_SSL, ERR_R_X509_LIB);
@@ -510,6 +523,30 @@ int ssl_verify_cert_chain(SSL_CONNECTION *s, STACK_OF(X509) *sk)
  end:
     X509_STORE_CTX_free(ctx);
     return i;
+}
+
+/*
+ * Verify a raw public key
+ * Return codes:
+ *  1: Verify success
+ *  0: Verify failure or error
+ * -1: Retry required
+ */
+int ssl_verify_rpk(SSL_CONNECTION *s, EVP_PKEY *rpk)
+{
+    return ssl_verify_internal(s, NULL, rpk);
+}
+
+/*
+ * Verify a certificate chain
+ * Return codes:
+ *  1: Verify success
+ *  0: Verify failure or error
+ * -1: Retry required
+ */
+int ssl_verify_cert_chain(SSL_CONNECTION *s, STACK_OF(X509) *sk)
+{
+    return ssl_verify_internal(s, sk, NULL);
 }
 
 static void set0_CA_list(STACK_OF(X509_NAME) **ca_list,

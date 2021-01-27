@@ -67,7 +67,8 @@ Once such a I<saved> certificate is no longer needed it can be freed with
 L<X509_free(3)>.
 
 X509_STORE_CTX_get0_cert() retrieves an internal pointer to the
-certificate being verified by the I<ctx>.
+certificate being verified by the I<ctx>. It may be NULL if a raw public
+key is being verified.
 
 X509_STORE_CTX_get1_chain() returns a complete validate chain if a previous
 verification is successful. Otherwise the returned chain may be incomplete or
@@ -460,6 +461,11 @@ The algorithm given in the certificate info is inconsistent
 A CA certificate is invalid. Either it is not a CA or its extensions are not
 consistent with the supplied purpose.
 
+=item B<X509_V_ERR_RPK_UNTRUSTED: raw public key untrusted, no trusted keys configured>
+
+No TLS records were configured to validate the raw public key, or DANE was not
+enabled on the connection.
+
 =back
 
 =head1 NOTES
@@ -490,7 +496,7 @@ L<X509_free(3)>.
 
 =head1 COPYRIGHT
 
-Copyright 2009-2021 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2009-2023 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
