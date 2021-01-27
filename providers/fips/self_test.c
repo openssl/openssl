@@ -359,9 +359,13 @@ int ossl_prov_is_running(void)
                     || FIPS_state == FIPS_STATE_SELFTEST;
     static unsigned int rate_limit = 0;
 
-    if (res) {
-        rate_limit = 0;
-    } else if (FIPS_state == FIPS_STATE_ERROR) {
+    if (FIPS_state == FIPS_STATE_ERROR) {
+        /*
+         * Technically rate_limit should have a lock around it since the
+         * increment below could occur from multiple threads. However since this
+         * is only use to limit the rate that errors are raised, its not
+         * important if errors occur. Using a lock seems over the top.
+         */
         if (rate_limit++ < FIPS_ERROR_REPORTING_RATE_LIMIT)
             ERR_raise(ERR_LIB_PROV, PROV_R_FIPS_MODULE_IN_ERROR_STATE);
     }
