@@ -918,7 +918,7 @@ int EVP_PKEY_base_id(const EVP_PKEY *pkey)
  * EVP_PKEY_EC, because of aliasing.
  * TODO Clean this away along with all other #legacy support.
  */
-const OSSL_ITEM standard_name2type[] = {
+static const OSSL_ITEM standard_name2type[] = {
     { EVP_PKEY_RSA,     "RSA" },
     { EVP_PKEY_RSA_PSS, "RSA-PSS" },
     { EVP_PKEY_EC,      "EC" },
