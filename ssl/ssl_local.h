@@ -585,7 +585,6 @@ struct ssl_session_st {
     int not_resumable;
     /* This is the cert and type for the other end. */
     X509 *peer;
-    int peer_type;
     /* Certificate chain peer sent. */
     STACK_OF(X509) *peer_chain;
     /*
