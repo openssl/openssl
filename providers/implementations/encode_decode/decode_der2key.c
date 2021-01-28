@@ -504,6 +504,16 @@ static void ecx_key_adjust(void *key, struct der2key_ctx_st *ctx)
 # define x448_d2i_key_params            NULL
 # define x448_free                      (free_key_fn *)ecx_key_free
 # define x448_adjust                    ecx_key_adjust
+
+# ifndef OPENSSL_NO_SM2
+#  define sm2_evp_type                  EVP_PKEY_SM2
+#  define sm2_evp_extract               (extract_key_fn *)EVP_PKEY_get1_EC_KEY
+#  define sm2_d2i_private_key           (d2i_of_void *)d2i_ECPrivateKey
+#  define sm2_d2i_public_key            NULL
+#  define sm2_d2i_key_params            (d2i_of_void *)d2i_ECParameters
+#  define sm2_free                      (free_key_fn *)EC_KEY_free
+#  define sm2_adjust                    ec_adjust
+# endif
 #endif
 
 /* ---------------------------------------------------------------------- */
@@ -762,6 +772,10 @@ MAKE_DECODER("ED25519", ed25519, ecx, PKCS8);
 MAKE_DECODER("ED25519", ed25519, ecx, SubjectPublicKeyInfo);
 MAKE_DECODER("ED448", ed448, ecx, PKCS8);
 MAKE_DECODER("ED448", ed448, ecx, SubjectPublicKeyInfo);
+# ifndef OPENSSL_NO_SM2
+MAKE_DECODER("SM2", sm2, ec, PKCS8);
+MAKE_DECODER("SM2", sm2, ec, SubjectPublicKeyInfo);
+# endif
 #endif
 MAKE_DECODER("RSA", rsa, rsa, PKCS8);
 MAKE_DECODER("RSA", rsa, rsa, SubjectPublicKeyInfo);

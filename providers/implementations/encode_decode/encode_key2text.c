@@ -547,6 +547,10 @@ err:
 }
 
 # define ec_input_type          "EC"
+
+# ifndef OPENSSL_NO_SM2
+#  define sm2_input_type        "SM2"
+# endif
 #endif
 
 /* ---------------------------------------------------------------------- */
@@ -906,6 +910,9 @@ MAKE_TEXT_ENCODER(dsa, dsa);
 #endif
 #ifndef OPENSSL_NO_EC
 MAKE_TEXT_ENCODER(ec, ec);
+# ifndef OPENSSL_NO_SM2
+MAKE_TEXT_ENCODER(sm2, ec);
+# endif
 MAKE_TEXT_ENCODER(ed25519, ecx);
 MAKE_TEXT_ENCODER(ed448, ecx);
 MAKE_TEXT_ENCODER(x25519, ecx);
