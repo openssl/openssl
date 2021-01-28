@@ -159,21 +159,41 @@ void *evp_keymgmt_util_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt)
         return NULL;
     }
 
+    CRYPTO_THREAD_write_lock(pk->lock);
+    /* Check to make sure some other thread didn't get there first */
+    i = evp_keymgmt_util_find_operation_cache_index(pk, keymgmt);
+    if (i < OSSL_NELEM(pk->operation_cache)
+        && pk->operation_cache[i].keymgmt != NULL) {
+        void *ret = pk->operation_cache[i].keydata;
+
+        CRYPTO_THREAD_unlock(pk->lock);
+
+        /*
+         * Another thread seemms to have already exported this so we abandon
+         * all the work we just did.
+         */
+        evp_keymgmt_freedata(keymgmt, import_data.keydata);
+
+        return ret;
+    }
+
     /* Add the new export to the operation cache */
     if (!evp_keymgmt_util_cache_keydata(pk, i, keymgmt, import_data.keydata)) {
         evp_keymgmt_freedata(keymgmt, import_data.keydata);
         return NULL;
     }
 
+    CRYPTO_THREAD_unlock(pk->lock);
+
     return import_data.keydata;
 }
 
-int evp_keymgmt_util_clear_operation_cache(EVP_PKEY *pk)
+int evp_keymgmt_util_clear_operation_cache(EVP_PKEY *pk, int locking)
 {
     size_t i, end = OSSL_NELEM(pk->operation_cache);
 
     if (pk != NULL) {
-        if (pk->lock != NULL && !CRYPTO_THREAD_write_lock(pk->lock))
+        if (locking && pk->lock != NULL && !CRYPTO_THREAD_write_lock(pk->lock))
             return 0;
         for (i = 0; i < end && pk->operation_cache[i].keymgmt != NULL; i++) {
             EVP_KEYMGMT *keymgmt = pk->operation_cache[i].keymgmt;
@@ -184,7 +204,7 @@ int evp_keymgmt_util_clear_operation_cache(EVP_PKEY *pk)
             evp_keymgmt_freedata(keymgmt, keydata);
             EVP_KEYMGMT_free(keymgmt);
         }
-        if (pk->lock != NULL)
+        if (locking && pk->lock != NULL)
             CRYPTO_THREAD_unlock(pk->lock);
     }
 
@@ -210,13 +230,9 @@ int evp_keymgmt_util_cache_keydata(EVP_PKEY *pk, size_t index,
     if (keydata != NULL) {
         if (!EVP_KEYMGMT_up_ref(keymgmt))
             return 0;
-        if (!CRYPTO_THREAD_write_lock(pk->lock)) {
-            EVP_KEYMGMT_free(keymgmt);
-            return 0;
-        }
+
         pk->operation_cache[index].keydata = keydata;
         pk->operation_cache[index].keymgmt = keymgmt;
-        CRYPTO_THREAD_unlock(pk->lock);
     }
     return 1;
 }
