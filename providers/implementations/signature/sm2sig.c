@@ -496,7 +496,7 @@ static const OSSL_PARAM *sm2sig_settable_ctx_md_params(void *vpsm2ctx)
     return EVP_MD_settable_ctx_params(psm2ctx->md);
 }
 
-const OSSL_DISPATCH sm2_signature_functions[] = {
+const OSSL_DISPATCH ossl_sm2_signature_functions[] = {
     { OSSL_FUNC_SIGNATURE_NEWCTX, (void (*)(void))sm2sig_newctx },
     { OSSL_FUNC_SIGNATURE_SIGN_INIT, (void (*)(void))sm2sig_signature_init },
     { OSSL_FUNC_SIGNATURE_SIGN, (void (*)(void))sm2sig_sign },

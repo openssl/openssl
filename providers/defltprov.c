@@ -347,7 +347,7 @@ static const OSSL_ALGORITHM deflt_keyexch[] = {
     { "DH:dhKeyAgreement", "provider=default", ossl_dh_keyexch_functions },
 #endif
 #ifndef OPENSSL_NO_EC
-    { "ECDH", "provider=default", ecossl_dh_keyexch_functions },
+    { "ECDH", "provider=default", ossl_ecdh_keyexch_functions },
     { "X25519", "provider=default", ossl_x25519_keyexch_functions },
     { "X448", "provider=default", ossl_x448_keyexch_functions },
 #endif
@@ -375,9 +375,9 @@ static const OSSL_ALGORITHM deflt_signature[] = {
 #ifndef OPENSSL_NO_EC
     { "ED25519", "provider=default", ossl_ed25519_signature_functions },
     { "ED448", "provider=default", ossl_ed448_signature_functions },
-    { "ECDSA", "provider=default", ecossl_dsa_signature_functions },
+    { "ECDSA", "provider=default", ossl_ecdsa_signature_functions },
 # ifndef OPENSSL_NO_SM2
-    { "SM2", "provider=default", sm2_signature_functions },
+    { "SM2", "provider=default", ossl_sm2_signature_functions },
 # endif
 #endif
     { "HMAC", "provider=default", ossl_mac_legacy_hmac_signature_functions },
@@ -396,7 +396,7 @@ static const OSSL_ALGORITHM deflt_signature[] = {
 static const OSSL_ALGORITHM deflt_asym_cipher[] = {
     { "RSA:rsaEncryption", "provider=default", ossl_rsa_asym_cipher_functions },
 #ifndef OPENSSL_NO_SM2
-    { "SM2", "provider=default", sm2_asym_cipher_functions },
+    { "SM2", "provider=default", ossl_sm2_asym_cipher_functions },
 #endif
     { NULL, NULL, NULL }
 };
@@ -436,7 +436,7 @@ static const OSSL_ALGORITHM deflt_keymgmt[] = {
     { "CMAC", "provider=default", ossl_cossl_mac_legacy_keymgmt_functions },
 #endif
 #ifndef OPENSSL_NO_SM2
-    { "SM2", "provider=default", sm2_keymgmt_functions },
+    { "SM2", "provider=default", ossl_sm2_keymgmt_functions },
 #endif
     { NULL, NULL, NULL }
 };

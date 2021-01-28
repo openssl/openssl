@@ -286,14 +286,14 @@ extern const OSSL_DISPATCH ossl_kdf_keymgmt_functions[];
 extern const OSSL_DISPATCH ossl_mac_legacy_keymgmt_functions[];
 extern const OSSL_DISPATCH ossl_cossl_mac_legacy_keymgmt_functions[];
 #ifndef OPENSSL_NO_SM2
-extern const OSSL_DISPATCH sm2_keymgmt_functions[];
+extern const OSSL_DISPATCH ossl_sm2_keymgmt_functions[];
 #endif
 
 /* Key Exchange */
 extern const OSSL_DISPATCH ossl_dh_keyexch_functions[];
 extern const OSSL_DISPATCH ossl_x25519_keyexch_functions[];
 extern const OSSL_DISPATCH ossl_x448_keyexch_functions[];
-extern const OSSL_DISPATCH ecossl_dh_keyexch_functions[];
+extern const OSSL_DISPATCH ossl_ecdh_keyexch_functions[];
 extern const OSSL_DISPATCH ossl_kdf_tls1_prf_keyexch_functions[];
 extern const OSSL_DISPATCH ossl_kdf_hkdf_keyexch_functions[];
 extern const OSSL_DISPATCH ossl_kdf_scrypt_keyexch_functions[];
@@ -303,17 +303,17 @@ extern const OSSL_DISPATCH ossl_dsa_signature_functions[];
 extern const OSSL_DISPATCH ossl_rsa_signature_functions[];
 extern const OSSL_DISPATCH ossl_ed25519_signature_functions[];
 extern const OSSL_DISPATCH ossl_ed448_signature_functions[];
-extern const OSSL_DISPATCH ecossl_dsa_signature_functions[];
+extern const OSSL_DISPATCH ossl_ecdsa_signature_functions[];
 extern const OSSL_DISPATCH ossl_mac_legacy_hmac_signature_functions[];
 extern const OSSL_DISPATCH ossl_mac_legacy_siphash_signature_functions[];
 extern const OSSL_DISPATCH ossl_mac_legacy_poly1305_signature_functions[];
 extern const OSSL_DISPATCH ossl_mac_legacy_cmac_signature_functions[];
-extern const OSSL_DISPATCH sm2_signature_functions[];
+extern const OSSL_DISPATCH ossl_sm2_signature_functions[];
 
 /* Asym Cipher */
 extern const OSSL_DISPATCH ossl_rsa_asym_cipher_functions[];
 #ifndef OPENSSL_NO_SM2
-extern const OSSL_DISPATCH sm2_asym_cipher_functions[];
+extern const OSSL_DISPATCH ossl_sm2_asym_cipher_functions[];
 #endif
 
 /* Asym Key encapsulation  */

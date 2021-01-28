@@ -530,7 +530,7 @@ int ecdh_derive(void *vpecdhctx, unsigned char *secret,
     return 0;
 }
 
-const OSSL_DISPATCH ecossl_dh_keyexch_functions[] = {
+const OSSL_DISPATCH ossl_ecdh_keyexch_functions[] = {
     { OSSL_FUNC_KEYEXCH_NEWCTX, (void (*)(void))ecdh_newctx },
     { OSSL_FUNC_KEYEXCH_INIT, (void (*)(void))ecdh_init },
     { OSSL_FUNC_KEYEXCH_DERIVE, (void (*)(void))ecdh_derive },
