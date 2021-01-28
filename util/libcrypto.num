@@ -2524,7 +2524,7 @@ EVP_PKEY_meth_new                       2577	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_
 RSA_padding_check_PKCS1_OAEP            2578	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 OCSP_SERVICELOC_it                      2579	3_0_0	EXIST::FUNCTION:OCSP
 PKCS12_SAFEBAG_get_nid                  2580	3_0_0	EXIST::FUNCTION:
-EVP_MD_CTX_set_update_fn                2581	3_0_0	EXIST::FUNCTION:
+EVP_MD_CTX_set_update_fn                2581	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 BIO_f_asn1                              2582	3_0_0	EXIST::FUNCTION:
 BIO_dump                                2583	3_0_0	EXIST::FUNCTION:
 ENGINE_load_ssl_client_cert             2584	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,ENGINE
@@ -3106,7 +3106,7 @@ IDEA_cfb64_encrypt                      3170	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_
 BN_mod_sub                              3171	3_0_0	EXIST::FUNCTION:
 ASN1_NULL_new                           3172	3_0_0	EXIST::FUNCTION:
 HMAC_Init                               3173	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_1_1_0
-EVP_MD_CTX_update_fn                    3174	3_0_0	EXIST::FUNCTION:
+EVP_MD_CTX_update_fn                    3174	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 EVP_aes_128_ecb                         3175	3_0_0	EXIST::FUNCTION:
 i2d_PKCS7_bio_stream                    3176	3_0_0	EXIST::FUNCTION:
 i2a_ACCESS_DESCRIPTION                  3178	3_0_0	EXIST::FUNCTION:

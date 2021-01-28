@@ -35,6 +35,11 @@ OpenSSL 3.0
 
    *Tomáš Mráz*
 
+ * Deprecate EVP_MD_CTX_set_update_fn() and EVP_MD_CTX_update_fn()
+   as they are not useful with non-deprecated functions.
+
+   *Rich Salz*
+
  * Deprecated the type OCSP_REQ_CTX and the functions OCSP_REQ_CTX_new(),
    OCSP_REQ_CTX_free(), OCSP_REQ_CTX_http(), OCSP_REQ_CTX_add1_header(),
    OCSP_REQ_CTX_i2d(), OCSP_REQ_CTX_nbio(), OCSP_REQ_CTX_nbio_d2i(),
