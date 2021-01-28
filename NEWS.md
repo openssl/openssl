@@ -20,7 +20,11 @@ OpenSSL 3.0
 
 ### Major changes between OpenSSL 1.1.1 and OpenSSL 3.0 [under development]
 
-  * Deprecated the `DSA_` functions.
+  * Deprecated the `OCSP_REQ_CTX` type and functions.
+  * Deprecated the `EC_KEY` and `EC_KEY_METHOD` types and functions.
+  * Deprecated the `RSA` and `RSA_METHOD` types and functions.
+  * Deprecated the `DSA` and `DSA_METHOD` types and functions.
+  * Deprecated the `DH` and `DH_METHOD` types and functions.
   * Deprecated the `ERR_load_` functions.
   * Remove the `RAND_DRBG` API.
   * Deprecated the `ENGINE` API.
