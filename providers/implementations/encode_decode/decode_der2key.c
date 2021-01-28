@@ -31,6 +31,7 @@
 #include "crypto/evp.h"
 #include "crypto/ecx.h"
 #include "crypto/rsa.h"
+#include "crypto/x509.h"
 #include "prov/bio.h"
 #include "prov/implementations.h"
 #include "endecoder_local.h"
@@ -330,7 +331,7 @@ static int der2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
             && (selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0) {
             RESET_ERR_MARK();
             derp = der;
-            pkey = d2i_PUBKEY_ex(NULL, &derp, der_len, libctx, NULL);
+            pkey = d2i_PUBKEY_legacy(NULL, &derp, der_len);
         }
 
         if (pkey != NULL) {
