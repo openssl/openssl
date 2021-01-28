@@ -23,6 +23,7 @@
 #include <openssl/rsa.h>
 #include <openssl/dsa.h>
 #include <openssl/encoder.h>
+#include <openssl/decoder.h>
 #include "internal/provider.h"
 
 struct X509_pubkey_st {
@@ -33,6 +34,14 @@ struct X509_pubkey_st {
     /* extra data for the callback, used by d2i_PUBKEY_ex */
     OSSL_LIB_CTX *libctx;
     char *propq;
+
+    /*
+     * d2i_X509_PUBKEY() does double parsing, first with OSSL_DECODER,
+     * and the with ASN1_item_d2i().  It leaves the result of OSSL_DECODER
+     * (a provider side EVP_PKEY) here, and leaves it to pubkey_cb() to
+     * notice it and move it to |pkey| above.
+     */
+    EVP_PKEY *tmp_prov_pkey;
 };
 
 static int x509_pubkey_decode(EVP_PKEY **pk, const X509_PUBKEY *key);
@@ -66,17 +75,22 @@ static int pubkey_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         /* Attempt to decode public key and cache in pubkey structure. */
         EVP_PKEY_free(pubkey->pkey);
         pubkey->pkey = NULL;
-        /*
-         * Opportunistically decode the key but remove any non fatal errors
-         * from the queue. Subsequent explicit attempts to decode/use the key
-         * will return an appropriate error.
-         */
-        ERR_set_mark();
-        if (x509_pubkey_decode(&pubkey->pkey, pubkey) == -1) {
-            ERR_clear_last_mark();
-            return 0;
+        if (pubkey->tmp_prov_pkey != NULL) {
+            pubkey->pkey = pubkey->tmp_prov_pkey;
+            pubkey->tmp_prov_pkey = NULL;
+        } else {
+            /*
+             * Opportunistically decode the key but remove any non fatal
+             * errors from the queue. Subsequent explicit attempts to
+             * decode/use the key will return an appropriate error.
+             */
+            ERR_set_mark();
+            if (x509_pubkey_decode(&pubkey->pkey, pubkey) == -1) {
+                ERR_clear_last_mark();
+                return 0;
+            }
+            ERR_pop_to_mark();
         }
-        ERR_pop_to_mark();
     } else if (operation == ASN1_OP_DUP_POST) {
         X509_PUBKEY *old = exarg;
 
@@ -91,8 +105,51 @@ ASN1_SEQUENCE_cb(X509_PUBKEY, pubkey_cb) = {
         ASN1_SIMPLE(X509_PUBKEY, public_key, ASN1_BIT_STRING)
 } ASN1_SEQUENCE_END_cb(X509_PUBKEY, X509_PUBKEY)
 
-IMPLEMENT_ASN1_FUNCTIONS(X509_PUBKEY)
+IMPLEMENT_ASN1_ALLOC_FUNCTIONS(X509_PUBKEY)
 IMPLEMENT_ASN1_DUP_FUNCTION(X509_PUBKEY)
+
+X509_PUBKEY *d2i_X509_PUBKEY(X509_PUBKEY **a,
+                             const unsigned char **in, long len)
+{
+    EVP_PKEY *pkey = NULL;
+    X509_PUBKEY *tmp_pk = NULL;
+    const unsigned char *p = *in;
+    size_t size = (size_t)len;
+    OSSL_DECODER_CTX *dctx = NULL;
+
+    if ((dctx = OSSL_DECODER_CTX_new_by_EVP_PKEY(&pkey,
+                                                 "DER", "SubjectPublicKeyInfo",
+                                                 NULL, EVP_PKEY_PUBLIC_KEY,
+                                                 NULL, NULL)) != NULL
+
+        && OSSL_DECODER_from_data(dctx, &p, &size)) {
+        if (a == NULL)
+            a = &tmp_pk;
+        if (*a == NULL)
+            *a = X509_PUBKEY_new();
+        (*a)->tmp_prov_pkey = pkey;
+    }
+    OSSL_DECODER_CTX_free(dctx);
+
+    return (X509_PUBKEY *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+                                        (X509_PUBKEY_it()));
+}
+
+int i2d_X509_PUBKEY(const X509_PUBKEY *a, unsigned char **out)
+{
+    return ASN1_item_i2d((const ASN1_VALUE *)a, out, (X509_PUBKEY_it()));
+}
+
+/*
+ * This does the same as d2i_X509_PUBKEY(), but only handles legacy keys.
+ * We use this for d2i_<TYPE>_PUBKEY() further down.
+ */
+static X509_PUBKEY *d2i_X509_PUBKEY_legacy(X509_PUBKEY **a,
+                                           const unsigned char **in, long len)
+{
+    return (X509_PUBKEY *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+                                        (X509_PUBKEY_it()));
+}
 
 /* TODO should better be called X509_PUBKEY_set1 */
 int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
@@ -175,9 +232,9 @@ int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
  * Attempt to decode a public key.
  * Returns 1 on success, 0 for a decode failure and -1 for a fatal
  * error e.g. malloc failure.
+ *
+ * This function is #legacy.
  */
-
-
 static int x509_pubkey_decode(EVP_PKEY **ppkey, const X509_PUBKEY *key)
 {
     EVP_PKEY *pkey = EVP_PKEY_new();
@@ -256,9 +313,13 @@ EVP_PKEY *X509_PUBKEY_get(const X509_PUBKEY *key)
  * Now three pseudo ASN1 routines that take an EVP_PKEY structure and encode
  * or decode as X509_PUBKEY
  */
-
-EVP_PKEY *d2i_PUBKEY_ex(EVP_PKEY **a, const unsigned char **pp, long length,
-                        OSSL_LIB_CTX *libctx, const char *propq)
+static EVP_PKEY *d2i_PUBKEY_int(EVP_PKEY **a,
+                                const unsigned char **pp, long length,
+                                OSSL_LIB_CTX *libctx, const char *propq,
+                                X509_PUBKEY *
+                                (*d2i_x509_pubkey)(X509_PUBKEY **a,
+                                                   const unsigned char **in,
+                                                   long len))
 {
     X509_PUBKEY *xpk, *xpk2 = NULL, **pxpk = NULL;
     EVP_PKEY *pktmp = NULL;
@@ -281,7 +342,7 @@ EVP_PKEY *d2i_PUBKEY_ex(EVP_PKEY **a, const unsigned char **pp, long length,
             goto end;
         pxpk = &xpk2;
     }
-    xpk = d2i_X509_PUBKEY(pxpk, &q, length);
+    xpk = d2i_x509_pubkey(pxpk, &q, length);
     if (xpk == NULL)
         goto end;
     pktmp = X509_PUBKEY_get(xpk);
@@ -297,6 +358,12 @@ EVP_PKEY *d2i_PUBKEY_ex(EVP_PKEY **a, const unsigned char **pp, long length,
  end:
     X509_PUBKEY_free(xpk2);
     return pktmp;
+}
+
+EVP_PKEY *d2i_PUBKEY_ex(EVP_PKEY **a, const unsigned char **pp, long length,
+                        OSSL_LIB_CTX *libctx, const char *propq)
+{
+    return d2i_PUBKEY_int(a, pp, length, libctx, propq, d2i_X509_PUBKEY);
 }
 
 EVP_PKEY *d2i_PUBKEY(EVP_PKEY **a, const unsigned char **pp, long length)
@@ -355,6 +422,12 @@ int i2d_PUBKEY(const EVP_PKEY *a, unsigned char **pp)
     return ret;
 }
 
+EVP_PKEY *d2i_PUBKEY_legacy(EVP_PKEY **a,
+                            const unsigned char **pp, long length)
+{
+    return d2i_PUBKEY_int(a, pp, length, NULL, NULL, d2i_X509_PUBKEY_legacy);
+}
+
 /*
  * The following are equivalents but which return RSA and DSA keys
  */
@@ -365,7 +438,7 @@ RSA *d2i_RSA_PUBKEY(RSA **a, const unsigned char **pp, long length)
     const unsigned char *q;
 
     q = *pp;
-    pkey = d2i_PUBKEY(NULL, &q, length);
+    pkey = d2i_PUBKEY_legacy(NULL, &q, length);
     if (pkey == NULL)
         return NULL;
     key = EVP_PKEY_get1_RSA(pkey);
@@ -406,7 +479,7 @@ DSA *d2i_DSA_PUBKEY(DSA **a, const unsigned char **pp, long length)
     const unsigned char *q;
 
     q = *pp;
-    pkey = d2i_PUBKEY(NULL, &q, length);
+    pkey = d2i_PUBKEY_legacy(NULL, &q, length);
     if (pkey == NULL)
         return NULL;
     key = EVP_PKEY_get1_DSA(pkey);
@@ -448,7 +521,7 @@ EC_KEY *d2i_EC_PUBKEY(EC_KEY **a, const unsigned char **pp, long length)
     const unsigned char *q;
 
     q = *pp;
-    pkey = d2i_PUBKEY(NULL, &q, length);
+    pkey = d2i_PUBKEY_legacy(NULL, &q, length);
     if (pkey == NULL)
         return NULL;
     key = EVP_PKEY_get1_EC_KEY(pkey);
