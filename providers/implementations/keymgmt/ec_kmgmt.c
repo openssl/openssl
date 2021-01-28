@@ -1311,7 +1311,7 @@ const OSSL_DISPATCH ossl_ec_keymgmt_functions[] = {
 
 #ifndef FIPS_MODULE
 # ifndef OPENSSL_NO_SM2
-const OSSL_DISPATCH sm2_keymgmt_functions[] = {
+const OSSL_DISPATCH ossl_sm2_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_NEW, (void (*)(void))ec_newdata },
     { OSSL_FUNC_KEYMGMT_GEN_INIT, (void (*)(void))ec_gen_init },
     { OSSL_FUNC_KEYMGMT_GEN_SET_TEMPLATE,

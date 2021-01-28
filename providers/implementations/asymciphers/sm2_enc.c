@@ -207,7 +207,7 @@ static const OSSL_PARAM *sm2_settable_ctx_params(ossl_unused void *provctx)
     return known_settable_ctx_params;
 }
 
-const OSSL_DISPATCH sm2_asym_cipher_functions[] = {
+const OSSL_DISPATCH ossl_sm2_asym_cipher_functions[] = {
     { OSSL_FUNC_ASYM_CIPHER_NEWCTX, (void (*)(void))sm2_newctx },
     { OSSL_FUNC_ASYM_CIPHER_ENCRYPT_INIT, (void (*)(void))sm2_init },
     { OSSL_FUNC_ASYM_CIPHER_ENCRYPT, (void (*)(void))sm2_asym_encrypt },
