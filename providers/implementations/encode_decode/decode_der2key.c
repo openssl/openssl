@@ -133,9 +133,10 @@ struct keytype_desc_st {
     int selection_mask;
 
     /* For type specific decoders, we use the corresponding d2i */
-    d2i_of_void *d2i_private_key;
-    d2i_of_void *d2i_public_key;
-    d2i_of_void *d2i_key_params;
+    d2i_of_void *d2i_private_key; /* From type-specific DER */
+    d2i_of_void *d2i_public_key;  /* From type-specific DER */
+    d2i_of_void *d2i_key_params;  /* From type-specific DER */
+    d2i_of_void *d2i_PUBKEY;      /* Wrapped in a SubjectPublicKeyInfo */
 
     /*
      * For PKCS#8 decoders, we use EVP_PKEY extractors, EVP_PKEY_get1_{TYPE}()
@@ -288,9 +289,12 @@ static int der2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
             goto end;
     }
     if (key == NULL
-        && ctx->desc->d2i_public_key != NULL
+        && (ctx->desc->d2i_PUBKEY != NULL || ctx->desc->d2i_public_key != NULL)
         && (selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0) {
-        key = ctx->desc->d2i_public_key(NULL, &derp, der_len);
+        if (ctx->desc->d2i_PUBKEY != NULL)
+            key = ctx->desc->d2i_PUBKEY(NULL, &derp, der_len);
+        else
+            key = ctx->desc->d2i_public_key(NULL, &derp, der_len);
         if (key == NULL && orig_selection != 0)
             goto end;
     }
@@ -325,6 +329,10 @@ static int der2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
                                      libctx, NULL);
         }
 
+        /*
+         * As long as we have algos without a specific d2i_<TYPE>_PUBKEY,
+         * this code must remain...
+         */
         if (pkey == NULL
             && (selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0) {
             RESET_ERR_MARK();
@@ -416,6 +424,7 @@ static int der2key_export_object(void *vctx,
 # define dh_d2i_private_key             NULL
 # define dh_d2i_public_key              NULL
 # define dh_d2i_key_params              (d2i_of_void *)d2i_DHparams
+# define dh_d2i_PUBKEY                  NULL
 # define dh_free                        (free_key_fn *)DH_free
 
 static void dh_adjust(void *key, struct der2key_ctx_st *ctx)
@@ -428,6 +437,7 @@ static void dh_adjust(void *key, struct der2key_ctx_st *ctx)
 # define dhx_d2i_private_key            NULL
 # define dhx_d2i_public_key             NULL
 # define dhx_d2i_key_params             (d2i_of_void *)d2i_DHxparams
+# define dhx_d2i_PUBKEY                 NULL
 # define dhx_free                       (free_key_fn *)DH_free
 # define dhx_adjust                     dh_adjust
 #endif
@@ -440,6 +450,7 @@ static void dh_adjust(void *key, struct der2key_ctx_st *ctx)
 # define dsa_d2i_private_key            (d2i_of_void *)d2i_DSAPrivateKey
 # define dsa_d2i_public_key             (d2i_of_void *)d2i_DSAPublicKey
 # define dsa_d2i_key_params             (d2i_of_void *)d2i_DSAparams
+# define dsa_d2i_PUBKEY                 (d2i_of_void *)d2i_DSA_PUBKEY
 # define dsa_free                       (free_key_fn *)DSA_free
 
 static void dsa_adjust(void *key, struct der2key_ctx_st *ctx)
@@ -456,6 +467,7 @@ static void dsa_adjust(void *key, struct der2key_ctx_st *ctx)
 # define ec_d2i_private_key             (d2i_of_void *)d2i_ECPrivateKey
 # define ec_d2i_public_key              NULL
 # define ec_d2i_key_params              (d2i_of_void *)d2i_ECParameters
+# define ec_d2i_PUBKEY                  (d2i_of_void *)d2i_EC_PUBKEY
 # define ec_free                        (free_key_fn *)EC_KEY_free
 
 static void ec_adjust(void *key, struct der2key_ctx_st *ctx)
@@ -478,6 +490,7 @@ static void ecx_key_adjust(void *key, struct der2key_ctx_st *ctx)
 # define ed25519_d2i_private_key        NULL
 # define ed25519_d2i_public_key         NULL
 # define ed25519_d2i_key_params         NULL
+# define ed25519_d2i_PUBKEY             NULL /* Unfortunately */
 # define ed25519_free                   (free_key_fn *)ecx_key_free
 # define ed25519_adjust                 ecx_key_adjust
 
@@ -486,6 +499,7 @@ static void ecx_key_adjust(void *key, struct der2key_ctx_st *ctx)
 # define ed448_d2i_private_key          NULL
 # define ed448_d2i_public_key           NULL
 # define ed448_d2i_key_params           NULL
+# define ed448_d2i_PUBKEY               NULL /* Unfortunately */
 # define ed448_free                     (free_key_fn *)ecx_key_free
 # define ed448_adjust                   ecx_key_adjust
 
@@ -494,6 +508,7 @@ static void ecx_key_adjust(void *key, struct der2key_ctx_st *ctx)
 # define x25519_d2i_private_key         NULL
 # define x25519_d2i_public_key          NULL
 # define x25519_d2i_key_params          NULL
+# define x25519_d2i_PUBKEY              NULL /* Unfortunately */
 # define x25519_free                    (free_key_fn *)ecx_key_free
 # define x25519_adjust                  ecx_key_adjust
 
@@ -502,6 +517,7 @@ static void ecx_key_adjust(void *key, struct der2key_ctx_st *ctx)
 # define x448_d2i_private_key           NULL
 # define x448_d2i_public_key            NULL
 # define x448_d2i_key_params            NULL
+# define x448_d2i_PUBKEY                NULL /* Unfortunately */
 # define x448_free                      (free_key_fn *)ecx_key_free
 # define x448_adjust                    ecx_key_adjust
 
@@ -511,6 +527,7 @@ static void ecx_key_adjust(void *key, struct der2key_ctx_st *ctx)
 #  define sm2_d2i_private_key           (d2i_of_void *)d2i_ECPrivateKey
 #  define sm2_d2i_public_key            NULL
 #  define sm2_d2i_key_params            (d2i_of_void *)d2i_ECParameters
+#  define sm2_d2i_PUBKEY                (d2i_of_void *)d2i_EC_PUBKEY
 #  define sm2_free                      (free_key_fn *)EC_KEY_free
 #  define sm2_adjust                    ec_adjust
 # endif
@@ -523,6 +540,7 @@ static void ecx_key_adjust(void *key, struct der2key_ctx_st *ctx)
 #define rsa_d2i_private_key             (d2i_of_void *)d2i_RSAPrivateKey
 #define rsa_d2i_public_key              (d2i_of_void *)d2i_RSAPublicKey
 #define rsa_d2i_key_params              NULL
+#define rsa_d2i_PUBKEY                  (d2i_of_void *)d2i_RSA_PUBKEY
 #define rsa_free                        (free_key_fn *)RSA_free
 
 static void rsa_adjust(void *key, struct der2key_ctx_st *ctx)
@@ -535,6 +553,7 @@ static void rsa_adjust(void *key, struct der2key_ctx_st *ctx)
 #define rsapss_d2i_private_key          (d2i_of_void *)d2i_RSAPrivateKey
 #define rsapss_d2i_public_key           (d2i_of_void *)d2i_RSAPublicKey
 #define rsapss_d2i_key_params           NULL
+#define rsapss_d2i_PUBKEY               (d2i_of_void *)d2i_RSA_PUBKEY
 #define rsapss_free                     (free_key_fn *)RSA_free
 #define rsapss_adjust                   rsa_adjust
 
@@ -551,6 +570,7 @@ static void rsa_adjust(void *key, struct der2key_ctx_st *ctx)
         keytype##_d2i_public_key,                       \
         NULL,                                           \
         NULL,                                           \
+        NULL,                                           \
         keytype##_adjust,                               \
         keytype##_free
 
@@ -561,6 +581,7 @@ static void rsa_adjust(void *key, struct der2key_ctx_st *ctx)
         keytype##_d2i_public_key,                       \
         NULL,                                           \
         NULL,                                           \
+        NULL,                                           \
         keytype##_adjust,                               \
         keytype##_free
 
@@ -568,6 +589,7 @@ static void rsa_adjust(void *key, struct der2key_ctx_st *ctx)
     "type-specific", 0,                                 \
         ( OSSL_KEYMGMT_SELECT_PRIVATE_KEY ),            \
         keytype##_d2i_private_key,                      \
+        NULL,                                           \
         NULL,                                           \
         NULL,                                           \
         NULL,                                           \
@@ -581,6 +603,7 @@ static void rsa_adjust(void *key, struct der2key_ctx_st *ctx)
         NULL,                                           \
         keytype##_d2i_key_params,                       \
         NULL,                                           \
+        NULL,                                           \
         keytype##_adjust,                               \
         keytype##_free
 
@@ -590,6 +613,7 @@ static void rsa_adjust(void *key, struct der2key_ctx_st *ctx)
         keytype##_d2i_private_key,                      \
         keytype##_d2i_public_key,                       \
         keytype##_d2i_key_params,                       \
+        NULL,                                           \
         NULL,                                           \
         keytype##_adjust,                               \
         keytype##_free
@@ -602,12 +626,14 @@ static void rsa_adjust(void *key, struct der2key_ctx_st *ctx)
         NULL,                                           \
         keytype##_d2i_key_params,                       \
         NULL,                                           \
+        NULL,                                           \
         keytype##_adjust,                               \
         keytype##_free
 
 #define DO_PKCS8(keytype)                               \
     "pkcs8", keytype##_evp_type,                        \
         ( OSSL_KEYMGMT_SELECT_PRIVATE_KEY ),            \
+        NULL,                                           \
         NULL,                                           \
         NULL,                                           \
         NULL,                                           \
@@ -621,6 +647,7 @@ static void rsa_adjust(void *key, struct der2key_ctx_st *ctx)
         NULL,                                           \
         NULL,                                           \
         NULL,                                           \
+        keytype##_d2i_PUBKEY,                           \
         keytype##_evp_extract,                          \
         keytype##_adjust,                               \
         keytype##_free
@@ -632,6 +659,7 @@ static void rsa_adjust(void *key, struct der2key_ctx_st *ctx)
         NULL,                                           \
         keytype##_d2i_key_params,                       \
         NULL,                                           \
+        NULL,                                           \
         keytype##_adjust,                               \
         keytype##_free
 
@@ -642,6 +670,7 @@ static void rsa_adjust(void *key, struct der2key_ctx_st *ctx)
         NULL,                                           \
         keytype##_d2i_key_params,                       \
         NULL,                                           \
+        NULL,                                           \
         keytype##_adjust,                               \
         keytype##_free
 
@@ -651,6 +680,7 @@ static void rsa_adjust(void *key, struct der2key_ctx_st *ctx)
         keytype##_d2i_private_key,                      \
         keytype##_d2i_public_key,                       \
         keytype##_d2i_key_params,                       \
+        NULL,                                           \
         NULL,                                           \
         keytype##_adjust,                               \
         keytype##_free
@@ -663,6 +693,7 @@ static void rsa_adjust(void *key, struct der2key_ctx_st *ctx)
         NULL,                                           \
         keytype##_d2i_key_params,                       \
         NULL,                                           \
+        NULL,                                           \
         keytype##_adjust,                               \
         keytype##_free
 
@@ -671,6 +702,7 @@ static void rsa_adjust(void *key, struct der2key_ctx_st *ctx)
         ( OSSL_KEYMGMT_SELECT_KEYPAIR ),                \
         keytype##_d2i_private_key,                      \
         keytype##_d2i_public_key,                       \
+        NULL,                                           \
         NULL,                                           \
         NULL,                                           \
         keytype##_adjust,                               \
