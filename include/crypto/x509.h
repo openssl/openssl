@@ -14,6 +14,7 @@
 # include "internal/refcount.h"
 # include <openssl/asn1.h>
 # include <openssl/x509.h>
+# include "crypto/ecx.h"
 
 /* Internal X509 structures and functions: not for application use */
 
@@ -328,4 +329,27 @@ ASN1_OCTET_STRING *ossl_x509_pubkey_hash(X509_PUBKEY *pubkey);
 /* A variant of d2i_PUBKEY() that is guaranteed to only return legacy keys */
 EVP_PKEY *ossl_d2i_PUBKEY_legacy(EVP_PKEY **a,
                                  const unsigned char **in, long length);
+
+RSA *ossl_d2i_RSA_PSS_PUBKEY(RSA **a, const unsigned char **pp, long length);
+int ossl_i2d_RSA_PSS_PUBKEY(const RSA *a, unsigned char **pp);
+# ifndef OPENSSL_NO_DH
+DH *ossl_d2i_DH_PUBKEY(DH **a, const unsigned char **pp, long length);
+int ossl_i2d_DH_PUBKEY(const DH *a, unsigned char **pp);
+DH *ossl_d2i_DHx_PUBKEY(DH **a, const unsigned char **pp, long length);
+int ossl_i2d_DHx_PUBKEY(const DH *a, unsigned char **pp);
+# endif
+# ifndef OPENSSL_NO_EC
+ECX_KEY *ossl_d2i_ED25519_PUBKEY(ECX_KEY **a,
+                                 const unsigned char **pp, long length);
+int ossl_i2d_ED25519_PUBKEY(const ECX_KEY *a, unsigned char **pp);
+ECX_KEY *ossl_d2i_ED448_PUBKEY(ECX_KEY **a,
+                               const unsigned char **pp, long length);
+int ossl_i2d_ED448_PUBKEY(const ECX_KEY *a, unsigned char **pp);
+ECX_KEY *ossl_d2i_X25519_PUBKEY(ECX_KEY **a,
+                                const unsigned char **pp, long length);
+int ossl_i2d_X25519_PUBKEY(const ECX_KEY *a, unsigned char **pp);
+ECX_KEY *ossl_d2i_X448_PUBKEY(ECX_KEY **a,
+                              const unsigned char **pp, long length);
+int ossl_i2d_X448_PUBKEY(const ECX_KEY *a, unsigned char **pp);
+# endif
 #endif
