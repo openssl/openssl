@@ -350,7 +350,7 @@ static const OSSL_ALGORITHM fips_keyexch[] = {
     { "DH:dhKeyAgreement", FIPS_DEFAULT_PROPERTIES, ossl_dh_keyexch_functions },
 #endif
 #ifndef OPENSSL_NO_EC
-    { "ECDH", FIPS_DEFAULT_PROPERTIES, ecossl_dh_keyexch_functions },
+    { "ECDH", FIPS_DEFAULT_PROPERTIES, ossl_ecdh_keyexch_functions },
     { "X25519", FIPS_DEFAULT_PROPERTIES, ossl_x25519_keyexch_functions },
     { "X448", FIPS_DEFAULT_PROPERTIES, ossl_x448_keyexch_functions },
 #endif
@@ -370,7 +370,7 @@ static const OSSL_ALGORITHM fips_signature[] = {
 #ifndef OPENSSL_NO_EC
     { "ED25519", FIPS_DEFAULT_PROPERTIES, ossl_ed25519_signature_functions },
     { "ED448", FIPS_DEFAULT_PROPERTIES, ossl_ed448_signature_functions },
-    { "ECDSA", FIPS_DEFAULT_PROPERTIES, ecossl_dsa_signature_functions },
+    { "ECDSA", FIPS_DEFAULT_PROPERTIES, ossl_ecdsa_signature_functions },
 #endif
     { "HMAC", FIPS_DEFAULT_PROPERTIES,
       ossl_mac_legacy_hmac_signature_functions },
