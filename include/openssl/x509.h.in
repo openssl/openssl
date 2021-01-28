@@ -726,7 +726,6 @@ const X509_ALGOR *X509_get0_tbs_sigalg(const X509 *x);
 EVP_PKEY *X509_get0_pubkey(const X509 *x);
 EVP_PKEY *X509_get_pubkey(X509 *x);
 ASN1_BIT_STRING *X509_get0_pubkey_bitstr(const X509 *x);
-int X509_certificate_type(const X509 *x, const EVP_PKEY *pubkey);
 
 long X509_REQ_get_version(const X509_REQ *req);
 int X509_REQ_set_version(X509_REQ *x, long version);
@@ -838,6 +837,8 @@ int X509_cmp(const X509 *a, const X509 *b);
 int X509_NAME_cmp(const X509_NAME *a, const X509_NAME *b);
 #ifndef OPENSSL_NO_DEPRECATED_3_0
 # define X509_NAME_hash(x) X509_NAME_hash_ex(x, NULL, NULL, NULL)
+OSSL_DEPRECATEDIN_3_0 int X509_certificate_type(const X509 *x,
+                                                const EVP_PKEY *pubkey);
 #endif
 unsigned long X509_NAME_hash_ex(const X509_NAME *x, OSSL_LIB_CTX *libctx,
                                 const char *propq, int *ok);

@@ -693,7 +693,7 @@ X509_add1_reject_object                 710	3_0_0	EXIST::FUNCTION:
 ERR_set_mark                            711	3_0_0	EXIST::FUNCTION:
 d2i_ASN1_VISIBLESTRING                  712	3_0_0	EXIST::FUNCTION:
 X509_NAME_ENTRY_dup                     714	3_0_0	EXIST::FUNCTION:
-X509_certificate_type                   715	3_0_0	EXIST::FUNCTION:
+X509_certificate_type                   715	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 PKCS7_add_signature                     716	3_0_0	EXIST::FUNCTION:
 OBJ_ln2nid                              717	3_0_0	EXIST::FUNCTION:
 CRYPTO_128_unwrap                       718	3_0_0	EXIST::FUNCTION:
