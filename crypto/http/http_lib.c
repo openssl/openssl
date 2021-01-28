@@ -15,27 +15,46 @@
 
 #include "http_local.h"
 
-/*
- * Parse a URL and split it up into host, port and path components and
- * whether it indicates SSL/TLS. Return 1 on success, 0 on error.
- */
+static int copy_substring(char **dest, const char *start, const char *end)
+{
+    return dest == NULL
+        || (*dest = OPENSSL_strndup(start, end - start)) != NULL;
+}
 
-int OSSL_HTTP_parse_url(const char *url, char **phost, char **pport,
-                        int *pport_num, char **ppath, int *pssl)
+static void free_pstring(char **pstr)
+{
+    if (pstr != NULL) {
+        OPENSSL_free(*pstr);
+        *pstr = NULL;
+    }
+}
+
+int OSSL_HTTP_parse_url(const char *url, int *pssl, char **puser, char **phost,
+                        char **pport, int *pport_num,
+                        char **ppath, char **pquery, char **pfrag)
 {
     char *p, *buf;
     char *host, *host_end;
-    const char *path, *port = OSSL_HTTP_PORT;
+    char *user, *user_end;
+    const char *path, *path_end, *tmp, *port = OSSL_HTTP_PORT;
     long portnum = 80;
+    const char *frag, *frag_end;
+    const char *query, *query_end;
 
+    if (pssl != NULL)
+        *pssl = 0;
+    if (puser != NULL)
+        *puser = NULL;
     if (phost != NULL)
         *phost = NULL;
     if (pport != NULL)
         *pport = NULL;
     if (ppath != NULL)
         *ppath = NULL;
-    if (pssl != NULL)
-        *pssl = 0;
+    if (pfrag != NULL)
+        *pfrag = NULL;
+    if (pquery != NULL)
+        *pquery = NULL;
 
     if (url == NULL) {
         ERR_raise(ERR_LIB_HTTP, ERR_R_PASSED_NULL_PARAMETER);
@@ -63,7 +82,14 @@ int OSSL_HTTP_parse_url(const char *url, char **phost, char **pport,
         }
         p += 3;
     }
-    host = p;
+
+    /* parse optional "userinfo@" */
+    user = user_end = host = p;
+    host = strchr(p, '@');
+    if (host != NULL)
+        user_end = host++;
+    else
+        host = p;
 
     /* parse host name/address as far as needed here */
     if (host[0] == '[') {
@@ -112,6 +138,23 @@ int OSSL_HTTP_parse_url(const char *url, char **phost, char **pport,
         ERR_raise(ERR_LIB_HTTP, HTTP_R_INVALID_URL_PATH);
         goto parse_err;
     }
+    path_end = query = query_end = frag = frag_end = path + strlen(path);
+
+    /* parse optional "?query" */
+    tmp = strchr(path, '?');
+    if (pquery != NULL && tmp != NULL) {
+        path_end = tmp;
+        query = path_end + 1;
+    }
+
+    /* parse optional "#fragment" */
+    tmp = strchr(path, '#');
+    if (tmp != NULL) {
+        if (query == path_end) /* we did not record a query component */
+            path_end = tmp;
+        query_end = tmp;
+        frag = query_end + 1;
+    }
 
     if (phost != NULL && (*phost = OPENSSL_strdup(host)) == NULL)
         goto err;
@@ -119,7 +162,10 @@ int OSSL_HTTP_parse_url(const char *url, char **phost, char **pport,
         goto err;
     if (pport_num != NULL)
         *pport_num = (int)portnum;
-    if (ppath != NULL && (*ppath = OPENSSL_strdup(path)) == NULL)
+    if (!copy_substring(puser, user, user_end)
+            || !copy_substring(ppath, path, path_end)
+            || !copy_substring(pquery, query, query_end)
+            || !copy_substring(pfrag, frag, frag_end))
         goto err;
 
     OPENSSL_free(buf);
@@ -129,18 +175,11 @@ int OSSL_HTTP_parse_url(const char *url, char **phost, char **pport,
     ERR_raise(ERR_LIB_HTTP, HTTP_R_ERROR_PARSING_URL);
 
  err:
-    if (ppath != NULL) {
-        OPENSSL_free(*ppath);
-        *ppath = NULL;
-    }
-    if (pport != NULL) {
-        OPENSSL_free(*pport);
-        *pport = NULL;
-    }
-    if (phost != NULL) {
-        OPENSSL_free(*phost);
-        *phost = NULL;
-    }
+    free_pstring(phost);
+    free_pstring(pport);
+    free_pstring(ppath);
+    free_pstring(pquery);
+    free_pstring(pfrag);
     OPENSSL_free(buf);
     return 0;
 }
