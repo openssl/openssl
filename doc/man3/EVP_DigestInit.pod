@@ -80,11 +80,6 @@ EVP_MD_do_all_provided
  int EVP_MD_CTX_block_size(const EVP_MD_CTX *ctx);
  int EVP_MD_CTX_type(const EVP_MD_CTX *ctx);
  void *EVP_MD_CTX_md_data(const EVP_MD_CTX *ctx);
- int (*EVP_MD_CTX_update_fn(EVP_MD_CTX *ctx))(EVP_MD_CTX *ctx,
-                                              const void *data, size_t count);
- void EVP_MD_CTX_set_update_fn(EVP_MD_CTX *ctx,
-                               int (*update)(EVP_MD_CTX *ctx,
-                                             const void *data, size_t count));
 
  const EVP_MD *EVP_md_null(void);
 
@@ -98,6 +93,17 @@ EVP_MD_do_all_provided
  void EVP_MD_do_all_provided(OSSL_LIB_CTX *libctx,
                              void (*fn)(EVP_MD *mac, void *arg),
                              void *arg);
+
+Deprecated since OpenSSL 3.0, can be hidden entirely by defining
+B<OPENSSL_API_COMPAT> with a suitable version value, see
+L<openssl_user_macros(7)>:
+
+ int (*EVP_MD_CTX_update_fn(EVP_MD_CTX *ctx))(EVP_MD_CTX *ctx,
+                                              const void *data, size_t count);
+
+ void EVP_MD_CTX_set_update_fn(EVP_MD_CTX *ctx,
+                               int (*update)(EVP_MD_CTX *ctx,
+                                             const void *data, size_t count));
 
 =head1 DESCRIPTION
 
@@ -325,7 +331,7 @@ should not be used after the EVP_MD_CTX is freed.
 =item EVP_MD_CTX_set_update_fn()
 
 Sets the update function for I<ctx> to I<update>.
-This is the function that is called by EVP_DigestUpdate. If not set, the
+This is the function that is called by EVP_DigestUpdate(). If not set, the
 update function from the B<EVP_MD> type specified at initialization is used.
 
 =item EVP_MD_CTX_update_fn()
@@ -645,10 +651,12 @@ later, so now EVP_sha1() can be used with RSA and DSA.
 
 The EVP_dss1() function was removed in OpenSSL 1.1.0.
 
-The EVP_MD_CTX_set_pkey_ctx() function was added in 1.1.1.
+The EVP_MD_CTX_set_pkey_ctx() function was added in OpenSSL 1.1.1.
 
 The EVP_MD_fetch(), EVP_MD_free(), EVP_MD_up_ref(), EVP_MD_CTX_set_params()
-and EVP_MD_CTX_get_params() functions were added in 3.0.
+and EVP_MD_CTX_get_params() functions were added in OpenSSL 3.0.
+The EVP_MD_CTX_update_fn() and EVP_MD_CTX_set_update_fn() were deprecated
+in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

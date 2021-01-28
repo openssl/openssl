@@ -531,11 +531,15 @@ int EVP_MD_block_size(const EVP_MD *md);
 unsigned long EVP_MD_flags(const EVP_MD *md);
 
 const EVP_MD *EVP_MD_CTX_md(const EVP_MD_CTX *ctx);
+# ifndef OPENSSL_NO_DEPRECATED_3_0
+OSSL_DEPRECATEDIN_3_0
 int (*EVP_MD_CTX_update_fn(EVP_MD_CTX *ctx))(EVP_MD_CTX *ctx,
                                              const void *data, size_t count);
+OSSL_DEPRECATEDIN_3_0
 void EVP_MD_CTX_set_update_fn(EVP_MD_CTX *ctx,
                               int (*update) (EVP_MD_CTX *ctx,
                                              const void *data, size_t count));
+# endif
 # define EVP_MD_CTX_name(e)              EVP_MD_name(EVP_MD_CTX_md(e))
 # define EVP_MD_CTX_size(e)              EVP_MD_size(EVP_MD_CTX_md(e))
 # define EVP_MD_CTX_block_size(e)        EVP_MD_block_size(EVP_MD_CTX_md(e))
