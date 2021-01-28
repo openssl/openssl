@@ -47,9 +47,9 @@ Certificate enrollment and revocation options:
 
 Message transfer options:
 
-[B<-server> I<[http[s]://]address[:port][/path]>]
+[B<-server> I<[http[s]://][userinfo@]host[:port][/path][?query][#fragment]>]
 [B<-path> I<remote_path>]
-[B<-proxy> I<[http[s]://]address[:port][/path]>]
+[B<-proxy> I<[http[s]://][userinfo@]host[:port][/path][?query][#fragment]>]
 [B<-no_proxy> I<addresses>]
 [B<-msg_timeout> I<seconds>]
 [B<-total_timeout> I<seconds>]
@@ -429,11 +429,13 @@ Reason numbers defined in RFC 5280 are:
 
 =over 4
 
-=item B<-server> I<[http[s]://]address[:port][/path]>
+=item B<-server> I<[http[s]://][userinfo@]host[:port][/path][?query][#fragment]>
 
 The IP address or DNS hostname and optionally port (defaulting to 80 or 443)
 of the CMP server to connect to using HTTP(S) transport.
-The optional I<http://> or I<https://> prefix is ignored.
+The scheme I<https> may be given only if the B<tls_used> option is used.
+The optional userinfo and fragment components are ignored.
+Any given query component is handled as part of the path component.
 If a path is included it provides the default value for the B<-path> option.
 
 =item B<-path> I<remote_path>
@@ -441,11 +443,13 @@ If a path is included it provides the default value for the B<-path> option.
 HTTP path at the CMP server (aka CMP alias) to use for POST requests.
 Defaults to any path given with B<-server>, else C<"/">.
 
-=item B<-proxy> I<[http[s]://]address[:port][/path]>
+=item B<-proxy> I<[http[s]://][userinfo@]host[:port] [/path][?query][#fragment]>
 
 The HTTP(S) proxy server to use for reaching the CMP server unless B<no_proxy>
 applies, see below.
-The optional I<http://> or I<https://> prefix and any trailing path are ignored.
+The optional I<http://> or I<https://> prefix is ignored (note that TLS may be
+selected by B<tls_used>), as well as any path, userinfo, and query, and fragment
+components.
 Defaults to the environment variable C<http_proxy> if set, else C<HTTP_PROXY>
 in case no TLS is used, otherwise C<https_proxy> if set, else C<HTTPS_PROXY>.
 

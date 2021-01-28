@@ -119,6 +119,10 @@ OpenSSL 3.0
 
    *Rich Salz and Richard Levitte*
 
+ * Deprecated `OCSP_parse_url()`, which is replaced with `OSSL_HTTP_parse_url`.
+
+   *David von Oheimb*
+
  * Validation of SM2 keys has been separated from the validation of regular EC
    keys, allowing to improve the SM2 validation process to reject loaded private
    keys that are not conforming to the SM2 ISO standard.

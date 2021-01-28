@@ -260,7 +260,7 @@ int OCSP_request_verify(OCSP_REQUEST *req, STACK_OF(X509) *certs,
                         X509_STORE *store, unsigned long flags);
 
 #  define OCSP_parse_url(url, host, port, path, ssl) \
-    OSSL_HTTP_parse_url(url, host, port, NULL, path, ssl) /* backward compat */
+    OSSL_HTTP_parse_url(url, ssl, NULL, host, port, NULL, path, NULL, NULL)
 
 int OCSP_id_issuer_cmp(const OCSP_CERTID *a, const OCSP_CERTID *b);
 int OCSP_id_cmp(const OCSP_CERTID *a, const OCSP_CERTID *b);

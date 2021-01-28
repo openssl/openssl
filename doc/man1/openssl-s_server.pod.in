@@ -470,6 +470,8 @@ Sets the timeout for OCSP response to I<int> seconds.
 Sets a fallback responder URL to use if no responder URL is present in the
 server certificate. Without this option an error is returned if the server
 certificate does not contain a responder address.
+The optional userinfo and fragment URL components are ignored.
+Any given query component is handled as part of the path component.
 
 =item B<-status_file> I<infile>
 

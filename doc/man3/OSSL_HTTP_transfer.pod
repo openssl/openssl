@@ -7,8 +7,7 @@ OSSL_HTTP_get_asn1,
 OSSL_HTTP_post_asn1,
 OSSL_HTTP_transfer,
 OSSL_HTTP_bio_cb_t,
-OSSL_HTTP_proxy_connect,
-OSSL_HTTP_parse_url
+OSSL_HTTP_proxy_connect
 - http client functions
 
 =head1 SYNOPSIS
@@ -22,15 +21,15 @@ OSSL_HTTP_parse_url
                     OSSL_HTTP_bio_cb_t bio_update_fn, void *arg,
                     const STACK_OF(CONF_VALUE) *headers,
                     int maxline, unsigned long max_resp_len, int timeout,
-                    const char *expected_content_type, int expect_asn1);
+                    const char *expected_ct, int expect_asn1);
  ASN1_VALUE *OSSL_HTTP_get_asn1(const char *url,
                                 const char *proxy, const char *no_proxy,
                                 BIO *bio, BIO *rbio,
                                 OSSL_HTTP_bio_cb_t bio_update_fn, void *arg,
                                 const STACK_OF(CONF_VALUE) *headers,
                                 int maxline, unsigned long max_resp_len,
-                                int timeout, const char *expected_content_type,
-                                const ASN1_ITEM *it);
+                                int timeout, const char *expected_ct,
+                                const ASN1_ITEM *rsp_it);
  ASN1_VALUE *OSSL_HTTP_post_asn1(const char *server, const char *port,
                                  const char *path, int use_ssl,
                                  const char *proxy, const char *no_proxy,
@@ -54,27 +53,26 @@ OSSL_HTTP_parse_url
  int OSSL_HTTP_proxy_connect(BIO *bio, const char *server, const char *port,
                              const char *proxyuser, const char *proxypass,
                              int timeout, BIO *bio_err, const char *prog);
- int OSSL_HTTP_parse_url(const char *url, char **phost, char **pport,
-                         int *pport_num, char **ppath, int *pssl);
 
 =head1 DESCRIPTION
 
 OSSL_HTTP_get() uses HTTP GET to obtain data (of any type) from the given I<url>
 and returns it as a memory BIO.
+If the schema component of the I<url> is C<https> a TLS connection is requested
+and the I<bio_update_fn> parameter, described below, must be provided.
+Any userinfo and fragment components in the I<url> are ignored.
+Any query component is handled as part of the path component.
 
-OSSL_HTTP_get_asn1() uses HTTP GET to obtain an ASN.1-encoded value
-(e.g., an X.509 certificate) with the expected structure specified by I<it>
-(e.g., I<ASN1_ITEM_rptr(X509)>) from the given I<url>
+OSSL_HTTP_get_asn1() is like OSSL_HTTP_get() but in addition
+parses the received contents (e.g., an X.509 certificate)
+as an ASN.1 DER encoded value with the expected structure specified by I<rsp_it>
 and returns it on success as a pointer to I<ASN1_VALUE>.
 
-OSSL_HTTP_post_asn1() uses the HTTP POST method to send a request I<req>
-with the ASN.1 structure defined in I<req_it> and the given I<content_type> to
-the given I<server> and optional I<port> and I<path>.
+OSSL_HTTP_post_asn1() is like OSSL_HTTP_get_asn1() but uses the HTTP POST method
+to send a request I<req> with the ASN.1 structure defined in I<req_it> and the
+given I<content_type> to the given I<server> and optional I<port> and I<path>.
 If I<use_ssl> is nonzero a TLS connection is requested and the I<bio_update_fn>
 parameter, described below, must be provided.
-The optional list I<headers> may contain additional custom HTTP header lines.
-The expected structure of the response is specified by I<rsp_it>.
-On success it returns the response as a pointer to B<ASN1_VALUE>.
 
 OSSL_HTTP_transfer() exchanges any form of HTTP request and response.
 It implements the core of the functions described above.
@@ -137,7 +135,7 @@ an ASN.1-encoded response is expected, which should include a total length,
 the length indications received are checked for consistency
 and for not exceeding the maximum response length.
 
-If the parameter I<expected_content_type> (or I<expected_ct>, respectively)
+If the parameter I<expected_ct>
 is not NULL then the HTTP client checks that the given content type string
 is included in the HTTP header of the response and returns an error if not.
 
@@ -192,24 +190,6 @@ Since this function is typically called by applications such as
 L<openssl-s_client(1)> it uses the I<bio_err> and I<prog> parameters (unless
 NULL) to print additional diagnostic information in a user-oriented way.
 
-OSSL_HTTP_parse_url() parses its input string I<url> as a URL
-of the form C<[http[s]://]address[:port][/path]> and splits it up into host,
-port, and path components and a flag indicating whether it begins with 'https'.
-The host component may be a DNS name or an IP address
-where IPv6 addresses should be enclosed in square brackets C<[> and C<]>.
-The port component is optional and defaults to "443" for HTTPS, else "80".
-If the I<pport_num> argument is NULL the port specification
-can be in mnemonic form such as "http" like with L<BIO_set_conn_port(3)>, else
-it must be in numerical form and its integer value is assigned to I<*pport_num>.
-The path component is also optional and defaults to "/".
-On success the function assigns via each non-NULL result pointer argument
-I<phost>, I<pport>, I<pport_num>, I<ppath>, and I<pssl>
-the respective url component.
-On error, I<*phost>, I<*pport>, and I<*ppath> are assigned to NULL,
-else they are guaranteed to contain non-NULL string pointers.
-It is the reponsibility of the caller to free them using L<OPENSSL_free(3)>.
-A string returned via I<*ppath> is guaranteed to begin with a C</> character.
-
 =head1 NOTES
 
 The names of the environment variables used by this implementation:
@@ -224,17 +204,18 @@ OSSL_HTTP_transfer() return a memory BIO containing the data received via HTTP.
 This must be freed by the caller. On failure, NULL is returned.
 Failure conditions include connection/transfer timeout, parse errors, etc.
 
-OSSL_HTTP_proxy_connect() and OSSL_HTTP_parse_url()
-return 1 on success, 0 on error.
+OSSL_HTTP_proxy_connect() returns 1 on success, 0 on error.
 
 =head1 SEE ALSO
 
+L<OSSL_HTTP_parse_url(3)>
 L<BIO_set_conn_port(3)>
 
 =head1 HISTORY
 
 OSSL_HTTP_get(), OSSL_HTTP_get_asn1(), OSSL_HTTP_post_asn1(),
-OSSL_HTTP_proxy_connect(), and OSSL_HTTP_parse_url() were added in OpenSSL 3.0.
+OSSL_HTTP_transfer(), and OSSL_HTTP_proxy_connect()
+were added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

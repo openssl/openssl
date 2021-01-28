@@ -41,8 +41,7 @@ typedef BIO *(*OSSL_HTTP_bio_cb_t)(BIO *bio, void *arg, int connect, int detail)
 OSSL_HTTP_REQ_CTX *OSSL_HTTP_REQ_CTX_new(BIO *wbio, BIO *rbio,
                                          int method_GET, int maxline,
                                          unsigned long max_resp_len,
-                                         int timeout,
-                                         const char *expected_content_type,
+                                         int timeout, const char *expected_ct,
                                          int expect_asn1);
 void OSSL_HTTP_REQ_CTX_free(OSSL_HTTP_REQ_CTX *rctx);
 int OSSL_HTTP_REQ_CTX_set_request_line(OSSL_HTTP_REQ_CTX *rctx,
@@ -64,15 +63,15 @@ BIO *OSSL_HTTP_get(const char *url, const char *proxy, const char *no_proxy,
                    OSSL_HTTP_bio_cb_t bio_update_fn, void *arg,
                    const STACK_OF(CONF_VALUE) *headers,
                    int maxline, unsigned long max_resp_len, int timeout,
-                   const char *expected_content_type, int expect_asn1);
+                   const char *expected_ct, int expect_asn1);
 ASN1_VALUE *OSSL_HTTP_get_asn1(const char *url,
                                const char *proxy, const char *no_proxy,
                                BIO *bio, BIO *rbio,
                                OSSL_HTTP_bio_cb_t bio_update_fn, void *arg,
                                const STACK_OF(CONF_VALUE) *headers,
                                int maxline, unsigned long max_resp_len,
-                               int timeout, const char *expected_content_type,
-                               const ASN1_ITEM *it);
+                               int timeout, const char *expected_ct,
+                               const ASN1_ITEM *rsp_it);
 ASN1_VALUE *OSSL_HTTP_post_asn1(const char *server, const char *port,
                                 const char *path, int use_ssl,
                                 const char *proxy, const char *no_proxy,
@@ -97,8 +96,9 @@ int OSSL_HTTP_proxy_connect(BIO *bio, const char *server, const char *port,
                             const char *proxyuser, const char *proxypass,
                             int timeout, BIO *bio_err, const char *prog);
 
-int OSSL_HTTP_parse_url(const char *url, char **phost, char **pport,
-                        int *pport_num, char **ppath, int *pssl);
+int OSSL_HTTP_parse_url(const char *url, int *pssl, char **puser, char **phost,
+                        char **pport, int *pport_num,
+                        char **ppath, char **pquery, char **pfrag);
 
 # ifdef  __cplusplus
 }

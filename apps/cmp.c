@@ -1855,7 +1855,8 @@ static int setup_client_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
         CMP_err("missing -server option");
         goto err;
     }
-    if (!OSSL_HTTP_parse_url(opt_server, &server, &port, &portnum, &path, &ssl)) {
+    if (!OSSL_HTTP_parse_url(opt_server, &ssl, NULL /* user */, &server, &port,
+                             &portnum, &path, NULL /* q */, NULL /* frag */)) {
         CMP_err1("cannot parse -server URL: %s", opt_server);
         goto err;
     }
