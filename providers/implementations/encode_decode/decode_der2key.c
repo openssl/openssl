@@ -279,47 +279,47 @@ static int der2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
     if (!read_der(ctx->provctx, cin, &der, &der_len))
         goto end;
 
-    if (ctx->desc->extract_key == NULL) {
-        /*
-         * There's no EVP_PKEY extractor, so we use the type specific
-         * functions.
-         */
-        derp = der;
-        if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0) {
-            key = ctx->desc->d2i_private_key(NULL, &derp, der_len);
-            if (key == NULL && orig_selection != 0)
-                goto end;
-        }
-        if (key == NULL
-            && (selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0) {
-            key = ctx->desc->d2i_public_key(NULL, &derp, der_len);
-            if (key == NULL && orig_selection != 0)
-                goto end;
-        }
-        if (key == NULL
-            && (selection & OSSL_KEYMGMT_SELECT_ALL_PARAMETERS) != 0) {
-            key = ctx->desc->d2i_key_params(NULL, &derp, der_len);
-        }
-    } else {
+    /* We try the typs specific functions first, if available */
+    derp = der;
+    if (ctx->desc->d2i_private_key != NULL
+        && (selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0) {
+        key = ctx->desc->d2i_private_key(NULL, &derp, der_len);
+        if (key == NULL && orig_selection != 0)
+            goto end;
+    }
+    if (key == NULL
+        && ctx->desc->d2i_public_key != NULL
+        && (selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0) {
+        key = ctx->desc->d2i_public_key(NULL, &derp, der_len);
+        if (key == NULL && orig_selection != 0)
+            goto end;
+    }
+    if (key == NULL
+        && ctx->desc->d2i_key_params != NULL
+        && (selection & OSSL_KEYMGMT_SELECT_ALL_PARAMETERS) != 0) {
+        key = ctx->desc->d2i_key_params(NULL, &derp, der_len);
+    }
+    if (key == NULL
+        && ctx->desc->extract_key != NULL) {
         /*
          * There is a EVP_PKEY extractor, so we use the more generic
          * EVP_PKEY functions, since they know how to unpack PKCS#8 and
          * SubjectPublicKeyInfo.
          */
 
-        /*
-         * Opportunistic attempt to decrypt.  If it doesn't work, we try
-         * to decode our input unencrypted.
-         */
-        if (der_from_p8(&new_der, &new_der_len, der, der_len,
-                        pw_cb, pw_cbarg)) {
-            OPENSSL_free(der);
-            der = new_der;
-            der_len = new_der_len;
-        }
-        RESET_ERR_MARK();
-
         if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0) {
+            /*
+             * Opportunistic attempt to decrypt.  If it doesn't work, we try
+             * to decode our input unencrypted.
+             */
+            if (der_from_p8(&new_der, &new_der_len, der, der_len,
+                            pw_cb, pw_cbarg)) {
+                OPENSSL_free(der);
+                der = new_der;
+                der_len = new_der_len;
+            }
+            RESET_ERR_MARK();
+
             derp = der;
             pkey = d2i_PrivateKey_ex(ctx->desc->evp_type, NULL, &derp, der_len,
                                      libctx, NULL);
