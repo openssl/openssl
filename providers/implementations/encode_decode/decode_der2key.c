@@ -44,7 +44,8 @@
         if (ERR_GET_LIB(err) == ERR_LIB_ASN1                            \
             && (ERR_GET_REASON(err) == ASN1_R_HEADER_TOO_LONG           \
                 || ERR_GET_REASON(err) == ASN1_R_UNSUPPORTED_TYPE       \
-                || ERR_GET_REASON(err) == ERR_R_NESTED_ASN1_ERROR))     \
+                || ERR_GET_REASON(err) == ERR_R_NESTED_ASN1_ERROR       \
+                || ERR_GET_REASON(err) == ASN1_R_NOT_ENOUGH_DATA))      \
             ERR_pop_to_mark();                                          \
         else                                                            \
             ERR_clear_last_mark();                                      \
@@ -113,9 +114,10 @@ static OSSL_FUNC_decoder_decode_fn der2key_decode;
 static OSSL_FUNC_decoder_export_object_fn der2key_export_object;
 
 struct der2key_ctx_st;           /* Forward declaration */
-typedef void *(extract_key_fn)(EVP_PKEY *);
-typedef void (adjust_key_fn)(void *, struct der2key_ctx_st *ctx);
-typedef void (free_key_fn)(void *);
+typedef void *extract_key_fn(EVP_PKEY *);
+typedef int check_key_fn(void *, struct der2key_ctx_st *ctx);
+typedef void adjust_key_fn(void *, struct der2key_ctx_st *ctx);
+typedef void free_key_fn(void *);
 struct keytype_desc_st {
     const char *keytype_name;
     const OSSL_DISPATCH *fns; /* Keymgmt (to pilfer functions from) */
@@ -143,6 +145,14 @@ struct keytype_desc_st {
      * For PKCS#8 decoders, we use EVP_PKEY extractors, EVP_PKEY_get1_{TYPE}()
      */
     extract_key_fn *extract_key;
+
+    /*
+     * For any key, we may need to check that the key meets expectations.
+     * This is useful when the same functions can decode several variants
+     * of a key.
+     */
+    check_key_fn *check_key;
+
     /*
      * For any key, we may need to make provider specific adjustments, such
      * as ensure the key carries the correct library context.
@@ -260,7 +270,6 @@ static int der2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
     EVP_PKEY *pkey = NULL;
     void *key = NULL;
     int orig_selection = selection;
-    int dec_err;
     int ok = 0;
 
     /*
@@ -280,54 +289,54 @@ static int der2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
 
     SET_ERR_MARK();
     if (!read_der(ctx->provctx, cin, &der, &der_len))
-        goto end;
+        goto next;
 
-    if (ctx->desc->extract_key == NULL) {
-        /*
-         * There's no EVP_PKEY extractor, so we use the type specific
-         * functions.
-         */
+    /* We try the typs specific functions first, if available */
+    if (ctx->desc->d2i_private_key != NULL
+        && (selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0) {
+        RESET_ERR_MARK();
         derp = der;
-        if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0) {
-            key = ctx->desc->d2i_private_key(NULL, &derp, der_len);
-            if (key == NULL && orig_selection != 0)
-                goto end;
-        }
-        if (key == NULL
-            && (selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0) {
-            key = ctx->desc->d2i_public_key(NULL, &derp, der_len);
-            if (key == NULL && orig_selection != 0)
-                goto end;
-        }
-        if (key == NULL
-            && (selection & OSSL_KEYMGMT_SELECT_ALL_PARAMETERS) != 0) {
-            key = ctx->desc->d2i_key_params(NULL, &derp, der_len);
-        }
-    } else {
+        key = ctx->desc->d2i_private_key(NULL, &derp, der_len);
+        if (key == NULL && orig_selection != 0)
+            goto next;
+    }
+    if (key == NULL
+        && ctx->desc->d2i_public_key != NULL
+        && (selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0) {
+        RESET_ERR_MARK();
+        derp = der;
+        key = ctx->desc->d2i_public_key(NULL, &derp, der_len);
+        if (key == NULL && orig_selection != 0)
+            goto next;
+    }
+    if (key == NULL
+        && ctx->desc->d2i_key_params != NULL
+        && (selection & OSSL_KEYMGMT_SELECT_ALL_PARAMETERS) != 0) {
+        RESET_ERR_MARK();
+        derp = der;
+        key = ctx->desc->d2i_key_params(NULL, &derp, der_len);
+    }
+    if (key == NULL
+        && ctx->desc->extract_key != NULL) {
         /*
          * There is a EVP_PKEY extractor, so we use the more generic
          * EVP_PKEY functions, since they know how to unpack PKCS#8 and
          * SubjectPublicKeyInfo.
          */
 
-        /*
-         * Opportunistic attempt to decrypt.  If it doesn't work, we try
-         * to decode our input unencrypted.
-         */
-        if (der_from_p8(&new_der, &new_der_len, der, der_len,
-                        pw_cb, pw_cbarg)) {
-            OPENSSL_free(der);
-            der = new_der;
-            der_len = new_der_len;
-        }
-        /* decryption errors are fatal and should be reported */
-        dec_err = ERR_peek_last_error();
-        if (ERR_GET_LIB(dec_err) == ERR_LIB_PROV
-                && ERR_GET_REASON(dec_err) == PROV_R_BAD_DECRYPT)
-            goto end;
-
-        RESET_ERR_MARK();
         if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0) {
+            /*
+             * Opportunistic attempt to decrypt.  If it doesn't work, we try
+             * to decode our input unencrypted.
+             */
+            if (der_from_p8(&new_der, &new_der_len, der, der_len,
+                            pw_cb, pw_cbarg)) {
+                OPENSSL_free(der);
+                der = new_der;
+                der_len = new_der_len;
+            }
+            RESET_ERR_MARK();
+
             derp = der;
             pkey = evp_privatekey_from_binary(ctx->desc->evp_type, NULL,
                                               &derp, der_len, libctx, NULL);
@@ -361,10 +370,17 @@ static int der2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
         }
     }
 
+    if (key != NULL
+        && ctx->desc->check_key != NULL
+        && !ctx->desc->check_key(key, ctx)) {
+        CLEAR_ERR_MARK();
+        goto end;
+    }
+
     if (key != NULL && ctx->desc->adjust_key != NULL)
         ctx->desc->adjust_key(key, ctx);
 
- end:
+ next:
     /*
      * Prune low-level ASN.1 parse errors from error queue, assuming
      * that this is called by decoder_process() in a loop trying several
@@ -372,7 +388,13 @@ static int der2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
      */
     CLEAR_ERR_MARK();
 
+    /*
+     * We free memory here so it's not held up during the callback, because
+     * we know the process is recursive and the allocated chunks of memory
+     * add up.
+     */
     OPENSSL_free(der);
+    der = NULL;
 
     if (key != NULL) {
         OSSL_PARAM params[4];
@@ -392,7 +414,10 @@ static int der2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
 
         ok = data_cb(params, data_cbarg);
     }
+
+ end:
     ctx->desc->free_key(key);
+    OPENSSL_free(der);
 
     return ok;
 }
@@ -425,6 +450,7 @@ static int der2key_export_object(void *vctx,
 # define dh_d2i_public_key              NULL
 # define dh_d2i_key_params              (d2i_of_void *)d2i_DHparams
 # define dh_free                        (free_key_fn *)DH_free
+# define dh_check                       NULL
 
 static void dh_adjust(void *key, struct der2key_ctx_st *ctx)
 {
@@ -437,6 +463,7 @@ static void dh_adjust(void *key, struct der2key_ctx_st *ctx)
 # define dhx_d2i_public_key             NULL
 # define dhx_d2i_key_params             (d2i_of_void *)d2i_DHxparams
 # define dhx_free                       (free_key_fn *)DH_free
+# define dhx_check                      NULL
 # define dhx_adjust                     dh_adjust
 #endif
 
@@ -449,6 +476,7 @@ static void dh_adjust(void *key, struct der2key_ctx_st *ctx)
 # define dsa_d2i_public_key             (d2i_of_void *)d2i_DSAPublicKey
 # define dsa_d2i_key_params             (d2i_of_void *)d2i_DSAparams
 # define dsa_free                       (free_key_fn *)DSA_free
+# define dsa_check                      NULL
 
 static void dsa_adjust(void *key, struct der2key_ctx_st *ctx)
 {
@@ -465,6 +493,15 @@ static void dsa_adjust(void *key, struct der2key_ctx_st *ctx)
 # define ec_d2i_public_key              NULL
 # define ec_d2i_key_params              (d2i_of_void *)d2i_ECParameters
 # define ec_free                        (free_key_fn *)EC_KEY_free
+
+static int ec_check(void *key, struct der2key_ctx_st *ctx)
+{
+    /* We're trying to be clever by comparing two truths */
+
+    int sm2 = (EC_KEY_get_flags(key) & EC_FLAG_SM2_RANGE) != 0;
+
+    return sm2 == (ctx->desc->evp_type == EVP_PKEY_SM2);
+}
 
 static void ec_adjust(void *key, struct der2key_ctx_st *ctx)
 {
@@ -487,6 +524,7 @@ static void ecx_key_adjust(void *key, struct der2key_ctx_st *ctx)
 # define ed25519_d2i_public_key         NULL
 # define ed25519_d2i_key_params         NULL
 # define ed25519_free                   (free_key_fn *)ossl_ecx_key_free
+# define ed25519_check                  NULL
 # define ed25519_adjust                 ecx_key_adjust
 
 # define ed448_evp_type                 EVP_PKEY_ED448
@@ -495,6 +533,7 @@ static void ecx_key_adjust(void *key, struct der2key_ctx_st *ctx)
 # define ed448_d2i_public_key           NULL
 # define ed448_d2i_key_params           NULL
 # define ed448_free                     (free_key_fn *)ossl_ecx_key_free
+# define ed448_check                    NULL
 # define ed448_adjust                   ecx_key_adjust
 
 # define x25519_evp_type                EVP_PKEY_X25519
@@ -503,6 +542,7 @@ static void ecx_key_adjust(void *key, struct der2key_ctx_st *ctx)
 # define x25519_d2i_public_key          NULL
 # define x25519_d2i_key_params          NULL
 # define x25519_free                    (free_key_fn *)ossl_ecx_key_free
+# define x25519_check                   NULL
 # define x25519_adjust                  ecx_key_adjust
 
 # define x448_evp_type                  EVP_PKEY_X448
@@ -511,6 +551,7 @@ static void ecx_key_adjust(void *key, struct der2key_ctx_st *ctx)
 # define x448_d2i_public_key            NULL
 # define x448_d2i_key_params            NULL
 # define x448_free                      (free_key_fn *)ossl_ecx_key_free
+# define x448_check                     NULL
 # define x448_adjust                    ecx_key_adjust
 
 # ifndef OPENSSL_NO_SM2
@@ -520,6 +561,7 @@ static void ecx_key_adjust(void *key, struct der2key_ctx_st *ctx)
 #  define sm2_d2i_public_key            NULL
 #  define sm2_d2i_key_params            (d2i_of_void *)d2i_ECParameters
 #  define sm2_free                      (free_key_fn *)EC_KEY_free
+#  define sm2_check                     ec_check
 #  define sm2_adjust                    ec_adjust
 # endif
 #endif
@@ -533,6 +575,19 @@ static void ecx_key_adjust(void *key, struct der2key_ctx_st *ctx)
 #define rsa_d2i_key_params              NULL
 #define rsa_free                        (free_key_fn *)RSA_free
 
+static int rsa_check(void *key, struct der2key_ctx_st *ctx)
+{
+    switch (RSA_test_flags(key, RSA_FLAG_TYPE_MASK)) {
+    case RSA_FLAG_TYPE_RSA:
+        return ctx->desc->evp_type == EVP_PKEY_RSA;
+    case RSA_FLAG_TYPE_RSASSAPSS:
+        return ctx->desc->evp_type == EVP_PKEY_RSA_PSS;
+    }
+
+    /* Currently unsupported RSA key type */
+    return 0;
+}
+
 static void rsa_adjust(void *key, struct der2key_ctx_st *ctx)
 {
     ossl_rsa_set0_libctx(key, PROV_LIBCTX_OF(ctx->provctx));
@@ -544,6 +599,7 @@ static void rsa_adjust(void *key, struct der2key_ctx_st *ctx)
 #define rsapss_d2i_public_key           (d2i_of_void *)d2i_RSAPublicKey
 #define rsapss_d2i_key_params           NULL
 #define rsapss_free                     (free_key_fn *)RSA_free
+#define rsapss_check                    rsa_check
 #define rsapss_adjust                   rsa_adjust
 
 /* ---------------------------------------------------------------------- */
@@ -553,63 +609,69 @@ static void rsa_adjust(void *key, struct der2key_ctx_st *ctx)
  * for each kind of object we want to decode.
  */
 #define DO_type_specific_keypair(keytype)               \
-    "type-specific", 0,                                 \
+    "type-specific", keytype##_evp_type,                \
         ( OSSL_KEYMGMT_SELECT_KEYPAIR ),                \
         keytype##_d2i_private_key,                      \
         keytype##_d2i_public_key,                       \
         NULL,                                           \
         NULL,                                           \
+        keytype##_check,                                \
         keytype##_adjust,                               \
         keytype##_free
 
 #define DO_type_specific_pub(keytype)                   \
-    "type-specific", 0,                                 \
+    "type-specific", keytype##_evp_type,                \
         ( OSSL_KEYMGMT_SELECT_PUBLIC_KEY ),             \
         NULL,                                           \
         keytype##_d2i_public_key,                       \
         NULL,                                           \
         NULL,                                           \
+        keytype##_check,                                \
         keytype##_adjust,                               \
         keytype##_free
 
 #define DO_type_specific_priv(keytype)                  \
-    "type-specific", 0,                                 \
+    "type-specific", keytype##_evp_type,                \
         ( OSSL_KEYMGMT_SELECT_PRIVATE_KEY ),            \
         keytype##_d2i_private_key,                      \
         NULL,                                           \
         NULL,                                           \
         NULL,                                           \
+        keytype##_check,                                \
         keytype##_adjust,                               \
         keytype##_free
 
 #define DO_type_specific_params(keytype)                \
-    "type-specific", 0,                                 \
+    "type-specific", keytype##_evp_type,                \
         ( OSSL_KEYMGMT_SELECT_ALL_PARAMETERS ),         \
         NULL,                                           \
         NULL,                                           \
         keytype##_d2i_key_params,                       \
         NULL,                                           \
+        keytype##_check,                                \
         keytype##_adjust,                               \
         keytype##_free
 
 #define DO_type_specific(keytype)                       \
-    "type-specific", 0,                                 \
+    "type-specific", keytype##_evp_type,                \
         ( OSSL_KEYMGMT_SELECT_ALL ),                    \
         keytype##_d2i_private_key,                      \
         keytype##_d2i_public_key,                       \
         keytype##_d2i_key_params,                       \
         NULL,                                           \
+        keytype##_check,                                \
         keytype##_adjust,                               \
         keytype##_free
 
 #define DO_type_specific_no_pub(keytype)                \
-    "type-specific", 0,                                 \
+    "type-specific", keytype##_evp_type,                \
         ( OSSL_KEYMGMT_SELECT_PRIVATE_KEY               \
           | OSSL_KEYMGMT_SELECT_ALL_PARAMETERS ),       \
         keytype##_d2i_private_key,                      \
         NULL,                                           \
         keytype##_d2i_key_params,                       \
         NULL,                                           \
+        keytype##_check,                                \
         keytype##_adjust,                               \
         keytype##_free
 
@@ -620,6 +682,7 @@ static void rsa_adjust(void *key, struct der2key_ctx_st *ctx)
         NULL,                                           \
         NULL,                                           \
         keytype##_evp_extract,                          \
+        keytype##_check,                                \
         keytype##_adjust,                               \
         keytype##_free
 
@@ -630,57 +693,63 @@ static void rsa_adjust(void *key, struct der2key_ctx_st *ctx)
         NULL,                                           \
         NULL,                                           \
         keytype##_evp_extract,                          \
+        keytype##_check,                                \
         keytype##_adjust,                               \
         keytype##_free
 
 #define DO_DH(keytype)                                  \
-    "DH", 0,                                            \
+    "DH", keytype##_evp_type,                           \
         ( OSSL_KEYMGMT_SELECT_ALL_PARAMETERS ),         \
         NULL,                                           \
         NULL,                                           \
         keytype##_d2i_key_params,                       \
         NULL,                                           \
+        keytype##_check,                                \
         keytype##_adjust,                               \
         keytype##_free
 
 #define DO_DHX(keytype)                                 \
-    "DHX", 0,                                           \
+    "DHX", keytype##_evp_type,                          \
         ( OSSL_KEYMGMT_SELECT_ALL_PARAMETERS ),         \
         NULL,                                           \
         NULL,                                           \
         keytype##_d2i_key_params,                       \
         NULL,                                           \
+        keytype##_check,                                \
         keytype##_adjust,                               \
         keytype##_free
 
 #define DO_DSA(keytype)                                 \
-    "DSA", 0,                                           \
+    "DSA", keytype##_evp_type,                          \
         ( OSSL_KEYMGMT_SELECT_ALL ),                    \
         keytype##_d2i_private_key,                      \
         keytype##_d2i_public_key,                       \
         keytype##_d2i_key_params,                       \
         NULL,                                           \
+        keytype##_check,                                \
         keytype##_adjust,                               \
         keytype##_free
 
 #define DO_EC(keytype)                                  \
-    "EC", 0,                                            \
+    "EC", keytype##_evp_type,                           \
         ( OSSL_KEYMGMT_SELECT_PRIVATE_KEY               \
           | OSSL_KEYMGMT_SELECT_ALL_PARAMETERS ),       \
         keytype##_d2i_private_key,                      \
         NULL,                                           \
         keytype##_d2i_key_params,                       \
         NULL,                                           \
+        keytype##_check,                                \
         keytype##_adjust,                               \
         keytype##_free
 
 #define DO_RSA(keytype)                                 \
-    "RSA", 0,                                           \
+    "RSA", keytype##_evp_type,                          \
         ( OSSL_KEYMGMT_SELECT_KEYPAIR ),                \
         keytype##_d2i_private_key,                      \
         keytype##_d2i_public_key,                       \
         NULL,                                           \
         NULL,                                           \
+        keytype##_check,                                \
         keytype##_adjust,                               \
         keytype##_free
 
