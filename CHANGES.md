@@ -23,6 +23,12 @@ OpenSSL 3.0
 
 ### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
 
+ * The undocumented function X509_certificate_type() has been deprecated;
+   applications can use X509_get0_pubkey() and X509_get0_signature() to
+   get the same information.
+
+   *Rich Salz*
+
  * Deprecated the obsolete X9.31 RSA key generation related functions
    BN_X931_generate_Xpq(), BN_X931_derive_prime_ex(), and
    BN_X931_generate_prime_ex().
