@@ -481,7 +481,10 @@ const BIGNUM *EC_GROUP_get0_cofactor(const EC_GROUP *group)
 void EC_GROUP_set_curve_name(EC_GROUP *group, int nid)
 {
     group->curve_name = nid;
-    group->asn1_flag = OPENSSL_EC_NAMED_CURVE;
+    group->asn1_flag =
+        (nid != NID_undef)
+        ? OPENSSL_EC_NAMED_CURVE
+        : OPENSSL_EC_EXPLICIT_CURVE;
 }
 
 int EC_GROUP_get_curve_name(const EC_GROUP *group)
