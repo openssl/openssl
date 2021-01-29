@@ -90,12 +90,11 @@ static int pmeth_cmp(const EVP_PKEY_METHOD *const *a,
 
 static const EVP_PKEY_METHOD *evp_pkey_meth_find_added_by_application(int type)
 {
-    EVP_PKEY_METHOD tmp;
-
-    tmp.pkey_id = type;
-    if (app_pkey_methods) {
+    if (app_pkey_methods != NULL) {
         int idx;
+        EVP_PKEY_METHOD tmp;
 
+        tmp.pkey_id = type;
         idx = sk_EVP_PKEY_METHOD_find(app_pkey_methods, &tmp);
         if (idx >= 0)
             return sk_EVP_PKEY_METHOD_value(app_pkey_methods, idx);
