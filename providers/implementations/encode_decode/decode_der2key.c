@@ -388,6 +388,7 @@ static int der2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
     CLEAR_ERR_MARK();
 
     OPENSSL_free(der);
+    der = NULL;
 
     if (key != NULL) {
         OSSL_PARAM params[4];
@@ -410,6 +411,7 @@ static int der2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
 
  end:
     ctx->desc->free_key(key);
+    OPENSSL_free(der);
 
     return ok;
 }
