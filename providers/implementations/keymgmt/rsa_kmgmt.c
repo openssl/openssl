@@ -56,11 +56,12 @@ static OSSL_FUNC_keymgmt_query_operation_name_fn rsa_query_operation_name;
 DEFINE_STACK_OF(BIGNUM)
 DEFINE_SPECIAL_STACK_OF_CONST(BIGNUM_const, BIGNUM)
 
-static int pss_params_fromdata(RSA_PSS_PARAMS_30 *pss_params,
+static int pss_params_fromdata(RSA_PSS_PARAMS_30 *pss_params, int *defaults_set,
                                const OSSL_PARAM params[], int rsa_type,
                                OSSL_LIB_CTX *libctx)
 {
-    if (!ossl_rsa_pss_params_30_fromdata(pss_params, params, libctx))
+    if (!ossl_rsa_pss_params_30_fromdata(pss_params, defaults_set,
+                                         params, libctx))
         return 0;
 
     /* If not a PSS type RSA, sending us PSS parameters is wrong */
@@ -153,6 +154,7 @@ static int rsa_import(void *keydata, int selection, const OSSL_PARAM params[])
     RSA *rsa = keydata;
     int rsa_type;
     int ok = 1;
+    int pss_defaults_set = 0;
 
     if (!ossl_prov_is_running() || rsa == NULL)
         return 0;
@@ -165,8 +167,10 @@ static int rsa_import(void *keydata, int selection, const OSSL_PARAM params[])
     /* TODO(3.0) OAEP should bring on parameters as well */
 
     if ((selection & OSSL_KEYMGMT_SELECT_OTHER_PARAMETERS) != 0)
-        ok = ok && pss_params_fromdata(ossl_rsa_get0_pss_params_30(rsa), params,
-                                       rsa_type, ossl_rsa_get0_libctx(rsa));
+        ok = ok && pss_params_fromdata(ossl_rsa_get0_pss_params_30(rsa),
+                                       &pss_defaults_set,
+                                       params, rsa_type,
+                                       ossl_rsa_get0_libctx(rsa));
     if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0)
         ok = ok && ossl_rsa_fromdata(rsa, params);
 
@@ -391,6 +395,7 @@ struct rsa_gen_ctx {
 
     /* For PSS */
     RSA_PSS_PARAMS_30 pss_params;
+    int pss_defaults_set;
 
     /* For generation callback */
     OSSL_CALLBACK *cb;
@@ -470,8 +475,8 @@ static int rsa_gen_set_params(void *genctx, const OSSL_PARAM params[])
         return 0;
     /* Only attempt to get PSS parameters when generating an RSA-PSS key */
     if (gctx->rsa_type == RSA_FLAG_TYPE_RSASSAPSS
-        && !pss_params_fromdata(&gctx->pss_params, params, gctx->rsa_type,
-                                gctx->libctx))
+        && !pss_params_fromdata(&gctx->pss_params, &gctx->pss_defaults_set, params,
+                                gctx->rsa_type, gctx->libctx))
         return 0;
 #if defined(FIPS_MODULE) && !defined(OPENSSL_NO_ACVP_TESTS)
     /* Any ACVP test related parameters are copied into a params[] */

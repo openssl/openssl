@@ -29,7 +29,7 @@
         break;
 
 int ossl_DER_w_algorithmIdentifier_MDWithRSAEncryption(WPACKET *pkt, int tag,
-                                                       RSA *rsa, int mdnid)
+                                                       int mdnid)
 {
     const unsigned char *precompiled = NULL;
     size_t precompiled_sz = 0;
