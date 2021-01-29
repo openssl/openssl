@@ -36,8 +36,8 @@ struct X509_pubkey_st {
     char *propq;
 
     /*
-     * d2i_X509_PUBKEY() does double parsing, first with OSSL_DECODER,
-     * and the with ASN1_item_d2i().  It leaves the result of OSSL_DECODER
+     * d2i_X509_PUBKEY() does double parsing, first with OSSL_DECODER, and
+     * then with ASN1_item_d2i().  It leaves the result of OSSL_DECODER
      * (a provider side EVP_PKEY) here, and leaves it to pubkey_cb() to
      * notice it and move it to |pkey| above.
      */
