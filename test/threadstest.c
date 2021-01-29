@@ -401,22 +401,45 @@ static void thread_shared_evp_pkey(void)
         multi_success = 0;
 }
 
+static void thread_downgrade_shared_evp_pkey(void)
+{
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+    /*
+     * This test is only relevant for deprecated functions that perform
+     * downgrading
+     */
+    if (EVP_PKEY_get0(shared_evp_pkey) == NULL)
+        multi_success = 0;
+#else
+    /* Shouldn't ever get here */
+    multi_success = 0;
+#endif
+}
+
+
 /*
  * Do work in multiple worker threads at the same time.
  * Test 0: General worker, using the default provider
  * Test 1: General worker, using the fips provider
  * Test 2: Simple fetch worker
- * Test 3: Worker using a shared EVP_PKEY
+ * Test 3: Worker downgrading a shared EVP_PKEY
+ * Test 4: Worker using a shared EVP_PKEY
  */
 static int test_multi(int idx)
 {
     thread_t thread1, thread2;
     int testresult = 0;
     OSSL_PROVIDER *prov = NULL, *prov2 = NULL;
-    void (*worker)(void);
+    void (*worker)(void) = NULL;
+    void (*worker2)(void) = NULL;
 
     if (idx == 1 && !do_fips)
         return TEST_skip("FIPS not supported");
+
+#ifdef OPENSSL_NO_DEPRECATED_3_0
+    if (idx == 3)
+        return TEST_skip("Skipping tests for deprected functions");
+#endif
 
     multi_success = 1;
     multi_libctx = OSSL_LIB_CTX_new();
@@ -435,6 +458,9 @@ static int test_multi(int idx)
         worker = thread_multi_simple_fetch;
         break;
     case 3:
+        worker2 = thread_downgrade_shared_evp_pkey;
+        /* fall through */
+    case 4:
         /*
          * If available we have both the default and fips providers for this
          * test
@@ -450,9 +476,11 @@ static int test_multi(int idx)
         TEST_error("Invalid test index");
         goto err;
     }
+    if (worker2 == NULL)
+        worker2 = worker;
 
     if (!TEST_true(run_thread(&thread1, worker))
-            || !TEST_true(run_thread(&thread2, worker)))
+            || !TEST_true(run_thread(&thread2, worker2)))
         goto err;
 
     worker();
@@ -547,7 +575,7 @@ int setup_tests(void)
     ADD_TEST(test_thread_local);
     ADD_TEST(test_atomic);
     ADD_TEST(test_multi_load);
-    ADD_ALL_TESTS(test_multi, 4);
+    ADD_ALL_TESTS(test_multi, 5);
     return 1;
 }
 
