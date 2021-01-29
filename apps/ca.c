@@ -2252,14 +2252,22 @@ static int do_updatedb(CA_DB *db)
 
         if (rrow[DB_type][0] == DB_TYPE_VAL) {
             /* ignore entries that are not valid */
-            if (strncmp(rrow[DB_exp_date], "49", 2) <= 0)
-                db_y2k = 1;
+	    if (strlen(rrow[DB_exp_date]) == 15)
+	        db_y2k = 1; /* exp. date is 2050-01-01 and later */
+            else if (strncmp(rrow[DB_exp_date], "49", 2) <= 0)
+                db_y2k = 1; /* exp. date is between 2000-01-01 and 2049-12-31 */
             else
-                db_y2k = 0;
+                db_y2k = 0; /* exp. date is between 1950-01-01 and 1999-12-31 */
 
             if (db_y2k == a_y2k) {
+	        char *row_exp_date;
+		row_exp_date = app_malloc(strlen(rrow[DB_exp_date]) + 1, "exp. date");
+		if (strlen(rrow[DB_exp_date]) == 15)
+		    memcpy(row_exp_date, rrow[DB_exp_date] + 2, 13);
+		else
+		    memcpy(row_exp_date, rrow[DB_exp_date], strlen(rrow[DB_exp_date]));
                 /* all on the same y2k side */
-                if (strcmp(rrow[DB_exp_date], a_tm_s) <= 0) {
+                if (strcmp(row_exp_date, a_tm_s) <= 0) {
                     rrow[DB_type][0] = DB_TYPE_EXP;
                     rrow[DB_type][1] = '\0';
                     cnt++;
