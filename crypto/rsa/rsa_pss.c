@@ -113,7 +113,9 @@ int RSA_verify_PKCS1_PSS_mgf1(RSA *rsa, const unsigned char *mHash,
         goto err;
     }
     if (sLen != RSA_PSS_SALTLEN_AUTO && (maskedDBLen - i) != sLen) {
-        ERR_raise(ERR_LIB_RSA, RSA_R_SLEN_CHECK_FAILED);
+        ERR_raise_data(ERR_LIB_RSA, RSA_R_SLEN_CHECK_FAILED,
+                       "expected: %d retrieved: %d", sLen,
+                       maskedDBLen - i);
         goto err;
     }
     if (!EVP_DigestInit_ex(ctx, Hash, NULL)

@@ -943,6 +943,7 @@ static int rsa_int_import_from(const OSSL_PARAM params[], void *vpctx,
     EVP_PKEY *pkey = EVP_PKEY_CTX_get0_pkey(pctx);
     RSA *rsa = ossl_rsa_new_with_ctx(pctx->libctx);
     RSA_PSS_PARAMS_30 rsa_pss_params = { 0, };
+    int pss_defaults_set = 0;
     int ok = 0;
 
     if (rsa == NULL) {
@@ -953,7 +954,8 @@ static int rsa_int_import_from(const OSSL_PARAM params[], void *vpctx,
     RSA_clear_flags(rsa, RSA_FLAG_TYPE_MASK);
     RSA_set_flags(rsa, rsa_type);
 
-    if (!ossl_rsa_pss_params_30_fromdata(&rsa_pss_params, params, pctx->libctx))
+    if (!ossl_rsa_pss_params_30_fromdata(&rsa_pss_params, &pss_defaults_set,
+                                         params, pctx->libctx))
         goto err;
 
     switch (rsa_type) {

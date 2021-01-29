@@ -217,6 +217,7 @@ int ossl_rsa_pss_params_30_todata(const RSA_PSS_PARAMS_30 *pss,
 }
 
 int ossl_rsa_pss_params_30_fromdata(RSA_PSS_PARAMS_30 *pss_params,
+                                    int *defaults_set,
                                     const OSSL_PARAM params[],
                                     OSSL_LIB_CTX *libctx)
 {
@@ -249,10 +250,13 @@ int ossl_rsa_pss_params_30_fromdata(RSA_PSS_PARAMS_30 *pss_params,
      * restrictions, so we start by setting default values, and let each
      * parameter override their specific restriction data.
      */
-    if (param_md != NULL || param_mgf != NULL || param_mgf1md != NULL
-        || param_saltlen != NULL)
+    if (!*defaults_set
+        && (param_md != NULL || param_mgf != NULL || param_mgf1md != NULL
+            || param_saltlen != NULL)) {
         if (!ossl_rsa_pss_params_30_set_defaults(pss_params))
             return 0;
+        *defaults_set = 1;
+    }
 
     if (param_mgf != NULL) {
         int default_maskgenalg_nid = ossl_rsa_pss_params_30_maskgenalg(NULL);
