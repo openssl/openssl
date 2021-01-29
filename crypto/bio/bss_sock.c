@@ -191,9 +191,9 @@ static long sock_ctrl(BIO *b, int cmd, long num, void *ptr)
             BIO_set_ktls_flag(b, num);
         break;
     case BIO_CTRL_GET_KTLS_SEND:
-        return BIO_should_ktls_flag(b, 1);
+        return BIO_should_ktls_flag(b, 1) != 0;
     case BIO_CTRL_GET_KTLS_RECV:
-        return BIO_should_ktls_flag(b, 0);
+        return BIO_should_ktls_flag(b, 0) != 0;
     case BIO_CTRL_SET_KTLS_TX_SEND_CTRL_MSG:
         BIO_set_ktls_ctrl_msg_flag(b);
         b->ptr = (void *)num;
