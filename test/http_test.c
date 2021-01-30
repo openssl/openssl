@@ -167,12 +167,14 @@ static int test_http_url_ok(const char *url, int exp_ssl, const char *exp_host,
 
 static int test_http_url_path_query_ok(const char *url, const char *exp_path_qu)
 {
-    char *path;
+    char *host, *path;
     int res;
 
-    res = TEST_true(OSSL_HTTP_parse_url(url, NULL, NULL, NULL, NULL, NULL,
+    res = TEST_true(OSSL_HTTP_parse_url(url, NULL, NULL, &host, NULL, NULL,
                                         &path, NULL, NULL))
+        && TEST_str_eq(host, "host")
         && TEST_str_eq(path, exp_path_qu);
+    OPENSSL_free(host);
     OPENSSL_free(path);
     return res;
 }
@@ -184,7 +186,9 @@ static int test_http_url_dns(void)
 
 static int test_http_url_path_query(void)
 {
-    return test_http_url_path_query_ok("http://usr@host:0/p?q=x#frag","/p?q=x");
+    return test_http_url_path_query_ok("http://usr@host:1/p?q=x#frag", "/p?q=x")
+        && test_http_url_path_query_ok("http://host?q=x#frag", "/?q=x")
+        && test_http_url_path_query_ok("http://host:9999#frag", "/");
 }
 
 static int test_http_url_userinfo_query_fragment(void)

@@ -36,10 +36,11 @@ int OSSL_HTTP_parse_url(const char *url, int *pssl, char **puser, char **phost,
     char *p, *buf;
     char *host, *host_end;
     char *user, *user_end;
-    const char *path, *path_end, *tmp, *port = OSSL_HTTP_PORT;
+    char *path, *path_end, *tmp;
+    char *port = OSSL_HTTP_PORT, *port_end = port + strlen(port);
     long portnum = 80;
-    const char *frag, *frag_end;
-    const char *query, *query_end;
+    char *frag, *frag_end;
+    char *query, *query_end;
 
     if (pssl != NULL)
         *pssl = 0;
@@ -75,6 +76,7 @@ int OSSL_HTTP_parse_url(const char *url, int *pssl, char **puser, char **phost,
             if (pssl != NULL)
                 *pssl = 1;
             port = OSSL_HTTPS_PORT;
+            port_end = port + strlen(port);
             portnum = 443;
         } else if (strcmp(buf, OSSL_HTTP_NAME) != 0) {
             ERR_raise(ERR_LIB_HTTP, HTTP_R_INVALID_URL_PREFIX);
@@ -100,9 +102,14 @@ int OSSL_HTTP_parse_url(const char *url, int *pssl, char **puser, char **phost,
             goto parse_err;
         *host_end++ = '\0';
     } else {
-        host_end = strchr(host, ':'); /* look for start of optional port */
+        /* look for start of optional port, path, query, or fragment */
+        host_end = strchr(host, ':');
         if (host_end == NULL)
-            host_end = strchr(host, '/'); /* look for start of optional path */
+            host_end = strchr(host, '/');
+        if (host_end == NULL)
+            host_end = strchr(host, '?');
+        if (host_end == NULL)
+            host_end = strchr(host, '#');
         if (host_end == NULL)
             /* the remaining string is just the hostname */
             host_end = host + strlen(host);
@@ -112,29 +119,20 @@ int OSSL_HTTP_parse_url(const char *url, int *pssl, char **puser, char **phost,
     p = host_end;
     if (*p == ':') {
         port = ++p;
-        if (pport_num == NULL) {
-            p = strchr(port, '/');
-            if (p == NULL)
-                p = host_end + 1 + strlen(port);
-        } else { /* make sure a numerical port value is given */
-            portnum = strtol(port, &p, 10);
-            if (p == port || (*p != '\0' && *p != '/'))
-                goto parse_err;
-            if (portnum <= 0 || portnum >= 65536) {
-                ERR_raise(ERR_LIB_HTTP, HTTP_R_INVALID_PORT_NUMBER);
-                goto err;
-            }
+        /* make sure a decimal port number is given */
+        portnum = strtol(port, &p, 10);
+        if (p == port)
+            goto parse_err;
+        if (portnum <= 0 || portnum >= 65536) {
+            ERR_raise(ERR_LIB_HTTP, HTTP_R_INVALID_PORT_NUMBER);
+            goto err;
         }
+        port_end = p;
     }
-    *host_end = '\0';
-    *p = '\0'; /* terminate port string */
 
-    /* check for optional path at end of url starting with '/' */
-    path = url + (p - buf);
-    /* cannot use p + 1 because *p is '\0' and path must start with '/' */
-    if (*path == '\0') {
-        path = "/";
-    } else if (*path != '/') {
+    /* check for optional path starting with '/' or '?'. Else must start '#' */
+    path = p;
+    if (*path != '\0' && *path != '/' && *path != '?' && *path != '#') {
         ERR_raise(ERR_LIB_HTTP, HTTP_R_INVALID_URL_PATH);
         goto parse_err;
     }
@@ -156,17 +154,18 @@ int OSSL_HTTP_parse_url(const char *url, int *pssl, char **puser, char **phost,
         frag = query_end + 1;
     }
 
-    if (phost != NULL && (*phost = OPENSSL_strdup(host)) == NULL)
+    if (!copy_substring(phost, host, host_end)
+            || !copy_substring(pport, port, port_end)
+            || !copy_substring(puser, user, user_end))
         goto err;
-    if (pport != NULL && (*pport = OPENSSL_strdup(port)) == NULL)
-        goto err;
-    if (pport_num != NULL)
-        *pport_num = (int)portnum;
-    if (!copy_substring(puser, user, user_end)
-            || !copy_substring(ppath, path, path_end)
+    if (*path != '/')
+        *--path = '/';
+    if (!copy_substring(ppath, path, path_end)
             || !copy_substring(pquery, query, query_end)
             || !copy_substring(pfrag, frag, frag_end))
         goto err;
+    if (pport_num != NULL)
+        *pport_num = (int)portnum;
 
     OPENSSL_free(buf);
     return 1;

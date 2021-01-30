@@ -31,10 +31,9 @@ and a flag indicating whether it begins with C<https>.
 The host component may be a DNS name or an IP address
 where IPv6 addresses should be enclosed in square brackets C<[> and C<]>.
 The port component is optional and defaults to "443" for HTTPS, else "80".
-If the I<pport_num> argument is NULL the port specification can be in mnemonic
-form such as C<http> like with L<BIO_set_conn_port(3)>, else it must be in
-numerical form and its integer value is assigned to I<*pport_num> on success.
-The path component is also optional and defaults to "/".
+If given, it must be in decimal form.  If the I<pport_num> argument is not NULL
+the integer value of the port number is assigned to I<*pport_num> on success.
+The path component is also optional and defaults to C</>.
 If I<pssl> is not NULL, I<*pssl> is assigned 1 in case parsing was successful
 and the schema part is present and is C<https>, else 0.
 Each non-NULL result pointer argument I<puser>, I<phost>, I<pport>, I<ppath>,
