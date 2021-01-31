@@ -499,7 +499,7 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
 
     IF[{- !$disabled{cmac} -}]
       SOURCE[cmactest]=cmactest.c
-      INCLUDE[cmactest]=../include ../apps/include
+      INCLUDE[cmactest]=../include
       DEPEND[cmactest]=../libcrypto.a libtestutil.a
     ENDIF
 
