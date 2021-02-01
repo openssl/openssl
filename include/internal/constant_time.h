@@ -181,6 +181,11 @@ static ossl_inline uint32_t constant_time_is_zero_32(uint32_t a)
     return constant_time_msb_32(~a & (a - 1));
 }
 
+static ossl_inline uint64_t constant_time_is_zero_64(uint64_t a)
+{
+    return constant_time_msb_64(~a & (a - 1));
+}
+
 static ossl_inline unsigned int constant_time_eq(unsigned int a,
                                                  unsigned int b)
 {
