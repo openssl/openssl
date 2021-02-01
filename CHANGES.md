@@ -27,7 +27,7 @@ OpenSSL 3.0
    BN_X931_generate_Xpq(), BN_X931_derive_prime_ex(), and
    BN_X931_generate_prime_ex().
 
-   *Tomas Mraz*
+   *Tomáš Mráz*
 
  * Deprecated the type OCSP_REQ_CTX and the functions OCSP_REQ_CTX_new(),
    OCSP_REQ_CTX_free(), OCSP_REQ_CTX_http(), OCSP_REQ_CTX_add1_header(),
@@ -110,7 +110,7 @@ OpenSSL 3.0
    read or write an EVP_PKEY directly using the OSSL_DECODER and OSSL_ENCODER
    APIs. Or load an EVP_PKEY directly from EC data using EVP_PKEY_fromdata().
 
-   *Shane Lontis, Paul Dale, Richard Levitte, and Tomas Mraz*
+   *Shane Lontis, Paul Dale, Richard Levitte, and Tomáš Mráz*
 
  * Deprecated all the libcrypto and libssl error string loading
    functions: ERR_load_ASN1_strings(), ERR_load_ASYNC_strings(),
@@ -306,7 +306,7 @@ OpenSSL 3.0
  * Handshake now fails if Extended Master Secret extension is dropped
    on renegotiation.
 
-   *Tomas Mraz*
+   *Tomáš Mráz*
 
  * Dropped interactive mode from the `openssl` program.  From now on,
    running it without arguments is equivalent to `openssl help`.
@@ -1009,7 +1009,7 @@ OpenSSL 3.0
  * Certificate verification using `X509_verify_cert()` meanwhile rejects EC keys
    with explicit curve parameters (specifiedCurve) as required by RFC 5480.
 
-   *Tomas Mraz*
+   *Tomáš Mráz*
 
  * For built-in EC curves, ensure an EC_GROUP built from the curve name is
    used even when parsing explicit parameters, when loading a encoded key
@@ -1156,7 +1156,7 @@ OpenSSL 3.0
 
  * Use SHA256 as the default digest for TS query in the `ts` app.
 
-   *Tomas Mraz*
+   *Tomáš Mráz*
 
  * Change PBKDF2 to conform to SP800-132 instead of the older PKCS5 RFC2898.
    This checks that the salt length is at least 128 bits, the derived key
@@ -1465,7 +1465,7 @@ OpenSSL 1.1.1
  * Certificates with explicit curve parameters are now disallowed in
    verification chains if the X509_V_FLAG_X509_STRICT flag is used.
 
-   *Tomas Mraz*
+   *Tomáš Mráz*
 
  * The 'MinProtocol' and 'MaxProtocol' configuration commands now silently
    ignore TLS protocol version bounds when configuring DTLS-based contexts, and
@@ -1486,7 +1486,7 @@ OpenSSL 1.1.1
  * Handshake now fails if Extended Master Secret extension is dropped
    on renegotiation.
 
-   *Tomas Mraz*
+   *Tomáš Mráz*
 
  * The Oracle Developer Studio compiler will start reporting deprecated APIs
 
@@ -1521,7 +1521,7 @@ OpenSSL 1.1.1
    reporting the EOF via SSL_ERROR_SSL is kept on the current development
    branch and will be present in the 3.0 release.
 
-   *Tomas Mraz*
+   *Tomáš Mráz*
 
  * Revised BN_generate_prime_ex to not avoid factors 3..17863 in p-1
    when primes for RSA keys are computed.
@@ -2265,7 +2265,7 @@ OpenSSL 1.1.1
  * Ignore the '-named_curve auto' value for compatibility of applications
    with OpenSSL 1.0.2.
 
-   *Tomas Mraz <tmraz@fedoraproject.org>*
+   *Tomáš Mráz <tmraz@fedoraproject.org>*
 
  * Fragmented SSL/TLS alerts are no longer accepted. An alert message is 2
    bytes long. In theory it is permissible in SSLv3 - TLSv1.2 to fragment such
