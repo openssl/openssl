@@ -2245,10 +2245,13 @@ static int do_updatedb(CA_DB *db)
             ASN1_TIME *exp_date = NULL;
 
             exp_date = ASN1_TIME_new();
-            if (exp_date == NULL)
+            if (exp_date == NULL) {
+                ASN1_TIME_free(a_tm);
                 return -1;
+            }
 
             if (!ASN1_TIME_set_string(exp_date, rrow[DB_exp_date])) {
+                ASN1_TIME_free(a_tm);
                 ASN1_TIME_free(exp_date);
                 return -1;
             }
