@@ -159,7 +159,8 @@ static int kdf_sshkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 
         if (!OSSL_PARAM_get_utf8_string_ptr(p, &kdftype))
             return 0;
-        if (kdftype == NULL || kdftype[0] == '\0' || kdftype[1] != '\0')
+        /* Expect one character (byte in this case) */
+        if (kdftype == NULL || p->data_size != 1)
             return 0;
         if (kdftype[0] < 65 || kdftype[0] > 70) {
             ERR_raise(ERR_LIB_PROV, PROV_R_VALUE_ERROR);
