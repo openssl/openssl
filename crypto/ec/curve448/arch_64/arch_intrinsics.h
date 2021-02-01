@@ -13,13 +13,11 @@
 #ifndef OSSL_CRYPTO_EC_CURVE448_ARCH_64_INTRINSICS_H
 # define OSSL_CRYPTO_EC_CURVE448_ARCH_64_INTRINSICS_H
 
+# include "internal/constant_time.h"
+
 # define ARCH_WORD_BITS 64
 
-static ossl_inline uint64_t word_is_zero(uint64_t a)
-{
-    /* let's hope the compiler isn't clever enough to optimize this. */
-    return (((__uint128_t) a) - 1) >> 64;
-}
+# define word_is_zero(a)     constant_time_is_zero_64(a)
 
 static ossl_inline uint128_t widemul(uint64_t a, uint64_t b)
 {
