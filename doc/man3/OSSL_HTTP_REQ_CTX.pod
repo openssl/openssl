@@ -56,8 +56,8 @@ should be preferred.
 OSSL_HTTP_REQ_CTX_new() allocates a new HTTP request context structure,
 which gets populated with the B<BIO> to send the request to (I<wbio>),
 the B<BIO> to read the response from (I<rbio>, which may be equal to I<wbio>),
-the maximum expected response header line length (I<maxline>, where any
-zero or less indicates using the B<HTTP_DEFAULT_MAX_LINE_LENGTH> of 4KiB;
+the maximum expected response header line length (I<maxline>, where a value <= 0
+indicates that the B<HTTP_DEFAULT_MAX_LINE_LENGTH> of 4KiB should be used;
 this length is also used as the number of content bytes read at a time),
 the request method (I<method_POST>, which may be 1 to indicate that the C<POST>
 method is to be used, or 0 to indicate that the C<GET> method is to be used),
@@ -92,14 +92,14 @@ For example, to add a C<Host> header for C<example.com> you would call:
 
 OSSL_HTTP_REQ_CTX_i2d() finalizes the HTTP request context by adding
 the DER encoding of I<req>, using the ASN.1 template I<it> to do the encoding.
-HTTP header C<Content-Length> is automatically filled out, and if
+The HTTP header C<Content-Length> is automatically filled out, and if
 I<content_type> isn't NULL, the HTTP header C<Content-Type> is also added with
 its content as value.  All of this ends up in the internal memory B<BIO>.
 This requires that I<method_POST> was 1 in the OSSL_HTTP_REQ_CTX_new() call.
 
-OSSL_HTTP_REQ_CTX_nbio() attempts sending the request prepared I<rctx>
-and gathering the response via HTTP, among others
-using the I<rbio> and I<wbio> that were given calling OSSL_HTTP_REQ_CTX_new().
+OSSL_HTTP_REQ_CTX_nbio() attempts to send the request prepared I<rctx>
+and gathering the response via HTTP, using the I<rbio> and I<wbio>
+that were given when calling OSSL_HTTP_REQ_CTX_new().
 When successful, the contents of the internal memory B<BIO> contains
 the contents of the HTTP response, without the response headers.
 It may need to be called again if its result is -1, which indicates
@@ -111,10 +111,10 @@ several times until a timeout is reached, and DER decodes the received
 response using the ASN.1 template I<it>.
 
 OSSL_HTTP_REQ_CTX_get0_mem_bio() returns the internal memory B<BIO>.
-Before sending the request, this could used to affect the HTTP request text.
+Before sending the request, this could used to modify the HTTP request text.
 I<Use with caution!>
-After receiving a response, this represents the current state
-of reading the response headers or contents received via HTTP.
+After receiving a response via HTTP, the BIO represents
+the current state of reading the response headers and contents.
 
 OSSL_HTTP_REQ_CTX_set_max_response_length() sets the maximum allowed
 response content length for I<rctx> to I<len>. If not set or I<len> is 0

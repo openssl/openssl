@@ -123,10 +123,11 @@ while using a proxy for HTTPS connections requires a suitable callback function
 such as OSSL_HTTP_proxy_connect(), described below.
 
 The I<maxline> parameter specifies the response header maximum line length,
-where a value <= 0 indicates using the B<HTTP_DEFAULT_MAX_LINE_LENGTH> of 4KiB.
-This length is also used as the number of content bytes read at a time.
+where a value <= 0 indicates that the B<HTTP_DEFAULT_MAX_LINE_LENGTH> of 4KiB
+should be used.
+This length is also used as the number of content bytes that are read at a time.
 The I<max_resp_len> parameter specifies the maximum response length,
-where 0 indicates the B<HTTP_DEFAULT_MAX_RESP_LEN>, which currently is 100 KiB.
+where 0 indicates B<HTTP_DEFAULT_MAX_RESP_LEN>, which currently is 100 KiB.
 
 An ASN.1-encoded response is expected by OSSL_HTTP_get_asn1() and
 OSSL_HTTP_post_asn1(), while for OSSL_HTTP_get() or OSSL_HTTP_transfer()
@@ -218,10 +219,10 @@ other HTTP client implementations such as wget, curl, and git.
 
 =head1 RETURN VALUES
 
-OSSL_HTTP_get(), OSSL_HTTP_get_asn1(), OSSL_HTTP_post_asn1(), and
-OSSL_HTTP_transfer() return on success a memory BIO containing
-the data received via HTTP, which must be freed by the caller, else NULL.
-Error conditions include connection/transfer timeout, parse errors, etc.
+On success, OSSL_HTTP_get(), OSSL_HTTP_get_asn1(), OSSL_HTTP_post_asn1(), and
+OSSL_HTTP_transfer() return a memory BIO containing the data received via HTTP.
+This must be freed by the caller. On failure, NULL is returned.
+Failure conditions include connection/transfer timeout, parse errors, etc.
 
 OSSL_HTTP_proxy_connect() and OSSL_HTTP_parse_url()
 return 1 on success, 0 on error.
