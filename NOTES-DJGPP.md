@@ -1,5 +1,5 @@
-INSTALLATION ON THE DOS PLATFORM WITH DJGPP
-===========================================
+Notes for the DOS platform with DJGPP
+=====================================
 
  OpenSSL has been ported to DJGPP, a Unix look-alike 32-bit run-time
  environment for 16-bit DOS, but only with long filename support.

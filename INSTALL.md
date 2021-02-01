@@ -58,13 +58,13 @@ To install OpenSSL, you will need:
 For additional platform specific requirements, solutions to specific
 issues and other details, please read one of these:
 
- * [NOTES-UNIX.md](NOTES-UNIX.md) - notes for Unix like systems
- * [NOTES-VMS.md](NOTES-VMS.md) - notes related to OpenVMS
- * [NOTES-WINDOWS.md](NOTES-WINDOWS.md) - notes related to the Windows platform
- * [NOTES-DJGPP.md](NOTES-DJGPP.md) - building for DOS with DJGPP
- * [NOTES-ANDROID.md](NOTES-ANDROID.md) - building for Android platforms (using NDK)
- * [NOTES-VALGRIND.md](NOTES-VALGRIND.md) - testing with Valgrind
- * [NOTES-PERL.m](NOTES-PERL.md) - some notes on Perl
+ * [Notes for UNIX-like platforms](NOTES-UNIX.md)
+ * [Notes for Android platforms](NOTES-ANDROID.md)
+ * [Notes for Windows platforms](NOTES-WINDOWS.md)
+ * [Notes for the DOS platform with DJGPP](NOTES-DJGPP.md)
+ * [Notes for the OpenVMS platform](NOTES-VMS.md)
+ * [Notes on Perl](NOTES-PERL.md)
+ * [Notes on Valgrind](NOTES-VALGRIND.md)
 
 Notational conventions
 ======================
