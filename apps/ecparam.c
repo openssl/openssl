@@ -238,7 +238,7 @@ int ecparam_main(int argc, char **argv)
         }
     } else {
         params_key = load_keyparams(infile, 1, "EC", "EC parameters");
-        if (!EVP_PKEY_is_a(params_key, "EC"))
+        if (params_key == NULL || !EVP_PKEY_is_a(params_key, "EC"))
             goto end;
         if (point_format
             && !EVP_PKEY_set_utf8_string_param(
