@@ -2036,7 +2036,10 @@ static int tls12_sigalg_allowed(const SSL *s, int op, const SIGALG_LOOKUP *lu)
     /* DSA is not allowed in TLS 1.3 */
     if (SSL_IS_TLS13(s) && lu->sig == EVP_PKEY_DSA)
         return 0;
-    /* TODO(OpenSSL1.2) fully axe DSA/etc. in ClientHello per TLS 1.3 spec */
+    /*
+     * At some point we should fully axe DSA/etc. in ClientHello as per TLS 1.3
+     * spec
+     */
     if (!s->server && !SSL_IS_DTLS(s) && s->s3.tmp.min_ver >= TLS1_3_VERSION
         && (lu->sig == EVP_PKEY_DSA || lu->hash_idx == SSL_MD_SHA1_IDX
             || lu->hash_idx == SSL_MD_MD5_IDX
