@@ -187,7 +187,7 @@ static int test_http_url_dns(void)
 static int test_http_url_path_query(void)
 {
     return test_http_url_path_query_ok("http://usr@host:1/p?q=x#frag", "/p?q=x")
-        && test_http_url_path_query_ok("http://host?q=x#frag", "/?q=x")
+        && test_http_url_path_query_ok("http://host?query#frag", "/?query")
         && test_http_url_path_query_ok("http://host:9999#frag", "/");
 }
 
