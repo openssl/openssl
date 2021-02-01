@@ -159,7 +159,8 @@ static int add_params(OSSL_PARAM_BLD *bld, const ST_KAT_PARAM *params,
             break;
         }
         case OSSL_PARAM_UTF8_STRING: {
-            if (!OSSL_PARAM_BLD_push_utf8_string(bld, p->name, p->data, 0))
+            if (!OSSL_PARAM_BLD_push_utf8_string(bld, p->name, p->data,
+                                                 p->data_len))
                 goto err;
             break;
         }
