@@ -1,46 +1,57 @@
-NOTES FOR WINDOWS PLATFORMS
+Notes for Windows platforms
 ===========================
 
- There are various options to build and run OpenSSL on the Windows platforms.
+ - [Native builds using Visual C++](#native-builds-using-visual-c++)
+ - [Native builds using MinGW](#native-builds-using-mingw)
+ - [Linking native applications](#linking-native-applications)
+ - [Hosted builds using Cygwin](#hosted-builds-using-cygwin)
 
- "Native" OpenSSL uses the Windows APIs directly at run time.
- To build a native OpenSSL you can either use:
 
-     Microsoft Visual C++ (MSVC) C compiler on the command line
- or
-     MinGW cross compiler
-     run on the GNU-like development environment MSYS2
-     or run on Linux or Cygwin
+There are various options to build and run OpenSSL on the Windows platforms.
 
- "Hosted" OpenSSL relies on an external POSIX compatibility layer
- for building (using GNU/Unix shell, compiler, and tools) and at run time.
- For this option you can use Cygwin.
+"Native" OpenSSL uses the Windows APIs directly at run time.
+To build a native OpenSSL you can either use:
 
- Visual C++ native builds, aka VC-*
- =====================================
+    Microsoft Visual C++ (MSVC) C compiler on the command line
+or
+    MinGW cross compiler
+    run on the GNU-like development environment MSYS2
+    or run on Linux or Cygwin
 
- Requirement details
- -------------------
+"Hosted" OpenSSL relies on an external POSIX compatibility layer
+for building (using GNU/Unix shell, compiler, and tools) and at run time.
+For this option you can use Cygwin.
 
- In addition to the requirements and instructions listed in INSTALL.md,
- these are required as well:
+Native builds using Visual C++
+==============================
 
- - Perl.
-   We recommend Strawberry Perl, available from <http://strawberryperl.com/>
-   Please read NOTES.PERL for more information, including the use of CPAN.
-   An alternative is ActiveState Perl, <https://www.activestate.com/ActivePerl>
-   for which you may need to explicitly build the Perl module Win32/Console.pm
-   via <https://platform.activestate.com/ActiveState> and then download it.
+The native builds using Visual C++ have a VC-* prefix.
 
- - Microsoft Visual C compiler.
-   Since these are proprietary and ever-changing we cannot test them all.
-   Older versions may not work. Use a recent version wherever possible.
+Requirement details
+-------------------
 
- - Netwide Assembler (NASM), available from <https://www.nasm.us>
-   Note that NASM is the only supported assembler.
+In addition to the requirements and instructions listed in INSTALL.md,
+these are required as well:
 
- Quick start
- -----------
+### Perl
+
+We recommend Strawberry Perl, available from <http://strawberryperl.com/>
+Please read NOTES.PERL for more information, including the use of CPAN.
+An alternative is ActiveState Perl, <https://www.activestate.com/ActivePerl>
+for which you may need to explicitly build the Perl module Win32/Console.pm
+via <https://platform.activestate.com/ActiveState> and then download it.
+
+### Microsoft Visual C compiler.
+
+Since these are proprietary and ever-changing we cannot test them all.
+Older versions may not work. Use a recent version wherever possible.
+
+### Netwide Assembler (NASM)
+
+NASM is the only supported assembler. It is available from <https://www.nasm.us>.
+
+Quick start
+-----------
 
  1. Install Perl
 
@@ -67,40 +78,40 @@ NOTES FOR WINDOWS PLATFORMS
 
  8. nmake install
 
- For the full installation instructions, or if anything goes wrong at any stage,
- check the INSTALL.md file.
+For the full installation instructions, or if anything goes wrong at any stage,
+check the INSTALL.md file.
 
- Installation directories
- ------------------------
+Installation directories
+------------------------
 
- The default installation directories are derived from environment
- variables.
+The default installation directories are derived from environment
+variables.
 
- For VC-WIN32, the following defaults are use:
+For VC-WIN32, the following defaults are use:
 
-     PREFIX:      %ProgramFiles(86)%\OpenSSL
-     OPENSSLDIR:  %CommonProgramFiles(86)%\SSL
+    PREFIX:      %ProgramFiles(86)%\OpenSSL
+    OPENSSLDIR:  %CommonProgramFiles(86)%\SSL
 
- For VC-WIN64, the following defaults are use:
+For VC-WIN64, the following defaults are use:
 
-     PREFIX:      %ProgramW6432%\OpenSSL
-     OPENSSLDIR:  %CommonProgramW6432%\SSL
+    PREFIX:      %ProgramW6432%\OpenSSL
+    OPENSSLDIR:  %CommonProgramW6432%\SSL
 
- Should those environment variables not exist (on a pure Win32
- installation for examples), these fallbacks are used:
+Should those environment variables not exist (on a pure Win32
+installation for examples), these fallbacks are used:
 
-     PREFIX:      %ProgramFiles%\OpenSSL
-     OPENSSLDIR:  %CommonProgramFiles%\SSL
+    PREFIX:      %ProgramFiles%\OpenSSL
+    OPENSSLDIR:  %CommonProgramFiles%\SSL
 
- ALSO NOTE that those directories are usually write protected, even if
- your account is in the Administrators group.  To work around that,
- start the command prompt by right-clicking on it and choosing "Run as
- Administrator" before running 'nmake install'.  The other solution
- is, of course, to choose a different set of directories by using
- --prefix and --openssldir when configuring.
+ALSO NOTE that those directories are usually write protected, even if
+your account is in the Administrators group.  To work around that,
+start the command prompt by right-clicking on it and choosing "Run as
+Administrator" before running 'nmake install'.  The other solution
+is, of course, to choose a different set of directories by using
+--prefix and --openssldir when configuring.
 
- Special notes for Universal Windows Platform builds, aka VC-*-UWP
- --------------------------------------------------------------------
+Special notes for Universal Windows Platform builds, aka VC-*-UWP
+--------------------------------------------------------------------
 
  - UWP targets only support building the static and dynamic libraries.
 
@@ -108,10 +119,10 @@ NOTES FOR WINDOWS PLATFORMS
    "vcvarsall.bat" before you compile. For example, if you want to build
    "arm64" builds, you should run "vcvarsall.bat x86_arm64 uwp".
 
- Native OpenSSL built using MinGW
- ================================
+Native builds using MinGW
+=========================
 
- MinGW offers an alternative way to build native OpenSSL, by cross compilation.
+MinGW offers an alternative way to build native OpenSSL, by cross compilation.
 
  * Usually the build is done on Windows in a GNU-like environment called MSYS2.
 
@@ -135,11 +146,12 @@ NOTES FOR WINDOWS PLATFORMS
 
    In the MSYS2 shell do the configuration depending on the target architecture:
 
-     ./Configure mingw ...
+       ./Configure mingw ...
    or
-     ./Configure mingw64 ...
+       ./Configure mingw64 ...
    or
-     ./Configure ...
+       ./Configure ...
+
    for the default architecture.
 
    Apart from that, follow the Unix / Linux instructions in INSTALL.md.
@@ -149,55 +161,55 @@ NOTES FOR WINDOWS PLATFORMS
    In this case configure with the corresponding --cross-compile-prefix= option.
    For example
 
-     ./Configure mingw --cross-compile-prefix=i686-w64-mingw32- ...
+       ./Configure mingw --cross-compile-prefix=i686-w64-mingw32- ...
    or
-     ./Configure mingw64 --cross-compile-prefix=x86_64-w64-mingw32- ...
+       ./Configure mingw64 --cross-compile-prefix=x86_64-w64-mingw32- ...
 
    This requires that you've installed the necessary add-on packages for
    mingw[64] cross compilation.
 
- Linking your application
- ========================
+Linking native applications
+===========================
 
- This section applies to all "native" builds.
+This section applies to all native builds.
 
- If you link with static OpenSSL libraries then you're expected to
- additionally link your application with WS2_32.LIB, GDI32.LIB,
- ADVAPI32.LIB, CRYPT32.LIB and USER32.LIB. Those developing
- non-interactive service applications might feel concerned about
- linking with GDI32.LIB and USER32.LIB, as they are justly associated
- with interactive desktop, which is not available to service
- processes. The toolkit is designed to detect in which context it's
- currently executed, GUI, console app or service, and act accordingly,
- namely whether or not to actually make GUI calls. Additionally those
- who wish to /DELAYLOAD:GDI32.DLL and /DELAYLOAD:USER32.DLL and
- actually keep them off service process should consider implementing
- and exporting from .exe image in question own _OPENSSL_isservice not
- relying on USER32.DLL. E.g., on Windows Vista and later you could:
+If you link with static OpenSSL libraries then you're expected to
+additionally link your application with WS2_32.LIB, GDI32.LIB,
+ADVAPI32.LIB, CRYPT32.LIB and USER32.LIB. Those developing
+non-interactive service applications might feel concerned about
+linking with GDI32.LIB and USER32.LIB, as they are justly associated
+with interactive desktop, which is not available to service
+processes. The toolkit is designed to detect in which context it's
+currently executed, GUI, console app or service, and act accordingly,
+namely whether or not to actually make GUI calls. Additionally those
+who wish to /DELAYLOAD:GDI32.DLL and /DELAYLOAD:USER32.DLL and
+actually keep them off service process should consider implementing
+and exporting from .exe image in question own _OPENSSL_isservice not
+relying on USER32.DLL. E.g., on Windows Vista and later you could:
 
-        __declspec(dllexport) __cdecl BOOL _OPENSSL_isservice(void)
-        {
-            DWORD sess;
+       __declspec(dllexport) __cdecl BOOL _OPENSSL_isservice(void)
+       {
+           DWORD sess;
 
-            if (ProcessIdToSessionId(GetCurrentProcessId(), &sess))
-                return sess == 0;
-            return FALSE;
-        }
+           if (ProcessIdToSessionId(GetCurrentProcessId(), &sess))
+               return sess == 0;
+           return FALSE;
+       }
 
- If you link with OpenSSL .DLLs, then you're expected to include into
- your application code a small "shim" snippet, which provides
- the glue between the OpenSSL BIO layer and your compiler run-time.
- See also the OPENSSL_Applink manual page.
+If you link with OpenSSL .DLLs, then you're expected to include into
+your application code a small "shim" snippet, which provides
+the glue between the OpenSSL BIO layer and your compiler run-time.
+See also the OPENSSL_Applink manual page.
 
- Hosted OpenSSL built using Cygwin
- =================================
+Hosted builds using Cygwin
+==========================
 
- Cygwin implements a POSIX/Unix runtime system (cygwin1.dll) on top of the
- Windows subsystem and provides a Bash shell and GNU tools environment.
- Consequently, a build of OpenSSL with Cygwin is virtually identical to the
- Unix procedure.
+Cygwin implements a POSIX/Unix runtime system (cygwin1.dll) on top of the
+Windows subsystem and provides a Bash shell and GNU tools environment.
+Consequently, a build of OpenSSL with Cygwin is virtually identical to the
+Unix procedure.
 
- To build OpenSSL using Cygwin, you need to:
+To build OpenSSL using Cygwin, you need to:
 
  * Install Cygwin, see <https://cygwin.com/>
 
@@ -206,9 +218,9 @@ NOTES FOR WINDOWS PLATFORMS
 
  * Run the Cygwin Bash shell
 
- Apart from that, follow the Unix / Linux instructions in INSTALL.md.
+Apart from that, follow the Unix / Linux instructions in INSTALL.md.
 
- NOTE: "make test" and normal file operations may fail in directories
- mounted as text (i.e. mount -t c:\somewhere /home) due to Cygwin
- stripping of carriage returns. To avoid this ensure that a binary
- mount is used, e.g. mount -b c:\somewhere /home.
+NOTE: "make test" and normal file operations may fail in directories
+mounted as text (i.e. mount -t c:\somewhere /home) due to Cygwin
+stripping of carriage returns. To avoid this ensure that a binary
+mount is used, e.g. mount -b c:\somewhere /home.
