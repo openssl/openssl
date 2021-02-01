@@ -3491,7 +3491,6 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 #endif
     case SSL_CTRL_SET_TLSEXT_HOSTNAME:
         /*
-         * TODO(OpenSSL1.2)
          * This API is only used for a client to set what SNI it will request
          * from the server, but we currently allow it to be used on servers
          * as well, which is a programming error.  Currently we just clear
