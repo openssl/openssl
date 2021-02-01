@@ -354,9 +354,9 @@ int ossl_DER_w_RSASSA_PSS_params(WPACKET *pkt, int tag,
     var##_oid_sz = sizeof(ossl_der_oid_##name);                         \
     break;
 
-int ossl_DER_w_algorithmIdentifier_RSA_params(WPACKET *pkt, int tag,
-                                              int rsa_type,
-                                              const RSA_PSS_PARAMS_30 *pss)
+int ossl_DER_w_algorithmIdentifier_RSA_PSS(WPACKET *pkt, int tag,
+                                           int rsa_type,
+                                           const RSA_PSS_PARAMS_30 *pss)
 {
     int rsa_nid = NID_undef;
     const unsigned char *rsa_oid = NULL;
@@ -385,6 +385,6 @@ int ossl_DER_w_algorithmIdentifier_RSA(WPACKET *pkt, int tag, RSA *rsa)
     int rsa_type = RSA_test_flags(rsa, RSA_FLAG_TYPE_MASK);
     RSA_PSS_PARAMS_30 *pss_params = ossl_rsa_get0_pss_params_30(rsa);
 
-    return ossl_DER_w_algorithmIdentifier_RSA_params(pkt, tag, rsa_type,
-                                                     pss_params);
+    return ossl_DER_w_algorithmIdentifier_RSA_PSS(pkt, tag, rsa_type,
+                                                  pss_params);
 }

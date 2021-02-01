@@ -246,9 +246,9 @@ static unsigned char *rsa_generate_signature_aid(PROV_RSA_CTX *ctx,
                 || !ossl_rsa_pss_params_30_set_maskgenhashalg(&pss_params,
                                                               ctx->mgf1_mdnid)
                 || !ossl_rsa_pss_params_30_set_saltlen(&pss_params, saltlen)
-                || !ossl_DER_w_algorithmIdentifier_RSA_params(&pkt, -1,
-                                                              RSA_FLAG_TYPE_RSASSAPSS,
-                                                              &pss_params)) {
+                || !ossl_DER_w_algorithmIdentifier_RSA_PSS(&pkt, -1,
+                                                           RSA_FLAG_TYPE_RSASSAPSS,
+                                                           &pss_params)) {
                 ERR_raise(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR);
                 goto cleanup;
             }
