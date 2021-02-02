@@ -93,7 +93,7 @@ subtest "generating certificate requests with RSA" => sub {
 };
 
 subtest "generating certificate requests with RSA-PSS" => sub {
-    plan tests => 11;
+    plan tests => 12;
 
     SKIP: {
         skip "RSA is not supported by this OpenSSL build", 2
@@ -147,6 +147,13 @@ subtest "generating certificate requests with RSA-PSS" => sub {
                      "-config", srctop_file("test", "test.cnf"),
                      "-new", "-out", "testreq-rsapss3.pem", "-utf8",
                      "-sigopt", "rsa_padding_mode:pkcs1",
+                     "-key", srctop_file("test", "testrsapss.pem")])),
+           "Generating request with expected failure");
+
+        ok(!run(app(["openssl", "req",
+                     "-config", srctop_file("test", "test.cnf"),
+                     "-new", "-out", "testreq-rsapss3.pem", "-utf8",
+                     "-sigopt", "rsa_pss_saltlen:-4",
                      "-key", srctop_file("test", "testrsapss.pem")])),
            "Generating request with expected failure");
 

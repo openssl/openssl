@@ -238,9 +238,8 @@ static unsigned char *rsa_generate_signature_aid(PROV_RSA_CTX *ctx,
             break;
         case RSA_PKCS1_PSS_PADDING:
             saltlen = rsa_pss_compute_saltlen(ctx);
-            if (saltlen < 0) {
+            if (saltlen < 0)
                 goto cleanup;
-            }
             if (!ossl_rsa_pss_params_30_set_defaults(&pss_params)
                 || !ossl_rsa_pss_params_30_set_hashalg(&pss_params, ctx->mdnid)
                 || !ossl_rsa_pss_params_30_set_maskgenhashalg(&pss_params,
@@ -811,8 +810,12 @@ static int rsa_digest_signverify_init(void *vprsactx, const char *mdname,
 
     if (prsactx != NULL)
         prsactx->flag_allow_md = 0;
-    if (!rsa_signverify_init(vprsactx, vrsa, operation)
-        || !rsa_setup_md(prsactx, mdname, prsactx->propq))
+    if (!rsa_signverify_init(vprsactx, vrsa, operation))
+        return 0;
+    if (mdname != NULL
+        /* was rsa_setup_md already called in rsa_signverify_init()? */
+        && (mdname[0] == '\0' || strcmp(prsactx->mdname, mdname) != 0)
+        && !rsa_setup_md(prsactx, mdname, prsactx->propq))
         return 0;
 
     prsactx->mdctx = EVP_MD_CTX_new();
