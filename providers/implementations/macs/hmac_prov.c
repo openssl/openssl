@@ -71,8 +71,6 @@ int ssl3_cbc_digest_record(const EVP_MD *md,
                            const unsigned char *mac_secret,
                            size_t mac_secret_length, char is_sslv3);
 
-static size_t hmac_size(void *vmacctx);
-
 static void *hmac_new(void *provctx)
 {
     struct hmac_data_st *macctx;

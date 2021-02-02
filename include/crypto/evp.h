@@ -196,7 +196,6 @@ struct evp_mac_st {
     OSSL_FUNC_mac_newctx_fn *newctx;
     OSSL_FUNC_mac_dupctx_fn *dupctx;
     OSSL_FUNC_mac_freectx_fn *freectx;
-    OSSL_FUNC_mac_size_fn *size;
     OSSL_FUNC_mac_init_fn *init;
     OSSL_FUNC_mac_update_fn *update;
     OSSL_FUNC_mac_final_fn *final;
