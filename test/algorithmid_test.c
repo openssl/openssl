@@ -14,9 +14,9 @@
 #include "testutil.h"
 
 /* Collected arguments */
-const char *eecert_filename = NULL;  /* For test_x509_file() */
-const char *cacert_filename = NULL;  /* For test_x509_file() */
-const char *pubkey_filename = NULL;  /* For test_spki_file() */
+static const char *eecert_filename = NULL;  /* For test_x509_file() */
+static const char *cacert_filename = NULL;  /* For test_x509_file() */
+static const char *pubkey_filename = NULL;  /* For test_spki_file() */
 
 #define ALGORITHMID_NAME "algorithm-id"
 
