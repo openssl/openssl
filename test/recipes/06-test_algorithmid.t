@@ -19,15 +19,23 @@ my %certs_info =
     (
      'ee-cert' => 'ca-cert',
      'ee-cert2' => 'ca-cert2',
-     'ee-cert-ec-explicit' => 'ca-cert-ec-named',
-     'ee-cert-ec-named-explicit' => 'ca-cert-ec-explicit',
-     'ee-cert-ec-named-named' => 'ca-cert-ec-named',
+
      # 'ee-pss-sha1-cert' => 'ca-cert',
      # 'ee-pss-sha256-cert' => 'ca-cert',
      # 'ee-pss-cert' => 'ca-pss-cert',
-     'server-ecdsa-brainpoolP256r1-cert' => 'rootcert',
      # 'server-pss-restrict-cert' => 'rootcert',
-     # 'server-ed448-cert' => 'root-ed448-cert'
+
+     (
+      disabled('ec')
+      ? ()
+      : (
+         'ee-cert-ec-explicit' => 'ca-cert-ec-named',
+         'ee-cert-ec-named-explicit' => 'ca-cert-ec-explicit',
+         'ee-cert-ec-named-named' => 'ca-cert-ec-named',
+         # 'server-ed448-cert' => 'root-ed448-cert'
+         'server-ecdsa-brainpoolP256r1-cert' => 'rootcert',
+        )
+     )
     );
 my @pubkeys =
     qw(testdsapub testecpub-p256 tested25519pub tested448pub testrsapub);
