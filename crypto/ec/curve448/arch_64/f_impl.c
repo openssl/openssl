@@ -207,9 +207,8 @@ void gf_sqr(gf_s * RESTRICT cs, const gf as)
     unsigned int i;
 
     /* For some reason clang doesn't vectorize this without prompting? */
-    for (i = 0; i < 4; i++) {
+    for (i = 0; i < 4; i++)
         aa[i] = a[i] + a[i + 4];
-    }
 
     accum2 = widemul(a[0], a[3]);
     accum0 = widemul(aa[0], aa[3]);

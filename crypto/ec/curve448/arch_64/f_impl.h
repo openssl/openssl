@@ -11,7 +11,7 @@
  */
 
 #ifndef OSSL_CRYPTO_EC_CURVE448_ARCH_64_F_IMPL_H
-#define  OSSL_CRYPTO_EC_CURVE448_ARCH_64_F_IMPL_H
+# define OSSL_CRYPTO_EC_CURVE448_ARCH_64_F_IMPL_H
 
 # define GF_HEADROOM 9999        /* Everything is reduced anyway */
 # define FIELD_LITERAL(a,b,c,d,e,f,g,h) {{a,b,c,d,e,f,g,h}}
