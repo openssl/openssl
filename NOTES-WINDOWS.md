@@ -1,9 +1,6 @@
 NOTES FOR WINDOWS PLATFORMS
 ===========================
 
- (This file, like the others, is in "markdown" format, but has a ".txt"
- extension to make it easier to view/edit on Windows.)
-
  There are various options to build and run OpenSSL on the Windows platforms.
 
  "Native" OpenSSL uses the Windows APIs directly at run time.

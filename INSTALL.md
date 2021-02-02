@@ -48,8 +48,8 @@ Prerequisites
 To install OpenSSL, you will need:
 
  * A "make" implementation
- * Perl 5 with core modules (please read [NOTES-Perl.md](NOTES-Perl.md))
- * The Perl module `Text::Template` (please read [NOTES-PERL.md](NOTES-Perl.md))
+ * Perl 5 with core modules (please read [NOTES-PERL.md](NOTES-PERL.md))
+ * The Perl module `Text::Template` (please read [NOTES-PERL.md](NOTES-PERL.md))
  * an ANSI C compiler
  * a development environment in the form of development libraries and C
    header files
@@ -58,13 +58,13 @@ To install OpenSSL, you will need:
 For additional platform specific requirements, solutions to specific
 issues and other details, please read one of these:
 
- * [NOTES-Unix.md](NOTES-Unix.md) - notes for Unix like systems
+ * [NOTES-UNIX.md](NOTES-UNIX.md) - notes for Unix like systems
  * [NOTES-VMS.md](NOTES-VMS.md) - notes related to OpenVMS
- * [NOTES-Windows.txt](NOTES-Windows.txt) - notes related to the Windows platform
+ * [NOTES-WINDOWS.md](NOTES-WINDOWS.md) - notes related to the Windows platform
  * [NOTES-DJGPP.md](NOTES-DJGPP.md) - building for DOS with DJGPP
- * [NOTES-Android.md](NOTES-Android.md) - building for Android platforms (using NDK)
- * [NOTES-Valgrind.md](NOTES-Valgrind.md) - testing with Valgrind
- * [NOTES-Perl.m](NOTES-Perl.md) - some notes on Perl
+ * [NOTES-ANDROID.md](NOTES-ANDROID.md) - building for Android platforms (using NDK)
+ * [NOTES-VALGRIND.md](NOTES-VALGRIND.md) - testing with Valgrind
+ * [NOTES-PERL.m](NOTES-PERL.md) - some notes on Perl
 
 Notational conventions
 ======================
@@ -285,7 +285,7 @@ Configuration Options
 There are several options to `./Configure` to customize the build (note that
 for Windows, the defaults for `--prefix` and `--openssldir` depend on what
 configuration is used and what Windows implementation OpenSSL is built on.
-More notes on this in [NOTES-Windows.txt](NOTES-Windows.txt):
+For more information, see the [Notes for Windows platforms](NOTES-WINDOWS.md).
 
 API Level
 ---------
