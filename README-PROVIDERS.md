@@ -98,20 +98,20 @@ The following is a minimal config file example to load and activate both
 the legacy and the default provider in the default library context.
 
     openssl_conf = openssl_init
-    
+
     [openssl_init]
     providers = provider_sect
-    
+
     [provider_sect]
     default = default_sect
     legacy = legacy_sect
-    
+
     [default_sect]
     activate = 1
-    
+
     [legacy_sect]
     activate = 1
-    
+
 
 It is also possible to load providers programmatically. For example you can
 load the legacy provider into the default library context as shown below.
@@ -122,14 +122,14 @@ often also want to explicitly load the default provider, as is done here:
 
     #include <stdio.h>
     #include <stdlib.h>
-    
+
     #include <openssl/provider.h>
-    
+
     int main(void)
     {
         OSSL_PROVIDER *legacy;
         OSSL_PROVIDER *deflt;
-    
+
         /* Load Multiple providers into the default (NULL) library context */
         legacy = OSSL_PROVIDER_load(NULL, "legacy");
         if (legacy == NULL) {
@@ -142,13 +142,10 @@ often also want to explicitly load the default provider, as is done here:
             OSSL_PROVIDER_unload(legacy);
             exit(EXIT_FAILURE);
         }
-    
+
         /* Rest of application */
-    
+
         OSSL_PROVIDER_unload(legacy);
         OSSL_PROVIDER_unload(deflt);
         exit(EXIT_SUCCESS);
     }
-
-
-
