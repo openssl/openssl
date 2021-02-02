@@ -29,9 +29,10 @@ jobs:
         default: false
     docker:
       - image: openquantumsafe/ci-ubuntu-bionic-x86_64:latest
-        auth:
-          username: $DOCKER_LOGIN
-          password: $DOCKER_PASSWORD
+# Re-enable iff docker enforces rate limitations without auth:
+#        auth:
+#          username: $DOCKER_LOGIN
+#          password: $DOCKER_PASSWORD
     steps:
       - checkout # change this from "checkout" to "*localCheckout" when running CircleCI locally
       - run:
@@ -90,9 +91,10 @@ jobs:
     description: A job that tests interoperability between OQS-OpenSSL and OQS-BoringSSL on a x64 Ubuntu Bionic Docker VM
     docker:
       - image: openquantumsafe/ci-ubuntu-bionic-x86_64:latest
-        auth:
-          username: $DOCKER_LOGIN
-          password: $DOCKER_PASSWORD
+# Re-enable iff docker enforces rate limitations without auth:
+#        auth:
+#          username: $DOCKER_LOGIN
+#          password: $DOCKER_PASSWORD
     steps:
       - checkout # change this from "checkout" to "*localCheckout" when running CircleCI locally
       - run:
@@ -117,9 +119,10 @@ jobs:
   trigger-downstream-ci:
     docker:
       - image: cimg/base:2020.01
-        auth:
-          username: $DOCKER_LOGIN
-          password: $DOCKER_PASSWORD
+# Re-enable iff docker enforces rate limitations without auth:
+#        auth:
+#          username: $DOCKER_LOGIN
+#          password: $DOCKER_PASSWORD
     steps:
       - run:
           name: Trigger oqs-demos CI
