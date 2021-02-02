@@ -1,14 +1,23 @@
-ENGINES
+Engines
 =======
 
-With OpenSSL 0.9.6, a new component was added to support alternative
-cryptography implementations, most commonly for interfacing with external
-crypto devices (eg. accelerator cards). This component is called ENGINE,
-and its presence in OpenSSL 0.9.6 (and subsequent bug-fix releases)
-caused a little confusion as 0.9.6** releases were rolled in two
-versions, a "standard" and an "engine" version. In development for 0.9.7,
-the ENGINE code has been merged into the main branch and will be present
-in the standard releases from 0.9.7 forwards.
+Deprecation Note
+----------------
+
+The ENGINE API was introduced in OpenSSL version 0.9.6 as a low level
+interface for adding alternative implementations of cryptographic
+primitives, most notably for integrating hardware crypto devices.
+
+The ENGINE interface has its limitations and it has been superseeded
+by the [PROVIDER API](README-Provider.md), it is deprecated in OpenSSL
+version 3.0. The following documentation is retained as an aid for
+users who need to maintain or support existing ENGINE implementations.
+Support for new hardware devices or new algorithms should be added
+via providers, and existing engines should be converted to providers
+as soon as possible.
+
+Built-in ENGINE implementations
+-------------------------------
 
 There are currently built-in ENGINE implementations for the following
 crypto devices:
