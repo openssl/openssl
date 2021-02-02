@@ -38,7 +38,11 @@ my %certs_info =
      )
     );
 my @pubkeys =
-    qw(testdsapub testecpub-p256 tested25519pub tested448pub testrsapub);
+    (
+     'testrsapub',
+     disabled('dsa') ? () : 'testdsapub',
+     disabled('ec') ? () : qw(testecpub-p256 tested25519pub tested448pub)
+    );
 my @certs = sort keys %certs_info;
 
 plan tests =>
