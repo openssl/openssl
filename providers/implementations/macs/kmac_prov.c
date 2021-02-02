@@ -73,7 +73,6 @@ static OSSL_FUNC_mac_gettable_ctx_params_fn kmac_gettable_ctx_params;
 static OSSL_FUNC_mac_get_ctx_params_fn kmac_get_ctx_params;
 static OSSL_FUNC_mac_settable_ctx_params_fn kmac_settable_ctx_params;
 static OSSL_FUNC_mac_set_ctx_params_fn kmac_set_ctx_params;
-static OSSL_FUNC_mac_size_fn kmac_size;
 static OSSL_FUNC_mac_init_fn kmac_init;
 static OSSL_FUNC_mac_update_fn kmac_update;
 static OSSL_FUNC_mac_final_fn kmac_final;
@@ -235,6 +234,13 @@ static void *kmac_dup(void *vsrc)
     return dst;
 }
 
+static size_t kmac_size(void *vmacctx)
+{
+    struct kmac_data_st *kctx = vmacctx;
+
+    return kctx->out_len;
+}
+
 /*
  * The init() assumes that any ctrl methods are set beforehand for
  * md, key and custom. Setting the fields afterwards will have no
@@ -276,13 +282,6 @@ static int kmac_init(void *vmacctx)
                    kctx->custom, kctx->custom_len, block_len)
            && EVP_DigestUpdate(ctx, out, out_len)
            && EVP_DigestUpdate(ctx, kctx->key, kctx->key_len);
-}
-
-static size_t kmac_size(void *vmacctx)
-{
-    struct kmac_data_st *kctx = vmacctx;
-
-    return kctx->out_len;
 }
 
 static int kmac_update(void *vmacctx, const unsigned char *data,

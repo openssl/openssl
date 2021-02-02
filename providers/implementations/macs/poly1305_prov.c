@@ -40,8 +40,6 @@ struct poly1305_data_st {
     POLY1305 poly1305;           /* Poly1305 data */
 };
 
-static size_t poly1305_size(void);
-
 static void *poly1305_new(void *provctx)
 {
     struct poly1305_data_st *ctx;
