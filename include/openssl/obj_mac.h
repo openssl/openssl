@@ -878,6 +878,10 @@
 #define NID_id_ct_resourceTaggedAttest          1237
 #define OBJ_id_ct_resourceTaggedAttest          OBJ_id_smime_ct,36L
 
+#define SN_id_ct_geofeedCSVwithCRLF             "id-ct-geofeedCSVwithCRLF"
+#define NID_id_ct_geofeedCSVwithCRLF            1246
+#define OBJ_id_ct_geofeedCSVwithCRLF            OBJ_id_smime_ct,47L
+
 #define SN_id_smime_aa_receiptRequest           "id-smime-aa-receiptRequest"
 #define NID_id_smime_aa_receiptRequest          212
 #define OBJ_id_smime_aa_receiptRequest          OBJ_id_smime_aa,1L
