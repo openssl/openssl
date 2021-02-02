@@ -536,7 +536,7 @@ static long conn_ctrl(BIO *b, int cmd, long num, void *ptr)
         }
         break;
     case BIO_CTRL_EOF:
-        ret = (b->flags & BIO_FLAGS_IN_EOF) != 0 ? 1 : 0;
+        ret = (b->flags & BIO_FLAGS_IN_EOF) != 0;
         break;
 # ifndef OPENSSL_NO_KTLS
     case BIO_CTRL_SET_KTLS:
