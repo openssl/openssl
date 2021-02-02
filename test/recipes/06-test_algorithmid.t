@@ -26,7 +26,7 @@ my %certs_info =
      # 'ee-pss-sha256-cert' => 'ca-cert',
      # 'ee-pss-cert' => 'ca-pss-cert',
      'server-ecdsa-brainpoolP256r1-cert' => 'rootcert',
-     'server-pss-restrict-cert' => 'rootcert',
+     # 'server-pss-restrict-cert' => 'rootcert',
      # 'server-ed448-cert' => 'root-ed448-cert'
     );
 my @pubkeys =
