@@ -101,15 +101,22 @@ void *evp_keymgmt_util_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt)
     if (pk->keymgmt == keymgmt)
         return pk->keydata;
 
-    /* If this key is already exported to |keymgmt|, no more to do */
     CRYPTO_THREAD_read_lock(pk->lock);
-    i = evp_keymgmt_util_find_operation_cache_index(pk, keymgmt);
-    if (i < OSSL_NELEM(pk->operation_cache)
-        && pk->operation_cache[i].keymgmt != NULL) {
-        void *ret = pk->operation_cache[i].keydata;
+    /*
+     * If the provider native "origin" hasn't changed since last time, we
+     * try to find our keymgmt in the operation cache.  If it has changed,
+     * |i| remains zero, and we will clear the cache further down.
+     */
+    if (pk->dirty_cnt == pk->dirty_cnt_copy) {
+        /* If this key is already exported to |keymgmt|, no more to do */
+        i = evp_keymgmt_util_find_operation_cache_index(pk, keymgmt);
+        if (i < OSSL_NELEM(pk->operation_cache)
+            && pk->operation_cache[i].keymgmt != NULL) {
+            void *ret = pk->operation_cache[i].keydata;
 
-        CRYPTO_THREAD_unlock(pk->lock);
-        return ret;
+            CRYPTO_THREAD_unlock(pk->lock);
+            return ret;
+        }
     }
     CRYPTO_THREAD_unlock(pk->lock);
 
@@ -177,11 +184,21 @@ void *evp_keymgmt_util_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt)
         return ret;
     }
 
+    /*
+     * If the dirty counter changed since last time, then clear the
+     * operation cache.  In that case, we know that |i| is zero.
+     */
+    if (pk->dirty_cnt != pk->dirty_cnt_copy)
+        evp_keymgmt_util_clear_operation_cache(pk);
+
     /* Add the new export to the operation cache */
     if (!evp_keymgmt_util_cache_keydata(pk, i, keymgmt, import_data.keydata)) {
         evp_keymgmt_freedata(keymgmt, import_data.keydata);
         return NULL;
     }
+
+    /* Synchronize the dirty count */
+    pk->dirty_cnt_copy = pk->dirty_cnt;
 
     CRYPTO_THREAD_unlock(pk->lock);
 
