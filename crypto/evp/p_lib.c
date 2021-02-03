@@ -2184,13 +2184,10 @@ const OSSL_PARAM *EVP_PKEY_settable_params(const EVP_PKEY *pkey)
 
 int EVP_PKEY_set_params(EVP_PKEY *pkey, OSSL_PARAM params[])
 {
-    int ret = pkey != NULL
+    pkey->dirty_cnt++;
+    return pkey != NULL
         && evp_pkey_is_provided(pkey)
         && evp_keymgmt_set_params(pkey->keymgmt, pkey->keydata, params);
-
-    if (ret)
-        pkey->dirty_cnt++;
-    return ret;
 }
 
 const OSSL_PARAM *EVP_PKEY_gettable_params(const EVP_PKEY *pkey)
