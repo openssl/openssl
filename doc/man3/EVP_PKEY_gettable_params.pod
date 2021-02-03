@@ -13,7 +13,7 @@ EVP_PKEY_get_octet_string_param
  #include <openssl/evp.h>
 
  const OSSL_PARAM *EVP_PKEY_gettable_params(EVP_PKEY *pkey);
- int EVP_PKEY_get_params(EVP_PKEY *pkey, OSSL_PARAM params[]);
+ int EVP_PKEY_get_params(const EVP_PKEY *pkey, OSSL_PARAM params[]);
  int EVP_PKEY_get_int_param(const EVP_PKEY *pkey, const char *key_name,
                             int *out);
  int EVP_PKEY_get_size_t_param(const EVP_PKEY *pkey, const char *key_name,
