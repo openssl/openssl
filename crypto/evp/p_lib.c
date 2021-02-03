@@ -1298,17 +1298,11 @@ int EVP_PKEY_supports_digest_nid(EVP_PKEY *pkey, int nid)
 int EVP_PKEY_set1_encoded_public_key(EVP_PKEY *pkey, const unsigned char *pub,
                                      size_t publen)
 {
-    if (pkey->ameth == NULL) {
-        OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
-
-        if (pkey->keymgmt == NULL || pkey->keydata == NULL)
-            return 0;
-
-        params[0] =
-            OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY,
-                                              (unsigned char *)pub, publen);
-        return evp_keymgmt_set_params(pkey->keymgmt, pkey->keydata, params);
-    }
+    if (pkey != NULL && evp_pkey_is_provided(pkey))
+        return
+            EVP_PKEY_set_octet_string_param(pkey,
+                                            OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY,
+                                            (unsigned char *)pub, publen);
 
     if (publen > INT_MAX)
         return 0;
@@ -1323,29 +1317,28 @@ size_t EVP_PKEY_get1_encoded_public_key(EVP_PKEY *pkey, unsigned char **ppub)
 {
     int rv;
 
-    if (pkey->ameth == NULL) {
-        OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
+    if (pkey != NULL && evp_pkey_is_provided(pkey)) {
+        size_t return_size = OSSL_PARAM_UNMODIFIED;
 
-        if (pkey->keymgmt == NULL || pkey->keydata == NULL)
+        /*
+         * We know that this is going to fail, but it will give us a size
+         * to allocate.
+         */
+        EVP_PKEY_get_octet_string_param(pkey,
+                                        OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY,
+                                        NULL, 0, &return_size);
+        if (return_size == OSSL_PARAM_UNMODIFIED)
             return 0;
 
-        params[0] =
-            OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY,
-                                              NULL, 0);
-        if (!evp_keymgmt_get_params(pkey->keymgmt, pkey->keydata, params))
-            return 0;
-
-        *ppub = OPENSSL_malloc(params[0].return_size);
+        *ppub = OPENSSL_malloc(return_size);
         if (*ppub == NULL)
             return 0;
 
-        params[0] =
-            OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY,
-                                              *ppub, params[0].return_size);
-        if (!evp_keymgmt_get_params(pkey->keymgmt, pkey->keydata, params))
+        if (!EVP_PKEY_get_octet_string_param(pkey,
+                                             OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY,
+                                             *ppub, return_size, NULL))
             return 0;
-
-        return params[0].return_size;
+        return return_size;
     }
 
 
@@ -2044,6 +2037,7 @@ int EVP_PKEY_get_octet_string_param(const EVP_PKEY *pkey, const char *key_name,
                                     size_t *out_sz)
 {
     OSSL_PARAM params[2];
+    int ret;
 
     if (key_name == NULL
         || pkey == NULL
@@ -2052,12 +2046,13 @@ int EVP_PKEY_get_octet_string_param(const EVP_PKEY *pkey, const char *key_name,
 
     params[0] = OSSL_PARAM_construct_octet_string(key_name, buf, max_buf_sz);
     params[1] = OSSL_PARAM_construct_end();
-    if (!EVP_PKEY_get_params(pkey, params)
-        || !OSSL_PARAM_modified(params))
-        return 0;
-    if (out_sz != NULL)
-        *out_sz = params[0].return_size;
-    return 1;
+    ret = EVP_PKEY_get_params(pkey, params);
+    if (OSSL_PARAM_modified(params)) {
+        if (out_sz != NULL)
+            *out_sz = params[0].return_size;
+        ret = ret && 1;
+    }
+    return ret;
 }
 
 int EVP_PKEY_get_utf8_string_param(const EVP_PKEY *pkey, const char *key_name,
