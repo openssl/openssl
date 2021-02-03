@@ -1813,11 +1813,12 @@ const OSSL_PARAM *EVP_PKEY_settable_params(EVP_PKEY *pkey);
 int EVP_PKEY_set_params(EVP_PKEY *pkey, OSSL_PARAM params[]);
 int EVP_PKEY_set_int_param(EVP_PKEY *pkey, const char *key_name, int in);
 int EVP_PKEY_set_size_t_param(EVP_PKEY *pkey, const char *key_name, size_t in);
-int EVP_PKEY_set_bn_param(EVP_PKEY *pkey, const char *key_name, BIGNUM *bn);
+int EVP_PKEY_set_bn_param(EVP_PKEY *pkey, const char *key_name,
+                          const BIGNUM *bn);
 int EVP_PKEY_set_utf8_string_param(EVP_PKEY *pkey, const char *key_name,
-                                   char *str);
+                                   const char *str);
 int EVP_PKEY_set_octet_string_param(EVP_PKEY *pkey, const char *key_name,
-                                    unsigned char *buf, size_t bsize);
+                                    const unsigned char *buf, size_t bsize);
 
 int EVP_PKEY_get_ec_point_conv_form(const EVP_PKEY *pkey);
 int EVP_PKEY_get_field_type(const EVP_PKEY *pkey);

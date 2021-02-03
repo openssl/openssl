@@ -2131,7 +2131,8 @@ int EVP_PKEY_set_size_t_param(EVP_PKEY *pkey, const char *key_name, size_t in)
     return EVP_PKEY_set_params(pkey, params);
 }
 
-int EVP_PKEY_set_bn_param(EVP_PKEY *pkey, const char *key_name, BIGNUM *bn)
+int EVP_PKEY_set_bn_param(EVP_PKEY *pkey, const char *key_name,
+                          const BIGNUM *bn)
 {
     OSSL_PARAM params[2];
     unsigned char buffer[2048];
@@ -2155,27 +2156,28 @@ int EVP_PKEY_set_bn_param(EVP_PKEY *pkey, const char *key_name, BIGNUM *bn)
 }
 
 int EVP_PKEY_set_utf8_string_param(EVP_PKEY *pkey, const char *key_name,
-                                   char *str)
+                                   const char *str)
 {
     OSSL_PARAM params[2];
 
     if (key_name == NULL)
         return 0;
 
-    params[0] = OSSL_PARAM_construct_utf8_string(key_name, str, 0);
+    params[0] = OSSL_PARAM_construct_utf8_string(key_name, (char *)str, 0);
     params[1] = OSSL_PARAM_construct_end();
     return EVP_PKEY_set_params(pkey, params);
 }
 
 int EVP_PKEY_set_octet_string_param(EVP_PKEY *pkey, const char *key_name,
-                                    unsigned char *buf, size_t bsize)
+                                    const unsigned char *buf, size_t bsize)
 {
     OSSL_PARAM params[2];
 
     if (key_name == NULL)
         return 0;
 
-    params[0] = OSSL_PARAM_construct_octet_string(key_name, buf, bsize);
+    params[0] = OSSL_PARAM_construct_octet_string(key_name,
+                                                  (unsigned char *)buf, bsize);
     params[1] = OSSL_PARAM_construct_end();
     return EVP_PKEY_set_params(pkey, params);
 }
