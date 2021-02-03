@@ -2228,11 +2228,13 @@ const OSSL_PARAM *EVP_PKEY_settable_params(EVP_PKEY *pkey)
 
 int EVP_PKEY_set_params(EVP_PKEY *pkey, OSSL_PARAM params[])
 {
-    if (pkey == NULL
-        || pkey->keymgmt == NULL
-        || pkey->keydata == NULL)
-        return 0;
-    return evp_keymgmt_set_params(pkey->keymgmt, pkey->keydata, params);
+    int ret = pkey != NULL
+        && evp_pkey_is_provided(pkey)
+        && evp_keymgmt_set_params(pkey->keymgmt, pkey->keydata, params);
+
+    if (ret)
+        pkey->dirty_cnt++;
+    return ret;
 }
 
 #ifndef FIPS_MODULE
