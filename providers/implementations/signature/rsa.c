@@ -13,6 +13,7 @@
  */
 #include "internal/deprecated.h"
 
+#include "e_os.h" /* strcasecmp */
 #include <string.h>
 #include <openssl/crypto.h>
 #include <openssl/core_dispatch.h>
@@ -814,7 +815,7 @@ static int rsa_digest_signverify_init(void *vprsactx, const char *mdname,
         return 0;
     if (mdname != NULL
         /* was rsa_setup_md already called in rsa_signverify_init()? */
-        && (mdname[0] == '\0' || strcmp(prsactx->mdname, mdname) != 0)
+        && (mdname[0] == '\0' || strcasecmp(prsactx->mdname, mdname) != 0)
         && !rsa_setup_md(prsactx, mdname, prsactx->propq))
         return 0;
 
