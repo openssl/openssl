@@ -73,8 +73,8 @@ before_build:
 
 build_script:
     - cd _build
-    - %NMAKE% build_all_generated
-    - %NMAKE% PERL=no-perl
+    - "%NMAKE%" build_all_generated
+    - "%NMAKE%" PERL=no-perl
     - cd ..
 
 test_script:
