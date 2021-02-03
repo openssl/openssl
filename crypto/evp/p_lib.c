@@ -2013,7 +2013,7 @@ int EVP_PKEY_get_bn_param(const EVP_PKEY *pkey, const char *key_name,
     memset(buffer, 0, sizeof(buffer));
     params[0] = OSSL_PARAM_construct_BN(key_name, buffer, sizeof(buffer));
     params[1] = OSSL_PARAM_construct_end();
-    if (!EVP_KEYMGMT_get_params(pkey, params)) {
+    if (!EVP_PKEY_get_params(pkey, params)) {
         if (!OSSL_PARAM_modified(params) || params[0].return_size == 0)
             return 0;
         buf_sz = params[0].return_size;
@@ -2027,7 +2027,7 @@ int EVP_PKEY_get_bn_param(const EVP_PKEY *pkey, const char *key_name,
         params[0].data = buf;
         params[0].data_size = buf_sz;
 
-        if (!EVP_KEYMGMT_get_params(pkey, params))
+        if (!EVP_PKEY_get_params(pkey, params))
             goto err;
     }
     /* Fail if the param was not found */
