@@ -11,7 +11,7 @@ EVP_PKEY_set_utf8_string_param, EVP_PKEY_set_octet_string_param
 
  #include <openssl/evp.h>
 
- const OSSL_PARAM *EVP_PKEY_settable_params(EVP_PKEY *pkey);
+ const OSSL_PARAM *EVP_PKEY_settable_params(const EVP_PKEY *pkey);
  int EVP_PKEY_set_params(EVP_PKEY *pkey, OSSL_PARAM params[]);
  int EVP_PKEY_set_int_param(EVP_PKEY *pkey, const char *key_name, int in);
  int EVP_PKEY_set_size_t_param(EVP_PKEY *pkey, const char *key_name, size_t in);

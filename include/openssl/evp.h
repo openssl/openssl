@@ -1809,7 +1809,7 @@ int EVP_PKEY_get_octet_string_param(const EVP_PKEY *pkey, const char *key_name,
                                     unsigned char *buf, size_t max_buf_sz,
                                     size_t *out_sz);
 
-const OSSL_PARAM *EVP_PKEY_settable_params(EVP_PKEY *pkey);
+const OSSL_PARAM *EVP_PKEY_settable_params(const EVP_PKEY *pkey);
 int EVP_PKEY_set_params(EVP_PKEY *pkey, OSSL_PARAM params[]);
 int EVP_PKEY_set_int_param(EVP_PKEY *pkey, const char *key_name, int in);
 int EVP_PKEY_set_size_t_param(EVP_PKEY *pkey, const char *key_name, size_t in);

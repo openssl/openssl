@@ -2184,9 +2184,9 @@ int EVP_PKEY_set_octet_string_param(EVP_PKEY *pkey, const char *key_name,
 
 const OSSL_PARAM *EVP_PKEY_settable_params(const EVP_PKEY *pkey)
 {
-    return pkey != NULL
-        && evp_pkey_is_provided(pkey)
-        && EVP_KEYMGMT_settable_params(pkey->keymgmt);
+    return (pkey != NULL && evp_pkey_is_provided(pkey))
+        ? EVP_KEYMGMT_settable_params(pkey->keymgmt)
+        : NULL;
 }
 
 int EVP_PKEY_set_params(EVP_PKEY *pkey, OSSL_PARAM params[])
@@ -2202,9 +2202,9 @@ int EVP_PKEY_set_params(EVP_PKEY *pkey, OSSL_PARAM params[])
 
 const OSSL_PARAM *EVP_PKEY_gettable_params(const EVP_PKEY *pkey)
 {
-    return pkey != NULL
-        && evp_pkey_is_provided(pkey)
-        && EVP_KEYMGMT_gettable_params(pkey->keymgmt);
+    return (pkey != NULL && evp_pkey_is_provided(pkey))
+        ? EVP_KEYMGMT_gettable_params(pkey->keymgmt)
+        : NULL;
 }
 
 int EVP_PKEY_get_params(const EVP_PKEY *pkey, OSSL_PARAM params[])
