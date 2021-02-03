@@ -67,7 +67,8 @@ All other methods return 1 if a value associated with the key's I<key_name> was
 successfully returned, or 0 if there was an error.
 An error may be returned by methods EVP_PKEY_get_utf8_string_param() and
 EVP_PKEY_get_octet_string_param() if I<max_buf_sz> is not big enough to hold the
-value.
+value.  If I<out_sz> is not NULL, I<*out_sz> will be assigned the required
+buffer size to hold the value.
 
 =head1 EXAMPLES
 
