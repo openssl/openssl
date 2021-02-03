@@ -189,7 +189,7 @@ void *evp_keymgmt_util_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt)
      * operation cache.  In that case, we know that |i| is zero.
      */
     if (pk->dirty_cnt != pk->dirty_cnt_copy)
-        evp_keymgmt_util_clear_operation_cache(pk);
+        evp_keymgmt_util_clear_operation_cache(pk, 0);
 
     /* Add the new export to the operation cache */
     if (!evp_keymgmt_util_cache_keydata(pk, i, keymgmt, import_data.keydata)) {
