@@ -25,12 +25,8 @@
 
 void evp_md_ctx_clear_digest(EVP_MD_CTX *ctx, int force)
 {
-    EVP_MD_free(ctx->fetched_digest);
-    ctx->fetched_digest = NULL;
-    ctx->reqdigest = NULL;
-
     if (ctx->provctx != NULL) {
-        if (ctx->digest->freectx != NULL)
+        if (ctx->digest != NULL && ctx->digest->freectx != NULL)
             ctx->digest->freectx(ctx->provctx);
         ctx->provctx = NULL;
         EVP_MD_CTX_set_flags(ctx, EVP_MD_CTX_FLAG_CLEANED);
@@ -55,6 +51,11 @@ void evp_md_ctx_clear_digest(EVP_MD_CTX *ctx, int force)
     ENGINE_finish(ctx->engine);
     ctx->engine = NULL;
 #endif
+
+    /* Non legacy code, this has to be later than the ctx->digest cleaning */
+    EVP_MD_free(ctx->fetched_digest);
+    ctx->fetched_digest = NULL;
+    ctx->reqdigest = NULL;
 }
 
 /* This call frees resources associated with the context */
