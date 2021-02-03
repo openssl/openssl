@@ -462,7 +462,10 @@ install : install_sw install_ssldirs install_docs
         @ IF "$(DESTDIR)" .EQS. "" THEN -
              @{- sourcefile("VMS", "msg_install.com") -} "$(SYSTARTUP)" "{- $osslver -}"
         @ IF "$(DESTDIR)" .NES. "" THEN -
-             @{- sourcefile("VMS", "msg_staging.com") -} "$(SYSTARTUP)" "{- $osslver -}"
+             @{- sourcefile("VMS", "msg_staging.com") -} -
+             'installtop' 'datatop' "$(INSTALLTOP)" "$(OPENSSLDIR)" -
+             "$(SYSTARTUP)" "{- $osslver -}" -
+             
 
 check_install :
         spawn/nolog @ossl_installroot:[SYSTEST]openssl_ivp{- $osslver -}.com
