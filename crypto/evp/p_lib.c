@@ -1995,15 +1995,6 @@ int evp_pkey_downgrade(EVP_PKEY *pk)
 }
 #endif  /* FIPS_MODULE */
 
-const OSSL_PARAM *EVP_PKEY_gettable_params(const EVP_PKEY *pkey)
-{
-    if (pkey == NULL
-        || pkey->keymgmt == NULL
-        || pkey->keydata == NULL)
-        return 0;
-    return EVP_KEYMGMT_gettable_params(pkey->keymgmt);
-}
-
 int EVP_PKEY_get_bn_param(const EVP_PKEY *pkey, const char *key_name,
                           BIGNUM **bn)
 {
@@ -2023,7 +2014,7 @@ int EVP_PKEY_get_bn_param(const EVP_PKEY *pkey, const char *key_name,
     memset(buffer, 0, sizeof(buffer));
     params[0] = OSSL_PARAM_construct_BN(key_name, buffer, sizeof(buffer));
     params[1] = OSSL_PARAM_construct_end();
-    if (!evp_keymgmt_get_params(pkey->keymgmt, pkey->keydata, params)) {
+    if (!EVP_KEYMGMT_get_params(pkey, params)) {
         if (!OSSL_PARAM_modified(params) || params[0].return_size == 0)
             return 0;
         buf_sz = params[0].return_size;
@@ -2037,7 +2028,7 @@ int EVP_PKEY_get_bn_param(const EVP_PKEY *pkey, const char *key_name,
         params[0].data = buf;
         params[0].data_size = buf_sz;
 
-        if (!evp_keymgmt_get_params(pkey->keymgmt, pkey->keydata, params))
+        if (!EVP_KEYMGMT_get_params(pkey, params))
             goto err;
     }
     /* Fail if the param was not found */
@@ -2063,7 +2054,7 @@ int EVP_PKEY_get_octet_string_param(const EVP_PKEY *pkey, const char *key_name,
 
     params[0] = OSSL_PARAM_construct_octet_string(key_name, buf, max_buf_sz);
     params[1] = OSSL_PARAM_construct_end();
-    if (!evp_keymgmt_get_params(pkey->keymgmt, pkey->keydata, params)
+    if (!EVP_PKEY_get_params(pkey, params)
         || !OSSL_PARAM_modified(params))
         return 0;
     if (out_sz != NULL)
@@ -2085,7 +2076,7 @@ int EVP_PKEY_get_utf8_string_param(const EVP_PKEY *pkey, const char *key_name,
 
     params[0] = OSSL_PARAM_construct_utf8_string(key_name, str, max_buf_sz);
     params[1] = OSSL_PARAM_construct_end();
-    if (!evp_keymgmt_get_params(pkey->keymgmt, pkey->keydata, params)
+    if (!EVP_PKEY_get_params(pkey, params)
         || !OSSL_PARAM_modified(params))
         return 0;
     if (out_sz != NULL)
@@ -2106,10 +2097,8 @@ int EVP_PKEY_get_int_param(const EVP_PKEY *pkey, const char *key_name,
 
     params[0] = OSSL_PARAM_construct_int(key_name, out);
     params[1] = OSSL_PARAM_construct_end();
-    if (!evp_keymgmt_get_params(pkey->keymgmt, pkey->keydata, params)
-        || !OSSL_PARAM_modified(params))
-        return 0;
-    return 1;
+    return EVP_PKEY_get_params(pkey, params)
+        && OSSL_PARAM_modified(params);
 }
 
 int EVP_PKEY_get_size_t_param(const EVP_PKEY *pkey, const char *key_name,
@@ -2125,10 +2114,8 @@ int EVP_PKEY_get_size_t_param(const EVP_PKEY *pkey, const char *key_name,
 
     params[0] = OSSL_PARAM_construct_size_t(key_name, out);
     params[1] = OSSL_PARAM_construct_end();
-    if (!evp_keymgmt_get_params(pkey->keymgmt, pkey->keydata, params)
-        || !OSSL_PARAM_modified(params))
-        return 0;
-    return 1;
+    return EVP_PKEY_get_params(pkey, params)
+        && OSSL_PARAM_modified(params);
 }
 
 int EVP_PKEY_set_int_param(EVP_PKEY *pkey, const char *key_name, int in)
@@ -2235,6 +2222,20 @@ int EVP_PKEY_set_params(EVP_PKEY *pkey, OSSL_PARAM params[])
     if (ret)
         pkey->dirty_cnt++;
     return ret;
+}
+
+const OSSL_PARAM *EVP_PKEY_gettable_params(const EVP_PKEY *pkey)
+{
+    return pkey != NULL
+        && evp_pkey_is_provided(pkey)
+        && EVP_KEYMGMT_gettable_params(pkey->keymgmt);
+}
+
+int EVP_PKEY_get_params(const EVP_PKEY *pkey, OSSL_PARAM params[])
+{
+    return pkey != NULL
+        && evp_pkey_is_provided(pkey)
+        && evp_keymgmt_get_params(pkey->keymgmt, pkey->keydata, params);
 }
 
 #ifndef FIPS_MODULE
