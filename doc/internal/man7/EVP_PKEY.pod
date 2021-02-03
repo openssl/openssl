@@ -176,6 +176,8 @@ L<EVP_KEYMGMT(3)>, and sending that data to the L<EVP_KEYMGMT(3)> of
 the provider that's to perform the operation, using its
 OSSL_FUNC_keymgmt_import() function.
 
+=back
+
 =head2 Upgrading and downgrading a key
 
 An B<EVP_PKEY> with a legacy origin will I<never> be upgraded to
@@ -192,7 +194,7 @@ internal function L<evp_pkey_downgrade(3)>.
 
 I<Downgrading a key is understandably fragile>, and possibly surprising,
 and should therefore be done I<as little as possible>, but is needed
-to be able to support functions like L<EVP_PKEY_get0_RSA()>.
+to be able to support functions like L<EVP_PKEY_get0_RSA(3)>.
 The general recommendation is to use L<evp_pkey_copy_downgraded(3)>
 whenever possible, which it should be if the need for a legacy origin
 is only internal, or better yet, to remove the need for downgrade at
