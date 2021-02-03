@@ -2143,7 +2143,7 @@ int EVP_PKEY_set_int_param(EVP_PKEY *pkey, const char *key_name, int in)
 
     params[0] = OSSL_PARAM_construct_int(key_name, &in);
     params[1] = OSSL_PARAM_construct_end();
-    return evp_keymgmt_set_params(pkey->keymgmt, pkey->keydata, params);
+    return EVP_PKEY_set_params(pkey, params);
 }
 
 int EVP_PKEY_set_size_t_param(EVP_PKEY *pkey, const char *key_name, size_t in)
@@ -2158,7 +2158,7 @@ int EVP_PKEY_set_size_t_param(EVP_PKEY *pkey, const char *key_name, size_t in)
 
     params[0] = OSSL_PARAM_construct_size_t(key_name, &in);
     params[1] = OSSL_PARAM_construct_end();
-    return evp_keymgmt_set_params(pkey->keymgmt, pkey->keydata, params);
+    return EVP_PKEY_set_params(pkey, params);
 }
 
 int EVP_PKEY_set_bn_param(EVP_PKEY *pkey, const char *key_name, BIGNUM *bn)
@@ -2182,7 +2182,7 @@ int EVP_PKEY_set_bn_param(EVP_PKEY *pkey, const char *key_name, BIGNUM *bn)
         return 0;
     params[0] = OSSL_PARAM_construct_BN(key_name, buffer, bsize);
     params[1] = OSSL_PARAM_construct_end();
-    return evp_keymgmt_set_params(pkey->keymgmt, pkey->keydata, params);
+    return EVP_PKEY_set_params(pkey, params);
 }
 
 int EVP_PKEY_set_utf8_string_param(EVP_PKEY *pkey, const char *key_name,
@@ -2198,7 +2198,7 @@ int EVP_PKEY_set_utf8_string_param(EVP_PKEY *pkey, const char *key_name,
 
     params[0] = OSSL_PARAM_construct_utf8_string(key_name, str, 0);
     params[1] = OSSL_PARAM_construct_end();
-    return evp_keymgmt_set_params(pkey->keymgmt, pkey->keydata, params);
+    return EVP_PKEY_set_params(pkey, params);
 }
 
 int EVP_PKEY_set_octet_string_param(EVP_PKEY *pkey, const char *key_name,
@@ -2214,7 +2214,7 @@ int EVP_PKEY_set_octet_string_param(EVP_PKEY *pkey, const char *key_name,
 
     params[0] = OSSL_PARAM_construct_octet_string(key_name, buf, bsize);
     params[1] = OSSL_PARAM_construct_end();
-    return evp_keymgmt_set_params(pkey->keymgmt, pkey->keydata, params);
+    return EVP_PKEY_set_params(pkey, params);
 }
 
 const OSSL_PARAM *EVP_PKEY_settable_params(EVP_PKEY *pkey)
