@@ -48,19 +48,29 @@ static int test_spki_aid(X509_PUBKEY *pubkey, const char *filename)
         goto end;
 
     X509_ALGOR_get0(&oid, NULL, NULL, alg);
-    if (!TEST_true(OBJ_obj2txt(name, sizeof(name), oid, 0))
-        || !TEST_ptr(EVP_KEYMGMT_fetch(NULL, name, NULL)))
+    if (!TEST_true(OBJ_obj2txt(name, sizeof(name), oid, 0)))
         goto end;
 
     /*
      * We use an internal functions to ensure we have a provided key.
-     * Note that |keydata| should not be freed, as it's cached in |pkey|
+     * Note that |keydata| should not be freed, as it's cached in |pkey|.
+     * The |keymgmt|, however, should, as its reference count is incremented
+     * in this function.
      */
     if ((keydata = evp_pkey_export_to_provider(pkey, NULL,
                                                &keymgmt, NULL)) == NULL) {
         TEST_info("The public key found in '%s' doesn't have provider support."
                   "  Skipping...",
                   filename);
+        ret = 1;
+        goto end;
+    }
+
+    if (!TEST_true(EVP_KEYMGMT_is_a(keymgmt, name))) {
+        TEST_info("The AlgorithmID key type (%s) for the public key found in"
+                  " '%s' doesn't match the key type of the extracted public"
+                  " key.",
+                  name, filename);
         ret = 1;
         goto end;
     }
@@ -85,6 +95,7 @@ static int test_spki_aid(X509_PUBKEY *pubkey, const char *filename)
         ret = 1;
 
  end:
+    EVP_KEYMGMT_free(keymgmt);
     OPENSSL_free(algid_legacy);
     return ret;
 }
