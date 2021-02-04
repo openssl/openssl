@@ -38,8 +38,8 @@ static int group_field_tests(const EC_GROUP *group, BN_CTX *ctx)
         || !TEST_true(group->meth->field_inv(group, b, BN_value_one(), ctx))
         || !TEST_true(BN_is_one(b))
         /* (1/a)*a = 1 */
-        || !TEST_true(BN_pseudo_rand(a, BN_num_bits(group->field) - 1,
-                                     BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ANY))
+        || !TEST_true(BN_rand(a, BN_num_bits(group->field) - 1,
+                              BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ANY))
         || !TEST_true(group->meth->field_inv(group, b, a, ctx))
         || (group->meth->field_encode &&
             !TEST_true(group->meth->field_encode(group, a, a, ctx)))

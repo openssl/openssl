@@ -217,6 +217,7 @@ int BN_priv_rand_range(BIGNUM *r, const BIGNUM *range)
     return bnrand_range(PRIVATE, r, range, NULL);
 }
 
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 int BN_pseudo_rand(BIGNUM *rnd, int bits, int top, int bottom)
 {
     return BN_rand(rnd, bits, top, bottom);
@@ -226,6 +227,7 @@ int BN_pseudo_rand_range(BIGNUM *r, const BIGNUM *range)
 {
     return BN_rand_range(r, range);
 }
+# endif
 #endif
 
 /*
