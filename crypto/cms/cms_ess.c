@@ -115,7 +115,7 @@ int ess_check_signing_certs(CMS_SignerInfo *si, STACK_OF(X509) *chain)
 CMS_ReceiptRequest *CMS_ReceiptRequest_create0_ex(
     unsigned char *id, int idlen, int allorfirst,
     STACK_OF(GENERAL_NAMES) *receiptList, STACK_OF(GENERAL_NAMES) *receiptsTo,
-    OSSL_LIB_CTX *libctx, const char *propq)
+    OSSL_LIB_CTX *libctx, ossl_unused const char *propq)
 {
     CMS_ReceiptRequest *rr;
 

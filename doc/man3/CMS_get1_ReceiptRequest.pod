@@ -33,7 +33,8 @@ If I<receiptList> is NULL the allOrFirstTier option in I<receiptsFrom> is used
 and set to the value of the I<allorfirst> parameter. If I<receiptList> is not
 NULL the I<receiptList> option in I<receiptsFrom> is used. The I<receiptsTo>
 parameter specifies the I<receiptsTo> field value. The library context I<libctx>
-and the property query I<propq> are used when retrieving algorithms from providers.
+is used internally to find the public Random generator. I<propq> is currently
+unused.
 
 CMS_ReceiptRequest_create0() is similar to
 CMS_ReceiptRequest_create0_ex() but uses default values of NULL for the
