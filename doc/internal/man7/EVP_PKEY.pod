@@ -29,7 +29,7 @@ and it can take one of the following forms:
 =item legacy origin
 
 This is the form that an B<EVP_PKEY> in OpenSSL prior to 3.0 had.  The
-internal key in the B<EVP_PKEY> is a pointer to to the low-level key
+internal key in the B<EVP_PKEY> is a pointer to the low-level key
 types, such as B<RSA>, B<DSA> and B<EC>, or an engine driven
 structure, and is governed by an associated L<EVP_PKEY_METHOD(3)> and
 an L<EVP_PKEY_ASN1_METHOD(3)>.
@@ -181,9 +181,9 @@ OSSL_FUNC_keymgmt_import() function.
 =head2 Upgrading and downgrading a key
 
 An B<EVP_PKEY> with a legacy origin will I<never> be upgraded to
-become a an B<EVP_PKEY> with a provider native origin.  Instead, we
-have the operation cache as described above, that takes care of the
-needs of the diverse operation the application may want to perform.
+become an B<EVP_PKEY> with a provider native origin.  Instead, we have
+the operation cache as described above, that takes care of the needs
+of the diverse operation the application may want to perform.
 
 An B<EVP_PKEY> with a provider native origin, I<may> be downgraded to
 be I<transformed> into an B<EVP_PKEY> with a legacy origin.  Because
