@@ -143,7 +143,7 @@ char *opt_appname(const char *arg0)
     size_t len = strlen(prog);
 
     if (arg0 != NULL)
-        snprintf(prog + len, sizeof(prog) - len - 1, " %s", arg0);
+        BIO_snprintf(prog + len, sizeof(prog) - len - 1, " %s", arg0);
     return prog;
 }
 
