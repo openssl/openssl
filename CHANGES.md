@@ -35,7 +35,23 @@ OpenSSL 3.0
 
    *Tomáš Mráz*
 
- * Deprecate EVP_MD_CTX_set_update_fn() and EVP_MD_CTX_update_fn()
+ * Default key generation method for the regular 2-prime RSA keys was
+   changed to FIPS 186-4 B.3.6 method (Generation of Probable Primes with
+   Conditions Based on Auxiliary Probable Primes). This method is slower
+   than the original method.
+
+   *Shane Lontis*
+
+ * Deprecated the BN_is_prime_ex() and BN_is_prime_fasttest_ex() functions.
+   They are replaced with BN_check_prime() function that avoids possible
+   misuse and always defaults to at least 64 rounds of Miller-Rabin
+   primality test. At least 64 rounds of MR test are now also used for
+   all prime generation including the RSA key generation which increases
+   the key generation time especially for larger keys.
+
+   *Kurt Roeckx*
+
+ * Deprecated EVP_MD_CTX_set_update_fn() and EVP_MD_CTX_update_fn()
    as they are not useful with non-deprecated functions.
 
    *Rich Salz*
