@@ -1,58 +1,6 @@
-
-DEPEND[]= \
-         openssl-asn1parse.pod \
-         openssl-ca.pod \
-         openssl-ciphers.pod \
-         openssl-cmds.pod \
-         openssl-cmp.pod \
-         openssl-cms.pod \
-         openssl-crl2pkcs7.pod \
-         openssl-crl.pod \
-         openssl-dgst.pod \
-         openssl-dhparam.pod \
-         openssl-dsaparam.pod \
-         openssl-dsa.pod \
-         openssl-ecparam.pod \
-         openssl-ec.pod \
-         openssl-enc.pod \
-         openssl-engine.pod \
-         openssl-errstr.pod \
-         openssl-fipsinstall.pod \
-         openssl-gendsa.pod \
-         openssl-genpkey.pod \
-         openssl-genrsa.pod \
-         openssl-info.pod \
-         openssl-kdf.pod \
-         openssl-list.pod \
-         openssl-mac.pod \
-         openssl-nseq.pod \
-         openssl-ocsp.pod \
-         openssl-passwd.pod \
-         openssl-pkcs12.pod \
-         openssl-pkcs7.pod \
-         openssl-pkcs8.pod \
-         openssl-pkeyparam.pod \
-         openssl-pkey.pod \
-         openssl-pkeyutl.pod \
-         openssl-prime.pod \
-         openssl-rand.pod \
-         openssl-rehash.pod \
-         openssl-req.pod \
-         openssl-rsa.pod \
-         openssl-rsautl.pod \
-         openssl-s_client.pod \
-         openssl-sess_id.pod \
-         openssl-smime.pod \
-         openssl-speed.pod \
-         openssl-spkac.pod \
-         openssl-srp.pod \
-         openssl-s_server.pod \
-         openssl-s_time.pod \
-         openssl-storeutl.pod \
-         openssl-ts.pod \
-         openssl-verify.pod \
-         openssl-version.pod \
-         openssl-x509.pod
+# All .pod.in files are detected by build.info in the parent directory, and
+# turned into appropriate DEPEND and GENERATE lines.  All we need here are
+# the additional dependencies on ../perlvars.pm.
 
 DEPEND[openssl-asn1parse.pod]=../perlvars.pm
 DEPEND[openssl-ca.pod]=../perlvars.pm
@@ -107,6 +55,3 @@ DEPEND[openssl-ts.pod]=../perlvars.pm
 DEPEND[openssl-verify.pod]=../perlvars.pm
 DEPEND[openssl-version.pod]=../perlvars.pm
 DEPEND[openssl-x509.pod]=../perlvars.pm
-
-# All .pod.in files are detected by build.info in the parent directory, and
-# turned into appropriate GENERATE lines.
