@@ -179,7 +179,7 @@ static int test_x509_sig_aid(X509 *eecert, const char *ee_filename,
 
  end:
     EVP_MD_CTX_free(mdctx);
-    EVP_PKEY_CTX_free(pctx);
+    /* pctx is free by EVP_MD_CTX_free() */
     OPENSSL_free(algid_legacy);
     return ret;
 }
