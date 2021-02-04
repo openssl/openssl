@@ -1629,6 +1629,7 @@ static void evp_pkey_free_it(EVP_PKEY *x)
     /* internal function; x is never NULL */
 
     evp_keymgmt_util_clear_operation_cache(x, 1);
+    sk_OP_CACHE_ELEM_free(x->operation_cache);
 #ifndef FIPS_MODULE
     evp_pkey_free_legacy(x);
 #endif
@@ -1734,7 +1735,7 @@ void *evp_pkey_export_to_provider(EVP_PKEY *pk, OSSL_LIB_CTX *libctx,
 
 #ifndef FIPS_MODULE
     if (pk->pkey.ptr != NULL) {
-        size_t i = 0;
+        OP_CACHE_ELEM *op;
 
         /*
          * If the legacy "origin" hasn't changed since last time, we try
@@ -1744,7 +1745,7 @@ void *evp_pkey_export_to_provider(EVP_PKEY *pk, OSSL_LIB_CTX *libctx,
         if (pk->ameth->dirty_cnt(pk) == pk->dirty_cnt_copy) {
             if (!CRYPTO_THREAD_read_lock(pk->lock))
                 goto end;
-            i = evp_keymgmt_util_find_operation_cache_index(pk, tmp_keymgmt);
+            op = evp_keymgmt_util_find_operation_cache(pk, tmp_keymgmt);
 
             /*
              * If |tmp_keymgmt| is present in the operation cache, it means
@@ -1752,22 +1753,13 @@ void *evp_pkey_export_to_provider(EVP_PKEY *pk, OSSL_LIB_CTX *libctx,
              * token copies of the cached pointers, to have token success
              * values to return.
              */
-            if (i < OSSL_NELEM(pk->operation_cache)
-                && pk->operation_cache[i].keymgmt != NULL) {
-                keydata = pk->operation_cache[i].keydata;
+            if (op != NULL && op->keymgmt != NULL) {
+                keydata = op->keydata;
                 CRYPTO_THREAD_unlock(pk->lock);
                 goto end;
             }
             CRYPTO_THREAD_unlock(pk->lock);
         }
-
-        /*
-         * TODO(3.0) Right now, we assume we have ample space.  We will have
-         * to think about a cache aging scheme, though, if |i| indexes outside
-         * the array.
-         */
-        if (!ossl_assert(i < OSSL_NELEM(pk->operation_cache)))
-            goto end;
 
         /* Make sure that the keymgmt key type matches the legacy NID */
         if (!ossl_assert(EVP_KEYMGMT_is_a(tmp_keymgmt, OBJ_nid2sn(pk->type))))
@@ -1806,8 +1798,19 @@ void *evp_pkey_export_to_provider(EVP_PKEY *pk, OSSL_LIB_CTX *libctx,
         }
         EVP_KEYMGMT_free(tmp_keymgmt); /* refcnt-- */
 
+        /* Check to make sure some other thread didn't get there first */
+        op = evp_keymgmt_util_find_operation_cache(pk, tmp_keymgmt);
+        if (op != NULL && op->keymgmt != NULL) {
+            void *tmp_keydata = op->keydata;
+
+            CRYPTO_THREAD_unlock(pk->lock);
+            evp_keymgmt_freedata(tmp_keymgmt, keydata);
+            keydata = tmp_keydata;
+            goto end;
+        }
+
         /* Add the new export to the operation cache */
-        if (!evp_keymgmt_util_cache_keydata(pk, i, tmp_keymgmt, keydata)) {
+        if (!evp_keymgmt_util_cache_keydata(pk, tmp_keymgmt, keydata)) {
             CRYPTO_THREAD_unlock(pk->lock);
             evp_keymgmt_freedata(tmp_keymgmt, keydata);
             keydata = NULL;
@@ -1972,7 +1975,7 @@ int evp_pkey_downgrade(EVP_PKEY *pk)
          * reference count, so we need to decrement it, or there will be a
          * leak.
          */
-        evp_keymgmt_util_cache_keydata(pk, 0, tmp_copy.keymgmt,
+        evp_keymgmt_util_cache_keydata(pk, tmp_copy.keymgmt,
                                        tmp_copy.keydata);
         EVP_KEYMGMT_free(tmp_copy.keymgmt);
 

@@ -549,6 +549,23 @@ int evp_cipher_asn1_to_param_ex(EVP_CIPHER_CTX *c, ASN1_TYPE *type,
                                 evp_cipher_aead_asn1_params *params);
 
 /*
+ * To support transparent execution of operation in backends other
+ * than the "origin" key, we support transparent export/import to
+ * those providers, and maintain a cache of the imported keydata,
+ * so we don't need to redo the export/import every time we perform
+ * the same operation in that same provider.
+ * This requires that the "origin" backend (whether it's a legacy or a
+ * provider "origin") implements exports, and that the target provider
+ * has an EVP_KEYMGMT that implements import.
+ */
+typedef struct {
+    EVP_KEYMGMT *keymgmt;
+    void *keydata;
+} OP_CACHE_ELEM;
+
+DEFINE_STACK_OF(OP_CACHE_ELEM)
+
+/*
  * An EVP_PKEY can have the following states:
  *
  * untyped & empty:
@@ -644,18 +661,9 @@ struct evp_pkey_st {
      * those providers, and maintain a cache of the imported keydata,
      * so we don't need to redo the export/import every time we perform
      * the same operation in that same provider.
-     * This requires that the "origin" backend (whether it's a legacy or a
-     * provider "origin") implements exports, and that the target provider
-     * has an EVP_KEYMGMT that implements import.
-     *
-     * The cache limit is set at 10 different providers using the same
-     * "origin".  It's probably over the top, but is preferable to too
-     * few.
      */
-    struct {
-        EVP_KEYMGMT *keymgmt;
-        void *keydata;
-    } operation_cache[10];
+    STACK_OF(OP_CACHE_ELEM) *operation_cache;
+
     /*
      * We keep a copy of that "origin"'s dirty count, so we know if the
      * operation cache needs flushing.
@@ -726,10 +734,10 @@ EVP_PKEY *evp_keymgmt_util_make_pkey(EVP_KEYMGMT *keymgmt, void *keydata);
 int evp_keymgmt_util_export(const EVP_PKEY *pk, int selection,
                             OSSL_CALLBACK *export_cb, void *export_cbarg);
 void *evp_keymgmt_util_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt);
-size_t evp_keymgmt_util_find_operation_cache_index(EVP_PKEY *pk,
-                                                   EVP_KEYMGMT *keymgmt);
+OP_CACHE_ELEM *evp_keymgmt_util_find_operation_cache(EVP_PKEY *pk,
+                                                     EVP_KEYMGMT *keymgmt);
 int evp_keymgmt_util_clear_operation_cache(EVP_PKEY *pk, int locking);
-int evp_keymgmt_util_cache_keydata(EVP_PKEY *pk, size_t index,
+int evp_keymgmt_util_cache_keydata(EVP_PKEY *pk,
                                    EVP_KEYMGMT *keymgmt, void *keydata);
 void evp_keymgmt_util_cache_keyinfo(EVP_PKEY *pk);
 void *evp_keymgmt_util_fromdata(EVP_PKEY *target, EVP_KEYMGMT *keymgmt,

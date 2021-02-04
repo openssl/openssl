@@ -87,7 +87,7 @@ int evp_keymgmt_util_export(const EVP_PKEY *pk, int selection,
 void *evp_keymgmt_util_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt)
 {
     struct evp_keymgmt_util_try_import_data_st import_data;
-    size_t i = 0;
+    OP_CACHE_ELEM *op;
 
     /* Export to where? */
     if (keymgmt == NULL)
@@ -104,15 +104,14 @@ void *evp_keymgmt_util_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt)
     CRYPTO_THREAD_read_lock(pk->lock);
     /*
      * If the provider native "origin" hasn't changed since last time, we
-     * try to find our keymgmt in the operation cache.  If it has changed,
-     * |i| remains zero, and we will clear the cache further down.
+     * try to find our keymgmt in the operation cache.  If it has changed
+     * and our keymgmt isn't found, we will clear the cache further down.
      */
     if (pk->dirty_cnt == pk->dirty_cnt_copy) {
         /* If this key is already exported to |keymgmt|, no more to do */
-        i = evp_keymgmt_util_find_operation_cache_index(pk, keymgmt);
-        if (i < OSSL_NELEM(pk->operation_cache)
-            && pk->operation_cache[i].keymgmt != NULL) {
-            void *ret = pk->operation_cache[i].keydata;
+        op = evp_keymgmt_util_find_operation_cache(pk, keymgmt);
+        if (op != NULL && op->keymgmt != NULL) {
+            void *ret = op->keydata;
 
             CRYPTO_THREAD_unlock(pk->lock);
             return ret;
@@ -126,15 +125,6 @@ void *evp_keymgmt_util_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt)
      * that the method is unsupported.
      */
     if (pk->keymgmt->export == NULL)
-        return NULL;
-
-    /* Check that we have found an empty slot in the export cache */
-    /*
-     * TODO(3.0) Right now, we assume we have ample space.  We will have to
-     * think about a cache aging scheme, though, if |i| indexes outside the
-     * array.
-     */
-    if (!ossl_assert(i < OSSL_NELEM(pk->operation_cache)))
         return NULL;
 
     /*
@@ -168,10 +158,9 @@ void *evp_keymgmt_util_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt)
 
     CRYPTO_THREAD_write_lock(pk->lock);
     /* Check to make sure some other thread didn't get there first */
-    i = evp_keymgmt_util_find_operation_cache_index(pk, keymgmt);
-    if (i < OSSL_NELEM(pk->operation_cache)
-        && pk->operation_cache[i].keymgmt != NULL) {
-        void *ret = pk->operation_cache[i].keydata;
+    op = evp_keymgmt_util_find_operation_cache(pk, keymgmt);
+    if (op != NULL && op->keydata != NULL) {
+        void *ret = op->keydata;
 
         CRYPTO_THREAD_unlock(pk->lock);
 
@@ -192,7 +181,7 @@ void *evp_keymgmt_util_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt)
         evp_keymgmt_util_clear_operation_cache(pk, 0);
 
     /* Add the new export to the operation cache */
-    if (!evp_keymgmt_util_cache_keydata(pk, i, keymgmt, import_data.keydata)) {
+    if (!evp_keymgmt_util_cache_keydata(pk, keymgmt, import_data.keydata)) {
         evp_keymgmt_freedata(keymgmt, import_data.keydata);
         return NULL;
     }
@@ -205,22 +194,20 @@ void *evp_keymgmt_util_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt)
     return import_data.keydata;
 }
 
+static void op_cache_free(OP_CACHE_ELEM *e)
+{
+    evp_keymgmt_freedata(e->keymgmt, e->keydata);
+    EVP_KEYMGMT_free(e->keymgmt);
+    OPENSSL_free(e);
+}
+
 int evp_keymgmt_util_clear_operation_cache(EVP_PKEY *pk, int locking)
 {
-    size_t i, end = OSSL_NELEM(pk->operation_cache);
-
     if (pk != NULL) {
         if (locking && pk->lock != NULL && !CRYPTO_THREAD_write_lock(pk->lock))
             return 0;
-        for (i = 0; i < end && pk->operation_cache[i].keymgmt != NULL; i++) {
-            EVP_KEYMGMT *keymgmt = pk->operation_cache[i].keymgmt;
-            void *keydata = pk->operation_cache[i].keydata;
-
-            pk->operation_cache[i].keymgmt = NULL;
-            pk->operation_cache[i].keydata = NULL;
-            evp_keymgmt_freedata(keymgmt, keydata);
-            EVP_KEYMGMT_free(keymgmt);
-        }
+        sk_OP_CACHE_ELEM_pop_free(pk->operation_cache, op_cache_free);
+        pk->operation_cache = NULL;
         if (locking && pk->lock != NULL)
             CRYPTO_THREAD_unlock(pk->lock);
     }
@@ -228,28 +215,52 @@ int evp_keymgmt_util_clear_operation_cache(EVP_PKEY *pk, int locking)
     return 1;
 }
 
-size_t evp_keymgmt_util_find_operation_cache_index(EVP_PKEY *pk,
-                                                   EVP_KEYMGMT *keymgmt)
+OP_CACHE_ELEM *evp_keymgmt_util_find_operation_cache(EVP_PKEY *pk,
+                                                     EVP_KEYMGMT *keymgmt)
 {
-    size_t i, end = OSSL_NELEM(pk->operation_cache);
+    int i, end = sk_OP_CACHE_ELEM_num(pk->operation_cache);
+    OP_CACHE_ELEM *p;
 
-    for (i = 0; i < end && pk->operation_cache[i].keymgmt != NULL; i++) {
-        if (keymgmt == pk->operation_cache[i].keymgmt)
-            break;
+    /*
+     * A comparison and sk_P_CACHE_ELEM_find() are avoided to not cause
+     * problems when we've only a read lock.
+     */
+    for (i = 0; i < end; i++) {
+        p = sk_OP_CACHE_ELEM_value(pk->operation_cache, i);
+        if (keymgmt == p->keymgmt)
+            return p;
     }
-
-    return i;
+    return NULL;
 }
 
-int evp_keymgmt_util_cache_keydata(EVP_PKEY *pk, size_t index,
+int evp_keymgmt_util_cache_keydata(EVP_PKEY *pk,
                                    EVP_KEYMGMT *keymgmt, void *keydata)
 {
-    if (keydata != NULL) {
-        if (!EVP_KEYMGMT_up_ref(keymgmt))
-            return 0;
+    OP_CACHE_ELEM *p = NULL;
 
-        pk->operation_cache[index].keydata = keydata;
-        pk->operation_cache[index].keymgmt = keymgmt;
+    if (keydata != NULL) {
+        if (pk->operation_cache == NULL) {
+            pk->operation_cache = sk_OP_CACHE_ELEM_new_null();
+            if (pk->operation_cache == NULL)
+                return 0;
+        }
+
+        p = OPENSSL_malloc(sizeof(*p));
+        if (p == NULL)
+            return 0;
+        p->keydata = keydata;
+        p->keymgmt = keymgmt;
+
+        if (!EVP_KEYMGMT_up_ref(keymgmt)) {
+            OPENSSL_free(p);
+            return 0;
+        }
+
+        if (!sk_OP_CACHE_ELEM_push(pk->operation_cache, p)) {
+            EVP_KEYMGMT_free(keymgmt);
+            OPENSSL_free(p);
+            return 0;
+        }
     }
     return 1;
 }
