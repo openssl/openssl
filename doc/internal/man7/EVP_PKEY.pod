@@ -74,7 +74,7 @@ OpenSSL providers allow it for the following:
 
 =over 4
 
-=item DH, EC, ED25519, ED448, X25519, X448:
+=item DH, EC, X25519, X448:
 
 It's possible to set the encoded public key.  This is supported in
 particular through L<EVP_PKEY_set1_encoded_public_key(3)>.
@@ -107,7 +107,7 @@ vendors, can't be expected to share internal key structures.  There
 are therefore instances where key data will need to be exported to the
 provider that is going to perform the operation (this also implies
 that every provider that implements a key pair based operation must
-also implement am L<EVP_KEYMGMT(3)>).
+also implement an L<EVP_KEYMGMT(3)>).
 
 For performance reasons, libcrypto tries to minimize the need to
 perform such an export, so it maintains a cache of such exports in the
@@ -115,7 +115,7 @@ B<EVP_PKEY>.  Each cache entry has two items, a pointer to the
 provider side key data and the associated L<EVP_KEYMGMT(3)>.
 
 I<This cache is often referred to as the "operation key cache", and
-the key data that the cached keys came from as the "origin", and since
+the key data that the cached keys came from is the "origin", and since
 there are two forms of the latter, we have the "legacy origin" and the
 "provider native origin".>
 
@@ -128,7 +128,7 @@ For a provider native origin, this requires that the associated
 L<EVP_KEYMGMT(3)> implements the OSSL_FUNC_keymgmt_export() function
 (see L<provider-keymgmt(7)>).
 In all cases, the receiving L<EVP_KEYMGMT(3)> (the one associated with
-the exported key data) must implement OSSL_FUNC_keygmt_import().
+the exported key data) must implement OSSL_FUNC_keymgmt_import().
 
 If such caching isn't supported, the operations that can be performed
 with that key are limited to the same backend as the origin key
