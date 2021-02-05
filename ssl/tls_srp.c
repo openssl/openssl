@@ -11,6 +11,9 @@
  * for the EdelKey project.
  */
 
+/* We need to use the SRP deprecated APIs */
+#define OPENSSL_SUPPRESS_DEPRECATED
+
 #include <openssl/crypto.h>
 #include <openssl/rand.h>
 #include <openssl/err.h>

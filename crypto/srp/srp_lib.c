@@ -11,6 +11,9 @@
  * for the EdelKey project.
  */
 
+/* All the SRP APIs in this file are deprecated */
+#define OPENSSL_SUPPRESS_DEPRECATED
+
 #ifndef OPENSSL_NO_SRP
 # include "internal/cryptlib.h"
 # include <openssl/sha.h>
