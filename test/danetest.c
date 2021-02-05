@@ -82,7 +82,6 @@ static int verify_chain(SSL *ssl, STACK_OF(X509) *chain)
         ret = 0;
 
     SSL_set_verify_result(ssl, X509_STORE_CTX_get_error(store_ctx));
-    X509_STORE_CTX_cleanup(store_ctx);
 
 end:
     X509_STORE_CTX_free(store_ctx);
