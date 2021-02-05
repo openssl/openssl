@@ -239,17 +239,13 @@ static int verify_chain(X509_STORE_CTX *ctx)
 
 int X509_STORE_CTX_verify(X509_STORE_CTX *ctx)
 {
-    int ret;
-
     if (ctx == NULL) {
         ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
         return -1;
     }
     if (ctx->cert == NULL && sk_X509_num(ctx->untrusted) >= 1)
         ctx->cert = sk_X509_value(ctx->untrusted, 0);
-    ret = X509_verify_cert(ctx);
-    ctx->cert = NULL;
-    return ret;
+    return X509_verify_cert(ctx);
 }
 
 int X509_verify_cert(X509_STORE_CTX *ctx)
