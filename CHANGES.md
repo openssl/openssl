@@ -29,6 +29,12 @@ OpenSSL 3.0
 
    *Rich Salz*
 
+ * Deprecated the obsolete BN_pseudo_rand() and BN_pseudo_rand_range()
+   functions. They are identical to BN_rand() and BN_rand_range()
+   respectively.
+
+   *Tomáš Mráz*
+
  * Deprecated the obsolete X9.31 RSA key generation related functions
    BN_X931_generate_Xpq(), BN_X931_derive_prime_ex(), and
    BN_X931_generate_prime_ex().
