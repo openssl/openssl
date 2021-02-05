@@ -10,10 +10,10 @@
 #include <string.h>
 #include <openssl/crypto.h>
 #include <openssl/core_dispatch.h>
+#include <openssl/proverr.h>
 #include "prov/implementations.h"
 #include "prov/ciphercommon.h"
 #include "prov/providercommon.h"
-#include "prov/providercommonerr.h"
 
 typedef struct prov_cipher_null_ctx_st {
     int enc;

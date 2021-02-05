@@ -9,11 +9,11 @@
 
 /* Dispatch functions for gcm mode */
 
+#include <openssl/rand.h>
+#include <openssl/proverr.h>
 #include "prov/ciphercommon.h"
 #include "prov/ciphercommon_gcm.h"
 #include "prov/providercommon.h"
-#include "prov/providercommonerr.h"
-#include <openssl/rand.h>
 #include "prov/provider_ctx.h"
 
 static int gcm_tls_init(PROV_GCM_CTX *dat, unsigned char *aad, size_t aad_len);

@@ -12,10 +12,10 @@
 #include <openssl/crypto.h>
 #include <openssl/err.h>
 #include <openssl/rand.h>
+#include <openssl/proverr.h>
 #include "prov/provider_util.h"
 #include "internal/thread_once.h"
 #include "prov/providercommon.h"
-#include "prov/providercommonerr.h"
 #include "prov/implementations.h"
 #include "prov/provider_ctx.h"
 #include "drbg_local.h"

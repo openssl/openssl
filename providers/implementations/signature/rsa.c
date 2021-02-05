@@ -22,12 +22,12 @@
 #include <openssl/rsa.h>
 #include <openssl/params.h>
 #include <openssl/evp.h>
+#include <openssl/proverr.h>
 #include "internal/cryptlib.h"
 #include "internal/nelem.h"
 #include "internal/sizes.h"
 #include "crypto/rsa.h"
 #include "prov/providercommon.h"
-#include "prov/providercommonerr.h"
 #include "prov/implementations.h"
 #include "prov/provider_ctx.h"
 #include "prov/der_rsa.h"

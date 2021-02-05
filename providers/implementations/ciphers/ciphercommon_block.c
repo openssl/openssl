@@ -11,9 +11,9 @@
 /* For SSL3_VERSION, TLS1_VERSION etc */
 #include <openssl/ssl.h>
 #include <openssl/rand.h>
+#include <openssl/proverr.h>
 #include "internal/constant_time.h"
 #include "ciphercommon_local.h"
-#include "prov/providercommonerr.h"
 
 /* Functions defined in ssl/tls_pad.c */
 int ssl3_cbc_remove_padding_and_mac(size_t *reclen,

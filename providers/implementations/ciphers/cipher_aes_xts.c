@@ -15,10 +15,10 @@
  */
 #include "internal/deprecated.h"
 
+#include <openssl/proverr.h>
 #include "cipher_aes_xts.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
-#include "prov/providercommonerr.h"
 
 #define AES_XTS_FLAGS PROV_CIPHER_FLAG_CUSTOM_IV
 #define AES_XTS_IV_BITS 128

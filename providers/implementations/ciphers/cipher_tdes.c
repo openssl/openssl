@@ -13,11 +13,11 @@
  */
 #include "internal/deprecated.h"
 
+#include <openssl/rand.h>
+#include <openssl/proverr.h>
 #include "prov/ciphercommon.h"
 #include "cipher_tdes.h"
-#include <openssl/rand.h>
 #include "prov/implementations.h"
-#include "prov/providercommonerr.h"
 
 /*
  * NOTE: ECB mode does not use an IV - but existing test code is setting

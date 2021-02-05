@@ -13,10 +13,10 @@
 #include <openssl/evp.h>
 #include <openssl/params.h>
 #include <openssl/err.h>
+#include <openssl/proverr.h>
 #include "internal/sha3.h"
 #include "prov/digestcommon.h"
 #include "prov/implementations.h"
-#include "prov/providercommonerr.h"
 
 #define SHA3_FLAGS PROV_DIGEST_FLAG_ALGID_ABSENT
 #define SHAKE_FLAGS PROV_DIGEST_FLAG_XOF

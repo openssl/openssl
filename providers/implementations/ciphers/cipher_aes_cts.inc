@@ -9,8 +9,8 @@
 
 /* Dispatch functions for AES CBC CTS ciphers */
 
+#include <openssl/proverr.h>
 #include "cipher_aes_cts.h"
-#include "prov/providercommonerr.h"
 
 #define AES_CTS_FLAGS PROV_CIPHER_FLAG_CTS
 

@@ -12,10 +12,10 @@
 #include <openssl/params.h>
 #include <openssl/evp.h>
 #include <openssl/err.h>
+#include <openssl/proverr.h>
 
 #include "crypto/poly1305.h"
 
-#include "prov/providercommonerr.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 

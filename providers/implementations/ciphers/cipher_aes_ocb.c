@@ -14,9 +14,9 @@
  */
 #include "internal/deprecated.h"
 
+#include <openssl/proverr.h>
 #include "cipher_aes_ocb.h"
 #include "prov/providercommon.h"
-#include "prov/providercommonerr.h"
 #include "prov/ciphercommon_aead.h"
 #include "prov/implementations.h"
 

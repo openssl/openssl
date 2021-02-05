@@ -13,8 +13,8 @@
 #include <openssl/evp.h>
 #include <openssl/core_names.h>
 #include <openssl/err.h>
+#include <openssl/proverr.h>
 #include "prov/provider_util.h"
-#include "prov/providercommonerr.h"
 #include "internal/nelem.h"
 
 void ossl_prov_cipher_reset(PROV_CIPHER *pc)

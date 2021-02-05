@@ -13,10 +13,10 @@
 
 /* For SSL3_VERSION */
 #include <openssl/ssl.h>
+#include <openssl/proverr.h>
 #include "ciphercommon_local.h"
 #include "prov/provider_ctx.h"
 #include "prov/providercommon.h"
-#include "prov/providercommonerr.h"
 
 /*-
  * Generic cipher functions for OSSL_PARAM gettables and settables

@@ -24,6 +24,7 @@
 #include <openssl/params.h>
 #include <openssl/decoder.h>
 #include <openssl/store.h>       /* The OSSL_STORE_INFO type numbers */
+#include <openssl/proverr.h>
 #include "internal/cryptlib.h"
 #include "internal/o_dir.h"
 #include "crypto/pem.h"          /* For PVK and "blob" PEM headers */
@@ -31,7 +32,6 @@
 #include "prov/implementations.h"
 #include "prov/bio.h"
 #include "prov/provider_ctx.h"
-#include "prov/providercommonerr.h"
 #include "file_store_local.h"
 
 DEFINE_STACK_OF(OSSL_STORE_INFO)

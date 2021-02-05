@@ -12,11 +12,11 @@
 #include <openssl/core_names.h>
 #include <openssl/params.h>
 #include <openssl/err.h>
+#include <openssl/proverr.h>
 #include "internal/cryptlib.h"
 #include "crypto/ecx.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
-#include "prov/providercommonerr.h"
 #ifdef S390X_EC_ASM
 # include "s390x_arch.h"
 #endif

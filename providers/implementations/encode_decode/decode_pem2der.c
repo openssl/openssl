@@ -21,10 +21,10 @@
 #include <openssl/err.h>
 #include <openssl/params.h>
 #include <openssl/pem.h>
+#include <openssl/proverr.h>
 #include "internal/nelem.h"
 #include "prov/bio.h"
 #include "prov/implementations.h"
-#include "prov/providercommonerr.h"
 #include "endecoder_local.h"
 
 static int read_pem(PROV_CTX *provctx, OSSL_CORE_BIO *cin,

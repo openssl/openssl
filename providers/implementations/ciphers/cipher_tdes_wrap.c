@@ -15,11 +15,11 @@
 
 #include <openssl/sha.h>
 #include <openssl/rand.h>
+#include <openssl/proverr.h>
 #include "cipher_tdes_default.h"
 #include "crypto/evp.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
-#include "prov/providercommonerr.h"
 
 #define TDES_WRAP_FLAGS PROV_CIPHER_FLAG_CUSTOM_IV
 

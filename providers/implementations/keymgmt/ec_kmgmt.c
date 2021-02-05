@@ -20,11 +20,11 @@
 #include <openssl/bn.h>
 #include <openssl/err.h>
 #include <openssl/objects.h>
+#include <openssl/proverr.h>
 #include "crypto/bn.h"
 #include "crypto/ec.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
-#include "prov/providercommonerr.h"
 #include "prov/provider_ctx.h"
 #include "internal/param_build_set.h"
 

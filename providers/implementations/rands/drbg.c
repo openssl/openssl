@@ -13,13 +13,13 @@
 #include <openssl/rand.h>
 #include <openssl/evp.h>
 #include "crypto/rand.h"
+#include <openssl/proverr.h>
 #include "drbg_local.h"
 #include "internal/thread_once.h"
 #include "crypto/cryptlib.h"
 #include "prov/seeding.h"
 #include "crypto/rand_pool.h"
 #include "prov/provider_ctx.h"
-#include "prov/providercommonerr.h"
 #include "prov/providercommon.h"
 
 /*

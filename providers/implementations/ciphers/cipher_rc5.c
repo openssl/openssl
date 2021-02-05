@@ -15,10 +15,10 @@
  */
 #include "internal/deprecated.h"
 
+#include <openssl/proverr.h>
 #include "cipher_rc5.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
-#include "prov/providercommonerr.h"
 
 #define RC5_FLAGS PROV_CIPHER_FLAG_VARIABLE_LENGTH
 

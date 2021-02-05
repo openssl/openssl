@@ -7,9 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "openssl/err.h"
+#include <openssl/err.h>
+#include <openssl/proverr.h>
 #include "prov/digestcommon.h"
-#include "prov/providercommonerr.h"
 
 int digest_default_get_params(OSSL_PARAM params[], size_t blksz, size_t paramsz,
                               unsigned long flags)
