@@ -392,11 +392,11 @@ static int self_test_ka(const ST_KAT_KAS *t,
     kactx = EVP_PKEY_CTX_new_from_name(libctx, t->algorithm, "");
     if (kactx == NULL)
         goto err;
-    if (EVP_PKEY_key_fromdata_init(kactx) <= 0
-        || EVP_PKEY_fromdata(kactx, &pkey, params) <= 0)
+    if (EVP_PKEY_fromdata_init(kactx) <= 0
+        || EVP_PKEY_fromdata(kactx, &pkey, EVP_PKEY_KEYPAIR, params) <= 0)
         goto err;
-    if (EVP_PKEY_key_fromdata_init(kactx) <= 0
-        || EVP_PKEY_fromdata(kactx, &peerkey, params_peer) <= 0)
+    if (EVP_PKEY_fromdata_init(kactx) <= 0
+        || EVP_PKEY_fromdata(kactx, &peerkey, EVP_PKEY_KEYPAIR, params_peer) <= 0)
         goto err;
 
     /* Create a EVP_PKEY_CTX to perform key derivation */
@@ -464,8 +464,8 @@ static int self_test_sign(const ST_KAT_SIGN *t,
     kctx = EVP_PKEY_CTX_new_from_name(libctx, t->algorithm, "");
     if (kctx == NULL || params == NULL)
         goto err;
-    if (EVP_PKEY_key_fromdata_init(kctx) <= 0
-        || EVP_PKEY_fromdata(kctx, &pkey, params) <= 0)
+    if (EVP_PKEY_fromdata_init(kctx) <= 0
+        || EVP_PKEY_fromdata(kctx, &pkey, EVP_PKEY_KEYPAIR, params) <= 0)
         goto err;
 
     /* Create a EVP_PKEY_CTX to use for the signing operation */
@@ -546,8 +546,8 @@ static int self_test_asym_cipher(const ST_KAT_ASYM_CIPHER *t, OSSL_SELF_TEST *st
     keyctx = EVP_PKEY_CTX_new_from_name(libctx, t->algorithm, NULL);
     if (keyctx == NULL || keyparams == NULL)
         goto err;
-    if (EVP_PKEY_key_fromdata_init(keyctx) <= 0
-        || EVP_PKEY_fromdata(keyctx, &key, keyparams) <= 0)
+    if (EVP_PKEY_fromdata_init(keyctx) <= 0
+        || EVP_PKEY_fromdata(keyctx, &key, EVP_PKEY_KEYPAIR, keyparams) <= 0)
         goto err;
 
     /* Create a EVP_PKEY_CTX to use for the encrypt or decrypt operation */

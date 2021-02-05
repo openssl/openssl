@@ -58,6 +58,8 @@ const OPTIONS *test_get_options(void)
     return test_options;
 }
 
+#if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DSA)                       \
+    || !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_RSA)
 static int pkey_get_bn_bytes(EVP_PKEY *pkey, const char *name,
                              unsigned char **out, size_t *out_len)
 {
@@ -83,7 +85,10 @@ err:
     BN_free(bn);
     return 0;
 }
+#endif
 
+#if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DSA)                        \
+    || !defined(OPENSSL_NO_RSA)
 static int sig_gen(EVP_PKEY *pkey, OSSL_PARAM *params, const char *digest_name,
                    const unsigned char *msg, size_t msg_len,
                    unsigned char **sig_out, size_t *sig_out_len)
@@ -109,6 +114,7 @@ err:
     EVP_MD_CTX_free(md_ctx);
     return ret;
 }
+#endif
 
 #ifndef OPENSSL_NO_EC
 static int ecdsa_keygen_test(int id)
@@ -932,8 +938,8 @@ static int dh_create_pkey(EVP_PKEY **pkey, const char *group_name,
     if (!TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld))
         || !TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(libctx, "DH", NULL))
         || !TEST_true(EVP_PKEY_fromdata_init(ctx))
-        || !TEST_int_eq(EVP_PKEY_fromdata(ctx, pkey, EVP_PKEY_KEYPAIR, params),
-                        pass))
+        || !TEST_int_eq(EVP_PKEY_fromdata(ctx, pkey, EVP_PKEY_PUBLIC_KEY,
+                                          params), pass))
     goto err;
 
     ret = 1;
@@ -1006,6 +1012,7 @@ err:
 #endif /* OPENSSL_NO_DH */
 
 
+#ifndef OPENSSL_NO_RSA
 static EVP_PKEY *rsa_keygen(int bits)
 {
     EVP_PKEY *key = NULL;
@@ -1055,7 +1062,7 @@ static int rsa_create_pkey(EVP_PKEY **pkey,
     }
     if (!TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld))
         || !TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(libctx, "RSA", NULL))
-        || !TEST_true(EVP_PKEY_fromdata_init(ctx))
+        || !TEST_true(EVP_PKEY_key_fromdata_init(ctx))
         || !TEST_true(EVP_PKEY_fromdata(ctx, pkey, EVP_PKEY_KEYPAIR, params)))
         goto err;
 
@@ -1297,6 +1304,7 @@ err:
     BN_CTX_free(bn_ctx);
     return ret;
 }
+#endif /* OPENSSL_NO_RSA */
 
 static int self_test_events(const OSSL_PARAM params[], void *varg)
 {
@@ -1428,20 +1436,31 @@ int setup_tests(void)
         }
     }
 
-    if (!test_get_libctx(&libctx, &prov_null, config_file, NULL, NULL))
+    prov_null = OSSL_PROVIDER_load(NULL, "null");
+    if (prov_null == NULL) {
+        opt_printf_stderr("Failed to load null provider into default libctx\n");
         return 0;
+    }
 
+    libctx = OSSL_LIB_CTX_new();
+    if (libctx == NULL
+        || !OSSL_LIB_CTX_load_config(libctx, config_file)) {
+        opt_printf_stderr("Failed to load config\n");
+        return 0;
+    }
     OSSL_SELF_TEST_set_callback(libctx, self_test_events, &self_test_args);
 
     ADD_ALL_TESTS(cipher_enc_dec_test, OSSL_NELEM(cipher_enc_data));
     ADD_ALL_TESTS(aes_ccm_enc_dec_test, OSSL_NELEM(aes_ccm_enc_data));
     ADD_ALL_TESTS(aes_gcm_enc_dec_test, OSSL_NELEM(aes_gcm_enc_data));
 
+#ifndef OPENSSL_NO_RSA
     ADD_ALL_TESTS(rsa_keygen_test, OSSL_NELEM(rsa_keygen_data));
     ADD_ALL_TESTS(rsa_siggen_test, OSSL_NELEM(rsa_siggen_data));
     ADD_ALL_TESTS(rsa_sigver_test, OSSL_NELEM(rsa_sigver_data));
     ADD_ALL_TESTS(rsa_decryption_primitive_test,
                   OSSL_NELEM(rsa_decrypt_prim_data));
+#endif /* OPENSSL_NO_RSA */
 
 #ifndef OPENSSL_NO_DH
     ADD_ALL_TESTS(dh_safe_prime_keygen_test,

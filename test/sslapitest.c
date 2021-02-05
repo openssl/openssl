@@ -8210,7 +8210,7 @@ static EVP_PKEY *get_tmp_dh_params(void)
 
         pctx = EVP_PKEY_CTX_new_from_name(libctx, "DH", NULL);
         if (!TEST_ptr(pctx)
-                || !TEST_true(EVP_PKEY_key_fromdata_init(pctx)))
+                || !TEST_true(EVP_PKEY_fromdata_init(pctx)))
             goto end;
 
         tmpl = OSSL_PARAM_BLD_new();
@@ -8225,7 +8225,8 @@ static EVP_PKEY *get_tmp_dh_params(void)
 
         params = OSSL_PARAM_BLD_to_param(tmpl);
         if (!TEST_ptr(params)
-                || !TEST_true(EVP_PKEY_fromdata(pctx, &dhpkey, params)))
+                || !TEST_true(EVP_PKEY_fromdata(pctx, &dhpkey,
+                                                EVP_PKEY_KEY_PARAMETERS, params)))
             goto end;
 
         tmp_dh_params = dhpkey;
