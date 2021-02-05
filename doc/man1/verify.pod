@@ -745,6 +745,10 @@ Returned by the verify callback to indicate OCSP verification failed.
 Returned by the verify callback to indicate that the certificate is not recognized
 by the OCSP responder.
 
+=item B<X509_V_ERR_ACCESS_DENIED>
+
+Unused.
+
 =back
 
 =head1 BUGS

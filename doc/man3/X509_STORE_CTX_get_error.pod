@@ -304,6 +304,12 @@ happen if extended CRL checking is enabled.
 an application specific error. This will never be returned unless explicitly
 set by an application.
 
+=item B<X509_V_ERR_ACCESS_DENIED: access control denied access>
+
+The submitted certificate or PSK is valid, but access control (usually in an
+application) denied access for different reasons. This will never be returned
+unless explicitly set by an application.
+
 =back
 
 =head1 NOTES

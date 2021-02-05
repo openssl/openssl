@@ -189,6 +189,9 @@ void X509_STORE_CTX_set_depth(X509_STORE_CTX *ctx, int depth);
 # define         X509_V_ERR_UNSUPPORTED_SIGNATURE_ALGORITHM      78
 # define         X509_V_ERR_EC_KEY_EXPLICIT_PARAMS               79
 
+/* Denied by (usually application) access control */
+# define         X509_V_ERR_ACCESS_DENIED                        80
+
 /* Certificate verify flags */
 
 # if OPENSSL_API_COMPAT < 0x10100000L
