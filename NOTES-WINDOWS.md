@@ -89,8 +89,8 @@ variables.
 
 For VC-WIN32, the following defaults are use:
 
-    PREFIX:      %ProgramFiles(86)%\OpenSSL
-    OPENSSLDIR:  %CommonProgramFiles(86)%\SSL
+    PREFIX:      %ProgramFiles(x86)%\OpenSSL
+    OPENSSLDIR:  %CommonProgramFiles(x86)%\SSL
 
 For VC-WIN64, the following defaults are use:
 
