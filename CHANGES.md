@@ -45,9 +45,9 @@ OpenSSL 3.0
  * Deprecated the BN_is_prime_ex() and BN_is_prime_fasttest_ex() functions.
    They are replaced with the BN_check_prime() function that avoids possible
    misuse and always uses at least 64 rounds of the Miller-Rabin
-   primality test. At least 64 rounds of MR test are now also used for
-   all prime generation including the RSA key generation which increases
-   the key generation time especially for larger keys.
+   primality test. At least 64 rounds of the Miller-Rabin test are now also
+   used for all prime generation, including RSA key generation.
+   This increases key generation time, especially for larger keys.
 
    *Kurt Roeckx*
 
