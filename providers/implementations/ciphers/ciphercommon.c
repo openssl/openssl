@@ -191,7 +191,7 @@ static int cipher_generic_init_internal(PROV_CIPHER_CTX *ctx,
     if (key != NULL) {
         if (ctx->variable_keylength == 0) {
             if (keylen != ctx->keylen) {
-                ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEYLEN);
+                ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
                 return 0;
             }
         } else {
@@ -613,7 +613,7 @@ int ossl_cipher_generic_initiv(PROV_CIPHER_CTX *ctx, const unsigned char *iv,
 {
     if (ivlen != ctx->ivlen
         || ivlen > sizeof(ctx->iv)) {
-        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_IVLEN);
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_IV_LENGTH);
         return 0;
     }
     ctx->iv_set = 1;

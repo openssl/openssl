@@ -87,7 +87,7 @@ static int der_from_p8(unsigned char **new_der, long *new_der_len,
         size_t plen = 0;
 
         if (!pw_cb(pbuf, sizeof(pbuf), &plen, NULL, pw_cbarg)) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_READ_KEY);
+            ERR_raise(ERR_LIB_PROV, PROV_R_UNABLE_TO_GET_PASSPHRASE);
         } else {
             const X509_ALGOR *alg = NULL;
             const ASN1_OCTET_STRING *oct = NULL;

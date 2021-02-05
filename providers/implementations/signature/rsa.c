@@ -1245,7 +1245,7 @@ static int rsa_set_ctx_params(void *vprsactx, const OSSL_PARAM params[])
          * lowest saltlen number possible.
          */
         if (saltlen < RSA_PSS_SALTLEN_MAX) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_PSS_SALTLEN);
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_SALT_LENGTH);
             return 0;
         }
 
@@ -1253,7 +1253,8 @@ static int rsa_set_ctx_params(void *vprsactx, const OSSL_PARAM params[])
             switch (saltlen) {
             case RSA_PSS_SALTLEN_AUTO:
                 if (prsactx->operation == EVP_PKEY_OP_VERIFY) {
-                    ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_PSS_SALTLEN);
+                    ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_SALT_LENGTH,
+                                   "Cannot use autodetected salt length");
                     return 0;
                 }
                 break;

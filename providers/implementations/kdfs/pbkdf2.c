@@ -285,13 +285,13 @@ static int pbkdf2_derive(const char *pass, size_t passlen,
      * results in an overflow of the loop counter 'i'.
      */
     if ((keylen / mdlen) >= KDF_PBKDF2_MAX_KEY_LEN_DIGEST_RATIO) {
-        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LEN);
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
         return 0;
     }
 
     if (lower_bound_checks) {
         if ((keylen * 8) < KDF_PBKDF2_MIN_KEY_LEN_BITS) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LEN);
+            ERR_raise(ERR_LIB_PROV, PROV_R_KEY_SIZE_TOO_SMALL);
             return 0;
         }
         if (saltlen < KDF_PBKDF2_MIN_SALT_LEN) {

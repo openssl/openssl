@@ -96,7 +96,7 @@ static X509_SIG *p8info_to_encp8(PKCS8_PRIV_KEY_INFO *p8info,
 
     if (!ossl_pw_get_passphrase(kstr, sizeof(kstr), &klen, NULL, 1,
                                 &ctx->pwdata)) {
-        ERR_raise(ERR_LIB_PROV, PROV_R_READ_KEY);
+        ERR_raise(ERR_LIB_PROV, PROV_R_UNABLE_TO_GET_PASSPHRASE);
         return NULL;
     }
     /* First argument == -1 means "standard" */
