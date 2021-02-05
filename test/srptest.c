@@ -7,6 +7,12 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * SRP is deprecated, so we're going to have to use some deprecated APIs in
+ * order to test it.
+ */
+#define OPENSSL_SUPPRESS_DEPRECATED
+
 #include <openssl/opensslconf.h>
 # include "testutil.h"
 

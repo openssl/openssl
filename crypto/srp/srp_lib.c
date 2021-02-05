@@ -11,6 +11,12 @@
  * for the EdelKey project.
  */
 
+/*
+ * SRP low level APIs are deprecated for public use, but still ok for
+ * internal use.
+ */
+#include "internal/deprecated.h"
+
 #ifndef OPENSSL_NO_SRP
 # include "internal/cryptlib.h"
 # include <openssl/sha.h>
