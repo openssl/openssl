@@ -513,7 +513,7 @@ static int gcm_tls_cipher(PROV_GCM_CTX *ctx, unsigned char *out, size_t *padlen,
      * side only.
      */
     if (ctx->enc && ++ctx->tls_enc_records == 0) {
-        ERR_raise(ERR_LIB_PROV, EVP_R_TOO_MANY_RECORDS);
+        ERR_raise(ERR_LIB_PROV, PROV_R_TOO_MANY_RECORDS);
         goto err;
     }
 

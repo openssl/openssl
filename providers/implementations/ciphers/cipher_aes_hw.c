@@ -114,7 +114,7 @@ static int cipher_hw_aes_initkey(PROV_CIPHER_CTX *dat,
     }
 
     if (ret < 0) {
-        ERR_raise(ERR_LIB_PROV, PROV_R_AES_KEY_SETUP_FAILED);
+        ERR_raise(ERR_LIB_PROV, PROV_R_KEY_SETUP_FAILED);
         return 0;
     }
 

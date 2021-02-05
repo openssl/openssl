@@ -119,11 +119,11 @@ static int chacha20_poly1305_get_ctx_params(void *vctx, OSSL_PARAM params[])
             return 0;
         }
         if (!ctx->base.enc) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_TAG_NOTSET);
+            ERR_raise(ERR_LIB_PROV, PROV_R_TAG_NOT_SET);
             return 0;
         }
         if (p->data_size == 0 || p->data_size > POLY1305_BLOCK_SIZE) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_TAGLEN);
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_TAG_LENGTH);
             return 0;
         }
         memcpy(p->data, ctx->tag, p->data_size);
@@ -186,7 +186,7 @@ static int chacha20_poly1305_set_ctx_params(void *vctx,
             return 0;
         }
         if (p->data_size == 0 || p->data_size > POLY1305_BLOCK_SIZE) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_TAGLEN);
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_TAG_LENGTH);
             return 0;
         }
         if (p->data != NULL) {
@@ -220,7 +220,7 @@ static int chacha20_poly1305_set_ctx_params(void *vctx,
             return 0;
         }
         if (hw->tls_iv_set_fixed(&ctx->base, p->data, p->data_size) == 0) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_IVLEN);
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_IV_LENGTH);
             return 0;
         }
     }
