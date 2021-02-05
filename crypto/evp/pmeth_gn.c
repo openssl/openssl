@@ -345,22 +345,17 @@ static int fromdata_init(EVP_PKEY_CTX *ctx, int operation)
     return -2;
 }
 
-int EVP_PKEY_param_fromdata_init(EVP_PKEY_CTX *ctx)
+int EVP_PKEY_fromdata_init(EVP_PKEY_CTX *ctx)
 {
-    return fromdata_init(ctx, EVP_PKEY_OP_PARAMFROMDATA);
+    return fromdata_init(ctx, EVP_PKEY_OP_FROMDATA);
 }
 
-int EVP_PKEY_key_fromdata_init(EVP_PKEY_CTX *ctx)
-{
-    return fromdata_init(ctx, EVP_PKEY_OP_KEYFROMDATA);
-}
-
-int EVP_PKEY_fromdata(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey, OSSL_PARAM params[])
+int EVP_PKEY_fromdata(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey, int selection,
+                      OSSL_PARAM params[])
 {
     void *keydata = NULL;
-    int selection;
 
-    if (ctx == NULL || (ctx->operation & EVP_PKEY_OP_TYPE_FROMDATA) == 0) {
+    if (ctx == NULL || (ctx->operation & EVP_PKEY_OP_FROMDATA) == 0) {
         ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
         return -2;
     }
@@ -376,40 +371,17 @@ int EVP_PKEY_fromdata(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey, OSSL_PARAM params[])
         return -1;
     }
 
-    if (ctx->operation == EVP_PKEY_OP_PARAMFROMDATA)
-        selection = OSSL_KEYMGMT_SELECT_ALL_PARAMETERS;
-    else
-        selection = OSSL_KEYMGMT_SELECT_ALL;
-    keydata = evp_keymgmt_util_fromdata(*ppkey, ctx->keymgmt, selection,
-                                        params);
-
+    keydata = evp_keymgmt_util_fromdata(*ppkey, ctx->keymgmt, selection, params);
     if (keydata == NULL)
         return 0;
     /* keydata is cached in *ppkey, so we need not bother with it further */
     return 1;
 }
 
-/*
- * TODO(3.0) Re-evaluate the names, it's possible that we find these to be
- * better:
- *
- * EVP_PKEY_param_settable()
- * EVP_PKEY_param_gettable()
- */
-const OSSL_PARAM *EVP_PKEY_param_fromdata_settable(EVP_PKEY_CTX *ctx)
+const OSSL_PARAM *EVP_PKEY_fromdata_settable(EVP_PKEY_CTX *ctx, int selection)
 {
     /* We call fromdata_init to get ctx->keymgmt populated */
-    if (fromdata_init(ctx, EVP_PKEY_OP_UNDEFINED))
-        return evp_keymgmt_import_types(ctx->keymgmt,
-                                        OSSL_KEYMGMT_SELECT_ALL_PARAMETERS);
-    return NULL;
-}
-
-const OSSL_PARAM *EVP_PKEY_key_fromdata_settable(EVP_PKEY_CTX *ctx)
-{
-    /* We call fromdata_init to get ctx->keymgmt populated */
-    if (fromdata_init(ctx, EVP_PKEY_OP_UNDEFINED))
-        return evp_keymgmt_import_types(ctx->keymgmt,
-                                        OSSL_KEYMGMT_SELECT_ALL);
+    if (fromdata_init(ctx, EVP_PKEY_OP_UNDEFINED) == 1)
+        return evp_keymgmt_import_types(ctx->keymgmt, selection);
     return NULL;
 }

@@ -4798,11 +4798,7 @@ X509_add_certs                          ?	3_0_0	EXIST::FUNCTION:
 X509_STORE_load_file                    ?	3_0_0	EXIST::FUNCTION:
 X509_STORE_load_path                    ?	3_0_0	EXIST::FUNCTION:
 X509_STORE_load_store                   ?	3_0_0	EXIST::FUNCTION:
-EVP_PKEY_param_fromdata_init            ?	3_0_0	EXIST::FUNCTION:
-EVP_PKEY_key_fromdata_init              ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_fromdata                       ?	3_0_0	EXIST::FUNCTION:
-EVP_PKEY_param_fromdata_settable        ?	3_0_0	EXIST::FUNCTION:
-EVP_PKEY_key_fromdata_settable          ?	3_0_0	EXIST::FUNCTION:
 EVP_ASYM_CIPHER_free                    ?	3_0_0	EXIST::FUNCTION:
 EVP_ASYM_CIPHER_up_ref                  ?	3_0_0	EXIST::FUNCTION:
 EVP_ASYM_CIPHER_provider                ?	3_0_0	EXIST::FUNCTION:
@@ -5300,3 +5296,5 @@ EVP_PKEY_set_octet_string_param         ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_get_ec_point_conv_form         ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_get_field_type                 ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_get_params                     ?	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_fromdata_init                  ?	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_fromdata_settable              ?	3_0_0	EXIST::FUNCTION:

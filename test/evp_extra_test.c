@@ -496,8 +496,9 @@ static int test_fromdata(char *keytype, OSSL_PARAM *params)
 
     if (!TEST_ptr(pctx = EVP_PKEY_CTX_new_from_name(testctx, keytype, NULL)))
         goto err;
-    if (!TEST_int_gt(EVP_PKEY_key_fromdata_init(pctx), 0)
-        || !TEST_int_gt(EVP_PKEY_fromdata(pctx, &pkey, params), 0))
+    if (!TEST_int_gt(EVP_PKEY_fromdata_init(pctx), 0)
+        || !TEST_int_gt(EVP_PKEY_fromdata(pctx, &pkey, EVP_PKEY_KEYPAIR,
+                                          params), 0))
         goto err;
 
     if (!TEST_ptr(pkey))
@@ -1954,8 +1955,9 @@ static int test_DSA_get_set_params(void)
     if (!TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld)))
         goto err;
 
-    if (!TEST_int_gt(EVP_PKEY_key_fromdata_init(pctx), 0)
-        || !TEST_int_gt(EVP_PKEY_fromdata(pctx, &pkey, params), 0))
+    if (!TEST_int_gt(EVP_PKEY_fromdata_init(pctx), 0)
+        || !TEST_int_gt(EVP_PKEY_fromdata(pctx, &pkey, EVP_PKEY_KEYPAIR,
+                                          params), 0))
         goto err;
 
     if (!TEST_ptr(pkey))
@@ -2014,8 +2016,9 @@ static int test_RSA_get_set_params(void)
     if (!TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld)))
         goto err;
 
-    if (!TEST_int_gt(EVP_PKEY_key_fromdata_init(pctx), 0)
-        || !TEST_int_gt(EVP_PKEY_fromdata(pctx, &pkey, params), 0))
+    if (!TEST_int_gt(EVP_PKEY_fromdata_init(pctx), 0)
+        || !TEST_int_gt(EVP_PKEY_fromdata(pctx, &pkey, EVP_PKEY_KEYPAIR,
+                                          params), 0))
         goto err;
 
     if (!TEST_ptr(pkey))
