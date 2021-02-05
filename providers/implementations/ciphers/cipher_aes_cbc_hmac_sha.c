@@ -18,6 +18,7 @@
 
 /* Only for SSL3_VERSION and TLS1_VERSION */
 #include <openssl/ssl.h>
+#include <openssl/proverr.h>
 #include "cipher_aes_cbc_hmac_sha.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
@@ -28,7 +29,6 @@ const OSSL_DISPATCH ossl_##nm##kbits##sub##_functions[] = {                    \
     { 0, NULL }                                                                \
 };
 #else
-# include "prov/providercommonerr.h"
 
 /* TODO(3.0) Figure out what flags are required */
 # define AES_CBC_HMAC_SHA_FLAGS (EVP_CIPH_CBC_MODE                             \

@@ -15,12 +15,12 @@
 #include <openssl/err.h>
 #include <openssl/rand.h>
 #include <openssl/core_dispatch.h>
+#include <openssl/proverr.h>
 #include "internal/thread_once.h"
 #include "prov/providercommon.h"
 #include "prov/provider_ctx.h"
 #include "prov/provider_util.h"
 #include "prov/implementations.h"
-#include "prov/providercommonerr.h"
 #include "drbg_local.h"
 
 static OSSL_FUNC_rand_newctx_fn drbg_hash_new_wrapper;

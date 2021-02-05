@@ -13,12 +13,12 @@
 #include <openssl/err.h>
 #include <openssl/rand.h>
 #include <openssl/aes.h>
+#include <openssl/proverr.h>
 #include "e_os.h" /* strcasecmp */
 #include "crypto/modes.h"
 #include "internal/thread_once.h"
 #include "prov/implementations.h"
 #include "prov/provider_ctx.h"
-#include "prov/providercommonerr.h"
 #include "drbg_local.h"
 
 static OSSL_FUNC_rand_newctx_fn drbg_ctr_new_wrapper;

@@ -25,12 +25,12 @@
 #include <openssl/dh.h>
 #include <openssl/dsa.h>
 #include <openssl/ec.h>
+#include <openssl/proverr.h>
 #include "internal/passphrase.h"
 #include "internal/cryptlib.h"
 #include "crypto/ecx.h"
 #include "crypto/rsa.h"
 #include "prov/implementations.h"
-#include "prov/providercommonerr.h"
 #include "prov/bio.h"
 #include "prov/provider_ctx.h"
 #include "prov/der_rsa.h"

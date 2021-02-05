@@ -13,12 +13,12 @@
  */
 #include "internal/deprecated.h"
 
+#include <openssl/rand.h>
+#include <openssl/proverr.h>
 #include "prov/ciphercommon.h"
 #include "cipher_des.h"
-#include <openssl/rand.h>
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
-#include "prov/providercommonerr.h"
 
 /* TODO(3.0) Figure out what flags need to be here */
 #define DES_FLAGS (EVP_CIPH_RAND_KEY)

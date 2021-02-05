@@ -16,9 +16,9 @@
 #include <openssl/evp.h>
 #include <openssl/err.h>
 #include <openssl/randerr.h>
+#include <openssl/proverr.h>
 #include "prov/implementations.h"
 #include "prov/provider_ctx.h"
-#include "prov/providercommonerr.h"
 #include "crypto/rand.h"
 #include "crypto/rand_pool.h"
 

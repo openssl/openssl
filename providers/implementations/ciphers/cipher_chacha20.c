@@ -9,10 +9,10 @@
 
 /* Dispatch functions for chacha20 cipher */
 
+#include <openssl/proverr.h>
 #include "cipher_chacha20.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
-#include "prov/providercommonerr.h"
 
 #define CHACHA20_KEYLEN (CHACHA_KEY_SIZE)
 #define CHACHA20_BLKLEN (1)

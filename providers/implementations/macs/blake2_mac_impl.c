@@ -10,10 +10,10 @@
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
 #include <openssl/params.h>
+#include <openssl/proverr.h>
 
 #include "prov/blake2.h"
 #include "internal/cryptlib.h"
-#include "prov/providercommonerr.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 

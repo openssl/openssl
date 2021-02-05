@@ -15,10 +15,10 @@
  */
 #include "internal/deprecated.h"
 
+#include <openssl/proverr.h>
 #include "cipher_rc5.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
-#include "prov/providercommonerr.h"
 
 static OSSL_FUNC_cipher_freectx_fn rc5_freectx;
 static OSSL_FUNC_cipher_dupctx_fn rc5_dupctx;

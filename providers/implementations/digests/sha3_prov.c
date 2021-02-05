@@ -13,10 +13,10 @@
 #include <openssl/evp.h>
 #include <openssl/params.h>
 #include <openssl/err.h>
+#include <openssl/proverr.h>
 #include "internal/sha3.h"
 #include "prov/digestcommon.h"
 #include "prov/implementations.h"
-#include "prov/providercommonerr.h"
 
 /*
  * Forward declaration of any unique methods implemented here. This is not strictly

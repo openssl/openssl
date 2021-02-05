@@ -15,10 +15,10 @@
  */
 #include "internal/deprecated.h"
 
+#include <openssl/proverr.h>
 #include "cipher_rc4_hmac_md5.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
-#include "prov/providercommonerr.h"
 
 /* TODO(3.0) Figure out what flags are required */
 #define RC4_HMAC_MD5_FLAGS (EVP_CIPH_STREAM_CIPHER | EVP_CIPH_VARIABLE_LENGTH  \

@@ -22,6 +22,7 @@
 #include <openssl/pem.h>         /* PEM_BUFSIZE and public PEM functions */
 #include <openssl/pkcs12.h>
 #include <openssl/x509.h>
+#include <openssl/proverr.h>
 #include "internal/cryptlib.h"   /* ossl_assert() */
 #include "internal/asn1.h"
 #include "crypto/dh.h"
@@ -31,7 +32,6 @@
 #include "crypto/rsa.h"
 #include "prov/bio.h"
 #include "prov/implementations.h"
-#include "prov/providercommonerr.h"
 #include "endecoder_local.h"
 
 #define SET_ERR_MARK() ERR_set_mark()
