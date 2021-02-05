@@ -504,8 +504,8 @@ sub add {
 
 =item B<< $ordinals->add_alias SOURCE, ALIAS, NAME, LIST >>
 
-Adds an alias ALIAS for the symbol NAME, and a set of C macros in LIST
-that are expected to be defined or undefined to use this symbol, if any.
+Adds an alias ALIAS for the symbol NAME from file SOURCE, and a set of C macros
+in LIST that are expected to be defined or undefined to use this symbol, if any.
 For undefined macros, they each must be prefixed with a C<!>.
 
 If this symbol already exists in loaded data, it will be rewritten using
@@ -751,7 +751,7 @@ Available options are:
 
 =item B<< source => FILENAME >>, B<< from => STRING >>
 
-This will create a new item, filled with data coming from STRING.
+This will create a new item from FILENAME, filled with data coming from STRING.
 
 STRING must conform to the following EBNF description:
 
@@ -772,7 +772,7 @@ STRING must conform to the following EBNF description:
 
 (C<letter> and C<digit> are assumed self evident)
 
-=item B<< source => STRING >>, B<< name => STRING >>, B<< number => NUMBER >>,
+=item B<< source => FILENAME >>, B<< name => STRING >>, B<< number => NUMBER >>,
       B<< version => STRING >>, B<< exists => BOOLEAN >>, B<< type => STRING >>,
       B<< platforms => HASHref >>, B<< features => LISTref >>
 
