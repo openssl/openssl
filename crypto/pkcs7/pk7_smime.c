@@ -289,7 +289,6 @@ int PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store,
             i = X509_verify_cert(cert_ctx);
             if (i <= 0)
                 j = X509_STORE_CTX_get_error(cert_ctx);
-            X509_STORE_CTX_cleanup(cert_ctx);
             if (i <= 0) {
                 ERR_raise_data(ERR_LIB_PKCS7, PKCS7_R_CERTIFICATE_VERIFY_ERROR,
                                "Verify error: %s",

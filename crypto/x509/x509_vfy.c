@@ -1317,7 +1317,7 @@ static void crl_akid_check(X509_STORE_CTX *ctx, X509_CRL *crl,
  */
 static int check_crl_path(X509_STORE_CTX *ctx, X509 *x)
 {
-    X509_STORE_CTX crl_ctx;
+    X509_STORE_CTX crl_ctx = {0};
     int ret;
 
     /* Don't allow recursive CRL path validation */
@@ -2313,6 +2313,12 @@ int X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
 {
     int ret = 1;
 
+    if (ctx == NULL) {
+        ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    X509_STORE_CTX_cleanup(ctx);
+
     ctx->store = store;
     ctx->cert = x509;
     ctx->untrusted = chain;
@@ -2340,7 +2346,7 @@ int X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
     if (store != NULL)
         ctx->cleanup = store->cleanup;
     else
-        ctx->cleanup = 0;
+        ctx->cleanup = NULL;
 
     if (store != NULL && store->check_issued != NULL)
         ctx->check_issued = store->check_issued;
@@ -2463,7 +2469,7 @@ void X509_STORE_CTX_cleanup(X509_STORE_CTX *ctx)
      * calls cleanup() for the same object twice!  Thus we must zero the
      * pointers below after they're freed!
      */
-    /* Seems to always be 0 in OpenSSL, do this at most once. */
+    /* Seems to always be NULL in OpenSSL, do this at most once. */
     if (ctx->cleanup != NULL) {
         ctx->cleanup(ctx);
         ctx->cleanup = NULL;
