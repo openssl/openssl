@@ -445,6 +445,7 @@ my @disablables = (
     "poly1305",
     "posix-io",
     "psk",
+    "quic",
     "rc2",
     "rc4",
     "rc5",
@@ -617,6 +618,7 @@ my @disable_cascades = (
     "legacy"                 => [ "md2" ],
 
     "cmp"               => [ "crmf" ],
+    "tls1_3"            => [ "quic" ],
 
     sub { $disabled{"deprecated-3.0"} }
           => [ "engine" ]

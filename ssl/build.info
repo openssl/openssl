@@ -39,5 +39,9 @@ IF[{- !$disabled{'deprecated-3.0'} -}]
 ENDIF
 DEFINE[../libssl]=$AESDEF
 
+IF[{- !$disabled{quic} -}]
+  SOURCE[../libssl]=ssl_quic.c statem/statem_quic.c
+ENDIF
+
 SOURCE[../providers/libcommon.a]=record/tls_pad.c
 SOURCE[../providers/libimplementations.a]=s3_cbc.c
