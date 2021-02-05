@@ -377,8 +377,13 @@ NODEBUG=@
         $(NODEBUG) !
         $(NODEBUG) ! Installation logical names
         $(NODEBUG) !
-        $(NODEBUG) installtop = F$PARSE(staging_instdir,"$(INSTALLTOP)","[]A.;",,"SYNTAX_ONLY,NO_CONCEAL") - ".][000000" - "[000000." - "][" - "]A.;" + ".]"
-        $(NODEBUG) datatop = F$PARSE(staging_datadir,"$(OPENSSLDIR)","[]A.;",,"SYNTAX_ONLY,NO_CONCEAL") - ".][000000" - "[000000." - "][" - "]A.;" + ".]"
+        $(NODEBUG) ! This also creates a few DCL variables that are used for
+        $(NODEBUG) ! the "install_msg" target.
+        $(NODEBUG) !
+        $(NODEBUG) installroot = F$PARSE(staging_instdir,"$(INSTALLTOP)","[]A.;",,"SYNTAX_ONLY,NO_CONCEAL") - ".][000000" - "[000000." - "][" - "]A.;"
+        $(NODEBUG) installtop = installroot + ".]"
+        $(NODEBUG) dataroot = F$PARSE(staging_datadir,"$(OPENSSLDIR)","[]A.;",,"SYNTAX_ONLY,NO_CONCEAL") - ".][000000" - "[000000." - "][" - "]A.;"
+        $(NODEBUG) datatop = dataroot + ".]"
         $(NODEBUG) DEFINE ossl_installroot 'installtop'
         $(NODEBUG) DEFINE ossl_dataroot 'datatop'
         $(NODEBUG) !
@@ -455,7 +460,10 @@ list-tests :
         @ WRITE SYS$OUTPUT "Tests are not supported with your chosen Configure options"
         @ ! {- output_on() if !$disabled{tests}; "" -}
 
-install : install_sw install_ssldirs install_docs
+install : install_sw install_ssldirs install_docs install_msg
+        @ !
+
+install_msg :
         @ WRITE SYS$OUTPUT ""
         @ WRITE SYS$OUTPUT "######################################################################"
         @ WRITE SYS$OUTPUT ""
@@ -463,7 +471,7 @@ install : install_sw install_ssldirs install_docs
              @{- sourcefile("VMS", "msg_install.com") -} "$(SYSTARTUP)" "{- $osslver -}"
         @ IF "$(DESTDIR)" .NES. "" THEN -
              @{- sourcefile("VMS", "msg_staging.com") -} -
-             'installtop' 'datatop' "$(INSTALLTOP)" "$(OPENSSLDIR)" -
+             "''installroot']" "''dataroot']" "$(INSTALLTOP)" "$(OPENSSLDIR)" -
              "$(SYSTARTUP)" "{- $osslver -}" -
              
 
