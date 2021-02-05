@@ -27,7 +27,8 @@ information
 
 =head1 DESCRIPTION
 
-These functions are typically called after X509_verify_cert() has indicated
+These functions are typically called after certificate or chain verification
+using L<X509_verify_cert(3)> or L<X509_STORE_CTX_verify(3)> has indicated
 an error or in a verification callback to determine the nature of an error.
 
 X509_STORE_CTX_get_error() returns the error code of B<ctx>, see
@@ -65,10 +66,9 @@ X509_STORE_CTX_get0_cert() retrieves an internal pointer to the
 certificate being verified by the B<ctx>.
 
 X509_STORE_CTX_get1_chain() returns a complete validate chain if a previous
-call to X509_verify_cert() is successful. If the call to X509_verify_cert()
-is B<not> successful the returned chain may be incomplete or invalid. The
-returned chain persists after the B<ctx> structure is freed, when it is
-no longer needed it should be free up using:
+verification is successful. Otherwise the returned chain may be incomplete or
+invalid. The returned chain persists after the B<ctx> structure is freed,
+when it is no longer needed it should be free up using:
 
  sk_X509_pop_free(chain, X509_free);
 
@@ -459,7 +459,7 @@ thread safe but will never happen unless an invalid code is passed.
 
 =head1 SEE ALSO
 
-L<X509_verify_cert(3)>,
+L<X509_verify_cert(3)>, L<X509_STORE_CTX_verify(3)>,
 L<X509_up_ref(3)>,
 L<X509_free(3)>.
 

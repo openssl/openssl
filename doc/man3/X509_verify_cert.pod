@@ -20,7 +20,7 @@ The verification context, of type B<X509_STORE_CTX>, can be constructed
 using L<X509_STORE_CTX_new(3)> and L<X509_STORE_CTX_init(3)>.
 It usually includes a target certificate to be verified,
 a set of certificates serving as trust anchors,
-a list of non-trusted certificates that may be helpful for chain construction
+a list of non-trusted certificates that may be helpful for chain construction,
 flags such as X509_V_FLAG_X509_STRICT, and various other optional components
 such as a callback function that allows customizing the verification outcome.
 A complete description of the certificate verification process is contained in
