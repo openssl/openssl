@@ -7,10 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/evp.h>
-#include <openssl/core_dispatch.h>
-#include "internal/refcount.h"
-#include "crypto/ecx.h"
+#ifndef OSSL_CRYPTO_EVP_H
+# define OSSL_CRYPTO_EVP_H
+# pragma once
+
+# include <openssl/evp.h>
+# include <openssl/core_dispatch.h>
+# include "internal/refcount.h"
+# include "crypto/ecx.h"
 
 /*
  * Don't free up md_ctx->pctx in EVP_MD_CTX_reset, use the reserved flag
@@ -793,10 +797,10 @@ int evp_keymgmt_copy(const EVP_KEYMGMT *keymgmt,
 
 /* Pulling defines out of C source files */
 
-#define EVP_RC4_KEY_SIZE 16
-#ifndef TLS1_1_VERSION
-# define TLS1_1_VERSION   0x0302
-#endif
+# define EVP_RC4_KEY_SIZE 16
+# ifndef TLS1_1_VERSION
+#  define TLS1_1_VERSION   0x0302
+# endif
 
 void evp_encode_ctx_set_flags(EVP_ENCODE_CTX *ctx, unsigned int flags);
 
@@ -816,7 +820,7 @@ int pkcs5_pbkdf2_hmac_ex(const char *pass, int passlen,
                          const EVP_MD *digest, int keylen, unsigned char *out,
                          OSSL_LIB_CTX *libctx, const char *propq);
 
-#ifndef FIPS_MODULE
+# ifndef FIPS_MODULE
 /*
  * Internal helpers for stricter EVP_PKEY_CTX_{set,get}_params().
  *
@@ -842,9 +846,12 @@ int evp_pkey_ctx_get1_id_prov(EVP_PKEY_CTX *ctx, void *id);
 int evp_pkey_ctx_get1_id_len_prov(EVP_PKEY_CTX *ctx, size_t *id_len);
 
 int evp_pkey_ctx_use_cached_data(EVP_PKEY_CTX *ctx);
-#endif /* !defined(FIPS_MODULE) */
+# endif /* !defined(FIPS_MODULE) */
+
 void evp_method_store_flush(OSSL_LIB_CTX *libctx);
 int evp_set_default_properties_int(OSSL_LIB_CTX *libctx, const char *propq,
                                    int loadconfig);
 
 void evp_md_ctx_clear_digest(EVP_MD_CTX *ctx, int force);
+
+#endif /* OSSL_CRYPTO_EVP_H */

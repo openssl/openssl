@@ -7,7 +7,11 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef OPENSSL_NO_CMS
+#ifndef OSSL_CRYPTO_CMS_H
+# define OSSL_CRYPTO_CMS_H
+# pragma once
+
+# ifndef OPENSSL_NO_CMS
 
 /* internal CMS-ESS related stuff */
 
@@ -18,4 +22,6 @@ int cms_signerinfo_get_signing_cert_v2(CMS_SignerInfo *si,
                                        ESS_SIGNING_CERT_V2 **psc);
 int cms_signerinfo_get_signing_cert(CMS_SignerInfo *si,
                                     ESS_SIGNING_CERT **psc);
+# endif /* OPENSSL_NO_CMS */
+
 #endif

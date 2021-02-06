@@ -7,12 +7,16 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <stddef.h>
+#ifndef OSSL_CRYPTO_SIPHASH_H
+# define OSSL_CRYPTO_SIPHASH_H
+# pragma once
 
-#define SIPHASH_BLOCK_SIZE        8
-#define SIPHASH_KEY_SIZE         16
-#define SIPHASH_MIN_DIGEST_SIZE   8
-#define SIPHASH_MAX_DIGEST_SIZE  16
+# include <stddef.h>
+
+# define SIPHASH_BLOCK_SIZE        8
+# define SIPHASH_KEY_SIZE         16
+# define SIPHASH_MIN_DIGEST_SIZE   8
+# define SIPHASH_MAX_DIGEST_SIZE  16
 
 typedef struct siphash_st SIPHASH;
 
@@ -23,3 +27,5 @@ int SipHash_Init(SIPHASH *ctx, const unsigned char *k,
                  int crounds, int drounds);
 void SipHash_Update(SIPHASH *ctx, const unsigned char *in, size_t inlen);
 int SipHash_Final(SIPHASH *ctx, unsigned char *out, size_t outlen);
+
+#endif

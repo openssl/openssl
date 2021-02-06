@@ -9,6 +9,7 @@
 
 #ifndef OSSL_CRYPTO_BN_H
 # define OSSL_CRYPTO_BN_H
+# pragma once
 
 # include <openssl/bn.h>
 # include <limits.h>
