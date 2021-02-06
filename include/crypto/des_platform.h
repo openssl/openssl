@@ -9,6 +9,7 @@
 
 #ifndef OSSL_DES_PLATFORM_H
 # define OSSL_DES_PLATFORM_H
+# pragma once
 
 # if defined(DES_ASM) && (defined(__sparc) || defined(__sparc__))
 

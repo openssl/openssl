@@ -7,9 +7,13 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/core.h>
-#include <openssl/dsa.h>
-#include "internal/ffc.h"
+#ifndef OSSL_CRYPTO_DSAERR_H
+# define OSSL_CRYPTO_DSAERR_H
+# pragma once
+
+# include <openssl/core.h>
+# include <openssl/dsa.h>
+# include "internal/ffc.h"
 
 #define DSA_PARAMGEN_TYPE_FIPS_186_4   0   /* Use FIPS186-4 standard */
 #define DSA_PARAMGEN_TYPE_FIPS_186_2   1   /* Use legacy FIPS186-2 standard */
@@ -34,3 +38,5 @@ int dsa_check_pub_key(const DSA *dsa, const BIGNUM *pub_key, int *ret);
 int dsa_check_pub_key_partial(const DSA *dsa, const BIGNUM *pub_key, int *ret);
 int dsa_check_priv_key(const DSA *dsa, const BIGNUM *priv_key, int *ret);
 int dsa_check_pairwise(const DSA *dsa);
+
+#endif

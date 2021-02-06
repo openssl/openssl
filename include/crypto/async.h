@@ -7,8 +7,13 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/async.h>
+#ifndef OSSL_CRYPTO_ASYNC_H
+# define OSSL_CRYPTO_ASYNC_H
+# pragma once
+
+# include <openssl/async.h>
 
 int async_init(void);
 void async_deinit(void);
 
+#endif

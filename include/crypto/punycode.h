@@ -9,7 +9,7 @@
 
 #ifndef OSSL_CRYPTO_PUNYCODE_H
 # define OSSL_CRYPTO_PUNYCODE_H
-
+# pragma once
 
 int ossl_punycode_decode (
 	const char *pEncoded,

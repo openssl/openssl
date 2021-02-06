@@ -9,6 +9,7 @@
 
 #ifndef OSSL_PROVIDER_RAND_POOL_H
 # define OSSL_PROVIDER_RAND_POOL_H
+# pragma once
 
 # include <stdio.h>
 # include <openssl/rand.h>

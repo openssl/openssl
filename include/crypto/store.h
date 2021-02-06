@@ -9,6 +9,7 @@
 
 #ifndef OSSL_CRYPTO_STORE_H
 # define OSSL_CRYPTO_STORE_H
+# pragma once
 
 # include <openssl/bio.h>
 # include <openssl/store.h>

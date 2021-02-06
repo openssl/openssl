@@ -7,6 +7,10 @@
  * https://www.openssl.org/source/license.html
  */
 
+#ifndef OSSL_CRYPTO_ESS_H
+# define OSSL_CRYPTO_ESS_H
+# pragma once
+
 /* internal ESS related stuff */
 
 ESS_SIGNING_CERT *ESS_SIGNING_CERT_get(PKCS7_SIGNER_INFO *si);
@@ -89,3 +93,5 @@ struct ESS_signing_cert_v2_st {
     STACK_OF(ESS_CERT_ID_V2) *cert_ids;
     STACK_OF(POLICYINFO) *policy_info;
 };
+
+#endif /* OSSL_CRYPTO_ESS_H */
