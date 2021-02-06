@@ -143,16 +143,19 @@ static int lookup_cert_match(X509 **result, X509_STORE_CTX *ctx, X509 *x)
 
 /*-
  * Inform the verify callback of an error.
- * If 'x' is not NULL it is the error cert, otherwise use the chain cert at
- * 'depth'
- * If 'err' is not X509_V_OK, that's the error value, otherwise leave
- * unchanged (presumably set by the caller).
+ * The error code is set to |err| if |err| is not X509_V_OK, else
+ * |ctx->error| is left unchanged (under the assumption it is set elsewhere).
+ * The error depth is |depth| if >= 0, else it defaults to |ctx->error_depth|.
+ * The error cert is |x| if not NULL, else defaults to the chain cert at depth.
  *
  * Returns 0 to abort verification with an error, non-zero to continue.
  */
 static int verify_cb_cert(X509_STORE_CTX *ctx, X509 *x, int depth, int err)
 {
-    ctx->error_depth = depth;
+    if (depth < 0)
+        depth = ctx->error_depth;
+    else
+        ctx->error_depth = depth;
     ctx->current_cert = (x != NULL) ? x : sk_X509_value(ctx->chain, depth);
     if (err != X509_V_OK)
         ctx->error = err;
@@ -339,7 +342,17 @@ static X509 *find_issuer(X509_STORE_CTX *ctx, STACK_OF(X509) *sk, X509 *x)
 /* Check that the given certificate 'x' is issued by the certificate 'issuer' */
 static int check_issued(ossl_unused X509_STORE_CTX *ctx, X509 *x, X509 *issuer)
 {
-    return x509_likely_issued(issuer, x) == X509_V_OK;
+    int err = x509_likely_issued(issuer, x);
+
+    if (err == X509_V_OK)
+        return 1;
+    /*
+     * SUBJECT_ISSUER_MISMATCH just means 'x' is clearly not issued by 'issuer'.
+     * Every other error code likely indicates a real error.
+     */
+    if (err != X509_V_ERR_SUBJECT_ISSUER_MISMATCH)
+        ctx->error = err;
+    return 0; /* Better call verify_cb_cert(ctx, x, ctx->error_depth, err) ? */
 }
 
 /*
@@ -1732,7 +1745,7 @@ static int internal_verify(X509_STORE_CTX *ctx)
          * We report the issuer as NULL because all we have is a bare key.
          */
         xi = NULL;
-    } else if (!ctx->check_issued(ctx, xi, xi)
+    } else if (x509_likely_issued(xi, xi) != X509_V_OK
                /* exceptional case: last cert in the chain is not self-issued */
                && ((ctx->param->flags & X509_V_FLAG_PARTIAL_CHAIN) == 0)) {
         if (n > 0) {
@@ -1750,7 +1763,7 @@ static int internal_verify(X509_STORE_CTX *ctx)
     }
 
     /*
-     * Do not clear ctx->error = 0, it must be "sticky",
+     * Do not clear error (by ctx->error = X509_V_OK), it must be "sticky",
      * only the user's callback is allowed to reset errors (at its own peril).
      */
     while (n >= 0) {
@@ -2308,7 +2321,7 @@ int X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
     ctx->other_ctx = NULL;
     ctx->valid = 0;
     ctx->chain = NULL;
-    ctx->error = 0;
+    ctx->error = X509_V_OK;
     ctx->explicit_policy = 0;
     ctx->error_depth = 0;
     ctx->current_cert = NULL;
@@ -2976,6 +2989,7 @@ static int build_chain(X509_STORE_CTX *ctx)
     int alt_untrusted = 0;
     int depth;
     int ok = 0;
+    int prev_error = ctx->error;
     int i;
 
     /* Our chain starts with a single untrusted element. */
@@ -3047,6 +3061,8 @@ static int build_chain(X509_STORE_CTX *ctx)
     while (search != 0) {
         X509 *issuer = NULL;
 
+        num = sk_X509_num(ctx->chain);
+        ctx->error_depth = num - 1;
         /*
          * Look in the trust store if enabled for first lookup, or we've run
          * out of untrusted issuers and search here is not disabled.  When we
@@ -3062,7 +3078,7 @@ static int build_chain(X509_STORE_CTX *ctx)
          * would be a-priori too long.
          */
         if ((search & S_DOTRUSTED) != 0) {
-            i = num = sk_X509_num(ctx->chain);
+            i = num;
             if ((search & S_DOALTERNATE) != 0) {
                 /*
                  * As high up the chain as we can, look for an alternative
@@ -3263,12 +3279,17 @@ static int build_chain(X509_STORE_CTX *ctx)
 
     switch (trust) {
     case X509_TRUST_TRUSTED:
+        /* Must restore any previous error value for backward compatibility */
+        ctx->error = prev_error;
         return 1;
     case X509_TRUST_REJECTED:
         /* Callback already issued */
         return 0;
     case X509_TRUST_UNTRUSTED:
     default:
+        if (ctx->error != X509_V_OK)
+            /* Callback already issued in most such cases */
+            return 0;
         num = sk_X509_num(ctx->chain);
         CB_FAIL_IF(num > depth,
                    ctx, NULL, num - 1, X509_V_ERR_CERT_CHAIN_TOO_LONG);
