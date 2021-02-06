@@ -9,6 +9,7 @@
 
 #ifndef OPENSSL_TRACE_H
 # define OPENSSL_TRACE_H
+# pragma once
 
 # include <stdarg.h>
 

@@ -43,4 +43,4 @@
 #define SN_grasshopper_mac              SN_kuznyechik_mac
 #define NID_grasshopper_mac             NID_kuznyechik_mac
 
-#endif
+#endif  /* OPENSSL_NO_DEPRECATED_3_0 */
