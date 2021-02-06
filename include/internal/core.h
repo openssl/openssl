@@ -9,6 +9,7 @@
 
 #ifndef OSSL_INTERNAL_CORE_H
 # define OSSL_INTERNAL_CORE_H
+# pragma once
 
 /*
  * namespaces:

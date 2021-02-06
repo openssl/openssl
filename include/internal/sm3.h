@@ -11,6 +11,7 @@
 /* TODO(3.0) Move this header into provider when dependencies are removed */
 #ifndef OSSL_INTERNAL_SM3_H
 # define OSSL_INTERNAL_SM3_H
+# pragma once
 
 # include <openssl/opensslconf.h>
 

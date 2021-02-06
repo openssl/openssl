@@ -7,8 +7,12 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/safestack.h>
-#include <openssl/param_build.h>
+#ifndef OSSL_INTERNAL_PARAM_BUILD_SET_H
+# define OSSL_INTERNAL_PARAM_BUILD_SET_H
+# pragma once
+
+# include <openssl/safestack.h>
+# include <openssl/param_build.h>
 
 int ossl_param_build_set_int(OSSL_PARAM_BLD *bld, OSSL_PARAM *p,
                              const char *key, int num);
@@ -27,3 +31,5 @@ int ossl_param_build_set_bn_pad(OSSL_PARAM_BLD *bld, OSSL_PARAM *p,
 int ossl_param_build_set_multi_key_bn(OSSL_PARAM_BLD *bld, OSSL_PARAM *p,
                                       const char *names[],
                                       STACK_OF(BIGNUM_const) *stk);
+
+#endif  /* OSSL_INTERNAL_PARAM_BUILD_SET_H */

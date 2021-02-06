@@ -22,6 +22,8 @@
 
 #ifndef HEADER_INTERNAL_KTLS
 # define HEADER_INTERNAL_KTLS
+# pragma once
+
 # ifndef OPENSSL_NO_KTLS
 
 #  if defined(__FreeBSD__)

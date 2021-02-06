@@ -10,6 +10,7 @@
 /* TODO(3.0) Move this header into provider when dependencies are removed */
 #ifndef OSSL_INTERNAL_SHA3_H
 # define OSSL_INTERNAL_SHA3_H
+# pragma once
 
 # include <openssl/e_os2.h>
 # include <stddef.h>

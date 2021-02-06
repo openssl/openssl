@@ -9,6 +9,7 @@
 
 #ifndef OSSL_INTERNAL_CRYPTLIB_H
 # define OSSL_INTERNAL_CRYPTLIB_H
+# pragma once
 
 # include <stdlib.h>
 # include <string.h>

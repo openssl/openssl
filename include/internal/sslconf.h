@@ -9,6 +9,7 @@
 
 #ifndef OSSL_INTERNAL_SSLCONF_H
 # define OSSL_INTERNAL_SSLCONF_H
+# pragma once
 
 typedef struct ssl_conf_cmd_st SSL_CONF_CMD;
 
