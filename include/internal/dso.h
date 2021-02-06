@@ -9,6 +9,7 @@
 
 #ifndef OSSL_INTERNAL_DSO_H
 # define OSSL_INTERNAL_DSO_H
+# pragma once
 
 # include <openssl/crypto.h>
 # include "internal/dsoerr.h"
