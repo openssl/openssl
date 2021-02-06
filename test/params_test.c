@@ -541,8 +541,81 @@ static int test_case(int i)
                                  test_cases[i].prov));
 }
 
+/*-
+ * OSSL_PARAM_allocate_from_text() tests
+ * =====================================
+ */
+
+static const OSSL_PARAM params_from_text[] = {
+    OSSL_PARAM_int32("int", NULL),
+    OSSL_PARAM_DEFN("short", OSSL_PARAM_INTEGER, NULL, sizeof(int16_t)),
+    OSSL_PARAM_DEFN("ushort", OSSL_PARAM_UNSIGNED_INTEGER, NULL, sizeof(uint16_t)),
+    OSSL_PARAM_END,
+};
+
+struct int_from_text_test_st {
+    const char *argname;
+    const char *strval;
+    long int intval;
+    int res;
+};
+
+static struct int_from_text_test_st int_from_text_test_cases[] = {
+    { "int",               "",          0, 0 },
+    { "int",              "0",          0, 1 },
+    { "int",            "101",        101, 1 },
+    { "int",           "-102",       -102, 1 },
+    { "int",            "12A",         12, 1 }, /* incomplete */
+    { "int",          "0x12B",      0x12B, 1 },
+    { "hexint",         "12C",      0x12C, 1 },
+    { "hexint",       "0x12D",          0, 1 }, /* zero */
+    /* test check of the target buffer size */
+    { "int",     "0x7fffffff",  INT32_MAX, 1 },
+    { "int",     "2147483647",  INT32_MAX, 1 },
+    { "int",     "2147483648",          0, 0 }, /* too small buffer */
+    { "int",    "-2147483648",  INT32_MIN, 1 },
+    { "int",    "-2147483649",          0, 0 }, /* too small buffer */
+    { "short",       "0x7fff",  INT16_MAX, 1 },
+    { "short",        "32767",  INT16_MAX, 1 },
+    { "short",        "32768",          0, 0 }, /* too small buffer */
+    { "ushort",      "0xffff", UINT16_MAX, 1 },
+    { "ushort",       "65535", UINT16_MAX, 1 },
+    { "ushort",       "65536",          0, 0 }, /* too small buffer */
+};
+
+static int check_int_from_text(const struct int_from_text_test_st a)
+{
+    OSSL_PARAM param;
+    long int val = 0;
+    int res;
+
+    if (!OSSL_PARAM_allocate_from_text(&param, params_from_text,
+                                       a.argname, a.strval, 0, NULL)) {
+        if (a.res)
+            TEST_error("errant %s param \"%s\"", a.argname, a.strval);
+        return !a.res;
+    }
+
+    res = OSSL_PARAM_get_long(&param, &val);
+    OPENSSL_free(param.data);
+
+    if (res ^ a.res || val != a.intval) {
+        TEST_error("errant %s \"%s\" %li != %li",
+                   a.argname, a.strval, a.intval, val);
+        return 0;
+    }
+
+    return a.res;
+}
+
+static int test_allocate_from_text(int i)
+{
+    return check_int_from_text(int_from_text_test_cases[i]);
+}
+
 int setup_tests(void)
 {
     ADD_ALL_TESTS(test_case, OSSL_NELEM(test_cases));
+    ADD_ALL_TESTS(test_allocate_from_text, OSSL_NELEM(int_from_text_test_cases));
     return 1;
 }
