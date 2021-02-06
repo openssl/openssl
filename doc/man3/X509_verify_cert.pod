@@ -33,10 +33,11 @@ SSL/TLS code.
 A negative return value from X509_verify_cert() can occur if it is invoked
 incorrectly, such as with no certificate set in I<ctx>, or when it is called
 twice in succession without reinitialising I<ctx> for the second call.
-A negative return value can also happen due to internal resource problems or if
+A negative return value can also happen due to internal resource problems
+or because internal inconsistenty has been detected or if
 a retry operation is requested during internal lookups (which never happens
 with standard lookup methods).
-Applications must check for <= 0 return value on error.
+Applications must interpret any return value <= 0 as an error.
 
 The X509_STORE_CTX_verify() behaves like X509_verify_cert() except that its
 target certificate is the first element of the list of untrusted certificates
@@ -47,6 +48,11 @@ in I<ctx> unless a target certificate is set explicitly.
 Both functions return 1 if a complete chain can be built and validated,
 otherwise they return 0, and in exceptional circumstances (such as malloc
 failure and internal errors) they can also return a negative code.
+
+If a complete chain can be built and validated both functions return 1.
+If the certificate must be rejected on the basis of the data available
+or required certificate status data in not available they return 0.
+If no definite answer possible they usually return a negative code.
 
 On error or failure additional error information can be obtained by
 examining I<ctx> using, for example, L<X509_STORE_CTX_get_error(3)>.
