@@ -9,6 +9,7 @@
 
 #ifndef OPENSSL_CORE_NUMBERS_H
 # define OPENSSL_CORE_NUMBERS_H
+# pragma once
 
 # include <stdarg.h>
 # include <openssl/core.h>

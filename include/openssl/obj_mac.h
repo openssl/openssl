@@ -9,6 +9,10 @@
  * https://www.openssl.org/source/license.html
  */
 
+#ifndef OPENSSL_OBJ_MAC_H
+# define OPENSSL_OBJ_MAC_H
+# pragma once
+
 #define SN_undef                        "UNDEF"
 #define LN_undef                        "undefined"
 #define NID_undef                       0
@@ -5420,6 +5424,8 @@
 #define LN_aes_256_siv          "aes-256-siv"
 #define NID_aes_256_siv         1200
 
+#endif /* OPENSSL_OBJ_MAC_H */
+
 #ifndef OPENSSL_NO_DEPRECATED_3_0
 
 #define SN_id_tc26_cipher_gostr3412_2015_magma_ctracpkm                 SN_magma_ctr_acpkm
@@ -5464,4 +5470,4 @@
 #define SN_grasshopper_mac              SN_kuznyechik_mac
 #define NID_grasshopper_mac             NID_kuznyechik_mac
 
-#endif
+#endif  /* OPENSSL_NO_DEPRECATED_3_0 */

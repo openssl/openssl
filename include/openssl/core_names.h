@@ -9,6 +9,7 @@
 
 #ifndef OPENSSL_CORE_NAMES_H
 # define OPENSSL_CORE_NAMES_H
+# pragma once
 
 # ifdef __cplusplus
 extern "C" {

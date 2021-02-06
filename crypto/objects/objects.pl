@@ -144,6 +144,10 @@ print <<"EOF";
  * https://www.openssl.org/source/license.html
  */
 
+#ifndef OPENSSL_OBJ_MAC_H
+# define OPENSSL_OBJ_MAC_H
+# pragma once
+
 #define SN_undef                        "UNDEF"
 #define LN_undef                        "undefined"
 #define NID_undef                       0
@@ -168,6 +172,11 @@ foreach (sort { $a <=> $b } keys %ordern)
 	print expand("#define NID_$Cname\t\t$nid{$Cname}\n") if $nid{$Cname} ne "";
 	print expand("#define OBJ_$Cname\t\t$obj{$Cname}\n") if $obj{$Cname} ne "";
 	}
+
+print <<EOF;
+
+#endif /* OPENSSL_OBJ_MAC_H */
+EOF
 
 sub process_oid
 	{

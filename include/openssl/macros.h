@@ -7,11 +7,13 @@
  * https://www.openssl.org/source/license.html
  */
 
+#ifndef OPENSSL_MACROS_H
+# define OPENSSL_MACROS_H
+# pragma once
+
 #include <openssl/opensslconf.h>
 #include <openssl/opensslv.h>
 
-#ifndef OPENSSL_MACROS_H
-# define OPENSSL_MACROS_H
 
 /* Helper macros for CPP string composition */
 # define OPENSSL_MSTR_HELPER(x) #x
