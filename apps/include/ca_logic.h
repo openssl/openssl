@@ -12,6 +12,6 @@
 
 #include <apps.h>
 
-extern int do_updatedb();
+extern int do_updatedb(CA_DB *db);
 
 #endif                          /* ! OSSL_APPS_CA_LOGIC_H */
