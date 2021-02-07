@@ -33,7 +33,7 @@
 
 #include "apps.h"
 #include "progs.h"
-#include <ca_logic.h>
+#include "ca_logic.h"
 
 #ifndef W_OK
 # define F_OK 0
