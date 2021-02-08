@@ -145,7 +145,7 @@ const OPTIONS pkcs12_options[] = {
 int pkcs12_main(int argc, char **argv)
 {
     char *infile = NULL, *outfile = NULL, *keyname = NULL, *certfile = NULL;
-    char *untrusted = NULL;
+    char *untrusted = NULL, *ciphername = NULL;
     char *passcertsarg = NULL, *passcerts = NULL;
     char *name = NULL, *csp_name = NULL;
     char pass[PASSWD_BUF_SIZE] = "", macpass[PASSWD_BUF_SIZE] = "";
@@ -221,9 +221,8 @@ int pkcs12_main(int argc, char **argv)
             export_pkcs12 = 1;
             break;
         case OPT_CIPHER:
-            enc_flag = opt_unknown();
-            if (!opt_cipher(enc_flag, &enc))
-                goto opthelp;
+            ciphername = opt_unknown();
+            enc_flag = opt_unknown();   /* overloaded meaning; see below. */
             break;
         case OPT_ITER:
             if (!opt_int(opt_arg(), &iter))
@@ -342,6 +341,10 @@ int pkcs12_main(int argc, char **argv)
         goto opthelp;
 
     app_RAND_load();
+    if (ciphername != NULL) {
+        if (!opt_cipher(ciphername, &enc))
+            goto opthelp;
+    }
     if (export_pkcs12) {
         if ((options & INFO) != 0)
             WARN_EXPORT("info");

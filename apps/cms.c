@@ -289,7 +289,8 @@ int cms_main(int argc, char **argv)
     char *certsoutfile = NULL, *digestname = NULL;
     int noCAfile = 0, noCApath = 0, noCAstore = 0;
     char *infile = NULL, *outfile = NULL, *rctfile = NULL;
-    char *passinarg = NULL, *passin = NULL, *signerfile = NULL, *originatorfile = NULL, *recipfile = NULL;
+    char *passinarg = NULL, *passin = NULL, *signerfile = NULL;
+    char *originatorfile = NULL, *recipfile = NULL, *ciphername = NULL;
     char *to = NULL, *from = NULL, *subject = NULL, *prog;
     cms_key_param *key_first = NULL, *key_param = NULL;
     int flags = CMS_DETACHED, noout = 0, print = 0, keyidx = -1, vpmtouched = 0;
@@ -624,8 +625,7 @@ int cms_main(int argc, char **argv)
             }
             break;
         case OPT_CIPHER:
-            if (!opt_cipher(opt_unknown(), &cipher))
-                goto end;
+            ciphername = opt_unknown();
             break;
         case OPT_KEYOPT:
             keyidx = -1;
@@ -698,8 +698,14 @@ int cms_main(int argc, char **argv)
         }
     }
     app_RAND_load();
-    if (digestname != NULL && !opt_md(digestname, &sign_md))
-        goto end;
+    if (digestname != NULL) {
+        if (!opt_md(digestname, &sign_md))
+            goto end;
+    }
+    if (ciphername != NULL) {
+        if (!opt_cipher(ciphername, &cipher))
+            goto end;
+    }
 
     /* Remaining args are files to process. */
     argc = opt_num_rest();
