@@ -94,11 +94,16 @@ non blocking I/O is set during the connect process.
 BIO_new_connect() combines BIO_new() and BIO_set_conn_hostname() into
 a single call: that is it creates a new connect BIO with B<name>.
 
-BIO_do_connect() attempts to connect the supplied BIO. It returns 1
-if the connection was established successfully. A zero or negative
-value is returned if the connection could not be established, the
-call BIO_should_retry() should be used for non blocking connect BIOs
+BIO_do_connect() attempts to connect the supplied BIO.
+This performs an SSL/TLS handshake as far as supported by the BIO.
+For non-SSL BIOs the connection is done typically at TCP level.
+If domain name resolution yields multiple IP addresses all of them are tried
+after connect() failures.
+The function returns 1 if the connection was established successfully.
+A zero or negative value is returned if the connection could not be established.
+The call BIO_should_retry() should be used for non blocking connect BIOs
 to determine if the call should be retried.
+If a connection has already been established this call has no effect.
 
 =head1 NOTES
 
@@ -203,7 +208,7 @@ Use BIO_set_conn_address() and BIO_get_conn_address() instead.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

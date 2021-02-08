@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright 2005 Nokia. All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -71,7 +71,7 @@ SSL_SESSION *SSL_SESSION_new(void)
 
     ss = OPENSSL_zalloc(sizeof(*ss));
     if (ss == NULL) {
-        SSLerr(SSL_F_SSL_SESSION_NEW, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
@@ -81,7 +81,7 @@ SSL_SESSION *SSL_SESSION_new(void)
     ss->time = (unsigned long)time(NULL);
     ss->lock = CRYPTO_THREAD_lock_new();
     if (ss->lock == NULL) {
-        SSLerr(SSL_F_SSL_SESSION_NEW, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
         OPENSSL_free(ss);
         return NULL;
     }
@@ -107,7 +107,7 @@ SSL_SESSION *ssl_session_dup(const SSL_SESSION *src, int ticket)
 {
     SSL_SESSION *dest;
 
-    dest = OPENSSL_malloc(sizeof(*src));
+    dest = OPENSSL_malloc(sizeof(*dest));
     if (dest == NULL) {
         goto err;
     }
@@ -218,7 +218,7 @@ SSL_SESSION *ssl_session_dup(const SSL_SESSION *src, int ticket)
 
     return dest;
  err:
-    SSLerr(SSL_F_SSL_SESSION_DUP, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
     SSL_SESSION_free(dest);
     return NULL;
 }
@@ -294,8 +294,7 @@ int ssl_generate_session_id(SSL *s, SSL_SESSION *ss)
         ss->session_id_length = SSL3_SSL_SESSION_ID_LENGTH;
         break;
     default:
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL_GENERATE_SESSION_ID,
-                 SSL_R_UNSUPPORTED_SSL_VERSION);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_UNSUPPORTED_SSL_VERSION);
         return 0;
     }
 
@@ -333,7 +332,7 @@ int ssl_generate_session_id(SSL *s, SSL_SESSION *ss)
     tmp = (int)ss->session_id_length;
     if (!cb(s, ss->session_id, &tmp)) {
         /* The callback failed */
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL_GENERATE_SESSION_ID,
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                  SSL_R_SSL_SESSION_ID_CALLBACK_FAILED);
         return 0;
     }
@@ -343,7 +342,7 @@ int ssl_generate_session_id(SSL *s, SSL_SESSION *ss)
      */
     if (tmp == 0 || tmp > ss->session_id_length) {
         /* The callback set an illegal length */
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL_GENERATE_SESSION_ID,
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                  SSL_R_SSL_SESSION_ID_HAS_BAD_LENGTH);
         return 0;
     }
@@ -351,8 +350,7 @@ int ssl_generate_session_id(SSL *s, SSL_SESSION *ss)
     /* Finally, check for a conflict */
     if (SSL_has_matching_session_id(s, ss->session_id,
                                     (unsigned int)ss->session_id_length)) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL_GENERATE_SESSION_ID,
-                 SSL_R_SSL_SESSION_ID_CONFLICT);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_SSL_SESSION_ID_CONFLICT);
         return 0;
     }
 
@@ -366,8 +364,7 @@ int ssl_get_new_session(SSL *s, int session)
     SSL_SESSION *ss = NULL;
 
     if ((ss = SSL_SESSION_new()) == NULL) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL_GET_NEW_SESSION,
-                 ERR_R_MALLOC_FAILURE);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
         return 0;
     }
 
@@ -398,8 +395,7 @@ int ssl_get_new_session(SSL *s, int session)
     }
 
     if (s->sid_ctx_length > sizeof(ss->sid_ctx)) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL_GET_NEW_SESSION,
-                 ERR_R_INTERNAL_ERROR);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         SSL_SESSION_free(ss);
         return 0;
     }
@@ -527,8 +523,7 @@ int ssl_get_prev_session(SSL *s, CLIENTHELLO_MSG *hello)
         case SSL_TICKET_FATAL_ERR_MALLOC:
         case SSL_TICKET_FATAL_ERR_OTHER:
             fatal = 1;
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL_GET_PREV_SESSION,
-                     ERR_R_INTERNAL_ERROR);
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             goto err;
         case SSL_TICKET_NONE:
         case SSL_TICKET_EMPTY:
@@ -574,7 +569,7 @@ int ssl_get_prev_session(SSL *s, CLIENTHELLO_MSG *hello)
          * noticing).
          */
 
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL_GET_PREV_SESSION,
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                  SSL_R_SESSION_ID_CONTEXT_UNINITIALIZED);
         fatal = 1;
         goto err;
@@ -593,8 +588,7 @@ int ssl_get_prev_session(SSL *s, CLIENTHELLO_MSG *hello)
     if (ret->flags & SSL_SESS_FLAG_EXTMS) {
         /* If old session includes extms, but new does not: abort handshake */
         if (!(s->s3.flags & TLS1_FLAGS_RECEIVED_EXTMS)) {
-            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_F_SSL_GET_PREV_SESSION,
-                     SSL_R_INCONSISTENT_EXTMS);
+            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_INCONSISTENT_EXTMS);
             fatal = 1;
             goto err;
         }
@@ -811,8 +805,7 @@ int SSL_SESSION_set1_id(SSL_SESSION *s, const unsigned char *sid,
                         unsigned int sid_len)
 {
     if (sid_len > SSL_MAX_SSL_SESSION_ID_LENGTH) {
-      SSLerr(SSL_F_SSL_SESSION_SET1_ID,
-             SSL_R_SSL_SESSION_ID_TOO_LONG);
+      ERR_raise(ERR_LIB_SSL, SSL_R_SSL_SESSION_ID_TOO_LONG);
       return 0;
     }
     s->session_id_length = sid_len;
@@ -956,8 +949,7 @@ int SSL_SESSION_set1_id_context(SSL_SESSION *s, const unsigned char *sid_ctx,
                                 unsigned int sid_ctx_len)
 {
     if (sid_ctx_len > SSL_MAX_SID_CTX_LENGTH) {
-        SSLerr(SSL_F_SSL_SESSION_SET1_ID_CONTEXT,
-               SSL_R_SSL_SESSION_ID_CONTEXT_TOO_LONG);
+        ERR_raise(ERR_LIB_SSL, SSL_R_SSL_SESSION_ID_CONTEXT_TOO_LONG);
         return 0;
     }
     s->sid_ctx_length = sid_ctx_len;
@@ -1023,7 +1015,7 @@ int SSL_set_session_ticket_ext(SSL *s, void *ext_data, int ext_len)
         s->ext.session_ticket =
             OPENSSL_malloc(sizeof(TLS_SESSION_TICKET_EXT) + ext_len);
         if (s->ext.session_ticket == NULL) {
-            SSLerr(SSL_F_SSL_SET_SESSION_TICKET_EXT, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
             return 0;
         }
 
@@ -1201,24 +1193,6 @@ int (*SSL_CTX_get_client_cert_cb(SSL_CTX *ctx)) (SSL *ssl, X509 **x509,
                                                  EVP_PKEY **pkey) {
     return ctx->client_cert_cb;
 }
-
-#ifndef OPENSSL_NO_ENGINE
-int SSL_CTX_set_client_cert_engine(SSL_CTX *ctx, ENGINE *e)
-{
-    if (!ENGINE_init(e)) {
-        SSLerr(SSL_F_SSL_CTX_SET_CLIENT_CERT_ENGINE, ERR_R_ENGINE_LIB);
-        return 0;
-    }
-    if (!ENGINE_get_ssl_client_cert_function(e)) {
-        SSLerr(SSL_F_SSL_CTX_SET_CLIENT_CERT_ENGINE,
-               SSL_R_NO_CLIENT_CERT_METHOD);
-        ENGINE_finish(e);
-        return 0;
-    }
-    ctx->client_cert_engine = e;
-    return 1;
-}
-#endif
 
 void SSL_CTX_set_cookie_generate_cb(SSL_CTX *ctx,
                                     int (*cb) (SSL *ssl,

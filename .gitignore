@@ -22,47 +22,50 @@
 # Auto generated headers
 /crypto/buildinf.h
 /include/crypto/*_conf.h
+/include/openssl/asn1.h
+/include/openssl/asn1t.h
+/include/openssl/bio.h
+/include/openssl/cmp.h
+/include/openssl/cms.h
+/include/openssl/conf.h
 /include/openssl/configuration.h
+/include/openssl/crmf.h
+/include/openssl/crypto.h
+/include/openssl/ct.h
+/include/openssl/err.h
+/include/openssl/ess.h
+/include/openssl/fipskey.h
+/include/openssl/lhash.h
+/include/openssl/ocsp.h
 /include/openssl/opensslv.h
+/include/openssl/pkcs12.h
+/include/openssl/pkcs7.h
+/include/openssl/safestack.h
+/include/openssl/srp.h
+/include/openssl/ssl.h
+/include/openssl/ui.h
+/include/openssl/x509.h
+/include/openssl/x509v3.h
+/include/openssl/x509_vfy.h
 
 # Auto generated doc files
-# Keep this in sync with doc/man1/build.info
-doc/man1/openssl-ca.pod
-doc/man1/openssl-cms.pod
-doc/man1/openssl-crl.pod
-doc/man1/openssl-dgst.pod
-doc/man1/openssl-dhparam.pod
-doc/man1/openssl-dsa.pod
-doc/man1/openssl-dsaparam.pod
-doc/man1/openssl-ec.pod
-doc/man1/openssl-ecparam.pod
-doc/man1/openssl-enc.pod
-doc/man1/openssl-gendsa.pod
-doc/man1/openssl-genpkey.pod
-doc/man1/openssl-genrsa.pod
-doc/man1/openssl-ocsp.pod
-doc/man1/openssl-passwd.pod
-doc/man1/openssl-pkcs12.pod
-doc/man1/openssl-pkcs7.pod
-doc/man1/openssl-pkcs8.pod
-doc/man1/openssl-pkey.pod
-doc/man1/openssl-pkeyparam.pod
-doc/man1/openssl-pkeyutl.pod
-doc/man1/openssl-rand.pod
-doc/man1/openssl-req.pod
-doc/man1/openssl-rsa.pod
-doc/man1/openssl-rsautl.pod
-doc/man1/openssl-s_client.pod
-doc/man1/openssl-s_server.pod
-doc/man1/openssl-s_time.pod
-doc/man1/openssl-smime.pod
-doc/man1/openssl-speed.pod
-doc/man1/openssl-spkac.pod
-doc/man1/openssl-srp.pod
-doc/man1/openssl-storeutl.pod
-doc/man1/openssl-ts.pod
-doc/man1/openssl-verify.pod
-doc/man1/openssl-x509.pod
+doc/man1/openssl-*.pod
+
+# Auto generated der files
+providers/common/der/der_digests_gen.c
+providers/common/der/der_dsa_gen.c
+providers/common/der/der_ec_gen.c
+providers/common/der/der_ecx_gen.c
+providers/common/der/der_rsa_gen.c
+providers/common/der/der_wrap_gen.c
+providers/common/der/der_sm2_gen.c
+providers/common/include/prov/der_dsa.h
+providers/common/include/prov/der_ec.h
+providers/common/include/prov/der_ecx.h
+providers/common/include/prov/der_rsa.h
+providers/common/include/prov/der_digests.h
+providers/common/include/prov/der_wrap.h
+providers/common/include/prov/der_sm2.h
 
 # error code files
 /crypto/err/openssl.txt.old
@@ -95,14 +98,14 @@ doc/man1/openssl-x509.pod
 /test/rsa_complex
 /test/confdump
 /test/bio_prefix_text
-# Other generated files in test/
-/test/provider_internal_test.conf
-/test/fipsinstall.conf
-/providers/fipsinstall.conf
+/test/evp_extra_test2
 
 # Certain files that get created by tests on the fly
 /test-runs
 /test/buildtest_*
+/test/provider_internal_test.cnf
+/test/fipsmodule.cnf
+/providers/fipsmodule.cnf
 
 # Fuzz stuff.
 # Anything without an extension is an executable on Unix, so we keep files
@@ -123,6 +126,8 @@ doc/man1/openssl-x509.pod
 /TAGS
 *.map
 *.ld
+/apps/progs.c
+/apps/progs.h
 
 # Windows (legacy)
 /tmp32

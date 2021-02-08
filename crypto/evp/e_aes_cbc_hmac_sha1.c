@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2011-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -26,6 +26,7 @@
 #include "crypto/modes.h"
 #include "crypto/evp.h"
 #include "internal/constant_time.h"
+#include "evp_local.h"
 
 typedef struct {
     AES_KEY ks;
@@ -438,8 +439,7 @@ static int aesni_cbc_hmac_sha1_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
             && (blocks = (plen - (sha_off + iv)) / SHA_CBLOCK)) {
             SHA1_Update(&key->md, in + iv, sha_off);
 
-            aesni_cbc_sha1_enc(in, out, blocks, &key->ks,
-                               EVP_CIPHER_CTX_iv_noconst(ctx),
+            aesni_cbc_sha1_enc(in, out, blocks, &key->ks, ctx->iv,
                                &key->md, in + iv + sha_off);
             blocks *= SHA_CBLOCK;
             aes_off += blocks;
@@ -471,10 +471,10 @@ static int aesni_cbc_hmac_sha1_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                 out[plen] = l;
             /* encrypt HMAC|padding at once */
             aesni_cbc_encrypt(out + aes_off, out + aes_off, len - aes_off,
-                              &key->ks, EVP_CIPHER_CTX_iv_noconst(ctx), 1);
+                              &key->ks, ctx->iv, 1);
         } else {
             aesni_cbc_encrypt(in + aes_off, out + aes_off, len - aes_off,
-                              &key->ks, EVP_CIPHER_CTX_iv_noconst(ctx), 1);
+                              &key->ks, ctx->iv, 1);
         }
     } else {
         union {
@@ -504,7 +504,7 @@ static int aesni_cbc_hmac_sha1_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                     return 0;
 
                 /* omit explicit iv */
-                memcpy(EVP_CIPHER_CTX_iv_noconst(ctx), in, AES_BLOCK_SIZE);
+                memcpy(ctx->iv, in, AES_BLOCK_SIZE);
 
                 in += AES_BLOCK_SIZE;
                 out += AES_BLOCK_SIZE;
@@ -525,7 +525,7 @@ static int aesni_cbc_hmac_sha1_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 # endif
                 /* decrypt HMAC|padding at once */
                 aesni_cbc_encrypt(in, out, len, &key->ks,
-                                  EVP_CIPHER_CTX_iv_noconst(ctx), 0);
+                                  ctx->iv, 0);
 
             /* figure out payload length */
             pad = out[len - 1];
@@ -702,8 +702,7 @@ static int aesni_cbc_hmac_sha1_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                 size_t off = out - p;
                 unsigned int c, cmask;
 
-                maxpad += SHA_DIGEST_LENGTH;
-                for (res = 0, i = 0, j = 0; j < maxpad; j++) {
+                for (res = 0, i = 0, j = 0; j < maxpad + SHA_DIGEST_LENGTH; j++) {
                     c = p[j];
                     cmask =
                         ((int)(j - off - SHA_DIGEST_LENGTH)) >> (sizeof(int) *
@@ -713,7 +712,6 @@ static int aesni_cbc_hmac_sha1_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                     res |= (c ^ pmac->c[i]) & cmask;
                     i += 1 & cmask;
                 }
-                maxpad -= SHA_DIGEST_LENGTH;
 
                 res = 0 - ((0 - res) >> (sizeof(res) * 8 - 1));
                 ret &= (int)~res;
@@ -761,7 +759,7 @@ static int aesni_cbc_hmac_sha1_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 # endif
                 /* decrypt HMAC|padding at once */
                 aesni_cbc_encrypt(in, out, len, &key->ks,
-                                  EVP_CIPHER_CTX_iv_noconst(ctx), 0);
+                                  ctx->iv, 0);
 
             SHA1_Update(&key->md, out, len);
         }

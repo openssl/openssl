@@ -29,23 +29,22 @@ B<openssl> B<s_client>
 [B<-verifyCApath> I<dir>]
 [B<-verifyCAstore> I<uri>]
 [B<-cert> I<filename>]
-[B<-certform> B<DER>|B<PEM>]
+[B<-certform> B<DER>|B<PEM>|B<P12>]
+[B<-cert_chain> I<filename>]
+[B<-build_chain>]
 [B<-CRL> I<filename>]
 [B<-CRLform> B<DER>|B<PEM>]
 [B<-crl_download>]
-[B<-key> I<filename>]
-[B<-keyform> B<DER>|B<PEM>]
-[B<-cert_chain> I<filename>]
-[B<-build_chain>]
+[B<-key> I<filename>|I<uri>]
+[B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>]
 [B<-pass> I<arg>]
-[B<-chainCApath> I<directory>]
 [B<-chainCAfile> I<filename>]
+[B<-chainCApath> I<directory>]
 [B<-chainCAstore> I<uri>]
 [B<-requestCAfile> I<filename>]
 [B<-dane_tlsa_domain> I<domain>]
 [B<-dane_tlsa_rrdata> I<rrdata>]
 [B<-dane_ee_no_namechecks>]
-[B<-build_chain>]
 [B<-reconnect>]
 [B<-showcerts>]
 [B<-prexit>]
@@ -79,6 +78,7 @@ B<openssl> B<s_client>
 [B<-split_send_frag>]
 [B<-max_pipelines>]
 [B<-read_buf>]
+[B<-ignore_unexpected_eof>]
 [B<-bugs>]
 [B<-comp>]
 [B<-no_comp>]
@@ -120,8 +120,8 @@ B<openssl> B<s_client>
 {- $OpenSSL::safe::opt_trust_synopsis -}
 {- $OpenSSL::safe::opt_s_synopsis -}
 {- $OpenSSL::safe::opt_r_synopsis -}
-{- $OpenSSL::safe::opt_engine_synopsis -}
-[B<-ssl_client_engine> I<id>]
+{- $OpenSSL::safe::opt_provider_synopsis -}
+{- $OpenSSL::safe::opt_engine_synopsis -}[B<-ssl_client_engine> I<id>]
 {- $OpenSSL::safe::opt_v_synopsis -}
 [I<host>:I<port>]
 
@@ -191,14 +191,14 @@ When used with the B<-proxy> flag, the program will attempt to authenticate
 with the specified proxy using basic (base64) authentication.
 NB: Basic authentication is insecure; the credentials are sent to the proxy
 in easily reversible base64 encoding before any TLS/SSL session is established.
-Therefore these credentials are easily recovered by anyone able to sniff/trace
+Therefore, these credentials are easily recovered by anyone able to sniff/trace
 the network. Use with caution.
 
 =item B<-proxy_pass> I<arg>
 
 The proxy password source, used with the B<-proxy_user> flag.
 For more information about the format of B<arg>
-see L<openssl(1)/Pass Phrase Options>.
+see L<openssl-passphrase-options(1)>.
 
 =item B<-unix> I<path>
 
@@ -233,14 +233,28 @@ Suppresses sending of the SNI (Server Name Indication) extension in the
 ClientHello message. Cannot be used in conjunction with the B<-servername> or
 <-dane_tlsa_domain> options.
 
-=item B<-cert> I<certname>
+=item B<-cert> I<filename>
 
-The certificate to use, if one is requested by the server. The default is
-not to use a certificate.
+The client certificate to use, if one is requested by the server.
+The default is not to use a certificate.
 
-=item B<-certform> I<format>
+The chain for the client certificate may be specified using B<-cert_chain>.
 
-The certificate format to use: DER or PEM. PEM is the default.
+=item B<-certform> B<DER>|B<PEM>|B<P12>
+
+The client certificate file format to use; the default is B<PEM>.
+This option has no effect and is retained for backward compatibility only.
+
+=item B<-cert_chain>
+
+A file or URI of untrusted certificates to use when attempting to build the
+certificate chain related to the certificate specified via the B<-cert> option.
+The input can be in PEM, DER, or PKCS#12 format.
+
+=item B<-build_chain>
+
+Specify whether the application should build the client certificate chain to be
+provided to the server.
 
 =item B<-CRL> I<filename>
 
@@ -248,38 +262,29 @@ CRL file to use to check the server's certificate.
 
 =item B<-CRLform> B<DER>|B<PEM>
 
-The CRL format; the default is B<PEM>.
-See L<openssl(1)/Format Options> for details.
+The CRL file format; the default is B<PEM>.
+See L<openssl-format-options(1)> for details.
 
 =item B<-crl_download>
 
 Download CRL from distribution points in the certificate.
 
-=item B<-key> I<keyfile>
+=item B<-key> I<filename>|I<uri>
 
-The private key to use. If not specified then the certificate file will
-be used.
+The client private key to use.
+If not specified then the certificate file will be used to read also the key.
 
-=item B<-keyform> I<format>
+=item B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
 
 The key format; the default is B<PEM>.
-See L<openssl(1)/Format Options> for details.
-
-=item B<-cert_chain>
-
-A file containing trusted certificates to use when attempting to build the
-client/server certificate chain related to the certificate specified via the
-B<-cert> option.
-
-=item B<-build_chain>
-
-Specify whether the application should build the certificate chain to be
-provided to the server.
+The only value with effect is B<ENGINE>; all others have become obsolete.
+See L<openssl-format-options(1)> for details.
 
 =item B<-pass> I<arg>
 
-the private key password source. For more information about the format of I<arg>
-see L<openssl(1)/Pass phrase options>.
+the private key and certifiate file password source.
+For more information about the format of I<arg>
+see L<openssl-passphrase-options(1)>.
 
 =item B<-verify> I<depth>
 
@@ -300,32 +305,42 @@ Limit verify output to only errors.
 
 =item B<-verifyCAfile> I<filename>
 
-CA file for verifying the server's certificate, in PEM format.
+A file in PEM format containing trusted certificates to use
+for verifying the server's certificate.
 
 =item B<-verifyCApath> I<dir>
 
-Use the specified directory as a certificate store path to verify
-the server's CA certificate.
+A directory containing trusted certificates to use
+for verifying the server's certificate.
+This directory must be in "hash format",
+see L<openssl-verify(1)> for more information.
 
 =item B<-verifyCAstore> I<uri>
 
-Use the specified URI as a store URI to verify the server's certificate.
-
-
-=item B<-chainCApath> I<directory>
-
-The directory to use for building the chain provided to the server. This
-directory must be in "hash format", see L<openssl-verify(1)> for more
-information.
+The URI of a store containing trusted certificates to use
+for verifying the server's certificate.
 
 =item B<-chainCAfile> I<file>
 
-A file containing trusted certificates to use when attempting to build the
-client certificate chain.
+A file in PEM format containing trusted certificates to use
+when attempting to build the client certificate chain.
+
+=item B<-chainCApath> I<directory>
+
+A directory containing trusted certificates to use
+for building the client certificate chain provided to the server.
+This directory must be in "hash format",
+see L<openssl-verify(1)> for more information.
 
 =item B<-chainCAstore> I<uri>
 
-The URI to use when attempting to build the client certificate chain.
+The URI of a store containing trusted certificates to use
+when attempting to build the client certificate chain.
+The URI may indicate a single certificate, as well as a collection of them.
+With URIs in the C<file:> scheme, this acts as B<-chainCAfile> or
+B<-chainCApath>, depending on if the URI indicates a directory or a
+single file.
+See L<ossl_store-file(7)> for more information on the C<file:> scheme.
 
 =item B<-requestCAfile> I<file>
 
@@ -464,11 +479,11 @@ File to send output of B<-msg> or B<-trace> to, default standard output.
 
 =item B<-nbio_test>
 
-Tests non-blocking I/O
+Tests nonblocking I/O
 
 =item B<-nbio>
 
-Turns on non-blocking I/O
+Turns on nonblocking I/O
 
 =item B<-crlf>
 
@@ -564,6 +579,15 @@ The default read buffer size to be used for connections. This will only have an
 effect if the buffer size is larger than the size that would otherwise be used
 and pipelining is in use (see L<SSL_CTX_set_default_read_buffer_len(3)> for
 further information).
+
+=item B<-ignore_unexpected_eof>
+
+Some TLS implementations do not send the mandatory close_notify alert on
+shutdown. If the application tries to wait for the close_notify alert but the
+peer closes the connection without sending it, an error is generated. When this
+option is enabled the peer does not need to send the close_notify alert and a
+closed connection will be treated as if the close_notify alert was received.
+For more information on shutting down a connection, see L<SSL_shutdown(3)>.
 
 =item B<-bugs>
 
@@ -758,11 +782,15 @@ Set the minimal acceptable length, in bits, for B<N>.
 
 {- $OpenSSL::safe::opt_r_item -}
 
+{- $OpenSSL::safe::opt_provider_item -}
+
 {- $OpenSSL::safe::opt_engine_item -}
 
+{- output_off() if $disabled{"deprecated-3.0"}; "" -}
 =item B<-ssl_client_engine> I<id>
 
 Specify engine to be used for client certificate operations.
+{- output_on() if $disabled{"deprecated-3.0"}; "" -}
 
 {- $OpenSSL::safe::opt_v_item -}
 
@@ -829,14 +857,14 @@ is that a web client complains it has no certificates or gives an empty
 list to choose from. This is normally because the server is not sending
 the clients certificate authority in its "acceptable CA list" when it
 requests a certificate. By using this command, the CA list can be viewed
-and checked. However some servers only request client authentication
+and checked. However, some servers only request client authentication
 after a specific URL is requested. To obtain the list in this case it
 is necessary to use the B<-prexit> option and send an HTTP request
 for an appropriate page.
 
 If a certificate is specified on the command line using the B<-cert>
 option it will not be used unless the server specifically requests
-a client certificate. Therefor merely including a client certificate
+a client certificate. Therefore, merely including a client certificate
 on the command line is no guarantee that the certificate works.
 
 If there are problems verifying a server certificate then the
@@ -845,7 +873,7 @@ server.
 
 This command is a test tool and is designed to continue the
 handshake after any certificate verification errors. As a result it will
-accept any certificate chain (trusted or not) sent by the peer. None test
+accept any certificate chain (trusted or not) sent by the peer. Non-test
 applications should B<not> do this as it makes them vulnerable to a MITM
 attack. This behaviour can be changed by with the B<-verify_return_error>
 option: any verify errors are then returned aborting the handshake.
@@ -880,9 +908,16 @@ L<ossl_store-file(7)>
 The B<-no_alt_chains> option was added in OpenSSL 1.1.0.
 The B<-name> option was added in OpenSSL 1.1.1.
 
+The B<-certform> option has become obsolete in OpenSSL 3.0.0 and has no effect.
+
+All B<-keyform> values except B<ENGINE> have become obsolete in OpenSSL 3.0.0
+and have no effect.
+
+The B<-engine> option was deprecated in OpenSSL 3.0.
+
 =head1 COPYRIGHT
 
-Copyright 2000-2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

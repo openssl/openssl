@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1998-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -21,7 +21,7 @@
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_OUT, OPT_ENGINE, OPT_BASE64, OPT_HEX,
-    OPT_R_ENUM
+    OPT_R_ENUM, OPT_PROV_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS rand_options[] = {
@@ -39,6 +39,7 @@ const OPTIONS rand_options[] = {
     {"hex", OPT_HEX, '-', "Hex encode output"},
 
     OPT_R_OPTIONS,
+    OPT_PROV_OPTIONS,
 
     OPT_PARAMETERS(),
     {"num", 0, 0, "Number of bytes to generate"},
@@ -81,15 +82,20 @@ int rand_main(int argc, char **argv)
         case OPT_HEX:
             format = FORMAT_TEXT;
             break;
+        case OPT_PROV_CASES:
+            if (!opt_provider(o))
+                goto end;
+            break;
         }
     }
+
+    /* Optional argument is number of bytes to generate. */
     argc = opt_num_rest();
     argv = opt_rest();
     if (argc == 1) {
         if (!opt_int(argv[0], &num) || num <= 0)
-            goto end;
-    } else if (argc > 0) {
-        BIO_printf(bio_err, "Extra arguments given.\n");
+            goto opthelp;
+    } else if (argc != 0) {
         goto opthelp;
     }
 

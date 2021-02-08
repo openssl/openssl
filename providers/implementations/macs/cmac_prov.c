@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -13,7 +13,7 @@
  */
 #include "internal/deprecated.h"
 
-#include <openssl/core_numbers.h>
+#include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
 #include <openssl/params.h>
 #include <openssl/engine.h>
@@ -23,22 +23,23 @@
 #include "prov/implementations.h"
 #include "prov/provider_ctx.h"
 #include "prov/provider_util.h"
+#include "prov/providercommon.h"
 
 /*
  * Forward declaration of everything implemented here.  This is not strictly
  * necessary for the compiler, but provides an assurance that the signatures
  * of the functions in the dispatch table are correct.
  */
-static OSSL_OP_mac_newctx_fn cmac_new;
-static OSSL_OP_mac_dupctx_fn cmac_dup;
-static OSSL_OP_mac_freectx_fn cmac_free;
-static OSSL_OP_mac_gettable_ctx_params_fn cmac_gettable_ctx_params;
-static OSSL_OP_mac_get_ctx_params_fn cmac_get_ctx_params;
-static OSSL_OP_mac_settable_ctx_params_fn cmac_settable_ctx_params;
-static OSSL_OP_mac_set_ctx_params_fn cmac_set_ctx_params;
-static OSSL_OP_mac_init_fn cmac_init;
-static OSSL_OP_mac_update_fn cmac_update;
-static OSSL_OP_mac_final_fn cmac_final;
+static OSSL_FUNC_mac_newctx_fn cmac_new;
+static OSSL_FUNC_mac_dupctx_fn cmac_dup;
+static OSSL_FUNC_mac_freectx_fn cmac_free;
+static OSSL_FUNC_mac_gettable_ctx_params_fn cmac_gettable_ctx_params;
+static OSSL_FUNC_mac_get_ctx_params_fn cmac_get_ctx_params;
+static OSSL_FUNC_mac_settable_ctx_params_fn cmac_settable_ctx_params;
+static OSSL_FUNC_mac_set_ctx_params_fn cmac_set_ctx_params;
+static OSSL_FUNC_mac_init_fn cmac_init;
+static OSSL_FUNC_mac_update_fn cmac_update;
+static OSSL_FUNC_mac_final_fn cmac_final;
 
 /* local CMAC data */
 
@@ -51,6 +52,9 @@ struct cmac_data_st {
 static void *cmac_new(void *provctx)
 {
     struct cmac_data_st *macctx;
+
+    if (!ossl_prov_is_running())
+        return NULL;
 
     if ((macctx = OPENSSL_zalloc(sizeof(*macctx))) == NULL
         || (macctx->ctx = CMAC_CTX_new()) == NULL) {
@@ -77,8 +81,12 @@ static void cmac_free(void *vmacctx)
 static void *cmac_dup(void *vsrc)
 {
     struct cmac_data_st *src = vsrc;
-    struct cmac_data_st *dst = cmac_new(src->provctx);
+    struct cmac_data_st *dst;
 
+    if (!ossl_prov_is_running())
+        return NULL;
+
+    dst = cmac_new(src->provctx);
     if (!CMAC_CTX_copy(dst->ctx, src->ctx)
         || !ossl_prov_cipher_copy(&dst->cipher, &src->cipher)) {
         cmac_free(dst);
@@ -97,9 +105,14 @@ static size_t cmac_size(void *vmacctx)
 static int cmac_init(void *vmacctx)
 {
     struct cmac_data_st *macctx = vmacctx;
-    int rv = CMAC_Init(macctx->ctx, NULL, 0,
-                       ossl_prov_cipher_cipher(&macctx->cipher),
-                       ossl_prov_cipher_engine(&macctx->cipher));
+    int rv;
+
+    if (!ossl_prov_is_running())
+        return 0;
+
+    rv = CMAC_Init(macctx->ctx, NULL, 0,
+                   ossl_prov_cipher_cipher(&macctx->cipher),
+                   ossl_prov_cipher_engine(&macctx->cipher));
 
     ossl_prov_cipher_reset(&macctx->cipher);
     return rv;
@@ -118,6 +131,9 @@ static int cmac_final(void *vmacctx, unsigned char *out, size_t *outl,
 {
     struct cmac_data_st *macctx = vmacctx;
 
+    if (!ossl_prov_is_running())
+        return 0;
+
     return CMAC_Final(macctx->ctx, out, outl);
 }
 
@@ -125,7 +141,7 @@ static const OSSL_PARAM known_gettable_ctx_params[] = {
     OSSL_PARAM_size_t(OSSL_MAC_PARAM_SIZE, NULL),
     OSSL_PARAM_END
 };
-static const OSSL_PARAM *cmac_gettable_ctx_params(void)
+static const OSSL_PARAM *cmac_gettable_ctx_params(ossl_unused void *provctx)
 {
     return known_gettable_ctx_params;
 }
@@ -146,7 +162,7 @@ static const OSSL_PARAM known_settable_ctx_params[] = {
     OSSL_PARAM_octet_string(OSSL_MAC_PARAM_KEY, NULL, 0),
     OSSL_PARAM_END
 };
-static const OSSL_PARAM *cmac_settable_ctx_params(void)
+static const OSSL_PARAM *cmac_settable_ctx_params(ossl_unused void *provctx)
 {
     return known_settable_ctx_params;
 }
@@ -157,7 +173,7 @@ static const OSSL_PARAM *cmac_settable_ctx_params(void)
 static int cmac_set_ctx_params(void *vmacctx, const OSSL_PARAM params[])
 {
     struct cmac_data_st *macctx = vmacctx;
-    OPENSSL_CTX *ctx = PROV_LIBRARY_CONTEXT_OF(macctx->provctx);
+    OSSL_LIB_CTX *ctx = PROV_LIBCTX_OF(macctx->provctx);
     const OSSL_PARAM *p;
 
     if (!ossl_prov_cipher_load_from_params(&macctx->cipher, params, ctx))
@@ -177,7 +193,7 @@ static int cmac_set_ctx_params(void *vmacctx, const OSSL_PARAM params[])
     return 1;
 }
 
-const OSSL_DISPATCH cmac_functions[] = {
+const OSSL_DISPATCH ossl_cmac_functions[] = {
     { OSSL_FUNC_MAC_NEWCTX, (void (*)(void))cmac_new },
     { OSSL_FUNC_MAC_DUPCTX, (void (*)(void))cmac_dup },
     { OSSL_FUNC_MAC_FREECTX, (void (*)(void))cmac_free },

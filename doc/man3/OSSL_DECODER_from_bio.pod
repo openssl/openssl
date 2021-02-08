@@ -1,0 +1,73 @@
+=pod
+
+=head1 NAME
+
+OSSL_DECODER_from_data,
+OSSL_DECODER_from_bio,
+OSSL_DECODER_from_fp
+- Routines to perform a decoding
+
+=head1 SYNOPSIS
+
+ #include <openssl/decoder.h>
+
+ int OSSL_DECODER_from_bio(OSSL_DECODER_CTX *ctx, BIO *in);
+ int OSSL_DECODER_from_fp(OSSL_DECODER_CTX *ctx, FILE *fp);
+ int OSSL_DECODER_from_data(OSSL_DECODER_CTX *ctx, const unsigned char **pdata,
+                            size_t *pdata_len);
+
+Feature availability macros:
+
+=over 4
+
+=item OSSL_DECODER_from_fp() is only available when B<OPENSSL_NO_STDIO>
+is undefined.
+
+=back
+
+=head1 DESCRIPTION
+
+OSSL_DECODER_from_data() runs the decoding process for the context I<ctx>,
+with input coming from I<*pdata>, I<*pdata_len> bytes long.  Both I<*pdata>
+and I<*pdata_len> must be non-NULL.  When OSSL_DECODER_from_data() returns,
+I<*pdata> is updated to point at the location after what has been decoded,
+and I<*pdata_len> to have the number of remaining bytes.
+
+OSSL_DECODER_from_bio() runs the decoding process for the context I<ctx>,
+with the input coming from the B<BIO> I<in>.  Should it make a difference,
+it's recommended to have the BIO set in binary mode rather than text mode.
+
+OSSL_DECODER_from_fp() does the same thing as OSSL_DECODER_from_bio(),
+except that the input is coming from the B<FILE> I<fp>.
+
+=head1 RETURN VALUES
+
+OSSL_DECODER_from_bio() and OSSL_DECODER_from_fp() return 1 on success, or 0
+on failure.
+
+=begin comment TODO(3.0) Add examples!
+
+=head1 EXAMPLES
+
+Text, because pod2xxx doesn't like empty sections
+
+=end comment
+
+=head1 SEE ALSO
+
+L<provider(7)>, L<OSSL_DECODER_CTX(3)>
+
+=head1 HISTORY
+
+The functions described here were added in OpenSSL 3.0.
+
+=head1 COPYRIGHT
+
+Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

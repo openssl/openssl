@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-openssl-req - PKCS#10 certificate request and certificate generating utility
+openssl-req - PKCS#10 certificate request and certificate generating command
 
 =head1 SYNOPSIS
 
@@ -23,18 +23,22 @@ B<openssl> B<req>
 [B<-new>]
 [B<-newkey> I<arg>]
 [B<-pkeyopt> I<opt>:I<value>]
+[B<-noenc>]
 [B<-nodes>]
-[B<-key> I<filename>]
-[B<-keyform> B<DER>|B<PEM>]
+[B<-key> I<filename>|I<uri>]
+[B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>]
 [B<-keyout> I<filename>]
 [B<-keygen_engine> I<id>]
 [B<-I<digest>>]
 [B<-config> I<filename>]
-[B<-multivalue-rdn>]
+[B<-section> I<name>]
 [B<-x509>]
+[B<-CA> I<filename>|I<uri>]
+[B<-CAkey> I<filename>|I<uri>]
 [B<-days> I<n>]
 [B<-set_serial> I<n>]
 [B<-newhdr>]
+[B<-copy_extensions> I<arg>]
 [B<-addext> I<ext>]
 [B<-extensions> I<section>]
 [B<-reqexts> I<section>]
@@ -43,21 +47,21 @@ B<openssl> B<req>
 [B<-reqopt>]
 [B<-subject>]
 [B<-subj> I<arg>]
+[B<-multivalue-rdn>]
 [B<-sigopt> I<nm>:I<v>]
+[B<-vfyopt> I<nm>:I<v>]
 [B<-batch>]
 [B<-verbose>]
-[B<-sm2-id> I<string>]
-[B<-sm2-hex-id> I<hex-string>]
 {- $OpenSSL::safe::opt_name_synopsis -}
 {- $OpenSSL::safe::opt_r_synopsis -}
-{- $OpenSSL::safe::opt_engine_synopsis -}
+{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
 
-=for openssl ifdef engine keygen_engine sm2-id sm2-hex-id
+=for openssl ifdef engine keygen_engine
 
 =head1 DESCRIPTION
 
-This command primarily creates and processes certificate requests
-in PKCS#10 format. It can additionally create self signed certificates
+This command primarily creates and processes certificate requests (CSRs)
+in PKCS#10 format. It can additionally create self-signed certificates
 for use as root CAs for example.
 
 =head1 OPTIONS
@@ -70,8 +74,8 @@ Print out a usage message.
 
 =item B<-inform> B<DER>|B<PEM>, B<-outform> B<DER>|B<PEM>
 
-The input and formats; the default is B<PEM>.
-See L<openssl(1)/Format Options> for details.
+The input and output formats; the default is B<PEM>.
+See L<openssl-format-options(1)> for details.
 
 The data is a PKCS#10 object.
 
@@ -79,23 +83,41 @@ The data is a PKCS#10 object.
 
 This specifies the input filename to read a request from or standard input
 if this option is not specified. A request is only read if the creation
-options (B<-new> and B<-newkey>) are not specified.
+options (B<-new> or B<-newkey>) are not specified.
 
 =item B<-sigopt> I<nm>:I<v>
 
-Pass options to the signature algorithm during sign or verify operations.
+Pass options to the signature algorithm during sign operations.
 Names and values of these options are algorithm-specific.
 
-=item B<-passin> I<arg>, B<-passout> I<arg>
+=item B<-vfyopt> I<nm>:I<v>
 
-The password source for the input and output file.
+Pass options to the signature algorithm during verify operations.
+Names and values of these options are algorithm-specific.
+
+=begin comment
+
+Maybe it would be preferable to only have -opts instead of -sigopt and
+-vfyopt?  They are both present here to be compatible with L<openssl-ca(1)>,
+which supports both options for good reasons.
+
+=end comment
+
+=item B<-passin> I<arg>
+
+The password source for the request input file and the certificate input.
 For more information about the format of B<arg>
-see L<openssl(1)/Pass Phrase Options>.
+see L<openssl-passphrase-options(1)>.
+
+=item B<-passout> I<arg>
+
+The password source for the output file.
+For more information about the format of B<arg>
+see L<openssl-passphrase-options(1)>.
 
 =item B<-out> I<filename>
 
-This specifies the output filename to write to or standard output by
-default.
+This specifies the output filename to write to or standard output by default.
 
 =item B<-text>
 
@@ -103,25 +125,24 @@ Prints out the certificate request in text form.
 
 =item B<-subject>
 
-Prints out the request subject (or certificate subject if B<-x509> is
-specified)
+Prints out the certificate request subject
+(or certificate subject if B<-x509> is specified).
 
 =item B<-pubkey>
 
-Outputs the public key.
+Prints out the public key.
 
 =item B<-noout>
 
-This option prevents output of the encoded version of the request.
+This option prevents output of the encoded version of the certificate request.
 
 =item B<-modulus>
 
-This option prints out the value of the modulus of the public key
-contained in the request.
+Prints out the value of the modulus of the public key contained in the request.
 
 =item B<-verify>
 
-Verifies the signature on the request.
+Verifies the self-signature on the request.
 
 =item B<-new>
 
@@ -130,8 +151,9 @@ the user for the relevant field values. The actual fields
 prompted for and their maximum and minimum sizes are specified
 in the configuration file and any requested extensions.
 
-If the B<-key> option is not used it will generate a new RSA private
-key using information specified in the configuration file.
+If the B<-key> option is not given it will generate a new RSA private key
+using information specified in the configuration file or given with
+the B<-newkey> and B<-pkeyopt> options, else by default with 2048 bits length.
 
 =item B<-newkey> I<arg>
 
@@ -167,15 +189,17 @@ options supported depends on the public key algorithm used and its
 implementation.
 See L<openssl-genpkey(1)/KEY GENERATION OPTIONS> for more details.
 
-=item B<-key> I<filename>
+=item B<-key> I<filename>|I<uri>
 
-This specifies the file to read the private key from. It also
-accepts PKCS#8 format private keys for PEM format files.
+This specifies the private key to use for request self-signature
+and signing certificates produced using the B<-x509> option.
+It also accepts PKCS#8 format private keys for PEM format files.
 
-=item B<-keyform> B<DER>|B<PEM>
+=item B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
 
 The format of the private key; the default is B<PEM>.
-See L<openssl(1)/Format Options> for details.
+The only value with effect is B<ENGINE>; all others have become obsolete.
+See L<openssl-format-options(1)> for details.
 
 =item B<-keyout> I<filename>
 
@@ -183,10 +207,14 @@ This gives the filename to write the newly created private key to.
 If this option is not specified then the filename present in the
 configuration file is used.
 
-=item B<-nodes>
+=item B<-noenc>
 
 If this option is specified then if a private key is created it
 will not be encrypted.
+
+=item B<-nodes>
+
+This option is deprecated since OpenSSL 3.0; use B<-noenc> instead.
 
 =item B<-I<digest>>
 
@@ -205,35 +233,59 @@ This allows an alternative configuration file to be specified.
 Optional; for a description of the default value,
 see L<openssl(1)/COMMAND SUMMARY>.
 
+=item B<-section> I<name>
+
+Specifies the name of the section to use; the default is B<req>.
+
 =item B<-subj> I<arg>
 
 Sets subject name for new request or supersedes the subject name
-when processing a request.
+when processing a certificate request.
+
 The arg must be formatted as C</type0=value0/type1=value1/type2=...>.
-Keyword characters may be escaped by \ (backslash), and whitespace is retained.
+Special characters may be escaped by C<\> (backslash), whitespace is retained.
 Empty values are permitted, but the corresponding type will not be included
 in the request.
-
-=item B<-multivalue-rdn>
-
-This option causes the -subj argument to be interpreted with full
-support for multivalued RDNs. Example:
+Giving a single C</> will lead to an empty sequence of RDNs (a NULL-DN).
+Multi-valued RDNs can be formed by placing a C<+> character instead of a C</>
+between the AttributeValueAssertions (AVAs) that specify the members of the set.
+Example:
 
 C</DC=org/DC=OpenSSL/DC=users/UID=123456+CN=John Doe>
 
-If -multi-rdn is not used then the UID value is C<123456+CN=John Doe>.
+=item B<-multivalue-rdn>
+
+This option has been deprecated and has no effect.
 
 =item B<-x509>
 
-This option outputs a self signed certificate instead of a certificate
-request. This is typically used to generate a test certificate or
-a self signed root CA. The extensions added to the certificate
-(if any) are specified in the configuration file. Unless specified
-using the B<-set_serial> option, a large random number will be used for
-the serial number.
+This option outputs a certificate instead of a certificate request.
+This is typically used to generate test certificates.
 
-If existing request is specified with the B<-in> option, it is converted
-to the self signed certificate otherwise new request is created.
+If an existing request is specified with the B<-in> option, it is converted
+to the a certificate; otherwise a request is created from scratch.
+
+Unless specified using the B<-set_serial> option,
+a large random number will be used for the serial number.
+
+Unless the B<-copy_extensions> option is used,
+X.509 extensions are not copied from any provided request input file.
+
+X.509 extensions to be added can be specified in the configuration file
+or using the B<-addext> option.
+
+=item B<-CA> I<filename>|I<uri>
+
+Specifies the "CA" certificate to be used for signing with the B<-x509> option.
+When present, this behaves like a "micro CA" as follows:
+The subject name of the "CA" certificate is placed as issuer name in the new
+certificate, which is then signed using the "CA" key given as specified below.
+
+=item B<-CAkey> I<filename>|I<uri>
+
+Sets the "CA" private key to sign a certificate with.
+The private key must match the public key of the certificate given with B<-CA>.
+If this option is not provided then the key must be present in the B<-CA> input.
 
 =item B<-days> I<n>
 
@@ -243,8 +295,20 @@ be a positive integer. The default is 30 days.
 
 =item B<-set_serial> I<n>
 
-Serial number to use when outputting a self signed certificate. This
-may be specified as a decimal value or a hex value if preceded by C<0x>.
+Serial number to use when outputting a self-signed certificate.
+This may be specified as a decimal value or a hex value if preceded by C<0x>.
+If not given, a large random number will be used.
+
+=item B<-copy_extensions> I<arg>
+
+Determines how X.509 extensions in certificate requests should be handled
+when B<-x509> is given.
+If I<arg> is B<none> or this option is not present then extensions are ignored.
+If I<arg> is B<copy> or B<copyall> then
+all extensions in the request are copied to the certificate.
+
+The main use of this option is to allow a certificate request to supply
+values for certain extensions such as subjectAltName.
 
 =item B<-addext> I<ext>
 
@@ -283,7 +347,7 @@ configuration file, must be valid UTF8 strings.
 
 =item B<-reqopt> I<option>
 
-Customise the output format used with B<-text>. The I<option> argument can be
+Customise the printing format used with B<-text>. The I<option> argument can be
 a single option or multiple options separated by commas.
 
 See discussion of the  B<-certopt> parameter in the L<openssl-x509(1)>
@@ -307,29 +371,23 @@ Print extra details about the operations being performed.
 Specifies an engine (by its unique I<id> string) which would be used
 for key generation operations.
 
-=item B<-sm2-id>
-
-Specify the ID string to use when verifying an SM2 certificate request. The ID
-string is required by the SM2 signature algorithm for signing and verification.
-
-=item B<-sm2-hex-id>
-
-Specify a binary ID string to use when verifying an SM2 certificate request. The
-argument for this option is string of hexadecimal digits.
-
 {- $OpenSSL::safe::opt_name_item -}
 
 {- $OpenSSL::safe::opt_r_item -}
 
 {- $OpenSSL::safe::opt_engine_item -}
 
+{- $OpenSSL::safe::opt_provider_item -}
+
 =back
 
 =head1 CONFIGURATION FILE FORMAT
 
 The configuration options are specified in the B<req> section of
-the configuration file. As with all configuration files if no
-value is specified in the specific section (i.e. B<req>) then
+the configuration file. An alternate name be specified by using the
+B<-section> option.
+As with all configuration files, if no
+value is specified in the specific section then
 the initial unnamed or B<default> section is searched too.
 
 The options available are described in detail below.
@@ -362,8 +420,8 @@ overridden by the B<-keyout> option.
 
 This specifies a file containing additional B<OBJECT IDENTIFIERS>.
 Each line of the file should consist of the numerical form of the
-object identifier followed by white space then the short name followed
-by white space and finally the long name.
+object identifier followed by whitespace then the short name followed
+by whitespace and finally the long name.
 
 =item B<oid_section>
 
@@ -381,7 +439,7 @@ It is used for private key generation.
 =item B<encrypt_key>
 
 If this is set to B<no> then if a private key is generated it is
-B<not> encrypted. This is equivalent to the B<-nodes> command line
+B<not> encrypted. This is equivalent to the B<-noenc> command line
 option. For compatibility B<encrypt_rsa_key> is an equivalent option.
 
 =item B<default_md>
@@ -514,18 +572,18 @@ The same but just using req:
 
  openssl req -newkey rsa:2048 -keyout key.pem -out req.pem
 
-Generate a self signed root certificate:
+Generate a self-signed root certificate:
 
  openssl req -x509 -newkey rsa:2048 -keyout key.pem -out req.pem
 
 Create an SM2 private key and then generate a certificate request from it:
 
  openssl ecparam -genkey -name SM2 -out sm2.key
- openssl req -new -key sm2.key -out sm2.csr -sm3 -sigopt "sm2_id:1234567812345678"
+ openssl req -new -key sm2.key -out sm2.csr -sm3 -sigopt "distid:1234567812345678"
 
 Examine and verify an SM2 certificate request:
 
- openssl req -verify -in sm2.csr -sm3 -sm2-id 1234567812345678
+ openssl req -verify -in sm2.csr -sm3 -vfyopt "distid:1234567812345678"
 
 Example of a file pointed to by the B<oid_file> option:
 
@@ -675,9 +733,19 @@ L<openssl-gendsa(1)>,
 L<config(5)>,
 L<x509v3_config(5)>
 
+=head1 HISTORY
+
+The B<-section> option was added in OpenSSL 3.0.0.
+
+All B<-keyform> values except B<ENGINE> and the B<-multivalue-rdn> option
+have become obsolete in OpenSSL 3.0.0 and have no effect.
+
+The B<-engine> option was deprecated in OpenSSL 3.0.
+The <-nodes> option was deprecated in OpenSSL 3.0, too; use B<-noenc> instead.
+
 =head1 COPYRIGHT
 
-Copyright 2000-2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

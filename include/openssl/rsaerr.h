@@ -12,93 +12,11 @@
 # define OPENSSL_RSAERR_H
 # pragma once
 
-# include <openssl/macros.h>
-# ifndef OPENSSL_NO_DEPRECATED_3_0
-#  define HEADER_RSAERR_H
-# endif
-
 # include <openssl/opensslconf.h>
 # include <openssl/symhacks.h>
+# include <openssl/cryptoerr_legacy.h>
 
 
-# ifdef  __cplusplus
-extern "C"
-# endif
-int ERR_load_RSA_strings(void);
-
-/*
- * RSA function codes.
- */
-# ifndef OPENSSL_NO_DEPRECATED_3_0
-#  define RSA_F_CHECK_PADDING_MD                           0
-#  define RSA_F_ENCODE_PKCS1                               0
-#  define RSA_F_INT_RSA_VERIFY                             0
-#  define RSA_F_OLD_RSA_PRIV_DECODE                        0
-#  define RSA_F_PKEY_PSS_INIT                              0
-#  define RSA_F_PKEY_RSA_CTRL                              0
-#  define RSA_F_PKEY_RSA_CTRL_STR                          0
-#  define RSA_F_PKEY_RSA_SIGN                              0
-#  define RSA_F_PKEY_RSA_VERIFY                            0
-#  define RSA_F_PKEY_RSA_VERIFYRECOVER                     0
-#  define RSA_F_RSA_ALGOR_TO_MD                            0
-#  define RSA_F_RSA_BUILTIN_KEYGEN                         0
-#  define RSA_F_RSA_CHECK_KEY                              0
-#  define RSA_F_RSA_CHECK_KEY_EX                           0
-#  define RSA_F_RSA_CMS_DECRYPT                            0
-#  define RSA_F_RSA_CMS_VERIFY                             0
-#  define RSA_F_RSA_FIPS186_4_GEN_PROB_PRIMES              0
-#  define RSA_F_RSA_ITEM_VERIFY                            0
-#  define RSA_F_RSA_METH_DUP                               0
-#  define RSA_F_RSA_METH_NEW                               0
-#  define RSA_F_RSA_METH_SET1_NAME                         0
-#  define RSA_F_RSA_MGF1_TO_MD                             0
-#  define RSA_F_RSA_MULTIP_INFO_NEW                        0
-#  define RSA_F_RSA_NEW_METHOD                             0
-#  define RSA_F_RSA_NULL                                   0
-#  define RSA_F_RSA_NULL_PRIVATE_DECRYPT                   0
-#  define RSA_F_RSA_NULL_PRIVATE_ENCRYPT                   0
-#  define RSA_F_RSA_NULL_PUBLIC_DECRYPT                    0
-#  define RSA_F_RSA_NULL_PUBLIC_ENCRYPT                    0
-#  define RSA_F_RSA_OSSL_PRIVATE_DECRYPT                   0
-#  define RSA_F_RSA_OSSL_PRIVATE_ENCRYPT                   0
-#  define RSA_F_RSA_OSSL_PUBLIC_DECRYPT                    0
-#  define RSA_F_RSA_OSSL_PUBLIC_ENCRYPT                    0
-#  define RSA_F_RSA_PADDING_ADD_NONE                       0
-#  define RSA_F_RSA_PADDING_ADD_PKCS1_OAEP                 0
-#  define RSA_F_RSA_PADDING_ADD_PKCS1_OAEP_MGF1            0
-#  define RSA_F_RSA_PADDING_ADD_PKCS1_PSS                  0
-#  define RSA_F_RSA_PADDING_ADD_PKCS1_PSS_MGF1             0
-#  define RSA_F_RSA_PADDING_ADD_PKCS1_TYPE_1               0
-#  define RSA_F_RSA_PADDING_ADD_PKCS1_TYPE_2               0
-#  define RSA_F_RSA_PADDING_ADD_SSLV23                     0
-#  define RSA_F_RSA_PADDING_ADD_X931                       0
-#  define RSA_F_RSA_PADDING_CHECK_NONE                     0
-#  define RSA_F_RSA_PADDING_CHECK_PKCS1_OAEP               0
-#  define RSA_F_RSA_PADDING_CHECK_PKCS1_OAEP_MGF1          0
-#  define RSA_F_RSA_PADDING_CHECK_PKCS1_TYPE_1             0
-#  define RSA_F_RSA_PADDING_CHECK_PKCS1_TYPE_2             0
-#  define RSA_F_RSA_PADDING_CHECK_SSLV23                   0
-#  define RSA_F_RSA_PADDING_CHECK_X931                     0
-#  define RSA_F_RSA_PARAM_DECODE                           0
-#  define RSA_F_RSA_PRINT                                  0
-#  define RSA_F_RSA_PRINT_FP                               0
-#  define RSA_F_RSA_PRIV_DECODE                            0
-#  define RSA_F_RSA_PRIV_ENCODE                            0
-#  define RSA_F_RSA_PSS_GET_PARAM                          0
-#  define RSA_F_RSA_PSS_TO_CTX                             0
-#  define RSA_F_RSA_PUB_DECODE                             0
-#  define RSA_F_RSA_SETUP_BLINDING                         0
-#  define RSA_F_RSA_SIGN                                   0
-#  define RSA_F_RSA_SIGN_ASN1_OCTET_STRING                 0
-#  define RSA_F_RSA_SP800_56B_CHECK_KEYPAIR                0
-#  define RSA_F_RSA_SP800_56B_CHECK_PUBLIC                 0
-#  define RSA_F_RSA_SP800_56B_PAIRWISE_TEST                0
-#  define RSA_F_RSA_SP800_56B_VALIDATE_STRENGTH            0
-#  define RSA_F_RSA_VERIFY                                 0
-#  define RSA_F_RSA_VERIFY_ASN1_OCTET_STRING               0
-#  define RSA_F_RSA_VERIFY_PKCS1_PSS_MGF1                  0
-#  define RSA_F_SETUP_TBUF                                 0
-# endif
 
 /*
  * RSA reason codes.

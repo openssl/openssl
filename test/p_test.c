@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -27,10 +27,10 @@
 #endif
 
 #include <openssl/core.h>
-#include <openssl/core_numbers.h>
+#include <openssl/core_dispatch.h>
 
-static OSSL_core_gettable_params_fn *c_gettable_params = NULL;
-static OSSL_core_get_params_fn *c_get_params = NULL;
+static OSSL_FUNC_core_gettable_params_fn *c_gettable_params = NULL;
+static OSSL_FUNC_core_get_params_fn *c_get_params = NULL;
 
 /* Tell the core what params we provide and what type they are */
 static const OSSL_PARAM p_param_types[] = {
@@ -39,17 +39,18 @@ static const OSSL_PARAM p_param_types[] = {
 };
 
 /* This is a trick to ensure we define the provider functions correctly */
-static OSSL_provider_gettable_params_fn p_gettable_params;
-static OSSL_provider_get_params_fn p_get_params;
+static OSSL_FUNC_provider_gettable_params_fn p_gettable_params;
+static OSSL_FUNC_provider_get_params_fn p_get_params;
+static OSSL_FUNC_provider_get_reason_strings_fn p_get_reason_strings;
 
 static const OSSL_PARAM *p_gettable_params(void *_)
 {
     return p_param_types;
 }
 
-static int p_get_params(void *vprov, OSSL_PARAM params[])
+static int p_get_params(void *vhand, OSSL_PARAM params[])
 {
-    const OSSL_PROVIDER *prov = vprov;
+    const OSSL_CORE_HANDLE *hand = vhand;
     OSSL_PARAM *p = params;
     int ok = 1;
 
@@ -76,7 +77,7 @@ static int p_get_params(void *vprov, OSSL_PARAM params[])
 
             opensslv = provname = greeting = NULL;
 
-            if (c_get_params(prov, counter_request)) {
+            if (c_get_params(hand, counter_request)) {
                 if (greeting) {
                     strcpy(buf, greeting);
                 } else {
@@ -100,13 +101,25 @@ static int p_get_params(void *vprov, OSSL_PARAM params[])
     return ok;
 }
 
+static const OSSL_ITEM *p_get_reason_strings(void *_)
+{
+    static const OSSL_ITEM reason_strings[] = {
+        {1, "dummy reason string"},
+        {0, NULL}
+    };
+
+    return reason_strings;
+}
+
 static const OSSL_DISPATCH p_test_table[] = {
     { OSSL_FUNC_PROVIDER_GETTABLE_PARAMS, (void (*)(void))p_gettable_params },
     { OSSL_FUNC_PROVIDER_GET_PARAMS, (void (*)(void))p_get_params },
+    { OSSL_FUNC_PROVIDER_GET_REASON_STRINGS,
+        (void (*)(void))p_get_reason_strings},
     { 0, NULL }
 };
 
-int OSSL_provider_init(const OSSL_PROVIDER *provider,
+int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
                        const OSSL_DISPATCH *in,
                        const OSSL_DISPATCH **out,
                        void **provctx)
@@ -114,10 +127,10 @@ int OSSL_provider_init(const OSSL_PROVIDER *provider,
     for (; in->function_id != 0; in++) {
         switch (in->function_id) {
         case OSSL_FUNC_CORE_GETTABLE_PARAMS:
-            c_gettable_params = OSSL_get_core_gettable_params(in);
+            c_gettable_params = OSSL_FUNC_core_gettable_params(in);
             break;
         case OSSL_FUNC_CORE_GET_PARAMS:
-            c_get_params = OSSL_get_core_get_params(in);
+            c_get_params = OSSL_FUNC_core_get_params(in);
             break;
         default:
             /* Just ignore anything we don't understand */
@@ -126,7 +139,7 @@ int OSSL_provider_init(const OSSL_PROVIDER *provider,
     }
 
     /* Because we use this in get_params, we need to pass it back */
-    *provctx = (void *)provider;
+    *provctx = (void *)handle;
 
     *out = p_test_table;
     return 1;

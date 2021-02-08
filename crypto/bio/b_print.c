@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -328,7 +328,7 @@ _dopr(char **sbuffer,
                 break;
             case 'w':
                 /* not supported yet, treat as next char */
-                ch = *format++;
+                format++;
                 break;
             default:
                 /* unknown, skip */
@@ -635,7 +635,11 @@ fmtfp(char **sbuffer,
             fvalue = tmpvalue;
     }
     ufvalue = abs_val(fvalue);
-    if (ufvalue > ULONG_MAX) {
+    /*
+     * By subtracting 65535 (2^16-1) we cancel the low order 15 bits
+     * of ULONG_MAX to avoid using imprecise floating point values.
+     */
+    if (ufvalue >= (double)(ULONG_MAX - 65535) + 65536.0) {
         /* Number too big */
         return 0;
     }
@@ -820,7 +824,7 @@ doapr_outch(char **sbuffer,
         *maxlen += BUFFER_INC;
         if (*buffer == NULL) {
             if ((*buffer = OPENSSL_malloc(*maxlen)) == NULL) {
-                BIOerr(BIO_F_DOAPR_OUTCH, ERR_R_MALLOC_FAILURE);
+                ERR_raise(ERR_LIB_BIO, ERR_R_MALLOC_FAILURE);
                 return 0;
             }
             if (*currlen > 0) {

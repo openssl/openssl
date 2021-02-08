@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -76,6 +76,7 @@
 #include "internal/bio.h"
 #include <openssl/evp.h>
 #include <openssl/rand.h>
+#include "internal/endian.h"
 #include "crypto/evp.h"
 
 static int ok_write(BIO *h, const char *buf, int num);
@@ -134,7 +135,7 @@ static int ok_new(BIO *bi)
     BIO_OK_CTX *ctx;
 
     if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) == NULL) {
-        EVPerr(EVP_F_OK_NEW, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
         return 0;
     }
 
@@ -203,7 +204,7 @@ static int ok_read(BIO *b, char *out, int outl)
                 /*
                  * copy start of the next block into proper place
                  */
-                if (ctx->buf_len_save - ctx->buf_off_save > 0) {
+                if (ctx->buf_len_save > ctx->buf_off_save) {
                     ctx->buf_len = ctx->buf_len_save - ctx->buf_off_save;
                     memmove(ctx->buf, &(ctx->buf[ctx->buf_off_save]),
                             ctx->buf_len);
@@ -418,14 +419,9 @@ static long ok_callback_ctrl(BIO *b, int cmd, BIO_info_cb *fp)
 
 static void longswap(void *_ptr, size_t len)
 {
-    const union {
-        long one;
-        char little;
-    } is_endian = {
-        1
-    };
+    DECLARE_IS_ENDIAN;
 
-    if (is_endian.little) {
+    if (IS_LITTLE_ENDIAN) {
         size_t i;
         unsigned char *p = _ptr, c;
 

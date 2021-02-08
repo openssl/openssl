@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -18,7 +18,7 @@
 #include "prov/digestcommon.h"
 #include "prov/implementations.h"
 
-/* md4_functions */
+/* ossl_md4_functions */
 IMPLEMENT_digest_functions(md4, MD4_CTX,
                            MD4_CBLOCK, MD4_DIGEST_LENGTH, 0,
                            MD4_Init, MD4_Update, MD4_Final)

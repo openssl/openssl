@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -197,6 +197,7 @@ ok($fatal_alert, "Duplicate ClientHello extension");
 $fatal_alert = 0;
 $proxy->clear();
 $proxy->filter(\&inject_duplicate_extension_serverhello);
+$proxy->clientflags("-no_tls1_3");
 $proxy->start();
 ok($fatal_alert, "Duplicate ServerHello extension");
 
@@ -206,6 +207,8 @@ SKIP: {
     #Test 3: Sending a zero length extension block should pass
     $proxy->clear();
     $proxy->filter(\&extension_filter);
+    $proxy->ciphers("AES128-SHA:\@SECLEVEL=0");
+    $proxy->clientflags("-no_tls1_3");
     $proxy->start();
     ok(TLSProxy::Message->success, "Zero extension length test");
 
@@ -243,7 +246,8 @@ SKIP: {
 }
 
 SKIP: {
-    skip "TLS 1.3 disabled", 1 if disabled("tls1_3");
+    skip "TLS 1.3 disabled", 1
+        if disabled("tls1_3") || (disabled("ec") && disabled("dh"));
     #Test 7: Inject an unsolicited extension (TLSv1.3)
     $fatal_alert = 0;
     $proxy->clear();
@@ -259,5 +263,6 @@ SKIP: {
 #        ignore it in a ClientHello
 $proxy->clear();
 $proxy->filter(\&inject_cryptopro_extension);
+$proxy->clientflags("-no_tls1_3");
 $proxy->start();
 ok(TLSProxy::Message->success(), "Cryptopro extension in ClientHello");

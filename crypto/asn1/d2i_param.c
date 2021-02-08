@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -11,14 +11,14 @@
 #include "internal/cryptlib.h"
 #include <openssl/evp.h>
 #include <openssl/asn1.h>
-#include "crypto/evp.h"
+#include "internal/asn1.h"
 #include "crypto/asn1.h"
+#include "crypto/evp.h"
 
 EVP_PKEY *d2i_KeyParams(int type, EVP_PKEY **a, const unsigned char **pp,
                         long length)
 {
     EVP_PKEY *ret = NULL;
-    const unsigned char *p = *pp;
 
     if ((a == NULL) || (*a == NULL)) {
         if ((ret = EVP_PKEY_new()) == NULL)
@@ -30,11 +30,11 @@ EVP_PKEY *d2i_KeyParams(int type, EVP_PKEY **a, const unsigned char **pp,
         goto err;
 
     if (ret->ameth == NULL || ret->ameth->param_decode == NULL) {
-        ASN1err(ASN1_F_D2I_KEYPARAMS, ASN1_R_UNSUPPORTED_TYPE);
+        ERR_raise(ERR_LIB_ASN1, ASN1_R_UNSUPPORTED_TYPE);
         goto err;
     }
 
-    if (!ret->ameth->param_decode(ret, &p, length))
+    if (!ret->ameth->param_decode(ret, pp, length))
         goto err;
 
     if (a != NULL)

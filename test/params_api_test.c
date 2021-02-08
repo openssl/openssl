@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2019, Oracle and/or its affiliates.  All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -11,7 +11,7 @@
 #include <string.h>
 #include "testutil.h"
 #include "internal/nelem.h"
-#include "ossl_test_endian.h"
+#include "internal/endian.h"
 #include <openssl/params.h>
 #include <openssl/bn.h>
 
@@ -48,8 +48,16 @@ static const struct {
     size_t len;
     unsigned char value[MAX_LEN];
 } raw_values[] = {
+    { 1, { 0x47 } },
+    { 1, { 0xd0 } },
+    { 2, { 0x01, 0xe9 } },
+    { 2, { 0xff, 0x53 } },
+    { 3, { 0x16, 0xff, 0x7c } },
+    { 3, { 0xa8, 0x9c, 0x0e } },
     { 4, { 0x38, 0x27, 0xbf, 0x3b } },
     { 4, { 0x9f, 0x26, 0x48, 0x22 } },
+    { 5, { 0x30, 0x65, 0xfa, 0xe4, 0x81 } },
+    { 5, { 0xd1, 0x76, 0x01, 0x1b, 0xcd } },
     { 8, { 0x59, 0xb2, 0x1a, 0xe9, 0x2a, 0xd8, 0x46, 0x40 } },
     { 8, { 0xb4, 0xae, 0xbd, 0xb4, 0xdd, 0x04, 0xb1, 0x4c } },
     { 16, { 0x61, 0xe8, 0x7e, 0x31, 0xe9, 0x33, 0x83, 0x3d,
@@ -65,10 +73,15 @@ static int test_param_type_extra(OSSL_PARAM *param, const unsigned char *cmp,
     int64_t i64;
     size_t s, sz;
     unsigned char buf[MAX_LEN];
-    const int bit32 = param->data_size == sizeof(int32_t);
-    const int sizet = bit32 && sizeof(size_t) > sizeof(int32_t);
+    const int bit32 = param->data_size <= sizeof(int32_t);
+    const int sizet = param->data_size <= sizeof(size_t);
     const int signd = param->data_type == OSSL_PARAM_INTEGER;
 
+    /*
+     * Set the unmodified sentinal directly because there is no param array
+     * for these tests.
+     */
+    param->return_size = OSSL_PARAM_UNMODIFIED;
     if (signd) {
         if ((bit32 && !TEST_true(OSSL_PARAM_get_int32(param, &i32)))
             || !TEST_true(OSSL_PARAM_get_int64(param, &i64)))
@@ -80,6 +93,8 @@ static int test_param_type_extra(OSSL_PARAM *param, const unsigned char *cmp,
             || (sizet && !TEST_true(OSSL_PARAM_get_size_t(param, &s))))
             return 0;
     }
+    if (!TEST_false(OSSL_PARAM_modified(param)))
+        return 0;
 
     /* Check signed types */
     if (bit32) {
@@ -89,7 +104,7 @@ static int test_param_type_extra(OSSL_PARAM *param, const unsigned char *cmp,
             return 0;
     }
     le_copy(buf, &i64, sizeof(i64));
-        sz = sizeof(i64) < width ? sizeof(i64) : width;
+    sz = sizeof(i64) < width ? sizeof(i64) : width;
     if (!TEST_mem_eq(buf, sz, cmp, sz))
         return 0;
     if (sizet && !signd) {
@@ -112,6 +127,8 @@ static int test_param_type_extra(OSSL_PARAM *param, const unsigned char *cmp,
                 || !TEST_size_t_eq((size_t)i64, 12345))
                 return 0;
         }
+        if (!TEST_true(OSSL_PARAM_modified(param)))
+            return 0;
     }
     return 1;
 }
@@ -370,6 +387,33 @@ static int test_param_size_t(int n)
     return test_param_type_extra(&param, raw_values[n].value, sizeof(size_t));
 }
 
+static int test_param_time_t(int n)
+{
+    time_t in, out;
+    unsigned char buf[MAX_LEN], cmp[sizeof(size_t)];
+    const size_t len = raw_values[n].len >= sizeof(size_t)
+                       ? sizeof(time_t) : raw_values[n].len;
+    OSSL_PARAM param = OSSL_PARAM_time_t("a", NULL);
+
+    memset(buf, 0, sizeof(buf));
+    le_copy(buf, raw_values[n].value, sizeof(in));
+    memcpy(&in, buf, sizeof(in));
+    param.data = &out;
+    if (!TEST_true(OSSL_PARAM_set_time_t(&param, in)))
+        return 0;
+    le_copy(cmp, &out, sizeof(out));
+    if (!TEST_mem_eq(cmp, len, raw_values[n].value, len))
+        return 0;
+    in = 0;
+    if (!TEST_true(OSSL_PARAM_get_time_t(&param, &in)))
+        return 0;
+    le_copy(cmp, &in, sizeof(in));
+    if (!TEST_mem_eq(cmp, sizeof(in), raw_values[n].value, sizeof(in)))
+        return 0;
+    param.data = &out;
+    return test_param_type_extra(&param, raw_values[n].value, sizeof(size_t));
+}
+
 static int test_param_bignum(int n)
 {
     unsigned char buf[MAX_LEN], bnbuf[MAX_LEN];
@@ -563,6 +607,33 @@ err:
     return ret;
 }
 
+static int test_param_modified(void)
+{
+    OSSL_PARAM param[3] = { OSSL_PARAM_int("a", NULL),
+                            OSSL_PARAM_int("b", NULL),
+                            OSSL_PARAM_END };
+    int a, b;
+
+    param->data = &a;
+    param[1].data = &b;
+    if (!TEST_false(OSSL_PARAM_modified(param))
+            && !TEST_true(OSSL_PARAM_set_int32(param, 1234))
+            && !TEST_true(OSSL_PARAM_modified(param))
+            && !TEST_false(OSSL_PARAM_modified(param + 1))
+            && !TEST_true(OSSL_PARAM_set_int32(param + 1, 1))
+            && !TEST_true(OSSL_PARAM_modified(param + 1)))
+        return 0;
+    OSSL_PARAM_set_all_unmodified(param);
+    if (!TEST_false(OSSL_PARAM_modified(param))
+            && !TEST_true(OSSL_PARAM_set_int32(param, 4321))
+            && !TEST_true(OSSL_PARAM_modified(param))
+            && !TEST_false(OSSL_PARAM_modified(param + 1))
+            && !TEST_true(OSSL_PARAM_set_int32(param + 1, 2))
+            && !TEST_true(OSSL_PARAM_modified(param + 1)))
+        return 0;
+    return 1;
+}
+
 int setup_tests(void)
 {
     ADD_ALL_TESTS(test_param_int, OSSL_NELEM(raw_values));
@@ -572,10 +643,12 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_param_int32, OSSL_NELEM(raw_values));
     ADD_ALL_TESTS(test_param_uint32, OSSL_NELEM(raw_values));
     ADD_ALL_TESTS(test_param_size_t, OSSL_NELEM(raw_values));
+    ADD_ALL_TESTS(test_param_time_t, OSSL_NELEM(raw_values));
     ADD_ALL_TESTS(test_param_int64, OSSL_NELEM(raw_values));
     ADD_ALL_TESTS(test_param_uint64, OSSL_NELEM(raw_values));
     ADD_ALL_TESTS(test_param_bignum, OSSL_NELEM(raw_values));
     ADD_TEST(test_param_real);
     ADD_TEST(test_param_construct);
+    ADD_TEST(test_param_modified);
     return 1;
 }

@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -42,7 +42,7 @@ $X="esi";
  0, 7, 14, 5, 12, 3, 10, 1, 8, 15, 6, 13, 4, 11, 2, 9,	# R3
  );
 
-&md5_block("md5_block_asm_data_order");
+&md5_block("ossl_md5_block_asm_data_order");
 &asm_finish();
 
 close STDOUT or die "error closing STDOUT: $!";

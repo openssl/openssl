@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -13,7 +13,7 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 
-#include "ssltestlib.h"
+#include "helpers/ssltestlib.h"
 #include "testutil.h"
 
 static char *cert = NULL;
@@ -61,7 +61,7 @@ static int test_dtls_unprocessed(int testidx)
 
     timer_cb_count = 0;
 
-    if (!TEST_true(create_ssl_ctx_pair(DTLS_server_method(),
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
                                        DTLS_client_method(),
                                        DTLS1_VERSION, 0,
                                        &sctx, &cctx, cert, privkey)))
@@ -146,6 +146,11 @@ static int test_dtls_unprocessed(int testidx)
 
 #define TOTAL_RECORDS (TOTAL_FULL_HAND_RECORDS + TOTAL_RESUME_HAND_RECORDS)
 
+/*
+ * We are assuming a ServerKeyExchange message is sent in this test. If we don't
+ * have either DH or EC, then it won't be
+ */
+#if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC)
 static int test_dtls_drop_records(int idx)
 {
     SSL_CTX *sctx = NULL, *cctx = NULL;
@@ -156,11 +161,14 @@ static int test_dtls_drop_records(int idx)
     SSL_SESSION *sess = NULL;
     int cli_to_srv_epoch0, cli_to_srv_epoch1, srv_to_cli_epoch0;
 
-    if (!TEST_true(create_ssl_ctx_pair(DTLS_server_method(),
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
                                        DTLS_client_method(),
                                        DTLS1_VERSION, 0,
                                        &sctx, &cctx, cert, privkey)))
         return 0;
+
+    if (!TEST_true(SSL_CTX_set_dh_auto(sctx, 1)))
+        goto end;
 
     if (idx >= TOTAL_FULL_HAND_RECORDS) {
         /* We're going to do a resumption handshake. Get a session first. */
@@ -244,6 +252,7 @@ static int test_dtls_drop_records(int idx)
 
     return testresult;
 }
+#endif /* !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC) */
 
 static const char dummy_cookie[] = "0123456";
 
@@ -267,7 +276,7 @@ static int test_cookie(void)
     SSL *serverssl = NULL, *clientssl = NULL;
     int testresult = 0;
 
-    if (!TEST_true(create_ssl_ctx_pair(DTLS_server_method(),
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
                                        DTLS_client_method(),
                                        DTLS1_VERSION, 0,
                                        &sctx, &cctx, cert, privkey)))
@@ -299,7 +308,7 @@ static int test_dtls_duplicate_records(void)
     SSL *serverssl = NULL, *clientssl = NULL;
     int testresult = 0;
 
-    if (!TEST_true(create_ssl_ctx_pair(DTLS_server_method(),
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
                                        DTLS_client_method(),
                                        DTLS1_VERSION, 0,
                                        &sctx, &cctx, cert, privkey)))
@@ -342,7 +351,9 @@ int setup_tests(void)
         return 0;
 
     ADD_ALL_TESTS(test_dtls_unprocessed, NUM_TESTS);
+#if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC)
     ADD_ALL_TESTS(test_dtls_drop_records, TOTAL_RECORDS);
+#endif
     ADD_TEST(test_cookie);
     ADD_TEST(test_dtls_duplicate_records);
 

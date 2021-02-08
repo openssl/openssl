@@ -16,8 +16,6 @@ SSL_CTX_config, SSL_config - configure SSL_CTX or SSL structure
 The functions SSL_CTX_config() and SSL_config() configure an B<SSL_CTX> or
 B<SSL> structure using the configuration B<name>.
 
-=head1 NOTES
-
 By calling SSL_CTX_config() or SSL_config() an application can perform many
 complex tasks based on the contents of the configuration file: greatly
 simplifying application configuration code. A degree of future proofing
@@ -82,7 +80,7 @@ The SSL_CTX_config() and SSL_config() functions were added in OpenSSL 1.1.0.
 
 =head1 COPYRIGHT
 
-Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

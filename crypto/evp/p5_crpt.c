@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -38,25 +38,25 @@ int PKCS5_PBE_keyivgen(EVP_CIPHER_CTX *cctx, const char *pass, int passlen,
     /* Extract useful info from parameter */
     if (param == NULL || param->type != V_ASN1_SEQUENCE ||
         param->value.sequence == NULL) {
-        EVPerr(EVP_F_PKCS5_PBE_KEYIVGEN, EVP_R_DECODE_ERROR);
+        ERR_raise(ERR_LIB_EVP, EVP_R_DECODE_ERROR);
         return 0;
     }
 
     pbe = ASN1_TYPE_unpack_sequence(ASN1_ITEM_rptr(PBEPARAM), param);
     if (pbe == NULL) {
-        EVPerr(EVP_F_PKCS5_PBE_KEYIVGEN, EVP_R_DECODE_ERROR);
+        ERR_raise(ERR_LIB_EVP, EVP_R_DECODE_ERROR);
         return 0;
     }
 
     ivl = EVP_CIPHER_iv_length(cipher);
     if (ivl < 0 || ivl > 16) {
-        EVPerr(EVP_F_PKCS5_PBE_KEYIVGEN, EVP_R_INVALID_IV_LENGTH);
+        ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_IV_LENGTH);
         PBEPARAM_free(pbe);
         return 0;
     }
     kl = EVP_CIPHER_key_length(cipher);
     if (kl < 0 || kl > (int)sizeof(md_tmp)) {
-        EVPerr(EVP_F_PKCS5_PBE_KEYIVGEN, EVP_R_INVALID_KEY_LENGTH);
+        ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_KEY_LENGTH);
         PBEPARAM_free(pbe);
         return 0;
     }
@@ -75,7 +75,7 @@ int PKCS5_PBE_keyivgen(EVP_CIPHER_CTX *cctx, const char *pass, int passlen,
 
     ctx = EVP_MD_CTX_new();
     if (ctx == NULL) {
-        EVPerr(EVP_F_PKCS5_PBE_KEYIVGEN, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
@@ -91,7 +91,7 @@ int PKCS5_PBE_keyivgen(EVP_CIPHER_CTX *cctx, const char *pass, int passlen,
         goto err;
     mdsize = EVP_MD_size(md);
     if (mdsize < 0)
-        return 0;
+        goto err;
     for (i = 1; i < iter; i++) {
         if (!EVP_DigestInit_ex(ctx, md, NULL))
             goto err;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -9,7 +9,7 @@
 
 #include <openssl/ssl.h>
 #include <openssl/err.h>
-#include "ssltestlib.h"
+#include "helpers/ssltestlib.h"
 #include "testutil.h"
 #include <string.h>
 
@@ -28,7 +28,7 @@ static int test_fatalerr(void)
         0x17, 0x03, 0x03, 0x00, 0x05, 'D', 'u', 'm', 'm', 'y'
     };
 
-    if (!TEST_true(create_ssl_ctx_pair(TLS_method(), TLS_method(),
+    if (!TEST_true(create_ssl_ctx_pair(NULL, TLS_method(), TLS_method(),
                                        TLS1_VERSION, 0,
                                        &sctx, &cctx, cert, privkey)))
         goto err;

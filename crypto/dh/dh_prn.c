@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -25,7 +25,7 @@ int DHparams_print_fp(FILE *fp, const DH *x)
     int ret;
 
     if ((b = BIO_new(BIO_s_file())) == NULL) {
-        DHerr(DH_F_DHPARAMS_PRINT_FP, ERR_R_BUF_LIB);
+        ERR_raise(ERR_LIB_DH, ERR_R_BUF_LIB);
         return 0;
     }
     BIO_set_fp(b, fp, BIO_NOCLOSE);

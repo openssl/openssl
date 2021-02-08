@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -16,6 +16,7 @@
 
 #include "crypto/x509.h"
 #include "ext_dat.h"
+#include "x509_local.h"
 
 static void *v2i_crld(const X509V3_EXT_METHOD *method,
                       X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *nval);
@@ -52,7 +53,7 @@ static STACK_OF(GENERAL_NAME) *gnames_from_sectname(X509V3_CTX *ctx,
     else
         gnsect = X509V3_parse_list(sect);
     if (!gnsect) {
-        X509V3err(X509V3_F_GNAMES_FROM_SECTNAME, X509V3_R_SECTION_NOT_FOUND);
+        ERR_raise(ERR_LIB_X509V3, X509V3_R_SECTION_NOT_FOUND);
         return NULL;
     }
     gens = v2i_GENERAL_NAMES(NULL, ctx, gnsect);
@@ -82,8 +83,7 @@ static int set_dist_point_name(DIST_POINT_NAME **pdp, X509V3_CTX *ctx,
             return -1;
         dnsect = X509V3_get_section(ctx, cnf->value);
         if (!dnsect) {
-            X509V3err(X509V3_F_SET_DIST_POINT_NAME,
-                      X509V3_R_SECTION_NOT_FOUND);
+            ERR_raise(ERR_LIB_X509V3, X509V3_R_SECTION_NOT_FOUND);
             return -1;
         }
         ret = X509V3_NAME_from_section(nm, dnsect, MBSTRING_ASC);
@@ -98,16 +98,14 @@ static int set_dist_point_name(DIST_POINT_NAME **pdp, X509V3_CTX *ctx,
          */
         if (sk_X509_NAME_ENTRY_value(rnm,
                                      sk_X509_NAME_ENTRY_num(rnm) - 1)->set) {
-            X509V3err(X509V3_F_SET_DIST_POINT_NAME,
-                      X509V3_R_INVALID_MULTIPLE_RDNS);
+            ERR_raise(ERR_LIB_X509V3, X509V3_R_INVALID_MULTIPLE_RDNS);
             goto err;
         }
     } else
         return 0;
 
     if (*pdp) {
-        X509V3err(X509V3_F_SET_DIST_POINT_NAME,
-                  X509V3_R_DISTPOINT_ALREADY_SET);
+        ERR_raise(ERR_LIB_X509V3, X509V3_R_DISTPOINT_ALREADY_SET);
         goto err;
     }
 
@@ -251,7 +249,7 @@ static void *v2i_crld(const X509V3_EXT_METHOD *method,
         DIST_POINT *point;
 
         cnf = sk_CONF_VALUE_value(nval, i);
-        if (!cnf->value) {
+        if (cnf->value == NULL) {
             STACK_OF(CONF_VALUE) *dpsect;
             dpsect = X509V3_get_section(ctx, cnf->name);
             if (!dpsect)
@@ -282,7 +280,7 @@ static void *v2i_crld(const X509V3_EXT_METHOD *method,
     return crld;
 
  merr:
-    X509V3err(X509V3_F_V2I_CRLD, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
  err:
     GENERAL_NAME_free(gen);
     GENERAL_NAMES_free(gens);
@@ -392,15 +390,15 @@ static void *v2i_idp(const X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
             if (!set_reasons(&idp->onlysomereasons, val))
                 goto err;
         } else {
-            X509V3err(X509V3_F_V2I_IDP, X509V3_R_INVALID_NAME);
-            X509V3_conf_err(cnf);
+            ERR_raise(ERR_LIB_X509V3, X509V3_R_INVALID_NAME);
+            X509V3_conf_add_error_name_value(cnf);
             goto err;
         }
     }
     return idp;
 
  merr:
-    X509V3err(X509V3_F_V2I_IDP, ERR_R_MALLOC_FAILURE);
+    ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
  err:
     ISSUING_DIST_POINT_free(idp);
     return NULL;
@@ -479,30 +477,31 @@ static int i2r_crldp(const X509V3_EXT_METHOD *method, void *pcrldp, BIO *out,
     return 1;
 }
 
-int DIST_POINT_set_dpname(DIST_POINT_NAME *dpn, X509_NAME *iname)
+/* Append any nameRelativeToCRLIssuer in dpn to iname, set in dpn->dpname */
+int DIST_POINT_set_dpname(DIST_POINT_NAME *dpn, const X509_NAME *iname)
 {
     int i;
     STACK_OF(X509_NAME_ENTRY) *frag;
     X509_NAME_ENTRY *ne;
-    if (!dpn || (dpn->type != 1))
+
+    if (dpn == NULL || dpn->type != 1)
         return 1;
     frag = dpn->name.relativename;
+    X509_NAME_free(dpn->dpname); /* just in case it was already set */
     dpn->dpname = X509_NAME_dup(iname);
-    if (!dpn->dpname)
+    if (dpn->dpname == NULL)
         return 0;
     for (i = 0; i < sk_X509_NAME_ENTRY_num(frag); i++) {
         ne = sk_X509_NAME_ENTRY_value(frag, i);
-        if (!X509_NAME_add_entry(dpn->dpname, ne, -1, i ? 0 : 1)) {
-            X509_NAME_free(dpn->dpname);
-            dpn->dpname = NULL;
-            return 0;
-        }
+        if (!X509_NAME_add_entry(dpn->dpname, ne, -1, i ? 0 : 1))
+            goto err;
     }
     /* generate cached encoding of name */
-    if (i2d_X509_NAME(dpn->dpname, NULL) < 0) {
-        X509_NAME_free(dpn->dpname);
-        dpn->dpname = NULL;
-        return 0;
-    }
-    return 1;
+    if (i2d_X509_NAME(dpn->dpname, NULL) >= 0)
+        return 1;
+
+ err:
+    X509_NAME_free(dpn->dpname);
+    dpn->dpname = NULL;
+    return 0;
 }

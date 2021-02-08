@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -270,7 +270,7 @@ extern "C" {
  * SSL3_CT_NUMBER is used to size arrays and it must be large enough to
  * contain all of the cert types defined for *either* SSLv3 and TLSv1.
  */
-# define SSL3_CT_NUMBER                  10
+# define SSL3_CT_NUMBER                  12
 
 # if defined(TLS_CT_NUMBER)
 #  if TLS_CT_NUMBER != SSL3_CT_NUMBER
@@ -296,6 +296,9 @@ extern "C" {
 # define TLS1_FLAGS_ENCRYPT_THEN_MAC_WRITE       0x0400
 
 # define TLS1_FLAGS_STATELESS                    0x0800
+
+/* Set if extended master secret extension required on renegotiation */
+# define TLS1_FLAGS_REQUIRED_EXTMS               0x1000
 
 # define SSL3_MT_HELLO_REQUEST                   0
 # define SSL3_MT_CLIENT_HELLO                    1

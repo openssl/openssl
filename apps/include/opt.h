@@ -1,7 +1,7 @@
 /*
- * Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -132,9 +132,9 @@
         { "xchain_build", OPT_X_CHAIN_BUILD, '-', \
             "build certificate chain for the extended certificates"}, \
         { "xcertform", OPT_X_CERTFORM, 'F', \
-            "format of Extended certificate (PEM or DER) PEM default " }, \
+            "format of Extended certificate (PEM/DER/P12); has no effect" }, \
         { "xkeyform", OPT_X_KEYFORM, 'F', \
-            "format of Extended certificate's key (PEM or DER) PEM default"}
+            "format of Extended certificate's key (DER/PEM/P12); has no effect"}
 
 # define OPT_X_CASES \
         OPT_X__FIRST: case OPT_X__LAST: break; \
@@ -266,6 +266,29 @@
         case OPT_R_RAND: case OPT_R_WRITERAND
 
 /*
+ * Provider options.
+ */
+# define OPT_PROV_ENUM \
+        OPT_PROV__FIRST=1600, \
+        OPT_PROV_PROVIDER, OPT_PROV_PROVIDER_PATH, OPT_PROV_PROPQUERY, \
+        OPT_PROV__LAST
+
+# define OPT_CONFIG_OPTION \
+        { "config", OPT_CONFIG, '<', "Load a configuration file (this may load modules)" }
+
+# define OPT_PROV_OPTIONS \
+        OPT_SECTION("Provider"), \
+        { "provider-path", OPT_PROV_PROVIDER_PATH, 's', "Provider load path (must be before 'provider' argument if required)" }, \
+        { "provider", OPT_PROV_PROVIDER, 's', "Provider to load (can be specified multiple times)" }, \
+        { "propquery", OPT_PROV_PROPQUERY, 's', "Property query used when fetching algorithms" }
+
+# define OPT_PROV_CASES \
+        OPT_PROV__FIRST: case OPT_PROV__LAST: break; \
+        case OPT_PROV_PROVIDER: \
+        case OPT_PROV_PROVIDER_PATH: \
+        case OPT_PROV_PROPQUERY
+
+/*
  * Option parsing.
  */
 extern const char OPT_HELP_STR[];
@@ -318,12 +341,15 @@ typedef struct string_int_pair_st {
 #define OPT_SECTION(sec) { OPT_SECTION_STR, 1, '-', sec " options:\n" }
 #define OPT_PARAMETERS() { OPT_PARAM_STR, 1, '-', "Parameters:\n" }
 
+const char *opt_path_end(const char *filename);
 char *opt_progname(const char *argv0);
+char *opt_appname(const char *arg0);
 char *opt_getprog(void);
 char *opt_init(int ac, char **av, const OPTIONS * o);
 int opt_next(void);
 void opt_begin(void);
 int opt_format(const char *s, unsigned long flags, int *result);
+const char *format2str(int format);
 int opt_int(const char *arg, int *result);
 int opt_ulong(const char *arg, unsigned long *result);
 int opt_long(const char *arg, long *result);
@@ -339,6 +365,7 @@ int opt_umax(const char *arg, uintmax_t *result);
 # define uintmax_t unsigned long
 #endif
 int opt_pair(const char *arg, const OPT_PAIR * pairs, int *result);
+int opt_string(const char *name, const char **options);
 int opt_cipher(const char *name, const EVP_CIPHER **cipherp);
 int opt_md(const char *name, const EVP_MD **mdp);
 char *opt_arg(void);
@@ -348,9 +375,11 @@ char **opt_rest(void);
 int opt_num_rest(void);
 int opt_verify(int i, X509_VERIFY_PARAM *vpm);
 int opt_rand(int i);
+int opt_provider(int i);
 void opt_help(const OPTIONS * list);
 void opt_print(const OPTIONS * opt, int doingparams, int width);
 int opt_format_error(const char *s, unsigned long flags);
+void print_format_error(int format, unsigned long flags);
 int opt_isdir(const char *name);
 int opt_printf_stderr(const char *fmt, ...);
 

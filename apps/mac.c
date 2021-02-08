@@ -1,7 +1,7 @@
 /*
- * Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -21,7 +21,8 @@
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
-    OPT_MACOPT, OPT_BIN, OPT_IN, OPT_OUT
+    OPT_MACOPT, OPT_BIN, OPT_IN, OPT_OUT,
+    OPT_PROV_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS mac_options[] = {
@@ -39,6 +40,8 @@ const OPTIONS mac_options[] = {
     {"out", OPT_OUT, '>', "Output to filename rather than stdout"},
     {"binary", OPT_BIN, '-',
         "Output in binary format (default is hexadecimal)"},
+
+    OPT_PROV_OPTIONS,
 
     OPT_PARAMETERS(),
     {"mac_name", 0, 0, "MAC algorithm"},
@@ -89,17 +92,20 @@ opthelp:
             if (opts == NULL || !sk_OPENSSL_STRING_push(opts, opt_arg()))
                 goto opthelp;
             break;
+        case OPT_PROV_CASES:
+            if (!opt_provider(o))
+                goto err;
+            break;
         }
     }
+
+    /* One argument, the MAC name. */
     argc = opt_num_rest();
     argv = opt_rest();
-
-    if (argc != 1) {
-        BIO_printf(bio_err, "Invalid number of extra arguments\n");
+    if (argc != 1)
         goto opthelp;
-    }
 
-    mac = EVP_MAC_fetch(NULL, argv[0], NULL);
+    mac = EVP_MAC_fetch(app_get0_libctx(), argv[0], app_get0_propq());
     if (mac == NULL) {
         BIO_printf(bio_err, "Invalid MAC name %s\n", argv[0]);
         goto opthelp;

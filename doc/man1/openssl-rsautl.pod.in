@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-openssl-rsautl - RSA utility
+openssl-rsautl - RSA command
 
 =head1 SYNOPSIS
 
@@ -13,8 +13,8 @@ B<openssl> B<rsautl>
 [B<-passin> I<arg>]
 [B<-rev>]
 [B<-out> I<file>]
-[B<-inkey> I<file>]
-[B<-keyform> B<DER>|B<PEM>|B<ENGINE>]
+[B<-inkey> I<filename>|I<uri>]
+[B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>]
 [B<-pubin>]
 [B<-certin>]
 [B<-sign>]
@@ -31,8 +31,8 @@ B<openssl> B<rsautl>
 [B<-raw>]
 [B<-hexdump>]
 [B<-asn1parse>]
-{- $OpenSSL::safe::opt_engine_synopsis -}
-{- $OpenSSL::safe::opt_r_synopsis -}
+{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_r_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
 
 =for openssl ifdef engine
 
@@ -60,7 +60,7 @@ if this option is not specified.
 =item B<-passin> I<arg>
 
 The passphrase used in the output file.
-See see L<openssl(1)/Pass Phrase Options>.
+See see L<openssl-passphrase-options(1)>.
 
 =item B<-rev>
 
@@ -71,14 +71,15 @@ Reverse the order of the input.
 Specifies the output filename to write to or standard output by
 default.
 
-=item B<-inkey> I<file>
+=item B<-inkey> I<filename>|I<uri>
 
-The input key file, by default it should be an RSA private key.
+The input key, by default it should be an RSA private key.
 
-=item B<-keyform> B<DER>|B<PEM>|B<ENGINE>
+=item B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
 
 The key format; the default is B<PEM>.
-See L<openssl(1)/Format Options> for details.
+The only value with effect is B<ENGINE>; all others have become obsolete.
+See L<openssl-format-options(1)> for details.
 
 =item B<-pubin>
 
@@ -126,6 +127,8 @@ B<-verify> option.
 
 {- $OpenSSL::safe::opt_r_item -}
 
+{- $OpenSSL::safe::opt_provider_item -}
+
 =back
 
 =head1 NOTES
@@ -164,7 +167,7 @@ encrypt and decrypt the block would have been of type 2 (the second byte)
 and random padding data visible instead of the 0xff bytes.
 
 It is possible to analyse the signature of certificates using this
-utility in conjunction with L<openssl-asn1parse(1)>. Consider the self signed
+command in conjunction with L<openssl-asn1parse(1)>. Consider the self signed
 example in F<certs/pca-cert.pem>. Running L<openssl-asn1parse(1)> as follows
 yields:
 
@@ -234,9 +237,14 @@ L<openssl-genrsa(1)>
 
 This command was deprecated in OpenSSL 3.0.
 
+All B<-keyform> values except B<ENGINE> have become obsolete in OpenSSL 3.0.0
+and have no effect.
+
+The B<-engine> option was deprecated in OpenSSL 3.0.
+
 =head1 COPYRIGHT
 
-Copyright 2000-2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

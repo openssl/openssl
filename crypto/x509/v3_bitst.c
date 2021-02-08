@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -64,7 +64,7 @@ ASN1_BIT_STRING *v2i_ASN1_BIT_STRING(X509V3_EXT_METHOD *method,
     int i;
     BIT_STRING_BITNAME *bnam;
     if ((bs = ASN1_BIT_STRING_new()) == NULL) {
-        X509V3err(X509V3_F_V2I_ASN1_BIT_STRING, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
     for (i = 0; i < sk_CONF_VALUE_num(nval); i++) {
@@ -73,8 +73,7 @@ ASN1_BIT_STRING *v2i_ASN1_BIT_STRING(X509V3_EXT_METHOD *method,
             if (strcmp(bnam->sname, val->name) == 0
                 || strcmp(bnam->lname, val->name) == 0) {
                 if (!ASN1_BIT_STRING_set_bit(bs, bnam->bitnum, 1)) {
-                    X509V3err(X509V3_F_V2I_ASN1_BIT_STRING,
-                              ERR_R_MALLOC_FAILURE);
+                    ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
                     ASN1_BIT_STRING_free(bs);
                     return NULL;
                 }
@@ -82,9 +81,8 @@ ASN1_BIT_STRING *v2i_ASN1_BIT_STRING(X509V3_EXT_METHOD *method,
             }
         }
         if (!bnam->lname) {
-            X509V3err(X509V3_F_V2I_ASN1_BIT_STRING,
-                      X509V3_R_UNKNOWN_BIT_STRING_ARGUMENT);
-            X509V3_conf_err(val);
+            ERR_raise_data(ERR_LIB_X509V3, X509V3_R_UNKNOWN_BIT_STRING_ARGUMENT,
+                           "%s", val->name);
             ASN1_BIT_STRING_free(bs);
             return NULL;
         }

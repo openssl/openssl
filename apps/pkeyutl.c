@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -23,7 +23,8 @@
 static EVP_PKEY_CTX *init_ctx(const char *kdfalg, int *pkeysize,
                               const char *keyfile, int keyform, int key_type,
                               char *passinarg, int pkey_op, ENGINE *e,
-                              const int impl, int rawin, EVP_PKEY **ppkey);
+                              const int impl, int rawin, EVP_PKEY **ppkey,
+                              OSSL_LIB_CTX *libctx);
 
 static int setup_peer(EVP_PKEY_CTX *ctx, int peerform, const char *file,
                       ENGINE *e);
@@ -44,7 +45,8 @@ typedef enum OPTION_choice {
     OPT_VERIFY, OPT_VERIFYRECOVER, OPT_REV, OPT_ENCRYPT, OPT_DECRYPT,
     OPT_DERIVE, OPT_SIGFILE, OPT_INKEY, OPT_PEERKEY, OPT_PASSIN,
     OPT_PEERFORM, OPT_KEYFORM, OPT_PKEYOPT, OPT_PKEYOPT_PASSIN, OPT_KDF,
-    OPT_KDFLEN, OPT_R_ENUM,
+    OPT_KDFLEN, OPT_R_ENUM, OPT_PROV_ENUM,
+    OPT_CONFIG,
     OPT_RAWIN, OPT_DIGEST
 } OPTION_CHOICE;
 
@@ -61,6 +63,7 @@ const OPTIONS pkeyutl_options[] = {
     {"encrypt", OPT_ENCRYPT, '-', "Encrypt input data with public key"},
     {"decrypt", OPT_DECRYPT, '-', "Decrypt input data with private key"},
     {"derive", OPT_DERIVE, '-', "Derive shared secret"},
+    OPT_CONFIG_OPTION,
 
     OPT_SECTION("Input"),
     {"in", OPT_IN, '<', "Input file - default stdin"},
@@ -69,11 +72,11 @@ const OPTIONS pkeyutl_options[] = {
     {"inkey", OPT_INKEY, 's', "Input private key file"},
     {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
     {"peerkey", OPT_PEERKEY, 's', "Peer key file used in key derivation"},
-    {"peerform", OPT_PEERFORM, 'E', "Peer key format - default PEM"},
+    {"peerform", OPT_PEERFORM, 'E', "Peer key format (DER/PEM/P12/ENGINE)"},
     {"certin", OPT_CERTIN, '-', "Input is a cert with a public key"},
     {"rev", OPT_REV, '-', "Reverse the order of the input buffer"},
     {"sigfile", OPT_SIGFILE, '<', "Signature file (verify operation only)"},
-    {"keyform", OPT_KEYFORM, 'E', "Private key format - default PEM"},
+    {"keyform", OPT_KEYFORM, 'E', "Private key format (ENGINE, other values ignored)"},
 
     OPT_SECTION("Output"),
     {"out", OPT_OUT, '>', "Output file - default stdout"},
@@ -92,11 +95,13 @@ const OPTIONS pkeyutl_options[] = {
     {"kdflen", OPT_KDFLEN, 'p', "KDF algorithm output length"},
 
     OPT_R_OPTIONS,
+    OPT_PROV_OPTIONS,
     {NULL}
 };
 
 int pkeyutl_main(int argc, char **argv)
 {
+    CONF *conf = NULL;
     BIO *in = NULL, *out = NULL;
     ENGINE *e = NULL;
     EVP_PKEY_CTX *ctx = NULL;
@@ -119,6 +124,7 @@ int pkeyutl_main(int argc, char **argv)
     int rawin = 0;
     const EVP_MD *md = NULL;
     int filesize = -1;
+    OSSL_LIB_CTX *libctx = app_get0_libctx();
 
     prog = opt_init(argc, argv, pkeyutl_options);
     while ((o = opt_next()) != OPT_EOF) {
@@ -154,15 +160,24 @@ int pkeyutl_main(int argc, char **argv)
             passinarg = opt_arg();
             break;
         case OPT_PEERFORM:
-            if (!opt_format(opt_arg(), OPT_FMT_PDE, &peerform))
+            if (!opt_format(opt_arg(), OPT_FMT_ANY, &peerform))
                 goto opthelp;
             break;
         case OPT_KEYFORM:
-            if (!opt_format(opt_arg(), OPT_FMT_PDE, &keyform))
+            if (!opt_format(opt_arg(), OPT_FMT_ANY, &keyform))
                 goto opthelp;
             break;
         case OPT_R_CASES:
             if (!opt_rand(o))
+                goto end;
+            break;
+        case OPT_CONFIG:
+            conf = app_load_config_modules(opt_arg());
+            if (conf == NULL)
+                goto end;
+            break;
+        case OPT_PROV_CASES:
+            if (!opt_provider(o))
                 goto end;
             break;
         case OPT_ENGINE:
@@ -234,6 +249,8 @@ int pkeyutl_main(int argc, char **argv)
             break;
         }
     }
+
+    /* No extra arguments. */
     argc = opt_num_rest();
     if (argc != 0)
         goto opthelp;
@@ -274,7 +291,8 @@ int pkeyutl_main(int argc, char **argv)
         goto opthelp;
     }
     ctx = init_ctx(kdfalg, &keysize, inkey, keyform, key_type,
-                   passinarg, pkey_op, e, engine_impl, rawin, &pkey);
+                   passinarg, pkey_op, e, engine_impl, rawin, &pkey,
+                   libctx);
     if (ctx == NULL) {
         BIO_printf(bio_err, "%s: Error initializing context\n", prog);
         ERR_print_errors(bio_err);
@@ -312,9 +330,18 @@ int pkeyutl_main(int argc, char **argv)
             if (passin == NULL) {
                 /* Get password interactively */
                 char passwd_buf[4096];
+                int r;
+
                 BIO_snprintf(passwd_buf, sizeof(passwd_buf), "Enter %s: ", opt);
-                EVP_read_pw_string(passwd_buf, sizeof(passwd_buf) - 1,
-                                   passwd_buf, 0);
+                r = EVP_read_pw_string(passwd_buf, sizeof(passwd_buf) - 1,
+                                       passwd_buf, 0);
+                if (r < 0) {
+                    if (r == -2)
+                        BIO_puts(bio_err, "user abort\n");
+                    else
+                        BIO_puts(bio_err, "entry failed\n");
+                    goto end;
+                }
                 passwd = OPENSSL_strdup(passwd_buf);
                 if (passwd == NULL) {
                     BIO_puts(bio_err, "out of memory\n");
@@ -477,6 +504,7 @@ int pkeyutl_main(int argc, char **argv)
     OPENSSL_free(sig);
     sk_OPENSSL_STRING_free(pkeyopts);
     sk_OPENSSL_STRING_free(pkeyopts_passin);
+    NCONF_free(conf);
     return ret;
 }
 
@@ -484,7 +512,8 @@ static EVP_PKEY_CTX *init_ctx(const char *kdfalg, int *pkeysize,
                               const char *keyfile, int keyform, int key_type,
                               char *passinarg, int pkey_op, ENGINE *e,
                               const int engine_impl, int rawin,
-                              EVP_PKEY **ppkey)
+                              EVP_PKEY **ppkey,
+                              OSSL_LIB_CTX *libctx)
 {
     EVP_PKEY *pkey = NULL;
     EVP_PKEY_CTX *ctx = NULL;
@@ -492,6 +521,7 @@ static EVP_PKEY_CTX *init_ctx(const char *kdfalg, int *pkeysize,
     char *passin = NULL;
     int rv = -1;
     X509 *x;
+
     if (((pkey_op == EVP_PKEY_OP_SIGN) || (pkey_op == EVP_PKEY_OP_DECRYPT)
          || (pkey_op == EVP_PKEY_OP_DERIVE))
         && (key_type != KEY_PRIVKEY && kdfalg == NULL)) {
@@ -504,15 +534,15 @@ static EVP_PKEY_CTX *init_ctx(const char *kdfalg, int *pkeysize,
     }
     switch (key_type) {
     case KEY_PRIVKEY:
-        pkey = load_key(keyfile, keyform, 0, passin, e, "Private Key");
+        pkey = load_key(keyfile, keyform, 0, passin, e, "private key");
         break;
 
     case KEY_PUBKEY:
-        pkey = load_pubkey(keyfile, keyform, 0, NULL, e, "Public Key");
+        pkey = load_pubkey(keyfile, keyform, 0, NULL, e, "public key");
         break;
 
     case KEY_CERT:
-        x = load_cert(keyfile, keyform, "Certificate");
+        x = load_cert(keyfile, "Certificate");
         if (x) {
             pkey = X509_get_pubkey(x);
             X509_free(x);
@@ -540,29 +570,19 @@ static EVP_PKEY_CTX *init_ctx(const char *kdfalg, int *pkeysize,
                 goto end;
             }
         }
-        ctx = EVP_PKEY_CTX_new_id(kdfnid, impl);
+        if (impl != NULL)
+            ctx = EVP_PKEY_CTX_new_id(kdfnid, impl);
+        else
+            ctx = EVP_PKEY_CTX_new_from_name(libctx, kdfalg, app_get0_propq());
     } else {
         if (pkey == NULL)
             goto end;
 
-#ifndef OPENSSL_NO_EC
-        /* SM2 needs a special treatment */
-        if (EVP_PKEY_id(pkey) == EVP_PKEY_EC) {
-            EC_KEY *eckey = NULL;
-            const EC_GROUP *group = NULL;
-            int nid;
-
-            if ((eckey = EVP_PKEY_get0_EC_KEY(pkey)) == NULL
-                    || (group = EC_KEY_get0_group(eckey)) == NULL
-                    || (nid = EC_GROUP_get_curve_name(group)) == 0)
-                goto end;
-            if (nid == NID_sm2
-                    && !EVP_PKEY_set_alias_type(pkey, EVP_PKEY_SM2))
-                goto end;
-        }
-#endif
         *pkeysize = EVP_PKEY_size(pkey);
-        ctx = EVP_PKEY_CTX_new(pkey, impl);
+        if (impl != NULL)
+            ctx = EVP_PKEY_CTX_new(pkey, impl);
+        else
+            ctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey, app_get0_propq());
         if (ppkey != NULL)
             *ppkey = pkey;
         EVP_PKEY_free(pkey);
@@ -626,7 +646,7 @@ static int setup_peer(EVP_PKEY_CTX *ctx, int peerform, const char *file,
 
     if (peerform == FORMAT_ENGINE)
         engine = e;
-    peer = load_pubkey(file, peerform, 0, NULL, engine, "Peer Key");
+    peer = load_pubkey(file, peerform, 0, NULL, engine, "peer key");
     if (peer == NULL) {
         BIO_printf(bio_err, "Error reading peer key %s\n", file);
         ERR_print_errors(bio_err);

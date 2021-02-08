@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -22,15 +22,15 @@
 #include "prov/implementations.h"
 #include "prov/providercommonerr.h"
 
-static OSSL_OP_digest_set_ctx_params_fn mdc2_set_ctx_params;
-static OSSL_OP_digest_settable_ctx_params_fn mdc2_settable_ctx_params;
+static OSSL_FUNC_digest_set_ctx_params_fn mdc2_set_ctx_params;
+static OSSL_FUNC_digest_settable_ctx_params_fn mdc2_settable_ctx_params;
 
 static const OSSL_PARAM known_mdc2_settable_ctx_params[] = {
     OSSL_PARAM_uint(OSSL_DIGEST_PARAM_PAD_TYPE, NULL),
     OSSL_PARAM_END
 };
 
-static const OSSL_PARAM *mdc2_settable_ctx_params(void)
+static const OSSL_PARAM *mdc2_settable_ctx_params(ossl_unused void *provctx)
 {
     return known_mdc2_settable_ctx_params;
 }
@@ -51,7 +51,7 @@ static int mdc2_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     return 0; /* Null Parameter */
 }
 
-/* mdc2_functions */
+/* ossl_mdc2_functions */
 IMPLEMENT_digest_functions_with_settable_ctx(
     mdc2, MDC2_CTX, MDC2_BLOCK, MDC2_DIGEST_LENGTH, 0,
     MDC2_Init, MDC2_Update, MDC2_Final,

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,29 +7,23 @@
  * https://www.openssl.org/source/license.html
  */
 
-/* We need to use the deprecated RSA low level calls */
-#define OPENSSL_SUPPRESS_DEPRECATED
-
 #include <openssl/opensslconf.h>
-#ifdef OPENSSL_NO_RSA
-NON_EMPTY_TRANSLATION_UNIT
-#else
 
-# include "apps.h"
-# include "progs.h"
-# include <string.h>
-# include <openssl/err.h>
-# include <openssl/pem.h>
-# include <openssl/rsa.h>
+#include "apps.h"
+#include "progs.h"
+#include <string.h>
+#include <openssl/err.h>
+#include <openssl/pem.h>
+#include <openssl/rsa.h>
 
-# define RSA_SIGN        1
-# define RSA_VERIFY      2
-# define RSA_ENCRYPT     3
-# define RSA_DECRYPT     4
+#define RSA_SIGN        1
+#define RSA_VERIFY      2
+#define RSA_ENCRYPT     3
+#define RSA_DECRYPT     4
 
-# define KEY_PRIVKEY     1
-# define KEY_PUBKEY      2
-# define KEY_CERT        3
+#define KEY_PRIVKEY     1
+#define KEY_PUBKEY      2
+#define KEY_CERT        3
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
@@ -37,7 +31,7 @@ typedef enum OPTION_choice {
     OPT_RSA_RAW, OPT_OAEP, OPT_SSL, OPT_PKCS, OPT_X931,
     OPT_SIGN, OPT_VERIFY, OPT_REV, OPT_ENCRYPT, OPT_DECRYPT,
     OPT_PUBIN, OPT_CERTIN, OPT_INKEY, OPT_PASSIN, OPT_KEYFORM,
-    OPT_R_ENUM
+    OPT_R_ENUM, OPT_PROV_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS rsautl_options[] = {
@@ -47,14 +41,14 @@ const OPTIONS rsautl_options[] = {
     {"verify", OPT_VERIFY, '-', "Verify with public key"},
     {"encrypt", OPT_ENCRYPT, '-', "Encrypt with public key"},
     {"decrypt", OPT_DECRYPT, '-', "Decrypt with private key"},
-# ifndef OPENSSL_NO_ENGINE
+#ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
-# endif
+#endif
 
     OPT_SECTION("Input"),
     {"in", OPT_IN, '<', "Input file"},
     {"inkey", OPT_INKEY, 's', "Input key"},
-    {"keyform", OPT_KEYFORM, 'E', "Private key format - default PEM"},
+    {"keyform", OPT_KEYFORM, 'E', "Private key format (ENGINE, other values ignored)"},
     {"pubin", OPT_PUBIN, '-', "Input is an RSA public"},
     {"certin", OPT_CERTIN, '-', "Input is a cert carrying an RSA public key"},
     {"rev", OPT_REV, '-', "Reverse the order of the input buffer"},
@@ -72,6 +66,7 @@ const OPTIONS rsautl_options[] = {
     {"hexdump", OPT_HEXDUMP, '-', "Hex dump output"},
 
     OPT_R_OPTIONS,
+    OPT_PROV_OPTIONS,
     {NULL}
 };
 
@@ -80,14 +75,15 @@ int rsautl_main(int argc, char **argv)
     BIO *in = NULL, *out = NULL;
     ENGINE *e = NULL;
     EVP_PKEY *pkey = NULL;
-    RSA *rsa = NULL;
+    EVP_PKEY_CTX *ctx = NULL;
     X509 *x;
     char *infile = NULL, *outfile = NULL, *keyfile = NULL;
     char *passinarg = NULL, *passin = NULL, *prog;
     char rsa_mode = RSA_VERIFY, key_type = KEY_PRIVKEY;
     unsigned char *rsa_in = NULL, *rsa_out = NULL, pad = RSA_PKCS1_PADDING;
-    int rsa_inlen, keyformat = FORMAT_PEM, keysize, ret = 1;
-    int rsa_outlen = 0, hexdump = 0, asn1parse = 0, need_priv = 0, rev = 0;
+    size_t rsa_inlen, rsa_outlen = 0;
+    int keyformat = FORMAT_PEM, keysize, ret = 1, rv;
+    int hexdump = 0, asn1parse = 0, need_priv = 0, rev = 0;
     OPTION_CHOICE o;
 
     prog = opt_init(argc, argv, rsautl_options);
@@ -103,7 +99,7 @@ int rsautl_main(int argc, char **argv)
             ret = 0;
             goto end;
         case OPT_KEYFORM:
-            if (!opt_format(opt_arg(), OPT_FMT_PDE, &keyformat))
+            if (!opt_format(opt_arg(), OPT_FMT_ANY, &keyformat))
                 goto opthelp;
             break;
         case OPT_IN:
@@ -169,8 +165,14 @@ int rsautl_main(int argc, char **argv)
             if (!opt_rand(o))
                 goto end;
             break;
+        case OPT_PROV_CASES:
+            if (!opt_provider(o))
+                goto end;
+            break;
         }
     }
+
+    /* No extra arguments. */
     argc = opt_num_rest();
     if (argc != 0)
         goto opthelp;
@@ -187,15 +189,15 @@ int rsautl_main(int argc, char **argv)
 
     switch (key_type) {
     case KEY_PRIVKEY:
-        pkey = load_key(keyfile, keyformat, 0, passin, e, "Private Key");
+        pkey = load_key(keyfile, keyformat, 0, passin, e, "private key");
         break;
 
     case KEY_PUBKEY:
-        pkey = load_pubkey(keyfile, keyformat, 0, NULL, e, "Public Key");
+        pkey = load_pubkey(keyfile, keyformat, 0, NULL, e, "public key");
         break;
 
     case KEY_CERT:
-        x = load_cert(keyfile, keyformat, "Certificate");
+        x = load_cert(keyfile, "Certificate");
         if (x) {
             pkey = X509_get_pubkey(x);
             X509_free(x);
@@ -206,15 +208,6 @@ int rsautl_main(int argc, char **argv)
     if (pkey == NULL)
         return 1;
 
-    rsa = EVP_PKEY_get1_RSA(pkey);
-    EVP_PKEY_free(pkey);
-
-    if (rsa == NULL) {
-        BIO_printf(bio_err, "Error getting RSA key\n");
-        ERR_print_errors(bio_err);
-        goto end;
-    }
-
     in = bio_open_default(infile, 'r', FORMAT_BINARY);
     if (in == NULL)
         goto end;
@@ -222,48 +215,58 @@ int rsautl_main(int argc, char **argv)
     if (out == NULL)
         goto end;
 
-    keysize = RSA_size(rsa);
+    keysize = EVP_PKEY_size(pkey);
 
     rsa_in = app_malloc(keysize * 2, "hold rsa key");
     rsa_out = app_malloc(keysize, "output rsa key");
+    rsa_outlen = keysize;
 
     /* Read the input data */
-    rsa_inlen = BIO_read(in, rsa_in, keysize * 2);
-    if (rsa_inlen < 0) {
+    rv = BIO_read(in, rsa_in, keysize * 2);
+    if (rv < 0) {
         BIO_printf(bio_err, "Error reading input Data\n");
         goto end;
     }
+    rsa_inlen = rv;
     if (rev) {
-        int i;
+        size_t i;
         unsigned char ctmp;
+
         for (i = 0; i < rsa_inlen / 2; i++) {
             ctmp = rsa_in[i];
             rsa_in[i] = rsa_in[rsa_inlen - 1 - i];
             rsa_in[rsa_inlen - 1 - i] = ctmp;
         }
     }
+
+    if ((ctx = EVP_PKEY_CTX_new_from_pkey(NULL, pkey, NULL)) == NULL)
+        goto end;
+
     switch (rsa_mode) {
-
     case RSA_VERIFY:
-        rsa_outlen = RSA_public_decrypt(rsa_inlen, rsa_in, rsa_out, rsa, pad);
+        rv = EVP_PKEY_verify_recover_init(ctx)
+            && EVP_PKEY_CTX_set_rsa_padding(ctx, pad)
+            && EVP_PKEY_verify_recover(ctx, rsa_out, &rsa_outlen,
+                                       rsa_in, rsa_inlen);
         break;
-
     case RSA_SIGN:
-        rsa_outlen =
-            RSA_private_encrypt(rsa_inlen, rsa_in, rsa_out, rsa, pad);
+        rv = EVP_PKEY_sign_init(ctx)
+            && EVP_PKEY_CTX_set_rsa_padding(ctx, pad)
+            && EVP_PKEY_sign(ctx, rsa_out, &rsa_outlen, rsa_in, rsa_inlen);
         break;
-
     case RSA_ENCRYPT:
-        rsa_outlen = RSA_public_encrypt(rsa_inlen, rsa_in, rsa_out, rsa, pad);
+        rv = EVP_PKEY_encrypt_init(ctx)
+            && EVP_PKEY_CTX_set_rsa_padding(ctx, pad)
+            && EVP_PKEY_encrypt(ctx, rsa_out, &rsa_outlen, rsa_in, rsa_inlen);
         break;
-
     case RSA_DECRYPT:
-        rsa_outlen =
-            RSA_private_decrypt(rsa_inlen, rsa_in, rsa_out, rsa, pad);
+        rv = EVP_PKEY_decrypt_init(ctx)
+            && EVP_PKEY_CTX_set_rsa_padding(ctx, pad)
+            && EVP_PKEY_decrypt(ctx, rsa_out, &rsa_outlen, rsa_in, rsa_inlen);
         break;
     }
 
-    if (rsa_outlen < 0) {
+    if (!rv) {
         BIO_printf(bio_err, "RSA operation error\n");
         ERR_print_errors(bio_err);
         goto end;
@@ -279,7 +282,8 @@ int rsautl_main(int argc, char **argv)
         BIO_write(out, rsa_out, rsa_outlen);
     }
  end:
-    RSA_free(rsa);
+    EVP_PKEY_CTX_free(ctx);
+    EVP_PKEY_free(pkey);
     release_engine(e);
     BIO_free(in);
     BIO_free_all(out);
@@ -288,4 +292,3 @@ int rsautl_main(int argc, char **argv)
     OPENSSL_free(passin);
     return ret;
 }
-#endif

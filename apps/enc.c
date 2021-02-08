@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -45,7 +45,7 @@ typedef enum OPTION_choice {
     OPT_NOPAD, OPT_SALT, OPT_NOSALT, OPT_DEBUG, OPT_UPPER_P, OPT_UPPER_A,
     OPT_A, OPT_Z, OPT_BUFSIZE, OPT_K, OPT_KFILE, OPT_UPPER_K, OPT_NONE,
     OPT_UPPER_S, OPT_IV, OPT_MD, OPT_ITER, OPT_PBKDF2, OPT_CIPHER,
-    OPT_R_ENUM
+    OPT_R_ENUM, OPT_PROV_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS enc_options[] = {
@@ -97,6 +97,7 @@ const OPTIONS enc_options[] = {
     {"", OPT_CIPHER, '-', "Any supported cipher"},
 
     OPT_R_OPTIONS,
+    OPT_PROV_OPTIONS,
     {NULL}
 };
 
@@ -111,7 +112,7 @@ int enc_main(int argc, char **argv)
     const EVP_CIPHER *cipher = NULL, *c;
     const EVP_MD *dgst = NULL;
     char *hkey = NULL, *hiv = NULL, *hsalt = NULL, *p;
-    char *infile = NULL, *outfile = NULL, *prog;
+    char *infile = NULL, *outfile = NULL, *prog, *arg0;
     char *str = NULL, *passarg = NULL, *pass = NULL, *strbuf = NULL;
     char mbuf[sizeof(magic) - 1];
     OPTION_CHOICE o;
@@ -130,18 +131,18 @@ int enc_main(int argc, char **argv)
     BIO *bzl = NULL;
 #endif
 
-    /* first check the program name */
-    prog = opt_progname(argv[0]);
-    if (strcmp(prog, "base64") == 0) {
+    /* first check the command name */
+    arg0 = argv[0];
+    if (strcmp(arg0, "base64") == 0) {
         base64 = 1;
 #ifdef ZLIB
-    } else if (strcmp(prog, "zlib") == 0) {
+    } else if (strcmp(arg0, "zlib") == 0) {
         do_zlib = 1;
 #endif
     } else {
-        cipher = EVP_get_cipherbyname(prog);
-        if (cipher == NULL && strcmp(prog, "enc") != 0) {
-            BIO_printf(bio_err, "%s is not a known cipher\n", prog);
+        cipher = EVP_get_cipherbyname(arg0);
+        if (cipher == NULL && strcmp(arg0, "enc") != 0) {
+            BIO_printf(bio_err, "%s is not a known cipher\n", arg0);
             goto end;
         }
     }
@@ -288,12 +289,17 @@ int enc_main(int argc, char **argv)
             if (!opt_rand(o))
                 goto end;
             break;
+        case OPT_PROV_CASES:
+            if (!opt_provider(o))
+                goto end;
+            break;
         }
     }
-    if (opt_num_rest() != 0) {
-        BIO_printf(bio_err, "Extra arguments given.\n");
+
+    /* No extra arguments. */
+    argc = opt_num_rest();
+    if (argc != 0)
         goto opthelp;
-    }
 
     if (cipher && EVP_CIPHER_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER) {
         BIO_printf(bio_err, "%s: AEAD ciphers not supported\n", prog);
@@ -533,7 +539,7 @@ int enc_main(int argc, char **argv)
                 goto end;
             }
             /* wiping secret data as we no longer need it */
-            OPENSSL_cleanse(hkey, strlen(hkey));
+            cleanse(hkey);
         }
 
         if ((benc = BIO_new(BIO_f_cipher())) == NULL)
@@ -546,7 +552,7 @@ int enc_main(int argc, char **argv)
 
         BIO_get_cipher_ctx(benc, &ctx);
 
-        if (!EVP_CipherInit_ex(ctx, cipher, NULL, NULL, NULL, enc)) {
+        if (!EVP_CipherInit_ex(ctx, cipher, e, NULL, NULL, enc)) {
             BIO_printf(bio_err, "Error setting cipher %s\n",
                        EVP_CIPHER_name(cipher));
             ERR_print_errors(bio_err);

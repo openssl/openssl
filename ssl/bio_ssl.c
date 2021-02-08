@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -58,7 +58,7 @@ static int ssl_new(BIO *bi)
     BIO_SSL *bs = OPENSSL_zalloc(sizeof(*bs));
 
     if (bs == NULL) {
-        BIOerr(BIO_F_SSL_NEW, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_BIO, ERR_R_MALLOC_FAILURE);
         return 0;
     }
     BIO_set_init(bi, 0);
@@ -284,6 +284,7 @@ static long ssl_ctrl(BIO *b, int cmd, long num, void *ptr)
             ssl_free(b);
             if (!ssl_new(b))
                 return 0;
+            bs = BIO_get_data(b);
         }
         BIO_set_shutdown(b, num);
         ssl = (SSL *)ptr;

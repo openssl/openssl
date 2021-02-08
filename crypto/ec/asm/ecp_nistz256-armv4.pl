@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -1521,9 +1521,9 @@ ecp_nistz256_point_add:
 	ldr	$t2,[sp,#32*18+12]	@ ~is_equal(S1,S2)
 	mvn	$t0,$t0			@ -1/0 -> 0/-1
 	mvn	$t1,$t1			@ -1/0 -> 0/-1
-	orr	$a0,$t0
-	orr	$a0,$t1
-	orrs	$a0,$t2			@ set flags
+	orr	$a0,$a0,$t0
+	orr	$a0,$a0,$t1
+	orrs	$a0,$a0,$t2		@ set flags
 
 	@ if(~is_equal(U1,U2) | in1infty | in2infty | ~is_equal(S1,S2))
 	bne	.Ladd_proceed

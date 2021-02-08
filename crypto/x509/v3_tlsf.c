@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -14,6 +14,7 @@
 #include <openssl/conf.h>
 #include <openssl/x509v3.h>
 #include "ext_dat.h"
+#include "x509_local.h"
 
 static STACK_OF(CONF_VALUE) *i2v_TLS_FEATURE(const X509V3_EXT_METHOD *method,
                                              TLS_FEATURE *tls_feature,
@@ -88,14 +89,14 @@ static TLS_FEATURE *v2i_TLS_FEATURE(const X509V3_EXT_METHOD *method,
 {
     TLS_FEATURE *tlsf;
     char *extval, *endptr;
-    ASN1_INTEGER *ai;
+    ASN1_INTEGER *ai = NULL;
     CONF_VALUE *val;
     int i;
     size_t j;
     long tlsextid;
 
     if ((tlsf = sk_ASN1_INTEGER_new_null()) == NULL) {
-        X509V3err(X509V3_F_V2I_TLS_FEATURE, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
@@ -115,8 +116,8 @@ static TLS_FEATURE *v2i_TLS_FEATURE(const X509V3_EXT_METHOD *method,
             tlsextid = strtol(extval, &endptr, 10);
             if (((*endptr) != '\0') || (extval == endptr) || (tlsextid < 0) ||
                 (tlsextid > 65535)) {
-                X509V3err(X509V3_F_V2I_TLS_FEATURE, X509V3_R_INVALID_SYNTAX);
-                X509V3_conf_err(val);
+                ERR_raise(ERR_LIB_X509V3, X509V3_R_INVALID_SYNTAX);
+                X509V3_conf_add_error_name_value(val);
                 goto err;
             }
         }
@@ -124,13 +125,16 @@ static TLS_FEATURE *v2i_TLS_FEATURE(const X509V3_EXT_METHOD *method,
         if ((ai = ASN1_INTEGER_new()) == NULL
                 || !ASN1_INTEGER_set(ai, tlsextid)
                 || sk_ASN1_INTEGER_push(tlsf, ai) <= 0) {
-            X509V3err(X509V3_F_V2I_TLS_FEATURE, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
             goto err;
         }
+        /* So it doesn't get purged if an error occurs next time around */
+        ai = NULL;
     }
     return tlsf;
 
  err:
     sk_ASN1_INTEGER_pop_free(tlsf, ASN1_INTEGER_free);
+    ASN1_INTEGER_free(ai);
     return NULL;
 }

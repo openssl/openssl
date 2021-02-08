@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -31,6 +31,12 @@ typedef unsigned int u_int;
 # include "apps.h"
 # include "s_apps.h"
 # include "internal/sockets.h"
+
+# if defined(__TANDEM)
+#  if defined(OPENSSL_TANDEM_FLOSS)
+#   include <floss.h(floss_read)>
+#  endif
+# endif
 
 # include <openssl/bio.h>
 # include <openssl/err.h>
@@ -160,7 +166,9 @@ int init_client(int *sock, const char *host, const char *port,
     if (*sock == INVALID_SOCKET) {
         if (bindaddr != NULL && !found) {
             BIO_printf(bio_err, "Can't bind %saddress for %s%s%s\n",
+#ifdef AF_INET6
                        BIO_ADDRINFO_family(res) == AF_INET6 ? "IPv6 " :
+#endif
                        BIO_ADDRINFO_family(res) == AF_INET ? "IPv4 " :
                        BIO_ADDRINFO_family(res) == AF_UNIX ? "unix " : "",
                        bindhost != NULL ? bindhost : "",
@@ -237,6 +245,7 @@ int do_server(int *accept_sock, const char *host, const char *port,
     sock_protocol = BIO_ADDRINFO_protocol(res);
     sock_address = BIO_ADDRINFO_address(res);
     next = BIO_ADDRINFO_next(res);
+#ifdef AF_INET6
     if (sock_family == AF_INET6)
         sock_options |= BIO_SOCK_V6_ONLY;
     if (next != NULL
@@ -251,6 +260,7 @@ int do_server(int *accept_sock, const char *host, const char *port,
             sock_options &= ~BIO_SOCK_V6_ONLY;
         }
     }
+#endif
 
     asock = BIO_socket(sock_family, sock_type, sock_protocol, 0);
     if (asock == INVALID_SOCKET
@@ -390,6 +400,27 @@ int do_server(int *accept_sock, const char *host, const char *port,
     BIO_ADDR_free(ourpeer);
     ourpeer = NULL;
     return ret;
+}
+
+void do_ssl_shutdown(SSL *ssl)
+{
+    int ret;
+
+    do {
+        /* We only do unidirectional shutdown */
+        ret = SSL_shutdown(ssl);
+        if (ret < 0) {
+            switch (SSL_get_error(ssl, ret)) {
+            case SSL_ERROR_WANT_READ:
+            case SSL_ERROR_WANT_WRITE:
+            case SSL_ERROR_WANT_ASYNC:
+            case SSL_ERROR_WANT_ASYNC_JOB:
+                /* We just do busy waiting. Nothing clever */
+                continue;
+            }
+            ret = 0;
+        }
+    } while (ret < 0);
 }
 
 #endif  /* OPENSSL_NO_SOCK */

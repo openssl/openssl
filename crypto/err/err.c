@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -75,7 +75,8 @@ static ERR_STRING_DATA ERR_str_libraries[] = {
     {ERR_PACK(ERR_LIB_SM2, 0, 0), "SM2 routines"},
     {ERR_PACK(ERR_LIB_ESS, 0, 0), "ESS routines"},
     {ERR_PACK(ERR_LIB_PROV, 0, 0), "Provider routines"},
-    {ERR_PACK(ERR_LIB_OSSL_SERIALIZER, 0, 0), "SERIALIZER routines"},
+    {ERR_PACK(ERR_LIB_OSSL_ENCODER, 0, 0), "ENCODER routines"},
+    {ERR_PACK(ERR_LIB_OSSL_DECODER, 0, 0), "DECODER routines"},
     {ERR_PACK(ERR_LIB_HTTP, 0, 0), "HTTP routines"},
     {0, NULL},
 };
@@ -116,6 +117,15 @@ static ERR_STRING_DATA ERR_str_reasons[] = {
     {ERR_R_INVALID_PROVIDER_FUNCTIONS, "invalid provider functions"},
     {ERR_R_INTERRUPTED_OR_CANCELLED, "interrupted or cancelled"},
 
+    /*
+     * Something is unsupported, exactly what is expressed with additional data
+     */
+    {ERR_R_UNSUPPORTED, "unsupported"},
+    /*
+     * A fetch failed for other reasons than the name to be fetched being
+     * unsupported.
+     */
+    {ERR_R_FETCH_FAILED, "fetch failed"},
     {0, NULL},
 };
 #endif
@@ -173,84 +183,6 @@ static ERR_STRING_DATA *int_err_get_item(const ERR_STRING_DATA *d)
     return p;
 }
 
-#ifndef OPENSSL_NO_ERR
-/* 2019-05-21: Russian and Ukrainian locales on Linux require more than 6,5 kB */
-# define SPACE_SYS_STR_REASONS 8 * 1024
-# define NUM_SYS_STR_REASONS 127
-
-static ERR_STRING_DATA SYS_str_reasons[NUM_SYS_STR_REASONS + 1];
-/*
- * SYS_str_reasons is filled with copies of strerror() results at
- * initialization. 'errno' values up to 127 should cover all usual errors,
- * others will be displayed numerically by ERR_error_string. It is crucial
- * that we have something for each reason code that occurs in
- * ERR_str_reasons, or bogus reason strings will be returned for SYSerr(),
- * which always gets an errno value and never one of those 'standard' reason
- * codes.
- */
-
-static void build_SYS_str_reasons(void)
-{
-    /* OPENSSL_malloc cannot be used here, use static storage instead */
-    static char strerror_pool[SPACE_SYS_STR_REASONS];
-    char *cur = strerror_pool;
-    size_t cnt = 0;
-    static int init = 1;
-    int i;
-    int saveerrno = get_last_sys_error();
-
-    CRYPTO_THREAD_write_lock(err_string_lock);
-    if (!init) {
-        CRYPTO_THREAD_unlock(err_string_lock);
-        return;
-    }
-
-    for (i = 1; i <= NUM_SYS_STR_REASONS; i++) {
-        ERR_STRING_DATA *str = &SYS_str_reasons[i - 1];
-
-        str->error = ERR_PACK(ERR_LIB_SYS, 0, i);
-        /*
-         * If we have used up all the space in strerror_pool,
-         * there's no point in calling openssl_strerror_r()
-         */
-        if (str->string == NULL && cnt < sizeof(strerror_pool)) {
-            if (openssl_strerror_r(i, cur, sizeof(strerror_pool) - cnt)) {
-                size_t l = strlen(cur);
-
-                str->string = cur;
-                cnt += l;
-                cur += l;
-
-                /*
-                 * VMS has an unusual quirk of adding spaces at the end of
-                 * some (most? all?) messages. Lets trim them off.
-                 */
-                while (cur > strerror_pool && ossl_isspace(cur[-1])) {
-                    cur--;
-                    cnt--;
-                }
-                *cur++ = '\0';
-                cnt++;
-            }
-        }
-        if (str->string == NULL)
-            str->string = "unknown";
-    }
-
-    /*
-     * Now we still have SYS_str_reasons[NUM_SYS_STR_REASONS] = {0, NULL}, as
-     * required by ERR_load_strings.
-     */
-
-    init = 0;
-
-    CRYPTO_THREAD_unlock(err_string_lock);
-    /* openssl_strerror_r could change errno, but we want to preserve it */
-    set_sys_error(saveerrno);
-    err_load_strings(SYS_str_reasons);
-}
-#endif
-
 static void ERR_STATE_free(ERR_STATE *s)
 {
     int i;
@@ -302,7 +234,7 @@ static void err_patch(int lib, ERR_STRING_DATA *str)
 }
 
 /*
- * Hash in |str| error strings. Assumes the URN_ONCE was done.
+ * Hash in |str| error strings. Assumes the RUN_ONCE was done.
  */
 static int err_load_strings(const ERR_STRING_DATA *str)
 {
@@ -314,7 +246,7 @@ static int err_load_strings(const ERR_STRING_DATA *str)
     return 1;
 }
 
-int ERR_load_ERR_strings(void)
+int err_load_ERR_strings_int(void)
 {
 #ifndef OPENSSL_NO_ERR
     if (!RUN_ONCE(&err_string_init, do_err_strings_init))
@@ -322,14 +254,13 @@ int ERR_load_ERR_strings(void)
 
     err_load_strings(ERR_str_libraries);
     err_load_strings(ERR_str_reasons);
-    build_SYS_str_reasons();
 #endif
     return 1;
 }
 
 int ERR_load_strings(int lib, ERR_STRING_DATA *str)
 {
-    if (ERR_load_ERR_strings() == 0)
+    if (err_load_ERR_strings_int() == 0)
         return 0;
 
     err_patch(lib, str);
@@ -339,7 +270,7 @@ int ERR_load_strings(int lib, ERR_STRING_DATA *str)
 
 int ERR_load_strings_const(const ERR_STRING_DATA *str)
 {
-    if (ERR_load_ERR_strings() == 0)
+    if (err_load_ERR_strings_int() == 0)
         return 0;
     err_load_strings(str);
     return 1;
@@ -390,21 +321,6 @@ unsigned long ERR_get_error(void)
     return get_error_values(EV_POP, NULL, NULL, NULL, NULL, NULL);
 }
 
-unsigned long ERR_get_error_line(const char **file, int *line)
-{
-    return get_error_values(EV_POP, file, line, NULL, NULL, NULL);
-}
-
-unsigned long ERR_get_error_func(const char **func)
-{
-    return get_error_values(EV_POP, NULL, NULL, func, NULL, NULL);
-}
-
-unsigned long ERR_get_error_data(const char **data, int *flags)
-{
-    return get_error_values(EV_POP, NULL, NULL, NULL, data, flags);
-}
-
 unsigned long ERR_get_error_all(const char **file, int *line,
                                 const char **func,
                                 const char **data, int *flags)
@@ -413,6 +329,11 @@ unsigned long ERR_get_error_all(const char **file, int *line,
 }
 
 #ifndef OPENSSL_NO_DEPRECATED_3_0
+unsigned long ERR_get_error_line(const char **file, int *line)
+{
+    return get_error_values(EV_POP, file, line, NULL, NULL, NULL);
+}
+
 unsigned long ERR_get_error_line_data(const char **file, int *line,
                                       const char **data, int *flags)
 {
@@ -567,11 +488,12 @@ static unsigned long get_error_values(ERR_GET_ACTION g,
     return ret;
 }
 
-void ERR_error_string_n(unsigned long e, char *buf, size_t len)
+void ossl_err_string_int(unsigned long e, const char *func,
+                         char *buf, size_t len)
 {
-    char lsbuf[64], rsbuf[64];
-    const char *ls, *rs;
-    unsigned long f = 0, l, r;
+    char lsbuf[64], rsbuf[256];
+    const char *ls, *rs = NULL;
+    unsigned long l, r;
 
     if (len == 0)
         return;
@@ -583,18 +505,37 @@ void ERR_error_string_n(unsigned long e, char *buf, size_t len)
         ls = lsbuf;
     }
 
-    rs = ERR_reason_error_string(e);
+    /*
+     * ERR_reason_error_string() can't safely return system error strings,
+     * since it would call openssl_strerror_r(), which needs a buffer for
+     * thread safety.  So for system errors, we call openssl_strerror_r()
+     * directly instead.
+     */
     r = ERR_GET_REASON(e);
+#ifndef OPENSSL_NO_ERR
+    if (ERR_SYSTEM_ERROR(e)) {
+        if (openssl_strerror_r(r, rsbuf, sizeof(rsbuf)))
+            rs = rsbuf;
+    } else {
+        rs = ERR_reason_error_string(e);
+    }
+#endif
     if (rs == NULL) {
         BIO_snprintf(rsbuf, sizeof(rsbuf), "reason(%lu)", r);
         rs = rsbuf;
     }
 
-    BIO_snprintf(buf, len, "error:%08lX:%s:%s:%s", e, ls, "", rs);
+    BIO_snprintf(buf, len, "error:%08lX:%s:%s:%s", e, ls, func, rs);
     if (strlen(buf) == len - 1) {
         /* Didn't fit; use a minimal format. */
-        BIO_snprintf(buf, len, "err:%lx:%lx:%lx:%lx", e, l, f, r);
+        BIO_snprintf(buf, len, "err:%lx:%lx:%lx:%lx", e, l, 0L, r);
     }
+}
+
+
+void ERR_error_string_n(unsigned long e, char *buf, size_t len)
+{
+    ossl_err_string_int(e, "", buf, len);
 }
 
 /*
@@ -642,6 +583,14 @@ const char *ERR_reason_error_string(unsigned long e)
         return NULL;
     }
 
+    /*
+     * ERR_reason_error_string() can't safely return system error strings,
+     * since openssl_strerror_r() needs a buffer for thread safety, and we
+     * haven't got one that would serve any sensible purpose.
+     */
+    if (ERR_SYSTEM_ERROR(e))
+        return NULL;
+
     l = ERR_GET_LIB(e);
     r = ERR_GET_REASON(e);
     d.error = ERR_PACK(l, 0, r);
@@ -653,8 +602,7 @@ const char *ERR_reason_error_string(unsigned long e)
     return ((p == NULL) ? NULL : p->string);
 }
 
-/* TODO(3.0): arg ignored for now */
-static void err_delete_thread_state(void *arg)
+static void err_delete_thread_state(void *unused)
 {
     ERR_STATE *state = CRYPTO_THREAD_get_local(&err_thread_local);
     if (state == NULL)
@@ -897,7 +845,7 @@ int ERR_set_mark(void)
 
     if (es->bottom == es->top)
         return 0;
-    es->err_flags[es->top] |= ERR_FLAG_MARK;
+    es->err_marks[es->top]++;
     return 1;
 }
 
@@ -910,14 +858,14 @@ int ERR_pop_to_mark(void)
         return 0;
 
     while (es->bottom != es->top
-           && (es->err_flags[es->top] & ERR_FLAG_MARK) == 0) {
+           && es->err_marks[es->top] == 0) {
         err_clear(es, es->top, 0);
         es->top = es->top > 0 ? es->top - 1 : ERR_NUM_ERRORS - 1;
     }
 
     if (es->bottom == es->top)
         return 0;
-    es->err_flags[es->top] &= ~ERR_FLAG_MARK;
+    es->err_marks[es->top]--;
     return 1;
 }
 
@@ -932,13 +880,13 @@ int ERR_clear_last_mark(void)
 
     top = es->top;
     while (es->bottom != top
-           && (es->err_flags[top] & ERR_FLAG_MARK) == 0) {
+           && es->err_marks[top] == 0) {
         top = top > 0 ? top - 1 : ERR_NUM_ERRORS - 1;
     }
 
     if (es->bottom == top)
         return 0;
-    es->err_flags[top] &= ~ERR_FLAG_MARK;
+    es->err_marks[top]--;
     return 1;
 }
 

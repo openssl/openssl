@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -15,9 +15,9 @@
 int encode_der_length(WPACKET *pkt, size_t cont_len);
 int encode_der_integer(WPACKET *pkt, const BIGNUM *n);
 int encode_der_dsa_sig(WPACKET *pkt, const BIGNUM *r, const BIGNUM *s);
-int decode_der_length(PACKET *pkt, PACKET *subpkt);
-int decode_der_integer(PACKET *pkt, BIGNUM *n);
-size_t decode_der_dsa_sig(BIGNUM *r, BIGNUM *s, const unsigned char **ppin,
-                          size_t len);
+int ossl_decode_der_length(PACKET *pkt, PACKET *subpkt);
+int ossl_decode_der_integer(PACKET *pkt, BIGNUM *n);
+size_t ossl_decode_der_dsa_sig(BIGNUM *r, BIGNUM *s, const unsigned char **ppin,
+                               size_t len);
 
 #endif

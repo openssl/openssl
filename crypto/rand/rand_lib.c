@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,17 +7,29 @@
  * https://www.openssl.org/source/license.html
  */
 
+/* We need to use some engine deprecated APIs */
+#define OPENSSL_SUPPRESS_DEPRECATED
+
 #include <stdio.h>
 #include <time.h>
+#include <limits.h>
+#include <openssl/trace.h>
+#include <openssl/err.h>
+#include <openssl/conf.h>
 #include "internal/cryptlib.h"
 #include <openssl/opensslconf.h>
 #include "crypto/rand.h"
+#include "crypto/cryptlib.h"
 #include <openssl/engine.h>
+#include <openssl/core_names.h>
 #include "internal/thread_once.h"
 #include "rand_local.h"
 #include "e_os.h"
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
+# include "crypto/rand_pool.h"
+# include "prov/seeding.h"
+
 # ifndef OPENSSL_NO_ENGINE
 /* non-NULL if default_RAND_meth is ENGINE-provided */
 static ENGINE *funct_ref;
@@ -28,217 +40,7 @@ static const RAND_METHOD *default_RAND_meth;
 static CRYPTO_ONCE rand_init = CRYPTO_ONCE_STATIC_INIT;
 
 static int rand_inited = 0;
-#endif /* FIPS_MODE */
 
-#ifdef OPENSSL_RAND_SEED_RDTSC
-/*
- * IMPORTANT NOTE:  It is not currently possible to use this code
- * because we are not sure about the amount of randomness it provides.
- * Some SP900 tests have been run, but there is internal skepticism.
- * So for now this code is not used.
- */
-# error "RDTSC enabled?  Should not be possible!"
-
-/*
- * Acquire entropy from high-speed clock
- *
- * Since we get some randomness from the low-order bits of the
- * high-speed clock, it can help.
- *
- * Returns the total entropy count, if it exceeds the requested
- * entropy count. Otherwise, returns an entropy count of 0.
- */
-size_t rand_acquire_entropy_from_tsc(RAND_POOL *pool)
-{
-    unsigned char c;
-    int i;
-
-    if ((OPENSSL_ia32cap_P[0] & (1 << 4)) != 0) {
-        for (i = 0; i < TSC_READ_COUNT; i++) {
-            c = (unsigned char)(OPENSSL_rdtsc() & 0xFF);
-            rand_pool_add(pool, &c, 1, 4);
-        }
-    }
-    return rand_pool_entropy_available(pool);
-}
-#endif
-
-#ifdef OPENSSL_RAND_SEED_RDCPU
-size_t OPENSSL_ia32_rdseed_bytes(unsigned char *buf, size_t len);
-size_t OPENSSL_ia32_rdrand_bytes(unsigned char *buf, size_t len);
-
-/*
- * Acquire entropy using Intel-specific cpu instructions
- *
- * Uses the RDSEED instruction if available, otherwise uses
- * RDRAND if available.
- *
- * For the differences between RDSEED and RDRAND, and why RDSEED
- * is the preferred choice, see https://goo.gl/oK3KcN
- *
- * Returns the total entropy count, if it exceeds the requested
- * entropy count. Otherwise, returns an entropy count of 0.
- */
-size_t rand_acquire_entropy_from_cpu(RAND_POOL *pool)
-{
-    size_t bytes_needed;
-    unsigned char *buffer;
-
-    bytes_needed = rand_pool_bytes_needed(pool, 1 /*entropy_factor*/);
-    if (bytes_needed > 0) {
-        buffer = rand_pool_add_begin(pool, bytes_needed);
-
-        if (buffer != NULL) {
-            /* Whichever comes first, use RDSEED, RDRAND or nothing */
-            if ((OPENSSL_ia32cap_P[2] & (1 << 18)) != 0) {
-                if (OPENSSL_ia32_rdseed_bytes(buffer, bytes_needed)
-                    == bytes_needed) {
-                    rand_pool_add_end(pool, bytes_needed, 8 * bytes_needed);
-                }
-            } else if ((OPENSSL_ia32cap_P[1] & (1 << (62 - 32))) != 0) {
-                if (OPENSSL_ia32_rdrand_bytes(buffer, bytes_needed)
-                    == bytes_needed) {
-                    rand_pool_add_end(pool, bytes_needed, 8 * bytes_needed);
-                }
-            } else {
-                rand_pool_add_end(pool, 0, 0);
-            }
-        }
-    }
-
-    return rand_pool_entropy_available(pool);
-}
-#endif
-
-
-/*
- * Implements the get_entropy() callback (see RAND_DRBG_set_callbacks())
- *
- * If the DRBG has a parent, then the required amount of entropy input
- * is fetched using the parent's RAND_DRBG_generate().
- *
- * Otherwise, the entropy is polled from the system entropy sources
- * using rand_pool_acquire_entropy().
- *
- * If a random pool has been added to the DRBG using RAND_add(), then
- * its entropy will be used up first.
- */
-size_t rand_drbg_get_entropy(RAND_DRBG *drbg,
-                             unsigned char **pout,
-                             int entropy, size_t min_len, size_t max_len,
-                             int prediction_resistance)
-{
-    size_t ret = 0;
-    size_t entropy_available = 0;
-    RAND_POOL *pool;
-
-    if (drbg->parent != NULL && drbg->strength > drbg->parent->strength) {
-        /*
-         * We currently don't support the algorithm from NIST SP 800-90C
-         * 10.1.2 to use a weaker DRBG as source
-         */
-        RANDerr(RAND_F_RAND_DRBG_GET_ENTROPY, RAND_R_PARENT_STRENGTH_TOO_WEAK);
-        return 0;
-    }
-
-    if (drbg->seed_pool != NULL) {
-        pool = drbg->seed_pool;
-        pool->entropy_requested = entropy;
-    } else {
-        pool = rand_pool_new(entropy, drbg->secure, min_len, max_len);
-        if (pool == NULL)
-            return 0;
-    }
-
-    if (drbg->parent != NULL) {
-        size_t bytes_needed = rand_pool_bytes_needed(pool, 1 /*entropy_factor*/);
-        unsigned char *buffer = rand_pool_add_begin(pool, bytes_needed);
-
-        if (buffer != NULL) {
-            size_t bytes = 0;
-
-            /*
-             * Get random data from parent. Include our address as additional input,
-             * in order to provide some additional distinction between different
-             * DRBG child instances.
-             * Our lock is already held, but we need to lock our parent before
-             * generating bits from it. (Note: taking the lock will be a no-op
-             * if locking if drbg->parent->lock == NULL.)
-             */
-            rand_drbg_lock(drbg->parent);
-            if (RAND_DRBG_generate(drbg->parent,
-                                   buffer, bytes_needed,
-                                   prediction_resistance,
-                                   (unsigned char *)&drbg, sizeof(drbg)) != 0)
-                bytes = bytes_needed;
-            drbg->reseed_next_counter
-                = tsan_load(&drbg->parent->reseed_prop_counter);
-            rand_drbg_unlock(drbg->parent);
-
-            rand_pool_add_end(pool, bytes, 8 * bytes);
-            entropy_available = rand_pool_entropy_available(pool);
-        }
-
-    } else {
-        /* Get entropy by polling system entropy sources. */
-        entropy_available = rand_pool_acquire_entropy(pool);
-    }
-
-    if (entropy_available > 0) {
-        ret   = rand_pool_length(pool);
-        *pout = rand_pool_detach(pool);
-    }
-
-    if (drbg->seed_pool == NULL)
-        rand_pool_free(pool);
-    return ret;
-}
-
-/*
- * Implements the cleanup_entropy() callback (see RAND_DRBG_set_callbacks())
- *
- */
-void rand_drbg_cleanup_entropy(RAND_DRBG *drbg,
-                               unsigned char *out, size_t outlen)
-{
-    if (drbg->seed_pool == NULL) {
-        if (drbg->secure)
-            OPENSSL_secure_clear_free(out, outlen);
-        else
-            OPENSSL_clear_free(out, outlen);
-    }
-}
-
-/*
- * Generate additional data that can be used for the drbg. The data does
- * not need to contain entropy, but it's useful if it contains at least
- * some bits that are unpredictable.
- *
- * Returns 0 on failure.
- *
- * On success it allocates a buffer at |*pout| and returns the length of
- * the data. The buffer should get freed using OPENSSL_secure_clear_free().
- */
-size_t rand_drbg_get_additional_data(RAND_POOL *pool, unsigned char **pout)
-{
-    size_t ret = 0;
-
-    if (rand_pool_add_additional_data(pool) == 0)
-        goto err;
-
-    ret = rand_pool_length(pool);
-    *pout = rand_pool_detach(pool);
-
- err:
-    return ret;
-}
-
-void rand_drbg_cleanup_additional_data(RAND_POOL *pool, unsigned char *out)
-{
-    rand_pool_reattach(pool, out);
-}
-
-#ifndef FIPS_MODE
 DEFINE_RUN_ONCE_STATIC(do_rand_init)
 {
 # ifndef OPENSSL_NO_ENGINE
@@ -287,10 +89,10 @@ void rand_cleanup_int(void)
     rand_inited = 0;
 }
 
-/* TODO(3.0): Do we need to handle this somehow in the FIPS module? */
 /*
  * RAND_close_seed_files() ensures that any seed file descriptors are
- * closed after use.
+ * closed after use.  This only applies to libcrypto/default provider,
+ * it does not apply to other providers.
  */
 void RAND_keep_random_devices_open(int keep)
 {
@@ -307,37 +109,23 @@ void RAND_keep_random_devices_open(int keep)
  */
 int RAND_poll(void)
 {
-    int ret = 0;
-
     const RAND_METHOD *meth = RAND_get_rand_method();
+    int ret = meth == RAND_OpenSSL();
 
     if (meth == NULL)
         return 0;
 
-    if (meth == RAND_OpenSSL()) {
-        /* fill random pool and seed the master DRBG */
-        RAND_DRBG *drbg = RAND_DRBG_get0_master();
-
-        if (drbg == NULL)
-            return 0;
-
-        rand_drbg_lock(drbg);
-        ret = rand_drbg_restart(drbg, NULL, 0, 0);
-        rand_drbg_unlock(drbg);
-
-        return ret;
-
-    } else {
-        RAND_POOL *pool = NULL;
-
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+    if (!ret) {
         /* fill random pool and seed the current legacy RNG */
-        pool = rand_pool_new(RAND_DRBG_STRENGTH, 1,
-                             (RAND_DRBG_STRENGTH + 7) / 8,
-                             RAND_POOL_MAX_LENGTH);
+        RAND_POOL *pool = rand_pool_new(RAND_DRBG_STRENGTH, 1,
+                                        (RAND_DRBG_STRENGTH + 7) / 8,
+                                        RAND_POOL_MAX_LENGTH);
+
         if (pool == NULL)
             return 0;
 
-        if (rand_pool_acquire_entropy(pool) == 0)
+        if (ossl_pool_acquire_entropy(pool) == 0)
             goto err;
 
         if (meth->add == NULL
@@ -347,413 +135,13 @@ int RAND_poll(void)
             goto err;
 
         ret = 1;
-
      err:
         rand_pool_free(pool);
     }
-
-    return ret;
-}
-#endif /* FIPS_MODE */
-
-/*
- * Allocate memory and initialize a new random pool
- */
-
-RAND_POOL *rand_pool_new(int entropy_requested, int secure,
-                         size_t min_len, size_t max_len)
-{
-    RAND_POOL *pool = OPENSSL_zalloc(sizeof(*pool));
-    size_t min_alloc_size = RAND_POOL_MIN_ALLOCATION(secure);
-
-    if (pool == NULL) {
-        RANDerr(RAND_F_RAND_POOL_NEW, ERR_R_MALLOC_FAILURE);
-        return NULL;
-    }
-
-    pool->min_len = min_len;
-    pool->max_len = (max_len > RAND_POOL_MAX_LENGTH) ?
-        RAND_POOL_MAX_LENGTH : max_len;
-    pool->alloc_len = min_len < min_alloc_size ? min_alloc_size : min_len;
-    if (pool->alloc_len > pool->max_len)
-        pool->alloc_len = pool->max_len;
-
-    if (secure)
-        pool->buffer = OPENSSL_secure_zalloc(pool->alloc_len);
-    else
-        pool->buffer = OPENSSL_zalloc(pool->alloc_len);
-
-    if (pool->buffer == NULL) {
-        RANDerr(RAND_F_RAND_POOL_NEW, ERR_R_MALLOC_FAILURE);
-        goto err;
-    }
-
-    pool->entropy_requested = entropy_requested;
-    pool->secure = secure;
-
-    return pool;
-
-err:
-    OPENSSL_free(pool);
-    return NULL;
-}
-
-/*
- * Attach new random pool to the given buffer
- *
- * This function is intended to be used only for feeding random data
- * provided by RAND_add() and RAND_seed() into the <master> DRBG.
- */
-RAND_POOL *rand_pool_attach(const unsigned char *buffer, size_t len,
-                            size_t entropy)
-{
-    RAND_POOL *pool = OPENSSL_zalloc(sizeof(*pool));
-
-    if (pool == NULL) {
-        RANDerr(RAND_F_RAND_POOL_ATTACH, ERR_R_MALLOC_FAILURE);
-        return NULL;
-    }
-
-    /*
-     * The const needs to be cast away, but attached buffers will not be
-     * modified (in contrary to allocated buffers which are zeroed and
-     * freed in the end).
-     */
-    pool->buffer = (unsigned char *) buffer;
-    pool->len = len;
-
-    pool->attached = 1;
-
-    pool->min_len = pool->max_len = pool->alloc_len = pool->len;
-    pool->entropy = entropy;
-
-    return pool;
-}
-
-/*
- * Free |pool|, securely erasing its buffer.
- */
-void rand_pool_free(RAND_POOL *pool)
-{
-    if (pool == NULL)
-        return;
-
-    /*
-     * Although it would be advisable from a cryptographical viewpoint,
-     * we are not allowed to clear attached buffers, since they are passed
-     * to rand_pool_attach() as `const unsigned char*`.
-     * (see corresponding comment in rand_pool_attach()).
-     */
-    if (!pool->attached) {
-        if (pool->secure)
-            OPENSSL_secure_clear_free(pool->buffer, pool->alloc_len);
-        else
-            OPENSSL_clear_free(pool->buffer, pool->alloc_len);
-    }
-
-    OPENSSL_free(pool);
-}
-
-/*
- * Return the |pool|'s buffer to the caller (readonly).
- */
-const unsigned char *rand_pool_buffer(RAND_POOL *pool)
-{
-    return pool->buffer;
-}
-
-/*
- * Return the |pool|'s entropy to the caller.
- */
-size_t rand_pool_entropy(RAND_POOL *pool)
-{
-    return pool->entropy;
-}
-
-/*
- * Return the |pool|'s buffer length to the caller.
- */
-size_t rand_pool_length(RAND_POOL *pool)
-{
-    return pool->len;
-}
-
-/*
- * Detach the |pool| buffer and return it to the caller.
- * It's the responsibility of the caller to free the buffer
- * using OPENSSL_secure_clear_free() or to re-attach it
- * again to the pool using rand_pool_reattach().
- */
-unsigned char *rand_pool_detach(RAND_POOL *pool)
-{
-    unsigned char *ret = pool->buffer;
-    pool->buffer = NULL;
-    pool->entropy = 0;
+#endif
     return ret;
 }
 
-/*
- * Re-attach the |pool| buffer. It is only allowed to pass
- * the |buffer| which was previously detached from the same pool.
- */
-void rand_pool_reattach(RAND_POOL *pool, unsigned char *buffer)
-{
-    pool->buffer = buffer;
-    OPENSSL_cleanse(pool->buffer, pool->len);
-    pool->len = 0;
-}
-
-/*
- * If |entropy_factor| bits contain 1 bit of entropy, how many bytes does one
- * need to obtain at least |bits| bits of entropy?
- */
-#define ENTROPY_TO_BYTES(bits, entropy_factor) \
-    (((bits) * (entropy_factor) + 7) / 8)
-
-
-/*
- * Checks whether the |pool|'s entropy is available to the caller.
- * This is the case when entropy count and buffer length are high enough.
- * Returns
- *
- *  |entropy|  if the entropy count and buffer size is large enough
- *      0      otherwise
- */
-size_t rand_pool_entropy_available(RAND_POOL *pool)
-{
-    if (pool->entropy < pool->entropy_requested)
-        return 0;
-
-    if (pool->len < pool->min_len)
-        return 0;
-
-    return pool->entropy;
-}
-
-/*
- * Returns the (remaining) amount of entropy needed to fill
- * the random pool.
- */
-
-size_t rand_pool_entropy_needed(RAND_POOL *pool)
-{
-    if (pool->entropy < pool->entropy_requested)
-        return pool->entropy_requested - pool->entropy;
-
-    return 0;
-}
-
-/* Increase the allocation size -- not usable for an attached pool */
-static int rand_pool_grow(RAND_POOL *pool, size_t len)
-{
-    if (len > pool->alloc_len - pool->len) {
-        unsigned char *p;
-        const size_t limit = pool->max_len / 2;
-        size_t newlen = pool->alloc_len;
-
-        if (pool->attached || len > pool->max_len - pool->len) {
-            RANDerr(RAND_F_RAND_POOL_GROW, ERR_R_INTERNAL_ERROR);
-            return 0;
-        }
-
-        do
-            newlen = newlen < limit ? newlen * 2 : pool->max_len;
-        while (len > newlen - pool->len);
-
-        if (pool->secure)
-            p = OPENSSL_secure_zalloc(newlen);
-        else
-            p = OPENSSL_zalloc(newlen);
-        if (p == NULL) {
-            RANDerr(RAND_F_RAND_POOL_GROW, ERR_R_MALLOC_FAILURE);
-            return 0;
-        }
-        memcpy(p, pool->buffer, pool->len);
-        if (pool->secure)
-            OPENSSL_secure_clear_free(pool->buffer, pool->alloc_len);
-        else
-            OPENSSL_clear_free(pool->buffer, pool->alloc_len);
-        pool->buffer = p;
-        pool->alloc_len = newlen;
-    }
-    return 1;
-}
-
-/*
- * Returns the number of bytes needed to fill the pool, assuming
- * the input has 1 / |entropy_factor| entropy bits per data bit.
- * In case of an error, 0 is returned.
- */
-
-size_t rand_pool_bytes_needed(RAND_POOL *pool, unsigned int entropy_factor)
-{
-    size_t bytes_needed;
-    size_t entropy_needed = rand_pool_entropy_needed(pool);
-
-    if (entropy_factor < 1) {
-        RANDerr(RAND_F_RAND_POOL_BYTES_NEEDED, RAND_R_ARGUMENT_OUT_OF_RANGE);
-        return 0;
-    }
-
-    bytes_needed = ENTROPY_TO_BYTES(entropy_needed, entropy_factor);
-
-    if (bytes_needed > pool->max_len - pool->len) {
-        /* not enough space left */
-        RANDerr(RAND_F_RAND_POOL_BYTES_NEEDED, RAND_R_RANDOM_POOL_OVERFLOW);
-        return 0;
-    }
-
-    if (pool->len < pool->min_len &&
-        bytes_needed < pool->min_len - pool->len)
-        /* to meet the min_len requirement */
-        bytes_needed = pool->min_len - pool->len;
-
-    /*
-     * Make sure the buffer is large enough for the requested amount
-     * of data. This guarantees that existing code patterns where
-     * rand_pool_add_begin, rand_pool_add_end or rand_pool_add
-     * are used to collect entropy data without any error handling
-     * whatsoever, continue to be valid.
-     * Furthermore if the allocation here fails once, make sure that
-     * we don't fall back to a less secure or even blocking random source,
-     * as that could happen by the existing code patterns.
-     * This is not a concern for additional data, therefore that
-     * is not needed if rand_pool_grow fails in other places.
-     */
-    if (!rand_pool_grow(pool, bytes_needed)) {
-        /* persistent error for this pool */
-        pool->max_len = pool->len = 0;
-        return 0;
-    }
-
-    return bytes_needed;
-}
-
-/* Returns the remaining number of bytes available */
-size_t rand_pool_bytes_remaining(RAND_POOL *pool)
-{
-    return pool->max_len - pool->len;
-}
-
-/*
- * Add random bytes to the random pool.
- *
- * It is expected that the |buffer| contains |len| bytes of
- * random input which contains at least |entropy| bits of
- * randomness.
- *
- * Returns 1 if the added amount is adequate, otherwise 0
- */
-int rand_pool_add(RAND_POOL *pool,
-                  const unsigned char *buffer, size_t len, size_t entropy)
-{
-    if (len > pool->max_len - pool->len) {
-        RANDerr(RAND_F_RAND_POOL_ADD, RAND_R_ENTROPY_INPUT_TOO_LONG);
-        return 0;
-    }
-
-    if (pool->buffer == NULL) {
-        RANDerr(RAND_F_RAND_POOL_ADD, ERR_R_INTERNAL_ERROR);
-        return 0;
-    }
-
-    if (len > 0) {
-        /*
-         * This is to protect us from accidentally passing the buffer
-         * returned from rand_pool_add_begin.
-         * The check for alloc_len makes sure we do not compare the
-         * address of the end of the allocated memory to something
-         * different, since that comparison would have an
-         * indeterminate result.
-         */
-        if (pool->alloc_len > pool->len && pool->buffer + pool->len == buffer) {
-            RANDerr(RAND_F_RAND_POOL_ADD, ERR_R_INTERNAL_ERROR);
-            return 0;
-        }
-        /*
-         * We have that only for cases when a pool is used to collect
-         * additional data.
-         * For entropy data, as long as the allocation request stays within
-         * the limits given by rand_pool_bytes_needed this rand_pool_grow
-         * below is guaranteed to succeed, thus no allocation happens.
-         */
-        if (!rand_pool_grow(pool, len))
-            return 0;
-        memcpy(pool->buffer + pool->len, buffer, len);
-        pool->len += len;
-        pool->entropy += entropy;
-    }
-
-    return 1;
-}
-
-/*
- * Start to add random bytes to the random pool in-place.
- *
- * Reserves the next |len| bytes for adding random bytes in-place
- * and returns a pointer to the buffer.
- * The caller is allowed to copy up to |len| bytes into the buffer.
- * If |len| == 0 this is considered a no-op and a NULL pointer
- * is returned without producing an error message.
- *
- * After updating the buffer, rand_pool_add_end() needs to be called
- * to finish the update operation (see next comment).
- */
-unsigned char *rand_pool_add_begin(RAND_POOL *pool, size_t len)
-{
-    if (len == 0)
-        return NULL;
-
-    if (len > pool->max_len - pool->len) {
-        RANDerr(RAND_F_RAND_POOL_ADD_BEGIN, RAND_R_RANDOM_POOL_OVERFLOW);
-        return NULL;
-    }
-
-    if (pool->buffer == NULL) {
-        RANDerr(RAND_F_RAND_POOL_ADD_BEGIN, ERR_R_INTERNAL_ERROR);
-        return NULL;
-    }
-
-    /*
-     * As long as the allocation request stays within the limits given
-     * by rand_pool_bytes_needed this rand_pool_grow below is guaranteed
-     * to succeed, thus no allocation happens.
-     * We have that only for cases when a pool is used to collect
-     * additional data. Then the buffer might need to grow here,
-     * and of course the caller is responsible to check the return
-     * value of this function.
-     */
-    if (!rand_pool_grow(pool, len))
-        return NULL;
-
-    return pool->buffer + pool->len;
-}
-
-/*
- * Finish to add random bytes to the random pool in-place.
- *
- * Finishes an in-place update of the random pool started by
- * rand_pool_add_begin() (see previous comment).
- * It is expected that |len| bytes of random input have been added
- * to the buffer which contain at least |entropy| bits of randomness.
- * It is allowed to add less bytes than originally reserved.
- */
-int rand_pool_add_end(RAND_POOL *pool, size_t len, size_t entropy)
-{
-    if (len > pool->alloc_len - pool->len) {
-        RANDerr(RAND_F_RAND_POOL_ADD_END, RAND_R_RANDOM_POOL_OVERFLOW);
-        return 0;
-    }
-
-    if (len > 0) {
-        pool->len += len;
-        pool->entropy += entropy;
-    }
-
-    return 1;
-}
-
-#ifndef FIPS_MODE
 int RAND_set_rand_method(const RAND_METHOD *meth)
 {
     if (!RUN_ONCE(&rand_init, do_rand_init))
@@ -768,13 +156,9 @@ int RAND_set_rand_method(const RAND_METHOD *meth)
     CRYPTO_THREAD_unlock(rand_meth_lock);
     return 1;
 }
-#endif
 
 const RAND_METHOD *RAND_get_rand_method(void)
 {
-#ifdef FIPS_MODE
-    return NULL;
-#else
     const RAND_METHOD *tmp_meth = NULL;
 
     if (!RUN_ONCE(&rand_init, do_rand_init))
@@ -801,10 +185,9 @@ const RAND_METHOD *RAND_get_rand_method(void)
     tmp_meth = default_RAND_meth;
     CRYPTO_THREAD_unlock(rand_meth_lock);
     return tmp_meth;
-#endif
 }
 
-#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODE)
+# if !defined(OPENSSL_NO_ENGINE)
 int RAND_set_rand_engine(ENGINE *engine)
 {
     const RAND_METHOD *tmp_meth = NULL;
@@ -828,7 +211,7 @@ int RAND_set_rand_engine(ENGINE *engine)
     CRYPTO_THREAD_unlock(rand_engine_lock);
     return 1;
 }
-#endif
+# endif
 
 void RAND_seed(const void *buf, int num)
 {
@@ -846,26 +229,58 @@ void RAND_add(const void *buf, int num, double randomness)
         meth->add(buf, num, randomness);
 }
 
+# if !defined(OPENSSL_NO_DEPRECATED_1_1_0)
+int RAND_pseudo_bytes(unsigned char *buf, int num)
+{
+    const RAND_METHOD *meth = RAND_get_rand_method();
+
+    if (meth != NULL && meth->pseudorand != NULL)
+        return meth->pseudorand(buf, num);
+    ERR_raise(ERR_LIB_RAND, RAND_R_FUNC_NOT_IMPLEMENTED);
+    return -1;
+}
+# endif
+
+int RAND_status(void)
+{
+    EVP_RAND_CTX *rand;
+    const RAND_METHOD *meth = RAND_get_rand_method();
+
+    if (meth != NULL && meth != RAND_OpenSSL())
+        return meth->status != NULL ? meth->status() : 0;
+
+    if ((rand = RAND_get0_primary(NULL)) == NULL)
+        return 0;
+    return EVP_RAND_state(rand) == EVP_RAND_STATE_READY;
+}
+#else  /* !FIPS_MODULE */
+
+const RAND_METHOD *RAND_get_rand_method(void)
+{
+    return NULL;
+}
+#endif /* !FIPS_MODULE */
+
 /*
  * This function is not part of RAND_METHOD, so if we're not using
  * the default method, then just call RAND_bytes().  Otherwise make
  * sure we're instantiated and use the private DRBG.
  */
-int RAND_priv_bytes_ex(OPENSSL_CTX *ctx, unsigned char *buf, int num)
+int RAND_priv_bytes_ex(OSSL_LIB_CTX *ctx, unsigned char *buf, int num)
 {
-    RAND_DRBG *drbg;
+    EVP_RAND_CTX *rand;
     const RAND_METHOD *meth = RAND_get_rand_method();
 
     if (meth != NULL && meth != RAND_OpenSSL()) {
         if (meth->bytes != NULL)
             return meth->bytes(buf, num);
-        RANDerr(RAND_F_RAND_PRIV_BYTES_EX, RAND_R_FUNC_NOT_IMPLEMENTED);
+        ERR_raise(ERR_LIB_RAND, RAND_R_FUNC_NOT_IMPLEMENTED);
         return -1;
     }
 
-    drbg = OPENSSL_CTX_get0_private_drbg(ctx);
-    if (drbg != NULL)
-        return RAND_DRBG_bytes(drbg, buf, num);
+    rand = RAND_get0_private(ctx);
+    if (rand != NULL)
+        return EVP_RAND_generate(rand, buf, num, 0, 0, NULL, 0);
 
     return 0;
 }
@@ -875,21 +290,21 @@ int RAND_priv_bytes(unsigned char *buf, int num)
     return RAND_priv_bytes_ex(NULL, buf, num);
 }
 
-int RAND_bytes_ex(OPENSSL_CTX *ctx, unsigned char *buf, int num)
+int RAND_bytes_ex(OSSL_LIB_CTX *ctx, unsigned char *buf, int num)
 {
-    RAND_DRBG *drbg;
+    EVP_RAND_CTX *rand;
     const RAND_METHOD *meth = RAND_get_rand_method();
 
     if (meth != NULL && meth != RAND_OpenSSL()) {
         if (meth->bytes != NULL)
             return meth->bytes(buf, num);
-        RANDerr(RAND_F_RAND_BYTES_EX, RAND_R_FUNC_NOT_IMPLEMENTED);
+        ERR_raise(ERR_LIB_RAND, RAND_R_FUNC_NOT_IMPLEMENTED);
         return -1;
     }
 
-    drbg = OPENSSL_CTX_get0_public_drbg(ctx);
-    if (drbg != NULL)
-        return RAND_DRBG_bytes(drbg, buf, num);
+    rand = RAND_get0_public(ctx);
+    if (rand != NULL)
+        return EVP_RAND_generate(rand, buf, num, 0, 0, NULL, 0);
 
     return 0;
 }
@@ -899,23 +314,432 @@ int RAND_bytes(unsigned char *buf, int num)
     return RAND_bytes_ex(NULL, buf, num);
 }
 
-#if !defined(OPENSSL_NO_DEPRECATED_1_1_0) && !defined(FIPS_MODE)
-int RAND_pseudo_bytes(unsigned char *buf, int num)
-{
-    const RAND_METHOD *meth = RAND_get_rand_method();
+typedef struct rand_global_st {
+    /*
+     * The three shared DRBG instances
+     *
+     * There are three shared DRBG instances: <primary>, <public>, and
+     * <private>.  The <public> and <private> DRBGs are secondary ones.
+     * These are used for non-secret (e.g. nonces) and secret
+     * (e.g. private keys) data respectively.
+     */
+    CRYPTO_RWLOCK *lock;
 
-    if (meth != NULL && meth->pseudorand != NULL)
-        return meth->pseudorand(buf, num);
-    RANDerr(RAND_F_RAND_PSEUDO_BYTES, RAND_R_FUNC_NOT_IMPLEMENTED);
-    return -1;
+    EVP_RAND_CTX *seed;
+
+    /*
+     * The <primary> DRBG
+     *
+     * Not used directly by the application, only for reseeding the two other
+     * DRBGs. It reseeds itself by pulling either randomness from os entropy
+     * sources or by consuming randomness which was added by RAND_add().
+     *
+     * The <primary> DRBG is a global instance which is accessed concurrently by
+     * all threads. The necessary locking is managed automatically by its child
+     * DRBG instances during reseeding.
+     */
+    EVP_RAND_CTX *primary;
+
+    /*
+     * The <public> DRBG
+     *
+     * Used by default for generating random bytes using RAND_bytes().
+     *
+     * The <public> secondary DRBG is thread-local, i.e., there is one instance
+     * per thread.
+     */
+    CRYPTO_THREAD_LOCAL public;
+
+    /*
+     * The <private> DRBG
+     *
+     * Used by default for generating private keys using RAND_priv_bytes()
+     *
+     * The <private> secondary DRBG is thread-local, i.e., there is one
+     * instance per thread.
+     */
+    CRYPTO_THREAD_LOCAL private;
+
+    /* Which RNG is being used by default and it's configuration settings */
+    char *rng_name;
+    char *rng_cipher;
+    char *rng_digest;
+    char *rng_propq;
+
+    /* Allow the randomness source to be changed */
+    char *seed_name;
+    char *seed_propq;
+} RAND_GLOBAL;
+
+/*
+ * Initialize the OSSL_LIB_CTX global DRBGs on first use.
+ * Returns the allocated global data on success or NULL on failure.
+ */
+static void *rand_ossl_ctx_new(OSSL_LIB_CTX *libctx)
+{
+    RAND_GLOBAL *dgbl = OPENSSL_zalloc(sizeof(*dgbl));
+
+    if (dgbl == NULL)
+        return NULL;
+
+#ifndef FIPS_MODULE
+    /*
+     * We need to ensure that base libcrypto thread handling has been
+     * initialised.
+     */
+     OPENSSL_init_crypto(0, NULL);
+#endif
+
+    dgbl->lock = CRYPTO_THREAD_lock_new();
+    if (dgbl->lock == NULL)
+        goto err1;
+
+    if (!CRYPTO_THREAD_init_local(&dgbl->private, NULL))
+        goto err1;
+
+    if (!CRYPTO_THREAD_init_local(&dgbl->public, NULL))
+        goto err2;
+
+    return dgbl;
+
+ err2:
+    CRYPTO_THREAD_cleanup_local(&dgbl->private);
+ err1:
+    CRYPTO_THREAD_lock_free(dgbl->lock);
+    OPENSSL_free(dgbl);
+    return NULL;
+}
+
+static void rand_ossl_ctx_free(void *vdgbl)
+{
+    RAND_GLOBAL *dgbl = vdgbl;
+
+    if (dgbl == NULL)
+        return;
+
+    CRYPTO_THREAD_lock_free(dgbl->lock);
+    CRYPTO_THREAD_cleanup_local(&dgbl->private);
+    CRYPTO_THREAD_cleanup_local(&dgbl->public);
+    EVP_RAND_CTX_free(dgbl->primary);
+    EVP_RAND_CTX_free(dgbl->seed);
+    OPENSSL_free(dgbl->rng_name);
+    OPENSSL_free(dgbl->rng_cipher);
+    OPENSSL_free(dgbl->rng_digest);
+    OPENSSL_free(dgbl->rng_propq);
+    OPENSSL_free(dgbl->seed_name);
+    OPENSSL_free(dgbl->seed_propq);
+
+    OPENSSL_free(dgbl);
+}
+
+static const OSSL_LIB_CTX_METHOD rand_drbg_ossl_ctx_method = {
+    rand_ossl_ctx_new,
+    rand_ossl_ctx_free,
+};
+
+static RAND_GLOBAL *rand_get_global(OSSL_LIB_CTX *libctx)
+{
+    return ossl_lib_ctx_get_data(libctx, OSSL_LIB_CTX_DRBG_INDEX,
+                                 &rand_drbg_ossl_ctx_method);
+}
+
+static void rand_delete_thread_state(void *arg)
+{
+    OSSL_LIB_CTX *ctx = arg;
+    RAND_GLOBAL *dgbl = rand_get_global(ctx);
+    EVP_RAND_CTX *rand;
+
+    if (dgbl == NULL)
+        return;
+
+    rand = CRYPTO_THREAD_get_local(&dgbl->public);
+    CRYPTO_THREAD_set_local(&dgbl->public, NULL);
+    EVP_RAND_CTX_free(rand);
+
+    rand = CRYPTO_THREAD_get_local(&dgbl->private);
+    CRYPTO_THREAD_set_local(&dgbl->private, NULL);
+    EVP_RAND_CTX_free(rand);
+}
+
+#ifndef FIPS_MODULE
+static EVP_RAND_CTX *rand_new_seed(OSSL_LIB_CTX *libctx)
+{
+    EVP_RAND *rand;
+    RAND_GLOBAL *dgbl = rand_get_global(libctx);
+    EVP_RAND_CTX *ctx;
+    char *name;
+
+    name = dgbl->seed_name != NULL ? dgbl->seed_name : "SEED-SRC";
+    rand = EVP_RAND_fetch(libctx, name, dgbl->seed_propq);
+    if (rand == NULL) {
+        ERR_raise(ERR_LIB_RAND, RAND_R_UNABLE_TO_FETCH_DRBG);
+        return NULL;
+    }
+    ctx = EVP_RAND_CTX_new(rand, NULL);
+    EVP_RAND_free(rand);
+    if (ctx == NULL) {
+        ERR_raise(ERR_LIB_RAND, RAND_R_UNABLE_TO_CREATE_DRBG);
+        return NULL;
+    }
+    if (!EVP_RAND_instantiate(ctx, 0, 0, NULL, 0)) {
+        ERR_raise(ERR_LIB_RAND, RAND_R_ERROR_INSTANTIATING_DRBG);
+        EVP_RAND_CTX_free(ctx);
+        return NULL;
+    }
+    return ctx;
 }
 #endif
 
-int RAND_status(void)
+static EVP_RAND_CTX *rand_new_drbg(OSSL_LIB_CTX *libctx, EVP_RAND_CTX *parent,
+                                   unsigned int reseed_interval,
+                                   time_t reseed_time_interval)
 {
-    const RAND_METHOD *meth = RAND_get_rand_method();
+    EVP_RAND *rand;
+    RAND_GLOBAL *dgbl = rand_get_global(libctx);
+    EVP_RAND_CTX *ctx;
+    OSSL_PARAM params[7], *p = params;
+    char *name, *cipher;
 
-    if (meth != NULL && meth->status != NULL)
-        return meth->status();
-    return 0;
+    name = dgbl->rng_name != NULL ? dgbl->rng_name : "CTR-DRBG";
+    rand = EVP_RAND_fetch(libctx, name, dgbl->rng_propq);
+    if (rand == NULL) {
+        ERR_raise(ERR_LIB_RAND, RAND_R_UNABLE_TO_FETCH_DRBG);
+        return NULL;
+    }
+    ctx = EVP_RAND_CTX_new(rand, parent);
+    EVP_RAND_free(rand);
+    if (ctx == NULL) {
+        ERR_raise(ERR_LIB_RAND, RAND_R_UNABLE_TO_CREATE_DRBG);
+        return NULL;
+    }
+
+    /*
+     * Rather than trying to decode the DRBG settings, just pass them through
+     * and rely on the other end to ignore those it doesn't care about.
+     */
+    cipher = dgbl->rng_cipher != NULL ? dgbl->rng_cipher : "AES-256-CTR";
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_DRBG_PARAM_CIPHER,
+                                            cipher, 0);
+    if (dgbl->rng_digest != NULL)
+        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_DRBG_PARAM_DIGEST,
+                                                dgbl->rng_digest, 0);
+    if (dgbl->rng_propq != NULL)
+        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_DRBG_PARAM_PROPERTIES,
+                                                dgbl->rng_propq, 0);
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_ALG_PARAM_MAC, "HMAC", 0);
+    *p++ = OSSL_PARAM_construct_uint(OSSL_DRBG_PARAM_RESEED_REQUESTS,
+                                     &reseed_interval);
+    *p++ = OSSL_PARAM_construct_time_t(OSSL_DRBG_PARAM_RESEED_TIME_INTERVAL,
+                                       &reseed_time_interval);
+    *p = OSSL_PARAM_construct_end();
+    if (!EVP_RAND_set_ctx_params(ctx, params)) {
+        ERR_raise(ERR_LIB_RAND, RAND_R_ERROR_INITIALISING_DRBG);
+        EVP_RAND_CTX_free(ctx);
+        return NULL;
+    }
+    if (!EVP_RAND_instantiate(ctx, 0, 0, NULL, 0)) {
+        ERR_raise(ERR_LIB_RAND, RAND_R_ERROR_INSTANTIATING_DRBG);
+        EVP_RAND_CTX_free(ctx);
+        return NULL;
+    }
+    return ctx;
 }
+
+/*
+ * Get the primary random generator.
+ * Returns pointer to its EVP_RAND_CTX on success, NULL on failure.
+ *
+ */
+EVP_RAND_CTX *RAND_get0_primary(OSSL_LIB_CTX *ctx)
+{
+    RAND_GLOBAL *dgbl = rand_get_global(ctx);
+    EVP_RAND_CTX *ret;
+
+    if (dgbl == NULL)
+        return NULL;
+
+    if (!CRYPTO_THREAD_read_lock(dgbl->lock))
+        return NULL;
+
+    ret = dgbl->primary;
+    CRYPTO_THREAD_unlock(dgbl->lock);
+
+    if (ret != NULL)
+        return ret;
+
+    if (!CRYPTO_THREAD_write_lock(dgbl->lock))
+        return NULL;
+
+    ret = dgbl->primary;
+    if (ret != NULL) {
+        CRYPTO_THREAD_unlock(dgbl->lock);
+        return ret;
+    }
+
+#ifndef FIPS_MODULE
+    if (dgbl->seed == NULL) {
+        ERR_set_mark();
+        dgbl->seed = rand_new_seed(ctx);
+        ERR_pop_to_mark();
+    }
+#endif
+
+    ret = dgbl->primary = rand_new_drbg(ctx, dgbl->seed,
+                                        PRIMARY_RESEED_INTERVAL,
+                                        PRIMARY_RESEED_TIME_INTERVAL);
+    /*
+    * The primary DRBG may be shared between multiple threads so we must
+    * enable locking.
+    */
+    if (ret != NULL && !EVP_RAND_enable_locking(ret)) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_UNABLE_TO_ENABLE_LOCKING);
+        EVP_RAND_CTX_free(ret);
+        ret = dgbl->primary = NULL;
+    }
+    CRYPTO_THREAD_unlock(dgbl->lock);
+
+    return ret;
+}
+
+/*
+ * Get the public random generator.
+ * Returns pointer to its EVP_RAND_CTX on success, NULL on failure.
+ */
+EVP_RAND_CTX *RAND_get0_public(OSSL_LIB_CTX *ctx)
+{
+    RAND_GLOBAL *dgbl = rand_get_global(ctx);
+    EVP_RAND_CTX *rand, *primary;
+
+    if (dgbl == NULL)
+        return NULL;
+
+    rand = CRYPTO_THREAD_get_local(&dgbl->public);
+    if (rand == NULL) {
+        primary = RAND_get0_primary(ctx);
+        if (primary == NULL)
+            return NULL;
+
+        ctx = ossl_lib_ctx_get_concrete(ctx);
+        /*
+         * If the private is also NULL then this is the first time we've
+         * used this thread.
+         */
+        if (CRYPTO_THREAD_get_local(&dgbl->private) == NULL
+                && !ossl_init_thread_start(NULL, ctx, rand_delete_thread_state))
+            return NULL;
+        rand = rand_new_drbg(ctx, primary, SECONDARY_RESEED_INTERVAL,
+                             SECONDARY_RESEED_TIME_INTERVAL);
+        CRYPTO_THREAD_set_local(&dgbl->public, rand);
+    }
+    return rand;
+}
+
+/*
+ * Get the private random generator.
+ * Returns pointer to its EVP_RAND_CTX on success, NULL on failure.
+ */
+EVP_RAND_CTX *RAND_get0_private(OSSL_LIB_CTX *ctx)
+{
+    RAND_GLOBAL *dgbl = rand_get_global(ctx);
+    EVP_RAND_CTX *rand, *primary;
+
+    if (dgbl == NULL)
+        return NULL;
+
+    rand = CRYPTO_THREAD_get_local(&dgbl->private);
+    if (rand == NULL) {
+        primary = RAND_get0_primary(ctx);
+        if (primary == NULL)
+            return NULL;
+
+        ctx = ossl_lib_ctx_get_concrete(ctx);
+        /*
+         * If the public is also NULL then this is the first time we've
+         * used this thread.
+         */
+        if (CRYPTO_THREAD_get_local(&dgbl->public) == NULL
+                && !ossl_init_thread_start(NULL, ctx, rand_delete_thread_state))
+            return NULL;
+        rand = rand_new_drbg(ctx, primary, SECONDARY_RESEED_INTERVAL,
+                             SECONDARY_RESEED_TIME_INTERVAL);
+        CRYPTO_THREAD_set_local(&dgbl->private, rand);
+    }
+    return rand;
+}
+
+#ifndef FIPS_MODULE
+static int random_set_string(char **p, const char *s)
+{
+    char *d = OPENSSL_strdup(s);
+
+    if (d == NULL) {
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
+        return 0;
+    }
+    OPENSSL_free(*p);
+    *p = d;
+    return 1;
+}
+
+/*
+ * Load the DRBG definitions from a configuration file.
+ */
+static int random_conf_init(CONF_IMODULE *md, const CONF *cnf)
+{
+    STACK_OF(CONF_VALUE) *elist;
+    CONF_VALUE *cval;
+    RAND_GLOBAL *dgbl = rand_get_global(cnf->libctx);
+    int i, r = 1;
+
+    OSSL_TRACE1(CONF, "Loading random module: section %s\n",
+                CONF_imodule_get_value(md));
+
+    /* Value is a section containing RANDOM configuration */
+    elist = NCONF_get_section(cnf, CONF_imodule_get_value(md));
+    if (elist == NULL) {
+        ERR_raise(ERR_LIB_CRYPTO, CRYPTO_R_RANDOM_SECTION_ERROR);
+        return 0;
+    }
+
+    for (i = 0; i < sk_CONF_VALUE_num(elist); i++) {
+        cval = sk_CONF_VALUE_value(elist, i);
+        if (strcasecmp(cval->name, "random") == 0) {
+            if (!random_set_string(&dgbl->rng_name, cval->value))
+                return 0;
+        } else if (strcasecmp(cval->name, "cipher") == 0) {
+            if (!random_set_string(&dgbl->rng_cipher, cval->value))
+                return 0;
+        } else if (strcasecmp(cval->name, "digest") == 0) {
+            if (!random_set_string(&dgbl->rng_digest, cval->value))
+                return 0;
+        } else if (strcasecmp(cval->name, "properties") == 0) {
+            if (!random_set_string(&dgbl->rng_propq, cval->value))
+                return 0;
+        } else if (strcasecmp(cval->name, "seed") == 0) {
+            if (!random_set_string(&dgbl->seed_name, cval->value))
+                return 0;
+        } else if (strcasecmp(cval->name, "seed_properties") == 0) {
+            if (!random_set_string(&dgbl->seed_propq, cval->value))
+                return 0;
+        } else {
+            ERR_raise_data(ERR_LIB_CRYPTO,
+                           CRYPTO_R_UNKNOWN_NAME_IN_RANDOM_SECTION,
+                           "name=%s, value=%s", cval->name, cval->value);
+            r = 0;
+        }
+    }
+    return r;
+}
+
+
+static void random_conf_deinit(CONF_IMODULE *md)
+{
+    OSSL_TRACE(CONF, "Cleaned up random\n");
+}
+
+void ossl_random_add_conf_module(void)
+{
+    OSSL_TRACE(CONF, "Adding config module 'random'\n");
+    CONF_module_add("random", random_conf_init, random_conf_deinit);
+}
+#endif

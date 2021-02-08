@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-openssl-pkeyutl - public key algorithm utility
+openssl-pkeyutl - public key algorithm command
 
 =head1 SYNOPSIS
 
@@ -14,11 +14,11 @@ B<openssl> B<pkeyutl>
 [B<-digest> I<algorithm>]
 [B<-out> I<file>]
 [B<-sigfile> I<file>]
-[B<-inkey> I<file>]
-[B<-keyform> B<DER>|B<PEM>|B<ENGINE>]
+[B<-inkey> I<filename>|I<uri>]
+[B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>]
 [B<-passin> I<arg>]
 [B<-peerkey> I<file>]
-[B<-peerform> B<DER>|B<PEM>|B<ENGINE>]
+[B<-peerform> B<DER>|B<PEM>|B<P12>|B<ENGINE>]
 [B<-pubin>]
 [B<-certin>]
 [B<-rev>]
@@ -34,15 +34,16 @@ B<openssl> B<pkeyutl>
 [B<-pkeyopt_passin> I<opt>[:I<passarg>]]
 [B<-hexdump>]
 [B<-asn1parse>]
-{- $OpenSSL::safe::opt_engine_synopsis -}
-[B<-engine_impl>]
+{- $OpenSSL::safe::opt_engine_synopsis -}[B<-engine_impl>]
 {- $OpenSSL::safe::opt_r_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
+{- $OpenSSL::safe::opt_config_synopsis -}
 
 =for openssl ifdef engine engine_impl
 
 =head1 DESCRIPTION
 
-This command can be used to perform low level public key
+This command can be used to perform low-level public key
 operations using any supported algorithm.
 
 =head1 OPTIONS
@@ -84,28 +85,30 @@ default.
 
 Signature file, required for B<-verify> operations only
 
-=item B<-inkey> I<file>
+=item B<-inkey> I<filename>|I<uri>
 
-The input key file, by default it should be a private key.
+The input key, by default it should be a private key.
 
-=item B<-keyform> B<DER>|B<PEM>|B<ENGINE>
+=item B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
 
 The key format; the default is B<PEM>.
-See L<openssl(1)/Format Options> for details.
+The only value with effect is B<ENGINE>; all others have become obsolete.
+See L<openssl-format-options(1)> for details.
 
 =item B<-passin> I<arg>
 
 The input key password source. For more information about the format of I<arg>
-see L<openssl(1)/Pass Phrase Options>.
+see L<openssl-passphrase-options(1)>.
 
 =item B<-peerkey> I<file>
 
 The peer key file, used by key derivation (agreement) operations.
 
-=item B<-peerform> B<DER>|B<PEM>|B<ENGINE>
+=item B<-peerform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
 
 The peer key format; the default is B<PEM>.
-See L<openssl(1)/Format Options> for details.
+The only value with effect is B<ENGINE>; all others have become obsolete.
+See L<openssl-format-options(1)> for details.
 
 =item B<-pubin>
 
@@ -168,7 +171,7 @@ Public key options specified as opt:value. See NOTES below for more details.
 Allows reading a public key option I<opt> from stdin or a password source.
 If only I<opt> is specified, the user will be prompted to enter a password on
 stdin.  Alternatively, I<passarg> can be specified which can be any value
-supported by L<openssl(1)/Pass phrase options>.
+supported by L<openssl-passphrase-options(1)>.
 
 =item B<-hexdump>
 
@@ -181,12 +184,18 @@ B<-verifyrecover> option when an ASN1 structure is signed.
 
 {- $OpenSSL::safe::opt_engine_item -}
 
+{- output_off() if $disabled{"deprecated-3.0"}; "" -}
 =item B<-engine_impl>
 
 When used with the B<-engine> option, it specifies to also use
 engine I<id> for crypto operations.
+{- output_on() if $disabled{"deprecated-3.0"}; "" -}
 
 {- $OpenSSL::safe::opt_r_item -}
+
+{- $OpenSSL::safe::opt_provider_item -}
+
+{- $OpenSSL::safe::opt_config_item -}
 
 =back
 
@@ -318,18 +327,18 @@ must be known for this to work. If the size of the file cannot be determined
 =head1 SM2
 
 The SM2 algorithm supports sign, verify, encrypt and decrypt operations. For
-the sign and verify operations, SM2 requires an ID string to be passed in. The
-following B<-pkeyopt> value is supported:
+the sign and verify operations, SM2 requires an Distinguishing ID string to
+be passed in. The following B<-pkeyopt> value is supported:
 
 =over 4
 
-=item B<sm2_id:>I<string>
+=item B<distid:>I<string>
 
 This sets the ID string used in SM2 sign or verify operations. While verifying
 an SM2 signature, the ID string must be the same one used when signing the data.
 Otherwise the verification will fail.
 
-=item B<sm2_hex_id:>I<hex_string>
+=item B<hexdistid:>I<hex_string>
 
 This sets the ID string used in SM2 sign or verify operations. While verifying
 an SM2 signature, the ID string must be the same one used when signing the data.
@@ -379,12 +388,12 @@ Derive using the same algorithm, but read key from environment variable MYPASS:
 Sign some data using an L<SM2(7)> private key and a specific ID:
 
  openssl pkeyutl -sign -in file -inkey sm2.key -out sig -rawin -digest sm3 \
-    -pkeyopt sm2_id:someid
+    -pkeyopt distid:someid
 
 Verify some data using an L<SM2(7)> certificate and a specific ID:
 
  openssl pkeyutl -verify -certin -in file -inkey sm2.cert -sigfile sig \
-    -rawin -digest sm3 -pkeyopt sm2_id:someid
+    -rawin -digest sm3 -pkeyopt distid:someid
 
 =head1 SEE ALSO
 
@@ -399,10 +408,16 @@ L<openssl-kdf(1)>
 L<EVP_PKEY_CTX_set_hkdf_md(3)>,
 L<EVP_PKEY_CTX_set_tls1_prf_md(3)>,
 
+=head1 HISTORY
+
+All B<-keyform> values except B<ENGINE> have become obsolete in OpenSSL 3.0.0
+and have no effect.
+
+The B<-engine> option was deprecated in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2006-2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2006-2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

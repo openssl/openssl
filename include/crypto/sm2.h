@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2021 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright 2017 Ribose Inc. All Rights Reserved.
  * Ported from Ribose contributions from Botan.
  *
@@ -16,6 +16,9 @@
 # ifndef OPENSSL_NO_SM2
 
 #  include <openssl/ec.h>
+#  include "crypto/types.h"
+
+int sm2_key_private_check(const EC_KEY *eckey);
 
 /* The default user id as specified in GM/T 0009-2012 */
 #  define SM2_DEFAULT_USERID "1234567812345678"
@@ -45,14 +48,14 @@ int sm2_do_verify(const EC_KEY *key,
 /*
  * SM2 signature generation.
  */
-int sm2_sign(const unsigned char *dgst, int dgstlen,
-             unsigned char *sig, unsigned int *siglen, EC_KEY *eckey);
+int sm2_internal_sign(const unsigned char *dgst, int dgstlen,
+                      unsigned char *sig, unsigned int *siglen, EC_KEY *eckey);
 
 /*
  * SM2 signature verification.
  */
-int sm2_verify(const unsigned char *dgst, int dgstlen,
-               const unsigned char *sig, int siglen, EC_KEY *eckey);
+int sm2_internal_verify(const unsigned char *dgst, int dgstlen,
+                        const unsigned char *sig, int siglen, EC_KEY *eckey);
 
 /*
  * SM2 encryption
@@ -74,5 +77,6 @@ int sm2_decrypt(const EC_KEY *key,
                 const uint8_t *ciphertext,
                 size_t ciphertext_len, uint8_t *ptext_buf, size_t *ptext_len);
 
+const unsigned char *sm2_algorithmidentifier_encoding(int md_nid, size_t *len);
 # endif /* OPENSSL_NO_SM2 */
 #endif

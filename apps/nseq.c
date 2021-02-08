@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -16,7 +16,8 @@
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
-    OPT_TOSEQ, OPT_IN, OPT_OUT
+    OPT_TOSEQ, OPT_IN, OPT_OUT,
+    OPT_PROV_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS nseq_options[] = {
@@ -29,6 +30,8 @@ const OPTIONS nseq_options[] = {
     OPT_SECTION("Output"),
     {"toseq", OPT_TOSEQ, '-', "Output NS Sequence file"},
     {"out", OPT_OUT, '>', "Output file"},
+
+    OPT_PROV_OPTIONS,
     {NULL}
 };
 
@@ -62,8 +65,14 @@ int nseq_main(int argc, char **argv)
         case OPT_OUT:
             outfile = opt_arg();
             break;
+        case OPT_PROV_CASES:
+            if (!opt_provider(o))
+                goto end;
+            break;
         }
     }
+
+    /* No extra arguments. */
     argc = opt_num_rest();
     if (argc != 0)
         goto opthelp;

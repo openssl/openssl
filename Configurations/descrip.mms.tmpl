@@ -50,6 +50,10 @@
       grep { !$unified_info{attributes}->{modules}->{$_}->{noinst}
              && $unified_info{attributes}->{modules}->{$_}->{engine} }
       @{$unified_info{modules}};
+  our @install_modules =
+      grep { !$unified_info{attributes}->{modules}->{$_}->{noinst}
+             && !$unified_info{attributes}->{modules}->{$_}->{engine} }
+      @{$unified_info{modules}};
   our @install_programs =
       grep { !$unified_info{attributes}->{programs}->{$_}->{noinst} }
       @{$unified_info{programs}};
@@ -102,6 +106,7 @@ OPTIONS={- $config{options} -}
 CONFIGURE_ARGS=({- join(", ",quotify_l(@{$config{perlargv}})) -})
 SRCDIR={- $config{sourcedir} -}
 BLDDIR={- $config{builddir} -}
+FIPSKEY={- $config{FIPSKEY} -}
 
 # Allow both V and VERBOSE to indicate verbosity.  This only applies
 # to testing.
@@ -116,6 +121,13 @@ SHLIB_TARGET={- $target{shared_target} -}
 
 LIBS={- join(", ", map { "-\n\t".$_.".OLB" } @libs) -}
 SHLIBS={- join(", ", map { "-\n\t".$_.".EXE" } @shlibs) -}
+FIPSMODULENAME={- # We do some extra checking here, as there should be only one
+                  my @fipsmodules =
+                      grep { !$unified_info{attributes}->{modules}->{$_}->{noinst}
+                             && $unified_info{attributes}->{modules}->{$_}->{fips} }
+                      @{$unified_info{modules}};
+                  die "More that one FIPS module" if scalar @fipsmodules > 1;
+                  join(", ", map { basename platform->dso($_) } @fipsmodules) -}
 MODULES={- join(", ", map { "-\n\t".$_.".EXE" } @{$unified_info{modules}}) -}
 PROGRAMS={- join(", ", map { "-\n\t".$_.".EXE" } @{$unified_info{programs}}) -}
 SCRIPTS={- join(", ", map { "-\n\t".$_ } @{$unified_info{scripts}}) -}
@@ -132,6 +144,7 @@ GENERATED={- # common0.tmpl provides @generated
 INSTALL_LIBS={- join(", ", map { "-\n\t".$_.".OLB" } @install_libs) -}
 INSTALL_SHLIBS={- join(", ", map { "-\n\t".$_.".EXE" } @install_shlibs) -}
 INSTALL_ENGINES={- join(", ", map { "-\n\t".$_.".EXE" } @install_engines) -}
+INSTALL_MODULES={- join(", ", map { "-\n\t".$_.".EXE" } @install_modules) -}
 INSTALL_PROGRAMS={- join(", ", map { "-\n\t".$_.".EXE" } @install_programs) -}
 BIN_SCRIPTS={- join(", ", @install_bin_scripts) -}
 MISC_SCRIPTS={- join(", ", @install_misc_scripts) -}
@@ -140,8 +153,8 @@ HTMLDOCS3={- join(", ", map { "-\n\t".$_ } @{$unified_info{htmldocs}->{man3}}) -
 HTMLDOCS5={- join(", ", map { "-\n\t".$_ } @{$unified_info{htmldocs}->{man5}}) -}
 HTMLDOCS7={- join(", ", map { "-\n\t".$_ } @{$unified_info{htmldocs}->{man7}}) -}
 
-APPS_OPENSSL={- use File::Spec::Functions;
-                catfile("apps","openssl") -}
+APPS_OPENSSL="{- use File::Spec::Functions;
+                 catfile("apps","openssl") -}"
 
 # DESTDIR is for package builders so that they can configure for, say,
 # SYS$COMMON:[OPENSSL] and yet have everything installed in STAGING:[USER].
@@ -351,6 +364,9 @@ CPPFLAGS_Q={- (my $c = $lib_cppflags.$cppflags2.$cppflags1) =~ s|"|""|g;
 # given with /INCLUDE is a fantasy, unfortunately.
 NODEBUG=@
 .FIRST :
+        $(NODEBUG) sourcetop = F$PARSE("$(SRCDIR)","[]A.;",,"SYNTAX_ONLY,NO_CONCEAL") - ".][000000" - "[000000." - "][" - "]A.;" + ".]"
+        $(NODEBUG) DEFINE ossl_sourceroot 'sourcetop'
+        $(NODEBUG) !
         $(NODEBUG) openssl_inc1 = F$PARSE("[.include.openssl]","A.;",,,"syntax_only") - "A.;"
         $(NODEBUG) openssl_inc2 = F$PARSE("{- catdir($config{sourcedir},"[.include.openssl]") -}","A.;",,,"SYNTAX_ONLY") - "A.;"
         $(NODEBUG) internal_inc1 = F$PARSE("[.crypto.include.internal]","A.;",,,"SYNTAX_ONLY") - "A.;"
@@ -401,7 +417,7 @@ NODEBUG=@
 
 # The main targets ###################################################
 
-{- dependmagic('build_sw'); -} : build_libs_nodep, build_modules_nodep, build_programs_nodep
+{- dependmagic('build_sw'); -} : build_libs_nodep, build_modules_nodep, build_programs_nodep copy-utils
 {- dependmagic('build_libs'); -} : build_libs_nodep
 {- dependmagic('build_modules'); -} : build_modules_nodep
 {- dependmagic('build_programs'); -} : build_programs_nodep
@@ -429,25 +445,23 @@ build_all_generated : $(GENERATED_MANDATORY) $(GENERATED) build_docs
 all : build_sw build_docs
 
 test : tests
-{- dependmagic('tests'); -} : build_programs_nodep, build_modules_nodep
+{- dependmagic('tests'); -} : build_programs_nodep, build_modules_nodep copy-utils
         @ ! {- output_off() if $disabled{tests}; "" -}
-        DEFINE SRCTOP {- sourcedir() -}
-        DEFINE BLDTOP {- builddir() -}
-        DEFINE OPENSSL_ENGINES {- builddir("engines") -}
-        DEFINE OPENSSL_MODULES {- builddir("providers") -}
+        DEFINE SRCTOP "$(SRCDIR)"
+        DEFINE BLDTOP "$(BLDDIR)"
+        DEFINE FIPSKEY "$(FIPSKEY)"
         IF "$(VERBOSE)" .NES. "" THEN DEFINE VERBOSE "$(VERBOSE)"
         $(PERL) {- sourcefile("test", "run_tests.pl") -} $(TESTS)
-        DEASSIGN OPENSSL_MODULES
-        DEASSIGN OPENSSL_ENGINES
         DEASSIGN BLDTOP
         DEASSIGN SRCTOP
+        DEASSIGN FIPSKEY
         @ ! {- if ($disabled{tests}) { output_on(); } else { output_off(); } "" -}
         @ WRITE SYS$OUTPUT "Tests are not supported with your chosen Configure options"
         @ ! {- output_on() if !$disabled{tests}; "" -}
 
 list-tests :
         @ ! {- output_off() if $disabled{tests}; "" -}
-        @ DEFINE SRCTOP {- sourcedir() -}
+        @ DEFINE SRCTOP "$(SRCDIR)"
         @ $(PERL) {- sourcefile("test", "run_tests.pl") -} list
         @ DEASSIGN SRCTOP
         @ ! {- if ($disabled{tests}) { output_on(); } else { output_off(); } "" -}
@@ -522,15 +536,27 @@ descrip.mms : FORCE
 
 # Install helper targets #############################################
 
-install_sw : install_dev install_engines install_runtime -
-             install_startup install_ivp
+install_sw : install_dev install_engines install_modules -
+             install_runtime install_startup install_ivp
 
-uninstall_sw : uninstall_dev uninstall_engines uninstall_runtime -
-               uninstall_startup uninstall_ivp
+uninstall_sw : uninstall_dev uninstall_modules uninstall_engines -
+               uninstall_runtime uninstall_startup uninstall_ivp
 
 install_docs : install_html_docs
 
 uninstall_docs : uninstall_html_docs
+
+install_fips: install_sw
+	@ WRITE SYS$OUTPUT "*** Installing FIPS module configuration"
+	@ WRITE SYS$OUTPUT "fipsinstall $(DESTDIR)$(MODULESDIR)/$(FIPSMODULENAME).cnf"
+	openssl fipsinstall -
+		-module ossl_installroot:[MODULES{- $sover_dirname.$target{pointer_size} -}.'arch']$(FIPSMODULENAME) -
+		-out ossl_installroot:[MODULES{- $sover_dirname.$target{pointer_size} -}.'arch']$(FIPSMODULENAME).cnf -
+		-macopt "key:$(FIPSKEY)"
+
+uninstall_fips: uninstall_sw
+	@ WRITE SYS$OUTPUT "*** Uninstalling FIPS module configuration"
+	DELETE ossl_installroot:[MODULES{- $sover_dirname.$target{pointer_size} -}.'arch']$(FIPSMODULENAME).cnf;*
 
 install_ssldirs : check_INSTALLTOP
         - CREATE/DIR/PROT=(S:RWED,O:RWE,G:RE,W:RE) OSSL_DATAROOT:[000000]
@@ -567,12 +593,21 @@ install_dev : check_INSTALLTOP install_runtime_libs
 
 install_engines : check_INSTALLTOP install_runtime_libs build_modules
         @ {- output_off() unless scalar @install_engines; "" -} !
-        @ WRITE SYS$OUTPUT "*** Installing ENGINE modules"
+        @ WRITE SYS$OUTPUT "*** Installing engines"
         - CREATE/DIR ossl_installroot:[ENGINES{- $sover_dirname.$target{pointer_size} -}.'arch']
         {- join("\n        ",
                 map { "COPY/PROT=W:RE $_.EXE ossl_installroot:[ENGINES$sover_dirname$target{pointer_size}.'arch']" }
                 @install_engines) -}
         @ {- output_on() unless scalar @install_engines; "" -} !
+
+install_modules : check_INSTALLTOP install_runtime_libs build_modules
+        @ {- output_off() unless scalar @install_modules; "" -} !
+        @ WRITE SYS$OUTPUT "*** Installing modules"
+        - CREATE/DIR ossl_installroot:[MODULES{- $sover_dirname.$target{pointer_size} -}.'arch']
+        {- join("\n        ",
+                map { "COPY/PROT=W:RE $_.EXE ossl_installroot:[MODULES$sover_dirname$target{pointer_size}.'arch']" }
+                @install_modules) -}
+        @ {- output_on() unless scalar @install_modules; "" -} !
 
 install_runtime : install_programs
 
@@ -684,6 +719,14 @@ check_INSTALLTOP :
 
 # Helper targets #####################################################
 
+copy-utils : [.util]wrap.pl
+
+[.util]wrap.pl : configdata.pm
+	@ IF "$(SRCDIR)" .NES. "$(BLDDIR)" THEN -
+		CREATE/DIR/LOG [.util]
+	@ IF "$(SRCDIR)" .NES. "$(BLDDIR)" THEN -
+		COPY/LOG ossl_sourceroot:[util]wrap.pl [.util]
+
 # Developer targets ##################################################
 
 debug_logicals :
@@ -770,13 +813,10 @@ reconfigure reconf :
       if ($args{src} =~ /\.html$/) {
 	  my $title = basename($args{src}, ".html");
 	  my $pod = $args{generator}->[0];
+	  my $mkpod2html = sourcefile('util', 'mkpod2html.pl');
 	  return <<"EOF";
 $args{src}: $pod
-	pipe pod2html "--podroot=\$(SRCDIR)/doc" --htmldir=.. -
-		       --podpath=man1:man3:man5:man7 "--infile=$pod" -
-		      "--title=$title" -
-	| \$(PERL) -pe "s|href=""http://man\\.he\\.net/(man\d/[^""]+)(?:\\.html)?""|href=""../\$1.html|g;" -
-	> \$\@
+	\$(PERL) $mkpod2html -i $pod -o \$\@ -t "$title" -r "\$(SRCDIR)/doc"
 EOF
       } elsif (platform->isdef($args{src})) {
           my $target = platform->def($args{src});

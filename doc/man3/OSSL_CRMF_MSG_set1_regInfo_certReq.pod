@@ -17,11 +17,11 @@ OSSL_CRMF_MSG_set1_regInfo_certReq
 
 =head1 DESCRIPTION
 
-OSSL_CRMF_MSG_set1_regInfo_utf8Pairs() adds a copy of the given B<utf8pairs>
-value as utf8Pairs regInfo to the given B<msg>. See RFC 4211 section 7.1.
+OSSL_CRMF_MSG_set1_regInfo_utf8Pairs() adds a copy of the given I<utf8pairs>
+value as utf8Pairs regInfo to the given I<msg>. See RFC 4211 section 7.1.
 
-OSSL_CRMF_MSG_set1_regInfo_certReq() adds a copy of the given B<cr> value
-as certReq regInfo to the given B<msg>. See RFC 4211 section 7.2.
+OSSL_CRMF_MSG_set1_regInfo_certReq() adds a copy of the given I<cr> value
+as certReq regInfo to the given I<msg>. See RFC 4211 section 7.2.
 
 =head1 RETURN VALUES
 
@@ -30,7 +30,7 @@ All functions return 1 on success, 0 on error.
 =head1 NOTES
 
 Calling these functions multiple times adds multiple instances of the respective
-control to the regInfo structure of the given B<msg>. While RFC 4211 expects
+control to the regInfo structure of the given I<msg>. While RFC 4211 expects
 multiple utf8Pairs in one regInfo structure, it does not allow multiple certReq.
 
 =head1 SEE ALSO
@@ -43,7 +43,7 @@ The OpenSSL CRMF support was added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2007-2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2007-2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

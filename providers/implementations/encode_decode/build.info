@@ -1,0 +1,18 @@
+# We make separate GOAL variables for each algorithm, to make it easy to
+# switch each to the Legacy provider when needed.
+
+$ENCODER_GOAL=../../libimplementations.a
+$DECODER_GOAL=../../libimplementations.a
+$RSA_GOAL=../../libimplementations.a
+$FFC_GOAL=../../libimplementations.a
+$DH_GOAL=../../libimplementations.a
+$DSA_GOAL=../../libimplementations.a
+$ECX_GOAL=../../libimplementations.a
+$EC_GOAL=../../libimplementations.a
+
+SOURCE[$ENCODER_GOAL]=endecoder_common.c
+
+SOURCE[$DECODER_GOAL]=decode_der2key.c decode_pem2der.c decode_ms2key.c
+
+SOURCE[$ENCODER_GOAL]=encode_key2any.c encode_key2text.c encode_key2ms.c
+DEPEND[encode_key2any.o]=../../common/include/prov/der_rsa.h

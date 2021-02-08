@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -46,7 +46,7 @@ int EVP_PBE_scrypt(const char *pass, size_t passlen,
     OSSL_PARAM params[7], *z = params;
 
     if (r > UINT32_MAX || p > UINT32_MAX) {
-        EVPerr(EVP_F_EVP_PBE_SCRYPT, EVP_R_PARAMETER_TOO_LARGE);
+        ERR_raise(ERR_LIB_EVP, EVP_R_PARAMETER_TOO_LARGE);
         return 0;
     }
 
@@ -62,6 +62,7 @@ int EVP_PBE_scrypt(const char *pass, size_t passlen,
     if (maxmem == 0)
         maxmem = SCRYPT_MAX_MEM;
 
+    /* Use OSSL_LIB_CTX_set0_default() if you need a library context */
     kdf = EVP_KDF_fetch(NULL, OSSL_KDF_NAME_SCRYPT, NULL);
     kctx = EVP_KDF_CTX_new(kdf);
     EVP_KDF_free(kdf);

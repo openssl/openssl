@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -76,11 +76,6 @@ void add_all_tests(const char *test_case_name, int(*test_fn)(int idx),
     num_test_cases += num;
 }
 
-int subtest_level(void)
-{
-    return level;
-}
-
 static int gcd(int a, int b)
 {
     while (b != 0) {
@@ -96,8 +91,6 @@ static void set_seed(int s)
     seed = s;
     if (seed <= 0)
         seed = (int)time(NULL);
-    test_printf_stdout("%*s# RAND SEED %d\n", subtest_level(), "", seed);
-    test_flush_stdout();
     test_random_seed(seed);
 }
 
@@ -109,6 +102,7 @@ int setup_test_framework(int argc, char *argv[])
 
     if (TAP_levels != NULL)
         level = 4 * atoi(TAP_levels);
+    test_adjust_streams_tap_level(level);
     if (test_seed != NULL)
         set_seed(atoi(test_seed));
 
@@ -214,6 +208,7 @@ static int process_shared_options(void)
             if (!opt_int(opt_arg(), &value))
                 goto end;
             level = 4 * value;
+            test_adjust_streams_tap_level(level);
             break;
         case OPT_TEST_SEED:
             if (!opt_int(opt_arg(), &value))
@@ -260,14 +255,16 @@ PRINTF_FORMAT(2, 3) static void test_verdict(int verdict,
     test_flush_stdout();
     test_flush_stderr();
 
-    test_printf_stdout("%*s%s ", level, "", verdict != 0 ? "ok" : "not ok");
+    if (verdict == 0 && seed != 0)
+        test_printf_tapout("# OPENSSL_TEST_RAND_ORDER=%d\n", seed);
+    test_printf_tapout("%s ", verdict != 0 ? "ok" : "not ok");
     va_start(ap, description);
-    test_vprintf_stdout(description, ap);
+    test_vprintf_tapout(description, ap);
     va_end(ap);
     if (verdict == TEST_SKIP_CODE)
-        test_printf_stdout(" # skipped");
-    test_printf_stdout("\n");
-    test_flush_stdout();
+        test_printf_tapout(" # skipped");
+    test_printf_tapout("\n");
+    test_flush_tapout();
 }
 
 int run_tests(const char *test_prog_name)
@@ -284,15 +281,16 @@ int run_tests(const char *test_prog_name)
         return EXIT_FAILURE;
 
     if (num_tests < 1) {
-        test_printf_stdout("%*s1..0 # Skipped: %s\n", level, "",
-                           test_prog_name);
+        test_printf_tapout("1..0 # Skipped: %s\n", test_prog_name);
     } else if (show_list == 0 && single_test == -1) {
-        if (level > 0)
-            test_printf_stdout("%*s# Subtest: %s\n", level, "", test_prog_name);
-        test_printf_stdout("%*s1..%d\n", level, "", num_tests);
+        if (level > 0) {
+            test_printf_stdout("Subtest: %s\n", test_prog_name);
+            test_flush_stdout();
+        }
+        test_printf_tapout("1..%d\n", num_tests);
     }
 
-    test_flush_stdout();
+    test_flush_tapout();
 
     for (i = 0; i < num_tests; i++)
         permute[i] = i;
@@ -312,14 +310,14 @@ int run_tests(const char *test_prog_name)
         }
         else if (show_list) {
             if (all_tests[i].num != -1) {
-                test_printf_stdout("%d - %s (%d..%d)\n", ii + 1,
+                test_printf_tapout("%d - %s (%d..%d)\n", ii + 1,
                                    all_tests[i].test_case_name, 1,
                                    all_tests[i].num);
             } else {
-                test_printf_stdout("%d - %s\n", ii + 1,
+                test_printf_tapout("%d - %s\n", ii + 1,
                                    all_tests[i].test_case_name);
             }
-            test_flush_stdout();
+            test_flush_tapout();
         } else if (all_tests[i].num == -1) {
             set_test_title(all_tests[i].test_case_name);
             verdict = all_tests[i].test_fn();
@@ -332,12 +330,13 @@ int run_tests(const char *test_prog_name)
 
             verdict = TEST_SKIP_CODE;
             level += 4;
+            test_adjust_streams_tap_level(level);
             if (all_tests[i].subtest && single_iter == -1) {
-                test_printf_stdout("%*s# Subtest: %s\n", level, "",
+                test_printf_stdout("Subtest: %s\n",
                                    all_tests[i].test_case_name);
-                test_printf_stdout("%*s%d..%d\n", level, "", 1,
-                                   all_tests[i].num);
+                test_printf_tapout("%d..%d\n", 1, all_tests[i].num);
                 test_flush_stdout();
+                test_flush_tapout();
             }
 
             j = -1;
@@ -375,6 +374,7 @@ int run_tests(const char *test_prog_name)
             }
 
             level -= 4;
+            test_adjust_streams_tap_level(level);
             if (verdict == 0)
                 ++num_failed;
             test_verdict(verdict, "%d - %s", ii + 1,

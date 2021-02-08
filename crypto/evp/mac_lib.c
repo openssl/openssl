@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -26,7 +26,7 @@ EVP_MAC_CTX *EVP_MAC_CTX_new(EVP_MAC *mac)
     if (ctx == NULL
         || (ctx->data = mac->newctx(ossl_provider_ctx(mac->prov))) == NULL
         || !EVP_MAC_up_ref(mac)) {
-        EVPerr(EVP_F_EVP_MAC_CTX_NEW, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
         if (ctx != NULL)
             mac->freectx(ctx->data);
         OPENSSL_free(ctx);
@@ -57,13 +57,13 @@ EVP_MAC_CTX *EVP_MAC_CTX_dup(const EVP_MAC_CTX *src)
 
     dst = OPENSSL_malloc(sizeof(*dst));
     if (dst == NULL) {
-        EVPerr(EVP_F_EVP_MAC_CTX_DUP, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
     *dst = *src;
     if (!EVP_MAC_up_ref(dst->meth)) {
-        EVPerr(EVP_F_EVP_MAC_CTX_DUP, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
         OPENSSL_free(dst);
         return NULL;
     }
@@ -82,7 +82,7 @@ EVP_MAC *EVP_MAC_CTX_mac(EVP_MAC_CTX *ctx)
     return ctx->meth;
 }
 
-size_t EVP_MAC_size(EVP_MAC_CTX *ctx)
+size_t EVP_MAC_CTX_get_mac_size(EVP_MAC_CTX *ctx)
 {
     size_t sz = 0;
 
@@ -112,23 +112,22 @@ int EVP_MAC_init(EVP_MAC_CTX *ctx)
 
 int EVP_MAC_update(EVP_MAC_CTX *ctx, const unsigned char *data, size_t datalen)
 {
-    if (datalen == 0)
-        return 1;
     return ctx->meth->update(ctx->data, data, datalen);
 }
 
 int EVP_MAC_final(EVP_MAC_CTX *ctx,
                   unsigned char *out, size_t *outl, size_t outsize)
 {
-    int l = EVP_MAC_size(ctx);
+    size_t l;
+    int res = 1;
 
-    if (l < 0)
-        return 0;
+    if (out != NULL)
+        res = ctx->meth->final(ctx->data, out, &l, outsize);
+    else
+        l = EVP_MAC_CTX_get_mac_size(ctx);
     if (outl != NULL)
         *outl = l;
-    if (out == NULL)
-        return 1;
-    return ctx->meth->final(ctx->data, out, outl, outsize);
+    return res;
 }
 
 /*
@@ -161,6 +160,13 @@ int EVP_MAC_CTX_set_params(EVP_MAC_CTX *ctx, const OSSL_PARAM params[])
 int EVP_MAC_number(const EVP_MAC *mac)
 {
     return mac->name_id;
+}
+
+const char *EVP_MAC_name(const EVP_MAC *mac)
+{
+    if (mac->prov != NULL)
+        return evp_first_name(mac->prov, mac->name_id);
+    return NULL;
 }
 
 int EVP_MAC_is_a(const EVP_MAC *mac, const char *name)

@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -153,10 +153,15 @@ int X509V3_extensions_print(BIO *bp, const char *title,
     for (i = 0; i < sk_X509_EXTENSION_num(exts); i++) {
         ASN1_OBJECT *obj;
         X509_EXTENSION *ex;
+
         ex = sk_X509_EXTENSION_value(exts, i);
+        obj = X509_EXTENSION_get_object(ex);
+        if ((flag & X509_FLAG_EXTENSIONS_ONLY_KID) != 0
+                && OBJ_obj2nid(obj) != NID_subject_key_identifier
+                && OBJ_obj2nid(obj) != NID_authority_key_identifier)
+            continue;
         if (indent && BIO_printf(bp, "%*s", indent, "") <= 0)
             return 0;
-        obj = X509_EXTENSION_get_object(ex);
         i2a_ASN1_OBJECT(bp, obj);
         j = X509_EXTENSION_get_critical(ex);
         if (BIO_printf(bp, ": %s\n", j ? "critical" : "") <= 0)

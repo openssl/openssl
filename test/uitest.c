@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2002-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -78,7 +78,7 @@ static int test_new_ui(void)
     char pass[16];
     int ok = 0;
 
-    setup_ui_method();
+    (void)setup_ui_method();
     if (TEST_int_gt(password_callback(pass, sizeof(pass), 0, &cb_data), 0)
             && TEST_str_eq(pass, cb_data.password))
         ok = 1;

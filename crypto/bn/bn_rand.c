@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -25,7 +25,7 @@ static int bnrand(BNRAND_FLAG flag, BIGNUM *rnd, int bits, int top, int bottom,
 {
     unsigned char *buf = NULL;
     int b, ret = 0, bit, bytes, mask;
-    OPENSSL_CTX *libctx = bn_get_lib_ctx(ctx);
+    OSSL_LIB_CTX *libctx = bn_get_libctx(ctx);
 
     if (bits == 0) {
         if (top != BN_RAND_TOP_ANY || bottom != BN_RAND_BOTTOM_ANY)
@@ -42,7 +42,7 @@ static int bnrand(BNRAND_FLAG flag, BIGNUM *rnd, int bits, int top, int bottom,
 
     buf = OPENSSL_malloc(bytes);
     if (buf == NULL) {
-        BNerr(BN_F_BNRAND, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_BN, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
@@ -95,7 +95,7 @@ static int bnrand(BNRAND_FLAG flag, BIGNUM *rnd, int bits, int top, int bottom,
     return ret;
 
 toosmall:
-    BNerr(BN_F_BNRAND, BN_R_BITS_TOO_SMALL);
+    ERR_raise(ERR_LIB_BN, BN_R_BITS_TOO_SMALL);
     return 0;
 }
 
@@ -103,7 +103,7 @@ int BN_rand_ex(BIGNUM *rnd, int bits, int top, int bottom, BN_CTX *ctx)
 {
     return bnrand(NORMAL, rnd, bits, top, bottom, ctx);
 }
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
 int BN_rand(BIGNUM *rnd, int bits, int top, int bottom)
 {
     return bnrand(NORMAL, rnd, bits, top, bottom, NULL);
@@ -120,7 +120,7 @@ int BN_priv_rand_ex(BIGNUM *rnd, int bits, int top, int bottom, BN_CTX *ctx)
     return bnrand(PRIVATE, rnd, bits, top, bottom, ctx);
 }
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
 int BN_priv_rand(BIGNUM *rnd, int bits, int top, int bottom)
 {
     return bnrand(PRIVATE, rnd, bits, top, bottom, NULL);
@@ -135,7 +135,7 @@ static int bnrand_range(BNRAND_FLAG flag, BIGNUM *r, const BIGNUM *range,
     int count = 100;
 
     if (range->neg || BN_is_zero(range)) {
-        BNerr(BN_F_BNRAND_RANGE, BN_R_INVALID_RANGE);
+        ERR_raise(ERR_LIB_BN, BN_R_INVALID_RANGE);
         return 0;
     }
 
@@ -170,7 +170,7 @@ static int bnrand_range(BNRAND_FLAG flag, BIGNUM *r, const BIGNUM *range,
             }
 
             if (!--count) {
-                BNerr(BN_F_BNRAND_RANGE, BN_R_TOO_MANY_ITERATIONS);
+                ERR_raise(ERR_LIB_BN, BN_R_TOO_MANY_ITERATIONS);
                 return 0;
             }
 
@@ -183,7 +183,7 @@ static int bnrand_range(BNRAND_FLAG flag, BIGNUM *r, const BIGNUM *range,
                 return 0;
 
             if (!--count) {
-                BNerr(BN_F_BNRAND_RANGE, BN_R_TOO_MANY_ITERATIONS);
+                ERR_raise(ERR_LIB_BN, BN_R_TOO_MANY_ITERATIONS);
                 return 0;
             }
         }
@@ -199,7 +199,7 @@ int BN_rand_range_ex(BIGNUM *r, const BIGNUM *range, BN_CTX *ctx)
     return bnrand_range(NORMAL, r, range, ctx);
 }
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
 int BN_rand_range(BIGNUM *r, const BIGNUM *range)
 {
     return bnrand_range(NORMAL, r, range, NULL);
@@ -211,7 +211,7 @@ int BN_priv_rand_range_ex(BIGNUM *r, const BIGNUM *range, BN_CTX *ctx)
     return bnrand_range(PRIVATE, r, range, ctx);
 }
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
 int BN_priv_rand_range(BIGNUM *r, const BIGNUM *range)
 {
     return bnrand_range(PRIVATE, r, range, NULL);
@@ -254,7 +254,7 @@ int BN_generate_dsa_nonce(BIGNUM *out, const BIGNUM *range,
     unsigned char *k_bytes = NULL;
     int ret = 0;
     EVP_MD *md = NULL;
-    OPENSSL_CTX *libctx = bn_get_lib_ctx(ctx);
+    OSSL_LIB_CTX *libctx = bn_get_libctx(ctx);
 
     if (mdctx == NULL)
         goto err;
@@ -270,13 +270,13 @@ int BN_generate_dsa_nonce(BIGNUM *out, const BIGNUM *range,
          * large and we don't handle this case in order to avoid leaking the
          * length of the private key.
          */
-        BNerr(BN_F_BN_GENERATE_DSA_NONCE, BN_R_PRIVATE_KEY_TOO_LARGE);
+        ERR_raise(ERR_LIB_BN, BN_R_PRIVATE_KEY_TOO_LARGE);
         goto err;
     }
 
     md = EVP_MD_fetch(libctx, "SHA512", NULL);
     if (md == NULL) {
-        BNerr(BN_F_BN_GENERATE_DSA_NONCE, BN_R_NO_SUITABLE_DIGEST);
+        ERR_raise(ERR_LIB_BN, BN_R_NO_SUITABLE_DIGEST);
         goto err;
     }
     for (done = 0; done < num_k_bytes;) {

@@ -29,6 +29,7 @@ CERTIFICATEPOLICIES_free,
 CERTIFICATEPOLICIES_new,
 CMS_ContentInfo_free,
 CMS_ContentInfo_new,
+CMS_ContentInfo_new_ex,
 CMS_ContentInfo_print_ctx,
 CMS_ReceiptRequest_free,
 CMS_ReceiptRequest_new,
@@ -81,7 +82,11 @@ IPAddressOrRange_free,
 IPAddressOrRange_new,
 IPAddressRange_free,
 IPAddressRange_new,
+ISSUER_SIGN_TOOL_free,
+ISSUER_SIGN_TOOL_it,
+ISSUER_SIGN_TOOL_new,
 ISSUING_DIST_POINT_free,
+ISSUING_DIST_POINT_it,
 ISSUING_DIST_POINT_new,
 NAME_CONSTRAINTS_free,
 NAME_CONSTRAINTS_new,
@@ -122,15 +127,20 @@ OCSP_SIGNATURE_free,
 OCSP_SIGNATURE_new,
 OCSP_SINGLERESP_free,
 OCSP_SINGLERESP_new,
+OSSL_CMP_ITAV_dup,
 OSSL_CMP_ITAV_free,
+OSSL_CMP_MSG_dup,
 OSSL_CMP_MSG_it,
 OSSL_CMP_MSG_free,
 OSSL_CMP_PKIHEADER_free,
 OSSL_CMP_PKIHEADER_it,
 OSSL_CMP_PKIHEADER_new,
+OSSL_CMP_PKISI_dup,
 OSSL_CMP_PKISI_free,
+OSSL_CMP_PKISI_it,
 OSSL_CMP_PKISI_new,
 OSSL_CMP_PKISTATUS_it,
+OSSL_CRMF_CERTID_dup,
 OSSL_CRMF_CERTID_free,
 OSSL_CRMF_CERTID_it,
 OSSL_CRMF_CERTID_new,
@@ -143,6 +153,7 @@ OSSL_CRMF_ENCRYPTEDVALUE_new,
 OSSL_CRMF_MSGS_free,
 OSSL_CRMF_MSGS_it,
 OSSL_CRMF_MSGS_new,
+OSSL_CRMF_MSG_dup,
 OSSL_CRMF_MSG_free,
 OSSL_CRMF_MSG_it,
 OSSL_CRMF_MSG_new,
@@ -191,6 +202,7 @@ PKCS7_SIGN_ENVELOPE_free,
 PKCS7_SIGN_ENVELOPE_new,
 PKCS7_dup,
 PKCS7_free,
+PKCS7_new_ex,
 PKCS7_new,
 PKCS7_print_ctx,
 PKCS8_PRIV_KEY_INFO_free,
@@ -248,6 +260,7 @@ TS_TST_INFO_new,
 USERNOTICE_free,
 USERNOTICE_new,
 X509_ALGOR_free,
+X509_ALGOR_it,
 X509_ALGOR_new,
 X509_ATTRIBUTE_dup,
 X509_ATTRIBUTE_free,
@@ -324,6 +337,10 @@ to generate the function bodies.
 B<I<TYPE>_new>() allocates an empty object of the indicated type.
 The object returned must be released by calling B<I<TYPE>_free>().
 
+B<I<TYPE>_new_ex>() is similiar to B<I<TYPE>_new>() but also passes the
+library context I<libctx> and the property query I<propq> to use when retrieving
+algorithms from providers.
+
 B<I<TYPE>_dup>() copies an existing object, leaving it untouched.
 
 B<I<TYPE>_free>() releases the object and all pointers and sub-objects
@@ -337,14 +354,19 @@ user-defined, then pass in any I<pctx> down to any nested calls.
 
 =head1 RETURN VALUES
 
-B<I<TYPE>_new>() and B<I<TYPE>_dup>() return a pointer to the object or NULL on
-failure.
+B<I<TYPE>_new>(), B<I<TYPE>_new_ex>() and B<I<TYPE>_dup>() return a pointer to
+the object or NULL on failure.
 
 B<I<TYPE>_print_ctx>() returns 1 on success or zero on failure.
 
+=head1 HISTORY
+
+The functions PKCS7_new_ex() and CMS_ContentInfo_new_ex() were
+added in OpenSSL 3.0.
+
 =head1 COPYRIGHT
 
-Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

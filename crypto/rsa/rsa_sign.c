@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -93,7 +93,7 @@ static const unsigned char digestinfo_##name##_der[] = {                       \
       ASN1_OCTET_STRING, sz                                                    \
 };
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
 # ifndef OPENSSL_NO_MD2
 ENCODE_DIGESTINFO_MD(md2, 0x02, MD2_DIGEST_LENGTH)
 # endif
@@ -114,16 +114,16 @@ static const unsigned char digestinfo_mdc2_der[] = {
 };
 # endif
 # ifndef OPENSSL_NO_RMD160
-/* RIPEMD160 (1 3 36 3 3 1 2) */
+/* RIPEMD160 (1 3 36 3 2 1) */
 static const unsigned char digestinfo_ripemd160_der[] = {
-    ASN1_SEQUENCE, 0x0c + RIPEMD160_DIGEST_LENGTH,
-      ASN1_SEQUENCE, 0x08,
-        ASN1_OID, 0x04, 1 * 40 + 3, 36, 3, 3, 1, 2,
+    ASN1_SEQUENCE, 0x0d + RIPEMD160_DIGEST_LENGTH,
+      ASN1_SEQUENCE, 0x09,
+        ASN1_OID, 0x05, 1 * 40 + 3, 36, 3, 2, 1,
         ASN1_NULL, 0x00,
       ASN1_OCTET_STRING, RIPEMD160_DIGEST_LENGTH
 };
 # endif
-#endif /* FIPS_MODE */
+#endif /* FIPS_MODULE */
 
 /* SHA-1 (1 3 14 3 2 26) */
 static const unsigned char digestinfo_sha1_der[] = {
@@ -150,10 +150,10 @@ ENCODE_DIGESTINFO_SHA(sha3_512, 0x0a, SHA512_DIGEST_LENGTH)
         *len = sizeof(digestinfo_##name##_der);                                \
         return digestinfo_##name##_der;
 
-const unsigned char *rsa_digestinfo_encoding(int md_nid, size_t *len)
+const unsigned char *ossl_rsa_digestinfo_encoding(int md_nid, size_t *len)
 {
     switch (md_nid) {
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
 # ifndef OPENSSL_NO_MDC2
     MD_CASE(mdc2)
 # endif
@@ -169,7 +169,7 @@ const unsigned char *rsa_digestinfo_encoding(int md_nid, size_t *len)
 # ifndef OPENSSL_NO_RMD160
     MD_CASE(ripemd160)
 # endif
-#endif /* FIPS_MODE */
+#endif /* FIPS_MODULE */
     MD_CASE(sha1)
     MD_CASE(sha224)
     MD_CASE(sha256)
@@ -185,6 +185,47 @@ const unsigned char *rsa_digestinfo_encoding(int md_nid, size_t *len)
         return NULL;
     }
 }
+
+#define MD_NID_CASE(name, sz)                                                  \
+    case NID_##name:                                                           \
+        return sz;
+
+static int digest_sz_from_nid(int nid)
+{
+    switch (nid) {
+#ifndef FIPS_MODULE
+# ifndef OPENSSL_NO_MDC2
+    MD_NID_CASE(mdc2, MDC2_DIGEST_LENGTH)
+# endif
+# ifndef OPENSSL_NO_MD2
+    MD_NID_CASE(md2, MD2_DIGEST_LENGTH)
+# endif
+# ifndef OPENSSL_NO_MD4
+    MD_NID_CASE(md4, MD4_DIGEST_LENGTH)
+# endif
+# ifndef OPENSSL_NO_MD5
+    MD_NID_CASE(md5, MD5_DIGEST_LENGTH)
+# endif
+# ifndef OPENSSL_NO_RMD160
+    MD_NID_CASE(ripemd160, RIPEMD160_DIGEST_LENGTH)
+# endif
+#endif /* FIPS_MODULE */
+    MD_NID_CASE(sha1, SHA_DIGEST_LENGTH)
+    MD_NID_CASE(sha224, SHA224_DIGEST_LENGTH)
+    MD_NID_CASE(sha256, SHA256_DIGEST_LENGTH)
+    MD_NID_CASE(sha384, SHA384_DIGEST_LENGTH)
+    MD_NID_CASE(sha512, SHA512_DIGEST_LENGTH)
+    MD_NID_CASE(sha512_224, SHA224_DIGEST_LENGTH)
+    MD_NID_CASE(sha512_256, SHA256_DIGEST_LENGTH)
+    MD_NID_CASE(sha3_224, SHA224_DIGEST_LENGTH)
+    MD_NID_CASE(sha3_256, SHA256_DIGEST_LENGTH)
+    MD_NID_CASE(sha3_384, SHA384_DIGEST_LENGTH)
+    MD_NID_CASE(sha3_512, SHA512_DIGEST_LENGTH)
+    default:
+        return 0;
+    }
+}
+
 
 /* Size of an SSL signature: MD5+SHA1 */
 #define SSL_SIG_LENGTH  36
@@ -206,19 +247,19 @@ static int encode_pkcs1(unsigned char **out, size_t *out_len, int type,
     unsigned char *dig_info;
 
     if (type == NID_undef) {
-        RSAerr(RSA_F_ENCODE_PKCS1, RSA_R_UNKNOWN_ALGORITHM_TYPE);
+        ERR_raise(ERR_LIB_RSA, RSA_R_UNKNOWN_ALGORITHM_TYPE);
         return 0;
     }
-    di_prefix = rsa_digestinfo_encoding(type, &di_prefix_len);
+    di_prefix = ossl_rsa_digestinfo_encoding(type, &di_prefix_len);
     if (di_prefix == NULL) {
-        RSAerr(RSA_F_ENCODE_PKCS1,
-               RSA_R_THE_ASN1_OBJECT_IDENTIFIER_IS_NOT_KNOWN_FOR_THIS_MD);
+        ERR_raise(ERR_LIB_RSA,
+                  RSA_R_THE_ASN1_OBJECT_IDENTIFIER_IS_NOT_KNOWN_FOR_THIS_MD);
         return 0;
     }
     dig_info_len = di_prefix_len + m_len;
     dig_info = OPENSSL_malloc(dig_info_len);
     if (dig_info == NULL) {
-        RSAerr(RSA_F_ENCODE_PKCS1, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_RSA, ERR_R_MALLOC_FAILURE);
         return 0;
     }
     memcpy(dig_info, di_prefix, di_prefix_len);
@@ -237,8 +278,10 @@ int RSA_sign(int type, const unsigned char *m, unsigned int m_len,
     unsigned char *tmps = NULL;
     const unsigned char *encoded = NULL;
 
+#ifndef FIPS_MODULE
     if (rsa->meth->rsa_sign != NULL)
         return rsa->meth->rsa_sign(type, m, m_len, sigret, siglen, rsa);
+#endif /* FIPS_MODULE */
 
     /* Compute the encoded digest. */
     if (type == NID_md5_sha1) {
@@ -248,7 +291,7 @@ int RSA_sign(int type, const unsigned char *m, unsigned int m_len,
          * RSASSA-PKCS1-v1_5.
          */
         if (m_len != SSL_SIG_LENGTH) {
-            RSAerr(RSA_F_RSA_SIGN, RSA_R_INVALID_MESSAGE_LENGTH);
+            ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_MESSAGE_LENGTH);
             return 0;
         }
         encoded_len = SSL_SIG_LENGTH;
@@ -260,7 +303,7 @@ int RSA_sign(int type, const unsigned char *m, unsigned int m_len,
     }
 
     if (encoded_len + RSA_PKCS1_PADDING_SIZE > (size_t)RSA_size(rsa)) {
-        RSAerr(RSA_F_RSA_SIGN, RSA_R_DIGEST_TOO_BIG_FOR_RSA_KEY);
+        ERR_raise(ERR_LIB_RSA, RSA_R_DIGEST_TOO_BIG_FOR_RSA_KEY);
         goto err;
     }
     encrypt_len = RSA_private_encrypt((int)encoded_len, encoded, sigret, rsa,
@@ -294,14 +337,14 @@ int int_rsa_verify(int type, const unsigned char *m, unsigned int m_len,
     unsigned char *decrypt_buf = NULL, *encoded = NULL;
 
     if (siglen != (size_t)RSA_size(rsa)) {
-        RSAerr(RSA_F_INT_RSA_VERIFY, RSA_R_WRONG_SIGNATURE_LENGTH);
+        ERR_raise(ERR_LIB_RSA, RSA_R_WRONG_SIGNATURE_LENGTH);
         return 0;
     }
 
     /* Recover the encoded digest. */
     decrypt_buf = OPENSSL_malloc(siglen);
     if (decrypt_buf == NULL) {
-        RSAerr(RSA_F_INT_RSA_VERIFY, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_RSA, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
@@ -311,6 +354,7 @@ int int_rsa_verify(int type, const unsigned char *m, unsigned int m_len,
         goto err;
     decrypt_len = len;
 
+#ifndef FIPS_MODULE
     if (type == NID_md5_sha1) {
         /*
          * NID_md5_sha1 corresponds to the MD5/SHA1 combination in TLS 1.1 and
@@ -318,7 +362,7 @@ int int_rsa_verify(int type, const unsigned char *m, unsigned int m_len,
          * RSASSA-PKCS1-v1_5.
          */
         if (decrypt_len != SSL_SIG_LENGTH) {
-            RSAerr(RSA_F_INT_RSA_VERIFY, RSA_R_BAD_SIGNATURE);
+            ERR_raise(ERR_LIB_RSA, RSA_R_BAD_SIGNATURE);
             goto err;
         }
 
@@ -327,12 +371,12 @@ int int_rsa_verify(int type, const unsigned char *m, unsigned int m_len,
             *prm_len = SSL_SIG_LENGTH;
         } else {
             if (m_len != SSL_SIG_LENGTH) {
-                RSAerr(RSA_F_INT_RSA_VERIFY, RSA_R_INVALID_MESSAGE_LENGTH);
+                ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_MESSAGE_LENGTH);
                 goto err;
             }
 
             if (memcmp(decrypt_buf, m, SSL_SIG_LENGTH) != 0) {
-                RSAerr(RSA_F_INT_RSA_VERIFY, RSA_R_BAD_SIGNATURE);
+                ERR_raise(ERR_LIB_RSA, RSA_R_BAD_SIGNATURE);
                 goto err;
             }
         }
@@ -347,34 +391,31 @@ int int_rsa_verify(int type, const unsigned char *m, unsigned int m_len,
             *prm_len = 16;
         } else {
             if (m_len != 16) {
-                RSAerr(RSA_F_INT_RSA_VERIFY, RSA_R_INVALID_MESSAGE_LENGTH);
+                ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_MESSAGE_LENGTH);
                 goto err;
             }
 
             if (memcmp(m, decrypt_buf + 2, 16) != 0) {
-                RSAerr(RSA_F_INT_RSA_VERIFY, RSA_R_BAD_SIGNATURE);
+                ERR_raise(ERR_LIB_RSA, RSA_R_BAD_SIGNATURE);
                 goto err;
             }
         }
-    } else {
+    } else
+#endif /* FIPS_MODULE */
+    {
         /*
          * If recovering the digest, extract a digest-sized output from the end
          * of |decrypt_buf| for |encode_pkcs1|, then compare the decryption
          * output as in a standard verification.
          */
         if (rm != NULL) {
-            const EVP_MD *md = EVP_get_digestbynid(type);
-            if (md == NULL) {
-                RSAerr(RSA_F_INT_RSA_VERIFY, RSA_R_UNKNOWN_ALGORITHM_TYPE);
-                goto err;
-            }
+            len = digest_sz_from_nid(type);
 
-            len = EVP_MD_size(md);
             if (len <= 0)
                 goto err;
             m_len = (unsigned int)len;
             if (m_len > decrypt_len) {
-                RSAerr(RSA_F_INT_RSA_VERIFY, RSA_R_INVALID_DIGEST_LENGTH);
+                ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_DIGEST_LENGTH);
                 goto err;
             }
             m = decrypt_buf + decrypt_len - m_len;
@@ -386,7 +427,7 @@ int int_rsa_verify(int type, const unsigned char *m, unsigned int m_len,
 
         if (encoded_len != decrypt_len
                 || memcmp(encoded, decrypt_buf, encoded_len) != 0) {
-            RSAerr(RSA_F_INT_RSA_VERIFY, RSA_R_BAD_SIGNATURE);
+            ERR_raise(ERR_LIB_RSA, RSA_R_BAD_SIGNATURE);
             goto err;
         }
 

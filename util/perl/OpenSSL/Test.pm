@@ -1,4 +1,4 @@
-# Copyright 2016-2019 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -21,6 +21,7 @@ $VERSION = "1.0";
 @EXPORT_OK = (@Test::More::EXPORT_OK, qw(bldtop_dir bldtop_file
                                          srctop_dir srctop_file
                                          data_file data_dir
+                                         result_file result_dir
                                          pipe with cmdstr quotify
                                          openssl_versions
                                          ok_nofips is_nofips isnt_nofips));
@@ -34,6 +35,8 @@ OpenSSL::Test - a private extension of Test::More
   use OpenSSL::Test;
 
   setup("my_test_name");
+
+  plan tests => 2;
 
   ok(run(app(["openssl", "version"])), "check for openssl presence");
 
@@ -122,8 +125,8 @@ most likely refuse to run.
 C<setup> checks for environment variables (see L</ENVIRONMENT> below),
 checks that C<$TOP/Configure> or C<$SRCTOP/Configure> exists, C<chdir>
 into the results directory (defined by the C<$RESULT_D> environment
-variable if defined, otherwise C<$BLDTOP/test> or C<$TOP/test>, whichever
-is defined).
+variable if defined, otherwise C<$BLDTOP/test-runs> or C<$TOP/test-runs>,
+whichever is defined).
 
 =back
 
@@ -219,7 +222,8 @@ used (currently only on Unix).
 
 It returns a CODEREF to be used by C<run>, C<pipe> or C<cmdstr>.
 
-The options that C<cmd> can take are in the form of hash values:
+The options that C<cmd> (as well as its derivatives described below) can take
+are in the form of hash values:
 
 =over 4
 
@@ -387,7 +391,7 @@ derivatives, anything else will most likely cause an error unless you
 know what you're doing.
 
 C<run> executes the command returned by CODEREF and return either the
-resulting output (if the option C<capture> is set true) or a boolean
+resulting standard output (if the option C<capture> is set true) or a boolean
 indicating if the command succeeded or not.
 
 The options that C<run> can take are in the form of hash values:
@@ -396,10 +400,10 @@ The options that C<run> can take are in the form of hash values:
 
 =item B<capture =E<gt> 0|1>
 
-If true, the command will be executed with a perl backtick, and C<run> will
-return the resulting output as an array of lines.  If false or not given,
-the command will be executed with C<system()>, and C<run> will return 1 if
-the command was successful or 0 if it wasn't.
+If true, the command will be executed with a perl backtick,
+and C<run> will return the resulting standard output as an array of lines.
+If false or not given, the command will be executed with C<system()>,
+and C<run> will return 1 if the command was successful or 0 if it wasn't.
 
 =item B<prefix =E<gt> EXPR>
 
@@ -415,6 +419,7 @@ particularly useful together with B<capture>.
 
 =back
 
+Usually 1 indicates that the command was successful and 0 indicates failure.
 For further discussion on what is considered a successful command or not, see
 the function C<with> further down.
 
@@ -643,6 +648,43 @@ file path as a string, adapted to the local operating system.
 
 sub data_file {
     return __data_file(@_);
+}
+
+=over 4
+
+=item B<result_dir>
+
+C<result_dir> returns the directory where test output files should be placed
+as a string, adapted to the local operating system.
+
+=back
+
+=cut
+
+sub result_dir {
+    BAIL_OUT("Must run setup() first") if (! $test_name);
+
+    return catfile($directories{RESULTS});
+}
+
+=over 4
+
+=item B<result_file FILENAME>
+
+FILENAME is the name of a test output file.
+C<result_file> returns the path of the given file as a string,
+prepending to the file name the path to the directory where test output files
+should be placed, adapted to the local operating system.
+
+=back
+
+=cut
+
+sub result_file {
+    BAIL_OUT("Must run setup() first") if (! $test_name);
+
+    my $f = pop;
+    return catfile(result_dir(),@_,$f);
 }
 
 =over 4
@@ -1063,13 +1105,6 @@ sub __data_dir {
     return catdir($directories{SRCDATA},@_);
 }
 
-sub __results_file {
-    BAIL_OUT("Must run setup() first") if (! $test_name);
-
-    my $f = pop;
-    return catfile($directories{RESULTS},@_,$f);
-}
-
 # __cwd DIR
 # __cwd DIR, OPTS
 #
@@ -1178,13 +1213,31 @@ sub __wrap_cmd {
     my $cmd = shift;
     my $exe_shell = shift;
 
-    my @prefix = ( __bldtop_file("util", "shlib_wrap.sh") );
+    my @prefix = ();
 
-    if(defined($exe_shell)) {
-	@prefix = ( $exe_shell );
-    } elsif ($^O eq "VMS" || $^O eq "MSWin32") {
-	# VMS and Windows don't use any wrapper script for the moment
-	@prefix = ();
+    if (defined($exe_shell)) {
+        # If $exe_shell is defined, trust it
+        @prefix = ( $exe_shell );
+    } else {
+        # Otherwise, use the standard wrapper
+        my $std_wrapper = __bldtop_file("util", "wrap.pl");
+
+        if ($^O eq "VMS") {
+            # On VMS, running random executables without having a command
+            # symbol means running them with the MCR command.  This is an
+            # old PDP-11 command that stuck around.  So we get a command
+            # running perl running the script.
+            @prefix = ( "MCR", $^X, $std_wrapper );
+        } elsif ($^O eq "MSWin32") {
+            # In the Windows case, we run perl explicitly.  We might not
+            # need it, but that depends on if the user has associated the
+            # '.pl' extension with a perl interpreter, so better be safe.
+            @prefix = ( $^X, $std_wrapper );
+        } else {
+            # Otherwise, we assume Unix semantics, and trust that the #!
+            # line activates perl for us.
+            @prefix = ( $std_wrapper );
+        }
     }
 
     return (@prefix, $cmd);

@@ -38,11 +38,6 @@ It is not necessary to call these functions after locally calling an approved ke
 generation method, but may be required for assurance purposes when receiving
 keys from a third party.
 
-In OpenSSL an EVP_PKEY structure containing a private key also contains the
-public key components and parameters (if any). An OpenSSL private key is
-equivalent to what some libraries call a "key pair". A private key can be used
-in functions which require the use of a public key or parameters.
-
 =head1 RETURN VALUES
 
 All functions return 1 for success or others for failure.

@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -80,6 +80,13 @@ _armv8_sha512_probe:
 	.long	0xcec08000	// sha512su0	v0.2d,v0.2d
 	ret
 .size	_armv8_sha512_probe,.-_armv8_sha512_probe
+
+.globl	_armv8_cpuid_probe
+.type	_armv8_cpuid_probe,%function
+_armv8_cpuid_probe:
+	mrs	x0, midr_el1
+	ret
+.size	_armv8_cpuid_probe,.-_armv8_cpuid_probe
 
 .globl	OPENSSL_cleanse
 .type	OPENSSL_cleanse,%function

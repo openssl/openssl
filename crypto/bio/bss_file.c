@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -74,9 +74,9 @@ BIO *BIO_new_file(const char *filename, const char *mode)
             || errno == ENXIO
 #endif
             )
-            BIOerr(BIO_F_BIO_NEW_FILE, BIO_R_NO_SUCH_FILE);
+            ERR_raise(ERR_LIB_BIO, BIO_R_NO_SUCH_FILE);
         else
-            BIOerr(BIO_F_BIO_NEW_FILE, ERR_R_SYS_LIB);
+            ERR_raise(ERR_LIB_BIO, ERR_R_SYS_LIB);
         return NULL;
     }
     if ((ret = BIO_new(BIO_s_file())) == NULL) {
@@ -149,7 +149,7 @@ static int file_read(BIO *b, char *out, int outl)
                 ? UP_ferror((FILE *)b->ptr) : ferror((FILE *)b->ptr))) {
             ERR_raise_data(ERR_LIB_SYS, get_last_sys_error(),
                            "calling fread()");
-            BIOerr(BIO_F_FILE_READ, ERR_R_SYS_LIB);
+            ERR_raise(ERR_LIB_BIO, ERR_R_SYS_LIB);
             ret = -1;
         }
     }
@@ -237,6 +237,15 @@ static long file_ctrl(BIO *b, int cmd, long num, void *ptr)
                 _setmode(fd, _O_TEXT);
             else
                 _setmode(fd, _O_BINARY);
+            /*
+             * Reports show that ftell() isn't trustable in text mode.
+             * This has been confirmed as a bug in the Universal C RTL, see
+             * https://developercommunity.visualstudio.com/content/problem/425878/fseek-ftell-fail-in-text-mode-for-unix-style-text.html
+             * The suggested work-around from Microsoft engineering is to
+             * turn off buffering until the bug is resolved.
+             */
+            if ((num & BIO_FP_TEXT) != 0)
+                setvbuf((FILE *)ptr, NULL, _IONBF, 0);
 # elif defined(OPENSSL_SYS_MSDOS)
             int fd = fileno((FILE *)ptr);
             /* Set correct text/binary mode */
@@ -272,7 +281,7 @@ static long file_ctrl(BIO *b, int cmd, long num, void *ptr)
         else if (num & BIO_FP_READ)
             OPENSSL_strlcpy(p, "r", sizeof(p));
         else {
-            BIOerr(BIO_F_FILE_CTRL, BIO_R_BAD_FOPEN_MODE);
+            ERR_raise(ERR_LIB_BIO, BIO_R_BAD_FOPEN_MODE);
             ret = 0;
             break;
         }
@@ -290,7 +299,7 @@ static long file_ctrl(BIO *b, int cmd, long num, void *ptr)
             ERR_raise_data(ERR_LIB_SYS, get_last_sys_error(),
                            "calling fopen(%s, %s)",
                            ptr, p);
-            BIOerr(BIO_F_FILE_CTRL, ERR_R_SYS_LIB);
+            ERR_raise(ERR_LIB_BIO, ERR_R_SYS_LIB);
             ret = 0;
             break;
         }
@@ -318,7 +327,7 @@ static long file_ctrl(BIO *b, int cmd, long num, void *ptr)
         if (st == EOF) {
             ERR_raise_data(ERR_LIB_SYS, get_last_sys_error(),
                            "calling fflush()");
-            BIOerr(BIO_F_FILE_CTRL, ERR_R_SYS_LIB);
+            ERR_raise(ERR_LIB_BIO, ERR_R_SYS_LIB);
             ret = 0;
         }
         break;

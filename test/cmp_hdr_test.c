@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2007-2020 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright Nokia 2007-2019
  * Copyright Siemens AG 2015-2019
  *
@@ -9,7 +9,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "cmp_testlib.h"
+#include "helpers/cmp_testlib.h"
 
 static unsigned char rand_data[OSSL_CMP_TRANSACTIONID_LENGTH];
 
@@ -35,7 +35,7 @@ static CMP_HDR_TEST_FIXTURE *set_up(const char *const test_case_name)
     if (!TEST_ptr(fixture = OPENSSL_zalloc(sizeof(*fixture))))
         return NULL;
     fixture->test_case_name = test_case_name;
-    if (!TEST_ptr(fixture->cmp_ctx = OSSL_CMP_CTX_new()))
+    if (!TEST_ptr(fixture->cmp_ctx = OSSL_CMP_CTX_new(NULL, NULL)))
         goto err;
     if (!TEST_ptr(fixture->hdr = OSSL_CMP_PKIHEADER_new()))
         goto err;
@@ -350,9 +350,9 @@ static int
 execute_HDR_set_and_check_implicitConfirm_test(CMP_HDR_TEST_FIXTURE
                                                * fixture)
 {
-    return TEST_false(ossl_cmp_hdr_check_implicitConfirm(fixture->hdr))
+    return TEST_false(ossl_cmp_hdr_has_implicitConfirm(fixture->hdr))
         && TEST_true(ossl_cmp_hdr_set_implicitConfirm(fixture->hdr))
-        && TEST_true(ossl_cmp_hdr_check_implicitConfirm(fixture->hdr));
+        && TEST_true(ossl_cmp_hdr_has_implicitConfirm(fixture->hdr));
 }
 
 static int test_HDR_set_and_check_implicit_confirm(void)
@@ -397,10 +397,11 @@ static int execute_HDR_init_test(CMP_HDR_TEST_FIXTURE *fixture)
     return 1;
 }
 
-static int test_HDR_init(void)
+static int test_HDR_init_with_ref(void)
 {
-    SETUP_TEST_FIXTURE(CMP_HDR_TEST_FIXTURE, set_up);
     unsigned char ref[CMP_TEST_REFVALUE_LENGTH];
+
+    SETUP_TEST_FIXTURE(CMP_HDR_TEST_FIXTURE, set_up);
 
     fixture->expected = 1;
     if (!TEST_int_eq(1, RAND_bytes(ref, sizeof(ref)))
@@ -415,9 +416,9 @@ static int test_HDR_init(void)
 
 static int test_HDR_init_with_subject(void)
 {
-    SETUP_TEST_FIXTURE(CMP_HDR_TEST_FIXTURE, set_up);
     X509_NAME *subject = NULL;
 
+    SETUP_TEST_FIXTURE(CMP_HDR_TEST_FIXTURE, set_up);
     fixture->expected = 1;
     if (!TEST_ptr(subject = X509_NAME_new())
             || !TEST_true(X509_NAME_ADD(subject, "CN", "Common Name"))
@@ -427,14 +428,6 @@ static int test_HDR_init_with_subject(void)
         fixture = NULL;
     }
     X509_NAME_free(subject);
-    EXECUTE_TEST(execute_HDR_init_test, tear_down);
-    return result;
-}
-
-static int test_HDR_init_no_ref_no_subject(void)
-{
-    SETUP_TEST_FIXTURE(CMP_HDR_TEST_FIXTURE, set_up);
-    fixture->expected = 0;
     EXECUTE_TEST(execute_HDR_init_test, tear_down);
     return result;
 }
@@ -464,9 +457,8 @@ int setup_tests(void)
     /* also tests public function OSSL_CMP_HDR_get0_transactionID(): */
     /* also tests public function OSSL_CMP_HDR_get0_recipNonce(): */
     /* also tests internal function ossl_cmp_hdr_get_pvno(): */
-    ADD_TEST(test_HDR_init);
+    ADD_TEST(test_HDR_init_with_ref);
     ADD_TEST(test_HDR_init_with_subject);
-    ADD_TEST(test_HDR_init_no_ref_no_subject);
     /*
      *  TODO make sure that total number of tests (here currently 24) is shown,
      *  also for other cmp_*text.c. Currently the test drivers always show 1.

@@ -7,7 +7,7 @@
 
 =head1 NAME
 
-openssl-storeutl - STORE utility
+openssl-storeutl - STORE command
 
 =head1 SYNOPSIS
 
@@ -27,7 +27,7 @@ B<openssl> B<storeutl>
 [B<-alias> I<arg>]
 [B<-fingerprint> I<arg>]
 [B<-I<digest>>]
-{- $OpenSSL::safe::opt_engine_synopsis -}
+{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
 I<uri> ...
 
 =head1 DESCRIPTION
@@ -55,7 +55,7 @@ this option prevents output of the PEM data.
 =item B<-passin> I<arg>
 
 the key password source. For more information about the format of I<arg>
-see L<openssl(1)/Pass Phrase Options>.
+see L<openssl-passphrase-options(1)>.
 
 =item B<-text>
 
@@ -79,11 +79,19 @@ returned.
 =item B<-subject> I<arg>
 
 Search for an object having the subject name I<arg>.
+
 The arg must be formatted as C</type0=value0/type1=value1/type2=...>.
-Keyword characters may be escaped by \ (backslash), and whitespace is retained.
+Special characters may be escaped by C<\> (backslash), whitespace is retained.
 Empty values are permitted but are ignored for the search.  That is,
 a search with an empty value will have the same effect as not specifying
 the type at all.
+Giving a single C</> will lead to an empty sequence of RDNs (a NULL-DN).
+Multi-valued RDNs can be formed by placing a C<+> character instead of a C</>
+between the AttributeValueAssertions (AVAs) that specify the members of the set.
+
+Example:
+
+C</DC=org/DC=OpenSSL/DC=users/UID=123456+CN=John Doe>
 
 =item B<-issuer> I<arg>
 
@@ -110,6 +118,8 @@ The digest that was used to compute the fingerprint given with B<-fingerprint>.
 
 {- $OpenSSL::safe::opt_engine_item -}
 
+{- $OpenSSL::safe::opt_provider_item -}
+
 =back
 
 =head1 SEE ALSO
@@ -120,9 +130,11 @@ L<openssl(1)>
 
 This command was added in OpenSSL 1.1.1.
 
+The B<-engine> option was deprecated in OpenSSL 3.0.
+
 =head1 COPYRIGHT
 
-Copyright 2016-2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

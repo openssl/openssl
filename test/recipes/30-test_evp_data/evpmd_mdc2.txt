@@ -6,22 +6,21 @@
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
 
-
 Title = MDC2 test vectors
 
+Availablein = legacy
 Digest = MDC2
-Availablein = default
 Input = "Now is the time for all "
 Output = 42e50cd224baceba760bdd2bd409281a
 
+Availablein = legacy
 Digest = MDC2
-Availablein = default
 Padding = 1
 Input = "Now is the time for all "
 Output = 42e50cd224baceba760bdd2bd409281a
 
+Availablein = legacy
 Digest = MDC2
-Availablein = default
 Padding = 2
 Input = "Now is the time for all "
 Output = 2e4679b5add9ca7535d87afeab33bee2

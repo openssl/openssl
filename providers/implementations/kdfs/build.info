@@ -6,6 +6,7 @@ $HKDF_GOAL=../../libimplementations.a
 $KBKDF_GOAL=../../libimplementations.a
 $KRB5KDF_GOAL=../../libimplementations.a
 $PBKDF2_GOAL=../../libimplementations.a
+$PKCS12KDF_GOAL=../../libimplementations.a
 $SSKDF_GOAL=../../libimplementations.a
 $SCRYPT_GOAL=../../libimplementations.a
 $SSHKDF_GOAL=../../libimplementations.a
@@ -25,8 +26,11 @@ SOURCE[$PBKDF2_GOAL]=pbkdf2.c
 SOURCE[../../libfips.a]=pbkdf2_fips.c
 SOURCE[../../libnonfips.a]=pbkdf2_fips.c
 
+SOURCE[$PKCS12KDF_GOAL]=pkcs12kdf.c
+
 SOURCE[$SSKDF_GOAL]=sskdf.c
 
 SOURCE[$SCRYPT_GOAL]=scrypt.c
 SOURCE[$SSHKDF_GOAL]=sshkdf.c
 SOURCE[$X942KDF_GOAL]=x942kdf.c
+DEPEND[x942kdf.o]=../../common/include/prov/der_wrap.h

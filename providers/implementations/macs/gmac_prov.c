@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -8,7 +8,7 @@
  */
 
 #include <stdlib.h>
-#include <openssl/core_numbers.h>
+#include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
 #include <openssl/params.h>
 #include <openssl/engine.h>
@@ -19,22 +19,23 @@
 #include "prov/implementations.h"
 #include "prov/provider_ctx.h"
 #include "prov/provider_util.h"
+#include "prov/providercommon.h"
 
 /*
  * Forward declaration of everything implemented here.  This is not strictly
  * necessary for the compiler, but provides an assurance that the signatures
  * of the functions in the dispatch table are correct.
  */
-static OSSL_OP_mac_newctx_fn gmac_new;
-static OSSL_OP_mac_dupctx_fn gmac_dup;
-static OSSL_OP_mac_freectx_fn gmac_free;
-static OSSL_OP_mac_gettable_params_fn gmac_gettable_params;
-static OSSL_OP_mac_get_params_fn gmac_get_params;
-static OSSL_OP_mac_settable_ctx_params_fn gmac_settable_ctx_params;
-static OSSL_OP_mac_set_ctx_params_fn gmac_set_ctx_params;
-static OSSL_OP_mac_init_fn gmac_init;
-static OSSL_OP_mac_update_fn gmac_update;
-static OSSL_OP_mac_final_fn gmac_final;
+static OSSL_FUNC_mac_newctx_fn gmac_new;
+static OSSL_FUNC_mac_dupctx_fn gmac_dup;
+static OSSL_FUNC_mac_freectx_fn gmac_free;
+static OSSL_FUNC_mac_gettable_params_fn gmac_gettable_params;
+static OSSL_FUNC_mac_get_params_fn gmac_get_params;
+static OSSL_FUNC_mac_settable_ctx_params_fn gmac_settable_ctx_params;
+static OSSL_FUNC_mac_set_ctx_params_fn gmac_set_ctx_params;
+static OSSL_FUNC_mac_init_fn gmac_init;
+static OSSL_FUNC_mac_update_fn gmac_update;
+static OSSL_FUNC_mac_final_fn gmac_final;
 
 /* local GMAC pkey structure */
 
@@ -43,8 +44,6 @@ struct gmac_data_st {
     EVP_CIPHER_CTX *ctx;         /* Cipher context */
     PROV_CIPHER cipher;
 };
-
-static size_t gmac_size(void);
 
 static void gmac_free(void *vmacctx)
 {
@@ -61,6 +60,9 @@ static void *gmac_new(void *provctx)
 {
     struct gmac_data_st *macctx;
 
+    if (!ossl_prov_is_running())
+        return NULL;
+
     if ((macctx = OPENSSL_zalloc(sizeof(*macctx))) == NULL
         || (macctx->ctx = EVP_CIPHER_CTX_new()) == NULL) {
         gmac_free(macctx);
@@ -74,8 +76,12 @@ static void *gmac_new(void *provctx)
 static void *gmac_dup(void *vsrc)
 {
     struct gmac_data_st *src = vsrc;
-    struct gmac_data_st *dst = gmac_new(src->provctx);
+    struct gmac_data_st *dst;
 
+    if (!ossl_prov_is_running())
+        return NULL;
+
+    dst = gmac_new(src->provctx);
     if (dst == NULL)
         return NULL;
 
@@ -87,9 +93,14 @@ static void *gmac_dup(void *vsrc)
     return dst;
 }
 
+static size_t gmac_size(void)
+{
+    return EVP_GCM_TLS_TAG_LEN;
+}
+
 static int gmac_init(void *vmacctx)
 {
-    return 1;
+    return ossl_prov_is_running();
 }
 
 static int gmac_update(void *vmacctx, const unsigned char *data,
@@ -98,6 +109,9 @@ static int gmac_update(void *vmacctx, const unsigned char *data,
     struct gmac_data_st *macctx = vmacctx;
     EVP_CIPHER_CTX *ctx = macctx->ctx;
     int outlen;
+
+    if (datalen == 0)
+        return 1;
 
     while (datalen > INT_MAX) {
         if (!EVP_EncryptUpdate(ctx, NULL, &outlen, data, INT_MAX))
@@ -114,6 +128,9 @@ static int gmac_final(void *vmacctx, unsigned char *out, size_t *outl,
     struct gmac_data_st *macctx = vmacctx;
     int hlen = 0;
 
+    if (!ossl_prov_is_running())
+        return 0;
+
     if (!EVP_EncryptFinal_ex(macctx->ctx, out, &hlen))
         return 0;
 
@@ -127,16 +144,11 @@ static int gmac_final(void *vmacctx, unsigned char *out, size_t *outl,
     return 1;
 }
 
-static size_t gmac_size(void)
-{
-    return EVP_GCM_TLS_TAG_LEN;
-}
-
 static const OSSL_PARAM known_gettable_params[] = {
     OSSL_PARAM_size_t(OSSL_MAC_PARAM_SIZE, NULL),
     OSSL_PARAM_END
 };
-static const OSSL_PARAM *gmac_gettable_params(void)
+static const OSSL_PARAM *gmac_gettable_params(void *provctx)
 {
     return known_gettable_params;
 }
@@ -158,7 +170,7 @@ static const OSSL_PARAM known_settable_ctx_params[] = {
     OSSL_PARAM_octet_string(OSSL_MAC_PARAM_IV, NULL, 0),
     OSSL_PARAM_END
 };
-static const OSSL_PARAM *gmac_settable_ctx_params(void)
+static const OSSL_PARAM *gmac_settable_ctx_params(ossl_unused void *provctx)
 {
     return known_settable_ctx_params;
 }
@@ -170,7 +182,7 @@ static int gmac_set_ctx_params(void *vmacctx, const OSSL_PARAM params[])
 {
     struct gmac_data_st *macctx = vmacctx;
     EVP_CIPHER_CTX *ctx = macctx->ctx;
-    OPENSSL_CTX *provctx = PROV_LIBRARY_CONTEXT_OF(macctx->provctx);
+    OSSL_LIB_CTX *provctx = PROV_LIBCTX_OF(macctx->provctx);
     const OSSL_PARAM *p;
 
    if (ctx == NULL
@@ -210,7 +222,7 @@ static int gmac_set_ctx_params(void *vmacctx, const OSSL_PARAM params[])
     return 1;
 }
 
-const OSSL_DISPATCH gmac_functions[] = {
+const OSSL_DISPATCH ossl_gmac_functions[] = {
     { OSSL_FUNC_MAC_NEWCTX, (void (*)(void))gmac_new },
     { OSSL_FUNC_MAC_DUPCTX, (void (*)(void))gmac_dup },
     { OSSL_FUNC_MAC_FREECTX, (void (*)(void))gmac_free },

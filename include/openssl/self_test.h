@@ -1,7 +1,7 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -27,8 +27,10 @@ extern "C" {
 # define OSSL_SELF_TEST_TYPE_NONE               "None"
 # define OSSL_SELF_TEST_TYPE_MODULE_INTEGRITY   "Module_Integrity"
 # define OSSL_SELF_TEST_TYPE_INSTALL_INTEGRITY  "Install_Integrity"
+# define OSSL_SELF_TEST_TYPE_CRNG               "Continuous_RNG_Test"
 # define OSSL_SELF_TEST_TYPE_PCT                "Pairwise_Consistency_Test"
 # define OSSL_SELF_TEST_TYPE_KAT_CIPHER         "KAT_Cipher"
+# define OSSL_SELF_TEST_TYPE_KAT_ASYM_CIPHER    "KAT_AsymmetricCipher"
 # define OSSL_SELF_TEST_TYPE_KAT_DIGEST         "KAT_Digest"
 # define OSSL_SELF_TEST_TYPE_KAT_SIGNATURE      "KAT_Signature"
 # define OSSL_SELF_TEST_TYPE_KAT_KDF            "KAT_KDF"
@@ -43,6 +45,8 @@ extern "C" {
 # define OSSL_SELF_TEST_DESC_PCT_DSA        "DSA"
 # define OSSL_SELF_TEST_DESC_CIPHER_AES_GCM "AES_GCM"
 # define OSSL_SELF_TEST_DESC_CIPHER_TDES    "TDES"
+# define OSSL_SELF_TEST_DESC_ASYM_RSA_ENC   "RSA_Encrypt"
+# define OSSL_SELF_TEST_DESC_ASYM_RSA_DEC   "RSA_Decrypt"
 # define OSSL_SELF_TEST_DESC_MD_SHA1        "SHA1"
 # define OSSL_SELF_TEST_DESC_MD_SHA2        "SHA2"
 # define OSSL_SELF_TEST_DESC_MD_SHA3        "SHA3"
@@ -52,17 +56,33 @@ extern "C" {
 # define OSSL_SELF_TEST_DESC_DRBG_CTR       "CTR"
 # define OSSL_SELF_TEST_DESC_DRBG_HASH      "HASH"
 # define OSSL_SELF_TEST_DESC_DRBG_HMAC      "HMAC"
+# define OSSL_SELF_TEST_DESC_KA_DH          "DH"
 # define OSSL_SELF_TEST_DESC_KA_ECDH        "ECDH"
-# define OSSL_SELF_TEST_DESC_KA_ECDSA       "ECDSA"
 # define OSSL_SELF_TEST_DESC_KDF_HKDF       "HKDF"
+# define OSSL_SELF_TEST_DESC_KDF_SSKDF      "SSKDF"
+# define OSSL_SELF_TEST_DESC_KDF_X963KDF    "X963KDF"
+# define OSSL_SELF_TEST_DESC_KDF_X942KDF    "X942KDF"
+# define OSSL_SELF_TEST_DESC_KDF_PBKDF2     "PBKDF2"
+# define OSSL_SELF_TEST_DESC_KDF_SSHKDF     "SSHKDF"
+# define OSSL_SELF_TEST_DESC_KDF_TLS12_PRF  "TLS12_PRF"
+# define OSSL_SELF_TEST_DESC_KDF_KBKDF      "KBKDF"
+# define OSSL_SELF_TEST_DESC_RNG            "RNG"
 
 # ifdef __cplusplus
 }
 # endif
 
-void OSSL_SELF_TEST_set_callback(OPENSSL_CTX *libctx, OSSL_CALLBACK *cb,
+void OSSL_SELF_TEST_set_callback(OSSL_LIB_CTX *libctx, OSSL_CALLBACK *cb,
                                  void *cbarg);
-void OSSL_SELF_TEST_get_callback(OPENSSL_CTX *libctx, OSSL_CALLBACK **cb,
+void OSSL_SELF_TEST_get_callback(OSSL_LIB_CTX *libctx, OSSL_CALLBACK **cb,
                                  void **cbarg);
+
+OSSL_SELF_TEST *OSSL_SELF_TEST_new(OSSL_CALLBACK *cb, void *cbarg);
+void OSSL_SELF_TEST_free(OSSL_SELF_TEST *st);
+
+void OSSL_SELF_TEST_onbegin(OSSL_SELF_TEST *st, const char *type,
+                            const char *desc);
+int OSSL_SELF_TEST_oncorrupt_byte(OSSL_SELF_TEST *st, unsigned char *bytes);
+void OSSL_SELF_TEST_onend(OSSL_SELF_TEST *st, int ret);
 
 #endif /* OPENSSL_SELF_TEST_H */

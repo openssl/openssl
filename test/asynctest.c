@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -42,6 +42,39 @@ static int save_current(void *args)
 
     return 1;
 }
+
+static int change_deflt_libctx(void *args)
+{
+    OSSL_LIB_CTX *libctx = OSSL_LIB_CTX_new();
+    OSSL_LIB_CTX *oldctx, *tmpctx;
+    int ret = 0;
+
+    if (libctx == NULL)
+        return 0;
+
+    oldctx = OSSL_LIB_CTX_set0_default(libctx);
+    ASYNC_pause_job();
+
+    /* Check the libctx is set up as we expect */
+    tmpctx = OSSL_LIB_CTX_set0_default(oldctx);
+    if (tmpctx != libctx)
+        goto err;
+
+    /* Set it back again to continue to use our own libctx */
+    oldctx = OSSL_LIB_CTX_set0_default(libctx);
+    ASYNC_pause_job();
+
+    /* Check the libctx is set up as we expect */
+    tmpctx = OSSL_LIB_CTX_set0_default(oldctx);
+    if (tmpctx != libctx)
+        goto err;
+
+    ret = 1;
+ err:
+    OSSL_LIB_CTX_free(libctx);
+    return ret;
+}
+
 
 #define MAGIC_WAIT_FD   ((OSSL_ASYNC_FD)99)
 static int waitfd(void *args)
@@ -306,6 +339,80 @@ static int test_ASYNC_block_pause(void)
     return 1;
 }
 
+static int test_ASYNC_start_job_ex(void)
+{
+    ASYNC_JOB *job = NULL;
+    int funcret;
+    ASYNC_WAIT_CTX *waitctx = NULL;
+    OSSL_LIB_CTX *libctx = OSSL_LIB_CTX_new();
+    OSSL_LIB_CTX *oldctx, *tmpctx, *globalctx;
+    int ret = 0;
+
+    if (libctx == NULL) {
+        fprintf(stderr,
+                "test_ASYNC_start_job_ex() failed to create libctx\n");
+        goto err;
+    }
+
+    globalctx = oldctx = OSSL_LIB_CTX_set0_default(libctx);
+
+    if ((waitctx = ASYNC_WAIT_CTX_new()) == NULL
+            || ASYNC_start_job(&job, waitctx, &funcret, change_deflt_libctx,
+                               NULL, 0)
+               != ASYNC_PAUSE) {
+        fprintf(stderr,
+                "test_ASYNC_start_job_ex() failed to start job\n");
+        goto err;
+    }
+
+    /* Reset the libctx temporarily to find out what it is*/
+    tmpctx = OSSL_LIB_CTX_set0_default(oldctx);
+    oldctx = OSSL_LIB_CTX_set0_default(tmpctx);
+    if (tmpctx != libctx) {
+        fprintf(stderr,
+                "test_ASYNC_start_job_ex() failed - unexpected libctx\n");
+        goto err;
+    }
+
+    if (ASYNC_start_job(&job, waitctx, &funcret, change_deflt_libctx, NULL, 0)
+               != ASYNC_PAUSE) {
+        fprintf(stderr,
+                "test_ASYNC_start_job_ex() - restarting job failed\n");
+        goto err;
+    }
+
+    /* Reset the libctx and continue with the global default libctx */
+    tmpctx = OSSL_LIB_CTX_set0_default(oldctx);
+    if (tmpctx != libctx) {
+        fprintf(stderr,
+                "test_ASYNC_start_job_ex() failed - unexpected libctx\n");
+        goto err;
+    }
+
+    if (ASYNC_start_job(&job, waitctx, &funcret, change_deflt_libctx, NULL, 0)
+               != ASYNC_FINISH
+                || funcret != 1) {
+        fprintf(stderr,
+                "test_ASYNC_start_job_ex() - finishing job failed\n");
+        goto err;
+    }
+
+    /* Reset the libctx temporarily to find out what it is*/
+    tmpctx = OSSL_LIB_CTX_set0_default(libctx);
+    OSSL_LIB_CTX_set0_default(tmpctx);
+    if (tmpctx != globalctx) {
+        fprintf(stderr,
+                "test_ASYNC_start_job_ex() failed - global libctx check failed\n");
+        goto err;
+    }
+
+    ret = 1;
+ err:
+    ASYNC_WAIT_CTX_free(waitctx);
+    OSSL_LIB_CTX_free(libctx);
+    return ret;
+}
+
 int main(int argc, char **argv)
 {
     if (!ASYNC_is_capable()) {
@@ -317,7 +424,8 @@ int main(int argc, char **argv)
                 || !test_ASYNC_start_job()
                 || !test_ASYNC_get_current_job()
                 || !test_ASYNC_WAIT_CTX_get_all_fds()
-                || !test_ASYNC_block_pause()) {
+                || !test_ASYNC_block_pause()
+                || !test_ASYNC_start_job_ex()) {
             return 1;
         }
     }

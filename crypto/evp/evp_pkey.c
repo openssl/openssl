@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -12,13 +12,16 @@
 #include "internal/cryptlib.h"
 #include <openssl/x509.h>
 #include <openssl/rand.h>
+#include <openssl/encoder.h>
+#include "internal/provider.h"
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
 #include "crypto/x509.h"
 
 /* Extract a private key from a PKCS8 structure */
 
-EVP_PKEY *EVP_PKCS82PKEY(const PKCS8_PRIV_KEY_INFO *p8)
+EVP_PKEY *EVP_PKCS82PKEY_ex(const PKCS8_PRIV_KEY_INFO *p8, OSSL_LIB_CTX *libctx,
+                            const char *propq)
 {
     EVP_PKEY *pkey = NULL;
     const ASN1_OBJECT *algoid;
@@ -28,24 +31,27 @@ EVP_PKEY *EVP_PKCS82PKEY(const PKCS8_PRIV_KEY_INFO *p8)
         return NULL;
 
     if ((pkey = EVP_PKEY_new()) == NULL) {
-        EVPerr(EVP_F_EVP_PKCS82PKEY, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
     if (!EVP_PKEY_set_type(pkey, OBJ_obj2nid(algoid))) {
-        EVPerr(EVP_F_EVP_PKCS82PKEY, EVP_R_UNSUPPORTED_PRIVATE_KEY_ALGORITHM);
         i2t_ASN1_OBJECT(obj_tmp, 80, algoid);
-        ERR_add_error_data(2, "TYPE=", obj_tmp);
+        ERR_raise_data(ERR_LIB_EVP, EVP_R_UNSUPPORTED_PRIVATE_KEY_ALGORITHM,
+                       "TYPE=%s", obj_tmp);
         goto error;
     }
 
-    if (pkey->ameth->priv_decode) {
+    if (pkey->ameth->priv_decode_ex != NULL) {
+        if (!pkey->ameth->priv_decode_ex(pkey, p8, libctx, propq))
+            goto error;
+    } else if (pkey->ameth->priv_decode != NULL) {
         if (!pkey->ameth->priv_decode(pkey, p8)) {
-            EVPerr(EVP_F_EVP_PKCS82PKEY, EVP_R_PRIVATE_KEY_DECODE_ERROR);
+            ERR_raise(ERR_LIB_EVP, EVP_R_PRIVATE_KEY_DECODE_ERROR);
             goto error;
         }
     } else {
-        EVPerr(EVP_F_EVP_PKCS82PKEY, EVP_R_METHOD_NOT_SUPPORTED);
+        ERR_raise(ERR_LIB_EVP, EVP_R_METHOD_NOT_SUPPORTED);
         goto error;
     }
 
@@ -56,34 +62,70 @@ EVP_PKEY *EVP_PKCS82PKEY(const PKCS8_PRIV_KEY_INFO *p8)
     return NULL;
 }
 
+EVP_PKEY *EVP_PKCS82PKEY(const PKCS8_PRIV_KEY_INFO *p8)
+{
+    return EVP_PKCS82PKEY_ex(p8, NULL, NULL);
+}
+
 /* Turn a private key into a PKCS8 structure */
 
 PKCS8_PRIV_KEY_INFO *EVP_PKEY2PKCS8(const EVP_PKEY *pkey)
 {
-    PKCS8_PRIV_KEY_INFO *p8 = PKCS8_PRIV_KEY_INFO_new();
-    if (p8  == NULL) {
-        EVPerr(EVP_F_EVP_PKEY2PKCS8, ERR_R_MALLOC_FAILURE);
-        return NULL;
-    }
+    PKCS8_PRIV_KEY_INFO *p8 = NULL;
+    OSSL_ENCODER_CTX *ctx = NULL;
 
-    if (pkey->ameth) {
-        if (pkey->ameth->priv_encode) {
-            if (!pkey->ameth->priv_encode(p8, pkey)) {
-                EVPerr(EVP_F_EVP_PKEY2PKCS8, EVP_R_PRIVATE_KEY_ENCODE_ERROR);
+    /*
+     * The implementation for provider-native keys is to encode the
+     * key to a DER encoded PKCS#8 structure, then convert it to a
+     * PKCS8_PRIV_KEY_INFO with good old d2i functions.
+     */
+    if (evp_pkey_is_provided(pkey)) {
+        int selection = OSSL_KEYMGMT_SELECT_ALL;
+        unsigned char *der = NULL;
+        size_t derlen = 0;
+        const unsigned char *pp;
+
+        if ((ctx = OSSL_ENCODER_CTX_new_by_EVP_PKEY(pkey, selection,
+                                                    "DER", "pkcs8",
+                                                    NULL)) == NULL
+            || !OSSL_ENCODER_to_data(ctx, &der, &derlen))
+            goto error;
+
+        pp = der;
+        p8 = d2i_PKCS8_PRIV_KEY_INFO(NULL, &pp, (long)derlen);
+        OPENSSL_free(der);
+        if (p8 == NULL)
+            goto error;
+    } else {
+        p8 = PKCS8_PRIV_KEY_INFO_new();
+        if (p8  == NULL) {
+            ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
+            return NULL;
+        }
+
+        if (pkey->ameth != NULL) {
+            if (pkey->ameth->priv_encode != NULL) {
+                if (!pkey->ameth->priv_encode(p8, pkey)) {
+                    ERR_raise(ERR_LIB_EVP, EVP_R_PRIVATE_KEY_ENCODE_ERROR);
+                    goto error;
+                }
+            } else {
+                ERR_raise(ERR_LIB_EVP, EVP_R_METHOD_NOT_SUPPORTED);
                 goto error;
             }
         } else {
-            EVPerr(EVP_F_EVP_PKEY2PKCS8, EVP_R_METHOD_NOT_SUPPORTED);
+            ERR_raise(ERR_LIB_EVP, EVP_R_UNSUPPORTED_PRIVATE_KEY_ALGORITHM);
             goto error;
         }
-    } else {
-        EVPerr(EVP_F_EVP_PKEY2PKCS8, EVP_R_UNSUPPORTED_PRIVATE_KEY_ALGORITHM);
-        goto error;
     }
-    return p8;
+    goto end;
  error:
     PKCS8_PRIV_KEY_INFO_free(p8);
-    return NULL;
+    p8 = NULL;
+ end:
+    OSSL_ENCODER_CTX_free(ctx);
+    return p8;
+
 }
 
 /* EVP_PKEY attribute functions */
@@ -146,4 +188,21 @@ int EVP_PKEY_add1_attr_by_txt(EVP_PKEY *key,
     if (X509at_add1_attr_by_txt(&key->attributes, attrname, type, bytes, len))
         return 1;
     return 0;
+}
+
+const char *EVP_PKEY_get0_first_alg_name(const EVP_PKEY *key)
+{
+    const EVP_PKEY_ASN1_METHOD *ameth;
+    const char *name = NULL;
+
+    if (key->keymgmt != NULL)
+        return EVP_KEYMGMT_get0_first_name(key->keymgmt);
+
+    /* Otherwise fallback to legacy */
+    ameth = EVP_PKEY_get0_asn1(key);
+    if (ameth != NULL)
+        EVP_PKEY_asn1_get0_info(NULL, NULL,
+                                NULL, NULL, &name, ameth);
+
+    return name;
 }

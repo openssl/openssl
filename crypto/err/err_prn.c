@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -23,22 +23,25 @@ void ERR_print_errors_cb(int (*cb) (const char *str, size_t len, void *u),
 {
     CRYPTO_THREAD_ID tid = CRYPTO_THREAD_get_current_id();
     unsigned long l;
-    char buf[ERR_PRINT_BUF_SIZE], *hex;
-    const char *lib, *reason;
     const char *file, *data, *func;
     int line, flags;
 
     while ((l = ERR_get_error_all(&file, &line, &func, &data, &flags)) != 0) {
-        lib = ERR_lib_error_string(l);
-        reason = ERR_reason_error_string(l);
-        if (func == NULL)
-            func = "unknown function";
+        char buf[ERR_PRINT_BUF_SIZE] = "";
+        char *hex = NULL;
+        int offset;
+
         if ((flags & ERR_TXT_STRING) == 0)
             data = "";
-        hex = OPENSSL_buf2hexstr((const unsigned char *)&tid, sizeof(tid));
-        BIO_snprintf(buf, sizeof(buf), "%s:error:%s:%s:%s:%s:%d:%s\n",
-                     hex == NULL ? "<null>" : hex, lib, func, reason, file,
-                     line, data);
+
+        hex = openssl_buf2hexstr_sep((const unsigned char *)&tid, sizeof(tid),
+                                     '\0');
+        BIO_snprintf(buf, sizeof(buf), "%s:", hex == NULL ? "<null>" : hex);
+        offset = strlen(buf);
+        ossl_err_string_int(l, func, buf + offset, sizeof(buf) - offset);
+        offset += strlen(buf + offset);
+        BIO_snprintf(buf + offset, sizeof(buf) - offset, ":%s:%d:%s\n",
+                     file, line, data);
         OPENSSL_free(hex);
         if (cb(buf, strlen(buf), u) <= 0)
             break;              /* abort outputting the error report */
@@ -68,7 +71,7 @@ void ERR_add_error_txt(const char *separator, const char *txt)
     if (separator == NULL)
         separator = "";
     if (err == 0)
-        put_error(ERR_LIB_CMP, NULL, 0, "", 0);
+        put_error(ERR_LIB_NONE, NULL, 0, "", 0);
 
     do {
         size_t available_len, data_len;
@@ -125,7 +128,7 @@ void ERR_add_error_txt(const char *separator, const char *txt)
                 ERR_add_error_data(2, separator, tmp);
                 OPENSSL_free(tmp);
             }
-            put_error(ERR_LIB_CMP, func, err, file, line);
+            put_error(ERR_GET_LIB(err), func, err, file, line);
             txt = curr;
         } else {
             if (trailing_separator) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -83,7 +83,7 @@ int BN_lshift(BIGNUM *r, const BIGNUM *a, int n)
     int ret;
 
     if (n < 0) {
-        BNerr(BN_F_BN_LSHIFT, BN_R_INVALID_SHIFT);
+        ERR_raise(ERR_LIB_BN, BN_R_INVALID_SHIFT);
         return 0;
     }
 
@@ -152,7 +152,7 @@ int BN_rshift(BIGNUM *r, const BIGNUM *a, int n)
     int ret = 0;
 
     if (n < 0) {
-        BNerr(BN_F_BN_RSHIFT, BN_R_INVALID_SHIFT);
+        ERR_raise(ERR_LIB_BN, BN_R_INVALID_SHIFT);
         return 0;
     }
 

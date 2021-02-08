@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -40,11 +40,12 @@ struct keccak_st {
     PROV_SHA3_METHOD meth;
 };
 
-void sha3_reset(KECCAK1600_CTX *ctx);
-int sha3_init(KECCAK1600_CTX *ctx, unsigned char pad, size_t bitlen);
-int keccak_kmac_init(KECCAK1600_CTX *ctx, unsigned char pad, size_t bitlen);
-int sha3_update(KECCAK1600_CTX *ctx, const void *_inp, size_t len);
-int sha3_final(unsigned char *md, KECCAK1600_CTX *ctx);
+void ossl_sha3_reset(KECCAK1600_CTX *ctx);
+int ossl_sha3_init(KECCAK1600_CTX *ctx, unsigned char pad, size_t bitlen);
+int ossl_keccak_kmac_init(KECCAK1600_CTX *ctx, unsigned char pad,
+                          size_t bitlen);
+int ossl_sha3_update(KECCAK1600_CTX *ctx, const void *_inp, size_t len);
+int ossl_sha3_final(unsigned char *md, KECCAK1600_CTX *ctx);
 
 size_t SHA3_absorb(uint64_t A[5][5], const unsigned char *inp, size_t len,
                    size_t r);

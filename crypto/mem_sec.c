@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright 2004-2014, Akamai Technologies. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -21,11 +21,24 @@
 #include <string.h>
 
 #ifndef OPENSSL_NO_SECURE_MEMORY
+# if defined(_WIN32)
+#  include <windows.h>
+# endif
 # include <stdlib.h>
 # include <assert.h>
-# include <unistd.h>
+# if defined(OPENSSL_SYS_UNIX)
+#  include <unistd.h>
+# endif
 # include <sys/types.h>
-# include <sys/mman.h>
+# if defined(OPENSSL_SYS_UNIX)
+#  include <sys/mman.h>
+#  if defined(__FreeBSD__)
+#    define MADV_DONTDUMP MADV_NOCORE
+#  endif
+#  if !defined(MAP_CONCEAL)
+#    define MAP_CONCEAL 0
+#  endif
+# endif
 # if defined(OPENSSL_SYS_LINUX)
 #  include <sys/syscall.h>
 #  if defined(SYS_mlock2)
@@ -227,9 +240,6 @@ size_t CRYPTO_secure_actual_size(void *ptr)
     return 0;
 #endif
 }
-/* END OF PAGE ...
-
-   ... START OF PAGE */
 
 /*
  * SECURE HEAP IMPLEMENTATION
@@ -378,20 +388,40 @@ static int sh_init(size_t size, size_t minsize)
     size_t i;
     size_t pgsize;
     size_t aligned;
+#if defined(_WIN32)
+    DWORD flOldProtect;
+    SYSTEM_INFO systemInfo;
+#endif
 
     memset(&sh, 0, sizeof(sh));
 
-    /* make sure size and minsize are powers of 2 */
+    /* make sure size is a powers of 2 */
     OPENSSL_assert(size > 0);
     OPENSSL_assert((size & (size - 1)) == 0);
-    OPENSSL_assert((minsize & (minsize - 1)) == 0);
-    if (size <= 0 || (size & (size - 1)) != 0)
-        goto err;
-    if (minsize == 0 || (minsize & (minsize - 1)) != 0)
+    if (size == 0 || (size & (size - 1)) != 0)
         goto err;
 
-    while (minsize < (int)sizeof(SH_LIST))
-        minsize *= 2;
+    if (minsize <= sizeof(SH_LIST)) {
+        OPENSSL_assert(sizeof(SH_LIST) <= 65536);
+        /*
+         * Compute the minimum possible allocation size.
+         * This must be a power of 2 and at least as large as the SH_LIST
+         * structure.
+         */
+        minsize = sizeof(SH_LIST) - 1;
+        minsize |= minsize >> 1;
+        minsize |= minsize >> 2;
+        if (sizeof(SH_LIST) > 16)
+            minsize |= minsize >> 4;
+        if (sizeof(SH_LIST) > 256)
+            minsize |= minsize >> 8;
+        minsize++;
+    } else {
+        /* make sure minsize is a powers of 2 */
+          OPENSSL_assert((minsize & (minsize - 1)) == 0);
+          if ((minsize & (minsize - 1)) != 0)
+              goto err;
+    }
 
     sh.arena_size = size;
     sh.minsize = minsize;
@@ -433,16 +463,20 @@ static int sh_init(size_t size, size_t minsize)
         else
             pgsize = (size_t)tmppgsize;
     }
+#elif defined(_WIN32)
+    GetSystemInfo(&systemInfo);
+    pgsize = (size_t)systemInfo.dwPageSize;
 #else
     pgsize = PAGE_SIZE;
 #endif
     sh.map_size = pgsize + sh.arena_size + pgsize;
-    if (1) {
-#ifdef MAP_ANON
-        sh.map_result = mmap(NULL, sh.map_size,
-                             PROT_READ|PROT_WRITE, MAP_ANON|MAP_PRIVATE, -1, 0);
-    } else {
-#endif
+
+#if !defined(_WIN32)
+# ifdef MAP_ANON
+    sh.map_result = mmap(NULL, sh.map_size,
+                         PROT_READ|PROT_WRITE, MAP_ANON|MAP_PRIVATE|MAP_CONCEAL, -1, 0);
+# else
+    {
         int fd;
 
         sh.map_result = MAP_FAILED;
@@ -452,8 +486,16 @@ static int sh_init(size_t size, size_t minsize)
             close(fd);
         }
     }
+# endif
     if (sh.map_result == MAP_FAILED)
         goto err;
+#else
+    sh.map_result = VirtualAlloc(NULL, sh.map_size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+
+    if (sh.map_result == NULL)
+            goto err;
+#endif
+
     sh.arena = (char *)(sh.map_result + pgsize);
     sh_setbit(sh.arena, 0, sh.bittable);
     sh_add_to_list(&sh.freelist[0], sh.arena);
@@ -461,14 +503,24 @@ static int sh_init(size_t size, size_t minsize)
     /* Now try to add guard pages and lock into memory. */
     ret = 1;
 
+#if !defined(_WIN32)
     /* Starting guard is already aligned from mmap. */
     if (mprotect(sh.map_result, pgsize, PROT_NONE) < 0)
         ret = 2;
+#else
+    if (VirtualProtect(sh.map_result, pgsize, PAGE_NOACCESS, &flOldProtect) == FALSE)
+        ret = 2;
+#endif
 
     /* Ending guard page - need to round up to page boundary */
     aligned = (pgsize + sh.arena_size + (pgsize - 1)) & ~(pgsize - 1);
+#if !defined(_WIN32)
     if (mprotect(sh.map_result + aligned, pgsize, PROT_NONE) < 0)
         ret = 2;
+#else
+    if (VirtualProtect(sh.map_result + aligned, pgsize, PAGE_NOACCESS, &flOldProtect) == FALSE)
+        ret = 2;
+#endif
 
 #if defined(OPENSSL_SYS_LINUX) && defined(MLOCK_ONFAULT) && defined(SYS_mlock2)
     if (syscall(SYS_mlock2, sh.arena, sh.arena_size, MLOCK_ONFAULT) < 0) {
@@ -479,6 +531,9 @@ static int sh_init(size_t size, size_t minsize)
             ret = 2;
         }
     }
+#elif defined(_WIN32)
+    if (VirtualLock(sh.arena, sh.arena_size) == FALSE)
+        ret = 2;
 #else
     if (mlock(sh.arena, sh.arena_size) < 0)
         ret = 2;
@@ -500,8 +555,13 @@ static void sh_done(void)
     OPENSSL_free(sh.freelist);
     OPENSSL_free(sh.bittable);
     OPENSSL_free(sh.bitmalloc);
-    if (sh.map_result != NULL && sh.map_size)
+#if !defined(_WIN32)
+    if (sh.map_result != MAP_FAILED && sh.map_size)
         munmap(sh.map_result, sh.map_size);
+#else
+    if (sh.map_result != NULL && sh.map_size)
+        VirtualFree(sh.map_result, 0, MEM_RELEASE);
+#endif
     memset(&sh, 0, sizeof(sh));
 }
 

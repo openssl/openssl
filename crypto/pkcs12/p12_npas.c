@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -34,20 +34,19 @@ int PKCS12_newpass(PKCS12 *p12, const char *oldpass, const char *newpass)
     /* Check for NULL PKCS12 structure */
 
     if (p12 == NULL) {
-        PKCS12err(PKCS12_F_PKCS12_NEWPASS,
-                  PKCS12_R_INVALID_NULL_PKCS12_POINTER);
+        ERR_raise(ERR_LIB_PKCS12, PKCS12_R_INVALID_NULL_PKCS12_POINTER);
         return 0;
     }
 
     /* Check the mac */
 
     if (!PKCS12_verify_mac(p12, oldpass, -1)) {
-        PKCS12err(PKCS12_F_PKCS12_NEWPASS, PKCS12_R_MAC_VERIFY_FAILURE);
+        ERR_raise(ERR_LIB_PKCS12, PKCS12_R_MAC_VERIFY_FAILURE);
         return 0;
     }
 
     if (!newpass_p12(p12, oldpass, newpass)) {
-        PKCS12err(PKCS12_F_PKCS12_NEWPASS, PKCS12_R_PARSE_ERROR);
+        ERR_raise(ERR_LIB_PKCS12, PKCS12_R_PARSE_ERROR);
         return 0;
     }
 
@@ -157,8 +156,10 @@ static int newpass_bag(PKCS12_SAFEBAG *bag, const char *oldpass,
     if ((p8 = PKCS8_decrypt(bag->value.shkeybag, oldpass, -1)) == NULL)
         return 0;
     X509_SIG_get0(bag->value.shkeybag, &shalg, NULL);
-    if (!alg_get(shalg, &p8_nid, &p8_iter, &p8_saltlen))
+    if (!alg_get(shalg, &p8_nid, &p8_iter, &p8_saltlen)) {
+        PKCS8_PRIV_KEY_INFO_free(p8);
         return 0;
+    }
     p8new = PKCS8_encrypt(p8_nid, NULL, newpass, -1, NULL, p8_saltlen,
                           p8_iter, p8);
     PKCS8_PRIV_KEY_INFO_free(p8);

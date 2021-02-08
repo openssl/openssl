@@ -3,11 +3,17 @@
 =head1 NAME
 
 pem_password_cb,
-PEM_read_bio_PrivateKey, PEM_read_PrivateKey, PEM_write_bio_PrivateKey,
-PEM_write_bio_PrivateKey_traditional, PEM_write_PrivateKey,
+PEM_read_bio_PrivateKey_ex, PEM_read_bio_PrivateKey,
+PEM_read_PrivateKey_ex, PEM_read_PrivateKey,
+PEM_write_bio_PrivateKey_ex, PEM_write_bio_PrivateKey,
+PEM_write_bio_PrivateKey_traditional,
+PEM_write_PrivateKey_ex, PEM_write_PrivateKey,
 PEM_write_bio_PKCS8PrivateKey, PEM_write_PKCS8PrivateKey,
 PEM_write_bio_PKCS8PrivateKey_nid, PEM_write_PKCS8PrivateKey_nid,
-PEM_read_bio_PUBKEY, PEM_read_PUBKEY, PEM_write_bio_PUBKEY, PEM_write_PUBKEY,
+PEM_read_bio_PUBKEY_ex, PEM_read_bio_PUBKEY,
+PEM_read_PUBKEY_ex, PEM_read_PUBKEY,
+PEM_write_bio_PUBKEY_ex, PEM_write_bio_PUBKEY,
+PEM_write_PUBKEY_ex, PEM_write_PUBKEY,
 PEM_read_bio_RSAPrivateKey, PEM_read_RSAPrivateKey,
 PEM_write_bio_RSAPrivateKey, PEM_write_RSAPrivateKey,
 PEM_read_bio_RSAPublicKey, PEM_read_RSAPublicKey, PEM_write_bio_RSAPublicKey,
@@ -15,8 +21,8 @@ PEM_write_RSAPublicKey, PEM_read_bio_RSA_PUBKEY, PEM_read_RSA_PUBKEY,
 PEM_write_bio_RSA_PUBKEY, PEM_write_RSA_PUBKEY, PEM_read_bio_DSAPrivateKey,
 PEM_read_DSAPrivateKey, PEM_write_bio_DSAPrivateKey, PEM_write_DSAPrivateKey,
 PEM_read_bio_DSA_PUBKEY, PEM_read_DSA_PUBKEY, PEM_write_bio_DSA_PUBKEY,
-PEM_write_DSA_PUBKEY, PEM_read_bio_Parameters, PEM_write_bio_Parameters,
-PEM_read_bio_DSAparams, PEM_read_DSAparams,
+PEM_write_DSA_PUBKEY, PEM_read_bio_Parameters_ex, PEM_read_bio_Parameters,
+PEM_write_bio_Parameters, PEM_read_bio_DSAparams, PEM_read_DSAparams,
 PEM_write_bio_DSAparams, PEM_write_DSAparams, PEM_read_bio_DHparams,
 PEM_read_DHparams, PEM_write_bio_DHparams, PEM_write_DHparams,
 PEM_read_bio_X509, PEM_read_X509, PEM_write_bio_X509, PEM_write_X509,
@@ -33,10 +39,21 @@ PEM_write_bio_PKCS7, PEM_write_PKCS7 - PEM routines
 
  typedef int pem_password_cb(char *buf, int size, int rwflag, void *u);
 
+ EVP_PKEY *PEM_read_bio_PrivateKey_ex(BIO *bp, EVP_PKEY **x,
+                                      pem_password_cb *cb, void *u,
+                                      OSSL_LIB_CTX *libctx, const char *propq);
  EVP_PKEY *PEM_read_bio_PrivateKey(BIO *bp, EVP_PKEY **x,
                                    pem_password_cb *cb, void *u);
+ EVP_PKEY *PEM_read_PrivateKey_ex(FILE *fp, EVP_PKEY **x, pem_password_cb *cb,
+                                  void *u, OSSL_LIB_CTX *libctx,
+                                  const char *propq);
  EVP_PKEY *PEM_read_PrivateKey(FILE *fp, EVP_PKEY **x,
                                pem_password_cb *cb, void *u);
+ int PEM_write_bio_PrivateKey_ex(BIO *bp, const EVP_PKEY *x,
+                                 const EVP_CIPHER *enc,
+                                 unsigned char *kstr, int klen,
+                                 pem_password_cb *cb, void *u,
+                                 OSSL_LIB_CTX *libctx, const char *propq);
  int PEM_write_bio_PrivateKey(BIO *bp, const EVP_PKEY *x, const EVP_CIPHER *enc,
                               unsigned char *kstr, int klen,
                               pem_password_cb *cb, void *u);
@@ -44,6 +61,10 @@ PEM_write_bio_PKCS7, PEM_write_PKCS7 - PEM routines
                                           const EVP_CIPHER *enc,
                                           unsigned char *kstr, int klen,
                                           pem_password_cb *cb, void *u);
+ int PEM_write_PrivateKey_ex(FILE *fp, EVP_PKEY *x, const EVP_CIPHER *enc,
+                             unsigned char *kstr, int klen,
+                             pem_password_cb *cb, void *u,
+                             OSSL_LIB_CTX *libctx, const char *propq);
  int PEM_write_PrivateKey(FILE *fp, EVP_PKEY *x, const EVP_CIPHER *enc,
                           unsigned char *kstr, int klen,
                           pem_password_cb *cb, void *u);
@@ -60,11 +81,21 @@ PEM_write_bio_PKCS7, PEM_write_PKCS7 - PEM routines
                                    char *kstr, int klen,
                                    pem_password_cb *cb, void *u);
 
+ EVP_PKEY *PEM_read_bio_PUBKEY_ex(BIO *bp, EVP_PKEY **x,
+                                  pem_password_cb *cb, void *u,
+                                  OSSL_LIB_CTX *libctx, const char *propq);
  EVP_PKEY *PEM_read_bio_PUBKEY(BIO *bp, EVP_PKEY **x,
                                pem_password_cb *cb, void *u);
+ EVP_PKEY *PEM_read_PUBKEY_ex(FILE *fp, EVP_PKEY **x,
+                              pem_password_cb *cb, void *u,
+                              OSSL_LIB_CTX *libctx, const char *propq);
  EVP_PKEY *PEM_read_PUBKEY(FILE *fp, EVP_PKEY **x,
                            pem_password_cb *cb, void *u);
+ int PEM_write_bio_PUBKEY_ex(BIO *bp, EVP_PKEY *x,
+                             OSSL_LIB_CTX *libctx, const char *propq);
  int PEM_write_bio_PUBKEY(BIO *bp, EVP_PKEY *x);
+ int PEM_write_PUBKEY_ex(FILE *fp, EVP_PKEY *x,
+                         OSSL_LIB_CTX *libctx, const char *propq);
  int PEM_write_PUBKEY(FILE *fp, EVP_PKEY *x);
 
  RSA *PEM_read_bio_RSAPrivateKey(BIO *bp, RSA **x,
@@ -110,6 +141,8 @@ PEM_write_bio_PKCS7, PEM_write_PKCS7 - PEM routines
  int PEM_write_bio_DSA_PUBKEY(BIO *bp, DSA *x);
  int PEM_write_DSA_PUBKEY(FILE *fp, DSA *x);
 
+ EVP_PKEY *PEM_read_bio_Parameters_ex(BIO *bp, EVP_PKEY **x,
+                                      OSSL_LIB_CTX *libctx, const char *propq);
  EVP_PKEY *PEM_read_bio_Parameters(BIO *bp, EVP_PKEY **x);
  int PEM_write_bio_Parameters(BIO *bp, const EVP_PKEY *x);
 
@@ -168,9 +201,12 @@ brevity the term "B<I<TYPE>> functions" will be used below to collectively
 refer to the B<PEM_read_bio_I<TYPE>>(), B<PEM_read_I<TYPE>>(),
 B<PEM_write_bio_I<TYPE>>(), and B<PEM_write_I<TYPE>>() functions.
 
-The B<PrivateKey> functions read or write a private key in PEM format using an
-EVP_PKEY structure. The write routines use PKCS#8 private key format and are
-equivalent to PEM_write_bio_PKCS8PrivateKey().The read functions transparently
+Some operations have additional variants that take a library context I<libctx>
+and a property query string I<propq>.
+
+The B<PrivateKey> functions read or write a private key in PEM format using
+an EVP_PKEY structure. The write routines use PKCS#8 private key format and are
+equivalent to PEM_write_bio_PKCS8PrivateKey(). The read functions transparently
 handle traditional and PKCS#8 format encrypted and unencrypted keys.
 
 PEM_write_bio_PrivateKey_traditional() writes out a private key in the
@@ -205,7 +241,7 @@ RSA structure. The public key is encoded using a PKCS#1 RSAPublicKey
 structure.
 
 The B<RSA_PUBKEY> functions also process an RSA public key using
-an RSA structure. However the public key is encoded using a
+an RSA structure. However, the public key is encoded using a
 SubjectPublicKeyInfo structure and an error occurs if the public
 key is not RSA.
 
@@ -307,6 +343,12 @@ arbitrary data to be passed to the callback by the application
 I<must> return the number of characters in the passphrase or -1 if
 an error occurred.
 
+Some implementations may need to use cryptographic algorithms during their
+operation. If this is the case and I<libctx> and I<propq> parameters have been
+passed then any algorithm fetches will use that library context and property
+query string. Otherwise the default library context and property query string
+will be used.
+
 =head1 NOTES
 
 The old B<PrivateKey> write routines are retained for compatibility.
@@ -386,7 +428,7 @@ The pseudo code to derive the key would look similar to:
 =head1 BUGS
 
 The PEM read routines in some versions of OpenSSL will not correctly reuse
-an existing structure. Therefore the following:
+an existing structure. Therefore, the following:
 
  PEM_read_bio_X509(bp, &x, 0, NULL);
 
@@ -408,6 +450,16 @@ The write routines return 1 for success or 0 for failure.
 
 Although the PEM routines take several arguments in almost all applications
 most of them are set to 0 or NULL.
+
+To read a certificate with a library context in PEM format from a BIO:
+
+ X509 *x = X509_new_ex(libctx, NULL);
+
+ if (x == NULL)
+     /* Error */
+
+ if (PEM_read_bio_X509(bp, &x, 0, NULL) == NULL)
+     /* Error */
 
 Read a certificate in PEM format from a BIO:
 
@@ -480,9 +532,13 @@ The old Netscape certificate sequences were no longer documented
 in OpenSSL 1.1.0; applications should use the PKCS7 standard instead
 as they will be formally deprecated in a future releases.
 
+PEM_read_bio_PrivateKey_ex(), PEM_read_PrivateKey_ex(),
+PEM_read_bio_PUBKEY_ex(), PEM_read_PUBKEY_ex() and
+PEM_read_bio_Parameters_ex() were introduced in OpenSSL 3.0.
+
 =head1 COPYRIGHT
 
-Copyright 2001-2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2001-2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

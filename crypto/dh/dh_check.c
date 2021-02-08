@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -33,18 +33,18 @@ int DH_check_params_ex(const DH *dh)
         return 0;
 
     if ((errflags & DH_CHECK_P_NOT_PRIME) != 0)
-        DHerr(DH_F_DH_CHECK_PARAMS_EX, DH_R_CHECK_P_NOT_PRIME);
+        ERR_raise(ERR_LIB_DH, DH_R_CHECK_P_NOT_PRIME);
     if ((errflags & DH_NOT_SUITABLE_GENERATOR) != 0)
-        DHerr(DH_F_DH_CHECK_PARAMS_EX, DH_R_NOT_SUITABLE_GENERATOR);
+        ERR_raise(ERR_LIB_DH, DH_R_NOT_SUITABLE_GENERATOR);
     if ((errflags & DH_MODULUS_TOO_SMALL) != 0)
-        DHerr(DH_F_DH_CHECK_PARAMS_EX, DH_R_MODULUS_TOO_SMALL);
+        ERR_raise(ERR_LIB_DH, DH_R_MODULUS_TOO_SMALL);
     if ((errflags & DH_MODULUS_TOO_LARGE) != 0)
-        DHerr(DH_F_DH_CHECK_PARAMS_EX, DH_R_MODULUS_TOO_LARGE);
+        ERR_raise(ERR_LIB_DH, DH_R_MODULUS_TOO_LARGE);
 
     return errflags == 0;
 }
 
-#ifdef FIPS_MODE
+#ifdef FIPS_MODULE
 int DH_check_params(const DH *dh, int *ret)
 {
     int nid;
@@ -62,8 +62,8 @@ int DH_check_params(const DH *dh, int *ret)
      * (2b) FFC domain params conform to FIPS-186-4 explicit domain param
      * validity tests.
      */
-    return ffc_params_FIPS186_4_validate(&dh->params, FFC_PARAM_TYPE_DH, NULL,
-                                         FFC_PARAMS_VALIDATE_ALL, ret, NULL);
+    return ossl_ffc_params_FIPS186_4_validate(dh->libctx, &dh->params,
+                                              FFC_PARAM_TYPE_DH, ret, NULL);
 }
 #else
 int DH_check_params(const DH *dh, int *ret)
@@ -102,7 +102,7 @@ int DH_check_params(const DH *dh, int *ret)
     BN_CTX_free(ctx);
     return ok;
 }
-#endif /* FIPS_MODE */
+#endif /* FIPS_MODULE */
 
 /*-
  * Check that p is a safe prime and
@@ -116,23 +116,23 @@ int DH_check_ex(const DH *dh)
         return 0;
 
     if ((errflags & DH_NOT_SUITABLE_GENERATOR) != 0)
-        DHerr(DH_F_DH_CHECK_EX, DH_R_NOT_SUITABLE_GENERATOR);
+        ERR_raise(ERR_LIB_DH, DH_R_NOT_SUITABLE_GENERATOR);
     if ((errflags & DH_CHECK_Q_NOT_PRIME) != 0)
-        DHerr(DH_F_DH_CHECK_EX, DH_R_CHECK_Q_NOT_PRIME);
+        ERR_raise(ERR_LIB_DH, DH_R_CHECK_Q_NOT_PRIME);
     if ((errflags & DH_CHECK_INVALID_Q_VALUE) != 0)
-        DHerr(DH_F_DH_CHECK_EX, DH_R_CHECK_INVALID_Q_VALUE);
+        ERR_raise(ERR_LIB_DH, DH_R_CHECK_INVALID_Q_VALUE);
     if ((errflags & DH_CHECK_INVALID_J_VALUE) != 0)
-        DHerr(DH_F_DH_CHECK_EX, DH_R_CHECK_INVALID_J_VALUE);
+        ERR_raise(ERR_LIB_DH, DH_R_CHECK_INVALID_J_VALUE);
     if ((errflags & DH_UNABLE_TO_CHECK_GENERATOR) != 0)
-        DHerr(DH_F_DH_CHECK_EX, DH_R_UNABLE_TO_CHECK_GENERATOR);
+        ERR_raise(ERR_LIB_DH, DH_R_UNABLE_TO_CHECK_GENERATOR);
     if ((errflags & DH_CHECK_P_NOT_PRIME) != 0)
-        DHerr(DH_F_DH_CHECK_EX, DH_R_CHECK_P_NOT_PRIME);
+        ERR_raise(ERR_LIB_DH, DH_R_CHECK_P_NOT_PRIME);
     if ((errflags & DH_CHECK_P_NOT_SAFE_PRIME) != 0)
-        DHerr(DH_F_DH_CHECK_EX, DH_R_CHECK_P_NOT_SAFE_PRIME);
+        ERR_raise(ERR_LIB_DH, DH_R_CHECK_P_NOT_SAFE_PRIME);
     if ((errflags & DH_MODULUS_TOO_SMALL) != 0)
-        DHerr(DH_F_DH_CHECK_EX, DH_R_MODULUS_TOO_SMALL);
+        ERR_raise(ERR_LIB_DH, DH_R_MODULUS_TOO_SMALL);
     if ((errflags & DH_MODULUS_TOO_LARGE) != 0)
-        DHerr(DH_F_DH_CHECK_EX, DH_R_MODULUS_TOO_LARGE);
+        ERR_raise(ERR_LIB_DH, DH_R_MODULUS_TOO_LARGE);
 
     return errflags == 0;
 }
@@ -140,7 +140,7 @@ int DH_check_ex(const DH *dh)
 /* Note: according to documentation - this only checks the params */
 int DH_check(const DH *dh, int *ret)
 {
-#ifdef FIPS_MODE
+#ifdef FIPS_MODULE
     return DH_check_params(dh, ret);
 #else
     int ok = 0, r;
@@ -210,7 +210,7 @@ int DH_check(const DH *dh, int *ret)
     BN_CTX_end(ctx);
     BN_CTX_free(ctx);
     return ok;
-#endif /* FIPS_MODE */
+#endif /* FIPS_MODULE */
 }
 
 int DH_check_pub_key_ex(const DH *dh, const BIGNUM *pub_key)
@@ -221,11 +221,11 @@ int DH_check_pub_key_ex(const DH *dh, const BIGNUM *pub_key)
         return 0;
 
     if ((errflags & DH_CHECK_PUBKEY_TOO_SMALL) != 0)
-        DHerr(DH_F_DH_CHECK_PUB_KEY_EX, DH_R_CHECK_PUBKEY_TOO_SMALL);
+        ERR_raise(ERR_LIB_DH, DH_R_CHECK_PUBKEY_TOO_SMALL);
     if ((errflags & DH_CHECK_PUBKEY_TOO_LARGE) != 0)
-        DHerr(DH_F_DH_CHECK_PUB_KEY_EX, DH_R_CHECK_PUBKEY_TOO_LARGE);
+        ERR_raise(ERR_LIB_DH, DH_R_CHECK_PUBKEY_TOO_LARGE);
     if ((errflags & DH_CHECK_PUBKEY_INVALID) != 0)
-        DHerr(DH_F_DH_CHECK_PUB_KEY_EX, DH_R_CHECK_PUBKEY_INVALID);
+        ERR_raise(ERR_LIB_DH, DH_R_CHECK_PUBKEY_INVALID);
 
     return errflags == 0;
 }
@@ -235,7 +235,7 @@ int DH_check_pub_key_ex(const DH *dh, const BIGNUM *pub_key)
  */
 int DH_check_pub_key(const DH *dh, const BIGNUM *pub_key, int *ret)
 {
-    return ffc_validate_public_key(&dh->params, pub_key, ret);
+    return ossl_ffc_validate_public_key(&dh->params, pub_key, ret);
 }
 
 /*
@@ -245,7 +245,7 @@ int DH_check_pub_key(const DH *dh, const BIGNUM *pub_key, int *ret)
  */
 int dh_check_pub_key_partial(const DH *dh, const BIGNUM *pub_key, int *ret)
 {
-    return ffc_validate_public_key_partial(&dh->params, pub_key, ret);
+    return ossl_ffc_validate_public_key_partial(&dh->params, pub_key, ret);
 }
 
 int dh_check_priv_key(const DH *dh, const BIGNUM *priv_key, int *ret)
@@ -268,7 +268,7 @@ int dh_check_priv_key(const DH *dh, const BIGNUM *priv_key, int *ret)
         if (BN_cmp(two_powN, dh->params.q) < 0)
             upper = two_powN;
     }
-    if (!ffc_validate_private_key(upper, priv_key, ret))
+    if (!ossl_ffc_validate_private_key(upper, priv_key, ret))
         goto err;
 
     ok = 1;
@@ -281,7 +281,7 @@ err:
  * FFC pairwise check from SP800-56A R3.
  *    Section 5.6.2.1.4 Owner Assurance of Pair-wise Consistency
  */
-int dh_check_pairwise(DH *dh)
+int dh_check_pairwise(const DH *dh)
 {
     int ret = 0;
     BN_CTX *ctx = NULL;

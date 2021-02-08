@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2018-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -29,13 +29,14 @@ SKIP: {
                       '-in', srctop_file('test', 'certs', 'sm2.pem'),
                       '-inkey', srctop_file('test', 'certs', 'sm2.key'),
                       '-out', 'sm2.sig', '-rawin',
-                      '-digest', 'sm3', '-pkeyopt', 'sm2_id:someid']))),
+                      '-digest', 'sm3', '-pkeyopt', 'distid:someid']))),
                       "Sign a piece of data using SM2");
-    ok_nofips(run(app(([ 'openssl', 'pkeyutl', '-verify', '-certin',
+    ok_nofips(run(app(([ 'openssl', 'pkeyutl',
+                      '-verify', '-certin',
                       '-in', srctop_file('test', 'certs', 'sm2.pem'),
                       '-inkey', srctop_file('test', 'certs', 'sm2.pem'),
                       '-sigfile', 'sm2.sig', '-rawin',
-                      '-digest', 'sm3', '-pkeyopt', 'sm2_id:someid']))),
+                      '-digest', 'sm3', '-pkeyopt', 'distid:someid']))),
                       "Verify an SM2 signature against a piece of data");
 }
 
@@ -74,8 +75,8 @@ sub tsignverify {
     my $pubkey = shift;
     my @extraopts = @_;
 
-    my $data_to_sign = srctop_file('test', 'README');
-    my $other_data = srctop_file('test', 'README.external');
+    my $data_to_sign = srctop_file('test', 'data.bin');
+    my $other_data = srctop_file('test', 'data2.bin');
     my $sigfile = basename($privkey, '.pem') . '.sig';
 
     my @args = ();

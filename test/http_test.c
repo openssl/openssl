@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright Siemens AG 2020
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -21,20 +21,6 @@ static X509 *x509 = NULL;
 #define PORT   "81"
 #define RPATH  "path/any.crt"
 static const char *rpath;
-
-static X509 *load_pem_cert(const char *file)
-{
-    X509 *cert = NULL;
-    BIO *bio = NULL;
-
-    if (!TEST_ptr(bio = BIO_new(BIO_s_file())))
-        return NULL;
-    if (TEST_int_gt(BIO_read_filename(bio, file), 0))
-        (void)TEST_ptr(cert = PEM_read_bio_X509(bio, NULL, NULL, NULL));
-
-    BIO_free(bio);
-    return cert;
-}
 
 /*
  * pretty trivial HTTP mock server:
@@ -125,14 +111,14 @@ static int test_http_x509(int do_get)
     rcert = (X509 *)
         (do_get ?
          OSSL_HTTP_get_asn1("http://"SERVER":"PORT"/"RPATH,
-                            NULL /* proxy */, NULL /* proxy_port */,
+                            NULL /* proxy */, NULL /* no_proxy */,
                             wbio, rbio, NULL /* bio_update_fn */, NULL,
                             headers, 0 /* maxline */,
                             0 /* max_resp_len */, 0 /* timeout */,
                             "application/x-x509-ca-cert", x509_it)
          :
          OSSL_HTTP_post_asn1(SERVER, PORT, RPATH, 0 /* use_ssl */,
-                             NULL /* proxy */, NULL /* proxy_port */,
+                             NULL /* proxy */, NULL /* no_proxy */,
                              wbio, rbio, NULL /* bio_update_fn */, NULL,
                              headers, "application/x-x509-ca-cert",
                              (ASN1_VALUE *)x509, x509_it, 0 /* maxline */,
@@ -147,6 +133,72 @@ static int test_http_x509(int do_get)
     BIO_free(rbio);
     sk_CONF_VALUE_pop_free(headers, X509V3_conf_free);
     return res;
+}
+
+static int test_http_url_ok(const char *url, const char *exp_host, int exp_ssl)
+{
+    char *host, *port, *path;
+    int num, ssl;
+    int res;
+
+    res = TEST_true(OSSL_HTTP_parse_url(url, &host, &port, &num, &path, &ssl))
+        && TEST_str_eq(host, exp_host)
+        && TEST_str_eq(port, "65535")
+        && TEST_int_eq(num, 65535)
+        && TEST_str_eq(path, "/pkix")
+        && TEST_int_eq(ssl, exp_ssl);
+    OPENSSL_free(host);
+    OPENSSL_free(port);
+    OPENSSL_free(path);
+    return res;
+}
+
+static int test_http_url_dns(void)
+{
+    return test_http_url_ok("server:65535/pkix", "server", 0);
+}
+
+static int test_http_url_ipv4(void)
+{
+    return test_http_url_ok("https://1.2.3.4:65535/pkix", "1.2.3.4", 1);
+}
+
+static int test_http_url_ipv6(void)
+{
+    return test_http_url_ok("http://[FF01::101]:65535/pkix", "FF01::101", 0);
+}
+
+static int test_http_url_invalid(const char *url)
+{
+    char *host = "1", *port = "1", *path = "1";
+    int num = 1, ssl = 1;
+    int res;
+
+    res = TEST_false(OSSL_HTTP_parse_url(url, &host, &port, &num, &path, &ssl))
+        && TEST_ptr_null(host)
+        && TEST_ptr_null(port)
+        && TEST_ptr_null(path);
+    if (!res) {
+        OPENSSL_free(host);
+        OPENSSL_free(port);
+        OPENSSL_free(path);
+    }
+    return res;
+}
+
+static int test_http_url_invalid_prefix(void)
+{
+    return test_http_url_invalid("htttps://1.2.3.4:65535/pkix");
+}
+
+static int test_http_url_invalid_port(void)
+{
+    return test_http_url_invalid("https://1.2.3.4:65536/pkix");
+}
+
+static int test_http_url_invalid_path(void)
+{
+    return test_http_url_invalid("https://[FF01::101]pkix");
 }
 
 static int test_http_get_x509(void)
@@ -172,9 +224,15 @@ int setup_tests(void)
     }
 
     x509_it = ASN1_ITEM_rptr(X509);
-    if (!TEST_ptr((x509 = load_pem_cert(test_get_argument(0)))))
+    if (!TEST_ptr((x509 = load_cert_pem(test_get_argument(0), NULL))))
         return 1;
 
+    ADD_TEST(test_http_url_dns);
+    ADD_TEST(test_http_url_ipv4);
+    ADD_TEST(test_http_url_ipv6);
+    ADD_TEST(test_http_url_invalid_prefix);
+    ADD_TEST(test_http_url_invalid_port);
+    ADD_TEST(test_http_url_invalid_path);
     ADD_TEST(test_http_get_x509);
     ADD_TEST(test_http_post_x509);
     return 1;

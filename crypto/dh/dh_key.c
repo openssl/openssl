@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -18,6 +18,13 @@
 #include "dh_local.h"
 #include "crypto/bn.h"
 #include "crypto/dh.h"
+#include "crypto/security_bits.h"
+
+#ifdef FIPS_MODULE
+# define MIN_STRENGTH 112
+#else
+# define MIN_STRENGTH 80
+#endif
 
 static int generate_key(DH *dh);
 static int dh_bn_mod_exp(const DH *dh, BIGNUM *r,
@@ -32,17 +39,17 @@ static int compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
     BN_MONT_CTX *mont = NULL;
     BIGNUM *tmp;
     int ret = -1;
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     int check_result;
 #endif
 
     if (BN_num_bits(dh->params.p) > OPENSSL_DH_MAX_MODULUS_BITS) {
-        DHerr(0, DH_R_MODULUS_TOO_LARGE);
+        ERR_raise(ERR_LIB_DH, DH_R_MODULUS_TOO_LARGE);
         goto err;
     }
 
     if (BN_num_bits(dh->params.p) < DH_MIN_MODULUS_BITS) {
-        DHerr(0, DH_R_MODULUS_TOO_SMALL);
+        ERR_raise(ERR_LIB_DH, DH_R_MODULUS_TOO_SMALL);
         return 0;
     }
 
@@ -55,7 +62,7 @@ static int compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
         goto err;
 
     if (dh->priv_key == NULL) {
-        DHerr(0, DH_R_NO_PRIVATE_VALUE);
+        ERR_raise(ERR_LIB_DH, DH_R_NO_PRIVATE_VALUE);
         goto err;
     }
 
@@ -67,39 +74,66 @@ static int compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
             goto err;
     }
 /* TODO(3.0) : Solve in a PR related to Key validation for DH */
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     if (!DH_check_pub_key(dh, pub_key, &check_result) || check_result) {
-        DHerr(0, DH_R_INVALID_PUBKEY);
+        ERR_raise(ERR_LIB_DH, DH_R_INVALID_PUBKEY);
         goto err;
     }
 #endif
     if (!dh->meth->bn_mod_exp(dh, tmp, pub_key, dh->priv_key, dh->params.p, ctx,
                               mont)) {
-        DHerr(0, ERR_R_BN_LIB);
+        ERR_raise(ERR_LIB_DH, ERR_R_BN_LIB);
         goto err;
     }
 
-    ret = BN_bn2bin(tmp, key);
+    /* return the padded key, i.e. same number of bytes as the modulus */
+    ret = BN_bn2binpad(tmp, key, BN_num_bytes(dh->params.p));
  err:
     BN_CTX_end(ctx);
     BN_CTX_free(ctx);
     return ret;
 }
 
+/*-
+ * NB: This function is inherently not constant time due to the
+ * RFC 5246 (8.1.2) padding style that strips leading zero bytes.
+ */
 int DH_compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
 {
-#ifdef FIPS_MODE
-    return compute_key(key, pub_key, dh);
+    int ret = 0, i;
+    volatile size_t npad = 0, mask = 1;
+
+    /* compute the key; ret is constant unless compute_key is external */
+#ifdef FIPS_MODULE
+    ret = compute_key(key, pub_key, dh);
 #else
-    return dh->meth->compute_key(key, pub_key, dh);
+    ret = dh->meth->compute_key(key, pub_key, dh);
 #endif
+    if (ret <= 0)
+        return ret;
+
+    /* count leading zero bytes, yet still touch all bytes */
+    for (i = 0; i < ret; i++) {
+        mask &= !key[i];
+        npad += mask;
+    }
+
+    /* unpad key */
+    ret -= npad;
+    /* key-dependent memory access, potentially leaking npad / ret */
+    memmove(key, key + npad, ret);
+    /* key-dependent memory access, potentially leaking npad / ret */
+    memset(key + ret, 0, npad);
+
+    return ret;
 }
 
 int DH_compute_key_padded(unsigned char *key, const BIGNUM *pub_key, DH *dh)
 {
     int rv, pad;
 
-#ifdef FIPS_MODE
+    /* rv is constant unless compute_key is external */
+#ifdef FIPS_MODULE
     rv = compute_key(key, pub_key, dh);
 #else
     rv = dh->meth->compute_key(key, pub_key, dh);
@@ -107,6 +141,7 @@ int DH_compute_key_padded(unsigned char *key, const BIGNUM *pub_key, DH *dh)
     if (rv <= 0)
         return rv;
     pad = BN_num_bytes(dh->params.p) - rv;
+    /* pad is constant (zero) unless compute_key is external */
     if (pad > 0) {
         memmove(key + pad, key, rv);
         memset(key, 0, pad);
@@ -148,7 +183,7 @@ static int dh_bn_mod_exp(const DH *dh, BIGNUM *r,
 static int dh_init(DH *dh)
 {
     dh->flags |= DH_FLAG_CACHE_MONT_P;
-    ffc_params_init(&dh->params);
+    ossl_ffc_params_init(&dh->params);
     dh->dirty_cnt++;
     return 1;
 }
@@ -159,23 +194,23 @@ static int dh_finish(DH *dh)
     return 1;
 }
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
 void DH_set_default_method(const DH_METHOD *meth)
 {
     default_DH_method = meth;
 }
-#endif /* FIPS_MODE */
+#endif /* FIPS_MODULE */
 
 int DH_generate_key(DH *dh)
 {
-#ifdef FIPS_MODE
+#ifdef FIPS_MODULE
     return generate_key(dh);
 #else
     return dh->meth->generate_key(dh);
 #endif
 }
 
-int dh_generate_public_key(BN_CTX *ctx, DH *dh, const BIGNUM *priv_key,
+int dh_generate_public_key(BN_CTX *ctx, const DH *dh, const BIGNUM *priv_key,
                            BIGNUM *pub_key)
 {
     int ret = 0;
@@ -186,8 +221,16 @@ int dh_generate_public_key(BN_CTX *ctx, DH *dh, const BIGNUM *priv_key,
         return 0;
 
     if (dh->flags & DH_FLAG_CACHE_MONT_P) {
-        mont = BN_MONT_CTX_set_locked(&dh->method_mont_p,
-                                      dh->lock, dh->params.p, ctx);
+        /*
+         * We take the input DH as const, but we lie, because in some cases we
+         * want to get a hold of its Montgomery context.
+         *
+         * We cast to remove the const qualifier in this case, it should be
+         * fine...
+         */
+        BN_MONT_CTX **pmont = (BN_MONT_CTX **)&dh->method_mont_p;
+
+        mont = BN_MONT_CTX_set_locked(pmont, dh->lock, dh->params.p, ctx);
         if (mont == NULL)
             goto err;
     }
@@ -207,19 +250,19 @@ static int generate_key(DH *dh)
 {
     int ok = 0;
     int generate_new_key = 0;
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     unsigned l;
 #endif
     BN_CTX *ctx = NULL;
     BIGNUM *pub_key = NULL, *priv_key = NULL;
 
     if (BN_num_bits(dh->params.p) > OPENSSL_DH_MAX_MODULUS_BITS) {
-        DHerr(0, DH_R_MODULUS_TOO_LARGE);
+        ERR_raise(ERR_LIB_DH, DH_R_MODULUS_TOO_LARGE);
         return 0;
     }
 
     if (BN_num_bits(dh->params.p) < DH_MIN_MODULUS_BITS) {
-        DHerr(0, DH_R_MODULUS_TOO_SMALL);
+        ERR_raise(ERR_LIB_DH, DH_R_MODULUS_TOO_SMALL);
         return 0;
     }
 
@@ -246,25 +289,26 @@ static int generate_key(DH *dh)
     if (generate_new_key) {
         /* Is it an approved safe prime ?*/
         if (DH_get_nid(dh) != NID_undef) {
-            /*
-             * The safe prime group code sets N = 2*s
-             * (where s = max security strength supported).
-             * N = dh->length (N = maximum bit length of private key)
-             */
-            if (dh->length == 0
-                || dh->params.q == NULL
+            int max_strength =
+                    ifc_ffc_compute_security_bits(BN_num_bits(dh->params.p));
+
+            if (dh->params.q == NULL
                 || dh->length > BN_num_bits(dh->params.q))
                 goto err;
-            if (!ffc_generate_private_key(ctx, &dh->params, dh->length,
-                                          dh->length / 2, priv_key))
+            /* dh->length = maximum bit length of generated private key */
+            if (!ossl_ffc_generate_private_key(ctx, &dh->params, dh->length,
+                                               max_strength, priv_key))
                 goto err;
         } else {
-#ifdef FIPS_MODE
+#ifdef FIPS_MODULE
             if (dh->params.q == NULL)
                 goto err;
 #else
             if (dh->params.q == NULL) {
-                /* secret exponent length */
+                /* secret exponent length, must satisfy 2^(l-1) <= p */
+                if (dh->length != 0
+                    && dh->length >= BN_num_bits(dh->params.p))
+                    goto err;
                 l = dh->length ? dh->length : BN_num_bits(dh->params.p) - 1;
                 if (!BN_priv_rand_ex(priv_key, l, BN_RAND_TOP_ONE,
                                      BN_RAND_BOTTOM_ANY, ctx))
@@ -282,14 +326,19 @@ static int generate_key(DH *dh)
             } else
 #endif
             {
+                /* Do a partial check for invalid p, q, g */
+                if (!ossl_ffc_params_simple_validate(dh->libctx, &dh->params,
+                                                     FFC_PARAM_TYPE_DH))
+                    goto err;
                 /*
                  * For FFC FIPS 186-4 keygen
                  * security strength s = 112,
                  * Max Private key size N = len(q)
                  */
-                if (!ffc_generate_private_key(ctx, &dh->params,
-                                              BN_num_bits(dh->params.q), 112,
-                                              priv_key))
+                if (!ossl_ffc_generate_private_key(ctx, &dh->params,
+                                                   BN_num_bits(dh->params.q),
+                                                   MIN_STRENGTH,
+                                                   priv_key))
                     goto err;
             }
         }
@@ -304,7 +353,7 @@ static int generate_key(DH *dh)
     ok = 1;
  err:
     if (ok != 1)
-        DHerr(0, ERR_R_BN_LIB);
+        ERR_raise(ERR_LIB_DH, ERR_R_BN_LIB);
 
     if (pub_key != dh->pub_key)
         BN_free(pub_key);
@@ -340,15 +389,15 @@ int dh_buf2key(DH *dh, const unsigned char *buf, size_t len)
         goto err;
     return 1;
 err:
-    DHerr(DH_F_DH_BUF2KEY, err_reason);
+    ERR_raise(ERR_LIB_DH, err_reason);
     BN_free(pubkey);
     return 0;
 }
 
-size_t dh_key2buf(const DH *dh, unsigned char **pbuf_out)
+size_t dh_key2buf(const DH *dh, unsigned char **pbuf_out, size_t size, int alloc)
 {
     const BIGNUM *pubkey;
-    unsigned char *pbuf;
+    unsigned char *pbuf = NULL;
     const BIGNUM *p;
     int p_size;
 
@@ -357,22 +406,32 @@ size_t dh_key2buf(const DH *dh, unsigned char **pbuf_out)
     if (p == NULL || pubkey == NULL
             || (p_size = BN_num_bytes(p)) == 0
             || BN_num_bytes(pubkey) == 0) {
-        DHerr(DH_F_DH_KEY2BUF, DH_R_INVALID_PUBKEY);
+        ERR_raise(ERR_LIB_DH, DH_R_INVALID_PUBKEY);
         return 0;
     }
-    if ((pbuf = OPENSSL_malloc(p_size)) == NULL) {
-        DHerr(DH_F_DH_KEY2BUF, ERR_R_MALLOC_FAILURE);
-        return 0;
+    if (pbuf_out != NULL && (alloc || *pbuf_out != NULL)) {
+        if (!alloc) {
+            if (size >= (size_t)p_size)
+                pbuf = *pbuf_out;
+        } else {
+            pbuf = OPENSSL_malloc(p_size);
+        }
+
+        if (pbuf == NULL) {
+            ERR_raise(ERR_LIB_DH, ERR_R_MALLOC_FAILURE);
+            return 0;
+        }
+        /*
+         * As per Section 4.2.8.1 of RFC 8446 left pad public
+         * key with zeros to the size of p
+         */
+        if (BN_bn2binpad(pubkey, pbuf, p_size) < 0) {
+            if (alloc)
+                OPENSSL_free(pbuf);
+            ERR_raise(ERR_LIB_DH, DH_R_BN_ERROR);
+            return 0;
+        }
+        *pbuf_out = pbuf;
     }
-    /*
-     * As per Section 4.2.8.1 of RFC 8446 left pad public
-     * key with zeros to the size of p
-     */
-    if (BN_bn2binpad(pubkey, pbuf, p_size) < 0) {
-        OPENSSL_free(pbuf);
-        DHerr(DH_F_DH_KEY2BUF, DH_R_BN_ERROR);
-        return 0;
-    }
-    *pbuf_out = pbuf;
     return p_size;
 }

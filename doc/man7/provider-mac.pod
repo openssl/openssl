@@ -8,7 +8,7 @@ provider-mac - The mac library E<lt>-E<gt> provider functions
 
 =for openssl multiple includes
 
- #include <openssl/core_numbers.h>
+ #include <openssl/core_dispatch.h>
  #include <openssl/core_names.h>
 
  /*
@@ -18,24 +18,24 @@ provider-mac - The mac library E<lt>-E<gt> provider functions
   */
 
  /* Context management */
- void *OP_mac_newctx(void *provctx);
- void OP_mac_freectx(void *mctx);
- void *OP_mac_dupctx(void *src);
+ void *OSSL_FUNC_mac_newctx(void *provctx);
+ void OSSL_FUNC_mac_freectx(void *mctx);
+ void *OSSL_FUNC_mac_dupctx(void *src);
 
  /* Encryption/decryption */
- int OP_mac_init(void *mctx);
- int OP_mac_update(void *mctx, const unsigned char *in, size_t inl);
- int OP_mac_final(void *mctx, unsigned char *out, size_t *outl, size_t outsize);
+ int OSSL_FUNC_mac_init(void *mctx);
+ int OSSL_FUNC_mac_update(void *mctx, const unsigned char *in, size_t inl);
+ int OSSL_FUNC_mac_final(void *mctx, unsigned char *out, size_t *outl, size_t outsize);
 
  /* MAC parameter descriptors */
- const OSSL_PARAM *OP_mac_get_params(void);
- const OSSL_PARAM *OP_mac_get_ctx_params(void);
- const OSSL_PARAM *OP_mac_set_ctx_params(void);
+ const OSSL_PARAM *OSSL_FUNC_mac_get_params(void *provctx);
+ const OSSL_PARAM *OSSL_FUNC_mac_get_ctx_params(void *provctx);
+ const OSSL_PARAM *OSSL_FUNC_mac_set_ctx_params(void *provctx);
 
  /* MAC parameters */
- int OP_mac_get_params(OSSL_PARAM params[]);
- int OP_mac_get_ctx_params(void *mctx, OSSL_PARAM params[]);
- int OP_mac_set_ctx_params(void *mctx, const OSSL_PARAM params[]);
+ int OSSL_FUNC_mac_get_params(OSSL_PARAM params[]);
+ int OSSL_FUNC_mac_get_ctx_params(void *mctx, OSSL_PARAM params[]);
+ int OSSL_FUNC_mac_set_ctx_params(void *mctx, const OSSL_PARAM params[]);
 
 =head1 DESCRIPTION
 
@@ -55,69 +55,69 @@ provider_query_operation() function
 All these "functions" have a corresponding function type definition
 named B<OSSL_{name}_fn>, and a helper function to retrieve the
 function pointer from an B<OSSL_DISPATCH> element named
-B<OSSL_get_{name}>.
-For example, the "function" OP_mac_newctx() has these:
+B<OSSL_FUNC_{name}>.
+For example, the "function" OSSL_FUNC_mac_newctx() has these:
 
- typedef void *(OSSL_OP_mac_newctx_fn)(void *provctx);
- static ossl_inline OSSL_OP_mac_newctx_fn
-     OSSL_get_OP_mac_newctx(const OSSL_DISPATCH *opf);
+ typedef void *(OSSL_OSSL_FUNC_mac_newctx_fn)(void *provctx);
+ static ossl_inline OSSL_OSSL_FUNC_mac_newctx_fn
+     OSSL_FUNC_mac_newctx(const OSSL_DISPATCH *opf);
 
 B<OSSL_DISPATCH> arrays are indexed by numbers that are provided as
-macros in L<openssl-core_numbers.h(7)>, as follows:
+macros in L<openssl-core_dispatch.h(7)>, as follows:
 
- OP_mac_newctx               OSSL_FUNC_MAC_NEWCTX
- OP_mac_freectx              OSSL_FUNC_MAC_FREECTX
- OP_mac_dupctx               OSSL_FUNC_MAC_DUPCTX
+ OSSL_FUNC_mac_newctx               OSSL_FUNC_MAC_NEWCTX
+ OSSL_FUNC_mac_freectx              OSSL_FUNC_MAC_FREECTX
+ OSSL_FUNC_mac_dupctx               OSSL_FUNC_MAC_DUPCTX
 
- OP_mac_init                 OSSL_FUNC_MAC_INIT
- OP_mac_update               OSSL_FUNC_MAC_UPDATE
- OP_mac_final                OSSL_FUNC_MAC_FINAL
+ OSSL_FUNC_mac_init                 OSSL_FUNC_MAC_INIT
+ OSSL_FUNC_mac_update               OSSL_FUNC_MAC_UPDATE
+ OSSL_FUNC_mac_final                OSSL_FUNC_MAC_FINAL
 
- OP_mac_get_params           OSSL_FUNC_MAC_GET_PARAMS
- OP_mac_get_ctx_params       OSSL_FUNC_MAC_GET_CTX_PARAMS
- OP_mac_set_ctx_params       OSSL_FUNC_MAC_SET_CTX_PARAMS
+ OSSL_FUNC_mac_get_params           OSSL_FUNC_MAC_GET_PARAMS
+ OSSL_FUNC_mac_get_ctx_params       OSSL_FUNC_MAC_GET_CTX_PARAMS
+ OSSL_FUNC_mac_set_ctx_params       OSSL_FUNC_MAC_SET_CTX_PARAMS
 
- OP_mac_gettable_params      OSSL_FUNC_MAC_GETTABLE_PARAMS
- OP_mac_gettable_ctx_params  OSSL_FUNC_MAC_GETTABLE_CTX_PARAMS
- OP_mac_settable_ctx_params  OSSL_FUNC_MAC_SETTABLE_CTX_PARAMS
+ OSSL_FUNC_mac_gettable_params      OSSL_FUNC_MAC_GETTABLE_PARAMS
+ OSSL_FUNC_mac_gettable_ctx_params  OSSL_FUNC_MAC_GETTABLE_CTX_PARAMS
+ OSSL_FUNC_mac_settable_ctx_params  OSSL_FUNC_MAC_SETTABLE_CTX_PARAMS
 
 A mac algorithm implementation may not implement all of these functions.
 In order to be a consistent set of functions, at least the following functions
-must be implemented: OP_mac_newctx(), OP_mac_freectx(), OP_mac_init(),
-OP_mac_update(), OP_mac_final().
+must be implemented: OSSL_FUNC_mac_newctx(), OSSL_FUNC_mac_freectx(), OSSL_FUNC_mac_init(),
+OSSL_FUNC_mac_update(), OSSL_FUNC_mac_final().
 All other functions are optional.
 
 =head2 Context Management Functions
 
-OP_mac_newctx() should create and return a pointer to a provider side
+OSSL_FUNC_mac_newctx() should create and return a pointer to a provider side
 structure for holding context information during a mac operation.
 A pointer to this context will be passed back in a number of the other mac
 operation function calls.
 The parameter I<provctx> is the provider context generated during provider
 initialisation (see L<provider(7)>).
 
-OP_mac_freectx() is passed a pointer to the provider side mac context in
+OSSL_FUNC_mac_freectx() is passed a pointer to the provider side mac context in
 the I<mctx> parameter.
 If it receives NULL as I<mctx> value, it should not do anything other than
 return.
 This function should free any resources associated with that context.
 
-OP_mac_dupctx() should duplicate the provider side mac context in the
+OSSL_FUNC_mac_dupctx() should duplicate the provider side mac context in the
 I<mctx> parameter and return the duplicate copy.
 
 =head2 Encryption/Decryption Functions
 
-OP_mac_init() initialises a mac operation given a newly created provider
+OSSL_FUNC_mac_init() initialises a mac operation given a newly created provider
 side mac context in the I<mctx> parameter.
 
-OP_mac_update() is called to supply data for MAC computation of a previously
+OSSL_FUNC_mac_update() is called to supply data for MAC computation of a previously
 initialised mac operation.
 The I<mctx> parameter contains a pointer to a previously initialised provider
 side context.
-OP_mac_update() may be called multiple times for a single mac operation.
+OSSL_FUNC_mac_update() may be called multiple times for a single mac operation.
 
-OP_mac_final() completes the MAC computation started through previous
-OP_mac_init() and OP_mac_update() calls.
+OSSL_FUNC_mac_final() completes the MAC computation started through previous
+OSSL_FUNC_mac_init() and OSSL_FUNC_mac_update() calls.
 The I<mctx> parameter contains a pointer to the provider side context.
 The resulting MAC should be written to I<out> and the amount of data written
 to I<*outl>, which should not exceed I<outsize> bytes.
@@ -129,21 +129,21 @@ L<EVP_MAC_final(3)>.
 See L<OSSL_PARAM(3)> for further details on the parameters structure used by
 these functions.
 
-OP_mac_get_params() gets details of parameter values associated with the
+OSSL_FUNC_mac_get_params() gets details of parameter values associated with the
 provider algorithm and stores them in I<params>.
 
-OP_mac_set_ctx_params() sets mac parameters associated with the given
+OSSL_FUNC_mac_set_ctx_params() sets mac parameters associated with the given
 provider side mac context I<mctx> to I<params>.
 Any parameter settings are additional to any that were previously set.
 
-OP_mac_get_ctx_params() gets details of currently set parameter values
+OSSL_FUNC_mac_get_ctx_params() gets details of currently set parameter values
 associated with the given provider side mac context I<mctx> and stores them
 in I<params>.
 
-OP_mac_gettable_params(), OP_mac_gettable_ctx_params(), and
-OP_mac_settable_ctx_params() all return constant B<OSSL_PARAM> arrays
-as descriptors of the parameters that OP_mac_get_params(),
-OP_mac_get_ctx_params(), and OP_mac_set_ctx_params() can handle,
+OSSL_FUNC_mac_gettable_params(), OSSL_FUNC_mac_gettable_ctx_params(), and
+OSSL_FUNC_mac_settable_ctx_params() all return constant B<OSSL_PARAM> arrays
+as descriptors of the parameters that OSSL_FUNC_mac_get_params(),
+OSSL_FUNC_mac_get_ctx_params(), and OSSL_FUNC_mac_set_ctx_params() can handle,
 respectively.
 
 Parameters currently recognised by built-in macs are as follows. Not all
@@ -203,15 +203,15 @@ Allowable sizes are decided within each implementation.
 
 =head1 RETURN VALUES
 
-OP_mac_newctx() and OP_mac_dupctx() should return the newly created
+OSSL_FUNC_mac_newctx() and OSSL_FUNC_mac_dupctx() should return the newly created
 provider side mac context, or NULL on failure.
 
-OP_mac_init(), OP_mac_update(), OP_mac_final(), OP_mac_get_params(),
-OP_mac_get_ctx_params() and OP_mac_set_ctx_params() should return 1 for
+OSSL_FUNC_mac_init(), OSSL_FUNC_mac_update(), OSSL_FUNC_mac_final(), OSSL_FUNC_mac_get_params(),
+OSSL_FUNC_mac_get_ctx_params() and OSSL_FUNC_mac_set_ctx_params() should return 1 for
 success or 0 on error.
 
-OP_mac_gettable_params(), OP_mac_gettable_ctx_params() and
-OP_mac_settable_ctx_params() should return a constant B<OSSL_PARAM>
+OSSL_FUNC_mac_gettable_params(), OSSL_FUNC_mac_gettable_ctx_params() and
+OSSL_FUNC_mac_settable_ctx_params() should return a constant B<OSSL_PARAM>
 array, or NULL if none is offered.
 
 =head1 SEE ALSO
@@ -224,7 +224,7 @@ The provider MAC interface was introduced in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

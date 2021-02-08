@@ -41,7 +41,7 @@ EVP_MAC_CTX_get_params():
 
 =back
 
-The "size" parameter can also be retrieved with with EVP_MAC_size().
+The "size" parameter can also be retrieved with with EVP_MAC_CTX_get_mac_size().
 The length of the "size" parameter should not exceed that of an B<unsigned int>.
 
 =head1 SEE ALSO
@@ -51,7 +51,7 @@ L<EVP_MAC(3)/PARAMETERS>, L<OSSL_PARAM(3)>
 
 =head1 COPYRIGHT
 
-Copyright 2018-2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2018-2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

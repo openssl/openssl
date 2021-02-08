@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -27,7 +27,7 @@ typedef enum OPTION_choice {
     OPT_PSK,
     OPT_SRP,
     OPT_CIPHERSUITES,
-    OPT_V, OPT_UPPER_V, OPT_S
+    OPT_V, OPT_UPPER_V, OPT_S, OPT_PROV_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS ciphers_options[] = {
@@ -67,6 +67,7 @@ const OPTIONS ciphers_options[] = {
 #endif
     {"ciphersuites", OPT_CIPHERSUITES, 's',
      "Configure the TLSv1.3 ciphersuites to use"},
+    OPT_PROV_OPTIONS,
 
     OPT_PARAMETERS(),
     {"cipher", 0, 0, "Cipher string to decode (optional)"},
@@ -169,13 +170,18 @@ int ciphers_main(int argc, char **argv)
         case OPT_CIPHERSUITES:
             ciphersuites = opt_arg();
             break;
+        case OPT_PROV_CASES:
+            if (!opt_provider(o))
+                goto end;
+            break;
         }
     }
+
+    /* Optional arg is cipher name. */
     argv = opt_rest();
     argc = opt_num_rest();
-
     if (argc == 1)
-        ciphers = *argv;
+        ciphers = argv[0];
     else if (argc != 0)
         goto opthelp;
 

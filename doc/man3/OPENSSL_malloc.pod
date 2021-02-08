@@ -48,7 +48,7 @@ OPENSSL_MALLOC_FD
  char *CRYPTO_strndup(const char *p, size_t num, const char *file, int line);
  void *CRYPTO_clear_realloc(void *p, size_t old_len, size_t num,
                             const char *file, int line);
- void CRYPTO_clear_free(void *str, size_t num, const char *, int)
+ void CRYPTO_clear_free(void *str, size_t num, const char *, int);
 
  typedef void *(*CRYPTO_malloc_fn)(size_t num, const char *file, int line);
  typedef void *(*CRYPTO_realloc_fn)(void *addr, size_t num, const char *file,
@@ -73,9 +73,9 @@ Deprecated:
  int CRYPTO_mem_leaks_cb(int (*cb)(const char *str, size_t len, void *u),
                          void *u);
 
- int CRYPTO_set_mem_debug(int onoff)
+ int CRYPTO_set_mem_debug(int onoff);
  int CRYPTO_mem_ctrl(int mode);
- int OPENSSL_mem_debug_push(const char *info)
+ int OPENSSL_mem_debug_push(const char *info);
  int OPENSSL_mem_debug_pop(void);
  int CRYPTO_mem_debug_push(const char *info, const char *file, int line);
  int CRYPTO_mem_debug_pop(void);
@@ -101,7 +101,7 @@ before ultimately calling OPENSSL_free().
 
 OPENSSL_cleanse() fills B<ptr> of size B<len> with a string of 0's.
 Use OPENSSL_cleanse() with care if the memory is a mapping of a file.
-If the storage controller uses write compression, then its possible
+If the storage controller uses write compression, then it's possible
 that sensitive tail bytes will survive zeroization because the block of
 zeros will be compressed. If the storage controller uses wear leveling,
 then the old sensitive data will not be overwritten; rather, a block of
@@ -195,7 +195,7 @@ clang's memory and leak sanitizer.
 
 =head1 COPYRIGHT
 
-Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

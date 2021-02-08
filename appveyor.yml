@@ -1,5 +1,5 @@
 image:
-  - Visual Studio 2017
+    - Visual Studio 2017
 
 platform:
     - x64
@@ -21,8 +21,6 @@ before_build:
     - ps: >-
         Get-VSSetupInstance -All
     - ps: >-
-        gci env:* | sort-object name
-    - ps: >-
         If ($env:Platform -Match "x86") {
             $env:VCVARS_PLATFORM="x86"
             $env:TARGET="VC-WIN32 no-asm --strict-warnings"
@@ -32,30 +30,40 @@ before_build:
         }
     - ps: >-
         If ($env:Configuration -Match "shared") {
-            $env:SHARED="no-makedepend"
+            $env:CONFIG_OPTS=""
         } ElseIf ($env:Configuration -Match "minimal") {
-            $env:SHARED="no-shared no-dso no-makedepend no-aria no-async no-autoload-config no-blake2 no-bf no-camellia no-cast no-chacha no-cmac no-cms no-cmp no-comp no-ct no-des no-dgram no-dh no-dsa no-dtls no-ec2m no-engine no-filenames no-gost no-idea no-ktls no-mdc2 no-md4 no-multiblock no-nextprotoneg no-ocsp no-ocb no-poly1305 no-psk no-rc2 no-rc4 no-rmd160 no-seed no-siphash no-siv no-sm2 no-sm3 no-sm4 no-srp no-srtp no-ssl3 no-ssl3-method no-ts no-ui-console no-whirlpool no-asm -DOPENSSL_SMALL_FOOTPRINT"
+            $env:CONFIG_OPTS="no-bulk no-asm -DOPENSSL_SMALL_FOOTPRINT"
         } Else {
-            $env:SHARED="no-shared no-makedepend"
+            $env:CONFIG_OPTS="no-shared"
         }
     - call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat" %VCVARS_PLATFORM%
     - mkdir _build
     - cd _build
-    - perl ..\Configure %TARGET% %SHARED%
+    - perl ..\Configure %TARGET% no-makedepend %CONFIG_OPTS%
     - perl configdata.pm --dump
     - cd ..
     - ps: >-
-        if (-not $env:APPVEYOR_PULL_REQUEST_NUMBER`
-            -or (&git log -2 | Select-String "\[extended tests\]") ) {
+        If (-not $env:APPVEYOR_PULL_REQUEST_NUMBER`
+            -or (&git log -1 $env:APPVEYOR_PULL_REQUEST_HEAD_COMMIT |
+                 Select-String "\[extended tests\]") ) {
             $env:EXTENDED_TESTS="yes"
         }
+    - ps: >-
+        If ($env:BUILDONLY -or $env:MAKEVERBOSE) {
+            $env:NMAKE="nmake"
+        } Else {
+            $env:NMAKE="nmake /S"
+        }
+    - ps: >-
+        gci env:* | sort-object name
 
 build_script:
     - cd _build
     - ps: >-
         If ($env:Configuration -Match "shared" -or $env:EXTENDED_TESTS) {
-            cmd /c "nmake build_all_generated 2>&1"
-            cmd /c "nmake PERL=no-perl 2>&1"
+            cmd /c "%NMAKE% build_all_generated 2>&1"
+            # Unfortunately, CL=/MP would not have parallelizing effect
+            cmd /c "%NMAKE% PERL=no-perl 2>&1"
         }
     - cd ..
 
@@ -63,15 +71,16 @@ test_script:
     - cd _build
     - ps: >-
         If ($env:Configuration -Match "shared" -or $env:EXTENDED_TESTS) {
+            # Unfortunately, HARNESS_JOBS=4 would not have parallelizing effect
             if ($env:EXTENDED_TESTS) {
-                cmd /c "nmake test HARNESS_VERBOSE_FAILURE=yes 2>&1"
+                cmd /c "%NMAKE% test HARNESS_VERBOSE_FAILURE=yes 2>&1"
             } Else {
-                cmd /c "nmake test HARNESS_VERBOSE_FAILURE=yes TESTS=-test_fuzz 2>&1"
+                cmd /c "%NMAKE% test HARNESS_VERBOSE_FAILURE=yes TESTS=-test_fuzz 2>&1"
             }
         }
     - ps: >-
         if ($env:EXTENDED_TESTS) {
             mkdir ..\_install
-            cmd /c "nmake install DESTDIR=..\_install 2>&1"
+            cmd /c "%NMAKE% install DESTDIR=..\_install 2>&1"
         }
     - cd ..

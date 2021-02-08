@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -35,7 +35,7 @@ DSA_SIG *DSA_SIG_new(void)
 {
     DSA_SIG *sig = OPENSSL_zalloc(sizeof(*sig));
     if (sig == NULL)
-        DSAerr(DSA_F_DSA_SIG_NEW, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_DSA, ERR_R_MALLOC_FAILURE);
     return sig;
 }
 
@@ -65,7 +65,7 @@ DSA_SIG *d2i_DSA_SIG(DSA_SIG **psig, const unsigned char **ppin, long len)
         sig->r = BN_new();
     if (sig->s == NULL)
         sig->s = BN_new();
-    if (decode_der_dsa_sig(sig->r, sig->s, ppin, (size_t)len) == 0) {
+    if (ossl_decode_der_dsa_sig(sig->r, sig->s, ppin, (size_t)len) == 0) {
         if (psig == NULL || *psig == NULL)
             DSA_SIG_free(sig);
         return NULL;
@@ -118,14 +118,16 @@ int i2d_DSA_SIG(const DSA_SIG *sig, unsigned char **ppout)
 
 int DSA_size(const DSA *dsa)
 {
-    int ret;
+    int ret = -1;
     DSA_SIG sig;
 
-    sig.r = sig.s = dsa->params.q;
-    ret = i2d_DSA_SIG(&sig, NULL);
+    if (dsa->params.q != NULL) {
+        sig.r = sig.s = dsa->params.q;
+        ret = i2d_DSA_SIG(&sig, NULL);
 
-    if (ret < 0)
-        ret = 0;
+        if (ret < 0)
+            ret = 0;
+    }
     return ret;
 }
 

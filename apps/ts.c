@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -8,29 +8,26 @@
  */
 
 #include <openssl/opensslconf.h>
-#ifdef OPENSSL_NO_TS
-NON_EMPTY_TRANSLATION_UNIT
-#else
-# include <stdio.h>
-# include <stdlib.h>
-# include <string.h>
-# include "apps.h"
-# include "progs.h"
-# include <openssl/bio.h>
-# include <openssl/err.h>
-# include <openssl/pem.h>
-# include <openssl/rand.h>
-# include <openssl/ts.h>
-# include <openssl/bn.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "apps.h"
+#include "progs.h"
+#include <openssl/bio.h>
+#include <openssl/err.h>
+#include <openssl/pem.h>
+#include <openssl/rand.h>
+#include <openssl/ts.h>
+#include <openssl/bn.h>
 
 /* Request nonce length, in bits (must be a multiple of 8). */
-# define NONCE_LENGTH            64
+#define NONCE_LENGTH            64
 
 /* Name of config entry that defines the OID file. */
-# define ENV_OID_FILE            "oid_file"
+#define ENV_OID_FILE            "oid_file"
 
 /* Is |EXACTLY_ONE| of three pointers set? */
-# define EXACTLY_ONE(a, b, c) \
+#define EXACTLY_ONE(a, b, c) \
         (( a && !b && !c) || \
          ( b && !a && !c) || \
          ( c && !a && !b))
@@ -86,7 +83,7 @@ typedef enum OPTION_choice {
     OPT_IN, OPT_TOKEN_IN, OPT_OUT, OPT_TOKEN_OUT, OPT_TEXT,
     OPT_REPLY, OPT_QUERYFILE, OPT_PASSIN, OPT_INKEY, OPT_SIGNER,
     OPT_CHAIN, OPT_VERIFY, OPT_CAPATH, OPT_CAFILE, OPT_CASTORE, OPT_UNTRUSTED,
-    OPT_MD, OPT_V_ENUM, OPT_R_ENUM
+    OPT_MD, OPT_V_ENUM, OPT_R_ENUM, OPT_PROV_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS ts_options[] = {
@@ -94,14 +91,14 @@ const OPTIONS ts_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"config", OPT_CONFIG, '<', "Configuration file"},
     {"section", OPT_SECTION, 's', "Section to use within config file"},
-# ifndef OPENSSL_NO_ENGINE
+#ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
-# endif
+#endif
     {"inkey", OPT_INKEY, 's', "File with private key for reply"},
     {"signer", OPT_SIGNER, 's', "Signer certificate file"},
     {"chain", OPT_CHAIN, '<', "File with signer CA chain"},
-    {"CApath", OPT_CAPATH, '/', "Path to trusted CA files"},
     {"CAfile", OPT_CAFILE, '<', "File with trusted CA certs"},
+    {"CApath", OPT_CAPATH, '/', "Path to trusted CA files"},
     {"CAstore", OPT_CASTORE, ':', "URI to trusted CA store"},
     {"untrusted", OPT_UNTRUSTED, '<', "File with untrusted certs"},
     {"token_in", OPT_TOKEN_IN, '-', "Input is a PKCS#7 file"},
@@ -127,6 +124,7 @@ const OPTIONS ts_options[] = {
 
     OPT_R_OPTIONS,
     OPT_V_OPTIONS,
+    OPT_PROV_OPTIONS,
     {NULL}
 };
 
@@ -145,11 +143,11 @@ static char* opt_helplist[] = {
     "    [-signer tsa_cert.pem] [-inkey private_key.pem]",
     "    [-chain certs_file.pem] [-tspolicy oid]",
     "    [-in file] [-token_in] [-out file] [-token_out]",
-# ifndef OPENSSL_NO_ENGINE
+#ifndef OPENSSL_NO_ENGINE
     "    [-text] [-engine id]",
-# else
+#else
     "    [-text]",
-# endif
+#endif
     "",
     " openssl ts -verify -CApath dir -CAfile file.pem -CAstore uri",
     "   -untrusted file.pem [-data file] [-digest hexstring]",
@@ -219,6 +217,10 @@ int ts_main(int argc, char **argv)
             if (!opt_rand(o))
                 goto end;
             break;
+        case OPT_PROV_CASES:
+            if (!opt_provider(o))
+                goto end;
+            break;
         case OPT_TSPOLICY:
             policy = opt_arg();
             break;
@@ -284,7 +286,10 @@ int ts_main(int argc, char **argv)
             break;
         }
     }
-    if (mode == OPT_ERR || opt_num_rest() != 0)
+
+    /* No extra arguments. */
+    argc = opt_num_rest();
+    if (argc != 0 || mode == OPT_ERR)
         goto opthelp;
 
     if (mode == OPT_REPLY && passin &&
@@ -694,10 +699,10 @@ static TS_RESP *create_response(CONF *conf, const char *section, const char *eng
         goto end;
     if (!TS_CONF_set_serial(conf, section, serial_cb, resp_ctx))
         goto end;
-# ifndef OPENSSL_NO_ENGINE
+#ifndef OPENSSL_NO_ENGINE
     if (!TS_CONF_set_crypto_device(conf, section, engine))
         goto end;
-# endif
+#endif
     if (!TS_CONF_set_signer_cert(conf, section, signer, resp_ctx))
         goto end;
     if (!TS_CONF_set_certs(conf, section, chain, resp_ctx))
@@ -955,6 +960,8 @@ static X509_STORE *create_cert_store(const char *CApath, const char *CAfile,
 {
     X509_STORE *cert_ctx = NULL;
     X509_LOOKUP *lookup = NULL;
+    OSSL_LIB_CTX *libctx = app_get0_libctx();
+    const char *propq = app_get0_propq();
 
     cert_ctx = X509_STORE_new();
     X509_STORE_set_verify_cb(cert_ctx, verify_cb);
@@ -976,7 +983,8 @@ static X509_STORE *create_cert_store(const char *CApath, const char *CAfile,
             BIO_printf(bio_err, "memory allocation failure\n");
             goto err;
         }
-        if (!X509_LOOKUP_load_file(lookup, CAfile, X509_FILETYPE_PEM)) {
+        if (!X509_LOOKUP_load_file_ex(lookup, CAfile, X509_FILETYPE_PEM, libctx,
+                                      propq)) {
             BIO_printf(bio_err, "Error loading file %s\n", CAfile);
             goto err;
         }
@@ -988,7 +996,7 @@ static X509_STORE *create_cert_store(const char *CApath, const char *CAfile,
             BIO_printf(bio_err, "memory allocation failure\n");
             goto err;
         }
-        if (!X509_LOOKUP_load_store(lookup, CAstore)) {
+        if (!X509_LOOKUP_load_store_ex(lookup, CAstore, libctx, propq)) {
             BIO_printf(bio_err, "Error loading store URI %s\n", CAstore);
             goto err;
         }
@@ -1008,4 +1016,3 @@ static int verify_cb(int ok, X509_STORE_CTX *ctx)
 {
     return ok;
 }
-#endif  /* ndef OPENSSL_NO_TS */

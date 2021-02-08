@@ -1,2 +1,0 @@
-SOURCE[../../libcrypto]=serializer_meth.c serializer_lib.c serializer_pkey.c \
-        serializer_err.c

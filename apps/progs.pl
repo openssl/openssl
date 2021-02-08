@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -92,35 +92,48 @@ EOF
 
     my %cmd_disabler = (
         ciphers  => "sock",
+        genrsa   => "rsa",
+        gendsa   => "dsa",
+        dsaparam => "dsa",
+        gendh    => "dh",
+        dhparam  => "dh",
+        ecparam  => "ec",
         pkcs12   => "des",
     );
     my %cmd_deprecated = (
-        rsa      => [ "3_0", "pkey",      "rsa" ],
-        genrsa   => [ "3_0", "genpkey",   "rsa" ],
-        rsautl   => [ "3_0", "pkeyutl",   "rsa" ],
-        dhparam  => [ "3_0", "pkeyparam", "dh" ],
-        dsaparam => [ "3_0", "pkeyparam", "dsa" ],
-        dsa      => [ "3_0", "pkey",      "dsa" ],
-        gendsa   => [ "3_0", "genpkey",   "dsa" ],
-        ec       => [ "3_0", "pkey",      "ec" ],
-        ecparam  => [ "3_0", "pkeyparam", "ec" ],
+# The format of this table is:
+#   [0] = alternative command to use instead
+#   [1] = deprecented in this version
+#   [2] = preprocessor conditional for exclusing irrespective of deprecation
+#        rsa      => [ "pkey",      "3_0", "rsa" ],
+#        genrsa   => [ "genpkey",   "3_0", "rsa" ],
+        rsautl   => [ "pkeyutl",   "3_0", "rsa" ],
+#        dhparam  => [ "pkeyparam", "3_0", "dh"  ],
+#        dsaparam => [ "pkeyparam", "3_0", "dsa" ],
+#        dsa      => [ "pkey",      "3_0", "dsa" ],
+#        gendsa   => [ "genpkey",   "3_0", "dsa" ],
+#        ec       => [ "pkey",      "3_0", "ec"  ],
+#        ecparam  => [ "pkeyparam", "3_0", "ec"  ],
     );
 
     print "FUNCTION functions[] = {\n";
     foreach my $cmd ( @ARGV ) {
         my $str =
-            "    {FT_general, \"$cmd\", ${cmd}_main, ${cmd}_options, NULL},\n";
+            "    {FT_general, \"$cmd\", ${cmd}_main, ${cmd}_options, NULL, NULL},\n";
         if ($cmd =~ /^s_/) {
             print "#ifndef OPENSSL_NO_SOCK\n${str}#endif\n";
         } elsif (my $deprecated = $cmd_deprecated{$cmd}) {
             my @dep = @{$deprecated};
-            print "#if ";
-            if ($dep[2]) {
-                print "!defined(OPENSSL_NO_" . uc($dep[2]) . ") && ";
+            my $daltprg = $dep[0];
+            my $dver = $dep[1];
+            my $dsys = $dep[2];
+            print "#if !defined(OPENSSL_NO_DEPRECATED_" . $dver . ")";
+            if ($dsys) {
+                print " && !defined(OPENSSL_NO_" . uc($dsys) . ")";
             }
-            print "!defined(OPENSSL_NO_DEPRECATED_" . $dep[0] . ")";
-            my $dalt = "\"" . $dep[1] . "\"";
-            $str =~ s/NULL/$dalt/;
+            $dver =~ s/_/./g;
+            my $dalt = "\"" . $daltprg . "\", \"" . $dver . "\"";
+            $str =~ s/NULL, NULL/$dalt/;
             print "\n${str}#endif\n";
         } elsif (grep { $cmd eq $_ } @disablables) {
             print "#ifndef OPENSSL_NO_" . uc($cmd) . "\n${str}#endif\n";
@@ -137,7 +150,6 @@ EOF
     );
     foreach my $cmd (
         "md2", "md4", "md5",
-        "gost",
         "sha1", "sha224", "sha256", "sha384",
         "sha512", "sha512-224", "sha512-256",
         "sha3-224", "sha3-256", "sha3-384", "sha3-512",

@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -29,7 +29,7 @@ X509_SIG *PKCS8_encrypt(int pbe_nid, const EVP_CIPHER *cipher,
         pbe = PKCS5_pbe_set(pbe_nid, iter, salt, saltlen);
     }
     if (pbe == NULL) {
-        PKCS12err(PKCS12_F_PKCS8_ENCRYPT, ERR_R_ASN1_LIB);
+        ERR_raise(ERR_LIB_PKCS12, ERR_R_ASN1_LIB);
         return NULL;
     }
     p8 = PKCS8_set0_pbe(pass, passlen, p8inf, pbe);
@@ -51,14 +51,14 @@ X509_SIG *PKCS8_set0_pbe(const char *pass, int passlen,
         PKCS12_item_i2d_encrypt(pbe, ASN1_ITEM_rptr(PKCS8_PRIV_KEY_INFO),
                                 pass, passlen, p8inf, 1);
     if (!enckey) {
-        PKCS12err(PKCS12_F_PKCS8_SET0_PBE, PKCS12_R_ENCRYPT_ERROR);
+        ERR_raise(ERR_LIB_PKCS12, PKCS12_R_ENCRYPT_ERROR);
         return NULL;
     }
 
     p8 = OPENSSL_zalloc(sizeof(*p8));
 
     if (p8 == NULL) {
-        PKCS12err(PKCS12_F_PKCS8_SET0_PBE, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PKCS12, ERR_R_MALLOC_FAILURE);
         ASN1_OCTET_STRING_free(enckey);
         return NULL;
     }

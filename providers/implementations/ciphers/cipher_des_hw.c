@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -38,6 +38,16 @@ static int cipher_hw_des_initkey(PROV_CIPHER_CTX *ctx,
     return 1;
 }
 
+static void cipher_hw_des_copyctx(PROV_CIPHER_CTX *dst,
+                                  const PROV_CIPHER_CTX *src)
+{
+    PROV_DES_CTX *sctx = (PROV_DES_CTX *)src;
+    PROV_DES_CTX *dctx = (PROV_DES_CTX *)dst;
+
+    *dctx = *sctx;
+    dst->ks = &dctx->dks.ks;
+}
+
 static int cipher_hw_des_ecb_cipher(PROV_CIPHER_CTX *ctx, unsigned char *out,
                                     const unsigned char *in, size_t len)
 {
@@ -55,7 +65,13 @@ static int cipher_hw_des_ecb_cipher(PROV_CIPHER_CTX *ctx, unsigned char *out,
 static int cipher_hw_des_cbc_cipher(PROV_CIPHER_CTX *ctx, unsigned char *out,
                                     const unsigned char *in, size_t len)
 {
-    DES_key_schedule *key = &(((PROV_DES_CTX *)ctx)->dks.ks);
+    PROV_DES_CTX *dctx = (PROV_DES_CTX *)ctx;
+    DES_key_schedule *key = &(dctx->dks.ks);
+
+    if (dctx->dstream.cbc != NULL) {
+        (*dctx->dstream.cbc) (in, out, len, key, ctx->iv);
+        return 1;
+    }
 
     while (len >= MAXCHUNK) {
         DES_ncbc_encrypt(in, out, MAXCHUNK, key, (DES_cblock *)ctx->iv,
@@ -164,7 +180,8 @@ static int cipher_hw_des_cfb8_cipher(PROV_CIPHER_CTX *ctx, unsigned char *out,
 #define PROV_CIPHER_HW_des_mode(mode)                                          \
 static const PROV_CIPHER_HW des_##mode = {                                     \
     cipher_hw_des_initkey,                                                     \
-    cipher_hw_des_##mode##_cipher                                              \
+    cipher_hw_des_##mode##_cipher,                                             \
+    cipher_hw_des_copyctx                                                      \
 };                                                                             \
 const PROV_CIPHER_HW *PROV_CIPHER_HW_des_##mode(void)                          \
 {                                                                              \

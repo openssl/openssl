@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -11,6 +11,7 @@
 
 #include "prov/ciphercommon.h"
 #include "prov/ciphercommon_ccm.h"
+#include "prov/providercommon.h"
 #include "prov/providercommonerr.h"
 
 static int ccm_cipher_internal(PROV_CCM_CTX *ctx, unsigned char *out,
@@ -21,7 +22,7 @@ static int ccm_tls_init(PROV_CCM_CTX *ctx, unsigned char *aad, size_t alen)
 {
     size_t len;
 
-    if (alen != EVP_AEAD_TLS1_AAD_LEN)
+    if (!ossl_prov_is_running() || alen != EVP_AEAD_TLS1_AAD_LEN)
         return 0;
 
     /* Save the aad for later use. */
@@ -160,11 +161,25 @@ int ccm_get_ctx_params(void *vctx, OSSL_PARAM params[])
 
     p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_IV);
     if (p != NULL) {
-        if (ccm_get_ivlen(ctx) != p->data_size) {
+        if (ccm_get_ivlen(ctx) > p->data_size) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_IVLEN);
             return 0;
         }
-        if (!OSSL_PARAM_set_octet_string(p, ctx->iv, p->data_size)) {
+        if (!OSSL_PARAM_set_octet_string(p, ctx->iv, p->data_size)
+            && !OSSL_PARAM_set_octet_ptr(p, &ctx->iv, p->data_size)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
+            return 0;
+        }
+    }
+
+    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_UPDATED_IV);
+    if (p != NULL) {
+        if (ccm_get_ivlen(ctx) > p->data_size) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_IVLEN);
+            return 0;
+        }
+        if (!OSSL_PARAM_set_octet_string(p, ctx->iv, p->data_size)
+            && !OSSL_PARAM_set_octet_ptr(p, &ctx->iv, p->data_size)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
             return 0;
         }
@@ -205,6 +220,9 @@ static int ccm_init(void *vctx, const unsigned char *key, size_t keylen,
                     const unsigned char *iv, size_t ivlen, int enc)
 {
     PROV_CCM_CTX *ctx = (PROV_CCM_CTX *)vctx;
+
+    if (!ossl_prov_is_running())
+        return 0;
 
     ctx->enc = enc;
 
@@ -262,6 +280,9 @@ int ccm_stream_final(void *vctx, unsigned char *out, size_t *outl,
     PROV_CCM_CTX *ctx = (PROV_CCM_CTX *)vctx;
     int i;
 
+    if (!ossl_prov_is_running())
+        return 0;
+
     i = ccm_cipher_internal(ctx, out, outl, NULL, 0);
     if (i <= 0)
         return 0;
@@ -275,6 +296,9 @@ int ccm_cipher(void *vctx,
                       const unsigned char *in, size_t inl)
 {
     PROV_CCM_CTX *ctx = (PROV_CCM_CTX *)vctx;
+
+    if (!ossl_prov_is_running())
+        return 0;
 
     if (outsize < inl) {
         ERR_raise(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
@@ -306,8 +330,11 @@ static int ccm_tls_cipher(PROV_CCM_CTX *ctx,
     int rv = 0;
     size_t olen = 0;
 
+    if (!ossl_prov_is_running())
+        goto err;
+
     /* Encrypt/decrypt must be performed in place */
-    if (out != in || len < (EVP_CCM_TLS_EXPLICIT_IV_LEN + (size_t)ctx->m))
+    if (in == NULL || out != in || len < EVP_CCM_TLS_EXPLICIT_IV_LEN + ctx->m)
         goto err;
 
     /* If encrypting set explicit IV from sequence number (start of AAD) */

@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2005-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -843,8 +843,8 @@ BIO *BIO_new_dgram_sctp(int fd, int close_flag)
                    sizeof(struct sctp_authchunk));
     if (ret < 0) {
         BIO_vfree(bio);
-        BIOerr(BIO_F_BIO_NEW_DGRAM_SCTP, ERR_R_SYS_LIB);
-        ERR_add_error_data(1, "Ensure SCTP AUTH chunks are enabled in kernel");
+        ERR_raise_data(ERR_LIB_BIO, ERR_R_SYS_LIB,
+                       "Ensure SCTP AUTH chunks are enabled in kernel");
         return NULL;
     }
     auth.sauth_chunk = OPENSSL_SCTP_FORWARD_CUM_TSN_CHUNK_TYPE;
@@ -853,8 +853,8 @@ BIO *BIO_new_dgram_sctp(int fd, int close_flag)
                    sizeof(struct sctp_authchunk));
     if (ret < 0) {
         BIO_vfree(bio);
-        BIOerr(BIO_F_BIO_NEW_DGRAM_SCTP, ERR_R_SYS_LIB);
-        ERR_add_error_data(1, "Ensure SCTP AUTH chunks are enabled in kernel");
+        ERR_raise_data(ERR_LIB_BIO, ERR_R_SYS_LIB,
+                       "Ensure SCTP AUTH chunks are enabled in kernel");
         return NULL;
     }
 
@@ -891,10 +891,9 @@ BIO *BIO_new_dgram_sctp(int fd, int close_flag)
 
     if (!auth_data || !auth_forward) {
         BIO_vfree(bio);
-        BIOerr(BIO_F_BIO_NEW_DGRAM_SCTP, ERR_R_SYS_LIB);
-        ERR_add_error_data(1,
-                           "Ensure SCTP AUTH chunks are enabled on the "
-                           "underlying socket");
+        ERR_raise_data(ERR_LIB_BIO, ERR_R_SYS_LIB,
+                       "Ensure SCTP AUTH chunks are enabled on the "
+                       "underlying socket");
         return NULL;
     }
 
@@ -958,7 +957,7 @@ static int dgram_sctp_new(BIO *bi)
     bi->init = 0;
     bi->num = 0;
     if ((data = OPENSSL_zalloc(sizeof(*data))) == NULL) {
-        BIOerr(BIO_F_DGRAM_SCTP_NEW, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_BIO, ERR_R_MALLOC_FAILURE);
         return 0;
     }
 #  ifdef SCTP_PR_SCTP_NONE
@@ -1196,7 +1195,7 @@ static int dgram_sctp_read(BIO *b, char *out, int outl)
                 (socklen_t) (sizeof(sctp_assoc_t) + 256 * sizeof(uint8_t));
             authchunks = OPENSSL_malloc(optlen);
             if (authchunks == NULL) {
-                BIOerr(BIO_F_DGRAM_SCTP_READ, ERR_R_MALLOC_FAILURE);
+                ERR_raise(ERR_LIB_BIO, ERR_R_MALLOC_FAILURE);
                 return -1;
             }
             memset(authchunks, 0, optlen);
@@ -1216,7 +1215,7 @@ static int dgram_sctp_read(BIO *b, char *out, int outl)
             OPENSSL_free(authchunks);
 
             if (!auth_data || !auth_forward) {
-                BIOerr(BIO_F_DGRAM_SCTP_READ, BIO_R_CONNECT_ERROR);
+                ERR_raise(ERR_LIB_BIO, BIO_R_CONNECT_ERROR);
                 return -1;
             }
 

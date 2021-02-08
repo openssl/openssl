@@ -1,11 +1,14 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+
+/* We need to use some deprecated APIs */
+#define OPENSSL_SUPPRESS_DEPRECATED
 
 /* Required for vmsplice */
 #ifndef _GNU_SOURCE
@@ -678,6 +681,9 @@ static cbc_handles *get_cipher_handle(int nid)
 static const EVP_CIPHER *afalg_aes_cbc(int nid)
 {
     cbc_handles *cipher_handle = get_cipher_handle(nid);
+
+    if (cipher_handle == NULL)
+            return NULL;
     if (cipher_handle->_hidden == NULL
         && ((cipher_handle->_hidden =
          EVP_CIPHER_meth_new(nid,
@@ -845,9 +851,19 @@ void engine_load_afalg_int(void)
     toadd = engine_afalg();
     if (toadd == NULL)
         return;
+    ERR_set_mark();
     ENGINE_add(toadd);
+    /*
+     * If the "add" worked, it gets a structural reference. So either way, we
+     * release our just-created reference.
+     */
     ENGINE_free(toadd);
-    ERR_clear_error();
+    /*
+     * If the "add" didn't work, it was probably a conflict because it was
+     * already added (eg. someone calling ENGINE_load_blah then calling
+     * ENGINE_load_builtin_engines() perhaps).
+     */
+    ERR_pop_to_mark();
 }
 # endif
 

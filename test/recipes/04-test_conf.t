@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2017-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -16,8 +16,8 @@ use File::Compare qw(compare_text);
 setup('test_conf');
 
 my %input_result = (
-    'dollarid_on.conf'  => 'dollarid_on.txt',
-    'dollarid_off.conf' => 'dollarid_off.txt',
+    'dollarid_on.cnf'  => 'dollarid_on.txt',
+    'dollarid_off.cnf' => 'dollarid_off.txt',
 );
 
 plan skip_all => 'This is unsupported for cross compiled configurations'

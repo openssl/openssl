@@ -1,7 +1,6 @@
 $DESASM=des_enc.c fcrypt_b.c
 IF[{- !$disabled{asm} -}]
   $DESASM_x86=des-586.s crypt586.s
-  $DESASM_ia64=ghash-ia64.s
   $DESASM_sparcv9=des_enc-sparc.S fcrypt_b.c dest4-sparcv9.S
   $DESASM_sparcv8=des_enc-sparc.S fcrypt_b.c
 
@@ -14,21 +13,26 @@ IF[{- !$disabled{asm} -}]
 ENDIF
 
 LIBS=../../libcrypto
-$COMMON=set_key.c ecb3_enc.c $DESASM
-SOURCE[../../libcrypto]=$COMMON\
-        ecb_enc.c  cbc_enc.c \
-        cfb64enc.c cfb64ede.c cfb_enc.c \
-        ofb64ede.c ofb64enc.c ofb_enc.c \
-        str2key.c  pcbc_enc.c qud_cksm.c rand_key.c \
-        fcrypt.c xcbc_enc.c cbc_cksm.c
-SOURCE[../../providers/libfips.a]=$COMMON
+$COMMON=set_key.c ecb3_enc.c
+$ALL=$COMMON\
+     ecb_enc.c  cbc_enc.c \
+     cfb64enc.c cfb64ede.c cfb_enc.c \
+     ofb64ede.c ofb64enc.c ofb_enc.c \
+     str2key.c  pcbc_enc.c qud_cksm.c rand_key.c \
+     fcrypt.c xcbc_enc.c cbc_cksm.c
+
+SOURCE[../../libcrypto]=$ALL $DESASM
+SOURCE[../../providers/libfips.a]=$COMMON $DESASM
+SOURCE[../../providers/liblegacy.a]=$DESASM
+
 DEFINE[../../libcrypto]=$DESDEF
 DEFINE[../../providers/libfips.a]=$DESDEF
+DEFINE[../../providers/liblegacy.a]=$DESDEF
 
 # When all deprecated symbols are removed, libcrypto doesn't export the
 # DES functions, so we must include them directly in liblegacy.a
-IF[{- $disabled{'deprecated-3.0'} && !$disabled{"mdc2"} -}]
-  SOURCE[../../providers/liblegacy.a]=set_key.c $DESASM
+IF[{- $disabled{'deprecated-3.0'} && !$disabled{des} -}]
+  SOURCE[../../providers/liblegacy.a]=$ALL
   DEFINE[../../providers/liblegacy.a]=$DESDEF
 ENDIF
 

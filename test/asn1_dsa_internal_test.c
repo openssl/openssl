@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -93,7 +93,7 @@ static int test_decode(void)
 
     /* Positive tests */
     pder = t_dsa_sig;
-    if (decode_der_dsa_sig(r, s, &pder, sizeof(t_dsa_sig)) == 0
+    if (ossl_decode_der_dsa_sig(r, s, &pder, sizeof(t_dsa_sig)) == 0
             || !TEST_ptr_eq(pder, (t_dsa_sig + sizeof(t_dsa_sig)))
             || !TEST_BN_eq_word(r, 1) || !TEST_BN_eq_word(s, 2)) {
         TEST_info("asn1_dsa test_decode: t_dsa_sig failed");
@@ -103,7 +103,7 @@ static int test_decode(void)
     BN_clear(r);
     BN_clear(s);
     pder = t_dsa_sig_extra;
-    if (decode_der_dsa_sig(r, s, &pder, sizeof(t_dsa_sig_extra)) == 0
+    if (ossl_decode_der_dsa_sig(r, s, &pder, sizeof(t_dsa_sig_extra)) == 0
             || !TEST_ptr_eq(pder,
                             (t_dsa_sig_extra + sizeof(t_dsa_sig_extra) - 2))
             || !TEST_BN_eq_word(r, 1) || !TEST_BN_eq_word(s, 2)) {
@@ -114,7 +114,7 @@ static int test_decode(void)
     BN_clear(r);
     BN_clear(s);
     pder = t_dsa_sig_msb;
-    if (decode_der_dsa_sig(r, s, &pder, sizeof(t_dsa_sig_msb)) == 0
+    if (ossl_decode_der_dsa_sig(r, s, &pder, sizeof(t_dsa_sig_msb)) == 0
             || !TEST_ptr_eq(pder, (t_dsa_sig_msb + sizeof(t_dsa_sig_msb)))
             || !TEST_BN_eq_word(r, 0x81) || !TEST_BN_eq_word(s, 0x82)) {
         TEST_info("asn1_dsa test_decode: t_dsa_sig_msb failed");
@@ -124,7 +124,7 @@ static int test_decode(void)
     BN_clear(r);
     BN_clear(s);
     pder = t_dsa_sig_two;
-    if (decode_der_dsa_sig(r, s, &pder, sizeof(t_dsa_sig_two)) == 0
+    if (ossl_decode_der_dsa_sig(r, s, &pder, sizeof(t_dsa_sig_two)) == 0
             || !TEST_ptr_eq(pder, (t_dsa_sig_two + sizeof(t_dsa_sig_two)))
             || !TEST_BN_eq_word(r, 0x100) || !TEST_BN_eq_word(s, 0x200)) {
         TEST_info("asn1_dsa test_decode: t_dsa_sig_two failed");
@@ -133,7 +133,7 @@ static int test_decode(void)
 
     /* Negative tests */
     pder = t_invalid_int_zero;
-    if (decode_der_dsa_sig(r, s, &pder, sizeof(t_invalid_int_zero)) != 0) {
+    if (ossl_decode_der_dsa_sig(r, s, &pder, sizeof(t_invalid_int_zero)) != 0) {
         TEST_info("asn1_dsa test_decode: Expected t_invalid_int_zero to fail");
         goto fail;
     }
@@ -141,7 +141,7 @@ static int test_decode(void)
     BN_clear(r);
     BN_clear(s);
     pder = t_invalid_int;
-    if (decode_der_dsa_sig(r, s, &pder, sizeof(t_invalid_int)) != 0) {
+    if (ossl_decode_der_dsa_sig(r, s, &pder, sizeof(t_invalid_int)) != 0) {
         TEST_info("asn1_dsa test_decode: Expected t_invalid_int to fail");
         goto fail;
     }
@@ -149,7 +149,7 @@ static int test_decode(void)
     BN_clear(r);
     BN_clear(s);
     pder = t_neg_int;
-    if (decode_der_dsa_sig(r, s, &pder, sizeof(t_neg_int)) != 0) {
+    if (ossl_decode_der_dsa_sig(r, s, &pder, sizeof(t_neg_int)) != 0) {
         TEST_info("asn1_dsa test_decode: Expected t_neg_int to fail");
         goto fail;
     }
@@ -157,7 +157,7 @@ static int test_decode(void)
     BN_clear(r);
     BN_clear(s);
     pder = t_trunc_der;
-    if (decode_der_dsa_sig(r, s, &pder, sizeof(t_trunc_der)) != 0) {
+    if (ossl_decode_der_dsa_sig(r, s, &pder, sizeof(t_trunc_der)) != 0) {
         TEST_info("asn1_dsa test_decode: Expected fail t_trunc_der");
         goto fail;
     }
@@ -165,7 +165,7 @@ static int test_decode(void)
     BN_clear(r);
     BN_clear(s);
     pder = t_trunc_seq;
-    if (decode_der_dsa_sig(r, s, &pder, sizeof(t_trunc_seq)) != 0) {
+    if (ossl_decode_der_dsa_sig(r, s, &pder, sizeof(t_trunc_seq)) != 0) {
         TEST_info("asn1_dsa test_decode: Expected fail t_trunc_seq");
         goto fail;
     }

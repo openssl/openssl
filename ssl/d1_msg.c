@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2005-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -19,14 +19,13 @@ int dtls1_write_app_data_bytes(SSL *s, int type, const void *buf_, size_t len,
         if (i < 0)
             return i;
         if (i == 0) {
-            SSLerr(SSL_F_DTLS1_WRITE_APP_DATA_BYTES,
-                   SSL_R_SSL_HANDSHAKE_FAILURE);
+            ERR_raise(ERR_LIB_SSL, SSL_R_SSL_HANDSHAKE_FAILURE);
             return -1;
         }
     }
 
     if (len > SSL3_RT_MAX_PLAIN_LENGTH) {
-        SSLerr(SSL_F_DTLS1_WRITE_APP_DATA_BYTES, SSL_R_DTLS_MESSAGE_TOO_BIG);
+        ERR_raise(ERR_LIB_SSL, SSL_R_DTLS_MESSAGE_TOO_BIG);
         return -1;
     }
 

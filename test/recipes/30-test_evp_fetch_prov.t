@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -21,11 +21,9 @@ use lib bldtop_dir('.');
 use platform;
 
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
+my $infile = bldtop_file('providers', platform->dso('fips'));
 
 my @types = ( "digest", "cipher" );
-
-$ENV{OPENSSL_MODULES} = bldtop_dir("providers");
-$ENV{OPENSSL_CONF_INCLUDE} = bldtop_dir("providers");
 
 my @setups = ();
 my @testdata = (
@@ -48,11 +46,8 @@ my @testdata = (
 unless ($no_fips) {
     push @setups, {
         cmd     => app(['openssl', 'fipsinstall',
-                        '-out', bldtop_file('providers', 'fipsinstall.conf'),
-                        '-module', bldtop_file('providers', platform->dso('fips')),
-                        '-provider_name', 'fips', '-mac_name', 'HMAC',
-                        '-macopt', 'digest:SHA256', '-macopt', 'hexkey:00',
-                        '-section_name', 'fips_sect']),
+                        '-out', bldtop_file('providers', 'fipsmodule.cnf'),
+                        '-module', $infile]),
         message => "fipsinstall"
     };
     push @testdata, (
@@ -121,7 +116,7 @@ foreach my $setup (@setups) {
 
 foreach my $alg (@types) {
     foreach my $testcase (@testdata) {
-        $ENV{OPENSSL_CONF} = $testcase->{config};
+        $ENV{OPENSSL_CONF} = "";
         foreach my $test (@{$testcase->{tests}}) {
             my @testproviders =
                 @{ $test->{providers} // $testcase->{providers} };
@@ -137,6 +132,7 @@ foreach my $alg (@types) {
                 "running evp_fetch_prov_test with $alg$testprovstr$testmsg";
 
             ok(run(test(["evp_fetch_prov_test", "-type", "$alg",
+                         "-config", "$testcase->{config}",
                          @testargs, @testproviders])),
                $message);
         }

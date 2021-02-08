@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -58,7 +58,7 @@ static int do_encrypt(unsigned char *iv_gen, unsigned char *ct, int *ct_len,
           && TEST_true(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, 16,
                                            tag) > 0)
           && TEST_true(iv_gen == NULL
-                  || EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GET_IV, 12, iv_gen) > 0);
+                  || EVP_CIPHER_CTX_get_original_iv(ctx, iv_gen, 12));
     EVP_CIPHER_CTX_free(ctx);
     return ret;
 }
@@ -116,7 +116,7 @@ static int badkeylen_test(void)
     return ret;
 }
 
-#ifdef FIPS_MODE
+#ifdef FIPS_MODULE
 static int ivgen_test(void)
 {
     unsigned char iv_gen[16];
@@ -127,14 +127,14 @@ static int ivgen_test(void)
     return do_encrypt(iv_gen, ct, &ctlen, tag, &taglen)
            && do_decrypt(iv_gen, ct, ctlen, tag, taglen);
 }
-#endif /* FIPS_MODE */
+#endif /* FIPS_MODULE */
 
 int setup_tests(void)
 {
     ADD_TEST(kat_test);
     ADD_TEST(badkeylen_test);
-#ifdef FIPS_MODE
+#ifdef FIPS_MODULE
     ADD_TEST(ivgen_test);
-#endif /* FIPS_MODE */
+#endif /* FIPS_MODULE */
     return 1;
 }

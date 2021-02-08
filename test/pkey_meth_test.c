@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -8,6 +8,9 @@
  */
 
 /* Internal tests for EVP_PKEY method ordering */
+
+/* We need to use some deprecated APIs */
+#define OPENSSL_SUPPRESS_DEPRECATED
 
 #include <stdio.h>
 #include <string.h>
@@ -47,6 +50,7 @@ static int test_asn1_meths(void)
     return good;
 }
 
+#ifndef OPENSSL_NO_DEPRECATED_3_0
 /* Test of EVP_PKEY_METHOD ordering */
 static int test_pkey_meths(void)
 {
@@ -74,10 +78,13 @@ static int test_pkey_meths(void)
     }
     return good;
 }
+#endif
 
 int setup_tests(void)
 {
     ADD_TEST(test_asn1_meths);
+#ifndef OPENSSL_NO_DEPRECATED_3_0
     ADD_TEST(test_pkey_meths);
+#endif
     return 1;
 }

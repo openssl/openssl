@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2019, Oracle and/or its affiliates.  All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -57,22 +57,23 @@ static void property_defns_free(void *vproperty_defns)
     }
 }
 
-static void *property_defns_new(OPENSSL_CTX *ctx) {
+static void *property_defns_new(OSSL_LIB_CTX *ctx) {
     return lh_PROPERTY_DEFN_ELEM_new(&property_defn_hash, &property_defn_cmp);
 }
 
-static const OPENSSL_CTX_METHOD property_defns_method = {
+static const OSSL_LIB_CTX_METHOD property_defns_method = {
     property_defns_new,
     property_defns_free,
 };
 
-OSSL_PROPERTY_LIST *ossl_prop_defn_get(OPENSSL_CTX *ctx, const char *prop)
+OSSL_PROPERTY_LIST *ossl_prop_defn_get(OSSL_LIB_CTX *ctx, const char *prop)
 {
     PROPERTY_DEFN_ELEM elem, *r;
     LHASH_OF(PROPERTY_DEFN_ELEM) *property_defns;
 
-    property_defns = openssl_ctx_get_data(ctx, OPENSSL_CTX_PROPERTY_DEFN_INDEX,
-                                          &property_defns_method);
+    property_defns = ossl_lib_ctx_get_data(ctx,
+                                           OSSL_LIB_CTX_PROPERTY_DEFN_INDEX,
+                                           &property_defns_method);
     if (property_defns == NULL)
         return NULL;
 
@@ -81,15 +82,16 @@ OSSL_PROPERTY_LIST *ossl_prop_defn_get(OPENSSL_CTX *ctx, const char *prop)
     return r != NULL ? r->defn : NULL;
 }
 
-int ossl_prop_defn_set(OPENSSL_CTX *ctx, const char *prop,
+int ossl_prop_defn_set(OSSL_LIB_CTX *ctx, const char *prop,
                        OSSL_PROPERTY_LIST *pl)
 {
     PROPERTY_DEFN_ELEM elem, *old, *p = NULL;
     size_t len;
     LHASH_OF(PROPERTY_DEFN_ELEM) *property_defns;
 
-    property_defns = openssl_ctx_get_data(ctx, OPENSSL_CTX_PROPERTY_DEFN_INDEX,
-                                          &property_defns_method);
+    property_defns = ossl_lib_ctx_get_data(ctx,
+                                           OSSL_LIB_CTX_PROPERTY_DEFN_INDEX,
+                                           &property_defns_method);
     if (property_defns == NULL)
         return 0;
 

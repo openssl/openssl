@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2007-2020 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright Nokia 2007-2019
  * Copyright Siemens AG 2015-2019
  *
@@ -17,7 +17,6 @@
 
 #  include <openssl/macros.h>
 #  include <openssl/trace.h>
-#  include <openssl/x509.h>
 
 #  ifdef __cplusplus
 extern "C" {
@@ -39,16 +38,18 @@ typedef int OSSL_CMP_severity;
 #  define OSSL_CMP_LOG_NOTICE  5
 #  define OSSL_CMP_LOG_INFO    6
 #  define OSSL_CMP_LOG_DEBUG   7
-typedef int (*OSSL_cmp_log_cb_t)(const char *func, const char *file, int line,
+#  define OSSL_CMP_LOG_TRACE   8
+#  define OSSL_CMP_LOG_MAX     OSSL_CMP_LOG_TRACE
+typedef int (*OSSL_CMP_log_cb_t)(const char *func, const char *file, int line,
                                  OSSL_CMP_severity level, const char *msg);
 
 int OSSL_CMP_print_to_bio(BIO *bio, const char *component, const char *file,
                           int line, OSSL_CMP_severity level, const char *msg);
 /* use of the logging callback for outputting error queue */
-void OSSL_CMP_print_errors_cb(OSSL_cmp_log_cb_t log_fn);
+void OSSL_CMP_print_errors_cb(OSSL_CMP_log_cb_t log_fn);
 
 #  ifdef  __cplusplus
 }
 #  endif
-# endif /* !defined OPENSSL_NO_CMP */
-#endif /* !defined OPENSSL_CMP_UTIL_H */
+# endif /* !defined(OPENSSL_NO_CMP) */
+#endif /* !defined(OPENSSL_CMP_UTIL_H) */

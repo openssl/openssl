@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -8,44 +8,38 @@
  */
 
 #include "crypto/cryptlib.h"
+#include <openssl/conf.h>
 #include "internal/thread_once.h"
 #include "internal/property.h"
 
-struct openssl_ctx_onfree_list_st {
-    openssl_ctx_onfree_fn *fn;
-    struct openssl_ctx_onfree_list_st *next;
+struct ossl_lib_ctx_onfree_list_st {
+    ossl_lib_ctx_onfree_fn *fn;
+    struct ossl_lib_ctx_onfree_list_st *next;
 };
 
-struct openssl_ctx_st {
+struct ossl_lib_ctx_st {
     CRYPTO_RWLOCK *lock;
     CRYPTO_EX_DATA data;
 
     /*
-     * For most data in the OPENSSL_CTX we just use ex_data to store it. But
+     * For most data in the OSSL_LIB_CTX we just use ex_data to store it. But
      * that doesn't work for ex_data itself - so we store that directly.
      */
     OSSL_EX_DATA_GLOBAL global;
 
     /* Map internal static indexes to dynamically created indexes */
-    int dyn_indexes[OPENSSL_CTX_MAX_INDEXES];
+    int dyn_indexes[OSSL_LIB_CTX_MAX_INDEXES];
 
     /* Keep a separate lock for each index */
-    CRYPTO_RWLOCK *index_locks[OPENSSL_CTX_MAX_INDEXES];
+    CRYPTO_RWLOCK *index_locks[OSSL_LIB_CTX_MAX_INDEXES];
 
     CRYPTO_RWLOCK *oncelock;
-    int run_once_done[OPENSSL_CTX_MAX_RUN_ONCE];
-    int run_once_ret[OPENSSL_CTX_MAX_RUN_ONCE];
-    struct openssl_ctx_onfree_list_st *onfreelist;
+    int run_once_done[OSSL_LIB_CTX_MAX_RUN_ONCE];
+    int run_once_ret[OSSL_LIB_CTX_MAX_RUN_ONCE];
+    struct ossl_lib_ctx_onfree_list_st *onfreelist;
 };
 
-#ifndef FIPS_MODE
-static OPENSSL_CTX default_context_int;
-
-/* Always points at default_context_int if it has been initialised */
-static OPENSSL_CTX *default_context = NULL;
-#endif
-
-static int context_init(OPENSSL_CTX *ctx)
+static int context_init(OSSL_LIB_CTX *ctx)
 {
     size_t i;
     int exdata_done = 0;
@@ -58,19 +52,19 @@ static int context_init(OPENSSL_CTX *ctx)
     if (ctx->oncelock == NULL)
         goto err;
 
-    for (i = 0; i < OPENSSL_CTX_MAX_INDEXES; i++) {
+    for (i = 0; i < OSSL_LIB_CTX_MAX_INDEXES; i++) {
         ctx->index_locks[i] = CRYPTO_THREAD_lock_new();
         ctx->dyn_indexes[i] = -1;
         if (ctx->index_locks[i] == NULL)
             goto err;
     }
 
-    /* OPENSSL_CTX is built on top of ex_data so we initialise that directly */
+    /* OSSL_LIB_CTX is built on top of ex_data so we initialise that directly */
     if (!do_ex_data_init(ctx))
         goto err;
     exdata_done = 1;
 
-    if (!crypto_new_ex_data_ex(ctx, CRYPTO_EX_INDEX_OPENSSL_CTX, NULL,
+    if (!crypto_new_ex_data_ex(ctx, CRYPTO_EX_INDEX_OSSL_LIB_CTX, NULL,
                                &ctx->data)) {
         crypto_cleanup_all_ex_data_int(ctx);
         goto err;
@@ -90,9 +84,9 @@ static int context_init(OPENSSL_CTX *ctx)
     return 0;
 }
 
-static int context_deinit(OPENSSL_CTX *ctx)
+static int context_deinit(OSSL_LIB_CTX *ctx)
 {
-    struct openssl_ctx_onfree_list_st *tmp, *onfree;
+    struct ossl_lib_ctx_onfree_list_st *tmp, *onfree;
     int i;
 
     if (ctx == NULL)
@@ -107,9 +101,9 @@ static int context_deinit(OPENSSL_CTX *ctx)
         onfree = onfree->next;
         OPENSSL_free(tmp);
     }
-    CRYPTO_free_ex_data(CRYPTO_EX_INDEX_OPENSSL_CTX, NULL, &ctx->data);
+    CRYPTO_free_ex_data(CRYPTO_EX_INDEX_OSSL_LIB_CTX, NULL, &ctx->data);
     crypto_cleanup_all_ex_data_int(ctx);
-    for (i = 0; i < OPENSSL_CTX_MAX_INDEXES; i++)
+    for (i = 0; i < OSSL_LIB_CTX_MAX_INDEXES; i++)
         CRYPTO_THREAD_lock_free(ctx->index_locks[i]);
 
     CRYPTO_THREAD_lock_free(ctx->oncelock);
@@ -118,85 +112,154 @@ static int context_deinit(OPENSSL_CTX *ctx)
     return 1;
 }
 
-#ifndef FIPS_MODE
-void openssl_ctx_default_deinit(void)
-{
-    context_deinit(default_context);
-}
+#ifndef FIPS_MODULE
+/* The default default context */
+static OSSL_LIB_CTX default_context_int;
 
 static CRYPTO_ONCE default_context_init = CRYPTO_ONCE_STATIC_INIT;
-DEFINE_RUN_ONCE_STATIC(do_default_context_init)
-{
-    if (context_init(&default_context_int))
-        default_context = &default_context_int;
+static CRYPTO_THREAD_LOCAL default_context_thread_local;
 
-    return 1;
+DEFINE_RUN_ONCE_STATIC(default_context_do_init)
+{
+    return CRYPTO_THREAD_init_local(&default_context_thread_local, NULL)
+        && context_init(&default_context_int);
+}
+
+void ossl_lib_ctx_default_deinit(void)
+{
+    context_deinit(&default_context_int);
+}
+
+static OSSL_LIB_CTX *get_thread_default_context(void)
+{
+    if (!RUN_ONCE(&default_context_init, default_context_do_init))
+        return NULL;
+
+    return CRYPTO_THREAD_get_local(&default_context_thread_local);
+}
+
+static OSSL_LIB_CTX *get_default_context(void)
+{
+    OSSL_LIB_CTX *current_defctx = get_thread_default_context();
+
+    if (current_defctx == NULL)
+        current_defctx = &default_context_int;
+    return current_defctx;
+}
+
+static int set_default_context(OSSL_LIB_CTX *defctx)
+{
+    if (defctx == &default_context_int)
+        defctx = NULL;
+
+    return CRYPTO_THREAD_set_local(&default_context_thread_local, defctx);
 }
 #endif
 
-OPENSSL_CTX *OPENSSL_CTX_new(void)
+OSSL_LIB_CTX *OSSL_LIB_CTX_new(void)
 {
-    OPENSSL_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
+    OSSL_LIB_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
 
     if (ctx != NULL && !context_init(ctx)) {
-        OPENSSL_CTX_free(ctx);
+        OSSL_LIB_CTX_free(ctx);
         ctx = NULL;
     }
     return ctx;
 }
 
-void OPENSSL_CTX_free(OPENSSL_CTX *ctx)
+#ifndef FIPS_MODULE
+int OSSL_LIB_CTX_load_config(OSSL_LIB_CTX *ctx, const char *config_file)
 {
-    if (ctx != NULL)
-        context_deinit(ctx);
+    return CONF_modules_load_file_ex(ctx, config_file, NULL, 0) > 0;
+}
+#endif
+
+void OSSL_LIB_CTX_free(OSSL_LIB_CTX *ctx)
+{
+    if (ossl_lib_ctx_is_default(ctx))
+        return;
+
+    context_deinit(ctx);
     OPENSSL_free(ctx);
 }
 
-OPENSSL_CTX *openssl_ctx_get_concrete(OPENSSL_CTX *ctx)
+OSSL_LIB_CTX *OSSL_LIB_CTX_set0_default(OSSL_LIB_CTX *libctx)
 {
-#ifndef FIPS_MODE
-    if (ctx == NULL) {
-        if (!RUN_ONCE(&default_context_init, do_default_context_init))
-            return 0;
-        return default_context;
-    }
+#ifndef FIPS_MODULE
+    OSSL_LIB_CTX *current_defctx;
+
+    if ((current_defctx = get_default_context()) != NULL
+        && set_default_context(libctx))
+        return current_defctx;
+#endif
+
+    return NULL;
+}
+
+OSSL_LIB_CTX *ossl_lib_ctx_get_concrete(OSSL_LIB_CTX *ctx)
+{
+#ifndef FIPS_MODULE
+    if (ctx == NULL)
+        return get_default_context();
 #endif
     return ctx;
 }
 
-static void openssl_ctx_generic_new(void *parent_ign, void *ptr_ign,
-                                    CRYPTO_EX_DATA *ad, int index,
-                                    long argl_ign, void *argp)
+int ossl_lib_ctx_is_default(OSSL_LIB_CTX *ctx)
 {
-    const OPENSSL_CTX_METHOD *meth = argp;
-    void *ptr = meth->new_func(crypto_ex_data_get_openssl_ctx(ad));
-
-    if (ptr != NULL)
-        CRYPTO_set_ex_data(ad, index, ptr);
+#ifndef FIPS_MODULE
+    if (ctx == NULL || ctx == get_default_context())
+        return 1;
+#endif
+    return 0;
 }
-static void openssl_ctx_generic_free(void *parent_ign, void *ptr,
+
+int ossl_lib_ctx_is_global_default(OSSL_LIB_CTX *ctx)
+{
+#ifndef FIPS_MODULE
+    if (ossl_lib_ctx_get_concrete(ctx) == &default_context_int)
+        return 1;
+#endif
+    return 0;
+}
+
+static void ossl_lib_ctx_generic_new(void *parent_ign, void *ptr_ign,
                                      CRYPTO_EX_DATA *ad, int index,
                                      long argl_ign, void *argp)
 {
-    const OPENSSL_CTX_METHOD *meth = argp;
+    const OSSL_LIB_CTX_METHOD *meth = argp;
+    OSSL_LIB_CTX *ctx = crypto_ex_data_get_ossl_lib_ctx(ad);
+    void *ptr = meth->new_func(ctx);
+
+    if (ptr != NULL) {
+        CRYPTO_THREAD_write_lock(ctx->lock);
+        CRYPTO_set_ex_data(ad, index, ptr);
+        CRYPTO_THREAD_unlock(ctx->lock);
+    }
+}
+static void ossl_lib_ctx_generic_free(void *parent_ign, void *ptr,
+                                      CRYPTO_EX_DATA *ad, int index,
+                                      long argl_ign, void *argp)
+{
+    const OSSL_LIB_CTX_METHOD *meth = argp;
 
     meth->free_func(ptr);
 }
 
 /* Non-static so we can use it in context_internal_test */
-static int openssl_ctx_init_index(OPENSSL_CTX *ctx, int static_index,
-                                  const OPENSSL_CTX_METHOD *meth)
+static int ossl_lib_ctx_init_index(OSSL_LIB_CTX *ctx, int static_index,
+                                   const OSSL_LIB_CTX_METHOD *meth)
 {
     int idx;
 
-    ctx = openssl_ctx_get_concrete(ctx);
+    ctx = ossl_lib_ctx_get_concrete(ctx);
     if (ctx == NULL)
         return 0;
 
-    idx = crypto_get_ex_new_index_ex(ctx, CRYPTO_EX_INDEX_OPENSSL_CTX, 0,
+    idx = crypto_get_ex_new_index_ex(ctx, CRYPTO_EX_INDEX_OSSL_LIB_CTX, 0,
                                      (void *)meth,
-                                     openssl_ctx_generic_new,
-                                     NULL, openssl_ctx_generic_free);
+                                     ossl_lib_ctx_generic_new,
+                                     NULL, ossl_lib_ctx_generic_free);
     if (idx < 0)
         return 0;
 
@@ -204,13 +267,13 @@ static int openssl_ctx_init_index(OPENSSL_CTX *ctx, int static_index,
     return 1;
 }
 
-void *openssl_ctx_get_data(OPENSSL_CTX *ctx, int index,
-                           const OPENSSL_CTX_METHOD *meth)
+void *ossl_lib_ctx_get_data(OSSL_LIB_CTX *ctx, int index,
+                            const OSSL_LIB_CTX_METHOD *meth)
 {
     void *data = NULL;
     int dynidx;
 
-    ctx = openssl_ctx_get_concrete(ctx);
+    ctx = ossl_lib_ctx_get_concrete(ctx);
     if (ctx == NULL)
         return NULL;
 
@@ -220,7 +283,9 @@ void *openssl_ctx_get_data(OPENSSL_CTX *ctx, int index,
 
     if (dynidx != -1) {
         CRYPTO_THREAD_read_lock(ctx->index_locks[index]);
+        CRYPTO_THREAD_read_lock(ctx->lock);
         data = CRYPTO_get_ex_data(&ctx->data, dynidx);
+        CRYPTO_THREAD_unlock(ctx->lock);
         CRYPTO_THREAD_unlock(ctx->index_locks[index]);
         return data;
     }
@@ -230,13 +295,13 @@ void *openssl_ctx_get_data(OPENSSL_CTX *ctx, int index,
 
     dynidx = ctx->dyn_indexes[index];
     if (dynidx != -1) {
-        CRYPTO_THREAD_unlock(ctx->lock);
         data = CRYPTO_get_ex_data(&ctx->data, dynidx);
+        CRYPTO_THREAD_unlock(ctx->lock);
         CRYPTO_THREAD_unlock(ctx->index_locks[index]);
         return data;
     }
 
-    if (!openssl_ctx_init_index(ctx, index, meth)) {
+    if (!ossl_lib_ctx_init_index(ctx, index, meth)) {
         CRYPTO_THREAD_unlock(ctx->lock);
         CRYPTO_THREAD_unlock(ctx->index_locks[index]);
         return NULL;
@@ -244,30 +309,42 @@ void *openssl_ctx_get_data(OPENSSL_CTX *ctx, int index,
 
     CRYPTO_THREAD_unlock(ctx->lock);
 
-    /* The alloc call ensures there's a value there */
-    if (CRYPTO_alloc_ex_data(CRYPTO_EX_INDEX_OPENSSL_CTX, NULL,
-                             &ctx->data, ctx->dyn_indexes[index]))
+    /*
+     * The alloc call ensures there's a value there. We release the ctx->lock
+     * for this, because the allocation itself may recursively call
+     * ossl_lib_ctx_get_data for other indexes (never this one). The allocation
+     * will itself aquire the ctx->lock when it actually comes to store the
+     * allocated data (see ossl_lib_ctx_generic_new() above). We call
+     * ossl_crypto_alloc_ex_data_intern() here instead of CRYPTO_alloc_ex_data().
+     * They do the same thing except that the latter calls CRYPTO_get_ex_data()
+     * as well - which we must not do without holding the ctx->lock.
+     */
+    if (ossl_crypto_alloc_ex_data_intern(CRYPTO_EX_INDEX_OSSL_LIB_CTX, NULL,
+                                         &ctx->data, ctx->dyn_indexes[index])) {
+        CRYPTO_THREAD_read_lock(ctx->lock);
         data = CRYPTO_get_ex_data(&ctx->data, ctx->dyn_indexes[index]);
+        CRYPTO_THREAD_unlock(ctx->lock);
+    }
 
     CRYPTO_THREAD_unlock(ctx->index_locks[index]);
 
     return data;
 }
 
-OSSL_EX_DATA_GLOBAL *openssl_ctx_get_ex_data_global(OPENSSL_CTX *ctx)
+OSSL_EX_DATA_GLOBAL *ossl_lib_ctx_get_ex_data_global(OSSL_LIB_CTX *ctx)
 {
-    ctx = openssl_ctx_get_concrete(ctx);
+    ctx = ossl_lib_ctx_get_concrete(ctx);
     if (ctx == NULL)
         return NULL;
     return &ctx->global;
 }
 
-int openssl_ctx_run_once(OPENSSL_CTX *ctx, unsigned int idx,
-                         openssl_ctx_run_once_fn run_once_fn)
+int ossl_lib_ctx_run_once(OSSL_LIB_CTX *ctx, unsigned int idx,
+                          ossl_lib_ctx_run_once_fn run_once_fn)
 {
     int done = 0, ret = 0;
 
-    ctx = openssl_ctx_get_concrete(ctx);
+    ctx = ossl_lib_ctx_get_concrete(ctx);
     if (ctx == NULL)
         return 0;
 
@@ -295,9 +372,9 @@ int openssl_ctx_run_once(OPENSSL_CTX *ctx, unsigned int idx,
     return ret;
 }
 
-int openssl_ctx_onfree(OPENSSL_CTX *ctx, openssl_ctx_onfree_fn onfreefn)
+int ossl_lib_ctx_onfree(OSSL_LIB_CTX *ctx, ossl_lib_ctx_onfree_fn onfreefn)
 {
-    struct openssl_ctx_onfree_list_st *newonfree
+    struct ossl_lib_ctx_onfree_list_st *newonfree
         = OPENSSL_malloc(sizeof(*newonfree));
 
     if (newonfree == NULL)
@@ -308,4 +385,17 @@ int openssl_ctx_onfree(OPENSSL_CTX *ctx, openssl_ctx_onfree_fn onfreefn)
     ctx->onfreelist = newonfree;
 
     return 1;
+}
+
+const char *ossl_lib_ctx_get_descriptor(OSSL_LIB_CTX *libctx)
+{
+#ifdef FIPS_MODULE
+    return "FIPS internal library context";
+#else
+    if (ossl_lib_ctx_is_global_default(libctx))
+        return "Global default library context";
+    if (ossl_lib_ctx_is_default(libctx))
+        return "Thread-local default library context";
+    return "Non-default library context";
+#endif
 }

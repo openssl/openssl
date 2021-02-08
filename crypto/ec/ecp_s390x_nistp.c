@@ -1,11 +1,17 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+
+/*
+ * EC_METHOD low level APIs are deprecated for public use, but still ok for
+ * internal use.
+ */
+#include "internal/deprecated.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -134,27 +140,26 @@ static ECDSA_SIG *ecdsa_s390x_nistp_sign_sig(const unsigned char *dgst,
     group = EC_KEY_get0_group(eckey);
     privkey = EC_KEY_get0_private_key(eckey);
     if (group == NULL || privkey == NULL) {
-        ECerr(EC_F_ECDSA_S390X_NISTP_SIGN_SIG, EC_R_MISSING_PARAMETERS);
+        ERR_raise(ERR_LIB_EC, EC_R_MISSING_PARAMETERS);
         return NULL;
     }
 
     if (!EC_KEY_can_sign(eckey)) {
-        ECerr(EC_F_ECDSA_S390X_NISTP_SIGN_SIG,
-              EC_R_CURVE_DOES_NOT_SUPPORT_SIGNING);
+        ERR_raise(ERR_LIB_EC, EC_R_CURVE_DOES_NOT_SUPPORT_SIGNING);
         return NULL;
     }
 
     k = BN_secure_new();
     sig = ECDSA_SIG_new();
     if (k == NULL || sig == NULL) {
-        ECerr(EC_F_ECDSA_S390X_NISTP_SIGN_SIG, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
         goto ret;
     }
 
     sig->r = BN_new();
     sig->s = BN_new();
     if (sig->r == NULL || sig->s == NULL) {
-        ECerr(EC_F_ECDSA_S390X_NISTP_SIGN_SIG, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
         goto ret;
     }
 
@@ -163,27 +168,27 @@ static ECDSA_SIG *ecdsa_s390x_nistp_sign_sig(const unsigned char *dgst,
     memcpy(param + S390X_OFF_H(len) + off, dgst, len - off);
 
     if (BN_bn2binpad(privkey, param + S390X_OFF_K(len), len) == -1) {
-        ECerr(EC_F_ECDSA_S390X_NISTP_SIGN_SIG, ERR_R_BN_LIB);
+        ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
         goto ret;
     }
 
     if (r == NULL || kinv == NULL) {
         /*
-         * Generate random k and copy to param param block. RAND_priv_bytes
+         * Generate random k and copy to param param block. RAND_priv_bytes_ex
          * is used instead of BN_priv_rand_range or BN_generate_dsa_nonce
          * because kdsa instruction constructs an in-range, invertible nonce
          * internally implementing counter-measures for RNG weakness.
          */
-         if (RAND_priv_bytes(param + S390X_OFF_RN(len), len) != 1) {
-             ECerr(EC_F_ECDSA_S390X_NISTP_SIGN_SIG,
-                   EC_R_RANDOM_NUMBER_GENERATION_FAILED);
+         if (RAND_priv_bytes_ex(eckey->libctx, param + S390X_OFF_RN(len),
+                                len) != 1) {
+             ERR_raise(ERR_LIB_EC, EC_R_RANDOM_NUMBER_GENERATION_FAILED);
              goto ret;
          }
     } else {
         /* Reconstruct k = (k^-1)^-1. */
         if (ec_group_do_inverse_ord(group, k, kinv, NULL) == 0
             || BN_bn2binpad(k, param + S390X_OFF_RN(len), len) == -1) {
-            ECerr(EC_F_ECDSA_S390X_NISTP_SIGN_SIG, ERR_R_BN_LIB);
+            ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
             goto ret;
         }
         /* Turns KDSA internal nonce-generation off. */
@@ -191,13 +196,13 @@ static ECDSA_SIG *ecdsa_s390x_nistp_sign_sig(const unsigned char *dgst,
     }
 
     if (s390x_kdsa(fc, param, NULL, 0) != 0) {
-        ECerr(EC_F_ECDSA_S390X_NISTP_SIGN_SIG, ERR_R_ECDSA_LIB);
+        ERR_raise(ERR_LIB_EC, ERR_R_ECDSA_LIB);
         goto ret;
     }
 
     if (BN_bin2bn(param + S390X_OFF_R(len), len, sig->r) == NULL
         || BN_bin2bn(param + S390X_OFF_S(len), len, sig->s) == NULL) {
-        ECerr(EC_F_ECDSA_S390X_NISTP_SIGN_SIG, ERR_R_BN_LIB);
+        ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
         goto ret;
     }
 
@@ -227,19 +232,18 @@ static int ecdsa_s390x_nistp_verify_sig(const unsigned char *dgst, int dgstlen,
     group = EC_KEY_get0_group(eckey);
     pubkey = EC_KEY_get0_public_key(eckey);
     if (eckey == NULL || group == NULL || pubkey == NULL || sig == NULL) {
-        ECerr(EC_F_ECDSA_S390X_NISTP_VERIFY_SIG, EC_R_MISSING_PARAMETERS);
+        ERR_raise(ERR_LIB_EC, EC_R_MISSING_PARAMETERS);
         return -1;
     }
 
     if (!EC_KEY_can_sign(eckey)) {
-        ECerr(EC_F_ECDSA_S390X_NISTP_VERIFY_SIG,
-              EC_R_CURVE_DOES_NOT_SUPPORT_SIGNING);
+        ERR_raise(ERR_LIB_EC, EC_R_CURVE_DOES_NOT_SUPPORT_SIGNING);
         return -1;
     }
 
     ctx = BN_CTX_new_ex(group->libctx);
     if (ctx == NULL) {
-        ECerr(EC_F_ECDSA_S390X_NISTP_VERIFY_SIG, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
         return -1;
     }
 
@@ -248,7 +252,7 @@ static int ecdsa_s390x_nistp_verify_sig(const unsigned char *dgst, int dgstlen,
     x = BN_CTX_get(ctx);
     y = BN_CTX_get(ctx);
     if (x == NULL || y == NULL) {
-        ECerr(EC_F_ECDSA_S390X_NISTP_VERIFY_SIG, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
         goto ret;
     }
 
@@ -262,7 +266,7 @@ static int ecdsa_s390x_nistp_verify_sig(const unsigned char *dgst, int dgstlen,
         || BN_bn2binpad(sig->s, param + S390X_OFF_S(len), len) == -1
         || BN_bn2binpad(x, param + S390X_OFF_X(len), len) == -1
         || BN_bn2binpad(y, param + S390X_OFF_Y(len), len) == -1) {
-        ECerr(EC_F_ECDSA_S390X_NISTP_VERIFY_SIG, ERR_R_BN_LIB);
+        ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
         goto ret;
     }
 
@@ -331,8 +335,6 @@ const EC_METHOD *EC_GFp_s390x_nistp##bits##_method(void)                \
         ec_GFp_simple_point_clear_finish,                               \
         ec_GFp_simple_point_copy,                                       \
         ec_GFp_simple_point_set_to_infinity,                            \
-        ec_GFp_simple_set_Jprojective_coordinates_GFp,                  \
-        ec_GFp_simple_get_Jprojective_coordinates_GFp,                  \
         ec_GFp_simple_point_set_affine_coordinates,                     \
         ec_GFp_simple_point_get_affine_coordinates,                     \
         NULL, /* point_set_compressed_coordinates */                    \

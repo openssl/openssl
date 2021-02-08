@@ -113,12 +113,12 @@ It is recommended that B<add> is a multiple of 4.
 The random generator must be seeded prior to calling BN_generate_prime_ex().
 If the automatic seeding or reseeding of the OpenSSL CSPRNG fails due to
 external circumstances (see L<RAND(7)>), the operation will fail.
-The random number generator configured for the OPENSSL_CTX associated with
+The random number generator configured for the OSSL_LIB_CTX associated with
 B<ctx> will be used.
 
 BN_generate_prime_ex() is the same as BN_generate_prime_ex2() except that no
 B<ctx> parameter is passed.
-In this case the random number generator associated with the default OPENSSL_CTX
+In this case the random number generator associated with the default OSSL_LIB_CTX
 will be used.
 
 BN_check_prime(), BN_is_prime_ex(), BN_is_prime_fasttest_ex(), BN_is_prime()
@@ -148,7 +148,7 @@ BN_is_prime_fasttest() and BN_is_prime() behave just like
 BN_is_prime_fasttest_ex() and BN_is_prime_ex() respectively, but with the old
 style call back.
 
-B<ctx> is a pre-allocated B<BN_CTX> (to save the overhead of allocating and
+B<ctx> is a preallocated B<BN_CTX> (to save the overhead of allocating and
 freeing the structure in a loop), or B<NULL>.
 
 If the trial division is done, and no divisors are found and B<cb>
@@ -240,7 +240,7 @@ BN_check_prime() was added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

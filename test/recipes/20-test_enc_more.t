@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2017 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2017-2020 The OpenSSL Project Authors. All Rights Reserved.
 # Copyright (c) 2017, Oracle and/or its affiliates.  All rights reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -15,7 +15,9 @@ use File::Spec::Functions qw/catfile/;
 use File::Copy;
 use File::Compare qw/compare_text/;
 use File::Basename;
-use OpenSSL::Test qw/:DEFAULT srctop_file/;
+use OpenSSL::Test qw/:DEFAULT srctop_file bldtop_dir/;
+use OpenSSL::Test::Utils;
+
 
 setup("test_evp_more");
 
@@ -25,6 +27,9 @@ my $cipherlist = undef;
 my $plaintext = catfile(".", "testdatafile");
 my $fail = "";
 my $cmd = "openssl";
+my $provpath = bldtop_dir("providers");
+my @prov = ("-provider-path", $provpath, "-provider", "default");
+push @prov, ("-provider", "legacy") unless disabled("legacy");
 
 my $ciphersstatus = undef;
 my @ciphers =
@@ -32,6 +37,9 @@ my @ciphers =
          (map { split /\s+/ }
           run(app([$cmd, "enc", "-list"]),
               capture => 1, statusvar => \$ciphersstatus)));
+@ciphers = grep {!/^-(bf|blowfish|cast|des$|des-cbc|des-cfb|des-ecb|des-ofb
+                      |desx|idea|rc2|rc4|seed)/x} @ciphers
+    if disabled("legacy");
 
 plan tests => 2 + scalar @ciphers;
 
@@ -49,9 +57,9 @@ SKIP: {
         my $clearfile = "$plaintext.$ciphername.clear";
         my @common = ( $cmd, "enc", "$cipher", "-k", "test" );
 
-        ok(run(app([@common, "-e", "-in", $plaintext, "-out", $cipherfile]))
+        ok(run(app([@common, @prov, "-e", "-in", $plaintext, "-out", $cipherfile]))
            && compare_text($plaintext, $cipherfile) != 0
-           && run(app([@common, "-d", "-in", $cipherfile, "-out", $clearfile]))
+           && run(app([@common, @prov, "-d", "-in", $cipherfile, "-out", $clearfile]))
            && compare_text($plaintext, $clearfile) == 0
            , $ciphername);
     }

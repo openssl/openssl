@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2019, Oracle and/or its affiliates.  All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -9,90 +9,140 @@
  */
 
 #include "e_os.h"
+#include <openssl/core_names.h>
+#include <openssl/core_dispatch.h>
+#include <openssl/err.h>
+#include <openssl/evp.h>
+#include <openssl/params.h>
+#include "internal/packet.h"
+#include "internal/der.h"
+#include "prov/provider_ctx.h"
+#include "prov/providercommon.h"
+#include "prov/providercommonerr.h"
+#include "prov/implementations.h"
+#include "prov/provider_util.h"
+#include "prov/der_wrap.h"
 
-#ifndef OPENSSL_NO_CMS
+#define X942KDF_MAX_INLEN (1 << 30)
 
-# include <stdlib.h>
-# include <stdarg.h>
-# include <string.h>
-# include <openssl/hmac.h>
-# include <openssl/cms.h>
-# include <openssl/evp.h>
-# include <openssl/kdf.h>
-# include <openssl/x509.h>
-# include <openssl/obj_mac.h>
-# include <openssl/core_names.h>
-# include "internal/cryptlib.h"
-# include "internal/numbers.h"
-# include "crypto/evp.h"
-# include "prov/provider_ctx.h"
-# include "prov/providercommonerr.h"
-# include "prov/implementations.h"
-# include "prov/provider_util.h"
-
-# define X942KDF_MAX_INLEN (1 << 30)
-
-static OSSL_OP_kdf_newctx_fn x942kdf_new;
-static OSSL_OP_kdf_freectx_fn x942kdf_free;
-static OSSL_OP_kdf_reset_fn x942kdf_reset;
-static OSSL_OP_kdf_derive_fn x942kdf_derive;
-static OSSL_OP_kdf_settable_ctx_params_fn x942kdf_settable_ctx_params;
-static OSSL_OP_kdf_set_ctx_params_fn x942kdf_set_ctx_params;
-static OSSL_OP_kdf_gettable_ctx_params_fn x942kdf_gettable_ctx_params;
-static OSSL_OP_kdf_get_ctx_params_fn x942kdf_get_ctx_params;
+static OSSL_FUNC_kdf_newctx_fn x942kdf_new;
+static OSSL_FUNC_kdf_freectx_fn x942kdf_free;
+static OSSL_FUNC_kdf_reset_fn x942kdf_reset;
+static OSSL_FUNC_kdf_derive_fn x942kdf_derive;
+static OSSL_FUNC_kdf_settable_ctx_params_fn x942kdf_settable_ctx_params;
+static OSSL_FUNC_kdf_set_ctx_params_fn x942kdf_set_ctx_params;
+static OSSL_FUNC_kdf_gettable_ctx_params_fn x942kdf_gettable_ctx_params;
+static OSSL_FUNC_kdf_get_ctx_params_fn x942kdf_get_ctx_params;
 
 typedef struct {
     void *provctx;
     PROV_DIGEST digest;
     unsigned char *secret;
     size_t secret_len;
-    int cek_nid;
-    unsigned char *ukm;
-    size_t ukm_len;
+    unsigned char *partyuinfo, *partyvinfo, *supp_pubinfo, *supp_privinfo;
+    size_t partyuinfo_len, partyvinfo_len, supp_pubinfo_len, supp_privinfo_len;
     size_t dkm_len;
+    const unsigned char *cek_oid;
+    size_t cek_oid_len;
+    int use_keybits;
 } KDF_X942;
 
-/* A table of allowed wrapping algorithms and the associated output lengths */
+/*
+ * A table of allowed wrapping algorithms, oids and the associated output
+ * lengths.
+ * NOTE: RC2wrap and camellia128_wrap have been removed as there are no
+ * corresponding ciphers for these operations.
+ */
 static const struct {
-    int nid;
+    const char *name;
+    const unsigned char *oid;
+    size_t oid_len;
     size_t keklen; /* size in bytes */
 } kek_algs[] = {
-    { NID_id_smime_alg_CMS3DESwrap, 24 },
-    { NID_id_smime_alg_CMSRC2wrap, 16 },
-    { NID_id_aes128_wrap, 16 },
-    { NID_id_aes192_wrap, 24 },
-    { NID_id_aes256_wrap, 32 },
-    { NID_id_camellia128_wrap, 16 },
-    { NID_id_camellia192_wrap, 24 },
-    { NID_id_camellia256_wrap, 32 }
+    { "AES-128-WRAP", ossl_der_oid_id_aes128_wrap, DER_OID_SZ_id_aes128_wrap,
+      16 },
+    { "AES-192-WRAP", ossl_der_oid_id_aes192_wrap, DER_OID_SZ_id_aes192_wrap,
+      24 },
+    { "AES-256-WRAP", ossl_der_oid_id_aes256_wrap, DER_OID_SZ_id_aes256_wrap,
+      32 },
+#ifndef FIPS_MODULE
+    { "DES3-WRAP", ossl_der_oid_id_alg_CMS3DESwrap,
+      DER_OID_SZ_id_alg_CMS3DESwrap, 24 },
+#endif
 };
 
-/* Skip past an ASN1 structure: for OBJECT skip content octets too */
-static int skip_asn1(unsigned char **pp, long *plen, int exptag)
+static int find_alg_id(OSSL_LIB_CTX *libctx, const char *algname,
+                       const char *propq, size_t *id)
 {
-    int i, tag, xclass;
-    long tmplen;
-    const unsigned char *q = *pp;
+    int ret = 1;
+    size_t i;
+    EVP_CIPHER *cipher;
 
-    i = ASN1_get_object(&q, &tmplen, &tag, &xclass, *plen);
-    if ((i & 0x80) != 0 || tag != exptag || xclass != V_ASN1_UNIVERSAL)
-        return 0;
-    if (tag == V_ASN1_OBJECT)
-        q += tmplen;
-    *pp = (unsigned char *)q;
-    *plen -= q - *pp;
-    return 1;
+    cipher = EVP_CIPHER_fetch(libctx, algname, propq);
+    if (cipher != NULL) {
+        for (i = 0; i < OSSL_NELEM(kek_algs); i++) {
+            if (EVP_CIPHER_is_a(cipher, kek_algs[i].name)) {
+                *id = i;
+                goto end;
+            }
+        }
+    }
+    ret = 0;
+    ERR_raise(ERR_LIB_PROV, PROV_R_UNSUPPORTED_CEK_ALG);
+end:
+    EVP_CIPHER_free(cipher);
+    return ret;
+}
+
+static int DER_w_keyinfo(WPACKET *pkt,
+                         const unsigned char *der_oid, size_t der_oidlen,
+                         unsigned char **pcounter)
+{
+    return ossl_DER_w_begin_sequence(pkt, -1)
+           /* Store the initial value of 1 into the counter */
+           && ossl_DER_w_octet_string_uint32(pkt, -1, 1)
+           /* Remember where we stored the counter in the buffer */
+           && (pcounter == NULL
+               || (*pcounter = WPACKET_get_curr(pkt)) != NULL)
+           && ossl_DER_w_precompiled(pkt, -1, der_oid, der_oidlen)
+           && ossl_DER_w_end_sequence(pkt, -1);
+}
+
+static int der_encode_sharedinfo(WPACKET *pkt, unsigned char *buf, size_t buflen,
+                                 const unsigned char *der_oid, size_t der_oidlen,
+                                 const unsigned char *partyu, size_t partyulen,
+                                 const unsigned char *partyv, size_t partyvlen,
+                                 const unsigned char *supp_pub, size_t supp_publen,
+                                 const unsigned char *supp_priv, size_t supp_privlen,
+                                 uint32_t keylen_bits, unsigned char **pcounter)
+{
+    return (buf != NULL ? WPACKET_init_der(pkt, buf, buflen) :
+                          WPACKET_init_null_der(pkt))
+           && ossl_DER_w_begin_sequence(pkt, -1)
+           && (supp_priv == NULL
+               || ossl_DER_w_octet_string(pkt, 3, supp_priv, supp_privlen))
+           && (supp_pub == NULL
+               || ossl_DER_w_octet_string(pkt, 2, supp_pub, supp_publen))
+           && (keylen_bits == 0
+               || ossl_DER_w_octet_string_uint32(pkt, 2, keylen_bits))
+           && (partyv == NULL || ossl_DER_w_octet_string(pkt, 1, partyv, partyvlen))
+           && (partyu == NULL || ossl_DER_w_octet_string(pkt, 0, partyu, partyulen))
+           && DER_w_keyinfo(pkt, der_oid, der_oidlen, pcounter)
+           && ossl_DER_w_end_sequence(pkt, -1)
+           && WPACKET_finish(pkt);
 }
 
 /*
  * Encode the other info structure.
  *
- *  RFC2631 Section 2.1.2 Contains the following definition for otherinfo
+ * The ANS X9.42-2003 standard uses OtherInfo:
  *
  *  OtherInfo ::= SEQUENCE {
  *      keyInfo KeySpecificInfo,
- *      partyAInfo [0] OCTET STRING OPTIONAL,
- *      suppPubInfo [2] OCTET STRING
+ *      partyUInfo [0] OCTET STRING OPTIONAL,
+ *      partyVInfo [1] OCTET STRING OPTIONAL,
+ *      suppPubInfo [2] OCTET STRING OPTIONAL,
+ *      suppPrivInfo [3] OCTET STRING OPTIONAL
  *  }
  *
  *  KeySpecificInfo ::= SEQUENCE {
@@ -100,12 +150,33 @@ static int skip_asn1(unsigned char **pp, long *plen, int exptag)
  *      counter OCTET STRING SIZE (4..4)
  *  }
  *
- * |nid| is the algorithm object identifier.
+ *  RFC2631 Section 2.1.2 Contains the following definition for OtherInfo
+ *
+ *  OtherInfo ::= SEQUENCE {
+ *      keyInfo KeySpecificInfo,
+ *      partyAInfo [0] OCTET STRING OPTIONAL,
+ *      suppPubInfo [2] OCTET STRING
+ *  }
+ *  Where suppPubInfo is the key length (in bits) (stored into 4 bytes)
+ *
+}
+ *
  * |keylen| is the length (in bytes) of the generated KEK. It is stored into
- * suppPubInfo (in bits).
- * |ukm| is the optional user keying material that is stored into partyAInfo. It
+ * suppPubInfo (in bits). It is ignored if the value is 0.
+ * |cek_oid| The oid of the key wrapping algorithm.
+ * |cek_oidlen| The length (in bytes) of the key wrapping algorithm oid,
+ * |partyu| is the optional public info contributed by the initiator. It
+ * can be NULL. (It is also used as the ukm by CMS).
+ * |partyu_len| is the |partyu| length (in bytes).
+ * |partyv| is the optional public info contributed by the responder. It
  * can be NULL.
- * |ukmlen| is the user keying material length (in bytes).
+ * |partyv_len| is the |partyv| length (in bytes).
+ * |supp_pub| is the optional additional, mutually-known public information. It
+ * can be NULL. |keylen| should be 0 if this is not NULL.
+ * |supp_pub_len| is the |supp_pub| length (in bytes).
+ * |supp_priv| is the optional additional, mutually-known private information. It
+ * can be NULL.
+ * |supp_priv_len| is the |supp_priv| length (in bytes).
  * |der| is the returned encoded data. It must be freed by the caller.
  * |der_len| is the returned size of the encoded data.
  * |out_ctr| returns a pointer to the counter data which is embedded inside the
@@ -114,66 +185,68 @@ static int skip_asn1(unsigned char **pp, long *plen, int exptag)
  * Returns: 1 if successfully encoded, or 0 otherwise.
  * Assumptions: |der|, |der_len| & |out_ctr| are not NULL.
  */
-static int x942_encode_otherinfo(int nid, size_t keylen,
-                                 const unsigned char *ukm, size_t ukmlen,
-                                 unsigned char **der, size_t *der_len,
-                                 unsigned char **out_ctr)
+static int
+x942_encode_otherinfo(size_t keylen,
+                      const unsigned char *cek_oid, size_t cek_oidlen,
+                      const unsigned char *partyu, size_t partyu_len,
+                      const unsigned char *partyv, size_t partyv_len,
+                      const unsigned char *supp_pub, size_t supp_pub_len,
+                      const unsigned char *supp_priv, size_t supp_priv_len,
+                      unsigned char **der, size_t *der_len,
+                      unsigned char **out_ctr)
 {
-    unsigned char *p, *encoded = NULL;
-    int ret = 0, encoded_len;
-    long tlen;
-    /* "magic" value to check offset is sane */
-    static unsigned char ctr[4] = { 0x00, 0x00, 0x00, 0x01 };
-    X509_ALGOR *ksi = NULL;
-    ASN1_OBJECT *alg_oid = NULL;
-    ASN1_OCTET_STRING *ctr_oct = NULL, *ukm_oct = NULL;
+    int ret = 0;
+    unsigned char *pcounter = NULL, *der_buf = NULL;
+    size_t der_buflen = 0;
+    WPACKET pkt;
+    uint32_t keylen_bits;
 
-    /* set the KeySpecificInfo - which contains an algorithm oid and counter */
-    ksi = X509_ALGOR_new();
-    alg_oid = OBJ_dup(OBJ_nid2obj(nid));
-    ctr_oct = ASN1_OCTET_STRING_new();
-    if (ksi == NULL
-        || alg_oid == NULL
-        || ctr_oct == NULL
-        || !ASN1_OCTET_STRING_set(ctr_oct, ctr, sizeof(ctr))
-        || !X509_ALGOR_set0(ksi, alg_oid, V_ASN1_OCTET_STRING, ctr_oct))
+    /* keylenbits must fit into 4 bytes */
+    if (keylen > 0xFFFFFF)
+        return 0;
+    keylen_bits = 8 * keylen;
+
+    /* Calculate the size of the buffer */
+    if (!der_encode_sharedinfo(&pkt, NULL, 0, cek_oid, cek_oidlen,
+                               partyu, partyu_len, partyv, partyv_len,
+                               supp_pub, supp_pub_len, supp_priv, supp_priv_len,
+                               keylen_bits, NULL)
+        || !WPACKET_get_total_written(&pkt, &der_buflen))
         goto err;
-    /* NULL these as they now belong to ksi */
-    alg_oid = NULL;
-    ctr_oct = NULL;
-
-    /* Set the optional partyAInfo */
-    if (ukm != NULL) {
-        ukm_oct = ASN1_OCTET_STRING_new();
-        if (ukm_oct == NULL)
-            goto err;
-        ASN1_OCTET_STRING_set(ukm_oct, (unsigned char *)ukm, ukmlen);
-    }
-    /* Generate the OtherInfo DER data */
-    encoded_len = CMS_SharedInfo_encode(&encoded, ksi, ukm_oct, keylen);
-    if (encoded_len <= 0)
+    WPACKET_cleanup(&pkt);
+    /* Alloc the buffer */
+    der_buf = OPENSSL_zalloc(der_buflen);
+    if (der_buf == NULL)
+        goto err;
+    /* Encode into the buffer */
+    if (!der_encode_sharedinfo(&pkt, der_buf, der_buflen, cek_oid, cek_oidlen,
+                               partyu, partyu_len, partyv, partyv_len,
+                               supp_pub, supp_pub_len, supp_priv, supp_priv_len,
+                               keylen_bits, &pcounter))
+        goto err;
+    /*
+     * Since we allocated the exact size required, the buffer should point to the
+     * start of the alllocated buffer at this point.
+     */
+    if (WPACKET_get_curr(&pkt) != der_buf)
         goto err;
 
-    /* Parse the encoded data to find the offset of the counter data */
-    p = encoded;
-    tlen = (long)encoded_len;
-    if (skip_asn1(&p, &tlen, V_ASN1_SEQUENCE)
-        && skip_asn1(&p, &tlen, V_ASN1_SEQUENCE)
-        && skip_asn1(&p, &tlen, V_ASN1_OBJECT)
-        && skip_asn1(&p, &tlen, V_ASN1_OCTET_STRING)
-        && CRYPTO_memcmp(p, ctr, 4) == 0) {
-        *out_ctr = p;
-        *der = encoded;
-        *der_len = (size_t)encoded_len;
-        ret = 1;
-    }
+    /*
+     * The data for the DER encoded octet string of a 32 bit counter = 1
+     * should be 04 04 00 00 00 01
+     * So just check the header is correct and skip over it.
+     * This counter will be incremented in the kdf update loop.
+     */
+    if (pcounter == NULL
+        || pcounter[0] != 0x04
+        || pcounter[1] != 0x04)
+        goto err;
+    *out_ctr = (pcounter + 2);
+    *der = der_buf;
+    *der_len = der_buflen;
+    ret = 1;
 err:
-    if (ret != 1)
-        OPENSSL_free(encoded);
-    ASN1_OCTET_STRING_free(ctr_oct);
-    ASN1_OCTET_STRING_free(ukm_oct);
-    ASN1_OBJECT_free(alg_oid);
-    X509_ALGOR_free(ksi);
+    WPACKET_cleanup(&pkt);
     return ret;
 }
 
@@ -246,20 +319,30 @@ static void *x942kdf_new(void *provctx)
 {
     KDF_X942 *ctx;
 
+    if (!ossl_prov_is_running())
+        return 0;
+
     if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) == NULL)
         ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
     ctx->provctx = provctx;
+    ctx->use_keybits = 1;
     return ctx;
 }
 
 static void x942kdf_reset(void *vctx)
 {
     KDF_X942 *ctx = (KDF_X942 *)vctx;
+    void *provctx = ctx->provctx;
 
     ossl_prov_digest_reset(&ctx->digest);
     OPENSSL_clear_free(ctx->secret, ctx->secret_len);
-    OPENSSL_clear_free(ctx->ukm, ctx->ukm_len);
+    OPENSSL_clear_free(ctx->partyuinfo, ctx->partyuinfo_len);
+    OPENSSL_clear_free(ctx->partyvinfo, ctx->partyvinfo_len);
+    OPENSSL_clear_free(ctx->supp_pubinfo, ctx->supp_pubinfo_len);
+    OPENSSL_clear_free(ctx->supp_privinfo, ctx->supp_privinfo_len);
     memset(ctx, 0, sizeof(*ctx));
+    ctx->provctx = provctx;
+    ctx->use_keybits = 1;
 }
 
 static void x942kdf_free(void *vctx)
@@ -299,39 +382,52 @@ static size_t x942kdf_size(KDF_X942 *ctx)
 static int x942kdf_derive(void *vctx, unsigned char *key, size_t keylen)
 {
     KDF_X942 *ctx = (KDF_X942 *)vctx;
-    const EVP_MD *md = ossl_prov_digest_md(&ctx->digest);
+    const EVP_MD *md;
     int ret = 0;
     unsigned char *ctr;
     unsigned char *der = NULL;
     size_t der_len = 0;
 
+    if (!ossl_prov_is_running())
+        return 0;
+
+    /*
+     * These 2 options encode to the same field so only one of them should be
+     * active at once.
+     */
+    if (ctx->use_keybits && ctx->supp_pubinfo != NULL) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_PUBINFO);
+        return 0;
+    }
+
     if (ctx->secret == NULL) {
         ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_SECRET);
         return 0;
     }
+    md = ossl_prov_digest_md(&ctx->digest);
     if (md == NULL) {
         ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_MESSAGE_DIGEST);
         return 0;
     }
-    if (ctx->cek_nid == NID_undef) {
+    if (ctx->cek_oid == NULL || ctx->cek_oid_len == 0) {
         ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_CEK_ALG);
         return 0;
     }
-    if (ctx->ukm != NULL && ctx->ukm_len >= X942KDF_MAX_INLEN) {
+    if (ctx->partyuinfo != NULL && ctx->partyuinfo_len >= X942KDF_MAX_INLEN) {
         /*
-         * Note the ukm length MUST be 512 bits.
+         * Note the ukm length MUST be 512 bits if it is used.
          * For backwards compatibility the old check is being done.
          */
-        ERR_raise(ERR_LIB_PROV, PROV_R_INAVLID_UKM_LENGTH);
-        return 0;
-    }
-    if (keylen != ctx->dkm_len) {
-        ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_CEK_ALG);
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_UKM_LENGTH);
         return 0;
     }
     /* generate the otherinfo der */
-    if (!x942_encode_otherinfo(ctx->cek_nid, ctx->dkm_len,
-                               ctx->ukm, ctx->ukm_len,
+    if (!x942_encode_otherinfo(ctx->use_keybits ? ctx->dkm_len : 0,
+                               ctx->cek_oid, ctx->cek_oid_len,
+                               ctx->partyuinfo, ctx->partyuinfo_len,
+                               ctx->partyvinfo, ctx->partyvinfo_len,
+                               ctx->supp_pubinfo, ctx->supp_pubinfo_len,
+                               ctx->supp_privinfo, ctx->supp_privinfo_len,
                                &der, &der_len, &ctr)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_BAD_ENCODING);
         return 0;
@@ -344,39 +440,70 @@ static int x942kdf_derive(void *vctx, unsigned char *key, size_t keylen)
 
 static int x942kdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
-    const OSSL_PARAM *p;
+    const OSSL_PARAM *p, *pq;
     KDF_X942 *ctx = vctx;
-    OPENSSL_CTX *provctx = PROV_LIBRARY_CONTEXT_OF(ctx->provctx);
-    size_t i;
+    OSSL_LIB_CTX *provctx = PROV_LIBCTX_OF(ctx->provctx);
+    const char *propq = NULL;
+    size_t id;
 
     if (!ossl_prov_digest_load_from_params(&ctx->digest, params, provctx))
         return 0;
 
-    if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_SECRET)) != NULL
-        || (p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_KEY)) != NULL)
-        if (!x942kdf_set_buffer(&ctx->secret, &ctx->secret_len, p))
-            return 0;
+    p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_SECRET);
+    if (p == NULL)
+        p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_KEY);
+    if (p != NULL && !x942kdf_set_buffer(&ctx->secret, &ctx->secret_len, p))
+        return 0;
 
-    if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_UKM)) != NULL)
-        if (!x942kdf_set_buffer(&ctx->ukm, &ctx->ukm_len, p))
-            return 0;
+    p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_X942_PARTYUINFO);
+    if (p == NULL)
+        p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_UKM);
+    if (p != NULL
+        && !x942kdf_set_buffer(&ctx->partyuinfo, &ctx->partyuinfo_len, p))
+        return 0;
 
-    if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_CEK_ALG)) != NULL) {
+    p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_X942_PARTYVINFO);
+    if (p != NULL
+        && !x942kdf_set_buffer(&ctx->partyvinfo, &ctx->partyvinfo_len, p))
+        return 0;
+
+    p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_X942_USE_KEYBITS);
+    if (p != NULL && !OSSL_PARAM_get_int(p, &ctx->use_keybits))
+        return 0;
+
+    p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_X942_SUPP_PUBINFO);
+    if (p != NULL) {
+        if (!x942kdf_set_buffer(&ctx->supp_pubinfo, &ctx->supp_pubinfo_len, p))
+            return 0;
+        ctx->use_keybits = 0;
+    }
+
+    p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_X942_SUPP_PRIVINFO);
+    if (p != NULL
+        && !x942kdf_set_buffer(&ctx->supp_privinfo, &ctx->supp_privinfo_len, p))
+        return 0;
+
+    p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_CEK_ALG);
+    if (p != NULL) {
         if (p->data_type != OSSL_PARAM_UTF8_STRING)
             return 0;
-        ctx->cek_nid = OBJ_sn2nid(p->data);
-        for (i = 0; i < OSSL_NELEM(kek_algs); i++)
-            if (kek_algs[i].nid == ctx->cek_nid)
-                goto cek_found;
-        ERR_raise(ERR_LIB_PROV, PROV_R_UNSUPPORTED_CEK_ALG);
-        return 0;
-cek_found:
-        ctx->dkm_len = kek_algs[i].keklen;
+        pq = OSSL_PARAM_locate_const(params, OSSL_ALG_PARAM_PROPERTIES);
+        /*
+         * We already grab the properties during ossl_prov_digest_load_from_params()
+         * so there is no need to check the validity again..
+         */
+        if (pq != NULL)
+            propq = p->data;
+        if (find_alg_id(provctx, p->data, propq, &id) == 0)
+            return 0;
+        ctx->cek_oid = kek_algs[id].oid;
+        ctx->cek_oid_len = kek_algs[id].oid_len;
+        ctx->dkm_len = kek_algs[id].keklen;
     }
     return 1;
 }
 
-static const OSSL_PARAM *x942kdf_settable_ctx_params(void)
+static const OSSL_PARAM *x942kdf_settable_ctx_params(ossl_unused void *provctx)
 {
     static const OSSL_PARAM known_settable_ctx_params[] = {
         OSSL_PARAM_utf8_string(OSSL_KDF_PARAM_PROPERTIES, NULL, 0),
@@ -384,6 +511,11 @@ static const OSSL_PARAM *x942kdf_settable_ctx_params(void)
         OSSL_PARAM_octet_string(OSSL_KDF_PARAM_SECRET, NULL, 0),
         OSSL_PARAM_octet_string(OSSL_KDF_PARAM_KEY, NULL, 0),
         OSSL_PARAM_octet_string(OSSL_KDF_PARAM_UKM, NULL, 0),
+        OSSL_PARAM_octet_string(OSSL_KDF_PARAM_X942_PARTYUINFO, NULL, 0),
+        OSSL_PARAM_octet_string(OSSL_KDF_PARAM_X942_PARTYVINFO, NULL, 0),
+        OSSL_PARAM_octet_string(OSSL_KDF_PARAM_X942_SUPP_PUBINFO, NULL, 0),
+        OSSL_PARAM_octet_string(OSSL_KDF_PARAM_X942_SUPP_PRIVINFO, NULL, 0),
+        OSSL_PARAM_int(OSSL_KDF_PARAM_X942_USE_KEYBITS, NULL),
         OSSL_PARAM_utf8_string(OSSL_KDF_PARAM_CEK_ALG, NULL, 0),
         OSSL_PARAM_END
     };
@@ -400,7 +532,7 @@ static int x942kdf_get_ctx_params(void *vctx, OSSL_PARAM params[])
     return -2;
 }
 
-static const OSSL_PARAM *x942kdf_gettable_ctx_params(void)
+static const OSSL_PARAM *x942kdf_gettable_ctx_params(ossl_unused void *provctx)
 {
     static const OSSL_PARAM known_gettable_ctx_params[] = {
         OSSL_PARAM_size_t(OSSL_KDF_PARAM_SIZE, NULL),
@@ -409,7 +541,7 @@ static const OSSL_PARAM *x942kdf_gettable_ctx_params(void)
     return known_gettable_ctx_params;
 }
 
-const OSSL_DISPATCH kdf_x942_kdf_functions[] = {
+const OSSL_DISPATCH ossl_kdf_x942_kdf_functions[] = {
     { OSSL_FUNC_KDF_NEWCTX, (void(*)(void))x942kdf_new },
     { OSSL_FUNC_KDF_FREECTX, (void(*)(void))x942kdf_free },
     { OSSL_FUNC_KDF_RESET, (void(*)(void))x942kdf_reset },
@@ -422,5 +554,3 @@ const OSSL_DISPATCH kdf_x942_kdf_functions[] = {
     { OSSL_FUNC_KDF_GET_CTX_PARAMS, (void(*)(void))x942kdf_get_ctx_params },
     { 0, NULL }
 };
-
-#endif /* OPENSSL_NO_CMS */

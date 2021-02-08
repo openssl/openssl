@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -11,6 +11,7 @@
 
 #include "cipher_chacha20.h"
 #include "prov/implementations.h"
+#include "prov/providercommon.h"
 #include "prov/providercommonerr.h"
 
 #define CHACHA20_KEYLEN (CHACHA_KEY_SIZE)
@@ -19,35 +20,39 @@
 /* TODO(3.0) Figure out what flags are required */
 #define CHACHA20_FLAGS (EVP_CIPH_CUSTOM_IV | EVP_CIPH_ALWAYS_CALL_INIT)
 
-static OSSL_OP_cipher_newctx_fn chacha20_newctx;
-static OSSL_OP_cipher_freectx_fn chacha20_freectx;
-static OSSL_OP_cipher_get_params_fn chacha20_get_params;
-static OSSL_OP_cipher_get_ctx_params_fn chacha20_get_ctx_params;
-static OSSL_OP_cipher_set_ctx_params_fn chacha20_set_ctx_params;
-static OSSL_OP_cipher_gettable_ctx_params_fn chacha20_gettable_ctx_params;
-static OSSL_OP_cipher_settable_ctx_params_fn chacha20_settable_ctx_params;
-#define chacha20_cipher cipher_generic_cipher
-#define chacha20_update cipher_generic_stream_update
-#define chacha20_final cipher_generic_stream_final
-#define chacha20_gettable_params cipher_generic_gettable_params
+static OSSL_FUNC_cipher_newctx_fn chacha20_newctx;
+static OSSL_FUNC_cipher_freectx_fn chacha20_freectx;
+static OSSL_FUNC_cipher_get_params_fn chacha20_get_params;
+static OSSL_FUNC_cipher_get_ctx_params_fn chacha20_get_ctx_params;
+static OSSL_FUNC_cipher_set_ctx_params_fn chacha20_set_ctx_params;
+static OSSL_FUNC_cipher_gettable_ctx_params_fn chacha20_gettable_ctx_params;
+static OSSL_FUNC_cipher_settable_ctx_params_fn chacha20_settable_ctx_params;
+#define chacha20_cipher ossl_cipher_generic_cipher
+#define chacha20_update ossl_cipher_generic_stream_update
+#define chacha20_final ossl_cipher_generic_stream_final
+#define chacha20_gettable_params ossl_cipher_generic_gettable_params
 
 void chacha20_initctx(PROV_CHACHA20_CTX *ctx)
 {
-    cipher_generic_initkey(ctx, CHACHA20_KEYLEN * 8,
-                           CHACHA20_BLKLEN * 8,
-                           CHACHA20_IVLEN * 8,
-                           0, CHACHA20_FLAGS,
-                           PROV_CIPHER_HW_chacha20(CHACHA20_KEYLEN * 8),
-                           NULL);
+    ossl_cipher_generic_initkey(ctx, CHACHA20_KEYLEN * 8,
+                                CHACHA20_BLKLEN * 8,
+                                CHACHA20_IVLEN * 8,
+                                0, CHACHA20_FLAGS,
+                                ossl_prov_cipher_hw_chacha20(CHACHA20_KEYLEN * 8),
+                                NULL);
 }
 
 static void *chacha20_newctx(void *provctx)
 {
-     PROV_CHACHA20_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
+    PROV_CHACHA20_CTX *ctx;
 
-     if (ctx != NULL)
-         chacha20_initctx(ctx);
-     return ctx;
+    if (!ossl_prov_is_running())
+        return NULL;
+
+    ctx = OPENSSL_zalloc(sizeof(*ctx));
+    if (ctx != NULL)
+        chacha20_initctx(ctx);
+    return ctx;
 }
 
 static void chacha20_freectx(void *vctx)
@@ -55,16 +60,17 @@ static void chacha20_freectx(void *vctx)
     PROV_CHACHA20_CTX *ctx = (PROV_CHACHA20_CTX *)vctx;
 
     if (ctx != NULL) {
+        ossl_cipher_generic_reset_ctx((PROV_CIPHER_CTX *)vctx);
         OPENSSL_clear_free(ctx, sizeof(*ctx));
     }
 }
 
 static int chacha20_get_params(OSSL_PARAM params[])
 {
-    return cipher_generic_get_params(params, 0, CHACHA20_FLAGS,
-                                     CHACHA20_KEYLEN * 8,
-                                     CHACHA20_BLKLEN * 8,
-                                     CHACHA20_IVLEN * 8);
+    return ossl_cipher_generic_get_params(params, 0, CHACHA20_FLAGS,
+                                          CHACHA20_KEYLEN * 8,
+                                          CHACHA20_BLKLEN * 8,
+                                          CHACHA20_IVLEN * 8);
 }
 
 static int chacha20_get_ctx_params(void *vctx, OSSL_PARAM params[])
@@ -90,7 +96,7 @@ static const OSSL_PARAM chacha20_known_gettable_ctx_params[] = {
     OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_IVLEN, NULL),
     OSSL_PARAM_END
 };
-const OSSL_PARAM *chacha20_gettable_ctx_params(void)
+const OSSL_PARAM *chacha20_gettable_ctx_params(ossl_unused void *provctx)
 {
     return chacha20_known_gettable_ctx_params;
 }
@@ -130,7 +136,7 @@ static const OSSL_PARAM chacha20_known_settable_ctx_params[] = {
     OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_IVLEN, NULL),
     OSSL_PARAM_END
 };
-const OSSL_PARAM *chacha20_settable_ctx_params(void)
+const OSSL_PARAM *chacha20_settable_ctx_params(ossl_unused void *provctx)
 {
     return chacha20_known_settable_ctx_params;
 }
@@ -140,7 +146,8 @@ int chacha20_einit(void *vctx, const unsigned char *key, size_t keylen,
 {
     int ret;
 
-    ret= cipher_generic_einit(vctx, key, keylen, iv, ivlen);
+    /* The generic function checks for ossl_prov_is_running() */
+    ret= ossl_cipher_generic_einit(vctx, key, keylen, iv, ivlen);
     if (ret && iv != NULL) {
         PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
         PROV_CIPHER_HW_CHACHA20 *hw = (PROV_CIPHER_HW_CHACHA20 *)ctx->hw;
@@ -155,7 +162,8 @@ int chacha20_dinit(void *vctx, const unsigned char *key, size_t keylen,
 {
     int ret;
 
-    ret= cipher_generic_dinit(vctx, key, keylen, iv, ivlen);
+    /* The generic function checks for ossl_prov_is_running() */
+    ret= ossl_cipher_generic_dinit(vctx, key, keylen, iv, ivlen);
     if (ret && iv != NULL) {
         PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
         PROV_CIPHER_HW_CHACHA20 *hw = (PROV_CIPHER_HW_CHACHA20 *)ctx->hw;
@@ -165,8 +173,8 @@ int chacha20_dinit(void *vctx, const unsigned char *key, size_t keylen,
     return ret;
 }
 
-/* chacha20_functions */
-const OSSL_DISPATCH chacha20_functions[] = {
+/* ossl_chacha20_functions */
+const OSSL_DISPATCH ossl_chacha20_functions[] = {
     { OSSL_FUNC_CIPHER_NEWCTX, (void (*)(void))chacha20_newctx },
     { OSSL_FUNC_CIPHER_FREECTX, (void (*)(void))chacha20_freectx },
     { OSSL_FUNC_CIPHER_ENCRYPT_INIT, (void (*)(void))chacha20_einit },

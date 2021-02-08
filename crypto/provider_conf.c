@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -14,9 +14,10 @@
 #include <openssl/safestack.h>
 #include "internal/provider.h"
 
+DEFINE_STACK_OF(OSSL_PROVIDER)
+
 /* PROVIDER config module */
 
-DEFINE_STACK_OF(OSSL_PROVIDER)
 static STACK_OF(OSSL_PROVIDER) *activated_providers = NULL;
 
 static const char *skip_dot(const char *name)
@@ -69,7 +70,7 @@ static int provider_conf_params(OSSL_PROVIDER *prov,
     return ok;
 }
 
-static int provider_conf_load(OPENSSL_CTX *libctx, const char *name,
+static int provider_conf_load(OSSL_LIB_CTX *libctx, const char *name,
                               const char *value, const CONF *cnf)
 {
     int i;
@@ -86,7 +87,8 @@ static int provider_conf_load(OPENSSL_CTX *libctx, const char *name,
     ecmds = NCONF_get_section(cnf, value);
 
     if (!ecmds) {
-        CRYPTOerr(CRYPTO_F_PROVIDER_CONF_LOAD, CRYPTO_R_PROVIDER_SECTION_ERROR);
+        ERR_raise_data(ERR_LIB_CRYPTO, CRYPTO_R_PROVIDER_SECTION_ERROR,
+                       "section=%s not found", value);
         return 0;
     }
 
@@ -157,14 +159,13 @@ static int provider_conf_init(CONF_IMODULE *md, const CONF *cnf)
     elist = NCONF_get_section(cnf, CONF_imodule_get_value(md));
 
     if (!elist) {
-        CRYPTOerr(CRYPTO_F_PROVIDER_CONF_INIT,
-                  CRYPTO_R_PROVIDER_SECTION_ERROR);
+        ERR_raise(ERR_LIB_CRYPTO, CRYPTO_R_PROVIDER_SECTION_ERROR);
         return 0;
     }
 
     for (i = 0; i < sk_CONF_VALUE_num(elist); i++) {
         cval = sk_CONF_VALUE_value(elist, i);
-        if (!provider_conf_load(NULL, cval->name, cval->value, cnf))
+        if (!provider_conf_load(cnf->libctx, cval->name, cval->value, cnf))
             return 0;
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -20,6 +20,7 @@
 #include <openssl/provider.h>
 #include "testutil.h"
 
+static char *config_file = NULL;
 static char *alg = "digest";
 static int use_default_ctx = 0;
 static char *fetch_property = NULL;
@@ -32,6 +33,7 @@ typedef enum OPTION_choice {
     OPT_FETCH_PROPERTY,
     OPT_FETCH_FAILURE,
     OPT_USE_DEFAULTCTX,
+    OPT_CONFIG_FILE,
     OPT_TEST_ENUM
 } OPTION_CHOICE;
 
@@ -39,6 +41,7 @@ const OPTIONS *test_get_options(void)
 {
     static const OPTIONS test_options[] = {
         OPT_TEST_OPTIONS_WITH_EXTRA_USAGE("[provname...]\n"),
+        { "config", OPT_CONFIG_FILE, '<', "The configuration file to use for the libctx" },
         { "type", OPT_ALG_FETCH_TYPE, 's', "The fetch type to test" },
         { "property", OPT_FETCH_PROPERTY, 's', "The fetch property e.g. provider=fips" },
         { "fetchfail", OPT_FETCH_FAILURE, '-', "fetch is expected to fail" },
@@ -73,16 +76,18 @@ static int calculate_digest(const EVP_MD *md, const char *msg, size_t len,
     return ret;
 }
 
-static int load_providers(OPENSSL_CTX **libctx, OSSL_PROVIDER *prov[])
+static int load_providers(OSSL_LIB_CTX **libctx, OSSL_PROVIDER *prov[])
 {
-    OPENSSL_CTX *ctx;
+    OSSL_LIB_CTX *ctx = NULL;
     int ret = 0;
     size_t i;
 
-    ctx = OPENSSL_CTX_new();
+    ctx = OSSL_LIB_CTX_new();
     if (!TEST_ptr(ctx))
         goto err;
 
+    if (!TEST_true(OSSL_LIB_CTX_load_config(ctx, config_file)))
+        goto err;
     if (test_get_argument_count() > 2)
         goto err;
 
@@ -92,9 +97,12 @@ static int load_providers(OPENSSL_CTX **libctx, OSSL_PROVIDER *prov[])
         if (!TEST_ptr(prov[i]))
             goto err;
     }
+
     ret = 1;
     *libctx = ctx;
 err:
+    if (ret == 0)
+        OSSL_LIB_CTX_free(ctx);
     return ret;
 }
 
@@ -103,7 +111,7 @@ err:
  */
 static int test_EVP_MD_fetch(void)
 {
-    OPENSSL_CTX *ctx = NULL;
+    OSSL_LIB_CTX *ctx = NULL;
     EVP_MD *md = NULL;
     OSSL_PROVIDER *prov[2] = {NULL, NULL};
     int ret = 0;
@@ -138,7 +146,7 @@ static int test_EVP_MD_fetch(void)
         if (!TEST_true(EVP_MD_up_ref(md)))
             goto err;
         /* Ref count should now be 2. Release first one here */
-        EVP_MD_meth_free(md);
+        EVP_MD_free(md);
     } else {
         if (!TEST_ptr_null(md))
             goto err;
@@ -146,7 +154,7 @@ static int test_EVP_MD_fetch(void)
     ret = 1;
 
 err:
-    EVP_MD_meth_free(md);
+    EVP_MD_free(md);
     OSSL_PROVIDER_unload(prov[0]);
     OSSL_PROVIDER_unload(prov[1]);
     /* Not normally needed, but we would like to test that
@@ -154,7 +162,7 @@ err:
      */
     if (ctx != NULL) {
         OPENSSL_thread_stop_ex(ctx);
-        OPENSSL_CTX_free(ctx);
+        OSSL_LIB_CTX_free(ctx);
     }
     return ret;
 }
@@ -189,7 +197,7 @@ err:
  */
 static int test_EVP_CIPHER_fetch(void)
 {
-    OPENSSL_CTX *ctx = NULL;
+    OSSL_LIB_CTX *ctx = NULL;
     EVP_CIPHER *cipher = NULL;
     OSSL_PROVIDER *prov[2] = {NULL, NULL};
     int ret = 0;
@@ -210,7 +218,7 @@ static int test_EVP_CIPHER_fetch(void)
             if (!TEST_true(EVP_CIPHER_up_ref(cipher)))
                 goto err;
             /* Ref count should now be 2. Release first one here */
-            EVP_CIPHER_meth_free(cipher);
+            EVP_CIPHER_free(cipher);
         }
     } else {
         if (!TEST_ptr_null(cipher))
@@ -218,10 +226,10 @@ static int test_EVP_CIPHER_fetch(void)
     }
     ret = 1;
 err:
-    EVP_CIPHER_meth_free(cipher);
+    EVP_CIPHER_free(cipher);
     OSSL_PROVIDER_unload(prov[0]);
     OSSL_PROVIDER_unload(prov[1]);
-    OPENSSL_CTX_free(ctx);
+    OSSL_LIB_CTX_free(ctx);
     return ret;
 }
 
@@ -231,6 +239,9 @@ int setup_tests(void)
 
     while ((o = opt_next()) != OPT_EOF) {
         switch (o) {
+        case OPT_CONFIG_FILE:
+            config_file = opt_arg();
+            break;
         case OPT_ALG_FETCH_TYPE:
             alg = opt_arg();
             break;

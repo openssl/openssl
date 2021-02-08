@@ -4,9 +4,9 @@
 
 EVP_KDF, EVP_KDF_fetch, EVP_KDF_free, EVP_KDF_up_ref,
 EVP_KDF_CTX, EVP_KDF_CTX_new, EVP_KDF_CTX_free, EVP_KDF_CTX_dup,
-EVP_KDF_reset, EVP_KDF_derive,
-EVP_KDF_size, EVP_KDF_provider, EVP_KDF_CTX_kdf, EVP_KDF_is_a,
-EVP_KDF_number, EVP_KDF_names_do_all,
+EVP_KDF_CTX_reset, EVP_KDF_derive,
+EVP_KDF_CTX_get_kdf_size, EVP_KDF_provider, EVP_KDF_CTX_kdf, EVP_KDF_is_a,
+EVP_KDF_number, EVP_KDF_name, EVP_KDF_names_do_all,
 EVP_KDF_CTX_get_params, EVP_KDF_CTX_set_params, EVP_KDF_do_all_provided,
 EVP_KDF_get_params, EVP_KDF_gettable_ctx_params, EVP_KDF_settable_ctx_params,
 EVP_KDF_gettable_params - EVP KDF routines
@@ -22,17 +22,18 @@ EVP_KDF_gettable_params - EVP KDF routines
  const EVP_KDF *EVP_KDF_CTX_kdf(EVP_KDF_CTX *ctx);
  void EVP_KDF_CTX_free(EVP_KDF_CTX *ctx);
  EVP_KDF_CTX *EVP_KDF_CTX_dup(const EVP_KDF_CTX *src);
- void EVP_KDF_reset(EVP_KDF_CTX *ctx);
- size_t EVP_KDF_size(EVP_KDF_CTX *ctx);
+ void EVP_KDF_CTX_reset(EVP_KDF_CTX *ctx);
+ size_t EVP_KDF_CTX_get_kdf_size(EVP_KDF_CTX *ctx);
  int EVP_KDF_derive(EVP_KDF_CTX *ctx, unsigned char *key, size_t keylen);
  int EVP_KDF_up_ref(EVP_KDF *kdf);
  void EVP_KDF_free(EVP_KDF *kdf);
- EVP_KDF *EVP_KDF_fetch(OPENSSL_CTX *libctx, const char *algorithm,
+ EVP_KDF *EVP_KDF_fetch(OSSL_LIB_CTX *libctx, const char *algorithm,
                         const char *properties);
  int EVP_KDF_number(const EVP_KDF *kdf);
  int EVP_KDF_is_a(const EVP_KDF *kdf, const char *name);
+ const char *EVP_KDF_name(const EVP_KDF *kdf);
  const OSSL_PROVIDER *EVP_KDF_provider(const EVP_KDF *kdf);
- void EVP_KDF_do_all_provided(OPENSSL_CTX *libctx,
+ void EVP_KDF_do_all_provided(OSSL_LIB_CTX *libctx,
                               void (*fn)(EVP_KDF *kdf, void *arg),
                               void *arg);
  void EVP_KDF_names_do_all(const EVP_KDF *kdf,
@@ -48,7 +49,7 @@ EVP_KDF_gettable_params - EVP KDF routines
 
 =head1 DESCRIPTION
 
-The EVP KDF routines are a high level interface to Key Derivation Function
+The EVP KDF routines are a high-level interface to Key Derivation Function
 algorithms and should be used instead of algorithm-specific functions.
 
 After creating a B<EVP_KDF_CTX> for the required algorithm using
@@ -67,6 +68,9 @@ B<EVP_KDF_CTX> is a context type that holds the algorithm inputs.
 EVP_KDF_fetch() fetches an implementation of a KDF I<algorithm>, given
 a library context I<libctx> and a set of I<properties>.
 See L<provider(7)/Fetching algorithms> for further information.
+
+See L<OSSL_PROVIDER-default(7)/Key Derivation Function (KDF)> for the lists of
+algorithms supported by the default provider.
 
 The returned value must eventually be freed with
 L<EVP_KDF_free(3)>.
@@ -89,13 +93,13 @@ I<ctx>.
 
 =head2 Computing functions
 
-EVP_KDF_reset() resets the context to the default state as if the context
+EVP_KDF_CTX_reset() resets the context to the default state as if the context
 had just been created.
 
 EVP_KDF_derive() derives I<keylen> bytes of key material and places it in the
 I<key> buffer.  If the algorithm produces a fixed amount of output then an
 error will occur unless the I<keylen> parameter is equal to that output size,
-as returned by EVP_KDF_size().
+as returned by EVP_KDF_CTX_get_kdf_size().
 
 EVP_KDF_get_params() retrieves details about the implementation
 I<kdf>.
@@ -129,7 +133,7 @@ See L<OSSL_PARAM(3)> for the use of B<OSSL_PARAM> as parameter descriptor.
 
 =head2 Information functions
 
-EVP_KDF_size() returns the output size if the algorithm produces a fixed amount
+EVP_KDF_CTX_get_kdf_size() returns the output size if the algorithm produces a fixed amount
 of output and B<SIZE_MAX> otherwise.  If an error occurs then 0 is returned.
 For some algorithms an error may result if input parameters necessary to
 calculate a fixed output size have not yet been supplied.
@@ -147,6 +151,10 @@ and the given I<arg> as argument.
 
 EVP_KDF_number() returns the internal dynamic number assigned to
 I<kdf>.
+
+EVP_KDF_name() return the name of the given KDF.  For fetched KDFs
+with multiple names, only one of them is returned; it's
+recommended to use EVP_KDF_names_do_all() instead.
 
 EVP_KDF_names_do_all() traverses all names for I<kdf>, and calls
 I<fn> with each name and I<data>.
@@ -237,10 +245,12 @@ EVP_KDF_up_ref() returns 1 on success, 0 on error.
 EVP_KDF_CTX_new() returns either the newly allocated
 B<EVP_KDF_CTX> structure or NULL if an error occurred.
 
-EVP_KDF_CTX_free() and EVP_KDF_reset() do not return a value.
+EVP_KDF_CTX_free() and EVP_KDF_CTX_reset() do not return a value.
 
-EVP_KDF_size() returns the output size.  B<SIZE_MAX> is returned to indicate
+EVP_KDF_CTX_get_kdf_size() returns the output size.  B<SIZE_MAX> is returned to indicate
 that the algorithm produces a variable amount of output; 0 to indicate failure.
+
+EVP_KDF_name() returns the name of the KDF, or NULL on error.
 
 The remaining functions return 1 for success and 0 or a negative value for
 failure.  In particular, a return value of -2 indicates the operation is not
@@ -248,14 +258,7 @@ supported by the KDF algorithm.
 
 =head1 SEE ALSO
 
-L<EVP_KDF-SCRYPT(7)>
-L<EVP_KDF-TLS1_PRF(7)>
-L<EVP_KDF-PBKDF2(7)>
-L<EVP_KDF-HKDF(7)>
-L<EVP_KDF-SS(7)>
-L<EVP_KDF-SSHKDF(7)>
-L<EVP_KDF-X963(7)>
-L<EVP_KDF-X942(7)>
+L<OSSL_PROVIDER-default(7)/Key Derivation Function (KDF)>
 
 =head1 HISTORY
 
@@ -263,7 +266,7 @@ This functionality was added to OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

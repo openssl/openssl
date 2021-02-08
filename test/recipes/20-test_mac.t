@@ -1,7 +1,7 @@
 #! /usr/bin/env perl
-# Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2018-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
-# Licensed under the OpenSSL license (the "License").  You may not use
+# Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
@@ -78,6 +78,11 @@ my @mac_fail_tests = (
       input => '00',
       err => 'EVP_MAC_Init',
       desc => 'KMAC128 Fail no key' },
+    { cmd => [qw{openssl mac -propquery unknown -macopt hexkey:404142434445464748494A4B4C4D4E4F505152535455565758595A5B5C5D5E5F}],
+      type => 'KMAC128',
+      input => '00',
+      err => 'Invalid MAC name KMAC128',
+      desc => 'KMAC128 Fail unknown property' },
 );
 
 my @siphash_fail_tests = (

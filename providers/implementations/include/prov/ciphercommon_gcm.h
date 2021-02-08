@@ -1,6 +1,6 @@
 
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -14,7 +14,7 @@
 typedef struct prov_gcm_hw_st PROV_GCM_HW;
 
 #define GCM_IV_DEFAULT_SIZE 12 /* IV's for AES_GCM should normally be 12 bytes */
-#define GCM_IV_MAX_SIZE     64
+#define GCM_IV_MAX_SIZE     (1024 / 8)
 #define GCM_TAG_MAX_SIZE    16
 
 #if defined(OPENSSL_CPUID_OBJ) && defined(__s390__)
@@ -72,7 +72,7 @@ typedef struct prov_gcm_ctx_st {
     unsigned char iv[GCM_IV_MAX_SIZE]; /* Buffer to use for IV's */
     unsigned char buf[AES_BLOCK_SIZE]; /* Buffer of partial blocks processed via update calls */
 
-    OPENSSL_CTX *libctx;    /* needed for rand calls */
+    OSSL_LIB_CTX *libctx;    /* needed for rand calls */
     const PROV_GCM_HW *hw;  /* hardware specific methods */
     GCM128_CONTEXT gcm;
     ctr128_f ctr;
@@ -102,13 +102,13 @@ struct prov_gcm_hw_st {
   OSSL_GCM_oneshot_fn oneshot;
 };
 
-OSSL_OP_cipher_encrypt_init_fn gcm_einit;
-OSSL_OP_cipher_decrypt_init_fn gcm_dinit;
-OSSL_OP_cipher_get_ctx_params_fn gcm_get_ctx_params;
-OSSL_OP_cipher_set_ctx_params_fn gcm_set_ctx_params;
-OSSL_OP_cipher_cipher_fn gcm_cipher;
-OSSL_OP_cipher_update_fn gcm_stream_update;
-OSSL_OP_cipher_final_fn gcm_stream_final;
+OSSL_FUNC_cipher_encrypt_init_fn gcm_einit;
+OSSL_FUNC_cipher_decrypt_init_fn gcm_dinit;
+OSSL_FUNC_cipher_get_ctx_params_fn gcm_get_ctx_params;
+OSSL_FUNC_cipher_set_ctx_params_fn gcm_set_ctx_params;
+OSSL_FUNC_cipher_cipher_fn gcm_cipher;
+OSSL_FUNC_cipher_update_fn gcm_stream_update;
+OSSL_FUNC_cipher_final_fn gcm_stream_final;
 void gcm_initctx(void *provctx, PROV_GCM_CTX *ctx, size_t keybits,
                  const PROV_GCM_HW *hw, size_t ivlen_min);
 

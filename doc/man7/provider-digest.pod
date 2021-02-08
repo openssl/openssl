@@ -8,7 +8,7 @@ provider-digest - The digest library E<lt>-E<gt> provider functions
 
 =for openssl multiple includes
 
- #include <openssl/core_numbers.h>
+ #include <openssl/core_dispatch.h>
  #include <openssl/core_names.h>
 
  /*
@@ -17,31 +17,31 @@ provider-digest - The digest library E<lt>-E<gt> provider functions
   */
 
  /* Context management */
- void *OP_digest_newctx(void *provctx);
- void OP_digest_freectx(void *dctx);
- void *OP_digest_dupctx(void *dctx);
+ void *OSSL_FUNC_digest_newctx(void *provctx);
+ void OSSL_FUNC_digest_freectx(void *dctx);
+ void *OSSL_FUNC_digest_dupctx(void *dctx);
 
  /* Digest generation */
- int OP_digest_init(void *dctx);
- int OP_digest_update(void *dctx, const unsigned char *in, size_t inl);
- int OP_digest_final(void *dctx, unsigned char *out, size_t *outl,
-                     size_t outsz);
- int OP_digest_digest(void *provctx, const unsigned char *in, size_t inl,
-                      unsigned char *out, size_t *outl, size_t outsz);
+ int OSSL_FUNC_digest_init(void *dctx);
+ int OSSL_FUNC_digest_update(void *dctx, const unsigned char *in, size_t inl);
+ int OSSL_FUNC_digest_final(void *dctx, unsigned char *out, size_t *outl,
+                            size_t outsz);
+ int OSSL_FUNC_digest_digest(void *provctx, const unsigned char *in, size_t inl,
+                             unsigned char *out, size_t *outl, size_t outsz);
 
  /* Digest parameter descriptors */
- const OSSL_PARAM *OP_digest_gettable_params(void);
+ const OSSL_PARAM *OSSL_FUNC_digest_gettable_params(void *provctx);
 
  /* Digest operation parameter descriptors */
- const OSSL_PARAM *OP_digest_gettable_ctx_params(void);
- const OSSL_PARAM *OP_digest_settable_ctx_params(void);
+ const OSSL_PARAM *OSSL_FUNC_digest_gettable_ctx_params(void *provctx);
+ const OSSL_PARAM *OSSL_FUNC_digest_settable_ctx_params(void *provctx);
 
  /* Digest parameters */
- int OP_digest_get_params(OSSL_PARAM params[]);
+ int OSSL_FUNC_digest_get_params(OSSL_PARAM params[]);
 
  /* Digest operation parameters */
- int OP_digest_set_ctx_params(void *dctx, const OSSL_PARAM params[]);
- int OP_digest_get_ctx_params(void *dctx, OSSL_PARAM params[]);
+ int OSSL_FUNC_digest_set_ctx_params(void *dctx, const OSSL_PARAM params[]);
+ int OSSL_FUNC_digest_get_ctx_params(void *dctx, OSSL_PARAM params[]);
 
 =head1 DESCRIPTION
 
@@ -61,75 +61,75 @@ provider_query_operation() function
 All these "functions" have a corresponding function type definition
 named B<OSSL_{name}_fn>, and a helper function to retrieve the
 function pointer from an B<OSSL_DISPATCH> element named
-B<OSSL_get_{name}>.
-For example, the "function" OP_digest_newctx() has these:
+B<OSSL_FUNC_{name}>.
+For example, the "function" OSSL_FUNC_digest_newctx() has these:
 
- typedef void *(OSSL_OP_digest_newctx_fn)(void *provctx);
- static ossl_inline OSSL_OP_digest_newctx_fn
-     OSSL_get_OP_digest_newctx(const OSSL_DISPATCH *opf);
+ typedef void *(OSSL_OSSL_FUNC_digest_newctx_fn)(void *provctx);
+ static ossl_inline OSSL_OSSL_FUNC_digest_newctx_fn
+     OSSL_FUNC_digest_newctx(const OSSL_DISPATCH *opf);
 
 B<OSSL_DISPATCH> arrays are indexed by numbers that are provided as
-macros in L<openssl-core_numbers.h(7)>, as follows:
+macros in L<openssl-core_dispatch.h(7)>, as follows:
 
- OP_digest_newctx               OSSL_FUNC_DIGEST_NEWCTX
- OP_digest_freectx              OSSL_FUNC_DIGEST_FREECTX
- OP_digest_dupctx               OSSL_FUNC_DIGEST_DUPCTX
+ OSSL_FUNC_digest_newctx               OSSL_FUNC_DIGEST_NEWCTX
+ OSSL_FUNC_digest_freectx              OSSL_FUNC_DIGEST_FREECTX
+ OSSL_FUNC_digest_dupctx               OSSL_FUNC_DIGEST_DUPCTX
 
- OP_digest_init                 OSSL_FUNC_DIGEST_INIT
- OP_digest_update               OSSL_FUNC_DIGEST_UPDATE
- OP_digest_final                OSSL_FUNC_DIGEST_FINAL
- OP_digest_digest               OSSL_FUNC_DIGEST_DIGEST
+ OSSL_FUNC_digest_init                 OSSL_FUNC_DIGEST_INIT
+ OSSL_FUNC_digest_update               OSSL_FUNC_DIGEST_UPDATE
+ OSSL_FUNC_digest_final                OSSL_FUNC_DIGEST_FINAL
+ OSSL_FUNC_digest_digest               OSSL_FUNC_DIGEST_DIGEST
 
- OP_digest_get_params           OSSL_FUNC_DIGEST_GET_PARAMS
- OP_digest_get_ctx_params       OSSL_FUNC_DIGEST_GET_CTX_PARAMS
- OP_digest_set_ctx_params       OSSL_FUNC_DIGEST_SET_CTX_PARAMS
+ OSSL_FUNC_digest_get_params           OSSL_FUNC_DIGEST_GET_PARAMS
+ OSSL_FUNC_digest_get_ctx_params       OSSL_FUNC_DIGEST_GET_CTX_PARAMS
+ OSSL_FUNC_digest_set_ctx_params       OSSL_FUNC_DIGEST_SET_CTX_PARAMS
 
- OP_digest_gettable_params      OSSL_FUNC_DIGEST_GETTABLE_PARAMS
- OP_digest_gettable_ctx_params  OSSL_FUNC_DIGEST_GETTABLE_CTX_PARAMS
- OP_digest_settable_ctx_params  OSSL_FUNC_DIGEST_SETTABLE_CTX_PARAMS
+ OSSL_FUNC_digest_gettable_params      OSSL_FUNC_DIGEST_GETTABLE_PARAMS
+ OSSL_FUNC_digest_gettable_ctx_params  OSSL_FUNC_DIGEST_GETTABLE_CTX_PARAMS
+ OSSL_FUNC_digest_settable_ctx_params  OSSL_FUNC_DIGEST_SETTABLE_CTX_PARAMS
 
 A digest algorithm implementation may not implement all of these functions.
-In order to be usable all or none of OP_digest_newctx, OP_digest_freectx,
-OP_digest_init, OP_digest_update and OP_digest_final should be implemented.
+In order to be usable all or none of OSSL_FUNC_digest_newctx, OSSL_FUNC_digest_freectx,
+OSSL_FUNC_digest_init, OSSL_FUNC_digest_update and OSSL_FUNC_digest_final should be implemented.
 All other functions are optional.
 
 =head2 Context Management Functions
 
-OP_digest_newctx() should create and return a pointer to a provider side
+OSSL_FUNC_digest_newctx() should create and return a pointer to a provider side
 structure for holding context information during a digest operation.
 A pointer to this context will be passed back in a number of the other digest
 operation function calls.
 The parameter I<provctx> is the provider context generated during provider
 initialisation (see L<provider(7)>).
 
-OP_digest_freectx() is passed a pointer to the provider side digest context in
+OSSL_FUNC_digest_freectx() is passed a pointer to the provider side digest context in
 the I<dctx> parameter.
 This function should free any resources associated with that context.
 
-OP_digest_dupctx() should duplicate the provider side digest context in the
+OSSL_FUNC_digest_dupctx() should duplicate the provider side digest context in the
 I<dctx> parameter and return the duplicate copy.
 
 =head2 Digest Generation Functions
 
-OP_digest_init() initialises a digest operation given a newly created
+OSSL_FUNC_digest_init() initialises a digest operation given a newly created
 provider side digest context in the I<dctx> parameter.
 
-OP_digest_update() is called to supply data to be digested as part of a
+OSSL_FUNC_digest_update() is called to supply data to be digested as part of a
 previously initialised digest operation.
 The I<dctx> parameter contains a pointer to a previously initialised provider
 side context.
-OP_digest_update() should digest I<inl> bytes of data at the location pointed to
+OSSL_FUNC_digest_update() should digest I<inl> bytes of data at the location pointed to
 by I<in>.
-OP_digest_update() may be called multiple times for a single digest operation.
+OSSL_FUNC_digest_update() may be called multiple times for a single digest operation.
 
-OP_digest_final() generates a digest started through previous OP_digest_init()
-and OP_digest_update() calls.
+OSSL_FUNC_digest_final() generates a digest started through previous OSSL_FUNC_digest_init()
+and OSSL_FUNC_digest_update() calls.
 The I<dctx> parameter contains a pointer to the provider side context.
 The digest should be written to I<*out> and the length of the digest to
 I<*outl>.
 The digest should not exceed I<outsz> bytes.
 
-OP_digest_digest() is a "oneshot" digest function.
+OSSL_FUNC_digest_digest() is a "oneshot" digest function.
 No provider side digest context is used.
 Instead the provider context that was created during provider initialisation is
 passed in the I<provctx> parameter (see L<provider(7)>).
@@ -142,20 +142,20 @@ exceed I<outsz> bytes.
 See L<OSSL_PARAM(3)> for further details on the parameters structure used by
 these functions.
 
-OP_digest_get_params() gets details of the algorithm implementation
+OSSL_FUNC_digest_get_params() gets details of the algorithm implementation
 and stores them in I<params>.
 
-OP_digest_set_ctx_params() sets digest operation parameters for the
+OSSL_FUNC_digest_set_ctx_params() sets digest operation parameters for the
 provider side digest context I<dctx> to I<params>.
 Any parameter settings are additional to any that were previously set.
 
-OP_digest_get_ctx_params() gets digest operation details details from
+OSSL_FUNC_digest_get_ctx_params() gets digest operation details details from
 the given provider side digest context I<dctx> and stores them in I<params>.
 
-OP_digest_gettable_params(), OP_digest_gettable_ctx_params(), and
-OP_digest_settable_ctx_params() all return constant B<OSSL_PARAM> arrays
-as descriptors of the parameters that OP_digest_get_params(),
-OP_digest_get_ctx_params(), and OP_digest_set_ctx_params() can handle,
+OSSL_FUNC_digest_gettable_params(), OSSL_FUNC_digest_gettable_ctx_params(), and
+OSSL_FUNC_digest_settable_ctx_params() all return constant B<OSSL_PARAM> arrays
+as descriptors of the parameters that OSSL_FUNC_digest_get_params(),
+OSSL_FUNC_digest_get_ctx_params(), and OSSL_FUNC_digest_set_ctx_params() can handle,
 respectively.
 
 Parameters currently recognised by built-in digests with this function
@@ -217,71 +217,34 @@ B<unsigned long int>.
 
 =head2 Digest Context Parameters
 
-OP_digest_set_ctx_params() sets digest parameters associated with the
+OSSL_FUNC_digest_set_ctx_params() sets digest parameters associated with the
 given provider side digest context I<dctx> to I<params>.
 Any parameter settings are additional to any that were previously set.
 See L<OSSL_PARAM(3)> for further details on the parameters structure.
 
-OP_digest_get_ctx_params() gets details of currently set parameters
+OSSL_FUNC_digest_get_ctx_params() gets details of currently set parameters
 values associated with the give provider side digest context I<dctx>
 and stores them in I<params>.
 See L<OSSL_PARAM(3)> for further details on the parameters structure.
 
-Parameters currently recognised by built-in digests are as follows. Not all
-parameters are relevant to, or are understood by all digests:
-
-=over 4
-
-=item "xoflen" (B<OSSL_DIGEST_PARAM_XOFLEN>) <unsigned integer>
-
-Sets the digest length for extendable output functions.
-The length of the "xoflen" parameter should not exceed that of a B<size_t>.
-
-=item "ssl3-ms" (B<OSSL_DIGEST_PARAM_SSL3_MS>) <octet string>
-
-This parameter is set by libssl in order to calculate a signature hash for an
-SSLv3 CertificateVerify message as per RFC6101.
-It is only set after all handshake messages have already been digested via
-OP_digest_update() calls.
-The parameter provides the master secret value to be added to the digest.
-The digest implementation should calculate the complete digest as per RFC6101
-section 5.6.8.
-The next call after setting this parameter will be OP_digest_final().
-This is only relevant for implementations of SHA1 or MD5_SHA1.
-
-=item "pad_type" (B<OSSL_DIGEST_PARAM_PAD_TYPE>) <unsigned integer>
-
-Sets the pad type to be used.
-The only built-in digest that uses this is MDC2.
-Normally the final MDC2 block is padded with 0s.
-If the pad type is set to 2 then the final block is padded with 0x80 followed by
-0s.
-
-=item "micalg" (B<OSSL_DIGEST_PARAM_MICALG>) <UTF8 string>
-
-Gets the digest Message Integrity Check algorithm string.
-This is used when creating S/MIME multipart/signed messages, as specified in
-RFC 5751.
-
-=back
-
 =head1 RETURN VALUES
 
-OP_digest_newctx() and OP_digest_dupctx() should return the newly created
+OSSL_FUNC_digest_newctx() and OSSL_FUNC_digest_dupctx() should return the newly created
 provider side digest context, or NULL on failure.
 
-OP_digest_init(), OP_digest_update(), OP_digest_final(), OP_digest_digest(),
-OP_digest_set_params() and OP_digest_get_params() should return 1 for success or
+OSSL_FUNC_digest_init(), OSSL_FUNC_digest_update(), OSSL_FUNC_digest_final(), OSSL_FUNC_digest_digest(),
+OSSL_FUNC_digest_set_params() and OSSL_FUNC_digest_get_params() should return 1 for success or
 0 on error.
 
-OP_digest_size() should return the digest size.
+OSSL_FUNC_digest_size() should return the digest size.
 
-OP_digest_block_size() should return the block size of the underlying digest
+OSSL_FUNC_digest_block_size() should return the block size of the underlying digest
 algorithm.
 
 =head1 SEE ALSO
 
-L<provider(7)>
+L<provider(7)>, L<OSSL_PROVIDER-FIPS(7)>, L<OSSL_PROVIDER-default(7)>,
+L<OSSL_PROVIDER-legacy(7)>
 
 =head1 HISTORY
 
@@ -289,7 +252,7 @@ The provider DIGEST interface was introduced in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

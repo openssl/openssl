@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2020 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -8,9 +8,12 @@
  * https://www.openssl.org/source/license.html
  */
 
+/* We need to use some engine deprecated APIs */
+#define OPENSSL_SUPPRESS_DEPRECATED
+
 /*
- * RC4 and SHA-1 low level APIs are deprecated for public use, but still ok
- * for internal use.
+ * RC4 and SHA-1 low level APIs and EVP _meth_ APISs are deprecated for public
+ * use, but still ok for internal use.
  */
 #include "internal/deprecated.h"
 
@@ -95,9 +98,7 @@ static int bind_helper(ENGINE *e)
         || !ENGINE_set_name(e, engine_openssl_name)
         || !ENGINE_set_destroy_function(e, openssl_destroy)
 #ifndef TEST_ENG_OPENSSL_NO_ALGORITHMS
-# ifndef OPENSSL_NO_RSA
         || !ENGINE_set_RSA(e, RSA_get_default_method())
-# endif
 # ifndef OPENSSL_NO_DSA
         || !ENGINE_set_DSA(e, DSA_get_default_method())
 # endif
@@ -149,13 +150,20 @@ void engine_load_openssl_int(void)
     ENGINE *toadd = engine_openssl();
     if (!toadd)
         return;
+
+    ERR_set_mark();
     ENGINE_add(toadd);
     /*
      * If the "add" worked, it gets a structural reference. So either way, we
      * release our just-created reference.
      */
     ENGINE_free(toadd);
-    ERR_clear_error();
+    /*
+     * If the "add" didn't work, it was probably a conflict because it was
+     * already added (eg. someone calling ENGINE_load_blah then calling
+     * ENGINE_load_builtin_engines() perhaps).
+     */
+    ERR_pop_to_mark();
 }
 
 /*
@@ -443,7 +451,7 @@ static int ossl_hmac_init(EVP_PKEY_CTX *ctx)
     OSSL_HMAC_PKEY_CTX *hctx;
 
     if ((hctx = OPENSSL_zalloc(sizeof(*hctx))) == NULL) {
-        ENGINEerr(ENGINE_F_OSSL_HMAC_INIT, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_ENGINE, ERR_R_MALLOC_FAILURE);
         return 0;
     }
     hctx->ktmp.type = V_ASN1_OCTET_STRING;

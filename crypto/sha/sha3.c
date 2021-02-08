@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -12,18 +12,18 @@
 
 void SHA3_squeeze(uint64_t A[5][5], unsigned char *out, size_t len, size_t r);
 
-void sha3_reset(KECCAK1600_CTX *ctx)
+void ossl_sha3_reset(KECCAK1600_CTX *ctx)
 {
     memset(ctx->A, 0, sizeof(ctx->A));
     ctx->bufsz = 0;
 }
 
-int sha3_init(KECCAK1600_CTX *ctx, unsigned char pad, size_t bitlen)
+int ossl_sha3_init(KECCAK1600_CTX *ctx, unsigned char pad, size_t bitlen)
 {
     size_t bsz = SHA3_BLOCKSIZE(bitlen);
 
     if (bsz <= sizeof(ctx->buf)) {
-        sha3_reset(ctx);
+        ossl_sha3_reset(ctx);
         ctx->block_size = bsz;
         ctx->md_size = bitlen / 8;
         ctx->pad = pad;
@@ -33,16 +33,16 @@ int sha3_init(KECCAK1600_CTX *ctx, unsigned char pad, size_t bitlen)
     return 0;
 }
 
-int keccak_kmac_init(KECCAK1600_CTX *ctx, unsigned char pad, size_t bitlen)
+int ossl_keccak_kmac_init(KECCAK1600_CTX *ctx, unsigned char pad, size_t bitlen)
 {
-    int ret = sha3_init(ctx, pad, bitlen);
+    int ret = ossl_sha3_init(ctx, pad, bitlen);
 
     if (ret)
         ctx->md_size *= 2;
     return ret;
 }
 
-int sha3_update(KECCAK1600_CTX *ctx, const void *_inp, size_t len)
+int ossl_sha3_update(KECCAK1600_CTX *ctx, const void *_inp, size_t len)
 {
     const unsigned char *inp = _inp;
     size_t bsz = ctx->block_size;
@@ -84,7 +84,7 @@ int sha3_update(KECCAK1600_CTX *ctx, const void *_inp, size_t len)
     return 1;
 }
 
-int sha3_final(unsigned char *md, KECCAK1600_CTX *ctx)
+int ossl_sha3_final(unsigned char *md, KECCAK1600_CTX *ctx)
 {
     size_t bsz = ctx->block_size;
     size_t num = ctx->bufsz;

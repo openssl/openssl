@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -48,7 +48,8 @@ typedef enum OPTION_choice {
     OPT_CAPATH, OPT_CAFILE, OPT_CASTORE,
     OPT_NOCAPATH, OPT_NOCAFILE, OPT_NOCASTORE,
     OPT_NEW, OPT_REUSE, OPT_BUGS, OPT_VERIFY, OPT_TIME, OPT_SSL3,
-    OPT_WWW, OPT_TLS1, OPT_TLS1_1, OPT_TLS1_2, OPT_TLS1_3
+    OPT_WWW, OPT_TLS1, OPT_TLS1_1, OPT_TLS1_2, OPT_TLS1_3,
+    OPT_PROV_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS s_time_options[] = {
@@ -85,7 +86,7 @@ const OPTIONS s_time_options[] = {
     {"www", OPT_WWW, 's', "Fetch specified page from the site"},
 
     OPT_SECTION("Certificate"),
-    {"nameopt", OPT_NAMEOPT, 's', "Various certificate name options"},
+    {"nameopt", OPT_NAMEOPT, 's', "Certificate subject/issuer name printing options"},
     {"cert", OPT_CERT, '<', "Cert file to use, PEM format assumed"},
     {"key", OPT_KEY, '<', "File with key, PEM; default is -cert file"},
     {"cafile", OPT_CAFILE, '<', "PEM format file of CA's"},
@@ -99,6 +100,7 @@ const OPTIONS s_time_options[] = {
     {"no-CAstore", OPT_NOCASTORE, '-',
      "Do not load certificates from the default certificates store URI"},
 
+    OPT_PROV_OPTIONS,
     {NULL}
 };
 
@@ -226,8 +228,14 @@ int s_time_main(int argc, char **argv)
             min_version = TLS1_3_VERSION;
             max_version = TLS1_3_VERSION;
             break;
+        case OPT_PROV_CASES:
+            if (!opt_provider(o))
+                goto end;
+            break;
         }
     }
+
+    /* No extra arguments. */
     argc = opt_num_rest();
     if (argc != 0)
         goto opthelp;
@@ -410,12 +418,19 @@ static SSL *doConnection(SSL *scon, const char *host, SSL_CTX *ctx)
     if ((conn = BIO_new(BIO_s_connect())) == NULL)
         return NULL;
 
-    BIO_set_conn_hostname(conn, host);
-    BIO_set_conn_mode(conn, BIO_SOCK_NODELAY);
+    if (BIO_set_conn_hostname(conn, host) <= 0
+            || BIO_set_conn_mode(conn, BIO_SOCK_NODELAY) <= 0) {
+        BIO_free(conn);
+        return NULL;
+    }
 
-    if (scon == NULL)
+    if (scon == NULL) {
         serverCon = SSL_new(ctx);
-    else {
+        if (serverCon == NULL) {
+            BIO_free(conn);
+            return NULL;
+        }
+    } else {
         serverCon = scon;
         SSL_set_connect_state(serverCon);
     }

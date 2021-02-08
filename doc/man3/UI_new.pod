@@ -44,7 +44,7 @@ UI_get_method, UI_set_method, UI_OpenSSL, UI_null - user interface
  int UI_dup_error_string(UI *ui, const char *text);
 
  char *UI_construct_prompt(UI *ui_method,
-        const char *object_desc, const char *object_name);
+                           const char *phrase_desc, const char *object_name);
 
  void *UI_add_user_data(UI *ui, void *user_data);
  int UI_dup_user_data(UI *ui, void *user_data);
@@ -149,10 +149,12 @@ as their UI_add counterparts, except that they make their own copies
 of all strings.
 
 UI_construct_prompt() is a helper function that can be used to create
-a prompt from two pieces of information: an description and a name.
+a prompt from two pieces of information: a phrase description I<phrase_desc>
+and an object name I<object_name>, where the latter may be NULL.
 The default constructor (if there is none provided by the method used)
-creates a string "Enter I<description> for I<name>:".  With the
-description "pass phrase" and the filename "foo.key", that becomes
+creates a string "Enter I<phrase_desc> for I<object_name>:"
+where the " for I<object_name>" part is left out if I<object_name> is NULL.
+With the description "pass phrase" and the filename "foo.key", that becomes
 "Enter pass phrase for foo.key:".  Other methods may create whatever
 string and may include encodings that will be processed by the other
 method functions.
@@ -243,7 +245,7 @@ The UI_dup_user_data() function was added in OpenSSL 1.1.1.
 
 =head1 COPYRIGHT
 
-Copyright 2001-2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2001-2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

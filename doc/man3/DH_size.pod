@@ -9,38 +9,38 @@ security bits
 
  #include <openssl/dh.h>
 
+ int DH_bits(const DH *dh);
+
 Deprecated since OpenSSL 3.0, can be hidden entirely by defining
 B<OPENSSL_API_COMPAT> with a suitable version value, see
 L<openssl_user_macros(7)>:
 
  int DH_size(const DH *dh);
 
- int DH_bits(const DH *dh);
-
  int DH_security_bits(const DH *dh);
 
 =head1 DESCRIPTION
 
-All of the functions described on this page are deprecated.
-Applications should instead use L<EVP_PKEY_bits(3)>,
-L<EVP_PKEY_security_bits(3)> and L<EVP_PKEY_size(3)>.
+DH_bits() returns the number of significant bits.
+
+B<dh> and B<dh-E<gt>p> must not be B<NULL>.
+
+The remaining functions described on this page are deprecated.
+Applications should instead use L<EVP_PKEY_security_bits(3)> and
+L<EVP_PKEY_size(3)>.
 
 DH_size() returns the Diffie-Hellman prime size in bytes. It can be used
 to determine how much memory must be allocated for the shared secret
 computed by L<DH_compute_key(3)>.
-
-DH_bits() returns the number of significant bits.
-
-B<dh> and B<dh-E<gt>p> must not be B<NULL>.
 
 DH_security_bits() returns the number of security bits of the given B<dh>
 key. See L<BN_security_bits(3)>.
 
 =head1 RETURN VALUES
 
-DH_size() returns the prime size of Diffie-Hellman in bytes.
-
 DH_bits() returns the number of bits in the key.
+
+DH_size() returns the prime size of Diffie-Hellman in bytes.
 
 DH_security_bits() returns the number of security bits.
 
@@ -52,13 +52,13 @@ L<BN_num_bits(3)>
 
 =head1 HISTORY
 
-All of these functions were deprecated in OpenSSL 3.0.
+The DH_size() and DH_security_bits() functions were deprecated in OpenSSL 3.0.
 
 The DH_bits() function was added in OpenSSL 1.1.0.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

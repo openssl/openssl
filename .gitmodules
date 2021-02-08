@@ -9,3 +9,8 @@
 [submodule "krb5"]
 	path = krb5
 	url = https://github.com/krb5/krb5
+
+[submodule "gost-engine"]
+	path = gost-engine
+	url = https://github.com/gost-engine/engine
+	update = rebase

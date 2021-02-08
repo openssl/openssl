@@ -36,14 +36,11 @@ B<openssl> B<dsa>
 [B<-modulus>]
 [B<-pubin>]
 [B<-pubout>]
-{- $OpenSSL::safe::opt_engine_synopsis -}
+{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
 
 =for openssl ifdef pvk-string pvk-weak pvk-none engine
 
 =head1 DESCRIPTION
-
-This command has been deprecated.
-The L<openssl-pkey(1)> command should be used instead.
 
 This command processes DSA keys. They can be converted between various
 forms and their components printed out. B<Note> This command uses the
@@ -61,10 +58,10 @@ Print out a usage message.
 =item B<-inform> B<DER>|B<PEM>, B<-outform> B<DER>|B<PEM>
 
 The input and formats; the default is B<PEM>.
-See L<openssl(1)/Format Options> for details.
+See L<openssl-format-options(1)> for details.
 
 Private keys are a sequence of B<ASN.1 INTEGERS>: the version (zero), B<p>,
-B<q>, B<g>, and the public and and private key components.  Public keys
+B<q>, B<g>, and the public and private key components.  Public keys
 are a B<SubjectPublicKeyInfo> structure with the B<DSA> type.
 
 The B<PEM> format also accepts PKCS#8 data.
@@ -86,7 +83,7 @@ filename.
 
 The password source for the input and output file.
 For more information about the format of B<arg>
-see L<openssl(1)/Pass Phrase Options>.
+see L<openssl-passphrase-options(1)>.
 
 =item B<-aes128>, B<-aes192>, B<-aes256>, B<-aria128>, B<-aria192>, B<-aria256>, B<-camellia128>, B<-camellia192>, B<-camellia256>, B<-des>, B<-des3>, B<-idea>
 
@@ -122,6 +119,8 @@ key will be output instead. This option is automatically set if the input is
 a public key.
 
 {- $OpenSSL::safe::opt_engine_item -}
+
+{- $OpenSSL::safe::opt_provider_item -}
 
 =back
 
@@ -161,11 +160,11 @@ L<openssl-genrsa(1)>
 
 =head1 HISTORY
 
-This command was deprecated in OpenSSL 3.0.
+The B<-engine> option was deprecated in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

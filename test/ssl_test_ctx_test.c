@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -16,7 +16,7 @@
 #include <string.h>
 
 #include "internal/nelem.h"
-#include "ssl_test_ctx.h"
+#include "helpers/ssl_test_ctx.h"
 #include "testutil.h"
 #include <openssl/e_os2.h>
 #include <openssl/err.h>
@@ -114,7 +114,7 @@ static SSL_TEST_CTX_TEST_FIXTURE *set_up(const char *const test_case_name)
     if (!TEST_ptr(fixture = OPENSSL_zalloc(sizeof(*fixture))))
         return NULL;
     fixture->test_case_name = test_case_name;
-    if (!TEST_ptr(fixture->expected_ctx = SSL_TEST_CTX_new())) {
+    if (!TEST_ptr(fixture->expected_ctx = SSL_TEST_CTX_new(NULL))) {
         OPENSSL_free(fixture);
         return NULL;
     }
@@ -126,7 +126,8 @@ static int execute_test(SSL_TEST_CTX_TEST_FIXTURE *fixture)
     int success = 0;
     SSL_TEST_CTX *ctx;
 
-    if (!TEST_ptr(ctx = SSL_TEST_CTX_create(conf, fixture->test_section))
+    if (!TEST_ptr(ctx = SSL_TEST_CTX_create(conf, fixture->test_section,
+                                            fixture->expected_ctx->libctx))
             || !testctx_eq(ctx, fixture->expected_ctx))
         goto err;
 
@@ -150,8 +151,6 @@ static void tear_down(SSL_TEST_CTX_TEST_FIXTURE *fixture)
 static int test_empty_configuration(void)
 {
     SETUP_SSL_TEST_CTX_TEST_FIXTURE();
-    if (fixture == NULL)
-        return 0;
     fixture->test_section = "ssltest_default";
     fixture->expected_ctx->expected_result = SSL_TEST_SUCCESS;
     EXECUTE_SSL_TEST_CTX_TEST();
@@ -161,8 +160,6 @@ static int test_empty_configuration(void)
 static int test_good_configuration(void)
 {
     SETUP_SSL_TEST_CTX_TEST_FIXTURE();
-    if (fixture == NULL)
-        return 0;
     fixture->test_section = "ssltest_good";
     fixture->expected_ctx->method = SSL_TEST_METHOD_DTLS;
     fixture->expected_ctx->handshake_mode = SSL_TEST_HANDSHAKE_RESUME;
@@ -232,7 +229,7 @@ static int test_bad_configuration(int idx)
     SSL_TEST_CTX *ctx;
 
     if (!TEST_ptr_null(ctx = SSL_TEST_CTX_create(conf,
-                                                 bad_configurations[idx]))) {
+                                                 bad_configurations[idx], NULL))) {
         SSL_TEST_CTX_free(ctx);
         return 0;
     }
@@ -251,7 +248,7 @@ int setup_tests(void)
 
     if (!TEST_ptr(conf = NCONF_new(NULL)))
         return 0;
-    /* argument should point to test/ssl_test_ctx_test.conf */
+    /* argument should point to test/ssl_test_ctx_test.cnf */
     if (!TEST_int_gt(NCONF_load(conf, test_get_argument(0), NULL), 0))
         return 0;
 

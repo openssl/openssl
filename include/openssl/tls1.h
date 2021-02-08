@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  * Copyright 2005 Nokia. All rights reserved.
  *
@@ -1116,14 +1116,16 @@ int SSL_CTX_set_tlsext_ticket_key_evp_cb
 # define TLS_CT_RSA_FIXED_ECDH           65
 # define TLS_CT_ECDSA_FIXED_ECDH         66
 # define TLS_CT_GOST01_SIGN              22
-# define TLS_CT_GOST12_SIGN              238
-# define TLS_CT_GOST12_512_SIGN          239
+# define TLS_CT_GOST12_IANA_SIGN         67
+# define TLS_CT_GOST12_IANA_512_SIGN     68
+# define TLS_CT_GOST12_LEGACY_SIGN       238
+# define TLS_CT_GOST12_LEGACY_512_SIGN   239
 
 /*
  * when correcting this number, correct also SSL3_CT_NUMBER in ssl3.h (see
  * comment there)
  */
-# define TLS_CT_NUMBER                   10
+# define TLS_CT_NUMBER                   12
 
 # if defined(SSL3_CT_NUMBER)
 #  if TLS_CT_NUMBER != SSL3_CT_NUMBER

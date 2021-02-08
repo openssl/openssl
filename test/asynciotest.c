@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
 
 #include "internal/packet.h"
 
-#include "ssltestlib.h"
+#include "helpers/ssltestlib.h"
 #include "testutil.h"
 
 /* Should we fragment records or not? 0 = no, !0 = yes*/
@@ -296,7 +296,8 @@ static int test_asyncio(int test)
     const char testdata[] = "Test data";
     char buf[sizeof(testdata)];
 
-    if (!TEST_true(create_ssl_ctx_pair(TLS_server_method(), TLS_client_method(),
+    if (!TEST_true(create_ssl_ctx_pair(NULL, TLS_server_method(),
+                                       TLS_client_method(),
                                        TLS1_VERSION, 0,
                                        &serverctx, &clientctx, cert, privkey)))
         goto end;

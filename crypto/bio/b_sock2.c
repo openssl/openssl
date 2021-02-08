@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -12,6 +12,7 @@
 #include <errno.h>
 
 #include "bio_local.h"
+#include "internal/ktls.h"
 
 #include <openssl/err.h>
 
@@ -48,9 +49,20 @@ int BIO_socket(int domain, int socktype, int protocol, int options)
     if (sock == -1) {
         ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
                        "calling socket()");
-        BIOerr(BIO_F_BIO_SOCKET, BIO_R_UNABLE_TO_CREATE_SOCKET);
+        ERR_raise(ERR_LIB_BIO, BIO_R_UNABLE_TO_CREATE_SOCKET);
         return INVALID_SOCKET;
     }
+# ifndef OPENSSL_NO_KTLS
+    {
+        /*
+         * The new socket is created successfully regardless of ktls_enable.
+         * ktls_enable doesn't change any functionality of the socket, except
+         * changing the setsockopt to enable the processing of ktls_start.
+         * Thus, it is not a problem to call it for non-TLS sockets.
+         */
+        ktls_enable(sock);
+    }
+# endif
 
     return sock;
 }
@@ -80,7 +92,7 @@ int BIO_connect(int sock, const BIO_ADDR *addr, int options)
     const int on = 1;
 
     if (sock == -1) {
-        BIOerr(BIO_F_BIO_CONNECT, BIO_R_INVALID_SOCKET);
+        ERR_raise(ERR_LIB_BIO, BIO_R_INVALID_SOCKET);
         return 0;
     }
 
@@ -92,7 +104,7 @@ int BIO_connect(int sock, const BIO_ADDR *addr, int options)
                        (const void *)&on, sizeof(on)) != 0) {
             ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
                            "calling setsockopt()");
-            BIOerr(BIO_F_BIO_CONNECT, BIO_R_UNABLE_TO_KEEPALIVE);
+            ERR_raise(ERR_LIB_BIO, BIO_R_UNABLE_TO_KEEPALIVE);
             return 0;
         }
     }
@@ -102,7 +114,7 @@ int BIO_connect(int sock, const BIO_ADDR *addr, int options)
                        (const void *)&on, sizeof(on)) != 0) {
             ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
                            "calling setsockopt()");
-            BIOerr(BIO_F_BIO_CONNECT, BIO_R_UNABLE_TO_NODELAY);
+            ERR_raise(ERR_LIB_BIO, BIO_R_UNABLE_TO_NODELAY);
             return 0;
         }
     }
@@ -112,7 +124,7 @@ int BIO_connect(int sock, const BIO_ADDR *addr, int options)
         if (!BIO_sock_should_retry(-1)) {
             ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
                            "calling connect()");
-            BIOerr(BIO_F_BIO_CONNECT, BIO_R_CONNECT_ERROR);
+            ERR_raise(ERR_LIB_BIO, BIO_R_CONNECT_ERROR);
         }
         return 0;
     }
@@ -142,7 +154,7 @@ int BIO_bind(int sock, const BIO_ADDR *addr, int options)
 # endif
 
     if (sock == -1) {
-        BIOerr(BIO_F_BIO_BIND, BIO_R_INVALID_SOCKET);
+        ERR_raise(ERR_LIB_BIO, BIO_R_INVALID_SOCKET);
         return 0;
     }
 
@@ -156,7 +168,7 @@ int BIO_bind(int sock, const BIO_ADDR *addr, int options)
                        (const void *)&on, sizeof(on)) != 0) {
             ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
                            "calling setsockopt()");
-            BIOerr(BIO_F_BIO_BIND, BIO_R_UNABLE_TO_REUSEADDR);
+            ERR_raise(ERR_LIB_BIO, BIO_R_UNABLE_TO_REUSEADDR);
             return 0;
         }
     }
@@ -165,7 +177,7 @@ int BIO_bind(int sock, const BIO_ADDR *addr, int options)
     if (bind(sock, BIO_ADDR_sockaddr(addr), BIO_ADDR_sockaddr_size(addr)) != 0) {
         ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
                        "calling bind()");
-        BIOerr(BIO_F_BIO_BIND, BIO_R_UNABLE_TO_BIND_SOCKET);
+        ERR_raise(ERR_LIB_BIO, BIO_R_UNABLE_TO_BIND_SOCKET);
         return 0;
     }
 
@@ -216,7 +228,7 @@ int BIO_listen(int sock, const BIO_ADDR *addr, int options)
     socklen_t socktype_len = sizeof(socktype);
 
     if (sock == -1) {
-        BIOerr(BIO_F_BIO_LISTEN, BIO_R_INVALID_SOCKET);
+        ERR_raise(ERR_LIB_BIO, BIO_R_INVALID_SOCKET);
         return 0;
     }
 
@@ -225,7 +237,7 @@ int BIO_listen(int sock, const BIO_ADDR *addr, int options)
         || socktype_len != sizeof(socktype)) {
         ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
                        "calling getsockopt()");
-        BIOerr(BIO_F_BIO_LISTEN, BIO_R_GETTING_SOCKTYPE);
+        ERR_raise(ERR_LIB_BIO, BIO_R_GETTING_SOCKTYPE);
         return 0;
     }
 
@@ -237,7 +249,7 @@ int BIO_listen(int sock, const BIO_ADDR *addr, int options)
                        (const void *)&on, sizeof(on)) != 0) {
             ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
                            "calling setsockopt()");
-            BIOerr(BIO_F_BIO_LISTEN, BIO_R_UNABLE_TO_KEEPALIVE);
+            ERR_raise(ERR_LIB_BIO, BIO_R_UNABLE_TO_KEEPALIVE);
             return 0;
         }
     }
@@ -247,7 +259,7 @@ int BIO_listen(int sock, const BIO_ADDR *addr, int options)
                        (const void *)&on, sizeof(on)) != 0) {
             ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
                            "calling setsockopt()");
-            BIOerr(BIO_F_BIO_LISTEN, BIO_R_UNABLE_TO_NODELAY);
+            ERR_raise(ERR_LIB_BIO, BIO_R_UNABLE_TO_NODELAY);
             return 0;
         }
     }
@@ -263,7 +275,7 @@ int BIO_listen(int sock, const BIO_ADDR *addr, int options)
                        (const void *)&on, sizeof(on)) != 0) {
             ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
                            "calling setsockopt()");
-            BIOerr(BIO_F_BIO_LISTEN, BIO_R_LISTEN_V6_ONLY);
+            ERR_raise(ERR_LIB_BIO, BIO_R_LISTEN_V6_ONLY);
             return 0;
         }
     }
@@ -275,7 +287,7 @@ int BIO_listen(int sock, const BIO_ADDR *addr, int options)
     if (socktype != SOCK_DGRAM && listen(sock, MAX_LISTEN) == -1) {
         ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
                        "calling listen()");
-        BIOerr(BIO_F_BIO_LISTEN, BIO_R_UNABLE_TO_LISTEN_SOCKET);
+        ERR_raise(ERR_LIB_BIO, BIO_R_UNABLE_TO_LISTEN_SOCKET);
         return 0;
     }
 
@@ -303,7 +315,7 @@ int BIO_accept_ex(int accept_sock, BIO_ADDR *addr_, int options)
         if (!BIO_sock_should_retry(accepted_sock)) {
             ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
                            "calling accept()");
-            BIOerr(BIO_F_BIO_ACCEPT_EX, BIO_R_ACCEPT_ERROR);
+            ERR_raise(ERR_LIB_BIO, BIO_R_ACCEPT_ERROR);
         }
         return INVALID_SOCKET;
     }

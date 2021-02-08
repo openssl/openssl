@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -50,12 +50,12 @@ static DSA_METHOD openssl_dsa_meth = {
 
 static const DSA_METHOD *default_DSA_method = &openssl_dsa_meth;
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
 void DSA_set_default_method(const DSA_METHOD *meth)
 {
     default_DSA_method = meth;
 }
-#endif /* FIPS_MODE */
+#endif /* FIPS_MODULE */
 
 const DSA_METHOD *DSA_get_default_method(void)
 {
@@ -174,7 +174,7 @@ DSA_SIG *dsa_do_sign_int(const unsigned char *dgst, int dlen, DSA *dsa)
 
  err:
     if (rv == 0) {
-        DSAerr(0, reason);
+        ERR_raise(ERR_LIB_DSA, reason);
         DSA_SIG_free(ret);
         ret = NULL;
     }
@@ -205,7 +205,7 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in,
     int q_bits, q_words;
 
     if (!dsa->params.p || !dsa->params.q || !dsa->params.g) {
-        DSAerr(DSA_F_DSA_SIGN_SETUP, DSA_R_MISSING_PARAMETERS);
+        ERR_raise(ERR_LIB_DSA, DSA_R_MISSING_PARAMETERS);
         return 0;
     }
 
@@ -213,11 +213,11 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in,
     if (BN_is_zero(dsa->params.p)
         || BN_is_zero(dsa->params.q)
         || BN_is_zero(dsa->params.g)) {
-        DSAerr(DSA_F_DSA_SIGN_SETUP, DSA_R_INVALID_PARAMETERS);
+        ERR_raise(ERR_LIB_DSA, DSA_R_INVALID_PARAMETERS);
         return 0;
     }
     if (dsa->priv_key == NULL) {
-        DSAerr(DSA_F_DSA_SIGN_SETUP, DSA_R_MISSING_PRIVATE_KEY);
+        ERR_raise(ERR_LIB_DSA, DSA_R_MISSING_PRIVATE_KEY);
         return 0;
     }
 
@@ -307,7 +307,7 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in,
     ret = 1;
  err:
     if (!ret)
-        DSAerr(DSA_F_DSA_SIGN_SETUP, ERR_R_BN_LIB);
+        ERR_raise(ERR_LIB_DSA, ERR_R_BN_LIB);
     if (ctx != ctx_in)
         BN_CTX_free(ctx);
     BN_clear_free(k);
@@ -327,19 +327,19 @@ static int dsa_do_verify(const unsigned char *dgst, int dgst_len,
     if (dsa->params.p == NULL
         || dsa->params.q == NULL
         || dsa->params.g == NULL) {
-        DSAerr(DSA_F_DSA_DO_VERIFY, DSA_R_MISSING_PARAMETERS);
+        ERR_raise(ERR_LIB_DSA, DSA_R_MISSING_PARAMETERS);
         return -1;
     }
 
     i = BN_num_bits(dsa->params.q);
     /* fips 186-3 allows only different sizes for q */
     if (i != 160 && i != 224 && i != 256) {
-        DSAerr(DSA_F_DSA_DO_VERIFY, DSA_R_BAD_Q_VALUE);
+        ERR_raise(ERR_LIB_DSA, DSA_R_BAD_Q_VALUE);
         return -1;
     }
 
     if (BN_num_bits(dsa->params.p) > OPENSSL_DSA_MAX_MODULUS_BITS) {
-        DSAerr(DSA_F_DSA_DO_VERIFY, DSA_R_MODULUS_TOO_LARGE);
+        ERR_raise(ERR_LIB_DSA, DSA_R_MODULUS_TOO_LARGE);
         return -1;
     }
     u1 = BN_new();
@@ -415,7 +415,7 @@ static int dsa_do_verify(const unsigned char *dgst, int dgst_len,
 
  err:
     if (ret < 0)
-        DSAerr(DSA_F_DSA_DO_VERIFY, ERR_R_BN_LIB);
+        ERR_raise(ERR_LIB_DSA, ERR_R_BN_LIB);
     BN_CTX_free(ctx);
     BN_free(u1);
     BN_free(u2);
@@ -426,7 +426,7 @@ static int dsa_do_verify(const unsigned char *dgst, int dgst_len,
 static int dsa_init(DSA *dsa)
 {
     dsa->flags |= DSA_FLAG_CACHE_MONT_P;
-    ffc_params_init(&dsa->params);
+    ossl_ffc_params_init(&dsa->params);
     dsa->dirty_cnt++;
     return 1;
 }

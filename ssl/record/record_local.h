@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -65,6 +65,8 @@ void dtls1_record_bitmap_update(SSL *s, DTLS1_BITMAP *bitmap);
 #define SSL3_BUFFER_add_offset(b, o)        ((b)->offset += (o))
 #define SSL3_BUFFER_is_initialised(b)       ((b)->buf != NULL)
 #define SSL3_BUFFER_set_default_len(b, l)   ((b)->default_len = (l))
+#define SSL3_BUFFER_set_app_buffer(b, l)    ((b)->app_buffer = (l))
+#define SSL3_BUFFER_is_app_buffer(b)        ((b)->app_buffer)
 
 void SSL3_BUFFER_clear(SSL3_BUFFER *b);
 void SSL3_BUFFER_set_data(SSL3_BUFFER *b, const unsigned char *d, size_t n);
@@ -105,13 +107,21 @@ void SSL3_RECORD_set_seq_num(SSL3_RECORD *r, const unsigned char *seq_num);
 int ssl3_get_record(SSL *s);
 __owur int ssl3_do_compress(SSL *ssl, SSL3_RECORD *wr);
 __owur int ssl3_do_uncompress(SSL *ssl, SSL3_RECORD *rr);
-int ssl3_cbc_copy_mac(unsigned char *out,
-                       const SSL3_RECORD *rec, size_t md_size);
-__owur int ssl3_cbc_remove_padding(SSL3_RECORD *rec,
-                                   size_t block_size, size_t mac_size);
-__owur int tls1_cbc_remove_padding(const SSL *s,
-                                   SSL3_RECORD *rec,
-                                   size_t block_size, size_t mac_size);
+__owur int ssl3_cbc_remove_padding_and_mac(size_t *reclen,
+                                           size_t origreclen,
+                                           unsigned char *recdata,
+                                           unsigned char **mac,
+                                           int *alloced,
+                                           size_t block_size, size_t mac_size,
+                                           OSSL_LIB_CTX *libctx);
+__owur int tls1_cbc_remove_padding_and_mac(size_t *reclen,
+                                           size_t origreclen,
+                                           unsigned char *recdata,
+                                           unsigned char **mac,
+                                           int *alloced,
+                                           size_t block_size, size_t mac_size,
+                                           int aead,
+                                           OSSL_LIB_CTX *libctx);
 int dtls1_process_record(SSL *s, DTLS1_BITMAP *bitmap);
 __owur int dtls1_get_record(SSL *s);
 int early_data_count_ok(SSL *s, size_t length, size_t overhead, int send);

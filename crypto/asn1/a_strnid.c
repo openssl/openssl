@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -160,7 +160,7 @@ static ASN1_STRING_TABLE *stable_get(int nid)
     if (tmp != NULL && tmp->flags & STABLE_FLAGS_MALLOC)
         return tmp;
     if ((rv = OPENSSL_zalloc(sizeof(*rv))) == NULL) {
-        ASN1err(ASN1_F_STABLE_GET, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
     if (!sk_ASN1_STRING_TABLE_push(stable, rv)) {
@@ -190,7 +190,7 @@ int ASN1_STRING_TABLE_add(int nid,
 
     tmp = stable_get(nid);
     if (tmp == NULL) {
-        ASN1err(ASN1_F_ASN1_STRING_TABLE_ADD, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
         return 0;
     }
     if (minsize >= 0)

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -19,12 +19,12 @@ typedef struct prov_camellia_ctx_st {
     } ks;
 } PROV_CAMELLIA_CTX;
 
-#define PROV_CIPHER_HW_camellia_ofb PROV_CIPHER_HW_camellia_ofb128
-#define PROV_CIPHER_HW_camellia_cfb PROV_CIPHER_HW_camellia_cfb128
-const PROV_CIPHER_HW *PROV_CIPHER_HW_camellia_ecb(size_t keybits);
-const PROV_CIPHER_HW *PROV_CIPHER_HW_camellia_cbc(size_t keybits);
-const PROV_CIPHER_HW *PROV_CIPHER_HW_camellia_ofb128(size_t keybits);
-const PROV_CIPHER_HW *PROV_CIPHER_HW_camellia_cfb128(size_t keybits);
-const PROV_CIPHER_HW *PROV_CIPHER_HW_camellia_cfb1(size_t keybits);
-const PROV_CIPHER_HW *PROV_CIPHER_HW_camellia_cfb8(size_t keybits);
-const PROV_CIPHER_HW *PROV_CIPHER_HW_camellia_ctr(size_t keybits);
+#define ossl_prov_cipher_hw_camellia_ofb ossl_prov_cipher_hw_camellia_ofb128
+#define ossl_prov_cipher_hw_camellia_cfb ossl_prov_cipher_hw_camellia_cfb128
+const PROV_CIPHER_HW *ossl_prov_cipher_hw_camellia_ecb(size_t keybits);
+const PROV_CIPHER_HW *ossl_prov_cipher_hw_camellia_cbc(size_t keybits);
+const PROV_CIPHER_HW *ossl_prov_cipher_hw_camellia_ofb128(size_t keybits);
+const PROV_CIPHER_HW *ossl_prov_cipher_hw_camellia_cfb128(size_t keybits);
+const PROV_CIPHER_HW *ossl_prov_cipher_hw_camellia_cfb1(size_t keybits);
+const PROV_CIPHER_HW *ossl_prov_cipher_hw_camellia_cfb8(size_t keybits);
+const PROV_CIPHER_HW *ossl_prov_cipher_hw_camellia_ctr(size_t keybits);

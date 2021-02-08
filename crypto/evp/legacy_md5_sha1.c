@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -18,10 +18,10 @@
 #include "prov/md5_sha1.h"   /* diverse MD5_SHA1 macros */
 #include "legacy_meth.h"
 
-IMPLEMENT_LEGACY_EVP_MD_METH_LC(md5_sha1_int, md5_sha1)
+IMPLEMENT_LEGACY_EVP_MD_METH_LC(md5_sha1_int, ossl_md5_sha1)
 static int md5_sha1_int_ctrl(EVP_MD_CTX *ctx, int cmd, int mslen, void *ms)
 {
-    return md5_sha1_ctrl(EVP_MD_CTX_md_data(ctx), cmd, mslen, ms);
+    return ossl_md5_sha1_ctrl(EVP_MD_CTX_md_data(ctx), cmd, mslen, ms);
 }
 
 static const EVP_MD md5_sha1_md = {

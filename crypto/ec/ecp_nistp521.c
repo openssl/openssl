@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2011-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -38,27 +38,24 @@
  */
 
 #include <openssl/e_os2.h>
-#ifdef OPENSSL_NO_EC_NISTP_64_GCC_128
-NON_EMPTY_TRANSLATION_UNIT
-#else
 
-# include <string.h>
-# include <openssl/err.h>
-# include "ec_local.h"
+#include <string.h>
+#include <openssl/err.h>
+#include "ec_local.h"
 
-# if defined(__SIZEOF_INT128__) && __SIZEOF_INT128__==16
+#if defined(__SIZEOF_INT128__) && __SIZEOF_INT128__==16
   /* even with gcc, the typedef won't work for 32-bit platforms */
 typedef __uint128_t uint128_t;  /* nonstandard; implemented by gcc on 64-bit
                                  * platforms */
-# else
-#  error "Your compiler doesn't appear to support 128-bit integer types"
-# endif
+#else
+# error "Your compiler doesn't appear to support 128-bit integer types"
+#endif
 
 typedef uint8_t u8;
 typedef uint64_t u64;
 
 /*
- * The underlying field. P521 operates over GF(2^521-1). We can serialise an
+ * The underlying field. P521 operates over GF(2^521-1). We can serialize an
  * element of this field into 66 bytes where the most significant byte
  * contains only a single bit. We call this an felem_bytearray.
  */
@@ -131,9 +128,10 @@ static const felem_bytearray nistp521_curve_params[5] = {
  * A field element with 64-bit limbs is an 'felem'. One with 128-bit limbs is a
  * 'largefelem' */
 
-# define NLIMBS 9
+#define NLIMBS 9
 
 typedef uint64_t limb;
+typedef limb limb_aX __attribute((__aligned__(1)));
 typedef limb felem[NLIMBS];
 typedef uint128_t largefelem[NLIMBS];
 
@@ -147,32 +145,32 @@ static const limb bottom58bits = 0x3ffffffffffffff;
 static void bin66_to_felem(felem out, const u8 in[66])
 {
     out[0] = (*((limb *) & in[0])) & bottom58bits;
-    out[1] = (*((limb *) & in[7]) >> 2) & bottom58bits;
-    out[2] = (*((limb *) & in[14]) >> 4) & bottom58bits;
-    out[3] = (*((limb *) & in[21]) >> 6) & bottom58bits;
-    out[4] = (*((limb *) & in[29])) & bottom58bits;
-    out[5] = (*((limb *) & in[36]) >> 2) & bottom58bits;
-    out[6] = (*((limb *) & in[43]) >> 4) & bottom58bits;
-    out[7] = (*((limb *) & in[50]) >> 6) & bottom58bits;
-    out[8] = (*((limb *) & in[58])) & bottom57bits;
+    out[1] = (*((limb_aX *) & in[7]) >> 2) & bottom58bits;
+    out[2] = (*((limb_aX *) & in[14]) >> 4) & bottom58bits;
+    out[3] = (*((limb_aX *) & in[21]) >> 6) & bottom58bits;
+    out[4] = (*((limb_aX *) & in[29])) & bottom58bits;
+    out[5] = (*((limb_aX *) & in[36]) >> 2) & bottom58bits;
+    out[6] = (*((limb_aX *) & in[43]) >> 4) & bottom58bits;
+    out[7] = (*((limb_aX *) & in[50]) >> 6) & bottom58bits;
+    out[8] = (*((limb_aX *) & in[58])) & bottom57bits;
 }
 
 /*
- * felem_to_bin66 takes an felem and serialises into a little endian, 66 byte
+ * felem_to_bin66 takes an felem and serializes into a little endian, 66 byte
  * array. This assumes that the CPU is little-endian.
  */
 static void felem_to_bin66(u8 out[66], const felem in)
 {
     memset(out, 0, 66);
     (*((limb *) & out[0])) = in[0];
-    (*((limb *) & out[7])) |= in[1] << 2;
-    (*((limb *) & out[14])) |= in[2] << 4;
-    (*((limb *) & out[21])) |= in[3] << 6;
-    (*((limb *) & out[29])) = in[4];
-    (*((limb *) & out[36])) |= in[5] << 2;
-    (*((limb *) & out[43])) |= in[6] << 4;
-    (*((limb *) & out[50])) |= in[7] << 6;
-    (*((limb *) & out[58])) = in[8];
+    (*((limb_aX *) & out[7])) |= in[1] << 2;
+    (*((limb_aX *) & out[14])) |= in[2] << 4;
+    (*((limb_aX *) & out[21])) |= in[3] << 6;
+    (*((limb_aX *) & out[29])) = in[4];
+    (*((limb_aX *) & out[36])) |= in[5] << 2;
+    (*((limb_aX *) & out[43])) |= in[6] << 4;
+    (*((limb_aX *) & out[50])) |= in[7] << 6;
+    (*((limb_aX *) & out[58])) = in[8];
 }
 
 /* BN_to_felem converts an OpenSSL BIGNUM into an felem */
@@ -182,12 +180,12 @@ static int BN_to_felem(felem out, const BIGNUM *bn)
     int num_bytes;
 
     if (BN_is_negative(bn)) {
-        ECerr(EC_F_BN_TO_FELEM, EC_R_BIGNUM_OUT_OF_RANGE);
+        ERR_raise(ERR_LIB_EC, EC_R_BIGNUM_OUT_OF_RANGE);
         return 0;
     }
     num_bytes = BN_bn2lebinpad(bn, b_out, sizeof(b_out));
     if (num_bytes < 0) {
-        ECerr(EC_F_BN_TO_FELEM, EC_R_BIGNUM_OUT_OF_RANGE);
+        ERR_raise(ERR_LIB_EC, EC_R_BIGNUM_OUT_OF_RANGE);
         return 0;
     }
     bin66_to_felem(out, b_out);
@@ -1641,8 +1639,6 @@ const EC_METHOD *EC_GFp_nistp521_method(void)
         ec_GFp_simple_point_clear_finish,
         ec_GFp_simple_point_copy,
         ec_GFp_simple_point_set_to_infinity,
-        ec_GFp_simple_set_Jprojective_coordinates_GFp,
-        ec_GFp_simple_get_Jprojective_coordinates_GFp,
         ec_GFp_simple_point_set_affine_coordinates,
         ec_GFp_nistp521_point_get_affine_coordinates,
         0 /* point_set_compressed_coordinates */ ,
@@ -1698,7 +1694,7 @@ static NISTP521_PRE_COMP *nistp521_pre_comp_new(void)
     NISTP521_PRE_COMP *ret = OPENSSL_zalloc(sizeof(*ret));
 
     if (ret == NULL) {
-        ECerr(EC_F_NISTP521_PRE_COMP_NEW, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
         return ret;
     }
 
@@ -1706,7 +1702,7 @@ static NISTP521_PRE_COMP *nistp521_pre_comp_new(void)
 
     ret->lock = CRYPTO_THREAD_lock_new();
     if (ret->lock == NULL) {
-        ECerr(EC_F_NISTP521_PRE_COMP_NEW, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
         OPENSSL_free(ret);
         return NULL;
     }
@@ -1757,7 +1753,7 @@ int ec_GFp_nistp521_group_set_curve(EC_GROUP *group, const BIGNUM *p,
 {
     int ret = 0;
     BIGNUM *curve_p, *curve_a, *curve_b;
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     BN_CTX *new_ctx = NULL;
 
     if (ctx == NULL)
@@ -1776,15 +1772,14 @@ int ec_GFp_nistp521_group_set_curve(EC_GROUP *group, const BIGNUM *p,
     BN_bin2bn(nistp521_curve_params[1], sizeof(felem_bytearray), curve_a);
     BN_bin2bn(nistp521_curve_params[2], sizeof(felem_bytearray), curve_b);
     if ((BN_cmp(curve_p, p)) || (BN_cmp(curve_a, a)) || (BN_cmp(curve_b, b))) {
-        ECerr(EC_F_EC_GFP_NISTP521_GROUP_SET_CURVE,
-              EC_R_WRONG_CURVE_PARAMETERS);
+        ERR_raise(ERR_LIB_EC, EC_R_WRONG_CURVE_PARAMETERS);
         goto err;
     }
     group->field_mod_func = BN_nist_mod_521;
     ret = ec_GFp_simple_group_set_curve(group, p, a, b, ctx);
  err:
     BN_CTX_end(ctx);
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     BN_CTX_free(new_ctx);
 #endif
     return ret;
@@ -1803,8 +1798,7 @@ int ec_GFp_nistp521_point_get_affine_coordinates(const EC_GROUP *group,
     largefelem tmp;
 
     if (EC_POINT_is_at_infinity(group, point)) {
-        ECerr(EC_F_EC_GFP_NISTP521_POINT_GET_AFFINE_COORDINATES,
-              EC_R_POINT_AT_INFINITY);
+        ERR_raise(ERR_LIB_EC, EC_R_POINT_AT_INFINITY);
         return 0;
     }
     if ((!BN_to_felem(x_in, point->X)) || (!BN_to_felem(y_in, point->Y)) ||
@@ -1818,8 +1812,7 @@ int ec_GFp_nistp521_point_get_affine_coordinates(const EC_GROUP *group,
     felem_contract(x_out, x_in);
     if (x != NULL) {
         if (!felem_to_BN(x, x_out)) {
-            ECerr(EC_F_EC_GFP_NISTP521_POINT_GET_AFFINE_COORDINATES,
-                  ERR_R_BN_LIB);
+            ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
             return 0;
         }
     }
@@ -1830,8 +1823,7 @@ int ec_GFp_nistp521_point_get_affine_coordinates(const EC_GROUP *group,
     felem_contract(y_out, y_in);
     if (y != NULL) {
         if (!felem_to_BN(y, y_out)) {
-            ECerr(EC_F_EC_GFP_NISTP521_POINT_GET_AFFINE_COORDINATES,
-                  ERR_R_BN_LIB);
+            ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
             return 0;
         }
     }
@@ -1919,12 +1911,11 @@ int ec_GFp_nistp521_points_mul(const EC_GROUP *group, EC_POINT *r,
         if (!felem_to_BN(x, g_pre_comp[1][0]) ||
             !felem_to_BN(y, g_pre_comp[1][1]) ||
             !felem_to_BN(z, g_pre_comp[1][2])) {
-            ECerr(EC_F_EC_GFP_NISTP521_POINTS_MUL, ERR_R_BN_LIB);
+            ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
             goto err;
         }
-        if (!EC_POINT_set_Jprojective_coordinates_GFp(group,
-                                                      generator, x, y, z,
-                                                      ctx))
+        if (!ec_GFp_simple_set_Jprojective_coordinates_GFp(group, generator, x,
+                                                           y, z, ctx))
             goto err;
         if (0 == EC_POINT_cmp(group, generator, group->generator, ctx))
             /* precomputation matches generator */
@@ -1952,7 +1943,7 @@ int ec_GFp_nistp521_points_mul(const EC_GROUP *group, EC_POINT *r,
                 OPENSSL_malloc(sizeof(*tmp_felems) * (num_points * 17 + 1));
         if ((secrets == NULL) || (pre_comp == NULL)
             || (mixed && (tmp_felems == NULL))) {
-            ECerr(EC_F_EC_GFP_NISTP521_POINTS_MUL, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
             goto err;
         }
 
@@ -1982,7 +1973,7 @@ int ec_GFp_nistp521_points_mul(const EC_GROUP *group, EC_POINT *r,
                      * constant-timeness
                      */
                     if (!BN_nnmod(tmp_scalar, p_scalar, group->order, ctx)) {
-                        ECerr(EC_F_EC_GFP_NISTP521_POINTS_MUL, ERR_R_BN_LIB);
+                        ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
                         goto err;
                     }
                     num_bytes = BN_bn2lebinpad(tmp_scalar,
@@ -1992,7 +1983,7 @@ int ec_GFp_nistp521_points_mul(const EC_GROUP *group, EC_POINT *r,
                                                secrets[i], sizeof(secrets[i]));
                 }
                 if (num_bytes < 0) {
-                    ECerr(EC_F_EC_GFP_NISTP521_POINTS_MUL, ERR_R_BN_LIB);
+                    ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
                     goto err;
                 }
                 /* precompute multiples */
@@ -2034,7 +2025,7 @@ int ec_GFp_nistp521_points_mul(const EC_GROUP *group, EC_POINT *r,
              * constant-timeness
              */
             if (!BN_nnmod(tmp_scalar, scalar, group->order, ctx)) {
-                ECerr(EC_F_EC_GFP_NISTP521_POINTS_MUL, ERR_R_BN_LIB);
+                ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
                 goto err;
             }
             num_bytes = BN_bn2lebinpad(tmp_scalar, g_secret, sizeof(g_secret));
@@ -2059,10 +2050,10 @@ int ec_GFp_nistp521_points_mul(const EC_GROUP *group, EC_POINT *r,
     felem_contract(z_in, z_out);
     if ((!felem_to_BN(x, x_in)) || (!felem_to_BN(y, y_in)) ||
         (!felem_to_BN(z, z_in))) {
-        ECerr(EC_F_EC_GFP_NISTP521_POINTS_MUL, ERR_R_BN_LIB);
+        ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
         goto err;
     }
-    ret = EC_POINT_set_Jprojective_coordinates_GFp(group, r, x, y, z, ctx);
+    ret = ec_GFp_simple_set_Jprojective_coordinates_GFp(group, r, x, y, z, ctx);
 
  err:
     BN_CTX_end(ctx);
@@ -2081,14 +2072,14 @@ int ec_GFp_nistp521_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
     BIGNUM *x, *y;
     EC_POINT *generator = NULL;
     felem tmp_felems[16];
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     BN_CTX *new_ctx = NULL;
 #endif
 
     /* throw away old precomputation */
     EC_pre_comp_free(group);
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     if (ctx == NULL)
         ctx = new_ctx = BN_CTX_new();
 #endif
@@ -2182,7 +2173,7 @@ int ec_GFp_nistp521_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
  err:
     BN_CTX_end(ctx);
     EC_POINT_free(generator);
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     BN_CTX_free(new_ctx);
 #endif
     EC_nistp521_pre_comp_free(pre);
@@ -2193,5 +2184,3 @@ int ec_GFp_nistp521_have_precompute_mult(const EC_GROUP *group)
 {
     return HAVEPRECOMP(group, nistp521);
 }
-
-#endif

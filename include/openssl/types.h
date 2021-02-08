@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -18,6 +18,7 @@ extern "C" {
 
 # include <openssl/e_os2.h>
 # include <openssl/safestack.h>
+# include <openssl/macros.h>
 
 typedef struct ossl_provider_st OSSL_PROVIDER; /* Provider Object */
 
@@ -60,7 +61,9 @@ typedef int ASN1_BOOLEAN;
 typedef int ASN1_NULL;
 # endif
 
+typedef struct asn1_type_st ASN1_TYPE;
 typedef struct asn1_object_st ASN1_OBJECT;
+typedef struct asn1_string_table_st ASN1_STRING_TABLE;
 
 typedef struct ASN1_ITEM_st ASN1_ITEM;
 typedef struct asn1_pctx_st ASN1_PCTX;
@@ -112,11 +115,16 @@ typedef struct evp_keymgmt_st EVP_KEYMGMT;
 typedef struct evp_kdf_st EVP_KDF;
 typedef struct evp_kdf_ctx_st EVP_KDF_CTX;
 
+typedef struct evp_rand_st EVP_RAND;
+typedef struct evp_rand_ctx_st EVP_RAND_CTX;
+
 typedef struct evp_keyexch_st EVP_KEYEXCH;
 
 typedef struct evp_signature_st EVP_SIGNATURE;
 
 typedef struct evp_asym_cipher_st EVP_ASYM_CIPHER;
+
+typedef struct evp_kem_st EVP_KEM;
 
 typedef struct evp_Encode_Ctx_st EVP_ENCODE_CTX;
 
@@ -125,15 +133,21 @@ typedef struct hmac_ctx_st HMAC_CTX;
 typedef struct dh_st DH;
 typedef struct dh_method DH_METHOD;
 
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 typedef struct dsa_st DSA;
 typedef struct dsa_method DSA_METHOD;
+# endif
 
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 typedef struct rsa_st RSA;
 typedef struct rsa_meth_st RSA_METHOD;
+# endif
 typedef struct rsa_pss_params_st RSA_PSS_PARAMS;
 
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 typedef struct ec_key_st EC_KEY;
 typedef struct ec_key_method_st EC_KEY_METHOD;
+# endif
 
 typedef struct rand_meth_st RAND_METHOD;
 typedef struct rand_drbg_st RAND_DRBG;
@@ -184,7 +198,7 @@ typedef struct NAME_CONSTRAINTS_st NAME_CONSTRAINTS;
 
 typedef struct crypto_ex_data_st CRYPTO_EX_DATA;
 
-typedef struct ossl_http_req_ctx_st OCSP_REQ_CTX; /* backward compatibility */
+typedef struct ossl_http_req_ctx_st OSSL_HTTP_REQ_CTX;
 typedef struct ocsp_response_st OCSP_RESPONSE;
 typedef struct ocsp_responder_id_st OCSP_RESPID;
 
@@ -197,17 +211,22 @@ typedef struct ct_policy_eval_ctx_st CT_POLICY_EVAL_CTX;
 typedef struct ossl_store_info_st OSSL_STORE_INFO;
 typedef struct ossl_store_search_st OSSL_STORE_SEARCH;
 
-typedef struct openssl_ctx_st OPENSSL_CTX;
+typedef struct ossl_lib_ctx_st OSSL_LIB_CTX;
 
 typedef struct ossl_dispatch_st OSSL_DISPATCH;
 typedef struct ossl_item_st OSSL_ITEM;
 typedef struct ossl_algorithm_st OSSL_ALGORITHM;
 typedef struct ossl_param_st OSSL_PARAM;
+typedef struct ossl_param_bld_st OSSL_PARAM_BLD;
 
 typedef int pem_password_cb (char *buf, int size, int rwflag, void *userdata);
 
-typedef struct ossl_serializer_st OSSL_SERIALIZER;
-typedef struct ossl_serializer_ctx_st OSSL_SERIALIZER_CTX;
+typedef struct ossl_encoder_st OSSL_ENCODER;
+typedef struct ossl_encoder_ctx_st OSSL_ENCODER_CTX;
+typedef struct ossl_decoder_st OSSL_DECODER;
+typedef struct ossl_decoder_ctx_st OSSL_DECODER_CTX;
+
+typedef struct ossl_self_test_st OSSL_SELF_TEST;
 
 #if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L && \
     defined(INTMAX_MAX) && defined(UINTMAX_MAX)

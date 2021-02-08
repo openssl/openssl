@@ -64,6 +64,13 @@ Normally, the order of the an B<OSSL_PARAM> array is not relevant.
 However, if the I<responder> can handle multiple elements with the
 same key, those elements must be handled in the order they are in.
 
+An B<OSSL_PARAM> array must have a terminating element, where I<key>
+is NULL.  The usual full terminating template is:
+
+    { NULL, 0, NULL, 0, 0 }
+
+This can also be specified using L<OSSL_PARAM_END(3)>.
+
 =head2 B<OSSL_PARAM> fields
 
 =over 4
@@ -71,6 +78,9 @@ same key, those elements must be handled in the order they are in.
 =item I<key>
 
 The identity of the parameter in the form of a string.
+
+In an B<OSSL_PARAM> array, an item with this field set to NULL is
+considered a terminating item.
 
 =item I<data_type>
 
@@ -159,6 +169,9 @@ The parameter data is a pointer to a printable string.
 The difference between this and B<OSSL_PARAM_UTF8_STRING> is that I<data>
 doesn't point directly at the data, but to a pointer that points to the data.
 
+If there is any uncertainty about which to use, B<OSSL_PARAM_UTF8_STRING> is
+almost certainly the correct choice.
+
 This is used to indicate that constant data is or will be passed,
 and there is therefore no need to copy the data that is passed, just
 the pointer to it.
@@ -181,6 +194,9 @@ The parameter data is a pointer to an arbitrary string of bytes.
 The difference between this and B<OSSL_PARAM_OCTET_STRING> is that
 I<data> doesn't point directly at the data, but to a pointer that
 points to the data.
+
+If there is any uncertainty about which to use, B<OSSL_PARAM_OCTET_STRING> is
+almost certainly the correct choice.
 
 This is used to indicate that constant data is or will be passed, and
 there is therefore no need to copy the data that is passed, just the
@@ -282,7 +298,7 @@ This example is for setting parameters on some object:
     OSSL_PARAM set[] = {
         { "foo", OSSL_PARAM_UTF8_STRING_PTR, &foo, foo_l, 0 },
         { "bar", OSSL_PARAM_UTF8_STRING, &bar, sizeof(bar), 0 },
-        { NULL, 0, NULL, 0, NULL }
+        { NULL, 0, NULL, 0, 0 }
     };
 
 =head3 Example 2
@@ -296,7 +312,7 @@ This example is for requesting parameters on some object:
     OSSL_PARAM request[] = {
         { "foo", OSSL_PARAM_UTF8_STRING_PTR, &foo, 0 /*irrelevant*/, 0 },
         { "bar", OSSL_PARAM_UTF8_STRING, &bar, sizeof(bar), 0 },
-        { NULL, 0, NULL, 0, NULL }
+        { NULL, 0, NULL, 0, 0 }
     };
 
 A I<responder> that receives this array (as I<params> in this example)
@@ -327,7 +343,7 @@ B<OSSL_PARAM> was added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

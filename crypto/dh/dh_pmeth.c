@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -57,7 +57,7 @@ static int pkey_dh_init(EVP_PKEY_CTX *ctx)
     DH_PKEY_CTX *dctx;
 
     if ((dctx = OPENSSL_zalloc(sizeof(*dctx))) == NULL) {
-        DHerr(DH_F_PKEY_DH_INIT, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_DH, ERR_R_MALLOC_FAILURE);
         return 0;
     }
     dctx->prime_len = 2048;
@@ -172,11 +172,7 @@ static int pkey_dh_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
     case EVP_PKEY_CTRL_DH_KDF_TYPE:
         if (p1 == -2)
             return dctx->kdf_type;
-#ifdef OPENSSL_NO_CMS
-        if (p1 != EVP_PKEY_DH_KDF_NONE)
-#else
         if (p1 != EVP_PKEY_DH_KDF_NONE && p1 != EVP_PKEY_DH_KDF_X9_42)
-#endif
             return -2;
         dctx->kdf_type = p1;
         return 1;
@@ -249,7 +245,7 @@ static int pkey_dh_ctrl_str(EVP_PKEY_CTX *ctx,
         int nid = OBJ_sn2nid(value);
 
         if (nid == NID_undef) {
-            DHerr(DH_F_PKEY_DH_CTRL_STR, DH_R_INVALID_PARAMETER_NAME);
+            ERR_raise(ERR_LIB_DH, DH_R_INVALID_PARAMETER_NAME);
             return -2;
         }
         dctx->param_nid = nid;
@@ -278,7 +274,7 @@ static int pkey_dh_ctrl_str(EVP_PKEY_CTX *ctx,
     return -2;
 }
 
-static DH *ffc_params_generate(OPENSSL_CTX *libctx, DH_PKEY_CTX *dctx,
+static DH *ffc_params_generate(OSSL_LIB_CTX *libctx, DH_PKEY_CTX *dctx,
                                BN_GENCB *pcb)
 {
     DH *ret;
@@ -286,7 +282,6 @@ static DH *ffc_params_generate(OPENSSL_CTX *libctx, DH_PKEY_CTX *dctx,
     int res;
     int prime_len = dctx->prime_len;
     int subprime_len = dctx->subprime_len;
-    const EVP_MD *md = dctx->md;
 
     if (dctx->paramgen_type > DH_PARAMGEN_TYPE_FIPS_186_4)
         return NULL;
@@ -300,26 +295,24 @@ static DH *ffc_params_generate(OPENSSL_CTX *libctx, DH_PKEY_CTX *dctx,
         else
             subprime_len = 160;
     }
-    if (md == NULL) {
-        if (prime_len >= 2048)
-            md = EVP_sha256();
-        else
-            md = EVP_sha1();
-    }
-# ifndef FIPS_MODE
+
+    if (dctx->md != NULL)
+        ossl_ffc_set_digest(&ret->params, EVP_MD_name(dctx->md), NULL);
+
+# ifndef FIPS_MODULE
     if (dctx->paramgen_type == DH_PARAMGEN_TYPE_FIPS_186_2)
-        rv = ffc_params_FIPS186_2_generate(libctx, &ret->params,
-                                           FFC_PARAM_TYPE_DH,
-                                           prime_len, subprime_len, md, &res,
-                                           pcb);
+        rv = ossl_ffc_params_FIPS186_2_generate(libctx, &ret->params,
+                                                FFC_PARAM_TYPE_DH,
+                                                prime_len, subprime_len, &res,
+                                                pcb);
     else
 # endif
     /* For FIPS we always use the DH_PARAMGEN_TYPE_FIPS_186_4 generator */
     if (dctx->paramgen_type >= DH_PARAMGEN_TYPE_FIPS_186_2)
-        rv = ffc_params_FIPS186_4_generate(libctx, &ret->params,
-                                           FFC_PARAM_TYPE_DH,
-                                           prime_len, subprime_len, md, &res,
-                                           pcb);
+        rv = ossl_ffc_params_FIPS186_4_generate(libctx, &ret->params,
+                                                FFC_PARAM_TYPE_DH,
+                                                prime_len, subprime_len, &res,
+                                                pcb);
     if (rv <= 0) {
         DH_free(ret);
         return NULL;
@@ -346,7 +339,7 @@ static int pkey_dh_paramgen(EVP_PKEY_CTX *ctx,
         return 1;
     }
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     if (dctx->rfc5114_param) {
         switch (dctx->rfc5114_param) {
         case 1:
@@ -367,7 +360,7 @@ static int pkey_dh_paramgen(EVP_PKEY_CTX *ctx,
         EVP_PKEY_assign(pkey, EVP_PKEY_DHX, dh);
         return 1;
     }
-#endif /* FIPS_MODE */
+#endif /* FIPS_MODULE */
 
     if (ctx->pkey_gencb != NULL) {
         pcb = BN_GENCB_new();
@@ -375,9 +368,9 @@ static int pkey_dh_paramgen(EVP_PKEY_CTX *ctx,
             return 0;
         evp_pkey_set_cb_translate(pcb, ctx);
     }
-# ifdef FIPS_MODE
+# ifdef FIPS_MODULE
     dctx->paramgen_type = DH_PARAMGEN_TYPE_FIPS_186_4;
-# endif /* FIPS_MODE */
+# endif /* FIPS_MODULE */
     if (dctx->paramgen_type >= DH_PARAMGEN_TYPE_FIPS_186_2) {
         dh = ffc_params_generate(NULL, dctx, pcb);
         BN_GENCB_free(pcb);
@@ -407,7 +400,7 @@ static int pkey_dh_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
     DH *dh = NULL;
 
     if (ctx->pkey == NULL && dctx->param_nid == NID_undef) {
-        DHerr(DH_F_PKEY_DH_KEYGEN, DH_R_NO_PARAMETERS_SET);
+        ERR_raise(ERR_LIB_DH, DH_R_NO_PARAMETERS_SET);
         return 0;
     }
     if (dctx->param_nid != NID_undef)
@@ -431,7 +424,7 @@ static int pkey_dh_derive(EVP_PKEY_CTX *ctx, unsigned char *key,
     DH_PKEY_CTX *dctx = ctx->data;
     BIGNUM *dhpub;
     if (!ctx->pkey || !ctx->peerkey) {
-        DHerr(DH_F_PKEY_DH_DERIVE, DH_R_KEYS_NOT_SET);
+        ERR_raise(ERR_LIB_DH, DH_R_KEYS_NOT_SET);
         return 0;
     }
     dh = ctx->pkey->pkey.dh;
@@ -450,7 +443,6 @@ static int pkey_dh_derive(EVP_PKEY_CTX *ctx, unsigned char *key,
         *keylen = ret;
         return 1;
     }
-#ifndef OPENSSL_NO_CMS
     else if (dctx->kdf_type == EVP_PKEY_DH_KDF_X9_42) {
 
         unsigned char *Z = NULL;
@@ -480,7 +472,6 @@ static int pkey_dh_derive(EVP_PKEY_CTX *ctx, unsigned char *key,
         OPENSSL_clear_free(Z, Zlen);
         return ret;
     }
-#endif
     return 0;
 }
 

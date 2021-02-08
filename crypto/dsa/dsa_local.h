@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2007-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -25,14 +25,14 @@ struct dsa_st {
     /* Normally used to cache montgomery values */
     BN_MONT_CTX *method_mont_p;
     CRYPTO_REF_COUNT references;
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     CRYPTO_EX_DATA ex_data;
 #endif
     const DSA_METHOD *meth;
     /* functional reference if 'meth' is ENGINE-provided */
     ENGINE *engine;
     CRYPTO_RWLOCK *lock;
-    OPENSSL_CTX *libctx;
+    OSSL_LIB_CTX *libctx;
 
     /* Provider data */
     size_t dirty_cnt; /* If any key material changes, increment this */

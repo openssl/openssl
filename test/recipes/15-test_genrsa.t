@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2017-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -11,12 +11,22 @@ use strict;
 use warnings;
 
 use File::Spec;
-use OpenSSL::Test qw/:DEFAULT srctop_file/;
+use OpenSSL::Test qw/:DEFAULT srctop_file srctop_dir bldtop_dir bldtop_file/;
 use OpenSSL::Test::Utils;
 
-setup("test_genrsa");
+BEGIN {
+    setup("test_genrsa");
+}
 
-plan tests => 9;
+use lib srctop_dir('Configurations');
+use lib bldtop_dir('.');
+use platform;
+
+my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
+
+plan tests =>
+    ($no_fips ? 0 : 2)          # FIPS install test + fips related test
+    + 13;
 
 # We want to know that an absurdly small number of bits isn't support
 if (disabled("deprecated-3.0")) {
@@ -43,7 +53,7 @@ while ($good > $bad + 1) {
     my $bits = 2 ** $checked;
     if (disabled("deprecated-3.0")) {
         $fin = run(app([ 'openssl', 'genpkey', '-out', 'genrsatest.pem',
-                         '-algorithm', 'RSA', '-pkeyopt', 'rsa_keygen_pubexp:3',
+                         '-algorithm', 'RSA', '-pkeyopt', 'rsa_keygen_pubexp:65537',
                          '-pkeyopt', "rsa_keygen_bits:$bits",
                        ], stderr => undef));
     } else {
@@ -64,7 +74,7 @@ $good = 2 ** $good;
 note "Found lowest allowed amount of bits to be $good";
 
 ok(run(app([ 'openssl', 'genpkey', '-algorithm', 'RSA',
-             '-pkeyopt', 'rsa_keygen_pubexp:3',
+             '-pkeyopt', 'rsa_keygen_pubexp:65537',
              '-pkeyopt', "rsa_keygen_bits:$good",
              '-out', 'genrsatest.pem' ])),
    "genpkey -3 $good");
@@ -75,8 +85,26 @@ ok(run(app([ 'openssl', 'genpkey', '-algorithm', 'RSA',
              '-pkeyopt', "rsa_keygen_bits:$good",
              '-out', 'genrsatest.pem' ])),
    "genpkey -f4 $good");
-ok(run(app([ 'openssl', 'pkey', '-check', '-in', 'genrsatest.pem', '-noout' ])),
+
+ok(run(app([ 'openssl', 'genpkey', '-algorithm', 'RSA',
+             '-pkeyopt', 'rsa_keygen_bits:2048',
+             '-out', 'genrsatest2048.pem' ])),
+   "genpkey 2048 bits");
+ok(run(app([ 'openssl', 'pkey', '-check', '-in', 'genrsatest2048.pem', '-noout' ])),
    "pkey -check");
+
+ok(!run(app([ 'openssl', 'genpkey', '-algorithm', 'RSA',
+             '-pkeyopt', 'hexe:02',
+             '-out', 'genrsatest.pem' ])),
+   "genpkey with a bad public exponent should fail");
+ok(!run(app([ 'openssl', 'genpkey', '-algorithm', 'RSA',
+             '-pkeyopt', 'e:65538',
+             '-out', 'genrsatest.pem' ])),
+   "genpkey with a even public exponent should fail");
+ok(!run(app([ 'openssl', 'genpkey', '-propquery', 'unknown',
+             '-algorithm', 'RSA' ])),
+   "genpkey requesting unknown=yes property should fail");
+
 
  SKIP: {
     skip "Skipping rsa command line test", 4 if disabled("deprecated-3.0");
@@ -89,4 +117,27 @@ ok(run(app([ 'openssl', 'pkey', '-check', '-in', 'genrsatest.pem', '-noout' ])),
        "genrsa -f4 $good");
     ok(run(app([ 'openssl', 'rsa', '-check', '-in', 'genrsatest.pem', '-noout' ])),
        "rsa -check");
+}
+
+unless ($no_fips) {
+    my $provconf = srctop_file("test", "fips-and-base.cnf");
+    my $provpath = bldtop_dir("providers");
+    my @prov = ( "-provider-path", $provpath,
+                 "-config", $provconf);
+    my $infile = bldtop_file('providers', platform->dso('fips'));
+
+    ok(run(app(['openssl', 'fipsinstall',
+                '-out', bldtop_file('providers', 'fipsmodule.cnf'),
+                '-module', $infile,
+                '-provider_name', 'fips', '-mac_name', 'HMAC',
+                '-section_name', 'fips_sect'])),
+       "fipsinstall");
+
+    $ENV{OPENSSL_TEST_LIBCTX} = "1";
+    ok(run(app(['openssl', 'genpkey',
+                @prov,
+               '-algorithm', 'RSA',
+               '-pkeyopt', 'bits:2080',
+               '-out', 'genrsatest2080.pem'])),
+       "Generating RSA key with > 2048 bits and < 3072 bits");
 }

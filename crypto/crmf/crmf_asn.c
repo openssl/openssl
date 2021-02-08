@@ -1,5 +1,5 @@
 /*-
- * Copyright 2007-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2007-2020 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright Nokia 2007-2019
  * Copyright Siemens AG 2015-2019
  *
@@ -230,7 +230,7 @@ ASN1_SEQUENCE(OSSL_CRMF_MSG) = {
                          OSSL_CRMF_ATTRIBUTETYPEANDVALUE)
 } ASN1_SEQUENCE_END(OSSL_CRMF_MSG)
 IMPLEMENT_ASN1_FUNCTIONS(OSSL_CRMF_MSG)
-
+IMPLEMENT_ASN1_DUP_FUNCTION(OSSL_CRMF_MSG)
 
 ASN1_ITEM_TEMPLATE(OSSL_CRMF_MSGS) =
     ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0,

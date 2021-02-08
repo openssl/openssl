@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -21,16 +21,16 @@ PKCS12_SAFEBAG *PKCS12_item_pack_safebag(void *obj, const ASN1_ITEM *it,
     PKCS12_SAFEBAG *safebag;
 
     if ((bag = PKCS12_BAGS_new()) == NULL) {
-        PKCS12err(PKCS12_F_PKCS12_ITEM_PACK_SAFEBAG, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PKCS12, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
     bag->type = OBJ_nid2obj(nid1);
     if (!ASN1_item_pack(obj, it, &bag->value.octet)) {
-        PKCS12err(PKCS12_F_PKCS12_ITEM_PACK_SAFEBAG, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PKCS12, ERR_R_MALLOC_FAILURE);
         goto err;
     }
     if ((safebag = PKCS12_SAFEBAG_new()) == NULL) {
-        PKCS12err(PKCS12_F_PKCS12_ITEM_PACK_SAFEBAG, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PKCS12, ERR_R_MALLOC_FAILURE);
         goto err;
     }
     safebag->value.bag = bag;
@@ -48,17 +48,17 @@ PKCS7 *PKCS12_pack_p7data(STACK_OF(PKCS12_SAFEBAG) *sk)
     PKCS7 *p7;
 
     if ((p7 = PKCS7_new()) == NULL) {
-        PKCS12err(PKCS12_F_PKCS12_PACK_P7DATA, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PKCS12, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
     p7->type = OBJ_nid2obj(NID_pkcs7_data);
     if ((p7->d.data = ASN1_OCTET_STRING_new()) == NULL) {
-        PKCS12err(PKCS12_F_PKCS12_PACK_P7DATA, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PKCS12, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
     if (!ASN1_item_pack(sk, ASN1_ITEM_rptr(PKCS12_SAFEBAGS), &p7->d.data)) {
-        PKCS12err(PKCS12_F_PKCS12_PACK_P7DATA, PKCS12_R_CANT_PACK_STRUCTURE);
+        ERR_raise(ERR_LIB_PKCS12, PKCS12_R_CANT_PACK_STRUCTURE);
         goto err;
     }
     return p7;
@@ -72,8 +72,7 @@ PKCS7 *PKCS12_pack_p7data(STACK_OF(PKCS12_SAFEBAG) *sk)
 STACK_OF(PKCS12_SAFEBAG) *PKCS12_unpack_p7data(PKCS7 *p7)
 {
     if (!PKCS7_type_is_data(p7)) {
-        PKCS12err(PKCS12_F_PKCS12_UNPACK_P7DATA,
-                  PKCS12_R_CONTENT_TYPE_NOT_DATA);
+        ERR_raise(ERR_LIB_PKCS12, PKCS12_R_CONTENT_TYPE_NOT_DATA);
         return NULL;
     }
     return ASN1_item_unpack(p7->d.data, ASN1_ITEM_rptr(PKCS12_SAFEBAGS));
@@ -90,12 +89,11 @@ PKCS7 *PKCS12_pack_p7encdata(int pbe_nid, const char *pass, int passlen,
     const EVP_CIPHER *pbe_ciph;
 
     if ((p7 = PKCS7_new()) == NULL) {
-        PKCS12err(PKCS12_F_PKCS12_PACK_P7ENCDATA, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PKCS12, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
     if (!PKCS7_set_type(p7, NID_pkcs7_encrypted)) {
-        PKCS12err(PKCS12_F_PKCS12_PACK_P7ENCDATA,
-                  PKCS12_R_ERROR_SETTING_ENCRYPTED_DATA_TYPE);
+        ERR_raise(ERR_LIB_PKCS12, PKCS12_R_ERROR_SETTING_ENCRYPTED_DATA_TYPE);
         goto err;
     }
 
@@ -107,7 +105,7 @@ PKCS7 *PKCS12_pack_p7encdata(int pbe_nid, const char *pass, int passlen,
         pbe = PKCS5_pbe_set(pbe_nid, iter, salt, saltlen);
 
     if (pbe == NULL) {
-        PKCS12err(PKCS12_F_PKCS12_PACK_P7ENCDATA, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_PKCS12, ERR_R_MALLOC_FAILURE);
         goto err;
     }
     X509_ALGOR_free(p7->d.encrypted->enc_data->algorithm);
@@ -116,7 +114,7 @@ PKCS7 *PKCS12_pack_p7encdata(int pbe_nid, const char *pass, int passlen,
     if (!(p7->d.encrypted->enc_data->enc_data =
           PKCS12_item_i2d_encrypt(pbe, ASN1_ITEM_rptr(PKCS12_SAFEBAGS), pass,
                                   passlen, bags, 1))) {
-        PKCS12err(PKCS12_F_PKCS12_PACK_P7ENCDATA, PKCS12_R_ENCRYPT_ERROR);
+        ERR_raise(ERR_LIB_PKCS12, PKCS12_R_ENCRYPT_ERROR);
         goto err;
     }
 
@@ -155,8 +153,7 @@ int PKCS12_pack_authsafes(PKCS12 *p12, STACK_OF(PKCS7) *safes)
 STACK_OF(PKCS7) *PKCS12_unpack_authsafes(const PKCS12 *p12)
 {
     if (!PKCS7_type_is_data(p12->authsafes)) {
-        PKCS12err(PKCS12_F_PKCS12_UNPACK_AUTHSAFES,
-                  PKCS12_R_CONTENT_TYPE_NOT_DATA);
+        ERR_raise(ERR_LIB_PKCS12, PKCS12_R_CONTENT_TYPE_NOT_DATA);
         return NULL;
     }
     return ASN1_item_unpack(p12->authsafes->d.data,

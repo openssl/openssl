@@ -1,11 +1,14 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+
+/* We need to use some engine deprecated APIs */
+#define OPENSSL_SUPPRESS_DEPRECATED
 
 #include "e_os.h"
 #include "crypto/cryptlib.h"
@@ -31,6 +34,7 @@
 #include <openssl/trace.h>
 
 static int stopped = 0;
+static uint64_t optsdone = 0;
 
 typedef struct ossl_init_stop_st OPENSSL_INIT_STOP;
 struct ossl_init_stop_st {
@@ -231,7 +235,15 @@ static int config_inited = 0;
 static const OPENSSL_INIT_SETTINGS *conf_settings = NULL;
 DEFINE_RUN_ONCE_STATIC(ossl_init_config)
 {
+    int ret = openssl_config_int(NULL);
+
+    config_inited = 1;
+    return ret;
+}
+DEFINE_RUN_ONCE_STATIC_ALT(ossl_init_config_settings, ossl_init_config)
+{
     int ret = openssl_config_int(conf_settings);
+
     config_inited = 1;
     return ret;
 }
@@ -336,7 +348,7 @@ void OPENSSL_cleanup(void)
 
     /*
      * TODO(3.0): This function needs looking at with a view to moving most/all
-     * of this into onfree handlers in OPENSSL_CTX.
+     * of this into onfree handlers in OSSL_LIB_CTX.
      */
 
     /* If we've not been inited then no need to deinit */
@@ -393,7 +405,7 @@ void OPENSSL_cleanup(void)
      * - rand_cleanup_int could call an ENGINE's RAND cleanup function so
      * must be called before engine_cleanup_int()
      * - ENGINEs use CRYPTO_EX_DATA and therefore, must be cleaned up
-     * before the ex data handlers are wiped during default openssl_ctx deinit.
+     * before the ex data handlers are wiped during default ossl_lib_ctx deinit.
      * - conf_modules_free_int() can end up in ENGINE code so must be called
      * before engine_cleanup_int()
      * - ENGINEs and additional EVP algorithms might use added OIDs names so
@@ -409,11 +421,14 @@ void OPENSSL_cleanup(void)
     OSSL_TRACE(INIT, "OPENSSL_cleanup: engine_cleanup_int()\n");
     engine_cleanup_int();
 #endif
+
+#ifndef OPENSSL_NO_DEPRECATED_3_0
     OSSL_TRACE(INIT, "OPENSSL_cleanup: ossl_store_cleanup_int()\n");
     ossl_store_cleanup_int();
+#endif
 
-    OSSL_TRACE(INIT, "OPENSSL_cleanup: openssl_ctx_default_deinit()\n");
-    openssl_ctx_default_deinit();
+    OSSL_TRACE(INIT, "OPENSSL_cleanup: ossl_lib_ctx_default_deinit()\n");
+    ossl_lib_ctx_default_deinit();
 
     ossl_cleanup_thread();
 
@@ -450,14 +465,36 @@ void OPENSSL_cleanup(void)
  */
 int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
 {
+    uint64_t tmp;
+    int aloaddone = 0;
+
+    /*
+     * We ignore failures from this function. It is probably because we are
+     * on a platform that doesn't support lockless atomic loads (we may not
+     * have created init_lock yet so we can't use it). This is just an
+     * optimisation to skip the full checks in this function if we don't need
+     * to, so we carry on regardless in the event of failure.
+     *
+     * There could be a race here with other threads, so that optsdone has not
+     * been updated yet, even though the options have in fact been initialised.
+     * This doesn't matter - it just means we will run the full function
+     * unnecessarily - but all the critical code is contained in RUN_ONCE
+     * functions anyway so we are safe.
+     */
+    if (CRYPTO_atomic_load(&optsdone, &tmp, NULL)) {
+        if ((tmp & opts) == opts)
+            return 1;
+        aloaddone = 1;
+    }
+
     /*
      * TODO(3.0): This function needs looking at with a view to moving most/all
-     * of this into OPENSSL_CTX.
+     * of this into OSSL_LIB_CTX.
      */
 
     if (stopped) {
         if (!(opts & OPENSSL_INIT_BASE_ONLY))
-            CRYPTOerr(CRYPTO_F_OPENSSL_INIT_CRYPTO, ERR_R_INIT_FAIL);
+            ERR_raise(ERR_LIB_CRYPTO, ERR_R_INIT_FAIL);
         return 0;
     }
 
@@ -477,6 +514,18 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
 
     if (opts & OPENSSL_INIT_BASE_ONLY)
         return 1;
+
+    /*
+     * init_lock should definitely be set up now, so we can now repeat the
+     * same check from above but be sure that it will work even on platforms
+     * without lockless CRYPTO_atomic_load
+     */
+    if (!aloaddone) {
+        if (!CRYPTO_atomic_load(&optsdone, &tmp, init_lock))
+            return 0;
+        if ((tmp & opts) == opts)
+            return 1;
+    }
 
     /*
      * Now we don't always set up exit handlers, the INIT_BASE_ONLY calls
@@ -533,11 +582,18 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
 
     if (opts & OPENSSL_INIT_LOAD_CONFIG) {
         int ret;
-        CRYPTO_THREAD_write_lock(init_lock);
-        conf_settings = settings;
-        ret = RUN_ONCE(&config, ossl_init_config);
-        conf_settings = NULL;
-        CRYPTO_THREAD_unlock(init_lock);
+
+        if (settings == NULL) {
+            ret = RUN_ONCE(&config, ossl_init_config);
+        } else {
+            CRYPTO_THREAD_write_lock(init_lock);
+            conf_settings = settings;
+            ret = RUN_ONCE_ALT(&config, ossl_init_config_settings,
+                               ossl_init_config);
+            conf_settings = NULL;
+            CRYPTO_THREAD_unlock(init_lock);
+        }
+
         if (ret <= 0)
             return 0;
     }
@@ -592,6 +648,9 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
             && !RUN_ONCE(&zlib, ossl_init_zlib))
         return 0;
 #endif
+
+    if (!CRYPTO_atomic_or(&optsdone, opts, &tmp, init_lock))
+        return 0;
 
     return 1;
 }
@@ -649,7 +708,7 @@ int OPENSSL_atexit(void (*handler)(void))
 #endif
 
     if ((newhand = OPENSSL_malloc(sizeof(*newhand))) == NULL) {
-        CRYPTOerr(CRYPTO_F_OPENSSL_ATEXIT, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
         return 0;
     }
 
@@ -660,28 +719,3 @@ int OPENSSL_atexit(void (*handler)(void))
     return 1;
 }
 
-#ifdef OPENSSL_SYS_UNIX
-/*
- * The following three functions are for OpenSSL developers.  This is
- * where we set/reset state across fork (called via pthread_atfork when
- * it exists, or manually by the application when it doesn't).
- *
- * WARNING!  If you put code in either OPENSSL_fork_parent or
- * OPENSSL_fork_child, you MUST MAKE SURE that they are async-signal-
- * safe.  See this link, for example:
- *      http://man7.org/linux/man-pages/man7/signal-safety.7.html
- */
-
-void OPENSSL_fork_prepare(void)
-{
-}
-
-void OPENSSL_fork_parent(void)
-{
-}
-
-void OPENSSL_fork_child(void)
-{
-    /* TODO(3.0): Inform all providers about a fork event */
-}
-#endif

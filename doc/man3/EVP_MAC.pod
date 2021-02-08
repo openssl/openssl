@@ -3,11 +3,11 @@
 =head1 NAME
 
 EVP_MAC, EVP_MAC_fetch, EVP_MAC_up_ref, EVP_MAC_free,
-EVP_MAC_is_a, EVP_MAC_number, EVP_MAC_names_do_all,
+EVP_MAC_is_a, EVP_MAC_number, EVP_MAC_name, EVP_MAC_names_do_all,
 EVP_MAC_provider, EVP_MAC_get_params, EVP_MAC_gettable_params,
 EVP_MAC_CTX, EVP_MAC_CTX_new, EVP_MAC_CTX_free, EVP_MAC_CTX_dup,
 EVP_MAC_CTX_mac, EVP_MAC_CTX_get_params, EVP_MAC_CTX_set_params,
-EVP_MAC_size, EVP_MAC_init, EVP_MAC_update, EVP_MAC_final,
+EVP_MAC_CTX_get_mac_size, EVP_MAC_init, EVP_MAC_update, EVP_MAC_final,
 EVP_MAC_gettable_ctx_params, EVP_MAC_settable_ctx_params,
 EVP_MAC_do_all_provided - EVP MAC routines
 
@@ -18,12 +18,13 @@ EVP_MAC_do_all_provided - EVP MAC routines
  typedef struct evp_mac_st EVP_MAC;
  typedef struct evp_mac_ctx_st EVP_MAC_CTX;
 
- EVP_MAC *EVP_MAC_fetch(OPENSSL_CTX *libctx, const char *algorithm,
+ EVP_MAC *EVP_MAC_fetch(OSSL_LIB_CTX *libctx, const char *algorithm,
                         const char *properties);
  int EVP_MAC_up_ref(EVP_MAC *mac);
  void EVP_MAC_free(EVP_MAC *mac);
  int EVP_MAC_is_a(const EVP_MAC *mac, const char *name);
  int EVP_MAC_number(const EVP_MAC *mac);
+ const char *EVP_MAC_name(const EVP_MAC *mac);
  void EVP_MAC_names_do_all(const EVP_MAC *mac,
                            void (*fn)(const char *name, void *data),
                            void *data);
@@ -37,7 +38,7 @@ EVP_MAC_do_all_provided - EVP MAC routines
  int EVP_MAC_CTX_get_params(EVP_MAC_CTX *ctx, OSSL_PARAM params[]);
  int EVP_MAC_CTX_set_params(EVP_MAC_CTX *ctx, const OSSL_PARAM params[]);
 
- size_t EVP_MAC_size(EVP_MAC_CTX *ctx);
+ size_t EVP_MAC_CTX_get_mac_size(EVP_MAC_CTX *ctx);
  int EVP_MAC_init(EVP_MAC_CTX *ctx);
  int EVP_MAC_update(EVP_MAC_CTX *ctx, const unsigned char *data, size_t datalen);
  int EVP_MAC_final(EVP_MAC_CTX *ctx,
@@ -47,7 +48,7 @@ EVP_MAC_do_all_provided - EVP MAC routines
  const OSSL_PARAM *EVP_MAC_gettable_ctx_params(const EVP_MAC *mac);
  const OSSL_PARAM *EVP_MAC_settable_ctx_params(const EVP_MAC *mac);
 
- void EVP_MAC_do_all_provided(OPENSSL_CTX *libctx,
+ void EVP_MAC_do_all_provided(OSSL_LIB_CTX *libctx,
                               void (*fn)(EVP_MAC *mac, void *arg),
                               void *arg);
 
@@ -81,6 +82,9 @@ rely on an underlying computation algorithm.
 EVP_MAC_fetch() fetches an implementation of a MAC I<algorithm>, given
 a library context I<libctx> and a set of I<properties>.
 See L<provider(7)/Fetching algorithms> for further information.
+
+See L<OSSL_PROVIDER-default(7)/Message Authentication Code (MAC)> for the list
+of algorithms supported by the default provider.
 
 The returned value must eventually be freed with
 L<EVP_MAC_free(3)>.
@@ -158,7 +162,7 @@ See L<OSSL_PARAM(3)> for the use of B<OSSL_PARAM> as parameter descriptor.
 
 =head2 Information functions
 
-EVP_MAC_size() returns the MAC output size for the given context.
+EVP_MAC_CTX_get_mac_size() returns the MAC output size for the given context.
 
 EVP_MAC_is_a() checks if the given I<mac> is an implementation of an
 algorithm that's identifiable with I<name>.
@@ -173,6 +177,10 @@ and the given I<arg> as argument.
 
 EVP_MAC_number() returns the internal dynamic number assigned to
 I<mac>.
+
+EVP_MAC_name() return the name of the given MAC.  For fetched MACs
+with multiple names, only one of them is returned; it's
+recommended to use EVP_MAC_names_do_all() instead.
 
 EVP_MAC_names_do_all() traverses all names for I<mac>, and calls
 I<fn> with each name and I<data>.
@@ -245,6 +253,21 @@ EVP_MAC_final() should produce.
 The allowed sizes vary between MAC implementations, but must never exceed
 what can be given with a B<size_t>.
 
+=item "tls-data-size" (B<OSSL_MAC_PARAM_TLS_DATA_SIZE>) <unsigned integer>
+
+This parameter is only supported by HMAC. If set then special handling is
+activated for calculating the MAC of a received mac-then-encrypt TLS record
+where variable length record padding has been used (as in the case of CBC mode
+ciphersuites). The value represents the total length of the record that is
+having the MAC calculated including the received MAC and the record padding.
+
+When used EVP_MAC_update must be called precisely twice. The first time with
+the 13 bytes of TLS "header" data, and the second time with the entire record
+including the MAC itself and any padding. The entire record length must equal
+the value passed in the "tls-data-size" parameter. The length passed in the
+B<datalen> parameter to EVP_MAC_update() should be equal to the length of the
+record after the MAC and any padding has been removed.
+
 =back
 
 All these parameters should be used before the calls to any of
@@ -264,6 +287,8 @@ EVP_MAC_free() returns nothing at all.
 EVP_MAC_is_a() returns 1 if the given method can be identified with
 the given name, otherwise 0.
 
+EVP_MAC_name() returns a name of the MAC, or NULL on error.
+
 EVP_MAC_provider() returns a pointer to the provider for the MAC, or
 NULL on error.
 
@@ -278,8 +303,7 @@ success, 0 on error.
 EVP_MAC_init(), EVP_MAC_update(), and EVP_MAC_final() return 1 on success, 0
 on error.
 
-EVP_MAC_size() returns the expected output size, or 0 if it isn't
-set.
+EVP_MAC_CTX_get_mac_size() returns the expected output size, or 0 if it isn't set.
 If it isn't set, a call to EVP_MAC_init() should get it set.
 
 EVP_MAC_do_all_provided() returns nothing at all.
@@ -304,7 +328,7 @@ EVP_MAC_do_all_provided() returns nothing at all.
       EVP_MAC_CTX *ctx = NULL;
 
       unsigned char buf[4096];
-      ssize_t read_l;
+      size_t read_l;
       size_t final_l;
 
       size_t i;
@@ -314,12 +338,12 @@ EVP_MAC_do_all_provided() returns nothing at all.
 
       if (cipher != NULL)
           params[params_n++] =
-              OSSL_PARAM_construct_utf8_string("cipher", cipher, 0, NULL);
+              OSSL_PARAM_construct_utf8_string("cipher", (char*)cipher, 0);
       if (digest != NULL)
           params[params_n++] =
-              OSSL_PARAM_construct_utf8_string("digest", digest, 0, NULL);
+              OSSL_PARAM_construct_utf8_string("digest", (char*)digest, 0);
       params[params_n++] =
-          OSSL_PARAM_construct_octet_string("key", key, strlen(key), NULL);
+          OSSL_PARAM_construct_octet_string("key", (void*)key, strlen(key));
       params[params_n] = OSSL_PARAM_construct_end();
 
       if (mac == NULL
@@ -331,12 +355,12 @@ EVP_MAC_do_all_provided() returns nothing at all.
       if (!EVP_MAC_init(ctx))
           goto err;
 
-      while ( (read_l = read(STDIN_FILENO, buf, sizeof(buf))) < 0) {
+      while ( (read_l = read(STDIN_FILENO, buf, sizeof(buf))) > 0) {
           if (!EVP_MAC_update(ctx, buf, read_l))
               goto err;
       }
 
-      if (!EVP_MAC_final(ctx, buf, &final_l))
+      if (!EVP_MAC_final(ctx, buf, &final_l, sizeof(buf)))
           goto err;
 
       printf("Result: ");
@@ -361,7 +385,7 @@ look like this:
 
   $ MY_MAC=cmac MY_KEY=secret0123456789 MY_MAC_CIPHER=aes-128-cbc \
     LD_LIBRARY_PATH=. ./foo < foo.c
-  Result: ECCAAFF041B22A2299EB90A1B53B6D45
+  Result: C5C06683CD9DDEF904D754505C560A4E
 
 (in this example, that program was stored in F<foo.c> and compiled to
 F<./foo>)
@@ -384,7 +408,7 @@ These functions were added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2018-2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2018-2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

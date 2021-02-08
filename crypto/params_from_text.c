@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2019, Oracle and/or its affiliates.  All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -9,6 +9,7 @@
  */
 
 #include <string.h>
+#include <openssl/ebcdic.h>
 #include <openssl/err.h>
 #include <openssl/params.h>
 
@@ -75,7 +76,7 @@ static int prepare_from_text(const OSSL_PARAM *paramdefs, const char *key,
          */
         if (p->data_size > 0) {
             if (*buf_n >= p->data_size) {
-                CRYPTOerr(0, CRYPTO_R_TOO_SMALL_BUFFER);
+                ERR_raise(ERR_LIB_CRYPTO, CRYPTO_R_TOO_SMALL_BUFFER);
                 /* Since this is a different error, we don't break */
                 return 0;
             }
@@ -85,7 +86,7 @@ static int prepare_from_text(const OSSL_PARAM *paramdefs, const char *key,
         break;
     case OSSL_PARAM_UTF8_STRING:
         if (*ishex) {
-            CRYPTOerr(0, ERR_R_PASSED_INVALID_ARGUMENT);
+            ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT);
             return 0;
         }
         *buf_n = strlen(value) + 1;
@@ -139,13 +140,17 @@ static int construct_from_text(OSSL_PARAM *to, const OSSL_PARAM *paramdef,
             }
             break;
         case OSSL_PARAM_UTF8_STRING:
+#ifdef CHARSET_EBCDIC
+            ebcdic2ascii(buf, value, buf_n);
+#else
             strncpy(buf, value, buf_n);
+#endif
             break;
         case OSSL_PARAM_OCTET_STRING:
             if (ishex) {
                 size_t l = 0;
 
-                if (!OPENSSL_hexstr2buf_ex(buf, buf_n, &l, value))
+                if (!OPENSSL_hexstr2buf_ex(buf, buf_n, &l, value, ':'))
                     return 0;
             } else {
                 memcpy(buf, value, buf_n);
@@ -157,7 +162,7 @@ static int construct_from_text(OSSL_PARAM *to, const OSSL_PARAM *paramdef,
     *to = *paramdef;
     to->data = buf;
     to->data_size = buf_n;
-    to->return_size = 0;
+    to->return_size = OSSL_PARAM_UNMODIFIED;
 
     return 1;
 }
@@ -182,7 +187,7 @@ int OSSL_PARAM_allocate_from_text(OSSL_PARAM *to,
         return 0;
 
     if ((buf = OPENSSL_zalloc(buf_n > 0 ? buf_n : 1)) == NULL) {
-        CRYPTOerr(0, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
         return 0;
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -40,7 +40,7 @@ int PKCS12_PBE_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 
     pbe = ASN1_TYPE_unpack_sequence(ASN1_ITEM_rptr(PBEPARAM), param);
     if (pbe == NULL) {
-        PKCS12err(PKCS12_F_PKCS12_PBE_KEYIVGEN, PKCS12_R_DECODE_ERROR);
+        ERR_raise(ERR_LIB_PKCS12, PKCS12_R_DECODE_ERROR);
         return 0;
     }
 
@@ -52,13 +52,13 @@ int PKCS12_PBE_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
     saltlen = pbe->salt->length;
     if (!(*pkcs12_key_gen)(pass, passlen, salt, saltlen, PKCS12_KEY_ID,
                            iter, EVP_CIPHER_key_length(cipher), key, md)) {
-        PKCS12err(PKCS12_F_PKCS12_PBE_KEYIVGEN, PKCS12_R_KEY_GEN_ERROR);
+        ERR_raise(ERR_LIB_PKCS12, PKCS12_R_KEY_GEN_ERROR);
         PBEPARAM_free(pbe);
         return 0;
     }
     if (!(*pkcs12_key_gen)(pass, passlen, salt, saltlen, PKCS12_IV_ID,
                            iter, EVP_CIPHER_iv_length(cipher), iv, md)) {
-        PKCS12err(PKCS12_F_PKCS12_PBE_KEYIVGEN, PKCS12_R_IV_GEN_ERROR);
+        ERR_raise(ERR_LIB_PKCS12, PKCS12_R_IV_GEN_ERROR);
         PBEPARAM_free(pbe);
         return 0;
     }

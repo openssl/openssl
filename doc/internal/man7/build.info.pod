@@ -24,7 +24,7 @@ B<MODULES=> I<name> ...
 
 B<SCRIPTS=> I<name> ...
 
-B<DEPEND[>I<item>B<]=> I<otheritem> ...
+B<DEPEND[>I<items>B<]=> I<otheritem> ...
 
 B<GENERATE[>I<item>B<]=> I<generator> I<generator-args> ...
 
@@ -32,9 +32,9 @@ B<SOURCE[>I<item>B<]=> I<file> ...
 
 B<SHARED_SOURCE[>I<item>B<]=> I<file> ...
 
-B<DEFINE[>I<item>B<]=> I<name>[B<=>I<value>] ...
+B<DEFINE[>I<items>B<]=> I<name>[B<=>I<value>] ...
 
-B<INCLUDE[>I<item>B<]=> I<dir> ...
+B<INCLUDE[>I<items>B<]=> I<dir> ...
 
 B<$>I<VARIABLE>B<=>I<value>
 
@@ -122,7 +122,7 @@ syntax is one of:
 
 =item B<I<KEYWORD>> B<=> I<value> ...
 
-=item B<I<KEYWORD>[>I<item>B<]> B<=> I<value> ...
+=item B<I<KEYWORD>[>I<items>B<]> B<=> I<value> ...
 
 =back
 
@@ -154,8 +154,14 @@ F<foo.c> and F<details.c>, and that it depends on the library
 C<libcookie> (in other words, the library will be included when
 linking that program together).
 
-For any indexed statement for which the item hasn't been specified
-through any plain statement, or where the item exists but the indexed
+Multiple space separated items are allowed too:
+
+    SOURCE[foo]=foo.c
+    SOURCE[details]=details.c
+    DEPEND[foo details]=libcookie
+
+For any indexed statement for which the items haven't been specified
+through any plain statement, or where the items exists but the indexed
 statement does not apply, the value is simply ignored by the build
 file generators.
 
@@ -169,7 +175,7 @@ variations on how they are treated.
 =item B<I<KEYWORD>{> I<attrib> | I<attrib>B<=>I<attrib-value> [,...]B<}>
 B<=> I<value> ...
 
-=item B<I<KEYWORD>[>I<item>B<]{> I<attrib> | I<attrib>B<=>I<attrib-value>
+=item B<I<KEYWORD>[>I<items>B<]{> I<attrib> | I<attrib>B<=>I<attrib-value>
 [,...]B<}> B<=> I<value> ...
 
 =back
@@ -263,6 +269,22 @@ I<variables are expanded into their values before the value they are
 part of is tokenized>.
 
 I<Variable assignment values are not tokenized.>
+
+Variable references can be one of:
+
+=over 4
+
+=item B<$>I<NAME> or B<${>I<NAME>B<}>
+
+Simple reference; the variable reference is replaced with its value,
+verbatim.
+
+=item B<${>I<NAME>B</>I<str>B</>I<subst>B<}>
+
+Substitution reference; the variable reference is replaced with its
+value, modified by replacing all occurrences of I<str> with I<subst>.
+
+=back
 
 =head2 Scope
 
@@ -411,15 +433,15 @@ C<noinst>, while the script C<bar> will.
 
 =over 4
 
-=item B<DEPEND[>I<item>B<]> B<=> I<file> ...
+=item B<DEPEND[>I<items>B<]> B<=> I<file> ...
 
-Collects dependencies, where I<item> depends on the given I<file>s.
+Collects dependencies, where I<items> depend on the given I<file>s.
 
-As a special case, the I<item> may be empty, for which the build file
+As a special case, the I<items> may be empty, for which the build file
 generators should make the whole build depend on the given I<file>s,
-rather than some specific I<item>.
+rather than the specific I<items>.
 
-The I<item> may be any program, library, module, script, or any
+The I<items> may be any program, library, module, script, or any
 filename used as a value anywhere.
 
 B<DEPEND> statements may have attributes, which apply to each
@@ -473,19 +495,19 @@ given with B<LIBS> or B<MODULES>.  For libraries, the given filenames
 are only used for their shared form, so if the item is a library name
 ending with C<.a>, the filenames will be ignored.
 
-=item B<DEFINE[>I<item>B<]> B<=> I<name>[B<=>I<value>] ...
+=item B<DEFINE[>I<items>B<]> B<=> I<name>[B<=>I<value>] ...
 
 Collects I<name> / I<value> pairs (or just I<name> with no defined
-value if no I<value> is given) associated with I<item>.
+value if no I<value> is given) associated with I<items>.
 
 The build file generators will decide what to do with them.  For
 example, these pairs should become C macro definitions whenever a
 C<.c> file is built into an object file.
 
-=item B<INCLUDE[>I<item>B<]> B<=> I<dir> ...
+=item B<INCLUDE[>I<items>B<]> B<=> I<dir> ...
 
 Collects inclusion directories that will be used when building the
-I<item> components (object files and whatever else).  This is used at
+I<items> components (object files and whatever else).  This is used at
 the discretion of the build file generators.
 
 =back
@@ -568,7 +590,7 @@ the exception of conditional statements and variable assignments.
 
 =item "indexed statement"
 
-Any F<build.info> statement of the form B<I<KEYWORD>[>I<item>B<]=>I<values>,
+Any F<build.info> statement of the form B<I<KEYWORD>[>I<items>B<]=>I<values>,
 with the exception of conditional statements.
 
 =item "intermediate file"
@@ -588,11 +610,11 @@ B<SCRIPTS>.
 For OpenSSL::Template documentation,
 C<perldoc -o man util/perl/OpenSSL/Template.pm>
 
-L<Text::Temlate|https://metacpan.org/pod/Text::Template>
+L<Text::Template|https://metacpan.org/pod/Text::Template>
 
 =head1 COPYRIGHT
 
-Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use this
 file except in compliance with the License.  You can obtain a copy in the file

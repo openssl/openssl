@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -154,11 +154,7 @@ static long sock_ctrl(BIO *b, int cmd, long num, void *ptr)
     long ret = 1;
     int *ip;
 # ifndef OPENSSL_NO_KTLS
-#  ifdef __FreeBSD__
-    struct tls_enable *crypto_info;
-#  else
-    struct tls12_crypto_info_aes_gcm_128 *crypto_info;
-#  endif
+    ktls_crypto_info_t *crypto_info;
 # endif
 
     switch (cmd) {
@@ -189,12 +185,8 @@ static long sock_ctrl(BIO *b, int cmd, long num, void *ptr)
         break;
 # ifndef OPENSSL_NO_KTLS
     case BIO_CTRL_SET_KTLS:
-#  ifdef __FreeBSD__
-        crypto_info = (struct tls_enable *)ptr;
-#  else
-        crypto_info = (struct tls12_crypto_info_aes_gcm_128 *)ptr;
-#  endif
-        ret = ktls_start(b->num, crypto_info, sizeof(*crypto_info), num);
+        crypto_info = (ktls_crypto_info_t *)ptr;
+        ret = ktls_start(b->num, crypto_info, num);
         if (ret)
             BIO_set_ktls_flag(b, num);
         break;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -14,14 +14,13 @@
 static CRYPTO_ONCE store_init = CRYPTO_ONCE_STATIC_INIT;
 DEFINE_RUN_ONCE_STATIC(do_store_init)
 {
-    return OPENSSL_init_crypto(0, NULL)
-        && ossl_store_file_loader_init();
+    return OPENSSL_init_crypto(0, NULL);
 }
 
 int ossl_store_init_once(void)
 {
     if (!RUN_ONCE(&store_init, do_store_init)) {
-        OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_INIT_ONCE, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_MALLOC_FAILURE);
         return 0;
     }
     return 1;

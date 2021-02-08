@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2002-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -28,7 +28,7 @@ int ECDSA_do_verify(const unsigned char *dgst, int dgst_len,
 {
     if (eckey->meth->verify_sig != NULL)
         return eckey->meth->verify_sig(dgst, dgst_len, sig, eckey);
-    ECerr(EC_F_ECDSA_DO_VERIFY, EC_R_OPERATION_NOT_SUPPORTED);
+    ERR_raise(ERR_LIB_EC, EC_R_OPERATION_NOT_SUPPORTED);
     return -1;
 }
 
@@ -44,6 +44,6 @@ int ECDSA_verify(int type, const unsigned char *dgst, int dgst_len,
     if (eckey->meth->verify != NULL)
         return eckey->meth->verify(type, dgst, dgst_len, sigbuf, sig_len,
                                    eckey);
-    ECerr(EC_F_ECDSA_VERIFY, EC_R_OPERATION_NOT_SUPPORTED);
+    ERR_raise(ERR_LIB_EC, EC_R_OPERATION_NOT_SUPPORTED);
     return -1;
 }

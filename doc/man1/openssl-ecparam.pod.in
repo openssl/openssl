@@ -15,7 +15,6 @@ B<openssl ecparam>
 [B<-out> I<filename>]
 [B<-noout>]
 [B<-text>]
-[B<-C>]
 [B<-check>]
 [B<-check_named>]
 [B<-name> I<arg>]
@@ -24,16 +23,12 @@ B<openssl ecparam>
 [B<-param_enc> I<arg>]
 [B<-no_seed>]
 [B<-genkey>]
-{- $OpenSSL::safe::opt_engine_synopsis -}
-{- $OpenSSL::safe::opt_r_synopsis -}
+{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_r_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
 
 =for openssl ifdef engine
 
 =head1 DESCRIPTION
-
-This command has been deprecated.
-The L<openssl-genpkey(1)> and L<openssl-pkeyparam(1)> commands
-should be used instead.
 
 This command is used to manipulate or generate EC parameter files.
 
@@ -51,7 +46,7 @@ Print out a usage message.
 =item B<-inform> B<DER>|B<PEM>, B<-outform> B<DER>|B<PEM>
 
 The input and formats; the default is B<PEM>.
-See L<openssl(1)/Format Options> for details.
+See L<openssl-format-options(1)> for details.
 
 Parameters are encoded as B<EcpkParameters> as specified in IETF RFC 3279.
 
@@ -73,11 +68,6 @@ This option inhibits the output of the encoded version of the parameters.
 =item B<-text>
 
 This option prints out the EC parameters in human readable form.
-
-=item B<-C>
-
-This option converts the EC parameters into C code. The parameters can then
-be loaded by calling the get_ec_group_XXX() function.
 
 =item B<-check>
 
@@ -130,6 +120,8 @@ This option will generate an EC private key using the specified parameters.
 
 {- $OpenSSL::safe::opt_r_item -}
 
+{- $OpenSSL::safe::opt_provider_item -}
+
 =back
 
 =head1 EXAMPLES
@@ -171,7 +163,9 @@ L<openssl-dsaparam(1)>
 
 =head1 HISTORY
 
-This command was deprecated in OpenSSL 3.0.
+The B<-engine> option was deprecated in OpenSSL 3.0.
+
+The B<-C> option was removed in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
