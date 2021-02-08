@@ -235,8 +235,10 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
 #else
         EVP_MD *provmd = EVP_MD_fetch(NULL, OBJ_nid2sn(type->type), "");
 
-        if (provmd == NULL)
+        if (provmd == NULL) {
+            ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
             return 0;
+        }
         type = provmd;
         EVP_MD_free(ctx->fetched_digest);
         ctx->fetched_digest = provmd;
@@ -247,6 +249,14 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
         if (ctx->digest->freectx != NULL)
             ctx->digest->freectx(ctx->provctx);
         ctx->provctx = NULL;
+    }
+    if (type->prov != NULL && ctx->fetched_digest != type) {
+        if (!EVP_MD_up_ref((EVP_MD *)type)) {
+            ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
+            return 0;
+        }
+        EVP_MD_free(ctx->fetched_digest);
+        ctx->fetched_digest = (EVP_MD *)type;
     }
     ctx->digest = type;
     if (ctx->provctx == NULL) {
