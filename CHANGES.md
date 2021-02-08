@@ -23,6 +23,12 @@ OpenSSL 3.0
 
 ### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
 
+ * Add a compile time option to prevent the caching of provider fetched
+   algorithms.  This is enabled by including the no-cached-fetch option
+   at configuration time.
+
+   *Paul Dale*
+
  * Combining the Configure options no-ec and no-dh no longer disables TLSv1.3.
    Typically if OpenSSL has no EC or DH algorithms then it cannot support
    connections with TLSv1.3. However OpenSSL now supports "pluggable" groups
