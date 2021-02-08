@@ -598,8 +598,13 @@ DEFINE_STACK_OF(OP_CACHE_ELEM)
     ((pk)->type == EVP_PKEY_NONE && (pk)->keymgmt == NULL)
 #define evp_pkey_is_typed(pk)                                   \
     ((pk)->type != EVP_PKEY_NONE || (pk)->keymgmt != NULL)
-#define evp_pkey_is_assigned(pk)                                \
+#ifndef FIPS_MODULE
+# define evp_pkey_is_assigned(pk)                               \
     ((pk)->pkey.ptr != NULL || (pk)->keydata != NULL)
+#else
+# define evp_pkey_is_assigned(pk)                               \
+    ((pk)->keydata != NULL)
+#endif
 #define evp_pkey_is_legacy(pk)                                  \
     ((pk)->type != EVP_PKEY_NONE && (pk)->keymgmt == NULL)
 #define evp_pkey_is_provided(pk)                                \
