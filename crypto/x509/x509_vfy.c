@@ -122,7 +122,7 @@ static X509 *lookup_cert_match(X509_STORE_CTX *ctx, X509 *x)
     /* Look for exact match */
     for (i = 0; i < sk_X509_num(certs); i++) {
         xtmp = sk_X509_value(certs, i);
-        if (!X509_cmp(xtmp, x))
+        if (X509_cmp(xtmp, x) == 0)
             break;
         xtmp = NULL;
     }
@@ -232,7 +232,7 @@ static int verify_chain(X509_STORE_CTX *ctx)
 #endif
 
     /* If we get this far evaluate policies */
-    if (ctx->param->flags & X509_V_FLAG_POLICY_CHECK)
+    if ((ctx->param->flags & X509_V_FLAG_POLICY_CHECK) != 0)
         ok = ctx->check_policy(ctx);
     return ok;
 }
@@ -816,12 +816,13 @@ static int check_trust(X509_STORE_CTX *ctx, int num_untrusted)
      * the chain is PKIX trusted.
      */
     if (num_untrusted < num) {
-        if (ctx->param->flags & X509_V_FLAG_PARTIAL_CHAIN)
+        if ((ctx->param->flags & X509_V_FLAG_PARTIAL_CHAIN) != 0)
             goto trusted;
         return X509_TRUST_UNTRUSTED;
     }
 
-    if (num_untrusted == num && ctx->param->flags & X509_V_FLAG_PARTIAL_CHAIN) {
+    if (num_untrusted == num
+            && (ctx->param->flags & X509_V_FLAG_PARTIAL_CHAIN) != 0) {
         /*
          * Last-resort call with no new trusted certificates, check the leaf
          * for a direct trust store match.
@@ -1744,7 +1745,7 @@ static int internal_verify(X509_STORE_CTX *ctx)
          */
         if (xi != NULL
             && (xs != xi
-                || ((ctx->param->flags & X509_V_FLAG_CHECK_SS_SIGNATURE)
+                || ((ctx->param->flags & X509_V_FLAG_CHECK_SS_SIGNATURE) != 0
                     && (xi->ex_flags & EXFLAG_SS) != 0))) {
             EVP_PKEY *pkey;
             /*
@@ -1936,7 +1937,7 @@ int X509_get_pubkey_parameters(EVP_PKEY *pkey, STACK_OF(X509) *chain)
     EVP_PKEY *ktmp = NULL, *ktmp2;
     int i, j;
 
-    if ((pkey != NULL) && !EVP_PKEY_missing_parameters(pkey))
+    if (pkey != NULL && !EVP_PKEY_missing_parameters(pkey))
         return 1;
 
     for (i = 0; i < sk_X509_num(chain); i++) {
@@ -2176,7 +2177,6 @@ int X509_STORE_CTX_set_trust(X509_STORE_CTX *ctx, int trust)
  * application can set: if they aren't set then we use the default of SSL
  * client/server.
  */
-
 int X509_STORE_CTX_purpose_inherit(X509_STORE_CTX *ctx, int def_purpose,
                                    int purpose, int trust)
 {
@@ -2958,7 +2958,7 @@ static int build_chain(X509_STORE_CTX *ctx)
      * and alternate chains are not disabled, try building an alternate chain
      * if no luck with untrusted first.
      */
-    search = (ctx->untrusted != NULL) ? S_DOUNTRUSTED : 0;
+    search = ctx->untrusted != NULL ? S_DOUNTRUSTED : 0;
     if (DANETLS_HAS_PKIX(dane) || !DANETLS_HAS_DANE(dane)) {
         if (search == 0 || (ctx->param->flags & X509_V_FLAG_TRUSTED_FIRST) != 0)
             search |= S_DOTRUSTED;
@@ -3054,7 +3054,7 @@ static int build_chain(X509_STORE_CTX *ctx)
             }
             curr = sk_X509_value(ctx->chain, i - 1);
 
-            ok = depth < num ? 0 : get_issuer(&issuer, ctx, curr);
+            ok = num > depth ? 0 : get_issuer(&issuer, ctx, curr);
 
             if (ok < 0) {
                 trust = X509_TRUST_REJECTED;
@@ -3191,7 +3191,7 @@ static int build_chain(X509_STORE_CTX *ctx)
             if (!ossl_assert(num == ctx->num_untrusted))
                 goto int_err;
             curr = sk_X509_value(ctx->chain, num - 1);
-            issuer = (self_signed || depth < num) ?
+            issuer = (self_signed || num > depth) ?
                 NULL : find_issuer(ctx, sk_untrusted, curr);
             if (issuer == NULL) {
                 /*
@@ -3208,7 +3208,7 @@ static int build_chain(X509_STORE_CTX *ctx)
             /* Drop this issuer from future consideration */
             (void)sk_X509_delete_ptr(sk_untrusted, issuer);
 
-            if (!X509_add_cert(ctx->chain, issuer,  X509_ADD_FLAG_UP_REF))
+            if (!X509_add_cert(ctx->chain, issuer, X509_ADD_FLAG_UP_REF))
                 goto int_err;
 
             ++ctx->num_untrusted;
