@@ -341,6 +341,7 @@ int pkcs12_main(int argc, char **argv)
     if (argc != 0)
         goto opthelp;
 
+    app_RAND_load();
     if (export_pkcs12) {
         if ((options & INFO) != 0)
             WARN_EXPORT("info");

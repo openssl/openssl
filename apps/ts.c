@@ -292,6 +292,7 @@ int ts_main(int argc, char **argv)
     if (argc != 0 || mode == OPT_ERR)
         goto opthelp;
 
+    app_RAND_load();
     if (mode == OPT_REPLY && passin &&
         !app_passwd(passin, NULL, &password, NULL)) {
         BIO_printf(bio_err, "Error getting password.\n");

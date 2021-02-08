@@ -209,7 +209,7 @@ const OPTIONS ca_options[] = {
     {"noemailDN", OPT_NOEMAILDN, '-', "Don't add the EMAIL field to the DN"},
 
     OPT_SECTION("Signing"),
-    {"md", OPT_MD, 's', "md to use; one of md2, md5, sha or sha1"},
+    {"md", OPT_MD, 's', "Digest to use, such as sha256"},
     {"keyfile", OPT_KEYFILE, 's', "The CA private key"},
     {"keyform", OPT_KEYFORM, 'f',
      "Private key file format (ENGINE, other values ignored)"},
@@ -521,6 +521,7 @@ end_of_options:
         goto end;
 
     app_RAND_load_conf(conf, BASE_SECTION);
+    app_RAND_load();
 
     f = NCONF_get_string(conf, section, STRING_MASK);
     if (f == NULL)

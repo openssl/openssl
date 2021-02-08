@@ -108,6 +108,7 @@ int gendsa_main(int argc, char **argv)
     if (argc != 1)
         goto opthelp;
 
+    app_RAND_load();
     dsaparams = argv[0];
     private = 1;
 
