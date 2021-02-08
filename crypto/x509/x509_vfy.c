@@ -199,17 +199,13 @@ static int verify_chain(X509_STORE_CTX *ctx)
     int err;
     int ok;
 
-    /*
-     * Before either returning with an error, or continuing with CRL checks,
-     * instantiate chain public key parameters.
-     */
-    if ((ok = build_chain(ctx)) == 0 ||
-        (ok = check_chain(ctx)) == 0 ||
-        (ok = check_auth_level(ctx)) == 0 ||
-        (ok = check_id(ctx)) == 0 || 1)
-        X509_get_pubkey_parameters(NULL, ctx->chain);
-    if (ok == 0 || (ok = ctx->check_revocation(ctx)) == 0)
-        return 0;
+    if ((ok = build_chain(ctx)) <= 0
+        || (ok = check_chain(ctx)) <= 0
+        || (ok = check_auth_level(ctx)) <= 0
+        || (ok = check_id(ctx)) <= 0
+        || (ok = X509_get_pubkey_parameters(NULL, ctx->chain) ? 1 : -1) <= 0
+        || (ok = ctx->check_revocation(ctx)) <= 0)
+        return ok;
 
     err = X509_chain_check_suiteb(&ctx->error_depth, NULL, ctx->chain,
                                   ctx->param->flags);
@@ -1931,12 +1927,13 @@ ASN1_TIME *X509_time_adj_ex(ASN1_TIME *s,
     return ASN1_TIME_adj(s, t, offset_day, offset_sec);
 }
 
+/* Copy any missing public key parameters up the chain towards pkey */
 int X509_get_pubkey_parameters(EVP_PKEY *pkey, STACK_OF(X509) *chain)
 {
     EVP_PKEY *ktmp = NULL, *ktmp2;
     int i, j;
 
-    if ((pkey != NULL) && !EVP_PKEY_missing_parameters(pkey))
+    if (pkey != NULL && !EVP_PKEY_missing_parameters(pkey))
         return 1;
 
     for (i = 0; i < sk_X509_num(chain); i++) {
@@ -1947,6 +1944,7 @@ int X509_get_pubkey_parameters(EVP_PKEY *pkey, STACK_OF(X509) *chain)
         }
         if (!EVP_PKEY_missing_parameters(ktmp))
             break;
+        ktmp = NULL;
     }
     if (ktmp == NULL) {
         ERR_raise(ERR_LIB_X509, X509_R_UNABLE_TO_FIND_PARAMETERS_IN_CHAIN);
@@ -1956,11 +1954,12 @@ int X509_get_pubkey_parameters(EVP_PKEY *pkey, STACK_OF(X509) *chain)
     /* first, populate the other certs */
     for (j = i - 1; j >= 0; j--) {
         ktmp2 = X509_get0_pubkey(sk_X509_value(chain, j));
-        EVP_PKEY_copy_parameters(ktmp2, ktmp);
+        if (!EVP_PKEY_copy_parameters(ktmp2, ktmp))
+            return 0;
     }
 
     if (pkey != NULL)
-        EVP_PKEY_copy_parameters(pkey, ktmp);
+        return EVP_PKEY_copy_parameters(pkey, ktmp);
     return 1;
 }
 
