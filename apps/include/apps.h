@@ -19,7 +19,6 @@
 # include <sys/types.h>
 # ifndef OPENSSL_NO_POSIX_IO
 #  include <sys/stat.h>
-#  include <fcntl.h>
 # endif
 
 # include <openssl/e_os2.h>
@@ -37,6 +36,7 @@
 # include "fmt.h"
 # include "platform.h"
 # include "engine_loader.h"
+# include "ca_logic.h"
 
 /*
  * quick macro when you need to pass an unsigned char instead of a char.
@@ -198,18 +198,6 @@ int unpack_revinfo(ASN1_TIME **prevtm, int *preason, ASN1_OBJECT **phold,
 # define DB_TYPE_EXP     'E'    /* Expired  */
 # define DB_TYPE_VAL     'V'    /* Valid ; inserted with: ca ... -valid */
 # define DB_TYPE_SUSP    'S'    /* Suspended  */
-
-typedef struct db_attr_st {
-    int unique_subject;
-} DB_ATTR;
-typedef struct ca_db_st {
-    DB_ATTR attributes;
-    TXT_DB *db;
-    char *dbfname;
-# ifndef OPENSSL_NO_POSIX_IO
-    struct stat dbst;
-# endif
-} CA_DB;
 
 void app_bail_out(char *fmt, ...);
 void *app_malloc(size_t sz, const char *what);
