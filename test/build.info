@@ -279,6 +279,9 @@ IF[{- !$disabled{tests} -}]
   DEPEND[ssl_test_ctx_test]=../libcrypto ../libssl libtestutil.a
 
   SOURCE[ssl_test]=ssl_test.c helpers/ssl_test_ctx.c helpers/handshake.c
+  IF[{- !$disabled{'srp'} -}]
+    SOURCE[ssl_test]=helpers/handshake_srp.c
+  ENDIF
   INCLUDE[ssl_test]=../include ../apps/include
   DEPEND[ssl_test]=../libcrypto ../libssl libtestutil.a
 

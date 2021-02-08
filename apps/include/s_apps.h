@@ -92,6 +92,7 @@ typedef struct srp_arg_st {
 
 int set_up_srp_arg(SSL_CTX *ctx, SRP_ARG *srp_arg, int srp_lateuser, int c_msg,
                    int c_debug);
+void set_up_dummy_srp(SSL_CTX *ctx);
 
 /* The server side SRP context that we pass to all SRP related callbacks */
 typedef struct srpsrvparm_st {

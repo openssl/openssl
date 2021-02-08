@@ -10,7 +10,7 @@
 
 /*
  * This file is to enable backwards compatibility for the SRP features of
- * s_client and s_server. All of those features are deprecated and will
+ * s_client, s_server and ciphers. All of those features are deprecated and will
  * eventually disappear. In the meantime, to continue to support them, we
  * need to access deprecated SRP APIs.
  */
@@ -135,6 +135,16 @@ int set_up_srp_arg(SSL_CTX *ctx, SRP_ARG *srp_arg, int srp_lateuser, int c_msg,
         SSL_CTX_set_srp_verify_param_callback(ctx, ssl_srp_verify_param_cb);
 
     return 1;
+}
+
+static char *dummy_srp(SSL *ssl, void *arg)
+{
+    return "";
+}
+
+void set_up_dummy_srp(SSL_CTX *ctx)
+{
+        SSL_CTX_set_srp_client_pwd_callback(ctx, dummy_srp);
 }
 
 /*
