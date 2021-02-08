@@ -17,9 +17,6 @@
 
 # include <stdarg.h>
 # include <sys/types.h>
-# ifndef OPENSSL_NO_POSIX_IO
-#  include <sys/stat.h>
-# endif
 
 # include <openssl/e_os2.h>
 # include <openssl/types.h>
