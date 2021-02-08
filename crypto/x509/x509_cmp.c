@@ -177,8 +177,7 @@ int X509_cmp(const X509 *a, const X509 *b)
 
 int ossl_x509_add_cert_new(STACK_OF(X509) **p_sk, X509 *cert, int flags)
 {
-    if (*p_sk == NULL
-            && (*p_sk = sk_X509_new_null()) == NULL) {
+    if (*p_sk == NULL && (*p_sk = sk_X509_new_null()) == NULL) {
         ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
         return 0;
     }
@@ -216,7 +215,7 @@ int X509_add_cert(STACK_OF(X509) *sk, X509 *cert, int flags)
 }
 
 int X509_add_certs(STACK_OF(X509) *sk, STACK_OF(X509) *certs, int flags)
-/* compiler would allow 'const' for the list of certs, yet they are up-ref'ed */
+/* compiler would allow 'const' for the certs, yet they may get up-ref'ed */
 {
     if (sk == NULL) {
         ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
@@ -227,7 +226,7 @@ int X509_add_certs(STACK_OF(X509) *sk, STACK_OF(X509) *certs, int flags)
 
 int ossl_x509_add_certs_new(STACK_OF(X509) **p_sk, STACK_OF(X509) *certs,
                             int flags)
-/* compiler would allow 'const' for the list of certs, yet they are up-ref'ed */
+/* compiler would allow 'const' for the certs, yet they may get up-ref'ed */
 {
     int n = sk_X509_num(certs /* may be NULL */);
     int i;
