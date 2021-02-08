@@ -9,12 +9,15 @@ use File::Spec::Functions;
 my $there = canonpath(catdir(dirname($0), updir()));
 my $std_engines = catdir($there, 'engines');
 my $std_providers = catdir($there, 'providers');
+my $std_openssl_conf = catdir($there, 'apps/openssl.cnf');
 my $unix_shlib_wrap = catfile($there, 'util/shlib_wrap.sh');
 
 $ENV{OPENSSL_ENGINES} = $std_engines
     if ($ENV{OPENSSL_ENGINES} // '') eq '' && -d $std_engines;
 $ENV{OPENSSL_MODULES} = $std_providers
     if ($ENV{OPENSSL_MODULES} // '') eq '' && -d $std_providers;
+$ENV{OPENSSL_CONF} = $std_openssl_conf
+    if ($ENV{OPENSSL_CONF} // '') eq '' && -f $std_openssl_conf;
 
 my $use_system = 0;
 my @cmd;

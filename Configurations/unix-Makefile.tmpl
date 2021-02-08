@@ -1215,12 +1215,19 @@ tar:
 
 # Helper targets #####################################################
 
-link-utils: $(BLDDIR)/util/opensslwrap.sh $(BLDDIR)/util/wrap.pl
+link-utils: $(BLDDIR)/util/opensslwrap.sh $(BLDDIR)/util/wrap.pl \
+            $(BLDDIR)/apps/openssl.cnf
 
 $(BLDDIR)/util/opensslwrap.sh $(BLDDIR)/util/wrap.pl: configdata.pm
 	@if [ "$(SRCDIR)" != "$(BLDDIR)" ]; then \
 	    mkdir -p "$(BLDDIR)/util"; \
 	    ln -sf "../$(SRCDIR)/util/`basename "$@"`" "$(BLDDIR)/util"; \
+	fi
+
+$(BLDDIR)/apps/openssl.cnf: configdata.pm
+	@if [ "$(SRCDIR)" != "$(BLDDIR)" ]; then \
+	    mkdir -p "$(BLDDIR)/apps"; \
+	    ln -sf "../$(SRCDIR)/apps/`basename "$@"`" "$(BLDDIR)/apps"; \
 	fi
 
 FORCE:
