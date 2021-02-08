@@ -3261,6 +3261,7 @@ static int build_chain(X509_STORE_CTX *ctx)
         /* Callback already issued */
         return 0;
     case X509_TRUST_UNTRUSTED:
+    default:
         if (ctx->error != X509_V_OK)
             /* Callback already issued in most such cases */
             return 0;
