@@ -3330,7 +3330,7 @@ int ssl3_handshake_write(SSL *s)
 int ssl3_new(SSL *s)
 {
 #ifndef OPENSSL_NO_SRP
-    if (!SSL_SRP_CTX_init(s))
+    if (!ssl_srp_ctx_init_intern(s))
         return 0;
 #endif
 
@@ -3366,7 +3366,7 @@ void ssl3_free(SSL *s)
     OPENSSL_free(s->s3.alpn_proposed);
 
 #ifndef OPENSSL_NO_SRP
-    SSL_SRP_CTX_free(s);
+    ssl_srp_ctx_free_intern(s);
 #endif
     memset(&s->s3, 0, sizeof(s->s3));
 }

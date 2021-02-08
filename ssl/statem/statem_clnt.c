@@ -2717,7 +2717,7 @@ MSG_PROCESS_RETURN tls_process_server_done(SSL *s, PACKET *pkt)
     }
 #ifndef OPENSSL_NO_SRP
     if (s->s3.tmp.new_cipher->algorithm_mkey & SSL_kSRP) {
-        if (SRP_Calc_A_param(s) <= 0) {
+        if (ssl_srp_calc_a_param_intern(s) <= 0) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_SRP_A_CALC);
             return MSG_PROCESS_ERROR;
         }
