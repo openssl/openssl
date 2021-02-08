@@ -67,7 +67,8 @@ When combined with B<-s> includes cipher suites which require PSK.
 
 =item B<-srp>
 
-When combined with B<-s> includes cipher suites which require SRP.
+When combined with B<-s> includes cipher suites which require SRP. This option
+is deprecated.
 
 =item B<-v>
 
