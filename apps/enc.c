@@ -111,7 +111,7 @@ int enc_main(int argc, char **argv)
     EVP_CIPHER_CTX *ctx = NULL;
     const EVP_CIPHER *cipher = NULL;
     const EVP_MD *dgst = NULL;
-    const char *dgstname = NULL;
+    const char *digestname = NULL;
     char *hkey = NULL, *hiv = NULL, *hsalt = NULL, *p;
     char *infile = NULL, *outfile = NULL, *prog;
     char *str = NULL, *passarg = NULL, *pass = NULL, *strbuf = NULL;
@@ -260,7 +260,7 @@ int enc_main(int argc, char **argv)
             hiv = opt_arg();
             break;
         case OPT_MD:
-            dgstname = opt_arg();
+            digestname = opt_arg();
             break;
         case OPT_CIPHER:
             ciphername = opt_unknown();
@@ -308,8 +308,8 @@ int enc_main(int argc, char **argv)
         BIO_printf(bio_err, "%s XTS ciphers not supported\n", prog);
         goto end;
     }
-    if (dgstname != NULL) {
-        if (!!opt_md(opt_arg(), &dgst))
+    if (digestname != NULL) {
+        if (!opt_md(digestname, &dgst))
             goto opthelp;
     }
     if (dgst == NULL)
