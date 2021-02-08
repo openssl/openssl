@@ -286,7 +286,7 @@ int cms_main(int argc, char **argv)
     X509_VERIFY_PARAM *vpm = NULL;
     char *certfile = NULL, *keyfile = NULL, *contfile = NULL;
     const char *CAfile = NULL, *CApath = NULL, *CAstore = NULL;
-    char *certsoutfile = NULL;
+    char *certsoutfile = NULL, *digestname = NULL;
     int noCAfile = 0, noCApath = 0, noCAstore = 0;
     char *infile = NULL, *outfile = NULL, *rctfile = NULL;
     char *passinarg = NULL, *passin = NULL, *signerfile = NULL, *originatorfile = NULL, *recipfile = NULL;
@@ -565,8 +565,7 @@ int cms_main(int argc, char **argv)
             certsoutfile = opt_arg();
             break;
         case OPT_MD:
-            if (!opt_md(opt_arg(), &sign_md))
-                goto end;
+            digestname = opt_arg();
             break;
         case OPT_SIGNER:
             /* If previous -signer argument add signer to list */
@@ -699,6 +698,8 @@ int cms_main(int argc, char **argv)
         }
     }
     app_RAND_load();
+    if (digestname != NULL && !opt_md(digestname, &sign_md))
+        goto end;
 
     /* Remaining args are files to process. */
     argc = opt_num_rest();

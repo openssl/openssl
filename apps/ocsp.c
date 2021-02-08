@@ -223,7 +223,7 @@ int ocsp_main(int argc, char **argv)
     X509_STORE *store = NULL;
     X509_VERIFY_PARAM *vpm = NULL;
     const char *CAfile = NULL, *CApath = NULL, *CAstore = NULL;
-    char *header, *value;
+    char *header, *value, *respdigname = NULL;
     char *host = NULL, *port = NULL, *path = "/", *outfile = NULL;
     char *rca_filename = NULL, *reqin = NULL, *respin = NULL;
     char *reqout = NULL, *respout = NULL, *ridx_filename = NULL;
@@ -467,8 +467,7 @@ int ocsp_main(int argc, char **argv)
             rcertfile = opt_arg();
             break;
         case OPT_RMD:   /* Response MessageDigest */
-            if (!opt_md(opt_arg(), &rsign_md))
-                goto end;
+            respdigname = opt_arg();
             break;
         case OPT_RSIGOPT:
             if (rsign_sigopts == NULL)
@@ -524,6 +523,11 @@ int ocsp_main(int argc, char **argv)
         BIO_printf(bio_err, "%s: Digest must be before -cert or -serial\n",
                    prog);
         goto opthelp;
+    }
+
+    if (respdigname != NULL) {
+        if (!opt_md(respdigname, &rsign_md))
+            goto end;
     }
 
     /* Have we anything to do? */
