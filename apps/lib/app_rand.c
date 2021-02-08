@@ -14,6 +14,7 @@
 #include <openssl/conf.h>
 
 static char *save_rand_file;
+static char *load_rand_file;
 
 void app_RAND_load_conf(CONF *c, const char *section)
 {
@@ -31,27 +32,30 @@ void app_RAND_load_conf(CONF *c, const char *section)
         save_rand_file = OPENSSL_strdup(randfile);
 }
 
-static int loadfiles(char *name)
+int app_RAND_load(void)
 {
     char *p;
     int last, ret = 1;
 
+    if (load_rand_file == NULL)
+        return 1;
+
     for ( ; ; ) {
         last = 0;
-        for (p = name; *p != '\0' && *p != LIST_SEPARATOR_CHAR; p++)
+        for (p = load_rand_file; *p != '\0' && *p != LIST_SEPARATOR_CHAR; p++)
             continue;
         if (*p == '\0')
             last = 1;
         *p = '\0';
-        if (RAND_load_file(name, -1) < 0) {
-            BIO_printf(bio_err, "Can't load %s into RNG\n", name);
+        if (RAND_load_file(load_rand_file, -1) < 0) {
+            BIO_printf(bio_err, "Can't load %s into RNG\n", load_rand_file);
             ERR_print_errors(bio_err);
             ret = 0;
         }
         if (last)
             break;
-        name = p + 1;
-        if (*name == '\0')
+        load_rand_file = p + 1;
+        if (*load_rand_file == '\0')
             break;
     }
     return ret;
@@ -82,7 +86,7 @@ int opt_rand(int opt)
     case OPT_R__LAST:
         break;
     case OPT_R_RAND:
-        return loadfiles(opt_arg());
+        load_rand_file = opt_arg();
         break;
     case OPT_R_WRITERAND:
         OPENSSL_free(save_rand_file);

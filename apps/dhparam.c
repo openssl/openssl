@@ -158,6 +158,7 @@ int dhparam_main(int argc, char **argv)
     } else if (argc != 0) {
         goto opthelp;
     }
+    app_RAND_load();
 
 
     if (g && !num)

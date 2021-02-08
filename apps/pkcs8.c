@@ -200,6 +200,7 @@ int pkcs8_main(int argc, char **argv)
         goto opthelp;
 
     private = 1;
+    app_RAND_load();
 
     if (!app_passwd(passinarg, passoutarg, &passin, &passout)) {
         BIO_printf(bio_err, "Error getting passwords\n");

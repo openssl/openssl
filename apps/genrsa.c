@@ -164,6 +164,7 @@ opthelp:
         goto opthelp;
     }
 
+    app_RAND_load();
     private = 1;
     if (!app_passwd(NULL, passoutarg, NULL, &passout)) {
         BIO_printf(bio_err, "Error getting password\n");

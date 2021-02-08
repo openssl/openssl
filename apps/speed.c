@@ -1854,6 +1854,7 @@ int speed_main(int argc, char **argv)
     argc = opt_num_rest();
     argv = opt_rest();
 
+    app_RAND_load();
     for (; *argv; argv++) {
         const char *algo = *argv;
 

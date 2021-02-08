@@ -698,6 +698,7 @@ int cms_main(int argc, char **argv)
             break;
         }
     }
+    app_RAND_load();
 
     /* Remaining args are files to process. */
     argc = opt_num_rest();

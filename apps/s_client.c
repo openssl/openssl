@@ -1574,9 +1574,7 @@ int s_client_main(int argc, char **argv)
     /* Optional argument is connect string if -connect not used. */
     argc = opt_num_rest();
     if (argc == 1) {
-        /*
-         * Don't allow -connect and a separate argument.
-         */
+        /* Don't allow -connect and a separate argument. */
         if (connectstr != NULL) {
             BIO_printf(bio_err,
                        "%s: cannot provide both -connect option and target parameter\n",
@@ -1588,6 +1586,7 @@ int s_client_main(int argc, char **argv)
     } else if (argc != 0) {
         goto opthelp;
     }
+    app_RAND_load();
 
     if (count4or6 >= 2) {
         BIO_printf(bio_err, "%s: Can't use both -4 and -6\n", prog);

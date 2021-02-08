@@ -480,6 +480,7 @@ int req_main(int argc, char **argv)
     if (argc != 0)
         goto opthelp;
 
+    app_RAND_load();
     if (!gen_x509) {
         if (days != UNSET_DAYS)
             BIO_printf(bio_err, "Ignoring -days without -x509; not generating a certificate\n");

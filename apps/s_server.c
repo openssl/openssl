@@ -1662,6 +1662,7 @@ int s_server_main(int argc, char *argv[])
     if (argc != 0)
         goto opthelp;
 
+    app_RAND_load();
 #ifndef OPENSSL_NO_NEXTPROTONEG
     if (min_version == TLS1_3_VERSION && next_proto_neg_in != NULL) {
         BIO_printf(bio_err, "Cannot supply -nextprotoneg with TLSv1.3\n");
