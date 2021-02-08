@@ -1260,6 +1260,21 @@ static int test_kdf_sshkdf(void)
     return ret;
 }
 
+static int test_kdfs_same( EVP_KDF *kdf1, EVP_KDF *kdf2)
+{
+    /* Fast path in case the two are the same algorithm pointer */
+    if (kdf1 == kdf2)
+        return 1;
+    /*
+     * Compare their names and providers instead.
+     * This is necessary in a non-caching build (or a cache flush during fetch)
+     * because without the algorithm in the cache, fetching it a second time
+     * will result in a different pointer.
+     */
+    return TEST_ptr_eq(EVP_KDF_provider(kdf1), EVP_KDF_provider(kdf2))
+           && TEST_str_eq(EVP_KDF_name(kdf1), EVP_KDF_name(kdf2));
+}
+
 static int test_kdf_get_kdf(void)
 {
     EVP_KDF *kdf1 = NULL, *kdf2 = NULL;
@@ -1270,7 +1285,7 @@ static int test_kdf_get_kdf(void)
         || !TEST_ptr(kdf1 = EVP_KDF_fetch(NULL, OSSL_KDF_NAME_PBKDF2, NULL))
         || !TEST_ptr(kdf2 = EVP_KDF_fetch(NULL, OBJ_nid2sn(OBJ_obj2nid(obj)),
                                           NULL))
-        || !TEST_ptr_eq(kdf1, kdf2))
+        || !test_kdfs_same(kdf1, kdf2))
         ok = 0;
     EVP_KDF_free(kdf1);
     kdf1 = NULL;
@@ -1279,14 +1294,14 @@ static int test_kdf_get_kdf(void)
 
     if (!TEST_ptr(kdf1 = EVP_KDF_fetch(NULL, SN_tls1_prf, NULL))
         || !TEST_ptr(kdf2 = EVP_KDF_fetch(NULL, LN_tls1_prf, NULL))
-        || !TEST_ptr_eq(kdf1, kdf2))
+        || !test_kdfs_same(kdf1, kdf2))
         ok = 0;
     /* kdf1 is re-used below, so don't free it here */
     EVP_KDF_free(kdf2);
     kdf2 = NULL;
 
     if (!TEST_ptr(kdf2 = EVP_KDF_fetch(NULL, OBJ_nid2sn(NID_tls1_prf), NULL))
-        || !TEST_ptr_eq(kdf1, kdf2))
+        || !test_kdfs_same(kdf1, kdf2))
         ok = 0;
     EVP_KDF_free(kdf1);
     kdf1 = NULL;
