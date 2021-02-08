@@ -163,31 +163,32 @@ static int der_encode_sharedinfo(WPACKET *pkt, unsigned char *buf, size_t buflen
  *  }
  *  Where suppPubInfo is the key length (in bits) (stored into 4 bytes)
  *
-}
- *
  * |keylen| is the length (in bytes) of the generated KEK. It is stored into
- * suppPubInfo (in bits). It is ignored if the value is 0.
+ *   suppPubInfo (in bits). It is ignored if the value is 0.
  * |cek_oid| The oid of the key wrapping algorithm.
  * |cek_oidlen| The length (in bytes) of the key wrapping algorithm oid,
- * |acvp| is the optional blob of DER data representing all the fields related
- * to partyUInfo, partyVInfo, suppPubInfo and suppPrivInfo. It can be NULL.
+ * |acvp| is the optional blob of DER data representing one or more of the
+ *   OtherInfo fields related to |partyu|, |partyv|, |supp_pub| and |supp_priv|.
+ *   This field should noramlly be NULL. If |acvp| is non NULL then |partyu|,
+ *   |partyv|, |supp_pub| and |supp_priv| should all be NULL.
  * |acvp_len| is the |acvp| length (in bytes).
- * |partyu| is the optional public info contributed by the initiator. It
- * can be NULL. (It is also used as the ukm by CMS).
+ * |partyu| is the optional public info contributed by the initiator.
+ *   It can be NULL. (It is also used as the ukm by CMS).
  * |partyu_len| is the |partyu| length (in bytes).
- * |partyv| is the optional public info contributed by the responder. It
- * can be NULL.
+ * |partyv| is the optional public info contributed by the responder.
+ *   It can be NULL.
  * |partyv_len| is the |partyv| length (in bytes).
- * |supp_pub| is the optional additional, mutually-known public information. It
- * can be NULL. |keylen| should be 0 if this is not NULL.
+ * |supp_pub| is the optional additional, mutually-known public information.
+ *   It can be NULL. |keylen| should be 0 if this is not NULL.
  * |supp_pub_len| is the |supp_pub| length (in bytes).
- * |supp_priv| is the optional additional, mutually-known private information. It
- * can be NULL.
+ * |supp_priv| is the optional additional, mutually-known private information.
+ *   It can be NULL.
  * |supp_priv_len| is the |supp_priv| length (in bytes).
  * |der| is the returned encoded data. It must be freed by the caller.
  * |der_len| is the returned size of the encoded data.
  * |out_ctr| returns a pointer to the counter data which is embedded inside the
- * encoded data. This allows the counter bytes to be updated without re-encoding.
+ *   encoded data. This allows the counter bytes to be updated without
+ *   re-encoding.
  *
  * Returns: 1 if successfully encoded, or 0 otherwise.
  * Assumptions: |der|, |der_len| & |out_ctr| are not NULL.
