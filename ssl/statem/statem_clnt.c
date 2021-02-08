@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  * Copyright 2005 Nokia. All rights reserved.
  *
@@ -1009,7 +1009,7 @@ size_t ossl_statem_client_max_message_size(SSL *s)
 }
 
 /*
- * Process a message that the client has been received from the server.
+ * Process a message that the client has received from the server.
  */
 MSG_PROCESS_RETURN ossl_statem_client_process_message(SSL *s, PACKET *pkt)
 {
@@ -1078,6 +1078,9 @@ WORK_STATE ossl_statem_client_post_process_message(SSL *s, WORK_STATE wst)
         /* Shouldn't happen */
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return WORK_ERROR;
+
+    case TLS_ST_CR_CERT:
+        return tls_post_process_server_certificate(s, wst);
 
     case TLS_ST_CR_CERT_VRFY:
     case TLS_ST_CR_CERT_REQ:
@@ -1722,11 +1725,7 @@ static MSG_PROCESS_RETURN tls_process_as_hello_retry_request(SSL *s,
     OPENSSL_free(extensions);
     extensions = NULL;
 
-    if (s->ext.tls13_cookie_len == 0
-#if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH)
-        && s->s3.tmp.pkey != NULL
-#endif
-        ) {
+    if (s->ext.tls13_cookie_len == 0 && s->s3.tmp.pkey != NULL) {
         /*
          * We didn't receive a cookie or a new key_share so the next
          * ClientHello will not change
@@ -1762,20 +1761,16 @@ static MSG_PROCESS_RETURN tls_process_as_hello_retry_request(SSL *s,
     return MSG_PROCESS_ERROR;
 }
 
+/* prepare server cert verificaton by setting s->session->peer_chain from pkt */
 MSG_PROCESS_RETURN tls_process_server_certificate(SSL *s, PACKET *pkt)
 {
-    int i;
-    MSG_PROCESS_RETURN ret = MSG_PROCESS_ERROR;
     unsigned long cert_list_len, cert_len;
     X509 *x = NULL;
     const unsigned char *certstart, *certbytes;
-    STACK_OF(X509) *sk = NULL;
-    EVP_PKEY *pkey = NULL;
-    size_t chainidx, certidx;
+    size_t chainidx;
     unsigned int context = 0;
-    const SSL_CERT_LOOKUP *clu;
 
-    if ((sk = sk_X509_new_null()) == NULL) {
+    if ((s->session->peer_chain = sk_X509_new_null()) == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
         goto err;
     }
@@ -1834,14 +1829,39 @@ MSG_PROCESS_RETURN tls_process_server_certificate(SSL *s, PACKET *pkt)
             OPENSSL_free(rawexts);
         }
 
-        if (!sk_X509_push(sk, x)) {
+        if (!sk_X509_push(s->session->peer_chain, x)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
             goto err;
         }
         x = NULL;
     }
+    return MSG_PROCESS_CONTINUE_PROCESSING;
 
-    i = ssl_verify_cert_chain(s, sk);
+ err:
+    X509_free(x);
+    sk_X509_pop_free(s->session->peer_chain, X509_free);
+    s->session->peer_chain = NULL;
+    return MSG_PROCESS_ERROR;
+}
+
+/*
+ * Verify the s->session->peer_chain and check server cert type.
+ * On success set s->session->peer and s->session->verify_result.
+ * Else the peer certificate verification callback may request retry.
+ */
+WORK_STATE tls_post_process_server_certificate(SSL *s, WORK_STATE wst)
+{
+    X509 *x;
+    EVP_PKEY *pkey = NULL;
+    const SSL_CERT_LOOKUP *clu;
+    size_t certidx;
+    int i;
+
+    i = ssl_verify_cert_chain(s, s->session->peer_chain);
+    if (i == -1) {
+        s->rwstate = SSL_RETRY_VERIFY;
+        return WORK_MORE_A;
+    }
     /*
      * The documented interface is that SSL_VERIFY_PEER should be set in order
      * for client side verification of the server certificate to take place.
@@ -1859,35 +1879,31 @@ MSG_PROCESS_RETURN tls_process_server_certificate(SSL *s, PACKET *pkt)
     if (s->verify_mode != SSL_VERIFY_NONE && i <= 0) {
         SSLfatal(s, ssl_x509err2alert(s->verify_result),
                  SSL_R_CERTIFICATE_VERIFY_FAILED);
-        goto err;
+        return WORK_ERROR;
     }
     ERR_clear_error();          /* but we keep s->verify_result */
     if (i > 1) {
         SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE, i);
-        goto err;
+        return WORK_ERROR;
     }
 
-    s->session->peer_chain = sk;
     /*
      * Inconsistency alert: cert_chain does include the peer's certificate,
      * which we don't include in statem_srvr.c
      */
-    x = sk_X509_value(sk, 0);
-    sk = NULL;
+    x = sk_X509_value(s->session->peer_chain, 0);
 
     pkey = X509_get0_pubkey(x);
 
     if (pkey == NULL || EVP_PKEY_missing_parameters(pkey)) {
-        x = NULL;
         SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                  SSL_R_UNABLE_TO_FIND_PUBLIC_KEY_PARAMETERS);
-        goto err;
+        return WORK_ERROR;
     }
 
     if ((clu = ssl_cert_lookup_by_pkey(pkey, &certidx)) == NULL) {
-        x = NULL;
         SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_UNKNOWN_CERTIFICATE_TYPE);
-        goto err;
+        return WORK_ERROR;
     }
     /*
      * Check certificate type is consistent with ciphersuite. For TLS 1.3
@@ -1896,9 +1912,8 @@ MSG_PROCESS_RETURN tls_process_server_certificate(SSL *s, PACKET *pkt)
      */
     if (!SSL_IS_TLS13(s)) {
         if ((clu->amask & s->s3.tmp.new_cipher->algorithm_auth) == 0) {
-            x = NULL;
             SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_WRONG_CERTIFICATE_TYPE);
-            goto err;
+            return WORK_ERROR;
         }
     }
     s->session->peer_type = certidx;
@@ -1907,7 +1922,6 @@ MSG_PROCESS_RETURN tls_process_server_certificate(SSL *s, PACKET *pkt)
     X509_up_ref(x);
     s->session->peer = x;
     s->session->verify_result = s->verify_result;
-    x = NULL;
 
     /* Save the current hash state for when we receive the CertificateVerify */
     if (SSL_IS_TLS13(s)
@@ -1915,15 +1929,9 @@ MSG_PROCESS_RETURN tls_process_server_certificate(SSL *s, PACKET *pkt)
                                    sizeof(s->cert_verify_hash),
                                    &s->cert_verify_hash_len)) {
         /* SSLfatal() already called */;
-        goto err;
+        return WORK_ERROR;
     }
-
-    ret = MSG_PROCESS_CONTINUE_READING;
-
- err:
-    X509_free(x);
-    sk_X509_pop_free(sk, X509_free);
-    return ret;
+    return WORK_FINISHED_CONTINUE;
 }
 
 static int tls_process_ske_psk_preamble(SSL *s, PACKET *pkt)
@@ -2055,8 +2063,8 @@ static int tls_process_ske_dhe(SSL *s, PACKET *pkt, EVP_PKEY **pkey)
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto err;
     }
-    if (EVP_PKEY_key_fromdata_init(pctx) <= 0
-            || EVP_PKEY_fromdata(pctx, &peer_tmp, params) <= 0) {
+    if (EVP_PKEY_fromdata_init(pctx) <= 0
+            || EVP_PKEY_fromdata(pctx, &peer_tmp, EVP_PKEY_KEYPAIR, params) <= 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_BAD_DH_VALUE);
         goto err;
     }
@@ -2103,7 +2111,6 @@ static int tls_process_ske_dhe(SSL *s, PACKET *pkt, EVP_PKEY **pkey)
 
 static int tls_process_ske_ecdhe(SSL *s, PACKET *pkt, EVP_PKEY **pkey)
 {
-#ifndef OPENSSL_NO_EC
     PACKET encoded_pt;
     unsigned int curve_type, curve_id;
 
@@ -2156,10 +2163,6 @@ static int tls_process_ske_ecdhe(SSL *s, PACKET *pkt, EVP_PKEY **pkey)
     /* else anonymous ECDH, so no certificate or pkey. */
 
     return 1;
-#else
-    SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-    return 0;
-#endif
 }
 
 MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
@@ -2174,10 +2177,8 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
 
     save_param_start = *pkt;
 
-#if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH)
     EVP_PKEY_free(s->s3.peer_tmp);
     s->s3.peer_tmp = NULL;
-#endif
 
     if (alg_k & SSL_PSK) {
         if (!tls_process_ske_psk_preamble(s, pkt)) {
@@ -2953,7 +2954,6 @@ static int tls_construct_cke_dhe(SSL *s, WPACKET *pkt)
 
 static int tls_construct_cke_ecdhe(SSL *s, WPACKET *pkt)
 {
-#ifndef OPENSSL_NO_EC
     unsigned char *encodedPoint = NULL;
     size_t encoded_pt_len = 0;
     EVP_PKEY *ckey = NULL, *skey = NULL;
@@ -2994,10 +2994,6 @@ static int tls_construct_cke_ecdhe(SSL *s, WPACKET *pkt)
     OPENSSL_free(encodedPoint);
     EVP_PKEY_free(ckey);
     return ret;
-#else
-    SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-    return 0;
-#endif
 }
 
 static int tls_construct_cke_gost(SSL *s, WPACKET *pkt)
@@ -3544,25 +3540,23 @@ int ssl3_check_cert_and_algorithm(SSL *s)
         return 0;
     }
 
-#ifndef OPENSSL_NO_EC
     if (clu->amask & SSL_aECDSA) {
         if (ssl_check_srvr_ecc_cert_and_alg(s->session->peer, s))
             return 1;
         SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE, SSL_R_BAD_ECC_CERT);
         return 0;
     }
-#endif
+
     if (alg_k & (SSL_kRSA | SSL_kRSAPSK) && idx != SSL_PKEY_RSA) {
         SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE,
                  SSL_R_MISSING_RSA_ENCRYPTING_CERT);
         return 0;
     }
-#ifndef OPENSSL_NO_DH
+
     if ((alg_k & SSL_kDHE) && (s->s3.peer_tmp == NULL)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return 0;
     }
-#endif
 
     return 1;
 }

@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2021 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -43,13 +43,16 @@ plan tests => 30 # = scalar @conf_srcs
 # verify generated sources in the default configuration.
 my $is_default_tls = (disabled("ssl3") && !disabled("tls1") &&
                       !disabled("tls1_1") && !disabled("tls1_2") &&
-                      !disabled("tls1_3"));
+                      !disabled("tls1_3") && (!disabled("ec") || !disabled("dh")));
 
 my $is_default_dtls = (!disabled("dtls1") && !disabled("dtls1_2"));
 
 my @all_pre_tls1_3 = ("ssl3", "tls1", "tls1_1", "tls1_2");
 my $no_tls = alldisabled(available_protocols("tls"));
 my $no_tls_below1_3 = $no_tls || (disabled("tls1_2") && !disabled("tls1_3"));
+if (!$no_tls && $no_tls_below1_3 && disabled("ec") && disabled("dh")) {
+  $no_tls = 1;
+}
 my $no_pre_tls1_3 = alldisabled(@all_pre_tls1_3);
 my $no_dtls = alldisabled(available_protocols("dtls"));
 my $no_npn = disabled("nextprotoneg");
@@ -105,13 +108,13 @@ my %skip = (
   "18-dtls-renegotiate.cnf" => $no_dtls,
   "19-mac-then-encrypt.cnf" => $no_pre_tls1_3,
   "20-cert-select.cnf" => disabled("tls1_2") || $no_ec,
-  "21-key-update.cnf" => disabled("tls1_3"),
+  "21-key-update.cnf" => disabled("tls1_3") || ($no_ec && $no_dh),
   "22-compression.cnf" => disabled("zlib") || $no_tls,
   "23-srp.cnf" => (disabled("tls1") && disabled ("tls1_1")
                     && disabled("tls1_2")) || disabled("srp"),
-  "24-padding.cnf" => disabled("tls1_3"),
+  "24-padding.cnf" => disabled("tls1_3") || ($no_ec && $no_dh),
   "25-cipher.cnf" => disabled("ec") || disabled("tls1_2"),
-  "26-tls13_client_auth.cnf" => disabled("tls1_3"),
+  "26-tls13_client_auth.cnf" => disabled("tls1_3") || ($no_ec && $no_dh),
   "29-dtls-sctp-label-bug.cnf" => disabled("sctp") || disabled("sock"),
 );
 
@@ -157,12 +160,12 @@ sub test_conf {
            "Getting output from generate_ssl_tests.pl.");
 
     SKIP: {
-        # Test 2. Compare against existing output in test/ssl_tests.cnf.
+        # Test 2. Compare against existing output in test/ssl-tests/
         skip "Skipping generated source test for $conf", 1
           if !$check_source;
 
         $run_test = is(cmp_text($output_file, $conf_file), 0,
-                       "Comparing generated sources.");
+                       "Comparing generated $output_file with $conf_file.");
       }
 
       # Test 3. Run the test.

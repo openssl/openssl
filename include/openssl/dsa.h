@@ -98,10 +98,6 @@ int DSA_SIG_set0(DSA_SIG *sig, BIGNUM *r, BIGNUM *s);
 /* typedef struct dsa_st DSA; */
 /* typedef struct dsa_method DSA_METHOD; */
 
-/*
- * TODO(3.0): consider removing the ASN.1 encoding and decoding when
- * deserialization is completed elsewhere.
- */
 #   define d2i_DSAparams_fp(fp, x) \
         (DSA *)ASN1_d2i_fp((char *(*)())DSA_new, \
                            (char *(*)())d2i_DSAparams, (fp), \

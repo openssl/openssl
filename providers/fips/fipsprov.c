@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -350,7 +350,7 @@ static const OSSL_ALGORITHM fips_keyexch[] = {
     { "DH:dhKeyAgreement", FIPS_DEFAULT_PROPERTIES, ossl_dh_keyexch_functions },
 #endif
 #ifndef OPENSSL_NO_EC
-    { "ECDH", FIPS_DEFAULT_PROPERTIES, ecossl_dh_keyexch_functions },
+    { "ECDH", FIPS_DEFAULT_PROPERTIES, ossl_ecdh_keyexch_functions },
     { "X25519", FIPS_DEFAULT_PROPERTIES, ossl_x25519_keyexch_functions },
     { "X448", FIPS_DEFAULT_PROPERTIES, ossl_x448_keyexch_functions },
 #endif
@@ -370,7 +370,7 @@ static const OSSL_ALGORITHM fips_signature[] = {
 #ifndef OPENSSL_NO_EC
     { "ED25519", FIPS_DEFAULT_PROPERTIES, ossl_ed25519_signature_functions },
     { "ED448", FIPS_DEFAULT_PROPERTIES, ossl_ed448_signature_functions },
-    { "ECDSA", FIPS_DEFAULT_PROPERTIES, ecossl_dsa_signature_functions },
+    { "ECDSA", FIPS_DEFAULT_PROPERTIES, ossl_ecdsa_signature_functions },
 #endif
     { "HMAC", FIPS_DEFAULT_PROPERTIES,
       ossl_mac_legacy_hmac_signature_functions },
@@ -434,8 +434,6 @@ static const OSSL_ALGORITHM *fips_query(void *provctx, int operation_id,
     case OSSL_OP_DIGEST:
         return fips_digests;
     case OSSL_OP_CIPHER:
-        ossl_prov_cache_exported_algorithms(fips_ciphers,
-                                            exported_fips_ciphers);
         return exported_fips_ciphers;
     case OSSL_OP_MAC:
         return fips_macs;
@@ -625,6 +623,8 @@ int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
         goto err;
 
     fgbl->handle = handle;
+
+    ossl_prov_cache_exported_algorithms(fips_ciphers, exported_fips_ciphers);
 
     selftest_params.libctx = libctx;
     if (!SELF_TEST_post(&selftest_params, 0)) {

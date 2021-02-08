@@ -19,33 +19,6 @@
 
 
 /*
- * UI function codes.
- */
-# ifndef OPENSSL_NO_DEPRECATED_3_0
-#  define UI_F_CLOSE_CONSOLE                               0
-#  define UI_F_ECHO_CONSOLE                                0
-#  define UI_F_GENERAL_ALLOCATE_BOOLEAN                    0
-#  define UI_F_GENERAL_ALLOCATE_PROMPT                     0
-#  define UI_F_NOECHO_CONSOLE                              0
-#  define UI_F_OPEN_CONSOLE                                0
-#  define UI_F_UI_CONSTRUCT_PROMPT                         0
-#  define UI_F_UI_CREATE_METHOD                            0
-#  define UI_F_UI_CTRL                                     0
-#  define UI_F_UI_DUP_ERROR_STRING                         0
-#  define UI_F_UI_DUP_INFO_STRING                          0
-#  define UI_F_UI_DUP_INPUT_BOOLEAN                        0
-#  define UI_F_UI_DUP_INPUT_STRING                         0
-#  define UI_F_UI_DUP_USER_DATA                            0
-#  define UI_F_UI_DUP_VERIFY_STRING                        0
-#  define UI_F_UI_GET0_RESULT                              0
-#  define UI_F_UI_GET_RESULT_LENGTH                        0
-#  define UI_F_UI_NEW_METHOD                               0
-#  define UI_F_UI_PROCESS                                  0
-#  define UI_F_UI_SET_RESULT                               0
-#  define UI_F_UI_SET_RESULT_EX                            0
-# endif
-
-/*
  * UI reason codes.
  */
 # define UI_R_COMMON_OK_AND_CANCEL_CHARACTERS             104

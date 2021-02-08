@@ -1,6 +1,6 @@
 #! /bin/bash
 #
-# Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2021 The OpenSSL Project Authors. All Rights Reserved.
 # Copyright (c) 2016 Viktor Dukhovni <openssl-users@dukhovni.org>.
 # All rights reserved.
 #
@@ -116,6 +116,19 @@ genroot() {
 }
 
 genca() {
+    local OPTIND=1
+    local purpose=
+
+    while getopts p: o
+    do
+        case $o in
+        p) purpose="$OPTARG";;
+        *) echo "Usage: $0 genca [-p EKU] cn keyname certname cakeyname cacertname" >&2
+           return 1;;
+        esac
+    done
+
+    shift $((OPTIND - 1))
     local cn=$1; shift
     local key=$1; shift
     local cert=$1; shift
@@ -127,17 +140,16 @@ genca() {
     local akid="authorityKeyIdentifier = keyid"
 
     exts=$(printf "%s\n%s\n%s\n" "$bcon" "$ku" "$skid" "$akid")
-    for eku in "$@"
-    do
-        exts=$(printf "%s\nextendedKeyUsage = %s\n" "$exts" "$eku")
-    done
+    if [ -n "$purpose" ]; then
+        exts=$(printf "%s\nextendedKeyUsage = %s\n" "$exts" "$purpose")
+    fi
     if [ -n "$NC" ]; then
         exts=$(printf "%s\nnameConstraints = %s\n" "$exts" "$NC")
     fi
     csr=$(req "$key" "CN = $cn") || return 1
     echo "$csr" |
         cert "$cert" "$exts" -CA "${cacert}.pem" -CAkey "${cakey}.pem" \
-	    -set_serial 2 -days "${DAYS}"
+	    -set_serial 2 -days "${DAYS}" "$@"
 }
 
 gen_nonbc_ca() {

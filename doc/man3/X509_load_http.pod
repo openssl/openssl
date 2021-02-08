@@ -15,8 +15,8 @@ X509_CRL_http_nbio
  X509 *X509_load_http(const char *url, BIO *bio, BIO *rbio, int timeout);
  X509_CRL *X509_CRL_load_http(const char *url, BIO *bio, BIO *rbio, int timeout);
 
- #define X509_http_nbio(url)
- #define X509_CRL_http_nbio(url)
+ #define X509_http_nbio(rctx, pcert)
+ #define X509_CRL_http_nbio(rctx, pcrl)
 
 =head1 DESCRIPTION
 

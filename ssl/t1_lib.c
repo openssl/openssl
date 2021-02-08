@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -185,25 +185,19 @@ static struct {
     {NID_ffdhe8192, OSSL_TLS_GROUP_ID_ffdhe8192}
 };
 
-#ifndef OPENSSL_NO_EC
 static const unsigned char ecformats_default[] = {
     TLSEXT_ECPOINTFORMAT_uncompressed,
     TLSEXT_ECPOINTFORMAT_ansiX962_compressed_prime,
     TLSEXT_ECPOINTFORMAT_ansiX962_compressed_char2
 };
-#endif /* !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH) */
 
 /* The default curves */
-#if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC)
 static const uint16_t supported_groups_default[] = {
-# ifndef OPENSSL_NO_EC
     29,                      /* X25519 (29) */
     23,                      /* secp256r1 (23) */
     30,                      /* X448 (30) */
     25,                      /* secp521r1 (25) */
     24,                      /* secp384r1 (24) */
-# endif
-# ifndef OPENSSL_NO_GOST
     34,                      /* GC256A (34) */
     35,                      /* GC256B (35) */
     36,                      /* GC256C (36) */
@@ -211,23 +205,17 @@ static const uint16_t supported_groups_default[] = {
     38,                      /* GC512A (38) */
     39,                      /* GC512B (39) */
     40,                      /* GC512C (40) */
-# endif
-# ifndef OPENSSL_NO_DH
     0x100,                   /* ffdhe2048 (0x100) */
     0x101,                   /* ffdhe3072 (0x101) */
     0x102,                   /* ffdhe4096 (0x102) */
     0x103,                   /* ffdhe6144 (0x103) */
     0x104,                   /* ffdhe8192 (0x104) */
-# endif
 };
-#endif /* !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH) */
 
-#ifndef OPENSSL_NO_EC
 static const uint16_t suiteb_curves[] = {
     TLSEXT_curve_P_256,
     TLSEXT_curve_P_384
 };
-#endif
 
 struct provider_group_data_st {
     SSL_CTX *ctx;
@@ -398,29 +386,47 @@ static int discover_provider_groups(OSSL_PROVIDER *provider, void *vctx)
 
 int ssl_load_groups(SSL_CTX *ctx)
 {
-    return OSSL_PROVIDER_do_all(ctx->libctx, discover_provider_groups, ctx);
+    size_t i, j, num_deflt_grps = 0;
+    uint16_t tmp_supp_groups[OSSL_NELEM(supported_groups_default)];
+
+    if (!OSSL_PROVIDER_do_all(ctx->libctx, discover_provider_groups, ctx))
+        return 0;
+
+    for (i = 0; i < OSSL_NELEM(supported_groups_default); i++) {
+        for (j = 0; j < ctx->group_list_len; j++) {
+            if (ctx->group_list[j].group_id == supported_groups_default[i]) {
+                tmp_supp_groups[num_deflt_grps++] = ctx->group_list[j].group_id;
+                break;
+            }
+        }
+    }
+
+    if (num_deflt_grps == 0)
+        return 1;
+
+    ctx->ext.supported_groups_default
+        = OPENSSL_malloc(sizeof(uint16_t) * num_deflt_grps);
+
+    if (ctx->ext.supported_groups_default == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+        return 0;
+    }
+
+    memcpy(ctx->ext.supported_groups_default,
+           tmp_supp_groups,
+           num_deflt_grps * sizeof(tmp_supp_groups[0]));
+    ctx->ext.supported_groups_default_len = num_deflt_grps;
+
+    return 1;
 }
 
 static uint16_t tls1_group_name2id(SSL_CTX *ctx, const char *name)
 {
     size_t i;
-    int nid = NID_undef;
-
-    /* See if we can identify a nid for this name */
-#ifndef OPENSSL_NO_EC
-    nid = EC_curve_nist2nid(name);
-#endif
-    if (nid == NID_undef)
-        nid = OBJ_sn2nid(name);
-    if (nid == NID_undef)
-        nid = OBJ_ln2nid(name);
 
     for (i = 0; i < ctx->group_list_len; i++) {
         if (strcmp(ctx->group_list[i].tlsname, name) == 0
-                || (nid != NID_undef
-                    && nid == tls1_group_id2nid(ctx->group_list[i].group_id,
-                                                0))
-           )
+                || strcmp(ctx->group_list[i].realname, name) == 0)
             return ctx->group_list[i].group_id;
     }
 
@@ -484,10 +490,8 @@ uint16_t tls1_nid2group_id(int nid)
 void tls1_get_supported_groups(SSL *s, const uint16_t **pgroups,
                                size_t *pgroupslen)
 {
-#if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH)
     /* For Suite B mode only include P-256, P-384 */
     switch (tls1_suiteb(s)) {
-# ifndef OPENSSL_NO_EC
     case SSL_CERT_FLAG_SUITEB_128_LOS:
         *pgroups = suiteb_curves;
         *pgroupslen = OSSL_NELEM(suiteb_curves);
@@ -502,28 +506,27 @@ void tls1_get_supported_groups(SSL *s, const uint16_t **pgroups,
         *pgroups = suiteb_curves + 1;
         *pgroupslen = 1;
         break;
-# endif
 
     default:
         if (s->ext.supportedgroups == NULL) {
-            *pgroups = supported_groups_default;
-            *pgroupslen = OSSL_NELEM(supported_groups_default);
+            *pgroups = s->ctx->ext.supported_groups_default;
+            *pgroupslen = s->ctx->ext.supported_groups_default_len;
         } else {
             *pgroups = s->ext.supportedgroups;
             *pgroupslen = s->ext.supportedgroups_len;
         }
         break;
     }
-#else
-    *pgroups = NULL;
-    *pgroupslen = 0;
-#endif /* !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH) */
 }
 
-int tls_valid_group(SSL *s, uint16_t group_id, int minversion, int maxversion)
+int tls_valid_group(SSL *s, uint16_t group_id, int minversion, int maxversion,
+                    int isec, int *okfortls13)
 {
     const TLS_GROUP_INFO *ginfo = tls1_group_id_lookup(s->ctx, group_id);
     int ret;
+
+    if (okfortls13 != NULL)
+        okfortls13 = 0;
 
     if (ginfo == NULL)
         return 0;
@@ -546,7 +549,14 @@ int tls_valid_group(SSL *s, uint16_t group_id, int minversion, int maxversion)
             ret = (minversion <= ginfo->maxtls);
         if (ginfo->mintls > 0)
             ret &= (maxversion >= ginfo->mintls);
+        if (ret && okfortls13 != NULL && maxversion == TLS1_3_VERSION)
+            *okfortls13 = (ginfo->maxtls == 0)
+                          || (ginfo->maxtls >= TLS1_3_VERSION);
     }
+    ret &= !isec
+           || strcmp(ginfo->algorithm, "EC") == 0
+           || strcmp(ginfo->algorithm, "X25519") == 0
+           || strcmp(ginfo->algorithm, "X448") == 0;
 
     return ret;
 }
@@ -795,7 +805,6 @@ int tls1_check_group_id(SSL *s, uint16_t group_id, int check_own_groups)
     return tls1_in_list(group_id, groups, groups_len);
 }
 
-#ifndef OPENSSL_NO_EC
 void tls1_get_formatlist(SSL *s, const unsigned char **pformats,
                          size_t *num_formats)
 {
@@ -948,24 +957,13 @@ int tls1_check_ec_tmp_key(SSL *s, unsigned long cid)
     return 0;
 }
 
-#else
-
-static int tls1_check_cert_param(SSL *s, X509 *x, int set_ee_md)
-{
-    return 1;
-}
-
-#endif                          /* OPENSSL_NO_EC */
-
 /* Default sigalg schemes */
 static const uint16_t tls12_sigalgs[] = {
-#ifndef OPENSSL_NO_EC
     TLSEXT_SIGALG_ecdsa_secp256r1_sha256,
     TLSEXT_SIGALG_ecdsa_secp384r1_sha384,
     TLSEXT_SIGALG_ecdsa_secp521r1_sha512,
     TLSEXT_SIGALG_ed25519,
     TLSEXT_SIGALG_ed448,
-#endif
 
     TLSEXT_SIGALG_rsa_pss_pss_sha256,
     TLSEXT_SIGALG_rsa_pss_pss_sha384,
@@ -978,20 +976,19 @@ static const uint16_t tls12_sigalgs[] = {
     TLSEXT_SIGALG_rsa_pkcs1_sha384,
     TLSEXT_SIGALG_rsa_pkcs1_sha512,
 
-#ifndef OPENSSL_NO_EC
     TLSEXT_SIGALG_ecdsa_sha224,
     TLSEXT_SIGALG_ecdsa_sha1,
-#endif
+
     TLSEXT_SIGALG_rsa_pkcs1_sha224,
     TLSEXT_SIGALG_rsa_pkcs1_sha1,
-#ifndef OPENSSL_NO_DSA
+
     TLSEXT_SIGALG_dsa_sha224,
     TLSEXT_SIGALG_dsa_sha1,
 
     TLSEXT_SIGALG_dsa_sha256,
     TLSEXT_SIGALG_dsa_sha384,
     TLSEXT_SIGALG_dsa_sha512,
-#endif
+
 #ifndef OPENSSL_NO_GOST
     TLSEXT_SIGALG_gostr34102012_256_intrinsic,
     TLSEXT_SIGALG_gostr34102012_512_intrinsic,
@@ -1001,15 +998,13 @@ static const uint16_t tls12_sigalgs[] = {
 #endif
 };
 
-#ifndef OPENSSL_NO_EC
+
 static const uint16_t suiteb_sigalgs[] = {
     TLSEXT_SIGALG_ecdsa_secp256r1_sha256,
     TLSEXT_SIGALG_ecdsa_secp384r1_sha384
 };
-#endif
 
 static const SIGALG_LOOKUP sigalg_lookup_tbl[] = {
-#ifndef OPENSSL_NO_EC
     {"ecdsa_secp256r1_sha256", TLSEXT_SIGALG_ecdsa_secp256r1_sha256,
      NID_sha256, SSL_MD_SHA256_IDX, EVP_PKEY_EC, SSL_PKEY_ECC,
      NID_ecdsa_with_SHA256, NID_X9_62_prime256v1, 1},
@@ -1031,7 +1026,6 @@ static const SIGALG_LOOKUP sigalg_lookup_tbl[] = {
     {NULL, TLSEXT_SIGALG_ecdsa_sha1,
      NID_sha1, SSL_MD_SHA1_IDX, EVP_PKEY_EC, SSL_PKEY_ECC,
      NID_ecdsa_with_SHA1, NID_undef, 1},
-#endif
     {"rsa_pss_rsae_sha256", TLSEXT_SIGALG_rsa_pss_rsae_sha256,
      NID_sha256, SSL_MD_SHA256_IDX, EVP_PKEY_RSA_PSS, SSL_PKEY_RSA,
      NID_undef, NID_undef, 1},
@@ -1065,7 +1059,6 @@ static const SIGALG_LOOKUP sigalg_lookup_tbl[] = {
     {"rsa_pkcs1_sha1", TLSEXT_SIGALG_rsa_pkcs1_sha1,
      NID_sha1, SSL_MD_SHA1_IDX, EVP_PKEY_RSA, SSL_PKEY_RSA,
      NID_sha1WithRSAEncryption, NID_undef, 1},
-#ifndef OPENSSL_NO_DSA
     {NULL, TLSEXT_SIGALG_dsa_sha256,
      NID_sha256, SSL_MD_SHA256_IDX, EVP_PKEY_DSA, SSL_PKEY_DSA_SIGN,
      NID_dsa_with_SHA256, NID_undef, 1},
@@ -1081,7 +1074,6 @@ static const SIGALG_LOOKUP sigalg_lookup_tbl[] = {
     {NULL, TLSEXT_SIGALG_dsa_sha1,
      NID_sha1, SSL_MD_SHA1_IDX, EVP_PKEY_DSA, SSL_PKEY_DSA_SIGN,
      NID_dsaWithSHA1, NID_undef, 1},
-#endif
 #ifndef OPENSSL_NO_GOST
     {NULL, TLSEXT_SIGALG_gostr34102012_256_intrinsic,
      NID_id_GostR3411_2012_256, SSL_MD_GOST12_256_IDX,
@@ -1193,8 +1185,11 @@ static const SIGALG_LOOKUP *tls1_lookup_sigalg(const SSL *s, uint16_t sigalg)
          /* cache should have the same number of elements as sigalg_lookup_tbl */
          i < OSSL_NELEM(sigalg_lookup_tbl);
          lu++, i++) {
-        if (lu->sigalg == sigalg)
+        if (lu->sigalg == sigalg) {
+            if (!lu->enabled)
+                return NULL;
             return lu;
+        }
     }
     return NULL;
 }
@@ -1300,6 +1295,8 @@ static const SIGALG_LOOKUP *tls1_get_legacy_sigalg(const SSL *s, int idx)
     if (SSL_USE_SIGALGS(s) || idx != SSL_PKEY_RSA) {
         const SIGALG_LOOKUP *lu = tls1_lookup_sigalg(s, tls_default_sigalg[idx]);
 
+        if (lu == NULL)
+            return NULL;
         if (!tls1_lookup_md(s->ctx, lu, NULL))
             return NULL;
         if (!tls12_sigalg_allowed(s, SSL_SECOP_SIGALG_SUPPORTED, lu))
@@ -1331,7 +1328,6 @@ size_t tls12_get_psigalgs(SSL *s, int sent, const uint16_t **psigs)
      * If Suite B mode use Suite B sigalgs only, ignore any other
      * preferences.
      */
-#ifndef OPENSSL_NO_EC
     switch (tls1_suiteb(s)) {
     case SSL_CERT_FLAG_SUITEB_128_LOS:
         *psigs = suiteb_sigalgs;
@@ -1345,7 +1341,6 @@ size_t tls12_get_psigalgs(SSL *s, int sent, const uint16_t **psigs)
         *psigs = suiteb_sigalgs + 1;
         return 1;
     }
-#endif
     /*
      *  We use client_sigalgs (if not NULL) if we're a server
      *  and sending a certificate request or if we're a client and
@@ -1363,7 +1358,6 @@ size_t tls12_get_psigalgs(SSL *s, int sent, const uint16_t **psigs)
     }
 }
 
-#ifndef OPENSSL_NO_EC
 /*
  * Called by servers only. Checks that we have a sig alg that supports the
  * specified EC curve.
@@ -1394,7 +1388,6 @@ int tls_check_sigalg_curve(const SSL *s, int curve)
 
     return 0;
 }
-#endif
 
 /*
  * Return the number of security bits for the signature algorithm, or 0 on
@@ -1487,7 +1480,6 @@ int tls12_check_peer_sigalg(SSL *s, uint16_t sig, EVP_PKEY *pkey)
         return 0;
     }
 
-#ifndef OPENSSL_NO_EC
     if (pkeyid == EVP_PKEY_EC) {
 
         /* Check point compression is permitted */
@@ -1526,7 +1518,6 @@ int tls12_check_peer_sigalg(SSL *s, uint16_t sig, EVP_PKEY *pkey)
         SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE, SSL_R_WRONG_SIGNATURE_TYPE);
         return 0;
     }
-#endif
 
     /* Check signature matches a type we sent */
     sent_sigslen = tls12_get_psigalgs(s, 1, &sent_sigs);
@@ -2036,7 +2027,10 @@ static int tls12_sigalg_allowed(const SSL *s, int op, const SIGALG_LOOKUP *lu)
     /* DSA is not allowed in TLS 1.3 */
     if (SSL_IS_TLS13(s) && lu->sig == EVP_PKEY_DSA)
         return 0;
-    /* TODO(OpenSSL1.2) fully axe DSA/etc. in ClientHello per TLS 1.3 spec */
+    /*
+     * At some point we should fully axe DSA/etc. in ClientHello as per TLS 1.3
+     * spec
+     */
     if (!s->server && !SSL_IS_DTLS(s) && s->s3.tmp.min_ver >= TLS1_3_VERSION
         && (lu->sig == EVP_PKEY_DSA || lu->hash_idx == SSL_MD_SHA1_IDX
             || lu->hash_idx == SSL_MD_MD5_IDX
@@ -2137,7 +2131,8 @@ int tls12_copy_sigalgs(SSL *s, WPACKET *pkt,
     for (i = 0; i < psiglen; i++, psig++) {
         const SIGALG_LOOKUP *lu = tls1_lookup_sigalg(s, *psig);
 
-        if (!tls12_sigalg_allowed(s, SSL_SECOP_SIGALG_SUPPORTED, lu))
+        if (lu == NULL
+                || !tls12_sigalg_allowed(s, SSL_SECOP_SIGALG_SUPPORTED, lu))
             continue;
         if (!WPACKET_put_bytes_u16(pkt, *psig))
             return 0;
@@ -2167,7 +2162,8 @@ static size_t tls12_shared_sigalgs(SSL *s, const SIGALG_LOOKUP **shsig,
         const SIGALG_LOOKUP *lu = tls1_lookup_sigalg(s, *ptmp);
 
         /* Skip disabled hashes or signature algorithms */
-        if (!tls12_sigalg_allowed(s, SSL_SECOP_SIGALG_SHARED, lu))
+        if (lu == NULL
+                || !tls12_sigalg_allowed(s, SSL_SECOP_SIGALG_SHARED, lu))
             continue;
         for (j = 0, atmp = allow; j < allowlen; j++, atmp++) {
             if (*ptmp == *atmp) {
@@ -2905,7 +2901,7 @@ EVP_PKEY *ssl_get_auto_dh(SSL *s)
 
     pctx = EVP_PKEY_CTX_new_from_name(s->ctx->libctx, "DH", s->ctx->propq);
     if (pctx == NULL
-            || EVP_PKEY_key_fromdata_init(pctx) != 1)
+            || EVP_PKEY_fromdata_init(pctx) != 1)
         goto err;
 
     tmpl = OSSL_PARAM_BLD_new();
@@ -2915,7 +2911,8 @@ EVP_PKEY *ssl_get_auto_dh(SSL *s)
         goto err;
 
     params = OSSL_PARAM_BLD_to_param(tmpl);
-    if (params == NULL || EVP_PKEY_fromdata(pctx, &dhp, params) != 1)
+    if (params == NULL
+            || EVP_PKEY_fromdata(pctx, &dhp, EVP_PKEY_KEY_PARAMETERS, params) != 1)
         goto err;
 
 err:

@@ -693,7 +693,7 @@ X509_add1_reject_object                 710	3_0_0	EXIST::FUNCTION:
 ERR_set_mark                            711	3_0_0	EXIST::FUNCTION:
 d2i_ASN1_VISIBLESTRING                  712	3_0_0	EXIST::FUNCTION:
 X509_NAME_ENTRY_dup                     714	3_0_0	EXIST::FUNCTION:
-X509_certificate_type                   715	3_0_0	EXIST::FUNCTION:
+X509_certificate_type                   715	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 PKCS7_add_signature                     716	3_0_0	EXIST::FUNCTION:
 OBJ_ln2nid                              717	3_0_0	EXIST::FUNCTION:
 CRYPTO_128_unwrap                       718	3_0_0	EXIST::FUNCTION:
@@ -2524,7 +2524,7 @@ EVP_PKEY_meth_new                       2577	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_
 RSA_padding_check_PKCS1_OAEP            2578	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 OCSP_SERVICELOC_it                      2579	3_0_0	EXIST::FUNCTION:OCSP
 PKCS12_SAFEBAG_get_nid                  2580	3_0_0	EXIST::FUNCTION:
-EVP_MD_CTX_set_update_fn                2581	3_0_0	EXIST::FUNCTION:
+EVP_MD_CTX_set_update_fn                2581	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 BIO_f_asn1                              2582	3_0_0	EXIST::FUNCTION:
 BIO_dump                                2583	3_0_0	EXIST::FUNCTION:
 ENGINE_load_ssl_client_cert             2584	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,ENGINE
@@ -3106,7 +3106,7 @@ IDEA_cfb64_encrypt                      3170	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_
 BN_mod_sub                              3171	3_0_0	EXIST::FUNCTION:
 ASN1_NULL_new                           3172	3_0_0	EXIST::FUNCTION:
 HMAC_Init                               3173	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_1_1_0
-EVP_MD_CTX_update_fn                    3174	3_0_0	EXIST::FUNCTION:
+EVP_MD_CTX_update_fn                    3174	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 EVP_aes_128_ecb                         3175	3_0_0	EXIST::FUNCTION:
 i2d_PKCS7_bio_stream                    3176	3_0_0	EXIST::FUNCTION:
 i2a_ACCESS_DESCRIPTION                  3178	3_0_0	EXIST::FUNCTION:
@@ -4798,11 +4798,7 @@ X509_add_certs                          ?	3_0_0	EXIST::FUNCTION:
 X509_STORE_load_file                    ?	3_0_0	EXIST::FUNCTION:
 X509_STORE_load_path                    ?	3_0_0	EXIST::FUNCTION:
 X509_STORE_load_store                   ?	3_0_0	EXIST::FUNCTION:
-EVP_PKEY_param_fromdata_init            ?	3_0_0	EXIST::FUNCTION:
-EVP_PKEY_key_fromdata_init              ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_fromdata                       ?	3_0_0	EXIST::FUNCTION:
-EVP_PKEY_param_fromdata_settable        ?	3_0_0	EXIST::FUNCTION:
-EVP_PKEY_key_fromdata_settable          ?	3_0_0	EXIST::FUNCTION:
 EVP_ASYM_CIPHER_free                    ?	3_0_0	EXIST::FUNCTION:
 EVP_ASYM_CIPHER_up_ref                  ?	3_0_0	EXIST::FUNCTION:
 EVP_ASYM_CIPHER_provider                ?	3_0_0	EXIST::FUNCTION:
@@ -4996,6 +4992,7 @@ EVP_PKEY_get_octet_string_param         ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_is_a                           ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_can_sign                       ?	3_0_0	EXIST::FUNCTION:
 X509_STORE_CTX_new_ex                   ?	3_0_0	EXIST::FUNCTION:
+X509_STORE_CTX_verify                   ?	3_0_0	EXIST::FUNCTION:
 CT_POLICY_EVAL_CTX_new_ex               ?	3_0_0	EXIST::FUNCTION:CT
 CTLOG_new_ex                            ?	3_0_0	EXIST::FUNCTION:CT
 CTLOG_new_from_base64_ex                ?	3_0_0	EXIST::FUNCTION:CT
@@ -5287,6 +5284,8 @@ PEM_write_bio_PUBKEY_ex                 ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_get_group_name                 ?	3_0_0	EXIST::FUNCTION:
 CRYPTO_atomic_or                        ?	3_0_0	EXIST::FUNCTION:
 CRYPTO_atomic_load                      ?	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_CTX_set_rsa_pss_keygen_md      ?	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_CTX_set_rsa_pss_keygen_md_name ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_settable_params                ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_set_params                     ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_set_int_param                  ?	3_0_0	EXIST::FUNCTION:
@@ -5296,3 +5295,6 @@ EVP_PKEY_set_utf8_string_param          ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_set_octet_string_param         ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_get_ec_point_conv_form         ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_get_field_type                 ?	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_get_params                     ?	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_fromdata_init                  ?	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_fromdata_settable              ?	3_0_0	EXIST::FUNCTION:

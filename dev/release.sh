@@ -121,7 +121,7 @@ while true; do
         ;;
     --local-user )
         shift
-        tagley=" -u $1"
+        tagkey=" -u $1"
         gpgkey=" -u $1"
         shift
         ;;

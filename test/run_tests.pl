@@ -47,6 +47,7 @@ my %tapargs =
     );
 
 $tapargs{jobs} = $jobs if $jobs > 1;
+print "Using HARNESS_JOBS=$jobs\n" if $jobs > 1;
 
 # Additional OpenSSL special TAP arguments.  Because we can't pass them via
 # TAP::Harness->new(), they will be accessed directly, see the
@@ -57,7 +58,7 @@ $openssl_args{'failure_verbosity'} = $ENV{HARNESS_VERBOSE} ? 0 :
     $ENV{HARNESS_VERBOSE_FAILURE_PROGRESS} ? 2 :
     1; # $ENV{HARNESS_VERBOSE_FAILURE}
 print "Warning: HARNESS_JOBS > 1 overrides HARNESS_VERBOSE\n"
-    if $jobs > 1;
+    if $jobs > 1 && $ENV{HARNESS_VERBOSE};
 print "Warning: HARNESS_VERBOSE overrides HARNESS_VERBOSE_FAILURE*\n"
     if ($ENV{HARNESS_VERBOSE} && ($ENV{HARNESS_VERBOSE_FAILURE}
                                   || $ENV{HARNESS_VERBOSE_FAILURE_PROGRESS}));
@@ -76,7 +77,7 @@ sub reorder {
     my $key = pop;
 
     # for parallel test runs, do slow tests first
-    if (defined $jobs && $jobs > 1 && $key =~ m/test_ssl_new|test_fuzz/) {
+    if ($jobs > 1 && $key =~ m/test_ssl_new|test_fuzz/) {
         $key =~ s/(\d+)-/00-/;
     }
     return $key;

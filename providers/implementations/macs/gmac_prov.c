@@ -45,8 +45,6 @@ struct gmac_data_st {
     PROV_CIPHER cipher;
 };
 
-static size_t gmac_size(void);
-
 static void gmac_free(void *vmacctx)
 {
     struct gmac_data_st *macctx = vmacctx;
@@ -95,6 +93,11 @@ static void *gmac_dup(void *vsrc)
     return dst;
 }
 
+static size_t gmac_size(void)
+{
+    return EVP_GCM_TLS_TAG_LEN;
+}
+
 static int gmac_init(void *vmacctx)
 {
     return ossl_prov_is_running();
@@ -139,11 +142,6 @@ static int gmac_final(void *vmacctx, unsigned char *out, size_t *outl,
 
     *outl = hlen;
     return 1;
-}
-
-static size_t gmac_size(void)
-{
-    return EVP_GCM_TLS_TAG_LEN;
 }
 
 static const OSSL_PARAM known_gettable_params[] = {

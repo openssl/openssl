@@ -22,20 +22,6 @@ extern "C" {
 int err_load_PROP_strings_int(void);
 
 /*
- * PROP function codes.
- */
-# ifndef OPENSSL_NO_DEPRECATED_3_0
-#  define PROP_F_OSSL_PARSE_PROPERTY                       0
-#  define PROP_F_OSSL_PARSE_QUERY                          0
-#  define PROP_F_PARSE_HEX                                 0
-#  define PROP_F_PARSE_NAME                                0
-#  define PROP_F_PARSE_NUMBER                              0
-#  define PROP_F_PARSE_OCT                                 0
-#  define PROP_F_PARSE_STRING                              0
-#  define PROP_F_PARSE_UNQUOTED                            0
-# endif
-
-/*
  * PROP reason codes.
  */
 # define PROP_R_NAME_TOO_LONG                             100

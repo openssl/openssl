@@ -23,8 +23,8 @@ X509_STORE_CTX_verify_fn
  void X509_STORE_CTX_cleanup(X509_STORE_CTX *ctx);
  void X509_STORE_CTX_free(X509_STORE_CTX *ctx);
 
- int X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store,
-                         X509 *x509, STACK_OF(X509) *chain);
+ int X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *trust_store,
+                         X509 *target, STACK_OF(X509) *untrusted);
 
  void X509_STORE_CTX_set0_trusted_stack(X509_STORE_CTX *ctx, STACK_OF(X509) *sk);
 
@@ -48,7 +48,7 @@ X509_STORE_CTX_verify_fn
 =head1 DESCRIPTION
 
 These functions initialise an B<X509_STORE_CTX> structure for subsequent use
-by X509_verify_cert().
+by L<X509_verify_cert(3)> or L<X509_STORE_CTX_verify(3)>.
 
 X509_STORE_CTX_new_ex() returns a newly initialised B<X509_STORE_CTX>
 structure associated with the specified library context I<libctx> and property
@@ -67,22 +67,31 @@ is no longer valid.
 If I<ctx> is NULL nothing is done.
 
 X509_STORE_CTX_init() sets up I<ctx> for a subsequent verification operation.
-It must be called before each call to X509_verify_cert(), i.e. a I<ctx> is only
-good for one call to X509_verify_cert(); if you want to verify a second
-certificate with the same I<ctx> then you must call X509_STORE_CTX_cleanup()
+It must be called before each call to L<X509_verify_cert(3)>, i.e., a I<ctx> is
+only good for one verification; if you want to verify a second certificate
+or chain with the same I<ctx> then you must call X509_STORE_CTX_cleanup()
 and then X509_STORE_CTX_init() again before the second call to
-X509_verify_cert(). The trusted certificate store is set to I<store>, the end
-entity certificate to be verified is set to I<x509> and a set of additional
-certificates (which will be untrusted but may be used to build the chain) in
-I<chain>. Any or all of the I<store>, I<x509> and I<chain> parameters can be
-B<NULL>.
+L<X509_verify_cert(3)> or L<X509_STORE_CTX_verify(3)>.
+The trusted certificate store is set to I<trust_store> of type B<X509_STORE>.
+This may be NULL because there are no trusted certificates or because
+they are provided simply as a list using X509_STORE_CTX_set0_trusted_stack().
+The end entity certificate to be verified is set to I<target>,
+and a list of additional certificates may be provided in I<untrusted>,
+which will not be trusted but may be used to build the chain.
+Each of the I<trust_store>, I<target> and I<untrusted> parameters can be
+B<NULL>. Yet note that L<X509_verify_cert(3)> and L<X509_STORE_CTX_verify(3)>
+will need a verification target.
+This can also be set using X509_STORE_CTX_set_cert().
+For L<X509_STORE_CTX_verify(3)>, which takes by default the first element of the
+list of untrusted certificates as its verification target,
+this can be also set indirectly using X509_STORE_CTX_set0_untrusted().
 
 X509_STORE_CTX_set0_trusted_stack() sets the set of trusted certificates of
 I<ctx> to I<sk>. This is an alternative way of specifying trusted certificates
 instead of using an B<X509_STORE>.
 
-X509_STORE_CTX_set_cert() sets the certificate to be verified in I<ctx> to
-I<x>.
+X509_STORE_CTX_set_cert() sets the target certificate to be verified in I<ctx>
+to I<x>.
 
 X509_STORE_CTX_set0_verified_chain() sets the validated chain used
 by I<ctx> to be I<chain>.
@@ -103,8 +112,10 @@ to the verification parameters associated with I<ctx>.
 X509_STORE_CTX_get0_untrusted() retrieves an internal pointer to the
 stack of untrusted certificates associated with I<ctx>.
 
-X509_STORE_CTX_set0_untrusted() sets the internal point to the stack
+X509_STORE_CTX_set0_untrusted() sets the internal pointer to the stack
 of untrusted certificates associated with I<ctx> to I<sk>.
+X509_STORE_CTX_verify() will take the first element, if any,
+as its default target if the target certificate is not set explicitly.
 
 X509_STORE_CTX_set0_param() sets the internal verification parameter pointer
 to I<param>. After this call B<param> should not be used.
@@ -114,7 +125,8 @@ method to I<name>. This uses the function X509_VERIFY_PARAM_lookup() to
 find an appropriate set of parameters from I<name>.
 
 X509_STORE_CTX_get_num_untrusted() returns the number of untrusted certificates
-that were used in building the chain following a call to X509_verify_cert().
+that were used in building the chain following a call to L<X509_verify_cert(3)>.
+With L<X509_STORE_CTX_verify(3)>, this does not count the first chain element.
 
 X509_STORE_CTX_set_verify() provides the capability for overriding the default
 verify function. This function is responsible for verifying chain signatures and
@@ -162,7 +174,7 @@ used.
 
 =head1 SEE ALSO
 
-L<X509_verify_cert(3)>
+L<X509_verify_cert(3)>, L<X509_STORE_CTX_verify(3)>,
 L<X509_VERIFY_PARAM_set_flags(3)>
 
 =head1 HISTORY

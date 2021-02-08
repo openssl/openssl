@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -337,12 +337,25 @@ static int ec_match(const void *keydata1, const void *keydata2, int selection)
     return ok;
 }
 
+static int common_check_sm2(const EC_KEY *ec, int sm2_wanted)
+{
+    const EC_GROUP *ecg = NULL;
+
+    /*
+     * sm2_wanted: import the keys or domparams only on SM2 Curve
+     * !sm2_wanted: import the keys or domparams only not on SM2 Curve
+     */
+    if ((ecg = EC_KEY_get0_group(ec)) == NULL
+        || (sm2_wanted ^ (EC_GROUP_get_curve_name(ecg) == NID_sm2)))
+        return 0;
+    return 1;
+}
+
 static
 int common_import(void *keydata, int selection, const OSSL_PARAM params[],
-                  int sm2_curve)
+                  int sm2_wanted)
 {
     EC_KEY *ec = keydata;
-    const EC_GROUP *ecg = NULL;
     int ok = 1;
 
     if (!ossl_prov_is_running() || ec == NULL)
@@ -353,7 +366,7 @@ int common_import(void *keydata, int selection, const OSSL_PARAM params[],
      * following combinations:
      *   - domain parameters (+optional other params)
      *   - public key with associated domain parameters (+optional other params)
-     *   - private key with associated public key and domain parameters
+     *   - private key with associated domain parameters and optional public key
      *         (+optional other params)
      *
      * This means:
@@ -363,19 +376,10 @@ int common_import(void *keydata, int selection, const OSSL_PARAM params[],
      */
     if ((selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) == 0)
         return 0;
-    if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0
-            && (selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) == 0)
-        return 0;
 
-    if ((selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) != 0)
-        ok = ok && ec_group_fromdata(ec, params);
+    ok = ok && ec_group_fromdata(ec, params);
 
-    /*
-     * sm2_curve: import the keys or domparams only on SM2 Curve
-     * !sm2_curve: import the keys or domparams only not on SM2 Curve
-     */
-    if ((ecg = EC_KEY_get0_group(ec)) == NULL
-            || (sm2_curve ^ (EC_GROUP_get_curve_name(ecg) == NID_sm2)))
+    if (!common_check_sm2(ec, sm2_wanted))
         return 0;
 
     if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0) {
@@ -1271,19 +1275,38 @@ static void ec_gen_cleanup(void *genctx)
     OPENSSL_free(gctx);
 }
 
-void *ec_load(const void *reference, size_t reference_sz)
+static void *common_load(const void *reference, size_t reference_sz,
+                         int sm2_wanted)
 {
     EC_KEY *ec = NULL;
 
     if (ossl_prov_is_running() && reference_sz == sizeof(ec)) {
         /* The contents of the reference is the address to our object */
         ec = *(EC_KEY **)reference;
+
+        if (!common_check_sm2(ec, sm2_wanted))
+            return NULL;
+
         /* We grabbed, so we detach it */
         *(EC_KEY **)reference = NULL;
         return ec;
     }
     return NULL;
 }
+
+static void *ec_load(const void *reference, size_t reference_sz)
+{
+    return common_load(reference, reference_sz, 0);
+}
+
+#ifndef FIPS_MODULE
+# ifndef OPENSSL_NO_SM2
+static void *sm2_load(const void *reference, size_t reference_sz)
+{
+    return common_load(reference, reference_sz, 1);
+}
+# endif
+#endif
 
 const OSSL_DISPATCH ossl_ec_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_NEW, (void (*)(void))ec_newdata },
@@ -1315,7 +1338,7 @@ const OSSL_DISPATCH ossl_ec_keymgmt_functions[] = {
 
 #ifndef FIPS_MODULE
 # ifndef OPENSSL_NO_SM2
-const OSSL_DISPATCH sm2_keymgmt_functions[] = {
+const OSSL_DISPATCH ossl_sm2_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_NEW, (void (*)(void))ec_newdata },
     { OSSL_FUNC_KEYMGMT_GEN_INIT, (void (*)(void))ec_gen_init },
     { OSSL_FUNC_KEYMGMT_GEN_SET_TEMPLATE,
@@ -1325,6 +1348,7 @@ const OSSL_DISPATCH sm2_keymgmt_functions[] = {
       (void (*)(void))ec_gen_settable_params },
     { OSSL_FUNC_KEYMGMT_GEN, (void (*)(void))sm2_gen },
     { OSSL_FUNC_KEYMGMT_GEN_CLEANUP, (void (*)(void))ec_gen_cleanup },
+    { OSSL_FUNC_KEYMGMT_LOAD, (void (*)(void))sm2_load },
     { OSSL_FUNC_KEYMGMT_FREE, (void (*)(void))ec_freedata },
     { OSSL_FUNC_KEYMGMT_GET_PARAMS, (void (*) (void))sm2_get_params },
     { OSSL_FUNC_KEYMGMT_GETTABLE_PARAMS, (void (*) (void))sm2_gettable_params },

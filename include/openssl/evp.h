@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -21,6 +21,7 @@
 # include <openssl/opensslconf.h>
 # include <openssl/types.h>
 # include <openssl/core.h>
+# include <openssl/core_dispatch.h>
 # include <openssl/symhacks.h>
 # include <openssl/bio.h>
 # include <openssl/evperr.h>
@@ -37,16 +38,18 @@
 
 # include <openssl/objects.h>
 
-# define EVP_PK_RSA      0x0001
-# define EVP_PK_DSA      0x0002
-# define EVP_PK_DH       0x0004
-# define EVP_PK_EC       0x0008
-# define EVP_PKT_SIGN    0x0010
-# define EVP_PKT_ENC     0x0020
-# define EVP_PKT_EXCH    0x0040
-# define EVP_PKS_RSA     0x0100
-# define EVP_PKS_DSA     0x0200
-# define EVP_PKS_EC      0x0400
+# ifndef OPENSSL_NO_DEPRECATED_3_0
+#  define EVP_PK_RSA      0x0001
+#  define EVP_PK_DSA      0x0002
+#  define EVP_PK_DH       0x0004
+#  define EVP_PK_EC       0x0008
+#  define EVP_PKT_SIGN    0x0010
+#  define EVP_PKT_ENC     0x0020
+#  define EVP_PKT_EXCH    0x0040
+#  define EVP_PKS_RSA     0x0100
+#  define EVP_PKS_DSA     0x0200
+#  define EVP_PKS_EC      0x0400
+# endif
 
 # define EVP_PKEY_NONE   NID_undef
 # define EVP_PKEY_RSA    NID_rsaEncryption
@@ -531,11 +534,15 @@ int EVP_MD_block_size(const EVP_MD *md);
 unsigned long EVP_MD_flags(const EVP_MD *md);
 
 const EVP_MD *EVP_MD_CTX_md(const EVP_MD_CTX *ctx);
+# ifndef OPENSSL_NO_DEPRECATED_3_0
+OSSL_DEPRECATEDIN_3_0
 int (*EVP_MD_CTX_update_fn(EVP_MD_CTX *ctx))(EVP_MD_CTX *ctx,
                                              const void *data, size_t count);
+OSSL_DEPRECATEDIN_3_0
 void EVP_MD_CTX_set_update_fn(EVP_MD_CTX *ctx,
                               int (*update) (EVP_MD_CTX *ctx,
                                              const void *data, size_t count));
+# endif
 # define EVP_MD_CTX_name(e)              EVP_MD_name(EVP_MD_CTX_md(e))
 # define EVP_MD_CTX_size(e)              EVP_MD_size(EVP_MD_CTX_md(e))
 # define EVP_MD_CTX_block_size(e)        EVP_MD_block_size(EVP_MD_CTX_md(e))
@@ -1546,18 +1553,17 @@ const char *EVP_PKEY_get0_first_alg_name(const EVP_PKEY *key);
 # define EVP_PKEY_OP_UNDEFINED           0
 # define EVP_PKEY_OP_PARAMGEN            (1<<1)
 # define EVP_PKEY_OP_KEYGEN              (1<<2)
-# define EVP_PKEY_OP_PARAMFROMDATA       (1<<3)
-# define EVP_PKEY_OP_KEYFROMDATA         (1<<4)
-# define EVP_PKEY_OP_SIGN                (1<<5)
-# define EVP_PKEY_OP_VERIFY              (1<<6)
-# define EVP_PKEY_OP_VERIFYRECOVER       (1<<7)
-# define EVP_PKEY_OP_SIGNCTX             (1<<8)
-# define EVP_PKEY_OP_VERIFYCTX           (1<<9)
-# define EVP_PKEY_OP_ENCRYPT             (1<<10)
-# define EVP_PKEY_OP_DECRYPT             (1<<11)
-# define EVP_PKEY_OP_DERIVE              (1<<12)
-# define EVP_PKEY_OP_ENCAPSULATE         (1<<13)
-# define EVP_PKEY_OP_DECAPSULATE         (1<<14)
+# define EVP_PKEY_OP_FROMDATA            (1<<3)
+# define EVP_PKEY_OP_SIGN                (1<<4)
+# define EVP_PKEY_OP_VERIFY              (1<<5)
+# define EVP_PKEY_OP_VERIFYRECOVER       (1<<6)
+# define EVP_PKEY_OP_SIGNCTX             (1<<7)
+# define EVP_PKEY_OP_VERIFYCTX           (1<<8)
+# define EVP_PKEY_OP_ENCRYPT             (1<<9)
+# define EVP_PKEY_OP_DECRYPT             (1<<10)
+# define EVP_PKEY_OP_DERIVE              (1<<11)
+# define EVP_PKEY_OP_ENCAPSULATE         (1<<12)
+# define EVP_PKEY_OP_DECAPSULATE         (1<<13)
 
 # define EVP_PKEY_OP_TYPE_SIG    \
         (EVP_PKEY_OP_SIGN | EVP_PKEY_OP_VERIFY | EVP_PKEY_OP_VERIFYRECOVER \
@@ -1572,8 +1578,6 @@ const char *EVP_PKEY_get0_first_alg_name(const EVP_PKEY *key);
 # define EVP_PKEY_OP_TYPE_GEN \
         (EVP_PKEY_OP_PARAMGEN | EVP_PKEY_OP_KEYGEN)
 
-# define EVP_PKEY_OP_TYPE_FROMDATA \
-        (EVP_PKEY_OP_PARAMFROMDATA | EVP_PKEY_OP_KEYFROMDATA)
 
 int EVP_PKEY_CTX_set_mac_key(EVP_PKEY_CTX *ctx, const unsigned char *key,
                              int keylen);
@@ -1784,12 +1788,12 @@ int EVP_PKEY_decapsulate(EVP_PKEY_CTX *ctx,
 
 typedef int EVP_PKEY_gen_cb(EVP_PKEY_CTX *ctx);
 
-int EVP_PKEY_param_fromdata_init(EVP_PKEY_CTX *ctx);
-int EVP_PKEY_key_fromdata_init(EVP_PKEY_CTX *ctx);
-int EVP_PKEY_fromdata(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey, OSSL_PARAM param[]);
-const OSSL_PARAM *EVP_PKEY_param_fromdata_settable(EVP_PKEY_CTX *ctx);
-const OSSL_PARAM *EVP_PKEY_key_fromdata_settable(EVP_PKEY_CTX *ctx);
+int EVP_PKEY_fromdata_init(EVP_PKEY_CTX *ctx);
+int EVP_PKEY_fromdata(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey, int selection,
+                      OSSL_PARAM param[]);
+const OSSL_PARAM *EVP_PKEY_fromdata_settable(EVP_PKEY_CTX *ctx, int selection);
 const OSSL_PARAM *EVP_PKEY_gettable_params(const EVP_PKEY *pkey);
+int EVP_PKEY_get_params(const EVP_PKEY *pkey, OSSL_PARAM params[]);
 int EVP_PKEY_get_int_param(const EVP_PKEY *pkey, const char *key_name,
                            int *out);
 int EVP_PKEY_get_size_t_param(const EVP_PKEY *pkey, const char *key_name,
@@ -1802,15 +1806,16 @@ int EVP_PKEY_get_octet_string_param(const EVP_PKEY *pkey, const char *key_name,
                                     unsigned char *buf, size_t max_buf_sz,
                                     size_t *out_sz);
 
-const OSSL_PARAM *EVP_PKEY_settable_params(EVP_PKEY *pkey);
+const OSSL_PARAM *EVP_PKEY_settable_params(const EVP_PKEY *pkey);
 int EVP_PKEY_set_params(EVP_PKEY *pkey, OSSL_PARAM params[]);
 int EVP_PKEY_set_int_param(EVP_PKEY *pkey, const char *key_name, int in);
 int EVP_PKEY_set_size_t_param(EVP_PKEY *pkey, const char *key_name, size_t in);
-int EVP_PKEY_set_bn_param(EVP_PKEY *pkey, const char *key_name, BIGNUM *bn);
+int EVP_PKEY_set_bn_param(EVP_PKEY *pkey, const char *key_name,
+                          const BIGNUM *bn);
 int EVP_PKEY_set_utf8_string_param(EVP_PKEY *pkey, const char *key_name,
-                                   char *str);
+                                   const char *str);
 int EVP_PKEY_set_octet_string_param(EVP_PKEY *pkey, const char *key_name,
-                                    unsigned char *buf, size_t bsize);
+                                    const unsigned char *buf, size_t bsize);
 
 int EVP_PKEY_get_ec_point_conv_form(const EVP_PKEY *pkey);
 int EVP_PKEY_get_field_type(const EVP_PKEY *pkey);

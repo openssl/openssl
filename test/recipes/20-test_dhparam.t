@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -36,11 +36,13 @@ sub checkdhparams {
         #Text file. Check it looks like PEM
         open(PEMFILE, '<', $file) or die $!;
         if (my $firstline = <PEMFILE>) {
-            chomp($firstline);
+            $firstline =~ s/\R$//;
             if ($firstline eq "-----BEGIN DH PARAMETERS-----") {
                 $pemtype = "PKCS3";
             } elsif ($firstline eq "-----BEGIN X9.42 DH PARAMETERS-----") {
                 $pemtype = "X9.42";
+            } else {
+                $pemtype = "";
             }
         } else {
             $pemtype = "";

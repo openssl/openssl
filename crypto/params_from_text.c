@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2019, Oracle and/or its affiliates.  All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -9,6 +9,7 @@
  */
 
 #include <string.h>
+#include <openssl/ebcdic.h>
 #include <openssl/err.h>
 #include <openssl/params.h>
 
@@ -139,7 +140,11 @@ static int construct_from_text(OSSL_PARAM *to, const OSSL_PARAM *paramdef,
             }
             break;
         case OSSL_PARAM_UTF8_STRING:
+#ifdef CHARSET_EBCDIC
+            ebcdic2ascii(buf, value, buf_n);
+#else
             strncpy(buf, value, buf_n);
+#endif
             break;
         case OSSL_PARAM_OCTET_STRING:
             if (ishex) {

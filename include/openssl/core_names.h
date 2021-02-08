@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -385,13 +385,13 @@ extern "C" {
 #define OSSL_PKEY_RSA_PSS_SALT_LEN_AUTO   "auto"
 
 /* Key generation parameters */
-#define OSSL_PKEY_PARAM_RSA_BITS            OSSL_PKEY_PARAM_BITS
-#define OSSL_PKEY_PARAM_RSA_PRIMES          "primes"
-#define OSSL_PKEY_PARAM_RSA_DIGEST          OSSL_PKEY_PARAM_DIGEST
-#define OSSL_PKEY_PARAM_RSA_DIGEST_PROPS    OSSL_PKEY_PARAM_PROPERTIES
-#define OSSL_PKEY_PARAM_RSA_MASKGENFUNC     OSSL_PKEY_PARAM_MASKGENFUNC
-#define OSSL_PKEY_PARAM_RSA_MGF1_DIGEST     OSSL_PKEY_PARAM_MGF1_DIGEST
-#define OSSL_PKEY_PARAM_RSA_PSS_SALTLEN     "saltlen"
+#define OSSL_PKEY_PARAM_RSA_BITS             OSSL_PKEY_PARAM_BITS
+#define OSSL_PKEY_PARAM_RSA_PRIMES           "primes"
+#define OSSL_PKEY_PARAM_RSA_DIGEST           OSSL_PKEY_PARAM_DIGEST
+#define OSSL_PKEY_PARAM_RSA_DIGEST_PROPS     OSSL_PKEY_PARAM_PROPERTIES
+#define OSSL_PKEY_PARAM_RSA_MASKGENFUNC      OSSL_PKEY_PARAM_MASKGENFUNC
+#define OSSL_PKEY_PARAM_RSA_MGF1_DIGEST      OSSL_PKEY_PARAM_MGF1_DIGEST
+#define OSSL_PKEY_PARAM_RSA_PSS_SALTLEN      "saltlen"
 
 /* Key generation parameters */
 #define OSSL_PKEY_PARAM_FFC_TYPE         "type"

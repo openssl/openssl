@@ -331,7 +331,6 @@ OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, cipher_gettable_ctx_params,
 OSSL_CORE_MAKE_FUNC(void *, mac_newctx, (void *provctx))
 OSSL_CORE_MAKE_FUNC(void *, mac_dupctx, (void *src))
 OSSL_CORE_MAKE_FUNC(void, mac_freectx, (void *mctx))
-OSSL_CORE_MAKE_FUNC(size_t, mac_size, (void *mctx))
 OSSL_CORE_MAKE_FUNC(int, mac_init, (void *mctx))
 OSSL_CORE_MAKE_FUNC(int, mac_update,
                     (void *mctx, const unsigned char *in, size_t inl))

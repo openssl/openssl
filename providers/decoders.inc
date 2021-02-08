@@ -65,6 +65,10 @@ DECODER_w_structure("X25519", der, PKCS8, x25519, yes),
 DECODER_w_structure("X25519", der, SubjectPublicKeyInfo, x25519, yes),
 DECODER_w_structure("X448", der, PKCS8, x448, yes),
 DECODER_w_structure("X448", der, SubjectPublicKeyInfo, x448, yes),
+# ifndef OPENSSL_NO_SM2
+DECODER_w_structure("SM2", der, PKCS8, sm2, yes),
+DECODER_w_structure("SM2", der, SubjectPublicKeyInfo, sm2, yes),
+# endif
 #endif
 DECODER_w_structure("RSA", der, PKCS8, rsa, yes),
 DECODER_w_structure("RSA", der, SubjectPublicKeyInfo, rsa, yes),

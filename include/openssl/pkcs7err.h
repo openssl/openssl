@@ -19,46 +19,6 @@
 
 
 /*
- * PKCS7 function codes.
- */
-# ifndef OPENSSL_NO_DEPRECATED_3_0
-#  define PKCS7_F_DO_PKCS7_SIGNED_ATTRIB                   0
-#  define PKCS7_F_PKCS7_ADD0_ATTRIB_SIGNING_TIME           0
-#  define PKCS7_F_PKCS7_ADD_ATTRIB_SMIMECAP                0
-#  define PKCS7_F_PKCS7_ADD_CERTIFICATE                    0
-#  define PKCS7_F_PKCS7_ADD_CRL                            0
-#  define PKCS7_F_PKCS7_ADD_RECIPIENT_INFO                 0
-#  define PKCS7_F_PKCS7_ADD_SIGNATURE                      0
-#  define PKCS7_F_PKCS7_ADD_SIGNER                         0
-#  define PKCS7_F_PKCS7_BIO_ADD_DIGEST                     0
-#  define PKCS7_F_PKCS7_COPY_EXISTING_DIGEST               0
-#  define PKCS7_F_PKCS7_CTRL                               0
-#  define PKCS7_F_PKCS7_DATADECODE                         0
-#  define PKCS7_F_PKCS7_DATAFINAL                          0
-#  define PKCS7_F_PKCS7_DATAINIT                           0
-#  define PKCS7_F_PKCS7_DATAVERIFY                         0
-#  define PKCS7_F_PKCS7_DECRYPT                            0
-#  define PKCS7_F_PKCS7_DECRYPT_RINFO                      0
-#  define PKCS7_F_PKCS7_ENCODE_RINFO                       0
-#  define PKCS7_F_PKCS7_ENCRYPT                            0
-#  define PKCS7_F_PKCS7_FINAL                              0
-#  define PKCS7_F_PKCS7_FIND_DIGEST                        0
-#  define PKCS7_F_PKCS7_GET0_SIGNERS                       0
-#  define PKCS7_F_PKCS7_RECIP_INFO_SET                     0
-#  define PKCS7_F_PKCS7_SET_CIPHER                         0
-#  define PKCS7_F_PKCS7_SET_CONTENT                        0
-#  define PKCS7_F_PKCS7_SET_DIGEST                         0
-#  define PKCS7_F_PKCS7_SET_TYPE                           0
-#  define PKCS7_F_PKCS7_SIGN                               0
-#  define PKCS7_F_PKCS7_SIGNATUREVERIFY                    0
-#  define PKCS7_F_PKCS7_SIGNER_INFO_SET                    0
-#  define PKCS7_F_PKCS7_SIGNER_INFO_SIGN                   0
-#  define PKCS7_F_PKCS7_SIGN_ADD_SIGNER                    0
-#  define PKCS7_F_PKCS7_SIMPLE_SMIMECAP                    0
-#  define PKCS7_F_PKCS7_VERIFY                             0
-# endif
-
-/*
  * PKCS7 reason codes.
  */
 # define PKCS7_R_CERTIFICATE_VERIFY_ERROR                 117

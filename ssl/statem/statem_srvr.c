@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  * Copyright 2005 Nokia. All rights reserved.
  *
@@ -1306,7 +1306,6 @@ int dtls_construct_hello_verify_request(SSL *s, WPACKET *pkt)
     return 1;
 }
 
-#ifndef OPENSSL_NO_EC
 /*-
  * ssl_check_for_safari attempts to fingerprint Safari using OS X
  * SecureTransport using the TLS extension block in |hello|.
@@ -1368,7 +1367,6 @@ static void ssl_check_for_safari(SSL *s, const CLIENTHELLO_MSG *hello)
     s->s3.is_probably_safari = PACKET_equal(&tmppkt, kSafariExtensionsBlock,
                                              ext_len);
 }
-#endif                          /* !OPENSSL_NO_EC */
 
 MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
 {
@@ -1853,10 +1851,8 @@ static int tls_early_post_process_client_hello(SSL *s)
         goto err;
     }
 
-#ifndef OPENSSL_NO_EC
     if (s->options & SSL_OP_SAFARI_ECDHE_ECDSA_BUG)
         ssl_check_for_safari(s, clienthello);
-#endif                          /* !OPENSSL_NO_EC */
 
     /* TLS extensions */
     if (!tls_parse_all_extensions(s, SSL_EXT_CLIENT_HELLO,
@@ -2420,11 +2416,9 @@ int tls_construct_server_done(SSL *s, WPACKET *pkt)
 int tls_construct_server_key_exchange(SSL *s, WPACKET *pkt)
 {
     EVP_PKEY *pkdh = NULL;
-#ifndef OPENSSL_NO_EC
     unsigned char *encodedPoint = NULL;
     size_t encodedlen = 0;
     int curve_id = 0;
-#endif
     const SIGALG_LOOKUP *lu = s->s3.tmp.sigalg;
     int i;
     unsigned long type;
@@ -2466,7 +2460,7 @@ int tls_construct_server_key_exchange(SSL *s, WPACKET *pkt)
         } else {
             pkdhp = cert->dh_tmp;
         }
-#if !defined(OPENSSL_NO_DH) && !defined(OPENSSL_NO_DEPRECATED_3_0)
+#if !defined(OPENSSL_NO_DEPRECATED_3_0)
         if ((pkdhp == NULL) && (s->cert->dh_tmp_cb != NULL)) {
             pkdh = ssl_dh_to_pkey(s->cert->dh_tmp_cb(s, 0, 1024));
             if (pkdh == NULL) {
@@ -2510,9 +2504,7 @@ int tls_construct_server_key_exchange(SSL *s, WPACKET *pkt)
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             goto err;
         }
-    } else
-#ifndef OPENSSL_NO_EC
-    if (type & (SSL_kECDHE | SSL_kECDHEPSK)) {
+    } else if (type & (SSL_kECDHE | SSL_kECDHEPSK)) {
 
         if (s->s3.tmp.pkey != NULL) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
@@ -2550,7 +2542,6 @@ int tls_construct_server_key_exchange(SSL *s, WPACKET *pkt)
         r[2] = NULL;
         r[3] = NULL;
     } else
-#endif                          /* !OPENSSL_NO_EC */
 #ifndef OPENSSL_NO_SRP
     if (type & SSL_kSRP) {
         if ((s->srp_ctx.N == NULL) ||
@@ -2638,7 +2629,6 @@ int tls_construct_server_key_exchange(SSL *s, WPACKET *pkt)
         BN_bn2bin(r[i], binval);
     }
 
-#ifndef OPENSSL_NO_EC
     if (type & (SSL_kECDHE | SSL_kECDHEPSK)) {
         /*
          * We only support named (not generic) curves. In this situation, the
@@ -2656,7 +2646,6 @@ int tls_construct_server_key_exchange(SSL *s, WPACKET *pkt)
         OPENSSL_free(encodedPoint);
         encodedPoint = NULL;
     }
-#endif
 
     /* not anonymous */
     if (lu != NULL) {
@@ -2717,9 +2706,7 @@ int tls_construct_server_key_exchange(SSL *s, WPACKET *pkt)
     ret = 1;
  err:
     EVP_PKEY_free(pkdh);
-#ifndef OPENSSL_NO_EC
     OPENSSL_free(encodedPoint);
-#endif
     EVP_MD_CTX_free(md_ctx);
     if (freer) {
         BN_free(r[0]);
@@ -3004,7 +2991,6 @@ static int tls_process_cke_dhe(SSL *s, PACKET *pkt)
 
 static int tls_process_cke_ecdhe(SSL *s, PACKET *pkt)
 {
-#ifndef OPENSSL_NO_EC
     EVP_PKEY *skey = s->s3.tmp.pkey;
     EVP_PKEY *ckey = NULL;
     int ret = 0;
@@ -3057,11 +3043,6 @@ static int tls_process_cke_ecdhe(SSL *s, PACKET *pkt)
     EVP_PKEY_free(ckey);
 
     return ret;
-#else
-    /* Should never happen */
-    SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-    return 0;
-#endif
 }
 
 static int tls_process_cke_srp(SSL *s, PACKET *pkt)

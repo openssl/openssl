@@ -123,9 +123,11 @@ while using a proxy for HTTPS connections requires a suitable callback function
 such as OSSL_HTTP_proxy_connect(), described below.
 
 The I<maxline> parameter specifies the response header maximum line length,
-where 0 indicates the default value, which currently is 4k.
+where a value <= 0 indicates that the B<HTTP_DEFAULT_MAX_LINE_LENGTH> of 4KiB
+should be used.
+This length is also used as the number of content bytes that are read at a time.
 The I<max_resp_len> parameter specifies the maximum response length,
-where 0 indicates the default value, which currently is 100k.
+where 0 indicates B<HTTP_DEFAULT_MAX_RESP_LEN>, which currently is 100 KiB.
 
 An ASN.1-encoded response is expected by OSSL_HTTP_get_asn1() and
 OSSL_HTTP_post_asn1(), while for OSSL_HTTP_get() or OSSL_HTTP_transfer()
@@ -217,9 +219,10 @@ other HTTP client implementations such as wget, curl, and git.
 
 =head1 RETURN VALUES
 
-OSSL_HTTP_get(), OSSL_HTTP_get_asn1(), OSSL_HTTP_post_asn1(), and
-OSSL_HTTP_transfer() return on success the data received via HTTP, else NULL.
-Error conditions include connection/transfer timeout, parse errors, etc.
+On success, OSSL_HTTP_get(), OSSL_HTTP_get_asn1(), OSSL_HTTP_post_asn1(), and
+OSSL_HTTP_transfer() return a memory BIO containing the data received via HTTP.
+This must be freed by the caller. On failure, NULL is returned.
+Failure conditions include connection/transfer timeout, parse errors, etc.
 
 OSSL_HTTP_proxy_connect() and OSSL_HTTP_parse_url()
 return 1 on success, 0 on error.
@@ -235,7 +238,7 @@ OSSL_HTTP_proxy_connect(), and OSSL_HTTP_parse_url() were added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

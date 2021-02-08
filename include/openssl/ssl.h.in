@@ -1,7 +1,7 @@
 /*
  * {- join("\n * ", @autowarntext) -}
  *
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  * Copyright 2005 Nokia. All rights reserved.
  *
@@ -194,14 +194,9 @@ extern "C" {
  * DEPRECATED IN 3.0.0, in favor of OSSL_default_ciphersuites()
  * Update both macro and function simultaneously
  */
-#  if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
-#   define TLS_DEFAULT_CIPHERSUITES "TLS_AES_256_GCM_SHA384:" \
-                                    "TLS_CHACHA20_POLY1305_SHA256:" \
-                                    "TLS_AES_128_GCM_SHA256"
-#  else
-#   define TLS_DEFAULT_CIPHERSUITES "TLS_AES_256_GCM_SHA384:" \
+#  define TLS_DEFAULT_CIPHERSUITES "TLS_AES_256_GCM_SHA384:" \
+                                   "TLS_CHACHA20_POLY1305_SHA256:" \
                                    "TLS_AES_128_GCM_SHA256"
-#  endif
 # endif
 /*
  * As of OpenSSL 1.0.0, ssl_create_cipher_list() in ssl/ssl_ciph.c always
@@ -927,12 +922,14 @@ __owur int SSL_extension_supported(unsigned int ext_type);
 # define SSL_ASYNC_PAUSED       5
 # define SSL_ASYNC_NO_JOBS      6
 # define SSL_CLIENT_HELLO_CB    7
+# define SSL_RETRY_VERIFY       8
 
 /* These will only be used when doing non-blocking IO */
 # define SSL_want_nothing(s)         (SSL_want(s) == SSL_NOTHING)
 # define SSL_want_read(s)            (SSL_want(s) == SSL_READING)
 # define SSL_want_write(s)           (SSL_want(s) == SSL_WRITING)
 # define SSL_want_x509_lookup(s)     (SSL_want(s) == SSL_X509_LOOKUP)
+# define SSL_want_retry_verify(s)    (SSL_want(s) == SSL_RETRY_VERIFY)
 # define SSL_want_async(s)           (SSL_want(s) == SSL_ASYNC_PAUSED)
 # define SSL_want_async_job(s)       (SSL_want(s) == SSL_ASYNC_NO_JOBS)
 # define SSL_want_client_hello_cb(s) (SSL_want(s) == SSL_CLIENT_HELLO_CB)
@@ -1227,6 +1224,7 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 # define SSL_ERROR_WANT_ASYNC            9
 # define SSL_ERROR_WANT_ASYNC_JOB       10
 # define SSL_ERROR_WANT_CLIENT_HELLO_CB 11
+# define SSL_ERROR_WANT_RETRY_VERIFY    12
 
 # ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define SSL_CTRL_SET_TMP_DH                    3

@@ -19,60 +19,6 @@
 
 
 /*
- * CRYPTO function codes.
- */
-# ifndef OPENSSL_NO_DEPRECATED_3_0
-#  define CRYPTO_F_CMAC_CTX_NEW                            0
-#  define CRYPTO_F_CRYPTO_DUP_EX_DATA                      0
-#  define CRYPTO_F_CRYPTO_FREE_EX_DATA                     0
-#  define CRYPTO_F_CRYPTO_GET_EX_NEW_INDEX                 0
-#  define CRYPTO_F_CRYPTO_GET_EX_NEW_INDEX_EX              0
-#  define CRYPTO_F_CRYPTO_MEMDUP                           0
-#  define CRYPTO_F_CRYPTO_NEW_EX_DATA                      0
-#  define CRYPTO_F_CRYPTO_NEW_EX_DATA_EX                   0
-#  define CRYPTO_F_CRYPTO_OCB128_COPY_CTX                  0
-#  define CRYPTO_F_CRYPTO_OCB128_INIT                      0
-#  define CRYPTO_F_CRYPTO_SET_EX_DATA                      0
-#  define CRYPTO_F_FIPS_MODE_SET                           0
-#  define CRYPTO_F_GET_AND_LOCK                            0
-#  define CRYPTO_F_GET_PROVIDER_STORE                      0
-#  define CRYPTO_F_OPENSSL_ATEXIT                          0
-#  define CRYPTO_F_OPENSSL_BUF2HEXSTR                      0
-#  define CRYPTO_F_OPENSSL_BUF2HEXSTR_EX                   0
-#  define CRYPTO_F_OPENSSL_FOPEN                           0
-#  define CRYPTO_F_OPENSSL_HEXSTR2BUF                      0
-#  define CRYPTO_F_OPENSSL_HEXSTR2BUF_EX                   0
-#  define CRYPTO_F_OPENSSL_INIT_CRYPTO                     0
-#  define CRYPTO_F_OPENSSL_LH_NEW                          0
-#  define CRYPTO_F_OPENSSL_SK_DEEP_COPY                    0
-#  define CRYPTO_F_OPENSSL_SK_DUP                          0
-#  define CRYPTO_F_OSSL_PARAM_BLD_PUSH_BN                  0
-#  define CRYPTO_F_OSSL_PARAM_BLD_PUSH_OCTET_PTR           0
-#  define CRYPTO_F_OSSL_PARAM_BLD_PUSH_OCTET_STRING        0
-#  define CRYPTO_F_OSSL_PARAM_BLD_PUSH_UTF8_PTR            0
-#  define CRYPTO_F_OSSL_PARAM_BLD_PUSH_UTF8_STRING         0
-#  define CRYPTO_F_OSSL_PARAM_BLD_TO_PARAM                 0
-#  define CRYPTO_F_OSSL_PARAM_BLD_TO_PARAM_EX              0
-#  define CRYPTO_F_OSSL_PARAM_TYPE_TO_PARAM                0
-#  define CRYPTO_F_OSSL_PROVIDER_ACTIVATE                  0
-#  define CRYPTO_F_OSSL_PROVIDER_ADD_BUILTIN               0
-#  define CRYPTO_F_OSSL_PROVIDER_ADD_PARAMETER             0
-#  define CRYPTO_F_OSSL_PROVIDER_NEW                       0
-#  define CRYPTO_F_OSSL_PROVIDER_SET_MODULE_PATH           0
-#  define CRYPTO_F_PARAM_PUSH                              0
-#  define CRYPTO_F_PARAM_PUSH_NUM                          0
-#  define CRYPTO_F_PKEY_HMAC_INIT                          0
-#  define CRYPTO_F_PKEY_POLY1305_INIT                      0
-#  define CRYPTO_F_PKEY_SIPHASH_INIT                       0
-#  define CRYPTO_F_PROVIDER_ACTIVATE                       0
-#  define CRYPTO_F_PROVIDER_CONF_INIT                      0
-#  define CRYPTO_F_PROVIDER_CONF_LOAD                      0
-#  define CRYPTO_F_PROVIDER_NEW                            0
-#  define CRYPTO_F_PROVIDER_STORE_NEW                      0
-#  define CRYPTO_F_SK_RESERVE                              0
-# endif
-
-/*
  * CRYPTO reason codes.
  */
 # define CRYPTO_R_BAD_ALGORITHM_NAME                      117

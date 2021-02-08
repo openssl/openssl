@@ -579,6 +579,7 @@ SSL_want_async_job                      define
 SSL_want_client_hello_cb                define
 SSL_want_nothing                        define
 SSL_want_read                           define
+SSL_want_retry_verify                   define
 SSL_want_write                          define
 SSL_want_x509_lookup                    define
 SSLv23_client_method                    define

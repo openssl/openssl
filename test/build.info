@@ -707,6 +707,11 @@ IF[{- !$disabled{tests} -}]
     SOURCE[ssl_old_test]=ssl_old_test.c helpers/predefined_dhparams.c
     INCLUDE[ssl_old_test]=.. ../include ../apps/include
     DEPEND[ssl_old_test]=../libcrypto.a ../libssl.a libtestutil.a
+
+    PROGRAMS{noinst}=algorithmid_test
+    SOURCE[algorithmid_test]=algorithmid_test.c
+    INCLUDE[algorithmid_test]=../include ../apps/include
+    DEPEND[algorithmid_test]=../libcrypto.a libtestutil.a
   ENDIF
 
   PROGRAMS{noinst}=asn1_time_test

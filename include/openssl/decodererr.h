@@ -19,12 +19,6 @@
 
 
 /*
- * OSSL_DECODER function codes.
- */
-# ifndef OPENSSL_NO_DEPRECATED_3_0
-# endif
-
-/*
  * OSSL_DECODER reason codes.
  */
 # define OSSL_DECODER_R_MISSING_GET_PARAMS                100

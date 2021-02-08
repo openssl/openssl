@@ -21,35 +21,6 @@
 
 
 /*
- * DSA function codes.
- */
-#  ifndef OPENSSL_NO_DEPRECATED_3_0
-#   define DSA_F_DSAPARAMS_PRINT                            0
-#   define DSA_F_DSAPARAMS_PRINT_FP                         0
-#   define DSA_F_DSA_BUILTIN_PARAMGEN                       0
-#   define DSA_F_DSA_BUILTIN_PARAMGEN2                      0
-#   define DSA_F_DSA_DO_SIGN                                0
-#   define DSA_F_DSA_DO_VERIFY                              0
-#   define DSA_F_DSA_METH_DUP                               0
-#   define DSA_F_DSA_METH_NEW                               0
-#   define DSA_F_DSA_METH_SET1_NAME                         0
-#   define DSA_F_DSA_NEW_METHOD                             0
-#   define DSA_F_DSA_PARAM_DECODE                           0
-#   define DSA_F_DSA_PRINT_FP                               0
-#   define DSA_F_DSA_PRIV_DECODE                            0
-#   define DSA_F_DSA_PRIV_ENCODE                            0
-#   define DSA_F_DSA_PUB_DECODE                             0
-#   define DSA_F_DSA_PUB_ENCODE                             0
-#   define DSA_F_DSA_SIGN                                   0
-#   define DSA_F_DSA_SIGN_SETUP                             0
-#   define DSA_F_DSA_SIG_NEW                                0
-#   define DSA_F_OLD_DSA_PRIV_DECODE                        0
-#   define DSA_F_PKEY_DSA_CTRL                              0
-#   define DSA_F_PKEY_DSA_CTRL_STR                          0
-#   define DSA_F_PKEY_DSA_KEYGEN                            0
-#  endif
-
-/*
  * DSA reason codes.
  */
 #  define DSA_R_BAD_FFC_PARAMETERS                         114

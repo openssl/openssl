@@ -11,15 +11,16 @@ EVP_PKEY_set_utf8_string_param, EVP_PKEY_set_octet_string_param
 
  #include <openssl/evp.h>
 
- const OSSL_PARAM *EVP_PKEY_settable_params(EVP_PKEY *pkey);
+ const OSSL_PARAM *EVP_PKEY_settable_params(const EVP_PKEY *pkey);
  int EVP_PKEY_set_params(EVP_PKEY *pkey, OSSL_PARAM params[]);
  int EVP_PKEY_set_int_param(EVP_PKEY *pkey, const char *key_name, int in);
  int EVP_PKEY_set_size_t_param(EVP_PKEY *pkey, const char *key_name, size_t in);
- int EVP_PKEY_set_bn_param(EVP_PKEY *pkey, const char *key_name, BIGNUM *bn);
+ int EVP_PKEY_set_bn_param(EVP_PKEY *pkey, const char *key_name,
+                           const BIGNUM *bn);
  int EVP_PKEY_set_utf8_string_param(EVP_PKEY *pkey, const char *key_name,
-                                    char *str);
+                                    const char *str);
  int EVP_PKEY_set_octet_string_param(EVP_PKEY *pkey, const char *key_name,
-                                     unsigned char *buf, size_t bsize);
+                                     const unsigned char *buf, size_t bsize);
 
 =head1 DESCRIPTION
 
@@ -71,7 +72,7 @@ These functions were added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

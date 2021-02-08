@@ -19,35 +19,6 @@
 
 
 /*
- * CONF function codes.
- */
-# ifndef OPENSSL_NO_DEPRECATED_3_0
-#  define CONF_F_CONF_DUMP_FP                              0
-#  define CONF_F_CONF_LOAD                                 0
-#  define CONF_F_CONF_LOAD_FP                              0
-#  define CONF_F_CONF_PARSE_LIST                           0
-#  define CONF_F_DEF_LOAD                                  0
-#  define CONF_F_DEF_LOAD_BIO                              0
-#  define CONF_F_GET_NEXT_FILE                             0
-#  define CONF_F_MODULE_ADD                                0
-#  define CONF_F_MODULE_INIT                               0
-#  define CONF_F_MODULE_LOAD_DSO                           0
-#  define CONF_F_MODULE_RUN                                0
-#  define CONF_F_NCONF_DUMP_BIO                            0
-#  define CONF_F_NCONF_DUMP_FP                             0
-#  define CONF_F_NCONF_GET_NUMBER_E                        0
-#  define CONF_F_NCONF_GET_SECTION                         0
-#  define CONF_F_NCONF_GET_STRING                          0
-#  define CONF_F_NCONF_LOAD                                0
-#  define CONF_F_NCONF_LOAD_BIO                            0
-#  define CONF_F_NCONF_LOAD_FP                             0
-#  define CONF_F_NCONF_NEW                                 0
-#  define CONF_F_PROCESS_INCLUDE                           0
-#  define CONF_F_SSL_MODULE_INIT                           0
-#  define CONF_F_STR_COPY                                  0
-# endif
-
-/*
  * CONF reason codes.
  */
 # define CONF_R_ERROR_LOADING_DSO                         110

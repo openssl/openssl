@@ -25,6 +25,8 @@ static const ERR_STRING_DATA HTTP_str_reasons[] = {
     {ERR_PACK(ERR_LIB_HTTP, 0, HTTP_R_ERROR_PARSING_URL), "error parsing url"},
     {ERR_PACK(ERR_LIB_HTTP, 0, HTTP_R_ERROR_RECEIVING), "error receiving"},
     {ERR_PACK(ERR_LIB_HTTP, 0, HTTP_R_ERROR_SENDING), "error sending"},
+    {ERR_PACK(ERR_LIB_HTTP, 0, HTTP_R_FAILED_READING_DATA),
+    "failed reading data"},
     {ERR_PACK(ERR_LIB_HTTP, 0, HTTP_R_INCONSISTENT_CONTENT_LENGTH),
     "inconsistent content length"},
     {ERR_PACK(ERR_LIB_HTTP, 0, HTTP_R_INVALID_PORT_NUMBER),

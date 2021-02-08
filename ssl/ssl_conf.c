@@ -221,12 +221,10 @@ static int cmd_Curves(SSL_CONF_CTX *cctx, const char *value)
     return cmd_Groups(cctx, value);
 }
 
-#ifndef OPENSSL_NO_EC
 /* ECDH temporary parameters */
 static int cmd_ECDHParameters(SSL_CONF_CTX *cctx, const char *value)
 {
     int rv = 1;
-    int nid;
 
     /* Ignore values supported by 1.0.2 for the automatic selection */
     if ((cctx->flags & SSL_CONF_FLAG_FILE)
@@ -237,20 +235,18 @@ static int cmd_ECDHParameters(SSL_CONF_CTX *cctx, const char *value)
         strcmp(value, "auto") == 0)
         return 1;
 
-    nid = EC_curve_nist2nid(value);
-    if (nid == NID_undef)
-        nid = OBJ_sn2nid(value);
-    if (nid == 0)
+    /* ECDHParameters accepts a single group name */
+    if (strstr(value, ":") != NULL)
         return 0;
 
     if (cctx->ctx)
-        rv = SSL_CTX_set1_groups(cctx->ctx, &nid, 1);
+        rv = SSL_CTX_set1_groups_list(cctx->ctx, value);
     else if (cctx->ssl)
-        rv = SSL_set1_groups(cctx->ssl, &nid, 1);
+        rv = SSL_set1_groups_list(cctx->ssl, value);
 
     return rv > 0;
 }
-#endif
+
 static int cmd_CipherString(SSL_CONF_CTX *cctx, const char *value)
 {
     int rv = 1;
@@ -701,9 +697,7 @@ static const ssl_conf_cmd_tbl ssl_conf_cmds[] = {
     SSL_CONF_CMD_STRING(ClientSignatureAlgorithms, "client_sigalgs", 0),
     SSL_CONF_CMD_STRING(Curves, "curves", 0),
     SSL_CONF_CMD_STRING(Groups, "groups", 0),
-#ifndef OPENSSL_NO_EC
     SSL_CONF_CMD_STRING(ECDHParameters, "named_curve", SSL_CONF_FLAG_SERVER),
-#endif
     SSL_CONF_CMD_STRING(CipherString, "cipher", 0),
     SSL_CONF_CMD_STRING(Ciphersuites, "ciphersuites", 0),
     SSL_CONF_CMD_STRING(Protocol, NULL, 0),

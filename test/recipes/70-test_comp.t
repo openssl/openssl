@@ -65,7 +65,8 @@ SKIP: {
 }
 
 SKIP: {
-    skip "TLSv1.3 disabled", 2 if disabled("tls1_3");
+    skip "TLSv1.3 disabled", 2
+        if disabled("tls1_3") || (disabled("ec") && disabled("dh"));
     #Test 3: Check that sending multiple compression methods in a TLSv1.3
     #        ClientHello fails
     $proxy->clear();

@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  * Copyright 2005 Nokia. All rights reserved.
  *
@@ -1321,7 +1321,12 @@ int main(int argc, char *argv[])
         max_version = TLS1_2_VERSION;
     } else {
         min_version = 0;
+# if defined(OPENSSL_NO_EC) && defined(OPENSSL_NO_DH)
+        /* We only have ec and dh based built-in groups for TLSv1.3 */
+        max_version = TLS1_2_VERSION;
+# else
         max_version = 0;
+# endif
     }
 #endif
 #ifndef OPENSSL_NO_DTLS

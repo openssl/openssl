@@ -488,11 +488,9 @@ int SSL_extension_supported(unsigned int ext_type)
     switch (ext_type) {
         /* Internally supported extensions. */
     case TLSEXT_TYPE_application_layer_protocol_negotiation:
-#ifndef OPENSSL_NO_EC
     case TLSEXT_TYPE_ec_point_formats:
     case TLSEXT_TYPE_supported_groups:
     case TLSEXT_TYPE_key_share:
-#endif
 #ifndef OPENSSL_NO_NEXTPROTONEG
     case TLSEXT_TYPE_next_proto_neg:
 #endif

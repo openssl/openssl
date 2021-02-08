@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2021 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -15,7 +15,7 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_req");
 
-plan tests => 42;
+plan tests => 43;
 
 require_ok(srctop_file('test', 'recipes', 'tconversion.pl'));
 
@@ -89,6 +89,87 @@ subtest "generating certificate requests with RSA" => sub {
                     "-config", srctop_file("test", "test.cnf"),
                     "-verify", "-in", "testreq-rsa.pem", "-noout"])),
            "Verifying signature on request");
+    }
+};
+
+subtest "generating certificate requests with RSA-PSS" => sub {
+    plan tests => 12;
+
+    SKIP: {
+        skip "RSA is not supported by this OpenSSL build", 2
+            if disabled("rsa");
+
+        ok(run(app(["openssl", "req",
+                    "-config", srctop_file("test", "test.cnf"),
+                    "-new", "-out", "testreq-rsapss.pem", "-utf8",
+                    "-key", srctop_file("test", "testrsapss.pem")])),
+           "Generating request");
+        ok(run(app(["openssl", "req",
+                    "-config", srctop_file("test", "test.cnf"),
+                    "-verify", "-in", "testreq-rsapss.pem", "-noout"])),
+           "Verifying signature on request");
+
+        ok(run(app(["openssl", "req",
+                    "-config", srctop_file("test", "test.cnf"),
+                    "-new", "-out", "testreq-rsapss2.pem", "-utf8",
+                    "-sigopt", "rsa_padding_mode:pss",
+                    "-sigopt", "rsa_pss_saltlen:-1",
+                    "-key", srctop_file("test", "testrsapss.pem")])),
+           "Generating request");
+        ok(run(app(["openssl", "req",
+                    "-config", srctop_file("test", "test.cnf"),
+                    "-verify", "-in", "testreq-rsapss2.pem", "-noout"])),
+           "Verifying signature on request");
+
+        ok(run(app(["openssl", "req",
+                    "-config", srctop_file("test", "test.cnf"),
+                    "-new", "-out", "testreq-rsapssmand.pem", "-utf8",
+                    "-sigopt", "rsa_padding_mode:pss",
+                    "-key", srctop_file("test", "testrsapssmandatory.pem")])),
+           "Generating request");
+        ok(run(app(["openssl", "req",
+                    "-config", srctop_file("test", "test.cnf"),
+                    "-verify", "-in", "testreq-rsapssmand.pem", "-noout"])),
+           "Verifying signature on request");
+
+        ok(run(app(["openssl", "req",
+                    "-config", srctop_file("test", "test.cnf"),
+                    "-new", "-out", "testreq-rsapssmand2.pem", "-utf8",
+                    "-sigopt", "rsa_pss_saltlen:100",
+                    "-key", srctop_file("test", "testrsapssmandatory.pem")])),
+           "Generating request");
+        ok(run(app(["openssl", "req",
+                    "-config", srctop_file("test", "test.cnf"),
+                    "-verify", "-in", "testreq-rsapssmand2.pem", "-noout"])),
+           "Verifying signature on request");
+
+        ok(!run(app(["openssl", "req",
+                     "-config", srctop_file("test", "test.cnf"),
+                     "-new", "-out", "testreq-rsapss3.pem", "-utf8",
+                     "-sigopt", "rsa_padding_mode:pkcs1",
+                     "-key", srctop_file("test", "testrsapss.pem")])),
+           "Generating request with expected failure");
+
+        ok(!run(app(["openssl", "req",
+                     "-config", srctop_file("test", "test.cnf"),
+                     "-new", "-out", "testreq-rsapss3.pem", "-utf8",
+                     "-sigopt", "rsa_pss_saltlen:-4",
+                     "-key", srctop_file("test", "testrsapss.pem")])),
+           "Generating request with expected failure");
+
+        ok(!run(app(["openssl", "req",
+                     "-config", srctop_file("test", "test.cnf"),
+                     "-new", "-out", "testreq-rsapssmand3.pem", "-utf8",
+                     "-sigopt", "rsa_pss_saltlen:10",
+                     "-key", srctop_file("test", "testrsapssmandatory.pem")])),
+           "Generating request with expected failure");
+
+        ok(!run(app(["openssl", "req",
+                     "-config", srctop_file("test", "test.cnf"),
+                     "-new", "-out", "testreq-rsapssmand3.pem", "-utf8",
+                     "-sha256",
+                     "-key", srctop_file("test", "testrsapssmandatory.pem")])),
+           "Generating request with expected failure");
     }
 };
 

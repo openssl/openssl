@@ -112,6 +112,19 @@ DEPS={- join(" \\\n" . ' ' x 5,
 GENERATED_MANDATORY={- join(" \\\n" . ' ' x 20,
                             fill_lines(" ", $COLUMNS - 20,
                                        @{$unified_info{depends}->{""}})) -}
+GENERATED_PODS={- # common0.tmpl provides @generated
+                  join(" \\\n" . ' ' x 15,
+                       fill_lines(" ", $COLUMNS - 15,
+                                  map { my $x = $_;
+                                        (
+                                          grep { 
+                                                 $unified_info{attributes}->{depends}
+                                                 ->{$x}->{$_}->{pod} // 0
+                                               }
+                                              keys %{$unified_info{attributes}->{depends}->{$x}}
+                                        ) ? $x : ();
+                                      }
+                                      @generated)) -}
 GENERATED={- # common0.tmpl provides @generated
              join(" \\\n" . ' ' x 5,
                   fill_lines(" ", $COLUMNS - 5,
@@ -457,6 +470,7 @@ LANG=C
 {- dependmagic('build_modules'); -}: build_modules_nodep
 {- dependmagic('build_programs'); -}: build_programs_nodep
 
+build_generated_pods: $(GENERATED_PODS)
 build_docs: build_man_docs build_html_docs
 build_man_docs: $(MANDOCS1) $(MANDOCS3) $(MANDOCS5) $(MANDOCS7)
 build_html_docs: $(HTMLDOCS1) $(HTMLDOCS3) $(HTMLDOCS5) $(HTMLDOCS7)
@@ -1014,10 +1028,10 @@ generate: generate_apps generate_crypto_bn generate_crypto_objects \
           generate_crypto_conf generate_crypto_asn1 generate_fuzz_oids
 
 .PHONY: doc-nits cmd-nits md-nits
-doc-nits: build_generated
+doc-nits: build_generated_pods
 	$(PERL) $(SRCDIR)/util/find-doc-nits -n -l -e
 
-cmd-nits: build_generated apps/openssl
+cmd-nits: build_generated apps/openssl build_generated_pods
 	$(PERL) $(SRCDIR)/util/find-doc-nits -c
 
 # This uses "mdl", the markdownlint application, which is written in ruby.

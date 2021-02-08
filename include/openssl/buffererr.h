@@ -19,15 +19,6 @@
 
 
 /*
- * BUF function codes.
- */
-# ifndef OPENSSL_NO_DEPRECATED_3_0
-#  define BUF_F_BUF_MEM_GROW                               0
-#  define BUF_F_BUF_MEM_GROW_CLEAN                         0
-#  define BUF_F_BUF_MEM_NEW                                0
-# endif
-
-/*
  * BUF reason codes.
  */
 

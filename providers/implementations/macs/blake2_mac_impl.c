@@ -39,8 +39,6 @@ struct blake2_mac_data_st {
     unsigned char key[BLAKE2_KEYBYTES];
 };
 
-static size_t blake2_mac_size(void *vmacctx);
-
 static void *blake2_mac_new(void *unused_provctx)
 {
     struct blake2_mac_data_st *macctx;
@@ -80,6 +78,13 @@ static void blake2_mac_free(void *vmacctx)
         OPENSSL_cleanse(macctx->key, sizeof(macctx->key));
         OPENSSL_free(macctx);
     }
+}
+
+static size_t blake2_mac_size(void *vmacctx)
+{
+    struct blake2_mac_data_st *macctx = vmacctx;
+
+    return macctx->params.digest_length;
 }
 
 static int blake2_mac_init(void *vmacctx)
@@ -212,13 +217,6 @@ static int blake2_mac_set_ctx_params(void *vmacctx, const OSSL_PARAM params[])
         BLAKE2_PARAM_SET_SALT(&macctx->params, p->data, p->data_size);
     }
     return 1;
-}
-
-static size_t blake2_mac_size(void *vmacctx)
-{
-    struct blake2_mac_data_st *macctx = vmacctx;
-
-    return macctx->params.digest_length;
 }
 
 const OSSL_DISPATCH BLAKE2_FUNCTIONS[] = {

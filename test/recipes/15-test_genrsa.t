@@ -26,7 +26,7 @@ my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 
 plan tests =>
     ($no_fips ? 0 : 2)          # FIPS install test + fips related test
-    + 12;
+    + 13;
 
 # We want to know that an absurdly small number of bits isn't support
 if (disabled("deprecated-3.0")) {
@@ -101,6 +101,9 @@ ok(!run(app([ 'openssl', 'genpkey', '-algorithm', 'RSA',
              '-pkeyopt', 'e:65538',
              '-out', 'genrsatest.pem' ])),
    "genpkey with a even public exponent should fail");
+ok(!run(app([ 'openssl', 'genpkey', '-propquery', 'unknown',
+             '-algorithm', 'RSA' ])),
+   "genpkey requesting unknown=yes property should fail");
 
 
  SKIP: {

@@ -1,7 +1,7 @@
 /*
  * {- join("\n * ", @autowarntext) -}
  *
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -403,9 +403,13 @@ int X509_NAME_digest(const X509_NAME *data, const EVP_MD *type,
                      unsigned char *md, unsigned int *len);
 
 X509 *X509_load_http(const char *url, BIO *bio, BIO *rbio, int timeout);
-# define X509_http_nbio(url) X509_load_http(url, NULL, NULL, 0)
+# define X509_http_nbio(rctx, pcert) \
+    OSSL_HTTP_REQ_CTX_sendreq_d2i(rctx, (ASN1_VALUE **)(pcert), \
+                                  ASN1_ITEM_rptr(X509))
 X509_CRL *X509_CRL_load_http(const char *url, BIO *bio, BIO *rbio, int timeout);
-# define X509_CRL_http_nbio(url) X509_CRL_load_http(url, NULL,  NULL, 0)
+# define X509_CRL_http_nbio(rctx, pcrl) \
+    OSSL_HTTP_REQ_CTX_sendreq_d2i(rctx, (ASN1_VALUE **)(pcrl), \
+                                  ASN1_ITEM_rptr(X509_CRL))
 
 # ifndef OPENSSL_NO_STDIO
 X509 *d2i_X509_fp(FILE *fp, X509 **x509);
@@ -722,7 +726,6 @@ const X509_ALGOR *X509_get0_tbs_sigalg(const X509 *x);
 EVP_PKEY *X509_get0_pubkey(const X509 *x);
 EVP_PKEY *X509_get_pubkey(X509 *x);
 ASN1_BIT_STRING *X509_get0_pubkey_bitstr(const X509 *x);
-int X509_certificate_type(const X509 *x, const EVP_PKEY *pubkey);
 
 long X509_REQ_get_version(const X509_REQ *req);
 int X509_REQ_set_version(X509_REQ *x, long version);
@@ -834,6 +837,8 @@ int X509_cmp(const X509 *a, const X509 *b);
 int X509_NAME_cmp(const X509_NAME *a, const X509_NAME *b);
 #ifndef OPENSSL_NO_DEPRECATED_3_0
 # define X509_NAME_hash(x) X509_NAME_hash_ex(x, NULL, NULL, NULL)
+OSSL_DEPRECATEDIN_3_0 int X509_certificate_type(const X509 *x,
+                                                const EVP_PKEY *pubkey);
 #endif
 unsigned long X509_NAME_hash_ex(const X509_NAME *x, OSSL_LIB_CTX *libctx,
                                 const char *propq, int *ok);
@@ -1036,8 +1041,6 @@ int EVP_PKEY_add1_attr_by_NID(EVP_PKEY *key,
 int EVP_PKEY_add1_attr_by_txt(EVP_PKEY *key,
                               const char *attrname, int type,
                               const unsigned char *bytes, int len);
-
-int X509_verify_cert(X509_STORE_CTX *ctx);
 
 /* lookup a cert from a X509 STACK */
 X509 *X509_find_by_issuer_and_serial(STACK_OF(X509) *sk, const X509_NAME *name,

@@ -52,18 +52,16 @@
  * around that, we make them non-static, and declare them an extra time to
  * avoid compilers complaining about definitions without declarations.
  */
-#if 0                            /* Currently unused */
 #define DER_AID_V_sha1Identifier                                        \
     DER_P_SEQUENCE|DER_F_CONSTRUCTED,                                   \
         DER_OID_SZ_id_sha1 + DER_SZ_NULL,                               \
         DER_OID_V_id_sha1,                                              \
         DER_V_NULL
-extern const unsigned char der_aid_sha1Identifier[];
-const unsigned char der_aid_sha1Identifier[] = {
+extern const unsigned char ossl_der_aid_sha1Identifier[];
+const unsigned char ossl_der_aid_sha1Identifier[] = {
     DER_AID_V_sha1Identifier
 };
-#define DER_AID_SZ_sha1Identifier sizeof(der_aid_sha1Identifier)
-#endif
+#define DER_AID_SZ_sha1Identifier sizeof(ossl_der_aid_sha1Identifier)
 
 #define DER_AID_V_sha224Identifier                                      \
     DER_P_SEQUENCE|DER_F_CONSTRUCTED,                                   \
@@ -277,8 +275,8 @@ static int DER_w_MaskGenAlgorithm(WPACKET *pkt, int tag,
 
 #define OAEP_PSS_MD_CASE(name, var)                                     \
     case NID_##name:                                                    \
-        var = ossl_der_oid_id_##name;                                   \
-        var##_sz = sizeof(ossl_der_oid_id_##name);                      \
+        var = ossl_der_aid_##name##Identifier;                          \
+        var##_sz = sizeof(ossl_der_aid_##name##Identifier);             \
         break;
 
 int ossl_DER_w_RSASSA_PSS_params(WPACKET *pkt, int tag,
@@ -356,14 +354,15 @@ int ossl_DER_w_RSASSA_PSS_params(WPACKET *pkt, int tag,
     var##_oid_sz = sizeof(ossl_der_oid_##name);                         \
     break;
 
-int ossl_DER_w_algorithmIdentifier_RSA(WPACKET *pkt, int tag, RSA *rsa)
+int ossl_DER_w_algorithmIdentifier_RSA_PSS(WPACKET *pkt, int tag,
+                                           int rsa_type,
+                                           const RSA_PSS_PARAMS_30 *pss)
 {
     int rsa_nid = NID_undef;
     const unsigned char *rsa_oid = NULL;
     size_t rsa_oid_sz = 0;
-    RSA_PSS_PARAMS_30 *pss_params = ossl_rsa_get0_pss_params_30(rsa);
 
-    switch (RSA_test_flags(rsa, RSA_FLAG_TYPE_MASK)) {
+    switch (rsa_type) {
     case RSA_FLAG_TYPE_RSA:
         RSA_CASE(rsaEncryption, rsa);
     case RSA_FLAG_TYPE_RSASSAPSS:
@@ -375,8 +374,17 @@ int ossl_DER_w_algorithmIdentifier_RSA(WPACKET *pkt, int tag, RSA *rsa)
 
     return ossl_DER_w_begin_sequence(pkt, tag)
         && (rsa_nid != NID_rsassaPss
-            || ossl_rsa_pss_params_30_is_unrestricted(pss_params)
-            || ossl_DER_w_RSASSA_PSS_params(pkt, -1, pss_params))
+            || ossl_rsa_pss_params_30_is_unrestricted(pss)
+            || ossl_DER_w_RSASSA_PSS_params(pkt, -1, pss))
         && ossl_DER_w_precompiled(pkt, -1, rsa_oid, rsa_oid_sz)
         && ossl_DER_w_end_sequence(pkt, tag);
+}
+
+int ossl_DER_w_algorithmIdentifier_RSA(WPACKET *pkt, int tag, RSA *rsa)
+{
+    int rsa_type = RSA_test_flags(rsa, RSA_FLAG_TYPE_MASK);
+    RSA_PSS_PARAMS_30 *pss_params = ossl_rsa_get0_pss_params_30(rsa);
+
+    return ossl_DER_w_algorithmIdentifier_RSA_PSS(pkt, tag, rsa_type,
+                                                  pss_params);
 }

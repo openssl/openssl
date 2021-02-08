@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  * Copyright 2005 Nokia. All rights reserved.
  *
@@ -1051,15 +1051,15 @@ struct ssl_ctx_st {
         /* RFC 4366 Maximum Fragment Length Negotiation */
         uint8_t max_fragment_len_mode;
 
-# ifndef OPENSSL_NO_EC
         /* EC extension values inherited by SSL structure */
         size_t ecpointformats_len;
         unsigned char *ecpointformats;
-# endif                         /* OPENSSL_NO_EC */
 
         size_t supportedgroups_len;
         uint16_t *supportedgroups;
 
+        uint16_t *supported_groups_default;
+        size_t supported_groups_default_len;
         /*
          * ALPN information (we are in the process of transitioning from NPN to
          * ALPN.)
@@ -1405,14 +1405,12 @@ struct ssl_st {
         /* used by the client to know if it actually sent alpn */
         int alpn_sent;
 
-# ifndef OPENSSL_NO_EC
         /*
          * This is set to true if we believe that this is a version of Safari
          * running on OS X 10.6 or newer. We wish to know this because Safari on
          * 10.8 .. 10.8.3 has broken ECDHE-ECDSA support.
          */
         char is_probably_safari;
-# endif                         /* !OPENSSL_NO_EC */
 
         /* For clients: peer temporary key */
         /* The group_id for the key exchange key */
@@ -1593,7 +1591,6 @@ struct ssl_st {
         int ticket_expected;
         /* TLS 1.3 tickets requested by the application. */
         int extra_tickets_expected;
-# ifndef OPENSSL_NO_EC
         size_t ecpointformats_len;
         /* our list */
         unsigned char *ecpointformats;
@@ -1601,7 +1598,6 @@ struct ssl_st {
         size_t peer_ecpointformats_len;
         /* peer's list */
         unsigned char *peer_ecpointformats;
-# endif                         /* OPENSSL_NO_EC */
         size_t supportedgroups_len;
         /* our list */
         uint16_t *supportedgroups;
@@ -1927,14 +1923,12 @@ typedef struct dtls1_state_st {
 
 } DTLS1_STATE;
 
-# ifndef OPENSSL_NO_EC
 /*
  * From ECC-TLS draft, used in encoding the curve type in ECParameters
  */
 #  define EXPLICIT_PRIME_CURVE_TYPE  1
 #  define EXPLICIT_CHAR2_CURVE_TYPE  2
 #  define NAMED_CURVE_TYPE           3
-# endif                         /* OPENSSL_NO_EC */
 
 struct cert_pkey_st {
     X509 *x509;
@@ -2009,9 +2003,7 @@ typedef struct cert_st {
     CERT_PKEY *key;
 
     EVP_PKEY *dh_tmp;
-#ifndef OPENSSL_NO_DH
     DH *(*dh_tmp_cb) (SSL *ssl, int is_export, int keysize);
-#endif
     int dh_tmp_auto;
     /* Flags related to certificates */
     uint32_t cert_flags;
@@ -2644,9 +2636,7 @@ __owur int tls1_alert_code(int code);
 __owur int tls13_alert_code(int code);
 __owur int ssl3_alert_code(int code);
 
-#  ifndef OPENSSL_NO_EC
 __owur int ssl_check_srvr_ecc_cert_and_alg(X509 *x, SSL *s);
-#  endif
 
 SSL_COMP *ssl3_comp_find(STACK_OF(SSL_COMP) *sk, int n);
 
@@ -2661,13 +2651,11 @@ __owur int tls1_set_groups_list(SSL_CTX *ctx, uint16_t **pext, size_t *pextlen,
                                 const char *str);
 __owur EVP_PKEY *ssl_generate_pkey_group(SSL *s, uint16_t id);
 __owur int tls_valid_group(SSL *s, uint16_t group_id, int minversion,
-                           int maxversion);
+                           int maxversion, int isec, int *okfortls13);
 __owur EVP_PKEY *ssl_generate_param_group(SSL *s, uint16_t id);
-#  ifndef OPENSSL_NO_EC
 void tls1_get_formatlist(SSL *s, const unsigned char **pformats,
                          size_t *num_formats);
 __owur int tls1_check_ec_tmp_key(SSL *s, unsigned long id);
-#  endif                        /* OPENSSL_NO_EC */
 
 __owur int tls_group_allowed(SSL *s, uint16_t curve, int op);
 void tls1_get_supported_groups(SSL *s, const uint16_t **pgroups,
@@ -2719,9 +2707,7 @@ __owur int tls1_set_peer_legacy_sigalg(SSL *s, const EVP_PKEY *pkey);
 __owur int tls1_lookup_md(SSL_CTX *ctx, const SIGALG_LOOKUP *lu,
                           const EVP_MD **pmd);
 __owur size_t tls12_get_psigalgs(SSL *s, int sent, const uint16_t **psigs);
-#  ifndef OPENSSL_NO_EC
 __owur int tls_check_sigalg_curve(const SSL *s, int curve);
-#  endif
 __owur int tls12_check_peer_sigalg(SSL *s, uint16_t, EVP_PKEY *pkey);
 __owur int ssl_set_client_disabled(SSL *s);
 __owur int ssl_cipher_disabled(const SSL *s, const SSL_CIPHER *c, int op, int echde);

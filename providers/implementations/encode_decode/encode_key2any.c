@@ -655,6 +655,12 @@ static int ec_pkcs8_priv_to_der(const void *veckey, unsigned char **pder)
 # define ec_evp_type            EVP_PKEY_EC
 # define ec_input_type          "EC"
 # define ec_pem_type            "EC"
+
+# ifndef OPENSSL_NO_SM2
+#  define sm2_evp_type          EVP_PKEY_SM2
+#  define sm2_input_type        "SM2"
+#  define sm2_pem_type          "SM2"
+# endif
 #endif
 
 /* ---------------------------------------------------------------------- */
@@ -1139,6 +1145,10 @@ static int key2any_encode(struct key2any_ctx_st *ctx, OSSL_CORE_BIO *cout,
 #define DO_EC_selection_mask DO_type_specific_selection_mask
 #define DO_EC(impl, type, output) DO_type_specific(impl, type, output)
 
+#define SM2_output_structure "sm2"
+#define DO_SM2_selection_mask DO_type_specific_selection_mask
+#define DO_SM2(impl, type, output) DO_type_specific(impl, type, output)
+
 /* PKCS#1 defines a structure for RSA private and public keys */
 #define PKCS1_output_structure "pkcs1"
 #define DO_PKCS1_selection_mask DO_RSA_selection_mask
@@ -1280,6 +1290,9 @@ MAKE_ENCODER(dsa, dsa, EVP_PKEY_DSA, type_specific, der);
 #endif
 #ifndef OPENSSL_NO_EC
 MAKE_ENCODER(ec, ec, EVP_PKEY_EC, type_specific_no_pub, der);
+# ifndef OPENSSL_NO_SM2
+MAKE_ENCODER(sm2, ec, EVP_PKEY_EC, type_specific_no_pub, der);
+# endif
 #endif
 
 /*
@@ -1296,6 +1309,9 @@ MAKE_ENCODER(dsa, dsa, EVP_PKEY_DSA, type_specific, pem);
 #endif
 #ifndef OPENSSL_NO_EC
 MAKE_ENCODER(ec, ec, EVP_PKEY_EC, type_specific_no_pub, pem);
+# ifndef OPENSSL_NO_SM2
+MAKE_ENCODER(sm2, ec, EVP_PKEY_EC, type_specific_no_pub, pem);
+# endif
 #endif
 
 /*
@@ -1335,6 +1351,12 @@ MAKE_ENCODER(ec, ec, EVP_PKEY_EC, PKCS8, der);
 MAKE_ENCODER(ec, ec, EVP_PKEY_EC, PKCS8, pem);
 MAKE_ENCODER(ec, ec, EVP_PKEY_EC, SubjectPublicKeyInfo, der);
 MAKE_ENCODER(ec, ec, EVP_PKEY_EC, SubjectPublicKeyInfo, pem);
+# ifndef OPENSSL_NO_SM2
+MAKE_ENCODER(sm2, ec, EVP_PKEY_EC, PKCS8, der);
+MAKE_ENCODER(sm2, ec, EVP_PKEY_EC, PKCS8, pem);
+MAKE_ENCODER(sm2, ec, EVP_PKEY_EC, SubjectPublicKeyInfo, der);
+MAKE_ENCODER(sm2, ec, EVP_PKEY_EC, SubjectPublicKeyInfo, pem);
+# endif
 MAKE_ENCODER(ed25519, ecx, EVP_PKEY_ED25519, PKCS8, der);
 MAKE_ENCODER(ed25519, ecx, EVP_PKEY_ED25519, PKCS8, pem);
 MAKE_ENCODER(ed25519, ecx, EVP_PKEY_ED25519, SubjectPublicKeyInfo, der);
@@ -1376,6 +1398,10 @@ MAKE_ENCODER(dsa, dsa, EVP_PKEY_DSA, DSA, pem);
 #ifndef OPENSSL_NO_EC
 MAKE_ENCODER(ec, ec, EVP_PKEY_EC, EC, der);
 MAKE_ENCODER(ec, ec, EVP_PKEY_EC, EC, pem);
+# ifndef OPENSSL_NO_SM2
+MAKE_ENCODER(sm2, ec, EVP_PKEY_EC, SM2, der);
+MAKE_ENCODER(sm2, ec, EVP_PKEY_EC, SM2, pem);
+# endif
 #endif
 
 /* Convenience structure names */

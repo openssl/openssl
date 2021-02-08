@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2002-2021 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -8,6 +8,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <string.h>
 #include <openssl/opensslconf.h>
 #include <openssl/evp.h>
 #include <openssl/encoder.h>
@@ -237,7 +238,7 @@ int ecparam_main(int argc, char **argv)
         }
     } else {
         params_key = load_keyparams(infile, 1, "EC", "EC parameters");
-        if (!EVP_PKEY_is_a(params_key, "EC"))
+        if (params_key == NULL || !EVP_PKEY_is_a(params_key, "EC"))
             goto end;
         if (point_format
             && !EVP_PKEY_set_utf8_string_param(

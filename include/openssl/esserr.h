@@ -19,18 +19,6 @@
 
 
 /*
- * ESS function codes.
- */
-# ifndef OPENSSL_NO_DEPRECATED_3_0
-#  define ESS_F_ESS_CERT_ID_NEW_INIT                       0
-#  define ESS_F_ESS_CERT_ID_V2_NEW_INIT                    0
-#  define ESS_F_ESS_SIGNING_CERT_ADD                       0
-#  define ESS_F_ESS_SIGNING_CERT_NEW_INIT                  0
-#  define ESS_F_ESS_SIGNING_CERT_V2_ADD                    0
-#  define ESS_F_ESS_SIGNING_CERT_V2_NEW_INIT               0
-# endif
-
-/*
  * ESS reason codes.
  */
 # define ESS_R_ESS_SIGNING_CERTIFICATE_ERROR              102

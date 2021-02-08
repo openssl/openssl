@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -129,6 +129,7 @@ __owur int tls_construct_cert_status_body(SSL *s, WPACKET *pkt);
 __owur int tls_construct_cert_status(SSL *s, WPACKET *pkt);
 __owur MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt);
 __owur MSG_PROCESS_RETURN tls_process_server_certificate(SSL *s, PACKET *pkt);
+__owur WORK_STATE tls_post_process_server_certificate(SSL *s, WORK_STATE wst);
 __owur int ssl3_check_cert_and_algorithm(SSL *s);
 #ifndef OPENSSL_NO_NEXTPROTONEG
 __owur int tls_construct_next_proto(SSL *s, WPACKET *pkt);
@@ -204,10 +205,8 @@ int tls_parse_ctos_srp(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
 #endif
 int tls_parse_ctos_early_data(SSL *s, PACKET *pkt, unsigned int context,
                               X509 *x, size_t chainidx);
-#ifndef OPENSSL_NO_EC
 int tls_parse_ctos_ec_pt_formats(SSL *s, PACKET *pkt, unsigned int context,
                                  X509 *x, size_t chainidx);
-#endif
 int tls_parse_ctos_supported_groups(SSL *s, PACKET *pkt, unsigned int context,
                                     X509 *x, size_t chainidxl);
 int tls_parse_ctos_session_ticket(SSL *s, PACKET *pkt, unsigned int context,
@@ -257,11 +256,9 @@ EXT_RETURN tls_construct_stoc_early_data(SSL *s, WPACKET *pkt,
 EXT_RETURN tls_construct_stoc_maxfragmentlen(SSL *s, WPACKET *pkt,
                                              unsigned int context, X509 *x,
                                              size_t chainidx);
-#ifndef OPENSSL_NO_EC
 EXT_RETURN tls_construct_stoc_ec_pt_formats(SSL *s, WPACKET *pkt,
                                             unsigned int context, X509 *x,
                                             size_t chainidx);
-#endif
 EXT_RETURN tls_construct_stoc_supported_groups(SSL *s, WPACKET *pkt,
                                                unsigned int context, X509 *x,
                                                size_t chainidx);
@@ -318,11 +315,9 @@ EXT_RETURN tls_construct_ctos_maxfragmentlen(SSL *s, WPACKET *pkt, unsigned int 
 EXT_RETURN tls_construct_ctos_srp(SSL *s, WPACKET *pkt, unsigned int context, X509 *x,
                            size_t chainidx);
 #endif
-#ifndef OPENSSL_NO_EC
 EXT_RETURN tls_construct_ctos_ec_pt_formats(SSL *s, WPACKET *pkt,
                                             unsigned int context, X509 *x,
                                             size_t chainidx);
-#endif
 EXT_RETURN tls_construct_ctos_supported_groups(SSL *s, WPACKET *pkt,
                                                unsigned int context, X509 *x,
                                                size_t chainidx);
@@ -386,10 +381,8 @@ int tls_parse_stoc_early_data(SSL *s, PACKET *pkt, unsigned int context,
                               X509 *x, size_t chainidx);
 int tls_parse_stoc_maxfragmentlen(SSL *s, PACKET *pkt, unsigned int context,
                                   X509 *x, size_t chainidx);
-#ifndef OPENSSL_NO_EC
 int tls_parse_stoc_ec_pt_formats(SSL *s, PACKET *pkt, unsigned int context,
                                  X509 *x, size_t chainidx);
-#endif
 int tls_parse_stoc_session_ticket(SSL *s, PACKET *pkt, unsigned int context,
                                   X509 *x, size_t chainidx);
 #ifndef OPENSSL_NO_OCSP

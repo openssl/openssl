@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2021 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -33,6 +33,8 @@ my ($no_rsa, $no_dsa, $no_dh, $no_ec, $no_psk,
     anydisabled qw/rsa dsa dh ec psk
                    ssl3 tls1 tls1_1 tls1_2 tls1_3
                    dtls dtls1 dtls1_2 ct/;
+#If ec and dh are disabled then don't use TLSv1.3
+$no_tls1_3 = 1 if (!$no_tls1_3 && $no_ec && $no_dh);
 my $no_anytls = alldisabled(available_protocols("tls"));
 my $no_anydtls = alldisabled(available_protocols("dtls"));
 

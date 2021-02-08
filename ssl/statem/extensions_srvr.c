@@ -228,7 +228,6 @@ int tls_parse_ctos_srp(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
 }
 #endif
 
-#ifndef OPENSSL_NO_EC
 int tls_parse_ctos_ec_pt_formats(SSL *s, PACKET *pkt, unsigned int context,
                                  X509 *x, size_t chainidx)
 {
@@ -251,7 +250,6 @@ int tls_parse_ctos_ec_pt_formats(SSL *s, PACKET *pkt, unsigned int context,
 
     return 1;
 }
-#endif                          /* OPENSSL_NO_EC */
 
 int tls_parse_ctos_session_ticket(SSL *s, PACKET *pkt, unsigned int context,
                                   X509 *x, size_t chainidx)
@@ -893,7 +891,6 @@ int tls_parse_ctos_cookie(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
     return 1;
 }
 
-#if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH)
 int tls_parse_ctos_supported_groups(SSL *s, PACKET *pkt, unsigned int context,
                                     X509 *x, size_t chainidx)
 {
@@ -921,7 +918,6 @@ int tls_parse_ctos_supported_groups(SSL *s, PACKET *pkt, unsigned int context,
 
     return 1;
 }
-#endif
 
 int tls_parse_ctos_ems(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
                        size_t chainidx)
@@ -1305,7 +1301,6 @@ EXT_RETURN tls_construct_stoc_maxfragmentlen(SSL *s, WPACKET *pkt,
     return EXT_RETURN_SENT;
 }
 
-#ifndef OPENSSL_NO_EC
 EXT_RETURN tls_construct_stoc_ec_pt_formats(SSL *s, WPACKET *pkt,
                                             unsigned int context, X509 *x,
                                             size_t chainidx)
@@ -1331,9 +1326,7 @@ EXT_RETURN tls_construct_stoc_ec_pt_formats(SSL *s, WPACKET *pkt,
 
     return EXT_RETURN_SENT;
 }
-#endif
 
-#if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH)
 EXT_RETURN tls_construct_stoc_supported_groups(SSL *s, WPACKET *pkt,
                                                unsigned int context, X509 *x,
                                                size_t chainidx)
@@ -1358,7 +1351,7 @@ EXT_RETURN tls_construct_stoc_supported_groups(SSL *s, WPACKET *pkt,
     for (i = 0; i < numgroups; i++) {
         uint16_t group = groups[i];
 
-        if (tls_valid_group(s, group, version, version)
+        if (tls_valid_group(s, group, version, version, 0, NULL)
                 && tls_group_allowed(s, group, SSL_SECOP_CURVE_SUPPORTED)) {
             if (first) {
                 /*
@@ -1393,7 +1386,6 @@ EXT_RETURN tls_construct_stoc_supported_groups(SSL *s, WPACKET *pkt,
 
     return EXT_RETURN_SENT;
 }
-#endif
 
 EXT_RETURN tls_construct_stoc_session_ticket(SSL *s, WPACKET *pkt,
                                              unsigned int context, X509 *x,

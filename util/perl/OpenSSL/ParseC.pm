@@ -261,18 +261,6 @@ my @opensslchandlers = (
     #####
     # Deprecated stuff, by OpenSSL release.
 
-    # We trick the parser by pretending that the declaration is wrapped in a
-    # check if the OPENSSL_NO_DEPRECATEDIN_x_y[_z] macro is defined or not.
-    # Callers of parse() will have to decide what to do with it.
-    { regexp   => qr/(DEPRECATEDIN_\d+_\d+(?:_\d+)?)<<<\((.*)\)>>>/,
-      massager => sub { return (<<"EOF");
-#ifndef OPENSSL_NO_$1
-$2;
-#endif
-EOF
-      },
-    },
-
     # OSSL_DEPRECATEDIN_x_y[_z] is simply ignored.  Such declarations are
     # supposed to be guarded with an '#ifdef OPENSSL_NO_DEPRECATED_x_y[_z]'
     { regexp   => qr/OSSL_DEPRECATEDIN_\d+_\d+(?:_\d+)?\s+(.*)/,

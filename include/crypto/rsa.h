@@ -65,6 +65,7 @@ int ossl_rsa_fromdata(RSA *rsa, const OSSL_PARAM params[]);
 int ossl_rsa_pss_params_30_todata(const RSA_PSS_PARAMS_30 *pss,
                                   OSSL_PARAM_BLD *bld, OSSL_PARAM params[]);
 int ossl_rsa_pss_params_30_fromdata(RSA_PSS_PARAMS_30 *pss_params,
+                                    int *defaults_set,
                                     const OSSL_PARAM params[],
                                     OSSL_LIB_CTX *libctx);
 

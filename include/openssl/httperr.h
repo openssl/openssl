@@ -19,12 +19,6 @@
 
 
 /*
- * HTTP function codes.
- */
-# ifndef OPENSSL_NO_DEPRECATED_3_0
-# endif
-
-/*
  * HTTP reason codes.
  */
 # define HTTP_R_ASN1_LEN_EXCEEDS_MAX_RESP_LEN             108
@@ -34,6 +28,7 @@
 # define HTTP_R_ERROR_PARSING_URL                         101
 # define HTTP_R_ERROR_RECEIVING                           103
 # define HTTP_R_ERROR_SENDING                             102
+# define HTTP_R_FAILED_READING_DATA                       128
 # define HTTP_R_INCONSISTENT_CONTENT_LENGTH               120
 # define HTTP_R_INVALID_PORT_NUMBER                       123
 # define HTTP_R_INVALID_URL_PATH                          125

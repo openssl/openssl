@@ -88,22 +88,33 @@ static int pmeth_cmp(const EVP_PKEY_METHOD *const *a,
     return ((*a)->pkey_id - (*b)->pkey_id);
 }
 
-const EVP_PKEY_METHOD *EVP_PKEY_meth_find(int type)
+static const EVP_PKEY_METHOD *evp_pkey_meth_find_added_by_application(int type)
 {
-    pmeth_fn *ret;
-    EVP_PKEY_METHOD tmp;
-    const EVP_PKEY_METHOD *t = &tmp;
-
-    tmp.pkey_id = type;
-    if (app_pkey_methods) {
+    if (app_pkey_methods != NULL) {
         int idx;
+        EVP_PKEY_METHOD tmp;
+
+        tmp.pkey_id = type;
         idx = sk_EVP_PKEY_METHOD_find(app_pkey_methods, &tmp);
         if (idx >= 0)
             return sk_EVP_PKEY_METHOD_value(app_pkey_methods, idx);
     }
+    return NULL;
+}
+
+const EVP_PKEY_METHOD *EVP_PKEY_meth_find(int type)
+{
+    pmeth_fn *ret;
+    EVP_PKEY_METHOD tmp;
+    const EVP_PKEY_METHOD *t;
+
+    if ((t = evp_pkey_meth_find_added_by_application(type)) != NULL)
+        return t;
+
+    tmp.pkey_id = type;
+    t = &tmp;
     ret = OBJ_bsearch_pmeth_func(&t, standard_methods,
-                                 sizeof(standard_methods) /
-                                 sizeof(pmeth_fn));
+                                 OSSL_NELEM(standard_methods));
     if (ret == NULL || *ret == NULL)
         return NULL;
     return (**ret)();
@@ -245,7 +256,7 @@ static EVP_PKEY_CTX *int_ctx_new(OSSL_LIB_CTX *libctx,
         pmeth = ENGINE_get_pkey_meth(e, id);
     else
 # endif
-        pmeth = EVP_PKEY_meth_find(id);
+        pmeth = evp_pkey_meth_find_added_by_application(id);
 
     /* END legacy */
 #endif /* FIPS_MODULE */
@@ -1315,6 +1326,14 @@ static int legacy_ctrl_to_param(EVP_PKEY_CTX *ctx, int keytype, int optype,
             return EVP_PKEY_CTX_set_rsa_keygen_primes(ctx, p1);
         }
     }
+
+    if (keytype == EVP_PKEY_RSA_PSS) {
+      switch(cmd) {
+        case EVP_PKEY_CTRL_MD:
+          return EVP_PKEY_CTX_set_rsa_pss_keygen_md(ctx, p2);
+      }
+    }
+
     /*
      * keytype == -1 is used when several key types share the same structure,
      * or for generic controls that are the same across multiple key types.
@@ -1665,8 +1684,33 @@ static int evp_pkey_ctx_store_cached_data(EVP_PKEY_CTX *ctx,
                                           int cmd, const char *name,
                                           const void *data, size_t data_len)
 {
-    if ((keytype != -1 && ctx->pmeth->pkey_id != keytype)
-        || ((optype != -1) && !(ctx->operation & optype))) {
+    if (keytype != -1) {
+        switch (evp_pkey_ctx_state(ctx)) {
+        case EVP_PKEY_STATE_PROVIDER:
+            if (ctx->keymgmt == NULL) {
+                ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
+                return -2;
+            }
+            if (!EVP_KEYMGMT_is_a(ctx->keymgmt,
+                                  evp_pkey_type2name(keytype))) {
+                ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_OPERATION);
+                return -1;
+            }
+            break;
+        case EVP_PKEY_STATE_UNKNOWN:
+        case EVP_PKEY_STATE_LEGACY:
+            if (ctx->pmeth == NULL) {
+                ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
+                return -2;
+            }
+            if (ctx->pmeth->pkey_id != keytype) {
+                ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_OPERATION);
+                return -1;
+            }
+            break;
+        }
+    }
+    if (optype != -1 && (ctx->operation & optype) == 0) {
         ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_OPERATION);
         return -1;
     }

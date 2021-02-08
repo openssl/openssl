@@ -5,8 +5,6 @@
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
 
-# Function codes
-
 #Reason codes
 ATTIC_R_AMBIGUOUS_CONTENT_TYPE:100:ambiguous content type
 ATTIC_R_BAD_PASSWORD_READ:101:bad password read

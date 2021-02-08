@@ -60,6 +60,9 @@ ENCODER_TEXT("ED25519", ed25519, yes),
 ENCODER_TEXT("ED448", ed448, yes),
 ENCODER_TEXT("X25519", x25519, yes),
 ENCODER_TEXT("X448", x448, yes),
+# ifndef OPENSSL_NO_SM2
+ENCODER_TEXT("SM2", sm2, yes),
+# endif
 #endif
 
 /*
@@ -104,6 +107,10 @@ ENCODER_w_structure("DSA", dsa, yes, pem, type_specific),
 /* EC only supports keypair and parameters output. */
 ENCODER_w_structure("EC", ec, yes, der, type_specific_no_pub),
 ENCODER_w_structure("EC", ec, yes, pem, type_specific_no_pub),
+# ifndef OPENSSL_NO_SM2
+ENCODER_w_structure("SM2", sm2, yes, der, type_specific_no_pub),
+ENCODER_w_structure("SM2", sm2, yes, pem, type_specific_no_pub),
+# endif
 #endif
 
 /*
@@ -177,6 +184,13 @@ ENCODER_w_structure("ED448", ed448, yes, der, PKCS8),
 ENCODER_w_structure("ED448", ed448, yes, pem, PKCS8),
 ENCODER_w_structure("ED448", ed448, yes, der, SubjectPublicKeyInfo),
 ENCODER_w_structure("ED448", ed448, yes, pem, SubjectPublicKeyInfo),
+
+# ifndef OPENSSL_NO_SM2
+ENCODER_w_structure("SM2", sm2, yes, der, PKCS8),
+ENCODER_w_structure("SM2", sm2, yes, pem, PKCS8),
+ENCODER_w_structure("SM2", sm2, yes, der, SubjectPublicKeyInfo),
+ENCODER_w_structure("SM2", sm2, yes, pem, SubjectPublicKeyInfo),
+# endif
 #endif
 
 /*

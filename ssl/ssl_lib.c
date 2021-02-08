@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  * Copyright 2005 Nokia. All rights reserved.
  *
@@ -768,7 +768,6 @@ SSL *SSL_new(SSL_CTX *ctx)
     s->ext.ocsp.resp_len = 0;
     SSL_CTX_up_ref(ctx);
     s->session_ctx = ctx;
-#ifndef OPENSSL_NO_EC
     if (ctx->ext.ecpointformats) {
         s->ext.ecpointformats =
             OPENSSL_memdup(ctx->ext.ecpointformats,
@@ -778,7 +777,6 @@ SSL *SSL_new(SSL_CTX *ctx)
         s->ext.ecpointformats_len =
             ctx->ext.ecpointformats_len;
     }
-#endif
     if (ctx->ext.supportedgroups) {
         s->ext.supportedgroups =
             OPENSSL_memdup(ctx->ext.supportedgroups,
@@ -1212,10 +1210,8 @@ void SSL_free(SSL *s)
 
     OPENSSL_free(s->ext.hostname);
     SSL_CTX_free(s->session_ctx);
-#ifndef OPENSSL_NO_EC
     OPENSSL_free(s->ext.ecpointformats);
     OPENSSL_free(s->ext.peer_ecpointformats);
-#endif                          /* OPENSSL_NO_EC */
     OPENSSL_free(s->ext.supportedgroups);
     OPENSSL_free(s->ext.peer_supportedgroups);
     sk_X509_EXTENSION_pop_free(s->ext.ocsp.exts, X509_EXTENSION_free);
@@ -3392,10 +3388,9 @@ void SSL_CTX_free(SSL_CTX *a)
     tls_engine_finish(a->client_cert_engine);
 #endif
 
-#ifndef OPENSSL_NO_EC
     OPENSSL_free(a->ext.ecpointformats);
-#endif
     OPENSSL_free(a->ext.supportedgroups);
+    OPENSSL_free(a->ext.supported_groups_default);
     OPENSSL_free(a->ext.alpn);
     OPENSSL_secure_free(a->ext.secure);
 
@@ -3498,24 +3493,19 @@ void ssl_set_masks(SSL *s)
     uint32_t *pvalid = s->s3.tmp.valid_flags;
     int rsa_enc, rsa_sign, dh_tmp, dsa_sign;
     unsigned long mask_k, mask_a;
-#ifndef OPENSSL_NO_EC
     int have_ecc_cert, ecdsa_ok;
-#endif
+
     if (c == NULL)
         return;
 
     dh_tmp = (c->dh_tmp != NULL
-#ifndef OPENSSL_NO_DH
               || c->dh_tmp_cb != NULL
-#endif
               || c->dh_tmp_auto);
 
     rsa_enc = pvalid[SSL_PKEY_RSA] & CERT_PKEY_VALID;
     rsa_sign = pvalid[SSL_PKEY_RSA] & CERT_PKEY_VALID;
     dsa_sign = pvalid[SSL_PKEY_DSA_SIGN] & CERT_PKEY_VALID;
-#ifndef OPENSSL_NO_EC
     have_ecc_cert = pvalid[SSL_PKEY_ECC] & CERT_PKEY_VALID;
-#endif
     mask_k = 0;
     mask_a = 0;
 
@@ -3563,7 +3553,6 @@ void ssl_set_masks(SSL *s)
      * An ECC certificate may be usable for ECDH and/or ECDSA cipher suites
      * depending on the key usage extension.
      */
-#ifndef OPENSSL_NO_EC
     if (have_ecc_cert) {
         uint32_t ex_kusage;
         ex_kusage = X509_get_key_usage(c->pkeys[SSL_PKEY_ECC].x509);
@@ -3584,11 +3573,8 @@ void ssl_set_masks(SSL *s)
             && pvalid[SSL_PKEY_ED448] & CERT_PKEY_EXPLICIT_SIGN
             && TLS1_get_version(s) == TLS1_2_VERSION)
             mask_a |= SSL_aECDSA;
-#endif
 
-#ifndef OPENSSL_NO_EC
     mask_k |= SSL_kECDHE;
-#endif
 
 #ifndef OPENSSL_NO_PSK
     mask_k |= SSL_kPSK;
@@ -3605,8 +3591,6 @@ void ssl_set_masks(SSL *s)
     s->s3.tmp.mask_a = mask_a;
 }
 
-#ifndef OPENSSL_NO_EC
-
 int ssl_check_srvr_ecc_cert_and_alg(X509 *x, SSL *s)
 {
     if (s->s3.tmp.new_cipher->algorithm_auth & SSL_aECDSA) {
@@ -3618,8 +3602,6 @@ int ssl_check_srvr_ecc_cert_and_alg(X509 *x, SSL *s)
     }
     return 1;                   /* all checks are ok */
 }
-
-#endif
 
 int ssl_get_server_cert_serverinfo(SSL *s, const unsigned char **serverinfo,
                                    size_t *serverinfo_length)
@@ -3808,6 +3790,8 @@ int SSL_get_error(const SSL *s, int i)
     }
     if (SSL_want_x509_lookup(s))
         return SSL_ERROR_WANT_X509_LOOKUP;
+    if (SSL_want_retry_verify(s))
+        return SSL_ERROR_WANT_RETRY_VERIFY;
     if (SSL_want_async(s))
         return SSL_ERROR_WANT_ASYNC;
     if (SSL_want_async_job(s))
@@ -4480,27 +4464,6 @@ int SSL_want(const SSL *s)
 {
     return s->rwstate;
 }
-
-/**
- * \brief Set the callback for generating temporary DH keys.
- * \param ctx the SSL context.
- * \param dh the callback
- */
-
-#if !defined(OPENSSL_NO_DH) && !defined(OPENSSL_NO_DEPRECATED_3_0)
-void SSL_CTX_set_tmp_dh_callback(SSL_CTX *ctx,
-                                 DH *(*dh) (SSL *ssl, int is_export,
-                                            int keylength))
-{
-    SSL_CTX_callback_ctrl(ctx, SSL_CTRL_SET_TMP_DH_CB, (void (*)(void))dh);
-}
-
-void SSL_set_tmp_dh_callback(SSL *ssl, DH *(*dh) (SSL *ssl, int is_export,
-                                                  int keylength))
-{
-    SSL_callback_ctrl(ssl, SSL_CTRL_SET_TMP_DH_CB, (void (*)(void))dh);
-}
-#endif
 
 #ifndef OPENSSL_NO_PSK
 int SSL_CTX_use_psk_identity_hint(SSL_CTX *ctx, const char *identity_hint)

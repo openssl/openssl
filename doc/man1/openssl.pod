@@ -615,6 +615,12 @@ L<config(5)/Engine Configuration>.
 The engine will be used for key ids specified with B<-key> and similar
 options when an option like B<-keyform engine> is given.
 
+A special case is the C<loader_attic> engine, which
+is meant just for internal OpenSSL testing purposes and
+supports loading keys, parameters, certificates, and CRLs from files.
+When this engine is used, files with such credentials are read via this engine.
+Using the C<file:> schema is optional; a plain file (path) name will do.
+
 =back
 
 Options specifying keys, like B<-key> and similar, can use the generic
@@ -638,6 +644,26 @@ necessary.  For a PKCS#11 implementation that has implemented such a loader,
 the PKCS#11 URI as defined in RFC 7512 should be possible to use directly:
 
     -key pkcs11:object=some-private-key;pin-value=1234
+
+=head2 Provider Options
+
+=over 4
+
+=item B<-provider> I<name>
+
+Load and initialize the provider identified by I<name>.
+
+=item B<-provider-path> I<path>
+
+Specifies the search path that is to be used for looking for providers.
+
+=item B<-propquery> I<propq>
+
+Specifies the I<property query clause> to be used when fetching algorithms
+from the loaded providers.
+See L<property(7)> for a more detailed description.
+
+=back
 
 =head1 ENVIRONMENT
 
@@ -796,7 +822,7 @@ that program with no arguments is now equivalent to C<openssl help>.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

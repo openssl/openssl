@@ -56,9 +56,7 @@ my $proxy = TLSProxy::Proxy->new(
 setrmextms(0, 0);
 $proxy->clientflags("-no_tls1_3");
 $proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
-my $numtests = 9;
-$numtests++ if (!disabled("tls1_3"));
-plan tests => $numtests;
+plan tests => 10;
 checkmessages(1, "Default extended master secret test", 1, 1, 1);
 
 #Test 2: If client omits extended master secret extension, server should too.
@@ -175,11 +173,14 @@ $proxy->clientstart();
 ok(TLSProxy::Message->fail(), "Server inconsistent session resumption 2");
 unlink $session;
 
-#Test 10: In TLS1.3 we should not negotiate extended master secret
-#Expected result: ClientHello extension seen; ServerHello extension not seen
-#                 TLS1.3 handshake (will appear as abbreviated handshake
-#                 because of no CKE message)
-if (!disabled("tls1_3")) {
+SKIP: {
+    skip "TLS 1.3 disabled", 1
+        if disabled("tls1_3") || (disabled("ec") && disabled("dh"));
+
+    #Test 10: In TLS1.3 we should not negotiate extended master secret
+    #Expected result: ClientHello extension seen; ServerHello extension not seen
+    #                 TLS1.3 handshake (will appear as abbreviated handshake
+    #                 because of no CKE message)
     clearall();
     setrmextms(0, 0);
     $proxy->start();

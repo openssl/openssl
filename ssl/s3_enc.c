@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright 2005 Nokia. All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -297,10 +297,8 @@ int ssl3_setup_key_block(SSL *s)
             if (s->session->cipher->algorithm_enc == SSL_eNULL)
                 s->s3.need_empty_fragments = 0;
 
-#ifndef OPENSSL_NO_RC4
             if (s->session->cipher->algorithm_enc == SSL_RC4)
                 s->s3.need_empty_fragments = 0;
-#endif
         }
     }
 

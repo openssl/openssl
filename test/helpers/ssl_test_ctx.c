@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -177,6 +177,7 @@ const char *ssl_protocol_name(int protocol)
 static const test_enum ssl_verify_callbacks[] = {
     {"None", SSL_TEST_VERIFY_NONE},
     {"AcceptAll", SSL_TEST_VERIFY_ACCEPT_ALL},
+    {"RetryOnce", SSL_TEST_VERIFY_RETRY_ONCE},
     {"RejectAll", SSL_TEST_VERIFY_REJECT_ALL},
 };
 
@@ -184,6 +185,7 @@ __owur static int parse_client_verify_callback(SSL_TEST_CLIENT_CONF *client_conf
                                                const char *value)
 {
     int ret_value;
+
     if (!parse_enum(ssl_verify_callbacks, OSSL_NELEM(ssl_verify_callbacks),
                     &ret_value, value)) {
         return 0;
