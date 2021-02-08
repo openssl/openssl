@@ -71,10 +71,16 @@
 # define EVP_PKEY_P256_DILITHIUM2 NID_p256_dilithium2
 # define EVP_PKEY_RSA3072_DILITHIUM2 NID_rsa3072_dilithium2
 # define EVP_PKEY_DILITHIUM3 NID_dilithium3
-# define EVP_PKEY_P256_DILITHIUM3 NID_p256_dilithium3
-# define EVP_PKEY_RSA3072_DILITHIUM3 NID_rsa3072_dilithium3
-# define EVP_PKEY_DILITHIUM4 NID_dilithium4
-# define EVP_PKEY_P384_DILITHIUM4 NID_p384_dilithium4
+# define EVP_PKEY_P384_DILITHIUM3 NID_p384_dilithium3
+# define EVP_PKEY_DILITHIUM5 NID_dilithium5
+# define EVP_PKEY_P521_DILITHIUM5 NID_p521_dilithium5
+# define EVP_PKEY_DILITHIUM2_AES NID_dilithium2_aes
+# define EVP_PKEY_P256_DILITHIUM2_AES NID_p256_dilithium2_aes
+# define EVP_PKEY_RSA3072_DILITHIUM2_AES NID_rsa3072_dilithium2_aes
+# define EVP_PKEY_DILITHIUM3_AES NID_dilithium3_aes
+# define EVP_PKEY_P384_DILITHIUM3_AES NID_p384_dilithium3_aes
+# define EVP_PKEY_DILITHIUM5_AES NID_dilithium5_aes
+# define EVP_PKEY_P521_DILITHIUM5_AES NID_p521_dilithium5_aes
 # define EVP_PKEY_FALCON512 NID_falcon512
 # define EVP_PKEY_P256_FALCON512 NID_p256_falcon512
 # define EVP_PKEY_RSA3072_FALCON512 NID_rsa3072_falcon512
@@ -100,7 +106,7 @@
 # define EVP_PKEY_SPHINCSSHAKE256128FROBUST NID_sphincsshake256128frobust
 # define EVP_PKEY_P256_SPHINCSSHAKE256128FROBUST NID_p256_sphincsshake256128frobust
 # define EVP_PKEY_RSA3072_SPHINCSSHAKE256128FROBUST NID_rsa3072_sphincsshake256128frobust
-#define OQS_OPENSSL_SIG_algs_length 36
+#define OQS_OPENSSL_SIG_algs_length 42
 #define OQS_OPENSSL_KEM_algs_length 40
 #define IS_OQS_OPENSSL_KEM_NID(a) ((a >= NID_oqs_kem_default) && (a <= NID_p384_sntrup857))
 #define IS_OQS_OPENSSL_SIG_NID(a) ((a >= NID_oqs_sig_default) && (a <= NID_rsa3072_sphincsshake256128frobust))

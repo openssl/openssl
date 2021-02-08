@@ -935,10 +935,16 @@ static const uint16_t tls12_sigalgs[] = {
     TLSEXT_SIGALG_p256_dilithium2,
     TLSEXT_SIGALG_rsa3072_dilithium2,
     TLSEXT_SIGALG_dilithium3,
-    TLSEXT_SIGALG_p256_dilithium3,
-    TLSEXT_SIGALG_rsa3072_dilithium3,
-    TLSEXT_SIGALG_dilithium4,
-    TLSEXT_SIGALG_p384_dilithium4,
+    TLSEXT_SIGALG_p384_dilithium3,
+    TLSEXT_SIGALG_dilithium5,
+    TLSEXT_SIGALG_p521_dilithium5,
+    TLSEXT_SIGALG_dilithium2_aes,
+    TLSEXT_SIGALG_p256_dilithium2_aes,
+    TLSEXT_SIGALG_rsa3072_dilithium2_aes,
+    TLSEXT_SIGALG_dilithium3_aes,
+    TLSEXT_SIGALG_p384_dilithium3_aes,
+    TLSEXT_SIGALG_dilithium5_aes,
+    TLSEXT_SIGALG_p521_dilithium5_aes,
     TLSEXT_SIGALG_falcon512,
     TLSEXT_SIGALG_p256_falcon512,
     TLSEXT_SIGALG_rsa3072_falcon512,
@@ -1115,17 +1121,35 @@ static const SIGALG_LOOKUP sigalg_lookup_tbl[] = {
     {"dilithium3", TLSEXT_SIGALG_dilithium3,
      NID_undef, -1, EVP_PKEY_DILITHIUM3, SSL_PKEY_DILITHIUM3,
      NID_undef, NID_undef},
-    {"p256_dilithium3", TLSEXT_SIGALG_p256_dilithium3,
-     NID_undef, -1, EVP_PKEY_P256_DILITHIUM3, SSL_PKEY_P256_DILITHIUM3,
+    {"p384_dilithium3", TLSEXT_SIGALG_p384_dilithium3,
+     NID_undef, -1, EVP_PKEY_P384_DILITHIUM3, SSL_PKEY_P384_DILITHIUM3,
      NID_undef, NID_undef},
-    {"rsa3072_dilithium3", TLSEXT_SIGALG_rsa3072_dilithium3,
-     NID_undef, -1, EVP_PKEY_RSA3072_DILITHIUM3, SSL_PKEY_RSA3072_DILITHIUM3,
+    {"dilithium5", TLSEXT_SIGALG_dilithium5,
+     NID_undef, -1, EVP_PKEY_DILITHIUM5, SSL_PKEY_DILITHIUM5,
      NID_undef, NID_undef},
-    {"dilithium4", TLSEXT_SIGALG_dilithium4,
-     NID_undef, -1, EVP_PKEY_DILITHIUM4, SSL_PKEY_DILITHIUM4,
+    {"p521_dilithium5", TLSEXT_SIGALG_p521_dilithium5,
+     NID_undef, -1, EVP_PKEY_P521_DILITHIUM5, SSL_PKEY_P521_DILITHIUM5,
      NID_undef, NID_undef},
-    {"p384_dilithium4", TLSEXT_SIGALG_p384_dilithium4,
-     NID_undef, -1, EVP_PKEY_P384_DILITHIUM4, SSL_PKEY_P384_DILITHIUM4,
+    {"dilithium2_aes", TLSEXT_SIGALG_dilithium2_aes,
+     NID_undef, -1, EVP_PKEY_DILITHIUM2_AES, SSL_PKEY_DILITHIUM2_AES,
+     NID_undef, NID_undef},
+    {"p256_dilithium2_aes", TLSEXT_SIGALG_p256_dilithium2_aes,
+     NID_undef, -1, EVP_PKEY_P256_DILITHIUM2_AES, SSL_PKEY_P256_DILITHIUM2_AES,
+     NID_undef, NID_undef},
+    {"rsa3072_dilithium2_aes", TLSEXT_SIGALG_rsa3072_dilithium2_aes,
+     NID_undef, -1, EVP_PKEY_RSA3072_DILITHIUM2_AES, SSL_PKEY_RSA3072_DILITHIUM2_AES,
+     NID_undef, NID_undef},
+    {"dilithium3_aes", TLSEXT_SIGALG_dilithium3_aes,
+     NID_undef, -1, EVP_PKEY_DILITHIUM3_AES, SSL_PKEY_DILITHIUM3_AES,
+     NID_undef, NID_undef},
+    {"p384_dilithium3_aes", TLSEXT_SIGALG_p384_dilithium3_aes,
+     NID_undef, -1, EVP_PKEY_P384_DILITHIUM3_AES, SSL_PKEY_P384_DILITHIUM3_AES,
+     NID_undef, NID_undef},
+    {"dilithium5_aes", TLSEXT_SIGALG_dilithium5_aes,
+     NID_undef, -1, EVP_PKEY_DILITHIUM5_AES, SSL_PKEY_DILITHIUM5_AES,
+     NID_undef, NID_undef},
+    {"p521_dilithium5_aes", TLSEXT_SIGALG_p521_dilithium5_aes,
+     NID_undef, -1, EVP_PKEY_P521_DILITHIUM5_AES, SSL_PKEY_P521_DILITHIUM5_AES,
      NID_undef, NID_undef},
     {"falcon512", TLSEXT_SIGALG_falcon512,
      NID_undef, -1, EVP_PKEY_FALCON512, SSL_PKEY_FALCON512,
@@ -1458,15 +1482,27 @@ static int sigalg_security_bits(const SIGALG_LOOKUP *lu)
         else if(lu->sigalg == TLSEXT_SIGALG_rsa3072_dilithium2)
             secbits = 128;
         else if(lu->sigalg == TLSEXT_SIGALG_dilithium3)
-            secbits = 128;
-        else if(lu->sigalg == TLSEXT_SIGALG_p256_dilithium3)
-            secbits = 128;
-        else if(lu->sigalg == TLSEXT_SIGALG_rsa3072_dilithium3)
-            secbits = 128;
-        else if(lu->sigalg == TLSEXT_SIGALG_dilithium4)
             secbits = 192;
-        else if(lu->sigalg == TLSEXT_SIGALG_p384_dilithium4)
+        else if(lu->sigalg == TLSEXT_SIGALG_p384_dilithium3)
             secbits = 192;
+        else if(lu->sigalg == TLSEXT_SIGALG_dilithium5)
+            secbits = 256;
+        else if(lu->sigalg == TLSEXT_SIGALG_p521_dilithium5)
+            secbits = 256;
+        else if(lu->sigalg == TLSEXT_SIGALG_dilithium2_aes)
+            secbits = 128;
+        else if(lu->sigalg == TLSEXT_SIGALG_p256_dilithium2_aes)
+            secbits = 128;
+        else if(lu->sigalg == TLSEXT_SIGALG_rsa3072_dilithium2_aes)
+            secbits = 128;
+        else if(lu->sigalg == TLSEXT_SIGALG_dilithium3_aes)
+            secbits = 192;
+        else if(lu->sigalg == TLSEXT_SIGALG_p384_dilithium3_aes)
+            secbits = 192;
+        else if(lu->sigalg == TLSEXT_SIGALG_dilithium5_aes)
+            secbits = 256;
+        else if(lu->sigalg == TLSEXT_SIGALG_p521_dilithium5_aes)
+            secbits = 256;
         else if(lu->sigalg == TLSEXT_SIGALG_falcon512)
             secbits = 128;
         else if(lu->sigalg == TLSEXT_SIGALG_p256_falcon512)
@@ -2942,10 +2978,16 @@ void tls1_set_cert_validity(SSL *s)
     tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_P256_DILITHIUM2);
     tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_RSA3072_DILITHIUM2);
     tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_DILITHIUM3);
-    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_P256_DILITHIUM3);
-    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_RSA3072_DILITHIUM3);
-    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_DILITHIUM4);
-    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_P384_DILITHIUM4);
+    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_P384_DILITHIUM3);
+    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_DILITHIUM5);
+    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_P521_DILITHIUM5);
+    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_DILITHIUM2_AES);
+    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_P256_DILITHIUM2_AES);
+    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_RSA3072_DILITHIUM2_AES);
+    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_DILITHIUM3_AES);
+    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_P384_DILITHIUM3_AES);
+    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_DILITHIUM5_AES);
+    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_P521_DILITHIUM5_AES);
     tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_FALCON512);
     tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_P256_FALCON512);
     tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_RSA3072_FALCON512);

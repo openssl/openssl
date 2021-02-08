@@ -253,21 +253,33 @@ static const char *get_sigtype(int nid)
     case NID_rsa3072_oqs_sig_default:
         return "RSA3072 - OQS Default Signature Algorithm";
     case NID_dilithium2:
-        return "Dilithium-2";
+        return "Dilithium2";
     case NID_p256_dilithium2:
-        return "ECDSA p256 - Dilithium-2";
+        return "ECDSA p256 - Dilithium2";
     case NID_rsa3072_dilithium2:
-        return "RSA3072 - Dilithium-2";
+        return "RSA3072 - Dilithium2";
     case NID_dilithium3:
-        return "Dilithium-3";
-    case NID_p256_dilithium3:
-        return "ECDSA p256 - Dilithium-3";
-    case NID_rsa3072_dilithium3:
-        return "RSA3072 - Dilithium-3";
-    case NID_dilithium4:
-        return "Dilithium-4";
-    case NID_p384_dilithium4:
-        return "ECDSA p384 - Dilithium-4";
+        return "Dilithium3";
+    case NID_p384_dilithium3:
+        return "ECDSA p384 - Dilithium3";
+    case NID_dilithium5:
+        return "Dilithium5";
+    case NID_p521_dilithium5:
+        return "ECDSA p521 - Dilithium5";
+    case NID_dilithium2_aes:
+        return "Dilithium2_AES";
+    case NID_p256_dilithium2_aes:
+        return "ECDSA p256 - Dilithium2_AES";
+    case NID_rsa3072_dilithium2_aes:
+        return "RSA3072 - Dilithium2_AES";
+    case NID_dilithium3_aes:
+        return "Dilithium3_AES";
+    case NID_p384_dilithium3_aes:
+        return "ECDSA p384 - Dilithium3_AES";
+    case NID_dilithium5_aes:
+        return "Dilithium5_AES";
+    case NID_p521_dilithium5_aes:
+        return "ECDSA p521 - Dilithium5_AES";
     case NID_falcon512:
         return "Falcon-512";
     case NID_p256_falcon512:

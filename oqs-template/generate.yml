@@ -326,53 +326,89 @@ sigs:
     # enterprise (1)
     # IBM (2)
     # qsc (267)
-    # Dilithium-raw (6)
+    # Dilithium-r3 (7)
     family: 'CRYSTALS-DILITHIUM'
     variants:
       -
         name: 'dilithium2'
-        pretty_name: 'Dilithium-2'
+        pretty_name: 'Dilithium2'
         oqs_meth: 'OQS_SIG_alg_dilithium_2'
         security: 128
-        oid: '1.3.6.1.4.1.2.267.6.4.3'
-        code_point: '0xfe03'
+        oid: '1.3.6.1.4.1.2.267.7.4.4'
+        code_point: '0xfea0'
         enable: true
         mix_with: [{'name': 'p256',
                     'pretty_name': 'ECDSA p256',
-                    'oid': '1.3.9999.2.2',
-                    'code_point': '0xfe04'},
+                    'oid': '1.3.9999.2.7.1',
+                    'code_point': '0xfea1'},
                    {'name': 'rsa3072',
                     'pretty_name': 'RSA3072',
-                    'oid': '1.3.9999.2.3',
-                    'code_point': '0xfe05'}]
+                    'oid': '1.3.9999.2.7.2',
+                    'code_point': '0xfea2'}]
       -
         name: 'dilithium3'
-        pretty_name: 'Dilithium-3'
+        pretty_name: 'Dilithium3'
         oqs_meth: 'OQS_SIG_alg_dilithium_3'
-        security: 128
-        oid: '1.3.6.1.4.1.2.267.6.5.4'
-        code_point: '0xfe06'
-        enable: true
-        mix_with: [{'name': 'p256',
-                    'pretty_name': 'ECDSA p256',
-                    'oid': '1.3.9999.2.4',
-                    'code_point': '0xfe07'},
-                   {'name': 'rsa3072',
-                    'pretty_name': 'RSA3072',
-                    'oid': '1.3.9999.2.5',
-                    'code_point': '0xfe08'}]
-      -
-        name: 'dilithium4'
-        pretty_name: 'Dilithium-4'
-        oqs_meth: 'OQS_SIG_alg_dilithium_4'
         security: 192
-        oid: '1.3.6.1.4.1.2.267.6.6.5'
-        code_point: '0xfe09'
+        oid: '1.3.6.1.4.1.2.267.7.6.5'
+        code_point: '0xfea3'
         enable: true
         mix_with: [{'name': 'p384',
                     'pretty_name': 'ECDSA p384',
-                    'oid': '1.3.9999.2.6',
-                    'code_point': '0xfe0a'}]
+                    'oid': '1.3.9999.2.7.3',
+                    'code_point': '0xfea4'}]
+      -
+        name: 'dilithium5'
+        pretty_name: 'Dilithium5'
+        oqs_meth: 'OQS_SIG_alg_dilithium_5'
+        security: 256
+        oid: '1.3.6.1.4.1.2.267.7.8.7'
+        code_point: '0xfea5'
+        enable: true
+        mix_with: [{'name': 'p521',
+                    'pretty_name': 'ECDSA p521',
+                    'oid': '1.3.9999.2.7.4',
+                    'code_point': '0xfea6'}]
+      -
+        name: 'dilithium2_aes'
+        pretty_name: 'Dilithium2_AES'
+        oqs_meth: 'OQS_SIG_alg_dilithium_2_aes'
+        security: 128
+        oid: '1.3.6.1.4.1.2.267.11.4.4'
+        code_point: '0xfea7'
+        enable: true
+        mix_with: [{'name': 'p256',
+                    'pretty_name': 'ECDSA p256',
+                    'oid': '1.3.9999.2.11.1',
+                    'code_point': '0xfea8'},
+                   {'name': 'rsa3072',
+                    'pretty_name': 'RSA3072',
+                    'oid': '1.3.9999.2.11.2',
+                    'code_point': '0xfea9'}]
+      -
+        name: 'dilithium3_aes'
+        pretty_name: 'Dilithium3_AES'
+        oqs_meth: 'OQS_SIG_alg_dilithium_3_aes'
+        security: 192
+        oid: '1.3.6.1.4.1.2.267.11.6.5'
+        code_point: '0xfeaa'
+        enable: true
+        mix_with: [{'name': 'p384',
+                    'pretty_name': 'ECDSA p384',
+                    'oid': '1.3.9999.2.11.3',
+                    'code_point': '0xfeab'}]
+      -
+        name: 'dilithium5_aes'
+        pretty_name: 'Dilithium5_AES'
+        oqs_meth: 'OQS_SIG_alg_dilithium_5_aes'
+        security: 256
+        oid: '1.3.6.1.4.1.2.267.11.8.7'
+        code_point: '0xfeac'
+        enable: true
+        mix_with: [{'name': 'p521',
+                    'pretty_name': 'ECDSA p521',
+                    'oid': '1.3.9999.2.11.4',
+                    'code_point': '0xfead'}]
   -
     # iso (1)
     # identified-organization (3)

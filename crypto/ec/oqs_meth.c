@@ -82,10 +82,16 @@ int oqssl_sig_nids_list[] = {
         NID_p256_dilithium2,
         NID_rsa3072_dilithium2,
         NID_dilithium3,
-        NID_p256_dilithium3,
-        NID_rsa3072_dilithium3,
-        NID_dilithium4,
-        NID_p384_dilithium4,
+        NID_p384_dilithium3,
+        NID_dilithium5,
+        NID_p521_dilithium5,
+        NID_dilithium2_aes,
+        NID_p256_dilithium2_aes,
+        NID_rsa3072_dilithium2_aes,
+        NID_dilithium3_aes,
+        NID_p384_dilithium3_aes,
+        NID_dilithium5_aes,
+        NID_p521_dilithium5_aes,
         NID_falcon512,
         NID_p256_falcon512,
         NID_rsa3072_falcon512,
@@ -195,12 +201,21 @@ char* get_oqs_alg_name(int openssl_nid)
     case NID_rsa3072_dilithium2:
       return OQS_SIG_alg_dilithium_2;
     case NID_dilithium3:
-    case NID_p256_dilithium3:
-    case NID_rsa3072_dilithium3:
+    case NID_p384_dilithium3:
       return OQS_SIG_alg_dilithium_3;
-    case NID_dilithium4:
-    case NID_p384_dilithium4:
-      return OQS_SIG_alg_dilithium_4;
+    case NID_dilithium5:
+    case NID_p521_dilithium5:
+      return OQS_SIG_alg_dilithium_5;
+    case NID_dilithium2_aes:
+    case NID_p256_dilithium2_aes:
+    case NID_rsa3072_dilithium2_aes:
+      return OQS_SIG_alg_dilithium_2_aes;
+    case NID_dilithium3_aes:
+    case NID_p384_dilithium3_aes:
+      return OQS_SIG_alg_dilithium_3_aes;
+    case NID_dilithium5_aes:
+    case NID_p521_dilithium5_aes:
+      return OQS_SIG_alg_dilithium_5_aes;
     case NID_falcon512:
     case NID_p256_falcon512:
     case NID_rsa3072_falcon512:
@@ -372,9 +387,12 @@ static int is_oqs_hybrid_alg(int openssl_nid)
     case NID_rsa3072_oqs_sig_default:
     case NID_p256_dilithium2:
     case NID_rsa3072_dilithium2:
-    case NID_p256_dilithium3:
-    case NID_rsa3072_dilithium3:
-    case NID_p384_dilithium4:
+    case NID_p384_dilithium3:
+    case NID_p521_dilithium5:
+    case NID_p256_dilithium2_aes:
+    case NID_rsa3072_dilithium2_aes:
+    case NID_p384_dilithium3_aes:
+    case NID_p521_dilithium5_aes:
     case NID_p256_falcon512:
     case NID_rsa3072_falcon512:
     case NID_p521_falcon1024:
@@ -406,7 +424,7 @@ static int get_classical_nid(int hybrid_id)
 ///// OQS_TEMPLATE_FRAGMENT_ASSIGN_CLASSICAL_NIDS_START
     case NID_rsa3072_oqs_sig_default:
     case NID_rsa3072_dilithium2:
-    case NID_rsa3072_dilithium3:
+    case NID_rsa3072_dilithium2_aes:
     case NID_rsa3072_falcon512:
     case NID_rsa3072_picnicl1full:
     case NID_rsa3072_picnic3l1:
@@ -417,7 +435,7 @@ static int get_classical_nid(int hybrid_id)
       return NID_rsaEncryption;
     case NID_p256_oqs_sig_default:
     case NID_p256_dilithium2:
-    case NID_p256_dilithium3:
+    case NID_p256_dilithium2_aes:
     case NID_p256_falcon512:
     case NID_p256_picnicl1full:
     case NID_p256_picnic3l1:
@@ -426,8 +444,11 @@ static int get_classical_nid(int hybrid_id)
     case NID_p256_sphincssha256128frobust:
     case NID_p256_sphincsshake256128frobust:
       return NID_X9_62_prime256v1;
-    case NID_p384_dilithium4:
+    case NID_p384_dilithium3:
+    case NID_p384_dilithium3_aes:
       return NID_secp384r1;
+    case NID_p521_dilithium5:
+    case NID_p521_dilithium5_aes:
     case NID_p521_falcon1024:
     case NID_p521_rainbowVclassic:
       return NID_secp521r1;///// OQS_TEMPLATE_FRAGMENT_ASSIGN_CLASSICAL_NIDS_END
@@ -447,11 +468,17 @@ static int get_oqs_nid(int hybrid_id)
     case NID_p256_dilithium2:
     case NID_rsa3072_dilithium2:
       return NID_dilithium2;
-    case NID_p256_dilithium3:
-    case NID_rsa3072_dilithium3:
+    case NID_p384_dilithium3:
       return NID_dilithium3;
-    case NID_p384_dilithium4:
-      return NID_dilithium4;
+    case NID_p521_dilithium5:
+      return NID_dilithium5;
+    case NID_p256_dilithium2_aes:
+    case NID_rsa3072_dilithium2_aes:
+      return NID_dilithium2_aes;
+    case NID_p384_dilithium3_aes:
+      return NID_dilithium3_aes;
+    case NID_p521_dilithium5_aes:
+      return NID_dilithium5_aes;
     case NID_p256_falcon512:
     case NID_rsa3072_falcon512:
       return NID_falcon512;
@@ -603,12 +630,21 @@ static int get_oqs_security_bits(int openssl_nid)
     case NID_rsa3072_dilithium2:
       return 128;
     case NID_dilithium3:
-    case NID_p256_dilithium3:
-    case NID_rsa3072_dilithium3:
-      return 128;
-    case NID_dilithium4:
-    case NID_p384_dilithium4:
+    case NID_p384_dilithium3:
       return 192;
+    case NID_dilithium5:
+    case NID_p521_dilithium5:
+      return 256;
+    case NID_dilithium2_aes:
+    case NID_p256_dilithium2_aes:
+    case NID_rsa3072_dilithium2_aes:
+      return 128;
+    case NID_dilithium3_aes:
+    case NID_p384_dilithium3_aes:
+      return 192;
+    case NID_dilithium5_aes:
+    case NID_p521_dilithium5_aes:
+      return 256;
     case NID_falcon512:
     case NID_p256_falcon512:
     case NID_rsa3072_falcon512:
@@ -1222,10 +1258,16 @@ static int oqs_item_verify(EVP_MD_CTX *ctx, const ASN1_ITEM *it, void *asn,
         nid != NID_p256_dilithium2 &&
         nid != NID_rsa3072_dilithium2 &&
         nid != NID_dilithium3 &&
-        nid != NID_p256_dilithium3 &&
-        nid != NID_rsa3072_dilithium3 &&
-        nid != NID_dilithium4 &&
-        nid != NID_p384_dilithium4 &&
+        nid != NID_p384_dilithium3 &&
+        nid != NID_dilithium5 &&
+        nid != NID_p521_dilithium5 &&
+        nid != NID_dilithium2_aes &&
+        nid != NID_p256_dilithium2_aes &&
+        nid != NID_rsa3072_dilithium2_aes &&
+        nid != NID_dilithium3_aes &&
+        nid != NID_p384_dilithium3_aes &&
+        nid != NID_dilithium5_aes &&
+        nid != NID_p521_dilithium5_aes &&
         nid != NID_falcon512 &&
         nid != NID_p256_falcon512 &&
         nid != NID_rsa3072_falcon512 &&
@@ -1757,14 +1799,20 @@ DEFINE_OQS_EVP_PKEY_ASN1_METHOD(ALG, NID_ALG, SHORT_NAME, LONG_NAME)
 DEFINE_OQS_EVP_METHODS(oqs_sig_default, NID_oqs_sig_default, "oqs_sig_default", "OpenSSL OQS Default Signature Algorithm algorithm")
 DEFINE_OQS_EVP_METHODS(p256_oqs_sig_default, NID_p256_oqs_sig_default, "p256_oqs_sig_default", "OpenSSL ECDSA p256 OQS Default Signature Algorithm algorithm")
 DEFINE_OQS_EVP_METHODS(rsa3072_oqs_sig_default, NID_rsa3072_oqs_sig_default, "rsa3072_oqs_sig_default", "OpenSSL RSA3072 OQS Default Signature Algorithm algorithm")
-DEFINE_OQS_EVP_METHODS(dilithium2, NID_dilithium2, "dilithium2", "OpenSSL Dilithium-2 algorithm")
-DEFINE_OQS_EVP_METHODS(p256_dilithium2, NID_p256_dilithium2, "p256_dilithium2", "OpenSSL ECDSA p256 Dilithium-2 algorithm")
-DEFINE_OQS_EVP_METHODS(rsa3072_dilithium2, NID_rsa3072_dilithium2, "rsa3072_dilithium2", "OpenSSL RSA3072 Dilithium-2 algorithm")
-DEFINE_OQS_EVP_METHODS(dilithium3, NID_dilithium3, "dilithium3", "OpenSSL Dilithium-3 algorithm")
-DEFINE_OQS_EVP_METHODS(p256_dilithium3, NID_p256_dilithium3, "p256_dilithium3", "OpenSSL ECDSA p256 Dilithium-3 algorithm")
-DEFINE_OQS_EVP_METHODS(rsa3072_dilithium3, NID_rsa3072_dilithium3, "rsa3072_dilithium3", "OpenSSL RSA3072 Dilithium-3 algorithm")
-DEFINE_OQS_EVP_METHODS(dilithium4, NID_dilithium4, "dilithium4", "OpenSSL Dilithium-4 algorithm")
-DEFINE_OQS_EVP_METHODS(p384_dilithium4, NID_p384_dilithium4, "p384_dilithium4", "OpenSSL ECDSA p384 Dilithium-4 algorithm")
+DEFINE_OQS_EVP_METHODS(dilithium2, NID_dilithium2, "dilithium2", "OpenSSL Dilithium2 algorithm")
+DEFINE_OQS_EVP_METHODS(p256_dilithium2, NID_p256_dilithium2, "p256_dilithium2", "OpenSSL ECDSA p256 Dilithium2 algorithm")
+DEFINE_OQS_EVP_METHODS(rsa3072_dilithium2, NID_rsa3072_dilithium2, "rsa3072_dilithium2", "OpenSSL RSA3072 Dilithium2 algorithm")
+DEFINE_OQS_EVP_METHODS(dilithium3, NID_dilithium3, "dilithium3", "OpenSSL Dilithium3 algorithm")
+DEFINE_OQS_EVP_METHODS(p384_dilithium3, NID_p384_dilithium3, "p384_dilithium3", "OpenSSL ECDSA p384 Dilithium3 algorithm")
+DEFINE_OQS_EVP_METHODS(dilithium5, NID_dilithium5, "dilithium5", "OpenSSL Dilithium5 algorithm")
+DEFINE_OQS_EVP_METHODS(p521_dilithium5, NID_p521_dilithium5, "p521_dilithium5", "OpenSSL ECDSA p521 Dilithium5 algorithm")
+DEFINE_OQS_EVP_METHODS(dilithium2_aes, NID_dilithium2_aes, "dilithium2_aes", "OpenSSL Dilithium2_AES algorithm")
+DEFINE_OQS_EVP_METHODS(p256_dilithium2_aes, NID_p256_dilithium2_aes, "p256_dilithium2_aes", "OpenSSL ECDSA p256 Dilithium2_AES algorithm")
+DEFINE_OQS_EVP_METHODS(rsa3072_dilithium2_aes, NID_rsa3072_dilithium2_aes, "rsa3072_dilithium2_aes", "OpenSSL RSA3072 Dilithium2_AES algorithm")
+DEFINE_OQS_EVP_METHODS(dilithium3_aes, NID_dilithium3_aes, "dilithium3_aes", "OpenSSL Dilithium3_AES algorithm")
+DEFINE_OQS_EVP_METHODS(p384_dilithium3_aes, NID_p384_dilithium3_aes, "p384_dilithium3_aes", "OpenSSL ECDSA p384 Dilithium3_AES algorithm")
+DEFINE_OQS_EVP_METHODS(dilithium5_aes, NID_dilithium5_aes, "dilithium5_aes", "OpenSSL Dilithium5_AES algorithm")
+DEFINE_OQS_EVP_METHODS(p521_dilithium5_aes, NID_p521_dilithium5_aes, "p521_dilithium5_aes", "OpenSSL ECDSA p521 Dilithium5_AES algorithm")
 DEFINE_OQS_EVP_METHODS(falcon512, NID_falcon512, "falcon512", "OpenSSL Falcon-512 algorithm")
 DEFINE_OQS_EVP_METHODS(p256_falcon512, NID_p256_falcon512, "p256_falcon512", "OpenSSL ECDSA p256 Falcon-512 algorithm")
 DEFINE_OQS_EVP_METHODS(rsa3072_falcon512, NID_rsa3072_falcon512, "rsa3072_falcon512", "OpenSSL RSA3072 Falcon-512 algorithm")
