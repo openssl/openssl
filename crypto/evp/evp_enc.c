@@ -182,6 +182,14 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
 #endif
     }
 
+    if (cipher->prov != NULL) {
+        if (!EVP_CIPHER_up_ref((EVP_CIPHER *)cipher)) {
+            ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
+            return 0;
+        }
+        EVP_CIPHER_free(ctx->fetched_cipher);
+        ctx->fetched_cipher = (EVP_CIPHER *)cipher;
+    }
     ctx->cipher = cipher;
     if (ctx->provctx == NULL) {
         ctx->provctx = ctx->cipher->newctx(ossl_provider_ctx(cipher->prov));
