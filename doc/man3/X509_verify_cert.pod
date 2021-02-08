@@ -49,7 +49,9 @@ otherwise they return 0, and in exceptional circumstances (such as malloc
 failure and internal errors) they can also return a negative code.
 
 On error or failure additional error information can be obtained by
-examining I<ctx> using, for example, L<X509_STORE_CTX_get_error(3)>.
+examining I<ctx> using, for example, L<X509_STORE_CTX_get_error(3)>.  Even if
+verification indicated success, the stored error code may be different from
+X509_V_OK, likely because a verification callback function has waived the error.
 
 =head1 SEE ALSO
 
