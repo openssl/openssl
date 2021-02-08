@@ -594,11 +594,15 @@ uninstall_html_docs:
 
 # Helper targets #####################################################
 
-copy-utils: $(BLDDIR)\util\wrap.pl
+copy-utils: $(BLDDIR)\util\wrap.pl $(BLDDIR)\apps\openssl.cnf
 
 $(BLDDIR)\util\wrap.pl: configdata.pm
 	@if NOT EXIST "$(BLDDIR)\util" mkdir "$(BLDDIR)\util"
 	@if NOT "$(SRCDIR)"=="$(BLDDIR)" copy "$(SRCDIR)\util\$(@F)" "$(BLDDIR)\util"
+
+$(BLDDIR)\apps\openssl.cnf: configdata.pm
+	@if NOT EXIST "$(BLDDIR)\apps" mkdir "$(BLDDIR)\apps"
+	@if NOT "$(SRCDIR)"=="$(BLDDIR)" copy "$(SRCDIR)\apps\$(@F)" "$(BLDDIR)\apps"
 
 # Building targets ###################################################
 
