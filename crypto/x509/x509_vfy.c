@@ -134,8 +134,8 @@ static X509 *lookup_cert_match(X509_STORE_CTX *ctx, X509 *x)
 
 /*-
  * Inform the verify callback of an error.
- * The error code is set to |err| if |err| is not X509_V_OK,
- * else |ctx->error| is left unchanged (under the assumption is set elsewhere).
+ * The error code is set to |err| if |err| is not X509_V_OK, else
+ * |ctx->error| is left unchanged (under the assumption it is set elsewhere).
  * The error depth is |depth| if >= 0, else it defaults to |ctx->error_depth|.
  * The error cert is |x| if not NULL, else defaults to the chain cert at depth.
  *
