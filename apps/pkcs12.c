@@ -220,9 +220,18 @@ int pkcs12_main(int argc, char **argv)
         case OPT_EXPORT:
             export_pkcs12 = 1;
             break;
+        case OPT_NODES:
+        case OPT_NOENC:
+            /*
+             * |enc_flag| stores the name of the option used so it
+             * can be printed if an error message is output.
+             */
+            enc_flag = opt_flag() + 1;
+            enc = NULL;
+            break;
         case OPT_CIPHER:
             ciphername = opt_unknown();
-            enc_flag = opt_unknown();   /* overloaded meaning; see below. */
+            enc_flag = opt_unknown();
             break;
         case OPT_ITER:
             if (!opt_int(opt_arg(), &iter))
@@ -244,11 +253,6 @@ int pkcs12_main(int argc, char **argv)
             break;
         case OPT_MACALG:
             macalg = opt_arg();
-            break;
-        case OPT_NODES:
-        case OPT_NOENC:
-            enc_flag = opt_flag() + 1;
-            enc = NULL;
             break;
         case OPT_CERTPBE:
             if (!set_pbe(&cert_pbe, opt_arg()))
