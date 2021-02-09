@@ -33,6 +33,7 @@ struct filter_prov_globals_st {
         OSSL_ALGORITHM alg[MAX_ALG_FILTERS + 1];
     } dispatch[MAX_FILTERS];
     int num_dispatch;
+    int no_cache;
 };
 
 static struct filter_prov_globals_st ourglobals;
@@ -83,7 +84,7 @@ static const OSSL_ALGORITHM *filter_query(void *provctx,
 
     for (i = 0; i < globs->num_dispatch; i++) {
         if (globs->dispatch[i].operation == operation_id) {
-            *no_cache = 0;
+            *no_cache = globs->no_cache;
             return globs->dispatch[i].alg;
         }
     }
@@ -156,10 +157,6 @@ int filter_provider_set_filter(int operation, const char *filterstr)
     if (filterstrtmp == NULL)
         goto err;
 
-    /* We don't support no_cache */
-    if (no_cache)
-        goto err;
-
     /* Nothing to filter */
     if (provalgs == NULL)
         goto err;
@@ -199,6 +196,7 @@ int filter_provider_set_filter(int operation, const char *filterstr)
     }
 
     globs->dispatch[globs->num_dispatch].operation = operation;
+    globs->no_cache = no_cache;
     globs->num_dispatch++;
 
     ret = 1;
