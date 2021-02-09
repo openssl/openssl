@@ -152,7 +152,7 @@ should be made or reference counts increased instead.
 
 =head1 RETURN VALUES
 
-X509_STORE_CTX_new() returns a newly allocates context or NULL is an
+X509_STORE_CTX_new() returns a newly allocated context or NULL if an
 error occurred.
 
 X509_STORE_CTX_init() returns 1 for success or 0 if an error occurred.
