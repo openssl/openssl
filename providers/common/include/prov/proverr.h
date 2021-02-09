@@ -8,8 +8,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef OSSL_PROVIDERCOMMONERR_H
-# define OSSL_PROVIDERCOMMONERR_H
+#ifndef OSSL_PROVERR_H
+# define OSSL_PROVERR_H
 # pragma once
 
 # include <openssl/opensslconf.h>

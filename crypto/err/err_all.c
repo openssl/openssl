@@ -43,7 +43,7 @@
 #include "crypto/storeerr.h"
 #include "crypto/esserr.h"
 #include "internal/propertyerr.h"
-#include "prov/providercommonerr.h"
+#include "prov/proverr.h"
 
 int err_load_crypto_strings_int(void)
 {

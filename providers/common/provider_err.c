@@ -10,7 +10,7 @@
 
 #include <openssl/err.h>
 #include <openssl/proverr.h>
-#include "include/prov/providercommonerr.h"
+#include "include/prov/proverr.h"
 
 #ifndef OPENSSL_NO_ERR
 
