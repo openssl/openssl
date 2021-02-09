@@ -833,7 +833,7 @@ const OSSL_PARAM *sm2_settable_params(ossl_unused void *provctx)
 }
 
 static
-int sm2_validate(const void *keydata, int selection)
+int sm2_validate(const void *keydata, int selection, int checktype)
 {
     const EC_KEY *eck = keydata;
     int ok = 0;
@@ -868,7 +868,7 @@ int sm2_validate(const void *keydata, int selection)
 #endif
 
 static
-int ec_validate(const void *keydata, int selection)
+int ec_validate(const void *keydata, int selection, int checktype)
 {
     const EC_KEY *eck = keydata;
     int ok = 0;
