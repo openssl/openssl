@@ -378,7 +378,7 @@ static int dh_validate(const void *keydata, int selection)
         ok = 1;
 
     if ((selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) != 0)
-        ok = ok && DH_check_params_ex(dh);
+        ok = ok && DH_check_ex(dh);
 
     if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0)
         ok = ok && dh_validate_public(dh);
