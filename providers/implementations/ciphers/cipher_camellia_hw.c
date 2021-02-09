@@ -16,7 +16,6 @@
 #include <openssl/camellia.h>
 #include <openssl/proverr.h>
 #include "cipher_camellia.h"
-#include <openssl/camellia.h>
 
 static int cipher_hw_camellia_initkey(PROV_CIPHER_CTX *dat,
                                       const unsigned char *key, size_t keylen)
