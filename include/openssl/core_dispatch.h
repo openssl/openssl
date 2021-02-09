@@ -491,6 +491,9 @@ OSSL_CORE_MAKE_FUNC(int,rand_verify_zeroization,
 # define OSSL_KEYMGMT_SELECT_ALL                \
     ( OSSL_KEYMGMT_SELECT_KEYPAIR | OSSL_KEYMGMT_SELECT_ALL_PARAMETERS )
 
+# define OSSL_KEYMGMT_VALIDATE_FULL_CHECK              0
+# define OSSL_KEYMGMT_VALIDATE_QUICK_CHECK             1
+
 /* Basic key object creation */
 # define OSSL_FUNC_KEYMGMT_NEW                         1
 OSSL_CORE_MAKE_FUNC(void *, keymgmt_new, (void *provctx))
@@ -551,7 +554,8 @@ OSSL_CORE_MAKE_FUNC(int, keymgmt_has, (const void *keydata, int selection))
 
 /* Key checks - validation */
 # define OSSL_FUNC_KEYMGMT_VALIDATE                   22
-OSSL_CORE_MAKE_FUNC(int, keymgmt_validate, (const void *keydata, int selection))
+OSSL_CORE_MAKE_FUNC(int, keymgmt_validate, (const void *keydata, int selection,
+                                            int checktype))
 
 /* Key checks - matching */
 # define OSSL_FUNC_KEYMGMT_MATCH                      23

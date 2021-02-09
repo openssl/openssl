@@ -359,7 +359,7 @@ static const OSSL_PARAM *rsa_gettable_params(void *provctx)
     return rsa_params;
 }
 
-static int rsa_validate(const void *keydata, int selection)
+static int rsa_validate(const void *keydata, int selection, int checktype)
 {
     const RSA *rsa = keydata;
     int ok = 0;

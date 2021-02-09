@@ -2071,7 +2071,13 @@ static int tls_process_ske_dhe(SSL *s, PACKET *pkt, EVP_PKEY **pkey)
     EVP_PKEY_CTX_free(pctx);
     pctx = EVP_PKEY_CTX_new_from_pkey(s->ctx->libctx, peer_tmp, s->ctx->propq);
     if (pctx == NULL
-            || EVP_PKEY_param_check(pctx) != 1
+            /*
+             * EVP_PKEY_param_check() will verify that the DH params are using
+             * a safe prime. In this context, because we're using ephemeral DH,
+             * we're ok with it not being a safe prime.
+             * EVP_PKEY_param_check_quick() skips the safe prime check.
+             */
+            || EVP_PKEY_param_check_quick(pctx) != 1
             || EVP_PKEY_public_check(pctx) != 1) {
         SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_DH_VALUE);
         goto err;
