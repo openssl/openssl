@@ -90,54 +90,116 @@ ill-formed or some other error occurred then -1 is returned.
 =head1 EXAMPLES
 
 In the following example an 'MyObject' object is signed using the key contained
-in an md_ctx. The signature is written to MyObject.signature.
+in an EVP_MD_CTX. The signature is written to MyObject.signature. The object is
+then output in DER format and then loaded back in and verified.
 
  #include <openssl/x509.h>
+ #include <openssl/asn1t.h>
 
- /* An object used to store the ASN1 data fields to sign */
- typedef struct MySignObject_st
+ /* An object used to store the ASN1 data fields that will be signed */
+ typedef struct MySignInfoObject_st
  {
-     ASN1_INTEGER version;
+     ASN1_INTEGER *version;
      X509_ALGOR sig_alg;
- } MySignObject;
+ } MySignInfoObject;
 
+ DECLARE_ASN1_FUNCTIONS(MySignInfoObject)
  /*
   * A higher level object containing the ASN1 fields, signature alg and
   * output signature.
   */
  typedef struct MyObject_st
  {
-     MySignObject info;
+     MySignInfoObject info;
      X509_ALGOR sig_alg;
-     ASN1_BIT_STRING signature;
+     ASN1_BIT_STRING *signature;
  } MyObject;
 
- ASN1_SEQUENCE_cb(MySignObject, NULL) = {
-     ASN1_EMBED(MySignObject, version, ASN1_INTEGER),
-     ASN1_EMBED(MySignObject, sig_alg, X509_ALGOR),
- } static_ASN1_SEQUENCE_END_cb(MySignObject, MySignObject)
+ DECLARE_ASN1_FUNCTIONS(MyObject)
 
- static int test_asn1_item_sign(MyObject *obj, EVP_PKEY *pkey, EVP_MD *md)
+ /* The ASN1 definition of MySignInfoObject */
+ ASN1_SEQUENCE_cb(MySignInfoObject, NULL) = {
+     ASN1_SIMPLE(MySignInfoObject, version, ASN1_INTEGER)
+     ASN1_EMBED(MySignInfoObject, sig_alg, X509_ALGOR),
+ } ASN1_SEQUENCE_END_cb(MySignInfoObject, MySignInfoObject)
+
+ /* new, free, d2i & i2d functions for MySignInfoObject */
+ IMPLEMENT_ASN1_FUNCTIONS(MySignInfoObject)
+
+ /* The ASN1 definition of MyObject */
+ ASN1_SEQUENCE_cb(MyObject, NULL) = {
+     ASN1_EMBED(MyObject, info, MySignInfoObject),
+     ASN1_EMBED(MyObject, sig_alg, X509_ALGOR),
+     ASN1_SIMPLE(MyObject, signature, ASN1_BIT_STRING)
+ } ASN1_SEQUENCE_END_cb(MyObject, MyObject)
+
+ /* new, free, d2i & i2d functions for MyObject */
+ IMPLEMENT_ASN1_FUNCTIONS(MyObject)
+
+ int test_asn1_item_sign_verify(const char *mdname, EVP_PKEY *pkey, long version)
  {
-     EVP_PKEY *pkey = NULL;
-     EVP_PKEY_CTX *gctx = EVP_PKEY_CTX_new_from_name(NULL, "EC", NULL);
+    int ret = 0;
+    unsigned char *obj_der = NULL;
+    const unsigned char *p = NULL;
+    MyObject *obj = NULL, *loaded_obj = NULL;
+    const ASN1_ITEM *it = ASN1_ITEM_rptr(MySignInfoObject);
+    EVP_MD_CTX *sctx = NULL, *vctx = NULL;
+    int len;
 
-     /* 'it' contains the mapping between ASN.1 data and an object MySignObject */
-     const ASN1_ITEM *it = ASN1_ITEM_rptr(MySignObject);
-     EVP_MD_CTX *mdctx = EVP_MD_CTX_new();
+    /* Create MyObject and set its version */
+    obj = MyObject_new();
+    if (obj == NULL)
+        goto err;
+    if (!ASN1_INTEGER_set(obj->info.version, version))
+        goto err;
 
-     memset(obj, 0, sizeof(*obj));
-     EVP_DigestSignInit(mdctx, NULL, md, NULL, pkey);
-     /*
-      * obj->info is the 'MySignObject' object that will be
-      * converted into DER data and then signed.
-      * obj->signature will contain the output signature.
-      * obj->sig_alg is filled with the private key's signing algorithm id.
-      * obj->info.sig_alg is another copy of the signing algorithm id that sits
-      * within the MyObject object.
-      */
-     return ASN1_item_sign_ctx(it, &obj->sig_alg, &obj->info.sig_alg,
-                               &obj->signature, &obj->info, mdctx);
+    /* Set the key and digest used for signing */
+    sctx = EVP_MD_CTX_new();
+    if (sctx == NULL
+        || !EVP_DigestSignInit_ex(sctx, NULL, mdname, NULL, NULL, pkey))
+        goto err;
+
+    /*
+     * it contains the mapping between ASN.1 data and an object MySignInfoObject
+     * obj->info is the 'MySignInfoObject' object that will be
+     *   converted into DER data and then signed.
+     * obj->signature will contain the output signature.
+     * obj->sig_alg is filled with the private key's signing algorithm id.
+     * obj->info.sig_alg is another copy of the signing algorithm id that sits
+     * within MyObject.
+     */
+    len = ASN1_item_sign_ctx(it, &obj->sig_alg, &obj->info.sig_alg,
+                             obj->signature, &obj->info, sctx);
+    if (len <= 0
+        || X509_ALGOR_cmp(&obj->sig_alg, &obj->info.sig_alg) != 0)
+        goto err;
+
+    /* Output MyObject in der form */
+    len = i2d_MyObject(obj, &obj_der);
+    if (len <= 0)
+        goto err;
+
+    /* Set the key and digest used for verifying */
+    vctx = EVP_MD_CTX_new();
+    if (vctx == NULL
+        || !EVP_DigestVerifyInit_ex(vctx, NULL, mdname, NULL, NULL, pkey))
+        goto err;
+
+    /* Load the der data back into an object */
+    p = obj_der;
+    loaded_obj = d2i_MyObject(NULL, &p, len);
+    if (loaded_obj == NULL)
+        goto err;
+    /* Verify the loaded object */
+    ret = ASN1_item_verify_ctx(it, &loaded_obj->sig_alg, loaded_obj->signature,
+                               &loaded_obj->info, vctx);
+err:
+    OPENSSL_free(obj_der);
+    MyObject_free(loaded_obj);
+    MyObject_free(obj);
+    EVP_MD_CTX_free(sctx);
+    EVP_MD_CTX_free(vctx);
+    return ret;
  }
 
 =head1 SEE ALSO
