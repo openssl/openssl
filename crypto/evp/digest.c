@@ -992,10 +992,6 @@ EVP_MD *EVP_MD_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
         evp_generic_fetch(ctx, OSSL_OP_DIGEST, algorithm, properties,
                           evp_md_from_dispatch, evp_md_up_ref, evp_md_free);
 
-    if (md != NULL && !evp_md_cache_constants(md)) {
-        EVP_MD_free(md);
-        md = NULL;
-    }
     return md;
 }
 
