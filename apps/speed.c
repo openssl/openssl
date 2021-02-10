@@ -1283,12 +1283,14 @@ static int SM2_sign_loop(void *args)
     unsigned char *buf = tempargs->buf;
     EVP_MD_CTX **sm2ctx = tempargs->sm2_ctx;
     unsigned char *sm2sig = tempargs->buf2;
-    size_t sm2sigsize = tempargs->sigsize;
-    const size_t max_size = tempargs->sigsize;
+    size_t sm2sigsize;
     int ret, count;
     EVP_PKEY **sm2_pkey = tempargs->sm2_pkey;
+    const size_t max_size = EVP_PKEY_size(sm2_pkey[testnum]);
 
     for (count = 0; COND(sm2_c[testnum][0]); count++) {
+        sm2sigsize = max_size;
+
         if (!EVP_DigestSignInit(sm2ctx[testnum], NULL, EVP_sm3(),
                                 NULL, sm2_pkey[testnum])) {
             BIO_printf(bio_err, "SM2 init sign failure\n");
@@ -1306,7 +1308,6 @@ static int SM2_sign_loop(void *args)
         }
         /* update the latest returned size and always use the fixed buffer size */
         tempargs->sigsize = sm2sigsize;
-        sm2sigsize = max_size;
     }
 
     return count;
@@ -3567,8 +3568,9 @@ int speed_main(int argc, char **argv)
                     || loopargs[i].sm2_vfy_ctx[testnum] == NULL)
                 break;
 
-            /* SM2 keys are generated as normal EC keys with a special curve */
-            st = !((pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_EC, NULL)) == NULL
+            sm2_pkey = NULL;
+
+            st = !((pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_SM2, NULL)) == NULL
                 || EVP_PKEY_keygen_init(pctx) <= 0
                 || EVP_PKEY_CTX_set_ec_paramgen_curve_nid(pctx,
                     sm2_curves[testnum].nid) <= 0
@@ -3615,11 +3617,9 @@ int speed_main(int argc, char **argv)
             op_count = 1;
         } else {
             for (i = 0; i < loopargs_len; i++) {
-                size_t sm2_sigsize = loopargs[i].sigsize;
-
                 /* Perform SM2 signature test */
                 st = EVP_DigestSign(loopargs[i].sm2_ctx[testnum],
-                                    loopargs[i].buf2, &sm2_sigsize,
+                                    loopargs[i].buf2, &loopargs[i].sigsize,
                                     loopargs[i].buf, 20);
                 if (st == 0)
                     break;
