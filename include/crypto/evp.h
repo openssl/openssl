@@ -23,7 +23,7 @@
 #define EVP_MD_CTX_FLAG_KEEP_PKEY_CTX   0x0400
 
 /*
- * An EVP_PKEY can have the following support states:
+ * An EVP_PKEY_CTX can have the following support states:
  *
  * Supports legacy implementations only:
  *
