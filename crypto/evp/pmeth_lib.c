@@ -649,6 +649,15 @@ const EVP_PKEY_METHOD *EVP_PKEY_meth_get0(size_t idx)
 }
 #endif
 
+int EVP_PKEY_CTX_is_a(EVP_PKEY_CTX *ctx, const char *keytype)
+{
+#ifndef FIPS_MODULE
+    if (evp_pkey_ctx_is_legacy(ctx))
+        return (ctx->pmeth->pkey_id == evp_pkey_name2type(keytype));
+#endif
+    return EVP_KEYMGMT_is_a(ctx->keymgmt, keytype);
+}
+
 int EVP_PKEY_CTX_set_params(EVP_PKEY_CTX *ctx, OSSL_PARAM *params)
 {
     if (EVP_PKEY_CTX_IS_DERIVE_OP(ctx)

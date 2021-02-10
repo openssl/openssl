@@ -1649,6 +1649,7 @@ EVP_PKEY_CTX *EVP_PKEY_CTX_new_from_pkey(OSSL_LIB_CTX *libctx,
                                          EVP_PKEY *pkey, const char *propquery);
 EVP_PKEY_CTX *EVP_PKEY_CTX_dup(const EVP_PKEY_CTX *ctx);
 void EVP_PKEY_CTX_free(EVP_PKEY_CTX *ctx);
+int EVP_PKEY_CTX_is_a(EVP_PKEY_CTX *ctx, const char *keytype);
 
 int EVP_PKEY_CTX_get_params(EVP_PKEY_CTX *ctx, OSSL_PARAM *params);
 const OSSL_PARAM *EVP_PKEY_CTX_gettable_params(EVP_PKEY_CTX *ctx);
