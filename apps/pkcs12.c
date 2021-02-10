@@ -145,7 +145,7 @@ const OPTIONS pkcs12_options[] = {
 int pkcs12_main(int argc, char **argv)
 {
     char *infile = NULL, *outfile = NULL, *keyname = NULL, *certfile = NULL;
-    char *untrusted = NULL, *ciphername = NULL;
+    char *untrusted = NULL, *ciphername = NULL, *enc_flag = NULL;
     char *passcertsarg = NULL, *passcerts = NULL;
     char *name = NULL, *csp_name = NULL;
     char pass[PASSWD_BUF_SIZE] = "", macpass[PASSWD_BUF_SIZE] = "";
@@ -164,7 +164,6 @@ int pkcs12_main(int argc, char **argv)
     BIO *in = NULL, *out = NULL;
     PKCS12 *p12 = NULL;
     STACK_OF(OPENSSL_STRING) *canames = NULL;
-    const char *enc_flag = NULL;
     const EVP_CIPHER *const default_enc = EVP_aes_256_cbc();
     const EVP_CIPHER *enc = default_enc;
     OPTION_CHOICE o;
@@ -228,6 +227,7 @@ int pkcs12_main(int argc, char **argv)
              */
             enc_flag = opt_flag() + 1;
             enc = NULL;
+            ciphername = NULL;
             break;
         case OPT_CIPHER:
             ciphername = opt_unknown();
