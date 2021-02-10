@@ -1,9 +1,6 @@
-NOTE: Don't expect any of these programs to work with current
-OpenSSL releases, or even with later SSLeay releases.
+OpenSSL Demonstration Applications
 
-Original README:
-=============================================================================
+This folder contains source code that demonstrates the proper use of OpenSSL library API.
 
-Some demo programs sent to me by various people
+digest - Demonstrates use of EVP_MD_fetch to compute a SHA3-512 digest.
 
-eric
