@@ -64,15 +64,15 @@ plan skip_all => "DSA isn't supported in this build"
     if disabled("dsa");
 
 my @valid = glob(data_file("valid", "*.pem"));
-#my @invalid = glob(data_file("invalid", "*.pem"));
+my @invalid = glob(data_file("invalid", "*.pem"));
 
-my $num_tests = scalar @valid;
+my $num_tests = scalar @valid + scalar @invalid;
 plan tests => $num_tests;
 
 foreach (@valid) {
     ok(run(app([qw{openssl pkeyparam -noout -check -in}, $_])));
 }
 
-#foreach (@invalid) {
-#    ok(!run(app([qw{openssl pkeyparam -noout -check -in}, $_])));
-#}
+foreach (@invalid) {
+    ok(!run(app([qw{openssl pkeyparam -noout -check -in}, $_])));
+}

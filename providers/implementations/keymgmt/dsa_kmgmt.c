@@ -309,11 +309,11 @@ static const OSSL_PARAM *dsa_gettable_params(void *provctx)
     return dsa_params;
 }
 
-static int dsa_validate_domparams(const DSA *dsa)
+static int dsa_validate_domparams(const DSA *dsa, int checktype)
 {
     int status = 0;
 
-    return dsa_check_params(dsa, &status);
+    return dsa_check_params(dsa, checktype, &status);
 }
 
 static int dsa_validate_public(const DSA *dsa)
@@ -350,7 +350,7 @@ static int dsa_validate(const void *keydata, int selection, int checktype)
         ok = 1;
 
     if ((selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) != 0)
-        ok = ok && dsa_validate_domparams(dsa);
+        ok = ok && dsa_validate_domparams(dsa, checktype);
 
     if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0)
         ok = ok && dsa_validate_public(dsa);
