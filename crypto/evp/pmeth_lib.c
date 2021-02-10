@@ -1403,6 +1403,19 @@ static int evp_pkey_ctx_store_cached_data(EVP_PKEY_CTX *ctx,
                                           int cmd, const char *name,
                                           const void *data, size_t data_len)
 {
+    /*
+     * Check that it's one of the supported commands.  The ctrl commands
+     * number cases here must correspond to the cases in the bottom switch
+     * in this function.
+     */
+    switch (cmd = decode_cmd(cmd, name)) {
+    case EVP_PKEY_CTRL_SET1_ID:
+        break;
+    default:
+        ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
+        return -2;
+    }
+
     if (keytype != -1) {
         switch (evp_pkey_ctx_state(ctx)) {
         case EVP_PKEY_STATE_PROVIDER:
@@ -1422,7 +1435,7 @@ static int evp_pkey_ctx_store_cached_data(EVP_PKEY_CTX *ctx,
                 ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
                 return -2;
             }
-            if (ctx->pmeth->pkey_id != keytype) {
+            if (EVP_PKEY_type(ctx->pmeth->pkey_id) != EVP_PKEY_type(keytype)) {
                 ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_OPERATION);
                 return -1;
             }
@@ -1434,7 +1447,6 @@ static int evp_pkey_ctx_store_cached_data(EVP_PKEY_CTX *ctx,
         return -1;
     }
 
-    cmd = decode_cmd(cmd, name);
     switch (cmd) {
     case EVP_PKEY_CTRL_SET1_ID:
         evp_pkey_ctx_free_cached_data(ctx, cmd, name);
@@ -1454,11 +1466,9 @@ static int evp_pkey_ctx_store_cached_data(EVP_PKEY_CTX *ctx,
         }
         ctx->cached_parameters.dist_id_set = 1;
         ctx->cached_parameters.dist_id_len = data_len;
-        return 1;
+        break;
     }
-
-    ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
-    return -2;
+    return 1;
 }
 
 static void evp_pkey_ctx_free_cached_data(EVP_PKEY_CTX *ctx,
