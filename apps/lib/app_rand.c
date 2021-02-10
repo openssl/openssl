@@ -14,7 +14,7 @@
 #include <openssl/conf.h>
 
 static char *save_rand_file;
-static char *files_to_load;
+static STACK_OF(OPENSSL_STRING) *randfiles;
 
 void app_RAND_load_conf(CONF *c, const char *section)
 {
@@ -32,35 +32,46 @@ void app_RAND_load_conf(CONF *c, const char *section)
         save_rand_file = OPENSSL_strdup(randfile);
 }
 
-int app_RAND_load(void)
+static int loadfiles(char *name)
 {
-    char *p, *save;
+    char *p;
     int last, ret = 1;
 
-    if (files_to_load == NULL)
-        return 1;
-
-    save = files_to_load;
     for ( ; ; ) {
         last = 0;
-        for (p = files_to_load; *p != '\0' && *p != LIST_SEPARATOR_CHAR; p++)
+        for (p = name; *p != '\0' && *p != LIST_SEPARATOR_CHAR; p++)
             continue;
         if (*p == '\0')
             last = 1;
         *p = '\0';
-        if (RAND_load_file(files_to_load, -1) < 0) {
-            BIO_printf(bio_err, "Can't load %s into RNG\n", files_to_load);
+        if (RAND_load_file(name, -1) < 0) {
+            BIO_printf(bio_err, "Can't load %s into RNG\n", name);
             ERR_print_errors(bio_err);
             ret = 0;
         }
         if (last)
             break;
-        files_to_load = p + 1;
-        if (*files_to_load == '\0')
+        name = p + 1;
+        if (*name == '\0')
             break;
     }
-    files_to_load = NULL;
-    OPENSSL_free(save);
+    return ret;
+}
+
+int app_RAND_load(void)
+{
+    char *p;
+    int i, ret = 1;
+
+    if (randfiles == NULL)
+        return 1;
+
+    for (i = 0; i < sk_OPENSSL_STRING_num(randfiles); i++) {
+        p = sk_OPENSSL_STRING_value(randfiles, i);
+        if (!loadfiles(p))
+            ret = 0;
+    }
+    sk_OPENSSL_STRING_free(randfiles);
     return ret;
 }
 
@@ -89,7 +100,11 @@ int opt_rand(int opt)
     case OPT_R__LAST:
         break;
     case OPT_R_RAND:
-        files_to_load = opt_arg();
+        if (randfiles == NULL
+                && (randfiles = sk_OPENSSL_STRING_new_null()) == NULL)
+            return 0;
+        if (!sk_OPENSSL_STRING_push(randfiles, opt_arg()))
+            return 0;
         break;
     case OPT_R_WRITERAND:
         OPENSSL_free(save_rand_file);
