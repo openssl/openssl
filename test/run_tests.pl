@@ -44,6 +44,7 @@ my %tapargs =
       lib               => [ $libdir ],
       switches          => '-w',
       merge             => 1,
+      timer             => $ENV{HARNESS_TIMER} ? 1 : 0,
     );
 
 if ($jobs > 1) {
