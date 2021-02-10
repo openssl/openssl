@@ -33,7 +33,7 @@ int dsa_key_fromdata(DSA *dsa, const OSSL_PARAM params[]);
 
 int dsa_generate_public_key(BN_CTX *ctx, const DSA *dsa, const BIGNUM *priv_key,
                             BIGNUM *pub_key);
-int dsa_check_params(const DSA *dsa, int *ret);
+int dsa_check_params(const DSA *dsa, int checktype, int *ret);
 int dsa_check_pub_key(const DSA *dsa, const BIGNUM *pub_key, int *ret);
 int dsa_check_pub_key_partial(const DSA *dsa, const BIGNUM *pub_key, int *ret);
 int dsa_check_priv_key(const DSA *dsa, const BIGNUM *priv_key, int *ret);

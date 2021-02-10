@@ -77,6 +77,7 @@ static int dsa_keygen(DSA *dsa, int pairwise_test)
 
     /* Do a partial check for invalid p, q, g */
     if (!ossl_ffc_params_simple_validate(dsa->libctx, &dsa->params,
+                                         OSSL_KEYMGMT_VALIDATE_QUICK_CHECK,
                                          FFC_PARAM_TYPE_DSA))
         goto err;
 

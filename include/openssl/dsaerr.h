@@ -35,6 +35,7 @@
 #  define DSA_R_MODULUS_TOO_LARGE                          103
 #  define DSA_R_NO_PARAMETERS_SET                          107
 #  define DSA_R_PARAMETER_ENCODING_ERROR                   105
+#  define DSA_R_P_NOT_PRIME                                115
 #  define DSA_R_Q_NOT_PRIME                                113
 #  define DSA_R_SEED_LEN_SMALL                             110
 

@@ -328,6 +328,7 @@ static int generate_key(DH *dh)
             {
                 /* Do a partial check for invalid p, q, g */
                 if (!ossl_ffc_params_simple_validate(dh->libctx, &dh->params,
+                                                     OSSL_KEYMGMT_VALIDATE_QUICK_CHECK,
                                                      FFC_PARAM_TYPE_DH))
                     goto err;
                 /*

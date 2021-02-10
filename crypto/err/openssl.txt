@@ -502,6 +502,7 @@ DSA_R_MISSING_PRIVATE_KEY:111:missing private key
 DSA_R_MODULUS_TOO_LARGE:103:modulus too large
 DSA_R_NO_PARAMETERS_SET:107:no parameters set
 DSA_R_PARAMETER_ENCODING_ERROR:105:parameter encoding error
+DSA_R_P_NOT_PRIME:115:p not prime
 DSA_R_Q_NOT_PRIME:113:q not prime
 DSA_R_SEED_LEN_SMALL:110:seed_len is less than the length of q
 DSO_R_CTRL_FAILED:100:control command failed

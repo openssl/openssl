@@ -13,6 +13,10 @@
  * It calls the same functions as the generation as the code is very similar.
  */
 
+#include <openssl/err.h>
+#include <openssl/bn.h>
+#include <openssl/dsaerr.h>
+#include <openssl/dherr.h>
 #include "internal/ffc.h"
 
 /* FIPS186-4 A.2.2 Unverifiable partial validation of Generator g */
@@ -89,7 +93,7 @@ int ossl_ffc_params_FIPS186_2_validate(OSSL_LIB_CTX *libctx,
  * this test.
  */
 int ossl_ffc_params_simple_validate(OSSL_LIB_CTX *libctx, FFC_PARAMS *params,
-                                    int type)
+                                    int checktype, int paramstype)
 {
     int ret, res = 0;
     int save_gindex;
@@ -105,13 +109,46 @@ int ossl_ffc_params_simple_validate(OSSL_LIB_CTX *libctx, FFC_PARAMS *params,
 
 #ifndef FIPS_MODULE
     if (save_flags & FFC_PARAM_FLAG_VALIDATE_LEGACY)
-        ret = ossl_ffc_params_FIPS186_2_validate(libctx, params, type, &res,
-                                                 NULL);
+        ret = ossl_ffc_params_FIPS186_2_validate(libctx, params, paramstype,
+                                                 &res, NULL);
     else
 #endif
-        ret = ossl_ffc_params_FIPS186_4_validate(libctx, params, type, &res,
-                                                 NULL);
+        ret = ossl_ffc_params_FIPS186_4_validate(libctx, params, paramstype,
+                                                 &res, NULL);
+#ifndef OPENSSL_NO_DH
+    if (ret == FFC_PARAM_RET_STATUS_FAILED
+        && (res & FFC_ERROR_NOT_SUITABLE_GENERATOR) != 0) {
+        ERR_raise(ERR_LIB_DH, DH_R_NOT_SUITABLE_GENERATOR);
+    }
+#endif
     params->flags = save_flags;
     params->gindex = save_gindex;
+
+    /*
+     * This is called also when generating ephemeral DH keys.
+     * Let's avoid expensive primality checks in that case.
+     */
+    if (ret != FFC_PARAM_RET_STATUS_FAILED
+        && checktype == OSSL_KEYMGMT_VALIDATE_FULL_CHECK) {
+        BN_CTX *ctx;
+
+        if ((ctx = BN_CTX_new_ex(libctx)) == NULL)
+            return 0;
+        if (BN_check_prime(params->p, ctx, NULL) != 1) {
+#ifndef OPENSSL_NO_DSA
+            ERR_raise(ERR_LIB_DSA, DSA_R_P_NOT_PRIME);
+#endif
+            ret = FFC_PARAM_RET_STATUS_FAILED;
+        }
+
+        if (BN_check_prime(params->q, ctx, NULL) != 1) {
+#ifndef OPENSSL_NO_DSA
+            ERR_raise(ERR_LIB_DSA, DSA_R_Q_NOT_PRIME);
+#endif
+            ret = FFC_PARAM_RET_STATUS_FAILED;
+        }
+        BN_CTX_free(ctx);
+    }
+
     return ret != FFC_PARAM_RET_STATUS_FAILED;
 }

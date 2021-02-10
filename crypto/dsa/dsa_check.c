@@ -19,15 +19,39 @@
 #include "dsa_local.h"
 #include "crypto/dsa.h"
 
-int dsa_check_params(const DSA *dsa, int *ret)
+#ifdef FIPS_MODULE
+int dsa_check_params(const DSA *dsa, int checktype, int *codes)
 {
     /*
      * (2b) FFC domain params conform to FIPS-186-4 explicit domain param
      * validity tests.
      */
     return ossl_ffc_params_FIPS186_4_validate(dsa->libctx, &dsa->params,
-                                              FFC_PARAM_TYPE_DSA, ret, NULL);
+                                              FFC_PARAM_TYPE_DSA, codes, NULL);
 }
+#else
+int dsa_check_params(const DSA *dsa, int checktype, int *codes)
+{
+    FFC_PARAMS params = {0};
+    int ret;
+
+    if (dsa->params.seed != NULL)
+        /*
+         * (2b) FFC domain params conform to FIPS-186-4 explicit domain param
+         * validity tests.
+         */
+        return ossl_ffc_params_FIPS186_4_validate(dsa->libctx, &dsa->params,
+                                                  FFC_PARAM_TYPE_DSA,
+                                                  codes, NULL);
+
+    if (!ossl_ffc_params_copy(&params, &dsa->params))
+        return 0;
+    ret = ossl_ffc_params_simple_validate(dsa->libctx, &params, checktype,
+                                          FFC_PARAM_TYPE_DSA);
+    ossl_ffc_params_cleanup(&params);
+    return ret;
+}
+#endif
 
 /*
  * See SP800-56Ar3 Section 5.6.2.3.1 : FFC Full public key validation.
