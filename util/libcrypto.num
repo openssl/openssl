@@ -16,7 +16,7 @@ X509_PUBKEY_set0_param                  15	3_0_0	EXIST::FUNCTION:
 PKCS12_it                               16	3_0_0	EXIST::FUNCTION:
 i2d_ASN1_OCTET_STRING                   17	3_0_0	EXIST::FUNCTION:
 EC_KEY_set_private_key                  18	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,EC
-SRP_VBASE_get_by_user                   19	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_1_1_0,DEPRECATEDIN_3_0,SRP
+SRP_VBASE_get_by_user                   19	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_1_1_0,SRP
 Camellia_cfb128_encrypt                 21	3_0_0	EXIST::FUNCTION:CAMELLIA,DEPRECATEDIN_3_0
 DES_ncbc_encrypt                        22	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,DES
 TS_REQ_get_ext_count                    23	3_0_0	EXIST::FUNCTION:TS
