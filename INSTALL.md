@@ -582,6 +582,14 @@ alternative, you can use the language specific variables, `CFLAGS` and `CXXFLAGS
 Build only some minimal set of features.
 This is a developer option used internally for CI build tests of the project.
 
+### no-cached-fetch
+
+Never cache algorithms when they are fetched from a provider.  Normally, a
+provider indicates if the algorithms it supplies can be cached or not.  Using
+this option will reduce run-time memory usage but it also introduces a
+significant performance penalty.  This option is primarily designed to help
+with detecting incorrect reference counting.
+
 ### no-capieng
 
 Don't build the CAPI engine.
