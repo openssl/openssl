@@ -801,16 +801,24 @@ const OSSL_PARAM *EVP_PKEY_CTX_settable_params(EVP_PKEY_CTX *ctx)
  */
 int evp_pkey_ctx_set_params_strict(EVP_PKEY_CTX *ctx, OSSL_PARAM *params)
 {
-    const OSSL_PARAM *p;
-
     if (ctx == NULL || params == NULL)
         return 0;
 
-    for (p = params; p->key != NULL; p++) {
-        /* Check the ctx actually understands this parameter */
-        if (OSSL_PARAM_locate_const(EVP_PKEY_CTX_settable_params(ctx),
-                                    p->key) == NULL )
-            return -2;
+    /*
+     * We only check for provider side EVP_PKEY_CTX.  For #legacy, we
+     * depend on the translation that happens in EVP_PKEY_CTX_set_params()
+     * call, and that the resulting ctrl call will return -2 if it doesn't
+     * known the ctrl command number.
+     */
+    if (evp_pkey_ctx_is_provided(ctx)) {
+        const OSSL_PARAM *settable = EVP_PKEY_CTX_settable_params(ctx);
+        const OSSL_PARAM *p;
+
+        for (p = params; p->key != NULL; p++) {
+            /* Check the ctx actually understands this parameter */
+            if (OSSL_PARAM_locate_const(settable, p->key) == NULL )
+                return -2;
+        }
     }
 
     return EVP_PKEY_CTX_set_params(ctx, params);
@@ -818,16 +826,24 @@ int evp_pkey_ctx_set_params_strict(EVP_PKEY_CTX *ctx, OSSL_PARAM *params)
 
 int evp_pkey_ctx_get_params_strict(EVP_PKEY_CTX *ctx, OSSL_PARAM *params)
 {
-    const OSSL_PARAM *p;
-
     if (ctx == NULL || params == NULL)
         return 0;
 
-    for (p = params; p->key != NULL; p++ ) {
-        /* Check the ctx actually understands this parameter */
-        if (OSSL_PARAM_locate_const(EVP_PKEY_CTX_gettable_params(ctx),
-                                    p->key) == NULL )
-            return -2;
+    /*
+     * We only check for provider side EVP_PKEY_CTX.  For #legacy, we
+     * depend on the translation that happens in EVP_PKEY_CTX_get_params()
+     * call, and that the resulting ctrl call will return -2 if it doesn't
+     * known the ctrl command number.
+     */
+    if (evp_pkey_ctx_is_provided(ctx)) {
+        const OSSL_PARAM *gettable = EVP_PKEY_CTX_gettable_params(ctx);
+        const OSSL_PARAM *p;
+
+        for (p = params; p->key != NULL; p++ ) {
+            /* Check the ctx actually understands this parameter */
+            if (OSSL_PARAM_locate_const(gettable, p->key) == NULL )
+                return -2;
+        }
     }
 
     return EVP_PKEY_CTX_get_params(ctx, params);
