@@ -516,7 +516,7 @@ static char *shacrypt(const char *passwd, const char *magic, const char *salt)
     EVP_MD_CTX *md = NULL, *md2 = NULL;
     const EVP_MD *sha = NULL;
     size_t passwd_len, salt_len, magic_len;
-    unsigned int rounds = 5000;        /* Default */
+    unsigned int rounds = ROUNDS_DEFAULT;        /* Default */
     char rounds_custom = 0;
     char *p_bytes = NULL;
     char *s_bytes = NULL;
