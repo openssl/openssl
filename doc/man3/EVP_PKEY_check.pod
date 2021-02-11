@@ -22,11 +22,11 @@ EVP_PKEY_public_check, EVP_PKEY_private_check, EVP_PKEY_pairwise_check
 EVP_PKEY_param_check() validates the parameters component of the key
 given by B<ctx>.
 
-EVP_PKEY_param_check_quick() also validates the parameters component of the key
-give by B<ctx>. However some algorithm implementations may offer a quicker form
-of validation that omits some checks in order to perform a sanity check of the
-key. If a quicker form is not provided then this function call does the same
-thing as EVP_PKEY_param_check().
+EVP_PKEY_param_check_quick() validates the parameters component of the key
+given by B<ctx> like EVP_PKEY_param_check() does. However some algorithm
+implementations may offer a quicker form of validation that omits some checks in
+order to perform a lightweight sanity check of the key. If a quicker form is not
+provided then this function call does the same thing as EVP_PKEY_param_check().
 
 EVP_PKEY_public_check() validates the public component of the key given by B<ctx>.
 
