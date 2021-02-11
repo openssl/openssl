@@ -47,7 +47,7 @@ key data (see L<provider-keymgmt(7)>).  The internal key in the
 B<EVP_PKEY> is a pointer to that key data held by the provider, and
 is governed by an associated L<EVP_KEYMGMT(3)> method structure.
 
-The functions available through The L<EVP_KEYMGMT(3)> have no access
+The functions available through the L<EVP_KEYMGMT(3)> have no access
 to the B<EVP_PKEY>, and can therefore not make any direct changes.
 Similarly, the key data that the B<EVP_PKEY> points at is only known
 to the functions pointed at in the L<EVP_KEYMGMT(3)>.
@@ -102,9 +102,9 @@ function.
 
 OpenSSL 3.0 can handle operations such as signing, encrypting, etc in
 diverse providers, potentially others than the provider of the
-L<EVP_KEYMGMT(3)>.  Since two providers, possibly from different
-vendors, can't be expected to share internal key structures.  There
-are therefore instances where key data will need to be exported to the
+L<EVP_KEYMGMT(3)>.  Two providers, possibly from different vendors,
+can't be expected to share internal key structures.  There are
+therefore instances where key data will need to be exported to the
 provider that is going to perform the operation (this also implies
 that every provider that implements a key pair based operation must
 also implement an L<EVP_KEYMGMT(3)>).
