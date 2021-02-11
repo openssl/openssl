@@ -474,10 +474,10 @@ static int rsa_keygen(int bits, EVP_PKEY **pub, EVP_PKEY **priv)
         || !TEST_true(EVP_PKEY_CTX_set_rsa_keygen_bits(keygen_ctx, bits))
         || !TEST_int_gt(EVP_PKEY_keygen(keygen_ctx, priv), 0)
         || !TEST_ptr(ectx =
-                     OSSL_ENCODER_CTX_new_by_EVP_PKEY(*priv,
-                                                      EVP_PKEY_PUBLIC_KEY,
-                                                      "DER", "type-specific",
-                                                      NULL))
+                     OSSL_ENCODER_CTX_new_for_pkey(*priv,
+                                                   EVP_PKEY_PUBLIC_KEY,
+                                                   "DER", "type-specific",
+                                                   NULL))
         || !TEST_true(OSSL_ENCODER_to_data(ectx, &pub_der, &len)))
         goto err;
     pp = pub_der;

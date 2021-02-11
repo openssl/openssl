@@ -85,9 +85,9 @@ PKCS8_PRIV_KEY_INFO *EVP_PKEY2PKCS8(const EVP_PKEY *pkey)
         size_t derlen = 0;
         const unsigned char *pp;
 
-        if ((ctx = OSSL_ENCODER_CTX_new_by_EVP_PKEY(pkey, selection,
-                                                    "DER", "pkcs8",
-                                                    NULL)) == NULL
+        if ((ctx = OSSL_ENCODER_CTX_new_for_pkey(pkey, selection,
+                                                 "DER", "pkcs8",
+                                                 NULL)) == NULL
             || !OSSL_ENCODER_to_data(ctx, &der, &derlen))
             goto error;
 

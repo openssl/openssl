@@ -124,7 +124,7 @@ Text, because pod2xxx doesn't like empty sections
 =head1 SEE ALSO
 
 L<provider(7)>, L<OSSL_DECODER_CTX(3)>, L<OSSL_DECODER_from_bio(3)>,
-L<OSSL_DECODER_CTX_new_by_EVP_PKEY(3)>, L<OSSL_LIB_CTX(3)>
+L<OSSL_DECODER_CTX_new_for_pkey(3)>, L<OSSL_LIB_CTX(3)>
 
 =head1 HISTORY
 

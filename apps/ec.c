@@ -256,9 +256,9 @@ int ec_main(int argc, char **argv)
             assert(private);
         }
 
-        ectx = OSSL_ENCODER_CTX_new_by_EVP_PKEY(eckey, selection,
-                                                output_type, output_structure,
-                                                NULL);
+        ectx = OSSL_ENCODER_CTX_new_for_pkey(eckey, selection,
+                                             output_type, output_structure,
+                                             NULL);
         if (enc != NULL) {
             OSSL_ENCODER_CTX_set_cipher(ectx, EVP_CIPHER_name(enc), NULL);
             if (passout != NULL)

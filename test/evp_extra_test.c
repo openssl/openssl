@@ -419,8 +419,8 @@ static EVP_PKEY *load_example_key(const char *keytype,
     const unsigned char **pdata = &data;
     EVP_PKEY *pkey = NULL;
     OSSL_DECODER_CTX *dctx =
-        OSSL_DECODER_CTX_new_by_EVP_PKEY(&pkey, "DER", NULL, keytype, 0,
-                                         testctx, NULL);
+        OSSL_DECODER_CTX_new_for_pkey(&pkey, "DER", NULL, keytype, 0,
+                                      testctx, NULL);
 
     /* |pkey| will be NULL on error */
     (void)OSSL_DECODER_from_data(dctx, pdata, &data_len);

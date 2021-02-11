@@ -254,14 +254,14 @@ int dhparam_main(int argc, char **argv)
             * We check that we got one of those key types afterwards.
             */
             decoderctx
-                = OSSL_DECODER_CTX_new_by_EVP_PKEY(&tmppkey,
-                                                    (informat == FORMAT_ASN1)
+                = OSSL_DECODER_CTX_new_for_pkey(&tmppkey,
+                                                (informat == FORMAT_ASN1)
                                                     ? "DER" : "PEM",
-                                                    NULL,
-                                                    (informat == FORMAT_ASN1)
+                                                NULL,
+                                                (informat == FORMAT_ASN1)
                                                     ? keytype : NULL,
-                                                    OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS,
-                                                    NULL, NULL);
+                                                OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS,
+                                                NULL, NULL);
 
             if (decoderctx != NULL
                     && !OSSL_DECODER_from_bio(decoderctx, in)
@@ -328,11 +328,11 @@ int dhparam_main(int argc, char **argv)
 
     if (!noout) {
         OSSL_ENCODER_CTX *ectx =
-            OSSL_ENCODER_CTX_new_by_EVP_PKEY(pkey,
-                                             OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS,
-                                             outformat == FORMAT_ASN1
-                                             ? "DER" : "PEM",
-                                             NULL, NULL);
+            OSSL_ENCODER_CTX_new_for_pkey(pkey,
+                                          OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS,
+                                          outformat == FORMAT_ASN1
+                                              ? "DER" : "PEM",
+                                          NULL, NULL);
 
         if (ectx == NULL || !OSSL_ENCODER_to_bio(ectx, out)) {
             OSSL_ENCODER_CTX_free(ectx);
