@@ -74,16 +74,16 @@ ENCODER_TEXT("SM2", sm2, yes),
  * created like this:
  *
  * OSSL_ENCODER_CTX *ctx =
- *     OSSL_ENCODER_CTX_new_by_EVP_PKEY(pkey, selection, "DER", "type-specific",
- *                                      NULL, NULL);
+ *     OSSL_ENCODER_CTX_new_for_pkey(pkey, selection, "DER", "type-specific",
+ *                                   NULL, NULL);
  *
  * To replace PEM_write_bio_{TYPE}PrivateKey(), PEM_write_bio_{TYPE}PublicKey()
  * and PEM_write_bio_{TYPE}Params(), use OSSL_ENCODER functions with an
  * OSSL_ENCODER_CTX created like this:
  *
  * OSSL_ENCODER_CTX *ctx =
- *     OSSL_ENCODER_CTX_new_by_EVP_PKEY(pkey, selection, "PEM", "type-specific",
- *                                      NULL, NULL);
+ *     OSSL_ENCODER_CTX_new_for_pkey(pkey, selection, "PEM", "type-specific",
+ *                                   NULL, NULL);
  *
  * We only implement those for which there are current i2d_ and PEM_write_bio
  * implementations.
@@ -197,7 +197,7 @@ ENCODER_w_structure("SM2", sm2, yes, pem, SubjectPublicKeyInfo),
  * Entries for key type specific output formats.  These are exactly the
  * same as the type specific above, except that they use the key type
  * name as structure name instead of "type-specific", in the call on
- * OSSL_ENCODER_CTX_new_by_EVP_PKEY().
+ * OSSL_ENCODER_CTX_new_for_pkey().
  */
 
 /* The RSA encoders only support private key and public key output */

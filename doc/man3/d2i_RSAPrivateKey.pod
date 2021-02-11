@@ -222,8 +222,8 @@ The following sample code does the rest of the work:
  unsigned char *p = buffer;     /* |buffer| is supplied by the caller */
  size_t len = buffer_size;      /* assumed be the size of |buffer| */
  OSSL_ENCODER_CTX *ctx =
-     OSSL_ENCODER_CTX_new_by_EVP_PKEY(pkey, selection, "DER", structure,
-                                      NULL, NULL);
+     OSSL_ENCODER_CTX_new_for_pkey(pkey, selection, "DER", structure,
+                                   NULL, NULL);
  if (ctx == NULL) {
      /* fatal error handling */
  }

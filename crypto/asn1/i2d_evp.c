@@ -42,8 +42,8 @@ static int i2d_provided(const EVP_PKEY *a, int selection,
          */
         size_t len = INT_MAX;
 
-        ctx = OSSL_ENCODER_CTX_new_by_EVP_PKEY(a, selection, "DER",
-                                               *output_structures, NULL);
+        ctx = OSSL_ENCODER_CTX_new_for_pkey(a, selection, "DER",
+                                            *output_structures, NULL);
         if (ctx == NULL)
             return -1;
         if (OSSL_ENCODER_to_data(ctx, pp, &len))

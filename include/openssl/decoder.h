@@ -120,11 +120,11 @@ int OSSL_DECODER_from_data(OSSL_DECODER_CTX *ctx, const unsigned char **pdata,
  * an implicit OSSL_DECODER_fetch(), suitable for the object of that type.
  */
 OSSL_DECODER_CTX *
-OSSL_DECODER_CTX_new_by_EVP_PKEY(EVP_PKEY **pkey,
-                                 const char *input_type,
-                                 const char *input_struct,
-                                 const char *keytype, int selection,
-                                 OSSL_LIB_CTX *libctx, const char *propquery);
+OSSL_DECODER_CTX_new_for_pkey(EVP_PKEY **pkey,
+                              const char *input_type,
+                              const char *input_struct,
+                              const char *keytype, int selection,
+                              OSSL_LIB_CTX *libctx, const char *propquery);
 
 # ifdef __cplusplus
 }

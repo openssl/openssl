@@ -587,9 +587,9 @@ static int cmd_DHParameters(SSL_CONF_CTX *cctx, const char *value)
             goto end;
 
         decoderctx
-            = OSSL_DECODER_CTX_new_by_EVP_PKEY(&dhpkey, "PEM", NULL, "DH",
-                                               OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS,
-                                               sslctx->libctx, sslctx->propq);
+            = OSSL_DECODER_CTX_new_for_pkey(&dhpkey, "PEM", NULL, "DH",
+                                            OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS,
+                                            sslctx->libctx, sslctx->propq);
         if (decoderctx == NULL
                 || !OSSL_DECODER_from_bio(decoderctx, in)) {
             OSSL_DECODER_CTX_free(decoderctx);

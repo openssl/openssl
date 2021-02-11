@@ -113,11 +113,11 @@ int OSSL_ENCODER_to_data(OSSL_ENCODER_CTX *ctx, unsigned char **pdata,
  * an implicit OSSL_ENCODER_fetch(), suitable for the object of that type.
  * This is more useful than calling OSSL_ENCODER_CTX_new().
  */
-OSSL_ENCODER_CTX *OSSL_ENCODER_CTX_new_by_EVP_PKEY(const EVP_PKEY *pkey,
-                                                   int selection,
-                                                   const char *output_type,
-                                                   const char *output_struct,
-                                                   const char *propquery);
+OSSL_ENCODER_CTX *OSSL_ENCODER_CTX_new_for_pkey(const EVP_PKEY *pkey,
+                                                int selection,
+                                                const char *output_type,
+                                                const char *output_struct,
+                                                const char *propquery);
 
 # ifdef __cplusplus
 }

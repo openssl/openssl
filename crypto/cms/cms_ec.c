@@ -27,8 +27,8 @@ static EVP_PKEY *pkey_type2param(int ptype, const void *pval,
         OSSL_DECODER_CTX *ctx = NULL;
         int selection = OSSL_KEYMGMT_SELECT_ALL_PARAMETERS;
 
-        ctx = OSSL_DECODER_CTX_new_by_EVP_PKEY(&pkey, "DER", NULL, "EC",
-                                               selection, libctx, propq);
+        ctx = OSSL_DECODER_CTX_new_for_pkey(&pkey, "DER", NULL, "EC",
+                                            selection, libctx, propq);
         if (ctx == NULL)
             goto err;
 
