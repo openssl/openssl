@@ -526,7 +526,7 @@ int tls_valid_group(SSL *s, uint16_t group_id, int minversion, int maxversion,
     int ret;
 
     if (okfortls13 != NULL)
-        okfortls13 = 0;
+        *okfortls13 = 0;
 
     if (ginfo == NULL)
         return 0;
