@@ -1107,8 +1107,8 @@ static int rsa_set_ctx_params(void *vprsactx, const OSSL_PARAM params[])
 {
     PROV_RSA_CTX *prsactx = (PROV_RSA_CTX *)vprsactx;
     const OSSL_PARAM *p;
-    int pad_mode = prsactx->pad_mode;
-    int saltlen = prsactx->saltlen;
+    int pad_mode;
+    int saltlen;
     char mdname[OSSL_MAX_NAME_SIZE] = "", *pmdname = NULL;
     char mdprops[OSSL_MAX_PROPQUERY_SIZE] = "", *pmdprops = NULL;
     char mgf1mdname[OSSL_MAX_NAME_SIZE] = "", *pmgf1mdname = NULL;
@@ -1116,6 +1116,8 @@ static int rsa_set_ctx_params(void *vprsactx, const OSSL_PARAM params[])
 
     if (prsactx == NULL || params == NULL)
         return 0;
+    pad_mode = prsactx->pad_mode;
+    saltlen = prsactx->saltlen;
 
     p = OSSL_PARAM_locate_const(params, OSSL_SIGNATURE_PARAM_DIGEST);
     /* Not allowed during certain operations */
