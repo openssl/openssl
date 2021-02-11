@@ -352,7 +352,7 @@ static int check_issued(ossl_unused X509_STORE_CTX *ctx, X509 *x, X509 *issuer)
      */
     if (err != X509_V_ERR_SUBJECT_ISSUER_MISMATCH)
         ctx->error = err;
-    return 0; /* Better call verify_cb_cert(ctx, x, ctx->error_depth, err) ? */
+    return 0;
 }
 
 /*
@@ -3287,10 +3287,17 @@ static int build_chain(X509_STORE_CTX *ctx)
         return 0;
     case X509_TRUST_UNTRUSTED:
     default:
-        if (ctx->error != X509_V_OK)
-            /* Callback already issued in most such cases */
-            return 0;
-        num = sk_X509_num(ctx->chain);
+        switch(ctx->error) {
+        case X509_V_ERR_ERROR_IN_CERT_NOT_BEFORE_FIELD:
+        case X509_V_ERR_CERT_NOT_YET_VALID:
+        case X509_V_ERR_ERROR_IN_CERT_NOT_AFTER_FIELD:
+        case X509_V_ERR_CERT_HAS_EXPIRED:
+            return 0; /* Callback already issued by x509_check_cert_time() */
+        default: /* A preliminary error has become final */
+            return verify_cb_cert(ctx, NULL, num - 1, ctx->error);
+        case X509_V_OK:
+            break;
+        }
         CB_FAIL_IF(num > depth,
                    ctx, NULL, num - 1, X509_V_ERR_CERT_CHAIN_TOO_LONG);
         CB_FAIL_IF(DANETLS_ENABLED(dane)
