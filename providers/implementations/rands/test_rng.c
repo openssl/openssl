@@ -35,6 +35,7 @@ static OSSL_FUNC_rand_verify_zeroization_fn test_rng_verify_zeroization;
 static OSSL_FUNC_rand_enable_locking_fn test_rng_enable_locking;
 static OSSL_FUNC_rand_lock_fn test_rng_lock;
 static OSSL_FUNC_rand_unlock_fn test_rng_unlock;
+static OSSL_FUNC_rand_get_seed_fn test_rng_get_seed;
 
 typedef struct {
     void *provctx;
@@ -228,6 +229,18 @@ static int test_rng_verify_zeroization(ossl_unused void *vtest)
     return 1;
 }
 
+static size_t test_rng_get_seed(void *vtest, unsigned char **pout,
+                                int entropy, size_t min_len, size_t max_len,
+                                ossl_unused int prediction_resistance,
+                                ossl_unused const unsigned char *adin,
+                                ossl_unused size_t adin_len)
+{
+    PROV_TEST_RNG *t = (PROV_TEST_RNG *)vtest;
+
+    *pout = t->entropy;
+    return  t->entropy_len > max_len ? max_len : t->entropy_len;
+}
+
 static int test_rng_enable_locking(void *vtest)
 {
     PROV_TEST_RNG *t = (PROV_TEST_RNG *)vtest;
@@ -280,5 +293,6 @@ const OSSL_DISPATCH ossl_test_rng_functions[] = {
     { OSSL_FUNC_RAND_GET_CTX_PARAMS, (void(*)(void))test_rng_get_ctx_params },
     { OSSL_FUNC_RAND_VERIFY_ZEROIZATION,
       (void(*)(void))test_rng_verify_zeroization },
+    { OSSL_FUNC_RAND_GET_SEED, (void(*)(void))test_rng_get_seed },
     { 0, NULL }
 };
