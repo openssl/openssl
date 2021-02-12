@@ -740,7 +740,7 @@ end_of_options:
         if (verbose)
             BIO_printf(bio_err, "Updating %s ...\n", dbfile);
 
-        i = do_updatedb(db);
+        i = do_updatedb(db, NULL);
         if (i == -1) {
             BIO_printf(bio_err, "Malloc failure\n");
             goto end;
