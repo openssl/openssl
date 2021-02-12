@@ -34,6 +34,8 @@ static OSSL_FUNC_rand_verify_zeroization_fn seed_src_verify_zeroization;
 static OSSL_FUNC_rand_enable_locking_fn seed_src_enable_locking;
 static OSSL_FUNC_rand_lock_fn seed_src_lock;
 static OSSL_FUNC_rand_unlock_fn seed_src_unlock;
+static OSSL_FUNC_rand_get_seed_fn seed_get_seed;
+static OSSL_FUNC_rand_clear_seed_fn seed_clear_seed;
 
 typedef struct {
     void *provctx;
@@ -170,6 +172,47 @@ static int seed_src_verify_zeroization(ossl_unused void *vseed)
     return 1;
 }
 
+static size_t seed_get_seed(void *vseed, unsigned char **pout,
+                            int entropy, size_t min_len, size_t max_len,
+                            int prediction_resistance,
+                            const unsigned char *adin, size_t adin_len)
+{
+    size_t bytes_needed;
+    unsigned char *p;
+
+    /*
+     * Figure out how many bytes we need.
+     * This assumes that the seed sources provide eight bits of entropy
+     * per byte.  For lower quality sources, the formula will need to be
+     * different.
+     */
+    bytes_needed = entropy >= 0 ? (entropy + 7) / 8 : 0;
+    if (bytes_needed < min_len)
+        bytes_needed = min_len;
+    if (bytes_needed > max_len) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_ENTROPY_SOURCE_STRENGTH_TOO_WEAK);
+        return 0;
+    }
+
+    p = OPENSSL_secure_malloc(bytes_needed);
+    if (p == NULL) {
+        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+        return 0;
+    }
+    *pout = p;
+    if (seed_src_generate(vseed, p, bytes_needed, 0, prediction_resistance,
+                          adin, adin_len) != 0)
+        return bytes_needed;
+    OPENSSL_secure_clear_free(p, bytes_needed);
+    return 0;
+}
+
+static void seed_clear_seed(ossl_unused void *vdrbg,
+                            unsigned char *out, size_t outlen)
+{
+    OPENSSL_secure_clear_free(out, outlen);
+}
+
 static int seed_src_enable_locking(ossl_unused void *vseed)
 {
     return 1;
@@ -201,5 +244,7 @@ const OSSL_DISPATCH ossl_seed_src_functions[] = {
     { OSSL_FUNC_RAND_GET_CTX_PARAMS, (void(*)(void))seed_src_get_ctx_params },
     { OSSL_FUNC_RAND_VERIFY_ZEROIZATION,
       (void(*)(void))seed_src_verify_zeroization },
+    { OSSL_FUNC_RAND_GET_SEED, (void(*)(void))seed_get_seed },
+    { OSSL_FUNC_RAND_CLEAR_SEED, (void(*)(void))seed_clear_seed },
     { 0, NULL }
 };
