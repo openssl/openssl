@@ -9,6 +9,7 @@
 
 #ifndef OSSL_INTERNAL_RSA_H
 # define OSSL_INTERNAL_RSA_H
+# pragma once
 
 # include <openssl/core.h>
 # include <openssl/rsa.h>

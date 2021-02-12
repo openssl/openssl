@@ -9,6 +9,7 @@
 
 #ifndef OSSL_INTERNAL_NUMBERS_H
 # define OSSL_INTERNAL_NUMBERS_H
+# pragma once
 
 # include <limits.h>
 

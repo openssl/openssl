@@ -7,4 +7,10 @@
  * https://www.openssl.org/source/license.html
  */
 
+#ifndef OSSL_CRYPTO_PKCS7_H
+# define OSSL_CRYPTO_PKCS7_H
+# pragma once
+
 void pkcs7_resolve_libctx(PKCS7 *p7);
+
+#endif

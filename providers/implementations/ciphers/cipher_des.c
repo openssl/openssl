@@ -13,15 +13,14 @@
  */
 #include "internal/deprecated.h"
 
+#include <openssl/rand.h>
+#include <openssl/proverr.h>
 #include "prov/ciphercommon.h"
 #include "cipher_des.h"
-#include <openssl/rand.h>
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
-#include "prov/providercommonerr.h"
 
-/* TODO(3.0) Figure out what flags need to be here */
-#define DES_FLAGS (EVP_CIPH_RAND_KEY)
+#define DES_FLAGS 0
 
 static OSSL_FUNC_cipher_freectx_fn des_freectx;
 static OSSL_FUNC_cipher_encrypt_init_fn des_einit;
@@ -90,7 +89,7 @@ static int des_init(void *vctx, const unsigned char *key, size_t keylen,
 
     if (key != NULL) {
         if (keylen != ctx->keylen) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEYLEN);
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
             return 0;
         }
         return ctx->hw->init(ctx, key, keylen);

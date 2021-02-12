@@ -9,6 +9,7 @@
 
 #ifndef OSSL_CMLL_PLATFORM_H
 # define OSSL_CMLL_PLATFORM_H
+# pragma once
 
 # if defined(CMLL_ASM) && (defined(__sparc) || defined(__sparc__))
 

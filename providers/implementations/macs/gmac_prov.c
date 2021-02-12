@@ -14,8 +14,8 @@
 #include <openssl/engine.h>
 #include <openssl/evp.h>
 #include <openssl/err.h>
+#include <openssl/proverr.h>
 
-#include "prov/providercommonerr.h"
 #include "prov/implementations.h"
 #include "prov/provider_ctx.h"
 #include "prov/provider_util.h"
@@ -191,7 +191,7 @@ static int gmac_set_ctx_params(void *vmacctx, const OSSL_PARAM params[])
 
     if (EVP_CIPHER_mode(ossl_prov_cipher_cipher(&macctx->cipher))
         != EVP_CIPH_GCM_MODE) {
-        ERR_raise(ERR_LIB_PROV, EVP_R_CIPHER_NOT_GCM_MODE);
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_MODE);
         return 0;
     }
     if (!EVP_EncryptInit_ex(ctx, ossl_prov_cipher_cipher(&macctx->cipher),
@@ -204,7 +204,7 @@ static int gmac_set_ctx_params(void *vmacctx, const OSSL_PARAM params[])
             return 0;
 
         if (p->data_size != (size_t)EVP_CIPHER_CTX_key_length(ctx)) {
-            ERR_raise(ERR_LIB_PROV, EVP_R_INVALID_KEY_LENGTH);
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
             return 0;
         }
         if (!EVP_EncryptInit_ex(ctx, NULL, NULL, p->data, NULL))

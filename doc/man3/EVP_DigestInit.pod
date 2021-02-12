@@ -393,13 +393,13 @@ EVP_MD_CTX_set_params() can be used with the following OSSL_PARAM keys:
 
 =over 4
 
-=item "xoflen" (B<OSSL_PARAM_DIGEST_KEY_XOFLEN>) <unsigned integer>
+=item "xoflen" (B<OSSL_DIGEST_PARAM_XOFLEN>) <unsigned integer>
 
 Sets the digest length for extendable output functions.
 It is used by the SHAKE algorithm and should not exceed what can be given
 using a B<size_t>.
 
-=item "pad_type" (B<OSSL_PARAM_DIGEST_KEY_PAD_TYPE>) <integer>
+=item "pad-type" (B<OSSL_DIGEST_PARAM_PAD_TYPE>) <unsigned integer>
 
 Sets the padding type.
 It is used by the MDC2 algorithm.

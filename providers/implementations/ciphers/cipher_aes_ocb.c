@@ -14,9 +14,9 @@
  */
 #include "internal/deprecated.h"
 
+#include <openssl/proverr.h>
 #include "cipher_aes_ocb.h"
 #include "prov/providercommon.h"
-#include "prov/providercommonerr.h"
 #include "prov/ciphercommon_aead.h"
 #include "prov/implementations.h"
 
@@ -451,7 +451,7 @@ static int aes_ocb_get_ctx_params(void *vctx, OSSL_PARAM params[])
             return 0;
         }
         if (!ctx->base.enc || p->data_size != ctx->taglen) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_TAGLEN);
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_TAG_LENGTH);
             return 0;
         }
         memcpy(p->data, ctx->tag, ctx->taglen);

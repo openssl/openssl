@@ -15,12 +15,12 @@
 
 /* Dispatch functions for cast cipher modes ecb, cbc, ofb, cfb */
 
+#include <openssl/proverr.h>
 #include "cipher_cast.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
-#include "prov/providercommonerr.h"
 
-#define CAST5_FLAGS (EVP_CIPH_VARIABLE_LENGTH)
+#define CAST5_FLAGS PROV_CIPHER_FLAG_VARIABLE_LENGTH
 
 static OSSL_FUNC_cipher_freectx_fn cast5_freectx;
 static OSSL_FUNC_cipher_dupctx_fn cast5_dupctx;

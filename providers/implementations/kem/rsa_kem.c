@@ -22,7 +22,7 @@
 #include <openssl/params.h>
 #include <openssl/err.h>
 #include <crypto/rsa.h>
-#include "prov/providercommonerr.h"
+#include <openssl/proverr.h>
 #include "prov/provider_ctx.h"
 #include "prov/implementations.h"
 #include "prov/securitycheck.h"

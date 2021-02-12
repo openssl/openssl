@@ -9,12 +9,13 @@
 
 #ifndef OPENSSL_TYPES_H
 # define OPENSSL_TYPES_H
+# pragma once
 
-#include <limits.h>
+# include <limits.h>
 
-#ifdef  __cplusplus
+# ifdef  __cplusplus
 extern "C" {
-#endif
+# endif
 
 # include <openssl/e_os2.h>
 # include <openssl/safestack.h>

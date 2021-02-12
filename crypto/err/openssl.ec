@@ -40,7 +40,7 @@ L SM2           NONE                            crypto/sm2/sm2_err.c            
 L OSSL_STORE    include/openssl/storeerr.h      crypto/store/store_err.c                include/crypto/storeerr.h
 L ESS           include/openssl/esserr.h        crypto/ess/ess_err.c                    include/crypto/esserr.h
 L PROP          NONE                            crypto/property/property_err.c          include/internal/propertyerr.h
-L PROV          NONE                            providers/common/provider_err.c         providers/common/include/prov/providercommonerr.h
+L PROV          include/openssl/proverr.h       providers/common/provider_err.c         providers/common/include/prov/proverr.h
 L OSSL_ENCODER  include/openssl/encodererr.h    crypto/encode_decode/encoder_err.c      include/crypto/encodererr.h
 L OSSL_DECODER  include/openssl/decodererr.h    crypto/encode_decode/decoder_err.c      include/crypto/decodererr.h
 L HTTP          include/openssl/httperr.h       crypto/http/http_err.c                  include/crypto/httperr.h

@@ -15,10 +15,10 @@
  */
 #include "internal/deprecated.h"
 
+#include <openssl/proverr.h>
 #include "cipher_aes_siv.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
-#include "prov/providercommonerr.h"
 #include "prov/ciphercommon_aead.h"
 #include "prov/provider_ctx.h"
 
@@ -37,7 +37,6 @@ static void *aes_siv_newctx(void *provctx, size_t keybits, unsigned int mode,
     if (ctx != NULL) {
         ctx->taglen = SIV_LEN;
         ctx->mode = mode;
-        ctx->flags = flags;
         ctx->keylen = keybits / 8;
         ctx->hw = ossl_prov_cipher_hw_aes_siv(keybits);
         ctx->libctx = PROV_LIBCTX_OF(provctx);
@@ -259,7 +258,7 @@ static OSSL_FUNC_cipher_settable_ctx_params_fn                                 \
 static int alg##_##kbits##_##lc##_get_params(OSSL_PARAM params[])              \
 {                                                                              \
     return ossl_cipher_generic_get_params(params, EVP_CIPH_##UCMODE##_MODE,    \
-                                     flags, 2*kbits, blkbits, ivbits);         \
+                                          flags, 2*kbits, blkbits, ivbits);    \
 }                                                                              \
 static void * alg##kbits##lc##_newctx(void *provctx)                           \
 {                                                                              \

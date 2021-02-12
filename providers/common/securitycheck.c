@@ -14,10 +14,10 @@
 #include <openssl/dh.h>
 #include <openssl/ec.h>
 #include <openssl/err.h>
+#include <openssl/proverr.h>
 #include <openssl/core_names.h>
 #include <openssl/obj_mac.h>
 #include "prov/securitycheck.h"
-#include "prov/providercommonerr.h"
 
 /*
  * FIPS requires a minimum security strength of 112 bits (for encryption or

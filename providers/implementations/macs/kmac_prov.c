@@ -53,8 +53,8 @@
 #include <openssl/params.h>
 #include <openssl/evp.h>
 #include <openssl/err.h>
+#include <openssl/proverr.h>
 
-#include "prov/providercommonerr.h"
 #include "prov/implementations.h"
 #include "prov/provider_ctx.h"
 #include "prov/provider_util.h"
@@ -258,7 +258,7 @@ static int kmac_init(void *vmacctx)
 
     /* Check key has been set */
     if (kctx->key_len == 0) {
-        ERR_raise(ERR_LIB_EVP, EVP_R_NO_KEY_SET);
+        ERR_raise(ERR_LIB_PROV, PROV_R_NO_KEY_SET);
         return 0;
     }
     if (!EVP_DigestInit_ex(kctx->ctx, ossl_prov_digest_md(&kctx->digest),

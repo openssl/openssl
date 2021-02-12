@@ -914,8 +914,17 @@ const OSSL_ALGORITHM *ossl_provider_query_operation(const OSSL_PROVIDER *prov,
                                                     int operation_id,
                                                     int *no_cache)
 {
-    return prov->query_operation == NULL
-        ? NULL : prov->query_operation(prov->provctx, operation_id, no_cache);
+    const OSSL_ALGORITHM *res;
+
+    if (prov->query_operation == NULL)
+        return NULL;
+    res = prov->query_operation(prov->provctx, operation_id, no_cache);
+#if defined(OPENSSL_NO_CACHED_FETCH)
+    /* Forcing the non-caching of queries */
+    if (no_cache != NULL)
+        *no_cache = 1;
+#endif
+    return res;
 }
 
 int ossl_provider_set_operation_bit(OSSL_PROVIDER *provider, size_t bitnum)

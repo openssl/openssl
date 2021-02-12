@@ -23,6 +23,12 @@ OpenSSL 3.0
 
 ### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
 
+ * Add a compile time option to prevent the caching of provider fetched
+   algorithms.  This is enabled by including the no-cached-fetch option
+   at configuration time.
+
+   *Paul Dale*
+
  * Combining the Configure options no-ec and no-dh no longer disables TLSv1.3.
    Typically if OpenSSL has no EC or DH algorithms then it cannot support
    connections with TLSv1.3. However OpenSSL now supports "pluggable" groups
@@ -40,13 +46,35 @@ OpenSSL 3.0
 
    *Rich Salz*
 
+ * Deprecated the obsolete BN_pseudo_rand() and BN_pseudo_rand_range()
+   functions. They are identical to BN_rand() and BN_rand_range()
+   respectively.
+
+   *Tomáš Mráz*
+
  * Deprecated the obsolete X9.31 RSA key generation related functions
    BN_X931_generate_Xpq(), BN_X931_derive_prime_ex(), and
    BN_X931_generate_prime_ex().
 
    *Tomáš Mráz*
 
- * Deprecate EVP_MD_CTX_set_update_fn() and EVP_MD_CTX_update_fn()
+ * The default key generation method for the regular 2-prime RSA keys was
+   changed to the FIPS 186-4 B.3.6 method (Generation of Probable Primes with
+   Conditions Based on Auxiliary Probable Primes). This method is slower
+   than the original method.
+
+   *Shane Lontis*
+
+ * Deprecated the BN_is_prime_ex() and BN_is_prime_fasttest_ex() functions.
+   They are replaced with the BN_check_prime() function that avoids possible
+   misuse and always uses at least 64 rounds of the Miller-Rabin
+   primality test. At least 64 rounds of the Miller-Rabin test are now also
+   used for all prime generation, including RSA key generation.
+   This increases key generation time, especially for larger keys.
+
+   *Kurt Roeckx*
+
+ * Deprecated EVP_MD_CTX_set_update_fn() and EVP_MD_CTX_update_fn()
    as they are not useful with non-deprecated functions.
 
    *Rich Salz*

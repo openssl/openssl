@@ -9,6 +9,7 @@
 
 #ifndef OPENSSL_CORE_OBJECT_H
 # define OPENSSL_CORE_OBJECT_H
+# pragma once
 
 # ifdef __cplusplus
 extern "C" {

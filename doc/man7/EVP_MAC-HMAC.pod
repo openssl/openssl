@@ -30,9 +30,11 @@ The following parameter can be set with EVP_MAC_CTX_set_params():
 
 =item "key" (B<OSSL_MAC_PARAM_KEY>) <octet string>
 
-=item "flags" (B<OSSL_MAC_PARAM_FLAGS>) <octet string>
-
 =item "digest" (B<OSSL_MAC_PARAM_DIGEST>) <UTF8 string>
+
+=item "digest-noinit" (B<OSSL_MAC_PARAM_DIGEST_NOINIT>) <integer>
+
+=item "digest-oneshot" (B<OSSL_MAC_PARAM_DIGEST_ONESHOT>) <integer>
 
 =item "properties" (B<OSSL_MAC_PARAM_PROPERTIES>) <UTF8 string>
 

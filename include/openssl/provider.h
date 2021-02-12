@@ -9,6 +9,7 @@
 
 #ifndef OPENSSL_PROVIDER_H
 # define OPENSSL_PROVIDER_H
+# pragma once
 
 # include <openssl/core.h>
 

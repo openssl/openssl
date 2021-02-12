@@ -7,6 +7,10 @@
  * https://www.openssl.org/source/license.html
  */
 
+#ifndef OSSL_CRYPTO_POLY1305_H
+# define OSSL_CRYPTO_POLY1305_H
+# pragma once
+
 #include <stddef.h>
 
 #define POLY1305_BLOCK_SIZE  16
@@ -38,3 +42,5 @@ size_t Poly1305_ctx_size(void);
 void Poly1305_Init(POLY1305 *ctx, const unsigned char key[32]);
 void Poly1305_Update(POLY1305 *ctx, const unsigned char *inp, size_t len);
 void Poly1305_Final(POLY1305 *ctx, unsigned char mac[16]);
+
+#endif /* OSSL_CRYPTO_POLY1305_H */

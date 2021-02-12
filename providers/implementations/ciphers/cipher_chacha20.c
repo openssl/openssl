@@ -9,16 +9,15 @@
 
 /* Dispatch functions for chacha20 cipher */
 
+#include <openssl/proverr.h>
 #include "cipher_chacha20.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
-#include "prov/providercommonerr.h"
 
 #define CHACHA20_KEYLEN (CHACHA_KEY_SIZE)
 #define CHACHA20_BLKLEN (1)
 #define CHACHA20_IVLEN (CHACHA_CTR_SIZE)
-/* TODO(3.0) Figure out what flags are required */
-#define CHACHA20_FLAGS (EVP_CIPH_CUSTOM_IV | EVP_CIPH_ALWAYS_CALL_INIT)
+#define CHACHA20_FLAGS (PROV_CIPHER_FLAG_CUSTOM_IV)
 
 static OSSL_FUNC_cipher_newctx_fn chacha20_newctx;
 static OSSL_FUNC_cipher_freectx_fn chacha20_freectx;

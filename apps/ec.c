@@ -70,7 +70,7 @@ int ec_main(int argc, char **argv)
     BIO *in = NULL, *out = NULL;
     ENGINE *e = NULL;
     const EVP_CIPHER *enc = NULL;
-    char *infile = NULL, *outfile = NULL, *prog;
+    char *infile = NULL, *outfile = NULL, *ciphername = NULL, *prog;
     char *passin = NULL, *passout = NULL, *passinarg = NULL, *passoutarg = NULL;
     OPTION_CHOICE o;
     int informat = FORMAT_PEM, outformat = FORMAT_PEM, text = 0, noout = 0;
@@ -131,8 +131,7 @@ int ec_main(int argc, char **argv)
             e = setup_engine(opt_arg(), 0);
             break;
         case OPT_CIPHER:
-            if (!opt_cipher(opt_unknown(), &enc))
-                goto opthelp;
+            ciphername = opt_unknown();
             break;
         case OPT_CONV_FORM:
             point_format = opt_arg();
@@ -162,6 +161,10 @@ int ec_main(int argc, char **argv)
     if (argc != 0)
         goto opthelp;
 
+    if (ciphername != NULL) {
+        if (!opt_cipher(ciphername, &enc))
+            goto opthelp;
+    }
     private = param_out || pubin || pubout ? 0 : 1;
     if (text && !pubin)
         private = 1;

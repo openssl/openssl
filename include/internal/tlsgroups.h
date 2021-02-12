@@ -9,6 +9,7 @@
 
 #ifndef OSSL_INTERNAL_TLSGROUPS_H
 # define OSSL_INTERNAL_TLSGROUPS_H
+# pragma once
 
 # define OSSL_TLS_GROUP_ID_sect163k1        0x0001
 # define OSSL_TLS_GROUP_ID_sect163r1        0x0002

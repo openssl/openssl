@@ -85,7 +85,7 @@ int ossl_cipher_hw_generic_cfb1(PROV_CIPHER_CTX *dat, unsigned char *out,
 {
     int num = dat->num;
 
-    if ((dat->flags & EVP_CIPH_FLAG_LENGTH_BITS) != 0) {
+    if (dat->use_bits) {
         CRYPTO_cfb128_1_encrypt(in, out, len, dat->ks, dat->iv, &num,
                                 dat->enc, dat->block);
         dat->num = num;

@@ -9,6 +9,7 @@
 
 #ifndef OSSL_INTERNAL_PROVIDER_H
 # define OSSL_INTERNAL_PROVIDER_H
+# pragma once
 
 # include <openssl/core.h>
 # include <openssl/core_dispatch.h>

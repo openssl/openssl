@@ -1916,7 +1916,6 @@ WORK_STATE tls_post_process_server_certificate(SSL *s, WORK_STATE wst)
             return WORK_ERROR;
         }
     }
-    s->session->peer_type = certidx;
 
     X509_free(s->session->peer);
     X509_up_ref(x);

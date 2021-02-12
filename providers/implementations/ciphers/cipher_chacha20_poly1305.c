@@ -9,24 +9,18 @@
 
 /* Dispatch functions for chacha20_poly1305 cipher */
 
+#include <openssl/proverr.h>
 #include "cipher_chacha20_poly1305.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
-#include "prov/providercommonerr.h"
 
 
 #define CHACHA20_POLY1305_KEYLEN CHACHA_KEY_SIZE
 #define CHACHA20_POLY1305_BLKLEN 1
 #define CHACHA20_POLY1305_MAX_IVLEN 12
 #define CHACHA20_POLY1305_MODE 0
-/* TODO(3.0) Figure out what flags are required */
-#define CHACHA20_POLY1305_FLAGS (EVP_CIPH_FLAG_AEAD_CIPHER                     \
-                                | EVP_CIPH_ALWAYS_CALL_INIT                    \
-                                | EVP_CIPH_CTRL_INIT                           \
-                                | EVP_CIPH_CUSTOM_COPY                         \
-                                | EVP_CIPH_FLAG_CUSTOM_CIPHER                  \
-                                | EVP_CIPH_CUSTOM_IV                           \
-                                | EVP_CIPH_CUSTOM_IV_LENGTH)
+#define CHACHA20_POLY1305_FLAGS (PROV_CIPHER_FLAG_AEAD                         \
+                                 | PROV_CIPHER_FLAG_CUSTOM_IV)
 
 static OSSL_FUNC_cipher_newctx_fn chacha20_poly1305_newctx;
 static OSSL_FUNC_cipher_freectx_fn chacha20_poly1305_freectx;
@@ -119,11 +113,11 @@ static int chacha20_poly1305_get_ctx_params(void *vctx, OSSL_PARAM params[])
             return 0;
         }
         if (!ctx->base.enc) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_TAG_NOTSET);
+            ERR_raise(ERR_LIB_PROV, PROV_R_TAG_NOT_SET);
             return 0;
         }
         if (p->data_size == 0 || p->data_size > POLY1305_BLOCK_SIZE) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_TAGLEN);
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_TAG_LENGTH);
             return 0;
         }
         memcpy(p->data, ctx->tag, p->data_size);
@@ -186,7 +180,7 @@ static int chacha20_poly1305_set_ctx_params(void *vctx,
             return 0;
         }
         if (p->data_size == 0 || p->data_size > POLY1305_BLOCK_SIZE) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_TAGLEN);
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_TAG_LENGTH);
             return 0;
         }
         if (p->data != NULL) {
@@ -220,7 +214,7 @@ static int chacha20_poly1305_set_ctx_params(void *vctx,
             return 0;
         }
         if (hw->tls_iv_set_fixed(&ctx->base, p->data, p->data_size) == 0) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_IVLEN);
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_IV_LENGTH);
             return 0;
         }
     }

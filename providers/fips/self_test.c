@@ -13,8 +13,8 @@
 #include <openssl/crypto.h>
 #include <openssl/fipskey.h>
 #include <openssl/err.h>
+#include <openssl/proverr.h>
 #include "e_os.h"
-#include "prov/providercommonerr.h"
 #include "prov/providercommon.h"
 
 /*

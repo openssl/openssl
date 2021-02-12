@@ -9,6 +9,7 @@
 
 #ifndef OSSL_SECURITY_BITS_H
 # define OSSL_SECURITY_BITS_H
+# pragma once
 
 uint16_t ifc_ffc_compute_security_bits(int n);
 

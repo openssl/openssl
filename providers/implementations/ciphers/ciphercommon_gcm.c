@@ -9,11 +9,11 @@
 
 /* Dispatch functions for gcm mode */
 
+#include <openssl/rand.h>
+#include <openssl/proverr.h>
 #include "prov/ciphercommon.h"
 #include "prov/ciphercommon_gcm.h"
 #include "prov/providercommon.h"
-#include "prov/providercommonerr.h"
-#include <openssl/rand.h>
 #include "prov/provider_ctx.h"
 
 static int gcm_tls_init(PROV_GCM_CTX *dat, unsigned char *aad, size_t aad_len);
@@ -513,7 +513,7 @@ static int gcm_tls_cipher(PROV_GCM_CTX *ctx, unsigned char *out, size_t *padlen,
      * side only.
      */
     if (ctx->enc && ++ctx->tls_enc_records == 0) {
-        ERR_raise(ERR_LIB_PROV, EVP_R_TOO_MANY_RECORDS);
+        ERR_raise(ERR_LIB_PROV, PROV_R_TOO_MANY_RECORDS);
         goto err;
     }
 

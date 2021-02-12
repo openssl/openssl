@@ -93,7 +93,7 @@ int rsa_main(int argc, char **argv)
     EVP_PKEY *pkey = NULL;
     EVP_PKEY_CTX *pctx;
     const EVP_CIPHER *enc = NULL;
-    char *infile = NULL, *outfile = NULL, *prog;
+    char *infile = NULL, *outfile = NULL, *ciphername = NULL, *prog;
     char *passin = NULL, *passout = NULL, *passinarg = NULL, *passoutarg = NULL;
     int private = 0;
     int informat = FORMAT_PEM, outformat = FORMAT_PEM, text = 0, check = 0;
@@ -171,8 +171,7 @@ int rsa_main(int argc, char **argv)
             check = 1;
             break;
         case OPT_CIPHER:
-            if (!opt_cipher(opt_unknown(), &enc))
-                goto opthelp;
+            ciphername = opt_unknown();
             break;
         case OPT_PROV_CASES:
             if (!opt_provider(o))
@@ -189,6 +188,10 @@ int rsa_main(int argc, char **argv)
     if (argc != 0)
         goto opthelp;
 
+    if (ciphername != NULL) {
+        if (!opt_cipher(ciphername, &enc))
+            goto opthelp;
+    }
     private = (text && !pubin) || (!pubout && !noout) ? 1 : 0;
 
     if (!app_passwd(passinarg, passoutarg, &passin, &passout)) {

@@ -9,6 +9,7 @@
 
 #ifndef OSSL_INTERNAL_CONSTANT_TIME_H
 # define OSSL_INTERNAL_CONSTANT_TIME_H
+# pragma once
 
 # include <stdlib.h>
 # include <string.h>

@@ -97,9 +97,9 @@ int dgst_main(int argc, char **argv)
     EVP_PKEY *sigkey = NULL;
     STACK_OF(OPENSSL_STRING) *sigopts = NULL, *macopts = NULL;
     char *hmac_key = NULL;
-    char *mac_name = NULL;
+    char *mac_name = NULL, *digestname = NULL;
     char *passinarg = NULL, *passin = NULL;
-    const EVP_MD *md = NULL, *m;
+    const EVP_MD *md = NULL;
     const char *outfile = NULL, *keyfile = NULL, *prog = NULL;
     const char *sigfile = NULL;
     const char *md_name = NULL;
@@ -209,9 +209,7 @@ int dgst_main(int argc, char **argv)
                 goto opthelp;
             break;
         case OPT_DIGEST:
-            if (!opt_md(opt_unknown(), &m))
-                goto opthelp;
-            md = m;
+            digestname = opt_unknown();
             break;
         case OPT_PROV_CASES:
             if (!opt_provider(o))
@@ -226,6 +224,11 @@ int dgst_main(int argc, char **argv)
     if (keyfile != NULL && argc > 1) {
         BIO_printf(bio_err, "%s: Can only sign or verify one file.\n", prog);
         goto end;
+    }
+    app_RAND_load();
+    if (digestname != NULL) {
+        if (!opt_md(digestname, &md))
+            goto opthelp;
     }
 
     if (do_verify && sigfile == NULL) {

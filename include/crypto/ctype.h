@@ -20,6 +20,7 @@
  */
 #ifndef OSSL_CRYPTO_CTYPE_H
 # define OSSL_CRYPTO_CTYPE_H
+# pragma once
 
 # define CTYPE_MASK_lower       0x1
 # define CTYPE_MASK_upper       0x2

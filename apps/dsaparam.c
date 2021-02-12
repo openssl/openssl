@@ -135,6 +135,7 @@ int dsaparam_main(int argc, char **argv)
     } else if (argc != 0) {
         goto opthelp;
     }
+    app_RAND_load();
 
     /* generate a key */
     numbits = num;

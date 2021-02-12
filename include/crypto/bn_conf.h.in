@@ -10,6 +10,7 @@
 
 #ifndef OSSL_CRYPTO_BN_CONF_H
 # define OSSL_CRYPTO_BN_CONF_H
+# pragma once
 
 /*
  * The contents of this file are not used in the UEFI build, as

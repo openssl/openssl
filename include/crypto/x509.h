@@ -7,9 +7,13 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "internal/refcount.h"
-#include <openssl/asn1.h>
-#include <openssl/x509.h>
+#ifndef OSSL_CRYPTO_X509_H
+# define OSSL_CRYPTO_X509_H
+# pragma once
+
+# include "internal/refcount.h"
+# include <openssl/asn1.h>
+# include <openssl/x509.h>
 
 /* Internal X509 structures and functions: not for application use */
 
@@ -320,3 +324,5 @@ int X509_PUBKEY_get0_libctx(OSSL_LIB_CTX **plibctx, const char **ppropq,
                             const X509_PUBKEY *key);
 /* Calculate default key identifier according to RFC 5280 section 4.2.1.2 (1) */
 ASN1_OCTET_STRING *x509_pubkey_hash(X509_PUBKEY *pubkey);
+
+#endif

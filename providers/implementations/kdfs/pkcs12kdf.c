@@ -14,12 +14,12 @@
 #include <openssl/evp.h>
 #include <openssl/kdf.h>
 #include <openssl/core_names.h>
+#include <openssl/proverr.h>
 #include "internal/cryptlib.h"
 #include "internal/numbers.h"
 #include "crypto/evp.h"
 #include "prov/provider_ctx.h"
 #include "prov/providercommon.h"
-#include "prov/providercommonerr.h"
 #include "prov/implementations.h"
 #include "prov/provider_util.h"
 

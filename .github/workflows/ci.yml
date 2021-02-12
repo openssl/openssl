@@ -80,6 +80,17 @@ jobs:
     - name: make test
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
+  non-caching:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: config
+      run: ./config enable-asan enable-ubsan no-cached-fetch && perl configdata.pm --dump
+    - name: make
+      run: make -s -j4
+    - name: make test
+      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4} OPENSSL_TEST_RAND_ORDER=0 TESTS="-test_fuzz* -test_ssl_* -test_evp -test_cmp_http -test_store -test_enc -[01][0-9]"
+
   sanitizers:
     runs-on: ubuntu-latest
     steps:

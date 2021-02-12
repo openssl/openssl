@@ -25,12 +25,12 @@
 #include <openssl/dh.h>
 #include <openssl/dsa.h>
 #include <openssl/ec.h>
+#include <openssl/proverr.h>
 #include "internal/passphrase.h"
 #include "internal/cryptlib.h"
 #include "crypto/ecx.h"
 #include "crypto/rsa.h"
 #include "prov/implementations.h"
-#include "prov/providercommonerr.h"
 #include "prov/bio.h"
 #include "prov/provider_ctx.h"
 #include "prov/der_rsa.h"
@@ -96,7 +96,7 @@ static X509_SIG *p8info_to_encp8(PKCS8_PRIV_KEY_INFO *p8info,
 
     if (!ossl_pw_get_passphrase(kstr, sizeof(kstr), &klen, NULL, 1,
                                 &ctx->pwdata)) {
-        ERR_raise(ERR_LIB_PROV, PROV_R_READ_KEY);
+        ERR_raise(ERR_LIB_PROV, PROV_R_UNABLE_TO_GET_PASSPHRASE);
         return NULL;
     }
     /* First argument == -1 means "standard" */

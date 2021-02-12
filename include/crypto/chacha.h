@@ -9,6 +9,7 @@
 
 #ifndef OSSL_CRYPTO_CHACHA_H
 #define OSSL_CRYPTO_CHACHA_H
+# pragma once
 
 #include <stddef.h>
 

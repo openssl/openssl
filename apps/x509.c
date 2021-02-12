@@ -246,7 +246,7 @@ int x509_main(int argc, char **argv)
     X509V3_CTX ext_ctx;
     EVP_PKEY *signkey = NULL, *CAkey = NULL, *pubkey = NULL;
     int newcert = 0;
-    char *subj = NULL;
+    char *subj = NULL, *digestname = NULL;
     X509_NAME *fsubj = NULL;
     const unsigned long chtype = MBSTRING_ASC;
     const int multirdn = 1;
@@ -569,8 +569,8 @@ int x509_main(int argc, char **argv)
             preserve_dates = 1;
             break;
         case OPT_MD:
-            if (!opt_md(opt_unknown(), &digest))
-                goto opthelp;
+            digestname = opt_unknown();
+            break;
         }
     }
 
@@ -579,6 +579,11 @@ int x509_main(int argc, char **argv)
     if (argc != 0)
         goto opthelp;
 
+    app_RAND_load();
+    if (digestname != NULL) {
+        if (!opt_md(digestname, &digest))
+            goto opthelp;
+    }
     if (preserve_dates && days != UNSET_DAYS) {
         BIO_printf(bio_err, "Cannot use -preserve_dates with -days option\n");
         goto end;

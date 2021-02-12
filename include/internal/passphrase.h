@@ -9,6 +9,7 @@
 
 #ifndef OSSL_INTERNAL_PASSPHRASE_H
 # define OSSL_INTERNAL_PASSPHRASE_H
+# pragma once
 
 /*
  * This is a passphrase reader bridge with bells and whistles.

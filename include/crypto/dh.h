@@ -7,10 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/core.h>
-#include <openssl/params.h>
-#include <openssl/dh.h>
-#include "internal/ffc.h"
+#ifndef OSSL_CRYPTO_DH_H
+# define OSSL_CRYPTO_DH_H
+# pragma once
+
+# include <openssl/core.h>
+# include <openssl/params.h>
+# include <openssl/dh.h>
+# include "internal/ffc.h"
 
 DH *dh_new_by_nid_ex(OSSL_LIB_CTX *libctx, int nid);
 DH *dh_new_ex(OSSL_LIB_CTX *libctx);
@@ -46,3 +50,5 @@ int dh_KDF_X9_42_asn1(unsigned char *out, size_t outlen,
                       const char *cek_alg,
                       const unsigned char *ukm, size_t ukmlen, const EVP_MD *md,
                       OSSL_LIB_CTX *libctx, const char *propq);
+
+#endif  /* OSSL_CRYPTO_DH_H */

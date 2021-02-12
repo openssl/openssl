@@ -13,10 +13,10 @@
 
 /* For SSL3_VERSION */
 #include <openssl/ssl.h>
+#include <openssl/proverr.h>
 #include "ciphercommon_local.h"
 #include "prov/provider_ctx.h"
 #include "prov/providercommon.h"
-#include "prov/providercommonerr.h"
 
 /*-
  * Generic cipher functions for OSSL_PARAM gettables and settables
@@ -26,7 +26,10 @@ static const OSSL_PARAM cipher_known_gettable_params[] = {
     OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_KEYLEN, NULL),
     OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_IVLEN, NULL),
     OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_BLOCK_SIZE, NULL),
-    OSSL_PARAM_ulong(OSSL_CIPHER_PARAM_FLAGS, NULL),
+    OSSL_PARAM_int(OSSL_CIPHER_PARAM_AEAD, NULL),
+    OSSL_PARAM_int(OSSL_CIPHER_PARAM_CUSTOM_IV, NULL),
+    OSSL_PARAM_int(OSSL_CIPHER_PARAM_CTS, NULL),
+    OSSL_PARAM_int(OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK, NULL),
     { OSSL_CIPHER_PARAM_TLS_MAC, OSSL_PARAM_OCTET_PTR, NULL, 0, OSSL_PARAM_UNMODIFIED },
     OSSL_PARAM_END
 };
@@ -36,7 +39,7 @@ const OSSL_PARAM *ossl_cipher_generic_gettable_params(void *provctx)
 }
 
 int ossl_cipher_generic_get_params(OSSL_PARAM params[], unsigned int md,
-                                   unsigned long flags,
+                                   uint64_t flags,
                                    size_t kbits, size_t blkbits, size_t ivbits)
 {
     OSSL_PARAM *p;
@@ -46,8 +49,27 @@ int ossl_cipher_generic_get_params(OSSL_PARAM params[], unsigned int md,
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_FLAGS);
-    if (p != NULL && !OSSL_PARAM_set_ulong(p, flags)) {
+    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_AEAD);
+    if (p != NULL
+        && !OSSL_PARAM_set_int(p, (flags & PROV_CIPHER_FLAG_AEAD) != 0)) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
+        return 0;
+    }
+    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_CUSTOM_IV);
+    if (p != NULL
+        && !OSSL_PARAM_set_int(p, (flags & PROV_CIPHER_FLAG_CUSTOM_IV) != 0)) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
+        return 0;
+    }
+    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_CTS);
+    if (p != NULL
+        && !OSSL_PARAM_set_int(p, (flags & PROV_CIPHER_FLAG_CTS) != 0)) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
+        return 0;
+    }
+    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK);
+    if (p != NULL
+        && !OSSL_PARAM_set_int(p, (flags & PROV_CIPHER_FLAG_TLS1_MULTIBLOCK) != 0)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
@@ -80,7 +102,6 @@ CIPHER_DEFAULT_SETTABLE_CTX_PARAMS_END(ossl_cipher_generic)
 /*
  * Variable key length cipher functions for OSSL_PARAM settables
  */
-
 int ossl_cipher_var_keylen_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
     PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
@@ -168,9 +189,9 @@ static int cipher_generic_init_internal(PROV_CIPHER_CTX *ctx,
             return 0;
     }
     if (key != NULL) {
-        if ((ctx->flags & EVP_CIPH_VARIABLE_LENGTH) == 0) {
+        if (ctx->variable_keylength == 0) {
             if (keylen != ctx->keylen) {
-                ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEYLEN);
+                ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
                 return 0;
             }
         } else {
@@ -592,7 +613,7 @@ int ossl_cipher_generic_initiv(PROV_CIPHER_CTX *ctx, const unsigned char *iv,
 {
     if (ivlen != ctx->ivlen
         || ivlen > sizeof(ctx->iv)) {
-        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_IVLEN);
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_IV_LENGTH);
         return 0;
     }
     ctx->iv_set = 1;
@@ -608,7 +629,11 @@ void ossl_cipher_generic_initkey(void *vctx, size_t kbits, size_t blkbits,
 {
     PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
 
-    ctx->flags = flags;
+    if ((flags & PROV_CIPHER_FLAG_INVERSE_CIPHER) != 0)
+        ctx->inverse_cipher = 1;
+    if ((flags & PROV_CIPHER_FLAG_VARIABLE_LENGTH) != 0)
+        ctx->variable_keylength = 1;
+
     ctx->pad = 1;
     ctx->keylen = ((kbits) / 8);
     ctx->ivlen = ((ivbits) / 8);

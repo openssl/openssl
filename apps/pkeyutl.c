@@ -117,7 +117,7 @@ int pkeyutl_main(int argc, char **argv)
     size_t buf_outlen;
     const char *inkey = NULL;
     const char *peerkey = NULL;
-    const char *kdfalg = NULL;
+    const char *kdfalg = NULL, *digestname = NULL;
     int kdflen = 0;
     STACK_OF(OPENSSL_STRING) *pkeyopts = NULL;
     STACK_OF(OPENSSL_STRING) *pkeyopts_passin = NULL;
@@ -244,8 +244,7 @@ int pkeyutl_main(int argc, char **argv)
             rawin = 1;
             break;
         case OPT_DIGEST:
-            if (!opt_md(opt_arg(), &md))
-                goto end;
+            digestname = opt_arg();
             break;
         }
     }
@@ -254,6 +253,12 @@ int pkeyutl_main(int argc, char **argv)
     argc = opt_num_rest();
     if (argc != 0)
         goto opthelp;
+
+    app_RAND_load();
+    if (digestname != NULL) {
+        if (!opt_md(digestname, &md))
+            goto end;
+    }
 
     if (rawin && pkey_op != EVP_PKEY_OP_SIGN && pkey_op != EVP_PKEY_OP_VERIFY) {
         BIO_printf(bio_err,

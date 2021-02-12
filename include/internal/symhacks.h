@@ -9,6 +9,7 @@
 
 #ifndef OSSL_INTERNAL_SYMHACKS_H
 # define OSSL_INTERNAL_SYMHACKS_H
+# pragma once
 
 # include <openssl/e_os2.h>
 

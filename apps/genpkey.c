@@ -62,14 +62,19 @@ int genpkey_main(int argc, char **argv)
     ENGINE *e = NULL;
     EVP_PKEY *pkey = NULL;
     EVP_PKEY_CTX *ctx = NULL;
-    char *outfile = NULL, *passarg = NULL, *pass = NULL, *prog;
+    char *outfile = NULL, *passarg = NULL, *pass = NULL, *prog, *p;
+    const char *ciphername = NULL, *paramfile = NULL, *algname = NULL;
     const EVP_CIPHER *cipher = NULL;
     OPTION_CHOICE o;
     int outformat = FORMAT_PEM, text = 0, ret = 1, rv, do_param = 0;
-    int private = 0;
+    int private = 0, i, m;
     OSSL_LIB_CTX *libctx = app_get0_libctx();
+    STACK_OF(OPENSSL_STRING) *keyopt = NULL;
 
     prog = opt_init(argc, argv, genpkey_options);
+    keyopt = sk_OPENSSL_STRING_new_null();
+    if (keyopt == NULL)
+        goto end;
     while ((o = opt_next()) != OPT_EOF) {
         switch (o) {
         case OPT_EOF:
@@ -97,49 +102,23 @@ int genpkey_main(int argc, char **argv)
         case OPT_PARAMFILE:
             if (do_param == 1)
                 goto opthelp;
-            if (!init_keygen_file(&ctx, opt_arg(), e, libctx, app_get0_propq()))
-                goto end;
+            paramfile = opt_arg();
             break;
         case OPT_ALGORITHM:
-            if (!init_gen_str(&ctx, opt_arg(), e, do_param, libctx, app_get0_propq()))
-                goto end;
+            algname = opt_arg();
             break;
         case OPT_PKEYOPT:
-            if (ctx == NULL) {
-                BIO_printf(bio_err, "%s: No keytype specified.\n", prog);
-                goto opthelp;
-            }
-            if (pkey_ctrl_string(ctx, opt_arg()) <= 0) {
-                BIO_printf(bio_err,
-                           "%s: Error setting %s parameter:\n",
-                           prog, opt_arg());
-                ERR_print_errors(bio_err);
+            if (!sk_OPENSSL_STRING_push(keyopt, opt_arg()))
                 goto end;
-            }
             break;
         case OPT_GENPARAM:
-            if (ctx != NULL) {
-                BIO_printf(bio_err,
-                           "%s: '-genparam' option must be set before"
-                            " the '-algorithm' option.\n", prog);
-                goto opthelp;
-            }
             do_param = 1;
             break;
         case OPT_TEXT:
             text = 1;
             break;
         case OPT_CIPHER:
-            if (!opt_cipher(opt_unknown(), &cipher)
-                || do_param == 1)
-                goto opthelp;
-            if (EVP_CIPHER_mode(cipher) == EVP_CIPH_GCM_MODE ||
-                EVP_CIPHER_mode(cipher) == EVP_CIPH_CCM_MODE ||
-                EVP_CIPHER_mode(cipher) == EVP_CIPH_XTS_MODE ||
-                EVP_CIPHER_mode(cipher) == EVP_CIPH_OCB_MODE) {
-                BIO_printf(bio_err, "%s: cipher mode not supported\n", prog);
-                goto end;
-            }
+            ciphername = opt_unknown();
             break;
         case OPT_CONFIG:
             conf = app_load_config_modules(opt_arg());
@@ -158,10 +137,38 @@ int genpkey_main(int argc, char **argv)
     if (argc != 0)
         goto opthelp;
 
-    private = do_param ? 0 : 1;
-
+    /* Fetch cipher, etc. */
+    if (paramfile != NULL) {
+        if (!init_keygen_file(&ctx, paramfile, e, libctx, app_get0_propq()))
+            goto end;
+    }
+    if (algname != NULL) {
+        if (!init_gen_str(&ctx, algname, e, do_param, libctx, app_get0_propq()))
+            goto end;
+    }
     if (ctx == NULL)
         goto opthelp;
+
+    for (i = 0; i < sk_OPENSSL_STRING_num(keyopt); i++) {
+        p = sk_OPENSSL_STRING_value(keyopt, i);
+        if (pkey_ctrl_string(ctx, p) <= 0) {
+            BIO_printf(bio_err, "%s: Error setting %s parameter:\n", prog, p);
+            ERR_print_errors(bio_err);
+            goto end;
+        }
+    }
+    if (ciphername != NULL) {
+        if (!opt_cipher(ciphername, &cipher) || do_param == 1)
+            goto opthelp;
+        m = EVP_CIPHER_mode(cipher);
+        if (m == EVP_CIPH_GCM_MODE || m == EVP_CIPH_CCM_MODE
+                || m == EVP_CIPH_XTS_MODE || m == EVP_CIPH_OCB_MODE) {
+            BIO_printf(bio_err, "%s: cipher mode not supported\n", prog);
+            goto end;
+        }
+    }
+
+    private = do_param ? 0 : 1;
 
     if (!app_passwd(passarg, NULL, &pass, NULL)) {
         BIO_puts(bio_err, "Error getting password\n");
@@ -224,6 +231,7 @@ int genpkey_main(int argc, char **argv)
     }
 
  end:
+    sk_OPENSSL_STRING_free(keyopt);
     EVP_PKEY_free(pkey);
     EVP_PKEY_CTX_free(ctx);
     BIO_free_all(out);
