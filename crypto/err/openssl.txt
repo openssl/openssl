@@ -947,6 +947,7 @@ PROV_R_BN_ERROR:160:bn error
 PROV_R_CIPHER_OPERATION_FAILED:102:cipher operation failed
 PROV_R_DERIVATION_FUNCTION_INIT_FAILED:205:derivation function init failed
 PROV_R_DIGEST_NOT_ALLOWED:174:digest not allowed
+PROV_R_ENTROPY_SOURCE_STRENGTH_TOO_WEAK:186:entropy source strength too weak
 PROV_R_ERROR_INSTANTIATING_DRBG:188:error instantiating drbg
 PROV_R_ERROR_RETRIEVING_ENTROPY:189:error retrieving entropy
 PROV_R_ERROR_RETRIEVING_NONCE:190:error retrieving nonce
@@ -1023,6 +1024,7 @@ PROV_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE:178:\
 PROV_R_OUTPUT_BUFFER_TOO_SMALL:106:output buffer too small
 PROV_R_PARENT_CANNOT_GENERATE_RANDOM_NUMBERS:228:\
 	parent cannot generate random numbers
+PROV_R_PARENT_CANNOT_SUPPLY_ENTROPY_SEED:187:parent cannot supply entropy seed
 PROV_R_PARENT_LOCKING_NOT_ENABLED:182:parent locking not enabled
 PROV_R_PARENT_STRENGTH_TOO_WEAK:194:parent strength too weak
 PROV_R_PATH_MUST_BE_ABSOLUTE:219:path must be absolute
@@ -1037,8 +1039,8 @@ PROV_R_SEED_SOURCES_MUST_NOT_HAVE_A_PARENT:229:\
 	seed sources must not have a parent
 PROV_R_SELF_TEST_KAT_FAILURE:215:self test kat failure
 PROV_R_SELF_TEST_POST_FAILURE:216:self test post failure
-PROV_R_TAG_NOT_SET:119:tag not set
 PROV_R_TAG_NOT_NEEDED:120:tag not needed
+PROV_R_TAG_NOT_SET:119:tag not set
 PROV_R_TOO_MANY_RECORDS:126:too many records
 PROV_R_UNABLE_TO_FIND_CIPHERS:207:unable to find ciphers
 PROV_R_UNABLE_TO_GET_PARENT_STRENGTH:199:unable to get parent strength
