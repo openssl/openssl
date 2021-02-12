@@ -3033,17 +3033,9 @@ static int build_chain(X509_STORE_CTX *ctx)
 
     /*
      * If we got any "DANE-TA(2) Cert(0) Full(0)" trust anchors from DNS, add
-     * them to our working copy of the untrusted certificate stack.  Since the
-     * caller of X509_STORE_CTX_init() may have provided only a leaf cert with
-     * no corresponding stack of untrusted certificates, we may need to create
-     * an empty stack first.  [ At present only the ssl library provides DANE
-     * support, and ssl_verify_cert_chain() always provides a non-null stack
-     * containing at least the leaf certificate, but we must be prepared for
-     * this to change. ]
+     * them to our working copy of the untrusted certificate stack.
      */
     if (DANETLS_ENABLED(dane) && dane->certs != NULL) {
-        if (sk_untrusted == NULL && (sk_untrusted = sk_X509_new_null()) == NULL)
-            goto memerr;
         if (!X509_add_certs(sk_untrusted, dane->certs, X509_ADD_FLAG_DEFAULT)) {
             sk_X509_free(sk_untrusted);
             goto memerr;
