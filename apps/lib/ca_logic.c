@@ -11,7 +11,7 @@
 #include <openssl/x509.h>
 #include <apps.h>
 
-int do_updatedb(CA_DB *db)
+int do_updatedb(CA_DB *db, time_t *now)
 {
     ASN1_TIME *a_tm = NULL;
     int i, cnt = 0;
@@ -21,7 +21,7 @@ int do_updatedb(CA_DB *db)
     if (a_tm == NULL)
         return -1;
 
-    if (X509_gmtime_adj(a_tm, 0) == NULL) {
+    if (X509_time_adj(a_tm, 0, now) == NULL) {
         ASN1_TIME_free(a_tm);
         return -1;
     }

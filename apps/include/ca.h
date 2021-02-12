@@ -7,12 +7,10 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef OSSL_APPS_CA_LOGIC_H
-#define OSSL_APPS_CA_LOGIC_H
+#ifndef OSSL_APPS_CA_H
+#define OSSL_APPS_CA_H
 
-#include "ca.h"
-
-/*#include "openssl/txt_db.h"
+#include "openssl/txt_db.h"
 # ifndef OPENSSL_NO_POSIX_IO
 #  include <fcntl.h>
 #  include <sys/stat.h>
@@ -29,8 +27,6 @@ typedef struct ca_db_st {
 # ifndef OPENSSL_NO_POSIX_IO
     struct stat dbst;
 # endif
-} CA_DB; */
+} CA_DB;
 
-extern int do_updatedb(CA_DB *db, time_t *now);
-
-#endif                          /* ! OSSL_APPS_CA_LOGIC_H */
+#endif                          /* ! OSSL_APPS_CA_H */
