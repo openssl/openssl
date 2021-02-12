@@ -10,7 +10,7 @@
 #include <unistd.h>
 #include "../apps/include/ca.h"
 #include "../apps/include/ca_logic.h"
-#include "apps.h"
+#include "../apps/include/apps.h"
 
 char *default_config_file = NULL;
 
