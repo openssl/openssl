@@ -8,8 +8,8 @@
  */
 
 #include <unistd.h>
-#include "ca.h"
-#include "ca_logic.h"
+#include "../apps/include/ca.h"
+#include "../apps/include/ca_logic.h"
 #include "apps.h"
 
 char *default_config_file = NULL;
