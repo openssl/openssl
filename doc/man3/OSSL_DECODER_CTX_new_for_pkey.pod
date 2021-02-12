@@ -40,7 +40,10 @@ B<OSSL_DECODER_CTX>, finds all applicable decoder implementations and sets
 them up, so all the caller has to do next is call functions like
 L<OSSL_DECODER_from_bio(3)>.  The caller may use the optional I<input_type>,
 I<input_struct>, I<keytype> and I<selection> to specify what the input is
-expected to contain.
+expected to contain.  The I<pkey> must reference an B<EVP_PKEY *> variable
+that will be set to the newly created B<EVP_PKEY> on succesfull decoding.
+The referenced variable must be initialized to NULL before calling the
+function.
 
 Internally OSSL_DECODER_CTX_new_for_pkey() searches for all available
 L<EVP_KEYMGMT(3)> implementations, and then builds a list of all potential
