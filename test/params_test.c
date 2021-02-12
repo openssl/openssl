@@ -141,9 +141,20 @@ static int raw_set_params(void *vobj, const OSSL_PARAM *params)
             if (!TEST_ptr(obj->p4 = OPENSSL_strndup(params->data,
                                                     params->data_size)))
                 return 0;
+            obj->p4_l = strlen(obj->p4);
         } else if (strcmp(params->key, "p5") == 0) {
-            strncpy(obj->p5, params->data, params->data_size);
-            obj->p5_l = strlen(obj->p5) + 1;
+            /*
+             * Protect obj->p5 against too much data.  This should not
+             * happen, we don't use that long strings.
+             */
+            size_t data_length =
+                OPENSSL_strnlen(params->data, params->data_size);
+
+            if (!TEST_size_t_lt(data_length, sizeof(obj->p5)))
+                return 0;
+            strncpy(obj->p5, params->data, data_length);
+            obj->p5[data_length] = '\0';
+            obj->p5_l = strlen(obj->p5);
         } else if (strcmp(params->key, "p6") == 0) {
             obj->p6 = *(const char **)params->data;
             obj->p6_l = params->data_size;
@@ -164,36 +175,22 @@ static int raw_get_params(void *vobj, OSSL_PARAM *params)
             params->return_size = sizeof(obj->p2);
             *(double *)params->data = obj->p2;
         } else if (strcmp(params->key, "p3") == 0) {
-            size_t bytes = BN_num_bytes(obj->p3);
-
-            params->return_size = bytes;
-            if (!TEST_size_t_ge(params->data_size, bytes))
+            params->return_size = BN_num_bytes(obj->p3);
+            if (!TEST_size_t_ge(params->data_size, params->return_size))
                 return 0;
-            BN_bn2nativepad(obj->p3, params->data, bytes);
+            BN_bn2nativepad(obj->p3, params->data, params->return_size);
         } else if (strcmp(params->key, "p4") == 0) {
-            size_t bytes = strlen(obj->p4) + 1;
-
-            params->return_size = bytes;
-            if (!TEST_size_t_ge(params->data_size, bytes))
+            params->return_size = strlen(obj->p4);
+            if (!TEST_size_t_gt(params->data_size, params->return_size))
                 return 0;
             strcpy(params->data, obj->p4);
         } else if (strcmp(params->key, "p5") == 0) {
-            size_t bytes = strlen(obj->p5) + 1;
-
-            params->return_size = bytes;
-            if (!TEST_size_t_ge(params->data_size, bytes))
+            params->return_size = strlen(obj->p5);
+            if (!TEST_size_t_gt(params->data_size, params->return_size))
                 return 0;
             strcpy(params->data, obj->p5);
         } else if (strcmp(params->key, "p6") == 0) {
-            /*
-             * We COULD also use OPENSSL_FULL_VERSION_STR directly and
-             * use sizeof(OPENSSL_FULL_VERSION_STR) instead of calling
-             * strlen().
-             * The caller wouldn't know the difference.
-             */
-            size_t bytes = strlen(obj->p6) + 1;
-
-            params->return_size = bytes;
+            params->return_size = strlen(obj->p6);
             *(const char **)params->data = obj->p6;
         }
 
@@ -229,12 +226,12 @@ static int api_set_params(void *vobj, const OSSL_PARAM *params)
         char *p5_ptr = obj->p5;
         if (!TEST_true(OSSL_PARAM_get_utf8_string(p, &p5_ptr, sizeof(obj->p5))))
             return 0;
-        obj->p5_l = strlen(obj->p5) + 1;
+        obj->p5_l = strlen(obj->p5);
     }
     if ((p = OSSL_PARAM_locate_const(params, "p6")) != NULL) {
         if (!TEST_true(OSSL_PARAM_get_utf8_ptr(p, &obj->p6)))
             return 0;
-        obj->p6_l = strlen(obj->p6) + 1;
+        obj->p6_l = strlen(obj->p6);
     }
 
     return 1;
@@ -353,8 +350,8 @@ static OSSL_PARAM static_raw_params[] = {
     { "p3", OSSL_PARAM_UNSIGNED_INTEGER, &bignumbin, sizeof(bignumbin), 0 },
     { "p4", OSSL_PARAM_UTF8_STRING, &app_p4, sizeof(app_p4), 0 },
     { "p5", OSSL_PARAM_UTF8_STRING, &app_p5, sizeof(app_p5), 0 },
-    /* sizeof(app_p6_init), because we know that's what we're using */
-    { "p6", OSSL_PARAM_UTF8_PTR, &app_p6, sizeof(app_p6_init), 0 },
+    /* sizeof(app_p6_init) - 1, because we know that's what we're using */
+    { "p6", OSSL_PARAM_UTF8_PTR, &app_p6, sizeof(app_p6_init) - 1, 0 },
     { "foo", OSSL_PARAM_OCTET_STRING, &foo, sizeof(foo), 0 },
     { NULL, 0, NULL, 0, 0 }
 };
@@ -366,7 +363,8 @@ static OSSL_PARAM static_api_params[] = {
     OSSL_PARAM_DEFN("p4", OSSL_PARAM_UTF8_STRING, &app_p4, sizeof(app_p4)),
     OSSL_PARAM_DEFN("p5", OSSL_PARAM_UTF8_STRING, &app_p5, sizeof(app_p5)),
     /* sizeof(app_p6_init), because we know that's what we're using */
-    OSSL_PARAM_DEFN("p6", OSSL_PARAM_UTF8_PTR, &app_p6, sizeof(app_p6_init)),
+    OSSL_PARAM_DEFN("p6", OSSL_PARAM_UTF8_PTR, &app_p6,
+                    sizeof(app_p6_init) - 1),
     OSSL_PARAM_DEFN("foo", OSSL_PARAM_OCTET_STRING, &foo, sizeof(foo)),
     OSSL_PARAM_END
 };
@@ -461,10 +459,12 @@ static int test_case_variant(OSSL_PARAM *params, const struct provider_dispatch_
         || !TEST_BN_eq(app_p3, verify_p3)       /* "provider" value */
         || !TEST_str_eq(app_p4, p4_init)        /* "provider" value */
         || !TEST_ptr(p = OSSL_PARAM_locate(params, "p5"))
-        || !TEST_size_t_eq(p->return_size, sizeof(p5_init)) /* "provider" value */
+        || !TEST_size_t_eq(p->return_size,
+                           sizeof(p5_init) - 1) /* "provider" value */
         || !TEST_str_eq(app_p5, p5_init)        /* "provider" value */
         || !TEST_ptr(p = OSSL_PARAM_locate(params, "p6"))
-        || !TEST_size_t_eq(p->return_size, sizeof(p6_init)) /* "provider" value */
+        || !TEST_size_t_eq(p->return_size,
+                           sizeof(p6_init) - 1) /* "provider" value */
         || !TEST_str_eq(app_p6, p6_init)        /* "provider" value */
         || !TEST_char_eq(foo[0], app_foo_init)  /* Should remain untouched */
         || !TEST_ptr(p = OSSL_PARAM_locate(params, "foo")))
@@ -511,11 +511,11 @@ static int test_case_variant(OSSL_PARAM *params, const struct provider_dispatch_
         || !TEST_str_eq(app_p4, app_p4_init)    /* app value */
         || !TEST_ptr(p = OSSL_PARAM_locate(params, "p5"))
         || !TEST_size_t_eq(p->return_size,
-                           sizeof(app_p5_init)) /* app value */
+                           sizeof(app_p5_init) - 1) /* app value */
         || !TEST_str_eq(app_p5, app_p5_init)    /* app value */
         || !TEST_ptr(p = OSSL_PARAM_locate(params, "p6"))
         || !TEST_size_t_eq(p->return_size,
-                           sizeof(app_p6_init)) /* app value */
+                           sizeof(app_p6_init) - 1) /* app value */
         || !TEST_str_eq(app_p6, app_p6_init)    /* app value */
         || !TEST_char_eq(foo[0], app_foo_init)  /* Should remain untouched */
         || !TEST_ptr(p = OSSL_PARAM_locate(params, "foo")))
