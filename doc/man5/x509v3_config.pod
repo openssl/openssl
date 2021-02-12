@@ -284,7 +284,7 @@ B<access_id;location>, where B<access_id> is an object identifier
 (although only a few values are well-known) and B<location> has the same
 syntax as subject alternative name (except that B<email:copy> is not supported).
 
-Possible values for access_id are B<OCSP> (OCSP responder),
+Possible values for access_id include B<OCSP> (OCSP responder),
 B<caIssuers> (CA Issuers), 
 B<ad_timestamping> (AD Time Stamping), 
 B<AD_DVCS> (ad dvcs),
