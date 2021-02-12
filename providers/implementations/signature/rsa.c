@@ -517,7 +517,7 @@ static int rsa_sign(void *vprsactx, unsigned char *sig, size_t *siglen,
                                              prsactx->rsa);
 
             if (ret <= 0) {
-                ERR_raise(ERR_LIB_PROV, ERR_LIB_RSA);
+                ERR_raise(ERR_LIB_PROV, ERR_R_RSA_LIB);
                 return 0;
             }
             ret = sltmp;
@@ -550,7 +550,7 @@ static int rsa_sign(void *vprsactx, unsigned char *sig, size_t *siglen,
                 ret = RSA_sign(prsactx->mdnid, tbs, tbslen, sig, &sltmp,
                                prsactx->rsa);
                 if (ret <= 0) {
-                    ERR_raise(ERR_LIB_PROV, ERR_LIB_RSA);
+                    ERR_raise(ERR_LIB_PROV, ERR_R_RSA_LIB);
                     return 0;
                 }
                 ret = sltmp;
@@ -592,7 +592,7 @@ static int rsa_sign(void *vprsactx, unsigned char *sig, size_t *siglen,
                                                 prsactx->tbuf, tbs,
                                                 prsactx->md, prsactx->mgf1_md,
                                                 prsactx->saltlen)) {
-                ERR_raise(ERR_LIB_PROV, ERR_LIB_RSA);
+                ERR_raise(ERR_LIB_PROV, ERR_R_RSA_LIB);
                 return 0;
             }
             ret = RSA_private_encrypt(RSA_size(prsactx->rsa), prsactx->tbuf,
@@ -614,7 +614,7 @@ static int rsa_sign(void *vprsactx, unsigned char *sig, size_t *siglen,
  end:
 #endif
     if (ret <= 0) {
-        ERR_raise(ERR_LIB_PROV, ERR_LIB_RSA);
+        ERR_raise(ERR_LIB_PROV, ERR_R_RSA_LIB);
         return 0;
     }
 
@@ -655,7 +655,7 @@ static int rsa_verify_recover(void *vprsactx,
             ret = RSA_public_decrypt(siglen, sig, prsactx->tbuf, prsactx->rsa,
                                      RSA_X931_PADDING);
             if (ret < 1) {
-                ERR_raise(ERR_LIB_PROV, ERR_LIB_RSA);
+                ERR_raise(ERR_LIB_PROV, ERR_R_RSA_LIB);
                 return 0;
             }
             ret--;
@@ -689,7 +689,7 @@ static int rsa_verify_recover(void *vprsactx,
                 ret = int_rsa_verify(prsactx->mdnid, NULL, 0, rout, &sltmp,
                                      sig, siglen, prsactx->rsa);
                 if (ret <= 0) {
-                    ERR_raise(ERR_LIB_PROV, ERR_LIB_RSA);
+                    ERR_raise(ERR_LIB_PROV, ERR_R_RSA_LIB);
                     return 0;
                 }
                 ret = sltmp;
@@ -705,7 +705,7 @@ static int rsa_verify_recover(void *vprsactx,
         ret = RSA_public_decrypt(siglen, sig, rout, prsactx->rsa,
                                  prsactx->pad_mode);
         if (ret < 0) {
-            ERR_raise(ERR_LIB_PROV, ERR_LIB_RSA);
+            ERR_raise(ERR_LIB_PROV, ERR_R_RSA_LIB);
             return 0;
         }
     }
@@ -733,7 +733,7 @@ static int rsa_verify(void *vprsactx, const unsigned char *sig, size_t siglen,
         case RSA_PKCS1_PADDING:
             if (!RSA_verify(prsactx->mdnid, tbs, tbslen, sig, siglen,
                             prsactx->rsa)) {
-                ERR_raise(ERR_LIB_PROV, ERR_LIB_RSA);
+                ERR_raise(ERR_LIB_PROV, ERR_R_RSA_LIB);
                 return 0;
             }
             return 1;
@@ -766,7 +766,7 @@ static int rsa_verify(void *vprsactx, const unsigned char *sig, size_t siglen,
                 ret = RSA_public_decrypt(siglen, sig, prsactx->tbuf,
                                          prsactx->rsa, RSA_NO_PADDING);
                 if (ret <= 0) {
-                    ERR_raise(ERR_LIB_PROV, ERR_LIB_RSA);
+                    ERR_raise(ERR_LIB_PROV, ERR_R_RSA_LIB);
                     return 0;
                 }
                 ret = RSA_verify_PKCS1_PSS_mgf1(prsactx->rsa, tbs,
@@ -774,7 +774,7 @@ static int rsa_verify(void *vprsactx, const unsigned char *sig, size_t siglen,
                                                 prsactx->tbuf,
                                                 prsactx->saltlen);
                 if (ret <= 0) {
-                    ERR_raise(ERR_LIB_PROV, ERR_LIB_RSA);
+                    ERR_raise(ERR_LIB_PROV, ERR_R_RSA_LIB);
                     return 0;
                 }
                 return 1;
@@ -790,7 +790,7 @@ static int rsa_verify(void *vprsactx, const unsigned char *sig, size_t siglen,
         rslen = RSA_public_decrypt(siglen, sig, prsactx->tbuf, prsactx->rsa,
                                    prsactx->pad_mode);
         if (rslen == 0) {
-            ERR_raise(ERR_LIB_PROV, ERR_LIB_RSA);
+            ERR_raise(ERR_LIB_PROV, ERR_R_RSA_LIB);
             return 0;
         }
     }

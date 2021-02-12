@@ -234,10 +234,7 @@ Use the following command to install OpenSSL.
 
 By default, OpenSSL will be installed to
 
-    SYS$COMMON:[OPENSSL-'version'...]
-
-where 'version' is the OpenSSL version number with underscores instead
-of periods.
+    SYS$COMMON:[OPENSSL]
 
 ### Windows
 
@@ -265,6 +262,9 @@ for 32bit binaries on 64bit Windows (WOW64).
 To install OpenSSL to a different location (for example into your home
 directory for testing purposes) run `Configure` as shown in the following
 examples.
+
+The options `--prefix` and `--openssldir` are explained in further detail in
+[Directories](#directories) below, and the values used here are mere examples.
 
 On Unix:
 
@@ -375,7 +375,7 @@ The top of the installation directory tree.  Defaults are:
 
     Unix:           /usr/local
     Windows:        C:\Program Files\OpenSSL
-    OpenVMS:        SYS$COMMON:[OPENSSL-'version']
+    OpenVMS:        SYS$COMMON:[OPENSSL]
 
 Compiler Warnings
 -----------------
@@ -1289,7 +1289,7 @@ its default):
 
 ### OpenVMS
 
-'arch' is replaced with the architecture name, `Alpha` or `ia64`,
+'arch' is replaced with the architecture name, `ALPHA` or `IA64`,
 'sover' is replaced with the shared library version (`0101` for 1.1), and
 'pz' is replaced with the pointer size OpenSSL was built with:
 

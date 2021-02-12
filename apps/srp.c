@@ -11,6 +11,9 @@
  * for the EdelKey project.
  */
 
+/* SRP is deprecated, so we're going to have to use some deprecated APIs */
+#define OPENSSL_SUPPRESS_DEPRECATED
+
 #include <openssl/opensslconf.h>
 
 #include <stdio.h>

@@ -88,7 +88,7 @@ static int ct_v1_log_id_from_pkey(CTLOG *log, EVP_PKEY *pkey)
     }
     sha256 = EVP_MD_fetch(log->libctx, "SHA2-256", log->propq);
     if (sha256 == NULL) {
-        ERR_raise(ERR_LIB_CT, ERR_LIB_EVP);
+        ERR_raise(ERR_LIB_CT, ERR_R_EVP_LIB);
         goto err;
     }
 

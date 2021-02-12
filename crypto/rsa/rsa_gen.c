@@ -410,7 +410,7 @@ static int rsa_multiprime_keygen(RSA *rsa, int bits, int primes,
     ok = 1;
  err:
     if (ok == -1) {
-        ERR_raise(ERR_LIB_RSA, ERR_LIB_BN);
+        ERR_raise(ERR_LIB_RSA, ERR_R_BN_LIB);
         ok = 0;
     }
     BN_CTX_end(ctx);

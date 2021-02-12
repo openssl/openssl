@@ -1258,7 +1258,7 @@ static int ssl_check_srp_ext_ClientHello(SSL *s)
                      SSL_R_PSK_IDENTITY_NOT_FOUND);
             return -1;
         } else {
-            ret = SSL_srp_server_param_with_username(s, &al);
+            ret = ssl_srp_server_param_with_username_intern(s, &al);
             if (ret < 0)
                 return 0;
             if (ret == SSL3_AL_FATAL) {
