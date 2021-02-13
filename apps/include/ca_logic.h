@@ -32,5 +32,6 @@ typedef struct ca_db_st {
 } CA_DB; */
 
 extern int do_updatedb(CA_DB *db, time_t *now);
+time_t iso8601_utc_to_time_t(const char *dateStr);
 
 #endif                          /* ! OSSL_APPS_CA_LOGIC_H */
