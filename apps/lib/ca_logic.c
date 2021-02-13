@@ -10,6 +10,8 @@
 #include <ca_logic.h>
 #include <openssl/x509.h>
 #include <apps.h>
+// time.h is needed only temporarily for iso8601_utc_to_time_t
+#include <time.h>
 
 int do_updatedb(CA_DB *db, time_t *now)
 {
