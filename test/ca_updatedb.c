@@ -21,34 +21,34 @@
 
 char *default_config_file = NULL;
 
-time_t iso8601_utc_to_time_t(const char *dateStr)
-{
-    struct tm t;
-
-    int success = sscanf(dateStr, "%d-%d-%dT%d:%dZ",
-        &t.tm_year, &t.tm_mon, &t.tm_mday, &t.tm_hour, &t.tm_min);
-
-    if (success != 5) {
-        return 0;
-    }
-
-    t.tm_year = t.tm_year - 1900;
-    t.tm_mon = t.tm_mon - 1;
-    t.tm_sec = 0;
-    t.tm_wday = 0;
-    t.tm_yday = 0;
-    t.tm_isdst = 0;
-
-    time_t localTime = mktime(&t);
-    time_t utcTime = localTime - timezone;
-    return utcTime;
-}
-
 int main(int argc, char *argv[])
 {
     CA_DB *db = NULL;
     int r;
     time_t *testdate;
+
+    time_t iso8601_utc_to_time_t(const char *dateStr)
+    {
+        struct tm t;
+    
+        int success = sscanf(dateStr, "%d-%d-%dT%d:%dZ",
+            &t.tm_year, &t.tm_mon, &t.tm_mday, &t.tm_hour, &t.tm_min);
+    
+        if (success != 5) {
+            return 0;
+        }
+    
+        t.tm_year = t.tm_year - 1900;
+        t.tm_mon = t.tm_mon - 1;
+        t.tm_sec = 0;
+        t.tm_wday = 0;
+        t.tm_yday = 0;
+        t.tm_isdst = 0;
+    
+        time_t localTime = mktime(&t);
+        time_t utcTime = localTime - timezone;
+        return utcTime;
+    }
 
     if (argc != 3) {
         fprintf(stderr, "Usage: %s indexfile testdate\n", argv[0]);
