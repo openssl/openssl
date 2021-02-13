@@ -7,7 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <unistd.h>
+#ifdef OPENSSL_SYS_UNIX
+# include <unistd.h>
+#endif
 #include "../apps/include/ca.h"
 #include "../apps/include/ca_logic.h"
 #include "../apps/include/apps.h"
@@ -43,6 +45,4 @@ int main(int argc, char *argv[])
 
     printf("Marked %i entries as expired\n", r);
     exit(EXIT_SUCCESS);
-
-    // /home/armin/work/apt-src/openssl-test/2017/ovpn-intermediate/index.txt
 }
