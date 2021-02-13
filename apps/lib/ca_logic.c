@@ -11,6 +11,11 @@
 #include <openssl/x509.h>
 #include <apps.h>
 
+/* another tweak for windows */
+#ifdef  WIN32
+# define timezone _get_timezone()
+#endif
+
 int do_updatedb(CA_DB *db, time_t *now)
 {
     ASN1_TIME *a_tm = NULL;
@@ -62,12 +67,6 @@ int do_updatedb(CA_DB *db, time_t *now)
 time_t iso8601_utc_to_time_t(const char *dateStr)
 {
     struct tm t;
-    time_t t1 = time(NULL);
-    long gmt_offset;
-
-    /* calculate difference to GMT manually */
-    localtime_r(&t1, &t);
-    gmt_offset = t.tm_gmtoff;
 
     int success = sscanf(dateStr, "%d-%d-%dT%d:%dZ",
         &t.tm_year, &t.tm_mon, &t.tm_mday, &t.tm_hour, &t.tm_min);
@@ -84,7 +83,7 @@ time_t iso8601_utc_to_time_t(const char *dateStr)
     t.tm_isdst = 0;
 
     time_t localTime = mktime(&t);
-    time_t utcTime = localTime + gmt_offset;
+    time_t utcTime = localTime - timezone;
     return utcTime;
 }
 
