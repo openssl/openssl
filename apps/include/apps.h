@@ -35,6 +35,12 @@
 # include "engine_loader.h"
 # include "ca.h"
 
+#ifndef W_OK
+# define F_OK 0
+# define W_OK 2
+# define R_OK 4
+#endif
+
 /*
  * quick macro when you need to pass an unsigned char instead of a char.
  * this is true for some implementations of the is*() functions, for

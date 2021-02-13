@@ -35,11 +35,11 @@
 #include "progs.h"
 #include "ca_logic.h"
 
-#ifndef W_OK
+/*#ifndef W_OK
 # define F_OK 0
 # define W_OK 2
 # define R_OK 4
-#endif
+#endif*/
 
 #ifndef PATH_MAX
 # define PATH_MAX 4096

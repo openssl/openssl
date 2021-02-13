@@ -14,6 +14,11 @@
 #include "../apps/include/ca_logic.h"
 #include "../apps/include/apps.h"
 
+/* tweaks needed due to missing unistd.h on Windows */
+#ifdef _WIN32
+# define access _access
+#endif
+
 char *default_config_file = NULL;
 
 int main(int argc, char *argv[])
