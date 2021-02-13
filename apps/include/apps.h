@@ -35,9 +35,13 @@
 # include "engine_loader.h"
 # include "ca.h"
 
-#ifndef W_OK
+#ifndef F_OK
 # define F_OK 0
+#endif
+#ifndef W_OK
 # define W_OK 2
+#endif
+#ifndef R_OK
 # define R_OK 4
 #endif
 
