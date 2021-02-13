@@ -13,7 +13,7 @@
 
 /* another tweak for windows */
 #ifdef  WIN32
-# define timezone _get_timezone()
+# define timezone _timezone
 #endif
 
 int do_updatedb(CA_DB *db, time_t *now)
