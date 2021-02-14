@@ -26,6 +26,11 @@ int main(int argc, char *argv[])
     CA_DB *db = NULL;
     int r;
     time_t *testdate;
+    BIO *channel;
+
+    channel = BIO_push(BIO_new(BIO_f_prefix()), dup_bio_err(FORMAT_TEXT));
+    bio_out = dup_bio_out(FORMAT_TEXT);
+    bio_err = dup_bio_err(FORMAT_TEXT);
 
     if (argc != 3) {
         fprintf(stderr, "Usage: %s indexfile testdate\n", argv[0]);
@@ -59,9 +64,9 @@ int main(int argc, char *argv[])
     if (r == -1)
 	exit(EXIT_FAILURE);
 
-    printf("Marked %i entries as expired\n", r);
     free(default_config_file);
     free_index(db);
     free(testdate);
+    BIO_free_all(channel);
     exit(EXIT_SUCCESS);
 }
