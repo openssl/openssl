@@ -27,6 +27,7 @@ int main(int argc, char *argv[])
     CA_DB *db = NULL;
     BIO *channel;
     time_t *testdateutc = NULL;
+    int r;
 
     if (argc != 3) {
         fprintf(stderr, "Usage: %s indexfile testdate\n", argv[0]);
@@ -59,8 +60,16 @@ int main(int argc, char *argv[])
 
     db = load_index(argv[1], NULL);
 
-    do_updatedb(db, testdateutc);
+    r = do_updatedb(db, testdateutc);
 
+    if (r > 0) {
+        if (!save_index(argv[1], "new", db))
+            goto end;
+
+        if (!rotate_index(argv[1], "new", "old"))
+            goto end;
+    }
+end:
     free(default_config_file);
     free_index(db);
     free(testdateutc);
