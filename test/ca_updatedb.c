@@ -22,64 +22,6 @@
 
 char *default_config_file = NULL;
 
-ASN1_TIME *asn1_string_to_ASN1_TIME(char *asn1_string)
-{
-    size_t len;
-    ASN1_TIME *tmps = NULL;
-    char *p;
-
-    len = strlen(asn1_string)+1;
-    tmps = ASN1_STRING_new();
-    if (tmps == NULL)
-        return NULL;
-
-    if (!ASN1_STRING_set(tmps, NULL, len)) {
-        ASN1_STRING_free(tmps);
-        return NULL;
-    }
-
-    if (strlen(asn1_string) == 13)
-    	tmps->type = V_ASN1_UTCTIME;
-    else
-        tmps->type = V_ASN1_GENERALIZEDTIME;
-    p = (char*)tmps->data;
-
-    tmps->length = BIO_snprintf(p, len, "%s", asn1_string);
-
-    return tmps;
-}
-
-time_t *asn1_string_to_time_t(char *asn1_string)
-{
-    ASN1_TIME *testdate_asn1 = NULL;
-    struct tm *testdate_tm = NULL;
-    time_t *testdatelocal = NULL;
-    time_t *testdateutc = NULL;
-
-    testdate_asn1 = asn1_string_to_ASN1_TIME(asn1_string);
-    if (testdate_asn1 == NULL)
-        return NULL;
-
-    testdate_tm = app_malloc(sizeof(struct tm), "testdate_tm");
-
-    if (!(ASN1_TIME_to_tm(testdate_asn1, testdate_tm))) {
-        free(testdate_tm);
-        ASN1_STRING_free(testdate_asn1);
-        return NULL;
-    }
-
-    testdatelocal = app_malloc(sizeof(time_t), "testdatelocal");
-    *testdatelocal = mktime(testdate_tm);
-    free(testdate_tm);
-
-    testdateutc = app_malloc(sizeof(time_t), "testdateutc");
-    *testdateutc = *testdatelocal - timezone;
-
-    free(testdatelocal);
-    ASN1_STRING_free(testdate_asn1);
-    return testdateutc;
-}
-
 int main(int argc, char *argv[])
 {
     CA_DB *db = NULL;

@@ -31,6 +31,13 @@ typedef struct ca_db_st {
 # endif
 } CA_DB; */
 
+/* tweaks needed for Windows */
+#ifdef _WIN32
+# define timezone _timezone
+#endif
+
 extern int do_updatedb(CA_DB *db, time_t *now);
+ASN1_TIME *asn1_string_to_ASN1_TIME(char *asn1_string);
+time_t *asn1_string_to_time_t(char *asn1_string);
 
 #endif                          /* ! OSSL_APPS_CA_LOGIC_H */
