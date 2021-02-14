@@ -65,7 +65,7 @@ ASN1_TIME *asn1_string_to_ASN1_TIME(char *asn1_string)
     ASN1_TIME *tmps = NULL;
     char *p;
 
-    len = strlen(asn1_string)+1;
+    len = strlen(asn1_string) + 1;
     tmps = ASN1_STRING_new();
     if (tmps == NULL)
         return NULL;
@@ -76,7 +76,7 @@ ASN1_TIME *asn1_string_to_ASN1_TIME(char *asn1_string)
     }
 
     if (strlen(asn1_string) == 13)
-    	tmps->type = V_ASN1_UTCTIME;
+        tmps->type = V_ASN1_UTCTIME;
     else
         tmps->type = V_ASN1_GENERALIZEDTIME;
     p = (char*)tmps->data;
@@ -97,7 +97,7 @@ time_t *asn1_string_to_time_t(char *asn1_string)
     if (testdate_asn1 == NULL)
         return NULL;
 
-    testdate_tm = app_malloc(sizeof(struct tm), "testdate_tm");
+    testdate_tm = app_malloc(sizeof(*testdate_tm), "testdate_tm");
 
     if (!(ASN1_TIME_to_tm(testdate_asn1, testdate_tm))) {
         free(testdate_tm);
