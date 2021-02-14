@@ -215,9 +215,7 @@ const OPTIONS cms_options[] = {
     {"aes128-wrap", OPT_AES128_WRAP, '-', "Use AES128 to wrap key"},
     {"aes192-wrap", OPT_AES192_WRAP, '-', "Use AES192 to wrap key"},
     {"aes256-wrap", OPT_AES256_WRAP, '-', "Use AES256 to wrap key"},
-# ifndef OPENSSL_NO_DES
     {"des3-wrap", OPT_3DES_WRAP, '-', "Use 3DES-EDE to wrap key"},
-# endif
     {"wrap", OPT_WRAP, 's', "Any wrap cipher to wrap key"},
 
     OPT_R_OPTIONS,
@@ -284,7 +282,7 @@ int cms_main(int argc, char **argv)
     X509_VERIFY_PARAM *vpm = NULL;
     char *certfile = NULL, *keyfile = NULL, *contfile = NULL;
     const char *CAfile = NULL, *CApath = NULL, *CAstore = NULL;
-    char *certsoutfile = NULL, *digestname = NULL;
+    char *certsoutfile = NULL, *digestname = NULL, *wrapname = NULL;
     int noCAfile = 0, noCApath = 0, noCAstore = 0;
     char *infile = NULL, *outfile = NULL, *rctfile = NULL;
     char *passinarg = NULL, *passin = NULL, *signerfile = NULL;
@@ -676,22 +674,13 @@ int cms_main(int argc, char **argv)
                 goto end;
             break;
         case OPT_3DES_WRAP:
-# ifndef OPENSSL_NO_DES
-            wrap_cipher = (EVP_CIPHER *)EVP_des_ede3_wrap();
-# endif
-            break;
         case OPT_AES128_WRAP:
-            wrap_cipher = (EVP_CIPHER *)EVP_aes_128_wrap();
-            break;
         case OPT_AES192_WRAP:
-            wrap_cipher = (EVP_CIPHER *)EVP_aes_192_wrap();
-            break;
         case OPT_AES256_WRAP:
-            wrap_cipher = (EVP_CIPHER *)EVP_aes_256_wrap();
+            wrapname = opt_flag() + 1;
             break;
         case OPT_WRAP:
-            if (!opt_cipher(opt_unknown(), &wrap_cipher))
-                goto end;
+            wrapname = opt_unknown();
             break;
         }
     }
@@ -704,6 +693,10 @@ int cms_main(int argc, char **argv)
     }
     if (ciphername != NULL) {
         if (!opt_cipher(ciphername, &cipher))
+            goto end;
+    }
+    if (wrapname != NULL) {
+        if (!opt_cipher(wrapname, &wrap_cipher))
             goto end;
     }
 
