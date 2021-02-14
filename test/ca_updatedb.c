@@ -38,6 +38,7 @@ int main(int argc, char *argv[])
         fprintf(stderr, "       testdate format: YYYY-MM-DDThh:mm\n");
 	exit(EXIT_FAILURE);
     }
+
     if (access(argv[1], F_OK) != 0) {
         fprintf(stderr, "Error: dbfile '%s' is not readable\n", argv[1]);
 	exit(EXIT_FAILURE);
@@ -45,13 +46,14 @@ int main(int argc, char *argv[])
 
     len = strlen(argv[2])+1;
     tmps = ASN1_STRING_new();
+    if (tmps == NULL)
+        exit(EXIT_FAILURE);
     if (!ASN1_STRING_set(tmps, NULL, len))
     {
         ASN1_STRING_free(tmps);
         exit(EXIT_FAILURE);
     }
 
-    testdatelocal = app_malloc(sizeof(time_t), "testdatelocal");
     testdate_tm = app_malloc(sizeof(struct tm), "testdate_tm");
 
     if (strlen(argv[2]) == 13)
@@ -59,16 +61,20 @@ int main(int argc, char *argv[])
     else
         tmps->type = V_ASN1_GENERALIZEDTIME;
     p = (char*)tmps->data;
-    tmps->length = BIO_snprintf(p, len, argv[2]);
+
+    tmps->length = BIO_snprintf(p, len, "%s", argv[2]);
 
     if (!(ASN1_TIME_to_tm(tmps, testdate_tm))) {
-        free(testdatelocal);
         free(testdate_tm);
         ASN1_STRING_free(tmps);
         fprintf(stderr, "Error: testdate '%s' is invalid\n", argv[2]);
         exit(EXIT_FAILURE);
     }
+
+    testdatelocal = app_malloc(sizeof(time_t), "testdatelocal");
     *testdatelocal = mktime(testdate_tm);
+    free(testdate_tm);
+
     testdateutc = app_malloc(sizeof(time_t), "testdateutc");
     *testdateutc = *testdatelocal - timezone;
     free(testdatelocal);
@@ -81,7 +87,6 @@ int main(int argc, char *argv[])
         ASN1_STRING_free(tmps);
         BIO_free_all(bio_err);
         BIO_free_all(channel);
-        free(testdate_tm);
         free(testdateutc);
         fprintf(stderr, "Error: could not get default config file\n");
         exit(EXIT_FAILURE);
@@ -94,7 +99,6 @@ int main(int argc, char *argv[])
     ASN1_STRING_free(tmps);
     free(default_config_file);
     free_index(db);
-    free(testdate_tm);
     free(testdateutc);
     BIO_free_all(bio_err);
     BIO_free_all(channel);
