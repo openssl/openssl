@@ -298,6 +298,8 @@ validity period starts from the current time (as seen by the host).
 =item B<-reqexts> I<name>
 
 Name of section in OpenSSL config file defining certificate request extensions.
+If the B<-csr> option is present, these extensions augment the extensions
+contained the given PKCS#10 CSR, overriding any extensions with same OIDs.
 
 =item B<-sans> I<spec>
 
