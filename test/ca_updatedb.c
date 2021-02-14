@@ -22,16 +22,42 @@
 
 char *default_config_file = NULL;
 
+ASN1_TIME *string_to_ASN1_TIME(char *string)
+{
+    size_t len;
+    ASN1_TIME *tmps = NULL;
+    char *p;
+
+    len = strlen(string)+1;
+    tmps = ASN1_STRING_new();
+    if (tmps == NULL)
+        return NULL;
+
+    if (!ASN1_STRING_set(tmps, NULL, len))
+    {
+        ASN1_STRING_free(tmps);
+        return NULL;
+    }
+
+    if (strlen(string) == 13)
+    	tmps->type = V_ASN1_UTCTIME;
+    else
+        tmps->type = V_ASN1_GENERALIZEDTIME;
+    p = (char*)tmps->data;
+
+    tmps->length = BIO_snprintf(p, len, "%s", string);
+
+    return tmps;
+}
+
 int main(int argc, char *argv[])
 {
     CA_DB *db = NULL;
     BIO *channel;
-    ASN1_TIME *tmps = NULL;
-    char *p;
+    ASN1_TIME *testdate_asn1 = NULL;
     struct tm *testdate_tm = NULL;
     time_t *testdatelocal = NULL;
     time_t *testdateutc = NULL;
-    size_t len;
 
     if (argc != 3) {
         fprintf(stderr, "Usage: %s indexfile testdate\n", argv[0]);
@@ -44,29 +70,15 @@ int main(int argc, char *argv[])
 	exit(EXIT_FAILURE);
     }
 
-    len = strlen(argv[2])+1;
-    tmps = ASN1_STRING_new();
-    if (tmps == NULL)
+    testdate_asn1 = string_to_ASN1_TIME(argv[2]);
+    if (testdate_asn1 == NULL)
         exit(EXIT_FAILURE);
-    if (!ASN1_STRING_set(tmps, NULL, len))
-    {
-        ASN1_STRING_free(tmps);
-        exit(EXIT_FAILURE);
-    }
 
     testdate_tm = app_malloc(sizeof(struct tm), "testdate_tm");
 
-    if (strlen(argv[2]) == 13)
-    	tmps->type = V_ASN1_UTCTIME;
-    else
-        tmps->type = V_ASN1_GENERALIZEDTIME;
-    p = (char*)tmps->data;
-
-    tmps->length = BIO_snprintf(p, len, "%s", argv[2]);
-
-    if (!(ASN1_TIME_to_tm(tmps, testdate_tm))) {
+    if (!(ASN1_TIME_to_tm(testdate_asn1, testdate_tm))) {
         free(testdate_tm);
-        ASN1_STRING_free(tmps);
+        ASN1_STRING_free(testdate_asn1);
         fprintf(stderr, "Error: testdate '%s' is invalid\n", argv[2]);
         exit(EXIT_FAILURE);
     }
@@ -84,7 +96,7 @@ int main(int argc, char *argv[])
 
     default_config_file = CONF_get1_default_config_file();
     if (default_config_file == NULL) {
-        ASN1_STRING_free(tmps);
+        ASN1_STRING_free(testdate_asn1);
         BIO_free_all(bio_err);
         BIO_free_all(channel);
         free(testdateutc);
@@ -96,7 +108,7 @@ int main(int argc, char *argv[])
 
     do_updatedb(db, testdateutc);
 
-    ASN1_STRING_free(tmps);
+    ASN1_STRING_free(testdate_asn1);
     free(default_config_file);
     free_index(db);
     free(testdateutc);
