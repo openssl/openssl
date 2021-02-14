@@ -27,17 +27,17 @@ int main(int argc, char *argv[])
     CA_DB *db = NULL;
     BIO *channel;
     time_t *testdateutc = NULL;
-    int r;
+    int rv;
 
     if (argc != 3) {
         fprintf(stderr, "Usage: %s indexfile testdate\n", argv[0]);
         fprintf(stderr, "       testdate format: ASN1-String\n");
-	exit(EXIT_FAILURE);
+        exit(EXIT_FAILURE);
     }
 
     if (access(argv[1], F_OK) != 0) {
         fprintf(stderr, "Error: dbfile '%s' is not readable\n", argv[1]);
-	exit(EXIT_FAILURE);
+        exit(EXIT_FAILURE);
     }
 
     testdateutc = asn1_string_to_time_t(argv[2]);
@@ -60,9 +60,9 @@ int main(int argc, char *argv[])
 
     db = load_index(argv[1], NULL);
 
-    r = do_updatedb(db, testdateutc);
+    rv = do_updatedb(db, testdateutc);
 
-    if (r > 0) {
+    if (rv > 0) {
         if (!save_index(argv[1], "new", db))
             goto end;
 
