@@ -30,7 +30,7 @@ int main(int argc, char *argv[])
 
     if (argc != 3) {
         fprintf(stderr, "Usage: %s indexfile testdate\n", argv[0]);
-        fprintf(stderr, "       testdate format: YYYY-MM-DDThh:mm\n");
+        fprintf(stderr, "       testdate format: ASN1-String\n");
 	exit(EXIT_FAILURE);
     }
 
