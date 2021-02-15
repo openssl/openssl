@@ -112,7 +112,7 @@ sub test_updatedb {
     }
 
     is($exit, 1, "ca_updatedb: returned EXIT_FAILURE (".$opts->{description}.")");
-    is($amt, scalar(@output), "ca_updatedb: amount of expired certificated differs from expected amount (".$opts->{description}.")");
+    is(scalar(@output), $amt, "ca_updatedb: amount of expired certificated differs from expected amount (".$opts->{description}.")");
     is($expirelistcorrect, 1, "ca_updatedb: list of expired certificated differs from expected list (".$opts->{description}.")");
 }
 
