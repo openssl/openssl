@@ -60,7 +60,7 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
     }
 
     if (ctx->pctx == NULL) {
-        if (libctx != NULL)
+        if (e == NULL)
             ctx->pctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey, props);
         else
             ctx->pctx = EVP_PKEY_CTX_new(pkey, e);
