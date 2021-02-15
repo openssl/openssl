@@ -1780,7 +1780,7 @@ int s_server_main(int argc, char *argv[])
         s_key_file2 = NULL;
     }
 
-    ctx = SSL_CTX_new(meth);
+    ctx = SSL_CTX_new_ex(app_get0_libctx(), app_get0_propq(), meth);
     if (ctx == NULL) {
         ERR_print_errors(bio_err);
         goto end;
@@ -1905,7 +1905,7 @@ int s_server_main(int argc, char *argv[])
     }
 
     if (s_cert2) {
-        ctx2 = SSL_CTX_new(meth);
+        ctx2 = SSL_CTX_new_ex(app_get0_libctx(), app_get0_propq(), meth);
         if (ctx2 == NULL) {
             ERR_print_errors(bio_err);
             goto end;
