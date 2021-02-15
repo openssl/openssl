@@ -1661,7 +1661,7 @@ int s_client_main(int argc, char **argv)
     }
 #endif
 
-    ctx = SSL_CTX_new(meth);
+    ctx = SSL_CTX_new_ex(app_get0_libctx(), app_get0_propq(), meth);
     if (ctx == NULL) {
         ERR_print_errors(bio_err);
         goto end;
