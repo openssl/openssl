@@ -47,7 +47,7 @@ int main(int argc, char *argv[])
     }
 
     channel = BIO_push(BIO_new(BIO_f_prefix()), dup_bio_err(FORMAT_TEXT));
-    bio_err = dup_bio_err(FORMAT_TEXT);
+    bio_err = dup_bio_out(FORMAT_TEXT);
 
     default_config_file = CONF_get1_default_config_file();
     if (default_config_file == NULL) {
