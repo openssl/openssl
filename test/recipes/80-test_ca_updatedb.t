@@ -17,42 +17,49 @@ setup('test_ca_updatedb');
 
 my @tests = (
     { 
+        description => 'updatedb called before the first certificate expires',
         filename => 'index.txt',
         copydb => 1,
         testdate => '990101000000Z',
         expirelist => []
     },
     { 
+        description => 'updatedb called before Y2k',
         filename => 'index.txt',
         copydb => 0,
         testdate => '991201000000Z',
         expirelist => [ '1000' ]
     },
     { 
+        description => 'updatedb called after year 2020',
         filename => 'index.txt',
         copydb => 0,
         testdate => '211201000000Z',
         expirelist => [ '1001' ]
     },
     { 
+        description => 'updatedb called in year 2049 (last year with 2 digits)',
         filename => 'index.txt',
         copydb => 0,
         testdate => '491201000000Z',
         expirelist => [ '1002' ]
     },
     { 
+        description => 'updatedb called in year 2050 (first year with 4 digits) before the last certificate expires',
         filename => 'index.txt',
         copydb => 0,
         testdate => '20500101000000Z',
         expirelist => [ ]
     },
     { 
+        description => 'updatedb called after the last certificate expired',
         filename => 'index.txt',
         copydb => 0,
         testdate => '20501201000000Z',
         expirelist => [ '1003' ]
     },
     { 
+        description => 'updatedb called for the first time after the last certificate expired',
         filename => 'index.txt',
         copydb => 1,
         testdate => '20501201000000Z',
@@ -104,8 +111,8 @@ sub test_updatedb {
         }
     }
 
-    is($exit, 1, "ca_updatedb: returned EXIT_FAILURE");
-    is($amt, scalar(@output), "ca_updatedb: amount of expired certificated differs from expected amount");
-    is($expirelistcorrect, 1, "ca_updatedb: list of expired certificated differs from expected list");
+    is($exit, 1, "ca_updatedb: returned EXIT_FAILURE (".$opts->{description}.")");
+    is($amt, scalar(@output), "ca_updatedb: amount of expired certificated differs from expected amount (".$opts->{description}.")");
+    is($expirelistcorrect, 1, "ca_updatedb: list of expired certificated differs from expected list (".$opts->{description}.")");
 }
 
