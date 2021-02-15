@@ -391,16 +391,16 @@ static void *evp_asym_cipher_from_algorithm(int name_id,
 
 void EVP_ASYM_CIPHER_free(EVP_ASYM_CIPHER *cipher)
 {
-    if (cipher != NULL) {
-        int i;
+    int i;
 
-        CRYPTO_DOWN_REF(&cipher->refcnt, &i, cipher->lock);
-        if (i > 0)
-            return;
-        ossl_provider_free(cipher->prov);
-        CRYPTO_THREAD_lock_free(cipher->lock);
-        OPENSSL_free(cipher);
-    }
+    if (cipher == NULL)
+        return;
+    CRYPTO_DOWN_REF(&cipher->refcnt, &i, cipher->lock);
+    if (i > 0)
+        return;
+    ossl_provider_free(cipher->prov);
+    CRYPTO_THREAD_lock_free(cipher->lock);
+    OPENSSL_free(cipher);
 }
 
 int EVP_ASYM_CIPHER_up_ref(EVP_ASYM_CIPHER *cipher)

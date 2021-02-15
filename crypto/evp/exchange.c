@@ -142,16 +142,16 @@ static void *evp_keyexch_from_algorithm(int name_id,
 
 void EVP_KEYEXCH_free(EVP_KEYEXCH *exchange)
 {
-    if (exchange != NULL) {
-        int i;
+    int i;
 
-        CRYPTO_DOWN_REF(&exchange->refcnt, &i, exchange->lock);
-        if (i > 0)
-            return;
-        ossl_provider_free(exchange->prov);
-        CRYPTO_THREAD_lock_free(exchange->lock);
-        OPENSSL_free(exchange);
-    }
+    if (exchange == NULL)
+        return;
+    CRYPTO_DOWN_REF(&exchange->refcnt, &i, exchange->lock);
+    if (i > 0)
+        return;
+    ossl_provider_free(exchange->prov);
+    CRYPTO_THREAD_lock_free(exchange->lock);
+    OPENSSL_free(exchange);
 }
 
 int EVP_KEYEXCH_up_ref(EVP_KEYEXCH *exchange)

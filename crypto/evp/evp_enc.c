@@ -68,6 +68,8 @@ EVP_CIPHER_CTX *EVP_CIPHER_CTX_new(void)
 
 void EVP_CIPHER_CTX_free(EVP_CIPHER_CTX *ctx)
 {
+    if (ctx == NULL)
+        return;
     EVP_CIPHER_CTX_reset(ctx);
     OPENSSL_free(ctx);
 }
@@ -1608,7 +1610,7 @@ void EVP_CIPHER_free(EVP_CIPHER *cipher)
 {
     int i;
 
-    if (cipher == NULL)
+    if (cipher == NULL || cipher->prov == NULL)
         return;
 
     CRYPTO_DOWN_REF(&cipher->refcnt, &i, cipher->lock);
