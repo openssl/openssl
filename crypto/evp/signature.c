@@ -275,16 +275,16 @@ static void *evp_signature_from_algorithm(int name_id,
 
 void EVP_SIGNATURE_free(EVP_SIGNATURE *signature)
 {
-    if (signature != NULL) {
-        int i;
+    int i;
 
-        CRYPTO_DOWN_REF(&signature->refcnt, &i, signature->lock);
-        if (i > 0)
-            return;
-        ossl_provider_free(signature->prov);
-        CRYPTO_THREAD_lock_free(signature->lock);
-        OPENSSL_free(signature);
-    }
+    if (signature == NULL)
+        return;
+    CRYPTO_DOWN_REF(&signature->refcnt, &i, signature->lock);
+    if (i > 0)
+        return;
+    ossl_provider_free(signature->prov);
+    CRYPTO_THREAD_lock_free(signature->lock);
+    OPENSSL_free(signature);
 }
 
 int EVP_SIGNATURE_up_ref(EVP_SIGNATURE *signature)

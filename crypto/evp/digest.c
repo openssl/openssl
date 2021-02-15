@@ -118,9 +118,7 @@ void EVP_MD_CTX_free(EVP_MD_CTX *ctx)
         return;
 
     EVP_MD_CTX_reset(ctx);
-
     OPENSSL_free(ctx);
-    return;
 }
 
 static int evp_md_init_internal(EVP_MD_CTX *ctx, const EVP_MD *type,

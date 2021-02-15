@@ -39,12 +39,12 @@ EVP_MAC_CTX *EVP_MAC_CTX_new(EVP_MAC *mac)
 
 void EVP_MAC_CTX_free(EVP_MAC_CTX *ctx)
 {
-    if (ctx != NULL) {
-        ctx->meth->freectx(ctx->data);
-        ctx->data = NULL;
-        /* refcnt-- */
-        EVP_MAC_free(ctx->meth);
-    }
+    if (ctx == NULL)
+        return;
+    ctx->meth->freectx(ctx->data);
+    ctx->data = NULL;
+    /* refcnt-- */
+    EVP_MAC_free(ctx->meth);
     OPENSSL_free(ctx);
 }
 

@@ -299,16 +299,17 @@ static void *evp_kem_from_algorithm(int name_id, const OSSL_ALGORITHM *algodef,
 
 void EVP_KEM_free(EVP_KEM *kem)
 {
-    if (kem != NULL) {
-        int i;
+    int i;
 
-        CRYPTO_DOWN_REF(&kem->refcnt, &i, kem->lock);
-        if (i > 0)
-            return;
-        ossl_provider_free(kem->prov);
-        CRYPTO_THREAD_lock_free(kem->lock);
-        OPENSSL_free(kem);
-    }
+    if (kem == NULL)
+        return;
+
+    CRYPTO_DOWN_REF(&kem->refcnt, &i, kem->lock);
+    if (i > 0)
+        return;
+    ossl_provider_free(kem->prov);
+    CRYPTO_THREAD_lock_free(kem->lock);
+    OPENSSL_free(kem);
 }
 
 int EVP_KEM_up_ref(EVP_KEM *kem)

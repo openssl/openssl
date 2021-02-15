@@ -25,18 +25,20 @@ static int evp_kdf_up_ref(void *vkdf)
     return 1;
 }
 
-static void evp_kdf_free(void *vkdf){
+static void evp_kdf_free(void *vkdf)
+{
     EVP_KDF *kdf = (EVP_KDF *)vkdf;
     int ref = 0;
 
-    if (kdf != NULL) {
-        CRYPTO_DOWN_REF(&kdf->refcnt, &ref, kdf->lock);
-        if (ref <= 0) {
-            ossl_provider_free(kdf->prov);
-            CRYPTO_THREAD_lock_free(kdf->lock);
-            OPENSSL_free(kdf);
-        }
-    }
+    if (kdf == NULL)
+        return;
+
+    CRYPTO_DOWN_REF(&kdf->refcnt, &ref, kdf->lock);
+    if (ref > 0)
+        return;
+    ossl_provider_free(kdf->prov);
+    CRYPTO_THREAD_lock_free(kdf->lock);
+    OPENSSL_free(kdf);
 }
 
 static void *evp_kdf_new(void)
