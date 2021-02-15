@@ -243,10 +243,7 @@ static double Time_F(int s)
     return ret;
 }
 #else
-static double Time_F(int s)
-{
-    return app_tminterval(s, usertime);
-}
+# error "SIGALRM not defined and the platform is not Windows"
 #endif
 
 static void multiblock_speed(const EVP_CIPHER *evp_cipher, int lengths_single,
@@ -558,13 +555,8 @@ static double sm2_results[SM2_NUM][2];    /* 2 ops: sign then verify */
 # endif /* OPENSSL_NO_SM2 */
 #endif /* OPENSSL_NO_EC */
 
-#ifndef SIGALRM
-# define COND(d) (count < (d))
-# define COUNT(d) (d)
-#else
-# define COND(unused_cond) (run && count<0x7fffffff)
-# define COUNT(d) (count)
-#endif                          /* SIGALRM */
+#define COND(unused_cond) (run && count<0x7fffffff)
+#define COUNT(d) (count)
 
 typedef struct loopargs_st {
     ASYNC_JOB *inprogress_job;
@@ -2169,265 +2161,9 @@ int speed_main(int argc, char **argv)
     if (doit[D_CBC_CAST]) 
         CAST_set_key(&cast_ks, 16, key16);
 #endif
-#ifndef SIGALRM
-#if !defined(OPENSSL_NO_DES) && !defined(OPENSSL_NO_DEPRECATED_3_0)
-    BIO_printf(bio_err, "First we calculate the approximate speed ...\n");
-    count = 10;
-    do {
-        long it;
-        count *= 2;
-        Time_F(START);
-        for (it = count; it; it--)
-            DES_ecb_encrypt((DES_cblock *)loopargs[0].buf,
-                            (DES_cblock *)loopargs[0].buf, &sch, DES_ENCRYPT);
-        d = Time_F(STOP);
-    } while (d < 3);
-    c[D_MD2][0] = count / 10;
-    c[D_MDC2][0] = count / 10;
-    c[D_MD4][0] = count;
-    c[D_MD5][0] = count;
-    c[D_HMAC][0] = count;
-    c[D_SHA1][0] = count;
-    c[D_RMD160][0] = count;
-    c[D_RC4][0] = count * 5;
-    c[D_CBC_DES][0] = count;
-    c[D_EDE3_DES][0] = count / 3;
-    c[D_CBC_IDEA][0] = count;
-    c[D_CBC_SEED][0] = count;
-    c[D_CBC_RC2][0] = count;
-    c[D_CBC_RC5][0] = count;
-    c[D_CBC_BF][0] = count;
-    c[D_CBC_CAST][0] = count;
-    c[D_CBC_128_AES][0] = count;
-    c[D_CBC_192_AES][0] = count;
-    c[D_CBC_256_AES][0] = count;
-    c[D_CBC_128_CML][0] = count;
-    c[D_CBC_192_CML][0] = count;
-    c[D_CBC_256_CML][0] = count;
-    c[D_EVP][0] = count;
-    c[D_SHA256][0] = count;
-    c[D_SHA512][0] = count;
-    c[D_WHIRLPOOL][0] = count;
-    c[D_IGE_128_AES][0] = count;
-    c[D_IGE_192_AES][0] = count;
-    c[D_IGE_256_AES][0] = count;
-    c[D_GHASH][0] = count;
-    c[D_RAND][0] = count;
-    c[D_EVP_HMAC][0] = count;
-    c[D_EVP_CMAC][0] = count;
-
-    for (i = 1; i < size_num; i++) {
-        long l0 = (long)lengths[0];
-        long l1 = (long)lengths[i];
-
-        c[D_MD2][i] = c[D_MD2][0] * 4 * l0 / l1;
-        c[D_MDC2][i] = c[D_MDC2][0] * 4 * l0 / l1;
-        c[D_MD4][i] = c[D_MD4][0] * 4 * l0 / l1;
-        c[D_MD5][i] = c[D_MD5][0] * 4 * l0 / l1;
-        c[D_HMAC][i] = c[D_HMAC][0] * 4 * l0 / l1;
-        c[D_SHA1][i] = c[D_SHA1][0] * 4 * l0 / l1;
-        c[D_RMD160][i] = c[D_RMD160][0] * 4 * l0 / l1;
-        c[D_EVP][i] = = c[D_EVP][0] * 4 * l0 / l1;
-        c[D_SHA256][i] = c[D_SHA256][0] * 4 * l0 / l1;
-        c[D_SHA512][i] = c[D_SHA512][0] * 4 * l0 / l1;
-        c[D_WHIRLPOOL][i] = c[D_WHIRLPOOL][0] * 4 * l0 / l1;
-        c[D_GHASH][i] = c[D_GHASH][0] * 4 * l0 / l1;
-        c[D_RAND][i] = c[D_RAND][0] * 4 * l0 / l1;
-        c[D_EVP_HMAC][i] = = c[D_EVP_HMAC][0] * 4 * l0 / l1;
-        c[D_EVP_CMAC][i] = = c[D_EVP_CMAC][0] * 4 * l0 / l1;
-
-        l0 = (long)lengths[i - 1];
-
-        c[D_RC4][i] = c[D_RC4][i - 1] * l0 / l1;
-        c[D_CBC_DES][i] = c[D_CBC_DES][i - 1] * l0 / l1;
-        c[D_EDE3_DES][i] = c[D_EDE3_DES][i - 1] * l0 / l1;
-        c[D_CBC_IDEA][i] = c[D_CBC_IDEA][i - 1] * l0 / l1;
-        c[D_CBC_SEED][i] = c[D_CBC_SEED][i - 1] * l0 / l1;
-        c[D_CBC_RC2][i] = c[D_CBC_RC2][i - 1] * l0 / l1;
-        c[D_CBC_RC5][i] = c[D_CBC_RC5][i - 1] * l0 / l1;
-        c[D_CBC_BF][i] = c[D_CBC_BF][i - 1] * l0 / l1;
-        c[D_CBC_CAST][i] = c[D_CBC_CAST][i - 1] * l0 / l1;
-        c[D_CBC_128_AES][i] = c[D_CBC_128_AES][i - 1] * l0 / l1;
-        c[D_CBC_192_AES][i] = c[D_CBC_192_AES][i - 1] * l0 / l1;
-        c[D_CBC_256_AES][i] = c[D_CBC_256_AES][i - 1] * l0 / l1;
-        c[D_CBC_128_CML][i] = c[D_CBC_128_CML][i - 1] * l0 / l1;
-        c[D_CBC_192_CML][i] = c[D_CBC_192_CML][i - 1] * l0 / l1;
-        c[D_CBC_256_CML][i] = c[D_CBC_256_CML][i - 1] * l0 / l1;
-        c[D_IGE_128_AES][i] = c[D_IGE_128_AES][i - 1] * l0 / l1;
-        c[D_IGE_192_AES][i] = c[D_IGE_192_AES][i - 1] * l0 / l1;
-        c[D_IGE_256_AES][i] = c[D_IGE_256_AES][i - 1] * l0 / l1;
-    }
-
-#  ifndef OPENSSL_NO_DEPRECATED_3_0
-    rsa_c[R_RSA_512][0] = count / 2000;
-    rsa_c[R_RSA_512][1] = count / 400;
-    for (i = 1; i < RSA_NUM; i++) {
-        rsa_c[i][0] = rsa_c[i - 1][0] / 8;
-        rsa_c[i][1] = rsa_c[i - 1][1] / 4;
-        if (rsa_doit[i] <= 1 && rsa_c[i][0] == 0)
-            rsa_doit[i] = 0;
-        else {
-            if (rsa_c[i][0] == 0) {
-                rsa_c[i][0] = 1; /* Set minimum iteration Nb to 1. */
-                rsa_c[i][1] = 20;
-            }
-        }
-    }
-#  endif
-
-#  if !defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_DEPRECATED_3_0)
-    dsa_c[R_DSA_512][0] = count / 1000;
-    dsa_c[R_DSA_512][1] = count / 1000 / 2;
-    for (i = 1; i < DSA_NUM; i++) {
-        dsa_c[i][0] = dsa_c[i - 1][0] / 4;
-        dsa_c[i][1] = dsa_c[i - 1][1] / 4;
-        if (dsa_doit[i] <= 1 && dsa_c[i][0] == 0)
-            dsa_doit[i] = 0;
-        else {
-            if (dsa_c[i][0] == 0) {
-                dsa_c[i][0] = 1; /* Set minimum iteration Nb to 1. */
-                dsa_c[i][1] = 1;
-            }
-        }
-    }
-#  endif
-
-#  ifndef OPENSSL_NO_EC
-    ecdsa_c[R_EC_P160][0] = count / 1000;
-    ecdsa_c[R_EC_P160][1] = count / 1000 / 2;
-    for (i = R_EC_P192; i <= R_EC_P521; i++) {
-        ecdsa_c[i][0] = ecdsa_c[i - 1][0] / 2;
-        ecdsa_c[i][1] = ecdsa_c[i - 1][1] / 2;
-        if (ecdsa_doit[i] <= 1 && ecdsa_c[i][0] == 0)
-            ecdsa_doit[i] = 0;
-        else {
-            if (ecdsa_c[i][0] == 0) {
-                ecdsa_c[i][0] = 1;
-                ecdsa_c[i][1] = 1;
-            }
-        }
-    }
-#   ifndef OPENSSL_NO_EC2M
-    ecdsa_c[R_EC_K163][0] = count / 1000;
-    ecdsa_c[R_EC_K163][1] = count / 1000 / 2;
-    for (i = R_EC_K233; i <= R_EC_K571; i++) {
-        ecdsa_c[i][0] = ecdsa_c[i - 1][0] / 2;
-        ecdsa_c[i][1] = ecdsa_c[i - 1][1] / 2;
-        if (ecdsa_doit[i] <= 1 && ecdsa_c[i][0] == 0)
-            ecdsa_doit[i] = 0;
-        else {
-            if (ecdsa_c[i][0] == 0) {
-                ecdsa_c[i][0] = 1;
-                ecdsa_c[i][1] = 1;
-            }
-        }
-    }
-    ecdsa_c[R_EC_B163][0] = count / 1000;
-    ecdsa_c[R_EC_B163][1] = count / 1000 / 2;
-    for (i = R_EC_B233; i <= R_EC_B571; i++) {
-        ecdsa_c[i][0] = ecdsa_c[i - 1][0] / 2;
-        ecdsa_c[i][1] = ecdsa_c[i - 1][1] / 2;
-        if (ecdsa_doit[i] <= 1 && ecdsa_c[i][0] == 0)
-            ecdsa_doit[i] = 0;
-        else {
-            if (ecdsa_c[i][0] == 0) {
-                ecdsa_c[i][0] = 1;
-                ecdsa_c[i][1] = 1;
-            }
-        }
-    }
-#   endif
-
-    ecdh_c[R_EC_P160][0] = count / 1000;
-    for (i = R_EC_P192; i <= R_EC_P521; i++) {
-        ecdh_c[i][0] = ecdh_c[i - 1][0] / 2;
-        if (ecdh_doit[i] <= 1 && ecdh_c[i][0] == 0)
-            ecdh_doit[i] = 0;
-        else {
-            if (ecdh_c[i][0] == 0) {
-                ecdh_c[i][0] = 1;
-            }
-        }
-    }
-#   ifndef OPENSSL_NO_EC2M
-    ecdh_c[R_EC_K163][0] = count / 1000;
-    for (i = R_EC_K233; i <= R_EC_K571; i++) {
-        ecdh_c[i][0] = ecdh_c[i - 1][0] / 2;
-        if (ecdh_doit[i] <= 1 && ecdh_c[i][0] == 0)
-            ecdh_doit[i] = 0;
-        else {
-            if (ecdh_c[i][0] == 0) {
-                ecdh_c[i][0] = 1;
-            }
-        }
-    }
-    ecdh_c[R_EC_B163][0] = count / 1000;
-    for (i = R_EC_B233; i <= R_EC_B571; i++) {
-        ecdh_c[i][0] = ecdh_c[i - 1][0] / 2;
-        if (ecdh_doit[i] <= 1 && ecdh_c[i][0] == 0)
-            ecdh_doit[i] = 0;
-        else {
-            if (ecdh_c[i][0] == 0) {
-                ecdh_c[i][0] = 1;
-            }
-        }
-    }
-#   endif
-    /* repeated code good to factorize */
-    ecdh_c[R_EC_BRP256R1][0] = count / 1000;
-    for (i = R_EC_BRP384R1; i <= R_EC_BRP512R1; i += 2) {
-        ecdh_c[i][0] = ecdh_c[i - 2][0] / 2;
-        if (ecdh_doit[i] <= 1 && ecdh_c[i][0] == 0)
-            ecdh_doit[i] = 0;
-        else {
-            if (ecdh_c[i][0] == 0) {
-                ecdh_c[i][0] = 1;
-            }
-        }
-    }
-    ecdh_c[R_EC_BRP256T1][0] = count / 1000;
-    for (i = R_EC_BRP384T1; i <= R_EC_BRP512T1; i += 2) {
-        ecdh_c[i][0] = ecdh_c[i - 2][0] / 2;
-        if (ecdh_doit[i] <= 1 && ecdh_c[i][0] == 0)
-            ecdh_doit[i] = 0;
-        else {
-            if (ecdh_c[i][0] == 0) {
-                ecdh_c[i][0] = 1;
-            }
-        }
-    }
-    /* default iteration count for the last two EC Curves */
-    ecdh_c[R_EC_X25519][0] = count / 1800;
-    ecdh_c[R_EC_X448][0] = count / 7200;
-
-    eddsa_c[R_EC_Ed25519][0] = count / 1800;
-    eddsa_c[R_EC_Ed448][0] = count / 7200;
-
-#   ifndef OPENSSL_NO_SM2
-    sm2_c[R_EC_SM2P256][0] = count / 1800;
-#   endif
-#  endif                          /* OPENSSL_NO_EC */
-
-#  ifndef OPENSSL_NO_DH
-    ffdh_c[R_FFDH_2048][0] = count / 1000;
-    for (i = R_FFDH_3072; i <= R_FFDH_8192; i++) {
-        ffdh_c[i][0] = ffdh_c[i - 1][0] / 2;
-        if (ffdh_doit[i] <= 1 && ffdh_c[i][0] == 0) {
-            ffdh_doit[i] = 0;
-        } else {
-            if (ffdh_c[i][0] == 0)
-                ffdh_c[i][0] = 1;
-        }
-    }
-#  endif /* OPENSSL_NO_DH */
-
-# else
-/* not worth fixing */
-#  error "You cannot disable DES on systems without SIGALRM."
-# endif                         /* OPENSSL_NO_DES */
-#elif SIGALRM > 0
+#if SIGALRM > 0
     signal(SIGALRM, alarmed);
-#endif                          /* SIGALRM */
+#endif
 
 #if !defined(OPENSSL_NO_MD2) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     if (doit[D_MD2]) {
@@ -4143,19 +3879,12 @@ int speed_main(int argc, char **argv)
 
 static void print_message(const char *s, long num, int length, int tm)
 {
-#ifdef SIGALRM
     BIO_printf(bio_err,
                mr ? "+DT:%s:%d:%d\n"
                : "Doing %s for %ds on %d size blocks: ", s, tm, length);
     (void)BIO_flush(bio_err);
     run = 1;
     alarm(tm);
-#else
-    BIO_printf(bio_err,
-               mr ? "+DN:%s:%ld:%d\n"
-               : "Doing %s %ld times on %d size blocks: ", s, num, length);
-    (void)BIO_flush(bio_err);
-#endif
 }
 
 #if !defined(OPENSSL_NO_DEPRECATED_3_0)         \
@@ -4165,19 +3894,12 @@ static void print_message(const char *s, long num, int length, int tm)
 static void pkey_print_message(const char *str, const char *str2, long num,
                                unsigned int bits, int tm)
 {
-# ifdef SIGALRM
     BIO_printf(bio_err,
                mr ? "+DTP:%d:%s:%s:%d\n"
                : "Doing %u bits %s %s's for %ds: ", bits, str, str2, tm);
     (void)BIO_flush(bio_err);
     run = 1;
     alarm(tm);
-# else
-    BIO_printf(bio_err,
-               mr ? "+DNP:%ld:%d:%s:%s\n"
-               : "Doing %ld %u bits %s %s's: ", num, bits, str, str2);
-    (void)BIO_flush(bio_err);
-# endif
 }
 #endif
 
