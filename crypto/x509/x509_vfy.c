@@ -3035,12 +3035,9 @@ static int build_chain(X509_STORE_CTX *ctx)
      * If we got any "DANE-TA(2) Cert(0) Full(0)" trust anchors from DNS, add
      * them to our working copy of the untrusted certificate stack.
      */
-    if (DANETLS_ENABLED(dane) && dane->certs != NULL) {
-        if (!X509_add_certs(sk_untrusted, dane->certs, X509_ADD_FLAG_DEFAULT)) {
-            sk_X509_free(sk_untrusted);
-            goto memerr;
-        }
-    }
+    if (DANETLS_ENABLED(dane) && dane->certs != NULL
+        && !X509_add_certs(sk_untrusted, dane->certs, X509_ADD_FLAG_DEFAULT))
+        goto memerr;
 
     /*
      * Still absurdly large, but arithmetically safe, a lower hard upper bound
@@ -3306,14 +3303,15 @@ static int build_chain(X509_STORE_CTX *ctx)
     }
 
  int_err:
-    sk_X509_free(sk_untrusted);
     ERR_raise(ERR_LIB_X509, ERR_R_INTERNAL_ERROR);
     ctx->error = X509_V_ERR_UNSPECIFIED;
+    sk_X509_free(sk_untrusted);
     return -1;
 
  memerr:
     ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
     ctx->error = X509_V_ERR_OUT_OF_MEM;
+    sk_X509_free(sk_untrusted);
     return -1;
 }
 
