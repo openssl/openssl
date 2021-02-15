@@ -182,8 +182,7 @@ static int verify_integrity(OSSL_CORE_BIO *bio, OSSL_FUNC_BIO_read_ex_fn read_ex
     if (ctx == NULL)
         goto err;
 
-    *p++ = OSSL_PARAM_construct_utf8_string("digest", DIGEST_NAME,
-                                            strlen(DIGEST_NAME));
+    *p++ = OSSL_PARAM_construct_utf8_string("digest", DIGEST_NAME, 0);
     *p++ = OSSL_PARAM_construct_octet_string("key", fixed_key,
                                              sizeof(fixed_key));
     *p = OSSL_PARAM_construct_end();
