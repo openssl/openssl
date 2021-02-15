@@ -60,25 +60,8 @@
 #ifndef OPENSSL_NO_MD2
 # include <openssl/md2.h>
 #endif
-#ifndef OPENSSL_NO_MDC2
-# include <openssl/mdc2.h>
-#endif
-#ifndef OPENSSL_NO_MD4
-# include <openssl/md4.h>
-#endif
-#ifndef OPENSSL_NO_MD5
-# include <openssl/md5.h>
-#endif
-#include <openssl/hmac.h>
 #ifndef OPENSSL_NO_CMAC
 #include <openssl/cmac.h>
-#endif
-#include <openssl/sha.h>
-#ifndef OPENSSL_NO_RMD160
-# include <openssl/ripemd.h>
-#endif
-#ifndef OPENSSL_NO_WHIRLPOOL
-# include <openssl/whrlpool.h>
 #endif
 #ifndef OPENSSL_NO_RC4
 # include <openssl/rc4.h>
@@ -323,57 +306,41 @@ const OPTIONS speed_options[] = {
 };
 
 enum {
-    D_MD2, D_MDC2, D_MD4, D_MD5 , D_HMAC, D_SHA1, D_RMD160, D_RC4,
-    D_CBC_DES, D_EDE3_DES, D_CBC_IDEA, D_CBC_SEED,
+    D_MD2, D_MDC2, D_MD4, D_MD5, D_SHA1, D_RMD160,
+    D_SHA256, D_SHA512, D_WHIRLPOOL, D_HMAC,
+    D_RC4, D_CBC_DES, D_EDE3_DES, D_CBC_IDEA, D_CBC_SEED,
     D_CBC_RC2, D_CBC_RC5, D_CBC_BF, D_CBC_CAST,
     D_CBC_128_AES, D_CBC_192_AES, D_CBC_256_AES,
     D_CBC_128_CML, D_CBC_192_CML, D_CBC_256_CML,
-    D_EVP, D_SHA256, D_SHA512, D_WHIRLPOOL,
-    D_IGE_128_AES, D_IGE_192_AES, D_IGE_256_AES,
-    D_GHASH, D_RAND, D_EVP_HMAC, D_EVP_CMAC, ALGOR_NUM 
+    D_EVP, D_IGE_128_AES, D_IGE_192_AES, D_IGE_256_AES,
+    D_GHASH, D_RAND, D_EVP_CMAC, ALGOR_NUM 
 };
 /* name of algorithms to test. MUST BE KEEP IN SYNC with above enum ! */
 static const char *names[ALGOR_NUM] = {
-    "md2", "mdc2", "md4", "md5", "hmac(md5)", "sha1", "rmd160", "rc4",
-    "des cbc", "des ede3", "idea cbc", "seed cbc",
+    "md2", "mdc2", "md4", "md5", "sha1", "rmd160",
+    "sha256", "sha512", "whirlpool", "hmac(md5)",
+    "rc4", "des cbc", "des ede3", "idea cbc", "seed cbc",
     "rc2 cbc", "rc5-32/12 cbc", "blowfish cbc", "cast cbc",
     "aes-128 cbc", "aes-192 cbc", "aes-256 cbc",
     "camellia-128 cbc", "camellia-192 cbc", "camellia-256 cbc",
-    "evp", "sha256", "sha512", "whirlpool",
-    "aes-128 ige", "aes-192 ige", "aes-256 ige", "ghash",
-    "rand", "hmac", "cmac"
+    "evp", "aes-128 ige", "aes-192 ige", "aes-256 ige", "ghash",
+    "rand", "cmac"
 };
 
 /* list of configured algorithm (remaining), with some few alias */
 static const OPT_PAIR doit_choices[] = {
-#if !defined(OPENSSL_NO_MD2) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     {"md2", D_MD2},
-#endif
-#if !defined(OPENSSL_NO_MDC2) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     {"mdc2", D_MDC2},
-#endif
-#if !defined(OPENSSL_NO_MD4) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     {"md4", D_MD4},
-#endif
-#if !defined(OPENSSL_NO_MD5) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     {"md5", D_MD5},
-# ifndef OPENSSL_NO_DEPRECATED_3_0
     {"hmac", D_HMAC},
-# endif
-#endif
-#ifndef OPENSSL_NO_DEPRECATED_3_0
     {"sha1", D_SHA1},
     {"sha256", D_SHA256},
     {"sha512", D_SHA512},
-#endif
-#if !defined(OPENSSL_NO_WHIRLPOOL) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     {"whirlpool", D_WHIRLPOOL},
-#endif
-#if !defined(OPENSSL_NO_RMD160) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     {"ripemd", D_RMD160},
     {"rmd160", D_RMD160},
     {"ripemd160", D_RMD160},
-#endif
 #if !defined(OPENSSL_NO_RC4) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     {"rc4", D_RC4},
 #endif
@@ -596,9 +563,7 @@ typedef struct loopargs_st {
     unsigned char *secret_ff_b;
 #endif
     EVP_CIPHER_CTX *ctx;
-#ifndef OPENSSL_NO_DEPRECATED_3_0
-    HMAC_CTX *hctx;
-#endif
+    EVP_MAC_CTX *mctx;
 #if !defined(OPENSSL_NO_CMAC) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     CMAC_CTX *cmac_ctx;
 #endif
@@ -612,151 +577,139 @@ static unsigned int testnum;
 /* Nb of iterations to do per algorithm and key-size */
 static long c[ALGOR_NUM][SIZE_NUM];
 
-#if !defined(OPENSSL_NO_MD2) && !defined(OPENSSL_NO_DEPRECATED_3_0)
+static char *evp_mac_mdname = "md5";
+static char *evp_hmac_name = NULL;
+static const char *evp_md_name = NULL;
+
+static EVP_MD *obtain_md(const char *name, int *fetched)
+{
+    EVP_MD *md = NULL;
+
+    *fetched = 0;
+    /* Look through providers' digests */
+    ERR_set_mark();
+    md = EVP_MD_fetch(NULL, name, NULL);
+    ERR_pop_to_mark();
+    if (md != NULL) {
+        *fetched = 1;
+        return md;
+    }
+
+    return (EVP_MD *)EVP_get_digestbyname(name);
+}
+
+static int have_md(const char *name)
+{
+    int fetched = 0;
+    EVP_MD *md = obtain_md(name, &fetched);
+
+    if (md != NULL) {
+        if (fetched)
+            EVP_MD_free(md);
+        return 1;
+    }
+    return 0;
+}
+
+static int EVP_Digest_loop(const char *mdname, int algindex, void *args)
+{
+    loopargs_t *tempargs = *(loopargs_t **) args;
+    unsigned char *buf = tempargs->buf;
+    unsigned char digest[EVP_MAX_MD_SIZE];
+    int count, fetched = 0;
+    EVP_MD *md = NULL;
+
+    /* Look through providers' digests */
+    ERR_set_mark();
+    md = EVP_MD_fetch(NULL, mdname, NULL);
+    ERR_pop_to_mark();
+    if (md != NULL)
+        fetched = 1;
+    else
+        md = (EVP_MD *)EVP_get_digestbyname(mdname);
+
+    if (md == NULL)
+        return -1;
+
+    for (count = 0; COND(c[algindex][testnum]); count++) {
+        if (!EVP_Digest(buf, (size_t)lengths[testnum], digest, NULL, md,
+                        NULL)) {
+            count = -1;
+            break;
+        }
+    }
+    if (fetched)
+        EVP_MD_free(md);
+    return count;
+}
+
+static int EVP_Digest_md_loop(void *args)
+{
+    return EVP_Digest_loop(evp_md_name, D_EVP, args);
+}
+
 static int EVP_Digest_MD2_loop(void *args)
 {
-    loopargs_t *tempargs = *(loopargs_t **) args;
-    unsigned char *buf = tempargs->buf;
-    unsigned char md2[MD2_DIGEST_LENGTH];
-    int count;
-
-    for (count = 0; COND(c[D_MD2][testnum]); count++) {
-        if (!EVP_Digest(buf, (size_t)lengths[testnum], md2, NULL, EVP_md2(),
-                        NULL))
-            return -1;
-    }
-    return count;
+    return EVP_Digest_loop("md2", D_MD2, args);
 }
-#endif
 
-#if !defined(OPENSSL_NO_MDC2) && !defined(OPENSSL_NO_DEPRECATED_3_0)
 static int EVP_Digest_MDC2_loop(void *args)
 {
-    loopargs_t *tempargs = *(loopargs_t **) args;
-    unsigned char *buf = tempargs->buf;
-    unsigned char mdc2[MDC2_DIGEST_LENGTH];
-    int count;
-
-    for (count = 0; COND(c[D_MDC2][testnum]); count++) {
-        if (!EVP_Digest(buf, (size_t)lengths[testnum], mdc2, NULL, EVP_mdc2(),
-                        NULL))
-            return -1;
-    }
-    return count;
+    return EVP_Digest_loop("mdc2", D_MDC2, args);
 }
-#endif
 
-#if !defined(OPENSSL_NO_MD4) && !defined(OPENSSL_NO_DEPRECATED_3_0)
 static int EVP_Digest_MD4_loop(void *args)
 {
-    loopargs_t *tempargs = *(loopargs_t **) args;
-    unsigned char *buf = tempargs->buf;
-    unsigned char md4[MD4_DIGEST_LENGTH];
-    int count;
-
-    for (count = 0; COND(c[D_MD4][testnum]); count++) {
-        if (!EVP_Digest(buf, (size_t)lengths[testnum], md4, NULL, EVP_md4(),
-                        NULL))
-            return -1;
-    }
-    return count;
+    return EVP_Digest_loop("md4", D_MD4, args);
 }
-#endif
 
-#if !defined(OPENSSL_NO_MD5) && !defined(OPENSSL_NO_DEPRECATED_3_0)
 static int MD5_loop(void *args)
 {
-    loopargs_t *tempargs = *(loopargs_t **) args;
-    unsigned char *buf = tempargs->buf;
-    unsigned char md5[MD5_DIGEST_LENGTH];
-    int count;
-    for (count = 0; COND(c[D_MD5][testnum]); count++)
-        MD5(buf, lengths[testnum], md5);
-    return count;
+    return EVP_Digest_loop("md5", D_MD5, args);
 }
 
-# ifndef OPENSSL_NO_DEPRECATED_3_0
 static int HMAC_loop(void *args)
 {
     loopargs_t *tempargs = *(loopargs_t **) args;
     unsigned char *buf = tempargs->buf;
-    HMAC_CTX *hctx = tempargs->hctx;
-    unsigned char hmac[MD5_DIGEST_LENGTH];
+    EVP_MAC_CTX *mctx = tempargs->mctx;
+    unsigned char mac[EVP_MAX_MD_SIZE];
     int count;
 
     for (count = 0; COND(c[D_HMAC][testnum]); count++) {
-        HMAC_Init_ex(hctx, NULL, 0, NULL, NULL);
-        HMAC_Update(hctx, buf, lengths[testnum]);
-        HMAC_Final(hctx, hmac, NULL);
-    }
-    return count;
-}
-# endif
-#endif
-
-#ifndef OPENSSL_NO_DEPRECATED_3_0
-static int SHA1_loop(void *args)
-{
-    loopargs_t *tempargs = *(loopargs_t **) args;
-    unsigned char *buf = tempargs->buf;
-    unsigned char sha[SHA_DIGEST_LENGTH];
-    int count;
-    for (count = 0; COND(c[D_SHA1][testnum]); count++)
-        SHA1(buf, lengths[testnum], sha);
-    return count;
-}
-
-static int SHA256_loop(void *args)
-{
-    loopargs_t *tempargs = *(loopargs_t **) args;
-    unsigned char *buf = tempargs->buf;
-    unsigned char sha256[SHA256_DIGEST_LENGTH];
-    int count;
-    for (count = 0; COND(c[D_SHA256][testnum]); count++)
-        SHA256(buf, lengths[testnum], sha256);
-    return count;
-}
-
-static int SHA512_loop(void *args)
-{
-    loopargs_t *tempargs = *(loopargs_t **) args;
-    unsigned char *buf = tempargs->buf;
-    unsigned char sha512[SHA512_DIGEST_LENGTH];
-    int count;
-    for (count = 0; COND(c[D_SHA512][testnum]); count++)
-        SHA512(buf, lengths[testnum], sha512);
-    return count;
-}
-#endif
-
-#if !defined(OPENSSL_NO_WHIRLPOOL) && !defined(OPENSSL_NO_DEPRECATED_3_0)
-static int WHIRLPOOL_loop(void *args)
-{
-    loopargs_t *tempargs = *(loopargs_t **) args;
-    unsigned char *buf = tempargs->buf;
-    unsigned char whirlpool[WHIRLPOOL_DIGEST_LENGTH];
-    int count;
-    for (count = 0; COND(c[D_WHIRLPOOL][testnum]); count++)
-        WHIRLPOOL(buf, lengths[testnum], whirlpool);
-    return count;
-}
-#endif
-
-#if !defined(OPENSSL_NO_RMD160) && !defined(OPENSSL_NO_DEPRECATED_3_0)
-static int EVP_Digest_RMD160_loop(void *args)
-{
-    loopargs_t *tempargs = *(loopargs_t **) args;
-    unsigned char *buf = tempargs->buf;
-    unsigned char rmd160[RIPEMD160_DIGEST_LENGTH];
-    int count;
-    for (count = 0; COND(c[D_RMD160][testnum]); count++) {
-        if (!EVP_Digest(buf, (size_t)lengths[testnum], &(rmd160[0]),
-                        NULL, EVP_ripemd160(), NULL))
+        size_t outl;
+        if (!EVP_MAC_init(mctx)
+            || !EVP_MAC_update(mctx, buf, lengths[testnum])
+            || !EVP_MAC_final(mctx, mac, &outl, sizeof(mac)))
             return -1;
     }
     return count;
 }
-#endif
+
+static int SHA1_loop(void *args)
+{
+    return EVP_Digest_loop("sha1", D_SHA1, args);
+}
+
+static int SHA256_loop(void *args)
+{
+    return EVP_Digest_loop("sha256", D_SHA256, args);
+}
+
+static int SHA512_loop(void *args)
+{
+    return EVP_Digest_loop("sha512", D_SHA512, args);
+}
+
+static int WHIRLPOOL_loop(void *args)
+{
+    return EVP_Digest_loop("whirlpool", D_WHIRLPOOL, args);
+}
+
+static int EVP_Digest_RMD160_loop(void *args)
+{
+    return EVP_Digest_loop("ripemd160", D_RMD160, args);
+}
 
 #if !defined(OPENSSL_NO_RC4) && !defined(OPENSSL_NO_DEPRECATED_3_0)
 static RC4_KEY rc4_ks;
@@ -996,42 +949,6 @@ static int EVP_Update_loop_aead(void *args)
     }
     return count;
 }
-
-static EVP_MD *evp_md = NULL;
-static int fetched_alg = 0;
-
-static int EVP_Digest_loop(void *args)
-{
-    loopargs_t *tempargs = *(loopargs_t **) args;
-    unsigned char *buf = tempargs->buf;
-    unsigned char md[EVP_MAX_MD_SIZE];
-    int count;
-
-    for (count = 0; COND(c[D_EVP][testnum]); count++) {
-        if (!EVP_Digest(buf, lengths[testnum], md, NULL, evp_md, NULL))
-            return -1;
-    }
-    return count;
-}
-
-#ifndef OPENSSL_NO_DEPRECATED_3_0
-static const EVP_MD *evp_hmac_md = NULL;
-static char *evp_hmac_name = NULL;
-static int EVP_HMAC_loop(void *args)
-{
-    loopargs_t *tempargs = *(loopargs_t **) args;
-    unsigned char *buf = tempargs->buf;
-    unsigned char no_key[32];
-    int count;
-
-    for (count = 0; COND(c[D_EVP_HMAC][testnum]); count++) {
-        if (HMAC(evp_hmac_md, no_key, sizeof(no_key), buf, lengths[testnum],
-                 NULL, NULL) == NULL)
-            return -1;
-    }
-    return count;
-}
-#endif
 
 #if !defined(OPENSSL_NO_CMAC) && !defined(OPENSSL_NO_DEPRECATED_3_0)
 static const EVP_CIPHER *evp_cmac_cipher = NULL;
@@ -1488,21 +1405,7 @@ static int run_benchmark(int async_jobs,
     return error ? -1 : total_op_count;
 }
 
-static EVP_MD *obtain_md(const char *name)
-{
-    EVP_MD *md = NULL;
-
-    /* Look through providers' digests */
-    ERR_set_mark();
-    md = EVP_MD_fetch(NULL, name, NULL);
-    ERR_pop_to_mark();
-    if (md != NULL) {
-        fetched_alg = 1;
-        return md;
-    }
-
-    return (EVP_MD *)EVP_get_digestbyname(name);
-}
+static int fetched_alg = 0;
 
 static EVP_CIPHER *obtain_cipher(const char *name)
 {
@@ -1727,11 +1630,12 @@ int speed_main(int argc, char **argv)
                 BIO_printf(bio_err, "%s: -evp option cannot be used more than once\n", prog);
                 goto opterr;
             }
-            evp_md = NULL;
             evp_cipher = obtain_cipher(opt_arg());
-            if (evp_cipher == NULL)
-                evp_md = obtain_md(opt_arg());
-            if (evp_cipher == NULL && evp_md == NULL) {
+            if (evp_cipher == NULL) {
+                if (have_md(opt_arg()))
+                    evp_md_name = opt_arg();
+            }
+            if (evp_cipher == NULL && evp_md_name == NULL) {
                 BIO_printf(bio_err,
                            "%s: %s is an unknown cipher or digest\n",
                            prog, opt_arg());
@@ -1740,16 +1644,14 @@ int speed_main(int argc, char **argv)
             doit[D_EVP] = 1;
             break;
         case OPT_HMAC:
-#ifndef OPENSSL_NO_DEPRECATED_3_0
-            evp_hmac_md = EVP_get_digestbyname(opt_arg());
-            if (evp_hmac_md == NULL) {
+            if (!have_md(opt_arg())) {
                 BIO_printf(bio_err, "%s: %s is an unknown digest\n",
                            prog, opt_arg());
                 goto end;
             }
-            doit[D_EVP_HMAC] = 1;
+            evp_mac_mdname = opt_arg();
+            doit[D_HMAC] = 1;
             break;
-#endif
         case OPT_CMAC:
 #if !defined(OPENSSL_NO_CMAC) && !defined(OPENSSL_NO_DEPRECATED_3_0)
             evp_cmac_cipher = EVP_get_cipherbyname(opt_arg());
@@ -2041,18 +1943,13 @@ int speed_main(int argc, char **argv)
     e = setup_engine(engine_id, 0);
 
     /* No parameters; turn on everything. */
-    if (argc == 0 && !doit[D_EVP] && !doit[D_EVP_HMAC] && !doit[D_EVP_CMAC]) {
+    if (argc == 0 && !doit[D_EVP] && !doit[D_HMAC] && !doit[D_EVP_CMAC]) {
         memset(doit, 1, sizeof(doit));
-        doit[D_EVP] = doit[D_EVP_HMAC] = doit[D_EVP_CMAC] = 0;
-#if !defined(OPENSSL_NO_MDC2) && !defined(OPENSSL_NO_DEPRECATED_3_0)
-        doit[D_MDC2] = 0;
-#endif
-#if !defined(OPENSSL_NO_MD4) && !defined(OPENSSL_NO_DEPRECATED_3_0)
-        doit[D_MD4] = 0;
-#endif
-#if !defined(OPENSSL_NO_RMD160) && !defined(OPENSSL_NO_DEPRECATED_3_0)
-        doit[D_RMD160] = 0;
-#endif
+        doit[D_EVP] = doit[D_EVP_CMAC] = 0;
+        for (i = D_MD2; i <= D_WHIRLPOOL; i++) {
+            if (!have_md(names[i]))
+                doit[i] = 0;
+        }
 #ifndef OPENSSL_NO_DEPRECATED_3_0
         memset(rsa_doit, 1, sizeof(rsa_doit));
 #endif
@@ -2165,7 +2062,6 @@ int speed_main(int argc, char **argv)
     signal(SIGALRM, alarmed);
 #endif
 
-#if !defined(OPENSSL_NO_MD2) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     if (doit[D_MD2]) {
         for (testnum = 0; testnum < size_num; testnum++) {
             print_message(names[D_MD2], c[D_MD2][testnum], lengths[testnum],
@@ -2174,10 +2070,11 @@ int speed_main(int argc, char **argv)
             count = run_benchmark(async_jobs, EVP_Digest_MD2_loop, loopargs);
             d = Time_F(STOP);
             print_result(D_MD2, testnum, count, d);
+            if (count < 0)
+                break;
         }
     }
-#endif
-#if !defined(OPENSSL_NO_MDC2) && !defined(OPENSSL_NO_DEPRECATED_3_0)
+
     if (doit[D_MDC2]) {
         for (testnum = 0; testnum < size_num; testnum++) {
             print_message(names[D_MDC2], c[D_MDC2][testnum], lengths[testnum],
@@ -2190,9 +2087,7 @@ int speed_main(int argc, char **argv)
                 break;
         }
     }
-#endif
 
-#if !defined(OPENSSL_NO_MD4) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     if (doit[D_MD4]) {
         for (testnum = 0; testnum < size_num; testnum++) {
             print_message(names[D_MD4], c[D_MD4][testnum], lengths[testnum],
@@ -2205,9 +2100,7 @@ int speed_main(int argc, char **argv)
                 break;
         }
     }
-#endif
 
-#if !defined(OPENSSL_NO_MD5) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     if (doit[D_MD5]) {
         for (testnum = 0; testnum < size_num; testnum++) {
             print_message(names[D_MD5], c[D_MD5][testnum], lengths[testnum],
@@ -2216,37 +2109,11 @@ int speed_main(int argc, char **argv)
             count = run_benchmark(async_jobs, MD5_loop, loopargs);
             d = Time_F(STOP);
             print_result(D_MD5, testnum, count, d);
+            if (count < 0)
+                break;
         }
     }
 
-# ifndef OPENSSL_NO_DEPRECATED_3_0
-    if (doit[D_HMAC]) {
-        static const char hmac_key[] = "This is a key...";
-        int len = strlen(hmac_key);
-
-        for (i = 0; i < loopargs_len; i++) {
-            loopargs[i].hctx = HMAC_CTX_new();
-            if (loopargs[i].hctx == NULL) {
-                BIO_printf(bio_err, "HMAC malloc failure, exiting...");
-                exit(1);
-            }
-
-            HMAC_Init_ex(loopargs[i].hctx, hmac_key, len, EVP_md5(), NULL);
-        }
-        for (testnum = 0; testnum < size_num; testnum++) {
-            print_message(names[D_HMAC], c[D_HMAC][testnum], lengths[testnum],
-                          seconds.sym);
-            Time_F(START);
-            count = run_benchmark(async_jobs, HMAC_loop, loopargs);
-            d = Time_F(STOP);
-            print_result(D_HMAC, testnum, count, d);
-        }
-        for (i = 0; i < loopargs_len; i++)
-            HMAC_CTX_free(loopargs[i].hctx);
-    }
-# endif
-#endif
-#ifndef OPENSSL_NO_DEPRECATED_3_0
     if (doit[D_SHA1]) {
         for (testnum = 0; testnum < size_num; testnum++) {
             print_message(names[D_SHA1], c[D_SHA1][testnum], lengths[testnum],
@@ -2255,8 +2122,11 @@ int speed_main(int argc, char **argv)
             count = run_benchmark(async_jobs, SHA1_loop, loopargs);
             d = Time_F(STOP);
             print_result(D_SHA1, testnum, count, d);
+            if (count < 0)
+                break;
         }
     }
+
     if (doit[D_SHA256]) {
         for (testnum = 0; testnum < size_num; testnum++) {
             print_message(names[D_SHA256], c[D_SHA256][testnum],
@@ -2265,8 +2135,11 @@ int speed_main(int argc, char **argv)
             count = run_benchmark(async_jobs, SHA256_loop, loopargs);
             d = Time_F(STOP);
             print_result(D_SHA256, testnum, count, d);
+            if (count < 0)
+                break;
         }
     }
+
     if (doit[D_SHA512]) {
         for (testnum = 0; testnum < size_num; testnum++) {
             print_message(names[D_SHA512], c[D_SHA512][testnum],
@@ -2275,10 +2148,11 @@ int speed_main(int argc, char **argv)
             count = run_benchmark(async_jobs, SHA512_loop, loopargs);
             d = Time_F(STOP);
             print_result(D_SHA512, testnum, count, d);
+            if (count < 0)
+                break;
         }
     }
-#endif
-#if !defined(OPENSSL_NO_WHIRLPOOL) && !defined(OPENSSL_NO_DEPRECATED_3_0)
+
     if (doit[D_WHIRLPOOL]) {
         for (testnum = 0; testnum < size_num; testnum++) {
             print_message(names[D_WHIRLPOOL], c[D_WHIRLPOOL][testnum],
@@ -2287,11 +2161,11 @@ int speed_main(int argc, char **argv)
             count = run_benchmark(async_jobs, WHIRLPOOL_loop, loopargs);
             d = Time_F(STOP);
             print_result(D_WHIRLPOOL, testnum, count, d);
+            if (count < 0)
+                break;
         }
     }
-#endif
 
-#if !defined(OPENSSL_NO_RMD160) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     if (doit[D_RMD160]) {
         for (testnum = 0; testnum < size_num; testnum++) {
             print_message(names[D_RMD160], c[D_RMD160][testnum],
@@ -2304,7 +2178,50 @@ int speed_main(int argc, char **argv)
                 break;
         }
     }
-#endif
+
+    if (doit[D_HMAC]) {
+        static const char hmac_key[] = "This is a key...";
+        int len = strlen(hmac_key);
+        EVP_MAC *mac = EVP_MAC_fetch(NULL, "HMAC", NULL);
+        OSSL_PARAM params[3];
+
+        if (mac == NULL || evp_mac_mdname == NULL)
+            goto end;
+
+        evp_hmac_name = app_malloc(sizeof("hmac()") + strlen(evp_mac_mdname),
+                                   "HMAC name");
+        sprintf(evp_hmac_name, "hmac(%s)", evp_mac_mdname);
+        names[D_HMAC] = evp_hmac_name;
+
+        params[0] =
+            OSSL_PARAM_construct_utf8_string("digest", "md5", 0);
+        params[1] =
+            OSSL_PARAM_construct_octet_string("key", (char *)hmac_key, len);
+        params[2] = OSSL_PARAM_construct_end();
+
+        for (i = 0; i < loopargs_len; i++) {
+            loopargs[i].mctx = EVP_MAC_CTX_new(mac);
+            if (loopargs[i].mctx == NULL)
+                goto end;
+
+            if (!EVP_MAC_CTX_set_params(loopargs[i].mctx, params))
+                 goto end;
+        }
+        for (testnum = 0; testnum < size_num; testnum++) {
+            print_message(names[D_HMAC], c[D_HMAC][testnum], lengths[testnum],
+                          seconds.sym);
+            Time_F(START);
+            count = run_benchmark(async_jobs, HMAC_loop, loopargs);
+            d = Time_F(STOP);
+            print_result(D_HMAC, testnum, count, d);
+            if (count < 0)
+                break;
+        }
+        for (i = 0; i < loopargs_len; i++)
+            EVP_MAC_CTX_free(loopargs[i].mctx);
+        EVP_MAC_free(mac);
+    }
+
 #if !defined(OPENSSL_NO_RC4) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     if (doit[D_RC4]) {
         for (testnum = 0; testnum < size_num; testnum++) {
@@ -2696,39 +2613,21 @@ int speed_main(int argc, char **argv)
                 }
                 print_result(D_EVP, testnum, count, d);
             }
-        } else if (evp_md != NULL) {
-            names[D_EVP] = OBJ_nid2ln(EVP_MD_type(evp_md));
+        } else if (evp_md_name != NULL) {
+            names[D_EVP] = evp_md_name;
 
             for (testnum = 0; testnum < size_num; testnum++) {
                 print_message(names[D_EVP], c[D_EVP][testnum], lengths[testnum],
                               seconds.sym);
                 Time_F(START);
-                count = run_benchmark(async_jobs, EVP_Digest_loop, loopargs);
+                count = run_benchmark(async_jobs, EVP_Digest_md_loop, loopargs);
                 d = Time_F(STOP);
                 print_result(D_EVP, testnum, count, d);
+                if (count < 0)
+                    break;
             }
         }
     }
-
-#ifndef OPENSSL_NO_DEPRECATED_3_0
-    if (doit[D_EVP_HMAC] && evp_hmac_md != NULL) {
-        const char *md_name = OBJ_nid2ln(EVP_MD_type(evp_hmac_md));
-
-        evp_hmac_name = app_malloc(sizeof("HMAC()") + strlen(md_name),
-                                   "HMAC name");
-        sprintf(evp_hmac_name, "HMAC(%s)", md_name);
-        names[D_EVP_HMAC] = evp_hmac_name;
-
-        for (testnum = 0; testnum < size_num; testnum++) {
-            print_message(names[D_EVP_HMAC], c[D_EVP_HMAC][testnum], lengths[testnum],
-                          seconds.sym);
-            Time_F(START);
-            count = run_benchmark(async_jobs, EVP_HMAC_loop, loopargs);
-            d = Time_F(STOP);
-            print_result(D_EVP_HMAC, testnum, count, d);
-        }
-    }
-#endif
 
 #if !defined(OPENSSL_NO_CMAC) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     if (doit[D_EVP_CMAC] && evp_cmac_cipher != NULL) {
@@ -3853,9 +3752,7 @@ int speed_main(int argc, char **argv)
         OPENSSL_free(loopargs[i].secret_b);
 #endif
     }
-#ifndef OPENSSL_NO_DEPRECATED_3_0
     OPENSSL_free(evp_hmac_name);
-#endif
 #if !defined(OPENSSL_NO_CMAC) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     OPENSSL_free(evp_cmac_name);
 #endif
@@ -3871,7 +3768,6 @@ int speed_main(int argc, char **argv)
     OPENSSL_free(loopargs);
     release_engine(e);
     if (fetched_alg) {
-        EVP_MD_free(evp_md);
         EVP_CIPHER_free(evp_cipher);
     }
     return ret;
