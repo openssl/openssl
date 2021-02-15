@@ -118,11 +118,6 @@ OSSL_DECODER_CTX_set_passphrase_ui() and
 OSSL_DECODER_CTX_set_passphrase_cb() all return 1 on success, or 0 on
 failure.
 
-=head1 NOTES
-
-Parts of the function names are made to match already existing OpenSSL
-names.
-
 =head1 SEE ALSO
 
 L<provider(7)>, L<OSSL_DECODER(3)>, L<OSSL_DECODER_CTX(3)>
