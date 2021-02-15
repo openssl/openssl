@@ -184,10 +184,7 @@ size_t ossl_drbg_get_seed(void *vdrbg, unsigned char **pout,
     return bytes_needed;
 }
 
-/*
- * Implements the cleanup_entropy() callback
- *
- */
+/* Implements the cleanup_entropy() callback */
 void ossl_drbg_clear_seed(ossl_unused void *vdrbg,
                           unsigned char *out, size_t outlen)
 {
