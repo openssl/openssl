@@ -80,6 +80,7 @@ int dsa_main(int argc, char **argv)
     ENGINE *e = NULL;
     EVP_PKEY *pkey = NULL;
     const EVP_CIPHER *enc = NULL;
+    EVP_CIPHER *fetched_enc = NULL;
     char *infile = NULL, *outfile = NULL, *prog;
     char *passin = NULL, *passout = NULL, *passinarg = NULL, *passoutarg = NULL;
     OPTION_CHOICE o;
@@ -166,7 +167,7 @@ int dsa_main(int argc, char **argv)
         goto opthelp;
 
     if (ciphername != NULL) {
-        if (!opt_cipher(ciphername, &enc))
+        if (!opt_cipher(ciphername, &enc, &fetched_enc))
             goto end;
     }
     private = pubin || pubout ? 0 : 1;
@@ -286,6 +287,7 @@ int dsa_main(int argc, char **argv)
  end:
     if (ret != 0)
         ERR_print_errors(bio_err);
+    EVP_CIPHER_free(fetched_enc);
     OSSL_ENCODER_CTX_free(ectx);
     BIO_free_all(out);
     EVP_PKEY_free(pkey);

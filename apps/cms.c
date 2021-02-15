@@ -277,7 +277,9 @@ int cms_main(int argc, char **argv)
     ENGINE *e = NULL;
     EVP_PKEY *key = NULL;
     const EVP_CIPHER *cipher = NULL, *wrap_cipher = NULL;
+    EVP_CIPHER *fetched_cipher = NULL, *fetched_wrap_cipher = NULL;
     const EVP_MD *sign_md = NULL;
+    EVP_MD *fetched_sign_md = NULL;
     STACK_OF(OPENSSL_STRING) *rr_to = NULL, *rr_from = NULL;
     STACK_OF(OPENSSL_STRING) *sksigners = NULL, *skkeys = NULL;
     STACK_OF(X509) *encerts = NULL, *other = NULL;
@@ -692,18 +694,18 @@ int cms_main(int argc, char **argv)
             wrap_cipher = EVP_aes_256_wrap();
             break;
         case OPT_WRAP:
-            if (!opt_cipher(opt_unknown(), &wrap_cipher))
+            if (!opt_cipher(opt_unknown(), &wrap_cipher, &fetched_wrap_cipher))
                 goto end;
             break;
         }
     }
     app_RAND_load();
     if (digestname != NULL) {
-        if (!opt_md(digestname, &sign_md))
+        if (!opt_md(digestname, &sign_md, &fetched_sign_md))
             goto end;
     }
     if (ciphername != NULL) {
-        if (!opt_cipher(ciphername, &cipher))
+        if (!opt_cipher(ciphername, &cipher, &fetched_cipher))
             goto end;
     }
 
@@ -1223,6 +1225,9 @@ int cms_main(int argc, char **argv)
  end:
     if (ret)
         ERR_print_errors(bio_err);
+    EVP_CIPHER_free(fetched_cipher);
+    EVP_CIPHER_free(fetched_wrap_cipher);
+    EVP_MD_free(fetched_sign_md);
     sk_X509_pop_free(encerts, X509_free);
     sk_X509_pop_free(other, X509_free);
     X509_VERIFY_PARAM_free(vpm);

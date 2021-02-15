@@ -141,7 +141,9 @@ int smime_main(int argc, char **argv)
     X509_STORE *store = NULL;
     X509_VERIFY_PARAM *vpm = NULL;
     const EVP_CIPHER *cipher = NULL;
+    EVP_CIPHER *fetched_cipher = NULL;
     const EVP_MD *sign_md = NULL;
+    EVP_MD *fetched_sign_md = NULL;
     const char *CAfile = NULL, *CApath = NULL, *CAstore = NULL, *prog = NULL;
     char *certfile = NULL, *keyfile = NULL, *contfile = NULL;
     char *infile = NULL, *outfile = NULL, *signerfile = NULL, *recipfile = NULL;
@@ -361,11 +363,11 @@ int smime_main(int argc, char **argv)
 
     app_RAND_load();
     if (digestname != NULL) {
-        if (!opt_md(digestname, &sign_md))
+        if (!opt_md(digestname, &sign_md, &fetched_sign_md))
             goto opthelp;
     }
     if (ciphername != NULL) {
-        if (!opt_cipher(ciphername, &cipher))
+        if (!opt_cipher(ciphername, &cipher, &fetched_cipher))
             goto opthelp;
     }
     if (!(operation & SMIME_SIGNERS) && (skkeys != NULL || sksigners != NULL)) {
@@ -650,6 +652,8 @@ int smime_main(int argc, char **argv)
  end:
     if (ret)
         ERR_print_errors(bio_err);
+    EVP_CIPHER_free(fetched_cipher);
+    EVP_MD_free(fetched_sign_md);
     sk_X509_pop_free(encerts, X509_free);
     sk_X509_pop_free(other, X509_free);
     X509_VERIFY_PARAM_free(vpm);

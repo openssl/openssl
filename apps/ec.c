@@ -70,6 +70,7 @@ int ec_main(int argc, char **argv)
     BIO *in = NULL, *out = NULL;
     ENGINE *e = NULL;
     const EVP_CIPHER *enc = NULL;
+    EVP_CIPHER *fetched_enc = NULL;
     char *infile = NULL, *outfile = NULL, *ciphername = NULL, *prog;
     char *passin = NULL, *passout = NULL, *passinarg = NULL, *passoutarg = NULL;
     OPTION_CHOICE o;
@@ -162,7 +163,7 @@ int ec_main(int argc, char **argv)
         goto opthelp;
 
     if (ciphername != NULL) {
-        if (!opt_cipher(ciphername, &enc))
+        if (!opt_cipher(ciphername, &enc, &fetched_enc))
             goto opthelp;
     }
     private = param_out || pubin || pubout ? 0 : 1;
@@ -276,6 +277,7 @@ int ec_main(int argc, char **argv)
 end:
     if (ret != 0)
         ERR_print_errors(bio_err);
+    EVP_CIPHER_free(fetched_enc);
     BIO_free(in);
     BIO_free_all(out);
     EVP_PKEY_free(eckey);

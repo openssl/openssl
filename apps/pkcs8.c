@@ -75,6 +75,7 @@ int pkcs8_main(int argc, char **argv)
     PKCS8_PRIV_KEY_INFO *p8inf = NULL;
     X509_SIG *p8 = NULL;
     const EVP_CIPHER *cipher = NULL;
+    EVP_CIPHER *fetched_cipher = NULL;
     char *infile = NULL, *outfile = NULL, *ciphername = NULL;
     char *passinarg = NULL, *passoutarg = NULL, *prog;
 #ifndef OPENSSL_NO_UI_CONSOLE
@@ -201,7 +202,7 @@ int pkcs8_main(int argc, char **argv)
     private = 1;
     app_RAND_load();
     if (ciphername != NULL) {
-        if (!opt_cipher(ciphername, &cipher))
+        if (!opt_cipher(ciphername, &cipher, &fetched_cipher))
             goto opthelp;
     }
 
@@ -365,6 +366,7 @@ int pkcs8_main(int argc, char **argv)
     ret = 0;
 
  end:
+    EVP_CIPHER_free(fetched_cipher);
     X509_SIG_free(p8);
     PKCS8_PRIV_KEY_INFO_free(p8inf);
     EVP_PKEY_free(pkey);

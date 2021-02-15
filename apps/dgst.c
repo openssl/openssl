@@ -100,6 +100,7 @@ int dgst_main(int argc, char **argv)
     char *mac_name = NULL, *digestname = NULL;
     char *passinarg = NULL, *passin = NULL;
     const EVP_MD *md = NULL;
+    EVP_MD *fetched_md = NULL;
     const char *outfile = NULL, *keyfile = NULL, *prog = NULL;
     const char *sigfile = NULL;
     const char *md_name = NULL;
@@ -227,7 +228,7 @@ int dgst_main(int argc, char **argv)
     }
     app_RAND_load();
     if (digestname != NULL) {
-        if (!opt_md(digestname, &md))
+        if (!opt_md(digestname, &md, &fetched_md))
             goto opthelp;
     }
 
@@ -446,6 +447,8 @@ int dgst_main(int argc, char **argv)
         }
     }
  end:
+    ERR_print_errors(bio_err);
+    EVP_MD_free(fetched_md);
     OPENSSL_clear_free(buf, BUFSIZE);
     BIO_free(in);
     OPENSSL_free(passin);

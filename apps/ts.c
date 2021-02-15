@@ -168,6 +168,7 @@ int ts_main(int argc, char **argv)
     char *inkey = NULL, *signer = NULL, *chain = NULL, *CApath = NULL;
     char *CAstore = NULL;
     const EVP_MD *md = NULL;
+    EVP_MD *fetched_md = NULL;
     OPTION_CHOICE o, mode = OPT_ERR;
     int ret = 1, no_nonce = 0, cert = 0, text = 0;
     int vpmtouched = 0;
@@ -293,7 +294,7 @@ int ts_main(int argc, char **argv)
 
     app_RAND_load();
     if (digestname != NULL) {
-        if (!opt_md(digestname, &md))
+        if (!opt_md(digestname, &md, &fetched_md))
             goto opthelp;
     }
     if (mode == OPT_REPLY && passin &&
@@ -339,6 +340,7 @@ int ts_main(int argc, char **argv)
     }
 
  end:
+    EVP_MD_free(fetched_md);
     X509_VERIFY_PARAM_free(vpm);
     NCONF_free(conf);
     OPENSSL_free(password);

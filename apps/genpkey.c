@@ -65,6 +65,7 @@ int genpkey_main(int argc, char **argv)
     char *outfile = NULL, *passarg = NULL, *pass = NULL, *prog, *p;
     const char *ciphername = NULL, *paramfile = NULL, *algname = NULL;
     const EVP_CIPHER *cipher = NULL;
+    EVP_CIPHER *fetched_cipher = NULL;
     OPTION_CHOICE o;
     int outformat = FORMAT_PEM, text = 0, ret = 1, rv, do_param = 0;
     int private = 0, i, m;
@@ -158,7 +159,8 @@ int genpkey_main(int argc, char **argv)
         }
     }
     if (ciphername != NULL) {
-        if (!opt_cipher(ciphername, &cipher) || do_param == 1)
+        if (!opt_cipher(ciphername, &cipher, &fetched_cipher)
+            || do_param == 1)
             goto opthelp;
         m = EVP_CIPHER_mode(cipher);
         if (m == EVP_CIPH_GCM_MODE || m == EVP_CIPH_CCM_MODE
@@ -231,6 +233,7 @@ int genpkey_main(int argc, char **argv)
     }
 
  end:
+    EVP_CIPHER_free(fetched_cipher);
     sk_OPENSSL_STRING_free(keyopt);
     EVP_PKEY_free(pkey);
     EVP_PKEY_CTX_free(ctx);

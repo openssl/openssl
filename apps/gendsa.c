@@ -57,6 +57,7 @@ int gendsa_main(int argc, char **argv)
     EVP_PKEY *pkey = NULL;
     EVP_PKEY_CTX *ctx = NULL;
     const EVP_CIPHER *enc = NULL;
+    EVP_CIPHER *fetched_enc = NULL;
     char *dsaparams = NULL, *ciphername = NULL;
     char *outfile = NULL, *passoutarg = NULL, *passout = NULL, *prog;
     OPTION_CHOICE o;
@@ -110,7 +111,7 @@ int gendsa_main(int argc, char **argv)
 
     app_RAND_load();
     if (ciphername != NULL) {
-        if (!opt_cipher(ciphername, &enc))
+        if (!opt_cipher(ciphername, &enc, &fetched_enc))
             goto end;
     }
     private = 1;
@@ -160,6 +161,7 @@ int gendsa_main(int argc, char **argv)
     if (ret != 0)
         ERR_print_errors(bio_err);
  end2:
+    EVP_CIPHER_free(fetched_enc);
     BIO_free(in);
     BIO_free_all(out);
     EVP_PKEY_free(pkey);

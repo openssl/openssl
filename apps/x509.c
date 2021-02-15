@@ -257,6 +257,7 @@ int x509_main(int argc, char **argv)
     X509_REQ *req = NULL, *rq = NULL;
     X509_STORE *ctx = NULL;
     const EVP_MD *digest = NULL;
+    EVP_MD *fetched_digest = NULL;
     char *CAkeyfile = NULL, *CAserial = NULL, *pubkeyfile = NULL, *alias = NULL;
     char *checkhost = NULL, *checkemail = NULL, *checkip = NULL;
     char *ext_names = NULL;
@@ -577,7 +578,7 @@ int x509_main(int argc, char **argv)
 
     app_RAND_load();
     if (digestname != NULL) {
-        if (!opt_md(digestname, &digest))
+        if (!opt_md(digestname, &digest, &fetched_digest))
             goto opthelp;
     }
     if (preserve_dates && days != UNSET_DAYS) {
@@ -1030,6 +1031,7 @@ int x509_main(int argc, char **argv)
     X509_REQ_free(req);
     X509_free(x);
     X509_free(xca);
+    EVP_MD_free(fetched_digest);
     EVP_PKEY_free(signkey);
     EVP_PKEY_free(CAkey);
     EVP_PKEY_free(pubkey);

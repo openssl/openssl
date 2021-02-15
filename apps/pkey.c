@@ -72,6 +72,7 @@ int pkey_main(int argc, char **argv)
     EVP_PKEY *pkey = NULL;
     EVP_PKEY_CTX *ctx = NULL;
     const EVP_CIPHER *cipher = NULL;
+    EVP_CIPHER *fetched_cipher = NULL;
     char *infile = NULL, *outfile = NULL, *passin = NULL, *passout = NULL;
     char *passinarg = NULL, *passoutarg = NULL, *ciphername = NULL, *prog;
     OPTION_CHOICE o;
@@ -187,7 +188,7 @@ int pkey_main(int argc, char **argv)
     private = (!noout && !pubout) || (text && !text_pub);
 
     if (ciphername != NULL) {
-        if (!opt_cipher(ciphername, &cipher))
+        if (!opt_cipher(ciphername, &cipher, &fetched_cipher))
             goto opthelp;
     }
     if (cipher == NULL) {
@@ -316,6 +317,7 @@ int pkey_main(int argc, char **argv)
  end:
     if (ret != 0)
         ERR_print_errors(bio_err);
+    EVP_CIPHER_free(fetched_cipher);
     EVP_PKEY_CTX_free(ctx);
     EVP_PKEY_free(pkey);
     release_engine(e);

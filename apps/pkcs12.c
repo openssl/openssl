@@ -166,6 +166,7 @@ int pkcs12_main(int argc, char **argv)
     STACK_OF(OPENSSL_STRING) *canames = NULL;
     const EVP_CIPHER *const default_enc = EVP_aes_256_cbc();
     const EVP_CIPHER *enc = default_enc;
+    EVP_CIPHER *fetched_enc = NULL;
     OPTION_CHOICE o;
 
     prog = opt_init(argc, argv, pkcs12_options);
@@ -346,7 +347,7 @@ int pkcs12_main(int argc, char **argv)
 
     app_RAND_load();
     if (ciphername != NULL) {
-        if (!opt_cipher(ciphername, &enc))
+        if (!opt_cipher(ciphername, &enc, &fetched_enc))
             goto opthelp;
     }
     if (export_pkcs12) {
@@ -497,6 +498,7 @@ int pkcs12_main(int argc, char **argv)
         STACK_OF(X509) *certs = NULL;
         STACK_OF(X509) *untrusted_certs = NULL;
         const EVP_MD *macmd = NULL;
+        EVP_MD *fetched_macmd = NULL;
         unsigned char *catmp = NULL;
         int i;
 
@@ -650,7 +652,7 @@ int pkcs12_main(int argc, char **argv)
         }
 
         if (macalg != NULL) {
-            if (!opt_md(macalg, &macmd))
+            if (!opt_md(macalg, &macmd, &fetched_macmd))
                 goto opthelp;
         }
 
@@ -669,6 +671,7 @@ int pkcs12_main(int argc, char **argv)
 
  export_end:
 
+        EVP_MD_free(fetched_macmd);
         EVP_PKEY_free(key);
         sk_X509_pop_free(certs, X509_free);
         sk_X509_pop_free(untrusted_certs, X509_free);
@@ -767,6 +770,7 @@ int pkcs12_main(int argc, char **argv)
     }
     ret = 0;
  end:
+    EVP_CIPHER_free(fetched_enc);
     PKCS12_free(p12);
     release_engine(e);
     BIO_free(in);

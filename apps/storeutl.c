@@ -84,6 +84,7 @@ int storeutl_main(int argc, char *argv[])
     char *alias = NULL, *digestname = NULL;
     OSSL_STORE_SEARCH *search = NULL;
     const EVP_MD *digest = NULL;
+    EVP_MD *fetched_digest = NULL;
     OSSL_LIB_CTX *libctx = app_get0_libctx();
 
     while ((o = opt_next()) != OPT_EOF) {
@@ -263,7 +264,7 @@ int storeutl_main(int argc, char *argv[])
         goto opthelp;
 
     if (digestname != NULL) {
-        if (!opt_md(digestname, &digest))
+        if (!opt_md(digestname, &digest, &fetched_digest))
             goto opthelp;
     }
 
@@ -322,6 +323,7 @@ int storeutl_main(int argc, char *argv[])
                   text, noout, recursive, 0, out, prog, libctx);
 
  end:
+    EVP_MD_free(fetched_digest);
     OPENSSL_free(fingerprint);
     OPENSSL_free(alias);
     ASN1_INTEGER_free(serial);

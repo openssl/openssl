@@ -204,6 +204,7 @@ int ocsp_main(int argc, char **argv)
 {
     BIO *acbio = NULL, *cbio = NULL, *derbio = NULL, *out = NULL;
     const EVP_MD *cert_id_md = NULL, *rsign_md = NULL;
+    EVP_MD *fetched_cert_id_md = NULL, *fetched_rsign_md = NULL;
     STACK_OF(OPENSSL_STRING) *rsign_sigopts = NULL;
     int trailing_md = 0;
     CA_DB *rdb = NULL;
@@ -499,7 +500,7 @@ int ocsp_main(int argc, char **argv)
                            prog);
                 goto opthelp;
             }
-            if (!opt_md(opt_unknown(), &cert_id_md))
+            if (!opt_md(opt_unknown(), &cert_id_md, &fetched_cert_id_md))
                 goto opthelp;
             trailing_md = 1;
             break;
@@ -527,7 +528,7 @@ int ocsp_main(int argc, char **argv)
     }
 
     if (respdigname != NULL) {
-        if (!opt_md(respdigname, &rsign_md))
+        if (!opt_md(respdigname, &rsign_md, &fetched_rsign_md))
             goto end;
     }
 
@@ -823,6 +824,8 @@ redo_accept:
         ret = 1;
 
  end:
+    EVP_MD_free(fetched_cert_id_md);
+    EVP_MD_free(fetched_rsign_md);
     ERR_print_errors(bio_err);
     X509_free(signer);
     X509_STORE_free(store);

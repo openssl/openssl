@@ -241,6 +241,7 @@ int req_main(int argc, char **argv)
     X509_REQ *req = NULL;
     const EVP_CIPHER *cipher = NULL;
     const EVP_MD *md_alg = NULL, *digest = NULL;
+    EVP_MD *fetched_md_alg = NULL, *fetched_digest = NULL;
     int ext_copy = EXT_COPY_UNSET;
     BIO *addext_bio = NULL;
     char *extensions = NULL;
@@ -480,7 +481,7 @@ int req_main(int argc, char **argv)
 
     app_RAND_load();
     if (digestname != NULL) {
-        if (!opt_md(digestname, &md_alg))
+        if (!opt_md(digestname, &md_alg, &fetched_md_alg))
             goto opthelp;
         digest = md_alg;
     }
@@ -539,7 +540,7 @@ int req_main(int argc, char **argv)
         if (p == NULL) {
             ERR_clear_error();
         } else {
-            if (!opt_md(p, &md_alg))
+            if (!opt_md(p, &md_alg, &fetched_md_alg))
                 goto opthelp;
             digest = md_alg;
         }
@@ -1055,6 +1056,7 @@ int req_main(int argc, char **argv)
     NCONF_free(addext_conf);
     BIO_free(addext_bio);
     BIO_free_all(out);
+    EVP_MD_free(fetched_digest);
     EVP_PKEY_free(pkey);
     EVP_PKEY_CTX_free(genctx);
     sk_OPENSSL_STRING_free(pkeyopts);

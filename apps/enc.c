@@ -110,7 +110,9 @@ int enc_main(int argc, char **argv)
         NULL, *wbio = NULL;
     EVP_CIPHER_CTX *ctx = NULL;
     const EVP_CIPHER *cipher = NULL;
+    EVP_CIPHER *fetched_cipher = NULL;
     const EVP_MD *dgst = NULL;
+    EVP_MD *fetched_dgst = NULL;
     const char *digestname = NULL;
     char *hkey = NULL, *hiv = NULL, *hsalt = NULL, *p;
     char *infile = NULL, *outfile = NULL, *prog;
@@ -297,7 +299,7 @@ int enc_main(int argc, char **argv)
 
     /* Get the cipher name, either from progname (if set) or flag. */
     if (ciphername != NULL) {
-        if (!opt_cipher(ciphername, &cipher))
+        if (!opt_cipher(ciphername, &cipher, &fetched_cipher))
             goto opthelp;
     }
     if (cipher && EVP_CIPHER_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER) {
@@ -309,7 +311,7 @@ int enc_main(int argc, char **argv)
         goto end;
     }
     if (digestname != NULL) {
-        if (!opt_md(digestname, &dgst))
+        if (!opt_md(digestname, &dgst, &fetched_dgst))
             goto opthelp;
     }
     if (dgst == NULL)
@@ -626,6 +628,8 @@ int enc_main(int argc, char **argv)
     }
  end:
     ERR_print_errors(bio_err);
+    EVP_CIPHER_free(fetched_cipher);
+    EVP_MD_free(fetched_dgst);
     OPENSSL_free(strbuf);
     OPENSSL_free(buff);
     BIO_free(in);

@@ -270,7 +270,7 @@ int ca_main(int argc, char **argv)
     STACK_OF(OPENSSL_STRING) *sigopts = NULL, *vfyopts = NULL;
     STACK_OF(X509) *cert_sk = NULL;
     X509_CRL *crl = NULL;
-    const EVP_MD *dgst = NULL;
+    const EVP_MD *dgst = NULL; EVP_MD *fetched_dgst = NULL;
     char *configfile = default_config_file, *section = NULL;
     char *md = NULL, *policy = NULL, *keyfile = NULL;
     char *certfile = NULL, *crl_ext = NULL, *crlnumberfile = NULL;
@@ -807,7 +807,7 @@ end_of_options:
             md = (char *)OBJ_nid2sn(def_nid);
         }
 
-        if (!opt_md(md, &dgst))
+        if (!opt_md(md, &dgst, &fetched_dgst))
             goto end;
     }
 
@@ -1315,6 +1315,7 @@ end_of_options:
  end:
     if (ret)
         ERR_print_errors(bio_err);
+    EVP_MD_free(fetched_dgst);
     BIO_free_all(Sout);
     BIO_free_all(out);
     BIO_free_all(in);

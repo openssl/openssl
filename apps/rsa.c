@@ -93,6 +93,7 @@ int rsa_main(int argc, char **argv)
     EVP_PKEY *pkey = NULL;
     EVP_PKEY_CTX *pctx;
     const EVP_CIPHER *enc = NULL;
+    EVP_CIPHER *fetched_enc = NULL;
     char *infile = NULL, *outfile = NULL, *ciphername = NULL, *prog;
     char *passin = NULL, *passout = NULL, *passinarg = NULL, *passoutarg = NULL;
     int private = 0;
@@ -189,7 +190,7 @@ int rsa_main(int argc, char **argv)
         goto opthelp;
 
     if (ciphername != NULL) {
-        if (!opt_cipher(ciphername, &enc))
+        if (!opt_cipher(ciphername, &enc, &fetched_enc))
             goto opthelp;
     }
     private = (text && !pubin) || (!pubout && !noout) ? 1 : 0;
@@ -353,6 +354,7 @@ int rsa_main(int argc, char **argv)
     }
     ret = 0;
  end:
+    EVP_CIPHER_free(fetched_enc);
     OSSL_ENCODER_CTX_free(ectx);
     release_engine(e);
     BIO_free_all(out);

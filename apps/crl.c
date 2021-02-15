@@ -82,7 +82,7 @@ int crl_main(int argc, char **argv)
     X509_LOOKUP *lookup = NULL;
     X509_OBJECT *xobj = NULL;
     EVP_PKEY *pkey;
-    const EVP_MD *digest = EVP_sha1();
+    const EVP_MD *digest = EVP_sha1(); EVP_MD *fetched_digest = NULL;
     char *infile = NULL, *outfile = NULL, *crldiff = NULL, *keyfile = NULL;
     char *digestname = NULL;
     const char *CAfile = NULL, *CApath = NULL, *CAstore = NULL, *prog;
@@ -208,7 +208,7 @@ int crl_main(int argc, char **argv)
         goto opthelp;
 
     if (digestname != NULL) {
-        if (!opt_md(digestname, &digest))
+        if (!opt_md(digestname, &digest, &fetched_digest))
             goto opthelp;
     }
     x = load_crl(infile, "CRL");
@@ -377,6 +377,7 @@ int crl_main(int argc, char **argv)
  end:
     if (ret != 0)
         ERR_print_errors(bio_err);
+    EVP_MD_free(fetched_digest);
     BIO_free_all(out);
     X509_CRL_free(x);
     X509_STORE_CTX_free(ctx);
