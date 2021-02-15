@@ -231,9 +231,12 @@ will be assigned the size the parameter's I<data> buffer should have.
 
 OSSL_PARAM_get_utf8_string() retrieves a UTF8 string from the parameter
 pointed to by I<p>.
-The string is either stored into I<*val> with a size limit of I<max_len> or,
-in the case when I<*val> is NULL, memory is allocated for the string and
-I<max_len> is ignored.
+The string is stored into I<*val> with a size limit of I<max_len>, not
+counting a terminating NUL byte.  If the retrieved UTF8 string was
+shorter than I<max_len> bytes, a terminating NUL byte is added into
+I<*val>.
+If I<*val> is NULL, memory is allocated for the string and I<max_len>
+is ignored.
 If memory is allocated by this function, it must be freed by the caller.
 
 OSSL_PARAM_set_utf8_string() sets a UTF8 string from the parameter pointed to
