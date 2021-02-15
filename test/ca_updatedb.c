@@ -32,18 +32,18 @@ int main(int argc, char *argv[])
     if (argc != 3) {
         fprintf(stderr, "Usage: %s indexfile testdate\n", argv[0]);
         fprintf(stderr, "       testdate format: ASN1-String\n");
-        exit(EXIT_FAILURE);
+        return EXIT_FAILURE;
     }
 
     if (access(argv[1], F_OK) != 0) {
         fprintf(stderr, "Error: dbfile '%s' is not readable\n", argv[1]);
-        exit(EXIT_FAILURE);
+        return EXIT_FAILURE;
     }
 
     testdateutc = asn1_string_to_time_t(argv[2]);
     if (testdateutc == NULL) {
         fprintf(stderr, "Error: testdate '%s' is invalid\n", argv[2]);
-        exit(EXIT_FAILURE);
+        return EXIT_FAILURE;
     }
 
     channel = BIO_push(BIO_new(BIO_f_prefix()), dup_bio_err(FORMAT_TEXT));
@@ -55,7 +55,7 @@ int main(int argc, char *argv[])
         BIO_free_all(channel);
         free(testdateutc);
         fprintf(stderr, "Error: could not get default config file\n");
-        exit(EXIT_FAILURE);
+        return EXIT_FAILURE;
     }
 
     db = load_index(argv[1], NULL);
@@ -75,5 +75,5 @@ end:
     free(testdateutc);
     BIO_free_all(bio_err);
     BIO_free_all(channel);
-    exit(EXIT_SUCCESS);
+    return EXIT_SUCCESS;
 }
