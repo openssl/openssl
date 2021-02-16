@@ -5,6 +5,10 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
+  Major changes between OpenSSL 1.1.1j and OpenSSL 1.1.1k [under development]
+
+      o
+
   Major changes between OpenSSL 1.1.1i and OpenSSL 1.1.1j [16 Feb 2021]
 
       o Fixed a NULL pointer deref in the X509_issuer_and_serial_hash()
