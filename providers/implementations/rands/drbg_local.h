@@ -91,7 +91,6 @@ struct prov_drbg_st {
     OSSL_FUNC_rand_lock_fn *parent_lock;
     OSSL_FUNC_rand_unlock_fn *parent_unlock;
     OSSL_FUNC_rand_get_ctx_params_fn *parent_get_ctx_params;
-    OSSL_FUNC_rand_generate_fn *parent_generate;
     OSSL_FUNC_rand_nonce_fn *parent_nonce;
     OSSL_FUNC_rand_get_seed_fn *parent_get_seed;
     OSSL_FUNC_rand_clear_seed_fn *parent_clear_seed;

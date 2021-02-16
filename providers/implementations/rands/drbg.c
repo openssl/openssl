@@ -807,8 +807,6 @@ PROV_DRBG *ossl_rand_drbg_new
         drbg->parent_unlock = OSSL_FUNC_rand_unlock(pfunc);
     if ((pfunc = find_call(p_dispatch, OSSL_FUNC_RAND_GET_CTX_PARAMS)) != NULL)
         drbg->parent_get_ctx_params = OSSL_FUNC_rand_get_ctx_params(pfunc);
-    if ((pfunc = find_call(p_dispatch, OSSL_FUNC_RAND_GENERATE)) != NULL)
-        drbg->parent_generate = OSSL_FUNC_rand_generate(pfunc);
     if ((pfunc = find_call(p_dispatch, OSSL_FUNC_RAND_NONCE)) != NULL)
         drbg->parent_nonce = OSSL_FUNC_rand_nonce(pfunc);
     if ((pfunc = find_call(p_dispatch, OSSL_FUNC_RAND_GET_SEED)) != NULL)
