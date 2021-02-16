@@ -180,7 +180,12 @@ static size_t seed_get_seed(void *vseed, unsigned char **pout,
     size_t bytes_needed;
     unsigned char *p;
 
-    /* Figure out how many bytes we need */
+    /*
+     * Figure out how many bytes we need.
+     * This assumes that the seed sources provide eight bits of entropy
+     * per byte.  For lower quality sources, the formula will need to be
+     * different.
+     */
     bytes_needed = entropy >= 0 ? (entropy + 7) / 8 : 0;
     if (bytes_needed < min_len)
         bytes_needed = min_len;
