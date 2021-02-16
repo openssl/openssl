@@ -1790,11 +1790,11 @@ dstu4145le 2 9 : uacurve9 : DSTU curve 9
 1 3 6 1 4 1 311 89 2 1 21 : picnic3l1 : picnic3l1
 1 3 6 1 4 1 311 89 2 1 22 : p256_picnic3l1 : p256_picnic3l1
 1 3 6 1 4 1 311 89 2 1 23 : rsa3072_picnic3l1 : rsa3072_picnic3l1
-1 3 9999 5 1 1 : rainbowIclassic : rainbowIclassic
-1 3 9999 5 1 2 : p256_rainbowIclassic : p256_rainbowIclassic
-1 3 9999 5 1 3 : rsa3072_rainbowIclassic : rsa3072_rainbowIclassic
-1 3 9999 5 3 1 : rainbowVclassic : rainbowVclassic
-1 3 9999 5 3 2 : p521_rainbowVclassic : p521_rainbowVclassic
+1 3 9999 5 1 1 1 : rainbowIclassic : rainbowIclassic
+1 3 9999 5 1 2 1 : p256_rainbowIclassic : p256_rainbowIclassic
+1 3 9999 5 1 3 1 : rsa3072_rainbowIclassic : rsa3072_rainbowIclassic
+1 3 9999 5 3 1 1 : rainbowVclassic : rainbowVclassic
+1 3 9999 5 3 2 1 : p521_rainbowVclassic : p521_rainbowVclassic
 1 3 9999 6 1 1 : sphincsharaka128frobust : sphincsharaka128frobust
 1 3 9999 6 1 2 : p256_sphincsharaka128frobust : p256_sphincsharaka128frobust
 1 3 9999 6 1 3 : rsa3072_sphincsharaka128frobust : rsa3072_sphincsharaka128frobust

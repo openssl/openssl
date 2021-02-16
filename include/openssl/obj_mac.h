@@ -5668,27 +5668,27 @@
 #define SN_rainbowIclassic              "rainbowIclassic"
 #define LN_rainbowIclassic              "rainbowIclassic"
 #define NID_rainbowIclassic             1305
-#define OBJ_rainbowIclassic             1L,3L,9999L,5L,1L,1L
+#define OBJ_rainbowIclassic             1L,3L,9999L,5L,1L,1L,1L
 
 #define SN_p256_rainbowIclassic         "p256_rainbowIclassic"
 #define LN_p256_rainbowIclassic         "p256_rainbowIclassic"
 #define NID_p256_rainbowIclassic                1306
-#define OBJ_p256_rainbowIclassic                1L,3L,9999L,5L,1L,2L
+#define OBJ_p256_rainbowIclassic                1L,3L,9999L,5L,1L,2L,1L
 
 #define SN_rsa3072_rainbowIclassic              "rsa3072_rainbowIclassic"
 #define LN_rsa3072_rainbowIclassic              "rsa3072_rainbowIclassic"
 #define NID_rsa3072_rainbowIclassic             1307
-#define OBJ_rsa3072_rainbowIclassic             1L,3L,9999L,5L,1L,3L
+#define OBJ_rsa3072_rainbowIclassic             1L,3L,9999L,5L,1L,3L,1L
 
 #define SN_rainbowVclassic              "rainbowVclassic"
 #define LN_rainbowVclassic              "rainbowVclassic"
 #define NID_rainbowVclassic             1308
-#define OBJ_rainbowVclassic             1L,3L,9999L,5L,3L,1L
+#define OBJ_rainbowVclassic             1L,3L,9999L,5L,3L,1L,1L
 
 #define SN_p521_rainbowVclassic         "p521_rainbowVclassic"
 #define LN_p521_rainbowVclassic         "p521_rainbowVclassic"
 #define NID_p521_rainbowVclassic                1309
-#define OBJ_p521_rainbowVclassic                1L,3L,9999L,5L,3L,2L
+#define OBJ_p521_rainbowVclassic                1L,3L,9999L,5L,3L,2L,1L
 
 #define SN_sphincsharaka128frobust              "sphincsharaka128frobust"
 #define LN_sphincsharaka128frobust              "sphincsharaka128frobust"

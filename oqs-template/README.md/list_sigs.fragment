@@ -2,7 +2,7 @@
 - **{{ sig['family'] }}**:
     {%- for variant in sig['variants'] -%}
 `{{ variant['name'] }}`
-{%- if variant['enable'] -%} * {%- endif -%}
+{%- if variant['enable'] -%} \* {%- endif -%}
 {%- if not loop.last %}, {% endif -%}
     {%- endfor -%}
 {%- endfor %}

@@ -10,7 +10,7 @@
  */
 
 /* Serialized OID's */
-static const unsigned char so[8066] = {
+static const unsigned char so[8071] = {
     0x2A,0x86,0x48,0x86,0xF7,0x0D,                 /* [    0] OBJ_rsadsi */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,            /* [    6] OBJ_pkcs */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x02,0x02,       /* [   13] OBJ_md2 */
@@ -1092,7 +1092,7 @@ static const unsigned char so[8066] = {
     0x2B,0x06,0x01,0x04,0x01,0x02,0x82,0x0B,0x0B,0x06,0x05,  /* [ 7856] OBJ_dilithium3_aes */
     0x2B,0xCE,0x0F,0x02,0x0B,0x03,                 /* [ 7867] OBJ_p384_dilithium3_aes */
     0x2B,0x06,0x01,0x04,0x01,0x02,0x82,0x0B,0x0B,0x08,0x07,  /* [ 7873] OBJ_dilithium5_aes */
-    0x2B,0xCE,0x0F,0x03,0x0B,0x04,                 /* [ 7884] OBJ_p521_dilithium5_aes */
+    0x2B,0xCE,0x0F,0x02,0x0B,0x04,                 /* [ 7884] OBJ_p521_dilithium5_aes */
     0x2B,0xCE,0x0F,0x03,0x01,                      /* [ 7890] OBJ_falcon512 */
     0x2B,0xCE,0x0F,0x03,0x02,                      /* [ 7895] OBJ_p256_falcon512 */
     0x2B,0xCE,0x0F,0x03,0x03,                      /* [ 7900] OBJ_rsa3072_falcon512 */
@@ -1104,20 +1104,20 @@ static const unsigned char so[8066] = {
     0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x01,0x15,  /* [ 7948] OBJ_picnic3l1 */
     0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x01,0x16,  /* [ 7959] OBJ_p256_picnic3l1 */
     0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x01,0x17,  /* [ 7970] OBJ_rsa3072_picnic3l1 */
-    0x2B,0xCE,0x0F,0x05,0x01,0x01,                 /* [ 7981] OBJ_rainbowIclassic */
-    0x2B,0xCE,0x0F,0x05,0x01,0x02,                 /* [ 7987] OBJ_p256_rainbowIclassic */
-    0x2B,0xCE,0x0F,0x05,0x01,0x03,                 /* [ 7993] OBJ_rsa3072_rainbowIclassic */
-    0x2B,0xCE,0x0F,0x05,0x03,0x01,                 /* [ 7999] OBJ_rainbowVclassic */
-    0x2B,0xCE,0x0F,0x05,0x03,0x02,                 /* [ 8005] OBJ_p521_rainbowVclassic */
-    0x2B,0xCE,0x0F,0x06,0x01,0x01,                 /* [ 8011] OBJ_sphincsharaka128frobust */
-    0x2B,0xCE,0x0F,0x06,0x01,0x02,                 /* [ 8017] OBJ_p256_sphincsharaka128frobust */
-    0x2B,0xCE,0x0F,0x06,0x01,0x03,                 /* [ 8023] OBJ_rsa3072_sphincsharaka128frobust */
-    0x2B,0xCE,0x0F,0x06,0x04,0x01,                 /* [ 8029] OBJ_sphincssha256128frobust */
-    0x2B,0xCE,0x0F,0x06,0x04,0x02,                 /* [ 8035] OBJ_p256_sphincssha256128frobust */
-    0x2B,0xCE,0x0F,0x06,0x04,0x03,                 /* [ 8041] OBJ_rsa3072_sphincssha256128frobust */
-    0x2B,0xCE,0x0F,0x06,0x07,0x01,                 /* [ 8047] OBJ_sphincsshake256128frobust */
-    0x2B,0xCE,0x0F,0x06,0x07,0x02,                 /* [ 8053] OBJ_p256_sphincsshake256128frobust */
-    0x2B,0xCE,0x0F,0x06,0x07,0x03,                 /* [ 8059] OBJ_rsa3072_sphincsshake256128frobust */
+    0x2B,0xCE,0x0F,0x05,0x01,0x01,0x01,            /* [ 7981] OBJ_rainbowIclassic */
+    0x2B,0xCE,0x0F,0x05,0x01,0x02,0x01,            /* [ 7988] OBJ_p256_rainbowIclassic */
+    0x2B,0xCE,0x0F,0x05,0x01,0x03,0x01,            /* [ 7995] OBJ_rsa3072_rainbowIclassic */
+    0x2B,0xCE,0x0F,0x05,0x03,0x01,0x01,            /* [ 8002] OBJ_rainbowVclassic */
+    0x2B,0xCE,0x0F,0x05,0x03,0x02,0x01,            /* [ 8009] OBJ_p521_rainbowVclassic */
+    0x2B,0xCE,0x0F,0x06,0x01,0x01,                 /* [ 8016] OBJ_sphincsharaka128frobust */
+    0x2B,0xCE,0x0F,0x06,0x01,0x02,                 /* [ 8022] OBJ_p256_sphincsharaka128frobust */
+    0x2B,0xCE,0x0F,0x06,0x01,0x03,                 /* [ 8028] OBJ_rsa3072_sphincsharaka128frobust */
+    0x2B,0xCE,0x0F,0x06,0x04,0x01,                 /* [ 8034] OBJ_sphincssha256128frobust */
+    0x2B,0xCE,0x0F,0x06,0x04,0x02,                 /* [ 8040] OBJ_p256_sphincssha256128frobust */
+    0x2B,0xCE,0x0F,0x06,0x04,0x03,                 /* [ 8046] OBJ_rsa3072_sphincssha256128frobust */
+    0x2B,0xCE,0x0F,0x06,0x07,0x01,                 /* [ 8052] OBJ_sphincsshake256128frobust */
+    0x2B,0xCE,0x0F,0x06,0x07,0x02,                 /* [ 8058] OBJ_p256_sphincsshake256128frobust */
+    0x2B,0xCE,0x0F,0x06,0x07,0x03,                 /* [ 8064] OBJ_rsa3072_sphincsshake256128frobust */
 };
 
 #define NUM_NID 1344
@@ -2427,20 +2427,20 @@ static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"picnic3l1", "picnic3l1", NID_picnic3l1, 11, &so[7948]},
     {"p256_picnic3l1", "p256_picnic3l1", NID_p256_picnic3l1, 11, &so[7959]},
     {"rsa3072_picnic3l1", "rsa3072_picnic3l1", NID_rsa3072_picnic3l1, 11, &so[7970]},
-    {"rainbowIclassic", "rainbowIclassic", NID_rainbowIclassic, 6, &so[7981]},
-    {"p256_rainbowIclassic", "p256_rainbowIclassic", NID_p256_rainbowIclassic, 6, &so[7987]},
-    {"rsa3072_rainbowIclassic", "rsa3072_rainbowIclassic", NID_rsa3072_rainbowIclassic, 6, &so[7993]},
-    {"rainbowVclassic", "rainbowVclassic", NID_rainbowVclassic, 6, &so[7999]},
-    {"p521_rainbowVclassic", "p521_rainbowVclassic", NID_p521_rainbowVclassic, 6, &so[8005]},
-    {"sphincsharaka128frobust", "sphincsharaka128frobust", NID_sphincsharaka128frobust, 6, &so[8011]},
-    {"p256_sphincsharaka128frobust", "p256_sphincsharaka128frobust", NID_p256_sphincsharaka128frobust, 6, &so[8017]},
-    {"rsa3072_sphincsharaka128frobust", "rsa3072_sphincsharaka128frobust", NID_rsa3072_sphincsharaka128frobust, 6, &so[8023]},
-    {"sphincssha256128frobust", "sphincssha256128frobust", NID_sphincssha256128frobust, 6, &so[8029]},
-    {"p256_sphincssha256128frobust", "p256_sphincssha256128frobust", NID_p256_sphincssha256128frobust, 6, &so[8035]},
-    {"rsa3072_sphincssha256128frobust", "rsa3072_sphincssha256128frobust", NID_rsa3072_sphincssha256128frobust, 6, &so[8041]},
-    {"sphincsshake256128frobust", "sphincsshake256128frobust", NID_sphincsshake256128frobust, 6, &so[8047]},
-    {"p256_sphincsshake256128frobust", "p256_sphincsshake256128frobust", NID_p256_sphincsshake256128frobust, 6, &so[8053]},
-    {"rsa3072_sphincsshake256128frobust", "rsa3072_sphincsshake256128frobust", NID_rsa3072_sphincsshake256128frobust, 6, &so[8059]},
+    {"rainbowIclassic", "rainbowIclassic", NID_rainbowIclassic, 7, &so[7981]},
+    {"p256_rainbowIclassic", "p256_rainbowIclassic", NID_p256_rainbowIclassic, 7, &so[7988]},
+    {"rsa3072_rainbowIclassic", "rsa3072_rainbowIclassic", NID_rsa3072_rainbowIclassic, 7, &so[7995]},
+    {"rainbowVclassic", "rainbowVclassic", NID_rainbowVclassic, 7, &so[8002]},
+    {"p521_rainbowVclassic", "p521_rainbowVclassic", NID_p521_rainbowVclassic, 7, &so[8009]},
+    {"sphincsharaka128frobust", "sphincsharaka128frobust", NID_sphincsharaka128frobust, 6, &so[8016]},
+    {"p256_sphincsharaka128frobust", "p256_sphincsharaka128frobust", NID_p256_sphincsharaka128frobust, 6, &so[8022]},
+    {"rsa3072_sphincsharaka128frobust", "rsa3072_sphincsharaka128frobust", NID_rsa3072_sphincsharaka128frobust, 6, &so[8028]},
+    {"sphincssha256128frobust", "sphincssha256128frobust", NID_sphincssha256128frobust, 6, &so[8034]},
+    {"p256_sphincssha256128frobust", "p256_sphincssha256128frobust", NID_p256_sphincssha256128frobust, 6, &so[8040]},
+    {"rsa3072_sphincssha256128frobust", "rsa3072_sphincssha256128frobust", NID_rsa3072_sphincssha256128frobust, 6, &so[8046]},
+    {"sphincsshake256128frobust", "sphincsshake256128frobust", NID_sphincsshake256128frobust, 6, &so[8052]},
+    {"p256_sphincsshake256128frobust", "p256_sphincsshake256128frobust", NID_p256_sphincsshake256128frobust, 6, &so[8058]},
+    {"rsa3072_sphincsshake256128frobust", "rsa3072_sphincsshake256128frobust", NID_rsa3072_sphincsshake256128frobust, 6, &so[8064]},
     {"p384_frodo976aes", "p384_frodo976aes", NID_p384_frodo976aes},
     {"p384_frodo976shake", "p384_frodo976shake", NID_p384_frodo976shake},
     {"p521_frodo1344aes", "p521_frodo1344aes", NID_p521_frodo1344aes},
@@ -5469,12 +5469,7 @@ static const unsigned int obj_objs[NUM_OBJ] = {
     1288,    /* OBJ_p256_dilithium2_aes          1 3 9999 2 11 1 */
     1289,    /* OBJ_rsa3072_dilithium2_aes       1 3 9999 2 11 2 */
     1291,    /* OBJ_p384_dilithium3_aes          1 3 9999 2 11 3 */
-    1293,    /* OBJ_p521_dilithium5_aes          1 3 9999 3 11 4 */
-    1305,    /* OBJ_rainbowIclassic              1 3 9999 5 1 1 */
-    1306,    /* OBJ_p256_rainbowIclassic         1 3 9999 5 1 2 */
-    1307,    /* OBJ_rsa3072_rainbowIclassic      1 3 9999 5 1 3 */
-    1308,    /* OBJ_rainbowVclassic              1 3 9999 5 3 1 */
-    1309,    /* OBJ_p521_rainbowVclassic         1 3 9999 5 3 2 */
+    1293,    /* OBJ_p521_dilithium5_aes          1 3 9999 2 11 4 */
     1310,    /* OBJ_sphincsharaka128frobust      1 3 9999 6 1 1 */
     1311,    /* OBJ_p256_sphincsharaka128frobust 1 3 9999 6 1 2 */
     1312,    /* OBJ_rsa3072_sphincsharaka128frobust 1 3 9999 6 1 3 */
@@ -5563,6 +5558,11 @@ static const unsigned int obj_objs[NUM_OBJ] = {
      176,    /* OBJ_id_ad                        1 3 6 1 5 5 7 48 */
      507,    /* OBJ_id_hex_partial_message       1 3 6 1 7 1 1 1 */
      508,    /* OBJ_id_hex_multipart_message     1 3 6 1 7 1 1 2 */
+    1305,    /* OBJ_rainbowIclassic              1 3 9999 5 1 1 1 */
+    1306,    /* OBJ_p256_rainbowIclassic         1 3 9999 5 1 2 1 */
+    1307,    /* OBJ_rsa3072_rainbowIclassic      1 3 9999 5 1 3 1 */
+    1308,    /* OBJ_rainbowVclassic              1 3 9999 5 3 1 1 */
+    1309,    /* OBJ_p521_rainbowVclassic         1 3 9999 5 3 2 1 */
       57,    /* OBJ_netscape                     2 16 840 1 113730 */
      754,    /* OBJ_camellia_128_ecb             0 3 4401 5 3 1 9 1 */
      766,    /* OBJ_camellia_128_ofb128          0 3 4401 5 3 1 9 3 */
