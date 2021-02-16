@@ -7,18 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifdef OPENSSL_SYS_UNIX
-# include <unistd.h>
-#endif
 #include "../apps/include/ca.h"
 #include "../apps/include/ca_logic.h"
 #include "../apps/include/apps.h"
-
-/* tweaks needed for Windows */
-#ifdef _WIN32
-# define access _access
-# define timezone _timezone
-#endif
 
 char *default_config_file = NULL;
 
@@ -30,13 +21,8 @@ int main(int argc, char *argv[])
     int rv;
 
     if (argc != 3) {
-        fprintf(stderr, "Usage: %s indexfile testdate\n", argv[0]);
+        fprintf(stderr, "Usage: %s dbfile testdate\n", argv[0]);
         fprintf(stderr, "       testdate format: ASN1-String\n");
-        return EXIT_FAILURE;
-    }
-
-    if (access(argv[1], F_OK) != 0) {
-        fprintf(stderr, "Error: dbfile '%s' is not readable\n", argv[1]);
         return EXIT_FAILURE;
     }
 
@@ -59,6 +45,10 @@ int main(int argc, char *argv[])
     }
 
     db = load_index(argv[1], NULL);
+    if (db == NULL) {
+        fprintf(stderr, "Error: dbfile '%s' is not readable\n", argv[1]);
+        return EXIT_FAILURE;
+    }
 
     rv = do_updatedb(db, testdateutc);
 
