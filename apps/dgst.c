@@ -405,7 +405,7 @@ int dgst_main(int argc, char **argv)
     if (md == NULL) {
         EVP_MD_CTX *tctx;
         BIO_get_md_ctx(bmd, &tctx);
-        md = EVP_MD_CTX_md(tctx);
+        md = EVP_MD_CTX_get0_md(tctx);
     }
     if (md != NULL)
         md_name = EVP_MD_name(md);

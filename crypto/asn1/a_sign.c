@@ -159,7 +159,7 @@ int ASN1_item_sign_ctx(const ASN1_ITEM *it, X509_ALGOR *algor1,
     int signid, paramtype, buf_len = 0;
     int rv, pkey_id;
 
-    md = EVP_MD_CTX_md(ctx);
+    md = EVP_MD_CTX_get0_md(ctx);
     pkey = EVP_PKEY_CTX_get0_pkey(EVP_MD_CTX_pkey_ctx(ctx));
 
     if (pkey == NULL) {

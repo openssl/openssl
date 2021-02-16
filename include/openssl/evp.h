@@ -538,8 +538,11 @@ int EVP_MD_size(const EVP_MD *md);
 int EVP_MD_block_size(const EVP_MD *md);
 unsigned long EVP_MD_flags(const EVP_MD *md);
 
-const EVP_MD *EVP_MD_CTX_md(const EVP_MD_CTX *ctx);
+const EVP_MD *EVP_MD_CTX_get0_md(const EVP_MD_CTX *ctx);
+EVP_MD *EVP_MD_CTX_get1_md(EVP_MD_CTX *ctx);
 # ifndef OPENSSL_NO_DEPRECATED_3_0
+OSSL_DEPRECATEDIN_3_0
+const EVP_MD *EVP_MD_CTX_md(const EVP_MD_CTX *ctx);
 OSSL_DEPRECATEDIN_3_0
 int (*EVP_MD_CTX_update_fn(EVP_MD_CTX *ctx))(EVP_MD_CTX *ctx,
                                              const void *data, size_t count);
@@ -548,10 +551,10 @@ void EVP_MD_CTX_set_update_fn(EVP_MD_CTX *ctx,
                               int (*update) (EVP_MD_CTX *ctx,
                                              const void *data, size_t count));
 # endif
-# define EVP_MD_CTX_name(e)              EVP_MD_name(EVP_MD_CTX_md(e))
-# define EVP_MD_CTX_size(e)              EVP_MD_size(EVP_MD_CTX_md(e))
-# define EVP_MD_CTX_block_size(e)        EVP_MD_block_size(EVP_MD_CTX_md(e))
-# define EVP_MD_CTX_type(e)              EVP_MD_type(EVP_MD_CTX_md(e))
+# define EVP_MD_CTX_name(e)            EVP_MD_name(EVP_MD_CTX_get0_md(e))
+# define EVP_MD_CTX_size(e)            EVP_MD_size(EVP_MD_CTX_get0_md(e))
+# define EVP_MD_CTX_block_size(e)      EVP_MD_block_size(EVP_MD_CTX_get0_md(e))
+# define EVP_MD_CTX_type(e)            EVP_MD_type(EVP_MD_CTX_get0_md(e))
 EVP_PKEY_CTX *EVP_MD_CTX_pkey_ctx(const EVP_MD_CTX *ctx);
 void EVP_MD_CTX_set_pkey_ctx(EVP_MD_CTX *ctx, EVP_PKEY_CTX *pctx);
 void *EVP_MD_CTX_md_data(const EVP_MD_CTX *ctx);
@@ -576,7 +579,8 @@ EVP_CIPHER *EVP_CIPHER_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
 int EVP_CIPHER_up_ref(EVP_CIPHER *cipher);
 void EVP_CIPHER_free(EVP_CIPHER *cipher);
 
-const EVP_CIPHER *EVP_CIPHER_CTX_cipher(const EVP_CIPHER_CTX *ctx);
+const EVP_CIPHER *EVP_CIPHER_CTX_get0_cipher(const EVP_CIPHER_CTX *ctx);
+EVP_CIPHER *EVP_CIPHER_CTX_get1_cipher(EVP_CIPHER_CTX *ctx);
 int EVP_CIPHER_CTX_encrypting(const EVP_CIPHER_CTX *ctx);
 int EVP_CIPHER_CTX_nid(const EVP_CIPHER_CTX *ctx);
 int EVP_CIPHER_CTX_block_size(const EVP_CIPHER_CTX *ctx);
@@ -584,6 +588,7 @@ int EVP_CIPHER_CTX_key_length(const EVP_CIPHER_CTX *ctx);
 int EVP_CIPHER_CTX_iv_length(const EVP_CIPHER_CTX *ctx);
 int EVP_CIPHER_CTX_tag_length(const EVP_CIPHER_CTX *ctx);
 # ifndef OPENSSL_NO_DEPRECATED_3_0
+const EVP_CIPHER *EVP_CIPHER_CTX_cipher(const EVP_CIPHER_CTX *ctx);
 OSSL_DEPRECATEDIN_3_0 const unsigned char *EVP_CIPHER_CTX_iv(const EVP_CIPHER_CTX *ctx);
 OSSL_DEPRECATEDIN_3_0 const unsigned char *EVP_CIPHER_CTX_original_iv(const EVP_CIPHER_CTX *ctx);
 OSSL_DEPRECATEDIN_3_0 unsigned char *EVP_CIPHER_CTX_iv_noconst(EVP_CIPHER_CTX *ctx);
@@ -598,12 +603,12 @@ void *EVP_CIPHER_CTX_get_app_data(const EVP_CIPHER_CTX *ctx);
 void EVP_CIPHER_CTX_set_app_data(EVP_CIPHER_CTX *ctx, void *data);
 void *EVP_CIPHER_CTX_get_cipher_data(const EVP_CIPHER_CTX *ctx);
 void *EVP_CIPHER_CTX_set_cipher_data(EVP_CIPHER_CTX *ctx, void *cipher_data);
-# define EVP_CIPHER_CTX_name(c)         EVP_CIPHER_name(EVP_CIPHER_CTX_cipher(c))
-# define EVP_CIPHER_CTX_type(c)         EVP_CIPHER_type(EVP_CIPHER_CTX_cipher(c))
+# define EVP_CIPHER_CTX_name(c)         EVP_CIPHER_name(EVP_CIPHER_CTX_get0_cipher(c))
+# define EVP_CIPHER_CTX_type(c)         EVP_CIPHER_type(EVP_CIPHER_CTX_get0_cipher(c))
 # ifndef OPENSSL_NO_DEPRECATED_1_1_0
-#  define EVP_CIPHER_CTX_flags(c)       EVP_CIPHER_flags(EVP_CIPHER_CTX_cipher(c))
+#  define EVP_CIPHER_CTX_flags(c)       EVP_CIPHER_flags(EVP_CIPHER_CTX_get0_cipher(c))
 # endif
-# define EVP_CIPHER_CTX_mode(c)         EVP_CIPHER_mode(EVP_CIPHER_CTX_cipher(c))
+# define EVP_CIPHER_CTX_mode(c)         EVP_CIPHER_mode(EVP_CIPHER_CTX_get0_cipher(c))
 
 # define EVP_ENCODE_LENGTH(l)    ((((l)+2)/3*4)+((l)/48+1)*2+80)
 # define EVP_DECODE_LENGTH(l)    (((l)+3)/4*3+80)

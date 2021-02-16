@@ -34,6 +34,7 @@ static const EVP_MD null_md = {
     NID_undef,
     0,
     0,
+    EVP_ORIG_GLOBAL,
     init,
     update,
     final,

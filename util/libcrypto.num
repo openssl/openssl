@@ -417,7 +417,7 @@ CRYPTO_ocb128_setiv                     424	3_0_0	EXIST::FUNCTION:OCB
 X509_CRL_digest                         425	3_0_0	EXIST::FUNCTION:
 EVP_aes_128_cbc_hmac_sha1               426	3_0_0	EXIST::FUNCTION:
 ERR_load_CMS_strings                    427	3_0_0	EXIST::FUNCTION:CMS,DEPRECATEDIN_3_0
-EVP_MD_CTX_md                           428	3_0_0	EXIST::FUNCTION:
+EVP_MD_CTX_md                           428	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 X509_REVOKED_get_ext                    429	3_0_0	EXIST::FUNCTION:
 d2i_RSA_PSS_PARAMS                      430	3_0_0	EXIST::FUNCTION:
 USERNOTICE_free                         431	3_0_0	EXIST::FUNCTION:
@@ -2961,7 +2961,7 @@ X509_CRL_sign_ctx                       3025	3_0_0	EXIST::FUNCTION:
 X509_STORE_add_crl                      3026	3_0_0	EXIST::FUNCTION:
 PEM_write_RSAPrivateKey                 3027	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,STDIO
 RC4_set_key                             3028	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,RC4
-EVP_CIPHER_CTX_cipher                   3029	3_0_0	EXIST::FUNCTION:
+EVP_CIPHER_CTX_cipher                   3029	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 PEM_write_bio_PKCS8PrivateKey_nid       3030	3_0_0	EXIST::FUNCTION:
 BN_MONT_CTX_new                         3031	3_0_0	EXIST::FUNCTION:
 CRYPTO_free_ex_index                    3032	3_0_0	EXIST::FUNCTION:
@@ -5352,3 +5352,7 @@ OSSL_PARAM_merge                        ?	3_0_0	EXIST::FUNCTION:
 OSSL_PARAM_free                         ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_todata                         ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_export                         ?	3_0_0	EXIST::FUNCTION:
+EVP_MD_CTX_get0_md                      ?	3_0_0	EXIST::FUNCTION:
+EVP_MD_CTX_get1_md                      ?	3_0_0	EXIST::FUNCTION:
+EVP_CIPHER_CTX_get0_cipher              ?	3_0_0	EXIST::FUNCTION:
+EVP_CIPHER_CTX_get1_cipher              ?	3_0_0	EXIST::FUNCTION:

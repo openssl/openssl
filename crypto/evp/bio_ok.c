@@ -394,7 +394,7 @@ static long ok_ctrl(BIO *b, int cmd, long num, void *ptr)
     case BIO_C_GET_MD:
         if (BIO_get_init(b)) {
             ppmd = ptr;
-            *ppmd = EVP_MD_CTX_md(ctx->md);
+            *ppmd = EVP_MD_CTX_get0_md(ctx->md);
         } else
             ret = 0;
         break;
@@ -442,7 +442,7 @@ static int sig_out(BIO *b)
 
     ctx = BIO_get_data(b);
     md = ctx->md;
-    digest = EVP_MD_CTX_md(md);
+    digest = EVP_MD_CTX_get0_md(md);
     md_size = EVP_MD_size(digest);
     md_data = EVP_MD_CTX_md_data(md);
 
@@ -486,7 +486,7 @@ static int sig_in(BIO *b)
 
     ctx = BIO_get_data(b);
     md = ctx->md;
-    digest = EVP_MD_CTX_md(md);
+    digest = EVP_MD_CTX_get0_md(md);
     md_size = EVP_MD_size(digest);
     md_data = EVP_MD_CTX_md_data(md);
 
@@ -532,7 +532,7 @@ static int block_out(BIO *b)
 
     ctx = BIO_get_data(b);
     md = ctx->md;
-    digest = EVP_MD_CTX_md(md);
+    digest = EVP_MD_CTX_get0_md(md);
     md_size = EVP_MD_size(digest);
 
     tl = ctx->buf_len - OK_BLOCK_BLOCK;
@@ -563,7 +563,7 @@ static int block_in(BIO *b)
 
     ctx = BIO_get_data(b);
     md = ctx->md;
-    md_size = EVP_MD_size(EVP_MD_CTX_md(md));
+    md_size = EVP_MD_size(EVP_MD_CTX_get0_md(md));
 
     assert(sizeof(tl) >= OK_BLOCK_BLOCK); /* always true */
     tl = ctx->buf[0];

@@ -175,7 +175,7 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
             /* legacy code support for engines */
             ERR_set_mark();
             /*
-             * This might be requested by a later call to EVP_MD_CTX_md().
+             * This might be requested by a later call to EVP_MD_CTX_get0_md().
              * In that case the "explicit fetch" rules apply for that
              * function (as per man pages), i.e. the ref count is not updated
              * so the EVP_MD should not be used beyound the lifetime of the

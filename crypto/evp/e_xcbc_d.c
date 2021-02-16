@@ -41,6 +41,7 @@ static const EVP_CIPHER d_xcbc_cipher = {
     NID_desx_cbc,
     8, 24, 8,
     EVP_CIPH_CBC_MODE,
+    EVP_ORIG_GLOBAL,
     desx_cbc_init_key,
     desx_cbc_cipher,
     NULL,

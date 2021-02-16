@@ -422,9 +422,32 @@ int EVP_Cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     return ctx->cipher->do_cipher(ctx, out, in, inl);
 }
 
+#ifndef OPENSSL_NO_DEPRECATED_3_0
 const EVP_CIPHER *EVP_CIPHER_CTX_cipher(const EVP_CIPHER_CTX *ctx)
 {
+    if (ctx == NULL)
+        return NULL;
     return ctx->cipher;
+}
+#endif
+
+const EVP_CIPHER *EVP_CIPHER_CTX_get0_cipher(const EVP_CIPHER_CTX *ctx)
+{
+    if (ctx == NULL)
+        return NULL;
+    return ctx->cipher;
+}
+
+EVP_CIPHER *EVP_CIPHER_CTX_get1_cipher(EVP_CIPHER_CTX *ctx)
+{
+    EVP_CIPHER *cipher;
+
+    if (ctx == NULL)
+        return NULL;
+    cipher = (EVP_CIPHER *)ctx->cipher;
+    if (!EVP_CIPHER_up_ref(cipher))
+        return NULL;
+    return cipher;
 }
 
 int EVP_CIPHER_CTX_encrypting(const EVP_CIPHER_CTX *ctx)
@@ -767,6 +790,7 @@ EVP_MD *EVP_MD_meth_new(int md_type, int pkey_type)
     if (md != NULL) {
         md->type = md_type;
         md->pkey_type = pkey_type;
+        md->origin = EVP_ORIG_METH;
     }
     return md;
 }
@@ -791,10 +815,21 @@ EVP_MD *EVP_MD_meth_dup(const EVP_MD *md)
     return to;
 }
 
+void evp_md_free_int(EVP_MD *md)
+{
+    ossl_provider_free(md->prov);
+    CRYPTO_THREAD_lock_free(md->lock);
+    OPENSSL_free(md);
+}
+
 void EVP_MD_meth_free(EVP_MD *md)
 {
-    EVP_MD_free(md);
+    if (md == NULL || md->origin != EVP_ORIG_METH)
+       return;
+
+    evp_md_free_int(md);
 }
+
 int EVP_MD_meth_set_input_blocksize(EVP_MD *md, int blocksize)
 {
     if (md->block_size != 0)
@@ -927,11 +962,32 @@ int (*EVP_MD_meth_get_ctrl(const EVP_MD *md))(EVP_MD_CTX *ctx, int cmd,
     return md->md_ctrl;
 }
 
+#ifndef OPENSSL_NO_DEPRECATED_3_0
 const EVP_MD *EVP_MD_CTX_md(const EVP_MD_CTX *ctx)
 {
     if (ctx == NULL)
         return NULL;
     return ctx->reqdigest;
+}
+#endif
+
+const EVP_MD *EVP_MD_CTX_get0_md(const EVP_MD_CTX *ctx)
+{
+    if (ctx == NULL)
+        return NULL;
+    return ctx->reqdigest;
+}
+
+EVP_MD *EVP_MD_CTX_get1_md(EVP_MD_CTX *ctx)
+{
+    EVP_MD *md;
+
+    if (ctx == NULL)
+        return NULL;
+    md = (EVP_MD *)ctx->reqdigest;
+    if (!EVP_MD_up_ref(md))
+        return NULL;
+    return md;
 }
 
 EVP_PKEY_CTX *EVP_MD_CTX_pkey_ctx(const EVP_MD_CTX *ctx)

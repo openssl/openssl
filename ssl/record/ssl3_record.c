@@ -480,8 +480,8 @@ int ssl3_get_record(SSL *s)
              && thisrr->type == SSL3_RT_APPLICATION_DATA
              && SSL_USE_EXPLICIT_IV(s)
              && s->enc_read_ctx != NULL
-             && (EVP_CIPHER_flags(EVP_CIPHER_CTX_cipher(s->enc_read_ctx))
-                 & EVP_CIPH_FLAG_PIPELINE)
+             && (EVP_CIPHER_flags(EVP_CIPHER_CTX_get0_cipher(s->enc_read_ctx))
+                 & EVP_CIPH_FLAG_PIPELINE) != 0
              && ssl3_record_app_data_waiting(s));
 
     if (num_recs == 1
@@ -523,7 +523,7 @@ int ssl3_get_record(SSL *s)
 
     /* TODO(size_t): convert this to do size_t properly */
     if (s->read_hash != NULL) {
-        const EVP_MD *tmpmd = EVP_MD_CTX_md(s->read_hash);
+        const EVP_MD *tmpmd = EVP_MD_CTX_get0_md(s->read_hash);
 
         if (tmpmd != NULL) {
             imac_size = EVP_MD_size(tmpmd);
@@ -617,9 +617,9 @@ int ssl3_get_record(SSL *s)
     } OSSL_TRACE_END(TLS);
 
     /* r->length is now the compressed data plus mac */
-    if ((sess != NULL) &&
-        (s->enc_read_ctx != NULL) &&
-        (!SSL_READ_ETM(s) && EVP_MD_CTX_md(s->read_hash) != NULL)) {
+    if ((sess != NULL)
+            && (s->enc_read_ctx != NULL)
+            && (!SSL_READ_ETM(s) && EVP_MD_CTX_get0_md(s->read_hash) != NULL)) {
         /* s->read_hash != NULL => mac_size != -1 */
 
         for (j = 0; j < num_recs; j++) {
@@ -842,13 +842,13 @@ int ssl3_enc(SSL *s, SSL3_RECORD *inrecs, size_t n_recs, int sending,
         if (s->enc_write_ctx == NULL)
             enc = NULL;
         else
-            enc = EVP_CIPHER_CTX_cipher(s->enc_write_ctx);
+            enc = EVP_CIPHER_CTX_get0_cipher(s->enc_write_ctx);
     } else {
         ds = s->enc_read_ctx;
         if (s->enc_read_ctx == NULL)
             enc = NULL;
         else
-            enc = EVP_CIPHER_CTX_cipher(s->enc_read_ctx);
+            enc = EVP_CIPHER_CTX_get0_cipher(s->enc_read_ctx);
     }
 
     if ((s->session == NULL) || (ds == NULL) || (enc == NULL)) {
@@ -967,7 +967,7 @@ int tls1_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending,
     }
 
     if (sending) {
-        if (EVP_MD_CTX_md(s->write_hash)) {
+        if (EVP_MD_CTX_get0_md(s->write_hash)) {
             int n = EVP_MD_CTX_size(s->write_hash);
             if (!ossl_assert(n >= 0)) {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
@@ -979,7 +979,8 @@ int tls1_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending,
             enc = NULL;
         else {
             int ivlen;
-            enc = EVP_CIPHER_CTX_cipher(s->enc_write_ctx);
+
+            enc = EVP_CIPHER_CTX_get0_cipher(s->enc_write_ctx);
             /* For TLSv1.1 and later explicit IV */
             if (SSL_USE_EXPLICIT_IV(s)
                 && EVP_CIPHER_mode(enc) == EVP_CIPH_CBC_MODE)
@@ -1004,7 +1005,7 @@ int tls1_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending,
             }
         }
     } else {
-        if (EVP_MD_CTX_md(s->read_hash)) {
+        if (EVP_MD_CTX_get0_md(s->read_hash)) {
             int n = EVP_MD_CTX_size(s->read_hash);
             if (!ossl_assert(n >= 0)) {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
@@ -1015,7 +1016,7 @@ int tls1_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending,
         if (s->enc_read_ctx == NULL)
             enc = NULL;
         else
-            enc = EVP_CIPHER_CTX_cipher(s->enc_read_ctx);
+            enc = EVP_CIPHER_CTX_get0_cipher(s->enc_read_ctx);
     }
 
     if ((s->session == NULL) || (ds == NULL) || (enc == NULL)) {
@@ -1026,11 +1027,11 @@ int tls1_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending,
     } else {
         int provided = (EVP_CIPHER_provider(enc) != NULL);
 
-        bs = EVP_CIPHER_block_size(EVP_CIPHER_CTX_cipher(ds));
+        bs = EVP_CIPHER_block_size(EVP_CIPHER_CTX_get0_cipher(ds));
 
         if (n_recs > 1) {
-            if (!(EVP_CIPHER_flags(EVP_CIPHER_CTX_cipher(ds))
-                  & EVP_CIPH_FLAG_PIPELINE)) {
+            if ((EVP_CIPHER_flags(EVP_CIPHER_CTX_get0_cipher(ds))
+                  & EVP_CIPH_FLAG_PIPELINE) == 0) {
                 /*
                  * We shouldn't have been called with pipeline data if the
                  * cipher doesn't support pipelining
@@ -1042,8 +1043,8 @@ int tls1_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending,
         for (ctr = 0; ctr < n_recs; ctr++) {
             reclen[ctr] = recs[ctr].length;
 
-            if (EVP_CIPHER_flags(EVP_CIPHER_CTX_cipher(ds))
-                & EVP_CIPH_FLAG_AEAD_CIPHER) {
+            if ((EVP_CIPHER_flags(EVP_CIPHER_CTX_get0_cipher(ds))
+                        & EVP_CIPH_FLAG_AEAD_CIPHER) != 0) {
                 unsigned char *seq;
 
                 seq = sending ? RECORD_LAYER_get_write_sequence(&s->rlayer)
@@ -1214,8 +1215,8 @@ int tls1_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending,
             /* TODO(size_t): Convert this call */
             tmpr = EVP_Cipher(ds, recs[0].data, recs[0].input,
                               (unsigned int)reclen[0]);
-            if ((EVP_CIPHER_flags(EVP_CIPHER_CTX_cipher(ds))
-                 & EVP_CIPH_FLAG_CUSTOM_CIPHER)
+            if ((EVP_CIPHER_flags(EVP_CIPHER_CTX_get0_cipher(ds))
+                 & EVP_CIPH_FLAG_CUSTOM_CIPHER) != 0
                 ? (tmpr < 0)
                 : (tmpr == 0)) {
                 /* AEAD can fail to verify MAC */
@@ -1353,7 +1354,7 @@ int n_ssl3_mac(SSL *ssl, SSL3_RECORD *rec, unsigned char *md, int sending)
         header[j++] = (unsigned char)(rec->length & 0xff);
 
         /* Final param == is SSLv3 */
-        if (ssl3_cbc_digest_record(EVP_MD_CTX_md(hash),
+        if (ssl3_cbc_digest_record(EVP_MD_CTX_get0_md(hash),
                                    md, &md_size,
                                    header, rec->input,
                                    rec->length, rec->orig_len,
@@ -1547,7 +1548,7 @@ int dtls1_process_record(SSL *s, DTLS1_BITMAP *bitmap)
 
     /* TODO(size_t): convert this to do size_t properly */
     if (s->read_hash != NULL) {
-        const EVP_MD *tmpmd = EVP_MD_CTX_md(s->read_hash);
+        const EVP_MD *tmpmd = EVP_MD_CTX_get0_md(s->read_hash);
 
         if (tmpmd != NULL) {
             imac_size = EVP_MD_size(tmpmd);
@@ -1613,8 +1614,10 @@ int dtls1_process_record(SSL *s, DTLS1_BITMAP *bitmap)
     } OSSL_TRACE_END(TLS);
 
     /* r->length is now the compressed data plus mac */
-    if ((sess != NULL) && !SSL_READ_ETM(s) &&
-        (s->enc_read_ctx != NULL) && (EVP_MD_CTX_md(s->read_hash) != NULL)) {
+    if ((sess != NULL)
+            && !SSL_READ_ETM(s)
+            && (s->enc_read_ctx != NULL)
+            && (EVP_MD_CTX_get0_md(s->read_hash) != NULL)) {
         /* s->read_hash != NULL => mac_size != -1 */
 
         i = s->method->ssl3_enc->mac(s, rr, md, 0 /* not send */ );

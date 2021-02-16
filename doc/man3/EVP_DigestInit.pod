@@ -16,7 +16,8 @@ EVP_MD_is_a, EVP_MD_name, EVP_MD_description, EVP_MD_number,
 EVP_MD_names_do_all, EVP_MD_provider,
 EVP_MD_type, EVP_MD_pkey_type, EVP_MD_size, EVP_MD_block_size, EVP_MD_flags,
 EVP_MD_CTX_name,
-EVP_MD_CTX_md, EVP_MD_CTX_type, EVP_MD_CTX_size, EVP_MD_CTX_block_size,
+EVP_MD_CTX_md, EVP_MD_CTX_get0_md, EVP_MD_CTX_get1_md,
+EVP_MD_CTX_type, EVP_MD_CTX_size, EVP_MD_CTX_block_size,
 EVP_MD_CTX_md_data, EVP_MD_CTX_update_fn, EVP_MD_CTX_set_update_fn,
 EVP_md_null,
 EVP_get_digestbyname, EVP_get_digestbynid, EVP_get_digestbyobj,
@@ -78,7 +79,8 @@ EVP_MD_do_all_provided
  int EVP_MD_block_size(const EVP_MD *md);
  unsigned long EVP_MD_flags(const EVP_MD *md);
 
- const EVP_MD *EVP_MD_CTX_md(const EVP_MD_CTX *ctx);
+ const EVP_MD *EVP_MD_CTX_get0_md(const EVP_MD_CTX *ctx);
+ EVP_MD *EVP_MD_CTX_get1_md(EVP_MD_CTX *ctx);
  const char *EVP_MD_CTX_name(const EVP_MD_CTX *ctx);
  int EVP_MD_CTX_size(const EVP_MD_CTX *ctx);
  int EVP_MD_CTX_block_size(const EVP_MD_CTX *ctx);
@@ -101,6 +103,8 @@ EVP_MD_do_all_provided
 Deprecated since OpenSSL 3.0, can be hidden entirely by defining
 B<OPENSSL_API_COMPAT> with a suitable version value, see
 L<openssl_user_macros(7)>:
+
+ const EVP_MD *EVP_MD_CTX_md(const EVP_MD_CTX *ctx);
 
  int (*EVP_MD_CTX_update_fn(EVP_MD_CTX *ctx))(EVP_MD_CTX *ctx,
                                               const void *data, size_t count);
@@ -351,14 +355,17 @@ Return the digest method private data for the passed B<EVP_MD_CTX>.
 The space is allocated by OpenSSL and has the size originally set with
 EVP_MD_meth_set_app_datasize().
 
-=item EVP_MD_CTX_md()
+=item EVP_MD_CTX_get0_md(), EVP_MD_CTX_get1_md()
 
-Returns the B<EVP_MD> structure corresponding to the passed B<EVP_MD_CTX>. This
+EVP_MD_CTX_get0_md() returns
+the B<EVP_MD> structure corresponding to the passed B<EVP_MD_CTX>. This
 will be the same B<EVP_MD> object originally passed to EVP_DigestInit_ex2() (or
 other similar function) when the EVP_MD_CTX was first initialised. Note that
 where explicit fetch is in use (see L<EVP_MD_fetch(3)>) the value returned from
 this function will not have its reference count incremented and therefore it
 should not be used after the EVP_MD_CTX is freed.
+EVP_MD_CTX_get1_md() is the same except the ownership is passed to the
+caller and is from the passed B<EVP_MD_CTX>.
 
 =item EVP_MD_CTX_set_update_fn()
 
@@ -697,7 +704,9 @@ EVP_MD_gettable_params(), EVP_MD_gettable_ctx_params(),
 EVP_MD_settable_ctx_params(), EVP_MD_CTX_settable_params() and
 EVP_MD_CTX_gettable_params() functions were added in OpenSSL 3.0.
 
-The EVP_MD_CTX_update_fn() and EVP_MD_CTX_set_update_fn() were deprecated
+The EVP_MD_CTX_md() function was deprecated in OpenSSL 3.0; use
+EVP_MD_CTX_get0_md() instead.
+EVP_MD_CTX_update_fn() and EVP_MD_CTX_set_update_fn() were deprecated
 in OpenSSL 3.0.
 
 =head1 COPYRIGHT

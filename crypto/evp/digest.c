@@ -1026,7 +1026,8 @@ int EVP_MD_up_ref(EVP_MD *md)
 {
     int ref = 0;
 
-    CRYPTO_UP_REF(&md->refcnt, &ref, md->lock);
+    if (md->origin == EVP_ORIG_DYNAMIC)
+        CRYPTO_UP_REF(&md->refcnt, &ref, md->lock);
     return 1;
 }
 
@@ -1034,15 +1035,13 @@ void EVP_MD_free(EVP_MD *md)
 {
     int i;
 
-    if (md == NULL)
+    if (md == NULL || md->origin != EVP_ORIG_DYNAMIC)
         return;
 
     CRYPTO_DOWN_REF(&md->refcnt, &i, md->lock);
     if (i > 0)
         return;
-    ossl_provider_free(md->prov);
-    CRYPTO_THREAD_lock_free(md->lock);
-    OPENSSL_free(md);
+    evp_md_free_int(md);
 }
 
 void EVP_MD_do_all_provided(OSSL_LIB_CTX *libctx,

@@ -24,6 +24,7 @@ static const EVP_MD md4_md = {
     NID_md4WithRSAEncryption,
     MD4_DIGEST_LENGTH,
     0,
+    EVP_ORIG_GLOBAL,
     LEGACY_EVP_MD_METH_TABLE(md4_init, md4_update, md4_final, NULL, MD4_CBLOCK),
 };
 

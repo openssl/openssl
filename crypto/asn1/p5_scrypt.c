@@ -217,7 +217,7 @@ int PKCS5_v2_scrypt_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass,
     int t, rv = 0;
     SCRYPT_PARAMS *sparam = NULL;
 
-    if (EVP_CIPHER_CTX_cipher(ctx) == NULL) {
+    if (EVP_CIPHER_CTX_get0_cipher(ctx) == NULL) {
         ERR_raise(ERR_LIB_EVP, EVP_R_NO_CIPHER_SET);
         goto err;
     }

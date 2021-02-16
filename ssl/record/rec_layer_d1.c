@@ -829,8 +829,9 @@ int do_dtls1_write(SSL *s, int type, const unsigned char *buf,
 
     sess = s->session;
 
-    if ((sess == NULL) ||
-        (s->enc_write_ctx == NULL) || (EVP_MD_CTX_md(s->write_hash) == NULL))
+    if ((sess == NULL)
+            || (s->enc_write_ctx == NULL)
+            || (EVP_MD_CTX_get0_md(s->write_hash) == NULL))
         clear = 1;
 
     if (clear)

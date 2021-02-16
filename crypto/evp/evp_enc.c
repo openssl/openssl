@@ -325,7 +325,8 @@ static int evp_cipher_init_internal(EVP_CIPHER_CTX *ctx,
         return 0;
     }
 
-    if (!(EVP_CIPHER_flags(EVP_CIPHER_CTX_cipher(ctx)) & EVP_CIPH_CUSTOM_IV)) {
+    if ((EVP_CIPHER_flags(EVP_CIPHER_CTX_get0_cipher(ctx))
+                & EVP_CIPH_CUSTOM_IV) == 0) {
         switch (EVP_CIPHER_CTX_mode(ctx)) {
 
         case EVP_CIPH_STREAM_CIPHER:
@@ -1602,23 +1603,29 @@ int EVP_CIPHER_up_ref(EVP_CIPHER *cipher)
 {
     int ref = 0;
 
-    CRYPTO_UP_REF(&cipher->refcnt, &ref, cipher->lock);
+    if (cipher->origin == EVP_ORIG_DYNAMIC)
+        CRYPTO_UP_REF(&cipher->refcnt, &ref, cipher->lock);
     return 1;
+}
+
+void evp_cipher_free_int(EVP_CIPHER *cipher)
+{
+    ossl_provider_free(cipher->prov);
+    CRYPTO_THREAD_lock_free(cipher->lock);
+    OPENSSL_free(cipher);
 }
 
 void EVP_CIPHER_free(EVP_CIPHER *cipher)
 {
     int i;
 
-    if (cipher == NULL || cipher->prov == NULL)
+    if (cipher == NULL || cipher->origin != EVP_ORIG_DYNAMIC)
         return;
 
     CRYPTO_DOWN_REF(&cipher->refcnt, &i, cipher->lock);
     if (i > 0)
         return;
-    ossl_provider_free(cipher->prov);
-    CRYPTO_THREAD_lock_free(cipher->lock);
-    OPENSSL_free(cipher);
+    evp_cipher_free_int(cipher);
 }
 
 void EVP_CIPHER_do_all_provided(OSSL_LIB_CTX *libctx,

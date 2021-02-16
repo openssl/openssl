@@ -432,13 +432,15 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, size_t len,
      * jumbo buffer to accommodate up to 8 records, but the
      * compromise is considered worthy.
      */
-    if (type == SSL3_RT_APPLICATION_DATA &&
-        len >= 4 * (max_send_fragment = ssl_get_max_send_fragment(s)) &&
-        s->compress == NULL && s->msg_callback == NULL &&
-        !SSL_WRITE_ETM(s) && SSL_USE_EXPLICIT_IV(s) &&
-        (BIO_get_ktls_send(s->wbio) == 0) &&
-        EVP_CIPHER_flags(EVP_CIPHER_CTX_cipher(s->enc_write_ctx)) &
-        EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK) {
+    if (type == SSL3_RT_APPLICATION_DATA
+            && len >= 4 * (max_send_fragment = ssl_get_max_send_fragment(s))
+            && s->compress == NULL
+            && s->msg_callback == NULL
+            && !SSL_WRITE_ETM(s)
+            && SSL_USE_EXPLICIT_IV(s)
+            && BIO_get_ktls_send(s->wbio) == 0
+            && (EVP_CIPHER_flags(EVP_CIPHER_CTX_get0_cipher(s->enc_write_ctx))
+                & EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK) != 0) {
         unsigned char aad[13];
         EVP_CTRL_TLS1_1_MULTIBLOCK_PARAM mb_param;
         size_t packlen;
@@ -586,12 +588,13 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, size_t len,
     }
     if (maxpipes == 0
         || s->enc_write_ctx == NULL
-        || !(EVP_CIPHER_flags(EVP_CIPHER_CTX_cipher(s->enc_write_ctx))
-             & EVP_CIPH_FLAG_PIPELINE)
+        || (EVP_CIPHER_flags(EVP_CIPHER_CTX_get0_cipher(s->enc_write_ctx))
+            & EVP_CIPH_FLAG_PIPELINE) == 0
         || !SSL_USE_EXPLICIT_IV(s))
         maxpipes = 1;
-    if (max_send_fragment == 0 || split_send_fragment == 0
-        || split_send_fragment > max_send_fragment) {
+    if (max_send_fragment == 0
+            || split_send_fragment == 0
+            || split_send_fragment > max_send_fragment) {
         /*
          * We should have prevented this when we set/get the split and max send
          * fragments so we shouldn't get here
@@ -713,8 +716,9 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
 
     sess = s->session;
 
-    if ((sess == NULL) ||
-        (s->enc_write_ctx == NULL) || (EVP_MD_CTX_md(s->write_hash) == NULL)) {
+    if ((sess == NULL)
+            || (s->enc_write_ctx == NULL)
+            || (EVP_MD_CTX_get0_md(s->write_hash) == NULL)) {
         clear = s->enc_write_ctx ? 0 : 1; /* must be AEAD cipher */
         mac_size = 0;
     } else {

@@ -24,6 +24,7 @@ static const EVP_MD md5_md = {
     NID_md5WithRSAEncryption,
     MD5_DIGEST_LENGTH,
     0,
+    EVP_ORIG_GLOBAL,
     LEGACY_EVP_MD_METH_TABLE(md5_init, md5_update, md5_final, NULL, MD5_CBLOCK)
 };
 
