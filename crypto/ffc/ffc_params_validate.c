@@ -96,10 +96,14 @@ int ossl_ffc_params_simple_validate(OSSL_LIB_CTX *libctx, const FFC_PARAMS *para
                                     int paramstype, int *res)
 {
     int ret;
+    int tmpres = 0;
     FFC_PARAMS tmpparams = {0};
 
     if (params == NULL)
         return 0;
+
+    if (res == NULL)
+        res = &tmpres;
 
     if (!ossl_ffc_params_copy(&tmpparams, params))
         return 0;
@@ -135,8 +139,13 @@ int ossl_ffc_params_simple_validate(OSSL_LIB_CTX *libctx, const FFC_PARAMS *para
 int ossl_ffc_params_full_validate(OSSL_LIB_CTX *libctx, const FFC_PARAMS *params,
                                   int paramstype, int *res)
 {
+    int tmpres = 0;
+
     if (params == NULL)
         return 0;
+
+    if (res == NULL)
+        res = &tmpres;
 
 #ifndef FIPS_MODULE
     if (params->seed != NULL) {
