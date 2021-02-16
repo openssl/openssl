@@ -22,6 +22,7 @@
 #include "crypto/x509.h"
 #include <openssl/rsa.h>
 #include <openssl/dsa.h>
+#include <openssl/decoder.h>
 #include <openssl/encoder.h>
 #include "internal/provider.h"
 
@@ -259,6 +260,43 @@ EVP_PKEY *X509_PUBKEY_get(const X509_PUBKEY *key)
 
 EVP_PKEY *d2i_PUBKEY_ex(EVP_PKEY **a, const unsigned char **pp, long length,
                         OSSL_LIB_CTX *libctx, const char *propq)
+{
+    OSSL_DECODER_CTX *dctx = NULL;
+    size_t len = length;
+    EVP_PKEY *pkey = NULL;
+    EVP_PKEY **ppkey = &pkey;
+    const char *input_structures[] = { "SubjectPublicKeyInfo", NULL };
+    int i, ret;
+
+    if (a != NULL)
+        ppkey = a;
+
+    for (i = 0;  i < (int)OSSL_NELEM(input_structures); ++i) {
+        dctx = OSSL_DECODER_CTX_new_by_EVP_PKEY(ppkey, "DER",
+                                                input_structures[i], NULL,
+                                                EVP_PKEY_PUBLIC_KEY, libctx, propq);
+        if (dctx == NULL)
+            return NULL;
+
+        ret = OSSL_DECODER_from_data(dctx, pp, &len);
+        OSSL_DECODER_CTX_free(dctx);
+        if (ret) {
+            if (*ppkey != NULL
+                && evp_keymgmt_util_has(*ppkey, OSSL_KEYMGMT_SELECT_PUBLIC_KEY))
+                return *ppkey;
+            goto err;
+        }
+    }
+    /* Fall through to error if all decodes failed */
+err:
+    if (ppkey != a)
+        EVP_PKEY_free(*ppkey);
+    return NULL;
+}
+
+
+EVP_PKEY *evp_publickey_from_binary(EVP_PKEY **a, const unsigned char **pp, long length,
+                                    OSSL_LIB_CTX *libctx, const char *propq)
 {
     X509_PUBKEY *xpk, *xpk2 = NULL, **pxpk = NULL;
     EVP_PKEY *pktmp = NULL;

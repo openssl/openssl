@@ -29,6 +29,7 @@
 #include "crypto/dsa.h"
 #include "crypto/ec.h"
 #include "crypto/ecx.h"
+#include "crypto/evp.h"
 #include "crypto/rsa.h"
 #include "prov/bio.h"
 #include "prov/implementations.h"
@@ -329,7 +330,7 @@ static int der2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
             && (selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0) {
             RESET_ERR_MARK();
             derp = der;
-            pkey = d2i_PUBKEY_ex(NULL, &derp, der_len, libctx, NULL);
+            pkey = evp_publickey_from_binary(NULL, &derp, der_len, libctx, NULL);
         }
 
         if (pkey != NULL) {

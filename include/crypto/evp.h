@@ -820,6 +820,10 @@ int pkcs5_pbkdf2_hmac_ex(const char *pass, int passlen,
                          const EVP_MD *digest, int keylen, unsigned char *out,
                          OSSL_LIB_CTX *libctx, const char *propq);
 
+EVP_PKEY *evp_publickey_from_binary(EVP_PKEY **a,
+                                    const unsigned char **pp, long length,
+                                    OSSL_LIB_CTX *libctx, const char *propq);
+
 # ifndef FIPS_MODULE
 /*
  * Internal helpers for stricter EVP_PKEY_CTX_{set,get}_params().
