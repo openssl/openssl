@@ -122,7 +122,7 @@ For example, since `dilithium2` claims L1 security, the hybrids `rsa3072_dilithi
 
 ## Quickstart
 
-The steps below have been confirmed to work on macOS 10.14 (with clang 10.0.0), Ubuntu 18.04.1 (with gcc-7) and should work on more recent versions of these operating systems/compilers. They have also been confirmed to work on Windows 10 with Visual Studio 2019.
+The steps below have been confirmed to work on macOS 10.14 (with clang 10.0.0), Ubuntu 18.04.1 (with gcc-7) and should work on more recent versions of these operating systems/compilers. They have also been confirmed to work on Windows 10 with Visual Studio 2019. All commands below are just examples and might also be used and work differently as per the respective packages' documentations.
 
 ### Building
 

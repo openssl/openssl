@@ -132,14 +132,15 @@ jobs:
                  --header "Content-Type: application/json" \
                  -d '{ "branch": "main", "parameters": { "new_openssl_commit": true } }' \
                  https://circleci.com/api/v2/project/gh/open-quantum-safe/oqs-demos/pipeline
-      - run:
-          name: Trigger profiling CI
-          command: |
-            curl -u ${BUILD_TRIGGER_TOKEN}: \
-                 -X POST \
-                 --header "Content-Type: application/json" \
-                 -d '{ "branch": "main", "parameters": { "new_openssl_commit": true } }' \
-                 https://circleci.com/api/v2/project/gh/open-quantum-safe/profiling/pipeline
+      # don't trigger for now as it's too expensive
+      #- run:
+      #    name: Trigger profiling CI
+      #    command: |
+      #      curl -u ${BUILD_TRIGGER_TOKEN}: \
+      #           -X POST \
+      #           --header "Content-Type: application/json" \
+      #           -d '{ "branch": "main", "parameters": { "new_openssl_commit": true } }' \
+      #           https://circleci.com/api/v2/project/gh/open-quantum-safe/profiling/pipeline
 
 workflows:
   version: 2.1
