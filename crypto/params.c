@@ -1104,11 +1104,12 @@ static int get_string_internal(const OSSL_PARAM *p, void **val, size_t max_len,
     }
 
     /* |max_len| must accomodate a terminating NUL byte */
-    if (max_len <= sz)
+    if (max_len < alloc_sz)
         return 0;
     if (sz != 0)
         memcpy(*val, p->data, sz);
-    ((unsigned char *)*val)[sz] = '\0';
+    if (alloc_sz > sz)
+        ((unsigned char *)*val)[sz] = '\0';
     return 1;
 }
 
