@@ -1,8 +1,8 @@
-NOTES FOR UNIX-LIKE PLATFORMS
+Notes for UNIX-like platforms
 =============================
 
  For Unix/POSIX runtime systems on Windows,
- please see [NOTES-Windows.txt](NOTES-Windows.txt).
+ please see the [Notes for Windows platforms](NOTES-WINDOWS.md).
 
  OpenSSL uses the compiler to link programs and shared libraries
  ---------------------------------------------------------------

@@ -338,7 +338,7 @@ static int dsa_validate_private(const DSA *dsa)
     return dsa_check_priv_key(dsa, priv_key, &status);
 }
 
-static int dsa_validate(const void *keydata, int selection)
+static int dsa_validate(const void *keydata, int selection, int checktype)
 {
     const DSA *dsa = keydata;
     int ok = 0;

@@ -778,7 +778,7 @@ void *evp_keymgmt_load(const EVP_KEYMGMT *keymgmt,
 
 int evp_keymgmt_has(const EVP_KEYMGMT *keymgmt, void *keyddata, int selection);
 int evp_keymgmt_validate(const EVP_KEYMGMT *keymgmt, void *keydata,
-                         int selection);
+                         int selection, int checktype);
 int evp_keymgmt_match(const EVP_KEYMGMT *keymgmt,
                       const void *keydata1, const void *keydata2,
                       int selection);

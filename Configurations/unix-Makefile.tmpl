@@ -1041,7 +1041,7 @@ cmd-nits: build_generated apps/openssl build_generated_pods
 # Finally, there's a Node.js version, which we haven't tried, that
 # can be found at https://github.com/DavidAnson/markdownlint
 md-nits:
-	mdl -s util/markdownlint.rb . NOTES-Windows.txt
+	mdl -s util/markdownlint.rb .
 
 # Test coverage is a good idea for the future
 #coverage: $(PROGRAMS) $(TESTPROGRAMS)

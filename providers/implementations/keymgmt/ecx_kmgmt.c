@@ -726,22 +726,22 @@ static int ecx_validate(const void *keydata, int selection, int type, size_t key
     return ok;
 }
 
-static int x25519_validate(const void *keydata, int selection)
+static int x25519_validate(const void *keydata, int selection, int checktype)
 {
     return ecx_validate(keydata, selection, ECX_KEY_TYPE_X25519, X25519_KEYLEN);
 }
 
-static int x448_validate(const void *keydata, int selection)
+static int x448_validate(const void *keydata, int selection, int checktype)
 {
     return ecx_validate(keydata, selection, ECX_KEY_TYPE_X448, X448_KEYLEN);
 }
 
-static int ed25519_validate(const void *keydata, int selection)
+static int ed25519_validate(const void *keydata, int selection, int checktype)
 {
     return ecx_validate(keydata, selection, ECX_KEY_TYPE_ED25519, ED25519_KEYLEN);
 }
 
-static int ed448_validate(const void *keydata, int selection)
+static int ed448_validate(const void *keydata, int selection, int checktype)
 {
     return ecx_validate(keydata, selection, ECX_KEY_TYPE_ED448, ED448_KEYLEN);
 }

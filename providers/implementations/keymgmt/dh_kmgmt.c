@@ -366,7 +366,7 @@ static int dh_validate_private(const DH *dh)
     return dh_check_priv_key(dh, priv_key, &status);;
 }
 
-static int dh_validate(const void *keydata, int selection)
+static int dh_validate(const void *keydata, int selection, int checktype)
 {
     const DH *dh = keydata;
     int ok = 0;
@@ -377,8 +377,17 @@ static int dh_validate(const void *keydata, int selection)
     if ((selection & DH_POSSIBLE_SELECTIONS) != 0)
         ok = 1;
 
-    if ((selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) != 0)
-        ok = ok && DH_check_params_ex(dh);
+    if ((selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) != 0) {
+        /*
+         * Both of these functions check parameters. DH_check_params_ex()
+         * performs a lightweight check (e.g. it does not check that p is a
+         * safe prime)
+         */
+        if (checktype == OSSL_KEYMGMT_VALIDATE_QUICK_CHECK)
+            ok = ok && DH_check_params_ex(dh);
+        else
+            ok = ok && DH_check_ex(dh);
+    }
 
     if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0)
         ok = ok && dh_validate_public(dh);

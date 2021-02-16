@@ -1627,9 +1627,7 @@ void evp_pkey_free_legacy(EVP_PKEY *x)
 static void evp_pkey_free_it(EVP_PKEY *x)
 {
     /* internal function; x is never NULL */
-
     evp_keymgmt_util_clear_operation_cache(x, 1);
-    sk_OP_CACHE_ELEM_free(x->operation_cache);
 #ifndef FIPS_MODULE
     evp_pkey_free_legacy(x);
 #endif
