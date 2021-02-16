@@ -403,11 +403,11 @@ int X509_NAME_digest(const X509_NAME *data, const EVP_MD *type,
                      unsigned char *md, unsigned int *len);
 
 X509 *X509_load_http(const char *url, BIO *bio, BIO *rbio, int timeout);
-# define X509_http_nbio(rctx, pcert) \
-    ((*(pcrl) =                                                         \
+# define X509_http_nbio(rctx, pcert)                                    \
+    ((*(pcert) =                                                        \
       OSSL_HTTP_REQ_CTX_sendreq_d2i(rctx, ASN1_ITEM_rptr(X509))) != NULL)
 X509_CRL *X509_CRL_load_http(const char *url, BIO *bio, BIO *rbio, int timeout);
-# define X509_CRL_http_nbio(rctx, pcrl) \
+# define X509_CRL_http_nbio(rctx, pcrl)                                 \
     ((*(pcrl) =                                                         \
       OSSL_HTTP_REQ_CTX_sendreq_d2i(rctx, ASN1_ITEM_rptr(X509_CRL))) != NULL)
 
