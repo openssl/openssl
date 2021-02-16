@@ -29,6 +29,9 @@ Below are the potential ID's that can be checked:
  # define X509_PURPOSE_OCSP_HELPER       8
  # define X509_PURPOSE_TIMESTAMP_SIGN    9
 
+The checks performed take into account the X.509 extensions
+keyUsage, extendedKeyUsage, and basicConstraints.
+
 =head1 RETURN VALUES
 
 For non-CA checks

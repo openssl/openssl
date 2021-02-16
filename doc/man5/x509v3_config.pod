@@ -142,15 +142,15 @@ Examples:
 =head2 Extended Key Usage
 
 This extension consists of a list of values indicating purposes for which
-the certificate public key can be used for, Each value can be either a
-short text name or an OID.
+the certificate public key can be used.
+Each value can be either a short text name or an OID.
 The following text names, and their intended meaning, are known:
 
- Value                  Meaning
- -----                  -------
- serverAuth             SSL/TLS Web Server Authentication
- clientAuth             SSL/TLS Web Client Authentication
- codeSigning            Code signing
+ Value                  Meaning according to RFC 5280 etc.
+ -----                  ----------------------------------
+ serverAuth             SSL/TLS WWW Server Authentication
+ clientAuth             SSL/TLS WWW Client Authentication
+ codeSigning            Code Signing
  emailProtection        E-mail Protection (S/MIME)
  timeStamping           Trusted Timestamping
  OCSPSigning            OCSP Signing
@@ -159,6 +159,10 @@ The following text names, and their intended meaning, are known:
  msCodeCom              Microsoft Commercial Code Signing (authenticode)
  msCTLSign              Microsoft Trust List Signing
  msEFS                  Microsoft Encrypted File System
+
+While IETF RFC 5280 says that B<id-kp-serverAuth> and B<id-kp-clientAuth>
+are only for WWW use, in practice they are used for all kinds of TLS clients
+and servers, and this is what OpenSSL assumes as well.
 
 Examples:
 
