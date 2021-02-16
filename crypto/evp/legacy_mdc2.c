@@ -24,6 +24,7 @@ static const EVP_MD mdc2_md = {
     NID_mdc2WithRSA,
     MDC2_DIGEST_LENGTH,
     0,
+    EVP_ORIG_GLOBAL,
     LEGACY_EVP_MD_METH_TABLE(mdc2_init, mdc2_update, mdc2_final, NULL,
                              MDC2_BLOCK),
 };

@@ -1049,7 +1049,7 @@ int PKCS7_signatureVerify(BIO *bio, PKCS7 *p7, PKCS7_SIGNER_INFO *si,
          * Workaround for some broken clients that put the signature OID
          * instead of the digest OID in digest_alg->algorithm
          */
-        if (EVP_MD_pkey_type(EVP_MD_CTX_md(mdc)) == md_type)
+        if (EVP_MD_pkey_type(EVP_MD_CTX_get0_md(mdc)) == md_type)
             break;
         btmp = BIO_next(btmp);
     }

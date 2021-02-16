@@ -159,6 +159,7 @@ IMPLEMENT_ARIA_CFBR(256,8)
 static const EVP_CIPHER aria_##keylen##_##mode = { \
         nid##_##keylen##_##nmode,blocksize,keylen/8,ivlen, \
         flags|EVP_CIPH_##MODE##_MODE,   \
+        EVP_ORIG_GLOBAL,                \
         aria_init_key,                  \
         aria_##mode##_cipher,           \
         NULL,                           \
@@ -757,6 +758,7 @@ static const EVP_CIPHER aria_##keylen##_##mode = { \
         nid##_##keylen##_##nmode,                  \
         blocksize, keylen/8, ivlen,                \
         ARIA_AUTH_FLAGS|EVP_CIPH_##MODE##_MODE,    \
+        EVP_ORIG_GLOBAL,                           \
         aria_##mode##_init_key,                    \
         aria_##mode##_cipher,                      \
         aria_##mode##_cleanup,                     \

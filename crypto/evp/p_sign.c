@@ -51,7 +51,7 @@ int EVP_SignFinal_ex(EVP_MD_CTX *ctx, unsigned char *sigret,
         goto err;
     if (EVP_PKEY_sign_init(pkctx) <= 0)
         goto err;
-    if (EVP_PKEY_CTX_set_signature_md(pkctx, EVP_MD_CTX_md(ctx)) <= 0)
+    if (EVP_PKEY_CTX_set_signature_md(pkctx, EVP_MD_CTX_get0_md(ctx)) <= 0)
         goto err;
     if (EVP_PKEY_sign(pkctx, sigret, &sltmp, m, m_len) <= 0)
         goto err;

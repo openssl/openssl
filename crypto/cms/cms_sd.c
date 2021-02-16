@@ -923,7 +923,7 @@ int CMS_SignerInfo_verify_content(CMS_SignerInfo *si, BIO *chain)
         } else
             r = 1;
     } else {
-        const EVP_MD *md = EVP_MD_CTX_md(mctx);
+        const EVP_MD *md = EVP_MD_CTX_get0_md(mctx);
         const CMS_CTX *ctx = si->cms_ctx;
 
         pkctx = EVP_PKEY_CTX_new_from_pkey(ossl_cms_ctx_get0_libctx(ctx),

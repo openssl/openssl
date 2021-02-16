@@ -89,6 +89,7 @@ static const EVP_MD sha1_md = {
     NID_sha1WithRSAEncryption,
     SHA_DIGEST_LENGTH,
     EVP_MD_FLAG_DIGALGID_ABSENT,
+    EVP_ORIG_GLOBAL,
     LEGACY_EVP_MD_METH_TABLE(sha1_init, sha1_update, sha1_final, sha1_int_ctrl,
                              SHA_CBLOCK),
 };
@@ -103,6 +104,7 @@ static const EVP_MD sha224_md = {
     NID_sha224WithRSAEncryption,
     SHA224_DIGEST_LENGTH,
     EVP_MD_FLAG_DIGALGID_ABSENT,
+    EVP_ORIG_GLOBAL,
     LEGACY_EVP_MD_METH_TABLE(sha224_init, sha224_update, sha224_final, NULL,
                              SHA256_CBLOCK),
 };
@@ -117,6 +119,7 @@ static const EVP_MD sha256_md = {
     NID_sha256WithRSAEncryption,
     SHA256_DIGEST_LENGTH,
     EVP_MD_FLAG_DIGALGID_ABSENT,
+    EVP_ORIG_GLOBAL,
     LEGACY_EVP_MD_METH_TABLE(sha256_init, sha256_update, sha256_final, NULL,
                              SHA256_CBLOCK),
 };
@@ -131,6 +134,7 @@ static const EVP_MD sha512_224_md = {
     NID_sha512_224WithRSAEncryption,
     SHA224_DIGEST_LENGTH,
     EVP_MD_FLAG_DIGALGID_ABSENT,
+    EVP_ORIG_GLOBAL,
     LEGACY_EVP_MD_METH_TABLE(sha512_224_int_init, sha512_224_int_update,
                              sha512_224_int_final, NULL, SHA512_CBLOCK),
 };
@@ -145,6 +149,7 @@ static const EVP_MD sha512_256_md = {
     NID_sha512_256WithRSAEncryption,
     SHA256_DIGEST_LENGTH,
     EVP_MD_FLAG_DIGALGID_ABSENT,
+    EVP_ORIG_GLOBAL,
     LEGACY_EVP_MD_METH_TABLE(sha512_256_int_init, sha512_256_int_update,
                              sha512_256_int_final, NULL, SHA512_CBLOCK),
 };
@@ -159,6 +164,7 @@ static const EVP_MD sha384_md = {
     NID_sha384WithRSAEncryption,
     SHA384_DIGEST_LENGTH,
     EVP_MD_FLAG_DIGALGID_ABSENT,
+    EVP_ORIG_GLOBAL,
     LEGACY_EVP_MD_METH_TABLE(sha384_init, sha384_update, sha384_final, NULL,
                              SHA512_CBLOCK),
 };
@@ -173,6 +179,7 @@ static const EVP_MD sha512_md = {
     NID_sha512WithRSAEncryption,
     SHA512_DIGEST_LENGTH,
     EVP_MD_FLAG_DIGALGID_ABSENT,
+    EVP_ORIG_GLOBAL,
     LEGACY_EVP_MD_METH_TABLE(sha512_init, sha512_update, sha512_final, NULL,
                              SHA512_CBLOCK),
 };
@@ -190,6 +197,7 @@ const EVP_MD *EVP_sha3_##bitlen(void)                                          \
         NID_RSA_SHA3_##bitlen,                                                 \
         bitlen / 8,                                                            \
         EVP_MD_FLAG_DIGALGID_ABSENT,                                           \
+        EVP_ORIG_GLOBAL,                                                       \
         LEGACY_EVP_MD_METH_TABLE(sha3_int_init, sha3_int_update,               \
                                  sha3_int_final, NULL,                         \
                                  (KECCAK1600_WIDTH - bitlen * 2) / 8),         \
@@ -204,6 +212,7 @@ const EVP_MD *EVP_shake##bitlen(void)                                          \
         0,                                                                     \
         bitlen / 8,                                                            \
         EVP_MD_FLAG_XOF,                                                       \
+        EVP_ORIG_GLOBAL,                                                       \
         LEGACY_EVP_MD_METH_TABLE(shake_init, sha3_int_update, sha3_int_final,  \
                         shake_ctrl, (KECCAK1600_WIDTH - bitlen * 2) / 8),      \
     };                                                                         \

@@ -538,8 +538,11 @@ int EVP_MD_size(const EVP_MD *md);
 int EVP_MD_block_size(const EVP_MD *md);
 unsigned long EVP_MD_flags(const EVP_MD *md);
 
-const EVP_MD *EVP_MD_CTX_md(const EVP_MD_CTX *ctx);
+const EVP_MD *EVP_MD_CTX_get0_md(const EVP_MD_CTX *ctx);
+EVP_MD *EVP_MD_CTX_get1_md(EVP_MD_CTX *ctx);
 # ifndef OPENSSL_NO_DEPRECATED_3_0
+OSSL_DEPRECATEDIN_3_0
+const EVP_MD *EVP_MD_CTX_md(const EVP_MD_CTX *ctx);
 OSSL_DEPRECATEDIN_3_0
 int (*EVP_MD_CTX_update_fn(EVP_MD_CTX *ctx))(EVP_MD_CTX *ctx,
                                              const void *data, size_t count);
@@ -548,10 +551,10 @@ void EVP_MD_CTX_set_update_fn(EVP_MD_CTX *ctx,
                               int (*update) (EVP_MD_CTX *ctx,
                                              const void *data, size_t count));
 # endif
-# define EVP_MD_CTX_name(e)              EVP_MD_name(EVP_MD_CTX_md(e))
-# define EVP_MD_CTX_size(e)              EVP_MD_size(EVP_MD_CTX_md(e))
-# define EVP_MD_CTX_block_size(e)        EVP_MD_block_size(EVP_MD_CTX_md(e))
-# define EVP_MD_CTX_type(e)              EVP_MD_type(EVP_MD_CTX_md(e))
+# define EVP_MD_CTX_name(e)            EVP_MD_name(EVP_MD_CTX_get0_md(e))
+# define EVP_MD_CTX_size(e)            EVP_MD_size(EVP_MD_CTX_get0_md(e))
+# define EVP_MD_CTX_block_size(e)      EVP_MD_block_size(EVP_MD_CTX_get0_md(e))
+# define EVP_MD_CTX_type(e)            EVP_MD_type(EVP_MD_CTX_get0_md(e))
 EVP_PKEY_CTX *EVP_MD_CTX_pkey_ctx(const EVP_MD_CTX *ctx);
 void EVP_MD_CTX_set_pkey_ctx(EVP_MD_CTX *ctx, EVP_PKEY_CTX *pctx);
 void *EVP_MD_CTX_md_data(const EVP_MD_CTX *ctx);

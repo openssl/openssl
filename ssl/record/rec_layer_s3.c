@@ -713,8 +713,9 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
 
     sess = s->session;
 
-    if ((sess == NULL) ||
-        (s->enc_write_ctx == NULL) || (EVP_MD_CTX_md(s->write_hash) == NULL)) {
+    if ((sess == NULL)
+            || (s->enc_write_ctx == NULL)
+            || (EVP_MD_CTX_get0_md(s->write_hash) == NULL)) {
         clear = s->enc_write_ctx ? 0 : 1; /* must be AEAD cipher */
         mac_size = 0;
     } else {

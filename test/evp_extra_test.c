@@ -1027,14 +1027,14 @@ static int test_EVP_Digest(void)
             || !TEST_true(EVP_DigestUpdate(md_ctx, kMsg, sizeof(kMsg)))
             || !TEST_true(EVP_DigestFinal(md_ctx, md, NULL))
             /* EVP_DigestFinal resets the EVP_MD_CTX. */
-            || !TEST_ptr_eq(EVP_MD_CTX_md(md_ctx), NULL))
+            || !TEST_ptr_eq(EVP_MD_CTX_get0_md(md_ctx), NULL))
         goto out;
 
     if (!TEST_true(EVP_DigestInit_ex(md_ctx, sha256, NULL))
             || !TEST_true(EVP_DigestUpdate(md_ctx, kMsg, sizeof(kMsg)))
             || !TEST_true(EVP_DigestFinal_ex(md_ctx, md, NULL))
             /* EVP_DigestFinal_ex does not reset the EVP_MD_CTX. */
-            || !TEST_ptr(EVP_MD_CTX_md(md_ctx))
+            || !TEST_ptr(EVP_MD_CTX_get0_md(md_ctx))
             /*
              * EVP_DigestInit_ex with NULL type should work on
              * pre-initialized context.
@@ -1046,7 +1046,7 @@ static int test_EVP_Digest(void)
             || !TEST_true(EVP_DigestUpdate(md_ctx, kMsg, sizeof(kMsg)))
             || !TEST_true(EVP_DigestFinalXOF(md_ctx, md, sizeof(md)))
             /* EVP_DigestFinalXOF does not reset the EVP_MD_CTX. */
-            || !TEST_ptr(EVP_MD_CTX_md(md_ctx))
+            || !TEST_ptr(EVP_MD_CTX_get0_md(md_ctx))
             || !TEST_true(EVP_DigestInit_ex(md_ctx, NULL, NULL)))
         goto out;
     ret = 1;

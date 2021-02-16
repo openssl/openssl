@@ -523,7 +523,7 @@ int ssl3_get_record(SSL *s)
 
     /* TODO(size_t): convert this to do size_t properly */
     if (s->read_hash != NULL) {
-        const EVP_MD *tmpmd = EVP_MD_CTX_md(s->read_hash);
+        const EVP_MD *tmpmd = EVP_MD_CTX_get0_md(s->read_hash);
 
         if (tmpmd != NULL) {
             imac_size = EVP_MD_size(tmpmd);
@@ -617,9 +617,9 @@ int ssl3_get_record(SSL *s)
     } OSSL_TRACE_END(TLS);
 
     /* r->length is now the compressed data plus mac */
-    if ((sess != NULL) &&
-        (s->enc_read_ctx != NULL) &&
-        (!SSL_READ_ETM(s) && EVP_MD_CTX_md(s->read_hash) != NULL)) {
+    if ((sess != NULL)
+            && (s->enc_read_ctx != NULL)
+            && (!SSL_READ_ETM(s) && EVP_MD_CTX_get0_md(s->read_hash) != NULL)) {
         /* s->read_hash != NULL => mac_size != -1 */
 
         for (j = 0; j < num_recs; j++) {
@@ -967,7 +967,7 @@ int tls1_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending,
     }
 
     if (sending) {
-        if (EVP_MD_CTX_md(s->write_hash)) {
+        if (EVP_MD_CTX_get0_md(s->write_hash)) {
             int n = EVP_MD_CTX_size(s->write_hash);
             if (!ossl_assert(n >= 0)) {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
@@ -1004,7 +1004,7 @@ int tls1_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending,
             }
         }
     } else {
-        if (EVP_MD_CTX_md(s->read_hash)) {
+        if (EVP_MD_CTX_get0_md(s->read_hash)) {
             int n = EVP_MD_CTX_size(s->read_hash);
             if (!ossl_assert(n >= 0)) {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
@@ -1353,7 +1353,7 @@ int n_ssl3_mac(SSL *ssl, SSL3_RECORD *rec, unsigned char *md, int sending)
         header[j++] = (unsigned char)(rec->length & 0xff);
 
         /* Final param == is SSLv3 */
-        if (ssl3_cbc_digest_record(EVP_MD_CTX_md(hash),
+        if (ssl3_cbc_digest_record(EVP_MD_CTX_get0_md(hash),
                                    md, &md_size,
                                    header, rec->input,
                                    rec->length, rec->orig_len,
@@ -1547,7 +1547,7 @@ int dtls1_process_record(SSL *s, DTLS1_BITMAP *bitmap)
 
     /* TODO(size_t): convert this to do size_t properly */
     if (s->read_hash != NULL) {
-        const EVP_MD *tmpmd = EVP_MD_CTX_md(s->read_hash);
+        const EVP_MD *tmpmd = EVP_MD_CTX_get0_md(s->read_hash);
 
         if (tmpmd != NULL) {
             imac_size = EVP_MD_size(tmpmd);
@@ -1613,8 +1613,10 @@ int dtls1_process_record(SSL *s, DTLS1_BITMAP *bitmap)
     } OSSL_TRACE_END(TLS);
 
     /* r->length is now the compressed data plus mac */
-    if ((sess != NULL) && !SSL_READ_ETM(s) &&
-        (s->enc_read_ctx != NULL) && (EVP_MD_CTX_md(s->read_hash) != NULL)) {
+    if ((sess != NULL)
+            && !SSL_READ_ETM(s)
+            && (s->enc_read_ctx != NULL)
+            && (EVP_MD_CTX_get0_md(s->read_hash) != NULL)) {
         /* s->read_hash != NULL => mac_size != -1 */
 
         i = s->method->ssl3_enc->mac(s, rr, md, 0 /* not send */ );

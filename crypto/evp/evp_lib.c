@@ -767,6 +767,7 @@ EVP_MD *EVP_MD_meth_new(int md_type, int pkey_type)
     if (md != NULL) {
         md->type = md_type;
         md->pkey_type = pkey_type;
+        md->origin = EVP_ORIG_METH;
     }
     return md;
 }
@@ -927,11 +928,31 @@ int (*EVP_MD_meth_get_ctrl(const EVP_MD *md))(EVP_MD_CTX *ctx, int cmd,
     return md->md_ctrl;
 }
 
+#ifndef OPENSSL_NO_DEPRECATED_3_0
 const EVP_MD *EVP_MD_CTX_md(const EVP_MD_CTX *ctx)
 {
     if (ctx == NULL)
         return NULL;
     return ctx->reqdigest;
+}
+#endif
+
+const EVP_MD *EVP_MD_CTX_get0_md(const EVP_MD_CTX *ctx)
+{
+    if (ctx == NULL)
+        return NULL;
+    return ctx->reqdigest;
+}
+
+EVP_MD *EVP_MD_CTX_get1_md(EVP_MD_CTX *ctx)
+{
+    EVP_MD *md;
+
+    if (ctx == NULL)
+        return NULL;
+    md = (EVP_MD *)ctx->reqdigest;
+    ctx->reqdigest = NULL;
+    return md;
 }
 
 EVP_PKEY_CTX *EVP_MD_CTX_pkey_ctx(const EVP_MD_CTX *ctx)

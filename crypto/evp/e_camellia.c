@@ -144,6 +144,7 @@ static int cmll_t4_ctr_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 static const EVP_CIPHER cmll_t4_##keylen##_##mode = { \
         nid##_##keylen##_##nmode,blocksize,keylen/8,ivlen, \
         flags|EVP_CIPH_##MODE##_MODE,   \
+        EVP_ORIG_GLOBAL,                \
         cmll_t4_init_key,               \
         cmll_t4_##mode##_cipher,        \
         NULL,                           \
@@ -153,6 +154,7 @@ static const EVP_CIPHER camellia_##keylen##_##mode = { \
         nid##_##keylen##_##nmode,blocksize,     \
         keylen/8,ivlen, \
         flags|EVP_CIPH_##MODE##_MODE,   \
+        EVP_ORIG_GLOBAL,                \
         camellia_init_key,              \
         camellia_##mode##_cipher,       \
         NULL,                           \
@@ -167,6 +169,7 @@ const EVP_CIPHER *EVP_camellia_##keylen##_##mode(void) \
 static const EVP_CIPHER camellia_##keylen##_##mode = { \
         nid##_##keylen##_##nmode,blocksize,keylen/8,ivlen, \
         flags|EVP_CIPH_##MODE##_MODE,   \
+        EVP_ORIG_GLOBAL,                \
         camellia_init_key,              \
         camellia_##mode##_cipher,       \
         NULL,                           \

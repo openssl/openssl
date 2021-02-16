@@ -232,6 +232,10 @@ struct evp_kdf_st {
     OSSL_FUNC_kdf_set_ctx_params_fn *set_ctx_params;
 };
 
+#define EVP_ORIG_DYNAMIC    0
+#define EVP_ORIG_GLOBAL     1
+#define EVP_ORIG_METH       2
+
 struct evp_md_st {
     /* nid */
     int type;
@@ -240,6 +244,7 @@ struct evp_md_st {
     int pkey_type;
     int md_size;
     unsigned long flags;
+    int origin;
     int (*init) (EVP_MD_CTX *ctx);
     int (*update) (EVP_MD_CTX *ctx, const void *data, size_t count);
     int (*final) (EVP_MD_CTX *ctx, unsigned char *md);
@@ -284,6 +289,8 @@ struct evp_cipher_st {
     /* Legacy structure members */
     /* Various flags */
     unsigned long flags;
+    /* How the EVP_CIPHER was created. */
+    int origin;
     /* init key */
     int (*init) (EVP_CIPHER_CTX *ctx, const unsigned char *key,
                  const unsigned char *iv, int enc);
@@ -420,6 +427,7 @@ static int cname##_cfb##cbits##_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, 
 static const EVP_CIPHER cname##_##mode = { \
         nid##_##nmode, block_size, key_len, iv_len, \
         flags | EVP_CIPH_##MODE##_MODE, \
+        EVP_ORIG_GLOBAL, \
         init_key, \
         cname##_##mode##_cipher, \
         cleanup, \
@@ -475,6 +483,7 @@ BLOCK_CIPHER_def_ecb(cname, kstruct, nid, block_size, key_len, flags, \
 static const EVP_CIPHER cname##_cbc = {\
         nid##_cbc, block_size, key_len, iv_len, \
         flags | EVP_CIPH_CBC_MODE,\
+        EVP_ORIG_GLOBAL,\
         init_key,\
         cname##_cbc_cipher,\
         cleanup,\
@@ -488,6 +497,7 @@ const EVP_CIPHER *EVP_##cname##_cbc(void) { return &cname##_cbc; }\
 static const EVP_CIPHER cname##_cfb = {\
         nid##_cfb64, 1, key_len, iv_len, \
         flags | EVP_CIPH_CFB_MODE,\
+        EVP_ORIG_GLOBAL,\
         init_key,\
         cname##_cfb_cipher,\
         cleanup,\
@@ -501,6 +511,7 @@ const EVP_CIPHER *EVP_##cname##_cfb(void) { return &cname##_cfb; }\
 static const EVP_CIPHER cname##_ofb = {\
         nid##_ofb64, 1, key_len, iv_len, \
         flags | EVP_CIPH_OFB_MODE,\
+        EVP_ORIG_GLOBAL,\
         init_key,\
         cname##_ofb_cipher,\
         cleanup,\
@@ -514,6 +525,7 @@ const EVP_CIPHER *EVP_##cname##_ofb(void) { return &cname##_ofb; }\
 static const EVP_CIPHER cname##_ecb = {\
         nid##_ecb, block_size, key_len, iv_len, \
         flags | EVP_CIPH_ECB_MODE,\
+        EVP_ORIG_GLOBAL,\
         init_key,\
         cname##_ecb_cipher,\
         cleanup,\

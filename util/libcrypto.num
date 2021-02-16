@@ -417,7 +417,7 @@ CRYPTO_ocb128_setiv                     424	3_0_0	EXIST::FUNCTION:OCB
 X509_CRL_digest                         425	3_0_0	EXIST::FUNCTION:
 EVP_aes_128_cbc_hmac_sha1               426	3_0_0	EXIST::FUNCTION:
 ERR_load_CMS_strings                    427	3_0_0	EXIST::FUNCTION:CMS,DEPRECATEDIN_3_0
-EVP_MD_CTX_md                           428	3_0_0	EXIST::FUNCTION:
+EVP_MD_CTX_md                           428	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 X509_REVOKED_get_ext                    429	3_0_0	EXIST::FUNCTION:
 d2i_RSA_PSS_PARAMS                      430	3_0_0	EXIST::FUNCTION:
 USERNOTICE_free                         431	3_0_0	EXIST::FUNCTION:
@@ -5352,3 +5352,5 @@ OSSL_PARAM_merge                        ?	3_0_0	EXIST::FUNCTION:
 OSSL_PARAM_free                         ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_todata                         ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_export                         ?	3_0_0	EXIST::FUNCTION:
+EVP_MD_CTX_get0_md                      ?	3_0_0	EXIST::FUNCTION:
+EVP_MD_CTX_get1_md                      ?	3_0_0	EXIST::FUNCTION:

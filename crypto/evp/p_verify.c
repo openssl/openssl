@@ -48,7 +48,7 @@ int EVP_VerifyFinal_ex(EVP_MD_CTX *ctx, const unsigned char *sigbuf,
         goto err;
     if (EVP_PKEY_verify_init(pkctx) <= 0)
         goto err;
-    if (EVP_PKEY_CTX_set_signature_md(pkctx, EVP_MD_CTX_md(ctx)) <= 0)
+    if (EVP_PKEY_CTX_set_signature_md(pkctx, EVP_MD_CTX_get0_md(ctx)) <= 0)
         goto err;
     i = EVP_PKEY_verify(pkctx, sigbuf, siglen, m, m_len);
  err:

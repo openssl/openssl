@@ -28,6 +28,7 @@ EVP_CIPHER *EVP_CIPHER_meth_new(int cipher_type, int block_size, int key_len)
         cipher->nid = cipher_type;
         cipher->block_size = block_size;
         cipher->key_len = key_len;
+        cipher->origin = EVP_ORIG_METH;
     }
     return cipher;
 }
