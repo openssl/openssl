@@ -12,7 +12,6 @@
 
 #include "openssl/txt_db.h"
 # ifndef OPENSSL_NO_POSIX_IO
-#  include <fcntl.h>
 #  include <sys/stat.h>
 # endif
 
