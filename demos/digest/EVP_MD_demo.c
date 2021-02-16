@@ -1,5 +1,5 @@
 /*-
- * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -83,6 +83,7 @@ int demonstrate_digest(void)
     const char *digest_name = "SHA3-512";
     const char *option_properties = NULL;
     EVP_MD *message_digest = NULL;
+	EVP_MD_CTX *digest_context = NULL;
     unsigned int digest_length;
     unsigned char *digest_value = NULL;
     int j;
@@ -90,8 +91,7 @@ int demonstrate_digest(void)
     library_context = OSSL_LIB_CTX_new();
     if (library_context == NULL) {
         fprintf(stderr, "OSSL_LIB_CTX_new() returned NULL\n");
-        ERR_print_errors_fp(stderr);
-        return 0;
+        goto cleanup;
     }
 
     /*
@@ -101,11 +101,9 @@ int demonstrate_digest(void)
                                   digest_name, option_properties);
     if (message_digest == NULL) {
         fprintf(stderr, "EVP_MD_fetch could not find %s.", digest_name);
-        ERR_print_errors_fp(stderr);
-        OSSL_LIB_CTX_free(library_context);
-        return 0;
+        goto cleanup;
     }
-/* Determine the length of the fetched digest type */
+	/* Determine the length of the fetched digest type */
     digest_length = EVP_MD_size(message_digest);
     if (digest_length <= 0) {
         fprintf(stderr, "EVP_MD_size returned invalid size.\n");
@@ -117,46 +115,41 @@ int demonstrate_digest(void)
         fprintf(stderr, "No memory.\n");
         goto cleanup;
     }
-/*
- * Make a message digest context to hold temporary state
- * during digest creation
- */
-    EVP_MD_CTX *digest_context = EVP_MD_CTX_new();
+	/*
+	 * Make a message digest context to hold temporary state
+	 * during digest creation
+ 	*/
+    digest_context = EVP_MD_CTX_new();
     if (digest_context == NULL) {
         fprintf(stderr, "EVP_MD_CTX_new failed.\n");
-        ERR_print_errors_fp(stderr);
         goto cleanup;
     }
-/*
- * Initialize the message digest context to use the fetched 
- * digest provider
- */
+    /*
+     * Initialize the message digest context to use the fetched 
+     * digest provider
+     */
     if (EVP_DigestInit(digest_context, message_digest) != 1) {
         fprintf(stderr, "EVP_DigestInit failed.\n");
-        ERR_print_errors_fp(stderr);
         goto cleanup;
     }
-/* Digest parts one and two of the soliloqy */
+    /* Digest parts one and two of the soliloqy */
     if (EVP_DigestUpdate(digest_context, hamlet_1, strlen(hamlet_1)) != 1) {
         fprintf(stderr, "EVP_DigestUpdate(hamlet_1) failed.\n");
-        ERR_print_errors_fp(stderr);
         goto cleanup;
     }
     if (EVP_DigestUpdate(digest_context, hamlet_2, strlen(hamlet_2)) != 1) {
         fprintf(stderr, "EVP_DigestUpdate(hamlet_2) failed.\n");
-        ERR_print_errors_fp(stderr);
         goto cleanup;
     }
     if (EVP_DigestFinal(digest_context, digest_value, &digest_length) != 1) {
         fprintf(stderr, "EVP_DigestFinal() failed.\n");
-        ERR_print_errors_fp(stderr);
         goto cleanup;
     }
     for( j=0; j<digest_length; j++ ) {
         fprintf(stdout, "%02x", digest_value[j]);
     }
     fprintf(stdout, "\n");
-/* Check digest_value against the known answer */
+    /* Check digest_value against the known answer */
     if ((size_t)digest_length != sizeof(known_answer)) {
         fprintf(stdout, "Digest length(%d) not equal to known answer length(%lu).\n",
             digest_length, sizeof(known_answer));
@@ -172,6 +165,8 @@ int demonstrate_digest(void)
 
 
 cleanup:
+    if (result != 1)
+        ERR_print_errors_fp(stderr);
 /* OpenSSL free functions will ignore NULL arguments */
     EVP_MD_CTX_free(digest_context);
     OPENSSL_free(digest_value);

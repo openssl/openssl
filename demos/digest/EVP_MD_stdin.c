@@ -7,12 +7,12 @@
  * https://www.openssl.org/source/license.html
  */
 
-/*
+/*-
  * Example of using EVP_MD_fetch and EVP_Digest* methods to calculate
  * a digest of static buffers
  * You can find SHA3 test vectors from NIST here:
  * https://csrc.nist.gov/CSRC/media/Projects/Cryptographic-Algorithm-Validation-Program/documents/sha3/sha-3bytetestvectors.zip
- * Use xxd convert a hex input:
+ * Use xxd convert a hex string to binary input for EVP_MD_stdin:
  * echo "1ca984dcc913344370cf" | xxd -r -p | ./EVP_MD_stdin
  */
 
@@ -28,7 +28,7 @@
 
 int demonstrate_digest(BIO *input)
 {
-    OSSL_LIB_CTX *library_context;
+    OSSL_LIB_CTX *library_context = NULL;
     int result = 0;
     const char * digest_name = "SHA3-512";
     const char * option_properties = NULL;
@@ -41,8 +41,7 @@ int demonstrate_digest(BIO *input)
     library_context = OSSL_LIB_CTX_new();
     if (library_context == NULL) {
         fprintf(stderr, "OSSL_LIB_CTX_new() returned NULL\n");
-        ERR_print_errors_fp(stderr);
-        return 0;
+        goto cleanup;
     }
 
     /*
@@ -56,7 +55,7 @@ int demonstrate_digest(BIO *input)
         OSSL_LIB_CTX_free(library_context);
         return 0;
     }
-/* Determine the length of the fetched digest type */
+    /* Determine the length of the fetched digest type */
     digest_length = EVP_MD_size(message_digest);
     if (digest_length <= 0) {
         fprintf(stderr, "EVP_MD_size returned invalid size.\n");
@@ -68,20 +67,20 @@ int demonstrate_digest(BIO *input)
         fprintf(stderr, "No memory.\n");
         goto cleanup;
     }
-/*
- * Make a message digest context to hold temporary state
- * during digest creation
- */
+    /*
+     * Make a message digest context to hold temporary state
+     * during digest creation
+     */
     EVP_MD_CTX *digest_context = EVP_MD_CTX_new();
     if (digest_context == NULL) {
         fprintf(stderr, "EVP_MD_CTX_new failed.\n");
         ERR_print_errors_fp(stderr);
         goto cleanup;
     }
-/*
- * Initialize the message digest context to use the fetched 
- * digest provider
- */
+    /*
+     * Initialize the message digest context to use the fetched 
+     * digest provider
+     */
     if (EVP_DigestInit(digest_context, message_digest) != 1) {
         fprintf(stderr, "EVP_DigestInit failed.\n");
         ERR_print_errors_fp(stderr);
@@ -90,22 +89,23 @@ int demonstrate_digest(BIO *input)
     while( (ii = BIO_read(input, buffer, sizeof(buffer))) > 0 ) {
         if (EVP_DigestUpdate(digest_context, buffer, ii) != 1) {
             fprintf(stderr, "EVP_DigestUpdate() failed.\n");
-            ERR_print_errors_fp(stderr);
             goto cleanup;
         }
     }
     if (EVP_DigestFinal(digest_context, digest_value, &digest_length) != 1) {
         fprintf(stderr, "EVP_DigestFinal() failed.\n");
-        ERR_print_errors_fp(stderr);
         goto cleanup;
     }
+    result = 1;
     for( ii=0; ii<digest_length; ii++ ) {
         fprintf(stdout, "%02x", digest_value[ii]);
     }
     fprintf(stdout, "\n");
 
 cleanup:
-/* OpenSSL free functions will ignore NULL arguments */
+    if (result != 1)
+        ERR_print_errors_fp(stderr);
+    /* OpenSSL free functions will ignore NULL arguments */
     EVP_MD_CTX_free(digest_context);
     OPENSSL_free(digest_value);
     EVP_MD_free(message_digest);
@@ -116,6 +116,11 @@ cleanup:
 
 int main(void)
 {
+    int result = 1;
     BIO *input = BIO_new_fd( fileno(stdin), 1 );
-    return demonstrate_digest(input) == 0;
+    if (input != NULL) {
+        result = demonstrate_digest(input);
+        BIO_free(input);
+    }
+    return result;
 }

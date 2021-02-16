@@ -7,13 +7,18 @@
  * https://www.openssl.org/source/license.html
  */
 
-/*
+/*=
  * Example of using EVP_MD_fetch and EVP_Digest* methods to calculate
  * a digest of static buffers
  * You can find SHA3 test vectors from NIST here:
  * https://csrc.nist.gov/CSRC/media/Projects/Cryptographic-Algorithm-Validation-Program/documents/sha3/sha-3bytetestvectors.zip
- * Use xxd convert a hex input:
- * echo "1ca984dcc913344370cf" | xxd -r -p | ./EVP_MD_stdin
+ * For example, contains these lines:
+    Len = 80
+    Msg = 1ca984dcc913344370cf
+    MD = 6915ea0eeffb99b9b246a0e34daf3947852684c3d618260119a22835659e4f23d4eb66a15d0affb8e93771578f5e8f25b7a5f2a55f511fb8b96325ba2cd14816
+ * use xxd convert the hex message string to binary input for EVP_MD_stdin:
+ * echo "1ca984dcc913344370cf" | xxd -r -p | ./EVP_f_md
+ * and then verify the output matches MD above.
  */
 
 #include <string.h>
@@ -39,7 +44,8 @@ int main(int argc, char * argv[])
     EVP_MD *md = NULL;
     unsigned char buffer[512];
     size_t readct, writect;
-    unsigned char *digest_value=NULL;
+	size_t digest_size;
+    char *digest_value=NULL;
     int j;
 
     if (argc > 1)
@@ -50,67 +56,63 @@ int main(int argc, char * argv[])
     input = BIO_new_fd( fileno(stdin), 1 );
     if (input == NULL) {
         fprintf(stderr, "BIO_new_fd() for stdin returned NULL\n");
-        ERR_print_errors_fp(stderr);
-        return 1;
+		goto cleanup;
     }
     library_context = OSSL_LIB_CTX_new();
     if (library_context == NULL) {
         fprintf(stderr, "OSSL_LIB_CTX_new() returned NULL\n");
-        ERR_print_errors_fp(stderr);
         goto cleanup;
     }
 
     md = EVP_MD_fetch( library_context, digest_name, NULL );
     if (md == NULL) {
         fprintf(stderr, "EVP_MD_fetch did not find %s.\n", digest_name);
-        ERR_print_errors_fp(stderr);
         goto cleanup;
     }
-    size_t digest_size = EVP_MD_size(md);
+    digest_size = EVP_MD_size(md);
     digest_value = OPENSSL_malloc(digest_size);
     if (digest_value == NULL) {
         fprintf(stderr, "Can't allocate %lu bytes for the digest value.\n", (unsigned long)digest_size);
         goto cleanup;
     }
-/* Make a bio that uses the digest */
+    /* Make a bio that uses the digest */
     bio_digest = BIO_new(BIO_f_md());
     if (bio_digest == NULL) {
         fprintf(stderr, "BIO_new(BIO_f_md()) returned NULL\n");
-        ERR_print_errors_fp(stderr);
         goto cleanup;
     }
-/* set our bio_digest BIO to digest data */
+    /* set our bio_digest BIO to digest data */
     if (BIO_set_md(bio_digest,md) != 1) {
            fprintf(stderr, "BIO_set_md failed.\n");
-           ERR_print_errors_fp(stderr);
            goto cleanup;
     }
-/*
- * We will use BIO chaining so that as we read, the digest gets updated
- * See the man page for BIO_push
- */
+    /*-
+     * We will use BIO chaining so that as we read, the digest gets updated
+     * See the man page for BIO_push
+     */
     BIO *reading = BIO_push( bio_digest, input );
     
     while( BIO_read(reading, buffer, sizeof(buffer)) > 0 )
         ;
 
-/* Read the digest from bio_digest */
-/*
- * BIO_gets must be used to calculate the final
- * digest value.
- */
+    /*-
+     * BIO_gets must be used to calculate the final
+     * digest value and then copy it to digest_value.
+     */
     if (BIO_gets(bio_digest, digest_value, digest_size) != digest_size) {
         fprintf(stderr, "BIO_gets(bio_digest) failed\n");
-        ERR_print_errors_fp(stderr);
         goto cleanup;
     }
     for( j=0; j<digest_size; j++ ) {
-        fprintf(stdout, "%02x", digest_value[j]);
+        fprintf(stdout, "%02x", (unsigned char)digest_value[j]);
     }
     fprintf(stdout, "\n");
     result = 0;
     
 cleanup:
+    if (result != 0) 
+        ERR_print_errors_fp(stderr);
+
     OPENSSL_free(digest_value);
     BIO_free(input);
     BIO_free(bio_digest);
