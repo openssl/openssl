@@ -404,12 +404,12 @@ int X509_NAME_digest(const X509_NAME *data, const EVP_MD *type,
 
 X509 *X509_load_http(const char *url, BIO *bio, BIO *rbio, int timeout);
 # define X509_http_nbio(rctx, pcert) \
-    OSSL_HTTP_REQ_CTX_sendreq_d2i(rctx, (ASN1_VALUE **)(pcert), \
-                                  ASN1_ITEM_rptr(X509))
+    ((*(pcrl) =                                                         \
+      OSSL_HTTP_REQ_CTX_sendreq_d2i(rctx, ASN1_ITEM_rptr(X509))) != NULL)
 X509_CRL *X509_CRL_load_http(const char *url, BIO *bio, BIO *rbio, int timeout);
 # define X509_CRL_http_nbio(rctx, pcrl) \
-    OSSL_HTTP_REQ_CTX_sendreq_d2i(rctx, (ASN1_VALUE **)(pcrl), \
-                                  ASN1_ITEM_rptr(X509_CRL))
+    ((*(pcrl) =                                                         \
+      OSSL_HTTP_REQ_CTX_sendreq_d2i(rctx, ASN1_ITEM_rptr(X509_CRL))) != NULL)
 
 # ifndef OPENSSL_NO_STDIO
 X509 *d2i_X509_fp(FILE *fp, X509 **x509);
