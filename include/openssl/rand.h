@@ -74,6 +74,11 @@ EVP_RAND_CTX *RAND_get0_primary(OSSL_LIB_CTX *ctx);
 EVP_RAND_CTX *RAND_get0_public(OSSL_LIB_CTX *ctx);
 EVP_RAND_CTX *RAND_get0_private(OSSL_LIB_CTX *ctx);
 
+int RAND_set_DRBG_type(OSSL_LIB_CTX *ctx, const char *drbg, const char *propq,
+                       const char *cipher, const char *digest);
+int RAND_set_seed_source_type(OSSL_LIB_CTX *ctx, const char *seed,
+                              const char *propq);
+
 void RAND_seed(const void *buf, int num);
 void RAND_keep_random_devices_open(int keep);
 
