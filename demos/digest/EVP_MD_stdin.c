@@ -12,8 +12,13 @@
  * a digest of static buffers
  * You can find SHA3 test vectors from NIST here:
  * https://csrc.nist.gov/CSRC/media/Projects/Cryptographic-Algorithm-Validation-Program/documents/sha3/sha-3bytetestvectors.zip
- * Use xxd convert a hex string to binary input for EVP_MD_stdin:
+ * For example, contains these lines:
+    Len = 80
+    Msg = 1ca984dcc913344370cf
+    MD = 6915ea0eeffb99b9b246a0e34daf3947852684c3d618260119a22835659e4f23d4eb66a15d0affb8e93771578f5e8f25b7a5f2a55f511fb8b96325ba2cd14816
+ * use xxd convert the hex message string to binary input for EVP_MD_stdin:
  * echo "1ca984dcc913344370cf" | xxd -r -p | ./EVP_MD_stdin
+ * and then verify the output matches MD above.
  */
 
 #include <string.h>
@@ -33,6 +38,7 @@ int demonstrate_digest(BIO *input)
     const char * digest_name = "SHA3-512";
     const char * option_properties = NULL;
     EVP_MD *message_digest = NULL;
+    EVP_MD_CTX *digest_context = NULL;
     unsigned int digest_length;
     unsigned char *digest_value = NULL;
     unsigned char buffer[512];
@@ -71,7 +77,7 @@ int demonstrate_digest(BIO *input)
      * Make a message digest context to hold temporary state
      * during digest creation
      */
-    EVP_MD_CTX *digest_context = EVP_MD_CTX_new();
+    digest_context = EVP_MD_CTX_new();
     if (digest_context == NULL) {
         fprintf(stderr, "EVP_MD_CTX_new failed.\n");
         ERR_print_errors_fp(stderr);
@@ -86,7 +92,7 @@ int demonstrate_digest(BIO *input)
         ERR_print_errors_fp(stderr);
         goto cleanup;
     }
-    while( (ii = BIO_read(input, buffer, sizeof(buffer))) > 0 ) {
+    while ((ii = BIO_read(input, buffer, sizeof(buffer))) > 0) {
         if (EVP_DigestUpdate(digest_context, buffer, ii) != 1) {
             fprintf(stderr, "EVP_DigestUpdate() failed.\n");
             goto cleanup;
@@ -97,7 +103,7 @@ int demonstrate_digest(BIO *input)
         goto cleanup;
     }
     result = 1;
-    for( ii=0; ii<digest_length; ii++ ) {
+    for (ii=0; ii<digest_length; ii++) {
         fprintf(stdout, "%02x", digest_value[ii]);
     }
     fprintf(stdout, "\n");
@@ -118,6 +124,7 @@ int main(void)
 {
     int result = 1;
     BIO *input = BIO_new_fd( fileno(stdin), 1 );
+
     if (input != NULL) {
         result = demonstrate_digest(input);
         BIO_free(input);

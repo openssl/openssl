@@ -7,14 +7,14 @@ CFLAGS = -I../../include -g
 LDFLAGS = -L../..
 LDLIBS = -lcrypto
 
-all: EVP_MD_demo EVP_MD_stdin EVP_f_md
+all: EVP_MD_demo EVP_MD_stdin BIO_f_md
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $<
 
 EVP_MD_demo: EVP_MD_demo.o
 EVP_MD_stdin: EVP_MD_stdin.o
-EVP_f_md: EVP_f_md.o
+BIO_f_md: BIO_f_md.o
 
 clean:
-	$(RM) *.o EVP_MD_demo EVP_MD_stdin EVP_f_md
+	$(RM) *.o EVP_MD_demo EVP_MD_stdin BIO_f_md

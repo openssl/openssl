@@ -7,7 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-/*=
+/*-
  * Example of using EVP_MD_fetch and EVP_Digest* methods to calculate
  * a digest of static buffers
  * You can find SHA3 test vectors from NIST here:
@@ -16,7 +16,7 @@
     Len = 80
     Msg = 1ca984dcc913344370cf
     MD = 6915ea0eeffb99b9b246a0e34daf3947852684c3d618260119a22835659e4f23d4eb66a15d0affb8e93771578f5e8f25b7a5f2a55f511fb8b96325ba2cd14816
- * use xxd convert the hex message string to binary input for EVP_MD_stdin:
+ * use xxd convert the hex message string to binary input for EVP_f_md:
  * echo "1ca984dcc913344370cf" | xxd -r -p | ./EVP_f_md
  * and then verify the output matches MD above.
  */
@@ -44,7 +44,7 @@ int main(int argc, char * argv[])
     EVP_MD *md = NULL;
     unsigned char buffer[512];
     size_t readct, writect;
-	size_t digest_size;
+    size_t digest_size;
     char *digest_value=NULL;
     int j;
 
@@ -56,7 +56,7 @@ int main(int argc, char * argv[])
     input = BIO_new_fd( fileno(stdin), 1 );
     if (input == NULL) {
         fprintf(stderr, "BIO_new_fd() for stdin returned NULL\n");
-		goto cleanup;
+        goto cleanup;
     }
     library_context = OSSL_LIB_CTX_new();
     if (library_context == NULL) {
@@ -103,7 +103,7 @@ int main(int argc, char * argv[])
         fprintf(stderr, "BIO_gets(bio_digest) failed\n");
         goto cleanup;
     }
-    for( j=0; j<digest_size; j++ ) {
+    for (j=0; j<digest_size; j++) {
         fprintf(stdout, "%02x", (unsigned char)digest_value[j]);
     }
     fprintf(stdout, "\n");

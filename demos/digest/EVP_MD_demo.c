@@ -83,7 +83,7 @@ int demonstrate_digest(void)
     const char *digest_name = "SHA3-512";
     const char *option_properties = NULL;
     EVP_MD *message_digest = NULL;
-	EVP_MD_CTX *digest_context = NULL;
+    EVP_MD_CTX *digest_context = NULL;
     unsigned int digest_length;
     unsigned char *digest_value = NULL;
     int j;
@@ -103,7 +103,7 @@ int demonstrate_digest(void)
         fprintf(stderr, "EVP_MD_fetch could not find %s.", digest_name);
         goto cleanup;
     }
-	/* Determine the length of the fetched digest type */
+    /* Determine the length of the fetched digest type */
     digest_length = EVP_MD_size(message_digest);
     if (digest_length <= 0) {
         fprintf(stderr, "EVP_MD_size returned invalid size.\n");
@@ -115,10 +115,10 @@ int demonstrate_digest(void)
         fprintf(stderr, "No memory.\n");
         goto cleanup;
     }
-	/*
-	 * Make a message digest context to hold temporary state
-	 * during digest creation
- 	*/
+    /*
+     * Make a message digest context to hold temporary state
+     * during digest creation
+     */
     digest_context = EVP_MD_CTX_new();
     if (digest_context == NULL) {
         fprintf(stderr, "EVP_MD_CTX_new failed.\n");
@@ -145,7 +145,7 @@ int demonstrate_digest(void)
         fprintf(stderr, "EVP_DigestFinal() failed.\n");
         goto cleanup;
     }
-    for( j=0; j<digest_length; j++ ) {
+    for (j=0; j<digest_length; j++)  {
         fprintf(stdout, "%02x", digest_value[j]);
     }
     fprintf(stdout, "\n");
@@ -154,7 +154,7 @@ int demonstrate_digest(void)
         fprintf(stdout, "Digest length(%d) not equal to known answer length(%lu).\n",
             digest_length, sizeof(known_answer));
     } else if (memcmp(digest_value, known_answer, digest_length) != 0) {
-        for( j=0; j<sizeof(known_answer); j++ ) {
+        for (j=0; j<sizeof(known_answer); j++) {
             fprintf(stdout, "%02x", known_answer[j] );
         }
         fprintf(stdout, "\nDigest does not match known answer\n");
@@ -167,7 +167,7 @@ int demonstrate_digest(void)
 cleanup:
     if (result != 1)
         ERR_print_errors_fp(stderr);
-/* OpenSSL free functions will ignore NULL arguments */
+    /* OpenSSL free functions will ignore NULL arguments */
     EVP_MD_CTX_free(digest_context);
     OPENSSL_free(digest_value);
     EVP_MD_free(message_digest);
