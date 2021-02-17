@@ -171,9 +171,13 @@ int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
     }
 
     /*
-     * We dynamically allocate these strings to ensure that we don't reference
-     * them after the provider has been torn down (asan will tell us if we do).
-     * This files isn't linked against libcrypto, so we use malloc and strdup
+     * We want to test that libcrypto doesn't use the file and func pointers
+     * that we provide to it via c_set_error_debug beyond the time that they
+     * are valid for. Therefore we dynamically allocate these strings now and
+     * free them again when the provider is torn down. If anything tries to
+     * use those strings after that point there will be a use-after-free and
+     * asan will complain (and hence the tests will fail).
+     * This file isn't linked against libcrypto, so we use malloc and strdup
      * instead of OPENSSL_malloc and OPENSSL_strdup
      */
     ctx = malloc(sizeof(*ctx));
