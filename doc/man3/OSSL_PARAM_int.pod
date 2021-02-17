@@ -7,7 +7,7 @@ OSSL_PARAM_long, OSSL_PARAM_size_t, OSSL_PARAM_time_t, OSSL_PARAM_uint,
 OSSL_PARAM_uint32, OSSL_PARAM_uint64, OSSL_PARAM_ulong, OSSL_PARAM_BN,
 OSSL_PARAM_utf8_string, OSSL_PARAM_octet_string, OSSL_PARAM_utf8_ptr,
 OSSL_PARAM_octet_ptr,
-OSSL_PARAM_END,
+OSSL_PARAM_END, OSSL_PARAM_DEFN,
 OSSL_PARAM_construct_double, OSSL_PARAM_construct_int,
 OSSL_PARAM_construct_int32, OSSL_PARAM_construct_int64,
 OSSL_PARAM_construct_long, OSSL_PARAM_construct_size_t,
@@ -57,6 +57,9 @@ OSSL_PARAM_UNMODIFIED, OSSL_PARAM_modified, OSSL_PARAM_set_all_unmodified
  #define OSSL_PARAM_END
 
  #define OSSL_PARAM_UNMODIFIED
+
+ #define OSSL_PARAM_DEFN(key, type, addr, sz)    \
+    { (key), (type), (addr), (sz), OSSL_PARAM_UNMODIFIED }
 
  OSSL_PARAM OSSL_PARAM_construct_TYPE(const char *key, TYPE *buf);
  OSSL_PARAM OSSL_PARAM_construct_BN(const char *key, unsigned char *buf,
@@ -170,6 +173,12 @@ The storage for this parameter is at I<address> and is of I<size> bytes.
 
 OSSL_PARAM_END provides an end of parameter list marker.
 This should terminate all OSSL_PARAM arrays.
+
+The OSSL_PARAM_DEFN macro provides the ability to construct a single OSSL_PARAM
+(typically used in the construction of OSSL_PARAM arrays). The I<key>, I<type>,
+I<addr> and I<sz> arguments correspond to the I<key>, I<data_type>, I<data> and
+I<data_size> fields of the OSSL_PARAM structure as described on the
+L<OSSL_PARAM(3)> page.
 
 OSSL_PARAM_construct_TYPE() are a series of functions that create OSSL_PARAM
 records dynamically.
