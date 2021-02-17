@@ -20,8 +20,8 @@
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 
-void *tdes_newctx(void *provctx, int mode, size_t kbits, size_t blkbits,
-                  size_t ivbits, uint64_t flags, const PROV_CIPHER_HW *hw)
+void *ossl_tdes_newctx(void *provctx, int mode, size_t kbits, size_t blkbits,
+                       size_t ivbits, uint64_t flags, const PROV_CIPHER_HW *hw)
 {
     PROV_TDES_CTX *tctx;
 
@@ -35,7 +35,7 @@ void *tdes_newctx(void *provctx, int mode, size_t kbits, size_t blkbits,
     return tctx;
 }
 
-void *tdes_dupctx(void *ctx)
+void *ossl_tdes_dupctx(void *ctx)
 {
     PROV_TDES_CTX *in = (PROV_TDES_CTX *)ctx;
     PROV_TDES_CTX *ret;
@@ -53,7 +53,7 @@ void *tdes_dupctx(void *ctx)
     return ret;
 }
 
-void tdes_freectx(void *vctx)
+void ossl_tdes_freectx(void *vctx)
 {
     PROV_TDES_CTX *ctx = (PROV_TDES_CTX *)vctx;
 
@@ -88,21 +88,21 @@ static int tdes_init(void *vctx, const unsigned char *key, size_t keylen,
     return 1;
 }
 
-int tdes_einit(void *vctx, const unsigned char *key, size_t keylen,
-               const unsigned char *iv, size_t ivlen)
+int ossl_tdes_einit(void *vctx, const unsigned char *key, size_t keylen,
+                    const unsigned char *iv, size_t ivlen)
 {
     return tdes_init(vctx, key, keylen, iv, ivlen, 1);
 }
 
-int tdes_dinit(void *vctx, const unsigned char *key, size_t keylen,
-               const unsigned char *iv, size_t ivlen)
+int ossl_tdes_dinit(void *vctx, const unsigned char *key, size_t keylen,
+                    const unsigned char *iv, size_t ivlen)
 {
     return tdes_init(vctx, key, keylen, iv, ivlen, 0);
 }
 
-CIPHER_DEFAULT_GETTABLE_CTX_PARAMS_START(tdes)
+CIPHER_DEFAULT_GETTABLE_CTX_PARAMS_START(ossl_tdes)
     OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_RANDOM_KEY, NULL, 0),
-CIPHER_DEFAULT_GETTABLE_CTX_PARAMS_END(tdes)
+CIPHER_DEFAULT_GETTABLE_CTX_PARAMS_END(ossl_tdes)
 
 static int tdes_generatekey(PROV_CIPHER_CTX *ctx, void *ptr)
 {
@@ -122,7 +122,7 @@ static int tdes_generatekey(PROV_CIPHER_CTX *ctx, void *ptr)
     return 0;
 }
 
-int tdes_get_ctx_params(void *vctx, OSSL_PARAM params[])
+int ossl_tdes_get_ctx_params(void *vctx, OSSL_PARAM params[])
 {
     PROV_CIPHER_CTX  *ctx = (PROV_CIPHER_CTX *)vctx;
     OSSL_PARAM *p;

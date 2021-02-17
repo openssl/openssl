@@ -296,9 +296,10 @@ int ossl_cipher_generic_block_update(void *vctx, unsigned char *out,
         /* This only fails if padding is publicly invalid */
         *outl = inl;
         if (!ctx->enc
-                && !tlsunpadblock(ctx->libctx, ctx->tlsversion, out, outl,
-                                  blksz, &ctx->tlsmac, &ctx->alloced,
-                                  ctx->tlsmacsize, 0)) {
+            && !ossl_cipher_tlsunpadblock(ctx->libctx, ctx->tlsversion,
+                                          out, outl,
+                                          blksz, &ctx->tlsmac, &ctx->alloced,
+                                          ctx->tlsmacsize, 0)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_CIPHER_OPERATION_FAILED);
             return 0;
         }
@@ -306,7 +307,8 @@ int ossl_cipher_generic_block_update(void *vctx, unsigned char *out,
     }
 
     if (ctx->bufsz != 0)
-        nextblocks = fillblock(ctx->buf, &ctx->bufsz, blksz, &in, &inl);
+        nextblocks = ossl_cipher_fillblock(ctx->buf, &ctx->bufsz, blksz,
+                                           &in, &inl);
     else
         nextblocks = inl & ~(blksz-1);
 
@@ -350,7 +352,8 @@ int ossl_cipher_generic_block_update(void *vctx, unsigned char *out,
         in += nextblocks;
         inl -= nextblocks;
     }
-    if (inl != 0 && !trailingdata(ctx->buf, &ctx->bufsz, blksz, &in, &inl)) {
+    if (inl != 0
+        && !ossl_cipher_trailingdata(ctx->buf, &ctx->bufsz, blksz, &in, &inl)) {
         /* ERR_raise already called */
         return 0;
     }
@@ -376,7 +379,7 @@ int ossl_cipher_generic_block_final(void *vctx, unsigned char *out,
 
     if (ctx->enc) {
         if (ctx->pad) {
-            padblock(ctx->buf, &ctx->bufsz, blksz);
+            ossl_cipher_padblock(ctx->buf, &ctx->bufsz, blksz);
         } else if (ctx->bufsz == 0) {
             *outl = 0;
             return 1;
@@ -413,7 +416,7 @@ int ossl_cipher_generic_block_final(void *vctx, unsigned char *out,
         return 0;
     }
 
-    if (ctx->pad && !unpadblock(ctx->buf, &ctx->bufsz, blksz)) {
+    if (ctx->pad && !ossl_cipher_unpadblock(ctx->buf, &ctx->bufsz, blksz)) {
         /* ERR_raise already called */
         return 0;
     }

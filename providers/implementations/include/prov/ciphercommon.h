@@ -353,8 +353,9 @@ const OSSL_PARAM * name##_settable_ctx_params(ossl_unused void *provctx)       \
 int ossl_cipher_generic_initiv(PROV_CIPHER_CTX *ctx, const unsigned char *iv,
                                size_t ivlen);
 
-size_t fillblock(unsigned char *buf, size_t *buflen, size_t blocksize,
-                 const unsigned char **in, size_t *inlen);
-int trailingdata(unsigned char *buf, size_t *buflen, size_t blocksize,
-                 const unsigned char **in, size_t *inlen);
-
+size_t ossl_cipher_fillblock(unsigned char *buf, size_t *buflen,
+                             size_t blocksize,
+                             const unsigned char **in, size_t *inlen);
+int ossl_cipher_trailingdata(unsigned char *buf, size_t *buflen,
+                             size_t blocksize,
+                             const unsigned char **in, size_t *inlen);
