@@ -34,10 +34,11 @@
 # define SCRYPT_MAX_MEM  (1024 * 1024 * 32)
 #endif
 
-int EVP_PBE_scrypt(const char *pass, size_t passlen,
-                   const unsigned char *salt, size_t saltlen,
-                   uint64_t N, uint64_t r, uint64_t p, uint64_t maxmem,
-                   unsigned char *key, size_t keylen)
+int EVP_PBE_scrypt_ex(const char *pass, size_t passlen,
+                      const unsigned char *salt, size_t saltlen,
+                      uint64_t N, uint64_t r, uint64_t p, uint64_t maxmem,
+                      unsigned char *key, size_t keylen,
+                      OSSL_LIB_CTX *ctx, const char *propq)
 {
     const char *empty = "";
     int rv = 1;
@@ -84,6 +85,15 @@ int EVP_PBE_scrypt(const char *pass, size_t passlen,
 
     EVP_KDF_CTX_free(kctx);
     return rv;
+}
+
+int EVP_PBE_scrypt(const char *pass, size_t passlen,
+                   const unsigned char *salt, size_t saltlen,
+                   uint64_t N, uint64_t r, uint64_t p, uint64_t maxmem,
+                   unsigned char *key, size_t keylen)
+{
+    return EVP_PBE_scrypt_ex(pass, passlen, salt, saltlen, N, r, p, maxmem,
+                             key, keylen, NULL, NULL);
 }
 
 #endif

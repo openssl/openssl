@@ -22,6 +22,11 @@
 #include "helpers/pkcs12.h"
 
 
+static OSSL_LIB_CTX *testctx = NULL;
+static OSSL_PROVIDER *nullprov = NULL;
+static OSSL_PROVIDER *deflprov = NULL;
+static OSSL_PROVIDER *lgcyprov = NULL;
+
 /* --------------------------------------------------------------------------
  * PKCS12 component test data
  */
@@ -211,6 +216,51 @@ static const PKCS12_ENC mac_default = {
     1000
 };
 
+static const int enc_nids[] = {
+    /* NOTE: To use PBES2 we pass the desired cipher NID instead of NID_pbes2 */
+    NID_aes_128_cbc,
+    NID_aes_256_cbc,
+    NID_des_ede3_cbc,
+/*
+ * Other PBE algorithms which are not currently working/supported for PKCS#12.
+ */
+/*
+    NID_des_cbc,
+
+    NID_pbeWithMD2AndDES_CBC,
+    NID_pbeWithMD2AndRC2_CBC,
+    NID_pbeWithMD5AndCast5_CBC,
+    NID_pbeWithMD5AndDES_CBC,
+    NID_pbeWithMD5AndRC2_CBC,
+    NID_pbe_WithSHA1And128BitRC2_CBC,
+    NID_pbe_WithSHA1And128BitRC4,
+    NID_pbe_WithSHA1And40BitRC2_CBC,
+    NID_pbe_WithSHA1And40BitRC4,
+    NID_pbeWithSHA1AndDES_CBC,
+    NID_pbeWithSHA1AndRC2_CBC,
+*/
+    NID_pbe_WithSHA1And2_Key_TripleDES_CBC,
+    NID_pbe_WithSHA1And3_Key_TripleDES_CBC,
+};
+
+static const int mac_nids[] = {
+    NID_sha1,
+    NID_md5,
+    NID_sha256,
+    NID_sha512,
+    NID_sha3_256,
+    NID_sha3_512
+};
+
+static const int iters[] = {
+    1,
+    1000
+};
+
+static const char *passwords[] = {
+    "Password1",
+    "",
+};
 
 /* --------------------------------------------------------------------------
  * Local functions
@@ -261,9 +311,75 @@ static int test_single_cert_no_attrs(void)
     return end_pkcs12_builder(pb);
 }
 
+static int test_single_key(PKCS12_ENC *enc)
+{
+    char fname[80];
+    PKCS12_BUILDER *pb;
+    sprintf(fname, "1key_ciph-%d_iter-%d.p12", enc->nid, enc->iter);
+
+    pb = new_pkcs12_builder(fname);
+
+    /* Generate/encode */
+    start_pkcs12(pb);
+
+        start_contentinfo(pb);
+
+            add_keybag(pb, KEY1, sizeof(KEY1), NULL, enc);
+
+        end_contentinfo(pb);
+
+    end_pkcs12(pb);
+
+    /* Read/decode */
+    start_check_pkcs12(pb);
+
+        start_check_contentinfo(pb);
+
+            check_keybag(pb, KEY1, sizeof(KEY1), NULL, enc);
+
+        end_check_contentinfo(pb);
+
+    end_check_pkcs12(pb);
+
+    return end_pkcs12_builder(pb);
+}
+
+static int test_single_key_enc_alg(int z)
+{
+    PKCS12_ENC enc;
+
+    enc.nid = enc_nids[z];
+    enc.pass = enc_default.pass;
+    enc.iter = enc_default.iter;
+
+    return test_single_key(&enc);
+}
+
+static int test_single_key_enc_pass(int z)
+{
+    PKCS12_ENC enc;
+
+    enc.nid = enc_default.nid;
+    enc.pass = passwords[z];
+    enc.iter = enc_default.iter;
+
+    return test_single_key(&enc);
+}
+
+static int test_single_key_enc_iter(int z)
+{
+    PKCS12_ENC enc;
+
+    enc.nid = enc_default.nid;
+    enc.pass = enc_default.pass;
+    enc.iter = iters[z];
+
+    return test_single_key(&enc);
+}
+
 static int test_single_key_with_attrs(void)
 {
-    PKCS12_BUILDER *pb = new_pkcs12_builder("1key.p12");
+    PKCS12_BUILDER *pb = new_pkcs12_builder("1keyattrs.p12");
     
     /* Generate/encode */
     start_pkcs12(pb);
@@ -288,6 +404,72 @@ static int test_single_key_with_attrs(void)
     end_check_pkcs12(pb);
 
     return end_pkcs12_builder(pb);
+}
+
+static int test_single_cert_mac(PKCS12_ENC *mac)
+{
+    char fname[80];
+    PKCS12_BUILDER *pb;
+    sprintf(fname, "1cert_mac-%d_iter-%d.p12", mac->nid, mac->iter);
+
+    pb = new_pkcs12_builder(fname);
+
+    /* Generate/encode */
+    start_pkcs12(pb);
+
+        start_contentinfo(pb);
+
+            add_certbag(pb, CERT1, sizeof(CERT1), NULL);
+
+        end_contentinfo(pb);
+
+    end_pkcs12_with_mac(pb, mac);
+
+    /* Read/decode */
+    start_check_pkcs12_with_mac(pb, mac);
+
+        start_check_contentinfo(pb);
+
+            check_certbag(pb, CERT1, sizeof(CERT1), NULL);
+
+        end_check_contentinfo(pb);
+
+    end_check_pkcs12(pb);
+
+    return end_pkcs12_builder(pb);
+}
+
+static int test_single_cert_mac_alg(int z)
+{
+    PKCS12_ENC mac;
+
+    mac.nid = mac_nids[z];
+    mac.pass = mac_default.pass;
+    mac.iter = mac_default.iter;
+
+    return test_single_cert_mac(&mac);
+}
+
+static int test_single_cert_mac_pass(int z)
+{
+    PKCS12_ENC mac;
+
+    mac.nid = mac_default.nid;
+    mac.pass = passwords[z];
+    mac.iter = mac_default.iter;
+
+    return test_single_cert_mac(&mac);
+}
+
+static int test_single_cert_mac_iter(int z)
+{
+    PKCS12_ENC mac;
+
+    mac.nid = mac_default.nid;
+    mac.pass = mac_default.pass;
+    mac.iter = iters[z];
+
+    return test_single_cert_mac(&mac);
 }
 
 static int test_cert_key_with_attrs_and_mac(void)
@@ -430,11 +612,74 @@ static int test_multiple_contents(void)
     return end_pkcs12_builder(pb);
 }
 
+typedef enum OPTION_choice {
+    OPT_ERR = -1,
+    OPT_EOF = 0,
+    OPT_WRITE,
+    OPT_LEGACY,
+    OPT_CONTEXT,
+    OPT_TEST_ENUM
+} OPTION_CHOICE;
+
+const OPTIONS *test_get_options(void)
+{
+    static const OPTIONS options[] = {
+        OPT_TEST_OPTIONS_DEFAULT_USAGE,
+        { "write",   OPT_WRITE,   '-', "Write PKCS12 objects to file" },
+        { "legacy",  OPT_LEGACY,  '-', "Test the legacy APIs" },
+        { "context", OPT_CONTEXT, '-', "Explicitly use a non-default library context" },
+        { NULL }
+    };
+    return options;
+}
 
 int setup_tests(void)
 {
+    OPTION_CHOICE o;
+
+    while ((o = opt_next()) != OPT_EOF) {
+        switch (o) {
+        case OPT_WRITE:
+            PKCS12_helper_set_write_files(1);
+            break;
+        case OPT_LEGACY:
+            PKCS12_helper_set_legacy(1);
+            break;
+        case OPT_CONTEXT:
+            testctx = OSSL_LIB_CTX_new();
+            if (!TEST_ptr(testctx))
+                return 0;
+            /* Swap the libctx to test non-default context only */
+            nullprov = OSSL_PROVIDER_load(NULL, "null");
+            deflprov = OSSL_PROVIDER_load(testctx, "default");
+            lgcyprov = OSSL_PROVIDER_load(testctx, "legacy");
+            PKCS12_helper_set_libctx(testctx);
+            break;
+        case OPT_TEST_CASES:
+            break;
+        default:
+            return 0;
+        }
+    }
+
+    /*
+     * Verify that the default and fips providers in the default libctx are not
+     * available if we are using a standalone context
+     */
+    if (testctx != NULL) {
+        if (!TEST_false(OSSL_PROVIDER_available(NULL, "default"))
+                || !TEST_false(OSSL_PROVIDER_available(NULL, "fips")))
+            return 0;
+    }
+
     ADD_TEST(test_single_cert_no_attrs);
+    ADD_ALL_TESTS(test_single_key_enc_alg, OSSL_NELEM(enc_nids));
+    ADD_ALL_TESTS(test_single_key_enc_pass, OSSL_NELEM(passwords));
+    ADD_ALL_TESTS(test_single_key_enc_iter, OSSL_NELEM(iters));
     ADD_TEST(test_single_key_with_attrs);
+    ADD_ALL_TESTS(test_single_cert_mac_alg, OSSL_NELEM(mac_nids));
+    ADD_ALL_TESTS(test_single_cert_mac_pass, OSSL_NELEM(passwords));
+    ADD_ALL_TESTS(test_single_cert_mac_iter, OSSL_NELEM(iters));
     ADD_TEST(test_cert_key_with_attrs_and_mac);
     ADD_TEST(test_cert_key_encrypted_content);
     ADD_TEST(test_single_secret_encrypted_content);
@@ -442,3 +687,10 @@ int setup_tests(void)
     return 1;
 }
 
+void cleanup_tests(void)
+{
+    OSSL_PROVIDER_unload(nullprov);
+    OSSL_PROVIDER_unload(deflprov);
+    OSSL_PROVIDER_unload(lgcyprov);
+    OSSL_LIB_CTX_free(testctx);
+}

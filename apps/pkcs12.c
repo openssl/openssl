@@ -645,8 +645,9 @@ int pkcs12_main(int argc, char **argv)
         if (!twopass)
             OPENSSL_strlcpy(macpass, pass, sizeof(macpass));
 
-        p12 = PKCS12_create(cpass, name, key, ee_cert, certs,
-                            key_pbe, cert_pbe, iter, -1, keytype);
+        p12 = PKCS12_create_ex(cpass, name, key, ee_cert, certs,
+                               key_pbe, cert_pbe, iter, -1, keytype,
+                               app_get0_libctx(), app_get0_propq());
 
         if (p12 == NULL) {
             BIO_printf(bio_err, "Error creating PKCS12 structure for %s\n",
@@ -696,7 +697,12 @@ int pkcs12_main(int argc, char **argv)
     if (out == NULL)
         goto end;
 
-    if ((p12 = d2i_PKCS12_bio(in, NULL)) == NULL) {
+    p12 = PKCS12_init_ex(NID_pkcs7_data, app_get0_libctx(), app_get0_propq());
+    if (p12 == NULL) {
+        ERR_print_errors(bio_err);
+        goto end;
+    }
+    if ((p12 = d2i_PKCS12_bio(in, &p12)) == NULL) {
         ERR_print_errors(bio_err);
         goto end;
     }

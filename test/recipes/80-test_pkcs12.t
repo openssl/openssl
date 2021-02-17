@@ -57,10 +57,14 @@ if (eval { require Win32::API; 1; }) {
 }
 $ENV{OPENSSL_WIN32_UTF8}=1;
 
-plan tests => 5;
+plan tests => 7;
 
 # Test different PKCS#12 formats
 ok(run(test(["pkcs12_format_test"])), "test pkcs12 formats");
+# Test with legacy APIs
+ok(run(test(["pkcs12_format_test", "-legacy"])), "test pkcs12 formats using legacy APIs");
+# Test with a non-default library context (and no loaded providers in the default context)
+ok(run(test(["pkcs12_format_test", "-context"])), "test pkcs12 formats using a non-default library context");
 
 # just see that we can read shibboleth.pfx protected with $pass
 ok(run(app(["openssl", "pkcs12", "-noout",

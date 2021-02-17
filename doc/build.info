@@ -1118,6 +1118,10 @@ DEPEND[html/man3/EVP_OpenInit.html]=man3/EVP_OpenInit.pod
 GENERATE[html/man3/EVP_OpenInit.html]=man3/EVP_OpenInit.pod
 DEPEND[man/man3/EVP_OpenInit.3]=man3/EVP_OpenInit.pod
 GENERATE[man/man3/EVP_OpenInit.3]=man3/EVP_OpenInit.pod
+DEPEND[html/man3/EVP_PBE_CipherInit.html]=man3/EVP_PBE_CipherInit.pod
+GENERATE[html/man3/EVP_PBE_CipherInit.html]=man3/EVP_PBE_CipherInit.pod
+DEPEND[man/man3/EVP_PBE_CipherInit.3]=man3/EVP_PBE_CipherInit.pod
+GENERATE[man/man3/EVP_PBE_CipherInit.3]=man3/EVP_PBE_CipherInit.pod
 DEPEND[html/man3/EVP_PKEY2PKCS8.html]=man3/EVP_PKEY2PKCS8.pod
 GENERATE[html/man3/EVP_PKEY2PKCS8.html]=man3/EVP_PKEY2PKCS8.pod
 DEPEND[man/man3/EVP_PKEY2PKCS8.3]=man3/EVP_PKEY2PKCS8.pod
@@ -1726,6 +1730,10 @@ DEPEND[html/man3/PEM_write_bio_PKCS7_stream.html]=man3/PEM_write_bio_PKCS7_strea
 GENERATE[html/man3/PEM_write_bio_PKCS7_stream.html]=man3/PEM_write_bio_PKCS7_stream.pod
 DEPEND[man/man3/PEM_write_bio_PKCS7_stream.3]=man3/PEM_write_bio_PKCS7_stream.pod
 GENERATE[man/man3/PEM_write_bio_PKCS7_stream.3]=man3/PEM_write_bio_PKCS7_stream.pod
+DEPEND[html/man3/PKCS12_PBE_keyivgen.html]=man3/PKCS12_PBE_keyivgen.pod
+GENERATE[html/man3/PKCS12_PBE_keyivgen.html]=man3/PKCS12_PBE_keyivgen.pod
+DEPEND[man/man3/PKCS12_PBE_keyivgen.3]=man3/PKCS12_PBE_keyivgen.pod
+GENERATE[man/man3/PKCS12_PBE_keyivgen.3]=man3/PKCS12_PBE_keyivgen.pod
 DEPEND[html/man3/PKCS12_SAFEBAG_create_cert.html]=man3/PKCS12_SAFEBAG_create_cert.pod
 GENERATE[html/man3/PKCS12_SAFEBAG_create_cert.html]=man3/PKCS12_SAFEBAG_create_cert.pod
 DEPEND[man/man3/PKCS12_SAFEBAG_create_cert.3]=man3/PKCS12_SAFEBAG_create_cert.pod
@@ -1766,18 +1774,46 @@ DEPEND[html/man3/PKCS12_create.html]=man3/PKCS12_create.pod
 GENERATE[html/man3/PKCS12_create.html]=man3/PKCS12_create.pod
 DEPEND[man/man3/PKCS12_create.3]=man3/PKCS12_create.pod
 GENERATE[man/man3/PKCS12_create.3]=man3/PKCS12_create.pod
+DEPEND[html/man3/PKCS12_decrypt_skey.html]=man3/PKCS12_decrypt_skey.pod
+GENERATE[html/man3/PKCS12_decrypt_skey.html]=man3/PKCS12_decrypt_skey.pod
+DEPEND[man/man3/PKCS12_decrypt_skey.3]=man3/PKCS12_decrypt_skey.pod
+GENERATE[man/man3/PKCS12_decrypt_skey.3]=man3/PKCS12_decrypt_skey.pod
+DEPEND[html/man3/PKCS12_gen_mac.html]=man3/PKCS12_gen_mac.pod
+GENERATE[html/man3/PKCS12_gen_mac.html]=man3/PKCS12_gen_mac.pod
+DEPEND[man/man3/PKCS12_gen_mac.3]=man3/PKCS12_gen_mac.pod
+GENERATE[man/man3/PKCS12_gen_mac.3]=man3/PKCS12_gen_mac.pod
 DEPEND[html/man3/PKCS12_get_friendlyname.html]=man3/PKCS12_get_friendlyname.pod
 GENERATE[html/man3/PKCS12_get_friendlyname.html]=man3/PKCS12_get_friendlyname.pod
 DEPEND[man/man3/PKCS12_get_friendlyname.3]=man3/PKCS12_get_friendlyname.pod
 GENERATE[man/man3/PKCS12_get_friendlyname.3]=man3/PKCS12_get_friendlyname.pod
+DEPEND[html/man3/PKCS12_init.html]=man3/PKCS12_init.pod
+GENERATE[html/man3/PKCS12_init.html]=man3/PKCS12_init.pod
+DEPEND[man/man3/PKCS12_init.3]=man3/PKCS12_init.pod
+GENERATE[man/man3/PKCS12_init.3]=man3/PKCS12_init.pod
+DEPEND[html/man3/PKCS12_item_decrypt_d2i.html]=man3/PKCS12_item_decrypt_d2i.pod
+GENERATE[html/man3/PKCS12_item_decrypt_d2i.html]=man3/PKCS12_item_decrypt_d2i.pod
+DEPEND[man/man3/PKCS12_item_decrypt_d2i.3]=man3/PKCS12_item_decrypt_d2i.pod
+GENERATE[man/man3/PKCS12_item_decrypt_d2i.3]=man3/PKCS12_item_decrypt_d2i.pod
+DEPEND[html/man3/PKCS12_key_gen_utf8_ex.html]=man3/PKCS12_key_gen_utf8_ex.pod
+GENERATE[html/man3/PKCS12_key_gen_utf8_ex.html]=man3/PKCS12_key_gen_utf8_ex.pod
+DEPEND[man/man3/PKCS12_key_gen_utf8_ex.3]=man3/PKCS12_key_gen_utf8_ex.pod
+GENERATE[man/man3/PKCS12_key_gen_utf8_ex.3]=man3/PKCS12_key_gen_utf8_ex.pod
 DEPEND[html/man3/PKCS12_newpass.html]=man3/PKCS12_newpass.pod
 GENERATE[html/man3/PKCS12_newpass.html]=man3/PKCS12_newpass.pod
 DEPEND[man/man3/PKCS12_newpass.3]=man3/PKCS12_newpass.pod
 GENERATE[man/man3/PKCS12_newpass.3]=man3/PKCS12_newpass.pod
+DEPEND[html/man3/PKCS12_pack_p7encdata.html]=man3/PKCS12_pack_p7encdata.pod
+GENERATE[html/man3/PKCS12_pack_p7encdata.html]=man3/PKCS12_pack_p7encdata.pod
+DEPEND[man/man3/PKCS12_pack_p7encdata.3]=man3/PKCS12_pack_p7encdata.pod
+GENERATE[man/man3/PKCS12_pack_p7encdata.3]=man3/PKCS12_pack_p7encdata.pod
 DEPEND[html/man3/PKCS12_parse.html]=man3/PKCS12_parse.pod
 GENERATE[html/man3/PKCS12_parse.html]=man3/PKCS12_parse.pod
 DEPEND[man/man3/PKCS12_parse.3]=man3/PKCS12_parse.pod
 GENERATE[man/man3/PKCS12_parse.3]=man3/PKCS12_parse.pod
+DEPEND[html/man3/PKCS5_PBE_keyivgen.html]=man3/PKCS5_PBE_keyivgen.pod
+GENERATE[html/man3/PKCS5_PBE_keyivgen.html]=man3/PKCS5_PBE_keyivgen.pod
+DEPEND[man/man3/PKCS5_PBE_keyivgen.3]=man3/PKCS5_PBE_keyivgen.pod
+GENERATE[man/man3/PKCS5_PBE_keyivgen.3]=man3/PKCS5_PBE_keyivgen.pod
 DEPEND[html/man3/PKCS5_PBKDF2_HMAC.html]=man3/PKCS5_PBKDF2_HMAC.pod
 GENERATE[html/man3/PKCS5_PBKDF2_HMAC.html]=man3/PKCS5_PBKDF2_HMAC.pod
 DEPEND[man/man3/PKCS5_PBKDF2_HMAC.3]=man3/PKCS5_PBKDF2_HMAC.pod
@@ -1810,6 +1846,10 @@ DEPEND[html/man3/PKCS7_verify.html]=man3/PKCS7_verify.pod
 GENERATE[html/man3/PKCS7_verify.html]=man3/PKCS7_verify.pod
 DEPEND[man/man3/PKCS7_verify.3]=man3/PKCS7_verify.pod
 GENERATE[man/man3/PKCS7_verify.3]=man3/PKCS7_verify.pod
+DEPEND[html/man3/PKCS8_encrypt.html]=man3/PKCS8_encrypt.pod
+GENERATE[html/man3/PKCS8_encrypt.html]=man3/PKCS8_encrypt.pod
+DEPEND[man/man3/PKCS8_encrypt.3]=man3/PKCS8_encrypt.pod
+GENERATE[man/man3/PKCS8_encrypt.3]=man3/PKCS8_encrypt.pod
 DEPEND[html/man3/PKCS8_pkey_add1_attr.html]=man3/PKCS8_pkey_add1_attr.pod
 GENERATE[html/man3/PKCS8_pkey_add1_attr.html]=man3/PKCS8_pkey_add1_attr.pod
 DEPEND[man/man3/PKCS8_pkey_add1_attr.3]=man3/PKCS8_pkey_add1_attr.pod
@@ -2929,6 +2969,7 @@ html/man3/EVP_KEYMGMT.html \
 html/man3/EVP_MAC.html \
 html/man3/EVP_MD_meth_new.html \
 html/man3/EVP_OpenInit.html \
+html/man3/EVP_PBE_CipherInit.html \
 html/man3/EVP_PKEY2PKCS8.html \
 html/man3/EVP_PKEY_ASN1_METHOD.html \
 html/man3/EVP_PKEY_CTX_ctrl.html \
@@ -3081,6 +3122,7 @@ html/man3/PEM_read_bio_PrivateKey.html \
 html/man3/PEM_read_bio_ex.html \
 html/man3/PEM_write_bio_CMS_stream.html \
 html/man3/PEM_write_bio_PKCS7_stream.html \
+html/man3/PKCS12_PBE_keyivgen.html \
 html/man3/PKCS12_SAFEBAG_create_cert.html \
 html/man3/PKCS12_SAFEBAG_get0_attrs.html \
 html/man3/PKCS12_SAFEBAG_get1_cert.html \
@@ -3091,9 +3133,16 @@ html/man3/PKCS12_add_friendlyname_asc.html \
 html/man3/PKCS12_add_localkeyid.html \
 html/man3/PKCS12_add_safe.html \
 html/man3/PKCS12_create.html \
+html/man3/PKCS12_decrypt_skey.html \
+html/man3/PKCS12_gen_mac.html \
 html/man3/PKCS12_get_friendlyname.html \
+html/man3/PKCS12_init.html \
+html/man3/PKCS12_item_decrypt_d2i.html \
+html/man3/PKCS12_key_gen_utf8_ex.html \
 html/man3/PKCS12_newpass.html \
+html/man3/PKCS12_pack_p7encdata.html \
 html/man3/PKCS12_parse.html \
+html/man3/PKCS5_PBE_keyivgen.html \
 html/man3/PKCS5_PBKDF2_HMAC.html \
 html/man3/PKCS7_decrypt.html \
 html/man3/PKCS7_encrypt.html \
@@ -3102,6 +3151,7 @@ html/man3/PKCS7_sign.html \
 html/man3/PKCS7_sign_add_signer.html \
 html/man3/PKCS7_type_is_other.html \
 html/man3/PKCS7_verify.html \
+html/man3/PKCS8_encrypt.html \
 html/man3/PKCS8_pkey_add1_attr.html \
 html/man3/RAND_add.html \
 html/man3/RAND_bytes.html \
@@ -3504,6 +3554,7 @@ man/man3/EVP_KEYMGMT.3 \
 man/man3/EVP_MAC.3 \
 man/man3/EVP_MD_meth_new.3 \
 man/man3/EVP_OpenInit.3 \
+man/man3/EVP_PBE_CipherInit.3 \
 man/man3/EVP_PKEY2PKCS8.3 \
 man/man3/EVP_PKEY_ASN1_METHOD.3 \
 man/man3/EVP_PKEY_CTX_ctrl.3 \
@@ -3656,6 +3707,7 @@ man/man3/PEM_read_bio_PrivateKey.3 \
 man/man3/PEM_read_bio_ex.3 \
 man/man3/PEM_write_bio_CMS_stream.3 \
 man/man3/PEM_write_bio_PKCS7_stream.3 \
+man/man3/PKCS12_PBE_keyivgen.3 \
 man/man3/PKCS12_SAFEBAG_create_cert.3 \
 man/man3/PKCS12_SAFEBAG_get0_attrs.3 \
 man/man3/PKCS12_SAFEBAG_get1_cert.3 \
@@ -3666,9 +3718,16 @@ man/man3/PKCS12_add_friendlyname_asc.3 \
 man/man3/PKCS12_add_localkeyid.3 \
 man/man3/PKCS12_add_safe.3 \
 man/man3/PKCS12_create.3 \
+man/man3/PKCS12_decrypt_skey.3 \
+man/man3/PKCS12_gen_mac.3 \
 man/man3/PKCS12_get_friendlyname.3 \
+man/man3/PKCS12_init.3 \
+man/man3/PKCS12_item_decrypt_d2i.3 \
+man/man3/PKCS12_key_gen_utf8_ex.3 \
 man/man3/PKCS12_newpass.3 \
+man/man3/PKCS12_pack_p7encdata.3 \
 man/man3/PKCS12_parse.3 \
+man/man3/PKCS5_PBE_keyivgen.3 \
 man/man3/PKCS5_PBKDF2_HMAC.3 \
 man/man3/PKCS7_decrypt.3 \
 man/man3/PKCS7_encrypt.3 \
@@ -3677,6 +3736,7 @@ man/man3/PKCS7_sign.3 \
 man/man3/PKCS7_sign_add_signer.3 \
 man/man3/PKCS7_type_is_other.3 \
 man/man3/PKCS7_verify.3 \
+man/man3/PKCS8_encrypt.3 \
 man/man3/PKCS8_pkey_add1_attr.3 \
 man/man3/RAND_add.3 \
 man/man3/RAND_bytes.3 \
