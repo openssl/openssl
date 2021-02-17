@@ -31,7 +31,7 @@
  * This demonstration will show how to digest data using
  * a BIO configured with a message digest
  * A message digest name may be passed as an argument.
- * The default digest is sha3-512
+ * The default digest is SHA3-512
  */
 
 int main(int argc, char * argv[])
@@ -40,7 +40,6 @@ int main(int argc, char * argv[])
     OSSL_LIB_CTX *library_context = NULL;
     BIO *input = NULL;
     BIO *bio_digest = NULL;
-    const char *digest_name;
     EVP_MD *md = NULL;
     unsigned char buffer[512];
     size_t readct, writect;
@@ -48,11 +47,6 @@ int main(int argc, char * argv[])
     char *digest_value=NULL;
     int j;
 
-    if (argc > 1)
-        digest_name = argv[1];
-    else 
-        digest_name = "sha3-512";
-    
     input = BIO_new_fd( fileno(stdin), 1 );
     if (input == NULL) {
         fprintf(stderr, "BIO_new_fd() for stdin returned NULL\n");
@@ -64,9 +58,14 @@ int main(int argc, char * argv[])
         goto cleanup;
     }
 
-    md = EVP_MD_fetch( library_context, digest_name, NULL );
+    /*
+     * Fetch a message digest by name
+     * The algorithm name is case insensitive. 
+     * See providers(7) for details about algorithm fetching
+     */
+    md = EVP_MD_fetch( library_context, "SHA3-512", NULL );
     if (md == NULL) {
-        fprintf(stderr, "EVP_MD_fetch did not find %s.\n", digest_name);
+        fprintf(stderr, "EVP_MD_fetch did not find SHA3-512.\n");
         goto cleanup;
     }
     digest_size = EVP_MD_size(md);

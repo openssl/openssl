@@ -80,7 +80,6 @@ int demonstrate_digest(void)
 {
     OSSL_LIB_CTX *library_context;
     int result = 0;
-    const char *digest_name = "SHA3-512";
     const char *option_properties = NULL;
     EVP_MD *message_digest = NULL;
     EVP_MD_CTX *digest_context = NULL;
@@ -96,11 +95,13 @@ int demonstrate_digest(void)
 
     /*
      * Fetch a message digest by name
+     * The algorithm name is case insensitive. 
+     * See providers(7) for details about algorithm fetching
      */
     message_digest = EVP_MD_fetch(library_context,
-                                  digest_name, option_properties);
+                                  "SHA3-512", option_properties);
     if (message_digest == NULL) {
-        fprintf(stderr, "EVP_MD_fetch could not find %s.", digest_name);
+        fprintf(stderr, "EVP_MD_fetch could not find SHA3-512.");
         goto cleanup;
     }
     /* Determine the length of the fetched digest type */
