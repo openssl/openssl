@@ -198,52 +198,46 @@ static int ts_check_signing_certs(PKCS7_SIGNER_INFO *si,
                                   STACK_OF(X509) *chain)
 {
     ESS_SIGNING_CERT *ss = ossl_ess_signing_cert_get(si);
-    STACK_OF(ESS_CERT_ID) *cert_ids = NULL;
     ESS_SIGNING_CERT_V2 *ssv2 = ossl_ess_signing_cert_v2_get(si);
-    STACK_OF(ESS_CERT_ID_V2) *cert_ids_v2 = NULL;
     X509 *cert;
     int i = 0;
     int ret = 0;
+    int id_index;
+    int verification_length;
+    void *cert_ids_generic;
+    int (*find_cert_generic)(const void *cert_ids, const X509 *cert);
 
     if (ss != NULL) {
-        cert_ids = ss->cert_ids;
-        cert = sk_X509_value(chain, 0);
-        if (ossl_ess_find_cert(cert_ids, cert) != 0)
-            goto err;
-
-        /*
-         * Check the other certificates of the chain if there are more than one
-         * certificate ids in cert_ids.
-         */
-        if (sk_ESS_CERT_ID_num(cert_ids) > 1) {
-            for (i = 1; i < sk_X509_num(chain); ++i) {
-                cert = sk_X509_value(chain, i);
-                if (ossl_ess_find_cert(cert_ids, cert) < 0)
-                    goto err;
-            }
-        }
+        cert_ids_generic = ss->cert_ids;
+        find_cert_generic = (int (*)(const void *, const X509 *))&ossl_ess_find_cert;
+        verification_length = sk_ESS_CERT_ID_num(cert_ids_generic);
     } else if (ssv2 != NULL) {
-        cert_ids_v2 = ssv2->cert_ids;
-        cert = sk_X509_value(chain, 0);
-        if (ossl_ess_find_cert_v2(cert_ids_v2, cert) != 0)
-            goto err;
-
-        /*
-         * Check the other certificates of the chain if there are more than one
-         * certificate ids in cert_ids.
-         */
-        if (sk_ESS_CERT_ID_V2_num(cert_ids_v2) > 1) {
-            for (i = 1; i < sk_X509_num(chain); ++i) {
-                cert = sk_X509_value(chain, i);
-                if (ossl_ess_find_cert_v2(cert_ids_v2, cert) < 0)
-                    goto err;
-            }
-        }
+        cert_ids_generic = ssv2->cert_ids;
+        find_cert_generic = (int (*)(const void *, const X509 *))&ossl_ess_find_cert_v2;
+        verification_length = sk_ESS_CERT_ID_V2_num(cert_ids_generic);
     } else {
         goto err;
     }
 
+    if (verification_length < 1) // no signer set
+        goto err;
+
+    if (sk_X509_num(chain) < verification_length)
+        goto err;
+
+    for (i = 0; i < verification_length; i++) {
+        cert = sk_X509_value(chain, i);
+        id_index = find_cert_generic(cert_ids_generic, cert);
+        // the first certificate id must be the signer
+        if ((i == 0) && (id_index != 0))
+            goto err;
+        // all certificates must be present regardless of the order
+        if (id_index < 0)
+            goto err;
+    }
+
     ret = 1;
+
  err:
     if (!ret)
         ERR_raise(ERR_LIB_TS, TS_R_ESS_SIGNING_CERTIFICATE_ERROR);
