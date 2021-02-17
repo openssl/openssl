@@ -2,6 +2,7 @@
 
 =head1 NAME
 
+OSSL_parse_url,
 OSSL_HTTP_parse_url,
 OCSP_parse_url
 - http utility functions
@@ -10,6 +11,9 @@ OCSP_parse_url
 
  #include <openssl/http.h>
 
+ int OSSL_parse_url(const char *url, char **pscheme, char **puser, char **phost,
+                    char **pport, int *pport_num,
+                    char **ppath, char **pquery, char **pfrag);
  int OSSL_HTTP_parse_url(const char *url,
                          int *pssl, char **puser, char **phost,
                          char **pport, int *pport_num,
@@ -24,28 +28,34 @@ L<openssl_user_macros(7)>:
 
 =head1 DESCRIPTION
 
-OSSL_HTTP_parse_url() parses its input string I<url> as a URL of the form
-C<[http[s]://][userinfo@]host[:port][/path][?query][#fragment]> and splits it up
-into userinfo, host, port, path, query, and fragment components
-and a flag indicating whether it begins with C<https>.
+OSSL_parse_url() parses its input string I<url> as a URL of the form
+C<[scheme://][userinfo@]host[:port][/path][?query][#fragment]> and splits it up
+into scheme, userinfo, host, port, path, query, and fragment components.
 The host component may be a DNS name or an IP address
 where IPv6 addresses should be enclosed in square brackets C<[> and C<]>.
-The port component is optional and defaults to "443" for HTTPS, else "80".
+The port component is optional and defaults to C<0>.
 If given, it must be in decimal form.  If the I<pport_num> argument is not NULL
 the integer value of the port number is assigned to I<*pport_num> on success.
 The path component is also optional and defaults to C</>.
-If I<pssl> is not NULL, I<*pssl> is assigned 1 in case parsing was successful
-and the schema part is present and is C<https>, else 0.
-Each non-NULL result pointer argument I<puser>, I<phost>, I<pport>, I<ppath>,
-I<pquery>, and I<pfrag>, is assigned the respective url component.
+Each non-NULL result pointer argument I<pscheme>, I<puser>, I<phost>, I<pport>,
+I<ppath>, I<pquery>, and I<pfrag>, is assigned the respective url component.
 On success, they are guaranteed to contain non-NULL string pointers, else NULL.
 It is the reponsibility of the caller to free them using L<OPENSSL_free(3)>.
 If I<pquery> is NULL, any given query component is handled as part of the path.
 A string returned via I<*ppath> is guaranteed to begin with a C</> character.
-For absent userinfo, query, and fragment components an empty string is given.
+For absent scheme, userinfo, port, query, and fragment components
+an empty string is provided.
 
-Calling the deprecated fucntion OCSP_parse_url(url, host, port, path, ssl) is
-equivalent to OSSL_HTTP_parse_url(url, ssl, NULL, host, port, NULL, path, NULL, NULL).
+OSSL_HTTP_parse_url() is a special form of OSSL_parse_url()
+where the scheme, if given, must be C<http> or C<https>.
+If I<pssl> is not NULL, I<*pssl> is assigned 1 in case parsing was successful
+and the scheme is C<https>, else 0.
+The port component is optional and defaults to C<443> if the scheme is C<https>,
+else C<80>.
+
+Calling the deprecated function OCSP_parse_url(url, host, port, path, ssl)
+is equivalent to
+OSSL_HTTP_parse_url(url, ssl, NULL, host, port, NULL, path, NULL, NULL).
 
 =head1 RETURN VALUES
 
