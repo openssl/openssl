@@ -175,7 +175,7 @@ int X509_cmp(const X509 *a, const X509 *b)
     return rv < 0 ? -1 : rv > 0;
 }
 
-int X509_add_cert_new(STACK_OF(X509) **p_sk, X509 *cert, int flags)
+int ossl_x509_add_cert_new(STACK_OF(X509) **p_sk, X509 *cert, int flags)
 {
     if (*p_sk == NULL
             && (*p_sk = sk_X509_new_null()) == NULL) {
@@ -236,7 +236,7 @@ int ossl_x509_add_certs_new(STACK_OF(X509) **p_sk, STACK_OF(X509) *certs,
         int j = (flags & X509_ADD_FLAG_PREPEND) == 0 ? i : n - 1 - i;
         /* if prepend, add certs in reverse order to keep original order */
 
-        if (!X509_add_cert_new(p_sk, sk_X509_value(certs, j), flags))
+        if (!ossl_x509_add_cert_new(p_sk, sk_X509_value(certs, j), flags))
             return 0;
     }
     return 1;

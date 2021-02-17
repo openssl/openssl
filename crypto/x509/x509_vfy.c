@@ -281,7 +281,7 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
         return -1;
     }
 
-    if (!X509_add_cert_new(&ctx->chain, ctx->cert, X509_ADD_FLAG_UP_REF)) {
+    if (!ossl_x509_add_cert_new(&ctx->chain, ctx->cert, X509_ADD_FLAG_UP_REF)) {
         ctx->error = X509_V_ERR_OUT_OF_MEM;
         return -1;
     }
