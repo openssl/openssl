@@ -111,7 +111,7 @@ int ecdh_init(void *vpecdhctx, void *vecdh)
     pecdhctx->k = vecdh;
     pecdhctx->cofactor_mode = -1;
     pecdhctx->kdf_type = PROV_ECDH_KDF_NONE;
-    return ec_check_key(vecdh, 1);
+    return ossl_ec_check_key(vecdh, 1);
 }
 
 static
@@ -126,7 +126,7 @@ int ecdh_set_peer(void *vpecdhctx, void *vecdh)
         return 0;
     EC_KEY_free(pecdhctx->peerk);
     pecdhctx->peerk = vecdh;
-    return ec_check_key(vecdh, 1);
+    return ossl_ec_check_key(vecdh, 1);
 }
 
 static
@@ -254,7 +254,7 @@ int ecdh_set_ctx_params(void *vpecdhctx, const OSSL_PARAM params[])
 
         EVP_MD_free(pectx->kdf_md);
         pectx->kdf_md = EVP_MD_fetch(pectx->libctx, name, mdprops);
-        if (!digest_is_allowed(pectx->kdf_md)) {
+        if (!ossl_digest_is_allowed(pectx->kdf_md)) {
             EVP_MD_free(pectx->kdf_md);
             pectx->kdf_md = NULL;
         }
