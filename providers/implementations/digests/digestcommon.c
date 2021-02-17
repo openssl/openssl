@@ -11,8 +11,8 @@
 #include <openssl/proverr.h>
 #include "prov/digestcommon.h"
 
-int digest_default_get_params(OSSL_PARAM params[], size_t blksz, size_t paramsz,
-                              unsigned long flags)
+int ossl_digest_default_get_params(OSSL_PARAM params[], size_t blksz,
+                                   size_t paramsz, unsigned long flags)
 {
     OSSL_PARAM *p = NULL;
 
@@ -48,7 +48,7 @@ static const OSSL_PARAM digest_default_known_gettable_params[] = {
     OSSL_PARAM_int(OSSL_DIGEST_PARAM_ALGID_ABSENT, NULL),
     OSSL_PARAM_END
 };
-const OSSL_PARAM *digest_default_gettable_params(void *provctx)
+const OSSL_PARAM *ossl_digest_default_gettable_params(void *provctx)
 {
     return digest_default_known_gettable_params;
 }

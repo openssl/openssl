@@ -24,25 +24,25 @@ extern "C" {
 # endif
 
 #define PROV_FUNC_DIGEST_GET_PARAM(name, blksize, dgstsize, flags)             \
-static OSSL_FUNC_digest_get_params_fn name##_get_params;                         \
+static OSSL_FUNC_digest_get_params_fn name##_get_params;                       \
 static int name##_get_params(OSSL_PARAM params[])                              \
 {                                                                              \
-    return digest_default_get_params(params, blksize, dgstsize, flags);        \
+    return ossl_digest_default_get_params(params, blksize, dgstsize, flags);   \
 }
 
 #define PROV_DISPATCH_FUNC_DIGEST_GET_PARAMS(name)                             \
 { OSSL_FUNC_DIGEST_GET_PARAMS, (void (*)(void))name##_get_params },            \
 { OSSL_FUNC_DIGEST_GETTABLE_PARAMS,                                            \
-  (void (*)(void))digest_default_gettable_params }
+  (void (*)(void))ossl_digest_default_gettable_params }
 
 # define PROV_DISPATCH_FUNC_DIGEST_CONSTRUCT_START(                            \
     name, CTX, blksize, dgstsize, flags, init, upd, fin)                       \
-static OSSL_FUNC_digest_newctx_fn name##_newctx;                                 \
-static OSSL_FUNC_digest_freectx_fn name##_freectx;                               \
-static OSSL_FUNC_digest_dupctx_fn name##_dupctx;                                 \
+static OSSL_FUNC_digest_newctx_fn name##_newctx;                               \
+static OSSL_FUNC_digest_freectx_fn name##_freectx;                             \
+static OSSL_FUNC_digest_dupctx_fn name##_dupctx;                               \
 static void *name##_newctx(void *prov_ctx)                                     \
 {                                                                              \
-    CTX *ctx = ossl_prov_is_running() ? OPENSSL_zalloc(sizeof(*ctx)) : NULL;    \
+    CTX *ctx = ossl_prov_is_running() ? OPENSSL_zalloc(sizeof(*ctx)) : NULL;   \
     return ctx;                                                                \
 }                                                                              \
 static void name##_freectx(void *vctx)                                         \
@@ -53,7 +53,7 @@ static void name##_freectx(void *vctx)                                         \
 static void *name##_dupctx(void *ctx)                                          \
 {                                                                              \
     CTX *in = (CTX *)ctx;                                                      \
-    CTX *ret = ossl_prov_is_running() ? OPENSSL_malloc(sizeof(*ret)) : NULL;    \
+    CTX *ret = ossl_prov_is_running() ? OPENSSL_malloc(sizeof(*ret)) : NULL;   \
     if (ret != NULL)                                                           \
         *ret = *in;                                                            \
     return ret;                                                                \
@@ -61,13 +61,13 @@ static void *name##_dupctx(void *ctx)                                          \
 static OSSL_FUNC_digest_init_fn name##_internal_init;                          \
 static int name##_internal_init(void *ctx)                                     \
 {                                                                              \
-    return ossl_prov_is_running() ? init(ctx) : 0;                              \
+    return ossl_prov_is_running() ? init(ctx) : 0;                             \
 }                                                                              \
 static OSSL_FUNC_digest_final_fn name##_internal_final;                        \
 static int name##_internal_final(void *ctx, unsigned char *out, size_t *outl,  \
                                  size_t outsz)                                 \
 {                                                                              \
-    if (ossl_prov_is_running() && outsz >= dgstsize && fin(out, ctx)) {         \
+    if (ossl_prov_is_running() && outsz >= dgstsize && fin(out, ctx)) {        \
         *outl = dgstsize;                                                      \
         return 1;                                                              \
     }                                                                          \
@@ -103,9 +103,9 @@ PROV_DISPATCH_FUNC_DIGEST_CONSTRUCT_START(name, CTX, blksize, dgstsize, flags, \
 PROV_DISPATCH_FUNC_DIGEST_CONSTRUCT_END
 
 
-const OSSL_PARAM *digest_default_gettable_params(void *provctx);
-int digest_default_get_params(OSSL_PARAM params[], size_t blksz, size_t paramsz,
-                              unsigned long flags);
+const OSSL_PARAM *ossl_digest_default_gettable_params(void *provctx);
+int ossl_digest_default_get_params(OSSL_PARAM params[], size_t blksz,
+                                   size_t paramsz, unsigned long flags);
 
 # ifdef __cplusplus
 }
