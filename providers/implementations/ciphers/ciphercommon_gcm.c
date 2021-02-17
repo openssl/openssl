@@ -25,8 +25,8 @@ static int gcm_cipher_internal(PROV_GCM_CTX *ctx, unsigned char *out,
                                size_t *padlen, const unsigned char *in,
                                size_t len);
 
-void gcm_initctx(void *provctx, PROV_GCM_CTX *ctx, size_t keybits,
-                 const PROV_GCM_HW *hw, size_t ivlen_min)
+void ossl_gcm_initctx(void *provctx, PROV_GCM_CTX *ctx, size_t keybits,
+                      const PROV_GCM_HW *hw, size_t ivlen_min)
 {
     ctx->pad = 1;
     ctx->mode = EVP_CIPH_GCM_MODE;
@@ -69,14 +69,14 @@ static int gcm_init(void *vctx, const unsigned char *key, size_t keylen,
     return 1;
 }
 
-int gcm_einit(void *vctx, const unsigned char *key, size_t keylen,
-              const unsigned char *iv, size_t ivlen)
+int ossl_gcm_einit(void *vctx, const unsigned char *key, size_t keylen,
+                   const unsigned char *iv, size_t ivlen)
 {
     return gcm_init(vctx, key, keylen, iv, ivlen, 1);
 }
 
-int gcm_dinit(void *vctx, const unsigned char *key, size_t keylen,
-              const unsigned char *iv, size_t ivlen)
+int ossl_gcm_dinit(void *vctx, const unsigned char *key, size_t keylen,
+                   const unsigned char *iv, size_t ivlen)
 {
     return gcm_init(vctx, key, keylen, iv, ivlen, 0);
 }
@@ -129,7 +129,7 @@ static int setivinv(PROV_GCM_CTX *ctx, unsigned char *in, size_t inl)
     return 1;
 }
 
-int gcm_get_ctx_params(void *vctx, OSSL_PARAM params[])
+int ossl_gcm_get_ctx_params(void *vctx, OSSL_PARAM params[])
 {
     PROV_GCM_CTX *ctx = (PROV_GCM_CTX *)vctx;
     OSSL_PARAM *p;
@@ -216,7 +216,7 @@ int gcm_get_ctx_params(void *vctx, OSSL_PARAM params[])
     return 1;
 }
 
-int gcm_set_ctx_params(void *vctx, const OSSL_PARAM params[])
+int ossl_gcm_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
     PROV_GCM_CTX *ctx = (PROV_GCM_CTX *)vctx;
     const OSSL_PARAM *p;
@@ -287,8 +287,8 @@ int gcm_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     return 1;
 }
 
-int gcm_stream_update(void *vctx, unsigned char *out, size_t *outl,
-                      size_t outsize, const unsigned char *in, size_t inl)
+int ossl_gcm_stream_update(void *vctx, unsigned char *out, size_t *outl,
+                           size_t outsize, const unsigned char *in, size_t inl)
 {
     PROV_GCM_CTX *ctx = (PROV_GCM_CTX *)vctx;
 
@@ -309,8 +309,8 @@ int gcm_stream_update(void *vctx, unsigned char *out, size_t *outl,
     return 1;
 }
 
-int gcm_stream_final(void *vctx, unsigned char *out, size_t *outl,
-                     size_t outsize)
+int ossl_gcm_stream_final(void *vctx, unsigned char *out, size_t *outl,
+                          size_t outsize)
 {
     PROV_GCM_CTX *ctx = (PROV_GCM_CTX *)vctx;
     int i;
@@ -326,9 +326,9 @@ int gcm_stream_final(void *vctx, unsigned char *out, size_t *outl,
     return 1;
 }
 
-int gcm_cipher(void *vctx,
-               unsigned char *out, size_t *outl, size_t outsize,
-               const unsigned char *in, size_t inl)
+int ossl_gcm_cipher(void *vctx,
+                    unsigned char *out, size_t *outl, size_t outsize,
+                    const unsigned char *in, size_t inl)
 {
     PROV_GCM_CTX *ctx = (PROV_GCM_CTX *)vctx;
 
@@ -553,4 +553,3 @@ err:
     *padlen = plen;
     return rv;
 }
-

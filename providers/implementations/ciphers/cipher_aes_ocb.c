@@ -162,7 +162,7 @@ static int aes_ocb_block_update_internal(PROV_AES_OCB_CTX *ctx,
     size_t outlint = 0;
 
     if (*bufsz != 0)
-        nextblocks = fillblock(buf, bufsz, AES_BLOCK_SIZE, &in, &inl);
+        nextblocks = ossl_cipher_fillblock(buf, bufsz, AES_BLOCK_SIZE, &in, &inl);
     else
         nextblocks = inl & ~(AES_BLOCK_SIZE-1);
 
@@ -193,7 +193,8 @@ static int aes_ocb_block_update_internal(PROV_AES_OCB_CTX *ctx,
         in += nextblocks;
         inl -= nextblocks;
     }
-    if (inl != 0 && !trailingdata(buf, bufsz, AES_BLOCK_SIZE, &in, &inl)) {
+    if (inl != 0
+        && !ossl_cipher_trailingdata(buf, bufsz, AES_BLOCK_SIZE, &in, &inl)) {
         /* PROVerr already called */
         return 0;
     }
