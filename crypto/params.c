@@ -1104,7 +1104,7 @@ static int get_string_internal(const OSSL_PARAM *p, void **val,
         *max_len = alloc_sz;
     }
 
-    if (*max_len < alloc_sz)
+    if (*max_len < sz)
         return 0;
     memcpy(*val, p->data, sz);
     return 1;
@@ -1129,10 +1129,12 @@ int OSSL_PARAM_get_utf8_string(const OSSL_PARAM *p, char **val, size_t max_len)
     size_t data_length = p->data_size;
 
     if (data_length >= max_len)
-        data_length = OPENSSL_strnlen(p->data);
+        data_length = OPENSSL_strnlen(p->data, data_length);
     if (data_length >= max_len)
         return 0;            /* No space for a terminating NUL byte */
     ((char *)*val)[data_length] = '\0';
+
+    return ret;
 }
 
 int OSSL_PARAM_get_octet_string(const OSSL_PARAM *p, void **val, size_t max_len,
