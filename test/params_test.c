@@ -143,8 +143,16 @@ static int raw_set_params(void *vobj, const OSSL_PARAM *params)
                 return 0;
             obj->p4_l = strlen(obj->p4);
         } else if (strcmp(params->key, "p5") == 0) {
-            strncpy(obj->p5, params->data, params->data_size);
-            obj->p5[params->data_size] = '\0';
+            /*
+             * Protect obj->p5 against too much data.  This should not
+             * happen, we don't use that long strings.
+             */
+            size_t data_length =
+                OPENSSL_strnlen(params->data, params->data_size);
+            if (!TEST_size_t_lt(data_length, sizeof(obj->p5)))
+                return 0;
+            strncpy(obj->p5, params->data, data_length);
+            obj->p5[data_length] = '\0';
             obj->p5_l = strlen(obj->p5);
         } else if (strcmp(params->key, "p6") == 0) {
             obj->p6 = *(const char **)params->data;
