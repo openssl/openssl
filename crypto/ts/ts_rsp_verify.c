@@ -203,9 +203,10 @@ static int ts_check_signing_certs(PKCS7_SIGNER_INFO *si,
     int i = 0;
     int ret = 0;
     int id_index;
+    int chain_length;
     int verification_length;
     void *cert_ids_generic;
-    int (*find_cert_generic)(const void *cert_ids, const X509 *cert);
+    int (*find_cert_generic)(const void *, const X509 *);
 
     if (ss != NULL) {
         cert_ids_generic = ss->cert_ids;
@@ -219,19 +220,30 @@ static int ts_check_signing_certs(PKCS7_SIGNER_INFO *si,
         goto err;
     }
 
-    if (verification_length < 1) // no signer set
+    if (verification_length < 1) // no signer's ESSCertID
         goto err;
 
-    if (sk_X509_num(chain) < verification_length)
+    chain_length = sk_X509_num(chain);
+    if (chain_length < 1) // empty chain
         goto err;
+
+    if (1 < verification_length) { // RFC 2634, section 5.4
+        // Ambiguous standard
+        // But some TSA does not respond with the ESSCertID of the root certificate.
+        // Hence, we exclude the root from verifications.
+        if (1 < chain_length)
+            verification_length = chain_length - 1;
+        else
+            verification_length = 1;
+    }
 
     for (i = 0; i < verification_length; i++) {
         cert = sk_X509_value(chain, i);
         id_index = find_cert_generic(cert_ids_generic, cert);
-        // the first certificate id must be the signer
+        // The first ESSCertID must belongs to the signer.
         if ((i == 0) && (id_index != 0))
             goto err;
-        // all certificates must be present regardless of the order
+        // All certificates must be present in the list regardless of the order.
         if (id_index < 0)
             goto err;
     }
