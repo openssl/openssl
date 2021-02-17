@@ -40,7 +40,7 @@ ossl_provider_get_capabilities
   * Activate the Provider
   * If the Provider is a module, the module will be loaded
   */
- int ossl_provider_activate(OSSL_PROVIDER *prov);
+ int ossl_provider_activate(OSSL_PROVIDER *prov, int retain_fallbacks);
  int ossl_provider_deactivate(OSSL_PROVIDER *prov);
  /* Check if provider is available (activated) */
  int ossl_provider_available(OSSL_PROVIDER *prov);
@@ -178,6 +178,9 @@ be located in that module, and called.
 
 =back
 
+If I<retain_fallbacks> is zero, fallbacks are disabled.  If it is nonzero,
+fallbacks are left unchanged.
+
 ossl_provider_deactivate() "deactivates" the provider for the given
 provider object I<prov> by decrementing its activation count.  When
 that count reaches zero, the activation flag is cleared.
@@ -277,8 +280,8 @@ it has been incremented.
 ossl_provider_free() doesn't return any value.
 
 ossl_provider_set_module_path(), ossl_provider_set_fallback(),
-ossl_provider_activate() and ossl_provider_deactivate() return 1 on
-success, or 0 on error.
+ossl_provider_activate(), ossl_provider_activate_leave_fallbacks() and
+ossl_provider_deactivate() return 1 on success, or 0 on error.
 
 ossl_provider_available() return 1 if the provider is available,
 otherwise 0.

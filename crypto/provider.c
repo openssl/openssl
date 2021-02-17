@@ -13,7 +13,8 @@
 #include <openssl/core_names.h>
 #include "internal/provider.h"
 
-OSSL_PROVIDER *OSSL_PROVIDER_try_load(OSSL_LIB_CTX *libctx, const char *name)
+OSSL_PROVIDER *OSSL_PROVIDER_try_load(OSSL_LIB_CTX *libctx, const char *name,
+                                      int retain_fallbacks)
 {
     OSSL_PROVIDER *prov = NULL;
 
@@ -22,7 +23,7 @@ OSSL_PROVIDER *OSSL_PROVIDER_try_load(OSSL_LIB_CTX *libctx, const char *name)
         && (prov = ossl_provider_new(libctx, name, NULL, 0)) == NULL)
         return NULL;
 
-    if (!ossl_provider_activate(prov)) {
+    if (!ossl_provider_activate(prov, retain_fallbacks)) {
         ossl_provider_free(prov);
         return NULL;
     }
@@ -34,7 +35,7 @@ OSSL_PROVIDER *OSSL_PROVIDER_load(OSSL_LIB_CTX *libctx, const char *name)
 {
     /* Any attempt to load a provider disables auto-loading of defaults */
     if (ossl_provider_disable_fallback_loading(libctx))
-        return OSSL_PROVIDER_try_load(libctx, name);
+        return OSSL_PROVIDER_try_load(libctx, name, 0);
     return NULL;
 }
 

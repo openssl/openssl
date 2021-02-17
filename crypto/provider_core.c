@@ -667,14 +667,16 @@ static int provider_activate(OSSL_PROVIDER *prov)
     return 0;
 }
 
-int ossl_provider_activate(OSSL_PROVIDER *prov)
+int ossl_provider_activate(OSSL_PROVIDER *prov, int retain_fallbacks)
 {
     if (prov == NULL)
         return 0;
     if (provider_activate(prov)) {
-        CRYPTO_THREAD_write_lock(prov->store->lock);
-        prov->store->use_fallbacks = 0;
-        CRYPTO_THREAD_unlock(prov->store->lock);
+        if (!retain_fallbacks) {
+            CRYPTO_THREAD_write_lock(prov->store->lock);
+            prov->store->use_fallbacks = 0;
+            CRYPTO_THREAD_unlock(prov->store->lock);
+        }
         return 1;
     }
     return 0;
