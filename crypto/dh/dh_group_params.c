@@ -81,6 +81,17 @@ void dh_cache_named_group(DH *dh)
     }
 }
 
+int ossl_dh_is_named_safe_prime_group(const DH *dh)
+{
+    int id = DH_get_nid(dh);
+
+    /*
+     * Exclude RFC5114 groups (id = 1..3) since they do not have
+     * q = (p - 1) / 2
+     */
+    return (id > 3);
+}
+
 int DH_get_nid(const DH *dh)
 {
     if (dh == NULL)

@@ -345,14 +345,21 @@ static int dh_set_params(void *key, const OSSL_PARAM params[])
     return 1;
 }
 
-static int dh_validate_public(const DH *dh)
+static int dh_validate_public(const DH *dh, int checktype)
 {
     const BIGNUM *pub_key = NULL;
+    int res = 0;
 
     DH_get0_key(dh, &pub_key, NULL);
     if (pub_key == NULL)
         return 0;
-    return DH_check_pub_key_ex(dh, pub_key);
+
+    /* The partial test is only valid for named group's with q = (p - 1) / 2 */
+    if (checktype == OSSL_KEYMGMT_VALIDATE_QUICK_CHECK
+        && ossl_dh_is_named_safe_prime_group(dh))
+        return dh_check_pub_key_partial(dh, pub_key, &res);
+
+    return DH_check_pub_key(dh, pub_key, &res);
 }
 
 static int dh_validate_private(const DH *dh)
@@ -390,7 +397,7 @@ static int dh_validate(const void *keydata, int selection, int checktype)
     }
 
     if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0)
-        ok = ok && dh_validate_public(dh);
+        ok = ok && dh_validate_public(dh, checktype);
 
     if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0)
         ok = ok && dh_validate_private(dh);

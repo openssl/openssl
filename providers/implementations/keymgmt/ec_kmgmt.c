@@ -852,8 +852,12 @@ int sm2_validate(const void *keydata, int selection, int checktype)
     if ((selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) != 0)
         ok = ok && EC_GROUP_check(EC_KEY_get0_group(eck), ctx);
 
-    if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0)
-        ok = ok && ec_key_public_check(eck, ctx);
+    if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0) {
+        if (checktype == OSSL_KEYMGMT_VALIDATE_QUICK_CHECK)
+            ok = ok && ec_key_public_check_quick(eck, ctx);
+        else
+            ok = ok && ec_key_public_check(eck, ctx);
+    }
 
     if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0)
         ok = ok && sm2_key_private_check(eck);
@@ -894,8 +898,12 @@ int ec_validate(const void *keydata, int selection, int checktype)
             ok = ok && EC_GROUP_check(EC_KEY_get0_group(eck), ctx);
     }
 
-    if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0)
-        ok = ok && ec_key_public_check(eck, ctx);
+    if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0) {
+        if (checktype == OSSL_KEYMGMT_VALIDATE_QUICK_CHECK)
+            ok = ok && ec_key_public_check_quick(eck, ctx);
+        else
+            ok = ok && ec_key_public_check(eck, ctx);
+    }
 
     if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0)
         ok = ok && ec_key_private_check(eck);

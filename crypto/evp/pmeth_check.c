@@ -42,7 +42,7 @@ static int try_provided_check(EVP_PKEY_CTX *ctx, int selection, int checktype)
     return evp_keymgmt_validate(keymgmt, keydata, selection, checktype);
 }
 
-int EVP_PKEY_public_check(EVP_PKEY_CTX *ctx)
+static int evp_pkey_public_check_combined(EVP_PKEY_CTX *ctx, int checktype)
 {
     EVP_PKEY *pkey = ctx->pkey;
     int ok;
@@ -53,7 +53,7 @@ int EVP_PKEY_public_check(EVP_PKEY_CTX *ctx)
     }
 
     if ((ok = try_provided_check(ctx, OSSL_KEYMGMT_SELECT_PUBLIC_KEY,
-                                 OSSL_KEYMGMT_VALIDATE_FULL_CHECK)) != -1)
+                                 checktype)) != -1)
         return ok;
 
     if (pkey->type == EVP_PKEY_NONE)
@@ -74,6 +74,16 @@ int EVP_PKEY_public_check(EVP_PKEY_CTX *ctx)
  not_supported:
     ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
     return -2;
+}
+
+int EVP_PKEY_public_check(EVP_PKEY_CTX *ctx)
+{
+    return evp_pkey_public_check_combined(ctx, OSSL_KEYMGMT_VALIDATE_FULL_CHECK);
+}
+
+int EVP_PKEY_public_check_quick(EVP_PKEY_CTX *ctx)
+{
+    return evp_pkey_public_check_combined(ctx, OSSL_KEYMGMT_VALIDATE_QUICK_CHECK);
 }
 
 static int evp_pkey_param_check_combined(EVP_PKEY_CTX *ctx, int checktype)
