@@ -47,6 +47,7 @@
  */
 static int gen_bytes(EVP_RAND_CTX *drbg, unsigned char *buf, int num)
 {
+#ifndef OPENSSL_NO_DEPRECATED_3_0
     const RAND_METHOD *meth = RAND_get_rand_method();
 
     if (meth != NULL && meth != RAND_OpenSSL()) {
@@ -54,6 +55,7 @@ static int gen_bytes(EVP_RAND_CTX *drbg, unsigned char *buf, int num)
             return meth->bytes(buf, num);
         return -1;
     }
+#endif
 
     if (drbg != NULL)
         return EVP_RAND_generate(drbg, buf, num, 0, 0, NULL, 0);
@@ -551,9 +553,11 @@ static int test_rand_reseed(void)
     if (crngt_skip())
         return TEST_skip("CRNGT cannot be disabled");
 
+#ifndef OPENSSL_NO_DEPRECATED_3_0
     /* Check whether RAND_OpenSSL() is the default method */
     if (!TEST_ptr_eq(RAND_get_rand_method(), RAND_OpenSSL()))
         return 0;
+#endif
 
     /* All three DRBGs should be non-null */
     if (!TEST_ptr(primary = RAND_get0_primary(NULL))
