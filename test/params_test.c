@@ -149,6 +149,7 @@ static int raw_set_params(void *vobj, const OSSL_PARAM *params)
              */
             size_t data_length =
                 OPENSSL_strnlen(params->data, params->data_size);
+
             if (!TEST_size_t_lt(data_length, sizeof(obj->p5)))
                 return 0;
             strncpy(obj->p5, params->data, data_length);
