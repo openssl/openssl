@@ -442,15 +442,11 @@ err:
 }
 
 /*
- * ECC Key validation as specified in SP800-56A R3.
- * Section 5.6.2.3.3 ECC Full Public-Key Validation.
+ * ECC Partial Public-Key Validation as specified in SP800-56A R3
+ * Section 5.6.2.3.4 ECC Partial Public-Key Validation Routine.
  */
-int ec_key_public_check(const EC_KEY *eckey, BN_CTX *ctx)
+int ec_key_public_check_quick(const EC_KEY *eckey, BN_CTX *ctx)
 {
-    int ret = 0;
-    EC_POINT *point = NULL;
-    const BIGNUM *order = NULL;
-
     if (eckey == NULL || eckey->group == NULL || eckey->pub_key == NULL) {
         ERR_raise(ERR_LIB_EC, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
@@ -462,21 +458,36 @@ int ec_key_public_check(const EC_KEY *eckey, BN_CTX *ctx)
         return 0;
     }
 
-    point = EC_POINT_new(eckey->group);
-    if (point == NULL)
-        return 0;
-
     /* 5.6.2.3.3 (Step 2) Test if the public key is in range */
     if (!ec_key_public_range_check(ctx, eckey)) {
         ERR_raise(ERR_LIB_EC, EC_R_COORDINATES_OUT_OF_RANGE);
-        goto err;
+        return 0;
     }
 
     /* 5.6.2.3.3 (Step 3) is the pub_key on the elliptic curve */
     if (EC_POINT_is_on_curve(eckey->group, eckey->pub_key, ctx) <= 0) {
         ERR_raise(ERR_LIB_EC, EC_R_POINT_IS_NOT_ON_CURVE);
-        goto err;
+        return 0;
     }
+    return 1;
+}
+
+/*
+ * ECC Key validation as specified in SP800-56A R3.
+ * Section 5.6.2.3.3 ECC Full Public-Key Validation Routine.
+ */
+int ec_key_public_check(const EC_KEY *eckey, BN_CTX *ctx)
+{
+    int ret = 0;
+    EC_POINT *point = NULL;
+    const BIGNUM *order = NULL;
+
+    if (!ec_key_public_check_quick(eckey, ctx))
+        return 0;
+
+    point = EC_POINT_new(eckey->group);
+    if (point == NULL)
+        return 0;
 
     order = eckey->group->order;
     if (BN_is_zero(order)) {

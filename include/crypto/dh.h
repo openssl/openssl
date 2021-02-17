@@ -28,6 +28,7 @@ int dh_get_named_group_uid_from_size(int pbits);
 const char *dh_gen_type_id2name(int id);
 int dh_gen_type_name2id(const char *name);
 void dh_cache_named_group(DH *dh);
+int ossl_dh_is_named_safe_prime_group(const DH *dh);
 
 FFC_PARAMS *dh_get0_params(DH *dh);
 int dh_get0_nid(const DH *dh);

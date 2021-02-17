@@ -1827,6 +1827,7 @@ int EVP_PKEY_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey);
 int EVP_PKEY_gen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey);
 int EVP_PKEY_check(EVP_PKEY_CTX *ctx);
 int EVP_PKEY_public_check(EVP_PKEY_CTX *ctx);
+int EVP_PKEY_public_check_quick(EVP_PKEY_CTX *ctx);
 int EVP_PKEY_param_check(EVP_PKEY_CTX *ctx);
 int EVP_PKEY_param_check_quick(EVP_PKEY_CTX *ctx);
 int EVP_PKEY_private_check(EVP_PKEY_CTX *ctx);

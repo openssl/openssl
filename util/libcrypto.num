@@ -5299,3 +5299,4 @@ EVP_PKEY_get_params                     ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_fromdata_init                  ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_fromdata_settable              ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_param_check_quick              ?	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_public_check_quick             ?	3_0_0	EXIST::FUNCTION:

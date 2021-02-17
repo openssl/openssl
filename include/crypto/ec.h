@@ -60,6 +60,7 @@ int ecdh_KDF_X9_63(unsigned char *out, size_t outlen,
                    const EVP_MD *md, OSSL_LIB_CTX *libctx, const char *propq);
 
 int ec_key_public_check(const EC_KEY *eckey, BN_CTX *ctx);
+int ec_key_public_check_quick(const EC_KEY *eckey, BN_CTX *ctx);
 int ec_key_private_check(const EC_KEY *eckey);
 int ec_key_pairwise_check(const EC_KEY *eckey, BN_CTX *ctx);
 OSSL_LIB_CTX *ec_key_get_libctx(const EC_KEY *eckey);
