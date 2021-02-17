@@ -63,7 +63,7 @@ static int test_builtin_provider(void)
     ok =
         TEST_ptr(libctx)
         && TEST_true(OSSL_PROVIDER_add_builtin(libctx, name,
-                                            PROVIDER_INIT_FUNCTION_NAME))
+                                               PROVIDER_INIT_FUNCTION_NAME))
         && test_provider(&libctx, name);
 
     OSSL_LIB_CTX_free(libctx);
