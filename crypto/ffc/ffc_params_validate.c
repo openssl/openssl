@@ -147,12 +147,13 @@ int ossl_ffc_params_full_validate(OSSL_LIB_CTX *libctx, const FFC_PARAMS *params
     if (res == NULL)
         res = &tmpres;
 
-#ifndef FIPS_MODULE
+#ifdef FIPS_MODULE
+    return ossl_ffc_params_FIPS186_4_validate(libctx, params, paramstype,
+                                              res, NULL);
+#else
     if (params->seed != NULL) {
-#endif
         return ossl_ffc_params_FIPS186_4_validate(libctx, params, paramstype,
                                                   res, NULL);
-#ifndef FIPS_MODULE
     } else {
         int ret = 0;
 
