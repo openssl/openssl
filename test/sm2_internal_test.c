@@ -28,19 +28,14 @@
 
 # include "crypto/sm2.h"
 
-static RAND_METHOD fake_rand;
-static const RAND_METHOD *saved_rand;
-
+static OSSL_PROVIDER *fake_rand = NULL;
 static uint8_t *fake_rand_bytes = NULL;
 static size_t fake_rand_bytes_offset = 0;
 static size_t fake_rand_size = 0;
 
-static int get_faked_bytes(unsigned char *buf, int num)
+static int get_faked_bytes(unsigned char *buf, size_t num)
 {
-    if (fake_rand_bytes == NULL)
-        return saved_rand->bytes(buf, num);
-
-    if (!TEST_size_t_gt(fake_rand_size, 0))
+    if (!TEST_ptr(fake_rand_bytes) || !TEST_size_t_gt(fake_rand_size, 0))
         return 0;
 
     while (num-- > 0) {
@@ -54,32 +49,24 @@ static int get_faked_bytes(unsigned char *buf, int num)
 
 static int start_fake_rand(const char *hex_bytes)
 {
-    /* save old rand method */
-    if (!TEST_ptr(saved_rand = RAND_get_rand_method()))
-        return 0;
-
-    fake_rand = *saved_rand;
-    /* use own random function */
-    fake_rand.bytes = get_faked_bytes;
-
-    fake_rand_bytes = OPENSSL_hexstr2buf(hex_bytes, NULL);
+    OPENSSL_free(fake_rand_bytes);
     fake_rand_bytes_offset = 0;
     fake_rand_size = strlen(hex_bytes) / 2;
-
-    /* set new RAND_METHOD */
-    if (!TEST_true(RAND_set_rand_method(&fake_rand)))
+    if (!TEST_ptr(fake_rand_bytes = OPENSSL_hexstr2buf(hex_bytes, NULL)))
         return 0;
+
+    /* use own random function */
+    fake_rand_set_callback(get_faked_bytes);
     return 1;
+
 }
 
-static int restore_rand(void)
+static void restore_rand(void)
 {
+    fake_rand_set_callback(NULL);
     OPENSSL_free(fake_rand_bytes);
     fake_rand_bytes = NULL;
     fake_rand_bytes_offset = 0;
-    if (!TEST_true(RAND_set_rand_method(saved_rand)))
-        return 0;
-    return 1;
 }
 
 static EC_GROUP *create_EC_group(const char *p_hex, const char *a_hex,
@@ -375,8 +362,19 @@ int setup_tests(void)
 #ifdef OPENSSL_NO_SM2
     TEST_note("SM2 is disabled.");
 #else
+    fake_rand = fake_rand_start(NULL);
+    if (fake_rand == NULL)
+        return 0;
+
     ADD_TEST(sm2_crypt_test);
     ADD_TEST(sm2_sig_test);
 #endif
     return 1;
+}
+
+void cleanup_tests(void)
+{
+#ifdef OPENSSL_NO_SM2
+    fake_rand_finish(fake_rand);
+#endif
 }
