@@ -446,9 +446,7 @@ int opt_cipher(const char *name, EVP_CIPHER **cipherp)
     return ret;
 }
 
-/*
- * Parse message digest name, put it in *EVP_MD; return 0 on failure, else 1.
- */
+/* Parse message digest name, put it in *EVP_MD; return 0 on failure, else 1. */
 int opt_md_silent(const char *name, EVP_MD **mdp)
 {
     EVP_MD *md;
@@ -488,6 +486,16 @@ int opt_check_md(const char *name)
         return 1;
     ERR_clear_error();
     return 0;
+}
+
+/* Parse an OID name; returns its NID or 0 on failure. */
+int opt_oid(const char *name, const char *desc)
+{
+    int nid = OBJ_txt2nid(name);
+
+    if (nid == 0)
+        opt_printf_stderr("%s: Invalid OID name for %s: %s\n", prog, desc, name);
+    return nid;
 }
 
 /* Look through a list of name/value pairs. */
@@ -752,6 +760,11 @@ int opt_verify(int opt, X509_VERIFY_PARAM *vpm)
                               prog, opt_arg());
             return 0;
         }
+        break;
+    case OPT_V_EKU:
+        if ((i = opt_oid(opt_arg(), "Extended Key Usage")) == 0)
+            return 0;
+        X509_VERIFY_PARAM_set_eku(vpm, i);
         break;
     case OPT_V_VERIFY_NAME:
         vtmp = X509_VERIFY_PARAM_lookup(opt_arg());

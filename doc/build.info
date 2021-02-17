@@ -2327,6 +2327,10 @@ DEPEND[html/man3/SSL_CTX_set_default_passwd_cb.html]=man3/SSL_CTX_set_default_pa
 GENERATE[html/man3/SSL_CTX_set_default_passwd_cb.html]=man3/SSL_CTX_set_default_passwd_cb.pod
 DEPEND[man/man3/SSL_CTX_set_default_passwd_cb.3]=man3/SSL_CTX_set_default_passwd_cb.pod
 GENERATE[man/man3/SSL_CTX_set_default_passwd_cb.3]=man3/SSL_CTX_set_default_passwd_cb.pod
+DEPEND[html/man3/SSL_CTX_set_eku.html]=man3/SSL_CTX_set_eku.pod
+GENERATE[html/man3/SSL_CTX_set_eku.html]=man3/SSL_CTX_set_eku.pod
+DEPEND[man/man3/SSL_CTX_set_eku.3]=man3/SSL_CTX_set_eku.pod
+GENERATE[man/man3/SSL_CTX_set_eku.3]=man3/SSL_CTX_set_eku.pod
 DEPEND[html/man3/SSL_CTX_set_generate_session_id.html]=man3/SSL_CTX_set_generate_session_id.pod
 GENERATE[html/man3/SSL_CTX_set_generate_session_id.html]=man3/SSL_CTX_set_generate_session_id.pod
 DEPEND[man/man3/SSL_CTX_set_generate_session_id.3]=man3/SSL_CTX_set_generate_session_id.pod
@@ -3585,6 +3589,7 @@ html/man3/SSL_CTX_set_client_hello_cb.html \
 html/man3/SSL_CTX_set_ct_validation_callback.html \
 html/man3/SSL_CTX_set_ctlog_list_file.html \
 html/man3/SSL_CTX_set_default_passwd_cb.html \
+html/man3/SSL_CTX_set_eku.html \
 html/man3/SSL_CTX_set_generate_session_id.html \
 html/man3/SSL_CTX_set_info_callback.html \
 html/man3/SSL_CTX_set_keylog_callback.html \
@@ -4248,6 +4253,7 @@ man/man3/SSL_CTX_set_client_hello_cb.3 \
 man/man3/SSL_CTX_set_ct_validation_callback.3 \
 man/man3/SSL_CTX_set_ctlog_list_file.3 \
 man/man3/SSL_CTX_set_default_passwd_cb.3 \
+man/man3/SSL_CTX_set_eku.3 \
 man/man3/SSL_CTX_set_generate_session_id.3 \
 man/man3/SSL_CTX_set_info_callback.3 \
 man/man3/SSL_CTX_set_keylog_callback.3 \

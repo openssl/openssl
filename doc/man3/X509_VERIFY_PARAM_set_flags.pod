@@ -3,7 +3,8 @@
 =head1 NAME
 
 X509_VERIFY_PARAM_set_flags, X509_VERIFY_PARAM_clear_flags,
-X509_VERIFY_PARAM_get_flags, X509_VERIFY_PARAM_set_purpose,
+X509_VERIFY_PARAM_get_flags,
+X509_VERIFY_PARAM_set_eku, X509_VERIFY_PARAM_set_purpose,
 X509_VERIFY_PARAM_get_inh_flags, X509_VERIFY_PARAM_set_inh_flags,
 X509_VERIFY_PARAM_set_trust, X509_VERIFY_PARAM_set_depth,
 X509_VERIFY_PARAM_get_depth, X509_VERIFY_PARAM_set_auth_level,
@@ -34,6 +35,7 @@ X509_VERIFY_PARAM_set1_ip_asc
                                      uint32_t flags);
  uint32_t X509_VERIFY_PARAM_get_inh_flags(const X509_VERIFY_PARAM *param);
 
+ int X509_VERIFY_PARAM_set_eku(X509_VERIFY_PARAM *param, int nid);
  int X509_VERIFY_PARAM_set_purpose(X509_VERIFY_PARAM *param, int purpose);
  int X509_VERIFY_PARAM_set_trust(X509_VERIFY_PARAM *param, int trust);
 
@@ -86,6 +88,12 @@ another. X509_VERIFY_PARAM_set_inh_flags() sets the inheritance flags.
 See the B<INHERITANCE FLAGS> section for a description of these bits.
 
 X509_VERIFY_PARAM_clear_flags() clears the flags B<flags> in B<param>.
+
+X509_VERIFY_PARAM_set_eku() sets the Extended Key Usage (EKU) in I<param> to I<nid>.
+This must be an NID corresponding to an EKU OID, for example B<NID_server_auth>,
+which may have been obtained by parsing a text string using L<OBJ_txt2nid(3)>.
+It determines the acceptable EKU for the certificate chain to be verified.
+If provided, it overrides any purpose requirements for untrusted certificates.
 
 X509_VERIFY_PARAM_set_purpose() sets the verification purpose in B<param>
 to B<purpose>. This determines the acceptable purpose of the certificate
@@ -214,7 +222,7 @@ IPv6.  The condensed "::" notation is supported for IPv6 addresses.
 =head1 RETURN VALUES
 
 X509_VERIFY_PARAM_set_flags(), X509_VERIFY_PARAM_clear_flags(),
-X509_VERIFY_PARAM_set_inh_flags(),
+X509_VERIFY_PARAM_set_inh_flags(), X509_VERIFY_PARAM_set_eku(),
 X509_VERIFY_PARAM_set_purpose(), X509_VERIFY_PARAM_set_trust(),
 X509_VERIFY_PARAM_add0_policy() X509_VERIFY_PARAM_set1_policies(),
 X509_VERIFY_PARAM_set1_host(), X509_VERIFY_PARAM_add1_host(),
@@ -388,6 +396,7 @@ L<X509_verify_cert(3)>,
 L<X509_check_host(3)>,
 L<X509_check_email(3)>,
 L<X509_check_ip(3)>,
+L<OBJ_txt2nid(3)>,
 L<openssl-x509(1)>
 
 =head1 HISTORY
@@ -398,7 +407,8 @@ and has no effect.
 
 The X509_VERIFY_PARAM_get_hostflags() function was added in OpenSSL 1.1.0i.
 
-The X509_VERIFY_PARAM_get0_host(), X509_VERIFY_PARAM_get0_email(),
+The X509_VERIFY_PARAM_set_eku(),
+X509_VERIFY_PARAM_get0_host(), X509_VERIFY_PARAM_get0_email(),
 and X509_VERIFY_PARAM_get1_ip_asc() functions were added in OpenSSL 3.0.
 
 The function X509_VERIFY_PARAM_add0_policy() was historically documented as

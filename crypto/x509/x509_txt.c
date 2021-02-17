@@ -214,7 +214,8 @@ const char *X509_verify_cert_error_string(long n)
         return "Certificate public key has explicit ECC parameters";
     case X509_V_ERR_RPK_UNTRUSTED:
         return "Raw public key untrusted, no trusted keys configured";
-
+    case X509_V_ERR_INVALID_EXTENDED_KEY_USAGE:
+        return "unsupported certificate Extended Key Usage";
         /*
          * Entries must be kept consistent with include/openssl/x509_vfy.h.in
          * and with doc/man3/X509_STORE_CTX_get_error.pod

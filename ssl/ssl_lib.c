@@ -1064,6 +1064,16 @@ int SSL_has_matching_session_id(const SSL *ssl, const unsigned char *id,
     return (p != NULL);
 }
 
+int SSL_CTX_set_eku(SSL_CTX *ctx, int nid)
+{
+    return X509_VERIFY_PARAM_set_eku(ctx->param, nid);
+}
+
+int SSL_set_eku(SSL *ssl, int nid)
+{
+    return X509_VERIFY_PARAM_set_eku(SSL_get0_param(ssl), nid);
+}
+
 int SSL_CTX_set_purpose(SSL_CTX *s, int purpose)
 {
     return X509_VERIFY_PARAM_set_purpose(s->param, purpose);

@@ -151,12 +151,13 @@ The first step is to check that each certificate is well-formed.
 Part of these checks are enabled only if the B<-x509_strict> option is given.
 
 The second step is to check the extensions of every untrusted certificate
-for consistency with the supplied purpose.
-If the B<-purpose> option is not given then no such checks are done
-except for SSL/TLS connection setup,
+for consistency with the supplied purpose or Extended Key Usage (EKU),
+where the latter overrides any purpose requirements for untrusted certificates.
+If the B<-purpose> and B<-eku> options are not given
+then no such checks are done except for SSL/TLS connection setup,
 where by default C<sslserver> or C<sslclient>, are checked.
 The target or "leaf" certificate, as well as any other untrusted certificates,
-must have extensions compatible with the specified purpose.
+must have extensions compatible with the given EKU or specified purpose.
 All certificates except the target or "leaf" must also be valid CA certificates.
 The precise extensions required are described in more detail in
 L<openssl-x509(1)/CERTIFICATE EXTENSIONS>.

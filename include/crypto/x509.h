@@ -13,7 +13,7 @@
 
 # include "internal/refcount.h"
 # include <openssl/asn1.h>
-# include <openssl/x509.h>
+# include <openssl/x509v3.h>
 # include <openssl/conf.h>
 # include "crypto/types.h"
 
@@ -184,6 +184,7 @@ struct x509_st {
     uint32_t ex_flags;
     uint32_t ex_kusage;
     uint32_t ex_xkusage;
+    EXTENDED_KEY_USAGE *ex_ekus;
     uint32_t ex_nscert;
     ASN1_OCTET_STRING *skid;
     AUTHORITY_KEYID *akid;
