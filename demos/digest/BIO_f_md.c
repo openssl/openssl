@@ -16,8 +16,8 @@
     Len = 80
     Msg = 1ca984dcc913344370cf
     MD = 6915ea0eeffb99b9b246a0e34daf3947852684c3d618260119a22835659e4f23d4eb66a15d0affb8e93771578f5e8f25b7a5f2a55f511fb8b96325ba2cd14816
- * use xxd convert the hex message string to binary input for EVP_f_md:
- * echo "1ca984dcc913344370cf" | xxd -r -p | ./EVP_f_md
+ * use xxd convert the hex message string to binary input for BIO_f_md:
+ * echo "1ca984dcc913344370cf" | xxd -r -p | ./BIO_f_md
  * and then verify the output matches MD above.
  */
 
