@@ -162,7 +162,7 @@ int ossl_cmp_msg_add_extraCerts(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg)
                 return 0;
         } else {
             /* make sure that at least our own signer cert is included first */
-            if (!X509_add_cert_new(&msg->extraCerts, ctx->cert, prepend))
+            if (!ossl_x509_add_cert_new(&msg->extraCerts, ctx->cert, prepend))
                 return 0;
             ossl_cmp_debug(ctx, "fallback: adding just own CMP signer cert");
         }
