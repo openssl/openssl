@@ -111,7 +111,7 @@ int OSSL_parse_url(const char *url, char **pscheme, char **puser, char **phost,
         port = ++p;
     /* remaining port spec handling is also done for the default values */
     /* make sure a decimal port number is given */
-    if (!sscanf(port, "%u", &portnum) || portnum < 0 || portnum > 65535) {
+    if (!sscanf(port, "%u", &portnum) || portnum > 65535) {
         ERR_raise(ERR_LIB_HTTP, HTTP_R_INVALID_PORT_NUMBER);
         goto err;
     }
