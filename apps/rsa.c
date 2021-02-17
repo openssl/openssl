@@ -92,7 +92,7 @@ int rsa_main(int argc, char **argv)
     BIO *out = NULL;
     EVP_PKEY *pkey = NULL;
     EVP_PKEY_CTX *pctx;
-    const EVP_CIPHER *enc = NULL;
+    EVP_CIPHER *enc = NULL;
     char *infile = NULL, *outfile = NULL, *ciphername = NULL, *prog;
     char *passin = NULL, *passout = NULL, *passinarg = NULL, *passoutarg = NULL;
     int private = 0;
@@ -357,6 +357,7 @@ int rsa_main(int argc, char **argv)
     release_engine(e);
     BIO_free_all(out);
     EVP_PKEY_free(pkey);
+    EVP_CIPHER_free(enc);
     OPENSSL_free(passin);
     OPENSSL_free(passout);
     return ret;

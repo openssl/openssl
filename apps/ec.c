@@ -69,7 +69,7 @@ int ec_main(int argc, char **argv)
     EVP_PKEY *eckey = NULL;
     BIO *in = NULL, *out = NULL;
     ENGINE *e = NULL;
-    const EVP_CIPHER *enc = NULL;
+    EVP_CIPHER *enc = NULL;
     char *infile = NULL, *outfile = NULL, *ciphername = NULL, *prog;
     char *passin = NULL, *passout = NULL, *passinarg = NULL, *passoutarg = NULL;
     OPTION_CHOICE o;
@@ -279,6 +279,7 @@ end:
     BIO_free(in);
     BIO_free_all(out);
     EVP_PKEY_free(eckey);
+    EVP_CIPHER_free(enc);
     OSSL_ENCODER_CTX_free(ectx);
     OSSL_DECODER_CTX_free(dctx);
     EVP_PKEY_CTX_free(pctx);

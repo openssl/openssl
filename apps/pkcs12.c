@@ -165,8 +165,8 @@ int pkcs12_main(int argc, char **argv)
     BIO *in = NULL, *out = NULL;
     PKCS12 *p12 = NULL;
     STACK_OF(OPENSSL_STRING) *canames = NULL;
-    const EVP_CIPHER *const default_enc = EVP_aes_256_cbc();
-    const EVP_CIPHER *enc = default_enc;
+    EVP_CIPHER *default_enc = (EVP_CIPHER *)EVP_aes_256_cbc();
+    EVP_CIPHER *enc = (EVP_CIPHER *)default_enc;
     OPTION_CHOICE o;
 
     prog = opt_init(argc, argv, pkcs12_options);
@@ -433,7 +433,7 @@ int pkcs12_main(int argc, char **argv)
         if (key_pbe == NID_undef)
             key_pbe = NID_pbe_WithSHA1And3_Key_TripleDES_CBC;
         if (enc == default_enc)
-            enc = EVP_des_ede3_cbc();
+            enc = (EVP_CIPHER *)EVP_des_ede3_cbc();
         if (macalg == NULL)
             macalg = "sha1";
     }
@@ -501,7 +501,7 @@ int pkcs12_main(int argc, char **argv)
         X509 *ee_cert = NULL, *x = NULL;
         STACK_OF(X509) *certs = NULL;
         STACK_OF(X509) *untrusted_certs = NULL;
-        const EVP_MD *macmd = NULL;
+        EVP_MD *macmd = NULL;
         unsigned char *catmp = NULL;
         int i;
 
@@ -679,6 +679,7 @@ int pkcs12_main(int argc, char **argv)
  export_end:
 
         EVP_PKEY_free(key);
+        EVP_MD_free(macmd);
         sk_X509_pop_free(certs, X509_free);
         sk_X509_pop_free(untrusted_certs, X509_free);
         X509_free(ee_cert);

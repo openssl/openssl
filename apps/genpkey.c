@@ -64,7 +64,7 @@ int genpkey_main(int argc, char **argv)
     EVP_PKEY_CTX *ctx = NULL;
     char *outfile = NULL, *passarg = NULL, *pass = NULL, *prog, *p;
     const char *ciphername = NULL, *paramfile = NULL, *algname = NULL;
-    const EVP_CIPHER *cipher = NULL;
+    EVP_CIPHER *cipher = NULL;
     OPTION_CHOICE o;
     int outformat = FORMAT_PEM, text = 0, ret = 1, rv, do_param = 0;
     int private = 0, i, m;
@@ -234,6 +234,7 @@ int genpkey_main(int argc, char **argv)
     sk_OPENSSL_STRING_free(keyopt);
     EVP_PKEY_free(pkey);
     EVP_PKEY_CTX_free(ctx);
+    EVP_CIPHER_free(cipher);
     BIO_free_all(out);
     BIO_free(in);
     release_engine(e);

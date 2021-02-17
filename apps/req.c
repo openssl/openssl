@@ -239,8 +239,8 @@ int req_main(int argc, char **argv)
     LHASH_OF(OPENSSL_STRING) *addexts = NULL;
     X509 *new_x509 = NULL, *CAcert = NULL;
     X509_REQ *req = NULL;
-    const EVP_CIPHER *cipher = NULL;
-    const EVP_MD *md_alg = NULL, *digest = NULL;
+    EVP_CIPHER *cipher = NULL;
+    EVP_MD *md_alg = NULL, *digest = NULL;
     int ext_copy = EXT_COPY_UNSET;
     BIO *addext_bio = NULL;
     char *extensions = NULL;
@@ -264,7 +264,7 @@ int req_main(int argc, char **argv)
     unsigned long chtype = MBSTRING_ASC, reqflag = 0;
 
 #ifndef OPENSSL_NO_DES
-    cipher = EVP_des_ede3_cbc();
+    cipher = (EVP_CIPHER *)EVP_des_ede3_cbc();
 #endif
 
     prog = opt_init(argc, argv, req_options);
@@ -1058,6 +1058,8 @@ int req_main(int argc, char **argv)
     BIO_free(addext_bio);
     BIO_free_all(out);
     EVP_PKEY_free(pkey);
+    EVP_MD_free(md_alg);
+    EVP_MD_free(digest);
     EVP_PKEY_CTX_free(genctx);
     sk_OPENSSL_STRING_free(pkeyopts);
     sk_OPENSSL_STRING_free(sigopts);

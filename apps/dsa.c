@@ -79,7 +79,7 @@ int dsa_main(int argc, char **argv)
     BIO *out = NULL;
     ENGINE *e = NULL;
     EVP_PKEY *pkey = NULL;
-    const EVP_CIPHER *enc = NULL;
+    EVP_CIPHER *enc = NULL;
     char *infile = NULL, *outfile = NULL, *prog;
     char *passin = NULL, *passout = NULL, *passinarg = NULL, *passoutarg = NULL;
     OPTION_CHOICE o;
@@ -289,6 +289,7 @@ int dsa_main(int argc, char **argv)
     OSSL_ENCODER_CTX_free(ectx);
     BIO_free_all(out);
     EVP_PKEY_free(pkey);
+    EVP_CIPHER_free(enc);
     release_engine(e);
     OPENSSL_free(passin);
     OPENSSL_free(passout);

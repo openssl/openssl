@@ -83,7 +83,7 @@ int storeutl_main(int argc, char *argv[])
     size_t fingerprintlen = 0;
     char *alias = NULL, *digestname = NULL;
     OSSL_STORE_SEARCH *search = NULL;
-    const EVP_MD *digest = NULL;
+    EVP_MD *digest = NULL;
     OSSL_LIB_CTX *libctx = app_get0_libctx();
 
     while ((o = opt_next()) != OPT_EOF) {
@@ -322,6 +322,7 @@ int storeutl_main(int argc, char *argv[])
                   text, noout, recursive, 0, out, prog, libctx);
 
  end:
+    EVP_MD_free(digest);
     OPENSSL_free(fingerprint);
     OPENSSL_free(alias);
     ASN1_INTEGER_free(serial);

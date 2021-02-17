@@ -140,8 +140,8 @@ int smime_main(int argc, char **argv)
     X509 *cert = NULL, *recip = NULL, *signer = NULL;
     X509_STORE *store = NULL;
     X509_VERIFY_PARAM *vpm = NULL;
-    const EVP_CIPHER *cipher = NULL;
-    const EVP_MD *sign_md = NULL;
+    EVP_CIPHER *cipher = NULL;
+    EVP_MD *sign_md = NULL;
     const char *CAfile = NULL, *CApath = NULL, *CAstore = NULL, *prog = NULL;
     char *certfile = NULL, *keyfile = NULL, *contfile = NULL;
     char *infile = NULL, *outfile = NULL, *signerfile = NULL, *recipfile = NULL;
@@ -439,7 +439,7 @@ int smime_main(int argc, char **argv)
     if (operation == SMIME_ENCRYPT) {
         if (cipher == NULL) {
 #ifndef OPENSSL_NO_DES
-            cipher = EVP_des_ede3_cbc();
+            cipher = (EVP_CIPHER *)EVP_des_ede3_cbc();
 #else
             BIO_printf(bio_err, "No cipher selected\n");
             goto end;
@@ -662,6 +662,8 @@ int smime_main(int argc, char **argv)
     X509_free(recip);
     X509_free(signer);
     EVP_PKEY_free(key);
+    EVP_MD_free(sign_md);
+    EVP_CIPHER_free(cipher);
     PKCS7_free(p7);
     release_engine(e);
     BIO_free(in);

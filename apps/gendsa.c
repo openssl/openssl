@@ -56,7 +56,7 @@ int gendsa_main(int argc, char **argv)
     BIO *out = NULL, *in = NULL;
     EVP_PKEY *pkey = NULL;
     EVP_PKEY_CTX *ctx = NULL;
-    const EVP_CIPHER *enc = NULL;
+    EVP_CIPHER *enc = NULL;
     char *dsaparams = NULL, *ciphername = NULL;
     char *outfile = NULL, *passoutarg = NULL, *passout = NULL, *prog;
     OPTION_CHOICE o;
@@ -166,6 +166,7 @@ int gendsa_main(int argc, char **argv)
     BIO_free_all(out);
     EVP_PKEY_free(pkey);
     EVP_PKEY_CTX_free(ctx);
+    EVP_CIPHER_free(enc);
     release_engine(e);
     OPENSSL_free(passout);
     return ret;

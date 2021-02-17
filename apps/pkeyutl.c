@@ -124,6 +124,7 @@ int pkeyutl_main(int argc, char **argv)
     STACK_OF(OPENSSL_STRING) *pkeyopts_passin = NULL;
     int rawin = 0;
     EVP_MD_CTX *mctx = NULL;
+    EVP_MD *md = NULL;
     int filesize = -1;
     OSSL_LIB_CTX *libctx = app_get0_libctx();
 
@@ -507,6 +508,7 @@ int pkeyutl_main(int argc, char **argv)
  end:
     EVP_MD_CTX_free(mctx);
     EVP_PKEY_CTX_free(ctx);
+    EVP_MD_free(md);
     release_engine(e);
     BIO_free(in);
     BIO_free_all(out);

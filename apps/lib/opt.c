@@ -356,9 +356,12 @@ void print_format_error(int format, unsigned long flags)
 }
 
 /* Parse a cipher name, put it in *EVP_CIPHER; return 0 on failure, else 1. */
-int opt_cipher(const char *name, const EVP_CIPHER **cipherp)
+int opt_cipher(const char *name, EVP_CIPHER **cipherp)
 {
-    *cipherp = EVP_get_cipherbyname(name);
+    *cipherp = EVP_CIPHER_fetch(NULL, name, NULL);
+    if (*cipherp != NULL)
+        return 1;
+    *cipherp = (EVP_CIPHER *)EVP_get_cipherbyname(name);
     if (*cipherp != NULL)
         return 1;
     opt_printf_stderr("%s: Unknown cipher: %s\n", prog, name);
@@ -368,9 +371,12 @@ int opt_cipher(const char *name, const EVP_CIPHER **cipherp)
 /*
  * Parse message digest name, put it in *EVP_MD; return 0 on failure, else 1.
  */
-int opt_md(const char *name, const EVP_MD **mdp)
+int opt_md(const char *name, EVP_MD **mdp)
 {
-    *mdp = EVP_get_digestbyname(name);
+    *mdp = (EVP_MD *)EVP_get_digestbyname(name);
+    if (*mdp != NULL)
+        return 1;
+    *mdp = EVP_MD_fetch(NULL, name, NULL);
     if (*mdp != NULL)
         return 1;
     opt_printf_stderr("%s: Unknown option or message digest: %s\n", prog,

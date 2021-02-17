@@ -71,7 +71,7 @@ int pkey_main(int argc, char **argv)
     ENGINE *e = NULL;
     EVP_PKEY *pkey = NULL;
     EVP_PKEY_CTX *ctx = NULL;
-    const EVP_CIPHER *cipher = NULL;
+    EVP_CIPHER *cipher = NULL;
     char *infile = NULL, *outfile = NULL, *passin = NULL, *passout = NULL;
     char *passinarg = NULL, *passoutarg = NULL, *ciphername = NULL, *prog;
     OPTION_CHOICE o;
@@ -318,6 +318,7 @@ int pkey_main(int argc, char **argv)
         ERR_print_errors(bio_err);
     EVP_PKEY_CTX_free(ctx);
     EVP_PKEY_free(pkey);
+    EVP_CIPHER_free(cipher);
     release_engine(e);
     BIO_free_all(out);
     BIO_free(in);

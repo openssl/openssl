@@ -270,7 +270,7 @@ int ca_main(int argc, char **argv)
     STACK_OF(OPENSSL_STRING) *sigopts = NULL, *vfyopts = NULL;
     STACK_OF(X509) *cert_sk = NULL;
     X509_CRL *crl = NULL;
-    const EVP_MD *dgst = NULL;
+    EVP_MD *dgst = NULL;
     char *configfile = default_config_file, *section = NULL;
     char *md = NULL, *policy = NULL, *keyfile = NULL;
     char *certfile = NULL, *crl_ext = NULL, *crlnumberfile = NULL;
@@ -795,7 +795,7 @@ end_of_options:
      */
     if (def_ret == 2 && def_nid == NID_undef) {
         /* The signing algorithm requires there to be no digest */
-        dgst = EVP_md_null();
+        dgst = (EVP_MD *)EVP_md_null();
     } else if (md == NULL
                && (md = lookup_conf(conf, section, ENV_DEFAULT_MD)) == NULL) {
         goto end;
@@ -1330,6 +1330,7 @@ end_of_options:
     sk_OPENSSL_STRING_free(sigopts);
     sk_OPENSSL_STRING_free(vfyopts);
     EVP_PKEY_free(pkey);
+    EVP_MD_free(dgst);
     X509_free(x509);
     X509_CRL_free(crl);
     NCONF_free(conf);
