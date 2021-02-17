@@ -21,7 +21,8 @@ OSSL_PROVIDER_get_capabilities, OSSL_PROVIDER_self_test
                                             const char *path);
 
  OSSL_PROVIDER *OSSL_PROVIDER_load(OSSL_LIB_CTX *libctx, const char *name);
- OSSL_PROVIDER *OSSL_PROVIDER_try_load(OSSL_LIB_CTX *libctx, const char *name);
+ OSSL_PROVIDER *OSSL_PROVIDER_try_load(OSSL_LIB_CTX *libctx, const char *name,
+                                       int retain_fallbacks);
  int OSSL_PROVIDER_unload(OSSL_PROVIDER *prov);
  int OSSL_PROVIDER_available(OSSL_LIB_CTX *libctx, const char *name);
  int OSSL_PROVIDER_do_all(OSSL_LIB_CTX *ctx,
@@ -79,9 +80,9 @@ entry point, C<OSSL_provider_init>.
 
 OSSL_PROVIDER_try_load() functions like OSSL_PROVIDER_load(), except that
 it does not disable the fallback providers if the provider cannot be
-loaded and initialized.
-If the provider loads successfully, however, the fallback providers are
-disabled.
+loaded and initialized or if I<retain_fallbacks> is zero.
+If the provider loads successfully and I<retain_fallbacks> is nonzero, the
+fallback providers are disabled.
 
 OSSL_PROVIDER_unload() unloads the given provider.
 For a provider added with OSSL_PROVIDER_add_builtin(), this simply
