@@ -228,8 +228,7 @@ int opt_format_error(const char *s, unsigned long flags)
         opt_printf_stderr("%s: Bad format \"%s\"; must be pem or der\n",
                           prog, s);
     } else {
-        opt_printf_stderr("%s: Bad format \"%s\"; must be one of:\n",
-                          prog, s);
+        opt_printf_stderr("%s: Bad format \"%s\"; must be one of:\n", prog, s);
         for (ap = formats; ap->name; ap++)
             if (flags & ap->retval)
                 opt_printf_stderr("   %s\n", ap->name);
@@ -362,9 +361,7 @@ int opt_cipher(const char *name, const EVP_CIPHER **cipherp)
     return 0;
 }
 
-/*
- * Parse message digest name, put it in *EVP_MD; return 0 on failure, else 1.
- */
+/* Parse message digest name, put it in *EVP_MD; return 0 on failure, else 1. */
 int opt_md(const char *name, const EVP_MD **mdp)
 {
     *mdp = EVP_get_digestbyname(name);
@@ -373,6 +370,16 @@ int opt_md(const char *name, const EVP_MD **mdp)
     opt_printf_stderr("%s: Unknown option or message digest: %s\n", prog,
                       name != NULL ? name : "\"\"");
     return 0;
+}
+
+/* Parse an OID name; returns its NID or 0 on failure. */
+int opt_oid(const char *name, const char *desc)
+{
+    int nid = OBJ_txt2nid(name);
+
+    if (nid == 0)
+        opt_printf_stderr("%s: Invalid OID name for %s: %s\n", prog, desc, name);
+    return nid;
 }
 
 /* Look through a list of name/value pairs. */
@@ -590,11 +597,15 @@ int opt_verify(int opt, X509_VERIFY_PARAM *vpm)
             return 0;
         }
         break;
+    case OPT_V_EKU:
+        if ((i = opt_oid(opt_arg(), "Extended Key Usage")) == 0)
+            return 0;
+        X509_VERIFY_PARAM_set_eku(vpm, i);
+        break;
     case OPT_V_VERIFY_NAME:
         vtmp = X509_VERIFY_PARAM_lookup(opt_arg());
         if (vtmp == NULL) {
-            opt_printf_stderr("%s: Invalid verify name %s\n",
-                              prog, opt_arg());
+            opt_printf_stderr("%s: Invalid verify name %s\n", prog, opt_arg());
             return 0;
         }
         X509_VERIFY_PARAM_set1(vpm, vtmp);

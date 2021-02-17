@@ -5028,6 +5028,7 @@ EVP_PKEY_CTX_set_dhx_rfc5114            ?	3_0_0	EXIST::FUNCTION:
 X509_VERIFY_PARAM_get0_host             ?	3_0_0	EXIST::FUNCTION:
 X509_VERIFY_PARAM_get0_email            ?	3_0_0	EXIST::FUNCTION:
 X509_VERIFY_PARAM_get1_ip_asc           ?	3_0_0	EXIST::FUNCTION:
+X509_VERIFY_PARAM_set_eku               ?	3_0_0	EXIST::FUNCTION:
 X509_ALGOR_copy                         ?	3_0_0	EXIST::FUNCTION:
 X509_REQ_set0_signature                 ?	3_0_0	EXIST::FUNCTION:
 X509_REQ_set1_signature_algo            ?	3_0_0	EXIST::FUNCTION:
@@ -5088,6 +5089,7 @@ EC_KEY_new_by_curve_name_ex             ?	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 OSSL_LIB_CTX_set0_default               ?	3_0_0	EXIST::FUNCTION:
 PEM_X509_INFO_read_bio_ex               ?	3_0_0	EXIST::FUNCTION:
 PEM_X509_INFO_read_ex                   ?	3_0_0	EXIST::FUNCTION:STDIO
+X509_check_eku                          ?	3_0_0	EXIST::FUNCTION:
 X509_REQ_verify_ex                      ?	3_0_0	EXIST::FUNCTION:
 X509_new_ex                             ?	3_0_0	EXIST::FUNCTION:
 X509_LOOKUP_ctrl_ex                     ?	3_0_0	EXIST::FUNCTION:

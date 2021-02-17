@@ -19,7 +19,8 @@
  */
 # define OPT_V_ENUM \
         OPT_V__FIRST=2000, \
-        OPT_V_POLICY, OPT_V_PURPOSE, OPT_V_VERIFY_NAME, OPT_V_VERIFY_DEPTH, \
+        OPT_V_POLICY, OPT_V_PURPOSE, OPT_V_EKU, \
+        OPT_V_VERIFY_NAME, OPT_V_VERIFY_DEPTH, \
         OPT_V_ATTIME, OPT_V_VERIFY_HOSTNAME, OPT_V_VERIFY_EMAIL, \
         OPT_V_VERIFY_IP, OPT_V_IGNORE_CRITICAL, OPT_V_ISSUER_CHECKS, \
         OPT_V_CRL_CHECK, OPT_V_CRL_CHECK_ALL, OPT_V_POLICY_CHECK, \
@@ -36,6 +37,8 @@
         { "policy", OPT_V_POLICY, 's', "adds policy to the acceptable policy set"}, \
         { "purpose", OPT_V_PURPOSE, 's', \
             "certificate chain purpose"}, \
+        { "eku", OPT_V_EKU, 's', \
+            "certificate Extended Key Usage, e.g., serverAuth"}, \
         { "verify_name", OPT_V_VERIFY_NAME, 's', "verification policy name"}, \
         { "verify_depth", OPT_V_VERIFY_DEPTH, 'n', \
             "chain depth limit" }, \
@@ -86,6 +89,7 @@
         OPT_V__FIRST: case OPT_V__LAST: break; \
         case OPT_V_POLICY: \
         case OPT_V_PURPOSE: \
+        case OPT_V_EKU: \
         case OPT_V_VERIFY_NAME: \
         case OPT_V_VERIFY_DEPTH: \
         case OPT_V_VERIFY_AUTH_LEVEL: \
@@ -368,6 +372,7 @@ int opt_pair(const char *arg, const OPT_PAIR * pairs, int *result);
 int opt_string(const char *name, const char **options);
 int opt_cipher(const char *name, const EVP_CIPHER **cipherp);
 int opt_md(const char *name, const EVP_MD **mdp);
+int opt_oid(const char *name, const char *desc);
 char *opt_arg(void);
 char *opt_flag(void);
 char *opt_unknown(void);

@@ -176,6 +176,7 @@ int X509_VERIFY_PARAM_inherit(X509_VERIFY_PARAM *dest,
     else
         to_overwrite = 0;
 
+    x509_verify_param_copy(eku, 0);
     x509_verify_param_copy(purpose, 0);
     x509_verify_param_copy(trust, X509_TRUST_DEFAULT);
     x509_verify_param_copy(depth, -1);
@@ -297,6 +298,13 @@ uint32_t X509_VERIFY_PARAM_get_inh_flags(const X509_VERIFY_PARAM *param)
 int X509_VERIFY_PARAM_set_inh_flags(X509_VERIFY_PARAM *param, uint32_t flags)
 {
     param->inh_flags = flags;
+    return 1;
+}
+
+int X509_VERIFY_PARAM_set_eku(X509_VERIFY_PARAM *param, int eku)
+{
+    /* Should check range of acceptable EKU OIDs, but this is fuzzy */
+    param->eku = eku;
     return 1;
 }
 
@@ -507,6 +515,7 @@ static const X509_VERIFY_PARAM default_table[] = {
      0,                         /* check time to use */
      0,                         /* inheritance flags */
      X509_V_FLAG_TRUSTED_FIRST, /* flags */
+     0,                         /* eku */
      0,                         /* purpose */
      0,                         /* trust */
      100,                       /* depth */
@@ -518,6 +527,7 @@ static const X509_VERIFY_PARAM default_table[] = {
      0,                         /* check time to use */
      0,                         /* inheritance flags */
      0,                         /* flags */
+     0,                         /* eku */
      X509_PURPOSE_SMIME_SIGN,   /* purpose */
      X509_TRUST_EMAIL,          /* trust */
      -1,                        /* depth */
@@ -529,6 +539,7 @@ static const X509_VERIFY_PARAM default_table[] = {
      0,                         /* check time to use */
      0,                         /* inheritance flags */
      0,                         /* flags */
+     0,                         /* eku */
      X509_PURPOSE_SMIME_SIGN,   /* purpose */
      X509_TRUST_EMAIL,          /* trust */
      -1,                        /* depth */
@@ -540,6 +551,7 @@ static const X509_VERIFY_PARAM default_table[] = {
      0,                         /* check time to use */
      0,                         /* inheritance flags */
      0,                         /* flags */
+     0,                         /* eku */
      X509_PURPOSE_SSL_CLIENT,   /* purpose */
      X509_TRUST_SSL_CLIENT,     /* trust */
      -1,                        /* depth */
@@ -551,6 +563,7 @@ static const X509_VERIFY_PARAM default_table[] = {
      0,                         /* check time to use */
      0,                         /* inheritance flags */
      0,                         /* flags */
+     0,                         /* eku */
      X509_PURPOSE_SSL_SERVER,   /* purpose */
      X509_TRUST_SSL_SERVER,     /* trust */
      -1,                        /* depth */
