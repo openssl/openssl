@@ -96,6 +96,9 @@ int OSSL_HTTP_proxy_connect(BIO *bio, const char *server, const char *port,
                             const char *proxyuser, const char *proxypass,
                             int timeout, BIO *bio_err, const char *prog);
 
+int OSSL_parse_url(const char *url, char **pscheme, char **puser, char **phost,
+                   char **pport, int *pport_num,
+                   char **ppath, char **pquery, char **pfrag);
 int OSSL_HTTP_parse_url(const char *url, int *pssl, char **puser, char **phost,
                         char **pport, int *pport_num,
                         char **ppath, char **pquery, char **pfrag);

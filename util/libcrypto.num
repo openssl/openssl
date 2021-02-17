@@ -4880,6 +4880,7 @@ ASN1_item_verify_ex                     ?	3_0_0	EXIST::FUNCTION:
 BIO_socket_wait                         ?	3_0_0	EXIST::FUNCTION:SOCK
 BIO_wait                                ?	3_0_0	EXIST::FUNCTION:
 BIO_do_connect_retry                    ?	3_0_0	EXIST::FUNCTION:
+OSSL_parse_url                          ?	3_0_0	EXIST::FUNCTION:
 OSSL_HTTP_get                           ?	3_0_0	EXIST::FUNCTION:
 OSSL_HTTP_get_asn1                      ?	3_0_0	EXIST::FUNCTION:
 OSSL_HTTP_post_asn1                     ?	3_0_0	EXIST::FUNCTION:
