@@ -16,5 +16,7 @@ EVP_MD_demo: EVP_MD_demo.o
 EVP_MD_stdin: EVP_MD_stdin.o
 BIO_f_md: BIO_f_md.o
 
+test: ;
+
 clean:
 	$(RM) *.o EVP_MD_demo EVP_MD_stdin BIO_f_md
