@@ -276,8 +276,8 @@ int cms_main(int argc, char **argv)
     CMS_ReceiptRequest *rr = NULL;
     ENGINE *e = NULL;
     EVP_PKEY *key = NULL;
-    const EVP_CIPHER *cipher = NULL, *wrap_cipher = NULL;
-    const EVP_MD *sign_md = NULL;
+    EVP_CIPHER *cipher = NULL, *wrap_cipher = NULL;
+    EVP_MD *sign_md = NULL;
     STACK_OF(OPENSSL_STRING) *rr_to = NULL, *rr_from = NULL;
     STACK_OF(OPENSSL_STRING) *sksigners = NULL, *skkeys = NULL;
     STACK_OF(X509) *encerts = NULL, *other = NULL;
@@ -679,17 +679,17 @@ int cms_main(int argc, char **argv)
             break;
         case OPT_3DES_WRAP:
 # ifndef OPENSSL_NO_DES
-            wrap_cipher = EVP_des_ede3_wrap();
+            wrap_cipher = (EVP_CIPHER *)EVP_des_ede3_wrap();
 # endif
             break;
         case OPT_AES128_WRAP:
-            wrap_cipher = EVP_aes_128_wrap();
+            wrap_cipher = (EVP_CIPHER *)EVP_aes_128_wrap();
             break;
         case OPT_AES192_WRAP:
-            wrap_cipher = EVP_aes_192_wrap();
+            wrap_cipher = (EVP_CIPHER *)EVP_aes_192_wrap();
             break;
         case OPT_AES256_WRAP:
-            wrap_cipher = EVP_aes_256_wrap();
+            wrap_cipher = (EVP_CIPHER *)EVP_aes_256_wrap();
             break;
         case OPT_WRAP:
             if (!opt_cipher(opt_unknown(), &wrap_cipher))
@@ -803,7 +803,7 @@ int cms_main(int argc, char **argv)
     if (operation == SMIME_ENCRYPT) {
         if (!cipher) {
 # ifndef OPENSSL_NO_DES
-            cipher = EVP_des_ede3_cbc();
+            cipher = (EVP_CIPHER *)EVP_des_ede3_cbc();
 # else
             BIO_printf(bio_err, "No cipher selected\n");
             goto end;
@@ -1249,6 +1249,9 @@ int cms_main(int argc, char **argv)
     X509_free(recip);
     X509_free(signer);
     EVP_PKEY_free(key);
+    EVP_CIPHER_free(cipher);
+    EVP_CIPHER_free(wrap_cipher);
+    EVP_MD_free(sign_md);
     CMS_ContentInfo_free(cms);
     CMS_ContentInfo_free(rcms);
     release_engine(e);

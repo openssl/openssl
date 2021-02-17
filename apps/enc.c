@@ -109,8 +109,8 @@ int enc_main(int argc, char **argv)
     BIO *in = NULL, *out = NULL, *b64 = NULL, *benc = NULL, *rbio =
         NULL, *wbio = NULL;
     EVP_CIPHER_CTX *ctx = NULL;
-    const EVP_CIPHER *cipher = NULL;
-    const EVP_MD *dgst = NULL;
+    EVP_CIPHER *cipher = NULL;
+    EVP_MD *dgst = NULL;
     const char *digestname = NULL;
     char *hkey = NULL, *hiv = NULL, *hsalt = NULL, *p;
     char *infile = NULL, *outfile = NULL, *prog;
@@ -314,7 +314,7 @@ int enc_main(int argc, char **argv)
             goto opthelp;
     }
     if (dgst == NULL)
-        dgst = EVP_sha256();
+        dgst = (EVP_MD *)EVP_sha256();
 
     if (iter == 0)
         iter = 1;
@@ -633,6 +633,8 @@ int enc_main(int argc, char **argv)
     BIO_free_all(out);
     BIO_free(benc);
     BIO_free(b64);
+    EVP_MD_free(dgst);
+    EVP_CIPHER_free(cipher);
 #ifdef ZLIB
     BIO_free(bzl);
 #endif

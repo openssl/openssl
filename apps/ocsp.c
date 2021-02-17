@@ -203,7 +203,7 @@ const OPTIONS ocsp_options[] = {
 int ocsp_main(int argc, char **argv)
 {
     BIO *acbio = NULL, *cbio = NULL, *derbio = NULL, *out = NULL;
-    const EVP_MD *cert_id_md = NULL, *rsign_md = NULL;
+    EVP_MD *cert_id_md = NULL, *rsign_md = NULL;
     STACK_OF(OPENSSL_STRING) *rsign_sigopts = NULL;
     int trailing_md = 0;
     CA_DB *rdb = NULL;
@@ -218,7 +218,7 @@ int ocsp_main(int argc, char **argv)
     STACK_OF(X509) *issuers = NULL;
     X509 *issuer = NULL, *cert = NULL;
     STACK_OF(X509) *rca_cert = NULL;
-    const EVP_MD *resp_certid_md = NULL;
+    EVP_MD *resp_certid_md = NULL;
     X509 *signer = NULL, *rsigner = NULL;
     X509_STORE *store = NULL;
     X509_VERIFY_PARAM *vpm = NULL;
@@ -418,7 +418,7 @@ int ocsp_main(int argc, char **argv)
             if (cert == NULL)
                 goto end;
             if (cert_id_md == NULL)
-                cert_id_md = EVP_sha1();
+                cert_id_md = (EVP_MD *)EVP_sha1();
             if (!add_ocsp_cert(&req, cert, cert_id_md, issuer, ids))
                 goto end;
             if (!sk_OPENSSL_STRING_push(reqnames, opt_arg()))
@@ -427,7 +427,7 @@ int ocsp_main(int argc, char **argv)
             break;
         case OPT_SERIAL:
             if (cert_id_md == NULL)
-                cert_id_md = EVP_sha1();
+                cert_id_md = (EVP_MD *)EVP_sha1();
             if (!add_ocsp_serial(&req, opt_arg(), cert_id_md, issuer, ids))
                 goto end;
             if (!sk_OPENSSL_STRING_push(reqnames, opt_arg()))
@@ -485,8 +485,7 @@ int ocsp_main(int argc, char **argv)
                 goto end;
             break;
         case OPT_RCID:
-            resp_certid_md = EVP_get_digestbyname(opt_arg());
-            if (resp_certid_md == NULL)
+            if (!opt_md(opt_arg(), &resp_certid_md))
                 goto opthelp;
             break;
         case OPT_MD:
@@ -827,6 +826,9 @@ redo_accept:
     sk_OPENSSL_STRING_free(rsign_sigopts);
     EVP_PKEY_free(key);
     EVP_PKEY_free(rkey);
+    EVP_MD_free(cert_id_md);
+    EVP_MD_free(rsign_md);
+    EVP_MD_free(resp_certid_md);
     X509_free(cert);
     sk_X509_pop_free(issuers, X509_free);
     X509_free(rsigner);
