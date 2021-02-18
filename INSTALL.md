@@ -1666,6 +1666,13 @@ most UNIX/Linux systems), and Windows threads.  No other threading models are
 supported.  If your platform does not provide pthreads or Windows threads then
 you should use `Configure` with the `no-threads` option.
 
+For pthreads, all locks are non-recursive. In addition, in a debug build,
+the mutex attribute `PTHREAD_MUTEX_ERRORCHECK` is used. If this is not
+available on your platform, you might have to add
+`-DOPENSSL_NO_MUTEX_ERRORCHECK` to your `Configure` invocation.
+(On Linux `PTHREAD_MUTEX_ERRORCHECK` is an enum value, so a built-in
+ifdef test cannot be used.)
+
 Notes on shared libraries
 -------------------------
 
