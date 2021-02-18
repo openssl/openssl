@@ -512,7 +512,8 @@ static int decoder_process(const OSSL_PARAM params[], void *arg)
     int err, ok = 0;
     /* For recursions */
     struct decoder_process_data_st new_data;
-    const char *object_type = NULL;
+    const char *data_type = NULL;
+    const char *data_structure = NULL;
 
     memset(&new_data, 0, sizeof(new_data));
     new_data.ctx = data->ctx;
@@ -555,10 +556,31 @@ static int decoder_process(const OSSL_PARAM params[], void *arg)
             goto end;
         bio = new_data.bio;
 
-        /* Get the object type if there is one */
+        /* Get the data type if there is one */
         p = OSSL_PARAM_locate_const(params, OSSL_OBJECT_PARAM_DATA_TYPE);
-        if (p != NULL && !OSSL_PARAM_get_utf8_string_ptr(p, &object_type))
+        if (p != NULL && !OSSL_PARAM_get_utf8_string_ptr(p, &data_type))
             goto end;
+
+        /* Get the data structure if there is one */
+        p = OSSL_PARAM_locate_const(params, OSSL_OBJECT_PARAM_DATA_STRUCTURE);
+        if (p != NULL && !OSSL_PARAM_get_utf8_string_ptr(p, &data_structure))
+            goto end;
+
+        /*
+         * If the data structure is "type-specific" and the data type is
+         * given, we drop the data structure.  The reasoning is that the
+         * data type is already enough to find the applicable next decoder,
+         * so an additional "type-specific" data structure is extraneous.
+         *
+         * Furthermore, if the OSSL_DECODER caller asked for a type specific
+         * structure under another name, such as "DH", we get a mismatch
+         * if the data structure we just received is "type-specific".
+         * There's only so much you can do without infusing this code with
+         * too special knowledge.
+         */
+        if (data_type != NULL
+            && strcasecmp(data_structure, "type-specific") == 0)
+            data_structure = NULL;
     }
 
     /*
@@ -582,6 +604,10 @@ static int decoder_process(const OSSL_PARAM params[], void *arg)
             OSSL_DECODER_INSTANCE_get_decoder_ctx(new_decoder_inst);
         const char *new_input_type =
             OSSL_DECODER_INSTANCE_get_input_type(new_decoder_inst);
+        int n_i_s_was_set = 0;   /* We don't care here */
+        const char *new_input_structure =
+            OSSL_DECODER_INSTANCE_get_input_structure(new_decoder_inst,
+                                                      &n_i_s_was_set);
 
         /*
          * If |decoder| is NULL, it means we've just started, and the caller
@@ -595,17 +621,27 @@ static int decoder_process(const OSSL_PARAM params[], void *arg)
         /*
          * If we have a previous decoder, we check that the input type
          * of the next to be used matches the type of this previous one.
-         * input_type is a cache of the parameter "input-type" value for
-         * that decoder.
+         * |new_input_type| holds the value of the "input-type" parameter
+         * for the decoder we're currently considering.
          */
         if (decoder != NULL && !OSSL_DECODER_is_a(decoder, new_input_type))
             continue;
 
         /*
-         * If the previous decoder gave us an object type, we check to see
+         * If the previous decoder gave us a data type, we check to see
          * if that matches the decoder we're currently considering.
          */
-        if (object_type != NULL && !OSSL_DECODER_is_a(new_decoder, object_type))
+        if (data_type != NULL && !OSSL_DECODER_is_a(new_decoder, data_type))
+            continue;
+
+        /*
+         * If the previous decoder gave us a data structure name, we check
+         * to see that it matches the input data structure of the decoder
+         * we're currently considering.
+         */
+        if (data_structure != NULL
+            && (new_input_structure == NULL
+                || strcasecmp(data_structure, new_input_structure) != 0))
             continue;
 
         /*
@@ -638,6 +674,12 @@ static int decoder_process(const OSSL_PARAM params[], void *arg)
 
         if (ok)
             break;
+
+        /*
+         * These errors are assumed to come from ossl_store_handle_load_result()
+         * in crypto/store/store_result.c.  They are currently considered fatal
+         * errors, so we preserve them in the error queue and stop.
+         */
         err = ERR_peek_last_error();
         if ((ERR_GET_LIB(err) == ERR_LIB_EVP
              && ERR_GET_REASON(err) == EVP_R_UNSUPPORTED_PRIVATE_KEY_ALGORITHM)
@@ -647,7 +689,7 @@ static int decoder_process(const OSSL_PARAM params[], void *arg)
 #endif
             || (ERR_GET_LIB(err) == ERR_LIB_X509
                 && ERR_GET_REASON(err) == X509_R_UNSUPPORTED_ALGORITHM))
-            break; /* fatal error; preserve it on the error queue and stop */
+            goto end;
     }
 
  end:
