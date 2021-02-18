@@ -405,6 +405,7 @@ OSSL_CMP_SRV_certConf_cb_t              datatype
 OSSL_CMP_SRV_genm_cb_t                  datatype
 OSSL_CMP_SRV_error_cb_t                 datatype
 OSSL_CMP_SRV_pollReq_cb_t               datatype
+OSSL_CORE_MAKE_FUNC                     define
 OSSL_PARAM_TYPE                         define
 OSSL_PARAM_octet_ptr                    define
 OSSL_PARAM_octet_string                 define
