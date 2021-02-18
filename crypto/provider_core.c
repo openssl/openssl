@@ -205,7 +205,8 @@ int ossl_provider_disable_fallback_loading(OSSL_LIB_CTX *libctx)
     struct provider_store_st *store;
 
     if ((store = get_provider_store(libctx)) != NULL) {
-        CRYPTO_THREAD_write_lock(store->lock);
+        if (!CRYPTO_THREAD_write_lock(store->lock))
+            return 0;
         store->use_fallbacks = 0;
         CRYPTO_THREAD_unlock(store->lock);
         return 1;
@@ -233,7 +234,8 @@ OSSL_PROVIDER *ossl_provider_find(OSSL_LIB_CTX *libctx, const char *name,
 #endif
 
         tmpl.name = (char *)name;
-        CRYPTO_THREAD_write_lock(store->lock);
+        if (!CRYPTO_THREAD_write_lock(store->lock))
+            return NULL;
         if ((i = sk_OSSL_PROVIDER_find(store->providers, &tmpl)) == -1
             || (prov = sk_OSSL_PROVIDER_value(store->providers, i)) == NULL
             || !ossl_provider_up_ref(prov))
@@ -303,7 +305,8 @@ OSSL_PROVIDER *ossl_provider_new(OSSL_LIB_CTX *libctx, const char *name,
     if ((prov = provider_new(name, init_function)) == NULL)
         return NULL;
 
-    CRYPTO_THREAD_write_lock(store->lock);
+    if (!CRYPTO_THREAD_write_lock(store->lock))
+        return NULL;
     if (!ossl_provider_up_ref(prov)) { /* +1 One reference for the store */
         ossl_provider_free(prov); /* -1 Reference that was to be returned */
         prov = NULL;
@@ -486,7 +489,8 @@ static int provider_init(OSSL_PROVIDER *prov)
      * modifies a number of things in the provider structure that this
      * function needs to perform under lock anyway.
      */
-    CRYPTO_THREAD_write_lock(prov->flag_lock);
+    if (!CRYPTO_THREAD_write_lock(prov->flag_lock))
+        goto end;
     if (prov->flag_initialized) {
         ok = 1;
         goto end;
@@ -671,7 +675,8 @@ static int provider_deactivate(OSSL_PROVIDER *prov)
         return 0;
 
     if (ref < 1) {
-        CRYPTO_THREAD_write_lock(prov->flag_lock);
+        if (!CRYPTO_THREAD_write_lock(prov->flag_lock))
+            return 0;
         prov->flag_activated = 0;
         CRYPTO_THREAD_unlock(prov->flag_lock);
     }
@@ -688,7 +693,8 @@ static int provider_activate(OSSL_PROVIDER *prov)
         return 0;
 
     if (provider_init(prov)) {
-        CRYPTO_THREAD_write_lock(prov->flag_lock);
+        if (!CRYPTO_THREAD_write_lock(prov->flag_lock))
+            return 0;
         prov->flag_activated = 1;
         CRYPTO_THREAD_unlock(prov->flag_lock);
 
@@ -705,7 +711,10 @@ int ossl_provider_activate(OSSL_PROVIDER *prov, int retain_fallbacks)
         return 0;
     if (provider_activate(prov)) {
         if (!retain_fallbacks) {
-            CRYPTO_THREAD_write_lock(prov->store->lock);
+            if (!CRYPTO_THREAD_write_lock(prov->store->lock)) {
+                provider_deactivate(prov);
+                return 0;
+            }
             prov->store->use_fallbacks = 0;
             CRYPTO_THREAD_unlock(prov->store->lock);
         }
@@ -738,13 +747,15 @@ static void provider_activate_fallbacks(struct provider_store_st *store)
     int activated_fallback_count = 0;
     int i;
 
-    CRYPTO_THREAD_read_lock(store->lock);
+    if (!CRYPTO_THREAD_read_lock(store->lock))
+        return;
     use_fallbacks = store->use_fallbacks;
     CRYPTO_THREAD_unlock(store->lock);
     if (!use_fallbacks)
         return;
 
-    CRYPTO_THREAD_write_lock(store->lock);
+    if (!CRYPTO_THREAD_write_lock(store->lock))
+        return;
     /* Check again, just in case another thread changed it */
     use_fallbacks = store->use_fallbacks;
     if (!use_fallbacks) {
@@ -804,7 +815,8 @@ int ossl_provider_doall_activated(OSSL_LIB_CTX *ctx,
      * Under lock, grab a copy of the provider list and up_ref each
      * provider so that they don't disappear underneath us.
      */
-    CRYPTO_THREAD_read_lock(store->lock);
+    if (!CRYPTO_THREAD_read_lock(store->lock))
+        return 0;
     provs = sk_OSSL_PROVIDER_dup(store->providers);
     if (provs == NULL) {
         CRYPTO_THREAD_unlock(store->lock);
@@ -973,7 +985,8 @@ int ossl_provider_set_operation_bit(OSSL_PROVIDER *provider, size_t bitnum)
     size_t byte = bitnum / 8;
     unsigned char bit = (1 << (bitnum % 8)) & 0xFF;
 
-    CRYPTO_THREAD_write_lock(provider->opbits_lock);
+    if (!CRYPTO_THREAD_write_lock(provider->opbits_lock))
+        return 0;
     if (provider->operation_bits_sz <= byte) {
         unsigned char *tmp = OPENSSL_realloc(provider->operation_bits,
                                              byte + 1);
@@ -1005,7 +1018,8 @@ int ossl_provider_test_operation_bit(OSSL_PROVIDER *provider, size_t bitnum,
     }
 
     *result = 0;
-    CRYPTO_THREAD_read_lock(provider->opbits_lock);
+    if (!CRYPTO_THREAD_read_lock(provider->opbits_lock))
+        return 0;
     if (provider->operation_bits_sz > byte)
         *result = ((provider->operation_bits[byte] & bit) != 0);
     CRYPTO_THREAD_unlock(provider->opbits_lock);

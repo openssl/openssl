@@ -21,11 +21,11 @@ static int test_namemap_empty(void)
     OSSL_NAMEMAP *nm = NULL;
     int ok;
 
-    ok = TEST_true(ossl_namemap_empty(NULL))
+    ok = TEST_int_eq(ossl_namemap_empty(NULL), 1)
          && TEST_ptr(nm = ossl_namemap_new())
-         && TEST_true(ossl_namemap_empty(nm))
+         && TEST_int_eq(ossl_namemap_empty(nm), 1)
          && TEST_int_ne(ossl_namemap_add_name(nm, 0, NAME1), 0)
-         && TEST_false(ossl_namemap_empty(nm));
+         && TEST_int_eq(ossl_namemap_empty(nm), 0);
     ossl_namemap_free(nm);
     return ok;
 }

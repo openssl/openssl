@@ -11,6 +11,7 @@
 #include <openssl/evp.h>
 #include <openssl/params.h>
 #include <openssl/crypto.h>
+#include <internal/cryptlib.h>
 #include <openssl/fipskey.h>
 #include <openssl/err.h>
 #include <openssl/proverr.h>
@@ -212,9 +213,10 @@ err:
 
 static void set_fips_state(int state)
 {
-    CRYPTO_THREAD_write_lock(fips_state_lock);
-    FIPS_state = state;
-    CRYPTO_THREAD_unlock(fips_state_lock);
+    if (ossl_assert(CRYPTO_THREAD_write_lock(fips_state_lock) != 0)) {
+        FIPS_state = state;
+        CRYPTO_THREAD_unlock(fips_state_lock);
+    }
 }
 
 /* This API is triggered either on loading of the FIPS module or on demand */
@@ -232,7 +234,8 @@ int SELF_TEST_post(SELF_TEST_POST_PARAMS *st, int on_demand_test)
     if (!RUN_ONCE(&fips_self_test_init, do_fips_self_test_init))
         return 0;
 
-    CRYPTO_THREAD_read_lock(fips_state_lock);
+    if (!CRYPTO_THREAD_read_lock(fips_state_lock))
+        return 0;
     loclstate = FIPS_state;
     CRYPTO_THREAD_unlock(fips_state_lock);
 
@@ -244,8 +247,12 @@ int SELF_TEST_post(SELF_TEST_POST_PARAMS *st, int on_demand_test)
         return 0;
     }
 
-    CRYPTO_THREAD_write_lock(self_test_lock);
-    CRYPTO_THREAD_read_lock(fips_state_lock);
+    if (!CRYPTO_THREAD_write_lock(self_test_lock))
+        return 0;
+    if (!CRYPTO_THREAD_read_lock(fips_state_lock)) {
+        CRYPTO_THREAD_unlock(self_test_lock);
+        return 0;
+    }
     if (FIPS_state == FIPS_STATE_RUNNING) {
         CRYPTO_THREAD_unlock(fips_state_lock);
         if (!on_demand_test) {

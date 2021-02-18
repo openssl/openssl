@@ -268,7 +268,8 @@ static int get_cert_by_subject_ex(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
         }
         if (type == X509_LU_CRL && ent->hashes) {
             htmp.hash = h;
-            CRYPTO_THREAD_read_lock(ctx->lock);
+            if (!CRYPTO_THREAD_read_lock(ctx->lock))
+                goto finish;
             idx = sk_BY_DIR_HASH_find(ent->hashes, &htmp);
             if (idx >= 0) {
                 hent = sk_BY_DIR_HASH_value(ent->hashes, idx);
@@ -346,7 +347,8 @@ static int get_cert_by_subject_ex(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
         /* If a CRL, update the last file suffix added for this */
 
         if (type == X509_LU_CRL) {
-            CRYPTO_THREAD_write_lock(ctx->lock);
+            if (!CRYPTO_THREAD_write_lock(ctx->lock))
+                goto finish;
             /*
              * Look for entry again in case another thread added an entry
              * first.
