@@ -433,9 +433,9 @@ static int dh_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 {
     switch (op) {
     case ASN1_PKEY_CTRL_SET1_TLS_ENCPT:
-        return dh_buf2key(EVP_PKEY_get0_DH(pkey), arg2, arg1);
+        return ossl_dh_buf2key(EVP_PKEY_get0_DH(pkey), arg2, arg1);
     case ASN1_PKEY_CTRL_GET1_TLS_ENCPT:
-        return dh_key2buf(EVP_PKEY_get0_DH(pkey), arg2, 0, 1);
+        return ossl_dh_key2buf(EVP_PKEY_get0_DH(pkey), arg2, 0, 1);
     default:
         return -2;
     }
@@ -492,7 +492,7 @@ static int dh_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
      * If the DH method is foreign, then we can't be sure of anything, and
      * can therefore not export or pretend to export.
      */
-    if (dh_get_method(dh) != DH_OpenSSL())
+    if (ossl_dh_get_method(dh) != DH_OpenSSL())
         return 0;
 
     if (p == NULL || g == NULL)
@@ -543,7 +543,7 @@ static int dh_pkey_import_from_type(const OSSL_PARAM params[], void *vpctx,
 {
     EVP_PKEY_CTX *pctx = vpctx;
     EVP_PKEY *pkey = EVP_PKEY_CTX_get0_pkey(pctx);
-    DH *dh = dh_new_ex(pctx->libctx);
+    DH *dh = ossl_dh_new_ex(pctx->libctx);
 
     if (dh == NULL) {
         ERR_raise(ERR_LIB_DH, ERR_R_MALLOC_FAILURE);
@@ -552,8 +552,8 @@ static int dh_pkey_import_from_type(const OSSL_PARAM params[], void *vpctx,
     DH_clear_flags(dh, DH_FLAG_TYPE_MASK);
     DH_set_flags(dh, type == EVP_PKEY_DH ? DH_FLAG_TYPE_DH : DH_FLAG_TYPE_DHX);
 
-    if (!dh_params_fromdata(dh, params)
-        || !dh_key_fromdata(dh, params)
+    if (!ossl_dh_params_fromdata(dh, params)
+        || !ossl_dh_key_fromdata(dh, params)
         || !EVP_PKEY_assign(pkey, type, dh)) {
         DH_free(dh);
         return 0;

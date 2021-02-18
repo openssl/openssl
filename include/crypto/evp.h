@@ -179,8 +179,8 @@ DEFINE_STACK_OF_CONST(EVP_PKEY_METHOD)
 
 void evp_pkey_set_cb_translate(BN_GENCB *cb, EVP_PKEY_CTX *ctx);
 
-const EVP_PKEY_METHOD *dh_pkey_method(void);
-const EVP_PKEY_METHOD *dhx_pkey_method(void);
+const EVP_PKEY_METHOD *ossl_dh_pkey_method(void);
+const EVP_PKEY_METHOD *ossl_dhx_pkey_method(void);
 const EVP_PKEY_METHOD *dsa_pkey_method(void);
 const EVP_PKEY_METHOD *ec_pkey_method(void);
 const EVP_PKEY_METHOD *ecx25519_pkey_method(void);

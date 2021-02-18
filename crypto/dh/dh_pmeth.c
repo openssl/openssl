@@ -509,7 +509,7 @@ static const EVP_PKEY_METHOD dh_pkey_meth = {
     pkey_dh_ctrl_str
 };
 
-const EVP_PKEY_METHOD *dh_pkey_method(void)
+const EVP_PKEY_METHOD *ossl_dh_pkey_method(void)
 {
     return &dh_pkey_meth;
 }
@@ -548,7 +548,7 @@ static const EVP_PKEY_METHOD dhx_pkey_meth = {
     pkey_dh_ctrl_str
 };
 
-const EVP_PKEY_METHOD *dhx_pkey_method(void)
+const EVP_PKEY_METHOD *ossl_dhx_pkey_method(void)
 {
     return &dhx_pkey_meth;
 }

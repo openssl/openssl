@@ -39,7 +39,7 @@ static int dh_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
 
         DH_clear_flags(dh, DH_FLAG_TYPE_MASK);
         DH_set_flags(dh, DH_FLAG_TYPE_DH);
-        dh_cache_named_group(dh);
+        ossl_dh_cache_named_group(dh);
         dh->dirty_cnt++;
     }
     return 1;
