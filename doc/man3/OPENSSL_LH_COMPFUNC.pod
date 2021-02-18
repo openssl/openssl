@@ -195,7 +195,7 @@ B<lh_I<TYPE>_new>() and OPENSSL_LH_new() return NULL on error, otherwise a
 pointer to the new B<LHASH> structure.
 
 When a hash table entry is replaced, B<lh_I<TYPE>_insert>() or
-OPENSSL_LH_insert() returns the value being replaced. NULL is returned on normal
+OPENSSL_LH_insert() return the value being replaced. NULL is returned on normal
 operation and on error.
 
 B<lh_I<TYPE>_delete>() and OPENSSL_LH_delete() return the entry being deleted.
@@ -204,8 +204,9 @@ NULL is returned if there is no such value in the hash table.
 B<lh_I<TYPE>_retrieve>() and OPENSSL_LH_retrieve() return the hash table entry
 if it has been found, NULL otherwise.
 
-B<lh_I<TYPE>_error>() OPENSSL_LH_error() return 1 if an error occurred in the
-last operation, 0 otherwise. It's meaningful only after non-retrieve operations.
+B<lh_I<TYPE>_error>() and OPENSSL_LH_error() return 1 if an error occurred in
+the last operation, 0 otherwise. It's meaningful only after non-retrieve
+operations.
 
 B<lh_I<TYPE>_free>(), OPENSSL_LH_free(), B<lh_I<TYPE>_flush>(),
 OPENSSL_LH_flush(), B<lh_I<TYPE>_doall>() OPENSSL_LH_doall(),
@@ -214,7 +215,7 @@ B<lh_I<TYPE>_doall_arg>() and OPENSSL_LH_doall_arg() return no values.
 =head1 NOTE
 
 The LHASH code is not thread safe. All updating operations, as well as
-B<lh_I<TYPE>_error>() or OPENSSL_LH_error() callS must be performed under
+B<lh_I<TYPE>_error>() or OPENSSL_LH_error() calls must be performed under
 a write lock. All retrieve operations should be performed under a read lock,
 I<unless> accurate usage statistics are desired. In which case, a write lock
 should be used for retrieve operations as well. For output of the usage
