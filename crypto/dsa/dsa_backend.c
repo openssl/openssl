@@ -22,7 +22,7 @@
  * implementations alike.
  */
 
-int dsa_key_fromdata(DSA *dsa, const OSSL_PARAM params[])
+int ossl_dsa_key_fromdata(DSA *dsa, const OSSL_PARAM params[])
 {
     const OSSL_PARAM *param_priv_key, *param_pub_key;
     BIGNUM *priv_key = NULL, *pub_key = NULL;

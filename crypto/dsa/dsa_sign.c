@@ -150,8 +150,8 @@ int DSA_SIG_set0(DSA_SIG *sig, BIGNUM *r, BIGNUM *s)
     return 1;
 }
 
-int dsa_sign_int(int type, const unsigned char *dgst,
-                 int dlen, unsigned char *sig, unsigned int *siglen, DSA *dsa)
+int ossl_dsa_sign_int(int type, const unsigned char *dgst, int dlen,
+                      unsigned char *sig, unsigned int *siglen, DSA *dsa)
 {
     DSA_SIG *s;
 
@@ -159,7 +159,7 @@ int dsa_sign_int(int type, const unsigned char *dgst,
     if (dsa->libctx == NULL || dsa->meth != DSA_get_default_method())
         s = DSA_do_sign(dgst, dlen, dsa);
     else
-        s = dsa_do_sign_int(dgst, dlen, dsa);
+        s = ossl_dsa_do_sign_int(dgst, dlen, dsa);
     if (s == NULL) {
         *siglen = 0;
         return 0;
@@ -172,7 +172,7 @@ int dsa_sign_int(int type, const unsigned char *dgst,
 int DSA_sign(int type, const unsigned char *dgst, int dlen,
              unsigned char *sig, unsigned int *siglen, DSA *dsa)
 {
-    return dsa_sign_int(type, dgst, dlen, sig, siglen, dsa);
+    return ossl_dsa_sign_int(type, dgst, dlen, sig, siglen, dsa);
 }
 
 /* data has already been hashed (probably with SHA or SHA-1). */
@@ -206,4 +206,3 @@ int DSA_verify(int type, const unsigned char *dgst, int dgst_len,
     DSA_SIG_free(s);
     return ret;
 }
-

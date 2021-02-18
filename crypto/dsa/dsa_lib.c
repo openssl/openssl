@@ -190,7 +190,7 @@ DSA *DSA_new_method(ENGINE *engine)
     return dsa_new_intern(engine, NULL);
 }
 
-DSA *dsa_new_with_ctx(OSSL_LIB_CTX *libctx)
+DSA *ossl_dsa_new(OSSL_LIB_CTX *libctx)
 {
     return dsa_new_intern(NULL, libctx);
 }
@@ -336,19 +336,19 @@ int DSA_bits(const DSA *dsa)
     return -1;
 }
 
-FFC_PARAMS *dsa_get0_params(DSA *dsa)
+FFC_PARAMS *ossl_dsa_get0_params(DSA *dsa)
 {
     return &dsa->params;
 }
 
-int dsa_ffc_params_fromdata(DSA *dsa, const OSSL_PARAM params[])
+int ossl_dsa_ffc_params_fromdata(DSA *dsa, const OSSL_PARAM params[])
 {
     int ret;
     FFC_PARAMS *ffc;
 
     if (dsa == NULL)
         return 0;
-    ffc = dsa_get0_params(dsa);
+    ffc = ossl_dsa_get0_params(dsa);
     if (ffc == NULL)
         return 0;
 

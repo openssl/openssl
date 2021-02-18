@@ -23,8 +23,8 @@
 #include "crypto/dsa.h"
 #include "dsa_local.h"
 
-int dsa_generate_ffc_parameters(DSA *dsa, int type, int pbits, int qbits,
-                                BN_GENCB *cb)
+int ossl_dsa_generate_ffc_parameters(DSA *dsa, int type, int pbits, int qbits,
+                                     BN_GENCB *cb)
 {
     int ret = 0, res;
 
@@ -59,12 +59,12 @@ int DSA_generate_parameters_ex(DSA *dsa, int bits,
 
     /* The old code used FIPS 186-2 DSA Parameter generation */
     if (bits <= 1024 && seed_len == 20) {
-        if (!dsa_generate_ffc_parameters(dsa, DSA_PARAMGEN_TYPE_FIPS_186_2,
-                                         bits, 160, cb))
+        if (!ossl_dsa_generate_ffc_parameters(dsa, DSA_PARAMGEN_TYPE_FIPS_186_2,
+                                              bits, 160, cb))
             return 0;
     } else {
-        if (!dsa_generate_ffc_parameters(dsa, DSA_PARAMGEN_TYPE_FIPS_186_4,
-                                         bits, 0, cb))
+        if (!ossl_dsa_generate_ffc_parameters(dsa, DSA_PARAMGEN_TYPE_FIPS_186_4,
+                                              bits, 0, cb))
             return 0;
     }
 

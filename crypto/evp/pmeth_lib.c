@@ -54,7 +54,7 @@ static pmeth_fn standard_methods[] = {
     ossl_dh_pkey_method,
 # endif
 # ifndef OPENSSL_NO_DSA
-    dsa_pkey_method,
+    ossl_dsa_pkey_method,
 # endif
 # ifndef OPENSSL_NO_EC
     ec_pkey_method,
