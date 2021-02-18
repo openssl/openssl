@@ -21,7 +21,7 @@ OpenSSL Releases
 OpenSSL 3.0
 -----------
 
-### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
+### Changes between 1.1.1 and 3.0 alpha 12 [18 Feb 2021]
 
 * The SRP APIs have been deprecated. The old APIs do not work via providers,
    and there is no EVP interface to them. Unfortunately there is no replacement
