@@ -52,7 +52,7 @@ DH *DSA_dup_DH(const DSA *r)
     if (ret == NULL)
         goto err;
 
-    if (!ossl_ffc_params_copy(dh_get0_params(ret), &r->params))
+    if (!ossl_ffc_params_copy(ossl_dh_get0_params(ret), &r->params))
         goto err;
 
     if (r->pub_key != NULL) {

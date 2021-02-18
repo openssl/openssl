@@ -210,8 +210,8 @@ int DH_generate_key(DH *dh)
 #endif
 }
 
-int dh_generate_public_key(BN_CTX *ctx, const DH *dh, const BIGNUM *priv_key,
-                           BIGNUM *pub_key)
+int ossl_dh_generate_public_key(BN_CTX *ctx, const DH *dh,
+                                const BIGNUM *priv_key, BIGNUM *pub_key)
 {
     int ret = 0;
     BIGNUM *prk = BN_new();
@@ -344,7 +344,7 @@ static int generate_key(DH *dh)
         }
     }
 
-    if (!dh_generate_public_key(ctx, dh, priv_key, pub_key))
+    if (!ossl_dh_generate_public_key(ctx, dh, priv_key, pub_key))
         goto err;
 
     dh->pub_key = pub_key;
@@ -363,7 +363,7 @@ static int generate_key(DH *dh)
     return ok;
 }
 
-int dh_buf2key(DH *dh, const unsigned char *buf, size_t len)
+int ossl_dh_buf2key(DH *dh, const unsigned char *buf, size_t len)
 {
     int err_reason = DH_R_BN_ERROR;
     BIGNUM *pubkey = NULL;
@@ -394,7 +394,8 @@ err:
     return 0;
 }
 
-size_t dh_key2buf(const DH *dh, unsigned char **pbuf_out, size_t size, int alloc)
+size_t ossl_dh_key2buf(const DH *dh, unsigned char **pbuf_out, size_t size,
+                       int alloc)
 {
     const BIGNUM *pubkey;
     unsigned char *pbuf = NULL;

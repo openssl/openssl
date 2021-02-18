@@ -27,7 +27,7 @@
 
 static DH *dh_param_init(OSSL_LIB_CTX *libctx, const DH_NAMED_GROUP *group)
 {
-    DH *dh = dh_new_ex(libctx);
+    DH *dh = ossl_dh_new_ex(libctx);
 
     if (dh == NULL)
         return NULL;
@@ -39,7 +39,7 @@ static DH *dh_param_init(OSSL_LIB_CTX *libctx, const DH_NAMED_GROUP *group)
     return dh;
 }
 
-DH *dh_new_by_nid_ex(OSSL_LIB_CTX *libctx, int nid)
+DH *ossl_dh_new_by_nid_ex(OSSL_LIB_CTX *libctx, int nid)
 {
     const DH_NAMED_GROUP *group;
 
@@ -52,10 +52,10 @@ DH *dh_new_by_nid_ex(OSSL_LIB_CTX *libctx, int nid)
 
 DH *DH_new_by_nid(int nid)
 {
-    return dh_new_by_nid_ex(NULL, nid);
+    return ossl_dh_new_by_nid_ex(NULL, nid);
 }
 
-void dh_cache_named_group(DH *dh)
+void ossl_dh_cache_named_group(DH *dh)
 {
     const DH_NAMED_GROUP *group;
 

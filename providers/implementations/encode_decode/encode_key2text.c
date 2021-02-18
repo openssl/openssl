@@ -23,7 +23,7 @@
 #include <openssl/proverr.h>
 #include "internal/ffc.h"
 #include "crypto/bn.h"           /* bn_get_words() */
-#include "crypto/dh.h"           /* dh_get0_params() */
+#include "crypto/dh.h"           /* ossl_dh_get0_params() */
 #include "crypto/dsa.h"          /* dsa_get0_params() */
 #include "crypto/ec.h"           /* ec_key_get_libctx */
 #include "crypto/ecx.h"          /* ECX_KEY, etc... */
@@ -245,7 +245,7 @@ static int dh_to_text(BIO *out, const void *key, int selection)
         }
     }
     if ((selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) != 0) {
-        params = dh_get0_params((DH *)dh);
+        params = ossl_dh_get0_params((DH *)dh);
         if (params == NULL) {
             ERR_raise(ERR_LIB_PROV, PROV_R_NOT_PARAMETERS);
             return 0;

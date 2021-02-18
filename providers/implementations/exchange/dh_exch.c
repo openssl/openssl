@@ -180,13 +180,13 @@ static int dh_X9_42_kdf_derive(void *vpdhctx, unsigned char *secret,
 
     /* Do KDF stuff */
     if (pdhctx->kdf_type == PROV_DH_KDF_X9_42_ASN1) {
-        if (!dh_KDF_X9_42_asn1(secret, pdhctx->kdf_outlen,
-                               stmp, stmplen,
-                               pdhctx->kdf_cekalg,
-                               pdhctx->kdf_ukm,
-                               pdhctx->kdf_ukmlen,
-                               pdhctx->kdf_md,
-                               pdhctx->libctx, NULL))
+        if (!ossl_dh_kdf_X9_42_asn1(secret, pdhctx->kdf_outlen,
+                                    stmp, stmplen,
+                                    pdhctx->kdf_cekalg,
+                                    pdhctx->kdf_ukm,
+                                    pdhctx->kdf_ukmlen,
+                                    pdhctx->kdf_md,
+                                    pdhctx->libctx, NULL))
             goto err;
     }
     *secretlen = pdhctx->kdf_outlen;

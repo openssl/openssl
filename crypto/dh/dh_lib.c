@@ -47,7 +47,7 @@ int DH_set_method(DH *dh, const DH_METHOD *meth)
     return 1;
 }
 
-const DH_METHOD *dh_get_method(const DH *dh)
+const DH_METHOD *ossl_dh_get_method(const DH *dh)
 {
     return dh->meth;
 }
@@ -64,7 +64,7 @@ DH *DH_new_method(ENGINE *engine)
 }
 #endif /* !FIPS_MODULE */
 
-DH *dh_new_ex(OSSL_LIB_CTX *libctx)
+DH *ossl_dh_new_ex(OSSL_LIB_CTX *libctx)
 {
     return dh_new_intern(NULL, libctx);
 }
@@ -230,7 +230,7 @@ int DH_set0_pqg(DH *dh, BIGNUM *p, BIGNUM *q, BIGNUM *g)
         return 0;
 
     ossl_ffc_params_set0_pqg(&dh->params, p, q, g);
-    dh_cache_named_group(dh);
+    ossl_dh_cache_named_group(dh);
     dh->dirty_cnt++;
     return 1;
 }
@@ -317,11 +317,11 @@ ENGINE *DH_get0_engine(DH *dh)
 }
 #endif /*FIPS_MODULE */
 
-FFC_PARAMS *dh_get0_params(DH *dh)
+FFC_PARAMS *ossl_dh_get0_params(DH *dh)
 {
     return &dh->params;
 }
-int dh_get0_nid(const DH *dh)
+int ossl_dh_get0_nid(const DH *dh)
 {
     return dh->params.nid;
 }

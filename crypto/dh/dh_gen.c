@@ -35,8 +35,8 @@ static int dh_builtin_genparams(DH *ret, int prime_len, int generator,
                                 BN_GENCB *cb);
 #endif /* FIPS_MODULE */
 
-int dh_generate_ffc_parameters(DH *dh, int type, int pbits, int qbits,
-                               BN_GENCB *cb)
+int ossl_dh_generate_ffc_parameters(DH *dh, int type, int pbits, int qbits,
+                                    BN_GENCB *cb)
 {
     int ret, res;
 
@@ -55,7 +55,7 @@ int dh_generate_ffc_parameters(DH *dh, int type, int pbits, int qbits,
     return ret;
 }
 
-int dh_get_named_group_uid_from_size(int pbits)
+int ossl_dh_get_named_group_uid_from_size(int pbits)
 {
     /*
      * Just choose an approved safe prime group.
@@ -95,12 +95,12 @@ static int dh_gen_named_group(OSSL_LIB_CTX *libctx, DH *ret, int prime_len)
 {
     DH *dh;
     int ok = 0;
-    int nid = dh_get_named_group_uid_from_size(prime_len);
+    int nid = ossl_dh_get_named_group_uid_from_size(prime_len);
 
     if (nid == NID_undef)
         return 0;
 
-    dh = dh_new_by_nid_ex(libctx, nid);
+    dh = ossl_dh_new_by_nid_ex(libctx, nid);
     if (dh != NULL
         && ossl_ffc_params_copy(&ret->params, &dh->params)) {
         ok = 1;

@@ -30,17 +30,17 @@ static int dh_ffc_params_fromdata(DH *dh, const OSSL_PARAM params[])
 
     if (dh == NULL)
         return 0;
-    ffc = dh_get0_params(dh);
+    ffc = ossl_dh_get0_params(dh);
     if (ffc == NULL)
         return 0;
 
     ret = ossl_ffc_params_fromdata(ffc, params);
     if (ret)
-        dh_cache_named_group(dh); /* This increments dh->dirty_cnt */
+        ossl_dh_cache_named_group(dh); /* This increments dh->dirty_cnt */
     return ret;
 }
 
-int dh_params_fromdata(DH *dh, const OSSL_PARAM params[])
+int ossl_dh_params_fromdata(DH *dh, const OSSL_PARAM params[])
 {
     const OSSL_PARAM *param_priv_len;
     long priv_len;
@@ -58,7 +58,7 @@ int dh_params_fromdata(DH *dh, const OSSL_PARAM params[])
     return 1;
 }
 
-int dh_key_fromdata(DH *dh, const OSSL_PARAM params[])
+int ossl_dh_key_fromdata(DH *dh, const OSSL_PARAM params[])
 {
     const OSSL_PARAM *param_priv_key, *param_pub_key;
     BIGNUM *priv_key = NULL, *pub_key = NULL;
@@ -86,11 +86,11 @@ int dh_key_fromdata(DH *dh, const OSSL_PARAM params[])
     return 0;
 }
 
-int dh_params_todata(DH *dh, OSSL_PARAM_BLD *bld, OSSL_PARAM params[])
+int ossl_dh_params_todata(DH *dh, OSSL_PARAM_BLD *bld, OSSL_PARAM params[])
 {
     long l = DH_get_length(dh);
 
-    if (!ossl_ffc_params_todata(dh_get0_params(dh), bld, params))
+    if (!ossl_ffc_params_todata(ossl_dh_get0_params(dh), bld, params))
         return 0;
     if (l > 0
         && !ossl_param_build_set_long(bld, params, OSSL_PKEY_PARAM_DH_PRIV_LEN, l))
@@ -98,7 +98,7 @@ int dh_params_todata(DH *dh, OSSL_PARAM_BLD *bld, OSSL_PARAM params[])
     return 1;
 }
 
-int dh_key_todata(DH *dh, OSSL_PARAM_BLD *bld, OSSL_PARAM params[])
+int ossl_dh_key_todata(DH *dh, OSSL_PARAM_BLD *bld, OSSL_PARAM params[])
 {
     const BIGNUM *priv = NULL, *pub = NULL;
 
