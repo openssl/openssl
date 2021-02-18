@@ -71,6 +71,9 @@
 #endif
 #include <openssl/rsa.h>
 #include "./testrsa.h"
+#ifndef OPENSSL_NO_DH
+# include <openssl/dh.h>
+#endif
 #include <openssl/x509.h>
 #include <openssl/dsa.h>
 #include "./testdsa.h"
@@ -94,6 +97,10 @@
 #define MAX_ECDH_SIZE   256
 #define MISALIGN        64
 #define MAX_FFDH_SIZE 1024
+
+#ifndef RSA_DEFAULT_PRIME_NUM
+# define RSA_DEFAULT_PRIME_NUM 2
+#endif
 
 typedef struct openssl_speed_sec_st {
     int sym;
