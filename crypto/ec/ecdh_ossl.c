@@ -46,8 +46,8 @@ int ossl_ecdh_compute_key(unsigned char **psec, size_t *pseclen,
  * See Section 5.7.1.2 "Elliptic Curve Cryptography Cofactor Diffie-Hellman
  * (ECC CDH) Primitive:". The steps listed below refer to SP800-56A.
  */
-int ecdh_simple_compute_key(unsigned char **pout, size_t *poutlen,
-                            const EC_POINT *pub_key, const EC_KEY *ecdh)
+int ossl_ecdh_simple_compute_key(unsigned char **pout, size_t *poutlen,
+                                 const EC_POINT *pub_key, const EC_KEY *ecdh)
 {
     BN_CTX *ctx;
     EC_POINT *tmp = NULL;

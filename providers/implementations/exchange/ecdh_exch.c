@@ -25,7 +25,7 @@
 #include "prov/providercommon.h"
 #include "prov/implementations.h"
 #include "prov/securitycheck.h"
-#include "crypto/ec.h" /* ecdh_KDF_X9_63() */
+#include "crypto/ec.h" /* ossl_ecdh_kdf_X9_63() */
 
 static OSSL_FUNC_keyexch_newctx_fn ecdh_newctx;
 static OSSL_FUNC_keyexch_init_fn ecdh_init;
@@ -498,12 +498,12 @@ int ecdh_X9_63_kdf_derive(void *vpecdhctx, unsigned char *secret,
         goto err;
 
     /* Do KDF stuff */
-    if (!ecdh_KDF_X9_63(secret, pecdhctx->kdf_outlen,
-                        stmp, stmplen,
-                        pecdhctx->kdf_ukm,
-                        pecdhctx->kdf_ukmlen,
-                        pecdhctx->kdf_md,
-                        pecdhctx->libctx, NULL))
+    if (!ossl_ecdh_kdf_X9_63(secret, pecdhctx->kdf_outlen,
+                             stmp, stmplen,
+                             pecdhctx->kdf_ukm,
+                             pecdhctx->kdf_ukmlen,
+                             pecdhctx->kdf_md,
+                             pecdhctx->libctx, NULL))
         goto err;
     *psecretlen = pecdhctx->kdf_outlen;
     ret = 1;

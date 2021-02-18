@@ -80,12 +80,12 @@ static int ecx_init(void *vecxctx, void *vkey)
     if (ecxctx == NULL
             || key == NULL
             || key->keylen != ecxctx->keylen
-            || !ecx_key_up_ref(key)) {
+            || !ossl_ecx_key_up_ref(key)) {
         ERR_raise(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR);
         return 0;
     }
 
-    ecx_key_free(ecxctx->key);
+    ossl_ecx_key_free(ecxctx->key);
     ecxctx->key = key;
 
     return 1;
@@ -102,11 +102,11 @@ static int ecx_set_peer(void *vecxctx, void *vkey)
     if (ecxctx == NULL
             || key == NULL
             || key->keylen != ecxctx->keylen
-            || !ecx_key_up_ref(key)) {
+            || !ossl_ecx_key_up_ref(key)) {
         ERR_raise(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR);
         return 0;
     }
-    ecx_key_free(ecxctx->peerkey);
+    ossl_ecx_key_free(ecxctx->peerkey);
     ecxctx->peerkey = key;
 
     return 1;
@@ -182,8 +182,8 @@ static void ecx_freectx(void *vecxctx)
 {
     PROV_ECX_CTX *ecxctx = (PROV_ECX_CTX *)vecxctx;
 
-    ecx_key_free(ecxctx->key);
-    ecx_key_free(ecxctx->peerkey);
+    ossl_ecx_key_free(ecxctx->key);
+    ossl_ecx_key_free(ecxctx->peerkey);
 
     OPENSSL_free(ecxctx);
 }
@@ -203,15 +203,15 @@ static void *ecx_dupctx(void *vecxctx)
     }
 
     *dstctx = *srcctx;
-    if (dstctx->key != NULL && !ecx_key_up_ref(dstctx->key)) {
+    if (dstctx->key != NULL && !ossl_ecx_key_up_ref(dstctx->key)) {
         ERR_raise(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR);
         OPENSSL_free(dstctx);
         return NULL;
     }
 
-    if (dstctx->peerkey != NULL && !ecx_key_up_ref(dstctx->peerkey)) {
+    if (dstctx->peerkey != NULL && !ossl_ecx_key_up_ref(dstctx->peerkey)) {
         ERR_raise(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR);
-        ecx_key_free(dstctx->key);
+        ossl_ecx_key_free(dstctx->key);
         OPENSSL_free(dstctx);
         return NULL;
     }

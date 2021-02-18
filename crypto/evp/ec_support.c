@@ -115,7 +115,7 @@ static const EC_NAME2NID curve_list[] = {
     {"SM2", NID_sm2 },
 };
 
-const char *ec_curve_nid2name(int nid)
+const char *ossl_ec_curve_nid2name(int nid)
 {
     size_t i;
 
@@ -126,7 +126,7 @@ const char *ec_curve_nid2name(int nid)
      * TODO(3.0) Figure out if we should try to find the nid with
      * EC_curve_nid2nist() first, i.e. make it a priority to return
      * NIST names if there is one for the NID.  This is related to
-     * the TODO comment in ec_curve_name2nid().
+     * the TODO comment in ossl_ec_curve_name2nid().
      */
 
     for (i = 0; i < OSSL_NELEM(curve_list); i++) {
@@ -136,13 +136,13 @@ const char *ec_curve_nid2name(int nid)
     return NULL;
 }
 
-int ec_curve_name2nid(const char *name)
+int ossl_ec_curve_name2nid(const char *name)
 {
     size_t i;
     int nid;
 
     if (name != NULL) {
-        if ((nid = ec_curve_nist2nid_int(name)) != NID_undef)
+        if ((nid = ossl_ec_curve_nist2nid_int(name)) != NID_undef)
             return nid;
 
         for (i = 0; i < OSSL_NELEM(curve_list); i++) {
@@ -174,7 +174,7 @@ static const EC_NAME2NID nist_curves[] = {
     {"P-521", NID_secp521r1}
 };
 
-const char *ec_curve_nid2nist_int(int nid)
+const char *ossl_ec_curve_nid2nist_int(int nid)
 {
     size_t i;
     for (i = 0; i < OSSL_NELEM(nist_curves); i++) {
@@ -184,7 +184,7 @@ const char *ec_curve_nid2nist_int(int nid)
     return NULL;
 }
 
-int ec_curve_nist2nid_int(const char *name)
+int ossl_ec_curve_nist2nid_int(const char *name)
 {
     size_t i;
     for (i = 0; i < OSSL_NELEM(nist_curves); i++) {

@@ -160,7 +160,7 @@ static int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in,
     } while (BN_is_zero(r));
 
     /* compute the inverse of k */
-    if (!ec_group_do_inverse_ord(group, k, k, ctx)) {
+    if (!ossl_ec_group_do_inverse_ord(group, k, k, ctx)) {
         ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
         goto err;
     }
@@ -184,15 +184,15 @@ static int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in,
     return ret;
 }
 
-int ecdsa_simple_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp,
-                            BIGNUM **rp)
+int ossl_ecdsa_simple_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp,
+                                 BIGNUM **rp)
 {
     return ecdsa_sign_setup(eckey, ctx_in, kinvp, rp, NULL, 0);
 }
 
-ECDSA_SIG *ecdsa_simple_sign_sig(const unsigned char *dgst, int dgst_len,
-                                 const BIGNUM *in_kinv, const BIGNUM *in_r,
-                                 EC_KEY *eckey)
+ECDSA_SIG *ossl_ecdsa_simple_sign_sig(const unsigned char *dgst, int dgst_len,
+                                      const BIGNUM *in_kinv, const BIGNUM *in_r,
+                                      EC_KEY *eckey)
 {
     int ok = 0, i;
     BIGNUM *kinv = NULL, *s, *m = NULL;
@@ -353,8 +353,8 @@ int ossl_ecdsa_verify(int type, const unsigned char *dgst, int dgst_len,
     return ret;
 }
 
-int ecdsa_simple_verify_sig(const unsigned char *dgst, int dgst_len,
-                            const ECDSA_SIG *sig, EC_KEY *eckey)
+int ossl_ecdsa_simple_verify_sig(const unsigned char *dgst, int dgst_len,
+                                 const ECDSA_SIG *sig, EC_KEY *eckey)
 {
     int ret = -1, i;
     BN_CTX *ctx;
@@ -405,7 +405,7 @@ int ecdsa_simple_verify_sig(const unsigned char *dgst, int dgst_len,
         goto err;
     }
     /* calculate tmp1 = inv(S) mod order */
-    if (!ec_group_do_inverse_ord(group, u2, sig->s, ctx)) {
+    if (!ossl_ec_group_do_inverse_ord(group, u2, sig->s, ctx)) {
         ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
         goto err;
     }

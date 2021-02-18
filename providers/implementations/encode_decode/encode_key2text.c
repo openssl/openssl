@@ -25,7 +25,7 @@
 #include "crypto/bn.h"           /* bn_get_words() */
 #include "crypto/dh.h"           /* ossl_dh_get0_params() */
 #include "crypto/dsa.h"          /* ossl_dsa_get0_params() */
-#include "crypto/ec.h"           /* ec_key_get_libctx */
+#include "crypto/ec.h"           /* ossl_ec_key_get_libctx */
 #include "crypto/ecx.h"          /* ECX_KEY, etc... */
 #include "crypto/rsa.h"          /* RSA_PSS_PARAMS_30, etc... */
 #include "prov/bio.h"
@@ -539,7 +539,7 @@ static int ec_to_text(BIO *out, const void *key, int selection)
         && !print_labeled_buf(out, "pub:", pub, pub_len))
         goto err;
     if ((selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) != 0)
-        ret = ec_param_to_text(out, group, ec_key_get_libctx(ec));
+        ret = ec_param_to_text(out, group, ossl_ec_key_get_libctx(ec));
 err:
     OPENSSL_clear_free(priv, priv_len);
     OPENSSL_free(pub);

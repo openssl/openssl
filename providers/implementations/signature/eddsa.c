@@ -99,7 +99,7 @@ static int eddsa_digest_signverify_init(void *vpeddsactx, const char *mdname,
         return 0;
     }
 
-    if (!ecx_key_up_ref(edkey)) {
+    if (!ossl_ecx_key_up_ref(edkey)) {
         ERR_raise(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR);
         return 0;
     }
@@ -240,7 +240,7 @@ static void eddsa_freectx(void *vpeddsactx)
 {
     PROV_EDDSA_CTX *peddsactx = (PROV_EDDSA_CTX *)vpeddsactx;
 
-    ecx_key_free(peddsactx->key);
+    ossl_ecx_key_free(peddsactx->key);
 
     OPENSSL_free(peddsactx);
 }
@@ -260,7 +260,7 @@ static void *eddsa_dupctx(void *vpeddsactx)
     *dstctx = *srcctx;
     dstctx->key = NULL;
 
-    if (srcctx->key != NULL && !ecx_key_up_ref(srcctx->key)) {
+    if (srcctx->key != NULL && !ossl_ecx_key_up_ref(srcctx->key)) {
         ERR_raise(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR);
         goto err;
     }

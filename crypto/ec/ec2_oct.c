@@ -36,10 +36,10 @@
  * the same method, but claim no priority date earlier than July 29, 1994
  * (and additionally fail to cite the EUROCRYPT '92 publication as prior art).
  */
-int ec_GF2m_simple_set_compressed_coordinates(const EC_GROUP *group,
-                                              EC_POINT *point,
-                                              const BIGNUM *x_, int y_bit,
-                                              BN_CTX *ctx)
+int ossl_ec_GF2m_simple_set_compressed_coordinates(const EC_GROUP *group,
+                                                   EC_POINT *point,
+                                                   const BIGNUM *x_, int y_bit,
+                                                   BN_CTX *ctx)
 {
     BIGNUM *tmp, *x, *y, *z;
     int ret = 0, z0;
@@ -122,9 +122,10 @@ int ec_GF2m_simple_set_compressed_coordinates(const EC_GROUP *group,
  * length will be returned. If the length len of buf is smaller than required
  * an error will be returned.
  */
-size_t ec_GF2m_simple_point2oct(const EC_GROUP *group, const EC_POINT *point,
-                                point_conversion_form_t form,
-                                unsigned char *buf, size_t len, BN_CTX *ctx)
+size_t ossl_ec_GF2m_simple_point2oct(const EC_GROUP *group,
+                                     const EC_POINT *point,
+                                     point_conversion_form_t form,
+                                     unsigned char *buf, size_t len, BN_CTX *ctx)
 {
     size_t ret;
     int used_ctx = 0;
@@ -252,9 +253,9 @@ size_t ec_GF2m_simple_point2oct(const EC_GROUP *group, const EC_POINT *point,
  * Converts an octet string representation to an EC_POINT. Note that the
  * simple implementation only uses affine coordinates.
  */
-int ec_GF2m_simple_oct2point(const EC_GROUP *group, EC_POINT *point,
-                             const unsigned char *buf, size_t len,
-                             BN_CTX *ctx)
+int ossl_ec_GF2m_simple_oct2point(const EC_GROUP *group, EC_POINT *point,
+                                  const unsigned char *buf, size_t len,
+                                  BN_CTX *ctx)
 {
     point_conversion_form_t form;
     int y_bit, m;
