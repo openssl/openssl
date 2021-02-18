@@ -370,7 +370,7 @@ static int ecdh_cms_encrypt(CMS_RecipientInfo *ri)
     return rv;
 }
 
-int cms_ecdh_envelope(CMS_RecipientInfo *ri, int decrypt)
+int ossl_cms_ecdh_envelope(CMS_RecipientInfo *ri, int decrypt)
 {
     assert(decrypt == 0 || decrypt == 1);
 
@@ -385,7 +385,7 @@ int cms_ecdh_envelope(CMS_RecipientInfo *ri, int decrypt)
 }
 
 /* ECDSA and DSA implementation is the same */
-int cms_ecdsa_dsa_sign(CMS_SignerInfo *si, int verify)
+int ossl_cms_ecdsa_dsa_sign(CMS_SignerInfo *si, int verify)
 {
     assert(verify == 0 || verify == 1);
 

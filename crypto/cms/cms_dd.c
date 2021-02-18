@@ -17,9 +17,9 @@
 
 /* CMS DigestedData Utilities */
 
-CMS_ContentInfo *cms_DigestedData_create(const EVP_MD *md,
-                                         OSSL_LIB_CTX *libctx,
-                                         const char *propq)
+CMS_ContentInfo *ossl_cms_DigestedData_create(const EVP_MD *md,
+                                              OSSL_LIB_CTX *libctx,
+                                              const char *propq)
 {
     CMS_ContentInfo *cms;
     CMS_DigestedData *dd;
@@ -48,14 +48,16 @@ CMS_ContentInfo *cms_DigestedData_create(const EVP_MD *md,
     return NULL;
 }
 
-BIO *cms_DigestedData_init_bio(const CMS_ContentInfo *cms)
+BIO *ossl_cms_DigestedData_init_bio(const CMS_ContentInfo *cms)
 {
     CMS_DigestedData *dd = cms->d.digestedData;
 
-    return cms_DigestAlgorithm_init_bio(dd->digestAlgorithm, cms_get0_cmsctx(cms));
+    return ossl_cms_DigestAlgorithm_init_bio(dd->digestAlgorithm,
+                                             ossl_cms_get0_cmsctx(cms));
 }
 
-int cms_DigestedData_do_final(const CMS_ContentInfo *cms, BIO *chain, int verify)
+int ossl_cms_DigestedData_do_final(const CMS_ContentInfo *cms, BIO *chain,
+                                   int verify)
 {
     EVP_MD_CTX *mctx = EVP_MD_CTX_new();
     unsigned char md[EVP_MAX_MD_SIZE];
@@ -70,7 +72,7 @@ int cms_DigestedData_do_final(const CMS_ContentInfo *cms, BIO *chain, int verify
 
     dd = cms->d.digestedData;
 
-    if (!cms_DigestAlgorithm_find_ctx(mctx, chain, dd->digestAlgorithm))
+    if (!ossl_cms_DigestAlgorithm_find_ctx(mctx, chain, dd->digestAlgorithm))
         goto err;
 
     if (EVP_DigestFinal_ex(mctx, md, &mdlen) <= 0)
