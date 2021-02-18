@@ -19,7 +19,7 @@
  * crypto/ec/ec_key.c
  */
 
-int sm2_key_private_check(const EC_KEY *eckey)
+int ossl_sm2_key_private_check(const EC_KEY *eckey)
 {
     int ret = 0;
     BIGNUM *max = NULL;

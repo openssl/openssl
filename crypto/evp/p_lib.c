@@ -838,12 +838,12 @@ static ECX_KEY *evp_pkey_get1_ECX_KEY(EVP_PKEY *pkey, int type)
 {
     ECX_KEY *ret = evp_pkey_get0_ECX_KEY(pkey, type);
     if (ret != NULL)
-        ecx_key_up_ref(ret);
+        ossl_ecx_key_up_ref(ret);
     return ret;
 }
 
 #  define IMPLEMENT_ECX_VARIANT(NAME)                                   \
-    ECX_KEY *evp_pkey_get1_##NAME(EVP_PKEY *pkey)                       \
+    ECX_KEY *ossl_evp_pkey_get1_##NAME(EVP_PKEY *pkey)                  \
     {                                                                   \
         return evp_pkey_get1_ECX_KEY(pkey, EVP_PKEY_##NAME);            \
     }

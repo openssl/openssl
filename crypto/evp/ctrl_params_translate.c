@@ -1023,7 +1023,7 @@ static int fix_dh_paramgen_type(enum state state,
         return 0;
 
     if (state == PRE_CTRL_TO_PARAMS) {
-        ctx->p2 = (char *)dh_gen_type_id2name(ctx->p1);
+        ctx->p2 = (char *)ossl_dh_gen_type_id2name(ctx->p1);
         ctx->p1 = 0;
     }
 
@@ -1031,7 +1031,7 @@ static int fix_dh_paramgen_type(enum state state,
         return ret;
 
     if (state == PRE_PARAMS_TO_CTRL) {
-        ctx->p1 = dh_gen_type_name2id(ctx->p2);
+        ctx->p1 = ossl_dh_gen_type_name2id(ctx->p2);
         ctx->p2 = NULL;
     }
 
@@ -1504,7 +1504,7 @@ static int get_payload_group_name(enum state state,
             if (grp != NULL)
                 nid = EC_GROUP_get_curve_name(grp);
             if (nid != NID_undef)
-                ctx->p2 = (char *)ec_curve_nid2name(nid);
+                ctx->p2 = (char *)ossl_ec_curve_nid2name(nid);
         }
         break;
 #endif
@@ -1569,7 +1569,7 @@ static int get_payload_public_key(enum state state,
     case EVP_PKEY_DH:
         switch (ctx->params->data_type) {
         case OSSL_PARAM_OCTET_STRING:
-            ctx->sz = dh_key2buf(EVP_PKEY_get0_DH(pkey), &buf, 0, 1);
+            ctx->sz = ossl_dh_key2buf(EVP_PKEY_get0_DH(pkey), &buf, 0, 1);
             ctx->p2 = buf;
             break;
         case OSSL_PARAM_UNSIGNED_INTEGER:
@@ -1592,7 +1592,7 @@ static int get_payload_public_key(enum state state,
     case EVP_PKEY_EC:
         if (ctx->params->data_type == OSSL_PARAM_OCTET_STRING) {
             EC_KEY *eckey = EVP_PKEY_get0_EC_KEY(pkey);
-            BN_CTX *bnctx = BN_CTX_new_ex(ec_key_get_libctx(eckey));
+            BN_CTX *bnctx = BN_CTX_new_ex(ossl_ec_key_get_libctx(eckey));
             const EC_GROUP *ecg = EC_KEY_get0_group(eckey);
             const EC_POINT *point = EC_KEY_get0_public_key(eckey);
 

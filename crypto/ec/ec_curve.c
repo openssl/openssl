@@ -3147,8 +3147,8 @@ static EC_GROUP *ec_group_new_from_data(OSSL_LIB_CTX *libctx,
 
     /* If no curve data curve method must handle everything */
     if (curve.data == NULL)
-        return ec_group_new_ex(libctx, propq,
-                               curve.meth != NULL ? curve.meth() : NULL);
+        return ossl_ec_group_new_ex(libctx, propq,
+                                    curve.meth != NULL ? curve.meth() : NULL);
 
     if ((ctx = BN_CTX_new_ex(libctx)) == NULL) {
         ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
@@ -3170,7 +3170,7 @@ static EC_GROUP *ec_group_new_from_data(OSSL_LIB_CTX *libctx,
 
     if (curve.meth != 0) {
         meth = curve.meth();
-        if (((group = ec_group_new_ex(libctx, propq, meth)) == NULL) ||
+        if (((group = ossl_ec_group_new_ex(libctx, propq, meth)) == NULL) ||
             (!(group->meth->group_set_curve(group, p, a, b, ctx)))) {
             ERR_raise(ERR_LIB_EC, ERR_R_EC_LIB);
             goto err;
@@ -3286,12 +3286,12 @@ size_t EC_get_builtin_curves(EC_builtin_curve *r, size_t nitems)
 
 const char *EC_curve_nid2nist(int nid)
 {
-    return ec_curve_nid2nist_int(nid);
+    return ossl_ec_curve_nid2nist_int(nid);
 }
 
 int EC_curve_nist2nid(const char *name)
 {
-    return ec_curve_nist2nid_int(name);
+    return ossl_ec_curve_nist2nid_int(name);
 }
 
 #define NUM_BN_FIELDS 6
@@ -3303,7 +3303,7 @@ int EC_curve_nist2nid(const char *name)
  * Returns: The nid associated with the found named curve, or NID_undef
  *          if not found. If there was an error it returns -1.
  */
-int ec_curve_nid_from_params(const EC_GROUP *group, BN_CTX *ctx)
+int ossl_ec_curve_nid_from_params(const EC_GROUP *group, BN_CTX *ctx)
 {
     int ret = -1, nid, len, field_type, param_len;
     size_t i, seed_len;

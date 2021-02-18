@@ -218,9 +218,9 @@ static int pkey_ec_kdf_derive(EVP_PKEY_CTX *ctx,
     if (!pkey_ec_derive(ctx, ktmp, &ktmplen))
         goto err;
     /* Do KDF stuff */
-    if (!ecdh_KDF_X9_63(key, *keylen, ktmp, ktmplen,
-                        dctx->kdf_ukm, dctx->kdf_ukmlen, dctx->kdf_md,
-                        ctx->libctx, ctx->propquery))
+    if (!ossl_ecdh_kdf_X9_63(key, *keylen, ktmp, ktmplen,
+                             dctx->kdf_ukm, dctx->kdf_ukmlen, dctx->kdf_md,
+                             ctx->libctx, ctx->propquery))
         goto err;
     rv = 1;
 
@@ -486,7 +486,7 @@ static const EVP_PKEY_METHOD ec_pkey_meth = {
     pkey_ec_ctrl_str
 };
 
-const EVP_PKEY_METHOD *ec_pkey_method(void)
+const EVP_PKEY_METHOD *ossl_ec_pkey_method(void)
 {
     return &ec_pkey_meth;
 }

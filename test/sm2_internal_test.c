@@ -159,7 +159,8 @@ static int test_sm2_crypt(const EC_GROUP *group,
     if (!TEST_ptr(pt)
             || !TEST_true(EC_POINT_mul(group, pt, priv, NULL, NULL, NULL))
             || !TEST_true(EC_KEY_set_public_key(key, pt))
-            || !TEST_true(sm2_ciphertext_size(key, digest, msg_len, &ctext_len)))
+            || !TEST_true(ossl_sm2_ciphertext_size(key, digest, msg_len,
+                                                   &ctext_len)))
         goto done;
 
     ctext = OPENSSL_zalloc(ctext_len);
@@ -167,8 +168,9 @@ static int test_sm2_crypt(const EC_GROUP *group,
         goto done;
 
     start_fake_rand(k_hex);
-    if (!TEST_true(sm2_encrypt(key, digest, (const uint8_t *)message, msg_len,
-                               ctext, &ctext_len))) {
+    if (!TEST_true(ossl_sm2_encrypt(key, digest,
+                                    (const uint8_t *)message, msg_len,
+                                    ctext, &ctext_len))) {
         restore_rand();
         goto done;
     }
@@ -177,13 +179,14 @@ static int test_sm2_crypt(const EC_GROUP *group,
     if (!TEST_mem_eq(ctext, ctext_len, expected, ctext_len))
         goto done;
 
-    if (!TEST_true(sm2_plaintext_size(key, digest, ctext_len, &ptext_len))
+    if (!TEST_true(ossl_sm2_plaintext_size(key, digest, ctext_len, &ptext_len))
             || !TEST_int_eq(ptext_len, msg_len))
         goto done;
 
     recovered = OPENSSL_zalloc(ptext_len);
     if (!TEST_ptr(recovered)
-            || !TEST_true(sm2_decrypt(key, digest, ctext, ctext_len, recovered, &recovered_len))
+            || !TEST_true(ossl_sm2_decrypt(key, digest, ctext, ctext_len,
+                                           recovered, &recovered_len))
             || !TEST_int_eq(recovered_len, msg_len)
             || !TEST_mem_eq(recovered, recovered_len, message, msg_len))
         goto done;
@@ -286,8 +289,8 @@ static int test_sm2_sign(const EC_GROUP *group,
         goto done;
 
     start_fake_rand(k_hex);
-    sig = sm2_do_sign(key, EVP_sm3(), (const uint8_t *)userid, strlen(userid),
-                      (const uint8_t *)message, msg_len);
+    sig = ossl_sm2_do_sign(key, EVP_sm3(), (const uint8_t *)userid,
+                           strlen(userid), (const uint8_t *)message, msg_len);
     if (!TEST_ptr(sig)) {
         restore_rand();
         goto done;
@@ -302,8 +305,8 @@ static int test_sm2_sign(const EC_GROUP *group,
             || !TEST_BN_eq(s, sig_s))
         goto done;
 
-    ok = sm2_do_verify(key, EVP_sm3(), sig, (const uint8_t *)userid,
-                       strlen(userid), (const uint8_t *)message, msg_len);
+    ok = ossl_sm2_do_verify(key, EVP_sm3(), sig, (const uint8_t *)userid,
+                            strlen(userid), (const uint8_t *)message, msg_len);
 
     /* We goto done whether this passes or fails */
     TEST_true(ok);

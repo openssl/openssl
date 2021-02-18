@@ -13,7 +13,7 @@
 
 #include "crypto/sm2.h"
 #include "crypto/sm2err.h"
-#include "crypto/ec.h" /* ec_group_do_inverse_ord() */
+#include "crypto/ec.h" /* ossl_ec_group_do_inverse_ord() */
 #include "internal/numbers.h"
 #include <openssl/err.h>
 #include <openssl/evp.h>
@@ -21,11 +21,11 @@
 #include <openssl/bn.h>
 #include <string.h>
 
-int sm2_compute_z_digest(uint8_t *out,
-                         const EVP_MD *digest,
-                         const uint8_t *id,
-                         const size_t id_len,
-                         const EC_KEY *key)
+int ossl_sm2_compute_z_digest(uint8_t *out,
+                              const EVP_MD *digest,
+                              const uint8_t *id,
+                              const size_t id_len,
+                              const EC_KEY *key)
 {
     int rc = 0;
     const EC_GROUP *group = EC_KEY_get0_group(key);
@@ -44,7 +44,7 @@ int sm2_compute_z_digest(uint8_t *out,
     uint8_t e_byte = 0;
 
     hash = EVP_MD_CTX_new();
-    ctx = BN_CTX_new_ex(ec_key_get_libctx(key));
+    ctx = BN_CTX_new_ex(ossl_ec_key_get_libctx(key));
     if (hash == NULL || ctx == NULL) {
         ERR_raise(ERR_LIB_SM2, ERR_R_MALLOC_FAILURE);
         goto done;
@@ -149,8 +149,8 @@ static BIGNUM *sm2_compute_msg_hash(const EVP_MD *digest,
     uint8_t *z = NULL;
     BIGNUM *e = NULL;
     EVP_MD *fetched_digest = NULL;
-    OSSL_LIB_CTX *libctx = ec_key_get_libctx(key);
-    const char *propq = ec_key_get0_propq(key);
+    OSSL_LIB_CTX *libctx = ossl_ec_key_get_libctx(key);
+    const char *propq = ossl_ec_key_get0_propq(key);
 
     if (md_size < 0) {
         ERR_raise(ERR_LIB_SM2, SM2_R_INVALID_DIGEST);
@@ -169,7 +169,7 @@ static BIGNUM *sm2_compute_msg_hash(const EVP_MD *digest,
         goto done;
     }
 
-    if (!sm2_compute_z_digest(z, fetched_digest, id, id_len, key)) {
+    if (!ossl_sm2_compute_z_digest(z, fetched_digest, id, id_len, key)) {
         /* SM2err already called */
         goto done;
     }
@@ -208,7 +208,7 @@ static ECDSA_SIG *sm2_sig_gen(const EC_KEY *key, const BIGNUM *e)
     BIGNUM *s = NULL;
     BIGNUM *x1 = NULL;
     BIGNUM *tmp = NULL;
-    OSSL_LIB_CTX *libctx = ec_key_get_libctx(key);
+    OSSL_LIB_CTX *libctx = ossl_ec_key_get_libctx(key);
 
     kG = EC_POINT_new(group);
     ctx = BN_CTX_new_ex(libctx);
@@ -266,7 +266,7 @@ static ECDSA_SIG *sm2_sig_gen(const EC_KEY *key, const BIGNUM *e)
             continue;
 
         if (!BN_add(s, dA, BN_value_one())
-                || !ec_group_do_inverse_ord(group, s, s, ctx)
+                || !ossl_ec_group_do_inverse_ord(group, s, s, ctx)
                 || !BN_mod_mul(tmp, dA, r, order, ctx)
                 || !BN_sub(tmp, k, tmp)
                 || !BN_mod_mul(s, s, tmp, order, ctx)) {
@@ -308,7 +308,7 @@ static int sm2_sig_verify(const EC_KEY *key, const ECDSA_SIG *sig,
     BIGNUM *x1 = NULL;
     const BIGNUM *r = NULL;
     const BIGNUM *s = NULL;
-    OSSL_LIB_CTX *libctx = ec_key_get_libctx(key);
+    OSSL_LIB_CTX *libctx = ossl_ec_key_get_libctx(key);
 
     ctx = BN_CTX_new_ex(libctx);
     pt = EC_POINT_new(group);
@@ -375,11 +375,11 @@ static int sm2_sig_verify(const EC_KEY *key, const ECDSA_SIG *sig,
     return ret;
 }
 
-ECDSA_SIG *sm2_do_sign(const EC_KEY *key,
-                       const EVP_MD *digest,
-                       const uint8_t *id,
-                       const size_t id_len,
-                       const uint8_t *msg, size_t msg_len)
+ECDSA_SIG *ossl_sm2_do_sign(const EC_KEY *key,
+                            const EVP_MD *digest,
+                            const uint8_t *id,
+                            const size_t id_len,
+                            const uint8_t *msg, size_t msg_len)
 {
     BIGNUM *e = NULL;
     ECDSA_SIG *sig = NULL;
@@ -397,12 +397,12 @@ ECDSA_SIG *sm2_do_sign(const EC_KEY *key,
     return sig;
 }
 
-int sm2_do_verify(const EC_KEY *key,
-                  const EVP_MD *digest,
-                  const ECDSA_SIG *sig,
-                  const uint8_t *id,
-                  const size_t id_len,
-                  const uint8_t *msg, size_t msg_len)
+int ossl_sm2_do_verify(const EC_KEY *key,
+                       const EVP_MD *digest,
+                       const ECDSA_SIG *sig,
+                       const uint8_t *id,
+                       const size_t id_len,
+                       const uint8_t *msg, size_t msg_len)
 {
     BIGNUM *e = NULL;
     int ret = 0;
@@ -420,8 +420,9 @@ int sm2_do_verify(const EC_KEY *key,
     return ret;
 }
 
-int sm2_internal_sign(const unsigned char *dgst, int dgstlen,
-                      unsigned char *sig, unsigned int *siglen, EC_KEY *eckey)
+int ossl_sm2_internal_sign(const unsigned char *dgst, int dgstlen,
+                           unsigned char *sig, unsigned int *siglen,
+                           EC_KEY *eckey)
 {
     BIGNUM *e = NULL;
     ECDSA_SIG *s = NULL;
@@ -455,8 +456,9 @@ int sm2_internal_sign(const unsigned char *dgst, int dgstlen,
     return ret;
 }
 
-int sm2_internal_verify(const unsigned char *dgst, int dgstlen,
-                        const unsigned char *sig, int sig_len, EC_KEY *eckey)
+int ossl_sm2_internal_verify(const unsigned char *dgst, int dgstlen,
+                             const unsigned char *sig, int sig_len,
+                             EC_KEY *eckey)
 {
     ECDSA_SIG *s = NULL;
     BIGNUM *e = NULL;

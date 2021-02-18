@@ -41,7 +41,7 @@ static const OSSL_ITEM format_nameid_map[] = {
     { (int)POINT_CONVERSION_HYBRID, OSSL_PKEY_EC_POINT_CONVERSION_FORMAT_HYBRID },
 };
 
-int ec_encoding_name2id(const char *name)
+int ossl_ec_encoding_name2id(const char *name)
 {
     size_t i, sz;
 
@@ -67,7 +67,7 @@ static char *ec_param_encoding_id2name(int id)
     return NULL;
 }
 
-char *ec_check_group_type_id2name(int id)
+char *ossl_ec_check_group_type_id2name(int id)
 {
     size_t i, sz;
 
@@ -93,7 +93,7 @@ static int ec_check_group_type_name2id(const char *name)
     return -1;
 }
 
-int ec_set_check_group_type_from_name(EC_KEY *ec, const char *name)
+int ossl_ec_set_check_group_type_from_name(EC_KEY *ec, const char *name)
 {
     int flags = ec_check_group_type_name2id(name);
 
@@ -119,11 +119,11 @@ static int ec_set_check_group_type_from_param(EC_KEY *ec, const OSSL_PARAM *p)
         break;
     }
     if (status)
-        return ec_set_check_group_type_from_name(ec, name);
+        return ossl_ec_set_check_group_type_from_name(ec, name);
     return 0;
 }
 
-int ec_pt_format_name2id(const char *name)
+int ossl_ec_pt_format_name2id(const char *name)
 {
     size_t i, sz;
 
@@ -138,7 +138,7 @@ int ec_pt_format_name2id(const char *name)
     return -1;
 }
 
-char *ec_pt_format_id2name(int id)
+char *ossl_ec_pt_format_id2name(int id)
 {
     size_t i, sz;
 
@@ -149,10 +149,10 @@ char *ec_pt_format_id2name(int id)
     return NULL;
 }
 
-int ec_group_todata(const EC_GROUP *group, OSSL_PARAM_BLD *tmpl,
-                    OSSL_PARAM params[], OSSL_LIB_CTX *libctx,
-                    const char *propq,
-                    BN_CTX *bnctx, unsigned char **genbuf)
+int ossl_ec_group_todata(const EC_GROUP *group, OSSL_PARAM_BLD *tmpl,
+                         OSSL_PARAM params[], OSSL_LIB_CTX *libctx,
+                         const char *propq,
+                         BN_CTX *bnctx, unsigned char **genbuf)
 {
     int ret = 0, curve_nid, encoding_flag;
     const char *field_type, *encoding_name, *pt_form_name;
@@ -169,7 +169,7 @@ int ec_group_todata(const EC_GROUP *group, OSSL_PARAM_BLD *tmpl,
     }
 
     genform = EC_GROUP_get_point_conversion_form(group);
-    pt_form_name = ec_pt_format_id2name(genform);
+    pt_form_name = ossl_ec_pt_format_id2name(genform);
     if (pt_form_name == NULL
         || !ossl_param_build_set_utf8_string(
                 tmpl, params,
@@ -271,7 +271,7 @@ int ec_group_todata(const EC_GROUP *group, OSSL_PARAM_BLD *tmpl,
 #endif
     } else {
         /* named curve */
-        const char *curve_name = ec_curve_nid2name(curve_nid);
+        const char *curve_name = ossl_ec_curve_nid2name(curve_nid);
 
         if (curve_name == NULL
             || !ossl_param_build_set_utf8_string(tmpl, params,
@@ -291,7 +291,7 @@ err:
  * for legacy backends (EVP_PKEY_ASN1_METHOD and EVP_PKEY_METHOD) and provider
  * implementations alike.
  */
-int ec_set_ecdh_cofactor_mode(EC_KEY *ec, int mode)
+int ossl_ec_set_ecdh_cofactor_mode(EC_KEY *ec, int mode)
 {
     const EC_GROUP *ecg = EC_KEY_get0_group(ec);
     const BIGNUM *cofactor;
@@ -321,14 +321,14 @@ int ec_set_ecdh_cofactor_mode(EC_KEY *ec, int mode)
 }
 
 /*
- * Callers of ec_key_fromdata MUST make sure that ec_key_params_fromdata has
+ * Callers of ossl_ec_key_fromdata MUST make sure that ec_key_params_fromdata has
  * been called before!
  *
  * This function only gets the bare keypair, domain parameters and other
  * parameters are treated separately, and domain parameters are required to
  * define a keypair.
  */
-int ec_key_fromdata(EC_KEY *ec, const OSSL_PARAM params[], int include_private)
+int ossl_ec_key_fromdata(EC_KEY *ec, const OSSL_PARAM params[], int include_private)
 {
     const OSSL_PARAM *param_priv_key = NULL, *param_pub_key = NULL;
     BN_CTX *ctx = NULL;
@@ -349,7 +349,7 @@ int ec_key_fromdata(EC_KEY *ec, const OSSL_PARAM params[], int include_private)
         param_priv_key =
             OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_PRIV_KEY);
 
-    ctx = BN_CTX_new_ex(ec_key_get_libctx(ec));
+    ctx = BN_CTX_new_ex(ossl_ec_key_get_libctx(ec));
     if (ctx == NULL)
         goto err;
 
@@ -431,7 +431,7 @@ int ec_key_fromdata(EC_KEY *ec, const OSSL_PARAM params[], int include_private)
     return ok;
 }
 
-int ec_group_fromdata(EC_KEY *ec, const OSSL_PARAM params[])
+int ossl_ec_group_fromdata(EC_KEY *ec, const OSSL_PARAM params[])
 {
     int ok = 0;
     EC_GROUP *group = NULL;
@@ -439,8 +439,8 @@ int ec_group_fromdata(EC_KEY *ec, const OSSL_PARAM params[])
     if (ec == NULL)
         return 0;
 
-     group = EC_GROUP_new_from_params(params, ec_key_get_libctx(ec),
-                                      ec_key_get0_propq(ec));
+     group = EC_GROUP_new_from_params(params, ossl_ec_key_get_libctx(ec),
+                                      ossl_ec_key_get0_propq(ec));
 
     if (!EC_KEY_set_group(ec, group))
         goto err;
@@ -457,7 +457,7 @@ static int ec_key_point_format_fromdata(EC_KEY *ec, const OSSL_PARAM params[])
 
     p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_EC_POINT_CONVERSION_FORMAT);
     if (p != NULL) {
-        if (!ec_pt_format_param2id(p, &format)) {
+        if (!ossl_ec_pt_format_param2id(p, &format)) {
             ECerr(0, EC_R_INVALID_FORM);
             return 0;
         }
@@ -488,7 +488,7 @@ static int ec_set_include_public(EC_KEY *ec, int include)
     return 1;
 }
 
-int ec_key_otherparams_fromdata(EC_KEY *ec, const OSSL_PARAM params[])
+int ossl_ec_key_otherparams_fromdata(EC_KEY *ec, const OSSL_PARAM params[])
 {
     const OSSL_PARAM *p;
 
@@ -500,7 +500,7 @@ int ec_key_otherparams_fromdata(EC_KEY *ec, const OSSL_PARAM params[])
         int mode;
 
         if (!OSSL_PARAM_get_int(p, &mode)
-            || !ec_set_ecdh_cofactor_mode(ec, mode))
+            || !ossl_ec_set_ecdh_cofactor_mode(ec, mode))
             return 0;
     }
 
@@ -519,7 +519,7 @@ int ec_key_otherparams_fromdata(EC_KEY *ec, const OSSL_PARAM params[])
     return 1;
 }
 
-int ec_encoding_param2id(const OSSL_PARAM *p, int *id)
+int ossl_ec_encoding_param2id(const OSSL_PARAM *p, int *id)
 {
     const char *name = NULL;
     int status = 0;
@@ -535,7 +535,7 @@ int ec_encoding_param2id(const OSSL_PARAM *p, int *id)
         break;
     }
     if (status) {
-        int i = ec_encoding_name2id(name);
+        int i = ossl_ec_encoding_name2id(name);
 
         if (i >= 0) {
             *id = i;
@@ -545,7 +545,7 @@ int ec_encoding_param2id(const OSSL_PARAM *p, int *id)
     return 0;
 }
 
-int ec_pt_format_param2id(const OSSL_PARAM *p, int *id)
+int ossl_ec_pt_format_param2id(const OSSL_PARAM *p, int *id)
 {
     const char *name = NULL;
     int status = 0;
@@ -561,7 +561,7 @@ int ec_pt_format_param2id(const OSSL_PARAM *p, int *id)
         break;
     }
     if (status) {
-        int i = ec_pt_format_name2id(name);
+        int i = ossl_ec_pt_format_name2id(name);
 
         if (i >= 0) {
             *id = i;

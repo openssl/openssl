@@ -26,8 +26,8 @@
 
 /* functions for EC_GROUP objects */
 
-EC_GROUP *ec_group_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
-                          const EC_METHOD *meth)
+EC_GROUP *ossl_ec_group_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
+                               const EC_METHOD *meth)
 {
     EC_GROUP *ret;
 
@@ -81,7 +81,7 @@ EC_GROUP *ec_group_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
 # ifndef FIPS_MODULE
 EC_GROUP *EC_GROUP_new(const EC_METHOD *meth)
 {
-    return ec_group_new_ex(NULL, NULL, meth);
+    return ossl_ec_group_new_ex(NULL, NULL, meth);
 }
 # endif
 #endif
@@ -271,7 +271,7 @@ EC_GROUP *EC_GROUP_dup(const EC_GROUP *a)
     if (a == NULL)
         return NULL;
 
-    if ((t = ec_group_new_ex(a->libctx, a->propq, a->meth)) == NULL)
+    if ((t = ossl_ec_group_new_ex(a->libctx, a->propq, a->meth)) == NULL)
         return NULL;
     if (!EC_GROUP_copy(t, a))
         goto err;
@@ -836,7 +836,8 @@ int EC_POINT_set_Jprojective_coordinates_GFp(const EC_GROUP *group,
         ERR_raise(ERR_LIB_EC, EC_R_INCOMPATIBLE_OBJECTS);
         return 0;
     }
-    return ec_GFp_simple_set_Jprojective_coordinates_GFp(group, point, x, y, z, ctx);
+    return ossl_ec_GFp_simple_set_Jprojective_coordinates_GFp(group, point,
+                                                              x, y, z, ctx);
 }
 
 int EC_POINT_get_Jprojective_coordinates_GFp(const EC_GROUP *group,
@@ -852,7 +853,8 @@ int EC_POINT_get_Jprojective_coordinates_GFp(const EC_GROUP *group,
         ERR_raise(ERR_LIB_EC, EC_R_INCOMPATIBLE_OBJECTS);
         return 0;
     }
-    return ec_GFp_simple_get_Jprojective_coordinates_GFp(group, point, x, y, z, ctx);
+    return ossl_ec_GFp_simple_get_Jprojective_coordinates_GFp(group, point,
+                                                              x, y, z, ctx);
 }
 #endif
 
@@ -1101,7 +1103,7 @@ int EC_POINTs_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
         ret = group->meth->mul(group, r, scalar, num, points, scalars, ctx);
     else
         /* use default */
-        ret = ec_wNAF_mul(group, r, scalar, num, points, scalars, ctx);
+        ret = ossl_ec_wNAF_mul(group, r, scalar, num, points, scalars, ctx);
 
 #ifndef FIPS_MODULE
     BN_CTX_free(new_ctx);
@@ -1142,7 +1144,7 @@ int EC_POINT_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *g_scalar,
         ret = group->meth->mul(group, r, g_scalar, num, &point, &p_scalar, ctx);
     else
         /* use default */
-        ret = ec_wNAF_mul(group, r, g_scalar, num, &point, &p_scalar, ctx);
+        ret = ossl_ec_wNAF_mul(group, r, g_scalar, num, &point, &p_scalar, ctx);
 
 #ifndef FIPS_MODULE
     BN_CTX_free(new_ctx);
@@ -1155,7 +1157,7 @@ int EC_GROUP_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
 {
     if (group->meth->mul == 0)
         /* use default */
-        return ec_wNAF_precompute_mult(group, ctx);
+        return ossl_ec_wNAF_precompute_mult(group, ctx);
 
     if (group->meth->precompute_mult != 0)
         return group->meth->precompute_mult(group, ctx);
@@ -1167,7 +1169,7 @@ int EC_GROUP_have_precompute_mult(const EC_GROUP *group)
 {
     if (group->meth->mul == 0)
         /* use default */
-        return ec_wNAF_have_precompute_mult(group);
+        return ossl_ec_wNAF_have_precompute_mult(group);
 
     if (group->meth->have_precompute_mult != 0)
         return group->meth->have_precompute_mult(group);
@@ -1222,7 +1224,7 @@ void *EC_KEY_get_ex_data(const EC_KEY *key, int idx)
 }
 #endif
 
-int ec_group_simple_order_bits(const EC_GROUP *group)
+int ossl_ec_group_simple_order_bits(const EC_GROUP *group)
 {
     if (group->order == NULL)
         return 0;
@@ -1290,8 +1292,8 @@ static int ec_field_inverse_mod_ord(const EC_GROUP *group, BIGNUM *r,
  * EC_METHODs must implement their own field_inverse_mod_ord for
  * other functionality.
  */
-int ec_group_do_inverse_ord(const EC_GROUP *group, BIGNUM *res,
-                            const BIGNUM *x, BN_CTX *ctx)
+int ossl_ec_group_do_inverse_ord(const EC_GROUP *group, BIGNUM *res,
+                                 const BIGNUM *x, BN_CTX *ctx)
 {
     if (group->meth->field_inverse_mod_ord != NULL)
         return group->meth->field_inverse_mod_ord(group, res, x, ctx);
@@ -1309,7 +1311,8 @@ int ec_group_do_inverse_ord(const EC_GROUP *group, BIGNUM *res,
  * This wrapper returns 1 in case the underlying EC_METHOD does not
  * support coordinate blinding.
  */
-int ec_point_blind_coordinates(const EC_GROUP *group, EC_POINT *p, BN_CTX *ctx)
+int ossl_ec_point_blind_coordinates(const EC_GROUP *group, EC_POINT *p,
+                                    BN_CTX *ctx)
 {
     if (group->meth->blind_coordinates == NULL)
         return 1; /* ignore if not implemented */
@@ -1411,7 +1414,7 @@ static EC_GROUP *ec_group_explicit_to_named(const EC_GROUP *group,
             || EC_GROUP_set_seed(dup, NULL, 0) != 1
             || !EC_GROUP_set_generator(dup, point, order, NULL))
         goto err;
-    if ((curve_name_nid = ec_curve_nid_from_params(dup, ctx)) != NID_undef) {
+    if ((curve_name_nid = ossl_ec_curve_nid_from_params(dup, ctx)) != NID_undef) {
         /*
          * The input explicit parameters successfully matched one of the
          * built-in curves: often for built-in curves we have specialized
@@ -1483,7 +1486,7 @@ static EC_GROUP *group_new_from_name(const OSSL_PARAM *p,
     }
 
     if (ok) {
-        nid = ec_curve_name2nid(curve_name);
+        nid = ossl_ec_curve_name2nid(curve_name);
         if (nid == NID_undef) {
             ERR_raise(ERR_LIB_EC, EC_R_INVALID_CURVE);
             return NULL;
@@ -1495,14 +1498,14 @@ static EC_GROUP *group_new_from_name(const OSSL_PARAM *p,
 }
 
 /* These parameters can be set directly into an EC_GROUP */
-int ec_group_set_params(EC_GROUP *group, const OSSL_PARAM params[])
+int ossl_ec_group_set_params(EC_GROUP *group, const OSSL_PARAM params[])
 {
     int encoding_flag = -1, format = -1;
     const OSSL_PARAM *p;
 
     p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_EC_POINT_CONVERSION_FORMAT);
     if (p != NULL) {
-        if (!ec_pt_format_param2id(p, &format)) {
+        if (!ossl_ec_pt_format_param2id(p, &format)) {
             ECerr(0, EC_R_INVALID_FORM);
             return 0;
         }
@@ -1511,7 +1514,7 @@ int ec_group_set_params(EC_GROUP *group, const OSSL_PARAM params[])
 
     p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_EC_ENCODING);
     if (p != NULL) {
-        if (!ec_encoding_param2id(p, &encoding_flag)) {
+        if (!ossl_ec_encoding_param2id(p, &encoding_flag)) {
             ECerr(0, EC_R_INVALID_FORM);
             return 0;
         }
@@ -1549,7 +1552,7 @@ EC_GROUP *EC_GROUP_new_from_params(const OSSL_PARAM params[],
     if (ptmp != NULL) {
         group = group_new_from_name(ptmp, libctx, propq);
         if (group != NULL) {
-            if (!ec_group_set_params(group, params)) {
+            if (!ossl_ec_group_set_params(group, params)) {
                 EC_GROUP_free(group);
                 group = NULL;
             }
@@ -1706,7 +1709,7 @@ EC_GROUP *EC_GROUP_new_from_params(const OSSL_PARAM params[],
          */
         ptmp = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_EC_ENCODING);
         if (ptmp != NULL
-            && !ec_encoding_param2id(ptmp, &encoding_flag)) {
+            && !ossl_ec_encoding_param2id(ptmp, &encoding_flag)) {
             ECerr(0, EC_R_INVALID_ENCODING);
             return 0;
         }

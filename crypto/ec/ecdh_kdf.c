@@ -21,11 +21,11 @@
 #include "ec_local.h"
 
 /* Key derivation function from X9.63/SECG */
-int ecdh_KDF_X9_63(unsigned char *out, size_t outlen,
-                   const unsigned char *Z, size_t Zlen,
-                   const unsigned char *sinfo, size_t sinfolen,
-                   const EVP_MD *md,
-                   OSSL_LIB_CTX *libctx, const char *propq)
+int ossl_ecdh_kdf_X9_63(unsigned char *out, size_t outlen,
+                        const unsigned char *Z, size_t Zlen,
+                        const unsigned char *sinfo, size_t sinfolen,
+                        const EVP_MD *md,
+                        OSSL_LIB_CTX *libctx, const char *propq)
 {
     int ret = 0;
     EVP_KDF_CTX *kctx = NULL;
@@ -60,6 +60,7 @@ int ECDH_KDF_X9_62(unsigned char *out, size_t outlen,
                    const unsigned char *sinfo, size_t sinfolen,
                    const EVP_MD *md)
 {
-    return ecdh_KDF_X9_63(out, outlen, Z, Zlen, sinfo, sinfolen, md, NULL, NULL);
+    return ossl_ecdh_kdf_X9_63(out, outlen, Z, Zlen, sinfo, sinfolen, md, NULL,
+                               NULL);
 }
 #endif

@@ -57,19 +57,19 @@ static pmeth_fn standard_methods[] = {
     ossl_dsa_pkey_method,
 # endif
 # ifndef OPENSSL_NO_EC
-    ec_pkey_method,
+    ossl_ec_pkey_method,
 # endif
     ossl_rsa_pss_pkey_method,
 # ifndef OPENSSL_NO_DH
     ossl_dhx_pkey_method,
 # endif
 # ifndef OPENSSL_NO_EC
-    ecx25519_pkey_method,
-    ecx448_pkey_method,
+    ossl_ecx25519_pkey_method,
+    ossl_ecx448_pkey_method,
 # endif
 # ifndef OPENSSL_NO_EC
-    ed25519_pkey_method,
-    ed448_pkey_method,
+    ossl_ed25519_pkey_method,
+    ossl_ed448_pkey_method,
 # endif
 };
 
@@ -1326,99 +1326,7 @@ int EVP_PKEY_CTX_ctrl_uint64(EVP_PKEY_CTX *ctx, int keytype, int optype,
     return EVP_PKEY_CTX_ctrl(ctx, keytype, optype, cmd, 0, &value);
 }
 
-<<<<<<< HEAD
-=======
-static int legacy_ctrl_str_to_param(EVP_PKEY_CTX *ctx, const char *name,
-                                    const char *value)
-{
-    if (strcmp(name, "md") == 0)
-        name = OSSL_ALG_PARAM_DIGEST;
-    else if (strcmp(name, "rsa_padding_mode") == 0)
-        name = OSSL_ASYM_CIPHER_PARAM_PAD_MODE;
-    else if (strcmp(name, "rsa_mgf1_md") == 0)
-        name = OSSL_ASYM_CIPHER_PARAM_MGF1_DIGEST;
-    else if (strcmp(name, "rsa_oaep_md") == 0)
-        name = OSSL_ASYM_CIPHER_PARAM_OAEP_DIGEST;
-    else if (strcmp(name, "rsa_oaep_label") == 0)
-        name = OSSL_ASYM_CIPHER_PARAM_OAEP_LABEL;
-    else if (strcmp(name, "rsa_pss_saltlen") == 0)
-        name = OSSL_SIGNATURE_PARAM_PSS_SALTLEN;
-    else if (strcmp(name, "rsa_keygen_bits") == 0)
-        name = OSSL_PKEY_PARAM_RSA_BITS;
-    else if (strcmp(name, "rsa_keygen_pubexp") == 0)
-        name = OSSL_PKEY_PARAM_RSA_E;
-    else if (strcmp(name, "rsa_keygen_primes") == 0)
-        name = OSSL_PKEY_PARAM_RSA_PRIMES;
-    else if (strcmp(name, "rsa_pss_keygen_md") == 0)
-        name = OSSL_PKEY_PARAM_RSA_DIGEST;
-    else if (strcmp(name, "rsa_pss_keygen_mgf1_md") == 0)
-        name = OSSL_PKEY_PARAM_RSA_MGF1_DIGEST;
-    else if (strcmp(name, "rsa_pss_keygen_saltlen") == 0)
-        name = OSSL_PKEY_PARAM_RSA_PSS_SALTLEN;
-    else if (strcmp(name, "dsa_paramgen_bits") == 0)
-        name = OSSL_PKEY_PARAM_FFC_PBITS;
-    else if (strcmp(name, "dsa_paramgen_q_bits") == 0)
-        name = OSSL_PKEY_PARAM_FFC_QBITS;
-    else if (strcmp(name, "dsa_paramgen_md") == 0)
-        name = OSSL_PKEY_PARAM_FFC_DIGEST;
-    else if (strcmp(name, "dh_paramgen_generator") == 0)
-        name = OSSL_PKEY_PARAM_DH_GENERATOR;
-    else if (strcmp(name, "dh_paramgen_prime_len") == 0)
-        name = OSSL_PKEY_PARAM_FFC_PBITS;
-    else if (strcmp(name, "dh_paramgen_subprime_len") == 0)
-        name = OSSL_PKEY_PARAM_FFC_QBITS;
-    else if (strcmp(name, "dh_paramgen_type") == 0) {
-        name = OSSL_PKEY_PARAM_FFC_TYPE;
-        value = ossl_dh_gen_type_id2name(atoi(value));
-    } else if (strcmp(name, "dh_param") == 0)
-        name = OSSL_PKEY_PARAM_GROUP_NAME;
-    else if (strcmp(name, "dh_rfc5114") == 0) {
-        int num = atoi(value);
 
-        name = OSSL_PKEY_PARAM_GROUP_NAME;
-        value =
-            ossl_ffc_named_group_get_name(ossl_ffc_uid_to_dh_named_group(num));
-    } else if (strcmp(name, "dh_pad") == 0)
-        name = OSSL_EXCHANGE_PARAM_PAD;
-    else if (strcmp(name, "ec_paramgen_curve") == 0)
-        name = OSSL_PKEY_PARAM_GROUP_NAME;
-    else if (strcmp(name, "ecdh_cofactor_mode") == 0)
-        name = OSSL_EXCHANGE_PARAM_EC_ECDH_COFACTOR_MODE;
-    else if (strcmp(name, "ecdh_kdf_md") == 0)
-        name = OSSL_EXCHANGE_PARAM_KDF_DIGEST;
-    else if (strcmp(name, "ec_param_enc") == 0)
-        name = OSSL_PKEY_PARAM_EC_ENCODING;
-    else if (strcmp(name, "N") == 0)
-        name = OSSL_KDF_PARAM_SCRYPT_N;
-
-    {
-        /*
-         * TODO(3.0) reduce the code above to only translate known legacy
-         * string to the corresponding core name (see core_names.h), but
-         * otherwise leave it to this code block to do the actual work.
-         */
-        const OSSL_PARAM *settable = EVP_PKEY_CTX_settable_params(ctx);
-        OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
-        int rv = 0;
-        int exists = 0;
-
-        if (!OSSL_PARAM_allocate_from_text(&params[0], settable, name, value,
-                                           strlen(value), &exists)) {
-            if (!exists) {
-                ERR_raise_data(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED,
-                               "name=%s,value=%s", name, value);
-                return -2;
-            }
-            return 0;
-        }
-        if (EVP_PKEY_CTX_set_params(ctx, params))
-            rv = 1;
-        OPENSSL_free(params[0].data);
-        return rv;
-    }
-}
-
->>>>>>> 4651c47010... Fix external symbols related to dh keys
 static int evp_pkey_ctx_ctrl_str_int(EVP_PKEY_CTX *ctx,
                                      const char *name, const char *value)
 {
