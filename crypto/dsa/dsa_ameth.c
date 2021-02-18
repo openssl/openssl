@@ -539,15 +539,15 @@ static int dsa_pkey_import_from(const OSSL_PARAM params[], void *vpctx)
 {
     EVP_PKEY_CTX *pctx = vpctx;
     EVP_PKEY *pkey = EVP_PKEY_CTX_get0_pkey(pctx);
-    DSA *dsa = dsa_new_with_ctx(pctx->libctx);
+    DSA *dsa = ossl_dsa_new(pctx->libctx);
 
     if (dsa == NULL) {
         ERR_raise(ERR_LIB_DSA, ERR_R_MALLOC_FAILURE);
         return 0;
     }
 
-    if (!dsa_ffc_params_fromdata(dsa, params)
-        || !dsa_key_fromdata(dsa, params)
+    if (!ossl_dsa_ffc_params_fromdata(dsa, params)
+        || !ossl_dsa_key_fromdata(dsa, params)
         || !EVP_PKEY_assign_DSA(pkey, dsa)) {
         DSA_free(dsa);
         return 0;

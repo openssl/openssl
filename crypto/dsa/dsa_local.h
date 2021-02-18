@@ -69,4 +69,4 @@ struct dsa_method {
     int (*dsa_keygen) (DSA *dsa);
 };
 
-DSA_SIG *dsa_do_sign_int(const unsigned char *dgst, int dlen, DSA *dsa);
+DSA_SIG *ossl_dsa_do_sign_int(const unsigned char *dgst, int dlen, DSA *dsa);
