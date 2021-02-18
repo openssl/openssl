@@ -232,7 +232,12 @@ static void ossl_lib_ctx_generic_new(void *parent_ign, void *ptr_ign,
     void *ptr = meth->new_func(ctx);
 
     if (ptr != NULL) {
-        CRYPTO_THREAD_write_lock(ctx->lock);
+        if (!CRYPTO_THREAD_write_lock(ctx->lock))
+            /*
+             * Can't return something, so best to hope that something will
+             * fail later. :(
+             */
+            return;
         CRYPTO_set_ex_data(ad, index, ptr);
         CRYPTO_THREAD_unlock(ctx->lock);
     }
@@ -277,21 +282,30 @@ void *ossl_lib_ctx_get_data(OSSL_LIB_CTX *ctx, int index,
     if (ctx == NULL)
         return NULL;
 
-    CRYPTO_THREAD_read_lock(ctx->lock);
+    if (!CRYPTO_THREAD_read_lock(ctx->lock))
+        return NULL;
     dynidx = ctx->dyn_indexes[index];
     CRYPTO_THREAD_unlock(ctx->lock);
 
     if (dynidx != -1) {
-        CRYPTO_THREAD_read_lock(ctx->index_locks[index]);
-        CRYPTO_THREAD_read_lock(ctx->lock);
+        if (!CRYPTO_THREAD_read_lock(ctx->index_locks[index]))
+            return NULL;
+        if (!CRYPTO_THREAD_read_lock(ctx->lock)) {
+            CRYPTO_THREAD_unlock(ctx->index_locks[index]);
+            return NULL;
+        }
         data = CRYPTO_get_ex_data(&ctx->data, dynidx);
         CRYPTO_THREAD_unlock(ctx->lock);
         CRYPTO_THREAD_unlock(ctx->index_locks[index]);
         return data;
     }
 
-    CRYPTO_THREAD_write_lock(ctx->index_locks[index]);
-    CRYPTO_THREAD_write_lock(ctx->lock);
+    if (!CRYPTO_THREAD_write_lock(ctx->index_locks[index]))
+        return NULL;
+    if (!CRYPTO_THREAD_write_lock(ctx->lock)) {
+        CRYPTO_THREAD_unlock(ctx->index_locks[index]);
+        return NULL;
+    }
 
     dynidx = ctx->dyn_indexes[index];
     if (dynidx != -1) {
@@ -321,13 +335,14 @@ void *ossl_lib_ctx_get_data(OSSL_LIB_CTX *ctx, int index,
      */
     if (ossl_crypto_alloc_ex_data_intern(CRYPTO_EX_INDEX_OSSL_LIB_CTX, NULL,
                                          &ctx->data, ctx->dyn_indexes[index])) {
-        CRYPTO_THREAD_read_lock(ctx->lock);
+        if (!CRYPTO_THREAD_read_lock(ctx->lock))
+            goto end;
         data = CRYPTO_get_ex_data(&ctx->data, ctx->dyn_indexes[index]);
         CRYPTO_THREAD_unlock(ctx->lock);
     }
 
+end:
     CRYPTO_THREAD_unlock(ctx->index_locks[index]);
-
     return data;
 }
 
@@ -348,7 +363,8 @@ int ossl_lib_ctx_run_once(OSSL_LIB_CTX *ctx, unsigned int idx,
     if (ctx == NULL)
         return 0;
 
-    CRYPTO_THREAD_read_lock(ctx->oncelock);
+    if (!CRYPTO_THREAD_read_lock(ctx->oncelock))
+        return 0;
     done = ctx->run_once_done[idx];
     if (done)
         ret = ctx->run_once_ret[idx];
@@ -357,7 +373,8 @@ int ossl_lib_ctx_run_once(OSSL_LIB_CTX *ctx, unsigned int idx,
     if (done)
         return ret;
 
-    CRYPTO_THREAD_write_lock(ctx->oncelock);
+    if (!CRYPTO_THREAD_write_lock(ctx->oncelock))
+        return 0;
     if (ctx->run_once_done[idx]) {
         ret = ctx->run_once_ret[idx];
         CRYPTO_THREAD_unlock(ctx->oncelock);

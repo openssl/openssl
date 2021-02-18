@@ -132,7 +132,8 @@ int ENGINE_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f) (void))
         ERR_raise(ERR_LIB_ENGINE, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
-    CRYPTO_THREAD_write_lock(global_engine_lock);
+    if (!CRYPTO_THREAD_write_lock(global_engine_lock))
+        return 0;
     ref_exists = ((e->struct_ref > 0) ? 1 : 0);
     CRYPTO_THREAD_unlock(global_engine_lock);
     ctrl_exists = ((e->ctrl == NULL) ? 0 : 1);

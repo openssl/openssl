@@ -163,7 +163,8 @@ int RAND_set_rand_method(const RAND_METHOD *meth)
     if (!RUN_ONCE(&rand_init, do_rand_init))
         return 0;
 
-    CRYPTO_THREAD_write_lock(rand_meth_lock);
+    if (!CRYPTO_THREAD_write_lock(rand_meth_lock))
+        return 0;
 #  ifndef OPENSSL_NO_ENGINE
     ENGINE_finish(funct_ref);
     funct_ref = NULL;
@@ -180,7 +181,8 @@ const RAND_METHOD *RAND_get_rand_method(void)
     if (!RUN_ONCE(&rand_init, do_rand_init))
         return NULL;
 
-    CRYPTO_THREAD_write_lock(rand_meth_lock);
+    if (!CRYPTO_THREAD_write_lock(rand_meth_lock))
+        return NULL;
     if (default_RAND_meth == NULL) {
 #  ifndef OPENSSL_NO_ENGINE
         ENGINE *e;
@@ -220,7 +222,11 @@ int RAND_set_rand_engine(ENGINE *engine)
             return 0;
         }
     }
-    CRYPTO_THREAD_write_lock(rand_engine_lock);
+    if (!CRYPTO_THREAD_write_lock(rand_engine_lock)) {
+        ENGINE_finish(engine);
+        return 0;
+    }
+
     /* This function releases any prior ENGINE so call it first */
     RAND_set_rand_method(tmp_meth);
     funct_ref = engine;

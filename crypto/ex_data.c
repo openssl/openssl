@@ -43,7 +43,8 @@ static EX_CALLBACKS *get_and_lock(OSSL_EX_DATA_GLOBAL *global, int class_index)
          return NULL;
     }
 
-    CRYPTO_THREAD_write_lock(global->ex_data_lock);
+    if (!CRYPTO_THREAD_write_lock(global->ex_data_lock))
+        return NULL;
     ip = &global->ex_data[class_index];
     return ip;
 }
@@ -367,7 +368,8 @@ void CRYPTO_free_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad)
         if (storage != NULL)
             f = storage[i];
         else {
-            CRYPTO_THREAD_write_lock(global->ex_data_lock);
+            if (!CRYPTO_THREAD_write_lock(global->ex_data_lock))
+                continue;
             f = sk_EX_CALLBACK_value(ip->meth, i);
             CRYPTO_THREAD_unlock(global->ex_data_lock);
         }

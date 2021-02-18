@@ -411,7 +411,8 @@ int x509v3_cache_extensions(X509 *x)
         return (x->ex_flags & EXFLAG_INVALID) == 0;
 #endif
 
-    CRYPTO_THREAD_write_lock(x->lock);
+    if (!CRYPTO_THREAD_write_lock(x->lock))
+        return 0;
     if (x->ex_flags & EXFLAG_SET) { /* Cert has already been processed */
         CRYPTO_THREAD_unlock(x->lock);
         return (x->ex_flags & EXFLAG_INVALID) == 0;

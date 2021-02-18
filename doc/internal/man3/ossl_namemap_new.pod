@@ -85,7 +85,8 @@ ossl_namemap_new() and ossl_namemap_stored() return the pointer to a
 B<OSSL_NAMEMAP>, or NULL on error.
 
 ossl_namemap_empty() returns 1 if the B<OSSL_NAMEMAP> is NULL or
-empty, or 0 if it's not empty.
+empty, 0 if it's not empty, or -1 on internal error (such as inability
+to lock).
 
 ossl_namemap_add_name() and ossl_namemap_add_name_n() return the number
 associated with the added string, or zero on error.

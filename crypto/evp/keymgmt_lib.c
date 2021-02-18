@@ -101,7 +101,8 @@ void *evp_keymgmt_util_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt)
     if (pk->keymgmt == keymgmt)
         return pk->keydata;
 
-    CRYPTO_THREAD_read_lock(pk->lock);
+    if (!CRYPTO_THREAD_read_lock(pk->lock))
+        return NULL;
     /*
      * If the provider native "origin" hasn't changed since last time, we
      * try to find our keymgmt in the operation cache.  If it has changed
@@ -156,7 +157,10 @@ void *evp_keymgmt_util_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt)
         return NULL;
     }
 
-    CRYPTO_THREAD_write_lock(pk->lock);
+    if (!CRYPTO_THREAD_write_lock(pk->lock)) {
+        evp_keymgmt_freedata(keymgmt, import_data.keydata);
+        return NULL;
+    }
     /* Check to make sure some other thread didn't get there first */
     op = evp_keymgmt_util_find_operation_cache(pk, keymgmt);
     if (op != NULL && op->keydata != NULL) {

@@ -107,7 +107,8 @@ int ossl_namemap_empty(OSSL_NAMEMAP *namemap)
     if (namemap == NULL)
         return 1;
 
-    CRYPTO_THREAD_read_lock(namemap->lock);
+    if (!CRYPTO_THREAD_read_lock(namemap->lock))
+        return -1;
     rv = namemap->max_number == 0;
     CRYPTO_THREAD_unlock(namemap->lock);
     return rv;
@@ -149,9 +150,10 @@ int ossl_namemap_doall_names(const OSSL_NAMEMAP *namemap, int number,
      * the user function, so that we're not holding the read lock when in user
      * code. This could lead to deadlocks.
      */
-    CRYPTO_THREAD_read_lock(namemap->lock);
-    num_names = lh_NAMENUM_ENTRY_num_items(namemap->namenum);
+    if (!CRYPTO_THREAD_read_lock(namemap->lock))
+        return 0;
 
+    num_names = lh_NAMENUM_ENTRY_num_items(namemap->namenum);
     if (num_names == 0) {
         CRYPTO_THREAD_unlock(namemap->lock);
         return 0;
@@ -199,7 +201,8 @@ int ossl_namemap_name2num_n(const OSSL_NAMEMAP *namemap,
     if (namemap == NULL)
         return 0;
 
-    CRYPTO_THREAD_read_lock(namemap->lock);
+    if (!CRYPTO_THREAD_read_lock(namemap->lock))
+        return 0;
     number = namemap_name2num_n(namemap, name, name_len);
     CRYPTO_THREAD_unlock(namemap->lock);
 
@@ -281,7 +284,8 @@ int ossl_namemap_add_name_n(OSSL_NAMEMAP *namemap, int number,
     if (name == NULL || name_len == 0 || namemap == NULL)
         return 0;
 
-    CRYPTO_THREAD_write_lock(namemap->lock);
+    if (!CRYPTO_THREAD_write_lock(namemap->lock))
+        return 0;
     tmp_number = namemap_add_name_n(namemap, number, name, name_len);
     CRYPTO_THREAD_unlock(namemap->lock);
     return tmp_number;
@@ -307,7 +311,8 @@ int ossl_namemap_add_names(OSSL_NAMEMAP *namemap, int number,
         return 0;
     }
 
-    CRYPTO_THREAD_write_lock(namemap->lock);
+    if (!CRYPTO_THREAD_write_lock(namemap->lock))
+        return 0;
     /*
      * Check that no name is an empty string, and that all names have at
      * most one numeric identity together.
@@ -422,12 +427,26 @@ static void get_legacy_md_names(const OBJ_NAME *on, void *arg)
 
 OSSL_NAMEMAP *ossl_namemap_stored(OSSL_LIB_CTX *libctx)
 {
+#ifndef FIPS_MODULE
+    int nms;
+#endif
     OSSL_NAMEMAP *namemap =
         ossl_lib_ctx_get_data(libctx, OSSL_LIB_CTX_NAMEMAP_INDEX,
                               &stored_namemap_method);
 
+    if (namemap == NULL)
+        return NULL;
+
 #ifndef FIPS_MODULE
-    if (namemap != NULL && ossl_namemap_empty(namemap)) {
+    nms = ossl_namemap_empty(namemap);
+    if (nms < 0) {
+        /*
+         * Could not get lock to make the count, so maybe internal objects
+         * weren't added. This seems safest.
+         */
+        return NULL;
+    }
+    if (nms == 1) {
         /* Before pilfering, we make sure the legacy database is populated */
         OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_CIPHERS
                             | OPENSSL_INIT_ADD_ALL_DIGESTS, NULL);

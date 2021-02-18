@@ -784,7 +784,10 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
             goto err;
         }
 
-        CRYPTO_THREAD_write_lock(bio_lookup_lock);
+        if (!CRYPTO_THREAD_write_lock(bio_lookup_lock)) {
+            ret = 0;
+            goto err;
+        }
         he_fallback_address = INADDR_ANY;
         if (host == NULL) {
             he = &he_fallback;

@@ -176,7 +176,8 @@ static ERR_STRING_DATA *int_err_get_item(const ERR_STRING_DATA *d)
 {
     ERR_STRING_DATA *p = NULL;
 
-    CRYPTO_THREAD_read_lock(err_string_lock);
+    if (!CRYPTO_THREAD_read_lock(err_string_lock))
+        return NULL;
     p = lh_ERR_STRING_DATA_retrieve(int_error_hash, d);
     CRYPTO_THREAD_unlock(err_string_lock);
 
@@ -238,7 +239,8 @@ static void err_patch(int lib, ERR_STRING_DATA *str)
  */
 static int err_load_strings(const ERR_STRING_DATA *str)
 {
-    CRYPTO_THREAD_write_lock(err_string_lock);
+    if (!CRYPTO_THREAD_write_lock(err_string_lock))
+        return 0;
     for (; str->error; str++)
         (void)lh_ERR_STRING_DATA_insert(int_error_hash,
                                        (ERR_STRING_DATA *)str);
@@ -281,7 +283,8 @@ int ERR_unload_strings(int lib, ERR_STRING_DATA *str)
     if (!RUN_ONCE(&err_string_init, do_err_strings_init))
         return 0;
 
-    CRYPTO_THREAD_write_lock(err_string_lock);
+    if (!CRYPTO_THREAD_write_lock(err_string_lock))
+        return 0;
     /*
      * We don't need to ERR_PACK the lib, since that was done (to
      * the table) when it was loaded.
@@ -728,7 +731,8 @@ int ERR_get_next_error_library(void)
     if (!RUN_ONCE(&err_string_init, do_err_strings_init))
         return 0;
 
-    CRYPTO_THREAD_write_lock(err_string_lock);
+    if (!CRYPTO_THREAD_write_lock(err_string_lock))
+        return 0;
     ret = int_err_library_number++;
     CRYPTO_THREAD_unlock(err_string_lock);
     return ret;

@@ -468,7 +468,8 @@ BIO *OSSL_trace_begin(int category)
     prefix = trace_channels[category].prefix;
 
     if (channel != NULL) {
-        CRYPTO_THREAD_write_lock(trace_lock);
+        if (!CRYPTO_THREAD_write_lock(trace_lock))
+            return NULL;
         current_channel = channel;
         switch (trace_channels[category].type) {
         case SIMPLE_CHANNEL:

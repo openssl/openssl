@@ -194,7 +194,8 @@ int ossl_store_register_loader_int(OSSL_STORE_LOADER *loader)
         ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_MALLOC_FAILURE);
         return 0;
     }
-    CRYPTO_THREAD_write_lock(registry_lock);
+    if (!CRYPTO_THREAD_write_lock(registry_lock))
+        return 0;
 
     if (ossl_store_register_init()
         && (lh_OSSL_STORE_LOADER_insert(loader_register, loader) != NULL
@@ -231,7 +232,8 @@ const OSSL_STORE_LOADER *ossl_store_get0_loader_int(const char *scheme)
         ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
-    CRYPTO_THREAD_write_lock(registry_lock);
+    if (!CRYPTO_THREAD_write_lock(registry_lock))
+        return NULL;
 
     if (!ossl_store_register_init())
         ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_INTERNAL_ERROR);
@@ -260,7 +262,8 @@ OSSL_STORE_LOADER *ossl_store_unregister_loader_int(const char *scheme)
         ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
-    CRYPTO_THREAD_write_lock(registry_lock);
+    if (!CRYPTO_THREAD_write_lock(registry_lock))
+        return NULL;
 
     if (!ossl_store_register_init())
         ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_INTERNAL_ERROR);
