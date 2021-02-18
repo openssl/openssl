@@ -22,6 +22,10 @@
 #include "helpers/pkcs12.h"
 
 
+static OSSL_LIB_CTX *testctx = NULL;
+static OSSL_PROVIDER *nullprov = NULL;
+static OSSL_PROVIDER *testprov = NULL;
+
 /* --------------------------------------------------------------------------
  * PKCS12 component test data
  */
@@ -433,6 +437,22 @@ static int test_multiple_contents(void)
 
 int setup_tests(void)
 {
+    testctx = OSSL_LIB_CTX_new();
+    if (!TEST_ptr(testctx))
+        return 0;
+
+    /* TODO: Swap the libctx to test non-default context only */
+    nullprov = OSSL_PROVIDER_load(testctx /*NULL*/, "null");
+    testprov = OSSL_PROVIDER_load(NULL /*testctx*/, "default");
+
+    /*
+     * Verify that the default and fips providers in the default libctx are not
+     * available
+     */
+/*    if (!TEST_false(OSSL_PROVIDER_available(NULL, "default"))
+            || !TEST_false(OSSL_PROVIDER_available(NULL, "fips")))
+        return 0;
+*/
     ADD_TEST(test_single_cert_no_attrs);
     ADD_TEST(test_single_key_with_attrs);
     ADD_TEST(test_cert_key_with_attrs_and_mac);
@@ -442,3 +462,9 @@ int setup_tests(void)
     return 1;
 }
 
+void cleanup_tests(void)
+{
+    OSSL_PROVIDER_unload(nullprov);
+    OSSL_PROVIDER_unload(testprov);
+    OSSL_LIB_CTX_free(testctx);
+}

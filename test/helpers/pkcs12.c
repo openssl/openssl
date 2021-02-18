@@ -259,9 +259,13 @@ void end_contentinfo_encrypted(PKCS12_BUILDER *pb, const PKCS12_ENC *enc)
 static STACK_OF(PKCS12_SAFEBAG) *decode_contentinfo(STACK_OF(PKCS7) *safes, int idx, const PKCS12_ENC *enc)
 {
     STACK_OF(PKCS12_SAFEBAG) *bags = NULL;
+    int bagnid;
     PKCS7 *p7 = sk_PKCS7_value(safes, idx);
-    int bagnid = OBJ_obj2nid(p7->type);
 
+    if (!TEST_ptr(p7))
+        goto err;
+
+    bagnid = OBJ_obj2nid(p7->type);
     if (enc) {
         if (!TEST_int_eq(bagnid, NID_pkcs7_encrypted))
             goto err;

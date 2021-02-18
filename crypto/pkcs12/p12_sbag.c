@@ -224,3 +224,21 @@ PKCS12_SAFEBAG *PKCS12_SAFEBAG_create_pkcs8_encrypt(int pbe_nid,
 
     return bag;
 }
+
+PKCS12_SAFEBAG *PKCS12_SAFEBAG_create_pkcs8_encrypt_ex(PKCS8_PRIV_KEY_INFO *p8inf,
+                                                       OSSL_PARAM params[],
+                                                       OSSL_LIB_CTX *ctx, const char *propq)
+{
+    PKCS12_SAFEBAG *bag;
+    X509_SIG *p8;
+
+    p8 = PKCS8_encrypt_ex(p8inf, params, ctx, propq);
+    if (p8 == NULL)
+        return NULL;
+
+    bag = PKCS12_SAFEBAG_create0_pkcs8(p8);
+    if (bag == NULL)
+        X509_SIG_free(p8);
+
+    return bag;
+}

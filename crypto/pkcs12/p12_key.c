@@ -62,27 +62,9 @@ int PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt,
                        int saltlen, int id, int iter, int n,
                        unsigned char *out, const EVP_MD *md_type)
 {
-    int res = 0;
-    EVP_KDF *kdf;
-    EVP_KDF_CTX *ctx;
     OSSL_PARAM params[6], *p = params;
 
-    if (n <= 0)
-        return 0;
-
-    /*
-     * The parameter query isn't available but the library context can be
-     * extracted from the passed digest.
-     */
-    kdf = EVP_KDF_fetch(ossl_provider_libctx(EVP_MD_provider(md_type)),
-                        "PKCS12KDF", NULL);
-    if (kdf == NULL)
-        return 0;
-    ctx = EVP_KDF_CTX_new(kdf);
-    EVP_KDF_free(kdf);
-    if (ctx == NULL)
-        return 0;
-
+    /* Construct the KDF params */
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
                                             (char *)EVP_MD_name(md_type), 0);
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_PASSWORD,
@@ -92,8 +74,6 @@ int PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt,
     *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_PKCS12_ID, &id);
     *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_ITER, &iter);
     *p = OSSL_PARAM_construct_end();
-    if (!EVP_KDF_CTX_set_params(ctx, params))
-        goto err;
 
     OSSL_TRACE_BEGIN(PKCS12_KEYGEN) {
         BIO_printf(trc_out, "PKCS12_key_gen_uni(): ID %d, ITER %d\n", id, iter);
@@ -105,15 +85,44 @@ int PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt,
         BIO_printf(trc_out, "\n");
     } OSSL_TRACE_END(PKCS12_KEYGEN);
 
-    if (EVP_KDF_derive(ctx, out, (size_t)n)) {
+    /*
+     * The parameter query isn't available but the library context can be
+     * extracted from the passed digest.
+     */
+    return PKCS12_key_gen_ex(out, n, params, ossl_provider_libctx(EVP_MD_provider(md_type)), NULL);
+}
+
+int PKCS12_key_gen_ex(unsigned char *out, size_t keylen, OSSL_PARAM params[],
+                      OSSL_LIB_CTX *ctx, const char *propq)
+{
+    int res = 0;
+    EVP_KDF *kdf;
+    EVP_KDF_CTX *kdf_ctx;
+
+    if (keylen <= 0)
+        return 0;
+
+    kdf = EVP_KDF_fetch(ctx, "PKCS12KDF", propq);
+    if (kdf == NULL)
+        return 0;
+
+    kdf_ctx = EVP_KDF_CTX_new(kdf);
+    EVP_KDF_free(kdf);
+    if (kdf_ctx == NULL)
+        return 0;
+
+    if (!EVP_KDF_CTX_set_params(kdf_ctx, params))
+        goto err;
+
+    if (EVP_KDF_derive(kdf_ctx, out, keylen)) {
         res = 1;
         OSSL_TRACE_BEGIN(PKCS12_KEYGEN) {
-            BIO_printf(trc_out, "Output KEY (length %d)\n", n);
-            BIO_hex_string(trc_out, 0, n, out, n);
+            BIO_printf(trc_out, "Output KEY (length %d)\n", keylen);
+            BIO_hex_string(trc_out, 0, keylen, out, keylen);
             BIO_printf(trc_out, "\n");
         } OSSL_TRACE_END(PKCS12_KEYGEN);
     }
  err:
-    EVP_KDF_CTX_free(ctx);
+    EVP_KDF_CTX_free(kdf_ctx);
     return res;
 }
