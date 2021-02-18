@@ -52,7 +52,6 @@ int pkeyparam_main(int argc, char **argv)
     int text = 0, noout = 0, ret = EXIT_FAILURE, check = 0, r;
     OPTION_CHOICE o;
     char *infile = NULL, *outfile = NULL, *prog;
-    unsigned long err;
 
     prog = opt_init(argc, argv, pkeyparam_options);
     while ((o = opt_next()) != OPT_EOF) {
@@ -125,15 +124,8 @@ int pkeyparam_main(int argc, char **argv)
              * Note: at least for RSA keys if this function returns
              * -1, there will be no error reasons.
              */
-            BIO_printf(out, "Parameters are invalid\n");
-
-            while ((err = ERR_peek_error()) != 0) {
-                const char *reason = ERR_reason_error_string(err);
-
-                if (reason != NULL)
-                    BIO_printf(out, "Detailed error: %s\n", reason);
-                ERR_get_error(); /* remove err from error stack */
-            }
+            BIO_printf(bio_err, "Parameters are invalid\n");
+            ERR_print_errors(bio_err);
             goto end;
         }
     }
