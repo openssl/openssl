@@ -1428,7 +1428,7 @@ int speed_main(int argc, char **argv)
         {  test1024,  sizeof(test1024),  1024 },
         {  test2048,  sizeof(test2048),  2048 },
         {  test3072,  sizeof(test3072),  3072 },
-        {  test4096,  sizeof(test4096),  4092 },
+        {  test4096,  sizeof(test4096),  4096 },
         {  test7680,  sizeof(test7680),  7680 },
         { test15360, sizeof(test15360), 15360 }
     };
@@ -2374,7 +2374,7 @@ int speed_main(int argc, char **argv)
             const unsigned char *p = rsa_keys[testnum].data;
 
             st = (rsa_key = d2i_PrivateKey(EVP_PKEY_RSA, NULL, &p,
-                                           rsa_keys[k].length)) != NULL;
+                                           rsa_keys[testnum].length)) != NULL;
         }
 
         for (i = 0; st && i < loopargs_len; i++) {
