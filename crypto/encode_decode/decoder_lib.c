@@ -569,12 +569,12 @@ static int decoder_process(const OSSL_PARAM params[], void *arg)
             goto end;
         bio = new_data.bio;
 
-        /* Get the object type if there is one */
+        /* Get the data type if there is one */
         p = OSSL_PARAM_locate_const(params, OSSL_OBJECT_PARAM_DATA_TYPE);
         if (p != NULL && !OSSL_PARAM_get_utf8_string_ptr(p, &data_type))
             goto end;
 
-        /* Get the object structure if there is one */
+        /* Get the data structure if there is one */
         p = OSSL_PARAM_locate_const(params, OSSL_OBJECT_PARAM_DATA_STRUCTURE);
         if (p != NULL && !OSSL_PARAM_get_utf8_string_ptr(p, &data_structure))
             goto end;
@@ -763,5 +763,4 @@ static int decoder_process(const OSSL_PARAM params[], void *arg)
  end:
     BIO_free(new_data.bio);
     return ok;
-
 }
