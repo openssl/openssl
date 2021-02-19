@@ -1561,12 +1561,16 @@ EOF
       if (windowsdll()) {
           $recipe .= <<"EOF";
 	rm -f apps/$full
-	rm -f test/$full
 	rm -f fuzz/$full
 	cp -p $full apps/
-	cp -p $full test/
 	cp -p $full fuzz/
 EOF
+          if (!$disabled{tests}) {
+            $recipe .= <<"EOF";
+	rm -f test/$full
+	cp -p $full test/
+EOF
+          }
       }
       $recipe .= <<"EOF" if defined $argfile;
 $argfile: $argfiledeps
