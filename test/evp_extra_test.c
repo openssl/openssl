@@ -2423,7 +2423,7 @@ static int ecpub_nids[] = { NID_brainpoolP256r1, NID_X9_62_prime256v1,
 
 static int test_ecpub(int idx)
 {
-    int ret = 0, len;
+    int ret = 0, len, savelen;
     int nid;
     unsigned char buf[1024];
     unsigned char *p;
@@ -2439,12 +2439,14 @@ static int test_ecpub(int idx)
         || !TEST_true(EVP_PKEY_keygen(ctx, &pkey)))
         goto done;
     len = i2d_PublicKey(pkey, NULL);
+    savelen = len;
     if (!TEST_int_ge(len, 1)
         || !TEST_int_lt(len, 1024))
         goto done;
     p = buf;
     len = i2d_PublicKey(pkey, &p);
-    if (!TEST_int_ge(len, 1))
+    if (!TEST_int_ge(len, 1)
+            || !TEST_int_eq(len, savelen))
         goto done;
 
     ret = 1;
