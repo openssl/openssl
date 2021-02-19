@@ -573,32 +573,31 @@ static varref cmp_vars[] = { /* must be in same order as enumerated above! */
     {NULL}
 };
 
-#define FUNC (strcmp(OPENSSL_FUNC, "(unknown function)") == 0   \
-              ? "CMP" : OPENSSL_FUNC)
-#define CMP_print(bio, level, prefix, msg, a1, a2, a3) \
+#define CMP_print(bio, level, msg, a1, a2, a3) \
     ((void)(level > opt_verbosity ? 0 : \
-            (BIO_printf(bio, "%s:%s:%d:CMP %s: " msg "\n", \
-                        FUNC, OPENSSL_FILE, OPENSSL_LINE, prefix, a1, a2, a3))))
+    (OSSL_CMP_print_to_bio(bio, OPENSSL_FUNC, OPENSSL_FILE, OPENSSL_LINE, \
+                           level, NULL) + \
+    BIO_printf(bio, msg "\n", a1, a2, a3))))
 #define CMP_DEBUG(m, a1, a2, a3) \
-    CMP_print(bio_out, OSSL_CMP_LOG_DEBUG, "debug", m, a1, a2, a3)
+    CMP_print(bio_out, OSSL_CMP_LOG_DEBUG, m, a1, a2, a3)
 #define CMP_debug(msg)             CMP_DEBUG(msg"%s%s%s", "", "", "")
 #define CMP_debug1(msg, a1)        CMP_DEBUG(msg"%s%s",   a1, "", "")
 #define CMP_debug2(msg, a1, a2)    CMP_DEBUG(msg"%s",     a1, a2, "")
 #define CMP_debug3(msg, a1, a2, a3) CMP_DEBUG(msg,        a1, a2, a3)
 #define CMP_INFO(msg, a1, a2, a3) \
-    CMP_print(bio_out, OSSL_CMP_LOG_INFO, "info", msg, a1, a2, a3)
+    CMP_print(bio_out, OSSL_CMP_LOG_INFO, msg, a1, a2, a3)
 #define CMP_info(msg)              CMP_INFO(msg"%s%s%s", "", "", "")
 #define CMP_info1(msg, a1)         CMP_INFO(msg"%s%s",   a1, "", "")
 #define CMP_info2(msg, a1, a2)     CMP_INFO(msg"%s",     a1, a2, "")
 #define CMP_info3(msg, a1, a2, a3) CMP_INFO(msg,         a1, a2, a3)
 #define CMP_WARN(m, a1, a2, a3) \
-    CMP_print(bio_out, OSSL_CMP_LOG_WARNING, "warning", m, a1, a2, a3)
+    CMP_print(bio_out, OSSL_CMP_LOG_WARNING, m, a1, a2, a3)
 #define CMP_warn(msg)              CMP_WARN(msg"%s%s%s", "", "", "")
 #define CMP_warn1(msg, a1)         CMP_WARN(msg"%s%s",   a1, "", "")
 #define CMP_warn2(msg, a1, a2)     CMP_WARN(msg"%s",     a1, a2, "")
 #define CMP_warn3(msg, a1, a2, a3) CMP_WARN(msg,         a1, a2, a3)
 #define CMP_ERR(msg, a1, a2, a3) \
-    CMP_print(bio_err, OSSL_CMP_LOG_ERR, "error", msg, a1, a2, a3)
+    CMP_print(bio_err, OSSL_CMP_LOG_ERR, msg, a1, a2, a3)
 #define CMP_err(msg)               CMP_ERR(msg"%s%s%s", "", "", "")
 #define CMP_err1(msg, a1)          CMP_ERR(msg"%s%s",   a1, "", "")
 #define CMP_err2(msg, a1, a2)      CMP_ERR(msg"%s",     a1, a2, "")
@@ -657,7 +656,7 @@ static X509_REQ *load_csr_autofmt(const char *infile, const char *desc)
         csr = load_csr(infile, FORMAT_ASN1, desc);
     }
     if (csr == NULL) {
-        ERR_print_errors(bio_err);
+        OSSL_CMP_print_errors(cmp_ctx);
         BIO_printf(bio_err, "error: unable to load %s from file '%s'\n", desc,
                    infile);
     } else {
@@ -873,7 +872,7 @@ static X509_STORE *load_trusted(char *input, int for_new_cert, const char *desc)
             && (for_new_cert || truststore_set_host_etc(ts, NULL)))
         return ts;
     BIO_printf(bio_err, "error setting verification parameters\n");
-    OSSL_CMP_CTX_print_errors(cmp_ctx);
+    OSSL_CMP_print_errors(cmp_ctx);
     X509_STORE_free(ts);
     return NULL;
 }
@@ -1254,7 +1253,7 @@ static SSL_CTX *setup_ssl_ctx(OSSL_CMP_CTX *ctx, const char *host,
                                          SSL_BUILD_CHAIN_FLAG_NO_ROOT)) {
                 CMP_debug("success building cert chain for own TLS cert");
             } else {
-                OSSL_CMP_CTX_print_errors(ctx);
+                OSSL_CMP_print_errors(ctx);
                 CMP_warn("could not build cert chain for own TLS cert");
             }
             if (trust_store != NULL)
@@ -2658,7 +2657,6 @@ int cmp_main(int argc, char **argv)
         }
     }
 
-
     if (opt_port != NULL) { /* act as very basic CMP HTTP server */
 #ifdef OPENSSL_NO_SOCK
         BIO_printf(bio_err, "Cannot act as server - sockets not supported\n");
@@ -2803,10 +2801,6 @@ int cmp_main(int argc, char **argv)
                       status == OSSL_CMP_PKISTATUS_rejection
                       || status == OSSL_CMP_PKISTATUS_waiting
                       ? OSSL_CMP_LOG_ERR : OSSL_CMP_LOG_WARNING,
-                      status == OSSL_CMP_PKISTATUS_accepted ? "info" :
-                      status == OSSL_CMP_PKISTATUS_rejection ? "server error" :
-                      status == OSSL_CMP_PKISTATUS_waiting ? "internal error"
-                                                           : "warning",
                       "received from %s %s %s", opt_server,
                       string != NULL ? string : "<unknown PKIStatus>", "");
             OPENSSL_free(buf);
@@ -2851,7 +2845,7 @@ int cmp_main(int argc, char **argv)
     cleanse(opt_srv_secret);
 
     if (ret != 1)
-        OSSL_CMP_CTX_print_errors(cmp_ctx);
+        OSSL_CMP_print_errors(cmp_ctx);
 
     ossl_cmp_mock_srv_free(OSSL_CMP_CTX_get_transfer_cb_arg(cmp_ctx));
     {

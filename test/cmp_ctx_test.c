@@ -115,12 +115,17 @@ static int test_CTX_reinit(void)
 
 #if !defined(OPENSSL_NO_ERR) && !defined(OPENSSL_NO_AUTOERRINIT)
 
+static char expected[100], *expected_ptr;
 static int msg_total_size = 0;
 static int msg_total_size_log_cb(const char *func, const char *file, int line,
                                  OSSL_CMP_severity level, const char *msg)
 {
     msg_total_size += strlen(msg);
-    TEST_note("total=%d len=%zu msg='%s'\n", msg_total_size, strlen(msg), msg);
+    TEST_note("len=%zu total=%d msg='%s'\n", strlen(msg), msg_total_size, msg);
+    if (expected_ptr != NULL) {
+        (void)TEST_strn_eq(expected_ptr, msg, strlen(msg));
+        expected_ptr += strlen("missing sender identification:");
+    }
     return 1;
 }
 
@@ -134,7 +139,8 @@ static const char *const max_str_literal = STR509;
 static int execute_CTX_print_errors_test(OSSL_CMP_CTX_TEST_FIXTURE *fixture)
 {
     OSSL_CMP_CTX *ctx = fixture->ctx;
-    int base_err_msg_size, expected_size;
+    int max_len = sizeof(expected) - 1;
+    int base_err_msg_size = 0, expected_size;
     int res = 1;
 
     if (!TEST_true(OSSL_CMP_CTX_set_log_cb(ctx, NULL)))
@@ -144,7 +150,7 @@ static int execute_CTX_print_errors_test(OSSL_CMP_CTX_TEST_FIXTURE *fixture)
 
 # ifndef OPENSSL_NO_STDIO
     ERR_raise(ERR_LIB_CMP, CMP_R_MULTIPLE_SAN_SOURCES);
-    OSSL_CMP_CTX_print_errors(ctx); /* should print above error to STDERR */
+    OSSL_CMP_print_errors(ctx); /* should print above error to STDERR */
 # endif
 
     /* this should work regardless of OPENSSL_NO_STDIO and OPENSSL_NO_TRACE: */
@@ -153,23 +159,25 @@ static int execute_CTX_print_errors_test(OSSL_CMP_CTX_TEST_FIXTURE *fixture)
     if (!TEST_true(ctx->log_cb == msg_total_size_log_cb)) {
         res = 0;
     } else {
+        expected_ptr = expected;
+        expected[0] = '\0';
+        ERR_raise(ERR_LIB_CMP, CMP_R_MISSING_SENDER_IDENTIFICATION);
+        strncat(expected, "missing sender identification:", max_len);
         ERR_raise(ERR_LIB_CMP, CMP_R_INVALID_ARGS);
-        base_err_msg_size = strlen("INVALID_ARGS");
-        ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
-        base_err_msg_size += strlen("NULL_ARGUMENT");
-        expected_size = base_err_msg_size;
-        ossl_cmp_add_error_data("data1"); /* should prepend separator ":" */
-        expected_size += strlen(":" "data1");
+        strncat(expected, "invalid args:", max_len - strlen(expected));
+        ossl_cmp_add_error_data("data1");
+        strncat(expected, "data1", max_len - strlen(expected));
         ossl_cmp_add_error_data("data2"); /* should prepend separator " : " */
-        expected_size += strlen(" : " "data2");
-        ossl_cmp_add_error_line("new line"); /* should prepend separator "\n" */
-        expected_size += strlen("\n" "new line");
-        OSSL_CMP_CTX_print_errors(ctx);
-        if (!TEST_int_eq(msg_total_size, expected_size))
+        strncat(expected, " : data2", max_len - strlen(expected));
+        ossl_cmp_add_error_line("2nd line"); /* should prepend separator "\n" */
+        strncat(expected, "\n""2nd line", max_len - strlen(expected));
+        OSSL_CMP_print_errors(ctx);
+        if (!TEST_int_eq(msg_total_size, strlen(expected)))
             res = 0;
 
-        ERR_raise(ERR_LIB_CMP, CMP_R_INVALID_ARGS);
-        base_err_msg_size = strlen("INVALID_ARGS") + strlen(":");
+        expected_ptr = NULL;
+        ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
+        base_err_msg_size += strlen("NULL_ARGUMENT:");
         expected_size = base_err_msg_size;
         while (expected_size < 4096) { /* force split */
             ERR_add_error_txt(STR_SEP, max_str_literal);
@@ -177,7 +185,7 @@ static int execute_CTX_print_errors_test(OSSL_CMP_CTX_TEST_FIXTURE *fixture)
         }
         expected_size += base_err_msg_size - 2 * strlen(STR_SEP);
         msg_total_size = 0;
-        OSSL_CMP_CTX_print_errors(ctx);
+        OSSL_CMP_print_errors(ctx);
         if (!TEST_int_eq(msg_total_size, expected_size))
             res = 0;
     }
@@ -804,7 +812,7 @@ int setup_tests(void)
     ADD_TEST(test_cmp_ctx_log_cb);
 #if !defined(OPENSSL_NO_ERR) && !defined(OPENSSL_NO_AUTOERRINIT)
     /*
-     * also tests OSSL_CMP_CTX_set_log_cb(), OSSL_CMP_print_errors_cb(),
+     * also tests OSSL_CMP_CTX_set_log_cb()
      * and the macros ossl_cmp_add_error_data and ossl_cmp_add_error_line:
      */
     ADD_TEST(test_CTX_print_errors);

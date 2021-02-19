@@ -15,6 +15,7 @@
 #include <openssl/cmperr.h>
 #include <openssl/err.h> /* should be implied by cmperr.h */
 #include <openssl/x509v3.h>
+#include <crypto/err.h>
 
 /*
  * use trace API for CMP-specific logging, prefixed by "CMP " and severity
@@ -111,23 +112,10 @@ const char *ossl_cmp_log_parse_metadata(const char *buf,
     return msg;
 }
 
-#define UNKNOWN_FUNC "(unknown function)" /* the default for OPENSSL_FUNC */
-/*
- * substitute fallback if component/function name is NULL or empty or contains
- * just pseudo-information "(unknown function)" due to -pedantic and macros.h
- */
-static const char *improve_location_name(const char *func, const char *fallback)
-{
-    if (fallback == NULL)
-        return func == NULL ? UNKNOWN_FUNC : func;
-
-    return func == NULL || *func == '\0' || strcmp(func, UNKNOWN_FUNC) == 0
-        ? fallback : func;
-}
-
-int OSSL_CMP_print_to_bio(BIO *bio, const char *component, const char *file,
+int OSSL_CMP_print_to_bio(BIO *bio, const char *func, const char *file,
                           int line, OSSL_CMP_severity level, const char *msg)
 {
+    char lsbuf[256];
     const char *level_string =
         level == OSSL_CMP_LOG_EMERG ? "EMERG" :
         level == OSSL_CMP_LOG_ALERT ? "ALERT" :
@@ -136,67 +124,74 @@ int OSSL_CMP_print_to_bio(BIO *bio, const char *component, const char *file,
         level == OSSL_CMP_LOG_WARNING ? "warning" :
         level == OSSL_CMP_LOG_NOTICE ? "NOTE" :
         level == OSSL_CMP_LOG_INFO ? "info" :
-        level == OSSL_CMP_LOG_DEBUG ? "DEBUG" : "(unknown level)";
+        level == OSSL_CMP_LOG_DEBUG ? "debug" : "(unknown level)";
 
-#ifndef NDEBUG
-    if (BIO_printf(bio, "%s:%s:%d:", improve_location_name(component, "CMP"),
-                   file, line) < 0)
-        return 0;
-#endif
-    return BIO_printf(bio, OSSL_CMP_LOG_PREFIX"%s: %s\n",
-                      level_string, msg) >= 0;
+    if (ERR_location_string_n(ERR_LIB_CMP, func, file, line,
+                              lsbuf, sizeof(lsbuf)) >= 0)
+        BIO_printf(bio, "%s:", lsbuf);
+    else
+        BIO_puts(bio, OSSL_CMP_LOG_PREFIX);
+    return (msg == NULL
+            ? BIO_printf(bio, "%s: ", level_string)
+            : BIO_printf(bio, "%s: %s\n", level_string, msg)) >= 0;
 }
 
-#define ERR_PRINT_BUF_SIZE 4096
-/* this is similar to ERR_print_errors_cb, but uses the CMP-specific cb type */
-void OSSL_CMP_print_errors_cb(OSSL_CMP_log_cb_t log_fn)
+static int print_errors_cb_wrapper(const char *str, size_t len, void *u)
 {
-    unsigned long err;
-    char msg[ERR_PRINT_BUF_SIZE];
-    const char *file = NULL, *func = NULL, *data = NULL;
-    int line, flags;
-
-    while ((err = ERR_get_error_all(&file, &line, &func, &data, &flags)) != 0) {
-        const char *component =
-            improve_location_name(func, ERR_lib_error_string(err));
-        unsigned long reason = ERR_GET_REASON(err);
-        const char *rs = NULL;
-        char rsbuf[256];
-
-#ifndef OPENSSL_NO_ERR
-        if (ERR_SYSTEM_ERROR(err)) {
-            if (openssl_strerror_r(reason, rsbuf, sizeof(rsbuf)))
-                rs = rsbuf;
-        } else {
-            rs = ERR_reason_error_string(err);
-        }
+    OSSL_CMP_CTX *ctx = (OSSL_CMP_CTX *)u;
+    OSSL_CMP_log_cb_t log_fn = (ctx == NULL ? NULL : ctx->log_cb);
+    char *funcname = NULL, *filename = NULL;
+    const char *lib, *func, *msg;
+    int line = 0, ret = 0;
+#ifndef NDEBUG
+    const char *file, *lineno;
+    char buf[256];
+    int func_len, file_len;
 #endif
-        if (rs == NULL) {
-            BIO_snprintf(rsbuf, sizeof(rsbuf), "reason(%lu)", reason);
-            rs = rsbuf;
-        }
-        if (data != NULL && (flags & ERR_TXT_STRING) != 0)
-            BIO_snprintf(msg, sizeof(msg), "%s:%s", rs, data);
-        else
-            BIO_snprintf(msg, sizeof(msg), "%s", rs);
 
-        if (log_fn == NULL) {
-#ifndef OPENSSL_NO_STDIO
-            BIO *bio = BIO_new_fp(stderr, BIO_NOCLOSE);
-
-            if (bio != NULL) {
-                OSSL_CMP_print_to_bio(bio, component, file, line,
-                                      OSSL_CMP_LOG_ERR, msg);
-                BIO_free(bio);
-            }
+    lib = strstr(str, "error:"); /* skip "OpenSSL <version> " "*/
+    if (lib == NULL)
+        return 0;
+    lib = strchr(lib + strlen("error:"), ':') + 1; /* skip "error:" and code */
+    func = strchr(lib, ':') + 1;
+#ifndef NDEBUG
+    file = strchr(func, ':') + 1;
+    func_len = file - 3 - func;
+    lineno = strchr(file, ':') + 1;
+    file_len = lineno - 1 - file;
+    sscanf(lineno, "%d", &line);
+    BIO_snprintf(buf, sizeof(buf), "%.*s#%.*s",
+                 func_len, func, file_len, file);
+    funcname = buf;
+    filename = buf + func_len;
+    *filename++ = '\0'; /* overwrite the above '#' */
+    msg = strchr(lineno, ':') + 1;
 #else
-            /* ERR_raise(ERR_LIB_CMP, CMP_R_NO_STDIO) makes no sense during error printing */
+    msg = strchr(func, ':') + 1;
 #endif
-        } else {
-            if (log_fn(component, file, line, OSSL_CMP_LOG_ERR, msg) <= 0)
-                break; /* abort outputting the error report */
+    if (log_fn == NULL) {
+#ifndef OPENSSL_NO_STDIO
+        BIO *bio = BIO_new_fp(stderr, BIO_NOCLOSE);
+
+        if (bio != NULL) {
+            ret = OSSL_CMP_print_to_bio(bio, funcname, filename, line,
+                                        OSSL_CMP_LOG_ERR, msg);
+            BIO_free(bio);
         }
+#else
+        ret = 1;
+#endif
+        return ret;
     }
+    return log_fn(funcname, filename, line, OSSL_CMP_LOG_ERR, msg);
+}
+
+/* Print errors via the log callback in the ctx or OSSL_CMP_print_to_bio() */
+void OSSL_CMP_print_errors(const OSSL_CMP_CTX *ctx)
+{
+    if (ctx != NULL && OSSL_CMP_LOG_ERR > ctx->log_verbosity)
+        return; /* suppress output since severity is not sufficient */
+    ERR_print_errors_cb(print_errors_cb_wrapper, (void *)ctx);
 }
 
 int ossl_cmp_X509_STORE_add1_certs(X509_STORE *store, STACK_OF(X509) *certs,

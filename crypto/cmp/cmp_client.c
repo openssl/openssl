@@ -162,7 +162,7 @@ static int send_receive_check(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *req,
     }
 
     /* should print error queue since transfer_cb may call ERR_clear_error() */
-    OSSL_CMP_CTX_print_errors(ctx);
+    OSSL_CMP_print_errors(ctx);
 
     ossl_cmp_log1(INFO, ctx, "sending %s", req_type_str);
 

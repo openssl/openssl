@@ -151,7 +151,7 @@ int ossl_cmp_msg_add_extraCerts(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg)
                                "success building chain for own CMP signer cert");
             } else {
                 /* dump errors to avoid confusion when printing further ones */
-                OSSL_CMP_CTX_print_errors(ctx);
+                OSSL_CMP_print_errors(ctx);
                 ossl_cmp_warn(ctx,
                               "could not build chain for own CMP signer cert");
             }

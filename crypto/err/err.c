@@ -491,74 +491,10 @@ static unsigned long get_error_values(ERR_GET_ACTION g,
     return ret;
 }
 
-void ossl_err_string_int(unsigned long e, const char *func,
-                         char *buf, size_t len)
-{
-    char lsbuf[64], rsbuf[256];
-    const char *ls, *rs = NULL;
-    unsigned long l, r;
-
-    if (len == 0)
-        return;
-
-    l = ERR_GET_LIB(e);
-    ls = ERR_lib_error_string(e);
-    if (ls == NULL) {
-        BIO_snprintf(lsbuf, sizeof(lsbuf), "lib(%lu)", l);
-        ls = lsbuf;
-    }
-
-    /*
-     * ERR_reason_error_string() can't safely return system error strings,
-     * since it would call openssl_strerror_r(), which needs a buffer for
-     * thread safety.  So for system errors, we call openssl_strerror_r()
-     * directly instead.
-     */
-    r = ERR_GET_REASON(e);
-#ifndef OPENSSL_NO_ERR
-    if (ERR_SYSTEM_ERROR(e)) {
-        if (openssl_strerror_r(r, rsbuf, sizeof(rsbuf)))
-            rs = rsbuf;
-    } else {
-        rs = ERR_reason_error_string(e);
-    }
-#endif
-    if (rs == NULL) {
-        BIO_snprintf(rsbuf, sizeof(rsbuf), "reason(%lu)", r);
-        rs = rsbuf;
-    }
-
-    BIO_snprintf(buf, len, "error:%08lX:%s:%s:%s", e, ls, func, rs);
-    if (strlen(buf) == len - 1) {
-        /* Didn't fit; use a minimal format. */
-        BIO_snprintf(buf, len, "err:%lx:%lx:%lx:%lx", e, l, 0L, r);
-    }
-}
-
-
-void ERR_error_string_n(unsigned long e, char *buf, size_t len)
-{
-    ossl_err_string_int(e, "", buf, len);
-}
-
-/*
- * ERR_error_string_n should be used instead for ret != NULL as
- * ERR_error_string cannot know how large the buffer is
- */
-char *ERR_error_string(unsigned long e, char *ret)
-{
-    static char buf[256];
-
-    if (ret == NULL)
-        ret = buf;
-    ERR_error_string_n(e, ret, (int)sizeof(buf));
-    return ret;
-}
-
 const char *ERR_lib_error_string(unsigned long e)
 {
     ERR_STRING_DATA d, *p;
-    unsigned long l;
+    int l;
 
     if (!RUN_ONCE(&err_string_init, do_err_strings_init)) {
         return NULL;
@@ -580,7 +516,7 @@ const char *ERR_func_error_string(unsigned long e)
 const char *ERR_reason_error_string(unsigned long e)
 {
     ERR_STRING_DATA d, *p = NULL;
-    unsigned long l, r;
+    int l, r;
 
     if (!RUN_ONCE(&err_string_init, do_err_strings_init)) {
         return NULL;

@@ -372,10 +372,10 @@ int ossl_cmp_print_log(OSSL_CMP_severity level, const OSSL_CMP_CTX *ctx,
 #ifndef OPENSSL_NO_TRACE
     if (OSSL_TRACE_ENABLED(CMP)) {
         OSSL_TRACE_BEGIN(CMP) {
-            int printed =
-                BIO_snprintf(hugebuf, sizeof(hugebuf),
-                             "%s:%s:%d:" OSSL_CMP_LOG_PREFIX "%s: ",
-                             func, file, line, level_str);
+            int printed = BIO_snprintf(hugebuf, sizeof(hugebuf),
+                                       "%s:%s:%d:" OSSL_CMP_LOG_PREFIX "%s: ",
+                                       func, file, line, level_str);
+
             if (printed > 0 && (size_t)printed < sizeof(hugebuf)) {
                 if (BIO_vsnprintf(hugebuf + printed,
                                   sizeof(hugebuf) - printed, format, args) > 0)
@@ -410,14 +410,6 @@ int OSSL_CMP_CTX_set_log_cb(OSSL_CMP_CTX *ctx, OSSL_CMP_log_cb_t cb)
 #endif
 
     return 1;
-}
-
-/* Print OpenSSL and CMP errors via the log cb of the ctx or ERR_print_errors */
-void OSSL_CMP_CTX_print_errors(const OSSL_CMP_CTX *ctx)
-{
-    if (ctx != NULL && OSSL_CMP_LOG_ERR > ctx->log_verbosity)
-        return; /* suppress output since severity is not sufficient */
-    OSSL_CMP_print_errors_cb(ctx == NULL ? NULL : ctx->log_cb);
 }
 
 /*

@@ -17,7 +17,7 @@ OSSL_CMP_LOG_TRACE,
 
 OSSL_CMP_log_cb_t,
 OSSL_CMP_print_to_bio,
-OSSL_CMP_print_errors_cb
+OSSL_CMP_print_errors
 - functions for logging and error reporting
 
 =head1 SYNOPSIS
@@ -39,12 +39,13 @@ OSSL_CMP_print_errors_cb
  #define OSSL_CMP_LOG_DEBUG   7
  #define OSSL_CMP_LOG_TRACE   8
 
- typedef int (*OSSL_CMP_log_cb_t)(const char *component,
-                                  const char *file, int line,
+ typedef int (*OSSL_CMP_log_cb_t)(const char *func, const char *file, int line,
                                   OSSL_CMP_severity level, const char *msg);
- int OSSL_CMP_print_to_bio(BIO *bio, const char *component, const char *file,
+ int OSSL_CMP_print_to_bio(BIO *bio, const char *func, const char *file,
                            int line, OSSL_CMP_severity level, const char *msg);
- void OSSL_CMP_print_errors_cb(OSSL_CMP_log_cb_t log_fn);
+
+ #include <openssl/cmp.h>
+ void OSSL_CMP_print_errors(const OSSL_CMP_CTX *ctx);
 
 =head1 DESCRIPTION
 
@@ -57,14 +58,9 @@ messages produced by the CMP library in case of certificate validation failures.
 When an interesting activity is performed or an error occurs, some detail
 should be provided for user information, debugging, and auditing purposes.
 A CMP application can obtain this information by providing a callback function
-with the following type:
-
- typedef int (*OSSL_CMP_log_cb_t)(const char *component,
-                                  const char *file, int line,
-                                  OSSL_CMP_severity level, const char *msg);
-
+of type B>OSSL_CMP_log_cb_t>.
 The parameters may provide
-some component info (which may be a module name and/or function name) or NULL,
+a function name or NULL,
 a file pathname or NULL,
 a line number or 0 indicating the source code location,
 a severity level, and
@@ -91,22 +87,28 @@ OSSL_CMP_log_close() may be called when all activities are finished to flush
 any pending CMP-specific log output and deallocate related resources.
 It may be called multiple times. It does get called at OpenSSL stutdown.
 
-OSSL_CMP_print_to_bio() prints the given component info, filename, line number,
-severity level, and log message or error queue message to the given I<bio>.
-I<component> usually is a function or module name.
-If it is NULL, empty, or "(unknown function)" then "CMP" is used as fallback.
+OSSL_CMP_print_to_bio() prints the string constant C<CMP routines>,
+the function name I<func> followed by C<()> if I<func> is not NULL,
+the filename I<file> and line number I<line> if I<file> is not NULL,
+a string representing the severity level I<level> such as C<error>,
+and the message I<msg> followed by a newline character if I<msg> is not NULL,
+to the given I<bio> if provided.
 
-OSSL_CMP_print_errors_cb() outputs any entries in the OpenSSL error queue.
+OSSL_CMP_print_errors() outputs all entries in the OpenSSL error queue.
 It is similar to L<ERR_print_errors_cb(3)> but uses the CMP log callback
-function I<log_fn> for uniformity with CMP logging if not NULL. Otherwise it
-prints to STDERR using L<OSSL_CMP_print_to_bio(3)> (unless B<OPENSSL_NO_STDIO>
-is defined).
+function if set in the I<ctx> for uniformity with CMP logging.
+Otherwise it prints to STDERR using OSSL_CMP_print_to_bio()
+(unless B<OPENSSL_NO_STDIO> is defined).
 
 =head1 RETURN VALUES
 
-OSSL_CMP_log_close() and OSSL_CMP_print_errors_cb() do not return anything.
+OSSL_CMP_log_close() and OSSL_CMP_print_errors() do not return anything.
 
 All other functions return 1 on success, 0 on error.
+
+=head1 SEE ALSO
+
+L<ERR_print_errors_cb(3)>
 
 =head1 HISTORY
 

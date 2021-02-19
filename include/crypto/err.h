@@ -11,10 +11,15 @@
 # define OSSL_CRYPTO_ERR_H
 # pragma once
 
+#include <stddef.h>
+
 int err_load_ERR_strings_int(void);
 int err_load_crypto_strings_int(void);
 void err_cleanup(void);
 int err_shelve_state(void **);
 void err_unshelve_state(void *);
+int ossl_err_string_int(char *buf, size_t len, int with_tid, int with_osslv,
+                        const char *func, const char *file, int line,
+                        unsigned long e, const char *data, const char *nl);
 
 #endif

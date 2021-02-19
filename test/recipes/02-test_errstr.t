@@ -67,7 +67,7 @@ foreach my $errname (@Errno::EXPORT_OK) {
       # the empty string for that one, while the C strerror() may give back
       # something else.  The easiest way to deal with that possible mismatch
       # is to skip this errcode.
-      skip "perl error strings and ssystem error strings for errcode 0 differ", 1
+      skip "perl error strings and system error strings for errcode 0 differ", 1
           if $errcode == 0;
       # On some systems (for example Hurd), there are negative error codes.
       # These are currently unsupported in OpenSSL error reports.
@@ -88,16 +88,17 @@ foreach my $errname (@Errno::EXPORT_OK) {
 
 exit 0;
 
-# For an error string "error:xxxxxxxx:lib:func:reason", this returns
-# the following array:
-#
-# ( "xxxxxxxx", "lib", "func", "reason" )
+# For an error string "error:<code>:<lib>:<func>:<reason>", this returns
+# the following array: ( <code>, <lib>, <func>, <reason> )
 sub split_error {
+    my $str = $_[0];
     # Limit to 5 items, in case the reason contains a colon
-    my @erritems = split /:/, $_[0], 5;
+    my @erritems = split /:/, $str, 5;
+    my $n = scalar(@erritems);
+    die "Unexpected number $n of error string items in $str\n" if $n != 5;
 
     # Remove the first item, which is always "error"
-    shift @erritems;
+    die "Missing 'error' prefix in $str" if shift @erritems ne "error";
 
     return @erritems;
 }

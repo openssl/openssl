@@ -10,6 +10,7 @@
 #include <string.h>
 #include <openssl/opensslconf.h>
 #include <openssl/err.h>
+#include <openssl/storeerr.h>
 #include <openssl/macros.h>
 
 #include "testutil.h"
@@ -20,71 +21,94 @@
 # include <errno.h>
 #endif
 
-#ifndef OPENSSL_NO_DEPRECATED_3_0
-# define IS_HEX(ch) ((ch >= '0' && ch <='9') || (ch >= 'A' && ch <='F'))
+#define IS_HEX(ch) ((ch >= '0' && ch <='9') || (ch >= 'A' && ch <='F'))
 
-static int test_print_error_format(void)
+static int test_print_error_format(int libnum, const char *data)
 {
     /* Variables used to construct an error line */
-    char *lib;
-    const char *func = OPENSSL_FUNC;
+    const char *version = OPENSSL_FULL_VERSION_STR;
     char *reason;
-# ifdef OPENSSL_NO_ERR
+#ifdef OPENSSL_NO_ERR
     char reasonbuf[255];
-# endif
-# ifndef OPENSSL_NO_FILENAMES
+#endif
+#ifndef OPENSSL_NO_FILENAMES
     const char *file = OPENSSL_FILE;
     const int line = OPENSSL_LINE;
-# else
+#else
     const char *file = "";
     const int line = 0;
-# endif
-    /* The format for OpenSSL error lines */
-    const char *expected_format = ":error:%08lX:%s:%s:%s:%s:%d";
+#endif
+    char *lib;
+#ifndef NDEBUG
+    const char *func = OPENSSL_FUNC;
+    /* The format for the location part of error lines: */
+    const char *expected_location_format = "%s:%s():%s:%d";
     /*-
-     *                                          ^^ ^^ ^^ ^^ ^^
-     * "library" name --------------------------++ || || || ||
-     * function name ------------------------------++ || || ||
-     * reason string (system error string) -----------++ || ||
-     * file name ----------------------------------------++ ||
-     * line number -----------------------------------------++
+     *                                      ^^ ^^   ^^ ^^
+     * "library" name ----------------------++ ||   || ||
+     * function name --------------------------++   || ||
+     * file name -----------------------------------++ ||
+     * line number ------------------------------------++
      */
-    char expected[512];
+#endif
+    /* The format of OpenSSL error lines, past the <tread id>: */
+    const char *expected_format = "OpenSSL %s error:%08lX:%s:%s%s%s";
+    /*-
+     *                                     ^^             ^^ ^^  ^^
+     * OpenSSL version text----------------++             || ||  ||
+     * location string as defined above ------------------++ ||  ||
+     * reason string --------------------- ------------------++  ||
+     * optional extra error data --------------------------------++
+     */
+    char location[256];
+    char expected[256];
 
     char *out = NULL, *p = NULL;
     int ret = 0, len;
     BIO *bio = NULL;
-    const int syserr = EPERM;
     unsigned long errorcode;
-    unsigned long reasoncode;
+    int reasoncode;
+    int err = libnum == ERR_LIB_SYS ? EPERM : OSSL_STORE_R_UNREGISTERED_SCHEME;
 
     /*
-     * We set a mark here so we can clear the system error that we generate
-     * with ERR_PUT_error().  That is, after all, just a simulation to verify
-     * ERR_print_errors() output, not a real error.
+     * We set a mark here so we can clear the error that we generate. That is,
+     * after all, not a real error but a simulation to verify ERR_print_errors()
      */
     ERR_set_mark();
 
-    ERR_PUT_error(ERR_LIB_SYS, 0, syserr, file, line);
+    ERR_new();
+    ERR_set_debug(file, line, OPENSSL_FUNC);
+    ERR_set_error(libnum, err, NULL);
+    if (data != NULL)
+        ERR_add_error_data(1, data);
     errorcode = ERR_peek_error();
     reasoncode = ERR_GET_REASON(errorcode);
 
-    if (!TEST_int_eq(reasoncode, syserr)) {
+    if (!TEST_int_eq(reasoncode, err)) {
         ERR_pop_to_mark();
         goto err;
     }
 
-# ifndef OPENSSL_NO_ERR
-    lib = "system library";
-    reason = strerror(syserr);
-# else
-    lib = "lib(2)";
-    BIO_snprintf(reasonbuf, sizeof(reasonbuf), "reason(%lu)", reasoncode);
+#ifndef OPENSSL_NO_ERR
+    lib = libnum == ERR_LIB_SYS ? "system library" : "STORE routines";
+    reason = libnum == ERR_LIB_SYS ? strerror(err) : "unregistered scheme";
+#else
+    lib = libnum == ERR_LIB_SYS ? "lib(2)" : "lib(44)";
+    BIO_snprintf(reasonbuf, sizeof(reasonbuf), "reason(%d)", reasoncode);
     reason = reasonbuf;
-# endif
+#endif
 
+#ifndef NDEBUG
+    if (strcmp(func, OSSL_unknown_func) == 0)
+        func = ""; /* pseudo information "(unknown function)" is suppressed */
+    BIO_snprintf(location, sizeof(location), expected_location_format,
+                 lib, func, file, line);
+#else
+    BIO_snprintf(location, sizeof(location), "%s:", lib);
+#endif
     BIO_snprintf(expected, sizeof(expected), expected_format,
-                 errorcode, lib, func, reason, file, line);
+                 version, errorcode, location, reason,
+                 data == NULL ? "": ":", data == NULL ? "": data);
 
     if (!TEST_ptr(bio = BIO_new(BIO_s_mem())))
         goto err;
@@ -93,11 +117,18 @@ static int test_print_error_format(void)
 
     if (!TEST_int_gt(len = BIO_get_mem_data(bio, &out), 0))
         goto err;
-    /* Skip over the variable thread id at the start of the string */
-    for (p = out; *p != ':' && *p != 0; ++p) {
+    p = out;
+#ifndef NDEBUG
+    /* Check the format of the variable thread id at the start of the string */
+    for (; *p != ':' && *p != 0; ++p) {
         if (!TEST_true(IS_HEX(*p)))
             goto err;
     }
+    if (*p == ':')
+        p++;
+    if (!TEST_int_eq(p - out, 2 * sizeof(CRYPTO_THREAD_ID) + 1))
+        goto err;
+#endif
     if (!TEST_true(*p != 0)
         || !TEST_strn_eq(expected, p, strlen(expected)))
         goto err;
@@ -107,7 +138,6 @@ err:
     BIO_free(bio);
     return ret;
 }
-#endif
 
 /* Test that querying the error queue preserves the OS error. */
 static int preserves_system_error(void)
@@ -121,6 +151,16 @@ static int preserves_system_error(void)
     ERR_get_error();
     return TEST_int_eq(errno, EINVAL);
 #endif
+}
+
+static int test_print_system_error(void)
+{
+    return test_print_error_format(ERR_LIB_SYS, NULL);
+}
+
+static int test_print_lib_error(void)
+{
+    return test_print_error_format(ERR_LIB_OSSL_STORE, "some extra data");
 }
 
 /* Test that calls to ERR_add_error_[v]data append */
@@ -288,9 +328,8 @@ int setup_tests(void)
     ADD_TEST(preserves_system_error);
     ADD_TEST(vdata_appends);
     ADD_TEST(raised_error);
-#ifndef OPENSSL_NO_DEPRECATED_3_0
-    ADD_TEST(test_print_error_format);
-#endif
+    ADD_TEST(test_print_system_error);
+    ADD_TEST(test_print_lib_error);
     ADD_TEST(test_marks);
     return 1;
 }

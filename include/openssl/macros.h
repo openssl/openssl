@@ -19,6 +19,10 @@
 # define OPENSSL_MSTR_HELPER(x) #x
 # define OPENSSL_MSTR(x) OPENSSL_MSTR_HELPER(x)
 
+#ifdef  __cplusplus
+extern "C" {
+#endif
+
 /*
  * Sometimes OPENSSSL_NO_xxx ends up with an empty file and some compilers
  * don't like that.  This will hopefully silence them.
@@ -282,6 +286,7 @@
  * If none of the above applies, we check if the compiler is MSVC,
  * and use __FUNCTION__ if that's the case.
  */
+static const char *const OSSL_unknown_func = "(unknown function)";
 # ifndef OPENSSL_FUNC
 #  if defined(__STDC_VERSION__)
 #   if __STDC_VERSION__ >= 199901L
@@ -297,8 +302,12 @@
  * static string.
  */
 #  ifndef OPENSSL_FUNC
-#   define OPENSSL_FUNC "(unknown function)"
+#   define OPENSSL_FUNC OSSL_unknown_func
 #  endif
 # endif
+
+#ifdef  __cplusplus
+}
+#endif
 
 #endif  /* OPENSSL_MACROS_H */

@@ -2,16 +2,18 @@
 
 =head1 NAME
 
-ERR_error_string, ERR_error_string_n, ERR_lib_error_string,
-ERR_func_error_string, ERR_reason_error_string - obtain human-readable
-error message
+ERR_error_string, ERR_error_string_n, ERR_location_string_n,
+ERR_lib_error_string, ERR_func_error_string, ERR_reason_error_string
+- obtain human-readable error message
 
 =head1 SYNOPSIS
 
  #include <openssl/err.h>
 
  char *ERR_error_string(unsigned long e, char *buf);
- void ERR_error_string_n(unsigned long e, char *buf, size_t len);
+ int ERR_error_string_n(unsigned long e, char *buf, size_t len);
+ int ERR_location_string_n(int lib, const char *func, const char *file,
+                           int line, char *buf, size_t len);
 
  const char *ERR_lib_error_string(unsigned long e);
  const char *ERR_reason_error_string(unsigned long e);
@@ -24,7 +26,7 @@ Deprecated in OpenSSL 3.0:
 
 ERR_error_string() generates a human-readable string representing the
 error code I<e>, and places it at I<buf>. I<buf> must be at least 256
-bytes long. If I<buf> is B<NULL>, the error string is placed in a
+bytes long. If I<buf> is NULL, the error string is placed in a
 static buffer.
 Note that this function is not thread-safe and does no checks on the size
 of the buffer; use ERR_error_string_n() instead.
@@ -32,14 +34,29 @@ of the buffer; use ERR_error_string_n() instead.
 ERR_error_string_n() is a variant of ERR_error_string() that writes
 at most I<len> characters (including the terminating 0)
 and truncates the string if necessary.
-For ERR_error_string_n(), I<buf> may not be B<NULL>.
+For ERR_error_string_n(), I<buf> may not be NULL.
 
 The string will have the following format:
 
- error:[error code]:[library name]::[reason string]
+ C<error:<error code>:<library>::<reason>>
 
-I<error code> is an 8 digit hexadecimal number, I<library name> and
-I<reason string> are ASCII text.
+I<error code> is an 8 digit hexadecimal number, <library> is the library name
+or C<lib(<n>)> if the library number in I<e> is out of range, and <reason> is 
+the reason string or C<reason(<m>)> if the reason number in I<e> is out of range.
+
+ERR_location_string_n() generates a human-readable string representing
+a code location given by the library number I<lib>,
+the optional function name I<func>, the optional filename I<file>,
+and the line number I<line> unless I<file> is NULL.
+It places the result at I<buf>, which may not be NULL.
+It writes at most I<len> characters (including the terminating 0)
+and truncates the string if necessary.
+
+The string will have the following format:
+
+ <library>:[<function name>()][:<filename>:<line number>]
+
+where <library> is the library name or C<lib(<lib>)> if I<lib> is out of range.
 
 ERR_lib_error_string() and ERR_reason_error_string() return the library
 name and reason string respectively.
@@ -55,8 +72,11 @@ all error codes currently in the queue.
 ERR_error_string() returns a pointer to a static buffer containing the
 string if I<buf> B<== NULL>, I<buf> otherwise.
 
+ERR_error_string_n() and
+ERR_location_string_n() return the length of the string produced, -1 on error.
+
 ERR_lib_error_string() and ERR_reason_error_string() return the strings,
-and B<NULL> if none is registered for the error code.
+and NULL if none is registered for the respective number in the error code.
 
 ERR_func_error_string() returns NULL.
 
@@ -68,6 +88,7 @@ L<ERR_print_errors(3)>
 =head1 HISTORY
 
 ERR_func_error_string() became deprecated in OpenSSL 3.0.
+ERR_location_string_n() was added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

@@ -136,7 +136,7 @@ static int execute_validate_cert_path_test(CMP_VFY_TEST_FIXTURE *fixture)
                           OSSL_CMP_validate_cert_path(fixture->cmp_ctx,
                                                       ts, fixture->cert));
 
-    OSSL_CMP_CTX_print_errors(fixture->cmp_ctx);
+    OSSL_CMP_print_errors(fixture->cmp_ctx);
     return res;
 }
 

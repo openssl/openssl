@@ -4709,7 +4709,6 @@ OSSL_CMP_CTX_reinit                     ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_CTX_set_option                 ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_CTX_get_option                 ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_CTX_set_log_cb                 ?	3_0_0	EXIST::FUNCTION:CMP
-OSSL_CMP_CTX_print_errors               ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_CTX_set1_serverPath            ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_CTX_set1_server                ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_CTX_set_serverPort             ?	3_0_0	EXIST::FUNCTION:CMP
@@ -4761,7 +4760,7 @@ OSSL_CMP_CTX_set1_senderNonce           ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_log_open                       ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_log_close                      ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_print_to_bio                   ?	3_0_0	EXIST::FUNCTION:CMP
-OSSL_CMP_print_errors_cb                ?	3_0_0	EXIST::FUNCTION:CMP
+OSSL_CMP_print_errors                   ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CRMF_CERTID_get0_issuer            ?	3_0_0	EXIST::FUNCTION:CRMF
 OSSL_CRMF_CERTID_get0_serialNumber      ?	3_0_0	EXIST::FUNCTION:CRMF
 EVP_DigestSignUpdate                    ?	3_0_0	EXIST::FUNCTION:
@@ -4888,6 +4887,7 @@ OSSL_HTTP_transfer                      ?	3_0_0	EXIST::FUNCTION:
 OSSL_HTTP_proxy_connect                 ?	3_0_0	EXIST::FUNCTION:
 ERR_add_error_txt                       ?	3_0_0	EXIST::FUNCTION:
 ERR_add_error_mem_bio                   ?	3_0_0	EXIST::FUNCTION:
+ERR_location_string_n                   ?	3_0_0	EXIST::FUNCTION:
 X509_STORE_CTX_print_verify_cb          ?	3_0_0	EXIST::FUNCTION:
 X509_STORE_get1_all_certs               ?	3_0_0	EXIST::FUNCTION:
 OSSL_CMP_validate_msg                   ?	3_0_0	EXIST::FUNCTION:CMP

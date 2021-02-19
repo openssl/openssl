@@ -9,7 +9,6 @@ OSSL_CMP_CTX_set_option,
 OSSL_CMP_CTX_get_option,
 OSSL_CMP_CTX_set_log_cb,
 OSSL_CMP_CTX_set_log_verbosity,
-OSSL_CMP_CTX_print_errors,
 OSSL_CMP_CTX_set1_serverPath,
 OSSL_CMP_CTX_set1_server,
 OSSL_CMP_CTX_set_serverPort,
@@ -76,7 +75,6 @@ OSSL_CMP_CTX_set1_senderNonce
  /* logging and error reporting: */
  int OSSL_CMP_CTX_set_log_cb(OSSL_CMP_CTX *ctx, OSSL_CMP_log_cb_t cb);
  #define OSSL_CMP_CTX_set_log_verbosity(ctx, level)
- void OSSL_CMP_CTX_print_errors(const OSSL_CMP_CTX *ctx);
 
  /* message transfer: */
  int OSSL_CMP_CTX_set1_serverPath(OSSL_CMP_CTX *ctx, const char *path);
@@ -310,11 +308,6 @@ Alternatively, L<OSSL_CMP_log_open(3)> may be used to direct logging to STDOUT.
 
 OSSL_CMP_CTX_set_log_verbosity() is a macro setting the
 OSSL_CMP_OPT_LOG_VERBOSITY context option to the given level.
-
-OSSL_CMP_CTX_print_errors() outputs any entries in the OpenSSL error queue. It
-is similar to L<ERR_print_errors_cb(3)> but uses the CMP log callback function
-if set in the I<ctx> for uniformity with CMP logging if given. Otherwise it uses
-L<ERR_print_errors(3)> to print to STDERR (unless OPENSSL_NO_STDIO is defined).
 
 OSSL_CMP_CTX_set1_serverPath() sets the HTTP path of the CMP server on the host,
 also known as "CMP alias".
@@ -642,7 +635,7 @@ CMP is defined in RFC 4210 (and CRMF in RFC 4211).
 
 =head1 RETURN VALUES
 
-OSSL_CMP_CTX_free() and OSSL_CMP_CTX_print_errors() do not return anything.
+OSSL_CMP_CTX_free() does not return anything.
 
 OSSL_CMP_CTX_new(),
 OSSL_CMP_CTX_get_http_cb_arg(),
@@ -736,8 +729,7 @@ the id-it-signKeyPairTypes OID and prints info on the General Response contents:
 
 L<OSSL_CMP_exec_IR_ses(3)>, L<OSSL_CMP_exec_CR_ses(3)>,
 L<OSSL_CMP_exec_KUR_ses(3)>, L<OSSL_CMP_exec_GENM_ses(3)>,
-L<OSSL_CMP_exec_certreq(3)>, L<OSSL_CMP_MSG_http_perform(3)>,
-L<ERR_print_errors_cb(3)>
+L<OSSL_CMP_exec_certreq(3)>, L<OSSL_CMP_MSG_http_perform(3)>
 
 =head1 HISTORY
 
