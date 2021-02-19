@@ -69,7 +69,7 @@ PKCS7 *d2i_PKCS7(PKCS7 **a, const unsigned char **in, long len)
 
     ret = (PKCS7 *)ASN1_item_d2i((ASN1_VALUE **)a, in, len, (PKCS7_it()));
     if (ret != NULL)
-        pkcs7_resolve_libctx(ret);
+        ossl_pkcs7_resolve_libctx(ret);
     return ret;
 }
 
