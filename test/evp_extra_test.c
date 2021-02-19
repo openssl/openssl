@@ -2420,8 +2420,10 @@ static int test_ecpub(int idx)
     int nid;
     unsigned char buf[1024];
     unsigned char *p;
-    EVP_PKEY *pkey = NULL;
+    const unsigned char *q;
+    EVP_PKEY *pkey = NULL, *pkey2 = NULL, *pkeytmp = NULL;
     EVP_PKEY_CTX *ctx = NULL;
+    EC_KEY *ec = NULL;
 
     switch(idx) {
     case 0:
@@ -2485,11 +2487,29 @@ static int test_ecpub(int idx)
             || !TEST_int_eq(len, savelen))
         goto done;
 
+    /* Now try to decode the just-created DER. */
+    q = buf;
+    if (!TEST_ptr((pkeytmp = EVP_PKEY_new()))
+            || !TEST_ptr((ec = EC_KEY_new_by_curve_name(nid)))
+            || !TEST_true(EVP_PKEY_assign_EC_KEY(pkeytmp, ec)))
+        goto done;
+    /* EC_KEY ownership transferred */
+    ec = NULL;
+    if (!TEST_ptr((pkey2 = d2i_PublicKey(EVP_PKEY_EC, &pkeytmp, &q,
+                                                savelen))))
+        goto done;
+    /* The keys should match. */
+    if (!TEST_int_eq(EVP_PKEY_cmp(pkey, pkey2), 1))
+        goto done;
+
     ret = 1;
 
  done:
     EVP_PKEY_CTX_free(ctx);
     EVP_PKEY_free(pkey);
+    EVP_PKEY_free(pkeytmp);
+    EVP_PKEY_free(pkey2);
+    EC_KEY_free(ec);
     return ret;
 }
 
