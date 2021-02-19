@@ -2429,6 +2429,11 @@ static int test_ecpub(int idx)
     unsigned char *p;
     EVP_PKEY *pkey = NULL;
     EVP_PKEY_CTX *ctx = NULL;
+# ifndef OPENSSL_NO_DEPRECATED_3_0
+    const unsigned char *q;
+    EVP_PKEY *pkey2 = NULL;
+    EC_KEY *ec = NULL;
+# endif
 
     nid = ecpub_nids[idx];
 
@@ -2449,11 +2454,31 @@ static int test_ecpub(int idx)
             || !TEST_int_eq(len, savelen))
         goto done;
 
+# ifndef OPENSSL_NO_DEPRECATED_3_0
+    /* Now try to decode the just-created DER. */
+    q = buf;
+    if (!TEST_ptr((pkey2 = EVP_PKEY_new()))
+            || !TEST_ptr((ec = EC_KEY_new_by_curve_name(nid)))
+            || !TEST_true(EVP_PKEY_assign_EC_KEY(pkey2, ec)))
+        goto done;
+    /* EC_KEY ownership transferred */
+    ec = NULL;
+    if (!TEST_ptr(d2i_PublicKey(EVP_PKEY_EC, &pkey2, &q, savelen)))
+        goto done;
+    /* The keys should match. */
+    if (!TEST_int_eq(EVP_PKEY_cmp(pkey, pkey2), 1))
+        goto done;
+# endif
+
     ret = 1;
 
  done:
     EVP_PKEY_CTX_free(ctx);
     EVP_PKEY_free(pkey);
+# ifndef OPENSSL_NO_DEPRECATED_3_0
+    EVP_PKEY_free(pkey2);
+    EC_KEY_free(ec);
+# endif
     return ret;
 }
 #endif
