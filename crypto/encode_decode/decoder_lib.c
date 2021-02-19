@@ -743,10 +743,9 @@ static int decoder_process(const OSSL_PARAM params[], void *arg)
             break;
 
         /*
-         * These are errors are assumed to come from
-         * ossl_store_handle_load_result() in crypto/store/store_result.c
-         * They are currently considered fatal errors, so we preserve them
-         * in the error queue and stop.
+         * These errors are assumed to come from ossl_store_handle_load_result()
+         * in crypto/store/store_result.c.  They are currently considered fatal
+         * errors, so we preserve them in the error queue and stop.
          */
         err = ERR_peek_last_error();
         if ((ERR_GET_LIB(err) == ERR_LIB_EVP
