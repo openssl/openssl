@@ -746,7 +746,7 @@ static EVP_CIPHER_CTX *init_evp_cipher_ctx(const char *ciphername,
         ctx = NULL;
         goto end;
     }
-    
+
     EVP_CIPHER_CTX_set_key_length(ctx, keylen);
 
     if (!EVP_CipherInit_ex(ctx, NULL, NULL, key, iv, 1)) {
@@ -1349,7 +1349,7 @@ static EVP_PKEY *get_ecdsa(const EC_CURVE *curve)
         }
 
         /* Create the context for parameter generation */
-        if ((pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_EC, NULL)) == NULL
+        if ((pctx = EVP_PKEY_CTX_new_from_name(NULL, "EC", NULL)) == NULL
             || EVP_PKEY_paramgen_init(pctx) <= 0
             || EVP_PKEY_CTX_set_ec_paramgen_curve_nid(pctx,
                                                       curve->nid) <= 0

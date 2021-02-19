@@ -244,8 +244,8 @@ EVP_PKEY *get_dsa(int dsa_bits)
     p = BN_bin2bn(dsa_t.p, dsa_t.p_l, NULL);
     q = BN_bin2bn(dsa_t.q, dsa_t.q_l, NULL);
     g = BN_bin2bn(dsa_t.g, dsa_t.g_l, NULL);
-    if ((priv_key == NULL) || (pub_key == NULL) || (p == NULL) || (q == NULL)
-         || (g == NULL)) {
+    if (priv_key == NULL || pub_key == NULL || p == NULL || q == NULL
+        || g == NULL) {
         goto err;
     }
     if ((tmpl = OSSL_PARAM_BLD_new()) == NULL
@@ -264,7 +264,7 @@ EVP_PKEY *get_dsa(int dsa_bits)
 
     if (EVP_PKEY_fromdata_init(pctx) <= 0
         || EVP_PKEY_fromdata(pctx, &pkey, EVP_PKEY_KEYPAIR,
-                                          params) <= 0)
+                             params) <= 0)
         pkey = NULL;
 err:
     OSSL_PARAM_BLD_free_params(params);
