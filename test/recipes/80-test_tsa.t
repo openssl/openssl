@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2021 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -13,7 +13,7 @@ use warnings;
 use POSIX;
 use File::Spec::Functions qw/splitdir curdir catfile/;
 use File::Compare;
-use OpenSSL::Test qw/:DEFAULT cmdstr srctop_file/;
+use OpenSSL::Test qw/:DEFAULT cmdstr srctop_file data_file/;
 use OpenSSL::Test::Utils;
 
 setup("test_tsa");
@@ -79,7 +79,7 @@ sub verify_time_stamp_response_fail {
 
 # main functions
 
-plan tests => 20;
+plan tests => 21;
 
 note "setting up TSA test directory";
 indir "tsa" => sub
@@ -204,4 +204,13 @@ indir "tsa" => sub
          verify_time_stamp_response_fail("req3.tsq", "resp1.tsr")
      };
     }
+
+    ok(run(app([
+        @RUN, "-verify", "-no_check_time",
+        "-queryfile", data_file("all-zero.tsq"),
+        "-in", data_file("sectigo-all-zero.tsr"),
+        "-CAfile", data_file("user-trust-ca.pem"),
+        "-untrusted", data_file("sectigo-time-stamping-ca.pem"),
+    ])));
+
 }, create => 1, cleanup => 1
