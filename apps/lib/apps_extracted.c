@@ -446,11 +446,11 @@ int load_key_certs_crls(const char *uri, int maybe_stdin,
         return 0;
     }
 
-    if (pcerts != NULL && *pcerts == NULL
-            && (*pcerts = sk_X509_new_null()) == NULL) {
-        BIO_printf(bio_err, "Out of memory loading");
-        goto end;
-    } else {
+    if (pcerts != NULL) {
+        if (*pcerts == NULL && (*pcerts = sk_X509_new_null()) == NULL) {
+            BIO_printf(bio_err, "Out of memory loading");
+            goto end;
+        }
         cnt_expectations++;
         expect = OSSL_STORE_INFO_CERT;
     }
@@ -459,11 +459,11 @@ int load_key_certs_crls(const char *uri, int maybe_stdin,
         cnt_expectations++;
         expect = OSSL_STORE_INFO_CRL;
     }
-    if (pcrls != NULL && *pcrls == NULL
-            && (*pcrls = sk_X509_CRL_new_null()) == NULL) {
-        BIO_printf(bio_err, "Out of memory loading");
-        goto end;
-    } else {
+    if (pcrls != NULL) {
+        if (*pcrls == NULL && (*pcrls = sk_X509_CRL_new_null()) == NULL) {
+            BIO_printf(bio_err, "Out of memory loading");
+            goto end;
+        }
         cnt_expectations++;
         expect = OSSL_STORE_INFO_CRL;
     }
@@ -503,8 +503,21 @@ int load_key_certs_crls(const char *uri, int maybe_stdin,
         OSSL_STORE_INFO *info = OSSL_STORE_load(ctx);
         int type, ok = 1;
 
-        if (info == NULL)
-            break;
+        /*
+         * This can happen (for example) if we attempt to load a file with
+         * multiple different types of things in it - but the thing we just
+         * tried to load wasn't one of the ones we wanted, e.g. if we're trying
+         * to load a certificate but the file has both the private key and the
+         * certificate in it. We just retry until eof.
+         */
+        if (info == NULL) {
+            if (OSSL_STORE_error(ctx)) {
+                ERR_print_errors(bio_err);
+                ERR_clear_error();
+            }
+            continue;
+        }
+
         type = OSSL_STORE_INFO_get_type(info);
         switch (type) {
         case OSSL_STORE_INFO_PKEY:
