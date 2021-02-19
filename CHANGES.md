@@ -47,6 +47,13 @@ OpenSSL 3.0
 
    *Paul Dale*
 
+ * The openssl speed command does not use low-level API calls anymore. This
+   implies some of the performance numbers might not be fully comparable
+   with the previous releases due to higher overhead. This applies
+   particularly to measuring performance on smaller data chunks.
+
+   *Tomáš Mráz*
+
  * Combining the Configure options no-ec and no-dh no longer disables TLSv1.3.
    Typically if OpenSSL has no EC or DH algorithms then it cannot support
    connections with TLSv1.3. However OpenSSL now supports "pluggable" groups

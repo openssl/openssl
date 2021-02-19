@@ -2047,12 +2047,15 @@ int speed_main(int argc, char **argv)
     }
 
     if (doit[D_CBC_DES]) {
-        for (i = 0; i < loopargs_len; i++) {
+        int st = 1;
+
+        for (i = 0; st && i < loopargs_len; i++) {
             loopargs[i].ctx = init_evp_cipher_ctx("des-cbc", deskey,
                                                   sizeof(deskey)/3);
+            st = loopargs[i].ctx != NULL;
         }
         algindex = D_CBC_DES;
-        for (testnum = 0; testnum < size_num; testnum++) {
+        for (testnum = 0; st && testnum < size_num; testnum++) {
             print_message(names[D_CBC_DES], c[D_CBC_DES][testnum],
                           lengths[testnum], seconds.sym);
             Time_F(START);
@@ -2066,12 +2069,15 @@ int speed_main(int argc, char **argv)
     }
 
     if (doit[D_EDE3_DES]) {
-        for (i = 0; i < loopargs_len; i++) {
+        int st = 1;
+
+        for (i = 0; st && i < loopargs_len; i++) {
             loopargs[i].ctx = init_evp_cipher_ctx("des-ede3-cbc", deskey,
                                                   sizeof(deskey));
+            st = loopargs[i].ctx != NULL;
         }
         algindex = D_EDE3_DES;
-        for (testnum = 0; testnum < size_num; testnum++) {
+        for (testnum = 0; st && testnum < size_num; testnum++) {
             print_message(names[D_EDE3_DES], c[D_EDE3_DES][testnum],
                           lengths[testnum], seconds.sym);
             Time_F(START);
@@ -2088,13 +2094,16 @@ int speed_main(int argc, char **argv)
     for (k = 0; k < 3; k++) {
         algindex = D_CBC_128_AES + k;
         if (doit[algindex]) {
+            int st = 1;
+
             keylen = 16 + i * 8;
-            for (i = 0; i < loopargs_len; i++) {
+            for (i = 0; st && i < loopargs_len; i++) {
                 loopargs[i].ctx = init_evp_cipher_ctx(names[algindex],
                                                       key32, keylen);
+                st = loopargs[i].ctx != NULL;
             }
 
-            for (testnum = 0; testnum < size_num; testnum++) {
+            for (testnum = 0; st && testnum < size_num; testnum++) {
                 print_message(names[algindex], c[algindex][testnum],
                               lengths[testnum], seconds.sym);
                 Time_F(START);
@@ -2112,13 +2121,16 @@ int speed_main(int argc, char **argv)
     for (k = 0; k < 3; k++) {
         algindex = D_CBC_128_CML + k;
         if (doit[algindex]) {
+            int st = 1;
+
             keylen = 16 + i * 8;
-            for (i = 0; i < loopargs_len; i++) {
+            for (i = 0; st && i < loopargs_len; i++) {
                 loopargs[i].ctx = init_evp_cipher_ctx(names[algindex],
                                                       key32, keylen);
+                st = loopargs[i].ctx != NULL;
             }
 
-            for (testnum = 0; testnum < size_num; testnum++) {
+            for (testnum = 0; st && testnum < size_num; testnum++) {
                 print_message(names[algindex], c[algindex][testnum],
                               lengths[testnum], seconds.sym);
                 Time_F(START);
@@ -2135,13 +2147,15 @@ int speed_main(int argc, char **argv)
 
     for (algindex = D_RC4; algindex <= D_CBC_CAST; algindex++) {
         if (doit[algindex]) {
+            int st = 1;
             keylen = 16;
-            for (i = 0; i < loopargs_len; i++) {
+            for (i = 0; st && i < loopargs_len; i++) {
                 loopargs[i].ctx = init_evp_cipher_ctx(names[algindex],
                                                       key32, keylen);
+                st = loopargs[i].ctx != NULL;
             }
 
-            for (testnum = 0; testnum < size_num; testnum++) {
+            for (testnum = 0; st && testnum < size_num; testnum++) {
                 print_message(names[algindex], c[algindex][testnum],
                               lengths[testnum], seconds.sym);
                 Time_F(START);
