@@ -1003,15 +1003,17 @@ static const BN_ULONG ffdhe8192_q[] = {
 
 /* Macro to make a BIGNUM from static data */
 
-# define make_dh_bn(x) extern const BIGNUM _bignum_##x; \
-                       const BIGNUM _bignum_##x = { (BN_ULONG *) x, \
-                        OSSL_NELEM(x),\
-                        OSSL_NELEM(x),\
-                        0, BN_FLG_STATIC_DATA };
+# define make_dh_bn(x)                   \
+    extern const BIGNUM ossl_bignum_##x; \
+    const BIGNUM ossl_bignum_##x = {     \
+        (BN_ULONG *) x,                  \
+        OSSL_NELEM(x),                   \
+        OSSL_NELEM(x),                   \
+        0, BN_FLG_STATIC_DATA };
 
 static const BN_ULONG value_2 = 2;
 
-const BIGNUM _bignum_const_2 = {
+const BIGNUM ossl_bignum_const_2 = {
     (BN_ULONG *)&value_2, 1, 1, 0, BN_FLG_STATIC_DATA
 };
 

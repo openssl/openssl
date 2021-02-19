@@ -17,19 +17,22 @@
 # define FFDHE(sz) {                                                        \
         SN_ffdhe##sz, NID_ffdhe##sz,                                        \
         sz,                                                                 \
-        &_bignum_ffdhe##sz##_p, &_bignum_ffdhe##sz##_q, &_bignum_const_2,   \
+        &ossl_bignum_ffdhe##sz##_p, &ossl_bignum_ffdhe##sz##_q,             \
+        &ossl_bignum_const_2,                                               \
     }
 
 # define MODP(sz)  {                                                        \
         SN_modp_##sz, NID_modp_##sz,                                        \
         sz,                                                                 \
-        &_bignum_modp_##sz##_p, &_bignum_modp_##sz##_q,  &_bignum_const_2   \
+        &ossl_bignum_modp_##sz##_p, &ossl_bignum_modp_##sz##_q,             \
+        &ossl_bignum_const_2                                                \
     }
 
 # define RFC5114(name, uid, sz, tag) {                                      \
         name, uid,                                                          \
         sz,                                                                 \
-        &_bignum_dh##tag##_p, &_bignum_dh##tag##_q, &_bignum_dh##tag##_g    \
+        &ossl_bignum_dh##tag##_p, &ossl_bignum_dh##tag##_q,                 \
+        &ossl_bignum_dh##tag##_g                                            \
     }
 
 #else
