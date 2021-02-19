@@ -121,13 +121,13 @@ int ossl_rsa_fips186_4_gen_prob_primes(RSA *rsa, RSA_ACVP_TEST *test,
     BN_set_flags(rsa->q, BN_FLG_CONSTTIME);
 
     /* (Step 4) Generate p, Xp */
-    if (!bn_rsa_fips186_4_gen_prob_primes(rsa->p, Xpo, p1, p2, Xp, Xp1, Xp2,
-                                          nbits, e, ctx, cb))
+    if (!ossl_bn_rsa_fips186_4_gen_prob_primes(rsa->p, Xpo, p1, p2, Xp, Xp1, Xp2,
+                                               nbits, e, ctx, cb))
         goto err;
     for(;;) {
         /* (Step 5) Generate q, Xq*/
-        if (!bn_rsa_fips186_4_gen_prob_primes(rsa->q, Xqo, q1, q2, Xq, Xq1,
-                                              Xq2, nbits, e, ctx, cb))
+        if (!ossl_bn_rsa_fips186_4_gen_prob_primes(rsa->q, Xqo, q1, q2, Xq, Xq1,
+                                                   Xq2, nbits, e, ctx, cb))
             goto err;
 
         /* (Step 6) |Xp - Xq| > 2^(nbitlen/2 - 100) */
