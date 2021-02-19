@@ -44,9 +44,9 @@ EVP_PKEY *d2i_PrivateKey_ex(int keytype, EVP_PKEY **a, const unsigned char **pp,
         ppkey = a;
 
     for (i = 0;  i < (int)OSSL_NELEM(input_structures); ++i) {
-        dctx = OSSL_DECODER_CTX_new_by_EVP_PKEY(ppkey, "DER",
-                                                input_structures[i], key_name,
-                                                EVP_PKEY_KEYPAIR, libctx, propq);
+        dctx = OSSL_DECODER_CTX_new_for_pkey(ppkey, "DER",
+                                             input_structures[i], key_name,
+                                             EVP_PKEY_KEYPAIR, libctx, propq);
         if (dctx == NULL)
             return NULL;
 
