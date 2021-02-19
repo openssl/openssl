@@ -25,9 +25,9 @@ EVP_MAC_do_all_provided - EVP MAC routines
  int EVP_MAC_is_a(const EVP_MAC *mac, const char *name);
  int EVP_MAC_number(const EVP_MAC *mac);
  const char *EVP_MAC_name(const EVP_MAC *mac);
- void EVP_MAC_names_do_all(const EVP_MAC *mac,
-                           void (*fn)(const char *name, void *data),
-                           void *data);
+ int EVP_MAC_names_do_all(const EVP_MAC *mac,
+                          void (*fn)(const char *name, void *data),
+                          void *data);
  const OSSL_PROVIDER *EVP_MAC_provider(const EVP_MAC *mac);
  int EVP_MAC_get_params(EVP_MAC *mac, OSSL_PARAM params[]);
 
@@ -290,6 +290,9 @@ EVP_MAC_fetch() returns a pointer to a newly fetched EVP_MAC, or
 NULL if allocation failed.
 
 EVP_MAC_up_ref() returns 1 on success, 0 on error.
+
+EVP_MAC_names_do_all() returns 1 if the callback was called for all names. A
+return value of 0 means that the callback was not called for any names.
 
 EVP_MAC_free() returns nothing at all.
 

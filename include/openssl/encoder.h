@@ -39,9 +39,9 @@ int OSSL_ENCODER_is_a(const OSSL_ENCODER *encoder, const char *name);
 void OSSL_ENCODER_do_all_provided(OSSL_LIB_CTX *libctx,
                                   void (*fn)(OSSL_ENCODER *encoder, void *arg),
                                   void *arg);
-void OSSL_ENCODER_names_do_all(const OSSL_ENCODER *encoder,
-                               void (*fn)(const char *name, void *data),
-                               void *data);
+int OSSL_ENCODER_names_do_all(const OSSL_ENCODER *encoder,
+                              void (*fn)(const char *name, void *data),
+                              void *data);
 const OSSL_PARAM *OSSL_ENCODER_gettable_params(OSSL_ENCODER *encoder);
 int OSSL_ENCODER_get_params(OSSL_ENCODER *encoder, OSSL_PARAM params[]);
 

@@ -41,9 +41,9 @@ EVP_RAND_STATE_ERROR - EVP RAND routines
  void EVP_RAND_do_all_provided(OSSL_LIB_CTX *libctx,
                                void (*fn)(EVP_RAND *rand, void *arg),
                                void *arg);
- void EVP_RAND_names_do_all(const EVP_RAND *rand,
-                            void (*fn)(const char *name, void *data),
-                            void *data);
+ int EVP_RAND_names_do_all(const EVP_RAND *rand,
+                           void (*fn)(const char *name, void *data),
+                           void *data);
 
  int EVP_RAND_instantiate(EVP_RAND_CTX *ctx, unsigned int strength,
                           int prediction_resistance,
@@ -334,6 +334,9 @@ EVP_RAND_number() returns the provider specific identification number
 for the specified algorithm.
 
 EVP_RAND_up_ref() returns 1 on success, 0 on error.
+
+EVP_RAND_names_do_all() returns 1 if the callback was called for all names. A
+return value of 0 means that the callback was not called for any names.
 
 EVP_RAND_CTX_new() returns either the newly allocated
 B<EVP_RAND_CTX> structure or NULL if an error occurred.

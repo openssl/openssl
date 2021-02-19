@@ -48,9 +48,9 @@ unregister STORE loaders for different URI schemes
                                         void (*fn)(OSSL_STORE_LOADER *loader,
                                                    void *arg),
                                         void *arg);
- void OSSL_STORE_LOADER_names_do_all(const OSSL_STORE_LOADER *loader,
-                                     void (*fn)(const char *name, void *data),
-                                     void *data);
+ int OSSL_STORE_LOADER_names_do_all(const OSSL_STORE_LOADER *loader,
+                                    void (*fn)(const char *name, void *data),
+                                    void *data);
 
 Deprecated since OpenSSL 3.0, can be hidden entirely by defining
 B<OPENSSL_API_COMPAT> with a suitable version value, see
@@ -311,6 +311,9 @@ OSSL_STORE_LOADER_fetch() returns a pointer to an OSSL_STORE_LOADER object,
 or NULL on error.
 
 OSSL_STORE_LOADER_up_ref() returns 1 on success, or 0 on error.
+
+OSSL_STORE_LOADER_names_do_all() returns 1 if the callback was called for all
+names. A return value of 0 means that the callback was not called for any names.
 
 OSSL_STORE_LOADER_free() doesn't return any value.
 

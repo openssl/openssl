@@ -451,12 +451,14 @@ void EVP_RAND_do_all_provided(OSSL_LIB_CTX *libctx,
                        evp_rand_from_dispatch, evp_rand_free);
 }
 
-void EVP_RAND_names_do_all(const EVP_RAND *rand,
-                           void (*fn)(const char *name, void *data),
-                           void *data)
+int EVP_RAND_names_do_all(const EVP_RAND *rand,
+                          void (*fn)(const char *name, void *data),
+                          void *data)
 {
     if (rand->prov != NULL)
-        evp_names_do_all(rand->prov, rand->name_id, fn, data);
+        return evp_names_do_all(rand->prov, rand->name_id, fn, data);
+
+    return 1;
 }
 
 static int evp_rand_instantiate_locked

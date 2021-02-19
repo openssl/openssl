@@ -125,9 +125,9 @@ EVP_CIPHER_do_all_provided
  int EVP_CIPHER_nid(const EVP_CIPHER *e);
  int EVP_CIPHER_number(const EVP_CIPHER *e);
  int EVP_CIPHER_is_a(const EVP_CIPHER *cipher, const char *name);
- void EVP_CIPHER_names_do_all(const EVP_CIPHER *cipher,
-                              void (*fn)(const char *name, void *data),
-                              void *data);
+ int EVP_CIPHER_names_do_all(const EVP_CIPHER *cipher,
+                             void (*fn)(const char *name, void *data),
+                             void *data);
  const char *EVP_CIPHER_name(const EVP_CIPHER *cipher);
  const OSSL_PROVIDER *EVP_CIPHER_provider(const EVP_CIPHER *cipher);
  int EVP_CIPHER_block_size(const EVP_CIPHER *e);
@@ -460,6 +460,9 @@ EVP_CIPHER_param_to_asn1() and EVP_CIPHER_asn1_to_param() return greater
 than zero for success and zero or a negative number on failure.
 
 EVP_CIPHER_CTX_rand_key() returns 1 for success.
+
+EVP_CIPHER_names_do_all() returns 1 if the callback was called for all names.
+A return value of 0 means that the callback was not called for any names.
 
 =head1 CIPHER LISTING
 

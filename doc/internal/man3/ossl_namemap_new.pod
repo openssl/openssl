@@ -25,9 +25,9 @@ ossl_namemap_doall_names
  int ossl_namemap_name2num(const OSSL_NAMEMAP *namemap, const char *name);
  int ossl_namemap_name2num_n(const OSSL_NAMEMAP *namemap,
                              const char *name, size_t name_len);
- void ossl_namemap_doall_names(const OSSL_NAMEMAP *namemap, int number,
-                               void (*fn)(const char *name, void *data),
-                               void *data);
+ int ossl_namemap_doall_names(const OSSL_NAMEMAP *namemap, int number,
+                              void (*fn)(const char *name, void *data),
+                              void *data);
 
  int ossl_namemap_add_names(OSSL_NAMEMAP *namemap, int number,
                             const char *names, const char separator);
@@ -97,6 +97,9 @@ it's undefined in the given B<OSSL_NAMEMAP>.
 ossl_namemap_name2num() and ossl_namemap_name2num_n() return the number
 corresponding to the given name, or 0 if it's undefined in the given
 B<OSSL_NAMEMAP>.
+
+ossl_namemap_doall_names() returns 1 if the callback was called for all names. A
+return value of 0 means that the callback was not called for any names.
 
 ossl_namemap_add_names() returns the number associated with the added
 names, or zero on error.

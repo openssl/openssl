@@ -36,9 +36,9 @@ EVP_KDF_gettable_params - EVP KDF routines
  void EVP_KDF_do_all_provided(OSSL_LIB_CTX *libctx,
                               void (*fn)(EVP_KDF *kdf, void *arg),
                               void *arg);
- void EVP_KDF_names_do_all(const EVP_KDF *kdf,
-                           void (*fn)(const char *name, void *data),
-                           void *data);
+ int EVP_KDF_names_do_all(const EVP_KDF *kdf,
+                          void (*fn)(const char *name, void *data),
+                          void *data);
  int EVP_KDF_get_params(EVP_KDF *kdf, OSSL_PARAM params[]);
  int EVP_KDF_CTX_get_params(EVP_KDF_CTX *ctx, OSSL_PARAM params[]);
  int EVP_KDF_CTX_set_params(EVP_KDF_CTX *ctx, const OSSL_PARAM params[]);
@@ -251,6 +251,9 @@ EVP_KDF_CTX_get_kdf_size() returns the output size.  B<SIZE_MAX> is returned to 
 that the algorithm produces a variable amount of output; 0 to indicate failure.
 
 EVP_KDF_name() returns the name of the KDF, or NULL on error.
+
+EVP_KDF_names_do_all() returns 1 if the callback was called for all names. A
+return value of 0 means that the callback was not called for any names.
 
 The remaining functions return 1 for success and 0 or a negative value for
 failure.  In particular, a return value of -2 indicates the operation is not

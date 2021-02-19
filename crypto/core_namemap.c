@@ -116,31 +116,60 @@ int ossl_namemap_empty(OSSL_NAMEMAP *namemap)
 
 typedef struct doall_names_data_st {
     int number;
-    void (*fn)(const char *name, void *data);
-    void *data;
+    const char **names;
+    int found;
 } DOALL_NAMES_DATA;
 
 static void do_name(const NAMENUM_ENTRY *namenum, DOALL_NAMES_DATA *data)
 {
     if (namenum->number == data->number)
-        data->fn(namenum->name, data->data);
+        data->names[data->found++] = namenum->name;
 }
 
 IMPLEMENT_LHASH_DOALL_ARG_CONST(NAMENUM_ENTRY, DOALL_NAMES_DATA);
 
-void ossl_namemap_doall_names(const OSSL_NAMEMAP *namemap, int number,
-                              void (*fn)(const char *name, void *data),
-                              void *data)
+/*
+ * Call the callback for all names in the namemap with the given number.
+ * A return value 1 means that the callback was called for all names. A
+ * return value of 0 means that the callback was not called for any names.
+ */
+int ossl_namemap_doall_names(const OSSL_NAMEMAP *namemap, int number,
+                             void (*fn)(const char *name, void *data),
+                             void *data)
 {
     DOALL_NAMES_DATA cbdata;
+    size_t num_names;
+    int i;
 
     cbdata.number = number;
-    cbdata.fn = fn;
-    cbdata.data = data;
+    cbdata.found = 0;
+
+    /*
+     * We collect all the names first under a read lock. Subsequently we call
+     * the user function, so that we're not holding the read lock when in user
+     * code. This could lead to deadlocks.
+     */
     CRYPTO_THREAD_read_lock(namemap->lock);
+    num_names = lh_NAMENUM_ENTRY_num_items(namemap->namenum);
+
+    if (num_names == 0) {
+        CRYPTO_THREAD_unlock(namemap->lock);
+        return 0;
+    }
+    cbdata.names = OPENSSL_malloc(sizeof(*cbdata.names) * num_names);
+    if (cbdata.names == NULL) {
+        CRYPTO_THREAD_unlock(namemap->lock);
+        return 0;
+    }
     lh_NAMENUM_ENTRY_doall_DOALL_NAMES_DATA(namemap->namenum, do_name,
                                             &cbdata);
     CRYPTO_THREAD_unlock(namemap->lock);
+
+    for (i = 0; i < cbdata.found; i++)
+        fn(cbdata.names[i], data);
+
+    OPENSSL_free(cbdata.names);
+    return 1;
 }
 
 static int namemap_name2num_n(const OSSL_NAMEMAP *namemap,
@@ -207,7 +236,8 @@ const char *ossl_namemap_num2name(const OSSL_NAMEMAP *namemap, int number,
 
     data.idx = idx;
     data.name = NULL;
-    ossl_namemap_doall_names(namemap, number, do_num2name, &data);
+    if (!ossl_namemap_doall_names(namemap, number, do_num2name, &data))
+        return NULL;
     return data.name;
 }
 

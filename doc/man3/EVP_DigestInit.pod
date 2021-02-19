@@ -64,9 +64,9 @@ EVP_MD_do_all_provided
  const char *EVP_MD_name(const EVP_MD *md);
  int EVP_MD_number(const EVP_MD *md);
  int EVP_MD_is_a(const EVP_MD *md, const char *name);
- void EVP_MD_names_do_all(const EVP_MD *md,
-                          void (*fn)(const char *name, void *data),
-                          void *data);
+ int EVP_MD_names_do_all(const EVP_MD *md,
+                         void (*fn)(const char *name, void *data),
+                         void *data);
  const OSSL_PROVIDER *EVP_MD_provider(const EVP_MD *md);
  int EVP_MD_type(const EVP_MD *md);
  int EVP_MD_pkey_type(const EVP_MD *md);
@@ -541,6 +541,11 @@ Returns either an B<EVP_MD> structure or NULL if an error occurs.
 =item EVP_MD_CTX_set_pkey_ctx()
 
 This function has no return value.
+
+=item EVP_MD_names_do_all()
+
+Returns 1 if the callback was called for all names. A return value of 0 means
+that the callback was not called for any names.
 
 =back
 
