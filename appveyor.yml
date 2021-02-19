@@ -71,7 +71,6 @@ before_build:
     - ps: >-
         gci env:* | sort-object name
 
-# The two 'cmd /c' lines are due to "interesting"
 build_script:
     - cd _build
     - "%NMAKE% build_all_generated"
