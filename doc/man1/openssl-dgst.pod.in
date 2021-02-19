@@ -125,7 +125,7 @@ see L<openssl-passphrase-options(1)>.
 =item B<-verify> I<filename>
 
 Verify the signature using the public key in "filename".
-The output is either "Verification OK" or "Verification Failure".
+The output is either "Verified OK" or "Verification Failure".
 
 =item B<-prverify> I<filename>
 
@@ -263,7 +263,7 @@ The B<-engine> and B<-engine_impl> options were deprecated in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

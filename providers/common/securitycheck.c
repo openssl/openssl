@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -14,10 +14,10 @@
 #include <openssl/dh.h>
 #include <openssl/ec.h>
 #include <openssl/err.h>
+#include <openssl/proverr.h>
 #include <openssl/core_names.h>
 #include <openssl/obj_mac.h>
 #include "prov/securitycheck.h"
-#include "prov/providercommonerr.h"
 
 /*
  * FIPS requires a minimum security strength of 112 bits (for encryption or
@@ -28,7 +28,7 @@
 int ossl_rsa_check_key(const RSA *rsa, int protect)
 {
 #if !defined(OPENSSL_NO_FIPS_SECURITYCHECKS)
-    if (securitycheck_enabled()) {
+    if (ossl_securitycheck_enabled()) {
         int sz = RSA_bits(rsa);
 
         return protect ? (sz >= 2048) : (sz >= 1024);
@@ -52,10 +52,10 @@ int ossl_rsa_check_key(const RSA *rsa, int protect)
  * https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-131Ar2.pdf
  * "Table 2"
  */
-int ec_check_key(const EC_KEY *ec, int protect)
+int ossl_ec_check_key(const EC_KEY *ec, int protect)
 {
 # if !defined(OPENSSL_NO_FIPS_SECURITYCHECKS)
-    if (securitycheck_enabled()) {
+    if (ossl_securitycheck_enabled()) {
         int nid, strength;
         const char *curve_name;
         const EC_GROUP *group = EC_KEY_get0_group(ec);
@@ -110,10 +110,10 @@ int ec_check_key(const EC_KEY *ec, int protect)
  * https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-131Ar2.pdf
  * "Table 2"
  */
-int dsa_check_key(const DSA *dsa, int sign)
+int ossl_dsa_check_key(const DSA *dsa, int sign)
 {
 # if !defined(OPENSSL_NO_FIPS_SECURITYCHECKS)
-    if (securitycheck_enabled()) {
+    if (ossl_securitycheck_enabled()) {
         size_t L, N;
         const BIGNUM *p, *q;
 
@@ -154,10 +154,10 @@ int dsa_check_key(const DSA *dsa, int sign)
  * "Section 5.5.1.1FFC Domain Parameter Selection/Generation" and
  * "Appendix D" FFC Safe-prime Groups
  */
-int dh_check_key(const DH *dh)
+int ossl_dh_check_key(const DH *dh)
 {
 # if !defined(OPENSSL_NO_FIPS_SECURITYCHECKS)
-    if (securitycheck_enabled()) {
+    if (ossl_securitycheck_enabled()) {
         size_t L, N;
         const BIGNUM *p, *q;
 
@@ -187,12 +187,12 @@ int dh_check_key(const DH *dh)
 }
 #endif /* OPENSSL_NO_DH */
 
-int digest_get_approved_nid_with_sha1(const EVP_MD *md, int sha1_allowed)
+int ossl_digest_get_approved_nid_with_sha1(const EVP_MD *md, int sha1_allowed)
 {
-    int mdnid = digest_get_approved_nid(md);
+    int mdnid = ossl_digest_get_approved_nid(md);
 
 # if !defined(OPENSSL_NO_FIPS_SECURITYCHECKS)
-    if (securitycheck_enabled()) {
+    if (ossl_securitycheck_enabled()) {
         if (mdnid == NID_sha1 && !sha1_allowed)
             mdnid = NID_undef;
     }
@@ -200,11 +200,11 @@ int digest_get_approved_nid_with_sha1(const EVP_MD *md, int sha1_allowed)
     return mdnid;
 }
 
-int digest_is_allowed(const EVP_MD *md)
+int ossl_digest_is_allowed(const EVP_MD *md)
 {
 # if !defined(OPENSSL_NO_FIPS_SECURITYCHECKS)
-    if (securitycheck_enabled())
-        return digest_get_approved_nid(md) != NID_undef;
+    if (ossl_securitycheck_enabled())
+        return ossl_digest_get_approved_nid(md) != NID_undef;
 # endif /* OPENSSL_NO_FIPS_SECURITYCHECKS */
     return 1;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -22,16 +22,17 @@
 #include <openssl/pem.h>         /* PEM_BUFSIZE and public PEM functions */
 #include <openssl/pkcs12.h>
 #include <openssl/x509.h>
+#include <openssl/proverr.h>
 #include "internal/cryptlib.h"   /* ossl_assert() */
 #include "internal/asn1.h"
 #include "crypto/dh.h"
 #include "crypto/dsa.h"
 #include "crypto/ec.h"
+#include "crypto/evp.h"
 #include "crypto/ecx.h"
 #include "crypto/rsa.h"
 #include "prov/bio.h"
 #include "prov/implementations.h"
-#include "prov/providercommonerr.h"
 #include "endecoder_local.h"
 
 #define SET_ERR_MARK() ERR_set_mark()
@@ -87,7 +88,7 @@ static int der_from_p8(unsigned char **new_der, long *new_der_len,
         size_t plen = 0;
 
         if (!pw_cb(pbuf, sizeof(pbuf), &plen, NULL, pw_cbarg)) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_READ_KEY);
+            ERR_raise(ERR_LIB_PROV, PROV_R_UNABLE_TO_GET_PASSPHRASE);
         } else {
             const X509_ALGOR *alg = NULL;
             const ASN1_OCTET_STRING *oct = NULL;
@@ -321,8 +322,8 @@ static int der2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
 
         if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0) {
             derp = der;
-            pkey = d2i_PrivateKey_ex(ctx->desc->evp_type, NULL, &derp, der_len,
-                                     libctx, NULL);
+            pkey = evp_privatekey_from_binary(ctx->desc->evp_type, NULL,
+                                              &derp, der_len, libctx, NULL);
         }
 
         if (pkey == NULL

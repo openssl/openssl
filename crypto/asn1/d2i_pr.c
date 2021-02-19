@@ -15,15 +15,60 @@
 #include <openssl/bn.h>
 #include <openssl/evp.h>
 #include <openssl/objects.h>
+#include <openssl/decoder.h>
 #include <openssl/engine.h>
 #include <openssl/x509.h>
 #include <openssl/asn1.h>
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
+#include "internal/asn1.h"
 
-EVP_PKEY *d2i_PrivateKey_ex(int type, EVP_PKEY **a, const unsigned char **pp,
+EVP_PKEY *d2i_PrivateKey_ex(int keytype, EVP_PKEY **a, const unsigned char **pp,
                             long length, OSSL_LIB_CTX *libctx,
                             const char *propq)
+{
+    OSSL_DECODER_CTX *dctx = NULL;
+    size_t len = length;
+    EVP_PKEY *pkey = NULL;
+    EVP_PKEY **ppkey = &pkey;
+    const char *key_name = NULL;
+    const char *input_structures[] = { "type-specific", "pkcs8", NULL };
+    int i, ret;
+
+    if (keytype != EVP_PKEY_NONE) {
+        key_name = evp_pkey_type2name(keytype);
+        if (key_name == NULL)
+            return NULL;
+    }
+    if (a != NULL && *a != NULL)
+        ppkey = a;
+
+    for (i = 0;  i < (int)OSSL_NELEM(input_structures); ++i) {
+        dctx = OSSL_DECODER_CTX_new_for_pkey(ppkey, "DER",
+                                             input_structures[i], key_name,
+                                             EVP_PKEY_KEYPAIR, libctx, propq);
+        if (dctx == NULL)
+            return NULL;
+
+        ret = OSSL_DECODER_from_data(dctx, pp, &len);
+        OSSL_DECODER_CTX_free(dctx);
+        if (ret) {
+            if (*ppkey != NULL
+                && evp_keymgmt_util_has(*ppkey, OSSL_KEYMGMT_SELECT_PRIVATE_KEY))
+                return *ppkey;
+            goto err;
+        }
+    }
+    /* Fall through to error if all decodes failed */
+err:
+    if (ppkey != a)
+        EVP_PKEY_free(*ppkey);
+    return NULL;
+}
+
+EVP_PKEY *evp_privatekey_from_binary(int keytype, EVP_PKEY **a,
+                                     const unsigned char **pp, long length,
+                                     OSSL_LIB_CTX *libctx, const char *propq)
 {
     EVP_PKEY *ret;
     const unsigned char *p = *pp;
@@ -41,7 +86,7 @@ EVP_PKEY *d2i_PrivateKey_ex(int type, EVP_PKEY **a, const unsigned char **pp,
 #endif
     }
 
-    if (!EVP_PKEY_set_type(ret, type)) {
+    if (!EVP_PKEY_set_type(ret, keytype)) {
         ERR_raise(ERR_LIB_ASN1, ASN1_R_UNKNOWN_PUBLIC_KEY_TYPE);
         goto err;
     }
@@ -67,7 +112,7 @@ EVP_PKEY *d2i_PrivateKey_ex(int type, EVP_PKEY **a, const unsigned char **pp,
             EVP_PKEY_free(ret);
             ret = tmp;
             ERR_pop_to_mark();
-            if (EVP_PKEY_type(type) != EVP_PKEY_base_id(ret))
+            if (EVP_PKEY_type(keytype) != EVP_PKEY_base_id(ret))
                 goto err;
         } else {
             ERR_clear_last_mark();
@@ -94,57 +139,14 @@ EVP_PKEY *d2i_PrivateKey(int type, EVP_PKEY **a, const unsigned char **pp,
 }
 
 /*
- * This works like d2i_PrivateKey() except it automatically works out the
- * type
+ * This works like d2i_PrivateKey() except it passes the keytype as
+ * EVP_PKEY_NONE, which then figures out the type during decoding.
  */
-
 EVP_PKEY *d2i_AutoPrivateKey_ex(EVP_PKEY **a, const unsigned char **pp,
                                 long length, OSSL_LIB_CTX *libctx,
                                 const char *propq)
 {
-    STACK_OF(ASN1_TYPE) *inkey;
-    const unsigned char *p;
-    int keytype;
-    p = *pp;
-    /*
-     * Dirty trick: read in the ASN1 data into a STACK_OF(ASN1_TYPE): by
-     * analyzing it we can determine the passed structure: this assumes the
-     * input is surrounded by an ASN1 SEQUENCE.
-     */
-    inkey = d2i_ASN1_SEQUENCE_ANY(NULL, &p, length);
-    p = *pp;
-    /*
-     * Since we only need to discern "traditional format" RSA and DSA keys we
-     * can just count the elements.
-     */
-    if (sk_ASN1_TYPE_num(inkey) == 6) {
-        keytype = EVP_PKEY_DSA;
-    } else if (sk_ASN1_TYPE_num(inkey) == 4) {
-        keytype = EVP_PKEY_EC;
-    } else if (sk_ASN1_TYPE_num(inkey) == 3) { /* This seems to be PKCS8, not
-                                              * traditional format */
-        PKCS8_PRIV_KEY_INFO *p8 = d2i_PKCS8_PRIV_KEY_INFO(NULL, &p, length);
-        EVP_PKEY *ret;
-
-        sk_ASN1_TYPE_pop_free(inkey, ASN1_TYPE_free);
-        if (p8 == NULL) {
-            ERR_raise(ERR_LIB_ASN1, ASN1_R_UNSUPPORTED_PUBLIC_KEY_TYPE);
-            return NULL;
-        }
-        ret = EVP_PKCS82PKEY_ex(p8, libctx, propq);
-        PKCS8_PRIV_KEY_INFO_free(p8);
-        if (ret == NULL)
-            return NULL;
-        *pp = p;
-        if (a) {
-            *a = ret;
-        }
-        return ret;
-    } else {
-        keytype = EVP_PKEY_RSA;
-    }
-    sk_ASN1_TYPE_pop_free(inkey, ASN1_TYPE_free);
-    return d2i_PrivateKey_ex(keytype, a, pp, length, libctx, propq);
+    return d2i_PrivateKey_ex(EVP_PKEY_NONE, a, pp, length, libctx, propq);
 }
 
 EVP_PKEY *d2i_AutoPrivateKey(EVP_PKEY **a, const unsigned char **pp,

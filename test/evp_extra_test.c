@@ -419,8 +419,8 @@ static EVP_PKEY *load_example_key(const char *keytype,
     const unsigned char **pdata = &data;
     EVP_PKEY *pkey = NULL;
     OSSL_DECODER_CTX *dctx =
-        OSSL_DECODER_CTX_new_by_EVP_PKEY(&pkey, "DER", NULL, keytype, 0,
-                                         testctx, NULL);
+        OSSL_DECODER_CTX_new_for_pkey(&pkey, "DER", NULL, keytype, 0,
+                                      testctx, NULL);
 
     /* |pkey| will be NULL on error */
     (void)OSSL_DECODER_from_data(dctx, pdata, &data_len);
@@ -496,8 +496,9 @@ static int test_fromdata(char *keytype, OSSL_PARAM *params)
 
     if (!TEST_ptr(pctx = EVP_PKEY_CTX_new_from_name(testctx, keytype, NULL)))
         goto err;
-    if (!TEST_int_gt(EVP_PKEY_key_fromdata_init(pctx), 0)
-        || !TEST_int_gt(EVP_PKEY_fromdata(pctx, &pkey, params), 0))
+    if (!TEST_int_gt(EVP_PKEY_fromdata_init(pctx), 0)
+        || !TEST_int_gt(EVP_PKEY_fromdata(pctx, &pkey, EVP_PKEY_KEYPAIR,
+                                          params), 0))
         goto err;
 
     if (!TEST_ptr(pkey))
@@ -1954,8 +1955,9 @@ static int test_DSA_get_set_params(void)
     if (!TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld)))
         goto err;
 
-    if (!TEST_int_gt(EVP_PKEY_key_fromdata_init(pctx), 0)
-        || !TEST_int_gt(EVP_PKEY_fromdata(pctx, &pkey, params), 0))
+    if (!TEST_int_gt(EVP_PKEY_fromdata_init(pctx), 0)
+        || !TEST_int_gt(EVP_PKEY_fromdata(pctx, &pkey, EVP_PKEY_KEYPAIR,
+                                          params), 0))
         goto err;
 
     if (!TEST_ptr(pkey))
@@ -2014,8 +2016,9 @@ static int test_RSA_get_set_params(void)
     if (!TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld)))
         goto err;
 
-    if (!TEST_int_gt(EVP_PKEY_key_fromdata_init(pctx), 0)
-        || !TEST_int_gt(EVP_PKEY_fromdata(pctx, &pkey, params), 0))
+    if (!TEST_int_gt(EVP_PKEY_fromdata_init(pctx), 0)
+        || !TEST_int_gt(EVP_PKEY_fromdata(pctx, &pkey, EVP_PKEY_KEYPAIR,
+                                          params), 0))
         goto err;
 
     if (!TEST_ptr(pkey))

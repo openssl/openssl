@@ -13,6 +13,10 @@ SRP_user_pwd_set0_sv
 
  #include <openssl/srp.h>
 
+Deprecated since OpenSSL 3.0, can be hidden entirely by defining
+B<OPENSSL_API_COMPAT> with a suitable version value, see
+L<openssl_user_macros(7)>:
+
  SRP_user_pwd *SRP_user_pwd_new(void);
  void SRP_user_pwd_free(SRP_user_pwd *user_pwd);
 
@@ -21,6 +25,9 @@ SRP_user_pwd_set0_sv
  int SRP_user_pwd_set0_sv(SRP_user_pwd *user_pwd, BIGNUM *s, BIGNUM *v);
 
 =head1 DESCRIPTION
+
+All of the functions described on this page are deprecated. There are no
+available replacement functions at this time.
 
 The SRP_user_pwd_new() function allocates a structure to store a user verifier
 record.
@@ -56,11 +63,11 @@ L<SSL_CTX_set_srp_password(3)>
 
 =head1 HISTORY
 
-These functions were made public in OpenSSL 3.0.
+These functions were made public in OpenSSL 3.0 and are deprecated.
 
 =head1 COPYRIGHT
 
-Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2018-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

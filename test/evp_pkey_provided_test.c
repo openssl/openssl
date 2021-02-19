@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -219,10 +219,10 @@ static int test_print_key_type_using_encoder(const char *alg, int type,
 
     /* Make a context, it's valid for several prints */
     TEST_note("Setting up a OSSL_ENCODER context with passphrase");
-    if (!TEST_ptr(ctx = OSSL_ENCODER_CTX_new_by_EVP_PKEY(pk, selection,
-                                                         output_type,
-                                                         output_structure,
-                                                         NULL))
+    if (!TEST_ptr(ctx = OSSL_ENCODER_CTX_new_for_pkey(pk, selection,
+                                                      output_type,
+                                                      output_structure,
+                                                      NULL))
         /* Check that this operation is supported */
         || !TEST_int_ne(OSSL_ENCODER_CTX_get_num_encoders(ctx), 0))
         goto err;
@@ -339,8 +339,9 @@ static int test_fromdata_rsa(void)
     if (!TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(NULL, "RSA", NULL)))
         goto err;
 
-    if (!TEST_true(EVP_PKEY_key_fromdata_init(ctx))
-        || !TEST_true(EVP_PKEY_fromdata(ctx, &pk, fromdata_params))
+    if (!TEST_true(EVP_PKEY_fromdata_init(ctx))
+        || !TEST_true(EVP_PKEY_fromdata(ctx, &pk, EVP_PKEY_KEYPAIR,
+                                        fromdata_params))
         || !TEST_int_eq(EVP_PKEY_bits(pk), 32)
         || !TEST_int_eq(EVP_PKEY_security_bits(pk), 8)
         || !TEST_int_eq(EVP_PKEY_size(pk), 4))
@@ -411,8 +412,9 @@ static int test_evp_pkey_get_bn_param_large(void)
         || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_RSA_D, d))
         || !TEST_ptr(fromdata_params = OSSL_PARAM_BLD_to_param(bld))
         || !TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(NULL, "RSA", NULL))
-        || !TEST_true(EVP_PKEY_key_fromdata_init(ctx))
-        || !TEST_true(EVP_PKEY_fromdata(ctx, &pk, fromdata_params))
+        || !TEST_true(EVP_PKEY_fromdata_init(ctx))
+        || !TEST_true(EVP_PKEY_fromdata(ctx, &pk, EVP_PKEY_KEYPAIR,
+                                        fromdata_params))
         || !TEST_ptr(key_ctx = EVP_PKEY_CTX_new_from_pkey(NULL, pk, ""))
         || !TEST_true(EVP_PKEY_get_bn_param(pk, OSSL_PKEY_PARAM_RSA_N, &n_out))
         || !TEST_BN_eq(n, n_out))
@@ -501,8 +503,9 @@ static int test_fromdata_dh_named_group(void)
     if (!TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(NULL, "DH", NULL)))
         goto err;
 
-    if (!TEST_true(EVP_PKEY_key_fromdata_init(ctx))
-        || !TEST_true(EVP_PKEY_fromdata(ctx, &pk, fromdata_params))
+    if (!TEST_true(EVP_PKEY_fromdata_init(ctx))
+        || !TEST_true(EVP_PKEY_fromdata(ctx, &pk, EVP_PKEY_KEYPAIR,
+                                        fromdata_params))
         || !TEST_int_eq(EVP_PKEY_bits(pk), 2048)
         || !TEST_int_eq(EVP_PKEY_security_bits(pk), 112)
         || !TEST_int_eq(EVP_PKEY_size(pk), 256))
@@ -645,8 +648,9 @@ static int test_fromdata_dh_fips186_4(void)
     if (!TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(NULL, "DH", NULL)))
         goto err;
 
-    if (!TEST_true(EVP_PKEY_key_fromdata_init(ctx))
-        || !TEST_true(EVP_PKEY_fromdata(ctx, &pk, fromdata_params))
+    if (!TEST_true(EVP_PKEY_fromdata_init(ctx))
+        || !TEST_true(EVP_PKEY_fromdata(ctx, &pk, EVP_PKEY_KEYPAIR,
+                                        fromdata_params))
         || !TEST_int_eq(EVP_PKEY_bits(pk), 2048)
         || !TEST_int_eq(EVP_PKEY_security_bits(pk), 112)
         || !TEST_int_eq(EVP_PKEY_size(pk), 256))
@@ -916,8 +920,9 @@ static int test_fromdata_ecx(int tst)
         fromdata_params = params;
     }
 
-    if (!TEST_true(EVP_PKEY_key_fromdata_init(ctx))
-        || !TEST_true(EVP_PKEY_fromdata(ctx, &pk, fromdata_params))
+    if (!TEST_true(EVP_PKEY_fromdata_init(ctx))
+        || !TEST_true(EVP_PKEY_fromdata(ctx, &pk, EVP_PKEY_KEYPAIR,
+                                        fromdata_params))
         || !TEST_int_eq(EVP_PKEY_bits(pk), bits)
         || !TEST_int_eq(EVP_PKEY_security_bits(pk), security_bits)
         || !TEST_int_eq(EVP_PKEY_size(pk), size))
@@ -1028,8 +1033,9 @@ static int test_fromdata_ec(void)
     if (!TEST_ptr(ctx))
         goto err;
 
-    if (!TEST_true(EVP_PKEY_key_fromdata_init(ctx))
-        || !TEST_true(EVP_PKEY_fromdata(ctx, &pk, fromdata_params))
+    if (!TEST_true(EVP_PKEY_fromdata_init(ctx))
+        || !TEST_true(EVP_PKEY_fromdata(ctx, &pk, EVP_PKEY_KEYPAIR,
+                                        fromdata_params))
         || !TEST_int_eq(EVP_PKEY_bits(pk), 256)
         || !TEST_int_eq(EVP_PKEY_security_bits(pk), 128)
         || !TEST_int_eq(EVP_PKEY_size(pk), 2 + 35 * 2))
@@ -1286,8 +1292,9 @@ static int test_fromdata_dsa_fips186_4(void)
     if (!TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(NULL, "DSA", NULL)))
         goto err;
 
-    if (!TEST_true(EVP_PKEY_key_fromdata_init(ctx))
-        || !TEST_true(EVP_PKEY_fromdata(ctx, &pk, fromdata_params))
+    if (!TEST_true(EVP_PKEY_fromdata_init(ctx))
+        || !TEST_true(EVP_PKEY_fromdata(ctx, &pk, EVP_PKEY_KEYPAIR,
+                                        fromdata_params))
         || !TEST_int_eq(EVP_PKEY_bits(pk), 2048)
         || !TEST_int_eq(EVP_PKEY_security_bits(pk), 112)
         || !TEST_int_eq(EVP_PKEY_size(pk), 2 + 2 * (3 + sizeof(q_data))))

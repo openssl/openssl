@@ -1,5 +1,5 @@
-NOTES FOR VALGRIND
-==================
+Notes on Valgrind
+=================
 
 Valgrind is a test harness that includes many tools such as memcheck,
 which is commonly used to check for memory leaks, etc. The default tool

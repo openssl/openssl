@@ -25,7 +25,7 @@ settable for an B<EVP_MD_CTX> with L<EVP_MD_CTX_set_params(3)>:
 
 =over 4
 
-=item "pad_type" (B<OSSL_DIGEST_PARAM_PAD_TYPE>) <unsigned integer>
+=item "pad-type" (B<OSSL_DIGEST_PARAM_PAD_TYPE>) <unsigned integer>
 
 Sets the padding type to be used.
 Normally the final MDC2 block is padded with zeros.
@@ -40,7 +40,7 @@ L<EVP_MD_CTX_set_params(3)>, L<provider-digest(7)>, L<OSSL_PROVIDER-legacy(7)>
 
 =head1 COPYRIGHT
 
-Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

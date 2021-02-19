@@ -14,6 +14,10 @@ SRP_VBASE_get_by_user
 
  #include <openssl/srp.h>
 
+Deprecated since OpenSSL 3.0, can be hidden entirely by defining
+B<OPENSSL_API_COMPAT> with a suitable version value, see
+L<openssl_user_macros(7)>:
+
  SRP_VBASE *SRP_VBASE_new(char *seed_key);
  void SRP_VBASE_free(SRP_VBASE *vb);
 
@@ -24,6 +28,9 @@ SRP_VBASE_get_by_user
  SRP_user_pwd *SRP_VBASE_get_by_user(SRP_VBASE *vb, char *username);
 
 =head1 DESCRIPTION
+
+All of the functions described on this page are deprecated. There are no
+available replacement functions at this time.
 
 The SRP_VBASE_new() function allocates a structure to store server side SRP
 verifier information.
@@ -87,9 +94,11 @@ The SRP_VBASE_add0_user() function was added in OpenSSL 3.0.
 
 All other functions were added in OpenSSL 1.0.1.
 
+All of these functions were deprecated in OpenSSL 3.0.
+
 =head1 COPYRIGHT
 
-Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2018-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

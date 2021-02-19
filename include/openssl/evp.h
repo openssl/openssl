@@ -21,6 +21,7 @@
 # include <openssl/opensslconf.h>
 # include <openssl/types.h>
 # include <openssl/core.h>
+# include <openssl/core_dispatch.h>
 # include <openssl/symhacks.h>
 # include <openssl/bio.h>
 # include <openssl/evperr.h>
@@ -1552,18 +1553,17 @@ const char *EVP_PKEY_get0_first_alg_name(const EVP_PKEY *key);
 # define EVP_PKEY_OP_UNDEFINED           0
 # define EVP_PKEY_OP_PARAMGEN            (1<<1)
 # define EVP_PKEY_OP_KEYGEN              (1<<2)
-# define EVP_PKEY_OP_PARAMFROMDATA       (1<<3)
-# define EVP_PKEY_OP_KEYFROMDATA         (1<<4)
-# define EVP_PKEY_OP_SIGN                (1<<5)
-# define EVP_PKEY_OP_VERIFY              (1<<6)
-# define EVP_PKEY_OP_VERIFYRECOVER       (1<<7)
-# define EVP_PKEY_OP_SIGNCTX             (1<<8)
-# define EVP_PKEY_OP_VERIFYCTX           (1<<9)
-# define EVP_PKEY_OP_ENCRYPT             (1<<10)
-# define EVP_PKEY_OP_DECRYPT             (1<<11)
-# define EVP_PKEY_OP_DERIVE              (1<<12)
-# define EVP_PKEY_OP_ENCAPSULATE         (1<<13)
-# define EVP_PKEY_OP_DECAPSULATE         (1<<14)
+# define EVP_PKEY_OP_FROMDATA            (1<<3)
+# define EVP_PKEY_OP_SIGN                (1<<4)
+# define EVP_PKEY_OP_VERIFY              (1<<5)
+# define EVP_PKEY_OP_VERIFYRECOVER       (1<<6)
+# define EVP_PKEY_OP_SIGNCTX             (1<<7)
+# define EVP_PKEY_OP_VERIFYCTX           (1<<8)
+# define EVP_PKEY_OP_ENCRYPT             (1<<9)
+# define EVP_PKEY_OP_DECRYPT             (1<<10)
+# define EVP_PKEY_OP_DERIVE              (1<<11)
+# define EVP_PKEY_OP_ENCAPSULATE         (1<<12)
+# define EVP_PKEY_OP_DECAPSULATE         (1<<13)
 
 # define EVP_PKEY_OP_TYPE_SIG    \
         (EVP_PKEY_OP_SIGN | EVP_PKEY_OP_VERIFY | EVP_PKEY_OP_VERIFYRECOVER \
@@ -1578,8 +1578,6 @@ const char *EVP_PKEY_get0_first_alg_name(const EVP_PKEY *key);
 # define EVP_PKEY_OP_TYPE_GEN \
         (EVP_PKEY_OP_PARAMGEN | EVP_PKEY_OP_KEYGEN)
 
-# define EVP_PKEY_OP_TYPE_FROMDATA \
-        (EVP_PKEY_OP_PARAMFROMDATA | EVP_PKEY_OP_KEYFROMDATA)
 
 int EVP_PKEY_CTX_set_mac_key(EVP_PKEY_CTX *ctx, const unsigned char *key,
                              int keylen);
@@ -1790,11 +1788,10 @@ int EVP_PKEY_decapsulate(EVP_PKEY_CTX *ctx,
 
 typedef int EVP_PKEY_gen_cb(EVP_PKEY_CTX *ctx);
 
-int EVP_PKEY_param_fromdata_init(EVP_PKEY_CTX *ctx);
-int EVP_PKEY_key_fromdata_init(EVP_PKEY_CTX *ctx);
-int EVP_PKEY_fromdata(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey, OSSL_PARAM param[]);
-const OSSL_PARAM *EVP_PKEY_param_fromdata_settable(EVP_PKEY_CTX *ctx);
-const OSSL_PARAM *EVP_PKEY_key_fromdata_settable(EVP_PKEY_CTX *ctx);
+int EVP_PKEY_fromdata_init(EVP_PKEY_CTX *ctx);
+int EVP_PKEY_fromdata(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey, int selection,
+                      OSSL_PARAM param[]);
+const OSSL_PARAM *EVP_PKEY_fromdata_settable(EVP_PKEY_CTX *ctx, int selection);
 const OSSL_PARAM *EVP_PKEY_gettable_params(const EVP_PKEY *pkey);
 int EVP_PKEY_get_params(const EVP_PKEY *pkey, OSSL_PARAM params[]);
 int EVP_PKEY_get_int_param(const EVP_PKEY *pkey, const char *key_name,
@@ -1831,6 +1828,7 @@ int EVP_PKEY_gen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey);
 int EVP_PKEY_check(EVP_PKEY_CTX *ctx);
 int EVP_PKEY_public_check(EVP_PKEY_CTX *ctx);
 int EVP_PKEY_param_check(EVP_PKEY_CTX *ctx);
+int EVP_PKEY_param_check_quick(EVP_PKEY_CTX *ctx);
 int EVP_PKEY_private_check(EVP_PKEY_CTX *ctx);
 int EVP_PKEY_pairwise_check(EVP_PKEY_CTX *ctx);
 

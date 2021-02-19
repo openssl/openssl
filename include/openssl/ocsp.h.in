@@ -189,8 +189,8 @@ typedef OSSL_HTTP_REQ_CTX OCSP_REQ_CTX;
         OSSL_HTTP_REQ_CTX_i2d(r, "application/ocsp-request", i, req)
 #   define OCSP_REQ_CTX_nbio(r) \
         OSSL_HTTP_REQ_CTX_nbio(r)
-#   define OCSP_REQ_CTX_nbio_d2i(r, i) \
-        OSSL_HTTP_REQ_CTX_sendreq_d2i(r, i)
+#   define OCSP_REQ_CTX_nbio_d2i(r, p, i)        \
+        ((*(p) = OSSL_HTTP_REQ_CTX_sendreq_d2i(r, i)) != NULL)
 #   define OCSP_REQ_CTX_get0_mem_bio(r) \
         OSSL_HTTP_REQ_CTX_get0_mem_bio(r)
 #   define OCSP_set_max_response_length(r, l) \

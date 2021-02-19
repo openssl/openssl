@@ -257,7 +257,7 @@ int PKCS7_add_certificate(PKCS7 *p7, X509 *x509)
         return 0;
     }
 
-    return X509_add_cert_new(sk, x509, X509_ADD_FLAG_UP_REF);
+    return ossl_x509_add_cert_new(sk, x509, X509_ADD_FLAG_UP_REF);
 }
 
 int PKCS7_add_crl(PKCS7 *p7, X509_CRL *crl)

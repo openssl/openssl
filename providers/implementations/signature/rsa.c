@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -22,12 +22,12 @@
 #include <openssl/rsa.h>
 #include <openssl/params.h>
 #include <openssl/evp.h>
+#include <openssl/proverr.h>
 #include "internal/cryptlib.h"
 #include "internal/nelem.h"
 #include "internal/sizes.h"
 #include "crypto/rsa.h"
 #include "prov/providercommon.h"
-#include "prov/providercommonerr.h"
 #include "prov/implementations.h"
 #include "prov/provider_ctx.h"
 #include "prov/der_rsa.h"
@@ -276,7 +276,7 @@ static int rsa_setup_md(PROV_RSA_CTX *ctx, const char *mdname,
     if (mdname != NULL) {
         EVP_MD *md = EVP_MD_fetch(ctx->libctx, mdname, mdprops);
         int sha1_allowed = (ctx->operation != EVP_PKEY_OP_SIGN);
-        int md_nid = digest_rsa_sign_get_md_nid(md, sha1_allowed);
+        int md_nid = ossl_digest_rsa_sign_get_md_nid(md, sha1_allowed);
         size_t mdname_len = strlen(mdname);
 
         if (md == NULL
@@ -335,7 +335,7 @@ static int rsa_setup_mgf1_md(PROV_RSA_CTX *ctx, const char *mdname,
         return 0;
     }
     /* The default for mgf1 is SHA1 - so allow SHA1 */
-    if ((mdnid = digest_rsa_sign_get_md_nid(md, 1)) == NID_undef
+    if ((mdnid = ossl_digest_rsa_sign_get_md_nid(md, 1)) == NID_undef
         || !rsa_check_padding(ctx, NULL, mdname, mdnid)) {
         if (mdnid == NID_undef)
             ERR_raise_data(ERR_LIB_PROV, PROV_R_DIGEST_NOT_ALLOWED,
@@ -517,7 +517,7 @@ static int rsa_sign(void *vprsactx, unsigned char *sig, size_t *siglen,
                                              prsactx->rsa);
 
             if (ret <= 0) {
-                ERR_raise(ERR_LIB_PROV, ERR_LIB_RSA);
+                ERR_raise(ERR_LIB_PROV, ERR_R_RSA_LIB);
                 return 0;
             }
             ret = sltmp;
@@ -550,7 +550,7 @@ static int rsa_sign(void *vprsactx, unsigned char *sig, size_t *siglen,
                 ret = RSA_sign(prsactx->mdnid, tbs, tbslen, sig, &sltmp,
                                prsactx->rsa);
                 if (ret <= 0) {
-                    ERR_raise(ERR_LIB_PROV, ERR_LIB_RSA);
+                    ERR_raise(ERR_LIB_PROV, ERR_R_RSA_LIB);
                     return 0;
                 }
                 ret = sltmp;
@@ -592,7 +592,7 @@ static int rsa_sign(void *vprsactx, unsigned char *sig, size_t *siglen,
                                                 prsactx->tbuf, tbs,
                                                 prsactx->md, prsactx->mgf1_md,
                                                 prsactx->saltlen)) {
-                ERR_raise(ERR_LIB_PROV, ERR_LIB_RSA);
+                ERR_raise(ERR_LIB_PROV, ERR_R_RSA_LIB);
                 return 0;
             }
             ret = RSA_private_encrypt(RSA_size(prsactx->rsa), prsactx->tbuf,
@@ -614,7 +614,7 @@ static int rsa_sign(void *vprsactx, unsigned char *sig, size_t *siglen,
  end:
 #endif
     if (ret <= 0) {
-        ERR_raise(ERR_LIB_PROV, ERR_LIB_RSA);
+        ERR_raise(ERR_LIB_PROV, ERR_R_RSA_LIB);
         return 0;
     }
 
@@ -655,7 +655,7 @@ static int rsa_verify_recover(void *vprsactx,
             ret = RSA_public_decrypt(siglen, sig, prsactx->tbuf, prsactx->rsa,
                                      RSA_X931_PADDING);
             if (ret < 1) {
-                ERR_raise(ERR_LIB_PROV, ERR_LIB_RSA);
+                ERR_raise(ERR_LIB_PROV, ERR_R_RSA_LIB);
                 return 0;
             }
             ret--;
@@ -689,7 +689,7 @@ static int rsa_verify_recover(void *vprsactx,
                 ret = int_rsa_verify(prsactx->mdnid, NULL, 0, rout, &sltmp,
                                      sig, siglen, prsactx->rsa);
                 if (ret <= 0) {
-                    ERR_raise(ERR_LIB_PROV, ERR_LIB_RSA);
+                    ERR_raise(ERR_LIB_PROV, ERR_R_RSA_LIB);
                     return 0;
                 }
                 ret = sltmp;
@@ -705,7 +705,7 @@ static int rsa_verify_recover(void *vprsactx,
         ret = RSA_public_decrypt(siglen, sig, rout, prsactx->rsa,
                                  prsactx->pad_mode);
         if (ret < 0) {
-            ERR_raise(ERR_LIB_PROV, ERR_LIB_RSA);
+            ERR_raise(ERR_LIB_PROV, ERR_R_RSA_LIB);
             return 0;
         }
     }
@@ -733,7 +733,7 @@ static int rsa_verify(void *vprsactx, const unsigned char *sig, size_t siglen,
         case RSA_PKCS1_PADDING:
             if (!RSA_verify(prsactx->mdnid, tbs, tbslen, sig, siglen,
                             prsactx->rsa)) {
-                ERR_raise(ERR_LIB_PROV, ERR_LIB_RSA);
+                ERR_raise(ERR_LIB_PROV, ERR_R_RSA_LIB);
                 return 0;
             }
             return 1;
@@ -766,7 +766,7 @@ static int rsa_verify(void *vprsactx, const unsigned char *sig, size_t siglen,
                 ret = RSA_public_decrypt(siglen, sig, prsactx->tbuf,
                                          prsactx->rsa, RSA_NO_PADDING);
                 if (ret <= 0) {
-                    ERR_raise(ERR_LIB_PROV, ERR_LIB_RSA);
+                    ERR_raise(ERR_LIB_PROV, ERR_R_RSA_LIB);
                     return 0;
                 }
                 ret = RSA_verify_PKCS1_PSS_mgf1(prsactx->rsa, tbs,
@@ -774,7 +774,7 @@ static int rsa_verify(void *vprsactx, const unsigned char *sig, size_t siglen,
                                                 prsactx->tbuf,
                                                 prsactx->saltlen);
                 if (ret <= 0) {
-                    ERR_raise(ERR_LIB_PROV, ERR_LIB_RSA);
+                    ERR_raise(ERR_LIB_PROV, ERR_R_RSA_LIB);
                     return 0;
                 }
                 return 1;
@@ -790,7 +790,7 @@ static int rsa_verify(void *vprsactx, const unsigned char *sig, size_t siglen,
         rslen = RSA_public_decrypt(siglen, sig, prsactx->tbuf, prsactx->rsa,
                                    prsactx->pad_mode);
         if (rslen == 0) {
-            ERR_raise(ERR_LIB_PROV, ERR_LIB_RSA);
+            ERR_raise(ERR_LIB_PROV, ERR_R_RSA_LIB);
             return 0;
         }
     }
@@ -1107,8 +1107,8 @@ static int rsa_set_ctx_params(void *vprsactx, const OSSL_PARAM params[])
 {
     PROV_RSA_CTX *prsactx = (PROV_RSA_CTX *)vprsactx;
     const OSSL_PARAM *p;
-    int pad_mode = prsactx->pad_mode;
-    int saltlen = prsactx->saltlen;
+    int pad_mode;
+    int saltlen;
     char mdname[OSSL_MAX_NAME_SIZE] = "", *pmdname = NULL;
     char mdprops[OSSL_MAX_PROPQUERY_SIZE] = "", *pmdprops = NULL;
     char mgf1mdname[OSSL_MAX_NAME_SIZE] = "", *pmgf1mdname = NULL;
@@ -1116,6 +1116,8 @@ static int rsa_set_ctx_params(void *vprsactx, const OSSL_PARAM params[])
 
     if (prsactx == NULL || params == NULL)
         return 0;
+    pad_mode = prsactx->pad_mode;
+    saltlen = prsactx->saltlen;
 
     p = OSSL_PARAM_locate_const(params, OSSL_SIGNATURE_PARAM_DIGEST);
     /* Not allowed during certain operations */
@@ -1245,7 +1247,7 @@ static int rsa_set_ctx_params(void *vprsactx, const OSSL_PARAM params[])
          * lowest saltlen number possible.
          */
         if (saltlen < RSA_PSS_SALTLEN_MAX) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_PSS_SALTLEN);
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_SALT_LENGTH);
             return 0;
         }
 
@@ -1253,7 +1255,8 @@ static int rsa_set_ctx_params(void *vprsactx, const OSSL_PARAM params[])
             switch (saltlen) {
             case RSA_PSS_SALTLEN_AUTO:
                 if (prsactx->operation == EVP_PKEY_OP_VERIFY) {
-                    ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_PSS_SALTLEN);
+                    ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_SALT_LENGTH,
+                                   "Cannot use autodetected salt length");
                     return 0;
                 }
                 break;

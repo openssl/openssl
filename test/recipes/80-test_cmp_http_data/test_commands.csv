@@ -36,7 +36,7 @@ expected,description, -section,val, -cmd,val,val2, -cacertsout,val,val2, -infoty
 0, --- use csr for revocation ----, -section,, -cmd,rr,,BLANK,,,BLANK,,,BLANK,,BLANK, -revreason,0, -csr,csr.pem
 0, --- get certificate for revocation ----, -section,, -cmd,cr,,BLANK,,,BLANK,,,BLANK,,BLANK,
 1,without oldcert, -section,, -cmd,rr,,BLANK,,,BLANK,,,BLANK,,BLANK,
-1,oldcert is directory, -section,, -cmd,rr,,BLANK,,,BLANK,,, -oldcert,dir/,BLANK,cmp
+1,oldcert is directory, -section,, -cmd,rr,,BLANK,,,BLANK,,, -oldcert,dir/,BLANK,
 1,oldcert file nonexistent, -section,, -cmd,rr,,BLANK,,,BLANK,,, -oldcert,idontexist,BLANK,
 1,empty oldcert file, -section,, -cmd,rr,,BLANK,,,BLANK,,, -oldcert,empty.txt,BLANK,
 1,oldcert and key do not match, -section,, -cmd,rr,,BLANK,,,BLANK,,, -oldcert,trusted.crt, -revreason,0

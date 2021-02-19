@@ -391,7 +391,7 @@ static EVP_PKEY *new_raw_key_int(OSSL_LIB_CTX *libctx,
             goto err;
         /* May fail if no provider available */
         ERR_set_mark();
-        if (EVP_PKEY_key_fromdata_init(ctx) == 1) {
+        if (EVP_PKEY_fromdata_init(ctx) == 1) {
             OSSL_PARAM params[] = { OSSL_PARAM_END, OSSL_PARAM_END };
 
             ERR_clear_last_mark();
@@ -400,7 +400,7 @@ static EVP_PKEY *new_raw_key_int(OSSL_LIB_CTX *libctx,
                                         : OSSL_PKEY_PARAM_PUB_KEY,
                             (void *)key, len);
 
-            if (EVP_PKEY_fromdata(ctx, &pkey, params) != 1) {
+            if (EVP_PKEY_fromdata(ctx, &pkey, EVP_PKEY_KEYPAIR, params) != 1) {
                 ERR_raise(ERR_LIB_EVP, EVP_R_KEY_SETUP_FAILED);
                 goto err;
             }
@@ -610,7 +610,7 @@ static EVP_PKEY *new_cmac_key_int(const unsigned char *priv, size_t len,
     if (ctx == NULL)
         goto err;
 
-    if (!EVP_PKEY_key_fromdata_init(ctx)) {
+    if (!EVP_PKEY_fromdata_init(ctx)) {
         ERR_raise(ERR_LIB_EVP, EVP_R_KEY_SETUP_FAILED);
         goto err;
     }
@@ -629,7 +629,7 @@ static EVP_PKEY *new_cmac_key_int(const unsigned char *priv, size_t len,
 #  endif
     *p = OSSL_PARAM_construct_end();
 
-    if (!EVP_PKEY_fromdata(ctx, &pkey, params)) {
+    if (!EVP_PKEY_fromdata(ctx, &pkey, EVP_PKEY_KEYPAIR, params)) {
         ERR_raise(ERR_LIB_EVP, EVP_R_KEY_SETUP_FAILED);
         goto err;
     }
@@ -1093,8 +1093,8 @@ static int print_pkey(const EVP_PKEY *pkey, BIO *out, int indent,
     if (!print_set_indent(&out, &pop_f_prefix, &saved_indent, indent))
         return 0;
 
-    ctx = OSSL_ENCODER_CTX_new_by_EVP_PKEY(pkey, selection, "TEXT", NULL,
-                                           propquery);
+    ctx = OSSL_ENCODER_CTX_new_for_pkey(pkey, selection, "TEXT", NULL,
+                                        propquery);
     if (OSSL_ENCODER_CTX_get_num_encoders(ctx) != 0)
         ret = OSSL_ENCODER_to_bio(ctx, out);
     OSSL_ENCODER_CTX_free(ctx);
@@ -1627,9 +1627,7 @@ void evp_pkey_free_legacy(EVP_PKEY *x)
 static void evp_pkey_free_it(EVP_PKEY *x)
 {
     /* internal function; x is never NULL */
-
     evp_keymgmt_util_clear_operation_cache(x, 1);
-    sk_OP_CACHE_ELEM_free(x->operation_cache);
 #ifndef FIPS_MODULE
     evp_pkey_free_legacy(x);
 #endif

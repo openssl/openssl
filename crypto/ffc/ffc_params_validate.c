@@ -13,6 +13,10 @@
  * It calls the same functions as the generation as the code is very similar.
  */
 
+#include <openssl/err.h>
+#include <openssl/bn.h>
+#include <openssl/dsaerr.h>
+#include <openssl/dherr.h>
 #include "internal/ffc.h"
 
 /* FIPS186-4 A.2.2 Unverifiable partial validation of Generator g */
@@ -88,30 +92,92 @@ int ossl_ffc_params_FIPS186_2_validate(OSSL_LIB_CTX *libctx,
  * extra parameters such as the digest and seed, which may not be available for
  * this test.
  */
-int ossl_ffc_params_simple_validate(OSSL_LIB_CTX *libctx, FFC_PARAMS *params,
-                                    int type)
+int ossl_ffc_params_simple_validate(OSSL_LIB_CTX *libctx, const FFC_PARAMS *params,
+                                    int paramstype, int *res)
 {
-    int ret, res = 0;
-    int save_gindex;
-    unsigned int save_flags;
+    int ret;
+    int tmpres = 0;
+    FFC_PARAMS tmpparams = {0};
 
     if (params == NULL)
         return 0;
 
-    save_flags = params->flags;
-    save_gindex = params->gindex;
-    params->flags = FFC_PARAM_FLAG_VALIDATE_G;
-    params->gindex = FFC_UNVERIFIABLE_GINDEX;
+    if (res == NULL)
+        res = &tmpres;
+
+    if (!ossl_ffc_params_copy(&tmpparams, params))
+        return 0;
+
+    tmpparams.flags = FFC_PARAM_FLAG_VALIDATE_G;
+    tmpparams.gindex = FFC_UNVERIFIABLE_GINDEX;
 
 #ifndef FIPS_MODULE
-    if (save_flags & FFC_PARAM_FLAG_VALIDATE_LEGACY)
-        ret = ossl_ffc_params_FIPS186_2_validate(libctx, params, type, &res,
-                                                 NULL);
+    if (params->flags & FFC_PARAM_FLAG_VALIDATE_LEGACY)
+        ret = ossl_ffc_params_FIPS186_2_validate(libctx, &tmpparams, paramstype,
+                                                 res, NULL);
     else
 #endif
-        ret = ossl_ffc_params_FIPS186_4_validate(libctx, params, type, &res,
-                                                 NULL);
-    params->flags = save_flags;
-    params->gindex = save_gindex;
+        ret = ossl_ffc_params_FIPS186_4_validate(libctx, &tmpparams, paramstype,
+                                                 res, NULL);
+#ifndef OPENSSL_NO_DH
+    if (ret == FFC_PARAM_RET_STATUS_FAILED
+        && (*res & FFC_ERROR_NOT_SUITABLE_GENERATOR) != 0) {
+        ERR_raise(ERR_LIB_DH, DH_R_NOT_SUITABLE_GENERATOR);
+    }
+#endif
+
+    ossl_ffc_params_cleanup(&tmpparams);
+
     return ret != FFC_PARAM_RET_STATUS_FAILED;
+}
+
+/*
+ * If possible (or always in FIPS_MODULE) do full FIPS 186-4 validation.
+ * Otherwise do simple check but in addition also check the primality of the
+ * p and q.
+ */
+int ossl_ffc_params_full_validate(OSSL_LIB_CTX *libctx, const FFC_PARAMS *params,
+                                  int paramstype, int *res)
+{
+    int tmpres = 0;
+
+    if (params == NULL)
+        return 0;
+
+    if (res == NULL)
+        res = &tmpres;
+
+#ifdef FIPS_MODULE
+    return ossl_ffc_params_FIPS186_4_validate(libctx, params, paramstype,
+                                              res, NULL);
+#else
+    if (params->seed != NULL) {
+        return ossl_ffc_params_FIPS186_4_validate(libctx, params, paramstype,
+                                                  res, NULL);
+    } else {
+        int ret = 0;
+
+        ret = ossl_ffc_params_simple_validate(libctx, params, paramstype, res);
+        if (ret) {
+            BN_CTX *ctx;
+
+            if ((ctx = BN_CTX_new_ex(libctx)) == NULL)
+                return 0;
+            if (BN_check_prime(params->q, ctx, NULL) != 1) {
+# ifndef OPENSSL_NO_DSA
+                ERR_raise(ERR_LIB_DSA, DSA_R_Q_NOT_PRIME);
+# endif
+                ret = 0;
+            }
+            if (ret && BN_check_prime(params->p, ctx, NULL) != 1) {
+# ifndef OPENSSL_NO_DSA
+                ERR_raise(ERR_LIB_DSA, DSA_R_P_NOT_PRIME);
+# endif
+                ret = 0;
+            }
+            BN_CTX_free(ctx);
+        }
+        return ret;
+    }
+#endif
 }

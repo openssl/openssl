@@ -190,6 +190,7 @@ int ecparam_main(int argc, char **argv)
     if (argc != 0)
         goto opthelp;
 
+    app_RAND_load();
     private = genkey ? 1 : 0;
 
     in = bio_open_default(infile, 'r', informat);
@@ -291,7 +292,7 @@ int ecparam_main(int argc, char **argv)
         noout = 1;
 
     if (!noout) {
-        ectx_params = OSSL_ENCODER_CTX_new_by_EVP_PKEY(
+        ectx_params = OSSL_ENCODER_CTX_new_for_pkey(
                           params_key, OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS,
                           outformat == FORMAT_ASN1 ? "DER" : "PEM", NULL, NULL);
         if (!OSSL_ENCODER_to_bio(ectx_params, out)) {
@@ -316,7 +317,7 @@ int ecparam_main(int argc, char **argv)
             goto end;
         }
         assert(private);
-        ectx_key = OSSL_ENCODER_CTX_new_by_EVP_PKEY(
+        ectx_key = OSSL_ENCODER_CTX_new_for_pkey(
                        key, OSSL_KEYMGMT_SELECT_ALL,
                        outformat == FORMAT_ASN1 ? "DER" : "PEM", NULL, NULL);
         if (!OSSL_ENCODER_to_bio(ectx_key, out)) {

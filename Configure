@@ -392,6 +392,7 @@ my @disablables = (
     "blake2",
     "buildtest-c++",
     "bulk",
+    "cached-fetch",
     "camellia",
     "capieng",
     "cast",
@@ -611,13 +612,12 @@ my @disable_cascades = (
 
     sub { !$disabled{"msan"} } => [ "asm" ],
 
-    sub { $disabled{cmac}; } => [ "siv" ],
-    "legacy"                 => [ "md2" ],
+    "cmac"              => [ "siv" ],
+    "legacy"            => [ "md2" ],
 
     "cmp"               => [ "crmf" ],
 
-    sub { $disabled{"deprecated-3.0"} }
-          => [ "engine" ]
+    "deprecated-3.0"    => [ "engine", "srp" ]
     );
 
 # Avoid protocol support holes.  Also disable all versions below N, if version

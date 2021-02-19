@@ -20,11 +20,11 @@
 #include <openssl/bn.h>
 #include <openssl/err.h>
 #include <openssl/objects.h>
+#include <openssl/proverr.h>
 #include "crypto/bn.h"
 #include "crypto/ec.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
-#include "prov/providercommonerr.h"
 #include "prov/provider_ctx.h"
 #include "internal/param_build_set.h"
 
@@ -833,7 +833,7 @@ const OSSL_PARAM *sm2_settable_params(ossl_unused void *provctx)
 }
 
 static
-int sm2_validate(const void *keydata, int selection)
+int sm2_validate(const void *keydata, int selection, int checktype)
 {
     const EC_KEY *eck = keydata;
     int ok = 0;
@@ -868,7 +868,7 @@ int sm2_validate(const void *keydata, int selection)
 #endif
 
 static
-int ec_validate(const void *keydata, int selection)
+int ec_validate(const void *keydata, int selection, int checktype)
 {
     const EC_KEY *eck = keydata;
     int ok = 0;

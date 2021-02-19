@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -42,8 +42,8 @@ static int i2d_provided(const EVP_PKEY *a, int selection,
          */
         size_t len = INT_MAX;
 
-        ctx = OSSL_ENCODER_CTX_new_by_EVP_PKEY(a, selection, "DER",
-                                               *output_structures, NULL);
+        ctx = OSSL_ENCODER_CTX_new_for_pkey(a, selection, "DER",
+                                            *output_structures, NULL);
         if (ctx == NULL)
             return -1;
         if (OSSL_ENCODER_to_data(ctx, pp, &len))

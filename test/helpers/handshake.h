@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -11,6 +11,16 @@
 #define OSSL_TEST_HANDSHAKE_HELPER_H
 
 #include "ssl_test_ctx.h"
+
+typedef struct ctx_data_st {
+    unsigned char *npn_protocols;
+    size_t npn_protocols_len;
+    unsigned char *alpn_protocols;
+    size_t alpn_protocols_len;
+    char *srp_user;
+    char *srp_password;
+    char *session_ticket_app_data;
+} CTX_DATA;
 
 typedef struct handshake_result {
     ssl_test_result_t result;
@@ -77,5 +87,12 @@ HANDSHAKE_RESULT *do_handshake(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
                                SSL_CTX *client_ctx, SSL_CTX *resume_server_ctx,
                                SSL_CTX *resume_client_ctx,
                                const SSL_TEST_CTX *test_ctx);
+
+int configure_handshake_ctx_for_srp(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
+                                    SSL_CTX *client_ctx,
+                                    const SSL_TEST_EXTRA_CONF *extra,
+                                    CTX_DATA *server_ctx_data,
+                                    CTX_DATA *server2_ctx_data,
+                                    CTX_DATA *client_ctx_data);
 
 #endif  /* OSSL_TEST_HANDSHAKE_HELPER_H */

@@ -328,7 +328,7 @@ static int generate_key(DH *dh)
             {
                 /* Do a partial check for invalid p, q, g */
                 if (!ossl_ffc_params_simple_validate(dh->libctx, &dh->params,
-                                                     FFC_PARAM_TYPE_DH))
+                                                     FFC_PARAM_TYPE_DH, NULL))
                     goto err;
                 /*
                  * For FFC FIPS 186-4 keygen

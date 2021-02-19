@@ -24,7 +24,7 @@ X509_STORE_CTX_verify_fn
  void X509_STORE_CTX_free(X509_STORE_CTX *ctx);
 
  int X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *trust_store,
-                         X509 *target, STACK_OF(X509) *untrusted);
+                         X509 *target, STACK_OF(X509) *chain);
 
  void X509_STORE_CTX_set0_trusted_stack(X509_STORE_CTX *ctx, STACK_OF(X509) *sk);
 
@@ -60,26 +60,25 @@ X509_STORE_CTX_new() is the same as X509_STORE_CTX_new_ex() except that
 the default library context and a NULL property query string are used.
 
 X509_STORE_CTX_cleanup() internally cleans up an B<X509_STORE_CTX> structure.
-The context can then be reused with a new call to X509_STORE_CTX_init().
+It is used by X509_STORE_CTX_init() and X509_STORE_CTX_free().
 
 X509_STORE_CTX_free() completely frees up I<ctx>. After this call I<ctx>
 is no longer valid.
 If I<ctx> is NULL nothing is done.
 
 X509_STORE_CTX_init() sets up I<ctx> for a subsequent verification operation.
-It must be called before each call to L<X509_verify_cert(3)>, i.e., a I<ctx> is
-only good for one verification; if you want to verify a second certificate
-or chain with the same I<ctx> then you must call X509_STORE_CTX_cleanup()
-and then X509_STORE_CTX_init() again before the second call to
-L<X509_verify_cert(3)> or L<X509_STORE_CTX_verify(3)>.
+It must be called before each call to L<X509_verify_cert(3)> or
+L<X509_STORE_CTX_verify(3)>, i.e., a context is only good for one verification.
+If you want to verify a further certificate or chain with the same I<ctx>
+then you must call X509_STORE_CTX_init() again.
 The trusted certificate store is set to I<trust_store> of type B<X509_STORE>.
 This may be NULL because there are no trusted certificates or because
 they are provided simply as a list using X509_STORE_CTX_set0_trusted_stack().
-The end entity certificate to be verified is set to I<target>,
-and a list of additional certificates may be provided in I<untrusted>,
-which will not be trusted but may be used to build the chain.
-Each of the I<trust_store>, I<target> and I<untrusted> parameters can be
-B<NULL>. Yet note that L<X509_verify_cert(3)> and L<X509_STORE_CTX_verify(3)>
+The certificate to be verified is set to I<target>,
+and a list of additional certificates may be provided in I<chain>,
+which will be untrusted but may be used to build the chain.
+Each of the I<trust_store>, I<target> and I<chain> parameters can be NULL.
+Yet note that L<X509_verify_cert(3)> and L<X509_STORE_CTX_verify(3)>
 will need a verification target.
 This can also be set using X509_STORE_CTX_set_cert().
 For L<X509_STORE_CTX_verify(3)>, which takes by default the first element of the
@@ -153,13 +152,13 @@ should be made or reference counts increased instead.
 
 =head1 RETURN VALUES
 
-X509_STORE_CTX_new() returns a newly allocates context or B<NULL> is an
+X509_STORE_CTX_new() returns a newly allocated context or NULL if an
 error occurred.
 
 X509_STORE_CTX_init() returns 1 for success or 0 if an error occurred.
 
 X509_STORE_CTX_get0_param() returns a pointer to an B<X509_VERIFY_PARAM>
-structure or B<NULL> if an error occurred.
+structure or NULL if an error occurred.
 
 X509_STORE_CTX_cleanup(), X509_STORE_CTX_free(),
 X509_STORE_CTX_set0_trusted_stack(),
@@ -183,9 +182,11 @@ The X509_STORE_CTX_set0_crls() function was added in OpenSSL 1.0.0.
 The X509_STORE_CTX_get_num_untrusted() function was added in OpenSSL 1.1.0.
 The X509_STORE_CTX_new_ex() function was added in OpenSSL 3.0.
 
+There is no need to call X509_STORE_CTX_cleanup() explicitly since OpenSSL 3.0.
+
 =head1 COPYRIGHT
 
-Copyright 2009-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2009-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -62,6 +62,7 @@
 struct extracted_param_data_st {
     int object_type;
     const char *data_type;
+    const char *data_structure;
     const char *utf8_data;
     const void *octet_data;
     size_t octet_data_size;
@@ -127,6 +128,10 @@ int ossl_store_handle_load_result(const OSSL_PARAM params[], void *arg)
         && !OSSL_PARAM_get_octet_string_ptr(p, &helper_data.octet_data,
                                             &helper_data.octet_data_size)
         && !OSSL_PARAM_get_utf8_string_ptr(p, &helper_data.utf8_data))
+        return 0;
+    p = OSSL_PARAM_locate_const(params, OSSL_OBJECT_PARAM_DATA_STRUCTURE);
+    if (p != NULL
+        && !OSSL_PARAM_get_utf8_string_ptr(p, &helper_data.data_structure))
         return 0;
     p = OSSL_PARAM_locate_const(params, OSSL_OBJECT_PARAM_REFERENCE);
     if (p != NULL && !OSSL_PARAM_get_octet_string_ptr(p, &helper_data.ref,
@@ -274,8 +279,9 @@ static EVP_PKEY *try_key_value(struct extracted_param_data_st *data,
     }
 
     decoderctx =
-        OSSL_DECODER_CTX_new_by_EVP_PKEY(&pk, "DER", NULL, data->data_type,
-                                         selection, libctx, propq);
+        OSSL_DECODER_CTX_new_for_pkey(&pk, "DER", data->data_structure,
+                                      data->data_type, selection, libctx,
+                                      propq);
     (void)OSSL_DECODER_CTX_set_passphrase_cb(decoderctx, cb, cbarg);
 
     /* No error if this couldn't be decoded */

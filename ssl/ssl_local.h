@@ -585,7 +585,6 @@ struct ssl_session_st {
     int not_resumable;
     /* This is the cert and type for the other end. */
     X509 *peer;
-    int peer_type;
     /* Certificate chain peer sent. */
     STACK_OF(X509) *peer_chain;
     /*
@@ -2828,6 +2827,14 @@ int ssl_hmac_old_init(SSL_HMAC *ctx, void *key, size_t len, char *md);
 int ssl_hmac_old_update(SSL_HMAC *ctx, const unsigned char *data, size_t len);
 int ssl_hmac_old_final(SSL_HMAC *ctx, unsigned char *md, size_t *len);
 size_t ssl_hmac_old_size(const SSL_HMAC *ctx);
+
+int ssl_ctx_srp_ctx_free_intern(SSL_CTX *ctx);
+int ssl_ctx_srp_ctx_init_intern(SSL_CTX *ctx);
+int ssl_srp_ctx_free_intern(SSL *s);
+int ssl_srp_ctx_init_intern(SSL *s);
+
+int ssl_srp_calc_a_param_intern(SSL *s);
+int ssl_srp_server_param_with_username_intern(SSL *s, int *ad);
 
 # else /* OPENSSL_UNIT_TEST */
 

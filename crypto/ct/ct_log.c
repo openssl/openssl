@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -88,7 +88,7 @@ static int ct_v1_log_id_from_pkey(CTLOG *log, EVP_PKEY *pkey)
     }
     sha256 = EVP_MD_fetch(log->libctx, "SHA2-256", log->propq);
     if (sha256 == NULL) {
-        ERR_raise(ERR_LIB_CT, ERR_LIB_EVP);
+        ERR_raise(ERR_LIB_CT, ERR_R_EVP_LIB);
         goto err;
     }
 

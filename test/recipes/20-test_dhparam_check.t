@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2017-2020 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2017-2021 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -28,10 +28,12 @@ TESTDIR=test/recipes/20-test_dhparam_check_data/valid
 rm -rf $TESTDIR
 mkdir -p $TESTDIR
 
+#TODO(3.0): These 3 currently create invalid output - see issue #14145
 ./util/opensslwrap.sh genpkey -genparam -algorithm DH -pkeyopt dh_rfc5114:1 -out $TESTDIR/dh5114_1.pem
 ./util/opensslwrap.sh genpkey -genparam -algorithm DH -pkeyopt dh_rfc5114:2 -out $TESTDIR/dh5114_2.pem
 ./util/opensslwrap.sh genpkey -genparam -algorithm DH -pkeyopt dh_rfc5114:3 -out $TESTDIR/dh5114_3.pem
 
+#TODO(3.0): These 4 currently create invalid output - see issue #14145
 ./util/opensslwrap.sh genpkey -genparam -algorithm DH -pkeyopt pbits:1024 -pkeyopt type:fips186_2 -out $TESTDIR/dh_p1024_t1862.pem
 ./util/opensslwrap.sh genpkey -genparam -algorithm DH -pkeyopt pbits:2048 -pkeyopt type:fips186_2 -out $TESTDIR/dh_p2048_t1862.pem
 ./util/opensslwrap.sh genpkey -genparam -algorithm DH -pkeyopt pbits:2048 -pkeyopt type:fips186_4 -out $TESTDIR/dh_p2048_t1864.pem
@@ -54,31 +56,42 @@ mkdir -p $TESTDIR
 ./util/opensslwrap.sh genpkey -genparam -algorithm DHX -pkeyopt pbits:3072 -pkeyopt qbits:224 -pkeyopt type:fips186_2 -out $TESTDIR/dhx_p3072_q224_t1862.pem
 ./util/opensslwrap.sh genpkey -genparam -algorithm DHX -pkeyopt pbits:3072 -pkeyopt qbits:256 -pkeyopt type:fips186_2 -out $TESTDIR/dhx_p3072_q256_t1862.pem
 
+./util/opensslwrap.sh genpkey -genparam -algorithm DH -pkeyopt group:ffdhe2048 -out $TESTDIR/dh_ffdhe2048.pem
+./util/opensslwrap.sh genpkey -genparam -algorithm DHX -pkeyopt group:ffdhe2048 -out $TESTDIR/dhx_ffdhe2048.pem
+
+
 =cut
 
 my @valid = glob(data_file("valid", "*.pem"));
-#my @invalid = glob(data_file("invalid", "*.pem"));
+my @invalid = glob(data_file("invalid", "*.pem"));
 
-my $num_tests = scalar @valid;# + scalar @invalid;
-plan tests => 2 * $num_tests;
-
- SKIP: {
-    skip "Skipping DH tests", $num_tests
-        if disabled('deprecated-3.0');
-
-    foreach (@valid) {
-        ok(run(app([qw{openssl dhparam -noout -check -in}, $_])));
-    }
-
-#    foreach (@invalid) {
-#        ok(!run(app([qw{openssl dhparam -noout -check -in}, $_])));
-#    }
-}
+my $num_tests = scalar @valid + scalar @invalid;
+plan tests => 2 + 2 * $num_tests;
 
 foreach (@valid) {
+    ok(run(app([qw{openssl dhparam -noout -check -in}, $_])));
     ok(run(app([qw{openssl pkeyparam -noout -check -in}, $_])));
 }
 
-#foreach (@invalid) {
-#    ok(!run(app([qw{openssl pkeyparam -noout -check -in}, $_])));
-#}
+foreach (@invalid) {
+    ok(!run(app([qw{openssl dhparam -noout -check -in}, $_])));
+    ok(!run(app([qw{openssl pkeyparam -noout -check -in}, $_])));
+}
+
+my $tmpfile = 'out.txt';
+
+sub contains {
+    my $expected = shift;
+    my $found = 0;
+    open(my $in, '<', $tmpfile) or die "Could not open file $tmpfile";
+    while(<$in>) {
+        $found = 1 if m/$expected/; # output must include $expected
+    }
+    close $in;
+    return $found;
+}
+
+# Check that if we load dh params with only a 'p' and 'g' that it detects
+# that this is actually a valid named group.
+ok(run(app([qw{openssl pkeyparam -text -in}, data_file("valid/dh_ffdhe2048.pem")], stdout => $tmpfile)));
+ok(contains("ffdhe2048"))

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -21,11 +21,11 @@
 #include <openssl/params.h>
 #include <openssl/evp.h>
 #include <openssl/err.h>
+#include <openssl/proverr.h>
 #include "internal/nelem.h"
 #include "internal/sizes.h"
 #include "internal/cryptlib.h"
 #include "prov/providercommon.h"
-#include "prov/providercommonerr.h"
 #include "prov/implementations.h"
 #include "prov/provider_ctx.h"
 #include "prov/securitycheck.h"
@@ -137,7 +137,7 @@ static int ecdsa_signverify_init(void *vctx, void *ec, int operation)
     EC_KEY_free(ctx->ec);
     ctx->ec = ec;
     ctx->operation = operation;
-    return ec_check_key(ec, operation == EVP_PKEY_OP_SIGN);
+    return ossl_ec_check_key(ec, operation == EVP_PKEY_OP_SIGN);
 }
 
 static int ecdsa_sign_init(void *vctx, void *ec)
@@ -222,7 +222,7 @@ static int ecdsa_setup_md(PROV_ECDSA_CTX *ctx, const char *mdname,
         return 0;
     }
     sha1_allowed = (ctx->operation != EVP_PKEY_OP_SIGN);
-    md_nid = digest_get_approved_nid_with_sha1(md, sha1_allowed);
+    md_nid = ossl_digest_get_approved_nid_with_sha1(md, sha1_allowed);
     if (md_nid == NID_undef) {
         ERR_raise_data(ERR_LIB_PROV, PROV_R_DIGEST_NOT_ALLOWED,
                        "digest=%s", mdname);

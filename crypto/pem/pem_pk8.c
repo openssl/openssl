@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -73,8 +73,8 @@ static int do_pk8pkey(BIO *bp, const EVP_PKEY *x, int isder, int nid,
     int ret = 0;
     const char *outtype = isder ? "DER" : "PEM";
     OSSL_ENCODER_CTX *ctx =
-        OSSL_ENCODER_CTX_new_by_EVP_PKEY(x, OSSL_KEYMGMT_SELECT_ALL,
-                                         outtype, "pkcs8", propq);
+        OSSL_ENCODER_CTX_new_for_pkey(x, OSSL_KEYMGMT_SELECT_ALL,
+                                      outtype, "pkcs8", propq);
 
     if (ctx == NULL)
         return 0;

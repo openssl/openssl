@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -309,11 +309,11 @@ static const OSSL_PARAM *dsa_gettable_params(void *provctx)
     return dsa_params;
 }
 
-static int dsa_validate_domparams(const DSA *dsa)
+static int dsa_validate_domparams(const DSA *dsa, int checktype)
 {
     int status = 0;
 
-    return dsa_check_params(dsa, &status);
+    return dsa_check_params(dsa, checktype, &status);
 }
 
 static int dsa_validate_public(const DSA *dsa)
@@ -338,7 +338,7 @@ static int dsa_validate_private(const DSA *dsa)
     return dsa_check_priv_key(dsa, priv_key, &status);
 }
 
-static int dsa_validate(const void *keydata, int selection)
+static int dsa_validate(const void *keydata, int selection, int checktype)
 {
     const DSA *dsa = keydata;
     int ok = 0;
@@ -350,7 +350,7 @@ static int dsa_validate(const void *keydata, int selection)
         ok = 1;
 
     if ((selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) != 0)
-        ok = ok && dsa_validate_domparams(dsa);
+        ok = ok && dsa_validate_domparams(dsa, checktype);
 
     if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0)
         ok = ok && dsa_validate_public(dsa);

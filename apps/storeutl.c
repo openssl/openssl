@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -81,7 +81,7 @@ int storeutl_main(int argc, char *argv[])
     ASN1_INTEGER *serial = NULL;
     unsigned char *fingerprint = NULL;
     size_t fingerprintlen = 0;
-    char *alias = NULL;
+    char *alias = NULL, *digestname = NULL;
     OSSL_STORE_SEARCH *search = NULL;
     const EVP_MD *digest = NULL;
     OSSL_LIB_CTX *libctx = app_get0_libctx();
@@ -247,8 +247,8 @@ int storeutl_main(int argc, char *argv[])
             e = setup_engine(opt_arg(), 0);
             break;
         case OPT_MD:
-            if (!opt_md(opt_unknown(), &digest))
-                goto opthelp;
+            digestname = opt_unknown();
+            break;
         case OPT_PROV_CASES:
             if (!opt_provider(o))
                 goto end;
@@ -261,6 +261,11 @@ int storeutl_main(int argc, char *argv[])
     argv = opt_rest();
     if (argc != 1)
         goto opthelp;
+
+    if (digestname != NULL) {
+        if (!opt_md(digestname, &digest))
+            goto opthelp;
+    }
 
     if (criterion != 0) {
         switch (criterion) {

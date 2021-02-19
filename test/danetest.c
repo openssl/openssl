@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -82,7 +82,6 @@ static int verify_chain(SSL *ssl, STACK_OF(X509) *chain)
         ret = 0;
 
     SSL_set_verify_result(ssl, X509_STORE_CTX_get_error(store_ctx));
-    X509_STORE_CTX_cleanup(store_ctx);
 
 end:
     X509_STORE_CTX_free(store_ctx);

@@ -2409,8 +2409,9 @@ static int do_test_custom_explicit_fromdata(EC_GROUP *group, BN_CTX *ctx,
 
     if (!TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld))
         || !TEST_ptr(pctx = EVP_PKEY_CTX_new_from_name(NULL, "EC", NULL))
-        || !TEST_int_gt(EVP_PKEY_param_fromdata_init(pctx), 0)
-        || !TEST_int_gt(EVP_PKEY_fromdata(pctx, &pkeyparam, params), 0))
+        || !TEST_int_gt(EVP_PKEY_fromdata_init(pctx), 0)
+        || !TEST_int_gt(EVP_PKEY_fromdata(pctx, &pkeyparam,
+                                          EVP_PKEY_KEY_PARAMETERS, params), 0))
         goto err;
 
     /*- Check that all the set values are retrievable -*/
@@ -2869,9 +2870,11 @@ static int custom_params_test(int id)
     /* create two new provider-native `EVP_PKEY`s */
     EVP_PKEY_CTX_free(pctx2);
     if (!TEST_ptr(pctx2 = EVP_PKEY_CTX_new_from_name(NULL, "EC", NULL))
-            || !TEST_true(EVP_PKEY_key_fromdata_init(pctx2))
-            || !TEST_true(EVP_PKEY_fromdata(pctx2, &pkey1, params1))
-            || !TEST_true(EVP_PKEY_fromdata(pctx2, &pkey2, params2)))
+            || !TEST_true(EVP_PKEY_fromdata_init(pctx2))
+            || !TEST_true(EVP_PKEY_fromdata(pctx2, &pkey1, EVP_PKEY_KEYPAIR,
+                                            params1))
+            || !TEST_true(EVP_PKEY_fromdata(pctx2, &pkey2, EVP_PKEY_PUBLIC_KEY,
+                                            params2)))
         goto err;
 
     /* compute keyexchange once more using the provider keys */

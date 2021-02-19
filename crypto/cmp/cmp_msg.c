@@ -19,7 +19,6 @@
 #include <openssl/crmf.h>
 #include <openssl/err.h>
 #include <openssl/x509.h>
-#include "crypto/x509.h" /* for x509_set0_libctx() */
 
 OSSL_CMP_PKIHEADER *OSSL_CMP_MSG_get0_header(const OSSL_CMP_MSG *msg)
 {
@@ -353,6 +352,10 @@ OSSL_CMP_MSG *ossl_cmp_certreq_new(OSSL_CMP_CTX *ctx, int type,
         ERR_raise(ERR_LIB_CMP, CMP_R_INVALID_ARGS);
         return NULL;
     }
+    if (type == OSSL_CMP_PKIBODY_P10CR && crm != NULL) {
+        ERR_raise(ERR_LIB_CMP, CMP_R_INVALID_ARGS);
+        return NULL;
+    }
 
     if ((msg = ossl_cmp_msg_create(ctx, type)) == NULL)
         goto err;
@@ -466,13 +469,10 @@ OSSL_CMP_MSG *ossl_cmp_certrep_new(OSSL_CMP_CTX *ctx, int bodytype,
     if (bodytype == OSSL_CMP_PKIBODY_IP && caPubs != NULL
             && (repMsg->caPubs = X509_chain_up_ref(caPubs)) == NULL)
         goto err;
-    if (sk_X509_num(chain) > 0) {
-        msg->extraCerts = sk_X509_new_reserve(NULL, sk_X509_num(chain));
-        if (msg->extraCerts == NULL
-                || !X509_add_certs(msg->extraCerts, chain,
-                                   X509_ADD_FLAG_UP_REF | X509_ADD_FLAG_NO_DUP))
-            goto err;
-    }
+    if (sk_X509_num(chain) > 0
+        && !ossl_x509_add_certs_new(&msg->extraCerts, chain,
+                                    X509_ADD_FLAG_UP_REF | X509_ADD_FLAG_NO_DUP))
+        goto err;
 
     if (!unprotectedErrors
             || ossl_cmp_pkisi_get_status(si) != OSSL_CMP_PKISTATUS_rejection)

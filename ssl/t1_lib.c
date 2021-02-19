@@ -526,7 +526,7 @@ int tls_valid_group(SSL *s, uint16_t group_id, int minversion, int maxversion,
     int ret;
 
     if (okfortls13 != NULL)
-        okfortls13 = 0;
+        *okfortls13 = 0;
 
     if (ginfo == NULL)
         return 0;
@@ -2901,7 +2901,7 @@ EVP_PKEY *ssl_get_auto_dh(SSL *s)
 
     pctx = EVP_PKEY_CTX_new_from_name(s->ctx->libctx, "DH", s->ctx->propq);
     if (pctx == NULL
-            || EVP_PKEY_key_fromdata_init(pctx) != 1)
+            || EVP_PKEY_fromdata_init(pctx) != 1)
         goto err;
 
     tmpl = OSSL_PARAM_BLD_new();
@@ -2911,7 +2911,8 @@ EVP_PKEY *ssl_get_auto_dh(SSL *s)
         goto err;
 
     params = OSSL_PARAM_BLD_to_param(tmpl);
-    if (params == NULL || EVP_PKEY_fromdata(pctx, &dhp, params) != 1)
+    if (params == NULL
+            || EVP_PKEY_fromdata(pctx, &dhp, EVP_PKEY_KEY_PARAMETERS, params) != 1)
         goto err;
 
 err:

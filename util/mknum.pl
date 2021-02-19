@@ -1,6 +1,6 @@
 
 #! /usr/bin/env perl
-# Copyright 2018-2020 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2018-2021 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -73,7 +73,7 @@ foreach my $f (($symhacks_file // (), @ARGV)) {
                 && defined $symhacks_file
                 && $f eq $symhacks_file
                 && $_->{value} =~ /^\w(?:\w|\d)*/) {
-            $ordinals->add_alias($_->{value}, $_->{name}, @{$_->{conds}});
+            $ordinals->add_alias($f, $_->{value}, $_->{name}, @{$_->{conds}});
         } else {
             next if $_->{returntype} =~ /\b(?:ossl_)inline/;
             my $type = {
@@ -81,7 +81,7 @@ foreach my $f (($symhacks_file // (), @ARGV)) {
                 V => 'VARIABLE',
             } -> {$_->{type}};
             if ($type) {
-                $ordinals->add($_->{name}, $type, @{$_->{conds}});
+                $ordinals->add($f, $_->{name}, $type, @{$_->{conds}});
             }
         }
     }

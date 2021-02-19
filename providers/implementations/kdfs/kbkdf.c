@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright 2019 Red Hat, Inc.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -33,6 +33,7 @@
 #include <openssl/hmac.h>
 #include <openssl/kdf.h>
 #include <openssl/params.h>
+#include <openssl/proverr.h>
 
 #include "internal/cryptlib.h"
 #include "crypto/evp.h"
@@ -42,7 +43,6 @@
 #include "prov/provider_ctx.h"
 #include "prov/provider_util.h"
 #include "prov/providercommon.h"
-#include "prov/providercommonerr.h"
 
 #include "e_os.h"
 

@@ -19,14 +19,19 @@
 #include "dsa_local.h"
 #include "crypto/dsa.h"
 
-int dsa_check_params(const DSA *dsa, int *ret)
+int dsa_check_params(const DSA *dsa, int checktype, int *ret)
 {
-    /*
-     * (2b) FFC domain params conform to FIPS-186-4 explicit domain param
-     * validity tests.
-     */
-    return ossl_ffc_params_FIPS186_4_validate(dsa->libctx, &dsa->params,
-                                              FFC_PARAM_TYPE_DSA, ret, NULL);
+    if (checktype == OSSL_KEYMGMT_VALIDATE_QUICK_CHECK)
+        return ossl_ffc_params_simple_validate(dsa->libctx, &dsa->params,
+                                               FFC_PARAM_TYPE_DSA, ret);
+    else
+        /*
+         * Do full FFC domain params validation according to FIPS-186-4
+         *  - always in FIPS_MODULE
+         *  - only if possible (i.e., seed is set) in default provider
+         */
+        return ossl_ffc_params_full_validate(dsa->libctx, &dsa->params,
+                                             FFC_PARAM_TYPE_DSA, ret);
 }
 
 /*

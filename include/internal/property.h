@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2019, Oracle and/or its affiliates.  All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -10,8 +10,9 @@
 
 #ifndef OSSL_INTERNAL_PROPERTY_H
 # define OSSL_INTERNAL_PROPERTY_H
+# pragma once
 
-#include "internal/cryptlib.h"
+# include "internal/cryptlib.h"
 
 typedef struct ossl_method_store_st OSSL_METHOD_STORE;
 typedef struct ossl_property_list_st OSSL_PROPERTY_LIST;

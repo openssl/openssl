@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -9,8 +9,10 @@
 
 /* Dispatch functions for AES CBC CTS ciphers */
 
+#include <openssl/proverr.h>
 #include "cipher_aes_cts.h"
-#include "prov/providercommonerr.h"
+
+#define AES_CTS_FLAGS PROV_CIPHER_FLAG_CTS
 
 static OSSL_FUNC_cipher_get_ctx_params_fn aes_cbc_cts_get_ctx_params;
 static OSSL_FUNC_cipher_set_ctx_params_fn aes_cbc_cts_set_ctx_params;
@@ -101,8 +103,8 @@ const OSSL_DISPATCH ossl_##alg##kbits##lcmode##_cts_functions[] = {            \
 };
 
 /* ossl_aes256cbc_cts_functions */
-IMPLEMENT_cts_cipher(aes, AES, cbc, CBC, EVP_CIPH_FLAG_CTS, 256, 128, 128, block)
+IMPLEMENT_cts_cipher(aes, AES, cbc, CBC, AES_CTS_FLAGS, 256, 128, 128, block)
 /* ossl_aes192cbc_cts_functions */
-IMPLEMENT_cts_cipher(aes, AES, cbc, CBC, EVP_CIPH_FLAG_CTS, 192, 128, 128, block)
+IMPLEMENT_cts_cipher(aes, AES, cbc, CBC, AES_CTS_FLAGS, 192, 128, 128, block)
 /* ossl_aes128cbc_cts_functions */
-IMPLEMENT_cts_cipher(aes, AES, cbc, CBC, EVP_CIPH_FLAG_CTS, 128, 128, 128, block)
+IMPLEMENT_cts_cipher(aes, AES, cbc, CBC, AES_CTS_FLAGS, 128, 128, 128, block)

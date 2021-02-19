@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -145,7 +145,7 @@ const OPTIONS pkcs12_options[] = {
 int pkcs12_main(int argc, char **argv)
 {
     char *infile = NULL, *outfile = NULL, *keyname = NULL, *certfile = NULL;
-    char *untrusted = NULL;
+    char *untrusted = NULL, *ciphername = NULL, *enc_flag = NULL;
     char *passcertsarg = NULL, *passcerts = NULL;
     char *name = NULL, *csp_name = NULL;
     char pass[PASSWD_BUF_SIZE] = "", macpass[PASSWD_BUF_SIZE] = "";
@@ -164,7 +164,6 @@ int pkcs12_main(int argc, char **argv)
     BIO *in = NULL, *out = NULL;
     PKCS12 *p12 = NULL;
     STACK_OF(OPENSSL_STRING) *canames = NULL;
-    const char *enc_flag = NULL;
     const EVP_CIPHER *const default_enc = EVP_aes_256_cbc();
     const EVP_CIPHER *enc = default_enc;
     OPTION_CHOICE o;
@@ -220,10 +219,19 @@ int pkcs12_main(int argc, char **argv)
         case OPT_EXPORT:
             export_pkcs12 = 1;
             break;
+        case OPT_NODES:
+        case OPT_NOENC:
+            /*
+             * |enc_flag| stores the name of the option used so it
+             * can be printed if an error message is output.
+             */
+            enc_flag = opt_flag() + 1;
+            enc = NULL;
+            ciphername = NULL;
+            break;
         case OPT_CIPHER:
+            ciphername = opt_unknown();
             enc_flag = opt_unknown();
-            if (!opt_cipher(enc_flag, &enc))
-                goto opthelp;
             break;
         case OPT_ITER:
             if (!opt_int(opt_arg(), &iter))
@@ -245,11 +253,6 @@ int pkcs12_main(int argc, char **argv)
             break;
         case OPT_MACALG:
             macalg = opt_arg();
-            break;
-        case OPT_NODES:
-        case OPT_NOENC:
-            enc_flag = opt_flag() + 1;
-            enc = NULL;
             break;
         case OPT_CERTPBE:
             if (!set_pbe(&cert_pbe, opt_arg()))
@@ -341,6 +344,11 @@ int pkcs12_main(int argc, char **argv)
     if (argc != 0)
         goto opthelp;
 
+    app_RAND_load();
+    if (ciphername != NULL) {
+        if (!opt_cipher(ciphername, &enc))
+            goto opthelp;
+    }
     if (export_pkcs12) {
         if ((options & INFO) != 0)
             WARN_EXPORT("info");

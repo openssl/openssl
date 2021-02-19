@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -91,8 +91,9 @@ struct prov_drbg_st {
     OSSL_FUNC_rand_lock_fn *parent_lock;
     OSSL_FUNC_rand_unlock_fn *parent_unlock;
     OSSL_FUNC_rand_get_ctx_params_fn *parent_get_ctx_params;
-    OSSL_FUNC_rand_generate_fn *parent_generate;
     OSSL_FUNC_rand_nonce_fn *parent_nonce;
+    OSSL_FUNC_rand_get_seed_fn *parent_get_seed;
+    OSSL_FUNC_rand_clear_seed_fn *parent_clear_seed;
 
     const OSSL_DISPATCH *parent_dispatch;
 
@@ -204,6 +205,10 @@ int ossl_prov_drbg_reseed(PROV_DRBG *drbg, int prediction_resistance,
 int ossl_prov_drbg_generate(PROV_DRBG *drbg, unsigned char *out, size_t outlen,
                             unsigned int strength, int prediction_resistance,
                             const unsigned char *adin, size_t adinlen);
+
+/* Seeding api */
+OSSL_FUNC_rand_get_seed_fn ossl_drbg_get_seed;
+OSSL_FUNC_rand_clear_seed_fn ossl_drbg_clear_seed;
 
 /* Verify that an array of numeric values is all zero */
 #define PROV_DRBG_VERYIFY_ZEROIZATION(v)    \

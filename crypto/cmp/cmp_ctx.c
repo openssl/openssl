@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2007-2021 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright Nokia 2007-2019
  * Copyright Siemens AG 2015-2019
  *
@@ -12,7 +12,6 @@
 #include <openssl/trace.h>
 #include <openssl/bio.h>
 #include <openssl/ocsp.h> /* for OCSP_REVOKED_STATUS_* */
-#include "crypto/x509.h" /* for x509v3_cache_extensions() */
 
 #include "cmp_local.h"
 
@@ -65,15 +64,14 @@ STACK_OF(X509) *OSSL_CMP_CTX_get0_untrusted(const OSSL_CMP_CTX *ctx)
  */
 int OSSL_CMP_CTX_set1_untrusted(OSSL_CMP_CTX *ctx, STACK_OF(X509) *certs)
 {
-    STACK_OF(X509) *untrusted;
+    STACK_OF(X509) *untrusted = NULL;
+
     if (ctx == NULL) {
         ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
         return 0;
     }
-    if ((untrusted = sk_X509_new_null()) == NULL)
-        return 0;
-    if (X509_add_certs(untrusted, certs,
-                       X509_ADD_FLAG_UP_REF | X509_ADD_FLAG_NO_DUP) != 1)
+    if (!ossl_x509_add_certs_new(&untrusted, certs,
+                                 X509_ADD_FLAG_UP_REF | X509_ADD_FLAG_NO_DUP))
         goto err;
     sk_X509_pop_free(ctx->untrusted, X509_free);
     ctx->untrusted = untrusted;
@@ -731,10 +729,8 @@ int OSSL_CMP_CTX_build_cert_chain(OSSL_CMP_CTX *ctx, X509_STORE *own_trusted,
         return 0;
     }
 
-    if (ctx->untrusted != NULL ?
-        !X509_add_certs(ctx->untrusted, candidates,
-                        X509_ADD_FLAG_UP_REF | X509_ADD_FLAG_NO_DUP) :
-        !OSSL_CMP_CTX_set1_untrusted(ctx, candidates))
+    if (!ossl_x509_add_certs_new(&ctx->untrusted, candidates,
+                                 X509_ADD_FLAG_UP_REF | X509_ADD_FLAG_NO_DUP))
         return 0;
 
     ossl_cmp_debug(ctx, "trying to build chain for own CMP signer cert");

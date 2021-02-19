@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -13,8 +13,8 @@
 #include <openssl/crypto.h>
 #include <openssl/fipskey.h>
 #include <openssl/err.h>
+#include <openssl/proverr.h>
 #include "e_os.h"
-#include "prov/providercommonerr.h"
 #include "prov/providercommon.h"
 
 /*
@@ -182,8 +182,7 @@ static int verify_integrity(OSSL_CORE_BIO *bio, OSSL_FUNC_BIO_read_ex_fn read_ex
     if (ctx == NULL)
         goto err;
 
-    *p++ = OSSL_PARAM_construct_utf8_string("digest", DIGEST_NAME,
-                                            strlen(DIGEST_NAME) + 1);
+    *p++ = OSSL_PARAM_construct_utf8_string("digest", DIGEST_NAME, 0);
     *p++ = OSSL_PARAM_construct_octet_string("key", fixed_key,
                                              sizeof(fixed_key));
     *p = OSSL_PARAM_construct_end();

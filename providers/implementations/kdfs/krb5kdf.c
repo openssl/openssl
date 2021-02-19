@@ -21,6 +21,7 @@
 #include <openssl/des.h>
 #include <openssl/evp.h>
 #include <openssl/kdf.h>
+#include <openssl/proverr.h>
 
 #include "internal/cryptlib.h"
 #include "crypto/evp.h"
@@ -29,7 +30,6 @@
 #include "prov/provider_ctx.h"
 #include "prov/provider_util.h"
 #include "prov/providercommon.h"
-#include "prov/providercommonerr.h"
 
 /* KRB5 KDF defined in RFC 3961, Section 5.1 */
 

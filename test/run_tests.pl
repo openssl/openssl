@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2021 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -44,10 +44,17 @@ my %tapargs =
       lib               => [ $libdir ],
       switches          => '-w',
       merge             => 1,
+      timer             => $ENV{HARNESS_TIMER} ? 1 : 0,
     );
 
-$tapargs{jobs} = $jobs if $jobs > 1;
-print "Using HARNESS_JOBS=$jobs\n" if $jobs > 1;
+if ($jobs > 1) {
+    if ($ENV{HARNESS_VERBOSE}) {
+        print "Warning: HARNESS_JOBS > 1 ignored with HARNESS_VERBOSE\n";
+    } else {
+        $tapargs{jobs} = $jobs;
+        print "Using HARNESS_JOBS=$jobs\n";
+    }
+}
 
 # Additional OpenSSL special TAP arguments.  Because we can't pass them via
 # TAP::Harness->new(), they will be accessed directly, see the
@@ -57,8 +64,6 @@ my %openssl_args = ();
 $openssl_args{'failure_verbosity'} = $ENV{HARNESS_VERBOSE} ? 0 :
     $ENV{HARNESS_VERBOSE_FAILURE_PROGRESS} ? 2 :
     1; # $ENV{HARNESS_VERBOSE_FAILURE}
-print "Warning: HARNESS_JOBS > 1 overrides HARNESS_VERBOSE\n"
-    if $jobs > 1 && $ENV{HARNESS_VERBOSE};
 print "Warning: HARNESS_VERBOSE overrides HARNESS_VERBOSE_FAILURE*\n"
     if ($ENV{HARNESS_VERBOSE} && ($ENV{HARNESS_VERBOSE_FAILURE}
                                   || $ENV{HARNESS_VERBOSE_FAILURE_PROGRESS}));

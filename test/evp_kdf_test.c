@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018-2021 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2018-2020, Oracle and/or its affiliates.  All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -638,7 +638,7 @@ static int test_kdf_ss_hash(void)
     };
 
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
-                                            (char *)"sha224", sizeof("sha224"));
+                                            (char *)"sha224", 0);
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY, z, sizeof(z));
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_INFO, other,
                                              sizeof(other));
@@ -692,7 +692,7 @@ static int test_kdf_x963(void)
     };
 
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
-                                            (char *)"sha512", sizeof("sha512"));
+                                            (char *)"sha512", 0);
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY, z, sizeof(z));
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_INFO, shared,
                                              sizeof(shared));
@@ -1135,10 +1135,9 @@ static int test_kdf_ss_hmac(void)
     };
 
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_MAC,
-                                            (char *)OSSL_MAC_NAME_HMAC,
-                                            sizeof(OSSL_MAC_NAME_HMAC));
+                                            (char *)OSSL_MAC_NAME_HMAC, 0);
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
-                                            (char *)"sha256", sizeof("sha256"));
+                                            (char *)"sha256", 0);
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY, z, sizeof(z));
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_INFO, other,
                                              sizeof(other));
@@ -1182,8 +1181,7 @@ static int test_kdf_ss_kmac(void)
     };
 
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_MAC,
-                                            (char *)OSSL_MAC_NAME_KMAC128,
-                                            sizeof(OSSL_MAC_NAME_KMAC128));
+                                            (char *)OSSL_MAC_NAME_KMAC128, 0);
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY, z, sizeof(z));
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_INFO, other,
                                              sizeof(other));
@@ -1239,7 +1237,7 @@ static int test_kdf_sshkdf(void)
     };
 
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
-                                            (char *)"sha256", sizeof("sha256"));
+                                            (char *)"sha256", 0);
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY, key,
                                              sizeof(key));
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SSHKDF_XCGHASH,
@@ -1247,7 +1245,7 @@ static int test_kdf_sshkdf(void)
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SSHKDF_SESSION_ID,
                                              sessid, sizeof(sessid));
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_SSHKDF_TYPE,
-                                            kdftype, sizeof(kdftype));
+                                            kdftype, 0);
     *p = OSSL_PARAM_construct_end();
 
     ret =
@@ -1260,6 +1258,21 @@ static int test_kdf_sshkdf(void)
     return ret;
 }
 
+static int test_kdfs_same( EVP_KDF *kdf1, EVP_KDF *kdf2)
+{
+    /* Fast path in case the two are the same algorithm pointer */
+    if (kdf1 == kdf2)
+        return 1;
+    /*
+     * Compare their names and providers instead.
+     * This is necessary in a non-caching build (or a cache flush during fetch)
+     * because without the algorithm in the cache, fetching it a second time
+     * will result in a different pointer.
+     */
+    return TEST_ptr_eq(EVP_KDF_provider(kdf1), EVP_KDF_provider(kdf2))
+           && TEST_str_eq(EVP_KDF_name(kdf1), EVP_KDF_name(kdf2));
+}
+
 static int test_kdf_get_kdf(void)
 {
     EVP_KDF *kdf1 = NULL, *kdf2 = NULL;
@@ -1270,7 +1283,7 @@ static int test_kdf_get_kdf(void)
         || !TEST_ptr(kdf1 = EVP_KDF_fetch(NULL, OSSL_KDF_NAME_PBKDF2, NULL))
         || !TEST_ptr(kdf2 = EVP_KDF_fetch(NULL, OBJ_nid2sn(OBJ_obj2nid(obj)),
                                           NULL))
-        || !TEST_ptr_eq(kdf1, kdf2))
+        || !test_kdfs_same(kdf1, kdf2))
         ok = 0;
     EVP_KDF_free(kdf1);
     kdf1 = NULL;
@@ -1279,14 +1292,14 @@ static int test_kdf_get_kdf(void)
 
     if (!TEST_ptr(kdf1 = EVP_KDF_fetch(NULL, SN_tls1_prf, NULL))
         || !TEST_ptr(kdf2 = EVP_KDF_fetch(NULL, LN_tls1_prf, NULL))
-        || !TEST_ptr_eq(kdf1, kdf2))
+        || !test_kdfs_same(kdf1, kdf2))
         ok = 0;
     /* kdf1 is re-used below, so don't free it here */
     EVP_KDF_free(kdf2);
     kdf2 = NULL;
 
     if (!TEST_ptr(kdf2 = EVP_KDF_fetch(NULL, OBJ_nid2sn(NID_tls1_prf), NULL))
-        || !TEST_ptr_eq(kdf1, kdf2))
+        || !test_kdfs_same(kdf1, kdf2))
         ok = 0;
     EVP_KDF_free(kdf1);
     kdf1 = NULL;
@@ -1353,8 +1366,7 @@ static int test_kdf_krb5kdf(void)
     };
 
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_CIPHER,
-                                            (char *)"AES-128-CBC",
-                                            sizeof("AES-128-CBC"));
+                                            (char *)"AES-128-CBC", 0);
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY, key,
                                              sizeof(key));
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_CONSTANT,

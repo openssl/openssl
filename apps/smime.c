@@ -145,7 +145,8 @@ int smime_main(int argc, char **argv)
     const char *CAfile = NULL, *CApath = NULL, *CAstore = NULL, *prog = NULL;
     char *certfile = NULL, *keyfile = NULL, *contfile = NULL;
     char *infile = NULL, *outfile = NULL, *signerfile = NULL, *recipfile = NULL;
-    char *passinarg = NULL, *passin = NULL, *to = NULL, *from = NULL, *subject = NULL;
+    char *passinarg = NULL, *passin = NULL, *to = NULL, *from = NULL;
+    char *subject = NULL, *digestname = NULL, *ciphername = NULL;
     OPTION_CHOICE o;
     int noCApath = 0, noCAfile = 0, noCAstore = 0;
     int flags = PKCS7_DETACHED, operation = 0, ret = 0, indef = 0;
@@ -293,12 +294,10 @@ int smime_main(int argc, char **argv)
             recipfile = opt_arg();
             break;
         case OPT_MD:
-            if (!opt_md(opt_arg(), &sign_md))
-                goto opthelp;
+            digestname = opt_arg();
             break;
         case OPT_CIPHER:
-            if (!opt_cipher(opt_unknown(), &cipher))
-                goto opthelp;
+            ciphername = opt_unknown();
             break;
         case OPT_INKEY:
             /* If previous -inkey argument add signer to list */
@@ -360,6 +359,15 @@ int smime_main(int argc, char **argv)
     argc = opt_num_rest();
     argv = opt_rest();
 
+    app_RAND_load();
+    if (digestname != NULL) {
+        if (!opt_md(digestname, &sign_md))
+            goto opthelp;
+    }
+    if (ciphername != NULL) {
+        if (!opt_cipher(ciphername, &cipher))
+            goto opthelp;
+    }
     if (!(operation & SMIME_SIGNERS) && (skkeys != NULL || sksigners != NULL)) {
         BIO_puts(bio_err, "Multiple signers or keys not allowed\n");
         goto opthelp;

@@ -104,7 +104,7 @@ static int dh_init(void *vpdhctx, void *vdh)
     DH_free(pdhctx->dh);
     pdhctx->dh = vdh;
     pdhctx->kdf_type = PROV_DH_KDF_NONE;
-    return dh_check_key(vdh);
+    return ossl_dh_check_key(vdh);
 }
 
 static int dh_set_peer(void *vpdhctx, void *vdh)
@@ -321,7 +321,7 @@ static int dh_set_ctx_params(void *vpdhctx, const OSSL_PARAM params[])
 
         EVP_MD_free(pdhctx->kdf_md);
         pdhctx->kdf_md = EVP_MD_fetch(pdhctx->libctx, name, mdprops);
-        if (!digest_is_allowed(pdhctx->kdf_md)) {
+        if (!ossl_digest_is_allowed(pdhctx->kdf_md)) {
             EVP_MD_free(pdhctx->kdf_md);
             pdhctx->kdf_md = NULL;
         }

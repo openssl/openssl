@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -20,6 +20,7 @@
 #include <openssl/bn.h>
 #include <openssl/err.h>
 #include <openssl/safestack.h>
+#include <openssl/proverr.h>
 #include "internal/ffc.h"
 #include "crypto/bn.h"           /* bn_get_words() */
 #include "crypto/dh.h"           /* dh_get0_params() */
@@ -29,7 +30,6 @@
 #include "crypto/rsa.h"          /* RSA_PSS_PARAMS_30, etc... */
 #include "prov/bio.h"
 #include "prov/implementations.h"
-#include "prov/providercommonerr.h"
 #include "endecoder_local.h"
 
 DEFINE_SPECIAL_STACK_OF_CONST(BIGNUM_const, BIGNUM)

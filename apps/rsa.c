@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -93,7 +93,7 @@ int rsa_main(int argc, char **argv)
     EVP_PKEY *pkey = NULL;
     EVP_PKEY_CTX *pctx;
     const EVP_CIPHER *enc = NULL;
-    char *infile = NULL, *outfile = NULL, *prog;
+    char *infile = NULL, *outfile = NULL, *ciphername = NULL, *prog;
     char *passin = NULL, *passout = NULL, *passinarg = NULL, *passoutarg = NULL;
     int private = 0;
     int informat = FORMAT_PEM, outformat = FORMAT_PEM, text = 0, check = 0;
@@ -171,8 +171,7 @@ int rsa_main(int argc, char **argv)
             check = 1;
             break;
         case OPT_CIPHER:
-            if (!opt_cipher(opt_unknown(), &enc))
-                goto opthelp;
+            ciphername = opt_unknown();
             break;
         case OPT_PROV_CASES:
             if (!opt_provider(o))
@@ -189,6 +188,10 @@ int rsa_main(int argc, char **argv)
     if (argc != 0)
         goto opthelp;
 
+    if (ciphername != NULL) {
+        if (!opt_cipher(ciphername, &enc))
+            goto opthelp;
+    }
     private = (text && !pubin) || (!pubout && !noout) ? 1 : 0;
 
     if (!app_passwd(passinarg, passoutarg, &passin, &passout)) {
@@ -331,9 +334,9 @@ int rsa_main(int argc, char **argv)
     }
 
     /* Now, perform the encoding */
-    ectx = OSSL_ENCODER_CTX_new_by_EVP_PKEY(pkey, selection,
-                                            output_type, output_structure,
-                                            NULL);
+    ectx = OSSL_ENCODER_CTX_new_for_pkey(pkey, selection,
+                                         output_type, output_structure,
+                                         NULL);
     if (OSSL_ENCODER_CTX_get_num_encoders(ectx) == 0) {
         BIO_printf(bio_err, "%s format not supported\n", output_type);
         goto end;

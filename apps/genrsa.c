@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -86,7 +86,7 @@ int genrsa_main(int argc, char **argv)
     int ret = 1, num = DEFBITS, private = 0, primes = DEFPRIMES;
     unsigned long f4 = RSA_F4;
     char *outfile = NULL, *passoutarg = NULL, *passout = NULL;
-    char *prog, *hexe, *dece;
+    char *prog, *hexe, *dece, *ciphername = NULL;
     OPTION_CHOICE o;
     int traditional = 0;
 
@@ -131,8 +131,7 @@ opthelp:
             passoutarg = opt_arg();
             break;
         case OPT_CIPHER:
-            if (!opt_cipher(opt_unknown(), &enc))
-                goto end;
+            ciphername = opt_unknown();
             break;
         case OPT_PRIMES:
             if (!opt_int(opt_arg(), &primes))
@@ -164,7 +163,12 @@ opthelp:
         goto opthelp;
     }
 
+    app_RAND_load();
     private = 1;
+    if (ciphername != NULL) {
+        if (!opt_cipher(ciphername, &enc))
+            goto end;
+    }
     if (!app_passwd(NULL, passoutarg, NULL, &passout)) {
         BIO_printf(bio_err, "Error getting password\n");
         goto end;

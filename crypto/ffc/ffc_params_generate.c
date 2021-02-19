@@ -77,12 +77,12 @@ static int ffc_validate_LN(size_t L, size_t N, int type, int verify)
         ERR_raise(ERR_LIB_DH, DH_R_BAD_FFC_PARAMETERS);
 # endif
     } else if (type == FFC_PARAM_TYPE_DSA) {
-        if (L == 1024 && N == 160)
-            return 80;
-        if (L == 2048 && (N == 224 || N == 256))
-            return 112;
-        if (L == 3072 && N == 256)
+        if (L >= 3072 && N >= 256)
             return 128;
+        if (L >= 2048 && N >= 224)
+            return 112;
+        if (L >= 1024 && N >= 160)
+            return 80;
 # ifndef OPENSSL_NO_DSA
         ERR_raise(ERR_LIB_DSA, DSA_R_BAD_FFC_PARAMETERS);
 # endif

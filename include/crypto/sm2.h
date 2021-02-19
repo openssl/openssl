@@ -11,6 +11,8 @@
 
 #ifndef OSSL_CRYPTO_SM2_H
 # define OSSL_CRYPTO_SM2_H
+# pragma once
+
 # include <openssl/opensslconf.h>
 
 # ifndef OPENSSL_NO_SM2

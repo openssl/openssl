@@ -14,6 +14,10 @@ SRP_get_default_gN
 
  #include <openssl/srp.h>
 
+Deprecated since OpenSSL 3.0, can be hidden entirely by defining
+B<OPENSSL_API_COMPAT> with a suitable version value, see
+L<openssl_user_macros(7)>:
+
  int SRP_create_verifier_BN_ex(const char *user, const char *pass, BIGNUM **salt,
                                BIGNUM **verifier, const BIGNUM *N,
                                const BIGNUM *g, OSSL_LIB_CTX *libctx,
@@ -30,6 +34,9 @@ SRP_get_default_gN
  SRP_gN *SRP_get_default_gN(const char *id);
 
 =head1 DESCRIPTION
+
+All of the functions described on this page are deprecated. There are no
+available replacement functions at this time.
 
 The SRP_create_verifier_BN_ex() function creates an SRP password verifier from
 the supplied parameters as defined in section 2.4 of RFC 5054 using the library
@@ -115,11 +122,14 @@ L<SRP_user_pwd_new(3)>
 
 =head1 HISTORY
 
-These functions were added in OpenSSL 1.0.1.
+SRP_create_verifier_BN_ex() and SRP_create_verifier_ex() were introduced in
+OpenSSL 3.0. All other functions were added in OpenSSL 1.0.1.
+
+All of these functions were deprecated in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2018-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2018-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
