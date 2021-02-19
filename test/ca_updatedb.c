@@ -18,10 +18,10 @@ char *default_config_file = NULL;
 int setup_tests(void)
 {
     CA_DB *db = NULL;
-    BIO *channel;
     time_t *testdateutc = NULL;
     int rv;
     int argc = test_get_argument_count();
+    BIO *bio_tmp;
 
     if (argc != 2) {
         fprintf(stderr, "Usage: ca_updatedb dbfile testdate\n");
@@ -36,13 +36,8 @@ int setup_tests(void)
         return 0;
     }
 
-    channel = BIO_push(BIO_new(BIO_f_prefix()), dup_bio_err(FORMAT_TEXT));
-    bio_err = dup_bio_out(FORMAT_TEXT);
-
     default_config_file = CONF_get1_default_config_file();
     if (default_config_file == NULL) {
-        BIO_free_all(bio_err);
-        BIO_free_all(channel);
         free(testdateutc);
         fprintf(stderr, "Error: could not get default config file\n");
         return 0;
@@ -56,7 +51,10 @@ int setup_tests(void)
         return 0;
     }
 
+    bio_tmp = bio_err;
+    bio_err = bio_out;
     rv = do_updatedb(db, testdateutc);
+    bio_err = bio_tmp;
 
     if (rv > 0) {
         if (!save_index(indexfile, "new", db))
@@ -69,8 +67,5 @@ end:
     free(default_config_file);
     free_index(db);
     free(testdateutc);
-    // produces a segfault...
-    //BIO_free_all(bio_err);
-    BIO_free_all(channel);
     return 1;
 } 
