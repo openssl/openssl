@@ -22,6 +22,10 @@ All the macros listed in the synopsis above are reserved.
 
 Not applicable.
 
+=head1 HISTORY
+
+The macros described here were added in OpenSSL 3.0.
+
 =head1 COPYRIGHT
 
 Copyright 2021 The OpenSSL Project Authors. All Rights Reserved.
