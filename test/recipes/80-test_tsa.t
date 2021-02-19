@@ -79,7 +79,7 @@ sub verify_time_stamp_response_fail {
 
 # main functions
 
-plan tests => 21;
+plan tests => 22;
 
 note "setting up TSA test directory";
 indir "tsa" => sub
@@ -205,12 +205,37 @@ indir "tsa" => sub
      };
     }
 
-    ok(run(app([
-        @RUN, "-verify", "-no_check_time",
-        "-queryfile", data_file("all-zero.tsq"),
-        "-in", data_file("sectigo-all-zero.tsr"),
-        "-CAfile", data_file("user-trust-ca.pem"),
-        "-untrusted", data_file("sectigo-time-stamping-ca.pem"),
-    ])));
+    { # verifying response with multiple ESSCertID (good chain)
+        ok(run(app([
+            @RUN, "-verify", "-no_check_time",
+            "-queryfile", data_file("all-zero.tsq"),
+            "-in", data_file("sectigo-all-zero.tsr"),
+            "-CAfile", data_file("user-trust-ca.pem"),
+            "-untrusted", data_file("sectigo-time-stamping-ca.pem"),
+        ])));
+    }
+
+    { # verifying response with multiple ESSCertID (bad chain)
+        open(TARGET, ">failing-chain.pem");
+        my @chain_path_list = (
+            data_file("sectigo-time-stamping-ca.pem"),
+            data_file("user-trust-ca-aaa.pem"),
+        );
+        for my $chain_path (@chain_path_list) {
+            open(PEM, "<${chain_path}");
+            while(<PEM>) {
+                print TARGET $_;
+            }
+            close(PEM);
+        }
+        close(TARGET);
+        ok(!run(app([
+            @RUN, "-verify", "-no_check_time",
+            "-queryfile", data_file("all-zero.tsq"),
+            "-in", data_file("sectigo-all-zero.tsr"),
+            "-CAfile", data_file("comodo-aaa.pem"),
+            "-untrusted", "failing-chain.pem",
+        ])));
+    }
 
 }, create => 1, cleanup => 1
