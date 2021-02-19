@@ -179,15 +179,17 @@ that is provided by the caller):
 B<lh_I<TYPE>_error>() can be used to determine if an error occurred in the last
 operation.
 
-OPENSSL_LH_new() is the same as the lh_TYPE_new() except that it is not type
-specific. So instead of returning an LHASH_OF(TYPE) value it returns a void *.
-In the same way the functions OPENSSL_LH_free, OPENSSL_LH_flush,
-OPENSSL_LH_insert, OPENSSL_LH_delete, OPENSSL_LH_retrieve, OPENSSL_LH_doall,
-OPENSSL_LH_doall_arg, and OPENSSL_LH_error are equivalent to the similarly named
-lh_TYPE functions except that they return or use a void * where the equivalent
-lh_TYPE function returns or uses a TYPE * or LHASH_OF(TYPE) *. lh_TYPE functions
-are implemented as type checked wrappers around the OPENSSL_LH functions. Most
-applications should not call the OPENSSL_LH functions directly.
+OPENSSL_LH_new() is the same as the B<lh_I<TYPE>_new>() except that it is not
+type specific. So instead of returning an B<LHASH_OF(I<TYPE>)> value it returns
+a B<void *>. In the same way the functions OPENSSL_LH_free(),
+OPENSSL_LH_flush(), OPENSSL_LH_insert(), OPENSSL_LH_delete(),
+OPENSSL_LH_retrieve(), OPENSSL_LH_doall(), OPENSSL_LH_doall_arg(), and
+OPENSSL_LH_error() are equivalent to the similarly named B<lh_I<TYPE>> functions
+except that they return or use a B<void *> where the equivalent B<lh_I<TYPE>>
+function returns or uses a B<I<TYPE> *> or B<LHASH_OF(I<TYPE>) *>. B<lh_I<TYPE>>
+functions are implemented as type checked wrappers around the B<OPENSSL_LH>
+functions. Most applications should not call the B<OPENSSL_LH> functions
+directly.
 
 =head1 RETURN VALUES
 
