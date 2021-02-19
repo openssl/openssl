@@ -677,7 +677,7 @@ static int decoder_process(const OSSL_PARAM params[], void *arg)
         }
 
         /*
-         * If the previous decoder gave us an data type, we check to see
+         * If the previous decoder gave us a data type, we check to see
          * if that matches the decoder we're currently considering.
          */
         if (data_type != NULL && !OSSL_DECODER_is_a(new_decoder, data_type)) {
