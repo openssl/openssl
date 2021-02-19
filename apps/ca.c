@@ -32,6 +32,7 @@
 #endif
 
 #include "apps.h"
+#include "apps_extracted.h"
 #include "progs.h"
 #include "ca_logic.h"
 

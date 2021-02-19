@@ -10,26 +10,30 @@
 #include "../apps/include/ca.h"
 #include "../apps/include/ca_logic.h"
 #include "../apps/include/apps.h"
+#include "../apps/include/apps_extracted.h"
+#include "testutil.h"
 
 char *default_config_file = NULL;
 
-int main(int argc, char *argv[])
+int setup_tests(void)
 {
     CA_DB *db = NULL;
     BIO *channel;
     time_t *testdateutc = NULL;
     int rv;
+    int argc = test_get_argument_count();
 
-    if (argc != 3) {
-        fprintf(stderr, "Usage: %s dbfile testdate\n", argv[0]);
+    if (argc != 2) {
+        fprintf(stderr, "Usage: ca_updatedb dbfile testdate\n");
         fprintf(stderr, "       testdate format: ASN1-String\n");
-        return EXIT_FAILURE;
+        return 0;
     }
 
-    testdateutc = asn1_string_to_time_t(argv[2]);
+    char *testdate = test_get_argument(1);
+    testdateutc = asn1_string_to_time_t(testdate);
     if (testdateutc == NULL) {
-        fprintf(stderr, "Error: testdate '%s' is invalid\n", argv[2]);
-        return EXIT_FAILURE;
+        fprintf(stderr, "Error: testdate '%s' is invalid\n", testdate);
+        return 0;
     }
 
     channel = BIO_push(BIO_new(BIO_f_prefix()), dup_bio_err(FORMAT_TEXT));
@@ -41,29 +45,32 @@ int main(int argc, char *argv[])
         BIO_free_all(channel);
         free(testdateutc);
         fprintf(stderr, "Error: could not get default config file\n");
-        return EXIT_FAILURE;
+        return 0;
     }
 
-    db = load_index(argv[1], NULL);
+    char *indexfile = test_get_argument(0);
+    db = load_index(indexfile, NULL);
     if (db == NULL) {
-        fprintf(stderr, "Error: dbfile '%s' is not readable\n", argv[1]);
-        return EXIT_FAILURE;
+        fprintf(stderr, "Error: dbfile '%s' is not readable\n", indexfile);
+        free(indexfile);
+        return 0;
     }
 
     rv = do_updatedb(db, testdateutc);
 
     if (rv > 0) {
-        if (!save_index(argv[1], "new", db))
+        if (!save_index(indexfile, "new", db))
             goto end;
 
-        if (!rotate_index(argv[1], "new", "old"))
+        if (!rotate_index(indexfile, "new", "old"))
             goto end;
     }
 end:
     free(default_config_file);
     free_index(db);
     free(testdateutc);
-    BIO_free_all(bio_err);
+    // produces a segfault...
+    //BIO_free_all(bio_err);
     BIO_free_all(channel);
-    return EXIT_SUCCESS;
-}
+    return 1;
+} 
