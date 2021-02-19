@@ -522,7 +522,9 @@ static int decoder_process(const OSSL_PARAM params[], void *arg)
     new_data.recursion = data->recursion + 1;
 
 #define LEVEL_STR ">>>>>>>>>>>>>>>>"
-#define LEVEL (&LEVEL_STR[sizeof(LEVEL_STR) - new_data.recursion - 1])
+#define LEVEL (new_data.recursion < sizeof(LEVEL_STR) - 1               \
+               ? &LEVEL_STR[sizeof(LEVEL_STR) - new_data.recursion - 1] \
+               : LEVEL_STR "...")
 
     if (params == NULL) {
         /* First iteration, where we prepare for what is to come */
