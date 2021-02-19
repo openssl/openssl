@@ -490,19 +490,21 @@ void OSSL_ENCODER_do_all_provided(OSSL_LIB_CTX *libctx,
                           encoder_do_one, NULL, &data);
 }
 
-void OSSL_ENCODER_names_do_all(const OSSL_ENCODER *encoder,
-                               void (*fn)(const char *name, void *data),
-                               void *data)
+int OSSL_ENCODER_names_do_all(const OSSL_ENCODER *encoder,
+                              void (*fn)(const char *name, void *data),
+                              void *data)
 {
     if (encoder == NULL)
-        return;
+        return 0;
 
     if (encoder->base.prov != NULL) {
         OSSL_LIB_CTX *libctx = ossl_provider_libctx(encoder->base.prov);
         OSSL_NAMEMAP *namemap = ossl_namemap_stored(libctx);
 
-        ossl_namemap_doall_names(namemap, encoder->base.id, fn, data);
+        return ossl_namemap_doall_names(namemap, encoder->base.id, fn, data);
     }
+
+    return 1;
 }
 
 const OSSL_PARAM *

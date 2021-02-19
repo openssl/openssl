@@ -1395,8 +1395,8 @@ static void *evp_cipher_from_dispatch(const int name_id,
 #ifndef FIPS_MODULE
     /* TODO(3.x) get rid of the need for legacy NIDs */
     cipher->nid = NID_undef;
-    evp_names_do_all(prov, name_id, set_legacy_nid, &cipher->nid);
-    if (cipher->nid == -1) {
+    if (!evp_names_do_all(prov, name_id, set_legacy_nid, &cipher->nid)
+            || cipher->nid == -1) {
         ERR_raise(ERR_LIB_EVP, ERR_R_INTERNAL_ERROR);
         EVP_CIPHER_free(cipher);
         return NULL;

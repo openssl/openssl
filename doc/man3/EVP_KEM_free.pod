@@ -21,8 +21,8 @@ EVP_KEM_gettable_ctx_params, EVP_KEM_settable_ctx_params
  OSSL_PROVIDER *EVP_KEM_provider(const EVP_KEM *kem);
  void EVP_KEM_do_all_provided(OSSL_LIB_CTX *libctx,
                               void (*fn)(EVP_KEM *kem, void *arg), void *arg);
- void EVP_KEM_names_do_all(const EVP_KEM *kem,
-                           void (*fn)(const char *name, void *data), void *data);
+ int EVP_KEM_names_do_all(const EVP_KEM *kem,
+                          void (*fn)(const char *name, void *data), void *data);
  const OSSL_PARAM *EVP_KEM_gettable_ctx_params(const EVP_KEM *kem);
  const OSSL_PARAM *EVP_KEM_settable_ctx_params(const EVP_KEM *kem);
 
@@ -68,7 +68,7 @@ L<EVP_PKEY_CTX_get_params(3)> and L<EVP_PKEY_CTX_set_params(3)>.
 EVP_KEM_fetch() returns a pointer to an B<EVP_KEM> for success or B<NULL> for
 failure.
 
-EVP_KEM_up_ref() returns 1 for success or 0 otherwise.
+EVP_KEM_up_ref() and EVP_KEM_names_do_all() return 1 for success or 0 otherwise.
 
 EVP_KEM_gettable_ctx_params() and EVP_KEM_settable_ctx_params() return
 a constant B<OSSL_PARAM> array or NULL on error.

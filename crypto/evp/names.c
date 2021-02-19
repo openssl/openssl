@@ -98,7 +98,8 @@ const EVP_CIPHER *evp_get_cipherbyname_ex(OSSL_LIB_CTX *libctx,
     if (id == 0)
         return NULL;
 
-    ossl_namemap_doall_names(namemap, id, cipher_from_name, &cp);
+    if (!ossl_namemap_doall_names(namemap, id, cipher_from_name, &cp))
+        return NULL;
 
     return cp;
 }
@@ -143,7 +144,8 @@ const EVP_MD *evp_get_digestbyname_ex(OSSL_LIB_CTX *libctx, const char *name)
     if (id == 0)
         return NULL;
 
-    ossl_namemap_doall_names(namemap, id, digest_from_name, &dp);
+    if (!ossl_namemap_doall_names(namemap, id, digest_from_name, &dp))
+        return NULL;
 
     return dp;
 }
