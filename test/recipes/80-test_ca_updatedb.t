@@ -80,10 +80,11 @@ foreach my $test (@tests) {
 
 sub test_updatedb {
     my ($opts) = @_;
-    my $amt = scalar(@{$opts->{expirelist}});
+    my $amtexpectedexpired = scalar(@{$opts->{expirelist}});
     my @output;
     my $expirelistcorrect = 1;
     my $cert;
+    my $amtexpired = 0;
 
     if ($opts->{copydb}) {
         copy(data_file('index.txt'), 'index.txt');
@@ -100,19 +101,23 @@ sub test_updatedb {
 
     foreach my $tmp (@output) {
         ($cert)=$tmp=~/^([0-9A-F]+)=Expired/;
-        my $expirefound = 0;
-        foreach my $expire (@{$opts->{expirelist}}) {
-            if ($expire eq $cert) {
-                $expirefound = 1;
+        if (length($cert) > 0)
+        {
+            $amtexpired++;
+            my $expirefound = 0;
+            foreach my $expire (@{$opts->{expirelist}}) {
+                if ($expire eq $cert) {
+                    $expirefound = 1;
+                }
             }
-        }
-        if ($expirefound != 1) {
-            $expirelistcorrect = 0;
+            if ($expirefound != 1) {
+                $expirelistcorrect = 0;
+            }
         }
     }
 
     is($exit, 1, "ca_updatedb: returned EXIT_FAILURE (".$opts->{description}.")");
-    is(scalar(@output), $amt, "ca_updatedb: amount of expired certificated differs from expected amount (".$opts->{description}.")");
+    is($amtexpired, $amtexpectedexpired, "ca_updatedb: amount of expired certificated differs from expected amount (".$opts->{description}.")");
     is($expirelistcorrect, 1, "ca_updatedb: list of expired certificated differs from expected list (".$opts->{description}.")");
 }
 
