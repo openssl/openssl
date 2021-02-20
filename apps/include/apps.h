@@ -32,7 +32,6 @@
 # include "fmt.h"
 # include "platform.h"
 # include "engine_loader.h"
-# include "ca.h"
 # include "apps_extracted.h"
 
 /*
