@@ -1963,7 +1963,7 @@ int s_client_main(int argc, char **argv)
 
     /*
      * In TLSv1.3 NewSessionTicket messages arrive after the handshake and can
-     * come at any time. Therefore we use a callback to write out the session
+     * come at any time. Therefore, we use a callback to write out the session
      * when we know about it. This approach works for < TLSv1.3 as well.
      */
     SSL_CTX_set_session_cache_mode(ctx, SSL_SESS_CACHE_CLIENT
@@ -2849,7 +2849,7 @@ int s_client_main(int argc, char **argv)
 #if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS)
             /*
              * Under Windows/DOS we make the assumption that we can always
-             * write to the tty: therefore if we need to write to the tty we
+             * write to the tty: therefore, if we need to write to the tty we
              * just fall through. Otherwise we timeout the select every
              * second and see if there are any keypresses. Note: this is a
              * hack, in a proper Windows application we wouldn't do this.
@@ -3394,7 +3394,7 @@ static void print_stuff(BIO *bio, SSL *s, int full)
         /*
          * We also print the verify results when we dump session information,
          * but in TLSv1.3 we may not get that right away (or at all) depending
-         * on when we get a NewSessionTicket. Therefore we print it now as well.
+         * on when we get a NewSessionTicket. Therefore, we print it now as well.
          */
         verify_result = SSL_get_verify_result(s);
         BIO_printf(bio, "Verify return code: %ld (%s)\n", verify_result,

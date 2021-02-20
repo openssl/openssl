@@ -22,7 +22,7 @@ The EVP_PKEY_decapsulate_init() function initializes a private key algorithm
 context I<ctx> for a decapsulation operation and then sets the I<params>
 on the context in the same way as calling L<EVP_PKEY_CTX_set_params(3)>.
 
-The EVP_PKEY_auth_decapsulate_init() function is similiar to
+The EVP_PKEY_auth_decapsulate_init() function is similar to
 EVP_PKEY_decapsulate_init() but also passes an I<authpub> authentication public
 key that is used during decapsulation.
 

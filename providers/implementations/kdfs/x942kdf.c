@@ -239,7 +239,7 @@ x942_encode_otherinfo(size_t keylen,
         goto err;
     /*
      * Since we allocated the exact size required, the buffer should point to the
-     * start of the alllocated buffer at this point.
+     * start of the allocated buffer at this point.
      */
     if (WPACKET_get_curr(&pkt) != der_buf)
         goto err;

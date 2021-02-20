@@ -137,7 +137,7 @@ The key object should have been previously generated, loaded or imported into
 the provider using the key management (OSSL_OP_KEYMGMT) operation (see
 provider-keymgmt(7)>.
 
-OSSL_FUNC_kem_auth_encapsulate_init() is similiar to
+OSSL_FUNC_kem_auth_encapsulate_init() is similar to
 OSSL_FUNC_kem_encapsulate_init(), but also passes an additional authentication
 key I<provauthkey> which cannot be NULL.
 
@@ -165,7 +165,7 @@ The key object should have been previously generated, loaded or imported into
 the provider using the key management (OSSL_OP_KEYMGMT) operation (see
 provider-keymgmt(7)>.
 
-OSSL_FUNC_kem_auth_decapsulate_init() is similiar to
+OSSL_FUNC_kem_auth_decapsulate_init() is similar to
 OSSL_FUNC_kem_decapsulate_init(), but also passes an additional authentication
 key I<provauthkey> which cannot be NULL.
 
