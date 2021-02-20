@@ -62,8 +62,8 @@ struct translation_st;           /* Forwarding */
  *                              from an EVP_PKEY payload getter / setter,
  *                              and is fully responsible for getting or
  *                              setting the requested data.  With this
- *                              state, the fixup_args function is expect
- *                              to use or modify |**params|, depending on
+ *                              state, the fixup_args function is expected
+ *                              to use or modify |*params|, depending on
  *                              |action_type|.
  *
  * PRE_CTRL_TO_PARAMS           The fixup_args function has been called
@@ -79,12 +79,12 @@ struct translation_st;           /* Forwarding */
  *
  *                              With the PRE_CTRL_TO_PARAMS state, the
  *                              fixup_args function is expected to modify
- *                              the passed |**params| in whatever way
- *                              necessary, when |*action_type == SET|.
+ *                              the passed |*params| in whatever way
+ *                              necessary, when |action_type == SET|.
  *                              With the POST_CTRL_TO_PARAMS state, the
  *                              fixup_args function is expected to modify
- *                              the passed |*p2| in whatever way necessary,
- *                              when |*action_type == GET|.
+ *                              the passed |p2| in whatever way necessary,
+ *                              when |action_type == GET|.
  *
  *                              The return value from the fixup_args call
  *                              with the POST_CTRL_TO_PARAMS state becomes
@@ -106,8 +106,8 @@ struct translation_st;           /* Forwarding */
  *
  *                              With the PRE_CTRL_STR_TO_PARAMS state,
  *                              the fixup_args function is expected to
- *                              modify the passed |**params| in whatever
- *                              way necessary, when |*action_type == SET|.
+ *                              modify the passed |*params| in whatever
+ *                              way necessary, when |action_type == SET|.
  *                              With the POST_CTRL_STR_TO_PARAMS state,
  *                              the fixup_args function is only expected
  *                              to return a value.
@@ -130,12 +130,12 @@ struct translation_st;           /* Forwarding */
  *
  *                              With the PRE_PARAMS_TO_CTRL state, the
  *                              fixup_args function is expected to modify
- *                              the passed |*p1| and |*p2| in whatever way
- *                              necessary, when |*action_type == SET|.
+ *                              the passed |p1| and |p2| in whatever way
+ *                              necessary, when |action_type == SET|.
  *                              With the POST_PARAMS_TO_CTRL state, the
  *                              fixup_args function is expected to
- *                              modify the passed |**params| in whatever
- *                              way necessary, when |*action_type == GET|.
+ *                              modify the passed |*params| in whatever
+ *                              way necessary, when |action_type == GET|.
  * CLEANUP_PARAMS_TO_CTRL       The cleanup_args functions has been called
  *                              from EVP_PKEY_CTX_get_params() or
  *                              EVP_PKEY_CTX_set_params(), to clean up what
@@ -183,23 +183,23 @@ struct translation_ctx_st {
      */
     const char *ctrl_str;
     int ishex;
-    /* pointer to the ctrl-style int argument. */
+    /* the ctrl-style int argument. */
     int p1;
-    /* pointer to the ctrl-style void* argument. */
+    /* the ctrl-style void* argument. */
     void *p2;
-    /* pointer to a size_t, for passing back the |p2| size where applicable */
+    /* a size, for passing back the |p2| size where applicable */
     size_t sz;
     /* pointer to the OSSL_PARAM-style params array. */
     OSSL_PARAM *params;
 
     /*-
-     * The following are use entirely internally by the fixup_args functions
+     * The following are used entirely internally by the fixup_args functions
      * and should not be touched by the callers, at all.
      */
 
     /*
      * copy of the ctrl-style void* argument, if the the fixup_args function
-     * needs to manipulation |p2| but wants to remember original.
+     * needs to manipulate |p2| but wants to remember original.
      */
     void *orig_p2;
     /* Diverse types of storage for the needy. */
@@ -256,7 +256,7 @@ struct translation_st {
      */
     int ctrl_num;            /* EVP_PKEY_CTRL_xxx */
     const char *ctrl_str;    /* The corresponding ctrl string */
-    const char *ctrl_hexstr; /* The altnernative "hex{str}" ctrl string */
+    const char *ctrl_hexstr; /* The alternative "hex{str}" ctrl string */
     const char *param_key;   /* The corresponding OSSL_PARAM key */
     /*
      * The appropriate OSSL_PARAM data type.  This may be 0 to indicate that
@@ -301,8 +301,10 @@ static int default_check(enum state state,
             return -2;
         }
         if (!ossl_assert(translation->param_key != 0)
-            || !ossl_assert(translation->param_data_type != 0))
-            return 0;
+            || !ossl_assert(translation->param_data_type != 0)) {
+            ERR_raise(ERR_LIB_EVP, ERR_R_INTERNAL_ERROR);
+            return -1;
+        }
         break;
     case PRE_CTRL_STR_TO_PARAMS:
         /*
@@ -313,8 +315,10 @@ static int default_check(enum state state,
          */
         if (translation != NULL) {
             if (!ossl_assert(translation->param_key != NULL)
-                || !ossl_assert(translation->param_data_type != 0))
+                || !ossl_assert(translation->param_data_type != 0)) {
+                ERR_raise(ERR_LIB_EVP, ERR_R_INTERNAL_ERROR);
                 return 0;
+            }
             if (!ossl_assert(translation->action_type != GET)) {
                 ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
                 return -2;
@@ -332,8 +336,10 @@ static int default_check(enum state state,
             return -2;
         }
         if (!ossl_assert(translation->ctrl_num != 0)
-            || !ossl_assert(translation->param_data_type != 0))
-            return 0;
+            || !ossl_assert(translation->param_data_type != 0)) {
+            ERR_raise(ERR_LIB_EVP, ERR_R_INTERNAL_ERROR);
+            return -1;
+        }
     }
 
     /* Nothing else to check */
@@ -375,7 +381,7 @@ static int default_check(enum state state,
  *                                        For OSSL_PARAM_UNSIGNED_INTEGER,
  *                                        if |p2| is non-NULL, then |*p2|
  *                                        is assigned a BIGNUM, otherwise
- *                                        |*p1| is assigned an unsigned int.
+ *                                        |p1| is assigned an unsigned int.
  * POST_PARAMS_TO_CTRL, GET             - |p1| and |p2| are converted to
  *                                        an OSSL_PARAM, in the same manner
  *                                        as for the combination of
@@ -385,7 +391,7 @@ static int default_fixup_args(enum state state,
                               const struct translation_st *translation,
                               struct translation_ctx_st *ctx)
 {
-    int ret = 1;
+    int ret;
 
     if ((ret = default_check(state, translation, ctx)) < 0)
         return ret;
@@ -400,7 +406,7 @@ static int default_fixup_args(enum state state,
     /*
      * PRE_CTRL_TO_PARAMS and POST_CTRL_TO_PARAMS handle ctrl to params
      * translations.  PRE_CTRL_TO_PARAMS is responsible for preparing
-     * **params, and POST_CTRL_TO_PARAMS is responsible for bringing the
+     * |*params|, and POST_CTRL_TO_PARAMS is responsible for bringing the
      * result back to |*p2| and the return value.
      */
     case PRE_CTRL_TO_PARAMS:
@@ -448,8 +454,8 @@ static int default_fixup_args(enum state state,
             break;
         case OSSL_PARAM_UNSIGNED_INTEGER:
             /*
-             * BIGNUMs are passed via |*p2|.  For all ctrl's that just want
-             * to pass a simple integer via |*p1|, |*p2| is expected to be
+             * BIGNUMs are passed via |p2|.  For all ctrl's that just want
+             * to pass a simple integer via |p1|, |p2| is expected to be
              * NULL.
              *
              * Note that this allocates a buffer, which the cleanup function
@@ -466,6 +472,7 @@ static int default_fixup_args(enum state state,
                     if (!BN_bn2nativepad(ctx->p2,
                                          ctx->allocated_buf, ctx->buflen)) {
                         OPENSSL_free(ctx->allocated_buf);
+                        ctx->allocated_buf = NULL;
                         return 0;
                     }
                     *ctx->params =
@@ -532,7 +539,7 @@ static int default_fixup_args(enum state state,
     /*
      * PRE_CTRL_STR_TO_PARAMS and POST_CTRL_STR_TO_PARAMS handle ctrl_str to
      * params translations.  PRE_CTRL_TO_PARAMS is responsible for preparing
-     * **params, and POST_CTRL_TO_PARAMS currently has nothing to do, since
+     * |*params|, and POST_CTRL_TO_PARAMS currently has nothing to do, since
      * there's no support for getting data via ctrl_str calls.
      */
     case PRE_CTRL_STR_TO_PARAMS:
@@ -595,13 +602,14 @@ static int default_fixup_args(enum state state,
     /*
      * PRE_PARAMS_TO_CTRL and POST_PARAMS_TO_CTRL handle params to ctrl
      * translations.  PRE_PARAMS_TO_CTRL is responsible for preparing
-     * *p1 and *p2, and POST_PARAMS_TO_CTRL is responsible for bringing
-     * the EVP_PKEY_CTX_ctrl() return value (passed as *p1) and *p2 back
-     * to **params.
+     * |p1| and |p2|, and POST_PARAMS_TO_CTRL is responsible for bringing
+     * the EVP_PKEY_CTX_ctrl() return value (passed as |p1|) and |p2| back
+     * to |*params|.
      *
-     * PKEY is treated just like POST_PARAMS_TO_CTRL, making it easy for the
-     * related fixup_args functions to just set p1 and p2 appropriately and
-     * leave it to this section of code to fix up |ctx->params| accordingly.
+     * PKEY is treated just like POST_PARAMS_TO_CTRL, making it easy
+     * for the related fixup_args functions to just set |p1| and |p2|
+     * appropriately and leave it to this section of code to fix up
+     * |ctx->params| accordingly.
      */
     case PKEY:
     case POST_PARAMS_TO_CTRL:
@@ -613,7 +621,7 @@ static int default_fixup_args(enum state state,
             if (state == PRE_PARAMS_TO_CTRL && ctx->action_type == SET) {
                 /* For the PRE state, only setting needs some work to be done */
 
-                /* When setting, we populate *p1 and *p2 from *params */
+                /* When setting, we populate |p1| and |p2| from |*params| */
                 switch (translation->param_data_type) {
                 case OSSL_PARAM_INTEGER:
                     return OSSL_PARAM_get_int(ctx->params, &ctx->p1);
@@ -651,7 +659,7 @@ static int default_fixup_args(enum state state,
                        && ctx->action_type == GET) {
                 /* For the POST state, only getting needs some work to be done */
 
-                /* When getting, we populate *params from *p1 and *p2 */
+                /* When getting, we populate |*params| from |p1| and |p2| */
                 switch (translation->param_data_type) {
                 case OSSL_PARAM_INTEGER:
                     return OSSL_PARAM_set_int(ctx->params, ctx->p1);
@@ -825,11 +833,11 @@ static int fix_kdf_type(enum state state,
                         const struct kdf_type_map_st *kdf_type_map)
 {
     /*
-     * The EVP_PKEY_CTRL_DH_KDF_TYPE ctrl command is a bit special, in that
-     * it's used both for setting a value, and for getting it, all depending
-     * on the value if |*p1|; if |*p1| is -2, the backend is supposed to
-     * place the current kdf type in |*p2|, and if not, |*p1| is interpreted
-     * as the new kdf type.
+     * The EVP_PKEY_CTRL_DH_KDF_TYPE ctrl command is a bit special, in
+     * that it's used both for setting a value, and for getting it, all
+     * depending on the value if |p1|; if |p1| is -2, the backend is
+     * supposed to place the current kdf type in |p2|, and if not, |p1|
+     * is interpreted as the new kdf type.
      */
     int ret = 0;
 
@@ -1216,7 +1224,7 @@ static int fix_rsa_padding_mode(enum state state,
          * Ideally, we should use utf8 strings for the diverse padding modes.
          * We only came here because someone called EVP_PKEY_CTX_ctrl(),
          * though, and since that can reasonably be seen as legacy code
-         * that use the diverse RSA macros for the padding mode, and we
+         * that uses the diverse RSA macros for the padding mode, and we
          * know that at least our providers can handle the numeric modes,
          * we take the cheap route for now.
          *
@@ -1226,7 +1234,7 @@ static int fix_rsa_padding_mode(enum state state,
          * we have to do this same hack at least for that one.
          *
          * Since the "official" data type for the RSA padding mode is utf8
-         * string, we cannot count on default_fisup_args().  Instead, we
+         * string, we cannot count on default_fixup_args().  Instead, we
          * build the OSSL_PARAM item ourselves and return immediately.
          */
         ctx->params[0] = OSSL_PARAM_construct_int(translation->param_key,
@@ -1383,9 +1391,9 @@ static int fix_hkdf_mode(enum state state,
                          struct translation_ctx_st *ctx)
 {
     static const OSSL_ITEM str_value_map[] = {
-        { EVP_PKEY_HKDEF_MODE_EXTRACT_AND_EXPAND, "EXTRACT_AND_EXPAND" },
-        { EVP_PKEY_HKDEF_MODE_EXTRACT_ONLY,       "EXTRACT_ONLY"       },
-        { EVP_PKEY_HKDEF_MODE_EXPAND_ONLY,        "EXPAND_ONLY"        }
+        { EVP_KDF_HKDF_MODE_EXTRACT_AND_EXPAND, "EXTRACT_AND_EXPAND" },
+        { EVP_KDF_HKDF_MODE_EXTRACT_ONLY,       "EXTRACT_ONLY"       },
+        { EVP_KDF_HKDF_MODE_EXPAND_ONLY,        "EXPAND_ONLY"        }
     };
     int ret;
 
@@ -1824,7 +1832,7 @@ static int get_rsa_payload_coefficient(enum state state,
                          const struct translation_st *translation,      \
                          struct translation_ctx_st *ctx)                \
     {                                                                   \
-        if (EVP_PKEY_base_id(ctx->p2) != EVP_PKEY_RSA)                      \
+        if (EVP_PKEY_base_id(ctx->p2) != EVP_PKEY_RSA)                  \
             return 0;                                                   \
         return get_rsa_payload_factor(state, translation, ctx, n - 1);  \
     }
@@ -1835,7 +1843,7 @@ static int get_rsa_payload_coefficient(enum state state,
                          const struct translation_st *translation,      \
                          struct translation_ctx_st *ctx)                \
     {                                                                   \
-        if (EVP_PKEY_base_id(ctx->p2) != EVP_PKEY_RSA)                      \
+        if (EVP_PKEY_base_id(ctx->p2) != EVP_PKEY_RSA)                  \
             return 0;                                                   \
         return get_rsa_payload_exponent(state, translation, ctx,        \
                                         n - 1);                         \
@@ -1847,7 +1855,7 @@ static int get_rsa_payload_coefficient(enum state state,
                          const struct translation_st *translation,      \
                          struct translation_ctx_st *ctx)                \
     {                                                                   \
-        if (EVP_PKEY_base_id(ctx->p2) != EVP_PKEY_RSA)                      \
+        if (EVP_PKEY_base_id(ctx->p2) != EVP_PKEY_RSA)                  \
             return 0;                                                   \
         return get_rsa_payload_coefficient(state, translation, ctx,     \
                                            n - 1);                      \
@@ -2345,16 +2353,25 @@ lookup_translation(struct translation_st *tmpl,
 
 
         /*
-         * Base search criteria.  All callers must synthesise these bits
-         * somehow.
+         * Base search criteria: check that the optype and keytypes match,
+         * if relevant.  All callers must synthesise these bits somehow.
          */
         if (item->optype != -1 && (tmpl->optype & item->optype) == 0)
             continue;
-        if ((item->keytype1 != -1 || item->keytype2 != -1)
-            && (item->keytype1 != -1 && tmpl->keytype1 != item->keytype1)
-            && (item->keytype2 != -1 && tmpl->keytype2 != item->keytype2))
+        /*
+         * This expression is stunningly simple thanks to the sanity check
+         * above.
+         */
+        if (item->keytype1 != -1
+            && tmpl->keytype1 != item->keytype1
+            && tmpl->keytype2 != item->keytype2)
             continue;
 
+        /*
+         * Done with the base search criteria, now we check the criteria for
+         * the individual types of translations:
+         * ctrl->params, ctrl_str->params, and params->ctrl
+         */
         if (tmpl->ctrl_num != 0) {
             if (tmpl->ctrl_num != item->ctrl_num)
                 continue;
@@ -2393,7 +2410,7 @@ lookup_translation(struct translation_st *tmpl,
              *
              * Ctrls were fundamentally bidirectional, with only the ctrl
              * command macro name implying direction (if you're lucky).
-             * A few ctrl commands were even took advantage of the
+             * A few ctrl commands were even taking advantage of the
              * bidirectional nature, making the direction depend in the
              * value of the numeric argument.
              *
@@ -2544,7 +2561,10 @@ int evp_pkey_ctx_ctrl_str_to_param(EVP_PKEY_CTX *pctx,
             /* fixup_args is expected to make sure this is dead code */
             break;
         case GET:
-            ret = evp_pkey_ctx_get_params_strict(pctx, ctx.params);
+            /*
+             * this is dead code, but must be present, or some compilers
+             * will complain
+             */
             break;
         case SET:
             ret = evp_pkey_ctx_set_params_strict(pctx, ctx.params);
@@ -2605,7 +2625,7 @@ static int evp_pkey_ctx_setget_params_to_ctrl(EVP_PKEY_CTX *pctx,
             ret = ctx.p1;
         }
 
-        cleanup_translation_ctx(CLEANUP_CTRL_STR_TO_PARAMS, translation, &ctx);
+        cleanup_translation_ctx(CLEANUP_PARAMS_TO_CTRL, translation, &ctx);
 
         if (ret <= 0)
             return 0;

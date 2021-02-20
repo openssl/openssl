@@ -872,15 +872,17 @@ EVP_PKEY *evp_privatekey_from_binary(int keytype, EVP_PKEY **a,
 # define EVP_PKEY_STATE_PROVIDER        2
 int evp_pkey_ctx_state(const EVP_PKEY_CTX *ctx);
 
-/* This must ONLY be called for provider side operations */
+/* These two must ONLY be called for provider side operations */
 int evp_pkey_ctx_ctrl_to_param(EVP_PKEY_CTX *ctx,
                                int keytype, int optype,
                                int cmd, int p1, void *p2);
 int evp_pkey_ctx_ctrl_str_to_param(EVP_PKEY_CTX *ctx,
                                    const char *name, const char *value);
-/* This must ONLY be called for legacy operations */
+
+/* These two must ONLY be called for legacy operations */
 int evp_pkey_ctx_set_params_to_ctrl(EVP_PKEY_CTX *ctx, OSSL_PARAM *params);
 int evp_pkey_ctx_get_params_to_ctrl(EVP_PKEY_CTX *ctx, OSSL_PARAM *params);
+
 /* This must ONLY be called for legacy EVP_PKEYs */
 int evp_pkey_get_params_to_ctrl(const EVP_PKEY *pkey, OSSL_PARAM *params);
 
