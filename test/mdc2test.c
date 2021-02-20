@@ -18,7 +18,6 @@
 #include <openssl/params.h>
 #include <openssl/types.h>
 #include <openssl/core_names.h>
-#include "internal/nelem.h"
 #include "testutil.h"
 
 #if defined(OPENSSL_NO_DES) && !defined(OPENSSL_NO_MDC2)

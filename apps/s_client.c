@@ -15,6 +15,7 @@
 #include <string.h>
 #include <errno.h>
 #include <openssl/e_os2.h>
+#include "internal/nelem.h"
 
 #ifndef OPENSSL_NO_SOCK
 

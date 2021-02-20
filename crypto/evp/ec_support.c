@@ -11,6 +11,7 @@
 #include <openssl/ec.h>
 #include "crypto/ec.h"
 #include "e_os.h" /* strcasecmp required by windows */
+#include "internal/nelem.h"
 
 typedef struct ec_name2nid_st {
     const char *name;

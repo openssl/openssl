@@ -21,7 +21,9 @@
 #include <openssl/async.h>
 #include <openssl/ct.h>
 #include <openssl/trace.h>
+
 #include "internal/cryptlib.h"
+#include "internal/nelem.h"
 #include "internal/refcount.h"
 #include "internal/ktls.h"
 
