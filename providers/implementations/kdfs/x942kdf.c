@@ -17,6 +17,7 @@
 #include <openssl/proverr.h>
 #include "internal/packet.h"
 #include "internal/der.h"
+#include "internal/nelem.h"
 #include "prov/provider_ctx.h"
 #include "prov/providercommon.h"
 #include "prov/implementations.h"

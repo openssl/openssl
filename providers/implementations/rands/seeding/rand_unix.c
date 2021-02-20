@@ -18,6 +18,7 @@
 #include "crypto/rand_pool.h"
 #include "crypto/rand.h"
 #include "internal/dso.h"
+#include "internal/nelem.h"
 #include "prov/seeding.h"
 
 #ifdef __linux
