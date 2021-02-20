@@ -28,4 +28,15 @@ typedef struct ca_db_st {
 # endif
 } CA_DB;
 
+CA_DB *load_index(const char *dbfile, DB_ATTR *dbattr);
+int index_index(CA_DB *db);
+int save_index(const char *dbfile, const char *suffix, CA_DB *db);
+int rotate_index(const char *dbfile, const char *new_suffix,
+                 const char *old_suffix);
+void free_index(CA_DB *db);
+# define index_name_cmp_noconst(a, b) \
+        index_name_cmp((const OPENSSL_CSTRING *)CHECKED_PTR_OF(OPENSSL_STRING, a), \
+        (const OPENSSL_CSTRING *)CHECKED_PTR_OF(OPENSSL_STRING, b))
+int index_name_cmp(const OPENSSL_CSTRING *a, const OPENSSL_CSTRING *b);
+
 #endif                          /* ! OSSL_APPS_CA_H */
