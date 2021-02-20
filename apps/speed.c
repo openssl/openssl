@@ -26,6 +26,7 @@
 
 /* We need to use some deprecated APIs */
 #define OPENSSL_SUPPRESS_DEPRECATED
+#include "internal/e_os.h"
 
 #include <stdio.h>
 #include <stdlib.h>
