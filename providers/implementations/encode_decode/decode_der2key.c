@@ -35,6 +35,7 @@
 #include "prov/bio.h"
 #include "prov/implementations.h"
 #include "endecoder_local.h"
+#include "internal/nelem.h"
 
 struct der2key_ctx_st;           /* Forward declaration */
 typedef int check_key_fn(void *, struct der2key_ctx_st *ctx);
