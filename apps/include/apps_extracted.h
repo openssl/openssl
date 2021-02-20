@@ -56,12 +56,6 @@ int load_key_certs_crls(const char *uri, int maybe_stdin,
 
 void release_engine(ENGINE *e);
 
-BIGNUM *load_serial(const char *serialfile, int create, ASN1_INTEGER **retai);
-int save_serial(const char *serialfile, const char *suffix, const BIGNUM *serial,
-                ASN1_INTEGER **retai);
-int rotate_serial(const char *serialfile, const char *new_suffix,
-                  const char *old_suffix);
-int rand_serial(BIGNUM *b, ASN1_INTEGER *ai);
 int parse_yesno(const char *str, int def);
 X509_NAME *parse_name(const char *str, int chtype, int multirdn,
                       const char *desc);
