@@ -23,6 +23,13 @@ OpenSSL 3.0
 
 ### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
 
+* The RAND_METHOD APIs have been deprecated.  The functions deprecated are:
+   RAND_OpenSSL(), RAND_get_rand_method(), RAND_set_rand_engine() and
+   RAND_set_rand_method().  Provider based random number generators should
+   be used instead via EVP_RAND(3).
+
+   *Paul Dale*
+
 * The SRP APIs have been deprecated. The old APIs do not work via providers,
    and there is no EVP interface to them. Unfortunately there is no replacement
    for these APIs at this time.
