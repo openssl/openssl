@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -14,6 +14,7 @@
  */
 #define OPENSSL_SUPPRESS_DEPRECATED
 
+#include "e_os.h"
 #include "apps.h"
 
 #ifndef OPENSSL_NO_ENGINE
