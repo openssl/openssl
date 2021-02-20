@@ -39,4 +39,11 @@ void free_index(CA_DB *db);
         (const OPENSSL_CSTRING *)CHECKED_PTR_OF(OPENSSL_STRING, b))
 int index_name_cmp(const OPENSSL_CSTRING *a, const OPENSSL_CSTRING *b);
 
+BIGNUM *load_serial(const char *serialfile, int create, ASN1_INTEGER **retai);
+int save_serial(const char *serialfile, const char *suffix, const BIGNUM *serial,
+                ASN1_INTEGER **retai);
+int rotate_serial(const char *serialfile, const char *new_suffix,
+                  const char *old_suffix);
+int rand_serial(BIGNUM *b, ASN1_INTEGER *ai);
+
 #endif                          /* ! OSSL_APPS_CA_H */
