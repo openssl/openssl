@@ -11,6 +11,8 @@
 #define OSSL_APPS_APPS_EXTRACTED_H
 
 #include "openssl/x509.h"
+#include "ca.h"
+
 BIO *dup_bio_in(int format);
 BIO *dup_bio_out(int format);
 BIO *dup_bio_err(int format);
