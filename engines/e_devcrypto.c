@@ -25,6 +25,7 @@
 #include <openssl/engine.h>
 #include <openssl/objects.h>
 #include "crypto/cryptodev.h"
+#include "internal/nelem.h"
 
 /* #define ENGINE_DEVCRYPTO_DEBUG */
 

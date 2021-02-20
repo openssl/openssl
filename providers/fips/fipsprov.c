@@ -21,6 +21,7 @@
 #include "prov/providercommon.h"
 #include "prov/provider_util.h"
 #include "prov/seeding.h"
+#include "internal/nelem.h"
 #include "self_test.h"
 #include "crypto/context.h"
 #include "internal/core.h"

@@ -25,6 +25,7 @@
 #include "crypto/ec.h"
 #include "ec_local.h"
 #include "internal/e_os.h"
+#include "internal/nelem.h"
 #include "internal/param_build_set.h"
 
 /* Mapping between a flag and a name */

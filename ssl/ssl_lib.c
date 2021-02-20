@@ -23,6 +23,7 @@
 #include <openssl/trace.h>
 #include <openssl/core_names.h>
 #include "internal/cryptlib.h"
+#include "internal/nelem.h"
 #include "internal/refcount.h"
 #include "internal/ktls.h"
 
