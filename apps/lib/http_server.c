@@ -18,8 +18,10 @@
 #endif
 
 #include <ctype.h>
+#include "internal/e_os.h"
 #include "http_server.h"
-#include "internal/sockets.h"
+#include "internal/sockets.h" /* for openssl_fdset() */
+
 #include <openssl/err.h>
 #include <openssl/trace.h>
 #include <openssl/rand.h>

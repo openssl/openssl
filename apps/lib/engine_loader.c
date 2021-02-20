@@ -14,6 +14,7 @@
  */
 #define OPENSSL_SUPPRESS_DEPRECATED
 
+#include "internal/e_os.h"
 #include "apps.h"
 
 #ifndef OPENSSL_NO_ENGINE
