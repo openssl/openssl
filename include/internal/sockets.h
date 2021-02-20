@@ -41,7 +41,7 @@
 #  endif
 #  if !defined(IPPROTO_IP)
     /* winsock[2].h was included already? */
-#   include <winsock.h>
+#   include "internal/e_winsock.h"
 #  endif
 #  ifdef getservbyname
      /* this is used to be wcecompat/include/winsock_extras.h */
