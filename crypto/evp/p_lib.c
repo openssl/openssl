@@ -2148,7 +2148,14 @@ int EVP_PKEY_set_params(EVP_PKEY *pkey, OSSL_PARAM params[])
             return evp_keymgmt_set_params(pkey->keymgmt, pkey->keydata, params);
         }
 #ifndef FIPS_MODULE
-# if 0                           /* TODO? */
+        /*
+         * TODO?
+         * We will hopefully never find the need to set individual data in
+         * EVP_PKEYs with a legacy internal key, but we can't be entirely
+         * sure.  This bit of code can be enabled if we find the need.  If
+         * not, it can safely be removed when #legacy support is removed.
+         */
+# if 0
         else if (evp_pkey_is_legacy(pkey)) {
             return evp_pkey_set_params_to_ctrl(pkey, params);
         }
