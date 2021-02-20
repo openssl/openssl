@@ -22,6 +22,7 @@
 
 /* Needs to be included before the openssl headers */
 #include "apps.h"
+#include "ca.h"
 #include "http_server.h"
 #include "progs.h"
 #include "internal/sockets.h"

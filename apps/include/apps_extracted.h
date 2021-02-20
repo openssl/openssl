@@ -11,7 +11,6 @@
 #define OSSL_APPS_APPS_EXTRACTED_H
 
 #include "openssl/x509.h"
-#include "ca.h"
 
 BIO *dup_bio_in(int format);
 BIO *dup_bio_out(int format);
@@ -63,16 +62,6 @@ int save_serial(const char *serialfile, const char *suffix, const BIGNUM *serial
 int rotate_serial(const char *serialfile, const char *new_suffix,
                   const char *old_suffix);
 int rand_serial(BIGNUM *b, ASN1_INTEGER *ai);
-CA_DB *load_index(const char *dbfile, DB_ATTR *dbattr);
-int index_index(CA_DB *db);
-int save_index(const char *dbfile, const char *suffix, CA_DB *db);
-int rotate_index(const char *dbfile, const char *new_suffix,
-                 const char *old_suffix);
-void free_index(CA_DB *db);
-# define index_name_cmp_noconst(a, b) \
-        index_name_cmp((const OPENSSL_CSTRING *)CHECKED_PTR_OF(OPENSSL_STRING, a), \
-        (const OPENSSL_CSTRING *)CHECKED_PTR_OF(OPENSSL_STRING, b))
-int index_name_cmp(const OPENSSL_CSTRING *a, const OPENSSL_CSTRING *b);
 int parse_yesno(const char *str, int def);
 X509_NAME *parse_name(const char *str, int chtype, int multirdn,
                       const char *desc);
