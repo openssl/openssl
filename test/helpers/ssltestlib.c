@@ -25,6 +25,7 @@
 
 #if (!defined(OPENSSL_NO_KTLS) || !defined(OPENSSL_NO_QUIC)) && !defined(OPENSSL_NO_POSIX_IO) && !defined(OPENSSL_NO_SOCK)
 # define OSSL_USE_SOCKETS 1
+# include "internal/e_winsock.h"
 # include "internal/sockets.h"
 # include <openssl/bio.h>
 #endif
