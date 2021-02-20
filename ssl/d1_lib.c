@@ -225,7 +225,7 @@ long dtls1_ctrl(SSL *ssl, int cmd, long larg, void *parg)
 
     switch (cmd) {
     case DTLS_CTRL_GET_TIMEOUT:
-        if (dtls1_get_timeout(s, &t) != NULL) {
+        if (dtls1_get_timeout(s, &t) != 0) {
             *(struct timeval *)parg = ossl_time_to_timeval(t);
             ret = 1;
         }
@@ -256,9 +256,15 @@ long dtls1_ctrl(SSL *ssl, int cmd, long larg, void *parg)
     return ret;
 }
 
+static void dtls1_bio_set_next_timeout(BIO * bio, const DTLS1_STATE *d1)
+{
+    struct timeval tv = ossl_time_to_timeval(d1->next_timeout);
+
+    BIO_ctrl(bio, BIO_CTRL_DGRAM_SET_NEXT_TIMEOUT, 0, &tv);
+}
+
 void dtls1_start_timer(SSL_CONNECTION *s)
 {
-    struct timeval tv;
     OSSL_TIME duration;
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
 
@@ -285,17 +291,17 @@ void dtls1_start_timer(SSL_CONNECTION *s)
     duration = ossl_us2time(s->d1->timeout_duration_us);
     s->d1->next_timeout = ossl_time_add(ossl_time_now(), duration);
 
-    tv = ossl_time_to_timeval(s->d1->next_timeout);
-    BIO_ctrl(SSL_get_rbio(ssl), BIO_CTRL_DGRAM_SET_NEXT_TIMEOUT, 0, &tv);
+    /* set s->d1->next_timeout into ssl->rbio interface */
+    dtls1_bio_set_next_timeout(SSL_get_rbio(ssl), s->d1);
 }
 
-OSSL_TIME *dtls1_get_timeout(SSL_CONNECTION *s, OSSL_TIME *timeleft)
+int dtls1_get_timeout(const SSL_CONNECTION *s, OSSL_TIME *timeleft)
 {
     OSSL_TIME timenow;
 
     /* If no timeout is set, just return NULL */
     if (ossl_time_is_zero(s->d1->next_timeout))
-        return NULL;
+        return 0;
 
     /* Get current time */
     timenow = ossl_time_now();
@@ -308,7 +314,7 @@ OSSL_TIME *dtls1_get_timeout(SSL_CONNECTION *s, OSSL_TIME *timeleft)
     *timeleft = ossl_time_subtract(s->d1->next_timeout, timenow);
     if (ossl_time_compare(*timeleft, ossl_ms2time(15)) <= 0)
         *timeleft = ossl_time_zero();
-    return timeleft;
+    return 1;
 }
 
 int dtls1_is_timer_expired(SSL_CONNECTION *s)
@@ -316,14 +322,12 @@ int dtls1_is_timer_expired(SSL_CONNECTION *s)
     OSSL_TIME timeleft;
 
     /* Get time left until timeout, return false if no timer running */
-    if (dtls1_get_timeout(s, &timeleft) == NULL) {
+    if (dtls1_get_timeout(s, &timeleft) == 0)
         return 0;
-    }
 
     /* Return false if timer is not expired yet */
-    if (!ossl_time_is_zero(timeleft)) {
+    if (!ossl_time_is_zero(timeleft))
         return 0;
-    }
 
     /* Timer expired, so return true */
     return 1;
@@ -338,14 +342,12 @@ static void dtls1_double_timeout(SSL_CONNECTION *s)
 
 void dtls1_stop_timer(SSL_CONNECTION *s)
 {
-    struct timeval tv;
-
     /* Reset everything */
     s->d1->timeout_num_alerts = 0;
     s->d1->next_timeout = ossl_time_zero();
     s->d1->timeout_duration_us = 1000000;
-    tv = ossl_time_to_timeval(s->d1->next_timeout);
-    BIO_ctrl(s->rbio, BIO_CTRL_DGRAM_SET_NEXT_TIMEOUT, 0, &tv);
+    /* set s->d1->next_timeout into bio interface */
+    dtls1_bio_set_next_timeout(s->rbio, s->d1);
     /* Clear retransmission buffer */
     dtls1_clear_sent_buffer(s);
 }
