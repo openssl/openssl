@@ -117,7 +117,7 @@ static void *evp_rand_from_dispatch(int name_id,
                                     OSSL_PROVIDER *prov)
 {
     EVP_RAND *rand = NULL;
-    int fnrandcnt = 0, fnctxcnt = 0, fnlockcnt = 0;
+    int fnrandcnt = 0, fnctxcnt = 0, fnlockcnt = 0, fnenablelockcnt = 0;
 #ifdef FIPS_MODULE
     int fnzeroizecnt = 0;
 #endif
@@ -174,7 +174,7 @@ static void *evp_rand_from_dispatch(int name_id,
             if (rand->enable_locking != NULL)
                 break;
             rand->enable_locking = OSSL_FUNC_rand_enable_locking(fns);
-            fnlockcnt++;
+            fnenablelockcnt++;
             break;
         case OSSL_FUNC_RAND_LOCK:
             if (rand->lock != NULL)
@@ -243,7 +243,8 @@ static void *evp_rand_from_dispatch(int name_id,
      */
     if (fnrandcnt != 3
             || fnctxcnt != 3
-            || (fnlockcnt != 0 && fnlockcnt != 3)
+            || (fnenablelockcnt != 0 && fnenablelockcnt != 1)
+            || (fnlockcnt != 0 && fnlockcnt != 2)
 #ifdef FIPS_MODULE
             || fnzeroizecnt != 1
 #endif
