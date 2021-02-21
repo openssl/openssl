@@ -2414,6 +2414,12 @@ err:
         EVP_CIPHER_free((EVP_CIPHER *)type);
     return ret;
 }
+
+static int ecpub_nids[] = { NID_brainpoolP256r1, NID_X9_62_prime256v1,
+    NID_secp384r1, NID_secp521r1, NID_sect233k1, NID_sect233r1, NID_sect283r1,
+    NID_sect409k1, NID_sect409r1, NID_sect571k1, NID_sect571r1,
+    NID_brainpoolP384r1, NID_brainpoolP512r1};
+
 static int test_ecpub(int idx)
 {
     int ret = 0, len, savelen;
@@ -2425,50 +2431,7 @@ static int test_ecpub(int idx)
     EVP_PKEY_CTX *ctx = NULL;
     EC_KEY *ec = NULL;
 
-    switch(idx) {
-    case 0:
-        nid = NID_brainpoolP256r1;
-        break;
-    case 1:
-        nid = NID_X9_62_prime256v1;
-        break;
-    case 2:
-        nid = NID_secp384r1;
-        break;
-    case 3:
-        nid = NID_secp521r1;
-        break;
-    case 4:
-        nid = NID_sect233k1;
-        break;
-    case 5:
-        nid = NID_sect233r1;
-        break;
-    case 6:
-        nid = NID_sect283r1;
-        break;
-    case 7:
-        nid = NID_sect409k1;
-        break;
-    case 8:
-        nid = NID_sect409r1;
-        break;
-    case 9:
-        nid = NID_sect571k1;
-        break;
-    case 10:
-        nid = NID_sect571r1;
-        break;
-    case 11:
-        nid = NID_brainpoolP384r1;
-        break;
-    case 12:
-        nid = NID_brainpoolP512r1;
-        break;
-    default:
-        TEST_info("unhandled ecpub index");
-        goto done;
-    }
+    nid = ecpub_nids[idx];
 
     ctx = EVP_PKEY_CTX_new_id(EVP_PKEY_EC, NULL);
     if (!TEST_ptr(ctx)
@@ -2610,7 +2573,7 @@ int setup_tests(void)
     ADD_TEST(test_rand_agglomeration);
     ADD_ALL_TESTS(test_evp_iv, 10);
     ADD_TEST(test_EVP_rsa_pss_with_keygen_bits);
-    ADD_ALL_TESTS(test_ecpub, 13);
+    ADD_ALL_TESTS(test_ecpub, OSSL_NELEM(ecpub_nids));
 
     return 1;
 }
