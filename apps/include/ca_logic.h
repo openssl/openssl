@@ -10,33 +10,11 @@
 #ifndef OSSL_APPS_CA_LOGIC_H
 #define OSSL_APPS_CA_LOGIC_H
 
-#include "ca.h"
-
-/*#include "openssl/txt_db.h"
-# ifndef OPENSSL_NO_POSIX_IO
-#  include <fcntl.h>
-#  include <sys/stat.h>
-# endif
-
-typedef struct db_attr_st {
-    int unique_subject;
-} DB_ATTR;
-
-typedef struct ca_db_st {
-    DB_ATTR attributes;
-    TXT_DB *db;
-    char *dbfname;
-# ifndef OPENSSL_NO_POSIX_IO
-    struct stat dbst;
-# endif
-} CA_DB; */
-
 /* tweaks needed for Windows */
 #ifdef _WIN32
 # define timezone _timezone
 #endif
 
-extern int do_updatedb(CA_DB *db, time_t *now);
 ASN1_TIME *asn1_string_to_ASN1_TIME(char *asn1_string);
 time_t *asn1_string_to_time_t(char *asn1_string);
 
