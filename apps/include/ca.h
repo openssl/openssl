@@ -39,6 +39,8 @@ void free_index(CA_DB *db);
         (const OPENSSL_CSTRING *)CHECKED_PTR_OF(OPENSSL_STRING, b))
 int index_name_cmp(const OPENSSL_CSTRING *a, const OPENSSL_CSTRING *b);
 
+extern int do_updatedb(CA_DB *db, time_t *now);
+
 BIGNUM *load_serial(const char *serialfile, int create, ASN1_INTEGER **retai);
 int save_serial(const char *serialfile, const char *suffix, const BIGNUM *serial,
                 ASN1_INTEGER **retai);
