@@ -145,4 +145,7 @@ X509_ALGOR *ossl_x509_algor_mgf1_decode(X509_ALGOR *alg);
 int ossl_x509_algor_md_to_mgf1(X509_ALGOR **palg, const EVP_MD *mgf1md);
 int ossl_asn1_time_print_ex(BIO *bp, const ASN1_TIME *tm);
 
+ASN1_TIME *asn1_string_to_ASN1_TIME(char *asn1_string);
+time_t *asn1_string_to_time_t(char *asn1_string);
+
 #endif /* ndef OSSL_CRYPTO_ASN1_H */

@@ -524,10 +524,10 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[cmp_client_test]=.. ../include ../apps/include
   DEPEND[cmp_client_test]=../libcrypto.a libtestutil.a
 
-  SOURCE[ca_updatedb]=ca_updatedb.c ../apps/ca.c ../apps/lib/ca_logic.c \
+  SOURCE[ca_updatedb]=ca_updatedb.c ../apps/ca.c ../crypto/asn1/a_time.c \
                       ../apps/lib/app_provider.c ../apps/lib/fmt.c ../apps/lib/app_x509.c \
                       ../apps/lib/engine.c ../apps/lib/app_rand.c ../apps/lib/apps_ui.c \
-                      ../apps/lib/apps_extracted.c
+                      ../apps/lib/apps_extracted.c ../crypto/ctype.c
   INCLUDE[ca_updatedb]=.. ../include ../apps/include
   DEPEND[ca_updatedb]=libtestutil.a ../libssl
 
