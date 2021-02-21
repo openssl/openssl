@@ -8,6 +8,7 @@
  */
 
 #include "../apps/include/apps.h"
+#include "ca_logic.h"
 
 ASN1_TIME *asn1_string_to_ASN1_TIME(char *asn1_string)
 {
