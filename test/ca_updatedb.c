@@ -8,10 +8,10 @@
  */
 
 #include "../apps/include/ca.h"
-#include "../apps/include/ca_logic.h"
 #include "../apps/include/apps.h"
 #include "../apps/include/apps_extracted.h"
 #include "testutil.h"
+#include "crypto/asn1.h"
 
 char *default_config_file = NULL;
 
