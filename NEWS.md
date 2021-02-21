@@ -20,6 +20,12 @@ OpenSSL 3.0
 
 ### Major changes between OpenSSL 1.1.1 and OpenSSL 3.0 [under development]
 
+  * Deprecated the `OCSP_REQ_CTX` type and functions.
+  * Deprecated the `EC_KEY` and `EC_KEY_METHOD` types and functions.
+  * Deprecated the `RSA` and `RSA_METHOD` types and functions.
+  * Deprecated the `DSA` and `DSA_METHOD` types and functions.
+  * Deprecated the `DH` and `DH_METHOD` types and functions.
+  * Deprecated the `ERR_load_` functions.
   * Remove the `RAND_DRBG` API.
   * Deprecated the `ENGINE` API.
   * Added `OSSL_LIB_CTX`, a libcrypto library context.
@@ -46,7 +52,9 @@ OpenSSL 3.0
   * Added OSSL_ENCODER, a generic encoder API.
   * Added OSSL_PARAM_BLD, an easier to use API to OSSL_PARAM.
   * Added error raising macros, ERR_raise() and ERR_raise_data().
-  * Deprecated ERR_put_error().
+  * Deprecated ERR_put_error(), ERR_get_error_line(), ERR_get_error_line_data(),
+    ERR_peek_error_line_data(), ERR_peek_last_error_line_data() and
+    ERR_func_error_string().
   * Added OSSL_PROVIDER_available(), to check provider availibility.
   * Added 'openssl mac' that uses the EVP_MAC API.
   * Added 'openssl kdf' that uses the EVP_KDF API.
@@ -72,9 +80,21 @@ OpenSSL 3.0
 OpenSSL 1.1.1
 -------------
 
-### Major changes between OpenSSL 1.1.1h and OpenSSL 1.1.1i [under development]
+### Major changes between OpenSSL 1.1.1j and OpenSSL 1.1.1k [under development]
 
-  *
+### Major changes between OpenSSL 1.1.1i and OpenSSL 1.1.1j [16 Feb 2021]
+
+  * Fixed a NULL pointer deref in the X509_issuer_and_serial_hash()
+    function ([CVE-2021-23841])
+  * Fixed the RSA_padding_check_SSLv23() function and the RSA_SSLV23_PADDING
+    padding mode to correctly check for rollback attacks
+  * Fixed an overflow in the EVP_CipherUpdate, EVP_EncryptUpdate and
+    EVP_DecryptUpdate functions ([CVE-2021-23840])
+  * Fixed SRP_Calc_client_key so that it runs in constant time
+
+### Major changes between OpenSSL 1.1.1h and OpenSSL 1.1.1i [8 Dec 2020]
+
+  * Fixed NULL pointer deref in GENERAL_NAME_cmp ([CVE-2020-1971])
 
 ### Major changes between OpenSSL 1.1.1g and OpenSSL 1.1.1h [22 Sep 2020]
 
@@ -1325,6 +1345,7 @@ OpenSSL 0.9.x
 
 <!-- Links -->
 
+[CVE-2020-1971]: https://www.openssl.org/news/vulnerabilities.html#CVE-2020-1971
 [CVE-2020-1967]: https://www.openssl.org/news/vulnerabilities.html#CVE-2020-1967
 [CVE-2019-1563]: https://www.openssl.org/news/vulnerabilities.html#CVE-2019-1563
 [CVE-2019-1559]: https://www.openssl.org/news/vulnerabilities.html#CVE-2019-1559

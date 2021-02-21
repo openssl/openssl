@@ -15,7 +15,7 @@ B<openssl> B<spkac>
 [B<-help>]
 [B<-in> I<filename>]
 [B<-out> I<filename>]
-[B<-key> I<keyfile>]
+[B<-key> I<filename>|I<uri>]
 [B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>]
 [B<-passin> I<arg>]
 [B<-challenge> I<string>]
@@ -52,22 +52,22 @@ option is not specified. Ignored if the B<-key> option is used.
 Specifies the output filename to write to or standard output by
 default.
 
-=item B<-key> I<keyfile>
+=item B<-key> I<filename>|I<uri>
 
-Create an SPKAC file using the private key in I<keyfile>. The
-B<-in>, B<-noout>, B<-spksect> and B<-verify> options are ignored if
+Create an SPKAC file using the private key specified by I<filename> or I<uri>.
+The B<-in>, B<-noout>, B<-spksect> and B<-verify> options are ignored if
 present.
 
 =item B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
 
 The key format; the default is B<PEM>.
 The only value with effect is B<ENGINE>; all others have become obsolete.
-See L<openssl(1)/Format Options> for details.
+See L<openssl-format-options(1)> for details.
 
 =item B<-passin> I<arg>
 
 The input file password source. For more information about the format of I<arg>
-see L<openssl(1)/Pass Phrase Options>.
+see L<openssl-passphrase-options(1)>.
 
 =item B<-challenge> I<string>
 

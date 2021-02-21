@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -178,7 +178,7 @@ PKCS7 *d2i_PKCS7_fp(FILE *fp, PKCS7 **p7)
     PKCS7 *ret;
 
     ret = ASN1_item_d2i_fp(ASN1_ITEM_rptr(PKCS7), fp, p7);
-    if (ret != NULL && p7 != NULL)
+    if (ret != NULL)
         pkcs7_resolve_libctx(ret);
     return ret;
 }
@@ -194,7 +194,7 @@ PKCS7 *d2i_PKCS7_bio(BIO *bp, PKCS7 **p7)
     PKCS7 *ret;
 
     ret = ASN1_item_d2i_bio(ASN1_ITEM_rptr(PKCS7), bp, p7);
-    if (ret != NULL && p7 != NULL)
+    if (ret != NULL)
         pkcs7_resolve_libctx(ret);
     return ret;
 }
@@ -226,9 +226,7 @@ int i2d_X509_REQ_bio(BIO *bp, const X509_REQ *req)
     return ASN1_item_i2d_bio(ASN1_ITEM_rptr(X509_REQ), bp, req);
 }
 
-#ifndef OPENSSL_NO_RSA
-
-# ifndef OPENSSL_NO_STDIO
+#ifndef OPENSSL_NO_STDIO
 RSA *d2i_RSAPrivateKey_fp(FILE *fp, RSA **rsa)
 {
     return ASN1_item_d2i_fp(ASN1_ITEM_rptr(RSAPrivateKey), fp, rsa);
@@ -260,7 +258,7 @@ int i2d_RSA_PUBKEY_fp(FILE *fp, const RSA *rsa)
 {
     return ASN1_i2d_fp((I2D_OF(void))i2d_RSA_PUBKEY, fp, rsa);
 }
-# endif
+#endif
 
 RSA *d2i_RSAPrivateKey_bio(BIO *bp, RSA **rsa)
 {
@@ -291,7 +289,6 @@ int i2d_RSA_PUBKEY_bio(BIO *bp, const RSA *rsa)
 {
     return ASN1_i2d_bio_of(RSA, i2d_RSA_PUBKEY, bp, rsa);
 }
-#endif
 
 #ifndef OPENSSL_NO_DSA
 # ifndef OPENSSL_NO_STDIO
@@ -395,7 +392,7 @@ int X509_digest(const X509 *cert, const EVP_MD *md, unsigned char *data,
                 unsigned int *len)
 {
     if (EVP_MD_is_a(md, SN_sha1) && (cert->ex_flags & EXFLAG_SET) != 0
-            && (cert->ex_flags & EXFLAG_INVALID) == 0) {
+            && (cert->ex_flags & EXFLAG_NO_FINGERPRINT) == 0) {
         /* Asking for SHA1 and we already computed it. */
         if (len != NULL)
             *len = sizeof(cert->sha1_hash);
@@ -439,7 +436,7 @@ int X509_CRL_digest(const X509_CRL *data, const EVP_MD *type,
                     unsigned char *md, unsigned int *len)
 {
     if (type == EVP_sha1() && (data->flags & EXFLAG_SET) != 0
-            && (data->flags & EXFLAG_INVALID) == 0) {
+            && (data->flags & EXFLAG_NO_FINGERPRINT) == 0) {
         /* Asking for SHA1; always computed in CRL d2i. */
         if (len != NULL)
             *len = sizeof(data->sha1_hash);

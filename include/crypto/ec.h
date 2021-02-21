@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -11,11 +11,21 @@
 
 #ifndef OSSL_CRYPTO_EC_H
 # define OSSL_CRYPTO_EC_H
+# pragma once
+
 # include <openssl/opensslconf.h>
+# include <openssl/evp.h>
+
+const char *ec_curve_nid2name(int nid);
+int ec_curve_name2nid(const char *name);
+const char *ec_curve_nid2nist_int(int nid);
+int ec_curve_nist2nid_int(const char *name);
+int evp_pkey_ctx_set_ec_param_enc_prov(EVP_PKEY_CTX *ctx, int param_enc);
 
 # ifndef OPENSSL_NO_EC
 #  include <openssl/core.h>
 #  include <openssl/ec.h>
+#  include "crypto/types.h"
 
 /*-
  * Computes the multiplicative inverse of x in the range
@@ -54,8 +64,7 @@ int ec_key_private_check(const EC_KEY *eckey);
 int ec_key_pairwise_check(const EC_KEY *eckey, BN_CTX *ctx);
 OSSL_LIB_CTX *ec_key_get_libctx(const EC_KEY *eckey);
 const char *ec_key_get0_propq(const EC_KEY *eckey);
-const char *ec_curve_nid2name(int nid);
-int ec_curve_name2nid(const char *name);
+void ec_key_set0_libctx(EC_KEY *key, OSSL_LIB_CTX *libctx);
 
 /* Backend support */
 int ec_group_todata(const EC_GROUP *group, OSSL_PARAM_BLD *tmpl,
@@ -63,12 +72,18 @@ int ec_group_todata(const EC_GROUP *group, OSSL_PARAM_BLD *tmpl,
                     const char *propq,
                     BN_CTX *bnctx, unsigned char **genbuf);
 int ec_group_fromdata(EC_KEY *ec, const OSSL_PARAM params[]);
+int ec_group_set_params(EC_GROUP *group, const OSSL_PARAM params[]);
 int ec_key_fromdata(EC_KEY *ecx, const OSSL_PARAM params[], int include_private);
 int ec_key_otherparams_fromdata(EC_KEY *ec, const OSSL_PARAM params[]);
 int ec_set_ecdh_cofactor_mode(EC_KEY *ec, int mode);
 int ec_encoding_name2id(const char *name);
+int ec_encoding_param2id(const OSSL_PARAM *p, int *id);
+int ec_pt_format_name2id(const char *name);
+int ec_pt_format_param2id(const OSSL_PARAM *p, int *id);
+char *ec_pt_format_id2name(int id);
 
-int evp_pkey_ctx_set_ec_param_enc_prov(EVP_PKEY_CTX *ctx, int param_enc);
+char *ec_check_group_type_id2name(int flags);
+int ec_set_check_group_type_from_name(EC_KEY *ec, const char *name);
 
 # endif /* OPENSSL_NO_EC */
 #endif

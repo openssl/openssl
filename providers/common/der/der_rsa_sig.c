@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -29,7 +29,7 @@
         break;
 
 int ossl_DER_w_algorithmIdentifier_MDWithRSAEncryption(WPACKET *pkt, int tag,
-                                                       RSA *rsa, int mdnid)
+                                                       int mdnid)
 {
     const unsigned char *precompiled = NULL;
     size_t precompiled_sz = 0;
@@ -58,7 +58,9 @@ int ossl_DER_w_algorithmIdentifier_MDWithRSAEncryption(WPACKET *pkt, int tag,
     }
 
     return ossl_DER_w_begin_sequence(pkt, tag)
-        /* No parameters (yet?) */
+        /* PARAMETERS, always NULL according to current standards */
+        && ossl_DER_w_null(pkt, -1)
+        /* OID */
         && ossl_DER_w_precompiled(pkt, -1, precompiled, precompiled_sz)
         && ossl_DER_w_end_sequence(pkt, tag);
 }

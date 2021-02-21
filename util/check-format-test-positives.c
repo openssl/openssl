@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2007-2021 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright Nokia 2007-2019
  * Copyright Siemens AG 2015-2019
  *
@@ -42,7 +42,9 @@
 *@ multi-line comment indent off by -1
  *X*@ no spc after leading '*' in multi-line comment, reported unless sloppy-spc
  *@0 more than two spaces after .   in comment, reported unless sloppy-spc
-*/ /*@2 multi-line comment end indent off by -1 (relative to comment start) */
+ *@0 more than two spaces after ?   in comment, reported unless sloppy-spc
+ *@0 more than two spaces after !   in comment, reported unless sloppy-spc
+*/ /*@ multi-line comment end indent off by -1 (relative to comment start) */
 */ /*@ unexpected comment ending delimiter outside comment */
 /*@ comment line is 4 columns tooooooooooooooooo wide, reported unless sloppy-len */
 /*@ comment line is 5 columns toooooooooooooooooooooooooooooooooooooooooooooo wide */

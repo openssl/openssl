@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -20,6 +20,7 @@
  */
 #ifndef OSSL_CRYPTO_CTYPE_H
 # define OSSL_CRYPTO_CTYPE_H
+# pragma once
 
 # define CTYPE_MASK_lower       0x1
 # define CTYPE_MASK_upper       0x2

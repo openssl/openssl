@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -19,7 +19,7 @@
 static int process(const char *uri, const UI_METHOD *uimeth, PW_CB_DATA *uidata,
                    int expected, int criterion, OSSL_STORE_SEARCH *search,
                    int text, int noout, int recursive, int indent, BIO *out,
-                   const char *prog, OSSL_LIB_CTX *libctx, const char *propq);
+                   const char *prog, OSSL_LIB_CTX *libctx);
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP, OPT_ENGINE, OPT_OUT, OPT_PASSIN,
@@ -81,11 +81,10 @@ int storeutl_main(int argc, char *argv[])
     ASN1_INTEGER *serial = NULL;
     unsigned char *fingerprint = NULL;
     size_t fingerprintlen = 0;
-    char *alias = NULL;
+    char *alias = NULL, *digestname = NULL;
     OSSL_STORE_SEARCH *search = NULL;
     const EVP_MD *digest = NULL;
     OSSL_LIB_CTX *libctx = app_get0_libctx();
-    const char *propq = app_get0_propq();
 
     while ((o = opt_next()) != OPT_EOF) {
         switch (o) {
@@ -248,24 +247,24 @@ int storeutl_main(int argc, char *argv[])
             e = setup_engine(opt_arg(), 0);
             break;
         case OPT_MD:
-            if (!opt_md(opt_unknown(), &digest))
-                goto opthelp;
+            digestname = opt_unknown();
+            break;
         case OPT_PROV_CASES:
             if (!opt_provider(o))
                 goto end;
             break;
         }
     }
+
+    /* One argument, the URI */
     argc = opt_num_rest();
     argv = opt_rest();
+    if (argc != 1)
+        goto opthelp;
 
-    if (argc == 0) {
-        BIO_printf(bio_err, "%s: No URI given, nothing to do...\n", prog);
-        goto opthelp;
-    }
-    if (argc > 1) {
-        BIO_printf(bio_err, "%s: Unknown extra parameters after URI\n", prog);
-        goto opthelp;
+    if (digestname != NULL) {
+        if (!opt_md(digestname, &digest))
+            goto opthelp;
     }
 
     if (criterion != 0) {
@@ -320,7 +319,7 @@ int storeutl_main(int argc, char *argv[])
 
     ret = process(argv[0], get_ui_method(), &pw_cb_data,
                   expected, criterion, search,
-                  text, noout, recursive, 0, out, prog, libctx, propq);
+                  text, noout, recursive, 0, out, prog, libctx);
 
  end:
     OPENSSL_free(fingerprint);
@@ -351,12 +350,12 @@ static int indent_printf(int indent, BIO *bio, const char *format, ...)
 static int process(const char *uri, const UI_METHOD *uimeth, PW_CB_DATA *uidata,
                    int expected, int criterion, OSSL_STORE_SEARCH *search,
                    int text, int noout, int recursive, int indent, BIO *out,
-                   const char *prog, OSSL_LIB_CTX *libctx, const char *propq)
+                   const char *prog, OSSL_LIB_CTX *libctx)
 {
     OSSL_STORE_CTX *store_ctx = NULL;
     int ret = 1, items = 0;
 
-    if ((store_ctx = OSSL_STORE_open_ex(uri, libctx, propq, uimeth, uidata,
+    if ((store_ctx = OSSL_STORE_open_ex(uri, libctx, app_get0_propq(), uimeth, uidata,
                                         NULL, NULL))
         == NULL) {
         BIO_printf(bio_err, "Couldn't open file or uri %s\n", uri);
@@ -441,7 +440,7 @@ static int process(const char *uri, const UI_METHOD *uimeth, PW_CB_DATA *uidata,
                 ret += process(suburi, uimeth, uidata,
                                expected, criterion, search,
                                text, noout, recursive, indent + 2, out, prog,
-                               libctx, propq);
+                               libctx);
             }
             break;
         case OSSL_STORE_INFO_PARAMS:

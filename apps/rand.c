@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1998-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -88,16 +88,18 @@ int rand_main(int argc, char **argv)
             break;
         }
     }
+
+    /* Optional argument is number of bytes to generate. */
     argc = opt_num_rest();
     argv = opt_rest();
     if (argc == 1) {
         if (!opt_int(argv[0], &num) || num <= 0)
-            goto end;
-    } else if (argc > 0) {
-        BIO_printf(bio_err, "Extra arguments given.\n");
+            goto opthelp;
+    } else if (argc != 0) {
         goto opthelp;
     }
 
+    app_RAND_load();
     out = bio_open_default(outfile, 'w', format);
     if (out == NULL)
         goto end;

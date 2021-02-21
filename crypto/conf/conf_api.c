@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -27,7 +27,7 @@ CONF_VALUE *_CONF_get_section(const CONF *conf, const char *section)
         return NULL;
     vv.name = NULL;
     vv.section = (char *)section;
-    return lh_CONF_VALUE_retrieve(conf->data, &vv);
+    return conf->data != NULL ? lh_CONF_VALUE_retrieve(conf->data, &vv) : NULL;
 }
 
 STACK_OF(CONF_VALUE) *_CONF_get_section_values(const CONF *conf,
@@ -72,6 +72,8 @@ char *_CONF_get_string(const CONF *conf, const char *section,
         return NULL;
     if (conf == NULL)
         return ossl_safe_getenv(name);
+    if (conf->data == NULL)
+        return NULL;
     if (section != NULL) {
         vv.name = (char *)name;
         vv.section = (char *)section;

@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2021 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -48,6 +48,8 @@ my $smcont   = srctop_file("test", "smcont.txt");
 my $smcont_zero = srctop_file("test", "smcont_zero.txt");
 my ($no_des, $no_dh, $no_dsa, $no_ec, $no_ec2m, $no_rc2, $no_zlib)
     = disabled qw/des dh dsa ec ec2m rc2 zlib/;
+
+$no_rc2 = 1 if disabled("legacy");
 
 plan tests =>
     ($no_fips ? 0 : 1)          # FIPS install test
@@ -596,7 +598,7 @@ my @smime_cms_param_tests = (
         "-stream", "-out", "{output}.cms",
         "-recip", catfile($smdir, "smec1.pem"), "-aes-128-gcm", "-keyopt", "ecdh_kdf_md:sha256" ],
       [ "{cmd2}", "-decrypt", "-recip", catfile($smdir, "smec1.pem"),
-	      "-in", "{output}.cms", "-out", "{output}.txt" ],
+        "-in", "{output}.cms", "-out", "{output}.txt" ],
       \&final_compare
     ],
 
@@ -608,18 +610,16 @@ my @smime_cms_param_tests = (
       [ "{cmd2}", @prov, "-decrypt", "-recip", catfile($smdir, "smec2.pem"),
         "-in", "{output}.cms", "-out", "{output}.txt" ],
       \&final_compare
-    ]
+    ],
 
-    # TODO(3.0) Add this test back in when "dhpublicnumber" is supported
-    # in the keymanger.
-    #[ "enveloped content test streaming S/MIME format, X9.42 DH",
-    #  [ "{cmd1}", @prov, "-encrypt", "-in", $smcont,
-    #    "-stream", "-out", "{output}.cms",
-    #    "-recip", catfile($smdir, "smdh.pem"), "-aes128" ],
-    #  [ "{cmd2}", "-decrypt", "-recip", catfile($smdir, "smdh.pem"),
-    #    "-in", "{output}.cms", "-out", "{output}.txt" ],
-    #  \&final_compare
-    #]
+    [ "enveloped content test streaming S/MIME format, X9.42 DH",
+      [ "{cmd1}", @prov, "-encrypt", "-in", $smcont,
+        "-stream", "-out", "{output}.cms",
+        "-recip", catfile($smdir, "smdh.pem"), "-aes128" ],
+      [ "{cmd2}", @prov, "-decrypt", "-recip", catfile($smdir, "smdh.pem"),
+        "-in", "{output}.cms", "-out", "{output}.txt" ],
+      \&final_compare
+    ]
 );
 
 my @contenttype_cms_test = (

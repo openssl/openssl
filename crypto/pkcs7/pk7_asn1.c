@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -68,7 +68,7 @@ PKCS7 *d2i_PKCS7(PKCS7 **a, const unsigned char **in, long len)
     PKCS7 *ret;
 
     ret = (PKCS7 *)ASN1_item_d2i((ASN1_VALUE **)a, in, len, (PKCS7_it()));
-    if (ret != NULL && a != NULL)
+    if (ret != NULL)
         pkcs7_resolve_libctx(ret);
     return ret;
 }

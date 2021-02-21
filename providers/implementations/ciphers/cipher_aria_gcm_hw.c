@@ -25,11 +25,11 @@ static int aria_gcm_initkey(PROV_GCM_CTX *ctx, const unsigned char *key,
 
 static const PROV_GCM_HW aria_gcm = {
     aria_gcm_initkey,
-    gcm_setiv,
-    gcm_aad_update,
-    gcm_cipher_update,
-    gcm_cipher_final,
-    gcm_one_shot
+    ossl_gcm_setiv,
+    ossl_gcm_aad_update,
+    ossl_gcm_cipher_update,
+    ossl_gcm_cipher_final,
+    ossl_gcm_one_shot
 };
 const PROV_GCM_HW *ossl_prov_aria_hw_gcm(size_t keybits)
 {

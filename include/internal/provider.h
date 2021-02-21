@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -9,6 +9,7 @@
 
 #ifndef OSSL_INTERNAL_PROVIDER_H
 # define OSSL_INTERNAL_PROVIDER_H
+# pragma once
 
 # include <openssl/core.h>
 # include <openssl/core_dispatch.h>
@@ -47,10 +48,10 @@ int ossl_provider_disable_fallback_loading(OSSL_LIB_CTX *libctx);
 /*
  * Activate the Provider
  * If the Provider is a module, the module will be loaded
- * Inactivation is done by freeing the Provider
  */
 int ossl_provider_activate(OSSL_PROVIDER *prov);
-/* Check if the provider is available */
+int ossl_provider_deactivate(OSSL_PROVIDER *prov);
+/* Check if the provider is available (activated) */
 int ossl_provider_available(OSSL_PROVIDER *prov);
 
 /* Return pointer to the provider's context */

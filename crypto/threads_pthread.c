@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -51,12 +51,15 @@ CRYPTO_RWLOCK *CRYPTO_THREAD_lock_new(void)
         return NULL;
     }
 
+    /*
+     * We don't use recursive mutexes, but try to catch errors if we do.
+     */
     pthread_mutexattr_init(&attr);
-    #if defined(__TANDEM) && defined(_SPT_MODEL_)
-      pthread_mutexattr_setkind_np(&attr,MUTEX_RECURSIVE_NP);
-    #else
-      pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
-    #endif
+#  if defined(NDEBUG) && defined(PTHREAD_MUTEX_ERRORCHECK)
+    pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK);
+# else
+    pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_NORMAL);
+#  endif
 
     if (pthread_mutex_init(lock, &attr) != 0) {
         pthread_mutexattr_destroy(&attr);
@@ -76,8 +79,10 @@ int CRYPTO_THREAD_read_lock(CRYPTO_RWLOCK *lock)
     if (pthread_rwlock_rdlock(lock) != 0)
         return 0;
 # else
-    if (pthread_mutex_lock(lock) != 0)
+    if (pthread_mutex_lock(lock) != 0) {
+        assert(errno != EDEADLK && errno != EBUSY);
         return 0;
+    }
 # endif
 
     return 1;
@@ -89,8 +94,10 @@ int CRYPTO_THREAD_write_lock(CRYPTO_RWLOCK *lock)
     if (pthread_rwlock_wrlock(lock) != 0)
         return 0;
 # else
-    if (pthread_mutex_lock(lock) != 0)
+    if (pthread_mutex_lock(lock) != 0) {
+        assert(errno != EDEADLK && errno != EBUSY);
         return 0;
+    }
 # endif
 
     return 1;
@@ -102,8 +109,10 @@ int CRYPTO_THREAD_unlock(CRYPTO_RWLOCK *lock)
     if (pthread_rwlock_unlock(lock) != 0)
         return 0;
 # else
-    if (pthread_mutex_unlock(lock) != 0)
+    if (pthread_mutex_unlock(lock) != 0) {
+        assert(errno != EPERM);
         return 0;
+    }
 # endif
 
     return 1;
@@ -185,7 +194,7 @@ int CRYPTO_atomic_add(int *val, int amount, int *ret, CRYPTO_RWLOCK *lock)
         return 1;
     }
 # endif
-    if (!CRYPTO_THREAD_write_lock(lock))
+    if (lock == NULL || !CRYPTO_THREAD_write_lock(lock))
         return 0;
 
     *val += amount;
@@ -197,24 +206,57 @@ int CRYPTO_atomic_add(int *val, int amount, int *ret, CRYPTO_RWLOCK *lock)
     return 1;
 }
 
+int CRYPTO_atomic_or(uint64_t *val, uint64_t op, uint64_t *ret,
+                     CRYPTO_RWLOCK *lock)
+{
+# if defined(__GNUC__) && defined(__ATOMIC_ACQ_REL)
+    if (__atomic_is_lock_free(sizeof(*val), val)) {
+        *ret = __atomic_or_fetch(val, op, __ATOMIC_ACQ_REL);
+        return 1;
+    }
+# elif defined(__sun) && (defined(__SunOS_5_10) || defined(__SunOS_5_11))
+    /* This will work for all future Solaris versions. */
+    if (ret != NULL) {
+        *ret = atomic_or_64_nv(val, op);
+        return 1;
+    }
+# endif
+    if (lock == NULL || !CRYPTO_THREAD_write_lock(lock))
+        return 0;
+    *val |= op;
+    *ret  = *val;
+
+    if (!CRYPTO_THREAD_unlock(lock))
+        return 0;
+
+    return 1;
+}
+
+int CRYPTO_atomic_load(uint64_t *val, uint64_t *ret, CRYPTO_RWLOCK *lock)
+{
+# if defined(__GNUC__) && defined(__ATOMIC_ACQUIRE)
+    if (__atomic_is_lock_free(sizeof(*val), val)) {
+        __atomic_load(val, ret, __ATOMIC_ACQUIRE);
+        return 1;
+    }
+# elif defined(__sun) && (defined(__SunOS_5_10) || defined(__SunOS_5_11))
+    /* This will work for all future Solaris versions. */
+    if (ret != NULL) {
+        *ret = atomic_or_64_nv(val, 0);
+        return 1;
+    }
+# endif
+    if (lock == NULL || !CRYPTO_THREAD_read_lock(lock))
+        return 0;
+    *ret  = *val;
+    if (!CRYPTO_THREAD_unlock(lock))
+        return 0;
+
+    return 1;
+}
 # ifndef FIPS_MODULE
 #  ifdef OPENSSL_SYS_UNIX
 
-#   ifndef OPENSSL_NO_DEPRECATED_3_0
-
-void OPENSSL_fork_prepare(void)
-{
-}
-
-void OPENSSL_fork_parent(void)
-{
-}
-
-void OPENSSL_fork_child(void)
-{
-}
-
-#   endif
 static pthread_once_t fork_once_control = PTHREAD_ONCE_INIT;
 
 static void fork_once_func(void)

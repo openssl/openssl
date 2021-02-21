@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,10 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/evp.h>
-#include <openssl/core_dispatch.h>
-#include "internal/refcount.h"
-#include "crypto/ecx.h"
+#ifndef OSSL_CRYPTO_EVP_H
+# define OSSL_CRYPTO_EVP_H
+# pragma once
+
+# include <openssl/evp.h>
+# include <openssl/core_dispatch.h>
+# include "internal/refcount.h"
+# include "crypto/ecx.h"
 
 /*
  * Don't free up md_ctx->pctx in EVP_MD_CTX_reset, use the reserved flag
@@ -43,7 +47,7 @@ struct evp_pkey_ctx_st {
      * this context
      */
     OSSL_LIB_CTX *libctx;
-    const char *propquery;
+    char *propquery;
     const char *keytype;
     EVP_KEYMGMT *keymgmt;
 
@@ -196,7 +200,6 @@ struct evp_mac_st {
     OSSL_FUNC_mac_newctx_fn *newctx;
     OSSL_FUNC_mac_dupctx_fn *dupctx;
     OSSL_FUNC_mac_freectx_fn *freectx;
-    OSSL_FUNC_mac_size_fn *size;
     OSSL_FUNC_mac_init_fn *init;
     OSSL_FUNC_mac_update_fn *update;
     OSSL_FUNC_mac_final_fn *final;
@@ -550,6 +553,23 @@ int evp_cipher_asn1_to_param_ex(EVP_CIPHER_CTX *c, ASN1_TYPE *type,
                                 evp_cipher_aead_asn1_params *params);
 
 /*
+ * To support transparent execution of operation in backends other
+ * than the "origin" key, we support transparent export/import to
+ * those providers, and maintain a cache of the imported keydata,
+ * so we don't need to redo the export/import every time we perform
+ * the same operation in that same provider.
+ * This requires that the "origin" backend (whether it's a legacy or a
+ * provider "origin") implements exports, and that the target provider
+ * has an EVP_KEYMGMT that implements import.
+ */
+typedef struct {
+    EVP_KEYMGMT *keymgmt;
+    void *keydata;
+} OP_CACHE_ELEM;
+
+DEFINE_STACK_OF(OP_CACHE_ELEM)
+
+/*
  * An EVP_PKEY can have the following states:
  *
  * untyped & empty:
@@ -600,9 +620,7 @@ struct evp_pkey_st {
     ENGINE *pmeth_engine; /* If not NULL public key ENGINE to use */
     union {
         void *ptr;
-#  ifndef OPENSSL_NO_RSA
         struct rsa_st *rsa;     /* RSA */
-#  endif
 #  ifndef OPENSSL_NO_DSA
         struct dsa_st *dsa;     /* DSA */
 #  endif
@@ -647,18 +665,9 @@ struct evp_pkey_st {
      * those providers, and maintain a cache of the imported keydata,
      * so we don't need to redo the export/import every time we perform
      * the same operation in that same provider.
-     * This requires that the "origin" backend (whether it's a legacy or a
-     * provider "origin") implements exports, and that the target provider
-     * has an EVP_KEYMGMT that implements import.
-     *
-     * The cache limit is set at 10 different providers using the same
-     * "origin".  It's probably over the top, but is preferable to too
-     * few.
      */
-    struct {
-        EVP_KEYMGMT *keymgmt;
-        void *keydata;
-    } operation_cache[10];
+    STACK_OF(OP_CACHE_ELEM) *operation_cache;
+
     /*
      * We keep a copy of that "origin"'s dirty count, so we know if the
      * operation cache needs flushing.
@@ -729,10 +738,10 @@ EVP_PKEY *evp_keymgmt_util_make_pkey(EVP_KEYMGMT *keymgmt, void *keydata);
 int evp_keymgmt_util_export(const EVP_PKEY *pk, int selection,
                             OSSL_CALLBACK *export_cb, void *export_cbarg);
 void *evp_keymgmt_util_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt);
-size_t evp_keymgmt_util_find_operation_cache_index(EVP_PKEY *pk,
-                                                   EVP_KEYMGMT *keymgmt);
-void evp_keymgmt_util_clear_operation_cache(EVP_PKEY *pk);
-int evp_keymgmt_util_cache_keydata(EVP_PKEY *pk, size_t index,
+OP_CACHE_ELEM *evp_keymgmt_util_find_operation_cache(EVP_PKEY *pk,
+                                                     EVP_KEYMGMT *keymgmt);
+int evp_keymgmt_util_clear_operation_cache(EVP_PKEY *pk, int locking);
+int evp_keymgmt_util_cache_keydata(EVP_PKEY *pk,
                                    EVP_KEYMGMT *keymgmt, void *keydata);
 void evp_keymgmt_util_cache_keyinfo(EVP_PKEY *pk);
 void *evp_keymgmt_util_fromdata(EVP_PKEY *target, EVP_KEYMGMT *keymgmt,
@@ -769,7 +778,7 @@ void *evp_keymgmt_load(const EVP_KEYMGMT *keymgmt,
 
 int evp_keymgmt_has(const EVP_KEYMGMT *keymgmt, void *keyddata, int selection);
 int evp_keymgmt_validate(const EVP_KEYMGMT *keymgmt, void *keydata,
-                         int selection);
+                         int selection, int checktype);
 int evp_keymgmt_match(const EVP_KEYMGMT *keymgmt,
                       const void *keydata1, const void *keydata2,
                       int selection);
@@ -788,10 +797,10 @@ int evp_keymgmt_copy(const EVP_KEYMGMT *keymgmt,
 
 /* Pulling defines out of C source files */
 
-#define EVP_RC4_KEY_SIZE 16
-#ifndef TLS1_1_VERSION
-# define TLS1_1_VERSION   0x0302
-#endif
+# define EVP_RC4_KEY_SIZE 16
+# ifndef TLS1_1_VERSION
+#  define TLS1_1_VERSION   0x0302
+# endif
 
 void evp_encode_ctx_set_flags(EVP_ENCODE_CTX *ctx, unsigned int flags);
 
@@ -811,7 +820,7 @@ int pkcs5_pbkdf2_hmac_ex(const char *pass, int passlen,
                          const EVP_MD *digest, int keylen, unsigned char *out,
                          OSSL_LIB_CTX *libctx, const char *propq);
 
-#ifndef FIPS_MODULE
+# ifndef FIPS_MODULE
 /*
  * Internal helpers for stricter EVP_PKEY_CTX_{set,get}_params().
  *
@@ -830,15 +839,23 @@ int evp_pkey_ctx_get_params_strict(EVP_PKEY_CTX *ctx, OSSL_PARAM *params);
 EVP_MD_CTX *evp_md_ctx_new_ex(EVP_PKEY *pkey, const ASN1_OCTET_STRING *id,
                               OSSL_LIB_CTX *libctx, const char *propq);
 int evp_pkey_name2type(const char *name);
+const char *evp_pkey_type2name(int type);
 
 int evp_pkey_ctx_set1_id_prov(EVP_PKEY_CTX *ctx, const void *id, int len);
 int evp_pkey_ctx_get1_id_prov(EVP_PKEY_CTX *ctx, void *id);
 int evp_pkey_ctx_get1_id_len_prov(EVP_PKEY_CTX *ctx, size_t *id_len);
 
 int evp_pkey_ctx_use_cached_data(EVP_PKEY_CTX *ctx);
-#endif /* !defined(FIPS_MODULE) */
+# endif /* !defined(FIPS_MODULE) */
+
 void evp_method_store_flush(OSSL_LIB_CTX *libctx);
 int evp_set_default_properties_int(OSSL_LIB_CTX *libctx, const char *propq,
                                    int loadconfig);
 
 void evp_md_ctx_clear_digest(EVP_MD_CTX *ctx, int force);
+
+EVP_PKEY *evp_privatekey_from_binary(int keytype, EVP_PKEY **a,
+                                     const unsigned char **pp, long length,
+                                     OSSL_LIB_CTX *libctx, const char *propq);
+
+#endif /* OSSL_CRYPTO_EVP_H */

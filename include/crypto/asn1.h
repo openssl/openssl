@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,7 +7,11 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/asn1.h>
+#ifndef OSSL_CRYPTO_ASN1_H
+# define OSSL_CRYPTO_ASN1_H
+# pragma once
+
+# include <openssl/asn1.h>
 
 /* Internal ASN1 structures and functions: not for application use */
 
@@ -138,3 +142,6 @@ int x509_algor_new_from_md(X509_ALGOR **palg, const EVP_MD *md);
 const EVP_MD *x509_algor_get_md(X509_ALGOR *alg);
 X509_ALGOR *x509_algor_mgf1_decode(X509_ALGOR *alg);
 int x509_algor_md_to_mgf1(X509_ALGOR **palg, const EVP_MD *mgf1md);
+int asn1_time_print_ex(BIO *bp, const ASN1_TIME *tm);
+
+#endif /* ndef OSSL_CRYPTO_ASN1_H */

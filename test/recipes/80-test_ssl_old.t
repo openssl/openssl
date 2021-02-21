@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2021 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -13,11 +13,11 @@ use warnings;
 use POSIX;
 use File::Basename;
 use File::Copy;
-use OpenSSL::Test qw/:DEFAULT with bldtop_file bldtop_dir srctop_file srctop_dir cmdstr/;
+use OpenSSL::Test qw/:DEFAULT with bldtop_file bldtop_dir srctop_file srctop_dir cmdstr data_file/;
 use OpenSSL::Test::Utils;
 
 BEGIN {
-setup("test_ssl");
+setup("test_ssl_old");
 }
 
 use lib srctop_dir('Configurations');
@@ -33,6 +33,8 @@ my ($no_rsa, $no_dsa, $no_dh, $no_ec, $no_psk,
     anydisabled qw/rsa dsa dh ec psk
                    ssl3 tls1 tls1_1 tls1_2 tls1_3
                    dtls dtls1 dtls1_2 ct/;
+#If ec and dh are disabled then don't use TLSv1.3
+$no_tls1_3 = 1 if (!$no_tls1_3 && $no_ec && $no_dh);
 my $no_anytls = alldisabled(available_protocols("tls"));
 my $no_anydtls = alldisabled(available_protocols("dtls"));
 
@@ -75,7 +77,7 @@ my $P2intermediate="tmp_intP2.ss";
 my $server_sess="server.ss";
 my $client_sess="client.ss";
 
-# ssltest_old.c is deprecated in favour of the new framework in ssl_test.c
+# ssl_old_test.c is deprecated in favour of the new framework in ssl_test.c
 # If you're adding tests here, you probably want to convert them to the
 # new format in ssl_test.c and add recipes to 80-test_ssl_new.t instead.
 plan tests =>
@@ -103,10 +105,15 @@ subtest 'test_ss' => sub {
     }
 };
 
-note('test_ssl -- key U');
-testssl("keyU.ss", $Ucert, $CAcert, "default", srctop_file("test","default.cnf"));
+note('test_ssl_old -- key U');
+my $configfile = srctop_file("test","default-and-legacy.cnf");
+if (disabled("legacy")) {
+    $configfile = srctop_file("test","default.cnf");
+}
+
+testssl($Ukey, $Ucert, $CAcert, "default", $configfile);
 unless ($no_fips) {
-    testssl("keyU.ss", $Ucert, $CAcert, "fips",
+    testssl($Ukey, $Ucert, $CAcert, "fips",
             srctop_file("test","fips-and-base.cnf"));
 }
 
@@ -114,8 +121,8 @@ unless ($no_fips) {
 # subtest functions
 sub testss {
     my @req_dsa = ("-newkey",
-                   "dsa:".srctop_file("apps", "dsa1024.pem"));
-    my $dsaparams = srctop_file("apps", "dsa1024.pem");
+                   "dsa:".data_file("dsa2048.pem"));
+    my $dsaparams = data_file("dsa2048.pem");
     my @req_new;
     if ($no_rsa) {
 	@req_new = @req_dsa;
@@ -327,12 +334,18 @@ sub testss {
 sub testssl {
     my ($key, $cert, $CAtmp, $provider, $configfile) = @_;
     my @CA = $CAtmp ? ("-CAfile", $CAtmp) : ("-CApath", bldtop_dir("certs"));
+    my @providerflags = ("-provider", $provider);
 
-    my @ssltest = ("ssltest_old",
-		   "-s_key", $key, "-s_cert", $cert,
-		   "-c_key", $key, "-c_cert", $cert,
-		   "-provider", $provider,
-		   "-config", $configfile);
+    if ($provider eq "default" && !disabled("legacy")) {
+        push @providerflags, "-provider", "legacy";
+    }
+
+    my @ssltest = ("ssl_old_test",
+                   "-s_key", $key, "-s_cert", $cert,
+                   "-c_key", $key, "-c_cert", $cert,
+                   "-config", $configfile,
+                   @providerflags);
+
 
     my $serverinfo = srctop_file("test","serverinfo.pem");
 
@@ -385,8 +398,14 @@ sub testssl {
 	       'test sslv2/sslv3 w/o (EC)DHE via BIO pair');
 	  }
 
-	  ok(run(test([@ssltest, "-bio_pair", "-dhe1024dsa", "-v"])),
-	     'test sslv2/sslv3 with 1024bit DHE via BIO pair');
+	SKIP: {
+	    skip "skipping dhe1024dsa test", 1
+                if ($no_dh);
+
+            ok(run(test([@ssltest, "-bio_pair", "-dhe1024dsa", "-v"])),
+               'test sslv2/sslv3 with 1024bit DHE via BIO pair');
+          }
+
 	  ok(run(test([@ssltest, "-bio_pair", "-server_auth", @CA])),
 	     'test sslv2/sslv3 with server authentication');
 	  ok(run(test([@ssltest, "-bio_pair", "-client_auth", @CA])),
@@ -415,7 +434,7 @@ sub testssl {
     subtest "Testing ciphersuites" => sub {
 
         my @exkeys = ();
-        my $ciphers = "-PSK:-SRP";
+        my $ciphers = '-PSK:-SRP:@SECLEVEL=0';
 
         if (!$no_dsa) {
             push @exkeys, "-s_cert", "certD.ss", "-s_key", "keyD.ss";
@@ -425,28 +444,33 @@ sub testssl {
             push @exkeys, "-s_cert", "certE.ss", "-s_key", "keyE.ss";
         }
 
-	my @protocols = ();
-	# We only use the flags that ssltest_old understands
-	push @protocols, "-tls1_3" unless $no_tls1_3;
-	push @protocols, "-tls1_2" unless $no_tls1_2;
-	push @protocols, "-tls1" unless $no_tls1 || $provider eq "fips";
-	push @protocols, "-ssl3" unless $no_ssl3 || $provider eq "fips";
-	my $protocolciphersuitecount = 0;
-	my %ciphersuites = ();
-	my %ciphersstatus = ();
-	foreach my $protocol (@protocols) {
-	    my $ciphersstatus = undef;
-	    my @ciphers = run(app(["openssl", "ciphers", "-s", $protocol,
-				   "ALL:$ciphers"]),
-			      capture => 1, statusvar => \$ciphersstatus);
-	    @ciphers = grep {!/CAMELLIA|ARIA|CHACHA/} @ciphers;
-	    $ciphersstatus{$protocol} = $ciphersstatus;
-	    if ($ciphersstatus) {
-		$ciphersuites{$protocol} = [ map { s|\R||; split(/:/, $_) }
-					     @ciphers ];
-		$protocolciphersuitecount += scalar @{$ciphersuites{$protocol}};
-	    }
-	}
+        my @protocols = ();
+        # We only use the flags that ssl_old_test understands
+        push @protocols, "-tls1_3" unless $no_tls1_3;
+        push @protocols, "-tls1_2" unless $no_tls1_2;
+        push @protocols, "-tls1" unless $no_tls1 || $provider eq "fips";
+        push @protocols, "-ssl3" unless $no_ssl3 || $provider eq "fips";
+        my $protocolciphersuitecount = 0;
+        my %ciphersuites = ();
+        my %ciphersstatus = ();
+        #There's no "-config" option to the ciphers command so we set the
+        #environment variable instead
+        my $opensslconf = $ENV{OPENSSL_CONF};
+        $ENV{OPENSSL_CONF} = $configfile;
+        foreach my $protocol (@protocols) {
+            my $ciphersstatus = undef;
+            my @ciphers = run(app(["openssl", "ciphers", "-s", $protocol,
+                                   @providerflags,
+                                   "ALL:$ciphers"]),
+                                   capture => 1, statusvar => \$ciphersstatus);
+            $ciphersstatus{$protocol} = $ciphersstatus;
+            if ($ciphersstatus) {
+                $ciphersuites{$protocol} = [ map { s|\R||; split(/:/, $_) }
+                                    @ciphers ];
+                $protocolciphersuitecount += scalar @{$ciphersuites{$protocol}};
+            }
+        }
+        $ENV{OPENSSL_CONF} = $opensslconf;
 
         plan skip_all => "None of the ciphersuites to test are available in this OpenSSL build"
             if $protocolciphersuitecount + scalar(keys %ciphersuites) == 0;
@@ -465,7 +489,7 @@ sub testssl {
 
         foreach my $protocol (sort keys %ciphersuites) {
             note "Testing ciphersuites for $protocol";
-            # ssltest_old doesn't know -tls1_3, but that's fine, since that's
+            # ssl_old_test doesn't know -tls1_3, but that's fine, since that's
             # the default choice if TLSv1.3 enabled
             my $flag = $protocol eq "-tls1_3" ? "" : $protocol;
             my $ciphersuites = "";
@@ -477,19 +501,29 @@ sub testssl {
                     if ($protocol eq "-tls1_3") {
                         $ciphersuites = $cipher;
                         $cipher = "";
+                    } else {
+                        $cipher = $cipher.':@SECLEVEL=0';
                     }
-                    ok(run(test([@ssltest, @exkeys, "-cipher", $cipher,
-                                 "-ciphersuites", $ciphersuites, $flag || ()])),
+                    ok(run(test([@ssltest, @exkeys, "-cipher",
+                                 $cipher,
+                                 "-ciphersuites", $ciphersuites,
+                                 $flag || ()])),
                        "Testing $cipher");
                 }
             }
             next if $protocol eq "-tls1_3";
-            is(run(test([@ssltest,
-                         "-s_cipher", "EDH",
-                         "-c_cipher", 'EDH:@SECLEVEL=1',
-                         "-dhe512",
-                         $protocol])), 0,
-               "testing connection with weak DH, expecting failure");
+
+          SKIP: {
+              skip "skipping dhe512 test", 1
+                  if ($no_dh);
+
+              is(run(test([@ssltest,
+                           "-s_cipher", "EDH",
+                           "-c_cipher", 'EDH:@SECLEVEL=1',
+                           "-dhe512",
+                           $protocol])), 0,
+                 "testing connection with weak DH, expecting failure");
+            }
         }
     };
 
@@ -514,13 +548,13 @@ sub testssl {
 	    skip "skipping RSA tests", 2
 		if $no_rsa;
 
-	    ok(run(test(["ssltest_old", "-provider", "default", "-v", "-bio_pair", "-tls1", "-s_cert", srctop_file("apps","server2.pem"), "-no_dhe", "-no_ecdhe", "-num", "10", "-f", "-time"])),
+	    ok(run(test(["ssl_old_test", "-provider", "default", "-v", "-bio_pair", "-tls1", "-s_cert", srctop_file("apps","server2.pem"), "-no_dhe", "-no_ecdhe", "-num", "10", "-f", "-time"])),
 	       'test tlsv1 with 1024bit RSA, no (EC)DHE, multiple handshakes');
 
 	    skip "skipping RSA+DHE tests", 1
 		if $no_dh;
 
-	    ok(run(test(["ssltest_old", "-provider", "default", "-v", "-bio_pair", "-tls1", "-s_cert", srctop_file("apps","server2.pem"), "-dhe1024dsa", "-num", "10", "-f", "-time"])),
+	    ok(run(test(["ssl_old_test", "-provider", "default", "-v", "-bio_pair", "-tls1", "-s_cert", srctop_file("apps","server2.pem"), "-dhe1024dsa", "-num", "10", "-f", "-time"])),
 	       'test tlsv1 with 1024bit RSA, 1024bit DHE, multiple handshakes');
 	  }
 

@@ -32,6 +32,12 @@
 # include <sys/types.h>
 # if defined(OPENSSL_SYS_UNIX)
 #  include <sys/mman.h>
+#  if defined(__FreeBSD__)
+#    define MADV_DONTDUMP MADV_NOCORE
+#  endif
+#  if !defined(MAP_CONCEAL)
+#    define MAP_CONCEAL 0
+#  endif
 # endif
 # if defined(OPENSSL_SYS_LINUX)
 #  include <sys/syscall.h>
@@ -468,7 +474,7 @@ static int sh_init(size_t size, size_t minsize)
 #if !defined(_WIN32)
 # ifdef MAP_ANON
     sh.map_result = mmap(NULL, sh.map_size,
-                         PROT_READ|PROT_WRITE, MAP_ANON|MAP_PRIVATE, -1, 0);
+                         PROT_READ|PROT_WRITE, MAP_ANON|MAP_PRIVATE|MAP_CONCEAL, -1, 0);
 # else
     {
         int fd;

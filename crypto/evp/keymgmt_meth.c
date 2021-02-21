@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -404,12 +404,12 @@ int evp_keymgmt_has(const EVP_KEYMGMT *keymgmt, void *keydata, int selection)
 }
 
 int evp_keymgmt_validate(const EVP_KEYMGMT *keymgmt, void *keydata,
-                         int selection)
+                         int selection, int checktype)
 {
     /* We assume valid if the implementation doesn't have a function */
     if (keymgmt->validate == NULL)
         return 1;
-    return keymgmt->validate(keydata, selection);
+    return keymgmt->validate(keydata, selection, checktype);
 }
 
 int evp_keymgmt_match(const EVP_KEYMGMT *keymgmt,

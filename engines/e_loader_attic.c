@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -1155,7 +1155,8 @@ static int file_find(OSSL_STORE_LOADER_CTX *ctx,
             return 0;
         }
 
-        hash = X509_NAME_hash(OSSL_STORE_SEARCH_get0_name(search));
+        hash = X509_NAME_hash_ex(OSSL_STORE_SEARCH_get0_name(search),
+                                 NULL, NULL, NULL);
         BIO_snprintf(ctx->_.dir.search_name, sizeof(ctx->_.dir.search_name),
                      "%08lx", hash);
         return 1;
@@ -1338,9 +1339,6 @@ static int file_read_pem(BIO *bp, char **pem_name, char **pem_header,
 
 static OSSL_STORE_INFO *file_try_read_msblob(BIO *bp, int *matchcount)
 {
-#ifdef OPENSSL_NO_DSA
-    return NULL;
-#else
     OSSL_STORE_INFO *result = NULL;
     int ispub = -1;
 
@@ -1372,16 +1370,12 @@ static OSSL_STORE_INFO *file_try_read_msblob(BIO *bp, int *matchcount)
     }
 
     return result;
-#endif
 }
 
 static OSSL_STORE_INFO *file_try_read_PVK(BIO *bp, const UI_METHOD *ui_method,
                                           void *ui_data, const char *uri,
                                           int *matchcount)
 {
-#if defined(OPENSSL_NO_DSA) || defined(OPENSSL_NO_RC4)
-    return NULL;
-#else
     OSSL_STORE_INFO *result = NULL;
 
     {
@@ -1411,7 +1405,6 @@ static OSSL_STORE_INFO *file_try_read_PVK(BIO *bp, const UI_METHOD *ui_method,
     }
 
     return result;
-#endif
 }
 
 static int file_read_asn1(BIO *bp, unsigned char **data, long *len)

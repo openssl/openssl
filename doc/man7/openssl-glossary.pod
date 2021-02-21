@@ -1,0 +1,98 @@
+=pod
+
+=head1 NAME
+
+openssl-glossary - An OpenSSL Glossary
+
+=head1 DESCRIPTION
+
+=for comment Please keep the items in case-insensitive alphabetical order
+
+=over 4
+
+=item ASN.1, ASN1
+
+ASN.1 ("Abstract Syntax Notation One") is a notation for describing abstract
+types and values.  It is defined in the ITU-T documents X.680 to X.683:
+
+L<https://www.itu.int/rec/T-REC-X.680>,
+L<https://www.itu.int/rec/T-REC-X.681>,
+L<https://www.itu.int/rec/T-REC-X.682>,
+L<https://www.itu.int/rec/T-REC-X.683>
+
+=item DER ("Distinguished Encoding Rules")
+
+DER is a binary encoding of data, structured according to an ASN.1
+specification.  This is a common encoding used for cryptographic objects
+such as private and public keys, certificates, CRLs, ...
+
+It is defined in ITU-T document X.690:
+
+L<https://www.itu.int/rec/T-REC-X.690>
+
+=item MSBLOB
+
+MSBLOB is a Microsoft specific binary format for RSA and DSA keys, both
+private and public.  This form is never passphrase protected.
+
+=item PEM ("Privacy Enhanced Message")
+
+PEM is a format used for encoding of binary content into a mail and ASCII
+friendly form.  The content is a series of base64-encoded lines, surrounded
+by begin/end markers each on their own line.  For example:
+
+ -----BEGIN PRIVATE KEY-----
+ MIICdg....
+ ... bhTQ==
+ -----END PRIVATE KEY-----
+
+Optional header line(s) may appear after the begin line, and their existence
+depends on the type of object being written or read.
+
+For all OpenSSL uses, the binary content is expected to be a DER encoded
+structure.
+
+This is defined in IETF RFC 1421:
+
+L<https://tools.ietf.org/html/rfc1421>
+
+=item PKCS#8 (also known as "pkcs8" in some parts of OpenSSL)
+
+PKCS#8 is a specification of an ASN.1 structure that OpenSSL uses for
+storing or transmitting any private key in a key type agnostic manner, and
+has both an unencrypted and an encrypted form.
+
+This is specified in RFC 5208:
+
+L<https://tools.ietf.org/html/rfc5208>
+
+=item PVK
+
+PVK is a Microsoft specific binary format for RSA and DSA private keys.
+This form may be passphrase protected.
+
+=item SubjectPublicKeyInfo
+
+SubjectPublicKeyInfo is an ASN.1 structure that OpenSSL uses for storing and
+transmitting any public key in a key type agnostic manner.
+
+This is specified as part of the specification for certificates, RFC 5280:
+
+L<https://tools.ietf.org/html/rfc5280>
+
+=back
+
+=head1 HISTORY
+
+This glossary was added in OpenSSL 3.0.
+
+=head1 COPYRIGHT
+
+Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

@@ -73,11 +73,12 @@ functions
 
 =head1 DESCRIPTION
 
-SSL_CTX_new_ex() creates a new B<SSL_CTX> object as a framework to
-establish TLS/SSL or DTLS enabled connections using the library context
-I<libctx> (see L<OSSL_LIB_CTX(3)>). Any cryptographic algorithms that are used
-by any B<SSL> objects created from this B<SSL_CTX> will be fetched from the
-I<libctx> using the property query string I<propq> (see
+SSL_CTX_new_ex() creates a new B<SSL_CTX> object, which holds various
+configuration and data relevant to TLS/SSL or DTLS session establishment. The
+library context I<libctx> (see L<OSSL_LIB_CTX(3)>) is used to provide the
+cryptographic algorithms needed for the session. Any cryptographic algorithms
+that are used by any B<SSL> objects created from this B<SSL_CTX> will be fetched
+from the I<libctx> using the property query string I<propq> (see
 L<provider(7)/Fetching algorithms>. Either or both the I<libctx> or I<propq>
 parameters may be NULL.
 
@@ -89,6 +90,10 @@ first time increments the reference count. Freeing the B<SSL_CTX> (using
 SSL_CTX_free) decrements it. When the reference count drops to zero, any memory
 or resources allocated to the B<SSL_CTX> object are freed. SSL_CTX_up_ref()
 increments the reference count for an existing B<SSL_CTX> structure.
+
+An B<SSL_CTX> object should not be changed after it is used to create any B<SSL>
+objects or from multiple threads concurrently, since the implementation does not
+provide serialization of access for these cases.
 
 =head1 NOTES
 
@@ -228,7 +233,7 @@ SSL_CTX_new_ex() was added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

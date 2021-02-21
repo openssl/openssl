@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -13,6 +13,7 @@
 #include <openssl/params.h>
 #include <openssl/evp.h>
 #include <openssl/err.h>
+#include <openssl/proverr.h>
 
 #include "crypto/siphash.h"
 /*
@@ -22,7 +23,6 @@
  */
 #include "../../../crypto/siphash/siphash_local.h"
 
-#include "prov/providercommonerr.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 
@@ -38,7 +38,6 @@ static OSSL_FUNC_mac_gettable_ctx_params_fn siphash_gettable_ctx_params;
 static OSSL_FUNC_mac_get_ctx_params_fn siphash_get_ctx_params;
 static OSSL_FUNC_mac_settable_ctx_params_fn siphash_settable_params;
 static OSSL_FUNC_mac_set_ctx_params_fn siphash_set_params;
-static OSSL_FUNC_mac_size_fn siphash_size;
 static OSSL_FUNC_mac_init_fn siphash_init;
 static OSSL_FUNC_mac_update_fn siphash_update;
 static OSSL_FUNC_mac_final_fn siphash_final;
@@ -94,7 +93,7 @@ static int siphash_init(void *vmacctx)
 }
 
 static int siphash_update(void *vmacctx, const unsigned char *data,
-                       size_t datalen)
+                          size_t datalen)
 {
     struct siphash_data_st *ctx = vmacctx;
 

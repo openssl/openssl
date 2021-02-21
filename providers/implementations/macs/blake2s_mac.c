@@ -16,14 +16,14 @@
 #define BLAKE2_SALTBYTES BLAKE2S_SALTBYTES
 
 /* Function names */
-#define BLAKE2_PARAM_INIT blake2s_param_init
-#define BLAKE2_INIT_KEY blake2s_init_key
-#define BLAKE2_UPDATE blake2s_update
-#define BLAKE2_FINAL blake2s_final
-#define BLAKE2_PARAM_SET_DIGEST_LENGTH blake2s_param_set_digest_length
-#define BLAKE2_PARAM_SET_KEY_LENGTH blake2s_param_set_key_length
-#define BLAKE2_PARAM_SET_PERSONAL blake2s_param_set_personal
-#define BLAKE2_PARAM_SET_SALT blake2s_param_set_salt
+#define BLAKE2_PARAM_INIT ossl_blake2s_param_init
+#define BLAKE2_INIT_KEY ossl_blake2s_init_key
+#define BLAKE2_UPDATE ossl_blake2s_update
+#define BLAKE2_FINAL ossl_blake2s_final
+#define BLAKE2_PARAM_SET_DIGEST_LENGTH ossl_blake2s_param_set_digest_length
+#define BLAKE2_PARAM_SET_KEY_LENGTH ossl_blake2s_param_set_key_length
+#define BLAKE2_PARAM_SET_PERSONAL ossl_blake2s_param_set_personal
+#define BLAKE2_PARAM_SET_SALT ossl_blake2s_param_set_salt
 
 /* OSSL_DISPATCH symbol */
 #define BLAKE2_FUNCTIONS ossl_blake2smac_functions

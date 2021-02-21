@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2008-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -115,17 +115,11 @@ int cms_env_asn1_ctrl(CMS_RecipientInfo *ri, int cmd)
     } else
         return 0;
 
-#ifndef OPENSSL_NO_DH
-    if (EVP_PKEY_is_a(pkey, "DHX"))
+    if (EVP_PKEY_is_a(pkey, "DHX") || EVP_PKEY_is_a(pkey, "DH"))
         return cms_dh_envelope(ri, cmd);
-    else
-#endif
-#ifndef OPENSSL_NO_EC
-    if (EVP_PKEY_is_a(pkey, "EC"))
+    else if (EVP_PKEY_is_a(pkey, "EC"))
         return cms_ecdh_envelope(ri, cmd);
-    else
-#endif
-    if (EVP_PKEY_is_a(pkey, "RSA"))
+    else if (EVP_PKEY_is_a(pkey, "RSA"))
         return cms_rsa_envelope(ri, cmd);
 
     /* Something else? We'll give engines etc a chance to handle this */
@@ -187,7 +181,8 @@ void cms_RecipientInfos_set_cmsctx(CMS_ContentInfo *cms)
                 break;
             case CMS_RECIPINFO_TRANS:
                 ri->d.ktri->cms_ctx = ctx;
-                x509_set0_libctx(ri->d.ktri->recip, ctx->libctx, ctx->propq);
+                x509_set0_libctx(ri->d.ktri->recip, cms_ctx_get0_libctx(ctx),
+                                 cms_ctx_get0_propq(ctx));
                 break;
             case CMS_RECIPINFO_KEK:
                 ri->d.kekri->cms_ctx = ctx;
@@ -316,8 +311,9 @@ static int cms_RecipientInfo_ktri_init(CMS_RecipientInfo *ri, X509 *recip,
     ktri->recip = recip;
 
     if (flags & CMS_KEY_PARAM) {
-        ktri->pctx = EVP_PKEY_CTX_new_from_pkey(ctx->libctx, ktri->pkey,
-                                                ctx->propq);
+        ktri->pctx = EVP_PKEY_CTX_new_from_pkey(cms_ctx_get0_libctx(ctx),
+                                                ktri->pkey,
+                                                cms_ctx_get0_propq(ctx));
         if (ktri->pctx == NULL)
             return 0;
         if (EVP_PKEY_encrypt_init(ktri->pctx) <= 0)
@@ -476,7 +472,8 @@ static int cms_RecipientInfo_ktri_encrypt(const CMS_ContentInfo *cms,
         if (!cms_env_asn1_ctrl(ri, 0))
             goto err;
     } else {
-        pctx = EVP_PKEY_CTX_new_from_pkey(ctx->libctx, ktri->pkey, ctx->propq);
+        pctx = EVP_PKEY_CTX_new_from_pkey(cms_ctx_get0_libctx(ctx), ktri->pkey,
+                                          cms_ctx_get0_propq(ctx));
         if (pctx == NULL)
             return 0;
 
@@ -530,6 +527,8 @@ static int cms_RecipientInfo_ktri_decrypt(CMS_ContentInfo *cms,
     EVP_CIPHER *fetched_cipher = NULL;
     CMS_EncryptedContentInfo *ec;
     const CMS_CTX *ctx = cms_get0_cmsctx(cms);
+    OSSL_LIB_CTX *libctx = cms_ctx_get0_libctx(ctx);
+    const char *propq = cms_ctx_get0_propq(ctx);
 
     ec = cms_get0_env_enc_content(cms);
 
@@ -544,7 +543,7 @@ static int cms_RecipientInfo_ktri_decrypt(CMS_ContentInfo *cms,
         const char *name = OBJ_nid2sn(OBJ_obj2nid(calg->algorithm));
 
         (void)ERR_set_mark();
-        fetched_cipher = EVP_CIPHER_fetch(ctx->libctx, name, ctx->propq);
+        fetched_cipher = EVP_CIPHER_fetch(libctx, name, propq);
 
         if (fetched_cipher != NULL)
             cipher = fetched_cipher;
@@ -561,7 +560,7 @@ static int cms_RecipientInfo_ktri_decrypt(CMS_ContentInfo *cms,
         EVP_CIPHER_free(fetched_cipher);
     }
 
-    ktri->pctx = EVP_PKEY_CTX_new_from_pkey(ctx->libctx, pkey, ctx->propq);
+    ktri->pctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey, propq);
     if (ktri->pctx == NULL)
         goto err;
 
@@ -814,7 +813,8 @@ static EVP_CIPHER *cms_get_key_wrap_cipher(size_t keylen, const CMS_CTX *ctx)
     default:
         return NULL;
     }
-    return EVP_CIPHER_fetch(ctx->libctx, alg, ctx->propq);
+    return EVP_CIPHER_fetch(cms_ctx_get0_libctx(ctx), alg,
+                            cms_ctx_get0_propq(ctx));
 }
 
 
@@ -1293,6 +1293,8 @@ int cms_pkey_get_ri_type(EVP_PKEY *pk)
 {
     /* Check types that we know about */
     if (EVP_PKEY_is_a(pk, "DH"))
+        return CMS_RECIPINFO_AGREE;
+    else if (EVP_PKEY_is_a(pk, "DHX"))
         return CMS_RECIPINFO_AGREE;
     else if (EVP_PKEY_is_a(pk, "DSA"))
         return CMS_RECIPINFO_NONE;

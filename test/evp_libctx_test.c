@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -295,11 +295,13 @@ err:
 
 static int test_cipher_reinit(int test_id)
 {
-    int ret = 0, out1_len = 0, out2_len = 0, diff, ccm;
+    int ret = 0, diff, ccm, siv;
+    int out1_len = 0, out2_len = 0, out3_len = 0;
     EVP_CIPHER *cipher = NULL;
     EVP_CIPHER_CTX *ctx = NULL;
     unsigned char out1[256];
     unsigned char out2[256];
+    unsigned char out3[256];
     unsigned char in[16] = {
         0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
         0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10
@@ -330,6 +332,9 @@ static int test_cipher_reinit(int test_id)
     /* ccm fails on the second update - this matches OpenSSL 1_1_1 behaviour */
     ccm = (EVP_CIPHER_mode(cipher) == EVP_CIPH_CCM_MODE);
 
+    /* siv cannot be called with NULL key as the iv is irrelevant */
+    siv = (EVP_CIPHER_mode(cipher) == EVP_CIPH_SIV_MODE);
+
     /* DES3-WRAP uses random every update - so it will give a different value */
     diff = EVP_CIPHER_is_a(cipher, "DES3-WRAP");
 
@@ -337,15 +342,21 @@ static int test_cipher_reinit(int test_id)
         || !TEST_true(EVP_EncryptUpdate(ctx, out1, &out1_len, in, sizeof(in)))
         || !TEST_true(EVP_EncryptInit_ex(ctx, NULL, NULL, key, iv))
         || !TEST_int_eq(EVP_EncryptUpdate(ctx, out2, &out2_len, in, sizeof(in)),
-                        ccm ? 0 : 1))
+                        ccm ? 0 : 1)
+        || !TEST_true(EVP_EncryptInit_ex(ctx, NULL, NULL, NULL, iv))
+        || !TEST_int_eq(EVP_EncryptUpdate(ctx, out3, &out3_len, in, sizeof(in)),
+                        ccm || siv ? 0 : 1))
         goto err;
 
     if (ccm == 0) {
         if (diff) {
-            if (!TEST_mem_ne(out1, out1_len, out2, out2_len))
+            if (!TEST_mem_ne(out1, out1_len, out2, out2_len)
+                || !TEST_mem_ne(out1, out1_len, out3, out3_len)
+                || !TEST_mem_ne(out2, out2_len, out3, out3_len))
                 goto err;
         } else {
-            if (!TEST_mem_eq(out1, out1_len, out2, out2_len))
+            if (!TEST_mem_eq(out1, out1_len, out2, out2_len)
+                || (!siv && !TEST_mem_eq(out1, out1_len, out3, out3_len)))
                 goto err;
         }
     }
@@ -364,11 +375,13 @@ err:
  */
 static int test_cipher_reinit_partialupdate(int test_id)
 {
-    int ret = 0, out1_len = 0, out2_len = 0, in_len;
+    int ret = 0, in_len;
+    int out1_len = 0, out2_len = 0, out3_len = 0;
     EVP_CIPHER *cipher = NULL;
     EVP_CIPHER_CTX *ctx = NULL;
     unsigned char out1[256];
     unsigned char out2[256];
+    unsigned char out3[256];
     static const unsigned char in[32] = {
         0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
         0xba, 0xbe, 0xba, 0xbe, 0x00, 0x00, 0xba, 0xbe,
@@ -416,12 +429,15 @@ static int test_cipher_reinit_partialupdate(int test_id)
         || !TEST_true(EVP_EncryptUpdate(ctx, out2, &out2_len, in, in_len)))
         goto err;
 
-    /* DES3-WRAP uses random every update - so it will give a different value */
-    if (EVP_CIPHER_is_a(cipher, "DES3-WRAP")) {
-        if (!TEST_mem_ne(out1, out1_len, out2, out2_len))
+    if (!TEST_mem_eq(out1, out1_len, out2, out2_len))
+        goto err;
+
+    if (EVP_CIPHER_mode(cipher) != EVP_CIPH_SIV_MODE) {
+        if (!TEST_true(EVP_EncryptInit_ex(ctx, NULL, NULL, NULL, iv))
+            || !TEST_true(EVP_EncryptUpdate(ctx, out3, &out3_len, in, in_len)))
             goto err;
-    } else {
-        if (!TEST_mem_eq(out1, out1_len, out2, out2_len))
+
+        if (!TEST_mem_eq(out1, out1_len, out3, out3_len))
             goto err;
     }
     ret = 1;
@@ -458,10 +474,10 @@ static int rsa_keygen(int bits, EVP_PKEY **pub, EVP_PKEY **priv)
         || !TEST_true(EVP_PKEY_CTX_set_rsa_keygen_bits(keygen_ctx, bits))
         || !TEST_int_gt(EVP_PKEY_keygen(keygen_ctx, priv), 0)
         || !TEST_ptr(ectx =
-                     OSSL_ENCODER_CTX_new_by_EVP_PKEY(*priv,
-                                                      EVP_PKEY_PUBLIC_KEY,
-                                                      "DER", "type-specific",
-                                                      libctx, NULL))
+                     OSSL_ENCODER_CTX_new_for_pkey(*priv,
+                                                   EVP_PKEY_PUBLIC_KEY,
+                                                   "DER", "type-specific",
+                                                   NULL))
         || !TEST_true(OSSL_ENCODER_to_data(ectx, &pub_der, &len)))
         goto err;
     pp = pub_der;
@@ -648,19 +664,7 @@ int setup_tests(void)
         }
     }
 
-    nullprov = OSSL_PROVIDER_load(NULL, "null");
-    if (!TEST_ptr(nullprov))
-        return 0;
-
-    libctx = OSSL_LIB_CTX_new();
-    if (!TEST_ptr(libctx))
-        return 0;
-    if (config_file != NULL
-        && !TEST_true(OSSL_LIB_CTX_load_config(libctx, config_file)))
-        return 0;
-
-    libprov = OSSL_PROVIDER_load(libctx, prov_name);
-    if (!TEST_ptr(libprov))
+    if (!test_get_libctx(&libctx, &nullprov, config_file, &libprov, prov_name))
         return 0;
 
 #if !defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_DH)

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -15,10 +15,12 @@
  */
 #include "internal/deprecated.h"
 
+#include <openssl/proverr.h>
 #include "cipher_rc5.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
-#include "prov/providercommonerr.h"
+
+#define RC5_FLAGS PROV_CIPHER_FLAG_VARIABLE_LENGTH
 
 static OSSL_FUNC_cipher_freectx_fn rc5_freectx;
 static OSSL_FUNC_cipher_dupctx_fn rc5_dupctx;
@@ -153,10 +155,10 @@ const OSSL_DISPATCH ossl_##alg##kbits##lcmode##_functions[] = {                \
 };
 
 /* ossl_rc5128ecb_functions */
-IMPLEMENT_cipher(rc5, RC5, ecb, ECB, EVP_CIPH_VARIABLE_LENGTH, 128, 64, 0, block)
+IMPLEMENT_cipher(rc5, RC5, ecb, ECB, RC5_FLAGS, 128, 64, 0, block)
 /* ossl_rc5128cbc_functions */
-IMPLEMENT_cipher(rc5, RC5, cbc, CBC, EVP_CIPH_VARIABLE_LENGTH, 128, 64, 64, block)
+IMPLEMENT_cipher(rc5, RC5, cbc, CBC, RC5_FLAGS, 128, 64, 64, block)
 /* ossl_rc5128ofb64_functions */
-IMPLEMENT_cipher(rc5, RC5, ofb64, OFB, EVP_CIPH_VARIABLE_LENGTH, 128, 8, 64, stream)
+IMPLEMENT_cipher(rc5, RC5, ofb64, OFB, RC5_FLAGS, 128, 8, 64, stream)
 /* ossl_rc5128cfb64_functions */
-IMPLEMENT_cipher(rc5, RC5, cfb64,  CFB, EVP_CIPH_VARIABLE_LENGTH, 128, 8, 64, stream)
+IMPLEMENT_cipher(rc5, RC5, cfb64,  CFB, RC5_FLAGS, 128, 8, 64, stream)

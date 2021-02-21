@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -124,26 +124,9 @@ static int ssl_set_pkey(CERT *c, EVP_PKEY *pkey)
         return 0;
     }
 
-    if (c->pkeys[i].x509 != NULL) {
-        EVP_PKEY *pktmp;
-        pktmp = X509_get0_pubkey(c->pkeys[i].x509);
-        if (pktmp == NULL) {
-            ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
-            return 0;
-        }
-        /*
-         * The return code from EVP_PKEY_copy_parameters is deliberately
-         * ignored. Some EVP_PKEY types cannot do this.
-         */
-        EVP_PKEY_copy_parameters(pktmp, pkey);
-        ERR_clear_error();
-
-        if (!X509_check_private_key(c->pkeys[i].x509, pkey)) {
-            X509_free(c->pkeys[i].x509);
-            c->pkeys[i].x509 = NULL;
-            return 0;
-        }
-    }
+    if (c->pkeys[i].x509 != NULL
+            && !X509_check_private_key(c->pkeys[i].x509, pkey))
+        return 0;
 
     EVP_PKEY_free(c->pkeys[i].privatekey);
     EVP_PKEY_up_ref(pkey);
@@ -256,12 +239,12 @@ static int ssl_set_cert(CERT *c, X509 *x)
         ERR_raise(ERR_LIB_SSL, SSL_R_UNKNOWN_CERTIFICATE_TYPE);
         return 0;
     }
-#ifndef OPENSSL_NO_EC
+
     if (i == SSL_PKEY_ECC && !EVP_PKEY_can_sign(pkey)) {
         ERR_raise(ERR_LIB_SSL, SSL_R_ECC_CERT_NOT_FOR_SIGNING);
         return 0;
     }
-#endif
+
     if (c->pkeys[i].privatekey != NULL) {
         /*
          * The return code from EVP_PKEY_copy_parameters is deliberately

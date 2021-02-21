@@ -133,6 +133,22 @@ int CRYPTO_atomic_add(int *val, int amount, int *ret, CRYPTO_RWLOCK *lock)
     return 1;
 }
 
+int CRYPTO_atomic_or(uint64_t *val, uint64_t op, uint64_t *ret,
+                     CRYPTO_RWLOCK *lock)
+{
+    *val |= op;
+    *ret  = *val;
+
+    return 1;
+}
+
+int CRYPTO_atomic_load(uint64_t *val, uint64_t *ret, CRYPTO_RWLOCK *lock)
+{
+    *ret  = *val;
+
+    return 1;
+}
+
 int openssl_init_fork_handlers(void)
 {
     return 0;

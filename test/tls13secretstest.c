@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -196,6 +196,10 @@ int ssl_log_secret(SSL *ssl,
 const EVP_MD *ssl_md(SSL_CTX *ctx, int idx)
 {
     return EVP_sha256();
+}
+
+void ossl_statem_send_fatal(SSL *s, int al)
+{
 }
 
 void ossl_statem_fatal(SSL *s, int al, int reason, const char *fmt, ...)

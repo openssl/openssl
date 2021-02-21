@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2014-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -488,11 +488,9 @@ int SSL_extension_supported(unsigned int ext_type)
     switch (ext_type) {
         /* Internally supported extensions. */
     case TLSEXT_TYPE_application_layer_protocol_negotiation:
-#ifndef OPENSSL_NO_EC
     case TLSEXT_TYPE_ec_point_formats:
     case TLSEXT_TYPE_supported_groups:
     case TLSEXT_TYPE_key_share:
-#endif
 #ifndef OPENSSL_NO_NEXTPROTONEG
     case TLSEXT_TYPE_next_proto_neg:
 #endif

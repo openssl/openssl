@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -13,6 +13,7 @@
 #include <openssl/err.h>
 #include <openssl/core_names.h>
 #include "cms_local.h"
+#include "crypto/evp.h"
 
 static int dh_cms_set_peerkey(EVP_PKEY_CTX *pctx,
                               X509_ALGOR *alg, ASN1_BIT_STRING *pubkey)
@@ -23,7 +24,9 @@ static int dh_cms_set_peerkey(EVP_PKEY_CTX *pctx,
     ASN1_INTEGER *public_key = NULL;
     int rv = 0;
     EVP_PKEY *pkpeer = NULL, *pk = NULL;
+    BIGNUM *bnpub = NULL;
     const unsigned char *p;
+    unsigned char *buf = NULL;
     int plen;
 
     X509_ALGOR_get0(&aoid, &atype, &aval, alg);
@@ -43,16 +46,32 @@ static int dh_cms_set_peerkey(EVP_PKEY_CTX *pctx,
     if (p == NULL || plen == 0)
         goto err;
 
+    if ((public_key = d2i_ASN1_INTEGER(NULL, &p, plen)) == NULL)
+        goto err;
+    /*
+     * Pad to full p parameter size as that is checked by
+     * EVP_PKEY_set1_encoded_public_key()
+     */
+    plen = EVP_PKEY_size(pk);
+    if ((bnpub = ASN1_INTEGER_to_BN(public_key, NULL)) == NULL)
+        goto err;
+    if ((buf = OPENSSL_malloc(plen)) == NULL)
+        goto err;
+    if (BN_bn2binpad(bnpub, buf, plen) < 0)
+        goto err;
+
     pkpeer = EVP_PKEY_new();
     if (pkpeer == NULL
             || !EVP_PKEY_copy_parameters(pkpeer, pk)
-            || !EVP_PKEY_set1_encoded_public_key(pkpeer, p, plen))
+            || !EVP_PKEY_set1_encoded_public_key(pkpeer, buf, plen))
         goto err;
 
     if (EVP_PKEY_derive_set_peer(pctx, pkpeer) > 0)
         rv = 1;
  err:
     ASN1_INTEGER_free(public_key);
+    BN_free(bnpub);
+    OPENSSL_free(buf);
     EVP_PKEY_free(pkpeer);
     return rv;
 }
@@ -66,8 +85,9 @@ static int dh_cms_set_shared_info(EVP_PKEY_CTX *pctx, CMS_RecipientInfo *ri)
     unsigned char *dukm = NULL;
     size_t dukmlen = 0;
     int keylen, plen;
-    const EVP_CIPHER *kekcipher;
+    EVP_CIPHER *kekcipher = NULL;
     EVP_CIPHER_CTX *kekctx;
+    const char *name;
 
     if (!CMS_RecipientInfo_kari_get0_alg(ri, &alg, &ukm))
         goto err;
@@ -96,7 +116,12 @@ static int dh_cms_set_shared_info(EVP_PKEY_CTX *pctx, CMS_RecipientInfo *ri)
     kekctx = CMS_RecipientInfo_kari_get0_ctx(ri);
     if (kekctx == NULL)
         goto err;
-    kekcipher = EVP_get_cipherbyobj(kekalg->algorithm);
+
+    name = OBJ_nid2sn(OBJ_obj2nid(kekalg->algorithm));
+    if (name == NULL)
+        goto err;
+
+    kekcipher = EVP_CIPHER_fetch(pctx->libctx, name, pctx->propquery);
     if (kekcipher == NULL || EVP_CIPHER_mode(kekcipher) != EVP_CIPH_WRAP_MODE)
         goto err;
     if (!EVP_EncryptInit_ex(kekctx, kekcipher, NULL, NULL, NULL))
@@ -127,6 +152,7 @@ static int dh_cms_set_shared_info(EVP_PKEY_CTX *pctx, CMS_RecipientInfo *ri)
     rv = 1;
  err:
     X509_ALGOR_free(kekalg);
+    EVP_CIPHER_free(kekcipher);
     OPENSSL_free(dukm);
     return rv;
 }
@@ -148,13 +174,13 @@ static int dh_cms_decrypt(CMS_RecipientInfo *ri)
         if (alg ==  NULL || pubkey == NULL)
             return 0;
         if (!dh_cms_set_peerkey(pctx, alg, pubkey)) {
-            ERR_raise(ERR_LIB_DH, DH_R_PEER_KEY_ERROR);
+            ERR_raise(ERR_LIB_CMS, CMS_R_PEER_KEY_ERROR);
             return 0;
         }
     }
     /* Set DH derivation parameters and initialise unwrap context */
     if (!dh_cms_set_shared_info(pctx, ri)) {
-        ERR_raise(ERR_LIB_DH, DH_R_SHARED_INFO_ERROR);
+        ERR_raise(ERR_LIB_CMS, CMS_R_SHARED_INFO_ERROR);
         return 0;
     }
     return 1;

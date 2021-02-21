@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -151,18 +151,24 @@ EVP_PKEY *PEM_read_bio_PrivateKey(BIO *bp, EVP_PKEY **x, pem_password_cb *cb,
     return PEM_read_bio_PrivateKey_ex(bp, x, cb, u, NULL, NULL);
 }
 
-PEM_write_cb_fnsig(PrivateKey, EVP_PKEY, BIO, write_bio)
+PEM_write_cb_ex_fnsig(PrivateKey, EVP_PKEY, BIO, write_bio)
 {
-    IMPLEMENT_PEM_provided_write_body_vars(EVP_PKEY, PrivateKey);
+    IMPLEMENT_PEM_provided_write_body_vars(pkey, PrivateKey, propq);
 
     IMPLEMENT_PEM_provided_write_body_pass();
-    IMPLEMENT_PEM_provided_write_body_main(EVP_PKEY, bio);
+    IMPLEMENT_PEM_provided_write_body_main(pkey, bio);
 
  legacy:
     if (x->ameth == NULL || x->ameth->priv_encode != NULL)
         return PEM_write_bio_PKCS8PrivateKey(out, x, enc,
                                              (const char *)kstr, klen, cb, u);
     return PEM_write_bio_PrivateKey_traditional(out, x, enc, kstr, klen, cb, u);
+}
+
+PEM_write_cb_fnsig(PrivateKey, EVP_PKEY, BIO, write_bio)
+{
+    return PEM_write_bio_PrivateKey_ex(out, x, enc, kstr, klen, cb, u,
+                                       NULL, NULL);
 }
 
 /*
@@ -212,9 +218,9 @@ EVP_PKEY *PEM_read_bio_Parameters(BIO *bp, EVP_PKEY **x)
 PEM_write_fnsig(Parameters, EVP_PKEY, BIO, write_bio)
 {
     char pem_str[80];
-    IMPLEMENT_PEM_provided_write_body_vars(EVP_PKEY, Parameters);
+    IMPLEMENT_PEM_provided_write_body_vars(pkey, Parameters, NULL);
 
-    IMPLEMENT_PEM_provided_write_body_main(EVP_PKEY, bio);
+    IMPLEMENT_PEM_provided_write_body_main(pkey, bio);
 
  legacy:
     if (!x->ameth || !x->ameth->param_encode)
@@ -249,20 +255,23 @@ EVP_PKEY *PEM_read_PrivateKey(FILE *fp, EVP_PKEY **x, pem_password_cb *cb,
     return PEM_read_PrivateKey_ex(fp, x, cb, u, NULL, NULL);
 }
 
-int PEM_write_PrivateKey(FILE *fp, const EVP_PKEY *x, const EVP_CIPHER *enc,
-                         const unsigned char *kstr, int klen,
-                         pem_password_cb *cb, void *u)
+PEM_write_cb_ex_fnsig(PrivateKey, EVP_PKEY, FILE, write)
 {
     BIO *b;
     int ret;
 
-    if ((b = BIO_new_fp(fp, BIO_NOCLOSE)) == NULL) {
+    if ((b = BIO_new_fp(out, BIO_NOCLOSE)) == NULL) {
         ERR_raise(ERR_LIB_PEM, ERR_R_BUF_LIB);
         return 0;
     }
-    ret = PEM_write_bio_PrivateKey(b, x, enc, kstr, klen, cb, u);
+    ret = PEM_write_bio_PrivateKey_ex(b, x, enc, kstr, klen, cb, u,
+                                      libctx, propq);
     BIO_free(b);
     return ret;
 }
 
+PEM_write_cb_fnsig(PrivateKey, EVP_PKEY, FILE, write)
+{
+    return PEM_write_PrivateKey_ex(out, x, enc, kstr, klen, cb, u, NULL, NULL);
+}
 #endif

@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2021 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -106,6 +106,53 @@ sub cmp_text {
         $_[1] =~ s/\R//g;
         return $_[0] ne $_[1];
     });
+}
+
+sub file_contains {
+    $_ = shift @_;
+    my $pattern = shift @_;
+    open(DATA, $_) or return 0;
+    $_= join('', <DATA>);
+    close(DATA);
+    return m/$pattern/ ? 1 : 0;
+}
+
+sub cert_contains {
+    my $cert = shift @_;
+    my $pattern = shift @_;
+    my $expected = shift @_;
+    my $name = shift @_;
+    my $out = "cert_contains.out";
+    run(app(["openssl", "x509", "-noout", "-text", "-in", $cert, "-out", $out]));
+    is(file_contains($out, $pattern), $expected, ($name ? "$name: " : "").
+       "$cert should ".($expected ? "" : "not ")."contain $pattern");
+    # not unlinking $out
+}
+
+sub uniq (@) {
+    my %seen = ();
+    grep { not $seen{$_}++ } @_;
+}
+
+sub file_n_different_lines {
+    my $filename = shift @_;
+    open(DATA, $filename) or return 0;
+    chomp(my @lines = <DATA>);
+    close(DATA);
+    return scalar(uniq @lines);
+}
+
+sub cert_ext_has_n_different_lines {
+    my $cert = shift @_;
+    my $expected = shift @_;
+    my $exts = shift @_;
+    my $name = shift @_;
+    my $out = "cert_n_different_exts.out";
+    run(app(["openssl", "x509", "-noout", "-ext", $exts,
+             "-in", $cert, "-out", $out]));
+    is(file_n_different_lines($out), $expected, ($name ? "$name: " : "").
+       "$cert '$exts' output should contain $expected different lines");
+    # not unlinking $out
 }
 
 1;

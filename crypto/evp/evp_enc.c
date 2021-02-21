@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -11,6 +11,7 @@
 #define OPENSSL_SUPPRESS_DEPRECATED
 
 #include <stdio.h>
+#include <limits.h>
 #include <assert.h>
 #include "internal/cryptlib.h"
 #include <openssl/evp.h>
@@ -182,6 +183,14 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
 #endif
     }
 
+    if (cipher->prov != NULL) {
+        if (!EVP_CIPHER_up_ref((EVP_CIPHER *)cipher)) {
+            ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
+            return 0;
+        }
+        EVP_CIPHER_free(ctx->fetched_cipher);
+        ctx->fetched_cipher = (EVP_CIPHER *)cipher;
+    }
     ctx->cipher = cipher;
     if (ctx->provctx == NULL) {
         ctx->provctx = ctx->cipher->newctx(ossl_provider_ctx(cipher->prov));
@@ -503,6 +512,18 @@ static int evp_EncryptDecryptUpdate(EVP_CIPHER_CTX *ctx,
             return 1;
         } else {
             j = bl - i;
+
+            /*
+             * Once we've processed the first j bytes from in, the amount of
+             * data left that is a multiple of the block length is:
+             * (inl - j) & ~(bl - 1)
+             * We must ensure that this amount of data, plus the one block that
+             * we process from ctx->buf does not exceed INT_MAX
+             */
+            if (((inl - j) & ~(bl - 1)) > INT_MAX - bl) {
+                ERR_raise(ERR_LIB_EVP, EVP_R_OUTPUT_WOULD_OVERFLOW);
+                return 0;
+            }
             memcpy(&(ctx->buf[i]), in, j);
             inl -= j;
             in += j;
@@ -556,7 +577,7 @@ int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
     if (ctx->cipher->prov == NULL)
         goto legacy;
 
-    blocksize = EVP_CIPHER_CTX_block_size(ctx);
+    blocksize = ctx->cipher->block_size;
 
     if (ctx->cipher->cupdate == NULL  || blocksize < 1) {
         ERR_raise(ERR_LIB_EVP, EVP_R_UPDATE_ERROR);
@@ -763,6 +784,19 @@ int EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
             ERR_raise(ERR_LIB_EVP, EVP_R_PARTIALLY_OVERLAPPING);
             return 0;
         }
+        /*
+         * final_used is only ever set if buf_len is 0. Therefore the maximum
+         * length output we will ever see from evp_EncryptDecryptUpdate is
+         * the maximum multiple of the block length that is <= inl, or just:
+         * inl & ~(b - 1)
+         * Since final_used has been set then the final output length is:
+         * (inl & ~(b - 1)) + b
+         * This must never exceed INT_MAX
+         */
+        if ((inl & ~(b - 1)) > INT_MAX - b) {
+            ERR_raise(ERR_LIB_EVP, EVP_R_OUTPUT_WOULD_OVERFLOW);
+            return 0;
+        }
         memcpy(out, ctx->final, b);
         out += b;
         fix_len = 1;
@@ -948,6 +982,8 @@ int EVP_CIPHER_CTX_set_padding(EVP_CIPHER_CTX *ctx, int pad)
     else
         ctx->flags |= EVP_CIPH_NO_PADDING;
 
+    if (ctx->cipher != NULL && ctx->cipher->prov == NULL)
+        return 1;
     params[0] = OSSL_PARAM_construct_uint(OSSL_CIPHER_PARAM_PADDING, &pd);
     ok = evp_do_ciph_ctx_setparams(ctx->cipher, ctx->provctx, params);
 
@@ -1468,6 +1504,12 @@ static void *evp_cipher_from_dispatch(const int name_id,
     if (prov != NULL)
         ossl_provider_up_ref(prov);
 
+    if (!evp_cipher_cache_constants(cipher)) {
+        EVP_CIPHER_free(cipher);
+        ERR_raise(ERR_LIB_EVP, EVP_R_CACHE_CONSTANTS_FAILED);
+        cipher = NULL;
+    }
+
     return cipher;
 }
 
@@ -1489,10 +1531,6 @@ EVP_CIPHER *EVP_CIPHER_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
                           evp_cipher_from_dispatch, evp_cipher_up_ref,
                           evp_cipher_free);
 
-    if (cipher != NULL && !evp_cipher_cache_constants(cipher)) {
-        EVP_CIPHER_free(cipher);
-        cipher = NULL;
-    }
     return cipher;
 }
 

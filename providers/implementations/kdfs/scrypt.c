@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -14,12 +14,12 @@
 #include <openssl/kdf.h>
 #include <openssl/err.h>
 #include <openssl/core_names.h>
+#include <openssl/proverr.h>
 #include "crypto/evp.h"
 #include "internal/numbers.h"
 #include "prov/implementations.h"
 #include "prov/provider_ctx.h"
 #include "prov/providercommon.h"
-#include "prov/providercommonerr.h"
 #include "prov/implementations.h"
 
 #ifndef OPENSSL_NO_SCRYPT

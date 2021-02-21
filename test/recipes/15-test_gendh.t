@@ -18,7 +18,7 @@ setup("test_gendh");
 
 plan skip_all => "This test is unsupported in a no-dh build" if disabled("dh");
 
-plan tests => 12;
+plan tests => 13;
 
 ok(run(app([ 'openssl', 'genpkey', '-genparam',
              '-algorithm', 'DH',
@@ -32,6 +32,14 @@ ok(run(app([ 'openssl', 'genpkey', '-genparam',
              '-pkeyopt', 'type:fips186_4',
              '-text'])),
    "genpkey DH params fips186_4 with unverifiable g");
+
+ok(run(app([ 'openssl', 'genpkey', '-genparam',
+             '-algorithm', 'DH',
+             '-pkeyopt', 'pbits:2048',
+             '-pkeyopt', 'qbits:224',
+             '-pkeyopt', 'digest:SHA512-224',
+             '-pkeyopt', 'type:fips186_4'])),
+   "genpkey DH params fips186_4 with truncated SHA");
 
 ok(run(app([ 'openssl', 'genpkey', '-genparam',
              '-algorithm', 'DH',

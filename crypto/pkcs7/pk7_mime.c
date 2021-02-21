@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -52,7 +52,7 @@ PKCS7 *SMIME_read_PKCS7_ex(BIO *bio, BIO **bcont, PKCS7 **p7)
 
     ret = (PKCS7 *)SMIME_read_ASN1_ex(bio, bcont, ASN1_ITEM_rptr(PKCS7),
                                       (ASN1_VALUE **)p7);
-    if (ret != NULL && p7 != NULL)
+    if (ret != NULL)
         pkcs7_resolve_libctx(ret);
     return ret;
 }

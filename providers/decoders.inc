@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -50,9 +50,7 @@ DECODER_w_structure("DSA", der, SubjectPublicKeyInfo, dsa, yes),
 DECODER_w_structure("DSA", der, type_specific, dsa, yes),
 DECODER_w_structure("DSA", der, DSA, dsa, yes),
 DECODER("DSA", msblob, dsa, yes),
-# ifndef OPENSSL_NO_RC4
 DECODER("DSA", pvk, dsa, yes),
-# endif
 #endif
 #ifndef OPENSSL_NO_EC
 DECODER_w_structure("EC", der, PKCS8, ec, yes),
@@ -67,6 +65,10 @@ DECODER_w_structure("X25519", der, PKCS8, x25519, yes),
 DECODER_w_structure("X25519", der, SubjectPublicKeyInfo, x25519, yes),
 DECODER_w_structure("X448", der, PKCS8, x448, yes),
 DECODER_w_structure("X448", der, SubjectPublicKeyInfo, x448, yes),
+# ifndef OPENSSL_NO_SM2
+DECODER_w_structure("SM2", der, PKCS8, sm2, yes),
+DECODER_w_structure("SM2", der, SubjectPublicKeyInfo, sm2, yes),
+# endif
 #endif
 DECODER_w_structure("RSA", der, PKCS8, rsa, yes),
 DECODER_w_structure("RSA", der, SubjectPublicKeyInfo, rsa, yes),
@@ -74,11 +76,7 @@ DECODER_w_structure("RSA", der, type_specific_keypair, rsa, yes),
 DECODER_w_structure("RSA", der, RSA, rsa, yes),
 DECODER_w_structure("RSA-PSS", der, PKCS8, rsapss, yes),
 DECODER_w_structure("RSA-PSS", der, SubjectPublicKeyInfo, rsapss, yes),
-#ifndef OPENSSL_NO_DSA
 DECODER("RSA", msblob, rsa, yes),
-# ifndef OPENSSL_NO_RC4
 DECODER("RSA", pvk, rsa, yes),
-# endif
-#endif
 
 DECODER("DER", pem, der, yes),

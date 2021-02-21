@@ -14,7 +14,7 @@ B<openssl> B<pkeyutl>
 [B<-digest> I<algorithm>]
 [B<-out> I<file>]
 [B<-sigfile> I<file>]
-[B<-inkey> I<file>]
+[B<-inkey> I<filename>|I<uri>]
 [B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>]
 [B<-passin> I<arg>]
 [B<-peerkey> I<file>]
@@ -85,20 +85,20 @@ default.
 
 Signature file, required for B<-verify> operations only
 
-=item B<-inkey> I<file>
+=item B<-inkey> I<filename>|I<uri>
 
-The input key file, by default it should be a private key.
+The input key, by default it should be a private key.
 
 =item B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
 
 The key format; the default is B<PEM>.
 The only value with effect is B<ENGINE>; all others have become obsolete.
-See L<openssl(1)/Format Options> for details.
+See L<openssl-format-options(1)> for details.
 
 =item B<-passin> I<arg>
 
 The input key password source. For more information about the format of I<arg>
-see L<openssl(1)/Pass Phrase Options>.
+see L<openssl-passphrase-options(1)>.
 
 =item B<-peerkey> I<file>
 
@@ -108,7 +108,7 @@ The peer key file, used by key derivation (agreement) operations.
 
 The peer key format; the default is B<PEM>.
 The only value with effect is B<ENGINE>; all others have become obsolete.
-See L<openssl(1)/Format Options> for details.
+See L<openssl-format-options(1)> for details.
 
 =item B<-pubin>
 
@@ -171,7 +171,7 @@ Public key options specified as opt:value. See NOTES below for more details.
 Allows reading a public key option I<opt> from stdin or a password source.
 If only I<opt> is specified, the user will be prompted to enter a password on
 stdin.  Alternatively, I<passarg> can be specified which can be any value
-supported by L<openssl(1)/Pass phrase options>.
+supported by L<openssl-passphrase-options(1)>.
 
 =item B<-hexdump>
 
@@ -184,10 +184,12 @@ B<-verifyrecover> option when an ASN1 structure is signed.
 
 {- $OpenSSL::safe::opt_engine_item -}
 
+{- output_off() if $disabled{"deprecated-3.0"}; "" -}
 =item B<-engine_impl>
 
 When used with the B<-engine> option, it specifies to also use
 engine I<id> for crypto operations.
+{- output_on() if $disabled{"deprecated-3.0"}; "" -}
 
 {- $OpenSSL::safe::opt_r_item -}
 

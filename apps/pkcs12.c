@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -27,6 +27,12 @@
 #define CACERTS         0x10
 
 #define PASSWD_BUF_SIZE 2048
+#define PKCS12_DEFAULT_PBE NID_aes_256_cbc
+
+#define WARN_EXPORT(opt) \
+    BIO_printf(bio_err, "Warning: -%s option ignored with -export\n", opt);
+#define WARN_NO_EXPORT(opt) \
+    BIO_printf(bio_err, "Warning: -%s option ignored without -export\n", opt);
 
 static int get_cert_chain(X509 *cert, X509_STORE *store,
                           STACK_OF(X509) *untrusted_certs,
@@ -64,25 +70,48 @@ typedef enum OPTION_choice {
 const OPTIONS pkcs12_options[] = {
     OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
-    {"legacy", OPT_LEGACY_ALG, '-', "use legacy algorithms"},
+    {"in", OPT_IN, '<', "Input file"},
+    {"out", OPT_OUT, '>', "Output file"},
+    {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
+    {"passout", OPT_PASSOUT, 's', "Output file pass phrase source"},
+    {"password", OPT_PASSWORD, 's', "Set PKCS#12 import/export password source"},
+    {"twopass", OPT_TWOPASS, '-', "Separate MAC, encryption passwords"},
+    {"nokeys", OPT_NOKEYS, '-', "Don't output private keys"},
+    {"nocerts", OPT_NOCERTS, '-', "Don't output certificates"},
+    {"noout", OPT_NOOUT, '-', "Don't output anything, just verify PKCS#12 input"},
+    {"legacy", OPT_LEGACY_ALG, '-',
+#ifdef OPENSSL_NO_RC2
+     "Use legacy encryption algorithm 3DES_CBC for keys and certs"
+#else
+     "Use legacy encryption: 3DES_CBC for keys, RC2_CBC for certs"
+#endif
+    },
 #ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 #endif
-    {"password", OPT_PASSWORD, 's', "Set import/export password source"},
-    {"twopass", OPT_TWOPASS, '-', "Separate MAC, encryption passwords"},
+    OPT_PROV_OPTIONS,
+    OPT_R_OPTIONS,
 
-    OPT_SECTION("Input"),
-    {"in", OPT_IN, '<', "Input file for PKCS12 parsing or certs and possibly key"},
-    {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
+    OPT_SECTION("PKCS#12 import (parsing PKCS#12)"),
+    {"info", OPT_INFO, '-', "Print info about PKCS#12 structure"},
+    {"nomacver", OPT_NOMACVER, '-', "Don't verify integrity MAC"},
+    {"clcerts", OPT_CLCERTS, '-', "Only output client certificates"},
+    {"cacerts", OPT_CACERTS, '-', "Only output CA certificates"},
+    {"", OPT_CIPHER, '-', "Any supported cipher for output encryption"},
+    {"noenc", OPT_NOENC, '-', "Don't encrypt private keys"},
+    {"nodes", OPT_NODES, '-', "Don't encrypt private keys; deprecated"},
+
+    OPT_SECTION("PKCS#12 output (export)"),
+    {"export", OPT_EXPORT, '-', "Create PKCS12 file"},
     {"inkey", OPT_INKEY, 's', "Private key, else read from -in input file"},
     {"certfile", OPT_CERTFILE, '<', "Extra certificates for PKCS12 output"},
-    {"untrusted", OPT_UNTRUSTED, '<', "Untrusted certificates for chain building"},
     {"passcerts", OPT_PASSCERTS, 's', "Certificate file pass phrase source"},
-    {"nomacver", OPT_NOMACVER, '-', "Don't verify MAC"},
-
-    OPT_SECTION("CA input for export with the -chain option"),
-    {"CApath", OPT_CAPATH, '/', "PEM-format directory of CA's"},
+    {"chain", OPT_CHAIN, '-', "Build and add certificate chain for EE cert,"},
+    {OPT_MORE_STR, 0, 0,
+     "which is the 1st cert from -in matching the privte key (if given)"},
+    {"untrusted", OPT_UNTRUSTED, '<', "Untrusted certificates for chain building"},
     {"CAfile", OPT_CAFILE, '<', "PEM-format file of CA's"},
+    {"CApath", OPT_CAPATH, '/', "PEM-format directory of CA's"},
     {"CAstore", OPT_CASTORE, ':', "URI to store of CA's"},
     {"no-CAfile", OPT_NOCAFILE, '-',
      "Do not load the default certificates file"},
@@ -90,69 +119,40 @@ const OPTIONS pkcs12_options[] = {
      "Do not load certificates from the default certificates directory"},
     {"no-CAstore", OPT_NOCASTORE, '-',
      "Do not load certificates from the default certificates store"},
-
-    OPT_SECTION("Output"),
-    {"out", OPT_OUT, '>', "Output filename"},
-    {"passout", OPT_PASSOUT, 's', "Output pass phrase source"},
-    {"info", OPT_INFO, '-', "Print info about PKCS#12 structure"},
-    {"nokeys", OPT_NOKEYS, '-', "Don't output private keys"},
-    {"nocerts", OPT_NOCERTS, '-', "Don't output certificates"},
-    {"clcerts", OPT_CLCERTS, '-', "Only output client certificates"},
-    {"cacerts", OPT_CACERTS, '-', "Only output CA certificates"},
-    {"noout", OPT_NOOUT, '-', "Don't output anything, just verify PKCS#12 input"},
-
-    OPT_SECTION("PKCS12 output"),
-    {"export", OPT_EXPORT, '-', "Output PKCS12 file"},
-    {"chain", OPT_CHAIN, '-', "Build and add certificate chain for EE cert,"},
-    {OPT_MORE_STR, 0, 0,
-     "which is the 1st cert from -in matching the privte key (if given)"},
     {"name", OPT_NAME, 's', "Use name as friendly name"},
-    {"CSP", OPT_CSP, 's', "Microsoft CSP name"},
     {"caname", OPT_CANAME, 's',
      "Use name as CA friendly name (can be repeated)"},
+    {"CSP", OPT_CSP, 's', "Microsoft CSP name"},
     {"LMK", OPT_LMK, '-',
      "Add local machine keyset attribute to private key"},
     {"keyex", OPT_KEYEX, '-', "Set key type to MS key exchange"},
     {"keysig", OPT_KEYSIG, '-', "Set key type to MS key signature"},
-
-    OPT_SECTION("PKCS12 output encryption and MAC"),
-#ifndef OPENSSL_NO_RC2
-    {"descert", OPT_DESCERT, '-',
-     "Encrypt output with 3DES (default PBES2 with PBKDF2 and AES-256 CBC)"},
+    {"keypbe", OPT_KEYPBE, 's', "Private key PBE algorithm (default AES-256 CBC)"},
     {"certpbe", OPT_CERTPBE, 's',
      "Certificate PBE algorithm (default PBES2 with PBKDF2 and AES-256 CBC)"},
-#else
-    {"descert", OPT_DESCERT, '-', "Encrypt output with 3DES (the default)"},
-    {"certpbe", OPT_CERTPBE, 's', "Certificate PBE algorithm (default 3DES)"},
-#endif
-    {"keypbe", OPT_KEYPBE, 's', "Private key PBE algorithm (default 3DES)"},
-    {"iter", OPT_ITER, 'p', "Specify the iteration count for encryption key and MAC"},
-    {"noiter", OPT_NOITER, '-', "Don't use encryption key iteration"},
-    {"maciter", OPT_MACITER, '-', "Unused, kept for backwards compatibility"},
-    {"nomaciter", OPT_NOMACITER, '-', "Don't use MAC iteration"},
+    {"descert", OPT_DESCERT, '-',
+     "Encrypt output with 3DES (default PBES2 with PBKDF2 and AES-256 CBC)"},
     {"macalg", OPT_MACALG, 's',
      "Digest algorithm to use in MAC (default SHA1)"},
+    {"iter", OPT_ITER, 'p', "Specify the iteration count for encryption and MAC"},
+    {"noiter", OPT_NOITER, '-', "Don't use encryption iteration"},
+    {"nomaciter", OPT_NOMACITER, '-', "Don't use MAC iteration)"},
+    {"maciter", OPT_MACITER, '-', "Unused, kept for backwards compatibility"},
     {"nomac", OPT_NOMAC, '-', "Don't generate MAC"},
-    {"noenc", OPT_NOENC, '-', "Don't encrypt private keys"},
-    {"nodes", OPT_NODES, '-', "Don't encrypt private keys; deprecated"},
-    {"", OPT_CIPHER, '-', "Any supported cipher"},
-
-    OPT_R_OPTIONS,
-    OPT_PROV_OPTIONS,
     {NULL}
 };
 
 int pkcs12_main(int argc, char **argv)
 {
     char *infile = NULL, *outfile = NULL, *keyname = NULL, *certfile = NULL;
-    char *untrusted = NULL;
+    char *untrusted = NULL, *ciphername = NULL, *enc_flag = NULL;
     char *passcertsarg = NULL, *passcerts = NULL;
     char *name = NULL, *csp_name = NULL;
     char pass[PASSWD_BUF_SIZE] = "", macpass[PASSWD_BUF_SIZE] = "";
-    int export_cert = 0, options = 0, chain = 0, twopass = 0, keytype = 0, use_legacy = 0;
+    int export_pkcs12 = 0, options = 0, chain = 0, twopass = 0, keytype = 0, use_legacy = 0;
     int iter = PKCS12_DEFAULT_ITER, maciter = PKCS12_DEFAULT_ITER;
-    int cert_pbe = NID_aes_256_cbc;
-    int key_pbe = NID_aes_256_cbc;
+    int cert_pbe = PKCS12_DEFAULT_PBE;
+    int key_pbe = PKCS12_DEFAULT_PBE;
     int ret = 1, macver = 1, add_lmk = 0, private = 0;
     int noprompt = 0;
     char *passinarg = NULL, *passoutarg = NULL, *passarg = NULL;
@@ -164,7 +164,8 @@ int pkcs12_main(int argc, char **argv)
     BIO *in = NULL, *out = NULL;
     PKCS12 *p12 = NULL;
     STACK_OF(OPENSSL_STRING) *canames = NULL;
-    const EVP_CIPHER *enc = EVP_aes_256_cbc();
+    const EVP_CIPHER *const default_enc = EVP_aes_256_cbc();
+    const EVP_CIPHER *enc = default_enc;
     OPTION_CHOICE o;
 
     prog = opt_init(argc, argv, pkcs12_options);
@@ -216,11 +217,21 @@ int pkcs12_main(int argc, char **argv)
             cert_pbe = NID_pbe_WithSHA1And3_Key_TripleDES_CBC;
             break;
         case OPT_EXPORT:
-            export_cert = 1;
+            export_pkcs12 = 1;
+            break;
+        case OPT_NODES:
+        case OPT_NOENC:
+            /*
+             * |enc_flag| stores the name of the option used so it
+             * can be printed if an error message is output.
+             */
+            enc_flag = opt_flag() + 1;
+            enc = NULL;
+            ciphername = NULL;
             break;
         case OPT_CIPHER:
-            if (!opt_cipher(opt_unknown(), &enc))
-                goto opthelp;
+            ciphername = opt_unknown();
+            enc_flag = opt_unknown();
             break;
         case OPT_ITER:
             if (!opt_int(opt_arg(), &iter))
@@ -242,10 +253,6 @@ int pkcs12_main(int argc, char **argv)
             break;
         case OPT_MACALG:
             macalg = opt_arg();
-            break;
-        case OPT_NODES:
-        case OPT_NOENC:
-            enc = NULL;
             break;
         case OPT_CERTPBE:
             if (!set_pbe(&cert_pbe, opt_arg()))
@@ -331,38 +338,76 @@ int pkcs12_main(int argc, char **argv)
             break;
         }
     }
-    argc = opt_num_rest();
 
-    if (!export_cert) {
-        if (chain)
-            BIO_printf(bio_err, "Warning: -chain option ignored without -export\n");
-        if (certfile != NULL)
-            BIO_printf(bio_err, "Warning: -certfile option ignored without -export\n");
-        if (untrusted != NULL)
-            BIO_printf(bio_err, "Warning: -untrusted option ignored without -export\n");
-        if (passcertsarg != NULL)
+    /* No extra arguments. */
+    argc = opt_num_rest();
+    if (argc != 0)
+        goto opthelp;
+
+    app_RAND_load();
+    if (ciphername != NULL) {
+        if (!opt_cipher(ciphername, &enc))
+            goto opthelp;
+    }
+    if (export_pkcs12) {
+        if ((options & INFO) != 0)
+            WARN_EXPORT("info");
+        if (macver == 0)
+            WARN_EXPORT("nomacver");
+        if ((options & CLCERTS) != 0)
+            WARN_EXPORT("clcerts");
+        if ((options & CACERTS) != 0)
+            WARN_EXPORT("cacerts");
+        if (enc != default_enc)
             BIO_printf(bio_err,
-                       "Warning: -passcerts option ignored without -export\n");
-        if (CApath != NULL || noCApath)
-            BIO_printf(bio_err, "Warning: -[no-]CApath option ignored without -export\n");
-        if (CAfile != NULL || noCAfile)
-            BIO_printf(bio_err, "Warning: -[no-]CAfile option ignored without -export\n");
-        if (CAstore != NULL || noCAstore)
-            BIO_printf(bio_err, "Warning: -[no-]CAstore option ignored without -export\n");
-        if (add_lmk)
-            BIO_printf(bio_err, "Warning: -LMK option ignored without -export\n");
-        if (name != NULL)
-            BIO_printf(bio_err, "Warning: -name option ignored without -export\n");
-        if (csp_name != NULL)
-            BIO_printf(bio_err, "Warning: -CSP option ignored without -export\n");
-        if (canames != NULL)
-            BIO_printf(bio_err, "Warning: -caname option ignored without -export\n");
+                       "Warning: output encryption option -%s ignored with -export\n", enc_flag);
+    } else {
         if (keyname != NULL)
-            BIO_printf(bio_err, "Warning: -inkey option ignored without -export\n");
-        if (keytype != 0)
-            BIO_printf(bio_err, "Warning: -keyex and -keysig options ignored without -export\n");
+            WARN_NO_EXPORT("inkey");
+        if (certfile != NULL)
+            WARN_NO_EXPORT("certfile");
+        if (passcertsarg != NULL)
+            WARN_NO_EXPORT("passcerts");
+        if (chain)
+            WARN_NO_EXPORT("chain");
+        if (untrusted != NULL)
+            WARN_NO_EXPORT("untrusted");
+        if (CAfile != NULL)
+            WARN_NO_EXPORT("CAfile");
+        if (CApath != NULL)
+            WARN_NO_EXPORT("CApath");
+        if (CAstore != NULL)
+            WARN_NO_EXPORT("CAstore");
+        if (noCAfile)
+            WARN_NO_EXPORT("no-CAfile");
+        if (noCApath)
+            WARN_NO_EXPORT("no-CApath");
+        if (noCAstore)
+            WARN_NO_EXPORT("no-CAstore");
+        if (name != NULL)
+            WARN_NO_EXPORT("name");
+        if (canames != NULL)
+            WARN_NO_EXPORT("caname");
+        if (csp_name != NULL)
+            WARN_NO_EXPORT("CSP");
+        if (add_lmk)
+            WARN_NO_EXPORT("LMK");
+        if (keytype == KEY_EX)
+            WARN_NO_EXPORT("keyex");
+        if (keytype == KEY_SIG)
+            WARN_NO_EXPORT("keysig");
+        if (key_pbe != PKCS12_DEFAULT_PBE)
+            WARN_NO_EXPORT("keypbe");
+        if (cert_pbe != PKCS12_DEFAULT_PBE && cert_pbe != -1)
+            WARN_NO_EXPORT("certpbe and -descert");
         if (macalg != NULL)
-            BIO_printf(bio_err, "Warning: -macalg option ignored without -export\n");
+            WARN_NO_EXPORT("macalg");
+        if (iter != PKCS12_DEFAULT_ITER)
+            WARN_NO_EXPORT("iter and -noiter");
+        if (maciter == 1)
+            WARN_NO_EXPORT("nomaciter");
+        if (cert_pbe == -1 && maciter == -1)
+            WARN_NO_EXPORT("nomac");
     }
     if (use_legacy) {
         /* load the legacy provider if not loaded already*/
@@ -373,8 +418,8 @@ int pkcs12_main(int argc, char **argv)
             if (!app_provider_load(app_get0_libctx(), "default"))
                 goto end;
         }
-        if (cert_pbe != NID_pbe_WithSHA1And3_Key_TripleDES_CBC) {
-            /* Restore default algorithms */
+        if (cert_pbe == PKCS12_DEFAULT_PBE) {
+            /* Adapt default algorithm */
 #ifndef OPENSSL_NO_RC2
             cert_pbe = NID_pbe_WithSHA1And40BitRC2_CBC;
 #else
@@ -382,12 +427,12 @@ int pkcs12_main(int argc, char **argv)
 #endif
         }
 
-        key_pbe = NID_pbe_WithSHA1And3_Key_TripleDES_CBC;
-        enc = EVP_des_ede3_cbc();
+        if (key_pbe == PKCS12_DEFAULT_PBE)
+            key_pbe = NID_pbe_WithSHA1And3_Key_TripleDES_CBC;
+        if (enc == default_enc)
+            enc = EVP_des_ede3_cbc();
     }
 
-    if (argc != 0)
-        goto opthelp;
 
     private = 1;
 
@@ -397,7 +442,7 @@ int pkcs12_main(int argc, char **argv)
     }
 
     if (passarg != NULL) {
-        if (export_cert)
+        if (export_pkcs12)
             passoutarg = passarg;
         else
             passinarg = passarg;
@@ -409,7 +454,7 @@ int pkcs12_main(int argc, char **argv)
     }
 
     if (cpass == NULL) {
-        if (export_cert)
+        if (export_pkcs12)
             cpass = passout;
         else
             cpass = passin;
@@ -419,7 +464,7 @@ int pkcs12_main(int argc, char **argv)
         mpass = cpass;
         noprompt = 1;
         if (twopass) {
-            if (export_cert)
+            if (export_pkcs12)
                 BIO_printf(bio_err, "Option -twopass cannot be used with -passout or -password\n");
             else
                 BIO_printf(bio_err, "Option -twopass cannot be used with -passin or -password\n");
@@ -435,7 +480,7 @@ int pkcs12_main(int argc, char **argv)
         if (1) {
 #ifndef OPENSSL_NO_UI_CONSOLE
             if (EVP_read_pw_string(
-                macpass, sizeof(macpass), "Enter MAC Password:", export_cert)) {
+                macpass, sizeof(macpass), "Enter MAC Password:", export_pkcs12)) {
                 BIO_printf(bio_err, "Can't read Password\n");
                 goto end;
             }
@@ -446,7 +491,7 @@ int pkcs12_main(int argc, char **argv)
         }
     }
 
-    if (export_cert) {
+    if (export_pkcs12) {
         EVP_PKEY *key = NULL;
         X509 *ee_cert = NULL, *x = NULL;
         STACK_OF(X509) *certs = NULL;
@@ -456,7 +501,7 @@ int pkcs12_main(int argc, char **argv)
         int i;
 
         if ((options & (NOCERTS | NOKEYS)) == (NOCERTS | NOKEYS)) {
-            BIO_printf(bio_err, "Nothing to export due to -nocerts and -nokeys or -noout!\n");
+            BIO_printf(bio_err, "Nothing to export due to -noout or -nocerts and -nokeys\n");
             goto export_end;
         }
 

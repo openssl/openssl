@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -9,6 +9,7 @@
 
 #ifndef OPENSSL_SELF_TEST_H
 # define OPENSSL_SELF_TEST_H
+# pragma once
 
 # include <openssl/core.h> /* OSSL_CALLBACK */
 
@@ -60,6 +61,12 @@ extern "C" {
 # define OSSL_SELF_TEST_DESC_KA_ECDH        "ECDH"
 # define OSSL_SELF_TEST_DESC_KDF_HKDF       "HKDF"
 # define OSSL_SELF_TEST_DESC_KDF_SSKDF      "SSKDF"
+# define OSSL_SELF_TEST_DESC_KDF_X963KDF    "X963KDF"
+# define OSSL_SELF_TEST_DESC_KDF_X942KDF    "X942KDF"
+# define OSSL_SELF_TEST_DESC_KDF_PBKDF2     "PBKDF2"
+# define OSSL_SELF_TEST_DESC_KDF_SSHKDF     "SSHKDF"
+# define OSSL_SELF_TEST_DESC_KDF_TLS12_PRF  "TLS12_PRF"
+# define OSSL_SELF_TEST_DESC_KDF_KBKDF      "KBKDF"
 # define OSSL_SELF_TEST_DESC_RNG            "RNG"
 
 # ifdef __cplusplus

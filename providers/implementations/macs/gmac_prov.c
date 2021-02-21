@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -14,8 +14,8 @@
 #include <openssl/engine.h>
 #include <openssl/evp.h>
 #include <openssl/err.h>
+#include <openssl/proverr.h>
 
-#include "prov/providercommonerr.h"
 #include "prov/implementations.h"
 #include "prov/provider_ctx.h"
 #include "prov/provider_util.h"
@@ -44,8 +44,6 @@ struct gmac_data_st {
     EVP_CIPHER_CTX *ctx;         /* Cipher context */
     PROV_CIPHER cipher;
 };
-
-static size_t gmac_size(void);
 
 static void gmac_free(void *vmacctx)
 {
@@ -95,6 +93,11 @@ static void *gmac_dup(void *vsrc)
     return dst;
 }
 
+static size_t gmac_size(void)
+{
+    return EVP_GCM_TLS_TAG_LEN;
+}
+
 static int gmac_init(void *vmacctx)
 {
     return ossl_prov_is_running();
@@ -139,11 +142,6 @@ static int gmac_final(void *vmacctx, unsigned char *out, size_t *outl,
 
     *outl = hlen;
     return 1;
-}
-
-static size_t gmac_size(void)
-{
-    return EVP_GCM_TLS_TAG_LEN;
 }
 
 static const OSSL_PARAM known_gettable_params[] = {
@@ -193,7 +191,7 @@ static int gmac_set_ctx_params(void *vmacctx, const OSSL_PARAM params[])
 
     if (EVP_CIPHER_mode(ossl_prov_cipher_cipher(&macctx->cipher))
         != EVP_CIPH_GCM_MODE) {
-        ERR_raise(ERR_LIB_PROV, EVP_R_CIPHER_NOT_GCM_MODE);
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_MODE);
         return 0;
     }
     if (!EVP_EncryptInit_ex(ctx, ossl_prov_cipher_cipher(&macctx->cipher),
@@ -206,7 +204,7 @@ static int gmac_set_ctx_params(void *vmacctx, const OSSL_PARAM params[])
             return 0;
 
         if (p->data_size != (size_t)EVP_CIPHER_CTX_key_length(ctx)) {
-            ERR_raise(ERR_LIB_PROV, EVP_R_INVALID_KEY_LENGTH);
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
             return 0;
         }
         if (!EVP_EncryptInit_ex(ctx, NULL, NULL, p->data, NULL))

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2002-2021 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -9,7 +9,7 @@
  */
 
 /*
- * ECDSA low level APIs are deprecated for public use, but still ok for
+ * EC_KEY low level APIs are deprecated for public use, but still ok for
  * internal use.
  */
 #include "internal/deprecated.h"
@@ -657,6 +657,12 @@ OSSL_LIB_CTX *ec_key_get_libctx(const EC_KEY *key)
 const char *ec_key_get0_propq(const EC_KEY *key)
 {
     return key->propq;
+}
+
+void ec_key_set0_libctx(EC_KEY *key, OSSL_LIB_CTX *libctx)
+{
+    key->libctx = libctx;
+    /* Do we need to propagate this to the group? */
 }
 
 const EC_GROUP *EC_KEY_get0_group(const EC_KEY *key)

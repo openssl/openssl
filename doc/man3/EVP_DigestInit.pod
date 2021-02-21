@@ -80,11 +80,6 @@ EVP_MD_do_all_provided
  int EVP_MD_CTX_block_size(const EVP_MD_CTX *ctx);
  int EVP_MD_CTX_type(const EVP_MD_CTX *ctx);
  void *EVP_MD_CTX_md_data(const EVP_MD_CTX *ctx);
- int (*EVP_MD_CTX_update_fn(EVP_MD_CTX *ctx))(EVP_MD_CTX *ctx,
-                                              const void *data, size_t count);
- void EVP_MD_CTX_set_update_fn(EVP_MD_CTX *ctx,
-                               int (*update)(EVP_MD_CTX *ctx,
-                                             const void *data, size_t count));
 
  const EVP_MD *EVP_md_null(void);
 
@@ -98,6 +93,17 @@ EVP_MD_do_all_provided
  void EVP_MD_do_all_provided(OSSL_LIB_CTX *libctx,
                              void (*fn)(EVP_MD *mac, void *arg),
                              void *arg);
+
+Deprecated since OpenSSL 3.0, can be hidden entirely by defining
+B<OPENSSL_API_COMPAT> with a suitable version value, see
+L<openssl_user_macros(7)>:
+
+ int (*EVP_MD_CTX_update_fn(EVP_MD_CTX *ctx))(EVP_MD_CTX *ctx,
+                                              const void *data, size_t count);
+
+ void EVP_MD_CTX_set_update_fn(EVP_MD_CTX *ctx,
+                               int (*update)(EVP_MD_CTX *ctx,
+                                             const void *data, size_t count));
 
 =head1 DESCRIPTION
 
@@ -208,6 +214,10 @@ value explicitly fetched with EVP_MD_fetch().
 If I<impl> is non-NULL, its implementation of the digest I<type> is used if
 there is one, and if not, the default implementation is used.
 
+The I<type> parameter can be NULL if I<ctx> has been already initialized
+with another EVP_DigestInit_ex() call and has not been reset with
+EVP_MD_CTX_reset().
+
 =item EVP_DigestUpdate()
 
 Hashes I<cnt> bytes of data at I<d> into the digest context I<ctx>. This
@@ -239,12 +249,13 @@ few bytes.
 =item EVP_DigestInit()
 
 Behaves in the same way as EVP_DigestInit_ex() except it always uses the
-default digest implementation and calls EVP_MD_CTX_reset().
+default digest implementation and calls EVP_MD_CTX_reset() so it cannot
+be used with an I<type> of NULL.
 
 =item EVP_DigestFinal()
 
-Similar to EVP_DigestFinal_ex() except the digest context I<ctx> is
-automatically cleaned up.
+Similar to EVP_DigestFinal_ex() except after computing the digest
+the digest context I<ctx> is automatically cleaned up with EVP_MD_CTX_reset().
 
 =item EVP_MD_CTX_copy()
 
@@ -320,7 +331,7 @@ should not be used after the EVP_MD_CTX is freed.
 =item EVP_MD_CTX_set_update_fn()
 
 Sets the update function for I<ctx> to I<update>.
-This is the function that is called by EVP_DigestUpdate. If not set, the
+This is the function that is called by EVP_DigestUpdate(). If not set, the
 update function from the B<EVP_MD> type specified at initialization is used.
 
 =item EVP_MD_CTX_update_fn()
@@ -382,13 +393,13 @@ EVP_MD_CTX_set_params() can be used with the following OSSL_PARAM keys:
 
 =over 4
 
-=item "xoflen" (B<OSSL_PARAM_DIGEST_KEY_XOFLEN>) <unsigned integer>
+=item "xoflen" (B<OSSL_DIGEST_PARAM_XOFLEN>) <unsigned integer>
 
 Sets the digest length for extendable output functions.
 It is used by the SHAKE algorithm and should not exceed what can be given
 using a B<size_t>.
 
-=item "pad_type" (B<OSSL_PARAM_DIGEST_KEY_PAD_TYPE>) <integer>
+=item "pad-type" (B<OSSL_DIGEST_PARAM_PAD_TYPE>) <unsigned integer>
 
 Sets the padding type.
 It is used by the MDC2 algorithm.
@@ -640,14 +651,16 @@ later, so now EVP_sha1() can be used with RSA and DSA.
 
 The EVP_dss1() function was removed in OpenSSL 1.1.0.
 
-The EVP_MD_CTX_set_pkey_ctx() function was added in 1.1.1.
+The EVP_MD_CTX_set_pkey_ctx() function was added in OpenSSL 1.1.1.
 
 The EVP_MD_fetch(), EVP_MD_free(), EVP_MD_up_ref(), EVP_MD_CTX_set_params()
-and EVP_MD_CTX_get_params() functions were added in 3.0.
+and EVP_MD_CTX_get_params() functions were added in OpenSSL 3.0.
+The EVP_MD_CTX_update_fn() and EVP_MD_CTX_set_update_fn() were deprecated
+in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

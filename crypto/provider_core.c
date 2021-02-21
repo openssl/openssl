@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -44,12 +44,15 @@ struct provider_store_st;        /* Forward declaration */
 struct ossl_provider_st {
     /* Flag bits */
     unsigned int flag_initialized:1;
+    unsigned int flag_activated:1;
     unsigned int flag_fallback:1; /* Can be used as fallback */
     unsigned int flag_activated_as_fallback:1;
 
     /* OpenSSL library side data */
     CRYPTO_REF_COUNT refcnt;
     CRYPTO_RWLOCK *refcnt_lock;  /* For the ref counter */
+    CRYPTO_REF_COUNT activatecnt;
+    CRYPTO_RWLOCK *activatecnt_lock; /* For the activate counter */
     char *name;
     char *path;
     DSO *module;
@@ -82,6 +85,7 @@ struct ossl_provider_st {
      */
     unsigned char *operation_bits;
     size_t operation_bits_sz;
+    CRYPTO_RWLOCK *opbits_lock;
 
     /* Provider side data */
     void *provctx;
@@ -110,20 +114,15 @@ struct provider_store_st {
 };
 
 /*
- * provider_deactivate_free() is a wrapper around ossl_provider_free()
- * that also makes sure that activated fallback providers are deactivated.
- * This is simply done by freeing them an extra time, to compensate for the
- * refcount that provider_activate_fallbacks() gives them.
+ * provider_deactivate_free() is a wrapper around ossl_provider_deactivate()
+ * and ossl_provider_free(), called as needed.
  * Since this is only called when the provider store is being emptied, we
  * don't need to care about any lock.
  */
 static void provider_deactivate_free(OSSL_PROVIDER *prov)
 {
-    int extra_free = (prov->flag_initialized
-                      && prov->flag_activated_as_fallback);
-
-    if (extra_free)
-        ossl_provider_free(prov);
+    if (prov->flag_activated)
+        ossl_provider_deactivate(prov);
     ossl_provider_free(prov);
 }
 
@@ -251,8 +250,10 @@ static OSSL_PROVIDER *provider_new(const char *name,
     if ((prov = OPENSSL_zalloc(sizeof(*prov))) == NULL
 #ifndef HAVE_ATOMICS
         || (prov->refcnt_lock = CRYPTO_THREAD_lock_new()) == NULL
+        || (prov->activatecnt_lock = CRYPTO_THREAD_lock_new()) == NULL
 #endif
         || !ossl_provider_up_ref(prov) /* +1 One reference to be returned */
+        || (prov->opbits_lock = CRYPTO_THREAD_lock_new()) == NULL
         || (prov->name = OPENSSL_strdup(name)) == NULL) {
         ossl_provider_free(prov);
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
@@ -337,46 +338,45 @@ void ossl_provider_free(OSSL_PROVIDER *prov)
         CRYPTO_DOWN_REF(&prov->refcnt, &ref, prov->refcnt_lock);
 
         /*
-         * When the refcount drops below two, the store is the only
-         * possible reference, or it has already been taken away from
-         * the store (this may happen if a provider was activated
-         * because it's a fallback, but isn't currently used)
-         * When that happens, the provider is inactivated.
-         */
-        if (ref < 2 && prov->flag_initialized) {
-#ifndef FIPS_MODULE
-            ossl_init_thread_deregister(prov);
-#endif
-            if (prov->teardown != NULL)
-                prov->teardown(prov->provctx);
-#ifndef OPENSSL_NO_ERR
-# ifndef FIPS_MODULE
-            if (prov->error_strings != NULL) {
-                ERR_unload_strings(prov->error_lib, prov->error_strings);
-                OPENSSL_free(prov->error_strings);
-                prov->error_strings = NULL;
-            }
-# endif
-#endif
-            OPENSSL_free(prov->operation_bits);
-            prov->operation_bits = NULL;
-            prov->operation_bits_sz = 0;
-            prov->flag_initialized = 0;
-        }
-
-        /*
-         * When the refcount drops to zero, it has been taken out of
-         * the store.  All we have to do here is clean it out.
+         * When the refcount drops to zero, we clean up the provider.
+         * Note that this also does teardown, which may seem late,
+         * considering that init happens on first activation.  However,
+         * there may be other structures hanging on to the provider after
+         * the last deactivation and may therefore need full access to the
+         * provider's services.  Therefore, we deinit late.
          */
         if (ref == 0) {
+            if (prov->flag_initialized) {
+#ifndef FIPS_MODULE
+                ossl_init_thread_deregister(prov);
+#endif
+                if (prov->teardown != NULL)
+                    prov->teardown(prov->provctx);
+#ifndef OPENSSL_NO_ERR
+# ifndef FIPS_MODULE
+                if (prov->error_strings != NULL) {
+                    ERR_unload_strings(prov->error_lib, prov->error_strings);
+                    OPENSSL_free(prov->error_strings);
+                    prov->error_strings = NULL;
+                }
+# endif
+#endif
+                OPENSSL_free(prov->operation_bits);
+                prov->operation_bits = NULL;
+                prov->operation_bits_sz = 0;
+                prov->flag_initialized = 0;
+            }
+
 #ifndef FIPS_MODULE
             DSO_free(prov->module);
 #endif
             OPENSSL_free(prov->name);
             OPENSSL_free(prov->path);
             sk_INFOPAIR_pop_free(prov->parameters, free_infopair);
+            CRYPTO_THREAD_lock_free(prov->opbits_lock);
 #ifndef HAVE_ATOMICS
             CRYPTO_THREAD_lock_free(prov->refcnt_lock);
+            CRYPTO_THREAD_lock_free(prov->activatecnt_lock);
 #endif
             OPENSSL_free(prov);
         }
@@ -460,7 +460,7 @@ int OSSL_PROVIDER_set_default_search_path(OSSL_LIB_CTX *libctx,
  * locking.  Direct callers must remember to set the store flags when
  * appropriate.
  */
-static int provider_activate(OSSL_PROVIDER *prov)
+static int provider_init(OSSL_PROVIDER *prov)
 {
     const OSSL_DISPATCH *provider_dispatch = NULL;
     void *tmp_provctx = NULL;    /* safety measure */
@@ -633,16 +633,58 @@ static int provider_activate(OSSL_PROVIDER *prov)
     return 1;
 }
 
+static int provider_deactivate(OSSL_PROVIDER *prov)
+{
+    int ref = 0;
+
+    if (!ossl_assert(prov != NULL))
+        return 0;
+
+    if (CRYPTO_DOWN_REF(&prov->activatecnt, &ref, prov->activatecnt_lock) <= 0)
+        return 0;
+
+    if (ref < 1)
+        prov->flag_activated = 0;
+
+    /* We don't deinit here, that's done in ossl_provider_free() */
+    return 1;
+}
+
+static int provider_activate(OSSL_PROVIDER *prov)
+{
+    int ref = 0;
+
+    if (CRYPTO_UP_REF(&prov->activatecnt, &ref, prov->activatecnt_lock) <= 0)
+        return 0;
+
+    if (provider_init(prov)) {
+        prov->flag_activated = 1;
+
+        return 1;
+    }
+
+    provider_deactivate(prov);
+    return 0;
+}
+
 int ossl_provider_activate(OSSL_PROVIDER *prov)
 {
+    if (prov == NULL)
+        return 0;
     if (provider_activate(prov)) {
         CRYPTO_THREAD_write_lock(prov->store->lock);
         prov->store->use_fallbacks = 0;
         CRYPTO_THREAD_unlock(prov->store->lock);
         return 1;
     }
-
     return 0;
+}
+
+int ossl_provider_deactivate(OSSL_PROVIDER *prov)
+{
+    if (prov == NULL)
+        return 0;
+    return provider_deactivate(prov);
 }
 
 void *ossl_provider_ctx(const OSSL_PROVIDER *prov)
@@ -669,7 +711,7 @@ static int provider_forall_loaded(struct provider_store_st *store,
         OSSL_PROVIDER *prov =
             sk_OSSL_PROVIDER_value(store->providers, i);
 
-        if (prov->flag_initialized) {
+        if (prov->flag_activated) {
             if (found_activated != NULL)
                 *found_activated = 1;
             if (!(ret = cb(prov, cbdata)))
@@ -687,43 +729,50 @@ static int provider_forall_loaded(struct provider_store_st *store,
  */
 static void provider_activate_fallbacks(struct provider_store_st *store)
 {
-    if (store->use_fallbacks) {
-        int num_provs = sk_OSSL_PROVIDER_num(store->providers);
-        int activated_fallback_count = 0;
-        int i;
+    int use_fallbacks;
+    int num_provs;
+    int activated_fallback_count = 0;
+    int i;
 
-        for (i = 0; i < num_provs; i++) {
-            OSSL_PROVIDER *prov = sk_OSSL_PROVIDER_value(store->providers, i);
+    CRYPTO_THREAD_read_lock(store->lock);
+    use_fallbacks = store->use_fallbacks;
+    CRYPTO_THREAD_unlock(store->lock);
+    if (!use_fallbacks)
+        return;
 
-            /*
-             * Activated fallback providers get an extra refcount, to
-             * simulate a regular load.
-             * Note that we don't care if the activation succeeds or not,
-             * other than to maintain a correct refcount.  If the activation
-             * doesn't succeed, then any future attempt to use the fallback
-             * provider will fail anyway.
-             */
+    CRYPTO_THREAD_write_lock(store->lock);
+    /* Check again, just in case another thread changed it */
+    use_fallbacks = store->use_fallbacks;
+    if (!use_fallbacks) {
+        CRYPTO_THREAD_unlock(store->lock);
+        return;
+    }
+
+    num_provs = sk_OSSL_PROVIDER_num(store->providers);
+    for (i = 0; i < num_provs; i++) {
+        OSSL_PROVIDER *prov = sk_OSSL_PROVIDER_value(store->providers, i);
+
+        if (ossl_provider_up_ref(prov)) {
             if (prov->flag_fallback) {
-                if (ossl_provider_up_ref(prov)) {
-                    if (!provider_activate(prov)) {
-                        ossl_provider_free(prov);
-                    } else {
-                        prov->flag_activated_as_fallback = 1;
-                        activated_fallback_count++;
-                    }
+                if (provider_activate(prov)) {
+                    prov->flag_activated_as_fallback = 1;
+                    activated_fallback_count++;
                 }
             }
+            ossl_provider_free(prov);
         }
-
-        /*
-         * We assume that all fallbacks have been added to the store before
-         * any fallback is activated.
-         * TODO: We may have to reconsider this, IF we find ourselves adding
-         * fallbacks after any previous fallback has been activated.
-         */
-        if (activated_fallback_count > 0)
-            store->use_fallbacks = 0;
     }
+
+    /*
+     * We assume that all fallbacks have been added to the store before
+     * any fallback is activated.
+     * TODO: We may have to reconsider this, IF we find ourselves adding
+     * fallbacks after any previous fallback has been activated.
+     */
+    if (activated_fallback_count > 0)
+        store->use_fallbacks = 0;
+
+    CRYPTO_THREAD_unlock(store->lock);
 }
 
 int ossl_provider_forall_loaded(OSSL_LIB_CTX *ctx,
@@ -743,10 +792,9 @@ int ossl_provider_forall_loaded(OSSL_LIB_CTX *ctx,
 #endif
 
     if (store != NULL) {
-        CRYPTO_THREAD_read_lock(store->lock);
-
         provider_activate_fallbacks(store);
 
+        CRYPTO_THREAD_read_lock(store->lock);
         /*
          * Now, we sweep through all providers
          */
@@ -761,11 +809,9 @@ int ossl_provider_forall_loaded(OSSL_LIB_CTX *ctx,
 int ossl_provider_available(OSSL_PROVIDER *prov)
 {
     if (prov != NULL) {
-        CRYPTO_THREAD_read_lock(prov->store->lock);
         provider_activate_fallbacks(prov->store);
-        CRYPTO_THREAD_unlock(prov->store->lock);
 
-        return prov->flag_initialized;
+        return prov->flag_activated;
     }
     return 0;
 }
@@ -868,8 +914,17 @@ const OSSL_ALGORITHM *ossl_provider_query_operation(const OSSL_PROVIDER *prov,
                                                     int operation_id,
                                                     int *no_cache)
 {
-    return prov->query_operation == NULL
-        ? NULL : prov->query_operation(prov->provctx, operation_id, no_cache);
+    const OSSL_ALGORITHM *res;
+
+    if (prov->query_operation == NULL)
+        return NULL;
+    res = prov->query_operation(prov->provctx, operation_id, no_cache);
+#if defined(OPENSSL_NO_CACHED_FETCH)
+    /* Forcing the non-caching of queries */
+    if (no_cache != NULL)
+        *no_cache = 1;
+#endif
+    return res;
 }
 
 int ossl_provider_set_operation_bit(OSSL_PROVIDER *provider, size_t bitnum)
@@ -877,11 +932,13 @@ int ossl_provider_set_operation_bit(OSSL_PROVIDER *provider, size_t bitnum)
     size_t byte = bitnum / 8;
     unsigned char bit = (1 << (bitnum % 8)) & 0xFF;
 
+    CRYPTO_THREAD_write_lock(provider->opbits_lock);
     if (provider->operation_bits_sz <= byte) {
         unsigned char *tmp = OPENSSL_realloc(provider->operation_bits,
                                              byte + 1);
 
         if (tmp == NULL) {
+            CRYPTO_THREAD_unlock(provider->opbits_lock);
             ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
             return 0;
         }
@@ -891,6 +948,7 @@ int ossl_provider_set_operation_bit(OSSL_PROVIDER *provider, size_t bitnum)
         provider->operation_bits_sz = byte + 1;
     }
     provider->operation_bits[byte] |= bit;
+    CRYPTO_THREAD_unlock(provider->opbits_lock);
     return 1;
 }
 
@@ -906,8 +964,10 @@ int ossl_provider_test_operation_bit(OSSL_PROVIDER *provider, size_t bitnum,
     }
 
     *result = 0;
+    CRYPTO_THREAD_read_lock(provider->opbits_lock);
     if (provider->operation_bits_sz > byte)
         *result = ((provider->operation_bits[byte] & bit) != 0);
+    CRYPTO_THREAD_unlock(provider->opbits_lock);
     return 1;
 }
 

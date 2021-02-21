@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -9,6 +9,7 @@
 
 #ifndef OSSL_INTERNAL_ASN1_H
 # define OSSL_INTERNAL_ASN1_H
+# pragma once
 
 int asn1_d2i_read_bio(BIO *in, BUF_MEM **pb);
 

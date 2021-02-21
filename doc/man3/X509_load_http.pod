@@ -15,8 +15,8 @@ X509_CRL_http_nbio
  X509 *X509_load_http(const char *url, BIO *bio, BIO *rbio, int timeout);
  X509_CRL *X509_CRL_load_http(const char *url, BIO *bio, BIO *rbio, int timeout);
 
- #define X509_http_nbio(url)
- #define X509_CRL_http_nbio(url)
+ #define X509_http_nbio(rctx, pcert)
+ #define X509_CRL_http_nbio(rctx, pcrl)
 
 =head1 DESCRIPTION
 
@@ -53,7 +53,7 @@ X509_load_http() and X509_CRL_load_http() were added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

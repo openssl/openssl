@@ -3,7 +3,7 @@ Welcome to the OpenSSL Project
 
 [![openssl logo]][www.openssl.org]
 
-[![travis badge]][travis jobs]
+[![github actions ci badge]][github actions ci]
 [![appveyor badge]][appveyor jobs]
 
 OpenSSL is a robust, commercial-grade, full-featured Open Source Toolkit
@@ -105,13 +105,13 @@ detailed instructions about building and installing OpenSSL. For some
 platforms, the installation instructions are amended by a platform specific
 document.
 
- * [NOTES-Android.md](NOTES-Android.md)
- * [NOTES-DJGPP.md](NOTES-DJGPP.md)
- * [NOTES-Unix.md](NOTES-Unix.md)
- * [NOTES-VMS.md](NOTES-VMS.md)
- * [NOTES-Windows.txt](NOTES-Windows.txt)
- * [NOTES-Perl.md](NOTES-Perl.md)
- * [NOTES-Valgrind.md](NOTES-Valgrind.md)
+ * [Notes for UNIX-like platforms](NOTES-UNIX.md)
+ * [Notes for Android platforms](NOTES-ANDROID.md)
+ * [Notes for Windows platforms](NOTES-WINDOWS.md)
+ * [Notes for the DOS platform with DJGPP](NOTES-DJGPP.md)
+ * [Notes for the OpenVMS platform](NOTES-VMS.md)
+ * [Notes on Perl](NOTES-PERL.md)
+ * [Notes on Valgrind](NOTES-VALGRIND.md)
 
 Specific notes on upgrading to OpenSSL 3.0 from previous versions, as well as
 known issues are available on the [OpenSSL 3.0 Wiki] page.
@@ -165,7 +165,7 @@ attempting to develop or distribute cryptographic code.
 Copyright
 =========
 
-Copyright (c) 1998-2020 The OpenSSL Project
+Copyright (c) 1998-2021 The OpenSSL Project
 
 Copyright (c) 1995-1998 Eric A. Young, Tim J. Hudson
 
@@ -206,13 +206,13 @@ All rights reserved.
     doc/images/openssl.svg
     "OpenSSL Logo"
 
-[travis badge]:
-    <https://travis-ci.org/openssl/openssl.svg?branch=master>
-    "Travis Build Status"
+[github actions ci badge]:
+    <https://github.com/openssl/openssl/workflows/GitHub%20CI/badge.svg>
+    "GitHub Actions CI Status"
 
-[travis jobs]:
-    <https://travis-ci.org/openssl/openssl>
-    "Travis Jobs"
+[github actions ci]:
+    <https://github.com/openssl/openssl/actions?query=workflow%3A%22GitHub+CI%22>
+    "GitHub Actions CI"
 
 [appveyor badge]:
     <https://ci.appveyor.com/api/projects/status/8e10o7xfrg73v98f/branch/master?svg=true>

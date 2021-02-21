@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2004-2021 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2004, EdelKey Project. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -10,6 +10,9 @@
  * Originally written by Christophe Renou and Peter Sylvester,
  * for the EdelKey project.
  */
+
+/* All the SRP APIs in this file are deprecated */
+#define OPENSSL_SUPPRESS_DEPRECATED
 
 #ifndef OPENSSL_NO_SRP
 # include "internal/cryptlib.h"

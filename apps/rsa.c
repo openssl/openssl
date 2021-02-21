@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -29,6 +29,12 @@
  * much just for those macros...  they might serve better as EVP macros.
  */
 #include <openssl/core_dispatch.h>
+
+#ifndef OPENSSL_NO_RC4
+# define DEFAULT_PVK_ENCR_STRENGTH      2
+#else
+# define DEFAULT_PVK_ENCR_STRENGTH      0
+#endif
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
@@ -69,10 +75,12 @@ const OPTIONS rsa_options[] = {
     {"traditional", OPT_TRADITIONAL, '-',
      "Use traditional format for private keys"},
 
+#ifndef OPENSSL_NO_RC4
     OPT_SECTION("PVK"),
     {"pvk-strong", OPT_PVK_STRONG, '-', "Enable 'Strong' PVK encoding level (default)"},
     {"pvk-weak", OPT_PVK_WEAK, '-', "Enable 'Weak' PVK encoding level"},
     {"pvk-none", OPT_PVK_NONE, '-', "Don't enforce PVK encoding"},
+#endif
 
     OPT_PROV_OPTIONS,
     {NULL}
@@ -85,12 +93,12 @@ int rsa_main(int argc, char **argv)
     EVP_PKEY *pkey = NULL;
     EVP_PKEY_CTX *pctx;
     const EVP_CIPHER *enc = NULL;
-    char *infile = NULL, *outfile = NULL, *prog;
+    char *infile = NULL, *outfile = NULL, *ciphername = NULL, *prog;
     char *passin = NULL, *passout = NULL, *passinarg = NULL, *passoutarg = NULL;
     int private = 0;
     int informat = FORMAT_PEM, outformat = FORMAT_PEM, text = 0, check = 0;
     int noout = 0, modulus = 0, pubin = 0, pubout = 0, ret = 1;
-    int pvk_encr = 2;
+    int pvk_encr = DEFAULT_PVK_ENCR_STRENGTH;
     OPTION_CHOICE o;
     int traditional = 0;
     const char *output_type = NULL;
@@ -163,8 +171,7 @@ int rsa_main(int argc, char **argv)
             check = 1;
             break;
         case OPT_CIPHER:
-            if (!opt_cipher(opt_unknown(), &enc))
-                goto opthelp;
+            ciphername = opt_unknown();
             break;
         case OPT_PROV_CASES:
             if (!opt_provider(o))
@@ -175,10 +182,16 @@ int rsa_main(int argc, char **argv)
             break;
         }
     }
+
+    /* No extra arguments. */
     argc = opt_num_rest();
     if (argc != 0)
         goto opthelp;
 
+    if (ciphername != NULL) {
+        if (!opt_cipher(ciphername, &enc))
+            goto opthelp;
+    }
     private = (text && !pubin) || (!pubout && !noout) ? 1 : 0;
 
     if (!app_passwd(passinarg, passoutarg, &passin, &passout)) {
@@ -308,9 +321,9 @@ int rsa_main(int argc, char **argv)
     if (outformat == FORMAT_ASN1 || outformat == FORMAT_PEM) {
         if (pubout || pubin) {
             if (pubout == 2)
-                output_structure = "SubjectPublicKeyInfo";
-            else
                 output_structure = "pkcs1"; /* "type-specific" would work too */
+            else
+                output_structure = "SubjectPublicKeyInfo";
         } else {
             assert(private);
             if (traditional)
@@ -321,9 +334,9 @@ int rsa_main(int argc, char **argv)
     }
 
     /* Now, perform the encoding */
-    ectx = OSSL_ENCODER_CTX_new_by_EVP_PKEY(pkey, selection,
-                                            output_type, output_structure,
-                                            NULL, NULL);
+    ectx = OSSL_ENCODER_CTX_new_for_pkey(pkey, selection,
+                                         output_type, output_structure,
+                                         NULL);
     if (OSSL_ENCODER_CTX_get_num_encoders(ectx) == 0) {
         BIO_printf(bio_err, "%s format not supported\n", output_type);
         goto end;

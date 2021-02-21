@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2021 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2017, Oracle and/or its affiliates.  All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -12,6 +12,7 @@
 
 #ifndef OSSL_CRYPTO_ARIA_H
 # define OSSL_CRYPTO_ARIA_H
+# pragma once
 
 # include <openssl/opensslconf.h>
 

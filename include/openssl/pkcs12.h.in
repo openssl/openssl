@@ -85,8 +85,10 @@ typedef struct pkcs12_bag_st PKCS12_BAGS;
 # define PKCS12_MAKE_SHKEYBAG PKCS12_SAFEBAG_create_pkcs8_encrypt
 
 #endif
-
-DEPRECATEDIN_1_1_0(ASN1_TYPE *PKCS12_get_attr(const PKCS12_SAFEBAG *bag, int attr_nid))
+#ifndef OPENSSL_NO_DEPRECATED_1_1_0
+OSSL_DEPRECATEDIN_1_1_0 ASN1_TYPE *PKCS12_get_attr(const PKCS12_SAFEBAG *bag,
+                                                   int attr_nid);
+#endif
 
 ASN1_TYPE *PKCS8_get_attr(PKCS8_PRIV_KEY_INFO *p8, int attr_nid);
 int PKCS12_mac_present(const PKCS12 *p12);

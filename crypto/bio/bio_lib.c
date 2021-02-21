@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -13,13 +13,12 @@
 #include "bio_local.h"
 #include "internal/cryptlib.h"
 
-
 /*
  * Helper macro for the callback to determine whether an operator expects a
  * len parameter or not
  */
-#define HAS_LEN_OPER(o)        ((o) == BIO_CB_READ || (o) == BIO_CB_WRITE || \
-                                (o) == BIO_CB_GETS)
+#define HAS_LEN_OPER(o) ((o) == BIO_CB_READ || (o) == BIO_CB_WRITE \
+                         || (o) == BIO_CB_GETS)
 
 /*
  * Helper function to work out whether to call the new style callback or the old
@@ -29,7 +28,8 @@
  * for the "long" used for "inret"
  */
 static long bio_call_callback(BIO *b, int oper, const char *argp, size_t len,
-                              int argi, long argl, long inret, size_t *processed)
+                              int argi, long argl, long inret,
+                              size_t *processed)
 {
     long ret;
     int bareoper;
@@ -184,7 +184,7 @@ int BIO_up_ref(BIO *a)
 
     REF_PRINT_COUNT("BIO", a);
     REF_ASSERT_ISNT(i < 2);
-    return ((i > 1) ? 1 : 0);
+    return i > 1;
 }
 
 void BIO_clear_flags(BIO *b, int flags)
@@ -252,7 +252,11 @@ static int bio_read_intern(BIO *b, void *data, size_t dlen, size_t *readbytes)
 {
     int ret;
 
-    if ((b == NULL) || (b->method == NULL) || (b->method->bread == NULL)) {
+    if (b == NULL) {
+        ERR_raise(ERR_LIB_BIO, ERR_R_PASSED_NULL_PARAMETER);
+        return -1;
+    }
+    if (b->method == NULL || b->method->bread == NULL) {
         ERR_raise(ERR_LIB_BIO, BIO_R_UNSUPPORTED_METHOD);
         return -2;
     }
@@ -264,7 +268,7 @@ static int bio_read_intern(BIO *b, void *data, size_t dlen, size_t *readbytes)
 
     if (!b->init) {
         ERR_raise(ERR_LIB_BIO, BIO_R_UNINITIALIZED);
-        return -2;
+        return -1;
     }
 
     ret = b->method->bread(b, data, dlen, readbytes);
@@ -305,16 +309,7 @@ int BIO_read(BIO *b, void *data, int dlen)
 
 int BIO_read_ex(BIO *b, void *data, size_t dlen, size_t *readbytes)
 {
-    int ret;
-
-    ret = bio_read_intern(b, data, dlen, readbytes);
-
-    if (ret > 0)
-        ret = 1;
-    else
-        ret = 0;
-
-    return ret;
+    return bio_read_intern(b, data, dlen, readbytes) > 0;
 }
 
 static int bio_write_intern(BIO *b, const void *data, size_t dlen,
@@ -322,10 +317,11 @@ static int bio_write_intern(BIO *b, const void *data, size_t dlen,
 {
     int ret;
 
-    if (b == NULL)
-        return 0;
-
-    if ((b->method == NULL) || (b->method->bwrite == NULL)) {
+    if (b == NULL) {
+        ERR_raise(ERR_LIB_BIO, ERR_R_PASSED_NULL_PARAMETER);
+        return -1;
+    }
+    if (b->method == NULL || b->method->bwrite == NULL) {
         ERR_raise(ERR_LIB_BIO, BIO_R_UNSUPPORTED_METHOD);
         return -2;
     }
@@ -337,7 +333,7 @@ static int bio_write_intern(BIO *b, const void *data, size_t dlen,
 
     if (!b->init) {
         ERR_raise(ERR_LIB_BIO, BIO_R_UNINITIALIZED);
-        return -2;
+        return -1;
     }
 
     ret = b->method->bwrite(b, data, dlen, written);
@@ -372,16 +368,7 @@ int BIO_write(BIO *b, const void *data, int dlen)
 
 int BIO_write_ex(BIO *b, const void *data, size_t dlen, size_t *written)
 {
-    int ret;
-
-    ret = bio_write_intern(b, data, dlen, written);
-
-    if (ret > 0)
-        ret = 1;
-    else
-        ret = 0;
-
-    return ret;
+    return bio_write_intern(b, data, dlen, written) > 0;
 }
 
 int BIO_puts(BIO *b, const char *buf)
@@ -389,7 +376,11 @@ int BIO_puts(BIO *b, const char *buf)
     int ret;
     size_t written = 0;
 
-    if ((b == NULL) || (b->method == NULL) || (b->method->bputs == NULL)) {
+    if (b == NULL) {
+        ERR_raise(ERR_LIB_BIO, ERR_R_PASSED_NULL_PARAMETER);
+        return -1;
+    }
+    if (b->method == NULL || b->method->bputs == NULL) {
         ERR_raise(ERR_LIB_BIO, BIO_R_UNSUPPORTED_METHOD);
         return -2;
     }
@@ -402,7 +393,7 @@ int BIO_puts(BIO *b, const char *buf)
 
     if (!b->init) {
         ERR_raise(ERR_LIB_BIO, BIO_R_UNINITIALIZED);
-        return -2;
+        return -1;
     }
 
     ret = b->method->bputs(b, buf);
@@ -434,14 +425,18 @@ int BIO_gets(BIO *b, char *buf, int size)
     int ret;
     size_t readbytes = 0;
 
-    if ((b == NULL) || (b->method == NULL) || (b->method->bgets == NULL)) {
+    if (b == NULL) {
+        ERR_raise(ERR_LIB_BIO, ERR_R_PASSED_NULL_PARAMETER);
+        return -1;
+    }
+    if (b->method == NULL || b->method->bgets == NULL) {
         ERR_raise(ERR_LIB_BIO, BIO_R_UNSUPPORTED_METHOD);
         return -2;
     }
 
     if (size < 0) {
         ERR_raise(ERR_LIB_BIO, BIO_R_INVALID_ARGUMENT);
-        return 0;
+        return -1;
     }
 
     if (b->callback != NULL || b->callback_ex != NULL) {
@@ -452,7 +447,7 @@ int BIO_gets(BIO *b, char *buf, int size)
 
     if (!b->init) {
         ERR_raise(ERR_LIB_BIO, BIO_R_UNINITIALIZED);
-        return -2;
+        return -1;
     }
 
     ret = b->method->bgets(b, buf, size);
@@ -511,10 +506,11 @@ long BIO_ctrl(BIO *b, int cmd, long larg, void *parg)
 {
     long ret;
 
-    if (b == NULL)
-        return 0;
-
-    if ((b->method == NULL) || (b->method->ctrl == NULL)) {
+    if (b == NULL) {
+        ERR_raise(ERR_LIB_BIO, ERR_R_PASSED_NULL_PARAMETER);
+        return -1;
+    }
+    if (b->method == NULL || b->method->ctrl == NULL) {
         ERR_raise(ERR_LIB_BIO, BIO_R_UNSUPPORTED_METHOD);
         return -2;
     }
@@ -538,11 +534,12 @@ long BIO_callback_ctrl(BIO *b, int cmd, BIO_info_cb *fp)
 {
     long ret;
 
-    if (b == NULL)
-        return 0;
-
-    if ((b->method == NULL) || (b->method->callback_ctrl == NULL)
-            || (cmd != BIO_CTRL_SET_CALLBACK)) {
+    if (b == NULL) {
+        ERR_raise(ERR_LIB_BIO, ERR_R_PASSED_NULL_PARAMETER);
+        return -2;
+    }
+    if (b->method == NULL || b->method->callback_ctrl == NULL
+            || cmd != BIO_CTRL_SET_CALLBACK) {
         ERR_raise(ERR_LIB_BIO, BIO_R_UNSUPPORTED_METHOD);
         return -2;
     }
@@ -601,8 +598,10 @@ BIO *BIO_pop(BIO *b)
 {
     BIO *ret;
 
-    if (b == NULL)
+    if (b == NULL) {
+        ERR_raise(ERR_LIB_BIO, ERR_R_PASSED_NULL_PARAMETER);
         return NULL;
+    }
     ret = b->next_bio;
 
     BIO_ctrl(b, BIO_CTRL_POP, 0, b);
@@ -649,8 +648,10 @@ BIO *BIO_find_type(BIO *bio, int type)
 {
     int mt, mask;
 
-    if (bio == NULL)
+    if (bio == NULL) {
+        ERR_raise(ERR_LIB_BIO, ERR_R_PASSED_NULL_PARAMETER);
         return NULL;
+    }
     mask = type & 0xff;
     do {
         if (bio->method != NULL) {
@@ -659,8 +660,9 @@ BIO *BIO_find_type(BIO *bio, int type)
             if (!mask) {
                 if (mt & type)
                     return bio;
-            } else if (mt == type)
+            } else if (mt == type) {
                 return bio;
+            }
         }
         bio = bio->next_bio;
     } while (bio != NULL);
@@ -669,8 +671,10 @@ BIO *BIO_find_type(BIO *bio, int type)
 
 BIO *BIO_next(BIO *b)
 {
-    if (b == NULL)
+    if (b == NULL) {
+        ERR_raise(ERR_LIB_BIO, ERR_R_PASSED_NULL_PARAMETER);
         return NULL;
+    }
     return b->next_bio;
 }
 
@@ -897,7 +901,8 @@ int BIO_do_connect_retry(BIO *bio, int timeout, int nap_milliseconds)
         } else {
             rv = -1;
             if (err == 0) /* missing error queue entry */
-                ERR_raise(ERR_LIB_BIO, BIO_R_CONNECT_ERROR); /* workaround: general error */
+                /* workaround: general error */
+                ERR_raise(ERR_LIB_BIO, BIO_R_CONNECT_ERROR);
         }
     }
 

@@ -248,11 +248,9 @@ STACK_OF(X509)
     chain = X509_STORE_CTX_get0_chain(csc);
 
     /* result list to store the up_ref'ed not self-signed certificates */
-    if ((result = sk_X509_new_null()) == NULL)
-        goto err;
-    if (!X509_add_certs(result, chain,
-                        X509_ADD_FLAG_UP_REF | X509_ADD_FLAG_NO_DUP
-                        | X509_ADD_FLAG_NO_SS)) {
+    if (!ossl_x509_add_certs_new(&result, chain,
+                                 X509_ADD_FLAG_UP_REF | X509_ADD_FLAG_NO_DUP
+                                 | X509_ADD_FLAG_NO_SS)) {
         sk_X509_free(result);
         result = NULL;
     }

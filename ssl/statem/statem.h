@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -132,8 +132,10 @@ __owur int ossl_statem_accept(SSL *s);
 __owur int ossl_statem_connect(SSL *s);
 void ossl_statem_clear(SSL *s);
 void ossl_statem_set_renegotiate(SSL *s);
+void ossl_statem_send_fatal(SSL *s, int al);
 void ossl_statem_fatal(SSL *s, int al, int reason, const char *fmt, ...);
 # define SSL_AD_NO_ALERT    -1
+# define SSLfatal_alert(s, al) ossl_statem_send_fatal((s), (al))
 # define SSLfatal(s, al, r) SSLfatal_data((s), (al), (r), NULL)
 # define SSLfatal_data                                          \
     (ERR_new(),                                                 \

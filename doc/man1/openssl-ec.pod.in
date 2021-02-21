@@ -15,7 +15,7 @@ B<openssl> B<ec>
 [B<-help>]
 [B<-inform> B<DER>|B<PEM>|B<P12>|B<ENGINE>]
 [B<-outform> B<DER>|B<PEM>]
-[B<-in> I<filename>]
+[B<-in> I<filename>|I<uri>]
 [B<-passin> I<arg>]
 [B<-out> I<filename>]
 [B<-passout> I<arg>]
@@ -55,19 +55,19 @@ Print out a usage message.
 
 The key input format; the default is B<PEM>.
 The only value with effect is B<ENGINE>; all others have become obsolete.
-See L<openssl(1)/Format Options> for details.
+See L<openssl-format-options(1)> for details.
 
 =item B<-outform> B<DER>|B<PEM>
 
 The key output formats; the default is B<PEM>.
-See L<openssl(1)/Format Options> for details.
+See L<openssl-format-options(1)> for details.
 
 Private keys are an SEC1 private key or PKCS#8 format.
 Public keys are a B<SubjectPublicKeyInfo> as specified in IETF RFC 3280.
 
-=item B<-in> I<filename>
+=item B<-in> I<filename>|I<uri>
 
-This specifies the input filename to read a key from or standard input if this
+This specifies the input to read a key from or standard input if this
 option is not specified. If the key is encrypted a pass phrase will be
 prompted for.
 
@@ -82,7 +82,7 @@ filename.
 
 The password source for the input and output file.
 For more information about the format of B<arg>
-see L<openssl(1)/Pass Phrase Options>.
+see L<openssl-passphrase-options(1)>.
 
 =item B<-des>|B<-des3>|B<-idea>
 
@@ -189,9 +189,12 @@ L<openssl-rsa(1)>
 
 The B<-engine> option was deprecated in OpenSSL 3.0.
 
+The B<-conv_form> and B<-no_public> options are no longer supported
+with keys loaded from an engine in OpenSSL 3.0.
+
 =head1 COPYRIGHT
 
-Copyright 2003-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2003-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

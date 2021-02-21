@@ -40,7 +40,7 @@ Print out a usage message.
 =item B<-inform> B<DER>|B<PEM>, B<-outform> B<DER>|B<PEM>|B<NSS>
 
 The input and output formats; the default is PEM.
-See L<openssl(1)/Format Options> for details.
+See L<openssl-format-options(1)> for details.
 
 For B<NSS> output, the session ID and master key are reported in NSS "keylog"
 format.

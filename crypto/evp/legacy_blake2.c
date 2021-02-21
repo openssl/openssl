@@ -11,11 +11,11 @@
 #include "prov/blake2.h"        /* diverse BLAKE2 macros */
 #include "legacy_meth.h"
 
-#define blake2b_init blake2b512_init
-#define blake2s_init blake2s256_init
+#define ossl_blake2b_init ossl_blake2b512_init
+#define ossl_blake2s_init ossl_blake2s256_init
 
-IMPLEMENT_LEGACY_EVP_MD_METH_LC(blake2s_int, blake2s)
-IMPLEMENT_LEGACY_EVP_MD_METH_LC(blake2b_int, blake2b)
+IMPLEMENT_LEGACY_EVP_MD_METH_LC(blake2s_int, ossl_blake2s)
+IMPLEMENT_LEGACY_EVP_MD_METH_LC(blake2b_int, ossl_blake2b)
 
 static const EVP_MD blake2b_md = {
     NID_blake2b512,

@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,8 +7,11 @@
  * https://www.openssl.org/source/license.html
  */
 
-/* We need to use some deprecated APIs to support the legacy bits */
-#define OPENSSL_SUPPRESS_DEPRECATED
+/*
+ * Low level APIs are deprecated for public use, but still ok for
+ * internal use.
+ */
+#include "internal/deprecated.h"
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
@@ -16,9 +19,7 @@
 #include <openssl/encoder.h>
 #include <openssl/buffer.h>
 #include <openssl/x509.h>
-#ifndef OPENSSL_NO_DEPRECATED_3_0
-# include <openssl/rsa.h>        /* For i2d_RSAPublicKey */
-#endif
+#include <openssl/rsa.h>         /* For i2d_RSAPublicKey */
 #include <openssl/dsa.h>         /* For i2d_DSAPublicKey */
 #include <openssl/ec.h>          /* For i2o_ECPublicKey */
 #include "crypto/asn1.h"
@@ -41,9 +42,8 @@ static int i2d_provided(const EVP_PKEY *a, int selection,
          */
         size_t len = INT_MAX;
 
-        ctx = OSSL_ENCODER_CTX_new_by_EVP_PKEY(a, selection, "DER",
-                                               *output_structures,
-                                               NULL, NULL);
+        ctx = OSSL_ENCODER_CTX_new_for_pkey(a, selection, "DER",
+                                            *output_structures, NULL);
         if (ctx == NULL)
             return -1;
         if (OSSL_ENCODER_to_data(ctx, pp, &len))
@@ -107,12 +107,8 @@ int i2d_PublicKey(const EVP_PKEY *a, unsigned char **pp)
         return i2d_provided(a, EVP_PKEY_PUBLIC_KEY, output_structures, pp);
     }
     switch (EVP_PKEY_id(a)) {
-#ifndef OPENSSL_NO_DEPRECATED_3_0
-# ifndef OPENSSL_NO_RSA
     case EVP_PKEY_RSA:
         return i2d_RSAPublicKey(EVP_PKEY_get0_RSA(a), pp);
-# endif
-#endif
 #ifndef OPENSSL_NO_DSA
     case EVP_PKEY_DSA:
         return i2d_DSAPublicKey(EVP_PKEY_get0_DSA(a), pp);

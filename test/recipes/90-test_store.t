@@ -9,7 +9,8 @@
 use File::Spec::Functions;
 use File::Copy;
 use MIME::Base64;
-use OpenSSL::Test qw(:DEFAULT srctop_file srctop_dir bldtop_file data_file);
+use OpenSSL::Test qw(:DEFAULT srctop_file srctop_dir bldtop_file bldtop_dir
+                     data_file);
 use OpenSSL::Test::Utils;
 
 my $test_name = "test_store";
@@ -18,7 +19,7 @@ setup($test_name);
 my $mingw = config('target') =~ m|^mingw|;
 
 my $use_md5 = !disabled("md5");
-my $use_des = !disabled("des"); # also affects 3des and pkcs12 app
+my $use_des = !(disabled("des") || disabled("legacy")); # also affects 3des and pkcs12 app
 my $use_dsa = !disabled("dsa");
 my $use_ecc = !disabled("ec");
 
@@ -31,6 +32,9 @@ my @src_files =
       "test/testrsapub.pem",
       "test/testcrl.pem",
       "apps/server.pem" );
+my @src_rsa_files =
+    ( "test/testrsa.pem",
+      "test/testrsapub.pem" );
 my @generated_files =
     (
      ### generated from the source files
@@ -93,7 +97,9 @@ my @noexist_file_files =
 # @methods is a collection of extra 'openssl storeutl' arguments used to
 # try the different methods.
 my @methods;
-push @methods, [qw(-provider default -provider legacy)];
+my @prov_method = qw(-provider default);
+push @prov_method, qw(-provider legacy) unless disabled('legacy');
+push @methods, [ @prov_method ];
 push @methods, [qw(-engine loader_attic)]
     unless disabled('dynamic-engine') || disabled('deprecated-3.0');
 
@@ -106,11 +112,46 @@ my $n = scalar @methods
         + 3
         + 11 );
 
+my $do_test_ossltest_store =
+    !(disabled("engine") || disabled("dynamic-engine"));
+
+if ($do_test_ossltest_store) {
+    # test loading with apps 'org.openssl.engine:' loader, using the
+    # ossltest engine.
+    $n += 4 * scalar @src_rsa_files;
+}
+
 plan skip_all => "No plan" if $n == 0;
 
 plan tests => $n;
 
 indir "store_$$" => sub {
+    if ($do_test_ossltest_store) {
+        # ossltest loads PEM files, with names prefixed with 'ot:'.
+        # This prefix ensures that the files are, in fact, loaded through
+        # that engine and not mistakenly going through the 'file:' loader.
+
+        my $engine_scheme = 'org.openssl.engine:';
+        $ENV{OPENSSL_ENGINES} = bldtop_dir("engines");
+
+        foreach (@src_rsa_files) {
+            my $file = srctop_file($_);
+            my $file_abs = to_abs_file($file);
+            my @pubin = $_ =~ m|pub\.pem$| ? ("-pubin") : ();
+
+            ok(run(app(["openssl", "rsa", "-text", "-noout", @pubin,
+                        "-engine", "ossltest", "-inform", "engine",
+                        "-in", "ot:$file"])));
+            ok(run(app(["openssl", "rsa", "-text", "-noout", @pubin,
+                        "-engine", "ossltest", "-inform", "engine",
+                        "-in", "ot:$file_abs"])));
+            ok(run(app(["openssl", "rsa", "-text", "-noout", @pubin,
+                        "-in", "${engine_scheme}ossltest:ot:$file"])));
+            ok(run(app(["openssl", "rsa", "-text", "-noout", @pubin,
+                        "-in", "${engine_scheme}ossltest:ot:$file_abs"])));
+        }
+    }
+
  SKIP:
     {
         init() or die "init failed";
@@ -252,7 +293,9 @@ indir "store_$$" => sub {
 sub init {
     my $cnf = srctop_file('test', 'ca-and-certs.cnf');
     my $cakey = srctop_file('test', 'certs', 'ca-key.pem');
-    my @std_args = qw(-provider default -provider legacy);
+    my @std_args = qw(-provider default);
+    push @std_args, qw(-provider legacy)
+        unless disabled('legacy');
     return (
             # rsa-key-pkcs1.pem
             run(app(["openssl", "pkey", @std_args,

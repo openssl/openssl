@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -14,7 +14,6 @@
 #include "cms_local.h"
 #include "crypto/evp.h"
 
-#ifndef OPENSSL_NO_EC
 static EVP_PKEY *pkey_type2param(int ptype, const void *pval,
                                  OSSL_LIB_CTX *libctx, const char *propq)
 {
@@ -28,8 +27,8 @@ static EVP_PKEY *pkey_type2param(int ptype, const void *pval,
         OSSL_DECODER_CTX *ctx = NULL;
         int selection = OSSL_KEYMGMT_SELECT_ALL_PARAMETERS;
 
-        ctx = OSSL_DECODER_CTX_new_by_EVP_PKEY(&pkey, "DER", NULL, "EC",
-                                               selection, libctx, propq);
+        ctx = OSSL_DECODER_CTX_new_for_pkey(&pkey, "DER", NULL, "EC",
+                                            selection, libctx, propq);
         if (ctx == NULL)
             goto err;
 
@@ -384,7 +383,6 @@ int cms_ecdh_envelope(CMS_RecipientInfo *ri, int decrypt)
     ERR_raise(ERR_LIB_CMS, CMS_R_NOT_SUPPORTED_FOR_THIS_KEY_TYPE);
     return 0;
 }
-#endif
 
 /* ECDSA and DSA implementation is the same */
 int cms_ecdsa_dsa_sign(CMS_SignerInfo *si, int verify)

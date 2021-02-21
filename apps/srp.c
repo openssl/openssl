@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2004-2021 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2004, EdelKey Project. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -10,6 +10,9 @@
  * Originally written by Christophe Renou and Peter Sylvester,
  * for the EdelKey project.
  */
+
+/* SRP is deprecated, so we're going to have to use some deprecated APIs */
+#define OPENSSL_SUPPRESS_DEPRECATED
 
 #include <openssl/opensslconf.h>
 
@@ -301,9 +304,12 @@ int srp_main(int argc, char **argv)
             break;
         }
     }
+
+    /* Optional parameters are usernames. */
     argc = opt_num_rest();
     argv = opt_rest();
 
+    app_RAND_load();
     if (srpvfile != NULL && configfile != NULL) {
         BIO_printf(bio_err,
                    "-srpvfile and -configfile cannot be specified together.\n");
@@ -336,10 +342,7 @@ int srp_main(int argc, char **argv)
         if (configfile == NULL)
             configfile = default_config_file;
 
-        if (verbose)
-            BIO_printf(bio_err, "Using configuration from %s\n",
-                       configfile);
-        conf = app_load_config(configfile);
+        conf = app_load_config_verbose(configfile, verbose);
         if (conf == NULL)
             goto end;
         if (configfile != default_config_file && !app_load_modules(conf))

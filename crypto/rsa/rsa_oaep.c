@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -45,7 +45,7 @@ int RSA_padding_add_PKCS1_OAEP(unsigned char *to, int tlen,
 }
 
 /*
- * Perform ihe padding as per NIST 800-56B 7.2.2.3
+ * Perform the padding as per NIST 800-56B 7.2.2.3
  *      from (K) is the key material.
  *      param (A) is the additional input.
  * Step numbers are included here but not in the constant time inverse below

@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -237,7 +237,6 @@ static int get_cert_by_subject_ex(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
     if (type == X509_LU_X509) {
         data.st_x509.cert_info.subject = (X509_NAME *)name; /* won't modify it */
         stmp.data.x509 = &data.st_x509;
-        postfix = "";
     } else if (type == X509_LU_CRL) {
         data.crl.crl.issuer = (X509_NAME *)name; /* won't modify it */
         stmp.data.crl = &data.crl;
@@ -253,8 +252,9 @@ static int get_cert_by_subject_ex(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
     }
 
     ctx = (BY_DIR *)xl->method_data;
-
-    h = X509_NAME_hash(name);
+    h = X509_NAME_hash_ex(name, libctx, propq, &i);
+    if (i == 0)
+        goto finish;
     for (i = 0; i < sk_BY_DIR_ENTRY_num(ctx->dirs); i++) {
         BY_DIR_ENTRY *ent;
         int idx;

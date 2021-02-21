@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -383,7 +383,8 @@ int tls13_setup_key_block(SSL *s)
     s->session->cipher = s->s3.tmp.new_cipher;
     if (!ssl_cipher_get_evp(s->ctx, s->session, &c, &hash, NULL, NULL, NULL,
                             0)) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_CIPHER_OR_HASH_UNAVAILABLE);
+        /* Error is already recorded */
+        SSLfatal_alert(s, SSL_AD_INTERNAL_ERROR);
         return 0;
     }
 
@@ -595,8 +596,8 @@ int tls13_change_cipher_state(SSL *s, int which)
              * it again
              */
             if (!ssl_cipher_get_evp_cipher(s->ctx, sslcipher, &cipher)) {
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR,
-                         SSL_R_ALGORITHM_FETCH_FAILED);
+                /* Error is already recorded */
+                SSLfatal_alert(s, SSL_AD_INTERNAL_ERROR);
                 EVP_MD_CTX_free(mdctx);
                 goto err;
             }

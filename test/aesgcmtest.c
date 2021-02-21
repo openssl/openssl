@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -58,7 +58,7 @@ static int do_encrypt(unsigned char *iv_gen, unsigned char *ct, int *ct_len,
           && TEST_true(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, 16,
                                            tag) > 0)
           && TEST_true(iv_gen == NULL
-                  || EVP_CIPHER_CTX_get_iv(ctx, iv_gen, 12));
+                  || EVP_CIPHER_CTX_get_original_iv(ctx, iv_gen, 12));
     EVP_CIPHER_CTX_free(ctx);
     return ret;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -25,12 +25,8 @@
 
 void evp_md_ctx_clear_digest(EVP_MD_CTX *ctx, int force)
 {
-    EVP_MD_free(ctx->fetched_digest);
-    ctx->fetched_digest = NULL;
-    ctx->reqdigest = NULL;
-
     if (ctx->provctx != NULL) {
-        if (ctx->digest->freectx != NULL)
+        if (ctx->digest != NULL && ctx->digest->freectx != NULL)
             ctx->digest->freectx(ctx->provctx);
         ctx->provctx = NULL;
         EVP_MD_CTX_set_flags(ctx, EVP_MD_CTX_FLAG_CLEANED);
@@ -55,6 +51,11 @@ void evp_md_ctx_clear_digest(EVP_MD_CTX *ctx, int force)
     ENGINE_finish(ctx->engine);
     ctx->engine = NULL;
 #endif
+
+    /* Non legacy code, this has to be later than the ctx->digest cleaning */
+    EVP_MD_free(ctx->fetched_digest);
+    ctx->fetched_digest = NULL;
+    ctx->reqdigest = NULL;
 }
 
 /* This call frees resources associated with the context */
@@ -94,12 +95,8 @@ EVP_MD_CTX *evp_md_ctx_new_ex(EVP_PKEY *pkey, const ASN1_OCTET_STRING *id,
         goto err;
     }
 
-# ifndef OPENSSL_NO_EC
-    if (id != NULL && EVP_PKEY_CTX_set1_id(pctx, id->data, id->length) <= 0) {
-        ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
+    if (id != NULL && EVP_PKEY_CTX_set1_id(pctx, id->data, id->length) <= 0)
         goto err;
-    }
-# endif
 
     EVP_MD_CTX_set_pkey_ctx(ctx, pctx);
     return ctx;
@@ -170,8 +167,15 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
         ctx->provctx = NULL;
     }
 
-    if (type != NULL)
+    if (type != NULL) {
         ctx->reqdigest = type;
+    } else {
+        if (ctx->digest == NULL) {
+            ERR_raise(ERR_LIB_EVP, EVP_R_NO_DIGEST_SET);
+            return 0;
+        }
+        type = ctx->digest;
+    }
 
     /* TODO(3.0): Legacy work around code below. Remove this */
 #if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODULE)
@@ -231,8 +235,10 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
 #else
         EVP_MD *provmd = EVP_MD_fetch(NULL, OBJ_nid2sn(type->type), "");
 
-        if (provmd == NULL)
+        if (provmd == NULL) {
+            ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
             return 0;
+        }
         type = provmd;
         EVP_MD_free(ctx->fetched_digest);
         ctx->fetched_digest = provmd;
@@ -243,6 +249,14 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
         if (ctx->digest->freectx != NULL)
             ctx->digest->freectx(ctx->provctx);
         ctx->provctx = NULL;
+    }
+    if (type->prov != NULL && ctx->fetched_digest != type) {
+        if (!EVP_MD_up_ref((EVP_MD *)type)) {
+            ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
+            return 0;
+        }
+        EVP_MD_free(ctx->fetched_digest);
+        ctx->fetched_digest = (EVP_MD *)type;
     }
     ctx->digest = type;
     if (ctx->provctx == NULL) {
@@ -292,12 +306,6 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
             ctx->engine = impl;
         } else
             ctx->engine = NULL;
-    } else {
-        if (!ctx->digest) {
-            ERR_raise(ERR_LIB_EVP, EVP_R_NO_DIGEST_SET);
-            return 0;
-        }
-        type = ctx->digest;
     }
 #endif
     if (ctx->digest != type) {
@@ -455,7 +463,7 @@ int EVP_DigestFinalXOF(EVP_MD_CTX *ctx, unsigned char *md, size_t size)
 
     if (EVP_MD_CTX_set_params(ctx, params) > 0)
         ret = ctx->digest->dfinal(ctx->provctx, md, &size, size);
-    EVP_MD_CTX_reset(ctx);
+
     return ret;
 
 legacy:
@@ -830,6 +838,33 @@ static void set_legacy_nid(const char *name, void *vlegacy_nid)
 }
 #endif
 
+static int evp_md_cache_constants(EVP_MD *md)
+{
+    int ok, xof = 0, algid_absent = 0;
+    size_t blksz = 0;
+    size_t mdsize = 0;
+    OSSL_PARAM params[5];
+
+    params[0] = OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_BLOCK_SIZE, &blksz);
+    params[1] = OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_SIZE, &mdsize);
+    params[2] = OSSL_PARAM_construct_int(OSSL_DIGEST_PARAM_XOF, &xof);
+    params[3] = OSSL_PARAM_construct_int(OSSL_DIGEST_PARAM_ALGID_ABSENT,
+                                         &algid_absent);
+    params[4] = OSSL_PARAM_construct_end();
+    ok = evp_do_md_getparams(md, params);
+    if (mdsize > INT_MAX || blksz > INT_MAX)
+        ok = 0;
+    if (ok) {
+        md->block_size = (int)blksz;
+        md->md_size = (int)mdsize;
+        if (xof)
+            md->flags |= EVP_MD_FLAG_XOF;
+        if (algid_absent)
+            md->flags |= EVP_MD_FLAG_DIGALGID_ABSENT;
+    }
+    return ok;
+}
+
 static void *evp_md_from_dispatch(int name_id,
                                   const OSSL_DISPATCH *fns,
                                   OSSL_PROVIDER *prov)
@@ -940,6 +975,12 @@ static void *evp_md_from_dispatch(int name_id,
     md->prov = prov;
     if (prov != NULL)
         ossl_provider_up_ref(prov);
+
+    if (!evp_md_cache_constants(md)) {
+        EVP_MD_free(md);
+        ERR_raise(ERR_LIB_EVP, EVP_R_CACHE_CONSTANTS_FAILED);
+        md = NULL;
+    }
 
     return md;
 }

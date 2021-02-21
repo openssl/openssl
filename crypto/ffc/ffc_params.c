@@ -269,18 +269,14 @@ int ossl_ffc_params_todata(const FFC_PARAMS *ffc, OSSL_PARAM_BLD *bld,
                                               ffc->seed, ffc->seedlen))
         return 0;
     if (ffc->nid != NID_undef) {
-#ifndef OPENSSL_NO_DH
-        const char *name = ossl_ffc_named_group_from_uid(ffc->nid);
+        const DH_NAMED_GROUP *group = ossl_ffc_uid_to_dh_named_group(ffc->nid);
+        const char *name = ossl_ffc_named_group_get_name(group);
 
         if (name == NULL
             || !ossl_param_build_set_utf8_string(bld, params,
                                                  OSSL_PKEY_PARAM_GROUP_NAME,
                                                  name))
             return 0;
-#else
-        /* How could this be? We should not have a nid in a no-dh build. */
-        return 0;
-#endif
     }
     if (!ossl_param_build_set_utf8_string(bld, params,
                                           OSSL_PKEY_PARAM_FFC_VALIDATE_TYPE,

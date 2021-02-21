@@ -1,5 +1,5 @@
 # -*- mode: perl; -*-
-# Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2021 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -34,7 +34,7 @@ our @tests_ec = (
         test   => { "ExpectedResult" => "Success" },
     },
     {
-        # The Ed488 signature algorithm will not be enabled.
+        # The Ed448 signature algorithm will not be enabled.
         # Because of the config order, the certificate is first loaded, and
         # then the security level is chaged. If you try this with s_server
         # the order will be reversed and it will instead fail to load the key.
@@ -47,7 +47,7 @@ our @tests_ec = (
         test   => { "ExpectedResult" => "ServerFail" },
     },
     {
-        # The client will not sent the Ed488 signature algorithm, so the server
+        # The client will not sent the Ed448 signature algorithm, so the server
         # doesn't have a useable signature algorithm for the certificate.
         name => "SECLEVEL 5 client with ED448 key",
         server => { "CipherString" => "DEFAULT:\@SECLEVEL=4",

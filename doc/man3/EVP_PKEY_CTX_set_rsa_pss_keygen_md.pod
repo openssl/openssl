@@ -3,6 +3,7 @@
 =head1 NAME
 
 EVP_PKEY_CTX_set_rsa_pss_keygen_md,
+EVP_PKEY_CTX_set_rsa_pss_keygen_md_name,
 EVP_PKEY_CTX_set_rsa_pss_keygen_mgf1_md,
 EVP_PKEY_CTX_set_rsa_pss_keygen_mgf1_md_name,
 EVP_PKEY_CTX_set_rsa_pss_keygen_saltlen
@@ -14,6 +15,9 @@ EVP_PKEY_CTX_set_rsa_pss_keygen_saltlen
 
  int EVP_PKEY_CTX_set_rsa_pss_keygen_md(EVP_PKEY_CTX *pctx,
                                         const EVP_MD *md);
+ int EVP_PKEY_CTX_set_rsa_pss_keygen_md_name(EVP_PKEY_CTX *ctx,
+                                             const char *mdname,
+                                             const char *mdprops);
  int EVP_PKEY_CTX_set_rsa_pss_keygen_mgf1_md(EVP_PKEY_CTX *pctx,
                                              const EVP_MD *md);
  int EVP_PKEY_CTX_set_rsa_pss_keygen_mgf1_md_name(EVP_PKEY_CTX *pctx,
@@ -59,6 +63,8 @@ when (for example) a certificate request is signed.
 
 EVP_PKEY_CTX_set_rsa_pss_keygen_md() restricts the digest algorithm the
 generated key can use to I<md>.
+EVP_PKEY_CTX_set_rsa_pss_keygen_md_name() does the same thing, but
+passes the algorithm by name rather than by B<EVP_MD>.
 
 EVP_PKEY_CTX_set_rsa_pss_keygen_mgf1_md() restricts the MGF1 algorithm the
 generated key can use to I<md>.
@@ -89,7 +95,7 @@ L<EVP_PKEY_derive(3)>
 
 =head1 COPYRIGHT
 
-Copyright 2017-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2017-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

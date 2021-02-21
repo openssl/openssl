@@ -1,7 +1,7 @@
 /*
  * {- join("\n * ", @autowarntext) -}
  *
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  * Copyright 2005 Nokia. All rights reserved.
  *
@@ -194,14 +194,9 @@ extern "C" {
  * DEPRECATED IN 3.0.0, in favor of OSSL_default_ciphersuites()
  * Update both macro and function simultaneously
  */
-#  if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
-#   define TLS_DEFAULT_CIPHERSUITES "TLS_AES_256_GCM_SHA384:" \
-                                    "TLS_CHACHA20_POLY1305_SHA256:" \
-                                    "TLS_AES_128_GCM_SHA256"
-#  else
-#   define TLS_DEFAULT_CIPHERSUITES "TLS_AES_256_GCM_SHA384:" \
+#  define TLS_DEFAULT_CIPHERSUITES "TLS_AES_256_GCM_SHA384:" \
+                                   "TLS_CHACHA20_POLY1305_SHA256:" \
                                    "TLS_AES_128_GCM_SHA256"
-#  endif
 # endif
 /*
  * As of OpenSSL 1.0.0, ssl_create_cipher_list() in ssl/ssl_ciph.c always
@@ -671,12 +666,13 @@ void SSL_set_msg_callback(SSL *ssl,
 # ifndef OPENSSL_NO_SRP
 
 /* see tls_srp.c */
-__owur int SSL_SRP_CTX_init(SSL *s);
-__owur int SSL_CTX_SRP_CTX_init(SSL_CTX *ctx);
-int SSL_SRP_CTX_free(SSL *ctx);
-int SSL_CTX_SRP_CTX_free(SSL_CTX *ctx);
-__owur int SSL_srp_server_param_with_username(SSL *s, int *ad);
-__owur int SRP_Calc_A_param(SSL *s);
+OSSL_DEPRECATEDIN_3_0 __owur int SSL_SRP_CTX_init(SSL *s);
+OSSL_DEPRECATEDIN_3_0 __owur int SSL_CTX_SRP_CTX_init(SSL_CTX *ctx);
+OSSL_DEPRECATEDIN_3_0 int SSL_SRP_CTX_free(SSL *ctx);
+OSSL_DEPRECATEDIN_3_0 int SSL_CTX_SRP_CTX_free(SSL_CTX *ctx);
+OSSL_DEPRECATEDIN_3_0 __owur int SSL_srp_server_param_with_username(SSL *s,
+                                                                    int *ad);
+OSSL_DEPRECATEDIN_3_0 __owur int SRP_Calc_A_param(SSL *s);
 
 # endif
 
@@ -927,12 +923,14 @@ __owur int SSL_extension_supported(unsigned int ext_type);
 # define SSL_ASYNC_PAUSED       5
 # define SSL_ASYNC_NO_JOBS      6
 # define SSL_CLIENT_HELLO_CB    7
+# define SSL_RETRY_VERIFY       8
 
 /* These will only be used when doing non-blocking IO */
 # define SSL_want_nothing(s)         (SSL_want(s) == SSL_NOTHING)
 # define SSL_want_read(s)            (SSL_want(s) == SSL_READING)
 # define SSL_want_write(s)           (SSL_want(s) == SSL_WRITING)
 # define SSL_want_x509_lookup(s)     (SSL_want(s) == SSL_X509_LOOKUP)
+# define SSL_want_retry_verify(s)    (SSL_want(s) == SSL_RETRY_VERIFY)
 # define SSL_want_async(s)           (SSL_want(s) == SSL_ASYNC_PAUSED)
 # define SSL_want_async_job(s)       (SSL_want(s) == SSL_ASYNC_NO_JOBS)
 # define SSL_want_client_hello_cb(s) (SSL_want(s) == SSL_CLIENT_HELLO_CB)
@@ -1002,7 +1000,9 @@ extern "C" {
 # define SSL_CTX_get_app_data(ctx)       (SSL_CTX_get_ex_data(ctx,0))
 # define SSL_CTX_set_app_data(ctx,arg)   (SSL_CTX_set_ex_data(ctx,0, \
                                                               (char *)(arg)))
-DEPRECATEDIN_1_1_0(void SSL_set_debug(SSL *s, int debug))
+# ifndef OPENSSL_NO_DEPRECATED_1_1_0
+OSSL_DEPRECATEDIN_1_1_0 void SSL_set_debug(SSL *s, int debug);
+# endif
 
 /* TLSv1.3 KeyUpdate message types */
 /* -1 used so that this is an invalid value for the on-the-wire protocol */
@@ -1225,13 +1225,14 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 # define SSL_ERROR_WANT_ASYNC            9
 # define SSL_ERROR_WANT_ASYNC_JOB       10
 # define SSL_ERROR_WANT_CLIENT_HELLO_CB 11
+# define SSL_ERROR_WANT_RETRY_VERIFY    12
+
 # ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define SSL_CTRL_SET_TMP_DH                    3
-# endif
-# define SSL_CTRL_SET_TMP_ECDH                   4
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+#  define SSL_CTRL_SET_TMP_ECDH                  4
 #  define SSL_CTRL_SET_TMP_DH_CB                 6
 # endif
+
 # define SSL_CTRL_GET_CLIENT_CERT_REQUEST        9
 # define SSL_CTRL_GET_NUM_RENEGOTIATIONS         10
 # define SSL_CTRL_CLEAR_NUM_RENEGOTIATIONS       11
@@ -1499,6 +1500,8 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 # define SSL_get_max_proto_version(s) \
         SSL_ctrl(s, SSL_CTRL_GET_MAX_PROTO_VERSION, 0, NULL)
 
+const char *SSL_group_to_name(SSL *s, int id);
+
 /* Backwards compatibility, original 1.1.0 names */
 # define SSL_CTRL_GET_SERVER_TMP_KEY \
          SSL_CTRL_GET_PEER_TMP_KEY
@@ -1605,13 +1608,11 @@ __owur SSL_verify_cb SSL_get_verify_callback(const SSL *s);
 void SSL_set_verify(SSL *s, int mode, SSL_verify_cb callback);
 void SSL_set_verify_depth(SSL *s, int depth);
 void SSL_set_cert_cb(SSL *s, int (*cb) (SSL *ssl, void *arg), void *arg);
-# ifndef OPENSSL_NO_RSA
-#  ifndef OPENSSL_NO_DEPRECATED_3_0
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 OSSL_DEPRECATEDIN_3_0 __owur int SSL_use_RSAPrivateKey(SSL *ssl, RSA *rsa);
 OSSL_DEPRECATEDIN_3_0
 __owur int SSL_use_RSAPrivateKey_ASN1(SSL *ssl,
                                       const unsigned char *d, long len);
-#  endif
 # endif
 __owur int SSL_use_PrivateKey(SSL *ssl, EVP_PKEY *pkey);
 __owur int SSL_use_PrivateKey_ASN1(int pk, SSL *ssl, const unsigned char *d,
@@ -1634,23 +1635,18 @@ __owur int SSL_CTX_use_serverinfo_ex(SSL_CTX *ctx, unsigned int version,
                                      size_t serverinfo_length);
 __owur int SSL_CTX_use_serverinfo_file(SSL_CTX *ctx, const char *file);
 
-#ifndef OPENSSL_NO_RSA
-# ifndef OPENSSL_NO_DEPRECATED_3_0
-OSSL_DEPRECATEDIN_3_0 __owur int SSL_use_RSAPrivateKey_file(SSL *ssl,
-                                                            const char *file,
-                                                            int type);
-# endif
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+OSSL_DEPRECATEDIN_3_0
+__owur int SSL_use_RSAPrivateKey_file(SSL *ssl, const char *file, int type);
 #endif
 
 __owur int SSL_use_PrivateKey_file(SSL *ssl, const char *file, int type);
 __owur int SSL_use_certificate_file(SSL *ssl, const char *file, int type);
 
-#ifndef OPENSSL_NO_RSA
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+#ifndef OPENSSL_NO_DEPRECATED_3_0
 OSSL_DEPRECATEDIN_3_0
 __owur int SSL_CTX_use_RSAPrivateKey_file(SSL_CTX *ctx, const char *file,
                                           int type);
-# endif
 #endif
 __owur int SSL_CTX_use_PrivateKey_file(SSL_CTX *ctx, const char *file,
                                        int type);
@@ -1760,14 +1756,12 @@ void SSL_CTX_set_cert_verify_callback(SSL_CTX *ctx,
                                       void *arg);
 void SSL_CTX_set_cert_cb(SSL_CTX *c, int (*cb) (SSL *ssl, void *arg),
                          void *arg);
-# ifndef OPENSSL_NO_RSA
-#  ifndef OPENSSL_NO_DEPRECATED_3_0
-OSSL_DEPRECATEDIN_3_0 __owur int SSL_CTX_use_RSAPrivateKey(SSL_CTX *ctx,
-                                                           RSA *rsa);
+# ifndef OPENSSL_NO_DEPRECATED_3_0
+OSSL_DEPRECATEDIN_3_0
+__owur int SSL_CTX_use_RSAPrivateKey(SSL_CTX *ctx, RSA *rsa);
 OSSL_DEPRECATEDIN_3_0
 __owur int SSL_CTX_use_RSAPrivateKey_ASN1(SSL_CTX *ctx, const unsigned char *d,
                                           long len);
-#  endif
 # endif
 __owur int SSL_CTX_use_PrivateKey(SSL_CTX *ctx, EVP_PKEY *pkey);
 __owur int SSL_CTX_use_PrivateKey_ASN1(int pk, SSL_CTX *ctx,
@@ -1815,10 +1809,10 @@ __owur int SSL_CTX_dane_mtype_set(SSL_CTX *ctx, const EVP_MD *md,
                                   uint8_t mtype, uint8_t ord);
 __owur int SSL_dane_enable(SSL *s, const char *basedomain);
 __owur int SSL_dane_tlsa_add(SSL *s, uint8_t usage, uint8_t selector,
-                             uint8_t mtype, unsigned const char *data, size_t dlen);
+                             uint8_t mtype, const unsigned char *data, size_t dlen);
 __owur int SSL_get0_dane_authority(SSL *s, X509 **mcert, EVP_PKEY **mspki);
 __owur int SSL_get0_dane_tlsa(SSL *s, uint8_t *usage, uint8_t *selector,
-                              uint8_t *mtype, unsigned const char **data,
+                              uint8_t *mtype, const unsigned char **data,
                               size_t *dlen);
 /*
  * Bridge opacity barrier between libcrypt and libssl, also needed to support
@@ -1840,27 +1834,32 @@ __owur X509_VERIFY_PARAM *SSL_CTX_get0_param(SSL_CTX *ctx);
 __owur X509_VERIFY_PARAM *SSL_get0_param(SSL *ssl);
 
 # ifndef OPENSSL_NO_SRP
-int SSL_CTX_set_srp_username(SSL_CTX *ctx, char *name);
-int SSL_CTX_set_srp_password(SSL_CTX *ctx, char *password);
-int SSL_CTX_set_srp_strength(SSL_CTX *ctx, int strength);
+OSSL_DEPRECATEDIN_3_0 int SSL_CTX_set_srp_username(SSL_CTX *ctx, char *name);
+OSSL_DEPRECATEDIN_3_0 int SSL_CTX_set_srp_password(SSL_CTX *ctx, char *password);
+OSSL_DEPRECATEDIN_3_0 int SSL_CTX_set_srp_strength(SSL_CTX *ctx, int strength);
+OSSL_DEPRECATEDIN_3_0
 int SSL_CTX_set_srp_client_pwd_callback(SSL_CTX *ctx,
                                         char *(*cb) (SSL *, void *));
+OSSL_DEPRECATEDIN_3_0
 int SSL_CTX_set_srp_verify_param_callback(SSL_CTX *ctx,
                                           int (*cb) (SSL *, void *));
+OSSL_DEPRECATEDIN_3_0
 int SSL_CTX_set_srp_username_callback(SSL_CTX *ctx,
                                       int (*cb) (SSL *, int *, void *));
-int SSL_CTX_set_srp_cb_arg(SSL_CTX *ctx, void *arg);
+OSSL_DEPRECATEDIN_3_0 int SSL_CTX_set_srp_cb_arg(SSL_CTX *ctx, void *arg);
 
+OSSL_DEPRECATEDIN_3_0
 int SSL_set_srp_server_param(SSL *s, const BIGNUM *N, const BIGNUM *g,
                              BIGNUM *sa, BIGNUM *v, char *info);
+OSSL_DEPRECATEDIN_3_0
 int SSL_set_srp_server_param_pw(SSL *s, const char *user, const char *pass,
                                 const char *grp);
 
-__owur BIGNUM *SSL_get_srp_g(SSL *s);
-__owur BIGNUM *SSL_get_srp_N(SSL *s);
+OSSL_DEPRECATEDIN_3_0 __owur BIGNUM *SSL_get_srp_g(SSL *s);
+OSSL_DEPRECATEDIN_3_0 __owur BIGNUM *SSL_get_srp_N(SSL *s);
 
-__owur char *SSL_get_srp_username(SSL *s);
-__owur char *SSL_get_srp_userinfo(SSL *s);
+OSSL_DEPRECATEDIN_3_0 __owur char *SSL_get_srp_username(SSL *s);
+OSSL_DEPRECATEDIN_3_0 __owur char *SSL_get_srp_userinfo(SSL *s);
 # endif
 
 /*
@@ -1938,12 +1937,17 @@ __owur int SSL_get_error(const SSL *s, int ret_code);
 __owur const char *SSL_get_version(const SSL *s);
 
 /* This sets the 'default' SSL version that SSL_new() will create */
-DEPRECATEDIN_3_0(__owur int SSL_CTX_set_ssl_version(SSL_CTX *ctx, const SSL_METHOD *meth))
+# ifndef OPENSSL_NO_DEPRECATED_3_0
+OSSL_DEPRECATEDIN_3_0
+__owur int SSL_CTX_set_ssl_version(SSL_CTX *ctx, const SSL_METHOD *meth);
+# endif
 
 # ifndef OPENSSL_NO_SSL3_METHOD
-DEPRECATEDIN_1_1_0(__owur const SSL_METHOD *SSLv3_method(void)) /* SSLv3 */
-DEPRECATEDIN_1_1_0(__owur const SSL_METHOD *SSLv3_server_method(void))
-DEPRECATEDIN_1_1_0(__owur const SSL_METHOD *SSLv3_client_method(void))
+#  ifndef OPENSSL_NO_DEPRECATED_1_1_0
+OSSL_DEPRECATEDIN_1_1_0 __owur const SSL_METHOD *SSLv3_method(void); /* SSLv3 */
+OSSL_DEPRECATEDIN_1_1_0 __owur const SSL_METHOD *SSLv3_server_method(void);
+OSSL_DEPRECATEDIN_1_1_0 __owur const SSL_METHOD *SSLv3_client_method(void);
+#  endif
 # endif
 
 #define SSLv23_method           TLS_method
@@ -1956,34 +1960,44 @@ __owur const SSL_METHOD *TLS_server_method(void);
 __owur const SSL_METHOD *TLS_client_method(void);
 
 # ifndef OPENSSL_NO_TLS1_METHOD
-DEPRECATEDIN_1_1_0(__owur const SSL_METHOD *TLSv1_method(void)) /* TLSv1.0 */
-DEPRECATEDIN_1_1_0(__owur const SSL_METHOD *TLSv1_server_method(void))
-DEPRECATEDIN_1_1_0(__owur const SSL_METHOD *TLSv1_client_method(void))
+#  ifndef OPENSSL_NO_DEPRECATED_1_1_0
+OSSL_DEPRECATEDIN_1_1_0 __owur const SSL_METHOD *TLSv1_method(void); /* TLSv1.0 */
+OSSL_DEPRECATEDIN_1_1_0 __owur const SSL_METHOD *TLSv1_server_method(void);
+OSSL_DEPRECATEDIN_1_1_0 __owur const SSL_METHOD *TLSv1_client_method(void);
+#  endif
 # endif
 
 # ifndef OPENSSL_NO_TLS1_1_METHOD
-DEPRECATEDIN_1_1_0(__owur const SSL_METHOD *TLSv1_1_method(void)) /* TLSv1.1 */
-DEPRECATEDIN_1_1_0(__owur const SSL_METHOD *TLSv1_1_server_method(void))
-DEPRECATEDIN_1_1_0(__owur const SSL_METHOD *TLSv1_1_client_method(void))
+#  ifndef OPENSSL_NO_DEPRECATED_1_1_0
+OSSL_DEPRECATEDIN_1_1_0 __owur const SSL_METHOD *TLSv1_1_method(void); /* TLSv1.1 */
+OSSL_DEPRECATEDIN_1_1_0 __owur const SSL_METHOD *TLSv1_1_server_method(void);
+OSSL_DEPRECATEDIN_1_1_0 __owur const SSL_METHOD *TLSv1_1_client_method(void);
+#  endif
 # endif
 
 # ifndef OPENSSL_NO_TLS1_2_METHOD
-DEPRECATEDIN_1_1_0(__owur const SSL_METHOD *TLSv1_2_method(void)) /* TLSv1.2 */
-DEPRECATEDIN_1_1_0(__owur const SSL_METHOD *TLSv1_2_server_method(void))
-DEPRECATEDIN_1_1_0(__owur const SSL_METHOD *TLSv1_2_client_method(void))
+#  ifndef OPENSSL_NO_DEPRECATED_1_1_0
+OSSL_DEPRECATEDIN_1_1_0 __owur const SSL_METHOD *TLSv1_2_method(void); /* TLSv1.2 */
+OSSL_DEPRECATEDIN_1_1_0 __owur const SSL_METHOD *TLSv1_2_server_method(void);
+OSSL_DEPRECATEDIN_1_1_0 __owur const SSL_METHOD *TLSv1_2_client_method(void);
+#  endif
 # endif
 
 # ifndef OPENSSL_NO_DTLS1_METHOD
-DEPRECATEDIN_1_1_0(__owur const SSL_METHOD *DTLSv1_method(void)) /* DTLSv1.0 */
-DEPRECATEDIN_1_1_0(__owur const SSL_METHOD *DTLSv1_server_method(void))
-DEPRECATEDIN_1_1_0(__owur const SSL_METHOD *DTLSv1_client_method(void))
+#  ifndef OPENSSL_NO_DEPRECATED_1_1_0
+OSSL_DEPRECATEDIN_1_1_0 __owur const SSL_METHOD *DTLSv1_method(void); /* DTLSv1.0 */
+OSSL_DEPRECATEDIN_1_1_0 __owur const SSL_METHOD *DTLSv1_server_method(void);
+OSSL_DEPRECATEDIN_1_1_0 __owur const SSL_METHOD *DTLSv1_client_method(void);
+#  endif
 # endif
 
 # ifndef OPENSSL_NO_DTLS1_2_METHOD
 /* DTLSv1.2 */
-DEPRECATEDIN_1_1_0(__owur const SSL_METHOD *DTLSv1_2_method(void))
-DEPRECATEDIN_1_1_0(__owur const SSL_METHOD *DTLSv1_2_server_method(void))
-DEPRECATEDIN_1_1_0(__owur const SSL_METHOD *DTLSv1_2_client_method(void))
+#  ifndef OPENSSL_NO_DEPRECATED_1_1_0
+OSSL_DEPRECATEDIN_1_1_0 __owur const SSL_METHOD *DTLSv1_2_method(void);
+OSSL_DEPRECATEDIN_1_1_0 __owur const SSL_METHOD *DTLSv1_2_server_method(void);
+OSSL_DEPRECATEDIN_1_1_0 __owur const SSL_METHOD *DTLSv1_2_client_method(void);
+#  endif
 # endif
 
 __owur const SSL_METHOD *DTLS_method(void); /* DTLS 1.0 and 1.2 */

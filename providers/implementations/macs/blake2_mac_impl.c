@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -10,10 +10,10 @@
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
 #include <openssl/params.h>
+#include <openssl/proverr.h>
 
 #include "prov/blake2.h"
 #include "internal/cryptlib.h"
-#include "prov/providercommonerr.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 
@@ -38,8 +38,6 @@ struct blake2_mac_data_st {
     BLAKE2_PARAM params;
     unsigned char key[BLAKE2_KEYBYTES];
 };
-
-static size_t blake2_mac_size(void *vmacctx);
 
 static void *blake2_mac_new(void *unused_provctx)
 {
@@ -80,6 +78,13 @@ static void blake2_mac_free(void *vmacctx)
         OPENSSL_cleanse(macctx->key, sizeof(macctx->key));
         OPENSSL_free(macctx);
     }
+}
+
+static size_t blake2_mac_size(void *vmacctx)
+{
+    struct blake2_mac_data_st *macctx = vmacctx;
+
+    return macctx->params.digest_length;
 }
 
 static int blake2_mac_init(void *vmacctx)
@@ -212,13 +217,6 @@ static int blake2_mac_set_ctx_params(void *vmacctx, const OSSL_PARAM params[])
         BLAKE2_PARAM_SET_SALT(&macctx->params, p->data, p->data_size);
     }
     return 1;
-}
-
-static size_t blake2_mac_size(void *vmacctx)
-{
-    struct blake2_mac_data_st *macctx = vmacctx;
-
-    return macctx->params.digest_length;
 }
 
 const OSSL_DISPATCH BLAKE2_FUNCTIONS[] = {

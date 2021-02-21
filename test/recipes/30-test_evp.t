@@ -40,7 +40,7 @@ push @configs, 'fips-and-base.cnf' unless $no_fips;
 my @files = qw(
                 evpciph_aes_ccm_cavs.txt
                 evpciph_aes_common.txt
-                evpciph_aes_cts1.txt
+                evpciph_aes_cts.txt
                 evpciph_aes_wrap.txt
                 evpciph_des3_common.txt
                 evpkdf_hkdf.txt
@@ -48,6 +48,7 @@ my @files = qw(
                 evpkdf_ss.txt
                 evpkdf_ssh.txt
                 evpkdf_tls12_prf.txt
+                evpkdf_x942.txt
                 evpkdf_x963.txt
                 evpmac_common.txt
                 evpmd_sha.txt
@@ -70,7 +71,6 @@ push @files, qw(
 # A list of tests that only run with the default provider
 # (i.e. The algorithms are not present in the fips provider)
 my @defltfiles = qw(
-                     evpciph_aes_cts23.txt
                      evpciph_aes_ocb.txt
                      evpciph_aes_siv.txt
                      evpciph_aria.txt 
@@ -89,7 +89,6 @@ my @defltfiles = qw(
                      evpkdf_krb5.txt
                      evpkdf_scrypt.txt
                      evpkdf_tls11_prf.txt
-                     evpkdf_x942.txt
                      evpmac_blake.txt
                      evpmac_poly1305.txt
                      evpmac_siphash.txt

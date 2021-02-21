@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -295,19 +295,15 @@ static void delete_ext(STACK_OF(X509_EXTENSION) *sk, X509_EXTENSION *dext)
     ASN1_OBJECT *obj;
 
     obj = X509_EXTENSION_get_object(dext);
-    while ((idx = X509v3_get_ext_by_OBJ(sk, obj, -1)) >= 0) {
-        X509_EXTENSION *tmpext = X509v3_get_ext(sk, idx);
-
-        X509v3_delete_ext(sk, idx);
-        X509_EXTENSION_free(tmpext);
-    }
+    while ((idx = X509v3_get_ext_by_OBJ(sk, obj, -1)) >= 0)
+        X509_EXTENSION_free(X509v3_delete_ext(sk, idx));
 }
 
 /*
  * This is the main function: add a bunch of extensions based on a config
- * file section to an extension STACK.
+ * file section to an extension STACK. Just check in case sk == NULL.
+ * Note that on error new elements may have been added to *sk if sk != NULL.
  */
-
 int X509V3_EXT_add_nconf_sk(CONF *conf, X509V3_CTX *ctx, const char *section,
                             STACK_OF(X509_EXTENSION) **sk)
 {
@@ -323,9 +319,9 @@ int X509V3_EXT_add_nconf_sk(CONF *conf, X509V3_CTX *ctx, const char *section,
         if ((ext = X509V3_EXT_nconf_int(conf, ctx, val->section,
                                         val->name, val->value)) == NULL)
             return 0;
-        if (ctx->flags == X509V3_CTX_REPLACE)
-            delete_ext(*sk, ext);
         if (sk != NULL) {
+            if (ctx->flags == X509V3_CTX_REPLACE)
+                delete_ext(*sk, ext);
             if (X509v3_add_ext(sk, ext, -1) == NULL) {
                 X509_EXTENSION_free(ext);
                 return 0;
@@ -337,45 +333,45 @@ int X509V3_EXT_add_nconf_sk(CONF *conf, X509V3_CTX *ctx, const char *section,
 }
 
 /*
- * Convenience functions to add extensions to a certificate, CRL and request
+ * Add extensions to a certificate. Just check in case cert == NULL.
+ * Note that on error new elements may remain added to cert if cert != NULL.
  */
-
 int X509V3_EXT_add_nconf(CONF *conf, X509V3_CTX *ctx, const char *section,
                          X509 *cert)
 {
     STACK_OF(X509_EXTENSION) **sk = NULL;
-    if (cert)
+    if (cert != NULL)
         sk = &cert->cert_info.extensions;
     return X509V3_EXT_add_nconf_sk(conf, ctx, section, sk);
 }
 
-/* Same as above but for a CRL */
-
+/*
+ * Add extensions to a CRL. Just check in case crl == NULL.
+ * Note that on error new elements may remain added to crl if crl != NULL.
+ */
 int X509V3_EXT_CRL_add_nconf(CONF *conf, X509V3_CTX *ctx, const char *section,
                              X509_CRL *crl)
 {
     STACK_OF(X509_EXTENSION) **sk = NULL;
-    if (crl)
+    if (crl != NULL)
         sk = &crl->crl.extensions;
     return X509V3_EXT_add_nconf_sk(conf, ctx, section, sk);
 }
 
-/* Add extensions to certificate request */
-
+/*
+ * Add extensions to certificate request. Just check in case req is NULL.
+ * Note that on error new elements may remain added to req if req != NULL.
+ */
 int X509V3_EXT_REQ_add_nconf(CONF *conf, X509V3_CTX *ctx, const char *section,
                              X509_REQ *req)
 {
-    STACK_OF(X509_EXTENSION) *extlist = NULL, **sk = NULL;
-    int i;
+    STACK_OF(X509_EXTENSION) *exts = NULL;
+    int ret = X509V3_EXT_add_nconf_sk(conf, ctx, section, &exts);
 
-    if (req)
-        sk = &extlist;
-    i = X509V3_EXT_add_nconf_sk(conf, ctx, section, sk);
-    if (!i || !sk)
-        return i;
-    i = X509_REQ_add_extensions(req, extlist);
-    sk_X509_EXTENSION_pop_free(extlist, X509_EXTENSION_free);
-    return i;
+    if (ret && req != NULL && exts != NULL)
+        ret = X509_REQ_add_extensions(req, exts);
+    sk_X509_EXTENSION_pop_free(exts, X509_EXTENSION_free);
+    return ret;
 }
 
 /* Config database functions */
@@ -437,6 +433,10 @@ static X509V3_CONF_METHOD nconf_method = {
 
 void X509V3_set_nconf(X509V3_CTX *ctx, CONF *conf)
 {
+    if (ctx == NULL) {
+        ERR_raise(ERR_LIB_X509V3, ERR_R_PASSED_NULL_PARAMETER);
+        return;
+    }
     ctx->db_meth = &nconf_method;
     ctx->db = conf;
 }
@@ -444,11 +444,33 @@ void X509V3_set_nconf(X509V3_CTX *ctx, CONF *conf)
 void X509V3_set_ctx(X509V3_CTX *ctx, X509 *issuer, X509 *subj, X509_REQ *req,
                     X509_CRL *crl, int flags)
 {
+    if (ctx == NULL) {
+        ERR_raise(ERR_LIB_X509V3, ERR_R_PASSED_NULL_PARAMETER);
+        return;
+    }
+    ctx->flags = flags;
     ctx->issuer_cert = issuer;
     ctx->subject_cert = subj;
-    ctx->crl = crl;
     ctx->subject_req = req;
-    ctx->flags = flags;
+    ctx->crl = crl;
+    ctx->db_meth = NULL;
+    ctx->db = NULL;
+    ctx->issuer_pkey = NULL;
+}
+
+/* For API backward compatibility, this is separate from X509V3_set_ctx() */
+int X509V3_set_issuer_pkey(X509V3_CTX *ctx, EVP_PKEY *pkey)
+{
+    if (ctx == NULL) {
+        ERR_raise(ERR_LIB_X509V3, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    if (ctx->subject_cert == NULL && pkey != NULL) {
+        ERR_raise(ERR_LIB_X509V3, ERR_R_PASSED_INVALID_ARGUMENT);
+        return 0;
+    }
+    ctx->issuer_pkey = pkey;
+    return 1;
 }
 
 /* Old conf compatibility functions */
@@ -489,6 +511,10 @@ static X509V3_CONF_METHOD conf_lhash_method = {
 
 void X509V3_set_conf_lhash(X509V3_CTX *ctx, LHASH_OF(CONF_VALUE) *lhash)
 {
+    if (ctx == NULL) {
+        ERR_raise(ERR_LIB_X509V3, ERR_R_PASSED_NULL_PARAMETER);
+        return;
+    }
     ctx->db_meth = &conf_lhash_method;
     ctx->db = lhash;
 }

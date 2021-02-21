@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -14,9 +14,9 @@
  */
 #include "internal/deprecated.h"
 
+#include <openssl/proverr.h>
 #include "cipher_aes_ocb.h"
 #include "prov/providercommon.h"
-#include "prov/providercommonerr.h"
 #include "prov/ciphercommon_aead.h"
 #include "prov/implementations.h"
 
@@ -162,7 +162,7 @@ static int aes_ocb_block_update_internal(PROV_AES_OCB_CTX *ctx,
     size_t outlint = 0;
 
     if (*bufsz != 0)
-        nextblocks = fillblock(buf, bufsz, AES_BLOCK_SIZE, &in, &inl);
+        nextblocks = ossl_cipher_fillblock(buf, bufsz, AES_BLOCK_SIZE, &in, &inl);
     else
         nextblocks = inl & ~(AES_BLOCK_SIZE-1);
 
@@ -177,7 +177,8 @@ static int aes_ocb_block_update_internal(PROV_AES_OCB_CTX *ctx,
         }
         *bufsz = 0;
         outlint = AES_BLOCK_SIZE;
-        out += AES_BLOCK_SIZE;
+        if (out != NULL)
+            out += AES_BLOCK_SIZE;
     }
     if (nextblocks > 0) {
         outlint += nextblocks;
@@ -192,7 +193,8 @@ static int aes_ocb_block_update_internal(PROV_AES_OCB_CTX *ctx,
         in += nextblocks;
         inl -= nextblocks;
     }
-    if (inl != 0 && !trailingdata(buf, bufsz, AES_BLOCK_SIZE, &in, &inl)) {
+    if (inl != 0
+        && !ossl_cipher_trailingdata(buf, bufsz, AES_BLOCK_SIZE, &in, &inl)) {
         /* PROVerr already called */
         return 0;
     }
@@ -431,7 +433,7 @@ static int aes_ocb_get_ctx_params(void *vctx, OSSL_PARAM params[])
             return 0;
         }
     }
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_IV_STATE);
+    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_UPDATED_IV);
     if (p != NULL) {
         if (ctx->base.ivlen > p->data_size) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_IV_LENGTH);
@@ -450,7 +452,7 @@ static int aes_ocb_get_ctx_params(void *vctx, OSSL_PARAM params[])
             return 0;
         }
         if (!ctx->base.enc || p->data_size != ctx->taglen) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_TAGLEN);
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_TAG_LENGTH);
             return 0;
         }
         memcpy(p->data, ctx->tag, ctx->taglen);
@@ -463,7 +465,7 @@ static const OSSL_PARAM cipher_ocb_known_gettable_ctx_params[] = {
     OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_IVLEN, NULL),
     OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_AEAD_TAGLEN, NULL),
     OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_IV, NULL, 0),
-    OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_IV_STATE, NULL, 0),
+    OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_UPDATED_IV, NULL, 0),
     OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG, NULL, 0),
     OSSL_PARAM_END
 };

@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2004-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -38,6 +38,7 @@
 
 #ifndef OSSL_INTERNAL_O_DIR_H
 # define OSSL_INTERNAL_O_DIR_H
+# pragma once
 
 typedef struct OPENSSL_dir_context_st OPENSSL_DIR_CTX;
 

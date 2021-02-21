@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -12,11 +12,11 @@
 #include <openssl/params.h>
 #include <openssl/fips_names.h>
 #include <openssl/rand.h> /* RAND_get0_public() */
+#include <openssl/proverr.h>
 #include "internal/cryptlib.h"
 #include "prov/implementations.h"
 #include "prov/provider_ctx.h"
 #include "prov/providercommon.h"
-#include "prov/providercommonerr.h"
 #include "prov/provider_util.h"
 #include "prov/seeding.h"
 #include "self_test.h"
@@ -117,25 +117,25 @@ static const OSSL_PARAM fips_param_types[] = {
 static OSSL_PARAM core_params[] =
 {
     OSSL_PARAM_utf8_ptr(OSSL_PROV_PARAM_CORE_MODULE_FILENAME,
-                        selftest_params.module_filename,
+                        &selftest_params.module_filename,
                         sizeof(selftest_params.module_filename)),
     OSSL_PARAM_utf8_ptr(OSSL_PROV_FIPS_PARAM_MODULE_MAC,
-                        selftest_params.module_checksum_data,
+                        &selftest_params.module_checksum_data,
                         sizeof(selftest_params.module_checksum_data)),
     OSSL_PARAM_utf8_ptr(OSSL_PROV_FIPS_PARAM_INSTALL_MAC,
-                        selftest_params.indicator_checksum_data,
+                        &selftest_params.indicator_checksum_data,
                         sizeof(selftest_params.indicator_checksum_data)),
     OSSL_PARAM_utf8_ptr(OSSL_PROV_FIPS_PARAM_INSTALL_STATUS,
-                        selftest_params.indicator_data,
+                        &selftest_params.indicator_data,
                         sizeof(selftest_params.indicator_data)),
     OSSL_PARAM_utf8_ptr(OSSL_PROV_FIPS_PARAM_INSTALL_VERSION,
-                        selftest_params.indicator_version,
+                        &selftest_params.indicator_version,
                         sizeof(selftest_params.indicator_version)),
     OSSL_PARAM_utf8_ptr(OSSL_PROV_FIPS_PARAM_CONDITIONAL_ERRORS,
-                        selftest_params.conditional_error_check,
+                        &selftest_params.conditional_error_check,
                         sizeof(selftest_params.conditional_error_check)),
     OSSL_PARAM_utf8_ptr(OSSL_PROV_FIPS_PARAM_SECURITY_CHECKS,
-                        fips_security_check_option,
+                        &fips_security_check_option,
                         sizeof(fips_security_check_option)),
     OSSL_PARAM_END
 };
@@ -328,7 +328,10 @@ static const OSSL_ALGORITHM fips_kdfs[] = {
     { "SSKDF", FIPS_DEFAULT_PROPERTIES, ossl_kdf_sskdf_functions },
     { "PBKDF2", FIPS_DEFAULT_PROPERTIES, ossl_kdf_pbkdf2_functions },
     { "SSHKDF", FIPS_DEFAULT_PROPERTIES, ossl_kdf_sshkdf_functions },
-    { "X963KDF", FIPS_DEFAULT_PROPERTIES, ossl_kdf_x963_kdf_functions },
+    { "X963KDF:X942KDF-CONCAT", FIPS_DEFAULT_PROPERTIES,
+      ossl_kdf_x963_kdf_functions },
+    { "X942KDF-ASN1:X942KDF", FIPS_DEFAULT_PROPERTIES,
+      ossl_kdf_x942_kdf_functions },
     { "TLS1-PRF", FIPS_DEFAULT_PROPERTIES, ossl_kdf_tls1_prf_functions },
     { "KBKDF", FIPS_DEFAULT_PROPERTIES, ossl_kdf_kbkdf_functions },
     { NULL, NULL, NULL }
@@ -347,7 +350,7 @@ static const OSSL_ALGORITHM fips_keyexch[] = {
     { "DH:dhKeyAgreement", FIPS_DEFAULT_PROPERTIES, ossl_dh_keyexch_functions },
 #endif
 #ifndef OPENSSL_NO_EC
-    { "ECDH", FIPS_DEFAULT_PROPERTIES, ecossl_dh_keyexch_functions },
+    { "ECDH", FIPS_DEFAULT_PROPERTIES, ossl_ecdh_keyexch_functions },
     { "X25519", FIPS_DEFAULT_PROPERTIES, ossl_x25519_keyexch_functions },
     { "X448", FIPS_DEFAULT_PROPERTIES, ossl_x448_keyexch_functions },
 #endif
@@ -367,7 +370,7 @@ static const OSSL_ALGORITHM fips_signature[] = {
 #ifndef OPENSSL_NO_EC
     { "ED25519", FIPS_DEFAULT_PROPERTIES, ossl_ed25519_signature_functions },
     { "ED448", FIPS_DEFAULT_PROPERTIES, ossl_ed448_signature_functions },
-    { "ECDSA", FIPS_DEFAULT_PROPERTIES, ecossl_dsa_signature_functions },
+    { "ECDSA", FIPS_DEFAULT_PROPERTIES, ossl_ecdsa_signature_functions },
 #endif
     { "HMAC", FIPS_DEFAULT_PROPERTIES,
       ossl_mac_legacy_hmac_signature_functions },
@@ -431,8 +434,6 @@ static const OSSL_ALGORITHM *fips_query(void *provctx, int operation_id,
     case OSSL_OP_DIGEST:
         return fips_digests;
     case OSSL_OP_CIPHER:
-        ossl_prov_cache_exported_algorithms(fips_ciphers,
-                                            exported_fips_ciphers);
         return exported_fips_ciphers;
     case OSSL_OP_MAC:
         return fips_macs;
@@ -622,6 +623,8 @@ int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
         goto err;
 
     fgbl->handle = handle;
+
+    ossl_prov_cache_exported_algorithms(fips_ciphers, exported_fips_ciphers);
 
     selftest_params.libctx = libctx;
     if (!SELF_TEST_post(&selftest_params, 0)) {

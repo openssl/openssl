@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -74,6 +74,7 @@ static void *mac_newctx(void *provctx, const char *propq, const char *macname)
     return pmacctx;
 
  err:
+    OPENSSL_free(pmacctx->propq);
     OPENSSL_free(pmacctx);
     EVP_MAC_free(mac);
     return NULL;
@@ -171,8 +172,12 @@ static void *mac_dupctx(void *vpmacctx)
         return NULL;
 
     *dstctx = *srcctx;
+    dstctx->propq = NULL;
     dstctx->key = NULL;
     dstctx->macctx = NULL;
+
+    if (srcctx->propq != NULL && (dstctx->propq = OPENSSL_strdup(srcctx->propq)) == NULL)
+        goto err;
 
     if (srcctx->key != NULL && !ossl_mac_key_up_ref(srcctx->key))
         goto err;

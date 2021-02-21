@@ -1,11 +1,17 @@
 /*
- * Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+
+/*
+ * DH low level APIs are deprecated for public use, but still ok for
+ * internal use.
+ */
+#include "internal/deprecated.h"
 
 #include <openssl/core_names.h>
 #include "internal/param_build_set.h"
@@ -62,15 +68,6 @@ int dh_key_fromdata(DH *dh, const OSSL_PARAM params[])
 
     param_priv_key = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_PRIV_KEY);
     param_pub_key = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_PUB_KEY);
-
-    /*
-     * DH documentation says that a public key must be present if a
-     * private key is present.
-     * We want to have at least a public key either way, so we end up
-     * requiring it unconditionally.
-     */
-    if (param_priv_key != NULL && param_pub_key == NULL)
-        return 0;
 
     if ((param_priv_key != NULL
          && !OSSL_PARAM_get_BN(param_priv_key, &priv_key))

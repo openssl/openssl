@@ -56,8 +56,8 @@ guidelines:
  4. Patches should follow our [coding style] and compile without warnings.
     Where `gcc` or `clang` is available you should use the
     `--strict-warnings` `Configure` option.  OpenSSL compiles on many varied
-    platforms: try to ensure you only use portable features.  Clean builds
-    via Travis and AppVeyor are required, and they are started automatically
+    platforms: try to ensure you only use portable features.  Clean builds via
+    GitHub Actions and AppVeyor are required, and they are started automatically
     whenever a PR is created or updated.
 
     [coding style]: https://www.openssl.org/policies/codingstyle.html

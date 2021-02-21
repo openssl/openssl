@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -126,7 +126,9 @@ int ktls_check_supported_cipher(const SSL *s, const EVP_CIPHER *c,
         return 0;
     }
 
-    /* check that cipher is AES_GCM_128, AES_GCM_256, AES_CCM_128 */
+    /* check that cipher is AES_GCM_128, AES_GCM_256, AES_CCM_128 
+     * or Chacha20-Poly1305
+     */
     switch (EVP_CIPHER_nid(c))
     {
 # ifdef OPENSSL_KTLS_AES_CCM_128
@@ -139,6 +141,9 @@ int ktls_check_supported_cipher(const SSL *s, const EVP_CIPHER *c,
 # endif
 # ifdef OPENSSL_KTLS_AES_GCM_256
     case NID_aes_256_gcm:
+# endif
+# ifdef OPENSSL_KTLS_CHACHA20_POLY1305
+    case NID_chacha20_poly1305:
 # endif
         return 1;
     default:
@@ -158,9 +163,9 @@ int ktls_configure_crypto(const SSL *s, const EVP_CIPHER *c, EVP_CIPHER_CTX *dd,
 
     if (s->version == TLS1_2_VERSION &&
         EVP_CIPHER_mode(c) == EVP_CIPH_GCM_MODE) {
-        if (!EVP_CIPHER_CTX_get_iv_state(dd, geniv,
-                                         EVP_GCM_TLS_FIXED_IV_LEN
-                                         + EVP_GCM_TLS_EXPLICIT_IV_LEN))
+        if (!EVP_CIPHER_CTX_get_updated_iv(dd, geniv,
+                                           EVP_GCM_TLS_FIXED_IV_LEN
+                                           + EVP_GCM_TLS_EXPLICIT_IV_LEN))
             return 0;
         iiv = geniv;
     }
@@ -211,6 +216,20 @@ int ktls_configure_crypto(const SSL *s, const EVP_CIPHER *c, EVP_CIPHER_CTX *dd,
                 TLS_CIPHER_AES_CCM_128_REC_SEQ_SIZE);
         if (rec_seq != NULL)
             *rec_seq = crypto_info->ccm128.rec_seq;
+        return 1;
+# endif
+# ifdef OPENSSL_KTLS_CHACHA20_POLY1305
+    case NID_chacha20_poly1305:
+        crypto_info->chacha20poly1305.info.cipher_type = TLS_CIPHER_CHACHA20_POLY1305;
+        crypto_info->chacha20poly1305.info.version = s->version;
+        crypto_info->tls_crypto_info_len = sizeof(crypto_info->chacha20poly1305);
+        memcpy(crypto_info->chacha20poly1305.iv, iiv,
+		TLS_CIPHER_CHACHA20_POLY1305_IV_SIZE);
+        memcpy(crypto_info->chacha20poly1305.key, key, EVP_CIPHER_key_length(c));
+        memcpy(crypto_info->chacha20poly1305.rec_seq, rl_sequence,
+                TLS_CIPHER_CHACHA20_POLY1305_REC_SEQ_SIZE);
+        if (rec_seq != NULL)
+            *rec_seq = crypto_info->chacha20poly1305.rec_seq;
         return 1;
 # endif
     default:

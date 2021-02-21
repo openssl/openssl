@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -172,6 +172,9 @@ static int pkey_ec_derive(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *keylen)
     if (!key) {
         const EC_GROUP *group;
         group = EC_KEY_get0_group(eckey);
+
+        if (group == NULL)
+            return 0;
         *keylen = (EC_GROUP_get_degree(group) + 7) / 8;
         return 1;
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -9,6 +9,7 @@
 
 #ifndef OPENSSL_CORE_NAMES_H
 # define OPENSSL_CORE_NAMES_H
+# pragma once
 
 # ifdef __cplusplus
 extern "C" {
@@ -69,11 +70,14 @@ extern "C" {
 #define OSSL_CIPHER_PARAM_TLS_MAC_SIZE         "tls-mac-size" /* size_t */
 #define OSSL_CIPHER_PARAM_MODE                 "mode"         /* uint */
 #define OSSL_CIPHER_PARAM_BLOCK_SIZE           "blocksize"    /* size_t */
-#define OSSL_CIPHER_PARAM_FLAGS                "flags"        /* ulong */
+#define OSSL_CIPHER_PARAM_AEAD                 "aead"         /* int, 0 or 1 */
+#define OSSL_CIPHER_PARAM_CUSTOM_IV            "custom-iv"    /* int, 0 or 1 */
+#define OSSL_CIPHER_PARAM_CTS                  "cts"          /* int, 0 or 1 */
+#define OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK      "tls-multi"    /* int, 0 or 1 */
 #define OSSL_CIPHER_PARAM_KEYLEN               "keylen"       /* size_t */
 #define OSSL_CIPHER_PARAM_IVLEN                "ivlen"        /* size_t */
 #define OSSL_CIPHER_PARAM_IV                   "iv"           /* octet_string OR octet_ptr */
-#define OSSL_CIPHER_PARAM_IV_STATE             "iv-state"     /* octet_string OR octet_ptr */
+#define OSSL_CIPHER_PARAM_UPDATED_IV           "updated-iv"   /* octet_string OR octet_ptr */
 #define OSSL_CIPHER_PARAM_NUM                  "num"          /* uint */
 #define OSSL_CIPHER_PARAM_ROUNDS               "rounds"       /* uint */
 #define OSSL_CIPHER_PARAM_AEAD_TAG             "tag"          /* octet_string */
@@ -115,13 +119,14 @@ extern "C" {
 #define OSSL_CIPHER_CTS_MODE_CS3 "CS3"
 
 /* digest parameters */
-#define OSSL_DIGEST_PARAM_XOFLEN     "xoflen"    /* size_t */
-#define OSSL_DIGEST_PARAM_SSL3_MS    "ssl3-ms"   /* octet string */
-#define OSSL_DIGEST_PARAM_PAD_TYPE   "pad_type"  /* uint */
-#define OSSL_DIGEST_PARAM_MICALG     "micalg"    /* utf8 string */
-#define OSSL_DIGEST_PARAM_BLOCK_SIZE "blocksize" /* size_t */
-#define OSSL_DIGEST_PARAM_SIZE       "size"      /* size_t */
-#define OSSL_DIGEST_PARAM_FLAGS      "flags"     /* ulong */
+#define OSSL_DIGEST_PARAM_XOFLEN       "xoflen"        /* size_t */
+#define OSSL_DIGEST_PARAM_SSL3_MS      "ssl3-ms"       /* octet string */
+#define OSSL_DIGEST_PARAM_PAD_TYPE     "pad-type"      /* uint */
+#define OSSL_DIGEST_PARAM_MICALG       "micalg"        /* utf8 string */
+#define OSSL_DIGEST_PARAM_BLOCK_SIZE   "blocksize"     /* size_t */
+#define OSSL_DIGEST_PARAM_SIZE         "size"          /* size_t */
+#define OSSL_DIGEST_PARAM_XOF          "xof"           /* int, 0 or 1 */
+#define OSSL_DIGEST_PARAM_ALGID_ABSENT "algid-absent"  /* int, 0 or 1 */
 
 /* Known DIGEST names (not a complete list) */
 #define OSSL_DIGEST_NAME_MD5            "MD5"
@@ -146,12 +151,14 @@ extern "C" {
 #define OSSL_DIGEST_NAME_SM3            "SM3"
 
 /* MAC parameters */
-#define OSSL_MAC_PARAM_KEY          "key"        /* octet string */
-#define OSSL_MAC_PARAM_IV           "iv"         /* octet string */
-#define OSSL_MAC_PARAM_CUSTOM       "custom"     /* utf8 string */
-#define OSSL_MAC_PARAM_SALT         "salt"       /* octet string */
-#define OSSL_MAC_PARAM_XOF          "xof"        /* int, 0 or 1 */
-#define OSSL_MAC_PARAM_FLAGS        "flags"      /* int */
+#define OSSL_MAC_PARAM_KEY            "key"            /* octet string */
+#define OSSL_MAC_PARAM_IV             "iv"             /* octet string */
+#define OSSL_MAC_PARAM_CUSTOM         "custom"         /* utf8 string */
+#define OSSL_MAC_PARAM_SALT           "salt"           /* octet string */
+#define OSSL_MAC_PARAM_XOF            "xof"            /* int, 0 or 1 */
+#define OSSL_MAC_PARAM_DIGEST_NOINIT  "digest-noinit"  /* int, 0 or 1 */
+#define OSSL_MAC_PARAM_DIGEST_ONESHOT "digest-oneshot" /* int, 0 or 1 */
+
 /*
  * If "engine" or "properties" are specified, they should always be paired
  * with "cipher" or "digest".
@@ -203,18 +210,25 @@ extern "C" {
 #define OSSL_KDF_PARAM_PKCS12_ID    "id"        /* int */
 #define OSSL_KDF_PARAM_KBKDF_USE_L  "use-l"             /* int */
 #define OSSL_KDF_PARAM_KBKDF_USE_SEPARATOR  "use-separator"     /* int */
+#define OSSL_KDF_PARAM_X942_ACVPINFO        "acvp-info"
+#define OSSL_KDF_PARAM_X942_PARTYUINFO      "partyu-info"
+#define OSSL_KDF_PARAM_X942_PARTYVINFO      "partyv-info"
+#define OSSL_KDF_PARAM_X942_SUPP_PUBINFO    "supp-pubinfo"
+#define OSSL_KDF_PARAM_X942_SUPP_PRIVINFO   "supp-privinfo"
+#define OSSL_KDF_PARAM_X942_USE_KEYBITS     "use-keybits"
 
 /* Known KDF names */
-#define OSSL_KDF_NAME_HKDF          "HKDF"
-#define OSSL_KDF_NAME_PBKDF2        "PBKDF2"
-#define OSSL_KDF_NAME_SCRYPT        "SCRYPT"
-#define OSSL_KDF_NAME_SSHKDF        "SSHKDF"
-#define OSSL_KDF_NAME_SSKDF         "SSKDF"
-#define OSSL_KDF_NAME_TLS1_PRF      "TLS1-PRF"
-#define OSSL_KDF_NAME_X942KDF       "X942KDF"
-#define OSSL_KDF_NAME_X963KDF       "X963KDF"
-#define OSSL_KDF_NAME_KBKDF         "KBKDF"
-#define OSSL_KDF_NAME_KRB5KDF       "KRB5KDF"
+#define OSSL_KDF_NAME_HKDF           "HKDF"
+#define OSSL_KDF_NAME_PBKDF2         "PBKDF2"
+#define OSSL_KDF_NAME_SCRYPT         "SCRYPT"
+#define OSSL_KDF_NAME_SSHKDF         "SSHKDF"
+#define OSSL_KDF_NAME_SSKDF          "SSKDF"
+#define OSSL_KDF_NAME_TLS1_PRF       "TLS1-PRF"
+#define OSSL_KDF_NAME_X942KDF_ASN1   "X942KDF-ASN1"
+#define OSSL_KDF_NAME_X942KDF_CONCAT "X942KDF-CONCAT"
+#define OSSL_KDF_NAME_X963KDF        "X963KDF"
+#define OSSL_KDF_NAME_KBKDF          "KBKDF"
+#define OSSL_KDF_NAME_KRB5KDF        "KRB5KDF"
 
 /* Known RAND names */
 #define OSSL_RAND_PARAM_STATE                   "state"
@@ -379,13 +393,13 @@ extern "C" {
 #define OSSL_PKEY_RSA_PSS_SALT_LEN_AUTO   "auto"
 
 /* Key generation parameters */
-#define OSSL_PKEY_PARAM_RSA_BITS            OSSL_PKEY_PARAM_BITS
-#define OSSL_PKEY_PARAM_RSA_PRIMES          "primes"
-#define OSSL_PKEY_PARAM_RSA_DIGEST          OSSL_PKEY_PARAM_DIGEST
-#define OSSL_PKEY_PARAM_RSA_DIGEST_PROPS    OSSL_PKEY_PARAM_PROPERTIES
-#define OSSL_PKEY_PARAM_RSA_MASKGENFUNC     OSSL_PKEY_PARAM_MASKGENFUNC
-#define OSSL_PKEY_PARAM_RSA_MGF1_DIGEST     OSSL_PKEY_PARAM_MGF1_DIGEST
-#define OSSL_PKEY_PARAM_RSA_PSS_SALTLEN     "saltlen"
+#define OSSL_PKEY_PARAM_RSA_BITS             OSSL_PKEY_PARAM_BITS
+#define OSSL_PKEY_PARAM_RSA_PRIMES           "primes"
+#define OSSL_PKEY_PARAM_RSA_DIGEST           OSSL_PKEY_PARAM_DIGEST
+#define OSSL_PKEY_PARAM_RSA_DIGEST_PROPS     OSSL_PKEY_PARAM_PROPERTIES
+#define OSSL_PKEY_PARAM_RSA_MASKGENFUNC      OSSL_PKEY_PARAM_MASKGENFUNC
+#define OSSL_PKEY_PARAM_RSA_MGF1_DIGEST      OSSL_PKEY_PARAM_MGF1_DIGEST
+#define OSSL_PKEY_PARAM_RSA_PSS_SALTLEN      "saltlen"
 
 /* Key generation parameters */
 #define OSSL_PKEY_PARAM_FFC_TYPE         "type"
@@ -394,11 +408,22 @@ extern "C" {
 #define OSSL_PKEY_PARAM_FFC_DIGEST       OSSL_PKEY_PARAM_DIGEST
 #define OSSL_PKEY_PARAM_FFC_DIGEST_PROPS OSSL_PKEY_PARAM_PROPERTIES
 
-#define OSSL_PKEY_PARAM_EC_ENCODING      "encoding" /* utf8_string */
+#define OSSL_PKEY_PARAM_EC_ENCODING                "encoding" /* utf8_string */
+#define OSSL_PKEY_PARAM_EC_POINT_CONVERSION_FORMAT "point-format"
+#define OSSL_PKEY_PARAM_EC_GROUP_CHECK_TYPE        "group-check"
+#define OSSL_PKEY_PARAM_EC_INCLUDE_PUBLIC          "include-public"
 
 /* OSSL_PKEY_PARAM_EC_ENCODING values */
 #define OSSL_PKEY_EC_ENCODING_EXPLICIT  "explicit"
 #define OSSL_PKEY_EC_ENCODING_GROUP     "named_curve"
+
+#define OSSL_PKEY_EC_POINT_CONVERSION_FORMAT_UNCOMPRESSED "uncompressed"
+#define OSSL_PKEY_EC_POINT_CONVERSION_FORMAT_COMPRESSED   "compressed"
+#define OSSL_PKEY_EC_POINT_CONVERSION_FORMAT_HYBRID       "hybrid"
+
+#define OSSL_PKEY_EC_GROUP_CHECK_DEFAULT     "default"
+#define OSSL_PKEY_EC_GROUP_CHECK_NAMED       "named"
+#define OSSL_PKEY_EC_GROUP_CHECK_NAMED_NIST  "named-nist"
 
 /* Key Exchange parameters */
 #define OSSL_EXCHANGE_PARAM_PAD                   "pad" /* uint */
@@ -421,7 +446,6 @@ extern "C" {
  * EVP_PKEY_CTX_{set0,get0}_rsa_oaep_label().
  */
 #define OSSL_EXCHANGE_PARAM_KDF_UKM               "kdf-ukm" /* see note above */
-#define OSSL_EXCHANGE_PARAM_KDF_UKM_LEN           "kdf-ukm-len" /* size_t */
 
 /* Signature parameters */
 #define OSSL_SIGNATURE_PARAM_ALGORITHM_ID       "algorithm-id"
@@ -446,7 +470,6 @@ extern "C" {
 #define OSSL_ASYM_CIPHER_PARAM_OAEP_DIGEST              OSSL_ALG_PARAM_DIGEST
 #define OSSL_ASYM_CIPHER_PARAM_OAEP_DIGEST_PROPS        "digest-props"
 #define OSSL_ASYM_CIPHER_PARAM_OAEP_LABEL               "oaep-label"
-#define OSSL_ASYM_CIPHER_PARAM_OAEP_LABEL_LEN           "oaep-label-len"
 #define OSSL_ASYM_CIPHER_PARAM_TLS_CLIENT_VERSION       "tls-client-version"
 #define OSSL_ASYM_CIPHER_PARAM_TLS_NEGOTIATED_VERSION   "tls-negotiated-version"
 
@@ -458,6 +481,8 @@ extern "C" {
 #define OSSL_ENCODER_PARAM_INPUT_TYPE       "input-type"
 #define OSSL_ENCODER_PARAM_OUTPUT_TYPE      "output-type"
 #define OSSL_ENCODER_PARAM_OUTPUT_STRUCTURE "output-structure"
+/* Currently PVK only, but reusable for others as needed */
+#define OSSL_ENCODER_PARAM_ENCRYPT_LEVEL    "encrypt-level"
 
 #define OSSL_DECODER_PARAM_PROPERTIES       OSSL_ALG_PARAM_PROPERTIES
 #define OSSL_DECODER_PARAM_INPUT_TYPE       "input-type"

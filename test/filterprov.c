@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -33,6 +33,7 @@ struct filter_prov_globals_st {
         OSSL_ALGORITHM alg[MAX_ALG_FILTERS + 1];
     } dispatch[MAX_FILTERS];
     int num_dispatch;
+    int no_cache;
 };
 
 static struct filter_prov_globals_st ourglobals;
@@ -83,7 +84,7 @@ static const OSSL_ALGORITHM *filter_query(void *provctx,
 
     for (i = 0; i < globs->num_dispatch; i++) {
         if (globs->dispatch[i].operation == operation_id) {
-            *no_cache = 0;
+            *no_cache = globs->no_cache;
             return globs->dispatch[i].alg;
         }
     }
@@ -156,10 +157,6 @@ int filter_provider_set_filter(int operation, const char *filterstr)
     if (filterstrtmp == NULL)
         goto err;
 
-    /* We don't support no_cache */
-    if (no_cache)
-        goto err;
-
     /* Nothing to filter */
     if (provalgs == NULL)
         goto err;
@@ -167,7 +164,7 @@ int filter_provider_set_filter(int operation, const char *filterstr)
     if (globs->num_dispatch >= MAX_FILTERS)
         goto err;
 
-    for (name = filterstrtmp; !last; name = sep + 1) {
+    for (name = filterstrtmp; !last; name = (sep == NULL ? NULL : sep + 1)) {
         sep = strstr(name, ":");
         if (sep != NULL)
             *sep = '\0';
@@ -199,6 +196,7 @@ int filter_provider_set_filter(int operation, const char *filterstr)
     }
 
     globs->dispatch[globs->num_dispatch].operation = operation;
+    globs->no_cache = no_cache;
     globs->num_dispatch++;
 
     ret = 1;

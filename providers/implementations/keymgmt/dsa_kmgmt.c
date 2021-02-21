@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -63,8 +63,8 @@ struct dsa_gen_ctx {
     int gen_type; /* DSA_PARAMGEN_TYPE_FIPS_186_2 or DSA_PARAMGEN_TYPE_FIPS_186_4 */
     int pcounter;
     int hindex;
-    const char *mdname;
-    const char *mdprops;
+    char *mdname;
+    char *mdprops;
     OSSL_CALLBACK *cb;
     void *cbarg;
 };
@@ -309,11 +309,11 @@ static const OSSL_PARAM *dsa_gettable_params(void *provctx)
     return dsa_params;
 }
 
-static int dsa_validate_domparams(const DSA *dsa)
+static int dsa_validate_domparams(const DSA *dsa, int checktype)
 {
     int status = 0;
 
-    return dsa_check_params(dsa, &status);
+    return dsa_check_params(dsa, checktype, &status);
 }
 
 static int dsa_validate_public(const DSA *dsa)
@@ -338,7 +338,7 @@ static int dsa_validate_private(const DSA *dsa)
     return dsa_check_priv_key(dsa, priv_key, &status);
 }
 
-static int dsa_validate(const void *keydata, int selection)
+static int dsa_validate(const void *keydata, int selection, int checktype)
 {
     const DSA *dsa = keydata;
     int ok = 0;
@@ -350,7 +350,7 @@ static int dsa_validate(const void *keydata, int selection)
         ok = 1;
 
     if ((selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) != 0)
-        ok = ok && dsa_validate_domparams(dsa);
+        ok = ok && dsa_validate_domparams(dsa, checktype);
 
     if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0)
         ok = ok && dsa_validate_public(dsa);
@@ -459,13 +459,19 @@ static int dsa_gen_set_params(void *genctx, const OSSL_PARAM params[])
     if (p != NULL) {
         if (p->data_type != OSSL_PARAM_UTF8_STRING)
             return 0;
-        gctx->mdname = p->data;
+        OPENSSL_free(gctx->mdname);
+        gctx->mdname = OPENSSL_strdup(p->data);
+        if (gctx->mdname == NULL)
+            return 0;
     }
     p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_FFC_DIGEST_PROPS);
     if (p != NULL) {
         if (p->data_type != OSSL_PARAM_UTF8_STRING)
             return 0;
-        gctx->mdprops = p->data;
+        OPENSSL_free(gctx->mdprops);
+        gctx->mdprops = OPENSSL_strdup(p->data);
+        if (gctx->mdprops == NULL)
+            return 0;
     }
     return 1;
 }
@@ -572,6 +578,8 @@ static void dsa_gen_cleanup(void *genctx)
     if (gctx == NULL)
         return;
 
+    OPENSSL_free(gctx->mdname);
+    OPENSSL_free(gctx->mdprops);
     OPENSSL_clear_free(gctx->seed, gctx->seedlen);
     OPENSSL_free(gctx);
 }

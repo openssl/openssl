@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -24,6 +24,7 @@
 #include <openssl/params.h>
 #include <openssl/decoder.h>
 #include <openssl/store.h>       /* The OSSL_STORE_INFO type numbers */
+#include <openssl/proverr.h>
 #include "internal/cryptlib.h"
 #include "internal/o_dir.h"
 #include "crypto/pem.h"          /* For PVK and "blob" PEM headers */
@@ -31,7 +32,6 @@
 #include "prov/implementations.h"
 #include "prov/bio.h"
 #include "prov/provider_ctx.h"
-#include "prov/providercommonerr.h"
 #include "file_store_local.h"
 
 DEFINE_STACK_OF(OSSL_STORE_INFO)
@@ -59,7 +59,7 @@ static OSSL_FUNC_store_close_fn file_close;
  * internal OpenSSL functions, thereby bypassing the need for a surrounding
  * provider.  This is ok, since this is a local decoder, not meant for
  * public consumption.  It also uses the libcrypto internal decoder
- * setup function ossl_decoder_ctx_setup_for_EVP_PKEY(), to allow the
+ * setup function ossl_decoder_ctx_setup_for_pkey(), to allow the
  * last resort decoder to be added first (and thereby be executed last).
  * Finally, it sets up its own construct and cleanup functions.
  *
@@ -471,6 +471,7 @@ static int file_set_ctx_params(void *loaderctx, const OSSL_PARAM params[])
         size_t der_len = 0;
         X509_NAME *x509_name;
         unsigned long hash;
+        int ok;
 
         if (ctx->type != IS_DIR) {
             ERR_raise(ERR_LIB_PROV,
@@ -481,10 +482,14 @@ static int file_set_ctx_params(void *loaderctx, const OSSL_PARAM params[])
         if (!OSSL_PARAM_get_octet_string_ptr(p, (const void **)&der, &der_len)
             || (x509_name = d2i_X509_NAME(NULL, &der, der_len)) == NULL)
             return 0;
-        hash = X509_NAME_hash(x509_name);
+        hash = X509_NAME_hash_ex(x509_name,
+                                 ossl_prov_ctx_get0_libctx(ctx->provctx), NULL,
+                                 &ok);
         BIO_snprintf(ctx->_.dir.search_name, sizeof(ctx->_.dir.search_name),
                      "%08lx", hash);
         X509_NAME_free(x509_name);
+        if (ok == 0)
+            return 0;
     }
     return 1;
 }
@@ -530,7 +535,7 @@ void file_load_cleanup(void *construct_data)
 
 static int file_setup_decoders(struct file_ctx_st *ctx)
 {
-    EVP_PKEY *dummy; /* for OSSL_DECODER_CTX_new_by_EVP_PKEY() */
+    EVP_PKEY *dummy; /* for ossl_decoder_ctx_setup_for_pkey() */
     OSSL_LIB_CTX *libctx = ossl_prov_ctx_get0_libctx(ctx->provctx);
     OSSL_DECODER *to_obj = NULL; /* Last resort decoder */
     OSSL_DECODER_INSTANCE *to_obj_inst = NULL;
@@ -583,9 +588,9 @@ static int file_setup_decoders(struct file_ctx_st *ctx)
          * Since we're setting up our own constructor, we don't need to care
          * more than that...
          */
-        if (!ossl_decoder_ctx_setup_for_EVP_PKEY(ctx->_.file.decoderctx,
-                                                 &dummy, NULL,
-                                                 libctx, ctx->_.file.propq)
+        if (!ossl_decoder_ctx_setup_for_pkey(ctx->_.file.decoderctx,
+                                             &dummy, NULL,
+                                             libctx, ctx->_.file.propq)
             || !OSSL_DECODER_CTX_add_extra(ctx->_.file.decoderctx,
                                            libctx, ctx->_.file.propq)) {
             ERR_raise(ERR_LIB_PROV, ERR_R_OSSL_DECODER_LIB);

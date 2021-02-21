@@ -22,17 +22,13 @@ int EVP_PKEY_encrypt_old(unsigned char *ek, const unsigned char *key,
 {
     int ret = 0;
 
-#ifndef OPENSSL_NO_RSA
     if (EVP_PKEY_id(pubk) != EVP_PKEY_RSA) {
-#endif
         ERR_raise(ERR_LIB_EVP, EVP_R_PUBLIC_KEY_NOT_RSA);
-#ifndef OPENSSL_NO_RSA
         goto err;
     }
     ret =
         RSA_public_encrypt(key_len, key, ek, EVP_PKEY_get0_RSA(pubk),
                            RSA_PKCS1_PADDING);
  err:
-#endif
     return ret;
 }

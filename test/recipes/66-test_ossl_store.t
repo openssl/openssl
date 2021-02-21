@@ -10,10 +10,11 @@ use strict;
 use warnings;
 
 use OpenSSL::Test::Simple;
-use OpenSSL::Test qw/:DEFAULT srctop_file/;
+use OpenSSL::Test qw/:DEFAULT srctop_file data_dir/;
 
 setup("test_ossl_store");
 
 plan tests => 1;
 
-ok(run(test(["ossl_store_test", "-in", srctop_file("test", "testrsa.pem")])));
+ok(run(test(["ossl_store_test", "-in", srctop_file("test", "testrsa.pem"),
+             "-data", data_dir()])));

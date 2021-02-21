@@ -10,8 +10,11 @@
 
 #include <openssl/err.h>
 #include <openssl/cmserr.h>
+#include "crypto/cmserr.h"
 
-#ifndef OPENSSL_NO_ERR
+#ifndef OPENSSL_NO_CMS
+
+# ifndef OPENSSL_NO_ERR
 
 static const ERR_STRING_DATA CMS_str_reasons[] = {
     {ERR_PACK(ERR_LIB_CMS, 0, CMS_R_ADD_SIGNER_ERROR), "add signer error"},
@@ -160,13 +163,16 @@ static const ERR_STRING_DATA CMS_str_reasons[] = {
     {0, NULL}
 };
 
-#endif
+# endif
 
-int ERR_load_CMS_strings(void)
+int err_load_CMS_strings_int(void)
 {
-#ifndef OPENSSL_NO_ERR
+# ifndef OPENSSL_NO_ERR
     if (ERR_reason_error_string(CMS_str_reasons[0].error) == NULL)
         ERR_load_strings_const(CMS_str_reasons);
-#endif
+# endif
     return 1;
 }
+#else
+NON_EMPTY_TRANSLATION_UNIT
+#endif

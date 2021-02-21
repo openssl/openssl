@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2007-2021 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright Nokia 2007-2019
  * Copyright Siemens AG 2015-2019
  *
@@ -86,7 +86,6 @@ static int unprotected_exception(const OSSL_CMP_CTX *ctx,
     return 1;
 }
 
-
 /* Save error info from PKIStatusInfo field of a certresponse into ctx */
 static int save_statusInfo(OSSL_CMP_CTX *ctx, OSSL_CMP_PKISI *si)
 {
@@ -130,6 +129,9 @@ static int save_statusInfo(OSSL_CMP_CTX *ctx, OSSL_CMP_PKISI *si)
 static int send_receive_check(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *req,
                               OSSL_CMP_MSG **rep, int expected_type)
 {
+    int is_enrollment = IS_CREP(expected_type)
+        || expected_type == OSSL_CMP_PKIBODY_POLLREP
+        || expected_type == OSSL_CMP_PKIBODY_PKICONF;
     const char *req_type_str =
         ossl_cmp_bodytype_to_string(ossl_cmp_msg_get_bodytype(req));
     const char *expected_type_str = ossl_cmp_bodytype_to_string(expected_type);
@@ -144,14 +146,13 @@ static int send_receive_check(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *req,
 
     *rep = NULL;
     msg_timeout = ctx->msg_timeout; /* backup original value */
-    if ((IS_CREP(expected_type) || expected_type == OSSL_CMP_PKIBODY_POLLREP)
-            && ctx->total_timeout > 0 /* timeout is not infinite */) {
+    if (is_enrollment && ctx->total_timeout > 0 /* timeout is not infinite */) {
         if (now >= ctx->end_time) {
             ERR_raise(ERR_LIB_CMP, CMP_R_TOTAL_TIMEOUT);
             return 0;
         }
         if (!ossl_assert(ctx->end_time - time(NULL) < INT_MAX)) {
-            /* cannot really happen due to the assignment in do_certreq_seq() */
+            /* actually cannot happen due to assignment in initial_certreq() */
             ERR_raise(ERR_LIB_CMP, CMP_R_INVALID_ARGS);
             return 0;
         }
@@ -169,7 +170,9 @@ static int send_receive_check(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *req,
     ctx->msg_timeout = msg_timeout; /* restore original value */
 
     if (*rep == NULL) {
-        ERR_raise_data(ERR_LIB_CMP, CMP_R_TRANSFER_ERROR, /* or receiving response */
+        ERR_raise_data(ERR_LIB_CMP,
+                       ctx->total_timeout > 0 && time(NULL) >= ctx->end_time ?
+                       CMP_R_TOTAL_TIMEOUT : CMP_R_TRANSFER_ERROR,
                        "request sent: %s, expected response: %s",
                        req_type_str, expected_type_str);
         return 0;
@@ -199,7 +202,7 @@ static int send_receive_check(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *req,
 
     /* received message type is not one of the expected ones (e.g., error) */
     ERR_raise(ERR_LIB_CMP, bt == OSSL_CMP_PKIBODY_ERROR ? CMP_R_RECEIVED_ERROR :
-           CMP_R_UNEXPECTED_PKIBODY); /* in next line for mkerr.pl */
+              CMP_R_UNEXPECTED_PKIBODY); /* in next line for mkerr.pl */
 
     if (bt != OSSL_CMP_PKIBODY_ERROR) {
         ERR_add_error_data(3, "message type is '",
@@ -633,24 +636,41 @@ static int cert_response(OSSL_CMP_CTX *ctx, int sleep, int rid,
 
     /* not throwing failure earlier as transfer_cb may call ERR_clear_error() */
     if (fail_info != 0) {
-        if (txt == NULL)
-            ERR_raise_data(ERR_LIB_CMP, CMP_R_CERTIFICATE_NOT_ACCEPTED,
-                           "rejecting newly enrolled cert with subject: %s",
-                           subj);
-        else
-            ERR_raise_data(ERR_LIB_CMP, CMP_R_CERTIFICATE_NOT_ACCEPTED,
-                           "rejecting newly enrolled cert with subject: %s; %s",
-                           subj, txt);
+        ERR_raise_data(ERR_LIB_CMP, CMP_R_CERTIFICATE_NOT_ACCEPTED,
+                       "rejecting newly enrolled cert with subject: %s; %s",
+                       subj, txt);
         ret = 0;
     }
     OPENSSL_free(subj);
     return ret;
 }
 
+static int initial_certreq(OSSL_CMP_CTX *ctx,
+                           int req_type, const OSSL_CRMF_MSG *crm,
+                           OSSL_CMP_MSG **p_rep, int rep_type)
+{
+    OSSL_CMP_MSG *req;
+    int res;
+
+    ctx->status = -1;
+    if (!ossl_cmp_ctx_set0_newCert(ctx, NULL))
+        return 0;
+
+    if (ctx->total_timeout > 0) /* else ctx->end_time is not used */
+        ctx->end_time = time(NULL) + ctx->total_timeout;
+
+    /* also checks if all necessary options are set */
+    if ((req = ossl_cmp_certreq_new(ctx, req_type, crm)) == NULL)
+        return 0;
+
+    res = send_receive_check(ctx, req, p_rep, rep_type);
+    OSSL_CMP_MSG_free(req);
+    return res;
+}
+
 int OSSL_CMP_try_certreq(OSSL_CMP_CTX *ctx, int req_type,
                          const OSSL_CRMF_MSG *crm, int *checkAfter)
 {
-    OSSL_CMP_MSG *req = NULL;
     OSSL_CMP_MSG *rep = NULL;
     int is_p10 = req_type == OSSL_CMP_PKIBODY_P10CR;
     int rid = is_p10 ? -1 : OSSL_CMP_CERTREQID;
@@ -663,18 +683,7 @@ int OSSL_CMP_try_certreq(OSSL_CMP_CTX *ctx, int req_type,
     }
 
     if (ctx->status != OSSL_CMP_PKISTATUS_waiting) { /* not polling already */
-        ctx->status = -1;
-        if (!ossl_cmp_ctx_set0_newCert(ctx, NULL))
-            return 0;
-
-        if (ctx->total_timeout > 0) /* else ctx->end_time is not used */
-            ctx->end_time = time(NULL) + ctx->total_timeout;
-
-        req = ossl_cmp_certreq_new(ctx, req_type, crm);
-        if (req == NULL) /* also checks if all necessary options are set */
-            return 0;
-
-        if (!send_receive_check(ctx, req, &rep, rep_type))
+        if (!initial_certreq(ctx, req_type, crm, &rep, rep_type))
             goto err;
     } else {
         if (req_type < 0)
@@ -690,7 +699,6 @@ int OSSL_CMP_try_certreq(OSSL_CMP_CTX *ctx, int req_type,
                         req_type, rep_type);
 
  err:
-    OSSL_CMP_MSG_free(req);
     OSSL_CMP_MSG_free(rep);
     return res;
 }
@@ -707,7 +715,6 @@ X509 *OSSL_CMP_exec_certreq(OSSL_CMP_CTX *ctx, int req_type,
                             const OSSL_CRMF_MSG *crm)
 {
 
-    OSSL_CMP_MSG *req = NULL;
     OSSL_CMP_MSG *rep = NULL;
     int is_p10 = req_type == OSSL_CMP_PKIBODY_P10CR;
     int rid = is_p10 ? -1 : OSSL_CMP_CERTREQID;
@@ -718,23 +725,8 @@ X509 *OSSL_CMP_exec_certreq(OSSL_CMP_CTX *ctx, int req_type,
         ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
         return NULL;
     }
-    if (is_p10 && crm != NULL) {
-        ERR_raise(ERR_LIB_CMP, CMP_R_INVALID_ARGS);
-        return NULL;
-    }
 
-    ctx->status = -1;
-    if (!ossl_cmp_ctx_set0_newCert(ctx, NULL))
-        return NULL;
-
-    if (ctx->total_timeout > 0) /* else ctx->end_time is not used */
-        ctx->end_time = time(NULL) + ctx->total_timeout;
-
-    /* OSSL_CMP_certreq_new() also checks if all necessary options are set */
-    if ((req = ossl_cmp_certreq_new(ctx, req_type, crm)) == NULL)
-        goto err;
-
-    if (!send_receive_check(ctx, req, &rep, rep_type))
+    if (!initial_certreq(ctx, req_type, crm, &rep, rep_type))
         goto err;
 
     if (cert_response(ctx, 1 /* sleep */, rid, &rep, NULL, req_type, rep_type)
@@ -743,12 +735,11 @@ X509 *OSSL_CMP_exec_certreq(OSSL_CMP_CTX *ctx, int req_type,
 
     result = ctx->newCert;
  err:
-    OSSL_CMP_MSG_free(req);
     OSSL_CMP_MSG_free(rep);
     return result;
 }
 
-X509 *OSSL_CMP_exec_RR_ses(OSSL_CMP_CTX *ctx)
+int OSSL_CMP_exec_RR_ses(OSSL_CMP_CTX *ctx)
 {
     OSSL_CMP_MSG *rr = NULL;
     OSSL_CMP_MSG *rp = NULL;
@@ -757,13 +748,13 @@ X509 *OSSL_CMP_exec_RR_ses(OSSL_CMP_CTX *ctx)
     OSSL_CMP_REVREPCONTENT *rrep = NULL;
     OSSL_CMP_PKISI *si = NULL;
     char buf[OSSL_CMP_PKISI_BUFLEN];
-    X509 *result = NULL;
+    int ret = 0;
 
     if (ctx == NULL) {
         ERR_raise(ERR_LIB_CMP, CMP_R_INVALID_ARGS);
         return 0;
     }
-    if (ctx->oldCert == NULL) {
+    if (ctx->oldCert == NULL && ctx->p10CSR == NULL) {
         ERR_raise(ERR_LIB_CMP, CMP_R_MISSING_REFERENCE_CERT);
         return 0;
     }
@@ -796,24 +787,24 @@ X509 *OSSL_CMP_exec_RR_ses(OSSL_CMP_CTX *ctx)
     switch (ossl_cmp_pkisi_get_status(si)) {
     case OSSL_CMP_PKISTATUS_accepted:
         ossl_cmp_info(ctx, "revocation accepted (PKIStatus=accepted)");
-        result = ctx->oldCert;
+        ret = 1;
         break;
     case OSSL_CMP_PKISTATUS_grantedWithMods:
         ossl_cmp_info(ctx, "revocation accepted (PKIStatus=grantedWithMods)");
-        result = ctx->oldCert;
+        ret = 1;
         break;
     case OSSL_CMP_PKISTATUS_rejection:
         ERR_raise(ERR_LIB_CMP, CMP_R_REQUEST_REJECTED_BY_SERVER);
         goto err;
     case OSSL_CMP_PKISTATUS_revocationWarning:
         ossl_cmp_info(ctx, "revocation accepted (PKIStatus=revocationWarning)");
-        result = ctx->oldCert;
+        ret = 1;
         break;
     case OSSL_CMP_PKISTATUS_revocationNotification:
         /* interpretation as warning or error depends on CA */
         ossl_cmp_warn(ctx,
                       "revocation accepted (PKIStatus=revocationNotification)");
-        result = ctx->oldCert;
+        ret = 1;
         break;
     case OSSL_CMP_PKISTATUS_waiting:
     case OSSL_CMP_PKISTATUS_keyUpdateWarning:
@@ -825,7 +816,7 @@ X509 *OSSL_CMP_exec_RR_ses(OSSL_CMP_CTX *ctx)
     }
 
     /* check any present CertId in optional revCerts field */
-    if (rrep->revCerts != NULL) {
+    if (sk_OSSL_CRMF_CERTID_num(rrep->revCerts) >= 1) {
         OSSL_CRMF_CERTID *cid;
         OSSL_CRMF_CERTTEMPLATE *tmpl =
             sk_OSSL_CMP_REVDETAILS_value(rr->body->value.rr, rsid)->certDetails;
@@ -834,17 +825,17 @@ X509 *OSSL_CMP_exec_RR_ses(OSSL_CMP_CTX *ctx)
 
         if (sk_OSSL_CRMF_CERTID_num(rrep->revCerts) != num_RevDetails) {
             ERR_raise(ERR_LIB_CMP, CMP_R_WRONG_RP_COMPONENT_COUNT);
-            result = NULL;
+            ret = 0;
             goto err;
         }
         if ((cid = ossl_cmp_revrepcontent_get_CertId(rrep, rsid)) == NULL) {
-            result = NULL;
+            ret = 0;
             goto err;
         }
         if (X509_NAME_cmp(issuer, OSSL_CRMF_CERTID_get0_issuer(cid)) != 0) {
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
             ERR_raise(ERR_LIB_CMP, CMP_R_WRONG_CERTID_IN_RP);
-            result = NULL;
+            ret = 0;
             goto err;
 #endif
         }
@@ -852,7 +843,7 @@ X509 *OSSL_CMP_exec_RR_ses(OSSL_CMP_CTX *ctx)
                              OSSL_CRMF_CERTID_get0_serialNumber(cid)) != 0) {
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
             ERR_raise(ERR_LIB_CMP, CMP_R_WRONG_SERIAL_IN_RP);
-            result = NULL;
+            ret = 0;
             goto err;
 #endif
         }
@@ -861,19 +852,19 @@ X509 *OSSL_CMP_exec_RR_ses(OSSL_CMP_CTX *ctx)
     /* check number of any optionally present crls */
     if (rrep->crls != NULL && sk_X509_CRL_num(rrep->crls) != num_RevDetails) {
         ERR_raise(ERR_LIB_CMP, CMP_R_WRONG_RP_COMPONENT_COUNT);
-        result = NULL;
+        ret = 0;
         goto err;
     }
 
  err:
-    if (result == NULL
+    if (ret == 0
             && OSSL_CMP_CTX_snprint_PKIStatus(ctx, buf, sizeof(buf)) != NULL)
         ERR_add_error_data(1, buf);
 
  end:
     OSSL_CMP_MSG_free(rr);
     OSSL_CMP_MSG_free(rp);
-    return result;
+    return ret;
 }
 
 STACK_OF(OSSL_CMP_ITAV) *OSSL_CMP_exec_GENM_ses(OSSL_CMP_CTX *ctx)
@@ -886,6 +877,7 @@ STACK_OF(OSSL_CMP_ITAV) *OSSL_CMP_exec_GENM_ses(OSSL_CMP_CTX *ctx)
         ERR_raise(ERR_LIB_CMP, CMP_R_INVALID_ARGS);
         return 0;
     }
+    ctx->status = -1;
 
     if ((genm = ossl_cmp_genm_new(ctx)) == NULL)
         goto err;

@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -147,7 +147,7 @@ static int crl_set_issuers(X509_CRL *crl)
 
 /*
  * The X509_CRL structure needs a bit of customisation. Cache some extensions
- * and hash of the whole CRL.
+ * and hash of the whole CRL or set EXFLAG_NO_FINGERPRINT if this fails.
  */
 static int crl_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
                   void *exarg)
@@ -185,7 +185,7 @@ static int crl_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
 
     case ASN1_OP_D2I_POST:
         if (!X509_CRL_digest(crl, EVP_sha1(), crl->sha1_hash, NULL))
-            crl->flags |= EXFLAG_INVALID;
+            crl->flags |= EXFLAG_NO_FINGERPRINT;
         crl->idp = X509_CRL_get_ext_d2i(crl,
                                         NID_issuing_distribution_point, &i,
                                         NULL);
@@ -264,6 +264,15 @@ static int crl_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         ASN1_INTEGER_free(crl->crl_number);
         ASN1_INTEGER_free(crl->base_crl_number);
         sk_GENERAL_NAMES_pop_free(crl->issuers, GENERAL_NAMES_free);
+        OPENSSL_free(crl->propq);
+        break;
+    case ASN1_OP_DUP_POST:
+        {
+            X509_CRL *old = exarg;
+
+            if (!x509_crl_set0_libctx(crl, old->libctx, old->propq))
+                return 0;
+        }
         break;
     }
     return 1;
@@ -494,7 +503,13 @@ int x509_crl_set0_libctx(X509_CRL *x, OSSL_LIB_CTX *libctx, const char *propq)
 {
     if (x != NULL) {
         x->libctx = libctx;
-        x->propq = propq;
+        OPENSSL_free(x->propq);
+        x->propq = NULL;
+        if (propq != NULL) {
+            x->propq = OPENSSL_strdup(propq);
+            if (x->propq == NULL)
+                return 0;
+        }
     }
     return 1;
 }

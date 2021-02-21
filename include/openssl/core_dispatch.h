@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -9,6 +9,7 @@
 
 #ifndef OPENSSL_CORE_NUMBERS_H
 # define OPENSSL_CORE_NUMBERS_H
+# pragma once
 
 # include <stdarg.h>
 # include <openssl/core.h>
@@ -43,7 +44,7 @@ extern "C" {
  */
 #define OSSL_CORE_MAKE_FUNC(type,name,args)                             \
     typedef type (OSSL_FUNC_##name##_fn)args;                           \
-    static ossl_inline \
+    static ossl_unused ossl_inline \
     OSSL_FUNC_##name##_fn *OSSL_FUNC_##name(const OSSL_DISPATCH *opf)   \
     {                                                                   \
         return (OSSL_FUNC_##name##_fn *)opf->function;                  \
@@ -331,7 +332,6 @@ OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, cipher_gettable_ctx_params,
 OSSL_CORE_MAKE_FUNC(void *, mac_newctx, (void *provctx))
 OSSL_CORE_MAKE_FUNC(void *, mac_dupctx, (void *src))
 OSSL_CORE_MAKE_FUNC(void, mac_freectx, (void *mctx))
-OSSL_CORE_MAKE_FUNC(size_t, mac_size, (void *mctx))
 OSSL_CORE_MAKE_FUNC(int, mac_init, (void *mctx))
 OSSL_CORE_MAKE_FUNC(int, mac_update,
                     (void *mctx, const unsigned char *in, size_t inl))
@@ -399,6 +399,8 @@ OSSL_CORE_MAKE_FUNC(int, kdf_set_ctx_params,
 # define OSSL_FUNC_RAND_GET_CTX_PARAMS               15
 # define OSSL_FUNC_RAND_SET_CTX_PARAMS               16
 # define OSSL_FUNC_RAND_VERIFY_ZEROIZATION           17
+# define OSSL_FUNC_RAND_GET_SEED                     18
+# define OSSL_FUNC_RAND_CLEAR_SEED                   19
 
 OSSL_CORE_MAKE_FUNC(void *,rand_newctx,
                     (void *provctx, void *parent,
@@ -440,6 +442,13 @@ OSSL_CORE_MAKE_FUNC(void,rand_set_callbacks,
                      OSSL_CALLBACK *cleanup_nonce, void *arg))
 OSSL_CORE_MAKE_FUNC(int,rand_verify_zeroization,
                     (void *vctx))
+OSSL_CORE_MAKE_FUNC(size_t,rand_get_seed,
+                    (void *vctx, unsigned char **buffer,
+                     int entropy, size_t min_len, size_t max_len,
+                     int prediction_resistance,
+                     const unsigned char *adin, size_t adin_len))
+OSSL_CORE_MAKE_FUNC(void,rand_clear_seed,
+                    (void *vctx, unsigned char *buffer, size_t b_len))
 
 /*-
  * Key management
@@ -490,6 +499,9 @@ OSSL_CORE_MAKE_FUNC(int,rand_verify_zeroization,
     ( OSSL_KEYMGMT_SELECT_PRIVATE_KEY | OSSL_KEYMGMT_SELECT_PUBLIC_KEY )
 # define OSSL_KEYMGMT_SELECT_ALL                \
     ( OSSL_KEYMGMT_SELECT_KEYPAIR | OSSL_KEYMGMT_SELECT_ALL_PARAMETERS )
+
+# define OSSL_KEYMGMT_VALIDATE_FULL_CHECK              0
+# define OSSL_KEYMGMT_VALIDATE_QUICK_CHECK             1
 
 /* Basic key object creation */
 # define OSSL_FUNC_KEYMGMT_NEW                         1
@@ -551,7 +563,8 @@ OSSL_CORE_MAKE_FUNC(int, keymgmt_has, (const void *keydata, int selection))
 
 /* Key checks - validation */
 # define OSSL_FUNC_KEYMGMT_VALIDATE                   22
-OSSL_CORE_MAKE_FUNC(int, keymgmt_validate, (const void *keydata, int selection))
+OSSL_CORE_MAKE_FUNC(int, keymgmt_validate, (const void *keydata, int selection,
+                                            int checktype))
 
 /* Key checks - matching */
 # define OSSL_FUNC_KEYMGMT_MATCH                      23

@@ -1,7 +1,10 @@
 # Note that some of these directories are filtered in Configure.  Look for
 # %skipdir there for further explanations.
 
-SUBDIRS=crypto ssl apps test util tools fuzz providers doc
+SUBDIRS=crypto ssl apps util tools fuzz providers doc
+IF[{- !$disabled{tests} -}]
+  SUBDIRS=test
+ENDIF
 IF[{- !$disabled{'deprecated-3.0'} -}]
   SUBDIRS=engines
 ENDIF
@@ -38,8 +41,7 @@ DEPEND[]=include/openssl/asn1.h \
          include/openssl/x509.h \
          include/openssl/x509v3.h \
          include/openssl/x509_vfy.h \
-         include/crypto/bn_conf.h include/crypto/dso_conf.h \
-         doc/man7/openssl_user_macros.pod
+         include/crypto/bn_conf.h include/crypto/dso_conf.h
 
 GENERATE[include/openssl/asn1.h]=include/openssl/asn1.h.in
 GENERATE[include/openssl/asn1t.h]=include/openssl/asn1t.h.in
@@ -68,7 +70,6 @@ GENERATE[include/openssl/x509v3.h]=include/openssl/x509v3.h.in
 GENERATE[include/openssl/x509_vfy.h]=include/openssl/x509_vfy.h.in
 GENERATE[include/crypto/bn_conf.h]=include/crypto/bn_conf.h.in
 GENERATE[include/crypto/dso_conf.h]=include/crypto/dso_conf.h.in
-GENERATE[doc/man7/openssl_user_macros.pod]=doc/man7/openssl_user_macros.pod.in
 
 IF[{- defined $target{shared_defflag} -}]
   SHARED_SOURCE[libcrypto]=libcrypto.ld

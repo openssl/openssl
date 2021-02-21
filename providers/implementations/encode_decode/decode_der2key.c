@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -22,12 +22,17 @@
 #include <openssl/pem.h>         /* PEM_BUFSIZE and public PEM functions */
 #include <openssl/pkcs12.h>
 #include <openssl/x509.h>
+#include <openssl/proverr.h>
 #include "internal/cryptlib.h"   /* ossl_assert() */
 #include "internal/asn1.h"
+#include "crypto/dh.h"
+#include "crypto/dsa.h"
+#include "crypto/ec.h"
+#include "crypto/evp.h"
 #include "crypto/ecx.h"
+#include "crypto/rsa.h"
 #include "prov/bio.h"
 #include "prov/implementations.h"
-#include "prov/providercommonerr.h"
 #include "endecoder_local.h"
 
 #define SET_ERR_MARK() ERR_set_mark()
@@ -83,7 +88,7 @@ static int der_from_p8(unsigned char **new_der, long *new_der_len,
         size_t plen = 0;
 
         if (!pw_cb(pbuf, sizeof(pbuf), &plen, NULL, pw_cbarg)) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_READ_KEY);
+            ERR_raise(ERR_LIB_PROV, PROV_R_UNABLE_TO_GET_PASSPHRASE);
         } else {
             const X509_ALGOR *alg = NULL;
             const ASN1_OCTET_STRING *oct = NULL;
@@ -106,7 +111,9 @@ static OSSL_FUNC_decoder_freectx_fn der2key_freectx;
 static OSSL_FUNC_decoder_decode_fn der2key_decode;
 static OSSL_FUNC_decoder_export_object_fn der2key_export_object;
 
+struct der2key_ctx_st;           /* Forward declaration */
 typedef void *(extract_key_fn)(EVP_PKEY *);
+typedef void (adjust_key_fn)(void *, struct der2key_ctx_st *ctx);
 typedef void (free_key_fn)(void *);
 struct keytype_desc_st {
     const char *keytype_name;
@@ -130,10 +137,16 @@ struct keytype_desc_st {
     d2i_of_void *d2i_private_key;
     d2i_of_void *d2i_public_key;
     d2i_of_void *d2i_key_params;
+
     /*
      * For PKCS#8 decoders, we use EVP_PKEY extractors, EVP_PKEY_get1_{TYPE}()
      */
     extract_key_fn *extract_key;
+    /*
+     * For any key, we may need to make provider specific adjustments, such
+     * as ensure the key carries the correct library context.
+     */
+    adjust_key_fn *adjust_key;
     /* {type}_free() */
     free_key_fn *free_key;
 };
@@ -309,8 +322,8 @@ static int der2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
 
         if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0) {
             derp = der;
-            pkey = d2i_PrivateKey_ex(ctx->desc->evp_type, NULL, &derp, der_len,
-                                     libctx, NULL);
+            pkey = evp_privatekey_from_binary(ctx->desc->evp_type, NULL,
+                                              &derp, der_len, libctx, NULL);
         }
 
         if (pkey == NULL
@@ -340,6 +353,9 @@ static int der2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
             EVP_PKEY_free(pkey);
         }
     }
+
+    if (key != NULL && ctx->desc->adjust_key != NULL)
+        ctx->desc->adjust_key(key, ctx);
 
  end:
     /*
@@ -403,12 +419,18 @@ static int der2key_export_object(void *vctx,
 # define dh_d2i_key_params              (d2i_of_void *)d2i_DHparams
 # define dh_free                        (free_key_fn *)DH_free
 
+static void dh_adjust(void *key, struct der2key_ctx_st *ctx)
+{
+    ossl_dh_set0_libctx(key, PROV_LIBCTX_OF(ctx->provctx));
+}
+
 # define dhx_evp_type                   EVP_PKEY_DHX
 # define dhx_evp_extract                (extract_key_fn *)EVP_PKEY_get1_DH
 # define dhx_d2i_private_key            NULL
 # define dhx_d2i_public_key             NULL
 # define dhx_d2i_key_params             (d2i_of_void *)d2i_DHxparams
 # define dhx_free                       (free_key_fn *)DH_free
+# define dhx_adjust                     dh_adjust
 #endif
 
 /* ---------------------------------------------------------------------- */
@@ -420,6 +442,11 @@ static int der2key_export_object(void *vctx,
 # define dsa_d2i_public_key             (d2i_of_void *)d2i_DSAPublicKey
 # define dsa_d2i_key_params             (d2i_of_void *)d2i_DSAparams
 # define dsa_free                       (free_key_fn *)DSA_free
+
+static void dsa_adjust(void *key, struct der2key_ctx_st *ctx)
+{
+    ossl_dsa_set0_libctx(key, PROV_LIBCTX_OF(ctx->provctx));
+}
 #endif
 
 /* ---------------------------------------------------------------------- */
@@ -432,16 +459,28 @@ static int der2key_export_object(void *vctx,
 # define ec_d2i_key_params              (d2i_of_void *)d2i_ECParameters
 # define ec_free                        (free_key_fn *)EC_KEY_free
 
+static void ec_adjust(void *key, struct der2key_ctx_st *ctx)
+{
+    ec_key_set0_libctx(key, PROV_LIBCTX_OF(ctx->provctx));
+}
+
 /*
  * ED25519, ED448, X25519, X448 only implement PKCS#8 and SubjectPublicKeyInfo,
  * so no d2i functions to be had.
  */
+
+static void ecx_key_adjust(void *key, struct der2key_ctx_st *ctx)
+{
+    ecx_key_set0_libctx(key, PROV_LIBCTX_OF(ctx->provctx));
+}
+
 # define ed25519_evp_type               EVP_PKEY_ED25519
 # define ed25519_evp_extract            (extract_key_fn *)evp_pkey_get1_ED25519
 # define ed25519_d2i_private_key        NULL
 # define ed25519_d2i_public_key         NULL
 # define ed25519_d2i_key_params         NULL
 # define ed25519_free                   (free_key_fn *)ecx_key_free
+# define ed25519_adjust                 ecx_key_adjust
 
 # define ed448_evp_type                 EVP_PKEY_ED448
 # define ed448_evp_extract              (extract_key_fn *)evp_pkey_get1_ED448
@@ -449,6 +488,7 @@ static int der2key_export_object(void *vctx,
 # define ed448_d2i_public_key           NULL
 # define ed448_d2i_key_params           NULL
 # define ed448_free                     (free_key_fn *)ecx_key_free
+# define ed448_adjust                   ecx_key_adjust
 
 # define x25519_evp_type                EVP_PKEY_X25519
 # define x25519_evp_extract             (extract_key_fn *)evp_pkey_get1_X25519
@@ -456,6 +496,7 @@ static int der2key_export_object(void *vctx,
 # define x25519_d2i_public_key          NULL
 # define x25519_d2i_key_params          NULL
 # define x25519_free                    (free_key_fn *)ecx_key_free
+# define x25519_adjust                  ecx_key_adjust
 
 # define x448_evp_type                  EVP_PKEY_X448
 # define x448_evp_extract               (extract_key_fn *)evp_pkey_get1_X448
@@ -463,6 +504,17 @@ static int der2key_export_object(void *vctx,
 # define x448_d2i_public_key            NULL
 # define x448_d2i_key_params            NULL
 # define x448_free                      (free_key_fn *)ecx_key_free
+# define x448_adjust                    ecx_key_adjust
+
+# ifndef OPENSSL_NO_SM2
+#  define sm2_evp_type                  EVP_PKEY_SM2
+#  define sm2_evp_extract               (extract_key_fn *)EVP_PKEY_get1_EC_KEY
+#  define sm2_d2i_private_key           (d2i_of_void *)d2i_ECPrivateKey
+#  define sm2_d2i_public_key            NULL
+#  define sm2_d2i_key_params            (d2i_of_void *)d2i_ECParameters
+#  define sm2_free                      (free_key_fn *)EC_KEY_free
+#  define sm2_adjust                    ec_adjust
+# endif
 #endif
 
 /* ---------------------------------------------------------------------- */
@@ -474,12 +526,18 @@ static int der2key_export_object(void *vctx,
 #define rsa_d2i_key_params              NULL
 #define rsa_free                        (free_key_fn *)RSA_free
 
+static void rsa_adjust(void *key, struct der2key_ctx_st *ctx)
+{
+    ossl_rsa_set0_libctx(key, PROV_LIBCTX_OF(ctx->provctx));
+}
+
 #define rsapss_evp_type                 EVP_PKEY_RSA_PSS
 #define rsapss_evp_extract              (extract_key_fn *)EVP_PKEY_get1_RSA
 #define rsapss_d2i_private_key          (d2i_of_void *)d2i_RSAPrivateKey
 #define rsapss_d2i_public_key           (d2i_of_void *)d2i_RSAPublicKey
 #define rsapss_d2i_key_params           NULL
 #define rsapss_free                     (free_key_fn *)RSA_free
+#define rsapss_adjust                   rsa_adjust
 
 /* ---------------------------------------------------------------------- */
 
@@ -494,6 +552,7 @@ static int der2key_export_object(void *vctx,
         keytype##_d2i_public_key,                       \
         NULL,                                           \
         NULL,                                           \
+        keytype##_adjust,                               \
         keytype##_free
 
 #define DO_type_specific_pub(keytype)                   \
@@ -503,6 +562,7 @@ static int der2key_export_object(void *vctx,
         keytype##_d2i_public_key,                       \
         NULL,                                           \
         NULL,                                           \
+        keytype##_adjust,                               \
         keytype##_free
 
 #define DO_type_specific_priv(keytype)                  \
@@ -512,6 +572,7 @@ static int der2key_export_object(void *vctx,
         NULL,                                           \
         NULL,                                           \
         NULL,                                           \
+        keytype##_adjust,                               \
         keytype##_free
 
 #define DO_type_specific_params(keytype)                \
@@ -521,6 +582,7 @@ static int der2key_export_object(void *vctx,
         NULL,                                           \
         keytype##_d2i_key_params,                       \
         NULL,                                           \
+        keytype##_adjust,                               \
         keytype##_free
 
 #define DO_type_specific(keytype)                       \
@@ -530,6 +592,7 @@ static int der2key_export_object(void *vctx,
         keytype##_d2i_public_key,                       \
         keytype##_d2i_key_params,                       \
         NULL,                                           \
+        keytype##_adjust,                               \
         keytype##_free
 
 #define DO_type_specific_no_pub(keytype)                \
@@ -540,6 +603,7 @@ static int der2key_export_object(void *vctx,
         NULL,                                           \
         keytype##_d2i_key_params,                       \
         NULL,                                           \
+        keytype##_adjust,                               \
         keytype##_free
 
 #define DO_PKCS8(keytype)                               \
@@ -549,6 +613,7 @@ static int der2key_export_object(void *vctx,
         NULL,                                           \
         NULL,                                           \
         keytype##_evp_extract,                          \
+        keytype##_adjust,                               \
         keytype##_free
 
 #define DO_SubjectPublicKeyInfo(keytype)                \
@@ -558,6 +623,7 @@ static int der2key_export_object(void *vctx,
         NULL,                                           \
         NULL,                                           \
         keytype##_evp_extract,                          \
+        keytype##_adjust,                               \
         keytype##_free
 
 #define DO_DH(keytype)                                  \
@@ -567,6 +633,7 @@ static int der2key_export_object(void *vctx,
         NULL,                                           \
         keytype##_d2i_key_params,                       \
         NULL,                                           \
+        keytype##_adjust,                               \
         keytype##_free
 
 #define DO_DHX(keytype)                                 \
@@ -576,6 +643,7 @@ static int der2key_export_object(void *vctx,
         NULL,                                           \
         keytype##_d2i_key_params,                       \
         NULL,                                           \
+        keytype##_adjust,                               \
         keytype##_free
 
 #define DO_DSA(keytype)                                 \
@@ -585,6 +653,7 @@ static int der2key_export_object(void *vctx,
         keytype##_d2i_public_key,                       \
         keytype##_d2i_key_params,                       \
         NULL,                                           \
+        keytype##_adjust,                               \
         keytype##_free
 
 #define DO_EC(keytype)                                  \
@@ -595,6 +664,7 @@ static int der2key_export_object(void *vctx,
         NULL,                                           \
         keytype##_d2i_key_params,                       \
         NULL,                                           \
+        keytype##_adjust,                               \
         keytype##_free
 
 #define DO_RSA(keytype)                                 \
@@ -604,6 +674,7 @@ static int der2key_export_object(void *vctx,
         keytype##_d2i_public_key,                       \
         NULL,                                           \
         NULL,                                           \
+        keytype##_adjust,                               \
         keytype##_free
 
 /*
@@ -702,6 +773,10 @@ MAKE_DECODER("ED25519", ed25519, ecx, PKCS8);
 MAKE_DECODER("ED25519", ed25519, ecx, SubjectPublicKeyInfo);
 MAKE_DECODER("ED448", ed448, ecx, PKCS8);
 MAKE_DECODER("ED448", ed448, ecx, SubjectPublicKeyInfo);
+# ifndef OPENSSL_NO_SM2
+MAKE_DECODER("SM2", sm2, ec, PKCS8);
+MAKE_DECODER("SM2", sm2, ec, SubjectPublicKeyInfo);
+# endif
 #endif
 MAKE_DECODER("RSA", rsa, rsa, PKCS8);
 MAKE_DECODER("RSA", rsa, rsa, SubjectPublicKeyInfo);

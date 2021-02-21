@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2004-2021 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2004, EdelKey Project. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -11,6 +11,12 @@
  * for the EdelKey project.
  */
 
+/*
+ * We need to use the SRP deprecated APIs in order to implement the SSL SRP
+ * APIs - which are themselves deprecated.
+ */
+#define OPENSSL_SUPPRESS_DEPRECATED
+
 #include <openssl/crypto.h>
 #include <openssl/rand.h>
 #include <openssl/err.h>
@@ -19,7 +25,11 @@
 #ifndef OPENSSL_NO_SRP
 # include <openssl/srp.h>
 
-int SSL_CTX_SRP_CTX_free(struct ssl_ctx_st *ctx)
+/*
+ * The public API SSL_CTX_SRP_CTX_free() is deprecated so we use
+ * ssl_ctx_srp_ctx_free_intern() internally.
+ */
+int ssl_ctx_srp_ctx_free_intern(SSL_CTX *ctx)
 {
     if (ctx == NULL)
         return 0;
@@ -38,7 +48,16 @@ int SSL_CTX_SRP_CTX_free(struct ssl_ctx_st *ctx)
     return 1;
 }
 
-int SSL_SRP_CTX_free(struct ssl_st *s)
+int SSL_CTX_SRP_CTX_free(SSL_CTX *ctx)
+{
+    return ssl_ctx_srp_ctx_free_intern(ctx);
+}
+
+/*
+ * The public API SSL_SRP_CTX_free() is deprecated so we use
+ * ssl_srp_ctx_free_intern() internally.
+ */
+int ssl_srp_ctx_free_intern(SSL *s)
 {
     if (s == NULL)
         return 0;
@@ -57,7 +76,16 @@ int SSL_SRP_CTX_free(struct ssl_st *s)
     return 1;
 }
 
-int SSL_SRP_CTX_init(struct ssl_st *s)
+int SSL_SRP_CTX_free(SSL *s)
+{
+    return ssl_srp_ctx_free_intern(s);
+}
+
+/*
+ * The public API SSL_SRP_CTX_init() is deprecated so we use
+ * ssl_srp_ctx_init_intern() internally.
+ */
+int ssl_srp_ctx_init_intern(SSL *s)
 {
     SSL_CTX *ctx;
 
@@ -126,7 +154,16 @@ int SSL_SRP_CTX_init(struct ssl_st *s)
     return 0;
 }
 
-int SSL_CTX_SRP_CTX_init(struct ssl_ctx_st *ctx)
+int SSL_SRP_CTX_init(SSL *s)
+{
+    return ssl_srp_ctx_init_intern(s);
+}
+
+/*
+ * The public API SSL_CTX_SRP_CTX_init() is deprecated so we use
+ * ssl_ctx_srp_ctx_init_intern() internally.
+ */
+int ssl_ctx_srp_ctx_init_intern(SSL_CTX *ctx)
 {
     if (ctx == NULL)
         return 0;
@@ -137,8 +174,17 @@ int SSL_CTX_SRP_CTX_init(struct ssl_ctx_st *ctx)
     return 1;
 }
 
+int SSL_CTX_SRP_CTX_init(SSL_CTX *ctx)
+{
+    return ssl_ctx_srp_ctx_init_intern(ctx);
+}
+
 /* server side */
-int SSL_srp_server_param_with_username(SSL *s, int *ad)
+/*
+ * The public API SSL_srp_server_param_with_username() is deprecated so we use
+ * ssl_srp_server_param_with_username_intern() internally.
+ */
+int ssl_srp_server_param_with_username_intern(SSL *s, int *ad)
 {
     unsigned char b[SSL_MAX_MASTER_KEY_LENGTH];
     int al;
@@ -168,6 +214,11 @@ int SSL_srp_server_param_with_username(SSL *s, int *ad)
              SRP_Calc_B_ex(s->srp_ctx.b, s->srp_ctx.N, s->srp_ctx.g,
                            s->srp_ctx.v, s->ctx->libctx, s->ctx->propq)) !=
             NULL) ? SSL_ERROR_NONE : SSL3_AL_FATAL;
+}
+
+int SSL_srp_server_param_with_username(SSL *s, int *ad)
+{
+    return ssl_srp_server_param_with_username_intern(s, ad);
 }
 
 /*
@@ -361,7 +412,11 @@ int srp_verify_server_param(SSL *s)
     return 1;
 }
 
-int SRP_Calc_A_param(SSL *s)
+/*
+ * The public API SRP_Calc_A_param() is deprecated so we use
+ * ssl_srp_calc_a_param_intern() internally.
+ */
+int ssl_srp_calc_a_param_intern(SSL *s)
 {
     unsigned char rnd[SSL_MAX_MASTER_KEY_LENGTH];
 
@@ -374,6 +429,11 @@ int SRP_Calc_A_param(SSL *s)
         return 0;
 
     return 1;
+}
+
+int SRP_Calc_A_param(SSL *s)
+{
+    return ssl_srp_calc_a_param_intern(s);
 }
 
 BIGNUM *SSL_get_srp_g(SSL *s)

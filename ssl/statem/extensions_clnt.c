@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -108,7 +108,6 @@ EXT_RETURN tls_construct_ctos_srp(SSL *s, WPACKET *pkt, unsigned int context,
 }
 #endif
 
-#ifndef OPENSSL_NO_EC
 static int use_ecc(SSL *s, int min_version, int max_version)
 {
     int i, end, ret = 0;
@@ -144,7 +143,7 @@ static int use_ecc(SSL *s, int min_version, int max_version)
     for (j = 0; j < num_groups; j++) {
         uint16_t ctmp = pgroups[j];
 
-        if (tls_valid_group(s, ctmp, min_version, max_version)
+        if (tls_valid_group(s, ctmp, min_version, max_version, 1, NULL)
                 && tls_group_allowed(s, ctmp, SSL_SECOP_CURVE_SUPPORTED))
             return 1;
     }
@@ -182,15 +181,13 @@ EXT_RETURN tls_construct_ctos_ec_pt_formats(SSL *s, WPACKET *pkt,
 
     return EXT_RETURN_SENT;
 }
-#endif
 
-#if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC)
 EXT_RETURN tls_construct_ctos_supported_groups(SSL *s, WPACKET *pkt,
                                                unsigned int context, X509 *x,
                                                size_t chainidx)
 {
     const uint16_t *pgroups = NULL;
-    size_t num_groups = 0, i;
+    size_t num_groups = 0, i, tls13added = 0, added = 0;
     int min_version, max_version, reason;
 
     reason = ssl_get_min_max_version(s, &min_version, &max_version, NULL);
@@ -199,13 +196,13 @@ EXT_RETURN tls_construct_ctos_supported_groups(SSL *s, WPACKET *pkt,
         return EXT_RETURN_FAIL;
     }
 
-#if defined(OPENSSL_NO_EC)
-    if (SSL_IS_DTLS(s) || max_version < TLS1_3_VERSION)
+    /*
+     * We only support EC groups in TLSv1.2 or below, and in DTLS. Therefore
+     * if we don't have EC support then we don't send this extension.
+     */
+    if (!use_ecc(s, min_version, max_version)
+            && (SSL_IS_DTLS(s) || max_version < TLS1_3_VERSION))
         return EXT_RETURN_NOT_SENT;
-#else
-    if (!use_ecc(s, min_version, max_version) && max_version < TLS1_3_VERSION)
-        return EXT_RETURN_NOT_SENT;
-#endif
 
     /*
      * Add TLS extension supported_groups to the ClientHello message
@@ -223,23 +220,30 @@ EXT_RETURN tls_construct_ctos_supported_groups(SSL *s, WPACKET *pkt,
     /* Copy group ID if supported */
     for (i = 0; i < num_groups; i++) {
         uint16_t ctmp = pgroups[i];
+        int okfortls13;
 
-        if (tls_valid_group(s, ctmp, min_version, max_version)
+        if (tls_valid_group(s, ctmp, min_version, max_version, 0, &okfortls13)
                 && tls_group_allowed(s, ctmp, SSL_SECOP_CURVE_SUPPORTED)) {
             if (!WPACKET_put_bytes_u16(pkt, ctmp)) {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 return EXT_RETURN_FAIL;
             }
+            if (okfortls13 && max_version == TLS1_3_VERSION)
+                tls13added++;
+            added++;
         }
     }
     if (!WPACKET_close(pkt) || !WPACKET_close(pkt)) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        if (added == 0 || (tls13added == 0 && max_version == TLS1_3_VERSION))
+            SSLfatal_data(s, SSL_AD_INTERNAL_ERROR, SSL_R_NO_SUITABLE_GROUPS,
+                          "No groups enabled for max supported SSL/TLS version");
+        else
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return EXT_RETURN_FAIL;
     }
 
     return EXT_RETURN_SENT;
 }
-#endif
 
 EXT_RETURN tls_construct_ctos_session_ticket(SSL *s, WPACKET *pkt,
                                              unsigned int context, X509 *x,
@@ -1158,8 +1162,9 @@ EXT_RETURN tls_construct_ctos_psk(SSL *s, WPACKET *pkt, unsigned int context,
 }
 
 EXT_RETURN tls_construct_ctos_post_handshake_auth(SSL *s, WPACKET *pkt,
-                                                  unsigned int context,
-                                                  X509 *x, size_t chainidx)
+                                                  ossl_unused unsigned int context,
+                                                  ossl_unused X509 *x,
+                                                  ossl_unused size_t chainidx)
 {
 #ifndef OPENSSL_NO_TLS1_3
     if (!s->pha_enabled)
@@ -1305,7 +1310,6 @@ int tls_parse_stoc_server_name(SSL *s, PACKET *pkt, unsigned int context,
     return 1;
 }
 
-#ifndef OPENSSL_NO_EC
 int tls_parse_stoc_ec_pt_formats(SSL *s, PACKET *pkt, unsigned int context,
                                  X509 *x, size_t chainidx)
 {
@@ -1343,7 +1347,6 @@ int tls_parse_stoc_ec_pt_formats(SSL *s, PACKET *pkt, unsigned int context,
 
     return 1;
 }
-#endif
 
 int tls_parse_stoc_session_ticket(SSL *s, PACKET *pkt, unsigned int context,
                                   X509 *x, size_t chainidx)

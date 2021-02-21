@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2002-2020 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2002-2021 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -609,6 +609,7 @@ my %preferred_words = (
     'bitmask'       => 'bit mask',
     'builtin'       => 'built-in',
    #'epoch'         => 'Epoch', # handled specially, below
+    'fall-back'     => 'fallback',
     'file name'     => 'filename',
     'file system'   => 'filesystem',
     'host name'     => 'hostname',
@@ -885,7 +886,7 @@ sub checkstate () {
 
         err("$_ is supposedly public but is documented as internal")
             if ( $declared_public && $name_map{$_} =~ /\/internal\// );
-        err("$_ is supposedly internal but is documented as public")
+        err("$_ is supposedly internal (maybe missing from other.syms) but is documented as public")
             if ( $declared_internal && $name_map{$_} !~ /\/internal\// );
     }
 }
@@ -1173,7 +1174,8 @@ if ( $opt_n ) {
     # If not given args, check that all man1 commands are named properly.
     if ( scalar @ARGV == 0 ) {
         foreach ( files(TAGS => [ 'public_manual', 'man1' ]) ) {
-            next if /CA.pl/ || /openssl\.pod/ || /tsget\.pod/;
+            next if /openssl\.pod/
+                || /CA\.pl/ || /tsget\.pod/; # these commands are special cases
             err("$_ doesn't start with openssl-") unless /openssl-/;
         }
     }

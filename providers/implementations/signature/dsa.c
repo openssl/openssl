@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -23,12 +23,12 @@
 #include <openssl/params.h>
 #include <openssl/evp.h>
 #include <openssl/err.h>
+#include <openssl/proverr.h>
 #include "internal/nelem.h"
 #include "internal/sizes.h"
 #include "internal/cryptlib.h"
 #include "prov/providercommon.h"
 #include "prov/implementations.h"
-#include "prov/providercommonerr.h"
 #include "prov/provider_ctx.h"
 #include "prov/securitycheck.h"
 #include "crypto/dsa.h"
@@ -85,7 +85,6 @@ typedef struct {
     /* main digest */
     EVP_MD *md;
     EVP_MD_CTX *mdctx;
-    size_t mdsize;
     int operation;
 } PROV_DSA_CTX;
 
@@ -128,7 +127,7 @@ static int dsa_setup_md(PROV_DSA_CTX *ctx,
         int sha1_allowed = (ctx->operation != EVP_PKEY_OP_SIGN);
         WPACKET pkt;
         EVP_MD *md = EVP_MD_fetch(ctx->libctx, mdname, mdprops);
-        int md_nid = digest_get_approved_nid_with_sha1(md, sha1_allowed);
+        int md_nid = ossl_digest_get_approved_nid_with_sha1(md, sha1_allowed);
         size_t mdname_len = strlen(mdname);
 
         if (md == NULL || md_nid == NID_undef) {
@@ -184,7 +183,7 @@ static int dsa_signverify_init(void *vpdsactx, void *vdsa, int operation)
     DSA_free(pdsactx->dsa);
     pdsactx->dsa = vdsa;
     pdsactx->operation = operation;
-    if (!dsa_check_key(vdsa, operation == EVP_PKEY_OP_SIGN)) {
+    if (!ossl_dsa_check_key(vdsa, operation == EVP_PKEY_OP_SIGN)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
         return 0;
     }
@@ -361,7 +360,6 @@ static void dsa_freectx(void *vpdsactx)
     ctx->propq = NULL;
     ctx->mdctx = NULL;
     ctx->md = NULL;
-    ctx->mdsize = 0;
     DSA_free(ctx->dsa);
     OPENSSL_free(ctx);
 }
@@ -382,6 +380,7 @@ static void *dsa_dupctx(void *vpdsactx)
     dstctx->dsa = NULL;
     dstctx->md = NULL;
     dstctx->mdctx = NULL;
+    dstctx->propq = NULL;
 
     if (srcctx->dsa != NULL && !DSA_up_ref(srcctx->dsa))
         goto err;
@@ -395,6 +394,11 @@ static void *dsa_dupctx(void *vpdsactx)
         dstctx->mdctx = EVP_MD_CTX_new();
         if (dstctx->mdctx == NULL
                 || !EVP_MD_CTX_copy_ex(dstctx->mdctx, srcctx->mdctx))
+            goto err;
+    }
+    if (srcctx->propq != NULL) {
+        dstctx->propq = OPENSSL_strdup(srcctx->propq);
+        if (dstctx->propq == NULL)
             goto err;
     }
 

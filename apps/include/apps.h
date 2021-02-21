@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -36,6 +36,7 @@
 # include "opt.h"
 # include "fmt.h"
 # include "platform.h"
+# include "engine_loader.h"
 
 /*
  * quick macro when you need to pass an unsigned char instead of a char.
@@ -46,8 +47,9 @@
 
 void app_RAND_load_conf(CONF *c, const char *section);
 void app_RAND_write(void);
+int app_RAND_load(void);
 
-extern char *default_config_file;
+extern char *default_config_file; /* may be "" */
 extern BIO *bio_in;
 extern BIO *bio_out;
 extern BIO *bio_err;
@@ -62,8 +64,10 @@ BIO *bio_open_owner(const char *filename, int format, int private);
 BIO *bio_open_default(const char *filename, char mode, int format);
 BIO *bio_open_default_quiet(const char *filename, char mode, int format);
 CONF *app_load_config_bio(BIO *in, const char *filename);
-CONF *app_load_config(const char *filename);
-CONF *app_load_config_quiet(const char *filename);
+#define app_load_config(filename) app_load_config_internal(filename, 0)
+#define app_load_config_quiet(filename) app_load_config_internal(filename, 1)
+CONF *app_load_config_internal(const char *filename, int quiet);
+CONF *app_load_config_verbose(const char *filename, int verbose);
 int app_load_modules(const CONF *config);
 CONF *app_load_config_modules(const char *configfile);
 void unbuffer(FILE *fp);
@@ -155,10 +159,11 @@ ENGINE *setup_engine_methods(const char *id, unsigned int methods, int debug);
 void release_engine(ENGINE *e);
 int init_engine(ENGINE *e);
 int finish_engine(ENGINE *e);
-EVP_PKEY *load_engine_private_key(ENGINE *e, const char *keyid,
-                                  const char *pass, const char *desc);
-EVP_PKEY *load_engine_public_key(ENGINE *e, const char *keyid,
-                                 const char *pass, const char *desc);
+char *make_engine_uri(ENGINE *e, const char *key_id, const char *desc);
+
+int get_legacy_pkey_id(OSSL_LIB_CTX *libctx, const char *algname, ENGINE *e);
+const EVP_MD *get_digest_from_engine(const char *name);
+const EVP_CIPHER *get_cipher_from_engine(const char *name);
 
 # ifndef OPENSSL_NO_OCSP
 OCSP_RESPONSE *process_responder(OCSP_REQUEST *req,
@@ -229,7 +234,7 @@ int init_gen_str(EVP_PKEY_CTX **pctx,
                  const char *algname, ENGINE *e, int do_param,
                  OSSL_LIB_CTX *libctx, const char *propq);
 int do_X509_sign(X509 *x, EVP_PKEY *pkey, const EVP_MD *md,
-                 STACK_OF(OPENSSL_STRING) *sigopts);
+                 STACK_OF(OPENSSL_STRING) *sigopts, X509V3_CTX *ext_ctx);
 int do_X509_verify(X509 *x, EVP_PKEY *pkey, STACK_OF(OPENSSL_STRING) *vfyopts);
 int do_X509_REQ_sign(X509_REQ *x, EVP_PKEY *pkey, const EVP_MD *md,
                      STACK_OF(OPENSSL_STRING) *sigopts);
@@ -319,6 +324,7 @@ int app_provider_load(OSSL_LIB_CTX *libctx, const char *provider_name);
 void app_providers_cleanup(void);
 
 OSSL_LIB_CTX *app_get0_libctx(void);
+int app_set_propq(const char *arg);
 const char *app_get0_propq(void);
 
 #endif

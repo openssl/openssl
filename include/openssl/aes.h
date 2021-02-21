@@ -45,68 +45,63 @@ struct aes_key_st {
 typedef struct aes_key_st AES_KEY;
 
 # endif
-
-DEPRECATEDIN_3_0(const char *AES_options(void))
-
-DEPRECATEDIN_3_0(int
-                 AES_set_encrypt_key(const unsigned char *userKey,
-                                     const int bits, AES_KEY *key))
-DEPRECATEDIN_3_0(int
-                 AES_set_decrypt_key(const unsigned char *userKey,
-                                     const int bits, AES_KEY *key))
-
-DEPRECATEDIN_3_0(void
-                 AES_encrypt(const unsigned char *in, unsigned char *out,
-                             const AES_KEY *key))
-DEPRECATEDIN_3_0(void
-                 AES_decrypt(const unsigned char *in, unsigned char *out,
-                             const AES_KEY *key))
-
-DEPRECATEDIN_3_0(void
-                 AES_ecb_encrypt(const unsigned char *in, unsigned char *out,
-                                 const AES_KEY *key, const int enc))
-DEPRECATEDIN_3_0(void
-                 AES_cbc_encrypt(const unsigned char *in, unsigned char *out,
-                                 size_t length, const AES_KEY *key,
-                                 unsigned char *ivec, const int enc))
-DEPRECATEDIN_3_0(void
-                 AES_cfb128_encrypt(const unsigned char *in, unsigned char *out,
-                                    size_t length, const AES_KEY *key,
-                                    unsigned char *ivec, int *num,
-                                    const int enc))
-DEPRECATEDIN_3_0(void
-                 AES_cfb1_encrypt(const unsigned char *in, unsigned char *out,
-                                  size_t length, const AES_KEY *key,
-                                  unsigned char *ivec, int *num, const int enc))
-DEPRECATEDIN_3_0(void
-                 AES_cfb8_encrypt(const unsigned char *in, unsigned char *out,
-                                  size_t length, const AES_KEY *key,
-                                  unsigned char *ivec, int *num, const int enc))
-DEPRECATEDIN_3_0(void
-                 AES_ofb128_encrypt(const unsigned char *in, unsigned char *out,
-                                    size_t length, const AES_KEY *key,
-                                    unsigned char *ivec, int *num))
+# ifndef OPENSSL_NO_DEPRECATED_3_0
+OSSL_DEPRECATEDIN_3_0 const char *AES_options(void);
+OSSL_DEPRECATEDIN_3_0
+int AES_set_encrypt_key(const unsigned char *userKey, const int bits,
+                        AES_KEY *key);
+OSSL_DEPRECATEDIN_3_0
+int AES_set_decrypt_key(const unsigned char *userKey, const int bits,
+                        AES_KEY *key);
+OSSL_DEPRECATEDIN_3_0
+void AES_encrypt(const unsigned char *in, unsigned char *out,
+                 const AES_KEY *key);
+OSSL_DEPRECATEDIN_3_0
+void AES_decrypt(const unsigned char *in, unsigned char *out,
+                 const AES_KEY *key);
+OSSL_DEPRECATEDIN_3_0
+void AES_ecb_encrypt(const unsigned char *in, unsigned char *out,
+                     const AES_KEY *key, const int enc);
+OSSL_DEPRECATEDIN_3_0
+void AES_cbc_encrypt(const unsigned char *in, unsigned char *out,
+                     size_t length, const AES_KEY *key,
+                     unsigned char *ivec, const int enc);
+OSSL_DEPRECATEDIN_3_0
+void AES_cfb128_encrypt(const unsigned char *in, unsigned char *out,
+                        size_t length, const AES_KEY *key,
+                        unsigned char *ivec, int *num, const int enc);
+OSSL_DEPRECATEDIN_3_0
+void AES_cfb1_encrypt(const unsigned char *in, unsigned char *out,
+                      size_t length, const AES_KEY *key,
+                      unsigned char *ivec, int *num, const int enc);
+OSSL_DEPRECATEDIN_3_0
+void AES_cfb8_encrypt(const unsigned char *in, unsigned char *out,
+                      size_t length, const AES_KEY *key,
+                      unsigned char *ivec, int *num, const int enc);
+OSSL_DEPRECATEDIN_3_0
+void AES_ofb128_encrypt(const unsigned char *in, unsigned char *out,
+                        size_t length, const AES_KEY *key,
+                        unsigned char *ivec, int *num);
 
 /* NB: the IV is _two_ blocks long */
-DEPRECATEDIN_3_0(void
-                 AES_ige_encrypt(const unsigned char *in, unsigned char *out,
-                                 size_t length, const AES_KEY *key,
-                                 unsigned char *ivec, const int enc))
+OSSL_DEPRECATEDIN_3_0
+void AES_ige_encrypt(const unsigned char *in, unsigned char *out,
+                     size_t length, const AES_KEY *key,
+                     unsigned char *ivec, const int enc);
 /* NB: the IV is _four_ blocks long */
-DEPRECATEDIN_3_0(void
-                 AES_bi_ige_encrypt(const unsigned char *in, unsigned char *out,
-                                    size_t length, const AES_KEY *key,
-                                    const AES_KEY *key2,
-                                    const unsigned char *ivec, const int enc))
-
-DEPRECATEDIN_3_0(int
-                 AES_wrap_key(AES_KEY *key, const unsigned char *iv,
-                              unsigned char *out, const unsigned char *in,
-                              unsigned int inlen))
-DEPRECATEDIN_3_0(int
-                 AES_unwrap_key(AES_KEY *key, const unsigned char *iv,
-                                unsigned char *out, const unsigned char *in,
-                                unsigned int inlen))
+OSSL_DEPRECATEDIN_3_0
+void AES_bi_ige_encrypt(const unsigned char *in, unsigned char *out,
+                        size_t length, const AES_KEY *key, const AES_KEY *key2,
+                        const unsigned char *ivec, const int enc);
+OSSL_DEPRECATEDIN_3_0
+int AES_wrap_key(AES_KEY *key, const unsigned char *iv,
+                 unsigned char *out, const unsigned char *in,
+                 unsigned int inlen);
+OSSL_DEPRECATEDIN_3_0
+int AES_unwrap_key(AES_KEY *key, const unsigned char *iv,
+                   unsigned char *out, const unsigned char *in,
+                   unsigned int inlen);
+# endif
 
 
 # ifdef  __cplusplus

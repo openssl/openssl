@@ -13,7 +13,7 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 
-#include "ssltestlib.h"
+#include "helpers/ssltestlib.h"
 #include "testutil.h"
 
 static char *cert = NULL;
@@ -146,6 +146,11 @@ static int test_dtls_unprocessed(int testidx)
 
 #define TOTAL_RECORDS (TOTAL_FULL_HAND_RECORDS + TOTAL_RESUME_HAND_RECORDS)
 
+/*
+ * We are assuming a ServerKeyExchange message is sent in this test. If we don't
+ * have either DH or EC, then it won't be
+ */
+#if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC)
 static int test_dtls_drop_records(int idx)
 {
     SSL_CTX *sctx = NULL, *cctx = NULL;
@@ -247,6 +252,7 @@ static int test_dtls_drop_records(int idx)
 
     return testresult;
 }
+#endif /* !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC) */
 
 static const char dummy_cookie[] = "0123456";
 
@@ -345,7 +351,9 @@ int setup_tests(void)
         return 0;
 
     ADD_ALL_TESTS(test_dtls_unprocessed, NUM_TESTS);
+#if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC)
     ADD_ALL_TESTS(test_dtls_drop_records, TOTAL_RECORDS);
+#endif
     ADD_TEST(test_cookie);
     ADD_TEST(test_dtls_duplicate_records);
 

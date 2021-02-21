@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2008-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -28,7 +28,7 @@ static int cms_cb(int ok, X509_STORE_CTX *ctx);
 static void receipt_request_print(CMS_ContentInfo *cms);
 static CMS_ReceiptRequest *make_receipt_request(
     STACK_OF(OPENSSL_STRING) *rr_to, int rr_allorfirst,
-    STACK_OF(OPENSSL_STRING) *rr_from, OSSL_LIB_CTX *libctx, const char *propq);
+    STACK_OF(OPENSSL_STRING) *rr_from, OSSL_LIB_CTX *libctx);
 static int cms_set_pkey_param(EVP_PKEY_CTX *pctx,
                               STACK_OF(OPENSSL_STRING) *param);
 
@@ -286,10 +286,11 @@ int cms_main(int argc, char **argv)
     X509_VERIFY_PARAM *vpm = NULL;
     char *certfile = NULL, *keyfile = NULL, *contfile = NULL;
     const char *CAfile = NULL, *CApath = NULL, *CAstore = NULL;
-    char *certsoutfile = NULL;
+    char *certsoutfile = NULL, *digestname = NULL;
     int noCAfile = 0, noCApath = 0, noCAstore = 0;
     char *infile = NULL, *outfile = NULL, *rctfile = NULL;
-    char *passinarg = NULL, *passin = NULL, *signerfile = NULL, *originatorfile = NULL, *recipfile = NULL;
+    char *passinarg = NULL, *passin = NULL, *signerfile = NULL;
+    char *originatorfile = NULL, *recipfile = NULL, *ciphername = NULL;
     char *to = NULL, *from = NULL, *subject = NULL, *prog;
     cms_key_param *key_first = NULL, *key_param = NULL;
     int flags = CMS_DETACHED, noout = 0, print = 0, keyidx = -1, vpmtouched = 0;
@@ -303,7 +304,6 @@ int cms_main(int argc, char **argv)
     const char *mime_eol = "\n";
     OPTION_CHOICE o;
     OSSL_LIB_CTX *libctx = app_get0_libctx();
-    const char *propq = app_get0_propq();
 
     if ((vpm = X509_VERIFY_PARAM_new()) == NULL)
         return 1;
@@ -457,7 +457,7 @@ int cms_main(int argc, char **argv)
                     goto opthelp;
             } else {
                 rcms = load_content_info(rctformat, rctin, NULL, "recipient",
-                                         libctx, propq);
+                                         libctx, app_get0_propq());
             }
             break;
         case OPT_CERTFILE:
@@ -566,8 +566,7 @@ int cms_main(int argc, char **argv)
             certsoutfile = opt_arg();
             break;
         case OPT_MD:
-            if (!opt_md(opt_arg(), &sign_md))
-                goto end;
+            digestname = opt_arg();
             break;
         case OPT_SIGNER:
             /* If previous -signer argument add signer to list */
@@ -626,8 +625,7 @@ int cms_main(int argc, char **argv)
             }
             break;
         case OPT_CIPHER:
-            if (!opt_cipher(opt_unknown(), &cipher))
-                goto end;
+            ciphername = opt_unknown();
             break;
         case OPT_KEYOPT:
             keyidx = -1;
@@ -699,6 +697,17 @@ int cms_main(int argc, char **argv)
             break;
         }
     }
+    app_RAND_load();
+    if (digestname != NULL) {
+        if (!opt_md(digestname, &sign_md))
+            goto end;
+    }
+    if (ciphername != NULL) {
+        if (!opt_cipher(ciphername, &cipher))
+            goto end;
+    }
+
+    /* Remaining args are files to process. */
     argc = opt_num_rest();
     argv = opt_rest();
 
@@ -868,7 +877,7 @@ int cms_main(int argc, char **argv)
         goto end;
 
     if (operation & SMIME_IP) {
-        cms = load_content_info(informat, in, &indata, "SMIME", libctx, propq);
+        cms = load_content_info(informat, in, &indata, "SMIME", libctx, app_get0_propq());
         if (cms == NULL)
             goto end;
         if (contfile != NULL) {
@@ -899,7 +908,7 @@ int cms_main(int argc, char **argv)
         }
 
         rcms = load_content_info(rctformat, rctin, NULL, "recipient", libctx,
-                                 propq);
+                                 app_get0_propq());
         if (rcms == NULL)
             goto end;
     }
@@ -920,15 +929,15 @@ int cms_main(int argc, char **argv)
     ret = 3;
 
     if (operation == SMIME_DATA_CREATE) {
-        cms = CMS_data_create_ex(in, flags, libctx, propq);
+        cms = CMS_data_create_ex(in, flags, libctx, app_get0_propq());
     } else if (operation == SMIME_DIGEST_CREATE) {
-        cms = CMS_digest_create_ex(in, sign_md, flags, libctx, propq);
+        cms = CMS_digest_create_ex(in, sign_md, flags, libctx, app_get0_propq());
     } else if (operation == SMIME_COMPRESS) {
         cms = CMS_compress(in, -1, flags);
     } else if (operation == SMIME_ENCRYPT) {
         int i;
         flags |= CMS_PARTIAL;
-        cms = CMS_encrypt_ex(NULL, in, cipher, flags, libctx, propq);
+        cms = CMS_encrypt_ex(NULL, in, cipher, flags, libctx, app_get0_propq());
         if (cms == NULL)
             goto end;
         for (i = 0; i < sk_X509_num(encerts); i++) {
@@ -994,7 +1003,7 @@ int cms_main(int argc, char **argv)
         }
     } else if (operation == SMIME_ENCRYPTED_ENCRYPT) {
         cms = CMS_EncryptedData_encrypt_ex(in, cipher, secret_key,
-                                           secret_keylen, flags, libctx, propq);
+                                           secret_keylen, flags, libctx, app_get0_propq());
 
     } else if (operation == SMIME_SIGN_RECEIPT) {
         CMS_ContentInfo *srcms = NULL;
@@ -1022,15 +1031,14 @@ int cms_main(int argc, char **argv)
                     flags |= CMS_STREAM;
             }
             flags |= CMS_PARTIAL;
-            cms = CMS_sign_ex(NULL, NULL, other, in, flags, libctx, propq);
+            cms = CMS_sign_ex(NULL, NULL, other, in, flags, libctx, app_get0_propq());
             if (cms == NULL)
                 goto end;
             if (econtent_type != NULL)
                 CMS_set1_eContentType(cms, econtent_type);
 
             if (rr_to != NULL) {
-                rr = make_receipt_request(rr_to, rr_allorfirst, rr_from, libctx,
-                                          propq);
+                rr = make_receipt_request(rr_to, rr_allorfirst, rr_from, libctx);
                 if (rr == NULL) {
                     BIO_puts(bio_err,
                              "Signed Receipt Request Creation Error\n");
@@ -1387,7 +1395,7 @@ static STACK_OF(GENERAL_NAMES) *make_names_stack(STACK_OF(OPENSSL_STRING) *ns)
 static CMS_ReceiptRequest *make_receipt_request(
    STACK_OF(OPENSSL_STRING) *rr_to, int rr_allorfirst,
    STACK_OF(OPENSSL_STRING) *rr_from,
-   OSSL_LIB_CTX *libctx, const char *propq)
+   OSSL_LIB_CTX *libctx)
 {
     STACK_OF(GENERAL_NAMES) *rct_to = NULL, *rct_from = NULL;
     CMS_ReceiptRequest *rr;
@@ -1402,7 +1410,7 @@ static CMS_ReceiptRequest *make_receipt_request(
         rct_from = NULL;
     }
     rr = CMS_ReceiptRequest_create0_ex(NULL, -1, rr_allorfirst, rct_from,
-                                       rct_to, libctx, propq);
+                                       rct_to, libctx, app_get0_propq());
     return rr;
  err:
     sk_GENERAL_NAMES_pop_free(rct_to, GENERAL_NAMES_free);

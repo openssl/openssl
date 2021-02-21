@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -11,6 +11,8 @@
 
 #ifndef OSSL_CRYPTO_ECX_H
 # define OSSL_CRYPTO_ECX_H
+# pragma once
+
 # include <openssl/opensslconf.h>
 
 # ifndef OPENSSL_NO_EC
@@ -77,6 +79,7 @@ typedef struct ecx_key_st ECX_KEY;
 size_t ecx_key_length(ECX_KEY_TYPE type);
 ECX_KEY *ecx_key_new(OSSL_LIB_CTX *libctx, ECX_KEY_TYPE type, int haspubkey,
                      const char *propq);
+void ecx_key_set0_libctx(ECX_KEY *key, OSSL_LIB_CTX *libctx);
 unsigned char *ecx_key_allocate_privkey(ECX_KEY *key);
 void ecx_key_free(ECX_KEY *key);
 int ecx_key_up_ref(ECX_KEY *key);

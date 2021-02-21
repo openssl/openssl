@@ -152,7 +152,9 @@ appropriate size.
 
 EVP_RAND_enable_locking() enables locking for the RAND I<ctx> and all of
 its parents.  After this I<ctx> will operate in a thread safe manner, albeit
-more slowly.
+more slowly. This function is not itself thread safe if called with the same
+I<ctx> from multiple threads. Typically locking should be enabled before a
+I<ctx> is shared across multiple threads.
 
 EVP_RAND_get_params() retrieves details about the implementation
 I<rand>.
@@ -360,7 +362,7 @@ This functionality was added to OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

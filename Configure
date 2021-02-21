@@ -1,6 +1,6 @@
 #! /usr/bin/env perl
 # -*- mode: perl; -*-
-# Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2021 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -75,7 +75,7 @@ my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [-Dxxx] [-lx
 # 386           generate 80386 code in assembly modules
 # no-sse2       disables IA-32 SSE2 code in assembly modules, the above
 #               mentioned '386' option implies this one
-# no-<cipher>   build without specified algorithm (rsa, idea, rc5, ...)
+# no-<cipher>   build without specified algorithm (dsa, idea, rc5, ...)
 # -<xxx> +<xxx> All options which are unknown to the 'Configure' script are
 # /<xxx>        passed through to the compiler. Unix-style options beginning
 #               with a '-' or '+' are recognized, as well as Windows-style
@@ -292,7 +292,7 @@ $config{perlargv} = [ @argvcopy ];
 # 'unshift' adds at the front of the list (i.e. in reverse input order).
 foreach ( reverse sort( 'aes', 'aria', 'bf', 'camellia', 'cast', 'des', 'dh',
                         'dsa', 'ec', 'hmac', 'idea', 'md2', 'md5', 'mdc2',
-                        'rc2', 'rc4', 'rc5', 'ripemd', 'rsa', 'seed', 'sha',
+                        'rc2', 'rc4', 'rc5', 'ripemd', 'seed', 'sha',
                         'sm2', 'sm3', 'sm4') ) {
     unshift @argvcopy, "no-$_" if ! -d catdir($srcdir, 'crypto', $_);
 }
@@ -391,6 +391,8 @@ my @disablables = (
     "bf",
     "blake2",
     "buildtest-c++",
+    "bulk",
+    "cached-fetch",
     "camellia",
     "capieng",
     "cast",
@@ -539,15 +541,29 @@ our %disabled = ( # "what"         => "comment"
 # Note: => pair form used for aesthetics, not to truly make a hash table
 my @disable_cascades = (
     # "what"            => [ "cascade", ... ]
+    "bulk"              => [ "shared", "dso",
+                             "aria", "async", "autoload-config",
+                             "blake2", "bf", "camellia", "cast", "chacha",
+                             "cmac", "cms", "cmp", "comp", "ct",
+                             "des", "dgram", "dh", "dsa",
+                             "ec", "engine",
+                             "filenames",
+                             "idea", "ktls",
+                             "md4", "multiblock", "nextprotoneg",
+                             "ocsp", "ocb", "poly1305", "psk",
+                             "rc2", "rc4", "rmd160",
+                             "seed", "siphash", "siv",
+                             "sm3", "sm4", "srp",
+                             "srtp", "ssl3-method",
+                             "ts", "ui-console", "whirlpool",
+                             "fips-securitychecks" ],
     sub { $config{processor} eq "386" }
                         => [ "sse2" ],
     "ssl"               => [ "ssl3" ],
     "ssl3-method"       => [ "ssl3" ],
     "zlib"              => [ "zlib-dynamic" ],
     "des"               => [ "mdc2" ],
-    "ec"                => [ "ecdsa", "ecdh", "sm2", "gost" ],
-    sub { $disabled{"ec"} && $disabled{"dh"} }
-                        => [ "tls1_3" ],
+    "ec"                => [ "ec2m", "ecdsa", "ecdh", "sm2", "gost" ],
     "dgram"             => [ "dtls", "sctp" ],
     "sock"              => [ "dgram" ],
     "dtls"              => [ @dtls ],
@@ -581,7 +597,7 @@ my @disable_cascades = (
 
     "module"            => [ "fips", "dso" ],
 
-    "engine"            => [ grep /eng$/, @disablables ],
+    "engine"            => [ "dynamic-engine", grep(/eng$/, @disablables) ],
     "hw"                => [ "padlockeng" ],
 
     # no-autoalginit is only useful when building non-shared
@@ -596,13 +612,12 @@ my @disable_cascades = (
 
     sub { !$disabled{"msan"} } => [ "asm" ],
 
-    sub { $disabled{cmac}; } => [ "siv" ],
-    "legacy"                 => [ "md2" ],
+    "cmac"              => [ "siv" ],
+    "legacy"            => [ "md2" ],
 
     "cmp"               => [ "crmf" ],
 
-    sub { $disabled{"deprecated-3.0"} }
-          => [ "engine" ]
+    "deprecated-3.0"    => [ "engine", "srp" ]
     );
 
 # Avoid protocol support holes.  Also disable all versions below N, if version
@@ -1874,6 +1889,17 @@ if ($builder eq "unified") {
 
     $config{build_infos} = [ ];
 
+    # We want to detect configdata.pm in the source tree, so we
+    # don't use it if the build tree is different.
+    my $src_configdata = cleanfile($srcdir, "configdata.pm", $blddir);
+
+    # Any source file that we recognise is placed in this hash table, with
+    # the list of its intended destinations as value.  When everything has
+    # been collected, there's a routine that checks that these source files
+    # exist, or if they are generated, that the generator exists.
+    my %check_exist = ();
+    my %check_generate = ();
+
     my %ordinals = ();
     while (@build_dirs) {
         my @curd = @{shift @build_dirs};
@@ -2020,11 +2046,6 @@ if ($builder eq "unified") {
                     if defined $attrref;
             }
         };
-
-        # We want to detect configdata.pm in the source tree, so we
-        # don't use it if the build tree is different.
-        my $src_configdata = cleanfile($srcdir, "configdata.pm", $blddir);
-
 
         if ($buildinfo_debug) {
             print STDERR "DEBUG: Reading ",catfile($sourced, $f),"\n";
@@ -2225,6 +2246,7 @@ EOF
                 }
                 # We recognise C++, C and asm files
                 if ($s =~ /\.(cc|cpp|c|s|S)$/) {
+                    push @{$check_exist{$s}}, $ddest;
                     my $o = $_;
                     $o =~ s/\.[csS]$/.o/; # C and assembler
                     $o =~ s/\.(cc|cpp)$/_cc.o/; # C++
@@ -2233,12 +2255,14 @@ EOF
                     $unified_info{sources}->{$o}->{$s} = -1;
                 } elsif ($s =~ /\.rc$/) {
                     # We also recognise resource files
+                    push @{$check_exist{$s}}, $ddest;
                     my $o = $_;
                     $o =~ s/\.rc$/.res/; # Resource configuration
-                    my $o = cleanfile($buildd, $o, $blddir);
+                    $o = cleanfile($buildd, $o, $blddir);
                     $unified_info{sources}->{$ddest}->{$o} = -1;
                     $unified_info{sources}->{$o}->{$s} = -1;
                 } else {
+                    push @{$check_exist{$s}}, $ddest;
                     $unified_info{sources}->{$ddest}->{$s} = 1;
                 }
             }
@@ -2258,6 +2282,7 @@ EOF
 
                 if ($s =~ /\.(cc|cpp|c|s|S)$/) {
                     # We recognise C++, C and asm files
+                    push @{$check_exist{$s}}, $ddest;
                     my $o = $_;
                     $o =~ s/\.[csS]$/.o/; # C and assembler
                     $o =~ s/\.(cc|cpp)$/_cc.o/; # C++
@@ -2266,14 +2291,16 @@ EOF
                     $unified_info{sources}->{$o}->{$s} = -1;
                 } elsif ($s =~ /\.rc$/) {
                     # We also recognise resource files
+                    push @{$check_exist{$s}}, $ddest;
                     my $o = $_;
                     $o =~ s/\.rc$/.res/; # Resource configuration
-                    my $o = cleanfile($buildd, $o, $blddir);
+                    $o = cleanfile($buildd, $o, $blddir);
                     $unified_info{shared_sources}->{$ddest}->{$o} = -1;
                     $unified_info{sources}->{$o}->{$s} = -1;
                 } elsif ($s =~ /\.ld$/) {
                     # We also recognise linker scripts (or corresponding)
                     # We know they are generated files
+                    push @{$check_exist{$s}}, $ddest;
                     my $ld = cleanfile($buildd, $_, $blddir);
                     $unified_info{shared_sources}->{$ddest}->{$ld} = 1;
                 } else {
@@ -2296,6 +2323,7 @@ EOF
             if ($generate{$gen}) {
                 $generator[0] = cleanfile($buildd, $gen, $blddir);
             }
+            $check_generate{$ddest}->{$generator[0]}++;
 
             $unified_info{generate}->{$ddest} = [ @generator ];
         }
@@ -2400,6 +2428,60 @@ They are ignored and should be replaced with a combination of GENERATE,
 DEPEND and SHARED_SOURCE.
 EOF
 
+    # Check that each generated file is only generated once
+    my $ambiguous_generation = 0;
+    foreach (sort keys %check_generate) {
+        my @generators = sort keys %{$check_generate{$_}};
+        my $generators_txt = join(', ', @generators);
+        if (scalar @generators > 1) {
+            warn "$_ is GENERATEd by more than one generator ($generators_txt)\n";
+            $ambiguous_generation++;
+        }
+        if ($check_generate{$_}->{$generators[0]} > 1) {
+            warn "INFO: $_ has more than one GENERATE declaration (same generator)\n"
+        }
+    }
+    die "There are ambiguous source file generations\n"
+        if $ambiguous_generation > 0;
+
+    # All given source files should exist, or if generated, their
+    # generator should exist.  This loop ensures this is true.
+    my $missing = 0;
+    foreach my $orig (sort keys %check_exist) {
+        foreach my $dest (@{$check_exist{$orig}}) {
+            if ($orig ne $src_configdata) {
+                if ($orig =~ /\.a$/) {
+                    # Static library names may be used as sources, so we
+                    # need to detect those and give them special treatment.
+                    unless (grep { $_ eq $orig }
+                            keys %{$unified_info{libraries}}) {
+                        warn "$orig is given as source for $dest, but no such library is built\n";
+                        $missing++;
+                    }
+                } else {
+                    # A source may be generated, and its generator may be
+                    # generated as well.  We therefore loop to dig out the
+                    # first generator.
+                    my $gen = $orig;
+
+                    while (my @next = keys %{$check_generate{$gen}}) {
+                        $gen = $next[0];
+                    }
+
+                    if (! -f $gen) {
+                        if ($gen ne $orig) {
+                            $missing++;
+                            warn "$orig is given as source for $dest, but its generator (leading to $gen) is missing\n";
+                        } else {
+                            $missing++;
+                            warn "$orig is given as source for $dest, but is missing\n";
+                        }
+                    }
+                }
+            }
+        }
+    }
+    die "There are files missing\n" if $missing > 0;
 
     # Go through the sources of all libraries and check that the same basename
     # doesn't appear more than once.  Some static library archivers depend on

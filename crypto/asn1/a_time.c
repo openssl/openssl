@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -16,6 +16,7 @@
 
 #include <stdio.h>
 #include <time.h>
+#include "crypto/asn1.h"
 #include "crypto/ctype.h"
 #include "internal/cryptlib.h"
 #include <openssl/asn1t.h>
@@ -467,17 +468,23 @@ static const char _asn1_mon[12][4] = {
     "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
 };
 
+/* returns 1 on success, 0 on BIO write error or parse failure */
 int ASN1_TIME_print(BIO *bp, const ASN1_TIME *tm)
+{
+    return asn1_time_print_ex(bp, tm) > 0;
+}
+
+/* returns 0 on BIO write error, else -1 in case of parse failure, else 1 */
+int asn1_time_print_ex(BIO *bp, const ASN1_TIME *tm)
 {
     char *v;
     int gmt = 0, l;
     struct tm stm;
     const char upper_z = 0x5A, period = 0x2E;
 
-    if (!asn1_time_to_tm(&stm, tm)) {
-        /* asn1_time_to_tm will check the time type */
-        goto err;
-    }
+    /* asn1_time_to_tm will check the time type */
+    if (!asn1_time_to_tm(&stm, tm))
+        return BIO_write(bp, "Bad time value", 14) ? -1 : 0;
 
     l = tm->length;
     v = (char *)tm->data;
@@ -509,9 +516,6 @@ int ASN1_TIME_print(BIO *bp, const ASN1_TIME *tm)
                           stm.tm_min, stm.tm_sec, stm.tm_year + 1900,
                           (gmt ? " GMT" : "")) > 0;
     }
- err:
-    BIO_write(bp, "Bad time value", 14);
-    return 0;
 }
 
 int ASN1_TIME_cmp_time_t(const ASN1_TIME *s, time_t t)

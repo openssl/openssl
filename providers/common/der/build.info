@@ -25,43 +25,49 @@ GENERATE[$DER_RSA_H]=der_rsa.h.in
 DEPEND[$DER_RSA_H]=oids_to_c.pm
 
 #----- DSA
-$DER_DSA_H=../include/prov/der_dsa.h
-$DER_DSA_GEN=der_dsa_gen.c
-$DER_DSA_AUX=der_dsa_key.c der_dsa_sig.c
+IF[{- !$disabled{dsa} -}]
+  $DER_DSA_H=../include/prov/der_dsa.h
+  $DER_DSA_GEN=der_dsa_gen.c
+  $DER_DSA_AUX=der_dsa_key.c der_dsa_sig.c
 
-GENERATE[$DER_DSA_GEN]=der_dsa_gen.c.in
-DEPEND[$DER_DSA_GEN]=oids_to_c.pm
+  GENERATE[$DER_DSA_GEN]=der_dsa_gen.c.in
+  DEPEND[$DER_DSA_GEN]=oids_to_c.pm
 
-DEPEND[${DER_DSA_AUX/.c/.o}]=$DER_DSA_H $DER_DIGESTS_H
-DEPEND[${DER_DSA_GEN/.c/.o}]=$DER_DSA_H
-GENERATE[$DER_DSA_H]=der_dsa.h.in
-DEPEND[$DER_DSA_H]=oids_to_c.pm
+  DEPEND[${DER_DSA_AUX/.c/.o}]=$DER_DSA_H $DER_DIGESTS_H
+  DEPEND[${DER_DSA_GEN/.c/.o}]=$DER_DSA_H
+  GENERATE[$DER_DSA_H]=der_dsa.h.in
+  DEPEND[$DER_DSA_H]=oids_to_c.pm
+ENDIF
 
 #----- EC
-$DER_EC_H=../include/prov/der_ec.h
-$DER_EC_GEN=der_ec_gen.c
-$DER_EC_AUX=der_ec_key.c der_ec_sig.c
+IF[{- !$disabled{ec} -}]
+  $DER_EC_H=../include/prov/der_ec.h
+  $DER_EC_GEN=der_ec_gen.c
+  $DER_EC_AUX=der_ec_key.c der_ec_sig.c
 
-GENERATE[$DER_EC_GEN]=der_ec_gen.c.in
-DEPEND[$DER_EC_GEN]=oids_to_c.pm
+  GENERATE[$DER_EC_GEN]=der_ec_gen.c.in
+  DEPEND[$DER_EC_GEN]=oids_to_c.pm
 
-DEPEND[${DER_EC_AUX/.c/.o}]=$DER_EC_H $DER_DIGESTS_H
-DEPEND[${DER_EC_GEN/.c/.o}]=$DER_EC_H
-GENERATE[$DER_EC_H]=der_ec.h.in
-DEPEND[$DER_EC_H]=oids_to_c.pm
+  DEPEND[${DER_EC_AUX/.c/.o}]=$DER_EC_H $DER_DIGESTS_H
+  DEPEND[${DER_EC_GEN/.c/.o}]=$DER_EC_H
+  GENERATE[$DER_EC_H]=der_ec.h.in
+  DEPEND[$DER_EC_H]=oids_to_c.pm
+ENDIF
 
 #----- ECX
-$DER_ECX_H=../include/prov/der_ecx.h
-$DER_ECX_GEN=der_ecx_gen.c
-$DER_ECX_AUX=der_ecx_key.c
+IF[{- !$disabled{ec} -}]
+  $DER_ECX_H=../include/prov/der_ecx.h
+  $DER_ECX_GEN=der_ecx_gen.c
+  $DER_ECX_AUX=der_ecx_key.c
 
-GENERATE[$DER_ECX_GEN]=der_ecx_gen.c.in
-DEPEND[$DER_ECX_GEN]=oids_to_c.pm
+  GENERATE[$DER_ECX_GEN]=der_ecx_gen.c.in
+  DEPEND[$DER_ECX_GEN]=oids_to_c.pm
 
-DEPEND[${DER_ECX_AUX/.c/.o}]=$DER_ECX_H
-DEPEND[${DER_ECX_GEN/.c/.o}]=$DER_ECX_H
-GENERATE[$DER_ECX_H]=der_ecx.h.in
-DEPEND[$DER_ECX_H]=oids_to_c.pm
+  DEPEND[${DER_ECX_AUX/.c/.o}]=$DER_ECX_H
+  DEPEND[${DER_ECX_GEN/.c/.o}]=$DER_ECX_H
+  GENERATE[$DER_ECX_H]=der_ecx.h.in
+  DEPEND[$DER_ECX_H]=oids_to_c.pm
+ENDIF
 
 #----- KEY WRAP
 $DER_WRAP_H=../include/prov/der_wrap.h
@@ -75,33 +81,38 @@ GENERATE[$DER_WRAP_H]=der_wrap.h.in
 DEPEND[$DER_WRAP_H]=oids_to_c.pm
 
 #----- SM2
-$DER_SM2_H=../include/prov/der_sm2.h
-$DER_SM2_GEN=der_sm2_gen.c
-$DER_SM2_AUX=der_sm2_key.c der_sm2_sig.c
+IF[{- !$disabled{sm2} -}]
+  $DER_SM2_H=../include/prov/der_sm2.h
+  $DER_SM2_GEN=der_sm2_gen.c
+  $DER_SM2_AUX=der_sm2_key.c der_sm2_sig.c
 
-GENERATE[$DER_SM2_GEN]=der_sm2_gen.c.in
-DEPEND[$DER_SM2_GEN]=oids_to_c.pm
+  GENERATE[$DER_SM2_GEN]=der_sm2_gen.c.in
+  DEPEND[$DER_SM2_GEN]=oids_to_c.pm
 
-DEPEND[${DER_SM2_AUX/.c/.o}]=$DER_SM2_H $DER_EC_H
-DEPEND[${DER_SM2_GEN/.c/.o}]=$DER_SM2_H
-GENERATE[$DER_SM2_H]=der_sm2.h.in
-DEPEND[$DER_SM2_H]=oids_to_c.pm
+  DEPEND[${DER_SM2_AUX/.c/.o}]=$DER_SM2_H $DER_EC_H
+  DEPEND[${DER_SM2_GEN/.c/.o}]=$DER_SM2_H
+  GENERATE[$DER_SM2_H]=der_sm2.h.in
+  DEPEND[$DER_SM2_H]=oids_to_c.pm
+ENDIF
 
 #----- Conclusion
 
 # TODO(3.0) $COMMON should go to libcommon.a, but this currently leads
 # to linking conflicts, so we add it to libfips.a and libnonfips.a for
 # the moment being
-$COMMON=\
-        $DER_RSA_COMMON \
-        $DER_DSA_GEN $DER_DSA_AUX \
-        $DER_EC_GEN $DER_EC_AUX \
-        $DER_DIGESTS_GEN \
-        $DER_WRAP_GEN \
-        $DER_SM2_GEN $DER_SM2_AUX
+$COMMON= $DER_RSA_COMMON $DER_DIGESTS_GEN $DER_WRAP_GEN
+
+IF[{- !$disabled{dsa} -}]
+  $COMMON = $COMMON $DER_DSA_GEN $DER_DSA_AUX
+ENDIF
 
 IF[{- !$disabled{ec} -}]
+  $COMMON = $COMMON $DER_EC_GEN $DER_EC_AUX
   $COMMON = $COMMON $DER_ECX_GEN $DER_ECX_AUX
+ENDIF
+
+IF[{- !$disabled{sm2} -}]
+  $COMMON = $COMMON $DER_SM2_GEN $DER_SM2_AUX
 ENDIF
 
 SOURCE[../../libfips.a]=$COMMON $DER_RSA_FIPSABLE

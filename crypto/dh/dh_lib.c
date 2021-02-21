@@ -51,11 +51,12 @@ const DH_METHOD *dh_get_method(const DH *dh)
 {
     return dh->meth;
 }
-
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 DH *DH_new(void)
 {
     return dh_new_intern(NULL, NULL);
 }
+# endif
 
 DH *DH_new_method(ENGINE *engine)
 {
@@ -167,6 +168,11 @@ int DH_up_ref(DH *r)
     return ((i > 1) ? 1 : 0);
 }
 
+void ossl_dh_set0_libctx(DH *d, OSSL_LIB_CTX *libctx)
+{
+    d->libctx = libctx;
+}
+
 #ifndef FIPS_MODULE
 int DH_set_ex_data(DH *d, int idx, void *arg)
 {
@@ -181,12 +187,16 @@ void *DH_get_ex_data(const DH *d, int idx)
 
 int DH_bits(const DH *dh)
 {
-    return BN_num_bits(dh->params.p);
+    if (dh->params.p != NULL)
+        return BN_num_bits(dh->params.p);
+    return -1;
 }
 
 int DH_size(const DH *dh)
 {
-    return BN_num_bytes(dh->params.p);
+    if (dh->params.p != NULL)
+        return BN_num_bytes(dh->params.p);
+    return -1;
 }
 
 int DH_security_bits(const DH *dh)
@@ -198,7 +208,9 @@ int DH_security_bits(const DH *dh)
         N = dh->length;
     else
         N = -1;
-    return BN_security_bits(BN_num_bits(dh->params.p), N);
+    if (dh->params.p != NULL)
+        return BN_security_bits(BN_num_bits(dh->params.p), N);
+    return -1;
 }
 
 void DH_get0_pqg(const DH *dh,

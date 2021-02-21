@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -14,7 +14,6 @@
 #include "../ssl_local.h"
 #include "statem_local.h"
 #include "internal/cryptlib.h"
-#include "internal/evp.h"
 #include <openssl/buffer.h>
 #include <openssl/objects.h>
 #include <openssl/evp.h>
@@ -1043,7 +1042,8 @@ unsigned long ssl3_output_cert_chain(SSL *s, WPACKET *pkt, CERT_PKEY *cpk)
  * in NBIO events. If |clearbufs| is set then init_buf and the wbio buffer is
  * freed up as well.
  */
-WORK_STATE tls_finish_handshake(SSL *s, WORK_STATE wst, int clearbufs, int stop)
+WORK_STATE tls_finish_handshake(SSL *s, ossl_unused WORK_STATE wst,
+                                int clearbufs, int stop)
 {
     void (*cb) (const SSL *ssl, int type, int val) = NULL;
     int cleanuphand = s->statem.cleanuphand;
@@ -1515,15 +1515,24 @@ static int ssl_method_error(const SSL *s, const SSL_METHOD *method)
 
 /*
  * Only called by servers. Returns 1 if the server has a TLSv1.3 capable
- * certificate type, or has PSK or a certificate callback configured. Otherwise
- * returns 0.
+ * certificate type, or has PSK or a certificate callback configured, or has
+ * a servername callback configure. Otherwise returns 0.
  */
 static int is_tls13_capable(const SSL *s)
 {
     int i;
-#ifndef OPENSSL_NO_EC
     int curve;
-#endif
+
+    if (!ossl_assert(s->ctx != NULL) || !ossl_assert(s->session_ctx != NULL))
+        return 0;
+
+    /*
+     * A servername callback can change the available certs, so if a servername
+     * cb is set then we just assume TLSv1.3 will be ok
+     */
+    if (s->ctx->ext.servername_cb != NULL
+            || s->session_ctx->ext.servername_cb != NULL)
+        return 1;
 
 #ifndef OPENSSL_NO_PSK
     if (s->psk_server_callback != NULL)
@@ -1546,7 +1555,6 @@ static int is_tls13_capable(const SSL *s)
         }
         if (!ssl_has_cert(s, i))
             continue;
-#ifndef OPENSSL_NO_EC
         if (i != SSL_PKEY_ECC)
             return 1;
         /*
@@ -1554,13 +1562,9 @@ static int is_tls13_capable(const SSL *s)
          * more restrictive so check that our sig algs are consistent with this
          * EC cert. See section 4.2.3 of RFC8446.
          */
-        curve = evp_pkey_get_EC_KEY_curve_nid(s->cert->pkeys[SSL_PKEY_ECC]
-                                              .privatekey);
+        curve = ssl_get_EC_curve_nid(s->cert->pkeys[SSL_PKEY_ECC].privatekey);
         if (tls_check_sigalg_curve(s, curve))
             return 1;
-#else
-        return 1;
-#endif
     }
 
     return 0;

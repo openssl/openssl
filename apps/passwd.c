@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -22,7 +22,7 @@
 #include <openssl/md5.h>
 #include <openssl/sha.h>
 
-static unsigned const char cov_2char[64] = {
+static const unsigned char cov_2char[64] = {
     /* from crypto/des/fcrypt.c */
     0x2E, 0x2F, 0x30, 0x31, 0x32, 0x33, 0x34, 0x35,
     0x36, 0x37, 0x38, 0x39, 0x41, 0x42, 0x43, 0x44,
@@ -184,9 +184,10 @@ int passwd_main(int argc, char **argv)
             break;
         }
     }
+
+    /* All remaining arguments are the password text */
     argc = opt_num_rest();
     argv = opt_rest();
-
     if (*argv != NULL) {
         if (pw_source_defined)
             goto opthelp;
@@ -194,6 +195,7 @@ int passwd_main(int argc, char **argv)
         passwds = argv;
     }
 
+    app_RAND_load();
     if (mode == passwd_unset) {
         /* use default */
         mode = passwd_md5;
@@ -412,7 +414,7 @@ static char *md5crypt(const char *passwd, const char *magic, const char *salt)
         if (!EVP_DigestInit_ex(md2, EVP_md5(), NULL))
             goto err;
         if (!EVP_DigestUpdate(md2,
-                              (i & 1) ? (unsigned const char *)passwd : buf,
+                              (i & 1) ? (const unsigned char *)passwd : buf,
                               (i & 1) ? passwd_len : sizeof(buf)))
             goto err;
         if (i % 3) {
@@ -424,7 +426,7 @@ static char *md5crypt(const char *passwd, const char *magic, const char *salt)
                 goto err;
         }
         if (!EVP_DigestUpdate(md2,
-                              (i & 1) ? buf : (unsigned const char *)passwd,
+                              (i & 1) ? buf : (const unsigned char *)passwd,
                               (i & 1) ? sizeof(buf) : passwd_len))
                 goto err;
         if (!EVP_DigestFinal_ex(md2, buf, NULL))
@@ -514,7 +516,7 @@ static char *shacrypt(const char *passwd, const char *magic, const char *salt)
     EVP_MD_CTX *md = NULL, *md2 = NULL;
     const EVP_MD *sha = NULL;
     size_t passwd_len, salt_len, magic_len;
-    unsigned int rounds = 5000;        /* Default */
+    unsigned int rounds = ROUNDS_DEFAULT;        /* Default */
     char rounds_custom = 0;
     char *p_bytes = NULL;
     char *s_bytes = NULL;
@@ -626,7 +628,7 @@ static char *shacrypt(const char *passwd, const char *magic, const char *salt)
     n = passwd_len;
     while (n) {
         if (!EVP_DigestUpdate(md,
-                              (n & 1) ? buf : (unsigned const char *)passwd,
+                              (n & 1) ? buf : (const unsigned char *)passwd,
                               (n & 1) ? buf_size : passwd_len))
             goto err;
         n >>= 1;
@@ -672,7 +674,7 @@ static char *shacrypt(const char *passwd, const char *magic, const char *salt)
         if (!EVP_DigestInit_ex(md2, sha, NULL))
             goto err;
         if (!EVP_DigestUpdate(md2,
-                              (n & 1) ? (unsigned const char *)p_bytes : buf,
+                              (n & 1) ? (const unsigned char *)p_bytes : buf,
                               (n & 1) ? passwd_len : buf_size))
             goto err;
         if (n % 3) {
@@ -684,7 +686,7 @@ static char *shacrypt(const char *passwd, const char *magic, const char *salt)
                 goto err;
         }
         if (!EVP_DigestUpdate(md2,
-                              (n & 1) ? buf : (unsigned const char *)p_bytes,
+                              (n & 1) ? buf : (const unsigned char *)p_bytes,
                               (n & 1) ? buf_size : passwd_len))
                 goto err;
         if (!EVP_DigestFinal_ex(md2, buf, NULL))

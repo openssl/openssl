@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -9,6 +9,7 @@
 
 #ifndef OSSL_INTERNAL_CRYPTLIB_H
 # define OSSL_INTERNAL_CRYPTLIB_H
+# pragma once
 
 # include <stdlib.h>
 # include <string.h>
@@ -184,6 +185,7 @@ typedef void (ossl_lib_ctx_onfree_fn)(OSSL_LIB_CTX *ctx);
 int ossl_lib_ctx_run_once(OSSL_LIB_CTX *ctx, unsigned int idx,
                           ossl_lib_ctx_run_once_fn run_once_fn);
 int ossl_lib_ctx_onfree(OSSL_LIB_CTX *ctx, ossl_lib_ctx_onfree_fn onfreefn);
+const char *ossl_lib_ctx_get_descriptor(OSSL_LIB_CTX *libctx);
 
 OSSL_LIB_CTX *crypto_ex_data_get_ossl_lib_ctx(const CRYPTO_EX_DATA *ad);
 int crypto_new_ex_data_ex(OSSL_LIB_CTX *ctx, int class_index, void *obj,

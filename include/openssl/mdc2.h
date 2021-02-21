@@ -38,13 +38,14 @@ typedef struct mdc2_ctx_st {
     unsigned int pad_type;   /* either 1 or 2, default 1 */
 } MDC2_CTX;
 #  endif
-
-DEPRECATEDIN_3_0(int MDC2_Init(MDC2_CTX *c))
-DEPRECATEDIN_3_0(int MDC2_Update(MDC2_CTX *c, const unsigned char *data,
-                 size_t len))
-DEPRECATEDIN_3_0(int MDC2_Final(unsigned char *md, MDC2_CTX *c))
-DEPRECATEDIN_3_0(unsigned char *MDC2(const unsigned char *d, size_t n,
-                 unsigned char *md))
+#  ifndef OPENSSL_NO_DEPRECATED_3_0
+OSSL_DEPRECATEDIN_3_0 int MDC2_Init(MDC2_CTX *c);
+OSSL_DEPRECATEDIN_3_0 int MDC2_Update(MDC2_CTX *c, const unsigned char *data,
+                                      size_t len);
+OSSL_DEPRECATEDIN_3_0 int MDC2_Final(unsigned char *md, MDC2_CTX *c);
+OSSL_DEPRECATEDIN_3_0 unsigned char *MDC2(const unsigned char *d, size_t n,
+                                          unsigned char *md);
+#  endif
 
 #  ifdef  __cplusplus
 }

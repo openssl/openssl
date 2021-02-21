@@ -10,6 +10,7 @@
 
 #include <openssl/err.h>
 #include <openssl/cryptoerr.h>
+#include "crypto/cryptoerr.h"
 
 #ifndef OPENSSL_NO_ERR
 
@@ -20,6 +21,8 @@ static const ERR_STRING_DATA CRYPTO_str_reasons[] = {
     "conflicting names"},
     {ERR_PACK(ERR_LIB_CRYPTO, 0, CRYPTO_R_FIPS_MODE_NOT_SUPPORTED),
     "fips mode not supported"},
+    {ERR_PACK(ERR_LIB_CRYPTO, 0, CRYPTO_R_HEX_STRING_TOO_SHORT),
+    "hex string too short"},
     {ERR_PACK(ERR_LIB_CRYPTO, 0, CRYPTO_R_ILLEGAL_HEX_DIGIT),
     "illegal hex digit"},
     {ERR_PACK(ERR_LIB_CRYPTO, 0, CRYPTO_R_INSUFFICIENT_DATA_SPACE),
@@ -57,7 +60,7 @@ static const ERR_STRING_DATA CRYPTO_str_reasons[] = {
 
 #endif
 
-int ERR_load_CRYPTO_strings(void)
+int err_load_CRYPTO_strings_int(void)
 {
 #ifndef OPENSSL_NO_ERR
     if (ERR_reason_error_string(CRYPTO_str_reasons[0].error) == NULL)

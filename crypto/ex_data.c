@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -392,15 +392,22 @@ void CRYPTO_free_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad)
 int CRYPTO_alloc_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad,
                          int idx)
 {
-    EX_CALLBACK *f;
-    EX_CALLBACKS *ip;
     void *curval;
-    OSSL_EX_DATA_GLOBAL *global;
 
     curval = CRYPTO_get_ex_data(ad, idx);
     /* Already there, no need to allocate */
     if (curval != NULL)
         return 1;
+
+    return ossl_crypto_alloc_ex_data_intern(class_index, obj, ad, idx);
+}
+
+int ossl_crypto_alloc_ex_data_intern(int class_index, void *obj,
+                                     CRYPTO_EX_DATA *ad, int idx)
+{
+    EX_CALLBACK *f;
+    EX_CALLBACKS *ip;
+    OSSL_EX_DATA_GLOBAL *global;
 
     global = ossl_lib_ctx_get_ex_data_global(ad->ctx);
     if (global == NULL)

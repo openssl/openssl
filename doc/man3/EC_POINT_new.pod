@@ -55,11 +55,6 @@ EC_POINT_hex2point
                            unsigned char **pbuf, BN_CTX *ctx);
  int EC_POINT_oct2point(const EC_GROUP *group, EC_POINT *p,
                         const unsigned char *buf, size_t len, BN_CTX *ctx);
- BIGNUM *EC_POINT_point2bn(const EC_GROUP *group, const EC_POINT *p,
-                           point_conversion_form_t form, BIGNUM *bn,
-                           BN_CTX *ctx);
- EC_POINT *EC_POINT_bn2point(const EC_GROUP *group, const BIGNUM *bn,
-                             EC_POINT *p, BN_CTX *ctx);
  char *EC_POINT_point2hex(const EC_GROUP *group, const EC_POINT *p,
                           point_conversion_form_t form, BN_CTX *ctx);
  EC_POINT *EC_POINT_hex2point(const EC_GROUP *group, const char *hex,
@@ -96,6 +91,11 @@ Deprecated since OpenSSL 3.0:
                                               EC_POINT *p,
                                               const BIGNUM *x, int y_bit,
                                               BN_CTX *ctx);
+ BIGNUM *EC_POINT_point2bn(const EC_GROUP *group, const EC_POINT *p,
+                           point_conversion_form_t form, BIGNUM *bn,
+                           BN_CTX *ctx);
+ EC_POINT *EC_POINT_bn2point(const EC_GROUP *group, const BIGNUM *bn,
+                             EC_POINT *p, BN_CTX *ctx);
 
 =head1 DESCRIPTION
 
@@ -257,7 +257,9 @@ EC_POINT_get_Jprojective_coordinates_GFp(),
 EC_POINT_set_affine_coordinates_GFp(), EC_POINT_get_affine_coordinates_GFp(),
 EC_POINT_set_compressed_coordinates_GFp(),
 EC_POINT_set_affine_coordinates_GF2m(), EC_POINT_get_affine_coordinates_GF2m(),
-EC_POINT_set_compressed_coordinates_GF2m() were deprecated in OpenSSL 3.0.
+EC_POINT_set_compressed_coordinates_GF2m(),
+EC_POINT_point2bn(), and EC_POINT_bn2point() were deprecated in OpenSSL 3.0.
+
 
 B<EC_POINT_set_affine_coordinates>, B<EC_POINT_get_affine_coordinates>,
 and B<EC_POINT_set_compressed_coordinates> were

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -13,19 +13,17 @@
  */
 #include "internal/deprecated.h"
 
+#include <openssl/proverr.h>
 #include "cipher_aes.h"
 #include "prov/providercommon.h"
-#include "prov/providercommonerr.h"
 #include "prov/implementations.h"
 
 /* AES wrap with padding has IV length of 4, without padding 8 */
 #define AES_WRAP_PAD_IVLEN   4
 #define AES_WRAP_NOPAD_IVLEN 8
 
-/* TODO(3.0) Figure out what flags need to be passed */
-#define WRAP_FLAGS (EVP_CIPH_WRAP_MODE | EVP_CIPH_CUSTOM_IV \
-                    | EVP_CIPH_ALWAYS_CALL_INIT)
-#define WRAP_FLAGS_INV (WRAP_FLAGS | EVP_CIPH_FLAG_INVERSE_CIPHER)
+#define WRAP_FLAGS (PROV_CIPHER_FLAG_CUSTOM_IV)
+#define WRAP_FLAGS_INV (WRAP_FLAGS | PROV_CIPHER_FLAG_INVERSE_CIPHER)
 
 typedef size_t (*aeswrap_fn)(void *key, const unsigned char *iv,
                              unsigned char *out, const unsigned char *in,
@@ -111,7 +109,7 @@ static int aes_wrap_init(void *vctx, const unsigned char *key,
          * to be the AES decryption function, then CIPH-1K will be the AES
          * encryption function.
          */
-        if ((ctx->flags & EVP_CIPH_FLAG_INVERSE_CIPHER) == 0)
+        if (ctx->inverse_cipher == 0)
             use_forward_transform = ctx->enc;
         else
             use_forward_transform = !ctx->enc;

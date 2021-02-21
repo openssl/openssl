@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2021 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -27,7 +27,7 @@ sub verify {
     run(app([@args]));
 }
 
-plan tests => 151;
+plan tests => 155;
 
 # Canonical success
 ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"]),
@@ -141,6 +141,10 @@ ok(!verify("ee-cert", "sslserver", [], [qw(ca-cert)], "-partial_chain"),
    "fail untrusted partial chain");
 ok(verify("ee-cert", "sslserver", [qw(ca-cert)], [], "-partial_chain"),
    "accept trusted partial chain");
+ok(!verify("ee-cert", "sslserver", [qw(ca-expired)], [], "-partial_chain"),
+   "reject expired trusted partial chain"); # this check is beyond RFC 5280
+ok(!verify("ee-cert", "sslserver", [qw(root-expired)], [qw(ca-cert)]),
+   "reject expired trusted root"); # this check is beyond RFC 5280
 ok(verify("ee-cert", "sslserver", [qw(sca-cert)], [], "-partial_chain"),
    "accept partial chain with server purpose");
 ok(!verify("ee-cert", "sslserver", [qw(cca-cert)], [], "-partial_chain"),
@@ -375,6 +379,11 @@ ok(!verify("ee-pss-sha1-cert", "sslserver", ["root-cert"], ["ca-cert"], "-auth_l
 
 ok(verify("ee-pss-sha256-cert", "sslserver", ["root-cert"], ["ca-cert"], "-auth_level", "2"),
     "PSS signature using SHA256 and auth level 2");
+
+ok(verify("ee-pss-cert", "sslserver", ["root-cert"], ["ca-pss-cert"], ),
+    "CA PSS signature");
+ok(!verify("ee-pss-wrong1.5-cert", "sslserver", ["root-cert"], ["ca-pss-cert"], ),
+    "CA producing regular PKCS#1 v1.5 signature with PSA-PSS key");
 
 ok(!verify("many-names1", "sslserver", ["many-constraints"], ["many-constraints"], ),
     "Too many names and constraints to check (1)");

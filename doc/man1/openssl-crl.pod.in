@@ -53,7 +53,7 @@ This option has no effect and is retained for backward compatibility only.
 =item B<-outform> B<DER>|B<PEM>
 
 The CRL output format; the default is B<PEM>.
-See L<openssl(1)/Format Options> for details.
+See L<openssl-format-options(1)> for details.
 
 =item B<-key> I<filename>
 

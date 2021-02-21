@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2008-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -38,7 +38,7 @@ CMS_ContentInfo *d2i_CMS_bio(BIO *bp, CMS_ContentInfo **cms)
     CMS_ContentInfo *ci;
 
     ci = ASN1_item_d2i_bio(ASN1_ITEM_rptr(CMS_ContentInfo), bp, cms);
-    if (ci != NULL && cms != NULL)
+    if (ci != NULL)
         cms_resolve_libctx(ci);
     return ci;
 }
@@ -97,7 +97,7 @@ CMS_ContentInfo *SMIME_read_CMS_ex(BIO *bio, BIO **bcont, CMS_ContentInfo **cms)
     ci = (CMS_ContentInfo *)SMIME_read_ASN1_ex(bio, bcont,
                                                ASN1_ITEM_rptr(CMS_ContentInfo),
                                                (ASN1_VALUE **)cms);
-    if (ci != NULL && cms != NULL)
+    if (ci != NULL)
         cms_resolve_libctx(ci);
     return ci;
 }

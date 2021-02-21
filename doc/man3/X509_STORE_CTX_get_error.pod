@@ -27,29 +27,32 @@ information
 
 =head1 DESCRIPTION
 
-These functions are typically called after X509_verify_cert() has indicated
+These functions are typically called after certificate or chain verification
+using L<X509_verify_cert(3)> or L<X509_STORE_CTX_verify(3)> has indicated
 an error or in a verification callback to determine the nature of an error.
 
-X509_STORE_CTX_get_error() returns the error code of B<ctx>, see
-the B<ERROR CODES> section for a full description of all error codes.
+X509_STORE_CTX_get_error() returns the error code of I<ctx>.
+See the L</ERROR CODES> section for a full description of all error codes.
+It may return a code != X509_V_OK even if X509_verify_cert() did not indicate
+an error, likely because a verification callback function has waived the error.
 
-X509_STORE_CTX_set_error() sets the error code of B<ctx> to B<s>. For example
+X509_STORE_CTX_set_error() sets the error code of I<ctx> to I<s>. For example
 it might be used in a verification callback to set an error based on additional
 checks.
 
-X509_STORE_CTX_get_error_depth() returns the B<depth> of the error. This is a
+X509_STORE_CTX_get_error_depth() returns the I<depth> of the error. This is a
 nonnegative integer representing where in the certificate chain the error
 occurred. If it is zero it occurred in the end entity certificate, one if
 it is the certificate which signed the end entity certificate and so on.
 
-X509_STORE_CTX_set_error_depth() sets the error B<depth>.
+X509_STORE_CTX_set_error_depth() sets the error I<depth>.
 This can be used in combination with X509_STORE_CTX_set_error() to set the
 depth at which an error condition was detected.
 
-X509_STORE_CTX_get_current_cert() returns the certificate in B<ctx> which
-caused the error or B<NULL> if no certificate is relevant.
+X509_STORE_CTX_get_current_cert() returns the certificate in I<ctx> which
+caused the error or NULL if no certificate is relevant.
 
-X509_STORE_CTX_set_current_cert() sets the certificate B<x> in B<ctx> which
+X509_STORE_CTX_set_current_cert() sets the certificate I<x> in I<ctx> which
 caused the error.
 This value is not intended to remain valid for very long, and remains owned by
 the caller.
@@ -62,18 +65,17 @@ Once such a I<saved> certificate is no longer needed it can be freed with
 L<X509_free(3)>.
 
 X509_STORE_CTX_get0_cert() retrieves an internal pointer to the
-certificate being verified by the B<ctx>.
+certificate being verified by the I<ctx>.
 
 X509_STORE_CTX_get1_chain() returns a complete validate chain if a previous
-call to X509_verify_cert() is successful. If the call to X509_verify_cert()
-is B<not> successful the returned chain may be incomplete or invalid. The
-returned chain persists after the B<ctx> structure is freed, when it is
-no longer needed it should be free up using:
+verification is successful. Otherwise the returned chain may be incomplete or
+invalid.  The returned chain persists after the I<ctx> structure is freed.
+When it is no longer needed it should be free up using:
 
  sk_X509_pop_free(chain, X509_free);
 
 X509_verify_cert_error_string() returns a human readable error string for
-verification error B<n>.
+verification error I<n>.
 
 =head1 RETURN VALUES
 
@@ -82,10 +84,10 @@ X509_STORE_CTX_get_error() returns B<X509_V_OK> or an error code.
 X509_STORE_CTX_get_error_depth() returns a nonnegative error depth.
 
 X509_STORE_CTX_get_current_cert() returns the certificate which caused the
-error or B<NULL> if no certificate is relevant to the error.
+error or NULL if no certificate is relevant to the error.
 
 X509_verify_cert_error_string() returns a human readable error string for
-verification error B<n>.
+verification error I<n>.
 
 =head1 ERROR CODES
 
@@ -163,12 +165,12 @@ The CRL has expired.
 =item B<X509_V_ERR_ERROR_IN_CERT_NOT_BEFORE_FIELD:
 format error in certificate's notBefore field>
 
-The certificate B<notBefore> field contains an invalid time.
+The certificate C<notBefore> field contains an invalid time.
 
 =item B<X509_V_ERR_ERROR_IN_CERT_NOT_AFTER_FIELD:
 format error in certificate's notAfter field>
 
-The certificate B<notAfter> field contains an invalid time.
+The certificate C<notAfter> field contains an invalid time.
 
 =item B<X509_V_ERR_ERROR_IN_CRL_LAST_UPDATE_FIELD:
 format error in CRL's lastUpdate field>
@@ -178,7 +180,7 @@ The CRL B<lastUpdate> field contains an invalid time.
 =item B<X509_V_ERR_ERROR_IN_CRL_NEXT_UPDATE_FIELD:
 format error in CRL's nextUpdate field>
 
-The CRL B<nextUpdate> field contains an invalid time.
+The CRL C<nextUpdate> field contains an invalid time.
 
 =item B<X509_V_ERR_OUT_OF_MEM: out of memory>
 
@@ -261,7 +263,7 @@ Not used as of OpenSSL 1.1.0.
 =item B<X509_V_ERR_KEYUSAGE_NO_CERTSIGN:
 key usage does not include certificate signing>
 
-The current candidate issuer certificate was rejected because its B<keyUsage>
+The current candidate issuer certificate was rejected because its C<keyUsage>
 extension does not permit certificate signing.
 Not used as of OpenSSL 1.1.0.
 
@@ -359,7 +361,8 @@ certificates.
 
 =item B<X509_V_ERR_PROXY_CERTIFICATES_NOT_ALLOWED: proxy certificates not allowed, please set the appropriate flag>
 
-Proxy certificates not allowed unless the  B<-allow_proxy_certs> option is used.
+Proxy certificates not allowed unless the B<X509_V_FLAG_ALLOW_PROXY_CERTS> flag
+is set.
 
 =item B<X509_V_ERR_UNNESTED_RESOURCE: RFC 3779 resource not subset of parent's resources>
 
@@ -449,7 +452,7 @@ The above functions should be used instead of directly referencing the fields
 in the B<X509_VERIFY_CTX> structure.
 
 In versions of OpenSSL before 1.0 the current certificate returned by
-X509_STORE_CTX_get_current_cert() was never B<NULL>. Applications should
+X509_STORE_CTX_get_current_cert() was never NULL. Applications should
 check the return value before printing out any debugging information relating
 to the current certificate.
 
@@ -459,13 +462,13 @@ thread safe but will never happen unless an invalid code is passed.
 
 =head1 SEE ALSO
 
-L<X509_verify_cert(3)>,
+L<X509_verify_cert(3)>, L<X509_STORE_CTX_verify(3)>,
 L<X509_up_ref(3)>,
 L<X509_free(3)>.
 
 =head1 COPYRIGHT
 
-Copyright 2009-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2009-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

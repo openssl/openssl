@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2021 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright 2017 Ribose Inc. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -10,6 +10,7 @@
 
 #ifndef OSSL_CRYPTO_SM4_H
 # define OSSL_CRYPTO_SM4_H
+# pragma once
 
 # include <openssl/opensslconf.h>
 # include <openssl/e_os2.h>

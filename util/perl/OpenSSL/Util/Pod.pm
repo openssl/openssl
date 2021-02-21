@@ -1,4 +1,4 @@
-# Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2021 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -116,6 +116,7 @@ sub extract_pod_info {
 
     my @invisible_names = ();
     my %podinfo = ( section => $defaults{section});
+    $podinfo{lastsecttext} = ""; # init needed in case input file is empty
 
     # Regexp to split a text into paragraphs found at
     # https://www.perlmonks.org/?node_id=584367

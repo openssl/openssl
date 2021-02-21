@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -228,10 +228,14 @@ static void ossl_lib_ctx_generic_new(void *parent_ign, void *ptr_ign,
                                      long argl_ign, void *argp)
 {
     const OSSL_LIB_CTX_METHOD *meth = argp;
-    void *ptr = meth->new_func(crypto_ex_data_get_ossl_lib_ctx(ad));
+    OSSL_LIB_CTX *ctx = crypto_ex_data_get_ossl_lib_ctx(ad);
+    void *ptr = meth->new_func(ctx);
 
-    if (ptr != NULL)
+    if (ptr != NULL) {
+        CRYPTO_THREAD_write_lock(ctx->lock);
         CRYPTO_set_ex_data(ad, index, ptr);
+        CRYPTO_THREAD_unlock(ctx->lock);
+    }
 }
 static void ossl_lib_ctx_generic_free(void *parent_ign, void *ptr,
                                       CRYPTO_EX_DATA *ad, int index,
@@ -279,7 +283,9 @@ void *ossl_lib_ctx_get_data(OSSL_LIB_CTX *ctx, int index,
 
     if (dynidx != -1) {
         CRYPTO_THREAD_read_lock(ctx->index_locks[index]);
+        CRYPTO_THREAD_read_lock(ctx->lock);
         data = CRYPTO_get_ex_data(&ctx->data, dynidx);
+        CRYPTO_THREAD_unlock(ctx->lock);
         CRYPTO_THREAD_unlock(ctx->index_locks[index]);
         return data;
     }
@@ -289,8 +295,8 @@ void *ossl_lib_ctx_get_data(OSSL_LIB_CTX *ctx, int index,
 
     dynidx = ctx->dyn_indexes[index];
     if (dynidx != -1) {
-        CRYPTO_THREAD_unlock(ctx->lock);
         data = CRYPTO_get_ex_data(&ctx->data, dynidx);
+        CRYPTO_THREAD_unlock(ctx->lock);
         CRYPTO_THREAD_unlock(ctx->index_locks[index]);
         return data;
     }
@@ -303,10 +309,22 @@ void *ossl_lib_ctx_get_data(OSSL_LIB_CTX *ctx, int index,
 
     CRYPTO_THREAD_unlock(ctx->lock);
 
-    /* The alloc call ensures there's a value there */
-    if (CRYPTO_alloc_ex_data(CRYPTO_EX_INDEX_OSSL_LIB_CTX, NULL,
-                             &ctx->data, ctx->dyn_indexes[index]))
+    /*
+     * The alloc call ensures there's a value there. We release the ctx->lock
+     * for this, because the allocation itself may recursively call
+     * ossl_lib_ctx_get_data for other indexes (never this one). The allocation
+     * will itself aquire the ctx->lock when it actually comes to store the
+     * allocated data (see ossl_lib_ctx_generic_new() above). We call
+     * ossl_crypto_alloc_ex_data_intern() here instead of CRYPTO_alloc_ex_data().
+     * They do the same thing except that the latter calls CRYPTO_get_ex_data()
+     * as well - which we must not do without holding the ctx->lock.
+     */
+    if (ossl_crypto_alloc_ex_data_intern(CRYPTO_EX_INDEX_OSSL_LIB_CTX, NULL,
+                                         &ctx->data, ctx->dyn_indexes[index])) {
+        CRYPTO_THREAD_read_lock(ctx->lock);
         data = CRYPTO_get_ex_data(&ctx->data, ctx->dyn_indexes[index]);
+        CRYPTO_THREAD_unlock(ctx->lock);
+    }
 
     CRYPTO_THREAD_unlock(ctx->index_locks[index]);
 
@@ -367,4 +385,17 @@ int ossl_lib_ctx_onfree(OSSL_LIB_CTX *ctx, ossl_lib_ctx_onfree_fn onfreefn)
     ctx->onfreelist = newonfree;
 
     return 1;
+}
+
+const char *ossl_lib_ctx_get_descriptor(OSSL_LIB_CTX *libctx)
+{
+#ifdef FIPS_MODULE
+    return "FIPS internal library context";
+#else
+    if (ossl_lib_ctx_is_global_default(libctx))
+        return "Global default library context";
+    if (ossl_lib_ctx_is_default(libctx))
+        return "Thread-local default library context";
+    return "Non-default library context";
+#endif
 }

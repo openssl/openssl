@@ -158,7 +158,7 @@ OCSP_SINGLERESP *OCSP_basic_add1_status(OCSP_BASICRESP *rsp,
 
 int OCSP_basic_add1_cert(OCSP_BASICRESP *resp, X509 *cert)
 {
-    return X509_add_cert_new(&resp->certs, cert, X509_ADD_FLAG_UP_REF);
+    return ossl_x509_add_cert_new(&resp->certs, cert, X509_ADD_FLAG_UP_REF);
 }
 
 /*

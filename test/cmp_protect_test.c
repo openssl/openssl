@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2007-2021 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright Nokia 2007-2019
  * Copyright Siemens AG 2015-2019
  *
@@ -9,7 +9,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "cmp_testlib.h"
+#include "helpers/cmp_testlib.h"
 
 static const char *ir_protected_f;
 static const char *ir_unprotected_f;
@@ -538,24 +538,24 @@ int setup_tests(void)
         return 0;
     }
 
-    if (!test_get_libctx(&libctx, &default_null_provider, &provider, 10, USAGE))
+    if (!test_arg_libctx(&libctx, &default_null_provider, &provider, 10, USAGE))
         return 0;
 
-    if (!TEST_ptr(loadedkey = load_pem_key(server_key_f, libctx))
-            || !TEST_ptr(cert = load_pem_cert(server_cert_f, libctx)))
+    if (!TEST_ptr(loadedkey = load_pkey_pem(server_key_f, libctx))
+            || !TEST_ptr(cert = load_cert_pem(server_cert_f, libctx)))
         return 0;
 
-    if (!TEST_ptr(loadedprivkey = load_pem_key(server_f, libctx)))
+    if (!TEST_ptr(loadedprivkey = load_pkey_pem(server_f, libctx)))
         return 0;
     if (TEST_true(EVP_PKEY_up_ref(loadedprivkey)))
         loadedpubkey = loadedprivkey;
     if (!TEST_ptr(ir_protected = load_pkimsg(ir_protected_f))
             || !TEST_ptr(ir_unprotected = load_pkimsg(ir_unprotected_f)))
         return 0;
-    if (!TEST_ptr(endentity1 = load_pem_cert(endentity1_f, libctx))
-            || !TEST_ptr(endentity2 = load_pem_cert(endentity2_f, libctx))
-            || !TEST_ptr(root = load_pem_cert(root_f, libctx))
-            || !TEST_ptr(intermediate = load_pem_cert(intermediate_f, libctx)))
+    if (!TEST_ptr(endentity1 = load_cert_pem(endentity1_f, libctx))
+            || !TEST_ptr(endentity2 = load_cert_pem(endentity2_f, libctx))
+            || !TEST_ptr(root = load_cert_pem(root_f, libctx))
+            || !TEST_ptr(intermediate = load_cert_pem(intermediate_f, libctx)))
         return 0;
     if (!TEST_int_eq(1, RAND_bytes(rand_data, OSSL_CMP_TRANSACTIONID_LENGTH)))
         return 0;

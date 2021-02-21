@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -16,6 +16,7 @@
 #include <openssl/params.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
+#include <openssl/proverr.h>
 #include "openssl/param_build.h"
 #include "internal/param_build_set.h"
 #include "prov/implementations.h"
@@ -464,7 +465,7 @@ static void *mac_gen(void *genctx, OSSL_CALLBACK *cb, void *cbarg)
         return key;
 
     if (gctx->priv_key == NULL) {
-        ERR_raise(ERR_LIB_PROV, EVP_R_INVALID_KEY);
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY);
         ossl_mac_key_free(key);
         return NULL;
     }

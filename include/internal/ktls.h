@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -22,6 +22,8 @@
 
 #ifndef HEADER_INTERNAL_KTLS
 # define HEADER_INTERNAL_KTLS
+# pragma once
+
 # ifndef OPENSSL_NO_KTLS
 
 #  if defined(__FreeBSD__)
@@ -192,15 +194,12 @@ static ossl_inline int ktls_read_record(int fd, void *data, size_t length)
 static ossl_inline ossl_ssize_t ktls_sendfile(int s, int fd, off_t off,
                                               size_t size, int flags)
 {
-    off_t sbytes;
+    off_t sbytes = 0;
     int ret;
 
     ret = sendfile(fd, s, off, size, NULL, &sbytes, flags);
-    if (ret == -1) {
-	    if (errno == EAGAIN && sbytes != 0)
-		    return sbytes;
-	    return -1;
-    }
+    if (ret == -1 && sbytes == 0)
+        return -1;
     return sbytes;
 }
 
@@ -222,6 +221,11 @@ static ossl_inline ossl_ssize_t ktls_sendfile(int s, int fd, off_t off,
 #    define OPENSSL_KTLS_TLS13
 #    if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 2, 0)
 #     define OPENSSL_KTLS_AES_CCM_128
+#     if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 11, 0)
+#      ifndef OPENSSL_NO_CHACHA
+#       define OPENSSL_KTLS_CHACHA20_POLY1305
+#      endif
+#     endif
 #    endif
 #   endif
 
@@ -254,6 +258,9 @@ struct tls_crypto_info_all {
 #   endif
 #   ifdef OPENSSL_KTLS_AES_CCM_128
         struct tls12_crypto_info_aes_ccm_128 ccm128;
+#   endif
+#   ifdef OPENSSL_KTLS_CHACHA20_POLY1305
+        struct tls12_crypto_info_chacha20_poly1305 chacha20poly1305;
 #   endif
     };
     size_t tls_crypto_info_len;

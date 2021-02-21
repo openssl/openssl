@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -21,10 +21,10 @@
 #include <openssl/params.h>
 #include <openssl/evp.h>
 #include <openssl/err.h>
+#include <openssl/proverr.h>
 #include "internal/nelem.h"
 #include "internal/sizes.h"
 #include "internal/cryptlib.h"
-#include "prov/providercommonerr.h"
 #include "prov/implementations.h"
 #include "prov/provider_ctx.h"
 #include "crypto/ec.h"
@@ -496,7 +496,7 @@ static const OSSL_PARAM *sm2sig_settable_ctx_md_params(void *vpsm2ctx)
     return EVP_MD_settable_ctx_params(psm2ctx->md);
 }
 
-const OSSL_DISPATCH sm2_signature_functions[] = {
+const OSSL_DISPATCH ossl_sm2_signature_functions[] = {
     { OSSL_FUNC_SIGNATURE_NEWCTX, (void (*)(void))sm2sig_newctx },
     { OSSL_FUNC_SIGNATURE_SIGN_INIT, (void (*)(void))sm2sig_signature_init },
     { OSSL_FUNC_SIGNATURE_SIGN, (void (*)(void))sm2sig_sign },

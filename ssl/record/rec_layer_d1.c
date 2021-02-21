@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2005-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -46,6 +46,9 @@ int DTLS_RECORD_LAYER_new(RECORD_LAYER *rl)
 
 void DTLS_RECORD_LAYER_free(RECORD_LAYER *rl)
 {
+    if (rl->d == NULL)
+        return;
+
     DTLS_RECORD_LAYER_clear(rl);
     pqueue_free(rl->d->unprocessed_rcds.q);
     pqueue_free(rl->d->processed_rcds.q);
@@ -800,8 +803,8 @@ int do_dtls1_write(SSL *s, int type, const unsigned char *buf,
     wb = &s->rlayer.wbuf[0];
 
     /*
-     * first check if there is a SSL3_BUFFER still being written out.  This
-     * will happen with non blocking IO
+     * DTLS writes whole datagrams, so there can't be anything left in
+     * the buffer.
      */
     if (!ossl_assert(SSL3_BUFFER_get_left(wb) == 0)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);

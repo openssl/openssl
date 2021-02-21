@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  * Copyright 2005 Nokia. All rights reserved.
  *
@@ -269,7 +269,7 @@ static const EVP_MD *tlsa_md_get(SSL_DANE *dane, uint8_t mtype)
 static int dane_tlsa_add(SSL_DANE *dane,
                          uint8_t usage,
                          uint8_t selector,
-                         uint8_t mtype, unsigned const char *data, size_t dlen)
+                         uint8_t mtype, const unsigned char *data, size_t dlen)
 {
     danetls_record *t;
     const EVP_MD *md = NULL;
@@ -656,7 +656,7 @@ int SSL_CTX_set_ssl_version(SSL_CTX *ctx, const SSL_METHOD *meth)
         ERR_raise(ERR_LIB_SSL, SSL_R_SSL_LIBRARY_HAS_NO_CIPHERS);
         return 0;
     }
-    sk = ssl_create_cipher_list(ctx->method,
+    sk = ssl_create_cipher_list(ctx,
                                 ctx->tls13_ciphersuites,
                                 &(ctx->cipher_list),
                                 &(ctx->cipher_list_by_id),
@@ -768,7 +768,6 @@ SSL *SSL_new(SSL_CTX *ctx)
     s->ext.ocsp.resp_len = 0;
     SSL_CTX_up_ref(ctx);
     s->session_ctx = ctx;
-#ifndef OPENSSL_NO_EC
     if (ctx->ext.ecpointformats) {
         s->ext.ecpointformats =
             OPENSSL_memdup(ctx->ext.ecpointformats,
@@ -778,7 +777,6 @@ SSL *SSL_new(SSL_CTX *ctx)
         s->ext.ecpointformats_len =
             ctx->ext.ecpointformats_len;
     }
-#endif
     if (ctx->ext.supportedgroups) {
         s->ext.supportedgroups =
             OPENSSL_memdup(ctx->ext.supportedgroups,
@@ -1099,7 +1097,7 @@ int SSL_get0_dane_authority(SSL *s, X509 **mcert, EVP_PKEY **mspki)
 }
 
 int SSL_get0_dane_tlsa(SSL *s, uint8_t *usage, uint8_t *selector,
-                       uint8_t *mtype, unsigned const char **data, size_t *dlen)
+                       uint8_t *mtype, const unsigned char **data, size_t *dlen)
 {
     SSL_DANE *dane = &s->dane;
 
@@ -1126,7 +1124,7 @@ SSL_DANE *SSL_get0_dane(SSL *s)
 }
 
 int SSL_dane_tlsa_add(SSL *s, uint8_t usage, uint8_t selector,
-                      uint8_t mtype, unsigned const char *data, size_t dlen)
+                      uint8_t mtype, const unsigned char *data, size_t dlen)
 {
     return dane_tlsa_add(&s->dane, usage, selector, mtype, data, dlen);
 }
@@ -1212,10 +1210,8 @@ void SSL_free(SSL *s)
 
     OPENSSL_free(s->ext.hostname);
     SSL_CTX_free(s->session_ctx);
-#ifndef OPENSSL_NO_EC
     OPENSSL_free(s->ext.ecpointformats);
     OPENSSL_free(s->ext.peer_ecpointformats);
-#endif                          /* OPENSSL_NO_EC */
     OPENSSL_free(s->ext.supportedgroups);
     OPENSSL_free(s->ext.peer_supportedgroups);
     sk_X509_EXTENSION_pop_free(s->ext.ocsp.exts, X509_EXTENSION_free);
@@ -2701,7 +2697,7 @@ int SSL_CTX_set_cipher_list(SSL_CTX *ctx, const char *str)
 {
     STACK_OF(SSL_CIPHER) *sk;
 
-    sk = ssl_create_cipher_list(ctx->method, ctx->tls13_ciphersuites,
+    sk = ssl_create_cipher_list(ctx, ctx->tls13_ciphersuites,
                                 &ctx->cipher_list, &ctx->cipher_list_by_id, str,
                                 ctx->cert);
     /*
@@ -2725,7 +2721,7 @@ int SSL_set_cipher_list(SSL *s, const char *str)
 {
     STACK_OF(SSL_CIPHER) *sk;
 
-    sk = ssl_create_cipher_list(s->ctx->method, s->tls13_ciphersuites,
+    sk = ssl_create_cipher_list(s->ctx, s->tls13_ciphersuites,
                                 &s->cipher_list, &s->cipher_list_by_id, str,
                                 s->cert);
     /* see comment in SSL_CTX_set_cipher_list */
@@ -3190,7 +3186,7 @@ SSL_CTX *SSL_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
     if (!SSL_CTX_set_ciphersuites(ret, OSSL_default_ciphersuites()))
         goto err;
 
-    if (!ssl_create_cipher_list(ret->method,
+    if (!ssl_create_cipher_list(ret,
                                 ret->tls13_ciphersuites,
                                 &ret->cipher_list, &ret->cipher_list_by_id,
                                 OSSL_default_cipher_list(), ret->cert)
@@ -3243,7 +3239,7 @@ SSL_CTX *SSL_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
         goto err;
 
 #ifndef OPENSSL_NO_SRP
-    if (!SSL_CTX_SRP_CTX_init(ret))
+    if (!ssl_ctx_srp_ctx_init_intern(ret))
         goto err;
 #endif
 #ifndef OPENSSL_NO_ENGINE
@@ -3386,16 +3382,15 @@ void SSL_CTX_free(SSL_CTX *a)
     sk_SRTP_PROTECTION_PROFILE_free(a->srtp_profiles);
 #endif
 #ifndef OPENSSL_NO_SRP
-    SSL_CTX_SRP_CTX_free(a);
+    ssl_ctx_srp_ctx_free_intern(a);
 #endif
 #ifndef OPENSSL_NO_ENGINE
     tls_engine_finish(a->client_cert_engine);
 #endif
 
-#ifndef OPENSSL_NO_EC
     OPENSSL_free(a->ext.ecpointformats);
-#endif
     OPENSSL_free(a->ext.supportedgroups);
+    OPENSSL_free(a->ext.supported_groups_default);
     OPENSSL_free(a->ext.alpn);
     OPENSSL_secure_free(a->ext.secure);
 
@@ -3498,24 +3493,19 @@ void ssl_set_masks(SSL *s)
     uint32_t *pvalid = s->s3.tmp.valid_flags;
     int rsa_enc, rsa_sign, dh_tmp, dsa_sign;
     unsigned long mask_k, mask_a;
-#ifndef OPENSSL_NO_EC
     int have_ecc_cert, ecdsa_ok;
-#endif
+
     if (c == NULL)
         return;
 
     dh_tmp = (c->dh_tmp != NULL
-#ifndef OPENSSL_NO_DH
               || c->dh_tmp_cb != NULL
-#endif
               || c->dh_tmp_auto);
 
     rsa_enc = pvalid[SSL_PKEY_RSA] & CERT_PKEY_VALID;
     rsa_sign = pvalid[SSL_PKEY_RSA] & CERT_PKEY_VALID;
     dsa_sign = pvalid[SSL_PKEY_DSA_SIGN] & CERT_PKEY_VALID;
-#ifndef OPENSSL_NO_EC
     have_ecc_cert = pvalid[SSL_PKEY_ECC] & CERT_PKEY_VALID;
-#endif
     mask_k = 0;
     mask_a = 0;
 
@@ -3563,7 +3553,6 @@ void ssl_set_masks(SSL *s)
      * An ECC certificate may be usable for ECDH and/or ECDSA cipher suites
      * depending on the key usage extension.
      */
-#ifndef OPENSSL_NO_EC
     if (have_ecc_cert) {
         uint32_t ex_kusage;
         ex_kusage = X509_get_key_usage(c->pkeys[SSL_PKEY_ECC].x509);
@@ -3584,11 +3573,8 @@ void ssl_set_masks(SSL *s)
             && pvalid[SSL_PKEY_ED448] & CERT_PKEY_EXPLICIT_SIGN
             && TLS1_get_version(s) == TLS1_2_VERSION)
             mask_a |= SSL_aECDSA;
-#endif
 
-#ifndef OPENSSL_NO_EC
     mask_k |= SSL_kECDHE;
-#endif
 
 #ifndef OPENSSL_NO_PSK
     mask_k |= SSL_kPSK;
@@ -3605,8 +3591,6 @@ void ssl_set_masks(SSL *s)
     s->s3.tmp.mask_a = mask_a;
 }
 
-#ifndef OPENSSL_NO_EC
-
 int ssl_check_srvr_ecc_cert_and_alg(X509 *x, SSL *s)
 {
     if (s->s3.tmp.new_cipher->algorithm_auth & SSL_aECDSA) {
@@ -3618,8 +3602,6 @@ int ssl_check_srvr_ecc_cert_and_alg(X509 *x, SSL *s)
     }
     return 1;                   /* all checks are ok */
 }
-
-#endif
 
 int ssl_get_server_cert_serverinfo(SSL *s, const unsigned char **serverinfo,
                                    size_t *serverinfo_length)
@@ -3808,6 +3790,8 @@ int SSL_get_error(const SSL *s, int i)
     }
     if (SSL_want_x509_lookup(s))
         return SSL_ERROR_WANT_X509_LOOKUP;
+    if (SSL_want_retry_verify(s))
+        return SSL_ERROR_WANT_RETRY_VERIFY;
     if (SSL_want_async(s))
         return SSL_ERROR_WANT_ASYNC;
     if (SSL_want_async_job(s))
@@ -4480,27 +4464,6 @@ int SSL_want(const SSL *s)
 {
     return s->rwstate;
 }
-
-/**
- * \brief Set the callback for generating temporary DH keys.
- * \param ctx the SSL context.
- * \param dh the callback
- */
-
-#if !defined(OPENSSL_NO_DH) && !defined(OPENSSL_NO_DEPRECATED_3_0)
-void SSL_CTX_set_tmp_dh_callback(SSL_CTX *ctx,
-                                 DH *(*dh) (SSL *ssl, int is_export,
-                                            int keylength))
-{
-    SSL_CTX_callback_ctrl(ctx, SSL_CTRL_SET_TMP_DH_CB, (void (*)(void))dh);
-}
-
-void SSL_set_tmp_dh_callback(SSL *ssl, DH *(*dh) (SSL *ssl, int is_export,
-                                                  int keylength))
-{
-    SSL_callback_ctrl(ssl, SSL_CTRL_SET_TMP_DH_CB, (void (*)(void))dh);
-}
-#endif
 
 #ifndef OPENSSL_NO_PSK
 int SSL_CTX_use_psk_identity_hint(SSL_CTX *ctx, const char *identity_hint)
@@ -5960,7 +5923,7 @@ int SSL_set0_tmp_dh_pkey(SSL *s, EVP_PKEY *dhpkey)
 {
     if (!ssl_security(s, SSL_SECOP_TMP_DH,
                       EVP_PKEY_security_bits(dhpkey), 0, dhpkey)) {
-        SSLerr(0, SSL_R_DH_KEY_TOO_SMALL);
+        ERR_raise(ERR_LIB_SSL, SSL_R_DH_KEY_TOO_SMALL);
         EVP_PKEY_free(dhpkey);
         return 0;
     }
@@ -5973,7 +5936,7 @@ int SSL_CTX_set0_tmp_dh_pkey(SSL_CTX *ctx, EVP_PKEY *dhpkey)
 {
     if (!ssl_ctx_security(ctx, SSL_SECOP_TMP_DH,
                           EVP_PKEY_security_bits(dhpkey), 0, dhpkey)) {
-        SSLerr(0, SSL_R_DH_KEY_TOO_SMALL);
+        ERR_raise(ERR_LIB_SSL, SSL_R_DH_KEY_TOO_SMALL);
         EVP_PKEY_free(dhpkey);
         return 0;
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -48,10 +48,10 @@ STACK_OF(X509_INFO) *PEM_X509_INFO_read(FILE *fp, STACK_OF(X509_INFO) *sk,
 }
 #endif
 
-STACK_OF(X509_INFO)
-*PEM_X509_INFO_read_bio_ex(BIO *bp, STACK_OF(X509_INFO) *sk,
-                           pem_password_cb *cb, void *u, OSSL_LIB_CTX *libctx,
-                           const char *propq)
+STACK_OF(X509_INFO) *PEM_X509_INFO_read_bio_ex(BIO *bp, STACK_OF(X509_INFO) *sk,
+                                               pem_password_cb *cb, void *u,
+                                               OSSL_LIB_CTX *libctx,
+                                               const char *propq)
 {
     X509_INFO *xi = NULL;
     char *name = NULL, *header = NULL;
@@ -77,15 +77,18 @@ STACK_OF(X509_INFO)
     for (;;) {
         raw = 0;
         ptype = 0;
+        ERR_set_mark();
         i = PEM_read_bio(bp, &name, &header, &data, &len);
         if (i == 0) {
             error = ERR_GET_REASON(ERR_peek_last_error());
             if (error == PEM_R_NO_START_LINE) {
-                ERR_clear_error();
+                ERR_pop_to_mark();
                 break;
             }
+            ERR_clear_last_mark();
             goto err;
         }
+        ERR_clear_last_mark();
  start:
         if ((strcmp(name, PEM_STRING_X509) == 0) ||
             (strcmp(name, PEM_STRING_X509_OLD) == 0)) {
@@ -124,9 +127,7 @@ STACK_OF(X509_INFO)
                 goto start;
             }
             pp = &(xi->crl);
-        } else
-#ifndef OPENSSL_NO_RSA
-        if (strcmp(name, PEM_STRING_RSA) == 0) {
+        } else if (strcmp(name, PEM_STRING_RSA) == 0) {
             d2i = (D2I_OF(void)) d2i_RSAPrivateKey;
             if (xi->x_pkey != NULL) {
                 if (!sk_X509_INFO_push(ret, xi))
@@ -147,7 +148,6 @@ STACK_OF(X509_INFO)
             if ((int)strlen(header) > 10) /* assume encrypted */
                 raw = 1;
         } else
-#endif
 #ifndef OPENSSL_NO_DSA
         if (strcmp(name, PEM_STRING_DSA) == 0) {
             d2i = (D2I_OF(void)) d2i_DSAPrivateKey;
@@ -335,13 +335,11 @@ int PEM_X509_INFO_write_bio(BIO *bp, const X509_INFO *xi, EVP_CIPHER *enc,
                 goto err;
         } else {
             /* Add DSA/DH */
-#ifndef OPENSSL_NO_RSA
             /* normal optionally encrypted stuff */
             if (PEM_write_bio_RSAPrivateKey(bp,
                                             EVP_PKEY_get0_RSA(xi->x_pkey->dec_pkey),
                                             enc, kstr, klen, cb, u) <= 0)
                 goto err;
-#endif
         }
     }
 

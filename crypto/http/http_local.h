@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2007-2021 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright Siemens AG 2018-2020
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -12,20 +12,6 @@
 # define OSSL_CRYPTO_HTTP_LOCAL_H
 
 # include <openssl/ocsp.h>
-
-/* name aliases for legacy names with name prefix "OCSP_" */
-typedef OCSP_REQ_CTX OSSL_HTTP_REQ_CTX;
-/* functions meanwhile only used internally */
-# define OSSL_HTTP_REQ_CTX_new         OCSP_REQ_CTX_new
-# define OSSL_HTTP_REQ_CTX_free        OCSP_REQ_CTX_free
-# define OSSL_HTTP_REQ_CTX_header      OCSP_REQ_CTX_http
-# define OSSL_HTTP_REQ_CTX_add1_header OCSP_REQ_CTX_add1_header
-# define OSSL_HTTP_REQ_CTX_i2d         OCSP_REQ_CTX_i2d
-# define OSSL_HTTP_REQ_CTX_nbio        OCSP_REQ_CTX_nbio
-# define OSSL_HTTP_REQ_CTX_sendreq_d2i OCSP_REQ_CTX_nbio_d2i
-/* functions that are meanwhile unused */
-# define OSSL_HTTP_REQ_CTX_get0_mem_bio OCSP_REQ_CTX_get0_mem_bio /* undoc'd */
-# define OSSL_HTTP_REQ_CTX_set_max_response_length OCSP_set_max_response_length
 
 BIO *HTTP_asn1_item2bio(const ASN1_ITEM *it, const ASN1_VALUE *val);
 OSSL_HTTP_REQ_CTX *HTTP_REQ_CTX_new(BIO *wbio, BIO *rbio, int use_http_proxy,

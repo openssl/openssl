@@ -42,7 +42,7 @@ Print out a usage message.
 
 The input format and output format; the default is B<PEM>.
 The object is compatible with the PKCS#3 B<DHparameter> structure.
-See L<openssl(1)/Format Options> for details.
+See L<openssl-format-options(1)> for details.
 
 =item B<-in> I<filename>
 
@@ -56,8 +56,6 @@ if this option is not present. The output filename should B<not> be the same
 as the input filename.
 
 =item B<-dsaparam>
-
-This option is deprecated.
 
 If this option is used, DSA rather than DH parameters are read or created;
 they are converted to DH format.  Otherwise, "strong" primes (such
@@ -128,7 +126,7 @@ L<openssl-dsaparam(1)>
 
 =head1 HISTORY
 
-The B<-dsaparam> and B<-engine> options were deprecated in OpenSSL 3.0.
+The B<-engine> option was deprecated in OpenSSL 3.0.
 
 The B<-C> option was removed in OpenSSL 3.0.
 

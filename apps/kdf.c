@@ -89,13 +89,12 @@ opthelp:
             break;
         }
     }
+
+    /* One argument, the KDF name. */
     argc = opt_num_rest();
     argv = opt_rest();
-
-    if (argc != 1) {
-        BIO_printf(bio_err, "Invalid number of extra arguments\n");
+    if (argc != 1)
         goto opthelp;
-    }
 
     if ((kdf = EVP_KDF_fetch(NULL, argv[0], NULL)) == NULL) {
         BIO_printf(bio_err, "Invalid KDF name %s\n", argv[0]);

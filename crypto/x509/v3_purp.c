@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -362,18 +362,20 @@ static int setup_crldp(X509 *x)
 }
 
 /* Check that issuer public key algorithm matches subject signature algorithm */
-static int check_sig_alg_match(const EVP_PKEY *pkey, const X509 *subject)
+static int check_sig_alg_match(const EVP_PKEY *issuer_key, const X509 *subject)
 {
-    int pkey_nid;
+    int signer_nid, subj_sig_nid;
 
-    if (pkey == NULL)
+    if (issuer_key == NULL)
         return X509_V_ERR_NO_ISSUER_PUBLIC_KEY;
+    signer_nid = EVP_PKEY_base_id(issuer_key);
     if (OBJ_find_sigid_algs(OBJ_obj2nid(subject->cert_info.signature.algorithm),
-                            NULL, &pkey_nid) == 0)
-        return X509_V_ERR_UNSUPPORTED_SIGNATURE_ALGORITHM;
-    if (EVP_PKEY_type(pkey_nid) != EVP_PKEY_base_id(pkey))
-        return X509_V_ERR_SIGNATURE_ALGORITHM_MISMATCH;
-    return X509_V_OK;
+                            NULL, &subj_sig_nid) == 0)
+         return X509_V_ERR_UNSUPPORTED_SIGNATURE_ALGORITHM;
+    if (signer_nid == EVP_PKEY_type(subj_sig_nid)
+        || (signer_nid == NID_rsaEncryption && subj_sig_nid == NID_rsassaPss))
+        return X509_V_OK;
+    return X509_V_ERR_SIGNATURE_ALGORITHM_MISMATCH;
 }
 
 #define V1_ROOT (EXFLAG_V1|EXFLAG_SS)
@@ -387,6 +389,7 @@ static int check_sig_alg_match(const EVP_PKEY *pkey, const X509 *subject)
 /*
  * Cache info on various X.509v3 extensions and further derived information,
  * e.g., if cert 'x' is self-issued, in x->ex_flags and other internal fields.
+ * x->sha1_hash is filled in, or else EXFLAG_NO_FINGERPRINT is set in x->flags.
  * X509_SIG_INFO_VALID is set in x->flags if x->siginf was filled successfully.
  * Set EXFLAG_INVALID and return 0 in case the certificate is invalid.
  */
@@ -411,15 +414,12 @@ int x509v3_cache_extensions(X509 *x)
         CRYPTO_THREAD_unlock(x->lock);
         return (x->ex_flags & EXFLAG_INVALID) == 0;
     }
-    ERR_set_mark();
 
     /* Cache the SHA1 digest of the cert */
     if (!X509_digest(x, EVP_sha1(), x->sha1_hash, NULL))
-        /*
-         * Note that the cert is marked invalid also on internal malloc failure
-         * or on failure of EVP_MD_fetch(), potentially called by X509_digest().
-         */
-        x->ex_flags |= EXFLAG_INVALID;
+        x->ex_flags |= EXFLAG_NO_FINGERPRINT;
+
+    ERR_set_mark();
 
     /* V1 should mean no extensions ... */
     if (X509_get_version(x) == 0)
@@ -625,11 +625,13 @@ int x509v3_cache_extensions(X509 *x)
      */
 #endif
     ERR_pop_to_mark();
-    if ((x->ex_flags & EXFLAG_INVALID) == 0) {
+    if ((x->ex_flags & (EXFLAG_INVALID | EXFLAG_NO_FINGERPRINT)) == 0) {
         CRYPTO_THREAD_unlock(x->lock);
         return 1;
     }
-    ERR_raise(ERR_LIB_X509, X509V3_R_INVALID_CERTIFICATE);
+    if ((x->ex_flags & EXFLAG_INVALID) != 0)
+        ERR_raise(ERR_LIB_X509, X509V3_R_INVALID_CERTIFICATE);
+    /* If computing sha1_hash failed the error queue already reflects this. */
 
  err:
     x->ex_flags |= EXFLAG_SET; /* indicate that cert has been processed */

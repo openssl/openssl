@@ -182,12 +182,14 @@ B<sk_I<TYPE>_sort>() sorts I<sk> using the supplied comparison function.
 
 B<sk_I<TYPE>_is_sorted>() returns B<1> if I<sk> is sorted and B<0> otherwise.
 
-B<sk_I<TYPE>_dup>() returns a copy of I<sk>. Note the pointers in the copy
-are identical to the original.
+B<sk_I<TYPE>_dup>() returns a shallow copy of I<sk>
+or an empty stack if the passed stack is NULL.
+Note the pointers in the copy are identical to the original.
 
 B<sk_I<TYPE>_deep_copy>() returns a new stack where each element has been
-copied. Copying is performed by the supplied copyfunc() and freeing by
-freefunc(). The function freefunc() is only called if an error occurs.
+copied or an empty stack if the passed stack is NULL.
+Copying is performed by the supplied copyfunc() and freeing by freefunc().
+The function freefunc() is only called if an error occurs.
 
 =head1 NOTES
 
@@ -258,7 +260,7 @@ B<sk_I<TYPE>_is_sorted>() returns B<1> if the stack is sorted and B<0> if it is
 not.
 
 B<sk_I<TYPE>_dup>() and B<sk_I<TYPE>_deep_copy>() return a pointer to the copy
-of the stack.
+of the stack or NULL on error.
 
 =head1 HISTORY
 
@@ -270,7 +272,7 @@ B<sk_I<TYPE>_reserve>() and B<sk_I<TYPE>_new_reserve>() were added in OpenSSL
 
 =head1 COPYRIGHT
 
-Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

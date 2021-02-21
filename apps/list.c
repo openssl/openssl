@@ -945,6 +945,38 @@ static void list_options_for_command(const char *command)
     BIO_printf(bio_out, "- -\n");
 }
 
+static int is_md_available(const char *name)
+{
+    EVP_MD *md;
+
+    /* Look through providers' digests */
+    ERR_set_mark();
+    md = EVP_MD_fetch(NULL, name, NULL);
+    ERR_pop_to_mark();
+    if (md != NULL) {
+        EVP_MD_free(md);
+        return 1;
+    }
+
+    return (get_digest_from_engine(name) == NULL) ? 0 : 1;
+}
+
+static int is_cipher_available(const char *name)
+{
+    EVP_CIPHER *cipher;
+
+    /* Look through providers' ciphers */
+    ERR_set_mark();
+    cipher = EVP_CIPHER_fetch(NULL, name, NULL);
+    ERR_pop_to_mark();
+    if (cipher != NULL) {
+        EVP_CIPHER_free(cipher);
+        return 1;
+    }
+
+    return (get_cipher_from_engine(name) == NULL) ? 0 : 1;
+}
+
 static void list_type(FUNC_TYPE ft, int one)
 {
     FUNCTION *fp;
@@ -958,6 +990,18 @@ static void list_type(FUNC_TYPE ft, int one)
     for (fp = functions; fp->name != NULL; fp++) {
         if (fp->type != ft)
             continue;
+        switch (ft) {
+        case FT_cipher:
+            if (!is_cipher_available(fp->name))
+                continue;
+            break;
+        case FT_md:
+            if (!is_md_available(fp->name))
+                continue;
+            break;
+        default:
+            break;
+        }
         if (one) {
             BIO_printf(bio_out, "%s\n", fp->name);
         } else {
@@ -1217,9 +1261,6 @@ static void list_disabled(void)
 #ifdef OPENSSL_NO_RMD160
     BIO_puts(bio_out, "RMD160\n");
 #endif
-#ifdef OPENSSL_NO_RSA
-    BIO_puts(bio_out, "RSA\n");
-#endif
 #ifdef OPENSSL_NO_SCRYPT
     BIO_puts(bio_out, "SCRYPT\n");
 #endif
@@ -1295,8 +1336,10 @@ const OPTIONS list_options[] = {
     {"select", OPT_SELECT_NAME, 's', "Select a single algorithm"},
     {"commands", OPT_COMMANDS, '-', "List of standard commands"},
     {"standard-commands", OPT_COMMANDS, '-', "List of standard commands"},
+#ifndef OPENSSL_NO_DEPRECATED_3_0
     {"digest-commands", OPT_DIGEST_COMMANDS, '-',
-     "List of message digest commands"},
+     "List of message digest commands (deprecated)"},
+#endif
     {"digest-algorithms", OPT_DIGEST_ALGORITHMS, '-',
      "List of message digest algorithms"},
     {"kdf-algorithms", OPT_KDF_ALGORITHMS, '-',
@@ -1307,7 +1350,10 @@ const OPTIONS list_options[] = {
      "List of random number generators"},
     {"mac-algorithms", OPT_MAC_ALGORITHMS, '-',
      "List of message authentication code algorithms"},
-    {"cipher-commands", OPT_CIPHER_COMMANDS, '-', "List of cipher commands"},
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+    {"cipher-commands", OPT_CIPHER_COMMANDS, '-', 
+    "List of cipher commands (deprecated)"},
+#endif
     {"cipher-algorithms", OPT_CIPHER_ALGORITHMS, '-',
      "List of cipher algorithms"},
     {"encoders", OPT_ENCODERS, '-', "List of encoding methods" },
@@ -1480,10 +1526,10 @@ opthelp:
         }
         done = 1;
     }
-    if (opt_num_rest() != 0) {
-        BIO_printf(bio_err, "Extra arguments given.\n");
+
+    /* No extra arguments. */
+    if (opt_num_rest() != 0)
         goto opthelp;
-    }
 
     if (todo.commands)
         list_type(FT_general, one);

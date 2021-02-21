@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -252,7 +252,6 @@ int BN_mod_exp_recp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
          * a window to do.  To do this we need to scan forward until the last
          * set bit before the end of the window
          */
-        j = wstart;
         wvalue = 1;
         wend = 0;
         for (i = 1; i < window; i++) {
@@ -409,7 +408,6 @@ int BN_mod_exp_mont(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
          * a window to do.  To do this we need to scan forward until the last
          * set bit before the end of the window
          */
-        j = wstart;
         wvalue = 1;
         wend = 0;
         for (i = 1; i < window; i++) {
@@ -1354,7 +1352,6 @@ int BN_mod_exp_simple(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
          * a window to do.  To do this we need to scan forward until the last
          * set bit before the end of the window
          */
-        j = wstart;
         wvalue = 1;
         wend = 0;
         for (i = 1; i < window; i++) {

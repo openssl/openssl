@@ -23,6 +23,7 @@
 # include <openssl/safestack.h>
 # include <openssl/x509.h>
 # include <openssl/x509v3.h>
+# include "crypto/x509.h"
 
 /*
  * this structure is used to store the context for CMP sessions

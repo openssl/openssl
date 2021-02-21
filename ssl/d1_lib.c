@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2005-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -142,10 +142,11 @@ void dtls1_free(SSL *s)
 
     ssl3_free(s);
 
-    dtls1_clear_queues(s);
-
-    pqueue_free(s->d1->buffered_messages);
-    pqueue_free(s->d1->sent_messages);
+    if (s->d1 != NULL) {
+        dtls1_clear_queues(s);
+        pqueue_free(s->d1->buffered_messages);
+        pqueue_free(s->d1->sent_messages);
+    }
 
     OPENSSL_free(s->d1);
     s->d1 = NULL;
@@ -487,7 +488,7 @@ int DTLSv1_listen(SSL *s, BIO_ADDR *client)
     }
 
     if (!ssl3_setup_buffers(s)) {
-        /* SSLerr already called */
+        /* ERR_raise() already called */
         return -1;
     }
     buf = RECORD_LAYER_get_rbuf(&s->rlayer)->buf;

@@ -32,6 +32,7 @@ EVP_KDF_CTX                             datatype
 EVP_KEYMGMT                             datatype
 EVP_MAC                                 datatype
 EVP_MAC_CTX                             datatype
+EVP_PKEY                                datatype
 EVP_PKEY_gen_cb                         datatype
 EVP_PKEY_METHOD                         datatype
 EVP_PKEY_ASN1_METHOD                    datatype
@@ -54,6 +55,7 @@ OSSL_ENCODER_CTX                        datatype
 OSSL_ENCODER_CONSTRUCT                  datatype
 OSSL_ENCODER_CLEANUP                    datatype
 OSSL_ENCODER_INSTANCE                   datatype
+OSSL_HTTP_REQ_CTX                       datatype
 OSSL_STORE_CTX                          datatype
 OSSL_STORE_INFO                         datatype
 OSSL_STORE_LOADER                       datatype
@@ -331,6 +333,11 @@ EVP_seed_cfb                            define
 EVP_sm4_cfb                             define
 OBJ_cleanup                             define deprecated 1.1.0
 OCSP_parse_url                          define
+OCSP_REQ_CTX_add1_header                define deprecated 3.0.0
+OCSP_REQ_CTX_free                       define deprecated 3.0.0
+OCSP_REQ_CTX_i2d                        define deprecated 3.0.0
+OCSP_set_max_response_length            define deprecated 3.0.0
+OCSP_REQ_CTX_set1_req                   define deprecated 3.0.0
 OPENSSL_FILE                            define
 OPENSSL_FUNC                            define
 OPENSSL_LINE                            define
@@ -572,6 +579,7 @@ SSL_want_async_job                      define
 SSL_want_client_hello_cb                define
 SSL_want_nothing                        define
 SSL_want_read                           define
+SSL_want_retry_verify                   define
 SSL_want_write                          define
 SSL_want_x509_lookup                    define
 SSLv23_client_method                    define
@@ -587,6 +595,7 @@ X509_LOOKUP_load_file                   define
 X509_LOOKUP_load_file_ex                define
 X509_LOOKUP_load_store                  define
 X509_LOOKUP_load_store_ex               define
+X509_NAME_hash                          define
 X509_STORE_set_lookup_crls_cb           define
 X509_STORE_set_verify_func              define
 EVP_PKEY_CTX_set1_id                    define

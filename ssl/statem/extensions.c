@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -17,9 +17,7 @@
 static int final_renegotiate(SSL *s, unsigned int context, int sent);
 static int init_server_name(SSL *s, unsigned int context);
 static int final_server_name(SSL *s, unsigned int context, int sent);
-#ifndef OPENSSL_NO_EC
 static int final_ec_pt_formats(SSL *s, unsigned int context, int sent);
-#endif
 static int init_session_ticket(SSL *s, unsigned int context);
 #ifndef OPENSSL_NO_OCSP
 static int init_status_request(SSL *s, unsigned int context);
@@ -151,7 +149,6 @@ static const EXTENSION_DEFINITION ext_defs[] = {
 #else
     INVALID_EXTENSION,
 #endif
-#ifndef OPENSSL_NO_EC
     {
         TLSEXT_TYPE_ec_point_formats,
         SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS1_2_SERVER_HELLO
@@ -160,10 +157,6 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         tls_construct_stoc_ec_pt_formats, tls_construct_ctos_ec_pt_formats,
         final_ec_pt_formats
     },
-#else
-    INVALID_EXTENSION,
-#endif
-#if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH)
     {
         /*
          * "supported_groups" is spread across several specifications.
@@ -197,9 +190,6 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         tls_construct_stoc_supported_groups,
         tls_construct_ctos_supported_groups, NULL
     },
-#else
-    INVALID_EXTENSION,
-#endif
     {
         TLSEXT_TYPE_session_ticket,
         SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS1_2_SERVER_HELLO
@@ -957,7 +947,8 @@ static int final_server_name(SSL *s, unsigned int context, int sent)
      * context, to avoid the confusing situation of having sess_accept_good
      * exceed sess_accept (zero) for the new context.
      */
-    if (SSL_IS_FIRST_HANDSHAKE(s) && s->ctx != s->session_ctx) {
+    if (SSL_IS_FIRST_HANDSHAKE(s) && s->ctx != s->session_ctx
+		    && s->hello_retry_request == SSL_HRR_NONE) {
         tsan_counter(&s->ctx->stats.sess_accept);
         tsan_decr(&s->session_ctx->stats.sess_accept);
     }
@@ -1011,7 +1002,6 @@ static int final_server_name(SSL *s, unsigned int context, int sent)
     }
 }
 
-#ifndef OPENSSL_NO_EC
 static int final_ec_pt_formats(SSL *s, unsigned int context, int sent)
 {
     unsigned long alg_k, alg_a;
@@ -1049,7 +1039,6 @@ static int final_ec_pt_formats(SSL *s, unsigned int context, int sent)
 
     return 1;
 }
-#endif
 
 static int init_session_ticket(SSL *s, unsigned int context)
 {
@@ -1129,7 +1118,7 @@ static int init_sig_algs(SSL *s, unsigned int context)
     return 1;
 }
 
-static int init_sig_algs_cert(SSL *s, unsigned int context)
+static int init_sig_algs_cert(SSL *s, ossl_unused unsigned int context)
 {
     /* Clear any signature algorithms extension received */
     OPENSSL_free(s->s3.tmp.peer_cert_sigalgs);
@@ -1674,7 +1663,7 @@ static int final_maxfragmentlen(SSL *s, unsigned int context, int sent)
     return 1;
 }
 
-static int init_post_handshake_auth(SSL *s, unsigned int context)
+static int init_post_handshake_auth(SSL *s, ossl_unused unsigned int context)
 {
     s->post_handshake_auth = SSL_PHA_NONE;
 

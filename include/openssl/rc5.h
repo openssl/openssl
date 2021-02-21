@@ -46,27 +46,30 @@ typedef struct rc5_key_st {
     RC5_32_INT data[2 * (RC5_16_ROUNDS + 1)];
 } RC5_32_KEY;
 #  endif
-
-DEPRECATEDIN_3_0(int RC5_32_set_key(RC5_32_KEY *key, int len,
-                                    const unsigned char *data, int rounds))
-DEPRECATEDIN_3_0(void RC5_32_ecb_encrypt(const unsigned char *in,
-                                         unsigned char *out, RC5_32_KEY *key,
-                                         int enc))
-DEPRECATEDIN_3_0(void RC5_32_encrypt(unsigned long *data, RC5_32_KEY *key))
-DEPRECATEDIN_3_0(void RC5_32_decrypt(unsigned long *data, RC5_32_KEY *key))
-DEPRECATEDIN_3_0(void RC5_32_cbc_encrypt(const unsigned char *in,
-                                         unsigned char *out, long length,
-                                         RC5_32_KEY *ks, unsigned char *iv,
-                                         int enc))
-DEPRECATEDIN_3_0(void RC5_32_cfb64_encrypt(const unsigned char *in,
-                                           unsigned char *out, long length,
-                                           RC5_32_KEY *schedule,
-                                           unsigned char *ivec, int *num,
-                                           int enc))
-DEPRECATEDIN_3_0(void RC5_32_ofb64_encrypt(const unsigned char *in,
-                                           unsigned char *out, long length,
-                                           RC5_32_KEY *schedule,
-                                           unsigned char *ivec, int *num))
+#  ifndef OPENSSL_NO_DEPRECATED_3_0
+OSSL_DEPRECATEDIN_3_0 int RC5_32_set_key(RC5_32_KEY *key, int len,
+                                         const unsigned char *data,
+                                         int rounds);
+OSSL_DEPRECATEDIN_3_0 void RC5_32_ecb_encrypt(const unsigned char *in,
+                                              unsigned char *out,
+                                              RC5_32_KEY *key,
+                                              int enc);
+OSSL_DEPRECATEDIN_3_0 void RC5_32_encrypt(unsigned long *data, RC5_32_KEY *key);
+OSSL_DEPRECATEDIN_3_0 void RC5_32_decrypt(unsigned long *data, RC5_32_KEY *key);
+OSSL_DEPRECATEDIN_3_0 void RC5_32_cbc_encrypt(const unsigned char *in,
+                                              unsigned char *out, long length,
+                                              RC5_32_KEY *ks, unsigned char *iv,
+                                              int enc);
+OSSL_DEPRECATEDIN_3_0 void RC5_32_cfb64_encrypt(const unsigned char *in,
+                                                unsigned char *out, long length,
+                                                RC5_32_KEY *schedule,
+                                                unsigned char *ivec, int *num,
+                                                int enc);
+OSSL_DEPRECATEDIN_3_0 void RC5_32_ofb64_encrypt(const unsigned char *in,
+                                                unsigned char *out, long length,
+                                                RC5_32_KEY *schedule,
+                                                unsigned char *ivec, int *num);
+#  endif
 
 #  ifdef  __cplusplus
 }

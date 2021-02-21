@@ -176,9 +176,9 @@ static int hexstr2buf_sep(unsigned char *buf, size_t buf_n, size_t *buflen,
  * Given a string of hex digits convert to a buffer
  */
 int OPENSSL_hexstr2buf_ex(unsigned char *buf, size_t buf_n, size_t *buflen,
-                          const char *str)
+                          const char *str, const char sep)
 {
-    return hexstr2buf_sep(buf, buf_n, buflen, str, DEFAULT_SEPARATOR);
+    return hexstr2buf_sep(buf, buf_n, buflen, str, sep);
 }
 
 unsigned char *openssl_hexstr2buf_sep(const char *str, long *buflen,
@@ -187,7 +187,12 @@ unsigned char *openssl_hexstr2buf_sep(const char *str, long *buflen,
     unsigned char *buf;
     size_t buf_n, tmp_buflen;
 
-    buf_n = strlen(str) >> 1;
+    buf_n = strlen(str);
+    if (buf_n <= 1) {
+        ERR_raise(ERR_LIB_CRYPTO, CRYPTO_R_HEX_STRING_TOO_SHORT);
+        return NULL;
+    }
+    buf_n /= 2;
     if ((buf = OPENSSL_malloc(buf_n)) == NULL) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
         return NULL;
@@ -249,9 +254,10 @@ static int buf2hexstr_sep(char *str, size_t str_n, size_t *strlen,
 }
 
 int OPENSSL_buf2hexstr_ex(char *str, size_t str_n, size_t *strlen,
-                          const unsigned char *buf, size_t buflen)
+                          const unsigned char *buf, size_t buflen,
+                          const char sep)
 {
-    return buf2hexstr_sep(str, str_n, strlen, buf, buflen, DEFAULT_SEPARATOR);
+    return buf2hexstr_sep(str, str_n, strlen, buf, buflen, sep);
 }
 
 char *openssl_buf2hexstr_sep(const unsigned char *buf, long buflen, char sep)

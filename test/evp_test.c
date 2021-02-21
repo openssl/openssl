@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#define OPENSSL_SUPPRESS_DEPRECATED /* EVP_PKEY_new_CMAC_key */
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -26,7 +27,9 @@
 #include "internal/nelem.h"
 #include "crypto/evp.h"
 #include "testutil.h"
-#include "evp_test.h"
+
+typedef struct evp_test_buffer_st EVP_TEST_BUFFER;
+DEFINE_STACK_OF(EVP_TEST_BUFFER)
 
 #define AAD_NUM 4
 
@@ -762,7 +765,7 @@ static int cipher_test_enc(EVP_TEST *t, int enc,
     if (expected->iv != NULL) {
         /* Some (e.g., GCM) tests use IVs longer than EVP_MAX_IV_LENGTH. */
         unsigned char iv[128];
-        if (!TEST_true(EVP_CIPHER_CTX_get_iv_state(ctx_base, iv, sizeof(iv)))
+        if (!TEST_true(EVP_CIPHER_CTX_get_updated_iv(ctx_base, iv, sizeof(iv)))
                 || ((EVP_CIPHER_flags(expected->cipher) & EVP_CIPH_CUSTOM_IV) == 0
                     && !TEST_mem_eq(expected->iv, expected->iv_len, iv,
                                     expected->iv_len))) {
@@ -1150,6 +1153,14 @@ static int mac_test_run_pkey(EVP_TEST *t)
                   OBJ_nid2sn(expected->type), expected->alg);
 
     if (expected->type == EVP_PKEY_CMAC) {
+#ifdef OPENSSL_NO_DEPRECATED_3_0
+        TEST_info("skipping, PKEY CMAC '%s' is disabled", expected->alg);
+        t->skip = 1;
+        t->err = NULL;
+        goto err;
+#else
+        OSSL_LIB_CTX *tmpctx;
+
         if (expected->alg != NULL && is_cipher_disabled(expected->alg)) {
             TEST_info("skipping, PKEY CMAC '%s' is disabled", expected->alg);
             t->skip = 1;
@@ -1160,8 +1171,11 @@ static int mac_test_run_pkey(EVP_TEST *t)
             t->err = "MAC_KEY_CREATE_ERROR";
             goto err;
         }
-        key = EVP_PKEY_new_CMAC_key_ex(expected->key, expected->key_len,
-                                       EVP_CIPHER_name(cipher), libctx, NULL);
+        tmpctx = OSSL_LIB_CTX_set0_default(libctx);
+        key = EVP_PKEY_new_CMAC_key(NULL, expected->key, expected->key_len,
+                                    cipher);
+        OSSL_LIB_CTX_set0_default(tmpctx);
+#endif
     } else {
         key = EVP_PKEY_new_raw_private_key_ex(libctx,
                                               OBJ_nid2sn(expected->type), NULL,
@@ -2422,11 +2436,12 @@ static int kdf_test_ctrl(EVP_TEST *t, EVP_KDF_CTX *kctx,
             t->skip = 1;
         }
     }
-    if (p != NULL && strcmp(name, "cipher") == 0) {
-        if (is_cipher_disabled(p)) {
-            TEST_info("skipping, '%s' is disabled", p);
-            t->skip = 1;
-        }
+    if (p != NULL
+        && (strcmp(name, "cipher") == 0
+            || strcmp(name, "cekalg") == 0)
+        && is_cipher_disabled(p)) {
+        TEST_info("skipping, '%s' is disabled", p);
+        t->skip = 1;
     }
     OPENSSL_free(name);
     return 1;
@@ -3587,22 +3602,12 @@ int setup_tests(void)
     }
 
     /*
+     * Load the provider via configuration into the created library context.
      * Load the 'null' provider into the default library context to ensure that
      * the the tests do not fallback to using the default provider.
      */
-    prov_null = OSSL_PROVIDER_load(NULL, "null");
-    if (prov_null == NULL) {
-        opt_printf_stderr("Failed to load null provider into default libctx\n");
+    if (!test_get_libctx(&libctx, &prov_null, config_file, NULL, NULL))
         return 0;
-    }
-
-    /* load the provider via configuration into the created library context */
-    libctx = OSSL_LIB_CTX_new();
-    if (libctx == NULL
-        || !OSSL_LIB_CTX_load_config(libctx, config_file)) {
-        TEST_error("Failed to load config %s\n", config_file);
-        return 0;
-    }
 
     n = test_get_argument_count();
     if (n == 0)
@@ -3661,10 +3666,6 @@ static int is_digest_disabled(const char *name)
 
 static int is_pkey_disabled(const char *name)
 {
-#ifdef OPENSSL_NO_RSA
-    if (STR_STARTS_WITH(name, "RSA"))
-        return 1;
-#endif
 #ifdef OPENSSL_NO_EC
     if (STR_STARTS_WITH(name, "EC"))
         return 1;
@@ -3707,10 +3708,6 @@ static int is_kdf_disabled(const char *name)
     if (STR_ENDS_WITH(name, "SCRYPT"))
         return 1;
 #endif
-#ifdef OPENSSL_NO_CMS
-    if (strcasecmp(name, "X942KDF") == 0)
-        return 1;
-#endif /* OPENSSL_NO_CMS */
     return 0;
 }
 
@@ -3742,6 +3739,8 @@ static int is_cipher_disabled(const char *name)
 #endif
 #ifdef OPENSSL_NO_DES
     if (STR_STARTS_WITH(name, "DES"))
+        return 1;
+    if (STR_ENDS_WITH(name, "3DESwrap"))
         return 1;
 #endif
 #ifdef OPENSSL_NO_OCB

@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -117,6 +117,15 @@ static ERR_STRING_DATA ERR_str_reasons[] = {
     {ERR_R_INVALID_PROVIDER_FUNCTIONS, "invalid provider functions"},
     {ERR_R_INTERRUPTED_OR_CANCELLED, "interrupted or cancelled"},
 
+    /*
+     * Something is unsupported, exactly what is expressed with additional data
+     */
+    {ERR_R_UNSUPPORTED, "unsupported"},
+    /*
+     * A fetch failed for other reasons than the name to be fetched being
+     * unsupported.
+     */
+    {ERR_R_FETCH_FAILED, "fetch failed"},
     {0, NULL},
 };
 #endif
@@ -237,7 +246,7 @@ static int err_load_strings(const ERR_STRING_DATA *str)
     return 1;
 }
 
-int ERR_load_ERR_strings(void)
+int err_load_ERR_strings_int(void)
 {
 #ifndef OPENSSL_NO_ERR
     if (!RUN_ONCE(&err_string_init, do_err_strings_init))
@@ -251,7 +260,7 @@ int ERR_load_ERR_strings(void)
 
 int ERR_load_strings(int lib, ERR_STRING_DATA *str)
 {
-    if (ERR_load_ERR_strings() == 0)
+    if (err_load_ERR_strings_int() == 0)
         return 0;
 
     err_patch(lib, str);
@@ -261,7 +270,7 @@ int ERR_load_strings(int lib, ERR_STRING_DATA *str)
 
 int ERR_load_strings_const(const ERR_STRING_DATA *str)
 {
-    if (ERR_load_ERR_strings() == 0)
+    if (err_load_ERR_strings_int() == 0)
         return 0;
     err_load_strings(str);
     return 1;
@@ -312,21 +321,6 @@ unsigned long ERR_get_error(void)
     return get_error_values(EV_POP, NULL, NULL, NULL, NULL, NULL);
 }
 
-unsigned long ERR_get_error_line(const char **file, int *line)
-{
-    return get_error_values(EV_POP, file, line, NULL, NULL, NULL);
-}
-
-unsigned long ERR_get_error_func(const char **func)
-{
-    return get_error_values(EV_POP, NULL, NULL, func, NULL, NULL);
-}
-
-unsigned long ERR_get_error_data(const char **data, int *flags)
-{
-    return get_error_values(EV_POP, NULL, NULL, NULL, data, flags);
-}
-
 unsigned long ERR_get_error_all(const char **file, int *line,
                                 const char **func,
                                 const char **data, int *flags)
@@ -335,6 +329,11 @@ unsigned long ERR_get_error_all(const char **file, int *line,
 }
 
 #ifndef OPENSSL_NO_DEPRECATED_3_0
+unsigned long ERR_get_error_line(const char **file, int *line)
+{
+    return get_error_values(EV_POP, file, line, NULL, NULL, NULL);
+}
+
 unsigned long ERR_get_error_line_data(const char **file, int *line,
                                       const char **data, int *flags)
 {
@@ -489,11 +488,12 @@ static unsigned long get_error_values(ERR_GET_ACTION g,
     return ret;
 }
 
-void ERR_error_string_n(unsigned long e, char *buf, size_t len)
+void ossl_err_string_int(unsigned long e, const char *func,
+                         char *buf, size_t len)
 {
     char lsbuf[64], rsbuf[256];
     const char *ls, *rs = NULL;
-    unsigned long f = 0, l, r;
+    unsigned long l, r;
 
     if (len == 0)
         return;
@@ -512,22 +512,30 @@ void ERR_error_string_n(unsigned long e, char *buf, size_t len)
      * directly instead.
      */
     r = ERR_GET_REASON(e);
+#ifndef OPENSSL_NO_ERR
     if (ERR_SYSTEM_ERROR(e)) {
         if (openssl_strerror_r(r, rsbuf, sizeof(rsbuf)))
             rs = rsbuf;
     } else {
         rs = ERR_reason_error_string(e);
     }
+#endif
     if (rs == NULL) {
         BIO_snprintf(rsbuf, sizeof(rsbuf), "reason(%lu)", r);
         rs = rsbuf;
     }
 
-    BIO_snprintf(buf, len, "error:%08lX:%s:%s:%s", e, ls, "", rs);
+    BIO_snprintf(buf, len, "error:%08lX:%s:%s:%s", e, ls, func, rs);
     if (strlen(buf) == len - 1) {
         /* Didn't fit; use a minimal format. */
-        BIO_snprintf(buf, len, "err:%lx:%lx:%lx:%lx", e, l, f, r);
+        BIO_snprintf(buf, len, "err:%lx:%lx:%lx:%lx", e, l, 0L, r);
     }
+}
+
+
+void ERR_error_string_n(unsigned long e, char *buf, size_t len)
+{
+    ossl_err_string_int(e, "", buf, len);
 }
 
 /*
@@ -594,8 +602,7 @@ const char *ERR_reason_error_string(unsigned long e)
     return ((p == NULL) ? NULL : p->string);
 }
 
-/* TODO(3.0): arg ignored for now */
-static void err_delete_thread_state(void *arg)
+static void err_delete_thread_state(void *unused)
 {
     ERR_STATE *state = CRYPTO_THREAD_get_local(&err_thread_local);
     if (state == NULL)

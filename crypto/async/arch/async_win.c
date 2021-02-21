@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -34,7 +34,11 @@ void async_local_cleanup(void)
 
 int async_fibre_init_dispatcher(async_fibre *fibre)
 {
+# if defined(_WIN32_WINNT) && _WIN32_WINNT >= 0x600
+    fibre->fibre = ConvertThreadToFiberEx(NULL, FIBER_FLAG_FLOAT_SWITCH);
+# else
     fibre->fibre = ConvertThreadToFiber(NULL);
+# endif
     if (fibre->fibre == NULL) {
         fibre->converted = 0;
         fibre->fibre = GetCurrentFiber();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2019, Oracle and/or its affiliates.  All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -10,6 +10,7 @@
 
 #ifndef OPENSSL_PARAMS_H
 # define OPENSSL_PARAMS_H
+# pragma once
 
 # include <openssl/core.h>
 # include <openssl/bn.h>
@@ -62,9 +63,9 @@ extern "C" {
     OSSL_PARAM_DEFN((key), OSSL_PARAM_OCTET_STRING, (addr), sz)
 
 # define OSSL_PARAM_utf8_ptr(key, addr, sz) \
-    OSSL_PARAM_DEFN((key), OSSL_PARAM_UTF8_PTR, &(addr), sz)
+    OSSL_PARAM_DEFN((key), OSSL_PARAM_UTF8_PTR, (addr), sz)
 # define OSSL_PARAM_octet_ptr(key, addr, sz) \
-    OSSL_PARAM_DEFN((key), OSSL_PARAM_OCTET_PTR, &(addr), sz)
+    OSSL_PARAM_DEFN((key), OSSL_PARAM_OCTET_PTR, (addr), sz)
 
 /* Search an OSSL_PARAM array for a matching name */
 OSSL_PARAM *OSSL_PARAM_locate(OSSL_PARAM *p, const char *key);

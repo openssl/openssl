@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -125,15 +125,20 @@ int dsaparam_main(int argc, char **argv)
             break;
         }
     }
+
+    /* Optional arg is bitsize. */
     argc = opt_num_rest();
     argv = opt_rest();
-
     if (argc == 1) {
         if (!opt_int(argv[0], &num) || num < 0)
-            goto end;
-        /* generate a key */
-        numbits = num;
+            goto opthelp;
+    } else if (argc != 0) {
+        goto opthelp;
     }
+    app_RAND_load();
+
+    /* generate a key */
+    numbits = num;
     private = genkey ? 1 : 0;
 
     out = bio_open_owner(outfile, outformat, private);

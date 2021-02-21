@@ -19,7 +19,7 @@
 #include <openssl/pem.h>
 
 #include "testutil.h"
-#include "pkcs12_helper.h"
+#include "helpers/pkcs12.h"
 
 
 /* --------------------------------------------------------------------------

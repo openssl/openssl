@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -266,7 +266,8 @@ int PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store,
 
     /* Now verify the certificates */
     p7_ctx = pkcs7_get0_ctx(p7);
-    cert_ctx = X509_STORE_CTX_new_ex(p7_ctx->libctx, p7_ctx->propq);
+    cert_ctx = X509_STORE_CTX_new_ex(pkcs7_ctx_get0_libctx(p7_ctx),
+                                     pkcs7_ctx_get0_propq(p7_ctx));
     if (cert_ctx == NULL)
         goto err;
     if (!(flags & PKCS7_NOVERIFY))
@@ -288,7 +289,6 @@ int PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store,
             i = X509_verify_cert(cert_ctx);
             if (i <= 0)
                 j = X509_STORE_CTX_get_error(cert_ctx);
-            X509_STORE_CTX_cleanup(cert_ctx);
             if (i <= 0) {
                 ERR_raise_data(ERR_LIB_PKCS7, PKCS7_R_CERTIFICATE_VERIFY_ERROR,
                                "Verify error: %s",

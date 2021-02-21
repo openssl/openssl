@@ -42,5 +42,5 @@ unless ($no_fips) {
 }
 
 ok(run(test(["evp_libctx_test",
-             "-config", srctop_file("test","default-and-legacy.cnf"),])),
+             "-config", srctop_file("test","default.cnf"),])),
    "running default-and-legacy evp_libctx_test");

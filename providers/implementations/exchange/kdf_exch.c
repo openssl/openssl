@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -95,7 +95,13 @@ static int kdf_derive(void *vpkdfctx, unsigned char *secret, size_t *secretlen,
 
     if (!ossl_prov_is_running())
         return 0;
-    return EVP_KDF_derive(pkdfctx->kdfctx, secret, *secretlen);
+
+    if (secret == NULL) {
+        *secretlen = EVP_KDF_CTX_get_kdf_size(pkdfctx->kdfctx);
+        return 1;
+    }
+
+    return EVP_KDF_derive(pkdfctx->kdfctx, secret, outlen);
 }
 
 static void kdf_freectx(void *vpkdfctx)

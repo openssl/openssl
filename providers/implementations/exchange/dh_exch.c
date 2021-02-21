@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -104,7 +104,7 @@ static int dh_init(void *vpdhctx, void *vdh)
     DH_free(pdhctx->dh);
     pdhctx->dh = vdh;
     pdhctx->kdf_type = PROV_DH_KDF_NONE;
-    return dh_check_key(vdh);
+    return ossl_dh_check_key(vdh);
 }
 
 static int dh_set_peer(void *vpdhctx, void *vdh)
@@ -297,7 +297,7 @@ static int dh_set_ctx_params(void *vpdhctx, const OSSL_PARAM params[])
 
         if (name[0] == '\0')
             pdhctx->kdf_type = PROV_DH_KDF_NONE;
-        else if (strcmp(name, OSSL_KDF_NAME_X942KDF) == 0)
+        else if (strcmp(name, OSSL_KDF_NAME_X942KDF_ASN1) == 0)
             pdhctx->kdf_type = PROV_DH_KDF_X9_42_ASN1;
         else
             return 0;
@@ -321,7 +321,7 @@ static int dh_set_ctx_params(void *vpdhctx, const OSSL_PARAM params[])
 
         EVP_MD_free(pdhctx->kdf_md);
         pdhctx->kdf_md = EVP_MD_fetch(pdhctx->libctx, name, mdprops);
-        if (!digest_is_allowed(pdhctx->kdf_md)) {
+        if (!ossl_digest_is_allowed(pdhctx->kdf_md)) {
             EVP_MD_free(pdhctx->kdf_md);
             pdhctx->kdf_md = NULL;
         }
@@ -395,7 +395,6 @@ static const OSSL_PARAM known_gettable_ctx_params[] = {
     OSSL_PARAM_size_t(OSSL_EXCHANGE_PARAM_KDF_OUTLEN, NULL),
     OSSL_PARAM_DEFN(OSSL_EXCHANGE_PARAM_KDF_UKM, OSSL_PARAM_OCTET_PTR,
                     NULL, 0),
-    OSSL_PARAM_size_t(OSSL_EXCHANGE_PARAM_KDF_UKM_LEN, NULL),
     OSSL_PARAM_END
 };
 
@@ -421,7 +420,7 @@ static int dh_get_ctx_params(void *vpdhctx, OSSL_PARAM params[])
                 kdf_type = "";
                 break;
             case PROV_DH_KDF_X9_42_ASN1:
-                kdf_type = OSSL_KDF_NAME_X942KDF;
+                kdf_type = OSSL_KDF_NAME_X942KDF_ASN1;
                 break;
             default:
                 return 0;
@@ -444,11 +443,8 @@ static int dh_get_ctx_params(void *vpdhctx, OSSL_PARAM params[])
         return 0;
 
     p = OSSL_PARAM_locate(params, OSSL_EXCHANGE_PARAM_KDF_UKM);
-    if (p != NULL && !OSSL_PARAM_set_octet_ptr(p, pdhctx->kdf_ukm, 0))
-        return 0;
-
-    p = OSSL_PARAM_locate(params, OSSL_EXCHANGE_PARAM_KDF_UKM_LEN);
-    if (p != NULL && !OSSL_PARAM_set_size_t(p, pdhctx->kdf_ukmlen))
+    if (p != NULL
+        && !OSSL_PARAM_set_octet_ptr(p, pdhctx->kdf_ukm, pdhctx->kdf_ukmlen))
         return 0;
 
     p = OSSL_PARAM_locate(params, OSSL_KDF_PARAM_CEK_ALG);

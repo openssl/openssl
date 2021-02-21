@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -24,7 +24,7 @@ static EVP_PKEY_CTX *init_ctx(const char *kdfalg, int *pkeysize,
                               const char *keyfile, int keyform, int key_type,
                               char *passinarg, int pkey_op, ENGINE *e,
                               const int impl, int rawin, EVP_PKEY **ppkey,
-                              OSSL_LIB_CTX *libctx, const char *propq);
+                              OSSL_LIB_CTX *libctx);
 
 static int setup_peer(EVP_PKEY_CTX *ctx, int peerform, const char *file,
                       ENGINE *e);
@@ -117,7 +117,7 @@ int pkeyutl_main(int argc, char **argv)
     size_t buf_outlen;
     const char *inkey = NULL;
     const char *peerkey = NULL;
-    const char *kdfalg = NULL;
+    const char *kdfalg = NULL, *digestname = NULL;
     int kdflen = 0;
     STACK_OF(OPENSSL_STRING) *pkeyopts = NULL;
     STACK_OF(OPENSSL_STRING) *pkeyopts_passin = NULL;
@@ -125,7 +125,6 @@ int pkeyutl_main(int argc, char **argv)
     const EVP_MD *md = NULL;
     int filesize = -1;
     OSSL_LIB_CTX *libctx = app_get0_libctx();
-    const char *propq = NULL;
 
     prog = opt_init(argc, argv, pkeyutl_options);
     while ((o = opt_next()) != OPT_EOF) {
@@ -245,14 +244,21 @@ int pkeyutl_main(int argc, char **argv)
             rawin = 1;
             break;
         case OPT_DIGEST:
-            if (!opt_md(opt_arg(), &md))
-                goto end;
+            digestname = opt_arg();
             break;
         }
     }
+
+    /* No extra arguments. */
     argc = opt_num_rest();
     if (argc != 0)
         goto opthelp;
+
+    app_RAND_load();
+    if (digestname != NULL) {
+        if (!opt_md(digestname, &md))
+            goto end;
+    }
 
     if (rawin && pkey_op != EVP_PKEY_OP_SIGN && pkey_op != EVP_PKEY_OP_VERIFY) {
         BIO_printf(bio_err,
@@ -291,7 +297,7 @@ int pkeyutl_main(int argc, char **argv)
     }
     ctx = init_ctx(kdfalg, &keysize, inkey, keyform, key_type,
                    passinarg, pkey_op, e, engine_impl, rawin, &pkey,
-                   libctx, propq);
+                   libctx);
     if (ctx == NULL) {
         BIO_printf(bio_err, "%s: Error initializing context\n", prog);
         ERR_print_errors(bio_err);
@@ -512,7 +518,7 @@ static EVP_PKEY_CTX *init_ctx(const char *kdfalg, int *pkeysize,
                               char *passinarg, int pkey_op, ENGINE *e,
                               const int engine_impl, int rawin,
                               EVP_PKEY **ppkey,
-                              OSSL_LIB_CTX *libctx, const char *propq)
+                              OSSL_LIB_CTX *libctx)
 {
     EVP_PKEY *pkey = NULL;
     EVP_PKEY_CTX *ctx = NULL;
@@ -520,6 +526,7 @@ static EVP_PKEY_CTX *init_ctx(const char *kdfalg, int *pkeysize,
     char *passin = NULL;
     int rv = -1;
     X509 *x;
+
     if (((pkey_op == EVP_PKEY_OP_SIGN) || (pkey_op == EVP_PKEY_OP_DECRYPT)
          || (pkey_op == EVP_PKEY_OP_DERIVE))
         && (key_type != KEY_PRIVKEY && kdfalg == NULL)) {
@@ -571,7 +578,7 @@ static EVP_PKEY_CTX *init_ctx(const char *kdfalg, int *pkeysize,
         if (impl != NULL)
             ctx = EVP_PKEY_CTX_new_id(kdfnid, impl);
         else
-            ctx = EVP_PKEY_CTX_new_from_name(libctx, kdfalg, propq);
+            ctx = EVP_PKEY_CTX_new_from_name(libctx, kdfalg, app_get0_propq());
     } else {
         if (pkey == NULL)
             goto end;
@@ -580,7 +587,7 @@ static EVP_PKEY_CTX *init_ctx(const char *kdfalg, int *pkeysize,
         if (impl != NULL)
             ctx = EVP_PKEY_CTX_new(pkey, impl);
         else
-            ctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey, propq);
+            ctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey, app_get0_propq());
         if (ppkey != NULL)
             *ppkey = pkey;
         EVP_PKEY_free(pkey);

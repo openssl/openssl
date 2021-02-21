@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  * Copyright 2005 Nokia. All rights reserved.
  *
@@ -585,7 +585,6 @@ struct ssl_session_st {
     int not_resumable;
     /* This is the cert and type for the other end. */
     X509 *peer;
-    int peer_type;
     /* Certificate chain peer sent. */
     STACK_OF(X509) *peer_chain;
     /*
@@ -806,6 +805,8 @@ int ssl_hmac_update(SSL_HMAC *ctx, const unsigned char *data, size_t len);
 int ssl_hmac_final(SSL_HMAC *ctx, unsigned char *md, size_t *len,
                    size_t max_size);
 size_t ssl_hmac_size(const SSL_HMAC *ctx);
+
+int ssl_get_EC_curve_nid(const EVP_PKEY *pkey);
 
 typedef struct tls_group_info_st {
     char *tlsname;           /* Curve Name as in TLS specs */
@@ -1049,15 +1050,15 @@ struct ssl_ctx_st {
         /* RFC 4366 Maximum Fragment Length Negotiation */
         uint8_t max_fragment_len_mode;
 
-# ifndef OPENSSL_NO_EC
         /* EC extension values inherited by SSL structure */
         size_t ecpointformats_len;
         unsigned char *ecpointformats;
-# endif                         /* OPENSSL_NO_EC */
 
         size_t supportedgroups_len;
         uint16_t *supportedgroups;
 
+        uint16_t *supported_groups_default;
+        size_t supported_groups_default_len;
         /*
          * ALPN information (we are in the process of transitioning from NPN to
          * ALPN.)
@@ -1187,6 +1188,12 @@ struct ssl_ctx_st {
     TLS_GROUP_INFO *group_list;
     size_t group_list_len;
     size_t group_list_max_len;
+
+    /* masks of disabled algorithms */
+    uint32_t disabled_enc_mask;
+    uint32_t disabled_mac_mask;
+    uint32_t disabled_mkey_mask;
+    uint32_t disabled_auth_mask;
 };
 
 typedef struct cert_pkey_st CERT_PKEY;
@@ -1295,9 +1302,7 @@ struct ssl_st {
             int message_type;
             /* used to hold the new cipher we are going to use */
             const SSL_CIPHER *new_cipher;
-# if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH)
-            EVP_PKEY *pkey;         /* holds short lived DH/ECDH key */
-# endif
+            EVP_PKEY *pkey;         /* holds short lived key exchange key */
             /* used for certificate requests */
             int cert_req;
             /* Certificate types in certificate request message. */
@@ -1399,21 +1404,17 @@ struct ssl_st {
         /* used by the client to know if it actually sent alpn */
         int alpn_sent;
 
-# ifndef OPENSSL_NO_EC
         /*
          * This is set to true if we believe that this is a version of Safari
          * running on OS X 10.6 or newer. We wish to know this because Safari on
          * 10.8 .. 10.8.3 has broken ECDHE-ECDSA support.
          */
         char is_probably_safari;
-# endif                         /* !OPENSSL_NO_EC */
 
         /* For clients: peer temporary key */
-# if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH)
-        /* The group_id for the DH/ECDH key */
+        /* The group_id for the key exchange key */
         uint16_t group_id;
         EVP_PKEY *peer_tmp;
-# endif
 
     } s3;
 
@@ -1589,7 +1590,6 @@ struct ssl_st {
         int ticket_expected;
         /* TLS 1.3 tickets requested by the application. */
         int extra_tickets_expected;
-# ifndef OPENSSL_NO_EC
         size_t ecpointformats_len;
         /* our list */
         unsigned char *ecpointformats;
@@ -1597,7 +1597,6 @@ struct ssl_st {
         size_t peer_ecpointformats_len;
         /* peer's list */
         unsigned char *peer_ecpointformats;
-# endif                         /* OPENSSL_NO_EC */
         size_t supportedgroups_len;
         /* our list */
         uint16_t *supportedgroups;
@@ -1923,14 +1922,12 @@ typedef struct dtls1_state_st {
 
 } DTLS1_STATE;
 
-# ifndef OPENSSL_NO_EC
 /*
  * From ECC-TLS draft, used in encoding the curve type in ECParameters
  */
 #  define EXPLICIT_PRIME_CURVE_TYPE  1
 #  define EXPLICIT_CHAR2_CURVE_TYPE  2
 #  define NAMED_CURVE_TYPE           3
-# endif                         /* OPENSSL_NO_EC */
 
 struct cert_pkey_st {
     X509 *x509;
@@ -2005,9 +2002,7 @@ typedef struct cert_st {
     CERT_PKEY *key;
 
     EVP_PKEY *dh_tmp;
-#ifndef OPENSSL_NO_DH
     DH *(*dh_tmp_cb) (SSL *ssl, int is_export, int keysize);
-#endif
     int dh_tmp_auto;
     /* Flags related to certificates */
     uint32_t cert_flags;
@@ -2389,7 +2384,7 @@ __owur int ssl_cipher_id_cmp(const SSL_CIPHER *a, const SSL_CIPHER *b);
 DECLARE_OBJ_BSEARCH_GLOBAL_CMP_FN(SSL_CIPHER, SSL_CIPHER, ssl_cipher_id);
 __owur int ssl_cipher_ptr_id_cmp(const SSL_CIPHER *const *ap,
                                  const SSL_CIPHER *const *bp);
-__owur STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
+__owur STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(SSL_CTX *ctx,
                                                     STACK_OF(SSL_CIPHER) *tls13_ciphersuites,
                                                     STACK_OF(SSL_CIPHER) **cipher_list,
                                                     STACK_OF(SSL_CIPHER) **cipher_list_by_id,
@@ -2410,7 +2405,7 @@ __owur int ssl_cipher_get_evp(SSL_CTX *ctxc, const SSL_SESSION *s,
 __owur int ssl_cipher_get_overhead(const SSL_CIPHER *c, size_t *mac_overhead,
                                    size_t *int_overhead, size_t *blocksize,
                                    size_t *ext_overhead);
-__owur int ssl_cert_is_disabled(size_t idx);
+__owur int ssl_cert_is_disabled(SSL_CTX *ctx, size_t idx);
 __owur const SSL_CIPHER *ssl_get_cipher_by_char(SSL *ssl,
                                                 const unsigned char *ptr,
                                                 int all);
@@ -2464,6 +2459,8 @@ __owur int ssl_encapsulate(SSL *s, EVP_PKEY *pubkey,
                            unsigned char **ctp, size_t *ctlenp,
                            int gensecret);
 __owur EVP_PKEY *ssl_dh_to_pkey(DH *dh);
+__owur int ssl_set_tmp_ecdh_groups(uint16_t **pext, size_t *pextlen,
+                                   void *key);
 __owur unsigned int ssl_get_max_send_fragment(const SSL *ssl);
 __owur unsigned int ssl_get_split_send_fragment(const SSL *ssl);
 
@@ -2638,14 +2635,13 @@ __owur int tls1_alert_code(int code);
 __owur int tls13_alert_code(int code);
 __owur int ssl3_alert_code(int code);
 
-#  ifndef OPENSSL_NO_EC
 __owur int ssl_check_srvr_ecc_cert_and_alg(X509 *x, SSL *s);
-#  endif
 
 SSL_COMP *ssl3_comp_find(STACK_OF(SSL_COMP) *sk, int n);
 
 __owur const TLS_GROUP_INFO *tls1_group_id_lookup(SSL_CTX *ctx, uint16_t curve_id);
 __owur int tls1_group_id2nid(uint16_t group_id, int include_unknown);
+__owur uint16_t tls1_nid2group_id(int nid);
 __owur int tls1_check_group_id(SSL *s, uint16_t group_id, int check_own_curves);
 __owur uint16_t tls1_shared_group(SSL *s, int nmatch);
 __owur int tls1_set_groups(uint16_t **pext, size_t *pextlen,
@@ -2654,13 +2650,11 @@ __owur int tls1_set_groups_list(SSL_CTX *ctx, uint16_t **pext, size_t *pextlen,
                                 const char *str);
 __owur EVP_PKEY *ssl_generate_pkey_group(SSL *s, uint16_t id);
 __owur int tls_valid_group(SSL *s, uint16_t group_id, int minversion,
-                           int maxversion);
+                           int maxversion, int isec, int *okfortls13);
 __owur EVP_PKEY *ssl_generate_param_group(SSL *s, uint16_t id);
-#  ifndef OPENSSL_NO_EC
 void tls1_get_formatlist(SSL *s, const unsigned char **pformats,
                          size_t *num_formats);
 __owur int tls1_check_ec_tmp_key(SSL *s, unsigned long id);
-#  endif                        /* OPENSSL_NO_EC */
 
 __owur int tls_group_allowed(SSL *s, uint16_t curve, int op);
 void tls1_get_supported_groups(SSL *s, const uint16_t **pgroups,
@@ -2712,9 +2706,7 @@ __owur int tls1_set_peer_legacy_sigalg(SSL *s, const EVP_PKEY *pkey);
 __owur int tls1_lookup_md(SSL_CTX *ctx, const SIGALG_LOOKUP *lu,
                           const EVP_MD **pmd);
 __owur size_t tls12_get_psigalgs(SSL *s, int sent, const uint16_t **psigs);
-#  ifndef OPENSSL_NO_EC
 __owur int tls_check_sigalg_curve(const SSL *s, int curve);
-#  endif
 __owur int tls12_check_peer_sigalg(SSL *s, uint16_t, EVP_PKEY *pkey);
 __owur int ssl_set_client_disabled(SSL *s);
 __owur int ssl_cipher_disabled(const SSL *s, const SSL_CIPHER *c, int op, int echde);
@@ -2835,6 +2827,14 @@ int ssl_hmac_old_init(SSL_HMAC *ctx, void *key, size_t len, char *md);
 int ssl_hmac_old_update(SSL_HMAC *ctx, const unsigned char *data, size_t len);
 int ssl_hmac_old_final(SSL_HMAC *ctx, unsigned char *md, size_t *len);
 size_t ssl_hmac_old_size(const SSL_HMAC *ctx);
+
+int ssl_ctx_srp_ctx_free_intern(SSL_CTX *ctx);
+int ssl_ctx_srp_ctx_init_intern(SSL_CTX *ctx);
+int ssl_srp_ctx_free_intern(SSL *s);
+int ssl_srp_ctx_init_intern(SSL *s);
+
+int ssl_srp_calc_a_param_intern(SSL *s);
+int ssl_srp_server_param_with_username_intern(SSL *s, int *ad);
 
 # else /* OPENSSL_UNIT_TEST */
 

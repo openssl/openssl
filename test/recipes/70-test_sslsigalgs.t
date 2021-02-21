@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2021 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -54,13 +54,15 @@ use constant {
 #      the sigalgs
 
 #Test 1: Default sig algs should succeed
+$proxy->clientflags("-no_tls1_3") if disabled("ec") && disabled("dh");
 $proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
 plan tests => 26;
 ok(TLSProxy::Message->success, "Default sigalgs");
 my $testtype;
 
 SKIP: {
-    skip "TLSv1.3 disabled", 6 if disabled("tls1_3");
+    skip "TLSv1.3 disabled", 6
+        if disabled("tls1_3") || (disabled("ec") && disabled("dh"));
 
     $proxy->filter(\&sigalgs_filter);
 
@@ -237,7 +239,10 @@ SKIP: {
 
 my ($dsa_status, $sha1_status, $sha224_status);
 SKIP: {
-    skip "TLSv1.3 disabled", 2 if disabled("tls1_3") || disabled("dsa");
+    skip "TLSv1.3 disabled", 2
+        if disabled("tls1_3")
+           || disabled("dsa")
+           || (disabled("ec") && disabled("dh"));
     #Test 20: signature_algorithms with 1.3-only ClientHello
     $testtype = PURE_SIGALGS;
     $dsa_status = $sha1_status = $sha224_status = 0;
@@ -263,7 +268,8 @@ SKIP: {
 }
 
 SKIP: {
-    skip "TLSv1.3 disabled", 3 if disabled("tls1_3");
+    skip "TLSv1.3 disabled", 5
+        if disabled("tls1_3") || (disabled("ec") && disabled("dh"));
     #Test 22: Insert signature_algorithms_cert that match normal sigalgs
     $testtype = SIGALGS_CERT_ALL;
     $proxy->clear();
@@ -284,10 +290,7 @@ SKIP: {
     $proxy->filter(\&modify_sigalgs_cert_filter);
     $proxy->start();
     ok(TLSProxy::Message->fail, "No matching certificate for sigalgs_cert");
-}
 
-SKIP: {
-    skip "TLS 1.3 disabled", 2 if disabled("tls1_3");
     #Test 25: Send an unrecognized signature_algorithms_cert
     #        We should be able to skip over the unrecognized value and use a
     #        valid one that appears later in the list.

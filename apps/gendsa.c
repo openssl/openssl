@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -54,11 +54,10 @@ int gendsa_main(int argc, char **argv)
 {
     ENGINE *e = NULL;
     BIO *out = NULL, *in = NULL;
-    DSA *dsa = NULL;
     EVP_PKEY *pkey = NULL;
     EVP_PKEY_CTX *ctx = NULL;
     const EVP_CIPHER *enc = NULL;
-    char *dsaparams = NULL;
+    char *dsaparams = NULL, *ciphername = NULL;
     char *outfile = NULL, *passoutarg = NULL, *passout = NULL, *prog;
     OPTION_CHOICE o;
     int ret = 1, private = 0, verbose = 0;
@@ -94,59 +93,45 @@ int gendsa_main(int argc, char **argv)
                 goto end;
             break;
         case OPT_CIPHER:
-            if (!opt_cipher(opt_unknown(), &enc))
-                goto end;
+            ciphername = opt_unknown();
             break;
         case OPT_VERBOSE:
             verbose = 1;
             break;
         }
     }
+
+    /* One argument, the params file. */
     argc = opt_num_rest();
     argv = opt_rest();
-    private = 1;
-
     if (argc != 1)
         goto opthelp;
-    dsaparams = *argv;
+    dsaparams = argv[0];
+
+    app_RAND_load();
+    if (ciphername != NULL) {
+        if (!opt_cipher(ciphername, &enc))
+            goto end;
+    }
+    private = 1;
 
     if (!app_passwd(NULL, passoutarg, NULL, &passout)) {
         BIO_printf(bio_err, "Error getting password\n");
         goto end;
     }
 
-    in = bio_open_default(dsaparams, 'r', FORMAT_PEM);
-    if (in == NULL)
-        goto end2;
-
-    if ((dsa = PEM_read_bio_DSAparams(in, NULL, NULL, NULL)) == NULL) {
-        BIO_printf(bio_err, "unable to load DSA parameter file\n");
-        goto end;
-    }
-    BIO_free(in);
-    in = NULL;
+    pkey = load_keyparams(dsaparams, 1, "DSA", "DSA parameters");
 
     out = bio_open_owner(outfile, FORMAT_PEM, private);
     if (out == NULL)
         goto end2;
 
-    DSA_get0_pqg(dsa, &p, NULL, NULL);
-
-    if (BN_num_bits(p) > OPENSSL_DSA_MAX_MODULUS_BITS)
+    if (EVP_PKEY_bits(pkey) > OPENSSL_DSA_MAX_MODULUS_BITS)
         BIO_printf(bio_err,
                    "Warning: It is not recommended to use more than %d bit for DSA keys.\n"
                    "         Your key size is %d! Larger key size may behave not as expected.\n",
-                   OPENSSL_DSA_MAX_MODULUS_BITS, BN_num_bits(p));
+                   OPENSSL_DSA_MAX_MODULUS_BITS, EVP_PKEY_bits(pkey));
 
-    pkey = EVP_PKEY_new();
-    if (pkey == NULL) {
-        BIO_printf(bio_err, "unable to allocate PKEY\n");
-        goto end;
-    }
-    if (!EVP_PKEY_set1_DSA(pkey, dsa)) {
-        BIO_printf(bio_err, "unable to associate DSA parameters with PKEY\n");
-        goto end;
-    }
     ctx = EVP_PKEY_CTX_new(pkey, NULL);
     if (ctx == NULL) {
         BIO_printf(bio_err, "unable to create PKEY context\n");
@@ -177,7 +162,6 @@ int gendsa_main(int argc, char **argv)
  end2:
     BIO_free(in);
     BIO_free_all(out);
-    DSA_free(dsa);
     EVP_PKEY_free(pkey);
     EVP_PKEY_CTX_free(ctx);
     release_engine(e);

@@ -77,7 +77,7 @@ int OCSP_request_add1_cert(OCSP_REQUEST *req, X509 *cert)
         return 0;
     if (cert == NULL)
         return 1;
-    return X509_add_cert_new(&sig->certs, cert, X509_ADD_FLAG_UP_REF);
+    return ossl_x509_add_cert_new(&sig->certs, cert, X509_ADD_FLAG_UP_REF);
 }
 
 /*

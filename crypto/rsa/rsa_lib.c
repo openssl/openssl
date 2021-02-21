@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -192,6 +192,11 @@ int RSA_up_ref(RSA *r)
 OSSL_LIB_CTX *ossl_rsa_get0_libctx(RSA *r)
 {
     return r->libctx;
+}
+
+void ossl_rsa_set0_libctx(RSA *r, OSSL_LIB_CTX *libctx)
+{
+    r->libctx = libctx;
 }
 
 #ifndef FIPS_MODULE
@@ -897,6 +902,70 @@ int EVP_PKEY_CTX_get_rsa_padding(EVP_PKEY_CTX *ctx, int *pad_mode)
 
 }
 
+int EVP_PKEY_CTX_set_rsa_pss_keygen_md(EVP_PKEY_CTX *ctx, const EVP_MD *md)
+{
+    const char *name;
+
+    if (ctx == NULL || md == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
+        /* Uses the same return values as EVP_PKEY_CTX_ctrl */
+        return -2;
+    }
+
+    /* If key type not RSA return error */
+    if (ctx->pmeth != NULL
+        && ctx->pmeth->pkey_id != EVP_PKEY_RSA
+        && ctx->pmeth->pkey_id != EVP_PKEY_RSA_PSS)
+        return -1;
+
+    /* TODO(3.0): Remove this eventually when no more legacy */
+    if (ctx->op.keymgmt.genctx == NULL)
+        return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSA_PSS, EVP_PKEY_OP_KEYGEN,
+                                 EVP_PKEY_CTRL_MD, 0, (void *)md);
+
+    name = EVP_MD_name(md);
+
+    return EVP_PKEY_CTX_set_rsa_pss_keygen_md_name(ctx, name, NULL);
+}
+
+int EVP_PKEY_CTX_set_rsa_pss_keygen_md_name(EVP_PKEY_CTX *ctx,
+                                            const char *mdname,
+                                            const char *mdprops)
+{
+    OSSL_PARAM rsa_params[3], *p = rsa_params;
+
+    if (ctx == NULL || mdname == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
+        /* Uses the same return values as EVP_PKEY_CTX_ctrl */
+        return -2;
+    }
+
+    /* If key type not RSA return error */
+    if (ctx->pmeth != NULL
+        && ctx->pmeth->pkey_id != EVP_PKEY_RSA
+        && ctx->pmeth->pkey_id != EVP_PKEY_RSA_PSS)
+        return -1;
+
+
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_RSA_DIGEST,
+                                            /*
+                                             * Cast away the const. This is read
+                                             * only so should be safe
+                                             */
+                                            (char *)mdname, 0);
+    if (mdprops != NULL) {
+        *p++ = OSSL_PARAM_construct_utf8_string(
+                    OSSL_PKEY_PARAM_RSA_DIGEST_PROPS,
+                    /*
+                     * Cast away the const. This is read only so should be safe
+                     */
+                    (char *)mdprops, 0);
+    }
+    *p++ = OSSL_PARAM_construct_end();
+
+    return EVP_PKEY_CTX_set_params(ctx, rsa_params);
+}
+
 int EVP_PKEY_CTX_set_rsa_oaep_md(EVP_PKEY_CTX *ctx, const EVP_MD *md)
 {
     const char *name;
@@ -1202,7 +1271,7 @@ int EVP_PKEY_CTX_set0_rsa_oaep_label(EVP_PKEY_CTX *ctx, void *label, int llen)
 
 int EVP_PKEY_CTX_get0_rsa_oaep_label(EVP_PKEY_CTX *ctx, unsigned char **label)
 {
-    OSSL_PARAM rsa_params[3], *p = rsa_params;
+    OSSL_PARAM rsa_params[2], *p = rsa_params;
     size_t labellen;
 
     if (ctx == NULL || !EVP_PKEY_CTX_IS_ASYM_CIPHER_OP(ctx)) {
@@ -1223,13 +1292,12 @@ int EVP_PKEY_CTX_get0_rsa_oaep_label(EVP_PKEY_CTX *ctx, unsigned char **label)
 
     *p++ = OSSL_PARAM_construct_octet_ptr(OSSL_ASYM_CIPHER_PARAM_OAEP_LABEL,
                                           (void **)label, 0);
-    *p++ = OSSL_PARAM_construct_size_t(OSSL_ASYM_CIPHER_PARAM_OAEP_LABEL_LEN,
-                                       &labellen);
     *p++ = OSSL_PARAM_construct_end();
 
     if (!EVP_PKEY_CTX_get_params(ctx, rsa_params))
         return -1;
 
+    labellen = rsa_params[0].return_size;
     if (labellen > INT_MAX)
         return -1;
 
@@ -1328,7 +1396,8 @@ int EVP_PKEY_CTX_set_rsa_keygen_bits(EVP_PKEY_CTX *ctx, int bits)
     }
 
     /* If key type not RSA return error */
-    if (ctx->pmeth != NULL && ctx->pmeth->pkey_id != EVP_PKEY_RSA)
+    if (ctx->pmeth != NULL && ctx->pmeth->pkey_id != EVP_PKEY_RSA &&
+        ctx->pmeth->pkey_id != EVP_PKEY_RSA_PSS)
         return -1;
 
     /* TODO(3.0): Remove this eventually when no more legacy */
