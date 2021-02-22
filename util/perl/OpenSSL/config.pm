@@ -337,6 +337,19 @@ sub determine_compiler_settings {
 
     # Vendor specific overrides, only if we determined the compiler here
     if ( ! $cc ) {
+        if ( $SYSTEM eq 'OpenVMS' ) {
+            my $v = `CC/VERSION NLA0:`;
+            if ($? == 0) {
+                my ($vendor, $version) =
+                    ( $v =~ m/^([A-Z]+) C V([0-9\.-]+) on / );
+                my ($major, $minor, $patch) =
+                    ( $version =~ m/^([0-9]+)\.([0-9]+)-0*?(0|[1-9][0-9]*)$/ );
+                $CC = 'CC';
+                $CCVENDOR = $vendor;
+                $CCVER = ( $major * 100 + $minor ) * 100 + $patch;
+            }
+        }
+
         if ( ${SYSTEM} eq 'AIX' ) {
             # favor vendor cc over gcc
             if (IPC::Cmd::can_run('cc')) {
