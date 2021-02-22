@@ -11,6 +11,7 @@ EVP_RAND_provider, EVP_RAND_CTX_rand, EVP_RAND_is_a, EVP_RAND_number,
 EVP_RAND_name, EVP_RAND_names_do_all, EVP_RAND_get_ctx_params,
 EVP_RAND_set_ctx_params, EVP_RAND_do_all_provided, EVP_RAND_get_params,
 EVP_RAND_gettable_ctx_params, EVP_RAND_settable_ctx_params,
+EVP_RAND_CTX_gettable_params, EVP_RAND_CTX_settable_params,
 EVP_RAND_gettable_params, EVP_RAND_STATE_UNINITIALISED, EVP_RAND_STATE_READY,
 EVP_RAND_STATE_ERROR - EVP RAND routines
 
@@ -34,6 +35,8 @@ EVP_RAND_STATE_ERROR - EVP RAND routines
  const OSSL_PARAM *EVP_RAND_gettable_params(const EVP_RAND *rand);
  const OSSL_PARAM *EVP_RAND_gettable_ctx_params(const EVP_RAND *rand);
  const OSSL_PARAM *EVP_RAND_settable_ctx_params(const EVP_RAND *rand);
+ const OSSL_PARAM *EVP_RAND_CTX_gettable_params(EVP_RAND_CTX *ctx);
+ const OSSL_PARAM *EVP_RAND_CTX_settable_params(EVP_RAND_CTX *ctx);
  int EVP_RAND_number(const EVP_RAND *rand);
  const char *EVP_RAND_name(const EVP_RAND *rand);
  int EVP_RAND_is_a(const EVP_RAND *rand, const char *name);
@@ -179,12 +182,26 @@ simply ignored.
 Also, what happens when a needed parameter isn't passed down is
 defined by the implementation.
 
-EVP_RAND_gettable_params(), EVP_RAND_gettable_ctx_params() and
-EVP_RAND_settable_ctx_params() get a constant B<OSSL_PARAM> array that
-describes the retrievable and settable parameters, i.e. parameters that
-can be used with EVP_RAND_get_params(), EVP_RAND_get_ctx_params()
-and EVP_RAND_set_ctx_params(), respectively.
-See L<OSSL_PARAM(3)> for the use of B<OSSL_PARAM> as parameter descriptor.
+EVP_RAND_gettable_params() returns an B<OSSL_PARAM> array that describes
+the retrievable and settable parameters.  EVP_RAND_gettable_params() returns
+parameters that can be used with EVP_RAND_get_params().  See L<OSSL_PARAM(3)>
+for the use of B<OSSL_PARAM> as a parameter descriptor.
+
+EVP_RAND_gettable_ctx_params() and EVP_RAND_CTX_gettable_params() return
+constant B<OSSL_PARAM> arrays that describe the retrievable parameters that
+can be used with EVP_RAND_CTX_get_params().  EVP_RAND_gettable_ctx_params()
+returns the parameters that can be retrieved from the algorithm, whereas
+EVP_RAND_CTX_gettable_params() returns the parameters that can be retrieved
+in the context's current state.  See L<OSSL_PARAM(3)> for the use of
+B<OSSL_PARAM> as a parameter descriptor.
+
+EVP_RAND_settable_ctx_params() and EVP_RAND_CTX_settable_params() return
+constant B<OSSL_PARAM> arrays that describe the settable parameters that
+can be used with EVP_RAND_CTX_set_params().  EVP_RAND_settable_ctx_params()
+returns the parameters that can be retrieved from the algorithm, whereas
+EVP_RAND_CTX_settable_params() returns the parameters that can be retrieved
+in the context's current state.  See L<OSSL_PARAM(3)> for the use of
+B<OSSL_PARAM> as a parameter descriptor.
 
 =head2 Information functions
 
