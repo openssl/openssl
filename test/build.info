@@ -585,6 +585,9 @@ IF[{- !$disabled{tests} -}]
     IF[{- !$disabled{sm2} -}]
       PROGRAMS{noinst}=sm2_internal_test
     ENDIF
+    IF[{- !$disabled{sm3} -}]
+      PROGRAMS{noinst}=sm3_internal_test
+    ENDIF
     IF[{- !$disabled{sm4} -}]
       PROGRAMS{noinst}=sm4_internal_test
     ENDIF
@@ -680,6 +683,10 @@ IF[{- !$disabled{tests} -}]
     SOURCE[sm2_internal_test]=sm2_internal_test.c
     INCLUDE[sm2_internal_test]=../include ../apps/include
     DEPEND[sm2_internal_test]=../libcrypto.a libtestutil.a
+
+    SOURCE[sm3_internal_test]=sm3_internal_test.c
+    INCLUDE[sm3_internal_test]=../include ../apps/include
+    DEPEND[sm3_internal_test]=../libcrypto.a libtestutil.a
 
     SOURCE[sm4_internal_test]=sm4_internal_test.c
     INCLUDE[sm4_internal_test]=.. ../include ../apps/include
