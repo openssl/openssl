@@ -428,18 +428,42 @@ const OSSL_PARAM *EVP_RAND_gettable_params(const EVP_RAND *rand)
 
 const OSSL_PARAM *EVP_RAND_gettable_ctx_params(const EVP_RAND *rand)
 {
+    void *provctx;
+
     if (rand->gettable_ctx_params == NULL)
         return NULL;
-    return rand->gettable_ctx_params(
-               ossl_provider_ctx(EVP_RAND_provider(rand)));
+    provctx = ossl_provider_ctx(EVP_RAND_provider(rand));
+    return rand->gettable_ctx_params(NULL, provctx);
 }
 
 const OSSL_PARAM *EVP_RAND_settable_ctx_params(const EVP_RAND *rand)
 {
+    void *provctx;
+
     if (rand->settable_ctx_params == NULL)
         return NULL;
-    return rand->settable_ctx_params(
-               ossl_provider_ctx(EVP_RAND_provider(rand)));
+    provctx = ossl_provider_ctx(EVP_RAND_provider(rand));
+    return rand->settable_ctx_params(NULL, provctx);
+}
+
+const OSSL_PARAM *EVP_RAND_CTX_gettable_params(EVP_RAND_CTX *ctx)
+{
+    void *provctx;
+
+    if (ctx->meth->gettable_ctx_params == NULL)
+        return NULL;
+    provctx = ossl_provider_ctx(EVP_RAND_provider(ctx->meth));
+    return ctx->meth->gettable_ctx_params(ctx->data, provctx);
+}
+
+const OSSL_PARAM *EVP_RAND_CTX_settable_params(EVP_RAND_CTX *ctx)
+{
+    void *provctx;
+
+    if (ctx->meth->settable_ctx_params == NULL)
+        return NULL;
+    provctx = ossl_provider_ctx(EVP_RAND_provider(ctx->meth));
+    return ctx->meth->settable_ctx_params(ctx->data, provctx);
 }
 
 void EVP_RAND_do_all_provided(OSSL_LIB_CTX *libctx,

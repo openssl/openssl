@@ -1176,6 +1176,8 @@ int EVP_RAND_set_ctx_params(EVP_RAND_CTX *ctx, const OSSL_PARAM params[]);
 const OSSL_PARAM *EVP_RAND_gettable_params(const EVP_RAND *rand);
 const OSSL_PARAM *EVP_RAND_gettable_ctx_params(const EVP_RAND *rand);
 const OSSL_PARAM *EVP_RAND_settable_ctx_params(const EVP_RAND *rand);
+const OSSL_PARAM *EVP_RAND_CTX_gettable_params(EVP_RAND_CTX *ctx);
+const OSSL_PARAM *EVP_RAND_CTX_settable_params(EVP_RAND_CTX *ctx);
 
 void EVP_RAND_do_all_provided(OSSL_LIB_CTX *libctx,
                               void (*fn)(EVP_RAND *rand, void *arg),
