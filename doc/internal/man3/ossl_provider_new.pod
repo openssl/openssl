@@ -75,7 +75,7 @@ ossl_provider_get_capabilities
                                                      int *no_cache);
  void ossl_provider_unquery_operation(const OSSL_PROVIDER *prov,
                                       int operation_id,
-                                      const OSSL_ALGORITHM * algs);
+                                      const OSSL_ALGORITHM *algs);
 
  int ossl_provider_set_operation_bit(OSSL_PROVIDER *provider, size_t bitnum);
  int ossl_provider_test_operation_bit(OSSL_PROVIDER *provider, size_t bitnum,
