@@ -77,6 +77,11 @@ OpenSSL 3.0
 
    *Tomáš Mráz*
 
+ * Removed RSA padding mode for SSLv23 (which was only used for
+   SSLv2)
+
+   *Rich Salz*
+
  * Deprecated the obsolete X9.31 RSA key generation related functions
    BN_X931_generate_Xpq(), BN_X931_derive_prime_ex(), and
    BN_X931_generate_prime_ex().

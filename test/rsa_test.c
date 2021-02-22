@@ -278,28 +278,6 @@ static int test_rsa_pkcs1(int idx)
                            NULL, NULL);
 }
 
-static int test_rsa_sslv23(int idx)
-{
-    int ret;
-
-    /* Simulate an SSLv2 only client talking to a TLS capable server */
-    ret = test_rsa_simple(idx, RSA_PKCS1_PADDING, RSA_SSLV23_PADDING, 1, NULL,
-                          NULL, NULL);
-
-    /* Simulate a TLS capable client talking to an SSLv2 only server */
-    ret &= test_rsa_simple(idx, RSA_SSLV23_PADDING, RSA_PKCS1_PADDING, 1, NULL,
-                           NULL, NULL);
-
-    /*
-     * Simulate a TLS capable client talking to a TLS capable server. Should
-     * fail due to detecting a rollback attack.
-     */
-    ret &= test_rsa_simple(idx, RSA_SSLV23_PADDING, RSA_SSLV23_PADDING, 0, NULL,
-                           NULL, NULL);
-
-    return ret;
-}
-
 static int test_rsa_oaep(int idx)
 {
     int ret = 0;
@@ -411,7 +389,6 @@ err:
 int setup_tests(void)
 {
     ADD_ALL_TESTS(test_rsa_pkcs1, 3);
-    ADD_ALL_TESTS(test_rsa_sslv23, 3);
     ADD_ALL_TESTS(test_rsa_oaep, 3);
     ADD_ALL_TESTS(test_rsa_security_bit, OSSL_NELEM(rsa_security_bits_cases));
     return 1;

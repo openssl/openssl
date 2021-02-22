@@ -604,8 +604,6 @@ static int pkey_rsa_ctrl_str(EVP_PKEY_CTX *ctx,
 
         if (strcmp(value, "pkcs1") == 0) {
             pm = RSA_PKCS1_PADDING;
-        } else if (strcmp(value, "sslv23") == 0) {
-            pm = RSA_SSLV23_PADDING;
         } else if (strcmp(value, "none") == 0) {
             pm = RSA_NO_PADDING;
         } else if (strcmp(value, "oeap") == 0) {

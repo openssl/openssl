@@ -382,7 +382,6 @@ extern "C" {
 /* RSA padding modes */
 #define OSSL_PKEY_RSA_PAD_MODE_NONE    "none"
 #define OSSL_PKEY_RSA_PAD_MODE_PKCSV15 "pkcs1"
-#define OSSL_PKEY_RSA_PAD_MODE_SSLV23  "sslv23"
 #define OSSL_PKEY_RSA_PAD_MODE_OAEP    "oaep"
 #define OSSL_PKEY_RSA_PAD_MODE_X931    "x931"
 #define OSSL_PKEY_RSA_PAD_MODE_PSS     "pss"

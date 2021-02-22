@@ -61,7 +61,6 @@ static OSSL_FUNC_signature_settable_ctx_md_params_fn rsa_settable_ctx_md_params;
 
 static OSSL_ITEM padding_item[] = {
     { RSA_PKCS1_PADDING,        OSSL_PKEY_RSA_PAD_MODE_PKCSV15 },
-    { RSA_SSLV23_PADDING,       OSSL_PKEY_RSA_PAD_MODE_SSLV23 },
     { RSA_NO_PADDING,           OSSL_PKEY_RSA_PAD_MODE_NONE },
     { RSA_X931_PADDING,         OSSL_PKEY_RSA_PAD_MODE_X931 },
     { RSA_PKCS1_PSS_PADDING,    OSSL_PKEY_RSA_PAD_MODE_PSS },
@@ -1186,9 +1185,6 @@ static int rsa_set_ctx_params(void *vprsactx, const OSSL_PARAM params[])
             break;
         case RSA_PKCS1_PADDING:
             err_extra_text = "PKCS#1 padding not allowed with RSA-PSS";
-            goto cont;
-        case RSA_SSLV23_PADDING:
-            err_extra_text = "SSLv3 padding not allowed with RSA-PSS";
             goto cont;
         case RSA_NO_PADDING:
             err_extra_text = "No padding not allowed with RSA-PSS";
