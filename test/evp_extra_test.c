@@ -2415,6 +2415,7 @@ err:
     return ret;
 }
 
+#ifndef OPENSSL_NO_EC
 static int ecpub_nids[] = { NID_brainpoolP256r1, NID_X9_62_prime256v1,
     NID_secp384r1, NID_secp521r1, NID_sect233k1, NID_sect233r1, NID_sect283r1,
     NID_sect409k1, NID_sect409r1, NID_sect571k1, NID_sect571r1,
@@ -2475,6 +2476,7 @@ static int test_ecpub(int idx)
     EC_KEY_free(ec);
     return ret;
 }
+#endif
 
 static int test_EVP_rsa_pss_with_keygen_bits(void)
 {
@@ -2573,7 +2575,9 @@ int setup_tests(void)
     ADD_TEST(test_rand_agglomeration);
     ADD_ALL_TESTS(test_evp_iv, 10);
     ADD_TEST(test_EVP_rsa_pss_with_keygen_bits);
+#ifndef OPENSSL_NO_EC
     ADD_ALL_TESTS(test_ecpub, OSSL_NELEM(ecpub_nids));
+#endif
 
     return 1;
 }
