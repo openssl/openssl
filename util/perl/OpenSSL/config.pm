@@ -193,6 +193,8 @@ sub maybe_abort {
 
 # Look for ISC/SCO with its unique uname program
 sub is_sco_uname {
+    return undef unless IPC::Cmd::can_run('uname');
+
     open UNAME, "uname -X 2>/dev/null|" or return '';
     my $line = "";
     while ( <UNAME> ) {
@@ -200,9 +202,11 @@ sub is_sco_uname {
         $line = $_ if m@^Release@;
     }
     close UNAME;
-    return "" if $line eq '';
+
+    return undef if $line eq '';
+
     my @fields = split(/\s+/, $line);
-    return $fields[2] // '';
+    return $fields[2];
 }
 
 sub get_sco_type {
@@ -237,7 +241,7 @@ sub guess_system {
 
     # Special-cases for ISC, SCO, Unixware
     my $REL = is_sco_uname();
-    if ( $REL ne "" ) {
+    if ( defined $REL ) {
         my $result = get_sco_type($REL);
         return eval "\"$result\"" if $result ne '';
     }
@@ -293,48 +297,43 @@ sub determine_compiler_settings {
         }
     }
 
-    # Find the compiler vendor and version number for certain compilers
-    foreach my $pair (_pairs @cc_version) {
-        # Try to get the version number.
-        # Failure gets us undef or an empty string
-        my ( $k, $v ) = @$pair;
-        $v = $v->();
+    if ( $CC ) {
+        # Find the compiler vendor and version number for certain compilers
+        foreach my $pair (_pairs @cc_version) {
+            # Try to get the version number.
+            # Failure gets us undef or an empty string
+            my ( $k, $v ) = @$pair;
+            $v = $v->();
 
-        # If we got a version number, process it
-        if ($v) {
-            $CCVENDOR = $k;
+            # If we got a version number, process it
+            if ($v) {
+                $CCVENDOR = $k;
 
-            # The returned version is expected to be one of
-            #
-            # MAJOR
-            # MAJOR.MINOR
-            # MAJOR.MINOR.{whatever}
-            #
-            # We don't care what comes after MAJOR.MINOR.  All we need is to
-            # have them calculated into a single number, using this formula:
-            #
-            # MAJOR * 100 + MINOR
-            # Here are a few examples of what we should get:
-            #
-            # 2.95.1    => 295
-            # 3.1       => 301
-            # 9         => 900
-            my @numbers = split /\./, $v;
-            my @factors = (100, 1);
-            while (@numbers && @factors) {
-                $CCVER += shift(@numbers) * shift(@factors)
+                # The returned version is expected to be one of
+                #
+                # MAJOR
+                # MAJOR.MINOR
+                # MAJOR.MINOR.{whatever}
+                #
+                # We don't care what comes after MAJOR.MINOR.  All we need is
+                # to have them calculated into a single number, using this
+                # formula:
+                #
+                # MAJOR * 100 + MINOR
+                # Here are a few examples of what we should get:
+                #
+                # 2.95.1    => 295
+                # 3.1       => 301
+                # 9         => 900
+                my @numbers = split /\./, $v;
+                my @factors = (100, 1);
+                while (@numbers && @factors) {
+                    $CCVER += shift(@numbers) * shift(@factors)
+                }
+                last;
             }
-            last;
         }
     }
-
-    # If no C compiler has been determined at this point, we die.  Hard.
-    die <<_____
-ERROR!
-No C compiler found, please specify one with the environment variable CC,
-or configure with an explicit configuration target.
-_____
-        unless $CC;
 
     # Vendor specific overrides, only if we determined the compiler here
     if ( ! $cc ) {
@@ -374,6 +373,14 @@ EOF
             }
         }
     }
+
+    # If no C compiler has been determined at this point, we die.  Hard.
+    die <<_____
+ERROR!
+No C compiler found, please specify one with the environment variable CC,
+or configure with an explicit configuration target.
+_____
+        unless $CC;
 
     # On some systems, we assume a cc vendor if it's not already determined
 
