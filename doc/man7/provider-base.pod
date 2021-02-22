@@ -280,7 +280,7 @@ not store a reference).
 provider_unquery_operation() informs the provider that the result of a
 provider_query_operation() is no longer directly required and that the function
 pointers have been copied.  The I<operation_id> should match that passed to
-provider_query_operation() and I<algs> should be it return value.
+provider_query_operation() and I<algs> should be its return value.
 
 provider_get_reason_strings() should return a constant B<OSSL_ITEM>
 array that provides reason strings for reason codes the provider may
