@@ -44,6 +44,8 @@ d2i_PrivateKey_decoder(int keytype, EVP_PKEY **a, const unsigned char **pp,
         ppkey = a;
 
     for (i = 0;  i < (int)OSSL_NELEM(input_structures); ++i) {
+        const unsigned char *p = *pp;
+
         dctx = OSSL_DECODER_CTX_new_for_pkey(ppkey, "DER",
                                              input_structures[i], key_name,
                                              EVP_PKEY_KEYPAIR, libctx, propq);
@@ -56,6 +58,7 @@ d2i_PrivateKey_decoder(int keytype, EVP_PKEY **a, const unsigned char **pp,
             if (*ppkey != NULL
                 && evp_keymgmt_util_has(*ppkey, OSSL_KEYMGMT_SELECT_PRIVATE_KEY))
                 return *ppkey;
+            *pp = p;
             goto err;
         }
     }
