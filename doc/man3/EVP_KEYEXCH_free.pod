@@ -71,8 +71,10 @@ L<EVP_PKEY_CTX_get_params(3)> and L<EVP_PKEY_CTX_set_params(3)>.
 EVP_KEYEXCH_fetch() returns a pointer to a B<EVP_KEYEXCH> for success
 or NULL for failure.
 
-EVP_KEYEXCH_up_ref() and EVP_KEYEXCH_names_do_all() return 1 for success or 0
-otherwise.
+EVP_KEYEXCH_up_ref() returns 1 for success or 0 otherwise.
+
+EVP_KEYEXCH_names_do_all() returns 1 if the callback was called for all
+names. A return value of 0 means that the callback was not called for any names.
 
 EVP_KEYEXCH_is_a() returns 1 of I<exchange> was identifiable,
 otherwise 0.

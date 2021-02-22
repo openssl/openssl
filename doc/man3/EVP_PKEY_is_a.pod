@@ -46,7 +46,8 @@ supports signing, otherwise 0.
 
 EVP_PKEY_get0_first_alg_name() returns the name that is found or NULL on error.
 
-EVP_PKEY_typenames_do_all() returns 1 on success or 0 otherwise.
+EVP_PKEY_typenames_do_all() returns 1 if the callback was called for all names.
+A return value of 0 means that the callback was not called for any names.
 
 =head1 EXAMPLES
 

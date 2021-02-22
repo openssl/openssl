@@ -128,6 +128,11 @@ static void do_name(const NAMENUM_ENTRY *namenum, DOALL_NAMES_DATA *data)
 
 IMPLEMENT_LHASH_DOALL_ARG_CONST(NAMENUM_ENTRY, DOALL_NAMES_DATA);
 
+/*
+ * Call the callback for all names in the namemap with the given number.
+ * A return value 1 means that the callback was called for all names. A
+ * return value of 0 means that the callback was not called for any names.
+ */
 int ossl_namemap_doall_names(const OSSL_NAMEMAP *namemap, int number,
                              void (*fn)(const char *name, void *data),
                              void *data)

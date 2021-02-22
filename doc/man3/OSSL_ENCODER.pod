@@ -108,7 +108,8 @@ otherwise 0.
 
 OSSL_ENCODER_number() returns an integer.
 
-OSSL_ENCODER_names_do_all() returns 1 on success or 0 otherwise.
+OSSL_ENCODER_names_do_all() returns 1 if the callback was called for all
+names. A return value of 0 means that the callback was not called for any names.
 
 =head1 SEE ALSO
 

@@ -327,7 +327,10 @@ EVP_RAND_name() returns the name of the random number generation algorithm.
 EVP_RAND_number() returns the provider specific identification number
 for the specified algorithm.
 
-EVP_RAND_up_ref() and EVP_RAND_names_do_all() return 1 on success, 0 on error.
+EVP_RAND_up_ref() returns 1 on success, 0 on error.
+
+EVP_RAND_names_do_all() returns 1 if the callback was called for all names. A
+return value of 0 means that the callback was not called for any names.
 
 EVP_RAND_CTX_new() returns either the newly allocated
 B<EVP_RAND_CTX> structure or NULL if an error occurred.

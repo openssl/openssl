@@ -74,8 +74,10 @@ L<EVP_PKEY_CTX_get_params(3)> and L<EVP_PKEY_CTX_set_params(3)>.
 EVP_ASYM_CIPHER_fetch() returns a pointer to an B<EVP_ASYM_CIPHER> for success
 or B<NULL> for failure.
 
-EVP_ASYM_CIPHER_up_ref() and EVP_ASYM_CIPHER_names_do_all() return 1 for success
-or 0 otherwise.
+EVP_ASYM_CIPHER_up_ref() returns 1 for success or 0 otherwise.
+
+EVP_ASYM_CIPHER_names_do_all() returns 1 if the callback was called for all
+names. A return value of 0 means that the callback was not called for any names.
 
 EVP_ASYM_CIPHER_gettable_ctx_params() and EVP_ASYM_CIPHER_settable_ctx_params()
 return a constant B<OSSL_PARAM> array or NULL on error.

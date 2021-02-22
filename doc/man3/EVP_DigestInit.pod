@@ -544,7 +544,8 @@ This function has no return value.
 
 =item EVP_MD_names_do_all()
 
-Returns 1 on success or 0 otherwise.
+Returns 1 if the callback was called for all names. A return value of 0 means
+that the callback was not called for any names.
 
 =back
 
