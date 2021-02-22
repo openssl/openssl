@@ -432,9 +432,9 @@ OSSL_CORE_MAKE_FUNC(int,rand_lock, (void *vctx))
 OSSL_CORE_MAKE_FUNC(void,rand_unlock, (void *vctx))
 OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *,rand_gettable_params, (void *provctx))
 OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *,rand_gettable_ctx_params,
-                    (void *provctx))
+                    (void *vctx, void *provctx))
 OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *,rand_settable_ctx_params,
-                    (void *provctx))
+                    (void *vctx, void *provctx))
 OSSL_CORE_MAKE_FUNC(int,rand_get_params, (OSSL_PARAM params[]))
 OSSL_CORE_MAKE_FUNC(int,rand_get_ctx_params,
                     (void *vctx, OSSL_PARAM params[]))
