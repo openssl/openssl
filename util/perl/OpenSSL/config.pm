@@ -280,8 +280,8 @@ sub _pairs (@) {
 
 # Figure out CC, GCCVAR, etc.
 sub determine_compiler_settings {
-    # Make a copy and don't touch it.  That helps determine if we're
-    # finding the compiler here
+    # Make a copy and don't touch it.  That helps determine if we're finding
+    # the compiler here (false), or if it was set by the user (true.
     my $cc = $CC;
 
     # Set certain default
@@ -335,7 +335,7 @@ sub determine_compiler_settings {
         }
     }
 
-    # Vendor specific overrides, only if we determined the compiler here
+    # Vendor specific overrides, only if we didn't determine the compiler here
     if ( ! $cc ) {
         if ( $SYSTEM eq 'OpenVMS' ) {
             my $v = `CC/VERSION NLA0:`;
