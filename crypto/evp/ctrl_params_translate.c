@@ -293,11 +293,7 @@ static int default_check(enum state state,
         break;
     case PRE_CTRL_TO_PARAMS:
         if (!ossl_assert(translation != NULL)) {
-            if (translation->keytype1 == -1 && translation->keytype2 == -1)
-                ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
-            else
-                ERR_raise(ERR_LIB_EVP,
-                          EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+            ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
             return -2;
         }
         if (!ossl_assert(translation->param_key != 0)
@@ -314,25 +310,21 @@ static int default_check(enum state state,
          * function will have to deal with it carefully.
          */
         if (translation != NULL) {
+            if (!ossl_assert(translation->action_type != GET)) {
+                ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
+                return -2;
+            }
             if (!ossl_assert(translation->param_key != NULL)
                 || !ossl_assert(translation->param_data_type != 0)) {
                 ERR_raise(ERR_LIB_EVP, ERR_R_INTERNAL_ERROR);
                 return 0;
-            }
-            if (!ossl_assert(translation->action_type != GET)) {
-                ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
-                return -2;
             }
         }
         break;
     case PRE_PARAMS_TO_CTRL:
     case POST_PARAMS_TO_CTRL:
         if (!ossl_assert(translation != NULL)) {
-            if (translation->keytype1 == -1 && translation->keytype2 == -1)
-                ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
-            else
-                ERR_raise(ERR_LIB_EVP,
-                          EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+            ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
             return -2;
         }
         if (!ossl_assert(translation->ctrl_num != 0)
