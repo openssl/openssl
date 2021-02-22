@@ -28,7 +28,7 @@
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_ENGINE, OPT_IN, OPT_OUT, OPT_ASN1PARSE, OPT_HEXDUMP,
-    OPT_RSA_RAW, OPT_OAEP, OPT_SSL, OPT_PKCS, OPT_X931,
+    OPT_RSA_RAW, OPT_OAEP, OPT_PKCS, OPT_X931,
     OPT_SIGN, OPT_VERIFY, OPT_REV, OPT_ENCRYPT, OPT_DECRYPT,
     OPT_PUBIN, OPT_CERTIN, OPT_INKEY, OPT_PASSIN, OPT_KEYFORM,
     OPT_R_ENUM, OPT_PROV_ENUM
@@ -56,7 +56,6 @@ const OPTIONS rsautl_options[] = {
 
     OPT_SECTION("Output"),
     {"out", OPT_OUT, '>', "Output file"},
-    {"ssl", OPT_SSL, '-', "Use SSL v2 padding"},
     {"raw", OPT_RSA_RAW, '-', "Use no padding"},
     {"pkcs", OPT_PKCS, '-', "Use PKCS#1 v1.5 padding (default)"},
     {"x931", OPT_X931, '-', "Use ANSI X9.31 padding"},
@@ -122,9 +121,6 @@ int rsautl_main(int argc, char **argv)
             break;
         case OPT_OAEP:
             pad = RSA_PKCS1_OAEP_PADDING;
-            break;
-        case OPT_SSL:
-            pad = RSA_SSLV23_PADDING;
             break;
         case OPT_PKCS:
             pad = RSA_PKCS1_PADDING;

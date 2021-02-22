@@ -1392,7 +1392,7 @@ EVP_PBE_get                             1424	3_0_0	EXIST::FUNCTION:
 CRYPTO_nistcts128_encrypt               1425	3_0_0	EXIST::FUNCTION:
 CONF_modules_finish                     1426	3_0_0	EXIST::FUNCTION:
 BN_value_one                            1427	3_0_0	EXIST::FUNCTION:
-RSA_padding_add_SSLv23                  1428	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
+RSA_padding_add_SSLv23                  1428	3_0_0	NOEXIST::FUNCTION:DEPRECATEDIN_3_0
 OCSP_RESPBYTES_it                       1429	3_0_0	EXIST::FUNCTION:OCSP
 EVP_aes_192_wrap                        1430	3_0_0	EXIST::FUNCTION:
 OCSP_CERTID_it                          1431	3_0_0	EXIST::FUNCTION:OCSP
@@ -3302,7 +3302,7 @@ PKCS7_ENVELOPE_new                      3369	3_0_0	EXIST::FUNCTION:
 EDIPARTYNAME_new                        3370	3_0_0	EXIST::FUNCTION:
 CMS_add1_cert                           3371	3_0_0	EXIST::FUNCTION:CMS
 DSO_convert_filename                    3372	3_0_0	EXIST::FUNCTION:
-RSA_padding_check_SSLv23                3373	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
+RSA_padding_check_SSLv23                3373	3_0_0	NOEXIST::FUNCTION:DEPRECATEDIN_3_0
 CRYPTO_gcm128_finish                    3374	3_0_0	EXIST::FUNCTION:
 PKCS12_SAFEBAGS_it                      3375	3_0_0	EXIST::FUNCTION:
 PKCS12_PBE_add                          3376	3_0_0	EXIST::FUNCTION:

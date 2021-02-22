@@ -43,11 +43,6 @@ new applications. SEE WARNING BELOW.
 EME-OAEP as defined in PKCS #1 v2.0 with SHA-1, MGF1 and an empty
 encoding parameter. This mode is recommended for all new applications.
 
-=item RSA_SSLV23_PADDING
-
-PKCS #1 v1.5 padding with an SSL-specific modification that denotes
-that the server is SSL3 capable.
-
 =item RSA_NO_PADDING
 
 Raw RSA encryption. This mode should I<only> be used to implement

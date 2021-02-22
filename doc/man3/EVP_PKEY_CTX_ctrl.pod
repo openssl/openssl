@@ -249,7 +249,7 @@ terminating NUL byte.
 
 EVP_PKEY_CTX_set_rsa_padding() sets the RSA padding mode for I<ctx>.
 The I<pad> parameter can take the value B<RSA_PKCS1_PADDING> for PKCS#1
-padding, B<RSA_SSLV23_PADDING> for SSLv23 padding, B<RSA_NO_PADDING> for
+padding, B<RSA_NO_PADDING> for
 no padding, B<RSA_PKCS1_OAEP_PADDING> for OAEP padding (encrypt and
 decrypt only), B<RSA_X931_PADDING> for X9.31 padding (signature operations
 only), B<RSA_PKCS1_PSS_PADDING> (sign and verify only) and

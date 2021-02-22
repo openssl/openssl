@@ -119,11 +119,6 @@ static int rsa_ossl_public_encrypt(int flen, const unsigned char *from,
                                                     from, flen, NULL, 0,
                                                     NULL, NULL);
         break;
-#ifndef FIPS_MODULE
-    case RSA_SSLV23_PADDING:
-        i = ossl_rsa_padding_add_SSLv23_ex(rsa->libctx, buf, num, from, flen);
-        break;
-#endif
     case RSA_NO_PADDING:
         i = RSA_padding_add_none(buf, num, from, flen);
         break;
@@ -278,7 +273,6 @@ static int rsa_ossl_private_encrypt(int flen, const unsigned char *from,
     case RSA_NO_PADDING:
         i = RSA_padding_add_none(buf, num, from, flen);
         break;
-    case RSA_SSLV23_PADDING:
     default:
         ERR_raise(ERR_LIB_RSA, RSA_R_UNKNOWN_PADDING_TYPE);
         goto err;
@@ -487,11 +481,6 @@ static int rsa_ossl_private_decrypt(int flen, const unsigned char *from,
     case RSA_PKCS1_OAEP_PADDING:
         r = RSA_padding_check_PKCS1_OAEP(to, num, buf, j, num, NULL, 0);
         break;
-#ifndef FIPS_MODULE
-    case RSA_SSLV23_PADDING:
-        r = RSA_padding_check_SSLv23(to, num, buf, j, num);
-        break;
-#endif
     case RSA_NO_PADDING:
         memcpy(to, buf, (r = j));
         break;

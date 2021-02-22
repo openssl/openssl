@@ -1186,7 +1186,6 @@ static int fix_rsa_padding_mode(enum state state,
 {
     static const OSSL_ITEM str_value_map[] = {
         { RSA_PKCS1_PADDING,            "pkcs1"  },
-        { RSA_SSLV23_PADDING,           "sslv23" },
         { RSA_NO_PADDING,               "none"   },
         { RSA_PKCS1_OAEP_PADDING,       "oaep"   },
         { RSA_PKCS1_OAEP_PADDING,       "oeap"   },
