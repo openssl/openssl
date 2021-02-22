@@ -180,18 +180,29 @@ See L</PARAMETERS> below for more information.
 Sets the list of I<params> into a MD context I<ctx>.
 See L</PARAMETERS> below for more information.
 
-=item EVP_MD_gettable_params(), EVP_MD_gettable_ctx_params(),
-EVP_MD_settable_ctx_params(), EVP_MD_CTX_gettable_params(),
-EVP_MD_CTX_settable_params()
+=item EVP_MD_gettable_params()
 
-Get a B<OSSL_PARAM> array that describes the retrievable and settable
-parameters. EVP_MD_gettable_params() returns parameters that can be used with
-EVP_MD_get_params(). EVP_MD_gettable_ctx_params() and
-EVP_MD_CTX_gettable_params() return parameters that can be used with
-EVP_MD_CTX_get_params(). EVP_MD_settable_ctx_params() and
-EVP_MD_CTX_settable_params() return parameters that can be used with
-EVP_MD_CTX_set_params().
-See L<OSSL_PARAM(3)> for the use of B<OSSL_PARAM> as parameter descriptor.
+Get a constant B<OSSL_PARAM> array that describes the retrievable parameters
+that can be used with EVP_MD_get_params().  See L<OSSL_PARAM(3)> for the
+use of B<OSSL_PARAM> as a parameter descriptor.
+
+=item EVP_MD_gettable_ctx_params(), EVP_MD_CTX_gettable_params()
+
+Get a constant B<OSSL_PARAM> array that describes the retrievable parameters
+that can be used with EVP_MD_CTX_get_params().  EVP_MD_gettable_ctx_params()
+returns the parameters that can be retrieved from the algorithm, whereas
+EVP_MD_CTX_gettable_params() returns the parameters that can be retrieved
+in the context's current state.  See L<OSSL_PARAM(3)> for the use of
+B<OSSL_PARAM> as a parameter descriptor.
+
+=item EVP_MD_settable_ctx_params(), EVP_MD_CTX_settable_params()
+
+Get a constant B<OSSL_PARAM> array that describes the settable parameters
+that can be used with EVP_MD_CTX_set_params().  EVP_MD_settable_ctx_params()
+returns the parameters that can be set from the algorithm, whereas
+EVP_MD_CTX_settable_params() returns the parameters that can be set in the
+context's current state.  See L<OSSL_PARAM(3)> for the use of B<OSSL_PARAM>
+as a parameter descriptor.
 
 =item EVP_MD_CTX_set_flags(), EVP_MD_CTX_clear_flags(), EVP_MD_CTX_test_flags()
 
@@ -658,8 +669,12 @@ The EVP_dss1() function was removed in OpenSSL 1.1.0.
 
 The EVP_MD_CTX_set_pkey_ctx() function was added in OpenSSL 1.1.1.
 
-The EVP_MD_fetch(), EVP_MD_free(), EVP_MD_up_ref(), EVP_MD_CTX_set_params()
-and EVP_MD_CTX_get_params() functions were added in OpenSSL 3.0.
+The EVP_MD_fetch(), EVP_MD_free(), EVP_MD_up_ref(),
+EVP_MD_get_params(), EVP_MD_CTX_set_params(), EVP_MD_CTX_get_params(),
+EVP_MD_gettable_params(), EVP_MD_gettable_ctx_params(),
+EVP_MD_settable_ctx_params(), EVP_MD_CTX_settable_params() and
+EVP_MD_CTX_gettable_params() functions were added in OpenSSL 3.0.
+
 The EVP_MD_CTX_update_fn() and EVP_MD_CTX_set_update_fn() were deprecated
 in OpenSSL 3.0.
 
