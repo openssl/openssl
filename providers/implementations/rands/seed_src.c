@@ -156,7 +156,8 @@ static int seed_src_get_ctx_params(void *vseed, OSSL_PARAM params[])
     return 1;
 }
 
-static const OSSL_PARAM *seed_src_gettable_ctx_params(ossl_unused void *provctx)
+static const OSSL_PARAM *seed_src_gettable_ctx_params(ossl_unused void *vseed,
+                                                      ossl_unused void *provctx)
 {
     static const OSSL_PARAM known_gettable_ctx_params[] = {
         OSSL_PARAM_int(OSSL_RAND_PARAM_STATE, NULL),
