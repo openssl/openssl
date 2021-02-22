@@ -1022,10 +1022,14 @@ uninstall_html_docs:
 
 # Developer targets (note: these are only available on Unix) #########
 
-update: generate errors ordinals
+# It's important that generate_buildinfo comes after ordinals, as ordinals
+# is sensitive to build.info changes.
+update: generate errors ordinals generate_buildinfo
 
 generate: generate_apps generate_crypto_bn generate_crypto_objects \
           generate_crypto_conf generate_crypto_asn1 generate_fuzz_oids
+
+generate_buildinfo: generate_doc_buildinfo
 
 .PHONY: doc-nits cmd-nits md-nits
 doc-nits: build_generated_pods
@@ -1088,6 +1092,11 @@ generate_fuzz_oids:
 	( cd $(SRCDIR); $(PERL) fuzz/mkfuzzoids.pl \
 				crypto/objects/obj_dat.h \
 				> fuzz/oids.txt )
+
+generate_doc_buildinfo:
+	( $(PERL) -I$(BLDDIR) -Mconfigdata \
+                $(SRCDIR)/util/dofile.pl -o Makefile \
+                        $(SRCDIR)/doc/build.info.in > $(SRCDIR)/doc/build.info )
 
 # Set to -force to force a rebuild
 ERROR_REBUILD=
