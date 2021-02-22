@@ -262,9 +262,9 @@ OSSL_CORE_MAKE_FUNC(int, digest_get_ctx_params,
 OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, digest_gettable_params,
                     (void *provctx))
 OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, digest_settable_ctx_params,
-                    (void *provctx))
+                    (void *dctx, void *provctx))
 OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, digest_gettable_ctx_params,
-                    (void *provctx))
+                    (void *dctx, void *provctx))
 
 /* Symmetric Ciphers */
 
