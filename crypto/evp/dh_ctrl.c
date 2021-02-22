@@ -7,6 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "internal/deprecated.h"
+
 #include <stdio.h>
 #include <string.h>
 #include <openssl/core_names.h>
@@ -322,6 +324,7 @@ int EVP_PKEY_CTX_set0_dh_kdf_ukm(EVP_PKEY_CTX *ctx, unsigned char *ukm, int len)
     return ret;
 }
 
+#ifndef OPENSSL_NO_DEPRECATED_3_0
 int EVP_PKEY_CTX_get0_dh_kdf_ukm(EVP_PKEY_CTX *ctx, unsigned char **pukm)
 {
     int ret;
@@ -348,3 +351,4 @@ int EVP_PKEY_CTX_get0_dh_kdf_ukm(EVP_PKEY_CTX *ctx, unsigned char **pukm)
 
     return (int)ukmlen;
 }
+#endif

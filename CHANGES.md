@@ -22,15 +22,20 @@ OpenSSL 3.0
 -----------
 
 ### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
+ * Deprecated obsolete EVP_PKEY_CTX_get0_dh_kdf_ukm() and
+   EVP_PKEY_CTX_get0_ecdh_kdf_ukm() functions. They are not needed
+   and require returning octet ptr parameters from providers that
+   would like to support them which complicates provider implementations.
 
-* The RAND_METHOD APIs have been deprecated.  The functions deprecated are:
+   *Tomáš Mráz*
+
+ * The RAND_METHOD APIs have been deprecated.  The functions deprecated are:
    RAND_OpenSSL(), RAND_get_rand_method(), RAND_set_rand_engine() and
    RAND_set_rand_method().  Provider based random number generators should
    be used instead via EVP_RAND(3).
 
    *Paul Dale*
-
-* The SRP APIs have been deprecated. The old APIs do not work via providers,
+ * The SRP APIs have been deprecated. The old APIs do not work via providers,
    and there is no EVP interface to them. Unfortunately there is no replacement
    for these APIs at this time.
 
@@ -41,7 +46,7 @@ OpenSSL 3.0
    at configuration time.
 
    *Paul Dale*
- 
+
  * Combining the Configure options no-ec and no-dh no longer disables TLSv1.3.
    Typically if OpenSSL has no EC or DH algorithms then it cannot support
    connections with TLSv1.3. However OpenSSL now supports "pluggable" groups

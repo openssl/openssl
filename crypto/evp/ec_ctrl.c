@@ -243,6 +243,7 @@ int EVP_PKEY_CTX_set0_ecdh_kdf_ukm(EVP_PKEY_CTX *ctx, unsigned char *ukm, int le
     return ret;
 }
 
+#ifndef OPENSSL_NO_DEPRECATED_3_0
 int EVP_PKEY_CTX_get0_ecdh_kdf_ukm(EVP_PKEY_CTX *ctx, unsigned char **pukm)
 {
     size_t ukmlen;
@@ -283,6 +284,7 @@ int EVP_PKEY_CTX_get0_ecdh_kdf_ukm(EVP_PKEY_CTX *ctx, unsigned char **pukm)
 
     return ret;
 }
+#endif
 
 #ifndef FIPS_MODULE
 /*
