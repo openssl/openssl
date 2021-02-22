@@ -208,6 +208,8 @@ int PKCS5_v2_PBKDF2_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass,
                              const EVP_CIPHER *c, const EVP_MD *md,
                              int en_de);
 
+int PKCS12_PBE_params_decode(ASN1_TYPE *param, OSSL_PARAM **params, int params_len);
+
 struct evp_Encode_Ctx_st {
     /* number saved in a partial encode/decode */
     int num;

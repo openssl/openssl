@@ -10,6 +10,8 @@
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/asn1t.h>
+#include <openssl/core.h>
+#include <openssl/core_names.h>
 #include <openssl/x509.h>
 #include <openssl/rand.h>
 
@@ -145,6 +147,121 @@ X509_ALGOR *PKCS5_pbe2_set(const EVP_CIPHER *cipher, int iter,
     return PKCS5_pbe2_set_iv(cipher, iter, salt, saltlen, NULL, -1);
 }
 
+X509_ALGOR *PKCS5_pbe2_set_param(OSSL_PARAM params[], OSSL_LIB_CTX *libctx, char *propq)
+{
+    const OSSL_PARAM *p;
+    X509_ALGOR *scheme = NULL, *ret = NULL;
+    //int keylen;
+    EVP_CIPHER_CTX *ctx = NULL;
+    EVP_CIPHER *cipher = NULL;
+    unsigned char iv[EVP_MAX_IV_LENGTH];
+    PBE2PARAM *pbe2 = NULL;
+    unsigned char *aiv = NULL;
+    size_t aiv_len;
+
+    p = OSSL_PARAM_locate_const(params, OSSL_ALG_PARAM_CIPHER);
+    if (p == NULL)
+        goto merr;
+    if (p->data_type != OSSL_PARAM_UTF8_STRING)
+        goto merr;
+
+    cipher = EVP_CIPHER_fetch(libctx, p->data, propq);
+    if (cipher == NULL)
+        goto merr;
+
+    if ((pbe2 = PBE2PARAM_new()) == NULL)
+        goto merr;
+
+    /* Setup the AlgorithmIdentifier for the encryption scheme */
+    scheme = pbe2->encryption;
+    scheme->algorithm = OBJ_nid2obj(EVP_CIPHER_type(cipher));
+    if ((scheme->parameter = ASN1_TYPE_new()) == NULL)
+        goto merr;
+
+    p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_IV);
+    if (p == NULL)
+        goto merr;
+    if (!OSSL_PARAM_get_octet_string(p, (void**)&aiv, 0, &aiv_len))
+        goto merr;
+
+    if (EVP_CIPHER_iv_length(cipher)) {
+        if (aiv)
+            memcpy(iv, aiv, EVP_CIPHER_iv_length(cipher));
+        /* Create random IV if none given */
+        else if (RAND_bytes(iv, EVP_CIPHER_iv_length(cipher)) <= 0)
+            goto err;
+    }
+
+    ctx = EVP_CIPHER_CTX_new();
+    if (ctx == NULL)
+        goto merr;
+
+    /* Dummy cipherinit to just setup the IV, and PRF */
+    if (!EVP_CipherInit_ex(ctx, cipher, NULL, NULL, iv, 0))
+        goto err;
+    if (EVP_CIPHER_param_to_asn1(ctx, scheme->parameter) <= 0) {
+        ERR_raise(ERR_LIB_ASN1, ASN1_R_ERROR_SETTING_CIPHER_PARAMS);
+        goto err;
+    }
+    /*
+     * If prf NID unspecified see if cipher has a preference. An error is OK
+     * here: just means use default PRF.
+     */
+    p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_PRF);
+    int prf_nid = OBJ_txt2nid(p->data);
+    if ((prf_nid == -1) &&
+        EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_PBE_PRF_NID, 0, &prf_nid) <= 0) {
+        ERR_clear_error();
+        prf_nid = NID_hmacWithSHA256;
+    }
+    EVP_CIPHER_CTX_free(ctx);
+    ctx = NULL;
+
+    /* If its RC2 then we'd better setup the key length */
+// TODO: Put back in
+//    if (EVP_CIPHER_type(cipher) == NID_rc2_cbc)
+//        keylen = EVP_CIPHER_key_length(cipher);
+//    else
+//        keylen = -1;
+
+    /* Setup keyfunc */
+
+    X509_ALGOR_free(pbe2->keyfunc);
+
+    pbe2->keyfunc = PKCS5_pbkdf2_set_params(params);
+
+    if (pbe2->keyfunc == NULL)
+        goto merr;
+
+    /* Now set up top level AlgorithmIdentifier */
+    if ((ret = X509_ALGOR_new()) == NULL)
+        goto merr;
+
+    ret->algorithm = OBJ_nid2obj(NID_pbes2);
+
+    /* Encode PBE2PARAM into parameter */
+    if (!ASN1_TYPE_pack_sequence(ASN1_ITEM_rptr(PBE2PARAM), pbe2,
+                                 &ret->parameter))
+         goto merr;
+
+    PBE2PARAM_free(pbe2);
+    pbe2 = NULL;
+
+    return ret;
+
+ merr:
+    ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
+
+ err:
+    EVP_CIPHER_CTX_free(ctx);
+    PBE2PARAM_free(pbe2);
+    /* Note 'scheme' is freed as part of pbe2 */
+    X509_ALGOR_free(ret);
+
+    return NULL;
+}
+
+
 X509_ALGOR *PKCS5_pbkdf2_set(int iter, unsigned char *salt, int saltlen,
                              int prf_nid, int keylen)
 {
@@ -218,3 +335,96 @@ X509_ALGOR *PKCS5_pbkdf2_set(int iter, unsigned char *salt, int saltlen,
     X509_ALGOR_free(keyfunc);
     return NULL;
 }
+
+
+X509_ALGOR *PKCS5_pbkdf2_set_params(OSSL_PARAM params[])
+{
+    const OSSL_PARAM *p;
+    X509_ALGOR *keyfunc = NULL;
+    PBKDF2PARAM *kdf = NULL;
+    ASN1_OCTET_STRING *osalt = NULL;
+    size_t keylen;
+    unsigned long saltlen;
+    unsigned long iter = PKCS5_DEFAULT_ITER;
+    int prf_nid = 0;
+    const char *prf_name = NULL;
+
+    if ((kdf = PBKDF2PARAM_new()) == NULL)
+        goto merr;
+    if ((osalt = ASN1_OCTET_STRING_new()) == NULL)
+        goto merr;
+
+    kdf->salt->value.octet_string = osalt;
+    kdf->salt->type = V_ASN1_OCTET_STRING;
+
+    if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_SALT)) != NULL) {
+        if (!OSSL_PARAM_get_octet_string(p, (void **)&osalt->data, 0,
+                                         &saltlen)) {
+            goto merr;
+        }
+        osalt->length = (int)saltlen;
+    } else {
+        osalt->length = PKCS5_SALT_LEN;
+        if (RAND_bytes(osalt->data, osalt->length) <= 0)
+            goto merr;
+    }
+    if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_ITER)) != NULL) {
+        if (!OSSL_PARAM_get_uint64(p, &iter))
+            goto merr;
+    }
+    if (!ASN1_INTEGER_set(kdf->iter, iter))
+        goto merr;
+
+
+    /* If have a key len set it up */
+    p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_SIZE);
+    if (p != NULL) {
+        if (!OSSL_PARAM_get_size_t(p, &keylen)) {
+            goto merr;
+        }
+        if (keylen > 0) {
+            if ((kdf->keylength = ASN1_INTEGER_new()) == NULL)
+                goto merr;
+            if (!ASN1_INTEGER_set(kdf->keylength, keylen))
+                goto merr;
+        }
+    }
+
+    p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_PRF);
+    if (p != NULL) {
+        if (!OSSL_PARAM_get_utf8_string_ptr(p, &prf_name)) {
+            prf_nid = OBJ_txt2nid(prf_name);
+        }
+    }
+    /* prf can stay NULL if we are using hmacWithSHA1 */
+    if (prf_nid > 0 && prf_nid != NID_hmacWithSHA1) {
+        kdf->prf = X509_ALGOR_new();
+        if (kdf->prf == NULL)
+            goto merr;
+        X509_ALGOR_set0(kdf->prf, OBJ_nid2obj(prf_nid), V_ASN1_NULL, NULL);
+    }
+
+    /* Finally setup the keyfunc structure */
+
+    keyfunc = X509_ALGOR_new();
+    if (keyfunc == NULL)
+        goto merr;
+
+    keyfunc->algorithm = OBJ_nid2obj(NID_id_pbkdf2);
+
+    /* Encode PBKDF2PARAM into parameter of pbe2 */
+
+    if (!ASN1_TYPE_pack_sequence(ASN1_ITEM_rptr(PBKDF2PARAM), kdf,
+                                 &keyfunc->parameter))
+        goto merr;
+
+    PBKDF2PARAM_free(kdf);
+    return keyfunc;
+
+ merr:
+    ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
+    PBKDF2PARAM_free(kdf);
+    X509_ALGOR_free(keyfunc);
+    return NULL;
+}
+

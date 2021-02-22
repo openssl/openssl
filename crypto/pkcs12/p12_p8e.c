@@ -22,9 +22,26 @@
  * - Iterations
  *
  */
-X509_SIG *PKCS8_encrypt_ex(PKCS8_PRIV_KEY_INFO *p8, OSSL_PARAM params[],
+X509_SIG *PKCS8_encrypt_ex(PKCS8_PRIV_KEY_INFO *p8inf, OSSL_PARAM params[],
                            OSSL_LIB_CTX *ctx, const char *propq)
 {
+    X509_ALGOR *pbe;
+    X509_SIG *p8 = NULL;
+
+    pbe = PKCS5_pbe_set_params(params, ctx, propq);
+    if (pbe == NULL) {
+        ERR_raise(ERR_LIB_PKCS12, ERR_R_ASN1_LIB);
+        return NULL;
+    }
+/* TODO: Invert this so we set the X509ALGOR inside the encrypt function */
+/*    p8 = PKCS8_set0_pbe(pass, passlen, p8inf, pbe);
+    if (p8 == NULL) {
+        X509_ALGOR_free(pbe);
+        return NULL;
+    }
+*/
+    return p8;
+
 /*    X509_SIG *p8 = NULL;
     X509_ALGOR *pbe;
 
@@ -48,7 +65,6 @@ X509_SIG *PKCS8_encrypt_ex(PKCS8_PRIV_KEY_INFO *p8, OSSL_PARAM params[],
 
     return p8;
 */
-    return NULL;
 }
 
 

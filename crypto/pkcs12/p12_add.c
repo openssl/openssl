@@ -9,6 +9,8 @@
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
+#include <openssl/core.h>
+#include <openssl/core_names.h>
 #include <openssl/pkcs12.h>
 #include "p12_local.h"
 
@@ -99,11 +101,33 @@ PKCS7 *PKCS12_pack_p7encdata(int pbe_nid, const char *pass, int passlen,
 
     pbe_ciph = EVP_get_cipherbynid(pbe_nid);
 
-    if (pbe_ciph)
-        pbe = PKCS5_pbe2_set(pbe_ciph, iter, salt, saltlen);
-    else
-        pbe = PKCS5_pbe_set(pbe_nid, iter, salt, saltlen);
+#define MAX_PBE_PARAMS 6
+    /* If supplied pbe_nid is a cipher assume PBES2 with this cipher,
+     * otherwise assume PKCS12 PBE (PBES1) */
+    OSSL_PARAM params[MAX_PBE_PARAMS];
+    OSSL_PARAM *p = params;
 
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_PASSWORD,
+                                             (unsigned char *)pass, passlen);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SALT,
+                                             (unsigned char *)salt, saltlen);
+    *p++ = OSSL_PARAM_construct_uint(OSSL_KDF_PARAM_ITER, &iter);
+    int mode = 1;
+    *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_PKCS5, &mode);
+
+    if (pbe_ciph) {
+        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PBE_PARAM_ALG,
+                                                "PBES2", 0);
+        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PBE_PARAM_CIPHER,
+                                                EVP_CIPHER_name(pbe_ciph), 0);
+    } else {
+        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PBE_PARAM_ALG,
+                                                "PBES2", 0);
+    }
+    *p = OSSL_PARAM_construct_end();
+
+    /* TODO: Handle both pbe1 and pbe2 */
+    pbe = PKCS5_pbe2_set_param(params, NULL, NULL);
     if (pbe == NULL) {
         ERR_raise(ERR_LIB_PKCS12, ERR_R_MALLOC_FAILURE);
         goto err;

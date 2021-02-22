@@ -483,6 +483,12 @@ typedef int (EVP_PBE_KEYGEN) (EVP_CIPHER_CTX *ctx, const char *pass,
                               const EVP_CIPHER *cipher, const EVP_MD *md,
                               int en_de);
 
+/* Password based encryption parameter encode function */
+typedef int (EVP_PBE_ENCODE) (ASN1_TYPE *param, OSSL_PARAM **params, int *param_len);
+
+/* Password based encryption parameter decode function */
+typedef int (EVP_PBE_DECODE) (ASN1_TYPE *param, OSSL_PARAM **params, int *param_len);
+
 # ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define EVP_PKEY_assign_RSA(pkey,rsa) EVP_PKEY_assign((pkey),EVP_PKEY_RSA,\
                                                          (rsa))
@@ -1408,6 +1414,8 @@ int EVP_PBE_alg_add(int nid, const EVP_CIPHER *cipher, const EVP_MD *md,
                     EVP_PBE_KEYGEN *keygen);
 int EVP_PBE_find(int type, int pbe_nid, int *pcnid, int *pmnid,
                  EVP_PBE_KEYGEN **pkeygen);
+int EVP_PBE_find_ex(int type, int pbe_nid, int *pcnid, int *pmnid,
+                 EVP_PBE_KEYGEN **pkeygen, const char **pbe_name);
 void EVP_PBE_cleanup(void);
 int EVP_PBE_get(int *ptype, int *ppbe_nid, size_t num);
 

@@ -9,6 +9,8 @@
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
+#include <openssl/core.h>
+#include <openssl/core_names.h>
 #include <openssl/pkcs12.h>
 
 /* PKCS#12 PBE algorithms now in static table */
@@ -68,3 +70,30 @@ int PKCS12_PBE_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
     OPENSSL_cleanse(iv, EVP_MAX_IV_LENGTH);
     return ret;
 }
+
+int PKCS12_PBE_params_decode(ASN1_TYPE *param, OSSL_PARAM **params, int params_len)
+{
+    PBEPARAM *pbe;
+    OSSL_PARAM *p = params;
+    unsigned int iter = 0;
+
+    while (p != NULL)
+        p++;
+
+    /* Extract useful info from parameter */
+    pbe = ASN1_TYPE_unpack_sequence(ASN1_ITEM_rptr(PBEPARAM), param);
+    if (pbe == NULL) {
+        ERR_raise(ERR_LIB_PKCS12, PKCS12_R_DECODE_ERROR);
+        return 0;
+    }
+
+    if (pbe->iter != NULL) {
+        iter = ASN1_INTEGER_get(pbe->iter);
+        *p++ = OSSL_PARAM_construct_uint(OSSL_KDF_PARAM_ITER, &iter);
+    }
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SALT, pbe->salt->data,
+                                             pbe->salt->length);
+    PBEPARAM_free(pbe);
+    return 1;
+}
+

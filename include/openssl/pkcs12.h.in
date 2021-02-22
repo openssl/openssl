@@ -204,6 +204,8 @@ int PKCS12_key_gen_ex(unsigned char *out, size_t keylen, OSSL_PARAM params[],
 int PKCS12_PBE_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
                         ASN1_TYPE *param, const EVP_CIPHER *cipher,
                         const EVP_MD *md_type, int en_de);
+int PKCS12_PBE_params_decode(ASN1_TYPE *param, OSSL_PARAM **params, int params_len);
+
 int PKCS12_gen_mac(PKCS12 *p12, const char *pass, int passlen,
                    unsigned char *mac, unsigned int *maclen);
 int PKCS12_verify_mac(PKCS12 *p12, const char *pass, int passlen);
