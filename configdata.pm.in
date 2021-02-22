@@ -1,5 +1,26 @@
 #! {- $config{HASHBANGPERL} -}
-# -*- mode: perl -*-
+# Copyright 2021 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the Apache License 2.0 (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+#
+{-
+    $OUT = "# Do not ";
+    $OUT .= "edit this file; ";
+    $OUT .= "it was generated during the OpenSSL configuration.\n";
+-}
+use strict;
+use warnings;
+
+package configdata;
+use Exporter;
+our @ISA = qw(Exporter);
+our @EXPORT = qw(
+    %config %target %disabled %withargs %unified_info
+    @disablables @disablables_int
+);
 {-
  # We must make sourcedir() return an absolute path, because configdata.pm
  # may be loaded as a module from any script in any directory, making
@@ -54,11 +75,17 @@ our @EXPORT = qw(
 );
 
 our %config = ({- dump_data(\%config, indent => 0); -});
+
 our %target = ({- dump_data(\%target, indent => 0); -});
+
 our @disablables = ({- dump_data(\@disablables, indent => 0) -});
+
 our @disablables_int = ({- dump_data(\@disablables_int, indent => 0) -});
+
 our %disabled = ({- dump_data(\%disabled, indent => 0); -});
+
 our %withargs = ({- dump_data(\%withargs, indent => 0); -});
+
 our %unified_info = ({- dump_data(\%unified_info, indent => 0); -});
 
 # Unexported, only used by OpenSSL::Test::Utils::available_protocols()
