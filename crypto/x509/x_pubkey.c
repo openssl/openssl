@@ -24,7 +24,6 @@
 #include <openssl/dsa.h>
 #include <openssl/decoder.h>
 #include <openssl/encoder.h>
-#include <openssl/decoder.h>
 #include "internal/provider.h"
 #include "internal/sizes.h"
 
@@ -108,7 +107,6 @@ static int x509_pubkey_ex_d2i(ASN1_VALUE **pval,
 {
     const unsigned char *in_saved = *in;
     X509_PUBKEY *pubkey;
-    /* Get internal representation of Pubkey */
     int ret;
     OSSL_DECODER_CTX *dctx = NULL;
 
@@ -227,19 +225,6 @@ X509_PUBKEY *X509_PUBKEY_dup(const X509_PUBKEY *a)
     pubkey->pkey = a->pkey;
     return pubkey;
 }
-
-#if 0
-/*
- * This does the same as d2i_X509_PUBKEY(), but only handles legacy keys.
- * We use this for d2i_<TYPE>_PUBKEY() further down.
- */
-static X509_PUBKEY *d2i_X509_PUBKEY_legacy(X509_PUBKEY **a,
-                                           const unsigned char **in, long len)
-{
-    return (X509_PUBKEY *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
-                                        (X509_PUBKEY_it()));
-}
-#endif
 
 /* TODO should better be called X509_PUBKEY_set1 */
 int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
@@ -452,7 +437,9 @@ static EVP_PKEY *d2i_PUBKEY_int(EVP_PKEY **a,
     return pktmp;
 }
 
-EVP_PKEY *d2i_PUBKEY_legacy(EVP_PKEY **a, const unsigned char **pp, long length)
+/* For the algorithm specific d2i functions further down */
+EVP_PKEY *d2i_PUBKEY_legacy(EVP_PKEY **a,
+                            const unsigned char **pp, long length)
 {
     return d2i_PUBKEY_int(a, pp, length, NULL, NULL, 1, d2i_X509_PUBKEY);
 }
@@ -518,14 +505,6 @@ int i2d_PUBKEY(const EVP_PKEY *a, unsigned char **pp)
 
     return ret;
 }
-
-#if 0
-EVP_PKEY *d2i_PUBKEY_legacy(EVP_PKEY **a,
-                            const unsigned char **pp, long length)
-{
-    return d2i_PUBKEY_int(a, pp, length, NULL, NULL, d2i_X509_PUBKEY_legacy);
-}
-#endif
 
 /*
  * The following are equivalents but which return RSA and DSA keys
