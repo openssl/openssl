@@ -30,7 +30,8 @@ static const OSSL_PARAM known_md5_sha1_settable_ctx_params[] = {
     OSSL_PARAM_END
 };
 
-static const OSSL_PARAM *md5_sha1_settable_ctx_params(ossl_unused void *provctx)
+static const OSSL_PARAM *md5_sha1_settable_ctx_params(ossl_unused void *ctx,
+                                                      ossl_unused void *provctx)
 {
     return known_md5_sha1_settable_ctx_params;
 }
