@@ -91,7 +91,8 @@ static int fuzz_rand_get_ctx_params(void *vrng, OSSL_PARAM params[])
     return 1;
 }
 
-static const OSSL_PARAM *fuzz_rand_gettable_ctx_params(ossl_unused void *provctx)
+static const OSSL_PARAM *fuzz_rand_gettable_ctx_params(ossl_unused void *vrng,
+                                                       ossl_unused void *provctx)
 {
     static const OSSL_PARAM known_gettable_ctx_params[] = {
         OSSL_PARAM_int(OSSL_RAND_PARAM_STATE, NULL),
