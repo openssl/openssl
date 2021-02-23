@@ -42,8 +42,10 @@ static int i2d_provided(const EVP_PKEY *a, int selection,
          output_info++) {
         /*
          * The i2d_ calls don't take a boundary length for *pp.  However,
-         * OSSL_ENCODER_CTX_get_num_encoders() needs one, so we make one
-         * up.
+         * OSSL_ENCODER_to_data() needs one, so we make one up.  Because
+         * OSSL_ENCODER_to_data() decrements this number by the amount of
+         * bytes written, we need to calculate the length written further
+         * down, when pp != NULL.
          */
         size_t len = INT_MAX;
 
@@ -53,8 +55,12 @@ static int i2d_provided(const EVP_PKEY *a, int selection,
                                             NULL);
         if (ctx == NULL)
             return -1;
-        if (OSSL_ENCODER_to_data(ctx, pp, &len))
-            ret = (int)len;
+        if (OSSL_ENCODER_to_data(ctx, pp, &len)) {
+            if (pp == NULL)
+                ret = (int)len;
+            else
+                ret = INT_MAX - (int)len;
+        }
         OSSL_ENCODER_CTX_free(ctx);
         ctx = NULL;
     }
