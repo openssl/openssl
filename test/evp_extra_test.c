@@ -2428,7 +2428,7 @@ static int test_ecpub(int idx)
     unsigned char buf[1024];
     unsigned char *p;
     const unsigned char *q;
-    EVP_PKEY *pkey = NULL, *pkey2 = NULL, *pkeytmp = NULL;
+    EVP_PKEY *pkey = NULL, *pkey2 = NULL;
     EVP_PKEY_CTX *ctx = NULL;
     EC_KEY *ec = NULL;
 
@@ -2453,14 +2453,13 @@ static int test_ecpub(int idx)
 
     /* Now try to decode the just-created DER. */
     q = buf;
-    if (!TEST_ptr((pkeytmp = EVP_PKEY_new()))
+    if (!TEST_ptr((pkey2 = EVP_PKEY_new()))
             || !TEST_ptr((ec = EC_KEY_new_by_curve_name(nid)))
-            || !TEST_true(EVP_PKEY_assign_EC_KEY(pkeytmp, ec)))
+            || !TEST_true(EVP_PKEY_assign_EC_KEY(pkey2, ec)))
         goto done;
     /* EC_KEY ownership transferred */
     ec = NULL;
-    if (!TEST_ptr((pkey2 = d2i_PublicKey(EVP_PKEY_EC, &pkeytmp, &q,
-                                                savelen))))
+    if (!TEST_ptr(d2i_PublicKey(EVP_PKEY_EC, &pkey2, &q, savelen)))
         goto done;
     /* The keys should match. */
     if (!TEST_int_eq(EVP_PKEY_cmp(pkey, pkey2), 1))
@@ -2471,7 +2470,6 @@ static int test_ecpub(int idx)
  done:
     EVP_PKEY_CTX_free(ctx);
     EVP_PKEY_free(pkey);
-    EVP_PKEY_free(pkeytmp);
     EVP_PKEY_free(pkey2);
     EC_KEY_free(ec);
     return ret;
