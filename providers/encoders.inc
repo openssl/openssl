@@ -104,12 +104,15 @@ ENCODER_w_structure("DSA", dsa, yes, der, type_specific),
 ENCODER_w_structure("DSA", dsa, yes, pem, type_specific),
 #endif
 #ifndef OPENSSL_NO_EC
-/* EC only supports keypair and parameters output. */
+/* EC only supports keypair and parameters DER and PEM output. */
 ENCODER_w_structure("EC", ec, yes, der, type_specific_no_pub),
 ENCODER_w_structure("EC", ec, yes, pem, type_specific_no_pub),
+/* EC supports blob output for the public key */
+ENCODER("EC", ec, yes, blob),
 # ifndef OPENSSL_NO_SM2
 ENCODER_w_structure("SM2", sm2, yes, der, type_specific_no_pub),
 ENCODER_w_structure("SM2", sm2, yes, pem, type_specific_no_pub),
+ENCODER("SM2", sm2, yes, blob),
 # endif
 #endif
 
