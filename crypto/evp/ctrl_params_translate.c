@@ -893,7 +893,7 @@ static int fix_kdf_type(enum state state,
 
         /* Convert KDF type strings to numbers */
         for (; kdf_type_map->kdf_type_str != NULL; kdf_type_map++)
-            if (strcmp(ctx->p2, kdf_type_map->kdf_type_str) == 0) {
+            if (strcasecmp(ctx->p2, kdf_type_map->kdf_type_str) == 0) {
                 ctx->p1 = kdf_type_map->kdf_type_num;
                 ret = 1;
                 break;
