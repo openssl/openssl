@@ -484,7 +484,8 @@ static int sskdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     return 1;
 }
 
-static const OSSL_PARAM *sskdf_settable_ctx_params(ossl_unused void *provctx)
+static const OSSL_PARAM *sskdf_settable_ctx_params(ossl_unused void *ctx,
+                                                   ossl_unused void *provctx)
 {
     static const OSSL_PARAM known_settable_ctx_params[] = {
         OSSL_PARAM_octet_string(OSSL_KDF_PARAM_SECRET, NULL, 0),
@@ -510,7 +511,8 @@ static int sskdf_get_ctx_params(void *vctx, OSSL_PARAM params[])
     return -2;
 }
 
-static const OSSL_PARAM *sskdf_gettable_ctx_params(ossl_unused void *provctx)
+static const OSSL_PARAM *sskdf_gettable_ctx_params(ossl_unused void *ctx,
+                                                   ossl_unused void *provctx)
 {
     static const OSSL_PARAM known_gettable_ctx_params[] = {
         OSSL_PARAM_size_t(OSSL_KDF_PARAM_SIZE, NULL),
