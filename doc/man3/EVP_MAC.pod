@@ -9,6 +9,7 @@ EVP_MAC_CTX, EVP_MAC_CTX_new, EVP_MAC_CTX_free, EVP_MAC_CTX_dup,
 EVP_MAC_CTX_mac, EVP_MAC_CTX_get_params, EVP_MAC_CTX_set_params,
 EVP_MAC_CTX_get_mac_size, EVP_MAC_init, EVP_MAC_update, EVP_MAC_final,
 EVP_MAC_gettable_ctx_params, EVP_MAC_settable_ctx_params,
+EVP_MAC_CTX_gettable_params, EVP_MAC_CTX_settable_params,
 EVP_MAC_do_all_provided - EVP MAC routines
 
 =head1 SYNOPSIS
@@ -47,6 +48,8 @@ EVP_MAC_do_all_provided - EVP MAC routines
  const OSSL_PARAM *EVP_MAC_gettable_params(const EVP_MAC *mac);
  const OSSL_PARAM *EVP_MAC_gettable_ctx_params(const EVP_MAC *mac);
  const OSSL_PARAM *EVP_MAC_settable_ctx_params(const EVP_MAC *mac);
+ const OSSL_PARAM *EVP_MAC_CTX_gettable_params(EVP_MAC_CTX *ctx);
+ const OSSL_PARAM *EVP_MAC_CTX_settable_params(EVP_MAC_CTX *ctx);
 
  void EVP_MAC_do_all_provided(OSSL_LIB_CTX *libctx,
                               void (*fn)(EVP_MAC *mac, void *arg),
@@ -153,12 +156,26 @@ simply ignored.
 Also, what happens when a needed parameter isn't passed down is
 defined by the implementation.
 
-EVP_MAC_gettable_params(), EVP_MAC_gettable_ctx_params() and
-EVP_MAC_settable_ctx_params() get a constant B<OSSL_PARAM> array that
-describes the retrievable and settable parameters, i.e. parameters that
-can be used with EVP_MAC_get_params(), EVP_MAC_CTX_get_params()
-and EVP_MAC_CTX_set_params(), respectively.
-See L<OSSL_PARAM(3)> for the use of B<OSSL_PARAM> as parameter descriptor.
+EVP_MAC_gettable_params() returns an B<OSSL_PARAM> array that describes
+the retrievable and settable parameters.  EVP_MAC_gettable_params()
+returns parameters that can be used with EVP_MAC_get_params().
+See L<OSSL_PARAM(3)> for the use of B<OSSL_PARAM> as a parameter descriptor.
+
+EVP_MAC_gettable_ctx_params() and EVP_MAC_CTX_gettable_params()
+return constant B<OSSL_PARAM> arrays that describe the retrievable
+parameters that can be used with EVP_MAC_CTX_get_params().
+EVP_MAC_gettable_ctx_params() returns the parameters that can be retrieved
+from the algorithm, whereas EVP_MAC_CTX_gettable_params() returns
+the parameters that can be retrieved in the context's current state.
+See L<OSSL_PARAM(3)> for the use of B<OSSL_PARAM> as a parameter descriptor.
+
+EVP_MAC_settable_ctx_params() and EVP_MAC_CTX_settable_params() return
+constant B<OSSL_PARAM> arrays that describe the settable parameters that
+can be used with EVP_MAC_CTX_set_params().  EVP_MAC_settable_ctx_params()
+returns the parameters that can be retrieved from the algorithm,
+whereas EVP_MAC_CTX_settable_params() returns the parameters that can
+be retrieved in the context's current state.  See L<OSSL_PARAM(3)>
+for the use of B<OSSL_PARAM> as a parameter descriptor.
 
 =head2 Information functions
 
