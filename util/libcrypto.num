@@ -5302,6 +5302,8 @@ EVP_PKEY_fromdata_settable              ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_param_check_quick              ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_public_check_quick             ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_CTX_is_a                       ?	3_0_0	EXIST::FUNCTION:
+EVP_CIPHER_CTX_settable_params          ?	3_0_0	EXIST::FUNCTION:
+EVP_CIPHER_CTX_gettable_params          ?	3_0_0	EXIST::FUNCTION:
 EVP_KDF_CTX_gettable_params             ?	3_0_0	EXIST::FUNCTION:
 EVP_KDF_CTX_settable_params             ?	3_0_0	EXIST::FUNCTION:
 EVP_MAC_CTX_gettable_params             ?	3_0_0	EXIST::FUNCTION:

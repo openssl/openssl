@@ -315,9 +315,9 @@ OSSL_CORE_MAKE_FUNC(int, cipher_set_ctx_params, (void *cctx,
 OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, cipher_gettable_params,
                     (void *provctx))
 OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, cipher_settable_ctx_params,
-                    (void *provctx))
+                    (void *cctx, void *provctx))
 OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, cipher_gettable_ctx_params,
-                    (void *provctx))
+                    (void *cctx, void *provctx))
 
 /* MACs */
 
