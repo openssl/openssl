@@ -816,6 +816,8 @@ int EVP_CIPHER_CTX_get_params(EVP_CIPHER_CTX *ctx, OSSL_PARAM params[]);
 const OSSL_PARAM *EVP_CIPHER_gettable_params(const EVP_CIPHER *cipher);
 const OSSL_PARAM *EVP_CIPHER_settable_ctx_params(const EVP_CIPHER *cipher);
 const OSSL_PARAM *EVP_CIPHER_gettable_ctx_params(const EVP_CIPHER *cipher);
+const OSSL_PARAM *EVP_CIPHER_CTX_settable_params(EVP_CIPHER_CTX *ctx);
+const OSSL_PARAM *EVP_CIPHER_CTX_gettable_params(EVP_CIPHER_CTX *ctx);
 
 const BIO_METHOD *BIO_f_md(void);
 const BIO_METHOD *BIO_f_base64(void);
