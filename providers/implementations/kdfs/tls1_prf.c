@@ -211,7 +211,8 @@ static int kdf_tls1_prf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     return 1;
 }
 
-static const OSSL_PARAM *kdf_tls1_prf_settable_ctx_params(ossl_unused void *ctx)
+static const OSSL_PARAM *kdf_tls1_prf_settable_ctx_params(
+        ossl_unused void *ctx, ossl_unused void *provctx)
 {
     static const OSSL_PARAM known_settable_ctx_params[] = {
         OSSL_PARAM_utf8_string(OSSL_KDF_PARAM_PROPERTIES, NULL, 0),
@@ -232,7 +233,8 @@ static int kdf_tls1_prf_get_ctx_params(void *vctx, OSSL_PARAM params[])
     return -2;
 }
 
-static const OSSL_PARAM *kdf_tls1_prf_gettable_ctx_params(ossl_unused void *ctx)
+static const OSSL_PARAM *kdf_tls1_prf_gettable_ctx_params(
+        ossl_unused void *ctx, ossl_unused void *provctx)
 {
     static const OSSL_PARAM known_gettable_ctx_params[] = {
         OSSL_PARAM_size_t(OSSL_KDF_PARAM_SIZE, NULL),
