@@ -13,14 +13,13 @@
  */
 #include "internal/deprecated.h"
 
-#include <stdio.h>
 #include <openssl/crypto.h>
 #include <openssl/core_names.h>
 #include <openssl/engine.h>
 #include <openssl/evp.h>
+#include <openssl/param_build.h>
 #include "internal/cryptlib.h"
 #include "internal/refcount.h"
-#include "openssl/param_build.h"
 #include "crypto/bn.h"
 #include "crypto/evp.h"
 #include "crypto/rsa.h"
@@ -1067,8 +1066,6 @@ int EVP_PKEY_CTX_set0_rsa_oaep_label(EVP_PKEY_CTX *ctx, void *label, int llen)
     if (!EVP_PKEY_CTX_is_a(ctx, "RSA"))
         return -1;
 
-    /* TODO(3.0) Shouldn't a set0 translate into setting an OCTET_PTR? */
-
     /* Cast away the const. This is read only so should be safe */
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_ASYM_CIPHER_PARAM_OAEP_LABEL,
                                              (void *)label, (size_t)llen);
@@ -1077,7 +1074,7 @@ int EVP_PKEY_CTX_set0_rsa_oaep_label(EVP_PKEY_CTX *ctx, void *label, int llen)
     if (!evp_pkey_ctx_set_params_strict(ctx, rsa_params))
         return 0;
 
-    /* TODO(3.0) ????? */
+    /* Ownership is supposed to be transfered to the callee. */
     OPENSSL_free(label);
     return 1;
 }
