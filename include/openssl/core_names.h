@@ -432,7 +432,7 @@ extern "C" {
 #define OSSL_EXCHANGE_PARAM_KDF_DIGEST            "kdf-digest" /* utf8_string */
 #define OSSL_EXCHANGE_PARAM_KDF_DIGEST_PROPS      "kdf-digest-props" /* utf8_string */
 #define OSSL_EXCHANGE_PARAM_KDF_OUTLEN            "kdf-outlen" /* size_t */
-/* The following parameter is octet_string on set and octet_ptr on get */
+/* The following parameter is an octet_string on set and octet_ptr on get */
 #define OSSL_EXCHANGE_PARAM_KDF_UKM               "kdf-ukm"
 
 /* Signature parameters */
@@ -457,7 +457,7 @@ extern "C" {
     OSSL_PKEY_PARAM_MGF1_PROPERTIES
 #define OSSL_ASYM_CIPHER_PARAM_OAEP_DIGEST              OSSL_ALG_PARAM_DIGEST
 #define OSSL_ASYM_CIPHER_PARAM_OAEP_DIGEST_PROPS        "digest-props"
-/* The following parameter is octet_string on set and octet_ptr on get */
+/* The following parameter is an octet_string on set and octet_ptr on get */
 #define OSSL_ASYM_CIPHER_PARAM_OAEP_LABEL               "oaep-label"
 #define OSSL_ASYM_CIPHER_PARAM_TLS_CLIENT_VERSION       "tls-client-version"
 #define OSSL_ASYM_CIPHER_PARAM_TLS_NEGOTIATED_VERSION   "tls-negotiated-version"
