@@ -865,6 +865,7 @@ static int RSA_sign_loop(void *args)
     size_t *rsa_num = &tempargs->sigsize;
     EVP_PKEY_CTX **rsa_sign_ctx = tempargs->rsa_sign_ctx;
     int ret, count;
+
     for (count = 0; COND(rsa_c[testnum][0]); count++) {
         ret = EVP_PKEY_sign(rsa_sign_ctx[testnum], buf2, rsa_num, buf, 36);
         if (ret <= 0) {
@@ -885,6 +886,7 @@ static int RSA_verify_loop(void *args)
     size_t rsa_num = tempargs->sigsize;
     EVP_PKEY_CTX **rsa_verify_ctx = tempargs->rsa_verify_ctx;
     int ret, count;
+
     for (count = 0; COND(rsa_c[testnum][1]); count++) {
         ret = EVP_PKEY_verify(rsa_verify_ctx[testnum], buf2, rsa_num, buf, 36);
         if (ret <= 0) {
@@ -2131,6 +2133,7 @@ int speed_main(int argc, char **argv)
     for (algindex = D_RC4; algindex <= D_CBC_CAST; algindex++) {
         if (doit[algindex]) {
             int st = 1;
+
             keylen = 16;
             for (i = 0; st && i < loopargs_len; i++) {
                 loopargs[i].ctx = init_evp_cipher_ctx(names[algindex],
