@@ -380,6 +380,7 @@ extern const OSSL_DISPATCH ossl_dsa_to_text_encoder_functions[];
 
 extern const OSSL_DISPATCH ossl_ec_to_EC_der_encoder_functions[];
 extern const OSSL_DISPATCH ossl_ec_to_EC_pem_encoder_functions[];
+extern const OSSL_DISPATCH ossl_ec_to_blob_encoder_functions[];
 extern const OSSL_DISPATCH ossl_ec_to_PKCS8_der_encoder_functions[];
 extern const OSSL_DISPATCH ossl_ec_to_PKCS8_pem_encoder_functions[];
 extern const OSSL_DISPATCH ossl_ec_to_SubjectPublicKeyInfo_der_encoder_functions[];
@@ -393,6 +394,7 @@ extern const OSSL_DISPATCH ossl_ec_to_text_encoder_functions[];
 #ifndef OPENSSL_NO_SM2
 extern const OSSL_DISPATCH ossl_sm2_to_SM2_der_encoder_functions[];
 extern const OSSL_DISPATCH ossl_sm2_to_SM2_pem_encoder_functions[];
+extern const OSSL_DISPATCH ossl_sm2_to_blob_encoder_functions[];
 extern const OSSL_DISPATCH ossl_sm2_to_PKCS8_der_encoder_functions[];
 extern const OSSL_DISPATCH ossl_sm2_to_PKCS8_pem_encoder_functions[];
 extern const OSSL_DISPATCH ossl_sm2_to_SubjectPublicKeyInfo_der_encoder_functions[];
