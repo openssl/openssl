@@ -142,6 +142,23 @@ X509_ALGOR *PKCS5_pbe2_set_scrypt(const EVP_CIPHER *cipher,
     return NULL;
 }
 
+int PKCS5_v2_scrypt_keygen_ex(EVP_CIPHER_CTX **ctx, OSSL_PARAM *params, 
+                        const char *pass, int passlen, int en_de, 
+                        OSSL_LIB_CTX *libctx, const char *propq)
+{
+    return 0;
+}
+
+int PKCS5_v2_scrypt_encode(X509_ALGOR **algor, OSSL_PARAM *params)
+{
+    return 0;
+}
+
+int PKCS5_v2_scrypt_decode(X509_ALGOR *algor, OSSL_PARAM **params)
+{
+    return 0;
+}
+
 static X509_ALGOR *pkcs5_scrypt_set(const unsigned char *salt, size_t saltlen,
                                     size_t keylen, uint64_t N, uint64_t r,
                                     uint64_t p)

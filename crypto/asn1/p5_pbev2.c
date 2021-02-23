@@ -147,7 +147,7 @@ X509_ALGOR *PKCS5_pbe2_set(const EVP_CIPHER *cipher, int iter,
     return PKCS5_pbe2_set_iv(cipher, iter, salt, saltlen, NULL, -1);
 }
 
-X509_ALGOR *PKCS5_pbe2_set_param(OSSL_PARAM params[], OSSL_LIB_CTX *libctx, char *propq)
+int PKCS5_PBE2_encode(X509_ALGOR **algor, OSSL_PARAM params[], OSSL_LIB_CTX *libctx, char *propq)
 {
     const OSSL_PARAM *p;
     X509_ALGOR *scheme = NULL, *ret = NULL;
@@ -228,26 +228,24 @@ X509_ALGOR *PKCS5_pbe2_set_param(OSSL_PARAM params[], OSSL_LIB_CTX *libctx, char
 
     X509_ALGOR_free(pbe2->keyfunc);
 
-    pbe2->keyfunc = PKCS5_pbkdf2_set_params(params);
-
-    if (pbe2->keyfunc == NULL)
+    if (!PKCS5_v2_PBKDF2_encode(pbe2->keyfunc, params))
         goto merr;
 
     /* Now set up top level AlgorithmIdentifier */
-    if ((ret = X509_ALGOR_new()) == NULL)
+    if ((*algor = X509_ALGOR_new()) == NULL)
         goto merr;
 
-    ret->algorithm = OBJ_nid2obj(NID_pbes2);
+    (*algor)->algorithm = OBJ_nid2obj(NID_pbes2);
 
     /* Encode PBE2PARAM into parameter */
     if (!ASN1_TYPE_pack_sequence(ASN1_ITEM_rptr(PBE2PARAM), pbe2,
-                                 &ret->parameter))
+                                 &((*algor)->parameter)))
          goto merr;
 
     PBE2PARAM_free(pbe2);
     pbe2 = NULL;
 
-    return ret;
+    return 1;
 
  merr:
     ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
@@ -256,9 +254,9 @@ X509_ALGOR *PKCS5_pbe2_set_param(OSSL_PARAM params[], OSSL_LIB_CTX *libctx, char
     EVP_CIPHER_CTX_free(ctx);
     PBE2PARAM_free(pbe2);
     /* Note 'scheme' is freed as part of pbe2 */
-    X509_ALGOR_free(ret);
+    X509_ALGOR_free(*algor);
 
-    return NULL;
+    return 0;
 }
 
 
@@ -337,7 +335,7 @@ X509_ALGOR *PKCS5_pbkdf2_set(int iter, unsigned char *salt, int saltlen,
 }
 
 
-X509_ALGOR *PKCS5_pbkdf2_set_params(OSSL_PARAM params[])
+int PKCS5_v2_PBKDF_encode(X509_ALGOR **algor, OSSL_PARAM *params)
 {
     const OSSL_PARAM *p;
     X509_ALGOR *keyfunc = NULL;
@@ -419,12 +417,12 @@ X509_ALGOR *PKCS5_pbkdf2_set_params(OSSL_PARAM params[])
         goto merr;
 
     PBKDF2PARAM_free(kdf);
-    return keyfunc;
-
+    *algor = keyfunc;
+    return 1;
  merr:
     ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
     PBKDF2PARAM_free(kdf);
     X509_ALGOR_free(keyfunc);
-    return NULL;
+    return 0;
 }
 

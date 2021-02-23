@@ -149,6 +149,71 @@ int PKCS5_v2_PBE_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
     return rv;
 }
 
+int PKCS5_PBE2_keygen_ex(EVP_CIPHER_CTX **ctx, OSSL_PARAM *params, 
+                        const char *pass, int passlen, int en_de, 
+                        OSSL_LIB_CTX *libctx, const char *propq)
+{
+    return 0;
+}
+
+int PKCS5_PBE2_decode(X509_ALGOR *algor, OSSL_PARAM **params)
+{
+    PBE2PARAM *pbe2 = NULL;
+    EVP_PBE_DECODE *kdf_decode;
+    char cipher_name[80];
+    int rv = 0;
+    OSSL_PARAM params_lcl[8];
+    OSSL_PARAM *p = params_lcl;
+
+    *params = p;
+
+    // TODO: PBE type param is PBES2
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PBE_PARAM_ALG, "PBES2", 0);
+
+    pbe2 = ASN1_TYPE_unpack_sequence(ASN1_ITEM_rptr(PBE2PARAM), algor->parameter);
+    if (pbe2 == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_DECODE_ERROR);
+        goto err;
+    }
+
+    /* See if we recognise the key derivation function */
+    if (!EVP_PBE_find_ex(EVP_PBE_TYPE_KDF, OBJ_obj2nid(pbe2->keyfunc->algorithm),
+                         NULL, NULL, NULL, NULL, NULL, &kdf_decode)) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_UNSUPPORTED_KEY_DERIVATION_FUNCTION);
+        goto err;
+    }
+
+    /* Lets see if we recognise the encryption algorithm. */
+    OBJ_obj2txt(cipher_name, sizeof(cipher_name), pbe2->encryption->algorithm, 0);
+    if (cipher_name == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_UNSUPPORTED_CIPHER);
+        goto err;
+    }
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PBE_PARAM_CIPHER, cipher_name, 0);
+
+    /* Stolen from EVP_CIPHER_get_asn1_iv. For PBES2 the AI contains only the IV */
+    if (pbe2->encryption->parameter != NULL) {
+        unsigned char iv[EVP_MAX_IV_LENGTH];
+        int iv_len;
+
+        iv_len = ASN1_TYPE_get_octetstring(pbe2->encryption->parameter, iv, 0);
+        *p++ = OSSL_PARAM_construct_octet_string(OSSL_PBE_PARAM_CIPHER, iv, iv_len);
+    }
+
+    /* Fixup cipher based on AlgorithmIdentifier */
+/*    if (!EVP_CipherInit_ex(ctx, cipher, NULL, NULL, NULL, en_de))
+        goto err;
+    if (EVP_CIPHER_asn1_to_param(ctx, pbe2->encryption->parameter) < 0) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_CIPHER_PARAMETER_ERROR);
+        goto err;
+    }
+*/
+    rv = kdf_decode(pbe2->keyfunc, params);
+ err:
+    PBE2PARAM_free(pbe2);
+    return rv;
+}
+
 int PKCS5_v2_PBKDF2_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass,
                              int passlen, ASN1_TYPE *param,
                              const EVP_CIPHER *c, const EVP_MD *md, int en_de)
@@ -225,3 +290,75 @@ int PKCS5_v2_PBKDF2_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass,
     PBKDF2PARAM_free(kdf);
     return rv;
 }
+
+int PKCS5_v2_PBKDF2_keygen_ex(EVP_CIPHER_CTX **ctx, OSSL_PARAM *params,
+                        const char *pass, int passlen, int en_de,
+                        OSSL_LIB_CTX *libctx, const char *propq)
+{
+    return 0;
+}
+
+int PKCS5_v2_PBKDF2_encode(X509_ALGOR **algor, OSSL_PARAM *params)
+{
+    return 0;
+}
+
+int PKCS5_v2_PBKDF2_decode(X509_ALGOR *algor, OSSL_PARAM **params)
+{
+    unsigned char *salt;
+    int saltlen, iter;
+    int rv = 0;
+    unsigned int keylen = 0;
+    int prf_nid, hmac_md_nid;
+    const char *prf_name;
+    const char *md_name;
+    PBKDF2PARAM *kdf = NULL;
+    OSSL_PARAM params_lcl[8];
+    OSSL_PARAM *p = params_lcl;
+
+    *params = p;
+
+    /* Decode parameter */
+    kdf = ASN1_TYPE_unpack_sequence(ASN1_ITEM_rptr(PBKDF2PARAM), algor->parameter);
+    if (kdf == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_DECODE_ERROR);
+        goto err;
+    }
+
+    if (kdf->prf)
+        prf_nid = OBJ_obj2nid(kdf->prf->algorithm);
+    else
+        prf_nid = NID_hmacWithSHA1;
+
+    if (!EVP_PBE_find(EVP_PBE_TYPE_PRF, prf_nid, NULL, &hmac_md_nid, 0)) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_UNSUPPORTED_PRF);
+        goto err;
+    }
+
+    prf_name = OBJ_nid2sn(prf_nid);
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_PRF, prf_name, 0);
+ 
+    md_name = OBJ_nid2sn(hmac_md_nid);
+    if (md_name == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_UNSUPPORTED_PRF);
+        goto err;
+    }
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST, md_name, 0);
+
+    if (kdf->salt->type != V_ASN1_OCTET_STRING) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_UNSUPPORTED_SALT_TYPE);
+        goto err;
+    }
+    salt = kdf->salt->value.octet_string->data;
+    saltlen = kdf->salt->value.octet_string->length;
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SALT, salt, saltlen);
+
+    iter = ASN1_INTEGER_get(kdf->iter);
+    *p++ = OSSL_PARAM_construct_uint(OSSL_KDF_PARAM_ITER, &iter);
+
+    rv = 1;
+err:
+    PBKDF2PARAM_free(kdf);
+    return rv;
+}
+

@@ -236,6 +236,7 @@ extern "C" {
 #define OSSL_PBE_PARAM_ITER          OSSL_KDF_PARAM_ITER      /* unsigned int */
 #define OSSL_PBE_PARAM_SALT          OSSL_KDF_PARAM_SALT      /* octet string */
 #define OSSL_PBE_PARAM_CIPHER        OSSL_ALG_PARAM_CIPHER    /* utf8 string */
+#define OSSL_PBE_PARAM_IV            "iv"       /* octet string */
 
 /* PBE Algorithm class names */
 #define OSSL_PBE_NAME_PKCS5          "PKCS5"    /* PKCS#5 v1.5 */

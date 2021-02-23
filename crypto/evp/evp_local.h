@@ -208,7 +208,33 @@ int PKCS5_v2_PBKDF2_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass,
                              const EVP_CIPHER *c, const EVP_MD *md,
                              int en_de);
 
-int PKCS12_PBE_params_decode(ASN1_TYPE *param, OSSL_PARAM **params, int params_len);
+int PKCS5_PBE_keygen_ex(EVP_CIPHER_CTX **ctx, OSSL_PARAM *params,
+                        const char *pass, int passlen, int en_de,
+                        OSSL_LIB_CTX *libctx, const char *propq);
+int PKCS5_PBE2_keygen_ex(EVP_CIPHER_CTX **ctx, OSSL_PARAM *params,
+                        const char *pass, int passlen, int en_de,
+                        OSSL_LIB_CTX *libctx, const char *propq);
+int PKCS12_PBE_keygen_ex(EVP_CIPHER_CTX **ctx, OSSL_PARAM *params,
+                        const char *pass, int passlen, int en_de,
+                        OSSL_LIB_CTX *libctx, const char *propq);
+int PKCS5_v2_PBKDF2_keygen_ex(EVP_CIPHER_CTX **ctx, OSSL_PARAM *params,
+                        const char *pass, int passlen, int en_de,
+                        OSSL_LIB_CTX *libctx, const char *propq);
+int PKCS5_v2_scrypt_keygen_ex(EVP_CIPHER_CTX **ctx, OSSL_PARAM *params,
+                        const char *pass, int passlen, int en_de,
+                        OSSL_LIB_CTX *libctx, const char *propq);
+
+int PKCS5_PBE_encode(X509_ALGOR **algor, OSSL_PARAM *params);
+int PKCS5_PBE2_encode(X509_ALGOR **algor, OSSL_PARAM *params);
+int PKCS12_PBE_encode(X509_ALGOR **algor, OSSL_PARAM *params);
+int PKCS5_v2_PBKDF2_encode(X509_ALGOR **algor, OSSL_PARAM *params);
+int PKCS5_v2_scrypt_encode(X509_ALGOR **algor, OSSL_PARAM *params);
+
+int PKCS5_PBE_decode(X509_ALGOR *algor, OSSL_PARAM **params);
+int PKCS5_PBE2_decode(X509_ALGOR *algor, OSSL_PARAM **params);
+int PKCS12_PBE_decode(X509_ALGOR *algor, OSSL_PARAM **params);
+int PKCS5_v2_PBKDF2_decode(X509_ALGOR *algor, OSSL_PARAM **params);
+int PKCS5_v2_scrypt_decode(X509_ALGOR *algor, OSSL_PARAM **params);
 
 struct evp_Encode_Ctx_st {
     /* number saved in a partial encode/decode */

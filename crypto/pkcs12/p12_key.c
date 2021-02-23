@@ -92,14 +92,14 @@ int PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt,
     return PKCS12_key_gen_ex(out, n, params, ossl_provider_libctx(EVP_MD_provider(md_type)), NULL);
 }
 
-int PKCS12_key_gen_ex(unsigned char *out, size_t keylen, OSSL_PARAM params[],
+int PKCS12_key_gen_ex(unsigned char *out, size_t outlen, OSSL_PARAM params[],
                       OSSL_LIB_CTX *ctx, const char *propq)
 {
     int res = 0;
     EVP_KDF *kdf;
     EVP_KDF_CTX *kdf_ctx;
 
-    if (keylen <= 0)
+    if (outlen <= 0)
         return 0;
 
     kdf = EVP_KDF_fetch(ctx, "PKCS12KDF", propq);
@@ -114,11 +114,11 @@ int PKCS12_key_gen_ex(unsigned char *out, size_t keylen, OSSL_PARAM params[],
     if (!EVP_KDF_CTX_set_params(kdf_ctx, params))
         goto err;
 
-    if (EVP_KDF_derive(kdf_ctx, out, keylen)) {
+    if (EVP_KDF_derive(kdf_ctx, out, outlen)) {
         res = 1;
         OSSL_TRACE_BEGIN(PKCS12_KEYGEN) {
-            BIO_printf(trc_out, "Output KEY (length %d)\n", keylen);
-            BIO_hex_string(trc_out, 0, keylen, out, keylen);
+            BIO_printf(trc_out, "Output KEY (length %d)\n", outlen);
+            BIO_hex_string(trc_out, 0, outlen, out, outlen);
             BIO_printf(trc_out, "\n");
         } OSSL_TRACE_END(PKCS12_KEYGEN);
     }

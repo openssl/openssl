@@ -120,18 +120,17 @@ PKCS7 *PKCS12_pack_p7encdata(int pbe_nid, const char *pass, int passlen,
                                                 "PBES2", 0);
         *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PBE_PARAM_CIPHER,
                                                 EVP_CIPHER_name(pbe_ciph), 0);
+        *p = OSSL_PARAM_construct_end();
+        if (!PKCS5_PBE2_encode(&pbe, params))
+            goto err;
     } else {
         *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PBE_PARAM_ALG,
-                                                "PBES2", 0);
+                                                "PKCS12", 0);
+        *p = OSSL_PARAM_construct_end();
+        if (!PKCS5_PBE_encode(&pbe, params))
+            goto err;
     }
-    *p = OSSL_PARAM_construct_end();
 
-    /* TODO: Handle both pbe1 and pbe2 */
-    pbe = PKCS5_pbe2_set_param(params, NULL, NULL);
-    if (pbe == NULL) {
-        ERR_raise(ERR_LIB_PKCS12, ERR_R_MALLOC_FAILURE);
-        goto err;
-    }
     X509_ALGOR_free(p7->d.encrypted->enc_data->algorithm);
     p7->d.encrypted->enc_data->algorithm = pbe;
     ASN1_OCTET_STRING_free(p7->d.encrypted->enc_data->enc_data);

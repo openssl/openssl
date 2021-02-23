@@ -28,7 +28,7 @@ X509_SIG *PKCS8_encrypt_ex(PKCS8_PRIV_KEY_INFO *p8inf, OSSL_PARAM params[],
     X509_ALGOR *pbe;
     X509_SIG *p8 = NULL;
 
-    pbe = PKCS5_pbe_set_params(params, ctx, propq);
+    EVP_PBE_params_to_asn1(&pbe, params);
     if (pbe == NULL) {
         ERR_raise(ERR_LIB_PKCS12, ERR_R_ASN1_LIB);
         return NULL;

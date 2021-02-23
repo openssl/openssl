@@ -113,3 +113,22 @@ int PKCS5_PBE_keyivgen(EVP_CIPHER_CTX *cctx, const char *pass, int passlen,
     EVP_MD_CTX_free(ctx);
     return rv;
 }
+
+int PKCS5_PBE_keygen_ex(EVP_CIPHER_CTX **ctx, OSSL_PARAM *params,
+                        const char *pass, int passlen, int en_de,
+                        OSSL_LIB_CTX *libctx, const char *propq)
+{
+    return 0;
+}
+
+int PKCS5_PBE_encode(X509_ALGOR **algor, OSSL_PARAM *params)
+{
+    return PKCS12_PBE_encode(algor, params);
+}
+
+// TODO - May need to add extra PKCS5 mode param here?
+int PKCS5_PBE_decode(X509_ALGOR *algor, OSSL_PARAM **params)
+{
+    return PKCS12_PBE_decode(algor, params);
+}
+

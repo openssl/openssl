@@ -105,6 +105,90 @@ unsigned char *PKCS12_pbe_crypt(const X509_ALGOR *algor,
 
 }
 
+unsigned char *PKCS12_pbe_crypt_ex(OSSL_PARAM *params,
+                                   const char *pass, int passlen,
+                                   const unsigned char *in, int inlen,
+                                   unsigned char **data, int *datalen, int en_de,
+                                   OSSL_LIB_CTX *libctx, const char *propq)
+{
+    unsigned char *out = NULL;
+    int outlen, i;
+    EVP_CIPHER_CTX *ctx = NULL;
+    int max_out_len, mac_len = 0;
+
+    /* Process data */
+    if (!EVP_PBE_CipherInit_ex(&ctx, params, pass, passlen, libctx, propq, en_de))
+        goto err;
+
+    /*
+     * GOST algorithm specifics:
+     * OMAC algorithm calculate and encrypt MAC of the encrypted objects
+     * It's appended to encrypted text on encrypting
+     * MAC should be processed on decrypting separately from plain text
+     */
+    max_out_len = inlen + EVP_CIPHER_CTX_block_size(ctx);
+    if (EVP_CIPHER_flags(EVP_CIPHER_CTX_cipher(ctx)) & EVP_CIPH_FLAG_CIPHER_WITH_MAC) {
+        if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_TLS1_AAD, 0, &mac_len) < 0) {
+            ERR_raise(ERR_LIB_PKCS12, ERR_R_INTERNAL_ERROR);
+            goto err;
+        }
+
+        if (EVP_CIPHER_CTX_encrypting(ctx)) {
+            max_out_len += mac_len;
+        } else {
+            if (inlen < mac_len) {
+                ERR_raise(ERR_LIB_PKCS12, PKCS12_R_UNSUPPORTED_PKCS12_MODE);
+                goto err;
+            }
+            inlen -= mac_len;
+            if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG,
+                                    (int)mac_len, (unsigned char *)in+inlen) < 0) {
+                ERR_raise(ERR_LIB_PKCS12, ERR_R_INTERNAL_ERROR);
+                goto err;
+            }
+        }
+    }
+
+    if ((out = OPENSSL_malloc(max_out_len)) == NULL) {
+        ERR_raise(ERR_LIB_PKCS12, ERR_R_MALLOC_FAILURE);
+        goto err;
+    }
+
+    if (!EVP_CipherUpdate(ctx, out, &i, in, inlen)) {
+        OPENSSL_free(out);
+        out = NULL;
+        ERR_raise(ERR_LIB_PKCS12, ERR_R_EVP_LIB);
+        goto err;
+    }
+
+    outlen = i;
+    if (!EVP_CipherFinal_ex(ctx, out + i, &i)) {
+        OPENSSL_free(out);
+        out = NULL;
+        ERR_raise(ERR_LIB_PKCS12, PKCS12_R_PKCS12_CIPHERFINAL_ERROR);
+        goto err;
+    }
+    outlen += i;
+    if (EVP_CIPHER_flags(EVP_CIPHER_CTX_cipher(ctx)) & EVP_CIPH_FLAG_CIPHER_WITH_MAC) {
+        if (EVP_CIPHER_CTX_encrypting(ctx)) {
+            if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG,
+                (int)mac_len, out+outlen) < 0) {
+                ERR_raise(ERR_LIB_PKCS12, ERR_R_INTERNAL_ERROR);
+                goto err;
+            }
+            outlen += mac_len;
+        }
+    }
+    if (datalen)
+        *datalen = outlen;
+    if (data)
+        *data = out;
+ err:
+    EVP_CIPHER_CTX_free(ctx);
+    return out;
+
+}
+
 /*
  * Decrypt an OCTET STRING and decode ASN1 structure if zbuf set zero buffer
  * after use.
