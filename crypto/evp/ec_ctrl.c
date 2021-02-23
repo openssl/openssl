@@ -9,8 +9,6 @@
 
 #include "internal/deprecated.h"
 
-#include <string.h>
-
 #include <openssl/core_names.h>
 #include <openssl/err.h>
 #include <openssl/ec.h>
@@ -253,13 +251,6 @@ int EVP_PKEY_CTX_get0_ecdh_kdf_ukm(EVP_PKEY_CTX *ctx, unsigned char **pukm)
     ret = evp_pkey_ctx_getset_ecdh_param_checks(ctx);
     if (ret != 1)
         return ret;
-
-    /* TODO(3.0): Remove this eventually when no more legacy */
-    if (ctx->op.kex.exchprovctx == NULL)
-        return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_EC,
-                                 EVP_PKEY_OP_DERIVE,
-                                 EVP_PKEY_CTRL_GET_EC_KDF_UKM, 0,
-                                 (void *)(pukm));
 
     *p++ = OSSL_PARAM_construct_octet_ptr(OSSL_EXCHANGE_PARAM_KDF_UKM,
                                           (void **)pukm, 0);
