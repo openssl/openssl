@@ -26,7 +26,7 @@ Function associated with the given key exchange ctx.
 
 Gets a pointer to the User Key Material to be used as part of the selected
 Key Derivation Function associated with the given key exchange ctx. Providers
-usually do not need to support this gettable parameter as the sole purpose
+usually do not need to support this gettable parameter as its sole purpose
 is to support functionality of the deprecated EVP_PKEY_CTX_get0_dh_kdf_ukm()
 function.
 
