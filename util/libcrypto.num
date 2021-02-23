@@ -5304,6 +5304,8 @@ EVP_PKEY_public_check_quick             ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_CTX_is_a                       ?	3_0_0	EXIST::FUNCTION:
 EVP_KDF_CTX_gettable_params             ?	3_0_0	EXIST::FUNCTION:
 EVP_KDF_CTX_settable_params             ?	3_0_0	EXIST::FUNCTION:
+EVP_MAC_CTX_gettable_params             ?	3_0_0	EXIST::FUNCTION:
+EVP_MAC_CTX_settable_params             ?	3_0_0	EXIST::FUNCTION:
 EVP_RAND_CTX_gettable_params            ?	3_0_0	EXIST::FUNCTION:
 EVP_RAND_CTX_settable_params            ?	3_0_0	EXIST::FUNCTION:
 RAND_set_DRBG_type                      ?	3_0_0	EXIST::FUNCTION:
