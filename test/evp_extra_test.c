@@ -2448,6 +2448,8 @@ static void md_names(const char *name, void *vctx)
 
     if (!TEST_ptr(aes128))
         success = 0;
+
+    EVP_CIPHER_free(aes128);
 }
 
 /*
