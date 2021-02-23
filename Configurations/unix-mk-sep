@@ -1,0 +1,111 @@
+#! /usr/bin/env perl
+# Copyright 2021 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the Apache License 2.0 (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+use strict;
+use warnings;
+
+# Wrap an array of values Makefile-style.
+sub wrap {
+    my $length = 8;
+    my $res = '';
+
+    foreach my $f ( @_ ) {
+        my $i = length $f;
+        if ( $i + $length >= 75 ) {
+            $res .= " \\\n\t";
+            $length = 8;
+        }
+        $length += $i + 1;
+        $res .= "$f ";
+    }
+    $res .= "\n";
+    return $res;
+}
+
+# Inherit CFLAGS without any -I flags.
+my $cflags = &wrap(grep { $_ !~ /-I/ } @{$config{CFLAGS}});
+chomp($cflags);
+
+# Used to set variables in Makefile
+my $appslib = "apps/lib/libapps.a";
+my $testlib = "test/testutil/libtestutil.a";
+my $ossl_libdir = $ENV{OPENSSL_LIBDIR} // '???';
+my $ossl_headers = $ENV{OPENSSL_HEADERS} // '???';
+
+print <<EOF;
+##
+## Makefile to build the OpenSSL application and tests,
+## using external headers and library.
+##
+
+# Path to where the libraries are.
+OPENSSL_LIBDIR ?= $ossl_libdir
+# Path to where the headers are.
+OPENSSL_HEADERS ?= $ossl_headers
+
+# Edit appropriately.
+CFLAGS = $cflags -I\$(OPENSSL_HEADERS)
+CC = $config{CC}
+TESTLIBS = $testlib $appslib \\
+\t\$(OPENSSL_LIBDIR) -lcrypto -lssl
+EOF
+
+my @appfiles =
+    map { s/.c$/.o/; $_ }
+        map { $unified_info{sources}->{$_}->[0] }
+            grep { !/apps\/lib/ }
+                grep { /apps\/.*\.o/ } keys %{$unified_info{sources}};
+print "\n# Object files for the OpenSSL app\n";
+print "APPOBJECTS = \\\n\t", &wrap(@appfiles);
+
+my @applibfiles =
+    map { s/.c$/.o/; $_ }
+        map { $unified_info{sources}->{$_}->[0] }
+            grep { /apps\/lib\/.*\.o/ } keys %{$unified_info{sources}};
+print "\n# Object files for the app library\n";
+print "APPLIBOBJECTS = \\\n\t", &wrap(@applibfiles);
+
+my @testlibfiles =
+    map { s/.c$/.o/; $_ }
+        map { $unified_info{sources}->{$_}->[0] }
+            grep { /test\/testutil\/.*\.o/ } keys %{$unified_info{sources}};
+print "\n# Object files for the test library\n";
+print "TESTLIBOBJECTS = \\\n\t", &wrap(@testlibfiles);
+
+my @testprogs =
+    grep { !/buildtest/ }
+        grep { /test\// } @{$unified_info{programs}};
+print "\n# Test programs\n";
+print "TESTPROGS = \\\n\t", &wrap(@testprogs);
+
+print <<EOF;
+
+all: openssl \$(TESTPROGS)
+
+openssl: \$(APPOBJECTS) $appslib $testlib
+\t\$(CC) -o \$@ \$(APPOBJECTS) $appslib \\
+\t\t-L\$(OPENSSL_LIBDIR) -lcrypto -lssl
+
+${appslib}: \$(APPLIBOBJECTS)
+\tar r $appslib \$(APPLIBOBJECTS)
+
+${testlib}: \$(TESTLIBOBJECTS)
+\tar r $testlib \$(TESTLIBOBJECTS)
+
+clean:
+\trm -f openssl apps/*.o
+\trm -f ${appslib} apps/lib/*.o
+\trm -f ${testlib} test/testutil/*.o
+\trm -f \$(TESTPROGS) test/*.o
+
+EOF
+
+print "# Build all test programs\n";
+foreach my $t ( @testprogs ) {
+    print "$t : ${t}.o\n";
+    print "\t\$(CC) -o \$@ ${t}.o \$(TESTLIBS)\n";
+}
