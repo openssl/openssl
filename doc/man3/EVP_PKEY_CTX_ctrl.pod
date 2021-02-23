@@ -134,6 +134,7 @@ EVP_PKEY_CTX_set_kem_op
                                         const unsigned char *seed,
                                         size_t seedlen);
 
+ #include <openssl/dh.h>
 
  int EVP_PKEY_CTX_set_dh_paramgen_prime_len(EVP_PKEY_CTX *ctx, int len);
  int EVP_PKEY_CTX_set_dh_paramgen_subprime_len(EVP_PKEY_CTX *ctx, int len);
