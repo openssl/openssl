@@ -222,7 +222,7 @@ void DH_get0_pqg(const DH *dh,
 int DH_set0_pqg(DH *dh, BIGNUM *p, BIGNUM *q, BIGNUM *g)
 {
     /*
-     * If the fields p and g in d are NULL, the corresponding input
+     * If the fields p and g in dh are NULL, the corresponding input
      * parameters MUST be non-NULL.  q may remain NULL.
      */
     if ((dh->params.p == NULL && p == NULL)
