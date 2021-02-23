@@ -24,19 +24,22 @@ static int test_provider(OSSL_LIB_CTX **libctx, const char *name)
     OSSL_PROVIDER *prov = NULL;
     const char *greeting = NULL;
     char expected_greeting[256];
-    int ok;
+    int ok = 0;
+    long err;
 
     BIO_snprintf(expected_greeting, sizeof(expected_greeting),
                  "Hello OpenSSL %.20s, greetings from %s!",
                  OPENSSL_VERSION_STR, name);
 
-    ok =
-        TEST_ptr(prov = OSSL_PROVIDER_load(*libctx, name))
-        && TEST_true(OSSL_PROVIDER_get_params(prov, greeting_request))
-        && TEST_ptr(greeting = greeting_request[0].data)
-        && TEST_size_t_gt(greeting_request[0].data_size, 0)
-        && TEST_str_eq(greeting, expected_greeting)
-        && TEST_true(OSSL_PROVIDER_unload(prov));
+    if (!TEST_ptr(prov = OSSL_PROVIDER_load(*libctx, name))
+            || !TEST_true(OSSL_PROVIDER_get_params(prov, greeting_request))
+            || !TEST_ptr(greeting = greeting_request[0].data)
+            || !TEST_size_t_gt(greeting_request[0].data_size, 0)
+            || !TEST_str_eq(greeting, expected_greeting)
+            || !TEST_true(OSSL_PROVIDER_unload(prov)))
+        goto err;
+
+    prov = NULL;
 
     /*
      * We must free the libctx to force the provider to really be unloaded from
@@ -45,12 +48,19 @@ static int test_provider(OSSL_LIB_CTX **libctx, const char *name)
     OSSL_LIB_CTX_free(*libctx);
     *libctx = NULL;
 
-    /*
-     * Check that errors created by the now unloaded provider can still be
-     * accessed.
-     */
-    ERR_print_errors_fp(stderr);
+    /* Make sure we got the error we were expecting */
+    err = ERR_peek_last_error();
+    if (!TEST_int_gt(err, 0)
+            || !TEST_int_eq(ERR_GET_REASON(err), 1))
+        goto err;
 
+    /* We print out all the data to make sure it can still be accessed */
+    ERR_print_errors_fp(stderr);
+    ok = 1;
+ err:
+    OSSL_PROVIDER_unload(prov);
+    OSSL_LIB_CTX_free(*libctx);
+    *libctx = NULL;
     return ok;
 }
 
