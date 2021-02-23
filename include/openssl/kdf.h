@@ -48,6 +48,8 @@ int EVP_KDF_CTX_set_params(EVP_KDF_CTX *ctx, const OSSL_PARAM params[]);
 const OSSL_PARAM *EVP_KDF_gettable_params(const EVP_KDF *kdf);
 const OSSL_PARAM *EVP_KDF_gettable_ctx_params(const EVP_KDF *kdf);
 const OSSL_PARAM *EVP_KDF_settable_ctx_params(const EVP_KDF *kdf);
+const OSSL_PARAM *EVP_KDF_CTX_gettable_params(EVP_KDF_CTX *ctx);
+const OSSL_PARAM *EVP_KDF_CTX_settable_params(EVP_KDF_CTX *ctx);
 
 void EVP_KDF_do_all_provided(OSSL_LIB_CTX *libctx,
                              void (*fn)(EVP_KDF *kdf, void *arg),
