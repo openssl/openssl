@@ -1220,17 +1220,45 @@ const OSSL_PARAM *EVP_CIPHER_gettable_params(const EVP_CIPHER *cipher)
 
 const OSSL_PARAM *EVP_CIPHER_settable_ctx_params(const EVP_CIPHER *cipher)
 {
-    if (cipher != NULL && cipher->settable_ctx_params != NULL)
-        return cipher->settable_ctx_params(
-                   ossl_provider_ctx(EVP_CIPHER_provider(cipher)));
+    void *alg;
+
+    if (cipher != NULL && cipher->settable_ctx_params != NULL) {
+        alg = ossl_provider_ctx(EVP_CIPHER_provider(cipher));
+        return cipher->settable_ctx_params(NULL, alg);
+    }
     return NULL;
 }
 
 const OSSL_PARAM *EVP_CIPHER_gettable_ctx_params(const EVP_CIPHER *cipher)
 {
-    if (cipher != NULL && cipher->gettable_ctx_params != NULL)
-        return cipher->gettable_ctx_params(
-                   ossl_provider_ctx(EVP_CIPHER_provider(cipher)));
+    void *alg;
+
+    if (cipher != NULL && cipher->gettable_ctx_params != NULL) {
+        alg = ossl_provider_ctx(EVP_CIPHER_provider(cipher));
+        return cipher->gettable_ctx_params(NULL, alg);
+    }
+    return NULL;
+}
+
+const OSSL_PARAM *EVP_CIPHER_CTX_settable_params(EVP_CIPHER_CTX *cctx)
+{
+    void *alg;
+
+    if (cctx != NULL && cctx->cipher->settable_ctx_params != NULL) {
+        alg = ossl_provider_ctx(EVP_CIPHER_provider(cctx->cipher));
+        return cctx->cipher->settable_ctx_params(cctx->provctx, alg);
+    }
+    return NULL;
+}
+
+const OSSL_PARAM *EVP_CIPHER_CTX_gettable_params(EVP_CIPHER_CTX *cctx)
+{
+    void *alg;
+
+    if (cctx != NULL && cctx->cipher->gettable_ctx_params != NULL) {
+        alg = ossl_provider_ctx(EVP_CIPHER_provider(cctx->cipher));
+        return cctx->cipher->gettable_ctx_params(cctx->provctx, alg);
+    }
     return NULL;
 }
 
