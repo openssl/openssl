@@ -345,9 +345,9 @@ OSSL_CORE_MAKE_FUNC(int, mac_final,
                      unsigned char *out, size_t *outl, size_t outsize))
 OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, mac_gettable_params, (void *provctx))
 OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, mac_gettable_ctx_params,
-                    (void *provctx))
+                    (void *mctx, void *provctx))
 OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, mac_settable_ctx_params,
-                    (void *provctx))
+                    (void *mctx, void *provctx))
 OSSL_CORE_MAKE_FUNC(int, mac_get_params, (OSSL_PARAM params[]))
 OSSL_CORE_MAKE_FUNC(int, mac_get_ctx_params,
                     (void *mctx, OSSL_PARAM params[]))
