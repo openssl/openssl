@@ -1534,6 +1534,10 @@ DEPEND[html/man3/OSSL_CMP_validate_msg.html]=man3/OSSL_CMP_validate_msg.pod
 GENERATE[html/man3/OSSL_CMP_validate_msg.html]=man3/OSSL_CMP_validate_msg.pod
 DEPEND[man/man3/OSSL_CMP_validate_msg.3]=man3/OSSL_CMP_validate_msg.pod
 GENERATE[man/man3/OSSL_CMP_validate_msg.3]=man3/OSSL_CMP_validate_msg.pod
+DEPEND[html/man3/OSSL_CORE_MAKE_FUNC.html]=man3/OSSL_CORE_MAKE_FUNC.pod
+GENERATE[html/man3/OSSL_CORE_MAKE_FUNC.html]=man3/OSSL_CORE_MAKE_FUNC.pod
+DEPEND[man/man3/OSSL_CORE_MAKE_FUNC.3]=man3/OSSL_CORE_MAKE_FUNC.pod
+GENERATE[man/man3/OSSL_CORE_MAKE_FUNC.3]=man3/OSSL_CORE_MAKE_FUNC.pod
 DEPEND[html/man3/OSSL_CRMF_MSG_get0_tmpl.html]=man3/OSSL_CRMF_MSG_get0_tmpl.pod
 GENERATE[html/man3/OSSL_CRMF_MSG_get0_tmpl.html]=man3/OSSL_CRMF_MSG_get0_tmpl.pod
 DEPEND[man/man3/OSSL_CRMF_MSG_get0_tmpl.3]=man3/OSSL_CRMF_MSG_get0_tmpl.pod
@@ -1814,6 +1818,10 @@ DEPEND[html/man3/RAND_load_file.html]=man3/RAND_load_file.pod
 GENERATE[html/man3/RAND_load_file.html]=man3/RAND_load_file.pod
 DEPEND[man/man3/RAND_load_file.3]=man3/RAND_load_file.pod
 GENERATE[man/man3/RAND_load_file.3]=man3/RAND_load_file.pod
+DEPEND[html/man3/RAND_set_DRBG_type.html]=man3/RAND_set_DRBG_type.pod
+GENERATE[html/man3/RAND_set_DRBG_type.html]=man3/RAND_set_DRBG_type.pod
+DEPEND[man/man3/RAND_set_DRBG_type.3]=man3/RAND_set_DRBG_type.pod
+GENERATE[man/man3/RAND_set_DRBG_type.3]=man3/RAND_set_DRBG_type.pod
 DEPEND[html/man3/RAND_set_rand_method.html]=man3/RAND_set_rand_method.pod
 GENERATE[html/man3/RAND_set_rand_method.html]=man3/RAND_set_rand_method.pod
 DEPEND[man/man3/RAND_set_rand_method.3]=man3/RAND_set_rand_method.pod
@@ -3001,6 +3009,7 @@ html/man3/OSSL_CMP_STATUSINFO_new.html \
 html/man3/OSSL_CMP_exec_certreq.html \
 html/man3/OSSL_CMP_log_open.html \
 html/man3/OSSL_CMP_validate_msg.html \
+html/man3/OSSL_CORE_MAKE_FUNC.html \
 html/man3/OSSL_CRMF_MSG_get0_tmpl.html \
 html/man3/OSSL_CRMF_MSG_set0_validity.html \
 html/man3/OSSL_CRMF_MSG_set1_regCtrl_regToken.html \
@@ -3071,6 +3080,7 @@ html/man3/RAND_cleanup.html \
 html/man3/RAND_egd.html \
 html/man3/RAND_get0_primary.html \
 html/man3/RAND_load_file.html \
+html/man3/RAND_set_DRBG_type.html \
 html/man3/RAND_set_rand_method.html \
 html/man3/RC4_set_key.html \
 html/man3/RIPEMD160_Init.html \
@@ -3568,6 +3578,7 @@ man/man3/OSSL_CMP_STATUSINFO_new.3 \
 man/man3/OSSL_CMP_exec_certreq.3 \
 man/man3/OSSL_CMP_log_open.3 \
 man/man3/OSSL_CMP_validate_msg.3 \
+man/man3/OSSL_CORE_MAKE_FUNC.3 \
 man/man3/OSSL_CRMF_MSG_get0_tmpl.3 \
 man/man3/OSSL_CRMF_MSG_set0_validity.3 \
 man/man3/OSSL_CRMF_MSG_set1_regCtrl_regToken.3 \
@@ -3638,6 +3649,7 @@ man/man3/RAND_cleanup.3 \
 man/man3/RAND_egd.3 \
 man/man3/RAND_get0_primary.3 \
 man/man3/RAND_load_file.3 \
+man/man3/RAND_set_DRBG_type.3 \
 man/man3/RAND_set_rand_method.3 \
 man/man3/RC4_set_key.3 \
 man/man3/RIPEMD160_Init.3 \
