@@ -36,7 +36,7 @@ static OSSL_FUNC_mac_dupctx_fn siphash_dup;
 static OSSL_FUNC_mac_freectx_fn siphash_free;
 static OSSL_FUNC_mac_gettable_ctx_params_fn siphash_gettable_ctx_params;
 static OSSL_FUNC_mac_get_ctx_params_fn siphash_get_ctx_params;
-static OSSL_FUNC_mac_settable_ctx_params_fn siphash_settable_params;
+static OSSL_FUNC_mac_settable_ctx_params_fn siphash_settable_ctx_params;
 static OSSL_FUNC_mac_set_ctx_params_fn siphash_set_params;
 static OSSL_FUNC_mac_init_fn siphash_init;
 static OSSL_FUNC_mac_update_fn siphash_update;
@@ -121,7 +121,8 @@ static const OSSL_PARAM known_gettable_ctx_params[] = {
     OSSL_PARAM_size_t(OSSL_MAC_PARAM_SIZE, NULL),
     OSSL_PARAM_END
 };
-static const OSSL_PARAM *siphash_gettable_ctx_params(ossl_unused void *provctx)
+static const OSSL_PARAM *siphash_gettable_ctx_params(ossl_unused void *ctx,
+                                                     ossl_unused void *provctx)
 {
     return known_gettable_ctx_params;
 }
@@ -141,7 +142,9 @@ static const OSSL_PARAM known_settable_ctx_params[] = {
     OSSL_PARAM_octet_string(OSSL_MAC_PARAM_KEY, NULL, 0),
     OSSL_PARAM_END
 };
-static const OSSL_PARAM *siphash_settable_params(void *provctx)
+
+static const OSSL_PARAM *siphash_settable_ctx_params(ossl_unused void *ctx,
+                                                     void *provctx)
 {
     return known_settable_ctx_params;
 }
@@ -177,7 +180,7 @@ const OSSL_DISPATCH ossl_siphash_functions[] = {
       (void (*)(void))siphash_gettable_ctx_params },
     { OSSL_FUNC_MAC_GET_CTX_PARAMS, (void (*)(void))siphash_get_ctx_params },
     { OSSL_FUNC_MAC_SETTABLE_CTX_PARAMS,
-      (void (*)(void))siphash_settable_params },
+      (void (*)(void))siphash_settable_ctx_params },
     { OSSL_FUNC_MAC_SET_CTX_PARAMS, (void (*)(void))siphash_set_params },
     { 0, NULL }
 };
