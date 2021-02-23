@@ -53,10 +53,16 @@ static ossl_inline void err_set_debug(ERR_STATE *es, size_t i,
      * provider gets unloaded, they may not be valid anymore.
      */
     OPENSSL_free(es->err_file[i]);
-    es->err_file[i] = OPENSSL_strdup(file);
+    if (file == NULL || file[0] == '\0')
+        es->err_file[i] = NULL;
+    else
+        es->err_file[i] = OPENSSL_strdup(file);
     es->err_line[i] = line;
     OPENSSL_free(es->err_func[i]);
-    es->err_func[i] = OPENSSL_strdup(fn);
+    if (fn == NULL || fn[0] == '\0')
+        es->err_func[i] = NULL;
+    else
+        es->err_func[i] = OPENSSL_strdup(fn);
 }
 
 static ossl_inline void err_set_data(ERR_STATE *es, size_t i,
