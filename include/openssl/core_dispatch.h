@@ -376,9 +376,9 @@ OSSL_CORE_MAKE_FUNC(int, kdf_derive, (void *kctx, unsigned char *key,
                                           size_t keylen))
 OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, kdf_gettable_params, (void *provctx))
 OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, kdf_gettable_ctx_params,
-                    (void *provctx))
+                    (void *kctx, void *provctx))
 OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, kdf_settable_ctx_params,
-                    (void *provctx))
+                    (void *kctx, void *provctx))
 OSSL_CORE_MAKE_FUNC(int, kdf_get_params, (OSSL_PARAM params[]))
 OSSL_CORE_MAKE_FUNC(int, kdf_get_ctx_params,
                     (void *kctx, OSSL_PARAM params[]))
