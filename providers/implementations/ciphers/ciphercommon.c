@@ -33,7 +33,7 @@ static const OSSL_PARAM cipher_known_gettable_params[] = {
     { OSSL_CIPHER_PARAM_TLS_MAC, OSSL_PARAM_OCTET_PTR, NULL, 0, OSSL_PARAM_UNMODIFIED },
     OSSL_PARAM_END
 };
-const OSSL_PARAM *ossl_cipher_generic_gettable_params(void *provctx)
+const OSSL_PARAM *ossl_cipher_generic_gettable_params(ossl_unused void *provctx)
 {
     return cipher_known_gettable_params;
 }
@@ -141,7 +141,7 @@ static const OSSL_PARAM cipher_aead_known_gettable_ctx_params[] = {
     OSSL_PARAM_END
 };
 const OSSL_PARAM *ossl_cipher_aead_gettable_ctx_params(
-        ossl_unused void *provctx
+        ossl_unused void *cctx, ossl_unused void *provctx
     )
 {
     return cipher_aead_known_gettable_ctx_params;
@@ -156,7 +156,7 @@ static const OSSL_PARAM cipher_aead_known_settable_ctx_params[] = {
     OSSL_PARAM_END
 };
 const OSSL_PARAM *ossl_cipher_aead_settable_ctx_params(
-        ossl_unused void *provctx
+        ossl_unused void *cctx, ossl_unused void *provctx
     )
 {
     return cipher_aead_known_settable_ctx_params;

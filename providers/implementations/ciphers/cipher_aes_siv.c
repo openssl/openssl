@@ -183,7 +183,8 @@ static const OSSL_PARAM aes_siv_known_gettable_ctx_params[] = {
     OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG, NULL, 0),
     OSSL_PARAM_END
 };
-static const OSSL_PARAM *aes_siv_gettable_ctx_params(ossl_unused void *provctx)
+static const OSSL_PARAM *aes_siv_gettable_ctx_params(ossl_unused void *cctx,
+                                                     ossl_unused void *provctx)
 {
     return aes_siv_known_gettable_ctx_params;
 }
@@ -233,7 +234,8 @@ static const OSSL_PARAM aes_siv_known_settable_ctx_params[] = {
     OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG, NULL, 0),
     OSSL_PARAM_END
 };
-static const OSSL_PARAM *aes_siv_settable_ctx_params(ossl_unused void *provctx)
+static const OSSL_PARAM *aes_siv_settable_ctx_params(ossl_unused void *cctx,
+                                                     ossl_unused void *provctx)
 {
     return aes_siv_known_settable_ctx_params;
 }
@@ -248,7 +250,6 @@ static OSSL_FUNC_cipher_update_fn lc##_stream_update;                          \
 static OSSL_FUNC_cipher_final_fn lc##_stream_final;                            \
 static OSSL_FUNC_cipher_cipher_fn lc##_cipher;                                 \
 static OSSL_FUNC_cipher_get_params_fn alg##_##kbits##_##lc##_get_params;       \
-static OSSL_FUNC_cipher_gettable_params_fn alg##_##lc##_gettable_ctx_params;   \
 static OSSL_FUNC_cipher_get_ctx_params_fn alg##_##lc##_get_ctx_params;         \
 static OSSL_FUNC_cipher_gettable_ctx_params_fn                                 \
             alg##_##lc##_gettable_ctx_params;                                  \

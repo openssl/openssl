@@ -333,7 +333,8 @@ static const OSSL_PARAM name##_known_gettable_ctx_params[] = {                 \
 #define CIPHER_DEFAULT_GETTABLE_CTX_PARAMS_END(name)                           \
     OSSL_PARAM_END                                                             \
 };                                                                             \
-const OSSL_PARAM * name##_gettable_ctx_params(ossl_unused void *provctx)       \
+const OSSL_PARAM * name##_gettable_ctx_params(ossl_unused void *cctx,          \
+                                              ossl_unused void *provctx)       \
 {                                                                              \
     return name##_known_gettable_ctx_params;                                   \
 }
@@ -345,7 +346,8 @@ static const OSSL_PARAM name##_known_settable_ctx_params[] = {                 \
 #define CIPHER_DEFAULT_SETTABLE_CTX_PARAMS_END(name)                           \
     OSSL_PARAM_END                                                             \
 };                                                                             \
-const OSSL_PARAM * name##_settable_ctx_params(ossl_unused void *provctx)       \
+const OSSL_PARAM * name##_settable_ctx_params(ossl_unused void *cctx,          \
+                                              ossl_unused void *provctx)       \
 {                                                                              \
     return name##_known_settable_ctx_params;                                   \
 }
