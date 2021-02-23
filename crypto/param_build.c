@@ -74,7 +74,7 @@ static OSSL_PARAM_BLD_DEF *param_push(OSSL_PARAM_BLD *bld, const char *key,
     pd->key = key;
     pd->type = type;
     pd->size = size;
-    pd->alloc_blocks = bytes_to_blocks(size);
+    pd->alloc_blocks = bytes_to_blocks(alloc);
     if ((pd->secure = secure) != 0)
         bld->secure_blocks += pd->alloc_blocks;
     else
@@ -242,12 +242,12 @@ int OSSL_PARAM_BLD_push_utf8_string(OSSL_PARAM_BLD *bld, const char *key,
     OSSL_PARAM_BLD_DEF *pd;
 
     if (bsize == 0) {
-        bsize = strlen(buf) + 1;
+        bsize = strlen(buf);
     } else if (bsize > INT_MAX) {
         ERR_raise(ERR_LIB_CRYPTO, CRYPTO_R_STRING_TOO_LONG);
         return 0;
     }
-    pd = param_push(bld, key, bsize, bsize, OSSL_PARAM_UTF8_STRING, 0);
+    pd = param_push(bld, key, bsize, bsize + 1, OSSL_PARAM_UTF8_STRING, 0);
     if (pd == NULL)
         return 0;
     pd->string = buf;
@@ -260,7 +260,7 @@ int OSSL_PARAM_BLD_push_utf8_ptr(OSSL_PARAM_BLD *bld, const char *key,
     OSSL_PARAM_BLD_DEF *pd;
 
     if (bsize == 0) {
-        bsize = strlen(buf) + 1;
+        bsize = strlen(buf);
     } else if (bsize > INT_MAX) {
         ERR_raise(ERR_LIB_CRYPTO, CRYPTO_R_STRING_TOO_LONG);
         return 0;
@@ -340,6 +340,8 @@ static OSSL_PARAM *param_bld_convert(OSSL_PARAM_BLD *bld, OSSL_PARAM *param,
                 memcpy(p, pd->string, pd->size);
             else
                 memset(p, 0, pd->size);
+            if (pd->type == OSSL_PARAM_UTF8_STRING)
+                ((char *)p)[pd->size] = '\0';
         } else {
             /* Number, but could also be a NULL BIGNUM */
             if (pd->size > sizeof(pd->num))
