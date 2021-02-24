@@ -239,7 +239,7 @@ int OSSL_HTTP_parse_url(const char *url, int *pssl, char **puser, char **phost,
     return 0;
 }
 
-int http_use_proxy(const char *no_proxy, const char *server)
+int ossl_http_use_proxy(const char *no_proxy, const char *server)
 {
     size_t sl;
     const char *found = NULL;
@@ -265,8 +265,8 @@ int http_use_proxy(const char *no_proxy, const char *server)
     return found == NULL;
 }
 
-const char *http_adapt_proxy(const char *proxy, const char *no_proxy,
-                             const char *server, int use_ssl)
+const char *ossl_http_adapt_proxy(const char *proxy, const char *no_proxy,
+                                  const char *server, int use_ssl)
 {
     const int http_len = strlen(OSSL_HTTP_PREFIX);
     const int https_len = strlen(OSSL_HTTPS_PREFIX);
@@ -289,7 +289,7 @@ const char *http_adapt_proxy(const char *proxy, const char *no_proxy,
     else if (strncmp(proxy, OSSL_HTTPS_PREFIX, https_len) == 0)
         proxy += https_len;
 
-    if (*proxy == '\0' || !http_use_proxy(no_proxy, server))
+    if (*proxy == '\0' || !ossl_http_use_proxy(no_proxy, server))
         return NULL;
     return proxy;
 }

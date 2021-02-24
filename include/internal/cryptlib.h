@@ -249,11 +249,11 @@ static ossl_inline void ossl_sleep(unsigned long millis)
 
 char *sk_ASN1_UTF8STRING2text(STACK_OF(ASN1_UTF8STRING) *text, const char *sep,
                               size_t max_len);
-char *ipaddr_to_asc(unsigned char *p, int len);
+char *ossl_ipaddr_to_asc(unsigned char *p, int len);
 
-char *openssl_buf2hexstr_sep(const unsigned char *buf, long buflen, char sep);
-unsigned char *openssl_hexstr2buf_sep(const char *str, long *buflen,
-                                      const char sep);
+char *ossl_buf2hexstr_sep(const unsigned char *buf, long buflen, char sep);
+unsigned char *ossl_hexstr2buf_sep(const char *str, long *buflen,
+                                   const char sep);
 
 static ossl_inline int ossl_ends_with_dirsep(const char *path)
 {

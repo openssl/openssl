@@ -294,7 +294,7 @@ static void *file_open(void *provctx, const char *uri)
 void *file_attach(void *provctx, OSSL_CORE_BIO *cin)
 {
     struct file_ctx_st *ctx;
-    BIO *new_bio = bio_new_from_core_bio(provctx, cin);
+    BIO *new_bio = ossl_bio_new_from_core_bio(provctx, cin);
 
     if (new_bio == NULL)
         return NULL;

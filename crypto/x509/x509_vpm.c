@@ -455,7 +455,7 @@ char *X509_VERIFY_PARAM_get1_ip_asc(X509_VERIFY_PARAM *param)
     size_t iplen;
     unsigned char *ip = int_X509_VERIFY_PARAM_get0_ip(param, &iplen);
 
-    return  ip == NULL ? NULL : ipaddr_to_asc(ip, iplen);
+    return  ip == NULL ? NULL : ossl_ipaddr_to_asc(ip, iplen);
 }
 
 int X509_VERIFY_PARAM_set1_ip(X509_VERIFY_PARAM *param,

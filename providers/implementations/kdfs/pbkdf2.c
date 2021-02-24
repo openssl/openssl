@@ -119,7 +119,7 @@ static void kdf_pbkdf2_init(KDF_PBKDF2 *ctx)
         /* This is an error, but there is no way to indicate such directly */
         ossl_prov_digest_reset(&ctx->digest);
     ctx->iter = PKCS5_DEFAULT_ITER;
-    ctx->lower_bound_checks = kdf_pbkdf2_default_checks;
+    ctx->lower_bound_checks = ossl_kdf_pbkdf2_default_checks;
 }
 
 static int pbkdf2_set_membuf(unsigned char **buffer, size_t *buflen,
