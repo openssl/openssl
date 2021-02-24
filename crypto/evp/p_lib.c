@@ -13,6 +13,7 @@
  */
 #include "internal/deprecated.h"
 
+#include <assert.h>
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include "internal/refcount.h"
@@ -740,11 +741,8 @@ void *EVP_PKEY_get0(const EVP_PKEY *pkey)
 {
     if (pkey == NULL)
         return NULL;
-    if (!evp_pkey_downgrade((EVP_PKEY *)pkey)) {
-        ERR_raise(ERR_LIB_EVP, EVP_R_INACCESSIBLE_KEY);
-        return NULL;
-    }
-    return pkey->pkey.ptr;
+
+    return evp_pkey_get_legacy((EVP_PKEY *)pkey);
 }
 
 const unsigned char *EVP_PKEY_get0_hmac(const EVP_PKEY *pkey, size_t *len)
@@ -791,15 +789,11 @@ const unsigned char *EVP_PKEY_get0_siphash(const EVP_PKEY *pkey, size_t *len)
 # ifndef OPENSSL_NO_DSA
 DSA *EVP_PKEY_get0_DSA(const EVP_PKEY *pkey)
 {
-    if (!evp_pkey_downgrade((EVP_PKEY *)pkey)) {
-        ERR_raise(ERR_LIB_EVP, EVP_R_INACCESSIBLE_KEY);
-        return NULL;
-    }
     if (pkey->type != EVP_PKEY_DSA) {
         ERR_raise(ERR_LIB_EVP, EVP_R_EXPECTING_A_DSA_KEY);
         return NULL;
     }
-    return pkey->pkey.dsa;
+    return evp_pkey_get_legacy((EVP_PKEY *)pkey);
 }
 
 int EVP_PKEY_set1_DSA(EVP_PKEY *pkey, DSA *key)
@@ -823,15 +817,11 @@ DSA *EVP_PKEY_get1_DSA(EVP_PKEY *pkey)
 # ifndef OPENSSL_NO_EC
 static ECX_KEY *evp_pkey_get0_ECX_KEY(const EVP_PKEY *pkey, int type)
 {
-    if (!evp_pkey_downgrade((EVP_PKEY *)pkey)) {
-        ERR_raise(ERR_LIB_EVP, EVP_R_INACCESSIBLE_KEY);
-        return NULL;
-    }
     if (EVP_PKEY_base_id(pkey) != type) {
         ERR_raise(ERR_LIB_EVP, EVP_R_EXPECTING_A_ECX_KEY);
         return NULL;
     }
-    return pkey->pkey.ecx;
+    return evp_pkey_get_legacy((EVP_PKEY *)pkey);
 }
 
 static ECX_KEY *evp_pkey_get1_ECX_KEY(EVP_PKEY *pkey, int type)
@@ -868,15 +858,11 @@ int EVP_PKEY_set1_DH(EVP_PKEY *pkey, DH *key)
 
 DH *EVP_PKEY_get0_DH(const EVP_PKEY *pkey)
 {
-    if (!evp_pkey_downgrade((EVP_PKEY *)pkey)) {
-        ERR_raise(ERR_LIB_EVP, EVP_R_INACCESSIBLE_KEY);
-        return NULL;
-    }
     if (pkey->type != EVP_PKEY_DH && pkey->type != EVP_PKEY_DHX) {
         ERR_raise(ERR_LIB_EVP, EVP_R_EXPECTING_A_DH_KEY);
         return NULL;
     }
-    return pkey->pkey.dh;
+    return evp_pkey_get_legacy((EVP_PKEY *)pkey);
 }
 
 DH *EVP_PKEY_get1_DH(EVP_PKEY *pkey)
@@ -1559,12 +1545,32 @@ int EVP_PKEY_up_ref(EVP_PKEY *pkey)
 #ifndef FIPS_MODULE
 void evp_pkey_free_legacy(EVP_PKEY *x)
 {
-    if (x->ameth != NULL) {
-        if (x->ameth->pkey_free != NULL)
-            x->ameth->pkey_free(x);
+    const EVP_PKEY_ASN1_METHOD *ameth = x->ameth;
+    ENGINE *tmpe = NULL;
+
+    if (ameth == NULL && x->legacy_cache_pkey.ptr != NULL)
+        ameth = EVP_PKEY_asn1_find(&tmpe, x->type);
+
+    if (ameth != NULL) {
+        if (x->legacy_cache_pkey.ptr != NULL) {
+            /*
+             * We should never have both a legacy origin key, and a key in the
+             * legacy cache.
+             */
+            assert(x->pkey.ptr == NULL);
+            /*
+             * For the purposes of freeing we make the legacy cache look like
+             * a legacy origin key.
+             */
+            x->pkey = x->legacy_cache_pkey;
+            x->legacy_cache_pkey.ptr = NULL;
+        }
+        if (ameth->pkey_free != NULL)
+            ameth->pkey_free(x);
         x->pkey.ptr = NULL;
     }
 # ifndef OPENSSL_NO_ENGINE
+    ENGINE_finish(tmpe);
     ENGINE_finish(x->engine);
     x->engine = NULL;
     ENGINE_finish(x->pmeth_engine);
@@ -1877,78 +1883,57 @@ int evp_pkey_copy_downgraded(EVP_PKEY **dest, const EVP_PKEY *src)
     return 0;
 }
 
-int evp_pkey_downgrade(EVP_PKEY *pk)
+void *evp_pkey_get_legacy(EVP_PKEY *pk)
 {
-    EVP_PKEY tmp_copy;              /* Stack allocated! */
-    int rv = 0;
+    EVP_PKEY *tmp_copy = NULL;
+    void *ret = NULL;
 
     if (!ossl_assert(pk != NULL))
-        return 0;
+        return NULL;
 
     /*
-     * Throughout this whole function, we must ensure that we lock / unlock
-     * the exact same lock.  Note that we do pass it around a bit.
+     * If this isn't an assigned provider side key, we just use any existing
+     * origin legacy key.
      */
-    if (!CRYPTO_THREAD_write_lock(pk->lock))
-        return 0;
+    if (!evp_pkey_is_assigned(pk))
+        return NULL;
+    if (!evp_pkey_is_provided(pk))
+        return pk->pkey.ptr;
 
-    /* If this isn't an assigned provider side key, we're done */
-    if (!evp_pkey_is_assigned(pk) || !evp_pkey_is_provided(pk)) {
-        rv = 1;
-        goto end;
-    }
+    if (!CRYPTO_THREAD_read_lock(pk->lock))
+        return NULL;
 
-    /*
-     * To be able to downgrade, we steal the contents of |pk|, then reset
-     * it, and finally try to make it a downgraded copy.  If any of that
-     * fails, we restore the copied contents into |pk|.
-     */
-    tmp_copy = *pk;              /* |tmp_copy| now owns THE lock */
+    ret = pk->legacy_cache_pkey.ptr;
 
-    if (evp_pkey_reset_unlocked(pk)
-        && evp_pkey_copy_downgraded(&pk, &tmp_copy)) {
-
-        /* Restore the common attributes, then empty |tmp_copy| */
-        pk->references = tmp_copy.references;
-        pk->attributes = tmp_copy.attributes;
-        pk->save_parameters = tmp_copy.save_parameters;
-        pk->ex_data = tmp_copy.ex_data;
-
-        /* Ensure that stuff we've copied won't be freed */
-        tmp_copy.lock = NULL;
-        tmp_copy.attributes = NULL;
-        memset(&tmp_copy.ex_data, 0, sizeof(tmp_copy.ex_data));
-
-        /*
-         * Save the provider side data in the operation cache, so they'll
-         * find it again.  |pk| is new, so it's safe to assume slot zero
-         * is free.
-         * Note that evp_keymgmt_util_cache_keydata() increments keymgmt's
-         * reference count, so we need to decrement it, or there will be a
-         * leak.
-         */
-        evp_keymgmt_util_cache_keydata(pk, tmp_copy.keymgmt,
-                                       tmp_copy.keydata);
-        EVP_KEYMGMT_free(tmp_copy.keymgmt);
-
-        /*
-         * Clear keymgmt and keydata from |tmp_copy|, or they'll get
-         * inadvertently freed.
-         */
-        tmp_copy.keymgmt = NULL;
-        tmp_copy.keydata = NULL;
-
-        evp_pkey_free_it(&tmp_copy);
-        rv = 1;
-    } else {
-        /* Restore the original key */
-        *pk = tmp_copy;
-    }
-
- end:
     if (!CRYPTO_THREAD_unlock(pk->lock))
-        return 0;
-    return rv;
+        return NULL;
+
+    if (ret != NULL)
+        return ret;
+
+    if (!evp_pkey_copy_downgraded(&tmp_copy, pk))
+        return NULL;
+
+    if (!CRYPTO_THREAD_write_lock(pk->lock))
+        goto err;
+
+    /* Check again in case some other thread has updated it in the meantime */
+    ret = pk->legacy_cache_pkey.ptr;
+    if (ret == NULL) {
+        /* Steal the legacy key reference from the temporary copy */
+        ret = pk->legacy_cache_pkey.ptr = tmp_copy->pkey.ptr;
+        tmp_copy->pkey.ptr = NULL;
+    }
+
+    if (!CRYPTO_THREAD_unlock(pk->lock)) {
+        ret = NULL;
+        goto err;
+    }
+
+ err:
+    EVP_PKEY_free(tmp_copy);
+
+    return ret;
 }
 #endif  /* FIPS_MODULE */
 
