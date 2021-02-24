@@ -51,6 +51,7 @@ static OSSL_FUNC_keymgmt_export_types_fn dh_export_types;
 
 struct dh_gen_ctx {
     OSSL_LIB_CTX *libctx;
+    char *propq;
 
     FFC_PARAMS *ffc_params;
     int selection;
@@ -99,7 +100,7 @@ static void *dh_newdata(void *provctx)
     DH *dh = NULL;
 
     if (ossl_prov_is_running()) {
-        dh = ossl_dh_new_ex(PROV_LIBCTX_OF(provctx));
+        dh = ossl_dh_new_ex(PROV_LIBCTX_OF(provctx), NULL);
         if (dh != NULL) {
             DH_clear_flags(dh, DH_FLAG_TYPE_MASK);
             DH_set_flags(dh, DH_FLAG_TYPE_DH);
@@ -112,7 +113,7 @@ static void *dhx_newdata(void *provctx)
 {
     DH *dh = NULL;
 
-    dh = ossl_dh_new_ex(PROV_LIBCTX_OF(provctx));
+    dh = ossl_dh_new_ex(PROV_LIBCTX_OF(provctx), NULL);
     if (dh != NULL) {
         DH_clear_flags(dh, DH_FLAG_TYPE_MASK);
         DH_set_flags(dh, DH_FLAG_TYPE_DHX);
@@ -608,12 +609,12 @@ static void *dh_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
             gctx->group_nid = ossl_dh_get_named_group_uid_from_size(gctx->pbits);
         if (gctx->group_nid == NID_undef)
             return NULL;
-        dh = ossl_dh_new_by_nid_ex(gctx->libctx, gctx->group_nid);
+        dh = ossl_dh_new_by_nid_ex(gctx->libctx, gctx->group_nid, gctx->propq);
         if (dh == NULL)
             return NULL;
         ffc = ossl_dh_get0_params(dh);
     } else {
-        dh = ossl_dh_new_ex(gctx->libctx);
+        dh = ossl_dh_new_ex(gctx->libctx, gctx->propq);
         if (dh == NULL)
             return NULL;
         ffc = ossl_dh_get0_params(dh);

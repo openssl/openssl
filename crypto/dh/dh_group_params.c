@@ -25,9 +25,10 @@
 #include "crypto/dh.h"
 #include "e_os.h" /* strcasecmp */
 
-static DH *dh_param_init(OSSL_LIB_CTX *libctx, const DH_NAMED_GROUP *group)
+static DH *dh_param_init(OSSL_LIB_CTX *libctx, const DH_NAMED_GROUP *group,
+                         const char *propq)
 {
-    DH *dh = ossl_dh_new_ex(libctx);
+    DH *dh = ossl_dh_new_ex(libctx, propq);
 
     if (dh == NULL)
         return NULL;
@@ -39,12 +40,12 @@ static DH *dh_param_init(OSSL_LIB_CTX *libctx, const DH_NAMED_GROUP *group)
     return dh;
 }
 
-DH *ossl_dh_new_by_nid_ex(OSSL_LIB_CTX *libctx, int nid)
+DH *ossl_dh_new_by_nid_ex(OSSL_LIB_CTX *libctx, int nid, const char *propq)
 {
     const DH_NAMED_GROUP *group;
 
     if ((group = ossl_ffc_uid_to_dh_named_group(nid)) != NULL)
-        return dh_param_init(libctx, group);
+        return dh_param_init(libctx, group, propq);
 
     ERR_raise(ERR_LIB_DH, DH_R_INVALID_PARAMETER_NID);
     return NULL;
@@ -52,7 +53,7 @@ DH *ossl_dh_new_by_nid_ex(OSSL_LIB_CTX *libctx, int nid)
 
 DH *DH_new_by_nid(int nid)
 {
-    return ossl_dh_new_by_nid_ex(NULL, nid);
+    return ossl_dh_new_by_nid_ex(NULL, nid, NULL);
 }
 
 void ossl_dh_cache_named_group(DH *dh)

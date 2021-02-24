@@ -33,6 +33,7 @@ struct dh_st {
     ENGINE *engine;
 #endif
     OSSL_LIB_CTX *libctx;
+    char *propq;
     const DH_METHOD *meth;
     CRYPTO_RWLOCK *lock;
 

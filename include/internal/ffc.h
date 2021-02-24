@@ -148,32 +148,37 @@ int ossl_ffc_params_print(BIO *bp, const FFC_PARAMS *ffc, int indent);
 
 int ossl_ffc_params_FIPS186_4_generate(OSSL_LIB_CTX *libctx, FFC_PARAMS *params,
                                        int type, size_t L, size_t N,
+                                       const char *propq,
                                        int *res, BN_GENCB *cb);
 int ossl_ffc_params_FIPS186_2_generate(OSSL_LIB_CTX *libctx, FFC_PARAMS *params,
                                        int type, size_t L, size_t N,
+                                       const char *propq,
                                        int *res, BN_GENCB *cb);
 
 int ossl_ffc_params_FIPS186_4_gen_verify(OSSL_LIB_CTX *libctx,
                                          FFC_PARAMS *params, int mode, int type,
-                                         size_t L, size_t N, int *res,
-                                         BN_GENCB *cb);
+                                         size_t L, size_t N, const char *propq,
+                                         int *res, BN_GENCB *cb);
 int ossl_ffc_params_FIPS186_2_gen_verify(OSSL_LIB_CTX *libctx,
                                          FFC_PARAMS *params, int mode, int type,
-                                         size_t L, size_t N, int *res,
-                                         BN_GENCB *cb);
+                                         size_t L, size_t N, const char *propq,
+                                         int *res, BN_GENCB *cb);
 
 int ossl_ffc_params_simple_validate(OSSL_LIB_CTX *libctx,
                                     const FFC_PARAMS *params,
-                                    int paramstype, int *res);
+                                    int paramstype,
+                                    const char *propq, int *res);
 int ossl_ffc_params_full_validate(OSSL_LIB_CTX *libctx,
                                   const FFC_PARAMS *params,
-                                  int paramstype, int *res);
+                                  int paramstype, const char *propq, int *res);
 int ossl_ffc_params_FIPS186_4_validate(OSSL_LIB_CTX *libctx,
                                        const FFC_PARAMS *params,
-                                       int type, int *res, BN_GENCB *cb);
+                                       int type, const char *propq,
+                                       int *res, BN_GENCB *cb);
 int ossl_ffc_params_FIPS186_2_validate(OSSL_LIB_CTX *libctx,
                                        const FFC_PARAMS *params,
-                                       int type, int *res, BN_GENCB *cb);
+                                       int type, const char *propq,
+                                       int *res, BN_GENCB *cb);
 
 int ossl_ffc_generate_private_key(BN_CTX *ctx, const FFC_PARAMS *params,
                                   int N, int s, BIGNUM *priv);
@@ -183,10 +188,13 @@ int ossl_ffc_params_validate_unverifiable_g(BN_CTX *ctx, BN_MONT_CTX *mont,
                                             const BIGNUM *g, BIGNUM *tmp,
                                             int *ret);
 
-int ossl_ffc_validate_public_key(const FFC_PARAMS *params,
-                                 const BIGNUM *pub_key, int *ret);
-int ossl_ffc_validate_public_key_partial(const FFC_PARAMS *params,
-                                         const BIGNUM *pub_key, int *ret);
+int ossl_ffc_validate_public_key(OSSL_LIB_CTX *libctx, const FFC_PARAMS *params,
+                                 const BIGNUM *pub_key, const char *propq,
+                                 int *ret);
+int ossl_ffc_validate_public_key_partial(OSSL_LIB_CTX *libctx,
+                                         const FFC_PARAMS *params,
+                                         const BIGNUM *pub_key,
+                                         const char *propq, int *ret);
 int ossl_ffc_validate_private_key(const BIGNUM *upper, const BIGNUM *priv_key,
                                  int *ret);
 

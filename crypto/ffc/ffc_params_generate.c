@@ -321,6 +321,7 @@ static int generate_q_fips186_4(BN_CTX *ctx, BIGNUM *q, const EVP_MD *evpmd,
     int mdsize = EVP_MD_size(evpmd);
     unsigned char *pmd;
     OSSL_LIB_CTX *libctx = ossl_bn_get_libctx(ctx);
+    const char *propq = ossl_bn_get0_propq(ctx);
 
     /* find q */
     for (;;) {
@@ -329,7 +330,7 @@ static int generate_q_fips186_4(BN_CTX *ctx, BIGNUM *q, const EVP_MD *evpmd,
 
         /* A.1.1.2 Step (5) : generate seed with size seed_len */
         if (generate_seed
-                && RAND_bytes_ex(libctx, seed, (int)seedlen) < 0)
+                && RAND_bytes_ex(libctx, seed, (int)seedlen, propq) < 0)
             goto err;
         /*
          * A.1.1.2 Step (6) AND
@@ -392,6 +393,7 @@ static int generate_q_fips186_2(BN_CTX *ctx, BIGNUM *q, const EVP_MD *evpmd,
     unsigned char md[EVP_MAX_MD_SIZE];
     int i, r, ret = 0, m = *retm;
     OSSL_LIB_CTX *libctx = ossl_bn_get_libctx(ctx);
+    const char *propq = ossl_bn_get0_propq(ctx);
 
     /* find q */
     for (;;) {
@@ -399,7 +401,7 @@ static int generate_q_fips186_2(BN_CTX *ctx, BIGNUM *q, const EVP_MD *evpmd,
         if (!BN_GENCB_call(cb, 0, m++))
             goto err;
 
-        if (generate_seed && RAND_bytes_ex(libctx, seed, (int)qsize) <= 0)
+        if (generate_seed && RAND_bytes_ex(libctx, seed, (int)qsize, propq) <= 0)
             goto err;
 
         memcpy(buf, seed, qsize);
@@ -512,8 +514,8 @@ static const char *default_mdname(size_t N)
  */
 int ossl_ffc_params_FIPS186_4_gen_verify(OSSL_LIB_CTX *libctx,
                                          FFC_PARAMS *params, int mode, int type,
-                                         size_t L, size_t N, int *res,
-                                         BN_GENCB *cb)
+                                         size_t L, size_t N, const char *propq,
+                                         int *res, BN_GENCB *cb)
 {
     int ok = FFC_PARAM_RET_STATUS_FAILED;
     unsigned char *seed = NULL, *seed_tmp = NULL;
@@ -569,7 +571,7 @@ int ossl_ffc_params_FIPS186_4_gen_verify(OSSL_LIB_CTX *libctx,
     if (mctx == NULL)
         goto err;
 
-    if ((ctx = BN_CTX_new_ex(libctx)) == NULL)
+    if ((ctx = BN_CTX_new_ex(libctx, propq)) == NULL)
         goto err;
 
     BN_CTX_start(ctx);
@@ -805,8 +807,8 @@ err:
 /* Note this function is only used for verification in fips mode */
 int ossl_ffc_params_FIPS186_2_gen_verify(OSSL_LIB_CTX *libctx,
                                          FFC_PARAMS *params, int mode, int type,
-                                         size_t L, size_t N, int *res,
-                                         BN_GENCB *cb)
+                                         size_t L, size_t N, const char *propq,
+                                         int *res, BN_GENCB *cb)
 {
     int ok = FFC_PARAM_RET_STATUS_FAILED;
     unsigned char seed[SHA256_DIGEST_LENGTH];
@@ -876,7 +878,7 @@ int ossl_ffc_params_FIPS186_2_gen_verify(OSSL_LIB_CTX *libctx,
         memcpy(seed, seed_in, seed_len);
     }
 
-    ctx = BN_CTX_new_ex(libctx);
+    ctx = BN_CTX_new_ex(libctx, propq);
     if (ctx == NULL)
         goto err;
 
@@ -1035,19 +1037,21 @@ err:
 
 int ossl_ffc_params_FIPS186_4_generate(OSSL_LIB_CTX *libctx, FFC_PARAMS *params,
                                        int type, size_t L, size_t N,
+                                       const char *propq,
                                        int *res, BN_GENCB *cb)
 {
     return ossl_ffc_params_FIPS186_4_gen_verify(libctx, params,
                                                 FFC_PARAM_MODE_GENERATE,
-                                                type, L, N, res, cb);
+                                                type, L, N, propq, res, cb);
 }
 
 /* This should no longer be used in FIPS mode */
 int ossl_ffc_params_FIPS186_2_generate(OSSL_LIB_CTX *libctx, FFC_PARAMS *params,
                                        int type, size_t L, size_t N,
+                                       const char *propq,
                                        int *res, BN_GENCB *cb)
 {
     return ossl_ffc_params_FIPS186_2_gen_verify(libctx, params,
                                                 FFC_PARAM_MODE_GENERATE,
-                                                type, L, N, res, cb);
+                                                type, L, N, propq, res, cb);
 }

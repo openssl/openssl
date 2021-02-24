@@ -24,7 +24,7 @@
 #include "crypto/dh.h"
 #include "dh_local.h"
 
-static DH *dh_new_intern(ENGINE *engine, OSSL_LIB_CTX *libctx);
+static DH *dh_new_intern(ENGINE *engine, OSSL_LIB_CTX *libctx, const char *propq);
 
 #ifndef FIPS_MODULE
 int DH_set_method(DH *dh, const DH_METHOD *meth)
@@ -54,22 +54,23 @@ const DH_METHOD *ossl_dh_get_method(const DH *dh)
 # ifndef OPENSSL_NO_DEPRECATED_3_0
 DH *DH_new(void)
 {
-    return dh_new_intern(NULL, NULL);
+    return dh_new_intern(NULL, NULL, NULL);
 }
 # endif
 
 DH *DH_new_method(ENGINE *engine)
 {
-    return dh_new_intern(engine, NULL);
+    return dh_new_intern(engine, NULL, NULL);
 }
 #endif /* !FIPS_MODULE */
 
-DH *ossl_dh_new_ex(OSSL_LIB_CTX *libctx)
+DH *ossl_dh_new_ex(OSSL_LIB_CTX *libctx, const char *propq)
 {
-    return dh_new_intern(NULL, libctx);
+    return dh_new_intern(NULL, libctx, propq);
 }
 
-static DH *dh_new_intern(ENGINE *engine, OSSL_LIB_CTX *libctx)
+static DH *dh_new_intern(ENGINE *engine, OSSL_LIB_CTX *libctx,
+                         const char *propq)
 {
     DH *ret = OPENSSL_zalloc(sizeof(*ret));
 
@@ -85,7 +86,13 @@ static DH *dh_new_intern(ENGINE *engine, OSSL_LIB_CTX *libctx)
         OPENSSL_free(ret);
         return NULL;
     }
-
+    if (propq != NULL) {
+        ret->propq = OPENSSL_strdup(propq);
+        if (ret->propq == NULL) {
+            ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
+            goto err;
+        }
+    }
     ret->libctx = libctx;
     ret->meth = DH_get_default_method();
 #if !defined(FIPS_MODULE) && !defined(OPENSSL_NO_ENGINE)
@@ -150,6 +157,7 @@ void DH_free(DH *r)
 
     CRYPTO_THREAD_lock_free(r->lock);
 
+    OPENSSL_free(r->propq);
     ossl_ffc_params_cleanup(&r->params);
     BN_clear_free(r->pub_key);
     BN_clear_free(r->priv_key);

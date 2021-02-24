@@ -531,7 +531,7 @@ static int dsa_pqver_test(int id)
     EVP_PKEY *param_key = NULL;
     const struct dsa_pqver_st *tst = &dsa_pqver_data[id];
 
-    if (!TEST_ptr(bn_ctx = BN_CTX_new_ex(libctx))
+    if (!TEST_ptr(bn_ctx = BN_CTX_new_ex(libctx, NULL))
         || !TEST_true(dsa_create_pkey(&param_key, tst->p, tst->p_len,
                                       tst->q, tst->q_len, NULL, 0,
                                       tst->seed, tst->seed_len, tst->counter,
@@ -988,7 +988,7 @@ static int dh_safe_prime_keyver_test(int id)
     EVP_PKEY *pkey = NULL;
     const struct dh_safe_prime_keyver_st *tst = &dh_safe_prime_keyver_data[id];
 
-    if (!TEST_ptr(bn_ctx = BN_CTX_new_ex(libctx))
+    if (!TEST_ptr(bn_ctx = BN_CTX_new_ex(libctx, NULL))
         || !TEST_true(dh_create_pkey(&pkey, tst->group_name,
                                      tst->pub, tst->pub_len,
                                      tst->priv, tst->priv_len, bn_ctx, 1))

@@ -32,12 +32,14 @@ int ossl_dsa_generate_ffc_parameters(DSA *dsa, int type, int pbits, int qbits,
     if (type == DSA_PARAMGEN_TYPE_FIPS_186_2)
         ret = ossl_ffc_params_FIPS186_2_generate(dsa->libctx, &dsa->params,
                                                  FFC_PARAM_TYPE_DSA,
-                                                 pbits, qbits, &res, cb);
+                                                 pbits, qbits, dsa->propq,
+                                                 &res, cb);
     else
 #endif
         ret = ossl_ffc_params_FIPS186_4_generate(dsa->libctx, &dsa->params,
                                                  FFC_PARAM_TYPE_DSA,
-                                                 pbits, qbits, &res, cb);
+                                                 pbits, qbits, dsa->propq,
+                                                 &res, cb);
     if (ret > 0)
         dsa->dirty_cnt++;
     return ret;

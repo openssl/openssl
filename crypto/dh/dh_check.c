@@ -63,7 +63,8 @@ int DH_check_params(const DH *dh, int *ret)
      * validity tests.
      */
     return ossl_ffc_params_FIPS186_4_validate(dh->libctx, &dh->params,
-                                              FFC_PARAM_TYPE_DH, ret, NULL);
+                                              FFC_PARAM_TYPE_DH, dh->propq,
+                                              ret, NULL);
 }
 #else
 int DH_check_params(const DH *dh, int *ret)
@@ -235,7 +236,8 @@ int DH_check_pub_key_ex(const DH *dh, const BIGNUM *pub_key)
  */
 int DH_check_pub_key(const DH *dh, const BIGNUM *pub_key, int *ret)
 {
-    return ossl_ffc_validate_public_key(&dh->params, pub_key, ret);
+    return ossl_ffc_validate_public_key(dh->libctx, &dh->params, pub_key,
+                                        dh->propq, ret);
 }
 
 /*
@@ -245,7 +247,8 @@ int DH_check_pub_key(const DH *dh, const BIGNUM *pub_key, int *ret)
  */
 int ossl_dh_check_pub_key_partial(const DH *dh, const BIGNUM *pub_key, int *ret)
 {
-    return ossl_ffc_validate_public_key_partial(&dh->params, pub_key, ret);
+    return ossl_ffc_validate_public_key_partial(dh->libctx, &dh->params,
+                                                pub_key, dh->propq, ret);
 }
 
 int ossl_dh_check_priv_key(const DH *dh, const BIGNUM *priv_key, int *ret)
@@ -293,7 +296,7 @@ int ossl_dh_check_pairwise(const DH *dh)
         || dh->pub_key == NULL)
         return 0;
 
-    ctx = BN_CTX_new_ex(dh->libctx);
+    ctx = BN_CTX_new_ex(dh->libctx, dh->propq);
     if (ctx == NULL)
         goto err;
     pub_key = BN_new();

@@ -95,7 +95,7 @@ DSA_SIG *ossl_dsa_do_sign_int(const unsigned char *dgst, int dlen, DSA *dsa)
     if (ret->r == NULL || ret->s == NULL)
         goto err;
 
-    ctx = BN_CTX_new_ex(dsa->libctx);
+    ctx = BN_CTX_new_ex(dsa->libctx, dsa->propq);
     if (ctx == NULL)
         goto err;
     m = BN_CTX_get(ctx);
@@ -228,7 +228,7 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in,
 
     if (ctx_in == NULL) {
         /* if you don't pass in ctx_in you get a default libctx */
-        if ((ctx = BN_CTX_new_ex(NULL)) == NULL)
+        if ((ctx = BN_CTX_new_ex(NULL, NULL)) == NULL)
             goto err;
     } else
         ctx = ctx_in;
@@ -345,7 +345,7 @@ static int dsa_do_verify(const unsigned char *dgst, int dgst_len,
     u1 = BN_new();
     u2 = BN_new();
     t1 = BN_new();
-    ctx = BN_CTX_new_ex(NULL); /* verify does not need a libctx */
+    ctx = BN_CTX_new_ex(NULL, NULL); /* verify does not need a libctx */
     if (u1 == NULL || u2 == NULL || t1 == NULL || ctx == NULL)
         goto err;
 

@@ -18,7 +18,7 @@
 #define DSA_PARAMGEN_TYPE_FIPS_186_4   0   /* Use FIPS186-4 standard */
 #define DSA_PARAMGEN_TYPE_FIPS_186_2   1   /* Use legacy FIPS186-2 standard */
 
-DSA *ossl_dsa_new(OSSL_LIB_CTX *libctx);
+DSA *ossl_dsa_new(OSSL_LIB_CTX *libctx, const char *propq);
 void ossl_dsa_set0_libctx(DSA *d, OSSL_LIB_CTX *libctx);
 
 int ossl_dsa_generate_ffc_parameters(DSA *dsa, int type, int pbits, int qbits,

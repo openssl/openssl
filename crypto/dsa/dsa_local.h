@@ -33,6 +33,7 @@ struct dsa_st {
     ENGINE *engine;
     CRYPTO_RWLOCK *lock;
     OSSL_LIB_CTX *libctx;
+    char *propq;
 
     /* Provider data */
     size_t dirty_cnt; /* If any key material changes, increment this */

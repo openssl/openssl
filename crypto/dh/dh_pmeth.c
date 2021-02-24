@@ -275,7 +275,7 @@ static int pkey_dh_ctrl_str(EVP_PKEY_CTX *ctx,
 }
 
 static DH *ffc_params_generate(OSSL_LIB_CTX *libctx, DH_PKEY_CTX *dctx,
-                               BN_GENCB *pcb)
+                               const char *propq, BN_GENCB *pcb)
 {
     DH *ret;
     int rv = 0;
@@ -303,16 +303,16 @@ static DH *ffc_params_generate(OSSL_LIB_CTX *libctx, DH_PKEY_CTX *dctx,
     if (dctx->paramgen_type == DH_PARAMGEN_TYPE_FIPS_186_2)
         rv = ossl_ffc_params_FIPS186_2_generate(libctx, &ret->params,
                                                 FFC_PARAM_TYPE_DH,
-                                                prime_len, subprime_len, &res,
-                                                pcb);
+                                                prime_len, subprime_len, propq,
+                                                &res, pcb);
     else
 # endif
     /* For FIPS we always use the DH_PARAMGEN_TYPE_FIPS_186_4 generator */
     if (dctx->paramgen_type >= DH_PARAMGEN_TYPE_FIPS_186_2)
         rv = ossl_ffc_params_FIPS186_4_generate(libctx, &ret->params,
                                                 FFC_PARAM_TYPE_DH,
-                                                prime_len, subprime_len, &res,
-                                                pcb);
+                                                prime_len, subprime_len, propq,
+                                                &res, pcb);
     if (rv <= 0) {
         DH_free(ret);
         return NULL;
@@ -372,7 +372,7 @@ static int pkey_dh_paramgen(EVP_PKEY_CTX *ctx,
     dctx->paramgen_type = DH_PARAMGEN_TYPE_FIPS_186_4;
 # endif /* FIPS_MODULE */
     if (dctx->paramgen_type >= DH_PARAMGEN_TYPE_FIPS_186_2) {
-        dh = ffc_params_generate(NULL, dctx, pcb);
+        dh = ffc_params_generate(NULL, dctx, NULL, pcb);
         BN_GENCB_free(pcb);
         if (dh == NULL)
             return 0;

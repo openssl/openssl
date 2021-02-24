@@ -65,7 +65,7 @@ static int dsa_keygen(DSA *dsa, int pairwise_test)
     BN_CTX *ctx = NULL;
     BIGNUM *pub_key = NULL, *priv_key = NULL;
 
-    if ((ctx = BN_CTX_new_ex(dsa->libctx)) == NULL)
+    if ((ctx = BN_CTX_new_ex(dsa->libctx, dsa->propq)) == NULL)
         goto err;
 
     if (dsa->priv_key == NULL) {
@@ -77,7 +77,7 @@ static int dsa_keygen(DSA *dsa, int pairwise_test)
 
     /* Do a partial check for invalid p, q, g */
     if (!ossl_ffc_params_simple_validate(dsa->libctx, &dsa->params,
-                                         FFC_PARAM_TYPE_DSA, NULL))
+                                         FFC_PARAM_TYPE_DSA, dsa->propq, NULL))
         goto err;
 
     /*

@@ -16,15 +16,17 @@
  *
  * ret contains 0 on success, or error flags (see FFC_ERROR_PUBKEY_TOO_SMALL)
  */
-int ossl_ffc_validate_public_key_partial(const FFC_PARAMS *params,
-                                         const BIGNUM *pub_key, int *ret)
+int ossl_ffc_validate_public_key_partial(OSSL_LIB_CTX *libctx,
+                                         const FFC_PARAMS *params,
+                                         const BIGNUM *pub_key,
+                                         const char *propq, int *ret)
 {
     int ok = 0;
     BIGNUM *tmp = NULL;
     BN_CTX *ctx = NULL;
 
     *ret = 0;
-    ctx = BN_CTX_new_ex(NULL);
+    ctx = BN_CTX_new_ex(libctx, propq);
     if (ctx == NULL)
         goto err;
 
@@ -58,18 +60,21 @@ int ossl_ffc_validate_public_key_partial(const FFC_PARAMS *params,
 /*
  * See SP800-56Ar3 Section 5.6.2.3.1 : FFC Full public key validation.
  */
-int ossl_ffc_validate_public_key(const FFC_PARAMS *params,
-                                 const BIGNUM *pub_key, int *ret)
+int ossl_ffc_validate_public_key(OSSL_LIB_CTX *libctx,
+                                 const FFC_PARAMS *params,
+                                 const BIGNUM *pub_key,
+                                 const char *propq, int *ret)
 {
     int ok = 0;
     BIGNUM *tmp = NULL;
     BN_CTX *ctx = NULL;
 
-    if (!ossl_ffc_validate_public_key_partial(params, pub_key, ret))
+    if (!ossl_ffc_validate_public_key_partial(libctx, params, pub_key, propq,
+                                              ret))
         return 0;
 
     if (params->q != NULL) {
-        ctx = BN_CTX_new_ex(NULL);
+        ctx = BN_CTX_new_ex(libctx, propq);
         if (ctx == NULL)
             goto err;
         BN_CTX_start(ctx);

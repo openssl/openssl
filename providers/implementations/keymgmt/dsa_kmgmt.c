@@ -117,7 +117,7 @@ static void *dsa_newdata(void *provctx)
 {
     if (!ossl_prov_is_running())
         return NULL;
-    return ossl_dsa_new(PROV_LIBCTX_OF(provctx));
+    return ossl_dsa_new(PROV_LIBCTX_OF(provctx), NULL);
 }
 
 static void dsa_freedata(void *keydata)
@@ -514,7 +514,7 @@ static void *dsa_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
 
     if (!ossl_prov_is_running() || gctx == NULL)
         return NULL;
-    dsa = ossl_dsa_new(gctx->libctx);
+    dsa = ossl_dsa_new(gctx->libctx, gctx->mdprops);
     if (dsa == NULL)
         return NULL;
 

@@ -21,7 +21,8 @@
 #include "crypto/dh.h" /* required by DSA_dup_DH() */
 #include "dsa_local.h"
 
-static DSA *dsa_new_intern(ENGINE *engine, OSSL_LIB_CTX *libctx);
+static DSA *dsa_new_intern(ENGINE *engine, OSSL_LIB_CTX *libctx,
+                           const char *propq);
 
 #ifndef FIPS_MODULE
 
@@ -128,7 +129,8 @@ const DSA_METHOD *DSA_get_method(DSA *d)
     return d->meth;
 }
 
-static DSA *dsa_new_intern(ENGINE *engine, OSSL_LIB_CTX *libctx)
+static DSA *dsa_new_intern(ENGINE *engine, OSSL_LIB_CTX *libctx,
+                           const char *propq)
 {
     DSA *ret = OPENSSL_zalloc(sizeof(*ret));
 
@@ -144,7 +146,13 @@ static DSA *dsa_new_intern(ENGINE *engine, OSSL_LIB_CTX *libctx)
         OPENSSL_free(ret);
         return NULL;
     }
-
+    if (propq != NULL) {
+        ret->propq = OPENSSL_strdup(propq);
+        if (ret->propq == NULL) {
+            ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
+            goto err;
+        }
+    }
     ret->libctx = libctx;
     ret->meth = DSA_get_default_method();
 #if !defined(FIPS_MODULE) && !defined(OPENSSL_NO_ENGINE)
@@ -187,18 +195,18 @@ static DSA *dsa_new_intern(ENGINE *engine, OSSL_LIB_CTX *libctx)
 
 DSA *DSA_new_method(ENGINE *engine)
 {
-    return dsa_new_intern(engine, NULL);
+    return dsa_new_intern(engine, NULL, NULL);
 }
 
-DSA *ossl_dsa_new(OSSL_LIB_CTX *libctx)
+DSA *ossl_dsa_new(OSSL_LIB_CTX *libctx, const char *propq)
 {
-    return dsa_new_intern(NULL, libctx);
+    return dsa_new_intern(NULL, libctx, propq);
 }
 
 #ifndef FIPS_MODULE
 DSA *DSA_new(void)
 {
-    return dsa_new_intern(NULL, NULL);
+    return dsa_new_intern(NULL, NULL, NULL);
 }
 #endif
 
@@ -227,6 +235,7 @@ void DSA_free(DSA *r)
 
     CRYPTO_THREAD_lock_free(r->lock);
 
+    OPENSSL_free(r->propq);
     ossl_ffc_params_cleanup(&r->params);
     BN_clear_free(r->pub_key);
     BN_clear_free(r->priv_key);

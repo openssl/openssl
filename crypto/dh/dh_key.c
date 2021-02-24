@@ -53,7 +53,7 @@ static int compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
         return 0;
     }
 
-    ctx = BN_CTX_new_ex(dh->libctx);
+    ctx = BN_CTX_new_ex(dh->libctx, dh->propq);
     if (ctx == NULL)
         goto err;
     BN_CTX_start(ctx);
@@ -266,7 +266,7 @@ static int generate_key(DH *dh)
         return 0;
     }
 
-    ctx = BN_CTX_new_ex(dh->libctx);
+    ctx = BN_CTX_new_ex(dh->libctx, dh->propq);
     if (ctx == NULL)
         goto err;
 
@@ -328,7 +328,8 @@ static int generate_key(DH *dh)
             {
                 /* Do a partial check for invalid p, q, g */
                 if (!ossl_ffc_params_simple_validate(dh->libctx, &dh->params,
-                                                     FFC_PARAM_TYPE_DH, NULL))
+                                                     FFC_PARAM_TYPE_DH,
+                                                     dh->propq, NULL))
                     goto err;
                 /*
                  * For FFC FIPS 186-4 keygen

@@ -221,7 +221,7 @@ static int pkey_dsa_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 
     ret = ossl_ffc_params_FIPS186_4_generate(NULL, &dsa->params,
                                              FFC_PARAM_TYPE_DSA, dctx->nbits,
-                                             dctx->qbits, &res, pcb);
+                                             dctx->qbits, NULL, &res, pcb);
     BN_GENCB_free(pcb);
     if (ret > 0)
         EVP_PKEY_assign_DSA(pkey, dsa);

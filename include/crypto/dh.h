@@ -16,8 +16,8 @@
 # include <openssl/dh.h>
 # include "internal/ffc.h"
 
-DH *ossl_dh_new_by_nid_ex(OSSL_LIB_CTX *libctx, int nid);
-DH *ossl_dh_new_ex(OSSL_LIB_CTX *libctx);
+DH *ossl_dh_new_by_nid_ex(OSSL_LIB_CTX *libctx, int nid, const char *prop);
+DH *ossl_dh_new_ex(OSSL_LIB_CTX *libctx, const char *propq);
 void ossl_dh_set0_libctx(DH *d, OSSL_LIB_CTX *libctx);
 int ossl_dh_generate_ffc_parameters(DH *dh, int type, int pbits, int qbits,
                                     BN_GENCB *cb);

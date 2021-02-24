@@ -23,7 +23,8 @@ int ossl_dsa_check_params(const DSA *dsa, int checktype, int *ret)
 {
     if (checktype == OSSL_KEYMGMT_VALIDATE_QUICK_CHECK)
         return ossl_ffc_params_simple_validate(dsa->libctx, &dsa->params,
-                                               FFC_PARAM_TYPE_DSA, ret);
+                                               FFC_PARAM_TYPE_DSA, dsa->propq,
+                                               ret);
     else
         /*
          * Do full FFC domain params validation according to FIPS-186-4
@@ -31,7 +32,7 @@ int ossl_dsa_check_params(const DSA *dsa, int checktype, int *ret)
          *  - only if possible (i.e., seed is set) in default provider
          */
         return ossl_ffc_params_full_validate(dsa->libctx, &dsa->params,
-                                             FFC_PARAM_TYPE_DSA, ret);
+                                             FFC_PARAM_TYPE_DSA, dsa->propq, ret);
 }
 
 /*
@@ -39,7 +40,8 @@ int ossl_dsa_check_params(const DSA *dsa, int checktype, int *ret)
  */
 int ossl_dsa_check_pub_key(const DSA *dsa, const BIGNUM *pub_key, int *ret)
 {
-    return ossl_ffc_validate_public_key(&dsa->params, pub_key, ret);
+    return ossl_ffc_validate_public_key(dsa->libctx, &dsa->params, pub_key,
+                                        dsa->propq, ret);
 }
 
 /*
@@ -49,7 +51,8 @@ int ossl_dsa_check_pub_key(const DSA *dsa, const BIGNUM *pub_key, int *ret)
  */
 int ossl_dsa_check_pub_key_partial(const DSA *dsa, const BIGNUM *pub_key, int *ret)
 {
-    return ossl_ffc_validate_public_key_partial(&dsa->params, pub_key, ret);
+    return ossl_ffc_validate_public_key_partial(dsa->libctx, &dsa->params,
+                                        pub_key, dsa->propq, ret);
 }
 
 int ossl_dsa_check_priv_key(const DSA *dsa, const BIGNUM *priv_key, int *ret)
@@ -76,7 +79,7 @@ int ossl_dsa_check_pairwise(const DSA *dsa)
         || dsa->pub_key == NULL)
         return 0;
 
-    ctx = BN_CTX_new_ex(dsa->libctx);
+    ctx = BN_CTX_new_ex(dsa->libctx, dsa->propq);
     if (ctx == NULL)
         goto err;
     pub_key = BN_new();

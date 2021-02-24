@@ -51,6 +51,7 @@ int ossl_ffc_params_validate_unverifiable_g(BN_CTX *ctx, BN_MONT_CTX *mont,
 
 int ossl_ffc_params_FIPS186_4_validate(OSSL_LIB_CTX *libctx,
                                        const FFC_PARAMS *params, int type,
+                                       const char *propq,
                                        int *res, BN_GENCB *cb)
 {
     size_t L, N;
@@ -63,12 +64,13 @@ int ossl_ffc_params_FIPS186_4_validate(OSSL_LIB_CTX *libctx,
     N = BN_num_bits(params->q);
     return ossl_ffc_params_FIPS186_4_gen_verify(libctx, (FFC_PARAMS *)params,
                                                 FFC_PARAM_MODE_VERIFY, type,
-                                                L, N, res, cb);
+                                                L, N, propq, res, cb);
 }
 
 /* This may be used in FIPS mode to validate deprecated FIPS-186-2 Params */
 int ossl_ffc_params_FIPS186_2_validate(OSSL_LIB_CTX *libctx,
                                        const FFC_PARAMS *params, int type,
+                                       const char *propq,
                                        int *res, BN_GENCB *cb)
 {
     size_t L, N;
@@ -83,7 +85,7 @@ int ossl_ffc_params_FIPS186_2_validate(OSSL_LIB_CTX *libctx,
     N = BN_num_bits(params->q);
     return ossl_ffc_params_FIPS186_2_gen_verify(libctx, (FFC_PARAMS *)params,
                                                 FFC_PARAM_MODE_VERIFY, type,
-                                                L, N, res, cb);
+                                                L, N, propq, res, cb);
 }
 
 /*
@@ -93,7 +95,7 @@ int ossl_ffc_params_FIPS186_2_validate(OSSL_LIB_CTX *libctx,
  * this test.
  */
 int ossl_ffc_params_simple_validate(OSSL_LIB_CTX *libctx, const FFC_PARAMS *params,
-                                    int paramstype, int *res)
+                                    int paramstype, const char *propq, int *res)
 {
     int ret;
     int tmpres = 0;
@@ -114,11 +116,11 @@ int ossl_ffc_params_simple_validate(OSSL_LIB_CTX *libctx, const FFC_PARAMS *para
 #ifndef FIPS_MODULE
     if (params->flags & FFC_PARAM_FLAG_VALIDATE_LEGACY)
         ret = ossl_ffc_params_FIPS186_2_validate(libctx, &tmpparams, paramstype,
-                                                 res, NULL);
+                                                 propq, res, NULL);
     else
 #endif
         ret = ossl_ffc_params_FIPS186_4_validate(libctx, &tmpparams, paramstype,
-                                                 res, NULL);
+                                                 propq, res, NULL);
 #ifndef OPENSSL_NO_DH
     if (ret == FFC_PARAM_RET_STATUS_FAILED
         && (*res & FFC_ERROR_NOT_SUITABLE_GENERATOR) != 0) {
@@ -137,7 +139,7 @@ int ossl_ffc_params_simple_validate(OSSL_LIB_CTX *libctx, const FFC_PARAMS *para
  * p and q.
  */
 int ossl_ffc_params_full_validate(OSSL_LIB_CTX *libctx, const FFC_PARAMS *params,
-                                  int paramstype, int *res)
+                                  int paramstype, const char *propq, int *res)
 {
     int tmpres = 0;
 
@@ -148,20 +150,21 @@ int ossl_ffc_params_full_validate(OSSL_LIB_CTX *libctx, const FFC_PARAMS *params
         res = &tmpres;
 
 #ifdef FIPS_MODULE
-    return ossl_ffc_params_FIPS186_4_validate(libctx, params, paramstype,
+    return ossl_ffc_params_FIPS186_4_validate(libctx, params, paramstype, propq,
                                               res, NULL);
 #else
     if (params->seed != NULL) {
         return ossl_ffc_params_FIPS186_4_validate(libctx, params, paramstype,
-                                                  res, NULL);
+                                                  propq, res, NULL);
     } else {
         int ret = 0;
 
-        ret = ossl_ffc_params_simple_validate(libctx, params, paramstype, res);
+        ret = ossl_ffc_params_simple_validate(libctx, params, paramstype, propq,
+                                              res);
         if (ret) {
             BN_CTX *ctx;
 
-            if ((ctx = BN_CTX_new_ex(libctx)) == NULL)
+            if ((ctx = BN_CTX_new_ex(libctx, propq)) == NULL)
                 return 0;
             if (BN_check_prime(params->q, ctx, NULL) != 1) {
 # ifndef OPENSSL_NO_DSA
