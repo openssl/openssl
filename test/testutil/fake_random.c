@@ -33,7 +33,6 @@ static OSSL_FUNC_rand_enable_locking_fn fake_rand_enable_locking;
 static void *fake_rand_newctx(void *provctx, void *parent,
                               const OSSL_DISPATCH *parent_dispatch)
 {
-    fake_rand.cb = NULL;
     fake_rand.state = EVP_RAND_STATE_UNINITIALISED;
     return &fake_rand;
 }
