@@ -10,7 +10,7 @@
 #include "crypto/cryptlib.h"
 #include "internal/thread_once.h"
 
-int do_ex_data_init(OSSL_LIB_CTX *ctx)
+int ossl_do_ex_data_init(OSSL_LIB_CTX *ctx)
 {
     OSSL_EX_DATA_GLOBAL *global = ossl_lib_ctx_get_ex_data_global(ctx);
 
@@ -60,7 +60,7 @@ static void cleanup_cb(EX_CALLBACK *funcs)
  * called under potential race-conditions anyway (it's for program shutdown
  * after all).
  */
-void crypto_cleanup_all_ex_data_int(OSSL_LIB_CTX *ctx)
+void ossl_crypto_cleanup_all_ex_data_int(OSSL_LIB_CTX *ctx)
 {
     int i;
     OSSL_EX_DATA_GLOBAL *global = ossl_lib_ctx_get_ex_data_global(ctx);
@@ -101,7 +101,7 @@ static int dummy_dup(CRYPTO_EX_DATA *to, const CRYPTO_EX_DATA *from,
     return 1;
 }
 
-int crypto_free_ex_index_ex(OSSL_LIB_CTX *ctx, int class_index, int idx)
+int ossl_crypto_free_ex_index_ex(OSSL_LIB_CTX *ctx, int class_index, int idx)
 {
     EX_CALLBACKS *ip;
     EX_CALLBACK *a;
@@ -131,16 +131,17 @@ err:
 
 int CRYPTO_free_ex_index(int class_index, int idx)
 {
-    return crypto_free_ex_index_ex(NULL, class_index, idx);
+    return ossl_crypto_free_ex_index_ex(NULL, class_index, idx);
 }
 
 /*
  * Register a new index.
  */
-int crypto_get_ex_new_index_ex(OSSL_LIB_CTX *ctx, int class_index, long argl,
-                               void *argp, CRYPTO_EX_new *new_func,
-                               CRYPTO_EX_dup *dup_func,
-                               CRYPTO_EX_free *free_func)
+int ossl_crypto_get_ex_new_index_ex(OSSL_LIB_CTX *ctx, int class_index,
+                                    long argl, void *argp,
+                                    CRYPTO_EX_new *new_func,
+                                    CRYPTO_EX_dup *dup_func,
+                                    CRYPTO_EX_free *free_func)
 {
     int toret = -1;
     EX_CALLBACK *a;
@@ -193,8 +194,8 @@ int CRYPTO_get_ex_new_index(int class_index, long argl, void *argp,
                             CRYPTO_EX_new *new_func, CRYPTO_EX_dup *dup_func,
                             CRYPTO_EX_free *free_func)
 {
-    return crypto_get_ex_new_index_ex(NULL, class_index, argl, argp, new_func,
-                                      dup_func, free_func);
+    return ossl_crypto_get_ex_new_index_ex(NULL, class_index, argl, argp,
+                                           new_func, dup_func, free_func);
 }
 
 /*
@@ -204,8 +205,8 @@ int CRYPTO_get_ex_new_index(int class_index, long argl, void *argp,
  * in the lock, then using them outside the lock. Note this only applies
  * to the global "ex_data" state (ie. class definitions), not 'ad' itself.
  */
-int crypto_new_ex_data_ex(OSSL_LIB_CTX *ctx, int class_index, void *obj,
-                          CRYPTO_EX_DATA *ad)
+int ossl_crypto_new_ex_data_ex(OSSL_LIB_CTX *ctx, int class_index, void *obj,
+                               CRYPTO_EX_DATA *ad)
 {
     int mx, i;
     void *ptr;
@@ -253,7 +254,7 @@ int crypto_new_ex_data_ex(OSSL_LIB_CTX *ctx, int class_index, void *obj,
 
 int CRYPTO_new_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad)
 {
-    return crypto_new_ex_data_ex(NULL, class_index, obj, ad);
+    return ossl_crypto_new_ex_data_ex(NULL, class_index, obj, ad);
 }
 
 /*
@@ -473,7 +474,7 @@ void *CRYPTO_get_ex_data(const CRYPTO_EX_DATA *ad, int idx)
     return sk_void_value(ad->sk, idx);
 }
 
-OSSL_LIB_CTX *crypto_ex_data_get_ossl_lib_ctx(const CRYPTO_EX_DATA *ad)
+OSSL_LIB_CTX *ossl_crypto_ex_data_get_ossl_lib_ctx(const CRYPTO_EX_DATA *ad)
 {
     return ad->ctx;
 }
