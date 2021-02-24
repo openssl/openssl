@@ -1096,7 +1096,16 @@ generate_fuzz_oids:
 generate_doc_buildinfo:
 	( $(PERL) -I$(BLDDIR) -Mconfigdata \
                 $(SRCDIR)/util/dofile.pl -o Makefile \
-                        $(SRCDIR)/doc/build.info.in > $(SRCDIR)/doc/build.info )
+                        $(SRCDIR)/doc/build.info.in \
+                        > $(SRCDIR)/doc/build.info.new; \
+          if ( test -e $(SRCDIR)/doc/build.info \
+               && cmp $(SRCDIR)/doc/build.info.new $(SRCDIR)/doc/build.info \
+                  > /dev/null ); \
+          then \
+                rm $(SRCDIR)/doc/build.info.new; \
+          else \
+                mv $(SRCDIR)/doc/build.info.new $(SRCDIR)/doc/build.info; \
+          fi )
 
 # Set to -force to force a rebuild
 ERROR_REBUILD=
