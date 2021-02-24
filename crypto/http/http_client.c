@@ -229,7 +229,7 @@ static int OSSL_HTTP_REQ_CTX_set_content(OSSL_HTTP_REQ_CTX *rctx,
         && BIO_write(rctx->mem, req, req_len) == (int)req_len;
 }
 
-BIO *HTTP_asn1_item2bio(const ASN1_ITEM *it, const ASN1_VALUE *val)
+BIO *ossl_http_asn1_item2bio(const ASN1_ITEM *it, const ASN1_VALUE *val)
 {
     BIO *res;
 
@@ -258,7 +258,7 @@ int OSSL_HTTP_REQ_CTX_i2d(OSSL_HTTP_REQ_CTX *rctx, const char *content_type,
         return 0;
     }
 
-    res = (mem = HTTP_asn1_item2bio(it, req)) != NULL
+    res = (mem = ossl_http_asn1_item2bio(it, req)) != NULL
         && OSSL_HTTP_REQ_CTX_set_content(rctx, content_type, mem);
     BIO_free(mem);
     return res;
@@ -290,14 +290,15 @@ static int OSSL_HTTP_REQ_CTX_add1_headers(OSSL_HTTP_REQ_CTX *rctx,
  * If !use_http_proxy then the 'server' and 'port' parameters are ignored.
  * If req_mem == NULL then use GET and ignore content_type, else POST.
  */
-OSSL_HTTP_REQ_CTX *HTTP_REQ_CTX_new(BIO *wbio, BIO *rbio, int use_http_proxy,
-                                    const char *server, const char *port,
-                                    const char *path,
-                                    const STACK_OF(CONF_VALUE) *headers,
-                                    const char *content_type, BIO *req_mem,
-                                    int maxline, unsigned long max_resp_len,
-                                    int timeout,
-                                    const char *expected_ct, int expect_asn1)
+OSSL_HTTP_REQ_CTX
+*ossl_http_req_ctx_new(BIO *wbio, BIO *rbio, int use_http_proxy,
+                       const char *server, const char *port,
+                       const char *path,
+                       const STACK_OF(CONF_VALUE) *headers,
+                       const char *content_type, BIO *req_mem,
+                       int maxline, unsigned long max_resp_len,
+                       int timeout,
+                       const char *expected_ct, int expect_asn1)
 {
     OSSL_HTTP_REQ_CTX *rctx;
 
@@ -868,7 +869,7 @@ BIO *OSSL_HTTP_transfer(const char *server, const char *port, const char *path,
             port = NULL;
         if (port == NULL && strchr(server, ':') == NULL)
             port = use_ssl ? OSSL_HTTPS_PORT : OSSL_HTTP_PORT;
-        proxy = http_adapt_proxy(proxy, no_proxy, server, use_ssl);
+        proxy = ossl_http_adapt_proxy(proxy, no_proxy, server, use_ssl);
         if ((cbio = HTTP_new_bio(server, port, proxy)) == NULL)
             return NULL;
 #else
@@ -893,11 +894,11 @@ BIO *OSSL_HTTP_transfer(const char *server, const char *port, const char *path,
         }
     }
 
-    rctx = HTTP_REQ_CTX_new(cbio, rbio != NULL ? rbio : cbio,
-                            !use_ssl && proxy != NULL, server, port, path,
-                            headers, content_type, req_mem, maxline,
-                            max_resp_len, update_timeout(timeout, start_time),
-                            expected_ct, expect_asn1);
+    rctx = ossl_http_req_ctx_new(cbio, rbio != NULL ? rbio : cbio,
+                                 !use_ssl && proxy != NULL, server, port, path,
+                                 headers, content_type, req_mem, maxline,
+                                 max_resp_len, update_timeout(timeout, start_time),
+                                 expected_ct, expect_asn1);
     if (rctx == NULL)
         goto end;
 
@@ -1090,7 +1091,7 @@ ASN1_VALUE *OSSL_HTTP_post_asn1(const char *server, const char *port,
     }
     /* remaining parameters are checked indirectly */
 
-    req_mem = HTTP_asn1_item2bio(req_it, req);
+    req_mem = ossl_http_asn1_item2bio(req_it, req);
     res_mem = OSSL_HTTP_transfer(server, port, path, use_ssl, proxy, no_proxy,
                                  bio, rbio,
                                  bio_update_fn, arg, headers, content_type,

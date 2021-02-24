@@ -85,7 +85,7 @@ static int der2obj_decode(void *provctx, OSSL_CORE_BIO *cin, int selection,
      * We're called from file_store.c, so we know that OSSL_CORE_BIO is a
      * BIO in this case.
      */
-    BIO *in = bio_new_from_core_bio(provctx, cin);
+    BIO *in = ossl_bio_new_from_core_bio(provctx, cin);
     BUF_MEM *mem = NULL;
     int err, ok;
 

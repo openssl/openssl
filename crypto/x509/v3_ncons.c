@@ -193,8 +193,8 @@ static int print_nc_ipadd(BIO *bp, ASN1_OCTET_STRING *ip)
     /* ip->length should be 8 or 32 and len1 == len2 == 4 or len1 == len2 == 16 */
     int len1 = ip->length >= 16 ? 16 : ip->length >= 4 ? 4 : ip->length;
     int len2 = ip->length - len1;
-    char *ip1 = ipaddr_to_asc(ip->data, len1);
-    char *ip2 = ipaddr_to_asc(ip->data + len1, len2);
+    char *ip1 = ossl_ipaddr_to_asc(ip->data, len1);
+    char *ip2 = ossl_ipaddr_to_asc(ip->data + len1, len2);
     int ret = ip1 != NULL && ip2 != NULL
         && BIO_printf(bp, "IP:%s/%s", ip1, ip2) > 0;
 

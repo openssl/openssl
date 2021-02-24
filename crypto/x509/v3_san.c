@@ -178,7 +178,7 @@ STACK_OF(CONF_VALUE) *i2v_GENERAL_NAME(X509V3_EXT_METHOD *method,
         break;
 
     case GEN_IPADD:
-        tmp = ipaddr_to_asc(gen->d.ip->data, gen->d.ip->length);
+        tmp = ossl_ipaddr_to_asc(gen->d.ip->data, gen->d.ip->length);
         if (tmp == NULL || !X509V3_add_value("IP Address", tmp, &ret))
             ret = NULL;
         OPENSSL_free(tmp);
@@ -267,7 +267,7 @@ int GENERAL_NAME_print(BIO *out, GENERAL_NAME *gen)
         break;
 
     case GEN_IPADD:
-        tmp = ipaddr_to_asc(gen->d.ip->data, gen->d.ip->length);
+        tmp = ossl_ipaddr_to_asc(gen->d.ip->data, gen->d.ip->length);
         if (tmp == NULL)
             return 0;
         BIO_printf(out, "IP Address:%s", tmp);

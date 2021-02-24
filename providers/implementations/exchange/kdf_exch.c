@@ -81,7 +81,7 @@ static int kdf_init(void *vpkdfctx, void *vkdf, const OSSL_PARAM params[])
     if (!ossl_prov_is_running()
             || pkdfctx == NULL
             || vkdf == NULL
-            || !kdf_data_up_ref(vkdf))
+            || !ossl_kdf_data_up_ref(vkdf))
         return 0;
     pkdfctx->kdfdata = vkdf;
 
@@ -109,7 +109,7 @@ static void kdf_freectx(void *vpkdfctx)
     PROV_KDF_CTX *pkdfctx = (PROV_KDF_CTX *)vpkdfctx;
 
     EVP_KDF_CTX_free(pkdfctx->kdfctx);
-    kdf_data_free(pkdfctx->kdfdata);
+    ossl_kdf_data_free(pkdfctx->kdfdata);
 
     OPENSSL_free(pkdfctx);
 }
@@ -133,7 +133,7 @@ static void *kdf_dupctx(void *vpkdfctx)
         OPENSSL_free(dstctx);
         return NULL;
     }
-    if (!kdf_data_up_ref(dstctx->kdfdata)) {
+    if (!ossl_kdf_data_up_ref(dstctx->kdfdata)) {
         EVP_KDF_CTX_free(dstctx->kdfctx);
         OPENSSL_free(dstctx);
         return NULL;

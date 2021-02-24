@@ -558,7 +558,7 @@ int ossl_default_provider_init(const OSSL_CORE_HANDLE *handle,
      * create their own library context.
      */
     if ((*provctx = ossl_prov_ctx_new()) == NULL
-            || (corebiometh = bio_prov_init_bio_method()) == NULL) {
+            || (corebiometh = ossl_bio_prov_init_bio_method()) == NULL) {
         ossl_prov_ctx_free(*provctx);
         *provctx = NULL;
         return 0;
