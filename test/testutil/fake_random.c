@@ -177,6 +177,11 @@ OSSL_PROVIDER *fake_rand_start(OSSL_LIB_CTX *libctx)
             || !TEST_true(RAND_set_DRBG_type(libctx, "fake", NULL, NULL, NULL))
             || !TEST_ptr(p = OSSL_PROVIDER_try_load(libctx, "fake-rand", 1)))
         return NULL;
+    if (!TEST_ptr(RAND_get0_public(libctx))
+            || !TEST_ptr(RAND_get0_private(libctx))) {
+        OSSL_PROVIDER_unload(p);
+        return NULL;
+    }
     return p;
 }
 
