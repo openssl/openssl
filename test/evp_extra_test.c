@@ -2427,12 +2427,13 @@ static int test_ecpub(int idx)
     int nid;
     unsigned char buf[1024];
     unsigned char *p;
+    EVP_PKEY *pkey = NULL;
+    EVP_PKEY_CTX *ctx = NULL;
 # ifndef OPENSSL_NO_DEPRECATED_3_0
     const unsigned char *q;
-# endif
-    EVP_PKEY *pkey = NULL, *pkey2 = NULL;
-    EVP_PKEY_CTX *ctx = NULL;
+    EVP_PKEY *pkey2 = NULL;
     EC_KEY *ec = NULL;
+# endif
 
     nid = ecpub_nids[idx];
 
@@ -2474,8 +2475,10 @@ static int test_ecpub(int idx)
  done:
     EVP_PKEY_CTX_free(ctx);
     EVP_PKEY_free(pkey);
+# ifndef OPENSSL_NO_DEPRECATED_3_0
     EVP_PKEY_free(pkey2);
     EC_KEY_free(ec);
+# endif
     return ret;
 }
 #endif
