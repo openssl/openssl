@@ -2418,15 +2418,13 @@ err:
 static int test_EVP_rsa_pss_with_keygen_bits(void)
 {
     int ret;
-    OSSL_PROVIDER *provider;
     EVP_PKEY_CTX *ctx;
     EVP_PKEY *pkey;
     const EVP_MD *md;
     pkey = NULL;
     ret = 0;
-    provider = OSSL_PROVIDER_load(NULL, "default");
-    md = EVP_get_digestbyname("sha256");
 
+    md = EVP_get_digestbyname("sha256");
     ret = TEST_ptr((ctx = EVP_PKEY_CTX_new_id(EVP_PKEY_RSA_PSS, NULL)))
         && TEST_true(EVP_PKEY_keygen_init(ctx))
         && TEST_int_gt(EVP_PKEY_CTX_set_rsa_keygen_bits(ctx, 512), 0)
@@ -2435,7 +2433,6 @@ static int test_EVP_rsa_pss_with_keygen_bits(void)
 
     EVP_PKEY_free(pkey);
     EVP_PKEY_CTX_free(ctx);
-    OSSL_PROVIDER_unload(provider);
     return ret;
 }
 
