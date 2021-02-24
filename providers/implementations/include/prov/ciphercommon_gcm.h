@@ -73,6 +73,7 @@ typedef struct prov_gcm_ctx_st {
     unsigned char buf[AES_BLOCK_SIZE]; /* Buffer of partial blocks processed via update calls */
 
     OSSL_LIB_CTX *libctx;    /* needed for rand calls */
+    const char *propq;
     const PROV_GCM_HW *hw;  /* hardware specific methods */
     GCM128_CONTEXT gcm;
     ctr128_f ctr;

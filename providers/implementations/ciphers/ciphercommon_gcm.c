@@ -364,7 +364,7 @@ static int gcm_iv_generate(PROV_GCM_CTX *ctx, int offset)
         return 0;
 
     /* Use DRBG to generate random iv */
-    if (RAND_bytes_ex(ctx->libctx, ctx->iv + offset, sz) <= 0)
+    if (RAND_bytes_ex(ctx->libctx, ctx->iv + offset, sz, ctx->propq) <= 0)
         return 0;
     ctx->iv_state = IV_STATE_BUFFERED;
     ctx->iv_gen_rand = 1;
@@ -478,7 +478,8 @@ static int gcm_tls_iv_set_fixed(PROV_GCM_CTX *ctx, unsigned char *iv,
     if (len > 0)
         memcpy(ctx->iv, iv, len);
     if (ctx->enc
-        && RAND_bytes_ex(ctx->libctx, ctx->iv + len, ctx->ivlen - len) <= 0)
+        && RAND_bytes_ex(ctx->libctx, ctx->iv + len, ctx->ivlen - len,
+                         ctx->propq) <= 0)
             return 0;
     ctx->iv_gen = 1;
     ctx->iv_state = IV_STATE_BUFFERED;
