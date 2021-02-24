@@ -996,7 +996,7 @@ int tls1_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending,
                         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                         return 0;
                     } else if (RAND_bytes_ex(s->ctx->libctx, recs[ctr].input,
-                                             ivlen) <= 0) {
+                                             ivlen, s->ctx->propq) <= 0) {
                         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                         return 0;
                     }

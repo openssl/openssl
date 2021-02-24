@@ -3227,15 +3227,17 @@ SSL_CTX *SSL_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
 
     /* Setup RFC5077 ticket keys */
     if ((RAND_bytes_ex(libctx, ret->ext.tick_key_name,
-                       sizeof(ret->ext.tick_key_name)) <= 0)
+                       sizeof(ret->ext.tick_key_name), propq) <= 0)
         || (RAND_priv_bytes_ex(libctx, ret->ext.secure->tick_hmac_key,
-                               sizeof(ret->ext.secure->tick_hmac_key)) <= 0)
+                               sizeof(ret->ext.secure->tick_hmac_key),
+                               propq) <= 0)
         || (RAND_priv_bytes_ex(libctx, ret->ext.secure->tick_aes_key,
-                               sizeof(ret->ext.secure->tick_aes_key)) <= 0))
+                               sizeof(ret->ext.secure->tick_aes_key),
+                               propq) <= 0))
         ret->options |= SSL_OP_NO_TICKET;
 
     if (RAND_priv_bytes_ex(libctx, ret->ext.cookie_hmac_key,
-                           sizeof(ret->ext.cookie_hmac_key)) <= 0)
+                           sizeof(ret->ext.cookie_hmac_key), propq) <= 0)
         goto err;
 
 #ifndef OPENSSL_NO_SRP

@@ -29,7 +29,8 @@ static int ssl3_cbc_copy_mac(size_t *reclen,
                              size_t block_size,
                              size_t mac_size,
                              size_t good,
-                             OSSL_LIB_CTX *libctx);
+                             OSSL_LIB_CTX *libctx,
+                             const char *propq);
 
 int ssl3_cbc_remove_padding_and_mac(size_t *reclen,
                                     size_t origreclen,
@@ -37,7 +38,7 @@ int ssl3_cbc_remove_padding_and_mac(size_t *reclen,
                                     unsigned char **mac,
                                     int *alloced,
                                     size_t block_size, size_t mac_size,
-                                    OSSL_LIB_CTX *libctx);
+                                    OSSL_LIB_CTX *libctx, const char *propq);
 
 int tls1_cbc_remove_padding_and_mac(size_t *reclen,
                                     size_t origreclen,
@@ -46,7 +47,7 @@ int tls1_cbc_remove_padding_and_mac(size_t *reclen,
                                     int *alloced,
                                     size_t block_size, size_t mac_size,
                                     int aead,
-                                    OSSL_LIB_CTX *libctx);
+                                    OSSL_LIB_CTX *libctx, const char *propq);
 
 /*-
  * ssl3_cbc_remove_padding removes padding from the decrypted, SSLv3, CBC
@@ -71,7 +72,7 @@ int ssl3_cbc_remove_padding_and_mac(size_t *reclen,
                                     unsigned char **mac,
                                     int *alloced,
                                     size_t block_size, size_t mac_size,
-                                    OSSL_LIB_CTX *libctx)
+                                    OSSL_LIB_CTX *libctx, const char *propq)
 {
     size_t padding_length;
     size_t good;
@@ -90,7 +91,7 @@ int ssl3_cbc_remove_padding_and_mac(size_t *reclen,
     *reclen -= good & (padding_length + 1);
 
     return ssl3_cbc_copy_mac(reclen, origreclen, recdata, mac, alloced,
-                             block_size, mac_size, good, libctx);
+                             block_size, mac_size, good, libctx, propq);
 }
 
 /*-
@@ -117,7 +118,7 @@ int tls1_cbc_remove_padding_and_mac(size_t *reclen,
                                     int *alloced,
                                     size_t block_size, size_t mac_size,
                                     int aead,
-                                    OSSL_LIB_CTX *libctx)
+                                    OSSL_LIB_CTX *libctx, const char *propq)
 {
     size_t good = -1;
     size_t padding_length, to_check, i;
@@ -176,7 +177,7 @@ int tls1_cbc_remove_padding_and_mac(size_t *reclen,
     }
 
     return ssl3_cbc_copy_mac(reclen, origreclen, recdata, mac, alloced,
-                             block_size, mac_size, good, libctx);
+                             block_size, mac_size, good, libctx, propq);
 }
 
 /*-
@@ -204,7 +205,8 @@ static int ssl3_cbc_copy_mac(size_t *reclen,
                              size_t block_size,
                              size_t mac_size,
                              size_t good,
-                             OSSL_LIB_CTX *libctx)
+                             OSSL_LIB_CTX *libctx,
+                             const char *propq)
 {
 #if defined(CBC_MAC_ROTATE_IN_PLACE)
     unsigned char rotated_mac_buf[64 + EVP_MAX_MD_SIZE];
@@ -253,7 +255,7 @@ static int ssl3_cbc_copy_mac(size_t *reclen,
     }
 
     /* Create the random MAC we will emit if padding is bad */
-    if (!RAND_bytes_ex(libctx, randmac, mac_size))
+    if (!RAND_bytes_ex(libctx, randmac, mac_size, propq))
         return 0;
 
     if (!ossl_assert(mac != NULL && alloced != NULL))
