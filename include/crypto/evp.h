@@ -608,6 +608,21 @@ DEFINE_STACK_OF(OP_CACHE_ELEM)
 #define evp_pkey_is_provided(pk)                                \
     ((pk)->keymgmt != NULL)
 
+union legacy_pkey_st {
+    void *ptr;
+    struct rsa_st *rsa;     /* RSA */
+#  ifndef OPENSSL_NO_DSA
+    struct dsa_st *dsa;     /* DSA */
+#  endif
+#  ifndef OPENSSL_NO_DH
+    struct dh_st *dh;       /* DH */
+#  endif
+#  ifndef OPENSSL_NO_EC
+    struct ec_key_st *ec;   /* ECC */
+    ECX_KEY *ecx;           /* X25519, X448, Ed25519, Ed448 */
+#  endif
+};
+
 struct evp_pkey_st {
     /* == Legacy attributes == */
     int type;
@@ -621,24 +636,15 @@ struct evp_pkey_st {
     const EVP_PKEY_ASN1_METHOD *ameth;
     ENGINE *engine;
     ENGINE *pmeth_engine; /* If not NULL public key ENGINE to use */
-    union {
-        void *ptr;
-        struct rsa_st *rsa;     /* RSA */
-#  ifndef OPENSSL_NO_DSA
-        struct dsa_st *dsa;     /* DSA */
-#  endif
-#  ifndef OPENSSL_NO_DH
-        struct dh_st *dh;       /* DH */
-#  endif
-#  ifndef OPENSSL_NO_EC
-        struct ec_key_st *ec;   /* ECC */
-        ECX_KEY *ecx;           /* X25519, X448, Ed25519, Ed448 */
-#  endif
-    } pkey;
+
+    /* Union to store the reference to an origin legacy key */
+    union legacy_pkey_st pkey;
+
+    /* Union to store the reference to a non-origin legacy key */
+    union legacy_pkey_st legacy_cache_pkey;
 # endif
 
     /* == Common attributes == */
-    /* If these are modified, so must evp_pkey_downgrade() */
     CRYPTO_REF_COUNT references;
     CRYPTO_RWLOCK *lock;
     STACK_OF(X509_ATTRIBUTE) *attributes; /* [ 0 ] */
@@ -719,7 +725,7 @@ void *evp_pkey_export_to_provider(EVP_PKEY *pk, OSSL_LIB_CTX *libctx,
                                   const char *propquery);
 #ifndef FIPS_MODULE
 int evp_pkey_copy_downgraded(EVP_PKEY **dest, const EVP_PKEY *src);
-int evp_pkey_downgrade(EVP_PKEY *pk);
+void *evp_pkey_get_legacy(EVP_PKEY *pk);
 void evp_pkey_free_legacy(EVP_PKEY *x);
 #endif
 

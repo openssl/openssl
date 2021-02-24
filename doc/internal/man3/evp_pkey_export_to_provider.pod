@@ -53,10 +53,9 @@ evp_pkey_downgrade() returns 1 on success or 0 on error.
 
 =head1 NOTES
 
-Some functions calling evp_pkey_export_to_provider() or evp_pkey_downgrade()
-may have received a const key, and may therefore have to cast the key to
-non-const form to call this function.  Since B<EVP_PKEY> is always dynamically
-allocated, this is OK.
+Some functions calling evp_pkey_export_to_provider() may have received a const
+key, and may therefore have to cast the key to non-const form to call this
+function.  Since B<EVP_PKEY> is always dynamically allocated, this is OK.
 
 =head1 SEE ALSO
 
