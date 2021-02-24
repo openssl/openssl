@@ -18,13 +18,13 @@
 #include "self_test_data.inc"
 
 static int self_test_digest(const ST_KAT_DIGEST *t, OSSL_SELF_TEST *st,
-                            OSSL_LIB_CTX *libctx)
+                            OSSL_LIB_CTX *libctx, const char *propq)
 {
     int ok = 0;
     unsigned char out[EVP_MAX_MD_SIZE];
     unsigned int out_len = 0;
     EVP_MD_CTX *ctx = EVP_MD_CTX_new();
-    EVP_MD *md = EVP_MD_fetch(libctx, t->algorithm, NULL);
+    EVP_MD *md = EVP_MD_fetch(libctx, t->algorithm, propq);
 
     OSSL_SELF_TEST_onbegin(st, OSSL_SELF_TEST_TYPE_KAT_DIGEST, t->desc);
 
@@ -83,7 +83,7 @@ static int cipher_init(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
 
 /* Test a single KAT for encrypt/decrypt */
 static int self_test_cipher(const ST_KAT_CIPHER *t, OSSL_SELF_TEST *st,
-                            OSSL_LIB_CTX *libctx)
+                            OSSL_LIB_CTX *libctx, const char *propq)
 {
     int ret = 0, encrypt = 1, len, ct_len = 0, pt_len = 0;
     EVP_CIPHER_CTX *ctx = NULL;
@@ -96,7 +96,7 @@ static int self_test_cipher(const ST_KAT_CIPHER *t, OSSL_SELF_TEST *st,
     ctx = EVP_CIPHER_CTX_new();
     if (ctx == NULL)
         goto err;
-    cipher = EVP_CIPHER_fetch(libctx, t->base.algorithm, "");
+    cipher = EVP_CIPHER_fetch(libctx, t->base.algorithm, propq);
     if (cipher == NULL)
         goto err;
 
@@ -185,7 +185,7 @@ err:
 }
 
 static int self_test_kdf(const ST_KAT_KDF *t, OSSL_SELF_TEST *st,
-                         OSSL_LIB_CTX *libctx)
+                         OSSL_LIB_CTX *libctx, const char *propq)
 {
     int ret = 0;
     unsigned char out[128];
@@ -201,7 +201,7 @@ static int self_test_kdf(const ST_KAT_KDF *t, OSSL_SELF_TEST *st,
     if (bld == NULL)
         goto err;
 
-    kdf = EVP_KDF_fetch(libctx, t->algorithm, "");
+    kdf = EVP_KDF_fetch(libctx, t->algorithm, propq);
     if (kdf == NULL)
         goto err;
 
@@ -209,7 +209,7 @@ static int self_test_kdf(const ST_KAT_KDF *t, OSSL_SELF_TEST *st,
     if (ctx == NULL)
         goto err;
 
-    bnctx = BN_CTX_new_ex(libctx);
+    bnctx = BN_CTX_new_ex(libctx, propq);
     if (bnctx == NULL)
         goto err;
     if (!add_params(bld, t->params, bnctx))
@@ -242,7 +242,7 @@ err:
 }
 
 static int self_test_drbg(const ST_KAT_DRBG *t, OSSL_SELF_TEST *st,
-                          OSSL_LIB_CTX *libctx)
+                          OSSL_LIB_CTX *libctx, const char *propq)
 {
     int ret = 0;
     unsigned char out[256];
@@ -256,7 +256,7 @@ static int self_test_drbg(const ST_KAT_DRBG *t, OSSL_SELF_TEST *st,
 
     OSSL_SELF_TEST_onbegin(st, OSSL_SELF_TEST_TYPE_DRBG, t->desc);
 
-    rand = EVP_RAND_fetch(libctx, "TEST-RAND", NULL);
+    rand = EVP_RAND_fetch(libctx, "TEST-RAND", propq);
     if (rand == NULL)
         goto err;
 
@@ -270,7 +270,7 @@ static int self_test_drbg(const ST_KAT_DRBG *t, OSSL_SELF_TEST *st,
     if (!EVP_RAND_set_ctx_params(test, drbg_params))
         goto err;
 
-    rand = EVP_RAND_fetch(libctx, t->algorithm, NULL);
+    rand = EVP_RAND_fetch(libctx, t->algorithm, propq);
     if (rand == NULL)
         goto err;
 
@@ -354,7 +354,8 @@ err:
 
 #if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC)
 static int self_test_ka(const ST_KAT_KAS *t,
-                        OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx)
+                        OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx,
+                        const char *propq)
 {
     int ret = 0;
     EVP_PKEY_CTX *kactx = NULL, *dctx = NULL;
@@ -368,7 +369,7 @@ static int self_test_ka(const ST_KAT_KAS *t,
 
     OSSL_SELF_TEST_onbegin(st, OSSL_SELF_TEST_TYPE_KAT_KA, t->desc);
 
-    bnctx = BN_CTX_new_ex(libctx);
+    bnctx = BN_CTX_new_ex(libctx, propq);
     if (bnctx == NULL)
         goto err;
 
@@ -390,7 +391,7 @@ static int self_test_ka(const ST_KAT_KAS *t,
         goto err;
 
     /* Create a EVP_PKEY_CTX to load the DH keys into */
-    kactx = EVP_PKEY_CTX_new_from_name(libctx, t->algorithm, "");
+    kactx = EVP_PKEY_CTX_new_from_name(libctx, t->algorithm, propq);
     if (kactx == NULL)
         goto err;
     if (EVP_PKEY_fromdata_init(kactx) <= 0
@@ -401,7 +402,7 @@ static int self_test_ka(const ST_KAT_KAS *t,
         goto err;
 
     /* Create a EVP_PKEY_CTX to perform key derivation */
-    dctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey, NULL);
+    dctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey, propq);
     if (dctx == NULL)
         goto err;
 
@@ -431,7 +432,8 @@ err:
 #endif /* !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC) */
 
 static int self_test_sign(const ST_KAT_SIGN *t,
-                         OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx)
+                         OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx,
+                         const char *propq)
 {
     int ret = 0;
     OSSL_PARAM *params = NULL, *params_sig = NULL;
@@ -449,7 +451,7 @@ static int self_test_sign(const ST_KAT_SIGN *t,
 
     OSSL_SELF_TEST_onbegin(st, OSSL_SELF_TEST_TYPE_KAT_SIGNATURE, t->desc);
 
-    bnctx = BN_CTX_new_ex(libctx);
+    bnctx = BN_CTX_new_ex(libctx, propq);
     if (bnctx == NULL)
         goto err;
 
@@ -462,7 +464,7 @@ static int self_test_sign(const ST_KAT_SIGN *t,
     params = OSSL_PARAM_BLD_to_param(bld);
 
     /* Create a EVP_PKEY_CTX to load the DSA key into */
-    kctx = EVP_PKEY_CTX_new_from_name(libctx, t->algorithm, "");
+    kctx = EVP_PKEY_CTX_new_from_name(libctx, t->algorithm, propq);
     if (kctx == NULL || params == NULL)
         goto err;
     if (EVP_PKEY_fromdata_init(kctx) <= 0
@@ -470,7 +472,7 @@ static int self_test_sign(const ST_KAT_SIGN *t,
         goto err;
 
     /* Create a EVP_PKEY_CTX to use for the signing operation */
-    sctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey, NULL);
+    sctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey, propq);
     if (sctx == NULL
         || EVP_PKEY_sign_init(sctx) <= 0)
         goto err;
@@ -521,7 +523,7 @@ err:
  * and decrypt..
  */
 static int self_test_asym_cipher(const ST_KAT_ASYM_CIPHER *t, OSSL_SELF_TEST *st,
-                                 OSSL_LIB_CTX *libctx)
+                                 OSSL_LIB_CTX *libctx, const char *propq)
 {
     int ret = 0;
     OSSL_PARAM *keyparams = NULL, *initparams = NULL;
@@ -534,7 +536,7 @@ static int self_test_asym_cipher(const ST_KAT_ASYM_CIPHER *t, OSSL_SELF_TEST *st
 
     OSSL_SELF_TEST_onbegin(st, OSSL_SELF_TEST_TYPE_KAT_ASYM_CIPHER, t->desc);
 
-    bnctx = BN_CTX_new_ex(libctx);
+    bnctx = BN_CTX_new_ex(libctx, propq);
     if (bnctx == NULL)
         goto err;
 
@@ -544,7 +546,7 @@ static int self_test_asym_cipher(const ST_KAT_ASYM_CIPHER *t, OSSL_SELF_TEST *st
         || !add_params(keybld, t->key, bnctx))
         goto err;
     keyparams = OSSL_PARAM_BLD_to_param(keybld);
-    keyctx = EVP_PKEY_CTX_new_from_name(libctx, t->algorithm, NULL);
+    keyctx = EVP_PKEY_CTX_new_from_name(libctx, t->algorithm, propq);
     if (keyctx == NULL || keyparams == NULL)
         goto err;
     if (EVP_PKEY_fromdata_init(keyctx) <= 0
@@ -552,7 +554,7 @@ static int self_test_asym_cipher(const ST_KAT_ASYM_CIPHER *t, OSSL_SELF_TEST *st
         goto err;
 
     /* Create a EVP_PKEY_CTX to use for the encrypt or decrypt operation */
-    encctx = EVP_PKEY_CTX_new_from_pkey(libctx, key, NULL);
+    encctx = EVP_PKEY_CTX_new_from_pkey(libctx, key, propq);
     if (encctx == NULL
         || (t->encrypt && EVP_PKEY_encrypt_init(encctx) <= 0)
         || (!t->encrypt && EVP_PKEY_decrypt_init(encctx) <= 0))
@@ -606,69 +608,76 @@ err:
  * All tests are run regardless of if they fail or not.
  * Return 0 if any test fails.
  */
-static int self_test_digests(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx)
+static int self_test_digests(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx,
+                             const char *propq)
 {
     int i, ret = 1;
 
     for (i = 0; i < (int)OSSL_NELEM(st_kat_digest_tests); ++i) {
-        if (!self_test_digest(&st_kat_digest_tests[i], st, libctx))
+        if (!self_test_digest(&st_kat_digest_tests[i], st, libctx, propq))
             ret = 0;
     }
     return ret;
 }
 
-static int self_test_ciphers(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx)
+static int self_test_ciphers(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx,
+                             const char *propq)
 {
     int i, ret = 1;
 
     for (i = 0; i < (int)OSSL_NELEM(st_kat_cipher_tests); ++i) {
-        if (!self_test_cipher(&st_kat_cipher_tests[i], st, libctx))
+        if (!self_test_cipher(&st_kat_cipher_tests[i], st, libctx, propq))
             ret = 0;
     }
     return ret;
 }
 
-static int self_test_asym_ciphers(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx)
+static int self_test_asym_ciphers(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx,
+                                  const char *propq)
 {
     int i, ret = 1;
 
     for (i = 0; i < (int)OSSL_NELEM(st_kat_asym_cipher_tests); ++i) {
-        if (!self_test_asym_cipher(&st_kat_asym_cipher_tests[i], st, libctx))
+        if (!self_test_asym_cipher(&st_kat_asym_cipher_tests[i], st, libctx,
+                                   propq))
             ret = 0;
     }
     return ret;
 }
 
-static int self_test_kdfs(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx)
+static int self_test_kdfs(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx,
+                          const char *propq)
 {
     int i, ret = 1;
 
     for (i = 0; i < (int)OSSL_NELEM(st_kat_kdf_tests); ++i) {
-        if (!self_test_kdf(&st_kat_kdf_tests[i], st, libctx))
+        if (!self_test_kdf(&st_kat_kdf_tests[i], st, libctx, propq))
             ret = 0;
     }
     return ret;
 }
 
-static int self_test_drbgs(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx)
+static int self_test_drbgs(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx,
+                           const char *propq)
 {
     int i, ret = 1;
 
     for (i = 0; i < (int)OSSL_NELEM(st_kat_drbg_tests); ++i) {
-        if (!self_test_drbg(&st_kat_drbg_tests[i], st, libctx))
+        if (!self_test_drbg(&st_kat_drbg_tests[i], st, libctx, propq))
             ret = 0;
     }
     return ret;
 }
 
-static int self_test_kas(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx)
+static int self_test_kas(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx,
+                         const char *propq)
 {
     int ret = 1;
 #if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC)
     int i;
 
     for (i = 0; i < (int)OSSL_NELEM(st_kat_kas_tests); ++i) {
-        if (!self_test_ka(&st_kat_kas_tests[i], st, libctx))
+        if (!self_test_ka(&st_kat_kas_tests[i], st, libctx, propq))
             ret = 0;
     }
 #endif
@@ -676,12 +685,13 @@ static int self_test_kas(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx)
     return ret;
 }
 
-static int self_test_signatures(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx)
+static int self_test_signatures(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx,
+                                const char *propq)
 {
     int i, ret = 1;
 
     for (i = 0; i < (int)OSSL_NELEM(st_kat_sign_tests); ++i) {
-        if (!self_test_sign(&st_kat_sign_tests[i], st, libctx))
+        if (!self_test_sign(&st_kat_sign_tests[i], st, libctx, propq))
             ret = 0;
     }
     return ret;
@@ -692,23 +702,23 @@ static int self_test_signatures(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx)
  * Return 1 is successful, otherwise return 0.
  * This runs all the tests regardless of if any fail.
  */
-int SELF_TEST_kats(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx)
+int SELF_TEST_kats(OSSL_SELF_TEST *st, OSSL_LIB_CTX *libctx, const char *propq)
 {
     int ret = 1;
 
-    if (!self_test_digests(st, libctx))
+    if (!self_test_digests(st, libctx, propq))
         ret = 0;
-    if (!self_test_ciphers(st, libctx))
+    if (!self_test_ciphers(st, libctx, propq))
         ret = 0;
-    if (!self_test_signatures(st, libctx))
+    if (!self_test_signatures(st, libctx, propq))
         ret = 0;
-    if (!self_test_kdfs(st, libctx))
+    if (!self_test_kdfs(st, libctx, propq))
         ret = 0;
-    if (!self_test_drbgs(st, libctx))
+    if (!self_test_drbgs(st, libctx, propq))
         ret = 0;
-    if (!self_test_kas(st, libctx))
+    if (!self_test_kas(st, libctx, propq))
         ret = 0;
-    if (!self_test_asym_ciphers(st, libctx))
+    if (!self_test_asym_ciphers(st, libctx, propq))
         ret = 0;
 
     return ret;

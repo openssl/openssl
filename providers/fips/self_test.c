@@ -326,7 +326,7 @@ int SELF_TEST_post(SELF_TEST_POST_PARAMS *st, int on_demand_test)
 
     /* Only runs the KAT's during installation OR on_demand() */
     if (on_demand_test || kats_already_passed == 0) {
-        if (!SELF_TEST_kats(ev, st->libctx)) {
+        if (!SELF_TEST_kats(ev, st->libctx, NULL)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_SELF_TEST_KAT_FAILURE);
             goto end;
         }

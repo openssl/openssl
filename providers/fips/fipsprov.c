@@ -633,7 +633,7 @@ int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
     }
 
     /* TODO(3.0): Tests will hang if this is removed */
-    (void)RAND_get0_public(libctx);
+    (void)RAND_get0_public(libctx, NULL);
 
     *out = fips_dispatch_table;
     return 1;
