@@ -60,13 +60,13 @@ static int context_init(OSSL_LIB_CTX *ctx)
     }
 
     /* OSSL_LIB_CTX is built on top of ex_data so we initialise that directly */
-    if (!do_ex_data_init(ctx))
+    if (!ossl_do_ex_data_init(ctx))
         goto err;
     exdata_done = 1;
 
-    if (!crypto_new_ex_data_ex(ctx, CRYPTO_EX_INDEX_OSSL_LIB_CTX, NULL,
-                               &ctx->data)) {
-        crypto_cleanup_all_ex_data_int(ctx);
+    if (!ossl_crypto_new_ex_data_ex(ctx, CRYPTO_EX_INDEX_OSSL_LIB_CTX, NULL,
+                                    &ctx->data)) {
+        ossl_crypto_cleanup_all_ex_data_int(ctx);
         goto err;
     }
 
@@ -77,7 +77,7 @@ static int context_init(OSSL_LIB_CTX *ctx)
     return 1;
  err:
     if (exdata_done)
-        crypto_cleanup_all_ex_data_int(ctx);
+        ossl_crypto_cleanup_all_ex_data_int(ctx);
     CRYPTO_THREAD_lock_free(ctx->oncelock);
     CRYPTO_THREAD_lock_free(ctx->lock);
     ctx->lock = NULL;
@@ -102,7 +102,7 @@ static int context_deinit(OSSL_LIB_CTX *ctx)
         OPENSSL_free(tmp);
     }
     CRYPTO_free_ex_data(CRYPTO_EX_INDEX_OSSL_LIB_CTX, NULL, &ctx->data);
-    crypto_cleanup_all_ex_data_int(ctx);
+    ossl_crypto_cleanup_all_ex_data_int(ctx);
     for (i = 0; i < OSSL_LIB_CTX_MAX_INDEXES; i++)
         CRYPTO_THREAD_lock_free(ctx->index_locks[i]);
 
@@ -228,7 +228,7 @@ static void ossl_lib_ctx_generic_new(void *parent_ign, void *ptr_ign,
                                      long argl_ign, void *argp)
 {
     const OSSL_LIB_CTX_METHOD *meth = argp;
-    OSSL_LIB_CTX *ctx = crypto_ex_data_get_ossl_lib_ctx(ad);
+    OSSL_LIB_CTX *ctx = ossl_crypto_ex_data_get_ossl_lib_ctx(ad);
     void *ptr = meth->new_func(ctx);
 
     if (ptr != NULL) {
@@ -261,10 +261,10 @@ static int ossl_lib_ctx_init_index(OSSL_LIB_CTX *ctx, int static_index,
     if (ctx == NULL)
         return 0;
 
-    idx = crypto_get_ex_new_index_ex(ctx, CRYPTO_EX_INDEX_OSSL_LIB_CTX, 0,
-                                     (void *)meth,
-                                     ossl_lib_ctx_generic_new,
-                                     NULL, ossl_lib_ctx_generic_free);
+    idx = ossl_crypto_get_ex_new_index_ex(ctx, CRYPTO_EX_INDEX_OSSL_LIB_CTX, 0,
+                                          (void *)meth,
+                                          ossl_lib_ctx_generic_new,
+                                          NULL, ossl_lib_ctx_generic_free);
     if (idx < 0)
         return 0;
 
