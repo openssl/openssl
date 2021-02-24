@@ -153,6 +153,8 @@ static int rsa_encrypt(void *vprsactx, unsigned char *out, size_t *outlen,
     if (prsactx->pad_mode == RSA_PKCS1_OAEP_PADDING) {
         int rsasize = RSA_size(prsactx->rsa);
         unsigned char *tbuf;
+        const char *propq = ossl_rsa_get0_propq(prsactx->rsa);
+
 
         if ((tbuf = OPENSSL_malloc(rsasize)) == NULL) {
             ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
@@ -170,7 +172,8 @@ static int rsa_encrypt(void *vprsactx, unsigned char *out, size_t *outlen,
                                                     prsactx->oaep_label,
                                                     prsactx->oaep_labellen,
                                                     prsactx->oaep_md,
-                                                    prsactx->mgf1_md);
+                                                    prsactx->mgf1_md,
+                                                    propq);
 
         if (!ret) {
             OPENSSL_free(tbuf);
@@ -266,7 +269,8 @@ static int rsa_decrypt(void *vprsactx, unsigned char *out, size_t *outlen,
             }
             ret = ossl_rsa_padding_check_PKCS1_type_2_TLS(
                         prsactx->libctx, out, outsize, tbuf, len,
-                        prsactx->client_version, prsactx->alt_version);
+                        prsactx->client_version, prsactx->alt_version,
+                        ossl_rsa_get0_propq(prsactx->rsa));
         }
         OPENSSL_free(tbuf);
     } else {

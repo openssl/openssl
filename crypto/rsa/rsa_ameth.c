@@ -933,7 +933,7 @@ static int rsa_int_import_from(const OSSL_PARAM params[], void *vpctx,
 {
     EVP_PKEY_CTX *pctx = vpctx;
     EVP_PKEY *pkey = EVP_PKEY_CTX_get0_pkey(pctx);
-    RSA *rsa = ossl_rsa_new_with_ctx(pctx->libctx);
+    RSA *rsa = ossl_rsa_new_with_ctx(pctx->libctx, NULL);
     RSA_PSS_PARAMS_30 rsa_pss_params = { 0, };
     int pss_defaults_set = 0;
     int ok = 0;

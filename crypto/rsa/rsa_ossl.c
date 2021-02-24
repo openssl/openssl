@@ -97,7 +97,7 @@ static int rsa_ossl_public_encrypt(int flen, const unsigned char *from,
         }
     }
 
-    if ((ctx = BN_CTX_new_ex(rsa->libctx)) == NULL)
+    if ((ctx = BN_CTX_new_ex(rsa->libctx, rsa->propq)) == NULL)
         goto err;
     BN_CTX_start(ctx);
     f = BN_CTX_get(ctx);
@@ -112,16 +112,17 @@ static int rsa_ossl_public_encrypt(int flen, const unsigned char *from,
     switch (padding) {
     case RSA_PKCS1_PADDING:
         i = ossl_rsa_padding_add_PKCS1_type_2_ex(rsa->libctx, buf, num,
-                                                 from, flen);
+                                                 from, flen, rsa->propq);
         break;
     case RSA_PKCS1_OAEP_PADDING:
         i = ossl_rsa_padding_add_PKCS1_OAEP_mgf1_ex(rsa->libctx, buf, num,
                                                     from, flen, NULL, 0,
-                                                    NULL, NULL);
+                                                    NULL, NULL, rsa->propq);
         break;
 #ifndef FIPS_MODULE
     case RSA_SSLV23_PADDING:
-        i = ossl_rsa_padding_add_SSLv23_ex(rsa->libctx, buf, num, from, flen);
+        i = ossl_rsa_padding_add_SSLv23_ex(rsa->libctx, buf, num, from, flen,
+                                           rsa->propq);
         break;
 #endif
     case RSA_NO_PADDING:
@@ -256,7 +257,7 @@ static int rsa_ossl_private_encrypt(int flen, const unsigned char *from,
     BIGNUM *unblind = NULL;
     BN_BLINDING *blinding = NULL;
 
-    if ((ctx = BN_CTX_new_ex(rsa->libctx)) == NULL)
+    if ((ctx = BN_CTX_new_ex(rsa->libctx, rsa->propq)) == NULL)
         goto err;
     BN_CTX_start(ctx);
     f = BN_CTX_get(ctx);
@@ -389,7 +390,7 @@ static int rsa_ossl_private_decrypt(int flen, const unsigned char *from,
     BIGNUM *unblind = NULL;
     BN_BLINDING *blinding = NULL;
 
-    if ((ctx = BN_CTX_new_ex(rsa->libctx)) == NULL)
+    if ((ctx = BN_CTX_new_ex(rsa->libctx, rsa->propq)) == NULL)
         goto err;
     BN_CTX_start(ctx);
     f = BN_CTX_get(ctx);
@@ -543,7 +544,7 @@ static int rsa_ossl_public_decrypt(int flen, const unsigned char *from,
         }
     }
 
-    if ((ctx = BN_CTX_new_ex(rsa->libctx)) == NULL)
+    if ((ctx = BN_CTX_new_ex(rsa->libctx, rsa->propq)) == NULL)
         goto err;
     BN_CTX_start(ctx);
     f = BN_CTX_get(ctx);

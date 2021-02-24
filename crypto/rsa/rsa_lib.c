@@ -26,12 +26,13 @@
 #include "crypto/security_bits.h"
 #include "rsa_local.h"
 
-static RSA *rsa_new_intern(ENGINE *engine, OSSL_LIB_CTX *libctx);
+static RSA *rsa_new_intern(ENGINE *engine, OSSL_LIB_CTX *libctx,
+                           const char *propq);
 
 #ifndef FIPS_MODULE
 RSA *RSA_new(void)
 {
-    return rsa_new_intern(NULL, NULL);
+    return rsa_new_intern(NULL, NULL, NULL);
 }
 
 const RSA_METHOD *RSA_get_method(const RSA *rsa)
@@ -61,16 +62,17 @@ int RSA_set_method(RSA *rsa, const RSA_METHOD *meth)
 
 RSA *RSA_new_method(ENGINE *engine)
 {
-    return rsa_new_intern(engine, NULL);
+    return rsa_new_intern(engine, NULL, NULL);
 }
 #endif
 
-RSA *ossl_rsa_new_with_ctx(OSSL_LIB_CTX *libctx)
+RSA *ossl_rsa_new_with_ctx(OSSL_LIB_CTX *libctx, const char *propq)
 {
-    return rsa_new_intern(NULL, libctx);
+    return rsa_new_intern(NULL, libctx, propq);
 }
 
-static RSA *rsa_new_intern(ENGINE *engine, OSSL_LIB_CTX *libctx)
+static RSA *rsa_new_intern(ENGINE *engine, OSSL_LIB_CTX *libctx,
+                           const char *propq)
 {
     RSA *ret = OPENSSL_zalloc(sizeof(*ret));
 
@@ -87,6 +89,13 @@ static RSA *rsa_new_intern(ENGINE *engine, OSSL_LIB_CTX *libctx)
         return NULL;
     }
 
+    if (propq != NULL) {
+        ret->propq = OPENSSL_strdup(propq);
+        if (ret->propq == NULL) {
+            ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
+            goto err;
+        }
+    }
     ret->libctx = libctx;
     ret->meth = RSA_get_default_method();
 #if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODULE)
@@ -172,6 +181,7 @@ void RSA_free(RSA *r)
 #endif
     BN_BLINDING_free(r->blinding);
     BN_BLINDING_free(r->mt_blinding);
+    OPENSSL_free(r->propq);
     OPENSSL_free(r->bignum_data);
     OPENSSL_free(r);
 }
@@ -191,6 +201,11 @@ int RSA_up_ref(RSA *r)
 OSSL_LIB_CTX *ossl_rsa_get0_libctx(RSA *r)
 {
     return r->libctx;
+}
+
+const char *ossl_rsa_get0_propq(RSA *r)
+{
+    return r->propq;
 }
 
 void ossl_rsa_set0_libctx(RSA *r, OSSL_LIB_CTX *libctx)

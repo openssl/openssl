@@ -205,7 +205,8 @@ static int rsasve_gen_rand_bytes(RSA *rsa_pub,
     BN_CTX *bnctx;
     BIGNUM *z, *nminus3;
 
-    bnctx = BN_CTX_secure_new_ex(ossl_rsa_get0_libctx(rsa_pub));
+    bnctx = BN_CTX_secure_new_ex(ossl_rsa_get0_libctx(rsa_pub),
+                                 ossl_rsa_get0_propq(rsa_pub));
     if (bnctx == NULL)
         return 0;
 

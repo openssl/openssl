@@ -80,7 +80,7 @@ static void *rsa_newdata(void *provctx)
     if (!ossl_prov_is_running())
         return NULL;
 
-    rsa = ossl_rsa_new_with_ctx(libctx);
+    rsa = ossl_rsa_new_with_ctx(libctx, NULL);
     if (rsa != NULL) {
         RSA_clear_flags(rsa, RSA_FLAG_TYPE_MASK);
         RSA_set_flags(rsa, RSA_FLAG_TYPE_RSA);
@@ -96,7 +96,7 @@ static void *rsapss_newdata(void *provctx)
     if (!ossl_prov_is_running())
         return NULL;
 
-    rsa = ossl_rsa_new_with_ctx(libctx);
+    rsa = ossl_rsa_new_with_ctx(libctx, NULL);
     if (rsa != NULL) {
         RSA_clear_flags(rsa, RSA_FLAG_TYPE_MASK);
         RSA_set_flags(rsa, RSA_FLAG_TYPE_RSASSAPSS);
@@ -549,7 +549,7 @@ static void *rsa_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
         return NULL;
     }
 
-    if ((rsa_tmp = ossl_rsa_new_with_ctx(gctx->libctx)) == NULL)
+    if ((rsa_tmp = ossl_rsa_new_with_ctx(gctx->libctx, gctx->propq)) == NULL)
         return NULL;
 
     gctx->cb = osslcb;

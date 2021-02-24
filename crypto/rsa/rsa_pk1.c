@@ -120,7 +120,7 @@ int RSA_padding_check_PKCS1_type_1(unsigned char *to, int tlen,
 
 int ossl_rsa_padding_add_PKCS1_type_2_ex(OSSL_LIB_CTX *libctx, unsigned char *to,
                                          int tlen, const unsigned char *from,
-                                         int flen)
+                                         int flen, const char *propq)
 {
     int i, j;
     unsigned char *p;
@@ -138,12 +138,12 @@ int ossl_rsa_padding_add_PKCS1_type_2_ex(OSSL_LIB_CTX *libctx, unsigned char *to
     /* pad out with non-zero random data */
     j = tlen - 3 - flen;
 
-    if (RAND_bytes_ex(libctx, p, j) <= 0)
+    if (RAND_bytes_ex(libctx, p, j, propq) <= 0)
         return 0;
     for (i = 0; i < j; i++) {
         if (*p == '\0')
             do {
-                if (RAND_bytes_ex(libctx, p, 1) <= 0)
+                if (RAND_bytes_ex(libctx, p, 1, propq) <= 0)
                     return 0;
             } while (*p == '\0');
         p++;
@@ -158,7 +158,7 @@ int ossl_rsa_padding_add_PKCS1_type_2_ex(OSSL_LIB_CTX *libctx, unsigned char *to
 int RSA_padding_add_PKCS1_type_2(unsigned char *to, int tlen,
                                  const unsigned char *from, int flen)
 {
-    return ossl_rsa_padding_add_PKCS1_type_2_ex(NULL, to, tlen, from, flen);
+    return ossl_rsa_padding_add_PKCS1_type_2_ex(NULL, to, tlen, from, flen, NULL);
 }
 
 int RSA_padding_check_PKCS1_type_2(unsigned char *to, int tlen,
@@ -295,7 +295,8 @@ int ossl_rsa_padding_check_PKCS1_type_2_TLS(OSSL_LIB_CTX *libctx,
                                             unsigned char *to, size_t tlen,
                                             const unsigned char *from,
                                             size_t flen, int client_version,
-                                            int alt_version)
+                                            int alt_version,
+                                            const char *propq)
 {
     unsigned int i, good, version_good;
     unsigned char rand_premaster_secret[SSL_MAX_MASTER_KEY_LENGTH];
@@ -315,7 +316,7 @@ int ossl_rsa_padding_check_PKCS1_type_2_TLS(OSSL_LIB_CTX *libctx,
      * to decrypt.
      */
     if (RAND_priv_bytes_ex(libctx, rand_premaster_secret,
-                           sizeof(rand_premaster_secret)) <= 0) {
+                           sizeof(rand_premaster_secret), propq) <= 0) {
         ERR_raise(ERR_LIB_RSA, ERR_R_INTERNAL_ERROR);
         return -1;
     }

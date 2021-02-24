@@ -56,6 +56,7 @@ struct rsa_st {
     int dummy_zero;
 
     OSSL_LIB_CTX *libctx;
+    char *propq;
     int32_t version;
     const RSA_METHOD *meth;
     /* functional reference if 'meth' is ENGINE-provided */
@@ -197,9 +198,9 @@ int ossl_rsa_fips186_4_gen_prob_primes(RSA *rsa, RSA_ACVP_TEST *test,
 
 int ossl_rsa_padding_add_SSLv23_ex(OSSL_LIB_CTX *libctx, unsigned char *to,
                                    int tlen, const unsigned char *from,
-                                   int flen);
+                                   int flen, const char *propq);
 int ossl_rsa_padding_add_PKCS1_type_2_ex(OSSL_LIB_CTX *libctx, unsigned char *to,
                                          int tlen, const unsigned char *from,
-                                         int flen);
+                                         int flen, const char *propq);
 
 #endif /* OSSL_CRYPTO_RSA_LOCAL_H */

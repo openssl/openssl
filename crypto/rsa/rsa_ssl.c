@@ -23,7 +23,7 @@
 
 int ossl_rsa_padding_add_SSLv23_ex(OSSL_LIB_CTX *libctx, unsigned char *to,
                                    int tlen, const unsigned char *from,
-                                   int flen)
+                                   int flen, const char *propq)
 {
     int i, j;
     unsigned char *p;
@@ -41,12 +41,12 @@ int ossl_rsa_padding_add_SSLv23_ex(OSSL_LIB_CTX *libctx, unsigned char *to,
     /* pad out with non-zero random data */
     j = tlen - 3 - 8 - flen;
 
-    if (RAND_bytes_ex(libctx, p, j) <= 0)
+    if (RAND_bytes_ex(libctx, p, j, propq) <= 0)
         return 0;
     for (i = 0; i < j; i++) {
         if (*p == '\0')
             do {
-                if (RAND_bytes_ex(libctx, p, 1) <= 0)
+                if (RAND_bytes_ex(libctx, p, 1, propq) <= 0)
                     return 0;
             } while (*p == '\0');
         p++;
@@ -63,7 +63,7 @@ int ossl_rsa_padding_add_SSLv23_ex(OSSL_LIB_CTX *libctx, unsigned char *to,
 int RSA_padding_add_SSLv23(unsigned char *to, int tlen,
                            const unsigned char *from, int flen)
 {
-    return ossl_rsa_padding_add_SSLv23_ex(NULL, to, tlen, from, flen);
+    return ossl_rsa_padding_add_SSLv23_ex(NULL, to, tlen, from, flen, NULL);
 }
 
 /*

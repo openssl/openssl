@@ -120,7 +120,7 @@ BN_BLINDING *RSA_setup_blinding(RSA *rsa, BN_CTX *in_ctx)
     BN_BLINDING *ret = NULL;
 
     if (in_ctx == NULL) {
-        if ((ctx = BN_CTX_new_ex(rsa->libctx)) == NULL)
+        if ((ctx = BN_CTX_new_ex(rsa->libctx, rsa->propq)) == NULL)
             return 0;
     } else {
         ctx = in_ctx;

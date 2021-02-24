@@ -41,7 +41,7 @@ int RSA_padding_add_PKCS1_OAEP(unsigned char *to, int tlen,
                                const unsigned char *param, int plen)
 {
     return ossl_rsa_padding_add_PKCS1_OAEP_mgf1_ex(NULL, to, tlen, from, flen,
-                                                   param, plen, NULL, NULL);
+                                                   param, plen, NULL, NULL, NULL);
 }
 
 /*
@@ -56,7 +56,8 @@ int ossl_rsa_padding_add_PKCS1_OAEP_mgf1_ex(OSSL_LIB_CTX *libctx,
                                             const unsigned char *from, int flen,
                                             const unsigned char *param,
                                             int plen, const EVP_MD *md,
-                                            const EVP_MD *mgf1md)
+                                            const EVP_MD *mgf1md,
+                                            const char *propq)
 {
     int rv = 0;
     int i, emlen = tlen - 1;
@@ -103,7 +104,7 @@ int ossl_rsa_padding_add_PKCS1_OAEP_mgf1_ex(OSSL_LIB_CTX *libctx,
     db[emlen - flen - mdlen - 1] = 0x01;
     memcpy(db + emlen - flen - mdlen, from, (unsigned int)flen);
     /* step 3d: generate random byte string */
-    if (RAND_bytes_ex(libctx, seed, mdlen) <= 0)
+    if (RAND_bytes_ex(libctx, seed, mdlen, propq) <= 0)
         goto err;
 
     dbmask_len = emlen - mdlen;
@@ -140,7 +141,7 @@ int RSA_padding_add_PKCS1_OAEP_mgf1(unsigned char *to, int tlen,
                                     const EVP_MD *md, const EVP_MD *mgf1md)
 {
     return ossl_rsa_padding_add_PKCS1_OAEP_mgf1_ex(NULL, to, tlen, from, flen,
-                                                   param, plen, md, mgf1md);
+                                                   param, plen, md, mgf1md, NULL);
 }
 
 int RSA_padding_check_PKCS1_OAEP(unsigned char *to, int tlen,
