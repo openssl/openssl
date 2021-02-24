@@ -1824,10 +1824,15 @@ int evp_pkey_copy_downgraded(EVP_PKEY **dest, const EVP_PKEY *src)
             keytype = OBJ_nid2sn(type);
 
         /* Make sure we have a clean slate to copy into */
-        if (*dest == NULL)
+        if (*dest == NULL) {
             *dest = EVP_PKEY_new();
-        else
+            if (*dest == NULL) {
+                ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
+                return 0;
+            }
+        } else {
             evp_pkey_free_it(*dest);
+        }
 
         if (EVP_PKEY_set_type(*dest, type)) {
             /* If the key is typed but empty, we're done */
