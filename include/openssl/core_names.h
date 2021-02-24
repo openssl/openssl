@@ -158,6 +158,8 @@ extern "C" {
 #define OSSL_MAC_PARAM_XOF            "xof"            /* int, 0 or 1 */
 #define OSSL_MAC_PARAM_DIGEST_NOINIT  "digest-noinit"  /* int, 0 or 1 */
 #define OSSL_MAC_PARAM_DIGEST_ONESHOT "digest-oneshot" /* int, 0 or 1 */
+#define OSSL_MAC_PARAM_C_ROUNDS       "c-rounds"       /* unsigned int */
+#define OSSL_MAC_PARAM_D_ROUNDS       "d-rounds"       /* unsigned int */
 
 /*
  * If "engine" or "properties" are specified, they should always be paired
