@@ -197,7 +197,7 @@ static int set_pbmac_algor(const OSSL_CMP_CTX *ctx, X509_ALGOR **alg)
 
     pbm = OSSL_CRMF_pbmp_new(ctx->libctx, ctx->pbm_slen,
                              EVP_MD_type(ctx->pbm_owf), ctx->pbm_itercnt,
-                             ctx->pbm_mac);
+                             ctx->pbm_mac, ctx->propq);
     pbm_str = ASN1_STRING_new();
     if (pbm == NULL || pbm_str == NULL)
         goto err;

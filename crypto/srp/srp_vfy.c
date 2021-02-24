@@ -638,7 +638,7 @@ char *SRP_create_verifier_ex(const char *user, const char *pass, char **salt,
     }
 
     if (*salt == NULL) {
-        if (RAND_bytes_ex(libctx, tmp2, SRP_RANDOM_SALT_LEN) <= 0)
+        if (RAND_bytes_ex(libctx, tmp2, SRP_RANDOM_SALT_LEN, propq) <= 0)
             goto err;
 
         s = BN_bin2bn(tmp2, SRP_RANDOM_SALT_LEN, NULL);
@@ -710,7 +710,7 @@ int SRP_create_verifier_BN_ex(const char *user, const char *pass, BIGNUM **salt,
 {
     int result = 0;
     BIGNUM *x = NULL;
-    BN_CTX *bn_ctx = BN_CTX_new_ex(libctx);
+    BN_CTX *bn_ctx = BN_CTX_new_ex(libctx, propq);
     unsigned char tmp2[MAX_LEN];
     BIGNUM *salttmp = NULL;
 
@@ -721,7 +721,7 @@ int SRP_create_verifier_BN_ex(const char *user, const char *pass, BIGNUM **salt,
         goto err;
 
     if (*salt == NULL) {
-        if (RAND_bytes_ex(libctx, tmp2, SRP_RANDOM_SALT_LEN) <= 0)
+        if (RAND_bytes_ex(libctx, tmp2, SRP_RANDOM_SALT_LEN, propq) <= 0)
             goto err;
 
         salttmp = BN_bin2bn(tmp2, SRP_RANDOM_SALT_LEN, NULL);

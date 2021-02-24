@@ -111,7 +111,7 @@ BIGNUM *SRP_Calc_B_ex(const BIGNUM *b, const BIGNUM *N, const BIGNUM *g,
     BN_CTX *bn_ctx;
 
     if (b == NULL || N == NULL || g == NULL || v == NULL ||
-        (bn_ctx = BN_CTX_new_ex(libctx)) == NULL)
+        (bn_ctx = BN_CTX_new_ex(libctx, propq)) == NULL)
         return NULL;
 
     if ((kv = BN_new()) == NULL ||
@@ -218,7 +218,7 @@ BIGNUM *SRP_Calc_client_key_ex(const BIGNUM *N, const BIGNUM *B, const BIGNUM *g
     BN_CTX *bn_ctx;
 
     if (u == NULL || B == NULL || N == NULL || g == NULL || x == NULL
-        || a == NULL || (bn_ctx = BN_CTX_new_ex(libctx)) == NULL)
+        || a == NULL || (bn_ctx = BN_CTX_new_ex(libctx, propq)) == NULL)
         return NULL;
 
     if ((tmp = BN_new()) == NULL ||
