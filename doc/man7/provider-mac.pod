@@ -211,6 +211,16 @@ With some MAC algorithms, it can also be used to set the size that the
 resulting MAC should have.
 Allowable sizes are decided within each implementation.
 
+=item "c-rounds" (B<OSSL_MAC_PARAM_C_ROUNDS>) <unsigned integer>
+
+Specifies the number of rounds per message block for SipHash.  By default this
+is I<2>.
+
+=item "d-rounds" (B<OSSL_MAC_PARAM_D_ROUNDS>) <unsigned integer>
+
+Specifies the number of finalisation rounds for SipHash.  By default this is
+I<4>.
+
 =back
 
 =head1 RETURN VALUES

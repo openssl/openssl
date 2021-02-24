@@ -36,6 +36,14 @@ The length of the "size" parameter should not exceed that of a B<size_t>.
 
 =item "size" (B<OSSL_MAC_PARAM_SIZE>) <unsigned integer>
 
+=item "c-rounds" (B<OSSL_MAC_PARAM_C_ROUNDS>) <unsigned integer>
+
+Specifies the number of rounds per message block.  By default this is I<2>.
+
+=item "d-rounds" (B<OSSL_MAC_PARAM_D_ROUNDS>) <unsigned integer>
+
+Specifies the number of finalisation rounds.  By default this is I<4>.
+
 =back
 
 =head1 SEE ALSO
