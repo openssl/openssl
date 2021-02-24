@@ -1,5 +1,9 @@
 version: 2.1
 
+require_testapproval: &require_testapproval
+  requires:
+    - testapproval
+
 parameters:
   run_downstream_tests:
     type: boolean
@@ -16,7 +20,7 @@ localCheckout: &localCheckout
     cp -a /tmp/_circleci_local_build_repo/.git ${PROJECT_PATH}
 
 jobs:
-  ubuntu_bionic:
+  ubuntu_focal:
     description: A template for running OQS-OpenSSL tests on x64 Ubuntu Bionic Docker VMs
     parameters:
       LIBOQS_SHARED:
@@ -27,8 +31,12 @@ jobs:
         description: "Build OpenSSL as a shared library."
         type: boolean
         default: false
+      TESTSET:
+        description: "OQS test set."
+        type: string
+        default: oqs-test/test_tls_basic.py
     docker:
-      - image: openquantumsafe/ci-ubuntu-bionic-x86_64:latest
+      - image: openquantumsafe/ci-ubuntu-focal-x86_64:latest
 # Re-enable iff docker enforces rate limitations without auth:
 #        auth:
 #          username: $DOCKER_LOGIN
@@ -48,13 +56,13 @@ jobs:
           name: Run OpenSSL tests
           command: env LD_LIBRARY_PATH="$(pwd):$(pwd)/oqs/lib" make test
       - run:
-          name: Run OQS connection, CMS and speed tests
-          command: env LD_LIBRARY_PATH="$(pwd):$(pwd)/oqs/lib" python3 -m pytest --numprocesses=auto oqs-test/test_tls_full.py oqs-test/test_cms.py oqs-test/test_speed.py
+          name: Run OQS tests
+          command: env LD_LIBRARY_PATH="$(pwd):$(pwd)/oqs/lib" python3 -m pytest --numprocesses=auto << parameters.TESTSET >>
 
   macOS:
     description: A template for running OQS-OpenSSL tests on macOS
     macos:
-      xcode: "11.3.0"
+      xcode: "12.4.0"
     parameters:
       LIBOQS_SHARED:
         description: "Build liboqs as a shared library."
@@ -64,11 +72,15 @@ jobs:
         description: "Build OpenSSL as a shared library."
         type: boolean
         default: false
+      TESTSET:
+        description: "OQS test set."
+        type: string
+        default: oqs-test/test_tls_basic.py
     steps:
       - checkout # change this from "checkout" to "*localCheckout" when running CircleCI locally
       - run:
           name: Install dependencies
-          command: brew unlink python@2 && env HOMEBREW_NO_AUTO_UPDATE=1 brew install cmake ninja && pip3 install pytest pytest-xdist psutil
+          command: env HOMEBREW_NO_AUTO_UPDATE=1 brew install cmake ninja && pip3 install pytest pytest-xdist psutil
       - run:
           name: Clone liboqs
           command: ./oqs-scripts/clone_liboqs.sh
@@ -78,19 +90,18 @@ jobs:
       - run:
           name: Build OpenSSL
           command: <<# parameters.OPENSSL_SHARED >> env OPENSSL_LIBTYPE=shared <</ parameters.OPENSSL_SHARED >> ./oqs-scripts/build_openssl.sh
-      # TODO: Figure out why the tests fail on macOS when OpenSSL
-      # is built as a shared library.
-      #- run:
-          #name: Run OpenSSL tests
-          #command: env DYLD_LIBRARY_PATH="$(pwd):$(pwd)/oqs/lib" make test
+      # making liboqs shared lib available in a non-standard place due to https://github.com/openssl/openssl/issues/13413 to allow shared-lib make test to run 
       - run:
-          name: Run OQS connection, CMS and speed tests
-          command: env DYLD_LIBRARY_PATH="$(pwd):$(pwd)/oqs/lib" python3 -m pytest --numprocesses=auto oqs-test/test_tls_full.py oqs-test/test_cms.py oqs-test/test_speed.py
+          name: Run OpenSSL tests
+          command: ln -sf oqs/lib/liboqs.0.dylib . && env DYLD_LIBRARY_PATH="$(pwd):$(pwd)/oqs/lib" make test
+      - run:
+          name: Run OQS tests
+          command: env DYLD_LIBRARY_PATH="$(pwd):$(pwd)/oqs/lib" python3 -m pytest --numprocesses=auto << parameters.TESTSET >>
 
   ubuntu_boringssl_interop:
     description: A job that tests interoperability between OQS-OpenSSL and OQS-BoringSSL on a x64 Ubuntu Bionic Docker VM
     docker:
-      - image: openquantumsafe/ci-ubuntu-bionic-x86_64:latest
+      - image: openquantumsafe/ci-ubuntu-focal-x86_64:latest
 # Re-enable iff docker enforces rate limitations without auth:
 #        auth:
 #          username: $DOCKER_LOGIN
@@ -146,21 +157,30 @@ workflows:
   version: 2.1
   build:
     jobs:
-      - macOS:
-          name: macOS-static_oqs-static_ossl
+      - ubuntu_focal:
+          name: ubuntu-static_oqs-static_ossl
+          context: openquantumsafe
       - macOS:
           name: macOS-shared_oqs-shared_ossl
           LIBOQS_SHARED: true
           OPENSSL_SHARED: true
-      - ubuntu_bionic:
-          name: ubuntu-static_oqs-static_ossl
-          context: openquantumsafe
-      - ubuntu_bionic:
+      - testapproval:
+          requires:
+            - ubuntu-static_oqs-static_ossl
+          type: approval
+      - macOS:
+          <<: *require_testapproval
+          name: macOS-static_oqs-static_ossl
+          TESTSET: oqs-test/test_tls_full.py oqs-test/test_cms.py oqs-test/test_speed.py
+      - ubuntu_focal:
+          <<: *require_testapproval
           name: ubuntu-shared_oqs-shared_ossl
           context: openquantumsafe
           LIBOQS_SHARED: true
           OPENSSL_SHARED: true
+          TESTSET: oqs-test/test_tls_full.py oqs-test/test_cms.py oqs-test/test_speed.py
       - ubuntu_boringssl_interop:
+          <<: *require_testapproval
           name: boringssl-interop
           context: openquantumsafe
   on-main-branch:
