@@ -62,17 +62,19 @@ int RAND_bytes(unsigned char *buf, int num);
 int RAND_priv_bytes(unsigned char *buf, int num);
 
 /* Equivalent of RAND_priv_bytes() but additionally taking an OSSL_LIB_CTX */
-int RAND_priv_bytes_ex(OSSL_LIB_CTX *ctx, unsigned char *buf, int num);
+int RAND_priv_bytes_ex(OSSL_LIB_CTX *ctx, unsigned char *buf, int num,
+                       const char *propq);
 
 /* Equivalent of RAND_bytes() but additionally taking an OSSL_LIB_CTX */
-int RAND_bytes_ex(OSSL_LIB_CTX *ctx, unsigned char *buf, int num);
+int RAND_bytes_ex(OSSL_LIB_CTX *ctx, unsigned char *buf, int num,
+                  const char *propq);
 # ifndef OPENSSL_NO_DEPRECATED_1_1_0
 OSSL_DEPRECATEDIN_1_1_0 int RAND_pseudo_bytes(unsigned char *buf, int num);
 # endif
 
-EVP_RAND_CTX *RAND_get0_primary(OSSL_LIB_CTX *ctx);
-EVP_RAND_CTX *RAND_get0_public(OSSL_LIB_CTX *ctx);
-EVP_RAND_CTX *RAND_get0_private(OSSL_LIB_CTX *ctx);
+EVP_RAND_CTX *RAND_get0_primary(OSSL_LIB_CTX *ctx, const char *propq);
+EVP_RAND_CTX *RAND_get0_public(OSSL_LIB_CTX *ctx, const char *propq);
+EVP_RAND_CTX *RAND_get0_private(OSSL_LIB_CTX *ctx, const char *propq);
 
 int RAND_set_DRBG_type(OSSL_LIB_CTX *ctx, const char *drbg, const char *propq,
                        const char *cipher, const char *digest);

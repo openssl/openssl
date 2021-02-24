@@ -64,12 +64,12 @@ static int gen_bytes(EVP_RAND_CTX *drbg, unsigned char *buf, int num)
 
 static int rand_bytes(unsigned char *buf, int num)
 {
-    return gen_bytes(RAND_get0_public(NULL), buf, num);
+    return gen_bytes(RAND_get0_public(NULL, NULL), buf, num);
 }
 
 static int rand_priv_bytes(unsigned char *buf, int num)
 {
-    return gen_bytes(RAND_get0_private(NULL), buf, num);
+    return gen_bytes(RAND_get0_private(NULL, NULL), buf, num);
 }
 
 
@@ -521,9 +521,9 @@ static int test_rand_fork_safety(int i)
     EVP_RAND_CTX *primary, *public, *private;
 
     /* All three DRBGs should be non-null */
-    if (!TEST_ptr(primary = RAND_get0_primary(NULL))
-        || !TEST_ptr(public = RAND_get0_public(NULL))
-        || !TEST_ptr(private = RAND_get0_private(NULL)))
+    if (!TEST_ptr(primary = RAND_get0_primary(NULL, NULL))
+        || !TEST_ptr(public = RAND_get0_public(NULL, NULL))
+        || !TEST_ptr(private = RAND_get0_private(NULL, NULL)))
         return 0;
 
     /* run the actual test */
@@ -560,9 +560,9 @@ static int test_rand_reseed(void)
 #endif
 
     /* All three DRBGs should be non-null */
-    if (!TEST_ptr(primary = RAND_get0_primary(NULL))
-        || !TEST_ptr(public = RAND_get0_public(NULL))
-        || !TEST_ptr(private = RAND_get0_private(NULL)))
+    if (!TEST_ptr(primary = RAND_get0_primary(NULL, NULL))
+        || !TEST_ptr(public = RAND_get0_public(NULL, NULL))
+        || !TEST_ptr(private = RAND_get0_private(NULL, NULL)))
         return 0;
 
     /* There should be three distinct DRBGs, two of them chained to primary */
@@ -700,8 +700,8 @@ static void run_multi_thread_test(void)
     time_t start = time(NULL);
     EVP_RAND_CTX *public = NULL, *private = NULL;
 
-    if (!TEST_ptr(public = RAND_get0_public(NULL))
-            || !TEST_ptr(private = RAND_get0_private(NULL))
+    if (!TEST_ptr(public = RAND_get0_public(NULL, NULL))
+            || !TEST_ptr(private = RAND_get0_private(NULL, NULL))
             || !TEST_true(set_reseed_time_interval(private, 1))
             || !TEST_true(set_reseed_time_interval(public, 1))) {
         multi_thread_rand_bytes_succeeded = 0;

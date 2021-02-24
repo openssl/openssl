@@ -285,7 +285,7 @@ int RAND_status(void)
         return meth->status != NULL ? meth->status() : 0;
 # endif
 
-    if ((rand = RAND_get0_primary(NULL)) == NULL)
+    if ((rand = RAND_get0_primary(NULL, NULL)) == NULL)
         return 0;
     return EVP_RAND_state(rand) == EVP_RAND_STATE_READY;
 }
@@ -304,7 +304,8 @@ const RAND_METHOD *RAND_get_rand_method(void)
  * the default method, then just call RAND_bytes().  Otherwise make
  * sure we're instantiated and use the private DRBG.
  */
-int RAND_priv_bytes_ex(OSSL_LIB_CTX *ctx, unsigned char *buf, int num)
+int RAND_priv_bytes_ex(OSSL_LIB_CTX *ctx, unsigned char *buf, int num,
+                       const char *propq)
 {
     EVP_RAND_CTX *rand;
 #ifndef OPENSSL_NO_DEPRECATED_3_0
@@ -318,7 +319,7 @@ int RAND_priv_bytes_ex(OSSL_LIB_CTX *ctx, unsigned char *buf, int num)
     }
 #endif
 
-    rand = RAND_get0_private(ctx);
+    rand = RAND_get0_private(ctx, propq);
     if (rand != NULL)
         return EVP_RAND_generate(rand, buf, num, 0, 0, NULL, 0);
 
@@ -327,10 +328,11 @@ int RAND_priv_bytes_ex(OSSL_LIB_CTX *ctx, unsigned char *buf, int num)
 
 int RAND_priv_bytes(unsigned char *buf, int num)
 {
-    return RAND_priv_bytes_ex(NULL, buf, num);
+    return RAND_priv_bytes_ex(NULL, buf, num, NULL);
 }
 
-int RAND_bytes_ex(OSSL_LIB_CTX *ctx, unsigned char *buf, int num)
+int RAND_bytes_ex(OSSL_LIB_CTX *ctx, unsigned char *buf, int num,
+                  const char *propq)
 {
     EVP_RAND_CTX *rand;
 #ifndef OPENSSL_NO_DEPRECATED_3_0
@@ -344,7 +346,7 @@ int RAND_bytes_ex(OSSL_LIB_CTX *ctx, unsigned char *buf, int num)
     }
 #endif
 
-    rand = RAND_get0_public(ctx);
+    rand = RAND_get0_public(ctx, propq);
     if (rand != NULL)
         return EVP_RAND_generate(rand, buf, num, 0, 0, NULL, 0);
 
@@ -353,7 +355,7 @@ int RAND_bytes_ex(OSSL_LIB_CTX *ctx, unsigned char *buf, int num)
 
 int RAND_bytes(unsigned char *buf, int num)
 {
-    return RAND_bytes_ex(NULL, buf, num);
+    return RAND_bytes_ex(NULL, buf, num, NULL);
 }
 
 typedef struct rand_global_st {
@@ -534,16 +536,18 @@ static EVP_RAND_CTX *rand_new_seed(OSSL_LIB_CTX *libctx)
 
 static EVP_RAND_CTX *rand_new_drbg(OSSL_LIB_CTX *libctx, EVP_RAND_CTX *parent,
                                    unsigned int reseed_interval,
-                                   time_t reseed_time_interval)
+                                   time_t reseed_time_interval,
+                                   const char *propq)
 {
     EVP_RAND *rand;
     RAND_GLOBAL *dgbl = rand_get_global(libctx);
     EVP_RAND_CTX *ctx;
     OSSL_PARAM params[7], *p = params;
     char *name, *cipher;
+    const char *prop_query = (dgbl->rng_propq != NULL ? dgbl->rng_propq : propq);
 
     name = dgbl->rng_name != NULL ? dgbl->rng_name : "CTR-DRBG";
-    rand = EVP_RAND_fetch(libctx, name, dgbl->rng_propq);
+    rand = EVP_RAND_fetch(libctx, name, prop_query);
     if (rand == NULL) {
         ERR_raise(ERR_LIB_RAND, RAND_R_UNABLE_TO_FETCH_DRBG);
         return NULL;
@@ -565,9 +569,9 @@ static EVP_RAND_CTX *rand_new_drbg(OSSL_LIB_CTX *libctx, EVP_RAND_CTX *parent,
     if (dgbl->rng_digest != NULL)
         *p++ = OSSL_PARAM_construct_utf8_string(OSSL_DRBG_PARAM_DIGEST,
                                                 dgbl->rng_digest, 0);
-    if (dgbl->rng_propq != NULL)
+    if (prop_query != NULL)
         *p++ = OSSL_PARAM_construct_utf8_string(OSSL_DRBG_PARAM_PROPERTIES,
-                                                dgbl->rng_propq, 0);
+                                                (char *)prop_query, 0);
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_ALG_PARAM_MAC, "HMAC", 0);
     *p++ = OSSL_PARAM_construct_uint(OSSL_DRBG_PARAM_RESEED_REQUESTS,
                                      &reseed_interval);
@@ -592,7 +596,7 @@ static EVP_RAND_CTX *rand_new_drbg(OSSL_LIB_CTX *libctx, EVP_RAND_CTX *parent,
  * Returns pointer to its EVP_RAND_CTX on success, NULL on failure.
  *
  */
-EVP_RAND_CTX *RAND_get0_primary(OSSL_LIB_CTX *ctx)
+EVP_RAND_CTX *RAND_get0_primary(OSSL_LIB_CTX *ctx, const char *propq)
 {
     RAND_GLOBAL *dgbl = rand_get_global(ctx);
     EVP_RAND_CTX *ret;
@@ -628,7 +632,8 @@ EVP_RAND_CTX *RAND_get0_primary(OSSL_LIB_CTX *ctx)
 
     ret = dgbl->primary = rand_new_drbg(ctx, dgbl->seed,
                                         PRIMARY_RESEED_INTERVAL,
-                                        PRIMARY_RESEED_TIME_INTERVAL);
+                                        PRIMARY_RESEED_TIME_INTERVAL,
+                                        propq);
     /*
     * The primary DRBG may be shared between multiple threads so we must
     * enable locking.
@@ -647,7 +652,7 @@ EVP_RAND_CTX *RAND_get0_primary(OSSL_LIB_CTX *ctx)
  * Get the public random generator.
  * Returns pointer to its EVP_RAND_CTX on success, NULL on failure.
  */
-EVP_RAND_CTX *RAND_get0_public(OSSL_LIB_CTX *ctx)
+EVP_RAND_CTX *RAND_get0_public(OSSL_LIB_CTX *ctx, const char *propq)
 {
     RAND_GLOBAL *dgbl = rand_get_global(ctx);
     EVP_RAND_CTX *rand, *primary;
@@ -657,7 +662,7 @@ EVP_RAND_CTX *RAND_get0_public(OSSL_LIB_CTX *ctx)
 
     rand = CRYPTO_THREAD_get_local(&dgbl->public);
     if (rand == NULL) {
-        primary = RAND_get0_primary(ctx);
+        primary = RAND_get0_primary(ctx, propq);
         if (primary == NULL)
             return NULL;
 
@@ -670,7 +675,7 @@ EVP_RAND_CTX *RAND_get0_public(OSSL_LIB_CTX *ctx)
                 && !ossl_init_thread_start(NULL, ctx, rand_delete_thread_state))
             return NULL;
         rand = rand_new_drbg(ctx, primary, SECONDARY_RESEED_INTERVAL,
-                             SECONDARY_RESEED_TIME_INTERVAL);
+                             SECONDARY_RESEED_TIME_INTERVAL, propq);
         CRYPTO_THREAD_set_local(&dgbl->public, rand);
     }
     return rand;
@@ -680,7 +685,7 @@ EVP_RAND_CTX *RAND_get0_public(OSSL_LIB_CTX *ctx)
  * Get the private random generator.
  * Returns pointer to its EVP_RAND_CTX on success, NULL on failure.
  */
-EVP_RAND_CTX *RAND_get0_private(OSSL_LIB_CTX *ctx)
+EVP_RAND_CTX *RAND_get0_private(OSSL_LIB_CTX *ctx, const char *propq)
 {
     RAND_GLOBAL *dgbl = rand_get_global(ctx);
     EVP_RAND_CTX *rand, *primary;
@@ -690,7 +695,7 @@ EVP_RAND_CTX *RAND_get0_private(OSSL_LIB_CTX *ctx)
 
     rand = CRYPTO_THREAD_get_local(&dgbl->private);
     if (rand == NULL) {
-        primary = RAND_get0_primary(ctx);
+        primary = RAND_get0_primary(ctx, propq);
         if (primary == NULL)
             return NULL;
 
@@ -703,7 +708,7 @@ EVP_RAND_CTX *RAND_get0_private(OSSL_LIB_CTX *ctx)
                 && !ossl_init_thread_start(NULL, ctx, rand_delete_thread_state))
             return NULL;
         rand = rand_new_drbg(ctx, primary, SECONDARY_RESEED_INTERVAL,
-                             SECONDARY_RESEED_TIME_INTERVAL);
+                             SECONDARY_RESEED_TIME_INTERVAL, propq);
         CRYPTO_THREAD_set_local(&dgbl->private, rand);
     }
     return rand;

@@ -111,7 +111,7 @@ int ossl_bn_rsa_fips186_4_derive_prime(BIGNUM *Y, BIGNUM *X, const BIGNUM *Xin,
                                        BN_GENCB *cb);
 
 OSSL_LIB_CTX *ossl_bn_get_libctx(BN_CTX *ctx);
-
+const char *ossl_bn_get0_propq(BN_CTX *ctx);
 extern const BIGNUM ossl_bn_inv_sqrt_2;
 
 #endif

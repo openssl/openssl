@@ -26,6 +26,7 @@ static int bnrand(BNRAND_FLAG flag, BIGNUM *rnd, int bits, int top, int bottom,
     unsigned char *buf = NULL;
     int b, ret = 0, bit, bytes, mask;
     OSSL_LIB_CTX *libctx = ossl_bn_get_libctx(ctx);
+    const char *propq = ossl_bn_get0_propq(ctx);
 
     if (bits == 0) {
         if (top != BN_RAND_TOP_ANY || bottom != BN_RAND_BOTTOM_ANY)
@@ -47,8 +48,8 @@ static int bnrand(BNRAND_FLAG flag, BIGNUM *rnd, int bits, int top, int bottom,
     }
 
     /* make a random number and set the top and bottom bits */
-    b = flag == NORMAL ? RAND_bytes_ex(libctx, buf, bytes)
-                       : RAND_priv_bytes_ex(libctx, buf, bytes);
+    b = flag == NORMAL ? RAND_bytes_ex(libctx, buf, bytes, propq)
+                       : RAND_priv_bytes_ex(libctx, buf, bytes, propq);
     if (b <= 0)
         goto err;
 
@@ -60,7 +61,7 @@ static int bnrand(BNRAND_FLAG flag, BIGNUM *rnd, int bits, int top, int bottom,
         unsigned char c;
 
         for (i = 0; i < bytes; i++) {
-            if (RAND_bytes_ex(libctx, &c, 1) <= 0)
+            if (RAND_bytes_ex(libctx, &c, 1, propq) <= 0)
                 goto err;
             if (c >= 128 && i > 0)
                 buf[i] = buf[i - 1];
@@ -257,6 +258,7 @@ int BN_generate_dsa_nonce(BIGNUM *out, const BIGNUM *range,
     int ret = 0;
     EVP_MD *md = NULL;
     OSSL_LIB_CTX *libctx = ossl_bn_get_libctx(ctx);
+    const char *propq = ossl_bn_get0_propq(ctx);
 
     if (mdctx == NULL)
         goto err;
@@ -276,13 +278,14 @@ int BN_generate_dsa_nonce(BIGNUM *out, const BIGNUM *range,
         goto err;
     }
 
-    md = EVP_MD_fetch(libctx, "SHA512", NULL);
+    md = EVP_MD_fetch(libctx, "SHA512", propq);
     if (md == NULL) {
         ERR_raise(ERR_LIB_BN, BN_R_NO_SUITABLE_DIGEST);
         goto err;
     }
     for (done = 0; done < num_k_bytes;) {
-        if (!RAND_priv_bytes_ex(libctx, random_bytes, sizeof(random_bytes)))
+        if (!RAND_priv_bytes_ex(libctx, random_bytes, sizeof(random_bytes),
+                                propq))
             goto err;
 
         if (!EVP_DigestInit_ex(mdctx, md, NULL)

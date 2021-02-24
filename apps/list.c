@@ -432,9 +432,9 @@ static void display_random(const char *name, EVP_RAND_CTX *drbg)
 
 static void list_random_instances(void)
 {
-    display_random("primary", RAND_get0_primary(NULL));
-    display_random("public", RAND_get0_public(NULL));
-    display_random("private", RAND_get0_private(NULL));
+    display_random("primary", RAND_get0_primary(NULL, NULL));
+    display_random("public", RAND_get0_public(NULL, NULL));
+    display_random("private", RAND_get0_private(NULL, NULL));
 }
 
 /*

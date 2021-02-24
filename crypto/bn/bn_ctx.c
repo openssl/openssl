@@ -88,6 +88,7 @@ struct bignum_ctx {
     int flags;
     /* The library context */
     OSSL_LIB_CTX *libctx;
+    char *propq;
 };
 
 #ifndef FIPS_MODULE
@@ -128,7 +129,7 @@ static void ctxdbg(BIO *channel, const char *text, BN_CTX *ctx)
 # define CTXDBG(str, ctx) do {} while(0)
 #endif /* FIPS_MODULE */
 
-BN_CTX *BN_CTX_new_ex(OSSL_LIB_CTX *ctx)
+BN_CTX *BN_CTX_new_ex(OSSL_LIB_CTX *ctx, const char *propq)
 {
     BN_CTX *ret;
 
@@ -136,23 +137,32 @@ BN_CTX *BN_CTX_new_ex(OSSL_LIB_CTX *ctx)
         ERR_raise(ERR_LIB_BN, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
+    if (propq != NULL) {
+        ret->propq = OPENSSL_strdup(propq);
+        if (ret->propq == NULL) {
+            ERR_raise(ERR_LIB_BN, ERR_R_MALLOC_FAILURE);
+            OPENSSL_free(ret);
+            return NULL;
+        }
+    }
+    ret->libctx = ctx;
     /* Initialise the structure */
     BN_POOL_init(&ret->pool);
     BN_STACK_init(&ret->stack);
-    ret->libctx = ctx;
+
     return ret;
 }
 
 #ifndef FIPS_MODULE
 BN_CTX *BN_CTX_new(void)
 {
-    return BN_CTX_new_ex(NULL);
+    return BN_CTX_new_ex(NULL, NULL);
 }
 #endif
 
-BN_CTX *BN_CTX_secure_new_ex(OSSL_LIB_CTX *ctx)
+BN_CTX *BN_CTX_secure_new_ex(OSSL_LIB_CTX *ctx, const char *propq)
 {
-    BN_CTX *ret = BN_CTX_new_ex(ctx);
+    BN_CTX *ret = BN_CTX_new_ex(ctx, propq);
 
     if (ret != NULL)
         ret->flags = BN_FLG_SECURE;
@@ -162,7 +172,7 @@ BN_CTX *BN_CTX_secure_new_ex(OSSL_LIB_CTX *ctx)
 #ifndef FIPS_MODULE
 BN_CTX *BN_CTX_secure_new(void)
 {
-    return BN_CTX_secure_new_ex(NULL);
+    return BN_CTX_secure_new_ex(NULL, NULL);
 }
 #endif
 
@@ -188,6 +198,7 @@ void BN_CTX_free(BN_CTX *ctx)
 #endif
     BN_STACK_finish(&ctx->stack);
     BN_POOL_finish(&ctx->pool);
+    OPENSSL_free(ctx->propq);
     OPENSSL_free(ctx);
 }
 
@@ -254,6 +265,13 @@ OSSL_LIB_CTX *ossl_bn_get_libctx(BN_CTX *ctx)
     if (ctx == NULL)
         return NULL;
     return ctx->libctx;
+}
+
+const char *ossl_bn_get0_propq(BN_CTX *ctx)
+{
+    if (ctx == NULL)
+        return NULL;
+    return ctx->propq;
 }
 
 /************/
