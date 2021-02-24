@@ -159,7 +159,7 @@ int ossl_sm2_encrypt(const EC_KEY *key,
 
     kG = EC_POINT_new(group);
     kP = EC_POINT_new(group);
-    ctx = BN_CTX_new_ex(libctx);
+    ctx = BN_CTX_new_ex(libctx, propq);
     if (kG == NULL || kP == NULL || ctx == NULL) {
         ERR_raise(ERR_LIB_SM2, ERR_R_MALLOC_FAILURE);
         goto done;
@@ -321,7 +321,7 @@ int ossl_sm2_decrypt(const EC_KEY *key,
     C3 = sm2_ctext->C3->data;
     msg_len = sm2_ctext->C2->length;
 
-    ctx = BN_CTX_new_ex(libctx);
+    ctx = BN_CTX_new_ex(libctx, propq);
     if (ctx == NULL) {
         ERR_raise(ERR_LIB_SM2, ERR_R_MALLOC_FAILURE);
         goto done;

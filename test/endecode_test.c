@@ -1181,7 +1181,7 @@ int setup_tests(void)
     };
 
 #ifndef OPENSSL_NO_EC
-    if (!TEST_ptr(bnctx = BN_CTX_new_ex(NULL))
+    if (!TEST_ptr(bnctx = BN_CTX_new_ex(NULL, NULL))
         || !TEST_ptr(bld_prime_nc = OSSL_PARAM_BLD_new())
         || !TEST_ptr(bld_prime = OSSL_PARAM_BLD_new())
         || !create_ec_explicit_prime_params_namedcurve(bld_prime_nc)

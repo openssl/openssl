@@ -417,7 +417,7 @@ static int ec_param_explicit_gen_to_text(BIO *out, const EC_GROUP *group,
 
 /* Print explicit parameters */
 static int ec_param_explicit_to_text(BIO *out, const EC_GROUP *group,
-                                     OSSL_LIB_CTX *libctx)
+                                     OSSL_LIB_CTX *libctx, const char *propq)
 {
     int ret = 0, tmp_nid;
     BN_CTX *ctx = NULL;
@@ -425,7 +425,7 @@ static int ec_param_explicit_to_text(BIO *out, const EC_GROUP *group,
     const unsigned char *seed;
     size_t seed_len = 0;
 
-    ctx = BN_CTX_new_ex(libctx);
+    ctx = BN_CTX_new_ex(libctx, propq);
     if (ctx == NULL)
         return 0;
     BN_CTX_start(ctx);
@@ -458,7 +458,7 @@ err:
 }
 
 static int ec_param_to_text(BIO *out, const EC_GROUP *group,
-                            OSSL_LIB_CTX *libctx)
+                            OSSL_LIB_CTX *libctx, const char *propq)
 {
     if (EC_GROUP_get_asn1_flag(group) & OPENSSL_EC_NAMED_CURVE) {
         const char *curve_name;
@@ -475,7 +475,7 @@ static int ec_param_to_text(BIO *out, const EC_GROUP *group,
         return (curve_name == NULL
                 || BIO_printf(out, "%s: %s\n", "NIST CURVE", curve_name) > 0);
     } else {
-        return ec_param_explicit_to_text(out, group, libctx);
+        return ec_param_explicit_to_text(out, group, libctx, propq);
     }
 }
 
@@ -539,7 +539,8 @@ static int ec_to_text(BIO *out, const void *key, int selection)
         && !print_labeled_buf(out, "pub:", pub, pub_len))
         goto err;
     if ((selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) != 0)
-        ret = ec_param_to_text(out, group, ossl_ec_key_get_libctx(ec));
+        ret = ec_param_to_text(out, group, ossl_ec_key_get_libctx(ec),
+                               ossl_ec_key_get0_propq(ec));
 err:
     OPENSSL_clear_free(priv, priv_len);
     OPENSSL_free(pub);

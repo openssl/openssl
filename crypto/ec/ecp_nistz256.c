@@ -849,7 +849,7 @@ __owur static int ecp_nistz256_mult_precompute(EC_GROUP *group, BN_CTX *ctx)
         return 0;
 
     if (ctx == NULL) {
-        ctx = new_ctx = BN_CTX_new_ex(group->libctx);
+        ctx = new_ctx = BN_CTX_new_ex(group->libctx, group->propq);
         if (ctx == NULL)
             goto err;
     }

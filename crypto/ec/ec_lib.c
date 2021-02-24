@@ -329,7 +329,7 @@ static int ec_guess_cofactor(EC_GROUP *group) {
         return 1;
     }
 
-    if ((ctx = BN_CTX_new_ex(group->libctx)) == NULL)
+    if ((ctx = BN_CTX_new_ex(group->libctx, group->propq)) == NULL)
         return 0;
 
     BN_CTX_start(ctx);
@@ -1185,7 +1185,7 @@ int EC_GROUP_have_precompute_mult(const EC_GROUP *group)
  */
 static int ec_precompute_mont_data(EC_GROUP *group)
 {
-    BN_CTX *ctx = BN_CTX_new_ex(group->libctx);
+    BN_CTX *ctx = BN_CTX_new_ex(group->libctx, group->propq);
     int ret = 0;
 
     BN_MONT_CTX_free(group->mont_data);
@@ -1560,7 +1560,7 @@ EC_GROUP *EC_GROUP_new_from_params(const OSSL_PARAM params[],
         return group;
     }
     /* If it gets here then we are trying explicit parameters */
-    bnctx = BN_CTX_new_ex(libctx);
+    bnctx = BN_CTX_new_ex(libctx, propq);
     if (bnctx == NULL) {
         ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
         return 0;

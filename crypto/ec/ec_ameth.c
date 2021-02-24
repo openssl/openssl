@@ -578,7 +578,7 @@ int ec_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
      * EC_POINT_point2buf() can generate random numbers in some
      * implementations so we need to ensure we use the correct libctx.
      */
-    bnctx = BN_CTX_new_ex(libctx);
+    bnctx = BN_CTX_new_ex(libctx, propq);
     if (bnctx == NULL)
         goto err;
     BN_CTX_start(bnctx);

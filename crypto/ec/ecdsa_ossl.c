@@ -99,7 +99,7 @@ static int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in,
     }
 
     if ((ctx = ctx_in) == NULL) {
-        if ((ctx = BN_CTX_new_ex(eckey->libctx)) == NULL) {
+        if ((ctx = BN_CTX_new_ex(eckey->libctx, eckey->propq)) == NULL) {
             ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
             return 0;
         }
@@ -232,7 +232,7 @@ ECDSA_SIG *ossl_ecdsa_simple_sign_sig(const unsigned char *dgst, int dgst_len,
     }
     s = ret->s;
 
-    if ((ctx = BN_CTX_new_ex(eckey->libctx)) == NULL
+    if ((ctx = BN_CTX_new_ex(eckey->libctx, eckey->propq)) == NULL
         || (m = BN_new()) == NULL) {
         ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
         goto err;
@@ -376,7 +376,7 @@ int ossl_ecdsa_simple_verify_sig(const unsigned char *dgst, int dgst_len,
         return -1;
     }
 
-    ctx = BN_CTX_new_ex(eckey->libctx);
+    ctx = BN_CTX_new_ex(eckey->libctx, eckey->propq);
     if (ctx == NULL) {
         ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
         return -1;

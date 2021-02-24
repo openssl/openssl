@@ -153,7 +153,7 @@ int ossl_ec_GFp_simple_group_set_curve(EC_GROUP *group,
     }
 
     if (ctx == NULL) {
-        ctx = new_ctx = BN_CTX_new_ex(group->libctx);
+        ctx = new_ctx = BN_CTX_new_ex(group->libctx, group->propq);
         if (ctx == NULL)
             return 0;
     }
@@ -211,7 +211,7 @@ int ossl_ec_GFp_simple_group_get_curve(const EC_GROUP *group, BIGNUM *p,
     if (a != NULL || b != NULL) {
         if (group->meth->field_decode) {
             if (ctx == NULL) {
-                ctx = new_ctx = BN_CTX_new_ex(group->libctx);
+                ctx = new_ctx = BN_CTX_new_ex(group->libctx, group->propq);
                 if (ctx == NULL)
                     return 0;
             }
@@ -256,7 +256,7 @@ int ossl_ec_GFp_simple_group_check_discriminant(const EC_GROUP *group,
     BN_CTX *new_ctx = NULL;
 
     if (ctx == NULL) {
-        ctx = new_ctx = BN_CTX_new_ex(group->libctx);
+        ctx = new_ctx = BN_CTX_new_ex(group->libctx, group->propq);
         if (ctx == NULL) {
             ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
             goto err;
@@ -383,7 +383,7 @@ int ossl_ec_GFp_simple_set_Jprojective_coordinates_GFp(const EC_GROUP *group,
     int ret = 0;
 
     if (ctx == NULL) {
-        ctx = new_ctx = BN_CTX_new_ex(group->libctx);
+        ctx = new_ctx = BN_CTX_new_ex(group->libctx, group->propq);
         if (ctx == NULL)
             return 0;
     }
@@ -442,7 +442,7 @@ int ossl_ec_GFp_simple_get_Jprojective_coordinates_GFp(const EC_GROUP *group,
 
     if (group->meth->field_decode != 0) {
         if (ctx == NULL) {
-            ctx = new_ctx = BN_CTX_new_ex(group->libctx);
+            ctx = new_ctx = BN_CTX_new_ex(group->libctx, group->propq);
             if (ctx == NULL)
                 return 0;
         }
@@ -514,7 +514,7 @@ int ossl_ec_GFp_simple_point_get_affine_coordinates(const EC_GROUP *group,
     }
 
     if (ctx == NULL) {
-        ctx = new_ctx = BN_CTX_new_ex(group->libctx);
+        ctx = new_ctx = BN_CTX_new_ex(group->libctx, group->propq);
         if (ctx == NULL)
             return 0;
     }
@@ -633,7 +633,7 @@ int ossl_ec_GFp_simple_add(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a
     p = group->field;
 
     if (ctx == NULL) {
-        ctx = new_ctx = BN_CTX_new_ex(group->libctx);
+        ctx = new_ctx = BN_CTX_new_ex(group->libctx, group->propq);
         if (ctx == NULL)
             return 0;
     }
@@ -817,7 +817,7 @@ int ossl_ec_GFp_simple_dbl(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a
     p = group->field;
 
     if (ctx == NULL) {
-        ctx = new_ctx = BN_CTX_new_ex(group->libctx);
+        ctx = new_ctx = BN_CTX_new_ex(group->libctx, group->propq);
         if (ctx == NULL)
             return 0;
     }
@@ -972,7 +972,7 @@ int ossl_ec_GFp_simple_is_on_curve(const EC_GROUP *group, const EC_POINT *point,
     p = group->field;
 
     if (ctx == NULL) {
-        ctx = new_ctx = BN_CTX_new_ex(group->libctx);
+        ctx = new_ctx = BN_CTX_new_ex(group->libctx, group->propq);
         if (ctx == NULL)
             return -1;
     }
@@ -1089,7 +1089,7 @@ int ossl_ec_GFp_simple_cmp(const EC_GROUP *group, const EC_POINT *a,
     field_sqr = group->meth->field_sqr;
 
     if (ctx == NULL) {
-        ctx = new_ctx = BN_CTX_new_ex(group->libctx);
+        ctx = new_ctx = BN_CTX_new_ex(group->libctx, group->propq);
         if (ctx == NULL)
             return -1;
     }
@@ -1175,7 +1175,7 @@ int ossl_ec_GFp_simple_make_affine(const EC_GROUP *group, EC_POINT *point,
         return 1;
 
     if (ctx == NULL) {
-        ctx = new_ctx = BN_CTX_new_ex(group->libctx);
+        ctx = new_ctx = BN_CTX_new_ex(group->libctx, group->propq);
         if (ctx == NULL)
             return 0;
     }
@@ -1216,7 +1216,7 @@ int ossl_ec_GFp_simple_points_make_affine(const EC_GROUP *group, size_t num,
         return 1;
 
     if (ctx == NULL) {
-        ctx = new_ctx = BN_CTX_new_ex(group->libctx);
+        ctx = new_ctx = BN_CTX_new_ex(group->libctx, group->propq);
         if (ctx == NULL)
             return 0;
     }
@@ -1388,7 +1388,8 @@ int ossl_ec_GFp_simple_field_inv(const EC_GROUP *group, BIGNUM *r,
     int ret = 0;
 
     if (ctx == NULL
-            && (ctx = new_ctx = BN_CTX_secure_new_ex(group->libctx)) == NULL)
+            && (ctx = new_ctx = BN_CTX_secure_new_ex(group->libctx,
+                                                     group->propq)) == NULL)
         return 0;
 
     BN_CTX_start(ctx);

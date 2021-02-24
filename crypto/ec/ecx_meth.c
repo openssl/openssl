@@ -75,7 +75,7 @@ static int ecx_key_op(EVP_PKEY *pkey, int id, const X509_ALGOR *palg,
             goto err;
         }
         if (op == KEY_OP_KEYGEN) {
-            if (RAND_priv_bytes_ex(libctx, privkey, KEYLENID(id)) <= 0)
+            if (RAND_priv_bytes_ex(libctx, privkey, KEYLENID(id), propq) <= 0)
                 goto err;
             if (id == EVP_PKEY_X25519) {
                 privkey[0] &= 248;

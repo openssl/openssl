@@ -58,7 +58,7 @@ int ossl_ecdh_simple_compute_key(unsigned char **pout, size_t *poutlen,
     size_t buflen, len;
     unsigned char *buf = NULL;
 
-    if ((ctx = BN_CTX_new_ex(ecdh->libctx)) == NULL)
+    if ((ctx = BN_CTX_new_ex(ecdh->libctx, ecdh->propq)) == NULL)
         goto err;
     BN_CTX_start(ctx);
     x = BN_CTX_get(ctx);

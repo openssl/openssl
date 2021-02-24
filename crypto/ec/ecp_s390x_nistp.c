@@ -58,7 +58,7 @@ static int ec_GFp_s390x_nistp_mul(const EC_GROUP *group, EC_POINT *r,
     int rc = -1;
 
     if (ctx == NULL) {
-        ctx = new_ctx = BN_CTX_new_ex(group->libctx);
+        ctx = new_ctx = BN_CTX_new_ex(group->libctx, group->propq);
         if (ctx == NULL)
             return 0;
     }
@@ -241,7 +241,7 @@ static int ecdsa_s390x_nistp_verify_sig(const unsigned char *dgst, int dgstlen,
         return -1;
     }
 
-    ctx = BN_CTX_new_ex(group->libctx);
+    ctx = BN_CTX_new_ex(group->libctx, group->propq);
     if (ctx == NULL) {
         ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
         return -1;

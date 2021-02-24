@@ -44,7 +44,7 @@ int ossl_sm2_compute_z_digest(uint8_t *out,
     uint8_t e_byte = 0;
 
     hash = EVP_MD_CTX_new();
-    ctx = BN_CTX_new_ex(ossl_ec_key_get_libctx(key));
+    ctx = BN_CTX_new_ex(ossl_ec_key_get_libctx(key), ossl_ec_key_get0_propq(key));
     if (hash == NULL || ctx == NULL) {
         ERR_raise(ERR_LIB_SM2, ERR_R_MALLOC_FAILURE);
         goto done;
@@ -211,7 +211,7 @@ static ECDSA_SIG *sm2_sig_gen(const EC_KEY *key, const BIGNUM *e)
     OSSL_LIB_CTX *libctx = ossl_ec_key_get_libctx(key);
 
     kG = EC_POINT_new(group);
-    ctx = BN_CTX_new_ex(libctx);
+    ctx = BN_CTX_new_ex(libctx, ossl_ec_key_get0_propq(key));
     if (kG == NULL || ctx == NULL) {
         ERR_raise(ERR_LIB_SM2, ERR_R_MALLOC_FAILURE);
         goto done;
@@ -310,7 +310,7 @@ static int sm2_sig_verify(const EC_KEY *key, const ECDSA_SIG *sig,
     const BIGNUM *s = NULL;
     OSSL_LIB_CTX *libctx = ossl_ec_key_get_libctx(key);
 
-    ctx = BN_CTX_new_ex(libctx);
+    ctx = BN_CTX_new_ex(libctx, ossl_ec_key_get0_propq(key));
     pt = EC_POINT_new(group);
     if (ctx == NULL || pt == NULL) {
         ERR_raise(ERR_LIB_SM2, ERR_R_MALLOC_FAILURE);

@@ -264,7 +264,7 @@ static int ec_generate_key(EC_KEY *eckey, int pairwise_test)
     BIGNUM *order = NULL;
     EC_POINT *pub_key = NULL;
     const EC_GROUP *group = eckey->group;
-    BN_CTX *ctx = BN_CTX_secure_new_ex(eckey->libctx);
+    BN_CTX *ctx = BN_CTX_secure_new_ex(eckey->libctx, eckey->propq);
     int sm2 = EC_KEY_get_flags(eckey) & EC_FLAG_SM2_RANGE ? 1 : 0;
 
     if (ctx == NULL)
@@ -366,7 +366,7 @@ int ossl_ec_key_simple_generate_key(EC_KEY *eckey)
 int ossl_ec_key_simple_generate_public_key(EC_KEY *eckey)
 {
     int ret;
-    BN_CTX *ctx = BN_CTX_new_ex(eckey->libctx);
+    BN_CTX *ctx = BN_CTX_new_ex(eckey->libctx, eckey->propq);
 
     if (ctx == NULL)
         return 0;
@@ -586,7 +586,7 @@ int ossl_ec_key_simple_check_key(const EC_KEY *eckey)
         ERR_raise(ERR_LIB_EC, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
-    if ((ctx = BN_CTX_new_ex(eckey->libctx)) == NULL)
+    if ((ctx = BN_CTX_new_ex(eckey->libctx, eckey->propq)) == NULL)
         return 0;
 
     if (!ossl_ec_key_public_check(eckey, ctx))
@@ -615,7 +615,7 @@ int EC_KEY_set_public_key_affine_coordinates(EC_KEY *key, BIGNUM *x,
         ERR_raise(ERR_LIB_EC, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
-    ctx = BN_CTX_new_ex(key->libctx);
+    ctx = BN_CTX_new_ex(key->libctx, key->propq);
     if (ctx == NULL)
         return 0;
 

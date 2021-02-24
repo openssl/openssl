@@ -34,7 +34,7 @@ int ossl_ec_GFp_simple_set_compressed_coordinates(const EC_GROUP *group,
 #endif
 
     if (ctx == NULL) {
-        ctx = new_ctx = BN_CTX_new_ex(group->libctx);
+        ctx = new_ctx = BN_CTX_new_ex(group->libctx, group->propq);
         if (ctx == NULL)
             return 0;
     }
@@ -201,7 +201,7 @@ size_t ossl_ec_GFp_simple_point2oct(const EC_GROUP *group, const EC_POINT *point
         }
 
         if (ctx == NULL) {
-            ctx = new_ctx = BN_CTX_new_ex(group->libctx);
+            ctx = new_ctx = BN_CTX_new_ex(group->libctx, group->propq);
             if (ctx == NULL)
                 return 0;
         }
@@ -322,7 +322,7 @@ int ossl_ec_GFp_simple_oct2point(const EC_GROUP *group, EC_POINT *point,
     }
 
     if (ctx == NULL) {
-        ctx = new_ctx = BN_CTX_new_ex(group->libctx);
+        ctx = new_ctx = BN_CTX_new_ex(group->libctx, group->propq);
         if (ctx == NULL)
             return 0;
     }

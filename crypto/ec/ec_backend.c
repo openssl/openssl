@@ -349,7 +349,7 @@ int ossl_ec_key_fromdata(EC_KEY *ec, const OSSL_PARAM params[], int include_priv
         param_priv_key =
             OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_PRIV_KEY);
 
-    ctx = BN_CTX_new_ex(ossl_ec_key_get_libctx(ec));
+    ctx = BN_CTX_new_ex(ossl_ec_key_get_libctx(ec), ossl_ec_key_get0_propq(ec));
     if (ctx == NULL)
         goto err;
 

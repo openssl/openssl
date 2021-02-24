@@ -3150,7 +3150,7 @@ static EC_GROUP *ec_group_new_from_data(OSSL_LIB_CTX *libctx,
         return ossl_ec_group_new_ex(libctx, propq,
                                     curve.meth != NULL ? curve.meth() : NULL);
 
-    if ((ctx = BN_CTX_new_ex(libctx)) == NULL) {
+    if ((ctx = BN_CTX_new_ex(libctx, propq)) == NULL) {
         ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
         goto err;
     }

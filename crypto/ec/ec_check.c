@@ -28,7 +28,7 @@ int EC_GROUP_check_named_curve(const EC_GROUP *group, int nist_only,
     }
 
     if (ctx == NULL) {
-        ctx = new_ctx = BN_CTX_new_ex(NULL);
+        ctx = new_ctx = BN_CTX_new_ex(NULL, NULL);
         if (ctx == NULL) {
             ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
             return NID_undef;

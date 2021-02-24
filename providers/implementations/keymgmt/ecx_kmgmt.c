@@ -560,7 +560,7 @@ static void *ecx_gen(struct ecx_gen_ctx *gctx)
         ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
         goto err;
     }
-    if (RAND_priv_bytes_ex(gctx->libctx, privkey, key->keylen) <= 0)
+    if (RAND_priv_bytes_ex(gctx->libctx, privkey, key->keylen, gctx->propq) <= 0)
         goto err;
     switch (gctx->type) {
     case ECX_KEY_TYPE_X25519:
@@ -808,7 +808,8 @@ static void *s390x_ecx_keygen25519(struct ecx_gen_ctx *gctx)
         goto err;
     }
 
-    if (RAND_priv_bytes_ex(gctx->libctx, privkey, X25519_KEYLEN) <= 0)
+    if (RAND_priv_bytes_ex(gctx->libctx, privkey, X25519_KEYLEN,
+                           gctx->propq) <= 0)
         goto err;
 
     privkey[0] &= 248;
@@ -854,7 +855,7 @@ static void *s390x_ecx_keygen448(struct ecx_gen_ctx *gctx)
         goto err;
     }
 
-    if (RAND_priv_bytes_ex(gctx->libctx, privkey, X448_KEYLEN) <= 0)
+    if (RAND_priv_bytes_ex(gctx->libctx, privkey, X448_KEYLEN, gctx->propq) <= 0)
         goto err;
 
     privkey[0] &= 252;
@@ -906,7 +907,8 @@ static void *s390x_ecd_keygen25519(struct ecx_gen_ctx *gctx)
         goto err;
     }
 
-    if (RAND_priv_bytes_ex(gctx->libctx, privkey, ED25519_KEYLEN) <= 0)
+    if (RAND_priv_bytes_ex(gctx->libctx, privkey, ED25519_KEYLEN,
+                           gctx->propq) <= 0)
         goto err;
 
     sha = EVP_MD_fetch(gctx->libctx, "SHA512", gctx->propq);
@@ -976,7 +978,8 @@ static void *s390x_ecd_keygen448(struct ecx_gen_ctx *gctx)
     shake = EVP_MD_fetch(gctx->libctx, "SHAKE256", gctx->propq);
     if (shake == NULL)
         goto err;
-    if (RAND_priv_bytes_ex(gctx->libctx, privkey, ED448_KEYLEN) <= 0)
+    if (RAND_priv_bytes_ex(gctx->libctx, privkey, ED448_KEYLEN,
+                           gctx->propq) <= 0)
         goto err;
 
     hashctx = EVP_MD_CTX_new();

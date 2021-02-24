@@ -154,7 +154,7 @@ int ossl_ec_GFp_mont_group_set_curve(EC_GROUP *group, const BIGNUM *p,
     group->field_data2 = NULL;
 
     if (ctx == NULL) {
-        ctx = new_ctx = BN_CTX_new_ex(group->libctx);
+        ctx = new_ctx = BN_CTX_new_ex(group->libctx, group->propq);
         if (ctx == NULL)
             return 0;
     }
@@ -231,7 +231,8 @@ int ossl_ec_GFp_mont_field_inv(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a
         return 0;
 
     if (ctx == NULL
-            && (ctx = new_ctx = BN_CTX_secure_new_ex(group->libctx)) == NULL)
+            && (ctx = new_ctx = BN_CTX_secure_new_ex(group->libctx,
+                                                     group->propq)) == NULL)
         return 0;
 
     BN_CTX_start(ctx);

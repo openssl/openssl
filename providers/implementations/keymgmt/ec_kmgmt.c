@@ -131,10 +131,10 @@ int key_to_params(const EC_KEY *eckey, OSSL_PARAM_BLD *tmpl,
          * EC_POINT_point2buf() can generate random numbers in some
          * implementations so we need to ensure we use the correct libctx.
          */
-        bnctx = BN_CTX_new_ex(ossl_ec_key_get_libctx(eckey));
+        bnctx = BN_CTX_new_ex(ossl_ec_key_get_libctx(eckey),
+                              ossl_ec_key_get0_propq(eckey));
         if (bnctx == NULL)
             goto err;
-
 
         /* If we are doing a get then check first before decoding the point */
         if (tmpl == NULL) {
@@ -314,7 +314,8 @@ static int ec_match(const void *keydata1, const void *keydata2, int selection)
     if (!ossl_prov_is_running())
         return 0;
 
-    ctx = BN_CTX_new_ex(ossl_ec_key_get_libctx(ec1));
+    ctx = BN_CTX_new_ex(ossl_ec_key_get_libctx(ec1),
+                        ossl_ec_key_get0_propq(ec1));
     if (ctx == NULL)
         return 0;
 
@@ -451,7 +452,8 @@ int ec_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
         return 0;
 
     if ((selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) != 0) {
-        bnctx = BN_CTX_new_ex(ossl_ec_key_get_libctx(ec));
+        bnctx = BN_CTX_new_ex(ossl_ec_key_get_libctx(ec),
+                              ossl_ec_key_get0_propq(ec));
         if (bnctx == NULL) {
             ok = 0;
             goto end;
@@ -614,7 +616,7 @@ int common_get_params(void *key, OSSL_PARAM params[], int sm2)
     libctx = ossl_ec_key_get_libctx(eck);
     propq = ossl_ec_key_get0_propq(eck);
 
-    bnctx = BN_CTX_new_ex(libctx);
+    bnctx = BN_CTX_new_ex(libctx, propq);
     if (bnctx == NULL)
         return 0;
     BN_CTX_start(bnctx);
@@ -780,7 +782,8 @@ int ec_set_params(void *key, const OSSL_PARAM params[])
 
     p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY);
     if (p != NULL) {
-        BN_CTX *ctx = BN_CTX_new_ex(ossl_ec_key_get_libctx(key));
+        BN_CTX *ctx = BN_CTX_new_ex(ossl_ec_key_get_libctx(key),
+                                    ossl_ec_key_get0_propq(key));
         int ret = 1;
 
         if (ctx == NULL
@@ -844,7 +847,8 @@ int sm2_validate(const void *keydata, int selection, int checktype)
     if (!ossl_prov_is_running())
         return 0;
 
-    ctx = BN_CTX_new_ex(ossl_ec_key_get_libctx(eck));
+    ctx = BN_CTX_new_ex(ossl_ec_key_get_libctx(eck),
+                        ossl_ec_key_get0_propq(eck));
     if  (ctx == NULL)
         return 0;
 
@@ -883,7 +887,8 @@ int ec_validate(const void *keydata, int selection, int checktype)
     if (!ossl_prov_is_running())
         return 0;
 
-    ctx = BN_CTX_new_ex(ossl_ec_key_get_libctx(eck));
+    ctx = BN_CTX_new_ex(ossl_ec_key_get_libctx(eck),
+                        ossl_ec_key_get0_propq(eck));
     if  (ctx == NULL)
         return 0;
 
