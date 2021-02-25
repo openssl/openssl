@@ -23,6 +23,24 @@ OpenSSL 3.0
 
 ### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
 
+ * The deprecated functions EVP_PKEY_get0(), EVP_PKEY_get0_RSA(),
+   EVP_PKEY_get0_DSA(), EVP_PKEY_get0_EC_KEY(), EVP_PKEY_get0_DH(),
+   EVP_PKEY_get0_hmac(), EVP_PKEY_get0_poly1305() and EVP_PKEY_get0_siphash() as
+   well as the similarly named "get1" functions behave slightly differently in
+   OpenSSL 3.0. Previously they returned a pointer to the low-level key used
+   internally by libcrypto. From OpenSSL 3.0 this key may now be held in a
+   provider. Calling these functions will only return a handle on the internal
+   key where the EVP_PKEY was constructed using this key in the first place, for
+   example using a function or macro such as EVP_PKEY_assign_RSA(),
+   EVP_PKEY_set1_RSA(), etc. Where the EVP_PKEY holds a provider managed key,
+   then these functions now return a cached copy of the key. Changes to
+   the internal provider key that take place after the first time the cached key
+   is accessed will not be reflected back in the cached copy. Similarly any
+   changed made to the cached copy by application code will not be reflected
+   back in the internal provider key.
+
+   *Matt Caswell*
+
  * A number of functions handling low level keys or engines were deprecated
    including EVP_PKEY_set1_engine(), EVP_PKEY_get0_engine(), EVP_PKEY_assign(),
    EVP_PKEY_get0(), EVP_PKEY_get0_hmac(), EVP_PKEY_get0_poly1305() and
@@ -701,12 +719,12 @@ OpenSSL 3.0
    time.  Instead applications should use L<EVP_DigestSignInit_ex(3)>,
    L<EVP_DigestSignUpdate(3)> and L<EVP_DigestSignFinal(3)>.
 
-   Finaly functions that assign or obtain DH objects from an EVP_PKEY such as
+   Finaly functions that assign or obtain DSA objects from an EVP_PKEY such as
    `EVP_PKEY_assign_DSA()`, `EVP_PKEY_get0_DSA()`, `EVP_PKEY_get1_DSA()`, and
    `EVP_PKEY_set1_DSA()` are also deprecated.
    Applications should instead either read or write an
-   EVP_PKEY directly using the OSSL_DECODER and OSSL_ENCODER APIs.
-   Or load an EVP_PKEY directly from DSA data using `EVP_PKEY_fromdata()`.
+   EVP_PKEY directly using the OSSL_DECODER and OSSL_ENCODER APIs,
+   or load an EVP_PKEY directly from DSA data using `EVP_PKEY_fromdata()`.
 
    *Paul Dale*
 

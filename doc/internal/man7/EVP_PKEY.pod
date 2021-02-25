@@ -65,7 +65,10 @@ The B<EVP_PKEY> internal keys are mutable.
 
 This is especially visible with internal legacy keys, since they can
 be extracted with functions like L<EVP_PKEY_get0_RSA(3)> and then
-modified at will with functions like L<RSA_set0_key(3)>.
+modified at will with functions like L<RSA_set0_key(3)>. Note that if the
+internal key is a provider key then the return value from functions such as
+L<EVP_PKEY_get0_RSA(3)> is a cached copy of the key. Changes to the cached
+copy are not reflected back in the provider key.
 
 Internal provider native keys are also possible to be modified, if the
 associated L<EVP_KEYMGMT(3)> implementation allows it.  This is done
@@ -187,11 +190,11 @@ takes care of the needs of the diverse operation the application may want to
 perform.
 
 Similarly an B<EVP_PKEY> with a provider native origin, will I<never> be
-downgraded to be I<transformed> into an B<EVP_PKEY> with a legacy origin.
-Instead we may have a cached copy of the provider key in legacy form. Once the
-cached copy is created it is never updated. Changes made to the provider key
-are not reflected back in the cached legacy copy. Similarly changes made to the
-cached legacy copy are not reflected back in the provider key.
+I<transformed> into an B<EVP_PKEY> with a legacy origin. Instead we may have a
+cached copy of the provider key in legacy form. Once the cached copy is created
+it is never updated. Changes made to the provider key are not reflected back in
+the cached legacy copy. Similarly changes made to the cached legacy copy are not
+reflected back in the provider key.
 
 =head1 SEE ALSO
 
