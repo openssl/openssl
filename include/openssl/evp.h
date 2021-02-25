@@ -1240,22 +1240,27 @@ int EVP_PKEY_set_type_str(EVP_PKEY *pkey, const char *str, int len);
 int EVP_PKEY_set_type_by_keymgmt(EVP_PKEY *pkey, EVP_KEYMGMT *keymgmt);
 # ifndef OPENSSL_NO_DEPRECATED_3_0
 OSSL_DEPRECATEDIN_3_0 int EVP_PKEY_set_alias_type(EVP_PKEY *pkey, int type);
-# endif
-# ifndef OPENSSL_NO_ENGINE
+#  ifndef OPENSSL_NO_ENGINE
+OSSL_DEPRECATEDIN_3_0
 int EVP_PKEY_set1_engine(EVP_PKEY *pkey, ENGINE *e);
+OSSL_DEPRECATEDIN_3_0
 ENGINE *EVP_PKEY_get0_engine(const EVP_PKEY *pkey);
-# endif
+#  endif
+OSSL_DEPRECATEDIN_3_0
 int EVP_PKEY_assign(EVP_PKEY *pkey, int type, void *key);
+OSSL_DEPRECATEDIN_3_0
 void *EVP_PKEY_get0(const EVP_PKEY *pkey);
+OSSL_DEPRECATEDIN_3_0
 const unsigned char *EVP_PKEY_get0_hmac(const EVP_PKEY *pkey, size_t *len);
-# ifndef OPENSSL_NO_POLY1305
+#  ifndef OPENSSL_NO_POLY1305
+OSSL_DEPRECATEDIN_3_0
 const unsigned char *EVP_PKEY_get0_poly1305(const EVP_PKEY *pkey, size_t *len);
-# endif
-# ifndef OPENSSL_NO_SIPHASH
+#  endif
+#  ifndef OPENSSL_NO_SIPHASH
+OSSL_DEPRECATEDIN_3_0
 const unsigned char *EVP_PKEY_get0_siphash(const EVP_PKEY *pkey, size_t *len);
-# endif
+#  endif
 
-# ifndef OPENSSL_NO_DEPRECATED_3_0
 struct rsa_st;
 OSSL_DEPRECATEDIN_3_0
 int EVP_PKEY_set1_RSA(EVP_PKEY *pkey, struct rsa_st *key);
@@ -1263,22 +1268,24 @@ OSSL_DEPRECATEDIN_3_0
 struct rsa_st *EVP_PKEY_get0_RSA(const EVP_PKEY *pkey);
 OSSL_DEPRECATEDIN_3_0
 struct rsa_st *EVP_PKEY_get1_RSA(EVP_PKEY *pkey);
-# endif
-# ifndef OPENSSL_NO_DSA
+
+#  ifndef OPENSSL_NO_DSA
 struct dsa_st;
+OSSL_DEPRECATEDIN_3_0
 int EVP_PKEY_set1_DSA(EVP_PKEY *pkey, struct dsa_st *key);
+OSSL_DEPRECATEDIN_3_0
 struct dsa_st *EVP_PKEY_get0_DSA(const EVP_PKEY *pkey);
+OSSL_DEPRECATEDIN_3_0
 struct dsa_st *EVP_PKEY_get1_DSA(EVP_PKEY *pkey);
-# endif
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+#  endif
+
 #  ifndef OPENSSL_NO_DH
 struct dh_st;
 OSSL_DEPRECATEDIN_3_0 int EVP_PKEY_set1_DH(EVP_PKEY *pkey, struct dh_st *key);
 OSSL_DEPRECATEDIN_3_0 struct dh_st *EVP_PKEY_get0_DH(const EVP_PKEY *pkey);
 OSSL_DEPRECATEDIN_3_0 struct dh_st *EVP_PKEY_get1_DH(EVP_PKEY *pkey);
 #  endif
-# endif
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+
 #  ifndef OPENSSL_NO_EC
 struct ec_key_st;
 OSSL_DEPRECATEDIN_3_0
@@ -1288,7 +1295,7 @@ struct ec_key_st *EVP_PKEY_get0_EC_KEY(const EVP_PKEY *pkey);
 OSSL_DEPRECATEDIN_3_0
 struct ec_key_st *EVP_PKEY_get1_EC_KEY(EVP_PKEY *pkey);
 #  endif
-# endif
+# endif /* OPENSSL_NO_DEPRECATED_3_0 */
 
 EVP_PKEY *EVP_PKEY_new(void);
 int EVP_PKEY_up_ref(EVP_PKEY *pkey);

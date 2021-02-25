@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+/* test_multi below tests the thread safety of a deprecated function */
+#define OPENSSL_SUPPRESS_DEPRECATED
+
 #if defined(_WIN32)
 # include <windows.h>
 #endif
