@@ -105,9 +105,10 @@ size_t EVP_MAC_CTX_get_mac_size(EVP_MAC_CTX *ctx)
     return 0;
 }
 
-int EVP_MAC_init(EVP_MAC_CTX *ctx)
+int EVP_MAC_init(EVP_MAC_CTX *ctx, const unsigned char *key, size_t keylen,
+                 const OSSL_PARAM params[])
 {
-    return ctx->meth->init(ctx->data);
+    return ctx->meth->init(ctx->data, key, keylen, params);
 }
 
 int EVP_MAC_update(EVP_MAC_CTX *ctx, const unsigned char *data, size_t datalen)
