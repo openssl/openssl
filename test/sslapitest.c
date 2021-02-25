@@ -6858,7 +6858,7 @@ static int tick_key_evp_cb(SSL *s, unsigned char key_name[16],
 {
     const unsigned char tick_aes_key[16] = "0123456789abcdef";
     unsigned char tick_hmac_key[16] = "0123456789abcdef";
-    OSSL_PARAM params[3];
+    OSSL_PARAM params[2];
     EVP_CIPHER *aes128cbc = EVP_CIPHER_fetch(libctx, "AES-128-CBC", NULL);
     int ret;
 
@@ -6867,14 +6867,11 @@ static int tick_key_evp_cb(SSL *s, unsigned char key_name[16],
     memset(key_name, 0, 16);
     params[0] = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
                                                  "SHA256", 0);
-    params[1] = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY,
-                                                  tick_hmac_key,
-                                                  sizeof(tick_hmac_key));
-    params[2] = OSSL_PARAM_construct_end();
+    params[1] = OSSL_PARAM_construct_end();
     if (aes128cbc == NULL
             || !EVP_CipherInit_ex(ctx, aes128cbc, NULL, tick_aes_key, iv, enc)
-            || !EVP_MAC_CTX_set_params(hctx, params)
-            || !EVP_MAC_init(hctx))
+            || !EVP_MAC_init(hctx, tick_hmac_key, sizeof(tick_hmac_key),
+                             params))
         ret = -1;
     else
         ret = tick_key_renew ? 2 : 1;
