@@ -327,8 +327,8 @@ int run_tests(const char *test_prog_name)
         } else if (all_tests[i].num == -1) {
             set_test_title(all_tests[i].test_case_name);
             verdict = all_tests[i].test_fn();
-            test_verdict(verdict, "%d - %s", ii + 1, test_title);
             finalize(verdict != 0);
+            test_verdict(verdict, "%d - %s", ii + 1, test_title);
             if (verdict == 0)
                 num_failed++;
         } else {
