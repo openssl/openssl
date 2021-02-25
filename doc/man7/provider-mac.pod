@@ -23,7 +23,8 @@ provider-mac - The mac library E<lt>-E<gt> provider functions
  void *OSSL_FUNC_mac_dupctx(void *src);
 
  /* Encryption/decryption */
- int OSSL_FUNC_mac_init(void *mctx);
+ int OSSL_FUNC_mac_init(void *mctx, unsigned char *key, size_t keylen,
+                        const OSSL_PARAM params[]);
  int OSSL_FUNC_mac_update(void *mctx, const unsigned char *in, size_t inl);
  int OSSL_FUNC_mac_final(void *mctx, unsigned char *out, size_t *outl, size_t outsize);
 
@@ -108,7 +109,8 @@ I<mctx> parameter and return the duplicate copy.
 =head2 Encryption/Decryption Functions
 
 OSSL_FUNC_mac_init() initialises a mac operation given a newly created provider
-side mac context in the I<mctx> parameter.
+side mac context in the I<mctx> parameter.  The I<params> are set before setting
+the MAC I<key> of I<keylen> bytes.
 
 OSSL_FUNC_mac_update() is called to supply data for MAC computation of a previously
 initialised mac operation.
@@ -158,7 +160,8 @@ parameters are relevant to, or are understood by all macs:
 
 =item "key" (B<OSSL_MAC_PARAM_KEY>) <octet string>
 
-Sets the key in the associated MAC ctx.
+Sets the key in the associated MAC ctx.  This is identical to passing a I<key>
+argument to the OSSL_FUNC_mac_init() function.
 
 =item "iv" (B<OSSL_MAC_PARAM_IV>) <octet string>
 
@@ -228,7 +231,7 @@ array, or NULL if none is offered.
 
 =head1 SEE ALSO
 
-L<provider(7)>
+L<provider(7)>, L<EVP_MAC_init(3)>
 
 =head1 HISTORY
 
