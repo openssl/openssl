@@ -115,11 +115,15 @@ static int p_get_params(void *provctx, OSSL_PARAM params[])
 }
 
 static void p_set_error(int lib, int reason, const char *file, int line,
-                        const char *func)
+                        const char *func, const char *fmt, ...)
 {
+    va_list ap;
+
+    va_start(ap, fmt);
     c_new_error(NULL);
     c_set_error_debug(NULL, file, line, func);
-    c_vset_error(NULL, ERR_PACK(lib, 0, reason), NULL, NULL);
+    c_vset_error(NULL, ERR_PACK(lib, 0, reason), fmt, ap);
+    va_end(ap);
 }
 
 static const OSSL_ITEM *p_get_reason_strings(void *_)
@@ -192,7 +196,7 @@ int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
      * Set a spurious error to check error handling works correctly. This will
      * be ignored
      */
-    p_set_error(ERR_LIB_PROV, 1, ctx->thisfile, OPENSSL_LINE, ctx->thisfunc);
+    p_set_error(ERR_LIB_PROV, 1, ctx->thisfile, OPENSSL_LINE, ctx->thisfunc, NULL);
 
     *provctx = (void *)ctx;
     *out = p_test_table;
