@@ -47,8 +47,10 @@ The default value is 0.
 
 =back
 
-The "custom" and "key" parameters must be set before EVP_MAC_init().
+The "custom" parameter must be set as part of or before the EVP_MAC_init() call.
 The "xof" and "size" parameters can be set at any time before EVP_MAC_final().
+The "key" parameter is set as part of the EVP_MAC_init() call, but can be
+set before it instead.
 
 =head1 EXAMPLES
 
