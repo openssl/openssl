@@ -117,11 +117,11 @@ static int mac_digest_sign_init(void *vpmacctx, const char *mdname, void *vkey)
                               (char *)mdname,
                               (char *)engine,
                               pmacctx->key->properties,
-                              pmacctx->key->priv_key,
-                              pmacctx->key->priv_key_len))
+                              NULL, 0))
         return 0;
 
-    if (!EVP_MAC_init(pmacctx->macctx))
+    if (!EVP_MAC_init(pmacctx->macctx, pmacctx->key->priv_key,
+                      pmacctx->key->priv_key_len, NULL))
         return 0;
 
     return 1;
