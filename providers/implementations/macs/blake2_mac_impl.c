@@ -87,19 +87,36 @@ static size_t blake2_mac_size(void *vmacctx)
     return macctx->params.digest_length;
 }
 
-static int blake2_mac_init(void *vmacctx)
+static int blake2_setkey(struct blake2_mac_data_st *macctx,
+                         const unsigned char *key, size_t keylen)
+{
+    if (keylen > BLAKE2_KEYBYTES || keylen == 0) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
+        return 0;
+    }
+    memcpy(macctx->key, key, keylen);
+    /* Pad with zeroes at the end if required */
+    if (keylen < BLAKE2_KEYBYTES)
+        memset(macctx->key + keylen, 0, BLAKE2_KEYBYTES - keylen);
+    BLAKE2_PARAM_SET_KEY_LENGTH(&macctx->params, (uint8_t)keylen);
+    return 1;
+}
+
+static int blake2_mac_init(void *vmacctx, const unsigned char *key,
+                           size_t keylen, const OSSL_PARAM params[])
 {
     struct blake2_mac_data_st *macctx = vmacctx;
 
-    if (!ossl_prov_is_running())
+    if (!ossl_prov_is_running() || !blake2_mac_set_ctx_params(macctx, params))
         return 0;
-
-    /* Check key has been set */
-    if (macctx->params.key_length == 0) {
+    if (key != NULL) {
+        if (!blake2_setkey(macctx, key, keylen))
+            return 0;
+    } else if (macctx->params.key_length == 0) {
+        /* Check key has been set */
         ERR_raise(ERR_LIB_PROV, PROV_R_NO_KEY_SET);
         return 0;
     }
-
     return BLAKE2_INIT_KEY(&macctx->ctx, &macctx->params, macctx->key);
 }
 
@@ -180,19 +197,9 @@ static int blake2_mac_set_ctx_params(void *vmacctx, const OSSL_PARAM params[])
         BLAKE2_PARAM_SET_DIGEST_LENGTH(&macctx->params, (uint8_t)size);
     }
 
-    if ((p = OSSL_PARAM_locate_const(params, OSSL_MAC_PARAM_KEY)) != NULL) {
-        size_t len;
-        void *key_p = macctx->key;
-
-        if (!OSSL_PARAM_get_octet_string(p, &key_p, BLAKE2_KEYBYTES, &len)) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
-            return 0;
-        }
-        /* Pad with zeroes at the end */
-        memset(macctx->key + len, 0, BLAKE2_KEYBYTES - len);
-
-        BLAKE2_PARAM_SET_KEY_LENGTH(&macctx->params, (uint8_t)len);
-    }
+    if ((p = OSSL_PARAM_locate_const(params, OSSL_MAC_PARAM_KEY)) != NULL
+            && !blake2_setkey(macctx, p->data, p->data_size))
+        return 0;
 
     if ((p = OSSL_PARAM_locate_const(params, OSSL_MAC_PARAM_CUSTOM))
         != NULL) {
