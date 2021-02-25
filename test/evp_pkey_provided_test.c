@@ -361,15 +361,16 @@ static int test_fromdata_rsa(void)
         || !TEST_false(EVP_PKEY_copy_parameters(copy_pk, pk)))
         goto err;
 
+    ret = test_print_key_using_pem("RSA", pk)
+          && test_print_key_using_encoder("RSA", pk);
+ err:
+    /* for better diagnostics always compare key params */
     for (i = 0; fromdata_params[i].key != NULL; ++i) {
         if (!TEST_true(BN_set_word(bn_from, key_numbers[i]))
             || !TEST_true(EVP_PKEY_get_bn_param(pk, fromdata_params[i].key, &bn))
             || !TEST_BN_eq(bn, bn_from))
-            goto err;
+            ret = 0;
     }
-    ret = test_print_key_using_pem("RSA", pk)
-          && test_print_key_using_encoder("RSA", pk);
- err:
     BN_free(bn_from);
     BN_free(bn);
     EVP_PKEY_free(pk);
