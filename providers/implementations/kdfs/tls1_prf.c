@@ -289,14 +289,8 @@ static int tls1_prf_P_hash(EVP_MAC_CTX *ctx_init,
     unsigned char Ai[EVP_MAX_MD_SIZE];
     size_t Ai_len;
     int ret = 0;
-    OSSL_PARAM params[2], *p = params;
 
-    *p++ = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY,
-                                             (void *)sec, sec_len);
-    *p = OSSL_PARAM_construct_end();
-    if (!EVP_MAC_CTX_set_params(ctx_init, params))
-        goto err;
-    if (!EVP_MAC_init(ctx_init))
+    if (!EVP_MAC_init(ctx_init, sec, sec_len, NULL))
         goto err;
     chunk = EVP_MAC_CTX_get_mac_size(ctx_init);
     if (chunk == 0)
