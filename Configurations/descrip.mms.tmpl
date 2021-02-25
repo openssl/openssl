@@ -122,12 +122,13 @@ SHLIB_TARGET={- $target{shared_target} -}
 LIBS={- join(", ", map { "-\n\t".$_.".OLB" } @libs) -}
 SHLIBS={- join(", ", map { "-\n\t".$_.".EXE" } @shlibs) -}
 FIPSMODULENAME={- # We do some extra checking here, as there should be only one
+                  use File::Basename;
                   my @fipsmodules =
                       grep { !$unified_info{attributes}->{modules}->{$_}->{noinst}
                              && $unified_info{attributes}->{modules}->{$_}->{fips} }
                       @{$unified_info{modules}};
                   die "More that one FIPS module" if scalar @fipsmodules > 1;
-                  join(", ", map { basename platform->dso($_) } @fipsmodules) -}
+                  join(", ", map { basename(platform->dso($_)) } @fipsmodules) -}
 MODULES={- join(", ", map { "-\n\t".$_.".EXE" } @{$unified_info{modules}}) -}
 PROGRAMS={- join(", ", map { "-\n\t".$_.".EXE" } @{$unified_info{programs}}) -}
 SCRIPTS={- join(", ", map { "-\n\t".$_ } @{$unified_info{scripts}}) -}
