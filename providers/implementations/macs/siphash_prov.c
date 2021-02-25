@@ -45,7 +45,18 @@ static OSSL_FUNC_mac_final_fn siphash_final;
 struct siphash_data_st {
     void *provctx;
     SIPHASH siphash;             /* Siphash data */
+    unsigned int crounds, drounds;
 };
+
+static unsigned int crounds(struct siphash_data_st *ctx)
+{
+    return ctx->crounds != 0 ? ctx->crounds : SIPHASH_C_ROUNDS;
+}
+
+static unsigned int drounds(struct siphash_data_st *ctx)
+{
+    return ctx->drounds != 0 ? ctx->drounds : SIPHASH_D_ROUNDS;
+}
 
 static void *siphash_new(void *provctx)
 {
@@ -86,9 +97,27 @@ static size_t siphash_size(void *vmacctx)
     return SipHash_hash_size(&ctx->siphash);
 }
 
-static int siphash_init(void *vmacctx)
+static int siphash_setkey(struct siphash_data_st *ctx,
+                          const unsigned char *key, size_t keylen)
 {
-    return ossl_prov_is_running();
+    if (keylen != SIPHASH_KEY_SIZE)
+        return 0;
+    return SipHash_Init(&ctx->siphash, key, crounds(ctx), drounds(ctx));
+}
+
+static int siphash_init(void *vmacctx, const unsigned char *key, size_t keylen,
+                        const OSSL_PARAM params[])
+{
+    struct siphash_data_st *ctx = vmacctx;
+
+    if (!ossl_prov_is_running() || !siphash_set_params(ctx, params))
+        return 0;
+    /* Without a key, there is not much to do here,
+     * The actual initialization happens through controls.
+     */
+    if (key == NULL)
+        return 1;
+    return siphash_setkey(ctx, key, keylen);
 }
 
 static int siphash_update(void *vmacctx, const unsigned char *data,
@@ -116,37 +145,47 @@ static int siphash_final(void *vmacctx, unsigned char *out, size_t *outl,
     return SipHash_Final(&ctx->siphash, out, hlen);
 }
 
-static const OSSL_PARAM known_gettable_ctx_params[] = {
-    OSSL_PARAM_size_t(OSSL_MAC_PARAM_SIZE, NULL),
-    OSSL_PARAM_END
-};
 static const OSSL_PARAM *siphash_gettable_ctx_params(ossl_unused void *ctx,
                                                      ossl_unused void *provctx)
 {
+    static const OSSL_PARAM known_gettable_ctx_params[] = {
+        OSSL_PARAM_size_t(OSSL_MAC_PARAM_SIZE, NULL),
+        OSSL_PARAM_uint(OSSL_MAC_PARAM_C_ROUNDS, NULL),
+        OSSL_PARAM_uint(OSSL_MAC_PARAM_D_ROUNDS, NULL),
+        OSSL_PARAM_END
+    };
+
     return known_gettable_ctx_params;
 }
 
 static int siphash_get_ctx_params(void *vmacctx, OSSL_PARAM params[])
 {
+    struct siphash_data_st *ctx = vmacctx;
     OSSL_PARAM *p;
 
-    if ((p = OSSL_PARAM_locate(params, OSSL_MAC_PARAM_SIZE)) != NULL)
-        return OSSL_PARAM_set_size_t(p, siphash_size(vmacctx));
-
+    if ((p = OSSL_PARAM_locate(params, OSSL_MAC_PARAM_SIZE)) != NULL
+        && !OSSL_PARAM_set_size_t(p, siphash_size(vmacctx)))
+        return 0;
+    if ((p = OSSL_PARAM_locate(params, OSSL_MAC_PARAM_C_ROUNDS)) != NULL
+        && !OSSL_PARAM_set_uint(p, crounds(ctx)))
+        return 0;
+    if ((p = OSSL_PARAM_locate(params, OSSL_MAC_PARAM_D_ROUNDS)) != NULL
+        && !OSSL_PARAM_set_uint(p, drounds(ctx)))
+        return 0;
     return 1;
 }
-
-static const OSSL_PARAM known_settable_ctx_params[] = {
-    OSSL_PARAM_size_t(OSSL_MAC_PARAM_SIZE, NULL),
-    OSSL_PARAM_octet_string(OSSL_MAC_PARAM_KEY, NULL, 0),
-    OSSL_PARAM_uint(OSSL_MAC_PARAM_C_ROUNDS, NULL),
-    OSSL_PARAM_uint(OSSL_MAC_PARAM_D_ROUNDS, NULL),
-    OSSL_PARAM_END
-};
 
 static const OSSL_PARAM *siphash_settable_ctx_params(ossl_unused void *ctx,
                                                      void *provctx)
 {
+    static const OSSL_PARAM known_settable_ctx_params[] = {
+        OSSL_PARAM_size_t(OSSL_MAC_PARAM_SIZE, NULL),
+        OSSL_PARAM_octet_string(OSSL_MAC_PARAM_KEY, NULL, 0),
+        OSSL_PARAM_uint(OSSL_MAC_PARAM_C_ROUNDS, NULL),
+        OSSL_PARAM_uint(OSSL_MAC_PARAM_D_ROUNDS, NULL),
+        OSSL_PARAM_END
+    };
+
     return known_settable_ctx_params;
 }
 
@@ -154,7 +193,6 @@ static int siphash_set_params(void *vmacctx, const OSSL_PARAM *params)
 {
     struct siphash_data_st *ctx = vmacctx;
     const OSSL_PARAM *p = NULL;
-    unsigned int u;
     size_t size;
 
     if ((p = OSSL_PARAM_locate_const(params, OSSL_MAC_PARAM_SIZE)) != NULL) {
@@ -162,23 +200,16 @@ static int siphash_set_params(void *vmacctx, const OSSL_PARAM *params)
             || !SipHash_set_hash_size(&ctx->siphash, size))
             return 0;
     }
+    if ((p = OSSL_PARAM_locate_const(params, OSSL_MAC_PARAM_C_ROUNDS)) != NULL
+            && !OSSL_PARAM_get_uint(p, &ctx->crounds))
+        return 0;
+    if ((p = OSSL_PARAM_locate_const(params, OSSL_MAC_PARAM_D_ROUNDS)) != NULL
+            && !OSSL_PARAM_get_uint(p, &ctx->drounds))
+        return 0;
     if ((p = OSSL_PARAM_locate_const(params, OSSL_MAC_PARAM_KEY)) != NULL)
         if (p->data_type != OSSL_PARAM_OCTET_STRING
-            || p->data_size != SIPHASH_KEY_SIZE
-            || !SipHash_Init(&ctx->siphash, p->data, 0, 0))
+            || !siphash_setkey(ctx, p->data, p->data_size))
             return 0;
-    if ((p = OSSL_PARAM_locate_const(params, OSSL_MAC_PARAM_C_ROUNDS)) != NULL) {
-        if (!OSSL_PARAM_get_uint(p, &ctx->siphash.crounds))
-            return 0;
-        if (ctx->siphash.crounds == 0)
-            ctx->siphash.crounds = SIPHASH_C_ROUNDS;
-    }
-    if ((p = OSSL_PARAM_locate_const(params, OSSL_MAC_PARAM_D_ROUNDS)) != NULL) {
-        if (!OSSL_PARAM_get_uint(p, &ctx->siphash.drounds))
-            return 0;
-        if (ctx->siphash.drounds == 0)
-            ctx->siphash.drounds = SIPHASH_D_ROUNDS;
-    }
     return 1;
 }
 
