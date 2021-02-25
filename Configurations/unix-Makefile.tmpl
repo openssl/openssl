@@ -1305,6 +1305,14 @@ reconfigure reconf:
                  } @_;
   }
 
+  sub generatetarget {
+      my %args = @_;
+      my $deps = join(" ", @{$args{deps}});
+      return <<"EOF";
+$args{target}: $deps
+EOF
+  }
+
   sub generatesrc {
       my %args = @_;
       my $generator = join(" ", @{$args{generator}});
