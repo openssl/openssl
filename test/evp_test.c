@@ -1279,11 +1279,6 @@ static int mac_test_run_mac(EVP_TEST *t)
             goto err;
         }
     }
-    if (expected->key != NULL)
-        params[params_n++] =
-            OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY,
-                                              expected->key,
-                                              expected->key_len);
     if (expected->custom != NULL)
         params[params_n++] =
             OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_CUSTOM,
@@ -1339,11 +1334,7 @@ static int mac_test_run_mac(EVP_TEST *t)
         goto err;
     }
 
-    if (!EVP_MAC_CTX_set_params(ctx, params)) {
-        t->err = "MAC_BAD_PARAMS";
-        goto err;
-    }
-    if (!EVP_MAC_init(ctx)) {
+    if (!EVP_MAC_init(ctx, expected->key, expected->key_len, params)) {
         t->err = "MAC_INIT_ERROR";
         goto err;
     }
