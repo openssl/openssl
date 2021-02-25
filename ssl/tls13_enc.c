@@ -311,9 +311,10 @@ size_t tls13_final_finish_mac(SSL *s, const char *str, size_t slen,
     EVP_MAC *hmac = EVP_MAC_fetch(s->ctx->libctx, "HMAC", s->ctx->propq);
     unsigned char hash[EVP_MAX_MD_SIZE];
     unsigned char finsecret[EVP_MAX_MD_SIZE];
+    unsigned char *key = NULL;
     size_t hashlen, ret = 0;
     EVP_MAC_CTX *ctx = NULL;
-    OSSL_PARAM params[4], *p = params;
+    OSSL_PARAM params[3], *p = params;
 
     if (hmac == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
@@ -327,6 +328,7 @@ size_t tls13_final_finish_mac(SSL *s, const char *str, size_t slen,
         *p++ = OSSL_PARAM_construct_utf8_string(OSSL_ALG_PARAM_PROPERTIES,
                                                 (char *)s->ctx->propq,
                                                 0);
+    *p = OSSL_PARAM_construct_end();
 
     if (!ssl_handshake_hash(s, hash, sizeof(hash), &hashlen)) {
         /* SSLfatal() already called */
@@ -334,28 +336,20 @@ size_t tls13_final_finish_mac(SSL *s, const char *str, size_t slen,
     }
 
     if (str == s->method->ssl3_enc->server_finished_label) {
-        *p++ = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY,
-                                                 s->server_finished_secret,
-                                                 hashlen);
+        key = s->server_finished_secret;
     } else if (SSL_IS_FIRST_HANDSHAKE(s)) {
-        *p++ = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY,
-                                                 s->client_finished_secret,
-                                                 hashlen);
+        key = s->client_finished_secret;
     } else {
         if (!tls13_derive_finishedkey(s, ssl_handshake_md(s),
                                       s->client_app_traffic_secret,
                                       finsecret, hashlen))
             goto err;
-
-        *p++ = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY, finsecret,
-                                                 hashlen);
+        key = finsecret;
     }
-    *p++ = OSSL_PARAM_construct_end();
 
     ctx = EVP_MAC_CTX_new(hmac);
     if (ctx == NULL
-            || !EVP_MAC_CTX_set_params(ctx, params)
-            || !EVP_MAC_init(ctx)
+            || !EVP_MAC_init(ctx, key, hashlen, params)
             || !EVP_MAC_update(ctx, hash, hashlen)
                /* outsize as per sizeof(peer_finish_md) */
             || !EVP_MAC_final(ctx, out, &hashlen, EVP_MAX_MD_SIZE * 2)) {
