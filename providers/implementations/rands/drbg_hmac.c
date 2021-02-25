@@ -60,12 +60,8 @@ static int do_hmac(PROV_DRBG_HMAC *hmac, unsigned char inbyte,
                    const unsigned char *in3, size_t in3len)
 {
     EVP_MAC_CTX *ctx = hmac->ctx;
-    OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
 
-    *params = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY, hmac->K,
-                                                hmac->blocklen);
-    if (!EVP_MAC_CTX_set_params(ctx, params)
-            || !EVP_MAC_init(ctx)
+    if (!EVP_MAC_init(ctx, hmac->K, hmac->blocklen, NULL)
             /* K = HMAC(K, V || inbyte || [in1] || [in2] || [in3]) */
             || !EVP_MAC_update(ctx, hmac->V, hmac->blocklen)
             || !EVP_MAC_update(ctx, &inbyte, 1)
@@ -76,10 +72,7 @@ static int do_hmac(PROV_DRBG_HMAC *hmac, unsigned char inbyte,
         return 0;
 
    /* V = HMAC(K, V) */
-    *params = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY, hmac->K,
-                                                hmac->blocklen);
-    return EVP_MAC_CTX_set_params(ctx, params)
-           && EVP_MAC_init(ctx)
+    return EVP_MAC_init(ctx, hmac->K, hmac->blocklen, NULL)
            && EVP_MAC_update(ctx, hmac->V, hmac->blocklen)
            && EVP_MAC_final(ctx, hmac->V, NULL, sizeof(hmac->V));
 }
@@ -202,7 +195,6 @@ static int drbg_hmac_generate(PROV_DRBG *drbg,
     PROV_DRBG_HMAC *hmac = (PROV_DRBG_HMAC *)drbg->data;
     EVP_MAC_CTX *ctx = hmac->ctx;
     const unsigned char *temp = hmac->V;
-    OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
 
     /* (Step 2) if adin != NULL then (K,V) = HMAC_DRBG_Update(adin, K, V) */
     if (adin != NULL
@@ -218,10 +210,7 @@ static int drbg_hmac_generate(PROV_DRBG *drbg,
      *             }
      */
     for (;;) {
-        *params = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY,
-                                                    hmac->K, hmac->blocklen);
-        if (!EVP_MAC_CTX_set_params(ctx, params)
-            || !EVP_MAC_init(ctx)
+        if (!EVP_MAC_init(ctx, hmac->K, hmac->blocklen, NULL)
             || !EVP_MAC_update(ctx, temp, hmac->blocklen))
             return 0;
 
