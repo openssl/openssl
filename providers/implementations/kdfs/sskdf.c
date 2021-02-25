@@ -223,19 +223,11 @@ static int SSKDF_mac_kdm(EVP_MAC_CTX *ctx_init,
     unsigned char *out = derived_key;
     EVP_MAC_CTX *ctx = NULL;
     unsigned char *mac = mac_buf, *kmac_buffer = NULL;
-    OSSL_PARAM params[2], *p = params;
 
     if (z_len > SSKDF_MAX_INLEN || info_len > SSKDF_MAX_INLEN
             || derived_key_len > SSKDF_MAX_INLEN
             || derived_key_len == 0)
         return 0;
-
-    *p++ = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY,
-                                             (void *)salt, salt_len);
-    *p = OSSL_PARAM_construct_end();
-
-    if (!EVP_MAC_CTX_set_params(ctx_init, params))
-        goto end;
 
     if (!kmac_init(ctx_init, kmac_custom, kmac_custom_len, kmac_out_len,
                    derived_key_len, &kmac_buffer))
@@ -243,7 +235,7 @@ static int SSKDF_mac_kdm(EVP_MAC_CTX *ctx_init,
     if (kmac_buffer != NULL)
         mac = kmac_buffer;
 
-    if (!EVP_MAC_init(ctx_init))
+    if (!EVP_MAC_init(ctx_init, salt, salt_len, NULL))
         goto end;
 
     out_len = EVP_MAC_CTX_get_mac_size(ctx_init); /* output size */
