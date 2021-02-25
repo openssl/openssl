@@ -1322,22 +1322,31 @@ EOF
       my $deps = join(" ", @{$args{generator_deps}}, @{$args{deps}});
 
       if ($args{src} =~ /\.html$/) {
-	  my $title = basename($args{src}, ".html");
-	  my $pod = $args{generator}->[0];
-	  return <<"EOF";
+          #
+          # HTML generator
+          #
+          my $title = basename($args{src}, ".html");
+          my $pod = $args{generator}->[0];
+          return <<"EOF";
 $args{src}: $pod
 	\$(PERL) \$(SRCDIR)/util/mkpod2html.pl -i "$pod" -o \$\@ -t "$title" -r "\$(SRCDIR)/doc"
 EOF
       } elsif ($args{src} =~ /\.(\d)$/) {
-	  my $section = $1;
-	  my $name = uc basename($args{src}, ".$section");
-	  my $pod = $args{generator}->[0];
-	  return <<"EOF";
+          #
+          # Man-page generator
+          #
+          my $section = $1;
+          my $name = uc basename($args{src}, ".$section");
+          my $pod = $args{generator}->[0];
+          return <<"EOF";
 $args{src}: $pod
 	pod2man --name=$name --section=$section --center=OpenSSL \\
 		--release=\$(VERSION) $pod >\$\@
 EOF
       } elsif (platform->isdef($args{src})) {
+          #
+          # Linker script-ish generator
+          #
           my $target = platform->def($args{src});
           (my $mkdef_os = $target{shared_target}) =~ s|-shared$||;
           my $ord_ver = $args{intent} eq 'lib' ? ' --version $(VERSION)' : '';
@@ -1346,27 +1355,10 @@ EOF
 $target: $args{generator}->[0] $deps \$(SRCDIR)/util/mkdef.pl
 	\$(PERL) \$(SRCDIR)/util/mkdef.pl$ord_ver --ordinals $args{generator}->[0]  --name $ord_name --OS $mkdef_os > $target
 EOF
-      } elsif (!platform->isasm($args{src})) {
-          if ($args{generator}->[0] =~ m|^.*\.in$|) {
-              my $dofile = abs2rel(rel2abs(catfile($config{sourcedir},
-                                                   "util", "dofile.pl")),
-                                   rel2abs($config{builddir}));
-              my @modules = ( 'configdata.pm',
-                              grep { $_ =~ m|\.pm$| } @{$args{deps}} );
-              my %moduleincs = map { '"-I'.dirname($_).'"' => 1 } @modules;
-              @modules = map { "-M".basename($_, '.pm') } @modules;
-              my $modules = join(' ', '', sort keys %moduleincs, @modules);
-              return <<"EOF";
-$args{src}: $args{generator}->[0] $deps \$(BLDDIR)/configdata.pm
-	\$(PERL)$modules "$dofile" "-o$target{build_file}" $generator > \$@
-EOF
-	  } else {
-              return <<"EOF";
-$args{src}: $args{generator}->[0] $deps
-	\$(PERL)$generator_incs $generator > \$@
-EOF
-	  }
-      } else {
+      } elsif (platform->isasm($args{src})) {
+          #
+          # Assembler generator
+          #
           my $cppflags = {
               shlib => '$(LIB_CFLAGS) $(LIB_CPPFLAGS)',
               lib => '$(LIB_CFLAGS) $(LIB_CPPFLAGS)',
@@ -1395,6 +1387,56 @@ EOF
 $args{src}: $args{generator}->[0] $deps
 	\$(CC) $incs $cppflags $defs -E $args{generator}->[0] | \\
 	\$(PERL) -ne '/^#(line)?\\s*[0-9]+/ or print' > \$@
+EOF
+      } elsif ($args{generator}->[0] =~ m|^.*\.in$|) {
+          #
+          # "dofile" generator (file.in -> file)
+          #
+          my $dofile = abs2rel(rel2abs(catfile($config{sourcedir},
+                                               "util", "dofile.pl")),
+                               rel2abs($config{builddir}));
+          my @modules = ( 'configdata.pm',
+                          grep { $_ =~ m|\.pm$| } @{$args{deps}} );
+          my %moduleincs = map { '"-I'.dirname($_).'"' => 1 } @modules;
+          $deps = join(' ', $deps, @modules);
+          @modules = map { "-M".basename($_, '.pm') } @modules;
+          my $modules = join(' ', '', sort keys %moduleincs, @modules);
+          return <<"EOF";
+$args{src}: $args{generator}->[0] $deps
+	\$(PERL)$modules "$dofile" "-o$target{build_file}" $generator > \$@
+EOF
+      } elsif (grep { $_ eq $args{generator}->[0] } @{$unified_info{programs}}) {
+          #
+          # Generic generator using OpenSSL programs
+          #
+
+          # Redo $deps, because programs aren't expected to have deps of their
+          # own.  This is a little more tricky, though, because running programs
+          # may have dependencies on all sorts of files, so we search through
+          # our database of programs and modules to see if our dependencies
+          # are one of those.
+          $deps = join(' ', map { my $x = $_;
+                                  if (grep { $x eq $_ }
+                                          @{$unified_info{programs}}) {
+                                      platform->bin($x);
+                                  } elsif (grep { $x eq $_ }
+                                          @{$unified_info{modules}}) {
+                                      platform->dso($x);
+                                  } else {
+                                      $x;
+                                  }
+                                } @{$args{deps}});
+          return <<"EOF";
+$args{src}: $args{generator}->[0] $deps \$(BLDDIR)/util/wrap.pl
+	\$(BLDDIR)/util/wrap.pl $generator > \$@
+EOF
+      } else {
+          #
+          # Generic generator using Perl
+          #
+          return <<"EOF";
+$args{src}: $args{generator}->[0] $deps
+	\$(PERL)$generator_incs $generator > \$@
 EOF
       }
   }

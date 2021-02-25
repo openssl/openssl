@@ -2320,7 +2320,7 @@ EOF
             $generator[0] = cleanfile($sourced, $gen, $blddir);
 
             # If the generator is itself generated, it's in the build tree
-            if ($generate{$gen}) {
+            if ($generate{$gen} || ! -f $generator[0]) {
                 $generator[0] = cleanfile($buildd, $gen, $blddir);
             }
             $check_generate{$ddest}->{$generator[0]}++;
