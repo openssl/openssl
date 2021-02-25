@@ -741,7 +741,7 @@ int generate_cookie_callback(SSL *ssl, unsigned char *cookie,
     int res = 0;
     EVP_MAC *hmac = NULL;
     EVP_MAC_CTX *ctx = NULL;
-    OSSL_PARAM params[3], *p = params;
+    OSSL_PARAM params[2], *p = params;
     size_t mac_len;
 
     /* Initialize a random secret */
@@ -792,14 +792,8 @@ int generate_cookie_callback(SSL *ssl, unsigned char *cookie,
             goto end;
     }
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST, "SHA1", 0);
-    *p++ = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY, cookie_secret,
-                                             COOKIE_SECRET_LENGTH);
     *p = OSSL_PARAM_construct_end();
-    if (!EVP_MAC_CTX_set_params(ctx, params)) {
-            BIO_printf(bio_err, "HMAC context parameter setting failed\n");
-            goto end;
-    }
-    if (!EVP_MAC_init(ctx)) {
+    if (!EVP_MAC_init(ctx, cookie_secret, COOKIE_SECRET_LENGTH, params)) {
             BIO_printf(bio_err, "HMAC context initialisation failed\n");
             goto end;
     }
