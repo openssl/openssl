@@ -631,7 +631,7 @@ static int EVP_MAC_loop(int algindex, void *args)
     for (count = 0; COND(c[algindex][testnum]); count++) {
         size_t outl;
 
-        if (!EVP_MAC_init(mctx)
+        if (!EVP_MAC_init(mctx, NULL, 0, NULL)
             || !EVP_MAC_update(mctx, buf, lengths[testnum])
             || !EVP_MAC_final(mctx, mac, &outl, sizeof(mac)))
             return -1;
@@ -2158,28 +2158,24 @@ int speed_main(int argc, char **argv)
     if (doit[D_GHASH]) {
         static const char gmac_iv[] = "0123456789ab";
         EVP_MAC *mac = EVP_MAC_fetch(NULL, "GMAC", NULL);
-        OSSL_PARAM params[4];
+        OSSL_PARAM params[3];
 
         if (mac == NULL)
             goto end;
 
         params[0] = OSSL_PARAM_construct_utf8_string(OSSL_ALG_PARAM_CIPHER,
                                                      "aes-128-gcm", 0);
-        params[1] = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY,
-                                                      (char *)key32, 16);
-        params[2] = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_IV,
+        params[1] = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_IV,
                                                       (char *)gmac_iv,
                                                       sizeof(gmac_iv) - 1);
-        params[3] = OSSL_PARAM_construct_end();
+        params[2] = OSSL_PARAM_construct_end();
 
         for (i = 0; i < loopargs_len; i++) {
             loopargs[i].mctx = EVP_MAC_CTX_new(mac);
             if (loopargs[i].mctx == NULL)
                 goto end;
 
-            if (!EVP_MAC_CTX_set_params(loopargs[i].mctx, params))
-                goto end;
-            if (!EVP_MAC_init(loopargs[i].mctx))
+            if (!EVP_MAC_init(loopargs[i].mctx, key32, 16, params))
                 goto end;
         }
         for (testnum = 0; testnum < size_num; testnum++) {
