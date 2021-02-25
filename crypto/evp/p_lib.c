@@ -661,7 +661,7 @@ int EVP_PKEY_set_type_str(EVP_PKEY *pkey, const char *str, int len)
     return pkey_set_type(pkey, NULL, EVP_PKEY_NONE, str, len, NULL);
 }
 
-#ifndef OPENSSL_NO_DEPRECATED_3_0
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 int EVP_PKEY_set_alias_type(EVP_PKEY *pkey, int type)
 {
     if (!evp_pkey_is_legacy(pkey)) {
@@ -690,7 +690,7 @@ int EVP_PKEY_set_alias_type(EVP_PKEY *pkey, int type)
     pkey->type = type;
     return 1;
 }
-#endif
+# endif
 
 # ifndef OPENSSL_NO_ENGINE
 int EVP_PKEY_set1_engine(EVP_PKEY *pkey, ENGINE *e)
@@ -716,18 +716,20 @@ ENGINE *EVP_PKEY_get0_engine(const EVP_PKEY *pkey)
     return pkey->engine;
 }
 # endif
+
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 int EVP_PKEY_assign(EVP_PKEY *pkey, int type, void *key)
 {
     int alias = type;
 
-#ifndef OPENSSL_NO_EC
+#  ifndef OPENSSL_NO_EC
     if ((key != NULL) && (EVP_PKEY_type(type) == EVP_PKEY_EC)) {
         const EC_GROUP *group = EC_KEY_get0_group(key);
 
         if (group != NULL && EC_GROUP_get_curve_name(group) == NID_sm2)
             alias = EVP_PKEY_SM2;
     }
-#endif
+#  endif
 
     if (pkey == NULL || !EVP_PKEY_set_type(pkey, type))
         return 0;
@@ -736,6 +738,7 @@ int EVP_PKEY_assign(EVP_PKEY *pkey, int type, void *key)
     pkey->pkey.ptr = key;
     return (key != NULL);
 }
+# endif
 
 void *EVP_PKEY_get0(const EVP_PKEY *pkey)
 {
