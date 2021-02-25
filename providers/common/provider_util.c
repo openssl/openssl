@@ -72,6 +72,9 @@ int ossl_prov_cipher_load_from_params(PROV_CIPHER *pc,
     const OSSL_PARAM *p;
     const char *propquery;
 
+    if (params == NULL)
+        return 1;
+
     if (!load_common(params, &propquery, &pc->engine))
         return 0;
 
@@ -140,9 +143,11 @@ int ossl_prov_digest_load_from_params(PROV_DIGEST *pd,
     const OSSL_PARAM *p;
     const char *propquery;
 
+    if (params == NULL)
+        return 1;
+
     if (!load_common(params, &propquery, &pd->engine))
         return 0;
-
 
     p = OSSL_PARAM_locate_const(params, OSSL_ALG_PARAM_DIGEST);
     if (p == NULL)
