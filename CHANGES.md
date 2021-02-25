@@ -78,7 +78,9 @@ OpenSSL 3.0
    *Tomáš Mráz*
 
  * Removed RSA padding mode for SSLv23 (which was only used for
-   SSLv2)
+   SSLv2). This includes the functions RSA_padding_check_SSLv23() and
+   RSA_padding_add_SSLv23() and the `-ssl` option in the deprecated
+   `rsautl` command.
 
    *Rich Salz*
 
