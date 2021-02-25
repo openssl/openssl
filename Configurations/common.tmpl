@@ -137,6 +137,8 @@
  # generated source file.
  sub dogenerate {
      my $src = shift;
+     # Safety measure
+     return "" unless defined $unified_info{generate}->{$_};
      return "" if $cache{$src};
      my $obj = shift;
      my $bin = shift;
@@ -169,6 +171,17 @@
          }
      }
      $cache{$src} = 1;
+ }
+
+ sub dotarget {
+     my $target = shift;
+     return "" if $cache{$target};
+     $OUT .= generatetarget(target => $target,
+                            deps => $unified_info{depends}->{$target});
+     foreach (@{$unified_info{depends}->{$target}}) {
+         dogenerate($_);
+     }
+     $cache{$target} = 1;
  }
 
  # doobj is responsible for producing all the recipes that build
@@ -463,11 +476,12 @@
  # Start with populating the cache with all the overrides
  %cache = map { $_ => 1 } @{$unified_info{overrides}};
 
- # Build mandatory generated headers
+ # Build mandatory header file generators
  foreach (@{$unified_info{depends}->{""}}) { dogenerate($_); }
 
- # Build all known libraries, modules, programs and scripts.
+ # Build all known targets, libraries, modules, programs and scripts.
  # Everything else will be handled as a consequence.
+ foreach (@{$unified_info{targets}})   { dotarget($_); }
  foreach (@{$unified_info{libraries}}) { dolib($_);    }
  foreach (@{$unified_info{modules}})   { domodule($_); }
  foreach (@{$unified_info{programs}})  { dobin($_);    }
