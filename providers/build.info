@@ -142,6 +142,16 @@ IF[{- !$disabled{fips} -}]
   # statements, the final build file will not have a trace of it.
   MODULES{fips}=$FIPSGOAL
   LIBS{noinst}=$LIBFIPS
+
+  # For tests that try to use the FIPS module, we need to make a local fips
+  # module installation.  We have the output go to standard output, because
+  # the generated commands in build templates are expected to catch that,
+  # and thereby keep control over the exact output file location.
+  DEPEND[|tests|]=fipsmodule.cnf
+  GENERATE[fipsmodule.cnf]=../apps/openssl fipsinstall \
+        -module providers/$(FIPSMODULENAME) -provider_name fips \
+        -mac_name HMAC -section_name fips_sect -out -
+  DEPEND[fipsmodule.cnf]=$FIPSGOAL
 ENDIF
 
 #
