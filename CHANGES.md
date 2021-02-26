@@ -176,6 +176,19 @@ breaking changes, and mappings for the large list of deprecated functions.
 
    *Matt Caswell*
 
+ * PKCS#5 PBKDF1 key derivation has been moved from PKCS5_PBE_keyivgen() into
+   the legacy crypto provider as an EVP_KDF. Applications requiring this KDF
+   will need to load the legacy crypto provider. This includes these PBE
+   algorithms which use this KDF:
+   - NID_pbeWithMD2AndDES_CBC
+   - NID_pbeWithMD5AndDES_CBC
+   - NID_pbeWithSHA1AndRC2_CBC
+   - NID_pbeWithMD2AndRC2_CBC
+   - NID_pbeWithMD5AndRC2_CBC
+   - NID_pbeWithSHA1AndDES_CBC
+
+   *Jon Spillett*
+
  * Deprecated obsolete EVP_PKEY_CTX_get0_dh_kdf_ukm() and
    EVP_PKEY_CTX_get0_ecdh_kdf_ukm() functions.
 

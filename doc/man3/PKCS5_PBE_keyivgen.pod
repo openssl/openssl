@@ -158,6 +158,9 @@ PKCS5_v2_PBE_keyivgen_ex(), EVP_PBE_scrypt_ex(), PKCS5_v2_scrypt_keyivgen_ex(),
 PKCS5_pbe_set0_algor_ex(), PKCS5_pbe_set_ex(), PKCS5_pbe2_set_iv_ex() and
 PKCS5_pbkdf2_set_ex() were added in OpenSSL 3.0.
 
+From OpenSSL 3.0 the PBKDF1 algorithm used in PKCS5_PBE_keyivgen() and
+PKCS5_PBE_keyivgen_ex() has been moved to the legacy provider as an EVP_KDF.
+
 =head1 COPYRIGHT
 
 Copyright 2021 The OpenSSL Project Authors. All Rights Reserved.
