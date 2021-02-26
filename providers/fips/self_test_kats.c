@@ -294,10 +294,10 @@ static int self_test_drbg(const ST_KAT_DRBG *t, OSSL_SELF_TEST *st,
     drbg_params[1] =
         OSSL_PARAM_construct_octet_string(OSSL_RAND_PARAM_TEST_NONCE,
                                           (void *)t->nonce, t->noncelen);
-    if (!EVP_RAND_set_ctx_params(test, drbg_params)
-            || !EVP_RAND_instantiate(test, strength, 0, NULL, 0))
+    if (!EVP_RAND_instantiate(test, strength, 0, NULL, 0, drbg_params))
         goto err;
-    if (!EVP_RAND_instantiate(drbg, strength, 0, t->persstr, t->persstrlen))
+    if (!EVP_RAND_instantiate(drbg, strength, 0, t->persstr, t->persstrlen,
+                              NULL))
         goto err;
 
     drbg_params[0] =
