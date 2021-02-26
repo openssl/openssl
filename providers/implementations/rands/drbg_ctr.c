@@ -18,6 +18,7 @@
 #include "crypto/modes.h"
 #include "internal/thread_once.h"
 #include "prov/implementations.h"
+#include "prov/providercommon.h"
 #include "prov/provider_ctx.h"
 #include "drbg_local.h"
 
@@ -326,10 +327,13 @@ static int drbg_ctr_instantiate(PROV_DRBG *drbg,
 static int drbg_ctr_instantiate_wrapper(void *vdrbg, unsigned int strength,
                                         int prediction_resistance,
                                         const unsigned char *pstr,
-                                        size_t pstr_len)
+                                        size_t pstr_len,
+                                        const OSSL_PARAM params[])
 {
     PROV_DRBG *drbg = (PROV_DRBG *)vdrbg;
 
+    if (!ossl_prov_is_running() || !drbg_ctr_set_ctx_params(drbg, params))
+        return 0;
     return ossl_prov_drbg_instantiate(drbg, strength, prediction_resistance,
                                       pstr, pstr_len);
 }

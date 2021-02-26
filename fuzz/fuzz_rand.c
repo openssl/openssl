@@ -41,7 +41,8 @@ static int fuzz_rand_instantiate(ossl_unused void *vrng,
                                  ossl_unused unsigned int strength,
                                  ossl_unused int prediction_resistance,
                                  ossl_unused const unsigned char *pstr,
-                                 ossl_unused size_t pstr_len)
+                                 ossl_unused size_t pstr_len,
+                                 ossl_unused const OSSL_PARAM params[])
 {
     *(int *)vrng = EVP_RAND_STATE_READY;
     return 1;
