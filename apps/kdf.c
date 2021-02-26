@@ -135,7 +135,7 @@ opthelp:
     if (dkm_bytes == NULL)
         goto err;
 
-    if (!EVP_KDF_derive(ctx, dkm_bytes, dkm_len)) {
+    if (!EVP_KDF_derive(ctx, dkm_bytes, dkm_len, NULL)) {
         BIO_printf(bio_err, "EVP_KDF_derive failed\n");
         goto err;
     }
