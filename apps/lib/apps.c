@@ -188,9 +188,9 @@ unsigned long get_nameopt(void)
 
 int dump_cert_text(BIO *out, X509 *x)
 {
-    print_name(out, "subject=", X509_get_subject_name(x), get_nameopt());
+    print_name(out, "subject=", X509_get_subject_name(x));
     BIO_puts(out, "\n");
-    print_name(out, "issuer=", X509_get_issuer_name(x), get_nameopt());
+    print_name(out, "issuer=", X509_get_issuer_name(x));
     BIO_puts(out, "\n");
 
     return 0;
@@ -1071,14 +1071,13 @@ static int set_table_opts(unsigned long *flags, const char *arg,
     return 0;
 }
 
-void print_name(BIO *out, const char *title, const X509_NAME *nm,
-                unsigned long lflags)
+void print_name(BIO *out, const char *title, const X509_NAME *nm)
 {
     char *buf;
     char mline = 0;
     int indent = 0;
-
-    if (title)
+    unsigned long lflags = get_nameopt();
+    if (title != NULL)
         BIO_puts(out, title);
     if ((lflags & XN_FLAG_SEP_MASK) == XN_FLAG_SEP_MULTILINE) {
         mline = 1;
