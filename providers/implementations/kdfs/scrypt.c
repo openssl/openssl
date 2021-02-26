@@ -147,12 +147,12 @@ static int set_property_query(KDF_SCRYPT *ctx, const char *propq)
     return 1;
 }
 
-static int kdf_scrypt_derive(void *vctx, unsigned char *key,
-                             size_t keylen)
+static int kdf_scrypt_derive(void *vctx, unsigned char *key, size_t keylen,
+                             const OSSL_PARAM params[])
 {
     KDF_SCRYPT *ctx = (KDF_SCRYPT *)vctx;
 
-    if (!ossl_prov_is_running())
+    if (!ossl_prov_is_running() || !kdf_scrypt_set_ctx_params(ctx, params))
         return 0;
 
     if (ctx->pass == NULL) {

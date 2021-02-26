@@ -123,12 +123,13 @@ static size_t kdf_hkdf_size(KDF_HKDF *ctx)
     return sz;
 }
 
-static int kdf_hkdf_derive(void *vctx, unsigned char *key, size_t keylen)
+static int kdf_hkdf_derive(void *vctx, unsigned char *key, size_t keylen,
+                           const OSSL_PARAM params[])
 {
     KDF_HKDF *ctx = (KDF_HKDF *)vctx;
     const EVP_MD *md;
 
-    if (!ossl_prov_is_running())
+    if (!ossl_prov_is_running() || !kdf_hkdf_set_ctx_params(ctx, params))
         return 0;
 
     md = ossl_prov_digest_md(&ctx->digest);
