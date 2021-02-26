@@ -23,9 +23,9 @@ use lib srctop_dir('Configurations');
 use lib bldtop_dir('.');
 use platform;
 
-my $no_check = disabled('fips-securitychecks');
+my $no_check = disabled("fips") || disabled('fips-securitychecks');
 plan skip_all => "Test only supported in a fips build with security checks"
-    if disabled("fips") || disabled("fips-securitychecks");
+    if $no_check;
 plan tests => 11;
 
 my $fipsmodule = bldtop_file('providers', platform->dso('fips'));
