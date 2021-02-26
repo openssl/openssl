@@ -793,10 +793,6 @@ int x509_main(int argc, char **argv)
             X509_EXTENSION_free(X509_delete_ext(x, i));
     }
 
-    if ((reqfile || newcert || signkey != NULL || CAfile != NULL)
-            && !preserve_dates && !set_cert_times(x, NULL, NULL, days))
-        goto end;
-
     issuer_cert = x;
     if (CAfile != NULL) {
         issuer_cert = xca;
@@ -809,8 +805,12 @@ int x509_main(int argc, char **argv)
     if (sno != NULL && !X509_set_serialNumber(x, sno))
         goto end;
 
-    if (!X509_set_issuer_name(x, X509_get_subject_name(issuer_cert)))
-        goto end;
+    if (reqfile || newcert || signkey != NULL || CAfile != NULL) {
+        if (!preserve_dates && !set_cert_times(x, NULL, NULL, days))
+            goto end;
+        if (!X509_set_issuer_name(x, X509_get_subject_name(issuer_cert)))
+            goto end;
+    }
 
     X509V3_set_ctx(&ext_ctx, issuer_cert, x, req, NULL, X509V3_CTX_REPLACE);
     if (extconf != NULL) {
