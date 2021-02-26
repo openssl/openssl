@@ -2464,7 +2464,7 @@ static int kdf_test_run(EVP_TEST *t)
         t->err = "INTERNAL_ERROR";
         goto err;
     }
-    if (EVP_KDF_derive(expected->ctx, got, got_len) <= 0) {
+    if (EVP_KDF_derive(expected->ctx, got, got_len, NULL) <= 0) {
         t->err = "KDF_DERIVE_ERROR";
         goto err;
     }
