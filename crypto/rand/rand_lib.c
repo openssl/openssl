@@ -523,7 +523,7 @@ static EVP_RAND_CTX *rand_new_seed(OSSL_LIB_CTX *libctx)
         ERR_raise(ERR_LIB_RAND, RAND_R_UNABLE_TO_CREATE_DRBG);
         return NULL;
     }
-    if (!EVP_RAND_instantiate(ctx, 0, 0, NULL, 0)) {
+    if (!EVP_RAND_instantiate(ctx, 0, 0, NULL, 0, NULL)) {
         ERR_raise(ERR_LIB_RAND, RAND_R_ERROR_INSTANTIATING_DRBG);
         EVP_RAND_CTX_free(ctx);
         return NULL;
@@ -574,12 +574,7 @@ static EVP_RAND_CTX *rand_new_drbg(OSSL_LIB_CTX *libctx, EVP_RAND_CTX *parent,
     *p++ = OSSL_PARAM_construct_time_t(OSSL_DRBG_PARAM_RESEED_TIME_INTERVAL,
                                        &reseed_time_interval);
     *p = OSSL_PARAM_construct_end();
-    if (!EVP_RAND_set_ctx_params(ctx, params)) {
-        ERR_raise(ERR_LIB_RAND, RAND_R_ERROR_INITIALISING_DRBG);
-        EVP_RAND_CTX_free(ctx);
-        return NULL;
-    }
-    if (!EVP_RAND_instantiate(ctx, 0, 0, NULL, 0)) {
+    if (!EVP_RAND_instantiate(ctx, 0, 0, NULL, 0, params)) {
         ERR_raise(ERR_LIB_RAND, RAND_R_ERROR_INSTANTIATING_DRBG);
         EVP_RAND_CTX_free(ctx);
         return NULL;
