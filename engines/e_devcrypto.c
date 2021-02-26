@@ -1361,7 +1361,6 @@ void engine_load_devcrypto_int(void)
      */
     ERR_pop_to_mark();
 }
-}
 
 #else
 
