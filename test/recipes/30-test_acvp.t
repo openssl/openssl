@@ -23,9 +23,6 @@ plan skip_all => "ACVP is not supported by this test"
 
 use lib srctop_dir('Configurations');
 use lib bldtop_dir('.');
-use platform;
-
-my $infile = bldtop_file('providers', platform->dso('fips'));
 
 plan tests => 1;
 

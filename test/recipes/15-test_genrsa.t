@@ -20,7 +20,6 @@ BEGIN {
 
 use lib srctop_dir('Configurations');
 use lib bldtop_dir('.');
-use platform;
 
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 
@@ -124,7 +123,6 @@ unless ($no_fips) {
     my $provpath = bldtop_dir("providers");
     my @prov = ( "-provider-path", $provpath,
                  "-config", $provconf);
-    my $infile = bldtop_file('providers', platform->dso('fips'));
 
     $ENV{OPENSSL_TEST_LIBCTX} = "1";
     ok(run(app(['openssl', 'genpkey',

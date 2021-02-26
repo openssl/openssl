@@ -22,11 +22,8 @@ setup("test_ssl_old");
 
 use lib srctop_dir('Configurations');
 use lib bldtop_dir('.');
-use platform;
 
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
-my $infile = bldtop_file('providers', platform->dso('fips'));
-
 my ($no_rsa, $no_dsa, $no_dh, $no_ec, $no_psk,
     $no_ssl3, $no_tls1, $no_tls1_1, $no_tls1_2, $no_tls1_3,
     $no_dtls, $no_dtls1, $no_dtls1_2, $no_ct) =

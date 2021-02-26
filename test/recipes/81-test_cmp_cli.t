@@ -21,7 +21,7 @@ BEGIN {
 }
 use lib srctop_dir('Configurations');
 use lib bldtop_dir('.');
-use platform;
+
 plan skip_all => "These tests are not supported in a fuzz build"
     if config('options') =~ /-DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION/;
 

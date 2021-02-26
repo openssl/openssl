@@ -19,7 +19,6 @@ BEGIN {
 
 use lib srctop_dir('Configurations');
 use lib bldtop_dir('.');
-use platform;
 
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 my $no_legacy = disabled('legacy') || ($ENV{NO_LEGACY} // 0);

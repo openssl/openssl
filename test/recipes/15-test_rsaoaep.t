@@ -18,12 +18,11 @@ BEGIN {
 }
 use lib srctop_dir('Configurations');
 use lib bldtop_dir('.');
-use platform;
 
 my $no_check = disabled('fips-securitychecks');
 
 plan tests =>
-    ($no_check ? 0 : 1)         # FIPS install test
+    ($no_check ? 0 : 1)         # FIPS security check
     + 9;
 
 my @prov = ( );
@@ -42,6 +41,7 @@ my $small_key_file = srctop_file("test", "testrsa.pem");
 $ENV{OPENSSL_TEST_LIBCTX} = "1";
 
 unless ($no_check) {
+    @prov = ( "-provider-path", $provpath, "-config", $provconf );
     ok(!run(app(['openssl', 'pkeyutl',
                  @prov,
                  '-encrypt',

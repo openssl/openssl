@@ -22,10 +22,8 @@ setup("test_ssl_new");
 
 use lib srctop_dir('Configurations');
 use lib bldtop_dir('.');
-use platform;
 
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
-my $infile = bldtop_file('providers', platform->dso('fips'));
 
 $ENV{TEST_CERTS_DIR} = srctop_dir("test", "certs");
 

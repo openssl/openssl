@@ -23,7 +23,6 @@ BEGIN {
 
 use lib srctop_dir('Configurations');
 use lib bldtop_dir('.');
-use platform;
 
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 
@@ -55,8 +54,6 @@ plan tests =>
     + 10;
 
 unless ($no_fips) {
-    my $infile = bldtop_file('providers', platform->dso('fips'));
-
     @config = ( "-config", srctop_file("test", "fips-and-base.cnf") );
     $provname = 'fips';
 }

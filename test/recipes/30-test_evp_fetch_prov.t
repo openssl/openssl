@@ -18,10 +18,8 @@ setup("test_evp_fetch_prov");
 
 use lib srctop_dir('Configurations');
 use lib bldtop_dir('.');
-use platform;
 
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
-my $infile = bldtop_file('providers', platform->dso('fips'));
 
 my @types = ( "digest", "cipher" );
 

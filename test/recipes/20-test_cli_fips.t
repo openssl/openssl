@@ -26,7 +26,7 @@ use platform;
 my $no_check = disabled('fips-securitychecks');
 plan skip_all => "Test only supported in a fips build with security checks"
     if disabled("fips") || disabled("fips-securitychecks");
-plan tests => 13;
+plan tests => 11;
 
 my $fipsmodule = bldtop_file('providers', platform->dso('fips'));
 my $fipsconf = srctop_file("test", "fips-and-base.cnf");
@@ -34,7 +34,6 @@ my $defaultconf = srctop_file("test", "default.cnf");
 my $tbs_data = $fipsmodule;
 my $bogus_data = $fipsconf;
 
-$ENV{OPENSSL_CONF_INCLUDE} = abs2rel(curdir());
 $ENV{OPENSSL_CONF} = $fipsconf;
 
 ok(run(app(['openssl', 'list', '-public-key-methods', '-verbose'])),

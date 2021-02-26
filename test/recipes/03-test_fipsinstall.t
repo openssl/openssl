@@ -9,7 +9,7 @@
 use strict;
 use warnings;
 
-use File::Spec;
+use File::Spec::Functions qw(:DEFAULT abs2rel);
 use File::Copy;
 use OpenSSL::Glob;
 use OpenSSL::Test qw/:DEFAULT srctop_dir srctop_file bldtop_dir bldtop_file/;
@@ -235,7 +235,8 @@ SKIP: {
        "fipsinstall fails when the asymmetric cipher result is corrupted");
 }
 
-$ENV{OPENSSL_CONF_INCLUDE} = ".";
+# 'local' ensures that this change is only done in this file.
+local $ENV{OPENSSL_CONF_INCLUDE} = abs2rel(curdir());
 
 ok(replace_parent_line_file('fips.cnf', 'fips_parent.cnf')
    && run(app(['openssl', 'fipsinstall', '-config', 'fips_parent.cnf'])),
@@ -271,5 +272,3 @@ ok(replace_parent_line_file('fips_bad_module_mac.cnf',
    && !run(app(['openssl', 'fipsinstall',
                 '-config', 'fips_parent_bad_module_mac.cnf'])),
    "verify load config fail bad module mac");
-
-delete $ENV{OPENSSL_CONF_INCLUDE};

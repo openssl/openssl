@@ -19,7 +19,6 @@ setup("test_provider_status");
 
 use lib srctop_dir('Configurations');
 use lib bldtop_dir('.');
-use platform;
 
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 
@@ -27,8 +26,6 @@ plan skip_all => "provider_status is not supported by this test"
     if $no_fips;
 
 plan tests => 1;
-
-my $infile = bldtop_file('providers', platform->dso('fips'));
 
 ok(run(test(["provider_status_test", "-config", srctop_file("test","fips.cnf"),
              "-provider_name", "fips"])),
