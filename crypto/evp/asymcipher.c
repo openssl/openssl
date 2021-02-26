@@ -452,7 +452,7 @@ const OSSL_PARAM *EVP_ASYM_CIPHER_gettable_ctx_params(const EVP_ASYM_CIPHER *cip
         return NULL;
 
     provctx = ossl_provider_ctx(EVP_ASYM_CIPHER_provider(cip));
-    return cip->gettable_ctx_params(provctx);
+    return cip->gettable_ctx_params(NULL, provctx);
 }
 
 const OSSL_PARAM *EVP_ASYM_CIPHER_settable_ctx_params(const EVP_ASYM_CIPHER *cip)
@@ -463,5 +463,5 @@ const OSSL_PARAM *EVP_ASYM_CIPHER_settable_ctx_params(const EVP_ASYM_CIPHER *cip
         return NULL;
 
     provctx = ossl_provider_ctx(EVP_ASYM_CIPHER_provider(cip));
-    return cip->settable_ctx_params(provctx);
+    return cip->settable_ctx_params(NULL, provctx);
 }

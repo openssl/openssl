@@ -30,9 +30,11 @@ provider-keyexch - The keyexch library E<lt>-E<gt> provider functions
 
  /* Key Exchange parameters */
  int OSSL_FUNC_keyexch_set_ctx_params(void *ctx, const OSSL_PARAM params[]);
- const OSSL_PARAM *OSSL_FUNC_keyexch_settable_ctx_params(void *provctx);
+ const OSSL_PARAM *OSSL_FUNC_keyexch_settable_ctx_params(void *ctx,
+                                                         void *provctx);
  int OSSL_FUNC_keyexch_get_ctx_params(void *ctx, OSSL_PARAM params[]);
- const OSSL_PARAM *OSSL_FUNC_keyexch_gettable_ctx_params(void *provctx);
+ const OSSL_PARAM *OSSL_FUNC_keyexch_gettable_ctx_params(void *ctx,
+                                                         void *provctx);
 
 =head1 DESCRIPTION
 

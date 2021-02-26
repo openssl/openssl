@@ -367,7 +367,7 @@ const OSSL_PARAM *EVP_KEM_gettable_ctx_params(const EVP_KEM *kem)
         return NULL;
 
     provctx = ossl_provider_ctx(EVP_KEM_provider(kem));
-    return kem->gettable_ctx_params(provctx);
+    return kem->gettable_ctx_params(NULL, provctx);
 }
 
 const OSSL_PARAM *EVP_KEM_settable_ctx_params(const EVP_KEM *kem)
@@ -378,5 +378,5 @@ const OSSL_PARAM *EVP_KEM_settable_ctx_params(const EVP_KEM *kem)
         return NULL;
 
     provctx = ossl_provider_ctx(EVP_KEM_provider(kem));
-    return kem->settable_ctx_params(provctx);
+    return kem->settable_ctx_params(NULL, provctx);
 }

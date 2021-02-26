@@ -293,7 +293,8 @@ static const OSSL_PARAM known_gettable_ctx_params[] = {
     OSSL_PARAM_END
 };
 
-static const OSSL_PARAM *eddsa_gettable_ctx_params(ossl_unused void *provctx)
+static const OSSL_PARAM *eddsa_gettable_ctx_params(ossl_unused void *vpeddsactx,
+                                                   ossl_unused void *provctx)
 {
     return known_gettable_ctx_params;
 }

@@ -156,7 +156,8 @@ static const OSSL_PARAM known_gettable_rsakem_ctx_params[] = {
     OSSL_PARAM_END
 };
 
-static const OSSL_PARAM *rsakem_gettable_ctx_params(ossl_unused void *provctx)
+static const OSSL_PARAM *rsakem_gettable_ctx_params(ossl_unused void *vprsactx,
+                                                    ossl_unused void *provctx)
 {
     return known_gettable_rsakem_ctx_params;
 }
@@ -187,7 +188,8 @@ static const OSSL_PARAM known_settable_rsakem_ctx_params[] = {
     OSSL_PARAM_END
 };
 
-static const OSSL_PARAM *rsakem_settable_ctx_params(ossl_unused void *provctx)
+static const OSSL_PARAM *rsakem_settable_ctx_params(ossl_unused void *vprsactx,
+                                                    ossl_unused void *provctx)
 {
     return known_settable_rsakem_ctx_params;
 }

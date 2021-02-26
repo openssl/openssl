@@ -202,7 +202,8 @@ static int mac_set_ctx_params(void *vpmacctx, const OSSL_PARAM params[])
     return EVP_MAC_CTX_set_params(ctx->macctx, params);
 }
 
-static const OSSL_PARAM *mac_settable_ctx_params(void *provctx,
+static const OSSL_PARAM *mac_settable_ctx_params(ossl_unused void *ctx,
+                                                 void *provctx,
                                                  const char *macname)
 {
     EVP_MAC *mac = EVP_MAC_fetch(PROV_LIBCTX_OF(provctx), macname,
@@ -219,9 +220,10 @@ static const OSSL_PARAM *mac_settable_ctx_params(void *provctx,
 }
 
 #define MAC_SETTABLE_CTX_PARAMS(funcname, macname) \
-    static const OSSL_PARAM *mac_##funcname##_settable_ctx_params(void *provctx) \
+    static const OSSL_PARAM *mac_##funcname##_settable_ctx_params(void *ctx, \
+                                                                  void *provctx) \
     { \
-        return mac_settable_ctx_params(provctx, macname); \
+        return mac_settable_ctx_params(ctx, provctx, macname); \
     }
 
 MAC_SETTABLE_CTX_PARAMS(hmac, "HMAC")

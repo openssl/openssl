@@ -573,7 +573,8 @@ static int xor_gen_set_params(void *genctx, const OSSL_PARAM params[])
     return 1;
 }
 
-static const OSSL_PARAM *xor_gen_settable_params(void *provctx)
+static const OSSL_PARAM *xor_gen_settable_params(ossl_unused void *genctx,
+                                                 ossl_unused void *provctx)
 {
     static OSSL_PARAM settable[] = {
         OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME, NULL, 0),

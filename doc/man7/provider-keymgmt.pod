@@ -22,7 +22,8 @@ provider-keymgmt - The KEYMGMT library E<lt>-E<gt> provider functions
  void *OSSL_FUNC_keymgmt_gen_init(void *provctx, int selection);
  int OSSL_FUNC_keymgmt_gen_set_template(void *genctx, void *template);
  int OSSL_FUNC_keymgmt_gen_set_params(void *genctx, const OSSL_PARAM params[]);
- const OSSL_PARAM *OSSL_FUNC_keymgmt_gen_settable_params(void *provctx);
+ const OSSL_PARAM *OSSL_FUNC_keymgmt_gen_settable_params(void *genctx,
+                                                         void *provctx);
  void *OSSL_FUNC_keymgmt_gen(void *genctx, OSSL_CALLBACK *cb, void *cbarg);
  void OSSL_FUNC_keymgmt_gen_cleanup(void *genctx);
 

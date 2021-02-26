@@ -502,7 +502,8 @@ static int rsa_gen_set_params(void *genctx, const OSSL_PARAM params[])
     OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_RSA_MGF1_DIGEST, NULL, 0),   \
     OSSL_PARAM_int(OSSL_PKEY_PARAM_RSA_PSS_SALTLEN, NULL)
 
-static const OSSL_PARAM *rsa_gen_settable_params(void *provctx)
+static const OSSL_PARAM *rsa_gen_settable_params(ossl_unused void *genctx,
+                                                 ossl_unused void *provctx)
 {
     static OSSL_PARAM settable[] = {
         rsa_gen_basic,
@@ -512,7 +513,8 @@ static const OSSL_PARAM *rsa_gen_settable_params(void *provctx)
     return settable;
 }
 
-static const OSSL_PARAM *rsapss_gen_settable_params(void *provctx)
+static const OSSL_PARAM *rsapss_gen_settable_params(ossl_unused void *genctx,
+                                                    ossl_unused void *provctx)
 {
     static OSSL_PARAM settable[] = {
         rsa_gen_basic,

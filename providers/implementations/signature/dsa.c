@@ -434,7 +434,8 @@ static const OSSL_PARAM known_gettable_ctx_params[] = {
     OSSL_PARAM_END
 };
 
-static const OSSL_PARAM *dsa_gettable_ctx_params(ossl_unused void *vctx)
+static const OSSL_PARAM *dsa_gettable_ctx_params(ossl_unused void *ctx,
+                                                 ossl_unused void *provctx)
 {
     return known_gettable_ctx_params;
 }
@@ -476,20 +477,13 @@ static const OSSL_PARAM known_settable_ctx_params[] = {
     OSSL_PARAM_END
 };
 
-static const OSSL_PARAM *dsa_settable_ctx_params(ossl_unused void *provctx)
+static const OSSL_PARAM *dsa_settable_ctx_params(void *vpdsactx,
+                                                 ossl_unused void *provctx)
 {
-    /*
-     * TODO(3.0): Should this function return a different set of settable ctx
-     * params if the ctx is being used for a DigestSign/DigestVerify? In that
-     * case it is not allowed to set the digest size/digest name because the
-     * digest is explicitly set as part of the init.
-     * NOTE: Ideally we would check pdsactx->flag_allow_md, but this is
-     * problematic because there is no nice way of passing the
-     * PROV_DSA_CTX down to this function...
-     * Because we have API's that dont know about their parent..
-     * e.g: EVP_SIGNATURE_gettable_ctx_params(const EVP_SIGNATURE *sig).
-     * We could pass NULL for that case (but then how useful is the check?).
-     */
+    PROV_DSA_CTX *pdsactx = (PROV_DSA_CTX *)vpdsactx;
+
+    if (pdsactx != NULL && !pdsactx->flag_allow_md)
+        return &known_settable_ctx_params[2];
     return known_settable_ctx_params;
 }
 

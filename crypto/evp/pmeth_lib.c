@@ -744,27 +744,31 @@ const OSSL_PARAM *EVP_PKEY_CTX_gettable_params(EVP_PKEY_CTX *ctx)
             && ctx->op.kex.exchange != NULL
             && ctx->op.kex.exchange->gettable_ctx_params != NULL) {
         provctx = ossl_provider_ctx(EVP_KEYEXCH_provider(ctx->op.kex.exchange));
-        return ctx->op.kex.exchange->gettable_ctx_params(provctx);
+        return ctx->op.kex.exchange->gettable_ctx_params(ctx->op.kex.exchprovctx,
+                                                         provctx);
     }
     if (EVP_PKEY_CTX_IS_SIGNATURE_OP(ctx)
             && ctx->op.sig.signature != NULL
             && ctx->op.sig.signature->gettable_ctx_params != NULL) {
         provctx = ossl_provider_ctx(
                       EVP_SIGNATURE_provider(ctx->op.sig.signature));
-        return ctx->op.sig.signature->gettable_ctx_params(provctx);
+        return ctx->op.sig.signature->gettable_ctx_params(ctx->op.sig.sigprovctx,
+                                                          provctx);
     }
     if (EVP_PKEY_CTX_IS_ASYM_CIPHER_OP(ctx)
             && ctx->op.ciph.cipher != NULL
             && ctx->op.ciph.cipher->gettable_ctx_params != NULL) {
         provctx = ossl_provider_ctx(
                       EVP_ASYM_CIPHER_provider(ctx->op.ciph.cipher));
-        return ctx->op.ciph.cipher->gettable_ctx_params(provctx);
+        return ctx->op.ciph.cipher->gettable_ctx_params(ctx->op.ciph.ciphprovctx,
+                                                        provctx);
     }
     if (EVP_PKEY_CTX_IS_KEM_OP(ctx)
         && ctx->op.encap.kem != NULL
         && ctx->op.encap.kem->gettable_ctx_params != NULL) {
         provctx = ossl_provider_ctx(EVP_KEM_provider(ctx->op.encap.kem));
-        return ctx->op.encap.kem->gettable_ctx_params(provctx);
+        return ctx->op.encap.kem->gettable_ctx_params(ctx->op.encap.kemprovctx,
+                                                      provctx);
     }
     return NULL;
 }
@@ -777,30 +781,38 @@ const OSSL_PARAM *EVP_PKEY_CTX_settable_params(EVP_PKEY_CTX *ctx)
             && ctx->op.kex.exchange != NULL
             && ctx->op.kex.exchange->settable_ctx_params != NULL) {
         provctx = ossl_provider_ctx(EVP_KEYEXCH_provider(ctx->op.kex.exchange));
-        return ctx->op.kex.exchange->settable_ctx_params(provctx);
+        return ctx->op.kex.exchange->settable_ctx_params(ctx->op.kex.exchprovctx,
+                                                         provctx);
     }
     if (EVP_PKEY_CTX_IS_SIGNATURE_OP(ctx)
             && ctx->op.sig.signature != NULL
             && ctx->op.sig.signature->settable_ctx_params != NULL) {
         provctx = ossl_provider_ctx(
                       EVP_SIGNATURE_provider(ctx->op.sig.signature));
-        return ctx->op.sig.signature->settable_ctx_params(provctx);
+        return ctx->op.sig.signature->settable_ctx_params(ctx->op.sig.sigprovctx,
+                                                          provctx);
     }
     if (EVP_PKEY_CTX_IS_ASYM_CIPHER_OP(ctx)
             && ctx->op.ciph.cipher != NULL
             && ctx->op.ciph.cipher->settable_ctx_params != NULL) {
         provctx = ossl_provider_ctx(
                       EVP_ASYM_CIPHER_provider(ctx->op.ciph.cipher));
-        return ctx->op.ciph.cipher->settable_ctx_params(provctx);
+        return ctx->op.ciph.cipher->settable_ctx_params(ctx->op.ciph.ciphprovctx,
+                                                        provctx);
     }
     if (EVP_PKEY_CTX_IS_GEN_OP(ctx)
-            && ctx->keymgmt != NULL)
-        return EVP_KEYMGMT_gen_settable_params(ctx->keymgmt);
+            && ctx->keymgmt != NULL
+            && ctx->keymgmt->gen_settable_params != NULL) {
+        provctx = ossl_provider_ctx(EVP_KEYMGMT_provider(ctx->keymgmt));
+        return ctx->keymgmt->gen_settable_params(ctx->op.keymgmt.genctx,
+                                                 provctx);
+    }
     if (EVP_PKEY_CTX_IS_KEM_OP(ctx)
         && ctx->op.encap.kem != NULL
         && ctx->op.encap.kem->settable_ctx_params != NULL) {
         provctx = ossl_provider_ctx(EVP_KEM_provider(ctx->op.encap.kem));
-        return ctx->op.encap.kem->settable_ctx_params(provctx);
+        return ctx->op.encap.kem->settable_ctx_params(ctx->op.encap.kemprovctx,
+                                                      provctx);
     }
     return NULL;
 }
