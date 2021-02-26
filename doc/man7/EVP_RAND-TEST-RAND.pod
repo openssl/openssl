@@ -90,7 +90,7 @@ A context for a test generator can be obtained by calling:
  *p++ = OSSL_PARAM_construct_octet_string(OSSL_RAND_PARAM_TEST_NONCE,
                                           nonce, sizeof(nonce));
  *p = OSSL_PARAM_construct_end();
- EVP_RAND_set_ctx_params(rctx, params);
+ EVP_RAND_instantiate(rctx, strength, 0, NULL, 0, params);
 
  EVP_RAND_generate(rctx, bytes, sizeof(bytes), strength, 0, NULL, 0);
 

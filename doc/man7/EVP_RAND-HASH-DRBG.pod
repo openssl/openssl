@@ -73,7 +73,7 @@ A context for HASH DRBG can be obtained by calling:
 
  *p++ = OSSL_PARAM_construct_utf8_string(OSSL_DRBG_PARAM_DIGEST, SN_sha512, 0);
  *p = OSSL_PARAM_construct_end();
- EVP_RAND_set_ctx_params(rctx, params);
+ EVP_RAND_instantiate(rctx, strength, 0, NULL, 0, params);
 
  EVP_RAND_generate(rctx, bytes, sizeof(bytes), strength, 0, NULL, 0);
 
