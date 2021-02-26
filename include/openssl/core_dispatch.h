@@ -415,7 +415,8 @@ OSSL_CORE_MAKE_FUNC(void,rand_freectx, (void *vctx))
 OSSL_CORE_MAKE_FUNC(int,rand_instantiate,
                     (void *vdrbg, unsigned int strength,
                      int prediction_resistance,
-                     const unsigned char *pstr, size_t pstr_len))
+                     const unsigned char *pstr, size_t pstr_len,
+                     const OSSL_PARAM params[]))
 OSSL_CORE_MAKE_FUNC(int,rand_uninstantiate, (void *vdrbg))
 OSSL_CORE_MAKE_FUNC(int,rand_generate,
                     (void *vctx, unsigned char *out, size_t outlen,
