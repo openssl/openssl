@@ -220,6 +220,7 @@ extern "C" {
 
 /* Known KDF names */
 #define OSSL_KDF_NAME_HKDF           "HKDF"
+#define OSSL_KDF_NAME_PBKDF1         "PBKDF1"
 #define OSSL_KDF_NAME_PBKDF2         "PBKDF2"
 #define OSSL_KDF_NAME_SCRYPT         "SCRYPT"
 #define OSSL_KDF_NAME_SSHKDF         "SSHKDF"
