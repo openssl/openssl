@@ -217,12 +217,10 @@ static int self_test_kdf(const ST_KAT_KDF *t, OSSL_SELF_TEST *st,
     params = OSSL_PARAM_BLD_to_param(bld);
     if (params == NULL)
         goto err;
-    if (!EVP_KDF_CTX_set_params(ctx, params))
-        goto err;
 
     if (t->expected_len > sizeof(out))
         goto err;
-    if (EVP_KDF_derive(ctx, out, t->expected_len) <= 0)
+    if (EVP_KDF_derive(ctx, out, t->expected_len, params) <= 0)
         goto err;
 
     OSSL_SELF_TEST_oncorrupt_byte(st, out);
