@@ -79,6 +79,14 @@ Disabled by default. Use I<enable-rc5> config option to enable.
 
 =back
 
+=head2 Key Derivation Function (KDF)
+
+=over 4
+
+=item PBKDF1
+
+=back
+
 =begin comment
 
 When algorithms for other operations start appearing, the
