@@ -105,8 +105,7 @@ int tls13_hkdf_expand(SSL *s, const EVP_MD *md, const unsigned char *secret,
                                              hkdflabel, hkdflabellen);
     *p++ = OSSL_PARAM_construct_end();
 
-    ret = EVP_KDF_CTX_set_params(kctx, params) <= 0
-        || EVP_KDF_derive(kctx, out, outlen) <= 0;
+    ret = EVP_KDF_derive(kctx, out, outlen, params) <= 0;
 
     EVP_KDF_CTX_free(kctx);
 
@@ -258,8 +257,7 @@ int tls13_generate_secret(SSL *s, const EVP_MD *md,
                                              prevsecretlen);
     *p++ = OSSL_PARAM_construct_end();
 
-    ret = EVP_KDF_CTX_set_params(kctx, params) <= 0
-        || EVP_KDF_derive(kctx, outsecret, mdlen) <= 0;
+    ret = EVP_KDF_derive(kctx, outsecret, mdlen, params) <= 0;
 
     if (ret != 0)
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
