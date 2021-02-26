@@ -805,8 +805,9 @@ int x509_main(int argc, char **argv)
     }
 
     /* At this point the contents of the certificate x have been finished. */
+
     pkey = X509_get0_pubkey(x);
-    if (pkey == NULL) {
+    if ((print_pubkey != 0 || modulus != 0) && pkey == NULL) {
         BIO_printf(bio_err, "Error getting public key\n");
         goto end;
     }
