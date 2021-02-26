@@ -148,7 +148,7 @@ static int dsa_setup_md(PROV_DSA_CTX *ctx,
         EVP_MD_free(ctx->md);
 
         /*
-         * TODO(3.0) Should we care about DER writing errors?
+         * We do not care about DER writing errors.
          * All it really means is that for some reason, there's no
          * AlgorithmIdentifier to be had, but the operation itself is
          * still valid, just as long as it's not used to construct
@@ -313,7 +313,7 @@ int dsa_digest_sign_final(void *vpdsactx, unsigned char *sig, size_t *siglen,
      */
     if (sig != NULL) {
         /*
-         * TODO(3.0): There is the possibility that some externally provided
+         * There is the possibility that some externally provided
          * digests exceed EVP_MAX_MD_SIZE. We should probably handle that somehow -
          * but that problem is much larger than just in DSA.
          */
@@ -338,7 +338,7 @@ int dsa_digest_verify_final(void *vpdsactx, const unsigned char *sig,
         return 0;
 
     /*
-     * TODO(3.0): There is the possibility that some externally provided
+     * There is the possibility that some externally provided
      * digests exceed EVP_MAX_MD_SIZE. We should probably handle that somehow -
      * but that problem is much larger than just in DSA.
      */

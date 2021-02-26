@@ -249,6 +249,12 @@ OSSL_FUNC_digest_size() should return the digest size.
 OSSL_FUNC_digest_block_size() should return the block size of the underlying digest
 algorithm.
 
+=head1 BUGS
+
+The EVP_Digest() and EVP_DigestFinal_ex() libcrypto API calls do not
+expect the digest size to be larger than EVP_MAX_MD_SIZE. Any algorithm which
+produces larger digests is unusable with those API calls.
+
 =head1 SEE ALSO
 
 L<provider(7)>, L<OSSL_PROVIDER-FIPS(7)>, L<OSSL_PROVIDER-default(7)>,
