@@ -167,7 +167,7 @@ static int fake_rand_provider_init(const OSSL_CORE_HANDLE *handle,
     return 1;
 }
 
-OSSL_PROVIDER *fake_rand_start(OSSL_LIB_CTX *libctx)
+OSSL_PROVIDER *fake_rand_start(OSSL_LIB_CTX *libctx, const char *propq)
 {
     OSSL_PROVIDER *p;
 
@@ -178,8 +178,8 @@ OSSL_PROVIDER *fake_rand_start(OSSL_LIB_CTX *libctx)
         return NULL;
 
     /* Ensure that the fake rand is initialized. */
-    if (!TEST_ptr(RAND_get0_private(libctx))
-            || !TEST_ptr(RAND_get0_public(libctx))) {
+    if (!TEST_ptr(RAND_get0_private(libctx, propq))
+            || !TEST_ptr(RAND_get0_public(libctx, propq))) {
         OSSL_PROVIDER_unload(p);
         return NULL;
     }

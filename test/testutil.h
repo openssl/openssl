@@ -567,7 +567,7 @@ uint32_t test_random(void);
 void test_random_seed(uint32_t sd);
 
 /* Fake non-secure random number generator */
-OSSL_PROVIDER *fake_rand_start(OSSL_LIB_CTX *libctx);
+OSSL_PROVIDER *fake_rand_start(OSSL_LIB_CTX *libctx, const char *propq);
 void fake_rand_finish(OSSL_PROVIDER *p);
 void fake_rand_set_callback(int (*cb)(unsigned char *out, size_t outlen));
 

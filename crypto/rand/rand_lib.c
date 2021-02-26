@@ -242,7 +242,7 @@ void RAND_seed(const void *buf, int num)
     }
 # endif
 
-    drbg = RAND_get0_primary(NULL);
+    drbg = RAND_get0_primary(NULL, NULL);
     if (drbg != NULL && num > 0)
         EVP_RAND_reseed(drbg, 0, NULL, 0, buf, num);
 }
@@ -258,7 +258,7 @@ void RAND_add(const void *buf, int num, double randomness)
         return;
     }
 # endif
-    drbg = RAND_get0_primary(NULL);
+    drbg = RAND_get0_primary(NULL, NULL);
     if (drbg != NULL && num > 0)
         EVP_RAND_reseed(drbg, 0, NULL, 0, buf, num);
 }

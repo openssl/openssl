@@ -365,7 +365,7 @@ int setup_tests(void)
 #ifdef OPENSSL_NO_SM2
     TEST_note("SM2 is disabled.");
 #else
-    fake_rand = fake_rand_start(NULL);
+    fake_rand = fake_rand_start(NULL, NULL);
     if (fake_rand == NULL)
         return 0;
 
