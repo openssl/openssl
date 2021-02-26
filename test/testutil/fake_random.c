@@ -48,7 +48,8 @@ static void fake_rand_freectx(void *vrng)
 static int fake_rand_instantiate(void *vrng, ossl_unused unsigned int strength,
                                  ossl_unused  int prediction_resistance,
                                  ossl_unused const unsigned char *pstr,
-                                 size_t pstr_len)
+                                 size_t pstr_len,
+                                 ossl_unused const OSSL_PARAM params[])
 {
     FAKE_RAND *frng = (FAKE_RAND *)vrng;
 

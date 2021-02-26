@@ -365,9 +365,6 @@ int ossl_prov_drbg_instantiate(PROV_DRBG *drbg, unsigned int strength,
     size_t noncelen = 0, entropylen = 0;
     size_t min_entropy, min_entropylen, max_entropylen;
 
-    if (!ossl_prov_is_running())
-        return 0;
-
     if (strength > drbg->strength) {
         ERR_raise(ERR_LIB_PROV, PROV_R_INSUFFICIENT_DRBG_STRENGTH);
         goto end;
