@@ -75,7 +75,7 @@ static int xp_cmp(const X509_PURPOSE *const *a, const X509_PURPOSE *const *b)
 /*
  * As much as I'd like to make X509_check_purpose use a "const" X509* I really
  * can't because it does recalculate hashes and do other non-const things.
- * If id == -1 just calls x509v3_cache_extensions() for its side-effect.
+ * If id == -1 it just calls x509v3_cache_extensions() for its side-effect.
  * Returns 1 on success, 0 if x does not allow purpose, -1 on (internal) error.
  */
 int X509_check_purpose(X509 *x, int id, int require_ca)
@@ -660,7 +660,7 @@ static int check_ca(const X509 *x)
         return 0;
     if ((x->ex_flags & EXFLAG_BCONS) != 0) {
         /* If basicConstraints says not a CA then say so */
-        return ((x->ex_flags & EXFLAG_CA) != 0);
+        return (x->ex_flags & EXFLAG_CA) != 0;
     } else {
         /* We support V1 roots for...  uh, I don't really know why. */
         if ((x->ex_flags & V1_ROOT) == V1_ROOT)
@@ -702,12 +702,10 @@ static int check_ssl_ca(const X509 *x)
 {
     int ca_ret = check_ca(x);
 
-    if (!ca_ret)
+    if (ca_ret == 0)
         return 0;
     /* Check nsCertType if present */
-    if (ca_ret == 5 && (x->ex_nscert & NS_SSL_CA) != 0)
-        return 0;
-    return ca_ret != 0;
+    return ca_ret != 5 || (x->ex_nscert & NS_SSL_CA) != 0;
 }
 
 static int check_purpose_ssl_client(const X509_PURPOSE *xp, const X509 *x,
@@ -772,7 +770,7 @@ static int purpose_smime(const X509 *x, int require_ca)
     if (require_ca) {
         int ca_ret;
         ca_ret = check_ca(x);
-        if (!ca_ret)
+        if (ca_ret == 0)
             return 0;
         /* Check nsCertType if present */
         if (ca_ret != 5 || x->ex_nscert & NS_SMIME_CA)
