@@ -46,7 +46,7 @@ static int dane_verify(X509_STORE_CTX *ctx);
 static int null_callback(int ok, X509_STORE_CTX *e);
 static int check_issued(X509_STORE_CTX *ctx, X509 *x, X509 *issuer);
 static X509 *find_issuer(X509_STORE_CTX *ctx, STACK_OF(X509) *sk, X509 *x);
-static int check_chain(X509_STORE_CTX *ctx);
+static int check_extensions(X509_STORE_CTX *ctx);
 static int check_name_constraints(X509_STORE_CTX *ctx);
 static int check_id(X509_STORE_CTX *ctx);
 static int check_trust(X509_STORE_CTX *ctx, int num_untrusted);
@@ -213,7 +213,7 @@ static int verify_chain(X509_STORE_CTX *ctx)
     int ok;
 
     if ((ok = build_chain(ctx)) <= 0
-        || (ok = check_chain(ctx)) <= 0
+        || (ok = check_extensions(ctx)) <= 0
         || (ok = check_auth_level(ctx)) <= 0
         || (ok = check_id(ctx)) <= 0
         || (ok = X509_get_pubkey_parameters(NULL, ctx->chain) ? 1 : -1) <= 0
@@ -446,7 +446,7 @@ static int check_purpose(X509_STORE_CTX *ctx, X509 *x, int purpose, int depth,
  * Check extensions of a cert chain for consistency with the supplied purpose.
  * Sadly, returns 0 also on internal error.
  */
-static int check_chain(X509_STORE_CTX *ctx)
+static int check_extensions(X509_STORE_CTX *ctx)
 {
     int i, must_be_ca, plen = 0;
     X509 *x;
