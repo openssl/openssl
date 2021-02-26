@@ -886,16 +886,16 @@ int x509_main(int argc, char **argv)
             i2a_ASN1_INTEGER(out, X509_get0_serialNumber(x));
             BIO_printf(out, "\n");
         } else if (i == next_serial) {
-            ASN1_INTEGER *ser = X509_get_serialNumber(x);
-            BIGNUM *bnser = ASN1_INTEGER_to_BN(ser, NULL);
+            ASN1_INTEGER *ser;
+            BIGNUM *bnser = ASN1_INTEGER_to_BN(X509_get0_serialNumber(x), NULL);
 
             if (bnser == NULL)
                 goto end;
-            if (!BN_add_word(bnser, 1))
+            if (!BN_add_word(bnser, 1)
+                    || (ser = BN_to_ASN1_INTEGER(bnser, NULL)) == NULL) {
+                BN_free(bnser);
                 goto end;
-            ser = BN_to_ASN1_INTEGER(bnser, NULL);
-            if (ser == NULL)
-                goto end;
+            }
             BN_free(bnser);
             i2a_ASN1_INTEGER(out, ser);
             ASN1_INTEGER_free(ser);
