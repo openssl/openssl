@@ -79,7 +79,7 @@ typedef struct ossl_crmf_optionalvalidity_st OSSL_CRMF_OPTIONALVALIDITY;
 /* crmf_pbm.c */
 OSSL_CRMF_PBMPARAMETER *OSSL_CRMF_pbmp_new(OSSL_LIB_CTX *libctx, size_t slen,
                                            int owfnid, size_t itercnt,
-                                           int macnid);
+                                           int macnid, const char *propq);
 int OSSL_CRMF_pbm_new(OSSL_LIB_CTX *libctx, const char *propq,
                       const OSSL_CRMF_PBMPARAMETER *pbmp,
                       const unsigned char *msg, size_t msglen,
