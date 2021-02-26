@@ -487,22 +487,23 @@ int EVP_RAND_names_do_all(const EVP_RAND *rand,
 
 static int evp_rand_instantiate_locked
     (EVP_RAND_CTX *ctx, unsigned int strength, int prediction_resistance,
-     const unsigned char *pstr, size_t pstr_len)
+     const unsigned char *pstr, size_t pstr_len, const OSSL_PARAM params[])
 {
     return ctx->meth->instantiate(ctx->data, strength, prediction_resistance,
-                                  pstr, pstr_len);
+                                  pstr, pstr_len, params);
 }
 
 int EVP_RAND_instantiate(EVP_RAND_CTX *ctx, unsigned int strength,
                          int prediction_resistance,
-                         const unsigned char *pstr, size_t pstr_len)
+                         const unsigned char *pstr, size_t pstr_len,
+                         const OSSL_PARAM params[])
 {
     int res;
 
     if (!evp_rand_lock(ctx))
         return 0;
     res = evp_rand_instantiate_locked(ctx, strength, prediction_resistance,
-                                      pstr, pstr_len);
+                                      pstr, pstr_len, params);
     evp_rand_unlock(ctx);
     return res;
 }

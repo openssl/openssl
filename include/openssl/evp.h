@@ -1193,7 +1193,8 @@ int EVP_RAND_names_do_all(const EVP_RAND *rand,
 
 __owur int EVP_RAND_instantiate(EVP_RAND_CTX *ctx, unsigned int strength,
                                 int prediction_resistance,
-                                const unsigned char *pstr, size_t pstr_len);
+                                const unsigned char *pstr, size_t pstr_len,
+                                const OSSL_PARAM params[]);
 int EVP_RAND_uninstantiate(EVP_RAND_CTX *ctx);
 __owur int EVP_RAND_generate(EVP_RAND_CTX *ctx, unsigned char *out,
                              size_t outlen, unsigned int strength,

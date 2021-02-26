@@ -50,7 +50,8 @@ EVP_RAND_STATE_ERROR - EVP RAND routines
 
  int EVP_RAND_instantiate(EVP_RAND_CTX *ctx, unsigned int strength,
                           int prediction_resistance,
-                          const unsigned char *pstr, size_t pstr_len);
+                          const unsigned char *pstr, size_t pstr_len,
+                          const OSSL_PARAM params[]);
  int EVP_RAND_uninstantiate(EVP_RAND_CTX *ctx);
  int EVP_RAND_generate(EVP_RAND_CTX *ctx, unsigned char *out, size_t outlen,
                        unsigned int strength, int prediction_resistance,
@@ -78,10 +79,10 @@ If you want to do more, these calls should be used instead of the older
 RAND and RAND_DRBG functions.
 
 After creating a B<EVP_RAND_CTX> for the required algorithm using
-EVP_RAND_CTX_new(), inputs to the algorithm are supplied
-using calls to EVP_RAND_set_ctx_params() before
-calling EVP_RAND_instantiate() and then EVP_RAND_generate() to produce
-cryptographically secure random bytes.
+EVP_RAND_CTX_new(), inputs to the algorithm are supplied either by
+passing them as part of the EVP_RAND_instantiate() call or using calls to
+EVP_RAND_set_ctx_params() before calling EVP_RAND_instantiate().  Finally,
+call EVP_RAND_generate() to produce cryptographically secure random bytes.
 
 =head2 Types
 
@@ -123,8 +124,9 @@ I<ctx>.
 
 =head2 Random Number Generator Functions
 
-EVP_RAND_instantiate() instantiates the RAND I<ctx> with a minimum security
-strength of <strength> and personalisation string I<pstr> of length <pstr_len>.
+EVP_RAND_instantiate() processes any parameters in I<params> and
+then instantiates the RAND I<ctx> with a minimum security strength
+of <strength> and personalisation string I<pstr> of length <pstr_len>.
 If I<prediction_resistance> is specified, fresh entropy from a live source
 will be sought.  This call operates as per NIST SP 800-90A and SP 800-90C.
 
