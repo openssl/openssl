@@ -1592,7 +1592,8 @@ static int get_payload_public_key(enum state state,
     case EVP_PKEY_EC:
         if (ctx->params->data_type == OSSL_PARAM_OCTET_STRING) {
             EC_KEY *eckey = EVP_PKEY_get0_EC_KEY(pkey);
-            BN_CTX *bnctx = BN_CTX_new_ex(ossl_ec_key_get_libctx(eckey));
+            BN_CTX *bnctx = BN_CTX_new_ex(ossl_ec_key_get_libctx(eckey),
+                                          ossl_ec_key_get0_propq(eckey));
             const EC_GROUP *ecg = EC_KEY_get0_group(eckey);
             const EC_POINT *point = EC_KEY_get0_public_key(eckey);
 
