@@ -428,7 +428,8 @@ static int cmac_gen_set_params(void *genctx, const OSSL_PARAM params[])
     return 1;
 }
 
-static const OSSL_PARAM *mac_gen_settable_params(void *provctx)
+static const OSSL_PARAM *mac_gen_settable_params(ossl_unused void *genctx,
+                                                 ossl_unused void *provctx)
 {
     static OSSL_PARAM settable[] = {
         OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_PRIV_KEY, NULL, 0),
@@ -437,7 +438,8 @@ static const OSSL_PARAM *mac_gen_settable_params(void *provctx)
     return settable;
 }
 
-static const OSSL_PARAM *cmac_gen_settable_params(void *provctx)
+static const OSSL_PARAM *cmac_gen_settable_params(ossl_unused void *genctx,
+                                                  ossl_unused void *provctx)
 {
     static OSSL_PARAM settable[] = {
         OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_PRIV_KEY, NULL, 0),

@@ -340,7 +340,7 @@ const OSSL_PARAM *EVP_KEYMGMT_gen_settable_params(const EVP_KEYMGMT *keymgmt)
 
     if (keymgmt->gen_settable_params == NULL)
         return NULL;
-    return keymgmt->gen_settable_params(provctx);
+    return keymgmt->gen_settable_params(NULL, provctx);
 }
 
 void *evp_keymgmt_gen(const EVP_KEYMGMT *keymgmt, void *genctx,

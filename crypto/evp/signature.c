@@ -347,7 +347,7 @@ const OSSL_PARAM *EVP_SIGNATURE_gettable_ctx_params(const EVP_SIGNATURE *sig)
         return NULL;
 
     provctx = ossl_provider_ctx(EVP_SIGNATURE_provider(sig));
-    return sig->gettable_ctx_params(provctx);
+    return sig->gettable_ctx_params(NULL, provctx);
 }
 
 const OSSL_PARAM *EVP_SIGNATURE_settable_ctx_params(const EVP_SIGNATURE *sig)
@@ -358,7 +358,7 @@ const OSSL_PARAM *EVP_SIGNATURE_settable_ctx_params(const EVP_SIGNATURE *sig)
         return NULL;
 
     provctx = ossl_provider_ctx(EVP_SIGNATURE_provider(sig));
-    return sig->settable_ctx_params(provctx);
+    return sig->settable_ctx_params(NULL, provctx);
 }
 
 static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, int operation)

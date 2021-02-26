@@ -64,10 +64,11 @@ provider-signature - The signature library E<lt>-E<gt> provider functions
 
  /* Signature parameters */
  int OSSL_FUNC_signature_get_ctx_params(void *ctx, OSSL_PARAM params[]);
- const OSSL_PARAM *OSSL_FUNC_signature_gettable_ctx_params(void *provctx);
+ const OSSL_PARAM *OSSL_FUNC_signature_gettable_ctx_params(void *ctx,
+                                                           void *provctx);
  int OSSL_FUNC_signature_set_ctx_params(void *ctx, const OSSL_PARAM params[]);
- const OSSL_PARAM *OSSL_FUNC_signature_settable_ctx_params(void *provctx);
-
+ const OSSL_PARAM *OSSL_FUNC_signature_settable_ctx_params(void *ctx,
+                                                           void *provctx);
  /* MD parameters */
  int OSSL_FUNC_signature_get_ctx_md_params(void *ctx, OSSL_PARAM params[]);
  const OSSL_PARAM * OSSL_FUNC_signature_gettable_ctx_md_params(void *ctx);

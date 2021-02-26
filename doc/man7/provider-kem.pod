@@ -34,9 +34,9 @@ provider-kem - The kem library E<lt>-E<gt> provider functions
 
  /* KEM parameters */
  int OSSL_FUNC_kem_get_ctx_params(void *ctx, OSSL_PARAM params[]);
- const OSSL_PARAM *OSSL_FUNC_kem_gettable_ctx_params(void *provctx);
+ const OSSL_PARAM *OSSL_FUNC_kem_gettable_ctx_params(void *ctx, void *provctx);
  int OSSL_FUNC_kem_set_ctx_params(void *ctx, const OSSL_PARAM params[]);
- const OSSL_PARAM *OSSL_FUNC_kem_settable_ctx_params(void *provctx);
+ const OSSL_PARAM *OSSL_FUNC_kem_settable_ctx_params(void *ctx, void *provctx);
 
 =head1 DESCRIPTION
 
