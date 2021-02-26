@@ -101,14 +101,14 @@ static int krb5kdf_set_membuf(unsigned char **dst, size_t *dst_len,
     return OSSL_PARAM_get_octet_string(p, (void **)dst, 0, dst_len);
 }
 
-static int krb5kdf_derive(void *vctx, unsigned char *key,
-                              size_t keylen)
+static int krb5kdf_derive(void *vctx, unsigned char *key, size_t keylen,
+                          const OSSL_PARAM params[])
 {
     KRB5KDF_CTX *ctx = (KRB5KDF_CTX *)vctx;
     const EVP_CIPHER *cipher;
     ENGINE *engine;
 
-    if (!ossl_prov_is_running())
+    if (!ossl_prov_is_running() || !krb5kdf_set_ctx_params(ctx, params))
         return 0;
 
     cipher = ossl_prov_cipher_cipher(&ctx->cipher);

@@ -139,13 +139,13 @@ static int pbkdf2_set_membuf(unsigned char **buffer, size_t *buflen,
     return 1;
 }
 
-static int kdf_pbkdf2_derive(void *vctx, unsigned char *key,
-                             size_t keylen)
+static int kdf_pbkdf2_derive(void *vctx, unsigned char *key, size_t keylen,
+                             const OSSL_PARAM params[])
 {
     KDF_PBKDF2 *ctx = (KDF_PBKDF2 *)vctx;
     const EVP_MD *md;
 
-    if (!ossl_prov_is_running())
+    if (!ossl_prov_is_running() || !kdf_pbkdf2_set_ctx_params(ctx, params))
         return 0;
 
     if (ctx->pass == NULL) {
