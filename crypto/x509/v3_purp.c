@@ -18,22 +18,24 @@
 
 static int check_ssl_ca(const X509 *x);
 static int check_purpose_ssl_client(const X509_PURPOSE *xp, const X509 *x,
-                                    int ca);
+                                    int require_ca);
 static int check_purpose_ssl_server(const X509_PURPOSE *xp, const X509 *x,
-                                    int ca);
+                                    int require_ca);
 static int check_purpose_ns_ssl_server(const X509_PURPOSE *xp, const X509 *x,
-                                       int ca);
-static int purpose_smime(const X509 *x, int ca);
+                                       int require_ca);
+static int purpose_smime(const X509 *x, int require_ca);
 static int check_purpose_smime_sign(const X509_PURPOSE *xp, const X509 *x,
-                                    int ca);
+                                    int require_ca);
 static int check_purpose_smime_encrypt(const X509_PURPOSE *xp, const X509 *x,
-                                       int ca);
+                                       int require_ca);
 static int check_purpose_crl_sign(const X509_PURPOSE *xp, const X509 *x,
-                                  int ca);
+                                  int require_ca);
 static int check_purpose_timestamp_sign(const X509_PURPOSE *xp, const X509 *x,
-                                        int ca);
-static int no_check(const X509_PURPOSE *xp, const X509 *x, int ca);
-static int ocsp_helper(const X509_PURPOSE *xp, const X509 *x, int ca);
+                                        int require_ca);
+static int no_check_purpose(const X509_PURPOSE *xp, const X509 *x,
+                            int require_ca);
+static int check_purpose_ocsp_helper(const X509_PURPOSE *xp, const X509 *x,
+                                     int require_ca);
 
 static int xp_cmp(const X509_PURPOSE *const *a, const X509_PURPOSE *const *b);
 static void xptable_free(X509_PURPOSE *p);
@@ -51,9 +53,10 @@ static X509_PURPOSE xstandard[] = {
      check_purpose_smime_encrypt, "S/MIME encryption", "smimeencrypt", NULL},
     {X509_PURPOSE_CRL_SIGN, X509_TRUST_COMPAT, 0, check_purpose_crl_sign,
      "CRL signing", "crlsign", NULL},
-    {X509_PURPOSE_ANY, X509_TRUST_DEFAULT, 0, no_check, "Any Purpose", "any",
+    {X509_PURPOSE_ANY, X509_TRUST_DEFAULT, 0, no_check_purpose,
+     "Any Purpose", "any",
      NULL},
-    {X509_PURPOSE_OCSP_HELPER, X509_TRUST_COMPAT, 0, ocsp_helper,
+    {X509_PURPOSE_OCSP_HELPER, X509_TRUST_COMPAT, 0, check_purpose_ocsp_helper,
      "OCSP helper", "ocsphelper", NULL},
     {X509_PURPOSE_TIMESTAMP_SIGN, X509_TRUST_TSA, 0,
      check_purpose_timestamp_sign, "Time Stamp signing", "timestampsign",
@@ -70,26 +73,26 @@ static int xp_cmp(const X509_PURPOSE *const *a, const X509_PURPOSE *const *b)
 }
 
 /*
- * As much as I'd like to make X509_check_purpose use a "const" X509* I
- * really can't because it does recalculate hashes and do other non-const
- * things.
+ * As much as I'd like to make X509_check_purpose use a "const" X509* I really
+ * can't because it does recalculate hashes and do other non-const things.
+ * If id == -1 just calls x509v3_cache_extensions() for its side-effect.
+ * Returns 1 on success, 0 if x does not allow purpose, -1 on (internal) error.
  */
-int X509_check_purpose(X509 *x, int id, int ca)
+int X509_check_purpose(X509 *x, int id, int require_ca)
 {
     int idx;
     const X509_PURPOSE *pt;
 
     if (!x509v3_cache_extensions(x))
         return -1;
-
-    /* Return if side-effect only call */
     if (id == -1)
         return 1;
+
     idx = X509_PURPOSE_get_by_id(id);
     if (idx == -1)
         return -1;
     pt = X509_PURPOSE_get0(idx);
-    return pt->check_purpose(pt, x, ca);
+    return pt->check_purpose(pt, x, require_ca);
 }
 
 int X509_PURPOSE_set(int *p, int purpose)
@@ -130,12 +133,13 @@ int X509_PURPOSE_get_by_sname(const char *sname)
     return -1;
 }
 
+/* Returns -1 on error, else an index => 0 in standard/extended purpose table */
 int X509_PURPOSE_get_by_id(int purpose)
 {
     X509_PURPOSE tmp;
     int idx;
 
-    if ((purpose >= X509_PURPOSE_MIN) && (purpose <= X509_PURPOSE_MAX))
+    if (purpose >= X509_PURPOSE_MIN && purpose <= X509_PURPOSE_MAX)
         return purpose - X509_PURPOSE_MIN;
     if (xptable == NULL)
         return -1;
@@ -152,9 +156,8 @@ int X509_PURPOSE_add(int id, int trust, int flags,
 {
     int idx;
     X509_PURPOSE *ptmp;
-    /*
-     * This is set according to what we change: application can't set it
-     */
+
+    /* This is set according to what we change: application can't set it */
     flags &= ~X509_PURPOSE_DYNAMIC;
     /* This will always be set for application modified trust entries */
     flags |= X509_PURPOSE_DYNAMIC_NAME;
@@ -175,7 +178,7 @@ int X509_PURPOSE_add(int id, int trust, int flags,
         OPENSSL_free(ptmp->name);
         OPENSSL_free(ptmp->sname);
     }
-    /* dup supplied name */
+    /* Dup supplied name */
     ptmp->name = OPENSSL_strdup(name);
     ptmp->sname = OPENSSL_strdup(sname);
     if (ptmp->name == NULL|| ptmp->sname == NULL) {
@@ -270,7 +273,6 @@ int X509_supported_extension(X509_EXTENSION *ex)
      * normally reject the certificate. The list must be kept in numerical
      * order because it will be searched using bsearch.
      */
-
     static const int supported_nids[] = {
         NID_netscape_cert_type, /* 71 */
         NID_key_usage,          /* 83 */
@@ -301,7 +303,7 @@ int X509_supported_extension(X509_EXTENSION *ex)
     return 0;
 }
 
-/* return 1 on success, 0 if x is invalid, -1 on (internal) error */
+/* Returns 1 on success, 0 if x is invalid, -1 on (internal) error. */
 static int setup_dp(const X509 *x, DIST_POINT *dp)
 {
     const X509_NAME *iname = NULL;
@@ -323,7 +325,7 @@ static int setup_dp(const X509 *x, DIST_POINT *dp)
     if (dp->distpoint == NULL || dp->distpoint->type != 1)
         return 1;
 
-    /* handle name fragment given by nameRelativeToCRLIssuer */
+    /* Handle name fragment given by nameRelativeToCRLIssuer */
     /*
      * Note that the below way of determining iname is not really compliant
      * with https://tools.ietf.org/html/rfc5280#section-4.2.1.13
@@ -343,7 +345,7 @@ static int setup_dp(const X509 *x, DIST_POINT *dp)
     return DIST_POINT_set_dpname(dp->distpoint, iname) ? 1 : -1;
 }
 
-/* return 1 on success, 0 if x is invalid, -1 on (internal) error */
+/* Return 1 on success, 0 if x is invalid, -1 on (internal) error. */
 static int setup_crldp(X509 *x)
 {
     int i;
@@ -380,11 +382,11 @@ static int check_sig_alg_match(const EVP_PKEY *issuer_key, const X509 *subject)
 
 #define V1_ROOT (EXFLAG_V1|EXFLAG_SS)
 #define ku_reject(x, usage) \
-        (((x)->ex_flags & EXFLAG_KUSAGE) && !((x)->ex_kusage & (usage)))
+    (((x)->ex_flags & EXFLAG_KUSAGE) != 0 && ((x)->ex_kusage & (usage)) == 0)
 #define xku_reject(x, usage) \
-        (((x)->ex_flags & EXFLAG_XKUSAGE) && !((x)->ex_xkusage & (usage)))
+    (((x)->ex_flags & EXFLAG_XKUSAGE) != 0 && ((x)->ex_xkusage & (usage)) == 0)
 #define ns_reject(x, usage) \
-        (((x)->ex_flags & EXFLAG_NSCERT) && !((x)->ex_nscert & (usage)))
+    (((x)->ex_flags & EXFLAG_NSCERT) != 0 && ((x)->ex_nscert & (usage)) == 0)
 
 /*
  * Cache info on various X.509v3 extensions and further derived information,
@@ -404,13 +406,13 @@ int x509v3_cache_extensions(X509 *x)
     int res;
 
 #ifdef tsan_ld_acq
-    /* fast lock-free check, see end of the function for details. */
+    /* Fast lock-free check, see end of the function for details. */
     if (tsan_ld_acq((TSAN_QUALIFIER int *)&x->ex_cached))
         return (x->ex_flags & EXFLAG_INVALID) == 0;
 #endif
 
     CRYPTO_THREAD_write_lock(x->lock);
-    if (x->ex_flags & EXFLAG_SET) { /* cert has already been processed */
+    if (x->ex_flags & EXFLAG_SET) { /* Cert has already been processed */
         CRYPTO_THREAD_unlock(x->lock);
         return (x->ex_flags & EXFLAG_INVALID) == 0;
     }
@@ -432,7 +434,7 @@ int x509v3_cache_extensions(X509 *x)
             x->ex_flags |= EXFLAG_CA;
         if (bs->pathlen != NULL) {
             /*
-             * the error case !bs->ca is checked by check_chain()
+             * The error case !bs->ca is checked by check_chain()
              * in case ctx->param->flags & X509_V_FLAG_X509_STRICT
              */
             if (bs->pathlen->type == V_ASN1_NEG_INTEGER) {
@@ -519,7 +521,7 @@ int x509v3_cache_extensions(X509 *x)
                 x->ex_xkusage |= XKU_ANYEKU;
                 break;
             default:
-                /* ignore unknown extended key usage */
+                /* Ignore unknown extended key usage */
                 break;
             }
         }
@@ -551,7 +553,7 @@ int x509v3_cache_extensions(X509 *x)
 
     /* Check if subject name matches issuer */
     if (X509_NAME_cmp(X509_get_subject_name(x), X509_get_issuer_name(x)) == 0) {
-        x->ex_flags |= EXFLAG_SI; /* cert is self-issued */
+        x->ex_flags |= EXFLAG_SI; /* Cert is self-issued */
         if (X509_check_akid(x, x->akid) == X509_V_OK /* SKID matches AKID */
                 /* .. and the signature alg matches the PUBKEY alg: */
                 && check_sig_alg_match(X509_get0_pubkey(x), x) == X509_V_OK)
@@ -615,7 +617,7 @@ int x509v3_cache_extensions(X509 *x)
     /* Set x->siginf, ignoring errors due to unsupported algos */
     (void)x509_init_sig_info(x);
 
-    x->ex_flags |= EXFLAG_SET; /* indicate that cert has been processed */
+    x->ex_flags |= EXFLAG_SET; /* Indicate that cert has been processed */
 #ifdef tsan_st_rel
     tsan_st_rel((TSAN_QUALIFIER int *)&x->ex_cached, 1);
     /*
@@ -656,14 +658,11 @@ static int check_ca(const X509 *x)
     /* keyUsage if present should allow cert signing */
     if (ku_reject(x, KU_KEY_CERT_SIGN))
         return 0;
-    if (x->ex_flags & EXFLAG_BCONS) {
-        if (x->ex_flags & EXFLAG_CA)
-            return 1;
+    if ((x->ex_flags & EXFLAG_BCONS) != 0) {
         /* If basicConstraints says not a CA then say so */
-        else
-            return 0;
+        return ((x->ex_flags & EXFLAG_CA) != 0);
     } else {
-        /* we support V1 roots for...  uh, I don't really know why. */
+        /* We support V1 roots for...  uh, I don't really know why. */
         if ((x->ex_flags & V1_ROOT) == V1_ROOT)
             return 3;
         /*
@@ -674,7 +673,7 @@ static int check_ca(const X509 *x)
         /* Older certificates could have Netscape-specific CA types */
         else if (x->ex_flags & EXFLAG_NSCERT && x->ex_nscert & NS_ANY_CA)
             return 5;
-        /* can this still be regarded a CA certificate?  I doubt it */
+        /* Can this still be regarded a CA certificate?  I doubt it. */
         return 0;
     }
 }
@@ -698,26 +697,25 @@ int X509_check_ca(X509 *x)
     return check_ca(x);
 }
 
-/* Check SSL CA: common checks for SSL client and server */
+/* Check SSL CA: common checks for SSL client and server. */
 static int check_ssl_ca(const X509 *x)
 {
-    int ca_ret;
-    ca_ret = check_ca(x);
+    int ca_ret = check_ca(x);
+
     if (!ca_ret)
         return 0;
-    /* check nsCertType if present */
-    if (ca_ret != 5 || x->ex_nscert & NS_SSL_CA)
-        return ca_ret;
-    else
+    /* Check nsCertType if present */
+    if (ca_ret == 5 && (x->ex_nscert & NS_SSL_CA) != 0)
         return 0;
+    return ca_ret != 0;
 }
 
 static int check_purpose_ssl_client(const X509_PURPOSE *xp, const X509 *x,
-                                    int ca)
+                                    int require_ca)
 {
     if (xku_reject(x, XKU_SSL_CLIENT))
         return 0;
-    if (ca)
+    if (require_ca)
         return check_ssl_ca(x);
     /* We need to do digital signatures or key agreement */
     if (ku_reject(x, KU_DIGITAL_SIGNATURE | KU_KEY_AGREEMENT))
@@ -737,11 +735,11 @@ static int check_purpose_ssl_client(const X509_PURPOSE *xp, const X509 *x,
         KU_DIGITAL_SIGNATURE|KU_KEY_ENCIPHERMENT|KU_KEY_AGREEMENT
 
 static int check_purpose_ssl_server(const X509_PURPOSE *xp, const X509 *x,
-                                    int ca)
+                                    int require_ca)
 {
     if (xku_reject(x, XKU_SSL_SERVER | XKU_SGC))
         return 0;
-    if (ca)
+    if (require_ca)
         return check_ssl_ca(x);
 
     if (ns_reject(x, NS_SSL_SERVER))
@@ -754,11 +752,11 @@ static int check_purpose_ssl_server(const X509_PURPOSE *xp, const X509 *x,
 }
 
 static int check_purpose_ns_ssl_server(const X509_PURPOSE *xp, const X509 *x,
-                                       int ca)
+                                       int require_ca)
 {
     int ret;
-    ret = check_purpose_ssl_server(xp, x, ca);
-    if (!ret || ca)
+    ret = check_purpose_ssl_server(xp, x, require_ca);
+    if (!ret || require_ca)
         return ret;
     /* We need to encipher or Netscape complains */
     if (ku_reject(x, KU_KEY_ENCIPHERMENT))
@@ -767,16 +765,16 @@ static int check_purpose_ns_ssl_server(const X509_PURPOSE *xp, const X509 *x,
 }
 
 /* common S/MIME checks */
-static int purpose_smime(const X509 *x, int ca)
+static int purpose_smime(const X509 *x, int require_ca)
 {
     if (xku_reject(x, XKU_SMIME))
         return 0;
-    if (ca) {
+    if (require_ca) {
         int ca_ret;
         ca_ret = check_ca(x);
         if (!ca_ret)
             return 0;
-        /* check nsCertType if present */
+        /* Check nsCertType if present */
         if (ca_ret != 5 || x->ex_nscert & NS_SMIME_CA)
             return ca_ret;
         else
@@ -794,11 +792,11 @@ static int purpose_smime(const X509 *x, int ca)
 }
 
 static int check_purpose_smime_sign(const X509_PURPOSE *xp, const X509 *x,
-                                    int ca)
+                                    int require_ca)
 {
     int ret;
-    ret = purpose_smime(x, ca);
-    if (!ret || ca)
+    ret = purpose_smime(x, require_ca);
+    if (!ret || require_ca)
         return ret;
     if (ku_reject(x, KU_DIGITAL_SIGNATURE | KU_NON_REPUDIATION))
         return 0;
@@ -806,11 +804,11 @@ static int check_purpose_smime_sign(const X509_PURPOSE *xp, const X509 *x,
 }
 
 static int check_purpose_smime_encrypt(const X509_PURPOSE *xp, const X509 *x,
-                                       int ca)
+                                       int require_ca)
 {
     int ret;
-    ret = purpose_smime(x, ca);
-    if (!ret || ca)
+    ret = purpose_smime(x, require_ca);
+    if (!ret || require_ca)
         return ret;
     if (ku_reject(x, KU_KEY_ENCIPHERMENT))
         return 0;
@@ -818,9 +816,9 @@ static int check_purpose_smime_encrypt(const X509_PURPOSE *xp, const X509 *x,
 }
 
 static int check_purpose_crl_sign(const X509_PURPOSE *xp, const X509 *x,
-                                  int ca)
+                                  int require_ca)
 {
-    if (ca) {
+    if (require_ca) {
         int ca_ret;
         if ((ca_ret = check_ca(x)) != 2)
             return ca_ret;
@@ -836,26 +834,26 @@ static int check_purpose_crl_sign(const X509_PURPOSE *xp, const X509 *x,
  * OCSP helper: this is *not* a full OCSP check. It just checks that each CA
  * is valid. Additional checks must be made on the chain.
  */
-
-static int ocsp_helper(const X509_PURPOSE *xp, const X509 *x, int ca)
+static int check_purpose_ocsp_helper(const X509_PURPOSE *xp, const X509 *x,
+                                     int require_ca)
 {
     /*
      * Must be a valid CA.  Should we really support the "I don't know" value
      * (2)?
      */
-    if (ca)
+    if (require_ca)
         return check_ca(x);
-    /* leaf certificate is checked in OCSP_verify() */
+    /* Leaf certificate is checked in OCSP_verify() */
     return 1;
 }
 
 static int check_purpose_timestamp_sign(const X509_PURPOSE *xp, const X509 *x,
-                                        int ca)
+                                        int require_ca)
 {
     int i_ext;
 
     /* If ca is true we must return if this is a valid CA certificate. */
-    if (ca)
+    if (require_ca)
         return check_ca(x);
 
     /*
@@ -884,7 +882,8 @@ static int check_purpose_timestamp_sign(const X509_PURPOSE *xp, const X509 *x,
     return 1;
 }
 
-static int no_check(const X509_PURPOSE *xp, const X509 *x, int ca)
+static int no_check_purpose(const X509_PURPOSE *xp, const X509 *x,
+                            int require_ca)
 {
     return 1;
 }
@@ -911,7 +910,7 @@ int X509_check_issued(X509 *issuer, X509 *subject)
     return x509_signing_allowed(issuer, subject);
 }
 
-/* do the checks 1., 2., and 3. as described above for X509_check_issued() */
+/* Do the checks 1., 2., and 3. as described above for X509_check_issued() */
 int x509_likely_issued(X509 *issuer, X509 *subject)
 {
     int ret;
@@ -920,7 +919,7 @@ int x509_likely_issued(X509 *issuer, X509 *subject)
                       X509_get_issuer_name(subject)) != 0)
         return X509_V_ERR_SUBJECT_ISSUER_MISMATCH;
 
-    /* set issuer->skid and subject->akid */
+    /* Set issuer->skid and subject->akid */
     if (!x509v3_cache_extensions(issuer)
             || !x509v3_cache_extensions(subject))
         return X509_V_ERR_UNSPECIFIED;
@@ -929,7 +928,7 @@ int x509_likely_issued(X509 *issuer, X509 *subject)
     if (ret != X509_V_OK)
         return ret;
 
-    /* check if the subject signature alg matches the issuer's PUBKEY alg */
+    /* Check if the subject signature alg matches the issuer's PUBKEY alg */
     return check_sig_alg_match(X509_get0_pubkey(issuer), subject);
 }
 
@@ -991,14 +990,14 @@ int X509_check_akid(const X509 *issuer, const AUTHORITY_KEYID *akid)
 uint32_t X509_get_extension_flags(X509 *x)
 {
     /* Call for side-effect of computing hash and caching extensions */
-    X509_check_purpose(x, -1, -1);
+    X509_check_purpose(x, -1, 0);
     return x->ex_flags;
 }
 
 uint32_t X509_get_key_usage(X509 *x)
 {
     /* Call for side-effect of computing hash and caching extensions */
-    if (X509_check_purpose(x, -1, -1) != 1)
+    if (X509_check_purpose(x, -1, 0) != 1)
         return 0;
     if (x->ex_flags & EXFLAG_KUSAGE)
         return x->ex_kusage;
@@ -1008,7 +1007,7 @@ uint32_t X509_get_key_usage(X509 *x)
 uint32_t X509_get_extended_key_usage(X509 *x)
 {
     /* Call for side-effect of computing hash and caching extensions */
-    if (X509_check_purpose(x, -1, -1) != 1)
+    if (X509_check_purpose(x, -1, 0) != 1)
         return 0;
     if (x->ex_flags & EXFLAG_XKUSAGE)
         return x->ex_xkusage;
@@ -1018,7 +1017,7 @@ uint32_t X509_get_extended_key_usage(X509 *x)
 const ASN1_OCTET_STRING *X509_get0_subject_key_id(X509 *x)
 {
     /* Call for side-effect of computing hash and caching extensions */
-    if (X509_check_purpose(x, -1, -1) != 1)
+    if (X509_check_purpose(x, -1, 0) != 1)
         return NULL;
     return x->skid;
 }
@@ -1026,7 +1025,7 @@ const ASN1_OCTET_STRING *X509_get0_subject_key_id(X509 *x)
 const ASN1_OCTET_STRING *X509_get0_authority_key_id(X509 *x)
 {
     /* Call for side-effect of computing hash and caching extensions */
-    if (X509_check_purpose(x, -1, -1) != 1)
+    if (X509_check_purpose(x, -1, 0) != 1)
         return NULL;
     return (x->akid != NULL ? x->akid->keyid : NULL);
 }
@@ -1034,7 +1033,7 @@ const ASN1_OCTET_STRING *X509_get0_authority_key_id(X509 *x)
 const GENERAL_NAMES *X509_get0_authority_issuer(X509 *x)
 {
     /* Call for side-effect of computing hash and caching extensions */
-    if (X509_check_purpose(x, -1, -1) != 1)
+    if (X509_check_purpose(x, -1, 0) != 1)
         return NULL;
     return (x->akid != NULL ? x->akid->issuer : NULL);
 }
@@ -1042,7 +1041,7 @@ const GENERAL_NAMES *X509_get0_authority_issuer(X509 *x)
 const ASN1_INTEGER *X509_get0_authority_serial(X509 *x)
 {
     /* Call for side-effect of computing hash and caching extensions */
-    if (X509_check_purpose(x, -1, -1) != 1)
+    if (X509_check_purpose(x, -1, 0) != 1)
         return NULL;
     return (x->akid != NULL ? x->akid->serial : NULL);
 }
@@ -1050,7 +1049,7 @@ const ASN1_INTEGER *X509_get0_authority_serial(X509 *x)
 long X509_get_pathlen(X509 *x)
 {
     /* Called for side effect of caching extensions */
-    if (X509_check_purpose(x, -1, -1) != 1
+    if (X509_check_purpose(x, -1, 0) != 1
             || (x->ex_flags & EXFLAG_BCONS) == 0)
         return -1;
     return x->ex_pathlen;
@@ -1059,7 +1058,7 @@ long X509_get_pathlen(X509 *x)
 long X509_get_proxy_pathlen(X509 *x)
 {
     /* Called for side effect of caching extensions */
-    if (X509_check_purpose(x, -1, -1) != 1
+    if (X509_check_purpose(x, -1, 0) != 1
             || (x->ex_flags & EXFLAG_PROXY) == 0)
         return -1;
     return x->ex_pcpathlen;

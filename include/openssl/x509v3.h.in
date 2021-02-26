@@ -442,7 +442,7 @@ struct ISSUING_DIST_POINT_st {
 # define XKU_SSL_CLIENT          0x2
 # define XKU_SMIME               0x4
 # define XKU_CODE_SIGN           0x8
-# define XKU_SGC                 0x10
+# define XKU_SGC                 0x10 /* Netscape or MS Server-Gated Crypto */
 # define XKU_OCSP_SIGN           0x20
 # define XKU_TIMESTAMP           0x40
 # define XKU_DVCS                0x80

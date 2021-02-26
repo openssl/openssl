@@ -504,8 +504,8 @@ const char *X509_VERIFY_PARAM_get0_name(const X509_VERIFY_PARAM *param)
 static const X509_VERIFY_PARAM default_table[] = {
     {
      "default",                 /* X509 default parameters */
-     0,                         /* Check time */
-     0,                         /* internal flags */
+     0,                         /* check time to use */
+     0,                         /* inheritance flags */
      X509_V_FLAG_TRUSTED_FIRST, /* flags */
      0,                         /* purpose */
      0,                         /* trust */
@@ -515,8 +515,8 @@ static const X509_VERIFY_PARAM default_table[] = {
      vpm_empty_id},
     {
      "pkcs7",                   /* S/MIME sign parameters */
-     0,                         /* Check time */
-     0,                         /* internal flags */
+     0,                         /* check time to use */
+     0,                         /* inheritance flags */
      0,                         /* flags */
      X509_PURPOSE_SMIME_SIGN,   /* purpose */
      X509_TRUST_EMAIL,          /* trust */
@@ -526,8 +526,8 @@ static const X509_VERIFY_PARAM default_table[] = {
      vpm_empty_id},
     {
      "smime_sign",              /* S/MIME sign parameters */
-     0,                         /* Check time */
-     0,                         /* internal flags */
+     0,                         /* check time to use */
+     0,                         /* inheritance flags */
      0,                         /* flags */
      X509_PURPOSE_SMIME_SIGN,   /* purpose */
      X509_TRUST_EMAIL,          /* trust */
@@ -537,8 +537,8 @@ static const X509_VERIFY_PARAM default_table[] = {
      vpm_empty_id},
     {
      "ssl_client",              /* SSL/TLS client parameters */
-     0,                         /* Check time */
-     0,                         /* internal flags */
+     0,                         /* check time to use */
+     0,                         /* inheritance flags */
      0,                         /* flags */
      X509_PURPOSE_SSL_CLIENT,   /* purpose */
      X509_TRUST_SSL_CLIENT,     /* trust */
@@ -548,8 +548,8 @@ static const X509_VERIFY_PARAM default_table[] = {
      vpm_empty_id},
     {
      "ssl_server",              /* SSL/TLS server parameters */
-     0,                         /* Check time */
-     0,                         /* internal flags */
+     0,                         /* check time to use */
+     0,                         /* inheritance flags */
      0,                         /* flags */
      X509_PURPOSE_SSL_SERVER,   /* purpose */
      X509_TRUST_SSL_SERVER,     /* trust */
