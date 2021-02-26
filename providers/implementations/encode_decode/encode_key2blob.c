@@ -12,16 +12,15 @@
  */
 #include "internal/deprecated.h"
 
-#include <string.h>
 #include <openssl/core.h>
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
 #include <openssl/params.h>
 #include <openssl/err.h>
-#include <openssl/pem.h>         /* Functions for writing MSBLOB and PVK */
-#include <openssl/dsa.h>
+#include <openssl/evp.h>
+#include <openssl/ec.h>
 #include "internal/passphrase.h"
-#include "crypto/rsa.h"
+#include "internal/nelem.h"
 #include "prov/implementations.h"
 #include "prov/bio.h"
 #include "prov/provider_ctx.h"
@@ -41,7 +40,6 @@ static OSSL_FUNC_encoder_newctx_fn key2blob_newctx;
 static OSSL_FUNC_encoder_freectx_fn key2blob_freectx;
 static OSSL_FUNC_encoder_gettable_params_fn key2blob_gettable_params;
 static OSSL_FUNC_encoder_get_params_fn key2blob_get_params;
-static OSSL_FUNC_encoder_does_selection_fn key2blob_does_selection;
 
 static void *key2blob_newctx(void *provctx)
 {
@@ -73,10 +71,37 @@ static int key2blob_get_params(OSSL_PARAM params[])
     return 1;
 }
 
-static int key2blob_does_selection(void *vctx, int selection)
+static int key2blob_check_selection(int selection, int selection_mask)
 {
-    return (selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0
-        && (selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) == 0;
+    /*
+     * The selections are kinda sorta "levels", i.e. each selection given
+     * here is assumed to include those following.
+     */
+    int checks[] = {
+        OSSL_KEYMGMT_SELECT_PRIVATE_KEY,
+        OSSL_KEYMGMT_SELECT_PUBLIC_KEY,
+        OSSL_KEYMGMT_SELECT_ALL_PARAMETERS
+    };
+    size_t i;
+
+    /* The decoder implementations made here support guessing */
+    if (selection == 0)
+        return 1;
+
+    for (i = 0; i < OSSL_NELEM(checks); i++) {
+        int check1 = (selection & checks[i]) != 0;
+        int check2 = (selection_mask & checks[i]) != 0;
+
+        /*
+         * If the caller asked for the currently checked bit(s), return
+         * whether the decoder description says it's supported.
+         */
+        if (check1)
+            return check2;
+    }
+
+    /* This should be dead code, but just to be safe... */
+    return 0;
 }
 
 static int key2blob_encode(void *vctx, const void *key, int selection,
@@ -92,10 +117,32 @@ static int key2blob_encode(void *vctx, const void *key, int selection,
     return ok;
 }
 
-#define MAKE_BLOB_ENCODER(impl, type)                                   \
+/*
+ * MAKE_BLOB_ENCODER() Makes an OSSL_DISPATCH table for a particular key->blob
+ * encoder
+ *
+ * impl:                The keytype to encode
+ * type:                The C structure type holding the key data
+ * selection_name:      The acceptable selections.  This translates into
+ *                      the macro EVP_PKEY_##selection_name.
+ *
+ * The selection is understood as a "level" rather than an exact set of
+ * requests from the caller.  The encoder has to decide what contents fit
+ * the encoded format.  For example, the EC public key blob will only contain
+ * the encoded public key itself, no matter if the selection bits include
+ * OSSL_KEYMGMT_SELECT_PARAMETERS or not.  However, if the selection includes
+ * OSSL_KEYMGMT_SELECT_PRIVATE_KEY, the same encoder will simply refuse to
+ * cooperate, because it cannot output the private key.
+ *
+ * EVP_PKEY_##selection_name are convenience macros that combine "typical"
+ * OSSL_KEYMGMT_SELECT_ macros for a certain type of EVP_PKEY content.
+ */
+#define MAKE_BLOB_ENCODER(impl, type, selection_name)                   \
     static OSSL_FUNC_encoder_import_object_fn                           \
     impl##2blob_import_object;                                          \
     static OSSL_FUNC_encoder_free_object_fn impl##2blob_free_object;    \
+    static OSSL_FUNC_encoder_does_selection_fn                          \
+    impl##2blob_does_selection;                                         \
     static OSSL_FUNC_encoder_encode_fn impl##2blob_encode;              \
                                                                         \
     static void *impl##2blob_import_object(void *ctx, int selection,    \
@@ -107,6 +154,11 @@ static int key2blob_encode(void *vctx, const void *key, int selection,
     static void impl##2blob_free_object(void *key)                      \
     {                                                                   \
         ossl_prov_free_key(ossl_##impl##_keymgmt_functions, key);       \
+    }                                                                   \
+    static int impl##2blob_does_selection(void *ctx, int selection)     \
+    {                                                                   \
+        return key2blob_check_selection(selection,                      \
+                                        EVP_PKEY_##selection_name);     \
     }                                                                   \
     static int impl##2blob_encode(void *vctx, OSSL_CORE_BIO *cout,      \
                                   const void *key,                      \
@@ -132,7 +184,7 @@ static int key2blob_encode(void *vctx, const void *key, int selection,
         { OSSL_FUNC_ENCODER_GET_PARAMS,                                 \
           (void (*)(void))key2blob_get_params },                        \
         { OSSL_FUNC_ENCODER_DOES_SELECTION,                             \
-          (void (*)(void))key2blob_does_selection },                    \
+          (void (*)(void))impl##2blob_does_selection },                 \
         { OSSL_FUNC_ENCODER_IMPORT_OBJECT,                              \
           (void (*)(void))impl##2blob_import_object },                  \
         { OSSL_FUNC_ENCODER_FREE_OBJECT,                                \
@@ -143,8 +195,8 @@ static int key2blob_encode(void *vctx, const void *key, int selection,
     }
 
 #ifndef OPENSSL_NO_EC
-MAKE_BLOB_ENCODER(ec, ec);
+MAKE_BLOB_ENCODER(ec, ec, PUBLIC_KEY);
 # ifndef OPENSSL_NO_SM2
-MAKE_BLOB_ENCODER(sm2, ec);
+MAKE_BLOB_ENCODER(sm2, ec, PUBLIC_KEY);
 # endif
 #endif
