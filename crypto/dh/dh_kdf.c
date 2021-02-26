@@ -53,8 +53,7 @@ int ossl_dh_kdf_X9_42_asn1(unsigned char *out, size_t outlen,
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_CEK_ALG,
                                             (char *)cek_alg, 0);
     *p = OSSL_PARAM_construct_end();
-    ret = EVP_KDF_CTX_set_params(kctx, params) > 0
-          && EVP_KDF_derive(kctx, out, outlen) > 0;
+    ret = EVP_KDF_derive(kctx, out, outlen, params) > 0;
 err:
     EVP_KDF_CTX_free(kctx);
     EVP_KDF_free(kdf);

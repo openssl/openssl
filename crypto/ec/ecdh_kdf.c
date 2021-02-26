@@ -42,8 +42,7 @@ int ossl_ecdh_kdf_X9_63(unsigned char *out, size_t outlen,
                                                  (void *)sinfo, sinfolen);
         *p = OSSL_PARAM_construct_end();
 
-        ret = EVP_KDF_CTX_set_params(kctx, params) > 0
-            && EVP_KDF_derive(kctx, out, outlen) > 0;
+        ret = EVP_KDF_derive(kctx, out, outlen, params) > 0;
         EVP_KDF_CTX_free(kctx);
     }
     EVP_KDF_free(kdf);
