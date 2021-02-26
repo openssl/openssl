@@ -921,9 +921,8 @@ int req_main(int argc, char **argv)
 
     if (subj != NULL && !newreq && !gen_x509) {
         if (verbose) {
-            BIO_printf(bio_err, "Modifying subject of certificate request\n");
-            print_name(bio_err, "Old subject=",
-                       X509_REQ_get_subject_name(req), get_nameopt());
+            BIO_printf(out, "Modifying subject of certificate request\n");
+            print_name(out, "Old subject=", X509_REQ_get_subject_name(req));
         }
 
         if (!X509_REQ_set_subject_name(req, fsubj)) {
@@ -932,8 +931,7 @@ int req_main(int argc, char **argv)
         }
 
         if (verbose) {
-            print_name(bio_err, "New subject=",
-                       X509_REQ_get_subject_name(req), get_nameopt());
+            print_name(out, "New subject=", X509_REQ_get_subject_name(req));
         }
     }
 
@@ -996,12 +994,9 @@ int req_main(int argc, char **argv)
     }
 
     if (subject) {
-        if (gen_x509)
-            print_name(out, "subject=", X509_get_subject_name(new_x509),
-                       get_nameopt());
-        else
-            print_name(out, "subject=", X509_REQ_get_subject_name(req),
-                       get_nameopt());
+        print_name(out, "subject=", gen_x509
+                   ? X509_get_subject_name(new_x509)
+                   : X509_REQ_get_subject_name(req));
     }
 
     if (modulus) {
