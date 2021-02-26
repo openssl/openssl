@@ -137,12 +137,13 @@ size_t EVP_KDF_CTX_get_kdf_size(EVP_KDF_CTX *ctx)
     return 0;
 }
 
-int EVP_KDF_derive(EVP_KDF_CTX *ctx, unsigned char *key, size_t keylen)
+int EVP_KDF_derive(EVP_KDF_CTX *ctx, unsigned char *key, size_t keylen,
+                   const OSSL_PARAM params[])
 {
     if (ctx == NULL)
         return 0;
 
-    return ctx->meth->derive(ctx->data, key, keylen);
+    return ctx->meth->derive(ctx->data, key, keylen, params);
 }
 
 /*

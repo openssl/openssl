@@ -25,7 +25,8 @@ EVP_KDF_CTX_gettable_params, EVP_KDF_CTX_settable_params - EVP KDF routines
  EVP_KDF_CTX *EVP_KDF_CTX_dup(const EVP_KDF_CTX *src);
  void EVP_KDF_CTX_reset(EVP_KDF_CTX *ctx);
  size_t EVP_KDF_CTX_get_kdf_size(EVP_KDF_CTX *ctx);
- int EVP_KDF_derive(EVP_KDF_CTX *ctx, unsigned char *key, size_t keylen);
+ int EVP_KDF_derive(EVP_KDF_CTX *ctx, unsigned char *key, size_t keylen,
+                    const OSSL_PARAM params[]);
  int EVP_KDF_up_ref(EVP_KDF *kdf);
  void EVP_KDF_free(EVP_KDF *kdf);
  EVP_KDF *EVP_KDF_fetch(OSSL_LIB_CTX *libctx, const char *algorithm,
@@ -56,9 +57,10 @@ The EVP KDF routines are a high-level interface to Key Derivation Function
 algorithms and should be used instead of algorithm-specific functions.
 
 After creating a B<EVP_KDF_CTX> for the required algorithm using
-EVP_KDF_CTX_new(), inputs to the algorithm are supplied
-using calls to EVP_KDF_CTX_set_params() before
-calling EVP_KDF_derive() to derive the key.
+EVP_KDF_CTX_new(), inputs to the algorithm are supplied either by
+passing them as part of the EVP_KDF_derive() call or using calls
+to EVP_KDF_CTX_set_params() before calling EVP_KDF_derive() to derive
+the key.
 
 =head2 Types
 
@@ -99,9 +101,10 @@ I<ctx>.
 EVP_KDF_CTX_reset() resets the context to the default state as if the context
 had just been created.
 
-EVP_KDF_derive() derives I<keylen> bytes of key material and places it in the
-I<key> buffer.  If the algorithm produces a fixed amount of output then an
-error will occur unless the I<keylen> parameter is equal to that output size,
+EVP_KDF_derive() processes any parameters in I<Params> and then derives
+I<keylen> bytes of key material and places it in the I<key> buffer.
+If the algorithm produces a fixed amount of output then an error will
+occur unless the I<keylen> parameter is equal to that output size,
 as returned by EVP_KDF_CTX_get_kdf_size().
 
 EVP_KDF_get_params() retrieves details about the implementation
