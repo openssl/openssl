@@ -14,7 +14,7 @@ use File::Spec;
 use OpenSSL::Test::Utils;
 use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
-setup("test_rusext");
+setup("modified_test_rusext");
 
 plan tests => 5;
 
