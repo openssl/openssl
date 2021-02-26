@@ -2259,16 +2259,15 @@ static int rand_test_run(EVP_TEST *t)
         *p++ = OSSL_PARAM_construct_octet_string(OSSL_RAND_PARAM_TEST_NONCE,
                                                  z, item->nonce_len);
         *p = OSSL_PARAM_construct_end();
-        if (!TEST_true(EVP_RAND_set_ctx_params(expected->parent, params))
-                || !TEST_true(EVP_RAND_instantiate(expected->parent, strength,
-                                                   0, NULL, 0)))
+        if (!TEST_true(EVP_RAND_instantiate(expected->parent, strength,
+                                            0, NULL, 0, params)))
             goto err;
 
         z = item->pers != NULL ? item->pers : (unsigned char *)"";
         if (!TEST_true(EVP_RAND_instantiate
                            (expected->ctx, strength,
                             expected->prediction_resistance, z,
-                            item->pers_len)))
+                            item->pers_len, NULL)))
             goto err;
 
         if (item->reseed_entropy != NULL) {

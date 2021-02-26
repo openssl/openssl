@@ -828,11 +828,11 @@ static int test_rand_prediction_resistance(void)
     /* Initialise a three long DRBG chain */
     if (!TEST_ptr(x = new_drbg(NULL))
         || !TEST_true(disable_crngt(x))
-        || !TEST_true(EVP_RAND_instantiate(x, 0, 0, NULL, 0))
+        || !TEST_true(EVP_RAND_instantiate(x, 0, 0, NULL, 0, NULL))
         || !TEST_ptr(y = new_drbg(x))
-        || !TEST_true(EVP_RAND_instantiate(y, 0, 0, NULL, 0))
+        || !TEST_true(EVP_RAND_instantiate(y, 0, 0, NULL, 0, NULL))
         || !TEST_ptr(z = new_drbg(y))
-        || !TEST_true(EVP_RAND_instantiate(z, 0, 0, NULL, 0)))
+        || !TEST_true(EVP_RAND_instantiate(z, 0, 0, NULL, 0, NULL)))
         goto err;
 
     /*
