@@ -36,13 +36,6 @@ int setup_tests(void)
         return 0;
     }
 
-    default_config_file = CONF_get1_default_config_file();
-    if (default_config_file == NULL) {
-        free(testdateutc);
-        fprintf(stderr, "Error: could not get default config file\n");
-        return 0;
-    }
-
     char *indexfile = test_get_argument(0);
     db = load_index(indexfile, NULL);
     if (db == NULL) {
@@ -64,7 +57,6 @@ int setup_tests(void)
             goto end;
     }
 end:
-    free(default_config_file);
     free_index(db);
     free(testdateutc);
     return 1;
