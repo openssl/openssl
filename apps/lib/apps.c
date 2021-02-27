@@ -1077,6 +1077,7 @@ void print_name(BIO *out, const char *title, const X509_NAME *nm)
     char mline = 0;
     int indent = 0;
     unsigned long lflags = get_nameopt();
+
     if (title != NULL)
         BIO_puts(out, title);
     if ((lflags & XN_FLAG_SEP_MASK) == XN_FLAG_SEP_MULTILINE) {

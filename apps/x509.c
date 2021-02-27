@@ -976,9 +976,8 @@ int x509_main(int argc, char **argv)
                 goto end;
             }
             BIO_printf(out, "%s Fingerprint=", OBJ_nid2sn(EVP_MD_type(fdig)));
-            for (j = 0; j < (int)n; j++) {
+            for (j = 0; j < (int)n; j++)
                 BIO_printf(out, "%02X%c", md[j], (j + 1 == (int)n) ? '\n' : ':');
-            }
         } else if (i == ocspid) {
             X509_ocspid_print(out, x);
         } else if (i == ext) {
