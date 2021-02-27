@@ -215,8 +215,17 @@ void fake_rand_set_callback(EVP_RAND_CTX *rng,
                             int (*cb)(unsigned char *out, size_t outlen,
                                       const char *name, EVP_RAND_CTX *ctx))
 {
-    FAKE_RAND *f = rng->data;
+    if (rng != NULL)
+        ((FAKE_RAND *)rng->data)->cb = cb;
+}
 
-    f->cb = cb;
+void fake_rand_set_public_private_callbacks(OSSL_LIB_CTX *libctx,
+                                            int (*cb)(unsigned char *out,
+                                                      size_t outlen,
+                                                      const char *name,
+                                                      EVP_RAND_CTX *ctx))
+{
+    fake_rand_set_callback(RAND_get0_private(libctx), cb);
+    fake_rand_set_callback(RAND_get0_public(libctx), cb);
 }
 
