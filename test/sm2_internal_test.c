@@ -60,16 +60,14 @@ static int start_fake_rand(const char *hex_bytes)
         return 0;
 
     /* use own random function */
-    fake_rand_set_callback(RAND_get0_private(NULL), get_faked_bytes);
-    fake_rand_set_callback(RAND_get0_public(NULL), get_faked_bytes);
+    fake_rand_set_public_private_callbacks(NULL, get_faked_bytes);
     return 1;
 
 }
 
 static void restore_rand(void)
 {
-    fake_rand_set_callback(RAND_get0_private(NULL), NULL);
-    fake_rand_set_callback(RAND_get0_public(NULL), NULL);
+    fake_rand_set_public_private_callbacks(NULL, NULL);
     OPENSSL_free(fake_rand_bytes);
     fake_rand_bytes = NULL;
     fake_rand_bytes_offset = 0;
