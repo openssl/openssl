@@ -12,14 +12,17 @@
 #include <openssl/core_names.h>
 #include <openssl/rand.h>
 #include <openssl/provider.h>
+#include "../include/crypto/evp.h"
+#include "../../crypto/evp/evp_local.h"
 #include "../testutil.h"
 
 typedef struct {
-    int (*cb)(unsigned char *out, size_t outlen);
+    int (*cb)(unsigned char *out, size_t outlen,
+              const char *name, EVP_RAND_CTX *ctx);
     int state;
+    const char *name;
+    EVP_RAND_CTX *ctx;
 } FAKE_RAND;
-
-static FAKE_RAND fake_rand;
 
 static OSSL_FUNC_rand_newctx_fn fake_rand_newctx;
 static OSSL_FUNC_rand_freectx_fn fake_rand_freectx;
@@ -33,16 +36,16 @@ static OSSL_FUNC_rand_enable_locking_fn fake_rand_enable_locking;
 static void *fake_rand_newctx(void *provctx, void *parent,
                               const OSSL_DISPATCH *parent_dispatch)
 {
-    fake_rand.state = EVP_RAND_STATE_UNINITIALISED;
-    return &fake_rand;
+    FAKE_RAND *r = OPENSSL_zalloc(sizeof(*r));
+
+    if (r != NULL)
+        r->state = EVP_RAND_STATE_UNINITIALISED;
+    return r;
 }
 
 static void fake_rand_freectx(void *vrng)
 {
-    FAKE_RAND *frng = (FAKE_RAND *)vrng;
-
-    frng->cb = NULL;
-    frng->state = EVP_RAND_STATE_UNINITIALISED;
+    OPENSSL_free(vrng);
 }
 
 static int fake_rand_instantiate(void *vrng, ossl_unused unsigned int strength,
@@ -73,7 +76,7 @@ static int fake_rand_generate(void *vrng, unsigned char *out, size_t outlen,
     uint32_t r;
 
     if (frng->cb != NULL)
-        return (*frng->cb)(out, outlen);
+        return (*frng->cb)(out, outlen, frng->name, frng->ctx);
     while (outlen > 0) {
         r = test_random();
         l = outlen < sizeof(r) ? outlen : sizeof(r);
@@ -168,6 +171,20 @@ static int fake_rand_provider_init(const OSSL_CORE_HANDLE *handle,
     return 1;
 }
 
+static int check_rng(EVP_RAND_CTX *rng, const char *name)
+{
+    FAKE_RAND *f;
+
+    if (!TEST_ptr(rng)) {
+        TEST_info("random: %s", name);
+        return 0;
+    }
+    f = rng->data;
+    f->name = name;
+    f->ctx = rng;
+    return 1;
+}
+
 OSSL_PROVIDER *fake_rand_start(OSSL_LIB_CTX *libctx)
 {
     OSSL_PROVIDER *p;
@@ -179,8 +196,9 @@ OSSL_PROVIDER *fake_rand_start(OSSL_LIB_CTX *libctx)
         return NULL;
 
     /* Ensure that the fake rand is initialized. */
-    if (!TEST_ptr(RAND_get0_private(libctx))
-            || !TEST_ptr(RAND_get0_public(libctx))) {
+    if (!TEST_true(check_rng(RAND_get0_primary(libctx), "primary"))
+            || !TEST_true(check_rng(RAND_get0_private(libctx), "private"))
+            || !TEST_true(check_rng(RAND_get0_public(libctx), "public"))) {
         OSSL_PROVIDER_unload(p);
         return NULL;
     }
@@ -193,8 +211,12 @@ void fake_rand_finish(OSSL_PROVIDER *p)
     OSSL_PROVIDER_unload(p);
 }
 
-void fake_rand_set_callback(int (*cb)(unsigned char *out, size_t outlen))
+void fake_rand_set_callback(EVP_RAND_CTX *rng,
+                            int (*cb)(unsigned char *out, size_t outlen,
+                                      const char *name, EVP_RAND_CTX *ctx))
 {
-    fake_rand.cb = cb;
+    FAKE_RAND *f = rng->data;
+
+    f->cb = cb;
 }
 
