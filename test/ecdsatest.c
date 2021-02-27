@@ -25,18 +25,21 @@
 # include "internal/nelem.h"
 # include "ecdsatest.h"
 
+static fake_random_generate_cb fbytes;
+
 static const char *numbers[2];
 static size_t crv_len = 0;
 static EC_builtin_curve *curves = NULL;
 static OSSL_PROVIDER *fake_rand = NULL;
 
-static int fbytes(unsigned char *buf, size_t num)
+static int fbytes(unsigned char *buf, size_t num, ossl_unused const char *name,
+                  EVP_RAND_CTX *ctx)
 {
     int ret = 0;
     static int fbytes_counter = 0;
     BIGNUM *tmp = NULL;
 
-    fake_rand_set_callback(NULL);
+    fake_rand_set_callback(ctx, NULL);
 
     if (!TEST_ptr(tmp = BN_new())
         || !TEST_int_lt(fbytes_counter, OSSL_NELEM(numbers))
@@ -114,7 +117,7 @@ static int x9_62_tests(int n)
         goto err;
 
     /* public key must match KAT */
-    fake_rand_set_callback(&fbytes);
+    fake_rand_set_callback(RAND_get0_private(NULL), &fbytes);
     if (!TEST_true(EC_KEY_generate_key(key))
         || !TEST_true(p_len = EC_KEY_key2buf(key, POINT_CONVERSION_UNCOMPRESSED,
                                              &pbuf, NULL))
@@ -124,7 +127,7 @@ static int x9_62_tests(int n)
         goto err;
 
     /* create the signature via ECDSA_sign_setup to avoid use of ECDSA nonces */
-    fake_rand_set_callback(&fbytes);
+    fake_rand_set_callback(RAND_get0_private(NULL), &fbytes);
     if (!TEST_true(ECDSA_sign_setup(key, NULL, &kinv, &rp))
         || !TEST_ptr(signature = ECDSA_do_sign_ex(digest, dgst_len,
                                                   kinv, rp, key))
