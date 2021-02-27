@@ -567,11 +567,16 @@ uint32_t test_random(void);
 void test_random_seed(uint32_t sd);
 
 /* Fake non-secure random number generator */
+typedef int fake_random_generate_cb(unsigned char *out, size_t outlen,
+                                    const char *name, EVP_RAND_CTX *ctx);
+
 OSSL_PROVIDER *fake_rand_start(OSSL_LIB_CTX *libctx);
 void fake_rand_finish(OSSL_PROVIDER *p);
 void fake_rand_set_callback(EVP_RAND_CTX *ctx,
                             int (*cb)(unsigned char *out, size_t outlen,
                                       const char *name, EVP_RAND_CTX *ctx));
+void fake_rand_set_public_private_callbacks(OSSL_LIB_CTX *libctx,
+                                            fake_random_generate_cb *cb);
 
 /* Create a file path from a directory and a filename */
 char *test_mk_file_path(const char *dir, const char *file);
