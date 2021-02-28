@@ -762,7 +762,7 @@ EOF
           # Generic generator using Perl
           #
           return <<"EOF";
-$target: "$args{generator}->[0]" $deps
+$args{src}: "$args{generator}->[0]" $deps
 	"\$(PERL)"$generator_incs $generator > \$@
 EOF
       }
