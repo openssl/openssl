@@ -882,6 +882,84 @@ void BN_consttime_swap(BN_ULONG condition, BIGNUM *a, BIGNUM *b, int nwords)
 
 #undef BN_CONSTTIME_SWAP_FLAGS
 
+/*-
+ * Constant-time randomized conditional swap of a and b.
+ * a and b are swapped if condition is not 0.
+ * The randomization avoids creating a systematic bias in
+ * the values used by XOR operations, where the swap with condition==0
+ * does a lot of XORs that have one operand ('t' in the code below) at zero,
+ * while condition==1 results in 't' having about 50-50 zeroes and ones.
+ * This bias makes the swap vulnerable to EM (and likely other) physical
+ * side-channel attacks like Nonce@Once
+ * (for details, see: "Nonce@Once: A Single-Trace EM Side Channel Attack on
+ *  Several Constant-Time Elliptic Curve Implementations in Mobile Platforms"
+ * by M. Alam, B. Yilmaz, F. Werner, N. Samwel, A. Zajic, D. Genkin, Y. Yarom,
+ * and M. Prvulovic, in IEEE Euro S&P 2021)
+ *
+ * r is the value to use for randomization during the swap
+ * nwords is the number of words to swap.
+ * Assumes that at least nwords are allocated in both a and b.
+ * Assumes that no more than nwords are used by either a or b.
+ */
+void BN_consttime_swap_randomized(BN_ULONG condition, BIGNUM *a, BIGNUM *b, int nwords, BN_ULONG rand1, BN_ULONG rand2)
+{
+    BN_ULONG t;
+    int i;
+
+    if (a == b)
+        return;
+
+    bn_wcheck_size(a, nwords);
+    bn_wcheck_size(b, nwords);
+
+    condition = ((~condition & ((condition - 1))) >> (BN_BITS2 - 1)) - 1;
+
+    t = ((a->top ^ b->top) & condition) ^ rand1;
+    a->top = (a->top ^ t) ^ rand2;
+    b->top = (b->top ^ t) ^ rand2;
+
+    t = ((a->neg ^ b->neg) & condition) ^ rand1;
+    a->neg = (a->neg ^ t) ^ rand2;
+    b->neg = (b->neg ^ t) ^ rand2;
+	 
+    /*-
+     * BN_FLG_STATIC_DATA: indicates that data may not be written to. Intention
+     * is actually to treat it as it's read-only data, and some (if not most)
+     * of it does reside in read-only segment. In other words observation of
+     * BN_FLG_STATIC_DATA in BN_consttime_swap should be treated as fatal
+     * condition. It would either cause SEGV or effectively cause data
+     * corruption.
+     *
+     * BN_FLG_MALLOCED: refers to BN structure itself, and hence must be
+     * preserved.
+     *
+     * BN_FLG_SECURE: must be preserved, because it determines how x->d was
+     * allocated and hence how to free it.
+     *
+     * BN_FLG_CONSTTIME: sufficient to mask and swap
+     *
+     * BN_FLG_FIXED_TOP: indicates that we haven't called bn_correct_top() on
+     * the data, so the d array may be padded with additional 0 values (i.e.
+     * top could be greater than the minimal value that it could be). We should
+     * be swapping it
+     */
+
+#define BN_CONSTTIME_SWAP_FLAGS (BN_FLG_CONSTTIME | BN_FLG_FIXED_TOP)
+
+    t = (((a->flags ^ b->flags) & BN_CONSTTIME_SWAP_FLAGS) & condition) ^ rand1;
+    a->flags = (a->flags ^ t) ^ rand2;
+    b->flags = (b->flags ^ t) ^ rand2;
+	
+    /* conditionally swap the data */
+    for (i = 0; i < nwords; i++) {
+        t = ((a->d[i] ^ b->d[i]) & condition) ^ rand1;
+        a->d[i] = (a->d[i] ^ t) ^ rand2;
+        b->d[i] = (b->d[i] ^ t) ^ rand2;
+    }
+}
+
+#undef BN_CONSTTIME_SWAP_FLAGS
+
 /* Bits of security, see SP800-57 */
 
 int BN_security_bits(int L, int N)
