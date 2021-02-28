@@ -22,6 +22,8 @@
 #include "ec_local.h"
 #include "internal/refcount.h"
 
+#include <openssl/rand.h>
+
 /*
  * This file implements the wNAF-based interleaving multi-exponentiation method
  * Formerly at:
@@ -236,6 +238,21 @@ int ossl_ec_scalar_mul_ladder(const EC_GROUP *group, EC_POINT *r,
         }
     }
 
+    /*
+     * Create random values for BN_consttime_swap_randomized, and for
+	 * constant-time swapping of Z_is_one in EC_POINT_SWAP below
+	 * This randomizatin is needed to prevent side channel attacks
+     * (for details, see: "Nonce@Once: A Single-Trace EM Side Channel Attack on
+     *  Several Constant-Time Elliptic Curve Implementations in Mobile Platforms"
+     * by M. Alam, B. Yilmaz, F. Werner, N. Samwel, A. Zajic, D. Genkin, Y. Yarom,
+     * and M. Prvulovic, in IEEE Euro S&P 2021)
+     */
+    BN_ULONG *swap_rand=OPENSSL_malloc((cardinality_bits+2)*sizeof(BN_ULONG));
+    if(RAND_bytes_ex(bn_get_libctx(ctx),(unsigned char *)swap_rand,(cardinality_bits+2)*sizeof(BN_ULONG))<=0) {
+       ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
+       goto err;
+    }
+
     if (!BN_add(lambda, k, cardinality)) {
         ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
         goto err;
@@ -250,7 +267,7 @@ int ossl_ec_scalar_mul_ladder(const EC_GROUP *group, EC_POINT *r,
      * k := scalar + 2*cardinality
      */
     kbit = BN_is_bit_set(lambda, cardinality_bits);
-    BN_consttime_swap(kbit, k, lambda, group_top + 2);
+    BN_consttime_swap_randomized(kbit, k, lambda, group_top + 2, swap_rand[cardinality_bits],swap_rand[cardinality_bits]);
 
     group_top = bn_get_top(group->field);
     if ((bn_wexpand(s->X, group_top) == NULL)
@@ -282,13 +299,13 @@ int ossl_ec_scalar_mul_ladder(const EC_GROUP *group, EC_POINT *r,
     /* top bit is a 1, in a fixed pos */
     pbit = 1;
 
-#define EC_POINT_CSWAP(c, a, b, w, t) do {         \
-        BN_consttime_swap(c, (a)->X, (b)->X, w);   \
-        BN_consttime_swap(c, (a)->Y, (b)->Y, w);   \
-        BN_consttime_swap(c, (a)->Z, (b)->Z, w);   \
-        t = ((a)->Z_is_one ^ (b)->Z_is_one) & (c); \
-        (a)->Z_is_one ^= (t);                      \
-        (b)->Z_is_one ^= (t);                      \
+#define EC_POINT_CSWAP(c, a, b, w, t, r) do {         \
+        BN_consttime_swap_randomized(c, (a)->X, (b)->X, w, r, r);   \
+        BN_consttime_swap_randomized(c, (a)->Y, (b)->Y, w, r, r);   \
+        BN_consttime_swap_randomized(c, (a)->Z, (b)->Z, w, r, r);   \
+        t = (((a)->Z_is_one ^ (b)->Z_is_one) & (c)) ^ (r); \
+        (a)->Z_is_one = ((a)->Z_is_one ^ (t)) ^ (r);                      \
+        (b)->Z_is_one = ((b)->Z_is_one ^ (t)) ^ (r);                      \
 } while(0)
 
     /*-
@@ -351,7 +368,7 @@ int ossl_ec_scalar_mul_ladder(const EC_GROUP *group, EC_POINT *r,
 
     for (i = cardinality_bits - 1; i >= 0; i--) {
         kbit = BN_is_bit_set(k, i) ^ pbit;
-        EC_POINT_CSWAP(kbit, r, s, group_top, Z_is_one);
+        EC_POINT_CSWAP(kbit, r, s, group_top, Z_is_one, swap_rand[i]);
 
         /* Perform a single step of the Montgomery ladder */
         if (!ec_point_ladder_step(group, r, s, p, ctx)) {
@@ -365,8 +382,10 @@ int ossl_ec_scalar_mul_ladder(const EC_GROUP *group, EC_POINT *r,
         pbit ^= kbit;
     }
     /* one final cswap to move the right value into r */
-    EC_POINT_CSWAP(pbit, r, s, group_top, Z_is_one);
+    EC_POINT_CSWAP(pbit, r, s, group_top, Z_is_one, swap_rand[cardinality_bits+1]);
 #undef EC_POINT_CSWAP
+
+    OPENSSL_free(swap_rand);
 
     /* Finalize ladder (and recover full point coordinates) */
     if (!ec_point_ladder_post(group, r, s, p, ctx)) {
