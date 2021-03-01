@@ -38,21 +38,18 @@ OCSP_ONEREQ *OCSP_request_add0_id(OCSP_REQUEST *req, OCSP_CERTID *cid)
     one->reqCert = cid;
     if (req && !sk_OCSP_ONEREQ_push(req->tbsRequest.requestList, one)) {
         one->reqCert = NULL; /* do not free on error */
-        goto err;
+        OCSP_ONEREQ_free(one);
+        return NULL;
     }
     return one;
- err:
-    OCSP_ONEREQ_free(one);
-    return NULL;
 }
 
 /* Set requestorName from an X509_NAME structure */
 
 int OCSP_request_set1_name(OCSP_REQUEST *req, const X509_NAME *nm)
 {
-    GENERAL_NAME *gen;
+    GENERAL_NAME *gen = GENERAL_NAME_new();
 
-    gen = GENERAL_NAME_new();
     if (gen == NULL)
         return 0;
     if (!X509_NAME_set(&gen->d.directoryName, nm)) {
@@ -70,6 +67,7 @@ int OCSP_request_set1_name(OCSP_REQUEST *req, const X509_NAME *nm)
 int OCSP_request_add1_cert(OCSP_REQUEST *req, X509 *cert)
 {
     OCSP_SIGNATURE *sig;
+
     if (req->optionalSignature == NULL)
         req->optionalSignature = OCSP_SIGNATURE_new();
     sig = req->optionalSignature;
@@ -100,7 +98,7 @@ int OCSP_request_sign(OCSP_REQUEST *req,
 
     if ((req->optionalSignature = OCSP_SIGNATURE_new()) == NULL)
         goto err;
-    if (key) {
+    if (key != NULL) {
         if (!X509_check_private_key(signer, key)) {
             ERR_raise(ERR_LIB_OCSP,
                       OCSP_R_PRIVATE_KEY_DOES_NOT_MATCH_CERTIFICATE);
@@ -110,7 +108,7 @@ int OCSP_request_sign(OCSP_REQUEST *req,
             goto err;
     }
 
-    if (!(flags & OCSP_NOCERTS)) {
+    if ((flags & OCSP_NOCERTS) == 0) {
         if (!OCSP_request_add1_cert(req, signer))
             goto err;
         for (i = 0; i < sk_X509_num(certs); i++) {
@@ -141,9 +139,9 @@ int OCSP_response_status(OCSP_RESPONSE *resp)
 
 OCSP_BASICRESP *OCSP_response_get1_basic(OCSP_RESPONSE *resp)
 {
-    OCSP_RESPBYTES *rb;
-    rb = resp->responseBytes;
-    if (!rb) {
+    OCSP_RESPBYTES *rb = resp->responseBytes;
+
+    if (rb == NULL) {
         ERR_raise(ERR_LIB_OCSP, OCSP_R_NO_RESPONSE_DATA);
         return NULL;
     }
@@ -176,7 +174,7 @@ const OCSP_RESPDATA *OCSP_resp_get0_respdata(const OCSP_BASICRESP *bs)
 
 int OCSP_resp_count(OCSP_BASICRESP *bs)
 {
-    if (!bs)
+    if (bs == NULL)
         return -1;
     return sk_OCSP_SINGLERESP_num(bs->tbsResponseData.responses);
 }
@@ -185,12 +183,12 @@ int OCSP_resp_count(OCSP_BASICRESP *bs)
 
 OCSP_SINGLERESP *OCSP_resp_get0(OCSP_BASICRESP *bs, int idx)
 {
-    if (!bs)
+    if (bs == NULL)
         return NULL;
     return sk_OCSP_SINGLERESP_value(bs->tbsResponseData.responses, idx);
 }
 
-const ASN1_GENERALIZEDTIME *OCSP_resp_get0_produced_at(const OCSP_BASICRESP* bs)
+const ASN1_GENERALIZEDTIME *OCSP_resp_get0_produced_at(const OCSP_BASICRESP *bs)
 {
     return bs->tbsResponseData.producedAt;
 }
@@ -245,7 +243,8 @@ int OCSP_resp_find(OCSP_BASICRESP *bs, OCSP_CERTID *id, int last)
     int i;
     STACK_OF(OCSP_SINGLERESP) *sresp;
     OCSP_SINGLERESP *single;
-    if (!bs)
+
+    if (bs == NULL)
         return -1;
     if (last < 0)
         last = 0;
@@ -273,12 +272,14 @@ int OCSP_single_get0_status(OCSP_SINGLERESP *single, int *reason,
 {
     int ret;
     OCSP_CERTSTATUS *cst;
-    if (!single)
+
+    if (single == NULL)
         return -1;
     cst = single->certStatus;
     ret = cst->type;
     if (ret == V_OCSP_CERTSTATUS_REVOKED) {
         OCSP_REVOKEDINFO *rev = cst->value.revoked;
+
         if (revtime)
             *revtime = rev->revocationTime;
         if (reason) {
@@ -288,9 +289,9 @@ int OCSP_single_get0_status(OCSP_SINGLERESP *single, int *reason,
                 *reason = -1;
         }
     }
-    if (thisupd)
+    if (thisupd != NULL)
         *thisupd = single->thisUpdate;
-    if (nextupd)
+    if (nextupd != NULL)
         *nextupd = single->nextUpdate;
     return ret;
 }
@@ -306,15 +307,15 @@ int OCSP_resp_find_status(OCSP_BASICRESP *bs, OCSP_CERTID *id, int *status,
                           ASN1_GENERALIZEDTIME **thisupd,
                           ASN1_GENERALIZEDTIME **nextupd)
 {
-    int i;
+    int i = OCSP_resp_find(bs, id, -1);
     OCSP_SINGLERESP *single;
-    i = OCSP_resp_find(bs, id, -1);
+
     /* Maybe check for multiple responses and give an error? */
     if (i < 0)
         return 0;
     single = OCSP_resp_get0(bs, i);
     i = OCSP_single_get0_status(single, reason, revtime, thisupd, nextupd);
-    if (status)
+    if (status != NULL)
         *status = i;
     return 1;
 }
@@ -333,6 +334,7 @@ int OCSP_check_validity(ASN1_GENERALIZEDTIME *thisupd,
 {
     int ret = 1;
     time_t t_now, t_tmp;
+
     time(&t_now);
     /* Check thisUpdate is valid and not more than nsec in the future */
     if (!ASN1_GENERALIZEDTIME_check(thisupd)) {
@@ -358,7 +360,7 @@ int OCSP_check_validity(ASN1_GENERALIZEDTIME *thisupd,
         }
     }
 
-    if (!nextupd)
+    if (nextupd == NULL)
         return ret;
 
     /* Check nextUpdate is valid and not more than nsec in the past */
