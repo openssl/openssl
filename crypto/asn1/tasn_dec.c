@@ -90,7 +90,7 @@ unsigned long ASN1_tag2bit(int tag)
 
 /* Macro to initialize and invalidate the cache */
 
-#define asn1_tlc_clear(c)       if (c) (c)->valid = 0
+#define asn1_tlc_clear(c)       if ((c) != NULL) (c)->valid = 0
 /* Version to avoid compiler warning about 'c' always non-NULL */
 #define asn1_tlc_clear_nc(c)    (c)->valid = 0
 
@@ -121,6 +121,11 @@ int ASN1_item_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
                      int tag, int aclass, char opt, ASN1_TLC *ctx)
 {
     int rv;
+
+    if (pval == NULL || it == NULL) {
+        ERR_raise(ERR_LIB_ASN1, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
     rv = asn1_item_embed_d2i(pval, in, len, it, tag, aclass, opt, ctx, 0);
     if (rv <= 0)
         ASN1_item_ex_free(pval, it);
@@ -139,7 +144,7 @@ static int asn1_item_embed_d2i(ASN1_VALUE **pval, const unsigned char **in,
 {
     const ASN1_TEMPLATE *tt, *errtt = NULL;
     const ASN1_EXTERN_FUNCS *ef;
-    const ASN1_AUX *aux = it->funcs;
+    const ASN1_AUX *aux;
     ASN1_aux_cb *asn1_cb;
     const unsigned char *p = NULL, *q;
     unsigned char oclass;
@@ -150,8 +155,11 @@ static int asn1_item_embed_d2i(ASN1_VALUE **pval, const unsigned char **in,
     int ret = 0;
     ASN1_VALUE **pchptr;
 
-    if (pval == NULL)
+    if (pval == NULL || it == NULL) {
+        ERR_raise(ERR_LIB_ASN1, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
+    }
+    aux = it->funcs;
     if (aux && aux->asn1_cb)
         asn1_cb = aux->asn1_cb;
     else
@@ -1100,7 +1108,7 @@ static int asn1_check_tlen(long *olen, int *otag, unsigned char *oclass,
     p = *in;
     q = p;
 
-    if (ctx && ctx->valid) {
+    if (ctx != NULL && ctx->valid) {
         i = ctx->ret;
         plen = ctx->plen;
         pclass = ctx->pclass;
@@ -1108,7 +1116,7 @@ static int asn1_check_tlen(long *olen, int *otag, unsigned char *oclass,
         p += ctx->hdrlen;
     } else {
         i = ASN1_get_object(&p, &plen, &ptag, &pclass, len);
-        if (ctx) {
+        if (ctx != NULL) {
             ctx->ret = i;
             ctx->plen = plen;
             ctx->pclass = pclass;
@@ -1119,7 +1127,7 @@ static int asn1_check_tlen(long *olen, int *otag, unsigned char *oclass,
              * If definite length, and no error, length + header can't exceed
              * total amount of data available.
              */
-            if (!(i & 0x81) && ((plen + ctx->hdrlen) > len)) {
+            if ((i & 0x81) == 0 && (plen + ctx->hdrlen) > len) {
                 ERR_raise(ERR_LIB_ASN1, ASN1_R_TOO_LONG);
                 asn1_tlc_clear(ctx);
                 return 0;
@@ -1127,17 +1135,14 @@ static int asn1_check_tlen(long *olen, int *otag, unsigned char *oclass,
         }
     }
 
-    if (i & 0x80) {
-        ERR_raise(ERR_LIB_ASN1, ASN1_R_BAD_OBJECT_HEADER);
-        asn1_tlc_clear(ctx);
-        return 0;
-    }
+    if ((i & 0x80) != 0)
+        goto err;
     if (exptag >= 0) {
-        if ((exptag != ptag) || (expclass != pclass)) {
+        if (exptag != ptag || expclass != pclass) {
             /*
              * If type is OPTIONAL, not an error: indicate missing type.
              */
-            if (opt)
+            if (opt != 0)
                 return -1;
             asn1_tlc_clear(ctx);
             ERR_raise(ERR_LIB_ASN1, ASN1_R_WRONG_TAG);
@@ -1150,24 +1155,29 @@ static int asn1_check_tlen(long *olen, int *otag, unsigned char *oclass,
         asn1_tlc_clear(ctx);
     }
 
-    if (i & 1)
+    if ((i & 1) != 0)
         plen = len - (p - q);
 
-    if (inf)
+    if (inf != NULL)
         *inf = i & 1;
 
-    if (cst)
+    if (cst != NULL)
         *cst = i & V_ASN1_CONSTRUCTED;
 
-    if (olen)
+    if (olen != NULL)
         *olen = plen;
 
-    if (oclass)
+    if (oclass != NULL)
         *oclass = pclass;
 
-    if (otag)
+    if (otag != NULL)
         *otag = ptag;
 
     *in = p;
     return 1;
+
+ err:
+    ERR_raise(ERR_LIB_ASN1, ASN1_R_BAD_OBJECT_HEADER);
+    asn1_tlc_clear(ctx);
+    return 0;
 }
