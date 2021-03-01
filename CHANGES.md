@@ -23,6 +23,11 @@ OpenSSL 3.0
 
 ### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
 
+ * Windows thread synchronization uses read/write primitives (SRWLock) when
+   supported by the OS, otherwise CriticalSection continues to be used.
+
+   *Vincent Drake*
+
  * Add filter BIO BIO_f_readbuffer() that allows BIO_tell() and BIO_seek() to
    work on read only BIO source/sinks that do not support these functions.
    This allows piping or redirection of a file BIO using stdin to be buffered
