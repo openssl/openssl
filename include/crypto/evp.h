@@ -235,7 +235,6 @@ struct evp_md_st {
     int type;
 
     /* Legacy structure members */
-    /* TODO(3.0): Remove these */
     int pkey_type;
     int md_size;
     unsigned long flags;
@@ -250,7 +249,7 @@ struct evp_md_st {
     int (*md_ctrl) (EVP_MD_CTX *ctx, int cmd, int p1, void *p2);
 
     /* New structure members */
-    /* TODO(3.0): Remove above comment when legacy has gone */
+    /* Above comment to be removed when legacy has gone */
     int name_id;
     OSSL_PROVIDER *prov;
     CRYPTO_REF_COUNT refcnt;
@@ -280,7 +279,6 @@ struct evp_cipher_st {
     int iv_len;
 
     /* Legacy structure members */
-    /* TODO(3.0): Remove these */
     /* Various flags */
     unsigned long flags;
     /* init key */
@@ -303,7 +301,7 @@ struct evp_cipher_st {
     void *app_data;
 
     /* New structure members */
-    /* TODO(3.0): Remove above comment when legacy has gone */
+    /* Above comment to be removed when legacy has gone */
     int name_id;
     OSSL_PROVIDER *prov;
     CRYPTO_REF_COUNT refcnt;
