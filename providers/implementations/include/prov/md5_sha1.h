@@ -7,9 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-/* TODO(3.0) Move this header into provider when dependencies are removed */
-#ifndef OSSL_INTERNAL_MD5_SHA1_H
-# define OSSL_INTERNAL_MD5_SHA1_H
+#ifndef OSSL_PROV_MD5_SHA1_H
+# define OSSL_PROV_MD5_SHA1_H
 
 # include <openssl/opensslconf.h>
 
@@ -34,4 +33,4 @@ int ossl_md5_sha1_ctrl(MD5_SHA1_CTX *mctx, int cmd, int mslen, void *ms);
 
 # endif /* OPENSSL_NO_MD5 */
 
-#endif /* OSSL_INTERNAL_MD5_SHA1_H */
+#endif /* OSSL_PROV_MD5_SHA1_H */

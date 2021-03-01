@@ -7,9 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-/* TODO(3.0) Move this header into provider when dependencies are removed */
-#ifndef OSSL_PROVIDERS_DEFAULT_INCLUDE_INTERNAL_BLAKE2_H
-# define OSSL_PROVIDERS_DEFAULT_INCLUDE_INTERNAL_BLAKE2_H
+#ifndef OSSL_PROV_BLAKE2_H
+# define OSSL_PROV_BLAKE2_H
 
 # include <openssl/opensslconf.h>
 
@@ -118,4 +117,4 @@ void ossl_blake2s_param_set_personal(BLAKE2S_PARAM *P, const uint8_t *personal,
 void ossl_blake2s_param_set_salt(BLAKE2S_PARAM *P, const uint8_t *salt,
                                  size_t length);
 
-#endif /* OSSL_PROVIDERS_DEFAULT_INCLUDE_INTERNAL_BLAKE2_H */
+#endif /* OSSL_PROV_BLAKE2_H */
