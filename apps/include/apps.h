@@ -100,6 +100,7 @@ void print_bignum_var(BIO *, const BIGNUM *, const char*,
 void print_array(BIO *, const char *, int, const unsigned char *);
 int set_nameopt(const char *arg);
 unsigned long get_nameopt(void);
+int set_dateopt(unsigned long *dateopt, const char *arg);
 int set_cert_ex(unsigned long *flags, const char *arg);
 int set_name_ex(unsigned long *flags, const char *arg);
 int set_ext_copy(int *copy_type, const char *arg);
