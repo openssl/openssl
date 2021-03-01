@@ -50,17 +50,16 @@ OCSP_RESPONSE *OCSP_sendreq_bio(BIO *b, const char *path, OCSP_REQUEST *req)
 {
     OCSP_RESPONSE *resp = NULL;
     OSSL_HTTP_REQ_CTX *ctx;
-    int rv;
 
     ctx = OCSP_sendreq_new(b, path, req, -1 /* default max resp line length */);
     if (ctx == NULL)
         return NULL;
 
-    rv = OCSP_sendreq_nbio(&resp, ctx);
+    OCSP_sendreq_nbio(&resp, ctx);
 
     /* this indirectly calls ERR_clear_error(): */
     OSSL_HTTP_REQ_CTX_free(ctx);
 
-    return rv == 1 ? resp : NULL;
+    return resp;
 }
 #endif /* !defined(OPENSSL_NO_OCSP) */
