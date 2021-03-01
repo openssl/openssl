@@ -320,7 +320,7 @@ static int xor_encapsulate(void *vpxorctx,
     genctx = xor_gen_init(pxorctx->provctx, OSSL_KEYMGMT_SELECT_KEYPAIR);
     if (genctx == NULL)
         goto end;
-    ourkey = xor_gen(genctx, NULL, NULL);
+    ourkey = xor_gen(genctx, NULL, NULL, NULL);
     if (ourkey == NULL)
         goto end;
 
@@ -582,13 +582,14 @@ static const OSSL_PARAM *xor_gen_settable_params(void *provctx)
     return settable;
 }
 
-static void *xor_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
+static void *xor_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg,
+                     const OSSL_PARAM params[])
 {
     struct xor_gen_ctx *gctx = genctx;
     XORKEY *key = OPENSSL_zalloc(sizeof(*key));
     size_t i;
 
-    if (key == NULL)
+    if (key == NULL || !xor_gen_set_params(gctx, params))
         return NULL;
 
     if ((gctx->selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0) {
