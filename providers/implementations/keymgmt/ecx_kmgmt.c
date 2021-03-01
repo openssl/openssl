@@ -592,11 +592,14 @@ err:
     return NULL;
 }
 
-static void *x25519_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
+static void *x25519_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg,
+                        const OSSL_PARAM params[])
 {
     struct ecx_gen_ctx *gctx = genctx;
 
-    if (!ossl_prov_is_running())
+    if (!ossl_prov_is_running()
+            || gctx == NULL
+            || !ecx_gen_set_params(gctx, params))
         return 0;
 
 #ifdef S390X_EC_ASM
@@ -606,11 +609,14 @@ static void *x25519_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
     return ecx_gen(gctx);
 }
 
-static void *x448_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
+static void *x448_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg,
+                      const OSSL_PARAM params[])
 {
     struct ecx_gen_ctx *gctx = genctx;
 
-    if (!ossl_prov_is_running())
+    if (!ossl_prov_is_running()
+            || gctx == NULL
+            || !ecx_gen_set_params(gctx, params))
         return 0;
 
 #ifdef S390X_EC_ASM
@@ -620,11 +626,14 @@ static void *x448_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
     return ecx_gen(gctx);
 }
 
-static void *ed25519_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
+static void *ed25519_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg,
+                         const OSSL_PARAM params[])
 {
     struct ecx_gen_ctx *gctx = genctx;
 
-    if (!ossl_prov_is_running())
+    if (!ossl_prov_is_running()
+            || gctx == NULL
+            || !ecx_gen_set_params(gctx, params))
         return 0;
 
 #ifdef S390X_EC_ASM
@@ -637,11 +646,14 @@ static void *ed25519_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
     return ecx_gen(gctx);
 }
 
-static void *ed448_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
+static void *ed448_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg,
+                       const OSSL_PARAM params[])
 {
     struct ecx_gen_ctx *gctx = genctx;
 
-    if (!ossl_prov_is_running())
+    if (!ossl_prov_is_running()
+            || gctx == NULL
+            || !ecx_gen_set_params(gctx, params))
         return 0;
 
 #ifdef S390X_EC_ASM

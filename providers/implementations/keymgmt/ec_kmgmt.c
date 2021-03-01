@@ -1154,7 +1154,8 @@ static int ec_gen_assign_group(EC_KEY *ec, EC_GROUP *group)
 /*
  * The callback arguments (osslcb & cbarg) are not used by EC_KEY generation
  */
-static void *ec_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
+static void *ec_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg,
+                    const OSSL_PARAM params[])
 {
     struct ec_gen_ctx *gctx = genctx;
     EC_KEY *ec = NULL;
@@ -1162,6 +1163,7 @@ static void *ec_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
 
     if (!ossl_prov_is_running()
         || gctx == NULL
+        || !ec_gen_set_params(genctx, params)
         || (ec = EC_KEY_new_ex(gctx->libctx, NULL)) == NULL)
         return NULL;
 
@@ -1210,13 +1212,16 @@ err:
 /*
  * The callback arguments (osslcb & cbarg) are not used by EC_KEY generation
  */
-static void *sm2_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
+static void *sm2_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg,
+                     const OSSL_PARAM params[])
 {
     struct ec_gen_ctx *gctx = genctx;
     EC_KEY *ec = NULL;
     int ret = 1;
 
-    if (gctx == NULL
+    if (!ossl_prov_is_running()
+        || gctx == NULL
+        || !ec_gen_set_params(genctx, params)
         || (ec = EC_KEY_new_ex(gctx->libctx, NULL)) == NULL)
         return NULL;
 

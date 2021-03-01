@@ -447,13 +447,10 @@ static const OSSL_PARAM *cmac_gen_settable_params(void *provctx)
     return settable;
 }
 
-static void *mac_gen(void *genctx, OSSL_CALLBACK *cb, void *cbarg)
+static void *mac_gen_common(struct mac_gen_ctx *gctx,
+                            OSSL_CALLBACK *cb, void *cbarg)
 {
-    struct mac_gen_ctx *gctx = genctx;
     MAC_KEY *key;
-
-    if (!ossl_prov_is_running() || gctx == NULL)
-        return NULL;
 
     if ((key = ossl_mac_key_new(gctx->libctx, 0)) == NULL) {
         ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
@@ -487,6 +484,30 @@ static void *mac_gen(void *genctx, OSSL_CALLBACK *cb, void *cbarg)
     gctx->priv_key = NULL;
 
     return key;
+}
+
+static void *mac_gen(void *genctx, OSSL_CALLBACK *cb, void *cbarg,
+                      const OSSL_PARAM params[])
+{
+    struct mac_gen_ctx *gctx = genctx;
+
+    if (!ossl_prov_is_running()
+            || gctx == NULL
+            || !mac_gen_set_params(gctx, params))
+        return NULL;
+    return mac_gen_common(gctx, cb, cbarg);
+}
+
+static void *cmac_gen(void *genctx, OSSL_CALLBACK *cb, void *cbarg,
+                      const OSSL_PARAM params[])
+{
+    struct mac_gen_ctx *gctx = genctx;
+
+    if (!ossl_prov_is_running()
+            || gctx == NULL
+            || !cmac_gen_set_params(gctx, params))
+        return NULL;
+    return mac_gen_common(gctx, cb, cbarg);
 }
 
 static void mac_gen_cleanup(void *genctx)
@@ -537,7 +558,7 @@ const OSSL_DISPATCH ossl_cossl_mac_legacy_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_GEN_SET_PARAMS, (void (*)(void))cmac_gen_set_params },
     { OSSL_FUNC_KEYMGMT_GEN_SETTABLE_PARAMS,
         (void (*)(void))cmac_gen_settable_params },
-    { OSSL_FUNC_KEYMGMT_GEN, (void (*)(void))mac_gen },
+    { OSSL_FUNC_KEYMGMT_GEN, (void (*)(void))cmac_gen },
     { OSSL_FUNC_KEYMGMT_GEN_CLEANUP, (void (*)(void))mac_gen_cleanup },
     { 0, NULL }
 };

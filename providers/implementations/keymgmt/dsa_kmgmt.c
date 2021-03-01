@@ -504,7 +504,8 @@ static int dsa_gencb(int p, int n, BN_GENCB *cb)
     return gctx->cb(params, gctx->cbarg);
 }
 
-static void *dsa_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
+static void *dsa_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg,
+                     const OSSL_PARAM params[])
 {
     struct dsa_gen_ctx *gctx = genctx;
     DSA *dsa = NULL;
@@ -512,7 +513,9 @@ static void *dsa_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
     int ret = 0;
     FFC_PARAMS *ffc;
 
-    if (!ossl_prov_is_running() || gctx == NULL)
+    if (!ossl_prov_is_running()
+            || gctx == NULL
+            || !dsa_gen_set_params(gctx, params))
         return NULL;
     dsa = ossl_dsa_new(gctx->libctx);
     if (dsa == NULL)

@@ -523,13 +523,16 @@ static const OSSL_PARAM *rsapss_gen_settable_params(void *provctx)
     return settable;
 }
 
-static void *rsa_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
+static void *rsa_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg,
+                     const OSSL_PARAM params[])
 {
     struct rsa_gen_ctx *gctx = genctx;
     RSA *rsa = NULL, *rsa_tmp = NULL;
     BN_GENCB *gencb = NULL;
 
-    if (!ossl_prov_is_running() || gctx == NULL)
+    if (!ossl_prov_is_running()
+            || gctx == NULL
+            || !rsa_gen_set_params(gctx, params))
         return NULL;
 
     switch (gctx->rsa_type) {

@@ -589,7 +589,8 @@ static int dh_gencb(int p, int n, BN_GENCB *cb)
     return gctx->cb(params, gctx->cbarg);
 }
 
-static void *dh_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
+static void *dh_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg,
+                    const OSSL_PARAM params[])
 {
     int ret = 0;
     struct dh_gen_ctx *gctx = genctx;
@@ -597,7 +598,9 @@ static void *dh_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
     BN_GENCB *gencb = NULL;
     FFC_PARAMS *ffc;
 
-    if (!ossl_prov_is_running() || gctx == NULL)
+    if (!ossl_prov_is_running()
+            || gctx == NULL
+            || !dh_gen_set_params(gctx, params))
         return NULL;
 
     /* For parameter generation - If there is a group name just create it */
