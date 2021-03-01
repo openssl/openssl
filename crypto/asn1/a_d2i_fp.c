@@ -150,8 +150,7 @@ int asn1_d2i_read_bio(BIO *in, BUF_MEM **pb)
             e = ERR_GET_REASON(ERR_peek_error());
             if (e != ASN1_R_TOO_LONG)
                 goto err;
-            else
-                ERR_clear_error();
+            ERR_clear_error();
         }
         i = q - p;            /* header length */
         off += i;               /* end of data */
