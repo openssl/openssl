@@ -34,7 +34,12 @@ The length of the "size" parameter should not exceed that of a B<size_t>.
 
 =item "key" (B<OSSL_MAC_PARAM_KEY>) <octet string>
 
+Sets the MAC key.
+Setting this parameter is identical to passing a I<key> to L<EVP_MAC_init(3)>.
+
 =item "size" (B<OSSL_MAC_PARAM_SIZE>) <unsigned integer>
+
+Sets the MAC size.
 
 =item "c-rounds" (B<OSSL_MAC_PARAM_C_ROUNDS>) <unsigned integer>
 
