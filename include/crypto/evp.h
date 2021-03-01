@@ -776,7 +776,8 @@ int evp_keymgmt_get_params(const EVP_KEYMGMT *keymgmt,
                            void *keydata, OSSL_PARAM params[]);
 int evp_keymgmt_set_params(const EVP_KEYMGMT *keymgmt,
                            void *keydata, const OSSL_PARAM params[]);
-void *evp_keymgmt_gen_init(const EVP_KEYMGMT *keymgmt, int selection);
+void *evp_keymgmt_gen_init(const EVP_KEYMGMT *keymgmt, int selection,
+                           const OSSL_PARAM params[]);
 int evp_keymgmt_gen_set_template(const EVP_KEYMGMT *keymgmt, void *genctx,
                                  void *template);
 int evp_keymgmt_gen_set_params(const EVP_KEYMGMT *keymgmt, void *genctx,

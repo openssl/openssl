@@ -37,11 +37,12 @@ static int gen_init(EVP_PKEY_CTX *ctx, int operation)
     case EVP_PKEY_OP_PARAMGEN:
         ctx->op.keymgmt.genctx =
             evp_keymgmt_gen_init(ctx->keymgmt,
-                                 OSSL_KEYMGMT_SELECT_ALL_PARAMETERS);
+                                 OSSL_KEYMGMT_SELECT_ALL_PARAMETERS, NULL);
         break;
     case EVP_PKEY_OP_KEYGEN:
         ctx->op.keymgmt.genctx =
-            evp_keymgmt_gen_init(ctx->keymgmt, OSSL_KEYMGMT_SELECT_KEYPAIR);
+            evp_keymgmt_gen_init(ctx->keymgmt, OSSL_KEYMGMT_SELECT_KEYPAIR,
+                                 NULL);
         break;
     }
 
