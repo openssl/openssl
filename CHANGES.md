@@ -30,6 +30,11 @@ breaking changes, and mappings for the large list of deprecated functions.
 
 ### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
 
+ * Add a configurable flag to output date formats as ISO 8601. Does not
+   change the default date format.
+
+   *William Edmisten*
+
  * Version of MSVC earlier than 1300 could get link warnings, which could
    be suppressed if the undocumented -DI_CAN_LIVE_WITH_LNK4049 was set.
    Support for this flag has been removed.

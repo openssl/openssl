@@ -391,6 +391,11 @@ typedef const ASN1_ITEM *ASN1_ITEM_EXP (void);
 # define ASN1_STRFLGS_ESC_CTRL           2
 # define ASN1_STRFLGS_ESC_MSB            4
 
+/* Lower 8 bits are reserved as an output type specifier */
+# define ASN1_DTFLGS_TYPE_MASK    0x0FUL
+# define ASN1_DTFLGS_RFC822       0x00UL
+# define ASN1_DTFLGS_ISO8601      0x01UL
+
 /*
  * This flag determines how we do escaping: normally RC2253 backslash only,
  * set this to use backslash and quote.
@@ -800,7 +805,8 @@ int ASN1_item_i2d_bio(const ASN1_ITEM *it, BIO *out, const void *x);
 BIO *ASN1_item_i2d_mem_bio(const ASN1_ITEM *it, const ASN1_VALUE *val);
 int ASN1_UTCTIME_print(BIO *fp, const ASN1_UTCTIME *a);
 int ASN1_GENERALIZEDTIME_print(BIO *fp, const ASN1_GENERALIZEDTIME *a);
-int ASN1_TIME_print(BIO *fp, const ASN1_TIME *a);
+int ASN1_TIME_print(BIO *bp, const ASN1_TIME *tm);
+int ASN1_TIME_print_ex(BIO *bp, const ASN1_TIME *tm, unsigned long flags);
 int ASN1_STRING_print(BIO *bp, const ASN1_STRING *v);
 int ASN1_STRING_print_ex(BIO *out, const ASN1_STRING *str, unsigned long flags);
 int ASN1_buf_print(BIO *bp, const unsigned char *buf, size_t buflen, int off);

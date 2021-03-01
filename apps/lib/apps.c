@@ -1176,6 +1176,15 @@ int set_name_ex(unsigned long *flags, const char *arg)
     return 1;
 }
 
+int set_dateopt(unsigned long *dateopt, const char *arg)
+{
+    if (strcasecmp(arg, "rfc_822") == 0)
+        *dateopt = ASN1_DTFLGS_RFC822;
+    else if (strcasecmp(arg, "iso_8601") == 0)
+        *dateopt = ASN1_DTFLGS_ISO8601;
+    return 0;
+}
+
 int set_ext_copy(int *copy_type, const char *arg)
 {
     if (strcasecmp(arg, "none") == 0)

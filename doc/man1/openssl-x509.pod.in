@@ -24,6 +24,7 @@ B<openssl> B<x509>
 [B<-outform> B<DER>|B<PEM>]
 [B<-nocert>]
 [B<-noout>]
+[B<-dateopt>]
 [B<-text>]
 [B<-certopt> I<option>]
 [B<-fingerprint>]
@@ -207,6 +208,11 @@ Note: the B<-alias> and B<-purpose> options are also printing options
 but are described in the L</Trust Settings> section.
 
 =over 4
+
+=item B<-dateopt>
+
+Specify the date output format. Values are: rfc_822 and iso_8601.
+Defaults to rfc_822.
 
 =item B<-text>
 

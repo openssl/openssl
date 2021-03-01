@@ -140,7 +140,7 @@ int ossl_x509_algor_new_from_md(X509_ALGOR **palg, const EVP_MD *md);
 const EVP_MD *ossl_x509_algor_get_md(X509_ALGOR *alg);
 X509_ALGOR *ossl_x509_algor_mgf1_decode(X509_ALGOR *alg);
 int ossl_x509_algor_md_to_mgf1(X509_ALGOR **palg, const EVP_MD *mgf1md);
-int ossl_asn1_time_print_ex(BIO *bp, const ASN1_TIME *tm);
+int ossl_asn1_time_print_ex(BIO *bp, const ASN1_TIME *tm, unsigned long flags);
 
 EVP_PKEY * ossl_d2i_PrivateKey_legacy(int keytype, EVP_PKEY **a,
                                       const unsigned char **pp, long length,
