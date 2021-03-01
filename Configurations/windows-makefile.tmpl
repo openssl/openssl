@@ -638,9 +638,10 @@ EOF
 
   sub generatesrc {
       my %args = @_;
-      my ($gen0, @gens) = @{$args{generator}};
-      my $generator = '"'.$gen0.'"'.join('', map { " $_" } @gens);
-      my $generator_incs = join("", map { " -I \"$_\"" } @{$args{generator_incs}});
+      my $gen0 = $args{generator}->[0];
+      my $gen_args = join('', map { " $_" }
+                              @{$args{generator}}[1..$#{$args{generator}}]);
+      my $gen_incs = join("", map { " -I \"$_\"" } @{$args{generator_incs}});
       my $incs = join("", map { " -I \"$_\"" } @{$args{incs}});
       my $defs = join("", map { " -D".$_ } @{$args{defs}});
       my $deps = @{$args{deps}} ?
@@ -651,7 +652,7 @@ EOF
           # HTML generator
           #
           my $title = basename($args{src}, ".html");
-          my $pod = $args{generator}->[0];
+          my $pod = $gen0;
           return <<"EOF";
 $args{src}: "$pod"
 	\$(PERL) \$(SRCDIR)/util/mkpod2html.pl -i "$pod" -o \$\@ -t "$title" -r "\$(SRCDIR)/doc"
@@ -668,8 +669,8 @@ EOF
           my $ord_name =
               $args{generator}->[1] || platform->dsoname($args{product});
           return <<"EOF";
-$target: $args{generator}->[0] $deps $mkdef
-	"\$(PERL)" $mkdef$ord_ver --ordinals $args{generator}->[0] --name $ord_name --OS windows > $target
+$target: $gen0 $deps $mkdef
+	"\$(PERL)" $mkdef$ord_ver --ordinals $gen0 --name $ord_name --OS windows > $target
 EOF
       } elsif (platform->isasm($args{src})) {
           #
@@ -683,13 +684,14 @@ EOF
           } -> {$args{intent}};
           my $target = platform->asm($args{src});
 
-          if ($args{generator}->[0] =~ /\.pl$/) {
-              $generator = '"$(PERL)"'.$generator_incs.' '.$generator
+          my $generator;
+          if ($gen0 =~ /\.pl$/) {
+              $generator = '"$(PERL)"'.$gen_incs.' '.$gen0.$gen_args
                   .' "$(PERLASM_SCHEME)"'.$incs.' '.$cppflags.$defs.' $(PROCESSSOR)';
-          } elsif ($args{generator}->[0] =~ /\.S$/) {
+          } elsif ($gen0 =~ /\.S$/) {
               $generator = undef;
           } else {
-              die "Generator type for $src unknown: $generator\n";
+              die "Generator type for $src unknown: $gen0\n";
           }
 
           if (defined($generator)) {
@@ -697,7 +699,7 @@ EOF
               # end up generating foo.s in two steps.
               if ($args{src} =~ /\.S$/) {
                    return <<"EOF";
-$target: "$args{generator}->[0]" $deps
+$target: "$gen0" $deps
 	set ASM=\$(AS)
 	$generator \$@.S
 	\$(CPP) $incs $cppflags $defs \$@.S > \$@.i && move /Y \$@.i \$@
@@ -706,16 +708,16 @@ EOF
               }
               # Otherwise....
               return <<"EOF";
-$target: "$args{generator}->[0]" $deps
+$target: "$gen0" $deps
 	set ASM=\$(AS)
 	$generator \$@
 EOF
           }
           return <<"EOF";
-$target: "$args{generator}->[0]" $deps
-	\$(CPP) $incs $cppflags $defs "$args{generator}->[0]" > \$@.i && move /Y \$@.i \$@
+$target: "$gen0" $deps
+	\$(CPP) $incs $cppflags $defs "$gen0" > \$@.i && move /Y \$@.i \$@
 EOF
-      } elsif ($args{generator}->[0] =~ m|^.*\.in$|) {
+      } elsif ($gen0 =~ m|^.*\.in$|) {
           #
           # "dofile" generator (file.in -> file)
           #
@@ -729,10 +731,10 @@ EOF
           @modules = map { "-M".basename($_, '.pm') } @modules;
           my $modules = join(' ', '', sort keys %moduleincs, @modules);
           return <<"EOF";
-$args{src}: "$args{generator}->[0]" $deps
-	"\$(PERL)"$modules "$dofile" "-o$target{build_file}" $generator > \$@
+$args{src}: "$gen0" $deps
+	"\$(PERL)"$modules "$dofile" "-o$target{build_file}" "$gen0"$gen_args > \$@
 EOF
-      } elsif (grep { $_ eq $args{generator}->[0] } @{$unified_info{programs}}) {
+      } elsif (grep { $_ eq $gen0 } @{$unified_info{programs}}) {
           #
           # Generic generator using OpenSSL programs
           #
@@ -753,17 +755,19 @@ EOF
                                       $x;
                                   }
                                 } @{$args{deps}});
+          # Also redo $gen0, to ensure that we have the proper extension.
+          $gen0 = platform->bin($gen0);
           return <<"EOF";
-$args{src}: $args{generator}->[0] $deps
-	$generator > \$@
+$args{src}: $gen0 $deps
+	$gen0$gen_args > \$@
 EOF
       } else {
           #
           # Generic generator using Perl
           #
           return <<"EOF";
-$args{src}: "$args{generator}->[0]" $deps
-	"\$(PERL)"$generator_incs $generator > \$@
+$args{src}: "$gen0" $deps
+	"\$(PERL)"$gen_incs $gen0$gen_args > \$@
 EOF
       }
   }

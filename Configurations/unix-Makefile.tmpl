@@ -1316,8 +1316,10 @@ EOF
 
   sub generatesrc {
       my %args = @_;
-      my $generator = join(" ", @{$args{generator}});
-      my $generator_incs = join("", map { " -I".$_ } @{$args{generator_incs}});
+      my $gen0 = $args{generator}->[0];
+      my $gen_args = join('', map { " $_" }
+                              @{$args{generator}}[1..$#{$args{generator}}]);
+      my $gen_incs = join("", map { " -I".$_ } @{$args{generator_incs}});
       my $incs = join("", map { " -I".$_ } @{$args{incs}});
       my $defs = join("", map { " -D".$_ } @{$args{defs}});
       my $deps = join(" ", @{$args{generator_deps}}, @{$args{deps}});
@@ -1327,7 +1329,7 @@ EOF
           # HTML generator
           #
           my $title = basename($args{src}, ".html");
-          my $pod = $args{generator}->[0];
+          my $pod = $gen0;
           return <<"EOF";
 $args{src}: $pod
 	\$(PERL) \$(SRCDIR)/util/mkpod2html.pl -i "$pod" -o \$\@ -t "$title" -r "\$(SRCDIR)/doc"
@@ -1338,7 +1340,7 @@ EOF
           #
           my $section = $1;
           my $name = uc basename($args{src}, ".$section");
-          my $pod = $args{generator}->[0];
+          my $pod = $gen0;
           return <<"EOF";
 $args{src}: $pod
 	pod2man --name=$name --section=$section --center=OpenSSL \\
@@ -1353,8 +1355,8 @@ EOF
           my $ord_ver = $args{intent} eq 'lib' ? ' --version $(VERSION)' : '';
           my $ord_name = $args{generator}->[1] || $args{product};
           return <<"EOF";
-$target: $args{generator}->[0] $deps \$(SRCDIR)/util/mkdef.pl
-	\$(PERL) \$(SRCDIR)/util/mkdef.pl$ord_ver --ordinals $args{generator}->[0]  --name $ord_name --OS $mkdef_os > $target
+$target: $gen0 $deps \$(SRCDIR)/util/mkdef.pl
+	\$(PERL) \$(SRCDIR)/util/mkdef.pl$ord_ver --ordinals $gen0  --name $ord_name --OS $mkdef_os > $target
 EOF
       } elsif (platform->isasm($args{src})) {
           #
@@ -1367,29 +1369,30 @@ EOF
               bin => '$(BIN_CFLAGS) $(BIN_CPPFLAGS)'
           } -> {$args{intent}};
 
-          if ($args{generator}->[0] =~ /\.pl$/) {
-              $generator = 'CC="$(CC)" $(PERL)'.$generator_incs.' '.$generator
+          my $generator;
+          if ($gen0 =~ /\.pl$/) {
+              $generator = 'CC="$(CC)" $(PERL)'.$gen_incs.' '.$gen0.$gen_args
                   .' "$(PERLASM_SCHEME)"'.$incs.' '.$cppflags.$defs.' $(PROCESSOR)';
-          } elsif ($args{generator}->[0] =~ /\.m4$/) {
-              $generator = 'm4 -B 8192'.$generator_incs.' '.$generator.' >'
-          } elsif ($args{generator}->[0] =~ /\.S$/) {
+          } elsif ($gen0 =~ /\.m4$/) {
+              $generator = 'm4 -B 8192'.$gen_incs.' '.$gen0.$gen_args.' >'
+          } elsif ($gen0 =~ /\.S$/) {
               $generator = undef;
           } else {
-              die "Generator type for $args{src} unknown: $generator\n";
+              die "Generator type for $args{src} unknown: $gen0\n";
           }
 
           if (defined($generator)) {
               return <<"EOF";
-$args{src}: $args{generator}->[0] $deps
+$args{src}: $gen0 $deps
 	$generator \$@
 EOF
           }
           return <<"EOF";
-$args{src}: $args{generator}->[0] $deps
-	\$(CC) $incs $cppflags $defs -E $args{generator}->[0] | \\
+$args{src}: $gen0 $deps
+	\$(CC) $incs $cppflags $defs -E $gen0 | \\
 	\$(PERL) -ne '/^#(line)?\\s*[0-9]+/ or print' > \$@
 EOF
-      } elsif ($args{generator}->[0] =~ m|^.*\.in$|) {
+      } elsif ($gen0 =~ m|^.*\.in$|) {
           #
           # "dofile" generator (file.in -> file)
           #
@@ -1403,10 +1406,10 @@ EOF
           @modules = map { "-M".basename($_, '.pm') } @modules;
           my $modules = join(' ', '', sort keys %moduleincs, @modules);
           return <<"EOF";
-$args{src}: $args{generator}->[0] $deps
-	\$(PERL)$modules "$dofile" "-o$target{build_file}" $generator > \$@
+$args{src}: $gen0 $deps
+	\$(PERL)$modules "$dofile" "-o$target{build_file}" $gen0$gen_args > \$@
 EOF
-      } elsif (grep { $_ eq $args{generator}->[0] } @{$unified_info{programs}}) {
+      } elsif (grep { $_ eq $gen0 } @{$unified_info{programs}}) {
           #
           # Generic generator using OpenSSL programs
           #
@@ -1427,17 +1430,20 @@ EOF
                                       $x;
                                   }
                                 } @{$args{deps}});
+          # Also redo $gen0, to ensure that we have the proper extension where
+          # necessary.
+          $gen0 = platform->bin($gen0);
           return <<"EOF";
-$args{src}: $args{generator}->[0] $deps \$(BLDDIR)/util/wrap.pl
-	\$(BLDDIR)/util/wrap.pl $generator > \$@
+$args{src}: $gen0 $deps \$(BLDDIR)/util/wrap.pl
+	\$(BLDDIR)/util/wrap.pl $gen0$gen_args > \$@
 EOF
       } else {
           #
           # Generic generator using Perl
           #
           return <<"EOF";
-$args{src}: $args{generator}->[0] $deps
-	\$(PERL)$generator_incs $generator > \$@
+$args{src}: $gen0 $deps
+	\$(PERL)$gen_incs $gen0$gen_args > \$@
 EOF
       }
   }
