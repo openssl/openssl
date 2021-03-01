@@ -30,6 +30,9 @@ The following parameter can be set with EVP_MAC_CTX_set_params():
 
 =item "key" (B<OSSL_MAC_PARAM_KEY>) <octet string>
 
+Sets the MAC key.
+Setting this parameter is identical to passing a I<key> to L<EVP_MAC_init(3)>.
+
 =back
 
 The following parameters can be retrieved with
@@ -38,6 +41,8 @@ EVP_MAC_CTX_get_params():
 =over 4
 
 =item "size" (B<OSSL_MAC_PARAM_SIZE>) <unsigned integer>
+
+Gets the MAC size.
 
 =back
 
