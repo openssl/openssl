@@ -408,7 +408,8 @@ static int dh_validate(const void *keydata, int selection, int checktype)
     return ok;
 }
 
-static void *dh_gen_init_base(void *provctx, int selection, int type)
+static void *dh_gen_init_base(void *provctx, int selection,
+                              const OSSL_PARAM params[], int type)
 {
     OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(provctx);
     struct dh_gen_ctx *gctx = NULL;
@@ -441,17 +442,23 @@ static void *dh_gen_init_base(void *provctx, int selection, int type)
         gctx->generator = DH_GENERATOR_2;
         gctx->dh_type = type;
     }
+    if (!dh_gen_set_params(gctx, params)) {
+        OPENSSL_free(gctx);
+        gctx = NULL;
+    }
     return gctx;
 }
 
-static void *dh_gen_init(void *provctx, int selection)
+static void *dh_gen_init(void *provctx, int selection,
+                         const OSSL_PARAM params[])
 {
-    return dh_gen_init_base(provctx, selection, DH_FLAG_TYPE_DH);
+    return dh_gen_init_base(provctx, selection, params, DH_FLAG_TYPE_DH);
 }
 
-static void *dhx_gen_init(void *provctx, int selection)
+static void *dhx_gen_init(void *provctx, int selection,
+                          const OSSL_PARAM params[])
 {
-   return dh_gen_init_base(provctx, selection, DH_FLAG_TYPE_DHX);
+   return dh_gen_init_base(provctx, selection, params, DH_FLAG_TYPE_DHX);
 }
 
 static int dh_gen_set_template(void *genctx, void *templ)
@@ -487,6 +494,9 @@ static int dh_gen_set_params(void *genctx, const OSSL_PARAM params[])
 
     if (gctx == NULL)
         return 0;
+    if (params == NULL)
+        return 1;
+
 
     p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_FFC_TYPE);
     if (p != NULL) {

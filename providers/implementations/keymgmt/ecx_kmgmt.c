@@ -41,6 +41,8 @@ static OSSL_FUNC_keymgmt_gen_fn x448_gen;
 static OSSL_FUNC_keymgmt_gen_fn ed25519_gen;
 static OSSL_FUNC_keymgmt_gen_fn ed448_gen;
 static OSSL_FUNC_keymgmt_gen_cleanup_fn ecx_gen_cleanup;
+static OSSL_FUNC_keymgmt_gen_set_params_fn ecx_gen_set_params;
+static OSSL_FUNC_keymgmt_gen_settable_params_fn ecx_gen_settable_params;
 static OSSL_FUNC_keymgmt_load_fn ecx_load;
 static OSSL_FUNC_keymgmt_get_params_fn x25519_get_params;
 static OSSL_FUNC_keymgmt_get_params_fn x448_get_params;
@@ -373,6 +375,9 @@ static int ecx_set_params(void *key, const OSSL_PARAM params[])
     ECX_KEY *ecxkey = key;
     const OSSL_PARAM *p;
 
+    if (params == NULL)
+        return 1;
+
     p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY);
     if (p != NULL) {
         void *buf = ecxkey->pubkey;
@@ -445,7 +450,8 @@ static const OSSL_PARAM *ed448_settable_params(void *provctx)
     return ed_settable_params;
 }
 
-static void *ecx_gen_init(void *provctx, int selection, ECX_KEY_TYPE type)
+static void *ecx_gen_init(void *provctx, int selection,
+                          const OSSL_PARAM params[], ECX_KEY_TYPE type)
 {
     OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(provctx);
     struct ecx_gen_ctx *gctx = NULL;
@@ -458,27 +464,35 @@ static void *ecx_gen_init(void *provctx, int selection, ECX_KEY_TYPE type)
         gctx->type = type;
         gctx->selection = selection;
     }
+    if (!ecx_gen_set_params(gctx, params)) {
+        OPENSSL_free(gctx);
+        gctx = NULL;
+    }
     return gctx;
 }
 
-static void *x25519_gen_init(void *provctx, int selection)
+static void *x25519_gen_init(void *provctx, int selection,
+                             const OSSL_PARAM params[])
 {
-    return ecx_gen_init(provctx, selection, ECX_KEY_TYPE_X25519);
+    return ecx_gen_init(provctx, selection, params, ECX_KEY_TYPE_X25519);
 }
 
-static void *x448_gen_init(void *provctx, int selection)
+static void *x448_gen_init(void *provctx, int selection,
+                           const OSSL_PARAM params[])
 {
-    return ecx_gen_init(provctx, selection, ECX_KEY_TYPE_X448);
+    return ecx_gen_init(provctx, selection, params, ECX_KEY_TYPE_X448);
 }
 
-static void *ed25519_gen_init(void *provctx, int selection)
+static void *ed25519_gen_init(void *provctx, int selection,
+                              const OSSL_PARAM params[])
 {
-    return ecx_gen_init(provctx, selection, ECX_KEY_TYPE_ED25519);
+    return ecx_gen_init(provctx, selection, params, ECX_KEY_TYPE_ED25519);
 }
 
-static void *ed448_gen_init(void *provctx, int selection)
+static void *ed448_gen_init(void *provctx, int selection,
+                            const OSSL_PARAM params[])
 {
-    return ecx_gen_init(provctx, selection, ECX_KEY_TYPE_ED448);
+    return ecx_gen_init(provctx, selection, params, ECX_KEY_TYPE_ED448);
 }
 
 static int ecx_gen_set_params(void *genctx, const OSSL_PARAM params[])

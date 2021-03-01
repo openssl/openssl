@@ -365,7 +365,8 @@ static int dsa_validate(const void *keydata, int selection, int checktype)
     return ok;
 }
 
-static void *dsa_gen_init(void *provctx, int selection)
+static void *dsa_gen_init(void *provctx, int selection,
+                          const OSSL_PARAM params[])
 {
     OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(provctx);
     struct dsa_gen_ctx *gctx = NULL;
@@ -386,6 +387,10 @@ static void *dsa_gen_init(void *provctx, int selection)
         gctx->gindex = -1;
         gctx->pcounter = -1;
         gctx->hindex = 0;
+    }
+    if (!dsa_gen_set_params(gctx, params)) {
+        OPENSSL_free(gctx);
+        gctx = NULL;
     }
     return gctx;
 }
@@ -423,6 +428,9 @@ static int dsa_gen_set_params(void *genctx, const OSSL_PARAM params[])
 
     if (gctx == NULL)
         return 0;
+    if (params == NULL)
+        return 1;
+
 
     p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_FFC_TYPE);
     if (p != NULL) {
