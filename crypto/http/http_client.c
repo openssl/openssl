@@ -736,9 +736,12 @@ static ASN1_VALUE *BIO_mem_d2i(BIO *mem, const ASN1_ITEM *it)
 {
     const unsigned char *p;
     long len = BIO_get_mem_data(mem, &p);
-    ASN1_VALUE *resp = ASN1_item_d2i(NULL, &p, len, it);
+    ASN1_VALUE *resp;
 
-    if (resp == NULL)
+    if (mem == NULL)
+        return NULL;
+
+    if ((resp = ASN1_item_d2i(NULL, &p, len, it)) == NULL)
         ERR_raise(ERR_LIB_HTTP, HTTP_R_RESPONSE_PARSE_ERROR);
     return resp;
 }
@@ -1056,11 +1059,10 @@ ASN1_VALUE *OSSL_HTTP_get_asn1(const char *url,
         ERR_raise(ERR_LIB_HTTP, ERR_R_PASSED_NULL_PARAMETER);
         return NULL;
     }
-    if ((mem = OSSL_HTTP_get(url, proxy, no_proxy, bio, rbio, bio_update_fn,
-                             arg, headers, maxline, max_resp_len, timeout,
-                             expected_ct, 1 /* expect_asn1 */))
-        != NULL)
-        resp = BIO_mem_d2i(mem, rsp_it);
+    mem = OSSL_HTTP_get(url, proxy, no_proxy, bio, rbio, bio_update_fn,
+                        arg, headers, maxline, max_resp_len, timeout,
+                        expected_ct, 1 /* expect_asn1 */);
+    resp = BIO_mem_d2i(mem /* may be NULL */, rsp_it);
     BIO_free(mem);
     return resp;
 }
@@ -1096,8 +1098,7 @@ ASN1_VALUE *OSSL_HTTP_post_asn1(const char *server, const char *port,
                                  max_resp_len, timeout,
                                  expected_ct, 1 /* expect_asn1 */, NULL);
     BIO_free(req_mem);
-    if (res_mem != NULL)
-        resp = BIO_mem_d2i(res_mem, rsp_it);
+    resp = BIO_mem_d2i(res_mem /* may be NULL */, rsp_it);
     BIO_free(res_mem);
     return resp;
 }
