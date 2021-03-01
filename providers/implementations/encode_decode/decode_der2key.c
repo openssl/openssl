@@ -339,7 +339,7 @@ static int der2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
              * Tear out the low-level key pointer from the pkey,
              * but only if it matches the expected key type.
              *
-             * TODO: The check should be done with EVP_PKEY_is_a(), but
+             * The check should be done with EVP_PKEY_is_a(), but
              * as long as we still have #legacy internal keys, it's safer
              * to use the type numbers inside the provider.
              */
