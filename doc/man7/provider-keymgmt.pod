@@ -23,7 +23,8 @@ provider-keymgmt - The KEYMGMT library E<lt>-E<gt> provider functions
  int OSSL_FUNC_keymgmt_gen_set_template(void *genctx, void *template);
  int OSSL_FUNC_keymgmt_gen_set_params(void *genctx, const OSSL_PARAM params[]);
  const OSSL_PARAM *OSSL_FUNC_keymgmt_gen_settable_params(void *provctx);
- void *OSSL_FUNC_keymgmt_gen(void *genctx, OSSL_CALLBACK *cb, void *cbarg);
+ void *OSSL_FUNC_keymgmt_gen(void *genctx, OSSL_CALLBACK *cb, void *cbarg,
+                             const OSSL_PARAM params[]);
  void OSSL_FUNC_keymgmt_gen_cleanup(void *genctx);
 
  /* Key loading by object reference, also a constructor */
@@ -236,7 +237,8 @@ OSSL_FUNC_keymgmt_gen_settable_params() should return a constant array of
 descriptor B<OSSL_PARAM>, for parameters that OSSL_FUNC_keymgmt_gen_set_params() 
 can handle.
 
-OSSL_FUNC_keymgmt_gen() should perform the key object generation itself, and
+OSSL_FUNC_keymgmt_gen() should, after setting the geneartion parameters to
+I<params>, perform the key object generation itself, and
 return the result.  The callback I<cb> should be called at regular
 intervals with indications on how the key object generation
 progresses.
