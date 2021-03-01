@@ -10,7 +10,7 @@ jobs:
       # start proprietary DB using private Docker image
       # with credentials stored in the UI
       - run: |
-          echo "$DOCKER_PASSWORD" | docker login --username $DOCKER_USER --password $DOCKER_PASSWORD
+          docker login --username $DOCKER_USER --password $DOCKER_PASSWORD
 
       # build the application image
       - run: docker build -t retrace/openssl:$CIRCLE_BRANCH .
