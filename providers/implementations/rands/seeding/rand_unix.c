@@ -40,35 +40,6 @@
 # include <sys/param.h>
 # include <sys/random.h>
 #endif
-/*
- * Provide a compile time error if the FIPS module is being built and none
- * of the supported entropy sources are available.
- */
-#if defined(FIPS_MODULE)
-# if !defined(OPENSSL_RAND_SEED_GETRANDOM) \
-     && !defined(OPENSSL_RAND_SEED_DEVRANDOM) \
-     && !defined(OPENSSL_RAND_SEED_RDCPU) \
-     && !defined(OPENSSL_RAND_SEED_OS)
-#  error FIPS mode without supported randomness source
-# endif
-/* Remove the sources that are not permitted in FIPS */
-# ifdef OPENSSL_RAND_SEED_LIBRANDOM
-#  undef OPENSSL_RAND_SEED_LIBRANDOM
-#  warning FIPS mode does not support the _librandom_ randomness source
-# endif
-# ifdef OPENSSL_RAND_SEED_RDTSC
-#  undef OPENSSL_RAND_SEED_RDTSC
-#  warning FIPS mode does not support the _RDTSC_ randomness source
-# endif
-# ifdef OPENSSL_RAND_SEED_EGD
-#  undef OPENSSL_RAND_SEED_EGD
-#  warning FIPS mode does not support the _EGD_ randomness source
-# endif
-# ifdef OPENSSL_RAND_SEED_NONE
-#  undef OPENSSL_RAND_SEED_NONE
-#  warning FIPS mode does not support the _none_ randomness source
-# endif
-#endif
 
 #if (defined(OPENSSL_SYS_UNIX) && !defined(OPENSSL_SYS_VXWORKS)) \
      || defined(__DJGPP__)
@@ -393,7 +364,7 @@ static ssize_t syscall_random(void *buf, size_t buflen)
         if (errno != ENOSYS)
             return -1;
     }
-#    elif !defined(FIPS_MODULE)
+#    else
     union {
         void *p;
         int (*f)(void *buffer, size_t length);
@@ -441,12 +412,10 @@ static int keep_random_devices_open = 1;
        && defined(OPENSSL_RAND_SEED_GETRANDOM)
 static void *shm_addr;
 
-#    if !defined(FIPS_MODULE)
 static void cleanup_shm(void)
 {
     shmdt(shm_addr);
 }
-#    endif
 
 /*
  * Ensure that the system randomness source has been adequately seeded.
@@ -512,11 +481,8 @@ static int wait_random_seeded(void)
              * If this call fails, it isn't a big problem.
              */
             shm_addr = shmat(shm_id, NULL, SHM_RDONLY);
-#    ifndef FIPS_MODULE
-            /* TODO 3.0: The FIPS provider doesn't have OPENSSL_atexit */
             if (shm_addr != (void *)-1)
                 OPENSSL_atexit(&cleanup_shm);
-#    endif
         }
     }
     return seeded;
