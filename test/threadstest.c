@@ -473,6 +473,34 @@ static int test_multi(int idx)
     return testresult;
 }
 
+/*
+ * This test attempts to load several providers at the same time, and if
+ * run with a thread sanitizer, should crash if the core provider code
+ * doesn't synchronize well enough.
+ */
+#define MULTI_LOAD_THREADS 3
+static void test_multi_load_worker(void)
+{
+    OSSL_PROVIDER *prov;
+
+    TEST_ptr(prov = OSSL_PROVIDER_load(NULL, "default"));
+    TEST_true(OSSL_PROVIDER_unload(prov));
+}
+
+static int test_multi_load(void)
+{
+    thread_t threads[MULTI_LOAD_THREADS];
+    int i;
+
+    for (i = 0; i < MULTI_LOAD_THREADS; i++)
+        TEST_true(run_thread(&threads[i], test_multi_load_worker));
+
+    for (i = 0; i < MULTI_LOAD_THREADS; i++)
+        TEST_true(wait_for_thread(threads[i]));
+
+    return 1;
+}
+
 typedef enum OPTION_choice {
     OPT_ERR = -1,
     OPT_EOF = 0,
@@ -518,6 +546,7 @@ int setup_tests(void)
     ADD_TEST(test_once);
     ADD_TEST(test_thread_local);
     ADD_TEST(test_atomic);
+    ADD_TEST(test_multi_load);
     ADD_ALL_TESTS(test_multi, 4);
     return 1;
 }
