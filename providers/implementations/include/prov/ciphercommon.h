@@ -31,9 +31,6 @@ typedef struct prov_cipher_ctx_st PROV_CIPHER_CTX;
 typedef int (PROV_CIPHER_HW_FN)(PROV_CIPHER_CTX *dat, unsigned char *out,
                                 const unsigned char *in, size_t len);
 
-/* TODO(3.0): VERIFY ME */
-#define MAX_TLS_MAC_SIZE    48
-
 /* Internal flags that can be queried */
 #define PROV_CIPHER_FLAG_AEAD             0x0001
 #define PROV_CIPHER_FLAG_CUSTOM_IV        0x0002
