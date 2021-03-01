@@ -201,7 +201,9 @@ int ossl_provider_disable_fallback_loading(OSSL_LIB_CTX *libctx)
     struct provider_store_st *store;
 
     if ((store = get_provider_store(libctx)) != NULL) {
+        CRYPTO_THREAD_write_lock(store->lock);
         store->use_fallbacks = 0;
+        CRYPTO_THREAD_unlock(store->lock);
         return 1;
     }
     return 0;
