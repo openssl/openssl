@@ -534,7 +534,8 @@ OSSL_CORE_MAKE_FUNC(int, keymgmt_gen_get_params,
 OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *,
                     keymgmt_gen_gettable_params, (void *provctx))
 OSSL_CORE_MAKE_FUNC(void *, keymgmt_gen,
-                    (void *genctx, OSSL_CALLBACK *cb, void *cbarg))
+                    (void *genctx, OSSL_CALLBACK *cb, void *cbarg,
+                    const OSSL_PARAM params[]))
 OSSL_CORE_MAKE_FUNC(void, keymgmt_gen_cleanup, (void *genctx))
 
 /* Key loading by object reference */
