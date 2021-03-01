@@ -75,7 +75,6 @@ int ossl_param_build_set_bn_pad(OSSL_PARAM_BLD *bld, OSSL_PARAM *p,
     if (p != NULL) {
         if (sz > p->data_size)
             return 0;
-        /* TODO(3.0) Change to use OSSL_PARAM_set_BN_pad */
         p->data_size = sz;
         return OSSL_PARAM_set_BN(p, bn);
     }
