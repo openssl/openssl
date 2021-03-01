@@ -19,6 +19,7 @@
 #include <openssl/core_names.h>
 #include <openssl/dh.h>
 #include <openssl/err.h>
+#include <openssl/proverr.h>
 #include <openssl/params.h>
 #include "prov/providercommon.h"
 #include "prov/implementations.h"
@@ -130,17 +131,20 @@ static int dh_plain_derive(void *vpdhctx,
     size_t dhsize;
     const BIGNUM *pub_key = NULL;
 
-    /* TODO(3.0): Add errors to stack */
-    if (pdhctx->dh == NULL || pdhctx->dhpeer == NULL)
+    if (pdhctx->dh == NULL || pdhctx->dhpeer == NULL) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_KEY);
         return 0;
+    }
 
     dhsize = (size_t)DH_size(pdhctx->dh);
     if (secret == NULL) {
         *secretlen = dhsize;
         return 1;
     }
-    if (outlen < dhsize)
+    if (outlen < dhsize) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
         return 0;
+    }
 
     DH_get0_key(pdhctx->dhpeer, &pub_key, NULL);
     if (pdhctx->pad)
@@ -167,8 +171,10 @@ static int dh_X9_42_kdf_derive(void *vpdhctx, unsigned char *secret,
         return 1;
     }
 
-    if (pdhctx->kdf_outlen > outlen)
+    if (pdhctx->kdf_outlen > outlen) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
         return 0;
+    }
     if (!dh_plain_derive(pdhctx, NULL, &stmplen, 0))
         return 0;
     if ((stmp = OPENSSL_secure_malloc(stmplen)) == NULL) {

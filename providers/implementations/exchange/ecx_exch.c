@@ -123,7 +123,7 @@ static int ecx_derive(void *vecxctx, unsigned char *secret, size_t *secretlen,
     if (ecxctx->key == NULL
             || ecxctx->key->privkey == NULL
             || ecxctx->peerkey == NULL) {
-        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY);
+        ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_KEY);
         return 0;
     }
 
@@ -138,7 +138,7 @@ static int ecx_derive(void *vecxctx, unsigned char *secret, size_t *secretlen,
         return 1;
     }
     if (outlen < ecxctx->keylen) {
-        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
+        ERR_raise(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
         return 0;
     }
 
