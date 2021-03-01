@@ -317,7 +317,7 @@ static int xor_encapsulate(void *vpxorctx,
     }
 
     /* 1. Generate keypair */
-    genctx = xor_gen_init(pxorctx->provctx, OSSL_KEYMGMT_SELECT_KEYPAIR);
+    genctx = xor_gen_init(pxorctx->provctx, OSSL_KEYMGMT_SELECT_KEYPAIR, NULL);
     if (genctx == NULL)
         goto end;
     ourkey = xor_gen(genctx, NULL, NULL);
@@ -537,7 +537,8 @@ struct xor_gen_ctx {
     OSSL_LIB_CTX *libctx;
 };
 
-static void *xor_gen_init(void *provctx, int selection)
+static void *xor_gen_init(void *provctx, int selection,
+                          const OSSL_PARAM params[])
 {
     struct xor_gen_ctx *gctx = NULL;
 
@@ -551,6 +552,10 @@ static void *xor_gen_init(void *provctx, int selection)
     /* Our provctx is really just an OSSL_LIB_CTX */
     gctx->libctx = (OSSL_LIB_CTX *)provctx;
 
+    if (!xor_gen_set_params(gctx, params)) {
+        OPENSSL_free(gctx);
+        return NULL;
+    }
     return gctx;
 }
 
