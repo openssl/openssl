@@ -101,6 +101,7 @@ int asn1_d2i_read_bio(BIO *in, BUF_MEM **pb)
     uint32_t eos = 0;
     size_t off = 0;
     size_t len = 0;
+    size_t diff;
 
     const unsigned char *q;
     long slen;
@@ -114,15 +115,16 @@ int asn1_d2i_read_bio(BIO *in, BUF_MEM **pb)
 
     ERR_clear_error();
     for (;;) {
-        if (want >= (len - off)) {
-            want -= (len - off);
+        diff = len - off;
+        if (want >= diff) {
+            want -= diff;
 
             if (len + want < len || !BUF_MEM_grow_clean(b, len + want)) {
                 ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
                 goto err;
             }
             i = BIO_read(in, &(b->data[len]), want);
-            if ((i < 0) && ((len - off) == 0)) {
+            if (i < 0 && diff == 0) {
                 ERR_raise(ERR_LIB_ASN1, ASN1_R_NOT_ENOUGH_DATA);
                 goto err;
             }
@@ -138,15 +140,17 @@ int asn1_d2i_read_bio(BIO *in, BUF_MEM **pb)
 
         p = (unsigned char *)&(b->data[off]);
         q = p;
-        inf = ASN1_get_object(&q, &slen, &tag, &xclass, len - off);
+        diff = len - off;
+        if (diff == 0)
+            goto err;
+        inf = ASN1_get_object(&q, &slen, &tag, &xclass, diff);
         if (inf & 0x80) {
             unsigned long e;
 
             e = ERR_GET_REASON(ERR_peek_error());
             if (e != ASN1_R_TOO_LONG)
                 goto err;
-            else
-                ERR_clear_error(); /* clear error */
+            ERR_clear_error();
         }
         i = q - p;            /* header length */
         off += i;               /* end of data */

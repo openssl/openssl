@@ -159,6 +159,10 @@ static int asn1_item_embed_d2i(ASN1_VALUE **pval, const unsigned char **in,
         ERR_raise(ERR_LIB_ASN1, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
+    if (len <= 0) {
+        ERR_raise(ERR_LIB_ASN1, ASN1_R_TOO_SMALL);
+        return 0;
+    }
     aux = it->funcs;
     if (aux && aux->asn1_cb)
         asn1_cb = aux->asn1_cb;
@@ -1108,6 +1112,10 @@ static int asn1_check_tlen(long *olen, int *otag, unsigned char *oclass,
     p = *in;
     q = p;
 
+    if (len <= 0) {
+        ERR_raise(ERR_LIB_ASN1, ASN1_R_TOO_SMALL);
+        goto err;
+    }
     if (ctx != NULL && ctx->valid) {
         i = ctx->ret;
         plen = ctx->plen;
@@ -1129,14 +1137,15 @@ static int asn1_check_tlen(long *olen, int *otag, unsigned char *oclass,
              */
             if ((i & 0x81) == 0 && (plen + ctx->hdrlen) > len) {
                 ERR_raise(ERR_LIB_ASN1, ASN1_R_TOO_LONG);
-                asn1_tlc_clear(ctx);
-                return 0;
+                goto err;
             }
         }
     }
 
-    if ((i & 0x80) != 0)
+    if ((i & 0x80) != 0) {
+        ERR_raise(ERR_LIB_ASN1, ASN1_R_BAD_OBJECT_HEADER);
         goto err;
+    }
     if (exptag >= 0) {
         if (exptag != ptag || expclass != pclass) {
             /*
@@ -1144,9 +1153,8 @@ static int asn1_check_tlen(long *olen, int *otag, unsigned char *oclass,
              */
             if (opt != 0)
                 return -1;
-            asn1_tlc_clear(ctx);
             ERR_raise(ERR_LIB_ASN1, ASN1_R_WRONG_TAG);
-            return 0;
+            goto err;
         }
         /*
          * We have a tag and class match: assume we are going to do something
@@ -1177,7 +1185,6 @@ static int asn1_check_tlen(long *olen, int *otag, unsigned char *oclass,
     return 1;
 
  err:
-    ERR_raise(ERR_LIB_ASN1, ASN1_R_BAD_OBJECT_HEADER);
     asn1_tlc_clear(ctx);
     return 0;
 }
