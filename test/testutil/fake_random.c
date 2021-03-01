@@ -17,8 +17,7 @@
 #include "../testutil.h"
 
 typedef struct {
-    int (*cb)(unsigned char *out, size_t outlen,
-              const char *name, EVP_RAND_CTX *ctx);
+    fake_random_generate_cb *cb;
     int state;
     const char *name;
     EVP_RAND_CTX *ctx;
