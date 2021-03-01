@@ -503,7 +503,7 @@ void *evp_keymgmt_util_gen(EVP_PKEY *target, EVP_KEYMGMT *keymgmt,
 {
     void *keydata = NULL;
 
-    if ((keydata = evp_keymgmt_gen(keymgmt, genctx, cb, cbarg)) == NULL
+    if ((keydata = evp_keymgmt_gen(keymgmt, genctx, cb, cbarg, NULL)) == NULL
         || !evp_keymgmt_util_assign_pkey(target, keymgmt, keydata)) {
         evp_keymgmt_freedata(keymgmt, keydata);
         keydata = NULL;

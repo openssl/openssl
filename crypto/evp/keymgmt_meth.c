@@ -344,11 +344,11 @@ const OSSL_PARAM *EVP_KEYMGMT_gen_settable_params(const EVP_KEYMGMT *keymgmt)
 }
 
 void *evp_keymgmt_gen(const EVP_KEYMGMT *keymgmt, void *genctx,
-                      OSSL_CALLBACK *cb, void *cbarg)
+                      OSSL_CALLBACK *cb, void *cbarg, const OSSL_PARAM params[])
 {
     if (keymgmt->gen == NULL)
         return NULL;
-    return keymgmt->gen(genctx, cb, cbarg);
+    return keymgmt->gen(genctx, cb, cbarg, params);
 }
 
 void evp_keymgmt_gen_cleanup(const EVP_KEYMGMT *keymgmt, void *genctx)
