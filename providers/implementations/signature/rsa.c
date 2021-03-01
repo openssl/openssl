@@ -1329,10 +1329,17 @@ static int rsa_set_ctx_params(void *vprsactx, const OSSL_PARAM params[])
     return 1;
 }
 
-static const OSSL_PARAM known_settable_ctx_params[] = {
-    /* digest and properties must be first to be able to skip it */
+static const OSSL_PARAM settable_ctx_params[] = {
     OSSL_PARAM_utf8_string(OSSL_SIGNATURE_PARAM_DIGEST, NULL, 0),
     OSSL_PARAM_utf8_string(OSSL_SIGNATURE_PARAM_PROPERTIES, NULL, 0),
+    OSSL_PARAM_utf8_string(OSSL_SIGNATURE_PARAM_PAD_MODE, NULL, 0),
+    OSSL_PARAM_utf8_string(OSSL_SIGNATURE_PARAM_MGF1_DIGEST, NULL, 0),
+    OSSL_PARAM_utf8_string(OSSL_SIGNATURE_PARAM_MGF1_PROPERTIES, NULL, 0),
+    OSSL_PARAM_utf8_string(OSSL_SIGNATURE_PARAM_PSS_SALTLEN, NULL, 0),
+    OSSL_PARAM_END
+};
+
+static const OSSL_PARAM settable_ctx_params_no_digest[] = {
     OSSL_PARAM_utf8_string(OSSL_SIGNATURE_PARAM_PAD_MODE, NULL, 0),
     OSSL_PARAM_utf8_string(OSSL_SIGNATURE_PARAM_MGF1_DIGEST, NULL, 0),
     OSSL_PARAM_utf8_string(OSSL_SIGNATURE_PARAM_MGF1_PROPERTIES, NULL, 0),
@@ -1346,8 +1353,8 @@ static const OSSL_PARAM *rsa_settable_ctx_params(void *vprsactx,
     PROV_RSA_CTX *prsactx = (PROV_RSA_CTX *)vprsactx;
 
     if (prsactx != NULL && !prsactx->flag_allow_md)
-        return &known_settable_ctx_params[2];
-    return known_settable_ctx_params;
+        return settable_ctx_params_no_digest;
+    return settable_ctx_params;
 }
 
 static int rsa_get_ctx_md_params(void *vprsactx, OSSL_PARAM *params)

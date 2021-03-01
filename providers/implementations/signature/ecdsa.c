@@ -482,11 +482,15 @@ static int ecdsa_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     return 1;
 }
 
-static const OSSL_PARAM known_settable_ctx_params[] = {
-    /* the first three will be skipped if md setting is not allowed */
+static const OSSL_PARAM settable_ctx_params[] = {
     OSSL_PARAM_utf8_string(OSSL_SIGNATURE_PARAM_DIGEST, NULL, 0),
     OSSL_PARAM_size_t(OSSL_SIGNATURE_PARAM_DIGEST_SIZE, NULL),
     OSSL_PARAM_utf8_string(OSSL_SIGNATURE_PARAM_PROPERTIES, NULL, 0),
+    OSSL_PARAM_uint(OSSL_SIGNATURE_PARAM_KAT, NULL),
+    OSSL_PARAM_END
+};
+
+static const OSSL_PARAM settable_ctx_params_no_digest[] = {
     OSSL_PARAM_uint(OSSL_SIGNATURE_PARAM_KAT, NULL),
     OSSL_PARAM_END
 };
@@ -497,8 +501,8 @@ static const OSSL_PARAM *ecdsa_settable_ctx_params(void *vctx,
     PROV_ECDSA_CTX *ctx = (PROV_ECDSA_CTX *)vctx;
 
     if (ctx != NULL && !ctx->flag_allow_md)
-        return &known_settable_ctx_params[3];
-    return known_settable_ctx_params;
+        return settable_ctx_params_no_digest;
+    return settable_ctx_params;
 }
 
 static int ecdsa_get_ctx_md_params(void *vctx, OSSL_PARAM *params)

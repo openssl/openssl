@@ -471,9 +471,13 @@ static int dsa_set_ctx_params(void *vpdsactx, const OSSL_PARAM params[])
     return 1;
 }
 
-static const OSSL_PARAM known_settable_ctx_params[] = {
+static const OSSL_PARAM settable_ctx_params[] = {
     OSSL_PARAM_utf8_string(OSSL_SIGNATURE_PARAM_DIGEST, NULL, 0),
     OSSL_PARAM_utf8_string(OSSL_SIGNATURE_PARAM_PROPERTIES, NULL, 0),
+    OSSL_PARAM_END
+};
+
+static const OSSL_PARAM settable_ctx_params_no_digest[] = {
     OSSL_PARAM_END
 };
 
@@ -483,8 +487,8 @@ static const OSSL_PARAM *dsa_settable_ctx_params(void *vpdsactx,
     PROV_DSA_CTX *pdsactx = (PROV_DSA_CTX *)vpdsactx;
 
     if (pdsactx != NULL && !pdsactx->flag_allow_md)
-        return &known_settable_ctx_params[2];
-    return known_settable_ctx_params;
+        return settable_ctx_params_no_digest;
+    return settable_ctx_params;
 }
 
 static int dsa_get_ctx_md_params(void *vpdsactx, OSSL_PARAM *params)
