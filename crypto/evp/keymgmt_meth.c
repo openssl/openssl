@@ -302,13 +302,14 @@ void evp_keymgmt_freedata(const EVP_KEYMGMT *keymgmt, void *keydata)
     keymgmt->free(keydata);
 }
 
-void *evp_keymgmt_gen_init(const EVP_KEYMGMT *keymgmt, int selection)
+void *evp_keymgmt_gen_init(const EVP_KEYMGMT *keymgmt, int selection,
+                           const OSSL_PARAM params[])
 {
     void *provctx = ossl_provider_ctx(EVP_KEYMGMT_provider(keymgmt));
 
     if (keymgmt->gen_init == NULL)
         return NULL;
-    return keymgmt->gen_init(provctx, selection);
+    return keymgmt->gen_init(provctx, selection, params);
 }
 
 int evp_keymgmt_gen_set_template(const EVP_KEYMGMT *keymgmt, void *genctx,
