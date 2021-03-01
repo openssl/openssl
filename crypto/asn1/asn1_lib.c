@@ -52,8 +52,10 @@ int ASN1_get_object(const unsigned char **pp, long *plength, int *ptag,
     int tag, xclass, inf;
     long max = omax;
 
-    if (!max)
-        goto err;
+    if (omax <= 0) {
+        ERR_raise(ERR_LIB_ASN1, ASN1_R_TOO_SMALL);
+        return 0x80;
+    }
     ret = (*p & V_ASN1_CONSTRUCTED);
     xclass = (*p & V_ASN1_PRIVATE);
     i = *p & V_ASN1_PRIMITIVE_TAG;

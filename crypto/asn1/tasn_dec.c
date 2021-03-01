@@ -159,6 +159,10 @@ static int asn1_item_embed_d2i(ASN1_VALUE **pval, const unsigned char **in,
         ERR_raise(ERR_LIB_ASN1, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
+    if (len <= 0) {
+        ERR_raise(ERR_LIB_ASN1, ASN1_R_TOO_SMALL);
+        return 0;
+    }
     aux = it->funcs;
     if (aux && aux->asn1_cb)
         asn1_cb = aux->asn1_cb;
@@ -1108,6 +1112,10 @@ static int asn1_check_tlen(long *olen, int *otag, unsigned char *oclass,
     p = *in;
     q = p;
 
+    if (len <= 0) {
+        ERR_raise(ERR_LIB_ASN1, ASN1_R_TOO_SMALL);
+        goto err;
+    }
     if (ctx != NULL && ctx->valid) {
         i = ctx->ret;
         plen = ctx->plen;
