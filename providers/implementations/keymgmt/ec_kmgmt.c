@@ -774,6 +774,9 @@ int ec_set_params(void *key, const OSSL_PARAM params[])
 
     if (key == NULL)
         return 0;
+    if (params == NULL)
+        return 1;
+
 
     if (!ossl_ec_group_set_params((EC_GROUP *)EC_KEY_get0_group(key), params))
         return 0;
@@ -932,7 +935,8 @@ struct ec_gen_ctx {
     EC_GROUP *gen_group;
 };
 
-static void *ec_gen_init(void *provctx, int selection)
+static void *ec_gen_init(void *provctx, int selection,
+                         const OSSL_PARAM params[])
 {
     OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(provctx);
     struct ec_gen_ctx *gctx = NULL;
@@ -944,6 +948,10 @@ static void *ec_gen_init(void *provctx, int selection)
         gctx->libctx = libctx;
         gctx->selection = selection;
         gctx->ecdh_mode = 0;
+    }
+    if (!ec_gen_set_params(gctx, params)) {
+        OPENSSL_free(gctx);
+        gctx = NULL;
     }
     return gctx;
 }

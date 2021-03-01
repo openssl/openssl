@@ -47,6 +47,7 @@ static OSSL_FUNC_keymgmt_new_fn mac_new_cmac;
 static OSSL_FUNC_keymgmt_gettable_params_fn cmac_gettable_params;
 static OSSL_FUNC_keymgmt_import_types_fn cmac_imexport_types;
 static OSSL_FUNC_keymgmt_export_types_fn cmac_imexport_types;
+static OSSL_FUNC_keymgmt_gen_init_fn cmac_gen_init;
 static OSSL_FUNC_keymgmt_gen_set_params_fn cmac_gen_set_params;
 static OSSL_FUNC_keymgmt_gen_settable_params_fn cmac_gen_settable_params;
 
@@ -371,7 +372,7 @@ static const OSSL_PARAM *mac_settable_params(void *provctx)
     return settable_params;
 }
 
-static void *mac_gen_init(void *provctx, int selection)
+static void *mac_gen_init_common(void *provctx, int selection)
 {
     OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(provctx);
     struct mac_gen_ctx *gctx = NULL;
@@ -382,6 +383,30 @@ static void *mac_gen_init(void *provctx, int selection)
     if ((gctx = OPENSSL_zalloc(sizeof(*gctx))) != NULL) {
         gctx->libctx = libctx;
         gctx->selection = selection;
+    }
+    return gctx;
+}
+
+static void *mac_gen_init(void *provctx, int selection,
+                          const OSSL_PARAM params[])
+{
+    struct mac_gen_ctx *gctx = mac_gen_init_common(provctx, selection);
+
+    if (gctx != NULL && !mac_gen_set_params(gctx, params)) {
+        OPENSSL_free(gctx);
+        gctx = NULL;
+    }
+    return gctx;
+}
+
+static void *cmac_gen_init(void *provctx, int selection,
+                           const OSSL_PARAM params[])
+{
+    struct mac_gen_ctx *gctx = mac_gen_init_common(provctx, selection);
+
+    if (gctx != NULL && !cmac_gen_set_params(gctx, params)) {
+        OPENSSL_free(gctx);
+        gctx = NULL;
     }
     return gctx;
 }
@@ -535,7 +560,7 @@ const OSSL_DISPATCH ossl_cossl_mac_legacy_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_IMPORT_TYPES, (void (*)(void))cmac_imexport_types },
     { OSSL_FUNC_KEYMGMT_EXPORT, (void (*)(void))mac_export },
     { OSSL_FUNC_KEYMGMT_EXPORT_TYPES, (void (*)(void))cmac_imexport_types },
-    { OSSL_FUNC_KEYMGMT_GEN_INIT, (void (*)(void))mac_gen_init },
+    { OSSL_FUNC_KEYMGMT_GEN_INIT, (void (*)(void))cmac_gen_init },
     { OSSL_FUNC_KEYMGMT_GEN_SET_PARAMS, (void (*)(void))cmac_gen_set_params },
     { OSSL_FUNC_KEYMGMT_GEN_SETTABLE_PARAMS,
         (void (*)(void))cmac_gen_settable_params },
