@@ -28,6 +28,8 @@
 
 # include "crypto/sm2.h"
 
+static fake_random_generate_cb get_faked_bytes;
+
 static OSSL_PROVIDER *fake_rand = NULL;
 static uint8_t *fake_rand_bytes = NULL;
 static size_t fake_rand_bytes_offset = 0;

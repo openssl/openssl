@@ -25,6 +25,8 @@
 # include "internal/nelem.h"
 # include "ecdsatest.h"
 
+static fake_random_generate_cb fbytes;
+
 static const char *numbers[2];
 static size_t crv_len = 0;
 static EC_builtin_curve *curves = NULL;
