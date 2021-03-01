@@ -700,9 +700,8 @@ static int test_EC_priv_pub(void)
         || !TEST_true(OSSL_PARAM_BLD_push_octet_string(bld,
                                                        OSSL_PKEY_PARAM_PUB_KEY,
                                                        ec_pub, sizeof(ec_pub)))
-        || !TEST_true(OSSL_PARAM_BLD_push_octet_string(bld,
-                                                       OSSL_PKEY_PARAM_PUB_KEY,
-                                                       ec_pub, sizeof(ec_pub))))
+        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_PRIV_KEY,
+                                             priv)))
         goto err;
     if (!TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld)))
         goto err;
