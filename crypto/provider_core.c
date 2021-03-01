@@ -480,7 +480,7 @@ static int provider_init(OSSL_PROVIDER *prov)
 
     /*
      * The flag lock is used to lock init, not only because the flag is
-     * checked here and set at the end, but also because this functions
+     * checked here and set at the end, but also because this function
      * modifies a number of things in the provider structure that this
      * function needs to perform under lock anyway.
      */
