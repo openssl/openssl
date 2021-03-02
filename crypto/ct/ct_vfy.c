@@ -123,7 +123,7 @@ int SCT_CTX_verify(const SCT_CTX *sctx, const SCT *sct)
         goto end;
 
     if (!EVP_DigestVerifyInit_ex(ctx, NULL, "SHA2-256", sctx->libctx,
-                                 sctx->propq, sctx->pkey))
+                                 sctx->propq, sctx->pkey, NULL))
         goto end;
 
     if (!sct_ctx_update(ctx, sctx, sct))
