@@ -181,27 +181,20 @@ OSSL_FUNC_keymgmt_import() function.
 
 =back
 
-=head2 Upgrading and downgrading a key
+=head2 Changing a key origin
 
-An B<EVP_PKEY> with a legacy origin will I<never> be upgraded to
-become an B<EVP_PKEY> with a provider native origin.  Instead, we have
-the operation cache as described above, that takes care of the needs
-of the diverse operation the application may want to perform.
+It is never possible to change the origin of a key. An B<EVP_PKEY> with a legacy
+origin will I<never> be upgraded to become an B<EVP_PKEY> with a provider
+native origin. Instead, we have the operation cache as described above, that
+takes care of the needs of the diverse operation the application may want to
+perform.
 
-An B<EVP_PKEY> with a provider native origin, I<may> be downgraded to
-be I<transformed> into an B<EVP_PKEY> with a legacy origin.  Because
-an B<EVP_PKEY> can't have two origins, it means that it stops having a
-provider native origin.  The previous provider native key data is
-moved to the operation cache.  Downgrading is performed with the
-internal function L<evp_pkey_downgrade(3)>.
-
-I<Downgrading a key is understandably fragile>, and possibly surprising,
-and should therefore be done I<as little as possible>, but is needed
-to be able to support functions like L<EVP_PKEY_get0_RSA(3)>.
-The general recommendation is to use L<evp_pkey_copy_downgraded(3)>
-whenever possible, which it should be if the need for a legacy origin
-is only internal, or better yet, to remove the need for downgrade at
-all.
+Similarly an B<EVP_PKEY> with a provider native origin, will I<never> be
+downgraded to be I<transformed> into an B<EVP_PKEY> with a legacy origin.
+Instead we may have a cached copy of the provider key in legacy form. Once the
+cached copy is created it is never updated. Changes made to the provider key
+are not reflected back in the cached legacy copy. Similarly changes made to the
+cached legacy copy are not reflected back in the provider key.
 
 =head1 SEE ALSO
 

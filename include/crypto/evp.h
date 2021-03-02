@@ -647,7 +647,6 @@ struct evp_pkey_st {
 # endif
 
     /* == Common attributes == */
-    /* If these are modified, so must evp_pkey_downgrade() */
     CRYPTO_REF_COUNT references;
     CRYPTO_RWLOCK *lock;
     STACK_OF(X509_ATTRIBUTE) *attributes; /* [ 0 ] */

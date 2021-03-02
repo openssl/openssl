@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-evp_pkey_export_to_provider, evp_pkey_copy_downgraded, evp_pkey_downgrade
+evp_pkey_export_to_provider, evp_pkey_copy_downgraded, evp_pkey_get_legacy
 - internal EVP_PKEY support functions for providers
 
 =head1 SYNOPSIS
@@ -14,7 +14,7 @@ evp_pkey_export_to_provider, evp_pkey_copy_downgraded, evp_pkey_downgrade
                                    EVP_KEYMGMT **keymgmt,
                                    const char *propquery);
  int evp_pkey_copy_downgraded(EVP_PKEY **dest, const EVP_PKEY *src);
- void *evp_pkey_get_legacy(EVP_PKEY *pk)
+ void *evp_pkey_get_legacy(EVP_PKEY *pk);
 
 =head1 DESCRIPTION
 
@@ -56,10 +56,9 @@ evp_pkey_get_legacy() returns the legacy key or NULL on error.
 
 =head1 NOTES
 
-Some functions calling evp_pkey_export_to_provider() or evp_pkey_downgrade()
-may have received a const key, and may therefore have to cast the key to
-non-const form to call this function.  Since B<EVP_PKEY> is always dynamically
-allocated, this is OK.
+Some functions calling evp_pkey_export_to_provider() may have received a const
+key, and may therefore have to cast the key to non-const form to call this
+function.  Since B<EVP_PKEY> is always dynamically allocated, this is OK.
 
 =head1 SEE ALSO
 

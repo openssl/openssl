@@ -1311,36 +1311,6 @@ size_t EVP_PKEY_get1_encoded_public_key(EVP_PKEY *pkey, unsigned char **ppub)
 
 /*- All methods below can also be used in FIPS_MODULE */
 
-/*
- * This reset function must be used very carefully, as it literally throws
- * away everything in an EVP_PKEY without freeing them, and may cause leaks
- * of memory, what have you.
- * The only reason we have this is to have the same code for EVP_PKEY_new()
- * and evp_pkey_downgrade().
- */
-static int evp_pkey_reset_unlocked(EVP_PKEY *pk)
-{
-    if (pk == NULL)
-        return 0;
-
-    if (pk->lock != NULL) {
-      const size_t offset = (unsigned char *)&pk->lock - (unsigned char *)pk;
-
-      memset(pk, 0, offset);
-      memset((unsigned char *)pk + offset + sizeof(pk->lock),
-             0,
-             sizeof(*pk) - offset - sizeof(pk->lock));
-    }
-    /* EVP_PKEY_new uses zalloc so no need to call memset if pk->lock is NULL */
-
-    pk->type = EVP_PKEY_NONE;
-    pk->save_type = EVP_PKEY_NONE;
-    pk->references = 1;
-    pk->save_parameters = 1;
-
-    return 1;
-}
-
 EVP_PKEY *EVP_PKEY_new(void)
 {
     EVP_PKEY *ret = OPENSSL_zalloc(sizeof(*ret));
@@ -1350,8 +1320,10 @@ EVP_PKEY *EVP_PKEY_new(void)
         return NULL;
     }
 
-    if (!evp_pkey_reset_unlocked(ret))
-        goto err;
+    ret->type = EVP_PKEY_NONE;
+    ret->save_type = EVP_PKEY_NONE;
+    ret->references = 1;
+    ret->save_parameters = 1;
 
     ret->lock = CRYPTO_THREAD_lock_new();
     if (ret->lock == NULL) {
