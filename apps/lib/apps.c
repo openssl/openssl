@@ -301,8 +301,7 @@ int load_crls(const char *uri, STACK_OF(X509_CRL) **crls,
     return ret;
 }
 
-void print_name(BIO *out, const char *title, const X509_NAME *nm,
-                unsigned long lflags)
+void print_name(BIO *out, const char *title, const X509_NAME *nm)
 {
     char *buf;
     char mline = 0;
