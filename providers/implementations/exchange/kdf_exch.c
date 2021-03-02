@@ -74,7 +74,7 @@ KDF_NEWCTX(tls1_prf, "TLS1-PRF")
 KDF_NEWCTX(hkdf, "HKDF")
 KDF_NEWCTX(scrypt, "SCRYPT")
 
-static int kdf_init(void *vpkdfctx, void *vkdf)
+static int kdf_init(void *vpkdfctx, void *vkdf, const OSSL_PARAM params[])
 {
     PROV_KDF_CTX *pkdfctx = (PROV_KDF_CTX *)vpkdfctx;
 
@@ -85,7 +85,7 @@ static int kdf_init(void *vpkdfctx, void *vkdf)
         return 0;
     pkdfctx->kdfdata = vkdf;
 
-    return 1;
+    return kdf_set_ctx_params(pkdfctx, params);
 }
 
 static int kdf_derive(void *vpkdfctx, unsigned char *secret, size_t *secretlen,

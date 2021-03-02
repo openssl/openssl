@@ -93,7 +93,7 @@ static void *dh_newctx(void *provctx)
     return pdhctx;
 }
 
-static int dh_init(void *vpdhctx, void *vdh)
+static int dh_init(void *vpdhctx, void *vdh, const OSSL_PARAM params[])
 {
     PROV_DH_CTX *pdhctx = (PROV_DH_CTX *)vpdhctx;
 
@@ -105,7 +105,7 @@ static int dh_init(void *vpdhctx, void *vdh)
     DH_free(pdhctx->dh);
     pdhctx->dh = vdh;
     pdhctx->kdf_type = PROV_DH_KDF_NONE;
-    return ossl_dh_check_key(vdh);
+    return dh_set_ctx_params(pdhctx, params) && ossl_dh_check_key(vdh);
 }
 
 static int dh_set_peer(void *vpdhctx, void *vdh)
@@ -292,8 +292,10 @@ static int dh_set_ctx_params(void *vpdhctx, const OSSL_PARAM params[])
     char name[80] = { '\0' }; /* should be big enough */
     char *str = NULL;
 
-    if (pdhctx == NULL || params == NULL)
+    if (pdhctx == NULL)
         return 0;
+    if (params == NULL)
+        return 1;
 
     p = OSSL_PARAM_locate_const(params, OSSL_EXCHANGE_PARAM_KDF_TYPE);
     if (p != NULL) {
@@ -416,7 +418,7 @@ static int dh_get_ctx_params(void *vpdhctx, OSSL_PARAM params[])
     PROV_DH_CTX *pdhctx = (PROV_DH_CTX *)vpdhctx;
     OSSL_PARAM *p;
 
-    if (pdhctx == NULL || params == NULL)
+    if (pdhctx == NULL)
         return 0;
 
     p = OSSL_PARAM_locate(params, OSSL_EXCHANGE_PARAM_KDF_TYPE);

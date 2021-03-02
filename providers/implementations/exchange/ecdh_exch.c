@@ -99,7 +99,7 @@ void *ecdh_newctx(void *provctx)
 }
 
 static
-int ecdh_init(void *vpecdhctx, void *vecdh)
+int ecdh_init(void *vpecdhctx, void *vecdh, const OSSL_PARAM params[])
 {
     PROV_ECDH_CTX *pecdhctx = (PROV_ECDH_CTX *)vpecdhctx;
 
@@ -112,7 +112,8 @@ int ecdh_init(void *vpecdhctx, void *vecdh)
     pecdhctx->k = vecdh;
     pecdhctx->cofactor_mode = -1;
     pecdhctx->kdf_type = PROV_ECDH_KDF_NONE;
-    return ossl_ec_check_key(vecdh, 1);
+    return ecdh_set_ctx_params(pecdhctx, params)
+           && ossl_ec_check_key(vecdh, 1);
 }
 
 static
@@ -206,8 +207,10 @@ int ecdh_set_ctx_params(void *vpecdhctx, const OSSL_PARAM params[])
     PROV_ECDH_CTX *pectx = (PROV_ECDH_CTX *)vpecdhctx;
     const OSSL_PARAM *p;
 
-    if (pectx == NULL || params == NULL)
+    if (pectx == NULL)
         return 0;
+    if (params == NULL)
+        return 1;
 
     p = OSSL_PARAM_locate_const(params, OSSL_EXCHANGE_PARAM_EC_ECDH_COFACTOR_MODE);
     if (p != NULL) {
@@ -310,7 +313,7 @@ int ecdh_get_ctx_params(void *vpecdhctx, OSSL_PARAM params[])
     PROV_ECDH_CTX *pectx = (PROV_ECDH_CTX *)vpecdhctx;
     OSSL_PARAM *p;
 
-    if (pectx == NULL || params == NULL)
+    if (pectx == NULL)
         return 0;
 
     p = OSSL_PARAM_locate(params, OSSL_EXCHANGE_PARAM_EC_ECDH_COFACTOR_MODE);

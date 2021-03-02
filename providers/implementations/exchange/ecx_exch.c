@@ -69,7 +69,8 @@ static void *x448_newctx(void *provctx)
     return ecx_newctx(provctx, X448_KEYLEN);
 }
 
-static int ecx_init(void *vecxctx, void *vkey)
+static int ecx_init(void *vecxctx, void *vkey,
+                    ossl_unused const OSSL_PARAM params[])
 {
     PROV_ECX_CTX *ecxctx = (PROV_ECX_CTX *)vecxctx;
     ECX_KEY *key = vkey;
