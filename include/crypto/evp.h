@@ -23,7 +23,7 @@
 #define EVP_MD_CTX_FLAG_KEEP_PKEY_CTX   0x0400
 
 /*
- * An EVP_PKEY can have the following support states:
+ * An EVP_PKEY_CTX can have the following support states:
  *
  * Supports legacy implementations only:
  *
@@ -179,14 +179,14 @@ DEFINE_STACK_OF_CONST(EVP_PKEY_METHOD)
 
 void evp_pkey_set_cb_translate(BN_GENCB *cb, EVP_PKEY_CTX *ctx);
 
-const EVP_PKEY_METHOD *dh_pkey_method(void);
-const EVP_PKEY_METHOD *dhx_pkey_method(void);
-const EVP_PKEY_METHOD *dsa_pkey_method(void);
-const EVP_PKEY_METHOD *ec_pkey_method(void);
-const EVP_PKEY_METHOD *ecx25519_pkey_method(void);
-const EVP_PKEY_METHOD *ecx448_pkey_method(void);
-const EVP_PKEY_METHOD *ed25519_pkey_method(void);
-const EVP_PKEY_METHOD *ed448_pkey_method(void);
+const EVP_PKEY_METHOD *ossl_dh_pkey_method(void);
+const EVP_PKEY_METHOD *ossl_dhx_pkey_method(void);
+const EVP_PKEY_METHOD *ossl_dsa_pkey_method(void);
+const EVP_PKEY_METHOD *ossl_ec_pkey_method(void);
+const EVP_PKEY_METHOD *ossl_ecx25519_pkey_method(void);
+const EVP_PKEY_METHOD *ossl_ecx448_pkey_method(void);
+const EVP_PKEY_METHOD *ossl_ed25519_pkey_method(void);
+const EVP_PKEY_METHOD *ossl_ed448_pkey_method(void);
 const EVP_PKEY_METHOD *ossl_rsa_pkey_method(void);
 const EVP_PKEY_METHOD *ossl_rsa_pss_pkey_method(void);
 
@@ -598,8 +598,13 @@ DEFINE_STACK_OF(OP_CACHE_ELEM)
     ((pk)->type == EVP_PKEY_NONE && (pk)->keymgmt == NULL)
 #define evp_pkey_is_typed(pk)                                   \
     ((pk)->type != EVP_PKEY_NONE || (pk)->keymgmt != NULL)
-#define evp_pkey_is_assigned(pk)                                \
+#ifndef FIPS_MODULE
+# define evp_pkey_is_assigned(pk)                               \
     ((pk)->pkey.ptr != NULL || (pk)->keydata != NULL)
+#else
+# define evp_pkey_is_assigned(pk)                               \
+    ((pk)->keydata != NULL)
+#endif
 #define evp_pkey_is_legacy(pk)                                  \
     ((pk)->type != EVP_PKEY_NONE && (pk)->keymgmt == NULL)
 #define evp_pkey_is_provided(pk)                                \
@@ -699,6 +704,9 @@ struct evp_pkey_st {
 #define EVP_PKEY_CTX_IS_GEN_OP(ctx) \
     ((ctx)->operation == EVP_PKEY_OP_PARAMGEN \
      || (ctx)->operation == EVP_PKEY_OP_KEYGEN)
+
+#define EVP_PKEY_CTX_IS_FROMDATA_OP(ctx) \
+    ((ctx)->operation == EVP_PKEY_OP_FROMDATA)
 
 #define EVP_PKEY_CTX_IS_KEM_OP(ctx) \
     ((ctx)->operation == EVP_PKEY_OP_ENCAPSULATE \
@@ -857,5 +865,25 @@ void evp_md_ctx_clear_digest(EVP_MD_CTX *ctx, int force);
 EVP_PKEY *evp_privatekey_from_binary(int keytype, EVP_PKEY **a,
                                      const unsigned char **pp, long length,
                                      OSSL_LIB_CTX *libctx, const char *propq);
+
+/* Three possible states: */
+# define EVP_PKEY_STATE_UNKNOWN         0
+# define EVP_PKEY_STATE_LEGACY          1
+# define EVP_PKEY_STATE_PROVIDER        2
+int evp_pkey_ctx_state(const EVP_PKEY_CTX *ctx);
+
+/* These two must ONLY be called for provider side operations */
+int evp_pkey_ctx_ctrl_to_param(EVP_PKEY_CTX *ctx,
+                               int keytype, int optype,
+                               int cmd, int p1, void *p2);
+int evp_pkey_ctx_ctrl_str_to_param(EVP_PKEY_CTX *ctx,
+                                   const char *name, const char *value);
+
+/* These two must ONLY be called for legacy operations */
+int evp_pkey_ctx_set_params_to_ctrl(EVP_PKEY_CTX *ctx, OSSL_PARAM *params);
+int evp_pkey_ctx_get_params_to_ctrl(EVP_PKEY_CTX *ctx, OSSL_PARAM *params);
+
+/* This must ONLY be called for legacy EVP_PKEYs */
+int evp_pkey_get_params_to_ctrl(const EVP_PKEY *pkey, OSSL_PARAM *params);
 
 #endif /* OSSL_CRYPTO_EVP_H */

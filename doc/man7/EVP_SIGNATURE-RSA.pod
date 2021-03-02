@@ -34,8 +34,6 @@ The type of padding to be used. Its value can be one of the following:
 
 =item "pkcs1" (B<OSSL_PKEY_RSA_PAD_MODE_PKCSV15>) 
 
-=item "sslv23" (B<OSSL_PKEY_RSA_PAD_MODE_SSLV23>)
-
 =item "x931" (B<OSSL_PKEY_RSA_PAD_MODE_X931>)
 
 =item "pss" (B<OSSL_PKEY_RSA_PAD_MODE_PSS>) 

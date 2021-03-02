@@ -246,6 +246,7 @@ int x509_main(int argc, char **argv)
     int ext_copy = EXT_COPY_UNSET;
     X509V3_CTX ext_ctx;
     EVP_PKEY *signkey = NULL, *CAkey = NULL, *pubkey = NULL;
+    EVP_PKEY *pkey;
     int newcert = 0;
     char *subj = NULL, *digestname = NULL;
     X509_NAME *fsubj = NULL;
@@ -271,7 +272,7 @@ int x509_main(int argc, char **argv)
     int next_serial = 0, subject_hash = 0, issuer_hash = 0, ocspid = 0;
     int noout = 0, CA_createserial = 0, email = 0;
     int ocsp_uri = 0, trustout = 0, clrtrust = 0, clrreject = 0, aliasout = 0;
-    int ret = 1, i, num = 0, badsig = 0, clrext = 0, nocert = 0;
+    int ret = 1, i, j, num = 0, badsig = 0, clrext = 0, nocert = 0;
     int text = 0, serial = 0, subject = 0, issuer = 0, startdate = 0, ext = 0;
     int enddate = 0;
     time_t checkoffset = 0;
@@ -404,30 +405,25 @@ int x509_main(int argc, char **argv)
             subj = opt_arg();
             break;
         case OPT_ADDTRUST:
+            if (trust == NULL && (trust = sk_ASN1_OBJECT_new_null()) == NULL)
+                goto end;
             if ((objtmp = OBJ_txt2obj(opt_arg(), 0)) == NULL) {
-                BIO_printf(bio_err,
-                           "%s: Invalid trust object value %s\n",
+                BIO_printf(bio_err, "%s: Invalid trust object value %s\n",
                            prog, opt_arg());
                 goto opthelp;
             }
-            if (trust == NULL && (trust = sk_ASN1_OBJECT_new_null()) == NULL)
-                goto end;
             sk_ASN1_OBJECT_push(trust, objtmp);
-            objtmp = NULL;
             trustout = 1;
             break;
         case OPT_ADDREJECT:
+            if (reject == NULL && (reject = sk_ASN1_OBJECT_new_null()) == NULL)
+                goto end;
             if ((objtmp = OBJ_txt2obj(opt_arg(), 0)) == NULL) {
-                BIO_printf(bio_err,
-                           "%s: Invalid reject object value %s\n",
+                BIO_printf(bio_err, "%s: Invalid reject object value %s\n",
                            prog, opt_arg());
                 goto opthelp;
             }
-            if (reject == NULL
-                && (reject = sk_ASN1_OBJECT_new_null()) == NULL)
-                goto end;
             sk_ASN1_OBJECT_push(reject, objtmp);
-            objtmp = NULL;
             trustout = 1;
             break;
         case OPT_SETALIAS:
@@ -675,32 +671,24 @@ int x509_main(int argc, char **argv)
     }
 
     if (reqfile) {
-        EVP_PKEY *pkey;
-
         req = load_csr(infile, informat, "certificate request input");
         if (req == NULL)
             goto end;
 
         if ((pkey = X509_REQ_get0_pubkey(req)) == NULL) {
-            BIO_printf(bio_err, "Error unpacking public key\n");
+            BIO_printf(bio_err, "Error unpacking public key from CSR\n");
             goto end;
         }
         i = do_X509_REQ_verify(req, pkey, vfyopts);
-        if (i < 0) {
-            BIO_printf(bio_err,
-                       "Error while verifying certificate request self-signature\n");
+        if (i <= 0) {
+            BIO_printf(bio_err, i < 0
+                       ? "Error while verifying certificate request self-signature\n"
+                       : "Certificate request self-signature did not match the contents\n");
             goto end;
         }
-        if (i == 0) {
-            BIO_printf(bio_err,
-                       "Certificate request self-signature did not match the contents\n");
-            goto end;
-        } else {
-            BIO_printf(bio_err, "Certificate request self-signature ok\n");
-        }
+        BIO_printf(out, "Certificate request self-signature ok\n");
 
-        print_name(bio_err, "subject=", X509_REQ_get_subject_name(req),
-                   get_nameopt());
+        print_name(out, "subject=", X509_REQ_get_subject_name(req));
     } else if (!x509toreq && ext_copy != EXT_COPY_UNSET) {
         BIO_printf(bio_err, "Warning: ignoring -copy_extensions since neither -x509toreq nor -req is given\n");
     }
@@ -769,19 +757,13 @@ int x509_main(int argc, char **argv)
         X509_reject_clear(x);
 
     if (trust != NULL) {
-        for (i = 0; i < sk_ASN1_OBJECT_num(trust); i++) {
-            objtmp = sk_ASN1_OBJECT_value(trust, i);
-            X509_add1_trust_object(x, objtmp);
-        }
-        objtmp = NULL;
+        for (i = 0; i < sk_ASN1_OBJECT_num(trust); i++)
+            X509_add1_trust_object(x, sk_ASN1_OBJECT_value(trust, i));
     }
 
     if (reject != NULL) {
-        for (i = 0; i < sk_ASN1_OBJECT_num(reject); i++) {
-            objtmp = sk_ASN1_OBJECT_value(reject, i);
-            X509_add1_reject_object(x, objtmp);
-        }
-        objtmp = NULL;
+        for (i = 0; i < sk_ASN1_OBJECT_num(reject); i++)
+            X509_add1_reject_object(x, sk_ASN1_OBJECT_value(reject, i));
     }
 
     if (clrext && ext_names != NULL)
@@ -793,10 +775,6 @@ int x509_main(int argc, char **argv)
         if (clrext || (ext_names != NULL && strstr(ext_names, sn) == NULL))
             X509_EXTENSION_free(X509_delete_ext(x, i));
     }
-
-    if ((reqfile || newcert || signkey != NULL || CAfile != NULL)
-            && !preserve_dates && !set_cert_times(x, NULL, NULL, days))
-        goto end;
 
     issuer_cert = x;
     if (CAfile != NULL) {
@@ -810,8 +788,12 @@ int x509_main(int argc, char **argv)
     if (sno != NULL && !X509_set_serialNumber(x, sno))
         goto end;
 
-    if (!X509_set_issuer_name(x, X509_get_subject_name(issuer_cert)))
-        goto end;
+    if (reqfile || newcert || signkey != NULL || CAfile != NULL) {
+        if (!preserve_dates && !set_cert_times(x, NULL, NULL, days))
+            goto end;
+        if (!X509_set_issuer_name(x, X509_get_subject_name(issuer_cert)))
+            goto end;
+    }
 
     X509V3_set_ctx(&ext_ctx, issuer_cert, x, req, NULL, X509V3_CTX_REPLACE);
     if (extconf != NULL) {
@@ -824,6 +806,12 @@ int x509_main(int argc, char **argv)
     }
 
     /* At this point the contents of the certificate x have been finished. */
+
+    pkey = X509_get0_pubkey(x);
+    if ((print_pubkey != 0 || modulus != 0) && pkey == NULL) {
+        BIO_printf(bio_err, "Error getting public key\n");
+        goto end;
+    }
 
     if (x509toreq) { /* also works in conjunction with -req */
         if (signkey == NULL) {
@@ -889,159 +877,123 @@ int x509_main(int argc, char **argv)
         corrupt_signature(signature);
     }
 
-    if (num) { /* TODO remove this needless guard and extra indentation below */
-        /* Process print options in the given order, as indicated by index i */
-        for (i = 1; i <= num; i++) {
-            if (issuer == i) {
-                print_name(out, "issuer=", X509_get_issuer_name(x),
-                           get_nameopt());
-            } else if (subject == i) {
-                print_name(out, "subject=",
-                           X509_get_subject_name(x), get_nameopt());
-            } else if (serial == i) {
-                BIO_printf(out, "serial=");
-                i2a_ASN1_INTEGER(out, X509_get0_serialNumber(x));
-                BIO_printf(out, "\n");
-            } else if (next_serial == i) {
-                ASN1_INTEGER *ser = X509_get_serialNumber(x);
-                BIGNUM *bnser = ASN1_INTEGER_to_BN(ser, NULL);
+    /* Process print options in the given order, as indicated by index i */
+    for (i = 1; i <= num; i++) {
+        if (i == issuer) {
+            print_name(out, "issuer=", X509_get_issuer_name(x));
+        } else if (i == subject) {
+            print_name(out, "subject=", X509_get_subject_name(x));
+        } else if (i == serial) {
+            BIO_printf(out, "serial=");
+            i2a_ASN1_INTEGER(out, X509_get0_serialNumber(x));
+            BIO_printf(out, "\n");
+        } else if (i == next_serial) {
+            ASN1_INTEGER *ser;
+            BIGNUM *bnser = ASN1_INTEGER_to_BN(X509_get0_serialNumber(x), NULL);
 
-                if (!bnser)
-                    goto end;
-                if (!BN_add_word(bnser, 1))
-                    goto end;
-                ser = BN_to_ASN1_INTEGER(bnser, NULL);
-                if (!ser)
-                    goto end;
+            if (bnser == NULL)
+                goto end;
+            if (!BN_add_word(bnser, 1)
+                    || (ser = BN_to_ASN1_INTEGER(bnser, NULL)) == NULL) {
                 BN_free(bnser);
-                i2a_ASN1_INTEGER(out, ser);
-                ASN1_INTEGER_free(ser);
-                BIO_puts(out, "\n");
-            } else if (email == i || ocsp_uri == i) {
-                STACK_OF(OPENSSL_STRING) *emlst;
-                int j;
-
-                if (email == i)
-                    emlst = X509_get1_email(x);
-                else
-                    emlst = X509_get1_ocsp(x);
-                for (j = 0; j < sk_OPENSSL_STRING_num(emlst); j++)
-                    BIO_printf(out, "%s\n",
-                               sk_OPENSSL_STRING_value(emlst, j));
-                X509_email_free(emlst);
-            } else if (aliasout == i) {
-                unsigned char *alstr;
-
-                alstr = X509_alias_get0(x, NULL);
-                if (alstr)
-                    BIO_printf(out, "%s\n", alstr);
-                else
-                    BIO_puts(out, "<No Alias>\n");
-            } else if (subject_hash == i) {
-                BIO_printf(out, "%08lx\n", X509_subject_name_hash(x));
-#ifndef OPENSSL_NO_MD5
-            } else if (subject_hash_old == i) {
-                BIO_printf(out, "%08lx\n", X509_subject_name_hash_old(x));
-#endif
-            } else if (issuer_hash == i) {
-                BIO_printf(out, "%08lx\n", X509_issuer_name_hash(x));
-#ifndef OPENSSL_NO_MD5
-            } else if (issuer_hash_old == i) {
-                BIO_printf(out, "%08lx\n", X509_issuer_name_hash_old(x));
-#endif
-            } else if (pprint == i) {
-                X509_PURPOSE *ptmp;
-                int j;
-
-                BIO_printf(out, "Certificate purposes:\n");
-                for (j = 0; j < X509_PURPOSE_get_count(); j++) {
-                    ptmp = X509_PURPOSE_get0(j);
-                    purpose_print(out, x, ptmp);
-                }
-            } else if (modulus == i) {
-                EVP_PKEY *pkey;
-
-                pkey = X509_get0_pubkey(x);
-                if (pkey == NULL) {
-                    BIO_printf(bio_err,
-                               "Modulus unavailable: cannot get key\n");
-                    goto end;
-                }
-                BIO_printf(out, "Modulus=");
-                if (EVP_PKEY_is_a(pkey, "RSA")) {
-                    BIGNUM *n;
-
-                    /* Every RSA key has an 'n' */
-                    EVP_PKEY_get_bn_param(pkey, "n", &n);
-                    BN_print(out, n);
-                    BN_free(n);
-                } else if (EVP_PKEY_is_a(pkey, "DSA")) {
-                    BIGNUM *dsapub;
-
-                    /* Every DSA key has an 'pub' */
-                    EVP_PKEY_get_bn_param(pkey, "pub", &dsapub);
-                    BN_print(out, dsapub);
-                    BN_free(dsapub);
-                } else {
-                    BIO_printf(out, "No modulus for this public key type");
-                }
-                BIO_printf(out, "\n");
-            } else if (print_pubkey == i) {
-                EVP_PKEY *pkey;
-
-                pkey = X509_get0_pubkey(x);
-                if (pkey == NULL) {
-                    BIO_printf(bio_err, "Error getting public key\n");
-                    goto end;
-                }
-                PEM_write_bio_PUBKEY(out, pkey);
-            } else if (text == i) {
-                X509_print_ex(out, x, get_nameopt(), certflag);
-            } else if (startdate == i) {
-                BIO_puts(out, "notBefore=");
-                ASN1_TIME_print(out, X509_get0_notBefore(x));
-                BIO_puts(out, "\n");
-            } else if (enddate == i) {
-                BIO_puts(out, "notAfter=");
-                ASN1_TIME_print(out, X509_get0_notAfter(x));
-                BIO_puts(out, "\n");
-            } else if (fingerprint == i) {
-                int j;
-                unsigned int n;
-                unsigned char md[EVP_MAX_MD_SIZE];
-                const EVP_MD *fdig = digest;
-
-                if (fdig == NULL)
-                    fdig = EVP_sha1();
-
-                if (!X509_digest(x, fdig, md, &n)) {
-                    BIO_printf(bio_err, "Out of memory\n");
-                    goto end;
-                }
-                BIO_printf(out, "%s Fingerprint=",
-                           OBJ_nid2sn(EVP_MD_type(fdig)));
-                for (j = 0; j < (int)n; j++) {
-                    BIO_printf(out, "%02X%c", md[j], (j + 1 == (int)n)
-                               ? '\n' : ':');
-                }
-            } else if (ocspid == i) {
-                X509_ocspid_print(out, x);
-            } else if (ext == i) {
-                print_x509v3_exts(out, x, ext_names);
+                goto end;
             }
+            BN_free(bnser);
+            i2a_ASN1_INTEGER(out, ser);
+            ASN1_INTEGER_free(ser);
+            BIO_puts(out, "\n");
+        } else if (i == email || i == ocsp_uri) {
+            STACK_OF(OPENSSL_STRING) *emlst =
+                i == email ? X509_get1_email(x) : X509_get1_ocsp(x);
+
+            for (j = 0; j < sk_OPENSSL_STRING_num(emlst); j++)
+                BIO_printf(out, "%s\n", sk_OPENSSL_STRING_value(emlst, j));
+            X509_email_free(emlst);
+        } else if (i == aliasout) {
+            unsigned char *alstr = X509_alias_get0(x, NULL);
+
+            if (alstr)
+                BIO_printf(out, "%s\n", alstr);
+            else
+                BIO_puts(out, "<No Alias>\n");
+        } else if (i == subject_hash) {
+            BIO_printf(out, "%08lx\n", X509_subject_name_hash(x));
+#ifndef OPENSSL_NO_MD5
+        } else if (i == subject_hash_old) {
+            BIO_printf(out, "%08lx\n", X509_subject_name_hash_old(x));
+#endif
+        } else if (i == issuer_hash) {
+            BIO_printf(out, "%08lx\n", X509_issuer_name_hash(x));
+#ifndef OPENSSL_NO_MD5
+        } else if (i == issuer_hash_old) {
+            BIO_printf(out, "%08lx\n", X509_issuer_name_hash_old(x));
+#endif
+        } else if (i == pprint) {
+            BIO_printf(out, "Certificate purposes:\n");
+            for (j = 0; j < X509_PURPOSE_get_count(); j++)
+                purpose_print(out, x, X509_PURPOSE_get0(j));
+        } else if (i == modulus) {
+            BIO_printf(out, "Modulus=");
+            if (EVP_PKEY_is_a(pkey, "RSA")) {
+                BIGNUM *n;
+
+                /* Every RSA key has an 'n' */
+                EVP_PKEY_get_bn_param(pkey, "n", &n);
+                BN_print(out, n);
+                BN_free(n);
+            } else if (EVP_PKEY_is_a(pkey, "DSA")) {
+                BIGNUM *dsapub;
+
+                /* Every DSA key has a 'pub' */
+                EVP_PKEY_get_bn_param(pkey, "pub", &dsapub);
+                BN_print(out, dsapub);
+                BN_free(dsapub);
+            } else {
+                BIO_printf(out, "No modulus for this public key type");
+            }
+            BIO_printf(out, "\n");
+        } else if (i == print_pubkey) {
+            PEM_write_bio_PUBKEY(out, pkey);
+        } else if (i == text) {
+            X509_print_ex(out, x, get_nameopt(), certflag);
+        } else if (i == startdate) {
+            BIO_puts(out, "notBefore=");
+            ASN1_TIME_print(out, X509_get0_notBefore(x));
+            BIO_puts(out, "\n");
+        } else if (i == enddate) {
+            BIO_puts(out, "notAfter=");
+            ASN1_TIME_print(out, X509_get0_notAfter(x));
+            BIO_puts(out, "\n");
+        } else if (i == fingerprint) {
+            unsigned int n;
+            unsigned char md[EVP_MAX_MD_SIZE];
+            const EVP_MD *fdig = digest;
+
+            if (fdig == NULL)
+                fdig = EVP_sha1();
+
+            if (!X509_digest(x, fdig, md, &n)) {
+                BIO_printf(bio_err, "Out of memory\n");
+                goto end;
+            }
+            BIO_printf(out, "%s Fingerprint=", OBJ_nid2sn(EVP_MD_type(fdig)));
+            for (j = 0; j < (int)n; j++)
+                BIO_printf(out, "%02X%c", md[j], (j + 1 == (int)n) ? '\n' : ':');
+        } else if (i == ocspid) {
+            X509_ocspid_print(out, x);
+        } else if (i == ext) {
+            print_x509v3_exts(out, x, ext_names);
         }
     }
 
     if (checkend) {
         time_t tcheck = time(NULL) + checkoffset;
 
-        if (X509_cmp_time(X509_get0_notAfter(x), &tcheck) < 0) {
+        ret = X509_cmp_time(X509_get0_notAfter(x), &tcheck) < 0;
+        if (ret)
             BIO_printf(out, "Certificate will expire\n");
-            ret = 1;
-        } else {
+        else
             BIO_printf(out, "Certificate will not expire\n");
-            ret = 0;
-        }
         goto end;
     }
 
@@ -1088,7 +1040,6 @@ int x509_main(int argc, char **argv)
     ASN1_INTEGER_free(sno);
     sk_ASN1_OBJECT_pop_free(trust, ASN1_OBJECT_free);
     sk_ASN1_OBJECT_pop_free(reject, ASN1_OBJECT_free);
-    ASN1_OBJECT_free(objtmp);
     release_engine(e);
     clear_free(passin);
     return ret;
@@ -1153,7 +1104,7 @@ static int callb(int ok, X509_STORE_CTX *ctx)
         return 0;
     } else {
         err_cert = X509_STORE_CTX_get_current_cert(ctx);
-        print_name(bio_err, NULL, X509_get_subject_name(err_cert), 0);
+        print_name(bio_err, "subject=", X509_get_subject_name(err_cert));
         BIO_printf(bio_err,
                    "Error with certificate - error %d at depth %d\n%s\n", err,
                    X509_STORE_CTX_get_error_depth(ctx),

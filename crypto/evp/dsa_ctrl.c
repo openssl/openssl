@@ -82,13 +82,6 @@ int EVP_PKEY_CTX_set_dsa_paramgen_bits(EVP_PKEY_CTX *ctx, int nbits)
     if ((ret = dsa_paramgen_check(ctx)) <= 0)
         return ret;
 
-#if !defined(FIPS_MODULE)
-    /* TODO(3.0): Remove this eventually when no more legacy */
-    if (ctx->op.keymgmt.genctx == NULL)
-        return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DSA,  EVP_PKEY_OP_PARAMGEN,
-                                 EVP_PKEY_CTRL_DSA_PARAMGEN_BITS, nbits, NULL);
-#endif
-
     *p++ = OSSL_PARAM_construct_size_t(OSSL_PKEY_PARAM_FFC_PBITS, &bits);
     *p++ = OSSL_PARAM_construct_end();
 
@@ -103,13 +96,6 @@ int EVP_PKEY_CTX_set_dsa_paramgen_q_bits(EVP_PKEY_CTX *ctx, int qbits)
 
     if ((ret = dsa_paramgen_check(ctx)) <= 0)
         return ret;
-
-#if !defined(FIPS_MODULE)
-    /* TODO(3.0): Remove this eventually when no more legacy */
-    if (ctx->op.keymgmt.genctx == NULL)
-        return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DSA,  EVP_PKEY_OP_PARAMGEN,
-                                 EVP_PKEY_CTRL_DSA_PARAMGEN_Q_BITS, qbits, NULL);
-#endif
 
     *p++ = OSSL_PARAM_construct_size_t(OSSL_PKEY_PARAM_FFC_QBITS, &bits2);
     *p++ = OSSL_PARAM_construct_end();
@@ -127,16 +113,6 @@ int EVP_PKEY_CTX_set_dsa_paramgen_md_props(EVP_PKEY_CTX *ctx,
     if ((ret = dsa_paramgen_check(ctx)) <= 0)
         return ret;
 
-#if !defined(FIPS_MODULE)
-    /* TODO(3.0): Remove this eventually when no more legacy */
-    if (ctx->op.keymgmt.genctx == NULL) {
-        const EVP_MD *md = EVP_get_digestbyname(md_name);
-
-         EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DSA, EVP_PKEY_OP_PARAMGEN,
-                           EVP_PKEY_CTRL_DSA_PARAMGEN_MD, 0, (void *)(md));
-    }
-#endif
-
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_FFC_DIGEST,
                                             (char *)md_name, 0);
     if (md_properties != NULL)
@@ -148,10 +124,10 @@ int EVP_PKEY_CTX_set_dsa_paramgen_md_props(EVP_PKEY_CTX *ctx,
 }
 
 #if !defined(FIPS_MODULE)
+/* TODO(3.0): deprecate as this is needed only for legacy? */
 int EVP_PKEY_CTX_set_dsa_paramgen_md(EVP_PKEY_CTX *ctx, const EVP_MD *md)
 {
-    const char *md_name = (md == NULL) ? "" : EVP_MD_name(md);
-
-    return EVP_PKEY_CTX_set_dsa_paramgen_md_props(ctx, md_name, NULL);
+    return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DSA, EVP_PKEY_OP_PARAMGEN,
+                             EVP_PKEY_CTRL_DSA_PARAMGEN_MD, 0, (void *)(md));
 }
 #endif

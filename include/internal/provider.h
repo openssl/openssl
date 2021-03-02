@@ -49,7 +49,7 @@ int ossl_provider_disable_fallback_loading(OSSL_LIB_CTX *libctx);
  * Activate the Provider
  * If the Provider is a module, the module will be loaded
  */
-int ossl_provider_activate(OSSL_PROVIDER *prov);
+int ossl_provider_activate(OSSL_PROVIDER *prov, int retain_fallbacks);
 int ossl_provider_deactivate(OSSL_PROVIDER *prov);
 /* Check if the provider is available (activated) */
 int ossl_provider_available(OSSL_PROVIDER *prov);
@@ -83,6 +83,9 @@ int ossl_provider_self_test(const OSSL_PROVIDER *prov);
 const OSSL_ALGORITHM *ossl_provider_query_operation(const OSSL_PROVIDER *prov,
                                                     int operation_id,
                                                     int *no_cache);
+void ossl_provider_unquery_operation(const OSSL_PROVIDER *prov,
+                                     int operation_id,
+                                     const OSSL_ALGORITHM *algs);
 
 /* Cache of bits to see if we already queried an operation */
 int ossl_provider_set_operation_bit(OSSL_PROVIDER *provider, size_t bitnum);

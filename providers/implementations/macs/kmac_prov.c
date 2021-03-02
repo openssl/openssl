@@ -241,23 +241,41 @@ static size_t kmac_size(void *vmacctx)
     return kctx->out_len;
 }
 
+static int kmac_setkey(struct kmac_data_st *kctx, const unsigned char *key,
+                       size_t keylen)
+{
+    const EVP_MD *digest = ossl_prov_digest_md(&kctx->digest);
+
+    if (keylen < 4 || keylen > KMAC_MAX_KEY) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
+        return 0;
+    }
+    if (!kmac_bytepad_encode_key(kctx->key, &kctx->key_len,
+                                 key, keylen, EVP_MD_block_size(digest)))
+        return 0;
+    return 1;
+}
+
 /*
  * The init() assumes that any ctrl methods are set beforehand for
  * md, key and custom. Setting the fields afterwards will have no
  * effect on the output mac.
  */
-static int kmac_init(void *vmacctx)
+static int kmac_init(void *vmacctx, const unsigned char *key,
+                     size_t keylen, const OSSL_PARAM params[])
 {
     struct kmac_data_st *kctx = vmacctx;
     EVP_MD_CTX *ctx = kctx->ctx;
     unsigned char out[KMAC_MAX_BLOCKSIZE];
     int out_len, block_len;
 
-    if (!ossl_prov_is_running())
+    if (!ossl_prov_is_running() || !kmac_set_ctx_params(kctx, params))
         return 0;
-
-    /* Check key has been set */
-    if (kctx->key_len == 0) {
+    if (key != NULL) {
+        if (!kmac_setkey(kctx, key, keylen))
+            return 0;
+    } else if (kctx->key_len == 0) {
+        /* Check key has been set */
         ERR_raise(ERR_LIB_PROV, PROV_R_NO_KEY_SET);
         return 0;
     }
@@ -271,11 +289,11 @@ static int kmac_init(void *vmacctx)
 
     /* Set default custom string if it is not already set */
     if (kctx->custom_len == 0) {
-        const OSSL_PARAM params[] = {
+        const OSSL_PARAM cparams[] = {
             OSSL_PARAM_octet_string(OSSL_MAC_PARAM_CUSTOM, "", 0),
             OSSL_PARAM_END
         };
-        (void)kmac_set_ctx_params(kctx, params);
+        (void)kmac_set_ctx_params(kctx, cparams);
     }
 
     return bytepad(out, &out_len, kmac_string, sizeof(kmac_string),
@@ -318,7 +336,8 @@ static const OSSL_PARAM known_gettable_ctx_params[] = {
     OSSL_PARAM_size_t(OSSL_MAC_PARAM_SIZE, NULL),
     OSSL_PARAM_END
 };
-static const OSSL_PARAM *kmac_gettable_ctx_params(ossl_unused void *provctx)
+static const OSSL_PARAM *kmac_gettable_ctx_params(ossl_unused void *ctx,
+                                                  ossl_unused void *provctx)
 {
     return known_gettable_ctx_params;
 }
@@ -340,7 +359,8 @@ static const OSSL_PARAM known_settable_ctx_params[] = {
     OSSL_PARAM_octet_string(OSSL_MAC_PARAM_CUSTOM, NULL, 0),
     OSSL_PARAM_END
 };
-static const OSSL_PARAM *kmac_settable_ctx_params(ossl_unused void *provctx)
+static const OSSL_PARAM *kmac_settable_ctx_params(ossl_unused void *ctx,
+                                                  ossl_unused void *provctx)
 {
     return known_settable_ctx_params;
 }
@@ -358,7 +378,6 @@ static int kmac_set_ctx_params(void *vmacctx, const OSSL_PARAM *params)
 {
     struct kmac_data_st *kctx = vmacctx;
     const OSSL_PARAM *p;
-    const EVP_MD *digest = ossl_prov_digest_md(&kctx->digest);
 
     if ((p = OSSL_PARAM_locate_const(params, OSSL_MAC_PARAM_XOF)) != NULL
         && !OSSL_PARAM_get_int(p, &kctx->xof_mode))
@@ -366,16 +385,9 @@ static int kmac_set_ctx_params(void *vmacctx, const OSSL_PARAM *params)
     if (((p = OSSL_PARAM_locate_const(params, OSSL_MAC_PARAM_SIZE)) != NULL)
         && !OSSL_PARAM_get_size_t(p, &kctx->out_len))
         return 0;
-    if ((p = OSSL_PARAM_locate_const(params, OSSL_MAC_PARAM_KEY)) != NULL) {
-        if (p->data_size < 4 || p->data_size > KMAC_MAX_KEY) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
-            return 0;
-        }
-        if (!kmac_bytepad_encode_key(kctx->key, &kctx->key_len,
-                                     p->data, p->data_size,
-                                     EVP_MD_block_size(digest)))
-            return 0;
-    }
+    if ((p = OSSL_PARAM_locate_const(params, OSSL_MAC_PARAM_KEY)) != NULL
+            && !kmac_setkey(kctx, p->data, p->data_size))
+        return 0;
     if ((p = OSSL_PARAM_locate_const(params, OSSL_MAC_PARAM_CUSTOM))
         != NULL) {
         if (p->data_size > KMAC_MAX_CUSTOM) {

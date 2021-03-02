@@ -52,18 +52,19 @@ int CMS_get1_ReceiptRequest(CMS_SignerInfo *si, CMS_ReceiptRequest **prr)
     the |cert_ids|(Hash+IssuerID) list from this ESS_SIGNING_CERT.
     Derived from ts_check_signing_certs()
 */
-int ess_check_signing_certs(CMS_SignerInfo *si, STACK_OF(X509) *chain)
+int ossl_ess_check_signing_certs(CMS_SignerInfo *si, STACK_OF(X509) *chain)
 {
     ESS_SIGNING_CERT *ss = NULL;
     ESS_SIGNING_CERT_V2 *ssv2 = NULL;
     X509 *cert;
     int i = 0, ret = 0;
 
-    if (cms_signerinfo_get_signing_cert(si, &ss) > 0 && ss->cert_ids != NULL) {
+    if (ossl_cms_signerinfo_get_signing_cert(si, &ss) > 0
+            && ss->cert_ids != NULL) {
         STACK_OF(ESS_CERT_ID) *cert_ids = ss->cert_ids;
 
         cert = sk_X509_value(chain, 0);
-        if (ess_find_cert(cert_ids, cert) != 0)
+        if (ossl_ess_find_cert(cert_ids, cert) != 0)
             goto err;
 
         /*
@@ -74,16 +75,16 @@ int ess_check_signing_certs(CMS_SignerInfo *si, STACK_OF(X509) *chain)
             /* for each chain cert, try to find its cert id */
             for (i = 1; i < sk_X509_num(chain); ++i) {
                 cert = sk_X509_value(chain, i);
-                if (ess_find_cert(cert_ids, cert) < 0)
+                if (ossl_ess_find_cert(cert_ids, cert) < 0)
                     goto err;
             }
         }
-    } else if (cms_signerinfo_get_signing_cert_v2(si, &ssv2) > 0
+    } else if (ossl_cms_signerinfo_get_signing_cert_v2(si, &ssv2) > 0
                    && ssv2->cert_ids!= NULL) {
         STACK_OF(ESS_CERT_ID_V2) *cert_ids_v2 = ssv2->cert_ids;
 
         cert = sk_X509_value(chain, 0);
-        if (ess_find_cert_v2(cert_ids_v2, cert) != 0)
+        if (ossl_ess_find_cert_v2(cert_ids_v2, cert) != 0)
             goto err;
 
         /*
@@ -94,7 +95,7 @@ int ess_check_signing_certs(CMS_SignerInfo *si, STACK_OF(X509) *chain)
             /* for each chain cert, try to find its cert id */
             for (i = 1; i < sk_X509_num(chain); ++i) {
                 cert = sk_X509_value(chain, i);
-                if (ess_find_cert_v2(cert_ids_v2, cert) < 0)
+                if (ossl_ess_find_cert_v2(cert_ids_v2, cert) < 0)
                     goto err;
             }
         }
@@ -220,15 +221,15 @@ static int cms_msgSigDigest(CMS_SignerInfo *si,
         return 0;
     if (!asn1_item_digest_ex(ASN1_ITEM_rptr(CMS_Attributes_Verify), md,
                              si->signedAttrs, dig, diglen,
-                             cms_ctx_get0_libctx(si->cms_ctx),
-                             cms_ctx_get0_propq(si->cms_ctx)))
+                             ossl_cms_ctx_get0_libctx(si->cms_ctx),
+                             ossl_cms_ctx_get0_propq(si->cms_ctx)))
         return 0;
     return 1;
 }
 
 /* Add a msgSigDigest attribute to a SignerInfo */
 
-int cms_msgSigDigest_add1(CMS_SignerInfo *dest, CMS_SignerInfo *src)
+int ossl_cms_msgSigDigest_add1(CMS_SignerInfo *dest, CMS_SignerInfo *src)
 {
     unsigned char dig[EVP_MAX_MD_SIZE];
     unsigned int diglen;
@@ -247,7 +248,7 @@ int cms_msgSigDigest_add1(CMS_SignerInfo *dest, CMS_SignerInfo *src)
 
 /* Verify signed receipt after it has already passed normal CMS verify */
 
-int cms_Receipt_verify(CMS_ContentInfo *cms, CMS_ContentInfo *req_cms)
+int ossl_cms_Receipt_verify(CMS_ContentInfo *cms, CMS_ContentInfo *req_cms)
 {
     int r = 0, i;
     CMS_ReceiptRequest *rr = NULL;
@@ -376,7 +377,7 @@ int cms_Receipt_verify(CMS_ContentInfo *cms, CMS_ContentInfo *req_cms)
  * SignedData ContentInfo.
  */
 
-ASN1_OCTET_STRING *cms_encode_Receipt(CMS_SignerInfo *si)
+ASN1_OCTET_STRING *ossl_cms_encode_Receipt(CMS_SignerInfo *si)
 {
     CMS_Receipt rct;
     CMS_ReceiptRequest *rr = NULL;
@@ -418,7 +419,7 @@ ASN1_OCTET_STRING *cms_encode_Receipt(CMS_SignerInfo *si)
  * Add signer certificate's V2 digest |sc| to a SignerInfo structure |si|
  */
 
-int cms_add1_signing_cert_v2(CMS_SignerInfo *si, ESS_SIGNING_CERT_V2 *sc)
+int ossl_cms_add1_signing_cert_v2(CMS_SignerInfo *si, ESS_SIGNING_CERT_V2 *sc)
 {
     ASN1_STRING *seq = NULL;
     unsigned char *p, *pp = NULL;
@@ -450,7 +451,7 @@ int cms_add1_signing_cert_v2(CMS_SignerInfo *si, ESS_SIGNING_CERT_V2 *sc)
  * Add signer certificate's digest |sc| to a SignerInfo structure |si|
  */
 
-int cms_add1_signing_cert(CMS_SignerInfo *si, ESS_SIGNING_CERT *sc)
+int ossl_cms_add1_signing_cert(CMS_SignerInfo *si, ESS_SIGNING_CERT *sc)
 {
     ASN1_STRING *seq = NULL;
     unsigned char *p, *pp = NULL;

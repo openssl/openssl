@@ -473,19 +473,21 @@ void OSSL_DECODER_do_all_provided(OSSL_LIB_CTX *libctx,
                           &data);
 }
 
-void OSSL_DECODER_names_do_all(const OSSL_DECODER *decoder,
-                               void (*fn)(const char *name, void *data),
-                               void *data)
+int OSSL_DECODER_names_do_all(const OSSL_DECODER *decoder,
+                              void (*fn)(const char *name, void *data),
+                              void *data)
 {
     if (decoder == NULL)
-        return;
+        return 0;
 
     if (decoder->base.prov != NULL) {
         OSSL_LIB_CTX *libctx = ossl_provider_libctx(decoder->base.prov);
         OSSL_NAMEMAP *namemap = ossl_namemap_stored(libctx);
 
-        ossl_namemap_doall_names(namemap, decoder->base.id, fn, data);
+        return ossl_namemap_doall_names(namemap, decoder->base.id, fn, data);
     }
+
+    return 1;
 }
 
 const OSSL_PARAM *

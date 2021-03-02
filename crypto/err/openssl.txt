@@ -757,7 +757,7 @@ HTTP_R_FAILED_READING_DATA:128:failed reading data
 HTTP_R_INCONSISTENT_CONTENT_LENGTH:120:inconsistent content length
 HTTP_R_INVALID_PORT_NUMBER:123:invalid port number
 HTTP_R_INVALID_URL_PATH:125:invalid url path
-HTTP_R_INVALID_URL_PREFIX:124:invalid url prefix
+HTTP_R_INVALID_URL_SCHEME:124:invalid url scheme
 HTTP_R_MAX_RESP_LEN_EXCEEDED:117:max resp len exceeded
 HTTP_R_MISSING_ASN1_ENCODING:110:missing asn1 encoding
 HTTP_R_MISSING_CONTENT_TYPE:121:missing content type

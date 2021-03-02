@@ -44,6 +44,8 @@ static int single_test = -1;
 static int single_iter = -1;
 static int level = 0;
 static int seed = 0;
+static int rand_order = 0;
+
 /*
  * A parameterised test runs a loop of test cases.
  * |num_test_cases| counts the total number of test cases
@@ -103,8 +105,12 @@ int setup_test_framework(int argc, char *argv[])
     if (TAP_levels != NULL)
         level = 4 * atoi(TAP_levels);
     test_adjust_streams_tap_level(level);
-    if (test_seed != NULL)
+    if (test_seed != NULL) {
+        rand_order = 1;
         set_seed(atoi(test_seed));
+    } else {
+        set_seed(0);
+    }
 
 #if defined(OPENSSL_SYS_VMS) && defined(__DECC)
     argv = copy_argv(&argc, argv);
@@ -294,7 +300,7 @@ int run_tests(const char *test_prog_name)
 
     for (i = 0; i < num_tests; i++)
         permute[i] = i;
-    if (seed != 0)
+    if (rand_order != 0)
         for (i = num_tests - 1; i >= 1; i--) {
             j = test_random() % (1 + i);
             ii = permute[j];
@@ -321,8 +327,8 @@ int run_tests(const char *test_prog_name)
         } else if (all_tests[i].num == -1) {
             set_test_title(all_tests[i].test_case_name);
             verdict = all_tests[i].test_fn();
-            test_verdict(verdict, "%d - %s", ii + 1, test_title);
             finalize(verdict != 0);
+            test_verdict(verdict, "%d - %s", ii + 1, test_title);
             if (verdict == 0)
                 num_failed++;
         } else {
@@ -340,7 +346,7 @@ int run_tests(const char *test_prog_name)
             }
 
             j = -1;
-            if (seed == 0 || all_tests[i].num < 3)
+            if (rand_order == 0 || all_tests[i].num < 3)
                 jstep = 1;
             else
                 do

@@ -838,12 +838,12 @@ static ECX_KEY *evp_pkey_get1_ECX_KEY(EVP_PKEY *pkey, int type)
 {
     ECX_KEY *ret = evp_pkey_get0_ECX_KEY(pkey, type);
     if (ret != NULL)
-        ecx_key_up_ref(ret);
+        ossl_ecx_key_up_ref(ret);
     return ret;
 }
 
 #  define IMPLEMENT_ECX_VARIANT(NAME)                                   \
-    ECX_KEY *evp_pkey_get1_##NAME(EVP_PKEY *pkey)                       \
+    ECX_KEY *ossl_evp_pkey_get1_##NAME(EVP_PKEY *pkey)                  \
     {                                                                   \
         return evp_pkey_get1_ECX_KEY(pkey, EVP_PKEY_##NAME);            \
     }
@@ -982,20 +982,20 @@ int EVP_PKEY_is_a(const EVP_PKEY *pkey, const char *name)
     return EVP_KEYMGMT_is_a(pkey->keymgmt, name);
 }
 
-void EVP_PKEY_typenames_do_all(const EVP_PKEY *pkey,
-                               void (*fn)(const char *name, void *data),
-                               void *data)
+int EVP_PKEY_typenames_do_all(const EVP_PKEY *pkey,
+                              void (*fn)(const char *name, void *data),
+                              void *data)
 {
     if (!evp_pkey_is_typed(pkey))
-        return;
+        return 0;
 
     if (!evp_pkey_is_provided(pkey)) {
         const char *name = OBJ_nid2sn(EVP_PKEY_id(pkey));
 
         fn(name, data);
-        return;
+        return 1;
     }
-    EVP_KEYMGMT_names_do_all(pkey->keymgmt, fn, data);
+    return EVP_KEYMGMT_names_do_all(pkey->keymgmt, fn, data);
 }
 
 int EVP_PKEY_can_sign(const EVP_PKEY *pkey)
@@ -1182,7 +1182,8 @@ static int legacy_asn1_ctrl_to_param(EVP_PKEY *pkey, int op,
                  * We have the namemap number - now we need to find the
                  * associated nid
                  */
-                ossl_namemap_doall_names(namemap, mdnum, mdname2nid, &nid);
+                if (!ossl_namemap_doall_names(namemap, mdnum, mdname2nid, &nid))
+                    return 0;
                 *(int *)arg2 = nid;
             }
             return rv;
@@ -1228,60 +1229,8 @@ int EVP_PKEY_get_default_digest_name(EVP_PKEY *pkey,
 int EVP_PKEY_get_group_name(const EVP_PKEY *pkey, char *gname, size_t gname_sz,
                             size_t *gname_len)
 {
-    if (evp_pkey_is_legacy(pkey)) {
-        const char *name = NULL;
-
-        switch (EVP_PKEY_base_id(pkey)) {
-#ifndef OPENSSL_NO_EC
-        case EVP_PKEY_EC:
-            {
-                const EC_GROUP *grp = EC_KEY_get0_group(EVP_PKEY_get0_EC_KEY(pkey));
-                int nid = NID_undef;
-
-                if (grp != NULL)
-                    nid = EC_GROUP_get_curve_name(grp);
-                if (nid != NID_undef)
-                    name = ec_curve_nid2name(nid);
-            }
-            break;
-#endif
-#ifndef OPENSSL_NO_DH
-        case EVP_PKEY_DH:
-            {
-                DH *dh = EVP_PKEY_get0_DH(pkey);
-                int uid = DH_get_nid(dh);
-
-                if (uid != NID_undef) {
-                    const DH_NAMED_GROUP *dh_group =
-                        ossl_ffc_uid_to_dh_named_group(uid);
-
-                    name = ossl_ffc_named_group_get_name(dh_group);
-                }
-            }
-            break;
-#endif
-        default:
-            break;
-        }
-
-        if (gname_len != NULL)
-            *gname_len = (name == NULL ? 0 : strlen(name));
-        if (name != NULL) {
-            if (gname != NULL)
-                OPENSSL_strlcpy(gname, name, gname_sz);
-            return 1;
-        }
-    } else if (evp_pkey_is_provided(pkey)) {
-        if (EVP_PKEY_get_utf8_string_param(pkey, OSSL_PKEY_PARAM_GROUP_NAME,
-                                           gname, gname_sz, gname_len))
-            return 1;
-    } else {
-        ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_KEY);
-        return 0;
-    }
-
-    ERR_raise(ERR_LIB_EVP, EVP_R_UNSUPPORTED_KEY_TYPE);
-    return 0;
+    return EVP_PKEY_get_utf8_string_param(pkey, OSSL_PKEY_PARAM_GROUP_NAME,
+                                          gname, gname_sz, gname_len);
 }
 
 int EVP_PKEY_supports_digest_nid(EVP_PKEY *pkey, int nid)
@@ -1578,8 +1527,8 @@ int EVP_PKEY_set_type_by_keymgmt(EVP_PKEY *pkey, EVP_KEYMGMT *keymgmt)
      */
     const char *str[2] = { NULL, NULL };
 
-    EVP_KEYMGMT_names_do_all(keymgmt, find_ameth, &str);
-    if (str[1] != NULL) {
+    if (!EVP_KEYMGMT_names_do_all(keymgmt, find_ameth, &str)
+            || str[1] != NULL) {
         ERR_raise(ERR_LIB_EVP, ERR_R_INTERNAL_ERROR);
         return 0;
     }
@@ -2144,7 +2093,7 @@ int EVP_PKEY_set_bn_param(EVP_PKEY *pkey, const char *key_name,
     if (key_name == NULL
         || bn == NULL
         || pkey == NULL
-        || !evp_pkey_is_provided(pkey))
+        || !evp_pkey_is_assigned(pkey))
         return 0;
 
     bsize = BN_num_bytes(bn);
@@ -2194,12 +2143,28 @@ const OSSL_PARAM *EVP_PKEY_settable_params(const EVP_PKEY *pkey)
 
 int EVP_PKEY_set_params(EVP_PKEY *pkey, OSSL_PARAM params[])
 {
-    if (pkey == NULL)
-        return 0;
-
-    pkey->dirty_cnt++;
-    return evp_pkey_is_provided(pkey)
-        && evp_keymgmt_set_params(pkey->keymgmt, pkey->keydata, params);
+    if (pkey != NULL) {
+        if (evp_pkey_is_provided(pkey)) {
+            pkey->dirty_cnt++;
+            return evp_keymgmt_set_params(pkey->keymgmt, pkey->keydata, params);
+        }
+#ifndef FIPS_MODULE
+        /*
+         * TODO?
+         * We will hopefully never find the need to set individual data in
+         * EVP_PKEYs with a legacy internal key, but we can't be entirely
+         * sure.  This bit of code can be enabled if we find the need.  If
+         * not, it can safely be removed when #legacy support is removed.
+         */
+# if 0
+        else if (evp_pkey_is_legacy(pkey)) {
+            return evp_pkey_set_params_to_ctrl(pkey, params);
+        }
+# endif
+#endif
+    }
+    ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_KEY);
+    return 0;
 }
 
 const OSSL_PARAM *EVP_PKEY_gettable_params(const EVP_PKEY *pkey)
@@ -2211,9 +2176,16 @@ const OSSL_PARAM *EVP_PKEY_gettable_params(const EVP_PKEY *pkey)
 
 int EVP_PKEY_get_params(const EVP_PKEY *pkey, OSSL_PARAM params[])
 {
-    return pkey != NULL
-        && evp_pkey_is_provided(pkey)
-        && evp_keymgmt_get_params(pkey->keymgmt, pkey->keydata, params);
+    if (pkey != NULL) {
+        if (evp_pkey_is_provided(pkey))
+            return evp_keymgmt_get_params(pkey->keymgmt, pkey->keydata, params);
+#ifndef FIPS_MODULE
+        else if (evp_pkey_is_legacy(pkey))
+            return evp_pkey_get_params_to_ctrl(pkey, params);
+#endif
+    }
+    ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_KEY);
+    return 0;
 }
 
 #ifndef FIPS_MODULE

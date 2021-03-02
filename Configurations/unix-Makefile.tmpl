@@ -1022,10 +1022,14 @@ uninstall_html_docs:
 
 # Developer targets (note: these are only available on Unix) #########
 
-update: generate errors ordinals
+# It's important that generate_buildinfo comes after ordinals, as ordinals
+# is sensitive to build.info changes.
+update: generate errors ordinals generate_buildinfo
 
 generate: generate_apps generate_crypto_bn generate_crypto_objects \
           generate_crypto_conf generate_crypto_asn1 generate_fuzz_oids
+
+generate_buildinfo: generate_doc_buildinfo
 
 .PHONY: doc-nits cmd-nits md-nits
 doc-nits: build_generated_pods
@@ -1088,6 +1092,20 @@ generate_fuzz_oids:
 	( cd $(SRCDIR); $(PERL) fuzz/mkfuzzoids.pl \
 				crypto/objects/obj_dat.h \
 				> fuzz/oids.txt )
+
+generate_doc_buildinfo:
+	( $(PERL) -I$(BLDDIR) -Mconfigdata \
+                $(SRCDIR)/util/dofile.pl -o Makefile \
+                        $(SRCDIR)/doc/build.info.in \
+                        > $(SRCDIR)/doc/build.info.new; \
+          if ( test -e $(SRCDIR)/doc/build.info \
+               && cmp $(SRCDIR)/doc/build.info.new $(SRCDIR)/doc/build.info \
+                  > /dev/null ); \
+          then \
+                rm $(SRCDIR)/doc/build.info.new; \
+          else \
+                mv $(SRCDIR)/doc/build.info.new $(SRCDIR)/doc/build.info; \
+          fi )
 
 # Set to -force to force a rebuild
 ERROR_REBUILD=
@@ -1561,12 +1579,16 @@ EOF
       if (windowsdll()) {
           $recipe .= <<"EOF";
 	rm -f apps/$full
-	rm -f test/$full
 	rm -f fuzz/$full
 	cp -p $full apps/
-	cp -p $full test/
 	cp -p $full fuzz/
 EOF
+          if (!$disabled{tests}) {
+            $recipe .= <<"EOF";
+	rm -f test/$full
+	cp -p $full test/
+EOF
+          }
       }
       $recipe .= <<"EOF" if defined $argfile;
 $argfile: $argfiledeps

@@ -131,12 +131,12 @@ static void kdf_tls1_prf_reset(void *vctx)
     ctx->provctx = provctx;
 }
 
-static int kdf_tls1_prf_derive(void *vctx, unsigned char *key,
-                               size_t keylen)
+static int kdf_tls1_prf_derive(void *vctx, unsigned char *key, size_t keylen,
+                               const OSSL_PARAM params[])
 {
     TLS1_PRF *ctx = (TLS1_PRF *)vctx;
 
-    if (!ossl_prov_is_running())
+    if (!ossl_prov_is_running() || !kdf_tls1_prf_set_ctx_params(ctx, params))
         return 0;
 
     if (ctx->P_hash == NULL) {
@@ -211,7 +211,8 @@ static int kdf_tls1_prf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     return 1;
 }
 
-static const OSSL_PARAM *kdf_tls1_prf_settable_ctx_params(ossl_unused void *ctx)
+static const OSSL_PARAM *kdf_tls1_prf_settable_ctx_params(
+        ossl_unused void *ctx, ossl_unused void *provctx)
 {
     static const OSSL_PARAM known_settable_ctx_params[] = {
         OSSL_PARAM_utf8_string(OSSL_KDF_PARAM_PROPERTIES, NULL, 0),
@@ -232,7 +233,8 @@ static int kdf_tls1_prf_get_ctx_params(void *vctx, OSSL_PARAM params[])
     return -2;
 }
 
-static const OSSL_PARAM *kdf_tls1_prf_gettable_ctx_params(ossl_unused void *ctx)
+static const OSSL_PARAM *kdf_tls1_prf_gettable_ctx_params(
+        ossl_unused void *ctx, ossl_unused void *provctx)
 {
     static const OSSL_PARAM known_gettable_ctx_params[] = {
         OSSL_PARAM_size_t(OSSL_KDF_PARAM_SIZE, NULL),
@@ -287,14 +289,8 @@ static int tls1_prf_P_hash(EVP_MAC_CTX *ctx_init,
     unsigned char Ai[EVP_MAX_MD_SIZE];
     size_t Ai_len;
     int ret = 0;
-    OSSL_PARAM params[2], *p = params;
 
-    *p++ = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY,
-                                             (void *)sec, sec_len);
-    *p = OSSL_PARAM_construct_end();
-    if (!EVP_MAC_CTX_set_params(ctx_init, params))
-        goto err;
-    if (!EVP_MAC_init(ctx_init))
+    if (!EVP_MAC_init(ctx_init, sec, sec_len, NULL))
         goto err;
     chunk = EVP_MAC_CTX_get_mac_size(ctx_init);
     if (chunk == 0)

@@ -25,29 +25,42 @@
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
 
+struct type_and_structure_st {
+    const char *output_type;
+    const char *output_structure;
+};
+
 static int i2d_provided(const EVP_PKEY *a, int selection,
-                        const char *output_structures[],
+                        const struct type_and_structure_st *output_info,
                         unsigned char **pp)
 {
     OSSL_ENCODER_CTX *ctx = NULL;
     int ret;
 
     for (ret = -1;
-         ret == -1 && *output_structures != NULL;
-         output_structures++) {
+         ret == -1 && output_info->output_type != NULL;
+         output_info++) {
         /*
          * The i2d_ calls don't take a boundary length for *pp.  However,
-         * OSSL_ENCODER_CTX_get_num_encoders() needs one, so we make one
-         * up.
+         * OSSL_ENCODER_to_data() needs one, so we make one up.  Because
+         * OSSL_ENCODER_to_data() decrements this number by the amount of
+         * bytes written, we need to calculate the length written further
+         * down, when pp != NULL.
          */
         size_t len = INT_MAX;
 
-        ctx = OSSL_ENCODER_CTX_new_for_pkey(a, selection, "DER",
-                                            *output_structures, NULL);
+        ctx = OSSL_ENCODER_CTX_new_for_pkey(a, selection,
+                                            output_info->output_type,
+                                            output_info->output_structure,
+                                            NULL);
         if (ctx == NULL)
             return -1;
-        if (OSSL_ENCODER_to_data(ctx, pp, &len))
-            ret = (int)len;
+        if (OSSL_ENCODER_to_data(ctx, pp, &len)) {
+            if (pp == NULL)
+                ret = (int)len;
+            else
+                ret = INT_MAX - (int)len;
+        }
         OSSL_ENCODER_CTX_free(ctx);
         ctx = NULL;
     }
@@ -60,9 +73,12 @@ static int i2d_provided(const EVP_PKEY *a, int selection,
 int i2d_KeyParams(const EVP_PKEY *a, unsigned char **pp)
 {
     if (evp_pkey_is_provided(a)) {
-        const char *output_structures[] = { "type-specific", NULL };
+        static const struct type_and_structure_st output_info[] = {
+            { "DER", "type-specific" },
+            { NULL, }
+        };
 
-        return i2d_provided(a, EVP_PKEY_KEY_PARAMETERS, output_structures, pp);
+        return i2d_provided(a, EVP_PKEY_KEY_PARAMETERS, output_info, pp);
     }
     if (a->ameth != NULL && a->ameth->param_encode != NULL)
         return a->ameth->param_encode(a, pp);
@@ -78,9 +94,13 @@ int i2d_KeyParams_bio(BIO *bp, const EVP_PKEY *pkey)
 int i2d_PrivateKey(const EVP_PKEY *a, unsigned char **pp)
 {
     if (evp_pkey_is_provided(a)) {
-        const char *output_structures[] = { "type-specific", "pkcs8", NULL };
+        static const struct type_and_structure_st output_info[] = {
+            { "DER", "type-specific" },
+            { "DER", "pkcs8" },
+            { NULL, }
+        };
 
-        return i2d_provided(a, EVP_PKEY_KEYPAIR, output_structures, pp);
+        return i2d_provided(a, EVP_PKEY_KEYPAIR, output_info, pp);
     }
     if (a->ameth != NULL && a->ameth->old_priv_encode != NULL) {
         return a->ameth->old_priv_encode(a, pp);
@@ -102,9 +122,13 @@ int i2d_PrivateKey(const EVP_PKEY *a, unsigned char **pp)
 int i2d_PublicKey(const EVP_PKEY *a, unsigned char **pp)
 {
     if (evp_pkey_is_provided(a)) {
-        const char *output_structures[] = { "type-specific", NULL };
+        static const struct type_and_structure_st output_info[] = {
+            { "DER", "type-specific" },
+            { "blob", NULL },    /* for EC */
+            { NULL, }
+        };
 
-        return i2d_provided(a, EVP_PKEY_PUBLIC_KEY, output_structures, pp);
+        return i2d_provided(a, EVP_PKEY_PUBLIC_KEY, output_info, pp);
     }
     switch (EVP_PKEY_id(a)) {
     case EVP_PKEY_RSA:

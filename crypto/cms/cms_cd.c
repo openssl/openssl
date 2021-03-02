@@ -21,8 +21,9 @@
 
 /* CMS CompressedData Utilities */
 
-CMS_ContentInfo *cms_CompressedData_create(int comp_nid, OSSL_LIB_CTX *libctx,
-                                           const char *propq)
+CMS_ContentInfo *ossl_cms_CompressedData_create(int comp_nid,
+                                                OSSL_LIB_CTX *libctx,
+                                                const char *propq)
 {
     CMS_ContentInfo *cms;
     CMS_CompressedData *cd;
@@ -61,7 +62,7 @@ CMS_ContentInfo *cms_CompressedData_create(int comp_nid, OSSL_LIB_CTX *libctx,
     return NULL;
 }
 
-BIO *cms_CompressedData_init_bio(const CMS_ContentInfo *cms)
+BIO *ossl_cms_CompressedData_init_bio(const CMS_ContentInfo *cms)
 {
     CMS_CompressedData *cd;
     const ASN1_OBJECT *compoid;

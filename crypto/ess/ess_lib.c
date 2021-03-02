@@ -18,9 +18,9 @@ static ESS_CERT_ID *ESS_CERT_ID_new_init(X509 *cert, int issuer_needed);
 static ESS_CERT_ID_V2 *ESS_CERT_ID_V2_new_init(const EVP_MD *hash_alg,
                                                X509 *cert, int issuer_needed);
 
-ESS_SIGNING_CERT *ESS_SIGNING_CERT_new_init(X509 *signcert,
-                                            STACK_OF(X509) *certs,
-                                            int issuer_needed)
+ESS_SIGNING_CERT *ossl_ess_signing_cert_new_init(X509 *signcert,
+                                                 STACK_OF(X509) *certs,
+                                                 int issuer_needed)
 {
     ESS_CERT_ID *cid = NULL;
     ESS_SIGNING_CERT *sc;
@@ -96,10 +96,10 @@ static ESS_CERT_ID *ESS_CERT_ID_new_init(X509 *cert, int issuer_needed)
     return NULL;
 }
 
-ESS_SIGNING_CERT_V2 *ESS_SIGNING_CERT_V2_new_init(const EVP_MD *hash_alg,
-                                                  X509 *signcert,
-                                                  STACK_OF(X509) *certs,
-                                                  int issuer_needed)
+ESS_SIGNING_CERT_V2 *ossl_ess_signing_cert_v2_new_init(const EVP_MD *hash_alg,
+                                                       X509 *signcert,
+                                                       STACK_OF(X509) *certs,
+                                                       int issuer_needed)
 {
     ESS_CERT_ID_V2 *cid = NULL;
     ESS_SIGNING_CERT_V2 *sc;
@@ -192,7 +192,7 @@ static ESS_CERT_ID_V2 *ESS_CERT_ID_V2_new_init(const EVP_MD *hash_alg,
     return NULL;
 }
 
-ESS_SIGNING_CERT *ESS_SIGNING_CERT_get(PKCS7_SIGNER_INFO *si)
+ESS_SIGNING_CERT *ossl_ess_signing_cert_get(PKCS7_SIGNER_INFO *si)
 {
     ASN1_TYPE *attr;
     const unsigned char *p;
@@ -204,7 +204,7 @@ ESS_SIGNING_CERT *ESS_SIGNING_CERT_get(PKCS7_SIGNER_INFO *si)
     return d2i_ESS_SIGNING_CERT(NULL, &p, attr->value.sequence->length);
 }
 
-ESS_SIGNING_CERT_V2 *ESS_SIGNING_CERT_V2_get(PKCS7_SIGNER_INFO *si)
+ESS_SIGNING_CERT_V2 *ossl_ess_signing_cert_v2_get(PKCS7_SIGNER_INFO *si)
 {
     ASN1_TYPE *attr;
     const unsigned char *p;
@@ -216,7 +216,7 @@ ESS_SIGNING_CERT_V2 *ESS_SIGNING_CERT_V2_get(PKCS7_SIGNER_INFO *si)
     return d2i_ESS_SIGNING_CERT_V2(NULL, &p, attr->value.sequence->length);
 }
 
-int ESS_SIGNING_CERT_add(PKCS7_SIGNER_INFO *si, ESS_SIGNING_CERT *sc)
+int ossl_ess_signing_cert_add(PKCS7_SIGNER_INFO *si, ESS_SIGNING_CERT *sc)
 {
     ASN1_STRING *seq = NULL;
     unsigned char *p, *pp = NULL;
@@ -245,8 +245,7 @@ int ESS_SIGNING_CERT_add(PKCS7_SIGNER_INFO *si, ESS_SIGNING_CERT *sc)
     return 0;
 }
 
-int ESS_SIGNING_CERT_V2_add(PKCS7_SIGNER_INFO *si,
-                            ESS_SIGNING_CERT_V2 *sc)
+int ossl_ess_signing_cert_v2_add(PKCS7_SIGNER_INFO *si, ESS_SIGNING_CERT_V2 *sc)
 {
     ASN1_STRING *seq = NULL;
     unsigned char *p, *pp = NULL;
@@ -291,7 +290,7 @@ static int ess_issuer_serial_cmp(const ESS_ISSUER_SERIAL *is, const X509 *cert)
 }
 
 /* Returns < 0 if certificate is not found, certificate index otherwise. */
-int ess_find_cert(const STACK_OF(ESS_CERT_ID) *cert_ids, X509 *cert)
+int ossl_ess_find_cert(const STACK_OF(ESS_CERT_ID) *cert_ids, X509 *cert)
 {
     int i;
     unsigned char cert_sha1[SHA_DIGEST_LENGTH];
@@ -324,7 +323,8 @@ int ess_find_cert(const STACK_OF(ESS_CERT_ID) *cert_ids, X509 *cert)
 }
 
 /* Returns < 0 if certificate is not found, certificate index otherwise. */
-int ess_find_cert_v2(const STACK_OF(ESS_CERT_ID_V2) *cert_ids, const X509 *cert)
+int ossl_ess_find_cert_v2(const STACK_OF(ESS_CERT_ID_V2) *cert_ids,
+                          const X509 *cert)
 {
     int i;
     unsigned char cert_digest[EVP_MAX_MD_SIZE];

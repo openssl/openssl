@@ -79,11 +79,12 @@ static void test_rng_free(void *vtest)
 
 static int test_rng_instantiate(void *vtest, unsigned int strength,
                                 int prediction_resistance,
-                                const unsigned char *pstr, size_t pstr_len)
+                                const unsigned char *pstr, size_t pstr_len,
+                                const OSSL_PARAM params[])
 {
     PROV_TEST_RNG *t = (PROV_TEST_RNG *)vtest;
 
-    if (strength > t->strength)
+    if (!test_rng_set_ctx_params(t, params) || strength > t->strength)
         return 0;
 
     t->state = EVP_RAND_STATE_READY;
@@ -163,7 +164,8 @@ static int test_rng_get_ctx_params(void *vtest, OSSL_PARAM params[])
     return 1;
 }
 
-static const OSSL_PARAM *test_rng_gettable_ctx_params(ossl_unused void *provctx)
+static const OSSL_PARAM *test_rng_gettable_ctx_params(ossl_unused void *vtest,
+                                                      ossl_unused void *provctx)
 {
     static const OSSL_PARAM known_gettable_ctx_params[] = {
         OSSL_PARAM_int(OSSL_RAND_PARAM_STATE, NULL),
@@ -212,7 +214,8 @@ static int test_rng_set_ctx_params(void *vtest, const OSSL_PARAM params[])
     return 1;
 }
 
-static const OSSL_PARAM *test_rng_settable_ctx_params(ossl_unused void *provctx)
+static const OSSL_PARAM *test_rng_settable_ctx_params(ossl_unused void *vtest,
+                                                      ossl_unused void *provctx)
 {
     static const OSSL_PARAM known_settable_ctx_params[] = {
         OSSL_PARAM_octet_string(OSSL_RAND_PARAM_TEST_ENTROPY, NULL, 0),

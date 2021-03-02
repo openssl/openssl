@@ -133,8 +133,8 @@ int OPENSSL_gmtime_diff(int *pday, int *psec,
 static int julian_adj(const struct tm *tm, int off_day, long offset_sec,
                       long *pday, int *psec)
 {
-    int offset_hms, offset_day;
-    long time_jd;
+    int offset_hms;
+    long offset_day, time_jd;
     int time_year, time_month, time_day;
     /* split offset into days and day seconds */
     offset_day = offset_sec / SECS_PER_DAY;

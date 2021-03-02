@@ -12,9 +12,9 @@ EVP_PKEY_get0_first_alg_name
 
  int EVP_PKEY_is_a(const EVP_PKEY *pkey, const char *name);
  int EVP_PKEY_can_sign(const EVP_PKEY *pkey);
- void EVP_PKEY_typenames_do_all(const EVP_PKEY *pkey,
-                                void (*fn)(const char *name, void *data),
-                                void *data);
+ int EVP_PKEY_typenames_do_all(const EVP_PKEY *pkey,
+                               void (*fn)(const char *name, void *data),
+                               void *data);
  const char *EVP_PKEY_get0_first_alg_name(const EVP_PKEY *key);
 
 =head1 DESCRIPTION
@@ -45,6 +45,9 @@ EVP_PKEY_can_sign() returns 1 if the I<pkey> key type functionality
 supports signing, otherwise 0.
 
 EVP_PKEY_get0_first_alg_name() returns the name that is found or NULL on error.
+
+EVP_PKEY_typenames_do_all() returns 1 if the callback was called for all names.
+A return value of 0 means that the callback was not called for any names.
 
 =head1 EXAMPLES
 

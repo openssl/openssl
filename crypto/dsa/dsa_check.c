@@ -19,7 +19,7 @@
 #include "dsa_local.h"
 #include "crypto/dsa.h"
 
-int dsa_check_params(const DSA *dsa, int checktype, int *ret)
+int ossl_dsa_check_params(const DSA *dsa, int checktype, int *ret)
 {
     if (checktype == OSSL_KEYMGMT_VALIDATE_QUICK_CHECK)
         return ossl_ffc_params_simple_validate(dsa->libctx, &dsa->params,
@@ -37,7 +37,7 @@ int dsa_check_params(const DSA *dsa, int checktype, int *ret)
 /*
  * See SP800-56Ar3 Section 5.6.2.3.1 : FFC Full public key validation.
  */
-int dsa_check_pub_key(const DSA *dsa, const BIGNUM *pub_key, int *ret)
+int ossl_dsa_check_pub_key(const DSA *dsa, const BIGNUM *pub_key, int *ret)
 {
     return ossl_ffc_validate_public_key(&dsa->params, pub_key, ret);
 }
@@ -47,12 +47,12 @@ int dsa_check_pub_key(const DSA *dsa, const BIGNUM *pub_key, int *ret)
  * To only be used with ephemeral FFC public keys generated using the approved
  * safe-prime groups.
  */
-int dsa_check_pub_key_partial(const DSA *dsa, const BIGNUM *pub_key, int *ret)
+int ossl_dsa_check_pub_key_partial(const DSA *dsa, const BIGNUM *pub_key, int *ret)
 {
     return ossl_ffc_validate_public_key_partial(&dsa->params, pub_key, ret);
 }
 
-int dsa_check_priv_key(const DSA *dsa, const BIGNUM *priv_key, int *ret)
+int ossl_dsa_check_priv_key(const DSA *dsa, const BIGNUM *priv_key, int *ret)
 {
     *ret = 0;
 
@@ -64,7 +64,7 @@ int dsa_check_priv_key(const DSA *dsa, const BIGNUM *priv_key, int *ret)
  * FFC pairwise check from SP800-56A R3.
  *    Section 5.6.2.1.4 Owner Assurance of Pair-wise Consistency
  */
-int dsa_check_pairwise(const DSA *dsa)
+int ossl_dsa_check_pairwise(const DSA *dsa)
 {
     int ret = 0;
     BN_CTX *ctx = NULL;
@@ -84,7 +84,7 @@ int dsa_check_pairwise(const DSA *dsa)
         goto err;
 
     /* recalculate the public key = (g ^ priv) mod p */
-    if (!dsa_generate_public_key(ctx, dsa, dsa->priv_key, pub_key))
+    if (!ossl_dsa_generate_public_key(ctx, dsa, dsa->priv_key, pub_key))
         goto err;
     /* check it matches the existing pubic_key */
     ret = BN_cmp(pub_key, dsa->pub_key) == 0;

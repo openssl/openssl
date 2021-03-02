@@ -14,13 +14,10 @@
 
 #include <string.h>
 #include <openssl/core.h>
-#include <openssl/core_dispatch.h>
 #include <openssl/provider.h>
 #include <openssl/crypto.h>
-
-OSSL_provider_init_fn filter_provider_init;
-
-int filter_provider_set_filter(int operation, const char *name);
+#include "testutil.h"
+#include "filterprov.h"
 
 #define MAX_FILTERS     10
 #define MAX_ALG_FILTERS 5
@@ -34,6 +31,8 @@ struct filter_prov_globals_st {
     } dispatch[MAX_FILTERS];
     int num_dispatch;
     int no_cache;
+    unsigned long int query_count;
+    int error;
 };
 
 static struct filter_prov_globals_st ourglobals;
@@ -51,6 +50,7 @@ static struct filter_prov_globals_st *get_globals(void)
 static OSSL_FUNC_provider_gettable_params_fn filter_gettable_params;
 static OSSL_FUNC_provider_get_params_fn filter_get_params;
 static OSSL_FUNC_provider_query_operation_fn filter_query;
+static OSSL_FUNC_provider_unquery_operation_fn filter_unquery;
 static OSSL_FUNC_provider_teardown_fn filter_teardown;
 
 static const OSSL_PARAM *filter_gettable_params(void *provctx)
@@ -82,6 +82,7 @@ static const OSSL_ALGORITHM *filter_query(void *provctx,
     struct filter_prov_globals_st *globs = get_globals();
     int i;
 
+    globs->query_count++;
     for (i = 0; i < globs->num_dispatch; i++) {
         if (globs->dispatch[i].operation == operation_id) {
             *no_cache = globs->no_cache;
@@ -93,12 +94,30 @@ static const OSSL_ALGORITHM *filter_query(void *provctx,
     return OSSL_PROVIDER_query_operation(globs->deflt, operation_id, no_cache);
 }
 
+static void filter_unquery(void *provctx, int operation_id,
+                           const OSSL_ALGORITHM *algs)
+{
+    struct filter_prov_globals_st *globs = get_globals();
+    int i;
+
+    if (!TEST_ulong_gt(globs->query_count, 0))
+        globs->error = 1;
+    else
+        globs->query_count--;
+
+    for (i = 0; i < globs->num_dispatch; i++)
+        if (globs->dispatch[i].alg == algs)
+            return;
+    OSSL_PROVIDER_unquery_operation(globs->deflt, operation_id, algs);
+}
+
 static void filter_teardown(void *provctx)
 {
     struct filter_prov_globals_st *globs = get_globals();
 
     OSSL_PROVIDER_unload(globs->deflt);
     OSSL_LIB_CTX_free(globs->libctx);
+    memset(globs, 0, sizeof(*globs));
 }
 
 /* Functions we provide to the core */
@@ -106,6 +125,7 @@ static const OSSL_DISPATCH filter_dispatch_table[] = {
     { OSSL_FUNC_PROVIDER_GETTABLE_PARAMS, (void (*)(void))filter_gettable_params },
     { OSSL_FUNC_PROVIDER_GET_PARAMS, (void (*)(void))filter_get_params },
     { OSSL_FUNC_PROVIDER_QUERY_OPERATION, (void (*)(void))filter_query },
+    { OSSL_FUNC_PROVIDER_UNQUERY_OPERATION, (void (*)(void))filter_unquery },
     { OSSL_FUNC_PROVIDER_GET_CAPABILITIES, (void (*)(void))filter_get_capabilities },
     { OSSL_FUNC_PROVIDER_TEARDOWN, (void (*)(void))filter_teardown },
     { 0, NULL }
@@ -201,6 +221,18 @@ int filter_provider_set_filter(int operation, const char *filterstr)
 
     ret = 1;
  err:
+    OSSL_PROVIDER_unquery_operation(globs->deflt, operation, provalgs);
     OPENSSL_free(filterstrtmp);
     return ret;
+}
+
+/*
+ * Test if a filter provider is in a clean finishing state.
+ * If it is return 1, otherwise return 0.
+ */
+int filter_provider_check_clean_finish(void)
+{
+    struct filter_prov_globals_st *globs = get_globals();
+
+    return TEST_ulong_eq(globs->query_count, 0) && !globs->error;
 }

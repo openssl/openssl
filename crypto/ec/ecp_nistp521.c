@@ -1269,8 +1269,8 @@ static void point_add(felem x3, felem y3, felem z3,
          * This is obviously not constant-time but it will almost-never happen
          * for ECDH / ECDSA. The case where it can happen is during scalar-mult
          * where the intermediate value gets very close to the group order.
-         * Since |ec_GFp_nistp_recode_scalar_bits| produces signed digits for
-         * the scalar, it's possible for the intermediate value to be a small
+         * Since |ossl_ec_GFp_nistp_recode_scalar_bits| produces signed digits
+         * for the scalar, it's possible for the intermediate value to be a small
          * negative multiple of the base point, and for the final signed digit
          * to be the same value. We believe that this only occurs for the scalar
          * 1fffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
@@ -1587,7 +1587,7 @@ static void batch_mul(felem x_out, felem y_out, felem z_out,
                 bits |= get_bit(scalars[num], i + 1) << 2;
                 bits |= get_bit(scalars[num], i) << 1;
                 bits |= get_bit(scalars[num], i - 1);
-                ec_GFp_nistp_recode_scalar_bits(&sign, &digit, bits);
+                ossl_ec_GFp_nistp_recode_scalar_bits(&sign, &digit, bits);
 
                 /*
                  * select the point to add or subtract, in constant time
@@ -1625,55 +1625,55 @@ const EC_METHOD *EC_GFp_nistp521_method(void)
     static const EC_METHOD ret = {
         EC_FLAGS_DEFAULT_OCT,
         NID_X9_62_prime_field,
-        ec_GFp_nistp521_group_init,
-        ec_GFp_simple_group_finish,
-        ec_GFp_simple_group_clear_finish,
-        ec_GFp_nist_group_copy,
-        ec_GFp_nistp521_group_set_curve,
-        ec_GFp_simple_group_get_curve,
-        ec_GFp_simple_group_get_degree,
-        ec_group_simple_order_bits,
-        ec_GFp_simple_group_check_discriminant,
-        ec_GFp_simple_point_init,
-        ec_GFp_simple_point_finish,
-        ec_GFp_simple_point_clear_finish,
-        ec_GFp_simple_point_copy,
-        ec_GFp_simple_point_set_to_infinity,
-        ec_GFp_simple_point_set_affine_coordinates,
-        ec_GFp_nistp521_point_get_affine_coordinates,
+        ossl_ec_GFp_nistp521_group_init,
+        ossl_ec_GFp_simple_group_finish,
+        ossl_ec_GFp_simple_group_clear_finish,
+        ossl_ec_GFp_nist_group_copy,
+        ossl_ec_GFp_nistp521_group_set_curve,
+        ossl_ec_GFp_simple_group_get_curve,
+        ossl_ec_GFp_simple_group_get_degree,
+        ossl_ec_group_simple_order_bits,
+        ossl_ec_GFp_simple_group_check_discriminant,
+        ossl_ec_GFp_simple_point_init,
+        ossl_ec_GFp_simple_point_finish,
+        ossl_ec_GFp_simple_point_clear_finish,
+        ossl_ec_GFp_simple_point_copy,
+        ossl_ec_GFp_simple_point_set_to_infinity,
+        ossl_ec_GFp_simple_point_set_affine_coordinates,
+        ossl_ec_GFp_nistp521_point_get_affine_coordinates,
         0 /* point_set_compressed_coordinates */ ,
         0 /* point2oct */ ,
         0 /* oct2point */ ,
-        ec_GFp_simple_add,
-        ec_GFp_simple_dbl,
-        ec_GFp_simple_invert,
-        ec_GFp_simple_is_at_infinity,
-        ec_GFp_simple_is_on_curve,
-        ec_GFp_simple_cmp,
-        ec_GFp_simple_make_affine,
-        ec_GFp_simple_points_make_affine,
-        ec_GFp_nistp521_points_mul,
-        ec_GFp_nistp521_precompute_mult,
-        ec_GFp_nistp521_have_precompute_mult,
-        ec_GFp_nist_field_mul,
-        ec_GFp_nist_field_sqr,
+        ossl_ec_GFp_simple_add,
+        ossl_ec_GFp_simple_dbl,
+        ossl_ec_GFp_simple_invert,
+        ossl_ec_GFp_simple_is_at_infinity,
+        ossl_ec_GFp_simple_is_on_curve,
+        ossl_ec_GFp_simple_cmp,
+        ossl_ec_GFp_simple_make_affine,
+        ossl_ec_GFp_simple_points_make_affine,
+        ossl_ec_GFp_nistp521_points_mul,
+        ossl_ec_GFp_nistp521_precompute_mult,
+        ossl_ec_GFp_nistp521_have_precompute_mult,
+        ossl_ec_GFp_nist_field_mul,
+        ossl_ec_GFp_nist_field_sqr,
         0 /* field_div */ ,
-        ec_GFp_simple_field_inv,
+        ossl_ec_GFp_simple_field_inv,
         0 /* field_encode */ ,
         0 /* field_decode */ ,
         0,                      /* field_set_to_one */
-        ec_key_simple_priv2oct,
-        ec_key_simple_oct2priv,
+        ossl_ec_key_simple_priv2oct,
+        ossl_ec_key_simple_oct2priv,
         0, /* set private */
-        ec_key_simple_generate_key,
-        ec_key_simple_check_key,
-        ec_key_simple_generate_public_key,
+        ossl_ec_key_simple_generate_key,
+        ossl_ec_key_simple_check_key,
+        ossl_ec_key_simple_generate_public_key,
         0, /* keycopy */
         0, /* keyfinish */
-        ecdh_simple_compute_key,
-        ecdsa_simple_sign_setup,
-        ecdsa_simple_sign_sig,
-        ecdsa_simple_verify_sig,
+        ossl_ecdh_simple_compute_key,
+        ossl_ecdsa_simple_sign_setup,
+        ossl_ecdsa_simple_sign_sig,
+        ossl_ecdsa_simple_verify_sig,
         0, /* field_inverse_mod_ord */
         0, /* blind_coordinates */
         0, /* ladder_pre */
@@ -1739,17 +1739,17 @@ void EC_nistp521_pre_comp_free(NISTP521_PRE_COMP *p)
  * OPENSSL EC_METHOD FUNCTIONS
  */
 
-int ec_GFp_nistp521_group_init(EC_GROUP *group)
+int ossl_ec_GFp_nistp521_group_init(EC_GROUP *group)
 {
     int ret;
-    ret = ec_GFp_simple_group_init(group);
+    ret = ossl_ec_GFp_simple_group_init(group);
     group->a_is_minus3 = 1;
     return ret;
 }
 
-int ec_GFp_nistp521_group_set_curve(EC_GROUP *group, const BIGNUM *p,
-                                    const BIGNUM *a, const BIGNUM *b,
-                                    BN_CTX *ctx)
+int ossl_ec_GFp_nistp521_group_set_curve(EC_GROUP *group, const BIGNUM *p,
+                                         const BIGNUM *a, const BIGNUM *b,
+                                         BN_CTX *ctx)
 {
     int ret = 0;
     BIGNUM *curve_p, *curve_a, *curve_b;
@@ -1776,7 +1776,7 @@ int ec_GFp_nistp521_group_set_curve(EC_GROUP *group, const BIGNUM *p,
         goto err;
     }
     group->field_mod_func = BN_nist_mod_521;
-    ret = ec_GFp_simple_group_set_curve(group, p, a, b, ctx);
+    ret = ossl_ec_GFp_simple_group_set_curve(group, p, a, b, ctx);
  err:
     BN_CTX_end(ctx);
 #ifndef FIPS_MODULE
@@ -1789,10 +1789,10 @@ int ec_GFp_nistp521_group_set_curve(EC_GROUP *group, const BIGNUM *p,
  * Takes the Jacobian coordinates (X, Y, Z) of a point and returns (X', Y') =
  * (X/Z^2, Y/Z^3)
  */
-int ec_GFp_nistp521_point_get_affine_coordinates(const EC_GROUP *group,
-                                                 const EC_POINT *point,
-                                                 BIGNUM *x, BIGNUM *y,
-                                                 BN_CTX *ctx)
+int ossl_ec_GFp_nistp521_point_get_affine_coordinates(const EC_GROUP *group,
+                                                      const EC_POINT *point,
+                                                      BIGNUM *x, BIGNUM *y,
+                                                      BN_CTX *ctx)
 {
     felem z1, z2, x_in, y_in, x_out, y_out;
     largefelem tmp;
@@ -1838,36 +1838,36 @@ static void make_points_affine(size_t num, felem points[][3],
      * Runs in constant time, unless an input is the point at infinity (which
      * normally shouldn't happen).
      */
-    ec_GFp_nistp_points_make_affine_internal(num,
-                                             points,
-                                             sizeof(felem),
-                                             tmp_felems,
-                                             (void (*)(void *))felem_one,
-                                             felem_is_zero_int,
-                                             (void (*)(void *, const void *))
-                                             felem_assign,
-                                             (void (*)(void *, const void *))
-                                             felem_square_reduce, (void (*)
-                                                                   (void *,
-                                                                    const void
-                                                                    *,
-                                                                    const void
-                                                                    *))
-                                             felem_mul_reduce,
-                                             (void (*)(void *, const void *))
-                                             felem_inv,
-                                             (void (*)(void *, const void *))
-                                             felem_contract);
+    ossl_ec_GFp_nistp_points_make_affine_internal(num,
+                                                  points,
+                                                  sizeof(felem),
+                                                  tmp_felems,
+                                                  (void (*)(void *))felem_one,
+                                                  felem_is_zero_int,
+                                                  (void (*)(void *, const void *))
+                                                  felem_assign,
+                                                  (void (*)(void *, const void *))
+                                                  felem_square_reduce, (void (*)
+                                                                        (void *,
+                                                                         const void
+                                                                         *,
+                                                                         const void
+                                                                         *))
+                                                  felem_mul_reduce,
+                                                  (void (*)(void *, const void *))
+                                                  felem_inv,
+                                                  (void (*)(void *, const void *))
+                                                  felem_contract);
 }
 
 /*
  * Computes scalar*generator + \sum scalars[i]*points[i], ignoring NULL
  * values Result is stored in r (r can equal one of the inputs).
  */
-int ec_GFp_nistp521_points_mul(const EC_GROUP *group, EC_POINT *r,
-                               const BIGNUM *scalar, size_t num,
-                               const EC_POINT *points[],
-                               const BIGNUM *scalars[], BN_CTX *ctx)
+int ossl_ec_GFp_nistp521_points_mul(const EC_GROUP *group, EC_POINT *r,
+                                    const BIGNUM *scalar, size_t num,
+                                    const EC_POINT *points[],
+                                    const BIGNUM *scalars[], BN_CTX *ctx)
 {
     int ret = 0;
     int j;
@@ -1914,8 +1914,9 @@ int ec_GFp_nistp521_points_mul(const EC_GROUP *group, EC_POINT *r,
             ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
             goto err;
         }
-        if (!ec_GFp_simple_set_Jprojective_coordinates_GFp(group, generator, x,
-                                                           y, z, ctx))
+        if (!ossl_ec_GFp_simple_set_Jprojective_coordinates_GFp(group,
+                                                                generator,
+                                                                x, y, z, ctx))
             goto err;
         if (0 == EC_POINT_cmp(group, generator, group->generator, ctx))
             /* precomputation matches generator */
@@ -2053,7 +2054,8 @@ int ec_GFp_nistp521_points_mul(const EC_GROUP *group, EC_POINT *r,
         ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
         goto err;
     }
-    ret = ec_GFp_simple_set_Jprojective_coordinates_GFp(group, r, x, y, z, ctx);
+    ret = ossl_ec_GFp_simple_set_Jprojective_coordinates_GFp(group, r, x, y, z,
+                                                             ctx);
 
  err:
     BN_CTX_end(ctx);
@@ -2064,7 +2066,7 @@ int ec_GFp_nistp521_points_mul(const EC_GROUP *group, EC_POINT *r,
     return ret;
 }
 
-int ec_GFp_nistp521_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
+int ossl_ec_GFp_nistp521_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
 {
     int ret = 0;
     NISTP521_PRE_COMP *pre = NULL;
@@ -2180,7 +2182,7 @@ int ec_GFp_nistp521_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
     return ret;
 }
 
-int ec_GFp_nistp521_have_precompute_mult(const EC_GROUP *group)
+int ossl_ec_GFp_nistp521_have_precompute_mult(const EC_GROUP *group)
 {
     return HAVEPRECOMP(group, nistp521);
 }

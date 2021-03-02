@@ -286,8 +286,7 @@ int crl_main(int argc, char **argv)
     if (num) {
         for (i = 1; i <= num; i++) {
             if (issuer == i) {
-                print_name(bio_out, "issuer=", X509_CRL_get_issuer(x),
-                           get_nameopt());
+                print_name(bio_out, "issuer=", X509_CRL_get_issuer(x));
             }
             if (crlnumber == i) {
                 ASN1_INTEGER *crlnum;

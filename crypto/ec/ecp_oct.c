@@ -19,10 +19,10 @@
 
 #include "ec_local.h"
 
-int ec_GFp_simple_set_compressed_coordinates(const EC_GROUP *group,
-                                             EC_POINT *point,
-                                             const BIGNUM *x_, int y_bit,
-                                             BN_CTX *ctx)
+int ossl_ec_GFp_simple_set_compressed_coordinates(const EC_GROUP *group,
+                                                  EC_POINT *point,
+                                                  const BIGNUM *x_, int y_bit,
+                                                  BN_CTX *ctx)
 {
     BN_CTX *new_ctx = NULL;
     BIGNUM *tmp1, *tmp2, *x, *y;
@@ -158,9 +158,9 @@ int ec_GFp_simple_set_compressed_coordinates(const EC_GROUP *group,
     return ret;
 }
 
-size_t ec_GFp_simple_point2oct(const EC_GROUP *group, const EC_POINT *point,
-                               point_conversion_form_t form,
-                               unsigned char *buf, size_t len, BN_CTX *ctx)
+size_t ossl_ec_GFp_simple_point2oct(const EC_GROUP *group, const EC_POINT *point,
+                                    point_conversion_form_t form,
+                                    unsigned char *buf, size_t len, BN_CTX *ctx)
 {
     size_t ret;
     BN_CTX *new_ctx = NULL;
@@ -273,8 +273,9 @@ size_t ec_GFp_simple_point2oct(const EC_GROUP *group, const EC_POINT *point,
     return 0;
 }
 
-int ec_GFp_simple_oct2point(const EC_GROUP *group, EC_POINT *point,
-                            const unsigned char *buf, size_t len, BN_CTX *ctx)
+int ossl_ec_GFp_simple_oct2point(const EC_GROUP *group, EC_POINT *point,
+                                 const unsigned char *buf, size_t len,
+                                 BN_CTX *ctx)
 {
     point_conversion_form_t form;
     int y_bit;

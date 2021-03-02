@@ -141,22 +141,39 @@ static size_t hmac_size(void *vmacctx)
     return HMAC_size(macctx->ctx);
 }
 
-static int hmac_init(void *vmacctx)
+static int hmac_setkey(struct hmac_data_st *macctx,
+                       const unsigned char *key, size_t keylen)
 {
-    struct hmac_data_st *macctx = vmacctx;
     const EVP_MD *digest;
-    int rv = 1;
 
-    if (!ossl_prov_is_running())
+    if (macctx->keylen > 0)
+        OPENSSL_secure_clear_free(macctx->key, macctx->keylen);
+    /* Keep a copy of the key in case we need it for TLS HMAC */
+    macctx->key = OPENSSL_secure_malloc(keylen > 0 ? keylen : 1);
+    if (macctx->key == NULL)
         return 0;
+    memcpy(macctx->key, key, keylen);
+    macctx->keylen = keylen;
 
     digest = ossl_prov_digest_md(&macctx->digest);
     /* HMAC_Init_ex doesn't tolerate all zero params, so we must be careful */
-    if (macctx->tls_data_size == 0 && digest != NULL)
-        rv = HMAC_Init_ex(macctx->ctx, NULL, 0, digest,
-                          ossl_prov_digest_engine(&macctx->digest));
+    if (key != NULL || (macctx->tls_data_size == 0 && digest != NULL))
+        return HMAC_Init_ex(macctx->ctx, key, keylen, digest,
+                            ossl_prov_digest_engine(&macctx->digest));
+    return 1;
+}
 
-    return rv;
+static int hmac_init(void *vmacctx, const unsigned char *key,
+                     size_t keylen, const OSSL_PARAM params[])
+{
+    struct hmac_data_st *macctx = vmacctx;
+
+    if (!ossl_prov_is_running() || !hmac_set_ctx_params(macctx, params))
+        return 0;
+
+    if (key != NULL && !hmac_setkey(macctx, key, keylen))
+        return 0;
+    return 1;
 }
 
 static int hmac_update(void *vmacctx, const unsigned char *data,
@@ -219,7 +236,8 @@ static const OSSL_PARAM known_gettable_ctx_params[] = {
     OSSL_PARAM_size_t(OSSL_MAC_PARAM_SIZE, NULL),
     OSSL_PARAM_END
 };
-static const OSSL_PARAM *hmac_gettable_ctx_params(ossl_unused void *provctx)
+static const OSSL_PARAM *hmac_gettable_ctx_params(ossl_unused void *ctx,
+                                                  ossl_unused void *provctx)
 {
     return known_gettable_ctx_params;
 }
@@ -243,7 +261,8 @@ static const OSSL_PARAM known_settable_ctx_params[] = {
     OSSL_PARAM_size_t(OSSL_MAC_PARAM_TLS_DATA_SIZE, NULL),
     OSSL_PARAM_END
 };
-static const OSSL_PARAM *hmac_settable_ctx_params(ossl_unused void *provctx)
+static const OSSL_PARAM *hmac_settable_ctx_params(ossl_unused void *ctx,
+                                                  ossl_unused void *provctx)
 {
     return known_settable_ctx_params;
 }

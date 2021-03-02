@@ -40,8 +40,8 @@ int DSA_generate_key(DSA *dsa)
     return dsa_keygen(dsa, 0);
 }
 
-int dsa_generate_public_key(BN_CTX *ctx, const DSA *dsa, const BIGNUM *priv_key,
-                            BIGNUM *pub_key)
+int ossl_dsa_generate_public_key(BN_CTX *ctx, const DSA *dsa,
+                                 const BIGNUM *priv_key, BIGNUM *pub_key)
 {
     int ret = 0;
     BIGNUM *prk = BN_new();
@@ -97,7 +97,7 @@ static int dsa_keygen(DSA *dsa, int pairwise_test)
         pub_key = dsa->pub_key;
     }
 
-    if (!dsa_generate_public_key(ctx, dsa, priv_key, pub_key))
+    if (!ossl_dsa_generate_public_key(ctx, dsa, priv_key, pub_key))
         goto err;
 
     dsa->priv_key = priv_key;

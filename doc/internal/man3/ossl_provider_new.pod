@@ -13,7 +13,8 @@ ossl_provider_name, ossl_provider_dso,
 ossl_provider_module_name, ossl_provider_module_path,
 ossl_provider_libctx,
 ossl_provider_teardown, ossl_provider_gettable_params,
-ossl_provider_get_params, ossl_provider_query_operation,
+ossl_provider_get_params,
+ossl_provider_query_operation, ossl_provider_unquery_operation,
 ossl_provider_set_operation_bit, ossl_provider_test_operation_bit,
 ossl_provider_get_capabilities
 - internal provider routines
@@ -40,7 +41,7 @@ ossl_provider_get_capabilities
   * Activate the Provider
   * If the Provider is a module, the module will be loaded
   */
- int ossl_provider_activate(OSSL_PROVIDER *prov);
+ int ossl_provider_activate(OSSL_PROVIDER *prov, int retain_fallbacks);
  int ossl_provider_deactivate(OSSL_PROVIDER *prov);
  /* Check if provider is available (activated) */
  int ossl_provider_available(OSSL_PROVIDER *prov);
@@ -72,6 +73,9 @@ ossl_provider_get_capabilities
  const OSSL_ALGORITHM *ossl_provider_query_operation(const OSSL_PROVIDER *prov,
                                                      int operation_id,
                                                      int *no_cache);
+ void ossl_provider_unquery_operation(const OSSL_PROVIDER *prov,
+                                      int operation_id,
+                                      const OSSL_ALGORITHM *algs);
 
  int ossl_provider_set_operation_bit(OSSL_PROVIDER *provider, size_t bitnum);
  int ossl_provider_test_operation_bit(OSSL_PROVIDER *provider, size_t bitnum,
@@ -178,6 +182,9 @@ be located in that module, and called.
 
 =back
 
+If I<retain_fallbacks> is zero, fallbacks are disabled.  If it is nonzero,
+fallbacks are left unchanged.
+
 ossl_provider_deactivate() "deactivates" the provider for the given
 provider object I<prov> by decrementing its activation count.  When
 that count reaches zero, the activation flag is cleared.
@@ -231,6 +238,10 @@ I<query_operation> function, if the provider has one.
 It should return an array of I<OSSL_ALGORITHM> for the given
 I<operation_id>.
 
+ossl_provider_unquery_operation() informs the provider that the result of
+ossl_provider_query_operation() is no longer going to be directly accessed and
+that all relevant information has been copied.
+
 ossl_provider_set_operation_bit() registers a 1 for operation I<bitnum>
 in a bitstring that's internal to I<provider>.
 
@@ -277,8 +288,8 @@ it has been incremented.
 ossl_provider_free() doesn't return any value.
 
 ossl_provider_set_module_path(), ossl_provider_set_fallback(),
-ossl_provider_activate() and ossl_provider_deactivate() return 1 on
-success, or 0 on error.
+ossl_provider_activate(), ossl_provider_activate_leave_fallbacks() and
+ossl_provider_deactivate() return 1 on success, or 0 on error.
 
 ossl_provider_available() return 1 if the provider is available,
 otherwise 0.

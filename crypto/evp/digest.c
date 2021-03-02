@@ -656,14 +656,19 @@ int EVP_MD_CTX_set_params(EVP_MD_CTX *ctx, const OSSL_PARAM params[])
 
 const OSSL_PARAM *EVP_MD_settable_ctx_params(const EVP_MD *md)
 {
-    if (md != NULL && md->settable_ctx_params != NULL)
-        return md->settable_ctx_params(ossl_provider_ctx(EVP_MD_provider(md)));
+    void *alg;
+
+    if (md != NULL && md->settable_ctx_params != NULL) {
+        alg = ossl_provider_ctx(EVP_MD_provider(md));
+        return md->settable_ctx_params(NULL, alg);
+    }
     return NULL;
 }
 
 const OSSL_PARAM *EVP_MD_CTX_settable_params(EVP_MD_CTX *ctx)
 {
     EVP_PKEY_CTX *pctx;
+    void *alg;
 
     if (ctx == NULL)
         return NULL;
@@ -678,9 +683,10 @@ const OSSL_PARAM *EVP_MD_CTX_settable_params(EVP_MD_CTX *ctx)
         return pctx->op.sig.signature->settable_ctx_md_params(
                    pctx->op.sig.sigprovctx);
 
-    if (ctx->digest != NULL && ctx->digest->settable_ctx_params != NULL)
-        return ctx->digest->settable_ctx_params(
-                  ossl_provider_ctx(EVP_MD_provider(ctx->digest)));
+    if (ctx->digest != NULL && ctx->digest->settable_ctx_params != NULL) {
+        alg = ossl_provider_ctx(EVP_MD_provider(ctx->digest));
+        return ctx->digest->settable_ctx_params(ctx->provctx, alg);
+    }
 
     return NULL;
 }
@@ -706,14 +712,19 @@ int EVP_MD_CTX_get_params(EVP_MD_CTX *ctx, OSSL_PARAM params[])
 
 const OSSL_PARAM *EVP_MD_gettable_ctx_params(const EVP_MD *md)
 {
-    if (md != NULL && md->gettable_ctx_params != NULL)
-        return md->gettable_ctx_params(ossl_provider_ctx(EVP_MD_provider(md)));
+    void *alg;
+
+    if (md != NULL && md->gettable_ctx_params != NULL) {
+        alg = ossl_provider_ctx(EVP_MD_provider(md));
+        return md->gettable_ctx_params(NULL, alg);
+    }
     return NULL;
 }
 
 const OSSL_PARAM *EVP_MD_CTX_gettable_params(EVP_MD_CTX *ctx)
 {
     EVP_PKEY_CTX *pctx;
+    void *alg;
 
     if (ctx == NULL)
         return NULL;
@@ -728,11 +739,10 @@ const OSSL_PARAM *EVP_MD_CTX_gettable_params(EVP_MD_CTX *ctx)
         return pctx->op.sig.signature->gettable_ctx_md_params(
                     pctx->op.sig.sigprovctx);
 
-    if (ctx->digest != NULL
-            && ctx->digest->gettable_ctx_params != NULL)
-        return ctx->digest->gettable_ctx_params(
-                   ossl_provider_ctx(EVP_MD_provider(ctx->digest)));
-
+    if (ctx->digest != NULL && ctx->digest->gettable_ctx_params != NULL) {
+        alg = ossl_provider_ctx(EVP_MD_provider(ctx->digest));
+        return ctx->digest->gettable_ctx_params(ctx->provctx, alg);
+    }
     return NULL;
 }
 
@@ -881,8 +891,8 @@ static void *evp_md_from_dispatch(int name_id,
 #ifndef FIPS_MODULE
     /* TODO(3.x) get rid of the need for legacy NIDs */
     md->type = NID_undef;
-    evp_names_do_all(prov, name_id, set_legacy_nid, &md->type);
-    if (md->type == -1) {
+    if (!evp_names_do_all(prov, name_id, set_legacy_nid, &md->type)
+            || md->type == -1) {
         ERR_raise(ERR_LIB_EVP, ERR_R_INTERNAL_ERROR);
         EVP_MD_free(md);
         return NULL;

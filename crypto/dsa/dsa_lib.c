@@ -13,15 +13,13 @@
  */
 #include "internal/deprecated.h"
 
-#include <stdio.h>
+#include <openssl/bn.h>
+#include <openssl/engine.h>
 #include "internal/cryptlib.h"
 #include "internal/refcount.h"
-#include <openssl/bn.h>
-#include <openssl/asn1.h>
-#include <openssl/engine.h>
-#include "dsa_local.h"
 #include "crypto/dsa.h"
 #include "crypto/dh.h" /* required by DSA_dup_DH() */
+#include "dsa_local.h"
 
 static DSA *dsa_new_intern(ENGINE *engine, OSSL_LIB_CTX *libctx);
 
@@ -54,7 +52,7 @@ DH *DSA_dup_DH(const DSA *r)
     if (ret == NULL)
         goto err;
 
-    if (!ossl_ffc_params_copy(dh_get0_params(ret), &r->params))
+    if (!ossl_ffc_params_copy(ossl_dh_get0_params(ret), &r->params))
         goto err;
 
     if (r->pub_key != NULL) {
@@ -192,7 +190,7 @@ DSA *DSA_new_method(ENGINE *engine)
     return dsa_new_intern(engine, NULL);
 }
 
-DSA *dsa_new_with_ctx(OSSL_LIB_CTX *libctx)
+DSA *ossl_dsa_new(OSSL_LIB_CTX *libctx)
 {
     return dsa_new_intern(NULL, libctx);
 }
@@ -338,19 +336,19 @@ int DSA_bits(const DSA *dsa)
     return -1;
 }
 
-FFC_PARAMS *dsa_get0_params(DSA *dsa)
+FFC_PARAMS *ossl_dsa_get0_params(DSA *dsa)
 {
     return &dsa->params;
 }
 
-int dsa_ffc_params_fromdata(DSA *dsa, const OSSL_PARAM params[])
+int ossl_dsa_ffc_params_fromdata(DSA *dsa, const OSSL_PARAM params[])
 {
     int ret;
     FFC_PARAMS *ffc;
 
     if (dsa == NULL)
         return 0;
-    ffc = dsa_get0_params(dsa);
+    ffc = ossl_dsa_get0_params(dsa);
     if (ffc == NULL)
         return 0;
 

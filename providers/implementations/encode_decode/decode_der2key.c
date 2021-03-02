@@ -31,6 +31,7 @@
 #include "crypto/evp.h"
 #include "crypto/ecx.h"
 #include "crypto/rsa.h"
+#include "crypto/x509.h"
 #include "prov/bio.h"
 #include "prov/implementations.h"
 #include "endecoder_local.h"
@@ -330,7 +331,7 @@ static int der2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
             && (selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0) {
             RESET_ERR_MARK();
             derp = der;
-            pkey = d2i_PUBKEY_ex(NULL, &derp, der_len, libctx, NULL);
+            pkey = d2i_PUBKEY_legacy(NULL, &derp, der_len);
         }
 
         if (pkey != NULL) {
@@ -461,7 +462,7 @@ static void dsa_adjust(void *key, struct der2key_ctx_st *ctx)
 
 static void ec_adjust(void *key, struct der2key_ctx_st *ctx)
 {
-    ec_key_set0_libctx(key, PROV_LIBCTX_OF(ctx->provctx));
+    ossl_ec_key_set0_libctx(key, PROV_LIBCTX_OF(ctx->provctx));
 }
 
 /*
@@ -471,39 +472,39 @@ static void ec_adjust(void *key, struct der2key_ctx_st *ctx)
 
 static void ecx_key_adjust(void *key, struct der2key_ctx_st *ctx)
 {
-    ecx_key_set0_libctx(key, PROV_LIBCTX_OF(ctx->provctx));
+    ossl_ecx_key_set0_libctx(key, PROV_LIBCTX_OF(ctx->provctx));
 }
 
 # define ed25519_evp_type               EVP_PKEY_ED25519
-# define ed25519_evp_extract            (extract_key_fn *)evp_pkey_get1_ED25519
+# define ed25519_evp_extract            (extract_key_fn *)ossl_evp_pkey_get1_ED25519
 # define ed25519_d2i_private_key        NULL
 # define ed25519_d2i_public_key         NULL
 # define ed25519_d2i_key_params         NULL
-# define ed25519_free                   (free_key_fn *)ecx_key_free
+# define ed25519_free                   (free_key_fn *)ossl_ecx_key_free
 # define ed25519_adjust                 ecx_key_adjust
 
 # define ed448_evp_type                 EVP_PKEY_ED448
-# define ed448_evp_extract              (extract_key_fn *)evp_pkey_get1_ED448
+# define ed448_evp_extract              (extract_key_fn *)ossl_evp_pkey_get1_ED448
 # define ed448_d2i_private_key          NULL
 # define ed448_d2i_public_key           NULL
 # define ed448_d2i_key_params           NULL
-# define ed448_free                     (free_key_fn *)ecx_key_free
+# define ed448_free                     (free_key_fn *)ossl_ecx_key_free
 # define ed448_adjust                   ecx_key_adjust
 
 # define x25519_evp_type                EVP_PKEY_X25519
-# define x25519_evp_extract             (extract_key_fn *)evp_pkey_get1_X25519
+# define x25519_evp_extract             (extract_key_fn *)ossl_evp_pkey_get1_X25519
 # define x25519_d2i_private_key         NULL
 # define x25519_d2i_public_key          NULL
 # define x25519_d2i_key_params          NULL
-# define x25519_free                    (free_key_fn *)ecx_key_free
+# define x25519_free                    (free_key_fn *)ossl_ecx_key_free
 # define x25519_adjust                  ecx_key_adjust
 
 # define x448_evp_type                  EVP_PKEY_X448
-# define x448_evp_extract               (extract_key_fn *)evp_pkey_get1_X448
+# define x448_evp_extract               (extract_key_fn *)ossl_evp_pkey_get1_X448
 # define x448_d2i_private_key           NULL
 # define x448_d2i_public_key            NULL
 # define x448_d2i_key_params            NULL
-# define x448_free                      (free_key_fn *)ecx_key_free
+# define x448_free                      (free_key_fn *)ossl_ecx_key_free
 # define x448_adjust                    ecx_key_adjust
 
 # ifndef OPENSSL_NO_SM2

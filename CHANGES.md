@@ -22,8 +22,20 @@ OpenSSL 3.0
 -----------
 
 ### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
+ * Deprecated obsolete EVP_PKEY_CTX_get0_dh_kdf_ukm() and
+   EVP_PKEY_CTX_get0_ecdh_kdf_ukm() functions. They are not needed
+   and require returning octet ptr parameters from providers that
+   would like to support them which complicates provider implementations.
 
-* The SRP APIs have been deprecated. The old APIs do not work via providers,
+   *Tomáš Mráz*
+
+ * The RAND_METHOD APIs have been deprecated.  The functions deprecated are:
+   RAND_OpenSSL(), RAND_get_rand_method(), RAND_set_rand_engine() and
+   RAND_set_rand_method().  Provider based random number generators should
+   be used instead via EVP_RAND(3).
+
+   *Paul Dale*
+ * The SRP APIs have been deprecated. The old APIs do not work via providers,
    and there is no EVP interface to them. Unfortunately there is no replacement
    for these APIs at this time.
 
@@ -34,7 +46,14 @@ OpenSSL 3.0
    at configuration time.
 
    *Paul Dale*
- 
+
+ * The openssl speed command does not use low-level API calls anymore. This
+   implies some of the performance numbers might not be fully comparable
+   with the previous releases due to higher overhead. This applies
+   particularly to measuring performance on smaller data chunks.
+
+   *Tomáš Mráz*
+
  * Combining the Configure options no-ec and no-dh no longer disables TLSv1.3.
    Typically if OpenSSL has no EC or DH algorithms then it cannot support
    connections with TLSv1.3. However OpenSSL now supports "pluggable" groups
@@ -57,6 +76,13 @@ OpenSSL 3.0
    respectively.
 
    *Tomáš Mráz*
+
+ * Removed RSA padding mode for SSLv23 (which was only used for
+   SSLv2). This includes the functions RSA_padding_check_SSLv23() and
+   RSA_padding_add_SSLv23() and the `-ssl` option in the deprecated
+   `rsautl` command.
+
+   *Rich Salz*
 
  * Deprecated the obsolete X9.31 RSA key generation related functions
    BN_X931_generate_Xpq(), BN_X931_derive_prime_ex(), and
@@ -99,6 +125,10 @@ OpenSSL 3.0
    OSSL_HTTP_REQ_CTX_set_max_response_length().
 
    *Rich Salz and Richard Levitte*
+
+ * Deprecated `OCSP_parse_url()`, which is replaced with `OSSL_HTTP_parse_url`.
+
+   *David von Oheimb*
 
  * Validation of SM2 keys has been separated from the validation of regular EC
    keys, allowing to improve the SM2 validation process to reject loaded private

@@ -101,7 +101,7 @@ static int kdf_derive(void *vpkdfctx, unsigned char *secret, size_t *secretlen,
         return 1;
     }
 
-    return EVP_KDF_derive(pkdfctx->kdfctx, secret, outlen);
+    return EVP_KDF_derive(pkdfctx->kdfctx, secret, outlen, NULL);
 }
 
 static void kdf_freectx(void *vpkdfctx)

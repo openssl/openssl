@@ -11,6 +11,6 @@
 # define OSSL_CRYPTO_PKCS7_H
 # pragma once
 
-void pkcs7_resolve_libctx(PKCS7 *p7);
+void ossl_pkcs7_resolve_libctx(PKCS7 *p7);
 
 #endif

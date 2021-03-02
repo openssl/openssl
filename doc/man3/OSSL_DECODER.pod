@@ -33,9 +33,9 @@ OSSL_DECODER_get_params
  void OSSL_DECODER_do_all_provided(OSSL_LIB_CTX *libctx,
                                    void (*fn)(OSSL_DECODER *decoder, void *arg),
                                    void *arg);
- void OSSL_DECODER_names_do_all(const OSSL_DECODER *decoder,
-                                void (*fn)(const char *name, void *data),
-                                void *data);
+ int OSSL_DECODER_names_do_all(const OSSL_DECODER *decoder,
+                               void (*fn)(const char *name, void *data),
+                               void *data);
  const OSSL_PARAM *OSSL_DECODER_gettable_params(OSSL_DECODER *decoder);
  int OSSL_DECODER_get_params(OSSL_DECODER_CTX *ctx, const OSSL_PARAM params[]);
 
@@ -106,6 +106,9 @@ OSSL_DECODER_is_a() returns 1 if I<decoder> was identifiable,
 otherwise 0.
 
 OSSL_DECODER_number() returns an integer.
+
+OSSL_DECODER_names_do_all() returns 1 if the callback was called for all
+names. A return value of 0 means that the callback was not called for any names.
 
 =head1 NOTES
 

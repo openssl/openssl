@@ -179,7 +179,7 @@ PKCS7 *d2i_PKCS7_fp(FILE *fp, PKCS7 **p7)
 
     ret = ASN1_item_d2i_fp(ASN1_ITEM_rptr(PKCS7), fp, p7);
     if (ret != NULL)
-        pkcs7_resolve_libctx(ret);
+        ossl_pkcs7_resolve_libctx(ret);
     return ret;
 }
 
@@ -195,7 +195,7 @@ PKCS7 *d2i_PKCS7_bio(BIO *bp, PKCS7 **p7)
 
     ret = ASN1_item_d2i_bio(ASN1_ITEM_rptr(PKCS7), bp, p7);
     if (ret != NULL)
-        pkcs7_resolve_libctx(ret);
+        ossl_pkcs7_resolve_libctx(ret);
     return ret;
 }
 

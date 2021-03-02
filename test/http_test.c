@@ -135,37 +135,75 @@ static int test_http_x509(int do_get)
     return res;
 }
 
-static int test_http_url_ok(const char *url, const char *exp_host, int exp_ssl)
+static int test_http_url_ok(const char *url, int exp_ssl, const char *exp_host,
+                            const char *exp_port, const char *exp_path)
 {
-    char *host, *port, *path;
-    int num, ssl;
+    char *user, *host, *port, *path, *query, *frag;
+    int exp_num, num, ssl;
     int res;
 
-    res = TEST_true(OSSL_HTTP_parse_url(url, &host, &port, &num, &path, &ssl))
+    TEST_int_eq(sscanf(exp_port, "%d", &exp_num), 1);
+    res = TEST_true(OSSL_HTTP_parse_url(url, &ssl, &user, &host, &port, &num,
+                                        &path, &query, &frag))
         && TEST_str_eq(host, exp_host)
-        && TEST_str_eq(port, "65535")
-        && TEST_int_eq(num, 65535)
-        && TEST_str_eq(path, "/pkix")
+        && TEST_str_eq(port, exp_port)
+        && TEST_int_eq(num, exp_num)
+        && TEST_str_eq(path, exp_path)
         && TEST_int_eq(ssl, exp_ssl);
+    if (res && *user != '\0')
+        res = TEST_str_eq(user, "user:pass");
+    if (res && *frag != '\0')
+        res = TEST_str_eq(frag, "fr");
+    if (res && *query != '\0')
+        res = TEST_str_eq(query, "q");
+    OPENSSL_free(user);
     OPENSSL_free(host);
     OPENSSL_free(port);
+    OPENSSL_free(path);
+    OPENSSL_free(query);
+    OPENSSL_free(frag);
+    return res;
+}
+
+static int test_http_url_path_query_ok(const char *url, const char *exp_path_qu)
+{
+    char *host, *path;
+    int res;
+
+    res = TEST_true(OSSL_HTTP_parse_url(url, NULL, NULL, &host, NULL, NULL,
+                                        &path, NULL, NULL))
+        && TEST_str_eq(host, "host")
+        && TEST_str_eq(path, exp_path_qu);
+    OPENSSL_free(host);
     OPENSSL_free(path);
     return res;
 }
 
 static int test_http_url_dns(void)
 {
-    return test_http_url_ok("server:65535/pkix", "server", 0);
+    return test_http_url_ok("host:65535/path", 0, "host", "65535", "/path");
+}
+
+static int test_http_url_path_query(void)
+{
+    return test_http_url_path_query_ok("http://usr@host:1/p?q=x#frag", "/p?q=x")
+        && test_http_url_path_query_ok("http://host?query#frag", "/?query")
+        && test_http_url_path_query_ok("http://host:9999#frag", "/");
+}
+
+static int test_http_url_userinfo_query_fragment(void)
+{
+    return test_http_url_ok("user:pass@host/p?q#fr", 0, "host", "80", "/p");
 }
 
 static int test_http_url_ipv4(void)
 {
-    return test_http_url_ok("https://1.2.3.4:65535/pkix", "1.2.3.4", 1);
+    return test_http_url_ok("https://1.2.3.4/p/q", 1, "1.2.3.4", "443", "/p/q");
 }
 
 static int test_http_url_ipv6(void)
 {
-    return test_http_url_ok("http://[FF01::101]:65535/pkix", "FF01::101", 0);
+    return test_http_url_ok("http://[FF01::101]:6", 0, "FF01::101", "6", "/");
 }
 
 static int test_http_url_invalid(const char *url)
@@ -174,7 +212,8 @@ static int test_http_url_invalid(const char *url)
     int num = 1, ssl = 1;
     int res;
 
-    res = TEST_false(OSSL_HTTP_parse_url(url, &host, &port, &num, &path, &ssl))
+    res = TEST_false(OSSL_HTTP_parse_url(url, &ssl, NULL, &host, &port, &num,
+                                         &path, NULL, NULL))
         && TEST_ptr_null(host)
         && TEST_ptr_null(port)
         && TEST_ptr_null(path);
@@ -228,6 +267,8 @@ int setup_tests(void)
         return 1;
 
     ADD_TEST(test_http_url_dns);
+    ADD_TEST(test_http_url_path_query);
+    ADD_TEST(test_http_url_userinfo_query_fragment);
     ADD_TEST(test_http_url_ipv4);
     ADD_TEST(test_http_url_ipv6);
     ADD_TEST(test_http_url_invalid_prefix);

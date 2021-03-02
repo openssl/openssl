@@ -51,32 +51,32 @@ There are six supported types:
 =item EVP_KDF_SSHKDF_TYPE_INITIAL_IV_CLI_TO_SRV
 
 The Initial IV from client to server.
-Char array initializer of value {65, 0}, i.e., ASCII string "A".
+A single char of value 65 (ASCII char 'A').
 
 =item EVP_KDF_SSHKDF_TYPE_INITIAL_IV_SRV_TO_CLI
 
 The Initial IV from server to client
-Char array initializer of value {66, 0}, i.e., ASCII string "B".
+A single char of value 66 (ASCII char 'B').
 
 =item EVP_KDF_SSHKDF_TYPE_ENCRYPTION_KEY_CLI_TO_SRV
 
 The Encryption Key from client to server
-Char array initializer of value {67, 0}, i.e., ASCII string "C".
+A single char of value 67 (ASCII char 'C').
 
 =item EVP_KDF_SSHKDF_TYPE_ENCRYPTION_KEY_SRV_TO_CLI
 
 The Encryption Key from server to client
-Char array initializer of value {68, 0}, i.e., ASCII string "D".
+A single char of value 68 (ASCII char 'D').
 
 =item EVP_KDF_SSHKDF_TYPE_INTEGRITY_KEY_CLI_TO_SRV
 
 The Integrity Key from client to server
-Char array initializer of value {69, 0}, i.e., ASCII string "E".
+A single char of value 69 (ASCII char 'E').
 
 =item EVP_KDF_SSHKDF_TYPE_INTEGRITY_KEY_SRV_TO_CLI
 
 The Integrity Key from client to server
-Char array initializer of value {70, 0}, i.e., ASCII string "F".
+A single char of value 70 (ASCII char 'F').
 
 =back
 
@@ -103,7 +103,7 @@ This example derives an 8 byte IV using SHA-256 with a 1K "key" and appropriate
 
  EVP_KDF *kdf;
  EVP_KDF_CTX *kctx;
- const char type[] = EVP_KDF_SSHKDF_TYPE_INITIAL_IV_CLI_TO_SRV;
+ const char type = EVP_KDF_SSHKDF_TYPE_INITIAL_IV_CLI_TO_SRV;
  unsigned char key[1024] = "01234...";
  unsigned char xcghash[32] = "012345...";
  unsigned char session_id[32] = "012345...";
@@ -124,12 +124,9 @@ This example derives an 8 byte IV using SHA-256 with a 1K "key" and appropriate
  *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SALT,
                                           session_id, (size_t)32);
  *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_SSHKDF_TYPE,
-                                         type, sizeof(type) - 1);
+                                         &type, sizeof(type));
  *p = OSSL_PARAM_construct_end();
- if (EVP_KDF_CTX_set_params(kctx, params) <= 0)
-     /* Error */
-
- if (EVP_KDF_derive(kctx, out, &outlen) <= 0)
+ if (EVP_KDF_derive(kctx, out, &outlen, params) <= 0)
      /* Error */
 
 

@@ -142,9 +142,9 @@ void EC_ec_pre_comp_free(EC_PRE_COMP *pre)
  *
  * Returns 1 on success, 0 otherwise.
  */
-int ec_scalar_mul_ladder(const EC_GROUP *group, EC_POINT *r,
-                         const BIGNUM *scalar, const EC_POINT *point,
-                         BN_CTX *ctx)
+int ossl_ec_scalar_mul_ladder(const EC_GROUP *group, EC_POINT *r,
+                              const BIGNUM *scalar, const EC_POINT *point,
+                              BN_CTX *ctx)
 {
     int i, cardinality_bits, group_top, kbit, pbit, Z_is_one;
     EC_POINT *p = NULL;
@@ -407,9 +407,9 @@ int ec_scalar_mul_ladder(const EC_GROUP *group, EC_POINT *r,
  *      scalar*generator
  * in the addition if scalar != NULL
  */
-int ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
-                size_t num, const EC_POINT *points[], const BIGNUM *scalars[],
-                BN_CTX *ctx)
+int ossl_ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
+                     size_t num, const EC_POINT *points[],
+                     const BIGNUM *scalars[], BN_CTX *ctx)
 {
     const EC_POINT *generator = NULL;
     EC_POINT *tmp = NULL;
@@ -450,7 +450,7 @@ int ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
              * is why we ignore if BN_FLG_CONSTTIME is actually set and we
              * always call the ladder version.
              */
-            return ec_scalar_mul_ladder(group, r, scalar, NULL, ctx);
+            return ossl_ec_scalar_mul_ladder(group, r, scalar, NULL, ctx);
         }
         if ((scalar == NULL) && (num == 1) && (scalars[0] != group->order)) {
             /*-
@@ -460,7 +460,8 @@ int ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
              * To protect the secret scalar, we ignore if BN_FLG_CONSTTIME is
              * actually set and we always call the ladder version.
              */
-            return ec_scalar_mul_ladder(group, r, scalars[0], points[0], ctx);
+            return ossl_ec_scalar_mul_ladder(group, r, scalars[0], points[0],
+                                             ctx);
         }
     }
 
@@ -753,11 +754,11 @@ int ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
                          * Apply coordinate blinding for EC_POINT.
                          *
                          * The underlying EC_METHOD can optionally implement this function:
-                         * ec_point_blind_coordinates() returns 0 in case of errors or 1 on
+                         * ossl_ec_point_blind_coordinates() returns 0 in case of errors or 1 on
                          * success or if coordinate blinding is not implemented for this
                          * group.
                          */
-                        if (!ec_point_blind_coordinates(group, r, ctx)) {
+                        if (!ossl_ec_point_blind_coordinates(group, r, ctx)) {
                             ERR_raise(ERR_LIB_EC, EC_R_POINT_COORDINATES_BLIND_FAILURE);
                             goto err;
                         }
@@ -807,9 +808,9 @@ int ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 }
 
 /*-
- * ec_wNAF_precompute_mult()
+ * ossl_ec_wNAF_precompute_mult()
  * creates an EC_PRE_COMP object with preprecomputed multiples of the generator
- * for use with wNAF splitting as implemented in ec_wNAF_mul().
+ * for use with wNAF splitting as implemented in ossl_ec_wNAF_mul().
  *
  * 'pre_comp->points' is an array of multiples of the generator
  * of the following form:
@@ -826,7 +827,7 @@ int ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
  * points[2^(w-1)*numblocks-1]     = (2^(w-1)) *  2^(blocksize*(numblocks-1)) * generator
  * points[2^(w-1)*numblocks]       = NULL
  */
-int ec_wNAF_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
+int ossl_ec_wNAF_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
 {
     const EC_POINT *generator;
     EC_POINT *tmp_point = NULL, *base = NULL, **var;
@@ -987,7 +988,7 @@ int ec_wNAF_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
     return ret;
 }
 
-int ec_wNAF_have_precompute_mult(const EC_GROUP *group)
+int ossl_ec_wNAF_have_precompute_mult(const EC_GROUP *group)
 {
     return HAVEPRECOMP(group, ec);
 }

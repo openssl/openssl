@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -65,8 +65,8 @@ IMPLEMENT_ASN1_DUP_FUNCTION(ESS_SIGNING_CERT_V2)
  * Returns < 0 if attribute is not found, 1 if found, or 
  * -1 on attribute parsing failure.
  */
-int cms_signerinfo_get_signing_cert_v2(CMS_SignerInfo *si,
-                                       ESS_SIGNING_CERT_V2 **psc)
+int ossl_cms_signerinfo_get_signing_cert_v2(CMS_SignerInfo *si,
+                                            ESS_SIGNING_CERT_V2 **psc)
 {
     ASN1_STRING *str;
     ESS_SIGNING_CERT_V2 *sc;
@@ -92,8 +92,8 @@ int cms_signerinfo_get_signing_cert_v2(CMS_SignerInfo *si,
  * Returns < 0 if attribute is not found, 1 if found, or 
  * -1 on attribute parsing failure.
  */
-int cms_signerinfo_get_signing_cert(CMS_SignerInfo *si,
-                                    ESS_SIGNING_CERT **psc)
+int ossl_cms_signerinfo_get_signing_cert(CMS_SignerInfo *si,
+                                         ESS_SIGNING_CERT **psc)
 {
     ASN1_STRING *str;
     ESS_SIGNING_CERT *sc;

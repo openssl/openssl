@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <stdio.h>
-#include <string.h>
+#include "internal/deprecated.h"
+
 #include <openssl/core_names.h>
 #include <openssl/params.h>
 #include <openssl/err.h>
@@ -24,7 +24,7 @@ static int dh_paramgen_check(EVP_PKEY_CTX *ctx)
         return -2;
     }
     /* If key type not DH return error */
-    if (ctx->pmeth != NULL
+    if (evp_pkey_ctx_is_legacy(ctx)
         && ctx->pmeth->pkey_id != EVP_PKEY_DH
         && ctx->pmeth->pkey_id != EVP_PKEY_DHX)
         return -1;
@@ -39,7 +39,7 @@ static int dh_param_derive_check(EVP_PKEY_CTX *ctx)
         return -2;
     }
     /* If key type not DH return error */
-    if (ctx->pmeth != NULL
+    if (evp_pkey_ctx_is_legacy(ctx)
         && ctx->pmeth->pkey_id != EVP_PKEY_DH
         && ctx->pmeth->pkey_id != EVP_PKEY_DHX)
         return -1;
@@ -57,7 +57,7 @@ int EVP_PKEY_CTX_set_dh_paramgen_gindex(EVP_PKEY_CTX *ctx, int gindex)
     *p++ = OSSL_PARAM_construct_int(OSSL_PKEY_PARAM_FFC_GINDEX, &gindex);
     *p = OSSL_PARAM_construct_end();
 
-    return EVP_PKEY_CTX_set_params(ctx, params);
+    return evp_pkey_ctx_set_params_strict(ctx, params);
 }
 
 int EVP_PKEY_CTX_set_dh_paramgen_seed(EVP_PKEY_CTX *ctx,
@@ -74,31 +74,17 @@ int EVP_PKEY_CTX_set_dh_paramgen_seed(EVP_PKEY_CTX *ctx,
                                              (void *)seed, seedlen);
     *p = OSSL_PARAM_construct_end();
 
-    return EVP_PKEY_CTX_set_params(ctx, params);
+    return evp_pkey_ctx_set_params_strict(ctx, params);
 }
 
+/*
+ * This one is currently implemented as an EVP_PKEY_CTX_ctrl() wrapper,
+ * simply because that's easier.
+ */
 int EVP_PKEY_CTX_set_dh_paramgen_type(EVP_PKEY_CTX *ctx, int typ)
 {
-    int ret;
-    OSSL_PARAM params[2], *p = params;
-    const char *name;
-
-    if ((ret = dh_paramgen_check(ctx)) <= 0)
-        return ret;
-
-    /* TODO(3.0): Remove this eventually when no more legacy */
-    if (ctx->op.keymgmt.genctx == NULL)
-        return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DH, EVP_PKEY_OP_PARAMGEN,
-                                 EVP_PKEY_CTRL_DH_PARAMGEN_TYPE, typ, NULL);
-
-    name = dh_gen_type_id2name(typ);
-    if (name == NULL)
-        return 0;
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_FFC_TYPE,
-                                            (char *) name, 0);
-    *p = OSSL_PARAM_construct_end();
-
-    return EVP_PKEY_CTX_set_params(ctx, params);
+    return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DH, EVP_PKEY_OP_PARAMGEN,
+                             EVP_PKEY_CTRL_DH_PARAMGEN_TYPE, typ, NULL);
 }
 
 int EVP_PKEY_CTX_set_dh_paramgen_prime_len(EVP_PKEY_CTX *ctx, int pbits)
@@ -110,14 +96,9 @@ int EVP_PKEY_CTX_set_dh_paramgen_prime_len(EVP_PKEY_CTX *ctx, int pbits)
     if ((ret = dh_paramgen_check(ctx)) <= 0)
         return ret;
 
-    /* TODO(3.0): Remove this eventually when no more legacy */
-    if (ctx->op.keymgmt.genctx == NULL)
-        return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DH, EVP_PKEY_OP_PARAMGEN,
-                                 EVP_PKEY_CTRL_DH_PARAMGEN_PRIME_LEN, pbits,
-                                 NULL);
     *p++ = OSSL_PARAM_construct_size_t(OSSL_PKEY_PARAM_FFC_PBITS, &bits);
     *p = OSSL_PARAM_construct_end();
-    return EVP_PKEY_CTX_set_params(ctx, params);
+    return evp_pkey_ctx_set_params_strict(ctx, params);
 }
 
 int EVP_PKEY_CTX_set_dh_paramgen_subprime_len(EVP_PKEY_CTX *ctx, int qbits)
@@ -129,15 +110,10 @@ int EVP_PKEY_CTX_set_dh_paramgen_subprime_len(EVP_PKEY_CTX *ctx, int qbits)
     if ((ret = dh_paramgen_check(ctx)) <= 0)
         return ret;
 
-    /* TODO(3.0): Remove this eventually when no more legacy */
-    if (ctx->op.keymgmt.genctx == NULL)
-        return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DH, EVP_PKEY_OP_PARAMGEN,
-                                 EVP_PKEY_CTRL_DH_PARAMGEN_SUBPRIME_LEN, qbits,
-                                 NULL);
     *p++ = OSSL_PARAM_construct_size_t(OSSL_PKEY_PARAM_FFC_QBITS, &bits2);
     *p = OSSL_PARAM_construct_end();
 
-    return EVP_PKEY_CTX_set_params(ctx, params);
+    return evp_pkey_ctx_set_params_strict(ctx, params);
 }
 
 int EVP_PKEY_CTX_set_dh_paramgen_generator(EVP_PKEY_CTX *ctx, int gen)
@@ -148,37 +124,20 @@ int EVP_PKEY_CTX_set_dh_paramgen_generator(EVP_PKEY_CTX *ctx, int gen)
     if ((ret = dh_paramgen_check(ctx)) <= 0)
         return ret;
 
-    /* TODO(3.0): Remove this eventually when no more legacy */
-    if (ctx->op.keymgmt.genctx == NULL)
-        return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DH, EVP_PKEY_OP_PARAMGEN,
-                                 EVP_PKEY_CTRL_DH_PARAMGEN_GENERATOR, gen, NULL);
     *p++ = OSSL_PARAM_construct_int(OSSL_PKEY_PARAM_DH_GENERATOR, &gen);
     *p = OSSL_PARAM_construct_end();
 
-    return EVP_PKEY_CTX_set_params(ctx, params);
+    return evp_pkey_ctx_set_params_strict(ctx, params);
 }
 
+/*
+ * This one is currently implemented as an EVP_PKEY_CTX_ctrl() wrapper,
+ * simply because that's easier.
+ */
 int EVP_PKEY_CTX_set_dh_rfc5114(EVP_PKEY_CTX *ctx, int gen)
 {
-    int ret;
-    OSSL_PARAM params[2], *p = params;
-    const char *name;
-
-    if ((ret = dh_paramgen_check(ctx)) <= 0)
-        return ret;
-
-    /* TODO(3.0): Remove this eventually when no more legacy */
-    if (ctx->op.keymgmt.genctx == NULL)
-        return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DHX, EVP_PKEY_OP_PARAMGEN,
-                                 EVP_PKEY_CTRL_DH_RFC5114, gen, NULL);
-    name = ossl_ffc_named_group_get_name(ossl_ffc_uid_to_dh_named_group(gen));
-    if (name == NULL)
-        return 0;
-
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME,
-                                            (void *)name, 0);
-    *p = OSSL_PARAM_construct_end();
-    return EVP_PKEY_CTX_set_params(ctx, params);
+    return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DHX, EVP_PKEY_OP_PARAMGEN,
+                             EVP_PKEY_CTRL_DH_RFC5114, gen, NULL);
 }
 
 int EVP_PKEY_CTX_set_dhx_rfc5114(EVP_PKEY_CTX *ctx, int gen)
@@ -186,28 +145,17 @@ int EVP_PKEY_CTX_set_dhx_rfc5114(EVP_PKEY_CTX *ctx, int gen)
     return EVP_PKEY_CTX_set_dh_rfc5114(ctx, gen);
 }
 
+/*
+ * This one is currently implemented as an EVP_PKEY_CTX_ctrl() wrapper,
+ * simply because that's easier.
+ * TODO(3.0) Should this be deprecated in favor of passing a name or an
+ * ASN1_OBJECT (which can be converted to text internally)?
+ */
 int EVP_PKEY_CTX_set_dh_nid(EVP_PKEY_CTX *ctx, int nid)
 {
-    int ret;
-    OSSL_PARAM params[2], *p = params;
-    const char *name;
-
-    if ((ret = dh_paramgen_check(ctx)) <= 0)
-        return ret;
-
-    /* TODO(3.0): Remove this eventually when no more legacy */
-    if (ctx->op.keymgmt.genctx == NULL)
-        return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DH,
-                                 EVP_PKEY_OP_PARAMGEN | EVP_PKEY_OP_KEYGEN,
-                                 EVP_PKEY_CTRL_DH_NID, nid, NULL);
-    name = ossl_ffc_named_group_get_name(ossl_ffc_uid_to_dh_named_group(nid));
-    if (name == NULL)
-        return 0;
-
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME,
-                                            (void *)name, 0);
-    *p = OSSL_PARAM_construct_end();
-    return EVP_PKEY_CTX_set_params(ctx, params);
+    return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DH,
+                             EVP_PKEY_OP_PARAMGEN | EVP_PKEY_OP_KEYGEN,
+                             EVP_PKEY_CTRL_DH_NID, nid, NULL);
 }
 
 int EVP_PKEY_CTX_set_dh_pad(EVP_PKEY_CTX *ctx, int pad)
@@ -221,241 +169,91 @@ int EVP_PKEY_CTX_set_dh_pad(EVP_PKEY_CTX *ctx, int pad)
         return -2;
     }
 
-    /* TODO(3.0): Remove this eventually when no more legacy */
-    if (ctx->op.kex.exchprovctx == NULL)
-        return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DH, EVP_PKEY_OP_DERIVE,
-                                 EVP_PKEY_CTRL_DH_PAD, pad, NULL);
-
     dh_pad_params[0] = OSSL_PARAM_construct_uint(OSSL_EXCHANGE_PARAM_PAD, &upad);
     dh_pad_params[1] = OSSL_PARAM_construct_end();
 
-    return EVP_PKEY_CTX_set_params(ctx, dh_pad_params);
+    return evp_pkey_ctx_set_params_strict(ctx, dh_pad_params);
 }
 
+/*
+ * This one is currently implemented as an EVP_PKEY_CTX_ctrl() wrapper,
+ * simply because that's easier.
+ * TODO(3.0) Should this be deprecated in favor of passing a name?
+ */
 int EVP_PKEY_CTX_set_dh_kdf_type(EVP_PKEY_CTX *ctx, int kdf)
 {
-    int ret;
-    const char *kdf_type;
-    OSSL_PARAM params[2], *p = params;
-
-    ret = dh_param_derive_check(ctx);
-    if (ret != 1)
-        return ret;
-
-    /* TODO(3.0): Remove this eventually when no more legacy */
-    if (ctx->op.kex.exchprovctx == NULL)
-        return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DHX, EVP_PKEY_OP_DERIVE,
-                                 EVP_PKEY_CTRL_DH_KDF_TYPE, kdf, NULL);
-    switch (kdf) {
-        case EVP_PKEY_DH_KDF_NONE:
-            kdf_type = "";
-            break;
-        case EVP_PKEY_DH_KDF_X9_42:
-            kdf_type = OSSL_KDF_NAME_X942KDF_ASN1;
-            break;
-        default:
-            return -2;
-    }
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_EXCHANGE_PARAM_KDF_TYPE,
-                                            /*
-                                             * Cast away the const. This is read
-                                             * only so should be safe
-                                             */
-                                            (char *)kdf_type, 0);
-    *p = OSSL_PARAM_construct_end();
-
-    ret = evp_pkey_ctx_set_params_strict(ctx, params);
-    if (ret == -2) {
-        ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
-        /* Uses the same return values as EVP_PKEY_CTX_ctrl */
-        return -2;
-    }
-
-    return ret;
+    return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DHX, EVP_PKEY_OP_DERIVE,
+                             EVP_PKEY_CTRL_DH_KDF_TYPE, kdf, NULL);
 }
 
+/*
+ * This one is currently implemented as an EVP_PKEY_CTX_ctrl() wrapper,
+ * simply because that's easier.
+ * TODO(3.0) Should this be deprecated in favor of getting a name?
+ */
 int EVP_PKEY_CTX_get_dh_kdf_type(EVP_PKEY_CTX *ctx)
 {
-    int ret;
-    char kdf_type[80]; /* 80 should be big enough */
-    OSSL_PARAM params[2], *p = params;
-
-    ret = dh_param_derive_check(ctx);
-    if (ret != 1)
-        return ret;
-
-    /* TODO(3.0): Remove this eventually when no more legacy */
-    if (ctx->op.kex.exchprovctx == NULL)
-        return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DHX, EVP_PKEY_OP_DERIVE,
-                                 EVP_PKEY_CTRL_DH_KDF_TYPE, -2, NULL);
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_EXCHANGE_PARAM_KDF_TYPE,
-                                            kdf_type, sizeof(kdf_type));
-    *p = OSSL_PARAM_construct_end();
-
-    ret = evp_pkey_ctx_get_params_strict(ctx, params);
-    if (ret == -2) {
-        ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
-        /* Uses the same return values as EVP_PKEY_CTX_ctrl */
-        return -2;
-    } else if (ret != 1) {
-        return -1;
-    }
-
-    if (kdf_type[0] == '\0')
-        return EVP_PKEY_DH_KDF_NONE;
-    else if (strcmp(kdf_type, OSSL_KDF_NAME_X942KDF_ASN1) == 0)
-        return EVP_PKEY_DH_KDF_X9_42;
-
-    return -1;
+    return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DHX, EVP_PKEY_OP_DERIVE,
+                             EVP_PKEY_CTRL_DH_KDF_TYPE, -2, NULL);
 }
 
+/*
+ * This one is currently implemented as an EVP_PKEY_CTX_ctrl() wrapper,
+ * simply because that's easier.
+ */
 int EVP_PKEY_CTX_set0_dh_kdf_oid(EVP_PKEY_CTX *ctx, ASN1_OBJECT *oid)
 {
-    int ret;
-    OSSL_PARAM params[2], *p = params;
-    const char *oid_name;
-
-    ret = dh_param_derive_check(ctx);
-    if (ret != 1)
-        return ret;
-
-    /* TODO(3.0): Remove this eventually when no more legacy */
-    if (ctx->op.kex.exchprovctx == NULL)
-        return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DHX, EVP_PKEY_OP_DERIVE,
-                                 EVP_PKEY_CTRL_DH_KDF_OID, 0, (void *)(oid));
-    oid_name = OBJ_nid2sn(OBJ_obj2nid(oid));
-
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_CEK_ALG,
-                                            (char *)oid_name, 0);
-    *p = OSSL_PARAM_construct_end();
-    ret = evp_pkey_ctx_set_params_strict(ctx, params);
-    if (ret == -2) {
-        ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
-        /* Uses the same return values as EVP_PKEY_CTX_ctrl */
-        return -2;
-    }
-
-    return ret;
+    return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DHX, EVP_PKEY_OP_DERIVE,
+                             EVP_PKEY_CTRL_DH_KDF_OID, 0, (void *)(oid));
 }
 
+/*
+ * This one is currently implemented as an EVP_PKEY_CTX_ctrl() wrapper,
+ * simply because that's easier.
+ */
 int EVP_PKEY_CTX_get0_dh_kdf_oid(EVP_PKEY_CTX *ctx, ASN1_OBJECT **oid)
 {
-    int ret, nid;
-    OSSL_PARAM params[2], *p = params;
-    char oid_name[80]; /* 80 should be big enough */
-
-    ret = dh_param_derive_check(ctx);
-    if (ret != 1)
-        return ret;
-
-    /* TODO(3.0): Remove this eventually when no more legacy */
-    if (ctx->op.kex.exchprovctx == NULL)
-        return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DHX, EVP_PKEY_OP_DERIVE,
-                                 EVP_PKEY_CTRL_GET_DH_KDF_OID, 0, (void *)(oid));
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_CEK_ALG,
-                                            oid_name, sizeof(oid_name));
-    *p = OSSL_PARAM_construct_end();
-
-    ret = evp_pkey_ctx_get_params_strict(ctx, params);
-    if (ret == -2) {
-        ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
-        /* Uses the same return values as EVP_PKEY_CTX_ctrl */
-        return -2;
-    } else if (ret != 1) {
-        return -1;
-    }
-    nid = OBJ_sn2nid(oid_name);
-    if (nid == NID_undef)
-        nid = OBJ_ln2nid(oid_name);
-    *oid = (nid == NID_undef ? NULL : OBJ_nid2obj(nid));
-    return *oid != NULL;
+    return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DHX, EVP_PKEY_OP_DERIVE,
+                             EVP_PKEY_CTRL_GET_DH_KDF_OID, 0, (void *)(oid));
 }
 
+/*
+ * This one is currently implemented as an EVP_PKEY_CTX_ctrl() wrapper,
+ * simply because that's easier.
+ * TODO(3.0) Should this be deprecated in favor of passing a name?
+ */
 int EVP_PKEY_CTX_set_dh_kdf_md(EVP_PKEY_CTX *ctx, const EVP_MD *md)
 {
-    int ret;
-    OSSL_PARAM params[2], *p = params;
-    const char *md_name = NULL;
-
-    ret = dh_param_derive_check(ctx);
-    if (ret != 1)
-        return ret;
-
-    /* TODO(3.0): Remove this eventually when no more legacy */
-    if (ctx->op.kex.exchprovctx == NULL)
-        return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DHX, EVP_PKEY_OP_DERIVE,
-                                 EVP_PKEY_CTRL_DH_KDF_MD, 0, (void *)(md));
-    md_name = (md == NULL) ? "" : EVP_MD_name(md);
-
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_EXCHANGE_PARAM_KDF_DIGEST,
-                                            /*
-                                             * Cast away the const. This is read
-                                             * only so should be safe
-                                             */
-                                            (char *)md_name, 0);
-    *p = OSSL_PARAM_construct_end();
-
-    ret = evp_pkey_ctx_set_params_strict(ctx, params);
-    if (ret == -2) {
-        ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
-        /* Uses the same return values as EVP_PKEY_CTX_ctrl */
-        return -2;
-    }
-    return ret;
+    return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DHX, EVP_PKEY_OP_DERIVE,
+                             EVP_PKEY_CTRL_DH_KDF_MD, 0, (void *)(md));
 }
 
+/*
+ * This one is currently implemented as an EVP_PKEY_CTX_ctrl() wrapper,
+ * simply because that's easier.
+ * TODO(3.0) Should this be deprecated in favor of getting a name?
+ */
 int EVP_PKEY_CTX_get_dh_kdf_md(EVP_PKEY_CTX *ctx, const EVP_MD **pmd)
 {
-    int ret;
-    char name[80] = "";  /* 80 should be big enough */
-    OSSL_PARAM params[2], *p = params;
-
-    ret = dh_param_derive_check(ctx);
-    if (ret != 1)
-        return ret;
-
-    /* TODO(3.0): Remove this eventually when no more legacy */
-    if (ctx->op.kex.exchprovctx == NULL)
         return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DHX, EVP_PKEY_OP_DERIVE,
                                  EVP_PKEY_CTRL_GET_DH_KDF_MD, 0, (void *)(pmd));
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_EXCHANGE_PARAM_KDF_DIGEST,
-                                            name, sizeof(name));
-    *p = OSSL_PARAM_construct_end();
-
-    ret = evp_pkey_ctx_get_params_strict(ctx, params);
-    if (ret == -2) {
-        ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
-        /* Uses the same return values as EVP_PKEY_CTX_ctrl */
-        return -2;
-    } else if (ret != 1) {
-        return -1;
-    }
-
-    /* May be NULL meaning "unknown" */
-    *pmd = EVP_get_digestbyname(name);
-
-    return 1;
 }
 
-int EVP_PKEY_CTX_set_dh_kdf_outlen(EVP_PKEY_CTX *ctx, int inlen)
+int EVP_PKEY_CTX_set_dh_kdf_outlen(EVP_PKEY_CTX *ctx, int outlen)
 {
     int ret;
-    size_t len = inlen;
+    size_t len = outlen;
     OSSL_PARAM params[2], *p = params;
 
     ret = dh_param_derive_check(ctx);
     if (ret != 1)
         return ret;
 
-    /* TODO(3.0): Remove this eventually when no more legacy */
-    if (ctx->op.kex.exchprovctx == NULL)
-        return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DHX, EVP_PKEY_OP_DERIVE,
-                                 EVP_PKEY_CTRL_DH_KDF_OUTLEN, inlen, NULL);
-    if (inlen <= 0) {
+    if (outlen <= 0) {
         /*
          * This would ideally be -1 or 0, but we have to retain compatibility
          * with legacy behaviour of EVP_PKEY_CTX_ctrl() which returned -2 if
-         * in <= 0
+         * inlen <= 0
          */
         return -2;
     }
@@ -465,11 +263,8 @@ int EVP_PKEY_CTX_set_dh_kdf_outlen(EVP_PKEY_CTX *ctx, int inlen)
     *p = OSSL_PARAM_construct_end();
 
     ret = evp_pkey_ctx_set_params_strict(ctx, params);
-    if (ret == -2) {
+    if (ret == -2)
         ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
-        /* Uses the same return values as EVP_PKEY_CTX_ctrl */
-        return -2;
-    }
     return ret;
 }
 
@@ -483,25 +278,14 @@ int EVP_PKEY_CTX_get_dh_kdf_outlen(EVP_PKEY_CTX *ctx, int *plen)
     if (ret != 1)
         return ret;
 
-    /* TODO(3.0): Remove this eventually when no more legacy */
-    if (ctx->op.kex.exchprovctx == NULL)
-        return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DHX, EVP_PKEY_OP_DERIVE,
-                                 EVP_PKEY_CTRL_GET_DH_KDF_OUTLEN, 0,
-                                 (void *)(plen));
     *p++ = OSSL_PARAM_construct_size_t(OSSL_EXCHANGE_PARAM_KDF_OUTLEN,
                                        &len);
     *p = OSSL_PARAM_construct_end();
 
     ret = evp_pkey_ctx_get_params_strict(ctx, params);
-    if (ret == -2) {
+    if (ret == -2)
         ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
-        /* Uses the same return values as EVP_PKEY_CTX_ctrl */
-        return -2;
-    } else if (ret != 1) {
-        return -1;
-    }
-
-    if (len > INT_MAX)
+    if (ret != 1 || len > INT_MAX)
         return -1;
 
     *plen = (int)len;
@@ -521,11 +305,6 @@ int EVP_PKEY_CTX_set0_dh_kdf_ukm(EVP_PKEY_CTX *ctx, unsigned char *ukm, int len)
     if (ret != 1)
         return ret;
 
-    /* TODO(3.0): Remove this eventually when no more legacy */
-    if (ctx->op.kex.exchprovctx == NULL)
-        return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DHX, EVP_PKEY_OP_DERIVE,
-                                 EVP_PKEY_CTRL_DH_KDF_UKM, len, (void *)(ukm));
-
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_EXCHANGE_PARAM_KDF_UKM,
                                             /*
                                              * Cast away the const. This is read
@@ -536,16 +315,14 @@ int EVP_PKEY_CTX_set0_dh_kdf_ukm(EVP_PKEY_CTX *ctx, unsigned char *ukm, int len)
     *p = OSSL_PARAM_construct_end();
 
     ret = evp_pkey_ctx_set_params_strict(ctx, params);
-    if (ret == -2) {
+    if (ret == -2)
         ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
-        /* Uses the same return values as EVP_PKEY_CTX_ctrl */
-        return -2;
-    }
     if (ret == 1)
         OPENSSL_free(ukm);
     return ret;
 }
 
+#ifndef OPENSSL_NO_DEPRECATED_3_0
 int EVP_PKEY_CTX_get0_dh_kdf_ukm(EVP_PKEY_CTX *ctx, unsigned char **pukm)
 {
     int ret;
@@ -556,23 +333,15 @@ int EVP_PKEY_CTX_get0_dh_kdf_ukm(EVP_PKEY_CTX *ctx, unsigned char **pukm)
     if (ret != 1)
         return ret;
 
-    /* TODO(3.0): Remove this eventually when no more legacy */
-    if (ctx->op.kex.exchprovctx == NULL)
-        return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DHX, EVP_PKEY_OP_DERIVE,
-                                 EVP_PKEY_CTRL_GET_DH_KDF_UKM, 0, (void *)(pukm));
-
     *p++ = OSSL_PARAM_construct_octet_ptr(OSSL_EXCHANGE_PARAM_KDF_UKM,
                                           (void **)pukm, 0);
     *p = OSSL_PARAM_construct_end();
 
     ret = evp_pkey_ctx_get_params_strict(ctx, params);
-    if (ret == -2) {
+    if (ret == -2)
         ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
-        /* Uses the same return values as EVP_PKEY_CTX_ctrl */
-        return -2;
-    } else if (ret != 1) {
+    if (ret != 1)
         return -1;
-    }
 
     ukmlen = params[0].return_size;
     if (ukmlen > INT_MAX)
@@ -580,3 +349,4 @@ int EVP_PKEY_CTX_get0_dh_kdf_ukm(EVP_PKEY_CTX *ctx, unsigned char **pukm)
 
     return (int)ukmlen;
 }
+#endif

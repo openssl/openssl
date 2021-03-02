@@ -373,7 +373,7 @@ static int NewSessionCallback(SSL *ssl, SSL_SESSION *session) {
 static int TicketKeyCallback(SSL *ssl, uint8_t *key_name, uint8_t *iv,
                              EVP_CIPHER_CTX *ctx, EVP_MAC_CTX *hmac_ctx,
                              int encrypt) {
-  OSSL_PARAM params[3], *p = params;
+  OSSL_PARAM params[2], *p = params;
 
   if (!encrypt) {
     if (GetTestState(ssl)->ticket_decrypt_done) {
@@ -396,14 +396,10 @@ static int TicketKeyCallback(SSL *ssl, uint8_t *key_name, uint8_t *iv,
 
   *p++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
                                           const_cast<char *>("SHA256"), 0);
-  *p++ = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY,
-                                           (void *)kZeros,
-                                           sizeof(kZeros));
   *p = OSSL_PARAM_construct_end();
 
   if (!EVP_CipherInit_ex(ctx, EVP_aes_128_cbc(), NULL, kZeros, iv, encrypt)
-      || !EVP_MAC_init(hmac_ctx)
-      || !EVP_MAC_CTX_set_params(hmac_ctx, params)) {
+      || !EVP_MAC_init(hmac_ctx, kZeros, sizeof(kZeros), params)) {
     return -1;
   }
 

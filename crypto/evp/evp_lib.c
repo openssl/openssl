@@ -644,12 +644,14 @@ const char *EVP_CIPHER_name(const EVP_CIPHER *cipher)
 #endif
 }
 
-void EVP_CIPHER_names_do_all(const EVP_CIPHER *cipher,
-                             void (*fn)(const char *name, void *data),
-                             void *data)
+int EVP_CIPHER_names_do_all(const EVP_CIPHER *cipher,
+                            void (*fn)(const char *name, void *data),
+                            void *data)
 {
     if (cipher->prov != NULL)
-        evp_names_do_all(cipher->prov, cipher->name_id, fn, data);
+        return evp_names_do_all(cipher->prov, cipher->name_id, fn, data);
+
+    return 1;
 }
 
 const OSSL_PROVIDER *EVP_CIPHER_provider(const EVP_CIPHER *cipher)
@@ -685,12 +687,14 @@ const char *EVP_MD_name(const EVP_MD *md)
 #endif
 }
 
-void EVP_MD_names_do_all(const EVP_MD *md,
-                         void (*fn)(const char *name, void *data),
-                         void *data)
+int EVP_MD_names_do_all(const EVP_MD *md,
+                        void (*fn)(const char *name, void *data),
+                        void *data)
 {
     if (md->prov != NULL)
-        evp_names_do_all(md->prov, md->name_id, fn, data);
+        return evp_names_do_all(md->prov, md->name_id, fn, data);
+
+    return 1;
 }
 
 const OSSL_PROVIDER *EVP_MD_provider(const EVP_MD *md)
@@ -983,32 +987,8 @@ int EVP_CIPHER_CTX_test_flags(const EVP_CIPHER_CTX *ctx, int flags)
 int EVP_PKEY_CTX_set_group_name(EVP_PKEY_CTX *ctx, const char *name)
 {
     OSSL_PARAM params[] = { OSSL_PARAM_END, OSSL_PARAM_END };
-    OSSL_PARAM *p = params;
 
-    if (ctx == NULL) {
-        ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
-        /* Uses the same return values as EVP_PKEY_CTX_ctrl */
-        return -2;
-    }
-
-    if (!EVP_PKEY_CTX_IS_GEN_OP(ctx)) {
-#ifndef FIPS_MODULE
-        int nid;
-
-        /* Could be a legacy key, try and convert to a ctrl */
-        if (ctx->pmeth != NULL && (nid = OBJ_txt2nid(name)) != NID_undef) {
-            if (ctx->pmeth->pkey_id == EVP_PKEY_DH)
-                return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DH,
-                                         EVP_PKEY_OP_PARAMGEN
-                                         | EVP_PKEY_OP_KEYGEN,
-                                         EVP_PKEY_CTRL_DH_NID, nid, NULL);
-            if (ctx->pmeth->pkey_id == EVP_PKEY_EC)
-                return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_EC,
-                                         EVP_PKEY_OP_PARAMGEN|EVP_PKEY_OP_KEYGEN,
-                                         EVP_PKEY_CTRL_EC_PARAMGEN_CURVE_NID,
-                                         nid, NULL);
-        }
-#endif
+    if (ctx == NULL || !EVP_PKEY_CTX_IS_GEN_OP(ctx)) {
         ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
         /* Uses the same return values as EVP_PKEY_CTX_ctrl */
         return -2;
@@ -1017,8 +997,8 @@ int EVP_PKEY_CTX_set_group_name(EVP_PKEY_CTX *ctx, const char *name)
     if (name == NULL)
         return -1;
 
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME,
-                                            (char *)name, 0);
+    params[0] = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME,
+                                                 (char *)name, 0);
     return EVP_PKEY_CTX_set_params(ctx, params);
 }
 

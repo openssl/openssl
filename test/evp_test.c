@@ -1279,11 +1279,6 @@ static int mac_test_run_mac(EVP_TEST *t)
             goto err;
         }
     }
-    if (expected->key != NULL)
-        params[params_n++] =
-            OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY,
-                                              expected->key,
-                                              expected->key_len);
     if (expected->custom != NULL)
         params[params_n++] =
             OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_CUSTOM,
@@ -1339,11 +1334,7 @@ static int mac_test_run_mac(EVP_TEST *t)
         goto err;
     }
 
-    if (!EVP_MAC_CTX_set_params(ctx, params)) {
-        t->err = "MAC_BAD_PARAMS";
-        goto err;
-    }
-    if (!EVP_MAC_init(ctx)) {
+    if (!EVP_MAC_init(ctx, expected->key, expected->key_len, params)) {
         t->err = "MAC_INIT_ERROR";
         goto err;
     }
@@ -2268,16 +2259,15 @@ static int rand_test_run(EVP_TEST *t)
         *p++ = OSSL_PARAM_construct_octet_string(OSSL_RAND_PARAM_TEST_NONCE,
                                                  z, item->nonce_len);
         *p = OSSL_PARAM_construct_end();
-        if (!TEST_true(EVP_RAND_set_ctx_params(expected->parent, params))
-                || !TEST_true(EVP_RAND_instantiate(expected->parent, strength,
-                                                   0, NULL, 0)))
+        if (!TEST_true(EVP_RAND_instantiate(expected->parent, strength,
+                                            0, NULL, 0, params)))
             goto err;
 
         z = item->pers != NULL ? item->pers : (unsigned char *)"";
         if (!TEST_true(EVP_RAND_instantiate
                            (expected->ctx, strength,
                             expected->prediction_resistance, z,
-                            item->pers_len)))
+                            item->pers_len, NULL)))
             goto err;
 
         if (item->reseed_entropy != NULL) {
@@ -2473,7 +2463,7 @@ static int kdf_test_run(EVP_TEST *t)
         t->err = "INTERNAL_ERROR";
         goto err;
     }
-    if (EVP_KDF_derive(expected->ctx, got, got_len) <= 0) {
+    if (EVP_KDF_derive(expected->ctx, got, got_len, NULL) <= 0) {
         t->err = "KDF_DERIVE_ERROR";
         goto err;
     }

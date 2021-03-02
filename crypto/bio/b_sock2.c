@@ -175,7 +175,7 @@ int BIO_bind(int sock, const BIO_ADDR *addr, int options)
 # endif
 
     if (bind(sock, BIO_ADDR_sockaddr(addr), BIO_ADDR_sockaddr_size(addr)) != 0) {
-        ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
+        ERR_raise_data(ERR_LIB_SYS, get_last_socket_error() /* may be 0 */,
                        "calling bind()");
         ERR_raise(ERR_LIB_BIO, BIO_R_UNABLE_TO_BIND_SOCKET);
         return 0;

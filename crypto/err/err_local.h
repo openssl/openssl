@@ -48,9 +48,21 @@ static ossl_inline void err_set_debug(ERR_STATE *es, size_t i,
                                       const char *file, int line,
                                       const char *fn)
 {
-    es->err_file[i] = file;
+    /*
+     * We dup the file and fn strings because they may be provider owned. If the
+     * provider gets unloaded, they may not be valid anymore.
+     */
+    OPENSSL_free(es->err_file[i]);
+    if (file == NULL || file[0] == '\0')
+        es->err_file[i] = NULL;
+    else
+        es->err_file[i] = OPENSSL_strdup(file);
     es->err_line[i] = line;
-    es->err_func[i] = fn;
+    OPENSSL_free(es->err_func[i]);
+    if (fn == NULL || fn[0] == '\0')
+        es->err_func[i] = NULL;
+    else
+        es->err_func[i] = OPENSSL_strdup(fn);
 }
 
 static ossl_inline void err_set_data(ERR_STATE *es, size_t i,
@@ -67,8 +79,11 @@ static ossl_inline void err_clear(ERR_STATE *es, size_t i, int deall)
     es->err_marks[i] = 0;
     es->err_flags[i] = 0;
     es->err_buffer[i] = 0;
-    es->err_file[i] = NULL;
     es->err_line[i] = -1;
+    OPENSSL_free(es->err_file[i]);
+    es->err_file[i] = NULL;
+    OPENSSL_free(es->err_func[i]);
+    es->err_func[i] = NULL;
 }
 
 ERR_STATE *err_get_state_int(void);

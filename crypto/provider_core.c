@@ -78,6 +78,7 @@ struct ossl_provider_st {
     OSSL_FUNC_provider_get_capabilities_fn *get_capabilities;
     OSSL_FUNC_provider_self_test_fn *self_test;
     OSSL_FUNC_provider_query_operation_fn *query_operation;
+    OSSL_FUNC_provider_unquery_operation_fn *unquery_operation;
 
     /*
      * Cache of bit to indicate of query_operation() has been called on
@@ -571,6 +572,10 @@ static int provider_init(OSSL_PROVIDER *prov)
             prov->query_operation =
                 OSSL_FUNC_provider_query_operation(provider_dispatch);
             break;
+        case OSSL_FUNC_PROVIDER_UNQUERY_OPERATION:
+            prov->unquery_operation =
+                OSSL_FUNC_provider_unquery_operation(provider_dispatch);
+            break;
 #ifndef OPENSSL_NO_ERR
 # ifndef FIPS_MODULE
         case OSSL_FUNC_PROVIDER_GET_REASON_STRINGS:
@@ -667,14 +672,16 @@ static int provider_activate(OSSL_PROVIDER *prov)
     return 0;
 }
 
-int ossl_provider_activate(OSSL_PROVIDER *prov)
+int ossl_provider_activate(OSSL_PROVIDER *prov, int retain_fallbacks)
 {
     if (prov == NULL)
         return 0;
     if (provider_activate(prov)) {
-        CRYPTO_THREAD_write_lock(prov->store->lock);
-        prov->store->use_fallbacks = 0;
-        CRYPTO_THREAD_unlock(prov->store->lock);
+        if (!retain_fallbacks) {
+            CRYPTO_THREAD_write_lock(prov->store->lock);
+            prov->store->use_fallbacks = 0;
+            CRYPTO_THREAD_unlock(prov->store->lock);
+        }
         return 1;
     }
     return 0;
@@ -925,6 +932,14 @@ const OSSL_ALGORITHM *ossl_provider_query_operation(const OSSL_PROVIDER *prov,
         *no_cache = 1;
 #endif
     return res;
+}
+
+void ossl_provider_unquery_operation(const OSSL_PROVIDER *prov,
+                                     int operation_id,
+                                     const OSSL_ALGORITHM *algs)
+{
+    if (prov->unquery_operation != NULL)
+        prov->unquery_operation(prov->provctx, operation_id, algs);
 }
 
 int ossl_provider_set_operation_bit(OSSL_PROVIDER *provider, size_t bitnum)

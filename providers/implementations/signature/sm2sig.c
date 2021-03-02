@@ -144,7 +144,7 @@ static int sm2sig_sign(void *vpsm2ctx, unsigned char *sig, size_t *siglen,
     if (ctx->mdsize != 0 && tbslen != ctx->mdsize)
         return 0;
 
-    ret = sm2_internal_sign(tbs, tbslen, sig, &sltmp, ctx->ec);
+    ret = ossl_sm2_internal_sign(tbs, tbslen, sig, &sltmp, ctx->ec);
     if (ret <= 0)
         return 0;
 
@@ -160,7 +160,7 @@ static int sm2sig_verify(void *vpsm2ctx, const unsigned char *sig, size_t siglen
     if (ctx->mdsize != 0 && tbslen != ctx->mdsize)
         return 0;
 
-    return sm2_internal_verify(tbs, tbslen, sig, siglen, ctx->ec);
+    return ossl_sm2_internal_verify(tbs, tbslen, sig, siglen, ctx->ec);
 }
 
 static void free_md(PROV_SM2_CTX *ctx)
@@ -231,7 +231,8 @@ static int sm2sig_compute_z_digest(PROV_SM2_CTX *ctx)
 
         if ((z = OPENSSL_zalloc(ctx->mdsize)) == NULL
             /* get hashed prefix 'z' of tbs message */
-            || !sm2_compute_z_digest(z, ctx->md, ctx->id, ctx->id_len, ctx->ec)
+            || !ossl_sm2_compute_z_digest(z, ctx->md, ctx->id, ctx->id_len,
+                                          ctx->ec)
             || !EVP_DigestUpdate(ctx->mdctx, z, ctx->mdsize))
             ret = 0;
         OPENSSL_free(z);

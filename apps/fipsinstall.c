@@ -78,7 +78,7 @@ static int do_mac(EVP_MAC_CTX *ctx, unsigned char *tmp, BIO *in,
     int i;
     size_t outsz = *out_len;
 
-    if (!EVP_MAC_init(ctx))
+    if (!EVP_MAC_init(ctx, NULL, 0, NULL))
         goto err;
     if (EVP_MAC_CTX_get_mac_size(ctx) > outsz)
         goto end;

@@ -317,7 +317,7 @@ void evp_pkey_ctx_free_old_ops(EVP_PKEY_CTX *ctx);
 const char *evp_first_name(const OSSL_PROVIDER *prov, int name_id);
 int evp_is_a(OSSL_PROVIDER *prov, int number,
              const char *legacy_name, const char *name);
-void evp_names_do_all(OSSL_PROVIDER *prov, int number,
-                      void (*fn)(const char *name, void *data),
-                      void *data);
+int evp_names_do_all(OSSL_PROVIDER *prov, int number,
+                     void (*fn)(const char *name, void *data),
+                     void *data);
 int evp_cipher_cache_constants(EVP_CIPHER *cipher);

@@ -452,17 +452,19 @@ void OSSL_STORE_LOADER_do_all_provided(OSSL_LIB_CTX *libctx,
                           &data);
 }
 
-void OSSL_STORE_LOADER_names_do_all(const OSSL_STORE_LOADER *loader,
-                                    void (*fn)(const char *name, void *data),
-                                    void *data)
+int OSSL_STORE_LOADER_names_do_all(const OSSL_STORE_LOADER *loader,
+                                   void (*fn)(const char *name, void *data),
+                                   void *data)
 {
     if (loader == NULL)
-        return;
+        return 0;
 
     if (loader->prov != NULL) {
         OSSL_LIB_CTX *libctx = ossl_provider_libctx(loader->prov);
         OSSL_NAMEMAP *namemap = ossl_namemap_stored(libctx);
 
-        ossl_namemap_doall_names(namemap, loader->scheme_id, fn, data);
+        return ossl_namemap_doall_names(namemap, loader->scheme_id, fn, data);
     }
+
+    return 1;
 }

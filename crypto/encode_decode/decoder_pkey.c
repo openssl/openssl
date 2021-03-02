@@ -302,8 +302,12 @@ int ossl_decoder_ctx_setup_for_pkey(OSSL_DECODER_CTX *ctx,
          * If the key type is given by the caller, we only use the matching
          * KEYMGMTs, otherwise we use them all.
          */
-        if (keytype == NULL || EVP_KEYMGMT_is_a(keymgmt, keytype))
-            EVP_KEYMGMT_names_do_all(keymgmt, collect_name, names);
+        if (keytype == NULL || EVP_KEYMGMT_is_a(keymgmt, keytype)) {
+            if (!EVP_KEYMGMT_names_do_all(keymgmt, collect_name, names)) {
+                ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_INTERNAL_ERROR);
+                goto err;
+            }
+        }
 
         EVP_KEYMGMT_free(keymgmt);
     }

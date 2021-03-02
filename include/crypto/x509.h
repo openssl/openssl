@@ -327,4 +327,7 @@ int X509_PUBKEY_get0_libctx(OSSL_LIB_CTX **plibctx, const char **ppropq,
 /* Calculate default key identifier according to RFC 5280 section 4.2.1.2 (1) */
 ASN1_OCTET_STRING *x509_pubkey_hash(X509_PUBKEY *pubkey);
 
+/* A variant of d2i_PUBKEY() that is guaranteed to only return legacy keys */
+EVP_PKEY *d2i_PUBKEY_legacy(EVP_PKEY **a,
+                            const unsigned char **in, long length);
 #endif

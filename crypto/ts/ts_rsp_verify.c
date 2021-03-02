@@ -197,9 +197,9 @@ end:
 static int ts_check_signing_certs(PKCS7_SIGNER_INFO *si,
                                   STACK_OF(X509) *chain)
 {
-    ESS_SIGNING_CERT *ss = ESS_SIGNING_CERT_get(si);
+    ESS_SIGNING_CERT *ss = ossl_ess_signing_cert_get(si);
     STACK_OF(ESS_CERT_ID) *cert_ids = NULL;
-    ESS_SIGNING_CERT_V2 *ssv2 = ESS_SIGNING_CERT_V2_get(si);
+    ESS_SIGNING_CERT_V2 *ssv2 = ossl_ess_signing_cert_v2_get(si);
     STACK_OF(ESS_CERT_ID_V2) *cert_ids_v2 = NULL;
     X509 *cert;
     int i = 0;
@@ -208,7 +208,7 @@ static int ts_check_signing_certs(PKCS7_SIGNER_INFO *si,
     if (ss != NULL) {
         cert_ids = ss->cert_ids;
         cert = sk_X509_value(chain, 0);
-        if (ess_find_cert(cert_ids, cert) != 0)
+        if (ossl_ess_find_cert(cert_ids, cert) != 0)
             goto err;
 
         /*
@@ -218,14 +218,14 @@ static int ts_check_signing_certs(PKCS7_SIGNER_INFO *si,
         if (sk_ESS_CERT_ID_num(cert_ids) > 1) {
             for (i = 1; i < sk_X509_num(chain); ++i) {
                 cert = sk_X509_value(chain, i);
-                if (ess_find_cert(cert_ids, cert) < 0)
+                if (ossl_ess_find_cert(cert_ids, cert) < 0)
                     goto err;
             }
         }
     } else if (ssv2 != NULL) {
         cert_ids_v2 = ssv2->cert_ids;
         cert = sk_X509_value(chain, 0);
-        if (ess_find_cert_v2(cert_ids_v2, cert) != 0)
+        if (ossl_ess_find_cert_v2(cert_ids_v2, cert) != 0)
             goto err;
 
         /*
@@ -235,7 +235,7 @@ static int ts_check_signing_certs(PKCS7_SIGNER_INFO *si,
         if (sk_ESS_CERT_ID_V2_num(cert_ids_v2) > 1) {
             for (i = 1; i < sk_X509_num(chain); ++i) {
                 cert = sk_X509_value(chain, i);
-                if (ess_find_cert_v2(cert_ids_v2, cert) < 0)
+                if (ossl_ess_find_cert_v2(cert_ids_v2, cert) < 0)
                     goto err;
             }
         }

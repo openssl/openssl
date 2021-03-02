@@ -281,7 +281,7 @@ static const EVP_PKEY_METHOD dsa_pkey_meth = {
     pkey_dsa_ctrl_str
 };
 
-const EVP_PKEY_METHOD *dsa_pkey_method(void)
+const EVP_PKEY_METHOD *ossl_dsa_pkey_method(void)
 {
     return &dsa_pkey_meth;
 }

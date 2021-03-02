@@ -81,10 +81,7 @@ This example derives a key using the AES-128-CBC cipher:
  *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_CONSTANT,
                                           constant, strlen(constant));
  *p = OSSL_PARAM_construct_end();
- if (EVP_KDF_set_params(kctx, params) <= 0)
-     /* Error */
-
- if (EVP_KDF_derive(kctx, out, outlen) <= 0)
+ if (EVP_KDF_derive(kctx, out, outlen, params) <= 0)
      /* Error */
 
  EVP_KDF_CTX_free(kctx);

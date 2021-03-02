@@ -530,12 +530,12 @@ int evp_is_a(OSSL_PROVIDER *prov, int number,
     return ossl_namemap_name2num(namemap, name) == number;
 }
 
-void evp_names_do_all(OSSL_PROVIDER *prov, int number,
-                      void (*fn)(const char *name, void *data),
-                      void *data)
+int evp_names_do_all(OSSL_PROVIDER *prov, int number,
+                     void (*fn)(const char *name, void *data),
+                     void *data)
 {
     OSSL_LIB_CTX *libctx = ossl_provider_libctx(prov);
     OSSL_NAMEMAP *namemap = ossl_namemap_stored(libctx);
 
-    ossl_namemap_doall_names(namemap, number, fn, data);
+    return ossl_namemap_doall_names(namemap, number, fn, data);
 }

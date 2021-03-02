@@ -361,15 +361,16 @@ static int test_fromdata_rsa(void)
         || !TEST_false(EVP_PKEY_copy_parameters(copy_pk, pk)))
         goto err;
 
+    ret = test_print_key_using_pem("RSA", pk)
+          && test_print_key_using_encoder("RSA", pk);
+ err:
+    /* for better diagnostics always compare key params */
     for (i = 0; fromdata_params[i].key != NULL; ++i) {
         if (!TEST_true(BN_set_word(bn_from, key_numbers[i]))
             || !TEST_true(EVP_PKEY_get_bn_param(pk, fromdata_params[i].key, &bn))
             || !TEST_BN_eq(bn, bn_from))
-            goto err;
+            ret = 0;
     }
-    ret = test_print_key_using_pem("RSA", pk)
-          && test_print_key_using_encoder("RSA", pk);
- err:
     BN_free(bn_from);
     BN_free(bn);
     EVP_PKEY_free(pk);
@@ -523,11 +524,11 @@ static int test_fromdata_dh_named_group(void)
                                             &priv_out))
         || !TEST_BN_eq(priv, priv_out)
         || !TEST_true(EVP_PKEY_get_bn_param(pk, OSSL_PKEY_PARAM_FFC_P, &p))
-        || !TEST_BN_eq(&_bignum_ffdhe2048_p, p)
+        || !TEST_BN_eq(&ossl_bignum_ffdhe2048_p, p)
         || !TEST_true(EVP_PKEY_get_bn_param(pk, OSSL_PKEY_PARAM_FFC_Q, &q))
         || !TEST_ptr(q)
         || !TEST_true(EVP_PKEY_get_bn_param(pk, OSSL_PKEY_PARAM_FFC_G, &g))
-        || !TEST_BN_eq(&_bignum_const_2, g)
+        || !TEST_BN_eq(&ossl_bignum_const_2, g)
         || !TEST_false(EVP_PKEY_get_bn_param(pk, OSSL_PKEY_PARAM_FFC_COFACTOR,
                                              &j))
         || !TEST_ptr_null(j)
@@ -667,11 +668,11 @@ static int test_fromdata_dh_fips186_4(void)
                                             &priv_out))
         || !TEST_BN_eq(priv, priv_out)
         || !TEST_true(EVP_PKEY_get_bn_param(pk, OSSL_PKEY_PARAM_FFC_P, &p))
-        || !TEST_BN_eq(&_bignum_ffdhe2048_p, p)
+        || !TEST_BN_eq(&ossl_bignum_ffdhe2048_p, p)
         || !TEST_true(EVP_PKEY_get_bn_param(pk, OSSL_PKEY_PARAM_FFC_Q, &q))
         || !TEST_ptr(q)
         || !TEST_true(EVP_PKEY_get_bn_param(pk, OSSL_PKEY_PARAM_FFC_G, &g))
-        || !TEST_BN_eq(&_bignum_const_2, g)
+        || !TEST_BN_eq(&ossl_bignum_const_2, g)
         || !TEST_false(EVP_PKEY_get_bn_param(pk, OSSL_PKEY_PARAM_FFC_COFACTOR,
                                              &j))
         || !TEST_ptr_null(j)

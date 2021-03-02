@@ -1220,17 +1220,45 @@ const OSSL_PARAM *EVP_CIPHER_gettable_params(const EVP_CIPHER *cipher)
 
 const OSSL_PARAM *EVP_CIPHER_settable_ctx_params(const EVP_CIPHER *cipher)
 {
-    if (cipher != NULL && cipher->settable_ctx_params != NULL)
-        return cipher->settable_ctx_params(
-                   ossl_provider_ctx(EVP_CIPHER_provider(cipher)));
+    void *alg;
+
+    if (cipher != NULL && cipher->settable_ctx_params != NULL) {
+        alg = ossl_provider_ctx(EVP_CIPHER_provider(cipher));
+        return cipher->settable_ctx_params(NULL, alg);
+    }
     return NULL;
 }
 
 const OSSL_PARAM *EVP_CIPHER_gettable_ctx_params(const EVP_CIPHER *cipher)
 {
-    if (cipher != NULL && cipher->gettable_ctx_params != NULL)
-        return cipher->gettable_ctx_params(
-                   ossl_provider_ctx(EVP_CIPHER_provider(cipher)));
+    void *alg;
+
+    if (cipher != NULL && cipher->gettable_ctx_params != NULL) {
+        alg = ossl_provider_ctx(EVP_CIPHER_provider(cipher));
+        return cipher->gettable_ctx_params(NULL, alg);
+    }
+    return NULL;
+}
+
+const OSSL_PARAM *EVP_CIPHER_CTX_settable_params(EVP_CIPHER_CTX *cctx)
+{
+    void *alg;
+
+    if (cctx != NULL && cctx->cipher->settable_ctx_params != NULL) {
+        alg = ossl_provider_ctx(EVP_CIPHER_provider(cctx->cipher));
+        return cctx->cipher->settable_ctx_params(cctx->provctx, alg);
+    }
+    return NULL;
+}
+
+const OSSL_PARAM *EVP_CIPHER_CTX_gettable_params(EVP_CIPHER_CTX *cctx)
+{
+    void *alg;
+
+    if (cctx != NULL && cctx->cipher->gettable_ctx_params != NULL) {
+        alg = ossl_provider_ctx(EVP_CIPHER_provider(cctx->cipher));
+        return cctx->cipher->gettable_ctx_params(cctx->provctx, alg);
+    }
     return NULL;
 }
 
@@ -1395,8 +1423,8 @@ static void *evp_cipher_from_dispatch(const int name_id,
 #ifndef FIPS_MODULE
     /* TODO(3.x) get rid of the need for legacy NIDs */
     cipher->nid = NID_undef;
-    evp_names_do_all(prov, name_id, set_legacy_nid, &cipher->nid);
-    if (cipher->nid == -1) {
+    if (!evp_names_do_all(prov, name_id, set_legacy_nid, &cipher->nid)
+            || cipher->nid == -1) {
         ERR_raise(ERR_LIB_EVP, ERR_R_INTERNAL_ERROR);
         EVP_CIPHER_free(cipher);
         return NULL;

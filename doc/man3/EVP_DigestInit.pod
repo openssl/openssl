@@ -64,9 +64,9 @@ EVP_MD_do_all_provided
  const char *EVP_MD_name(const EVP_MD *md);
  int EVP_MD_number(const EVP_MD *md);
  int EVP_MD_is_a(const EVP_MD *md, const char *name);
- void EVP_MD_names_do_all(const EVP_MD *md,
-                          void (*fn)(const char *name, void *data),
-                          void *data);
+ int EVP_MD_names_do_all(const EVP_MD *md,
+                         void (*fn)(const char *name, void *data),
+                         void *data);
  const OSSL_PROVIDER *EVP_MD_provider(const EVP_MD *md);
  int EVP_MD_type(const EVP_MD *md);
  int EVP_MD_pkey_type(const EVP_MD *md);
@@ -180,18 +180,29 @@ See L</PARAMETERS> below for more information.
 Sets the list of I<params> into a MD context I<ctx>.
 See L</PARAMETERS> below for more information.
 
-=item EVP_MD_gettable_params(), EVP_MD_gettable_ctx_params(),
-EVP_MD_settable_ctx_params(), EVP_MD_CTX_gettable_params(),
-EVP_MD_CTX_settable_params()
+=item EVP_MD_gettable_params()
 
-Get a B<OSSL_PARAM> array that describes the retrievable and settable
-parameters. EVP_MD_gettable_params() returns parameters that can be used with
-EVP_MD_get_params(). EVP_MD_gettable_ctx_params() and
-EVP_MD_CTX_gettable_params() return parameters that can be used with
-EVP_MD_CTX_get_params(). EVP_MD_settable_ctx_params() and
-EVP_MD_CTX_settable_params() return parameters that can be used with
-EVP_MD_CTX_set_params().
-See L<OSSL_PARAM(3)> for the use of B<OSSL_PARAM> as parameter descriptor.
+Get a constant B<OSSL_PARAM> array that describes the retrievable parameters
+that can be used with EVP_MD_get_params().  See L<OSSL_PARAM(3)> for the
+use of B<OSSL_PARAM> as a parameter descriptor.
+
+=item EVP_MD_gettable_ctx_params(), EVP_MD_CTX_gettable_params()
+
+Get a constant B<OSSL_PARAM> array that describes the retrievable parameters
+that can be used with EVP_MD_CTX_get_params().  EVP_MD_gettable_ctx_params()
+returns the parameters that can be retrieved from the algorithm, whereas
+EVP_MD_CTX_gettable_params() returns the parameters that can be retrieved
+in the context's current state.  See L<OSSL_PARAM(3)> for the use of
+B<OSSL_PARAM> as a parameter descriptor.
+
+=item EVP_MD_settable_ctx_params(), EVP_MD_CTX_settable_params()
+
+Get a constant B<OSSL_PARAM> array that describes the settable parameters
+that can be used with EVP_MD_CTX_set_params().  EVP_MD_settable_ctx_params()
+returns the parameters that can be set from the algorithm, whereas
+EVP_MD_CTX_settable_params() returns the parameters that can be set in the
+context's current state.  See L<OSSL_PARAM(3)> for the use of B<OSSL_PARAM>
+as a parameter descriptor.
 
 =item EVP_MD_CTX_set_flags(), EVP_MD_CTX_clear_flags(), EVP_MD_CTX_test_flags()
 
@@ -542,6 +553,11 @@ Returns either an B<EVP_MD> structure or NULL if an error occurs.
 
 This function has no return value.
 
+=item EVP_MD_names_do_all()
+
+Returns 1 if the callback was called for all names. A return value of 0 means
+that the callback was not called for any names.
+
 =back
 
 =head1 NOTES
@@ -653,8 +669,12 @@ The EVP_dss1() function was removed in OpenSSL 1.1.0.
 
 The EVP_MD_CTX_set_pkey_ctx() function was added in OpenSSL 1.1.1.
 
-The EVP_MD_fetch(), EVP_MD_free(), EVP_MD_up_ref(), EVP_MD_CTX_set_params()
-and EVP_MD_CTX_get_params() functions were added in OpenSSL 3.0.
+The EVP_MD_fetch(), EVP_MD_free(), EVP_MD_up_ref(),
+EVP_MD_get_params(), EVP_MD_CTX_set_params(), EVP_MD_CTX_get_params(),
+EVP_MD_gettable_params(), EVP_MD_gettable_ctx_params(),
+EVP_MD_settable_ctx_params(), EVP_MD_CTX_settable_params() and
+EVP_MD_CTX_gettable_params() functions were added in OpenSSL 3.0.
+
 The EVP_MD_CTX_update_fn() and EVP_MD_CTX_set_update_fn() were deprecated
 in OpenSSL 3.0.
 

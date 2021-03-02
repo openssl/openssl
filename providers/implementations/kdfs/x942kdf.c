@@ -392,7 +392,8 @@ static size_t x942kdf_size(KDF_X942 *ctx)
     return (len <= 0) ? 0 : (size_t)len;
 }
 
-static int x942kdf_derive(void *vctx, unsigned char *key, size_t keylen)
+static int x942kdf_derive(void *vctx, unsigned char *key, size_t keylen,
+                          const OSSL_PARAM params[])
 {
     KDF_X942 *ctx = (KDF_X942 *)vctx;
     const EVP_MD *md;
@@ -401,7 +402,7 @@ static int x942kdf_derive(void *vctx, unsigned char *key, size_t keylen)
     unsigned char *der = NULL;
     size_t der_len = 0;
 
-    if (!ossl_prov_is_running())
+    if (!ossl_prov_is_running() || !x942kdf_set_ctx_params(ctx, params))
         return 0;
 
     /*
@@ -533,7 +534,8 @@ static int x942kdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     return 1;
 }
 
-static const OSSL_PARAM *x942kdf_settable_ctx_params(ossl_unused void *provctx)
+static const OSSL_PARAM *x942kdf_settable_ctx_params(ossl_unused void *ctx,
+                                                     ossl_unused void *provctx)
 {
     static const OSSL_PARAM known_settable_ctx_params[] = {
         OSSL_PARAM_utf8_string(OSSL_KDF_PARAM_PROPERTIES, NULL, 0),
@@ -563,7 +565,8 @@ static int x942kdf_get_ctx_params(void *vctx, OSSL_PARAM params[])
     return -2;
 }
 
-static const OSSL_PARAM *x942kdf_gettable_ctx_params(ossl_unused void *provctx)
+static const OSSL_PARAM *x942kdf_gettable_ctx_params(ossl_unused void *ctx,
+                                                     ossl_unused void *provctx)
 {
     static const OSSL_PARAM known_gettable_ctx_params[] = {
         OSSL_PARAM_size_t(OSSL_KDF_PARAM_SIZE, NULL),

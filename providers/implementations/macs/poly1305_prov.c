@@ -77,10 +77,28 @@ static size_t poly1305_size(void)
     return POLY1305_DIGEST_SIZE;
 }
 
-static int poly1305_init(void *vmacctx)
+static int poly1305_setkey(struct poly1305_data_st *ctx,
+                           const unsigned char *key, size_t keylen)
 {
+    if (keylen != POLY1305_KEY_SIZE) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
+        return 0;
+    }
+    Poly1305_Init(&ctx->poly1305, key);
+    return 1;
+}
+
+static int poly1305_init(void *vmacctx, const unsigned char *key,
+                         size_t keylen, const OSSL_PARAM params[])
+{
+    struct poly1305_data_st *ctx = vmacctx;
+
     /* initialize the context in MAC_ctrl function */
-    return ossl_prov_is_running();
+    if (!ossl_prov_is_running() || !poly1305_set_ctx_params(ctx, params))
+        return 0;
+    if (key != NULL)
+        return poly1305_setkey(ctx, key, keylen);
+    return 1;
 }
 
 static int poly1305_update(void *vmacctx, const unsigned char *data,
@@ -131,7 +149,8 @@ static const OSSL_PARAM known_settable_ctx_params[] = {
     OSSL_PARAM_octet_string(OSSL_MAC_PARAM_KEY, NULL, 0),
     OSSL_PARAM_END
 };
-static const OSSL_PARAM *poly1305_settable_ctx_params(ossl_unused void *provctx)
+static const OSSL_PARAM *poly1305_settable_ctx_params(ossl_unused void *ctx,
+                                                      ossl_unused void *provctx)
 {
     return known_settable_ctx_params;
 }
@@ -139,16 +158,11 @@ static const OSSL_PARAM *poly1305_settable_ctx_params(ossl_unused void *provctx)
 static int poly1305_set_ctx_params(void *vmacctx, const OSSL_PARAM *params)
 {
     struct poly1305_data_st *ctx = vmacctx;
-    const OSSL_PARAM *p = NULL;
+    const OSSL_PARAM *p;
 
-    if ((p = OSSL_PARAM_locate_const(params, OSSL_MAC_PARAM_KEY)) != NULL) {
-        if (p->data_type != OSSL_PARAM_OCTET_STRING
-            || p->data_size != POLY1305_KEY_SIZE) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
-            return 0;
-        }
-        Poly1305_Init(&ctx->poly1305, p->data);
-    }
+    if ((p = OSSL_PARAM_locate_const(params, OSSL_MAC_PARAM_KEY)) != NULL
+            && !poly1305_setkey(ctx, p->data, p->data_size))
+        return 0;
     return 1;
 }
 

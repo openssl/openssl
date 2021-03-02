@@ -15,7 +15,6 @@ RAND_get0_private
  EVP_RAND_CTX *RAND_get0_public(OSSL_LIB_CTX *ctx);
  EVP_RAND_CTX *RAND_get0_private(OSSL_LIB_CTX *ctx);
 
-
 =head1 DESCRIPTION
 
 The default RAND API implementation (RAND_OpenSSL()) utilizes three

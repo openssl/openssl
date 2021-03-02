@@ -25,48 +25,21 @@
 # include "internal/nelem.h"
 # include "ecdsatest.h"
 
-/* functions to change the RAND_METHOD */
-static int fbytes(unsigned char *buf, int num);
+static fake_random_generate_cb fbytes;
 
-static RAND_METHOD fake_rand;
-static const RAND_METHOD *old_rand;
-static int use_fake = 0;
 static const char *numbers[2];
 static size_t crv_len = 0;
 static EC_builtin_curve *curves = NULL;
+static OSSL_PROVIDER *fake_rand = NULL;
 
-static int change_rand(void)
-{
-    /* save old rand method */
-    if (!TEST_ptr(old_rand = RAND_get_rand_method()))
-        return 0;
-
-    fake_rand = *old_rand;
-    /* use own random function */
-    fake_rand.bytes = fbytes;
-    /* set new RAND_METHOD */
-    if (!TEST_true(RAND_set_rand_method(&fake_rand)))
-        return 0;
-    return 1;
-}
-
-static int restore_rand(void)
-{
-    if (!TEST_true(RAND_set_rand_method(old_rand)))
-        return 0;
-    return 1;
-}
-
-static int fbytes(unsigned char *buf, int num)
+static int fbytes(unsigned char *buf, size_t num, ossl_unused const char *name,
+                  EVP_RAND_CTX *ctx)
 {
     int ret = 0;
     static int fbytes_counter = 0;
     BIGNUM *tmp = NULL;
 
-    if (use_fake == 0)
-        return old_rand->bytes(buf, num);
-
-    use_fake = 0;
+    fake_rand_set_callback(ctx, NULL);
 
     if (!TEST_ptr(tmp = BN_new())
         || !TEST_int_lt(fbytes_counter, OSSL_NELEM(numbers))
@@ -140,13 +113,11 @@ static int x9_62_tests(int n)
         || !TEST_ptr(r = BN_new())
         || !TEST_ptr(s = BN_new())
         || !TEST_true(BN_hex2bn(&r, r_in))
-        || !TEST_true(BN_hex2bn(&s, s_in))
-        /* swap the RNG source */
-        || !TEST_true(change_rand()))
+        || !TEST_true(BN_hex2bn(&s, s_in)))
         goto err;
 
     /* public key must match KAT */
-    use_fake = 1;
+    fake_rand_set_callback(RAND_get0_private(NULL), &fbytes);
     if (!TEST_true(EC_KEY_generate_key(key))
         || !TEST_true(p_len = EC_KEY_key2buf(key, POINT_CONVERSION_UNCOMPRESSED,
                                              &pbuf, NULL))
@@ -156,7 +127,7 @@ static int x9_62_tests(int n)
         goto err;
 
     /* create the signature via ECDSA_sign_setup to avoid use of ECDSA nonces */
-    use_fake = 1;
+    fake_rand_set_callback(RAND_get0_private(NULL), &fbytes);
     if (!TEST_true(ECDSA_sign_setup(key, NULL, &kinv, &rp))
         || !TEST_ptr(signature = ECDSA_do_sign_ex(digest, dgst_len,
                                                   kinv, rp, key))
@@ -173,10 +144,6 @@ static int x9_62_tests(int n)
     ret = 1;
 
  err:
-    /* restore the RNG source */
-    if (!TEST_true(restore_rand()))
-        ret = 0;
-
     OPENSSL_free(message);
     OPENSSL_free(pbuf);
     OPENSSL_free(qbuf);
@@ -393,11 +360,17 @@ int setup_tests(void)
 #ifdef OPENSSL_NO_EC
     TEST_note("Elliptic curves are disabled.");
 #else
+    fake_rand = fake_rand_start(NULL);
+    if (fake_rand == NULL)
+        return 0;
+
     /* get a list of all internal curves */
     crv_len = EC_get_builtin_curves(NULL, 0);
     if (!TEST_ptr(curves = OPENSSL_malloc(sizeof(*curves) * crv_len))
-        || !TEST_true(EC_get_builtin_curves(curves, crv_len)))
+        || !TEST_true(EC_get_builtin_curves(curves, crv_len))) {
+        fake_rand_finish(fake_rand);
         return 0;
+    }
     ADD_ALL_TESTS(test_builtin_as_ec, crv_len);
 # ifndef OPENSSL_NO_SM2
     ADD_ALL_TESTS(test_builtin_as_sm2, crv_len);
@@ -410,6 +383,7 @@ int setup_tests(void)
 void cleanup_tests(void)
 {
 #ifndef OPENSSL_NO_EC
+    fake_rand_finish(fake_rand);
     OPENSSL_free(curves);
 #endif
 }

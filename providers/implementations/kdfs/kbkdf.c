@@ -209,7 +209,8 @@ done:
     return ret;
 }
 
-static int kbkdf_derive(void *vctx, unsigned char *key, size_t keylen)
+static int kbkdf_derive(void *vctx, unsigned char *key, size_t keylen,
+                        const OSSL_PARAM params[])
 {
     KBKDF *ctx = (KBKDF *)vctx;
     int ret = 0;
@@ -217,7 +218,7 @@ static int kbkdf_derive(void *vctx, unsigned char *key, size_t keylen)
     uint32_t l = 0;
     size_t h = 0;
 
-    if (!ossl_prov_is_running())
+    if (!ossl_prov_is_running() || !kbkdf_set_ctx_params(ctx, params))
         return 0;
 
     /* label, context, and iv are permitted to be empty.  Check everything
@@ -280,7 +281,6 @@ static int kbkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     KBKDF *ctx = (KBKDF *)vctx;
     OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(ctx->provctx);
     const OSSL_PARAM *p;
-    OSSL_PARAM mparams[2];
 
     if (!ossl_prov_macctx_load_from_params(&ctx->ctx_init, params, NULL,
                                            NULL, NULL, libctx))
@@ -330,20 +330,14 @@ static int kbkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
         return 0;
 
     /* Set up digest context, if we can. */
-    if (ctx->ctx_init != NULL && ctx->ki_len != 0) {
-        mparams[0] = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY,
-                                                       ctx->ki, ctx->ki_len);
-        mparams[1] = OSSL_PARAM_construct_end();
-
-        if (!EVP_MAC_CTX_set_params(ctx->ctx_init, mparams)
-            || !EVP_MAC_init(ctx->ctx_init))
+    if (ctx->ctx_init != NULL && ctx->ki_len != 0
+            && !EVP_MAC_init(ctx->ctx_init, ctx->ki, ctx->ki_len, NULL))
             return 0;
-    }
-
     return 1;
 }
 
-static const OSSL_PARAM *kbkdf_settable_ctx_params(ossl_unused void *provctx)
+static const OSSL_PARAM *kbkdf_settable_ctx_params(ossl_unused void *ctx,
+                                                   ossl_unused void *provctx)
 {
     static const OSSL_PARAM known_settable_ctx_params[] = {
         OSSL_PARAM_octet_string(OSSL_KDF_PARAM_INFO, NULL, 0),
@@ -374,7 +368,8 @@ static int kbkdf_get_ctx_params(void *vctx, OSSL_PARAM params[])
     return OSSL_PARAM_set_size_t(p, SIZE_MAX);
 }
 
-static const OSSL_PARAM *kbkdf_gettable_ctx_params(ossl_unused void *provctx)
+static const OSSL_PARAM *kbkdf_gettable_ctx_params(ossl_unused void *ctx,
+                                                   ossl_unused void *provctx)
 {
     static const OSSL_PARAM known_gettable_ctx_params[] =
         { OSSL_PARAM_size_t(OSSL_KDF_PARAM_SIZE, NULL), OSSL_PARAM_END };

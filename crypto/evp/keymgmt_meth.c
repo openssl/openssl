@@ -269,12 +269,14 @@ void EVP_KEYMGMT_do_all_provided(OSSL_LIB_CTX *libctx,
                        (void (*)(void *))EVP_KEYMGMT_free);
 }
 
-void EVP_KEYMGMT_names_do_all(const EVP_KEYMGMT *keymgmt,
-                              void (*fn)(const char *name, void *data),
-                              void *data)
+int EVP_KEYMGMT_names_do_all(const EVP_KEYMGMT *keymgmt,
+                             void (*fn)(const char *name, void *data),
+                             void *data)
 {
     if (keymgmt->prov != NULL)
-        evp_names_do_all(keymgmt->prov, keymgmt->name_id, fn, data);
+        return evp_names_do_all(keymgmt->prov, keymgmt->name_id, fn, data);
+
+    return 1;
 }
 
 /*

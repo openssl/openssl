@@ -8,8 +8,8 @@
  */
 
 /* Macros to build Self test data */
-#define ITM(x) x, sizeof(x)
-#define ITM_STR(x) x, (sizeof(x) - 1)
+#define ITM(x) ((void *)&x), sizeof(x)
+#define ITM_STR(x) ((void *)&x), (sizeof(x) - 1)
 
 #define ST_KAT_PARAM_END() { "", 0, NULL, 0 }
 #define ST_KAT_PARAM_BIGNUM(name, data)                                        \
@@ -18,8 +18,10 @@
     { name, OSSL_PARAM_OCTET_STRING, ITM(data) }
 #define ST_KAT_PARAM_UTF8STRING(name, data)                                    \
     { name, OSSL_PARAM_UTF8_STRING, ITM_STR(data) }
+#define ST_KAT_PARAM_UTF8CHAR(name, data)                                    \
+    { name, OSSL_PARAM_UTF8_STRING, ITM(data) }
 #define ST_KAT_PARAM_INT(name, i)                                              \
-    { name, OSSL_PARAM_INTEGER, &i, sizeof(i) }
+    { name, OSSL_PARAM_INTEGER, ITM(i) }
 
 /* used to store raw parameters for keys and algorithms */
 typedef struct st_kat_param_st {
@@ -351,7 +353,7 @@ static const ST_KAT_PARAM pbkdf2_params[] = {
 };
 
 static const char sshkdf_digest[] = "SHA1";
-static const char sshkdf_type[] = EVP_KDF_SSHKDF_TYPE_INITIAL_IV_CLI_TO_SRV;
+static const char sshkdf_type = EVP_KDF_SSHKDF_TYPE_INITIAL_IV_CLI_TO_SRV;
 static const unsigned char sshkdf_key[] = {
     0x00, 0x00, 0x00, 0x80, 0x55, 0xba, 0xe9, 0x31,
     0xc0, 0x7f, 0xd8, 0x24, 0xbf, 0x10, 0xad, 0xd1,
@@ -386,7 +388,7 @@ static const unsigned char sshkdf_expected[] = {
 };
 static const ST_KAT_PARAM sshkdf_params[] = {
     ST_KAT_PARAM_UTF8STRING(OSSL_KDF_PARAM_DIGEST, sshkdf_digest),
-    ST_KAT_PARAM_UTF8STRING(OSSL_KDF_PARAM_SSHKDF_TYPE, sshkdf_type),
+    ST_KAT_PARAM_UTF8CHAR(OSSL_KDF_PARAM_SSHKDF_TYPE, sshkdf_type),
     ST_KAT_PARAM_OCTET(OSSL_KDF_PARAM_KEY, sshkdf_key),
     ST_KAT_PARAM_OCTET(OSSL_KDF_PARAM_SSHKDF_XCGHASH, sshkdf_xcghash),
     ST_KAT_PARAM_OCTET(OSSL_KDF_PARAM_SSHKDF_SESSION_ID, sshkdf_session_id),

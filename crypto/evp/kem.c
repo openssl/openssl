@@ -349,12 +349,14 @@ void EVP_KEM_do_all_provided(OSSL_LIB_CTX *libctx,
                        (void (*)(void *))EVP_KEM_free);
 }
 
-void EVP_KEM_names_do_all(const EVP_KEM *kem,
-                          void (*fn)(const char *name, void *data),
-                          void *data)
+int EVP_KEM_names_do_all(const EVP_KEM *kem,
+                         void (*fn)(const char *name, void *data),
+                         void *data)
 {
     if (kem->prov != NULL)
-        evp_names_do_all(kem->prov, kem->name_id, fn, data);
+        return evp_names_do_all(kem->prov, kem->name_id, fn, data);
+
+    return 1;
 }
 
 const OSSL_PARAM *EVP_KEM_gettable_ctx_params(const EVP_KEM *kem)

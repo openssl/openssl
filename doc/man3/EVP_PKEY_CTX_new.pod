@@ -3,7 +3,8 @@
 =head1 NAME
 
 EVP_PKEY_CTX_new, EVP_PKEY_CTX_new_id, EVP_PKEY_CTX_new_from_name,
-EVP_PKEY_CTX_new_from_pkey, EVP_PKEY_CTX_dup, EVP_PKEY_CTX_free
+EVP_PKEY_CTX_new_from_pkey, EVP_PKEY_CTX_dup, EVP_PKEY_CTX_free,
+EVP_PKEY_CTX_is_a
 - public key algorithm context functions
 
 =head1 SYNOPSIS
@@ -20,6 +21,7 @@ EVP_PKEY_CTX_new_from_pkey, EVP_PKEY_CTX_dup, EVP_PKEY_CTX_free
                                           const char *propquery);
  EVP_PKEY_CTX *EVP_PKEY_CTX_dup(const EVP_PKEY_CTX *ctx);
  void EVP_PKEY_CTX_free(EVP_PKEY_CTX *ctx);
+ int EVP_PKEY_CTX_is_a(EVP_PKEY_CTX *ctx, const char *keytype);
 
 =head1 DESCRIPTION
 
@@ -52,6 +54,8 @@ keygen operation.
 
 EVP_PKEY_CTX_free() frees up the context I<ctx>.
 If I<ctx> is NULL, nothing is done.
+
+EVP_PKEY_is_a() checks if the key type associated with I<ctx> is I<keytype>.
 
 =head1 NOTES
 
@@ -101,6 +105,8 @@ EVP_PKEY_CTX_new(), EVP_PKEY_CTX_new_id() and EVP_PKEY_CTX_dup() return either
 the newly allocated B<EVP_PKEY_CTX> structure or B<NULL> if an error occurred.
 
 EVP_PKEY_CTX_free() does not return a value.
+
+EVP_PKEY_CTX_is_a() returns 1 for true and 0 for false.
 
 =head1 SEE ALSO
 

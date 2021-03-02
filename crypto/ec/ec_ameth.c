@@ -584,7 +584,7 @@ int ec_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
     BN_CTX_start(bnctx);
 
     /* export the domain parameters */
-    if (!ec_group_todata(ecg, tmpl, NULL, libctx, propq, bnctx, &gen_buf))
+    if (!ossl_ec_group_todata(ecg, tmpl, NULL, libctx, propq, bnctx, &gen_buf))
         goto err;
     selection |= OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS;
 
@@ -695,9 +695,9 @@ static int ec_pkey_import_from(const OSSL_PARAM params[], void *vpctx)
         return 0;
     }
 
-    if (!ec_group_fromdata(ec, params)
-        || !ec_key_otherparams_fromdata(ec, params)
-        || !ec_key_fromdata(ec, params, 1)
+    if (!ossl_ec_group_fromdata(ec, params)
+        || !ossl_ec_key_otherparams_fromdata(ec, params)
+        || !ossl_ec_key_fromdata(ec, params, 1)
         || !EVP_PKEY_assign_EC_KEY(pkey, ec)) {
         EC_KEY_free(ec);
         return 0;

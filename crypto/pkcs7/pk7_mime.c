@@ -31,7 +31,7 @@ int SMIME_write_PKCS7(BIO *bio, PKCS7 *p7, BIO *data, int flags)
 {
     STACK_OF(X509_ALGOR) *mdalgs;
     int ctype_nid = OBJ_obj2nid(p7->type);
-    const PKCS7_CTX *ctx = pkcs7_get0_ctx(p7);
+    const PKCS7_CTX *ctx = ossl_pkcs7_get0_ctx(p7);
 
     if (ctype_nid == NID_pkcs7_signed)
         mdalgs = p7->d.sign->md_algs;
@@ -42,8 +42,8 @@ int SMIME_write_PKCS7(BIO *bio, PKCS7 *p7, BIO *data, int flags)
 
     return SMIME_write_ASN1_ex(bio, (ASN1_VALUE *)p7, data, flags, ctype_nid,
                                NID_undef, mdalgs, ASN1_ITEM_rptr(PKCS7),
-                               pkcs7_ctx_get0_libctx(ctx),
-                               pkcs7_ctx_get0_propq(ctx));
+                               ossl_pkcs7_ctx_get0_libctx(ctx),
+                               ossl_pkcs7_ctx_get0_propq(ctx));
 }
 
 PKCS7 *SMIME_read_PKCS7_ex(BIO *bio, BIO **bcont, PKCS7 **p7)
@@ -53,7 +53,7 @@ PKCS7 *SMIME_read_PKCS7_ex(BIO *bio, BIO **bcont, PKCS7 **p7)
     ret = (PKCS7 *)SMIME_read_ASN1_ex(bio, bcont, ASN1_ITEM_rptr(PKCS7),
                                       (ASN1_VALUE **)p7);
     if (ret != NULL)
-        pkcs7_resolve_libctx(ret);
+        ossl_pkcs7_resolve_libctx(ret);
     return ret;
 }
 

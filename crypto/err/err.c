@@ -190,7 +190,7 @@ static void ERR_STATE_free(ERR_STATE *s)
     if (s == NULL)
         return;
     for (i = 0; i < ERR_NUM_ERRORS; i++) {
-        err_clear_data(s, i, 1);
+        err_clear(s, i, 1);
     }
     OPENSSL_free(s);
 }
