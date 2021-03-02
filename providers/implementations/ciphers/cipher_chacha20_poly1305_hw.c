@@ -68,9 +68,9 @@ static int chacha20_poly1305_initkey(PROV_CIPHER_CTX *bctx,
     ctx->tls_payload_length = NO_TLS_PAYLOAD_LENGTH;
 
     if (bctx->enc)
-        return ossl_chacha20_einit(&ctx->chacha, key, keylen, NULL, 0);
+        return ossl_chacha20_einit(&ctx->chacha, key, keylen, NULL, 0, NULL);
     else
-        return ossl_chacha20_dinit(&ctx->chacha, key, keylen, NULL, 0);
+        return ossl_chacha20_dinit(&ctx->chacha, key, keylen, NULL, 0, NULL);
 }
 
 static int chacha20_poly1305_initiv(PROV_CIPHER_CTX *bctx)
@@ -92,10 +92,10 @@ static int chacha20_poly1305_initiv(PROV_CIPHER_CTX *bctx)
 
         if (bctx->enc)
             ret = ossl_chacha20_einit(&ctx->chacha, NULL, 0,
-                                      tempiv, sizeof(tempiv));
+                                      tempiv, sizeof(tempiv), NULL);
         else
             ret = ossl_chacha20_dinit(&ctx->chacha, NULL, 0,
-                                      tempiv, sizeof(tempiv));
+                                      tempiv, sizeof(tempiv), NULL);
         ctx->nonce[0] = ctx->chacha.counter[1];
         ctx->nonce[1] = ctx->chacha.counter[2];
         ctx->nonce[2] = ctx->chacha.counter[3];
