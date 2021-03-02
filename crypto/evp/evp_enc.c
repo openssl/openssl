@@ -43,7 +43,7 @@ int EVP_CIPHER_CTX_reset(EVP_CIPHER_CTX *ctx)
 
     return 1;
 
-    /* TODO(3.0): Remove legacy code below */
+    /* Remove legacy code below when legacy support is removed. */
  legacy:
 
     if (ctx->cipher != NULL) {
@@ -105,7 +105,7 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
         return 0;
     }
 
-    /* TODO(3.0): Legacy work around code below. Remove this */
+    /* Code below to be removed when legacy support is dropped. */
 
 #if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODULE)
     /*
@@ -148,7 +148,7 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
     }
 
 
-    /* TODO(3.0): Start of non-legacy code below */
+    /* Start of non-legacy code below */
 
     /* Ensure a context left lying around from last time is cleared */
     if (cipher != NULL && ctx->cipher != NULL) {
@@ -237,7 +237,7 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
                               iv == NULL ? 0
                                          : EVP_CIPHER_CTX_iv_length(ctx));
 
-    /* TODO(3.0): Remove legacy code below */
+    /* Code below to be removed when legacy support is dropped. */
  legacy:
 
     if (cipher != NULL) {
@@ -597,7 +597,7 @@ int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 
     return ret;
 
-    /* TODO(3.0): Remove legacy code below */
+    /* Code below to be removed when legacy support is dropped. */
  legacy:
 
     return evp_EncryptDecryptUpdate(ctx, out, outl, in, inl);
@@ -657,7 +657,7 @@ int EVP_EncryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 
     return ret;
 
-    /* TODO(3.0): Remove legacy code below */
+    /* Code below to be removed when legacy support is dropped. */
  legacy:
 
     if (ctx->cipher->flags & EVP_CIPH_FLAG_CUSTOM_CIPHER) {
@@ -744,7 +744,7 @@ int EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 
     return ret;
 
-    /* TODO(3.0): Remove legacy code below */
+    /* Code below to be removed when legacy support is dropped. */
  legacy:
 
     b = ctx->cipher->block_size;
@@ -879,7 +879,7 @@ int EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 
     return ret;
 
-    /* TODO(3.0): Remove legacy code below */
+    /* Code below to be removed when legacy support is dropped. */
  legacy:
 
     *outl = 0;
@@ -953,7 +953,7 @@ int EVP_CIPHER_CTX_set_key_length(EVP_CIPHER_CTX *c, int keylen)
         return ok > 0 ? 1 : 0;
     }
 
-    /* TODO(3.0) legacy code follows */
+    /* Code below to be removed when legacy support is dropped. */
 
     /*
      * Note there have never been any built-in ciphers that define this flag
@@ -1021,7 +1021,7 @@ int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
 
     case EVP_CTRL_INIT:
         /*
-         * TODO(3.0) EVP_CTRL_INIT is purely legacy, no provider counterpart
+         * EVP_CTRL_INIT is purely legacy, no provider counterpart.
          * As a matter of fact, this should be dead code, but some caller
          * might still do a direct control call with this command, so...
          * Legacy methods return 1 except for exceptional circumstances, so
@@ -1172,7 +1172,7 @@ int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
         ret = evp_do_ciph_ctx_getparams(ctx->cipher, ctx->provctx, params);
     goto end;
 
-/* TODO(3.0): Remove legacy code below */
+    /* Code below to be removed when legacy support is dropped. */
 legacy:
     if (ctx->cipher->ctrl == NULL) {
         ERR_raise(ERR_LIB_EVP, EVP_R_CTRL_NOT_IMPLEMENTED);
@@ -1329,7 +1329,7 @@ int EVP_CIPHER_CTX_copy(EVP_CIPHER_CTX *out, const EVP_CIPHER_CTX *in)
 
     return 1;
 
-    /* TODO(3.0): Remove legacy code below */
+    /* Code below to be removed when legacy support is dropped. */
  legacy:
 
 #if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODULE)
