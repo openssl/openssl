@@ -562,6 +562,13 @@ int ASN1_TIME_compare(const ASN1_TIME *a, const ASN1_TIME *b)
     return 0;
 }
 
+/*
+ * tweak for Windows
+ */
+#ifdef WIN32
+# define timezone _timezone
+#endif
+
 ASN1_TIME *asn1_string_to_ASN1_TIME(char *asn1_string)
 {
     size_t len;
