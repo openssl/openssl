@@ -84,7 +84,8 @@ static void *eddsa_newctx(void *provctx, const char *propq_unused)
 }
 
 static int eddsa_digest_signverify_init(void *vpeddsactx, const char *mdname,
-                                        void *vedkey)
+                                        void *vedkey,
+                                        ossl_unused const OSSL_PARAM params[])
 {
     PROV_EDDSA_CTX *peddsactx = (PROV_EDDSA_CTX *)vpeddsactx;
     ECX_KEY *edkey = (ECX_KEY *)vedkey;
@@ -277,7 +278,7 @@ static int eddsa_get_ctx_params(void *vpeddsactx, OSSL_PARAM *params)
     PROV_EDDSA_CTX *peddsactx = (PROV_EDDSA_CTX *)vpeddsactx;
     OSSL_PARAM *p;
 
-    if (peddsactx == NULL || params == NULL)
+    if (peddsactx == NULL)
         return 0;
 
     p = OSSL_PARAM_locate(params, OSSL_SIGNATURE_PARAM_ALGORITHM_ID);

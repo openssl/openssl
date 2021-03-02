@@ -357,7 +357,8 @@ static int rsa_setup_mgf1_md(PROV_RSA_CTX *ctx, const char *mdname,
     return 1;
 }
 
-static int rsa_signverify_init(void *vprsactx, void *vrsa, int operation)
+static int rsa_signverify_init(void *vprsactx, void *vrsa,
+                               const OSSL_PARAM params[], int operation)
 {
     PROV_RSA_CTX *prsactx = (PROV_RSA_CTX *)vprsactx;
 
@@ -370,6 +371,9 @@ static int rsa_signverify_init(void *vprsactx, void *vrsa, int operation)
     RSA_free(prsactx->rsa);
     prsactx->rsa = vrsa;
     prsactx->operation = operation;
+
+    if (!rsa_set_ctx_params(prsactx, params))
+        return 0;
 
     if (!ossl_rsa_check_key(vrsa, operation == EVP_PKEY_OP_SIGN)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
@@ -468,11 +472,11 @@ static void free_tbuf(PROV_RSA_CTX *ctx)
     ctx->tbuf = NULL;
 }
 
-static int rsa_sign_init(void *vprsactx, void *vrsa)
+static int rsa_sign_init(void *vprsactx, void *vrsa, const OSSL_PARAM params[])
 {
     if (!ossl_prov_is_running())
         return 0;
-    return rsa_signverify_init(vprsactx, vrsa, EVP_PKEY_OP_SIGN);
+    return rsa_signverify_init(vprsactx, vrsa, params, EVP_PKEY_OP_SIGN);
 }
 
 static int rsa_sign(void *vprsactx, unsigned char *sig, size_t *siglen,
@@ -621,11 +625,13 @@ static int rsa_sign(void *vprsactx, unsigned char *sig, size_t *siglen,
     return 1;
 }
 
-static int rsa_verify_recover_init(void *vprsactx, void *vrsa)
+static int rsa_verify_recover_init(void *vprsactx, void *vrsa,
+                                   const OSSL_PARAM params[])
 {
     if (!ossl_prov_is_running())
         return 0;
-    return rsa_signverify_init(vprsactx, vrsa, EVP_PKEY_OP_VERIFYRECOVER);
+    return rsa_signverify_init(vprsactx, vrsa, params,
+                               EVP_PKEY_OP_VERIFYRECOVER);
 }
 
 static int rsa_verify_recover(void *vprsactx,
@@ -712,11 +718,12 @@ static int rsa_verify_recover(void *vprsactx,
     return 1;
 }
 
-static int rsa_verify_init(void *vprsactx, void *vrsa)
+static int rsa_verify_init(void *vprsactx, void *vrsa,
+                           const OSSL_PARAM params[])
 {
     if (!ossl_prov_is_running())
         return 0;
-    return rsa_signverify_init(vprsactx, vrsa, EVP_PKEY_OP_VERIFY);
+    return rsa_signverify_init(vprsactx, vrsa, params, EVP_PKEY_OP_VERIFY);
 }
 
 static int rsa_verify(void *vprsactx, const unsigned char *sig, size_t siglen,
@@ -801,7 +808,8 @@ static int rsa_verify(void *vprsactx, const unsigned char *sig, size_t siglen,
 }
 
 static int rsa_digest_signverify_init(void *vprsactx, const char *mdname,
-                                      void *vrsa, int operation)
+                                      void *vrsa, const OSSL_PARAM params[],
+                                      int operation)
 {
     PROV_RSA_CTX *prsactx = (PROV_RSA_CTX *)vprsactx;
 
@@ -810,7 +818,7 @@ static int rsa_digest_signverify_init(void *vprsactx, const char *mdname,
 
     if (prsactx != NULL)
         prsactx->flag_allow_md = 0;
-    if (!rsa_signverify_init(vprsactx, vrsa, operation))
+    if (!rsa_signverify_init(vprsactx, vrsa, params, operation))
         return 0;
     if (mdname != NULL
         /* was rsa_setup_md already called in rsa_signverify_init()? */
@@ -824,7 +832,7 @@ static int rsa_digest_signverify_init(void *vprsactx, const char *mdname,
         goto error;
     }
 
-    if (!EVP_DigestInit_ex(prsactx->mdctx, prsactx->md, NULL))
+    if (!EVP_DigestInit_ex2(prsactx->mdctx, prsactx->md, params))
         goto error;
 
     return 1;
@@ -850,12 +858,12 @@ static int rsa_digest_signverify_update(void *vprsactx,
 }
 
 static int rsa_digest_sign_init(void *vprsactx, const char *mdname,
-                                void *vrsa)
+                                void *vrsa, const OSSL_PARAM params[])
 {
     if (!ossl_prov_is_running())
         return 0;
     return rsa_digest_signverify_init(vprsactx, mdname, vrsa,
-                                      EVP_PKEY_OP_SIGN);
+                                      params, EVP_PKEY_OP_SIGN);
 }
 
 static int rsa_digest_sign_final(void *vprsactx, unsigned char *sig,
@@ -887,12 +895,12 @@ static int rsa_digest_sign_final(void *vprsactx, unsigned char *sig,
 }
 
 static int rsa_digest_verify_init(void *vprsactx, const char *mdname,
-                                  void *vrsa)
+                                  void *vrsa, const OSSL_PARAM params[])
 {
     if (!ossl_prov_is_running())
         return 0;
     return rsa_digest_signverify_init(vprsactx, mdname, vrsa,
-                                      EVP_PKEY_OP_VERIFY);
+                                      params, EVP_PKEY_OP_VERIFY);
 }
 
 int rsa_digest_verify_final(void *vprsactx, const unsigned char *sig,
@@ -995,7 +1003,7 @@ static int rsa_get_ctx_params(void *vprsactx, OSSL_PARAM *params)
     PROV_RSA_CTX *prsactx = (PROV_RSA_CTX *)vprsactx;
     OSSL_PARAM *p;
 
-    if (prsactx == NULL || params == NULL)
+    if (prsactx == NULL)
         return 0;
 
     p = OSSL_PARAM_locate(params, OSSL_SIGNATURE_PARAM_ALGORITHM_ID);
@@ -1114,8 +1122,11 @@ static int rsa_set_ctx_params(void *vprsactx, const OSSL_PARAM params[])
     char mgf1mdname[OSSL_MAX_NAME_SIZE] = "", *pmgf1mdname = NULL;
     char mgf1mdprops[OSSL_MAX_PROPQUERY_SIZE] = "", *pmgf1mdprops = NULL;
 
-    if (prsactx == NULL || params == NULL)
+    if (prsactx == NULL)
         return 0;
+    if (params == NULL)
+        return 1;
+
     pad_mode = prsactx->pad_mode;
     saltlen = prsactx->saltlen;
 

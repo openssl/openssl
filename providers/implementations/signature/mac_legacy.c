@@ -91,7 +91,8 @@ MAC_NEWCTX(siphash, "SIPHASH")
 MAC_NEWCTX(poly1305, "POLY1305")
 MAC_NEWCTX(cmac, "CMAC")
 
-static int mac_digest_sign_init(void *vpmacctx, const char *mdname, void *vkey)
+static int mac_digest_sign_init(void *vpmacctx, const char *mdname, void *vkey,
+                                const OSSL_PARAM params[])
 {
     PROV_MAC_CTX *pmacctx = (PROV_MAC_CTX *)vpmacctx;
     const char *ciphername = NULL, *engine = NULL;
@@ -121,7 +122,7 @@ static int mac_digest_sign_init(void *vpmacctx, const char *mdname, void *vkey)
         return 0;
 
     if (!EVP_MAC_init(pmacctx->macctx, pmacctx->key->priv_key,
-                      pmacctx->key->priv_key_len, NULL))
+                      pmacctx->key->priv_key_len, params))
         return 0;
 
     return 1;
