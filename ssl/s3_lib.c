@@ -4827,7 +4827,7 @@ int ssl_decapsulate(SSL *s, EVP_PKEY *privkey,
 
     pctx = EVP_PKEY_CTX_new_from_pkey(s->ctx->libctx, privkey, s->ctx->propq);
 
-    if (EVP_PKEY_decapsulate_init(pctx) <= 0
+    if (EVP_PKEY_decapsulate_init(pctx, NULL) <= 0
             || EVP_PKEY_decapsulate(pctx, NULL, &pmslen, ct, ctlen) <= 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto err;
@@ -4877,7 +4877,7 @@ int ssl_encapsulate(SSL *s, EVP_PKEY *pubkey,
 
     pctx = EVP_PKEY_CTX_new_from_pkey(s->ctx->libctx, pubkey, s->ctx->propq);
 
-    if (EVP_PKEY_encapsulate_init(pctx) <= 0
+    if (EVP_PKEY_encapsulate_init(pctx, NULL) <= 0
             || EVP_PKEY_encapsulate(pctx, NULL, &ctlen, NULL, &pmslen) <= 0
             || pmslen == 0 || ctlen == 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
