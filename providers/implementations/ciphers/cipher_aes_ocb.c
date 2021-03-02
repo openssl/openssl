@@ -102,7 +102,8 @@ static ossl_inline int aes_generic_ocb_copy_ctx(PROV_AES_OCB_CTX *dst,
  * Provider dispatch functions
  */
 static int aes_ocb_init(void *vctx, const unsigned char *key, size_t keylen,
-                        const unsigned char *iv, size_t ivlen, int enc)
+                        const unsigned char *iv, size_t ivlen,
+                        const OSSL_PARAM params[], int enc)
 {
     PROV_AES_OCB_CTX *ctx = (PROV_AES_OCB_CTX *)vctx;
 
@@ -131,21 +132,24 @@ static int aes_ocb_init(void *vctx, const unsigned char *key, size_t keylen,
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
             return 0;
         }
-        return ctx->base.hw->init(&ctx->base, key, keylen);
+        if (!ctx->base.hw->init(&ctx->base, key, keylen))
+            return 0;
     }
-    return 1;
+    return aes_ocb_set_ctx_params(ctx, params);
 }
 
 static int aes_ocb_einit(void *vctx, const unsigned char *key, size_t keylen,
-                         const unsigned char *iv, size_t ivlen)
+                         const unsigned char *iv, size_t ivlen,
+                         const OSSL_PARAM params[])
 {
-    return aes_ocb_init(vctx, key, keylen, iv, ivlen, 1);
+    return aes_ocb_init(vctx, key, keylen, iv, ivlen, params, 1);
 }
 
 static int aes_ocb_dinit(void *vctx, const unsigned char *key, size_t keylen,
-                         const unsigned char *iv, size_t ivlen)
+                         const unsigned char *iv, size_t ivlen,
+                         const OSSL_PARAM params[])
 {
-    return aes_ocb_init(vctx, key, keylen, iv, ivlen, 0);
+    return aes_ocb_init(vctx, key, keylen, iv, ivlen, params, 0);
 }
 
 /*
@@ -353,6 +357,9 @@ static int aes_ocb_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     PROV_AES_OCB_CTX *ctx = (PROV_AES_OCB_CTX *)vctx;
     const OSSL_PARAM *p;
     size_t sz;
+
+    if (params == NULL)
+        return 1;
 
     p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_AEAD_TAG);
     if (p != NULL) {
