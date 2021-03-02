@@ -569,33 +569,6 @@ int ASN1_TIME_compare(const ASN1_TIME *a, const ASN1_TIME *b)
 # define timezone _timezone
 #endif
 
-ASN1_TIME *asn1_string_to_ASN1_TIME(char *asn1_string)
-{
-    size_t len;
-    ASN1_TIME *tmps = NULL;
-    char *p;
-
-    len = strlen(asn1_string) + 1;
-    tmps = ASN1_STRING_new();
-    if (tmps == NULL)
-        return NULL;
-
-    if (!ASN1_STRING_set(tmps, NULL, len)) {
-        ASN1_STRING_free(tmps);
-        return NULL;
-    }
-
-    if (strlen(asn1_string) == 13)
-        tmps->type = V_ASN1_UTCTIME;
-    else
-        tmps->type = V_ASN1_GENERALIZEDTIME;
-    p = (char*)tmps->data;
-
-    tmps->length = BIO_snprintf(p, len, "%s", asn1_string);
-
-    return tmps;
-}
-
 time_t *asn1_string_to_time_t(char *asn1_string)
 {
     ASN1_TIME *testdate_asn1 = NULL;
@@ -603,8 +576,8 @@ time_t *asn1_string_to_time_t(char *asn1_string)
     time_t *testdatelocal = NULL;
     time_t *testdateutc = NULL;
 
-    testdate_asn1 = asn1_string_to_ASN1_TIME(asn1_string);
-    if (testdate_asn1 == NULL)
+    testdate_asn1 = ASN1_TIME_new();
+    if (!ASN1_TIME_set_string(testdate_asn1, asn1_string))
         return NULL;
 
     testdate_tm = malloc(sizeof(*testdate_tm));
