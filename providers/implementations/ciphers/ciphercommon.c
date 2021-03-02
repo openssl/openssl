@@ -107,6 +107,9 @@ int ossl_cipher_var_keylen_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
     const OSSL_PARAM *p;
 
+    if (params == NULL)
+        return 1;
+
     if (!ossl_cipher_generic_set_ctx_params(vctx, params))
         return 0;
     p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_KEYLEN);
@@ -573,6 +576,9 @@ int ossl_cipher_generic_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
     PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
     const OSSL_PARAM *p;
+
+    if (params == NULL)
+        return 1;
 
     p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_PADDING);
     if (p != NULL) {

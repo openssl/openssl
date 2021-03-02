@@ -21,6 +21,8 @@
 
 #define RC4_FLAGS PROV_CIPHER_FLAG_VARIABLE_LENGTH
 
+static OSSL_FUNC_cipher_encrypt_init_fn rc4_einit;
+static OSSL_FUNC_cipher_decrypt_init_fn rc4_dinit;
 static OSSL_FUNC_cipher_freectx_fn rc4_freectx;
 static OSSL_FUNC_cipher_dupctx_fn rc4_dupctx;
 
@@ -50,6 +52,24 @@ static void *rc4_dupctx(void *ctx)
     return ret;
 }
 
+static int rc4_einit(void *ctx, const unsigned char *key, size_t keylen,
+                          const unsigned char *iv, size_t ivlen,
+                          const OSSL_PARAM params[])
+{
+    if (!ossl_cipher_generic_einit(ctx, key, keylen, iv, ivlen, NULL))
+        return 0;
+    return ossl_cipher_var_keylen_set_ctx_params(ctx, params);
+}
+
+static int rc4_dinit(void *ctx, const unsigned char *key, size_t keylen,
+                          const unsigned char *iv, size_t ivlen,
+                          const OSSL_PARAM params[])
+{
+    if (!ossl_cipher_generic_dinit(ctx, key, keylen, iv, ivlen, NULL))
+        return 0;
+    return ossl_cipher_var_keylen_set_ctx_params(ctx, params);
+}
+
 #define IMPLEMENT_cipher(alg, UCALG, flags, kbits, blkbits, ivbits, typ)       \
 static OSSL_FUNC_cipher_get_params_fn alg##_##kbits##_get_params;              \
 static int alg##_##kbits##_get_params(OSSL_PARAM params[])                     \
@@ -75,8 +95,8 @@ const OSSL_DISPATCH ossl_##alg##kbits##_functions[] = {                        \
       (void (*)(void)) alg##_##kbits##_newctx },                               \
     { OSSL_FUNC_CIPHER_FREECTX, (void (*)(void)) alg##_freectx },              \
     { OSSL_FUNC_CIPHER_DUPCTX, (void (*)(void)) alg##_dupctx },                \
-    { OSSL_FUNC_CIPHER_ENCRYPT_INIT, (void (*)(void))ossl_cipher_generic_einit }, \
-    { OSSL_FUNC_CIPHER_DECRYPT_INIT, (void (*)(void))ossl_cipher_generic_dinit }, \
+    { OSSL_FUNC_CIPHER_ENCRYPT_INIT, (void (*)(void))rc4_einit },              \
+    { OSSL_FUNC_CIPHER_DECRYPT_INIT, (void (*)(void))rc4_dinit },              \
     { OSSL_FUNC_CIPHER_UPDATE, (void (*)(void))ossl_cipher_generic_##typ##_update },\
     { OSSL_FUNC_CIPHER_FINAL, (void (*)(void))ossl_cipher_generic_##typ##_final },  \
     { OSSL_FUNC_CIPHER_CIPHER, (void (*)(void))ossl_cipher_generic_cipher },   \
