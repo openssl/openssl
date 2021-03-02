@@ -284,15 +284,14 @@ static int shake_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     const OSSL_PARAM *p;
     KECCAK1600_CTX *ctx = (KECCAK1600_CTX *)vctx;
 
-    if (ctx != NULL && params != NULL) {
-        p = OSSL_PARAM_locate_const(params, OSSL_DIGEST_PARAM_XOFLEN);
-        if (p != NULL && !OSSL_PARAM_get_size_t(p, &ctx->md_size)) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
-            return 0;
-        }
-        return 1;
+    if (ctx == NULL)
+        return 0;
+    p = OSSL_PARAM_locate_const(params, OSSL_DIGEST_PARAM_XOFLEN);
+    if (p != NULL && !OSSL_PARAM_get_size_t(p, &ctx->md_size)) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
+        return 0;
     }
-    return 0; /* Null Parameter */
+    return 1;
 }
 
 #define IMPLEMENT_SHA3_functions(bitlen)                                       \
