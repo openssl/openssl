@@ -88,6 +88,8 @@ jobs:
         run: set -eux; cd ${{ env.myblddir }} && make update
       - name: make
         run: set -eux; cd ${{ env.myblddir }} && make -s -j4
+      - name: make test (minimal subset)
+        run: set -eux; cd ${{ env.myblddir }} && make test TESTS='0[0-9]'
 
   no-deprecated:
     runs-on: ubuntu-latest
