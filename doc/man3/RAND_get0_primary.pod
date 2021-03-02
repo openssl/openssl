@@ -57,9 +57,14 @@ During initialization, it is possible to change the reseed interval
 and reseed time interval.
 It is also possible to exchange the reseeding callbacks entirely.
 
+To set the type of DRBG that will be instantiated, use the
+L<RAND_set_DRBG_type(3)> call before accessing the random number generation
+infrastructure.
+
 =head1 SEE ALSO
 
-L<EVP_RAND(3)>
+L<EVP_RAND(3)>,
+L<RAND_set_DRBG_type(3)>
 
 =head1 HISTORY
 
