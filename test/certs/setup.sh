@@ -44,7 +44,7 @@ OPENSSL_KEYBITS=768 \
 
 # primary client-EKU root: croot-cert
 ./mkcert.sh genroot "Root CA" root-key croot-cert clientAuth
-# trust variants: +serverAuth -serverAuth +clientAuth +anyEKU -anyEKU
+# trust variants: +serverAuth -serverAuth +clientAuth -clientAuth +anyEKU -anyEKU
 openssl x509 -in croot-cert.pem -trustout \
     -addtrust serverAuth -out croot+serverAuth.pem
 openssl x509 -in croot-cert.pem -trustout \
@@ -97,11 +97,11 @@ openssl x509 -in ca-cert.pem -trustout \
     -addtrust anyExtendedKeyUsage -out ca+anyEKU.pem
 openssl x509 -in ca-cert.pem -trustout \
     -addreject anyExtendedKeyUsage -out ca-anyEKU.pem
-# ca-nonca trust variants: +serverAuth, -serverAuth
+# ca-nonca trust variants: +serverAuth, +anyEKU
 openssl x509 -in ca-nonca.pem -trustout \
     -addtrust serverAuth -out nca+serverAuth.pem
 openssl x509 -in ca-nonca.pem -trustout \
-    -addtrust serverAuth -out nca+anyEKU.pem
+    -addtrust anyExtendedKeyUsage -out nca+anyEKU.pem
 
 # Intermediate CA security variants:
 # MD5 issuer signature,
@@ -129,7 +129,7 @@ openssl x509 -in cca-cert.pem -trustout \
 openssl x509 -in cca-cert.pem -trustout \
     -addtrust clientAuth -out cca+clientAuth.pem
 openssl x509 -in cca-cert.pem -trustout \
-    -addtrust clientAuth -out cca-clientAuth.pem
+    -addreject clientAuth -out cca-clientAuth.pem
 openssl x509 -in cca-cert.pem -trustout \
     -addtrust anyExtendedKeyUsage -out cca+anyEKU.pem
 openssl x509 -in cca-cert.pem -trustout \
