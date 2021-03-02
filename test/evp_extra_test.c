@@ -1888,7 +1888,7 @@ static int test_EVP_PKEY_CTX_get_set_params(EVP_PKEY *pkey)
     mdctx = EVP_MD_CTX_new();
     if (!TEST_ptr(mdctx)
         || !TEST_true(EVP_DigestSignInit_ex(mdctx, NULL, "SHA1", NULL, NULL,
-                                            pkey)))
+                                            pkey, NULL)))
         goto err;
 
     /*

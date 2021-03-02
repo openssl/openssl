@@ -1199,7 +1199,7 @@ static int mac_test_run_pkey(EVP_TEST *t)
         t->err = "INTERNAL_ERROR";
         goto err;
     }
-    if (!EVP_DigestSignInit_ex(mctx, &pctx, mdname, libctx, NULL, key)) {
+    if (!EVP_DigestSignInit_ex(mctx, &pctx, mdname, libctx, NULL, key, NULL)) {
         t->err = "DIGESTSIGNINIT_ERROR";
         goto err;
     }
@@ -2898,12 +2898,12 @@ static int digestsigver_test_parse(EVP_TEST *t,
         }
         if (mdata->is_verify) {
             if (!EVP_DigestVerifyInit_ex(mdata->ctx, &mdata->pctx, name, libctx,
-                                         NULL, pkey))
+                                         NULL, pkey, NULL))
                 t->err = "DIGESTVERIFYINIT_ERROR";
             return 1;
         }
         if (!EVP_DigestSignInit_ex(mdata->ctx, &mdata->pctx, name, libctx, NULL,
-                                   pkey))
+                                   pkey, NULL))
             t->err = "DIGESTSIGNINIT_ERROR";
         return 1;
     }
