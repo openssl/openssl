@@ -176,6 +176,11 @@ EVP_KEYEXCH *EVP_KEYEXCH_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
 
 int EVP_PKEY_derive_init(EVP_PKEY_CTX *ctx)
 {
+    return EVP_PKEY_derive_init_ex(ctx, NULL);
+}
+
+int EVP_PKEY_derive_init_ex(EVP_PKEY_CTX *ctx, const OSSL_PARAM params[])
+{
     int ret;
     void *provkey = NULL;
     EVP_KEYEXCH *exchange = NULL;
@@ -279,7 +284,7 @@ int EVP_PKEY_derive_init(EVP_PKEY_CTX *ctx)
         ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
         goto err;
     }
-    ret = exchange->init(ctx->op.kex.exchprovctx, provkey);
+    ret = exchange->init(ctx->op.kex.exchprovctx, provkey, params);
 
     return ret ? 1 : 0;
  err:

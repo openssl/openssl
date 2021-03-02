@@ -39,7 +39,8 @@ static const char *canon_mdname(const char *mdname)
 static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
                           const EVP_MD *type, const char *mdname,
                           OSSL_LIB_CTX *libctx, const char *props,
-                          ENGINE *e, EVP_PKEY *pkey, int ver)
+                          ENGINE *e, EVP_PKEY *pkey, int ver,
+                          OSSL_PARAM params[])
 {
     EVP_PKEY_CTX *locpctx = NULL;
     EVP_SIGNATURE *signature = NULL;
@@ -202,14 +203,14 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
             goto err;
         }
         ret = signature->digest_verify_init(locpctx->op.sig.sigprovctx,
-                                            mdname, provkey);
+                                            mdname, provkey, params);
     } else {
         if (signature->digest_sign_init == NULL) {
             ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
             goto err;
         }
         ret = signature->digest_sign_init(locpctx->op.sig.sigprovctx,
-                                          mdname, provkey);
+                                          mdname, provkey, params);
     }
 
     goto end;
@@ -301,28 +302,34 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
 
 int EVP_DigestSignInit_ex(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
                           const char *mdname, OSSL_LIB_CTX *libctx,
-                          const char *props, EVP_PKEY *pkey)
+                          const char *props, EVP_PKEY *pkey,
+                          OSSL_PARAM params[])
 {
-    return do_sigver_init(ctx, pctx, NULL, mdname, libctx, props, NULL, pkey, 0);
+    return do_sigver_init(ctx, pctx, NULL, mdname, libctx, props, NULL, pkey, 0,
+                          params);
 }
 
 int EVP_DigestSignInit(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
                        const EVP_MD *type, ENGINE *e, EVP_PKEY *pkey)
 {
-    return do_sigver_init(ctx, pctx, type, NULL, NULL, NULL, e, pkey, 0);
+    return do_sigver_init(ctx, pctx, type, NULL, NULL, NULL, e, pkey, 0,
+                          NULL);
 }
 
 int EVP_DigestVerifyInit_ex(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
                             const char *mdname, OSSL_LIB_CTX *libctx,
-                            const char *props, EVP_PKEY *pkey)
+                            const char *props, EVP_PKEY *pkey,
+                            OSSL_PARAM params[])
 {
-    return do_sigver_init(ctx, pctx, NULL, mdname, libctx, props, NULL, pkey, 1);
+    return do_sigver_init(ctx, pctx, NULL, mdname, libctx, props, NULL, pkey, 1,
+                          params);
 }
 
 int EVP_DigestVerifyInit(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
                          const EVP_MD *type, ENGINE *e, EVP_PKEY *pkey)
 {
-    return do_sigver_init(ctx, pctx, type, NULL, NULL, NULL, e, pkey, 1);
+    return do_sigver_init(ctx, pctx, type, NULL, NULL, NULL, e, pkey, 1,
+                          NULL);
 }
 #endif /* FIPS_MDOE */
 
