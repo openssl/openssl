@@ -482,7 +482,10 @@ static int ec_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
         return 1;
 
     case ASN1_PKEY_CTRL_SET1_TLS_ENCPT:
-        return EC_KEY_oct2key(EVP_PKEY_get0_EC_KEY(pkey), arg2, arg1, NULL);
+        /* We should only be here if we have a legacy key */
+        if (!ossl_assert(evp_pkey_is_legacy(pkey)))
+            return 0;
+        return EC_KEY_oct2key(evp_pkey_get0_EC_KEY_int(pkey), arg2, arg1, NULL);
 
     case ASN1_PKEY_CTRL_GET1_TLS_ENCPT:
         return EC_KEY_key2buf(EVP_PKEY_get0_EC_KEY(pkey),

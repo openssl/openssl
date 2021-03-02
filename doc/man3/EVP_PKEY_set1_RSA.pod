@@ -38,10 +38,10 @@ L<openssl_user_macros(7)>:
  const unsigned char *EVP_PKEY_get0_hmac(const EVP_PKEY *pkey, size_t *len);
  const unsigned char *EVP_PKEY_get0_poly1305(const EVP_PKEY *pkey, size_t *len);
  const unsigned char *EVP_PKEY_get0_siphash(const EVP_PKEY *pkey, size_t *len);
- RSA *EVP_PKEY_get0_RSA(const EVP_PKEY *pkey);
- DSA *EVP_PKEY_get0_DSA(const EVP_PKEY *pkey);
- DH *EVP_PKEY_get0_DH(const EVP_PKEY *pkey);
- EC_KEY *EVP_PKEY_get0_EC_KEY(const EVP_PKEY *pkey);
+ const RSA *EVP_PKEY_get0_RSA(const EVP_PKEY *pkey);
+ const DSA *EVP_PKEY_get0_DSA(const EVP_PKEY *pkey);
+ const DH *EVP_PKEY_get0_DH(const EVP_PKEY *pkey);
+ const EC_KEY *EVP_PKEY_get0_EC_KEY(const EVP_PKEY *pkey);
 
  int EVP_PKEY_assign_RSA(EVP_PKEY *pkey, RSA *key);
  int EVP_PKEY_assign_DSA(EVP_PKEY *pkey, DSA *key);
@@ -143,6 +143,17 @@ EVP_PKEY_id(), EVP_PKEY_base_id(), EVP_PKEY_type(), EVP_PKEY_set_alias_type()
 
 For EVP_PKEY key type checking purposes, L<EVP_PKEY_is_a(3)> is more generic.
 
+The keys returned from the functions EVP_PKEY_get0_RSA(), EVP_PKEY_get0_DSA(),
+EVP_PKEY_get0_DH() and EVP_PKEY_get0_EC_KEY() were changed to have a "const"
+return type in OpenSSL 3.0. As described above the keys returned may be cached
+copies of the key held in a provider. Due to this, and unlike in earlier
+versions of OpenSSL, they should be considered read-only copies of the key.
+Updates to these keys will not be reflected back in the provider side key. The
+EVP_PKEY_get1_RSA(), EVP_PKEY_get1_DSA(), EVP_PKEY_get1_DH() and
+EVP_PKEY_get1_EC_KEY() functions were not changed to have a "const" return type
+in order that applications can "free" the return value. However applications
+should still consider them as read-only copies.
+
 =head1 NOTES
 
 In accordance with the OpenSSL naming convention the key obtained
@@ -215,6 +226,9 @@ EVP_PKEY_assign_EC_KEY, EVP_PKEY_assign_POLY1305, EVP_PKEY_assign_SIPHASH,
 EVP_PKEY_get0_hmac, EVP_PKEY_get0_poly1305, EVP_PKEY_get0_siphash,
 EVP_PKEY_set_alias_type, EVP_PKEY_set1_engine and EVP_PKEY_get0_engine were
 deprecated in OpenSSL 3.0.
+
+The return value from EVP_PKEY_get0_RSA, EVP_PKEY_get0_DSA, EVP_PKEY_get0_DH,
+EVP_PKEY_get0_EC_KEY were made const in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
