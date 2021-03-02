@@ -334,7 +334,6 @@ static int ecd_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 static int ecx_set_priv_key(EVP_PKEY *pkey, const unsigned char *priv,
                             size_t len)
 {
-    /* TODO(3.0): We should pass a libctx here */
     return ecx_key_op(pkey, pkey->ameth->pkey_id, NULL, priv, len,
                        KEY_OP_PRIVATE, NULL, NULL);
 }
