@@ -202,7 +202,8 @@ static void *xor_newctx(void *provctx)
     return pxorctx;
 }
 
-static int xor_init(void *vpxorctx, void *vkey)
+static int xor_init(void *vpxorctx, void *vkey,
+                    ossl_unused const OSSL_PARAM params[])
 {
     PROV_XOR_CTX *pxorctx = (PROV_XOR_CTX *)vpxorctx;
 
@@ -331,7 +332,7 @@ static int xor_encapsulate(void *vpxorctx,
     /* 3. Derive ss via KEX */
     derivectx = xor_newctx(pxorctx->provctx);
     if (derivectx == NULL
-            || !xor_init(derivectx, ourkey)
+            || !xor_init(derivectx, ourkey, NULL)
             || !xor_set_peer(derivectx, pxorctx->key)
             || !xor_derive(derivectx, ss, sslen, XOR_KEY_SIZE))
         goto end;
@@ -378,7 +379,7 @@ static int xor_decapsulate(void *vpxorctx,
     /* Derive ss via KEX */
     derivectx = xor_newctx(pxorctx->provctx);
     if (derivectx == NULL
-            || !xor_init(derivectx, pxorctx->key)
+            || !xor_init(derivectx, pxorctx->key, NULL)
             || !xor_set_peer(derivectx, peerkey)
             || !xor_derive(derivectx, ss, sslen, XOR_KEY_SIZE))
         goto end;

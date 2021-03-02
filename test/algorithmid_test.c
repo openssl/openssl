@@ -162,7 +162,7 @@ static int test_x509_sig_aid(X509 *eecert, const char *ee_filename,
     if (!TEST_ptr(mdctx = EVP_MD_CTX_new())
         || !TEST_true(EVP_DigestVerifyInit_ex(mdctx, &pctx,
                                               OBJ_nid2sn(dig_nid),
-                                              NULL, NULL, pkey))) {
+                                              NULL, NULL, pkey, NULL))) {
         TEST_info("Couldn't initialize a DigestVerify operation with "
                   "pkey type %s and hash type %s",
                   OBJ_nid2sn(pkey_nid), OBJ_nid2sn(dig_nid));

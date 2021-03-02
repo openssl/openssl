@@ -97,7 +97,7 @@ static int sig_gen(EVP_PKEY *pkey, OSSL_PARAM *params, const char *digest_name,
     if (!TEST_ptr(sig = OPENSSL_malloc(sz))
         || !TEST_ptr(md_ctx = EVP_MD_CTX_new())
         || !TEST_int_eq(EVP_DigestSignInit_ex(md_ctx, NULL, digest_name, libctx,
-                                              NULL, pkey), 1)
+                                              NULL, pkey, NULL), 1)
         || !TEST_int_gt(EVP_DigestSign(md_ctx, sig, &sig_len, msg, msg_len), 0))
         goto err;
     *sig_out = sig;
@@ -306,7 +306,7 @@ static int ecdsa_sigver_test(int id)
     ret = TEST_int_gt((sig_len = i2d_ECDSA_SIG(sign, &sig)), 0)
           && TEST_ptr(md_ctx = EVP_MD_CTX_new())
           && TEST_true(EVP_DigestVerifyInit_ex(md_ctx, NULL, tst->digest_alg,
-                                               libctx, NULL, pkey)
+                                               libctx, NULL, pkey, NULL)
           && TEST_int_eq(EVP_DigestVerify(md_ctx, sig, sig_len,
                                           tst->msg, tst->msg_len), tst->pass));
 err:
@@ -1249,7 +1249,7 @@ static int rsa_sigver_test(int id)
         || !TEST_ptr(md_ctx = EVP_MD_CTX_new())
         || !TEST_true(EVP_DigestVerifyInit_ex(md_ctx, &pkey_ctx,
                                               tst->digest_alg, libctx, NULL,
-                                              pkey)
+                                              pkey, NULL)
         || !TEST_true(EVP_PKEY_CTX_set_params(pkey_ctx, params))
         || !TEST_int_eq(EVP_DigestVerify(md_ctx, tst->sig, tst->sig_len,
                                          tst->msg, tst->msg_len), tst->pass)))
