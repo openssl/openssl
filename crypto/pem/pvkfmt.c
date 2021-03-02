@@ -450,12 +450,12 @@ static void write_lebn(unsigned char **out, const BIGNUM *bn, int len)
     *out += len;
 }
 
-static int check_bitlen_rsa(RSA *rsa, int ispub, unsigned int *magic);
-static void write_rsa(unsigned char **out, RSA *rsa, int ispub);
+static int check_bitlen_rsa(const RSA *rsa, int ispub, unsigned int *magic);
+static void write_rsa(unsigned char **out, const RSA *rsa, int ispub);
 
 #ifndef OPENSSL_NO_DSA
-static int check_bitlen_dsa(DSA *dsa, int ispub, unsigned int *magic);
-static void write_dsa(unsigned char **out, DSA *dsa, int ispub);
+static int check_bitlen_dsa(const DSA *dsa, int ispub, unsigned int *magic);
+static void write_dsa(unsigned char **out, const DSA *dsa, int ispub);
 #endif
 
 static int do_i2b(unsigned char **out, const EVP_PKEY *pk, int ispub)
@@ -542,7 +542,7 @@ static int do_i2b_bio(BIO *out, const EVP_PKEY *pk, int ispub)
     return -1;
 }
 
-static int check_bitlen_rsa(RSA *rsa, int ispub, unsigned int *pmagic)
+static int check_bitlen_rsa(const RSA *rsa, int ispub, unsigned int *pmagic)
 {
     int nbyte, hnbyte, bitlen;
     const BIGNUM *e;
@@ -582,7 +582,7 @@ static int check_bitlen_rsa(RSA *rsa, int ispub, unsigned int *pmagic)
     return 0;
 }
 
-static void write_rsa(unsigned char **out, RSA *rsa, int ispub)
+static void write_rsa(unsigned char **out, const RSA *rsa, int ispub)
 {
     int nbyte, hnbyte;
     const BIGNUM *n, *d, *e, *p, *q, *iqmp, *dmp1, *dmq1;
@@ -605,7 +605,7 @@ static void write_rsa(unsigned char **out, RSA *rsa, int ispub)
 }
 
 #ifndef OPENSSL_NO_DSA
-static int check_bitlen_dsa(DSA *dsa, int ispub, unsigned int *pmagic)
+static int check_bitlen_dsa(const DSA *dsa, int ispub, unsigned int *pmagic)
 {
     int bitlen;
     const BIGNUM *p = NULL, *q = NULL, *g = NULL;
@@ -633,7 +633,7 @@ static int check_bitlen_dsa(DSA *dsa, int ispub, unsigned int *pmagic)
     return 0;
 }
 
-static void write_dsa(unsigned char **out, DSA *dsa, int ispub)
+static void write_dsa(unsigned char **out, const DSA *dsa, int ispub)
 {
     int nbyte;
     const BIGNUM *p = NULL, *q = NULL, *g = NULL;

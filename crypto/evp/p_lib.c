@@ -740,7 +740,7 @@ int EVP_PKEY_assign(EVP_PKEY *pkey, int type, void *key)
 }
 # endif
 
-void *EVP_PKEY_get0(const EVP_PKEY *pkey)
+const void *EVP_PKEY_get0(const EVP_PKEY *pkey)
 {
     if (pkey == NULL)
         return NULL;
@@ -750,7 +750,7 @@ void *EVP_PKEY_get0(const EVP_PKEY *pkey)
 
 const unsigned char *EVP_PKEY_get0_hmac(const EVP_PKEY *pkey, size_t *len)
 {
-    ASN1_OCTET_STRING *os = NULL;
+    const ASN1_OCTET_STRING *os = NULL;
     if (pkey->type != EVP_PKEY_HMAC) {
         ERR_raise(ERR_LIB_EVP, EVP_R_EXPECTING_AN_HMAC_KEY);
         return NULL;
@@ -763,7 +763,7 @@ const unsigned char *EVP_PKEY_get0_hmac(const EVP_PKEY *pkey, size_t *len)
 # ifndef OPENSSL_NO_POLY1305
 const unsigned char *EVP_PKEY_get0_poly1305(const EVP_PKEY *pkey, size_t *len)
 {
-    ASN1_OCTET_STRING *os = NULL;
+    const ASN1_OCTET_STRING *os = NULL;
     if (pkey->type != EVP_PKEY_POLY1305) {
         ERR_raise(ERR_LIB_EVP, EVP_R_EXPECTING_A_POLY1305_KEY);
         return NULL;
@@ -777,7 +777,7 @@ const unsigned char *EVP_PKEY_get0_poly1305(const EVP_PKEY *pkey, size_t *len)
 # ifndef OPENSSL_NO_SIPHASH
 const unsigned char *EVP_PKEY_get0_siphash(const EVP_PKEY *pkey, size_t *len)
 {
-    ASN1_OCTET_STRING *os = NULL;
+    const ASN1_OCTET_STRING *os = NULL;
 
     if (pkey->type != EVP_PKEY_SIPHASH) {
         ERR_raise(ERR_LIB_EVP, EVP_R_EXPECTING_A_SIPHASH_KEY);
@@ -790,13 +790,18 @@ const unsigned char *EVP_PKEY_get0_siphash(const EVP_PKEY *pkey, size_t *len)
 # endif
 
 # ifndef OPENSSL_NO_DSA
-DSA *EVP_PKEY_get0_DSA(const EVP_PKEY *pkey)
+static DSA *evp_pkey_get0_DSA_int(const EVP_PKEY *pkey)
 {
     if (pkey->type != EVP_PKEY_DSA) {
         ERR_raise(ERR_LIB_EVP, EVP_R_EXPECTING_A_DSA_KEY);
         return NULL;
     }
     return evp_pkey_get_legacy((EVP_PKEY *)pkey);
+}
+
+const DSA *EVP_PKEY_get0_DSA(const EVP_PKEY *pkey)
+{
+    return evp_pkey_get0_DSA_int(pkey);
 }
 
 int EVP_PKEY_set1_DSA(EVP_PKEY *pkey, DSA *key)
@@ -808,7 +813,8 @@ int EVP_PKEY_set1_DSA(EVP_PKEY *pkey, DSA *key)
 }
 DSA *EVP_PKEY_get1_DSA(EVP_PKEY *pkey)
 {
-    DSA *ret = EVP_PKEY_get0_DSA(pkey);
+    DSA *ret = evp_pkey_get0_DSA_int(pkey);
+
     if (ret != NULL)
         DSA_up_ref(ret);
     return ret;
@@ -818,7 +824,7 @@ DSA *EVP_PKEY_get1_DSA(EVP_PKEY *pkey)
 
 #ifndef FIPS_MODULE
 # ifndef OPENSSL_NO_EC
-static ECX_KEY *evp_pkey_get0_ECX_KEY(const EVP_PKEY *pkey, int type)
+static const ECX_KEY *evp_pkey_get0_ECX_KEY(const EVP_PKEY *pkey, int type)
 {
     if (EVP_PKEY_base_id(pkey) != type) {
         ERR_raise(ERR_LIB_EVP, EVP_R_EXPECTING_A_ECX_KEY);
@@ -829,7 +835,7 @@ static ECX_KEY *evp_pkey_get0_ECX_KEY(const EVP_PKEY *pkey, int type)
 
 static ECX_KEY *evp_pkey_get1_ECX_KEY(EVP_PKEY *pkey, int type)
 {
-    ECX_KEY *ret = evp_pkey_get0_ECX_KEY(pkey, type);
+    ECX_KEY *ret = (ECX_KEY *)evp_pkey_get0_ECX_KEY(pkey, type);
     if (ret != NULL)
         ossl_ecx_key_up_ref(ret);
     return ret;
@@ -859,7 +865,7 @@ int EVP_PKEY_set1_DH(EVP_PKEY *pkey, DH *key)
     return ret;
 }
 
-DH *EVP_PKEY_get0_DH(const EVP_PKEY *pkey)
+DH *evp_pkey_get0_DH_int(const EVP_PKEY *pkey)
 {
     if (pkey->type != EVP_PKEY_DH && pkey->type != EVP_PKEY_DHX) {
         ERR_raise(ERR_LIB_EVP, EVP_R_EXPECTING_A_DH_KEY);
@@ -868,9 +874,15 @@ DH *EVP_PKEY_get0_DH(const EVP_PKEY *pkey)
     return evp_pkey_get_legacy((EVP_PKEY *)pkey);
 }
 
+const DH *EVP_PKEY_get0_DH(const EVP_PKEY *pkey)
+{
+    return evp_pkey_get0_DH_int(pkey);
+}
+
 DH *EVP_PKEY_get1_DH(EVP_PKEY *pkey)
 {
-    DH *ret = EVP_PKEY_get0_DH(pkey);
+    DH *ret = evp_pkey_get0_DH_int(pkey);
+
     if (ret != NULL)
         DH_up_ref(ret);
     return ret;
@@ -2194,7 +2206,7 @@ int EVP_PKEY_get_ec_point_conv_form(const EVP_PKEY *pkey)
             || pkey->keydata == NULL) {
 #ifndef OPENSSL_NO_EC
         /* Might work through the legacy route */
-        EC_KEY *ec = EVP_PKEY_get0_EC_KEY(pkey);
+        const EC_KEY *ec = EVP_PKEY_get0_EC_KEY(pkey);
 
         if (ec == NULL)
             return 0;
@@ -2234,7 +2246,7 @@ int EVP_PKEY_get_field_type(const EVP_PKEY *pkey)
             || pkey->keydata == NULL) {
 #ifndef OPENSSL_NO_EC
         /* Might work through the legacy route */
-        EC_KEY *ec = EVP_PKEY_get0_EC_KEY(pkey);
+        const EC_KEY *ec = EVP_PKEY_get0_EC_KEY(pkey);
         const EC_GROUP *grp;
 
         if (ec == NULL)
