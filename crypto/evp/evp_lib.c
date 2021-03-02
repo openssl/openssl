@@ -477,7 +477,7 @@ int EVP_CIPHER_CTX_iv_length(const EVP_CIPHER_CTX *ctx)
     if (rv == EVP_CTRL_RET_UNSUPPORTED)
         goto legacy;
     return rv != 0 ? (int)v : -1;
-    /* TODO (3.0) Remove legacy support */
+    /* Code below to be removed when legacy support is dropped. */
 legacy:
     if ((EVP_CIPHER_flags(ctx->cipher) & EVP_CIPH_CUSTOM_IV_LENGTH) != 0) {
         rv = EVP_CIPHER_CTX_ctrl((EVP_CIPHER_CTX *)ctx, EVP_CTRL_GET_IVLEN,

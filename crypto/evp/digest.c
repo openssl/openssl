@@ -32,7 +32,7 @@ void evp_md_ctx_clear_digest(EVP_MD_CTX *ctx, int force)
         EVP_MD_CTX_set_flags(ctx, EVP_MD_CTX_FLAG_CLEANED);
     }
 
-    /* TODO(3.0): Remove legacy code below */
+    /* Code below to remove when legacy support is dropped. */
 
     /*
      * Don't assume ctx->md_data was cleaned in EVP_Digest_Final, because
@@ -177,7 +177,7 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
         type = ctx->digest;
     }
 
-    /* TODO(3.0): Legacy work around code below. Remove this */
+    /* Code below to remove when legacy support is dropped. */
 #if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODULE)
     /*
      * Whether it's nice or not, "Inits" can be used on "Final"'d contexts so
@@ -225,7 +225,7 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
         ctx->md_data = NULL;
     }
 
-    /* TODO(3.0): Start of non-legacy code below */
+    /* Start of non-legacy code below */
 
     if (type->prov == NULL) {
 #ifdef FIPS_MODULE
@@ -274,7 +274,7 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
 
     return ctx->digest->dinit(ctx->provctx);
 
-    /* TODO(3.0): Remove legacy code below */
+    /* Code below to be removed when legacy support is dropped. */
  legacy:
 
 #if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODULE)
@@ -381,7 +381,7 @@ int EVP_DigestUpdate(EVP_MD_CTX *ctx, const void *data, size_t count)
     }
     return ctx->digest->dupdate(ctx->provctx, data, count);
 
-    /* TODO(3.0): Remove legacy code below */
+    /* Code below to be removed when legacy support is dropped. */
  legacy:
     return ctx->update(ctx, data, count);
 }
@@ -430,7 +430,7 @@ int EVP_DigestFinal_ex(EVP_MD_CTX *ctx, unsigned char *md, unsigned int *isize)
 
     return ret;
 
-    /* TODO(3.0): Remove legacy code below */
+    /* Code below to be removed when legacy support is dropped. */
  legacy:
     OPENSSL_assert(mdsize <= EVP_MAX_MD_SIZE);
     ret = ctx->digest->final(ctx, md);
@@ -542,7 +542,7 @@ int EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in)
 
     return 1;
 
-    /* TODO(3.0): Remove legacy code below */
+    /* Code below to be removed when legacy support is dropped. */
  legacy:
 #if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODULE)
     /* Make sure it's safe to copy a digest context using an ENGINE */
@@ -787,7 +787,7 @@ int EVP_MD_CTX_ctrl(EVP_MD_CTX *ctx, int cmd, int p1, void *p2)
     goto conclude;
 
 
-/* TODO(3.0): Remove legacy code below */
+    /* Code below to be removed when legacy support is dropped. */
  legacy:
     if (ctx->digest->md_ctrl == NULL) {
         ERR_raise(ERR_LIB_EVP, EVP_R_CTRL_NOT_IMPLEMENTED);
