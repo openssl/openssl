@@ -29,11 +29,11 @@ my $utf = srctop_file(@certs, "cyrillic.utf8");
 
 ok(run(app(["openssl", "x509", "-text", "-in", $pem, "-out", $out_msb,
             "-nameopt", "esc_msb"])));
-is(cmp_text($out_msb, srctop_file(@certs, "cyrillic.msb")),
+is(cmp_text($out_msb, $msb),
    0, 'Comparing esc_msb output with cyrillic.msb');
 ok(run(app(["openssl", "x509", "-text", "-in", $pem, "-out", $out_utf8,
             "-nameopt", "utf8"])));
-is(cmp_text($out_utf8, srctop_file(@certs, "cyrillic.utf8")),
+is(cmp_text($out_utf8, $utf),
    0, 'Comparing utf8 output with cyrillic.utf8');
 
  SKIP: {
