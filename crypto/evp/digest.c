@@ -124,13 +124,8 @@ void EVP_MD_CTX_free(EVP_MD_CTX *ctx)
     return;
 }
 
-int EVP_DigestInit(EVP_MD_CTX *ctx, const EVP_MD *type)
-{
-    EVP_MD_CTX_reset(ctx);
-    return EVP_DigestInit_ex(ctx, type, NULL);
-}
-
-int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
+static int evp_md_init_internal(EVP_MD_CTX *ctx, const EVP_MD *type,
+                                const OSSL_PARAM params[], ENGINE *impl)
 {
 #if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODULE)
     ENGINE *tmpimpl = NULL;
@@ -272,7 +267,7 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
         return 0;
     }
 
-    return ctx->digest->dinit(ctx->provctx);
+    return ctx->digest->dinit(ctx->provctx, params);
 
     /* Code below to be removed when legacy support is dropped. */
  legacy:
@@ -344,6 +339,23 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
     if (ctx->flags & EVP_MD_CTX_FLAG_NO_INIT)
         return 1;
     return ctx->digest->init(ctx);
+}
+
+int EVP_DigestInit_ex2(EVP_MD_CTX *ctx, const EVP_MD *type,
+                       const OSSL_PARAM params[])
+{
+    return evp_md_init_internal(ctx, type, params, NULL);
+}
+
+int EVP_DigestInit(EVP_MD_CTX *ctx, const EVP_MD *type)
+{
+    EVP_MD_CTX_reset(ctx);
+    return evp_md_init_internal(ctx, type, NULL, NULL);
+}
+
+int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
+{
+    return evp_md_init_internal(ctx, type, NULL, impl);
 }
 
 int EVP_DigestUpdate(EVP_MD_CTX *ctx, const void *data, size_t count)
