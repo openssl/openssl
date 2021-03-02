@@ -56,8 +56,8 @@ BLAKE2SMAC, and is empty by default.
 =item "size" (B<OSSL_MAC_PARAM_SIZE>) <unsigned integer>
 
 Sets the MAC size.
-It can be any number between between 1 and 32 for EVP_MAC_BLAKE2S or
-between 1 and 64 for EVP_MAC_BLAKE2B.
+It can be any number between 1 and 32 for EVP_MAC_BLAKE2S or between 1
+and 64 for EVP_MAC_BLAKE2B.
 It is 32 and 64 respectively by default.
 
 =back
