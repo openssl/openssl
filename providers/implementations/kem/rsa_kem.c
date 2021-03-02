@@ -117,7 +117,8 @@ static void *rsakem_dupctx(void *vprsactx)
     return dstctx;
 }
 
-static int rsakem_init(void *vprsactx, void *vrsa, int operation)
+static int rsakem_init(void *vprsactx, void *vrsa,
+                       const OSSL_PARAM params[], int operation)
 {
     PROV_RSA_CTX *prsactx = (PROV_RSA_CTX *)vprsactx;
 
@@ -130,26 +131,26 @@ static int rsakem_init(void *vprsactx, void *vrsa, int operation)
         ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
         return 0;
     }
-    return 1;
+    return rsakem_set_ctx_params(prsactx, params);
 }
 
-static int rsakem_encapsulate_init(void *vprsactx, void *vrsa)
+static int rsakem_encapsulate_init(void *vprsactx, void *vrsa,
+                                   const OSSL_PARAM params[])
 {
-    return rsakem_init(vprsactx, vrsa, EVP_PKEY_OP_ENCAPSULATE);
+    return rsakem_init(vprsactx, vrsa, params, EVP_PKEY_OP_ENCAPSULATE);
 }
 
-static int rsakem_decapsulate_init(void *vprsactx, void *vrsa)
+static int rsakem_decapsulate_init(void *vprsactx, void *vrsa,
+                                   const OSSL_PARAM params[])
 {
-    return rsakem_init(vprsactx, vrsa, EVP_PKEY_OP_DECAPSULATE);
+    return rsakem_init(vprsactx, vrsa, params, EVP_PKEY_OP_DECAPSULATE);
 }
 
 static int rsakem_get_ctx_params(void *vprsactx, OSSL_PARAM *params)
 {
     PROV_RSA_CTX *ctx = (PROV_RSA_CTX *)vprsactx;
 
-    if (ctx == NULL || params == NULL)
-        return 0;
-    return 1;
+    return ctx != NULL;
 }
 
 static const OSSL_PARAM known_gettable_rsakem_ctx_params[] = {
@@ -168,8 +169,11 @@ static int rsakem_set_ctx_params(void *vprsactx, const OSSL_PARAM params[])
     const OSSL_PARAM *p;
     int op;
 
-    if (prsactx == NULL || params == NULL)
+    if (prsactx == NULL)
         return 0;
+    if (params == NULL)
+        return 1;
+
 
     p = OSSL_PARAM_locate_const(params, OSSL_KEM_PARAM_OPERATION);
     if (p != NULL) {
