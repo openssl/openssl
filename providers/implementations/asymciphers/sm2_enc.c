@@ -56,7 +56,7 @@ static void *sm2_newctx(void *provctx)
     return psm2ctx;
 }
 
-static int sm2_init(void *vpsm2ctx, void *vkey)
+static int sm2_init(void *vpsm2ctx, void *vkey, const OSSL_PARAM params[])
 {
     PROV_SM2_CTX *psm2ctx = (PROV_SM2_CTX *)vpsm2ctx;
 
@@ -65,7 +65,7 @@ static int sm2_init(void *vpsm2ctx, void *vkey)
     EC_KEY_free(psm2ctx->key);
     psm2ctx->key = vkey;
 
-    return 1;
+    return sm2_set_ctx_params(psm2ctx, params);
 }
 
 static const EVP_MD *sm2_get_md(PROV_SM2_CTX *psm2ctx)
@@ -156,7 +156,7 @@ static int sm2_get_ctx_params(void *vpsm2ctx, OSSL_PARAM *params)
     PROV_SM2_CTX *psm2ctx = (PROV_SM2_CTX *)vpsm2ctx;
     OSSL_PARAM *p;
 
-    if (vpsm2ctx == NULL || params == NULL)
+    if (vpsm2ctx == NULL)
         return 0;
 
     p = OSSL_PARAM_locate(params, OSSL_ASYM_CIPHER_PARAM_DIGEST);
@@ -186,8 +186,10 @@ static int sm2_set_ctx_params(void *vpsm2ctx, const OSSL_PARAM params[])
 {
     PROV_SM2_CTX *psm2ctx = (PROV_SM2_CTX *)vpsm2ctx;
 
-    if (psm2ctx == NULL || params == NULL)
+    if (psm2ctx == NULL)
         return 0;
+    if (params == NULL)
+        return 1;
 
     if (!ossl_prov_digest_load_from_params(&psm2ctx->md, params,
                                            psm2ctx->libctx))
