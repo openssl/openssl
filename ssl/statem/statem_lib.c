@@ -310,7 +310,8 @@ int tls_construct_cert_verify(SSL *s, WPACKET *pkt)
     }
 
     if (EVP_DigestSignInit_ex(mctx, &pctx, md == NULL ? NULL : EVP_MD_name(md),
-                              s->ctx->libctx, s->ctx->propq, pkey) <= 0) {
+                              s->ctx->libctx, s->ctx->propq, pkey,
+                              NULL) <= 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
         goto err;
     }
@@ -487,7 +488,8 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
 
     if (EVP_DigestVerifyInit_ex(mctx, &pctx,
                                 md == NULL ? NULL : EVP_MD_name(md),
-                                s->ctx->libctx, s->ctx->propq, pkey) <= 0) {
+                                s->ctx->libctx, s->ctx->propq, pkey,
+                                NULL) <= 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
         goto err;
     }

@@ -2672,7 +2672,8 @@ int tls_construct_server_key_exchange(SSL *s, WPACKET *pkt)
 
         if (EVP_DigestSignInit_ex(md_ctx, &pctx,
                                   md == NULL ? NULL : EVP_MD_name(md),
-                                  s->ctx->libctx, s->ctx->propq, pkey) <= 0) {
+                                  s->ctx->libctx, s->ctx->propq, pkey,
+                                  NULL) <= 0) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             goto err;
         }
