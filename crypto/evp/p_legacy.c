@@ -67,7 +67,7 @@ int EVP_PKEY_set1_EC_KEY(EVP_PKEY *pkey, EC_KEY *key)
 EC_KEY *evp_pkey_get0_EC_KEY_int(const EVP_PKEY *pkey)
 {
     if (EVP_PKEY_base_id(pkey) != EVP_PKEY_EC) {
-        EVPerr(EVP_F_EVP_PKEY_GET0_EC_KEY, EVP_R_EXPECTING_A_EC_KEY);
+        ERR_raise(ERR_LIB_EVP, EVP_R_EXPECTING_A_EC_KEY);
         return NULL;
     }
     return evp_pkey_get_legacy((EVP_PKEY *)pkey);
