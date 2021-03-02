@@ -419,7 +419,7 @@ CMS_SignerInfo *CMS_add1_signer(CMS_ContentInfo *cms,
         } else if (EVP_DigestSignInit_ex(si->mctx, &si->pctx, EVP_MD_name(md),
                                          ossl_cms_ctx_get0_libctx(ctx),
                                          ossl_cms_ctx_get0_propq(ctx),
-                                         pk) <= 0) {
+                                         pk, NULL) <= 0) {
             goto err;
         }
     }
@@ -743,7 +743,8 @@ int CMS_SignerInfo_sign(CMS_SignerInfo *si)
         EVP_MD_CTX_reset(mctx);
         if (EVP_DigestSignInit_ex(mctx, &pctx, md_name,
                                   ossl_cms_ctx_get0_libctx(ctx),
-                                  ossl_cms_ctx_get0_propq(ctx), si->pkey) <= 0)
+                                  ossl_cms_ctx_get0_propq(ctx), si->pkey,
+                                  NULL) <= 0)
             goto err;
         si->pctx = pctx;
     }
@@ -853,7 +854,7 @@ int CMS_SignerInfo_verify(CMS_SignerInfo *si)
     }
     mctx = si->mctx;
     if (EVP_DigestVerifyInit_ex(mctx, &si->pctx, EVP_MD_name(md), libctx,
-                                propq, si->pkey) <= 0)
+                                propq, si->pkey, NULL) <= 0)
         goto err;
 
     if (!cms_sd_asn1_ctrl(si, 1))

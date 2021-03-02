@@ -928,7 +928,8 @@ int PKCS7_SIGNER_INFO_sign(PKCS7_SIGNER_INFO *si)
 
     if (EVP_DigestSignInit_ex(mctx, &pctx, EVP_MD_name(md),
                               ossl_pkcs7_ctx_get0_libctx(ctx),
-                              ossl_pkcs7_ctx_get0_propq(ctx), si->pkey) <= 0)
+                              ossl_pkcs7_ctx_get0_propq(ctx), si->pkey,
+                              NULL) <= 0)
         goto err;
 
     /*
