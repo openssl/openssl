@@ -223,6 +223,9 @@ int ossl_gcm_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     size_t sz;
     void *vp;
 
+    if (params == NULL)
+        return 1;
+
     p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_AEAD_TAG);
     if (p != NULL) {
         vp = ctx->buf;

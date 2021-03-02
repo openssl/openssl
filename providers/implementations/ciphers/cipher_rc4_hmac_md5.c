@@ -30,6 +30,8 @@
 
 #define GET_HW(ctx) ((PROV_CIPHER_HW_RC4_HMAC_MD5 *)ctx->base.hw)
 
+static OSSL_FUNC_cipher_encrypt_init_fn rc4_hmac_md5_einit;
+static OSSL_FUNC_cipher_decrypt_init_fn rc4_hmac_md5_dinit;
 static OSSL_FUNC_cipher_newctx_fn rc4_hmac_md5_newctx;
 static OSSL_FUNC_cipher_freectx_fn rc4_hmac_md5_freectx;
 static OSSL_FUNC_cipher_get_ctx_params_fn rc4_hmac_md5_get_ctx_params;
@@ -38,8 +40,6 @@ static OSSL_FUNC_cipher_set_ctx_params_fn rc4_hmac_md5_set_ctx_params;
 static OSSL_FUNC_cipher_settable_ctx_params_fn rc4_hmac_md5_settable_ctx_params;
 static OSSL_FUNC_cipher_get_params_fn rc4_hmac_md5_get_params;
 #define rc4_hmac_md5_gettable_params ossl_cipher_generic_gettable_params
-#define rc4_hmac_md5_einit ossl_cipher_generic_einit
-#define rc4_hmac_md5_dinit ossl_cipher_generic_dinit
 #define rc4_hmac_md5_update ossl_cipher_generic_stream_update
 #define rc4_hmac_md5_final ossl_cipher_generic_stream_final
 #define rc4_hmac_md5_cipher ossl_cipher_generic_cipher
@@ -69,6 +69,24 @@ static void rc4_hmac_md5_freectx(void *vctx)
 
     ossl_cipher_generic_reset_ctx((PROV_CIPHER_CTX *)vctx);
     OPENSSL_clear_free(ctx,  sizeof(*ctx));
+}
+
+static int rc4_hmac_md5_einit(void *ctx, const unsigned char *key,
+                              size_t keylen, const unsigned char *iv,
+                              size_t ivlen, const OSSL_PARAM params[])
+{
+    if (!ossl_cipher_generic_einit(ctx, key, keylen, iv, ivlen, NULL))
+        return 0;
+    return rc4_hmac_md5_set_ctx_params(ctx, params);
+}
+
+static int rc4_hmac_md5_dinit(void *ctx, const unsigned char *key,
+                              size_t keylen, const unsigned char *iv,
+                              size_t ivlen, const OSSL_PARAM params[])
+{
+    if (!ossl_cipher_generic_dinit(ctx, key, keylen, iv, ivlen, NULL))
+        return 0;
+    return rc4_hmac_md5_set_ctx_params(ctx, params);
 }
 
 static const OSSL_PARAM rc4_hmac_md5_known_gettable_ctx_params[] = {
@@ -124,6 +142,9 @@ static int rc4_hmac_md5_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     PROV_RC4_HMAC_MD5_CTX *ctx = (PROV_RC4_HMAC_MD5_CTX *)vctx;
     const OSSL_PARAM *p;
     size_t sz;
+
+    if (params == NULL)
+        return 1;
 
     p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_KEYLEN);
     if (p != NULL) {
