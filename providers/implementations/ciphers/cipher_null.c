@@ -38,7 +38,8 @@ static void null_freectx(void *vctx)
 
 static OSSL_FUNC_cipher_encrypt_init_fn null_einit;
 static int null_einit(void *vctx, const unsigned char *key, size_t keylen,
-                      const unsigned char *iv, size_t ivlen)
+                      const unsigned char *iv, size_t ivlen,
+                      const OSSL_PARAM params[])
 {
     PROV_CIPHER_NULL_CTX *ctx = (PROV_CIPHER_NULL_CTX *)vctx;
 
@@ -51,7 +52,8 @@ static int null_einit(void *vctx, const unsigned char *key, size_t keylen,
 
 static OSSL_FUNC_cipher_decrypt_init_fn null_dinit;
 static int null_dinit(void *vctx, const unsigned char *key, size_t keylen,
-                      const unsigned char *iv, size_t ivlen)
+                      const unsigned char *iv, size_t ivlen,
+                      const OSSL_PARAM params[])
 {
     if (!ossl_prov_is_running())
         return 0;
