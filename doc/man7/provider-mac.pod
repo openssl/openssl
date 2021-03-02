@@ -181,6 +181,8 @@ should have as well, see the documentation of the implementation.
 
 =back
 
+=back
+
 =head1 RETURN VALUES
 
 OSSL_FUNC_mac_newctx() and OSSL_FUNC_mac_dupctx() should return the newly created
@@ -197,8 +199,9 @@ array, or NULL if none is offered.
 =head1 SEE ALSO
 
 L<provider(7)>,
-L<EVP_MAC-CMAC(7)>, L<EVP_MAC-GMAC(7)>, L<EVP_MAC-HMAC(7)>, L<EVP_MAC-KMAC(7)>,
-L<EVP_MAC-Poly1305(7)>, L<EVP_MAC-Siphash(7)>
+L<EVP_MAC-BLAKE2(7)>, L<EVP_MAC-CMAC(7)>, L<EVP_MAC-GMAC(7)>,
+L<EVP_MAC-HMAC(7)>, L<EVP_MAC-KMAC(7)>, L<EVP_MAC-Poly1305(7)>,
+L<EVP_MAC-Siphash(7)>
 
 
 =head1 HISTORY
