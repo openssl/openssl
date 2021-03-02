@@ -94,9 +94,9 @@ L<OSSL_ENCODER_CTX_new_for_pkey(3)>).
 EVP_PKEY_get0_hmac(), EVP_PKEY_get0_poly1305(), EVP_PKEY_get0_siphash(),
 EVP_PKEY_get0_RSA(), EVP_PKEY_get0_DSA(), EVP_PKEY_get0_DH() and
 EVP_PKEY_get0_EC_KEY() return the referenced key in I<pkey> or NULL if the
-key is not of the correct type but the reference count of the returned key
-is B<not> incremented and so must not be freed after use. These functions are
-deprecated. Applications should instead use the EVP_PKEY directly where
+key is not of the correct type. The reference count of the returned key is
+B<not> incremented and so the key must not be freed after use. These functions
+are deprecated. Applications should instead use the EVP_PKEY directly where
 possible. If access to the low level key parameters is required then
 applications should use L<EVP_PKEY_get_params(3)> and other similar functions.
 To write an EVP_PKEY out use the OSSL_ENCODER APIs (see

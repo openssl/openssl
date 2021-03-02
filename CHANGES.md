@@ -719,12 +719,12 @@ OpenSSL 3.0
    time.  Instead applications should use L<EVP_DigestSignInit_ex(3)>,
    L<EVP_DigestSignUpdate(3)> and L<EVP_DigestSignFinal(3)>.
 
-   Finaly functions that assign or obtain DH objects from an EVP_PKEY such as
+   Finaly functions that assign or obtain DSA objects from an EVP_PKEY such as
    `EVP_PKEY_assign_DSA()`, `EVP_PKEY_get0_DSA()`, `EVP_PKEY_get1_DSA()`, and
    `EVP_PKEY_set1_DSA()` are also deprecated.
    Applications should instead either read or write an
-   EVP_PKEY directly using the OSSL_DECODER and OSSL_ENCODER APIs.
-   Or load an EVP_PKEY directly from DSA data using `EVP_PKEY_fromdata()`.
+   EVP_PKEY directly using the OSSL_DECODER and OSSL_ENCODER APIs,
+   or load an EVP_PKEY directly from DSA data using `EVP_PKEY_fromdata()`.
 
    *Paul Dale*
 
