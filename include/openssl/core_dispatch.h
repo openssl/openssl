@@ -243,7 +243,7 @@ OSSL_CORE_MAKE_FUNC(int, provider_self_test, (void *provctx))
 # define OSSL_FUNC_DIGEST_GETTABLE_CTX_PARAMS       13
 
 OSSL_CORE_MAKE_FUNC(void *, digest_newctx, (void *provctx))
-OSSL_CORE_MAKE_FUNC(int, digest_init, (void *dctx))
+OSSL_CORE_MAKE_FUNC(int, digest_init, (void *dctx, const OSSL_PARAM params[]))
 OSSL_CORE_MAKE_FUNC(int, digest_update,
                     (void *dctx, const unsigned char *in, size_t inl))
 OSSL_CORE_MAKE_FUNC(int, digest_final,
@@ -290,12 +290,14 @@ OSSL_CORE_MAKE_FUNC(int, cipher_encrypt_init, (void *cctx,
                                                   const unsigned char *key,
                                                   size_t keylen,
                                                   const unsigned char *iv,
-                                                  size_t ivlen))
+                                                  size_t ivlen,
+                                                  const OSSL_PARAM params[]))
 OSSL_CORE_MAKE_FUNC(int, cipher_decrypt_init, (void *cctx,
                                                   const unsigned char *key,
                                                   size_t keylen,
                                                   const unsigned char *iv,
-                                                  size_t ivlen))
+                                                  size_t ivlen,
+                                                  const OSSL_PARAM params[]))
 OSSL_CORE_MAKE_FUNC(int, cipher_update,
                     (void *cctx,
                      unsigned char *out, size_t *outl, size_t outsize,
@@ -613,7 +615,8 @@ OSSL_CORE_MAKE_FUNC(int, keymgmt_copy,
 # define OSSL_FUNC_KEYEXCH_GETTABLE_CTX_PARAMS        10
 
 OSSL_CORE_MAKE_FUNC(void *, keyexch_newctx, (void *provctx))
-OSSL_CORE_MAKE_FUNC(int, keyexch_init, (void *ctx, void *provkey))
+OSSL_CORE_MAKE_FUNC(int, keyexch_init, (void *ctx, void *provkey,
+                                        const OSSL_PARAM params[]))
 OSSL_CORE_MAKE_FUNC(int, keyexch_derive, (void *ctx,  unsigned char *secret,
                                              size_t *secretlen, size_t outlen))
 OSSL_CORE_MAKE_FUNC(int, keyexch_set_peer, (void *ctx, void *provkey))
@@ -658,27 +661,27 @@ OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, keyexch_gettable_ctx_params,
 
 OSSL_CORE_MAKE_FUNC(void *, signature_newctx, (void *provctx,
                                                   const char *propq))
-OSSL_CORE_MAKE_FUNC(int, signature_sign_init, (void *ctx, void *provkey))
+OSSL_CORE_MAKE_FUNC(int, signature_sign_init, (void *ctx, void *provkey,
+                                               const OSSL_PARAM params[]))
 OSSL_CORE_MAKE_FUNC(int, signature_sign, (void *ctx,  unsigned char *sig,
                                              size_t *siglen, size_t sigsize,
                                              const unsigned char *tbs,
                                              size_t tbslen))
-OSSL_CORE_MAKE_FUNC(int, signature_verify_init, (void *ctx, void *provkey))
+OSSL_CORE_MAKE_FUNC(int, signature_verify_init, (void *ctx, void *provkey,
+                                                 const OSSL_PARAM params[]))
 OSSL_CORE_MAKE_FUNC(int, signature_verify, (void *ctx,
                                                const unsigned char *sig,
                                                size_t siglen,
                                                const unsigned char *tbs,
                                                size_t tbslen))
-OSSL_CORE_MAKE_FUNC(int, signature_verify_recover_init, (void *ctx,
-                                                            void *provkey))
-OSSL_CORE_MAKE_FUNC(int, signature_verify_recover, (void *ctx,
-                                                       unsigned char *rout,
-                                                       size_t *routlen,
-                                                       size_t routsize,
-                                                       const unsigned char *sig,
-                                                       size_t siglen))
+OSSL_CORE_MAKE_FUNC(int, signature_verify_recover_init,
+                    (void *ctx, void *provkey, const OSSL_PARAM params[]))
+OSSL_CORE_MAKE_FUNC(int, signature_verify_recover,
+                    (void *ctx, unsigned char *rout, size_t *routlen,
+                     size_t routsize, const unsigned char *sig, size_t siglen))
 OSSL_CORE_MAKE_FUNC(int, signature_digest_sign_init,
-                    (void *ctx, const char *mdname, void *provkey))
+                    (void *ctx, const char *mdname, void *provkey,
+                     const OSSL_PARAM params[]))
 OSSL_CORE_MAKE_FUNC(int, signature_digest_sign_update,
                     (void *ctx, const unsigned char *data, size_t datalen))
 OSSL_CORE_MAKE_FUNC(int, signature_digest_sign_final,
@@ -688,7 +691,8 @@ OSSL_CORE_MAKE_FUNC(int, signature_digest_sign,
                     (void *ctx, unsigned char *sigret, size_t *siglen,
                      size_t sigsize, const unsigned char *tbs, size_t tbslen))
 OSSL_CORE_MAKE_FUNC(int, signature_digest_verify_init,
-                    (void *ctx, const char *mdname, void *provkey))
+                    (void *ctx, const char *mdname, void *provkey,
+                     const OSSL_PARAM params[]))
 OSSL_CORE_MAKE_FUNC(int, signature_digest_verify_update,
                     (void *ctx, const unsigned char *data, size_t datalen))
 OSSL_CORE_MAKE_FUNC(int, signature_digest_verify_final,
@@ -731,13 +735,15 @@ OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, signature_settable_ctx_md_params,
 # define OSSL_FUNC_ASYM_CIPHER_SETTABLE_CTX_PARAMS    11
 
 OSSL_CORE_MAKE_FUNC(void *, asym_cipher_newctx, (void *provctx))
-OSSL_CORE_MAKE_FUNC(int, asym_cipher_encrypt_init, (void *ctx, void *provkey))
+OSSL_CORE_MAKE_FUNC(int, asym_cipher_encrypt_init, (void *ctx, void *provkey,
+                                                    const OSSL_PARAM params[]))
 OSSL_CORE_MAKE_FUNC(int, asym_cipher_encrypt, (void *ctx, unsigned char *out,
                                                   size_t *outlen,
                                                   size_t outsize,
                                                   const unsigned char *in,
                                                   size_t inlen))
-OSSL_CORE_MAKE_FUNC(int, asym_cipher_decrypt_init, (void *ctx, void *provkey))
+OSSL_CORE_MAKE_FUNC(int, asym_cipher_decrypt_init, (void *ctx, void *provkey,
+                                                    const OSSL_PARAM params[]))
 OSSL_CORE_MAKE_FUNC(int, asym_cipher_decrypt, (void *ctx, unsigned char *out,
                                                   size_t *outlen,
                                                   size_t outsize,
@@ -768,12 +774,14 @@ OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, asym_cipher_settable_ctx_params,
 # define OSSL_FUNC_KEM_SETTABLE_CTX_PARAMS    11
 
 OSSL_CORE_MAKE_FUNC(void *, kem_newctx, (void *provctx))
-OSSL_CORE_MAKE_FUNC(int, kem_encapsulate_init, (void *ctx, void *provkey))
+OSSL_CORE_MAKE_FUNC(int, kem_encapsulate_init, (void *ctx, void *provkey,
+                                                const OSSL_PARAM params[]))
 OSSL_CORE_MAKE_FUNC(int, kem_encapsulate, (void *ctx,
                                            unsigned char *out, size_t *outlen,
                                            unsigned char *secret,
                                            size_t *secretlen))
-OSSL_CORE_MAKE_FUNC(int, kem_decapsulate_init, (void *ctx, void *provkey))
+OSSL_CORE_MAKE_FUNC(int, kem_decapsulate_init, (void *ctx, void *provkey,
+                                                const OSSL_PARAM params[]))
 OSSL_CORE_MAKE_FUNC(int, kem_decapsulate, (void *ctx,
                                            unsigned char *out, size_t *outlen,
                                            const unsigned char *in, size_t inlen))
