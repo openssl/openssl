@@ -571,31 +571,34 @@ int ASN1_TIME_compare(const ASN1_TIME *a, const ASN1_TIME *b)
 
 time_t *asn1_string_to_time_t(char *asn1_string)
 {
-    ASN1_TIME *testdate_asn1 = NULL;
-    struct tm *testdate_tm = NULL;
-    time_t *testdatelocal = NULL;
-    time_t *testdateutc = NULL;
+    ASN1_TIME *timestamp_asn1 = NULL;
+    struct tm *timestamp_tm = NULL;
+    time_t *timestamp_local = NULL;
+    time_t *timestamp_utc = NULL;
 
-    testdate_asn1 = ASN1_TIME_new();
-    if (!ASN1_TIME_set_string(testdate_asn1, asn1_string))
-        return NULL;
-
-    testdate_tm = malloc(sizeof(*testdate_tm));
-
-    if (!(ASN1_TIME_to_tm(testdate_asn1, testdate_tm))) {
-        free(testdate_tm);
-        ASN1_STRING_free(testdate_asn1);
+    timestamp_asn1 = ASN1_TIME_new();
+    if (!ASN1_TIME_set_string(timestamp_asn1, asn1_string))
+    {
+        ASN1_TIME_free(timestamp_asn1);
         return NULL;
     }
 
-    testdatelocal = malloc(sizeof(time_t));
-    *testdatelocal = mktime(testdate_tm);
-    free(testdate_tm);
+    timestamp_tm = malloc(sizeof(*timestamp_tm));
 
-    testdateutc = malloc(sizeof(time_t));
-    *testdateutc = *testdatelocal - timezone;
+    if (!(ASN1_TIME_to_tm(timestamp_asn1, timestamp_tm))) {
+        free(timestamp_tm);
+        ASN1_TIME_free(timestamp_asn1);
+        return NULL;
+    }
 
-    free(testdatelocal);
-    ASN1_STRING_free(testdate_asn1);
-    return testdateutc;
+    timestamp_local = malloc(sizeof(time_t));
+    *timestamp_local = mktime(timestamp_tm);
+    free(timestamp_tm);
+
+    timestamp_utc = malloc(sizeof(time_t));
+    *timestamp_utc = *timestamp_local - timezone;
+
+    free(timestamp_local);
+    ASN1_TIME_free(timestamp_asn1);
+    return timestamp_utc;
 }
