@@ -57,7 +57,7 @@ IF[{- !$disabled{tests} -}]
           context_internal_test aesgcmtest params_test evp_pkey_dparams_test \
           keymgmt_internal_test hexstr_test provider_status_test defltfips_test \
           bio_readbuffer_test \
-          ca_updatedb
+          ca_updatedb asn1_string_to_time_t
 
   IF[{- !$disabled{'deprecated-3.0'} -}]
     PROGRAMS{noinst}=enginetest
@@ -530,6 +530,11 @@ IF[{- !$disabled{tests} -}]
                       ../apps/lib/apps_extracted.c ../crypto/ctype.c
   INCLUDE[ca_updatedb]=.. ../include ../apps/include
   DEPEND[ca_updatedb]=libtestutil.a ../libssl
+
+  SOURCE[asn1_string_to_time_t]=asn1_string_to_time_t.c ../crypto/asn1/a_time.c \
+                                ../crypto/ctype.c
+  INCLUDE[asn1_string_to_time_t]=../include ../apps/include
+  DEPEND[asn1_string_to_time_t]=../libcrypto libtestutil.a
 
   # Internal test programs.  These are essentially a collection of internal
   # test routines.  Some of them need to reach internal symbols that aren't
