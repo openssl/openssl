@@ -146,6 +146,28 @@ jobs:
     - name: make test
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
+        #TODO 1. Install Test::V0 to run perl tests
+        #TODO 2. Install tcl to run tcl tests
+  buildtest-gost:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: config
+      run: ./config --strict-warnings && perl configdata.pm --dump
+    - name: make
+      run: make -s -j4
+    - name: checkout gost engine
+      run: git clone --depth 1 -b master https://github.com/gost-engine/engine.git gost-engine-test
+    - name: configure gost engine
+      working-directory: ./gost-engine-test
+      run: cmake . -DOPENSSL_ROOT_DIR=`pwd`/..
+    - name: build gost engine
+      working-directory: ./gost-engine-test
+      run: make
+    - name: test gost engine
+      working-directory: ./gost-engine-test
+      run: CTEST_OUTPUT_ON_FAILURE=1 HARNESS_OSSL_PREFIX='' OPENSSL_ENGINES=`pwd`/bin make test
+
   out-of-source-and-install:
     runs-on: ubuntu-latest
     steps:
