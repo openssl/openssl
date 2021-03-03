@@ -269,8 +269,7 @@ static EVP_PKEY_CTX *int_ctx_new(OSSL_LIB_CTX *libctx,
         /*
          * Chase down the legacy NID, as that might be needed for diverse
          * purposes, such as ensure that EVP_PKEY_type() can return sensible
-         * values, or that there's a better chance to "downgrade" a key when
-         * needed.  We go through all keymgmt names, because the keytype
+         * values. We go through all keymgmt names, because the keytype
          * that's passed to this function doesn't necessarily translate
          * directly.
          * TODO: Remove this when #legacy keys are gone.
