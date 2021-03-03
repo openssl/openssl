@@ -146,8 +146,7 @@ jobs:
     - name: make test
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
-        #TODO 1. Install Test::V0 to run perl tests
-        #TODO 2. Install tcl to run tcl tests
+        #TODO Install tcl to run tcl tests
   buildtest-gost:
     runs-on: ubuntu-latest
     steps:
@@ -157,7 +156,15 @@ jobs:
     - name: make
       run: make -s -j4
     - name: checkout gost engine
-      run: git clone --depth 1 -b master https://github.com/gost-engine/engine.git gost-engine-test
+      uses: actions/checkout@v2
+      with:
+        repository: gost-engine/engine
+        ref: master
+        path: gost-engine-test
+    - name: install cpanm and Test2::V0
+      uses: perl-actions/install-with-cpanm@v1
+      with:
+        install: Test2::V0
     - name: configure gost engine
       working-directory: ./gost-engine-test
       run: cmake . -DOPENSSL_ROOT_DIR=`pwd`/..
