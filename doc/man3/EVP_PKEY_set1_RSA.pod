@@ -84,7 +84,7 @@ L<EVP_PKEY_fromdata(3)>.
 
 EVP_PKEY_get1_RSA(), EVP_PKEY_get1_DSA(), EVP_PKEY_get1_DH() and
 EVP_PKEY_get1_EC_KEY() return the referenced key in I<pkey> or NULL if the
-key is not of the correct type.  The returned key must be freed after use.
+key is not of the correct type. The returned key must be freed after use.
 These functions are deprecated. Applications should instead use the EVP_PKEY
 directly where possible. If access to the low level key parameters is required
 then applications should use L<EVP_PKEY_get_params(3)> and other similar
