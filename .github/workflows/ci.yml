@@ -146,7 +146,6 @@ jobs:
     - name: make test
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
-        #TODO Install tcl to run tcl tests
   buildtest-gost:
     runs-on: ubuntu-latest
     steps:
@@ -171,9 +170,14 @@ jobs:
     - name: build gost engine
       working-directory: ./gost-engine-test
       run: make
-    - name: test gost engine
+    - name: basic test gost engine
       working-directory: ./gost-engine-test
       run: CTEST_OUTPUT_ON_FAILURE=1 HARNESS_OSSL_PREFIX='' OPENSSL_ENGINES=`pwd`/bin make test
+    - name: install TCL
+      run: sudo apt-get update && sudo apt-get -y install tcl-thread
+    - name: TCL tests gost engine
+      working-directory: ./gost-engine-test
+      run: LD_LIBRARY_PATH=`pwd`/.. OPENSSL_APP=`pwd`/../apps/openssl make tcl_tests
 
   out-of-source-and-install:
     runs-on: ubuntu-latest
