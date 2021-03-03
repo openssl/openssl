@@ -62,6 +62,7 @@ int (*X509_TRUST_set_default(int (*trust) (int, X509 *, int))) (int, X509 *,
     return oldtrust;
 }
 
+/* Returns X509_TRUST_TRUSTED, X509_TRUST_REJECTED, or X509_TRUST_UNTRUSTED */
 int X509_check_trust(X509 *x, int id, int flags)
 {
     X509_TRUST *pt;
@@ -253,7 +254,7 @@ static int obj_trust(int id, X509 *x, int flags)
     X509_CERT_AUX *ax = x->aux;
     int i;
 
-    if (ax && ax->reject) {
+    if (ax != NULL && ax->reject != NULL) {
         for (i = 0; i < sk_ASN1_OBJECT_num(ax->reject); i++) {
             ASN1_OBJECT *obj = sk_ASN1_OBJECT_value(ax->reject, i);
             int nid = OBJ_obj2nid(obj);
@@ -264,7 +265,7 @@ static int obj_trust(int id, X509 *x, int flags)
         }
     }
 
-    if (ax && ax->trust) {
+    if (ax != NULL && ax->trust != NULL) {
         for (i = 0; i < sk_ASN1_OBJECT_num(ax->trust); i++) {
             ASN1_OBJECT *obj = sk_ASN1_OBJECT_value(ax->trust, i);
             int nid = OBJ_obj2nid(obj);

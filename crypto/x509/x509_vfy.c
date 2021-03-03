@@ -180,6 +180,7 @@ static int verify_cb_crl(X509_STORE_CTX *ctx, int err)
     return ctx->verify_cb(0, ctx);
 }
 
+/* Sadly, returns 0 also on internal error in ctx->verify_cb(). */
 static int check_auth_level(X509_STORE_CTX *ctx)
 {
     int i;
@@ -207,7 +208,10 @@ static int check_auth_level(X509_STORE_CTX *ctx)
     return 1;
 }
 
-/* Returns -1 on internal error */
+/*-
+ * Returns -1 on internal error.
+ * Sadly, returns 0 also on internal error in ctx->verify_cb().
+ */
 static int verify_chain(X509_STORE_CTX *ctx)
 {
     int err;
@@ -258,6 +262,10 @@ int X509_STORE_CTX_verify(X509_STORE_CTX *ctx)
     return X509_verify_cert(ctx);
 }
 
+/*-
+ * Returns -1 on internal error.
+ * Sadly, returns 0 also on internal error in ctx->verify_cb().
+ */
 int X509_verify_cert(X509_STORE_CTX *ctx)
 {
     int ret;
@@ -370,7 +378,7 @@ static int get_issuer_sk(X509 **issuer, X509_STORE_CTX *ctx, X509 *x)
 
 /*-
  * Alternative lookup method: look from a STACK stored in other_ctx.
- * Returns NULL on internal error (such as out of memory).
+ * Returns NULL on internal/fatal error, empty stack if not found.
  */
 static STACK_OF(X509) *lookup_certs_sk(X509_STORE_CTX *ctx,
                                        const X509_NAME *nm)
@@ -397,7 +405,7 @@ static STACK_OF(X509) *lookup_certs_sk(X509_STORE_CTX *ctx,
 /*
  * Check EE or CA certificate purpose.  For trusted certificates explicit local
  * auxiliary trust can be used to override EKU-restrictions.
- * Sadly, returns 0 also on internal error.
+ * Sadly, returns 0 also on internal error in ctx->verify_cb().
  */
 static int check_purpose(X509_STORE_CTX *ctx, X509 *x, int purpose, int depth,
                          int must_be_ca)
@@ -430,7 +438,7 @@ static int check_purpose(X509_STORE_CTX *ctx, X509 *x, int purpose, int depth,
         return 1;
     case X509_TRUST_REJECTED:
         break;
-    default:
+    default: /* can only be X509_TRUST_UNTRUSTED */
         switch (X509_check_purpose(x, purpose, must_be_ca > 0)) {
         case 1:
             return 1;
@@ -446,9 +454,9 @@ static int check_purpose(X509_STORE_CTX *ctx, X509 *x, int purpose, int depth,
     return verify_cb_cert(ctx, x, depth, X509_V_ERR_INVALID_PURPOSE);
 }
 
-/*
+/*-
  * Check extensions of a cert chain for consistency with the supplied purpose.
- * Sadly, returns 0 also on internal error.
+ * Sadly, returns 0 also on internal error in ctx->verify_cb().
  */
 static int check_extensions(X509_STORE_CTX *ctx)
 {
@@ -644,7 +652,10 @@ static int has_san_id(X509 *x, int gtype)
     return ret;
 }
 
-/* Returns -1 on internal error */
+/*-
+ * Returns -1 on internal error.
+ * Sadly, returns 0 also on internal error in ctx->verify_cb().
+ */
 static int check_name_constraints(X509_STORE_CTX *ctx)
 {
     int i;
@@ -917,7 +928,7 @@ static int check_revocation(X509_STORE_CTX *ctx)
         last = sk_X509_num(ctx->chain) - 1;
     } else {
         /* If checking CRL paths this isn't the EE certificate */
-        if (ctx->parent)
+        if (ctx->parent != NULL)
             return 1;
         last = 0;
     }
@@ -1628,6 +1639,7 @@ static int cert_crl(X509_STORE_CTX *ctx, X509_CRL *crl, X509 *x)
     return 1;
 }
 
+/* Sadly, returns 0 also on internal error in ctx->verify_cb(). */
 static int check_policy(X509_STORE_CTX *ctx)
 {
     int ret;
@@ -1703,6 +1715,7 @@ static int check_policy(X509_STORE_CTX *ctx)
  * the validation status.
  *
  * Return 1 on success, 0 otherwise.
+ * Sadly, returns 0 also on internal error in ctx->verify_cb().
  */
 int ossl_x509_check_cert_time(X509_STORE_CTX *ctx, X509 *x, int depth)
 {
@@ -1732,7 +1745,7 @@ int ossl_x509_check_cert_time(X509_STORE_CTX *ctx, X509 *x, int depth)
 
 /*
  * Verify the issuer signatures and cert times of ctx->chain.
- * Sadly, returns 0 also on internal error.
+ * Sadly, returns 0 also on internal error in ctx->verify_cb().
  */
 static int internal_verify(X509_STORE_CTX *ctx)
 {
@@ -2897,6 +2910,7 @@ static void dane_reset(SSL_DANE *dane)
     dane->pdpth = -1;
 }
 
+/* Sadly, returns 0 also on internal error in ctx->verify_cb(). */
 static int check_leaf_suiteb(X509_STORE_CTX *ctx, X509 *cert)
 {
     int err = X509_chain_check_suiteb(NULL, cert, NULL, ctx->param->flags);
@@ -2984,7 +2998,10 @@ static int get1_trusted_issuer(X509 **issuer, X509_STORE_CTX *ctx, X509 *cert)
     return ok;
 }
 
-/* Returns -1 on internal error */
+/*-
+ * Returns -1 on internal error.
+ * Sadly, returns 0 also on internal error in ctx->verify_cb().
+ */
 static int build_chain(X509_STORE_CTX *ctx)
 {
     SSL_DANE *dane = ctx->dane;
