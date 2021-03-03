@@ -569,18 +569,18 @@ int ASN1_TIME_compare(const ASN1_TIME *a, const ASN1_TIME *b)
 # define timezone _timezone
 #endif
 
-time_t *asn1_string_to_time_t(char *asn1_string)
+time_t asn1_string_to_time_t(char *asn1_string)
 {
     ASN1_TIME *timestamp_asn1 = NULL;
     struct tm *timestamp_tm = NULL;
-    time_t *timestamp_local = NULL;
-    time_t *timestamp_utc = NULL;
+    time_t timestamp_local;
+    time_t timestamp_utc;
 
     timestamp_asn1 = ASN1_TIME_new();
     if (!ASN1_TIME_set_string(timestamp_asn1, asn1_string))
     {
         ASN1_TIME_free(timestamp_asn1);
-        return NULL;
+        return -1;
     }
 
     timestamp_tm = malloc(sizeof(*timestamp_tm));
@@ -588,17 +588,14 @@ time_t *asn1_string_to_time_t(char *asn1_string)
     if (!(ASN1_TIME_to_tm(timestamp_asn1, timestamp_tm))) {
         free(timestamp_tm);
         ASN1_TIME_free(timestamp_asn1);
-        return NULL;
+        return -1;
     }
 
-    timestamp_local = malloc(sizeof(time_t));
-    *timestamp_local = mktime(timestamp_tm);
+    timestamp_local = mktime(timestamp_tm);
     free(timestamp_tm);
 
-    timestamp_utc = malloc(sizeof(time_t));
-    *timestamp_utc = *timestamp_local - timezone;
+    timestamp_utc = timestamp_local - timezone;
 
-    free(timestamp_local);
     ASN1_TIME_free(timestamp_asn1);
     return timestamp_utc;
 }

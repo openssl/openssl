@@ -51,26 +51,26 @@ static TESTDATA asn1_to_utc[] = {
         "20210328030000+0200",
         1616893200,
     },
+    {
+        /* 
+         * Invalid strings should get -1 as a result
+         */
+        "INVALID",
+        -1,
+    },
 };
 
 static int convert_asn1_to_time_t(int idx)
 {
-    time_t *testdateutc = NULL;
+    time_t testdateutc;
     
     testdateutc = asn1_string_to_time_t(asn1_to_utc[idx].input);
-    if (testdateutc == NULL)
-    {
-        TEST_info("conversion failed, got NULL\n");
-        return 0;
-    }
 
-    if (!TEST_int_eq(*testdateutc, asn1_to_utc[idx].expected)) {
-        TEST_info("asn1_string_to_time_t (%s) failed: expected %lu, got %lu\n",
-                asn1_to_utc[idx].input, asn1_to_utc[idx].expected, (unsigned long) *testdateutc);
-        free(testdateutc);
+    if (!TEST_int_eq(testdateutc, asn1_to_utc[idx].expected)) {
+        TEST_info("asn1_string_to_time_t (%s) failed: expected %li, got %li\n",
+                asn1_to_utc[idx].input, asn1_to_utc[idx].expected, (signed long) testdateutc);
         return 0;
     }
-    free(testdateutc);
     return 1;
 }
 
