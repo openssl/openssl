@@ -39,7 +39,6 @@ mkdir -p build
 cd build
 cmake ..
 make
-CTEST_OUTPUT_ON_FAILURE=1 HARNESS_OSSL_PREFIX='' OPENSSL_ENGINES=$OPENSSL_ROOT_DIR/gost-engine/build/bin make test
+CTEST_OUTPUT_ON_FAILURE=1 HARNESS_OSSL_PREFIX='' OPENSSL_ENGINES=$OPENSSL_ROOT_DIR/gost-engine/build/bin make test tcl_tests
 
 exit 0
-
