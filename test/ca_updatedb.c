@@ -18,7 +18,7 @@ char *default_config_file = NULL;
 int setup_tests(void)
 {
     CA_DB *db = NULL;
-    time_t *testdateutc = NULL;
+    time_t testdateutc;
     int rv;
     int argc = test_get_argument_count();
     BIO *bio_tmp;
@@ -31,7 +31,7 @@ int setup_tests(void)
 
     char *testdate = test_get_argument(1);
     testdateutc = asn1_string_to_time_t(testdate);
-    if (testdateutc == NULL) {
+    if (testdateutc < 0) {
         fprintf(stderr, "Error: testdate '%s' is invalid\n", testdate);
         return 0;
     }
@@ -46,7 +46,7 @@ int setup_tests(void)
 
     bio_tmp = bio_err;
     bio_err = bio_out;
-    rv = do_updatedb(db, testdateutc);
+    rv = do_updatedb(db, &testdateutc);
     bio_err = bio_tmp;
 
     if (rv > 0) {
@@ -58,6 +58,5 @@ int setup_tests(void)
     }
 end:
     free_index(db);
-    free(testdateutc);
     return 1;
 } 
