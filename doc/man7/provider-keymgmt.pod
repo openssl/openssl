@@ -222,8 +222,9 @@ more elaborate context based key object constructor.
 
 OSSL_FUNC_keymgmt_gen_init() should create the key object generation context
 and initialize it with I<selections>, which will determine what kind
-of contents the key object to be generated should get.  The I<params>, if
-not NULL, should be set on the generation context.
+of contents the key object to be generated should get.
+The I<params>, if not NULL, should be set on the context in a manner similar to
+using OSSL_FUNC_keymgmt_set_params().
 
 OSSL_FUNC_keymgmt_gen_set_template() should add I<template> to the context
 I<genctx>.  The I<template> is assumed to be a key object constructed
