@@ -190,11 +190,11 @@ takes care of the needs of the diverse operation the application may want to
 perform.
 
 Similarly an B<EVP_PKEY> with a provider native origin, will I<never> be
-downgraded to be I<transformed> into an B<EVP_PKEY> with a legacy origin.
-Instead we may have a cached copy of the provider key in legacy form. Once the
-cached copy is created it is never updated. Changes made to the provider key
-are not reflected back in the cached legacy copy. Similarly changes made to the
-cached legacy copy are not reflected back in the provider key.
+I<transformed> into an B<EVP_PKEY> with a legacy origin. Instead we may have a
+cached copy of the provider key in legacy form. Once the cached copy is created
+it is never updated. Changes made to the provider key are not reflected back in
+the cached legacy copy. Similarly changes made to the cached legacy copy are not
+reflected back in the provider key.
 
 =head1 SEE ALSO
 
