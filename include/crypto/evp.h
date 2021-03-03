@@ -249,7 +249,7 @@ struct evp_md_st {
     int (*md_ctrl) (EVP_MD_CTX *ctx, int cmd, int p1, void *p2);
 
     /* New structure members */
-    /* Above comment to be removed when #legacy has gone */
+    /* Above comment to be removed when legacy has gone */
     int name_id;
     OSSL_PROVIDER *prov;
     CRYPTO_REF_COUNT refcnt;
