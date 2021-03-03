@@ -10,8 +10,8 @@ EVP_MD_CTX_set_params, EVP_MD_CTX_get_params,
 EVP_MD_settable_ctx_params, EVP_MD_gettable_ctx_params,
 EVP_MD_CTX_settable_params, EVP_MD_CTX_gettable_params,
 EVP_MD_CTX_set_flags, EVP_MD_CTX_clear_flags, EVP_MD_CTX_test_flags,
-EVP_Digest, EVP_DigestInit_ex, EVP_DigestInit, EVP_DigestUpdate,
-EVP_DigestFinal_ex, EVP_DigestFinalXOF, EVP_DigestFinal,
+EVP_Digest, EVP_DigestInit_ex2, EVP_DigestInit_ex, EVP_DigestInit,
+EVP_DigestUpdate, EVP_DigestFinal_ex, EVP_DigestFinalXOF, EVP_DigestFinal,
 EVP_MD_is_a, EVP_MD_name, EVP_MD_number, EVP_MD_names_do_all, EVP_MD_provider,
 EVP_MD_type, EVP_MD_pkey_type, EVP_MD_size, EVP_MD_block_size, EVP_MD_flags,
 EVP_MD_CTX_name,
@@ -49,6 +49,8 @@ EVP_MD_do_all_provided
 
  int EVP_Digest(const void *data, size_t count, unsigned char *md,
                 unsigned int *size, const EVP_MD *type, ENGINE *impl);
+ int EVP_DigestInit_ex2(EVP_MD_CTX *ctx, const EVP_MD *type,
+                        const OSSL_PARAM params[]);
  int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl);
  int EVP_DigestUpdate(EVP_MD_CTX *ctx, const void *d, size_t cnt);
  int EVP_DigestFinal_ex(EVP_MD_CTX *ctx, unsigned char *md, unsigned int *s);
@@ -154,7 +156,7 @@ providers.>
 
 Performs digest-specific control actions on context I<ctx>. The control command
 is indicated in I<cmd> and any additional arguments in I<p1> and I<p2>.
-EVP_MD_CTX_ctrl() must be called after EVP_DigestInit_ex(). Other restrictions
+EVP_MD_CTX_ctrl() must be called after EVP_DigestInit_ex2(). Other restrictions
 may apply depending on the control type and digest implementation.
 
 If this function happens to be used with a fetched B<EVP_MD>, it will
@@ -216,6 +218,18 @@ I<impl>. The digest value is placed in I<md> and its length is written at I<size
 if the pointer is not NULL. At most B<EVP_MAX_MD_SIZE> bytes will be written.
 If I<impl> is NULL the default implementation of digest I<type> is used.
 
+=item EVP_DigestInit_ex2()
+
+Sets up digest context I<ctx> to use a digest I<type>.
+I<type> is typically supplied by a function such as EVP_sha1(), or a
+value explicitly fetched with EVP_MD_fetch().
+
+The parameters B<params> are set on the context after initialisation.
+
+The I<type> parameter can be NULL if I<ctx> has been already initialized
+with another EVP_DigestInit_ex() call and has not been reset with
+EVP_MD_CTX_reset().
+
 =item EVP_DigestInit_ex()
 
 Sets up digest context I<ctx> to use a digest I<type>.
@@ -242,14 +256,14 @@ parameter is not NULL then the number of bytes of data written (i.e. the
 length of the digest) will be written to the integer at I<s>, at most
 B<EVP_MAX_MD_SIZE> bytes will be written.  After calling EVP_DigestFinal_ex()
 no additional calls to EVP_DigestUpdate() can be made, but
-EVP_DigestInit_ex() can be called to initialize a new digest operation.
+EVP_DigestInit_ex2() can be called to initialize a new digest operation.
 
 =item EVP_DigestFinalXOF()
 
 Interfaces to extendable-output functions, XOFs, such as SHAKE128 and SHAKE256.
 It retrieves the digest value from I<ctx> and places it in I<len>-sized I<md>.
 After calling this function no additional calls to EVP_DigestUpdate() can be
-made, but EVP_DigestInit_ex() can be called to initialize a new operation.
+made, but EVP_DigestInit_ex2() can be called to initialize a new operation.
 
 =item EVP_MD_CTX_copy_ex()
 
@@ -259,9 +273,9 @@ few bytes.
 
 =item EVP_DigestInit()
 
-Behaves in the same way as EVP_DigestInit_ex() except it always uses the
-default digest implementation and calls EVP_MD_CTX_reset() so it cannot
-be used with an I<type> of NULL.
+Behaves in the same way as EVP_DigestInit_ex2() except it doesn't set any
+parameters and calls EVP_MD_CTX_reset() so it cannot be used with an I<type>
+of NULL.
 
 =item EVP_DigestFinal()
 
@@ -333,7 +347,7 @@ EVP_MD_meth_set_app_datasize().
 =item EVP_MD_CTX_md()
 
 Returns the B<EVP_MD> structure corresponding to the passed B<EVP_MD_CTX>. This
-will be the same B<EVP_MD> object originally passed to EVP_DigestInit_ex() (or
+will be the same B<EVP_MD> object originally passed to EVP_DigestInit_ex2() (or
 other similar function) when the EVP_MD_CTX was first initialised. Note that
 where explicit fetch is in use (see L<EVP_MD_fetch(3)>) the value returned from
 this function will not have its reference count incremented and therefore it
@@ -500,7 +514,8 @@ Returns a pointer to a B<EVP_MD> for success or NULL for failure.
 
 Returns 1 for success or 0 for failure.
 
-=item EVP_DigestInit_ex(),
+=item EVP_DigestInit_ex2(),
+EVP_DigestInit_ex(),
 EVP_DigestUpdate(),
 EVP_DigestFinal_ex()
 
@@ -620,7 +635,7 @@ digest name passed on the command line.
      }
 
      mdctx = EVP_MD_CTX_new();
-     EVP_DigestInit_ex(mdctx, md, NULL);
+     EVP_DigestInit_ex2(mdctx, md, NULL);
      EVP_DigestUpdate(mdctx, mess1, strlen(mess1));
      EVP_DigestUpdate(mdctx, mess2, strlen(mess2));
      EVP_DigestFinal_ex(mdctx, md_value, &md_len);
@@ -669,7 +684,7 @@ The EVP_dss1() function was removed in OpenSSL 1.1.0.
 
 The EVP_MD_CTX_set_pkey_ctx() function was added in OpenSSL 1.1.1.
 
-The EVP_MD_fetch(), EVP_MD_free(), EVP_MD_up_ref(),
+The EVP_DigestInit_ex2(), EVP_MD_fetch(), EVP_MD_free(), EVP_MD_up_ref(),
 EVP_MD_get_params(), EVP_MD_CTX_set_params(), EVP_MD_CTX_get_params(),
 EVP_MD_gettable_params(), EVP_MD_gettable_ctx_params(),
 EVP_MD_settable_ctx_params(), EVP_MD_CTX_settable_params() and
