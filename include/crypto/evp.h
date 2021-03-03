@@ -893,8 +893,10 @@ int evp_pkey_ctx_get_params_to_ctrl(EVP_PKEY_CTX *ctx, OSSL_PARAM *params);
 int evp_pkey_get_params_to_ctrl(const EVP_PKEY *pkey, OSSL_PARAM *params);
 
 /* Same as the public get0 functions but are not const */
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 DH *evp_pkey_get0_DH_int(const EVP_PKEY *pkey);
 EC_KEY *evp_pkey_get0_EC_KEY_int(const EVP_PKEY *pkey);
 RSA *evp_pkey_get0_RSA_int(const EVP_PKEY *pkey);
+# endif
 
 #endif /* OSSL_CRYPTO_EVP_H */
