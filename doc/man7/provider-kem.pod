@@ -171,9 +171,12 @@ functions.
 OSSL_FUNC_kem_get_ctx_params() gets asymmetric kem parameters associated
 with the given provider side asymmetric kem context I<ctx> and stores them in
 I<params>.
+Passing NULL for I<params> should return true.
+
 OSSL_FUNC_kem_set_ctx_params() sets the asymmetric kem parameters associated
 with the given provider side asymmetric kem context I<ctx> to I<params>.
 Any parameter settings are additional to any that were previously set.
+Passing NULL for I<params> should return true.
 
 No parameters are currently recognised by built-in asymmetric kem algorithms.
 

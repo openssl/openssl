@@ -152,9 +152,11 @@ and stores them in I<params>.
 OSSL_FUNC_digest_set_ctx_params() sets digest operation parameters for the
 provider side digest context I<dctx> to I<params>.
 Any parameter settings are additional to any that were previously set.
+Passing NULL for I<params> should return true.
 
 OSSL_FUNC_digest_get_ctx_params() gets digest operation details details from
 the given provider side digest context I<dctx> and stores them in I<params>.
+Passing NULL for I<params> should return true.
 
 OSSL_FUNC_digest_gettable_params() returns a constant B<OSSL_PARAM> array
 containing descriptors of the parameters that OSSL_FUNC_digest_get_params()

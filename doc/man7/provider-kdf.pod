@@ -127,9 +127,11 @@ provider algorithm and stores them in I<params>.
 OSSL_FUNC_kdf_set_ctx_params() sets KDF parameters associated with the given
 provider side KDF context I<kctx> to I<params>.
 Any parameter settings are additional to any that were previously set.
+Passing NULL for I<params> should return true.
 
 OSSL_FUNC_kdf_get_ctx_params() retrieves gettable parameter values associated
 with the given provider side KDF context I<kctx> and stores them in I<params>.
+Passing NULL for I<params> should return true.
 
 OSSL_FUNC_kdf_gettable_params(), OSSL_FUNC_kdf_gettable_ctx_params(),
 and OSSL_FUNC_kdf_settable_ctx_params() all return constant B<OSSL_PARAM>
