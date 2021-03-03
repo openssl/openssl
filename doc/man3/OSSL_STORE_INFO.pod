@@ -166,7 +166,11 @@ Key parameters.
 
 =item OSSL_STORE_INFO_PKEY
 
-A private/public key of some sort.
+A keypair or just a private key (possibly with key parameters).
+
+=item OSSL_STORE_INFO_PUBKEY
+
+A public key (possibly with key parameters).
 
 =item OSSL_STORE_INFO_CERT
 
