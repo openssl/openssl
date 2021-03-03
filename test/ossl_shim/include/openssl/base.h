@@ -10,6 +10,9 @@
 #ifndef OSSL_TEST_SHIM_INCLUDE_OPENSSL_BASE_H
 #define OSSL_TEST_SHIM_INCLUDE_OPENSSL_BASE_H
 
+/* Needed for DH functions */
+#include "internal/deprecated.h"
+
 /* Needed for BORINGSSL_MAKE_DELETER */
 # include <openssl/bio.h>
 # include <openssl/evp.h>
