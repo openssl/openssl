@@ -23,7 +23,8 @@ provider-kem - The kem library E<lt>-E<gt> provider functions
  void *OSSL_FUNC_kem_dupctx(void *ctx);
 
  /* Encapsulation */
- int OSSL_FUNC_kem_encapsulate_init(void *ctx, void *provkey, const char *name);
+ int OSSL_FUNC_kem_encapsulate_init(void *ctx, void *provkey, const char *name,
+                                    const OSSL_PARAM params[]);
  int OSSL_FUNC_kem_encapsulate(void *ctx, unsigned char *out, size_t *outlen,
                                unsigned char *secret, size_t *secretlen);
 
@@ -120,6 +121,8 @@ OSSL_FUNC_kem_encapsulate_init() initialises a context for an asymmetric
 encapsulation given a provider side asymmetric kem context in the I<ctx>
 parameter, a pointer to a provider key object in the I<provkey> parameter and
 the I<name> of the algorithm.
+The I<params>, if not NULL, should be set on the context in a manner similar to
+using OSSL_FUNC_kem_set_ctx_params().
 The key object should have been previously generated, loaded or imported into
 the provider using the key management (OSSL_OP_KEYMGMT) operation (see
 provider-keymgmt(7)>.

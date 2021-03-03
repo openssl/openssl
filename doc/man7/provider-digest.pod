@@ -22,7 +22,7 @@ provider-digest - The digest library E<lt>-E<gt> provider functions
  void *OSSL_FUNC_digest_dupctx(void *dctx);
 
  /* Digest generation */
- int OSSL_FUNC_digest_init(void *dctx);
+ int OSSL_FUNC_digest_init(void *dctx, const OSSL_PARAM params[]);
  int OSSL_FUNC_digest_update(void *dctx, const unsigned char *in, size_t inl);
  int OSSL_FUNC_digest_final(void *dctx, unsigned char *out, size_t *outl,
                             size_t outsz);
@@ -115,6 +115,8 @@ I<dctx> parameter and return the duplicate copy.
 
 OSSL_FUNC_digest_init() initialises a digest operation given a newly created
 provider side digest context in the I<dctx> parameter.
+The I<params>, if not NULL, should be set on the context in a manner similar to
+using OSSL_FUNC_digest_set_ctx_params().
 
 OSSL_FUNC_digest_update() is called to supply data to be digested as part of a
 previously initialised digest operation.
