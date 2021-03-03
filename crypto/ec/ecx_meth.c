@@ -14,12 +14,13 @@
 #include "internal/deprecated.h"
 
 #include <stdio.h>
-#include "internal/cryptlib.h"
 #include <openssl/x509.h>
 #include <openssl/ec.h>
 #include <openssl/rand.h>
 #include <openssl/core_names.h>
-#include "openssl/param_build.h"
+#include <openssl/param_build.h>
+#include "internal/cryptlib.h"
+#include "internal/provider.h"
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
 #include "crypto/ecx.h"
@@ -334,14 +335,24 @@ static int ecd_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 static int ecx_set_priv_key(EVP_PKEY *pkey, const unsigned char *priv,
                             size_t len)
 {
+    OSSL_LIB_CTX *libctx = NULL;
+
+    if (pkey->keymgmt != NULL)
+        libctx = ossl_provider_libctx(EVP_KEYMGMT_provider(pkey->keymgmt));
+
     return ecx_key_op(pkey, pkey->ameth->pkey_id, NULL, priv, len,
-                       KEY_OP_PRIVATE, NULL, NULL);
+                       KEY_OP_PRIVATE, libctx, NULL);
 }
 
 static int ecx_set_pub_key(EVP_PKEY *pkey, const unsigned char *pub, size_t len)
 {
+    OSSL_LIB_CTX *libctx = NULL;
+
+    if (pkey->keymgmt != NULL)
+        libctx = ossl_provider_libctx(EVP_KEYMGMT_provider(pkey->keymgmt));
+
     return ecx_key_op(pkey, pkey->ameth->pkey_id, NULL, pub, len,
-                      KEY_OP_PUBLIC, NULL, NULL);
+                      KEY_OP_PUBLIC, libctx, NULL);
 }
 
 static int ecx_get_priv_key(const EVP_PKEY *pkey, unsigned char *priv,
