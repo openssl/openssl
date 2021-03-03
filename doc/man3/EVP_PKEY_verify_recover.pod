@@ -2,7 +2,8 @@
 
 =head1 NAME
 
-EVP_PKEY_verify_recover_init, EVP_PKEY_verify_recover
+EVP_PKEY_verify_recover_init, EVP_PKEY_verify_recover_init_ex,
+EVP_PKEY_verify_recover
 - recover signature using a public key algorithm
 
 =head1 SYNOPSIS
@@ -10,6 +11,8 @@ EVP_PKEY_verify_recover_init, EVP_PKEY_verify_recover
  #include <openssl/evp.h>
 
  int EVP_PKEY_verify_recover_init(EVP_PKEY_CTX *ctx);
+ int EVP_PKEY_verify_recover_init_ex(EVP_PKEY_CTX *ctx,
+                                     const OSSL_PARAM params[]);
  int EVP_PKEY_verify_recover(EVP_PKEY_CTX *ctx,
                              unsigned char *rout, size_t *routlen,
                              const unsigned char *sig, size_t siglen);
@@ -21,6 +24,10 @@ I<ctx> for signing using the algorithm given when the context was created
 using L<EVP_PKEY_CTX_new(3)> or variants thereof.  The algorithm is used to
 fetch a B<EVP_SIGNATURE> method implicitly, see L<provider(7)/Implicit fetch>
 for more information about implicit fetches.
+
+EVP_PKEY_verify_recover_init_ex() is the same as
+EVP_PKEY_verify_recover_init() but additionally sets the passed parameters
+I<params> on the context before returning.
 
 The EVP_PKEY_verify_recover() function recovers signed data
 using I<ctx>. The signature is specified using the I<sig> and
@@ -104,7 +111,10 @@ L<EVP_PKEY_derive(3)>
 
 =head1 HISTORY
 
-These functions were added in OpenSSL 1.0.0.
+The EVP_PKEY_verify_recover_init() and EVP_PKEY_verify_recover()
+functions were added in OpenSSL 1.0.0.
+
+The EVP_PKEY_verify_recover_init_ex() function was added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
