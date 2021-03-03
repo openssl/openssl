@@ -2,7 +2,8 @@
 
 =head1 NAME
 
-EVP_PKEY_decrypt_init, EVP_PKEY_decrypt - decrypt using a public key algorithm
+EVP_PKEY_decrypt_init, EVP_PKEY_decrypt_init_ex,
+EVP_PKEY_decrypt - decrypt using a public key algorithm
 
 =head1 SYNOPSIS
 
