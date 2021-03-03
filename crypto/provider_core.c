@@ -381,6 +381,7 @@ void ossl_provider_free(OSSL_PROVIDER *prov)
             OPENSSL_free(prov->path);
             sk_INFOPAIR_pop_free(prov->parameters, free_infopair);
             CRYPTO_THREAD_lock_free(prov->opbits_lock);
+            CRYPTO_THREAD_lock_free(prov->flag_lock);
 #ifndef HAVE_ATOMICS
             CRYPTO_THREAD_lock_free(prov->refcnt_lock);
             CRYPTO_THREAD_lock_free(prov->activatecnt_lock);
