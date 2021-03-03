@@ -139,10 +139,12 @@ OSSL_FUNC_keyexch_set_ctx_params() sets key exchange parameters associated with 
 given provider side key exchange context I<ctx> to I<params>,
 see L</Common Key Exchange parameters>.
 Any parameter settings are additional to any that were previously set.
+Passing NULL for I<params> should return true.
 
 OSSL_FUNC_keyexch_get_ctx_params() gets key exchange parameters associated with the
 given provider side key exchange context I<ctx> into I<params>,
 see L</Common Key Exchange parameters>.
+Passing NULL for I<params> should return true.
 
 OSSL_FUNC_keyexch_settable_ctx_params() yields a constant B<OSSL_PARAM> array that
 describes the settable parameters, i.e. parameters that can be used with

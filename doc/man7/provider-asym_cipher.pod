@@ -173,9 +173,12 @@ functions.
 OSSL_FUNC_asym_cipher_get_ctx_params() gets asymmetric cipher parameters associated
 with the given provider side asymmetric cipher context I<ctx> and stores them in
 I<params>.
+Passing NULL for I<params> should return true.
+
 OSSL_FUNC_asym_cipher_set_ctx_params() sets the asymmetric cipher parameters associated
 with the given provider side asymmetric cipher context I<ctx> to I<params>.
 Any parameter settings are additional to any that were previously set.
+Passing NULL for I<params> should return true.
 
 Parameters currently recognised by built-in asymmetric cipher algorithms are as
 follows.

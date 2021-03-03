@@ -332,9 +332,12 @@ the OSSL_FUNC_signature_get_ctx_params() and OSSL_FUNC_signature_set_ctx_params(
 
 OSSL_FUNC_signature_get_ctx_params() gets signature parameters associated with the
 given provider side signature context I<ctx> and stored them in I<params>.
+Passing NULL for I<params> should return true.
+
 OSSL_FUNC_signature_set_ctx_params() sets the signature parameters associated with the
 given provider side signature context I<ctx> to I<params>.
 Any parameter settings are additional to any that were previously set.
+Passing NULL for I<params> should return true.
 
 Common parameters currently recognised by built-in signature algorithms are as
 follows.
@@ -391,9 +394,12 @@ functions.
 
 OSSL_FUNC_signature_get_md_ctx_params() gets digest parameters associated with the
 given provider side digest signature context I<ctx> and stores them in I<params>.
+Passing NULL for I<params> should return true.
+
 OSSL_FUNC_signature_set_ms_ctx_params() sets the digest parameters associated with the
 given provider side digest signature context I<ctx> to I<params>.
 Any parameter settings are additional to any that were previously set.
+Passing NULL for I<params> should return true.
 
 Parameters currently recognised by built-in signature algorithms are the same
 as those for built-in digest algorithms. See
