@@ -32,7 +32,7 @@ void evp_md_ctx_clear_digest(EVP_MD_CTX *ctx, int force)
         EVP_MD_CTX_set_flags(ctx, EVP_MD_CTX_FLAG_CLEANED);
     }
 
-    /* Code below to remove when legacy support is dropped. */
+    /* Code below to be removed when legacy support is dropped. */
 
     /*
      * Don't assume ctx->md_data was cleaned in EVP_Digest_Final, because
@@ -177,7 +177,7 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
         type = ctx->digest;
     }
 
-    /* Code below to remove when legacy support is dropped. */
+    /* Code below to be removed when legacy support is dropped. */
 #if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODULE)
     /*
      * Whether it's nice or not, "Inits" can be used on "Final"'d contexts so

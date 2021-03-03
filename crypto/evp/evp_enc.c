@@ -597,7 +597,7 @@ int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 
     return ret;
 
-    /* Code below to remove when legacy support is dropped. */
+    /* Code below to be removed when legacy support is dropped. */
  legacy:
 
     return evp_EncryptDecryptUpdate(ctx, out, outl, in, inl);
@@ -657,7 +657,7 @@ int EVP_EncryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 
     return ret;
 
-    /* Code below to remove when legacy support is dropped. */
+    /* Code below to be removed when legacy support is dropped. */
  legacy:
 
     if (ctx->cipher->flags & EVP_CIPH_FLAG_CUSTOM_CIPHER) {
@@ -744,7 +744,7 @@ int EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 
     return ret;
 
-    /* Code below to remove when legacy support is dropped. */
+    /* Code below to be removed when legacy support is dropped. */
  legacy:
 
     b = ctx->cipher->block_size;
@@ -879,7 +879,7 @@ int EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 
     return ret;
 
-    /* Code below to remove when legacy support is dropped. */
+    /* Code below to be removed when legacy support is dropped. */
  legacy:
 
     *outl = 0;
@@ -953,7 +953,7 @@ int EVP_CIPHER_CTX_set_key_length(EVP_CIPHER_CTX *c, int keylen)
         return ok > 0 ? 1 : 0;
     }
 
-    /* Code below to remove when legacy support is dropped. */
+    /* Code below to be removed when legacy support is dropped. */
 
     /*
      * Note there have never been any built-in ciphers that define this flag

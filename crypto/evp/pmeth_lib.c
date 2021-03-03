@@ -963,7 +963,7 @@ static int evp_pkey_ctx_set1_octet_string(EVP_PKEY_CTX *ctx, int fallback,
         return -2;
     }
 
-    /* Code below to remove when legacy support is dropped. */
+    /* Code below to be removed when legacy support is dropped. */
     if (fallback)
         return EVP_PKEY_CTX_ctrl(ctx, -1, op, ctrl, datalen, (void *)(data));
     /* end of legacy support */
@@ -1052,7 +1052,7 @@ int EVP_PKEY_CTX_hkdf_mode(EVP_PKEY_CTX *ctx, int mode)
         return -2;
     }
 
-    /* Code below to remove when legacy support is dropped. */
+    /* Code below to be removed when legacy support is dropped. */
     if (ctx->op.kex.exchprovctx == NULL)
         return EVP_PKEY_CTX_ctrl(ctx, -1, EVP_PKEY_OP_DERIVE,
                                  EVP_PKEY_CTRL_HKDF_MODE, mode, NULL);
@@ -1100,7 +1100,7 @@ static int evp_pkey_ctx_set_uint64(EVP_PKEY_CTX *ctx, const char *param,
         return -2;
     }
 
-    /* Code below to remove when legacy support is dropped. */
+    /* Code below to be removed when legacy support is dropped. */
     if (ctx->op.kex.exchprovctx == NULL)
         return EVP_PKEY_CTX_ctrl_uint64(ctx, -1, op, ctrl, val);
     /* end of legacy support */
