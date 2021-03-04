@@ -128,7 +128,7 @@ OSSL_FUNC_kem_encapsulate() performs the actual encapsulation itself.
 A previously initialised asymmetric kem context is passed in the I<ctx>
 parameter.
 Unless I<out> is NULL, the data to be encapsulated is internally generated,
-and returned into the the buffer pointed to by the I<secret> parameter and the
+and returned into the buffer pointed to by the I<secret> parameter and the
 encapsulated data should also be written to the location pointed to by the
 I<out> parameter. The length of the encapsulated data should be written to
 I<*outlen> and the length of the generated secret should be written to

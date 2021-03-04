@@ -202,7 +202,7 @@ struct translation_ctx_st {
      */
 
     /*
-     * Copy of the ctrl-style void* argument, if the the fixup_args function
+     * Copy of the ctrl-style void* argument, if the fixup_args function
      * needs to manipulate |p2| but wants to remember original.
      */
     void *orig_p2;

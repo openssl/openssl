@@ -479,7 +479,7 @@ static int tree_calculate_authority_set(X509_POLICY_TREE *tree,
     curr = tree->levels;
     for (i = 1; i < tree->nlevel; i++) {
         /*
-         * If no anyPolicy node on this this level it can't appear on lower
+         * If no anyPolicy node on this level it can't appear on lower
          * levels so end search.
          */
         if ((anyptr = curr->anyPolicy) == NULL)

@@ -863,7 +863,7 @@ handled by the caller.  The caller may change this to an actual number.
 =item B<< $item->version >> (read-only)
 
 The version number for this item.  Please note that these version numbers
-have underscore (C<_>) as a separator the the version parts.
+have underscore (C<_>) as a separator for the version parts.
 
 =item B<< $item->exists >> (read-only)
 
