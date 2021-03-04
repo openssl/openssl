@@ -206,44 +206,45 @@ static int ts_check_signing_certs(PKCS7_SIGNER_INFO *si,
     int chain_length;
     int verification_length;
     void *cert_ids_generic;
-    int (*find_cert_generic)(const void *, const X509 *);
+    typedef int (*FindCert)(const void *, const X509 *);
+    FindCert find_cert_generic;
 
     if (ss != NULL) {
         cert_ids_generic = ss->cert_ids;
-        find_cert_generic = (int (*)(const void *, const X509 *))&ossl_ess_find_cert;
+        find_cert_generic = (FindCert)&ossl_ess_find_cert;
         verification_length = sk_ESS_CERT_ID_num(cert_ids_generic);
     } else if (ssv2 != NULL) {
         cert_ids_generic = ssv2->cert_ids;
-        find_cert_generic = (int (*)(const void *, const X509 *))&ossl_ess_find_cert_v2;
+        find_cert_generic = (FindCert)&ossl_ess_find_cert_v2;
         verification_length = sk_ESS_CERT_ID_V2_num(cert_ids_generic);
     } else {
         goto err;
     }
 
-    if (verification_length < 1) // no signer's ESSCertID
+    if (verification_length < 1) /* no signer's ESSCertID */
         goto err;
 
     chain_length = sk_X509_num(chain);
-    if (chain_length < 1) // empty chain
+    if (chain_length < 1) /* empty chain */
         goto err;
 
-    // RFC 2634, section 5.4
-    if (1 < verification_length) {
-        if (1 < chain_length)
-            // Validate every certificate except root
+    /* RFC 2634, section 5.4 */
+    if (verification_length > 1) {
+        if (chain_length > 1)
+            /* validate every certificate except root */
             verification_length = chain_length - 1;
         else
-            // Only validate the signing certificate
+            /* only validate the signing certificate */
             verification_length = 1;
     }
 
     for (i = 0; i < verification_length; i++) {
         cert = sk_X509_value(chain, i);
         id_index = find_cert_generic(cert_ids_generic, cert);
-        // The first ESSCertID must belongs to the signer.
-        if ((i == 0) && (id_index != 0))
+        /* the first ESSCertID must belong to the signer */
+        if (i == 0 && id_index != 0)
             goto err;
-        // All certificates must be present in the list regardless of the order.
+        /* all certificates must be present in the list regardless of the order */
         if (id_index < 0)
             goto err;
     }
