@@ -435,7 +435,9 @@ ASN1_OCTET_STRING *X509_digest_sig(const X509 *cert)
 int X509_CRL_digest(const X509_CRL *data, const EVP_MD *type,
                     unsigned char *md, unsigned int *len)
 {
-    if (type == EVP_sha1() && (data->flags & EXFLAG_SET) != 0
+    if (type != NULL
+            && EVP_MD_is_a(type, SN_sha1)
+            && (data->flags & EXFLAG_SET) != 0
             && (data->flags & EXFLAG_NO_FINGERPRINT) == 0) {
         /* Asking for SHA1; always computed in CRL d2i. */
         if (len != NULL)
@@ -443,15 +445,15 @@ int X509_CRL_digest(const X509_CRL *data, const EVP_MD *type,
         memcpy(md, data->sha1_hash, sizeof(data->sha1_hash));
         return 1;
     }
-    return (ASN1_item_digest
-            (ASN1_ITEM_rptr(X509_CRL), type, (char *)data, md, len));
+    return (asn1_item_digest_ex(ASN1_ITEM_rptr(X509_CRL), type, (char *)data,
+                                md, len, data->libctx, data->propq));
 }
 
 int X509_REQ_digest(const X509_REQ *data, const EVP_MD *type,
                     unsigned char *md, unsigned int *len)
 {
-    return (ASN1_item_digest
-            (ASN1_ITEM_rptr(X509_REQ), type, (char *)data, md, len));
+    return (asn1_item_digest_ex(ASN1_ITEM_rptr(X509_REQ), type, (char *)data,
+                                md, len, data->libctx, data->propq));
 }
 
 int X509_NAME_digest(const X509_NAME *data, const EVP_MD *type,

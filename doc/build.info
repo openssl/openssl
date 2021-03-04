@@ -2498,6 +2498,10 @@ DEPEND[html/man3/SSL_write.html]=man3/SSL_write.pod
 GENERATE[html/man3/SSL_write.html]=man3/SSL_write.pod
 DEPEND[man/man3/SSL_write.3]=man3/SSL_write.pod
 GENERATE[man/man3/SSL_write.3]=man3/SSL_write.pod
+DEPEND[html/man3/TS_RESP_CTX_new.html]=man3/TS_RESP_CTX_new.pod
+GENERATE[html/man3/TS_RESP_CTX_new.html]=man3/TS_RESP_CTX_new.pod
+DEPEND[man/man3/TS_RESP_CTX_new.3]=man3/TS_RESP_CTX_new.pod
+GENERATE[man/man3/TS_RESP_CTX_new.3]=man3/TS_RESP_CTX_new.pod
 DEPEND[html/man3/TS_VERIFY_CTX_set_certs.html]=man3/TS_VERIFY_CTX_set_certs.pod
 GENERATE[html/man3/TS_VERIFY_CTX_set_certs.html]=man3/TS_VERIFY_CTX_set_certs.pod
 DEPEND[man/man3/TS_VERIFY_CTX_set_certs.3]=man3/TS_VERIFY_CTX_set_certs.pod
@@ -3258,6 +3262,7 @@ html/man3/SSL_shutdown.html \
 html/man3/SSL_state_string.html \
 html/man3/SSL_want.html \
 html/man3/SSL_write.html \
+html/man3/TS_RESP_CTX_new.html \
 html/man3/TS_VERIFY_CTX_set_certs.html \
 html/man3/UI_STRING.html \
 html/man3/UI_UTIL_read_pw.html \
@@ -3829,6 +3834,7 @@ man/man3/SSL_shutdown.3 \
 man/man3/SSL_state_string.3 \
 man/man3/SSL_want.3 \
 man/man3/SSL_write.3 \
+man/man3/TS_RESP_CTX_new.3 \
 man/man3/TS_VERIFY_CTX_set_certs.3 \
 man/man3/UI_STRING.3 \
 man/man3/UI_UTIL_read_pw.3 \
