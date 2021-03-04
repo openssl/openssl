@@ -2965,10 +2965,10 @@ static int dane_verify(X509_STORE_CTX *ctx)
 }
 
 /*
- * Get issuer, without duplicate suppression
+ * Get trusted issuer, without duplicate suppression
  * Returns -1 on internal error.
  */
-static int get_issuer(X509 **issuer, X509_STORE_CTX *ctx, X509 *cert)
+static int get1_trusted_issuer(X509 **issuer, X509_STORE_CTX *ctx, X509 *cert)
 {
     STACK_OF(X509) *saved_chain = ctx->chain;
     int ok;
@@ -3090,8 +3090,8 @@ static int build_chain(X509_STORE_CTX *ctx)
             }
             curr = sk_X509_value(ctx->chain, i - 1);
 
-            /* Note: get_issuer() must be used even if curr is self-signed. */
-            ok = num > max_depth ? 0 : get_issuer(&issuer, ctx, curr);
+            /* Note: get1_trusted_issuer() must be used even if self-signed. */
+            ok = num > max_depth ? 0 : get1_trusted_issuer(&issuer, ctx, curr);
 
             if (ok < 0) {
                 trust = -1;
@@ -3102,8 +3102,10 @@ static int build_chain(X509_STORE_CTX *ctx)
             if (ok > 0) {
                 int self_signed = X509_self_signed(curr, 0);
 
-                if (self_signed < 0)
+                if (self_signed < 0) {
+                    X509_free(issuer);
                     goto int_err;
+                }
                 /*
                  * Alternative trusted issuer for a mid-chain untrusted cert?
                  * Pop the untrusted cert's successors and retry.  We might now
@@ -3150,7 +3152,7 @@ static int build_chain(X509_STORE_CTX *ctx)
                     }
                     if ((self_signed = X509_self_signed(issuer, 0)) < 0)
                         goto int_err;
-                } else if (num == ctx->num_untrusted) {
+                } else {
                     /*
                      * We have a self-signed certificate that has the same
                      * subject name (and perhaps keyid and/or serial number) as
