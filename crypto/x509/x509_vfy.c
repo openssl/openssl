@@ -2985,7 +2985,6 @@ static int build_chain(X509_STORE_CTX *ctx)
 {
     SSL_DANE *dane = ctx->dane;
     int num = sk_X509_num(ctx->chain);
-    X509 *curr = sk_X509_value(ctx->chain, num - 1); /* current end of chain */
     STACK_OF(X509) *sk_untrusted = NULL;
     unsigned int search;
     int may_trusted = 0;
@@ -3051,7 +3050,7 @@ static int build_chain(X509_STORE_CTX *ctx)
     max_depth = ctx->param->depth + 1;
 
     while (search != 0) {
-        X509 *issuer = NULL;
+        X509 *curr, *issuer = NULL;
 
         num = sk_X509_num(ctx->chain);
         ctx->error_depth = num - 1;
@@ -3145,8 +3144,7 @@ static int build_chain(X509_STORE_CTX *ctx)
                  * trusted matching issuer.  Otherwise, grow the chain.
                  */
                 if (!self_signed) {
-                    curr = issuer;
-                    if (!sk_X509_push(ctx->chain, curr)) {
+                    if (!sk_X509_push(ctx->chain, issuer)) {
                         X509_free(issuer);
                         goto memerr;
                     }
@@ -3167,8 +3165,6 @@ static int build_chain(X509_STORE_CTX *ctx)
                         X509_free(curr);
                         ctx->num_untrusted = --num;
                         (void)sk_X509_set(ctx->chain, num, issuer);
-                        curr = issuer;
-                        /* no need to update self_signed */
                     }
                 }
 
@@ -3246,7 +3242,6 @@ static int build_chain(X509_STORE_CTX *ctx)
                 goto int_err;
 
             ++ctx->num_untrusted;
-            curr = issuer;
 
             /* Check for DANE-TA trust of the topmost untrusted certificate. */
             trust = check_dane_issuer(ctx, ctx->num_untrusted - 1);
@@ -3297,9 +3292,9 @@ static int build_chain(X509_STORE_CTX *ctx)
         CB_FAIL_IF(DANETLS_ENABLED(dane)
                        && (!DANETLS_HAS_PKIX(dane) || dane->pdpth >= 0),
                    ctx, NULL, num - 1, X509_V_ERR_DANE_NO_MATCH);
-        if (X509_self_signed(curr, 0))
+        if (X509_self_signed(sk_X509_value(ctx->chain, num - 1), 0))
             return verify_cb_cert(ctx, NULL, num - 1,
-                                  sk_X509_num(ctx->chain) == 1
+                                  num == 1
                                   ? X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT
                                   : X509_V_ERR_SELF_SIGNED_CERT_IN_CHAIN);
         return verify_cb_cert(ctx, NULL, num - 1,
