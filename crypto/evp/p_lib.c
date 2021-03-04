@@ -1188,6 +1188,26 @@ static int legacy_asn1_ctrl_to_param(EVP_PKEY *pkey, int op,
             }
             return rv;
         }
+    case ASN1_PKEY_CTRL_SUPPORTS_MD_NID:
+        {
+            const OSSL_PARAM *gettable = NULL;
+            OSSL_PARAM params[2];
+
+            if ((gettable = EVP_PKEY_gettable_params(pkey)) == NULL
+                    || OSSL_PARAM_locate_const(gettable,
+                                               OSSL_PKEY_PARAM_DIGEST_SUPPORTED) == NULL)
+                return -2;
+
+            /*
+             * We use EVP_PKEY_get_params to check an "assertion" that a certain
+             * digest is supported. We set the input OSSL_PARAM and expect the
+             * get_params will fail if that hash is not supported.
+             */
+            params[0] = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_DIGEST_SUPPORTED,
+                                                         (char *)OBJ_nid2sn(arg1), 0);
+            params[1] = OSSL_PARAM_construct_end();
+            return EVP_PKEY_get_params(pkey, params);
+        }
     default:
         return -2;
     }

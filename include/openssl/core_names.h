@@ -275,6 +275,7 @@ extern "C" {
 #define OSSL_PKEY_PARAM_PROPERTIES          OSSL_ALG_PARAM_PROPERTIES
 #define OSSL_PKEY_PARAM_DEFAULT_DIGEST      "default-digest" /* utf8 string */
 #define OSSL_PKEY_PARAM_MANDATORY_DIGEST    "mandatory-digest" /* utf8 string */
+#define OSSL_PKEY_PARAM_DIGEST_SUPPORTED    "digest-supported" /* utf8 string */
 #define OSSL_PKEY_PARAM_PAD_MODE            "pad-mode"
 #define OSSL_PKEY_PARAM_DIGEST_SIZE         "digest-size"
 #define OSSL_PKEY_PARAM_MASKGENFUNC         "mgf"
