@@ -376,3 +376,16 @@ int has_stdin_waiting(void)
 }
 #endif
 
+/*
+ * generalized functions to have abstract os specific code
+ */
+
+int app_rename(const char *from, const char *to)
+{
+    #ifdef _WIN32
+        return WIN32_rename(from, to);
+    #else
+        return rename (from, to);
+    #endif
+}
+
