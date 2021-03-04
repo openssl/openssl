@@ -14,17 +14,20 @@ set -e
 
 PWD="$(pwd)"
 
-O_EXE="$PWD/$BLDTOP/apps"
-O_BINC="$PWD/$BLDTOP/include"
-O_SINC="$PWD/$SRCTOP/include"
-O_LIB="$PWD/$BLDTOP"
+SRCTOP="$(cd $SRCTOP; pwd)"
+BLDTOP="$(cd $BLDTOP; pwd)"
 
-unset OPENSSL_CONF
-
-if [ "$O_BINC" != "$O_SINC" ] ; then
+if [ "$SRCTOP" != "$BLDTOP" ] ; then
     echo "Out of tree builds not supported with gost_engine test!"
     exit 1
 fi
+
+O_EXE="$BLDTOP/apps"
+O_BINC="$BLDTOP/include"
+O_SINC="$SRCTOP/include"
+O_LIB="$BLDTOP"
+
+unset OPENSSL_CONF
 
 export PATH="$O_EXE:$PATH"
 export LD_LIBRARY_PATH="$O_LIB:$LD_LIBRARY_PATH"
@@ -42,15 +45,11 @@ echo "   OPENSSL_ROOT_DIR:   $OPENSSL_ROOT_DIR"
 echo "   OpenSSL version:    $OPENSSL_VERSION"
 echo "------------------------------------------------------------------"
 
-cd $SRCTOP/gost-engine
-rm -rf build
-mkdir -p build
-cd build
-cmake .. -DOPENSSL_ROOT_DIR="$OPENSSL_ROOT_DIR"
+cmake $SRCTOP/gost-engine -DOPENSSL_ROOT_DIR="$OPENSSL_ROOT_DIR"
 make
 export CTEST_OUTPUT_ON_FAILURE=1
 export HARNESS_OSSL_PREFIX=''
-export OPENSSL_ENGINES="$OPENSSL_ROOT_DIR/gost-engine/build/bin"
+export OPENSSL_ENGINES="$PWD/bin"
 export OPENSSL_APP="$O_EXE/openssl"
 make test
 make tcl_tests
