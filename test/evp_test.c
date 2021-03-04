@@ -3594,7 +3594,7 @@ int setup_tests(void)
     /*
      * Load the provider via configuration into the created library context.
      * Load the 'null' provider into the default library context to ensure that
-     * the the tests do not fallback to using the default provider.
+     * the tests do not fallback to using the default provider.
      */
     if (!test_get_libctx(&libctx, &prov_null, config_file, NULL, NULL))
         return 0;

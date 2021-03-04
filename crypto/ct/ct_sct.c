@@ -343,7 +343,7 @@ int SCT_validate(SCT *sct, const CT_POLICY_EVAL_CTX *ctx)
      * XXX: Potential for optimization.  This repeats some idempotent heavy
      * lifting on the certificate for each candidate SCT, and appears to not
      * use any information in the SCT itself, only the certificate is
-     * processed.  So it may make more sense to to do this just once, perhaps
+     * processed.  So it may make more sense to do this just once, perhaps
      * associated with the shared (by all SCTs) policy eval ctx.
      *
      * XXX: Failure here is global (SCT independent) and represents either an

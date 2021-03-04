@@ -165,7 +165,7 @@ typedef u64 u64_aX;
  */
 /*
  * Note that every Cn macro expands as two loads: one byte load and
- * one quadword load. One can argue that that many single-byte loads
+ * one quadword load. One can argue that many single-byte loads
  * is too excessive, as one could load a quadword and "milk" it for
  * eight 8-bit values instead. Well, yes, but in order to do so *and*
  * avoid excessive loads you have to accommodate a handful of 64-bit
