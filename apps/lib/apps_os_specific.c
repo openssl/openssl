@@ -232,7 +232,7 @@ int app_access(const char* name, int flag)
 # include "vms_term_sock.h"
 static int stdin_sock = -1;
 
-static void close_stdin_sock(void)
+void close_stdin_sock(void)
 {
     TerminalSocket (TERM_SOCK_DELETE, &stdin_sock);
 }
@@ -375,17 +375,4 @@ int has_stdin_waiting(void)
     return _kbhit();
 }
 #endif
-
-/*
- * generalized functions to have abstract os specific code
- */
-
-//int app_rename(const char *from, const char *to)
-//{
-//    #ifdef _WIN32
-//        return WIN32_rename(from, to);
-//    #else
-//        return rename (from, to);
-//    #endif
-//}
 
