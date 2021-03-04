@@ -185,11 +185,11 @@ jobs:
       run: ./config --strict-warnings --debug no-afalgeng enable-rc5 enable-md2 enable-ssl3 enable-ssl3-method enable-weak-ssl-ciphers enable-zlib enable-ec_nistp_64_gcc_128 enable-external-tests && perl configdata.pm --dump
     - name: make
       run: make -s -j4
-    - name: make test_external_gost_engine
+    - name: test external gost-engine
       run: make test TESTS="test_external_gost_engine"
-    - name: make test_external_krb5
+    - name: test external krb5
       run: make test TESTS="test_external_krb5"
-#   - name: make test_external_boringssl
+#   - name: test external boringssl
 #     run: BORING_RUNNER_DIR=$(pwd)/boringssl/ssl/test/runner make test TESTS="test_external_boringssl"
-#   - name: make test_external_pyca
+#   - name: test external pyca
 #     run: make test TESTS="test_external_pyca"
