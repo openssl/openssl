@@ -33,6 +33,7 @@
 # include "platform.h"
 # include "engine_loader.h"
 # include "apps_extracted.h"
+# include "apps_os_specific.h"
 
 /*
  * quick macro when you need to pass an unsigned char instead of a char.
@@ -54,10 +55,10 @@ extern const unsigned char tls13_aes256gcmsha384_id[];
 extern BIO_ADDR *ourpeer;
 
 CONF *app_load_config_modules(const char *configfile);
-void wait_for_async(SSL *s);
-# if defined(OPENSSL_SYS_MSDOS)
-int has_stdin_waiting(void);
-# endif
+//void wait_for_async(SSL *s);
+//# if defined(OPENSSL_SYS_MSDOS)
+//int has_stdin_waiting(void);
+//# endif
 
 void corrupt_signature(const ASN1_STRING *signature);
 
@@ -220,15 +221,15 @@ ASN1_VALUE *app_http_post_asn1(const char *host, const char *port,
  */
 # define SERIAL_RAND_BITS        159
 
-int app_access(const char *, int flag);
-int fileno_stdin(void);
-int fileno_stdout(void);
-int raw_read_stdin(void *, int);
-int raw_write_stdout(const void *, int);
+//int app_access(const char *, int flag);
+//int fileno_stdin(void);
+//int fileno_stdout(void);
+//int raw_read_stdin(void *, int);
+//int raw_write_stdout(const void *, int);
 
-# define TM_START        0
-# define TM_STOP         1
-double app_tminterval(int stop, int usertime);
+//# define TM_START        0
+//# define TM_STOP         1
+//double app_tminterval(int stop, int usertime);
 
 void make_uppercase(char *string);
 
@@ -247,10 +248,5 @@ void app_params_free(OSSL_PARAM *params);
 void app_providers_cleanup(void);
 
 int app_set_propq(const char *arg);
-
-#ifdef _WIN32
-static int WIN32_rename(const char *from, const char *to);
-# define rename(from,to) WIN32_rename((from),(to))
-#endif
 
 #endif
