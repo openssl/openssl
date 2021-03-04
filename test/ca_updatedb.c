@@ -9,7 +9,6 @@
 
 #include "../apps/include/ca.h"
 #include "../apps/include/apps.h"
-#include "../apps/include/apps_extracted.h"
 #include "testutil.h"
 #include "crypto/asn1.h"
 

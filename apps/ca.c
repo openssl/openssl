@@ -32,7 +32,6 @@
 #endif
 
 #include "apps.h"
-#include "apps_extracted.h"
 #include "ca.h"
 #include "progs.h"
 
