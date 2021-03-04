@@ -227,13 +227,13 @@ static int ts_check_signing_certs(PKCS7_SIGNER_INFO *si,
     if (chain_length < 1) // empty chain
         goto err;
 
-    if (1 < verification_length) { // RFC 2634, section 5.4
-        // Ambiguous standard
-        // But some TSA does not respond with the ESSCertID of the root certificate.
-        // Hence, we exclude the root from verifications.
+    // RFC 2634, section 5.4
+    if (1 < verification_length) {
         if (1 < chain_length)
+            // Validate every certificate except root
             verification_length = chain_length - 1;
         else
+            // Only validate the signing certificate
             verification_length = 1;
     }
 
