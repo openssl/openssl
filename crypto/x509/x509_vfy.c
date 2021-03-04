@@ -2992,7 +2992,7 @@ static int build_chain(X509_STORE_CTX *ctx)
     int may_alternate = 0;
     int trust = X509_TRUST_UNTRUSTED;
     int alt_untrusted = 0;
-    int depth;
+    int max_depth;
     int ok = 0;
     int prev_error = ctx->error;
     int i;
@@ -3048,7 +3048,7 @@ static int build_chain(X509_STORE_CTX *ctx)
      * Build chains up to one longer the limit, later fail if we hit the limit,
      * with an X509_V_ERR_CERT_CHAIN_TOO_LONG error code.
      */
-    depth = ctx->param->depth + 1;
+    max_depth = ctx->param->depth + 1;
 
     while (search != 0) {
         X509 *issuer = NULL;
@@ -3092,7 +3092,7 @@ static int build_chain(X509_STORE_CTX *ctx)
             curr = sk_X509_value(ctx->chain, i - 1);
 
             /* Note: get_issuer() must be used even if curr is self-signed. */
-            ok = num > depth ? 0 : get_issuer(&issuer, ctx, curr);
+            ok = num > max_depth ? 0 : get_issuer(&issuer, ctx, curr);
 
             if (ok < 0) {
                 trust = -1;
@@ -3225,11 +3225,11 @@ static int build_chain(X509_STORE_CTX *ctx)
             if (!ossl_assert(num == ctx->num_untrusted))
                 goto int_err;
             curr = sk_X509_value(ctx->chain, num - 1);
-            issuer = (X509_self_signed(curr, 0) || num > depth) ?
+            issuer = (X509_self_signed(curr, 0) || num > max_depth) ?
                 NULL : find_issuer(ctx, sk_untrusted, curr);
             if (issuer == NULL) {
                 /*
-                 * Once we have reached a self-signed cert or num exceeds depth
+                 * Once we have reached a self-signed cert or num > max_depth
                  * or can't find an issuer in the untrusted list we stop looking
                  * there and start looking only in the trust store if enabled.
                  */
@@ -3264,7 +3264,7 @@ static int build_chain(X509_STORE_CTX *ctx)
      * signers, or else direct leaf PKIX trust.
      */
     num = sk_X509_num(ctx->chain);
-    if (num <= depth) {
+    if (num <= max_depth) {
         if (trust == X509_TRUST_UNTRUSTED && DANETLS_HAS_DANE_TA(dane))
             trust = check_dane_pkeys(ctx);
         if (trust == X509_TRUST_UNTRUSTED && num == ctx->num_untrusted)
@@ -3292,7 +3292,7 @@ static int build_chain(X509_STORE_CTX *ctx)
         case X509_V_OK:
             break;
         }
-        CB_FAIL_IF(num > depth,
+        CB_FAIL_IF(num > max_depth,
                    ctx, NULL, num - 1, X509_V_ERR_CERT_CHAIN_TOO_LONG);
         CB_FAIL_IF(DANETLS_ENABLED(dane)
                        && (!DANETLS_HAS_PKIX(dane) || dane->pdpth >= 0),
