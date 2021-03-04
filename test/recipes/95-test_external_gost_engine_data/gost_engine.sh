@@ -49,5 +49,6 @@ make
 export CTEST_OUTPUT_ON_FAILURE=1
 export HARNESS_OSSL_PREFIX=''
 export OPENSSL_ENGINES="$OPENSSL_ROOT_DIR/gost-engine/build/bin"
+export OPENSSL_APP="$O_EXE/openssl"
 make test
 make tcl_tests
