@@ -50,6 +50,6 @@ static int WIN32_rename(const char *from, const char *to);
 # define _kbhit kbhit
 #endif
 
-//int app_rename(const char *from, const char *to);
+void close_stdin_sock(void);
 
 #endif
