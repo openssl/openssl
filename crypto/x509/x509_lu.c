@@ -321,7 +321,6 @@ int X509_STORE_CTX_get_by_subject(const X509_STORE_CTX *vs,
     stmp.type = X509_LU_NONE;
     stmp.data.ptr = NULL;
 
-
     X509_STORE_lock(store);
     tmp = X509_OBJECT_retrieve_by_subject(store->objs, type, name);
     X509_STORE_unlock(store);
@@ -740,12 +739,10 @@ int X509_STORE_CTX_get1_issuer(X509 **issuer, X509_STORE_CTX *ctx, X509 *x)
     if (ctx->check_issued(ctx, x, obj->data.x509)) {
         if (ossl_x509_check_cert_time(ctx, obj->data.x509, -1)) {
             *issuer = obj->data.x509;
-            if (!X509_up_ref(*issuer)) {
-                *issuer = NULL;
-                ok = -1;
-            }
+            /* |*issuer| has taken over the cert reference from |obj| */
+            obj->type = X509_LU_NONE;
             X509_OBJECT_free(obj);
-            return ok;
+            return 1;
         }
     }
     X509_OBJECT_free(obj);

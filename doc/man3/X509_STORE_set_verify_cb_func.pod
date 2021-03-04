@@ -22,6 +22,7 @@ X509_STORE_get_check_revocation,
 X509_STORE_set_check_revocation,
 X509_STORE_get_check_issued,
 X509_STORE_set_check_issued,
+X509_STORE_CTX_get1_issuer,
 X509_STORE_get_get_issuer,
 X509_STORE_set_get_issuer,
 X509_STORE_CTX_get_verify,
@@ -64,10 +65,10 @@ X509_STORE_CTX_lookup_certs_fn, X509_STORE_CTX_lookup_crls_fn
  void X509_STORE_set_verify(X509_STORE *ctx, X509_STORE_CTX_verify_fn verify);
  X509_STORE_CTX_verify_fn X509_STORE_CTX_get_verify(const X509_STORE_CTX *ctx);
 
+ int X509_STORE_CTX_get1_issuer(X509 **issuer, X509_STORE_CTX *ctx, X509 *x);
+ X509_STORE_CTX_get_issuer_fn X509_STORE_get_get_issuer(const X509_STORE_CTX *ctx);
  void X509_STORE_set_get_issuer(X509_STORE *ctx,
                                 X509_STORE_CTX_get_issuer_fn get_issuer);
- X509_STORE_CTX_get_issuer_fn
-     X509_STORE_get_get_issuer(const X509_STORE_CTX *ctx);
 
  void X509_STORE_set_check_issued(X509_STORE *ctx,
                                   X509_STORE_CTX_check_issued_fn check_issued);
@@ -137,12 +138,19 @@ on success.
 I<If no chain verification function is provided, the internal default
 function will be used instead.>
 
-X509_STORE_set_get_issuer() sets the function to get the issuer
-certificate that verifies the given certificate B<x>.
-When found, the issuer certificate must be assigned to B<*issuer>.
-This function must return 0 on failure and 1 on success.
-I<If no function to get the issuer is provided, the internal default
-function will be used instead.>
+X509_STORE_CTX_get1_issuer() tries to find a certificate from the I<store>
+component of I<ctx> with a subject name matching the issuer name of I<x>.
+On success it assigns to I<*issuer> the first match that is currently valid,
+or at least the most recently expired match if there is no currently valid one.
+If the function returns 1 the caller is responsible for freeing I<*issuer>.
+
+X509_STORE_set_get_issuer() sets the function I<get_issuer>
+to get the "best" candidate issuer certificate of the given certificate B<x>.
+When such a certificate is found, I<get_issuer> must up-ref and assign it
+to B<*issuer> and then return 1.
+Otherwise I<get_issuer> must return 0 if not found and -1 (or 0) on failure.
+If X509_STORE_set_get_issuer() is not used or I<get_issuer> is NULL
+then X509_STORE_CTX_get1_issuer() is used as the default implementation.
 
 X509_STORE_set_check_issued() sets the function to check that a given
 certificate B<x> is issued by the issuer certificate B<issuer>.
@@ -236,6 +244,9 @@ The X509_STORE_set_*() functions do not return a value.
 
 The X509_STORE_get_*() functions return a pointer of the appropriate
 function type.
+
+X509_STORE_CTX_get1_issuer() returns
+1 if a suitable certificate is found, 0 if not found, -1 on other error.
 
 =head1 SEE ALSO
 
