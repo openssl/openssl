@@ -139,19 +139,21 @@ static int test_store_get_params(int idx)
 static int test_store_attach_unregistered_scheme(void)
 {
     int ret;
-    OSSL_STORE_CTX *store_ctx;
-    OSSL_PROVIDER *provider;
-    OSSL_LIB_CTX *libctx;
-    BIO *bio;
-    libctx = OSSL_LIB_CTX_new();
-    provider = OSSL_PROVIDER_load(libctx, "default");
-    bio = BIO_new_file("test/certs/sm2-root.crt", "r");
+    OSSL_STORE_CTX *store_ctx = NULL;
+    OSSL_PROVIDER *provider = NULL;
+    OSSL_LIB_CTX *libctx = NULL;
+    BIO *bio = NULL;
+    char *input = test_mk_file_path(inputdir, sm2file);
 
-    ret = TEST_ptr(store_ctx = OSSL_STORE_attach(bio, "file", libctx, NULL,
-                                                 NULL, NULL, NULL, NULL)) &&
-          TEST_int_ne(ERR_GET_LIB(ERR_peek_error()), ERR_LIB_OSSL_STORE) &&
-          TEST_int_ne(ERR_GET_REASON(ERR_peek_error()),
-                      OSSL_STORE_R_UNREGISTERED_SCHEME);
+    ret = TEST_ptr(input)
+          && TEST_ptr(libctx = OSSL_LIB_CTX_new())
+          && TEST_ptr(provider = OSSL_PROVIDER_load(libctx, "default"))
+          && TEST_ptr(bio = BIO_new_file(input, "r"))
+          && TEST_ptr(store_ctx = OSSL_STORE_attach(bio, "file", libctx, NULL,
+                                                    NULL, NULL, NULL, NULL))
+          && TEST_int_ne(ERR_GET_LIB(ERR_peek_error()), ERR_LIB_OSSL_STORE)
+          && TEST_int_ne(ERR_GET_REASON(ERR_peek_error()),
+                         OSSL_STORE_R_UNREGISTERED_SCHEME);
 
     BIO_free(bio);
     OSSL_STORE_close(store_ctx);

@@ -20,6 +20,7 @@
 #include "internal/thread_once.h"
 #include "internal/provider.h"
 #include "internal/refcount.h"
+#include "internal/bio.h"
 #include "provider_local.h"
 #ifndef FIPS_MODULE
 # include <openssl/self_test.h>
@@ -1191,15 +1192,16 @@ static const OSSL_DISPATCH core_dispatch_[] = {
     { OSSL_FUNC_CORE_CLEAR_LAST_ERROR_MARK,
       (void (*)(void))core_clear_last_error_mark },
     { OSSL_FUNC_CORE_POP_ERROR_TO_MARK, (void (*)(void))core_pop_error_to_mark },
-    { OSSL_FUNC_BIO_NEW_FILE, (void (*)(void))BIO_new_file },
-    { OSSL_FUNC_BIO_NEW_MEMBUF, (void (*)(void))BIO_new_mem_buf },
-    { OSSL_FUNC_BIO_READ_EX, (void (*)(void))BIO_read_ex },
-    { OSSL_FUNC_BIO_WRITE_EX, (void (*)(void))BIO_write_ex },
-    { OSSL_FUNC_BIO_GETS, (void (*)(void))BIO_gets },
-    { OSSL_FUNC_BIO_PUTS, (void (*)(void))BIO_puts },
-    { OSSL_FUNC_BIO_CTRL, (void (*)(void))BIO_ctrl },
-    { OSSL_FUNC_BIO_FREE, (void (*)(void))BIO_free },
-    { OSSL_FUNC_BIO_VPRINTF, (void (*)(void))BIO_vprintf },
+    { OSSL_FUNC_BIO_NEW_FILE, (void (*)(void))ossl_core_bio_new_file },
+    { OSSL_FUNC_BIO_NEW_MEMBUF, (void (*)(void))ossl_core_bio_new_mem_buf },
+    { OSSL_FUNC_BIO_READ_EX, (void (*)(void))ossl_core_bio_read_ex },
+    { OSSL_FUNC_BIO_WRITE_EX, (void (*)(void))ossl_core_bio_write_ex },
+    { OSSL_FUNC_BIO_GETS, (void (*)(void))ossl_core_bio_gets },
+    { OSSL_FUNC_BIO_PUTS, (void (*)(void))ossl_core_bio_puts },
+    { OSSL_FUNC_BIO_CTRL, (void (*)(void))ossl_core_bio_ctrl },
+    { OSSL_FUNC_BIO_UP_REF, (void (*)(void))ossl_core_bio_up_ref },
+    { OSSL_FUNC_BIO_FREE, (void (*)(void))ossl_core_bio_free },
+    { OSSL_FUNC_BIO_VPRINTF, (void (*)(void))ossl_core_bio_vprintf },
     { OSSL_FUNC_BIO_VSNPRINTF, (void (*)(void))BIO_vsnprintf },
     { OSSL_FUNC_SELF_TEST_CB, (void (*)(void))OSSL_SELF_TEST_get_callback },
     { OSSL_FUNC_GET_ENTROPY, (void (*)(void))ossl_rand_get_entropy },
