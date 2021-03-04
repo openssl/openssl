@@ -186,4 +186,4 @@ jobs:
     - name: make
       run: make -s -j4
     - name: make test
-      run: BORING_RUNNER_DIR=$(pwd)/boringssl/ssl/test/runner make test TESTS="test_external*"
+      run: BORING_RUNNER_DIR=$(pwd)/boringssl/ssl/test/runner make test TESTS="test_external_gost_engine test_external_krb5"
