@@ -553,7 +553,7 @@ int EVP_PKEY_sign(EVP_PKEY_CTX *ctx,
     }
 
     if (ctx->operation != EVP_PKEY_OP_SIGN) {
-        EVPerr(0, EVP_R_OPERATON_NOT_INITIALIZED);
+        EVPerr(0, EVP_R_OPERATION_NOT_INITIALIZED);
         return -1;
     }
 
@@ -592,7 +592,7 @@ int EVP_PKEY_verify(EVP_PKEY_CTX *ctx,
     }
 
     if (ctx->operation != EVP_PKEY_OP_VERIFY) {
-        EVPerr(0, EVP_R_OPERATON_NOT_INITIALIZED);
+        EVPerr(0, EVP_R_OPERATION_NOT_INITIALIZED);
         return -1;
     }
 
@@ -629,7 +629,7 @@ int EVP_PKEY_verify_recover(EVP_PKEY_CTX *ctx,
     }
 
     if (ctx->operation != EVP_PKEY_OP_VERIFYRECOVER) {
-        EVPerr(0, EVP_R_OPERATON_NOT_INITIALIZED);
+        EVPerr(0, EVP_R_OPERATION_NOT_INITIALIZED);
         return -1;
     }
 

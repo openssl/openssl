@@ -117,7 +117,7 @@ int EVP_PKEY_encapsulate(EVP_PKEY_CTX *ctx,
         return 0;
 
     if (ctx->operation != EVP_PKEY_OP_ENCAPSULATE) {
-        EVPerr(0, EVP_R_OPERATON_NOT_INITIALIZED);
+        EVPerr(0, EVP_R_OPERATION_NOT_INITIALIZED);
         return -1;
     }
 
@@ -148,7 +148,7 @@ int EVP_PKEY_decapsulate(EVP_PKEY_CTX *ctx,
         return 0;
 
     if (ctx->operation != EVP_PKEY_OP_DECAPSULATE) {
-        EVPerr(0, EVP_R_OPERATON_NOT_INITIALIZED);
+        EVPerr(0, EVP_R_OPERATION_NOT_INITIALIZED);
         return -1;
     }
 

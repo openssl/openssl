@@ -183,7 +183,7 @@ int EVP_PKEY_encrypt(EVP_PKEY_CTX *ctx,
     }
 
     if (ctx->operation != EVP_PKEY_OP_ENCRYPT) {
-        EVPerr(0, EVP_R_OPERATON_NOT_INITIALIZED);
+        EVPerr(0, EVP_R_OPERATION_NOT_INITIALIZED);
         return -1;
     }
 
@@ -221,7 +221,7 @@ int EVP_PKEY_decrypt(EVP_PKEY_CTX *ctx,
     }
 
     if (ctx->operation != EVP_PKEY_OP_DECRYPT) {
-        EVPerr(0, EVP_R_OPERATON_NOT_INITIALIZED);
+        EVPerr(0, EVP_R_OPERATION_NOT_INITIALIZED);
         return -1;
     }
 
