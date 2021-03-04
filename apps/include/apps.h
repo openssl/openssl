@@ -239,4 +239,9 @@ void app_providers_cleanup(void);
 
 int app_set_propq(const char *arg);
 
+#ifdef _WIN32
+static int WIN32_rename(const char *from, const char *to);
+# define rename(from,to) WIN32_rename((from),(to))
+#endif
+
 #endif
