@@ -17,6 +17,7 @@
 #include <openssl/x509err.h>
 #include <openssl/trace.h>
 #include "internal/passphrase.h"
+#include "internal/bio.h"
 #include "crypto/decoder.h"
 #include "encoder_local.h"
 #include "e_os.h"
@@ -520,6 +521,7 @@ static int decoder_process(const OSSL_PARAM params[], void *arg)
     OSSL_DECODER_CTX *ctx = data->ctx;
     OSSL_DECODER_INSTANCE *decoder_inst = NULL;
     OSSL_DECODER *decoder = NULL;
+    OSSL_CORE_BIO *cbio = NULL;
     BIO *bio = data->bio;
     long loc;
     size_t i;
@@ -633,6 +635,11 @@ static int decoder_process(const OSSL_PARAM params[], void *arg)
         goto end;
     }
 
+    if ((cbio = ossl_core_bio_new_from_bio(bio)) == NULL) {
+        ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_MALLOC_FAILURE);
+        goto end;
+    }
+
     for (i = data->current_decoder_inst_index; i-- > 0;) {
         OSSL_DECODER_INSTANCE *new_decoder_inst =
             sk_OSSL_DECODER_INSTANCE_value(ctx->decoder_insts, i);
@@ -740,7 +747,7 @@ static int decoder_process(const OSSL_PARAM params[], void *arg)
         } OSSL_TRACE_END(DECODER);
 
         new_data.current_decoder_inst_index = i;
-        ok = new_decoder->decode(new_decoderctx, (OSSL_CORE_BIO *)bio,
+        ok = new_decoder->decode(new_decoderctx, cbio,
                                  new_data.ctx->selection,
                                  decoder_process, &new_data,
                                  ossl_pw_passphrase_callback_dec,
@@ -776,6 +783,7 @@ static int decoder_process(const OSSL_PARAM params[], void *arg)
     }
 
  end:
+    ossl_core_bio_free(cbio);
     BIO_free(new_data.bio);
     return ok;
 }

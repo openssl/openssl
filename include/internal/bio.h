@@ -11,6 +11,7 @@
 # define OSSL_INTERNAL_BIO_H
 # pragma once
 
+# include <openssl/core.h>
 # include <openssl/bio.h>
 
 struct bio_method_st {
@@ -69,5 +70,20 @@ int bread_conv(BIO *bio, char *data, size_t datal, size_t *read);
      BIO_ctrl(b, BIO_CTRL_SET_KTLS_TX_SEND_CTRL_MSG, record_type, NULL)
 # define BIO_clear_ktls_ctrl_msg(b) \
      BIO_ctrl(b, BIO_CTRL_CLEAR_KTLS_TX_CTRL_MSG, 0, NULL)
+
+/* Functions to allow the core to offer the CORE_BIO type to providers */
+OSSL_CORE_BIO *ossl_core_bio_new_from_bio(BIO *bio);
+OSSL_CORE_BIO *ossl_core_bio_new_file(const char *filename, const char *mode);
+OSSL_CORE_BIO *ossl_core_bio_new_mem_buf(const void *buf, int len);
+int ossl_core_bio_read_ex(OSSL_CORE_BIO *cb, void *data, size_t dlen,
+                          size_t *readbytes);
+int ossl_core_bio_write_ex(OSSL_CORE_BIO *cb, const void *data, size_t dlen,
+                           size_t *written);
+int ossl_core_bio_gets(OSSL_CORE_BIO *cb, char *buf, int size);
+int ossl_core_bio_puts(OSSL_CORE_BIO *cb, const char *buf);
+long ossl_core_bio_ctrl(OSSL_CORE_BIO *cb, int cmd, long larg, void *parg);
+int ossl_core_bio_up_ref(OSSL_CORE_BIO *cb);
+int ossl_core_bio_free(OSSL_CORE_BIO *cb);
+int ossl_core_bio_vprintf(OSSL_CORE_BIO *cb, const char *format, va_list args);
 
 #endif
