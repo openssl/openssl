@@ -2986,7 +2986,6 @@ static int build_chain(X509_STORE_CTX *ctx)
     SSL_DANE *dane = ctx->dane;
     int num = sk_X509_num(ctx->chain);
     X509 *curr = sk_X509_value(ctx->chain, num - 1); /* current end of chain */
-    int self_signed = X509_self_signed(curr, 0); /* always refers to curr */
     STACK_OF(X509) *sk_untrusted = NULL;
     unsigned int search;
     int may_trusted = 0;
@@ -3000,8 +2999,6 @@ static int build_chain(X509_STORE_CTX *ctx)
 
     /* Our chain starts with a single untrusted element. */
     if (!ossl_assert(num == 1 && ctx->num_untrusted == num))
-        goto int_err;
-    if (self_signed < 0)
         goto int_err;
 
 #define S_DOUNTRUSTED (1 << 0) /* Search untrusted chain */
@@ -3094,6 +3091,7 @@ static int build_chain(X509_STORE_CTX *ctx)
             }
             curr = sk_X509_value(ctx->chain, i - 1);
 
+            /* Note: get_issuer() must be used even if curr is self-signed. */
             ok = num > depth ? 0 : get_issuer(&issuer, ctx, curr);
 
             if (ok < 0) {
@@ -3103,6 +3101,10 @@ static int build_chain(X509_STORE_CTX *ctx)
             }
 
             if (ok > 0) {
+                int self_signed = X509_self_signed(curr, 0);
+
+                if (self_signed < 0)
+                    goto int_err;
                 /*
                  * Alternative trusted issuer for a mid-chain untrusted cert?
                  * Pop the untrusted cert's successors and retry.  We might now
@@ -3144,12 +3146,12 @@ static int build_chain(X509_STORE_CTX *ctx)
                  */
                 if (!self_signed) {
                     curr = issuer;
-                    if ((self_signed = X509_self_signed(curr, 0)) < 0)
-                        goto int_err;
                     if (!sk_X509_push(ctx->chain, curr)) {
                         X509_free(issuer);
                         goto memerr;
                     }
+                    if ((self_signed = X509_self_signed(issuer, 0)) < 0)
+                        goto int_err;
                 } else if (num == ctx->num_untrusted) {
                     /*
                      * We have a self-signed certificate that has the same
@@ -3212,7 +3214,6 @@ static int build_chain(X509_STORE_CTX *ctx)
                 /* Search for a trusted issuer of a shorter chain */
                 search |= S_DOALTERNATE;
                 alt_untrusted = ctx->num_untrusted - 1;
-                self_signed = 0;
             }
         }
 
@@ -3224,7 +3225,7 @@ static int build_chain(X509_STORE_CTX *ctx)
             if (!ossl_assert(num == ctx->num_untrusted))
                 goto int_err;
             curr = sk_X509_value(ctx->chain, num - 1);
-            issuer = (self_signed || num > depth) ?
+            issuer = (X509_self_signed(curr, 0) || num > depth) ?
                 NULL : find_issuer(ctx, sk_untrusted, curr);
             if (issuer == NULL) {
                 /*
@@ -3246,8 +3247,6 @@ static int build_chain(X509_STORE_CTX *ctx)
 
             ++ctx->num_untrusted;
             curr = issuer;
-            if ((self_signed = X509_self_signed(curr, 0)) < 0)
-                goto int_err;
 
             /* Check for DANE-TA trust of the topmost untrusted certificate. */
             trust = check_dane_issuer(ctx, ctx->num_untrusted - 1);
@@ -3298,7 +3297,7 @@ static int build_chain(X509_STORE_CTX *ctx)
         CB_FAIL_IF(DANETLS_ENABLED(dane)
                        && (!DANETLS_HAS_PKIX(dane) || dane->pdpth >= 0),
                    ctx, NULL, num - 1, X509_V_ERR_DANE_NO_MATCH);
-        if (self_signed)
+        if (X509_self_signed(curr, 0))
             return verify_cb_cert(ctx, NULL, num - 1,
                                   sk_X509_num(ctx->chain) == 1
                                   ? X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT
