@@ -266,6 +266,7 @@ typedef struct TS_resp_ctx TS_RESP_CTX;
 
 /* Creates a response context that can be used for generating responses. */
 TS_RESP_CTX *TS_RESP_CTX_new(void);
+TS_RESP_CTX *TS_RESP_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq);
 void TS_RESP_CTX_free(TS_RESP_CTX *ctx);
 
 /* This parameter must be set. */

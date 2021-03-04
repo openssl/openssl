@@ -124,6 +124,8 @@ struct TS_resp_ctx {
     TS_REQ *request;
     TS_RESP *response;
     TS_TST_INFO *tst_info;
+    OSSL_LIB_CTX *libctx;
+    char *propq;
 };
 
 struct TS_verify_ctx {

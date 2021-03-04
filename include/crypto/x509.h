@@ -81,6 +81,8 @@ struct X509_req_st {
 
     /* Set on live certificates for authentication purposes */
     ASN1_OCTET_STRING *distinguishing_id;
+    OSSL_LIB_CTX *libctx;
+    char *propq;
 };
 
 struct X509_crl_info_st {
@@ -313,6 +315,8 @@ int ossl_x509_init_sig_info(X509 *x);
 
 int ossl_x509_set0_libctx(X509 *x, OSSL_LIB_CTX *libctx, const char *propq);
 int ossl_x509_crl_set0_libctx(X509_CRL *x, OSSL_LIB_CTX *libctx,
+                              const char *propq);
+int ossl_x509_req_set0_libctx(X509_REQ *x, OSSL_LIB_CTX *libctx,
                               const char *propq);
 int ossl_asn1_item_digest_ex(const ASN1_ITEM *it, const EVP_MD *type,
                              void *data, unsigned char *md, unsigned int *len,
