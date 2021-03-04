@@ -232,7 +232,7 @@ int app_access(const char* name, int flag)
 # include "vms_term_sock.h"
 static int stdin_sock = -1;
 
-void close_stdin_sock(void)
+static void close_stdin_sock(void)
 {
     TerminalSocket (TERM_SOCK_DELETE, &stdin_sock);
 }
