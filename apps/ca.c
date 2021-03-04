@@ -462,7 +462,7 @@ int rotate_index(const char *dbfile, const char *new_suffix,
     j = BIO_snprintf(buf[1], sizeof(buf[1]), "%s-%s", dbfile, old_suffix);
     j = BIO_snprintf(buf[0], sizeof(buf[0]), "%s-%s", dbfile, new_suffix);
 #endif
-    if (rename(dbfile, buf[1]) < 0 && errno != ENOENT
+    if (app_rename(dbfile, buf[1]) < 0 && errno != ENOENT
 #ifdef ENOTDIR
         && errno != ENOTDIR
 #endif
@@ -471,29 +471,29 @@ int rotate_index(const char *dbfile, const char *new_suffix,
         perror("reason");
         goto err;
     }
-    if (rename(buf[0], dbfile) < 0) {
+    if (app_rename(buf[0], dbfile) < 0) {
         BIO_printf(bio_err, "Unable to rename %s to %s\n", buf[0], dbfile);
         perror("reason");
-        rename(buf[1], dbfile);
+        app_rename(buf[1], dbfile);
         goto err;
     }
-    if (rename(buf[4], buf[3]) < 0 && errno != ENOENT
+    if (app_rename(buf[4], buf[3]) < 0 && errno != ENOENT
 #ifdef ENOTDIR
         && errno != ENOTDIR
 #endif
         ) {
         BIO_printf(bio_err, "Unable to rename %s to %s\n", buf[4], buf[3]);
         perror("reason");
-        rename(dbfile, buf[0]);
-        rename(buf[1], dbfile);
+        app_rename(dbfile, buf[0]);
+        app_rename(buf[1], dbfile);
         goto err;
     }
-    if (rename(buf[2], buf[4]) < 0) {
+    if (app_rename(buf[2], buf[4]) < 0) {
         BIO_printf(bio_err, "Unable to rename %s to %s\n", buf[2], buf[4]);
         perror("reason");
-        rename(buf[3], buf[4]);
-        rename(dbfile, buf[0]);
-        rename(buf[1], dbfile);
+        app_rename(buf[3], buf[4]);
+        app_rename(dbfile, buf[0]);
+        app_rename(buf[1], dbfile);
         goto err;
     }
     return 1;
@@ -632,7 +632,7 @@ int rotate_serial(const char *serialfile, const char *new_suffix,
     j = BIO_snprintf(buf[0], sizeof(buf[0]), "%s-%s", serialfile, new_suffix);
     j = BIO_snprintf(buf[1], sizeof(buf[1]), "%s-%s", serialfile, old_suffix);
 #endif
-    if (rename(serialfile, buf[1]) < 0 && errno != ENOENT
+    if (app_rename(serialfile, buf[1]) < 0 && errno != ENOENT
 #ifdef ENOTDIR
         && errno != ENOTDIR
 #endif
@@ -642,11 +642,11 @@ int rotate_serial(const char *serialfile, const char *new_suffix,
         perror("reason");
         goto err;
     }
-    if (rename(buf[0], serialfile) < 0) {
+    if (app_rename(buf[0], serialfile) < 0) {
         BIO_printf(bio_err,
                    "Unable to rename %s to %s\n", buf[0], serialfile);
         perror("reason");
-        rename(buf[1], serialfile);
+        app_rename(buf[1], serialfile);
         goto err;
     }
     return 1;
