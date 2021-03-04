@@ -111,54 +111,6 @@ typedef struct X509_req_st X509_REQ;
 typedef struct x509_cert_aux_st X509_CERT_AUX;
 typedef struct x509_cinf_st X509_CINF;
 
-/* This is used for a table of trust checking functions */
-
-typedef struct x509_trust_st {
-    int trust;
-    int flags;
-    int (*check_trust) (struct x509_trust_st *, X509 *, int);
-    char *name;
-    int arg1;
-    void *arg2;
-} X509_TRUST;
-{-
-    generate_stack_macros("X509_TRUST");
--}
-
-
-/* standard trust ids */
-
-# define X509_TRUST_DEFAULT      0 /* Only valid in purpose settings */
-
-# define X509_TRUST_COMPAT       1
-# define X509_TRUST_SSL_CLIENT   2
-# define X509_TRUST_SSL_SERVER   3
-# define X509_TRUST_EMAIL        4
-# define X509_TRUST_OBJECT_SIGN  5
-# define X509_TRUST_OCSP_SIGN    6
-# define X509_TRUST_OCSP_REQUEST 7
-# define X509_TRUST_TSA          8
-
-/* Keep these up to date! */
-# define X509_TRUST_MIN          1
-# define X509_TRUST_MAX          8
-
-/* trust_flags values */
-# define X509_TRUST_DYNAMIC      (1U << 0)
-# define X509_TRUST_DYNAMIC_NAME (1U << 1)
-/* No compat trust if self-signed, preempts "DO_SS" */
-# define X509_TRUST_NO_SS_COMPAT (1U << 2)
-/* Compat trust if no explicit accepted trust EKUs */
-# define X509_TRUST_DO_SS_COMPAT (1U << 3)
-/* Accept "anyEKU" as a wildcard rejection OID and as a wildcard trust OID */
-# define X509_TRUST_OK_ANY_EKU   (1U << 4)
-
-/* check_trust return codes */
-
-# define X509_TRUST_TRUSTED      1
-# define X509_TRUST_REJECTED     2
-# define X509_TRUST_UNTRUSTED    3
-
 /* Flags for X509_print_ex() */
 
 # define X509_FLAG_COMPAT                0
@@ -623,21 +575,10 @@ ASN1_OCTET_STRING *X509_get0_distinguishing_id(X509 *x);
 void X509_REQ_set0_distinguishing_id(X509_REQ *x, ASN1_OCTET_STRING *d_id);
 ASN1_OCTET_STRING *X509_REQ_get0_distinguishing_id(X509_REQ *x);
 
-int X509_trusted(const X509 *x);
 int X509_alias_set1(X509 *x, const unsigned char *name, int len);
 int X509_keyid_set1(X509 *x, const unsigned char *id, int len);
 unsigned char *X509_alias_get0(X509 *x, int *len);
 unsigned char *X509_keyid_get0(X509 *x, int *len);
-int (*X509_TRUST_set_default(int (*trust) (int, X509 *, int))) (int, X509 *,
-                                                                int);
-int X509_TRUST_set(int *t, int trust);
-int X509_add1_trust_object(X509 *x, const ASN1_OBJECT *obj);
-int X509_add1_reject_object(X509 *x, const ASN1_OBJECT *obj);
-void X509_trust_clear(X509 *x);
-void X509_reject_clear(X509 *x);
-
-STACK_OF(ASN1_OBJECT) *X509_get0_trust_objects(X509 *x);
-STACK_OF(ASN1_OBJECT) *X509_get0_reject_objects(X509 *x);
 
 DECLARE_ASN1_FUNCTIONS(X509_REVOKED)
 DECLARE_ASN1_FUNCTIONS(X509_CRL_INFO)
@@ -1109,17 +1050,6 @@ int X509_PUBKEY_get0_param(ASN1_OBJECT **ppkalg,
                            const unsigned char **pk, int *ppklen,
                            X509_ALGOR **pa, const X509_PUBKEY *pub);
 int X509_PUBKEY_eq(const X509_PUBKEY *a, const X509_PUBKEY *b);
-
-int X509_check_trust(X509 *x, int id, int flags);
-int X509_TRUST_get_count(void);
-X509_TRUST *X509_TRUST_get0(int idx);
-int X509_TRUST_get_by_id(int id);
-int X509_TRUST_add(int id, int flags, int (*ck) (X509_TRUST *, X509 *, int),
-                   const char *name, int arg1, void *arg2);
-void X509_TRUST_cleanup(void);
-int X509_TRUST_get_flags(const X509_TRUST *xp);
-char *X509_TRUST_get0_name(const X509_TRUST *xp);
-int X509_TRUST_get_trust(const X509_TRUST *xp);
 
 # ifdef  __cplusplus
 }
