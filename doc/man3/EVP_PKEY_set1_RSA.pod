@@ -143,6 +143,17 @@ EVP_PKEY_id(), EVP_PKEY_base_id(), EVP_PKEY_type(), EVP_PKEY_set_alias_type()
 
 For EVP_PKEY key type checking purposes, L<EVP_PKEY_is_a(3)> is more generic.
 
+The keys returned from the functions EVP_PKEY_get0_RSA(), EVP_PKEY_get0_DSA(),
+EVP_PKEY_get0_DH() and EVP_PKEY_get0_EC_KEY() were changed to have a "const"
+return type in OpenSSL 3.0. As described above the keys returned may be cached
+copies of the key held in a provider. Due to this, and unlike in earlier
+versions of OpenSSL, they should be considered read-only copies of the key.
+Updates to these keys will not be reflected back in the provider side key. The
+EVP_PKEY_get1_RSA(), EVP_PKEY_get1_DSA(), EVP_PKEY_get1_DH() and
+EVP_PKEY_get1_EC_KEY() functions were not changed to have a "const" return type
+in order that application can "free" the return value. However applications
+should still consider them as read-only copies.
+
 =head1 NOTES
 
 In accordance with the OpenSSL naming convention the key obtained

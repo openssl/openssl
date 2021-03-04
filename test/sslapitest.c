@@ -8259,8 +8259,8 @@ static DH *tmp_dh_callback(SSL *s, int is_export, int keylen)
         return NULL;
 
     /*
-     * libssl does not free the the returned DH, so we free it now knowing that
-     * even after we free dhpkey, there will still be a reference to the owning
+     * libssl does not free the returned DH, so we free it now knowing that even
+     * after we free dhpkey, there will still be a reference to the owning
      * EVP_PKEY in tmp_dh_params, and so the DH object will live for the length
      * of time we need it for.
      */

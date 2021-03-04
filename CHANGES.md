@@ -36,7 +36,7 @@ OpenSSL 3.0
    then these functions now return a cached copy of the key. Changes to
    the internal provider key that take place after the first time the cached key
    is accessed will not be reflected back in the cached copy. Similarly any
-   changed made to the cached copy by application code will not be reflected
+   changes made to the cached copy by application code will not be reflected
    back in the internal provider key.
 
    For the above reasons the keys returned from these functions should typically
@@ -48,7 +48,8 @@ OpenSSL 3.0
    these deprecated functions. Failing this the code should be modified to use a
    const pointer instead. The EVP_PKEY_get1_RSA(), EVP_PKEY_get1_DSA(),
    EVP_PKEY_get1_EC_KEY() and EVP_PKEY_get1_DH() functions continue to return a
-   non-const pointer to enable them to be "freed".
+   non-const pointer to enable them to be "freed". However they should also be
+   treated as read-only.
 
    *Matt Caswell*
 
