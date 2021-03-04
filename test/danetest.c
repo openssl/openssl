@@ -20,7 +20,7 @@
 #include <openssl/err.h>
 #include <openssl/conf.h>
 #ifndef OPENSSL_NO_ENGINE
-#include <openssl/engine.h>
+# include <openssl/engine.h>
 #endif
 #include "testutil.h"
 
@@ -68,10 +68,10 @@ static int verify_chain(SSL *ssl, STACK_OF(X509) *chain)
                                                      ssl)))
         goto end;
 
-    X509_STORE_CTX_set_default(store_ctx,
-            SSL_is_server(ssl) ? "ssl_client" : "ssl_server");
+    X509_STORE_CTX_set_default(store_ctx, SSL_is_server(ssl)
+                               ? "ssl_client" : "ssl_server");
     X509_VERIFY_PARAM_set1(X509_STORE_CTX_get0_param(store_ctx),
-            SSL_get0_param(ssl));
+                           SSL_get0_param(ssl));
     store_ctx_dane_init(store_ctx, ssl);
 
     if (SSL_get_verify_callback(ssl) != NULL)
@@ -95,7 +95,7 @@ static STACK_OF(X509) *load_chain(BIO *fp, int nelem)
     char *header = 0;
     unsigned char *data = 0;
     long len;
-    char *errtype = 0;                /* if error: cert or pkey? */
+    char *errtype = 0; /* if error: cert or pkey? */
     STACK_OF(X509) *chain;
     typedef X509 *(*d2i_X509_t)(X509 **, const unsigned char **, long);
 
@@ -107,8 +107,8 @@ static STACK_OF(X509) *load_chain(BIO *fp, int nelem)
          && PEM_read_bio(fp, &name, &header, &data, &len) == 1;
          ++count) {
         if (strcmp(name, PEM_STRING_X509) == 0
-                    || strcmp(name, PEM_STRING_X509_TRUSTED) == 0
-                    || strcmp(name, PEM_STRING_X509_OLD) == 0) {
+                || strcmp(name, PEM_STRING_X509_TRUSTED) == 0
+                || strcmp(name, PEM_STRING_X509_OLD) == 0) {
             d2i_X509_t d = strcmp(name, PEM_STRING_X509_TRUSTED) != 0
                 ? d2i_X509_AUX : d2i_X509;
             X509 *cert;
@@ -391,10 +391,8 @@ static int run_tlsatest(void)
             || !TEST_ptr(ctx = SSL_CTX_new(TLS_client_method()))
             || !TEST_int_gt(SSL_CTX_dane_enable(ctx), 0)
             || !TEST_true(SSL_CTX_load_verify_file(ctx, CAfile))
-            || !TEST_int_gt(SSL_CTX_dane_mtype_set(ctx, EVP_sha512(), 2, 1),
-                            0)
-            || !TEST_int_gt(SSL_CTX_dane_mtype_set(ctx, EVP_sha256(), 1, 2),
-                            0)
+            || !TEST_int_gt(SSL_CTX_dane_mtype_set(ctx, EVP_sha512(), 2, 1), 0)
+            || !TEST_int_gt(SSL_CTX_dane_mtype_set(ctx, EVP_sha256(), 1, 2), 0)
             || !TEST_int_gt(test_tlsafile(ctx, basedomain, f, tlsafile), 0))
         goto end;
     ret = 1;
