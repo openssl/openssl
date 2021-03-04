@@ -19,6 +19,8 @@ O_BINC="$PWD/$BLDTOP/include"
 O_SINC="$PWD/$SRCTOP/include"
 O_LIB="$PWD/$BLDTOP"
 
+unset OPENSSL_CONF
+
 if [ "$O_BINC" != "$O_SINC" ] ; then
     echo "Out of tree builds not supported with gost_engine test!"
     exit 1
