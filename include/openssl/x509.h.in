@@ -150,7 +150,7 @@ typedef struct x509_trust_st {
 # define X509_TRUST_NO_SS_COMPAT (1U << 2)
 /* Compat trust if no explicit accepted trust EKUs */
 # define X509_TRUST_DO_SS_COMPAT (1U << 3)
-/* Accept "anyEKU" as a wildcard trust OID */
+/* Accept "anyEKU" as a wildcard rejection OID and as a wildcard trust OID */
 # define X509_TRUST_OK_ANY_EKU   (1U << 4)
 
 /* check_trust return codes */
