@@ -133,4 +133,9 @@
 # define EVP_R_XTS_DATA_UNIT_IS_TOO_LARGE                 191
 # define EVP_R_XTS_DUPLICATED_KEYS                        192
 
+/*
+ * Compatibility define.
+ */
+# define EVP_R_OPERATON_NOT_INITIALIZED    EVP_R_OPERATION_NOT_INITIALIZED
+
 #endif
