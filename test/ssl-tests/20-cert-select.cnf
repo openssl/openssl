@@ -1,6 +1,6 @@
 # Generated with generate_ssl_tests.pl
 
-num_tests = 56
+num_tests = 57
 
 test-0 = 0-ECDSA CipherString Selection
 test-1 = 1-ECDSA CipherString Selection
@@ -54,10 +54,11 @@ test-48 = 48-TLS 1.3 Ed25519 CipherString and Groups Selection
 test-49 = 49-TLS 1.3 Ed448 CipherString and Groups Selection
 test-50 = 50-TLS 1.3 Ed25519 Client Auth
 test-51 = 51-TLS 1.3 Ed448 Client Auth
-test-52 = 52-TLS 1.3 ECDSA with brainpool
-test-53 = 53-TLS 1.2 DSA Certificate Test
-test-54 = 54-TLS 1.3 Client Auth No TLS 1.3 Signature Algorithms
-test-55 = 55-TLS 1.3 DSA Certificate Test
+test-52 = 52-TLS 1.3 ECDSA with brainpool but no suitable groups
+test-53 = 53-TLS 1.3 ECDSA with brainpool
+test-54 = 54-TLS 1.2 DSA Certificate Test
+test-55 = 55-TLS 1.3 Client Auth No TLS 1.3 Signature Algorithms
+test-56 = 56-TLS 1.3 DSA Certificate Test
 # ===========================================================
 
 [0-ECDSA CipherString Selection]
@@ -783,6 +784,7 @@ PrivateKey = ${ENV::TEST_CERTS_DIR}/server-ecdsa-brainpoolP256r1-key.pem
 [22-ECDSA with brainpool-client]
 CipherString = aECDSA
 Groups = brainpoolP256r1
+MaxProtocol = TLSv1.2
 RequestCAFile = ${ENV::TEST_CERTS_DIR}/root-cert.pem
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
@@ -1705,19 +1707,45 @@ ExpectedResult = Success
 
 # ===========================================================
 
-[52-TLS 1.3 ECDSA with brainpool]
-ssl_conf = 52-TLS 1.3 ECDSA with brainpool-ssl
+[52-TLS 1.3 ECDSA with brainpool but no suitable groups]
+ssl_conf = 52-TLS 1.3 ECDSA with brainpool but no suitable groups-ssl
 
-[52-TLS 1.3 ECDSA with brainpool-ssl]
-server = 52-TLS 1.3 ECDSA with brainpool-server
-client = 52-TLS 1.3 ECDSA with brainpool-client
+[52-TLS 1.3 ECDSA with brainpool but no suitable groups-ssl]
+server = 52-TLS 1.3 ECDSA with brainpool but no suitable groups-server
+client = 52-TLS 1.3 ECDSA with brainpool but no suitable groups-client
 
-[52-TLS 1.3 ECDSA with brainpool-server]
+[52-TLS 1.3 ECDSA with brainpool but no suitable groups-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/server-ecdsa-brainpoolP256r1-cert.pem
+CipherString = DEFAULT
+Groups = brainpoolP256r1
+PrivateKey = ${ENV::TEST_CERTS_DIR}/server-ecdsa-brainpoolP256r1-key.pem
+
+[52-TLS 1.3 ECDSA with brainpool but no suitable groups-client]
+CipherString = aECDSA
+Groups = brainpoolP256r1
+RequestCAFile = ${ENV::TEST_CERTS_DIR}/root-cert.pem
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-52]
+ExpectedResult = ClientFail
+
+
+# ===========================================================
+
+[53-TLS 1.3 ECDSA with brainpool]
+ssl_conf = 53-TLS 1.3 ECDSA with brainpool-ssl
+
+[53-TLS 1.3 ECDSA with brainpool-ssl]
+server = 53-TLS 1.3 ECDSA with brainpool-server
+client = 53-TLS 1.3 ECDSA with brainpool-client
+
+[53-TLS 1.3 ECDSA with brainpool-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/server-ecdsa-brainpoolP256r1-cert.pem
 CipherString = DEFAULT
 PrivateKey = ${ENV::TEST_CERTS_DIR}/server-ecdsa-brainpoolP256r1-key.pem
 
-[52-TLS 1.3 ECDSA with brainpool-client]
+[53-TLS 1.3 ECDSA with brainpool-client]
 CipherString = DEFAULT
 MaxProtocol = TLSv1.3
 MinProtocol = TLSv1.3
@@ -1725,20 +1753,20 @@ RequestCAFile = ${ENV::TEST_CERTS_DIR}/root-cert.pem
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
-[test-52]
+[test-53]
 ExpectedResult = ServerFail
 
 
 # ===========================================================
 
-[53-TLS 1.2 DSA Certificate Test]
-ssl_conf = 53-TLS 1.2 DSA Certificate Test-ssl
+[54-TLS 1.2 DSA Certificate Test]
+ssl_conf = 54-TLS 1.2 DSA Certificate Test-ssl
 
-[53-TLS 1.2 DSA Certificate Test-ssl]
-server = 53-TLS 1.2 DSA Certificate Test-server
-client = 53-TLS 1.2 DSA Certificate Test-client
+[54-TLS 1.2 DSA Certificate Test-ssl]
+server = 54-TLS 1.2 DSA Certificate Test-server
+client = 54-TLS 1.2 DSA Certificate Test-client
 
-[53-TLS 1.2 DSA Certificate Test-server]
+[54-TLS 1.2 DSA Certificate Test-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = ALL
 DHParameters = ${ENV::TEST_CERTS_DIR}/dhp2048.pem
@@ -1748,26 +1776,26 @@ MaxProtocol = TLSv1.2
 MinProtocol = TLSv1.2
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
-[53-TLS 1.2 DSA Certificate Test-client]
+[54-TLS 1.2 DSA Certificate Test-client]
 CipherString = ALL
 SignatureAlgorithms = DSA+SHA256:DSA+SHA1
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
-[test-53]
+[test-54]
 ExpectedResult = Success
 
 
 # ===========================================================
 
-[54-TLS 1.3 Client Auth No TLS 1.3 Signature Algorithms]
-ssl_conf = 54-TLS 1.3 Client Auth No TLS 1.3 Signature Algorithms-ssl
+[55-TLS 1.3 Client Auth No TLS 1.3 Signature Algorithms]
+ssl_conf = 55-TLS 1.3 Client Auth No TLS 1.3 Signature Algorithms-ssl
 
-[54-TLS 1.3 Client Auth No TLS 1.3 Signature Algorithms-ssl]
-server = 54-TLS 1.3 Client Auth No TLS 1.3 Signature Algorithms-server
-client = 54-TLS 1.3 Client Auth No TLS 1.3 Signature Algorithms-client
+[55-TLS 1.3 Client Auth No TLS 1.3 Signature Algorithms-ssl]
+server = 55-TLS 1.3 Client Auth No TLS 1.3 Signature Algorithms-server
+client = 55-TLS 1.3 Client Auth No TLS 1.3 Signature Algorithms-client
 
-[54-TLS 1.3 Client Auth No TLS 1.3 Signature Algorithms-server]
+[55-TLS 1.3 Client Auth No TLS 1.3 Signature Algorithms-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT
 ClientSignatureAlgorithms = ECDSA+SHA1:DSA+SHA256:RSA+SHA256
@@ -1775,25 +1803,25 @@ PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/root-cert.pem
 VerifyMode = Request
 
-[54-TLS 1.3 Client Auth No TLS 1.3 Signature Algorithms-client]
+[55-TLS 1.3 Client Auth No TLS 1.3 Signature Algorithms-client]
 CipherString = DEFAULT
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
-[test-54]
+[test-55]
 ExpectedResult = ServerFail
 
 
 # ===========================================================
 
-[55-TLS 1.3 DSA Certificate Test]
-ssl_conf = 55-TLS 1.3 DSA Certificate Test-ssl
+[56-TLS 1.3 DSA Certificate Test]
+ssl_conf = 56-TLS 1.3 DSA Certificate Test-ssl
 
-[55-TLS 1.3 DSA Certificate Test-ssl]
-server = 55-TLS 1.3 DSA Certificate Test-server
-client = 55-TLS 1.3 DSA Certificate Test-client
+[56-TLS 1.3 DSA Certificate Test-ssl]
+server = 56-TLS 1.3 DSA Certificate Test-server
+client = 56-TLS 1.3 DSA Certificate Test-client
 
-[55-TLS 1.3 DSA Certificate Test-server]
+[56-TLS 1.3 DSA Certificate Test-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = ALL
 DSA.Certificate = ${ENV::TEST_CERTS_DIR}/server-dsa-cert.pem
@@ -1802,13 +1830,13 @@ MaxProtocol = TLSv1.3
 MinProtocol = TLSv1.3
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
-[55-TLS 1.3 DSA Certificate Test-client]
+[56-TLS 1.3 DSA Certificate Test-client]
 CipherString = ALL
 SignatureAlgorithms = DSA+SHA1:DSA+SHA256:ECDSA+SHA256
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
-[test-55]
+[test-56]
 ExpectedResult = ServerFail
 
 

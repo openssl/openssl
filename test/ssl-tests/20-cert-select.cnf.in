@@ -433,8 +433,7 @@ my @tests_non_fips = (
             "Groups" => "brainpoolP256r1",
         },
         client => {
-            #We don't restrict this to TLSv1.2, although use of brainpool
-            #should force this anyway so that this should succeed
+            "MaxProtocol" => "TLSv1.2",
             "CipherString" => "aECDSA",
             "RequestCAFile" => test_pem("root-cert.pem"),
             "Groups" => "brainpoolP256r1",
@@ -892,6 +891,25 @@ my @tests_tls_1_3_non_fips = (
             "ExpectedClientCertType" => "Ed448",
             "ExpectedClientSignType" => "Ed448",
             "ExpectedResult" => "Success"
+        },
+    },
+    {
+        name => "TLS 1.3 ECDSA with brainpool but no suitable groups",
+        server =>  {
+            "Certificate" => test_pem("server-ecdsa-brainpoolP256r1-cert.pem"),
+            "PrivateKey" => test_pem("server-ecdsa-brainpoolP256r1-key.pem"),
+            "Groups" => "brainpoolP256r1",
+        },
+        client => {
+            "CipherString" => "aECDSA",
+            "RequestCAFile" => test_pem("root-cert.pem"),
+            "Groups" => "brainpoolP256r1",
+        },
+        test   => {
+            #We only configured brainpoolP256r1 on the client side, but TLSv1.3
+            #is enabled and this group is not allowed in TLSv1.3. Therefore this
+            #should fail
+            "ExpectedResult" => "ClientFail"
         },
     },
     {
