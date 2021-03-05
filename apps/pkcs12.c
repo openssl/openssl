@@ -655,7 +655,11 @@ int pkcs12_main(int argc, char **argv)
         }
 
         if (maciter != -1)
-            PKCS12_set_mac(p12, mpass, -1, NULL, 0, maciter, macmd);
+            if (!PKCS12_set_mac(p12, mpass, -1, NULL, 0, maciter, macmd)) {
+                BIO_printf(bio_err, "Error creating PKCS12 MAC; no PKCS12KDF support?\n");
+                BIO_printf(bio_err, "Use -nomac if MAC not required and PKCS12KDF support not available.\n");
+                goto export_end;
+            }
 
         assert(private);
 
