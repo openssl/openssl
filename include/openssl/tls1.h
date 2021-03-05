@@ -1121,6 +1121,11 @@ int SSL_CTX_set_tlsext_ticket_key_evp_cb
 # define TLS_CT_GOST12_LEGACY_SIGN       238
 # define TLS_CT_GOST12_LEGACY_512_SIGN   239
 
+# ifndef OPENSSL_NO_DEPRECATED_3_0
+#  define TLS_CT_GOST12_SIGN TLS_CT_GOST12_LEGACY_SIGN
+#  define TLS_CT_GOST12_512_SIGN TLS_CT_GOST12_LEGACY_512_SIGN
+# endif
+
 /*
  * when correcting this number, correct also SSL3_CT_NUMBER in ssl3.h (see
  * comment there)
