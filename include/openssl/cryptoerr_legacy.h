@@ -1454,6 +1454,11 @@ OSSL_DEPRECATEDIN_3_0 int ERR_load_X509V3_strings(void);
 #  define X509V3_F_X509_PURPOSE_ADD                        0
 #  define X509V3_F_X509_PURPOSE_SET                        0
 
+/*
+ * Compatibility defines.
+ */
+# define EVP_R_OPERATON_NOT_INITIALIZED    EVP_R_OPERATION_NOT_INITIALIZED
+
 # endif
 
 # ifdef  __cplusplus
