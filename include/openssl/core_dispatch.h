@@ -135,12 +135,13 @@ OSSL_CORE_MAKE_FUNC(void,
 #define OSSL_FUNC_BIO_NEW_MEMBUF              41
 #define OSSL_FUNC_BIO_READ_EX                 42
 #define OSSL_FUNC_BIO_WRITE_EX                43
-#define OSSL_FUNC_BIO_FREE                    44
-#define OSSL_FUNC_BIO_VPRINTF                 45
-#define OSSL_FUNC_BIO_VSNPRINTF               46
-#define OSSL_FUNC_BIO_PUTS                    47
-#define OSSL_FUNC_BIO_GETS                    48
-#define OSSL_FUNC_BIO_CTRL                    49
+#define OSSL_FUNC_BIO_UP_REF                  44
+#define OSSL_FUNC_BIO_FREE                    45
+#define OSSL_FUNC_BIO_VPRINTF                 46
+#define OSSL_FUNC_BIO_VSNPRINTF               47
+#define OSSL_FUNC_BIO_PUTS                    48
+#define OSSL_FUNC_BIO_GETS                    49
+#define OSSL_FUNC_BIO_CTRL                    50
 
 
 OSSL_CORE_MAKE_FUNC(OSSL_CORE_BIO *, BIO_new_file, (const char *filename,
@@ -152,6 +153,7 @@ OSSL_CORE_MAKE_FUNC(int, BIO_write_ex, (OSSL_CORE_BIO *bio, const void *data,
                                         size_t data_len, size_t *written))
 OSSL_CORE_MAKE_FUNC(int, BIO_gets, (OSSL_CORE_BIO *bio, char *buf, int size))
 OSSL_CORE_MAKE_FUNC(int, BIO_puts, (OSSL_CORE_BIO *bio, const char *str))
+OSSL_CORE_MAKE_FUNC(int, BIO_up_ref, (OSSL_CORE_BIO *bio))
 OSSL_CORE_MAKE_FUNC(int, BIO_free, (OSSL_CORE_BIO *bio))
 OSSL_CORE_MAKE_FUNC(int, BIO_vprintf, (OSSL_CORE_BIO *bio, const char *format,
                                        va_list args))
