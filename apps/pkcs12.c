@@ -28,7 +28,6 @@
 #define CACERTS         0x10
 
 #define PASSWD_BUF_SIZE 2048
-#define PKCS12_DEFAULT_PBE NID_aes_256_cbc
 
 #define WARN_EXPORT(opt) \
     BIO_printf(bio_err, "Warning: -%s option ignored with -export\n", opt);
@@ -151,9 +150,10 @@ int pkcs12_main(int argc, char **argv)
     char *name = NULL, *csp_name = NULL;
     char pass[PASSWD_BUF_SIZE] = "", macpass[PASSWD_BUF_SIZE] = "";
     int export_pkcs12 = 0, options = 0, chain = 0, twopass = 0, keytype = 0, use_legacy = 0;
-    int iter = PKCS12_DEFAULT_ITER, maciter = PKCS12_DEFAULT_ITER;
-    int cert_pbe = PKCS12_DEFAULT_PBE;
-    int key_pbe = PKCS12_DEFAULT_PBE;
+    /* use library defaults for the iter, maciter, cert, and key PBE */
+    int iter = 0, maciter = 0;
+    int cert_pbe = NID_undef;
+    int key_pbe = NID_undef;
     int ret = 1, macver = 1, add_lmk = 0, private = 0;
     int noprompt = 0;
     char *passinarg = NULL, *passoutarg = NULL, *passarg = NULL;
@@ -397,13 +397,13 @@ int pkcs12_main(int argc, char **argv)
             WARN_NO_EXPORT("keyex");
         if (keytype == KEY_SIG)
             WARN_NO_EXPORT("keysig");
-        if (key_pbe != PKCS12_DEFAULT_PBE)
+        if (key_pbe != NID_undef)
             WARN_NO_EXPORT("keypbe");
-        if (cert_pbe != PKCS12_DEFAULT_PBE && cert_pbe != -1)
+        if (cert_pbe != NID_undef && cert_pbe != -1)
             WARN_NO_EXPORT("certpbe and -descert");
         if (macalg != NULL)
             WARN_NO_EXPORT("macalg");
-        if (iter != PKCS12_DEFAULT_ITER)
+        if (iter != 0)
             WARN_NO_EXPORT("iter and -noiter");
         if (maciter == 1)
             WARN_NO_EXPORT("nomaciter");
@@ -419,7 +419,7 @@ int pkcs12_main(int argc, char **argv)
             if (!app_provider_load(app_get0_libctx(), "default"))
                 goto end;
         }
-        if (cert_pbe == PKCS12_DEFAULT_PBE) {
+        if (cert_pbe == NID_undef) {
             /* Adapt default algorithm */
 #ifndef OPENSSL_NO_RC2
             cert_pbe = NID_pbe_WithSHA1And40BitRC2_CBC;
@@ -428,10 +428,12 @@ int pkcs12_main(int argc, char **argv)
 #endif
         }
 
-        if (key_pbe == PKCS12_DEFAULT_PBE)
+        if (key_pbe == NID_undef)
             key_pbe = NID_pbe_WithSHA1And3_Key_TripleDES_CBC;
         if (enc == default_enc)
             enc = EVP_des_ede3_cbc();
+        if (macalg == NULL)
+            macalg = "sha1";
     }
 
 

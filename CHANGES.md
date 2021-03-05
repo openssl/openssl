@@ -127,6 +127,16 @@ OpenSSL 3.0
 
    *Paul Dale*
 
+ * The default algorithms for pkcs12 creation with the PKCS12_create() function
+   were changed to more modern PBKDF2 and AES based algorithms. The default
+   MAC iteration count was changed to PKCS12_DEFAULT_ITER to make it equal
+   with the password-based encryption iteration count. The default digest
+   algorithm for the MAC computation was changed to SHA-256. The pkcs12
+   application now supports -legacy option that restores the previous
+   default algorithms to support interoperability with legacy systems.
+
+   *Tomáš Mráz and Sahana Prasad*
+
  * The openssl speed command does not use low-level API calls anymore. This
    implies some of the performance numbers might not be fully comparable
    with the previous releases due to higher overhead. This applies
