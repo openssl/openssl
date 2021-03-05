@@ -103,11 +103,11 @@ static int blake2_setkey(struct blake2_mac_data_st *macctx,
 }
 
 static int blake2_mac_init(void *vmacctx, const unsigned char *key,
-                           size_t keylen, const OSSL_PARAM params[])
+                           size_t keylen)
 {
     struct blake2_mac_data_st *macctx = vmacctx;
 
-    if (!ossl_prov_is_running() || !blake2_mac_set_ctx_params(macctx, params))
+    if (!ossl_prov_is_running())
         return 0;
     if (key != NULL) {
         if (!blake2_setkey(macctx, key, keylen))

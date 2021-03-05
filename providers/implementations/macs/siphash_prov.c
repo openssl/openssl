@@ -105,12 +105,11 @@ static int siphash_setkey(struct siphash_data_st *ctx,
     return SipHash_Init(&ctx->siphash, key, crounds(ctx), drounds(ctx));
 }
 
-static int siphash_init(void *vmacctx, const unsigned char *key, size_t keylen,
-                        const OSSL_PARAM params[])
+static int siphash_init(void *vmacctx, const unsigned char *key, size_t keylen)
 {
     struct siphash_data_st *ctx = vmacctx;
 
-    if (!ossl_prov_is_running() || !siphash_set_params(ctx, params))
+    if (!ossl_prov_is_running())
         return 0;
     /* Without a key, there is not much to do here,
      * The actual initialization happens through controls.

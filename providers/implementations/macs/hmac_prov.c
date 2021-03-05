@@ -163,12 +163,11 @@ static int hmac_setkey(struct hmac_data_st *macctx,
     return 1;
 }
 
-static int hmac_init(void *vmacctx, const unsigned char *key,
-                     size_t keylen, const OSSL_PARAM params[])
+static int hmac_init(void *vmacctx, const unsigned char *key, size_t keylen)
 {
     struct hmac_data_st *macctx = vmacctx;
 
-    if (!ossl_prov_is_running() || !hmac_set_ctx_params(macctx, params))
+    if (!ossl_prov_is_running())
         return 0;
 
     if (key != NULL && !hmac_setkey(macctx, key, keylen))

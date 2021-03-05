@@ -23,8 +23,7 @@ provider-mac - The mac library E<lt>-E<gt> provider functions
  void *OSSL_FUNC_mac_dupctx(void *src);
 
  /* Encryption/decryption */
- int OSSL_FUNC_mac_init(void *mctx, unsigned char *key, size_t keylen,
-                        const OSSL_PARAM params[]);
+ int OSSL_FUNC_mac_init(void *mctx, unsigned char *key, size_t keylen);
  int OSSL_FUNC_mac_update(void *mctx, const unsigned char *in, size_t inl);
  int OSSL_FUNC_mac_final(void *mctx, unsigned char *out, size_t *outl, size_t outsize);
 
@@ -108,9 +107,10 @@ I<mctx> parameter and return the duplicate copy.
 
 =head2 Encryption/Decryption Functions
 
-OSSL_FUNC_mac_init() initialises a mac operation given a newly created provider
-side mac context in the I<mctx> parameter.  The I<params> are set before setting
-the MAC I<key> of I<keylen> bytes.
+OSSL_FUNC_mac_init() initialises a mac operation with they MAC I<key>, given a
+newly created provider side mac context in the I<mctx> parameter.
+Beware that the caller may pass NULL for the I<key> to this function and pass
+the key through OSSL_FUNC_set_ctx_params() instead.
 
 OSSL_FUNC_mac_update() is called to supply data for MAC computation of a previously
 initialised mac operation.

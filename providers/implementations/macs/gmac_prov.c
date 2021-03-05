@@ -112,12 +112,11 @@ static int gmac_setkey(struct gmac_data_st *macctx,
     return 1;
 }
 
-static int gmac_init(void *vmacctx, const unsigned char *key,
-                     size_t keylen, const OSSL_PARAM params[])
+static int gmac_init(void *vmacctx, const unsigned char *key, size_t keylen)
 {
     struct gmac_data_st *macctx = vmacctx;
 
-    if (!ossl_prov_is_running() || !gmac_set_ctx_params(macctx, params))
+    if (!ossl_prov_is_running())
         return 0;
     if (key != NULL)
         return gmac_setkey(macctx, key, keylen);

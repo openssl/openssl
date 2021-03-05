@@ -261,15 +261,14 @@ static int kmac_setkey(struct kmac_data_st *kctx, const unsigned char *key,
  * md, key and custom. Setting the fields afterwards will have no
  * effect on the output mac.
  */
-static int kmac_init(void *vmacctx, const unsigned char *key,
-                     size_t keylen, const OSSL_PARAM params[])
+static int kmac_init(void *vmacctx, const unsigned char *key, size_t keylen)
 {
     struct kmac_data_st *kctx = vmacctx;
     EVP_MD_CTX *ctx = kctx->ctx;
     unsigned char out[KMAC_MAX_BLOCKSIZE];
     int out_len, block_len;
 
-    if (!ossl_prov_is_running() || !kmac_set_ctx_params(kctx, params))
+    if (!ossl_prov_is_running())
         return 0;
     if (key != NULL) {
         if (!kmac_setkey(kctx, key, keylen))

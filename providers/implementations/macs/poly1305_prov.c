@@ -88,13 +88,12 @@ static int poly1305_setkey(struct poly1305_data_st *ctx,
     return 1;
 }
 
-static int poly1305_init(void *vmacctx, const unsigned char *key,
-                         size_t keylen, const OSSL_PARAM params[])
+static int poly1305_init(void *vmacctx, const unsigned char *key, size_t keylen)
 {
     struct poly1305_data_st *ctx = vmacctx;
 
     /* initialize the context in MAC_ctrl function */
-    if (!ossl_prov_is_running() || !poly1305_set_ctx_params(ctx, params))
+    if (!ossl_prov_is_running())
         return 0;
     if (key != NULL)
         return poly1305_setkey(ctx, key, keylen);

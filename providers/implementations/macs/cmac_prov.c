@@ -109,15 +109,14 @@ static int cmac_setkey(struct cmac_data_st *macctx,
                        ossl_prov_cipher_cipher(&macctx->cipher),
                        ossl_prov_cipher_engine(&macctx->cipher));
     ossl_prov_cipher_reset(&macctx->cipher);
-    return rv;    
+    return rv;
 }
 
-static int cmac_init(void *vmacctx, const unsigned char *key,
-                     size_t keylen, const OSSL_PARAM params[])
+static int cmac_init(void *vmacctx, const unsigned char *key, size_t keylen)
 {
     struct cmac_data_st *macctx = vmacctx;
 
-    if (!ossl_prov_is_running() || !cmac_set_ctx_params(macctx, params))
+    if (!ossl_prov_is_running())
         return 0;
     if (key != NULL)
         return cmac_setkey(macctx, key, keylen);
