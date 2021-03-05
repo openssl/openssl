@@ -489,8 +489,9 @@ static int evp_rand_instantiate_locked
     (EVP_RAND_CTX *ctx, unsigned int strength, int prediction_resistance,
      const unsigned char *pstr, size_t pstr_len, const OSSL_PARAM params[])
 {
-    return ctx->meth->instantiate(ctx->data, strength, prediction_resistance,
-                                  pstr, pstr_len, params);
+    return evp_rand_set_ctx_params_locked(ctx, params)
+        && ctx->meth->instantiate(ctx->data, strength, prediction_resistance,
+                                  pstr, pstr_len);
 }
 
 int EVP_RAND_instantiate(EVP_RAND_CTX *ctx, unsigned int strength,

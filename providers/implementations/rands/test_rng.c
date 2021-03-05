@@ -79,12 +79,11 @@ static void test_rng_free(void *vtest)
 
 static int test_rng_instantiate(void *vtest, unsigned int strength,
                                 int prediction_resistance,
-                                const unsigned char *pstr, size_t pstr_len,
-                                const OSSL_PARAM params[])
+                                const unsigned char *pstr, size_t pstr_len)
 {
     PROV_TEST_RNG *t = (PROV_TEST_RNG *)vtest;
 
-    if (!test_rng_set_ctx_params(t, params) || strength > t->strength)
+    if (t == NULL || strength > t->strength)
         return 0;
 
     t->state = EVP_RAND_STATE_READY;

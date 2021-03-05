@@ -26,8 +26,7 @@ functions
  /* Random number generator functions: NIST */
  int OSSL_FUNC_rand_instantiate(void *ctx, unsigned int strength,
                                 int prediction_resistance,
-                                const unsigned char *pstr, size_t pstr_len,
-                                const OSSL_PARAM params[]);
+                                const unsigned char *pstr, size_t pstr_len);
  int OSSL_FUNC_rand_uninstantiate(void *ctx);
  int OSSL_FUNC_rand_generate(void *ctx, unsigned char *out, size_t outlen,
                              unsigned int strength, int prediction_resistance,
@@ -98,8 +97,7 @@ These functions correspond to those defined in NIST SP 800-90A and SP 800-90C.
 OSSL_FUNC_rand_instantiate() is used to instantiate the DRBG I<ctx> at a requested
 security I<strength>.  In addition, I<prediction_resistance> can be requested.
 Additional input I<addin> of length I<addin_len> bytes can optionally
-be provided.  The parameters specified in I<params> configure the DRBG and these
-should be processed before instantiation.
+be provided.
 
 OSSL_FUNC_rand_uninstantiate() is used to uninstantiate the DRBG I<ctx>.  After being
 uninstantiated, a DRBG is unable to produce output until it is instantiated

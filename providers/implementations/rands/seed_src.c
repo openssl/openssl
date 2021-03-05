@@ -70,8 +70,7 @@ static void seed_src_free(void *vseed)
 
 static int seed_src_instantiate(void *vseed, unsigned int strength,
                                 int prediction_resistance,
-                                const unsigned char *pstr, size_t pstr_len,
-                                ossl_unused const OSSL_PARAM params[])
+                                const unsigned char *pstr, size_t pstr_len)
 {
     PROV_SEED_SRC *s = (PROV_SEED_SRC *)vseed;
 
