@@ -457,7 +457,7 @@ int smime_main(int argc, char **argv)
     }
 
     if (certfile != NULL) {
-        if (!load_certs(certfile, &other, NULL, "certificates")) {
+        if (!load_certs(certfile, 0, &other, NULL, "certificates")) {
             ERR_print_errors(bio_err);
             goto end;
         }

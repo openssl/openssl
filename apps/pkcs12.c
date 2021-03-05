@@ -525,7 +525,7 @@ int pkcs12_main(int argc, char **argv)
 
         /* Load all certs in input file */
         if (!(options & NOCERTS)) {
-            if (!load_certs(infile, &certs, passin,
+            if (!load_certs(infile, 1, &certs, passin,
                             "certificates from -in file"))
                 goto export_end;
             if (sk_X509_num(certs) < 1) {
@@ -560,7 +560,7 @@ int pkcs12_main(int argc, char **argv)
 
         /* Load any untrusted certificates for chain building */
         if (untrusted != NULL) {
-            if (!load_certs(untrusted, &untrusted_certs, passcerts,
+            if (!load_certs(untrusted, 0, &untrusted_certs, passcerts,
                             "untrusted certificates"))
                 goto export_end;
         }
@@ -605,7 +605,7 @@ int pkcs12_main(int argc, char **argv)
 
         /* Add any extra certificates asked for */
         if (certfile != NULL) {
-            if (!load_certs(certfile, &certs, passcerts,
+            if (!load_certs(certfile, 0, &certs, passcerts,
                             "extra certificates from -certfile"))
                 goto export_end;
         }
