@@ -392,8 +392,7 @@ static size_t x942kdf_size(KDF_X942 *ctx)
     return (len <= 0) ? 0 : (size_t)len;
 }
 
-static int x942kdf_derive(void *vctx, unsigned char *key, size_t keylen,
-                          const OSSL_PARAM params[])
+static int x942kdf_derive(void *vctx, unsigned char *key, size_t keylen)
 {
     KDF_X942 *ctx = (KDF_X942 *)vctx;
     const EVP_MD *md;
@@ -402,7 +401,7 @@ static int x942kdf_derive(void *vctx, unsigned char *key, size_t keylen,
     unsigned char *der = NULL;
     size_t der_len = 0;
 
-    if (!ossl_prov_is_running() || !x942kdf_set_ctx_params(ctx, params))
+    if (!ossl_prov_is_running())
         return 0;
 
     /*

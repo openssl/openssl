@@ -131,12 +131,11 @@ static void kdf_tls1_prf_reset(void *vctx)
     ctx->provctx = provctx;
 }
 
-static int kdf_tls1_prf_derive(void *vctx, unsigned char *key, size_t keylen,
-                               const OSSL_PARAM params[])
+static int kdf_tls1_prf_derive(void *vctx, unsigned char *key, size_t keylen)
 {
     TLS1_PRF *ctx = (TLS1_PRF *)vctx;
 
-    if (!ossl_prov_is_running() || !kdf_tls1_prf_set_ctx_params(ctx, params))
+    if (!ossl_prov_is_running())
         return 0;
 
     if (ctx->P_hash == NULL) {

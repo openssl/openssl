@@ -143,7 +143,8 @@ int EVP_KDF_derive(EVP_KDF_CTX *ctx, unsigned char *key, size_t keylen,
     if (ctx == NULL)
         return 0;
 
-    return ctx->meth->derive(ctx->data, key, keylen, params);
+    return EVP_KDF_CTX_set_params(ctx, params)
+        && ctx->meth->derive(ctx->data, key, keylen);
 }
 
 /*

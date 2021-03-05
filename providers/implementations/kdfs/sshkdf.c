@@ -94,13 +94,12 @@ static int sshkdf_set_membuf(unsigned char **dst, size_t *dst_len,
     return OSSL_PARAM_get_octet_string(p, (void **)dst, 0, dst_len);
 }
 
-static int kdf_sshkdf_derive(void *vctx, unsigned char *key, size_t keylen,
-                             const OSSL_PARAM params[])
+static int kdf_sshkdf_derive(void *vctx, unsigned char *key, size_t keylen)
 {
     KDF_SSHKDF *ctx = (KDF_SSHKDF *)vctx;
     const EVP_MD *md;
 
-    if (!ossl_prov_is_running() || !kdf_sshkdf_set_ctx_params(ctx, params))
+    if (!ossl_prov_is_running())
         return 0;
 
     md = ossl_prov_digest_md(&ctx->digest);

@@ -24,8 +24,7 @@ provider-kdf - The KDF library E<lt>-E<gt> provider functions
 
  /* Encryption/decryption */
  int OSSL_FUNC_kdf_reset(void *kctx);
- int OSSL_FUNC_kdf_derive(void *kctx, unsigned char *key, size_t keylen,
-                          const OSSL_PARAM params[]);
+ int OSSL_FUNC_kdf_derive(void *kctx, unsigned char *key, size_t keylen);
 
  /* KDF parameter descriptors */
  const OSSL_PARAM *OSSL_FUNC_kdf_gettable_params(void *provctx);
@@ -109,8 +108,7 @@ I<kctx> parameter and return the duplicate copy.
 OSSL_FUNC_kdf_reset() initialises a KDF operation given a provider
 side KDF context in the I<kctx> parameter.
 
-OSSL_FUNC_kdf_derive() performs the KDF operation after processing the
-I<params> as per OSSL_FUNC_kdf_set_ctx_params().
+OSSL_FUNC_kdf_derive() performs the KDF operation.
 The I<kctx> parameter contains a pointer to the provider side context.
 The resulting key of the desired I<keylen> should be written to I<key>.
 If the algorithm does not support the requested I<keylen> the function must

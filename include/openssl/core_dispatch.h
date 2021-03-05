@@ -373,8 +373,8 @@ OSSL_CORE_MAKE_FUNC(void *, kdf_newctx, (void *provctx))
 OSSL_CORE_MAKE_FUNC(void *, kdf_dupctx, (void *src))
 OSSL_CORE_MAKE_FUNC(void, kdf_freectx, (void *kctx))
 OSSL_CORE_MAKE_FUNC(void, kdf_reset, (void *kctx))
-OSSL_CORE_MAKE_FUNC(int, kdf_derive, (void *kctx, unsigned char *key,
-                                      size_t keylen, const OSSL_PARAM params[]))
+OSSL_CORE_MAKE_FUNC(int, kdf_derive,
+                    (void *kctx, unsigned char *key, size_t keylen))
 OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, kdf_gettable_params, (void *provctx))
 OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, kdf_gettable_ctx_params,
                     (void *kctx, void *provctx))

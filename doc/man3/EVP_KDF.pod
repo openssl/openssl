@@ -101,7 +101,7 @@ I<ctx>.
 EVP_KDF_CTX_reset() resets the context to the default state as if the context
 had just been created.
 
-EVP_KDF_derive() processes any parameters in I<Params> and then derives
+EVP_KDF_derive() processes any parameters in I<params> and then derives
 I<keylen> bytes of key material and places it in the I<key> buffer.
 If the algorithm produces a fixed amount of output then an error will
 occur unless the I<keylen> parameter is equal to that output size,

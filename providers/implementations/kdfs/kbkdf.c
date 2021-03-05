@@ -209,8 +209,7 @@ done:
     return ret;
 }
 
-static int kbkdf_derive(void *vctx, unsigned char *key, size_t keylen,
-                        const OSSL_PARAM params[])
+static int kbkdf_derive(void *vctx, unsigned char *key, size_t keylen)
 {
     KBKDF *ctx = (KBKDF *)vctx;
     int ret = 0;
@@ -218,7 +217,7 @@ static int kbkdf_derive(void *vctx, unsigned char *key, size_t keylen,
     uint32_t l = 0;
     size_t h = 0;
 
-    if (!ossl_prov_is_running() || !kbkdf_set_ctx_params(ctx, params))
+    if (!ossl_prov_is_running())
         return 0;
 
     /* label, context, and iv are permitted to be empty.  Check everything
