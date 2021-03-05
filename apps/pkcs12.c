@@ -756,6 +756,14 @@ int pkcs12_main(int argc, char **argv)
              */
             unsigned char *utmp;
             int utmplen;
+            unsigned long err = ERR_peek_error();
+
+            if (ERR_GET_LIB(err) == ERR_LIB_PKCS12
+                && ERR_GET_REASON(err) == PKCS12_R_MAC_ABSENT) {
+                BIO_printf(bio_err, "Warning: MAC is absent!\n");
+                goto dump;
+            }
+
             utmp = OPENSSL_asc2uni(mpass, -1, NULL, &utmplen);
             if (utmp == NULL)
                 goto end;
@@ -773,6 +781,7 @@ int pkcs12_main(int argc, char **argv)
         }
     }
 
+ dump:
     assert(private);
     if (!dump_certs_keys_p12(out, p12, cpass, -1, options, passout, enc)) {
         BIO_printf(bio_err, "Error outputting keys and certificates\n");
