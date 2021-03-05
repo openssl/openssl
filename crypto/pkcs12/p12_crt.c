@@ -42,17 +42,13 @@ PKCS12 *PKCS12_create(const char *pass, const char *name, EVP_PKEY *pkey, X509 *
 
     /* Set defaults */
     if (!nid_cert)
-#ifdef OPENSSL_NO_RC2
-        nid_cert = NID_pbe_WithSHA1And3_Key_TripleDES_CBC;
-#else
-        nid_cert = NID_pbe_WithSHA1And40BitRC2_CBC;
-#endif
+        nid_cert = NID_aes_256_cbc;
     if (!nid_key)
-        nid_key = NID_pbe_WithSHA1And3_Key_TripleDES_CBC;
+        nid_key = NID_aes_256_cbc;
     if (!iter)
         iter = PKCS12_DEFAULT_ITER;
     if (!mac_iter)
-        mac_iter = 1;
+        mac_iter = PKCS12_DEFAULT_ITER;
 
     if (pkey == NULL && cert == NULL && ca == NULL) {
         ERR_raise(ERR_LIB_PKCS12, PKCS12_R_INVALID_NULL_ARGUMENT);

@@ -32,13 +32,10 @@ B<keytype> is the type of key.
 The parameters B<nid_key>, B<nid_cert>, B<iter>, B<mac_iter> and B<keytype>
 can all be set to zero and sensible defaults will be used.
 
-These defaults are: 40 bit RC2 encryption for certificates, triple DES
-encryption for private keys, a key iteration count of PKCS12_DEFAULT_ITER
-(currently 2048) and a MAC iteration count of 1.
-
-The default MAC iteration count is 1 in order to retain compatibility with
-old software which did not interpret MAC iteration counts. If such compatibility
-is not required then B<mac_iter> should be set to PKCS12_DEFAULT_ITER.
+These defaults are: AES password based encryption (PBES2 with PBKDF2 and
+AES-256-CBC) for private keys and certificates, the PBKDF2 and MAC key iteration
+count of PKCS12_DEFAULT_ITER (currently 2048), and MAC algorithm HMAC
+with SHA2-256.
 
 B<keytype> adds a flag to the store private key. This is a non standard extension
 that is only currently interpreted by MSIE. If set to zero the flag is omitted,
