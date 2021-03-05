@@ -19,6 +19,7 @@
 #include <openssl/pem.h>
 #include <openssl/pkcs12.h>
 #include <openssl/provider.h>
+#include <openssl/kdf.h>
 
 #define NOKEYS          0x1
 #define NOCERTS         0x2
@@ -733,6 +734,15 @@ int pkcs12_main(int argc, char **argv)
                    tsalt != NULL ? ASN1_STRING_length(tsalt) : 0L);
     }
     if (macver) {
+        EVP_KDF *pkcs12kdf;
+
+        pkcs12kdf = EVP_KDF_fetch(NULL, "PKCS12KDF", NULL);
+        if (pkcs12kdf == NULL) {
+            BIO_printf(bio_err, "Error verifying PKCS12 MAC; no PKCS12KDF support.\n");
+            BIO_printf(bio_err, "Use -nomacver if MAC verification is not required.\n");
+            goto end;
+        }
+        EVP_KDF_free(pkcs12kdf);
         /* If we enter empty password try no password first */
         if (!mpass[0] && PKCS12_verify_mac(p12, NULL, 0)) {
             /* If mac and crypto pass the same set it to NULL too */
