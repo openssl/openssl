@@ -826,7 +826,7 @@ int cms_main(int argc, char **argv)
     }
 
     if (certfile != NULL) {
-        if (!load_certs(certfile, &other, NULL, "certificate file")) {
+        if (!load_certs(certfile, 0, &other, NULL, "certificate file")) {
             ERR_print_errors(bio_err);
             goto end;
         }

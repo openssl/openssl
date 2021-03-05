@@ -145,7 +145,7 @@ int verify_main(int argc, char **argv)
             break;
         case OPT_UNTRUSTED:
             /* Zero or more times */
-            if (!load_certs(opt_arg(), &untrusted, NULL,
+            if (!load_certs(opt_arg(), 0, &untrusted, NULL,
                             "untrusted certificates"))
                 goto end;
             break;
@@ -154,7 +154,7 @@ int verify_main(int argc, char **argv)
             noCAfile = 1;
             noCApath = 1;
             noCAstore = 1;
-            if (!load_certs(opt_arg(), &trusted, NULL, "trusted certificates"))
+            if (!load_certs(opt_arg(), 0, &trusted, NULL, "trusted certificates"))
                 goto end;
             break;
         case OPT_CRLFILE:
