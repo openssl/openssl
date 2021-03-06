@@ -101,7 +101,7 @@ sub test_updatedb {
 
     foreach my $tmp (@output) {
         ($cert)=$tmp=~/^[\x20\x23]*[^0-9A-Fa-f]*([0-9A-Fa-f]+)=Expired/;
-        if (length($cert) > 0)
+        if (defined($cert) && (length($cert) > 0))
         {
             $amtexpired++;
             my $expirefound = 0;
