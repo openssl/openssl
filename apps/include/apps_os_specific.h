@@ -37,10 +37,12 @@ int has_stdin_waiting(void);
 # define _POSIX_C_SOURCE 2
 #endif
 
+/*
 #ifdef _WIN32
 static int WIN32_rename(const char *from, const char *to);
 # define rename(from,to) WIN32_rename((from),(to))
 #endif
+*/
 
 #if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS)
 # include <conio.h>
@@ -52,4 +54,5 @@ static int WIN32_rename(const char *from, const char *to);
 
 void close_stdin_sock(void);
 
+int app_rename(const char *_old, const char *_new);
 #endif
