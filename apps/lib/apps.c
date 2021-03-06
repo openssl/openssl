@@ -877,6 +877,11 @@ int load_key_certs_crls(const char *uri, int maybe_stdin,
         cnt_expectations++;
         expect = OSSL_STORE_INFO_PUBKEY;
     }
+    if (pparams != NULL) {
+        *pparams = NULL;
+        cnt_expectations++;
+        expect = OSSL_STORE_INFO_PARAMS;
+    }
     if (pcert != NULL) {
         *pcert = NULL;
         cnt_expectations++;
@@ -941,7 +946,7 @@ int load_key_certs_crls(const char *uri, int maybe_stdin,
         goto end;
 
     failed = NULL;
-    while (!OSSL_STORE_eof(ctx)) {
+    while (cnt_expectations > 0 && !OSSL_STORE_eof(ctx)) {
         OSSL_STORE_INFO *info = OSSL_STORE_load(ctx);
         int type, ok = 1;
 
@@ -963,28 +968,37 @@ int load_key_certs_crls(const char *uri, int maybe_stdin,
         type = OSSL_STORE_INFO_get_type(info);
         switch (type) {
         case OSSL_STORE_INFO_PKEY:
-            if (ppkey != NULL && *ppkey == NULL)
+            if (ppkey != NULL && *ppkey == NULL) {
                 ok = (*ppkey = OSSL_STORE_INFO_get1_PKEY(info)) != NULL;
-
+                cnt_expectations -= ok;
+            }
             /*
              * An EVP_PKEY with private parts also holds the public parts,
              * so if the caller asked for a public key, and we got a private
              * key, we can still pass it back.
              */
-            if (ok && ppubkey != NULL && *ppubkey == NULL)
+            if (ok && ppubkey != NULL && *ppubkey == NULL) {
                 ok = ((*ppubkey = OSSL_STORE_INFO_get1_PKEY(info)) != NULL);
+                cnt_expectations -= ok;
+            }
             break;
         case OSSL_STORE_INFO_PUBKEY:
-            if (ppubkey != NULL && *ppubkey == NULL)
+            if (ppubkey != NULL && *ppubkey == NULL) {
                 ok = ((*ppubkey = OSSL_STORE_INFO_get1_PUBKEY(info)) != NULL);
+                cnt_expectations -= ok;
+            }
             break;
         case OSSL_STORE_INFO_PARAMS:
-            if (pparams != NULL && *pparams == NULL)
+            if (pparams != NULL && *pparams == NULL) {
                 ok = ((*pparams = OSSL_STORE_INFO_get1_PARAMS(info)) != NULL);
+                cnt_expectations -= ok;
+            }
             break;
         case OSSL_STORE_INFO_CERT:
-            if (pcert != NULL && *pcert == NULL)
+            if (pcert != NULL && *pcert == NULL) {
                 ok = (*pcert = OSSL_STORE_INFO_get1_CERT(info)) != NULL;
+                cnt_expectations -= ok;
+            }
             else if (pcerts != NULL)
                 ok = X509_add_cert(*pcerts,
                                    OSSL_STORE_INFO_get1_CERT(info),
@@ -992,8 +1006,10 @@ int load_key_certs_crls(const char *uri, int maybe_stdin,
             ncerts += ok;
             break;
         case OSSL_STORE_INFO_CRL:
-            if (pcrl != NULL && *pcrl == NULL)
+            if (pcrl != NULL && *pcrl == NULL) {
                 ok = (*pcrl = OSSL_STORE_INFO_get1_CRL(info)) != NULL;
+                cnt_expectations -= ok;
+            }
             else if (pcrls != NULL)
                 ok = sk_X509_CRL_push(*pcrls, OSSL_STORE_INFO_get1_CRL(info));
             ncrls += ok;
