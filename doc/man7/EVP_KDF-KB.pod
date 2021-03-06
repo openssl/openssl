@@ -102,7 +102,7 @@ Label "label", and Context "context".
  *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_MAC,
                                          "HMAC", 0);
  *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY,
-                                          "secret", strlen("secret"))
+                                          "secret", strlen("secret"));
  *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SALT,
                                           "label", strlen("label"));
  *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_INFO,
