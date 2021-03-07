@@ -479,7 +479,7 @@ typedef enum {big, little} endianess_t;
 
 /* ignore negative */
 static
-int bn2binpad(const BIGNUM *a, unsigned char *to, int tolen, endianess_t endianess)
+int bn2binpad(const BIGNUM *a, unsigned char *to, size_t tolen, endianess_t endianess)
 {
     int n;
     size_t i, lasti, j, atop, mask;
@@ -513,7 +513,7 @@ int bn2binpad(const BIGNUM *a, unsigned char *to, int tolen, endianess_t endiane
     atop = a->top * BN_BYTES;
     if (endianess == big)
         to += tolen; /* start from the end of the buffer */
-    for (i = 0, j = 0; j < (size_t)tolen; j++) {
+    for (i = 0, j = 0; j < tolen; j++) {
         unsigned char val;
         l = a->d[i / BN_BYTES];
         mask = 0 - ((j - atop) >> (8 * sizeof(i) - 1));
@@ -587,7 +587,7 @@ BIGNUM *BN_lebin2bn(const unsigned char *s, int len, BIGNUM *ret)
     return ret;
 }
 
-int BN_bn2lebinpad(const BIGNUM *a, unsigned char *to, int tolen)
+int BN_bn2lebinpad(const BIGNUM *a, unsigned char *to, size_t tolen)
 {
     if (tolen < 0)
         return -1;
@@ -603,7 +603,7 @@ BIGNUM *BN_native2bn(const unsigned char *s, int len, BIGNUM *ret)
     return BN_bin2bn(s, len, ret);
 }
 
-int BN_bn2nativepad(const BIGNUM *a, unsigned char *to, int tolen)
+int BN_bn2nativepad(const BIGNUM *a, unsigned char *to, size_t tolen)
 {
     DECLARE_IS_ENDIAN;
 

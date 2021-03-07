@@ -833,7 +833,7 @@ int WPACKET_sub_reserve_bytes__(WPACKET *pkt, size_t len,
  * 1 byte will fail. Don't call this directly. Use the convenience macros below
  * instead.
  */
-int WPACKET_put_bytes__(WPACKET *pkt, unsigned int val, size_t bytes);
+int WPACKET_put_bytes__(WPACKET *pkt, size_t val, size_t bytes);
 
 /*
  * Convenience macros for calling WPACKET_put_bytes with different

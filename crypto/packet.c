@@ -379,7 +379,7 @@ int WPACKET_start_sub_packet(WPACKET *pkt)
     return WPACKET_start_sub_packet_len__(pkt, 0);
 }
 
-int WPACKET_put_bytes__(WPACKET *pkt, unsigned int val, size_t size)
+int WPACKET_put_bytes__(WPACKET *pkt, size_t val, size_t size)
 {
     unsigned char *data;
 
