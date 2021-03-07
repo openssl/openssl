@@ -7,7 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "apps.h"
+#include "opt.h"
+#include "ca.h"
+#include "apps_extracted.h"
 #include <string.h>
 #include <openssl/err.h>
 #include <openssl/provider.h>
