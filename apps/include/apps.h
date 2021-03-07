@@ -236,8 +236,8 @@ extern VERIFY_CB_ARGS verify_args;
 OSSL_PARAM *app_params_new_from_opts(STACK_OF(OPENSSL_STRING) *opts,
                                      const OSSL_PARAM *paramdefs);
 void app_params_free(OSSL_PARAM *params);
-void app_providers_cleanup(void);
+//void app_providers_cleanup(void);
 
-int app_set_propq(const char *arg);
+//int app_set_propq(const char *arg);
 
 #endif

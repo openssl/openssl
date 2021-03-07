@@ -72,6 +72,8 @@ int app_isdir(const char *);
 OSSL_LIB_CTX *app_create_libctx(void);
 OSSL_LIB_CTX *app_get0_libctx(void);
 int app_provider_load(OSSL_LIB_CTX *libctx, const char *provider_name);
+void app_providers_cleanup(void);
+int app_set_propq(const char *arg);
 
 const char *app_get0_propq(void);
 
