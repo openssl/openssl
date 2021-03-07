@@ -437,6 +437,13 @@ OpenSSL 3.0
 
    *Antonio Iacono*
 
+ * Added the AuthEnvelopedData content type structure (RFC 5083) with AES-GCM
+   parameter (RFC 5084) for the Cryptographic Message Syntax (CMS). Its purpose
+   is to support encryption and decryption of a digital envelope that is both
+   authenticated and encrypted using AES GCM mode.
+
+   *Jakub Zelenka*
+
  * Deprecated EC_POINT_make_affine() and EC_POINTs_make_affine(). These
    functions are not widely used and now OpenSSL automatically perform this
    conversion when needed.
