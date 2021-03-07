@@ -353,9 +353,6 @@ int BIO_write(BIO *b, const void *data, size_t dlen)
     size_t written;
     int ret;
 
-    if (dlen < 0)
-        return 0;
-
     ret = bio_write_intern(b, data, dlen, &written);
 
     if (ret > 0) {
