@@ -1,4 +1,4 @@
-NOTES FOR ANDROID PLATFORMS
+Notes for Android platforms
 ===========================
 
  Requirement details

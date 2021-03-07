@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -9,16 +9,15 @@
 
 /* Dispatch functions for chacha20 cipher */
 
+#include <openssl/proverr.h>
 #include "cipher_chacha20.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
-#include "prov/providercommonerr.h"
 
 #define CHACHA20_KEYLEN (CHACHA_KEY_SIZE)
 #define CHACHA20_BLKLEN (1)
 #define CHACHA20_IVLEN (CHACHA_CTR_SIZE)
-/* TODO(3.0) Figure out what flags are required */
-#define CHACHA20_FLAGS (EVP_CIPH_CUSTOM_IV | EVP_CIPH_ALWAYS_CALL_INIT)
+#define CHACHA20_FLAGS (PROV_CIPHER_FLAG_CUSTOM_IV)
 
 static OSSL_FUNC_cipher_newctx_fn chacha20_newctx;
 static OSSL_FUNC_cipher_freectx_fn chacha20_freectx;
@@ -32,7 +31,7 @@ static OSSL_FUNC_cipher_settable_ctx_params_fn chacha20_settable_ctx_params;
 #define chacha20_final ossl_cipher_generic_stream_final
 #define chacha20_gettable_params ossl_cipher_generic_gettable_params
 
-void chacha20_initctx(PROV_CHACHA20_CTX *ctx)
+void ossl_chacha20_initctx(PROV_CHACHA20_CTX *ctx)
 {
     ossl_cipher_generic_initkey(ctx, CHACHA20_KEYLEN * 8,
                                 CHACHA20_BLKLEN * 8,
@@ -51,7 +50,7 @@ static void *chacha20_newctx(void *provctx)
 
     ctx = OPENSSL_zalloc(sizeof(*ctx));
     if (ctx != NULL)
-        chacha20_initctx(ctx);
+        ossl_chacha20_initctx(ctx);
     return ctx;
 }
 
@@ -96,7 +95,8 @@ static const OSSL_PARAM chacha20_known_gettable_ctx_params[] = {
     OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_IVLEN, NULL),
     OSSL_PARAM_END
 };
-const OSSL_PARAM *chacha20_gettable_ctx_params(ossl_unused void *provctx)
+const OSSL_PARAM *chacha20_gettable_ctx_params(ossl_unused void *cctx,
+                                               ossl_unused void *provctx)
 {
     return chacha20_known_gettable_ctx_params;
 }
@@ -136,13 +136,14 @@ static const OSSL_PARAM chacha20_known_settable_ctx_params[] = {
     OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_IVLEN, NULL),
     OSSL_PARAM_END
 };
-const OSSL_PARAM *chacha20_settable_ctx_params(ossl_unused void *provctx)
+const OSSL_PARAM *chacha20_settable_ctx_params(ossl_unused void *cctx,
+                                               ossl_unused void *provctx)
 {
     return chacha20_known_settable_ctx_params;
 }
 
-int chacha20_einit(void *vctx, const unsigned char *key, size_t keylen,
-                   const unsigned char *iv, size_t ivlen)
+int ossl_chacha20_einit(void *vctx, const unsigned char *key, size_t keylen,
+                        const unsigned char *iv, size_t ivlen)
 {
     int ret;
 
@@ -157,8 +158,8 @@ int chacha20_einit(void *vctx, const unsigned char *key, size_t keylen,
     return ret;
 }
 
-int chacha20_dinit(void *vctx, const unsigned char *key, size_t keylen,
-                   const unsigned char *iv, size_t ivlen)
+int ossl_chacha20_dinit(void *vctx, const unsigned char *key, size_t keylen,
+                        const unsigned char *iv, size_t ivlen)
 {
     int ret;
 
@@ -177,8 +178,8 @@ int chacha20_dinit(void *vctx, const unsigned char *key, size_t keylen,
 const OSSL_DISPATCH ossl_chacha20_functions[] = {
     { OSSL_FUNC_CIPHER_NEWCTX, (void (*)(void))chacha20_newctx },
     { OSSL_FUNC_CIPHER_FREECTX, (void (*)(void))chacha20_freectx },
-    { OSSL_FUNC_CIPHER_ENCRYPT_INIT, (void (*)(void))chacha20_einit },
-    { OSSL_FUNC_CIPHER_DECRYPT_INIT, (void (*)(void))chacha20_dinit },
+    { OSSL_FUNC_CIPHER_ENCRYPT_INIT, (void (*)(void))ossl_chacha20_einit },
+    { OSSL_FUNC_CIPHER_DECRYPT_INIT, (void (*)(void))ossl_chacha20_dinit },
     { OSSL_FUNC_CIPHER_UPDATE, (void (*)(void))chacha20_update },
     { OSSL_FUNC_CIPHER_FINAL, (void (*)(void))chacha20_final },
     { OSSL_FUNC_CIPHER_CIPHER, (void (*)(void))chacha20_cipher},

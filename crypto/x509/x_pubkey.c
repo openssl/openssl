@@ -22,17 +22,23 @@
 #include "crypto/x509.h"
 #include <openssl/rsa.h>
 #include <openssl/dsa.h>
+#include <openssl/decoder.h>
 #include <openssl/encoder.h>
 #include "internal/provider.h"
+#include "internal/sizes.h"
 
 struct X509_pubkey_st {
     X509_ALGOR *algor;
     ASN1_BIT_STRING *public_key;
+
     EVP_PKEY *pkey;
 
     /* extra data for the callback, used by d2i_PUBKEY_ex */
     OSSL_LIB_CTX *libctx;
     char *propq;
+
+    /* Flag to force legacy keys */
+    unsigned int flag_force_legacy : 1;
 };
 
 static int x509_pubkey_decode(EVP_PKEY **pk, const X509_PUBKEY *key);
@@ -53,46 +59,172 @@ static int x509_pubkey_set0_libctx(X509_PUBKEY *x, OSSL_LIB_CTX *libctx,
     return 1;
 }
 
-/* Minor tweak to operation: free up EVP_PKEY */
-static int pubkey_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
-                     void *exarg)
+ASN1_SEQUENCE(X509_PUBKEY_INTERNAL) = {
+        ASN1_SIMPLE(X509_PUBKEY, algor, X509_ALGOR),
+        ASN1_SIMPLE(X509_PUBKEY, public_key, ASN1_BIT_STRING)
+} static_ASN1_SEQUENCE_END_name(X509_PUBKEY, X509_PUBKEY_INTERNAL)
+
+static void x509_pubkey_ex_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
 {
     X509_PUBKEY *pubkey = (X509_PUBKEY *)*pval;
 
-    if (operation == ASN1_OP_FREE_POST) {
-        OPENSSL_free(pubkey->propq);
-        EVP_PKEY_free(pubkey->pkey);
-    } else if (operation == ASN1_OP_D2I_POST) {
-        /* Attempt to decode public key and cache in pubkey structure. */
-        EVP_PKEY_free(pubkey->pkey);
-        pubkey->pkey = NULL;
-        /*
-         * Opportunistically decode the key but remove any non fatal errors
-         * from the queue. Subsequent explicit attempts to decode/use the key
-         * will return an appropriate error.
-         */
-        ERR_set_mark();
-        if (x509_pubkey_decode(&pubkey->pkey, pubkey) == -1) {
-            ERR_clear_last_mark();
-            return 0;
-        }
-        ERR_pop_to_mark();
-    } else if (operation == ASN1_OP_DUP_POST) {
-        X509_PUBKEY *old = exarg;
-
-        if (!x509_pubkey_set0_libctx(pubkey, old->libctx, old->propq))
-            return 0;
-    }
-    return 1;
+    X509_ALGOR_free(pubkey->algor);
+    ASN1_BIT_STRING_free(pubkey->public_key);
+    EVP_PKEY_free(pubkey->pkey);
+    OPENSSL_free(pubkey);
+    *pval = NULL;
 }
 
-ASN1_SEQUENCE_cb(X509_PUBKEY, pubkey_cb) = {
-        ASN1_SIMPLE(X509_PUBKEY, algor, X509_ALGOR),
-        ASN1_SIMPLE(X509_PUBKEY, public_key, ASN1_BIT_STRING)
-} ASN1_SEQUENCE_END_cb(X509_PUBKEY, X509_PUBKEY)
+static int x509_pubkey_ex_populate(ASN1_VALUE **pval, const ASN1_ITEM *it)
+{
+    X509_PUBKEY *pubkey = (X509_PUBKEY *)*pval;
 
+    return (pubkey->algor != NULL
+            || (pubkey->algor = X509_ALGOR_new()) != NULL)
+        && (pubkey->public_key != NULL
+            || (pubkey->public_key = ASN1_BIT_STRING_new()) != NULL);
+}
+
+static int x509_pubkey_ex_new(ASN1_VALUE **pval, const ASN1_ITEM *it)
+{
+    X509_PUBKEY *ret;
+
+    if ((ret = OPENSSL_zalloc(sizeof(*ret))) == NULL
+        || !x509_pubkey_ex_populate((ASN1_VALUE **)&ret, NULL)) {
+        x509_pubkey_ex_free((ASN1_VALUE **)&ret, NULL);
+        ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
+    } else {
+        *pval = (ASN1_VALUE *)ret;
+    }
+
+    return ret != NULL;
+}
+
+static int x509_pubkey_ex_d2i(ASN1_VALUE **pval,
+                              const unsigned char **in, long len,
+                              const ASN1_ITEM *it, int tag, int aclass,
+                              char opt, ASN1_TLC *ctx)
+{
+    const unsigned char *in_saved = *in;
+    X509_PUBKEY *pubkey;
+    int ret;
+    OSSL_DECODER_CTX *dctx = NULL;
+
+    if (*pval == NULL && !x509_pubkey_ex_new(pval, it))
+        return 0;
+    if (!x509_pubkey_ex_populate(pval, NULL)) {
+        ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
+        return 0;
+    }
+
+    /* This ensures that |*in| advances properly no matter what */
+    if ((ret = ASN1_item_ex_d2i(pval, in, len,
+                                ASN1_ITEM_rptr(X509_PUBKEY_INTERNAL),
+                                tag, aclass, opt, ctx)) <= 0)
+        return ret;
+
+    pubkey = (X509_PUBKEY *)*pval;
+    EVP_PKEY_free(pubkey->pkey);
+    pubkey->pkey = NULL;
+
+    /*
+     * Opportunistically decode the key but remove any non fatal errors
+     * from the queue. Subsequent explicit attempts to decode/use the key
+     * will return an appropriate error.
+     */
+    ERR_set_mark();
+
+    /*
+     * Try to decode with legacy method first.  This ensures that engines
+     * aren't overriden by providers.
+     */
+    if ((ret = x509_pubkey_decode(&pubkey->pkey, pubkey)) == -1) {
+        /* -1 indicates a fatal error, like malloc failure */
+        ERR_clear_last_mark();
+        goto end;
+    }
+
+    /* Try to decode it into an EVP_PKEY with OSSL_DECODER */
+    if (ret <= 0 && !pubkey->flag_force_legacy) {
+        const unsigned char *p = in_saved;
+        char txtoidname[OSSL_MAX_NAME_SIZE];
+
+        if (OBJ_obj2txt(txtoidname, sizeof(txtoidname),
+                        pubkey->algor->algorithm, 0) <= 0) {
+            ERR_clear_last_mark();
+            goto end;
+        }
+        if ((dctx =
+             OSSL_DECODER_CTX_new_for_pkey(&pubkey->pkey,
+                                           "DER", "SubjectPublicKeyInfo",
+                                           txtoidname, EVP_PKEY_PUBLIC_KEY,
+                                           pubkey->libctx,
+                                           pubkey->propq)) != NULL)
+            /*
+             * As said higher up, we're being opportunistic.  In other words,
+             * we don't care about what the return value signals.
+             */
+            OSSL_DECODER_from_data(dctx, &p, NULL);
+    }
+
+    ERR_pop_to_mark();
+    ret = 1;
+ end:
+    OSSL_DECODER_CTX_free(dctx);
+    return ret;
+}
+
+static int x509_pubkey_ex_i2d(const ASN1_VALUE **pval, unsigned char **out,
+                              const ASN1_ITEM *it, int tag, int aclass)
+{
+    return ASN1_item_ex_i2d(pval, out, ASN1_ITEM_rptr(X509_PUBKEY_INTERNAL),
+                            tag, aclass);
+}
+
+static int x509_pubkey_ex_print(BIO *out, const ASN1_VALUE **pval, int indent,
+                                const char *fname, const ASN1_PCTX *pctx)
+{
+    return ASN1_item_print(out, *pval, indent,
+                           ASN1_ITEM_rptr(X509_PUBKEY_INTERNAL), pctx);
+}
+
+static const ASN1_EXTERN_FUNCS x509_pubkey_ff = {
+    NULL,
+    x509_pubkey_ex_new,
+    x509_pubkey_ex_free,
+    0,                          /* Default clear behaviour is OK */
+    x509_pubkey_ex_d2i,
+    x509_pubkey_ex_i2d,
+    x509_pubkey_ex_print
+};
+
+IMPLEMENT_EXTERN_ASN1(X509_PUBKEY, V_ASN1_SEQUENCE, x509_pubkey_ff)
 IMPLEMENT_ASN1_FUNCTIONS(X509_PUBKEY)
-IMPLEMENT_ASN1_DUP_FUNCTION(X509_PUBKEY)
+
+/*
+ * X509_PUBKEY_dup() must be implemented manually, because there is no
+ * support for it in ASN1_EXTERN_FUNCS.
+ */
+X509_PUBKEY *X509_PUBKEY_dup(const X509_PUBKEY *a)
+{
+    X509_PUBKEY *pubkey = NULL;
+
+    if (!x509_pubkey_ex_new(NULL, ASN1_ITEM_rptr(X509_PUBKEY_INTERNAL))
+        || !x509_pubkey_set0_libctx(pubkey, a->libctx, a->propq)
+        || (pubkey->algor = X509_ALGOR_dup(a->algor)) == NULL
+        || (pubkey->public_key = ASN1_BIT_STRING_new()) == NULL
+        || !ASN1_BIT_STRING_set(pubkey->public_key,
+                                a->public_key->data, a->public_key->length)
+        || (a->pkey != NULL && !EVP_PKEY_up_ref(a->pkey))) {
+        x509_pubkey_ex_free((ASN1_VALUE **)&pubkey,
+                            ASN1_ITEM_rptr(X509_PUBKEY_INTERNAL));
+        ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
+        return NULL;
+    }
+
+    pubkey->pkey = a->pkey;
+    return pubkey;
+}
 
 /* TODO should better be called X509_PUBKEY_set1 */
 int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
@@ -122,9 +254,9 @@ int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
         unsigned char *der = NULL;
         size_t derlen = 0;
         OSSL_ENCODER_CTX *ectx =
-            OSSL_ENCODER_CTX_new_by_EVP_PKEY(pkey, EVP_PKEY_PUBLIC_KEY,
-                                             "DER", "SubjectPublicKeyInfo",
-                                             NULL);
+            OSSL_ENCODER_CTX_new_for_pkey(pkey, EVP_PKEY_PUBLIC_KEY,
+                                          "DER", "SubjectPublicKeyInfo",
+                                          NULL);
 
         if (OSSL_ENCODER_to_data(ectx, &der, &derlen)) {
             const unsigned char *pder = der;
@@ -175,9 +307,9 @@ int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
  * Attempt to decode a public key.
  * Returns 1 on success, 0 for a decode failure and -1 for a fatal
  * error e.g. malloc failure.
+ *
+ * This function is #legacy.
  */
-
-
 static int x509_pubkey_decode(EVP_PKEY **ppkey, const X509_PUBKEY *key)
 {
     EVP_PKEY *pkey = EVP_PKEY_new();
@@ -256,9 +388,14 @@ EVP_PKEY *X509_PUBKEY_get(const X509_PUBKEY *key)
  * Now three pseudo ASN1 routines that take an EVP_PKEY structure and encode
  * or decode as X509_PUBKEY
  */
-
-EVP_PKEY *d2i_PUBKEY_ex(EVP_PKEY **a, const unsigned char **pp, long length,
-                        OSSL_LIB_CTX *libctx, const char *propq)
+static EVP_PKEY *d2i_PUBKEY_int(EVP_PKEY **a,
+                                const unsigned char **pp, long length,
+                                OSSL_LIB_CTX *libctx, const char *propq,
+                                unsigned int force_legacy,
+                                X509_PUBKEY *
+                                (*d2i_x509_pubkey)(X509_PUBKEY **a,
+                                                   const unsigned char **in,
+                                                   long len))
 {
     X509_PUBKEY *xpk, *xpk2 = NULL, **pxpk = NULL;
     EVP_PKEY *pktmp = NULL;
@@ -271,7 +408,7 @@ EVP_PKEY *d2i_PUBKEY_ex(EVP_PKEY **a, const unsigned char **pp, long length,
      * feature.  It's not generally recommended, but is safe enough for
      * newly created structures.
      */
-    if (libctx != NULL || propq != NULL) {
+    if (libctx != NULL || propq != NULL || force_legacy) {
         xpk2 = OPENSSL_zalloc(sizeof(*xpk2));
         if (xpk2 == NULL) {
             ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
@@ -279,9 +416,10 @@ EVP_PKEY *d2i_PUBKEY_ex(EVP_PKEY **a, const unsigned char **pp, long length,
         }
         if (!x509_pubkey_set0_libctx(xpk2, libctx, propq))
             goto end;
+        xpk2->flag_force_legacy = !!force_legacy;
         pxpk = &xpk2;
     }
-    xpk = d2i_X509_PUBKEY(pxpk, &q, length);
+    xpk = d2i_x509_pubkey(pxpk, &q, length);
     if (xpk == NULL)
         goto end;
     pktmp = X509_PUBKEY_get(xpk);
@@ -297,6 +435,19 @@ EVP_PKEY *d2i_PUBKEY_ex(EVP_PKEY **a, const unsigned char **pp, long length,
  end:
     X509_PUBKEY_free(xpk2);
     return pktmp;
+}
+
+/* For the algorithm specific d2i functions further down */
+EVP_PKEY *d2i_PUBKEY_legacy(EVP_PKEY **a,
+                            const unsigned char **pp, long length)
+{
+    return d2i_PUBKEY_int(a, pp, length, NULL, NULL, 1, d2i_X509_PUBKEY);
+}
+
+EVP_PKEY *d2i_PUBKEY_ex(EVP_PKEY **a, const unsigned char **pp, long length,
+                        OSSL_LIB_CTX *libctx, const char *propq)
+{
+    return d2i_PUBKEY_int(a, pp, length, libctx, propq, 0, d2i_X509_PUBKEY);
 }
 
 EVP_PKEY *d2i_PUBKEY(EVP_PKEY **a, const unsigned char **pp, long length)
@@ -325,9 +476,9 @@ int i2d_PUBKEY(const EVP_PKEY *a, unsigned char **pp)
         X509_PUBKEY_free(xpk);
     } else if (a->keymgmt != NULL) {
         OSSL_ENCODER_CTX *ctx =
-            OSSL_ENCODER_CTX_new_by_EVP_PKEY(a, EVP_PKEY_PUBLIC_KEY,
-                                             "DER", "SubjectPublicKeyInfo",
-                                             NULL);
+            OSSL_ENCODER_CTX_new_for_pkey(a, EVP_PKEY_PUBLIC_KEY,
+                                          "DER", "SubjectPublicKeyInfo",
+                                          NULL);
         BIO *out = BIO_new(BIO_s_mem());
         BUF_MEM *buf = NULL;
 
@@ -365,7 +516,7 @@ RSA *d2i_RSA_PUBKEY(RSA **a, const unsigned char **pp, long length)
     const unsigned char *q;
 
     q = *pp;
-    pkey = d2i_PUBKEY(NULL, &q, length);
+    pkey = d2i_PUBKEY_legacy(NULL, &q, length);
     if (pkey == NULL)
         return NULL;
     key = EVP_PKEY_get1_RSA(pkey);
@@ -406,7 +557,7 @@ DSA *d2i_DSA_PUBKEY(DSA **a, const unsigned char **pp, long length)
     const unsigned char *q;
 
     q = *pp;
-    pkey = d2i_PUBKEY(NULL, &q, length);
+    pkey = d2i_PUBKEY_legacy(NULL, &q, length);
     if (pkey == NULL)
         return NULL;
     key = EVP_PKEY_get1_DSA(pkey);
@@ -448,7 +599,7 @@ EC_KEY *d2i_EC_PUBKEY(EC_KEY **a, const unsigned char **pp, long length)
     const unsigned char *q;
 
     q = *pp;
-    pkey = d2i_PUBKEY(NULL, &q, length);
+    pkey = d2i_PUBKEY_legacy(NULL, &q, length);
     if (pkey == NULL)
         return NULL;
     key = EVP_PKEY_get1_EC_KEY(pkey);

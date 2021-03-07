@@ -20,12 +20,12 @@
 #include <openssl/rsa.h>
 #include <openssl/params.h>
 #include <openssl/err.h>
+#include <openssl/proverr.h>
 /* Just for SSL_MAX_MASTER_KEY_LENGTH */
 #include <openssl/ssl.h>
 #include "internal/constant_time.h"
 #include "internal/sizes.h"
 #include "crypto/rsa.h"
-#include "prov/providercommonerr.h"
 #include "prov/provider_ctx.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
@@ -47,7 +47,6 @@ static OSSL_FUNC_asym_cipher_settable_ctx_params_fn rsa_settable_ctx_params;
 
 static OSSL_ITEM padding_item[] = {
     { RSA_PKCS1_PADDING,        OSSL_PKEY_RSA_PAD_MODE_PKCSV15 },
-    { RSA_SSLV23_PADDING,       OSSL_PKEY_RSA_PAD_MODE_SSLV23 },
     { RSA_NO_PADDING,           OSSL_PKEY_RSA_PAD_MODE_NONE },
     { RSA_PKCS1_OAEP_PADDING,   OSSL_PKEY_RSA_PAD_MODE_OAEP }, /* Correct spelling first */
     { RSA_PKCS1_OAEP_PADDING,   "oeap"   },
@@ -409,7 +408,8 @@ static const OSSL_PARAM known_gettable_ctx_params[] = {
     OSSL_PARAM_END
 };
 
-static const OSSL_PARAM *rsa_gettable_ctx_params(ossl_unused void *provctx)
+static const OSSL_PARAM *rsa_gettable_ctx_params(ossl_unused void *vprsactx,
+                                                 ossl_unused void *provctx)
 {
     return known_gettable_ctx_params;
 }
@@ -553,7 +553,8 @@ static const OSSL_PARAM known_settable_ctx_params[] = {
     OSSL_PARAM_END
 };
 
-static const OSSL_PARAM *rsa_settable_ctx_params(ossl_unused void *provctx)
+static const OSSL_PARAM *rsa_settable_ctx_params(ossl_unused void *vprsactx,
+                                                 ossl_unused void *provctx)
 {
     return known_settable_ctx_params;
 }

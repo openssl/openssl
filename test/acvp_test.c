@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -1383,7 +1383,7 @@ static int drbg_test(int id)
      * A NULL personalisation string defaults to the built in so something
      * non-NULL is needed if there is no personalisation string
      */
-    if (!TEST_true(EVP_RAND_instantiate(ctx, 0, 0, (void *)"", 0))
+    if (!TEST_true(EVP_RAND_instantiate(ctx, 0, 0, (void *)"", 0, NULL))
         || !TEST_true(EVP_RAND_generate(ctx, returned_bits, returned_bits_len,
                                         0, 0, NULL, 0))
         || !TEST_true(EVP_RAND_generate(ctx, returned_bits, returned_bits_len,

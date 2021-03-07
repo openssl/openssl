@@ -11,13 +11,15 @@
 
 #ifndef OSSL_CRYPTO_EC_H
 # define OSSL_CRYPTO_EC_H
+# pragma once
+
 # include <openssl/opensslconf.h>
 # include <openssl/evp.h>
 
-const char *ec_curve_nid2name(int nid);
-int ec_curve_name2nid(const char *name);
-const char *ec_curve_nid2nist_int(int nid);
-int ec_curve_nist2nid_int(const char *name);
+const char *ossl_ec_curve_nid2name(int nid);
+int ossl_ec_curve_name2nid(const char *name);
+const char *ossl_ec_curve_nid2nist_int(int nid);
+int ossl_ec_curve_nist2nid_int(const char *name);
 int evp_pkey_ctx_set_ec_param_enc_prov(EVP_PKEY_CTX *ctx, int param_enc);
 
 # ifndef OPENSSL_NO_EC
@@ -46,42 +48,45 @@ int evp_pkey_ctx_set_ec_param_enc_prov(EVP_PKEY_CTX *ctx, int param_enc);
  * reduction round on the input can be omitted by the underlying
  * implementations for better SCA properties on regular input values).
  */
-__owur int ec_group_do_inverse_ord(const EC_GROUP *group, BIGNUM *res,
-                                   const BIGNUM *x, BN_CTX *ctx);
+__owur int ossl_ec_group_do_inverse_ord(const EC_GROUP *group, BIGNUM *res,
+                                        const BIGNUM *x, BN_CTX *ctx);
 
 /*-
  * ECDH Key Derivation Function as defined in ANSI X9.63
  */
-int ecdh_KDF_X9_63(unsigned char *out, size_t outlen,
-                   const unsigned char *Z, size_t Zlen,
-                   const unsigned char *sinfo, size_t sinfolen,
-                   const EVP_MD *md, OSSL_LIB_CTX *libctx, const char *propq);
+int ossl_ecdh_kdf_X9_63(unsigned char *out, size_t outlen,
+                        const unsigned char *Z, size_t Zlen,
+                        const unsigned char *sinfo, size_t sinfolen,
+                        const EVP_MD *md, OSSL_LIB_CTX *libctx,
+                        const char *propq);
 
-int ec_key_public_check(const EC_KEY *eckey, BN_CTX *ctx);
-int ec_key_private_check(const EC_KEY *eckey);
-int ec_key_pairwise_check(const EC_KEY *eckey, BN_CTX *ctx);
-OSSL_LIB_CTX *ec_key_get_libctx(const EC_KEY *eckey);
-const char *ec_key_get0_propq(const EC_KEY *eckey);
-void ec_key_set0_libctx(EC_KEY *key, OSSL_LIB_CTX *libctx);
+int ossl_ec_key_public_check(const EC_KEY *eckey, BN_CTX *ctx);
+int ossl_ec_key_public_check_quick(const EC_KEY *eckey, BN_CTX *ctx);
+int ossl_ec_key_private_check(const EC_KEY *eckey);
+int ossl_ec_key_pairwise_check(const EC_KEY *eckey, BN_CTX *ctx);
+OSSL_LIB_CTX *ossl_ec_key_get_libctx(const EC_KEY *eckey);
+const char *ossl_ec_key_get0_propq(const EC_KEY *eckey);
+void ossl_ec_key_set0_libctx(EC_KEY *key, OSSL_LIB_CTX *libctx);
 
 /* Backend support */
-int ec_group_todata(const EC_GROUP *group, OSSL_PARAM_BLD *tmpl,
-                    OSSL_PARAM params[], OSSL_LIB_CTX *libctx,
-                    const char *propq,
-                    BN_CTX *bnctx, unsigned char **genbuf);
-int ec_group_fromdata(EC_KEY *ec, const OSSL_PARAM params[]);
-int ec_group_set_params(EC_GROUP *group, const OSSL_PARAM params[]);
-int ec_key_fromdata(EC_KEY *ecx, const OSSL_PARAM params[], int include_private);
-int ec_key_otherparams_fromdata(EC_KEY *ec, const OSSL_PARAM params[]);
-int ec_set_ecdh_cofactor_mode(EC_KEY *ec, int mode);
-int ec_encoding_name2id(const char *name);
-int ec_encoding_param2id(const OSSL_PARAM *p, int *id);
-int ec_pt_format_name2id(const char *name);
-int ec_pt_format_param2id(const OSSL_PARAM *p, int *id);
-char *ec_pt_format_id2name(int id);
+int ossl_ec_group_todata(const EC_GROUP *group, OSSL_PARAM_BLD *tmpl,
+                         OSSL_PARAM params[], OSSL_LIB_CTX *libctx,
+                         const char *propq,
+                         BN_CTX *bnctx, unsigned char **genbuf);
+int ossl_ec_group_fromdata(EC_KEY *ec, const OSSL_PARAM params[]);
+int ossl_ec_group_set_params(EC_GROUP *group, const OSSL_PARAM params[]);
+int ossl_ec_key_fromdata(EC_KEY *ecx, const OSSL_PARAM params[],
+                         int include_private);
+int ossl_ec_key_otherparams_fromdata(EC_KEY *ec, const OSSL_PARAM params[]);
+int ossl_ec_set_ecdh_cofactor_mode(EC_KEY *ec, int mode);
+int ossl_ec_encoding_name2id(const char *name);
+int ossl_ec_encoding_param2id(const OSSL_PARAM *p, int *id);
+int ossl_ec_pt_format_name2id(const char *name);
+int ossl_ec_pt_format_param2id(const OSSL_PARAM *p, int *id);
+char *ossl_ec_pt_format_id2name(int id);
 
-char *ec_check_group_type_id2name(int flags);
-int ec_set_check_group_type_from_name(EC_KEY *ec, const char *name);
+char *ossl_ec_check_group_type_id2name(int flags);
+int ossl_ec_set_check_group_type_from_name(EC_KEY *ec, const char *name);
 
 # endif /* OPENSSL_NO_EC */
 #endif

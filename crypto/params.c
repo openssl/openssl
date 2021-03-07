@@ -1070,15 +1070,21 @@ OSSL_PARAM OSSL_PARAM_construct_double(const char *key, double *buf)
     return ossl_param_construct(key, OSSL_PARAM_REAL, buf, sizeof(double));
 }
 
-static int get_string_internal(const OSSL_PARAM *p, void **val, size_t max_len,
-                               size_t *used_len, unsigned int type)
+static int get_string_internal(const OSSL_PARAM *p, void **val,
+                               size_t *max_len, size_t *used_len,
+                               unsigned int type)
 {
-    size_t sz;
+    size_t sz, alloc_sz;
 
     if ((val == NULL && used_len == NULL) || p == NULL || p->data_type != type)
         return 0;
 
     sz = p->data_size;
+    /*
+     * If the input size is 0, or the input string needs NUL byte
+     * termination, allocate an extra byte.
+     */
+    alloc_sz = sz + (type == OSSL_PARAM_UTF8_STRING || sz == 0);
 
     if (used_len != NULL)
         *used_len = sz;
@@ -1090,16 +1096,15 @@ static int get_string_internal(const OSSL_PARAM *p, void **val, size_t max_len,
         return 1;
 
     if (*val == NULL) {
-        char *const q = OPENSSL_malloc(sz > 0 ? sz : 1);
+        char *const q = OPENSSL_malloc(alloc_sz);
 
         if (q == NULL)
             return 0;
         *val = q;
-        if (sz != 0)
-            memcpy(q, p->data, sz);
-        return 1;
+        *max_len = alloc_sz;
     }
-    if (max_len < sz)
+
+    if (*max_len < sz)
         return 0;
     memcpy(*val, p->data, sz);
     return 1;
@@ -1107,14 +1112,35 @@ static int get_string_internal(const OSSL_PARAM *p, void **val, size_t max_len,
 
 int OSSL_PARAM_get_utf8_string(const OSSL_PARAM *p, char **val, size_t max_len)
 {
-    return get_string_internal(p, (void **)val, max_len, NULL,
-                               OSSL_PARAM_UTF8_STRING);
+    int ret = get_string_internal(p, (void **)val, &max_len, NULL,
+                                  OSSL_PARAM_UTF8_STRING);
+
+    /*
+     * We try to ensure that the copied string is terminated with a
+     * NUL byte.  That should be easy, just place a NUL byte at
+     * |((char*)*val)[p->data_size]|.
+     * Unfortunately, we have seen cases where |p->data_size| doesn't
+     * correctly reflect the length of the string, and just happens
+     * to be out of bounds according to |max_len|, so in that case, we
+     * make the extra step of trying to find the true length of the
+     * string that |p->data| points at, and use that as an index to
+     * place the NUL byte in |*val|.
+     */
+    size_t data_length = p->data_size;
+
+    if (data_length >= max_len)
+        data_length = OPENSSL_strnlen(p->data, data_length);
+    if (data_length >= max_len)
+        return 0;            /* No space for a terminating NUL byte */
+    ((char *)*val)[data_length] = '\0';
+
+    return ret;
 }
 
 int OSSL_PARAM_get_octet_string(const OSSL_PARAM *p, void **val, size_t max_len,
                                 size_t *used_len)
 {
-    return get_string_internal(p, val, max_len, used_len,
+    return get_string_internal(p, val, &max_len, used_len,
                                OSSL_PARAM_OCTET_STRING);
 }
 
@@ -1128,6 +1154,9 @@ static int set_string_internal(OSSL_PARAM *p, const void *val, size_t len,
         return 0;
 
     memcpy(p->data, val, len);
+    /* If possible within the size of p->data, add a NUL terminator byte */
+    if (type == OSSL_PARAM_UTF8_STRING && p->data_size > len)
+        ((char *)p->data)[len] = '\0';
     return 1;
 }
 
@@ -1139,7 +1168,7 @@ int OSSL_PARAM_set_utf8_string(OSSL_PARAM *p, const char *val)
     p->return_size = 0;
     if (val == NULL)
         return 0;
-    return set_string_internal(p, val, strlen(val) + 1, OSSL_PARAM_UTF8_STRING);
+    return set_string_internal(p, val, strlen(val), OSSL_PARAM_UTF8_STRING);
 }
 
 int OSSL_PARAM_set_octet_string(OSSL_PARAM *p, const void *val,
@@ -1158,7 +1187,7 @@ OSSL_PARAM OSSL_PARAM_construct_utf8_string(const char *key, char *buf,
                                             size_t bsize)
 {
     if (buf != NULL && bsize == 0)
-        bsize = strlen(buf) + 1;
+        bsize = strlen(buf);
     return ossl_param_construct(key, OSSL_PARAM_UTF8_STRING, buf, bsize);
 }
 
@@ -1207,7 +1236,7 @@ int OSSL_PARAM_set_utf8_ptr(OSSL_PARAM *p, const char *val)
         return 0;
     p->return_size = 0;
     return set_ptr_internal(p, val, OSSL_PARAM_UTF8_PTR,
-                            val == NULL ? 0 : strlen(val) + 1);
+                            val == NULL ? 0 : strlen(val));
 }
 
 int OSSL_PARAM_set_octet_ptr(OSSL_PARAM *p, const void *val,

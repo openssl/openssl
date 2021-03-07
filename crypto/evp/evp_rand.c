@@ -117,7 +117,7 @@ static void *evp_rand_from_dispatch(int name_id,
                                     OSSL_PROVIDER *prov)
 {
     EVP_RAND *rand = NULL;
-    int fnrandcnt = 0, fnctxcnt = 0, fnlockcnt = 0;
+    int fnrandcnt = 0, fnctxcnt = 0, fnlockcnt = 0, fnenablelockcnt = 0;
 #ifdef FIPS_MODULE
     int fnzeroizecnt = 0;
 #endif
@@ -174,7 +174,7 @@ static void *evp_rand_from_dispatch(int name_id,
             if (rand->enable_locking != NULL)
                 break;
             rand->enable_locking = OSSL_FUNC_rand_enable_locking(fns);
-            fnlockcnt++;
+            fnenablelockcnt++;
             break;
         case OSSL_FUNC_RAND_LOCK:
             if (rand->lock != NULL)
@@ -243,7 +243,8 @@ static void *evp_rand_from_dispatch(int name_id,
      */
     if (fnrandcnt != 3
             || fnctxcnt != 3
-            || (fnlockcnt != 0 && fnlockcnt != 3)
+            || (fnenablelockcnt != 0 && fnenablelockcnt != 1)
+            || (fnlockcnt != 0 && fnlockcnt != 2)
 #ifdef FIPS_MODULE
             || fnzeroizecnt != 1
 #endif
@@ -427,18 +428,42 @@ const OSSL_PARAM *EVP_RAND_gettable_params(const EVP_RAND *rand)
 
 const OSSL_PARAM *EVP_RAND_gettable_ctx_params(const EVP_RAND *rand)
 {
+    void *provctx;
+
     if (rand->gettable_ctx_params == NULL)
         return NULL;
-    return rand->gettable_ctx_params(
-               ossl_provider_ctx(EVP_RAND_provider(rand)));
+    provctx = ossl_provider_ctx(EVP_RAND_provider(rand));
+    return rand->gettable_ctx_params(NULL, provctx);
 }
 
 const OSSL_PARAM *EVP_RAND_settable_ctx_params(const EVP_RAND *rand)
 {
+    void *provctx;
+
     if (rand->settable_ctx_params == NULL)
         return NULL;
-    return rand->settable_ctx_params(
-               ossl_provider_ctx(EVP_RAND_provider(rand)));
+    provctx = ossl_provider_ctx(EVP_RAND_provider(rand));
+    return rand->settable_ctx_params(NULL, provctx);
+}
+
+const OSSL_PARAM *EVP_RAND_CTX_gettable_params(EVP_RAND_CTX *ctx)
+{
+    void *provctx;
+
+    if (ctx->meth->gettable_ctx_params == NULL)
+        return NULL;
+    provctx = ossl_provider_ctx(EVP_RAND_provider(ctx->meth));
+    return ctx->meth->gettable_ctx_params(ctx->data, provctx);
+}
+
+const OSSL_PARAM *EVP_RAND_CTX_settable_params(EVP_RAND_CTX *ctx)
+{
+    void *provctx;
+
+    if (ctx->meth->settable_ctx_params == NULL)
+        return NULL;
+    provctx = ossl_provider_ctx(EVP_RAND_provider(ctx->meth));
+    return ctx->meth->settable_ctx_params(ctx->data, provctx);
 }
 
 void EVP_RAND_do_all_provided(OSSL_LIB_CTX *libctx,
@@ -450,32 +475,35 @@ void EVP_RAND_do_all_provided(OSSL_LIB_CTX *libctx,
                        evp_rand_from_dispatch, evp_rand_free);
 }
 
-void EVP_RAND_names_do_all(const EVP_RAND *rand,
-                           void (*fn)(const char *name, void *data),
-                           void *data)
+int EVP_RAND_names_do_all(const EVP_RAND *rand,
+                          void (*fn)(const char *name, void *data),
+                          void *data)
 {
     if (rand->prov != NULL)
-        evp_names_do_all(rand->prov, rand->name_id, fn, data);
+        return evp_names_do_all(rand->prov, rand->name_id, fn, data);
+
+    return 1;
 }
 
 static int evp_rand_instantiate_locked
     (EVP_RAND_CTX *ctx, unsigned int strength, int prediction_resistance,
-     const unsigned char *pstr, size_t pstr_len)
+     const unsigned char *pstr, size_t pstr_len, const OSSL_PARAM params[])
 {
     return ctx->meth->instantiate(ctx->data, strength, prediction_resistance,
-                                  pstr, pstr_len);
+                                  pstr, pstr_len, params);
 }
 
 int EVP_RAND_instantiate(EVP_RAND_CTX *ctx, unsigned int strength,
                          int prediction_resistance,
-                         const unsigned char *pstr, size_t pstr_len)
+                         const unsigned char *pstr, size_t pstr_len,
+                         const OSSL_PARAM params[])
 {
     int res;
 
     if (!evp_rand_lock(ctx))
         return 0;
     res = evp_rand_instantiate_locked(ctx, strength, prediction_resistance,
-                                      pstr, pstr_len);
+                                      pstr, pstr_len, params);
     evp_rand_unlock(ctx);
     return res;
 }

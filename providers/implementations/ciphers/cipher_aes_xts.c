@@ -1,6 +1,6 @@
 
 /*
- * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -15,17 +15,12 @@
  */
 #include "internal/deprecated.h"
 
+#include <openssl/proverr.h>
 #include "cipher_aes_xts.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
-#include "prov/providercommonerr.h"
 
-/* TODO (3.0) Figure out what flags need to be set */
-#define AES_XTS_FLAGS (EVP_CIPH_CUSTOM_IV          \
-                       | EVP_CIPH_ALWAYS_CALL_INIT \
-                       | EVP_CIPH_CTRL_INIT        \
-                       | EVP_CIPH_CUSTOM_COPY)
-
+#define AES_XTS_FLAGS PROV_CIPHER_FLAG_CUSTOM_IV
 #define AES_XTS_IV_BITS 128
 #define AES_XTS_BLOCK_BITS 8
 
@@ -223,7 +218,8 @@ static const OSSL_PARAM aes_xts_known_settable_ctx_params[] = {
     OSSL_PARAM_END
 };
 
-static const OSSL_PARAM *aes_xts_settable_ctx_params(ossl_unused void *provctx)
+static const OSSL_PARAM *aes_xts_settable_ctx_params(ossl_unused void *cctx,
+                                                     ossl_unused void *provctx)
 {
     return aes_xts_known_settable_ctx_params;
 }
@@ -233,10 +229,6 @@ static int aes_xts_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
     const OSSL_PARAM *p;
 
-    /*
-     * TODO(3.0) We need a general solution for handling missing parameters
-     * inside set_params and get_params methods.
-     */
     p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_KEYLEN);
     if (p != NULL) {
         size_t keylen;

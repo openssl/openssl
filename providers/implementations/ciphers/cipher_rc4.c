@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -19,8 +19,7 @@
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 
-/* TODO (3.0) Figure out what flags are required */
-#define RC4_FLAGS EVP_CIPH_FLAG_DEFAULT_ASN1
+#define RC4_FLAGS PROV_CIPHER_FLAG_VARIABLE_LENGTH
 
 static OSSL_FUNC_cipher_freectx_fn rc4_freectx;
 static OSSL_FUNC_cipher_dupctx_fn rc4_dupctx;
@@ -97,6 +96,6 @@ const OSSL_DISPATCH ossl_##alg##kbits##_functions[] = {                        \
 };
 
 /* ossl_rc440_functions */
-IMPLEMENT_cipher(rc4, RC4, EVP_CIPH_VARIABLE_LENGTH, 40, 8, 0, stream)
+IMPLEMENT_cipher(rc4, RC4, RC4_FLAGS, 40, 8, 0, stream)
 /* ossl_rc4128_functions */
-IMPLEMENT_cipher(rc4, RC4, EVP_CIPH_VARIABLE_LENGTH, 128, 8, 0, stream)
+IMPLEMENT_cipher(rc4, RC4, RC4_FLAGS, 128, 8, 0, stream)

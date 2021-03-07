@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2021 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright 2017 Ribose Inc. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -8,9 +8,10 @@
  * https://www.openssl.org/source/license.html
  */
 
-/* TODO(3.0) Move this header into provider when dependencies are removed */
+/* This header can move into provider when legacy support is removed */
 #ifndef OSSL_INTERNAL_SM3_H
 # define OSSL_INTERNAL_SM3_H
+# pragma once
 
 # include <openssl/opensslconf.h>
 

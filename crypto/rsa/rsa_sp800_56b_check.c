@@ -92,7 +92,7 @@ int ossl_rsa_check_prime_factor_range(const BIGNUM *p, int nbits, BN_CTX *ctx)
     int shift;
 
     nbits >>= 1;
-    shift = nbits - BN_num_bits(&bn_inv_sqrt_2);
+    shift = nbits - BN_num_bits(&ossl_bn_inv_sqrt_2);
 
     /* Upper bound check */
     if (BN_num_bits(p) != nbits)
@@ -104,12 +104,12 @@ int ossl_rsa_check_prime_factor_range(const BIGNUM *p, int nbits, BN_CTX *ctx)
         goto err;
 
     /* set low = (√2)(2^(nbits/2 - 1) */
-    if (!BN_copy(low, &bn_inv_sqrt_2))
+    if (!BN_copy(low, &ossl_bn_inv_sqrt_2))
         goto err;
 
     if (shift >= 0) {
         /*
-         * We don't have all the bits. bn_inv_sqrt_2 contains a rounded up
+         * We don't have all the bits. ossl_bn_inv_sqrt_2 contains a rounded up
          * value, so there is a very low probability that we'll reject a valid
          * value.
          */
@@ -290,21 +290,19 @@ int ossl_rsa_get_lcm(BN_CTX *ctx, const BIGNUM *p, const BIGNUM *q,
 int ossl_rsa_sp800_56b_check_public(const RSA *rsa)
 {
     int ret = 0, status;
-#ifdef FIPS_MODULE
     int nbits;
-#endif
     BN_CTX *ctx = NULL;
     BIGNUM *gcd = NULL;
 
     if (rsa->n == NULL || rsa->e == NULL)
         return 0;
 
+    nbits = BN_num_bits(rsa->n);
 #ifdef FIPS_MODULE
     /*
      * (Step a): modulus must be 2048 or 3072 (caveat from SP800-56Br1)
      * NOTE: changed to allow keys >= 2048
      */
-    nbits = BN_num_bits(rsa->n);
     if (!ossl_rsa_sp800_56b_validate_strength(nbits, -1)) {
         ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_KEY_LENGTH);
         return 0;
@@ -329,13 +327,20 @@ int ossl_rsa_sp800_56b_check_public(const RSA *rsa)
      * The modulus is composite, but not a power of a prime.
      * The modulus has no factors smaller than 752.
      */
-    if (!BN_gcd(gcd, rsa->n, bn_get0_small_factors(), ctx) || !BN_is_one(gcd)) {
+    if (!BN_gcd(gcd, rsa->n, ossl_bn_get0_small_factors(), ctx)
+        || !BN_is_one(gcd)) {
         ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_MODULUS);
         goto err;
     }
 
-    ret = bn_miller_rabin_is_prime(rsa->n, 0, ctx, NULL, 1, &status);
+    ret = ossl_bn_miller_rabin_is_prime(rsa->n, 0, ctx, NULL, 1, &status);
+#ifdef FIPS_MODULE
     if (ret != 1 || status != BN_PRIMETEST_COMPOSITE_NOT_POWER_OF_PRIME) {
+#else
+    if (ret != 1 || (status != BN_PRIMETEST_COMPOSITE_NOT_POWER_OF_PRIME
+                     && (nbits >= RSA_MIN_MODULUS_BITS
+                         || status != BN_PRIMETEST_COMPOSITE_WITH_FACTOR))) {
+#endif
         ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_MODULUS);
         ret = 0;
         goto err;

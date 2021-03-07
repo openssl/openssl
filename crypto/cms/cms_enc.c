@@ -21,8 +21,8 @@
 
 /* Return BIO based on EncryptedContentInfo and key */
 
-BIO *cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec,
-                                   const CMS_CTX *cms_ctx)
+BIO *ossl_cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec,
+                                        const CMS_CTX *cms_ctx)
 {
     BIO *b;
     EVP_CIPHER_CTX *ctx;
@@ -37,8 +37,8 @@ BIO *cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec,
     size_t tkeylen = 0;
     int ok = 0;
     int enc, keep_key = 0;
-    OSSL_LIB_CTX *libctx = cms_ctx_get0_libctx(cms_ctx);
-    const char *propq = cms_ctx_get0_propq(cms_ctx);
+    OSSL_LIB_CTX *libctx = ossl_cms_ctx_get0_libctx(cms_ctx);
+    const char *propq = ossl_cms_ctx_get0_propq(cms_ctx);
 
     enc = ec->cipher ? 1 : 0;
 
@@ -193,10 +193,10 @@ BIO *cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec,
     return NULL;
 }
 
-int cms_EncryptedContent_init(CMS_EncryptedContentInfo *ec,
-                              const EVP_CIPHER *cipher,
-                              const unsigned char *key, size_t keylen,
-                              const CMS_CTX *cms_ctx)
+int ossl_cms_EncryptedContent_init(CMS_EncryptedContentInfo *ec,
+                                   const EVP_CIPHER *cipher,
+                                   const unsigned char *key, size_t keylen,
+                                   const CMS_CTX *cms_ctx)
 {
     ec->cipher = cipher;
     if (key) {
@@ -234,14 +234,15 @@ int CMS_EncryptedData_set1_key(CMS_ContentInfo *cms, const EVP_CIPHER *ciph,
         return 0;
     }
     ec = cms->d.encryptedData->encryptedContentInfo;
-    return cms_EncryptedContent_init(ec, ciph, key, keylen, cms_get0_cmsctx(cms));
+    return ossl_cms_EncryptedContent_init(ec, ciph, key, keylen,
+                                          ossl_cms_get0_cmsctx(cms));
 }
 
-BIO *cms_EncryptedData_init_bio(const CMS_ContentInfo *cms)
+BIO *ossl_cms_EncryptedData_init_bio(const CMS_ContentInfo *cms)
 {
     CMS_EncryptedData *enc = cms->d.encryptedData;
     if (enc->encryptedContentInfo->cipher && enc->unprotectedAttrs)
         enc->version = 2;
-    return cms_EncryptedContent_init_bio(enc->encryptedContentInfo,
-                                         cms_get0_cmsctx(cms));
+    return ossl_cms_EncryptedContent_init_bio(enc->encryptedContentInfo,
+                                              ossl_cms_get0_cmsctx(cms));
 }

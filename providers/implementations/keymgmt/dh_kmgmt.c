@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -91,7 +91,7 @@ static int dh_gen_type_name2id_w_default(const char *name, int type)
 #endif
     }
 
-    return dh_gen_type_name2id(name);
+    return ossl_dh_gen_type_name2id(name);
 }
 
 static void *dh_newdata(void *provctx)
@@ -99,7 +99,7 @@ static void *dh_newdata(void *provctx)
     DH *dh = NULL;
 
     if (ossl_prov_is_running()) {
-        dh = dh_new_ex(PROV_LIBCTX_OF(provctx));
+        dh = ossl_dh_new_ex(PROV_LIBCTX_OF(provctx));
         if (dh != NULL) {
             DH_clear_flags(dh, DH_FLAG_TYPE_MASK);
             DH_set_flags(dh, DH_FLAG_TYPE_DH);
@@ -112,7 +112,7 @@ static void *dhx_newdata(void *provctx)
 {
     DH *dh = NULL;
 
-    dh = dh_new_ex(PROV_LIBCTX_OF(provctx));
+    dh = ossl_dh_new_ex(PROV_LIBCTX_OF(provctx));
     if (dh != NULL) {
         DH_clear_flags(dh, DH_FLAG_TYPE_MASK);
         DH_set_flags(dh, DH_FLAG_TYPE_DHX);
@@ -158,8 +158,8 @@ static int dh_match(const void *keydata1, const void *keydata2, int selection)
     if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0)
         ok = ok && BN_cmp(DH_get0_priv_key(dh1), DH_get0_priv_key(dh2)) == 0;
     if ((selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) != 0) {
-        FFC_PARAMS *dhparams1 = dh_get0_params((DH *)dh1);
-        FFC_PARAMS *dhparams2 = dh_get0_params((DH *)dh2);
+        FFC_PARAMS *dhparams1 = ossl_dh_get0_params((DH *)dh1);
+        FFC_PARAMS *dhparams2 = ossl_dh_get0_params((DH *)dh2);
 
         ok = ok && ossl_ffc_params_cmp(dhparams1, dhparams2, 1);
     }
@@ -178,10 +178,10 @@ static int dh_import(void *keydata, int selection, const OSSL_PARAM params[])
         return 0;
 
     if ((selection & OSSL_KEYMGMT_SELECT_ALL_PARAMETERS) != 0)
-        ok = ok && dh_params_fromdata(dh, params);
+        ok = ok && ossl_dh_params_fromdata(dh, params);
 
     if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0)
-        ok = ok && dh_key_fromdata(dh, params);
+        ok = ok && ossl_dh_key_fromdata(dh, params);
 
     return ok;
 }
@@ -202,9 +202,9 @@ static int dh_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
         return 0;
 
     if ((selection & OSSL_KEYMGMT_SELECT_ALL_PARAMETERS) != 0)
-        ok = ok && dh_params_todata(dh, tmpl, NULL);
+        ok = ok && ossl_dh_params_todata(dh, tmpl, NULL);
     if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0)
-        ok = ok && dh_key_todata(dh, tmpl, NULL);
+        ok = ok && ossl_dh_key_todata(dh, tmpl, NULL);
 
     if (!ok
         || (params = OSSL_PARAM_BLD_to_param(tmpl)) == NULL) {
@@ -295,14 +295,14 @@ static ossl_inline int dh_get_params(void *key, OSSL_PARAM params[])
     if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY)) != NULL) {
         if (p->data_type != OSSL_PARAM_OCTET_STRING)
             return 0;
-        p->return_size = dh_key2buf(dh, (unsigned char **)&p->data,
-                                    p->data_size, 0);
+        p->return_size = ossl_dh_key2buf(dh, (unsigned char **)&p->data,
+                                         p->data_size, 0);
         if (p->return_size == 0)
             return 0;
     }
 
-    return dh_params_todata(dh, NULL, params)
-        && dh_key_todata(dh, NULL, params);
+    return ossl_dh_params_todata(dh, NULL, params)
+        && ossl_dh_key_todata(dh, NULL, params);
 }
 
 static const OSSL_PARAM dh_params[] = {
@@ -339,20 +339,27 @@ static int dh_set_params(void *key, const OSSL_PARAM params[])
     p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY);
     if (p != NULL
             && (p->data_type != OSSL_PARAM_OCTET_STRING
-                || !dh_buf2key(dh, p->data, p->data_size)))
+                || !ossl_dh_buf2key(dh, p->data, p->data_size)))
         return 0;
 
     return 1;
 }
 
-static int dh_validate_public(const DH *dh)
+static int dh_validate_public(const DH *dh, int checktype)
 {
     const BIGNUM *pub_key = NULL;
+    int res = 0;
 
     DH_get0_key(dh, &pub_key, NULL);
     if (pub_key == NULL)
         return 0;
-    return DH_check_pub_key_ex(dh, pub_key);
+
+    /* The partial test is only valid for named group's with q = (p - 1) / 2 */
+    if (checktype == OSSL_KEYMGMT_VALIDATE_QUICK_CHECK
+        && ossl_dh_is_named_safe_prime_group(dh))
+        return ossl_dh_check_pub_key_partial(dh, pub_key, &res);
+
+    return DH_check_pub_key(dh, pub_key, &res);
 }
 
 static int dh_validate_private(const DH *dh)
@@ -363,10 +370,10 @@ static int dh_validate_private(const DH *dh)
     DH_get0_key(dh, NULL, &priv_key);
     if (priv_key == NULL)
         return 0;
-    return dh_check_priv_key(dh, priv_key, &status);;
+    return ossl_dh_check_priv_key(dh, priv_key, &status);;
 }
 
-static int dh_validate(const void *keydata, int selection)
+static int dh_validate(const void *keydata, int selection, int checktype)
 {
     const DH *dh = keydata;
     int ok = 0;
@@ -377,18 +384,27 @@ static int dh_validate(const void *keydata, int selection)
     if ((selection & DH_POSSIBLE_SELECTIONS) != 0)
         ok = 1;
 
-    if ((selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) != 0)
-        ok = ok && DH_check_params_ex(dh);
+    if ((selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) != 0) {
+        /*
+         * Both of these functions check parameters. DH_check_params_ex()
+         * performs a lightweight check (e.g. it does not check that p is a
+         * safe prime)
+         */
+        if (checktype == OSSL_KEYMGMT_VALIDATE_QUICK_CHECK)
+            ok = ok && DH_check_params_ex(dh);
+        else
+            ok = ok && DH_check_ex(dh);
+    }
 
     if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0)
-        ok = ok && dh_validate_public(dh);
+        ok = ok && dh_validate_public(dh, checktype);
 
     if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0)
         ok = ok && dh_validate_private(dh);
 
     if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR)
             == OSSL_KEYMGMT_SELECT_KEYPAIR)
-        ok = ok && dh_check_pairwise(dh);
+        ok = ok && ossl_dh_check_pairwise(dh);
     return ok;
 }
 
@@ -445,7 +461,7 @@ static int dh_gen_set_template(void *genctx, void *templ)
 
     if (!ossl_prov_is_running() || gctx == NULL || dh == NULL)
         return 0;
-    gctx->ffc_params = dh_get0_params(dh);
+    gctx->ffc_params = ossl_dh_get0_params(dh);
     return 1;
 }
 
@@ -476,8 +492,7 @@ static int dh_gen_set_params(void *genctx, const OSSL_PARAM params[])
     if (p != NULL) {
         if (p->data_type != OSSL_PARAM_UTF8_STRING
             || ((gctx->gen_type =
-                 dh_gen_type_name2id_w_default(p->data,
-                                               gctx->dh_type)) == -1)) {
+                 dh_gen_type_name2id_w_default(p->data, gctx->dh_type)) == -1)) {
             ERR_raise(ERR_LIB_PROV, ERR_R_PASSED_INVALID_ARGUMENT);
             return 0;
         }
@@ -543,7 +558,8 @@ static int dh_gen_set_params(void *genctx, const OSSL_PARAM params[])
     return 1;
 }
 
-static const OSSL_PARAM *dh_gen_settable_params(void *provctx)
+static const OSSL_PARAM *dh_gen_settable_params(ossl_unused void *genctx,
+                                                ossl_unused void *provctx)
 {
     static OSSL_PARAM settable[] = {
         OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME, NULL, 0),
@@ -590,18 +606,18 @@ static void *dh_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
             && gctx->ffc_params == NULL) {
         /* Select a named group if there is not one already */
         if (gctx->group_nid == NID_undef)
-            gctx->group_nid = dh_get_named_group_uid_from_size(gctx->pbits);
+            gctx->group_nid = ossl_dh_get_named_group_uid_from_size(gctx->pbits);
         if (gctx->group_nid == NID_undef)
             return NULL;
-        dh = dh_new_by_nid_ex(gctx->libctx, gctx->group_nid);
+        dh = ossl_dh_new_by_nid_ex(gctx->libctx, gctx->group_nid);
         if (dh == NULL)
             return NULL;
-        ffc = dh_get0_params(dh);
+        ffc = ossl_dh_get0_params(dh);
     } else {
-        dh = dh_new_ex(gctx->libctx);
+        dh = ossl_dh_new_ex(gctx->libctx);
         if (dh == NULL)
             return NULL;
-        ffc = dh_get0_params(dh);
+        ffc = ossl_dh_get0_params(dh);
 
         /* Copy the template value if one was passed */
         if (gctx->ffc_params != NULL
@@ -637,8 +653,9 @@ static void *dh_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
                 ret = DH_generate_parameters_ex(dh, gctx->pbits,
                                                 gctx->generator, gencb);
             else
-                ret = dh_generate_ffc_parameters(dh, gctx->gen_type, gctx->pbits,
-                                                 gctx->qbits, gencb);
+                ret = ossl_dh_generate_ffc_parameters(dh, gctx->gen_type,
+                                                      gctx->pbits, gctx->qbits,
+                                                      gencb);
             if (ret <= 0)
                 goto end;
         }

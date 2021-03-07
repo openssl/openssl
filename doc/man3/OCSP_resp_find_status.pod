@@ -2,17 +2,13 @@
 
 =head1 NAME
 
-OCSP_resp_get0_certs,
-OCSP_resp_get0_signer,
-OCSP_resp_get0_id,
-OCSP_resp_get1_id,
-OCSP_resp_get0_produced_at,
-OCSP_resp_get0_signature,
-OCSP_resp_get0_tbs_sigalg,
-OCSP_resp_get0_respdata,
-OCSP_resp_find_status, OCSP_resp_count, OCSP_resp_get0, OCSP_resp_find,
-OCSP_single_get0_status, OCSP_check_validity,
-OCSP_basic_verify
+OCSP_resp_find_status, OCSP_resp_count,
+OCSP_resp_get0, OCSP_resp_find, OCSP_single_get0_status,
+OCSP_resp_get0_produced_at, OCSP_resp_get0_signature,
+OCSP_resp_get0_tbs_sigalg, OCSP_resp_get0_respdata,
+OCSP_resp_get0_certs, OCSP_resp_get0_signer,
+OCSP_resp_get0_id, OCSP_resp_get1_id,
+OCSP_check_validity, OCSP_basic_verify
 - OCSP response utility functions
 
 =head1 SYNOPSIS
@@ -75,9 +71,8 @@ B<OCSP_REVOKED_STATUS_CERTIFICATEHOLD> or B<OCSP_REVOKED_STATUS_REMOVEFROMCRL>.
 
 OCSP_resp_count() returns the number of B<OCSP_SINGLERESP> structures in I<bs>.
 
-OCSP_resp_get0() returns the B<OCSP_SINGLERESP> structure in I<bs>
-corresponding to index I<idx>. Where I<idx> runs from 0 to
-OCSP_resp_count(bs) - 1.
+OCSP_resp_get0() returns the B<OCSP_SINGLERESP> structure in I<bs> corresponding
+to index I<idx>, where I<idx> runs from 0 to OCSP_resp_count(bs) - 1.
 
 OCSP_resp_find() searches I<bs> for I<id> and returns the index of the first
 matching entry after I<last> or starting from the beginning if I<last> is -1.
@@ -105,10 +100,11 @@ signed the response are known via some out-of-band mechanism.
 OCSP_resp_get0_id() gets the responder id of I<bs>. If the responder ID is
 a name then <*pname> is set to the name and I<*pid> is set to NULL. If the
 responder ID is by key ID then I<*pid> is set to the key ID and I<*pname>
-is set to NULL. OCSP_resp_get1_id() leaves ownership of I<*pid> and I<*pname>
-with the caller, who is responsible for freeing them. Both functions return 1
-in case of success and 0 in case of failure. If OCSP_resp_get1_id() returns 0,
-no freeing of the results is necessary.
+is set to NULL.
+
+OCSP_resp_get1_id() is the same as OCSP_resp_get0_id()
+but leaves ownership of I<*pid> and I<*pname> with the caller,
+who is responsible for freeing them unless the function returns 0.
 
 OCSP_check_validity() checks the validity of its I<thisupd> and I<nextupd>
 arguments, which will be typically obtained from OCSP_resp_find_status() or
@@ -148,23 +144,40 @@ trust for OCSP signing in the root CA certificate.
 
 OCSP_resp_find_status() returns 1 if I<id> is found in I<bs> and 0 otherwise.
 
-OCSP_resp_count() returns the total number of B<OCSP_SINGLERESP> fields in
-I<bs>.
+OCSP_resp_count() returns the total number of B<OCSP_SINGLERESP> fields in I<bs>
+or -1 on error.
 
 OCSP_resp_get0() returns a pointer to an B<OCSP_SINGLERESP> structure or
-NULL if I<idx> is out of range.
+NULL on error, such as I<idx> being out of range.
 
-OCSP_resp_find() returns the index of I<id> in I<bs> (which may be 0) or -1 if
-I<id> was not found.
+OCSP_resp_find() returns the index of I<id> in I<bs> (which may be 0)
+or -1 on error, such as when I<id> was not found.
 
 OCSP_single_get0_status() returns the status of I<single> or -1 if an error
 occurred.
 
-OCSP_resp_get0_signer() returns 1 if the signing certificate was located,
-or 0 on error.
+OCSP_resp_get0_produced_at() returns the B<producedAt> field from I<bs>.
 
-OCSP_basic_verify() returns 1 on success, 0 on error, or -1 on fatal error such
-as malloc failure.
+OCSP_resp_get0_signature() returns the signature from I<bs>.
+
+OCSP_resp_get0_tbs_sigalg() returns the B<signatureAlgorithm> field from I<bs>.
+
+OCSP_resp_get0_respdata() returns the B<tbsResponseData> field from I<bs>.
+
+OCSP_resp_get0_certs() returns any certificates included in I<bs>.
+
+OCSP_resp_get0_signer() returns 1 if the signing certificate was located,
+or 0 if not found or on error.
+
+OCSP_resp_get0_id() and OCSP_resp_get1_id() return 1 on success, 0 on failure.
+
+OCSP_check_validity() returns 1 if I<thisupd> and I<nextupd> are valid time
+values and the current time + I<sec> is not before I<thisupd> and,
+if I<maxsec> >= 0, the current time - I<maxsec> is not past I<nextupd>.
+Otherwise it returns 0 to indicate an error.
+
+OCSP_basic_verify() returns 1 on success, 0 on verification not successful,
+or -1 on a fatal error such as malloc failure.
 
 =head1 NOTES
 

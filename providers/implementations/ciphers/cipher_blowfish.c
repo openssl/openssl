@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -19,7 +19,7 @@
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 
-#define BF_FLAGS (EVP_CIPH_VARIABLE_LENGTH)
+#define BF_FLAGS PROV_CIPHER_FLAG_VARIABLE_LENGTH
 
 static OSSL_FUNC_cipher_freectx_fn blowfish_freectx;
 static OSSL_FUNC_cipher_dupctx_fn blowfish_dupctx;

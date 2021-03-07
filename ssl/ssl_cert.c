@@ -878,7 +878,7 @@ int ssl_build_cert_chain(SSL *s, SSL_CTX *ctx, int flags)
             untrusted = cpk->chain;
     }
 
-    xs_ctx = X509_STORE_CTX_new_ex(real_ctx->libctx, ctx->propq);
+    xs_ctx = X509_STORE_CTX_new_ex(real_ctx->libctx, real_ctx->propq);
     if (xs_ctx == NULL) {
         ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
         goto err;

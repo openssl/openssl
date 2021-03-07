@@ -31,8 +31,14 @@ typedef struct prov_cipher_ctx_st PROV_CIPHER_CTX;
 typedef int (PROV_CIPHER_HW_FN)(PROV_CIPHER_CTX *dat, unsigned char *out,
                                 const unsigned char *in, size_t len);
 
-/* TODO(3.0): VERIFY ME */
-#define MAX_TLS_MAC_SIZE    48
+/* Internal flags that can be queried */
+#define PROV_CIPHER_FLAG_AEAD             0x0001
+#define PROV_CIPHER_FLAG_CUSTOM_IV        0x0002
+#define PROV_CIPHER_FLAG_CTS              0x0004
+#define PROV_CIPHER_FLAG_TLS1_MULTIBLOCK  0x0008
+/* Internal flags that are only used within the provider */
+#define PROV_CIPHER_FLAG_VARIABLE_LENGTH  0x0010
+#define PROV_CIPHER_FLAG_INVERSE_CIPHER   0x0020
 
 struct prov_cipher_ctx_st {
     block128_f block;
@@ -52,7 +58,9 @@ struct prov_cipher_ctx_st {
     unsigned int enc : 1;    /* Set to 1 for encrypt, or 0 otherwise */
     unsigned int iv_set : 1; /* Set when the iv is copied to the iv/oiv buffers */
     unsigned int updated : 1; /* Set to 1 during update for one shot ciphers */
-
+    unsigned int variable_keylength : 1;
+    unsigned int inverse_cipher : 1; /* set to 1 to use inverse cipher */
+    unsigned int use_bits : 1; /* Set to 0 for cfb1 to use bits instead of bytes */
 
     unsigned int tlsversion; /* If TLS padding is in use the TLS version number */
     unsigned char *tlsmac;   /* tls MAC extracted from the last record */
@@ -73,7 +81,6 @@ struct prov_cipher_ctx_st {
      * manage partial blocks themselves.
      */
     unsigned int num;
-    uint64_t flags;
 
     /* The original value of the iv */
     unsigned char oiv[GENERIC_BLOCK_SIZE];
@@ -110,11 +117,12 @@ OSSL_FUNC_cipher_gettable_ctx_params_fn ossl_cipher_aead_gettable_ctx_params;
 OSSL_FUNC_cipher_settable_ctx_params_fn ossl_cipher_aead_settable_ctx_params;
 
 int ossl_cipher_generic_get_params(OSSL_PARAM params[], unsigned int md,
-                              unsigned long flags,
-                              size_t kbits, size_t blkbits, size_t ivbits);
+                                   uint64_t flags,
+                                   size_t kbits, size_t blkbits, size_t ivbits);
 void ossl_cipher_generic_initkey(void *vctx, size_t kbits, size_t blkbits,
-                            size_t ivbits, unsigned int mode, uint64_t flags,
-                            const PROV_CIPHER_HW *hw, void *provctx);
+                                 size_t ivbits, unsigned int mode,
+                                 uint64_t flags,
+                                 const PROV_CIPHER_HW *hw, void *provctx);
 
 #define IMPLEMENT_generic_cipher_func(alg, UCALG, lcmode, UCMODE, flags, kbits,\
                                       blkbits, ivbits, typ)                    \
@@ -322,7 +330,8 @@ static const OSSL_PARAM name##_known_gettable_ctx_params[] = {                 \
 #define CIPHER_DEFAULT_GETTABLE_CTX_PARAMS_END(name)                           \
     OSSL_PARAM_END                                                             \
 };                                                                             \
-const OSSL_PARAM * name##_gettable_ctx_params(ossl_unused void *provctx)       \
+const OSSL_PARAM * name##_gettable_ctx_params(ossl_unused void *cctx,          \
+                                              ossl_unused void *provctx)       \
 {                                                                              \
     return name##_known_gettable_ctx_params;                                   \
 }
@@ -334,7 +343,8 @@ static const OSSL_PARAM name##_known_settable_ctx_params[] = {                 \
 #define CIPHER_DEFAULT_SETTABLE_CTX_PARAMS_END(name)                           \
     OSSL_PARAM_END                                                             \
 };                                                                             \
-const OSSL_PARAM * name##_settable_ctx_params(ossl_unused void *provctx)       \
+const OSSL_PARAM * name##_settable_ctx_params(ossl_unused void *cctx,          \
+                                              ossl_unused void *provctx)       \
 {                                                                              \
     return name##_known_settable_ctx_params;                                   \
 }
@@ -342,8 +352,9 @@ const OSSL_PARAM * name##_settable_ctx_params(ossl_unused void *provctx)       \
 int ossl_cipher_generic_initiv(PROV_CIPHER_CTX *ctx, const unsigned char *iv,
                                size_t ivlen);
 
-size_t fillblock(unsigned char *buf, size_t *buflen, size_t blocksize,
-                 const unsigned char **in, size_t *inlen);
-int trailingdata(unsigned char *buf, size_t *buflen, size_t blocksize,
-                 const unsigned char **in, size_t *inlen);
-
+size_t ossl_cipher_fillblock(unsigned char *buf, size_t *buflen,
+                             size_t blocksize,
+                             const unsigned char **in, size_t *inlen);
+int ossl_cipher_trailingdata(unsigned char *buf, size_t *buflen,
+                             size_t blocksize,
+                             const unsigned char **in, size_t *inlen);

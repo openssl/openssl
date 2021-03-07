@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-OSSL_ENCODER_CTX_new_by_EVP_PKEY,
+OSSL_ENCODER_CTX_new_for_pkey,
 OSSL_ENCODER_CTX_set_cipher,
 OSSL_ENCODER_CTX_set_passphrase,
 OSSL_ENCODER_CTX_set_pem_password_cb,
@@ -15,10 +15,10 @@ OSSL_ENCODER_CTX_set_passphrase_ui
  #include <openssl/encoder.h>
 
  OSSL_ENCODER_CTX *
- OSSL_ENCODER_CTX_new_by_EVP_PKEY(const EVP_PKEY *pkey, int selection,
-                                  const char *output_type,
-                                  const char *output_structure,
-                                  const char *propquery);
+ OSSL_ENCODER_CTX_new_for_pkey(const EVP_PKEY *pkey, int selection,
+                               const char *output_type,
+                               const char *output_structure,
+                               const char *propquery);
 
  int OSSL_ENCODER_CTX_set_cipher(OSSL_ENCODER_CTX *ctx,
                                  const char *cipher_name,
@@ -37,7 +37,7 @@ OSSL_ENCODER_CTX_set_passphrase_ui
 
 =head1 DESCRIPTION
 
-OSSL_ENCODER_CTX_new_by_EVP_PKEY() is a utility function that creates a
+OSSL_ENCODER_CTX_new_for_pkey() is a utility function that creates a
 B<OSSL_ENCODER_CTX>, finds all applicable encoder implementations and sets
 them up, so almost all the caller has to do next is call functions like
 L<OSSL_ENCODER_to_bio(3)>.  I<output_type> determines the final output
@@ -46,7 +46,7 @@ should be included in the output.  I<output_type> is further discussed in
 L</Output types> below, and I<selection> is further described in
 L</Selections>.
 
-Internally, OSSL_ENCODER_CTX_new_by_EVP_PKEY() uses the names from the
+Internally, OSSL_ENCODER_CTX_new_for_pkey() uses the names from the
 L<EVP_KEYMGMT(3)> implementation associated with I<pkey> to build a list of
 applicable encoder implementations that are used to process the I<pkey> into
 the encoding named by I<output_type>, with the outermost structure named by
@@ -54,7 +54,7 @@ I<output_structure> if that's relevant.  All these implementations are
 implicitly fetched, with I<propquery> for finer selection.
 
 If no suitable encoder implementation is found,
-OSSL_ENCODER_CTX_new_by_EVP_PKEY() still creates a B<OSSL_ENCODER_CTX>, but
+OSSL_ENCODER_CTX_new_for_pkey() still creates a B<OSSL_ENCODER_CTX>, but
 with no associated encoder (L<OSSL_ENCODER_CTX_get_num_encoders(3)> returns
 zero).  This helps the caller to distinguish between an error when creating
 the B<OSSL_ENCODER_CTX> and missing encoder implementation, and allows it to
@@ -146,22 +146,13 @@ usually include the public key.
 
 =head1 RETURN VALUES
 
-OSSL_ENCODER_CTX_new_by_EVP_PKEY() returns a pointer to a
-B<OSSL_ENCODER_CTX>, or NULL if it couldn't be created.
+OSSL_ENCODER_CTX_new_for_pkey() returns a pointer to an B<OSSL_ENCODER_CTX>,
+or NULL if it couldn't be created.
 
 OSSL_ENCODER_CTX_set_cipher(), OSSL_ENCODER_CTX_set_passphrase(),
 OSSL_ENCODER_CTX_set_pem_password_cb(), OSSL_ENCODER_CTX_set_passphrase_ui()
 and OSSL_ENCODER_CTX_set_passphrase_cb() all return 1 on success, or 0 on
 failure.
-
-=head1 NOTES
-
-Parts of the function names are made to match already existing OpenSSL
-names.
-
-B<EVP_PKEY> in OSSL_ENCODER_CTX_new_by_EVP_PKEY() matches the type name,
-thus making for the naming pattern B<OSSL_ENCODER_CTX_new_by_I<TYPE>>() when
-new types are handled.
 
 =head1 SEE ALSO
 
@@ -173,7 +164,7 @@ The functions described here were added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

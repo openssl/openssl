@@ -47,9 +47,9 @@ Certificate enrollment and revocation options:
 
 Message transfer options:
 
-[B<-server> I<[http[s]://]address[:port][/path]>]
+[B<-server> I<[http[s]://][userinfo@]host[:port][/path][?query][#fragment]>]
 [B<-path> I<remote_path>]
-[B<-proxy> I<[http[s]://]address[:port][/path]>]
+[B<-proxy> I<[http[s]://][userinfo@]host[:port][/path][?query][#fragment]>]
 [B<-no_proxy> I<addresses>]
 [B<-msg_timeout> I<seconds>]
 [B<-total_timeout> I<seconds>]
@@ -209,18 +209,18 @@ Currently implemented commands are:
 
 =back
 
-B<ir> requests initialization of an End Entity into a PKI hierarchy
+B<ir> requests initialization of an end entity into a PKI hierarchy
 by issuing a first certificate.
 
-B<cr> requests issuing an additional certificate for an End Entity already
+B<cr> requests issuing an additional certificate for an end entity already
 initialized to the PKI hierarchy.
 
 B<p10cr> requests issuing an additional certificate similarly to B<cr>
-but using PKCS#10 CSR format.
+but using legacy PKCS#10 CSR format.
 
-B<kur> requests a (key) update for an existing, given certificate.
+B<kur> requests a (key) update for an existing certificate.
 
-B<rr> requests revocation of an existing, given certificate.
+B<rr> requests revocation of an existing certificate.
 
 B<genm> requests information using a General Message, where optionally
 included B<InfoTypeAndValue>s may be used to state which info is of interest.
@@ -263,15 +263,17 @@ L<openssl-passphrase-options(1)>.
 
 X509 Distinguished Name (DN) of subject to use in the requested certificate
 template.
-For KUR, it defaults to the subject DN of any given CSR
+For KUR, it defaults to the public key
+in the PKCS#10 CSR given with the B<-csr> option, if provided,
 or of the reference certificate (see B<-oldcert>) if provided.
 This default is used for IR and CR only if no SANs are set.
+If the NULL-DN (C</>) is given then no subject is placed in the template.
 
-The provided subject DN is also used as fallback sender of outgoing CMP messages
-if no B<-cert> and no B<-oldcert> are given.
+If provided and neither B<-cert> nor B<-oldcert> is given,
+the subject DN is used as fallback sender of outgoing CMP messages.
 
 The argument must be formatted as I</type0=value0/type1=value1/type2=...>.
-Special characters may be escaped by C<\> (backslash), whitespace is retained.
+Special characters may be escaped by C<\> (backslash); whitespace is retained.
 Empty values are permitted, but the corresponding type will not be included.
 Giving a single C</> will lead to an empty sequence of RDNs (a NULL-DN).
 Multi-valued RDNs can be formed by placing a C<+> character instead of a C</>
@@ -284,9 +286,13 @@ C</DC=org/DC=OpenSSL/DC=users/UID=123456+CN=John Doe>
 
 X509 issuer Distinguished Name (DN) of the CA server
 to place in the requested certificate template in IR/CR/KUR.
+If the NULL-DN (C</>) is given then no issuer is placed in the template.
 
-If neither B<-srvcert> nor B<-recipient> is available,
-the name given in this option is also set as the recipient of the CMP message.
+If provided and neither B<-recipient> nor B<-srvcert> is given,
+the issuer DN is used as fallback recipient of outgoing CMP messages.
+
+The argument must be formatted as I</type0=value0/type1=value1/type2=...>.
+For details see the description of the B<-subject> option.
 
 =item B<-days> I<number>
 
@@ -298,6 +304,8 @@ validity period starts from the current time (as seen by the host).
 =item B<-reqexts> I<name>
 
 Name of section in OpenSSL config file defining certificate request extensions.
+If the B<-csr> option is present, these extensions augment the extensions
+contained the given PKCS#10 CSR, overriding any extensions with same OIDs.
 
 =item B<-sans> I<spec>
 
@@ -342,15 +350,15 @@ is provided via the B<-newkey> or B<-key> options.
 =item B<-csr> I<filename>
 
 PKCS#10 CSR in PEM or DER format containing a certificate request.
-When used with a with B<-cmd> I<p10cr> used directly in a legacy P10CR message.
-When used with B<-cmd> I<ir>, I<cr>, or I<kur>, it is tranformed into the
+With B<-cmd> I<p10cr> it is used directly in a legacy P10CR message.
+When used with B<-cmd> I<ir>, I<cr>, or I<kur>, it is transformed into the
 respective regular CMP request.
-It may also be used with B<-cmd> I<rr> to specifiy the certificate to be revoked
-via the included subject and public key.
+It may also be used with B<-cmd> I<rr> to specify the certificate to be revoked
+via the included subject name and public key.
 
 =item B<-out_trusted> I<filenames>|I<uris>
 
-Trusted certificate(s) to use for verifying the newly enrolled certificate.
+Trusted certificate(s) to use for validating the newly enrolled certificate.
 
 Multiple sources may be given, separated by commas and/or whitespace
 (where in the latter case the whole argument must be enclosed in "...").
@@ -389,13 +397,13 @@ The file where the chain of the newly enrolled certificate should be saved.
 
 The certificate to be updated (i.e., renewed or re-keyed) in Key Update Request
 (KUR) messages or to be revoked in Revocation Request (RR) messages.
+For KUR the certificate to be updated defaults to B<-cert>,
+and the resulting certificate is called I<reference certificate>.
 For RR the certificate to be revoked can also be specified using B<-csr>.
-For KUR certificate to be updated defaults to B<-cert>, and the resulting certificate is called
-I<reference certificate>.
 
 The reference certificate, if any, is also used for
 deriving default subject DN and Subject Alternative Names and the
-default issuer entry in the requested certificate template of a IR/CR/KUR.
+default issuer entry in the requested certificate template of an IR/CR/KUR.
 Its subject is used as sender of outgoing messages if B<-cert> is not given.
 Its issuer is used as default recipient in CMP message headers
 if neither B<-recipient>, B<-srvcert>, nor B<-issuer> is given.
@@ -427,11 +435,13 @@ Reason numbers defined in RFC 5280 are:
 
 =over 4
 
-=item B<-server> I<[http[s]://]address[:port][/path]>
+=item B<-server> I<[http[s]://][userinfo@]host[:port][/path][?query][#fragment]>
 
 The IP address or DNS hostname and optionally port (defaulting to 80 or 443)
 of the CMP server to connect to using HTTP(S) transport.
-The optional I<http://> or I<https://> prefix is ignored.
+The scheme I<https> may be given only if the B<tls_used> option is used.
+The optional userinfo and fragment components are ignored.
+Any given query component is handled as part of the path component.
 If a path is included it provides the default value for the B<-path> option.
 
 =item B<-path> I<remote_path>
@@ -439,11 +449,13 @@ If a path is included it provides the default value for the B<-path> option.
 HTTP path at the CMP server (aka CMP alias) to use for POST requests.
 Defaults to any path given with B<-server>, else C<"/">.
 
-=item B<-proxy> I<[http[s]://]address[:port][/path]>
+=item B<-proxy> I<[http[s]://][userinfo@]host[:port] [/path][?query][#fragment]>
 
 The HTTP(S) proxy server to use for reaching the CMP server unless B<no_proxy>
 applies, see below.
-The optional I<http://> or I<https://> prefix and any trailing path are ignored.
+The optional I<http://> or I<https://> prefix is ignored (note that TLS may be
+selected by B<tls_used>), as well as any path, userinfo, and query, and fragment
+components.
 Defaults to the environment variable C<http_proxy> if set, else C<HTTP_PROXY>
 in case no TLS is used, otherwise C<https_proxy> if set, else C<HTTPS_PROXY>.
 
@@ -474,7 +486,7 @@ Default is 0 (infinite).
 
 =item B<-trusted> I<filenames>|I<uris>
 
-When verifying signature-based protection of CMP response messages,
+When validating signature-based protection of CMP response messages,
 these are the CA certificate(s) to trust while checking certificate chains
 during CMP server authentication.
 This option gives more flexibility than the B<-srvcert> option because the
@@ -500,8 +512,8 @@ All these certificates may be useful for cert path construction
 for the CMP client certificate (to include in the extraCerts field of outgoing
 messages) and for the TLS client certificate (if TLS is enabled)
 as well as for chain building
-when verifying the CMP server certificate (checking signature-based
-CMP message protection) and when verifying newly enrolled certificates.
+when validating the CMP server certificate (checking signature-based
+CMP message protection) and when validating newly enrolled certificates.
 
 Multiple sources may be given, separated by commas and/or whitespace.
 Each file may contain multiple certificates.
@@ -509,7 +521,7 @@ Each file may contain multiple certificates.
 =item B<-srvcert> I<filename>|I<uri>]
 
 The specific CMP server certificate to expect and directly trust (even if it is
-expired) when verifying signature-based protection of CMP response messages.
+expired) when validating signature-based protection of CMP response messages.
 May be set alternatively to the B<-trusted> option to pin the accepted server.
 
 If set, the subject of the certificate is also used
@@ -529,6 +541,9 @@ the issuer of the certificate given with the B<-oldcert> option,
 the issuer of the CMP client certificate (B<-cert> option),
 as far as any of those is present, else the NULL-DN as last resort.
 
+The argument must be formatted as I</type0=value0/type1=value1/type2=...>.
+For details see the description of the B<-subject> option.
+
 =item B<-expect_sender> I<name>
 
 Distinguished Name (DN) expected in the sender field of incoming CMP messages.
@@ -541,9 +556,12 @@ Note that this option gives slightly more freedom than setting the B<-srvcert>,
 which pins the server to the holder of a particular certificate, while the
 expected sender name will continue to match after updates of the server cert.
 
+The argument must be formatted as I</type0=value0/type1=value1/type2=...>.
+For details see the description of the B<-subject> option.
+
 =item B<-ignore_keyusage>
 
-Ignore key usage restrictions in CMP signer certificates when verifying
+Ignore key usage restrictions in CMP signer certificates when validating
 signature-based protection of incoming CMP messages,
 else C<digitalSignature> must be allowed for signer certificate.
 
@@ -609,7 +627,7 @@ is typically used when authenticating with pre-shared key (password-based MAC).
 
 Prefer PBM-based message protection with given source of a secret value.
 The secret is used for creating PBM-based protection of outgoing messages
-and (as far as needed) for verifying PBM-based protection of incoming messages.
+and (as far as needed) for validating PBM-based protection of incoming messages.
 PBM stands for Password-Based Message Authentication Code.
 This takes precedence over the B<-cert> and B<-key> options.
 
@@ -775,7 +793,7 @@ Extra certificates to provide to TLS server during TLS handshake
 
 =item B<-tls_trusted> I<filenames>|I<uris>
 
-Trusted certificate(s) to use for verifying the TLS server certificate.
+Trusted certificate(s) to use for validating the TLS server certificate.
 This implies hostname validation.
 
 Multiple sources may be given, separated by commas and/or whitespace
@@ -897,7 +915,7 @@ have no effect on the certificate verification enabled via this option.
 
 =item B<-srv_untrusted> I<filenames>|I<uris>
 
-Intermediate CA certs that may be useful when verifying client certificates.
+Intermediate CA certs that may be useful when validating client certificates.
 
 =item B<-rsp_cert> I<filename>|I<uri>]
 

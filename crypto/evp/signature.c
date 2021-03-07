@@ -329,12 +329,14 @@ void EVP_SIGNATURE_do_all_provided(OSSL_LIB_CTX *libctx,
 }
 
 
-void EVP_SIGNATURE_names_do_all(const EVP_SIGNATURE *signature,
-                                void (*fn)(const char *name, void *data),
-                                void *data)
+int EVP_SIGNATURE_names_do_all(const EVP_SIGNATURE *signature,
+                               void (*fn)(const char *name, void *data),
+                               void *data)
 {
     if (signature->prov != NULL)
-        evp_names_do_all(signature->prov, signature->name_id, fn, data);
+        return evp_names_do_all(signature->prov, signature->name_id, fn, data);
+
+    return 1;
 }
 
 const OSSL_PARAM *EVP_SIGNATURE_gettable_ctx_params(const EVP_SIGNATURE *sig)
@@ -345,7 +347,7 @@ const OSSL_PARAM *EVP_SIGNATURE_gettable_ctx_params(const EVP_SIGNATURE *sig)
         return NULL;
 
     provctx = ossl_provider_ctx(EVP_SIGNATURE_provider(sig));
-    return sig->gettable_ctx_params(provctx);
+    return sig->gettable_ctx_params(NULL, provctx);
 }
 
 const OSSL_PARAM *EVP_SIGNATURE_settable_ctx_params(const EVP_SIGNATURE *sig)
@@ -356,7 +358,7 @@ const OSSL_PARAM *EVP_SIGNATURE_settable_ctx_params(const EVP_SIGNATURE *sig)
         return NULL;
 
     provctx = ossl_provider_ctx(EVP_SIGNATURE_provider(sig));
-    return sig->settable_ctx_params(provctx);
+    return sig->settable_ctx_params(NULL, provctx);
 }
 
 static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, int operation)

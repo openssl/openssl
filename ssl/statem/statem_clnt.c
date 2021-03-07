@@ -1916,7 +1916,6 @@ WORK_STATE tls_post_process_server_certificate(SSL *s, WORK_STATE wst)
             return WORK_ERROR;
         }
     }
-    s->session->peer_type = certidx;
 
     X509_free(s->session->peer);
     X509_up_ref(x);
@@ -2072,7 +2071,13 @@ static int tls_process_ske_dhe(SSL *s, PACKET *pkt, EVP_PKEY **pkey)
     EVP_PKEY_CTX_free(pctx);
     pctx = EVP_PKEY_CTX_new_from_pkey(s->ctx->libctx, peer_tmp, s->ctx->propq);
     if (pctx == NULL
-            || EVP_PKEY_param_check(pctx) != 1
+            /*
+             * EVP_PKEY_param_check() will verify that the DH params are using
+             * a safe prime. In this context, because we're using ephemeral DH,
+             * we're ok with it not being a safe prime.
+             * EVP_PKEY_param_check_quick() skips the safe prime check.
+             */
+            || EVP_PKEY_param_check_quick(pctx) != 1
             || EVP_PKEY_public_check(pctx) != 1) {
         SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_DH_VALUE);
         goto err;
@@ -2717,7 +2722,7 @@ MSG_PROCESS_RETURN tls_process_server_done(SSL *s, PACKET *pkt)
     }
 #ifndef OPENSSL_NO_SRP
     if (s->s3.tmp.new_cipher->algorithm_mkey & SSL_kSRP) {
-        if (SRP_Calc_A_param(s) <= 0) {
+        if (ssl_srp_calc_a_param_intern(s) <= 0) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_SRP_A_CALC);
             return MSG_PROCESS_ERROR;
         }

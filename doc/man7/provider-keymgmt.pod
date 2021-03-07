@@ -22,7 +22,8 @@ provider-keymgmt - The KEYMGMT library E<lt>-E<gt> provider functions
  void *OSSL_FUNC_keymgmt_gen_init(void *provctx, int selection);
  int OSSL_FUNC_keymgmt_gen_set_template(void *genctx, void *template);
  int OSSL_FUNC_keymgmt_gen_set_params(void *genctx, const OSSL_PARAM params[]);
- const OSSL_PARAM *OSSL_FUNC_keymgmt_gen_settable_params(void *provctx);
+ const OSSL_PARAM *OSSL_FUNC_keymgmt_gen_settable_params(void *genctx,
+                                                         void *provctx);
  void *OSSL_FUNC_keymgmt_gen(void *genctx, OSSL_CALLBACK *cb, void *cbarg);
  void OSSL_FUNC_keymgmt_gen_cleanup(void *genctx);
 
@@ -54,7 +55,7 @@ provider-keymgmt - The KEYMGMT library E<lt>-E<gt> provider functions
  int OSSL_FUNC_keymgmt_copy(void *keydata_to, const void *keydata_from, int selection);
 
  /* Key object validation */
- int OSSL_FUNC_keymgmt_validate(const void *keydata, int selection);
+ int OSSL_FUNC_keymgmt_validate(const void *keydata, int selection, int checktype);
 
 =head1 DESCRIPTION
 
@@ -298,7 +299,12 @@ data subsets may cause validation of the combined data.
 For example, the combination of B<OSSL_KEYMGMT_SELECT_PRIVATE_KEY> and
 B<OSSL_KEYMGMT_SELECT_PUBLIC_KEY> (or B<OSSL_KEYMGMT_SELECT_KEYPAIR>
 for short) is expected to check that the pairwise consistency of
-I<keydata> is valid.
+I<keydata> is valid. The I<checktype> parameter controls what type of check is
+performed on the subset of data. Two types of check are defined:
+B<OSSL_KEYMGMT_VALIDATE_FULL_CHECK> and B<OSSL_KEYMGMT_VALIDATE_QUICK_CHECK>.
+The interpretation of how much checking is performed in a full check versus a
+quick check is key type specific. Some providers may have no distinction
+between a full check and a quick check.
 
 OSSL_FUNC_keymgmt_match() should check if the data subset indicated by
 I<selection> in I<keydata1> and I<keydata2> match.  It is assumed that
@@ -398,7 +404,7 @@ The KEYMGMT interface was introduced in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -64,6 +64,7 @@ int mac_main(int argc, char **argv)
     const char *infile = NULL;
     int out_bin = 0;
     int inform = FORMAT_BINARY;
+    OSSL_PARAM *params = NULL;
 
     prog = opt_init(argc, argv, mac_options);
     buf = app_malloc(BUFSIZE, "I/O buffer");
@@ -117,9 +118,9 @@ opthelp:
 
     if (opts != NULL) {
         int ok = 1;
-        OSSL_PARAM *params =
-            app_params_new_from_opts(opts, EVP_MAC_settable_ctx_params(mac));
 
+        params = app_params_new_from_opts(opts,
+                                          EVP_MAC_settable_ctx_params(mac));
         if (params == NULL)
             goto err;
 
@@ -144,7 +145,7 @@ opthelp:
     if (out == NULL)
         goto err;
 
-    if (!EVP_MAC_init(ctx)) {
+    if (!EVP_MAC_init(ctx, NULL, 0, NULL)) {
         BIO_printf(bio_err, "EVP_MAC_Init failed\n");
         goto err;
     }

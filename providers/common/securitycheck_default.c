@@ -17,12 +17,13 @@
 #include "internal/nelem.h"
 
 /* Disable the security checks in the default provider */
-int securitycheck_enabled(void)
+int ossl_securitycheck_enabled(void)
 {
     return 0;
 }
 
-int digest_rsa_sign_get_md_nid(const EVP_MD *md, ossl_unused int sha1_allowed)
+int ossl_digest_rsa_sign_get_md_nid(const EVP_MD *md,
+                                    ossl_unused int sha1_allowed)
 {
     int mdnid;
 
@@ -35,8 +36,8 @@ int digest_rsa_sign_get_md_nid(const EVP_MD *md, ossl_unused int sha1_allowed)
         { NID_ripemd160, OSSL_DIGEST_NAME_RIPEMD160 },
     };
 
-    mdnid = digest_get_approved_nid_with_sha1(md, 1);
+    mdnid = ossl_digest_get_approved_nid_with_sha1(md, 1);
     if (mdnid == NID_undef)
-        mdnid = digest_md_to_nid(md, name_to_nid, OSSL_NELEM(name_to_nid));
+        mdnid = ossl_digest_md_to_nid(md, name_to_nid, OSSL_NELEM(name_to_nid));
     return mdnid;
 }

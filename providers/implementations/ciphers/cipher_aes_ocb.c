@@ -14,9 +14,9 @@
  */
 #include "internal/deprecated.h"
 
+#include <openssl/proverr.h>
 #include "cipher_aes_ocb.h"
 #include "prov/providercommon.h"
-#include "prov/providercommonerr.h"
 #include "prov/ciphercommon_aead.h"
 #include "prov/implementations.h"
 
@@ -162,7 +162,7 @@ static int aes_ocb_block_update_internal(PROV_AES_OCB_CTX *ctx,
     size_t outlint = 0;
 
     if (*bufsz != 0)
-        nextblocks = fillblock(buf, bufsz, AES_BLOCK_SIZE, &in, &inl);
+        nextblocks = ossl_cipher_fillblock(buf, bufsz, AES_BLOCK_SIZE, &in, &inl);
     else
         nextblocks = inl & ~(AES_BLOCK_SIZE-1);
 
@@ -193,7 +193,8 @@ static int aes_ocb_block_update_internal(PROV_AES_OCB_CTX *ctx,
         in += nextblocks;
         inl -= nextblocks;
     }
-    if (inl != 0 && !trailingdata(buf, bufsz, AES_BLOCK_SIZE, &in, &inl)) {
+    if (inl != 0
+        && !ossl_cipher_trailingdata(buf, bufsz, AES_BLOCK_SIZE, &in, &inl)) {
         /* PROVerr already called */
         return 0;
     }
@@ -451,7 +452,7 @@ static int aes_ocb_get_ctx_params(void *vctx, OSSL_PARAM params[])
             return 0;
         }
         if (!ctx->base.enc || p->data_size != ctx->taglen) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_TAGLEN);
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_TAG_LENGTH);
             return 0;
         }
         memcpy(p->data, ctx->tag, ctx->taglen);
@@ -468,7 +469,8 @@ static const OSSL_PARAM cipher_ocb_known_gettable_ctx_params[] = {
     OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG, NULL, 0),
     OSSL_PARAM_END
 };
-static const OSSL_PARAM *cipher_ocb_gettable_ctx_params(ossl_unused void *p_ctx)
+static const OSSL_PARAM *cipher_ocb_gettable_ctx_params(ossl_unused void *cctx,
+                                                        ossl_unused void *p_ctx)
 {
     return cipher_ocb_known_gettable_ctx_params;
 }
@@ -479,7 +481,8 @@ static const OSSL_PARAM cipher_ocb_known_settable_ctx_params[] = {
     OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG, NULL, 0),
     OSSL_PARAM_END
 };
-static const OSSL_PARAM *cipher_ocb_settable_ctx_params(ossl_unused void *p_ctx)
+static const OSSL_PARAM *cipher_ocb_settable_ctx_params(ossl_unused void *cctx,
+                                                        ossl_unused void *p_ctx)
 {
     return cipher_ocb_known_settable_ctx_params;
 }

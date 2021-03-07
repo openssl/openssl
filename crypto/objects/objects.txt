@@ -280,6 +280,7 @@ id-smime-ct 27		: id-ct-asciiTextWithCRLF
 id-smime-ct 28		: id-ct-xml
 id-smime-ct 35		: id-ct-rpkiGhostbusters
 id-smime-ct 36		: id-ct-resourceTaggedAttest
+id-smime-ct 47		: id-ct-geofeedCSVwithCRLF
 
 # S/MIME Attributes
 id-smime-aa 1		: id-smime-aa-receiptRequest

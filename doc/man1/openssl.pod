@@ -294,7 +294,7 @@ SPKAC printing and generating command.
 
 =item B<srp>
 
-Maintain SRP password file.
+Maintain SRP password file. This command is deprecated.
 
 =item B<storeutl>
 

@@ -3239,7 +3239,7 @@ SSL_CTX *SSL_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
         goto err;
 
 #ifndef OPENSSL_NO_SRP
-    if (!SSL_CTX_SRP_CTX_init(ret))
+    if (!ssl_ctx_srp_ctx_init_intern(ret))
         goto err;
 #endif
 #ifndef OPENSSL_NO_ENGINE
@@ -3382,7 +3382,7 @@ void SSL_CTX_free(SSL_CTX *a)
     sk_SRTP_PROTECTION_PROFILE_free(a->srtp_profiles);
 #endif
 #ifndef OPENSSL_NO_SRP
-    SSL_CTX_SRP_CTX_free(a);
+    ssl_ctx_srp_ctx_free_intern(a);
 #endif
 #ifndef OPENSSL_NO_ENGINE
     tls_engine_finish(a->client_cert_engine);

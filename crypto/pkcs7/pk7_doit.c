@@ -69,8 +69,8 @@ static int pkcs7_bio_add_digest(BIO **pbio, X509_ALGOR *alg,
     name = OBJ_nid2sn(OBJ_obj2nid(alg->algorithm));
 
     (void)ERR_set_mark();
-    fetched = EVP_MD_fetch(pkcs7_ctx_get0_libctx(ctx), name,
-                           pkcs7_ctx_get0_propq(ctx));
+    fetched = EVP_MD_fetch(ossl_pkcs7_ctx_get0_libctx(ctx), name,
+                           ossl_pkcs7_ctx_get0_propq(ctx));
     if (fetched != NULL)
         md = fetched;
     else
@@ -114,8 +114,8 @@ static int pkcs7_encode_rinfo(PKCS7_RECIP_INFO *ri,
     if (pkey == NULL)
         return 0;
 
-    pctx = EVP_PKEY_CTX_new_from_pkey(pkcs7_ctx_get0_libctx(ctx), pkey,
-                                      pkcs7_ctx_get0_propq(ctx));
+    pctx = EVP_PKEY_CTX_new_from_pkey(ossl_pkcs7_ctx_get0_libctx(ctx), pkey,
+                                      ossl_pkcs7_ctx_get0_propq(ctx));
     if (pctx == NULL)
         return 0;
 
@@ -163,8 +163,8 @@ static int pkcs7_decrypt_rinfo(unsigned char **pek, int *peklen,
     int ret = -1;
     const PKCS7_CTX *ctx = ri->ctx;
 
-    pctx = EVP_PKEY_CTX_new_from_pkey(pkcs7_ctx_get0_libctx(ctx), pkey,
-                                      pkcs7_ctx_get0_propq(ctx));
+    pctx = EVP_PKEY_CTX_new_from_pkey(ossl_pkcs7_ctx_get0_libctx(ctx), pkey,
+                                      ossl_pkcs7_ctx_get0_propq(ctx));
     if (pctx == NULL)
         return -1;
 
@@ -232,9 +232,9 @@ BIO *PKCS7_dataInit(PKCS7 *p7, BIO *bio)
         ERR_raise(ERR_LIB_PKCS7, PKCS7_R_INVALID_NULL_POINTER);
         return NULL;
     }
-    p7_ctx = pkcs7_get0_ctx(p7);
-    libctx = pkcs7_ctx_get0_libctx(p7_ctx);
-    propq = pkcs7_ctx_get0_propq(p7_ctx);
+    p7_ctx = ossl_pkcs7_get0_ctx(p7);
+    libctx = ossl_pkcs7_ctx_get0_libctx(p7_ctx);
+    propq = ossl_pkcs7_ctx_get0_propq(p7_ctx);
 
     /*
      * The content field in the PKCS7 ContentInfo is optional, but that really
@@ -426,9 +426,9 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
         return NULL;
     }
 
-    p7_ctx = pkcs7_get0_ctx(p7);
-    libctx = pkcs7_ctx_get0_libctx(p7_ctx);
-    propq = pkcs7_ctx_get0_propq(p7_ctx);
+    p7_ctx = ossl_pkcs7_get0_ctx(p7);
+    libctx = ossl_pkcs7_ctx_get0_libctx(p7_ctx);
+    propq = ossl_pkcs7_ctx_get0_propq(p7_ctx);
 
     if (p7->d.ptr == NULL) {
         ERR_raise(ERR_LIB_PKCS7, PKCS7_R_NO_CONTENT);
@@ -744,7 +744,7 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
         return 0;
     }
 
-    p7_ctx = pkcs7_get0_ctx(p7);
+    p7_ctx = ossl_pkcs7_get0_ctx(p7);
 
     if (p7->d.ptr == NULL) {
         ERR_raise(ERR_LIB_PKCS7, PKCS7_R_NO_CONTENT);
@@ -854,8 +854,8 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
                     goto err;
 
                 if (!EVP_SignFinal_ex(ctx_tmp, abuf, &abuflen, si->pkey,
-                                      pkcs7_ctx_get0_libctx(p7_ctx),
-                                      pkcs7_ctx_get0_propq(p7_ctx))) {
+                                      ossl_pkcs7_ctx_get0_libctx(p7_ctx),
+                                      ossl_pkcs7_ctx_get0_propq(p7_ctx))) {
                     OPENSSL_free(abuf);
                     ERR_raise(ERR_LIB_PKCS7, ERR_R_EVP_LIB);
                     goto err;
@@ -927,8 +927,8 @@ int PKCS7_SIGNER_INFO_sign(PKCS7_SIGNER_INFO *si)
     }
 
     if (EVP_DigestSignInit_ex(mctx, &pctx, EVP_MD_name(md),
-                              pkcs7_ctx_get0_libctx(ctx),
-                              pkcs7_ctx_get0_propq(ctx), si->pkey) <= 0)
+                              ossl_pkcs7_ctx_get0_libctx(ctx),
+                              ossl_pkcs7_ctx_get0_propq(ctx), si->pkey) <= 0)
         goto err;
 
     /*
@@ -1053,10 +1053,8 @@ int PKCS7_dataVerify(X509_STORE *cert_store, X509_STORE_CTX *ctx, BIO *bio,
     i = X509_verify_cert(ctx);
     if (i <= 0) {
         ERR_raise(ERR_LIB_PKCS7, ERR_R_X509_LIB);
-        X509_STORE_CTX_cleanup(ctx);
         goto err;
     }
-    X509_STORE_CTX_cleanup(ctx);
 
     return PKCS7_signatureVerify(bio, p7, si, x509);
  err:
@@ -1075,9 +1073,9 @@ int PKCS7_signatureVerify(BIO *bio, PKCS7 *p7, PKCS7_SIGNER_INFO *si,
     STACK_OF(X509_ATTRIBUTE) *sk;
     BIO *btmp;
     EVP_PKEY *pkey;
-    const PKCS7_CTX *ctx = pkcs7_get0_ctx(p7);
-    OSSL_LIB_CTX *libctx = pkcs7_ctx_get0_libctx(ctx);
-    const char *propq = pkcs7_ctx_get0_propq(ctx);
+    const PKCS7_CTX *ctx = ossl_pkcs7_get0_ctx(p7);
+    OSSL_LIB_CTX *libctx = ossl_pkcs7_ctx_get0_libctx(ctx);
+    const char *propq = ossl_pkcs7_ctx_get0_propq(ctx);
 
     mdc_tmp = EVP_MD_CTX_new();
     if (mdc_tmp == NULL) {

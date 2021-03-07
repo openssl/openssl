@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -9,8 +9,9 @@
 
 #ifndef OSSL_INTERNAL_BIO_H
 # define OSSL_INTERNAL_BIO_H
+# pragma once
 
-#include <openssl/bio.h>
+# include <openssl/bio.h>
 
 struct bio_method_st {
     int type;
@@ -62,11 +63,11 @@ int bread_conv(BIO *bio, char *data, size_t datal, size_t *read);
 # define BIO_clear_ktls_ctrl_msg_flag(b) \
     BIO_clear_flags(b, BIO_FLAGS_KTLS_TX_CTRL_MSG)
 
-#  define BIO_set_ktls(b, keyblob, is_tx)   \
+# define BIO_set_ktls(b, keyblob, is_tx)   \
      BIO_ctrl(b, BIO_CTRL_SET_KTLS, is_tx, keyblob)
-#  define BIO_set_ktls_ctrl_msg(b, record_type)   \
+# define BIO_set_ktls_ctrl_msg(b, record_type)   \
      BIO_ctrl(b, BIO_CTRL_SET_KTLS_TX_SEND_CTRL_MSG, record_type, NULL)
-#  define BIO_clear_ktls_ctrl_msg(b) \
+# define BIO_clear_ktls_ctrl_msg(b) \
      BIO_ctrl(b, BIO_CTRL_CLEAR_KTLS_TX_CTRL_MSG, 0, NULL)
 
 #endif

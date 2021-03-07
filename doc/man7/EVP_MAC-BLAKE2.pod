@@ -36,25 +36,28 @@ The length of the "size" parameter should not exceed that of a B<size_t>.
 
 =item "key" (B<OSSL_MAC_PARAM_KEY>) <octet string>
 
-This may be at most 64 bytes for BLAKE2BMAC or 32 for BLAKE2SMAC and
-at least 1 byte in both cases.
+Sets the MAC key.
+It may be at most 64 bytes for BLAKE2BMAC or 32 for BLAKE2SMAC and at
+least 1 byte in both cases.
+Setting this parameter is identical to passing a I<key> to L<EVP_MAC_init(3)>.
 
 =item "custom" (B<OSSL_MAC_PARAM_CUSTOM>) <octet string>
 
-This is an optional value of at most 16 bytes for BLAKE2BMAC or 8 for
-BLAKE2SMAC.
-It is empty by default.
+Sets the custom value.
+It is an optional value of at most 16 bytes for BLAKE2BMAC or 8 for
+BLAKE2SMAC, and is empty by default.
 
 =item "salt" (B<OSSL_MAC_PARAM_SALT>) <octet string>
 
-This is an optional value of at most 16 bytes for BLAKE2BMAC or 8 for
-BLAKE2SMAC.
-It is empty by default.
+Sets the salt.
+It is an optional value of at most 16 bytes for BLAKE2BMAC or 8 for
+BLAKE2SMAC, and is empty by default.
 
 =item "size" (B<OSSL_MAC_PARAM_SIZE>) <unsigned integer>
 
-When set, this can be any number between between 1 and 32 for
-EVP_MAC_BLAKE2S or 64 for EVP_MAC_BLAKE2B.
+Sets the MAC size.
+It can be any number between 1 and 32 for EVP_MAC_BLAKE2S or between 1
+and 64 for EVP_MAC_BLAKE2B.
 It is 32 and 64 respectively by default.
 
 =back

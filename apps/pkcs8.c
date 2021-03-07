@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -75,7 +75,7 @@ int pkcs8_main(int argc, char **argv)
     PKCS8_PRIV_KEY_INFO *p8inf = NULL;
     X509_SIG *p8 = NULL;
     const EVP_CIPHER *cipher = NULL;
-    char *infile = NULL, *outfile = NULL;
+    char *infile = NULL, *outfile = NULL, *ciphername = NULL;
     char *passinarg = NULL, *passoutarg = NULL, *prog;
 #ifndef OPENSSL_NO_UI_CONSOLE
     char pass[APP_PASS_LEN];
@@ -136,8 +136,7 @@ int pkcs8_main(int argc, char **argv)
             traditional = 1;
             break;
         case OPT_V2:
-            if (!opt_cipher(opt_arg(), &cipher))
-                goto opthelp;
+            ciphername = opt_arg();
             break;
         case OPT_V1:
             pbe_nid = OBJ_txt2nid(opt_arg());
@@ -200,6 +199,11 @@ int pkcs8_main(int argc, char **argv)
         goto opthelp;
 
     private = 1;
+    app_RAND_load();
+    if (ciphername != NULL) {
+        if (!opt_cipher(ciphername, &cipher))
+            goto opthelp;
+    }
 
     if (!app_passwd(passinarg, passoutarg, &passin, &passout)) {
         BIO_printf(bio_err, "Error getting passwords\n");

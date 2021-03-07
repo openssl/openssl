@@ -233,7 +233,7 @@ int PKCS7_add_signer(PKCS7 *p7, PKCS7_SIGNER_INFO *psi)
         }
     }
 
-    psi->ctx = pkcs7_get0_ctx(p7);
+    psi->ctx = ossl_pkcs7_get0_ctx(p7);
     if (!sk_PKCS7_SIGNER_INFO_push(signer_sk, psi))
         return 0;
     return 1;
@@ -257,7 +257,7 @@ int PKCS7_add_certificate(PKCS7 *p7, X509 *x509)
         return 0;
     }
 
-    return X509_add_cert_new(sk, x509, X509_ADD_FLAG_UP_REF);
+    return ossl_x509_add_cert_new(sk, x509, X509_ADD_FLAG_UP_REF);
 }
 
 int PKCS7_add_crl(PKCS7 *p7, X509_CRL *crl)
@@ -425,12 +425,12 @@ static STACK_OF(PKCS7_RECIP_INFO) *pkcs7_get_recipient_info(const PKCS7 *p7)
  * Set up the library context into any loaded structure that needs it.
  * i.e loaded X509 objects.
  */
-void pkcs7_resolve_libctx(PKCS7 *p7)
+void ossl_pkcs7_resolve_libctx(PKCS7 *p7)
 {
     int i;
-    const PKCS7_CTX *ctx = pkcs7_get0_ctx(p7);
-    OSSL_LIB_CTX *libctx = pkcs7_ctx_get0_libctx(ctx);
-    const char *propq = pkcs7_ctx_get0_propq(ctx);
+    const PKCS7_CTX *ctx = ossl_pkcs7_get0_ctx(p7);
+    OSSL_LIB_CTX *libctx = ossl_pkcs7_ctx_get0_libctx(ctx);
+    const char *propq = ossl_pkcs7_ctx_get0_propq(ctx);
     STACK_OF(PKCS7_RECIP_INFO) *rinfos = pkcs7_get_recipient_info(p7);
     STACK_OF(PKCS7_SIGNER_INFO) *sinfos = PKCS7_get_signer_info(p7);
     STACK_OF(X509) *certs = pkcs7_get_signer_certs(p7);
@@ -455,16 +455,16 @@ void pkcs7_resolve_libctx(PKCS7 *p7)
     }
 }
 
-const PKCS7_CTX *pkcs7_get0_ctx(const PKCS7 *p7)
+const PKCS7_CTX *ossl_pkcs7_get0_ctx(const PKCS7 *p7)
 {
     return p7 != NULL ? &p7->ctx : NULL;
 }
 
-OSSL_LIB_CTX *pkcs7_ctx_get0_libctx(const PKCS7_CTX *ctx)
+OSSL_LIB_CTX *ossl_pkcs7_ctx_get0_libctx(const PKCS7_CTX *ctx)
 {
     return ctx != NULL ? ctx->libctx : NULL;
 }
-const char *pkcs7_ctx_get0_propq(const PKCS7_CTX *ctx)
+const char *ossl_pkcs7_ctx_get0_propq(const PKCS7_CTX *ctx)
 {
     return ctx != NULL ? ctx->propq : NULL;
 }
@@ -524,7 +524,7 @@ PKCS7_RECIP_INFO *PKCS7_add_recipient(PKCS7 *p7, X509 *x509)
         goto err;
     if (!PKCS7_add_recipient_info(p7, ri))
         goto err;
-    ri->ctx = pkcs7_get0_ctx(p7);
+    ri->ctx = ossl_pkcs7_get0_ctx(p7);
     return ri;
  err:
     PKCS7_RECIP_INFO_free(ri);
@@ -656,7 +656,7 @@ int PKCS7_set_cipher(PKCS7 *p7, const EVP_CIPHER *cipher)
     }
 
     ec->cipher = cipher;
-    ec->ctx = pkcs7_get0_ctx(p7);
+    ec->ctx = ossl_pkcs7_get0_ctx(p7);
     return 1;
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -20,16 +20,16 @@
 #include <openssl/bn.h>
 #include <openssl/err.h>
 #include <openssl/safestack.h>
+#include <openssl/proverr.h>
 #include "internal/ffc.h"
 #include "crypto/bn.h"           /* bn_get_words() */
-#include "crypto/dh.h"           /* dh_get0_params() */
-#include "crypto/dsa.h"          /* dsa_get0_params() */
-#include "crypto/ec.h"           /* ec_key_get_libctx */
+#include "crypto/dh.h"           /* ossl_dh_get0_params() */
+#include "crypto/dsa.h"          /* ossl_dsa_get0_params() */
+#include "crypto/ec.h"           /* ossl_ec_key_get_libctx */
 #include "crypto/ecx.h"          /* ECX_KEY, etc... */
 #include "crypto/rsa.h"          /* RSA_PSS_PARAMS_30, etc... */
 #include "prov/bio.h"
 #include "prov/implementations.h"
-#include "prov/providercommonerr.h"
 #include "endecoder_local.h"
 
 DEFINE_SPECIAL_STACK_OF_CONST(BIGNUM_const, BIGNUM)
@@ -245,7 +245,7 @@ static int dh_to_text(BIO *out, const void *key, int selection)
         }
     }
     if ((selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) != 0) {
-        params = dh_get0_params((DH *)dh);
+        params = ossl_dh_get0_params((DH *)dh);
         if (params == NULL) {
             ERR_raise(ERR_LIB_PROV, PROV_R_NOT_PARAMETERS);
             return 0;
@@ -315,7 +315,7 @@ static int dsa_to_text(BIO *out, const void *key, int selection)
         }
     }
     if ((selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) != 0) {
-        params = dsa_get0_params((DSA *)dsa);
+        params = ossl_dsa_get0_params((DSA *)dsa);
         if (params == NULL) {
             ERR_raise(ERR_LIB_PROV, PROV_R_NOT_PARAMETERS);
             return 0;
@@ -539,7 +539,7 @@ static int ec_to_text(BIO *out, const void *key, int selection)
         && !print_labeled_buf(out, "pub:", pub, pub_len))
         goto err;
     if ((selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) != 0)
-        ret = ec_param_to_text(out, group, ec_key_get_libctx(ec));
+        ret = ec_param_to_text(out, group, ossl_ec_key_get_libctx(ec));
 err:
     OPENSSL_clear_free(priv, priv_len);
     OPENSSL_free(pub);

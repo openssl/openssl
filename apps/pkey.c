@@ -73,7 +73,7 @@ int pkey_main(int argc, char **argv)
     EVP_PKEY_CTX *ctx = NULL;
     const EVP_CIPHER *cipher = NULL;
     char *infile = NULL, *outfile = NULL, *passin = NULL, *passout = NULL;
-    char *passinarg = NULL, *passoutarg = NULL, *prog;
+    char *passinarg = NULL, *passoutarg = NULL, *ciphername = NULL, *prog;
     OPTION_CHOICE o;
     int informat = FORMAT_PEM, outformat = FORMAT_PEM;
     int pubin = 0, pubout = 0, text_pub = 0, text = 0, noout = 0, ret = 1;
@@ -143,8 +143,7 @@ int pkey_main(int argc, char **argv)
             pub_check = 1;
             break;
         case OPT_CIPHER:
-            if (!opt_cipher(opt_unknown(), &cipher))
-                goto opthelp;
+            ciphername = opt_unknown();
             break;
         case OPT_EC_CONV_FORM:
 #ifdef OPENSSL_NO_EC
@@ -187,6 +186,10 @@ int pkey_main(int argc, char **argv)
                    "Warning: The -traditional is ignored since there is no PEM output\n");
     private = (!noout && !pubout) || (text && !text_pub);
 
+    if (ciphername != NULL) {
+        if (!opt_cipher(ciphername, &cipher))
+            goto opthelp;
+    }
     if (cipher == NULL) {
         if (passoutarg != NULL)
             BIO_printf(bio_err,
@@ -255,15 +258,8 @@ int pkey_main(int argc, char **argv)
              * Note: at least for RSA keys if this function returns
              * -1, there will be no error reasons.
              */
-            unsigned long err;
-
-            BIO_printf(out, "Key is invalid\n");
-
-            while ((err = ERR_peek_error()) != 0) {
-                BIO_printf(out, "Detailed error: %s\n",
-                           ERR_reason_error_string(err));
-                ERR_get_error(); /* remove err from error stack */
-            }
+            BIO_printf(bio_err, "Key is invalid\n");
+            ERR_print_errors(bio_err);
             goto end;
         }
     }

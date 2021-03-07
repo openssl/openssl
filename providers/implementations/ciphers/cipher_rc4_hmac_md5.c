@@ -15,14 +15,13 @@
  */
 #include "internal/deprecated.h"
 
+#include <openssl/proverr.h>
 #include "cipher_rc4_hmac_md5.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
-#include "prov/providercommonerr.h"
 
-/* TODO(3.0) Figure out what flags are required */
-#define RC4_HMAC_MD5_FLAGS (EVP_CIPH_STREAM_CIPHER | EVP_CIPH_VARIABLE_LENGTH  \
-                            | EVP_CIPH_FLAG_AEAD_CIPHER)
+#define RC4_HMAC_MD5_FLAGS (PROV_CIPHER_FLAG_VARIABLE_LENGTH                   \
+                            | PROV_CIPHER_FLAG_AEAD)
 
 #define RC4_HMAC_MD5_KEY_BITS (16 * 8)
 #define RC4_HMAC_MD5_BLOCK_BITS (1 * 8)
@@ -78,7 +77,8 @@ static const OSSL_PARAM rc4_hmac_md5_known_gettable_ctx_params[] = {
     OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_AEAD_TLS1_AAD_PAD, NULL),
     OSSL_PARAM_END
 };
-const OSSL_PARAM *rc4_hmac_md5_gettable_ctx_params(ossl_unused void *provctx)
+const OSSL_PARAM *rc4_hmac_md5_gettable_ctx_params(ossl_unused void *cctx,
+                                                   ossl_unused void *provctx)
 {
     return rc4_hmac_md5_known_gettable_ctx_params;
 }
@@ -113,7 +113,8 @@ static const OSSL_PARAM rc4_hmac_md5_known_settable_ctx_params[] = {
     OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_AEAD_TLS1_AAD, NULL, 0),
     OSSL_PARAM_END
 };
-const OSSL_PARAM *rc4_hmac_md5_settable_ctx_params(ossl_unused void *provctx)
+const OSSL_PARAM *rc4_hmac_md5_settable_ctx_params(ossl_unused void *cctx,
+                                                   ossl_unused void *provctx)
 {
     return rc4_hmac_md5_known_settable_ctx_params;
 }
@@ -183,10 +184,10 @@ static int rc4_hmac_md5_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 static int rc4_hmac_md5_get_params(OSSL_PARAM params[])
 {
     return ossl_cipher_generic_get_params(params, RC4_HMAC_MD5_MODE,
-                                     RC4_HMAC_MD5_FLAGS,
-                                     RC4_HMAC_MD5_KEY_BITS,
-                                     RC4_HMAC_MD5_BLOCK_BITS,
-                                     RC4_HMAC_MD5_IV_BITS);
+                                          RC4_HMAC_MD5_FLAGS,
+                                          RC4_HMAC_MD5_KEY_BITS,
+                                          RC4_HMAC_MD5_BLOCK_BITS,
+                                          RC4_HMAC_MD5_IV_BITS);
 }
 
 const OSSL_DISPATCH ossl_rc4_hmac_ossl_md5_functions[] = {

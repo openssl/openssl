@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -118,10 +118,6 @@ int OCSP_basic_verify(OCSP_BASICRESP *bs, STACK_OF(X509) *certs,
                 goto end;
             if (!X509_add_certs(untrusted, certs, X509_ADD_FLAG_DEFAULT))
                 goto end;
-        } else if (certs != NULL) {
-            untrusted = certs;
-        } else {
-            untrusted = bs->certs;
         }
         ret = ocsp_verify_signer(signer, 1, st, flags, untrusted, &chain);
         if (ret <= 0)

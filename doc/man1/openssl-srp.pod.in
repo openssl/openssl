@@ -29,9 +29,9 @@ B<openssl srp>
 
 =head1 DESCRIPTION
 
-This command is used to maintain an SRP (secure remote password) file.
-At most one of the B<-add>, B<-modify>, B<-delete>, and B<-list> options
-can be specified.
+This command is deprecated. It is used to maintain an SRP (secure remote
+password) file. At most one of the B<-add>, B<-modify>, B<-delete>, and B<-list>
+options can be specified.
 These options take zero or more usernames as parameters and perform the
 appropriate operation on the SRP file.
 For B<-list>, if no I<user> is given then all users are displayed.
@@ -86,7 +86,7 @@ The B<-engine> option was deprecated in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2017-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2017-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

@@ -19,7 +19,6 @@
 #include <openssl/crmf.h>
 #include <openssl/err.h>
 #include <openssl/x509.h>
-#include "crypto/x509.h" /* for x509_set0_libctx() */
 
 OSSL_CMP_PKIHEADER *OSSL_CMP_MSG_get0_header(const OSSL_CMP_MSG *msg)
 {
@@ -219,7 +218,7 @@ static const X509_NAME *determine_subj(OSSL_CMP_CTX *ctx,
                                        int for_KUR)
 {
     if (ctx->subjectName != NULL)
-        return ctx->subjectName;
+        return IS_NULL_DN(ctx->subjectName) ? NULL : ctx->subjectName;
 
     if (ref_subj != NULL && (for_KUR || !HAS_SAN(ctx)))
         /*
@@ -242,7 +241,8 @@ OSSL_CRMF_MSG *OSSL_CMP_CTX_setup_CRM(OSSL_CMP_CTX *ctx, int for_KUR, int rid)
         refcert != NULL ? X509_get_subject_name(refcert) : NULL;
     const X509_NAME *subject = determine_subj(ctx, ref_subj, for_KUR);
     const X509_NAME *issuer = ctx->issuer != NULL || refcert == NULL
-        ? ctx->issuer : X509_get_issuer_name(refcert);
+        ? (IS_NULL_DN(ctx->issuer) ? NULL : ctx->issuer)
+        : X509_get_issuer_name(refcert);
     int crit = ctx->setSubjectAltNameCritical || subject == NULL;
     /* RFC5280: subjectAltName MUST be critical if subject is null */
     X509_EXTENSIONS *exts = NULL;
@@ -350,6 +350,10 @@ OSSL_CMP_MSG *ossl_cmp_certreq_new(OSSL_CMP_CTX *ctx, int type,
 
     if (type != OSSL_CMP_PKIBODY_IR && type != OSSL_CMP_PKIBODY_CR
             && type != OSSL_CMP_PKIBODY_KUR && type != OSSL_CMP_PKIBODY_P10CR) {
+        ERR_raise(ERR_LIB_CMP, CMP_R_INVALID_ARGS);
+        return NULL;
+    }
+    if (type == OSSL_CMP_PKIBODY_P10CR && crm != NULL) {
         ERR_raise(ERR_LIB_CMP, CMP_R_INVALID_ARGS);
         return NULL;
     }
@@ -466,13 +470,10 @@ OSSL_CMP_MSG *ossl_cmp_certrep_new(OSSL_CMP_CTX *ctx, int bodytype,
     if (bodytype == OSSL_CMP_PKIBODY_IP && caPubs != NULL
             && (repMsg->caPubs = X509_chain_up_ref(caPubs)) == NULL)
         goto err;
-    if (sk_X509_num(chain) > 0) {
-        msg->extraCerts = sk_X509_new_reserve(NULL, sk_X509_num(chain));
-        if (msg->extraCerts == NULL
-                || !X509_add_certs(msg->extraCerts, chain,
-                                   X509_ADD_FLAG_UP_REF | X509_ADD_FLAG_NO_DUP))
-            goto err;
-    }
+    if (sk_X509_num(chain) > 0
+        && !ossl_x509_add_certs_new(&msg->extraCerts, chain,
+                                    X509_ADD_FLAG_UP_REF | X509_ADD_FLAG_NO_DUP))
+        goto err;
 
     if (!unprotectedErrors
             || ossl_cmp_pkisi_get_status(si) != OSSL_CMP_PKISTATUS_rejection)

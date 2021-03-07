@@ -32,8 +32,8 @@ static void *aes_gcm_newctx(void *provctx, size_t keybits)
 
     ctx = OPENSSL_zalloc(sizeof(*ctx));
     if (ctx != NULL)
-        gcm_initctx(provctx, &ctx->base, keybits, ossl_prov_aes_hw_gcm(keybits),
-                    AES_GCM_IV_MIN_SIZE);
+        ossl_gcm_initctx(provctx, &ctx->base, keybits,
+                         ossl_prov_aes_hw_gcm(keybits), AES_GCM_IV_MIN_SIZE);
     return ctx;
 }
 

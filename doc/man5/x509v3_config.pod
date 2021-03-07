@@ -79,8 +79,8 @@ section. In this example:
  subjectAltName = @alt_section
 
  [alt_section]
- email = steve@here
- email = steve@there
+ email = steve@example.com
+ email = steve@example.org
 
 will only recognize the last value.  To specify multiple values append a
 numeric identifier, as shown here:
@@ -89,8 +89,8 @@ numeric identifier, as shown here:
  subjectAltName = @alt_section
 
  [alt_section]
- email.1 = steve@here
- email.2 = steve@there
+ email.1 = steve@example.com
+ email.2 = steve@example.org
 
 The syntax of raw extensions is defined by the source code that parses
 the extension but should be documened.
@@ -237,13 +237,13 @@ using the syntax in L<ASN1_generate_nconf(3)>.
 
 Examples:
 
- subjectAltName = email:copy, email:my@other.address, URI:http://my.url.here/
+ subjectAltName = email:copy, email:my@example.com, URI:http://my.example.com/
 
  subjectAltName = IP:192.168.7.1
 
  subjectAltName = IP:13::17
 
- subjectAltName = email:my@other.address, RID:1.2.3.4
+ subjectAltName = email:my@example.com, RID:1.2.3.4
 
  subjectAltName = otherName:1.2.3.4;UTF8:some other identifier
 
@@ -284,9 +284,17 @@ B<access_id;location>, where B<access_id> is an object identifier
 (although only a few values are well-known) and B<location> has the same
 syntax as subject alternative name (except that B<email:copy> is not supported).
 
+Possible values for access_id include B<OCSP> (OCSP responder),
+B<caIssuers> (CA Issuers), 
+B<ad_timestamping> (AD Time Stamping), 
+B<AD_DVCS> (ad dvcs),
+B<caRepository> (CA Repository).
+
 Examples:
 
- authorityInfoAccess = OCSP;URI:http://ocsp.my.host/
+ authorityInfoAccess = OCSP;URI:http://ocsp.example.com/,caIssuers;URI:http://myca.example.com/ca.cer
+
+ authorityInfoAccess = OCSP;URI:http://ocsp.example.com/
 
 =head2 CRL distribution points
 
@@ -330,9 +338,9 @@ Only one of B<fullname> or B<relativename> should be specified.
 
 Simple examples:
 
- crlDistributionPoints = URI:http://myhost.com/myca.crl
+ crlDistributionPoints = URI:http://example.com/myca.crl
 
- crlDistributionPoints = URI:http://my.com/my.crl, URI:http://oth.com/my.crl
+ crlDistributionPoints = URI:http://example.com/myca.crl, URI:http://example.org/my.crl
 
 Full distribution point example:
 
@@ -340,7 +348,7 @@ Full distribution point example:
  crlDistributionPoints = crldp1_section
 
  [crldp1_section]
- fullname = URI:http://myhost.com/myca.crl
+ fullname = URI:http://example.com/myca.crl
  CRLissuer = dirName:issuer_sect
  reasons = keyCompromise, CACompromise
 
@@ -386,7 +394,7 @@ Example:
  issuingDistributionPoint = critical, @idp_section
 
  [idp_section]
- fullname = URI:http://myhost.com/myca.crl
+ fullname = URI:http://example.com/myca.crl
  indirectCRL = TRUE
  onlysomereasons = keyCompromise, CACompromise
 
@@ -429,8 +437,8 @@ Example:
 
  [polsect]
  policyIdentifier = 1.3.5.8
- CPS.1 = "http://my.host.name/"
- CPS.2 = "http://my.your.name/"
+ CPS.1 = "http://my.host.example.com/"
+ CPS.2 = "http://my.your.example.com/"
  userNotice.1 = @notice
 
  [notice]
@@ -475,7 +483,7 @@ Examples:
 
  nameConstraints = permitted;IP:192.168.0.0/255.255.0.0
 
- nameConstraints = permitted;email:.somedomain.com
+ nameConstraints = permitted;email:.example.com
 
  nameConstraints = excluded;email:.com
 

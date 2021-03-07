@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -198,10 +198,10 @@ static int encode_EVP_PKEY_prov(void **encoded, long *encoded_len,
     const unsigned char *upass = (const unsigned char *)pass;
     int ok = 0;
 
-    if (!TEST_ptr(ectx = OSSL_ENCODER_CTX_new_by_EVP_PKEY(pkey, selection,
-                                                          output_type,
-                                                          output_structure,
-                                                          NULL))
+    if (!TEST_ptr(ectx = OSSL_ENCODER_CTX_new_for_pkey(pkey, selection,
+                                                       output_type,
+                                                       output_structure,
+                                                       NULL))
         || !TEST_int_gt(OSSL_ENCODER_CTX_get_num_encoders(ectx), 0)
         || (pass != NULL
             && !TEST_true(OSSL_ENCODER_CTX_set_passphrase(ectx, upass,
@@ -256,12 +256,12 @@ static int decode_EVP_PKEY_prov(void **object, void *encoded, long encoded_len,
         const char *testtype = (i == 0) ? input_type
                                         : ((i == 1) ? NULL : badtype);
 
-        if (!TEST_ptr(dctx = OSSL_DECODER_CTX_new_by_EVP_PKEY(&testpkey,
-                                                              testtype,
-                                                              NULL,
-                                                              keytype,
-                                                              selection,
-                                                              NULL, NULL))
+        if (!TEST_ptr(dctx = OSSL_DECODER_CTX_new_for_pkey(&testpkey,
+                                                           testtype,
+                                                           NULL,
+                                                           keytype,
+                                                           selection,
+                                                           NULL, NULL))
             || (pass != NULL
                 && !OSSL_DECODER_CTX_set_passphrase(dctx, upass, strlen(pass)))
             || !TEST_int_gt(BIO_reset(encoded_bio), 0)

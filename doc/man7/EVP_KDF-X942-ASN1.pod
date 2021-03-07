@@ -34,6 +34,14 @@ These parameters work as described in L<EVP_KDF(3)/PARAMETERS>.
 
 The shared secret used for key derivation.  This parameter sets the secret.
 
+=item "acvp-info" (B<OSSL_KDF_PARAM_X942_ACVPINFO>) <octet string>
+
+This value should not be used in production and should only be used for ACVP
+testing. It is an optional octet string containing a combined DER encoded blob
+of any of the optional fields related to "partyu-info", "partyv-info",
+"supp-pubinfo" and "supp-privinfo". If it is specified then none of these other
+fields should be used.
+
 =item "partyu-info" (B<OSSL_KDF_PARAM_X942_PARTYUINFO>) <octet string>
 
 An optional octet string containing public info contributed by the initiator.
@@ -107,10 +115,7 @@ keying material:
   *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_UKM, ukm, sizeof(ukm));
   *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_CEK_ALG, "AES-256-WRAP, 0);
   *p = OSSL_PARAM_construct_end();
-  if (EVP_KDF_CTX_set_params(kctx, params) <= 0)
-      error("EVP_KDF_CTX_set_params");
-
-  if (EVP_KDF_derive(kctx, out, sizeof(out)) <= 0)
+  if (EVP_KDF_derive(kctx, out, sizeof(out), params) <= 0)
       error("EVP_KDF_derive");
 
   EVP_KDF_CTX_free(kctx);
@@ -136,7 +141,7 @@ This functionality was added to OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

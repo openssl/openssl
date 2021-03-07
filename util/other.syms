@@ -348,6 +348,7 @@ OPENSSL_VERSION_MINOR                   define
 OPENSSL_VERSION_NUMBER                  define deprecated 3.0.0
 OPENSSL_VERSION_PATCH                   define
 OPENSSL_VERSION_PRE_RELEASE             define
+OPENSSL_VERSION_PREREQ                  define
 OPENSSL_VERSION_BUILD_METADATA          define
 OPENSSL_VERSION_PRE_RELEASE_STR         define
 OPENSSL_VERSION_BUILD_METADATA_STR      define
@@ -404,6 +405,7 @@ OSSL_CMP_SRV_certConf_cb_t              datatype
 OSSL_CMP_SRV_genm_cb_t                  datatype
 OSSL_CMP_SRV_error_cb_t                 datatype
 OSSL_CMP_SRV_pollReq_cb_t               datatype
+OSSL_CORE_MAKE_FUNC                     define
 OSSL_PARAM_TYPE                         define
 OSSL_PARAM_octet_ptr                    define
 OSSL_PARAM_octet_string                 define

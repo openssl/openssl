@@ -189,8 +189,8 @@ typedef OSSL_HTTP_REQ_CTX OCSP_REQ_CTX;
         OSSL_HTTP_REQ_CTX_i2d(r, "application/ocsp-request", i, req)
 #   define OCSP_REQ_CTX_nbio(r) \
         OSSL_HTTP_REQ_CTX_nbio(r)
-#   define OCSP_REQ_CTX_nbio_d2i(r, i) \
-        OSSL_HTTP_REQ_CTX_sendreq_d2i(r, i)
+#   define OCSP_REQ_CTX_nbio_d2i(r, p, i)        \
+        ((*(p) = OSSL_HTTP_REQ_CTX_sendreq_d2i(r, i)) != NULL)
 #   define OCSP_REQ_CTX_get0_mem_bio(r) \
         OSSL_HTTP_REQ_CTX_get0_mem_bio(r)
 #   define OCSP_set_max_response_length(r, l) \
@@ -260,7 +260,7 @@ int OCSP_request_verify(OCSP_REQUEST *req, STACK_OF(X509) *certs,
                         X509_STORE *store, unsigned long flags);
 
 #  define OCSP_parse_url(url, host, port, path, ssl) \
-    OSSL_HTTP_parse_url(url, host, port, NULL, path, ssl) /* backward compat */
+    OSSL_HTTP_parse_url(url, ssl, NULL, host, port, NULL, path, NULL, NULL)
 
 int OCSP_id_issuer_cmp(const OCSP_CERTID *a, const OCSP_CERTID *b);
 int OCSP_id_cmp(const OCSP_CERTID *a, const OCSP_CERTID *b);

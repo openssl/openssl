@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2011-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -13,12 +13,13 @@
 #include <openssl/err.h>
 #include <openssl/rand.h>
 #include <openssl/aes.h>
+#include <openssl/proverr.h>
 #include "e_os.h" /* strcasecmp */
 #include "crypto/modes.h"
 #include "internal/thread_once.h"
 #include "prov/implementations.h"
+#include "prov/providercommon.h"
 #include "prov/provider_ctx.h"
-#include "prov/providercommonerr.h"
 #include "drbg_local.h"
 
 static OSSL_FUNC_rand_newctx_fn drbg_ctr_new_wrapper;
@@ -326,10 +327,13 @@ static int drbg_ctr_instantiate(PROV_DRBG *drbg,
 static int drbg_ctr_instantiate_wrapper(void *vdrbg, unsigned int strength,
                                         int prediction_resistance,
                                         const unsigned char *pstr,
-                                        size_t pstr_len)
+                                        size_t pstr_len,
+                                        const OSSL_PARAM params[])
 {
     PROV_DRBG *drbg = (PROV_DRBG *)vdrbg;
 
+    if (!ossl_prov_is_running() || !drbg_ctr_set_ctx_params(drbg, params))
+        return 0;
     return ossl_prov_drbg_instantiate(drbg, strength, prediction_resistance,
                                       pstr, pstr_len);
 }
@@ -648,7 +652,8 @@ static int drbg_ctr_get_ctx_params(void *vdrbg, OSSL_PARAM params[])
     return ossl_drbg_get_ctx_params(drbg, params);
 }
 
-static const OSSL_PARAM *drbg_ctr_gettable_ctx_params(ossl_unused void *provctx)
+static const OSSL_PARAM *drbg_ctr_gettable_ctx_params(ossl_unused void *vctx,
+                                                      ossl_unused void *provctx)
 {
     static const OSSL_PARAM known_gettable_ctx_params[] = {
         OSSL_PARAM_utf8_string(OSSL_DRBG_PARAM_CIPHER, NULL, 0),
@@ -685,19 +690,21 @@ static int drbg_ctr_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 
     if ((p = OSSL_PARAM_locate_const(params, OSSL_DRBG_PARAM_CIPHER)) != NULL) {
         const char *base = (const char *)p->data;
+        size_t ctr_str_len = sizeof("CTR") - 1;
+        size_t ecb_str_len = sizeof("ECB") - 1;
 
         if (p->data_type != OSSL_PARAM_UTF8_STRING
-                || p->data_size < 3)
+                || p->data_size < ctr_str_len)
             return 0;
-        if (strcasecmp("CTR", base + p->data_size - sizeof("CTR")) != 0) {
+        if (strcasecmp("CTR", base + p->data_size - ctr_str_len) != 0) {
             ERR_raise(ERR_LIB_PROV, PROV_R_REQUIRE_CTR_MODE_CIPHER);
             return 0;
         }
-        if ((ecb = OPENSSL_strdup(base)) == NULL) {
+        if ((ecb = OPENSSL_strndup(base, p->data_size)) == NULL) {
             ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
             return 0;
         }
-        strcpy(ecb + p->data_size - sizeof("ECB"), "ECB");
+        strcpy(ecb + p->data_size - ecb_str_len, "ECB");
         EVP_CIPHER_free(ctr->cipher_ecb);
         EVP_CIPHER_free(ctr->cipher_ctr);
         ctr->cipher_ctr = EVP_CIPHER_fetch(libctx, base, propquery);
@@ -716,7 +723,8 @@ static int drbg_ctr_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     return ossl_drbg_set_ctx_params(ctx, params);
 }
 
-static const OSSL_PARAM *drbg_ctr_settable_ctx_params(ossl_unused void *provctx)
+static const OSSL_PARAM *drbg_ctr_settable_ctx_params(ossl_unused void *vctx,
+                                                      ossl_unused void *provctx)
 {
     static const OSSL_PARAM known_settable_ctx_params[] = {
         OSSL_PARAM_utf8_string(OSSL_DRBG_PARAM_PROPERTIES, NULL, 0),
@@ -755,5 +763,7 @@ const OSSL_DISPATCH ossl_drbg_ctr_functions[] = {
     { OSSL_FUNC_RAND_GET_CTX_PARAMS, (void(*)(void))drbg_ctr_get_ctx_params },
     { OSSL_FUNC_RAND_VERIFY_ZEROIZATION,
       (void(*)(void))drbg_ctr_verify_zeroization },
+    { OSSL_FUNC_RAND_GET_SEED, (void(*)(void))ossl_drbg_get_seed },
+    { OSSL_FUNC_RAND_CLEAR_SEED, (void(*)(void))ossl_drbg_clear_seed },
     { 0, NULL }
 };

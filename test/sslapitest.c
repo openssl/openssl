@@ -38,6 +38,7 @@
 #include "internal/nelem.h"
 #include "internal/ktls.h"
 #include "../ssl/ssl_local.h"
+#include "filterprov.h"
 
 #undef OSSL_NO_USABLE_TLS1_3
 #if defined(OPENSSL_NO_TLS1_3) \
@@ -48,10 +49,6 @@
  */
 # define OSSL_NO_USABLE_TLS1_3
 #endif
-
-/* Defined in filterprov.c */
-OSSL_provider_init_fn filter_provider_init;
-int filter_provider_set_filter(int operation, const char *name);
 
 /* Defined in tls-provider.c */
 int tls_provider_init(const OSSL_CORE_HANDLE *handle,
@@ -642,6 +639,61 @@ end:
     OPENSSL_free(root);
 
     return testresult;
+}
+
+static int test_ssl_build_cert_chain(void)
+{
+    int ret = 0;
+    SSL_CTX *ssl_ctx = NULL;
+    SSL *ssl = NULL;
+    char *skey = test_mk_file_path(certsdir, "leaf.key");
+    char *leaf_chain = test_mk_file_path(certsdir, "leaf-chain.pem");
+
+    if (!TEST_ptr(ssl_ctx = SSL_CTX_new_ex(libctx, NULL, TLS_server_method())))
+        goto end;
+    if (!TEST_ptr(ssl = SSL_new(ssl_ctx)))
+        goto end;
+    /* leaf_chain contains leaf + subinterCA + interCA + rootCA */
+    if (!TEST_int_eq(SSL_use_certificate_chain_file(ssl, leaf_chain), 1)
+        || !TEST_int_eq(SSL_use_PrivateKey_file(ssl, skey, SSL_FILETYPE_PEM), 1)
+        || !TEST_int_eq(SSL_check_private_key(ssl), 1))
+        goto end;
+    if (!TEST_true(SSL_build_cert_chain(ssl, SSL_BUILD_CHAIN_FLAG_NO_ROOT
+                                             | SSL_BUILD_CHAIN_FLAG_CHECK)))
+        goto end;
+    ret = 1;
+end:
+    SSL_free(ssl);
+    SSL_CTX_free(ssl_ctx);
+    OPENSSL_free(leaf_chain);
+    OPENSSL_free(skey);
+    return ret;
+}
+
+static int test_ssl_ctx_build_cert_chain(void)
+{
+    int ret = 0;
+    SSL_CTX *ctx = NULL;
+    char *skey = test_mk_file_path(certsdir, "leaf.key");
+    char *leaf_chain = test_mk_file_path(certsdir, "leaf-chain.pem");
+
+    if (!TEST_ptr(ctx = SSL_CTX_new_ex(libctx, NULL, TLS_server_method())))
+        goto end;
+    /* leaf_chain contains leaf + subinterCA + interCA + rootCA */
+    if (!TEST_int_eq(SSL_CTX_use_certificate_chain_file(ctx, leaf_chain), 1)
+        || !TEST_int_eq(SSL_CTX_use_PrivateKey_file(ctx, skey,
+                                                    SSL_FILETYPE_PEM), 1)
+        || !TEST_int_eq(SSL_CTX_check_private_key(ctx), 1))
+        goto end;
+    if (!TEST_true(SSL_CTX_build_cert_chain(ctx, SSL_BUILD_CHAIN_FLAG_NO_ROOT
+                                                | SSL_BUILD_CHAIN_FLAG_CHECK)))
+        goto end;
+    ret = 1;
+end:
+    SSL_CTX_free(ctx);
+    OPENSSL_free(leaf_chain);
+    OPENSSL_free(skey);
+    return ret;
 }
 
 #ifndef OPENSSL_NO_TLS1_2
@@ -6861,7 +6913,7 @@ static int tick_key_evp_cb(SSL *s, unsigned char key_name[16],
 {
     const unsigned char tick_aes_key[16] = "0123456789abcdef";
     unsigned char tick_hmac_key[16] = "0123456789abcdef";
-    OSSL_PARAM params[3];
+    OSSL_PARAM params[2];
     EVP_CIPHER *aes128cbc = EVP_CIPHER_fetch(libctx, "AES-128-CBC", NULL);
     int ret;
 
@@ -6870,14 +6922,11 @@ static int tick_key_evp_cb(SSL *s, unsigned char key_name[16],
     memset(key_name, 0, 16);
     params[0] = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
                                                  "SHA256", 0);
-    params[1] = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY,
-                                                  tick_hmac_key,
-                                                  sizeof(tick_hmac_key));
-    params[2] = OSSL_PARAM_construct_end();
+    params[1] = OSSL_PARAM_construct_end();
     if (aes128cbc == NULL
             || !EVP_CipherInit_ex(ctx, aes128cbc, NULL, tick_aes_key, iv, enc)
-            || !EVP_MAC_CTX_set_params(hctx, params)
-            || !EVP_MAC_init(hctx))
+            || !EVP_MAC_init(hctx, tick_hmac_key, sizeof(tick_hmac_key),
+                             params))
         ret = -1;
     else
         ret = tick_key_renew ? 2 : 1;
@@ -8058,7 +8107,7 @@ static int test_sigalgs_available(int idx)
                                                  : NID_rsassaPss))
         goto end;
 
-    testresult = 1;
+    testresult = filter_provider_check_clean_finish();
 
  end:
     SSL_free(serverssl);
@@ -8716,6 +8765,8 @@ int setup_tests(void)
     ADD_TEST(test_keylog_no_master_key);
 #endif
     ADD_TEST(test_client_cert_verify_cb);
+    ADD_TEST(test_ssl_build_cert_chain);
+    ADD_TEST(test_ssl_ctx_build_cert_chain);
 #ifndef OPENSSL_NO_TLS1_2
     ADD_TEST(test_client_hello_cb);
     ADD_TEST(test_no_ems);

@@ -65,6 +65,7 @@ static int algorithm_do_this(OSSL_PROVIDER *provider, void *cbdata)
                 data->fn(provider, thismap, no_store, data->data);
             }
         }
+        ossl_provider_unquery_operation(provider, cur_operation, map);
 
         /* Do we fulfill post-conditions? */
         if (data->post == NULL) {

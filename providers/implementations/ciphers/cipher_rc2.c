@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -15,14 +15,15 @@
  */
 #include "internal/deprecated.h"
 
+#include <openssl/proverr.h>
 #include "cipher_rc2.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
-#include "prov/providercommonerr.h"
 
 #define RC2_40_MAGIC    0xa0
 #define RC2_64_MAGIC    0x78
 #define RC2_128_MAGIC   0x3a
+#define RC2_FLAGS       PROV_CIPHER_FLAG_VARIABLE_LENGTH
 
 static OSSL_FUNC_cipher_freectx_fn rc2_freectx;
 static OSSL_FUNC_cipher_dupctx_fn rc2_dupctx;
@@ -242,15 +243,15 @@ const OSSL_DISPATCH ossl_##alg##kbits##lcmode##_functions[] = {                \
 };
 
 /* ossl_rc2128ecb_functions */
-IMPLEMENT_cipher(rc2, RC2, ecb, ECB, EVP_CIPH_VARIABLE_LENGTH, 128, 64, 0, block)
+IMPLEMENT_cipher(rc2, RC2, ecb, ECB, RC2_FLAGS, 128, 64, 0, block)
 /* ossl_rc2128cbc_functions */
-IMPLEMENT_cipher(rc2, RC2, cbc, CBC, EVP_CIPH_VARIABLE_LENGTH, 128, 64, 64, block)
+IMPLEMENT_cipher(rc2, RC2, cbc, CBC, RC2_FLAGS, 128, 64, 64, block)
 /* ossl_rc240cbc_functions */
-IMPLEMENT_cipher(rc2, RC2, cbc, CBC, EVP_CIPH_VARIABLE_LENGTH, 40, 64, 64, block)
+IMPLEMENT_cipher(rc2, RC2, cbc, CBC, RC2_FLAGS, 40, 64, 64, block)
 /* ossl_rc264cbc_functions */
-IMPLEMENT_cipher(rc2, RC2, cbc, CBC, EVP_CIPH_VARIABLE_LENGTH, 64, 64, 64, block)
+IMPLEMENT_cipher(rc2, RC2, cbc, CBC, RC2_FLAGS, 64, 64, 64, block)
 
 /* ossl_rc2128ofb128_functions */
-IMPLEMENT_cipher(rc2, RC2, ofb128, OFB, EVP_CIPH_VARIABLE_LENGTH, 128, 8, 64, stream)
+IMPLEMENT_cipher(rc2, RC2, ofb128, OFB, RC2_FLAGS, 128, 8, 64, stream)
 /* ossl_rc2128cfb128_functions */
-IMPLEMENT_cipher(rc2, RC2, cfb128, CFB, EVP_CIPH_VARIABLE_LENGTH, 128, 8, 64, stream)
+IMPLEMENT_cipher(rc2, RC2, cfb128, CFB, RC2_FLAGS, 128, 8, 64, stream)

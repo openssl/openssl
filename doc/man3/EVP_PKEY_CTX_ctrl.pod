@@ -157,7 +157,6 @@ EVP_PKEY_CTX_set_kem_op
  int EVP_PKEY_CTX_set_dh_kdf_outlen(EVP_PKEY_CTX *ctx, int len);
  int EVP_PKEY_CTX_get_dh_kdf_outlen(EVP_PKEY_CTX *ctx, int *len);
  int EVP_PKEY_CTX_set0_dh_kdf_ukm(EVP_PKEY_CTX *ctx, unsigned char *ukm, int len);
- int EVP_PKEY_CTX_get0_dh_kdf_ukm(EVP_PKEY_CTX *ctx, unsigned char **ukm);
 
  #include <openssl/ec.h>
 
@@ -172,7 +171,6 @@ EVP_PKEY_CTX_set_kem_op
  int EVP_PKEY_CTX_set_ecdh_kdf_outlen(EVP_PKEY_CTX *ctx, int len);
  int EVP_PKEY_CTX_get_ecdh_kdf_outlen(EVP_PKEY_CTX *ctx, int *len);
  int EVP_PKEY_CTX_set0_ecdh_kdf_ukm(EVP_PKEY_CTX *ctx, unsigned char *ukm, int len);
- int EVP_PKEY_CTX_get0_ecdh_kdf_ukm(EVP_PKEY_CTX *ctx, unsigned char **ukm);
 
  int EVP_PKEY_CTX_set1_id(EVP_PKEY_CTX *ctx, void *id, size_t id_len);
  int EVP_PKEY_CTX_get1_id(EVP_PKEY_CTX *ctx, void *id);
@@ -185,6 +183,14 @@ L<openssl_user_macros(7)>:
  #include <openssl/rsa.h>
 
  int EVP_PKEY_CTX_set_rsa_keygen_pubexp(EVP_PKEY_CTX *ctx, BIGNUM *pubexp);
+
+ #include <openssl/dh.h>
+
+ int EVP_PKEY_CTX_get0_dh_kdf_ukm(EVP_PKEY_CTX *ctx, unsigned char **ukm);
+
+ #include <openssl/ec.h>
+
+ int EVP_PKEY_CTX_get0_ecdh_kdf_ukm(EVP_PKEY_CTX *ctx, unsigned char **ukm);
 
 =head1 DESCRIPTION
 
@@ -243,7 +249,7 @@ terminating NUL byte.
 
 EVP_PKEY_CTX_set_rsa_padding() sets the RSA padding mode for I<ctx>.
 The I<pad> parameter can take the value B<RSA_PKCS1_PADDING> for PKCS#1
-padding, B<RSA_SSLV23_PADDING> for SSLv23 padding, B<RSA_NO_PADDING> for
+padding, B<RSA_NO_PADDING> for
 no padding, B<RSA_PKCS1_OAEP_PADDING> for OAEP padding (encrypt and
 decrypt only), B<RSA_X931_PADDING> for X9.31 padding (signature operations
 only), B<RSA_PKCS1_PSS_PADDING> (sign and verify only) and
@@ -668,6 +674,9 @@ added in OpenSSL 1.0.0.
 
 In OpenSSL 1.1.1 and below the functions were mostly macros.
 From OpenSSL 3.0 they are all functions.
+
+EVP_PKEY_CTX_set_rsa_keygen_pubexp(), EVP_PKEY_CTX_get0_dh_kdf_ukm(),
+and EVP_PKEY_CTX_get0_ecdh_kdf_ukm() were deprecated in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

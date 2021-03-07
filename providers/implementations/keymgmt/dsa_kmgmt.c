@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -117,7 +117,7 @@ static void *dsa_newdata(void *provctx)
 {
     if (!ossl_prov_is_running())
         return NULL;
-    return dsa_new_with_ctx(PROV_LIBCTX_OF(provctx));
+    return ossl_dsa_new(PROV_LIBCTX_OF(provctx));
 }
 
 static void dsa_freedata(void *keydata)
@@ -160,8 +160,8 @@ static int dsa_match(const void *keydata1, const void *keydata2, int selection)
         ok = ok
             && BN_cmp(DSA_get0_priv_key(dsa1), DSA_get0_priv_key(dsa2)) == 0;
     if ((selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) != 0) {
-        FFC_PARAMS *dsaparams1 = dsa_get0_params((DSA *)dsa1);
-        FFC_PARAMS *dsaparams2 = dsa_get0_params((DSA *)dsa2);
+        FFC_PARAMS *dsaparams1 = ossl_dsa_get0_params((DSA *)dsa1);
+        FFC_PARAMS *dsaparams2 = ossl_dsa_get0_params((DSA *)dsa2);
 
         ok = ok && ossl_ffc_params_cmp(dsaparams1, dsaparams2, 1);
     }
@@ -180,9 +180,9 @@ static int dsa_import(void *keydata, int selection, const OSSL_PARAM params[])
         return 0;
 
     if ((selection & OSSL_KEYMGMT_SELECT_ALL_PARAMETERS) != 0)
-        ok = ok && dsa_ffc_params_fromdata(dsa, params);
+        ok = ok && ossl_dsa_ffc_params_fromdata(dsa, params);
     if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0)
-        ok = ok && dsa_key_fromdata(dsa, params);
+        ok = ok && ossl_dsa_key_fromdata(dsa, params);
 
     return ok;
 }
@@ -199,7 +199,7 @@ static int dsa_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
         goto err;
 
     if ((selection & OSSL_KEYMGMT_SELECT_ALL_PARAMETERS) != 0)
-        ok = ok && ossl_ffc_params_todata(dsa_get0_params(dsa), tmpl, NULL);
+        ok = ok && ossl_ffc_params_todata(ossl_dsa_get0_params(dsa), tmpl, NULL);
     if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0)
         ok = ok && dsa_key_todata(dsa, tmpl, NULL);
 
@@ -289,7 +289,7 @@ static ossl_inline int dsa_get_params(void *key, OSSL_PARAM params[])
     if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_DEFAULT_DIGEST)) != NULL
         && !OSSL_PARAM_set_utf8_string(p, DSA_DEFAULT_MD))
         return 0;
-    return ossl_ffc_params_todata(dsa_get0_params(dsa), NULL, params)
+    return ossl_ffc_params_todata(ossl_dsa_get0_params(dsa), NULL, params)
            && dsa_key_todata(dsa, NULL, params);
 }
 
@@ -309,11 +309,11 @@ static const OSSL_PARAM *dsa_gettable_params(void *provctx)
     return dsa_params;
 }
 
-static int dsa_validate_domparams(const DSA *dsa)
+static int dsa_validate_domparams(const DSA *dsa, int checktype)
 {
     int status = 0;
 
-    return dsa_check_params(dsa, &status);
+    return ossl_dsa_check_params(dsa, checktype, &status);
 }
 
 static int dsa_validate_public(const DSA *dsa)
@@ -324,7 +324,7 @@ static int dsa_validate_public(const DSA *dsa)
     DSA_get0_key(dsa, &pub_key, NULL);
     if (pub_key == NULL)
         return 0;
-    return dsa_check_pub_key(dsa, pub_key, &status);
+    return ossl_dsa_check_pub_key(dsa, pub_key, &status);
 }
 
 static int dsa_validate_private(const DSA *dsa)
@@ -335,10 +335,10 @@ static int dsa_validate_private(const DSA *dsa)
     DSA_get0_key(dsa, NULL, &priv_key);
     if (priv_key == NULL)
         return 0;
-    return dsa_check_priv_key(dsa, priv_key, &status);
+    return ossl_dsa_check_priv_key(dsa, priv_key, &status);
 }
 
-static int dsa_validate(const void *keydata, int selection)
+static int dsa_validate(const void *keydata, int selection, int checktype)
 {
     const DSA *dsa = keydata;
     int ok = 0;
@@ -350,7 +350,7 @@ static int dsa_validate(const void *keydata, int selection)
         ok = 1;
 
     if ((selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) != 0)
-        ok = ok && dsa_validate_domparams(dsa);
+        ok = ok && dsa_validate_domparams(dsa, checktype);
 
     if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0)
         ok = ok && dsa_validate_public(dsa);
@@ -361,7 +361,7 @@ static int dsa_validate(const void *keydata, int selection)
     /* If the whole key is selected, we do a pairwise validation */
     if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR)
         == OSSL_KEYMGMT_SELECT_KEYPAIR)
-        ok = ok && dsa_check_pairwise(dsa);
+        ok = ok && ossl_dsa_check_pairwise(dsa);
     return ok;
 }
 
@@ -397,7 +397,7 @@ static int dsa_gen_set_template(void *genctx, void *templ)
 
     if (!ossl_prov_is_running() || gctx == NULL || dsa == NULL)
         return 0;
-    gctx->ffc_params = dsa_get0_params(dsa);
+    gctx->ffc_params = ossl_dsa_get0_params(dsa);
     return 1;
 }
 
@@ -476,7 +476,8 @@ static int dsa_gen_set_params(void *genctx, const OSSL_PARAM params[])
     return 1;
 }
 
-static const OSSL_PARAM *dsa_gen_settable_params(void *provctx)
+static const OSSL_PARAM *dsa_gen_settable_params(ossl_unused void *genctx,
+                                                 ossl_unused void *provctx)
 {
     static OSSL_PARAM settable[] = {
         OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_FFC_TYPE, NULL, 0),
@@ -514,7 +515,7 @@ static void *dsa_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
 
     if (!ossl_prov_is_running() || gctx == NULL)
         return NULL;
-    dsa = dsa_new_with_ctx(gctx->libctx);
+    dsa = ossl_dsa_new(gctx->libctx);
     if (dsa == NULL)
         return NULL;
 
@@ -524,7 +525,7 @@ static void *dsa_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
     if (gencb != NULL)
         BN_GENCB_set(gencb, dsa_gencb, genctx);
 
-    ffc = dsa_get0_params(dsa);
+    ffc = ossl_dsa_get0_params(dsa);
     /* Copy the template value if one was passed */
     if (gctx->ffc_params != NULL
         && !ossl_ffc_params_copy(ffc, gctx->ffc_params))
@@ -546,9 +547,9 @@ static void *dsa_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
     }
     if ((gctx->selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) != 0) {
 
-         if (dsa_generate_ffc_parameters(dsa, gctx->gen_type,
-                                         gctx->pbits, gctx->qbits,
-                                         gencb) <= 0)
+         if (ossl_dsa_generate_ffc_parameters(dsa, gctx->gen_type,
+                                              gctx->pbits, gctx->qbits,
+                                              gencb) <= 0)
              goto end;
     }
     ossl_ffc_params_enable_flags(ffc, FFC_PARAM_FLAG_VALIDATE_LEGACY,

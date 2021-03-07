@@ -20,7 +20,6 @@
 #include <openssl/crmf.h>
 #include <openssl/err.h>
 #include <openssl/x509.h>
-#include "crypto/x509.h"
 
 /* Verify a message protected by signature according to RFC section 5.1.3.3 */
 static int verify_signature(const OSSL_CMP_CTX *cmp_ctx,

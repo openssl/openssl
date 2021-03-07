@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -101,7 +101,7 @@ static int ossl_cipher_hw_tdes_cfb1(PROV_CIPHER_CTX *ctx, unsigned char *out,
     size_t n;
     unsigned char c[1], d[1];
 
-    if ((ctx->flags & EVP_CIPH_FLAG_LENGTH_BITS) == 0)
+    if (ctx->use_bits == 0)
         inl *= 8;
     for (n = 0; n < inl; ++n) {
         c[0] = (in[n / 8] & (1 << (7 - n % 8))) ? 0x80 : 0;

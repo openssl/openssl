@@ -189,7 +189,7 @@ static long fd_ctrl(BIO *b, int cmd, long num, void *ptr)
         ret = 1;
         break;
     case BIO_CTRL_EOF:
-        ret = (b->flags & BIO_FLAGS_IN_EOF) != 0 ? 1 : 0;
+        ret = (b->flags & BIO_FLAGS_IN_EOF) != 0;
         break;
     default:
         ret = 0;

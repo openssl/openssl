@@ -21,11 +21,12 @@
 #include <openssl/ec.h>
 #include <openssl/params.h>
 #include <openssl/err.h>
+#include <openssl/proverr.h>
 #include "prov/provider_ctx.h"
 #include "prov/providercommon.h"
 #include "prov/implementations.h"
 #include "prov/securitycheck.h"
-#include "crypto/ec.h" /* ecdh_KDF_X9_63() */
+#include "crypto/ec.h" /* ossl_ecdh_kdf_X9_63() */
 
 static OSSL_FUNC_keyexch_newctx_fn ecdh_newctx;
 static OSSL_FUNC_keyexch_init_fn ecdh_init;
@@ -111,7 +112,7 @@ int ecdh_init(void *vpecdhctx, void *vecdh)
     pecdhctx->k = vecdh;
     pecdhctx->cofactor_mode = -1;
     pecdhctx->kdf_type = PROV_ECDH_KDF_NONE;
-    return ec_check_key(vecdh, 1);
+    return ossl_ec_check_key(vecdh, 1);
 }
 
 static
@@ -126,7 +127,7 @@ int ecdh_set_peer(void *vpecdhctx, void *vecdh)
         return 0;
     EC_KEY_free(pecdhctx->peerk);
     pecdhctx->peerk = vecdh;
-    return ec_check_key(vecdh, 1);
+    return ossl_ec_check_key(vecdh, 1);
 }
 
 static
@@ -254,7 +255,7 @@ int ecdh_set_ctx_params(void *vpecdhctx, const OSSL_PARAM params[])
 
         EVP_MD_free(pectx->kdf_md);
         pectx->kdf_md = EVP_MD_fetch(pectx->libctx, name, mdprops);
-        if (!digest_is_allowed(pectx->kdf_md)) {
+        if (!ossl_digest_is_allowed(pectx->kdf_md)) {
             EVP_MD_free(pectx->kdf_md);
             pectx->kdf_md = NULL;
         }
@@ -297,7 +298,8 @@ static const OSSL_PARAM known_settable_ctx_params[] = {
 };
 
 static
-const OSSL_PARAM *ecdh_settable_ctx_params(ossl_unused void *provctx)
+const OSSL_PARAM *ecdh_settable_ctx_params(ossl_unused void *vpecdhctx,
+                                           ossl_unused void *provctx)
 {
     return known_settable_ctx_params;
 }
@@ -374,7 +376,8 @@ static const OSSL_PARAM known_gettable_ctx_params[] = {
 };
 
 static
-const OSSL_PARAM *ecdh_gettable_ctx_params(ossl_unused void *provctx)
+const OSSL_PARAM *ecdh_gettable_ctx_params(ossl_unused void *vpecdhctx,
+                                           ossl_unused void *provctx)
 {
     return known_gettable_ctx_params;
 }
@@ -408,7 +411,7 @@ int ecdh_plain_derive(void *vpecdhctx, unsigned char *secret,
     int key_cofactor_mode;
 
     if (pecdhctx->k == NULL || pecdhctx->peerk == NULL) {
-        ERR_raise(ERR_LIB_PROV, EC_R_KEYS_NOT_SET);
+        ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_KEY);
         return 0;
     }
 
@@ -486,8 +489,10 @@ int ecdh_X9_63_kdf_derive(void *vpecdhctx, unsigned char *secret,
         return 1;
     }
 
-    if (pecdhctx->kdf_outlen > outlen)
+    if (pecdhctx->kdf_outlen > outlen) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
         return 0;
+    }
     if (!ecdh_plain_derive(vpecdhctx, NULL, &stmplen, 0))
         return 0;
     if ((stmp = OPENSSL_secure_malloc(stmplen)) == NULL) {
@@ -498,12 +503,12 @@ int ecdh_X9_63_kdf_derive(void *vpecdhctx, unsigned char *secret,
         goto err;
 
     /* Do KDF stuff */
-    if (!ecdh_KDF_X9_63(secret, pecdhctx->kdf_outlen,
-                        stmp, stmplen,
-                        pecdhctx->kdf_ukm,
-                        pecdhctx->kdf_ukmlen,
-                        pecdhctx->kdf_md,
-                        pecdhctx->libctx, NULL))
+    if (!ossl_ecdh_kdf_X9_63(secret, pecdhctx->kdf_outlen,
+                             stmp, stmplen,
+                             pecdhctx->kdf_ukm,
+                             pecdhctx->kdf_ukmlen,
+                             pecdhctx->kdf_md,
+                             pecdhctx->libctx, NULL))
         goto err;
     *psecretlen = pecdhctx->kdf_outlen;
     ret = 1;

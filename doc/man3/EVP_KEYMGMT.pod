@@ -35,9 +35,9 @@ EVP_KEYMGMT_gen_settable_params
  void EVP_KEYMGMT_do_all_provided(OSSL_LIB_CTX *libctx,
                                   void (*fn)(EVP_KEYMGMT *keymgmt, void *arg),
                                   void *arg);
- void EVP_KEYMGMT_names_do_all(const EVP_KEYMGMT *keymgmt,
-                               void (*fn)(const char *name, void *data),
-                               void *data);
+ int EVP_KEYMGMT_names_do_all(const EVP_KEYMGMT *keymgmt,
+                              void (*fn)(const char *name, void *data),
+                              void *data);
  const OSSL_PARAM *EVP_KEYMGMT_gettable_params(const EVP_KEYMGMT *keymgmt);
  const OSSL_PARAM *EVP_KEYMGMT_settable_params(const EVP_KEYMGMT *keymgmt);
  const OSSL_PARAM *EVP_KEYMGMT_gen_settable_params(const EVP_KEYMGMT *keymgmt);
@@ -109,6 +109,9 @@ implementation represented by an EVP_KEYMGMT object, or NULL on
 error.
 
 EVP_KEYMGMT_up_ref() returns 1 on success, or 0 on error.
+
+EVP_KEYMGMT_names_do_all() returns 1 if the callback was called for all
+names. A return value of 0 means that the callback was not called for any names.
 
 EVP_KEYMGMT_free() doesn't return any value.
 

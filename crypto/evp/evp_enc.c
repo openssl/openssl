@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -11,6 +11,7 @@
 #define OPENSSL_SUPPRESS_DEPRECATED
 
 #include <stdio.h>
+#include <limits.h>
 #include <assert.h>
 #include "internal/cryptlib.h"
 #include <openssl/evp.h>
@@ -42,7 +43,7 @@ int EVP_CIPHER_CTX_reset(EVP_CIPHER_CTX *ctx)
 
     return 1;
 
-    /* TODO(3.0): Remove legacy code below */
+    /* Remove legacy code below when legacy support is removed. */
  legacy:
 
     if (ctx->cipher != NULL) {
@@ -104,7 +105,7 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
         return 0;
     }
 
-    /* TODO(3.0): Legacy work around code below. Remove this */
+    /* Code below to be removed when legacy support is dropped. */
 
 #if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODULE)
     /*
@@ -147,7 +148,7 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
     }
 
 
-    /* TODO(3.0): Start of non-legacy code below */
+    /* Start of non-legacy code below */
 
     /* Ensure a context left lying around from last time is cleared */
     if (cipher != NULL && ctx->cipher != NULL) {
@@ -182,6 +183,14 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
 #endif
     }
 
+    if (cipher->prov != NULL) {
+        if (!EVP_CIPHER_up_ref((EVP_CIPHER *)cipher)) {
+            ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
+            return 0;
+        }
+        EVP_CIPHER_free(ctx->fetched_cipher);
+        ctx->fetched_cipher = (EVP_CIPHER *)cipher;
+    }
     ctx->cipher = cipher;
     if (ctx->provctx == NULL) {
         ctx->provctx = ctx->cipher->newctx(ossl_provider_ctx(cipher->prov));
@@ -228,7 +237,7 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
                               iv == NULL ? 0
                                          : EVP_CIPHER_CTX_iv_length(ctx));
 
-    /* TODO(3.0): Remove legacy code below */
+    /* Code below to be removed when legacy support is dropped. */
  legacy:
 
     if (cipher != NULL) {
@@ -503,6 +512,18 @@ static int evp_EncryptDecryptUpdate(EVP_CIPHER_CTX *ctx,
             return 1;
         } else {
             j = bl - i;
+
+            /*
+             * Once we've processed the first j bytes from in, the amount of
+             * data left that is a multiple of the block length is:
+             * (inl - j) & ~(bl - 1)
+             * We must ensure that this amount of data, plus the one block that
+             * we process from ctx->buf does not exceed INT_MAX
+             */
+            if (((inl - j) & ~(bl - 1)) > INT_MAX - bl) {
+                ERR_raise(ERR_LIB_EVP, EVP_R_OUTPUT_WOULD_OVERFLOW);
+                return 0;
+            }
             memcpy(&(ctx->buf[i]), in, j);
             inl -= j;
             in += j;
@@ -576,7 +597,7 @@ int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 
     return ret;
 
-    /* TODO(3.0): Remove legacy code below */
+    /* Code below to be removed when legacy support is dropped. */
  legacy:
 
     return evp_EncryptDecryptUpdate(ctx, out, outl, in, inl);
@@ -636,7 +657,7 @@ int EVP_EncryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 
     return ret;
 
-    /* TODO(3.0): Remove legacy code below */
+    /* Code below to be removed when legacy support is dropped. */
  legacy:
 
     if (ctx->cipher->flags & EVP_CIPH_FLAG_CUSTOM_CIPHER) {
@@ -723,7 +744,7 @@ int EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 
     return ret;
 
-    /* TODO(3.0): Remove legacy code below */
+    /* Code below to be removed when legacy support is dropped. */
  legacy:
 
     b = ctx->cipher->block_size;
@@ -761,6 +782,19 @@ int EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
         if (((PTRDIFF_T)out == (PTRDIFF_T)in)
             || is_partially_overlapping(out, in, b)) {
             ERR_raise(ERR_LIB_EVP, EVP_R_PARTIALLY_OVERLAPPING);
+            return 0;
+        }
+        /*
+         * final_used is only ever set if buf_len is 0. Therefore the maximum
+         * length output we will ever see from evp_EncryptDecryptUpdate is
+         * the maximum multiple of the block length that is <= inl, or just:
+         * inl & ~(b - 1)
+         * Since final_used has been set then the final output length is:
+         * (inl & ~(b - 1)) + b
+         * This must never exceed INT_MAX
+         */
+        if ((inl & ~(b - 1)) > INT_MAX - b) {
+            ERR_raise(ERR_LIB_EVP, EVP_R_OUTPUT_WOULD_OVERFLOW);
             return 0;
         }
         memcpy(out, ctx->final, b);
@@ -845,7 +879,7 @@ int EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 
     return ret;
 
-    /* TODO(3.0): Remove legacy code below */
+    /* Code below to be removed when legacy support is dropped. */
  legacy:
 
     *outl = 0;
@@ -919,7 +953,7 @@ int EVP_CIPHER_CTX_set_key_length(EVP_CIPHER_CTX *c, int keylen)
         return ok > 0 ? 1 : 0;
     }
 
-    /* TODO(3.0) legacy code follows */
+    /* Code below to be removed when legacy support is dropped. */
 
     /*
      * Note there have never been any built-in ciphers that define this flag
@@ -987,7 +1021,7 @@ int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
 
     case EVP_CTRL_INIT:
         /*
-         * TODO(3.0) EVP_CTRL_INIT is purely legacy, no provider counterpart
+         * EVP_CTRL_INIT is purely legacy, no provider counterpart.
          * As a matter of fact, this should be dead code, but some caller
          * might still do a direct control call with this command, so...
          * Legacy methods return 1 except for exceptional circumstances, so
@@ -1138,7 +1172,7 @@ int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
         ret = evp_do_ciph_ctx_getparams(ctx->cipher, ctx->provctx, params);
     goto end;
 
-/* TODO(3.0): Remove legacy code below */
+    /* Code below to be removed when legacy support is dropped. */
 legacy:
     if (ctx->cipher->ctrl == NULL) {
         ERR_raise(ERR_LIB_EVP, EVP_R_CTRL_NOT_IMPLEMENTED);
@@ -1186,17 +1220,45 @@ const OSSL_PARAM *EVP_CIPHER_gettable_params(const EVP_CIPHER *cipher)
 
 const OSSL_PARAM *EVP_CIPHER_settable_ctx_params(const EVP_CIPHER *cipher)
 {
-    if (cipher != NULL && cipher->settable_ctx_params != NULL)
-        return cipher->settable_ctx_params(
-                   ossl_provider_ctx(EVP_CIPHER_provider(cipher)));
+    void *alg;
+
+    if (cipher != NULL && cipher->settable_ctx_params != NULL) {
+        alg = ossl_provider_ctx(EVP_CIPHER_provider(cipher));
+        return cipher->settable_ctx_params(NULL, alg);
+    }
     return NULL;
 }
 
 const OSSL_PARAM *EVP_CIPHER_gettable_ctx_params(const EVP_CIPHER *cipher)
 {
-    if (cipher != NULL && cipher->gettable_ctx_params != NULL)
-        return cipher->gettable_ctx_params(
-                   ossl_provider_ctx(EVP_CIPHER_provider(cipher)));
+    void *alg;
+
+    if (cipher != NULL && cipher->gettable_ctx_params != NULL) {
+        alg = ossl_provider_ctx(EVP_CIPHER_provider(cipher));
+        return cipher->gettable_ctx_params(NULL, alg);
+    }
+    return NULL;
+}
+
+const OSSL_PARAM *EVP_CIPHER_CTX_settable_params(EVP_CIPHER_CTX *cctx)
+{
+    void *alg;
+
+    if (cctx != NULL && cctx->cipher->settable_ctx_params != NULL) {
+        alg = ossl_provider_ctx(EVP_CIPHER_provider(cctx->cipher));
+        return cctx->cipher->settable_ctx_params(cctx->provctx, alg);
+    }
+    return NULL;
+}
+
+const OSSL_PARAM *EVP_CIPHER_CTX_gettable_params(EVP_CIPHER_CTX *cctx)
+{
+    void *alg;
+
+    if (cctx != NULL && cctx->cipher->gettable_ctx_params != NULL) {
+        alg = ossl_provider_ctx(EVP_CIPHER_provider(cctx->cipher));
+        return cctx->cipher->gettable_ctx_params(cctx->provctx, alg);
+    }
     return NULL;
 }
 
@@ -1267,7 +1329,7 @@ int EVP_CIPHER_CTX_copy(EVP_CIPHER_CTX *out, const EVP_CIPHER_CTX *in)
 
     return 1;
 
-    /* TODO(3.0): Remove legacy code below */
+    /* Code below to be removed when legacy support is dropped. */
  legacy:
 
 #if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODULE)
@@ -1361,8 +1423,8 @@ static void *evp_cipher_from_dispatch(const int name_id,
 #ifndef FIPS_MODULE
     /* TODO(3.x) get rid of the need for legacy NIDs */
     cipher->nid = NID_undef;
-    evp_names_do_all(prov, name_id, set_legacy_nid, &cipher->nid);
-    if (cipher->nid == -1) {
+    if (!evp_names_do_all(prov, name_id, set_legacy_nid, &cipher->nid)
+            || cipher->nid == -1) {
         ERR_raise(ERR_LIB_EVP, ERR_R_INTERNAL_ERROR);
         EVP_CIPHER_free(cipher);
         return NULL;

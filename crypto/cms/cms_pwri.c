@@ -50,9 +50,9 @@ CMS_RecipientInfo *CMS_add0_recipient_password(CMS_ContentInfo *cms,
     X509_ALGOR *encalg = NULL;
     unsigned char iv[EVP_MAX_IV_LENGTH];
     int ivlen;
-    const CMS_CTX *cms_ctx = cms_get0_cmsctx(cms);
+    const CMS_CTX *cms_ctx = ossl_cms_get0_cmsctx(cms);
 
-    ec = cms_get0_env_enc_content(cms);
+    ec = ossl_cms_get0_env_enc_content(cms);
     if (ec == NULL)
         return NULL;
     ris = CMS_get0_RecipientInfos(cms);
@@ -93,7 +93,7 @@ CMS_RecipientInfo *CMS_add0_recipient_password(CMS_ContentInfo *cms,
     ivlen = EVP_CIPHER_CTX_iv_length(ctx);
 
     if (ivlen > 0) {
-        if (RAND_bytes_ex(cms_ctx_get0_libctx(cms_ctx), iv, ivlen) <= 0)
+        if (RAND_bytes_ex(ossl_cms_ctx_get0_libctx(cms_ctx), iv, ivlen) <= 0)
             goto err;
         if (EVP_EncryptInit_ex(ctx, NULL, NULL, NULL, iv) <= 0) {
             ERR_raise(ERR_LIB_CMS, ERR_R_EVP_LIB);
@@ -262,7 +262,7 @@ static int kek_wrap_key(unsigned char *out, size_t *outlen,
         memcpy(out + 4, in, inlen);
         /* Add random padding to end */
         if (olen > inlen + 4
-            && RAND_bytes_ex(cms_ctx_get0_libctx(cms_ctx), out + 4 + inlen,
+            && RAND_bytes_ex(ossl_cms_ctx_get0_libctx(cms_ctx), out + 4 + inlen,
                              olen - 4 - inlen) <= 0)
             return 0;
         /* Encrypt twice */
@@ -278,8 +278,8 @@ static int kek_wrap_key(unsigned char *out, size_t *outlen,
 
 /* Encrypt/Decrypt content key in PWRI recipient info */
 
-int cms_RecipientInfo_pwri_crypt(const CMS_ContentInfo *cms,
-                                 CMS_RecipientInfo *ri, int en_de)
+int ossl_cms_RecipientInfo_pwri_crypt(const CMS_ContentInfo *cms,
+                                      CMS_RecipientInfo *ri, int en_de)
 {
     CMS_EncryptedContentInfo *ec;
     CMS_PasswordRecipientInfo *pwri;
@@ -290,9 +290,9 @@ int cms_RecipientInfo_pwri_crypt(const CMS_ContentInfo *cms,
     EVP_CIPHER *kekcipher;
     unsigned char *key = NULL;
     size_t keylen;
-    const CMS_CTX *cms_ctx = cms_get0_cmsctx(cms);
+    const CMS_CTX *cms_ctx = ossl_cms_get0_cmsctx(cms);
 
-    ec = cms_get0_env_enc_content(cms);
+    ec = ossl_cms_get0_env_enc_content(cms);
 
     pwri = ri->d.pwri;
 
@@ -316,8 +316,8 @@ int cms_RecipientInfo_pwri_crypt(const CMS_ContentInfo *cms,
     }
 
     name = OBJ_nid2sn(OBJ_obj2nid(kekalg->algorithm));
-    kekcipher = EVP_CIPHER_fetch(cms_ctx_get0_libctx(cms_ctx), name,
-                                 cms_ctx_get0_propq(cms_ctx));
+    kekcipher = EVP_CIPHER_fetch(ossl_cms_ctx_get0_libctx(cms_ctx), name,
+                                 ossl_cms_ctx_get0_propq(cms_ctx));
 
     if (kekcipher == NULL) {
         ERR_raise(ERR_LIB_CMS, CMS_R_UNKNOWN_CIPHER);

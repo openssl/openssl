@@ -30,10 +30,6 @@
 #include "crypto/siphash.h"
 #include "siphash_local.h"
 
-/* default: SipHash-2-4 */
-#define SIPHASH_C_ROUNDS 2
-#define SIPHASH_D_ROUNDS 4
-
 #define ROTL(x, b) (uint64_t)(((x) << (b)) | ((x) >> (64 - (b))))
 
 #define U32TO8_LE(p, v)                                                        \
@@ -146,7 +142,7 @@ void SipHash_Update(SIPHASH *ctx, const unsigned char *in, size_t inlen)
     uint64_t m;
     const uint8_t *end;
     int left;
-    int i;
+    unsigned int i;
     uint64_t v0 = ctx->v0;
     uint64_t v1 = ctx->v1;
     uint64_t v2 = ctx->v2;
@@ -202,7 +198,7 @@ void SipHash_Update(SIPHASH *ctx, const unsigned char *in, size_t inlen)
 int SipHash_Final(SIPHASH *ctx, unsigned char *out, size_t outlen)
 {
     /* finalize hash */
-    int i;
+    unsigned int i;
     uint64_t b = ctx->total_inlen << 56;
     uint64_t v0 = ctx->v0;
     uint64_t v1 = ctx->v1;

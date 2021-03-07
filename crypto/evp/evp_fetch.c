@@ -48,7 +48,7 @@ struct evp_method_data_st {
     const char *names;           /* For get_evp_method_from_store() */
     const char *propquery;       /* For get_evp_method_from_store() */
 
-    unsigned int flag_construct_error_occured : 1;
+    unsigned int flag_construct_error_occurred : 1;
 
     void *(*method_from_dispatch)(int name_id, const OSSL_DISPATCH *,
                                   OSSL_PROVIDER *);
@@ -203,7 +203,7 @@ static void *construct_evp_method(const OSSL_ALGORITHM *algodef,
      * record on inaccessible algorithms.
      */
     if (method == NULL)
-        methdata->flag_construct_error_occured = 1;
+        methdata->flag_construct_error_occurred = 1;
 
     return method;
 }
@@ -299,7 +299,7 @@ inner_evp_generic_fetch(OSSL_LIB_CTX *libctx, int operation_id,
         mcmdata.method_from_dispatch = new_method;
         mcmdata.refcnt_up_method = up_ref_method;
         mcmdata.destruct_method = free_method;
-        mcmdata.flag_construct_error_occured = 0;
+        mcmdata.flag_construct_error_occurred = 0;
         if ((method = ossl_method_construct(libctx, operation_id,
                                             0 /* !force_cache */,
                                             &mcm, &mcmdata)) != NULL) {
@@ -320,7 +320,7 @@ inner_evp_generic_fetch(OSSL_LIB_CTX *libctx, int operation_id,
          * If we never were in the constructor, the algorithm to be fetched
          * is unsupported.
          */
-        unsupported = !mcmdata.flag_construct_error_occured;
+        unsupported = !mcmdata.flag_construct_error_occurred;
     }
 
     if (method == NULL) {
@@ -530,12 +530,12 @@ int evp_is_a(OSSL_PROVIDER *prov, int number,
     return ossl_namemap_name2num(namemap, name) == number;
 }
 
-void evp_names_do_all(OSSL_PROVIDER *prov, int number,
-                      void (*fn)(const char *name, void *data),
-                      void *data)
+int evp_names_do_all(OSSL_PROVIDER *prov, int number,
+                     void (*fn)(const char *name, void *data),
+                     void *data)
 {
     OSSL_LIB_CTX *libctx = ossl_provider_libctx(prov);
     OSSL_NAMEMAP *namemap = ossl_namemap_stored(libctx);
 
-    ossl_namemap_doall_names(namemap, number, fn, data);
+    return ossl_namemap_doall_names(namemap, number, fn, data);
 }

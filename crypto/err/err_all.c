@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -43,7 +43,7 @@
 #include "crypto/storeerr.h"
 #include "crypto/esserr.h"
 #include "internal/propertyerr.h"
-#include "prov/providercommonerr.h"
+#include "prov/proverr.h"
 
 int err_load_crypto_strings_int(void)
 {

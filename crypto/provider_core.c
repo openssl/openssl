@@ -48,6 +48,9 @@ struct ossl_provider_st {
     unsigned int flag_fallback:1; /* Can be used as fallback */
     unsigned int flag_activated_as_fallback:1;
 
+    /* Getting and setting the flags require synchronization */
+    CRYPTO_RWLOCK *flag_lock;
+
     /* OpenSSL library side data */
     CRYPTO_REF_COUNT refcnt;
     CRYPTO_RWLOCK *refcnt_lock;  /* For the ref counter */
@@ -78,6 +81,7 @@ struct ossl_provider_st {
     OSSL_FUNC_provider_get_capabilities_fn *get_capabilities;
     OSSL_FUNC_provider_self_test_fn *self_test;
     OSSL_FUNC_provider_query_operation_fn *query_operation;
+    OSSL_FUNC_provider_unquery_operation_fn *unquery_operation;
 
     /*
      * Cache of bit to indicate of query_operation() has been called on
@@ -200,7 +204,9 @@ int ossl_provider_disable_fallback_loading(OSSL_LIB_CTX *libctx)
     struct provider_store_st *store;
 
     if ((store = get_provider_store(libctx)) != NULL) {
+        CRYPTO_THREAD_write_lock(store->lock);
         store->use_fallbacks = 0;
+        CRYPTO_THREAD_unlock(store->lock);
         return 1;
     }
     return 0;
@@ -254,6 +260,7 @@ static OSSL_PROVIDER *provider_new(const char *name,
 #endif
         || !ossl_provider_up_ref(prov) /* +1 One reference to be returned */
         || (prov->opbits_lock = CRYPTO_THREAD_lock_new()) == NULL
+        || (prov->flag_lock = CRYPTO_THREAD_lock_new()) == NULL
         || (prov->name = OPENSSL_strdup(name)) == NULL) {
         ossl_provider_free(prov);
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
@@ -374,6 +381,7 @@ void ossl_provider_free(OSSL_PROVIDER *prov)
             OPENSSL_free(prov->path);
             sk_INFOPAIR_pop_free(prov->parameters, free_infopair);
             CRYPTO_THREAD_lock_free(prov->opbits_lock);
+            CRYPTO_THREAD_lock_free(prov->flag_lock);
 #ifndef HAVE_ATOMICS
             CRYPTO_THREAD_lock_free(prov->refcnt_lock);
             CRYPTO_THREAD_lock_free(prov->activatecnt_lock);
@@ -469,9 +477,19 @@ static int provider_init(OSSL_PROVIDER *prov)
     OSSL_FUNC_provider_get_reason_strings_fn *p_get_reason_strings = NULL;
 # endif
 #endif
+    int ok = 0;
 
-    if (prov->flag_initialized)
-        return 1;
+    /*
+     * The flag lock is used to lock init, not only because the flag is
+     * checked here and set at the end, but also because this function
+     * modifies a number of things in the provider structure that this
+     * function needs to perform under lock anyway.
+     */
+    CRYPTO_THREAD_write_lock(prov->flag_lock);
+    if (prov->flag_initialized) {
+        ok = 1;
+        goto end;
+    }
 
     /*
      * If the init function isn't set, it indicates that this provider is
@@ -479,7 +497,7 @@ static int provider_init(OSSL_PROVIDER *prov)
      */
     if (prov->init_function == NULL) {
 #ifdef FIPS_MODULE
-        return 0;
+        goto end;
 #else
         if (prov->module == NULL) {
             char *allocated_path = NULL;
@@ -490,13 +508,14 @@ static int provider_init(OSSL_PROVIDER *prov)
 
             if ((prov->module = DSO_new()) == NULL) {
                 /* DSO_new() generates an error already */
-                return 0;
+                goto end;
             }
 
             if ((store = get_provider_store(prov->libctx)) == NULL
                     || !CRYPTO_THREAD_read_lock(store->lock))
-                return 0;
+                goto end;
             load_dir = store->default_path;
+            CRYPTO_THREAD_unlock(store->lock);
 
             if (load_dir == NULL) {
                 load_dir = ossl_safe_getenv("OPENSSL_MODULES");
@@ -513,7 +532,6 @@ static int provider_init(OSSL_PROVIDER *prov)
                     DSO_convert_filename(prov->module, prov->name);
             if (module_path != NULL)
                 merged_path = DSO_merge(prov->module, module_path, load_dir);
-            CRYPTO_THREAD_unlock(store->lock);
 
             if (merged_path == NULL
                 || (DSO_load(prov->module, merged_path, NULL, 0)) == NULL) {
@@ -541,7 +559,7 @@ static int provider_init(OSSL_PROVIDER *prov)
         DSO_free(prov->module);
         prov->module = NULL;
 #endif
-        return 0;
+        goto end;
     }
     prov->provctx = tmp_provctx;
 
@@ -571,6 +589,10 @@ static int provider_init(OSSL_PROVIDER *prov)
             prov->query_operation =
                 OSSL_FUNC_provider_query_operation(provider_dispatch);
             break;
+        case OSSL_FUNC_PROVIDER_UNQUERY_OPERATION:
+            prov->unquery_operation =
+                OSSL_FUNC_provider_unquery_operation(provider_dispatch);
+            break;
 #ifndef OPENSSL_NO_ERR
 # ifndef FIPS_MODULE
         case OSSL_FUNC_PROVIDER_GET_REASON_STRINGS:
@@ -598,7 +620,7 @@ static int provider_init(OSSL_PROVIDER *prov)
         cnt = 0;
         while (reasonstrings[cnt].id != 0) {
             if (ERR_GET_LIB(reasonstrings[cnt].id) != 0)
-                return 0;
+                goto end;
             cnt++;
         }
         cnt++;                   /* One for the terminating item */
@@ -607,7 +629,7 @@ static int provider_init(OSSL_PROVIDER *prov)
         prov->error_strings =
             OPENSSL_zalloc(sizeof(ERR_STRING_DATA) * (cnt + 1));
         if (prov->error_strings == NULL)
-            return 0;
+            goto end;
 
         /*
          * Set the "library" name.
@@ -630,7 +652,11 @@ static int provider_init(OSSL_PROVIDER *prov)
 
     /* With this flag set, this provider has become fully "loaded". */
     prov->flag_initialized = 1;
-    return 1;
+    ok = 1;
+
+ end:
+    CRYPTO_THREAD_unlock(prov->flag_lock);
+    return ok;
 }
 
 static int provider_deactivate(OSSL_PROVIDER *prov)
@@ -643,8 +669,11 @@ static int provider_deactivate(OSSL_PROVIDER *prov)
     if (CRYPTO_DOWN_REF(&prov->activatecnt, &ref, prov->activatecnt_lock) <= 0)
         return 0;
 
-    if (ref < 1)
+    if (ref < 1) {
+        CRYPTO_THREAD_write_lock(prov->flag_lock);
         prov->flag_activated = 0;
+        CRYPTO_THREAD_unlock(prov->flag_lock);
+    }
 
     /* We don't deinit here, that's done in ossl_provider_free() */
     return 1;
@@ -658,7 +687,9 @@ static int provider_activate(OSSL_PROVIDER *prov)
         return 0;
 
     if (provider_init(prov)) {
+        CRYPTO_THREAD_write_lock(prov->flag_lock);
         prov->flag_activated = 1;
+        CRYPTO_THREAD_unlock(prov->flag_lock);
 
         return 1;
     }
@@ -667,14 +698,16 @@ static int provider_activate(OSSL_PROVIDER *prov)
     return 0;
 }
 
-int ossl_provider_activate(OSSL_PROVIDER *prov)
+int ossl_provider_activate(OSSL_PROVIDER *prov, int retain_fallbacks)
 {
     if (prov == NULL)
         return 0;
     if (provider_activate(prov)) {
-        CRYPTO_THREAD_write_lock(prov->store->lock);
-        prov->store->use_fallbacks = 0;
-        CRYPTO_THREAD_unlock(prov->store->lock);
+        if (!retain_fallbacks) {
+            CRYPTO_THREAD_write_lock(prov->store->lock);
+            prov->store->use_fallbacks = 0;
+            CRYPTO_THREAD_unlock(prov->store->lock);
+        }
         return 1;
     }
     return 0;
@@ -914,8 +947,25 @@ const OSSL_ALGORITHM *ossl_provider_query_operation(const OSSL_PROVIDER *prov,
                                                     int operation_id,
                                                     int *no_cache)
 {
-    return prov->query_operation == NULL
-        ? NULL : prov->query_operation(prov->provctx, operation_id, no_cache);
+    const OSSL_ALGORITHM *res;
+
+    if (prov->query_operation == NULL)
+        return NULL;
+    res = prov->query_operation(prov->provctx, operation_id, no_cache);
+#if defined(OPENSSL_NO_CACHED_FETCH)
+    /* Forcing the non-caching of queries */
+    if (no_cache != NULL)
+        *no_cache = 1;
+#endif
+    return res;
+}
+
+void ossl_provider_unquery_operation(const OSSL_PROVIDER *prov,
+                                     int operation_id,
+                                     const OSSL_ALGORITHM *algs)
+{
+    if (prov->unquery_operation != NULL)
+        prov->unquery_operation(prov->provctx, operation_id, algs);
 }
 
 int ossl_provider_set_operation_bit(OSSL_PROVIDER *provider, size_t bitnum)

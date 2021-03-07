@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2019, Oracle and/or its affiliates.  All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -10,6 +10,7 @@
 
 #ifndef OSSL_CRYPTO_SPARSE_ARRAY_H
 # define OSSL_CRYPTO_SPARSE_ARRAY_H
+# pragma once
 
 # include <openssl/e_os2.h>
 

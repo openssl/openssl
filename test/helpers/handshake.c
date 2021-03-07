@@ -13,9 +13,6 @@
 #include <openssl/x509_vfy.h>
 #include <openssl/ssl.h>
 #include <openssl/core_names.h>
-#ifndef OPENSSL_NO_SRP
-#include <openssl/srp.h>
-#endif
 
 #include "../../ssl/ssl_local.h"
 #include "internal/sockets.h"
@@ -62,16 +59,6 @@ typedef struct handshake_ex_data_st {
     int session_ticket_do_not_call;
     ssl_servername_t servername;
 } HANDSHAKE_EX_DATA;
-
-typedef struct ctx_data_st {
-    unsigned char *npn_protocols;
-    size_t npn_protocols_len;
-    unsigned char *alpn_protocols;
-    size_t alpn_protocols_len;
-    char *srp_user;
-    char *srp_password;
-    char *session_ticket_app_data;
-} CTX_DATA;
 
 /* |ctx_data| itself is stack-allocated. */
 static void ctx_data_free_data(CTX_DATA *ctx_data)
@@ -449,28 +436,6 @@ static int server_alpn_cb(SSL *s, const unsigned char **out,
         : SSL_TLSEXT_ERR_ALERT_FATAL;
 }
 
-#ifndef OPENSSL_NO_SRP
-static char *client_srp_cb(SSL *s, void *arg)
-{
-    CTX_DATA *ctx_data = (CTX_DATA*)(arg);
-    return OPENSSL_strdup(ctx_data->srp_password);
-}
-
-static int server_srp_cb(SSL *s, int *ad, void *arg)
-{
-    CTX_DATA *ctx_data = (CTX_DATA*)(arg);
-    if (strcmp(ctx_data->srp_user, SSL_get_srp_username(s)) != 0)
-        return SSL3_AL_FATAL;
-    if (SSL_set_srp_server_param_pw(s, ctx_data->srp_user,
-                                    ctx_data->srp_password,
-                                    "2048" /* known group */) < 0) {
-        *ad = SSL_AD_INTERNAL_ERROR;
-        return SSL3_AL_FATAL;
-    }
-    return SSL_ERROR_NONE;
-}
-#endif  /* !OPENSSL_NO_SRP */
-
 static int generate_session_ticket_cb(SSL *s, void *arg)
 {
     CTX_DATA *server_ctx_data = arg;
@@ -711,28 +676,10 @@ static int configure_handshake_ctx(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
     }
 #endif
 #ifndef OPENSSL_NO_SRP
-    if (extra->server.srp_user != NULL) {
-        SSL_CTX_set_srp_username_callback(server_ctx, server_srp_cb);
-        server_ctx_data->srp_user = OPENSSL_strdup(extra->server.srp_user);
-        server_ctx_data->srp_password = OPENSSL_strdup(extra->server.srp_password);
-        SSL_CTX_set_srp_cb_arg(server_ctx, server_ctx_data);
-    }
-    if (extra->server2.srp_user != NULL) {
-        if (!TEST_ptr(server2_ctx))
-            goto err;
-        SSL_CTX_set_srp_username_callback(server2_ctx, server_srp_cb);
-        server2_ctx_data->srp_user = OPENSSL_strdup(extra->server2.srp_user);
-        server2_ctx_data->srp_password = OPENSSL_strdup(extra->server2.srp_password);
-        SSL_CTX_set_srp_cb_arg(server2_ctx, server2_ctx_data);
-    }
-    if (extra->client.srp_user != NULL) {
-        if (!TEST_true(SSL_CTX_set_srp_username(client_ctx,
-                                                extra->client.srp_user)))
-            goto err;
-        SSL_CTX_set_srp_client_pwd_callback(client_ctx, client_srp_cb);
-        client_ctx_data->srp_password = OPENSSL_strdup(extra->client.srp_password);
-        SSL_CTX_set_srp_cb_arg(client_ctx, client_ctx_data);
-    }
+    if (!configure_handshake_ctx_for_srp(server_ctx, server2_ctx, client_ctx,
+                                         extra, server_ctx_data,
+                                         server2_ctx_data, client_ctx_data))
+        goto err;
 #endif  /* !OPENSSL_NO_SRP */
     return 1;
 err:

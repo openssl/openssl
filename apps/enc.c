@@ -109,11 +109,13 @@ int enc_main(int argc, char **argv)
     BIO *in = NULL, *out = NULL, *b64 = NULL, *benc = NULL, *rbio =
         NULL, *wbio = NULL;
     EVP_CIPHER_CTX *ctx = NULL;
-    const EVP_CIPHER *cipher = NULL, *c;
+    const EVP_CIPHER *cipher = NULL;
     const EVP_MD *dgst = NULL;
+    const char *digestname = NULL;
     char *hkey = NULL, *hiv = NULL, *hsalt = NULL, *p;
-    char *infile = NULL, *outfile = NULL, *prog, *arg0;
+    char *infile = NULL, *outfile = NULL, *prog;
     char *str = NULL, *passarg = NULL, *pass = NULL, *strbuf = NULL;
+    const char *ciphername = NULL;
     char mbuf[sizeof(magic) - 1];
     OPTION_CHOICE o;
     int bsize = BSIZE, verbose = 0, debug = 0, olb64 = 0, nosalt = 0;
@@ -132,20 +134,14 @@ int enc_main(int argc, char **argv)
 #endif
 
     /* first check the command name */
-    arg0 = argv[0];
-    if (strcmp(arg0, "base64") == 0) {
+    if (strcmp(argv[0], "base64") == 0)
         base64 = 1;
 #ifdef ZLIB
-    } else if (strcmp(arg0, "zlib") == 0) {
+    else if (strcmp(argv[0], "zlib") == 0)
         do_zlib = 1;
 #endif
-    } else {
-        cipher = EVP_get_cipherbyname(arg0);
-        if (cipher == NULL && strcmp(arg0, "enc") != 0) {
-            BIO_printf(bio_err, "%s is not a known cipher\n", arg0);
-            goto end;
-        }
-    }
+    else if (strcmp(argv[0], "enc") != 0)
+        ciphername = argv[0];
 
     prog = opt_init(argc, argv, enc_options);
     while ((o = opt_next()) != OPT_EOF) {
@@ -264,13 +260,10 @@ int enc_main(int argc, char **argv)
             hiv = opt_arg();
             break;
         case OPT_MD:
-            if (!opt_md(opt_arg(), &dgst))
-                goto opthelp;
+            digestname = opt_arg();
             break;
         case OPT_CIPHER:
-            if (!opt_cipher(opt_unknown(), &c))
-                goto opthelp;
-            cipher = c;
+            ciphername = opt_unknown();
             break;
         case OPT_ITER:
             if (!opt_int(opt_arg(), &iter))
@@ -300,17 +293,25 @@ int enc_main(int argc, char **argv)
     argc = opt_num_rest();
     if (argc != 0)
         goto opthelp;
+    app_RAND_load();
 
+    /* Get the cipher name, either from progname (if set) or flag. */
+    if (ciphername != NULL) {
+        if (!opt_cipher(ciphername, &cipher))
+            goto opthelp;
+    }
     if (cipher && EVP_CIPHER_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER) {
         BIO_printf(bio_err, "%s: AEAD ciphers not supported\n", prog);
         goto end;
     }
-
     if (cipher && (EVP_CIPHER_mode(cipher) == EVP_CIPH_XTS_MODE)) {
         BIO_printf(bio_err, "%s XTS ciphers not supported\n", prog);
         goto end;
     }
-
+    if (digestname != NULL) {
+        if (!opt_md(digestname, &dgst))
+            goto opthelp;
+    }
     if (dgst == NULL)
         dgst = EVP_sha256();
 

@@ -22,9 +22,9 @@ EVP_KEYEXCH_gettable_ctx_params, EVP_KEYEXCH_settable_ctx_params
  void EVP_KEYEXCH_do_all_provided(OSSL_LIB_CTX *libctx,
                                   void (*fn)(EVP_KEYEXCH *exchange, void *arg),
                                   void *arg);
- void EVP_KEYEXCH_names_do_all(const EVP_KEYEXCH *exchange,
-                               void (*fn)(const char *name, void *data),
-                               void *data);
+ int EVP_KEYEXCH_names_do_all(const EVP_KEYEXCH *exchange,
+                              void (*fn)(const char *name, void *data),
+                              void *data);
  const OSSL_PARAM *EVP_KEYEXCH_gettable_ctx_params(const EVP_KEYEXCH *keyexch);
  const OSSL_PARAM *EVP_KEYEXCH_settable_ctx_params(const EVP_KEYEXCH *keyexch);
 
@@ -72,6 +72,9 @@ EVP_KEYEXCH_fetch() returns a pointer to a B<EVP_KEYEXCH> for success
 or NULL for failure.
 
 EVP_KEYEXCH_up_ref() returns 1 for success or 0 otherwise.
+
+EVP_KEYEXCH_names_do_all() returns 1 if the callback was called for all
+names. A return value of 0 means that the callback was not called for any names.
 
 EVP_KEYEXCH_is_a() returns 1 of I<exchange> was identifiable,
 otherwise 0.

@@ -9,10 +9,10 @@
 
 /* Dispatch functions for ccm mode */
 
+#include <openssl/proverr.h>
 #include "prov/ciphercommon.h"
 #include "prov/ciphercommon_ccm.h"
 #include "prov/providercommon.h"
-#include "prov/providercommonerr.h"
 
 static int ccm_cipher_internal(PROV_CCM_CTX *ctx, unsigned char *out,
                                size_t *padlen, const unsigned char *in,
@@ -65,7 +65,7 @@ static size_t ccm_get_ivlen(PROV_CCM_CTX *ctx)
     return 15 - ctx->l;
 }
 
-int ccm_set_ctx_params(void *vctx, const OSSL_PARAM params[])
+int ossl_ccm_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
     PROV_CCM_CTX *ctx = (PROV_CCM_CTX *)vctx;
     const OSSL_PARAM *p;
@@ -78,7 +78,7 @@ int ccm_set_ctx_params(void *vctx, const OSSL_PARAM params[])
             return 0;
         }
         if ((p->data_size & 1) || (p->data_size < 4) || p->data_size > 16) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_TAGLEN);
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_TAG_LENGTH);
             return 0;
         }
 
@@ -103,7 +103,7 @@ int ccm_set_ctx_params(void *vctx, const OSSL_PARAM params[])
         }
         ivlen = 15 - sz;
         if (ivlen < 2 || ivlen > 8) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_IVLEN);
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_IV_LENGTH);
             return 0;
         }
         ctx->l = ivlen;
@@ -130,7 +130,7 @@ int ccm_set_ctx_params(void *vctx, const OSSL_PARAM params[])
             return 0;
         }
         if (ccm_tls_iv_set_fixed(ctx, p->data, p->data_size) == 0) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_IVLEN);
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_IV_LENGTH);
             return 0;
         }
     }
@@ -138,7 +138,7 @@ int ccm_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     return 1;
 }
 
-int ccm_get_ctx_params(void *vctx, OSSL_PARAM params[])
+int ossl_ccm_get_ctx_params(void *vctx, OSSL_PARAM params[])
 {
     PROV_CCM_CTX *ctx = (PROV_CCM_CTX *)vctx;
     OSSL_PARAM *p;
@@ -162,7 +162,7 @@ int ccm_get_ctx_params(void *vctx, OSSL_PARAM params[])
     p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_IV);
     if (p != NULL) {
         if (ccm_get_ivlen(ctx) > p->data_size) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_IVLEN);
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_IV_LENGTH);
             return 0;
         }
         if (!OSSL_PARAM_set_octet_string(p, ctx->iv, p->data_size)
@@ -175,7 +175,7 @@ int ccm_get_ctx_params(void *vctx, OSSL_PARAM params[])
     p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_UPDATED_IV);
     if (p != NULL) {
         if (ccm_get_ivlen(ctx) > p->data_size) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_IVLEN);
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_IV_LENGTH);
             return 0;
         }
         if (!OSSL_PARAM_set_octet_string(p, ctx->iv, p->data_size)
@@ -200,7 +200,7 @@ int ccm_get_ctx_params(void *vctx, OSSL_PARAM params[])
     p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_AEAD_TAG);
     if (p != NULL) {
         if (!ctx->enc || !ctx->tag_set) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_TAG_NOTSET);
+            ERR_raise(ERR_LIB_PROV, PROV_R_TAG_NOT_SET);
             return 0;
         }
         if (p->data_type != OSSL_PARAM_OCTET_STRING) {
@@ -228,7 +228,7 @@ static int ccm_init(void *vctx, const unsigned char *key, size_t keylen,
 
     if (iv != NULL) {
         if (ivlen != ccm_get_ivlen(ctx)) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_IVLEN);
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_IV_LENGTH);
             return 0;
         }
         memcpy(ctx->iv, iv, ivlen);
@@ -236,7 +236,7 @@ static int ccm_init(void *vctx, const unsigned char *key, size_t keylen,
     }
     if (key != NULL) {
         if (keylen != ctx->keylen) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEYLEN);
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
             return 0;
         }
         return ctx->hw->setkey(ctx, key, keylen);
@@ -244,21 +244,21 @@ static int ccm_init(void *vctx, const unsigned char *key, size_t keylen,
     return 1;
 }
 
-int ccm_einit(void *vctx, const unsigned char *key, size_t keylen,
-                     const unsigned char *iv, size_t ivlen)
+int ossl_ccm_einit(void *vctx, const unsigned char *key, size_t keylen,
+                   const unsigned char *iv, size_t ivlen)
 {
     return ccm_init(vctx, key, keylen, iv, ivlen, 1);
 }
 
-int ccm_dinit(void *vctx, const unsigned char *key, size_t keylen,
-                     const unsigned char *iv, size_t ivlen)
+int ossl_ccm_dinit(void *vctx, const unsigned char *key, size_t keylen,
+                   const unsigned char *iv, size_t ivlen)
 {
     return ccm_init(vctx, key, keylen, iv, ivlen, 0);
 }
 
-int ccm_stream_update(void *vctx, unsigned char *out, size_t *outl,
-                             size_t outsize, const unsigned char *in,
-                             size_t inl)
+int ossl_ccm_stream_update(void *vctx, unsigned char *out, size_t *outl,
+                           size_t outsize, const unsigned char *in,
+                           size_t inl)
 {
     PROV_CCM_CTX *ctx = (PROV_CCM_CTX *)vctx;
 
@@ -274,8 +274,8 @@ int ccm_stream_update(void *vctx, unsigned char *out, size_t *outl,
     return 1;
 }
 
-int ccm_stream_final(void *vctx, unsigned char *out, size_t *outl,
-                            size_t outsize)
+int ossl_ccm_stream_final(void *vctx, unsigned char *out, size_t *outl,
+                          size_t outsize)
 {
     PROV_CCM_CTX *ctx = (PROV_CCM_CTX *)vctx;
     int i;
@@ -291,9 +291,8 @@ int ccm_stream_final(void *vctx, unsigned char *out, size_t *outl,
     return 1;
 }
 
-int ccm_cipher(void *vctx,
-                      unsigned char *out, size_t *outl, size_t outsize,
-                      const unsigned char *in, size_t inl)
+int ossl_ccm_cipher(void *vctx, unsigned char *out, size_t *outl, size_t outsize,
+                    const unsigned char *in, size_t inl)
 {
     PROV_CCM_CTX *ctx = (PROV_CCM_CTX *)vctx;
 
@@ -433,7 +432,7 @@ err:
     return rv;
 }
 
-void ccm_initctx(PROV_CCM_CTX *ctx, size_t keybits, const PROV_CCM_HW *hw)
+void ossl_ccm_initctx(PROV_CCM_CTX *ctx, size_t keybits, const PROV_CCM_HW *hw)
 {
     ctx->keylen = keybits / 8;
     ctx->key_set = 0;
@@ -445,4 +444,3 @@ void ccm_initctx(PROV_CCM_CTX *ctx, size_t keybits, const PROV_CCM_HW *hw)
     ctx->tls_aad_len = UNINITIALISED_SIZET;
     ctx->hw = hw;
 }
-

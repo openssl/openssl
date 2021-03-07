@@ -305,6 +305,7 @@ X509_OBJECT *X509_STORE_CTX_get_obj_by_subject(X509_STORE_CTX *vs,
     return ret;
 }
 
+/* Also fill the cache with all matching certificates */
 int X509_STORE_CTX_get_by_subject(const X509_STORE_CTX *vs,
                                   X509_LOOKUP_TYPE type,
                                   const X509_NAME *name, X509_OBJECT *ret)
@@ -711,11 +712,8 @@ X509_OBJECT *X509_OBJECT_retrieve_match(STACK_OF(X509_OBJECT) *h,
 }
 
 /*-
- * Try to get issuer certificate from store. Due to limitations
- * of the API this can only retrieve a single certificate matching
- * a given subject name. However it will fill the cache with all
- * matching certificates, so we can examine the cache for all
- * matches.
+ * Try to get issuer cert from |ctx->store| matching the subject name of |x|.
+ * Prefer the first non-expired one, else take the most recently expired one.
  *
  * Return values are:
  *  1 lookup successful.
@@ -738,7 +736,7 @@ int X509_STORE_CTX_get1_issuer(X509 **issuer, X509_STORE_CTX *ctx, X509 *x)
         X509_OBJECT_free(obj);
         return 0;
     }
-    /* If certificate matches all OK */
+    /* If certificate matches and is currently valid all OK */
     if (ctx->check_issued(ctx, x, obj->data.x509)) {
         if (x509_check_cert_time(ctx, obj->data.x509, -1)) {
             *issuer = obj->data.x509;
@@ -752,39 +750,46 @@ int X509_STORE_CTX_get1_issuer(X509 **issuer, X509_STORE_CTX *ctx, X509 *x)
     }
     X509_OBJECT_free(obj);
 
+    /*
+     * Due to limitations of the API this can only retrieve a single cert.
+     * However it will fill the cache with all matching certificates,
+     * so we can examine the cache for all matches.
+     */
     if (store == NULL)
         return 0;
 
-    /* Else find index of first cert accepted by 'check_issued' */
+    /* Find index of first currently valid cert accepted by 'check_issued' */
     ret = 0;
     X509_STORE_lock(store);
     idx = X509_OBJECT_idx_by_subject(store->objs, X509_LU_X509, xn);
-    if (idx != -1) {            /* should be true as we've had at least one
-                                 * match */
+    if (idx != -1) { /* should be true as we've had at least one match */
         /* Look through all matching certs for suitable issuer */
         for (i = idx; i < sk_X509_OBJECT_num(store->objs); i++) {
             pobj = sk_X509_OBJECT_value(store->objs, i);
             /* See if we've run past the matches */
             if (pobj->type != X509_LU_X509)
                 break;
-            if (X509_NAME_cmp(xn, X509_get_subject_name(pobj->data.x509)))
-                break;
+            if (X509_NAME_cmp(X509_get_subject_name(pobj->data.x509), xn) != 0)
+                break; /* Not more cert matches xn */
             if (ctx->check_issued(ctx, x, pobj->data.x509)) {
-                *issuer = pobj->data.x509;
                 ret = 1;
-                /*
-                 * If times check, exit with match,
-                 * otherwise keep looking. Leave last
-                 * match in issuer so we return nearest
-                 * match if no certificate time is OK.
-                 */
-
-                if (x509_check_cert_time(ctx, *issuer, -1))
+                /* If times check fine, exit with match, else keep looking. */
+                if (x509_check_cert_time(ctx, pobj->data.x509, -1)) {
+                    *issuer = pobj->data.x509;
                     break;
+                }
+                /*
+                 * Leave the so far most recently expired match in *issuer
+                 * so we return nearest match if no certificate time is OK.
+                 */
+                if (*issuer == NULL
+                    || ASN1_TIME_compare(X509_get0_notAfter(pobj->data.x509),
+                                         X509_get0_notAfter(*issuer)) > 0)
+                    *issuer = pobj->data.x509;
             }
         }
     }
-    if (*issuer && !X509_up_ref(*issuer)) {
+    if (*issuer != NULL && !X509_up_ref(*issuer)) {
         *issuer = NULL;
         ret = -1;
     }

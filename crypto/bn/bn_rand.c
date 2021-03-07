@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -25,7 +25,7 @@ static int bnrand(BNRAND_FLAG flag, BIGNUM *rnd, int bits, int top, int bottom,
 {
     unsigned char *buf = NULL;
     int b, ret = 0, bit, bytes, mask;
-    OSSL_LIB_CTX *libctx = bn_get_libctx(ctx);
+    OSSL_LIB_CTX *libctx = ossl_bn_get_libctx(ctx);
 
     if (bits == 0) {
         if (top != BN_RAND_TOP_ANY || bottom != BN_RAND_BOTTOM_ANY)
@@ -217,6 +217,7 @@ int BN_priv_rand_range(BIGNUM *r, const BIGNUM *range)
     return bnrand_range(PRIVATE, r, range, NULL);
 }
 
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 int BN_pseudo_rand(BIGNUM *rnd, int bits, int top, int bottom)
 {
     return BN_rand(rnd, bits, top, bottom);
@@ -226,6 +227,7 @@ int BN_pseudo_rand_range(BIGNUM *r, const BIGNUM *range)
 {
     return BN_rand_range(r, range);
 }
+# endif
 #endif
 
 /*
@@ -254,7 +256,7 @@ int BN_generate_dsa_nonce(BIGNUM *out, const BIGNUM *range,
     unsigned char *k_bytes = NULL;
     int ret = 0;
     EVP_MD *md = NULL;
-    OSSL_LIB_CTX *libctx = bn_get_libctx(ctx);
+    OSSL_LIB_CTX *libctx = ossl_bn_get_libctx(ctx);
 
     if (mdctx == NULL)
         goto err;

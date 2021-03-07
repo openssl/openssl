@@ -15,8 +15,8 @@
 #include <openssl/core_names.h>
 #include <openssl/params.h>
 #include <openssl/err.h>
+#include <openssl/proverr.h>
 #include <crypto/sm2.h>
-#include "prov/providercommonerr.h"
 #include "prov/provider_ctx.h"
 #include "prov/implementations.h"
 #include "prov/provider_util.h"
@@ -89,14 +89,14 @@ static int sm2_asym_encrypt(void *vpsm2ctx, unsigned char *out, size_t *outlen,
         return 0;
 
     if (out == NULL) {
-        if (!sm2_ciphertext_size(psm2ctx->key, md, inlen, outlen)) {
+        if (!ossl_sm2_ciphertext_size(psm2ctx->key, md, inlen, outlen)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY);
             return 0;
         }
         return 1;
     }
 
-    return sm2_encrypt(psm2ctx->key, md, in, inlen, out, outlen);
+    return ossl_sm2_encrypt(psm2ctx->key, md, in, inlen, out, outlen);
 }
 
 static int sm2_asym_decrypt(void *vpsm2ctx, unsigned char *out, size_t *outlen,
@@ -110,12 +110,12 @@ static int sm2_asym_decrypt(void *vpsm2ctx, unsigned char *out, size_t *outlen,
         return 0;
 
     if (out == NULL) {
-        if (!sm2_plaintext_size(psm2ctx->key, md, inlen, outlen))
+        if (!ossl_sm2_plaintext_size(psm2ctx->key, md, inlen, outlen))
             return 0;
         return 1;
     }
 
-    return sm2_decrypt(psm2ctx->key, md, in, inlen, out, outlen);
+    return ossl_sm2_decrypt(psm2ctx->key, md, in, inlen, out, outlen);
 }
 
 static void sm2_freectx(void *vpsm2ctx)
@@ -176,7 +176,8 @@ static const OSSL_PARAM known_gettable_ctx_params[] = {
     OSSL_PARAM_END
 };
 
-static const OSSL_PARAM *sm2_gettable_ctx_params(ossl_unused void *provctx)
+static const OSSL_PARAM *sm2_gettable_ctx_params(ossl_unused void *vpsm2ctx,
+                                                 ossl_unused void *provctx)
 {
     return known_gettable_ctx_params;
 }
@@ -202,7 +203,8 @@ static const OSSL_PARAM known_settable_ctx_params[] = {
     OSSL_PARAM_END
 };
 
-static const OSSL_PARAM *sm2_settable_ctx_params(ossl_unused void *provctx)
+static const OSSL_PARAM *sm2_settable_ctx_params(ossl_unused void *vpsm2ctx,
+                                                 ossl_unused void *provctx)
 {
     return known_settable_ctx_params;
 }

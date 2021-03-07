@@ -327,7 +327,7 @@ static int dh_cms_encrypt(CMS_RecipientInfo *ri)
     return rv;
 }
 
-int cms_dh_envelope(CMS_RecipientInfo *ri, int decrypt)
+int ossl_cms_dh_envelope(CMS_RecipientInfo *ri, int decrypt)
 {
     assert(decrypt == 0 || decrypt == 1);
 

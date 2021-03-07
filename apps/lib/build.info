@@ -17,3 +17,7 @@ IF[{- !$disabled{apps} -}]
   SOURCE[../libapps.a]=$LIBAPPSSRC $AUXLIBAPPSSRC
   INCLUDE[../libapps.a]=../.. ../../include ../include
 ENDIF
+
+IF[{- !$disabled{srp} -}]
+  SOURCE[../libapps.a]=tlssrp_depr.c
+ENDIF

@@ -7,7 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "crypto/x509.h" /* for X509_add_cert_new() */
+#include "crypto/x509.h" /* for ossl_x509_add_cert_new() */
 
 /*-  CertID ::= SEQUENCE {
  *       hashAlgorithm            AlgorithmIdentifier,

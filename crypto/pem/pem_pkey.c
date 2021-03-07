@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -153,10 +153,10 @@ EVP_PKEY *PEM_read_bio_PrivateKey(BIO *bp, EVP_PKEY **x, pem_password_cb *cb,
 
 PEM_write_cb_ex_fnsig(PrivateKey, EVP_PKEY, BIO, write_bio)
 {
-    IMPLEMENT_PEM_provided_write_body_vars(EVP_PKEY, PrivateKey, propq);
+    IMPLEMENT_PEM_provided_write_body_vars(pkey, PrivateKey, propq);
 
     IMPLEMENT_PEM_provided_write_body_pass();
-    IMPLEMENT_PEM_provided_write_body_main(EVP_PKEY, bio);
+    IMPLEMENT_PEM_provided_write_body_main(pkey, bio);
 
  legacy:
     if (x->ameth == NULL || x->ameth->priv_encode != NULL)
@@ -218,9 +218,9 @@ EVP_PKEY *PEM_read_bio_Parameters(BIO *bp, EVP_PKEY **x)
 PEM_write_fnsig(Parameters, EVP_PKEY, BIO, write_bio)
 {
     char pem_str[80];
-    IMPLEMENT_PEM_provided_write_body_vars(EVP_PKEY, Parameters, NULL);
+    IMPLEMENT_PEM_provided_write_body_vars(pkey, Parameters, NULL);
 
-    IMPLEMENT_PEM_provided_write_body_main(EVP_PKEY, bio);
+    IMPLEMENT_PEM_provided_write_body_main(pkey, bio);
 
  legacy:
     if (!x->ameth || !x->ameth->param_encode)

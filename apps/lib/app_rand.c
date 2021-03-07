@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -14,6 +14,7 @@
 #include <openssl/conf.h>
 
 static char *save_rand_file;
+static STACK_OF(OPENSSL_STRING) *randfiles;
 
 void app_RAND_load_conf(CONF *c, const char *section)
 {
@@ -57,6 +58,23 @@ static int loadfiles(char *name)
     return ret;
 }
 
+int app_RAND_load(void)
+{
+    char *p;
+    int i, ret = 1;
+
+    if (randfiles == NULL)
+        return 1;
+
+    for (i = 0; i < sk_OPENSSL_STRING_num(randfiles); i++) {
+        p = sk_OPENSSL_STRING_value(randfiles, i);
+        if (!loadfiles(p))
+            ret = 0;
+    }
+    sk_OPENSSL_STRING_free(randfiles);
+    return ret;
+}
+
 void app_RAND_write(void)
 {
     if (save_rand_file == NULL)
@@ -82,7 +100,11 @@ int opt_rand(int opt)
     case OPT_R__LAST:
         break;
     case OPT_R_RAND:
-        return loadfiles(opt_arg());
+        if (randfiles == NULL
+                && (randfiles = sk_OPENSSL_STRING_new_null()) == NULL)
+            return 0;
+        if (!sk_OPENSSL_STRING_push(randfiles, opt_arg()))
+            return 0;
         break;
     case OPT_R_WRITERAND:
         OPENSSL_free(save_rand_file);

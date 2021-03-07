@@ -117,11 +117,11 @@ static int mac_digest_sign_init(void *vpmacctx, const char *mdname, void *vkey)
                               (char *)mdname,
                               (char *)engine,
                               pmacctx->key->properties,
-                              pmacctx->key->priv_key,
-                              pmacctx->key->priv_key_len))
+                              NULL, 0))
         return 0;
 
-    if (!EVP_MAC_init(pmacctx->macctx))
+    if (!EVP_MAC_init(pmacctx->macctx, pmacctx->key->priv_key,
+                      pmacctx->key->priv_key_len, NULL))
         return 0;
 
     return 1;
@@ -172,8 +172,12 @@ static void *mac_dupctx(void *vpmacctx)
         return NULL;
 
     *dstctx = *srcctx;
+    dstctx->propq = NULL;
     dstctx->key = NULL;
     dstctx->macctx = NULL;
+
+    if (srcctx->propq != NULL && (dstctx->propq = OPENSSL_strdup(srcctx->propq)) == NULL)
+        goto err;
 
     if (srcctx->key != NULL && !ossl_mac_key_up_ref(srcctx->key))
         goto err;
@@ -198,7 +202,8 @@ static int mac_set_ctx_params(void *vpmacctx, const OSSL_PARAM params[])
     return EVP_MAC_CTX_set_params(ctx->macctx, params);
 }
 
-static const OSSL_PARAM *mac_settable_ctx_params(void *provctx,
+static const OSSL_PARAM *mac_settable_ctx_params(ossl_unused void *ctx,
+                                                 void *provctx,
                                                  const char *macname)
 {
     EVP_MAC *mac = EVP_MAC_fetch(PROV_LIBCTX_OF(provctx), macname,
@@ -215,9 +220,10 @@ static const OSSL_PARAM *mac_settable_ctx_params(void *provctx,
 }
 
 #define MAC_SETTABLE_CTX_PARAMS(funcname, macname) \
-    static const OSSL_PARAM *mac_##funcname##_settable_ctx_params(void *provctx) \
+    static const OSSL_PARAM *mac_##funcname##_settable_ctx_params(void *ctx, \
+                                                                  void *provctx) \
     { \
-        return mac_settable_ctx_params(provctx, macname); \
+        return mac_settable_ctx_params(ctx, provctx, macname); \
     }
 
 MAC_SETTABLE_CTX_PARAMS(hmac, "HMAC")

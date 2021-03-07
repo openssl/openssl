@@ -155,12 +155,27 @@ void OSSL_CMP_print_errors_cb(OSSL_CMP_log_cb_t log_fn)
     while ((err = ERR_get_error_all(&file, &line, &func, &data, &flags)) != 0) {
         const char *component =
             improve_location_name(func, ERR_lib_error_string(err));
+        unsigned long reason = ERR_GET_REASON(err);
+        const char *rs = NULL;
+        char rsbuf[256];
 
-        if (!(flags & ERR_TXT_STRING))
-            data = NULL;
-        BIO_snprintf(msg, sizeof(msg), "%s%s%s", ERR_reason_error_string(err),
-                     data == NULL || *data == '\0' ? "" : " : ",
-                     data == NULL ? "" : data);
+#ifndef OPENSSL_NO_ERR
+        if (ERR_SYSTEM_ERROR(err)) {
+            if (openssl_strerror_r(reason, rsbuf, sizeof(rsbuf)))
+                rs = rsbuf;
+        } else {
+            rs = ERR_reason_error_string(err);
+        }
+#endif
+        if (rs == NULL) {
+            BIO_snprintf(rsbuf, sizeof(rsbuf), "reason(%lu)", reason);
+            rs = rsbuf;
+        }
+        if (data != NULL && (flags & ERR_TXT_STRING) != 0)
+            BIO_snprintf(msg, sizeof(msg), "%s:%s", rs, data);
+        else
+            BIO_snprintf(msg, sizeof(msg), "%s", rs);
+
         if (log_fn == NULL) {
 #ifndef OPENSSL_NO_STDIO
             BIO *bio = BIO_new_fp(stderr, BIO_NOCLOSE);
@@ -248,11 +263,9 @@ STACK_OF(X509)
     chain = X509_STORE_CTX_get0_chain(csc);
 
     /* result list to store the up_ref'ed not self-signed certificates */
-    if ((result = sk_X509_new_null()) == NULL)
-        goto err;
-    if (!X509_add_certs(result, chain,
-                        X509_ADD_FLAG_UP_REF | X509_ADD_FLAG_NO_DUP
-                        | X509_ADD_FLAG_NO_SS)) {
+    if (!ossl_x509_add_certs_new(&result, chain,
+                                 X509_ADD_FLAG_UP_REF | X509_ADD_FLAG_NO_DUP
+                                 | X509_ADD_FLAG_NO_SS)) {
         sk_X509_free(result);
         result = NULL;
     }

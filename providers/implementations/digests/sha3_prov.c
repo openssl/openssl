@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -13,10 +13,14 @@
 #include <openssl/evp.h>
 #include <openssl/params.h>
 #include <openssl/err.h>
+#include <openssl/proverr.h>
 #include "internal/sha3.h"
 #include "prov/digestcommon.h"
 #include "prov/implementations.h"
-#include "prov/providercommonerr.h"
+
+#define SHA3_FLAGS PROV_DIGEST_FLAG_ALGID_ABSENT
+#define SHAKE_FLAGS PROV_DIGEST_FLAG_XOF
+#define KMAC_FLAGS PROV_DIGEST_FLAG_XOF
 
 /*
  * Forward declaration of any unique methods implemented here. This is not strictly
@@ -261,7 +265,8 @@ static const OSSL_PARAM known_shake_settable_ctx_params[] = {
     {OSSL_DIGEST_PARAM_XOFLEN, OSSL_PARAM_UNSIGNED_INTEGER, NULL, 0, 0},
     OSSL_PARAM_END
 };
-static const OSSL_PARAM *shake_settable_ctx_params(ossl_unused void *provctx)
+static const OSSL_PARAM *shake_settable_ctx_params(ossl_unused void *ctx,
+                                                   ossl_unused void *provctx)
 {
     return known_shake_settable_ctx_params;
 }
@@ -286,18 +291,18 @@ static int shake_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     SHA3_newctx(sha3, SHA3_##bitlen, sha3_##bitlen, bitlen, '\x06')            \
     PROV_FUNC_SHA3_DIGEST(sha3_##bitlen, bitlen,                               \
                           SHA3_BLOCKSIZE(bitlen), SHA3_MDSIZE(bitlen),         \
-                          EVP_MD_FLAG_DIGALGID_ABSENT)
+                          SHA3_FLAGS)
 
 #define IMPLEMENT_SHAKE_functions(bitlen)                                      \
     SHA3_newctx(shake, SHAKE_##bitlen, shake_##bitlen, bitlen, '\x1f')         \
     PROV_FUNC_SHAKE_DIGEST(shake_##bitlen, bitlen,                             \
                           SHA3_BLOCKSIZE(bitlen), SHA3_MDSIZE(bitlen),         \
-                          EVP_MD_FLAG_XOF)
+                          SHAKE_FLAGS)
 #define IMPLEMENT_KMAC_functions(bitlen)                                       \
     KMAC_newctx(keccak_kmac_##bitlen, bitlen, '\x04')                          \
     PROV_FUNC_SHAKE_DIGEST(keccak_kmac_##bitlen, bitlen,                       \
                            SHA3_BLOCKSIZE(bitlen), KMAC_MDSIZE(bitlen),        \
-                           EVP_MD_FLAG_XOF)
+                           KMAC_FLAGS)
 
 /* ossl_sha3_224_functions */
 IMPLEMENT_SHA3_functions(224)

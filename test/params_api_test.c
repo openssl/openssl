@@ -538,7 +538,7 @@ static int test_param_construct(void)
     bufp = NULL;
     if (!TEST_ptr(cp = OSSL_PARAM_locate(params, "utf8str"))
         || !TEST_true(OSSL_PARAM_set_utf8_string(cp, "abcdef"))
-        || !TEST_size_t_eq(cp->return_size, sizeof("abcdef"))
+        || !TEST_size_t_eq(cp->return_size, sizeof("abcdef") - 1)
         || !TEST_true(OSSL_PARAM_get_utf8_string(cp, &bufp, 0))
         || !TEST_str_eq(bufp, "abcdef"))
         goto err;
@@ -548,10 +548,11 @@ static int test_param_construct(void)
         || !TEST_str_eq(buf2, "abcdef"))
         goto err;
     /* UTF8 pointer */
+    /* Note that the size of a UTF8 string does *NOT* include the NUL byte */
     bufp = buf;
     if (!TEST_ptr(cp = OSSL_PARAM_locate(params, "utf8ptr"))
         || !TEST_true(OSSL_PARAM_set_utf8_ptr(cp, "tuvwxyz"))
-        || !TEST_size_t_eq(cp->return_size, sizeof("tuvwxyz"))
+        || !TEST_size_t_eq(cp->return_size, sizeof("tuvwxyz") - 1)
         || !TEST_str_eq(bufp, "tuvwxyz")
         || !TEST_true(OSSL_PARAM_get_utf8_ptr(cp, (const char **)&bufp2))
         || !TEST_ptr_eq(bufp2, bufp))

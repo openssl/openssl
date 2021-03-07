@@ -243,12 +243,12 @@ int DH_check_pub_key(const DH *dh, const BIGNUM *pub_key, int *ret)
  * To only be used with ephemeral FFC public keys generated using the approved
  * safe-prime groups.
  */
-int dh_check_pub_key_partial(const DH *dh, const BIGNUM *pub_key, int *ret)
+int ossl_dh_check_pub_key_partial(const DH *dh, const BIGNUM *pub_key, int *ret)
 {
     return ossl_ffc_validate_public_key_partial(&dh->params, pub_key, ret);
 }
 
-int dh_check_priv_key(const DH *dh, const BIGNUM *priv_key, int *ret)
+int ossl_dh_check_priv_key(const DH *dh, const BIGNUM *priv_key, int *ret)
 {
     int ok = 0;
     BIGNUM *two_powN = NULL, *upper;
@@ -281,7 +281,7 @@ err:
  * FFC pairwise check from SP800-56A R3.
  *    Section 5.6.2.1.4 Owner Assurance of Pair-wise Consistency
  */
-int dh_check_pairwise(const DH *dh)
+int ossl_dh_check_pairwise(const DH *dh)
 {
     int ret = 0;
     BN_CTX *ctx = NULL;
@@ -301,7 +301,7 @@ int dh_check_pairwise(const DH *dh)
         goto err;
 
     /* recalculate the public key = (g ^ priv) mod p */
-    if (!dh_generate_public_key(ctx, dh, dh->priv_key, pub_key))
+    if (!ossl_dh_generate_public_key(ctx, dh, dh->priv_key, pub_key))
         goto err;
     /* check it matches the existing pubic_key */
     ret = BN_cmp(pub_key, dh->pub_key) == 0;

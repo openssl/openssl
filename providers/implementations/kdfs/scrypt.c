@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -14,12 +14,12 @@
 #include <openssl/kdf.h>
 #include <openssl/err.h>
 #include <openssl/core_names.h>
+#include <openssl/proverr.h>
 #include "crypto/evp.h"
 #include "internal/numbers.h"
 #include "prov/implementations.h"
 #include "prov/provider_ctx.h"
 #include "prov/providercommon.h"
-#include "prov/providercommonerr.h"
 #include "prov/implementations.h"
 
 #ifndef OPENSSL_NO_SCRYPT
@@ -147,12 +147,12 @@ static int set_property_query(KDF_SCRYPT *ctx, const char *propq)
     return 1;
 }
 
-static int kdf_scrypt_derive(void *vctx, unsigned char *key,
-                             size_t keylen)
+static int kdf_scrypt_derive(void *vctx, unsigned char *key, size_t keylen,
+                             const OSSL_PARAM params[])
 {
     KDF_SCRYPT *ctx = (KDF_SCRYPT *)vctx;
 
-    if (!ossl_prov_is_running())
+    if (!ossl_prov_is_running() || !kdf_scrypt_set_ctx_params(ctx, params))
         return 0;
 
     if (ctx->pass == NULL) {
@@ -233,7 +233,8 @@ static int kdf_scrypt_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     return 1;
 }
 
-static const OSSL_PARAM *kdf_scrypt_settable_ctx_params(ossl_unused void *p_ctx)
+static const OSSL_PARAM *kdf_scrypt_settable_ctx_params(ossl_unused void *ctx,
+                                                        ossl_unused void *p_ctx)
 {
     static const OSSL_PARAM known_settable_ctx_params[] = {
         OSSL_PARAM_octet_string(OSSL_KDF_PARAM_PASSWORD, NULL, 0),
@@ -257,7 +258,8 @@ static int kdf_scrypt_get_ctx_params(void *vctx, OSSL_PARAM params[])
     return -2;
 }
 
-static const OSSL_PARAM *kdf_scrypt_gettable_ctx_params(ossl_unused void *p_ctx)
+static const OSSL_PARAM *kdf_scrypt_gettable_ctx_params(ossl_unused void *ctx,
+                                                        ossl_unused void *p_ctx)
 {
     static const OSSL_PARAM known_gettable_ctx_params[] = {
         OSSL_PARAM_size_t(OSSL_KDF_PARAM_SIZE, NULL),

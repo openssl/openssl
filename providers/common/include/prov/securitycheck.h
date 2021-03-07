@@ -11,17 +11,17 @@
 
 /* Functions that are common */
 int ossl_rsa_check_key(const RSA *rsa, int protect);
-int ec_check_key(const EC_KEY *ec, int protect);
-int dsa_check_key(const DSA *dsa, int sign);
-int dh_check_key(const DH *dh);
+int ossl_ec_check_key(const EC_KEY *ec, int protect);
+int ossl_dsa_check_key(const DSA *dsa, int sign);
+int ossl_dh_check_key(const DH *dh);
 
-int digest_is_allowed(const EVP_MD *md);
-int digest_get_approved_nid_with_sha1(const EVP_MD *md, int sha1_allowed);
+int ossl_digest_is_allowed(const EVP_MD *md);
+int ossl_digest_get_approved_nid_with_sha1(const EVP_MD *md, int sha1_allowed);
 
 /* Functions that are common */
-int digest_md_to_nid(const EVP_MD *md, const OSSL_ITEM *it, size_t it_len);
-int digest_get_approved_nid(const EVP_MD *md);
+int ossl_digest_md_to_nid(const EVP_MD *md, const OSSL_ITEM *it, size_t it_len);
+int ossl_digest_get_approved_nid(const EVP_MD *md);
 
 /* Functions that have different implementations for the FIPS_MODULE */
-int digest_rsa_sign_get_md_nid(const EVP_MD *md, int sha1_allowed);
-int securitycheck_enabled(void);
+int ossl_digest_rsa_sign_get_md_nid(const EVP_MD *md, int sha1_allowed);
+int ossl_securitycheck_enabled(void);

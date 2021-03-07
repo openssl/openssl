@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -21,10 +21,10 @@
 #include <openssl/params.h>
 #include <openssl/evp.h>
 #include <openssl/err.h>
+#include <openssl/proverr.h>
 #include "internal/nelem.h"
 #include "internal/sizes.h"
 #include "internal/cryptlib.h"
-#include "prov/providercommonerr.h"
 #include "prov/implementations.h"
 #include "prov/provider_ctx.h"
 #include "crypto/ec.h"
@@ -144,7 +144,7 @@ static int sm2sig_sign(void *vpsm2ctx, unsigned char *sig, size_t *siglen,
     if (ctx->mdsize != 0 && tbslen != ctx->mdsize)
         return 0;
 
-    ret = sm2_internal_sign(tbs, tbslen, sig, &sltmp, ctx->ec);
+    ret = ossl_sm2_internal_sign(tbs, tbslen, sig, &sltmp, ctx->ec);
     if (ret <= 0)
         return 0;
 
@@ -160,7 +160,7 @@ static int sm2sig_verify(void *vpsm2ctx, const unsigned char *sig, size_t siglen
     if (ctx->mdsize != 0 && tbslen != ctx->mdsize)
         return 0;
 
-    return sm2_internal_verify(tbs, tbslen, sig, siglen, ctx->ec);
+    return ossl_sm2_internal_verify(tbs, tbslen, sig, siglen, ctx->ec);
 }
 
 static void free_md(PROV_SM2_CTX *ctx)
@@ -192,7 +192,7 @@ static int sm2sig_digest_signverify_init(void *vpsm2ctx, const char *mdname,
         goto error;
 
     /*
-     * TODO(3.0) Should we care about DER writing errors?
+     * We do not care about DER writing errors.
      * All it really means is that for some reason, there's no
      * AlgorithmIdentifier to be had, but the operation itself is
      * still valid, just as long as it's not used to construct
@@ -231,7 +231,8 @@ static int sm2sig_compute_z_digest(PROV_SM2_CTX *ctx)
 
         if ((z = OPENSSL_zalloc(ctx->mdsize)) == NULL
             /* get hashed prefix 'z' of tbs message */
-            || !sm2_compute_z_digest(z, ctx->md, ctx->id, ctx->id_len, ctx->ec)
+            || !ossl_sm2_compute_z_digest(z, ctx->md, ctx->id, ctx->id_len,
+                                          ctx->ec)
             || !EVP_DigestUpdate(ctx->mdctx, z, ctx->mdsize))
             ret = 0;
         OPENSSL_free(z);
@@ -380,7 +381,8 @@ static const OSSL_PARAM known_gettable_ctx_params[] = {
     OSSL_PARAM_END
 };
 
-static const OSSL_PARAM *sm2sig_gettable_ctx_params(ossl_unused void *provctx)
+static const OSSL_PARAM *sm2sig_gettable_ctx_params(ossl_unused void *vpsm2ctx,
+                                                    ossl_unused void *provctx)
 {
     return known_gettable_ctx_params;
 }
@@ -445,7 +447,8 @@ static const OSSL_PARAM known_settable_ctx_params[] = {
     OSSL_PARAM_END
 };
 
-static const OSSL_PARAM *sm2sig_settable_ctx_params(ossl_unused void *provctx)
+static const OSSL_PARAM *sm2sig_settable_ctx_params(ossl_unused void *vpsm2ctx,
+                                                    ossl_unused void *provctx)
 {
     /*
      * TODO(3.0): Should this function return a different set of settable ctx

@@ -40,8 +40,6 @@
 #include <internal/nelem.h>
 #include "fuzzer.h"
 
-#include "rand.inc"
-
 static ASN1_ITEM_EXP *item_type[] = {
     ASN1_ITEM_ref(ACCESS_DESCRIPTION),
 #ifndef OPENSSL_NO_RFC3779
@@ -280,6 +278,7 @@ static ASN1_PCTX *pctx;
 
 int FuzzerInitialize(int *argc, char ***argv)
 {
+    FuzzerSetRand();
     pctx = ASN1_PCTX_new();
     ASN1_PCTX_set_flags(pctx, ASN1_PCTX_FLAGS_SHOW_ABSENT |
         ASN1_PCTX_FLAGS_SHOW_SEQUENCE | ASN1_PCTX_FLAGS_SHOW_SSOF |
@@ -291,7 +290,6 @@ int FuzzerInitialize(int *argc, char ***argv)
     OPENSSL_init_ssl(OPENSSL_INIT_LOAD_SSL_STRINGS, NULL);
     ERR_clear_error();
     CRYPTO_free_ex_index(0, -1);
-    FuzzerSetRand();
 
     return 1;
 }
@@ -365,4 +363,5 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
 void FuzzerCleanup(void)
 {
     ASN1_PCTX_free(pctx);
+    FuzzerClearRand();
 }

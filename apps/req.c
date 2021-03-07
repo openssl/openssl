@@ -245,7 +245,7 @@ int req_main(int argc, char **argv)
     BIO *addext_bio = NULL;
     char *extensions = NULL;
     const char *infile = NULL, *CAfile = NULL, *CAkeyfile = NULL;
-    char *outfile = NULL, *keyfile = NULL;
+    char *outfile = NULL, *keyfile = NULL, *digestname = NULL;
     char *keyalgstr = NULL, *p, *prog, *passargin = NULL, *passargout = NULL;
     char *passin = NULL, *passout = NULL;
     char *nofree_passin = NULL, *nofree_passout = NULL;
@@ -468,9 +468,7 @@ int req_main(int argc, char **argv)
             newreq = precert = 1;
             break;
         case OPT_MD:
-            if (!opt_md(opt_unknown(), &md_alg))
-                goto opthelp;
-            digest = md_alg;
+            digestname = opt_unknown();
             break;
         }
     }
@@ -479,6 +477,13 @@ int req_main(int argc, char **argv)
     argc = opt_num_rest();
     if (argc != 0)
         goto opthelp;
+
+    app_RAND_load();
+    if (digestname != NULL) {
+        if (!opt_md(digestname, &md_alg))
+            goto opthelp;
+        digest = md_alg;
+    }
 
     if (!gen_x509) {
         if (days != UNSET_DAYS)
@@ -916,9 +921,8 @@ int req_main(int argc, char **argv)
 
     if (subj != NULL && !newreq && !gen_x509) {
         if (verbose) {
-            BIO_printf(bio_err, "Modifying subject of certificate request\n");
-            print_name(bio_err, "Old subject=",
-                       X509_REQ_get_subject_name(req), get_nameopt());
+            BIO_printf(out, "Modifying subject of certificate request\n");
+            print_name(out, "Old subject=", X509_REQ_get_subject_name(req));
         }
 
         if (!X509_REQ_set_subject_name(req, fsubj)) {
@@ -927,8 +931,7 @@ int req_main(int argc, char **argv)
         }
 
         if (verbose) {
-            print_name(bio_err, "New subject=",
-                       X509_REQ_get_subject_name(req), get_nameopt());
+            print_name(out, "New subject=", X509_REQ_get_subject_name(req));
         }
     }
 
@@ -991,12 +994,9 @@ int req_main(int argc, char **argv)
     }
 
     if (subject) {
-        if (gen_x509)
-            print_name(out, "subject=", X509_get_subject_name(new_x509),
-                       get_nameopt());
-        else
-            print_name(out, "subject=", X509_REQ_get_subject_name(req),
-                       get_nameopt());
+        print_name(out, "subject=", gen_x509
+                   ? X509_get_subject_name(new_x509)
+                   : X509_REQ_get_subject_name(req));
     }
 
     if (modulus) {

@@ -124,7 +124,7 @@ static void ctxdbg(BIO *channel, const char *text, BN_CTX *ctx)
         ctxdbg(trc_out, str, ctx);  \
     } OSSL_TRACE_END(BN_CTX)
 #else
-/* TODO(3.0): Consider if we want to do this in FIPS mode */
+/* We do not want tracing in FIPS module */
 # define CTXDBG(str, ctx) do {} while(0)
 #endif /* FIPS_MODULE */
 
@@ -249,7 +249,7 @@ BIGNUM *BN_CTX_get(BN_CTX *ctx)
     return ret;
 }
 
-OSSL_LIB_CTX *bn_get_libctx(BN_CTX *ctx)
+OSSL_LIB_CTX *ossl_bn_get_libctx(BN_CTX *ctx)
 {
     if (ctx == NULL)
         return NULL;

@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+/* We need to use some deprecated APIs */
+#define OPENSSL_SUPPRESS_DEPRECATED
+
 #include <string.h>
 #include "internal/nelem.h"
 #include <openssl/crypto.h>
@@ -44,6 +47,7 @@
  */
 static int gen_bytes(EVP_RAND_CTX *drbg, unsigned char *buf, int num)
 {
+#ifndef OPENSSL_NO_DEPRECATED_3_0
     const RAND_METHOD *meth = RAND_get_rand_method();
 
     if (meth != NULL && meth != RAND_OpenSSL()) {
@@ -51,6 +55,7 @@ static int gen_bytes(EVP_RAND_CTX *drbg, unsigned char *buf, int num)
             return meth->bytes(buf, num);
         return -1;
     }
+#endif
 
     if (drbg != NULL)
         return EVP_RAND_generate(drbg, buf, num, 0, 0, NULL, 0);
@@ -548,9 +553,11 @@ static int test_rand_reseed(void)
     if (crngt_skip())
         return TEST_skip("CRNGT cannot be disabled");
 
+#ifndef OPENSSL_NO_DEPRECATED_3_0
     /* Check whether RAND_OpenSSL() is the default method */
     if (!TEST_ptr_eq(RAND_get_rand_method(), RAND_OpenSSL()))
         return 0;
+#endif
 
     /* All three DRBGs should be non-null */
     if (!TEST_ptr(primary = RAND_get0_primary(NULL))
@@ -821,11 +828,11 @@ static int test_rand_prediction_resistance(void)
     /* Initialise a three long DRBG chain */
     if (!TEST_ptr(x = new_drbg(NULL))
         || !TEST_true(disable_crngt(x))
-        || !TEST_true(EVP_RAND_instantiate(x, 0, 0, NULL, 0))
+        || !TEST_true(EVP_RAND_instantiate(x, 0, 0, NULL, 0, NULL))
         || !TEST_ptr(y = new_drbg(x))
-        || !TEST_true(EVP_RAND_instantiate(y, 0, 0, NULL, 0))
+        || !TEST_true(EVP_RAND_instantiate(y, 0, 0, NULL, 0, NULL))
         || !TEST_ptr(z = new_drbg(y))
-        || !TEST_true(EVP_RAND_instantiate(z, 0, 0, NULL, 0)))
+        || !TEST_true(EVP_RAND_instantiate(z, 0, 0, NULL, 0, NULL)))
         goto err;
 
     /*

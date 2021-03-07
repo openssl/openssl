@@ -183,7 +183,7 @@ static const PROV_CIPHER_HW des_##mode = {                                     \
     cipher_hw_des_##mode##_cipher,                                             \
     cipher_hw_des_copyctx                                                      \
 };                                                                             \
-const PROV_CIPHER_HW *PROV_CIPHER_HW_des_##mode(void)                          \
+const PROV_CIPHER_HW *ossl_prov_cipher_hw_des_##mode(void)                     \
 {                                                                              \
     return &des_##mode;                                                        \
 }

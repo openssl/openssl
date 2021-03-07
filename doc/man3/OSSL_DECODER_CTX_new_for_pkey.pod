@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-OSSL_DECODER_CTX_new_by_EVP_PKEY,
+OSSL_DECODER_CTX_new_for_pkey,
 OSSL_DECODER_CTX_set_passphrase,
 OSSL_DECODER_CTX_set_pem_password_cb,
 OSSL_DECODER_CTX_set_passphrase_ui,
@@ -14,11 +14,11 @@ OSSL_DECODER_CTX_set_passphrase_cb
  #include <openssl/decoder.h>
 
  OSSL_DECODER_CTX *
- OSSL_DECODER_CTX_new_by_EVP_PKEY(EVP_PKEY **pkey,
-                                  const char *input_type,
-                                  const char *input_struct,
-                                  const char *keytype, int selection,
-                                  OSSL_LIB_CTX *libctx, const char *propquery);
+ OSSL_DECODER_CTX_new_for_pkey(EVP_PKEY **pkey,
+                               const char *input_type,
+                               const char *input_struct,
+                               const char *keytype, int selection,
+                               OSSL_LIB_CTX *libctx, const char *propquery);
 
  int OSSL_DECODER_CTX_set_passphrase(OSSL_DECODER_CTX *ctx,
                                      const unsigned char *kstr,
@@ -35,14 +35,17 @@ OSSL_DECODER_CTX_set_passphrase_cb
 
 =head1 DESCRIPTION
 
-OSSL_DECODER_CTX_new_by_EVP_PKEY() is a utility function that creates a
+OSSL_DECODER_CTX_new_for_pkey() is a utility function that creates a
 B<OSSL_DECODER_CTX>, finds all applicable decoder implementations and sets
 them up, so all the caller has to do next is call functions like
 L<OSSL_DECODER_from_bio(3)>.  The caller may use the optional I<input_type>,
 I<input_struct>, I<keytype> and I<selection> to specify what the input is
-expected to contain.
+expected to contain.  The I<pkey> must reference an B<EVP_PKEY *> variable
+that will be set to the newly created B<EVP_PKEY> on succesfull decoding.
+The referenced variable must be initialized to NULL before calling the
+function.
 
-Internally OSSL_DECODER_CTX_new_by_EVP_PKEY() searches for all available
+Internally OSSL_DECODER_CTX_new_for_pkey() searches for all available
 L<EVP_KEYMGMT(3)> implementations, and then builds a list of all potential
 decoder implementations that may be able to process the encoded input into
 data suitable for B<EVP_PKEY>s.  All these implementations are implicitly
@@ -62,7 +65,7 @@ NULL and zero are valid and signify that the decoder implementations will
 find out the keytype and key contents on their own from the input they get.
 
 If no suitable decoder implementation is found,
-OSSL_DECODER_CTX_new_by_EVP_PKEY() still creates a B<OSSL_DECODER_CTX>, but
+OSSL_DECODER_CTX_new_for_pkey() still creates a B<OSSL_DECODER_CTX>, but
 with no associated decoder (L<OSSL_DECODER_CTX_get_num_decoders(3)> returns
 zero).  This helps the caller to distinguish between an error when creating
 the B<OSSL_ENCODER_CTX> and missing encoder implementation, and allows it to
@@ -107,22 +110,13 @@ encoded according to PKCS#1.
 
 =head1 RETURN VALUES
 
-OSSL_DECODER_CTX_new_by_EVP_PKEY() returns a pointer to a
+OSSL_DECODER_CTX_new_for_pkey() returns a pointer to a
 B<OSSL_DECODER_CTX>, or NULL if it couldn't be created.
 
 OSSL_DECODER_CTX_set_passphrase(), OSSL_DECODER_CTX_set_pem_password_cb(),
 OSSL_DECODER_CTX_set_passphrase_ui() and
 OSSL_DECODER_CTX_set_passphrase_cb() all return 1 on success, or 0 on
 failure.
-
-=head1 NOTES
-
-Parts of the function names are made to match already existing OpenSSL
-names.
-
-B<EVP_PKEY> in OSSL_DECODER_CTX_new_by_EVP_PKEY() matches the type name,
-thus making for the naming pattern B<OSSL_DECODER_CTX_new_by_I<TYPE>>() when
-new types are handled.
 
 =head1 SEE ALSO
 
@@ -134,7 +128,7 @@ The functions described here were added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

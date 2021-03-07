@@ -10,7 +10,7 @@
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/pkcs12.h>
-#include "crypto/x509.h" /* for X509_add_cert_new() */
+#include "crypto/x509.h" /* for ossl_x509_add_cert_new() */
 
 /* Simplified PKCS#12 routines */
 
@@ -104,7 +104,7 @@ int PKCS12_parse(PKCS12 *p12, const char *pass, EVP_PKEY **pkey, X509 **cert,
         }
 
         if (ca != NULL) {
-            if (!X509_add_cert_new(ca, x, X509_ADD_FLAG_DEFAULT))
+            if (!ossl_x509_add_cert_new(ca, x, X509_ADD_FLAG_DEFAULT))
                 goto err;
             continue;
         }

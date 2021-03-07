@@ -102,20 +102,26 @@ static size_t cmac_size(void *vmacctx)
     return EVP_CIPHER_CTX_block_size(CMAC_CTX_get0_cipher_ctx(macctx->ctx));
 }
 
-static int cmac_init(void *vmacctx)
+static int cmac_setkey(struct cmac_data_st *macctx,
+                       const unsigned char *key, size_t keylen)
+{
+    int rv = CMAC_Init(macctx->ctx, key, keylen,
+                       ossl_prov_cipher_cipher(&macctx->cipher),
+                       ossl_prov_cipher_engine(&macctx->cipher));
+    ossl_prov_cipher_reset(&macctx->cipher);
+    return rv;    
+}
+
+static int cmac_init(void *vmacctx, const unsigned char *key,
+                     size_t keylen, const OSSL_PARAM params[])
 {
     struct cmac_data_st *macctx = vmacctx;
-    int rv;
 
-    if (!ossl_prov_is_running())
+    if (!ossl_prov_is_running() || !cmac_set_ctx_params(macctx, params))
         return 0;
-
-    rv = CMAC_Init(macctx->ctx, NULL, 0,
-                   ossl_prov_cipher_cipher(&macctx->cipher),
-                   ossl_prov_cipher_engine(&macctx->cipher));
-
-    ossl_prov_cipher_reset(&macctx->cipher);
-    return rv;
+    if (key != NULL)
+        return cmac_setkey(macctx, key, keylen);
+    return 1;
 }
 
 static int cmac_update(void *vmacctx, const unsigned char *data,
@@ -141,7 +147,8 @@ static const OSSL_PARAM known_gettable_ctx_params[] = {
     OSSL_PARAM_size_t(OSSL_MAC_PARAM_SIZE, NULL),
     OSSL_PARAM_END
 };
-static const OSSL_PARAM *cmac_gettable_ctx_params(ossl_unused void *provctx)
+static const OSSL_PARAM *cmac_gettable_ctx_params(ossl_unused void *ctx,
+                                                  ossl_unused void *provctx)
 {
     return known_gettable_ctx_params;
 }
@@ -162,7 +169,8 @@ static const OSSL_PARAM known_settable_ctx_params[] = {
     OSSL_PARAM_octet_string(OSSL_MAC_PARAM_KEY, NULL, 0),
     OSSL_PARAM_END
 };
-static const OSSL_PARAM *cmac_settable_ctx_params(ossl_unused void *provctx)
+static const OSSL_PARAM *cmac_settable_ctx_params(ossl_unused void *ctx,
+                                                  ossl_unused void *provctx)
 {
     return known_settable_ctx_params;
 }
@@ -182,13 +190,7 @@ static int cmac_set_ctx_params(void *vmacctx, const OSSL_PARAM params[])
     if ((p = OSSL_PARAM_locate_const(params, OSSL_MAC_PARAM_KEY)) != NULL) {
         if (p->data_type != OSSL_PARAM_OCTET_STRING)
             return 0;
-
-        if (!CMAC_Init(macctx->ctx, p->data, p->data_size,
-                       ossl_prov_cipher_cipher(&macctx->cipher),
-                       ossl_prov_cipher_engine(&macctx->cipher)))
-            return 0;
-
-        ossl_prov_cipher_reset(&macctx->cipher);
+        return cmac_setkey(macctx, p->data, p->data_size);
     }
     return 1;
 }

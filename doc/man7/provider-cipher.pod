@@ -40,8 +40,10 @@ provider-cipher - The cipher library E<lt>-E<gt> provider functions
  const OSSL_PARAM *OSSL_FUNC_cipher_gettable_params(void *provctx);
 
  /* Cipher operation parameter descriptors */
- const OSSL_PARAM *OSSL_FUNC_cipher_gettable_ctx_params(void *provctx);
- const OSSL_PARAM *OSSL_FUNC_cipher_settable_ctx_params(void *provctx);
+ const OSSL_PARAM *OSSL_FUNC_cipher_gettable_ctx_params(void *cctx,
+                                                        void *provctx);
+ const OSSL_PARAM *OSSL_FUNC_cipher_settable_ctx_params(void *cctx,
+                                                        void *provctx);
 
  /* Cipher parameters */
  int OSSL_FUNC_cipher_get_params(OSSL_PARAM params[]);
@@ -186,11 +188,15 @@ Any parameter settings are additional to any that were previously set.
 OSSL_FUNC_cipher_get_ctx_params() gets cipher operation details details from
 the given provider side cipher context I<cctx> and stores them in I<params>.
 
-OSSL_FUNC_cipher_gettable_params(), OSSL_FUNC_cipher_gettable_ctx_params(), and
-OSSL_FUNC_cipher_settable_ctx_params() all return constant B<OSSL_PARAM> arrays
-as descriptors of the parameters that OSSL_FUNC_cipher_get_params(),
-OSSL_FUNC_cipher_get_ctx_params(), and OSSL_FUNC_cipher_set_ctx_params() can handle,
-respectively.
+OSSL_FUNC_cipher_gettable_params(), OSSL_FUNC_cipher_gettable_ctx_params(),
+and OSSL_FUNC_cipher_settable_ctx_params() all return constant B<OSSL_PARAM>
+arrays as descriptors of the parameters that OSSL_FUNC_cipher_get_params(),
+OSSL_FUNC_cipher_get_ctx_params(), and OSSL_FUNC_cipher_set_ctx_params()
+can handle, respectively.  OSSL_FUNC_cipher_gettable_ctx_params() and
+OSSL_FUNC_cipher_settable_ctx_params() will return the parameters associated
+with the provider side context I<cctx> in its current state if it is
+not NULL.  Otherwise, they return the parameters associated with the
+provider side algorithm I<provctx>.
 
 Parameters currently recognised by built-in ciphers are as follows. Not all
 parameters are relevant to, or are understood by all ciphers:
@@ -218,13 +224,27 @@ For example AES in CTR mode has a block size of 1 (because it operates like a
 stream cipher), even though AES has a block size of 16.
 The length of the "blocksize" parameter should not exceed that of a B<size_t>.
 
-=item "flags" (B<OSSL_CIPHER_PARAM_FLAGS>) <unsigned integer>
+=item "aead" (B<OSSL_CIPHER_PARAM_AEAD>) <integer>
 
-Gets any flags for the associated cipher algorithm.
-See L<EVP_CIPHER_meth_set_flags(3)> for a list of currently defined cipher
-flags.
-The length of the "flags" parameter should equal that of an
-B<unsigned long int>.
+Gets 1 if this is an AEAD cipher algorithm, otherwise it gets 0.
+
+=item "custom-iv" (B<OSSL_CIPHER_PARAM_CUSTOM_IV>) <integer>
+
+Gets 1 if the cipher algorithm has a custom IV, otherwise it gets 0.
+Storing and initializing the IV is left entirely to the implementation, if a
+custom IV is used.
+
+=item "cts" (B<OSSL_CIPHER_PARAM_CTS>) <integer>
+
+Gets 1 if the cipher algorithm uses ciphertext stealing, otherwise it gets 0.
+This is currently used to indicate that the cipher is a one shot that only
+allows a single call to EVP_CipherUpdate().
+
+=item "tls-multi" (B<OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK>) <integer>
+
+Gets 1 if the cipher algorithm supports interleaving of crypto blocks, otherwise
+it gets 0. The interleaving is an optimization only applicable to certain
+TLS ciphers.
 
 =item "keylen" (B<OSSL_CIPHER_PARAM_KEYLEN>) <unsigned integer>
 
@@ -263,7 +283,7 @@ See L<EVP_EncryptInit(3)/AEAD Interface>.
 =item "taglen" (B<OSSL_CIPHER_PARAM_AEAD_TAGLEN>) <unsigned integer>
 
 Gets the tag length to be used for an AEAD cipher for the associated cipher ctx.
-It returns a default value if it has not been set.
+It gets a default value if it has not been set.
 The length of the "taglen" parameter should not exceed that of a B<size_t>.
 
 =item "tlsaad" (B<OSSL_CIPHER_PARAM_AEAD_TLS1_AAD>) <octet string>

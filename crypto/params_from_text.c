@@ -28,6 +28,7 @@ static int prepare_from_text(const OSSL_PARAM *paramdefs, const char *key,
                              size_t *buf_n, BIGNUM **tmpbn, int *found)
 {
     const OSSL_PARAM *p;
+    size_t buf_bits;
 
     /*
      * ishex is used to translate legacy style string controls in hex format
@@ -50,7 +51,7 @@ static int prepare_from_text(const OSSL_PARAM *paramdefs, const char *key,
         if (*ishex)
             BN_hex2bn(tmpbn, value);
         else
-            BN_dec2bn(tmpbn, value);
+            BN_asc2bn(tmpbn, value);
 
         if (*tmpbn == NULL)
             return 0;
@@ -62,20 +63,25 @@ static int prepare_from_text(const OSSL_PARAM *paramdefs, const char *key,
          * buffer, i.e. if it's negative, we need to deal with it.  We do
          * it by subtracting 1 here and inverting the bytes in
          * construct_from_text() below.
+         * To subtract 1 from an absolute value of a negative number we
+         * actually have to add 1: -3 - 1 = -4, |-3| = 3 + 1 = 4.
          */
         if (p->data_type == OSSL_PARAM_INTEGER && BN_is_negative(*tmpbn)
-            && !BN_sub_word(*tmpbn, 1)) {
+            && !BN_add_word(*tmpbn, 1)) {
             return 0;
         }
 
-        *buf_n = BN_num_bytes(*tmpbn);
+        buf_bits = (size_t)BN_num_bits(*tmpbn);
+        *buf_n = (buf_bits + 7) / 8;
 
         /*
          * TODO(v3.0) is this the right way to do this?  This code expects
          * a zero data size to simply mean "arbitrary size".
          */
         if (p->data_size > 0) {
-            if (*buf_n >= p->data_size) {
+            if (buf_bits > p->data_size * 8
+                || (p->data_type == OSSL_PARAM_INTEGER
+                    && buf_bits == p->data_size * 8)) {
                 ERR_raise(ERR_LIB_CRYPTO, CRYPTO_R_TOO_SMALL_BUFFER);
                 /* Since this is a different error, we don't break */
                 return 0;
@@ -145,6 +151,8 @@ static int construct_from_text(OSSL_PARAM *to, const OSSL_PARAM *paramdef,
 #else
             strncpy(buf, value, buf_n);
 #endif
+            /* Don't count the terminating NUL byte as data */
+            buf_n--;
             break;
         case OSSL_PARAM_OCTET_STRING:
             if (ishex) {
@@ -184,11 +192,11 @@ int OSSL_PARAM_allocate_from_text(OSSL_PARAM *to,
 
     if (!prepare_from_text(paramdefs, key, value, value_n,
                            &paramdef, &ishex, &buf_n, &tmpbn, found))
-        return 0;
+        goto err;
 
     if ((buf = OPENSSL_zalloc(buf_n > 0 ? buf_n : 1)) == NULL) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
-        return 0;
+        goto err;
     }
 
     ok = construct_from_text(to, paramdef, value, value_n, ishex,
@@ -197,4 +205,7 @@ int OSSL_PARAM_allocate_from_text(OSSL_PARAM *to,
     if (!ok)
         OPENSSL_free(buf);
     return ok;
+ err:
+    BN_free(tmpbn);
+    return 0;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2011-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -15,12 +15,12 @@
 #include <openssl/err.h>
 #include <openssl/rand.h>
 #include <openssl/core_dispatch.h>
+#include <openssl/proverr.h>
 #include "internal/thread_once.h"
 #include "prov/providercommon.h"
 #include "prov/provider_ctx.h"
 #include "prov/provider_util.h"
 #include "prov/implementations.h"
-#include "prov/providercommonerr.h"
 #include "drbg_local.h"
 
 static OSSL_FUNC_rand_newctx_fn drbg_hash_new_wrapper;
@@ -266,10 +266,13 @@ static int drbg_hash_instantiate(PROV_DRBG *drbg,
 static int drbg_hash_instantiate_wrapper(void *vdrbg, unsigned int strength,
                                          int prediction_resistance,
                                          const unsigned char *pstr,
-                                         size_t pstr_len)
+                                         size_t pstr_len,
+                                         const OSSL_PARAM params[])
 {
     PROV_DRBG *drbg = (PROV_DRBG *)vdrbg;
 
+    if (!ossl_prov_is_running() || !drbg_hash_set_ctx_params(drbg, params))
+        return 0;
     return ossl_prov_drbg_instantiate(drbg, strength, prediction_resistance,
                                       pstr, pstr_len);
 }
@@ -442,7 +445,8 @@ static int drbg_hash_get_ctx_params(void *vdrbg, OSSL_PARAM params[])
     return ossl_drbg_get_ctx_params(drbg, params);
 }
 
-static const OSSL_PARAM *drbg_hash_gettable_ctx_params(ossl_unused void *p_ctx)
+static const OSSL_PARAM *drbg_hash_gettable_ctx_params(ossl_unused void *vctx,
+                                                       ossl_unused void *p_ctx)
 {
     static const OSSL_PARAM known_gettable_ctx_params[] = {
         OSSL_PARAM_utf8_string(OSSL_DRBG_PARAM_DIGEST, NULL, 0),
@@ -487,7 +491,8 @@ static int drbg_hash_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     return ossl_drbg_set_ctx_params(ctx, params);
 }
 
-static const OSSL_PARAM *drbg_hash_settable_ctx_params(ossl_unused void *p_ctx)
+static const OSSL_PARAM *drbg_hash_settable_ctx_params(ossl_unused void *vctx,
+                                                       ossl_unused void *p_ctx)
 {
     static const OSSL_PARAM known_settable_ctx_params[] = {
         OSSL_PARAM_utf8_string(OSSL_DRBG_PARAM_PROPERTIES, NULL, 0),
@@ -518,5 +523,7 @@ const OSSL_DISPATCH ossl_drbg_hash_functions[] = {
     { OSSL_FUNC_RAND_GET_CTX_PARAMS, (void(*)(void))drbg_hash_get_ctx_params },
     { OSSL_FUNC_RAND_VERIFY_ZEROIZATION,
       (void(*)(void))drbg_hash_verify_zeroization },
+    { OSSL_FUNC_RAND_GET_SEED, (void(*)(void))ossl_drbg_get_seed },
+    { OSSL_FUNC_RAND_CLEAR_SEED, (void(*)(void))ossl_drbg_clear_seed },
     { 0, NULL }
 };

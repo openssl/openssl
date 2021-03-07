@@ -20,7 +20,6 @@
  * Utility functions related to sending OCSP responses and extracting
  * relevant information from the request.
  */
-
 int OCSP_request_onereq_count(OCSP_REQUEST *req)
 {
     return sk_OCSP_ONEREQ_num(req->tbsRequest.requestList);
@@ -155,10 +154,9 @@ OCSP_SINGLERESP *OCSP_basic_add1_status(OCSP_BASICRESP *rsp,
 }
 
 /* Add a certificate to an OCSP request */
-
 int OCSP_basic_add1_cert(OCSP_BASICRESP *resp, X509 *cert)
 {
-    return X509_add_cert_new(&resp->certs, cert, X509_ADD_FLAG_UP_REF);
+    return ossl_x509_add_cert_new(&resp->certs, cert, X509_ADD_FLAG_UP_REF);
 }
 
 /*
@@ -166,12 +164,10 @@ int OCSP_basic_add1_cert(OCSP_BASICRESP *resp, X509 *cert)
  * set the responderID to the subject name in the signer's certificate, and
  * include one or more optional certificates in the response.
  */
-
 int OCSP_basic_sign_ctx(OCSP_BASICRESP *brsp,
                     X509 *signer, EVP_MD_CTX *ctx,
                     STACK_OF(X509) *certs, unsigned long flags)
 {
-    int i;
     OCSP_RESPID *rid;
     EVP_PKEY *pkey;
 
@@ -187,13 +183,9 @@ int OCSP_basic_sign_ctx(OCSP_BASICRESP *brsp,
     }
 
     if (!(flags & OCSP_NOCERTS)) {
-        if (!OCSP_basic_add1_cert(brsp, signer))
+        if (!OCSP_basic_add1_cert(brsp, signer)
+            || !X509_add_certs(brsp->certs, certs, X509_ADD_FLAG_UP_REF))
             goto err;
-        for (i = 0; i < sk_X509_num(certs); i++) {
-            X509 *tmpcert = sk_X509_value(certs, i);
-            if (!OCSP_basic_add1_cert(brsp, tmpcert))
-                goto err;
-        }
     }
 
     rid = &brsp->tbsResponseData.responderId;
@@ -212,7 +204,6 @@ int OCSP_basic_sign_ctx(OCSP_BASICRESP *brsp,
      * Right now, I think that not doing double hashing is the right thing.
      * -- Richard Levitte
      */
-
     if (!OCSP_BASICRESP_sign_ctx(brsp, ctx, 0))
         goto err;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -9,6 +9,7 @@
 
 #ifndef OSSL_INTERNAL_FFC_H
 # define OSSL_INTERNAL_FFC_H
+# pragma once
 
 # include <openssl/core.h>
 # include <openssl/bn.h>
@@ -161,8 +162,12 @@ int ossl_ffc_params_FIPS186_2_gen_verify(OSSL_LIB_CTX *libctx,
                                          size_t L, size_t N, int *res,
                                          BN_GENCB *cb);
 
-int ossl_ffc_params_simple_validate(OSSL_LIB_CTX *libctx, FFC_PARAMS *params,
-                                    int type);
+int ossl_ffc_params_simple_validate(OSSL_LIB_CTX *libctx,
+                                    const FFC_PARAMS *params,
+                                    int paramstype, int *res);
+int ossl_ffc_params_full_validate(OSSL_LIB_CTX *libctx,
+                                  const FFC_PARAMS *params,
+                                  int paramstype, int *res);
 int ossl_ffc_params_FIPS186_4_validate(OSSL_LIB_CTX *libctx,
                                        const FFC_PARAMS *params,
                                        int type, int *res, BN_GENCB *cb);

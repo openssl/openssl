@@ -222,8 +222,12 @@ int BN_rand_range_ex(BIGNUM *r, const BIGNUM *range, BN_CTX *ctx);
 int BN_rand_range(BIGNUM *rnd, const BIGNUM *range);
 int BN_priv_rand_range_ex(BIGNUM *r, const BIGNUM *range, BN_CTX *ctx);
 int BN_priv_rand_range(BIGNUM *rnd, const BIGNUM *range);
+# ifndef OPENSSL_NO_DEPRECATED_3_0
+OSSL_DEPRECATEDIN_3_0
 int BN_pseudo_rand(BIGNUM *rnd, int bits, int top, int bottom);
+OSSL_DEPRECATEDIN_3_0
 int BN_pseudo_rand_range(BIGNUM *rnd, const BIGNUM *range);
+# endif
 int BN_num_bits(const BIGNUM *a);
 int BN_num_bits_word(BN_ULONG l);
 int BN_security_bits(int L, int N);

@@ -526,7 +526,7 @@ int tls_valid_group(SSL *s, uint16_t group_id, int minversion, int maxversion,
     int ret;
 
     if (okfortls13 != NULL)
-        okfortls13 = 0;
+        *okfortls13 = 0;
 
     if (ginfo == NULL)
         return 0;
@@ -3393,13 +3393,12 @@ EVP_MAC_CTX *ssl_hmac_get0_EVP_MAC_CTX(SSL_HMAC *ctx)
 
 int ssl_hmac_init(SSL_HMAC *ctx, void *key, size_t len, char *md)
 {
-    OSSL_PARAM params[3], *p = params;
+    OSSL_PARAM params[2], *p = params;
 
     if (ctx->ctx != NULL) {
         *p++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST, md, 0);
-        *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY, key, len);
         *p = OSSL_PARAM_construct_end();
-        if (EVP_MAC_CTX_set_params(ctx->ctx, params) && EVP_MAC_init(ctx->ctx))
+        if (EVP_MAC_init(ctx->ctx, key, len, params))
             return 1;
     }
 #ifndef OPENSSL_NO_DEPRECATED_3_0

@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -184,7 +184,6 @@ int EVP_PKEY_CTX_get0_rsa_oaep_label(EVP_PKEY_CTX *ctx, unsigned char **label);
 # define EVP_PKEY_CTRL_RSA_KEYGEN_PRIMES  (EVP_PKEY_ALG_CTRL + 13)
 
 # define RSA_PKCS1_PADDING          1
-# define RSA_SSLV23_PADDING         2
 # define RSA_NO_PADDING             3
 # define RSA_PKCS1_OAEP_PADDING     4
 # define RSA_X931_PADDING           5
@@ -405,13 +404,6 @@ int RSA_padding_check_PKCS1_OAEP_mgf1(unsigned char *to, int tlen,
                                       int num,
                                       const unsigned char *param, int plen,
                                       const EVP_MD *md, const EVP_MD *mgf1md);
-OSSL_DEPRECATEDIN_3_0
-int RSA_padding_add_SSLv23(unsigned char *to, int tlen,
-                           const unsigned char *f, int fl);
-OSSL_DEPRECATEDIN_3_0
-int RSA_padding_check_SSLv23(unsigned char *to, int tlen,
-                             const unsigned char *f, int fl,
-                             int rsa_len);
 OSSL_DEPRECATEDIN_3_0 int RSA_padding_add_none(unsigned char *to, int tlen,
                                                const unsigned char *f, int fl);
 OSSL_DEPRECATEDIN_3_0 int RSA_padding_check_none(unsigned char *to, int tlen,

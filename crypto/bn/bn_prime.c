@@ -62,7 +62,7 @@ static const BIGNUM _bignum_small_prime_factors = {
     BN_FLG_STATIC_DATA
 };
 
-const BIGNUM *bn_get0_small_factors(void)
+const BIGNUM *ossl_bn_get0_small_factors(void)
 {
     return &_bignum_small_prime_factors;
 }
@@ -308,7 +308,7 @@ static int bn_is_prime_int(const BIGNUM *w, int checks, BN_CTX *ctx,
         goto err;
 #endif
 
-    ret = bn_miller_rabin_is_prime(w, checks, ctx, cb, 0, &status);
+    ret = ossl_bn_miller_rabin_is_prime(w, checks, ctx, cb, 0, &status);
     if (!ret)
         goto err;
     ret = (status == BN_PRIMETEST_PROBABLY_PRIME);
@@ -334,8 +334,8 @@ err:
  *
  * returns 0 if there was an error, otherwise it returns 1.
  */
-int bn_miller_rabin_is_prime(const BIGNUM *w, int iterations, BN_CTX *ctx,
-                             BN_GENCB *cb, int enhanced, int *status)
+int ossl_bn_miller_rabin_is_prime(const BIGNUM *w, int iterations, BN_CTX *ctx,
+                                  BN_GENCB *cb, int enhanced, int *status)
 {
     int i, j, a, ret = 0;
     BIGNUM *g, *w1, *w3, *x, *m, *z, *b;

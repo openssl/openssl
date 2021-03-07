@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2011-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -13,13 +13,13 @@
 #include <openssl/rand.h>
 #include <openssl/evp.h>
 #include "crypto/rand.h"
+#include <openssl/proverr.h>
 #include "drbg_local.h"
 #include "internal/thread_once.h"
 #include "crypto/cryptlib.h"
 #include "prov/seeding.h"
 #include "crypto/rand_pool.h"
 #include "prov/provider_ctx.h"
-#include "prov/providercommonerr.h"
 #include "prov/providercommon.h"
 
 /*
@@ -141,29 +141,14 @@ static unsigned int get_parent_reseed_count(PROV_DRBG *drbg)
  * If a random pool has been added to the DRBG using RAND_add(), then
  * its entropy will be used up first.
  */
-static size_t prov_drbg_get_entropy(PROV_DRBG *drbg, unsigned char **pout,
-                                    int entropy, size_t min_len,
-                                    size_t max_len, int prediction_resistance)
+size_t ossl_drbg_get_seed(void *vdrbg, unsigned char **pout,
+                          int entropy, size_t min_len,
+                          size_t max_len, int prediction_resistance,
+                          const unsigned char *adin, size_t adin_len)
 {
-    unsigned int p_str;
-    size_t r, bytes_needed;
+    PROV_DRBG *drbg = (PROV_DRBG *)vdrbg;
+    size_t bytes_needed;
     unsigned char *buffer;
-
-    if (!get_parent_strength(drbg, &p_str))
-        return 0;
-    if (drbg->strength > p_str) {
-        /*
-         * We currently don't support the algorithm from NIST SP 800-90C
-         * 10.1.2 to use a weaker DRBG as source
-         */
-        ERR_raise(ERR_LIB_PROV, PROV_R_PARENT_STRENGTH_TOO_WEAK);
-        return 0;
-    }
-
-    if (drbg->parent_generate == NULL) {
-        ERR_raise(ERR_LIB_PROV, PROV_R_PARENT_CANNOT_GENERATE_RANDOM_NUMBERS);
-        return 0;
-    }
 
     /* Figure out how many bytes we need */
     bytes_needed = entropy >= 0 ? (entropy + 7) / 8 : 0;
@@ -180,13 +165,7 @@ static size_t prov_drbg_get_entropy(PROV_DRBG *drbg, unsigned char **pout,
     }
 
     /*
-     * Our lock is already held, but we need to lock our parent before
-     * generating bits from it.  Note: taking the lock will be a no-op
-     * if locking is not required (while drbg->parent->lock == NULL).
-     */
-    ossl_drbg_lock_parent(drbg);
-    /*
-     * Get random data from parent.  Include our DRBG address as
+     * Get random data.  Include our DRBG address as
      * additional input, in order to provide a distinction between
      * different DRBG child instances.
      *
@@ -194,12 +173,9 @@ static size_t prov_drbg_get_entropy(PROV_DRBG *drbg, unsigned char **pout,
      *       a warning in some static code analyzers, but it's
      *       intentional and correct here.
      */
-    r = drbg->parent_generate(drbg->parent, buffer, bytes_needed,
-                              drbg->strength, prediction_resistance,
-                              (unsigned char *)&drbg,
-                              sizeof(drbg));
-    ossl_drbg_unlock_parent(drbg);
-    if (r == 0) {
+    if (!ossl_prov_drbg_generate(drbg, buffer, bytes_needed,
+                                 drbg->strength, prediction_resistance,
+                                 (unsigned char *)&drbg, sizeof(drbg))) {
         OPENSSL_secure_clear_free(buffer, bytes_needed);
         ERR_raise(ERR_LIB_PROV, PROV_R_GENERATE_ERROR);
         return 0;
@@ -208,12 +184,9 @@ static size_t prov_drbg_get_entropy(PROV_DRBG *drbg, unsigned char **pout,
     return bytes_needed;
 }
 
-/*
- * Implements the cleanup_entropy() callback
- *
- */
-static void prov_drbg_cleanup_entropy(ossl_unused PROV_DRBG *drbg,
-                                      unsigned char *out, size_t outlen)
+/* Implements the cleanup_entropy() callback */
+void ossl_drbg_clear_seed(ossl_unused void *vdrbg,
+                          unsigned char *out, size_t outlen)
 {
     OPENSSL_secure_clear_free(out, outlen);
 }
@@ -222,6 +195,9 @@ static size_t get_entropy(PROV_DRBG *drbg, unsigned char **pout, int entropy,
                           size_t min_len, size_t max_len,
                           int prediction_resistance)
 {
+    size_t bytes;
+    unsigned int p_str;
+
     if (drbg->parent == NULL)
 #ifdef FIPS_MODULE
         return ossl_crngt_get_entropy(drbg, pout, entropy, min_len, max_len,
@@ -231,8 +207,42 @@ static size_t get_entropy(PROV_DRBG *drbg, unsigned char **pout, int entropy,
                                      max_len);
 #endif
 
-    return prov_drbg_get_entropy(drbg, pout, entropy, min_len, max_len,
-                                 prediction_resistance);
+    if (drbg->parent_get_seed == NULL) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_PARENT_CANNOT_SUPPLY_ENTROPY_SEED);
+        return 0;
+    }
+    if (!get_parent_strength(drbg, &p_str))
+        return 0;
+    if (drbg->strength > p_str) {
+        /*
+         * We currently don't support the algorithm from NIST SP 800-90C
+         * 10.1.2 to use a weaker DRBG as source
+         */
+        ERR_raise(ERR_LIB_PROV, PROV_R_PARENT_STRENGTH_TOO_WEAK);
+        return 0;
+    }
+
+    /*
+     * Our lock is already held, but we need to lock our parent before
+     * generating bits from it.  Note: taking the lock will be a no-op
+     * if locking is not required (while drbg->parent->lock == NULL).
+     */
+    if (!ossl_drbg_lock_parent(drbg))
+        return 0;
+    /*
+     * Get random data from parent.  Include our DRBG address as
+     * additional input, in order to provide a distinction between
+     * different DRBG child instances.
+     *
+     * Note: using the sizeof() operator on a pointer triggers
+     *       a warning in some static code analyzers, but it's
+     *       intentional and correct here.
+     */
+    bytes = drbg->parent_get_seed(drbg->parent, pout, drbg->strength,
+                                  min_len, max_len, prediction_resistance,
+                                  (unsigned char *)&drbg, sizeof(drbg));
+    ossl_drbg_unlock_parent(drbg);
+    return bytes;
 }
 
 static void cleanup_entropy(PROV_DRBG *drbg, unsigned char *out, size_t outlen)
@@ -243,8 +253,11 @@ static void cleanup_entropy(PROV_DRBG *drbg, unsigned char *out, size_t outlen)
 #else
         ossl_prov_cleanup_entropy(drbg->provctx, out, outlen);
 #endif
-    } else {
-        prov_drbg_cleanup_entropy(drbg, out, outlen);
+    } else if (drbg->parent_clear_seed != NULL) {
+        if (!ossl_drbg_lock_parent(drbg))
+            return;
+        drbg->parent_clear_seed(drbg, out, outlen);
+        ossl_drbg_unlock_parent(drbg);
     }
 }
 
@@ -351,9 +364,6 @@ int ossl_prov_drbg_instantiate(PROV_DRBG *drbg, unsigned int strength,
     unsigned char *nonce = NULL, *entropy = NULL;
     size_t noncelen = 0, entropylen = 0;
     size_t min_entropy, min_entropylen, max_entropylen;
-
-    if (!ossl_prov_is_running())
-        return 0;
 
     if (strength > drbg->strength) {
         ERR_raise(ERR_LIB_PROV, PROV_R_INSUFFICIENT_DRBG_STRENGTH);
@@ -794,10 +804,12 @@ PROV_DRBG *ossl_rand_drbg_new
         drbg->parent_unlock = OSSL_FUNC_rand_unlock(pfunc);
     if ((pfunc = find_call(p_dispatch, OSSL_FUNC_RAND_GET_CTX_PARAMS)) != NULL)
         drbg->parent_get_ctx_params = OSSL_FUNC_rand_get_ctx_params(pfunc);
-    if ((pfunc = find_call(p_dispatch, OSSL_FUNC_RAND_GENERATE)) != NULL)
-        drbg->parent_generate = OSSL_FUNC_rand_generate(pfunc);
     if ((pfunc = find_call(p_dispatch, OSSL_FUNC_RAND_NONCE)) != NULL)
         drbg->parent_nonce = OSSL_FUNC_rand_nonce(pfunc);
+    if ((pfunc = find_call(p_dispatch, OSSL_FUNC_RAND_GET_SEED)) != NULL)
+        drbg->parent_get_seed = OSSL_FUNC_rand_get_seed(pfunc);
+    if ((pfunc = find_call(p_dispatch, OSSL_FUNC_RAND_CLEAR_SEED)) != NULL)
+        drbg->parent_clear_seed = OSSL_FUNC_rand_clear_seed(pfunc);
 
     /* Set some default maximums up */
     drbg->max_entropylen = DRBG_MAX_LENGTH;

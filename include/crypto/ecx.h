@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -11,6 +11,8 @@
 
 #ifndef OSSL_CRYPTO_ECX_H
 # define OSSL_CRYPTO_ECX_H
+# pragma once
+
 # include <openssl/opensslconf.h>
 
 # ifndef OPENSSL_NO_EC
@@ -74,13 +76,12 @@ struct ecx_key_st {
 
 typedef struct ecx_key_st ECX_KEY;
 
-size_t ecx_key_length(ECX_KEY_TYPE type);
-ECX_KEY *ecx_key_new(OSSL_LIB_CTX *libctx, ECX_KEY_TYPE type, int haspubkey,
-                     const char *propq);
-void ecx_key_set0_libctx(ECX_KEY *key, OSSL_LIB_CTX *libctx);
-unsigned char *ecx_key_allocate_privkey(ECX_KEY *key);
-void ecx_key_free(ECX_KEY *key);
-int ecx_key_up_ref(ECX_KEY *key);
+ECX_KEY *ossl_ecx_key_new(OSSL_LIB_CTX *libctx, ECX_KEY_TYPE type,
+                          int haspubkey, const char *propq);
+void ossl_ecx_key_set0_libctx(ECX_KEY *key, OSSL_LIB_CTX *libctx);
+unsigned char *ossl_ecx_key_allocate_privkey(ECX_KEY *key);
+void ossl_ecx_key_free(ECX_KEY *key);
+int ossl_ecx_key_up_ref(ECX_KEY *key);
 
 int X25519(uint8_t out_shared_key[32], const uint8_t private_key[32],
            const uint8_t peer_public_value[32]);
@@ -114,13 +115,13 @@ void X448_public_from_private(uint8_t out_public_value[56],
 
 
 /* Backend support */
-int ecx_public_from_private(ECX_KEY *key);
-int ecx_key_fromdata(ECX_KEY *ecx, const OSSL_PARAM params[],
-                     int include_private);
+int ossl_ecx_public_from_private(ECX_KEY *key);
+int ossl_ecx_key_fromdata(ECX_KEY *ecx, const OSSL_PARAM params[],
+                          int include_private);
 
-ECX_KEY *evp_pkey_get1_X25519(EVP_PKEY *pkey);
-ECX_KEY *evp_pkey_get1_X448(EVP_PKEY *pkey);
-ECX_KEY *evp_pkey_get1_ED25519(EVP_PKEY *pkey);
-ECX_KEY *evp_pkey_get1_ED448(EVP_PKEY *pkey);
+ECX_KEY *ossl_evp_pkey_get1_X25519(EVP_PKEY *pkey);
+ECX_KEY *ossl_evp_pkey_get1_X448(EVP_PKEY *pkey);
+ECX_KEY *ossl_evp_pkey_get1_ED25519(EVP_PKEY *pkey);
+ECX_KEY *ossl_evp_pkey_get1_ED448(EVP_PKEY *pkey);
 # endif /* OPENSSL_NO_EC */
 #endif

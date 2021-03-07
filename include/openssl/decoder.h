@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -39,9 +39,9 @@ int OSSL_DECODER_is_a(const OSSL_DECODER *encoder, const char *name);
 void OSSL_DECODER_do_all_provided(OSSL_LIB_CTX *libctx,
                                   void (*fn)(OSSL_DECODER *encoder, void *arg),
                                   void *arg);
-void OSSL_DECODER_names_do_all(const OSSL_DECODER *encoder,
-                               void (*fn)(const char *name, void *data),
-                               void *data);
+int OSSL_DECODER_names_do_all(const OSSL_DECODER *encoder,
+                              void (*fn)(const char *name, void *data),
+                              void *data);
 const OSSL_PARAM *OSSL_DECODER_gettable_params(OSSL_DECODER *decoder);
 int OSSL_DECODER_get_params(OSSL_DECODER *decoder, OSSL_PARAM params[]);
 
@@ -120,11 +120,11 @@ int OSSL_DECODER_from_data(OSSL_DECODER_CTX *ctx, const unsigned char **pdata,
  * an implicit OSSL_DECODER_fetch(), suitable for the object of that type.
  */
 OSSL_DECODER_CTX *
-OSSL_DECODER_CTX_new_by_EVP_PKEY(EVP_PKEY **pkey,
-                                 const char *input_type,
-                                 const char *input_struct,
-                                 const char *keytype, int selection,
-                                 OSSL_LIB_CTX *libctx, const char *propquery);
+OSSL_DECODER_CTX_new_for_pkey(EVP_PKEY **pkey,
+                              const char *input_type,
+                              const char *input_struct,
+                              const char *keytype, int selection,
+                              OSSL_LIB_CTX *libctx, const char *propquery);
 
 # ifdef __cplusplus
 }

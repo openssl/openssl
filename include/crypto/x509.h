@@ -7,9 +7,13 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "internal/refcount.h"
-#include <openssl/asn1.h>
-#include <openssl/x509.h>
+#ifndef OSSL_CRYPTO_X509_H
+# define OSSL_CRYPTO_X509_H
+# pragma once
+
+# include "internal/refcount.h"
+# include <openssl/asn1.h>
+# include <openssl/x509.h>
 
 /* Internal X509 structures and functions: not for application use */
 
@@ -314,9 +318,16 @@ int x509_init_sig_info(X509 *x);
 int asn1_item_digest_ex(const ASN1_ITEM *it, const EVP_MD *type, void *data,
                         unsigned char *md, unsigned int *len,
                         OSSL_LIB_CTX *libctx, const char *propq);
-int X509_add_cert_new(STACK_OF(X509) **sk, X509 *cert, int flags);
+int ossl_x509_add_cert_new(STACK_OF(X509) **sk, X509 *cert, int flags);
+int ossl_x509_add_certs_new(STACK_OF(X509) **p_sk, STACK_OF(X509) *certs,
+                            int flags);
 
 int X509_PUBKEY_get0_libctx(OSSL_LIB_CTX **plibctx, const char **ppropq,
                             const X509_PUBKEY *key);
 /* Calculate default key identifier according to RFC 5280 section 4.2.1.2 (1) */
 ASN1_OCTET_STRING *x509_pubkey_hash(X509_PUBKEY *pubkey);
+
+/* A variant of d2i_PUBKEY() that is guaranteed to only return legacy keys */
+EVP_PKEY *d2i_PUBKEY_legacy(EVP_PKEY **a,
+                            const unsigned char **in, long length);
+#endif

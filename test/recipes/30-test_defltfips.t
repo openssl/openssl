@@ -20,21 +20,13 @@ BEGIN {
 
 use lib srctop_dir('Configurations');
 use lib bldtop_dir('.');
-use platform;
 
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 
 plan tests =>
-    ($no_fips ? 1 : 3);
+    ($no_fips ? 1 : 2);
 
 unless ($no_fips) {
-    my $infile = bldtop_file('providers', platform->dso('fips'));
-
-    ok(run(app(['openssl', 'fipsinstall',
-                '-out', bldtop_file('providers', 'fipsmodule.cnf'),
-                '-module', $infile])),
-       "fipsinstall");
-
     $ENV{OPENSSL_CONF} = abs_path(srctop_file("test", "fips.cnf"));
     ok(run(test(["defltfips_test", "fips"])), "running defltfips_test fips");
 }

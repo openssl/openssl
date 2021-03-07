@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -664,20 +664,21 @@ static int ts_RESP_sign(TS_RESP_CTX *ctx)
     certs = ctx->flags & TS_ESS_CERT_ID_CHAIN ? ctx->certs : NULL;
     if (ctx->ess_cert_id_digest == NULL
         || ctx->ess_cert_id_digest == EVP_sha1()) {
-        if ((sc = ESS_SIGNING_CERT_new_init(ctx->signer_cert, certs, 0)) == NULL)
+        if ((sc = ossl_ess_signing_cert_new_init(ctx->signer_cert,
+                                                 certs, 0)) == NULL)
             goto err;
 
-        if (!ESS_SIGNING_CERT_add(si, sc)) {
+        if (!ossl_ess_signing_cert_add(si, sc)) {
             ERR_raise(ERR_LIB_TS, TS_R_ESS_ADD_SIGNING_CERT_ERROR);
             goto err;
         }
     } else {
-        sc2 = ESS_SIGNING_CERT_V2_new_init(ctx->ess_cert_id_digest,
-                                           ctx->signer_cert, certs, 0);
+        sc2 = ossl_ess_signing_cert_v2_new_init(ctx->ess_cert_id_digest,
+                                                ctx->signer_cert, certs, 0);
         if (sc2 == NULL)
             goto err;
 
-        if (!ESS_SIGNING_CERT_V2_add(si, sc2)) {
+        if (!ossl_ess_signing_cert_v2_add(si, sc2)) {
             ERR_raise(ERR_LIB_TS, TS_R_ESS_ADD_SIGNING_CERT_V2_ERROR);
             goto err;
         }

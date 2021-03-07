@@ -209,7 +209,7 @@ const OPTIONS ca_options[] = {
     {"noemailDN", OPT_NOEMAILDN, '-', "Don't add the EMAIL field to the DN"},
 
     OPT_SECTION("Signing"),
-    {"md", OPT_MD, 's', "md to use; one of md2, md5, sha or sha1"},
+    {"md", OPT_MD, 's', "Digest to use, such as sha256"},
     {"keyfile", OPT_KEYFILE, 's', "The CA private key"},
     {"keyform", OPT_KEYFORM, 'f',
      "Private key file format (ENGINE, other values ignored)"},
@@ -521,6 +521,7 @@ end_of_options:
         goto end;
 
     app_RAND_load_conf(conf, BASE_SECTION);
+    app_RAND_load();
 
     f = NCONF_get_string(conf, section, STRING_MASK);
     if (f == NULL)
@@ -862,6 +863,7 @@ end_of_options:
             if (extensions != NULL) {
                 /* Check syntax of config file section */
                 X509V3_CTX ctx;
+
                 X509V3_set_ctx_test(&ctx);
                 X509V3_set_nconf(&ctx, conf);
                 if (!X509V3_EXT_add_nconf(conf, &ctx, extensions, NULL)) {
@@ -1140,6 +1142,7 @@ end_of_options:
         if (crl_ext != NULL) {
             /* Check syntax of file */
             X509V3_CTX ctx;
+
             X509V3_set_ctx_test(&ctx);
             X509V3_set_nconf(&ctx, conf);
             if (!X509V3_EXT_add_nconf(conf, &ctx, crl_ext, NULL)) {
@@ -1229,6 +1232,7 @@ end_of_options:
 
         if (crl_ext != NULL || crlnumberfile != NULL) {
             X509V3_CTX crlctx;
+
             X509V3_set_ctx(&crlctx, x509, NULL, NULL, crl, 0);
             X509V3_set_nconf(&crlctx, conf);
 
@@ -1696,12 +1700,12 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
     if (!i)
         goto end;
 
+    /* Initialize the context structure */
+    X509V3_set_ctx(&ext_ctx, selfsign ? ret : x509,
+                   ret, req, NULL, X509V3_CTX_REPLACE);
+
     /* Lets add the extensions, if there are any */
     if (ext_sect) {
-        /* Initialize the context structure */
-        X509V3_set_ctx(&ext_ctx, selfsign ? ret : x509,
-                       ret, req, NULL, X509V3_CTX_REPLACE);
-
         if (extfile_conf != NULL) {
             if (verbose)
                 BIO_printf(bio_err, "Extra configuration file found\n");

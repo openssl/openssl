@@ -12,7 +12,7 @@
 
 /* Test first part of SSL server handshake. */
 
-/* We need to use the deprecated RSA/EC low level calls */
+/* We need to use some deprecated APIs */
 #define OPENSSL_SUPPRESS_DEPRECATED
 
 #include <time.h>
@@ -24,8 +24,6 @@
 #include <openssl/dh.h>
 #include <openssl/err.h>
 #include "fuzzer.h"
-
-#include "rand.inc"
 
 static const uint8_t kCertificateDER[] = {
     0x30, 0x82, 0x02, 0xff, 0x30, 0x82, 0x01, 0xe7, 0xa0, 0x03, 0x02, 0x01,
@@ -495,12 +493,12 @@ int FuzzerInitialize(int *argc, char ***argv)
 {
     STACK_OF(SSL_COMP) *comp_methods;
 
+    FuzzerSetRand();
     OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CRYPTO_STRINGS | OPENSSL_INIT_ASYNC, NULL);
     OPENSSL_init_ssl(OPENSSL_INIT_LOAD_SSL_STRINGS, NULL);
     ERR_clear_error();
     CRYPTO_free_ex_index(0, -1);
     idx = SSL_get_ex_data_X509_STORE_CTX_idx();
-    FuzzerSetRand();
     comp_methods = SSL_COMP_get_compression_methods();
     if (comp_methods != NULL)
         sk_SSL_COMP_sort(comp_methods);
@@ -663,4 +661,5 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
 
 void FuzzerCleanup(void)
 {
+    FuzzerClearRand();
 }

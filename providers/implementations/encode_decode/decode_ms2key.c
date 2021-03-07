@@ -148,7 +148,7 @@ static int ms2key_post(struct ms2key_ctx_st *ctx, EVP_PKEY *pkey,
          * Tear out the low-level key pointer from the pkey,
          * but only if it matches the expected key type.
          *
-         * TODO(3.0): The check should be done with EVP_PKEY_is_a(), but
+         * The check should be done with EVP_PKEY_is_a(), but
          * as long as we still have #legacy internal keys, it's safer to
          * use the type numbers in side the provider.
          */

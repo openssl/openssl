@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -10,6 +10,7 @@
 #include <openssl/opensslconf.h>
 
 #include <openssl/ssl.h>
+#include <openssl/srp.h>
 
 #define PORT            "4433"
 #define PROTOCOL        "tcp"
@@ -77,3 +78,30 @@ int ssl_load_stores(SSL_CTX *ctx, const char *vfyCApath,
 void ssl_ctx_security_debug(SSL_CTX *ctx, int verbose);
 int set_keylog_file(SSL_CTX *ctx, const char *keylog_file);
 void print_ca_names(BIO *bio, SSL *s);
+
+#ifndef OPENSSL_NO_SRP
+/* The client side SRP context that we pass to all SRP related callbacks */
+typedef struct srp_arg_st {
+    char *srppassin;
+    char *srplogin;
+    int msg;                    /* copy from c_msg */
+    int debug;                  /* copy from c_debug */
+    int amp;                    /* allow more groups */
+    int strength;               /* minimal size for N */
+} SRP_ARG;
+
+int set_up_srp_arg(SSL_CTX *ctx, SRP_ARG *srp_arg, int srp_lateuser, int c_msg,
+                   int c_debug);
+void set_up_dummy_srp(SSL_CTX *ctx);
+
+/* The server side SRP context that we pass to all SRP related callbacks */
+typedef struct srpsrvparm_st {
+    char *login;
+    SRP_VBASE *vb;
+    SRP_user_pwd *user;
+} srpsrvparm;
+
+int set_up_srp_verifier_file(SSL_CTX *ctx, srpsrvparm *srp_callback_parm,
+                             char *srpuserseed, char *srp_verifier_file);
+void lookup_srp_user(srpsrvparm *srp_callback_parm, BIO *bio_s_out);
+#endif /* OPENSSL_NO_SRP */

@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2008-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -286,10 +286,11 @@ int cms_main(int argc, char **argv)
     X509_VERIFY_PARAM *vpm = NULL;
     char *certfile = NULL, *keyfile = NULL, *contfile = NULL;
     const char *CAfile = NULL, *CApath = NULL, *CAstore = NULL;
-    char *certsoutfile = NULL;
+    char *certsoutfile = NULL, *digestname = NULL;
     int noCAfile = 0, noCApath = 0, noCAstore = 0;
     char *infile = NULL, *outfile = NULL, *rctfile = NULL;
-    char *passinarg = NULL, *passin = NULL, *signerfile = NULL, *originatorfile = NULL, *recipfile = NULL;
+    char *passinarg = NULL, *passin = NULL, *signerfile = NULL;
+    char *originatorfile = NULL, *recipfile = NULL, *ciphername = NULL;
     char *to = NULL, *from = NULL, *subject = NULL, *prog;
     cms_key_param *key_first = NULL, *key_param = NULL;
     int flags = CMS_DETACHED, noout = 0, print = 0, keyidx = -1, vpmtouched = 0;
@@ -565,8 +566,7 @@ int cms_main(int argc, char **argv)
             certsoutfile = opt_arg();
             break;
         case OPT_MD:
-            if (!opt_md(opt_arg(), &sign_md))
-                goto end;
+            digestname = opt_arg();
             break;
         case OPT_SIGNER:
             /* If previous -signer argument add signer to list */
@@ -625,8 +625,7 @@ int cms_main(int argc, char **argv)
             }
             break;
         case OPT_CIPHER:
-            if (!opt_cipher(opt_unknown(), &cipher))
-                goto end;
+            ciphername = opt_unknown();
             break;
         case OPT_KEYOPT:
             keyidx = -1;
@@ -697,6 +696,15 @@ int cms_main(int argc, char **argv)
                 goto end;
             break;
         }
+    }
+    app_RAND_load();
+    if (digestname != NULL) {
+        if (!opt_md(digestname, &sign_md))
+            goto end;
+    }
+    if (ciphername != NULL) {
+        if (!opt_cipher(ciphername, &cipher))
+            goto end;
     }
 
     /* Remaining args are files to process. */

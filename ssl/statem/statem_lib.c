@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -329,10 +329,6 @@ int tls_construct_cert_verify(SSL *s, WPACKET *pkt)
          * in order to add the EVP_CTRL_SSL3_MASTER_SECRET call between them.
          */
         if (EVP_DigestSignUpdate(mctx, hdata, hdatalen) <= 0
-            /*
-             * TODO(3.0) Replace this when EVP_MD_CTX_ctrl() is deprecated
-             * with a call to ssl3_digest_master_key_set_params()
-             */
             || EVP_MD_CTX_ctrl(mctx, EVP_CTRL_SSL3_MASTER_SECRET,
                                (int)s->session->master_key_length,
                                s->session->master_key) <= 0
@@ -520,10 +516,6 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
         }
     }
     if (s->version == SSL3_VERSION) {
-        /*
-         * TODO(3.0) Replace this when EVP_MD_CTX_ctrl() is deprecated
-         * with a call to ssl3_digest_master_key_set_params()
-         */
         if (EVP_DigestVerifyUpdate(mctx, hdata, hdatalen) <= 0
                 || EVP_MD_CTX_ctrl(mctx, EVP_CTRL_SSL3_MASTER_SECRET,
                                    (int)s->session->master_key_length,

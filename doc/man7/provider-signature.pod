@@ -64,10 +64,11 @@ provider-signature - The signature library E<lt>-E<gt> provider functions
 
  /* Signature parameters */
  int OSSL_FUNC_signature_get_ctx_params(void *ctx, OSSL_PARAM params[]);
- const OSSL_PARAM *OSSL_FUNC_signature_gettable_ctx_params(void *provctx);
+ const OSSL_PARAM *OSSL_FUNC_signature_gettable_ctx_params(void *ctx,
+                                                           void *provctx);
  int OSSL_FUNC_signature_set_ctx_params(void *ctx, const OSSL_PARAM params[]);
- const OSSL_PARAM *OSSL_FUNC_signature_settable_ctx_params(void *provctx);
-
+ const OSSL_PARAM *OSSL_FUNC_signature_settable_ctx_params(void *ctx,
+                                                           void *provctx);
  /* MD parameters */
  int OSSL_FUNC_signature_get_ctx_md_params(void *ctx, OSSL_PARAM params[]);
  const OSSL_PARAM * OSSL_FUNC_signature_gettable_ctx_md_params(void *ctx);
@@ -407,7 +408,7 @@ The provider SIGNATURE interface was introduced in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

@@ -7,7 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-/* TODO(3.0) Move this header into provider when dependencies are removed */
+/* This header can move into provider when legacy support is removed */
 #include <openssl/modes.h>
 
 #if (defined(_WIN32) || defined(_WIN64)) && !defined(__MINGW32__)

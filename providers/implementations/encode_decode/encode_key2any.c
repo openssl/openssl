@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -25,12 +25,12 @@
 #include <openssl/dh.h>
 #include <openssl/dsa.h>
 #include <openssl/ec.h>
+#include <openssl/proverr.h>
 #include "internal/passphrase.h"
 #include "internal/cryptlib.h"
 #include "crypto/ecx.h"
 #include "crypto/rsa.h"
 #include "prov/implementations.h"
-#include "prov/providercommonerr.h"
 #include "prov/bio.h"
 #include "prov/provider_ctx.h"
 #include "prov/der_rsa.h"
@@ -60,6 +60,20 @@ typedef int key_to_der_fn(BIO *out, const void *key,
                           struct key2any_ctx_st *ctx);
 typedef int write_bio_of_void_fn(BIO *bp, const void *x);
 
+
+/* Free the blob allocated during key_to_paramstring_fn */
+static void free_asn1_data(int type, void *data)
+{
+    switch(type) {
+    case V_ASN1_OBJECT:
+        ASN1_OBJECT_free(data);
+        break;
+    case V_ASN1_SEQUENCE:
+        ASN1_STRING_free(data);
+        break;
+    }
+}
+
 static PKCS8_PRIV_KEY_INFO *key_to_p8info(const void *key, int key_nid,
                                           void *params, int params_type,
                                           i2d_of_void *k2d)
@@ -69,7 +83,6 @@ static PKCS8_PRIV_KEY_INFO *key_to_p8info(const void *key, int key_nid,
     int derlen;
     /* The final PKCS#8 info */
     PKCS8_PRIV_KEY_INFO *p8info = NULL;
-
 
     if ((p8info = PKCS8_PRIV_KEY_INFO_new()) == NULL
         || (derlen = k2d(key, &der)) <= 0
@@ -96,7 +109,7 @@ static X509_SIG *p8info_to_encp8(PKCS8_PRIV_KEY_INFO *p8info,
 
     if (!ossl_pw_get_passphrase(kstr, sizeof(kstr), &klen, NULL, 1,
                                 &ctx->pwdata)) {
-        ERR_raise(ERR_LIB_PROV, PROV_R_READ_KEY);
+        ERR_raise(ERR_LIB_PROV, PROV_R_UNABLE_TO_GET_PASSPHRASE);
         return NULL;
     }
     /* First argument == -1 means "standard" */
@@ -112,6 +125,9 @@ static X509_SIG *key_to_encp8(const void *key, int key_nid,
     PKCS8_PRIV_KEY_INFO *p8info =
         key_to_p8info(key, key_nid, params, params_type, k2d);
     X509_SIG *p8 = p8info_to_encp8(p8info, ctx);
+
+    if (p8info == NULL)
+        free_asn1_data(params_type, params);
 
     PKCS8_PRIV_KEY_INFO_free(p8info);
     return p8;
@@ -174,6 +190,8 @@ static int key_to_pkcs8_der_priv_bio(BIO *out, const void *key,
 
         if (p8info != NULL)
             ret = i2d_PKCS8_PRIV_KEY_INFO_bio(out, p8info);
+        else
+            free_asn1_data(strtype, str);
 
         PKCS8_PRIV_KEY_INFO_free(p8info);
     }
@@ -208,6 +226,8 @@ static int key_to_pkcs8_pem_priv_bio(BIO *out, const void *key,
 
         if (p8info != NULL)
             ret = PEM_write_bio_PKCS8_PRIV_KEY_INFO(out, p8info);
+        else
+            free_asn1_data(strtype, str);
 
         PKCS8_PRIV_KEY_INFO_free(p8info);
     }
@@ -259,6 +279,8 @@ static int key_to_spki_pem_pub_bio(BIO *out, const void *key,
 
     if (xpk != NULL)
         ret = PEM_write_bio_X509_PUBKEY(out, xpk);
+    else
+        free_asn1_data(strtype, str);
 
     /* Also frees |str| */
     X509_PUBKEY_free(xpk);

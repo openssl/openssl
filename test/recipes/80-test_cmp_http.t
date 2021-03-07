@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2007-2020 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2007-2021 The OpenSSL Project Authors. All Rights Reserved.
 # Copyright Nokia 2007-2019
 # Copyright Siemens AG 2015-2019
 #
@@ -20,7 +20,7 @@ BEGIN {
 }
 use lib srctop_dir('Configurations');
 use lib bldtop_dir('.');
-use platform;
+
 plan skip_all => "These tests are not supported in a fuzz build"
     if config('options') =~ /-DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION/;
 

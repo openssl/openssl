@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -35,6 +35,7 @@ static OSSL_FUNC_rand_verify_zeroization_fn test_rng_verify_zeroization;
 static OSSL_FUNC_rand_enable_locking_fn test_rng_enable_locking;
 static OSSL_FUNC_rand_lock_fn test_rng_lock;
 static OSSL_FUNC_rand_unlock_fn test_rng_unlock;
+static OSSL_FUNC_rand_get_seed_fn test_rng_get_seed;
 
 typedef struct {
     void *provctx;
@@ -78,11 +79,12 @@ static void test_rng_free(void *vtest)
 
 static int test_rng_instantiate(void *vtest, unsigned int strength,
                                 int prediction_resistance,
-                                const unsigned char *pstr, size_t pstr_len)
+                                const unsigned char *pstr, size_t pstr_len,
+                                const OSSL_PARAM params[])
 {
     PROV_TEST_RNG *t = (PROV_TEST_RNG *)vtest;
 
-    if (strength > t->strength)
+    if (!test_rng_set_ctx_params(t, params) || strength > t->strength)
         return 0;
 
     t->state = EVP_RAND_STATE_READY;
@@ -162,7 +164,8 @@ static int test_rng_get_ctx_params(void *vtest, OSSL_PARAM params[])
     return 1;
 }
 
-static const OSSL_PARAM *test_rng_gettable_ctx_params(ossl_unused void *provctx)
+static const OSSL_PARAM *test_rng_gettable_ctx_params(ossl_unused void *vtest,
+                                                      ossl_unused void *provctx)
 {
     static const OSSL_PARAM known_gettable_ctx_params[] = {
         OSSL_PARAM_int(OSSL_RAND_PARAM_STATE, NULL),
@@ -211,7 +214,8 @@ static int test_rng_set_ctx_params(void *vtest, const OSSL_PARAM params[])
     return 1;
 }
 
-static const OSSL_PARAM *test_rng_settable_ctx_params(ossl_unused void *provctx)
+static const OSSL_PARAM *test_rng_settable_ctx_params(ossl_unused void *vtest,
+                                                      ossl_unused void *provctx)
 {
     static const OSSL_PARAM known_settable_ctx_params[] = {
         OSSL_PARAM_octet_string(OSSL_RAND_PARAM_TEST_ENTROPY, NULL, 0),
@@ -226,6 +230,18 @@ static const OSSL_PARAM *test_rng_settable_ctx_params(ossl_unused void *provctx)
 static int test_rng_verify_zeroization(ossl_unused void *vtest)
 {
     return 1;
+}
+
+static size_t test_rng_get_seed(void *vtest, unsigned char **pout,
+                                int entropy, size_t min_len, size_t max_len,
+                                ossl_unused int prediction_resistance,
+                                ossl_unused const unsigned char *adin,
+                                ossl_unused size_t adin_len)
+{
+    PROV_TEST_RNG *t = (PROV_TEST_RNG *)vtest;
+
+    *pout = t->entropy;
+    return  t->entropy_len > max_len ? max_len : t->entropy_len;
 }
 
 static int test_rng_enable_locking(void *vtest)
@@ -280,5 +296,6 @@ const OSSL_DISPATCH ossl_test_rng_functions[] = {
     { OSSL_FUNC_RAND_GET_CTX_PARAMS, (void(*)(void))test_rng_get_ctx_params },
     { OSSL_FUNC_RAND_VERIFY_ZEROIZATION,
       (void(*)(void))test_rng_verify_zeroization },
+    { OSSL_FUNC_RAND_GET_SEED, (void(*)(void))test_rng_get_seed },
     { 0, NULL }
 };

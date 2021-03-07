@@ -17,7 +17,7 @@
 
 #include "crypto/sm2.h"
 #include "crypto/sm2err.h"
-#include "crypto/ec.h" /* ecdh_KDF_X9_63() */
+#include "crypto/ec.h" /* ossl_ecdh_kdf_X9_63() */
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/bn.h>
@@ -67,8 +67,8 @@ static size_t ec_field_size(const EC_GROUP *group)
     return field_size;
 }
 
-int sm2_plaintext_size(const EC_KEY *key, const EVP_MD *digest, size_t msg_len,
-                       size_t *pt_size)
+int ossl_sm2_plaintext_size(const EC_KEY *key, const EVP_MD *digest,
+                            size_t msg_len, size_t *pt_size)
 {
     const size_t field_size = ec_field_size(EC_KEY_get0_group(key));
     const int md_size = EVP_MD_size(digest);
@@ -93,8 +93,8 @@ int sm2_plaintext_size(const EC_KEY *key, const EVP_MD *digest, size_t msg_len,
     return 1;
 }
 
-int sm2_ciphertext_size(const EC_KEY *key, const EVP_MD *digest, size_t msg_len,
-                        size_t *ct_size)
+int ossl_sm2_ciphertext_size(const EC_KEY *key, const EVP_MD *digest,
+                             size_t msg_len, size_t *ct_size)
 {
     const size_t field_size = ec_field_size(EC_KEY_get0_group(key));
     const int md_size = EVP_MD_size(digest);
@@ -113,10 +113,10 @@ int sm2_ciphertext_size(const EC_KEY *key, const EVP_MD *digest, size_t msg_len,
     return 1;
 }
 
-int sm2_encrypt(const EC_KEY *key,
-                const EVP_MD *digest,
-                const uint8_t *msg,
-                size_t msg_len, uint8_t *ciphertext_buf, size_t *ciphertext_len)
+int ossl_sm2_encrypt(const EC_KEY *key,
+                     const EVP_MD *digest,
+                     const uint8_t *msg, size_t msg_len,
+                     uint8_t *ciphertext_buf, size_t *ciphertext_len)
 {
     int rc = 0, ciphertext_leni;
     size_t i;
@@ -139,8 +139,8 @@ int sm2_encrypt(const EC_KEY *key,
     size_t field_size;
     const int C3_size = EVP_MD_size(digest);
     EVP_MD *fetched_digest = NULL;
-    OSSL_LIB_CTX *libctx = ec_key_get_libctx(key);
-    const char *propq = ec_key_get0_propq(key);
+    OSSL_LIB_CTX *libctx = ossl_ec_key_get_libctx(key);
+    const char *propq = ossl_ec_key_get0_propq(key);
 
     /* NULL these before any "goto done" */
     ctext_struct.C2 = NULL;
@@ -213,8 +213,8 @@ int sm2_encrypt(const EC_KEY *key,
    }
 
     /* X9.63 with no salt happens to match the KDF used in SM2 */
-    if (!ecdh_KDF_X9_63(msg_mask, msg_len, x2y2, 2 * field_size, NULL, 0,
-                        digest, libctx, propq)) {
+    if (!ossl_ecdh_kdf_X9_63(msg_mask, msg_len, x2y2, 2 * field_size, NULL, 0,
+                             digest, libctx, propq)) {
         ERR_raise(ERR_LIB_SM2, ERR_R_EVP_LIB);
         goto done;
     }
@@ -275,10 +275,10 @@ int sm2_encrypt(const EC_KEY *key,
     return rc;
 }
 
-int sm2_decrypt(const EC_KEY *key,
-                const EVP_MD *digest,
-                const uint8_t *ciphertext,
-                size_t ciphertext_len, uint8_t *ptext_buf, size_t *ptext_len)
+int ossl_sm2_decrypt(const EC_KEY *key,
+                     const EVP_MD *digest,
+                     const uint8_t *ciphertext, size_t ciphertext_len,
+                     uint8_t *ptext_buf, size_t *ptext_len)
 {
     int rc = 0;
     int i;
@@ -297,8 +297,8 @@ int sm2_decrypt(const EC_KEY *key,
     const uint8_t *C3 = NULL;
     int msg_len = 0;
     EVP_MD_CTX *hash = NULL;
-    OSSL_LIB_CTX *libctx = ec_key_get_libctx(key);
-    const char *propq = ec_key_get0_propq(key);
+    OSSL_LIB_CTX *libctx = ossl_ec_key_get_libctx(key);
+    const char *propq = ossl_ec_key_get0_propq(key);
 
     if (field_size == 0 || hash_size <= 0)
        goto done;
@@ -362,8 +362,8 @@ int sm2_decrypt(const EC_KEY *key,
 
     if (BN_bn2binpad(x2, x2y2, field_size) < 0
             || BN_bn2binpad(y2, x2y2 + field_size, field_size) < 0
-            || !ecdh_KDF_X9_63(msg_mask, msg_len, x2y2, 2 * field_size, NULL, 0,
-                               digest, libctx, propq)) {
+            || !ossl_ecdh_kdf_X9_63(msg_mask, msg_len, x2y2, 2 * field_size,
+                                    NULL, 0, digest, libctx, propq)) {
         ERR_raise(ERR_LIB_SM2, ERR_R_INTERNAL_ERROR);
         goto done;
     }

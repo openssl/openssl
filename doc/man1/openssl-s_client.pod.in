@@ -752,23 +752,24 @@ Offer SRTP key management, where B<value> is a colon-separated profile list.
 
 =item B<-srpuser> I<value>
 
-Set the SRP username to the specified value.
+Set the SRP username to the specified value. This option is deprecated.
 
 =item B<-srppass> I<value>
 
-Set the SRP password to the specified value.
+Set the SRP password to the specified value. This option is deprecated.
 
 =item B<-srp_lateuser>
 
-SRP username for the second ClientHello message.
+SRP username for the second ClientHello message. This option is deprecated.
 
-=item B<-srp_moregroups>
+=item B<-srp_moregroups>  This option is deprecated.
 
 Tolerate other than the known B<g> and B<N> values.
 
 =item B<-srp_strength> I<number>
 
-Set the minimal acceptable length, in bits, for B<N>.
+Set the minimal acceptable length, in bits, for B<N>.  This option is
+deprecated.
 
 {- $OpenSSL::safe::opt_version_item -}
 
@@ -917,7 +918,7 @@ The B<-engine> option was deprecated in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

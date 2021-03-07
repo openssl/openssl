@@ -126,11 +126,11 @@ static int generic_aes_gcm_cipher_update(PROV_GCM_CTX *ctx, const unsigned char 
 
 static const PROV_GCM_HW aes_gcm = {
     aes_gcm_initkey,
-    gcm_setiv,
-    gcm_aad_update,
+    ossl_gcm_setiv,
+    ossl_gcm_aad_update,
     generic_aes_gcm_cipher_update,
-    gcm_cipher_final,
-    gcm_one_shot
+    ossl_gcm_cipher_final,
+    ossl_gcm_one_shot
 };
 
 #if defined(S390X_aes_128_CAPABLE)

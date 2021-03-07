@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -57,7 +57,7 @@ int gendsa_main(int argc, char **argv)
     EVP_PKEY *pkey = NULL;
     EVP_PKEY_CTX *ctx = NULL;
     const EVP_CIPHER *enc = NULL;
-    char *dsaparams = NULL;
+    char *dsaparams = NULL, *ciphername = NULL;
     char *outfile = NULL, *passoutarg = NULL, *passout = NULL, *prog;
     OPTION_CHOICE o;
     int ret = 1, private = 0, verbose = 0;
@@ -93,8 +93,7 @@ int gendsa_main(int argc, char **argv)
                 goto end;
             break;
         case OPT_CIPHER:
-            if (!opt_cipher(opt_unknown(), &enc))
-                goto end;
+            ciphername = opt_unknown();
             break;
         case OPT_VERBOSE:
             verbose = 1;
@@ -107,8 +106,13 @@ int gendsa_main(int argc, char **argv)
     argv = opt_rest();
     if (argc != 1)
         goto opthelp;
-
     dsaparams = argv[0];
+
+    app_RAND_load();
+    if (ciphername != NULL) {
+        if (!opt_cipher(ciphername, &enc))
+            goto end;
+    }
     private = 1;
 
     if (!app_passwd(NULL, passoutarg, NULL, &passout)) {

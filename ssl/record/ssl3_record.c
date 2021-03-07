@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -528,7 +528,7 @@ int ssl3_get_record(SSL *s)
         if (tmpmd != NULL) {
             imac_size = EVP_MD_size(tmpmd);
             if (!ossl_assert(imac_size >= 0 && imac_size <= EVP_MAX_MD_SIZE)) {
-                    SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_LIB_EVP);
+                    SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
                     return -1;
             }
             mac_size = (size_t)imac_size;
@@ -1552,7 +1552,7 @@ int dtls1_process_record(SSL *s, DTLS1_BITMAP *bitmap)
         if (tmpmd != NULL) {
             imac_size = EVP_MD_size(tmpmd);
             if (!ossl_assert(imac_size >= 0 && imac_size <= EVP_MAX_MD_SIZE)) {
-                    SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_LIB_EVP);
+                    SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
                     return -1;
             }
             mac_size = (size_t)imac_size;

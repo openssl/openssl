@@ -266,9 +266,9 @@ void OSSL_STORE_LOADER_do_all_provided(OSSL_LIB_CTX *libctx,
                                        void (*fn)(OSSL_STORE_LOADER *loader,
                                                   void *arg),
                                        void *arg);
-void OSSL_STORE_LOADER_names_do_all(const OSSL_STORE_LOADER *loader,
-                                    void (*fn)(const char *name, void *data),
-                                    void *data);
+int OSSL_STORE_LOADER_names_do_all(const OSSL_STORE_LOADER *loader,
+                                   void (*fn)(const char *name, void *data),
+                                   void *data);
 
 /*-
  *  Function to register a loader for the given URI scheme.

@@ -20,7 +20,7 @@
  * implementations alike.
  */
 
-int ecx_public_from_private(ECX_KEY *key)
+int ossl_ecx_public_from_private(ECX_KEY *key)
 {
     switch (key->type) {
     case ECX_KEY_TYPE_X25519:
@@ -47,8 +47,8 @@ int ecx_public_from_private(ECX_KEY *key)
     return 1;
 }
 
-int ecx_key_fromdata(ECX_KEY *ecx, const OSSL_PARAM params[],
-                     int include_private)
+int ossl_ecx_key_fromdata(ECX_KEY *ecx, const OSSL_PARAM params[],
+                          int include_private)
 {
     size_t privkeylen = 0, pubkeylen = 0;
     const OSSL_PARAM *param_priv_key = NULL, *param_pub_key;
@@ -82,7 +82,7 @@ int ecx_key_fromdata(ECX_KEY *ecx, const OSSL_PARAM params[],
         || (param_priv_key != NULL && privkeylen != ecx->keylen))
         return 0;
 
-    if (param_pub_key == NULL && !ecx_public_from_private(ecx))
+    if (param_pub_key == NULL && !ossl_ecx_public_from_private(ecx))
         return 0;
 
     ecx->haspubkey = 1;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -15,12 +15,12 @@
 
 /* Dispatch functions for cast cipher modes ecb, cbc, ofb, cfb */
 
+#include <openssl/proverr.h>
 #include "cipher_cast.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
-#include "prov/providercommonerr.h"
 
-#define CAST5_FLAGS (EVP_CIPH_VARIABLE_LENGTH)
+#define CAST5_FLAGS PROV_CIPHER_FLAG_VARIABLE_LENGTH
 
 static OSSL_FUNC_cipher_freectx_fn cast5_freectx;
 static OSSL_FUNC_cipher_dupctx_fn cast5_dupctx;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -85,7 +85,7 @@ int ossl_cipher_hw_generic_cfb1(PROV_CIPHER_CTX *dat, unsigned char *out,
 {
     int num = dat->num;
 
-    if ((dat->flags & EVP_CIPH_FLAG_LENGTH_BITS) != 0) {
+    if (dat->use_bits) {
         CRYPTO_cfb128_1_encrypt(in, out, len, dat->ks, dat->iv, &num,
                                 dat->enc, dat->block);
         dat->num = num;

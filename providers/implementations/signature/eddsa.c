@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -14,11 +14,11 @@
 #include <openssl/params.h>
 #include <openssl/evp.h>
 #include <openssl/err.h>
+#include <openssl/proverr.h>
 #include "internal/nelem.h"
 #include "internal/sizes.h"
 #include "prov/providercommon.h"
 #include "prov/implementations.h"
-#include "prov/providercommonerr.h"
 #include "prov/provider_ctx.h"
 #include "prov/der_ecx.h"
 #include "crypto/ecx.h"
@@ -99,13 +99,13 @@ static int eddsa_digest_signverify_init(void *vpeddsactx, const char *mdname,
         return 0;
     }
 
-    if (!ecx_key_up_ref(edkey)) {
+    if (!ossl_ecx_key_up_ref(edkey)) {
         ERR_raise(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR);
         return 0;
     }
 
     /*
-     * TODO(3.0) Should we care about DER writing errors?
+     * We do not care about DER writing errors.
      * All it really means is that for some reason, there's no
      * AlgorithmIdentifier to be had, but the operation itself is
      * still valid, just as long as it's not used to construct
@@ -240,7 +240,7 @@ static void eddsa_freectx(void *vpeddsactx)
 {
     PROV_EDDSA_CTX *peddsactx = (PROV_EDDSA_CTX *)vpeddsactx;
 
-    ecx_key_free(peddsactx->key);
+    ossl_ecx_key_free(peddsactx->key);
 
     OPENSSL_free(peddsactx);
 }
@@ -260,7 +260,7 @@ static void *eddsa_dupctx(void *vpeddsactx)
     *dstctx = *srcctx;
     dstctx->key = NULL;
 
-    if (srcctx->key != NULL && !ecx_key_up_ref(srcctx->key)) {
+    if (srcctx->key != NULL && !ossl_ecx_key_up_ref(srcctx->key)) {
         ERR_raise(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR);
         goto err;
     }
@@ -293,7 +293,8 @@ static const OSSL_PARAM known_gettable_ctx_params[] = {
     OSSL_PARAM_END
 };
 
-static const OSSL_PARAM *eddsa_gettable_ctx_params(ossl_unused void *provctx)
+static const OSSL_PARAM *eddsa_gettable_ctx_params(ossl_unused void *vpeddsactx,
+                                                   ossl_unused void *provctx)
 {
     return known_gettable_ctx_params;
 }

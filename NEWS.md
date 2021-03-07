@@ -80,7 +80,19 @@ OpenSSL 3.0
 OpenSSL 1.1.1
 -------------
 
-### Major changes between OpenSSL 1.1.1h and OpenSSL 1.1.1i [under development]
+### Major changes between OpenSSL 1.1.1j and OpenSSL 1.1.1k [under development]
+
+### Major changes between OpenSSL 1.1.1i and OpenSSL 1.1.1j [16 Feb 2021]
+
+  * Fixed a NULL pointer deref in the X509_issuer_and_serial_hash()
+    function ([CVE-2021-23841])
+  * Fixed the RSA_padding_check_SSLv23() function and the RSA_SSLV23_PADDING
+    padding mode to correctly check for rollback attacks
+  * Fixed an overflow in the EVP_CipherUpdate, EVP_EncryptUpdate and
+    EVP_DecryptUpdate functions ([CVE-2021-23840])
+  * Fixed SRP_Calc_client_key so that it runs in constant time
+
+### Major changes between OpenSSL 1.1.1h and OpenSSL 1.1.1i [8 Dec 2020]
 
   * Fixed NULL pointer deref in GENERAL_NAME_cmp ([CVE-2020-1971])
 

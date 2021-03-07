@@ -666,12 +666,13 @@ void SSL_set_msg_callback(SSL *ssl,
 # ifndef OPENSSL_NO_SRP
 
 /* see tls_srp.c */
-__owur int SSL_SRP_CTX_init(SSL *s);
-__owur int SSL_CTX_SRP_CTX_init(SSL_CTX *ctx);
-int SSL_SRP_CTX_free(SSL *ctx);
-int SSL_CTX_SRP_CTX_free(SSL_CTX *ctx);
-__owur int SSL_srp_server_param_with_username(SSL *s, int *ad);
-__owur int SRP_Calc_A_param(SSL *s);
+OSSL_DEPRECATEDIN_3_0 __owur int SSL_SRP_CTX_init(SSL *s);
+OSSL_DEPRECATEDIN_3_0 __owur int SSL_CTX_SRP_CTX_init(SSL_CTX *ctx);
+OSSL_DEPRECATEDIN_3_0 int SSL_SRP_CTX_free(SSL *ctx);
+OSSL_DEPRECATEDIN_3_0 int SSL_CTX_SRP_CTX_free(SSL_CTX *ctx);
+OSSL_DEPRECATEDIN_3_0 __owur int SSL_srp_server_param_with_username(SSL *s,
+                                                                    int *ad);
+OSSL_DEPRECATEDIN_3_0 __owur int SRP_Calc_A_param(SSL *s);
 
 # endif
 
@@ -1833,27 +1834,32 @@ __owur X509_VERIFY_PARAM *SSL_CTX_get0_param(SSL_CTX *ctx);
 __owur X509_VERIFY_PARAM *SSL_get0_param(SSL *ssl);
 
 # ifndef OPENSSL_NO_SRP
-int SSL_CTX_set_srp_username(SSL_CTX *ctx, char *name);
-int SSL_CTX_set_srp_password(SSL_CTX *ctx, char *password);
-int SSL_CTX_set_srp_strength(SSL_CTX *ctx, int strength);
+OSSL_DEPRECATEDIN_3_0 int SSL_CTX_set_srp_username(SSL_CTX *ctx, char *name);
+OSSL_DEPRECATEDIN_3_0 int SSL_CTX_set_srp_password(SSL_CTX *ctx, char *password);
+OSSL_DEPRECATEDIN_3_0 int SSL_CTX_set_srp_strength(SSL_CTX *ctx, int strength);
+OSSL_DEPRECATEDIN_3_0
 int SSL_CTX_set_srp_client_pwd_callback(SSL_CTX *ctx,
                                         char *(*cb) (SSL *, void *));
+OSSL_DEPRECATEDIN_3_0
 int SSL_CTX_set_srp_verify_param_callback(SSL_CTX *ctx,
                                           int (*cb) (SSL *, void *));
+OSSL_DEPRECATEDIN_3_0
 int SSL_CTX_set_srp_username_callback(SSL_CTX *ctx,
                                       int (*cb) (SSL *, int *, void *));
-int SSL_CTX_set_srp_cb_arg(SSL_CTX *ctx, void *arg);
+OSSL_DEPRECATEDIN_3_0 int SSL_CTX_set_srp_cb_arg(SSL_CTX *ctx, void *arg);
 
+OSSL_DEPRECATEDIN_3_0
 int SSL_set_srp_server_param(SSL *s, const BIGNUM *N, const BIGNUM *g,
                              BIGNUM *sa, BIGNUM *v, char *info);
+OSSL_DEPRECATEDIN_3_0
 int SSL_set_srp_server_param_pw(SSL *s, const char *user, const char *pass,
                                 const char *grp);
 
-__owur BIGNUM *SSL_get_srp_g(SSL *s);
-__owur BIGNUM *SSL_get_srp_N(SSL *s);
+OSSL_DEPRECATEDIN_3_0 __owur BIGNUM *SSL_get_srp_g(SSL *s);
+OSSL_DEPRECATEDIN_3_0 __owur BIGNUM *SSL_get_srp_N(SSL *s);
 
-__owur char *SSL_get_srp_username(SSL *s);
-__owur char *SSL_get_srp_userinfo(SSL *s);
+OSSL_DEPRECATEDIN_3_0 __owur char *SSL_get_srp_username(SSL *s);
+OSSL_DEPRECATEDIN_3_0 __owur char *SSL_get_srp_userinfo(SSL *s);
 # endif
 
 /*

@@ -460,12 +460,14 @@ void EVP_KEYEXCH_do_all_provided(OSSL_LIB_CTX *libctx,
                        (void (*)(void *))EVP_KEYEXCH_free);
 }
 
-void EVP_KEYEXCH_names_do_all(const EVP_KEYEXCH *keyexch,
-                              void (*fn)(const char *name, void *data),
-                              void *data)
+int EVP_KEYEXCH_names_do_all(const EVP_KEYEXCH *keyexch,
+                             void (*fn)(const char *name, void *data),
+                             void *data)
 {
     if (keyexch->prov != NULL)
-        evp_names_do_all(keyexch->prov, keyexch->name_id, fn, data);
+        return evp_names_do_all(keyexch->prov, keyexch->name_id, fn, data);
+
+    return 1;
 }
 
 const OSSL_PARAM *EVP_KEYEXCH_gettable_ctx_params(const EVP_KEYEXCH *keyexch)
@@ -476,7 +478,7 @@ const OSSL_PARAM *EVP_KEYEXCH_gettable_ctx_params(const EVP_KEYEXCH *keyexch)
         return NULL;
 
     provctx = ossl_provider_ctx(EVP_KEYEXCH_provider(keyexch));
-    return keyexch->gettable_ctx_params(provctx);
+    return keyexch->gettable_ctx_params(NULL, provctx);
 }
 
 const OSSL_PARAM *EVP_KEYEXCH_settable_ctx_params(const EVP_KEYEXCH *keyexch)
@@ -486,5 +488,5 @@ const OSSL_PARAM *EVP_KEYEXCH_settable_ctx_params(const EVP_KEYEXCH *keyexch)
     if (keyexch == NULL || keyexch->settable_ctx_params == NULL)
         return NULL;
     provctx = ossl_provider_ctx(EVP_KEYEXCH_provider(keyexch));
-    return keyexch->settable_ctx_params(provctx);
+    return keyexch->settable_ctx_params(NULL, provctx);
 }

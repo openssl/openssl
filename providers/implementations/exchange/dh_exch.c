@@ -19,6 +19,7 @@
 #include <openssl/core_names.h>
 #include <openssl/dh.h>
 #include <openssl/err.h>
+#include <openssl/proverr.h>
 #include <openssl/params.h>
 #include "prov/providercommon.h"
 #include "prov/implementations.h"
@@ -104,7 +105,7 @@ static int dh_init(void *vpdhctx, void *vdh)
     DH_free(pdhctx->dh);
     pdhctx->dh = vdh;
     pdhctx->kdf_type = PROV_DH_KDF_NONE;
-    return dh_check_key(vdh);
+    return ossl_dh_check_key(vdh);
 }
 
 static int dh_set_peer(void *vpdhctx, void *vdh)
@@ -130,17 +131,20 @@ static int dh_plain_derive(void *vpdhctx,
     size_t dhsize;
     const BIGNUM *pub_key = NULL;
 
-    /* TODO(3.0): Add errors to stack */
-    if (pdhctx->dh == NULL || pdhctx->dhpeer == NULL)
+    if (pdhctx->dh == NULL || pdhctx->dhpeer == NULL) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_KEY);
         return 0;
+    }
 
     dhsize = (size_t)DH_size(pdhctx->dh);
     if (secret == NULL) {
         *secretlen = dhsize;
         return 1;
     }
-    if (outlen < dhsize)
+    if (outlen < dhsize) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
         return 0;
+    }
 
     DH_get0_key(pdhctx->dhpeer, &pub_key, NULL);
     if (pdhctx->pad)
@@ -167,8 +171,10 @@ static int dh_X9_42_kdf_derive(void *vpdhctx, unsigned char *secret,
         return 1;
     }
 
-    if (pdhctx->kdf_outlen > outlen)
+    if (pdhctx->kdf_outlen > outlen) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
         return 0;
+    }
     if (!dh_plain_derive(pdhctx, NULL, &stmplen, 0))
         return 0;
     if ((stmp = OPENSSL_secure_malloc(stmplen)) == NULL) {
@@ -180,13 +186,13 @@ static int dh_X9_42_kdf_derive(void *vpdhctx, unsigned char *secret,
 
     /* Do KDF stuff */
     if (pdhctx->kdf_type == PROV_DH_KDF_X9_42_ASN1) {
-        if (!dh_KDF_X9_42_asn1(secret, pdhctx->kdf_outlen,
-                               stmp, stmplen,
-                               pdhctx->kdf_cekalg,
-                               pdhctx->kdf_ukm,
-                               pdhctx->kdf_ukmlen,
-                               pdhctx->kdf_md,
-                               pdhctx->libctx, NULL))
+        if (!ossl_dh_kdf_X9_42_asn1(secret, pdhctx->kdf_outlen,
+                                    stmp, stmplen,
+                                    pdhctx->kdf_cekalg,
+                                    pdhctx->kdf_ukm,
+                                    pdhctx->kdf_ukmlen,
+                                    pdhctx->kdf_md,
+                                    pdhctx->libctx, NULL))
             goto err;
     }
     *secretlen = pdhctx->kdf_outlen;
@@ -321,7 +327,7 @@ static int dh_set_ctx_params(void *vpdhctx, const OSSL_PARAM params[])
 
         EVP_MD_free(pdhctx->kdf_md);
         pdhctx->kdf_md = EVP_MD_fetch(pdhctx->libctx, name, mdprops);
-        if (!digest_is_allowed(pdhctx->kdf_md)) {
+        if (!ossl_digest_is_allowed(pdhctx->kdf_md)) {
             EVP_MD_free(pdhctx->kdf_md);
             pdhctx->kdf_md = NULL;
         }
@@ -383,7 +389,8 @@ static const OSSL_PARAM known_settable_ctx_params[] = {
     OSSL_PARAM_END
 };
 
-static const OSSL_PARAM *dh_settable_ctx_params(ossl_unused void *provctx)
+static const OSSL_PARAM *dh_settable_ctx_params(ossl_unused void *vpdhctx,
+                                                ossl_unused void *provctx)
 {
     return known_settable_ctx_params;
 }
@@ -398,7 +405,8 @@ static const OSSL_PARAM known_gettable_ctx_params[] = {
     OSSL_PARAM_END
 };
 
-static const OSSL_PARAM *dh_gettable_ctx_params(ossl_unused void *provctx)
+static const OSSL_PARAM *dh_gettable_ctx_params(ossl_unused void *vpdhctx,
+                                                ossl_unused void *provctx)
 {
     return known_gettable_ctx_params;
 }

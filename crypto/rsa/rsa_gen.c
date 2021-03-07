@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -410,7 +410,7 @@ static int rsa_multiprime_keygen(RSA *rsa, int bits, int primes,
     ok = 1;
  err:
     if (ok == -1) {
-        ERR_raise(ERR_LIB_RSA, ERR_LIB_BN);
+        ERR_raise(ERR_LIB_RSA, ERR_R_BN_LIB);
         ok = 0;
     }
     BN_CTX_end(ctx);

@@ -97,6 +97,7 @@
 # define EVP_R_ONLY_ONESHOT_SUPPORTED                     177
 # define EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE   150
 # define EVP_R_OPERATON_NOT_INITIALIZED                   151
+# define EVP_R_OUTPUT_WOULD_OVERFLOW                      202
 # define EVP_R_PARAMETER_TOO_LARGE                        187
 # define EVP_R_PARTIALLY_OVERLAPPING                      162
 # define EVP_R_PBKDF2_ERROR                               181

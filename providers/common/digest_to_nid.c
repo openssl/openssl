@@ -20,7 +20,7 @@
  * Internal library code deals with NIDs, so we need to translate from a name.
  * We do so using EVP_MD_is_a(), and therefore need a name to NID map.
  */
-int digest_md_to_nid(const EVP_MD *md, const OSSL_ITEM *it, size_t it_len)
+int ossl_digest_md_to_nid(const EVP_MD *md, const OSSL_ITEM *it, size_t it_len)
 {
     size_t i;
 
@@ -37,7 +37,7 @@ int digest_md_to_nid(const EVP_MD *md, const OSSL_ITEM *it, size_t it_len)
  * Retrieve one of the FIPs approved hash algorithms by nid.
  * See FIPS 180-4 "Secure Hash Standard" and FIPS 202 - SHA-3.
  */
-int digest_get_approved_nid(const EVP_MD *md)
+int ossl_digest_get_approved_nid(const EVP_MD *md)
 {
     static const OSSL_ITEM name_to_nid[] = {
         { NID_sha1,      OSSL_DIGEST_NAME_SHA1      },
@@ -53,5 +53,5 @@ int digest_get_approved_nid(const EVP_MD *md)
         { NID_sha3_512,  OSSL_DIGEST_NAME_SHA3_512  },
     };
 
-    return digest_md_to_nid(md, name_to_nid, OSSL_NELEM(name_to_nid));
+    return ossl_digest_md_to_nid(md, name_to_nid, OSSL_NELEM(name_to_nid));
 }

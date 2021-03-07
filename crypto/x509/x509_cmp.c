@@ -44,6 +44,8 @@ unsigned long X509_issuer_and_serial_hash(X509 *a)
     if (ctx == NULL)
         goto err;
     f = X509_NAME_oneline(a->cert_info.issuer, NULL, 0);
+    if (f == NULL)
+        goto err;
     if (!EVP_DigestInit_ex(ctx, EVP_md5(), NULL))
         goto err;
     if (!EVP_DigestUpdate(ctx, (unsigned char *)f, strlen(f)))
@@ -173,14 +175,13 @@ int X509_cmp(const X509 *a, const X509 *b)
     return rv < 0 ? -1 : rv > 0;
 }
 
-int X509_add_cert_new(STACK_OF(X509) **sk, X509 *cert, int flags)
+int ossl_x509_add_cert_new(STACK_OF(X509) **p_sk, X509 *cert, int flags)
 {
-    if (*sk == NULL
-            && (*sk = sk_X509_new_null()) == NULL) {
+    if (*p_sk == NULL && (*p_sk = sk_X509_new_null()) == NULL) {
         ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
         return 0;
     }
-    return X509_add_cert(*sk, cert, flags);
+    return X509_add_cert(*p_sk, cert, flags);
 }
 
 int X509_add_cert(STACK_OF(X509) *sk, X509 *cert, int flags)
@@ -214,16 +215,27 @@ int X509_add_cert(STACK_OF(X509) *sk, X509 *cert, int flags)
 }
 
 int X509_add_certs(STACK_OF(X509) *sk, STACK_OF(X509) *certs, int flags)
-/* compiler would allow 'const' for the list of certs, yet they are up-ref'ed */
+/* compiler would allow 'const' for the certs, yet they may get up-ref'ed */
 {
-    int n = sk_X509_num(certs); /* certs may be NULL */
+    if (sk == NULL) {
+        ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    return ossl_x509_add_certs_new(&sk, certs, flags);
+}
+
+int ossl_x509_add_certs_new(STACK_OF(X509) **p_sk, STACK_OF(X509) *certs,
+                            int flags)
+/* compiler would allow 'const' for the certs, yet they may get up-ref'ed */
+{
+    int n = sk_X509_num(certs /* may be NULL */);
     int i;
 
     for (i = 0; i < n; i++) {
         int j = (flags & X509_ADD_FLAG_PREPEND) == 0 ? i : n - 1 - i;
         /* if prepend, add certs in reverse order to keep original order */
 
-        if (!X509_add_cert(sk, sk_X509_value(certs, j), flags))
+        if (!ossl_x509_add_cert_new(p_sk, sk_X509_value(certs, j), flags))
             return 0;
     }
     return 1;

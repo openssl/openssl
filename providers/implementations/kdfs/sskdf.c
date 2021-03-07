@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2019, Oracle and/or its affiliates.  All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -42,12 +42,12 @@
 #include <openssl/kdf.h>
 #include <openssl/core_names.h>
 #include <openssl/params.h>
+#include <openssl/proverr.h>
 #include "internal/cryptlib.h"
 #include "internal/numbers.h"
 #include "crypto/evp.h"
 #include "prov/provider_ctx.h"
 #include "prov/providercommon.h"
-#include "prov/providercommonerr.h"
 #include "prov/implementations.h"
 #include "prov/provider_util.h"
 
@@ -223,19 +223,11 @@ static int SSKDF_mac_kdm(EVP_MAC_CTX *ctx_init,
     unsigned char *out = derived_key;
     EVP_MAC_CTX *ctx = NULL;
     unsigned char *mac = mac_buf, *kmac_buffer = NULL;
-    OSSL_PARAM params[2], *p = params;
 
     if (z_len > SSKDF_MAX_INLEN || info_len > SSKDF_MAX_INLEN
             || derived_key_len > SSKDF_MAX_INLEN
             || derived_key_len == 0)
         return 0;
-
-    *p++ = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY,
-                                             (void *)salt, salt_len);
-    *p = OSSL_PARAM_construct_end();
-
-    if (!EVP_MAC_CTX_set_params(ctx_init, params))
-        goto end;
 
     if (!kmac_init(ctx_init, kmac_custom, kmac_custom_len, kmac_out_len,
                    derived_key_len, &kmac_buffer))
@@ -243,7 +235,7 @@ static int SSKDF_mac_kdm(EVP_MAC_CTX *ctx_init,
     if (kmac_buffer != NULL)
         mac = kmac_buffer;
 
-    if (!EVP_MAC_init(ctx_init))
+    if (!EVP_MAC_init(ctx_init, salt, salt_len, NULL))
         goto end;
 
     out_len = EVP_MAC_CTX_get_mac_size(ctx_init); /* output size */
@@ -350,12 +342,13 @@ static size_t sskdf_size(KDF_SSKDF *ctx)
     return (len <= 0) ? 0 : (size_t)len;
 }
 
-static int sskdf_derive(void *vctx, unsigned char *key, size_t keylen)
+static int sskdf_derive(void *vctx, unsigned char *key, size_t keylen,
+                        const OSSL_PARAM params[])
 {
     KDF_SSKDF *ctx = (KDF_SSKDF *)vctx;
     const EVP_MD *md;
 
-    if (!ossl_prov_is_running())
+    if (!ossl_prov_is_running() || !sskdf_set_ctx_params(ctx, params))
         return 0;
     if (ctx->secret == NULL) {
         ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_SECRET);
@@ -419,12 +412,13 @@ static int sskdf_derive(void *vctx, unsigned char *key, size_t keylen)
     }
 }
 
-static int x963kdf_derive(void *vctx, unsigned char *key, size_t keylen)
+static int x963kdf_derive(void *vctx, unsigned char *key, size_t keylen,
+                          const OSSL_PARAM params[])
 {
     KDF_SSKDF *ctx = (KDF_SSKDF *)vctx;
     const EVP_MD *md;
 
-    if (!ossl_prov_is_running())
+    if (!ossl_prov_is_running() || !sskdf_set_ctx_params(ctx, params))
         return 0;
 
     if (ctx->secret == NULL) {
@@ -484,7 +478,8 @@ static int sskdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     return 1;
 }
 
-static const OSSL_PARAM *sskdf_settable_ctx_params(ossl_unused void *provctx)
+static const OSSL_PARAM *sskdf_settable_ctx_params(ossl_unused void *ctx,
+                                                   ossl_unused void *provctx)
 {
     static const OSSL_PARAM known_settable_ctx_params[] = {
         OSSL_PARAM_octet_string(OSSL_KDF_PARAM_SECRET, NULL, 0),
@@ -510,7 +505,8 @@ static int sskdf_get_ctx_params(void *vctx, OSSL_PARAM params[])
     return -2;
 }
 
-static const OSSL_PARAM *sskdf_gettable_ctx_params(ossl_unused void *provctx)
+static const OSSL_PARAM *sskdf_gettable_ctx_params(ossl_unused void *ctx,
+                                                   ossl_unused void *provctx)
 {
     static const OSSL_PARAM known_gettable_ctx_params[] = {
         OSSL_PARAM_size_t(OSSL_KDF_PARAM_SIZE, NULL),

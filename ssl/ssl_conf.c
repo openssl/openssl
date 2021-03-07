@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2012-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -587,9 +587,9 @@ static int cmd_DHParameters(SSL_CONF_CTX *cctx, const char *value)
             goto end;
 
         decoderctx
-            = OSSL_DECODER_CTX_new_by_EVP_PKEY(&dhpkey, "PEM", NULL, "DH",
-                                               OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS,
-                                               sslctx->libctx, sslctx->propq);
+            = OSSL_DECODER_CTX_new_for_pkey(&dhpkey, "PEM", NULL, "DH",
+                                            OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS,
+                                            sslctx->libctx, sslctx->propq);
         if (decoderctx == NULL
                 || !OSSL_DECODER_from_bio(decoderctx, in)) {
             OSSL_DECODER_CTX_free(decoderctx);

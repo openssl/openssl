@@ -286,7 +286,7 @@ static int send_record(BIO *rbio, unsigned char type, uint64_t seqnr,
     unsigned char iv[16];
     unsigned char pad;
     unsigned char *enc;
-    OSSL_PARAM params[3];
+    OSSL_PARAM params[2];
 
     seq[0] = (seqnr >> 40) & 0xff;
     seq[1] = (seqnr >> 32) & 0xff;
@@ -309,11 +309,8 @@ static int send_record(BIO *rbio, unsigned char type, uint64_t seqnr,
     EVP_MAC_free(hmac);
     params[0] = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
                                                  "SHA1", 0);
-    params[1] = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY,
-                                                  mac_key, 20);
-    params[2] = OSSL_PARAM_construct_end();
-    EVP_MAC_CTX_set_params(ctx, params);
-    EVP_MAC_init(ctx);
+    params[1] = OSSL_PARAM_construct_end();
+    EVP_MAC_init(ctx, mac_key, 20, params);
     EVP_MAC_update(ctx, epoch, 2);
     EVP_MAC_update(ctx, seq, 6);
     EVP_MAC_update(ctx, &type, 1);

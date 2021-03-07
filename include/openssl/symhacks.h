@@ -34,10 +34,6 @@
 #  undef i2d_ECPKPARAMETERS
 #  define i2d_ECPKPARAMETERS                      i2d_UC_ECPKPARAMETERS
 
-/* This one clashes with CMS_data_create */
-#  undef cms_Data_create
-#  define cms_Data_create                         priv_cms_Data_create
-
 # endif
 
 #endif                          /* ! defined HEADER_VMS_IDHACKS_H */

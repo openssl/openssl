@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -14,6 +14,11 @@
 #include <openssl/params.h>
 /* For TLS1_3_VERSION */
 #include <openssl/ssl.h>
+
+static OSSL_FUNC_keymgmt_import_fn xor_import;
+static OSSL_FUNC_keymgmt_import_types_fn xor_import_types;
+static OSSL_FUNC_keymgmt_export_fn xor_export;
+static OSSL_FUNC_keymgmt_export_types_fn xor_export_types;
 
 int tls_provider_init(const OSSL_CORE_HANDLE *handle,
                       const OSSL_DISPATCH *in,
@@ -568,7 +573,8 @@ static int xor_gen_set_params(void *genctx, const OSSL_PARAM params[])
     return 1;
 }
 
-static const OSSL_PARAM *xor_gen_settable_params(void *provctx)
+static const OSSL_PARAM *xor_gen_settable_params(ossl_unused void *genctx,
+                                                 ossl_unused void *provctx)
 {
     static OSSL_PARAM settable[] = {
         OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME, NULL, 0),
@@ -600,6 +606,82 @@ static void *xor_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
     return key;
 }
 
+/* IMPORT + EXPORT */
+
+static int xor_import(void *vkey, int select, const OSSL_PARAM params[])
+{
+    XORKEY *key = vkey;
+    const OSSL_PARAM *param_priv_key, *param_pub_key;
+    unsigned char privkey[XOR_KEY_SIZE];
+    unsigned char pubkey[XOR_KEY_SIZE];
+    void *pprivkey = privkey, *ppubkey = pubkey;
+    size_t priv_len = 0, pub_len = 0;
+    int res = 0;
+
+    if (key == NULL || (select & OSSL_KEYMGMT_SELECT_KEYPAIR) == 0)
+        return 0;
+
+    memset(privkey, 0, sizeof(privkey));
+    memset(pubkey, 0, sizeof(pubkey));
+    param_priv_key = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_PRIV_KEY);
+    param_pub_key = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_PUB_KEY);
+
+    if ((param_priv_key != NULL
+         && !OSSL_PARAM_get_octet_string(param_priv_key, &pprivkey,
+                                         sizeof(privkey), &priv_len))
+        || (param_pub_key != NULL
+            && !OSSL_PARAM_get_octet_string(param_pub_key, &ppubkey,
+                                            sizeof(pubkey), &pub_len)))
+        goto err;
+
+    if (priv_len > 0) {
+        memcpy(key->privkey, privkey, priv_len);
+        key->hasprivkey = 1;
+    }
+    if (pub_len > 0) {
+        memcpy(key->pubkey, pubkey, pub_len);
+        key->haspubkey = 1;
+    }
+    res = 1;
+ err:
+    return res;
+}
+
+static int xor_export(void *vkey, int select, OSSL_CALLBACK *param_cb,
+                      void *cbarg)
+{
+    XORKEY *key = vkey;
+    OSSL_PARAM params[3], *p = params;
+
+    if (key == NULL || (select & OSSL_KEYMGMT_SELECT_KEYPAIR) == 0)
+        return 0;
+
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_PRIV_KEY,
+                                             key->privkey,
+                                             sizeof(key->privkey));
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_PUB_KEY,
+                                             key->pubkey, sizeof(key->pubkey));
+    *p++ = OSSL_PARAM_construct_end();
+
+    return param_cb(params, cbarg);
+}
+
+static const OSSL_PARAM xor_key_types[] = {
+    OSSL_PARAM_BN(OSSL_PKEY_PARAM_PUB_KEY, NULL, 0),
+    OSSL_PARAM_BN(OSSL_PKEY_PARAM_PRIV_KEY, NULL, 0),
+    OSSL_PARAM_END
+};
+
+static const OSSL_PARAM *xor_import_types(int select)
+{
+    return (select & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0 ? xor_key_types : NULL;
+}
+
+static const OSSL_PARAM *xor_export_types(int select)
+{
+    return (select & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0 ? xor_key_types : NULL;
+}
+
 static void xor_gen_cleanup(void *genctx)
 {
     OPENSSL_free(genctx);
@@ -620,6 +702,10 @@ static const OSSL_DISPATCH xor_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_HAS, (void (*)(void))xor_has },
     { OSSL_FUNC_KEYMGMT_COPY, (void (*)(void))xor_copy },
     { OSSL_FUNC_KEYMGMT_FREE, (void (*)(void))xor_freedata },
+    { OSSL_FUNC_KEYMGMT_IMPORT, (void (*)(void))xor_import },
+    { OSSL_FUNC_KEYMGMT_IMPORT_TYPES, (void (*)(void))xor_import_types },
+    { OSSL_FUNC_KEYMGMT_EXPORT, (void (*)(void))xor_export },
+    { OSSL_FUNC_KEYMGMT_EXPORT_TYPES, (void (*)(void))xor_export_types },
     { 0, NULL }
 };
 

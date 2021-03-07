@@ -114,6 +114,8 @@ static int ndef_prefix(BIO *b, unsigned char **pbuf, int *plen, void *parg)
     ndef_aux = *(NDEF_SUPPORT **)parg;
 
     derlen = ASN1_item_ndef_i2d(ndef_aux->val, NULL, ndef_aux->it);
+    if (derlen < 0)
+        return 0;
     if ((p = OPENSSL_malloc(derlen)) == NULL) {
         ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
         return 0;

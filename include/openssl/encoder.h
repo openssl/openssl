@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -39,9 +39,9 @@ int OSSL_ENCODER_is_a(const OSSL_ENCODER *encoder, const char *name);
 void OSSL_ENCODER_do_all_provided(OSSL_LIB_CTX *libctx,
                                   void (*fn)(OSSL_ENCODER *encoder, void *arg),
                                   void *arg);
-void OSSL_ENCODER_names_do_all(const OSSL_ENCODER *encoder,
-                               void (*fn)(const char *name, void *data),
-                               void *data);
+int OSSL_ENCODER_names_do_all(const OSSL_ENCODER *encoder,
+                              void (*fn)(const char *name, void *data),
+                              void *data);
 const OSSL_PARAM *OSSL_ENCODER_gettable_params(OSSL_ENCODER *encoder);
 int OSSL_ENCODER_get_params(OSSL_ENCODER *encoder, OSSL_PARAM params[]);
 
@@ -113,11 +113,11 @@ int OSSL_ENCODER_to_data(OSSL_ENCODER_CTX *ctx, unsigned char **pdata,
  * an implicit OSSL_ENCODER_fetch(), suitable for the object of that type.
  * This is more useful than calling OSSL_ENCODER_CTX_new().
  */
-OSSL_ENCODER_CTX *OSSL_ENCODER_CTX_new_by_EVP_PKEY(const EVP_PKEY *pkey,
-                                                   int selection,
-                                                   const char *output_type,
-                                                   const char *output_struct,
-                                                   const char *propquery);
+OSSL_ENCODER_CTX *OSSL_ENCODER_CTX_new_for_pkey(const EVP_PKEY *pkey,
+                                                int selection,
+                                                const char *output_type,
+                                                const char *output_struct,
+                                                const char *propquery);
 
 # ifdef __cplusplus
 }

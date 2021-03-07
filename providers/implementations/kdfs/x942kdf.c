@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2019, Oracle and/or its affiliates.  All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -14,11 +14,11 @@
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/params.h>
+#include <openssl/proverr.h>
 #include "internal/packet.h"
 #include "internal/der.h"
 #include "prov/provider_ctx.h"
 #include "prov/providercommon.h"
-#include "prov/providercommonerr.h"
 #include "prov/implementations.h"
 #include "prov/provider_util.h"
 #include "prov/der_wrap.h"
@@ -39,6 +39,8 @@ typedef struct {
     PROV_DIGEST digest;
     unsigned char *secret;
     size_t secret_len;
+    unsigned char *acvpinfo;
+    size_t acvpinfo_len;
     unsigned char *partyuinfo, *partyvinfo, *supp_pubinfo, *supp_privinfo;
     size_t partyuinfo_len, partyvinfo_len, supp_pubinfo_len, supp_privinfo_len;
     size_t dkm_len;
@@ -110,6 +112,7 @@ static int DER_w_keyinfo(WPACKET *pkt,
 
 static int der_encode_sharedinfo(WPACKET *pkt, unsigned char *buf, size_t buflen,
                                  const unsigned char *der_oid, size_t der_oidlen,
+                                 const unsigned char *acvp, size_t acvplen,
                                  const unsigned char *partyu, size_t partyulen,
                                  const unsigned char *partyv, size_t partyvlen,
                                  const unsigned char *supp_pub, size_t supp_publen,
@@ -127,6 +130,7 @@ static int der_encode_sharedinfo(WPACKET *pkt, unsigned char *buf, size_t buflen
                || ossl_DER_w_octet_string_uint32(pkt, 2, keylen_bits))
            && (partyv == NULL || ossl_DER_w_octet_string(pkt, 1, partyv, partyvlen))
            && (partyu == NULL || ossl_DER_w_octet_string(pkt, 0, partyu, partyulen))
+           && (acvp == NULL || ossl_DER_w_precompiled(pkt, -1, acvp, acvplen))
            && DER_w_keyinfo(pkt, der_oid, der_oidlen, pcounter)
            && ossl_DER_w_end_sequence(pkt, -1)
            && WPACKET_finish(pkt);
@@ -159,35 +163,40 @@ static int der_encode_sharedinfo(WPACKET *pkt, unsigned char *buf, size_t buflen
  *  }
  *  Where suppPubInfo is the key length (in bits) (stored into 4 bytes)
  *
-}
- *
  * |keylen| is the length (in bytes) of the generated KEK. It is stored into
- * suppPubInfo (in bits). It is ignored if the value is 0.
+ *   suppPubInfo (in bits). It is ignored if the value is 0.
  * |cek_oid| The oid of the key wrapping algorithm.
  * |cek_oidlen| The length (in bytes) of the key wrapping algorithm oid,
- * |partyu| is the optional public info contributed by the initiator. It
- * can be NULL. (It is also used as the ukm by CMS).
+ * |acvp| is the optional blob of DER data representing one or more of the
+ *   OtherInfo fields related to |partyu|, |partyv|, |supp_pub| and |supp_priv|.
+ *   This field should noramlly be NULL. If |acvp| is non NULL then |partyu|,
+ *   |partyv|, |supp_pub| and |supp_priv| should all be NULL.
+ * |acvp_len| is the |acvp| length (in bytes).
+ * |partyu| is the optional public info contributed by the initiator.
+ *   It can be NULL. (It is also used as the ukm by CMS).
  * |partyu_len| is the |partyu| length (in bytes).
- * |partyv| is the optional public info contributed by the responder. It
- * can be NULL.
+ * |partyv| is the optional public info contributed by the responder.
+ *   It can be NULL.
  * |partyv_len| is the |partyv| length (in bytes).
- * |supp_pub| is the optional additional, mutually-known public information. It
- * can be NULL. |keylen| should be 0 if this is not NULL.
+ * |supp_pub| is the optional additional, mutually-known public information.
+ *   It can be NULL. |keylen| should be 0 if this is not NULL.
  * |supp_pub_len| is the |supp_pub| length (in bytes).
- * |supp_priv| is the optional additional, mutually-known private information. It
- * can be NULL.
+ * |supp_priv| is the optional additional, mutually-known private information.
+ *   It can be NULL.
  * |supp_priv_len| is the |supp_priv| length (in bytes).
  * |der| is the returned encoded data. It must be freed by the caller.
  * |der_len| is the returned size of the encoded data.
  * |out_ctr| returns a pointer to the counter data which is embedded inside the
- * encoded data. This allows the counter bytes to be updated without re-encoding.
+ *   encoded data. This allows the counter bytes to be updated without
+ *   re-encoding.
  *
  * Returns: 1 if successfully encoded, or 0 otherwise.
  * Assumptions: |der|, |der_len| & |out_ctr| are not NULL.
  */
 static int
 x942_encode_otherinfo(size_t keylen,
-                      const unsigned char *cek_oid, size_t cek_oidlen,
+                      const unsigned char *cek_oid, size_t cek_oid_len,
+                      const unsigned char *acvp, size_t acvp_len,
                       const unsigned char *partyu, size_t partyu_len,
                       const unsigned char *partyv, size_t partyv_len,
                       const unsigned char *supp_pub, size_t supp_pub_len,
@@ -207,7 +216,8 @@ x942_encode_otherinfo(size_t keylen,
     keylen_bits = 8 * keylen;
 
     /* Calculate the size of the buffer */
-    if (!der_encode_sharedinfo(&pkt, NULL, 0, cek_oid, cek_oidlen,
+    if (!der_encode_sharedinfo(&pkt, NULL, 0, cek_oid, cek_oid_len,
+                               acvp, acvp_len,
                                partyu, partyu_len, partyv, partyv_len,
                                supp_pub, supp_pub_len, supp_priv, supp_priv_len,
                                keylen_bits, NULL)
@@ -219,7 +229,8 @@ x942_encode_otherinfo(size_t keylen,
     if (der_buf == NULL)
         goto err;
     /* Encode into the buffer */
-    if (!der_encode_sharedinfo(&pkt, der_buf, der_buflen, cek_oid, cek_oidlen,
+    if (!der_encode_sharedinfo(&pkt, der_buf, der_buflen, cek_oid, cek_oid_len,
+                               acvp, acvp_len,
                                partyu, partyu_len, partyv, partyv_len,
                                supp_pub, supp_pub_len, supp_priv, supp_priv_len,
                                keylen_bits, &pcounter))
@@ -262,9 +273,10 @@ static int x942kdf_hash_kdm(const EVP_MD *kdf_md,
     unsigned char *out = derived_key;
     EVP_MD_CTX *ctx = NULL, *ctx_init = NULL;
 
-    if (z_len > X942KDF_MAX_INLEN || other_len > X942KDF_MAX_INLEN
-            || derived_key_len > X942KDF_MAX_INLEN
-            || derived_key_len == 0) {
+    if (z_len > X942KDF_MAX_INLEN
+        || other_len > X942KDF_MAX_INLEN
+        || derived_key_len > X942KDF_MAX_INLEN
+        || derived_key_len == 0) {
         ERR_raise(ERR_LIB_PROV, PROV_R_BAD_LENGTH);
         return 0;
     }
@@ -336,6 +348,7 @@ static void x942kdf_reset(void *vctx)
 
     ossl_prov_digest_reset(&ctx->digest);
     OPENSSL_clear_free(ctx->secret, ctx->secret_len);
+    OPENSSL_clear_free(ctx->acvpinfo, ctx->acvpinfo_len);
     OPENSSL_clear_free(ctx->partyuinfo, ctx->partyuinfo_len);
     OPENSSL_clear_free(ctx->partyvinfo, ctx->partyvinfo_len);
     OPENSSL_clear_free(ctx->supp_pubinfo, ctx->supp_pubinfo_len);
@@ -379,7 +392,8 @@ static size_t x942kdf_size(KDF_X942 *ctx)
     return (len <= 0) ? 0 : (size_t)len;
 }
 
-static int x942kdf_derive(void *vctx, unsigned char *key, size_t keylen)
+static int x942kdf_derive(void *vctx, unsigned char *key, size_t keylen,
+                          const OSSL_PARAM params[])
 {
     KDF_X942 *ctx = (KDF_X942 *)vctx;
     const EVP_MD *md;
@@ -388,7 +402,7 @@ static int x942kdf_derive(void *vctx, unsigned char *key, size_t keylen)
     unsigned char *der = NULL;
     size_t der_len = 0;
 
-    if (!ossl_prov_is_running())
+    if (!ossl_prov_is_running() || !x942kdf_set_ctx_params(ctx, params))
         return 0;
 
     /*
@@ -399,7 +413,18 @@ static int x942kdf_derive(void *vctx, unsigned char *key, size_t keylen)
         ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_PUBINFO);
         return 0;
     }
-
+    /*
+     * If the blob of acvp data is used then the individual info fields that it
+     * replaces should not also be defined.
+     */
+    if (ctx->acvpinfo != NULL
+        && (ctx->partyuinfo != NULL
+            || ctx->partyvinfo != NULL
+            || ctx->supp_pubinfo != NULL
+            || ctx->supp_privinfo != NULL)) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_DATA);
+        return 0;
+    }
     if (ctx->secret == NULL) {
         ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_SECRET);
         return 0;
@@ -424,6 +449,7 @@ static int x942kdf_derive(void *vctx, unsigned char *key, size_t keylen)
     /* generate the otherinfo der */
     if (!x942_encode_otherinfo(ctx->use_keybits ? ctx->dkm_len : 0,
                                ctx->cek_oid, ctx->cek_oid_len,
+                               ctx->acvpinfo, ctx->acvpinfo_len,
                                ctx->partyuinfo, ctx->partyuinfo_len,
                                ctx->partyvinfo, ctx->partyvinfo_len,
                                ctx->supp_pubinfo, ctx->supp_pubinfo_len,
@@ -453,6 +479,11 @@ static int x942kdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     if (p == NULL)
         p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_KEY);
     if (p != NULL && !x942kdf_set_buffer(&ctx->secret, &ctx->secret_len, p))
+        return 0;
+
+    p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_X942_ACVPINFO);
+    if (p != NULL
+        && !x942kdf_set_buffer(&ctx->acvpinfo, &ctx->acvpinfo_len, p))
         return 0;
 
     p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_X942_PARTYUINFO);
@@ -503,7 +534,8 @@ static int x942kdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     return 1;
 }
 
-static const OSSL_PARAM *x942kdf_settable_ctx_params(ossl_unused void *provctx)
+static const OSSL_PARAM *x942kdf_settable_ctx_params(ossl_unused void *ctx,
+                                                     ossl_unused void *provctx)
 {
     static const OSSL_PARAM known_settable_ctx_params[] = {
         OSSL_PARAM_utf8_string(OSSL_KDF_PARAM_PROPERTIES, NULL, 0),
@@ -511,6 +543,7 @@ static const OSSL_PARAM *x942kdf_settable_ctx_params(ossl_unused void *provctx)
         OSSL_PARAM_octet_string(OSSL_KDF_PARAM_SECRET, NULL, 0),
         OSSL_PARAM_octet_string(OSSL_KDF_PARAM_KEY, NULL, 0),
         OSSL_PARAM_octet_string(OSSL_KDF_PARAM_UKM, NULL, 0),
+        OSSL_PARAM_octet_string(OSSL_KDF_PARAM_X942_ACVPINFO, NULL, 0),
         OSSL_PARAM_octet_string(OSSL_KDF_PARAM_X942_PARTYUINFO, NULL, 0),
         OSSL_PARAM_octet_string(OSSL_KDF_PARAM_X942_PARTYVINFO, NULL, 0),
         OSSL_PARAM_octet_string(OSSL_KDF_PARAM_X942_SUPP_PUBINFO, NULL, 0),
@@ -532,7 +565,8 @@ static int x942kdf_get_ctx_params(void *vctx, OSSL_PARAM params[])
     return -2;
 }
 
-static const OSSL_PARAM *x942kdf_gettable_ctx_params(ossl_unused void *provctx)
+static const OSSL_PARAM *x942kdf_gettable_ctx_params(ossl_unused void *ctx,
+                                                     ossl_unused void *provctx)
 {
     static const OSSL_PARAM known_gettable_ctx_params[] = {
         OSSL_PARAM_size_t(OSSL_KDF_PARAM_SIZE, NULL),

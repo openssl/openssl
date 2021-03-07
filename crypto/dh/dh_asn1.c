@@ -19,6 +19,7 @@
 #include "dh_local.h"
 #include <openssl/objects.h>
 #include <openssl/asn1t.h>
+#include "crypto/dh.h"
 
 /* Override the default free and new methods */
 static int dh_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
@@ -38,6 +39,7 @@ static int dh_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
 
         DH_clear_flags(dh, DH_FLAG_TYPE_MASK);
         DH_set_flags(dh, DH_FLAG_TYPE_DH);
+        ossl_dh_cache_named_group(dh);
         dh->dirty_cnt++;
     }
     return 1;
@@ -87,8 +89,6 @@ int_dhx942_dh *d2i_int_dhx(int_dhx942_dh **a,
 int i2d_int_dhx(const int_dhx942_dh *a, unsigned char **pp);
 
 IMPLEMENT_ASN1_ENCODE_FUNCTIONS_fname(int_dhx942_dh, DHxparams, int_dhx)
-
-/* Application public function: read in X9.42 DH parameters into DH structure */
 
 DH *d2i_DHxparams(DH **a, const unsigned char **pp, long length)
 {

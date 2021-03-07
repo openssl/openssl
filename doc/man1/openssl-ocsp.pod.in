@@ -157,6 +157,8 @@ with B<-serial>, B<-cert> and B<-host> options).
 =item B<-url> I<responder_url>
 
 Specify the responder URL. Both HTTP and HTTPS (SSL/TLS) URLs can be specified.
+The optional userinfo and fragment components are ignored.
+Any given query component is handled as part of the path component.
 
 =item B<-host> I<hostname>:I<port>, B<-path> I<pathname>
 

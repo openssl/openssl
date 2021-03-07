@@ -23,14 +23,6 @@ OSSL_HTTP_REQ_CTX *HTTP_REQ_CTX_new(BIO *wbio, BIO *rbio, int use_http_proxy,
                                     int timeout,
                                     const char *expected_content_type,
                                     int expect_asn1);
-ASN1_VALUE *HTTP_sendreq_bio(BIO *bio, OSSL_HTTP_bio_cb_t bio_update_fn,
-                             void *arg, const char *server, const char *port,
-                             const char *path, int use_ssl, int use_proxy,
-                             const STACK_OF(CONF_VALUE) *headers,
-                             const char *content_type,
-                             ASN1_VALUE *req, const ASN1_ITEM *req_it,
-                             int maxline, unsigned long max_resp_len,
-                             int timeout, const ASN1_ITEM *rsp_it);
 int http_use_proxy(const char *no_proxy, const char *server);
 const char *http_adapt_proxy(const char *proxy, const char *no_proxy,
                              const char *server, int use_ssl);

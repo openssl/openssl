@@ -15,7 +15,6 @@
 # include <openssl/cmp.h>
 # include <openssl/pem.h>
 # include <openssl/rand.h>
-# include "crypto/x509.h" /* for x509_set0_libctx() and x509_dup_ex() */
 
 # include "../../crypto/cmp/cmp_local.h"
 # include "../testutil.h"

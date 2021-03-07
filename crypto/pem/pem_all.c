@@ -223,4 +223,4 @@ DH *PEM_read_DHparams(FILE *fp, DH **x, pem_password_cb *cb, void *u)
 # endif
 
 #endif
-IMPLEMENT_PEM_provided_write(PUBKEY, EVP_PKEY, PEM_STRING_PUBLIC, PUBKEY)
+IMPLEMENT_PEM_provided_write(PUBKEY, EVP_PKEY, pkey, PEM_STRING_PUBLIC, PUBKEY)

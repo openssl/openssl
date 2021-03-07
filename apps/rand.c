@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1998-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -99,6 +99,7 @@ int rand_main(int argc, char **argv)
         goto opthelp;
     }
 
+    app_RAND_load();
     out = bio_open_default(outfile, 'w', format);
     if (out == NULL)
         goto end;

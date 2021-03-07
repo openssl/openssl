@@ -93,7 +93,8 @@ static int test_dsa_param_keygen(int tstid)
      * these 'safe primes' should not be used normally for dsa *.
      */
     static const BIGNUM *bn[] = {
-        &_bignum_dh2048_256_p,  &_bignum_dh2048_256_q, &_bignum_dh2048_256_g
+        &ossl_bignum_dh2048_256_p, &ossl_bignum_dh2048_256_q,
+        &ossl_bignum_dh2048_256_g
     };
 
     /*
@@ -201,7 +202,8 @@ err:
 static int test_dh_safeprime_param_keygen(int tstid)
 {
     static const BIGNUM *bn[] = {
-        &_bignum_ffdhe2048_p,  &_bignum_ffdhe2048_q, &_bignum_const_2
+        &ossl_bignum_ffdhe2048_p,  &ossl_bignum_ffdhe2048_q,
+        &ossl_bignum_const_2
     };
     return do_dh_param_keygen(tstid, bn);
 }
@@ -474,10 +476,10 @@ static int rsa_keygen(int bits, EVP_PKEY **pub, EVP_PKEY **priv)
         || !TEST_true(EVP_PKEY_CTX_set_rsa_keygen_bits(keygen_ctx, bits))
         || !TEST_int_gt(EVP_PKEY_keygen(keygen_ctx, priv), 0)
         || !TEST_ptr(ectx =
-                     OSSL_ENCODER_CTX_new_by_EVP_PKEY(*priv,
-                                                      EVP_PKEY_PUBLIC_KEY,
-                                                      "DER", "type-specific",
-                                                      NULL))
+                     OSSL_ENCODER_CTX_new_for_pkey(*priv,
+                                                   EVP_PKEY_PUBLIC_KEY,
+                                                   "DER", "type-specific",
+                                                   NULL))
         || !TEST_true(OSSL_ENCODER_to_data(ectx, &pub_der, &len)))
         goto err;
     pp = pub_der;

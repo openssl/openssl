@@ -23,9 +23,9 @@ EVP_SIGNATURE_gettable_ctx_params, EVP_SIGNATURE_settable_ctx_params
                                     void (*fn)(EVP_SIGNATURE *signature,
                                                void *arg),
                                     void *arg);
- void EVP_SIGNATURE_names_do_all(const EVP_SIGNATURE *signature,
-                                 void (*fn)(const char *name, void *data),
-                                 void *data);
+ int EVP_SIGNATURE_names_do_all(const EVP_SIGNATURE *signature,
+                                void (*fn)(const char *name, void *data),
+                                void *data);
  const OSSL_PARAM *EVP_SIGNATURE_gettable_ctx_params(const EVP_SIGNATURE *sig);
  const OSSL_PARAM *EVP_SIGNATURE_settable_ctx_params(const EVP_SIGNATURE *sig);
 
@@ -75,6 +75,9 @@ EVP_SIGNATURE_fetch() returns a pointer to an B<EVP_SIGNATURE> for success
 or B<NULL> for failure.
 
 EVP_SIGNATURE_up_ref() returns 1 for success or 0 otherwise.
+
+EVP_SIGNATURE_names_do_all() returns 1 if the callback was called for all names.
+A return value of 0 means that the callback was not called for any names.
 
 EVP_SIGNATURE_gettable_ctx_params() and EVP_SIGNATURE_settable_ctx_params()
 return a constant B<OSSL_PARAM> array or NULL on error.

@@ -33,9 +33,9 @@ OSSL_ENCODER_get_params
  void OSSL_ENCODER_do_all_provided(OSSL_LIB_CTX *libctx,
                                    void (*fn)(OSSL_ENCODER *encoder, void *arg),
                                    void *arg);
- void OSSL_ENCODER_names_do_all(const OSSL_ENCODER *encoder,
-                                void (*fn)(const char *name, void *data),
-                                void *data);
+ int OSSL_ENCODER_names_do_all(const OSSL_ENCODER *encoder,
+                               void (*fn)(const char *name, void *data),
+                               void *data);
  const OSSL_PARAM *OSSL_ENCODER_gettable_params(OSSL_ENCODER *encoder);
  int OSSL_ENCODER_get_params(OSSL_ENCODER_CTX *ctx, const OSSL_PARAM params[]);
 
@@ -63,7 +63,7 @@ I<encoder>, and when the count reaches zero, frees it.
 OSSL_ENCODER_provider() returns the provider of the given
 I<encoder>.
 
-OSSL_ENCODER_provider() returns the property definition associated
+OSSL_ENCODER_properties() returns the property definition associated
 with the given I<encoder>.
 
 OSSL_ENCODER_is_a() checks if I<encoder> is an implementation of an
@@ -87,12 +87,6 @@ OSSL_ENCODER_get_params() attempts to get parameters specified
 with an L<OSSL_PARAM(3)> array I<params>.  Parameters that the
 implementation doesn't recognise should be ignored.
 
-=head1 NOTES
-
-OSSL_ENCODER_fetch() may be called implicitly by other fetching
-functions, using the same library context and properties.
-Any other API that uses keys will typically do this.
-
 =head1 RETURN VALUES
 
 OSSL_ENCODER_fetch() returns a pointer to the key management
@@ -114,10 +108,13 @@ otherwise 0.
 
 OSSL_ENCODER_number() returns an integer.
 
+OSSL_ENCODER_names_do_all() returns 1 if the callback was called for all
+names. A return value of 0 means that the callback was not called for any names.
+
 =head1 SEE ALSO
 
 L<provider(7)>, L<OSSL_ENCODER_CTX(3)>, L<OSSL_ENCODER_to_bio(3)>,
-L<OSSL_ENCODER_CTX_new_by_EVP_PKEY(3)>, L<OSSL_LIB_CTX(3)>
+L<OSSL_ENCODER_CTX_new_for_pkey(3)>, L<OSSL_LIB_CTX(3)>
 
 =head1 HISTORY
 

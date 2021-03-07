@@ -24,8 +24,8 @@ static void *aria_gcm_newctx(void *provctx, size_t keybits)
 
     ctx = OPENSSL_zalloc(sizeof(*ctx));
     if (ctx != NULL)
-        gcm_initctx(provctx, &ctx->base, keybits,
-                    ossl_prov_aria_hw_gcm(keybits), ARIA_GCM_IV_MIN_SIZE);
+        ossl_gcm_initctx(provctx, &ctx->base, keybits,
+                         ossl_prov_aria_hw_gcm(keybits), ARIA_GCM_IV_MIN_SIZE);
     return ctx;
 }
 

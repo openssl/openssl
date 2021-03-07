@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -21,11 +21,11 @@
 #include <openssl/params.h>
 #include <openssl/evp.h>
 #include <openssl/err.h>
+#include <openssl/proverr.h>
 #include "internal/nelem.h"
 #include "internal/sizes.h"
 #include "internal/cryptlib.h"
 #include "prov/providercommon.h"
-#include "prov/providercommonerr.h"
 #include "prov/implementations.h"
 #include "prov/provider_ctx.h"
 #include "prov/securitycheck.h"
@@ -137,7 +137,7 @@ static int ecdsa_signverify_init(void *vctx, void *ec, int operation)
     EC_KEY_free(ctx->ec);
     ctx->ec = ec;
     ctx->operation = operation;
-    return ec_check_key(ec, operation == EVP_PKEY_OP_SIGN);
+    return ossl_ec_check_key(ec, operation == EVP_PKEY_OP_SIGN);
 }
 
 static int ecdsa_sign_init(void *vctx, void *ec)
@@ -222,7 +222,7 @@ static int ecdsa_setup_md(PROV_ECDSA_CTX *ctx, const char *mdname,
         return 0;
     }
     sha1_allowed = (ctx->operation != EVP_PKEY_OP_SIGN);
-    md_nid = digest_get_approved_nid_with_sha1(md, sha1_allowed);
+    md_nid = ossl_digest_get_approved_nid_with_sha1(md, sha1_allowed);
     if (md_nid == NID_undef) {
         ERR_raise_data(ERR_LIB_PROV, PROV_R_DIGEST_NOT_ALLOWED,
                        "digest=%s", mdname);
@@ -433,7 +433,8 @@ static const OSSL_PARAM known_gettable_ctx_params[] = {
     OSSL_PARAM_END
 };
 
-static const OSSL_PARAM *ecdsa_gettable_ctx_params(ossl_unused void *provctx)
+static const OSSL_PARAM *ecdsa_gettable_ctx_params(ossl_unused void *vctx,
+                                                   ossl_unused void *provctx)
 {
     return known_gettable_ctx_params;
 }
@@ -481,17 +482,27 @@ static int ecdsa_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     return 1;
 }
 
-static const OSSL_PARAM known_settable_ctx_params[] = {
-    OSSL_PARAM_size_t(OSSL_SIGNATURE_PARAM_DIGEST_SIZE, NULL),
+static const OSSL_PARAM settable_ctx_params[] = {
     OSSL_PARAM_utf8_string(OSSL_SIGNATURE_PARAM_DIGEST, NULL, 0),
+    OSSL_PARAM_size_t(OSSL_SIGNATURE_PARAM_DIGEST_SIZE, NULL),
     OSSL_PARAM_utf8_string(OSSL_SIGNATURE_PARAM_PROPERTIES, NULL, 0),
     OSSL_PARAM_uint(OSSL_SIGNATURE_PARAM_KAT, NULL),
     OSSL_PARAM_END
 };
 
-static const OSSL_PARAM *ecdsa_settable_ctx_params(ossl_unused void *provctx)
+static const OSSL_PARAM settable_ctx_params_no_digest[] = {
+    OSSL_PARAM_uint(OSSL_SIGNATURE_PARAM_KAT, NULL),
+    OSSL_PARAM_END
+};
+
+static const OSSL_PARAM *ecdsa_settable_ctx_params(void *vctx,
+                                                   ossl_unused void *provctx)
 {
-    return known_settable_ctx_params;
+    PROV_ECDSA_CTX *ctx = (PROV_ECDSA_CTX *)vctx;
+
+    if (ctx != NULL && !ctx->flag_allow_md)
+        return settable_ctx_params_no_digest;
+    return settable_ctx_params;
 }
 
 static int ecdsa_get_ctx_md_params(void *vctx, OSSL_PARAM *params)

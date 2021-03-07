@@ -84,6 +84,7 @@ int crl_main(int argc, char **argv)
     EVP_PKEY *pkey;
     const EVP_MD *digest = EVP_sha1();
     char *infile = NULL, *outfile = NULL, *crldiff = NULL, *keyfile = NULL;
+    char *digestname = NULL;
     const char *CAfile = NULL, *CApath = NULL, *CAstore = NULL, *prog;
     OPTION_CHOICE o;
     int hash = 0, issuer = 0, lastupdate = 0, nextupdate = 0, noout = 0;
@@ -192,8 +193,7 @@ int crl_main(int argc, char **argv)
                 goto opthelp;
             break;
         case OPT_MD:
-            if (!opt_md(opt_unknown(), &digest))
-                goto opthelp;
+            digestname = opt_unknown();
             break;
         case OPT_PROV_CASES:
             if (!opt_provider(o))
@@ -207,6 +207,10 @@ int crl_main(int argc, char **argv)
     if (argc != 0)
         goto opthelp;
 
+    if (digestname != NULL) {
+        if (!opt_md(digestname, &digest))
+            goto opthelp;
+    }
     x = load_crl(infile, "CRL");
     if (x == NULL)
         goto end;
@@ -282,8 +286,7 @@ int crl_main(int argc, char **argv)
     if (num) {
         for (i = 1; i <= num; i++) {
             if (issuer == i) {
-                print_name(bio_out, "issuer=", X509_CRL_get_issuer(x),
-                           get_nameopt());
+                print_name(bio_out, "issuer=", X509_CRL_get_issuer(x));
             }
             if (crlnumber == i) {
                 ASN1_INTEGER *crlnum;

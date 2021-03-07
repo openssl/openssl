@@ -91,22 +91,23 @@ static void list_ciphers(void)
             continue;
 
         names = sk_OPENSSL_CSTRING_new(name_cmp);
-        EVP_CIPHER_names_do_all(c, collect_names, names);
-        BIO_printf(bio_out, "  ");
-        print_names(bio_out, names);
-        sk_OPENSSL_CSTRING_free(names);
+        if (names != NULL && EVP_CIPHER_names_do_all(c, collect_names, names)) {
+            BIO_printf(bio_out, "  ");
+            print_names(bio_out, names);
 
-        BIO_printf(bio_out, " @ %s\n",
-                   OSSL_PROVIDER_name(EVP_CIPHER_provider(c)));
+            BIO_printf(bio_out, " @ %s\n",
+                    OSSL_PROVIDER_name(EVP_CIPHER_provider(c)));
 
-        if (verbose) {
-            print_param_types("retrievable algorithm parameters",
-                              EVP_CIPHER_gettable_params(c), 4);
-            print_param_types("retrievable operation parameters",
-                              EVP_CIPHER_gettable_ctx_params(c), 4);
-            print_param_types("settable operation parameters",
-                              EVP_CIPHER_settable_ctx_params(c), 4);
+            if (verbose) {
+                print_param_types("retrievable algorithm parameters",
+                                EVP_CIPHER_gettable_params(c), 4);
+                print_param_types("retrievable operation parameters",
+                                EVP_CIPHER_gettable_ctx_params(c), 4);
+                print_param_types("settable operation parameters",
+                                EVP_CIPHER_settable_ctx_params(c), 4);
+            }
         }
+        sk_OPENSSL_CSTRING_free(names);
     }
     sk_EVP_CIPHER_pop_free(ciphers, EVP_CIPHER_free);
 }
@@ -168,21 +169,22 @@ static void list_digests(void)
             continue;
 
         names = sk_OPENSSL_CSTRING_new(name_cmp);
-        EVP_MD_names_do_all(m, collect_names, names);
-        BIO_printf(bio_out, "  ");
-        print_names(bio_out, names);
-        sk_OPENSSL_CSTRING_free(names);
+        if (names != NULL && EVP_MD_names_do_all(m, collect_names, names)) {
+            BIO_printf(bio_out, "  ");
+            print_names(bio_out, names);
 
-        BIO_printf(bio_out, " @ %s\n", OSSL_PROVIDER_name(EVP_MD_provider(m)));
+            BIO_printf(bio_out, " @ %s\n", OSSL_PROVIDER_name(EVP_MD_provider(m)));
 
-        if (verbose) {
-            print_param_types("retrievable algorithm parameters",
-                              EVP_MD_gettable_params(m), 4);
-            print_param_types("retrievable operation parameters",
-                              EVP_MD_gettable_ctx_params(m), 4);
-            print_param_types("settable operation parameters",
-                              EVP_MD_settable_ctx_params(m), 4);
+            if (verbose) {
+                print_param_types("retrievable algorithm parameters",
+                                EVP_MD_gettable_params(m), 4);
+                print_param_types("retrievable operation parameters",
+                                EVP_MD_gettable_ctx_params(m), 4);
+                print_param_types("settable operation parameters",
+                                EVP_MD_settable_ctx_params(m), 4);
+            }
         }
+        sk_OPENSSL_CSTRING_free(names);
     }
     sk_EVP_MD_pop_free(digests, EVP_MD_free);
 }
@@ -227,21 +229,22 @@ static void list_macs(void)
             continue;
 
         names = sk_OPENSSL_CSTRING_new(name_cmp);
-        EVP_MAC_names_do_all(m, collect_names, names);
-        BIO_printf(bio_out, "  ");
-        print_names(bio_out, names);
-        sk_OPENSSL_CSTRING_free(names);
+        if (names != NULL && EVP_MAC_names_do_all(m, collect_names, names)) {
+            BIO_printf(bio_out, "  ");
+            print_names(bio_out, names);
 
-        BIO_printf(bio_out, " @ %s\n", OSSL_PROVIDER_name(EVP_MAC_provider(m)));
+            BIO_printf(bio_out, " @ %s\n", OSSL_PROVIDER_name(EVP_MAC_provider(m)));
 
-        if (verbose) {
-            print_param_types("retrievable algorithm parameters",
-                              EVP_MAC_gettable_params(m), 4);
-            print_param_types("retrievable operation parameters",
-                              EVP_MAC_gettable_ctx_params(m), 4);
-            print_param_types("settable operation parameters",
-                              EVP_MAC_settable_ctx_params(m), 4);
+            if (verbose) {
+                print_param_types("retrievable algorithm parameters",
+                                EVP_MAC_gettable_params(m), 4);
+                print_param_types("retrievable operation parameters",
+                                EVP_MAC_gettable_ctx_params(m), 4);
+                print_param_types("settable operation parameters",
+                                EVP_MAC_settable_ctx_params(m), 4);
+            }
         }
+        sk_OPENSSL_CSTRING_free(names);
     }
     sk_EVP_MAC_pop_free(macs, EVP_MAC_free);
 }
@@ -289,21 +292,22 @@ static void list_kdfs(void)
             continue;
 
         names = sk_OPENSSL_CSTRING_new(name_cmp);
-        EVP_KDF_names_do_all(k, collect_names, names);
-        BIO_printf(bio_out, "  ");
-        print_names(bio_out, names);
-        sk_OPENSSL_CSTRING_free(names);
+        if (names != NULL && EVP_KDF_names_do_all(k, collect_names, names)) {
+            BIO_printf(bio_out, "  ");
+            print_names(bio_out, names);
 
-        BIO_printf(bio_out, " @ %s\n", OSSL_PROVIDER_name(EVP_KDF_provider(k)));
+            BIO_printf(bio_out, " @ %s\n", OSSL_PROVIDER_name(EVP_KDF_provider(k)));
 
-        if (verbose) {
-            print_param_types("retrievable algorithm parameters",
-                              EVP_KDF_gettable_params(k), 4);
-            print_param_types("retrievable operation parameters",
-                              EVP_KDF_gettable_ctx_params(k), 4);
-            print_param_types("settable operation parameters",
-                              EVP_KDF_settable_ctx_params(k), 4);
+            if (verbose) {
+                print_param_types("retrievable algorithm parameters",
+                                EVP_KDF_gettable_params(k), 4);
+                print_param_types("retrievable operation parameters",
+                                EVP_KDF_gettable_ctx_params(k), 4);
+                print_param_types("settable operation parameters",
+                                EVP_KDF_settable_ctx_params(k), 4);
+            }
         }
+        sk_OPENSSL_CSTRING_free(names);
     }
     sk_EVP_KDF_pop_free(kdfs, EVP_KDF_free);
 }
@@ -478,19 +482,20 @@ static void list_encoders(void)
             continue;
 
         names = sk_OPENSSL_CSTRING_new(name_cmp);
-        OSSL_ENCODER_names_do_all(k, collect_names, names);
-        BIO_printf(bio_out, "  ");
-        print_names(bio_out, names);
-        sk_OPENSSL_CSTRING_free(names);
+        if (names != NULL && OSSL_ENCODER_names_do_all(k, collect_names, names)) {
+            BIO_printf(bio_out, "  ");
+            print_names(bio_out, names);
 
-        BIO_printf(bio_out, " @ %s (%s)\n",
-                   OSSL_PROVIDER_name(OSSL_ENCODER_provider(k)),
-                   OSSL_ENCODER_properties(k));
+            BIO_printf(bio_out, " @ %s (%s)\n",
+                    OSSL_PROVIDER_name(OSSL_ENCODER_provider(k)),
+                    OSSL_ENCODER_properties(k));
 
-        if (verbose) {
-            print_param_types("settable operation parameters",
-                              OSSL_ENCODER_settable_ctx_params(k), 4);
+            if (verbose) {
+                print_param_types("settable operation parameters",
+                                OSSL_ENCODER_settable_ctx_params(k), 4);
+            }
         }
+        sk_OPENSSL_CSTRING_free(names);
     }
     sk_OSSL_ENCODER_pop_free(encoders, OSSL_ENCODER_free);
 }
@@ -541,19 +546,20 @@ static void list_decoders(void)
             continue;
 
         names = sk_OPENSSL_CSTRING_new(name_cmp);
-        OSSL_DECODER_names_do_all(k, collect_names, names);
-        BIO_printf(bio_out, "  ");
-        print_names(bio_out, names);
-        sk_OPENSSL_CSTRING_free(names);
+        if (names != NULL && OSSL_DECODER_names_do_all(k, collect_names, names)) {
+            BIO_printf(bio_out, "  ");
+            print_names(bio_out, names);
 
-        BIO_printf(bio_out, " @ %s (%s)\n",
-                   OSSL_PROVIDER_name(OSSL_DECODER_provider(k)),
-                   OSSL_DECODER_properties(k));
+            BIO_printf(bio_out, " @ %s (%s)\n",
+                    OSSL_PROVIDER_name(OSSL_DECODER_provider(k)),
+                    OSSL_DECODER_properties(k));
 
-        if (verbose) {
-            print_param_types("settable operation parameters",
-                              OSSL_DECODER_settable_ctx_params(k), 4);
+            if (verbose) {
+                print_param_types("settable operation parameters",
+                                OSSL_DECODER_settable_ctx_params(k), 4);
+            }
         }
+        sk_OPENSSL_CSTRING_free(names);
     }
     sk_OSSL_DECODER_pop_free(decoders, OSSL_DECODER_free);
 }
@@ -594,22 +600,23 @@ static void list_keymanagers(void)
             continue;
 
         names = sk_OPENSSL_CSTRING_new(name_cmp);
-        EVP_KEYMGMT_names_do_all(k, collect_names, names);
-        BIO_printf(bio_out, "  ");
-        print_names(bio_out, names);
-        sk_OPENSSL_CSTRING_free(names);
+        if (names != NULL && EVP_KEYMGMT_names_do_all(k, collect_names, names)) {
+            BIO_printf(bio_out, "  ");
+            print_names(bio_out, names);
 
-        BIO_printf(bio_out, " @ %s\n",
-                   OSSL_PROVIDER_name(EVP_KEYMGMT_provider(k)));
+            BIO_printf(bio_out, " @ %s\n",
+                    OSSL_PROVIDER_name(EVP_KEYMGMT_provider(k)));
 
-        if (verbose) {
-            print_param_types("settable key generation parameters",
-                              EVP_KEYMGMT_gen_settable_params(k), 4);
-            print_param_types("settable operation parameters",
-                              EVP_KEYMGMT_settable_params(k), 4);
-            print_param_types("retrievable operation parameters",
-                              EVP_KEYMGMT_gettable_params(k), 4);
+            if (verbose) {
+                print_param_types("settable key generation parameters",
+                                EVP_KEYMGMT_gen_settable_params(k), 4);
+                print_param_types("settable operation parameters",
+                                EVP_KEYMGMT_settable_params(k), 4);
+                print_param_types("retrievable operation parameters",
+                                EVP_KEYMGMT_gettable_params(k), 4);
+            }
         }
+        sk_OPENSSL_CSTRING_free(names);
     }
     sk_EVP_KEYMGMT_pop_free(km_stack, EVP_KEYMGMT_free);
 }
@@ -650,21 +657,22 @@ static void list_signatures(void)
             continue;
 
         names = sk_OPENSSL_CSTRING_new(name_cmp);
-        EVP_SIGNATURE_names_do_all(k, collect_names, names);
-        count++;
-        BIO_printf(bio_out, "  ");
-        print_names(bio_out, names);
-        sk_OPENSSL_CSTRING_free(names);
+        if (names != NULL && EVP_SIGNATURE_names_do_all(k, collect_names, names)) {
+            count++;
+            BIO_printf(bio_out, "  ");
+            print_names(bio_out, names);
 
-        BIO_printf(bio_out, " @ %s\n",
-                   OSSL_PROVIDER_name(EVP_SIGNATURE_provider(k)));
+            BIO_printf(bio_out, " @ %s\n",
+                    OSSL_PROVIDER_name(EVP_SIGNATURE_provider(k)));
 
-        if (verbose) {
-            print_param_types("settable operation parameters",
-                              EVP_SIGNATURE_settable_ctx_params(k), 4);
-            print_param_types("retrievable operation parameters",
-                              EVP_SIGNATURE_gettable_ctx_params(k), 4);
+            if (verbose) {
+                print_param_types("settable operation parameters",
+                                EVP_SIGNATURE_settable_ctx_params(k), 4);
+                print_param_types("retrievable operation parameters",
+                                EVP_SIGNATURE_gettable_ctx_params(k), 4);
+            }
         }
+        sk_OPENSSL_CSTRING_free(names);
     }
     sk_EVP_SIGNATURE_pop_free(sig_stack, EVP_SIGNATURE_free);
     if (count == 0)
@@ -707,20 +715,21 @@ static void list_kems(void)
             continue;
 
         names = sk_OPENSSL_CSTRING_new(name_cmp);
-        EVP_KEM_names_do_all(k, collect_names, names);
-        count++;
-        BIO_printf(bio_out, "  ");
-        print_names(bio_out, names);
-        sk_OPENSSL_CSTRING_free(names);
+        if (names != NULL && EVP_KEM_names_do_all(k, collect_names, names)) {
+            count++;
+            BIO_printf(bio_out, "  ");
+            print_names(bio_out, names);
 
-        BIO_printf(bio_out, " @ %s\n", OSSL_PROVIDER_name(EVP_KEM_provider(k)));
+            BIO_printf(bio_out, " @ %s\n", OSSL_PROVIDER_name(EVP_KEM_provider(k)));
 
-        if (verbose) {
-            print_param_types("settable operation parameters",
-                              EVP_KEM_settable_ctx_params(k), 4);
-            print_param_types("retrievable operation parameters",
-                              EVP_KEM_gettable_ctx_params(k), 4);
+            if (verbose) {
+                print_param_types("settable operation parameters",
+                                EVP_KEM_settable_ctx_params(k), 4);
+                print_param_types("retrievable operation parameters",
+                                EVP_KEM_gettable_ctx_params(k), 4);
+            }
         }
+        sk_OPENSSL_CSTRING_free(names);
     }
     sk_EVP_KEM_pop_free(kem_stack, EVP_KEM_free);
     if (count == 0)
@@ -764,21 +773,23 @@ static void list_asymciphers(void)
             continue;
 
         names = sk_OPENSSL_CSTRING_new(name_cmp);
-        EVP_ASYM_CIPHER_names_do_all(k, collect_names, names);
-        count++;
-        BIO_printf(bio_out, "  ");
-        print_names(bio_out, names);
-        sk_OPENSSL_CSTRING_free(names);
+        if (names != NULL
+                && EVP_ASYM_CIPHER_names_do_all(k, collect_names, names)) {
+            count++;
+            BIO_printf(bio_out, "  ");
+            print_names(bio_out, names);
 
-        BIO_printf(bio_out, " @ %s\n",
-                   OSSL_PROVIDER_name(EVP_ASYM_CIPHER_provider(k)));
+            BIO_printf(bio_out, " @ %s\n",
+                    OSSL_PROVIDER_name(EVP_ASYM_CIPHER_provider(k)));
 
-        if (verbose) {
-            print_param_types("settable operation parameters",
-                              EVP_ASYM_CIPHER_settable_ctx_params(k), 4);
-            print_param_types("retrievable operation parameters",
-                              EVP_ASYM_CIPHER_gettable_ctx_params(k), 4);
+            if (verbose) {
+                print_param_types("settable operation parameters",
+                                EVP_ASYM_CIPHER_settable_ctx_params(k), 4);
+                print_param_types("retrievable operation parameters",
+                                EVP_ASYM_CIPHER_gettable_ctx_params(k), 4);
+            }
         }
+        sk_OPENSSL_CSTRING_free(names);
     }
     sk_EVP_ASYM_CIPHER_pop_free(asymciph_stack, EVP_ASYM_CIPHER_free);
     if (count == 0)
@@ -821,21 +832,22 @@ static void list_keyexchanges(void)
             continue;
 
         names = sk_OPENSSL_CSTRING_new(name_cmp);
-        EVP_KEYEXCH_names_do_all(k, collect_names, names);
-        count++;
-        BIO_printf(bio_out, "  ");
-        print_names(bio_out, names);
-        sk_OPENSSL_CSTRING_free(names);
+        if (names != NULL && EVP_KEYEXCH_names_do_all(k, collect_names, names)) {
+            count++;
+            BIO_printf(bio_out, "  ");
+            print_names(bio_out, names);
 
-        BIO_printf(bio_out, " @ %s\n",
-                   OSSL_PROVIDER_name(EVP_KEYEXCH_provider(k)));
+            BIO_printf(bio_out, " @ %s\n",
+                    OSSL_PROVIDER_name(EVP_KEYEXCH_provider(k)));
 
-        if (verbose) {
-            print_param_types("settable operation parameters",
-                              EVP_KEYEXCH_settable_ctx_params(k), 4);
-            print_param_types("retrievable operation parameters",
-                              EVP_KEYEXCH_gettable_ctx_params(k), 4);
+            if (verbose) {
+                print_param_types("settable operation parameters",
+                                EVP_KEYEXCH_settable_ctx_params(k), 4);
+                print_param_types("retrievable operation parameters",
+                                EVP_KEYEXCH_gettable_ctx_params(k), 4);
+            }
         }
+        sk_OPENSSL_CSTRING_free(names);
     }
     sk_EVP_KEYEXCH_pop_free(kex_stack, EVP_KEYEXCH_free);
     if (count == 0)
