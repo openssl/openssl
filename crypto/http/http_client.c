@@ -736,13 +736,12 @@ static BIO *HTTP_new_bio(const char *server /* optionally includes ":port" */,
 static ASN1_VALUE *BIO_mem_d2i(BIO *mem, const ASN1_ITEM *it)
 {
     const unsigned char *p;
-    long len = BIO_get_mem_data(mem, &p);
     ASN1_VALUE *resp;
 
     if (mem == NULL)
         return NULL;
 
-    if ((resp = ASN1_item_d2i(NULL, &p, len, it)) == NULL)
+    if ((resp = ASN1_item_d2i(NULL, &p, BIO_get_mem_data(mem, &p), it)) == NULL)
         ERR_raise(ERR_LIB_HTTP, HTTP_R_RESPONSE_PARSE_ERROR);
     return resp;
 }
