@@ -362,7 +362,7 @@ to be needed to use MAC iterations counts but they are now used by default.
 
 =item B<-nomac>
 
-Don't attempt to provide the MAC integrity. This can be useful with FIPS
+Don't attempt to provide the MAC integrity. This can be useful with the FIPS
 provider as the PKCS12 MAC requires PKCS12KDF which is not an approved FIPS
 algorithm and cannot be supported by the FIPS provider.
 
