@@ -23,6 +23,16 @@ OpenSSL 3.0
 
 ### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
 
+ * OSSL_STORE_INFO_get_type() may now return an additional value. In 1.1.1
+   this function would return one of the values OSSL_STORE_INFO_NAME,
+   OSSL_STORE_INFO_PKEY, OSSL_STORE_INFO_PARAMS, OSSL_STORE_INFO_CERT or
+   OSSL_STORE_INFO_CRL. Decoded public keys would previously have been reported
+   as type OSSL_STORE_INFO_PKEY in 1.1.1. In 3.0 decoded public keys are now
+   reported as having the new type OSSL_STORE_INFO_PUBKEY. Applications
+   using this function should be amended to handle the changed return value.
+
+   *Richard Levitte*
+
  * The implementation of the EVP ciphers CAST5-ECB, CAST5-CBC, CAST5-OFB,
    CAST5-CFB, BF-ECB, BF-CBC, BF-OFB, BF-CFB, IDEA-ECB, IDEC-CBC, IDEA-OFB,
    IDEA-CFB, SEED-ECB, SEED-CBC, SEED-OFB, SEED-CFB, RC2-ECB, RC2-CBC,
