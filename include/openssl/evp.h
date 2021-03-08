@@ -1249,7 +1249,7 @@ ENGINE *EVP_PKEY_get0_engine(const EVP_PKEY *pkey);
 OSSL_DEPRECATEDIN_3_0
 int EVP_PKEY_assign(EVP_PKEY *pkey, int type, void *key);
 OSSL_DEPRECATEDIN_3_0
-const void *EVP_PKEY_get0(const EVP_PKEY *pkey);
+void *EVP_PKEY_get0(EVP_PKEY *pkey);
 OSSL_DEPRECATEDIN_3_0
 const unsigned char *EVP_PKEY_get0_hmac(const EVP_PKEY *pkey, size_t *len);
 #  ifndef OPENSSL_NO_POLY1305

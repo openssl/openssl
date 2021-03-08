@@ -740,12 +740,15 @@ int EVP_PKEY_assign(EVP_PKEY *pkey, int type, void *key)
 }
 # endif
 
-const void *EVP_PKEY_get0(const EVP_PKEY *pkey)
+void *EVP_PKEY_get0(EVP_PKEY *pkey)
 {
     if (pkey == NULL)
         return NULL;
 
-    return evp_pkey_get_legacy((EVP_PKEY *)pkey);
+    if (!evp_pkey_is_provided(pkey))
+        return pkey->pkey.ptr;
+
+    return NULL;
 }
 
 const unsigned char *EVP_PKEY_get0_hmac(const EVP_PKEY *pkey, size_t *len)
@@ -755,7 +758,7 @@ const unsigned char *EVP_PKEY_get0_hmac(const EVP_PKEY *pkey, size_t *len)
         ERR_raise(ERR_LIB_EVP, EVP_R_EXPECTING_AN_HMAC_KEY);
         return NULL;
     }
-    os = EVP_PKEY_get0(pkey);
+    os = EVP_PKEY_get0((EVP_PKEY *)pkey);
     *len = os->length;
     return os->data;
 }
@@ -768,7 +771,7 @@ const unsigned char *EVP_PKEY_get0_poly1305(const EVP_PKEY *pkey, size_t *len)
         ERR_raise(ERR_LIB_EVP, EVP_R_EXPECTING_A_POLY1305_KEY);
         return NULL;
     }
-    os = EVP_PKEY_get0(pkey);
+    os = EVP_PKEY_get0((EVP_PKEY *)pkey);
     *len = os->length;
     return os->data;
 }
@@ -783,7 +786,7 @@ const unsigned char *EVP_PKEY_get0_siphash(const EVP_PKEY *pkey, size_t *len)
         ERR_raise(ERR_LIB_EVP, EVP_R_EXPECTING_A_SIPHASH_KEY);
         return NULL;
     }
-    os = EVP_PKEY_get0(pkey);
+    os = EVP_PKEY_get0((EVP_PKEY *)pkey);
     *len = os->length;
     return os->data;
 }

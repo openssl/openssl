@@ -23,7 +23,7 @@ OpenSSL 3.0
 
 ### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
 
- * The deprecated functions EVP_PKEY_get0(), EVP_PKEY_get0_RSA(),
+ * The deprecated functions EVP_PKEY_get0_RSA(),
    EVP_PKEY_get0_DSA(), EVP_PKEY_get0_EC_KEY(), EVP_PKEY_get0_DH(),
    EVP_PKEY_get0_hmac(), EVP_PKEY_get0_poly1305() and EVP_PKEY_get0_siphash() as
    well as the similarly named "get1" functions behave slightly differently in
@@ -41,7 +41,7 @@ OpenSSL 3.0
 
    For the above reasons the keys returned from these functions should typically
    be treated as read-only. To emphasise this the value returned from
-   EVP_PKEY_get0(), EVP_PKEY_get0_RSA(), EVP_PKEY_get0_DSA(),
+   EVP_PKEY_get0_RSA(), EVP_PKEY_get0_DSA(),
    EVP_PKEY_get0_EC_KEY() and EVP_PKEY_get0_DH() has been made const. This may
    break some existing code. Applications broken by this change should be
    modified. The preferred solution is to refactor the code to avoid the use of
