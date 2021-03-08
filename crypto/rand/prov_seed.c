@@ -20,7 +20,7 @@ size_t ossl_rand_get_entropy(ossl_unused OSSL_CORE_HANDLE *handle,
     size_t entropy_available;
     RAND_POOL *pool;
 
-    pool = rand_pool_new(entropy, 1, min_len, max_len);
+    pool = ossl_rand_pool_new(entropy, 1, min_len, max_len);
     if (pool == NULL) {
         ERR_raise(ERR_LIB_RAND, ERR_R_MALLOC_FAILURE);
         return 0;
@@ -30,11 +30,11 @@ size_t ossl_rand_get_entropy(ossl_unused OSSL_CORE_HANDLE *handle,
     entropy_available = ossl_pool_acquire_entropy(pool);
 
     if (entropy_available > 0) {
-        ret   = rand_pool_length(pool);
-        *pout = rand_pool_detach(pool);
+        ret   = ossl_rand_pool_length(pool);
+        *pout = ossl_rand_pool_detach(pool);
     }
 
-    rand_pool_free(pool);
+    ossl_rand_pool_free(pool);
     return ret;
 }
 
@@ -51,7 +51,7 @@ size_t ossl_rand_get_nonce(ossl_unused OSSL_CORE_HANDLE *handle,
     size_t ret = 0;
     RAND_POOL *pool;
 
-    pool = rand_pool_new(0, 0, min_len, max_len);
+    pool = ossl_rand_pool_new(0, 0, min_len, max_len);
     if (pool == NULL) {
         ERR_raise(ERR_LIB_RAND, ERR_R_MALLOC_FAILURE);
         return 0;
@@ -60,12 +60,12 @@ size_t ossl_rand_get_nonce(ossl_unused OSSL_CORE_HANDLE *handle,
     if (!ossl_pool_add_nonce_data(pool))
         goto err;
 
-    if (salt != NULL && !rand_pool_add(pool, salt, salt_len, 0))
+    if (salt != NULL && !ossl_rand_pool_add(pool, salt, salt_len, 0))
         goto err;
-    ret   = rand_pool_length(pool);
-    *pout = rand_pool_detach(pool);
+    ret   = ossl_rand_pool_length(pool);
+    *pout = ossl_rand_pool_detach(pool);
  err:
-    rand_pool_free(pool);
+    ossl_rand_pool_free(pool);
     return ret;
 }
 

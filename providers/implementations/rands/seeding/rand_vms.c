@@ -362,8 +362,8 @@ size_t data_collect_method(RAND_POOL *pool)
     } data;
     size_t total_elems = 0;
     size_t total_length = 0;
-    size_t bytes_needed = rand_pool_bytes_needed(pool, ENTROPY_FACTOR);
-    size_t bytes_remaining = rand_pool_bytes_remaining(pool);
+    size_t bytes_needed = ossl_rand_pool_bytes_needed(pool, ENTROPY_FACTOR);
+    size_t bytes_remaining = ossl_rand_pool_bytes_remaining(pool);
 
     /* Take all the 64-bit items first, to ensure proper alignment of data */
     total_elems +=
@@ -469,9 +469,9 @@ size_t data_collect_method(RAND_POOL *pool)
         total_length = bytes_remaining;
 
     /* We give the pessimistic value for the amount of entropy */
-    rand_pool_add(pool, (unsigned char *)data.buffer, total_length,
-                  8 * total_length / ENTROPY_FACTOR);
-    return rand_pool_entropy_available(pool);
+    ossl_rand_pool_add(pool, (unsigned char *)data.buffer, total_length,
+                       8 * total_length / ENTROPY_FACTOR);
+    return ossl_rand_pool_entropy_available(pool);
 }
 
 int ossl_pool_add_nonce_data(RAND_POOL *pool)
@@ -499,7 +499,7 @@ int ossl_pool_add_nonce_data(RAND_POOL *pool)
     sys$gettim((void*)&data.time);
 #endif
 
-    return rand_pool_add(pool, (unsigned char *)&data, sizeof(data), 0);
+    return ossl_rand_pool_add(pool, (unsigned char *)&data, sizeof(data), 0);
 }
 
 /*
@@ -536,7 +536,7 @@ size_t get_entropy_method(RAND_POOL *pool)
     size_t bytes_to_get = 0;
     uint32_t status;
 
-    for (bytes_needed = rand_pool_bytes_needed(pool, 1);
+    for (bytes_needed = ossl_rand_pool_bytes_needed(pool, 1);
          bytes_needed > 0;
          bytes_needed -= bytes_to_get) {
         bytes_to_get =
@@ -555,10 +555,10 @@ size_t get_entropy_method(RAND_POOL *pool)
             return 0;
         }
 
-        rand_pool_add(pool, buffer, bytes_to_get, 8 * bytes_to_get);
+        ossl_rand_pool_add(pool, buffer, bytes_to_get, 8 * bytes_to_get);
     }
 
-    return rand_pool_entropy_available(pool);
+    return ossl_rand_pool_entropy_available(pool);
 }
 
 /*
@@ -576,7 +576,7 @@ size_t ossl_pool_acquire_entropy(RAND_POOL *pool)
 }
 
 
-int rand_pool_add_additional_data(RAND_POOL *pool)
+int ossl_rand_pool_add_additional_data(RAND_POOL *pool)
 {
     struct {
         CRYPTO_THREAD_ID tid;
@@ -598,18 +598,18 @@ int rand_pool_add_additional_data(RAND_POOL *pool)
     sys$gettim((void*)&data.time);
 #endif
 
-    return rand_pool_add(pool, (unsigned char *)&data, sizeof(data), 0);
+    return ossl_rand_pool_add(pool, (unsigned char *)&data, sizeof(data), 0);
 }
 
-int rand_pool_init(void)
+int ossl_rand_pool_init(void)
 {
     return 1;
 }
 
-void rand_pool_cleanup(void)
+void ossl_rand_pool_cleanup(void)
 {
 }
 
-void rand_pool_keep_random_devices_open(int keep)
+void ossl_rand_pool_keep_random_devices_open(int keep)
 {
 }

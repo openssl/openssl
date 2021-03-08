@@ -26,6 +26,6 @@
 # define SECONDARY_RESEED_TIME_INTERVAL          (7 * 60)  /* 7 minutes */
 
 /* The global RAND method, and the global buffer and DRBG instance. */
-extern RAND_METHOD rand_meth;
+extern RAND_METHOD ossl_rand_meth;
 
 #endif

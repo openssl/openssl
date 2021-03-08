@@ -71,24 +71,24 @@
 # define DEVRANDOM_EGD "/var/run/egd-pool", "/dev/egd-pool", "/etc/egd-pool", "/etc/entropy"
 #endif
 
-void rand_cleanup_int(void);
+void ossl_rand_cleanup_int(void);
 
 /*
  * Initialise the random pool reseeding sources.
  *
  * Returns 1 on success and 0 on failure.
  */
-int rand_pool_init(void);
+int ossl_rand_pool_init(void);
 
 /*
  * Finalise the random pool reseeding sources.
  */
-void rand_pool_cleanup(void);
+void ossl_rand_pool_cleanup(void);
 
 /*
  * Control the random pool use of open file descriptors.
  */
-void rand_pool_keep_random_devices_open(int keep);
+void ossl_rand_pool_keep_random_devices_open(int keep);
 
 /*
  * Configuration

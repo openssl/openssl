@@ -402,7 +402,7 @@ void OPENSSL_cleanup(void)
 
     /*
      * Note that cleanup order is important:
-     * - rand_cleanup_int could call an ENGINE's RAND cleanup function so
+     * - ossl_rand_cleanup_int could call an ENGINE's RAND cleanup function so
      * must be called before engine_cleanup_int()
      * - ENGINEs use CRYPTO_EX_DATA and therefore, must be cleaned up
      * before the ex data handlers are wiped during default ossl_lib_ctx deinit.
@@ -411,8 +411,8 @@ void OPENSSL_cleanup(void)
      * - ENGINEs and additional EVP algorithms might use added OIDs names so
      * obj_cleanup_int() must be called last
      */
-    OSSL_TRACE(INIT, "OPENSSL_cleanup: rand_cleanup_int()\n");
-    rand_cleanup_int();
+    OSSL_TRACE(INIT, "OPENSSL_cleanup: ossl_rand_cleanup_int()\n");
+    ossl_rand_cleanup_int();
 
     OSSL_TRACE(INIT, "OPENSSL_cleanup: conf_modules_free_int()\n");
     conf_modules_free_int();
