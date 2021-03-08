@@ -87,11 +87,10 @@ int OSSL_parse_url(const char *url, char **pscheme, char **puser, char **phost,
     /* parse host name/address as far as needed here */
     if (host[0] == '[') {
         /* ipv6 literal, which may include ':' */
-        host++;
-        host_end = strchr(host, ']');
+        host_end = strchr(host + 1, ']');
         if (host_end == NULL)
             goto parse_err;
-        p = host_end + 1;
+        p = ++host_end;
     } else {
         /* look for start of optional port, path, query, or fragment */
         host_end = strchr(host, ':');
