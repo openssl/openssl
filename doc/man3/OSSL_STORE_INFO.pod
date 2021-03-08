@@ -215,7 +215,8 @@ L<ossl_store(7)>, L<OSSL_STORE_open(3)>, L<OSSL_STORE_register_loader(3)>
 
 =head1 HISTORY
 
-The OSSL_STORE API was added in OpenSSL 1.1.1.
+The OSSL_STORE API was added in OpenSSL 1.1.1. The OSSL_STORE_INFO_PUBKEY object
+type was added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
