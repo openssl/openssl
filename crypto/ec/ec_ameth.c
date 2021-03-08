@@ -708,7 +708,7 @@ static int ec_pkey_import_from(const OSSL_PARAM params[], void *vpctx)
     return 1;
 }
 
-const EVP_PKEY_ASN1_METHOD eckey_asn1_meth = {
+const EVP_PKEY_ASN1_METHOD ossl_eckey_asn1_meth = {
     EVP_PKEY_EC,
     EVP_PKEY_EC,
     0,
@@ -759,7 +759,7 @@ const EVP_PKEY_ASN1_METHOD eckey_asn1_meth = {
 };
 
 #if !defined(OPENSSL_NO_SM2)
-const EVP_PKEY_ASN1_METHOD sm2_asn1_meth = {
+const EVP_PKEY_ASN1_METHOD ossl_sm2_asn1_meth = {
    EVP_PKEY_SM2,
    EVP_PKEY_EC,
    ASN1_PKEY_ALIAS

@@ -92,18 +92,18 @@ struct evp_pkey_asn1_method_st {
 
 DEFINE_STACK_OF_CONST(EVP_PKEY_ASN1_METHOD)
 
-extern const EVP_PKEY_ASN1_METHOD dh_asn1_meth;
-extern const EVP_PKEY_ASN1_METHOD dhx_asn1_meth;
-extern const EVP_PKEY_ASN1_METHOD dsa_asn1_meths[5];
-extern const EVP_PKEY_ASN1_METHOD eckey_asn1_meth;
-extern const EVP_PKEY_ASN1_METHOD ecx25519_asn1_meth;
-extern const EVP_PKEY_ASN1_METHOD ecx448_asn1_meth;
-extern const EVP_PKEY_ASN1_METHOD ed25519_asn1_meth;
-extern const EVP_PKEY_ASN1_METHOD ed448_asn1_meth;
-extern const EVP_PKEY_ASN1_METHOD sm2_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD ossl_dh_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD ossl_dhx_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD ossl_dsa_asn1_meths[5];
+extern const EVP_PKEY_ASN1_METHOD ossl_eckey_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD ossl_ecx25519_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD ossl_ecx448_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD ossl_ed25519_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD ossl_ed448_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD ossl_sm2_asn1_meth;
 
-extern const EVP_PKEY_ASN1_METHOD rsa_asn1_meths[2];
-extern const EVP_PKEY_ASN1_METHOD rsa_pss_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD ossl_rsa_asn1_meths[2];
+extern const EVP_PKEY_ASN1_METHOD ossl_rsa_pss_asn1_meth;
 
 /*
  * These are used internally in the ASN1_OBJECT to keep track of whether the
@@ -133,15 +133,15 @@ struct asn1_pctx_st {
 
 /* ASN1 type functions */
 
-int asn1_type_set_octetstring_int(ASN1_TYPE *a, long num,
-                                  unsigned char *data, int len);
-int asn1_type_get_octetstring_int(const ASN1_TYPE *a, long *num,
-                                  unsigned char *data, int max_len);
+int ossl_asn1_type_set_octetstring_int(ASN1_TYPE *a, long num,
+                                       unsigned char *data, int len);
+int ossl_asn1_type_get_octetstring_int(const ASN1_TYPE *a, long *num,
+                                       unsigned char *data, int max_len);
 
-int x509_algor_new_from_md(X509_ALGOR **palg, const EVP_MD *md);
-const EVP_MD *x509_algor_get_md(X509_ALGOR *alg);
-X509_ALGOR *x509_algor_mgf1_decode(X509_ALGOR *alg);
-int x509_algor_md_to_mgf1(X509_ALGOR **palg, const EVP_MD *mgf1md);
-int asn1_time_print_ex(BIO *bp, const ASN1_TIME *tm);
+int ossl_x509_algor_new_from_md(X509_ALGOR **palg, const EVP_MD *md);
+const EVP_MD *ossl_x509_algor_get_md(X509_ALGOR *alg);
+X509_ALGOR *ossl_x509_algor_mgf1_decode(X509_ALGOR *alg);
+int ossl_x509_algor_md_to_mgf1(X509_ALGOR **palg, const EVP_MD *mgf1md);
+int ossl_asn1_time_print_ex(BIO *bp, const ASN1_TIME *tm);
 
 #endif /* ndef OSSL_CRYPTO_ASN1_H */

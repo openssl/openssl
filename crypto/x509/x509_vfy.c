@@ -1886,7 +1886,7 @@ int X509_cmp_time(const ASN1_TIME *ctm, time_t *cmp_time)
      * Digit and date ranges will be verified in the conversion methods.
      */
     for (i = 0; i < ctm->length - 1; i++) {
-        if (!ascii_isdigit(ctm->data[i]))
+        if (!ossl_ascii_isdigit(ctm->data[i]))
             return 0;
     }
     if (ctm->data[ctm->length - 1] != upper_z)

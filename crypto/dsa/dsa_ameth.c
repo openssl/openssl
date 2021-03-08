@@ -557,7 +557,7 @@ static int dsa_pkey_import_from(const OSSL_PARAM params[], void *vpctx)
 
 /* NB these are sorted in pkey_id order, lowest first */
 
-const EVP_PKEY_ASN1_METHOD dsa_asn1_meths[5] = {
+const EVP_PKEY_ASN1_METHOD ossl_dsa_asn1_meths[5] = {
 
     {
      EVP_PKEY_DSA2,

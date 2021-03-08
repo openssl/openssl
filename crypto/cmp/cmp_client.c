@@ -221,8 +221,8 @@ static int send_receive_check(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *req,
                                 ASN1_INTEGER_get(emc->errorCode)) > 0)
             ERR_add_error_data(1, buf);
         if (emc->errorDetails != NULL) {
-            char *text = sk_ASN1_UTF8STRING2text(emc->errorDetails, ", ",
-                                                 OSSL_CMP_PKISI_BUFLEN - 1);
+            char *text = ossl_sk_ASN1_UTF8STRING2text(emc->errorDetails, ", ",
+                                                      OSSL_CMP_PKISI_BUFLEN - 1);
 
             if (text != NULL)
                 ERR_add_error_data(2, "; errorDetails: ", text);
@@ -316,8 +316,8 @@ static int poll_for_response(OSSL_CMP_CTX *ctx, int sleep, int rid,
                                            " with reason = '")) < 0) {
                 *str = '\0';
             } else {
-                char *text = sk_ASN1_UTF8STRING2text(pollRep->reason, ", ",
-                                                     sizeof(str) - len - 2);
+                char *text = ossl_sk_ASN1_UTF8STRING2text(pollRep->reason, ", ",
+                                                          sizeof(str) - len - 2);
 
                 if (text == NULL
                         || BIO_snprintf(str + len, sizeof(str) - len,

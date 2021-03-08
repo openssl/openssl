@@ -373,7 +373,7 @@ static int ts_check_status_info(TS_RESP *response)
 
 static char *ts_get_status_text(STACK_OF(ASN1_UTF8STRING) *text)
 {
-    return sk_ASN1_UTF8STRING2text(text, "/", TS_MAX_STATUS_LENGTH);
+    return ossl_sk_ASN1_UTF8STRING2text(text, "/", TS_MAX_STATUS_LENGTH);
 }
 
 static int ts_check_policy(const ASN1_OBJECT *req_oid,

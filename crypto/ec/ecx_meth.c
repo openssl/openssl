@@ -469,7 +469,7 @@ static int x25519_import_from(const OSSL_PARAM params[], void *vpctx)
     return ecx_generic_import_from(params, vpctx, EVP_PKEY_X25519);
 }
 
-const EVP_PKEY_ASN1_METHOD ecx25519_asn1_meth = {
+const EVP_PKEY_ASN1_METHOD ossl_ecx25519_asn1_meth = {
     EVP_PKEY_X25519,
     EVP_PKEY_X25519,
     0,
@@ -522,7 +522,7 @@ static int x448_import_from(const OSSL_PARAM params[], void *vpctx)
     return ecx_generic_import_from(params, vpctx, EVP_PKEY_X448);
 }
 
-const EVP_PKEY_ASN1_METHOD ecx448_asn1_meth = {
+const EVP_PKEY_ASN1_METHOD ossl_ecx448_asn1_meth = {
     EVP_PKEY_X448,
     EVP_PKEY_X448,
     0,
@@ -649,7 +649,7 @@ static int ed25519_import_from(const OSSL_PARAM params[], void *vpctx)
     return ecx_generic_import_from(params, vpctx, EVP_PKEY_ED25519);
 }
 
-const EVP_PKEY_ASN1_METHOD ed25519_asn1_meth = {
+const EVP_PKEY_ASN1_METHOD ossl_ed25519_asn1_meth = {
     EVP_PKEY_ED25519,
     EVP_PKEY_ED25519,
     0,
@@ -701,7 +701,7 @@ static int ed448_import_from(const OSSL_PARAM params[], void *vpctx)
     return ecx_generic_import_from(params, vpctx, EVP_PKEY_ED448);
 }
 
-const EVP_PKEY_ASN1_METHOD ed448_asn1_meth = {
+const EVP_PKEY_ASN1_METHOD ossl_ed448_asn1_meth = {
     EVP_PKEY_ED448,
     EVP_PKEY_ED448,
     0,

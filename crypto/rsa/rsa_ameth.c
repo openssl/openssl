@@ -299,7 +299,7 @@ static int rsa_pss_param_print(BIO *bp, int pss_key, RSA_PSS_PARAMS *pss,
             goto err;
         if (BIO_puts(bp, " with ") <= 0)
             goto err;
-        maskHash = x509_algor_mgf1_decode(pss->maskGenAlgorithm);
+        maskHash = ossl_x509_algor_mgf1_decode(pss->maskGenAlgorithm);
         if (maskHash != NULL) {
             if (i2a_ASN1_OBJECT(bp, maskHash->algorithm) <= 0)
                 goto err;
@@ -455,7 +455,7 @@ static RSA_PSS_PARAMS *rsa_pss_decode(const X509_ALGOR *alg)
         return NULL;
 
     if (pss->maskGenAlgorithm != NULL) {
-        pss->maskHash = x509_algor_mgf1_decode(pss->maskGenAlgorithm);
+        pss->maskHash = ossl_x509_algor_mgf1_decode(pss->maskGenAlgorithm);
         if (pss->maskHash == NULL) {
             RSA_PSS_PARAMS_free(pss);
             return NULL;
@@ -554,13 +554,13 @@ RSA_PSS_PARAMS *rsa_pss_params_create(const EVP_MD *sigmd,
         if (!ASN1_INTEGER_set(pss->saltLength, saltlen))
             goto err;
     }
-    if (!x509_algor_new_from_md(&pss->hashAlgorithm, sigmd))
+    if (!ossl_x509_algor_new_from_md(&pss->hashAlgorithm, sigmd))
         goto err;
     if (mgf1md == NULL)
         mgf1md = sigmd;
-    if (!x509_algor_md_to_mgf1(&pss->maskGenAlgorithm, mgf1md))
+    if (!ossl_x509_algor_md_to_mgf1(&pss->maskGenAlgorithm, mgf1md))
         goto err;
-    if (!x509_algor_new_from_md(&pss->maskHash, mgf1md))
+    if (!ossl_x509_algor_new_from_md(&pss->maskHash, mgf1md))
         goto err;
     return pss;
  err:
@@ -668,10 +668,10 @@ static int rsa_pss_get_param_unverified(const RSA_PSS_PARAMS *pss,
 
     if (pss == NULL)
         return 0;
-    *pmd = x509_algor_get_md(pss->hashAlgorithm);
+    *pmd = ossl_x509_algor_get_md(pss->hashAlgorithm);
     if (*pmd == NULL)
         return 0;
-    *pmgf1md = x509_algor_get_md(pss->maskHash);
+    *pmgf1md = ossl_x509_algor_get_md(pss->maskHash);
     if (*pmgf1md == NULL)
         return 0;
     if (pss->saltLength)
@@ -1018,7 +1018,7 @@ static int rsa_pss_pkey_import_from(const OSSL_PARAM params[], void *vpctx)
     return rsa_int_import_from(params, vpctx, RSA_FLAG_TYPE_RSASSAPSS);
 }
 
-const EVP_PKEY_ASN1_METHOD rsa_asn1_meths[2] = {
+const EVP_PKEY_ASN1_METHOD ossl_rsa_asn1_meths[2] = {
     {
      EVP_PKEY_RSA,
      EVP_PKEY_RSA,
@@ -1066,7 +1066,7 @@ const EVP_PKEY_ASN1_METHOD rsa_asn1_meths[2] = {
      ASN1_PKEY_ALIAS}
 };
 
-const EVP_PKEY_ASN1_METHOD rsa_pss_asn1_meth = {
+const EVP_PKEY_ASN1_METHOD ossl_rsa_pss_asn1_meth = {
      EVP_PKEY_RSA_PSS,
      EVP_PKEY_RSA_PSS,
      ASN1_PKEY_SIGPARAM_NULL,

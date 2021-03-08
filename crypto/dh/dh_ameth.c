@@ -35,7 +35,7 @@ static DH *d2i_dhp(const EVP_PKEY *pkey, const unsigned char **pp,
                    long length)
 {
     DH *dh = NULL;
-    int is_dhx = (pkey->ameth == &dhx_asn1_meth);
+    int is_dhx = (pkey->ameth == &ossl_dhx_asn1_meth);
 
     if (is_dhx)
         dh = d2i_DHxparams(NULL, pp, length);
@@ -47,7 +47,7 @@ static DH *d2i_dhp(const EVP_PKEY *pkey, const unsigned char **pp,
 
 static int i2d_dhp(const EVP_PKEY *pkey, const DH *a, unsigned char **pp)
 {
-    if (pkey->ameth == &dhx_asn1_meth)
+    if (pkey->ameth == &ossl_dhx_asn1_meth)
         return i2d_DHxparams(a, pp);
     return i2d_DHparams(a, pp);
 }
@@ -350,7 +350,7 @@ static int dh_security_bits(const EVP_PKEY *pkey)
 static int dh_cmp_parameters(const EVP_PKEY *a, const EVP_PKEY *b)
 {
     return ossl_ffc_params_cmp(&a->pkey.dh->params, &a->pkey.dh->params,
-                               a->ameth != &dhx_asn1_meth);
+                               a->ameth != &ossl_dhx_asn1_meth);
 }
 
 static int int_dh_param_copy(DH *to, const DH *from, int is_x942)
@@ -386,7 +386,7 @@ static int dh_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from)
             return 0;
     }
     return int_dh_param_copy(to->pkey.dh, from->pkey.dh,
-                             from->ameth == &dhx_asn1_meth);
+                             from->ameth == &ossl_dhx_asn1_meth);
 }
 
 static int dh_missing_parameters(const EVP_PKEY *a)
@@ -574,7 +574,7 @@ static int dhx_pkey_import_from(const OSSL_PARAM params[], void *vpctx)
     return dh_pkey_import_from_type(params, vpctx, EVP_PKEY_DHX);
 }
 
-const EVP_PKEY_ASN1_METHOD dh_asn1_meth = {
+const EVP_PKEY_ASN1_METHOD ossl_dh_asn1_meth = {
     EVP_PKEY_DH,
     EVP_PKEY_DH,
     0,
@@ -619,7 +619,7 @@ const EVP_PKEY_ASN1_METHOD dh_asn1_meth = {
     dh_pkey_import_from,
 };
 
-const EVP_PKEY_ASN1_METHOD dhx_asn1_meth = {
+const EVP_PKEY_ASN1_METHOD ossl_dhx_asn1_meth = {
     EVP_PKEY_DHX,
     EVP_PKEY_DHX,
     0,

@@ -315,9 +315,9 @@ int x509_check_issued_int(X509 *issuer, X509 *subject, OSSL_LIB_CTX *libctx,
 int x509_set0_libctx(X509 *x, OSSL_LIB_CTX *libctx, const char *propq);
 int x509_crl_set0_libctx(X509_CRL *x, OSSL_LIB_CTX *libctx, const char *propq);
 int x509_init_sig_info(X509 *x);
-int asn1_item_digest_ex(const ASN1_ITEM *it, const EVP_MD *type, void *data,
-                        unsigned char *md, unsigned int *len,
-                        OSSL_LIB_CTX *libctx, const char *propq);
+int ossl_asn1_item_digest_ex(const ASN1_ITEM *it, const EVP_MD *type, void *data,
+                             unsigned char *md, unsigned int *len,
+                             OSSL_LIB_CTX *libctx, const char *propq);
 int ossl_x509_add_cert_new(STACK_OF(X509) **sk, X509 *cert, int flags);
 int ossl_x509_add_certs_new(STACK_OF(X509) **p_sk, STACK_OF(X509) *certs,
                             int flags);
