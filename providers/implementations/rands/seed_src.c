@@ -104,7 +104,7 @@ static int seed_src_generate(void *vseed, unsigned char *out, size_t outlen,
         return 0;
     }
 
-    pool = rand_pool_new(strength, 1, outlen, outlen);
+    pool = ossl_rand_pool_new(strength, 1, outlen, outlen);
     if (pool == NULL) {
         ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
         return 0;
@@ -114,9 +114,9 @@ static int seed_src_generate(void *vseed, unsigned char *out, size_t outlen,
     entropy_available = ossl_pool_acquire_entropy(pool);
 
     if (entropy_available > 0)
-        memcpy(out, rand_pool_buffer(pool), rand_pool_length(pool));
+        memcpy(out, ossl_rand_pool_buffer(pool), ossl_rand_pool_length(pool));
 
-    rand_pool_free(pool);
+    ossl_rand_pool_free(pool);
     return entropy_available > 0;
 }
 

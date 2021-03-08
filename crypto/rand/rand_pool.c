@@ -19,8 +19,8 @@
 /*
  * Allocate memory and initialize a new random pool
  */
-RAND_POOL *rand_pool_new(int entropy_requested, int secure,
-                         size_t min_len, size_t max_len)
+RAND_POOL *ossl_rand_pool_new(int entropy_requested, int secure,
+                              size_t min_len, size_t max_len)
 {
     RAND_POOL *pool = OPENSSL_zalloc(sizeof(*pool));
     size_t min_alloc_size = RAND_POOL_MIN_ALLOCATION(secure);
@@ -62,8 +62,8 @@ err:
  * This function is intended to be used only for feeding random data
  * provided by RAND_add() and RAND_seed() into the <master> DRBG.
  */
-RAND_POOL *rand_pool_attach(const unsigned char *buffer, size_t len,
-                            size_t entropy)
+RAND_POOL *ossl_rand_pool_attach(const unsigned char *buffer, size_t len,
+                                 size_t entropy)
 {
     RAND_POOL *pool = OPENSSL_zalloc(sizeof(*pool));
 
@@ -91,7 +91,7 @@ RAND_POOL *rand_pool_attach(const unsigned char *buffer, size_t len,
 /*
  * Free |pool|, securely erasing its buffer.
  */
-void rand_pool_free(RAND_POOL *pool)
+void ossl_rand_pool_free(RAND_POOL *pool)
 {
     if (pool == NULL)
         return;
@@ -99,8 +99,8 @@ void rand_pool_free(RAND_POOL *pool)
     /*
      * Although it would be advisable from a cryptographical viewpoint,
      * we are not allowed to clear attached buffers, since they are passed
-     * to rand_pool_attach() as `const unsigned char*`.
-     * (see corresponding comment in rand_pool_attach()).
+     * to ossl_rand_pool_attach() as `const unsigned char*`.
+     * (see corresponding comment in ossl_rand_pool_attach()).
      */
     if (!pool->attached) {
         if (pool->secure)
@@ -115,7 +115,7 @@ void rand_pool_free(RAND_POOL *pool)
 /*
  * Return the |pool|'s buffer to the caller (readonly).
  */
-const unsigned char *rand_pool_buffer(RAND_POOL *pool)
+const unsigned char *ossl_rand_pool_buffer(RAND_POOL *pool)
 {
     return pool->buffer;
 }
@@ -123,7 +123,7 @@ const unsigned char *rand_pool_buffer(RAND_POOL *pool)
 /*
  * Return the |pool|'s entropy to the caller.
  */
-size_t rand_pool_entropy(RAND_POOL *pool)
+size_t ossl_rand_pool_entropy(RAND_POOL *pool)
 {
     return pool->entropy;
 }
@@ -131,7 +131,7 @@ size_t rand_pool_entropy(RAND_POOL *pool)
 /*
  * Return the |pool|'s buffer length to the caller.
  */
-size_t rand_pool_length(RAND_POOL *pool)
+size_t ossl_rand_pool_length(RAND_POOL *pool)
 {
     return pool->len;
 }
@@ -140,9 +140,9 @@ size_t rand_pool_length(RAND_POOL *pool)
  * Detach the |pool| buffer and return it to the caller.
  * It's the responsibility of the caller to free the buffer
  * using OPENSSL_secure_clear_free() or to re-attach it
- * again to the pool using rand_pool_reattach().
+ * again to the pool using ossl_rand_pool_reattach().
  */
-unsigned char *rand_pool_detach(RAND_POOL *pool)
+unsigned char *ossl_rand_pool_detach(RAND_POOL *pool)
 {
     unsigned char *ret = pool->buffer;
     pool->buffer = NULL;
@@ -154,7 +154,7 @@ unsigned char *rand_pool_detach(RAND_POOL *pool)
  * Re-attach the |pool| buffer. It is only allowed to pass
  * the |buffer| which was previously detached from the same pool.
  */
-void rand_pool_reattach(RAND_POOL *pool, unsigned char *buffer)
+void ossl_rand_pool_reattach(RAND_POOL *pool, unsigned char *buffer)
 {
     pool->buffer = buffer;
     OPENSSL_cleanse(pool->buffer, pool->len);
@@ -177,7 +177,7 @@ void rand_pool_reattach(RAND_POOL *pool, unsigned char *buffer)
  *  |entropy|  if the entropy count and buffer size is large enough
  *      0      otherwise
  */
-size_t rand_pool_entropy_available(RAND_POOL *pool)
+size_t ossl_rand_pool_entropy_available(RAND_POOL *pool)
 {
     if (pool->entropy < pool->entropy_requested)
         return 0;
@@ -193,7 +193,7 @@ size_t rand_pool_entropy_available(RAND_POOL *pool)
  * the random pool.
  */
 
-size_t rand_pool_entropy_needed(RAND_POOL *pool)
+size_t ossl_rand_pool_entropy_needed(RAND_POOL *pool)
 {
     if (pool->entropy < pool->entropy_requested)
         return pool->entropy_requested - pool->entropy;
@@ -243,10 +243,10 @@ static int rand_pool_grow(RAND_POOL *pool, size_t len)
  * In case of an error, 0 is returned.
  */
 
-size_t rand_pool_bytes_needed(RAND_POOL *pool, unsigned int entropy_factor)
+size_t ossl_rand_pool_bytes_needed(RAND_POOL *pool, unsigned int entropy_factor)
 {
     size_t bytes_needed;
-    size_t entropy_needed = rand_pool_entropy_needed(pool);
+    size_t entropy_needed = ossl_rand_pool_entropy_needed(pool);
 
     if (entropy_factor < 1) {
         ERR_raise(ERR_LIB_RAND, RAND_R_ARGUMENT_OUT_OF_RANGE);
@@ -269,7 +269,7 @@ size_t rand_pool_bytes_needed(RAND_POOL *pool, unsigned int entropy_factor)
     /*
      * Make sure the buffer is large enough for the requested amount
      * of data. This guarantees that existing code patterns where
-     * rand_pool_add_begin, rand_pool_add_end or rand_pool_add
+     * ossl_rand_pool_add_begin, ossl_rand_pool_add_end or ossl_rand_pool_add
      * are used to collect entropy data without any error handling
      * whatsoever, continue to be valid.
      * Furthermore if the allocation here fails once, make sure that
@@ -288,7 +288,7 @@ size_t rand_pool_bytes_needed(RAND_POOL *pool, unsigned int entropy_factor)
 }
 
 /* Returns the remaining number of bytes available */
-size_t rand_pool_bytes_remaining(RAND_POOL *pool)
+size_t ossl_rand_pool_bytes_remaining(RAND_POOL *pool)
 {
     return pool->max_len - pool->len;
 }
@@ -302,7 +302,7 @@ size_t rand_pool_bytes_remaining(RAND_POOL *pool)
  *
  * Returns 1 if the added amount is adequate, otherwise 0
  */
-int rand_pool_add(RAND_POOL *pool,
+int ossl_rand_pool_add(RAND_POOL *pool,
                   const unsigned char *buffer, size_t len, size_t entropy)
 {
     if (len > pool->max_len - pool->len) {
@@ -318,7 +318,7 @@ int rand_pool_add(RAND_POOL *pool,
     if (len > 0) {
         /*
          * This is to protect us from accidentally passing the buffer
-         * returned from rand_pool_add_begin.
+         * returned from ossl_rand_pool_add_begin.
          * The check for alloc_len makes sure we do not compare the
          * address of the end of the allocated memory to something
          * different, since that comparison would have an
@@ -332,7 +332,7 @@ int rand_pool_add(RAND_POOL *pool,
          * We have that only for cases when a pool is used to collect
          * additional data.
          * For entropy data, as long as the allocation request stays within
-         * the limits given by rand_pool_bytes_needed this rand_pool_grow
+         * the limits given by ossl_rand_pool_bytes_needed this rand_pool_grow
          * below is guaranteed to succeed, thus no allocation happens.
          */
         if (!rand_pool_grow(pool, len))
@@ -354,10 +354,10 @@ int rand_pool_add(RAND_POOL *pool,
  * If |len| == 0 this is considered a no-op and a NULL pointer
  * is returned without producing an error message.
  *
- * After updating the buffer, rand_pool_add_end() needs to be called
+ * After updating the buffer, ossl_rand_pool_add_end() needs to be called
  * to finish the update operation (see next comment).
  */
-unsigned char *rand_pool_add_begin(RAND_POOL *pool, size_t len)
+unsigned char *ossl_rand_pool_add_begin(RAND_POOL *pool, size_t len)
 {
     if (len == 0)
         return NULL;
@@ -374,7 +374,7 @@ unsigned char *rand_pool_add_begin(RAND_POOL *pool, size_t len)
 
     /*
      * As long as the allocation request stays within the limits given
-     * by rand_pool_bytes_needed this rand_pool_grow below is guaranteed
+     * by ossl_rand_pool_bytes_needed this rand_pool_grow below is guaranteed
      * to succeed, thus no allocation happens.
      * We have that only for cases when a pool is used to collect
      * additional data. Then the buffer might need to grow here,
@@ -391,12 +391,12 @@ unsigned char *rand_pool_add_begin(RAND_POOL *pool, size_t len)
  * Finish to add random bytes to the random pool in-place.
  *
  * Finishes an in-place update of the random pool started by
- * rand_pool_add_begin() (see previous comment).
+ * ossl_rand_pool_add_begin() (see previous comment).
  * It is expected that |len| bytes of random input have been added
  * to the buffer which contain at least |entropy| bits of randomness.
  * It is allowed to add less bytes than originally reserved.
  */
-int rand_pool_add_end(RAND_POOL *pool, size_t len, size_t entropy)
+int ossl_rand_pool_add_end(RAND_POOL *pool, size_t len, size_t entropy)
 {
     if (len > pool->alloc_len - pool->len) {
         ERR_raise(ERR_LIB_RAND, RAND_R_RANDOM_POOL_OVERFLOW);
