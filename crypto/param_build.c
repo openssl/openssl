@@ -62,7 +62,7 @@ static size_t bytes_to_blocks(size_t bytes)
 }
 
 static OSSL_PARAM_BLD_DEF *param_push(OSSL_PARAM_BLD *bld, const char *key,
-                                      size_t size, size_t alloc, int type,
+                                      int size, size_t alloc, int type,
                                       int secure)
 {
     OSSL_PARAM_BLD_DEF *pd = OPENSSL_zalloc(sizeof(*pd));

@@ -119,7 +119,7 @@ static UI_STRING *general_allocate_prompt(UI *ui, const char *prompt,
 static int general_allocate_string(UI *ui, const char *prompt,
                                    int prompt_freeable,
                                    enum UI_string_types type, int input_flags,
-                                   char *result_buf, int minsize, size_t maxsize,
+                                   char *result_buf, int minsize, int maxsize,
                                    const char *test_buf)
 {
     int ret = -1;
