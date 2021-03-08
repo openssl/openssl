@@ -399,8 +399,8 @@ int X509_digest(const X509 *cert, const EVP_MD *md, unsigned char *data,
         memcpy(data, cert->sha1_hash, sizeof(cert->sha1_hash));
         return 1;
     }
-    return (asn1_item_digest_ex(ASN1_ITEM_rptr(X509), md, (char *)cert, data,
-                                len, cert->libctx, cert->propq));
+    return (ossl_asn1_item_digest_ex(ASN1_ITEM_rptr(X509), md, (char *)cert,
+                                     data, len, cert->libctx, cert->propq));
 }
 
 /* calculate cert digest using the same hash algorithm as in its signature */

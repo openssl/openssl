@@ -247,8 +247,8 @@ static ossl_inline void ossl_sleep(unsigned long millis)
 }
 #endif /* defined OPENSSL_SYS_UNIX */
 
-char *sk_ASN1_UTF8STRING2text(STACK_OF(ASN1_UTF8STRING) *text, const char *sep,
-                              size_t max_len);
+char *ossl_sk_ASN1_UTF8STRING2text(STACK_OF(ASN1_UTF8STRING) *text,
+                                   const char *sep, size_t max_len);
 char *ossl_ipaddr_to_asc(unsigned char *p, int len);
 
 char *ossl_buf2hexstr_sep(const unsigned char *buf, long buflen, char sep);

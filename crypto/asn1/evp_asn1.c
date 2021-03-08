@@ -143,8 +143,8 @@ ASN1_SEQUENCE(asn1_oct_int) = {
 
 DECLARE_ASN1_ITEM(asn1_oct_int)
 
-int asn1_type_set_octetstring_int(ASN1_TYPE *a, long num, unsigned char *data,
-                                  int len)
+int ossl_asn1_type_set_octetstring_int(ASN1_TYPE *a, long num,
+                                       unsigned char *data, int len)
 {
     asn1_oct_int atmp;
     ASN1_OCTET_STRING oct;
@@ -158,8 +158,8 @@ int asn1_type_set_octetstring_int(ASN1_TYPE *a, long num, unsigned char *data,
     return 0;
 }
 
-int asn1_type_get_octetstring_int(const ASN1_TYPE *a, long *num,
-                                  unsigned char *data, int max_len)
+int ossl_asn1_type_get_octetstring_int(const ASN1_TYPE *a, long *num,
+                                       unsigned char *data, int max_len)
 {
     asn1_oct_int *atmp = NULL;
     int ret = -1;

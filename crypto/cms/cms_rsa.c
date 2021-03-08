@@ -25,7 +25,7 @@ static RSA_OAEP_PARAMS *rsa_oaep_decode(const X509_ALGOR *alg)
         return NULL;
 
     if (oaep->maskGenFunc != NULL) {
-        oaep->maskHash = x509_algor_mgf1_decode(oaep->maskGenFunc);
+        oaep->maskHash = ossl_x509_algor_mgf1_decode(oaep->maskGenFunc);
         if (oaep->maskHash == NULL) {
             RSA_OAEP_PARAMS_free(oaep);
             return NULL;
@@ -65,10 +65,10 @@ static int rsa_cms_decrypt(CMS_RecipientInfo *ri)
         goto err;
     }
 
-    mgf1md = x509_algor_get_md(oaep->maskHash);
+    mgf1md = ossl_x509_algor_get_md(oaep->maskHash);
     if (mgf1md == NULL)
         goto err;
-    md = x509_algor_get_md(oaep->hashFunc);
+    md = ossl_x509_algor_get_md(oaep->hashFunc);
     if (md == NULL)
         goto err;
 
@@ -140,9 +140,9 @@ static int rsa_cms_encrypt(CMS_RecipientInfo *ri)
     oaep = RSA_OAEP_PARAMS_new();
     if (oaep == NULL)
         goto err;
-    if (!x509_algor_new_from_md(&oaep->hashFunc, md))
+    if (!ossl_x509_algor_new_from_md(&oaep->hashFunc, md))
         goto err;
-    if (!x509_algor_md_to_mgf1(&oaep->maskGenFunc, mgf1md))
+    if (!ossl_x509_algor_md_to_mgf1(&oaep->maskGenFunc, mgf1md))
         goto err;
     if (labellen > 0) {
         ASN1_OCTET_STRING *los;

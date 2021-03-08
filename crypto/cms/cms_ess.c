@@ -166,10 +166,10 @@ static int cms_msgSigDigest(CMS_SignerInfo *si,
 
     if (md == NULL)
         return 0;
-    if (!asn1_item_digest_ex(ASN1_ITEM_rptr(CMS_Attributes_Verify), md,
-                             si->signedAttrs, dig, diglen,
-                             ossl_cms_ctx_get0_libctx(si->cms_ctx),
-                             ossl_cms_ctx_get0_propq(si->cms_ctx)))
+    if (!ossl_asn1_item_digest_ex(ASN1_ITEM_rptr(CMS_Attributes_Verify), md,
+                                  si->signedAttrs, dig, diglen,
+                                  ossl_cms_ctx_get0_libctx(si->cms_ctx),
+                                  ossl_cms_ctx_get0_propq(si->cms_ctx)))
         return 0;
     return 1;
 }

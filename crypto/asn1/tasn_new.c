@@ -91,7 +91,7 @@ int asn1_item_embed_new(ASN1_VALUE **pval, const ASN1_ITEM *it, int embed)
             if (*pval == NULL)
                 goto memerr;
         }
-        asn1_set_choice_selector(pval, -1, it);
+        ossl_asn1_set_choice_selector(pval, -1, it);
         if (asn1_cb && !asn1_cb(ASN1_OP_NEW_POST, pval, it, NULL))
             goto auxerr2;
         break;
@@ -114,16 +114,16 @@ int asn1_item_embed_new(ASN1_VALUE **pval, const ASN1_ITEM *it, int embed)
                 goto memerr;
         }
         /* 0 : init. lock */
-        if (asn1_do_lock(pval, 0, it) < 0) {
+        if (ossl_asn1_do_lock(pval, 0, it) < 0) {
             if (!embed) {
                 OPENSSL_free(*pval);
                 *pval = NULL;
             }
             goto memerr;
         }
-        asn1_enc_init(pval, it);
+        ossl_asn1_enc_init(pval, it);
         for (i = 0, tt = it->templates; i < it->tcount; tt++, i++) {
-            pseqval = asn1_get_field_ptr(pval, tt);
+            pseqval = ossl_asn1_get_field_ptr(pval, tt);
             if (!asn1_template_new(pseqval, tt))
                 goto memerr2;
         }
@@ -134,13 +134,13 @@ int asn1_item_embed_new(ASN1_VALUE **pval, const ASN1_ITEM *it, int embed)
     return 1;
 
  memerr2:
-    asn1_item_embed_free(pval, it, embed);
+    ossl_asn1_item_embed_free(pval, it, embed);
  memerr:
     ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
     return 0;
 
  auxerr2:
-    asn1_item_embed_free(pval, it, embed);
+    ossl_asn1_item_embed_free(pval, it, embed);
  auxerr:
     ERR_raise(ERR_LIB_ASN1, ASN1_R_AUX_ERROR);
     return 0;

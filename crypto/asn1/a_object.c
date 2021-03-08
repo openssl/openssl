@@ -226,7 +226,7 @@ ASN1_OBJECT *d2i_ASN1_OBJECT(ASN1_OBJECT **a, const unsigned char **pp,
         i = ASN1_R_EXPECTING_AN_OBJECT;
         goto err;
     }
-    ret = c2i_ASN1_OBJECT(a, &p, len);
+    ret = ossl_c2i_ASN1_OBJECT(a, &p, len);
     if (ret)
         *pp = p;
     return ret;
@@ -235,8 +235,8 @@ ASN1_OBJECT *d2i_ASN1_OBJECT(ASN1_OBJECT **a, const unsigned char **pp,
     return NULL;
 }
 
-ASN1_OBJECT *c2i_ASN1_OBJECT(ASN1_OBJECT **a, const unsigned char **pp,
-                             long len)
+ASN1_OBJECT *ossl_c2i_ASN1_OBJECT(ASN1_OBJECT **a, const unsigned char **pp,
+                                  long len)
 {
     ASN1_OBJECT *ret = NULL, tobj;
     const unsigned char *p;
