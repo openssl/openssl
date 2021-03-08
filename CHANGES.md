@@ -562,7 +562,12 @@ OpenSSL 3.0
    reduced. This results in SSL 3, TLS 1.0, TLS 1.1 and DTLS 1.0 no longer
    working at the default security level of 1 and instead requires security
    level 0. The security level can be changed either using the cipher string
-   with `@SECLEVEL`, or calling `SSL_CTX_set_security_level()`.
+   with `@SECLEVEL`, or calling `SSL_CTX_set_security_level()`. This also means
+   that where the signature algorithms extension is missing from a ClientHello
+   then the handshake will fail in TLS 1.2 at security level 1. This is because,
+   although this extension is optional, failing to provide one means that
+   OpenSSL will fallback to a default set of signature algorithms. This default
+   set requires the availability of SHA1.
 
    *Kurt Roeckx*
 
