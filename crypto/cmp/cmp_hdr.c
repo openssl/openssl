@@ -283,9 +283,6 @@ int ossl_cmp_hdr_set_transactionID(OSSL_CMP_CTX *ctx, OSSL_CMP_PKIHEADER *hdr)
         OPENSSL_free(tid);
     }
 
-    if (ctx->transactionID == NULL
-        && !set_random(&ctx->transactionID, ctx, OSSL_CMP_TRANSACTIONID_LENGTH))
-        return 0;
     return ossl_cmp_asn1_octet_string_set1(&hdr->transactionID,
                                            ctx->transactionID);
 }
