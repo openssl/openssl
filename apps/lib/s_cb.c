@@ -952,7 +952,8 @@ static int set_cert_cb(SSL *ssl, void *arg)
                 if (!SSL_build_cert_chain(ssl, 0))
                     return 0;
             } else if (exc->chain != NULL) {
-                SSL_set1_chain(ssl, exc->chain);
+                if (!SSL_set1_chain(ssl, exc->chain))
+                    return 0;
             }
         }
         exc = exc->prev;
