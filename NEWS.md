@@ -20,6 +20,9 @@ OpenSSL 3.0
 
 ### Major changes between OpenSSL 1.1.1 and OpenSSL 3.0 [under development]
 
+  * Moved the impmlementation of various EVP ciphers and digests to the legacy
+    provider. Applications that continue to use these ciphers and digests via
+    EVP will need to load the legacy provider.
   * Deprecated the `OCSP_REQ_CTX` type and functions.
   * Deprecated the `EC_KEY` and `EC_KEY_METHOD` types and functions.
   * Deprecated the `RSA` and `RSA_METHOD` types and functions.
