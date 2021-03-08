@@ -13,7 +13,7 @@
 
 #define DEFAULT_BUF_SIZE    256
 
-int WPACKET_allocate_bytes(WPACKET *pkt, unsigned int len, unsigned char **allocbytes)
+int WPACKET_allocate_bytes(WPACKET *pkt, size_t len, unsigned char **allocbytes)
 {
     if (!WPACKET_reserve_bytes(pkt, len, allocbytes))
         return 0;
