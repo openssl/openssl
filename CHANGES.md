@@ -23,6 +23,29 @@ OpenSSL 3.0
 
 ### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
 
+ * The implementation of the EVP ciphers CAST5-ECB, CAST5-CBC, CAST5-OFB,
+   CAST5-CFB, BF-ECB, BF-CBC, BF-OFB, BF-CFB, IDEA-ECB, IDEC-CBC, IDEA-OFB,
+   IDEA-CFB, SEED-ECB, SEED-CBC, SEED-OFB, SEED-CFB, RC2-ECB, RC2-CBC,
+   RC2-40-CBC, RC2-64-CBC, RC2-OFB, RC2-CFB, RC4, RC4-40, RC4-HMAC-MD5, RC5-ECB,
+   RC5-CBC, RC5-OFB, RC5-CFB, DESX-CBC, DES-ECB, DES-CBC, DES-OFB, DES-CFB,
+   DES-CFB1 and DES-CFB8 have been moved to the legacy provider. Applications
+   using the EVP APIs to access these ciphers should instead use more modern
+   ciphers. If that is not possible then these applications should ensure that
+   the legacy provider has been loaded. This can be achieved either
+   programmatically or via configuration. See the provider(7) man page for
+   further details.
+
+   *Matt Caswell*
+
+ * The implementation of the EVP digests MD2, MD4, MDC2, WHIRLPOOL and
+   RIPEMD-160 have been moved to the legacy provider. Applications using the
+   EVP APIs to access these digests should instead use more modern digests. If
+   that is not possible then these applications should ensure that the legacy
+   provider has been loaded. This can be achieved either programmatically or via
+   configuration. See the provider(7) man page for further details.
+
+   *Matt Caswell*
+
  * The deprecated functions EVP_PKEY_get0(), EVP_PKEY_get0_RSA(),
    EVP_PKEY_get0_DSA(), EVP_PKEY_get0_EC_KEY(), EVP_PKEY_get0_DH(),
    EVP_PKEY_get0_hmac(), EVP_PKEY_get0_poly1305() and EVP_PKEY_get0_siphash() as
