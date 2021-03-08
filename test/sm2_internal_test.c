@@ -381,7 +381,7 @@ int setup_tests(void)
 
 void cleanup_tests(void)
 {
-#ifdef OPENSSL_NO_SM2
+#ifndef OPENSSL_NO_SM2
     fake_rand_finish(fake_rand);
 #endif
 }
