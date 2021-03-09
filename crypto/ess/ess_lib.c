@@ -57,7 +57,7 @@ static ESS_CERT_ID *ESS_CERT_ID_new_init(X509 *cert, int issuer_needed)
     unsigned char cert_sha1[SHA_DIGEST_LENGTH];
 
     /* Call for side-effect of computing hash and caching extensions */
-    if (!x509v3_cache_extensions(cert))
+    if (!ossl_x509v3_cache_extensions(cert))
         return NULL;
 
     if ((cid = ESS_CERT_ID_new()) == NULL)

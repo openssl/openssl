@@ -738,7 +738,7 @@ int X509_STORE_CTX_get1_issuer(X509 **issuer, X509_STORE_CTX *ctx, X509 *x)
     }
     /* If certificate matches and is currently valid all OK */
     if (ctx->check_issued(ctx, x, obj->data.x509)) {
-        if (x509_check_cert_time(ctx, obj->data.x509, -1)) {
+        if (ossl_x509_check_cert_time(ctx, obj->data.x509, -1)) {
             *issuer = obj->data.x509;
             if (!X509_up_ref(*issuer)) {
                 *issuer = NULL;
@@ -774,7 +774,7 @@ int X509_STORE_CTX_get1_issuer(X509 **issuer, X509_STORE_CTX *ctx, X509 *x)
             if (ctx->check_issued(ctx, x, pobj->data.x509)) {
                 ret = 1;
                 /* If times check fine, exit with match, else keep looking. */
-                if (x509_check_cert_time(ctx, pobj->data.x509, -1)) {
+                if (ossl_x509_check_cert_time(ctx, pobj->data.x509, -1)) {
                     *issuer = pobj->data.x509;
                     break;
                 }

@@ -38,14 +38,14 @@ int X509_CRL_set1_lastUpdate(X509_CRL *x, const ASN1_TIME *tm)
 {
     if (x == NULL)
         return 0;
-    return x509_set1_time(&x->crl.lastUpdate, tm);
+    return ossl_x509_set1_time(&x->crl.lastUpdate, tm);
 }
 
 int X509_CRL_set1_nextUpdate(X509_CRL *x, const ASN1_TIME *tm)
 {
     if (x == NULL)
         return 0;
-    return x509_set1_time(&x->crl.nextUpdate, tm);
+    return ossl_x509_set1_time(&x->crl.nextUpdate, tm);
 }
 
 int X509_CRL_sort(X509_CRL *c)

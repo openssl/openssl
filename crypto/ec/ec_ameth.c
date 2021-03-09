@@ -158,7 +158,7 @@ static int eckey_pub_decode(EVP_PKEY *pkey, const X509_PUBKEY *pubkey)
     OSSL_LIB_CTX *libctx = NULL;
     const char *propq = NULL;
 
-    if (!X509_PUBKEY_get0_libctx(&libctx, &propq, pubkey)
+    if (!ossl_x509_PUBKEY_get0_libctx(&libctx, &propq, pubkey)
         || !X509_PUBKEY_get0_param(NULL, &p, &pklen, &palg, pubkey))
         return 0;
     X509_ALGOR_get0(NULL, &ptype, &pval, palg);

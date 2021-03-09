@@ -83,7 +83,7 @@ int X509_check_purpose(X509 *x, int id, int require_ca)
     int idx;
     const X509_PURPOSE *pt;
 
-    if (!x509v3_cache_extensions(x))
+    if (!ossl_x509v3_cache_extensions(x))
         return -1;
     if (id == -1)
         return 1;
@@ -395,7 +395,7 @@ static int check_sig_alg_match(const EVP_PKEY *issuer_key, const X509 *subject)
  * X509_SIG_INFO_VALID is set in x->flags if x->siginf was filled successfully.
  * Set EXFLAG_INVALID and return 0 in case the certificate is invalid.
  */
-int x509v3_cache_extensions(X509 *x)
+int ossl_x509v3_cache_extensions(X509 *x)
 {
     BASIC_CONSTRAINTS *bs;
     PROXY_CERT_INFO_EXTENSION *pci;
@@ -559,7 +559,7 @@ int x509v3_cache_extensions(X509 *x)
                 /* .. and the signature alg matches the PUBKEY alg: */
                 && check_sig_alg_match(X509_get0_pubkey(x), x) == X509_V_OK)
             x->ex_flags |= EXFLAG_SS; /* indicate self-signed */
-        /* This is very related to x509_likely_issued(x, x) == X509_V_OK */
+        /* This is very related to ossl_x509_likely_issued(x, x) == X509_V_OK */
     }
 
     /* Handle subject alternative names and various other extensions */
@@ -616,7 +616,7 @@ int x509v3_cache_extensions(X509 *x)
     }
 
     /* Set x->siginf, ignoring errors due to unsupported algos */
-    (void)x509_init_sig_info(x);
+    (void)ossl_x509_init_sig_info(x);
 
     x->ex_flags |= EXFLAG_SET; /* Indicate that cert has been processed */
 #ifdef tsan_st_rel
@@ -692,7 +692,7 @@ void X509_set_proxy_pathlen(X509 *x, long l)
 int X509_check_ca(X509 *x)
 {
     /* Note 0 normally means "not a CA" - but in this case means error. */
-    if (!x509v3_cache_extensions(x))
+    if (!ossl_x509v3_cache_extensions(x))
         return 0;
 
     return check_ca(x);
@@ -904,13 +904,13 @@ int X509_check_issued(X509 *issuer, X509 *subject)
 {
     int ret;
 
-    if ((ret = x509_likely_issued(issuer, subject)) != X509_V_OK)
+    if ((ret = ossl_x509_likely_issued(issuer, subject)) != X509_V_OK)
         return ret;
-    return x509_signing_allowed(issuer, subject);
+    return ossl_x509_signing_allowed(issuer, subject);
 }
 
-/* Do the checks 1., 2., and 3. as described above for X509_check_issued() */
-int x509_likely_issued(X509 *issuer, X509 *subject)
+/* do the checks 1., 2., and 3. as described above for X509_check_issued() */
+int ossl_x509_likely_issued(X509 *issuer, X509 *subject)
 {
     int ret;
 
@@ -918,9 +918,9 @@ int x509_likely_issued(X509 *issuer, X509 *subject)
                       X509_get_issuer_name(subject)) != 0)
         return X509_V_ERR_SUBJECT_ISSUER_MISMATCH;
 
-    /* Set issuer->skid and subject->akid */
-    if (!x509v3_cache_extensions(issuer)
-            || !x509v3_cache_extensions(subject))
+    /* set issuer->skid and subject->akid */
+    if (!ossl_x509v3_cache_extensions(issuer)
+            || !ossl_x509v3_cache_extensions(subject))
         return X509_V_ERR_UNSPECIFIED;
 
     ret = X509_check_akid(issuer, subject->akid);
@@ -938,7 +938,7 @@ int x509_likely_issued(X509 *issuer, X509 *subject)
  * Returns 0 for OK, or positive for reason for rejection
  * where reason codes match those for X509_verify_cert().
  */
-int x509_signing_allowed(const X509 *issuer, const X509 *subject)
+int ossl_x509_signing_allowed(const X509 *issuer, const X509 *subject)
 {
     if (subject->ex_flags & EXFLAG_PROXY) {
         if (ku_reject(issuer, KU_DIGITAL_SIGNATURE))

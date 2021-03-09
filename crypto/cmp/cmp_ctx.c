@@ -607,7 +607,7 @@ int OSSL_CMP_CTX_set1_##FIELD(OSSL_CMP_CTX *ctx, const TYPE *val) \
     return 1; \
 }
 
-#define X509_invalid(cert) (!x509v3_cache_extensions(cert))
+#define X509_invalid(cert) (!ossl_x509v3_cache_extensions(cert))
 #define EVP_PKEY_invalid(key) 0
 #define DEFINE_OSSL_CMP_CTX_set1_up_ref(FIELD, TYPE) \
 int OSSL_CMP_CTX_set1_##FIELD(OSSL_CMP_CTX *ctx, TYPE *val) \

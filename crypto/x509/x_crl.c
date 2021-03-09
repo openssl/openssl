@@ -270,7 +270,7 @@ static int crl_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         {
             X509_CRL *old = exarg;
 
-            if (!x509_crl_set0_libctx(crl, old->libctx, old->propq))
+            if (!ossl_x509_crl_set0_libctx(crl, old->libctx, old->propq))
                 return 0;
         }
         break;
@@ -500,7 +500,8 @@ void *X509_CRL_get_meth_data(X509_CRL *crl)
     return crl->meth_data;
 }
 
-int x509_crl_set0_libctx(X509_CRL *x, OSSL_LIB_CTX *libctx, const char *propq)
+int ossl_x509_crl_set0_libctx(X509_CRL *x, OSSL_LIB_CTX *libctx,
+                              const char *propq)
 {
     if (x != NULL) {
         x->libctx = libctx;
