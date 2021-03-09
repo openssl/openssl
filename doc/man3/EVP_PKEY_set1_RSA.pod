@@ -43,7 +43,7 @@ L<openssl_user_macros(7)>:
  const DSA *EVP_PKEY_get0_DSA(const EVP_PKEY *pkey);
  const DH *EVP_PKEY_get0_DH(const EVP_PKEY *pkey);
  const EC_KEY *EVP_PKEY_get0_EC_KEY(const EVP_PKEY *pkey);
- void *EVP_PKEY_get0(EVP_PKEY *pkey);
+ void *EVP_PKEY_get0(const EVP_PKEY *pkey);
 
  int EVP_PKEY_assign_RSA(EVP_PKEY *pkey, RSA *key);
  int EVP_PKEY_assign_DSA(EVP_PKEY *pkey, DSA *key);
