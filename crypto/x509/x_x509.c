@@ -31,7 +31,7 @@ ASN1_SEQUENCE_enc(X509_CINF, enc, 0) = {
 IMPLEMENT_ASN1_FUNCTIONS(X509_CINF)
 /* X509 top level structure needs a bit of customisation */
 
-extern void policy_cache_free(X509_POLICY_CACHE *cache);
+extern void ossl_policy_cache_free(X509_POLICY_CACHE *cache);
 
 static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
                    void *exarg)
@@ -46,7 +46,7 @@ static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         ASN1_OCTET_STRING_free(ret->skid);
         AUTHORITY_KEYID_free(ret->akid);
         CRL_DIST_POINTS_free(ret->crldp);
-        policy_cache_free(ret->policy_cache);
+        ossl_policy_cache_free(ret->policy_cache);
         GENERAL_NAMES_free(ret->altname);
         NAME_CONSTRAINTS_free(ret->nc);
 #ifndef OPENSSL_NO_RFC3779
@@ -87,7 +87,7 @@ static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         ASN1_OCTET_STRING_free(ret->skid);
         AUTHORITY_KEYID_free(ret->akid);
         CRL_DIST_POINTS_free(ret->crldp);
-        policy_cache_free(ret->policy_cache);
+        ossl_policy_cache_free(ret->policy_cache);
         GENERAL_NAMES_free(ret->altname);
         NAME_CONSTRAINTS_free(ret->nc);
 #ifndef OPENSSL_NO_RFC3779
