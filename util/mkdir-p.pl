@@ -34,11 +34,12 @@ sub do_mkdir_p {
   }
 
   unless (mkdir($dir, 0777)) {
+    local($err) = $!;
     if (-d $dir) {
       # We raced against another instance doing the same thing.
       return;
     }
-    die "Cannot create directory $dir: $!\n";
+    die "Cannot create directory $dir: $err\n";
   }
   print "created directory `$dir'\n";
 }
