@@ -25,10 +25,11 @@ OpenSSL 3.0
 
  * OSSL_STORE_INFO_get_type() may now return an additional value. In 1.1.1
    this function would return one of the values OSSL_STORE_INFO_NAME,
-   OSSL_STORE_INFO_PKEY, OSSL_STORE_INFO_CERT or OSSL_STORE_INFO_CRL. In 3.0
-   it may additionally return the value OSSL_STORE_INFO_PUBKEY. Applications
-   using this function should be amended to handle the additional possible
-   return value.
+   OSSL_STORE_INFO_PKEY, OSSL_STORE_INFO_PARAMS, OSSL_STORE_INFO_CERT or
+   OSSL_STORE_INFO_CRL. Decoded public keys would previously have been reported
+   as type OSSL_STORE_INFO_PKEY in 1.1.1. In 3.0 decoded public keys are now
+   reported as having the new type OSSL_STORE_INFO_PUBKEY. Applications
+   using this function should be amended to handle the changed return value.
 
    *Richard Levitte*
 
