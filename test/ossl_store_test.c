@@ -138,7 +138,6 @@ static int test_store_get_params(int idx)
 
     return 1;
 }
-#include <unistd.h>
 
 /*
  * This test verifies that calling OSSL_STORE_ATTACH does not set an
