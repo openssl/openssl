@@ -32,8 +32,8 @@ typedef struct SM3state_st {
    unsigned int num;
 } SM3_CTX;
 
-int sm3_init(SM3_CTX *c);
-int sm3_update(SM3_CTX *c, const void *data, size_t len);
-int sm3_final(unsigned char *md, SM3_CTX *c);
+int ossl_sm3_init(SM3_CTX *c);
+int ossl_sm3_update(SM3_CTX *c, const void *data, size_t len);
+int ossl_sm3_final(unsigned char *md, SM3_CTX *c);
 
 #endif /* OSSL_INTERNAL_SM3_H */
