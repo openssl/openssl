@@ -279,6 +279,37 @@ The remaining functions return 1 for success and 0 or a negative value for
 failure.  In particular, a return value of -2 indicates the operation is not
 supported by the KDF algorithm.
 
+=head1 NOTES
+
+The KDF lifecycle is defined by this diagram:
+
+                     +-------------------+
+                     |       start       |
+                     +-------------------+
+                       |
+                       | EVP_KDF_CTX_new
+                       v
+                     + - - - - - - - - - +
+                     '       newed       ' <+
+                     + - - - - - - - - - +  |
+                       |                    |
+                       | EVP_KDF_derive     | EVP_KDF_CTX_reset
+                       v                    |
+    EVP_KDF_derive   +-------------------+  |
+  + - - - - - - - -  |                   |  |
+  '                  |     deriving      |  |
+  + - - - - - - - -> |                   | -+
+                     +-------------------+
+                       |
+                       | EVP_KDF_CTX_free
+                       v
+                     +-------------------+
+                     |       freed       |
+                     +-------------------+
+
+In the future, the transitions illustrated will be enforced.
+When this is done, it will not be considered a breaking change to the API.
+
 =head1 SEE ALSO
 
 L<OSSL_PROVIDER-default(7)/Key Derivation Function (KDF)>
