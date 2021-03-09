@@ -583,21 +583,21 @@ static void *ecx_gen(struct ecx_gen_ctx *gctx)
         privkey[0] &= 248;
         privkey[X25519_KEYLEN - 1] &= 127;
         privkey[X25519_KEYLEN - 1] |= 64;
-        X25519_public_from_private(key->pubkey, privkey);
+        ossl_x25519_public_from_private(key->pubkey, privkey);
         break;
     case ECX_KEY_TYPE_X448:
         privkey[0] &= 252;
         privkey[X448_KEYLEN - 1] |= 128;
-        X448_public_from_private(key->pubkey, privkey);
+        ossl_x448_public_from_private(key->pubkey, privkey);
         break;
     case ECX_KEY_TYPE_ED25519:
-        if (!ED25519_public_from_private(gctx->libctx, key->pubkey, privkey,
-                                         gctx->propq))
+        if (!ossl_ed25519_public_from_private(gctx->libctx, key->pubkey, privkey,
+                                              gctx->propq))
             goto err;
         break;
     case ECX_KEY_TYPE_ED448:
-        if (!ED448_public_from_private(gctx->libctx, key->pubkey, privkey,
-                                       gctx->propq))
+        if (!ossl_ed448_public_from_private(gctx->libctx, key->pubkey, privkey,
+                                            gctx->propq))
             goto err;
         break;
     }
@@ -697,19 +697,19 @@ static int ecx_key_pairwise_check(const ECX_KEY *ecx, int type)
 
     switch (type) {
     case ECX_KEY_TYPE_X25519:
-        X25519_public_from_private(pub, ecx->privkey);
+        ossl_x25519_public_from_private(pub, ecx->privkey);
         break;
     case ECX_KEY_TYPE_X448:
-        X448_public_from_private(pub, ecx->privkey);
+        ossl_x448_public_from_private(pub, ecx->privkey);
         break;
     case ECX_KEY_TYPE_ED25519:
-        if (!ED25519_public_from_private(ecx->libctx, pub, ecx->privkey,
-                                         ecx->propq))
+        if (!ossl_ed25519_public_from_private(ecx->libctx, pub, ecx->privkey,
+                                              ecx->propq))
             return 0;
         break;
     case ECX_KEY_TYPE_ED448:
-        if (!ED448_public_from_private(ecx->libctx, pub, ecx->privkey,
-                                       ecx->propq))
+        if (!ossl_ed448_public_from_private(ecx->libctx, pub, ecx->privkey,
+                                            ecx->propq))
             return 0;
         break;
     default:
