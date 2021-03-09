@@ -740,7 +740,7 @@ int EVP_PKEY_assign(EVP_PKEY *pkey, int type, void *key)
 }
 # endif
 
-void *EVP_PKEY_get0(EVP_PKEY *pkey)
+void *EVP_PKEY_get0(const EVP_PKEY *pkey)
 {
     if (pkey == NULL)
         return NULL;
@@ -759,7 +759,7 @@ const unsigned char *EVP_PKEY_get0_hmac(const EVP_PKEY *pkey, size_t *len)
         return NULL;
     }
     os = evp_pkey_get_legacy((EVP_PKEY *)pkey);
-    if (os) {
+    if (os != NULL) {
         *len = os->length;
         return os->data;
     }
@@ -775,7 +775,7 @@ const unsigned char *EVP_PKEY_get0_poly1305(const EVP_PKEY *pkey, size_t *len)
         return NULL;
     }
     os = evp_pkey_get_legacy((EVP_PKEY *)pkey);
-    if (os) {
+    if (os != NULL) {
         *len = os->length;
         return os->data;
     }
@@ -793,7 +793,7 @@ const unsigned char *EVP_PKEY_get0_siphash(const EVP_PKEY *pkey, size_t *len)
         return NULL;
     }
     os = evp_pkey_get_legacy((EVP_PKEY *)pkey);
-    if (os) {
+    if (os != NULL) {
         *len = os->length;
         return os->data;
     }
