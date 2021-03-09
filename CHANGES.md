@@ -23,6 +23,11 @@ OpenSSL 3.0
 
 ### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
 
+ * The EVP_PKEY_public_check() and EVP_PKEY_param_check() functions now work for
+   more key types include RSA, DSA, ED25519, X25519, ED448 and X448. Previously
+   (in 1.1.1) they would always return -2. For key types that do not have
+   parameters then EVP_PKEY_param_check() will still return 1.
+
  * The output from numerous "printing" functions such X509_signature_print(),
    X509_print_ex(), X509_CRL_print_ex(), and other similar functions has been
    amended such that there may be cosmetic differences between the output
