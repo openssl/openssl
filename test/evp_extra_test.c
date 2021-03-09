@@ -37,6 +37,11 @@
 #include "../e_os.h" /* strcasecmp */
 
 static OSSL_LIB_CTX *testctx = NULL;
+static char *testpropq = NULL;
+
+static OSSL_PROVIDER *nullprov = NULL;
+static OSSL_PROVIDER *deflprov = NULL;
+static OSSL_PROVIDER *lgcyprov = NULL;
 
 /*
  * kExampleRSAKeyDER is an RSA private key in ASN.1, DER format. Of course, you
@@ -420,7 +425,7 @@ static EVP_PKEY *load_example_key(const char *keytype,
     EVP_PKEY *pkey = NULL;
     OSSL_DECODER_CTX *dctx =
         OSSL_DECODER_CTX_new_for_pkey(&pkey, "DER", NULL, keytype, 0,
-                                      testctx, NULL);
+                                      testctx, testpropq);
 
     /* |pkey| will be NULL on error */
     (void)OSSL_DECODER_from_data(dctx, pdata, &data_len);
@@ -494,7 +499,7 @@ static int test_fromdata(char *keytype, OSSL_PARAM *params)
     EVP_PKEY *pkey = NULL;
     int testresult = 0;
 
-    if (!TEST_ptr(pctx = EVP_PKEY_CTX_new_from_name(testctx, keytype, NULL)))
+    if (!TEST_ptr(pctx = EVP_PKEY_CTX_new_from_name(testctx, keytype, testpropq)))
         goto err;
     if (!TEST_int_gt(EVP_PKEY_fromdata_init(pctx), 0)
         || !TEST_int_gt(EVP_PKEY_fromdata(pctx, &pkey, EVP_PKEY_KEYPAIR,
@@ -755,7 +760,8 @@ static int test_EC_priv_only_legacy(void)
      * The EVP_DigestSignInit function should create the key on the provider
      * side which is sufficient for this test.
      */
-    if (!TEST_true(EVP_DigestSignInit(ctx, NULL, NULL, NULL, pkey)))
+    if (!TEST_true(EVP_DigestSignInit_ex(ctx, NULL, NULL, testctx, testpropq,
+                                         pkey, NULL)))
         goto err;
 
     ret = 1;
@@ -781,7 +787,12 @@ static int test_EVP_Enveloped(void)
     static const unsigned char msg[] = { 1, 2, 3, 4, 5, 6, 7, 8 };
     int len, kek_len, ciphertext_len, plaintext_len;
     unsigned char ciphertext[32], plaintext[16];
-    const EVP_CIPHER *type = EVP_aes_256_cbc();
+    const EVP_CIPHER *type = NULL;
+
+    if (nullprov != NULL)
+        return TEST_skip("Test does not support a non-default library context");
+
+    type = EVP_aes_256_cbc();
 
     if (!TEST_ptr(keypair = load_example_rsa_key())
             || !TEST_ptr(kek = OPENSSL_zalloc(EVP_PKEY_size(keypair)))
@@ -837,6 +848,9 @@ static int test_EVP_DigestSignInit(int tst)
     size_t written;
     const EVP_MD *md;
     EVP_MD *mdexp = NULL;
+
+    if (nullprov != NULL)
+        return TEST_skip("Test does not support a non-default library context");
 
     if (tst >= 6) {
         membio = BIO_new(BIO_s_mem());
@@ -937,6 +951,9 @@ static int test_EVP_DigestVerifyInit(void)
     EVP_PKEY *pkey = NULL;
     EVP_MD_CTX *md_ctx = NULL;
 
+    if (nullprov != NULL)
+        return TEST_skip("Test does not support a non-default library context");
+
     if (!TEST_ptr(md_ctx = EVP_MD_CTX_new())
             || !TEST_ptr(pkey = load_example_rsa_key()))
         goto out;
@@ -962,18 +979,24 @@ static int test_EVP_Digest(void)
     int ret = 0;
     EVP_MD_CTX *md_ctx = NULL;
     unsigned char md[EVP_MAX_MD_SIZE];
+    EVP_MD *sha256 = NULL;
+    EVP_MD *shake256 = NULL;
 
     if (!TEST_ptr(md_ctx = EVP_MD_CTX_new()))
         goto out;
 
-    if (!TEST_true(EVP_DigestInit_ex(md_ctx, EVP_sha256(), NULL))
+    if (!TEST_ptr(sha256 = EVP_MD_fetch(testctx, "sha256", testpropq))
+            || !TEST_ptr(shake256 = EVP_MD_fetch(testctx, "shake256", testpropq)))
+        goto out;
+
+    if (!TEST_true(EVP_DigestInit_ex(md_ctx, sha256, NULL))
             || !TEST_true(EVP_DigestUpdate(md_ctx, kMsg, sizeof(kMsg)))
             || !TEST_true(EVP_DigestFinal(md_ctx, md, NULL))
             /* EVP_DigestFinal resets the EVP_MD_CTX. */
             || !TEST_ptr_eq(EVP_MD_CTX_md(md_ctx), NULL))
         goto out;
 
-    if (!TEST_true(EVP_DigestInit_ex(md_ctx, EVP_sha256(), NULL))
+    if (!TEST_true(EVP_DigestInit_ex(md_ctx, sha256, NULL))
             || !TEST_true(EVP_DigestUpdate(md_ctx, kMsg, sizeof(kMsg)))
             || !TEST_true(EVP_DigestFinal_ex(md_ctx, md, NULL))
             /* EVP_DigestFinal_ex does not reset the EVP_MD_CTX. */
@@ -985,7 +1008,7 @@ static int test_EVP_Digest(void)
             || !TEST_true(EVP_DigestInit_ex(md_ctx, NULL, NULL)))
         goto out;
 
-    if (!TEST_true(EVP_DigestInit_ex(md_ctx, EVP_shake256(), NULL))
+    if (!TEST_true(EVP_DigestInit_ex(md_ctx, shake256, NULL))
             || !TEST_true(EVP_DigestUpdate(md_ctx, kMsg, sizeof(kMsg)))
             || !TEST_true(EVP_DigestFinalXOF(md_ctx, md, sizeof(md)))
             /* EVP_DigestFinalXOF does not reset the EVP_MD_CTX. */
@@ -996,6 +1019,8 @@ static int test_EVP_Digest(void)
 
  out:
     EVP_MD_CTX_free(md_ctx);
+    EVP_MD_free(sha256);
+    EVP_MD_free(shake256);
     return ret;
 }
 
@@ -1244,12 +1269,13 @@ static int test_EVP_SM2_verify(void)
     EVP_PKEY *pkey = NULL;
     EVP_MD_CTX *mctx = NULL;
     EVP_PKEY_CTX *pctx = NULL;
+    EVP_MD *sm3 = NULL;
 
     bio = BIO_new_mem_buf(pubkey, strlen(pubkey));
     if (!TEST_true(bio != NULL))
         goto done;
 
-    pkey = PEM_read_bio_PUBKEY(bio, NULL, NULL, NULL);
+    pkey = PEM_read_bio_PUBKEY_ex(bio, NULL, NULL, NULL, testctx, testpropq);
     if (!TEST_true(pkey != NULL))
         goto done;
 
@@ -1259,12 +1285,15 @@ static int test_EVP_SM2_verify(void)
     if (!TEST_ptr(mctx = EVP_MD_CTX_new()))
         goto done;
 
-    if (!TEST_ptr(pctx = EVP_PKEY_CTX_new(pkey, NULL)))
+    if (!TEST_ptr(pctx = EVP_PKEY_CTX_new_from_pkey(testctx, pkey, testpropq)))
         goto done;
 
     EVP_MD_CTX_set_pkey_ctx(mctx, pctx);
 
-    if (!TEST_true(EVP_DigestVerifyInit(mctx, NULL, EVP_sm3(), NULL, pkey)))
+    if (!TEST_ptr(sm3 = EVP_MD_fetch(testctx, "sm3", testpropq)))
+        goto done;
+
+    if (!TEST_true(EVP_DigestVerifyInit(mctx, NULL, sm3, NULL, pkey)))
         goto done;
 
     if (!TEST_int_gt(EVP_PKEY_CTX_set1_id(pctx, id, strlen(id)), 0))
@@ -1282,6 +1311,7 @@ static int test_EVP_SM2_verify(void)
     EVP_PKEY_free(pkey);
     EVP_PKEY_CTX_free(pctx);
     EVP_MD_CTX_free(mctx);
+    EVP_MD_free(sm3);
     return rc;
 }
 
@@ -1298,6 +1328,7 @@ static int test_EVP_SM2(void)
     EVP_MD_CTX *md_ctx = NULL;
     EVP_MD_CTX *md_ctx_verify = NULL;
     EVP_PKEY_CTX *cctx = NULL;
+    EVP_MD *sm3 = NULL;
 
     uint8_t ciphertext[128];
     size_t ctext_len = sizeof(ciphertext);
@@ -1312,7 +1343,7 @@ static int test_EVP_SM2(void)
     int i;
     char mdname[20];
 
-    pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_SM2, NULL);
+    pctx = EVP_PKEY_CTX_new_from_name(testctx, "SM2", testpropq);
     if (!TEST_ptr(pctx))
         goto done;
 
@@ -1325,7 +1356,7 @@ static int test_EVP_SM2(void)
     if (!TEST_true(EVP_PKEY_paramgen(pctx, &pkeyparams)))
         goto done;
 
-    kctx = EVP_PKEY_CTX_new(pkeyparams, NULL);
+    kctx = EVP_PKEY_CTX_new_from_pkey(testctx, pkeyparams, testpropq);
     if (!TEST_ptr(kctx))
         goto done;
 
@@ -1341,13 +1372,16 @@ static int test_EVP_SM2(void)
     if (!TEST_ptr(md_ctx_verify = EVP_MD_CTX_new()))
         goto done;
 
-    if (!TEST_ptr(sctx = EVP_PKEY_CTX_new(pkey, NULL)))
+    if (!TEST_ptr(sctx = EVP_PKEY_CTX_new_from_pkey(testctx, pkey, testpropq)))
         goto done;
 
     EVP_MD_CTX_set_pkey_ctx(md_ctx, sctx);
     EVP_MD_CTX_set_pkey_ctx(md_ctx_verify, sctx);
 
-    if (!TEST_true(EVP_DigestSignInit(md_ctx, NULL, EVP_sm3(), NULL, pkey)))
+    if (!TEST_ptr(sm3 = EVP_MD_fetch(testctx, "sm3", testpropq)))
+        goto done;
+
+    if (!TEST_true(EVP_DigestSignInit(md_ctx, NULL, sm3, NULL, pkey)))
         goto done;
 
     if (!TEST_int_gt(EVP_PKEY_CTX_set1_id(sctx, sm2_id, sizeof(sm2_id)), 0))
@@ -1368,7 +1402,7 @@ static int test_EVP_SM2(void)
 
     /* Ensure that the signature round-trips. */
 
-    if (!TEST_true(EVP_DigestVerifyInit(md_ctx_verify, NULL, EVP_sm3(), NULL, pkey)))
+    if (!TEST_true(EVP_DigestVerifyInit(md_ctx_verify, NULL, sm3, NULL, pkey)))
         goto done;
 
     if (!TEST_int_gt(EVP_PKEY_CTX_set1_id(sctx, sm2_id, sizeof(sm2_id)), 0))
@@ -1391,7 +1425,7 @@ static int test_EVP_SM2(void)
                                                       i == 0 ? "SM3" : "SHA2-256",
                                                       0);
 
-        if (!TEST_ptr(cctx = EVP_PKEY_CTX_new(pkey, NULL)))
+        if (!TEST_ptr(cctx = EVP_PKEY_CTX_new_from_pkey(testctx, pkey, testpropq)))
             goto done;
 
         if (!TEST_true(EVP_PKEY_encrypt_init(cctx)))
@@ -1440,6 +1474,7 @@ done:
     EVP_PKEY_free(pkeyparams);
     EVP_MD_CTX_free(md_ctx);
     EVP_MD_CTX_free(md_ctx_verify);
+    EVP_MD_free(sm3);
     OPENSSL_free(sig);
     return ret;
 }
@@ -1484,6 +1519,9 @@ static int test_set_get_raw_keys_int(int tst, int pub, int uselibctx)
     unsigned char *in;
     size_t inlen, len = 0;
     EVP_PKEY *pkey;
+
+    if (nullprov != NULL)
+        return TEST_skip("Test does not support a non-default library context");
 
     /* Check if this algorithm supports public keys */
     if (keys[tst].pub == NULL)
@@ -1589,7 +1627,7 @@ static int test_EVP_PKEY_check(int i)
         && !TEST_int_eq(EVP_PKEY_id(pkey), expected_id))
         goto done;
 
-    if (!TEST_ptr(ctx = EVP_PKEY_CTX_new(pkey, NULL)))
+    if (!TEST_ptr(ctx = EVP_PKEY_CTX_new_from_pkey(testctx, pkey, testpropq)))
         goto done;
 
     if (!TEST_int_eq(EVP_PKEY_check(ctx), expected_check))
@@ -1637,7 +1675,8 @@ static int get_cmac_val(EVP_PKEY *pkey, unsigned char *mac)
     int ret = 1;
 
     if (!TEST_ptr(mdctx)
-            || !TEST_true(EVP_DigestSignInit(mdctx, NULL, NULL, NULL, pkey))
+            || !TEST_true(EVP_DigestSignInit_ex(mdctx, NULL, NULL, testctx,
+                                                testpropq, pkey, NULL))
             || !TEST_true(EVP_DigestSignUpdate(mdctx, msg, sizeof(msg)))
             || !TEST_true(EVP_DigestSignFinal(mdctx, mac, &maclen))
             || !TEST_size_t_eq(maclen, AES_BLOCK_SIZE))
@@ -1654,17 +1693,22 @@ static int test_CMAC_keygen(void)
         0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
         0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f
     };
-    /*
-     * This is a legacy method for CMACs, but should still work.
-     * This verifies that it works without an ENGINE.
-     */
-    EVP_PKEY_CTX *kctx = EVP_PKEY_CTX_new_id(EVP_PKEY_CMAC, NULL);
+    EVP_PKEY_CTX *kctx = NULL;
     int ret = 0;
     EVP_PKEY *pkey = NULL;
     unsigned char mac[AES_BLOCK_SIZE];
 # if !defined(OPENSSL_NO_DEPRECATED_3_0)
     unsigned char mac2[AES_BLOCK_SIZE];
 # endif
+
+    if (nullprov != NULL)
+        return TEST_skip("Test does not support a non-default library context");
+
+    /*
+     * This is a legacy method for CMACs, but should still work.
+     * This verifies that it works without an ENGINE.
+     */
+    kctx = EVP_PKEY_CTX_new_id(EVP_PKEY_CMAC, NULL);
 
     /* Test a CMAC key created using the "generated" method */
     if (!TEST_int_gt(EVP_PKEY_keygen_init(kctx), 0)
@@ -1717,7 +1761,7 @@ static int test_HKDF(void)
     };
     size_t expectedlen = sizeof(expected);
 
-    if (!TEST_ptr(pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_HKDF, NULL)))
+    if (!TEST_ptr(pctx = EVP_PKEY_CTX_new_from_name(testctx, "HKDF", testpropq)))
         goto done;
 
     /* We do this twice to test reuse of the EVP_PKEY_CTX */
@@ -1761,7 +1805,7 @@ static int test_emptyikm_HKDF(void)
     };
     size_t expectedlen = sizeof(expected);
 
-    if (!TEST_ptr(pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_HKDF, NULL)))
+    if (!TEST_ptr(pctx = EVP_PKEY_CTX_new_from_name(testctx, "HKDF", testpropq)))
         goto done;
 
     outlen = sizeof(out);
@@ -1831,7 +1875,7 @@ static int test_EVP_PKEY_CTX_get_set_params(EVP_PKEY *pkey)
     char ssl3ms[48];
 
     /* Initialise a sign operation */
-    ctx = EVP_PKEY_CTX_new(pkey, NULL);
+    ctx = EVP_PKEY_CTX_new_from_pkey(testctx, pkey, testpropq);
     if (!TEST_ptr(ctx)
             || !TEST_int_gt(EVP_PKEY_sign_init(ctx), 0))
         goto err;
@@ -1887,7 +1931,7 @@ static int test_EVP_PKEY_CTX_get_set_params(EVP_PKEY *pkey)
      */
     mdctx = EVP_MD_CTX_new();
     if (!TEST_ptr(mdctx)
-        || !TEST_true(EVP_DigestSignInit_ex(mdctx, NULL, "SHA1", NULL, NULL,
+        || !TEST_true(EVP_DigestSignInit_ex(mdctx, NULL, "SHA1", testctx, testpropq,
                                             pkey, NULL)))
         goto err;
 
@@ -2040,6 +2084,7 @@ static int test_RSA_get_set_params(void)
 static int test_decrypt_null_chunks(void)
 {
     EVP_CIPHER_CTX* ctx = NULL;
+    EVP_CIPHER *cipher = NULL;
     const unsigned char key[32] = {
         0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b,
         0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
@@ -2056,8 +2101,9 @@ static int test_decrypt_null_chunks(void)
     int ret = 0;
     const int enc_offset = 10, dec_offset = 20;
 
-    if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new())
-            || !TEST_true(EVP_EncryptInit_ex(ctx, EVP_chacha20_poly1305(), NULL,
+    if (!TEST_ptr(cipher = EVP_CIPHER_fetch(testctx, "ChaCha20-Poly1305", testpropq))
+            || !TEST_ptr(ctx = EVP_CIPHER_CTX_new())
+            || !TEST_true(EVP_EncryptInit_ex(ctx, cipher, NULL,
                                              key, iv))
             || !TEST_true(EVP_EncryptUpdate(ctx, ciphertext, &ctlen, msg,
                                             enc_offset))
@@ -2075,8 +2121,7 @@ static int test_decrypt_null_chunks(void)
 
     /* Deliberately initialise tmp to a non zero value */
     tmp = 99;
-    if (!TEST_true(EVP_DecryptInit_ex(ctx, EVP_chacha20_poly1305(), NULL, key,
-                                      iv))
+    if (!TEST_true(EVP_DecryptInit_ex(ctx, cipher, NULL, key, iv))
             || !TEST_true(EVP_DecryptUpdate(ctx, plaintext, &ptlen, ciphertext,
                                             dec_offset))
             /*
@@ -2098,6 +2143,7 @@ static int test_decrypt_null_chunks(void)
     ret = 1;
  err:
     EVP_CIPHER_CTX_free(ctx);
+    EVP_CIPHER_free(cipher);
     return ret;
 }
 #endif /* !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305) */
@@ -2174,6 +2220,9 @@ static int test_keygen_with_empty_template(int n)
     EVP_PKEY *tkey = NULL;
     int ret = 0;
 
+    if (nullprov != NULL)
+        return TEST_skip("Test does not support a non-default library context");
+
     switch (n) {
     case 0:
         /* We do test with no template at all as well */
@@ -2212,7 +2261,7 @@ static int test_keygen_with_empty_template(int n)
 static int test_pkey_ctx_fail_without_provider(int tst)
 {
     OSSL_LIB_CTX *tmpctx = OSSL_LIB_CTX_new();
-    OSSL_PROVIDER *nullprov = NULL;
+    OSSL_PROVIDER *tmpnullprov = NULL;
     EVP_PKEY_CTX *pctx = NULL;
     const char *keytype = NULL;
     int expect_null = 0;
@@ -2221,8 +2270,8 @@ static int test_pkey_ctx_fail_without_provider(int tst)
     if (!TEST_ptr(tmpctx))
         goto err;
 
-    nullprov = OSSL_PROVIDER_load(tmpctx, "null");
-    if (!TEST_ptr(nullprov))
+    tmpnullprov = OSSL_PROVIDER_load(tmpctx, "null");
+    if (!TEST_ptr(tmpnullprov))
         goto err;
 
     /*
@@ -2265,7 +2314,7 @@ static int test_pkey_ctx_fail_without_provider(int tst)
 
  err:
     EVP_PKEY_CTX_free(pctx);
-    OSSL_PROVIDER_unload(nullprov);
+    OSSL_PROVIDER_unload(tmpnullprov);
     OSSL_LIB_CTX_free(tmpctx);
     return ret;
 }
@@ -2282,7 +2331,7 @@ static int test_rand_agglomeration(void)
     unsigned char out[sizeof(seed)];
 
     if (!TEST_int_ne(sizeof(seed) % step, 0)
-            || !TEST_ptr(rand = EVP_RAND_fetch(NULL, "TEST-RAND", NULL)))
+            || !TEST_ptr(rand = EVP_RAND_fetch(testctx, "TEST-RAND", testpropq)))
         return 0;
     ctx = EVP_RAND_CTX_new(rand, NULL);
     EVP_RAND_free(rand);
@@ -2335,13 +2384,16 @@ static int test_evp_iv(int idx)
     size_t ivlen, ref_len;
     const EVP_CIPHER *type = NULL;
 
+    if (nullprov != NULL && idx < 5)
+        return TEST_skip("Test does not support a non-default library context");
+
     switch(idx) {
     case 0:
         type = EVP_aes_128_cbc();
         /* FALLTHROUGH */
     case 5:
         type = (type != NULL) ? type :
-                                EVP_CIPHER_fetch(testctx, "aes-128-cbc", NULL);
+                                EVP_CIPHER_fetch(testctx, "aes-128-cbc", testpropq);
         ref_iv = cbc_state;
         ref_len = sizeof(cbc_state);
         break;
@@ -2350,7 +2402,7 @@ static int test_evp_iv(int idx)
         /* FALLTHROUGH */
     case 6:
         type = (type != NULL) ? type :
-                                EVP_CIPHER_fetch(testctx, "aes-128-ofb", NULL);
+                                EVP_CIPHER_fetch(testctx, "aes-128-ofb", testpropq);
         ref_iv = ofb_state;
         ref_len = sizeof(ofb_state);
         break;
@@ -2359,7 +2411,7 @@ static int test_evp_iv(int idx)
         /* FALLTHROUGH */
     case 7:
         type = (type != NULL) ? type :
-                                EVP_CIPHER_fetch(testctx, "aes-128-gcm", NULL);
+                                EVP_CIPHER_fetch(testctx, "aes-128-gcm", testpropq);
         ref_iv = gcm_state;
         ref_len = sizeof(gcm_state);
         break;
@@ -2368,7 +2420,7 @@ static int test_evp_iv(int idx)
         /* FALLTHROUGH */
     case 8:
         type = (type != NULL) ? type :
-                                EVP_CIPHER_fetch(testctx, "aes-128-ccm", NULL);
+                                EVP_CIPHER_fetch(testctx, "aes-128-ccm", testpropq);
         ref_iv = ccm_state;
         ref_len = sizeof(ccm_state);
         break;
@@ -2382,7 +2434,7 @@ static int test_evp_iv(int idx)
         /* FALLTHROUGH */
     case 9:
         type = (type != NULL) ? type :
-                                EVP_CIPHER_fetch(testctx, "aes-128-ocb", NULL);
+                                EVP_CIPHER_fetch(testctx, "aes-128-ocb", testpropq);
         ref_iv = ocb_state;
         ref_len = sizeof(ocb_state);
         break;
@@ -2432,6 +2484,9 @@ static int test_ecpub(int idx)
     EVP_PKEY *pkey2 = NULL;
     EC_KEY *ec = NULL;
 # endif
+
+    if (nullprov != NULL)
+        return TEST_skip("Test does not support a non-default library context");
 
     nid = ecpub_nids[idx];
 
@@ -2483,20 +2538,20 @@ static int test_ecpub(int idx)
 
 static int test_EVP_rsa_pss_with_keygen_bits(void)
 {
-    int ret;
-    EVP_PKEY_CTX *ctx;
-    EVP_PKEY *pkey;
-    const EVP_MD *md;
-    pkey = NULL;
-    ret = 0;
+    int ret = 0;
+    EVP_PKEY_CTX *ctx = NULL;
+    EVP_PKEY *pkey = NULL;
+    EVP_MD *md;
 
-    md = EVP_get_digestbyname("sha256");
-    ret = TEST_ptr((ctx = EVP_PKEY_CTX_new_id(EVP_PKEY_RSA_PSS, NULL)))
+    md = EVP_MD_fetch(testctx, "sha256", testpropq);
+    ret = TEST_ptr(md)
+        && TEST_ptr((ctx = EVP_PKEY_CTX_new_from_name(testctx, "RSA", testpropq)))
         && TEST_true(EVP_PKEY_keygen_init(ctx))
         && TEST_int_gt(EVP_PKEY_CTX_set_rsa_keygen_bits(ctx, 512), 0)
         && TEST_true(EVP_PKEY_CTX_set_rsa_pss_keygen_md(ctx, md))
         && TEST_true(EVP_PKEY_keygen(ctx, &pkey));
 
+    EVP_MD_free(md);
     EVP_PKEY_free(pkey);
     EVP_PKEY_CTX_free(ctx);
     return ret;
@@ -2550,12 +2605,45 @@ static int test_names_do_all(void)
     return testresult;
 }
 
+typedef enum OPTION_choice {
+    OPT_ERR = -1,
+    OPT_EOF = 0,
+    OPT_CONTEXT,
+    OPT_TEST_ENUM
+} OPTION_CHOICE;
+
+const OPTIONS *test_get_options(void)
+{
+    static const OPTIONS options[] = {
+        OPT_TEST_OPTIONS_DEFAULT_USAGE,
+        { "context", OPT_CONTEXT, '-', "Explicitly use a non-default library context" },
+        { NULL }
+    };
+    return options;
+}
+
 int setup_tests(void)
 {
-    testctx = OSSL_LIB_CTX_new();
+    OPTION_CHOICE o;
 
-    if (!TEST_ptr(testctx))
-        return 0;
+    while ((o = opt_next()) != OPT_EOF) {
+        switch (o) {
+        case OPT_CONTEXT:
+            /* Set up an alternate library context */
+            testctx = OSSL_LIB_CTX_new();
+            if (!TEST_ptr(testctx))
+                return 0;
+            /* Swap the libctx to test non-default context only */
+            nullprov = OSSL_PROVIDER_load(NULL, "null");
+            deflprov = OSSL_PROVIDER_load(testctx, "default");
+            lgcyprov = OSSL_PROVIDER_load(testctx, "legacy");
+            break;
+        case OPT_TEST_CASES:
+            break;
+        default:
+            return 0;
+        }
+    }
 
     ADD_TEST(test_EVP_set_default_properties);
     ADD_ALL_TESTS(test_EVP_DigestSignInit, 9);
@@ -2633,5 +2721,8 @@ int setup_tests(void)
 
 void cleanup_tests(void)
 {
+    OSSL_PROVIDER_unload(nullprov);
+    OSSL_PROVIDER_unload(deflprov);
+    OSSL_PROVIDER_unload(lgcyprov);
     OSSL_LIB_CTX_free(testctx);
 }
