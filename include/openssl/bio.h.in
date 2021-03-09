@@ -647,6 +647,7 @@ const BIO_METHOD *BIO_s_bio(void);
 const BIO_METHOD *BIO_s_null(void);
 const BIO_METHOD *BIO_f_null(void);
 const BIO_METHOD *BIO_f_buffer(void);
+const BIO_METHOD *BIO_f_readbuffer(void);
 const BIO_METHOD *BIO_f_linebuffer(void);
 const BIO_METHOD *BIO_f_nbio_test(void);
 const BIO_METHOD *BIO_f_prefix(void);
