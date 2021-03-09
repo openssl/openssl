@@ -758,9 +758,12 @@ const unsigned char *EVP_PKEY_get0_hmac(const EVP_PKEY *pkey, size_t *len)
         ERR_raise(ERR_LIB_EVP, EVP_R_EXPECTING_AN_HMAC_KEY);
         return NULL;
     }
-    os = EVP_PKEY_get0((EVP_PKEY *)pkey);
-    *len = os->length;
-    return os->data;
+    os = evp_pkey_get_legacy((EVP_PKEY *)pkey);
+    if (os) {
+        *len = os->length;
+        return os->data;
+    }
+    return NULL;
 }
 
 # ifndef OPENSSL_NO_POLY1305
@@ -771,9 +774,12 @@ const unsigned char *EVP_PKEY_get0_poly1305(const EVP_PKEY *pkey, size_t *len)
         ERR_raise(ERR_LIB_EVP, EVP_R_EXPECTING_A_POLY1305_KEY);
         return NULL;
     }
-    os = EVP_PKEY_get0((EVP_PKEY *)pkey);
-    *len = os->length;
-    return os->data;
+    os = evp_pkey_get_legacy((EVP_PKEY *)pkey);
+    if (os) {
+        *len = os->length;
+        return os->data;
+    }
+    return NULL;
 }
 # endif
 
@@ -786,9 +792,12 @@ const unsigned char *EVP_PKEY_get0_siphash(const EVP_PKEY *pkey, size_t *len)
         ERR_raise(ERR_LIB_EVP, EVP_R_EXPECTING_A_SIPHASH_KEY);
         return NULL;
     }
-    os = EVP_PKEY_get0((EVP_PKEY *)pkey);
-    *len = os->length;
-    return os->data;
+    os = evp_pkey_get_legacy((EVP_PKEY *)pkey);
+    if (os) {
+        *len = os->length;
+        return os->data;
+    }
+    return NULL;
 }
 # endif
 

@@ -411,7 +411,7 @@ static void thread_downgrade_shared_evp_pkey(void)
      * This test is only relevant for deprecated functions that perform
      * downgrading
      */
-    if (EVP_PKEY_get0(shared_evp_pkey) == NULL)
+    if (EVP_PKEY_get0_RSA(shared_evp_pkey) == NULL)
         multi_success = 0;
 #else
     /* Shouldn't ever get here */

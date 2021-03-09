@@ -22,6 +22,10 @@ OpenSSL 3.0
 -----------
 
 ### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
+ * The deprecated function EVP_PKEY_get0() now returns NULL being called for a
+   provided key.
+
+   *Dmitry Belyavskiy*
 
  * The deprecated functions EVP_PKEY_get0_RSA(),
    EVP_PKEY_get0_DSA(), EVP_PKEY_get0_EC_KEY(), EVP_PKEY_get0_DH(),
