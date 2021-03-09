@@ -159,8 +159,8 @@ int ed25519_digest_sign(void *vpeddsactx, unsigned char *sigret,
     if (S390X_CAN_SIGN(ED25519))
         return s390x_ed25519_digestsign(edkey, sigret, tbs, tbslen);
 #endif /* S390X_EC_ASM */
-    if (ED25519_sign(sigret, tbs, tbslen, edkey->pubkey, edkey->privkey,
-                     peddsactx->libctx, NULL) == 0) {
+    if (ossl_ed25519_sign(sigret, tbs, tbslen, edkey->pubkey, edkey->privkey,
+                          peddsactx->libctx, NULL) == 0) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SIGN);
         return 0;
     }
@@ -190,8 +190,8 @@ int ed448_digest_sign(void *vpeddsactx, unsigned char *sigret,
     if (S390X_CAN_SIGN(ED448))
         return s390x_ed448_digestsign(edkey, sigret, tbs, tbslen);
 #endif /* S390X_EC_ASM */
-    if (ED448_sign(peddsactx->libctx, sigret, tbs, tbslen, edkey->pubkey,
-                   edkey->privkey, NULL, 0, edkey->propq) == 0) {
+    if (ossl_ed448_sign(peddsactx->libctx, sigret, tbs, tbslen, edkey->pubkey,
+                        edkey->privkey, NULL, 0, edkey->propq) == 0) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SIGN);
         return 0;
     }
@@ -214,8 +214,8 @@ int ed25519_digest_verify(void *vpeddsactx, const unsigned char *sig,
         return s390x_ed25519_digestverify(edkey, sig, tbs, tbslen);
 #endif /* S390X_EC_ASM */
 
-    return ED25519_verify(tbs, tbslen, sig, edkey->pubkey, peddsactx->libctx,
-                          edkey->propq);
+    return ossl_ed25519_verify(tbs, tbslen, sig, edkey->pubkey,
+                               peddsactx->libctx, edkey->propq);
 }
 
 int ed448_digest_verify(void *vpeddsactx, const unsigned char *sig,
@@ -233,8 +233,8 @@ int ed448_digest_verify(void *vpeddsactx, const unsigned char *sig,
         return s390x_ed448_digestverify(edkey, sig, tbs, tbslen);
 #endif /* S390X_EC_ASM */
 
-    return ED448_verify(peddsactx->libctx, tbs, tbslen, sig, edkey->pubkey,
-                        NULL, 0, edkey->propq);
+    return ossl_ed448_verify(peddsactx->libctx, tbs, tbslen, sig, edkey->pubkey,
+                             NULL, 0, edkey->propq);
 }
 
 static void eddsa_freectx(void *vpeddsactx)

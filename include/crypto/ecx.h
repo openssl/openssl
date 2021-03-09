@@ -83,34 +83,43 @@ unsigned char *ossl_ecx_key_allocate_privkey(ECX_KEY *key);
 void ossl_ecx_key_free(ECX_KEY *key);
 int ossl_ecx_key_up_ref(ECX_KEY *key);
 
-int X25519(uint8_t out_shared_key[32], const uint8_t private_key[32],
-           const uint8_t peer_public_value[32]);
-void X25519_public_from_private(uint8_t out_public_value[32],
-                                const uint8_t private_key[32]);
+int ossl_x25519(uint8_t out_shared_key[32], const uint8_t private_key[32],
+                const uint8_t peer_public_value[32]);
+void ossl_x25519_public_from_private(uint8_t out_public_value[32],
+                                     const uint8_t private_key[32]);
 
-int ED25519_public_from_private(OSSL_LIB_CTX *ctx, uint8_t out_public_key[32],
-                                const uint8_t private_key[32], const char *propq);
-int ED25519_sign(uint8_t *out_sig, const uint8_t *message, size_t message_len,
-                 const uint8_t public_key[32], const uint8_t private_key[32],
-                 OSSL_LIB_CTX *libctx, const char *propq);
-int ED25519_verify(const uint8_t *message, size_t message_len,
-                   const uint8_t signature[64], const uint8_t public_key[32],
-                   OSSL_LIB_CTX *libctx, const char *propq);
+int
+ossl_ed25519_public_from_private(OSSL_LIB_CTX *ctx, uint8_t out_public_key[32],
+                                 const uint8_t private_key[32],
+                                 const char *propq);
+int
+ossl_ed25519_sign(uint8_t *out_sig, const uint8_t *message, size_t message_len,
+                  const uint8_t public_key[32], const uint8_t private_key[32],
+                  OSSL_LIB_CTX *libctx, const char *propq);
+int
+ossl_ed25519_verify(const uint8_t *message, size_t message_len,
+                    const uint8_t signature[64], const uint8_t public_key[32],
+                    OSSL_LIB_CTX *libctx, const char *propq);
 
-int ED448_public_from_private(OSSL_LIB_CTX *ctx, uint8_t out_public_key[57],
-                              const uint8_t private_key[57], const char *propq);
-int ED448_sign(OSSL_LIB_CTX *ctx, uint8_t *out_sig, const uint8_t *message,
-               size_t message_len, const uint8_t public_key[57],
-               const uint8_t private_key[57], const uint8_t *context,
-               size_t context_len, const char *propq);
+int
+ossl_ed448_public_from_private(OSSL_LIB_CTX *ctx, uint8_t out_public_key[57],
+                               const uint8_t private_key[57], const char *propq);
+int
+ossl_ed448_sign(OSSL_LIB_CTX *ctx, uint8_t *out_sig, const uint8_t *message,
+                size_t message_len, const uint8_t public_key[57],
+                const uint8_t private_key[57], const uint8_t *context,
+                size_t context_len, const char *propq);
 
-int ED448_verify(OSSL_LIB_CTX *ctx, const uint8_t *message, size_t message_len,
-                 const uint8_t signature[114], const uint8_t public_key[57],
-                 const uint8_t *context, size_t context_len, const char *propq);
+int
+ossl_ed448_verify(OSSL_LIB_CTX *ctx, const uint8_t *message, size_t message_len,
+                  const uint8_t signature[114], const uint8_t public_key[57],
+                  const uint8_t *context, size_t context_len, const char *propq);
 
-int X448(uint8_t out_shared_key[56], const uint8_t private_key[56],
-         const uint8_t peer_public_value[56]);
-void X448_public_from_private(uint8_t out_public_value[56],
+int
+ossl_x448(uint8_t out_shared_key[56], const uint8_t private_key[56],
+          const uint8_t peer_public_value[56]);
+void
+ossl_x448_public_from_private(uint8_t out_public_value[56],
                               const uint8_t private_key[56]);
 
 

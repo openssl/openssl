@@ -1058,7 +1058,7 @@ static const curve448_precomputed_s curve448_precomputed_base_table = {
         }}
     }
 };
-const struct curve448_precomputed_s *curve448_precomputed_base
+const struct curve448_precomputed_s *ossl_curve448_precomputed_base
     = &curve448_precomputed_base_table;
 
 static const niels_t curve448_wnaf_base_table[32] = {
@@ -1480,4 +1480,4 @@ static const niels_t curve448_wnaf_base_table[32] = {
                        0x001979c0df237316ULL, 0x00501e953a919b87ULL)},
     }}
 };
-const niels_t *curve448_wnaf_base = curve448_wnaf_base_table;
+const niels_t *ossl_curve448_wnaf_base = curve448_wnaf_base_table;
