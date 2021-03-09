@@ -468,7 +468,7 @@ int ossl_cms_RecipientInfo_kari_encrypt(const CMS_ContentInfo *cms,
 int ossl_cms_RecipientInfo_pwri_crypt(const CMS_ContentInfo *cms,
                                       CMS_RecipientInfo *ri, int en_de);
 /* SignerInfo routines */
-int CMS_si_check_attributes(const CMS_SignerInfo *si);
+int ossl_cms_si_check_attributes(const CMS_SignerInfo *si);
 void ossl_cms_SignerInfos_set_cmsctx(CMS_ContentInfo *cms);
 
 
