@@ -71,8 +71,6 @@ static OSSL_FUNC_keymgmt_import_types_fn ecx_imexport_types;
 static OSSL_FUNC_keymgmt_export_fn ecx_export;
 static OSSL_FUNC_keymgmt_export_types_fn ecx_imexport_types;
 
-#define ECX_POSSIBLE_SELECTIONS (OSSL_KEYMGMT_SELECT_KEYPAIR)
-
 struct ecx_gen_ctx {
     OSSL_LIB_CTX *libctx;
     char *propq;
@@ -727,7 +725,13 @@ static int ecx_validate(const void *keydata, int selection, int type, size_t key
 
     assert(keylen == ecx->keylen);
 
-    if ((selection & ECX_POSSIBLE_SELECTIONS) != 0)
+    /*
+     * ECX keys have no parameters. But if EVP_PKEY_param_check() is called then
+     * we should return true.
+     */
+    if ((selection & (OSSL_KEYMGMT_SELECT_KEYPAIR
+                      | OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS
+                      | OSSL_KEYMGMT_SELECT_OTHER_PARAMETERS)) != 0)
         ok = 1;
 
     if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0)

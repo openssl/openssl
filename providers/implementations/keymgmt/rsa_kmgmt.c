@@ -367,7 +367,18 @@ static int rsa_validate(const void *keydata, int selection, int checktype)
     if (!ossl_prov_is_running())
         return 0;
 
-    if ((selection & RSA_POSSIBLE_SELECTIONS) != 0)
+    /*
+     * Although an RSA key has no domain parameters, validating them should
+     * return true.
+     *
+     * RSA_POSSIBLE_SELECTIONS already includes
+     * OSSL_KEYMGMT_SELECT_OTHER_PARAMETERS. We explicitly add
+     * OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS here as well for completeness. In
+     * practice this makes little difference since EVP_PKEY_param_check() always
+     * checks the combination of "other" and "domain" parameters anyway.
+     */
+    if ((selection & (RSA_POSSIBLE_SELECTIONS
+                      | OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS)) != 0)
         ok = 1;
 
     /* If the whole key is selected, we do a pairwise validation */
