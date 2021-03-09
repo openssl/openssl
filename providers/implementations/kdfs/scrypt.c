@@ -493,15 +493,15 @@ static int scrypt_alg(const char *pass, size_t passlen,
     X = (uint32_t *)(B + Blen);
     T = X + 32 * r;
     V = T + 32 * r;
-    if (pkcs5_pbkdf2_hmac_ex(pass, passlen, salt, saltlen, 1, sha256, (int)Blen,
-                             B, libctx, propq) == 0)
+    if (ossl_pkcs5_pbkdf2_hmac_ex(pass, passlen, salt, saltlen, 1, sha256,
+                                  (int)Blen, B, libctx, propq) == 0)
         goto err;
 
     for (i = 0; i < p; i++)
         scryptROMix(B + 128 * r * i, r, N, X, T, V);
 
-    if (pkcs5_pbkdf2_hmac_ex(pass, passlen, B, (int)Blen, 1, sha256, keylen,
-                             key, libctx, propq) == 0)
+    if (ossl_pkcs5_pbkdf2_hmac_ex(pass, passlen, B, (int)Blen, 1, sha256,
+                                  keylen, key, libctx, propq) == 0)
         goto err;
     rv = 1;
  err:
