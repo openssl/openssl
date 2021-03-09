@@ -150,7 +150,7 @@ static void cleanup3_doall(ADDED_OBJ *a)
     OPENSSL_free(a);
 }
 
-void obj_cleanup_int(void)
+void ossl_obj_cleanup_int(void)
 {
     if (added == NULL)
         return;
