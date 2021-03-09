@@ -41,9 +41,9 @@ PKCS12 *PKCS12_create(const char *pass, const char *name, EVP_PKEY *pkey, X509 *
     unsigned int keyidlen = 0;
 
     /* Set defaults */
-    if (!nid_cert)
+    if (nid_cert == NID_undef)
         nid_cert = NID_aes_256_cbc;
-    if (!nid_key)
+    if (nid_key == NID_undef)
         nid_key = NID_aes_256_cbc;
     if (!iter)
         iter = PKCS12_DEFAULT_ITER;

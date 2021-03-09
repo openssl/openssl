@@ -186,7 +186,8 @@ int PKCS12_set_mac(PKCS12 *p12, const char *pass, int passlen,
     unsigned int maclen;
     ASN1_OCTET_STRING *macoct;
 
-    if (!md_type)
+    if (md_type == NULL)
+        /* No need to do a fetch as the md_type is used only to get a NID */
         md_type = EVP_sha256();
     if (!iter)
         iter = PKCS12_DEFAULT_ITER;

@@ -16,28 +16,28 @@ PKCS12_create - create a PKCS#12 structure
 
 PKCS12_create() creates a PKCS#12 structure.
 
-B<pass> is the passphrase to use. B<name> is the B<friendlyName> to use for
-the supplied certificate and key. B<pkey> is the private key to include in
-the structure and B<cert> its corresponding certificates. B<ca>, if not B<NULL>
+I<pass> is the passphrase to use. I<name> is the B<friendlyName> to use for
+the supplied certificate and key. I<pkey> is the private key to include in
+the structure and I<cert> its corresponding certificates. I<ca>, if not NULL
 is an optional set of certificates to also include in the structure.
 
-B<nid_key> and B<nid_cert> are the encryption algorithms that should be used
+I<nid_key> and I<nid_cert> are the encryption algorithms that should be used
 for the key and certificate respectively. The modes
-GCM, CCM, XTS, and OCB are unsupported. B<iter> is the encryption algorithm
-iteration count to use and B<mac_iter> is the MAC iteration count to use.
-B<keytype> is the type of key.
+GCM, CCM, XTS, and OCB are unsupported. I<iter> is the encryption algorithm
+iteration count to use and I<mac_iter> is the MAC iteration count to use.
+I<keytype> is the type of key.
 
 =head1 NOTES
 
-The parameters B<nid_key>, B<nid_cert>, B<iter>, B<mac_iter> and B<keytype>
+The parameters I<nid_key>, I<nid_cert>, I<iter>, I<mac_iter> and I<keytype>
 can all be set to zero and sensible defaults will be used.
 
 These defaults are: AES password based encryption (PBES2 with PBKDF2 and
-AES-256-CBC) for private keys and certificates, the PBKDF2 and MAC key iteration
-count of PKCS12_DEFAULT_ITER (currently 2048), and MAC algorithm HMAC
-with SHA2-256.
+AES-256-CBC) for private keys and certificates, the PBKDF2 and MAC key
+derivation iteration count of B<PKCS12_DEFAULT_ITER> (currently 2048), and
+MAC algorithm HMAC with SHA2-256.
 
-B<keytype> adds a flag to the store private key. This is a non standard extension
+I<keytype> adds a flag to the store private key. This is a non standard extension
 that is only currently interpreted by MSIE. If set to zero the flag is omitted,
 if set to B<KEY_SIG> the key can be used for signing only, if set to B<KEY_EX>
 it can be used for signing and encryption. This option was useful for old
@@ -45,18 +45,18 @@ export grade software which could use signing only keys of arbitrary size but
 had restrictions on the permissible sizes of keys which could be used for
 encryption.
 
-If a certificate contains an B<alias> or B<keyid> then this will be
+If a certificate contains an I<alias> or I<keyid> then this will be
 used for the corresponding B<friendlyName> or B<localKeyID> in the
 PKCS12 structure.
 
-Either B<pkey>, B<cert> or both can be B<NULL> to indicate that no key or
+Either I<pkey>, I<cert> or both can be NULL to indicate that no key or
 certificate is required. In previous versions both had to be present or
 a fatal error is returned.
 
-B<nid_key> or B<nid_cert> can be set to -1 indicating that no encryption
+I<nid_key> or I<nid_cert> can be set to -1 indicating that no encryption
 should be used.
 
-B<mac_iter> can be set to -1 and the MAC will then be omitted entirely.
+I<mac_iter> can be set to -1 and the MAC will then be omitted entirely.
 
 PKCS12_create() makes assumptions regarding the encoding of the given pass
 phrase.
@@ -70,6 +70,12 @@ PKCS12_create() returns a valid B<PKCS12> structure or NULL if an error occurred
 
 L<d2i_PKCS12(3)>,
 L<passphrase-encoding(7)>
+
+=head1 HISTORY
+
+The defaults for encryption algorithms, MAC algorithm, and the MAC key
+derivation iteration count were changed in OpenSSL 3.0 to more modern
+standards.
 
 =head1 COPYRIGHT
 
