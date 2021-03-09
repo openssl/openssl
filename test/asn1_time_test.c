@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <crypto/asn1.h>
 #include <openssl/asn1.h>
 #include <openssl/evp.h>
 #include <openssl/objects.h>
@@ -26,6 +27,53 @@ struct testdata {
     time_t t;               /* expected time_t*/
     int cmp_result;         /* comparison to baseline result */
     int convert_result;     /* conversion result */
+};
+
+struct TESTDATA_asn1_to_utc {
+    char *input;
+    time_t expected;
+};
+
+static struct TESTDATA_asn1_to_utc asn1_to_utc[] = {
+    {
+        /* 
+         * last second of standard time in central Europe in 2021
+         * specified in GMT
+         */
+        "210328005959Z",
+        1616893199,
+    },
+    {
+        /* 
+         * first second of daylight saving time in central Europe in 2021
+         * specified in GMT
+         */
+        "210328010000Z",
+        1616893200,
+    },
+    {
+        /* 
+         * last second of standard time in central Europe in 2021
+         * specified in offset to GMT
+         */
+        "20210328015959+0100",
+        1616893199,
+    },
+    {
+        /* 
+         * first second of daylight saving time in central Europe in 2021
+         * specified in offset to GMT
+         */
+        "20210328030000+0200",
+        1616893200,
+    },
+    {
+        /* 
+         * Invalid strings should get -1 as a result
+         */
+        "INVALID",
+        -1,
+    },
 };
 
 static struct testdata tbl_testdata_pos[] = {
@@ -379,6 +427,20 @@ static int test_time_dup(void)
     return ret;
 }
 
+static int convert_asn1_to_time_t(int idx)
+{
+    time_t testdateutc;
+    
+    testdateutc = asn1_string_to_time_t(asn1_to_utc[idx].input);
+
+    if (!TEST_time_t_eq(testdateutc, asn1_to_utc[idx].expected)) {
+        TEST_info("asn1_string_to_time_t (%s) failed: expected %li, got %li\n",
+                asn1_to_utc[idx].input, asn1_to_utc[idx].expected, (signed long) testdateutc);
+        return 0;
+    }
+    return 1;
+}
+
 int setup_tests(void)
 {
     /*
@@ -414,5 +476,6 @@ int setup_tests(void)
     }
     ADD_ALL_TESTS(test_table_compare, OSSL_NELEM(tbl_compare_testdata));
     ADD_TEST(test_time_dup);
+    ADD_ALL_TESTS(convert_asn1_to_time_t, OSSL_NELEM(asn1_to_utc));
     return 1;
 }
