@@ -63,10 +63,10 @@ static int aria_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
     int mode = EVP_CIPHER_CTX_mode(ctx);
 
     if (enc || (mode != EVP_CIPH_ECB_MODE && mode != EVP_CIPH_CBC_MODE))
-        ret = aria_set_encrypt_key(key, EVP_CIPHER_CTX_key_length(ctx) * 8,
+        ret = ossl_aria_set_encrypt_key(key, EVP_CIPHER_CTX_key_length(ctx) * 8,
                                         EVP_CIPHER_CTX_get_cipher_data(ctx));
     else
-        ret = aria_set_decrypt_key(key, EVP_CIPHER_CTX_key_length(ctx) * 8,
+        ret = ossl_aria_set_decrypt_key(key, EVP_CIPHER_CTX_key_length(ctx) * 8,
                                         EVP_CIPHER_CTX_get_cipher_data(ctx));
     if (ret < 0) {
         ERR_raise(ERR_LIB_EVP,EVP_R_ARIA_KEY_SETUP_FAILED);
@@ -82,10 +82,10 @@ static void aria_cbc_encrypt(const unsigned char *in, unsigned char *out,
 
     if (enc)
         CRYPTO_cbc128_encrypt(in, out, len, key, ivec,
-                              (block128_f) aria_encrypt);
+                              (block128_f) ossl_aria_encrypt);
     else
         CRYPTO_cbc128_decrypt(in, out, len, key, ivec,
-                              (block128_f) aria_encrypt);
+                              (block128_f) ossl_aria_encrypt);
 }
 
 static void aria_cfb128_encrypt(const unsigned char *in, unsigned char *out,
@@ -94,7 +94,7 @@ static void aria_cfb128_encrypt(const unsigned char *in, unsigned char *out,
 {
 
     CRYPTO_cfb128_encrypt(in, out, length, key, ivec, num, enc,
-                          (block128_f) aria_encrypt);
+                          (block128_f) ossl_aria_encrypt);
 }
 
 static void aria_cfb1_encrypt(const unsigned char *in, unsigned char *out,
@@ -102,7 +102,7 @@ static void aria_cfb1_encrypt(const unsigned char *in, unsigned char *out,
                               unsigned char *ivec, int *num, const int enc)
 {
     CRYPTO_cfb128_1_encrypt(in, out, length, key, ivec, num, enc,
-                            (block128_f) aria_encrypt);
+                            (block128_f) ossl_aria_encrypt);
 }
 
 static void aria_cfb8_encrypt(const unsigned char *in, unsigned char *out,
@@ -110,13 +110,13 @@ static void aria_cfb8_encrypt(const unsigned char *in, unsigned char *out,
                               unsigned char *ivec, int *num, const int enc)
 {
     CRYPTO_cfb128_8_encrypt(in, out, length, key, ivec, num, enc,
-                            (block128_f) aria_encrypt);
+                            (block128_f) ossl_aria_encrypt);
 }
 
 static void aria_ecb_encrypt(const unsigned char *in, unsigned char *out,
                              const ARIA_KEY *key, const int enc)
 {
-    aria_encrypt(in, out, key);
+    ossl_aria_encrypt(in, out, key);
 }
 
 static void aria_ofb128_encrypt(const unsigned char *in, unsigned char *out,
@@ -124,7 +124,7 @@ static void aria_ofb128_encrypt(const unsigned char *in, unsigned char *out,
                              unsigned char *ivec, int *num)
 {
     CRYPTO_ofb128_encrypt(in, out, length, key, ivec, num,
-                         (block128_f) aria_encrypt);
+                         (block128_f) ossl_aria_encrypt);
 }
 
 IMPLEMENT_BLOCK_CIPHER(aria_128, ks, aria, EVP_ARIA_KEY,
@@ -175,7 +175,7 @@ static int aria_ctr_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 
     CRYPTO_ctr128_encrypt(in, out, len, &dat->ks, ctx->iv,
                           EVP_CIPHER_CTX_buf_noconst(ctx), &num,
-                          (block128_f) aria_encrypt);
+                          (block128_f) ossl_aria_encrypt);
     EVP_CIPHER_CTX_set_num(ctx, num);
     return 1;
 }
@@ -211,10 +211,10 @@ static int aria_gcm_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
     if (!iv && !key)
         return 1;
     if (key) {
-        ret = aria_set_encrypt_key(key, EVP_CIPHER_CTX_key_length(ctx) * 8,
-                                   &gctx->ks.ks);
+        ret = ossl_aria_set_encrypt_key(key, EVP_CIPHER_CTX_key_length(ctx) * 8,
+                                        &gctx->ks.ks);
         CRYPTO_gcm128_init(&gctx->gcm, &gctx->ks,
-                           (block128_f) aria_encrypt);
+                           (block128_f) ossl_aria_encrypt);
         if (ret < 0) {
             ERR_raise(ERR_LIB_EVP,EVP_R_ARIA_KEY_SETUP_FAILED);
             return 0;
@@ -508,10 +508,10 @@ static int aria_ccm_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
         return 1;
 
     if (key) {
-        ret = aria_set_encrypt_key(key, EVP_CIPHER_CTX_key_length(ctx) * 8,
-                                   &cctx->ks.ks);
+        ret = ossl_aria_set_encrypt_key(key, EVP_CIPHER_CTX_key_length(ctx) * 8,
+                                        &cctx->ks.ks);
         CRYPTO_ccm128_init(&cctx->ccm, cctx->M, cctx->L,
-                           &cctx->ks, (block128_f) aria_encrypt);
+                           &cctx->ks, (block128_f) ossl_aria_encrypt);
         if (ret < 0) {
             ERR_raise(ERR_LIB_EVP,EVP_R_ARIA_KEY_SETUP_FAILED);
             return 0;
