@@ -71,6 +71,7 @@ static char server_port[32] = { '\0' };
 static char *opt_path = NULL;
 static char *opt_proxy = NULL;
 static char *opt_no_proxy = NULL;
+static char *opt_recipient = NULL;
 static int opt_msg_timeout = -1;
 static int opt_total_timeout = -1;
 
@@ -78,7 +79,6 @@ static int opt_total_timeout = -1;
 static char *opt_trusted = NULL;
 static char *opt_untrusted = NULL;
 static char *opt_srvcert = NULL;
-static char *opt_recipient = NULL;
 static char *opt_expect_sender = NULL;
 static int opt_ignore_keyusage = 0;
 static int opt_unprotected_errors = 0;
@@ -204,10 +204,11 @@ typedef enum OPTION_choice {
     OPT_OLDCERT, OPT_REVREASON,
 
     OPT_SERVER, OPT_PATH, OPT_PROXY, OPT_NO_PROXY,
+    OPT_RECIPIENT,
     OPT_MSG_TIMEOUT, OPT_TOTAL_TIMEOUT,
 
     OPT_TRUSTED, OPT_UNTRUSTED, OPT_SRVCERT,
-    OPT_RECIPIENT, OPT_EXPECT_SENDER,
+    OPT_EXPECT_SENDER,
     OPT_IGNORE_KEYUSAGE, OPT_UNPROTECTED_ERRORS,
     OPT_EXTRACERTSOUT, OPT_CACERTSOUT,
 
@@ -340,6 +341,8 @@ const OPTIONS cmp_options[] = {
      "List of addresses of servers not to use HTTP(S) proxy for"},
     {OPT_MORE_STR, 0, 0,
      "Default from environment variable 'no_proxy', else 'NO_PROXY', else none"},
+    {"recipient", OPT_RECIPIENT, 's',
+     "DN of CA. Default: subject of -srvcert, -issuer, issuer of -oldcert or -cert"},
     {"msg_timeout", OPT_MSG_TIMEOUT, 'n',
      "Timeout per CMP message round trip (or 0 for none). Default 120 seconds"},
     {"total_timeout", OPT_TOTAL_TIMEOUT, 'n',
@@ -353,8 +356,6 @@ const OPTIONS cmp_options[] = {
      "Intermediate CA certs for chain construction for CMP/TLS/enrolled certs"},
     {"srvcert", OPT_SRVCERT, 's',
      "Server cert to pin and trust directly when verifying signed CMP responses"},
-    {"recipient", OPT_RECIPIENT, 's',
-     "DN of CA. Default: subject of -srvcert, -issuer, issuer of -oldcert or -cert"},
     {"expect_sender", OPT_EXPECT_SENDER, 's',
      "DN of expected sender of responses. Defaults to subject of -srvcert, if any"},
     {"ignore_keyusage", OPT_IGNORE_KEYUSAGE, '-',
@@ -527,10 +528,11 @@ static varref cmp_vars[] = { /* must be in same order as enumerated above! */
     {&opt_oldcert}, {(char **)&opt_revreason},
 
     {&opt_server}, {&opt_path}, {&opt_proxy}, {&opt_no_proxy},
+    {&opt_recipient},
     {(char **)&opt_msg_timeout}, {(char **)&opt_total_timeout},
 
     {&opt_trusted}, {&opt_untrusted}, {&opt_srvcert},
-    {&opt_recipient}, {&opt_expect_sender},
+    {&opt_expect_sender},
     {(char **)&opt_ignore_keyusage}, {(char **)&opt_unprotected_errors},
     {&opt_extracertsout}, {&opt_cacertsout},
 
@@ -2375,6 +2377,9 @@ static int get_opts(int argc, char **argv)
         case OPT_PATH:
             opt_path = opt_str("path");
             break;
+        case OPT_RECIPIENT:
+            opt_recipient = opt_str("recipient");
+            break;
         case OPT_MSG_TIMEOUT:
             if ((opt_msg_timeout = opt_nat()) < 0)
                 goto opthelp;
@@ -2443,9 +2448,6 @@ static int get_opts(int argc, char **argv)
             break;
         case OPT_SRVCERT:
             opt_srvcert = opt_str("srvcert");
-            break;
-        case OPT_RECIPIENT:
-            opt_recipient = opt_str("recipient");
             break;
         case OPT_EXPECT_SENDER:
             opt_expect_sender = opt_str("expect_sender");
