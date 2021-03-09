@@ -36,7 +36,7 @@ static int rsa_validate_keypair_multiprime(const RSA *key, BN_GENCB *cb)
     if (key->version == RSA_ASN1_VERSION_MULTI) {
         ex_primes = sk_RSA_PRIME_INFO_num(key->prime_infos);
         if (ex_primes <= 0
-                || (ex_primes + 2) > rsa_multip_cap(BN_num_bits(key->n))) {
+                || (ex_primes + 2) > ossl_rsa_multip_cap(BN_num_bits(key->n))) {
             ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_MULTI_PRIME_KEY);
             return 0;
         }

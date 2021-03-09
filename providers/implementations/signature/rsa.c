@@ -691,8 +691,8 @@ static int rsa_verify_recover(void *vprsactx,
             {
                 size_t sltmp;
 
-                ret = int_rsa_verify(prsactx->mdnid, NULL, 0, rout, &sltmp,
-                                     sig, siglen, prsactx->rsa);
+                ret = ossl_rsa_verify(prsactx->mdnid, NULL, 0, rout, &sltmp,
+                                      sig, siglen, prsactx->rsa);
                 if (ret <= 0) {
                     ERR_raise(ERR_LIB_PROV, ERR_R_RSA_LIB);
                     return 0;
