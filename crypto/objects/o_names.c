@@ -104,7 +104,7 @@ int OBJ_NAME_new_index(unsigned long (*hash_func) (const char *),
             ret = 0;
             goto out;
         }
-        name_funcs->hash_func = openssl_lh_strcasehash;
+        name_funcs->hash_func = ossl_lh_strcasehash;
         name_funcs->cmp_func = obj_strcasecmp;
         push = sk_NAME_FUNCS_push(name_funcs_stack, name_funcs);
 
@@ -154,7 +154,7 @@ static unsigned long obj_name_hash(const OBJ_NAME *a)
             sk_NAME_FUNCS_value(name_funcs_stack,
                                 a->type)->hash_func(a->name);
     } else {
-        ret = openssl_lh_strcasehash(a->name);
+        ret = ossl_lh_strcasehash(a->name);
     }
     ret ^= a->type;
     return ret;

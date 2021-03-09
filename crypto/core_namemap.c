@@ -10,7 +10,7 @@
 #include "e_os.h"                /* strcasecmp */
 #include "internal/namemap.h"
 #include <openssl/lhash.h>
-#include "crypto/lhash.h"      /* openssl_lh_strcasehash */
+#include "crypto/lhash.h"      /* ossl_lh_strcasehash */
 #include "internal/tsan_assist.h"
 
 /*-
@@ -47,7 +47,7 @@ struct ossl_namemap_st {
 
 static unsigned long namenum_hash(const NAMENUM_ENTRY *n)
 {
-    return openssl_lh_strcasehash(n->name);
+    return ossl_lh_strcasehash(n->name);
 }
 
 static int namenum_cmp(const NAMENUM_ENTRY *a, const NAMENUM_ENTRY *b)
