@@ -19,7 +19,7 @@ int setup_tests(void)
     CA_DB *db = NULL;
     time_t testdateutc;
     int rv;
-    int argc = test_get_argument_count();
+    size_t argc = test_get_argument_count();
     BIO *bio_tmp;
 
     if (argc != 2) {
