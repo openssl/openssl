@@ -360,7 +360,7 @@ unsigned long OPENSSL_LH_strhash(const char *c)
     return (ret >> 16) ^ ret;
 }
 
-unsigned long openssl_lh_strcasehash(const char *c)
+unsigned long ossl_lh_strcasehash(const char *c)
 {
     unsigned long ret = 0;
     long n;
