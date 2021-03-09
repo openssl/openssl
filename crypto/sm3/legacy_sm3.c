@@ -13,7 +13,7 @@
 #include "../evp/legacy_meth.h"
 #include "internal/sm3.h"
 
-IMPLEMENT_LEGACY_EVP_MD_METH_LC(sm3_int, sm3)
+IMPLEMENT_LEGACY_EVP_MD_METH_LC(sm3_int, ossl_sm3)
 
 static const EVP_MD sm3_md = {
     NID_sm3,
