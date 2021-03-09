@@ -14,7 +14,7 @@
 #include <openssl/x509v3.h>
 #include "ext_dat.h"
 
-const X509V3_EXT_METHOD v3_ns_ia5_list[8] = {
+const X509V3_EXT_METHOD ossl_v3_ns_ia5_list[8] = {
     EXT_IA5STRING(NID_netscape_base_url),
     EXT_IA5STRING(NID_netscape_revocation_url),
     EXT_IA5STRING(NID_netscape_ca_revocation_url),

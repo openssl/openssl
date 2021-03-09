@@ -304,7 +304,7 @@ struct x509_object_st {
     } data;
 };
 
-int a2i_ipadd(unsigned char *ipout, const char *ipasc);
+int ossl_a2i_ipadd(unsigned char *ipout, const char *ipasc);
 int x509_set1_time(ASN1_TIME **ptm, const ASN1_TIME *tm);
 int x509_print_ex_brief(BIO *bio, X509 *cert, unsigned long neg_cflags);
 int x509v3_cache_extensions(X509 *x);
@@ -325,7 +325,7 @@ int ossl_x509_add_certs_new(STACK_OF(X509) **p_sk, STACK_OF(X509) *certs,
 int X509_PUBKEY_get0_libctx(OSSL_LIB_CTX **plibctx, const char **ppropq,
                             const X509_PUBKEY *key);
 /* Calculate default key identifier according to RFC 5280 section 4.2.1.2 (1) */
-ASN1_OCTET_STRING *x509_pubkey_hash(X509_PUBKEY *pubkey);
+ASN1_OCTET_STRING *ossl_x509_pubkey_hash(X509_PUBKEY *pubkey);
 
 /* A variant of d2i_PUBKEY() that is guaranteed to only return legacy keys */
 EVP_PKEY *d2i_PUBKEY_legacy(EVP_PKEY **a,

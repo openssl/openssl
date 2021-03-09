@@ -53,7 +53,7 @@ IMPLEMENT_ASN1_FUNCTIONS(ADMISSION_SYNTAX)
 static int i2r_ADMISSION_SYNTAX(const struct v3_ext_method *method, void *in,
                                 BIO *bp, int ind);
 
-const X509V3_EXT_METHOD v3_ext_admission = {
+const X509V3_EXT_METHOD ossl_v3_ext_admission = {
     NID_x509ExtAdmission,   /* .ext_nid = */
     0,                      /* .ext_flags = */
     ASN1_ITEM_ref(ADMISSION_SYNTAX), /* .it = */

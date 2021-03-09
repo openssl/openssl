@@ -22,7 +22,7 @@
  */
 
 
-const X509V3_EXT_METHOD v3_utf8_list[1] = {
+const X509V3_EXT_METHOD ossl_v3_utf8_list[1] = {
     EXT_UTF8STRING(NID_subjectSignTool),
 };
 

@@ -24,7 +24,7 @@ static AUTHORITY_KEYID *v2i_AUTHORITY_KEYID(X509V3_EXT_METHOD *method,
                                             X509V3_CTX *ctx,
                                             STACK_OF(CONF_VALUE) *values);
 
-const X509V3_EXT_METHOD v3_akey_id = {
+const X509V3_EXT_METHOD ossl_v3_akey_id = {
     NID_authority_key_identifier,
     X509V3_EXT_MULTILINE, ASN1_ITEM_ref(AUTHORITY_KEYID),
     0, 0, 0, 0,
@@ -136,7 +136,7 @@ static AUTHORITY_KEYID *v2i_AUTHORITY_KEYID(X509V3_EXT_METHOD *method,
             X509_PUBKEY *pubkey = NULL;
 
             if (X509_PUBKEY_set(&pubkey, ctx->issuer_pkey))
-                ikeyid = x509_pubkey_hash(pubkey);
+                ikeyid = ossl_x509_pubkey_hash(pubkey);
             X509_PUBKEY_free(pubkey);
         }
         if ((keyid == 2 || issuer == 0)
