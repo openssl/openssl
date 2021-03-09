@@ -42,7 +42,7 @@ Otherwise they return a pointer to the newly allocated structure.
 
 L<ERR_get_error(3)>, L<CMS_final(3)>>
 
-head1 HISTORY
+=head1 HISTORY
 
 The CMS_digest_create_ex() method was added in OpenSSL 3.0.
 

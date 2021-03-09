@@ -53,7 +53,7 @@ allocated structure.
 
 L<ERR_get_error(3)>, L<CMS_final(3)>, L<CMS_EncryptedData_decrypt(3)>
 
-head1 HISTORY
+=head1 HISTORY
 
 The CMS_EncryptedData_encrypt_ex() method was added in OpenSSL 3.0.
 
