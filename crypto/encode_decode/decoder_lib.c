@@ -39,7 +39,14 @@ int OSSL_DECODER_from_bio(OSSL_DECODER_CTX *ctx, BIO *in)
 {
     struct decoder_process_data_st data;
     int ok = 0;
+    BIO *new_bio = NULL;
 
+    if (BIO_tell(in) < 0) {
+        new_bio = BIO_new(BIO_f_readbuffer());
+        if (new_bio == NULL)
+            return 0;
+        in = BIO_push(new_bio, in);
+    }
     memset(&data, 0, sizeof(data));
     data.ctx = ctx;
     data.bio = in;
@@ -52,6 +59,10 @@ int OSSL_DECODER_from_bio(OSSL_DECODER_CTX *ctx, BIO *in)
     /* Clear any internally cached passphrase */
     (void)ossl_pw_clear_passphrase_cache(&ctx->pwdata);
 
+    if (new_bio != NULL) {
+        BIO_pop(new_bio);
+        BIO_free(new_bio);
+    }
     return ok;
 }
 
