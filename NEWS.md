@@ -21,9 +21,10 @@ OpenSSL 3.0
 ### Major changes between OpenSSL 1.1.1 and OpenSSL 3.0 [under development]
 
   * Changed the license to the Apache License v2.0.
-  * Moved the impmlementation of various EVP ciphers and digests to the legacy
-    provider. Applications that continue to use these ciphers and digests via
-    EVP will need to load the legacy provider.
+  * Moved all variations of the EVP ciphers CAST5, BF, IDEA, SEED, RC2,
+    RC4, RC5, and DES to the legacy provider.
+  * Moved the EVP digests MD2, MD4, MDC2, WHIRLPOOL and RIPEMD-160 to the legacy
+    provider.
   * Deprecated the `OCSP_REQ_CTX` type and functions.
   * Deprecated the `EC_KEY` and `EC_KEY_METHOD` types and functions.
   * Deprecated the `RSA` and `RSA_METHOD` types and functions.
