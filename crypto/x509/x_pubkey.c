@@ -258,8 +258,8 @@ EVP_PKEY *X509_PUBKEY_get(const X509_PUBKEY *key)
  * or decode as X509_PUBKEY
  */
 
-EVP_PKEY *d2i_PUBKEY_ex(EVP_PKEY **a, const unsigned char **pp, long length,
-                        OSSL_LIB_CTX *libctx, const char *propq)
+static EVP_PKEY *d2i_PUBKEY_decoder(EVP_PKEY **a, const unsigned char **pp, long length,
+                                    OSSL_LIB_CTX *libctx, const char *propq)
 {
     OSSL_DECODER_CTX *dctx = NULL;
     size_t len = length;
@@ -272,6 +272,8 @@ EVP_PKEY *d2i_PUBKEY_ex(EVP_PKEY **a, const unsigned char **pp, long length,
         ppkey = a;
 
     for (i = 0;  i < (int)OSSL_NELEM(input_structures); ++i) {
+        const unsigned char *p = *pp;
+
         dctx = OSSL_DECODER_CTX_new_by_EVP_PKEY(ppkey, "DER",
                                                 input_structures[i], NULL,
                                                 EVP_PKEY_PUBLIC_KEY, libctx, propq);
@@ -284,6 +286,7 @@ EVP_PKEY *d2i_PUBKEY_ex(EVP_PKEY **a, const unsigned char **pp, long length,
             if (*ppkey != NULL
                 && evp_keymgmt_util_has(*ppkey, OSSL_KEYMGMT_SELECT_PUBLIC_KEY))
                 return *ppkey;
+            *pp = p;
             goto err;
         }
     }
@@ -292,6 +295,18 @@ err:
     if (ppkey != a)
         EVP_PKEY_free(*ppkey);
     return NULL;
+}
+
+EVP_PKEY *d2i_PUBKEY_ex(EVP_PKEY **a, const unsigned char **pp, long length,
+                        OSSL_LIB_CTX *libctx, const char *propq)
+{
+    EVP_PKEY *ret;
+
+    ret = d2i_PUBKEY_decoder(a, pp, length, libctx, propq);
+    /* try the legacy path if the decoder failed */
+    if (ret == NULL)
+        ret = evp_publickey_from_binary(a, pp, length, libctx, propq);
+    return ret;
 }
 
 
