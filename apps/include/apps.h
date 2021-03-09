@@ -158,7 +158,7 @@ int unpack_revinfo(ASN1_TIME **prevtm, int *preason, ASN1_OBJECT **phold,
 # define DB_TYPE_SUSP    'S'    /* Suspended  */
 
 void app_bail_out(char *fmt, ...);
-void* app_malloc(int sz, const char *what);
+void* app_malloc(size_t sz, const char *what);
 void policies_print(X509_STORE_CTX *ctx);
 int bio_to_mem(unsigned char **out, int maxlen, BIO *in);
 int x509_ctrl_string(X509 *x, const char *value);
