@@ -263,7 +263,7 @@ static int cms_check_attribute(int nid, int flags, int type,
  *     attributes. Only one instance of each is allowed, with each of these
  *     attributes containing a single attribute value in its set.
  */
-int CMS_si_check_attributes(const CMS_SignerInfo *si)
+int ossl_cms_si_check_attributes(const CMS_SignerInfo *si)
 {
     int i;
     int have_signed_attrs = (CMS_signed_get_attr_count(si) > 0);

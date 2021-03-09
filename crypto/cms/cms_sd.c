@@ -734,7 +734,7 @@ int CMS_SignerInfo_sign(CMS_SignerInfo *si)
             goto err;
     }
 
-    if (!CMS_si_check_attributes(si))
+    if (!ossl_cms_si_check_attributes(si))
         goto err;
 
     if (si->pctx)
@@ -829,7 +829,7 @@ int CMS_SignerInfo_verify(CMS_SignerInfo *si)
         return -1;
     }
 
-    if (!CMS_si_check_attributes(si))
+    if (!ossl_cms_si_check_attributes(si))
         return -1;
 
     name = OBJ_nid2sn(OBJ_obj2nid(si->digestAlgorithm->algorithm));
