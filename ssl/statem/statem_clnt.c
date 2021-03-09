@@ -3114,7 +3114,7 @@ static int tls_construct_cke_gost(SSL *s, WPACKET *pkt)
 }
 
 #ifndef OPENSSL_NO_GOST
-int gost18_cke_cipher_nid(const SSL *s)
+int ossl_gost18_cke_cipher_nid(const SSL *s)
 {
     if ((s->s3.tmp.new_cipher->algorithm_enc & SSL_MAGMA) != 0)
         return NID_magma_ctr;
@@ -3124,7 +3124,7 @@ int gost18_cke_cipher_nid(const SSL *s)
     return NID_undef;
 }
 
-int gost_ukm(const SSL *s, unsigned char *dgst_buf)
+int ossl_gost_ukm(const SSL *s, unsigned char *dgst_buf)
 {
     EVP_MD_CTX * hash = NULL;
     unsigned int md_len;
@@ -3159,14 +3159,14 @@ static int tls_construct_cke_gost18(SSL *s, WPACKET *pkt)
     unsigned char *pms = NULL;
     size_t pmslen = 0;
     size_t msglen;
-    int cipher_nid = gost18_cke_cipher_nid(s);
+    int cipher_nid = ossl_gost18_cke_cipher_nid(s);
 
     if (cipher_nid == NID_undef) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return 0;
     }
 
-    if (gost_ukm(s, rnd_dgst) <= 0) {
+    if (ossl_gost_ukm(s, rnd_dgst) <= 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto err;
     }

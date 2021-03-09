@@ -3198,14 +3198,14 @@ static int tls_process_cke_gost18(SSL *s, PACKET *pkt)
     const unsigned char *start = NULL;
     size_t outlen = 32, inlen = 0;
     int ret = 0;
-    int cipher_nid = gost18_cke_cipher_nid(s);
+    int cipher_nid = ossl_gost18_cke_cipher_nid(s);
 
     if (cipher_nid == NID_undef) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return 0;
     }
 
-    if (gost_ukm(s, rnd_dgst) <= 0) {
+    if (ossl_gost_ukm(s, rnd_dgst) <= 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto err;
     }
