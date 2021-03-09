@@ -234,7 +234,7 @@ void app_bail_out(char *fmt, ...)
     exit(1);
 }
 
-void* app_malloc(int sz, const char *what)
+void* app_malloc(size_t sz, const char *what)
 {
     void *vp = OPENSSL_malloc(sz);
 
