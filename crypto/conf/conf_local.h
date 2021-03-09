@@ -7,5 +7,4 @@
  * https://www.openssl.org/source/license.html
  */
 
-void conf_add_ssl_module(void);
-
+void ossl_config_add_ssl_module(void);
