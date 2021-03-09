@@ -161,7 +161,7 @@ int ossl_rsa_todata(RSA *rsa, OSSL_PARAM_BLD *bld, OSSL_PARAM params[])
 #if defined(FIPS_MODULE) && !defined(OPENSSL_NO_ACVP_TESTS)
     /* The acvp test results are not meant for export so check for bld == NULL */
     if (bld == NULL)
-        rsa_acvp_test_get_params(rsa, params);
+        ossl_rsa_acvp_test_get_params(rsa, params);
 #endif
     ret = 1;
  err:

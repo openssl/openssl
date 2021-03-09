@@ -157,16 +157,16 @@ struct rsa_meth_st {
 #define pkey_is_pss(pkey) (pkey->ameth->pkey_id == EVP_PKEY_RSA_PSS)
 #define pkey_ctx_is_pss(ctx) (ctx->pmeth->pkey_id == EVP_PKEY_RSA_PSS)
 
-RSA_PSS_PARAMS *rsa_pss_params_create(const EVP_MD *sigmd,
-                                      const EVP_MD *mgf1md, int saltlen);
-int rsa_pss_get_param(const RSA_PSS_PARAMS *pss, const EVP_MD **pmd,
-                      const EVP_MD **pmgf1md, int *psaltlen);
+RSA_PSS_PARAMS *ossl_rsa_pss_params_create(const EVP_MD *sigmd,
+                                           const EVP_MD *mgf1md, int saltlen);
+int ossl_rsa_pss_get_param(const RSA_PSS_PARAMS *pss, const EVP_MD **pmd,
+                           const EVP_MD **pmgf1md, int *psaltlen);
 /* internal function to clear and free multi-prime parameters */
-void rsa_multip_info_free_ex(RSA_PRIME_INFO *pinfo);
-void rsa_multip_info_free(RSA_PRIME_INFO *pinfo);
-RSA_PRIME_INFO *rsa_multip_info_new(void);
-int rsa_multip_calc_product(RSA *rsa);
-int rsa_multip_cap(int bits);
+void ossl_rsa_multip_info_free_ex(RSA_PRIME_INFO *pinfo);
+void ossl_rsa_multip_info_free(RSA_PRIME_INFO *pinfo);
+RSA_PRIME_INFO *ossl_rsa_multip_info_new(void);
+int ossl_rsa_multip_calc_product(RSA *rsa);
+int ossl_rsa_multip_cap(int bits);
 
 int ossl_rsa_sp800_56b_validate_strength(int nbits, int strength);
 int ossl_rsa_check_pminusq_diff(BIGNUM *diff, const BIGNUM *p, const BIGNUM *q,

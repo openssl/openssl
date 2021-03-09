@@ -489,7 +489,7 @@ static int rsa_gen_set_params(void *genctx, const OSSL_PARAM params[])
         return 0;
 #if defined(FIPS_MODULE) && !defined(OPENSSL_NO_ACVP_TESTS)
     /* Any ACVP test related parameters are copied into a params[] */
-    if (!rsa_acvp_test_gen_params_new(&gctx->acvp_test_params, params))
+    if (!ossl_rsa_acvp_test_gen_params_new(&gctx->acvp_test_params, params))
         return 0;
 #endif
     return 1;
@@ -571,7 +571,7 @@ static void *rsa_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
 
 #if defined(FIPS_MODULE) && !defined(OPENSSL_NO_ACVP_TESTS)
     if (gctx->acvp_test_params != NULL) {
-        if (!rsa_acvp_test_set_params(rsa_tmp, gctx->acvp_test_params))
+        if (!ossl_rsa_acvp_test_set_params(rsa_tmp, gctx->acvp_test_params))
             goto err;
     }
 #endif
@@ -603,7 +603,7 @@ static void rsa_gen_cleanup(void *genctx)
     if (gctx == NULL)
         return;
 #if defined(FIPS_MODULE) && !defined(OPENSSL_NO_ACVP_TESTS)
-    rsa_acvp_test_gen_params_free(gctx->acvp_test_params);
+    ossl_rsa_acvp_test_gen_params_free(gctx->acvp_test_params);
     gctx->acvp_test_params = NULL;
 #endif
     BN_clear_free(gctx->pub_exp);
