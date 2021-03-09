@@ -1,6 +1,6 @@
 name: GitHub CI
 
-on: [pull_request]
+on: [pull_request, push]
 
 # for some reason, this does not work:
 # variables:
@@ -13,6 +13,30 @@ on: [pull_request]
 #     - make="make -s"
 
 jobs:
+  check_update:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: config
+      run: ./config --strict-warnings && perl configdata.pm --dump
+    - name: make build_generated
+      run: make -s build_generated
+    - name: make update
+      run: make -s update
+    - name: git diff
+      run: git diff --exit-code
+
+  check_docs:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: config
+      run: ./config --strict-warnings && perl configdata.pm --dump
+    - name: make build_generated
+      run: make -s build_generated
+    - name: make doc-nits
+      run: make doc-nits
+
   basic_gcc:
     runs-on: ubuntu-latest
     steps:
@@ -23,8 +47,6 @@ jobs:
         run: make -s -j4
       - name: make test
         run: make test
-      - name: make doc-nits
-        run: make doc-nits
 
   basic_clang:
     runs-on: ubuntu-latest
@@ -43,6 +65,17 @@ jobs:
       - uses: actions/checkout@v2
       - name: config
         run: ./config --strict-warnings no-shared no-dso no-pic no-aria no-async no-autoload-config no-blake2 no-bf no-camellia no-cast no-chacha no-cmac no-cms no-comp no-ct no-des no-dgram no-dh no-dsa no-dtls no-ec2m no-engine no-filenames no-gost no-idea no-mdc2 no-md4 no-multiblock no-nextprotoneg no-ocsp no-ocb no-poly1305 no-psk no-rc2 no-rc4 no-rmd160 no-seed no-siphash no-sm2 no-sm3 no-sm4 no-srp no-srtp no-ssl3 no-ssl3-method no-ts no-ui-console no-whirlpool no-asm -DOPENSSL_NO_SECURE_MEMORY -DOPENSSL_SMALL_FOOTPRINT && perl configdata.pm --dump
+      - name: make
+        run: make -s -j4
+      - name: make test
+        run: make test
+
+  no-deprecated:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: config
+        run: ./config --strict-warnings no-deprecated && perl configdata.pm --dump
       - name: make
         run: make -s -j4
       - name: make test
@@ -75,7 +108,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: config
-        run: ./config -Werror --debug no-afalgeng no-shared enable-crypto-mdebug enable-rc5 enable-md2 && perl configdata.pm --dump
+        run: ./config -Werror --debug no-afalgeng no-shared enable-crypto-mdebug enable-rc5 enable-md2 enable-ssl3 enable-ssl3-method enable-weak-ssl-ciphers enable-zlib enable-ec_nistp_64_gcc_128 && perl configdata.pm --dump
       - name: make
         run: make -s -j4
       - name: make test
