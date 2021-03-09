@@ -12,6 +12,7 @@
 
 #include "openssl/x509.h"
 
+extern char *default_config_file; /* may be "" */
 BIO *dup_bio_in(int format);
 BIO *dup_bio_out(int format);
 BIO *dup_bio_err(int format);
