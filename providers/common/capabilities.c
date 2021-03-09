@@ -214,8 +214,8 @@ static int tls_group_capability(OSSL_CALLBACK *cb, void *arg)
     return 1;
 }
 
-int provider_get_capabilities(void *provctx, const char *capability,
-                              OSSL_CALLBACK *cb, void *arg)
+int ossl_prov_get_capabilities(void *provctx, const char *capability,
+                               OSSL_CALLBACK *cb, void *arg)
 {
     if (strcasecmp(capability, "TLS-GROUP") == 0)
         return tls_group_capability(cb, arg);

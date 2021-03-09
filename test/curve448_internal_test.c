@@ -629,14 +629,16 @@ static int test_ed448(void)
             || !TEST_true(ossl_ed448_sign(NULL, outsig, msg9, sizeof(msg9),
                                           pubkey9, privkey9, NULL, 0, NULL))
             || !TEST_int_eq(memcmp(sig9, outsig, sizeof(sig9)), 0)
-            || !TEST_true(ossl_ed448ph_sign(NULL, outsig, dohash(hashctx, phmsg1,
-                                            sizeof(phmsg1)), phpubkey1,
-                                            phprivkey1, NULL, 0, NULL))
+            || !TEST_true(ossl_ed448ph_sign(NULL, outsig,
+                                            dohash(hashctx, phmsg1,
+                                                   sizeof(phmsg1)), phpubkey1,
+                                                   phprivkey1, NULL, 0, NULL))
             || !TEST_int_eq(memcmp(phsig1, outsig, sizeof(phsig1)), 0)
-            || !TEST_true(ossl_ed448ph_sign(NULL, outsig, dohash(hashctx, phmsg2,
-                                            sizeof(phmsg2)), phpubkey2,
-                                            phprivkey2, phcontext2,
-                                            sizeof(phcontext2), NULL))
+            || !TEST_true(ossl_ed448ph_sign(NULL, outsig,
+                                            dohash(hashctx, phmsg2,
+                                                   sizeof(phmsg2)), phpubkey2,
+                                                   phprivkey2, phcontext2,
+                                                   sizeof(phcontext2), NULL))
             || !TEST_int_eq(memcmp(phsig2, outsig, sizeof(phsig2)), 0)) {
         EVP_MD_CTX_free(hashctx);
         return 0;

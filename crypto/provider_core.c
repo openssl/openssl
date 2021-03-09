@@ -157,7 +157,7 @@ static void *provider_store_new(OSSL_LIB_CTX *ctx)
     }
     store->use_fallbacks = 1;
 
-    for (p = predefined_providers; p->name != NULL; p++) {
+    for (p = ossl_predefined_providers; p->name != NULL; p++) {
         OSSL_PROVIDER *prov = NULL;
 
         /*

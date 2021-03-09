@@ -14,6 +14,7 @@
 # include <openssl/ocsp.h>
 
 BIO *ossl_http_asn1_item2bio(const ASN1_ITEM *it, const ASN1_VALUE *val);
+
 OSSL_HTTP_REQ_CTX
 *ossl_http_req_ctx_new(BIO *wbio, BIO *rbio, int use_http_proxy,
                        const char *server, const char *port,
