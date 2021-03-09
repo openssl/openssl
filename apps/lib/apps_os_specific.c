@@ -19,11 +19,6 @@
 # define _kbhit kbhit
 #endif
 
-#ifdef _WIN32
-static int WIN32_rename(const char *from, const char *to);
-# define rename(from,to) WIN32_rename((from),(to))
-#endif
-
 /*
  * Platform-specific sections
  */
@@ -387,6 +382,10 @@ int has_stdin_waiting(void)
 
 int app_rename(const char *_old, const char *_new)
 {
+#ifdef _WIN32
+    return WIN32_rename(_old, _new);
+#else
     return rename(_old, _new);
+#endif
 }
 
