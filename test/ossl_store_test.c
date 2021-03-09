@@ -23,12 +23,16 @@
 typedef enum OPTION_choice {
     OPT_ERR = -1,
     OPT_EOF = 0,
+    OPT_INPUTDIR,
     OPT_INFILE,
+    OPT_SM2FILE,
     OPT_DATADIR,
     OPT_TEST_ENUM
 } OPTION_CHOICE;
 
+static const char *inputdir = NULL;
 static const char *infile = NULL;
+static const char *sm2file = NULL;
 static const char *datadir = NULL;
 
 static int test_store_open(void)
@@ -37,16 +41,19 @@ static int test_store_open(void)
     OSSL_STORE_CTX *sctx = NULL;
     OSSL_STORE_SEARCH *search = NULL;
     UI_METHOD *ui_method = NULL;
+    char *input = test_mk_file_path(inputdir, infile);
 
-    ret = TEST_ptr(search = OSSL_STORE_SEARCH_by_alias("nothing"))
+    ret = TEST_ptr(input)
+          && TEST_ptr(search = OSSL_STORE_SEARCH_by_alias("nothing"))
           && TEST_ptr(ui_method= UI_create_method("DummyUI"))
-          && TEST_ptr(sctx = OSSL_STORE_open_ex(infile, NULL, NULL, ui_method,
+          && TEST_ptr(sctx = OSSL_STORE_open_ex(input, NULL, NULL, ui_method,
                                                 NULL, NULL, NULL))
           && TEST_false(OSSL_STORE_find(sctx, NULL))
           && TEST_true(OSSL_STORE_find(sctx, search));
     UI_destroy_method(ui_method);
     OSSL_STORE_SEARCH_free(search);
     OSSL_STORE_close(sctx);
+    OPENSSL_free(input);
     return ret;
 }
 
@@ -159,6 +166,7 @@ static int test_store_attach_unregistered_scheme(void)
     OSSL_STORE_close(store_ctx);
     OSSL_PROVIDER_unload(provider);
     OSSL_LIB_CTX_free(libctx);
+    OPENSSL_free(input);
     return ret;
 }
 
@@ -166,7 +174,9 @@ const OPTIONS *test_get_options(void)
 {
     static const OPTIONS test_options[] = {
         OPT_TEST_OPTIONS_DEFAULT_USAGE,
-        { "in", OPT_INFILE, '<', },
+        { "dir", OPT_INPUTDIR, '/' },
+        { "in", OPT_INFILE, '<' },
+        { "sm2", OPT_SM2FILE, '<' },
         { "data", OPT_DATADIR, 's' },
         { NULL }
     };
@@ -179,8 +189,14 @@ int setup_tests(void)
 
     while ((o = opt_next()) != OPT_EOF) {
         switch (o) {
+        case OPT_INPUTDIR:
+            inputdir = opt_arg();
+            break;
         case OPT_INFILE:
             infile = opt_arg();
+            break;
+        case OPT_SM2FILE:
+            sm2file = opt_arg();
             break;
         case OPT_DATADIR:
             datadir = opt_arg();
@@ -194,13 +210,19 @@ int setup_tests(void)
     }
 
     if (datadir == NULL) {
-        TEST_error("No datadir specified");
+        TEST_error("No data directory specified");
+        return 0;
+    }
+    if (inputdir == NULL) {
+        TEST_error("No input directory specified");
         return 0;
     }
 
-    ADD_TEST(test_store_open);
+    if (infile != NULL)
+        ADD_TEST(test_store_open);
     ADD_TEST(test_store_search_by_key_fingerprint_fail);
     ADD_ALL_TESTS(test_store_get_params, 3);
-    ADD_TEST(test_store_attach_unregistered_scheme);
+    if (sm2file != NULL)
+        ADD_TEST(test_store_attach_unregistered_scheme);
     return 1;
 }
