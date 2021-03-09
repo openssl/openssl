@@ -35,7 +35,7 @@ static int nref_nos(STACK_OF(ASN1_INTEGER) *nnums, STACK_OF(CONF_VALUE) *nos);
 static int displaytext_str2tag(const char *tagstr, unsigned int *tag_len);
 static int displaytext_get_tag_len(const char *tagstr);
 
-const X509V3_EXT_METHOD v3_cpols = {
+const X509V3_EXT_METHOD ossl_v3_cpols = {
     NID_certificate_policies, 0, ASN1_ITEM_ref(CERTIFICATEPOLICIES),
     0, 0, 0, 0,
     0, 0,
@@ -185,7 +185,7 @@ static POLICYINFO *policy_section(X509V3_CTX *ctx,
             }
             pol->policyid = pobj;
 
-        } else if (!v3_name_cmp(cnf->name, "CPS")) {
+        } else if (!ossl_v3_name_cmp(cnf->name, "CPS")) {
             if (pol->qualifiers == NULL)
                 pol->qualifiers = sk_POLICYQUALINFO_new_null();
             if ((qual = POLICYQUALINFO_new()) == NULL)
@@ -201,7 +201,7 @@ static POLICYINFO *policy_section(X509V3_CTX *ctx,
             if (!ASN1_STRING_set(qual->d.cpsuri, cnf->value,
                                  strlen(cnf->value)))
                 goto merr;
-        } else if (!v3_name_cmp(cnf->name, "userNotice")) {
+        } else if (!ossl_v3_name_cmp(cnf->name, "userNotice")) {
             STACK_OF(CONF_VALUE) *unot;
             if (*cnf->value != '@') {
                 ERR_raise(ERR_LIB_X509V3, X509V3_R_EXPECTED_A_SECTION_NAME);

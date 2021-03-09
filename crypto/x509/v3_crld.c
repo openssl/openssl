@@ -23,7 +23,7 @@ static void *v2i_crld(const X509V3_EXT_METHOD *method,
 static int i2r_crldp(const X509V3_EXT_METHOD *method, void *pcrldp, BIO *out,
                      int indent);
 
-const X509V3_EXT_METHOD v3_crld = {
+const X509V3_EXT_METHOD ossl_v3_crld = {
     NID_crl_distribution_points, 0, ASN1_ITEM_ref(CRL_DIST_POINTS),
     0, 0, 0, 0,
     0, 0,
@@ -33,7 +33,7 @@ const X509V3_EXT_METHOD v3_crld = {
     NULL
 };
 
-const X509V3_EXT_METHOD v3_freshest_crl = {
+const X509V3_EXT_METHOD ossl_v3_freshest_crl = {
     NID_freshest_crl, 0, ASN1_ITEM_ref(CRL_DIST_POINTS),
     0, 0, 0, 0,
     0, 0,
@@ -344,7 +344,7 @@ static int i2r_idp(const X509V3_EXT_METHOD *method, void *pidp, BIO *out,
 static void *v2i_idp(const X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
                      STACK_OF(CONF_VALUE) *nval);
 
-const X509V3_EXT_METHOD v3_idp = {
+const X509V3_EXT_METHOD ossl_v3_idp = {
     NID_issuing_distribution_point, X509V3_EXT_MULTILINE,
     ASN1_ITEM_ref(ISSUING_DIST_POINT),
     0, 0, 0, 0,
