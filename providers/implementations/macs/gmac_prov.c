@@ -146,6 +146,7 @@ static int gmac_update(void *vmacctx, const unsigned char *data,
 static int gmac_final(void *vmacctx, unsigned char *out, size_t *outl,
                       size_t outsize)
 {
+    OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
     struct gmac_data_st *macctx = vmacctx;
     int hlen = 0;
 
@@ -155,10 +156,10 @@ static int gmac_final(void *vmacctx, unsigned char *out, size_t *outl,
     if (!EVP_EncryptFinal_ex(macctx->ctx, out, &hlen))
         return 0;
 
-    /* TODO(3.0) Use params */
     hlen = gmac_size();
-    if (!EVP_CIPHER_CTX_ctrl(macctx->ctx, EVP_CTRL_AEAD_GET_TAG,
-                             hlen, out))
+    params[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG,
+                                                  out, (size_t)hlen);
+    if (!EVP_CIPHER_CTX_get_params(macctx->ctx, params))
         return 0;
 
     *outl = hlen;
