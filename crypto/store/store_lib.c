@@ -944,8 +944,8 @@ OSSL_STORE_CTX *OSSL_STORE_attach(BIO *bp, const char *scheme,
         void *provctx = OSSL_PROVIDER_get0_provider_ctx(provider);
         OSSL_CORE_BIO *cbio = ossl_core_bio_new_from_bio(bp);
 
-        if (cbio != NULL
-            && (loader_ctx = fetched_loader->p_attach(provctx, cbio)) == NULL) {
+        if (cbio == NULL
+            || (loader_ctx = fetched_loader->p_attach(provctx, cbio)) == NULL) {
             OSSL_STORE_LOADER_free(fetched_loader);
             fetched_loader = NULL;
         } else if (propq != NULL) {
