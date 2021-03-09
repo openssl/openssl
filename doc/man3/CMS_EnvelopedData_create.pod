@@ -64,7 +64,7 @@ allocated structure.
 
 L<ERR_get_error(3)>, L<CMS_encrypt(3)>, L<CMS_decrypt(3)>, L<CMS_final(3)>
 
-head1 HISTORY
+=head1 HISTORY
 
 The CMS_EnvelopedData_create_ex() method was added in OpenSSL 3.0.
 
