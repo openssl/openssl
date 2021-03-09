@@ -102,7 +102,7 @@ static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         {
             X509 *old = exarg;
 
-            if (!x509_set0_libctx(ret, old->libctx, old->propq))
+            if (!ossl_x509_set0_libctx(ret, old->libctx, old->propq))
                 return 0;
         }
         break;
@@ -130,7 +130,7 @@ X509 *d2i_X509(X509 **a, const unsigned char **in, long len)
     cert = (X509 *)ASN1_item_d2i((ASN1_VALUE **)a, in, len, (X509_it()));
     /* Only cache the extensions if the cert object was passed in */
     if (cert != NULL && a != NULL) {
-        if (!x509v3_cache_extensions(cert)) {
+        if (!ossl_x509v3_cache_extensions(cert)) {
             if (free_on_error)
                 X509_free(cert);
             cert = NULL;
@@ -148,7 +148,7 @@ int i2d_X509(const X509 *a, unsigned char **out)
  * asn1 object and it needs a libctx to operate.
  * Use X509_new_ex() instead if possible.
  */
-int x509_set0_libctx(X509 *x, OSSL_LIB_CTX *libctx, const char *propq)
+int ossl_x509_set0_libctx(X509 *x, OSSL_LIB_CTX *libctx, const char *propq)
 {
     if (x != NULL) {
         x->libctx = libctx;
@@ -168,7 +168,7 @@ X509 *X509_new_ex(OSSL_LIB_CTX *libctx, const char *propq)
     X509 *cert = NULL;
 
     cert = (X509 *)ASN1_item_new((X509_it()));
-    if (!x509_set0_libctx(cert, libctx, propq)) {
+    if (!ossl_x509_set0_libctx(cert, libctx, propq)) {
         X509_free(cert);
         cert = NULL;
     }

@@ -39,7 +39,7 @@ struct X509_VERIFY_PARAM_st {
 };
 
 /* No error callback if depth < 0 */
-int x509_check_cert_time(X509_STORE_CTX *ctx, X509 *x, int depth);
+int ossl_x509_check_cert_time(X509_STORE_CTX *ctx, X509 *x, int depth);
 
 /* a sequence of these are used */
 struct x509_attributes_st {
@@ -155,7 +155,5 @@ DEFINE_STACK_OF(BY_DIR_ENTRY)
 typedef STACK_OF(X509_NAME_ENTRY) STACK_OF_X509_NAME_ENTRY;
 DEFINE_STACK_OF(STACK_OF_X509_NAME_ENTRY)
 
-void x509_set_signature_info(X509_SIG_INFO *siginf, const X509_ALGOR *alg,
-                             const ASN1_STRING *sig);
-int x509_likely_issued(X509 *issuer, X509 *subject);
-int x509_signing_allowed(const X509 *issuer, const X509 *subject);
+int ossl_x509_likely_issued(X509 *issuer, X509 *subject);
+int ossl_x509_signing_allowed(const X509 *issuer, const X509 *subject);
