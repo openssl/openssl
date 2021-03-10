@@ -183,6 +183,9 @@ static int test_rng_set_ctx_params(void *vtest, const OSSL_PARAM params[])
     void *ptr = NULL;
     size_t size = 0;
 
+    if (params == NULL)
+        return 1;
+
     p = OSSL_PARAM_locate_const(params, OSSL_RAND_PARAM_STRENGTH);
     if (p != NULL && !OSSL_PARAM_get_uint(p, &t->strength))
         return 0;
