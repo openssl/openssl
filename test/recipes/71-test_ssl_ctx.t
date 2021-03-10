@@ -10,7 +10,7 @@ use strict;
 use warnings;
 use OpenSSL::Test;
 
-setup("ssl_ctx_test");
+setup("test_ssl_ctx");
 
 plan tests => 1;
 ok(run(test(["ssl_ctx_test"])));

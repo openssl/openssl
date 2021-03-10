@@ -32,15 +32,20 @@ my $utf8_pem  = srctop_file($folder, "utf8_leaf.pem");
 my $ascii_chain_pem = srctop_file($folder, "ascii_chain.pem");
 my $utf8_chain_pem  = srctop_file($folder, "utf8_chain.pem");
 
-my $out = "san.tmp";
+my $out;
+my $outcnt = 0;
+sub outname {
+    $outcnt++;
+    return "sanout-$outcnt.tmp";
+}
 
+$out = outname();
 ok(run(app(["openssl", "x509", "-ext", "subjectAltName", "-in", $ascii_pem, "-noout", "-out", $out])));
 is(cmp_text($out, srctop_file($folder, "san.ascii")), 0, 'Comparing othername for ASCII domain');
 
+$out = outname();
 ok(run(app(["openssl", "x509", "-ext", "subjectAltName", "-in", $utf8_pem, "-noout", "-out", $out])));
 is(cmp_text($out, srctop_file($folder, "san.utf8")), 0, 'Comparing othername for IDN domain');
-
-unlink $out;
 
 ok(run(app(["openssl", "verify", "-nameopt", "utf8", "-no_check_time", "-verify_email", "学生\@elementary.school.example.com", "-CAfile", $ascii_chain_pem, $ascii_pem])));
 ok(run(app(["openssl", "verify", "-nameopt", "utf8", "-no_check_time", "-verify_email", "医生\@大学.example.com", "-CAfile", $utf8_chain_pem, $utf8_pem])));

@@ -12,7 +12,7 @@ use strict;
 use OpenSSL::Test qw/:DEFAULT data_file/;
 use OpenSSL::Test::Utils;
 
-setup("test_cmp_lib");
+setup("test_cmp_status");
 
 plan skip_all => "This test is not supported in a no-cmp build"
     if disabled("cmp");
