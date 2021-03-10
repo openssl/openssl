@@ -11,8 +11,9 @@
 #include <openssl/cms.h>
 #include <openssl/err.h>
 #include <openssl/decoder.h>
-#include "cms_local.h"
+#include "internal/sizes.h"
 #include "crypto/evp.h"
+#include "cms_local.h"
 
 static EVP_PKEY *pkey_type2param(int ptype, const void *pval,
                                  OSSL_LIB_CTX *libctx, const char *propq)
@@ -36,14 +37,13 @@ static EVP_PKEY *pkey_type2param(int ptype, const void *pval,
         OSSL_DECODER_CTX_free(ctx);
     } else if (ptype == V_ASN1_OBJECT) {
         const ASN1_OBJECT *poid = pval;
-        const char *groupname;
+        char groupname[OSSL_MAX_NAME_SIZE];
 
         /* type == V_ASN1_OBJECT => the parameters are given by an asn1 OID */
         pctx = EVP_PKEY_CTX_new_from_name(libctx, "EC", propq);
         if (pctx == NULL || EVP_PKEY_paramgen_init(pctx) <= 0)
             goto err;
-        groupname = OBJ_nid2sn(OBJ_obj2nid(poid));
-        if (groupname == NULL
+        if (!OBJ_obj2txt(groupname, sizeof(groupname), poid, 0)
                 || !EVP_PKEY_CTX_set_group_name(pctx, groupname)) {
             ERR_raise(ERR_LIB_CMS, CMS_R_DECODE_ERROR);
             goto err;
@@ -159,7 +159,7 @@ static int ecdh_cms_set_shared_info(EVP_PKEY_CTX *pctx, CMS_RecipientInfo *ri)
     int plen, keylen;
     EVP_CIPHER *kekcipher = NULL;
     EVP_CIPHER_CTX *kekctx;
-    const char *name;
+    char name[OSSL_MAX_NAME_SIZE];
 
     if (!CMS_RecipientInfo_kari_get0_alg(ri, &alg, &ukm))
         return 0;
@@ -180,7 +180,7 @@ static int ecdh_cms_set_shared_info(EVP_PKEY_CTX *pctx, CMS_RecipientInfo *ri)
     kekctx = CMS_RecipientInfo_kari_get0_ctx(ri);
     if (kekctx == NULL)
         goto err;
-    name = OBJ_nid2sn(OBJ_obj2nid(kekalg->algorithm));
+    OBJ_obj2txt(name, sizeof(name), kekalg->algorithm, 0);
     kekcipher = EVP_CIPHER_fetch(pctx->libctx, name, pctx->propquery);
     if (kekcipher == NULL || EVP_CIPHER_mode(kekcipher) != EVP_CIPH_WRAP_MODE)
         goto err;

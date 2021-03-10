@@ -15,6 +15,7 @@
 #include <openssl/asn1.h>
 #include <openssl/cms.h>
 #include <openssl/cms.h>
+#include "internal/sizes.h"
 #include "crypto/x509.h"
 #include "cms_local.h"
 
@@ -403,10 +404,10 @@ BIO *ossl_cms_DigestAlgorithm_init_bio(X509_ALGOR *digestAlgorithm,
     const ASN1_OBJECT *digestoid;
     const EVP_MD *digest = NULL;
     EVP_MD *fetched_digest = NULL;
-    const char *alg;
+    char alg[OSSL_MAX_NAME_SIZE];
 
     X509_ALGOR_get0(&digestoid, NULL, NULL, digestAlgorithm);
-    alg = OBJ_nid2sn(OBJ_obj2nid(digestoid));
+    OBJ_obj2txt(alg, sizeof(alg), digestoid, 0);
 
     (void)ERR_set_mark();
     fetched_digest = EVP_MD_fetch(ossl_cms_ctx_get0_libctx(ctx), alg,

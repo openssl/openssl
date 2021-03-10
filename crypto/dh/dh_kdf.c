@@ -66,16 +66,11 @@ int DH_KDF_X9_42(unsigned char *out, size_t outlen,
                  ASN1_OBJECT *key_oid,
                  const unsigned char *ukm, size_t ukmlen, const EVP_MD *md)
 {
-    int nid;
-    const char *key_alg = NULL;
+    char key_alg[OSSL_MAX_NAME_SIZE];
     const OSSL_PROVIDER *prov = EVP_MD_provider(md);
     OSSL_LIB_CTX *libctx = ossl_provider_libctx(prov);
 
-    nid = OBJ_obj2nid(key_oid);
-    if (nid == NID_undef)
-        return 0;
-    key_alg = OBJ_nid2sn(nid);
-    if (key_alg == NULL)
+    if (!OBJ_obj2txt(key_alg, sizeof(key_alg), key_oid, 0))
         return 0;
 
     return ossl_dh_kdf_X9_42_asn1(out, outlen, Z, Zlen, key_alg,

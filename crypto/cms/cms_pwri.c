@@ -15,8 +15,9 @@
 #include <openssl/cms.h>
 #include <openssl/rand.h>
 #include <openssl/aes.h>
-#include "cms_local.h"
+#include "internal/sizes.h"
 #include "crypto/asn1.h"
+#include "cms_local.h"
 
 int CMS_RecipientInfo_set0_password(CMS_RecipientInfo *ri,
                                     unsigned char *pass, ossl_ssize_t passlen)
@@ -286,7 +287,7 @@ int ossl_cms_RecipientInfo_pwri_crypt(const CMS_ContentInfo *cms,
     int r = 0;
     X509_ALGOR *algtmp, *kekalg = NULL;
     EVP_CIPHER_CTX *kekctx = NULL;
-    const char *name;
+    char name[OSSL_MAX_NAME_SIZE];
     EVP_CIPHER *kekcipher;
     unsigned char *key = NULL;
     size_t keylen;
@@ -315,7 +316,7 @@ int ossl_cms_RecipientInfo_pwri_crypt(const CMS_ContentInfo *cms,
         return 0;
     }
 
-    name = OBJ_nid2sn(OBJ_obj2nid(kekalg->algorithm));
+    OBJ_obj2txt(name, sizeof(name), kekalg->algorithm, 0);
     kekcipher = EVP_CIPHER_fetch(ossl_cms_ctx_get0_libctx(cms_ctx), name,
                                  ossl_cms_ctx_get0_propq(cms_ctx));
 

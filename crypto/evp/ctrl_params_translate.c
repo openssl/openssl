@@ -954,7 +954,8 @@ static int fix_oid(enum state state,
          * default_fixup_args() will then be able to convert that to the
          * corresponding OSSL_PARAM.
          */
-        ctx->p2 = (char *)OBJ_nid2sn(OBJ_obj2nid(ctx->p2));
+        OBJ_obj2txt(ctx->name_buf, sizeof(ctx->name_buf), ctx->p2, 0);
+        ctx->p2 = (char *)ctx->name_buf;
         ctx->p1 = 0; /* let default_fixup_args() figure out the length */
     }
 

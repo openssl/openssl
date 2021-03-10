@@ -8,14 +8,15 @@
  */
 
 #include "e_os.h"
-#include "internal/cryptlib.h"
 
 #include <openssl/objects.h>
 #include <openssl/ts.h>
 #include <openssl/pkcs7.h>
 #include <openssl/crypto.h>
-#include "ts_local.h"
+#include "internal/cryptlib.h"
+#include "internal/sizes.h"
 #include "crypto/ess.h"
+#include "ts_local.h"
 
 DEFINE_STACK_OF_CONST(EVP_MD)
 
@@ -447,7 +448,7 @@ static int ts_RESP_check_request(TS_RESP_CTX *ctx)
     TS_REQ *request = ctx->request;
     TS_MSG_IMPRINT *msg_imprint;
     X509_ALGOR *md_alg;
-    int md_alg_id;
+    char md_alg_name[OSSL_MAX_NAME_SIZE];
     const ASN1_OCTET_STRING *digest;
     const EVP_MD *md = NULL;
     int i;
@@ -461,10 +462,10 @@ static int ts_RESP_check_request(TS_RESP_CTX *ctx)
 
     msg_imprint = request->msg_imprint;
     md_alg = msg_imprint->hash_algo;
-    md_alg_id = OBJ_obj2nid(md_alg->algorithm);
+    OBJ_obj2txt(md_alg_name, sizeof(md_alg_name), md_alg->algorithm, 0);
     for (i = 0; !md && i < sk_EVP_MD_num(ctx->mds); ++i) {
         const EVP_MD *current_md = sk_EVP_MD_value(ctx->mds, i);
-        if (md_alg_id == EVP_MD_type(current_md))
+        if (EVP_MD_is_a(current_md, md_alg_name))
             md = current_md;
     }
     if (!md) {
