@@ -15,12 +15,13 @@
 #include <openssl/err.h>
 #include <openssl/cms.h>
 #include <openssl/ess.h>
-#include "cms_local.h"
+#include "internal/sizes.h"
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
 #include "crypto/cms.h"
 #include "crypto/ess.h"
 #include "crypto/x509.h" /* for ossl_x509_add_cert_new() */
+#include "cms_local.h"
 
 /* CMS SignedData Utilities */
 
@@ -328,9 +329,12 @@ CMS_SignerInfo *CMS_add1_signer(CMS_ContentInfo *cms,
     /* See if digest is present in digestAlgorithms */
     for (i = 0; i < sk_X509_ALGOR_num(sd->digestAlgorithms); i++) {
         const ASN1_OBJECT *aoid;
+        char name[OSSL_MAX_NAME_SIZE];
+
         alg = sk_X509_ALGOR_value(sd->digestAlgorithms, i);
         X509_ALGOR_get0(&aoid, NULL, NULL, alg);
-        if (OBJ_obj2nid(aoid) == EVP_MD_type(md))
+        OBJ_obj2txt(name, sizeof(name), aoid, 0);
+        if (EVP_MD_is_a(md, name))
             break;
     }
 
@@ -724,9 +728,10 @@ int CMS_SignerInfo_sign(CMS_SignerInfo *si)
     int alen;
     size_t siglen;
     const CMS_CTX *ctx = si->cms_ctx;
-    const char *md_name = OBJ_nid2sn(OBJ_obj2nid(si->digestAlgorithm->algorithm));
+    char md_name[OSSL_MAX_NAME_SIZE];
 
-    if (md_name == NULL)
+    if (!OBJ_obj2txt(md_name, sizeof(md_name),
+                     si->digestAlgorithm->algorithm, 0))
         return 0;
 
     if (CMS_signed_get_attr_by_NID(si, NID_pkcs9_signingTime, -1) < 0) {
@@ -781,7 +786,7 @@ int CMS_SignerInfo_verify(CMS_SignerInfo *si)
     EVP_MD_CTX *mctx = NULL;
     unsigned char *abuf = NULL;
     int alen, r = -1;
-    const char *name;
+    char name[OSSL_MAX_NAME_SIZE];
     const EVP_MD *md;
     EVP_MD *fetched_md = NULL;
     const CMS_CTX *ctx = si->cms_ctx;
@@ -796,7 +801,7 @@ int CMS_SignerInfo_verify(CMS_SignerInfo *si)
     if (!ossl_cms_si_check_attributes(si))
         return -1;
 
-    name = OBJ_nid2sn(OBJ_obj2nid(si->digestAlgorithm->algorithm));
+    OBJ_obj2txt(name, sizeof(name), si->digestAlgorithm->algorithm, 0);
 
     (void)ERR_set_mark();
     fetched_md = EVP_MD_fetch(libctx, name, propq);

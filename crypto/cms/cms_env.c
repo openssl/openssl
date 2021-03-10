@@ -14,6 +14,7 @@
 #include <openssl/err.h>
 #include <openssl/cms.h>
 #include <openssl/evp.h>
+#include "internal/sizes.h"
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
 #include "crypto/x509.h"
@@ -538,7 +539,9 @@ static int cms_RecipientInfo_ktri_decrypt(CMS_ContentInfo *cms,
     if (cms->d.envelopedData->encryptedContentInfo->havenocert
             && !cms->d.envelopedData->encryptedContentInfo->debug) {
         X509_ALGOR *calg = ec->contentEncryptionAlgorithm;
-        const char *name = OBJ_nid2sn(OBJ_obj2nid(calg->algorithm));
+        char name[OSSL_MAX_NAME_SIZE];
+
+        OBJ_obj2txt(name, sizeof(name), calg->algorithm, 0);
 
         (void)ERR_set_mark();
         fetched_cipher = EVP_CIPHER_fetch(libctx, name, propq);

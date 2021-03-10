@@ -187,7 +187,8 @@ int PKCS7_set0_type_other(PKCS7 *p7, int type, ASN1_TYPE *other)
 
 int PKCS7_add_signer(PKCS7 *p7, PKCS7_SIGNER_INFO *psi)
 {
-    int i, j, nid;
+    int i, j;
+    ASN1_OBJECT *obj;
     X509_ALGOR *alg;
     STACK_OF(PKCS7_SIGNER_INFO) *signer_sk;
     STACK_OF(X509_ALGOR) *md_sk;
@@ -207,27 +208,35 @@ int PKCS7_add_signer(PKCS7 *p7, PKCS7_SIGNER_INFO *psi)
         return 0;
     }
 
-    nid = OBJ_obj2nid(psi->digest_alg->algorithm);
-
+    obj = psi->digest_alg->algorithm;
     /* If the digest is not currently listed, add it */
     j = 0;
     for (i = 0; i < sk_X509_ALGOR_num(md_sk); i++) {
         alg = sk_X509_ALGOR_value(md_sk, i);
-        if (OBJ_obj2nid(alg->algorithm) == nid) {
+        if (OBJ_cmp(obj, alg->algorithm) == 0) {
             j = 1;
             break;
         }
     }
     if (!j) {                   /* we need to add another algorithm */
+        int nid;
+
         if ((alg = X509_ALGOR_new()) == NULL
             || (alg->parameter = ASN1_TYPE_new()) == NULL) {
             X509_ALGOR_free(alg);
             ERR_raise(ERR_LIB_PKCS7, ERR_R_MALLOC_FAILURE);
             return 0;
         }
-        alg->algorithm = OBJ_nid2obj(nid);
+        /*
+         * If there is a constant copy of the ASN1 OBJECT in libcrypto, then
+         * use that.  Otherwise, use a dynamically duplicated copy
+         */
+        if ((nid = OBJ_obj2nid(obj)) != NID_undef)
+            alg->algorithm = OBJ_nid2obj(nid);
+        else
+            alg->algorithm = OBJ_dup(obj);
         alg->parameter->type = V_ASN1_NULL;
-        if (!sk_X509_ALGOR_push(md_sk, alg)) {
+        if (alg->algorithm == NULL || !sk_X509_ALGOR_push(md_sk, alg)) {
             X509_ALGOR_free(alg);
             return 0;
         }

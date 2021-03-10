@@ -594,7 +594,6 @@ X509
     unsigned char *iv = NULL; /* initial vector for symmetric encryption */
     unsigned char *outbuf = NULL; /* decryption output buffer */
     const unsigned char *p = NULL; /* needed for decoding ASN1 */
-    int symmAlg = 0; /* NIDs for symmetric algorithm */
     int n, outlen = 0;
     EVP_PKEY_CTX *pkctx = NULL; /* private key context */
 
@@ -603,12 +602,8 @@ X509
         ERR_raise(ERR_LIB_CRMF, CRMF_R_NULL_ARGUMENT);
         return NULL;
     }
-    if ((symmAlg = OBJ_obj2nid(ecert->symmAlg->algorithm)) == 0) {
-        ERR_raise(ERR_LIB_CRMF, CRMF_R_UNSUPPORTED_CIPHER);
-        return NULL;
-    }
     /* select symmetric cipher based on algorithm given in message */
-    if ((cipher = EVP_get_cipherbynid(symmAlg)) == NULL) {
+    if ((cipher = EVP_get_cipherbyobj(ecert->symmAlg->algorithm)) == NULL) {
         ERR_raise(ERR_LIB_CRMF, CRMF_R_UNSUPPORTED_CIPHER);
         goto end;
     }

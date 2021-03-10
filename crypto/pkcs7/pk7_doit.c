@@ -8,12 +8,13 @@
  */
 
 #include <stdio.h>
-#include "internal/cryptlib.h"
 #include <openssl/rand.h>
 #include <openssl/objects.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 #include <openssl/err.h>
+#include "internal/cryptlib.h"
+#include "internal/sizes.h"
 #include "pk7_local.h"
 
 static int add_attribute(STACK_OF(X509_ATTRIBUTE) **sk, int nid, int atrtype,
@@ -57,7 +58,7 @@ static int pkcs7_bio_add_digest(BIO **pbio, X509_ALGOR *alg,
                                 const PKCS7_CTX *ctx)
 {
     BIO *btmp;
-    const char *name;
+    char name[OSSL_MAX_NAME_SIZE];
     EVP_MD *fetched = NULL;
     const EVP_MD *md;
 
@@ -66,7 +67,7 @@ static int pkcs7_bio_add_digest(BIO **pbio, X509_ALGOR *alg,
         goto err;
     }
 
-    name = OBJ_nid2sn(OBJ_obj2nid(alg->algorithm));
+    OBJ_obj2txt(name, sizeof(name), alg->algorithm, 0);
 
     (void)ERR_set_mark();
     fetched = EVP_MD_fetch(ossl_pkcs7_ctx_get0_libctx(ctx), name,
@@ -404,7 +405,7 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
     PKCS7_RECIP_INFO *ri = NULL;
     unsigned char *ek = NULL, *tkey = NULL;
     int eklen = 0, tkeylen = 0;
-    const char *name;
+    char name[OSSL_MAX_NAME_SIZE];
     const PKCS7_CTX *p7_ctx;
     OSSL_LIB_CTX *libctx;
     const char *propq;
@@ -448,7 +449,7 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
         data_body = p7->d.signed_and_enveloped->enc_data->enc_data;
         enc_alg = p7->d.signed_and_enveloped->enc_data->algorithm;
 
-        name = OBJ_nid2sn(OBJ_obj2nid(enc_alg->algorithm));
+        OBJ_obj2txt(name, sizeof(name), enc_alg->algorithm, 0);
 
         (void)ERR_set_mark();
         evp_cipher = EVP_CIPHER_fetch(libctx, name, propq);
@@ -469,7 +470,7 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
         enc_alg = p7->d.enveloped->enc_data->algorithm;
         /* data_body is NULL if the optional EncryptedContent is missing. */
         data_body = p7->d.enveloped->enc_data->enc_data;
-        name = OBJ_nid2sn(OBJ_obj2nid(enc_alg->algorithm));
+        OBJ_obj2txt(name, sizeof(name), enc_alg->algorithm, 0);
 
         (void)ERR_set_mark();
         evp_cipher = EVP_CIPHER_fetch(libctx, name, propq);
@@ -505,7 +506,7 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
                 goto err;
             }
 
-            name = OBJ_nid2sn(OBJ_obj2nid(xa->algorithm));
+            OBJ_obj2txt(name, sizeof(name), xa->algorithm, 0);
 
             (void)ERR_set_mark();
             evp_md = EVP_MD_fetch(libctx, name, propq);

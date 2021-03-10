@@ -17,8 +17,6 @@
 #include <openssl/rand.h>
 #include <openssl/evp.h>
 
-#include "crmf_local.h"
-
 /* explicit #includes not strictly needed since implied by the above: */
 #include <openssl/asn1t.h>
 #include <openssl/crmf.h>
@@ -26,6 +24,10 @@
 #include <openssl/evp.h>
 #include <openssl/params.h>
 #include <openssl/core_names.h>
+
+#include "internal/sizes.h"
+
+#include "crmf_local.h"
 
 /*-
  * creates and initializes OSSL_CRMF_PBMPARAMETER (section 4.4)
@@ -130,7 +132,8 @@ int OSSL_CRMF_pbm_new(OSSL_LIB_CTX *libctx, const char *propq,
                       unsigned char **out, size_t *outlen)
 {
     int mac_nid, hmac_md_nid = NID_undef;
-    const char *mdname;
+    char mdname[OSSL_MAX_NAME_SIZE];
+    char hmac_mdname[OSSL_MAX_NAME_SIZE];
     EVP_MD *owf = NULL;
     EVP_MD_CTX *ctx = NULL;
     unsigned char basekey[EVP_MAX_MD_SIZE];
@@ -155,7 +158,7 @@ int OSSL_CRMF_pbm_new(OSSL_LIB_CTX *libctx, const char *propq,
      * compute the key used in the MAC process.  All implementations MUST
      * support SHA-1.
      */
-    mdname = OBJ_nid2sn(OBJ_obj2nid(pbmp->owf->algorithm));
+    OBJ_obj2txt(mdname, sizeof(mdname), pbmp->owf->algorithm, 0);
     if ((owf = EVP_MD_fetch(libctx, mdname, propq)) == NULL) {
         ERR_raise(ERR_LIB_CRMF, CRMF_R_UNSUPPORTED_ALGORITHM);
         goto err;
@@ -200,13 +203,14 @@ int OSSL_CRMF_pbm_new(OSSL_LIB_CTX *libctx, const char *propq,
     mac_nid = OBJ_obj2nid(pbmp->mac->algorithm);
 
     if (!EVP_PBE_find(EVP_PBE_TYPE_PRF, mac_nid, NULL, &hmac_md_nid, NULL)
-            || (mdname = OBJ_nid2sn(hmac_md_nid)) == NULL) {
+        || !OBJ_obj2txt(hmac_mdname, sizeof(hmac_mdname),
+                        OBJ_nid2obj(hmac_md_nid), 0)) {
         ERR_raise(ERR_LIB_CRMF, CRMF_R_UNSUPPORTED_ALGORITHM);
         goto err;
     }
 
     macparams[0] = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
-                                                    (char *)mdname, 0);
+                                                    (char *)hmac_mdname, 0);
     if ((mac = EVP_MAC_fetch(libctx, "HMAC", propq)) == NULL
             || (mctx = EVP_MAC_CTX_new(mac)) == NULL
             || !EVP_MAC_CTX_set_params(mctx, macparams)
