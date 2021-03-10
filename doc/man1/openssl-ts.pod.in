@@ -50,7 +50,7 @@ B<-verify>
 [B<-queryfile> I<request.tsq>]
 [B<-in> I<response.tsr>]
 [B<-token_in>]
-[B<-untrusted> I<file>]
+[B<-untrusted> I<files>|I<uris>]
 [B<-CAfile> I<file>]
 [B<-CApath> I<dir>]
 [B<-CAstore> I<uri>]
@@ -326,13 +326,16 @@ This flag can be used together with the B<-in> option and indicates
 that the input is a DER encoded timestamp token (ContentInfo) instead
 of a timestamp response (TimeStampResp). (Optional)
 
-=item B<-untrusted> I<file>
+=item B<-untrusted> I<files>|I<uris>
 
 A set of additional untrusted certificates which may be
 needed when building the certificate chain for the TSA's signing certificate.
 These do not need to contain the TSA signing certificate and intermediate CA
 certificates as far as the response already includes them.
 (Optional)
+
+Multiple sources may be given, separated by commas and/or whitespace.
+Each file may contain multiple certificates.
 
 =item B<-CAfile> I<file>, B<-CApath> I<dir>, B<-CAstore> I<uri>
 
