@@ -1362,7 +1362,7 @@ static int test_EVP_SM2(void)
     EVP_MD_CTX *md_ctx = NULL;
     EVP_MD_CTX *md_ctx_verify = NULL;
     EVP_PKEY_CTX *cctx = NULL;
-    EVP_MD *sm3 = NULL;
+    EVP_MD *check_md = NULL;
 
     uint8_t ciphertext[128];
     size_t ctext_len = sizeof(ciphertext);
@@ -1377,8 +1377,8 @@ static int test_EVP_SM2(void)
     int i;
     char mdname[20];
 
-    pctx = EVP_PKEY_CTX_new_from_name(testctx, "SM2", testpropq);
-    if (!TEST_ptr(pctx))
+    if (!TEST_ptr(pctx = EVP_PKEY_CTX_new_from_name(testctx,
+                                                    "SM2", testpropq)))
         goto done;
 
     if (!TEST_true(EVP_PKEY_paramgen_init(pctx) == 1))
@@ -1390,8 +1390,8 @@ static int test_EVP_SM2(void)
     if (!TEST_true(EVP_PKEY_paramgen(pctx, &pkeyparams)))
         goto done;
 
-    kctx = EVP_PKEY_CTX_new_from_pkey(testctx, pkeyparams, testpropq);
-    if (!TEST_ptr(kctx))
+    if (!TEST_ptr(kctx = EVP_PKEY_CTX_new_from_pkey(testctx,
+                                                    pkeyparams, testpropq)))
         goto done;
 
     if (!TEST_true(EVP_PKEY_keygen_init(kctx)))
@@ -1421,7 +1421,7 @@ static int test_EVP_SM2(void)
     if (!TEST_int_gt(EVP_PKEY_CTX_set1_id(sctx, sm2_id, sizeof(sm2_id)), 0))
         goto done;
 
-    if(!TEST_true(EVP_DigestSignUpdate(md_ctx, kMsg, sizeof(kMsg))))
+    if (!TEST_true(EVP_DigestSignUpdate(md_ctx, kMsg, sizeof(kMsg))))
         goto done;
 
     /* Determine the size of the signature. */
@@ -1485,11 +1485,22 @@ static int test_EVP_SM2(void)
         if (!TEST_true(EVP_PKEY_CTX_get_params(cctx, gparams)))
             goto done;
 
-        /* Test we're still using the digest we think we are */
-        if (i == 0 && !TEST_int_eq(strcmp(mdname, "SM3"), 0))
+        /*
+         * Test we're still using the digest we think we are.
+         * Because of aliases, the easiest is to fetch the digest and
+         * check the name with EVP_MD_is_a().
+         */
+        EVP_MD_free(check_md);
+        if (!TEST_ptr(check_md = EVP_MD_fetch(NULL, mdname, NULL)))
             goto done;
-        if (i == 1 && !TEST_int_eq(strcmp(mdname, "SHA2-256"), 0))
+        if (i == 0 && !TEST_true(EVP_MD_is_a(check_md, "SM3"))) {
+            TEST_info("Fetched md %s isn't SM3", mdname);
             goto done;
+        }
+        if (i == 1 && !TEST_true(EVP_MD_is_a(check_md, "SHA2-256"))) {
+            TEST_info("Fetched md %s isn't SHA2-256", mdname);
+            goto done;
+        }
 
         if (!TEST_true(ptext_len == sizeof(kMsg)))
             goto done;
@@ -1508,7 +1519,7 @@ done:
     EVP_PKEY_free(pkeyparams);
     EVP_MD_CTX_free(md_ctx);
     EVP_MD_CTX_free(md_ctx_verify);
-    EVP_MD_free(sm3);
+    EVP_MD_free(check_md);
     OPENSSL_free(sig);
     return ret;
 }
