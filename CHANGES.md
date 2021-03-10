@@ -28,7 +28,7 @@ OpenSSL 3.0
    Previously (in 1.1.1) they would return -2. For key types that do not have
    parameters then EVP_PKEY_param_check() will always return 1.
 
- * The output from numerous "printing" functions such X509_signature_print(),
+ * The output from numerous "printing" functions such as X509_signature_print(),
    X509_print_ex(), X509_CRL_print_ex(), and other similar functions has been
    amended such that there may be cosmetic differences between the output
    observed in 1.1.1 and 3.0. This also applies to the "-text" output from the
