@@ -725,36 +725,6 @@ void *ossl_provider_ctx(const OSSL_PROVIDER *prov)
     return prov->provctx;
 }
 
-
-static int provider_forall_loaded(struct provider_store_st *store,
-                                  int *found_activated,
-                                  int (*cb)(OSSL_PROVIDER *provider,
-                                            void *cbdata),
-                                  void *cbdata)
-{
-    int i;
-    int ret = 1;
-    int num_provs;
-
-    num_provs = sk_OSSL_PROVIDER_num(store->providers);
-
-    if (found_activated != NULL)
-        *found_activated = 0;
-    for (i = 0; i < num_provs; i++) {
-        OSSL_PROVIDER *prov =
-            sk_OSSL_PROVIDER_value(store->providers, i);
-
-        if (prov->flag_activated) {
-            if (found_activated != NULL)
-                *found_activated = 1;
-            if (!(ret = cb(prov, cbdata)))
-                break;
-        }
-    }
-
-    return ret;
-}
-
 /*
  * This function only does something once when store->use_fallbacks == 1,
  * and then sets store->use_fallbacks = 0, so the second call and so on is
@@ -813,8 +783,9 @@ int ossl_provider_forall_loaded(OSSL_LIB_CTX *ctx,
                                           void *cbdata),
                                 void *cbdata)
 {
-    int ret = 1;
+    int ret = 0, i, j;
     struct provider_store_st *store = get_provider_store(ctx);
+    STACK_OF(OSSL_PROVIDER) *provs = NULL;
 
 #ifndef FIPS_MODULE
     /*
@@ -824,18 +795,46 @@ int ossl_provider_forall_loaded(OSSL_LIB_CTX *ctx,
     OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, NULL);
 #endif
 
-    if (store != NULL) {
-        provider_activate_fallbacks(store);
+    if (store == NULL)
+        return 1;
+    provider_activate_fallbacks(store);
 
-        CRYPTO_THREAD_read_lock(store->lock);
-        /*
-         * Now, we sweep through all providers
-         */
-        ret = provider_forall_loaded(store, NULL, cb, cbdata);
-
+    /*
+     * Under lock, grab a copy of the provider list and up_ref each
+     * provider so that they don't disappear underneath us.
+     */
+    CRYPTO_THREAD_read_lock(store->lock);
+    provs = sk_OSSL_PROVIDER_dup(store->providers);
+    if (provs == NULL) {
         CRYPTO_THREAD_unlock(store->lock);
+        return 0;
+    }
+    j = sk_OSSL_PROVIDER_num(provs);
+    for (i = 0; i < j; i++)
+        if (!ossl_provider_up_ref(sk_OSSL_PROVIDER_value(provs, i)))
+            goto err_unlock;
+    CRYPTO_THREAD_unlock(store->lock);
+
+    /*
+     * Now, we sweep through all providers not under lock
+     */
+    for (j = 0; j < i; j++) {
+        OSSL_PROVIDER *prov = sk_OSSL_PROVIDER_value(provs, j);
+
+        if (prov->flag_activated && !cb(prov, cbdata))
+            goto finish;
     }
 
+    ret = 1;
+    goto finish;
+
+ err_unlock:
+    CRYPTO_THREAD_unlock(store->lock);
+ finish:
+    /* The pop_free call doesn't do what we want on an error condition */
+    for (j = 0; j < i; j++)
+        ossl_provider_free(sk_OSSL_PROVIDER_value(provs, j));
+    sk_OSSL_PROVIDER_free(provs);
     return ret;
 }
 
