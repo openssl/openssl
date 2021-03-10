@@ -705,7 +705,7 @@ static int gid_cb(const char *elem, int len, void *arg)
     gid_cb_st *garg = arg;
     size_t i;
     uint16_t gid = 0;
-    char etmp[20];
+    char etmp[64];
 
     if (elem == NULL)
         return 0;
