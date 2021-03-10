@@ -289,9 +289,9 @@ The KDF lifecycle is defined by this diagram:
                        |
                        | EVP_KDF_CTX_new
                        v
-                     + - - - - - - - - - +
-                     '       newed       ' <+
-                     + - - - - - - - - - +  |
+                     +-------------------+
+                     |       newed       | <+
+                     +-------------------+  |
                        |                    |
                        | EVP_KDF_derive     | EVP_KDF_CTX_reset
                        v                    |
