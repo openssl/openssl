@@ -184,6 +184,9 @@ static int cmac_set_ctx_params(void *vmacctx, const OSSL_PARAM params[])
     OSSL_LIB_CTX *ctx = PROV_LIBCTX_OF(macctx->provctx);
     const OSSL_PARAM *p;
 
+    if (params == NULL)
+        return 1;
+
     if (!ossl_prov_cipher_load_from_params(&macctx->cipher, params, ctx))
         return 0;
 
