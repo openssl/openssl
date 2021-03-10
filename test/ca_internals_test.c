@@ -7,14 +7,17 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <string.h>
 #include "../apps/include/ca.h"
 #include "../apps/include/apps_extracted.h"
 #include "testutil.h"
 #include "crypto/asn1.h"
 
+#define binname "ca_internals_test"
+
 char *default_config_file = NULL;
 
-int setup_tests(void)
+int test_do_updatedb(void)
 {
     CA_DB *db = NULL;
     time_t testdateutc;
@@ -22,20 +25,20 @@ int setup_tests(void)
     size_t argc = test_get_argument_count();
     BIO *bio_tmp;
 
-    if (argc != 2) {
-        fprintf(stderr, "Usage: ca_updatedb dbfile testdate\n");
-        fprintf(stderr, "       testdate format: ASN1-String\n");
+    if (argc != 3) {
+        TEST_error("Usage: %s: do_updatedb dbfile testdate\n", binname);
+        TEST_error("       testdate format: ASN1-String\n");
         return 0;
     }
 
-    char *testdate = test_get_argument(1);
+    char *testdate = test_get_argument(2);
     testdateutc = asn1_string_to_time_t(testdate);
     if (testdateutc < 0) {
         fprintf(stderr, "Error: testdate '%s' is invalid\n", testdate);
         return 0;
     }
 
-    char *indexfile = test_get_argument(0);
+    char *indexfile = test_get_argument(1);
     db = load_index(indexfile, NULL);
     if (db == NULL) {
         fprintf(stderr, "Error: dbfile '%s' is not readable\n", indexfile);
@@ -59,3 +62,15 @@ end:
     free_index(db);
     return 1;
 } 
+
+int setup_tests(void)
+{
+    char *command = test_get_argument(0);
+
+    if (strcmp(command, "do_updatedb") == 0)
+        return test_do_updatedb();
+    
+    TEST_error("%s: command '%s' is not supported for testing\n", binname, command);
+    return 0;
+}
+
