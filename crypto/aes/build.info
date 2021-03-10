@@ -4,6 +4,7 @@ SOURCE[../../libcrypto]=\
         aes_ige.c aes_wrap.c {- $target{aes_asm_src} -}
 
 GENERATE[aes-ia64.s]=asm/aes-ia64.S
+GENERATE[bsaes-armv8.S]=asm/bsaes-armv8.S
 
 GENERATE[aes-586.s]=asm/aes-586.pl \
         $(PERLASM_SCHEME) $(LIB_CFLAGS) $(LIB_CPPFLAGS) $(PROCESSOR)
