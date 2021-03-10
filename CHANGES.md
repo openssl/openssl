@@ -45,6 +45,14 @@ OpenSSL 3.0
 
    *Richard Levitte*
 
+ * Improved adherence to Enhanced Security Services (ESS, RFC 2634 and RFC 5035)
+   for the TSP implementation.
+   Correct the semantics of checking the validation chain in case ESSCertID{,v2}
+   contains more than one certificate identifier: This means that all
+   certificates referenced there MUST be part of the validation chain.
+
+   *David von Oheimb*
+
  * The implementation of the EVP ciphers CAST5-ECB, CAST5-CBC, CAST5-OFB,
    CAST5-CFB, BF-ECB, BF-CBC, BF-OFB, BF-CFB, IDEA-ECB, IDEC-CBC, IDEA-OFB,
    IDEA-CFB, SEED-ECB, SEED-CBC, SEED-OFB, SEED-CFB, RC2-ECB, RC2-CBC,
