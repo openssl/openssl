@@ -779,10 +779,10 @@ static void provider_activate_fallbacks(struct provider_store_st *store)
     CRYPTO_THREAD_unlock(store->lock);
 }
 
-int ossl_provider_forall_loaded(OSSL_LIB_CTX *ctx,
-                                int (*cb)(OSSL_PROVIDER *provider,
-                                          void *cbdata),
-                                void *cbdata)
+int ossl_provider_doall_activated(OSSL_LIB_CTX *ctx,
+                                  int (*cb)(OSSL_PROVIDER *provider,
+                                            void *cbdata),
+                                  void *cbdata)
 {
     int ret = 0, i, j;
     struct provider_store_st *store = get_provider_store(ctx);

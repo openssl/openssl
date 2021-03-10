@@ -107,7 +107,7 @@ void ossl_algorithm_do_all(OSSL_LIB_CTX *libctx, int operation_id,
     cbdata.data = data;
 
     if (provider == NULL)
-        ossl_provider_forall_loaded(libctx, algorithm_do_this, &cbdata);
+        ossl_provider_doall_activated(libctx, algorithm_do_this, &cbdata);
     else
         algorithm_do_this(provider, &cbdata);
 }

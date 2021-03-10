@@ -58,10 +58,10 @@ int ossl_provider_available(OSSL_PROVIDER *prov);
 void *ossl_provider_ctx(const OSSL_PROVIDER *prov);
 
 /* Iterate over all loaded providers */
-int ossl_provider_forall_loaded(OSSL_LIB_CTX *,
-                                int (*cb)(OSSL_PROVIDER *provider,
-                                          void *cbdata),
-                                void *cbdata);
+int ossl_provider_doall_activated(OSSL_LIB_CTX *,
+                                  int (*cb)(OSSL_PROVIDER *provider,
+                                            void *cbdata),
+                                  void *cbdata);
 
 /* Getters for other library functions */
 const char *ossl_provider_name(const OSSL_PROVIDER *prov);
