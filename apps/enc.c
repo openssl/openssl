@@ -81,7 +81,7 @@ const OPTIONS enc_options[] = {
     {"", OPT_CIPHER, '-', "Any supported cipher"},
     OPT_R_OPTIONS,
 #ifdef ZLIB
-    {"z", OPT_Z, '-', "Use zlib as the 'encryption'"},
+    {"z", OPT_Z, '-', "Compress or decompress encrypted data using zlib"},
 #endif
 #ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
