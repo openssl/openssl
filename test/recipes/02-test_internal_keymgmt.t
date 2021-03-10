@@ -11,7 +11,7 @@ use OpenSSL::Test qw(:DEFAULT bldtop_dir);
 use OpenSSL::Test::Simple;
 use OpenSSL::Test::Utils;
 
-setup("test_internal_provider");
+setup("test_internal_keymgmt");
 
 $ENV{OPENSSL_MODULES} = bldtop_dir("test");
 

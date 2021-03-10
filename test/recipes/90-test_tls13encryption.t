@@ -9,7 +9,7 @@
 use OpenSSL::Test;
 use OpenSSL::Test::Utils;
 
-my $test_name = "tls13encryption";
+my $test_name = "test_tls13encryption";
 setup($test_name);
 
 plan skip_all => "$test_name is not supported in this build"

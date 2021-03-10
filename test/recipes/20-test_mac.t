@@ -190,10 +190,9 @@ sub comparefile {
     my $buffer;
     my $BUFSIZE = 1024;
     read($out, $buffer, $BUFSIZE) or die "unable to read";
-    # Not unlinking $outfile
-
     my $line = uc unpack("H*", $buffer);
     close($out);
+    # Not unlinking $outfile
 
     if ($line eq $expect) {
         return 1;
