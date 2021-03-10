@@ -282,6 +282,9 @@ static int kbkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(ctx->provctx);
     const OSSL_PARAM *p;
 
+    if (params == NULL)
+        return 1;
+
     if (!ossl_prov_macctx_load_from_params(&ctx->ctx_init, params, NULL,
                                            NULL, NULL, libctx))
         return 0;

@@ -472,6 +472,8 @@ static int x942kdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     const char *propq = NULL;
     size_t id;
 
+    if (params == NULL)
+        return 1;
     if (!ossl_prov_digest_load_from_params(&ctx->digest, params, provctx))
         return 0;
 

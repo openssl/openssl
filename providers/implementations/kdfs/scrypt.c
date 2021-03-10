@@ -185,6 +185,9 @@ static int kdf_scrypt_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     KDF_SCRYPT *ctx = vctx;
     uint64_t u64_value;
 
+    if (params == NULL)
+        return 1;
+
     if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_PASSWORD)) != NULL)
         if (!scrypt_set_membuf(&ctx->pass, &ctx->pass_len, p))
             return 0;
