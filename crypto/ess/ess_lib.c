@@ -359,3 +359,42 @@ int ossl_ess_find_cert_v2(const STACK_OF(ESS_CERT_ID_V2) *cert_ids,
 
     return -1;
 }
+
+/* Returns < 0 if certificate is not found, certificate index otherwise. */
+int ossl_ess_find_cid(const STACK_OF(X509) *certs,
+                      ESS_CERT_ID *cid, ESS_CERT_ID_V2 *cid_v2)
+{
+    unsigned char cert_digest[EVP_MAX_MD_SIZE];
+    unsigned int len, cid_hash_len;
+    int i;
+    const ESS_ISSUER_SERIAL *is;
+
+    if (certs == NULL || (cid == NULL && cid_v2 == NULL))
+        return -1;
+
+    /* Look for cert with cid in the certs. */
+    for (i = 0; i < sk_X509_num(certs); ++i) {
+        const X509 *cert = sk_X509_value(certs, i);
+        const EVP_MD *md;
+
+        /* TODO(3.0): fetch sha algorithm from providers */
+        if (cid != NULL)
+            md = EVP_sha1();
+        else
+            md = cid_v2->hash_alg == NULL ? EVP_sha256() :
+                EVP_get_digestbyobj(cid_v2->hash_alg->algorithm);
+        cid_hash_len = cid != NULL ? cid->hash->length : cid_v2->hash->length;
+        if (!X509_digest(cert, md, cert_digest, &len)
+                || cid_hash_len != len)
+            return -1;
+
+        if (memcmp(cid != NULL ? cid->hash->data : cid_v2->hash->data,
+                   cert_digest, len) == 0) {
+            is = cid != NULL ? cid->issuer_serial : cid_v2->issuer_serial;
+            if (is == NULL || ess_issuer_serial_cmp(is, cert) == 0)
+                return i;
+        }
+    }
+
+    return -1;
+}

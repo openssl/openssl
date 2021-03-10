@@ -32,6 +32,8 @@ ESS_SIGNING_CERT_V2 *ossl_ess_signing_cert_v2_new_init(const EVP_MD *hash_alg,
 int ossl_ess_find_cert_v2(const STACK_OF(ESS_CERT_ID_V2) *cert_ids,
                           const X509 *cert);
 int ossl_ess_find_cert(const STACK_OF(ESS_CERT_ID) *cert_ids, X509 *cert);
+int ossl_ess_find_cid(const STACK_OF(X509) *certs,
+                      ESS_CERT_ID *cid, ESS_CERT_ID_V2 *cid_v2);
 
 /*-
  * IssuerSerial ::= SEQUENCE {

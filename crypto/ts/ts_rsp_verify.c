@@ -206,52 +206,32 @@ static int ts_check_signing_certs(PKCS7_SIGNER_INFO *si,
                                   STACK_OF(X509) *chain)
 {
     ESS_SIGNING_CERT *ss = ossl_ess_signing_cert_get(si);
-    STACK_OF(ESS_CERT_ID) *cert_ids = NULL;
     ESS_SIGNING_CERT_V2 *ssv2 = ossl_ess_signing_cert_v2_get(si);
-    STACK_OF(ESS_CERT_ID_V2) *cert_ids_v2 = NULL;
-    X509 *cert;
-    int i = 0;
+    int i, j;
     int ret = 0;
 
+    /*
+     * Check if first ESSCertIDs matches signer cert
+     * and each further ESSCertIDs matches any cert in the chain.
+     */
     if (ss != NULL) {
-        cert_ids = ss->cert_ids;
-        cert = sk_X509_value(chain, 0);
-        if (ossl_ess_find_cert(cert_ids, cert) != 0)
-            goto err;
-
-        /*
-         * Check the other certificates of the chain if there are more than one
-         * certificate ids in cert_ids.
-         */
-        if (sk_ESS_CERT_ID_num(cert_ids) > 1) {
-            for (i = 1; i < sk_X509_num(chain); ++i) {
-                cert = sk_X509_value(chain, i);
-                if (ossl_ess_find_cert(cert_ids, cert) < 0)
-                    goto err;
-            }
+        for (i = 0; i < sk_ESS_CERT_ID_num(ss->cert_ids); i++) {
+            j = ossl_ess_find_cid(chain, sk_ESS_CERT_ID_value(ss->cert_ids, i),
+                                  NULL);
+            if (j < 0 || (i == 0 && j != 0))
+                goto err;
         }
+        ret = 1;
     } else if (ssv2 != NULL) {
-        cert_ids_v2 = ssv2->cert_ids;
-        cert = sk_X509_value(chain, 0);
-        if (ossl_ess_find_cert_v2(cert_ids_v2, cert) != 0)
-            goto err;
-
-        /*
-         * Check the other certificates of the chain if there are more than one
-         * certificate ids in cert_ids.
-         */
-        if (sk_ESS_CERT_ID_V2_num(cert_ids_v2) > 1) {
-            for (i = 1; i < sk_X509_num(chain); ++i) {
-                cert = sk_X509_value(chain, i);
-                if (ossl_ess_find_cert_v2(cert_ids_v2, cert) < 0)
-                    goto err;
-            }
+        for (i = 0; i < sk_ESS_CERT_ID_V2_num(ssv2->cert_ids); i++) {
+            j = ossl_ess_find_cid(chain, NULL,
+                                  sk_ESS_CERT_ID_V2_value(ssv2->cert_ids, i));
+            if (j < 0 || (i == 0 && j != 0))
+                goto err;
         }
-    } else {
-        goto err;
+        ret = 1;
     }
 
-    ret = 1;
  err:
     if (!ret)
         ERR_raise(ERR_LIB_TS, TS_R_ESS_SIGNING_CERTIFICATE_ERROR);
