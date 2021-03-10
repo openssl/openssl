@@ -134,5 +134,5 @@ int OSSL_PROVIDER_do_all(OSSL_LIB_CTX *ctx,
                                    void *cbdata),
                          void *cbdata)
 {
-    return ossl_provider_forall_loaded(ctx, cb, cbdata);
+    return ossl_provider_doall_activated(ctx, cb, cbdata);
 }
