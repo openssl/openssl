@@ -57,7 +57,7 @@ IF[{- !$disabled{tests} -}]
           context_internal_test aesgcmtest params_test evp_pkey_dparams_test \
           keymgmt_internal_test hexstr_test provider_status_test defltfips_test \
           bio_readbuffer_test \
-          ca_updatedb asn1_string_to_time_t
+          ca_internals_test 
 
   IF[{- !$disabled{'deprecated-3.0'} -}]
     PROGRAMS{noinst}=enginetest
@@ -524,12 +524,12 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[cmp_client_test]=.. ../include ../apps/include
   DEPEND[cmp_client_test]=../libcrypto.a libtestutil.a
 
-  SOURCE[ca_updatedb]=ca_updatedb.c ../apps/ca.c ../crypto/asn1/a_time.c \
+  SOURCE[ca_internals_test]=ca_internals_test.c ../apps/ca.c ../crypto/asn1/a_time.c \
                       ../apps/lib/app_provider.c ../apps/lib/fmt.c ../apps/lib/app_x509.c \
                       ../apps/lib/engine.c ../apps/lib/app_rand.c ../apps/lib/apps_ui.c \
                       ../apps/lib/apps_extracted.c ../crypto/ctype.c ../apps/lib/apps_os_specific.c
-  INCLUDE[ca_updatedb]=.. ../include ../apps/include
-  DEPEND[ca_updatedb]=libtestutil.a ../libssl
+  INCLUDE[ca_internals_test]=.. ../include ../apps/include
+  DEPEND[ca_internals_test]=libtestutil.a ../libssl
 
   # Internal test programs.  These are essentially a collection of internal
   # test routines.  Some of them need to reach internal symbols that aren't

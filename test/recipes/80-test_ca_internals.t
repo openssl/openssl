@@ -13,9 +13,9 @@ use POSIX;
 use OpenSSL::Test qw/:DEFAULT data_file/;
 use File::Copy;
 
-setup('test_ca_updatedb');
+setup('test_ca_internals');
 
-my @tests = (
+my @updatedb_tests = (
     { 
         description => 'updatedb called before the first certificate expires',
         filename => 'index.txt',
@@ -70,13 +70,40 @@ my @tests = (
     }
 );
 
+my @unsupported_commands = (
+    { 
+        command => 'unsupported'
+    }
+);
+ 
 # every "test_updatedb" makes 3 checks
-plan tests => 3 * scalar(@tests);
+plan tests => 3 * scalar(@updatedb_tests) +
+              1 * scalar(@unsupported_commands);
 
-foreach my $test (@tests) {
+
+foreach my $test (@updatedb_tests) {
     test_updatedb($test);
 }
+foreach my $test (@unsupported_commands) {
+    test_unsupported_commands($test);
+}
 
+
+################### subs to do tests per supported command ################
+
+sub test_unsupported_commands {
+    my ($opts) = @_;
+
+    run(
+        test(['ca_internals_test',
+                $opts->{command}
+        ]),
+        capture => 0,
+        statusvar => \my $exit
+    );
+
+    is($exit, 0, "command '".$opts->{command}."' completed without an error");
+}
 
 sub test_updatedb {
     my ($opts) = @_;
@@ -91,7 +118,8 @@ sub test_updatedb {
     }
 
     @output = run(
-        test(['ca_updatedb',
+        test(['ca_internals_test',
+            "do_updatedb",
             $opts->{filename},
             $opts->{testdate}
         ]),
@@ -116,8 +144,8 @@ sub test_updatedb {
         }
     }
 
-    is($exit, 1, "ca_updatedb: returned EXIT_FAILURE (".$opts->{description}.")");
-    is($amtexpired, $amtexpectedexpired, "ca_updatedb: amount of expired certificated differs from expected amount (".$opts->{description}.")");
-    is($expirelistcorrect, 1, "ca_updatedb: list of expired certificated differs from expected list (".$opts->{description}.")");
+    is($exit, 1, "ca_internals_test: returned EXIT_FAILURE (".$opts->{description}.")");
+    is($amtexpired, $amtexpectedexpired, "ca_internals_test: amount of expired certificated differs from expected amount (".$opts->{description}.")");
+    is($expirelistcorrect, 1, "ca_internals_test: list of expired certificated differs from expected list (".$opts->{description}.")");
 }
 
