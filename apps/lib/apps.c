@@ -638,6 +638,164 @@ void* app_malloc(int sz, const char *what)
     return vp;
 }
 
+char *next_item(char *opt) /* in list separated by comma and/or space */
+{
+    /* advance to separator (comma or whitespace), if any */
+    while (*opt != ',' && !isspace(*opt) && *opt != '\0') {
+        if (*opt == '\\' && opt[1] != '\0')
+            /* skip and unescape '\' escaped char */
+            memmove(opt, opt + 1, strlen(opt));
+        opt++;
+    }
+    if (*opt != '\0') {
+        /* terminate current item */
+        *opt++ = '\0';
+        /* skip over any whitespace after separator */
+        while (isspace(*opt))
+            opt++;
+    }
+    return *opt == '\0' ? NULL : opt; /* NULL indicates end of input */
+}
+
+static void warn_cert_msg(const char *uri, X509 *cert, const char *msg)
+{
+    char *subj = X509_NAME_oneline(X509_get_subject_name(cert), NULL, 0);
+
+    BIO_printf(bio_err, "Warning: certificate from '%s' with subject '%s' %s",
+               uri, subj, msg);
+    OPENSSL_free(subj);
+}
+
+static void warn_cert(const char *uri, X509 *cert, int warn_EE,
+                      X509_VERIFY_PARAM *vpm)
+{
+    uint32_t ex_flags = X509_get_extension_flags(cert);
+    int res = X509_cmp_timeframe(vpm, X509_get0_notBefore(cert),
+                                 X509_get0_notAfter(cert));
+
+    if (res != 0)
+        warn_cert_msg(uri, cert, res > 0 ? "has expired" : "not yet valid");
+    if (warn_EE && (ex_flags & EXFLAG_V1) == 0 && (ex_flags & EXFLAG_CA) == 0)
+        warn_cert_msg(uri, cert, "is not a CA cert");
+}
+
+static void warn_certs(const char *uri, STACK_OF(X509) *certs, int warn_EE,
+                       X509_VERIFY_PARAM *vpm)
+{
+    int i;
+
+    for (i = 0; i < sk_X509_num(certs); i++)
+        warn_cert(uri, sk_X509_value(certs, i), warn_EE, vpm);
+}
+
+int load_cert_certs(const char *uri,
+                    X509 **pcert, STACK_OF(X509) **pcerts,
+                    int exclude_http, const char *pass, const char *desc,
+                    X509_VERIFY_PARAM *vpm)
+{
+    int ret = 0;
+    char *pass_string;
+
+    if (exclude_http && (strncasecmp(uri, "http://", 7) == 0
+                         || strncasecmp(uri, "https://", 8) == 0)) {
+        BIO_printf(bio_err, "error: HTTP retrieval not allowed for %s\n", desc);
+        return ret;
+    }
+    pass_string = get_passwd(pass, desc);
+    ret = load_key_certs_crls(uri, 0, pass_string, desc, NULL, NULL, NULL,
+                              pcert, pcerts, NULL, NULL);
+    clear_free(pass_string);
+
+    if (ret) {
+        if (pcert != NULL)
+            warn_cert(uri, *pcert, 0, vpm);
+        warn_certs(uri, *pcerts, 1, vpm);
+    } else {
+        sk_X509_pop_free(*pcerts, X509_free);
+        *pcerts = NULL;
+    }
+    return ret;
+}
+
+STACK_OF(X509) *load_certs_multifile(char *files, const char *pass,
+                                     const char *desc, X509_VERIFY_PARAM *vpm)
+{
+    STACK_OF(X509) *certs = NULL;
+    STACK_OF(X509) *result = sk_X509_new_null();
+
+    if (files == NULL)
+        goto err;
+    if (result == NULL)
+        goto oom;
+
+    while (files != NULL) {
+        char *next = next_item(files);
+
+        if (!load_cert_certs(files, NULL, &certs, 0, pass, desc, vpm))
+            goto err;
+        if (!X509_add_certs(result, certs,
+                            X509_ADD_FLAG_UP_REF | X509_ADD_FLAG_NO_DUP))
+            goto oom;
+        sk_X509_pop_free(certs, X509_free);
+        certs = NULL;
+        files = next;
+    }
+    return result;
+
+ oom:
+    BIO_printf(bio_err, "out of memory\n");
+ err:
+    sk_X509_pop_free(certs, X509_free);
+    sk_X509_pop_free(result, X509_free);
+    return NULL;
+}
+
+static X509_STORE *sk_X509_to_store(X509_STORE *store /* may be NULL */,
+                                    const STACK_OF(X509) *certs /* may NULL */)
+{
+    int i;
+
+    if (store == NULL)
+        store = X509_STORE_new();
+    if (store == NULL)
+        return NULL;
+    for (i = 0; i < sk_X509_num(certs); i++) {
+        if (!X509_STORE_add_cert(store, sk_X509_value(certs, i))) {
+            X509_STORE_free(store);
+            return NULL;
+        }
+    }
+    return store;
+}
+
+/*
+ * Create cert store structure with certificates read from given file(s).
+ * Returns pointer to created X509_STORE on success, NULL on error.
+ */
+X509_STORE *load_certstore(char *input, const char *pass, const char *desc,
+                           X509_VERIFY_PARAM *vpm)
+{
+    X509_STORE *store = NULL;
+    STACK_OF(X509) *certs = NULL;
+
+    while (input != NULL) {
+        char *next = next_item(input);
+        int ok;
+
+        if (!load_cert_certs(input, NULL, &certs, 1, pass, desc, vpm)) {
+            X509_STORE_free(store);
+            return NULL;
+        }
+        ok = (store = sk_X509_to_store(store, certs)) != NULL;
+        sk_X509_pop_free(certs, X509_free);
+        certs = NULL;
+        if (!ok)
+            return NULL;
+        input = next;
+    }
+    return store;
+}
+
 /*
  * Initialize or extend, if *certs != NULL, a certificate stack.
  * The caller is responsible for freeing *certs if its value is left not NULL.

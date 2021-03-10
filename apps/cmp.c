@@ -618,25 +618,6 @@ static int set_verbosity(int level)
     return 1;
 }
 
-static char *next_item(char *opt) /* in list separated by comma and/or space */
-{
-    /* advance to separator (comma or whitespace), if any */
-    while (*opt != ',' && !isspace(*opt) && *opt != '\0') {
-        if (*opt == '\\' && opt[1] != '\0')
-            /* skip and unescape '\' escaped char */
-            memmove(opt, opt + 1, strlen(opt));
-        opt++;
-    }
-    if (*opt != '\0') {
-        /* terminate current item */
-        *opt++ = '\0';
-        /* skip over any whitespace after separator */
-        while (isspace(*opt))
-            opt++;
-    }
-    return *opt == '\0' ? NULL : opt; /* NULL indicates end of input */
-}
-
 static EVP_PKEY *load_key_pwd(const char *uri, int format,
                               const char *pass, ENGINE *eng, const char *desc)
 {
@@ -689,63 +670,6 @@ static X509_REQ *load_csr_autofmt(const char *infile, const char *desc)
     return csr;
 }
 
-static void warn_cert_msg(const char *uri, X509 *cert, const char *msg)
-{
-    char *subj = X509_NAME_oneline(X509_get_subject_name(cert), NULL, 0);
-
-    CMP_warn3("certificate from '%s' with subject '%s' %s", uri, subj, msg);
-    OPENSSL_free(subj);
-}
-
-static void warn_cert(const char *uri, X509 *cert, int warn_EE)
-{
-    uint32_t ex_flags = X509_get_extension_flags(cert);
-    int res = X509_cmp_timeframe(vpm, X509_get0_notBefore(cert),
-                                 X509_get0_notAfter(cert));
-
-    if (res != 0)
-        warn_cert_msg(uri, cert, res > 0 ? "has expired" : "not yet valid");
-    if (warn_EE && (ex_flags & EXFLAG_V1) == 0 && (ex_flags & EXFLAG_CA) == 0)
-        warn_cert_msg(uri, cert, "is not a CA cert");
-}
-
-static void warn_certs(const char *uri, STACK_OF(X509) *certs, int warn_EE)
-{
-    int i;
-
-    for (i = 0; i < sk_X509_num(certs); i++)
-        warn_cert(uri, sk_X509_value(certs, i), warn_EE);
-}
-
-/* TODO potentially move this and related functions to apps/lib/apps.c */
-static int load_cert_certs(const char *uri,
-                           X509 **pcert, STACK_OF(X509) **pcerts,
-                           int exclude_http, const char *pass, const char *desc)
-{
-    int ret = 0;
-    char *pass_string;
-
-    if (exclude_http && (strncasecmp(uri, "http://", 7) == 0
-                         || strncasecmp(uri, "https://", 8) == 0)) {
-        BIO_printf(bio_err, "error: HTTP retrieval not allowed for %s\n", desc);
-        return ret;
-    }
-    pass_string = get_passwd(pass, desc);
-    ret = load_key_certs_crls(uri, 0, pass_string, desc, NULL, NULL, NULL,
-                              pcert, pcerts, NULL, NULL);
-    clear_free(pass_string);
-
-    if (ret) {
-        if (pcert != NULL)
-            warn_cert(uri, *pcert, 0);
-        warn_certs(uri, *pcerts, 1);
-    } else {
-        sk_X509_pop_free(*pcerts, X509_free);
-        *pcerts = NULL;
-    }
-    return ret;
-}
-
 /* set expected host name/IP addr and clears the email addr in the given ts */
 static int truststore_set_host_etc(X509_STORE *ts, char *host)
 {
@@ -761,24 +685,6 @@ static int truststore_set_host_etc(X509_STORE *ts, char *host)
                                     X509_CHECK_FLAG_NO_PARTIAL_WILDCARDS);
     return (host != NULL && X509_VERIFY_PARAM_set1_ip_asc(ts_vpm, host))
         || X509_VERIFY_PARAM_set1_host(ts_vpm, host, 0);
-}
-
-static X509_STORE *sk_X509_to_store(X509_STORE *store /* may be NULL */,
-                                    const STACK_OF(X509) *certs /* may NULL */)
-{
-    int i;
-
-    if (store == NULL)
-        store = X509_STORE_new();
-    if (store == NULL)
-        return NULL;
-    for (i = 0; i < sk_X509_num(certs); i++) {
-        if (!X509_STORE_add_cert(store, sk_X509_value(certs, i))) {
-            X509_STORE_free(store);
-            return NULL;
-        }
-    }
-    return store;
 }
 
 /* write OSSL_CMP_MSG DER-encoded to the specified file name item */
@@ -952,37 +858,9 @@ static int set_gennames(OSSL_CMP_CTX *ctx, char *names, const char *desc)
     return 1;
 }
 
-/* TODO potentially move to apps/lib/apps.c */
-/*
- * create cert store structure with certificates read from given file(s)
- * returns pointer to created X509_STORE on success, NULL on error
- */
-static X509_STORE *load_certstore(char *input, const char *desc)
-{
-    X509_STORE *store = NULL;
-    STACK_OF(X509) *certs = NULL;
-
-    while (input != NULL) {
-        char *next = next_item(input);
-        int ok;
-
-        if (!load_cert_certs(input, NULL, &certs, 1, opt_otherpass, desc)) {
-            X509_STORE_free(store);
-            return NULL;
-        }
-        ok = (store = sk_X509_to_store(store, certs)) != NULL;
-        sk_X509_pop_free(certs, X509_free);
-        certs = NULL;
-        if (!ok)
-            return NULL;
-        input = next;
-    }
-    return store;
-}
-
 static X509_STORE *load_trusted(char *input, int for_new_cert, const char *desc)
 {
-    X509_STORE *ts = load_certstore(input, desc);
+    X509_STORE *ts = load_certstore(input, opt_otherpass, desc, vpm);
 
     if (ts == NULL)
         return NULL;
@@ -998,40 +876,6 @@ static X509_STORE *load_trusted(char *input, int for_new_cert, const char *desc)
     return NULL;
 }
 
-/* TODO potentially move to apps/lib/apps.c */
-static STACK_OF(X509) *load_certs_multifile(char *files,
-                                            const char *pass, const char *desc)
-{
-    STACK_OF(X509) *certs = NULL;
-    STACK_OF(X509) *result = sk_X509_new_null();
-
-    if (files == NULL)
-        goto err;
-    if (result == NULL)
-        goto oom;
-
-    while (files != NULL) {
-        char *next = next_item(files);
-
-        if (!load_cert_certs(files, NULL, &certs, 0, pass, desc))
-            goto err;
-        if (!X509_add_certs(result, certs,
-                            X509_ADD_FLAG_UP_REF | X509_ADD_FLAG_NO_DUP))
-            goto oom;
-        sk_X509_pop_free(certs, X509_free);
-        certs = NULL;
-        files = next;
-    }
-    return result;
-
- oom:
-    BIO_printf(bio_err, "out of memory\n");
- err:
-    sk_X509_pop_free(certs, X509_free);
-    sk_X509_pop_free(result, X509_free);
-    return NULL;
-}
-
 typedef int (*add_X509_stack_fn_t)(void *ctx, const STACK_OF(X509) *certs);
 
 static int setup_certs(char *files, const char *desc, void *ctx,
@@ -1042,7 +886,7 @@ static int setup_certs(char *files, const char *desc, void *ctx,
 
     if (files == NULL)
         return 1;
-    if ((certs = load_certs_multifile(files, opt_otherpass, desc)) == NULL)
+    if ((certs = load_certs_multifile(files, opt_otherpass, desc, vpm)) == NULL)
         return 0;
     ok = (*set1_fn)(ctx, certs);
     sk_X509_pop_free(certs, X509_free);
@@ -1350,8 +1194,9 @@ static SSL_CTX *setup_ssl_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
     SSL_CTX_set_mode(ssl_ctx, SSL_MODE_AUTO_RETRY);
 
     if (opt_tls_trusted != NULL) {
-        if ((trust_store = load_certstore(opt_tls_trusted,
-                                          "trusted TLS certificates")) == NULL)
+        trust_store = load_certstore(opt_tls_trusted, opt_otherpass,
+                                     "trusted TLS certificates", vpm);
+        if (trust_store == NULL)
             goto err;
         SSL_CTX_set_cert_store(ssl_ctx, trust_store);
         /* for improved diagnostics on SSL_CTX_build_cert_chain() errors: */
@@ -1364,7 +1209,8 @@ static SSL_CTX *setup_ssl_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
         int ok;
 
         if (!load_cert_certs(opt_tls_cert, &cert, &certs, 0, opt_tls_keypass,
-                             "TLS client certificate (optionally with chain)"))
+                             "TLS client certificate (optionally with chain)",
+                             vpm))
             /* need opt_tls_keypass if opt_tls_cert is encrypted PKCS#12 file */
             goto err;
 
@@ -1418,7 +1264,8 @@ static SSL_CTX *setup_ssl_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
         if (opt_tls_extra != NULL) {
             STACK_OF(X509) *tls_extra = load_certs_multifile(opt_tls_extra,
                                                              opt_otherpass,
-                                                             "extra certificates for TLS");
+                                                             "extra certificates for TLS",
+                                                             vpm);
             int res = 1;
 
             if (tls_extra == NULL)
@@ -1541,7 +1388,8 @@ static int setup_protection_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
         int ok;
 
         if (!load_cert_certs(opt_cert, &cert, &certs, 0, opt_keypass,
-                             "CMP client certificate (optionally with chain)"))
+                             "CMP client certificate (optionally with chain)",
+                             vpm))
             /* opt_keypass is needed if opt_cert is an encrypted PKCS#12 file */
             return 0;
         ok = OSSL_CMP_CTX_set1_cert(ctx, cert);
