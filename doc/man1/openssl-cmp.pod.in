@@ -1022,8 +1022,7 @@ which can be used to interact conveniently with the Insta Demo CA.
 In order to enroll an initial certificate from that CA it is sufficient
 to issue the following shell commands.
 
-  cd /path/to/openssl
-  export OPENSSL_CONF=apps/openssl.cnf
+  export OPENSSL_CONF=/path/to/openssl/apps/openssl.cnf
 
 =begin comment
 
