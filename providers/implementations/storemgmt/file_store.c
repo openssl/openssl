@@ -326,6 +326,9 @@ static int file_set_ctx_params(void *loaderctx, const OSSL_PARAM params[])
     struct file_ctx_st *ctx = loaderctx;
     const OSSL_PARAM *p;
 
+    if (params == NULL)
+        return 1;
+
     p = OSSL_PARAM_locate_const(params, OSSL_STORE_PARAM_PROPERTIES);
     if (p != NULL) {
         OPENSSL_free(ctx->_.file.propq);
