@@ -199,8 +199,6 @@ passed back to some of the provider functions.
 
 ossl_provider_forall_loaded() iterates over all the currently
 "activated" providers, and calls I<cb> for each of them.
-If no providers have been "activated" yet, it tries to activate all
-available fallback providers and tries another iteration.
 
 ossl_provider_name() returns the name that was given with
 ossl_provider_new().
@@ -286,6 +284,10 @@ ossl_provider_up_ref() returns the value of the reference count after
 it has been incremented.
 
 ossl_provider_free() doesn't return any value.
+
+ossl_provider_forall_loaded() returns 1 if the callback was called for all
+activated providers.  A return value of 0 means that the callback was not
+called for any activated providers.
 
 ossl_provider_set_module_path(), ossl_provider_set_fallback(),
 ossl_provider_activate(), ossl_provider_activate_leave_fallbacks() and
