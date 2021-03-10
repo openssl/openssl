@@ -547,7 +547,7 @@ const OSSL_DISPATCH ossl_mac_legacy_keymgmt_functions[] = {
     { 0, NULL }
 };
 
-const OSSL_DISPATCH ossl_cossl_mac_legacy_keymgmt_functions[] = {
+const OSSL_DISPATCH ossl_cmac_legacy_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_NEW, (void (*)(void))mac_new_cmac },
     { OSSL_FUNC_KEYMGMT_FREE, (void (*)(void))mac_free },
     { OSSL_FUNC_KEYMGMT_GET_PARAMS, (void (*) (void))mac_get_params },
