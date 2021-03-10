@@ -199,6 +199,8 @@ passed back to some of the provider functions.
 
 ossl_provider_doall_activated() iterates over all the currently
 "activated" providers, and calls I<cb> for each of them.
+If no providers have been "activated" yet, it tries to activate all
+available fallback providers before iterating over them.
 
 ossl_provider_name() returns the name that was given with
 ossl_provider_new().
