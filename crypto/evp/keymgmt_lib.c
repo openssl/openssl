@@ -455,8 +455,10 @@ int evp_keymgmt_util_copy(EVP_PKEY *to, EVP_PKEY *from, int selection)
          * implemented, so just copy and be done
          */
         if (!evp_keymgmt_copy(to_keymgmt, to_keydata, from->keydata,
-                              selection))
+                              selection)) {
+            evp_keymgmt_freedata(to_keymgmt, alloc_keydata);
             return 0;
+        }
     } else if (match_type(to_keymgmt, from->keymgmt)) {
         struct evp_keymgmt_util_try_import_data_st import_data;
 
@@ -466,10 +468,8 @@ int evp_keymgmt_util_copy(EVP_PKEY *to, EVP_PKEY *from, int selection)
 
         if (!evp_keymgmt_util_export(from, selection,
                                      &evp_keymgmt_util_try_import,
-                                     &import_data)) {
-            evp_keymgmt_freedata(to_keymgmt, alloc_keydata);
+                                     &import_data))
             return 0;
-        }
 
         /*
          * In case to_keydata was previously unallocated,
