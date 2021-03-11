@@ -562,7 +562,7 @@ static int check_extensions(X509_STORE_CTX *ctx)
             CB_FAIL_IF(x->skid != NULL
                            && (x->ex_flags & EXFLAG_SKID_CRITICAL) != 0,
                        ctx, x, i, X509_V_ERR_SUBJECT_KEY_IDENTIFIER_CRITICAL);
-            if (X509_get_version(x) >= 2) { /* at least X.509v3 */
+            if (X509_get_version(x) >= X509_VERSION_3) {
                 /* Check AKID presence acc. to RFC 5280 section 4.2.1.1 */
                 CB_FAIL_IF(i + 1 < num /*
                                         * this means not last cert in chain,
@@ -2053,7 +2053,7 @@ X509_CRL *X509_CRL_diff(X509_CRL *base, X509_CRL *newer,
     }
     /* Create new CRL */
     crl = X509_CRL_new_ex(base->libctx, base->propq);
-    if (crl == NULL || !X509_CRL_set_version(crl, 1))
+    if (crl == NULL || !X509_CRL_set_version(crl, X509_CRL_VERSION_2))
         goto memerr;
     /* Set issuer name */
     if (!X509_CRL_set_issuer_name(crl, X509_CRL_get_issuer(newer)))
