@@ -378,45 +378,45 @@ int ossl_namemap_add_names(OSSL_NAMEMAP *namemap, int number,
 #include <openssl/evp.h>
 
 /* Creates an initial namemap with names found in the legacy method db */
-static void get_legacy_evp_names(const char *main_name, const char *alias,
+static void get_legacy_evp_names(const char *name, const char *desc,
                                  void *arg)
 {
-    int main_id = ossl_namemap_add_name(arg, 0, main_name);
+    int num = ossl_namemap_add_name(arg, 0, name);
 
     /*
-     * We could check that the returned value is the same as main_id,
-     * but since this is a void function, there's no sane way to report
-     * the error.  The best we can do is trust ourselve to keep the legacy
-     * method database conflict free.
+     * We currently treat the description ("long name" in OBJ speak) as an
+     * alias.
+     */
+
+    /*
+     * We could check that the returned value is the same as id, but since
+     * this is a void function, there's no sane way to report the error.
+     * The best we can do is trust ourselve to keep the legacy method
+     * database conflict free.
      *
      * This registers any alias with the same number as the main name.
      * Should it be that the current |on| *has* the main name, this is
      * simply a no-op.
      */
-    if (alias != NULL) {
-        (void)ossl_namemap_add_name(arg, main_id, alias);
+    if (desc != NULL) {
+        (void)ossl_namemap_add_name(arg, num, desc);
     }
 }
 
 static void get_legacy_cipher_names(const OBJ_NAME *on, void *arg)
 {
     const EVP_CIPHER *cipher = (void *)OBJ_NAME_get(on->name, on->type);
+    int nid = EVP_CIPHER_type(cipher);
 
-    get_legacy_evp_names(EVP_CIPHER_name(cipher), on->name, arg);
+    get_legacy_evp_names(OBJ_nid2sn(nid), OBJ_nid2ln(nid), arg);
 }
 
 static void get_legacy_md_names(const OBJ_NAME *on, void *arg)
 {
     const EVP_MD *md = (void *)OBJ_NAME_get(on->name, on->type);
-    /* We don't want the pkey_type names, so we need some extra care */
-    int snid, lnid;
+    int nid = EVP_MD_type(md);
 
-    snid = OBJ_sn2nid(on->name);
-    lnid = OBJ_ln2nid(on->name);
-    if (snid != EVP_MD_pkey_type(md) && lnid != EVP_MD_pkey_type(md))
-        get_legacy_evp_names(EVP_MD_name(md), on->name, arg);
-    else
-        get_legacy_evp_names(EVP_MD_name(md), NULL, arg);
+    get_legacy_evp_names(OBJ_nid2sn(nid), OBJ_nid2ln(nid), arg);
 }
 #endif
 
