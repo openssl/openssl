@@ -108,7 +108,7 @@ const OPTIONS pkcs12_options[] = {
     {"passcerts", OPT_PASSCERTS, 's', "Certificate file pass phrase source"},
     {"chain", OPT_CHAIN, '-', "Build and add certificate chain for EE cert,"},
     {OPT_MORE_STR, 0, 0,
-     "which is the 1st cert from -in matching the privte key (if given)"},
+     "which is the 1st cert from -in matching the private key (if given)"},
     {"untrusted", OPT_UNTRUSTED, '<', "Untrusted certificates for chain building"},
     {"CAfile", OPT_CAFILE, '<', "PEM-format file of CA's"},
     {"CApath", OPT_CAPATH, '/', "PEM-format directory of CA's"},
