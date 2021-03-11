@@ -161,7 +161,6 @@ static const OSSL_ALGORITHM *legacy_query(void *provctx, int operation_id,
 
 static void legacy_teardown(void *provctx)
 {
-    OSSL_LIB_CTX_free(PROV_LIBCTX_OF(provctx));
     ossl_prov_ctx_free(provctx);
 }
 
@@ -180,7 +179,6 @@ int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
                        void **provctx)
 {
     OSSL_FUNC_core_get_libctx_fn *c_get_libctx = NULL;
-    OSSL_LIB_CTX *libctx = NULL;
 
     for (; in->function_id != 0; in++) {
         switch (in->function_id) {
@@ -202,14 +200,13 @@ int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
     if (c_get_libctx == NULL)
         return 0;
 
-    if ((*provctx = ossl_prov_ctx_new()) == NULL
-        || (libctx = OSSL_LIB_CTX_new()) == NULL) {
-        OSSL_LIB_CTX_free(libctx);
+    if ((*provctx = ossl_prov_ctx_new()) == NULL) {
         legacy_teardown(*provctx);
         *provctx = NULL;
         return 0;
     }
-    ossl_prov_ctx_set0_libctx(*provctx, libctx);
+    ossl_prov_ctx_set0_libctx(*provctx,
+                              (OSSL_LIB_CTX *)c_get_libctx(handle));
     ossl_prov_ctx_set0_handle(*provctx, handle);
 
     *out = legacy_dispatch_table;
