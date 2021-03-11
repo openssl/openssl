@@ -1375,7 +1375,7 @@ static int test_EVP_SM2(void)
     OSSL_PARAM sparams[2] = {OSSL_PARAM_END, OSSL_PARAM_END};
     OSSL_PARAM gparams[2] = {OSSL_PARAM_END, OSSL_PARAM_END};
     int i;
-    char mdname[20];
+    char mdname[OSSL_MAX_NAME_SIZE];
 
     if (!TEST_ptr(pctx = EVP_PKEY_CTX_new_from_name(testctx,
                                                     "SM2", testpropq)))
