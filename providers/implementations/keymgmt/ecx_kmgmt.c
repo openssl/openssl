@@ -15,6 +15,7 @@
 #include <openssl/core_names.h>
 #include <openssl/params.h>
 #include <openssl/err.h>
+#include <openssl/proverr.h>
 #include <openssl/evp.h>
 #include <openssl/rand.h>
 #include "internal/param_build_set.h"
@@ -718,21 +719,17 @@ static int ecx_key_pairwise_check(const ECX_KEY *ecx, int type)
 static int ecx_validate(const void *keydata, int selection, int type, size_t keylen)
 {
     const ECX_KEY *ecx = keydata;
-    int ok = 0;
+    int ok = keylen == ecx->keylen;
 
     if (!ossl_prov_is_running())
         return 0;
 
-    assert(keylen == ecx->keylen);
+    if ((selection & ECX_POSSIBLE_SELECTIONS) == 0)
+        return 1; /* nothing to validate */
 
-    /*
-     * ECX keys have no parameters. But if EVP_PKEY_param_check() is called then
-     * we should return true.
-     */
-    if ((selection & (OSSL_KEYMGMT_SELECT_KEYPAIR
-                      | OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS
-                      | OSSL_KEYMGMT_SELECT_OTHER_PARAMETERS)) != 0)
-        ok = 1;
+    if (!ok) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_ALGORITHM_MISMATCH);
+    }
 
     if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0)
         ok = ok && ecx->haspubkey;

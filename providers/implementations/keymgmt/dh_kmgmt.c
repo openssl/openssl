@@ -128,19 +128,19 @@ static void dh_freedata(void *keydata)
 static int dh_has(const void *keydata, int selection)
 {
     const DH *dh = keydata;
-    int ok = 0;
+    int ok = 1;
 
-    if (ossl_prov_is_running() && dh != NULL) {
-        if ((selection & DH_POSSIBLE_SELECTIONS) != 0)
-            ok = 1;
+    if (!ossl_prov_is_running() || dh == NULL)
+        return 0;
+    if ((selection & DH_POSSIBLE_SELECTIONS) == 0)
+        return 1; /* the selection is not missing */
 
-        if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0)
-            ok = ok && (DH_get0_pub_key(dh) != NULL);
-        if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0)
-            ok = ok && (DH_get0_priv_key(dh) != NULL);
-        if ((selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) != 0)
-            ok = ok && (DH_get0_p(dh) != NULL && DH_get0_g(dh) != NULL);
-    }
+    if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0)
+        ok = ok && (DH_get0_pub_key(dh) != NULL);
+    if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0)
+        ok = ok && (DH_get0_priv_key(dh) != NULL);
+    if ((selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) != 0)
+        ok = ok && (DH_get0_p(dh) != NULL && DH_get0_g(dh) != NULL);
     return ok;
 }
 
@@ -376,13 +376,13 @@ static int dh_validate_private(const DH *dh)
 static int dh_validate(const void *keydata, int selection, int checktype)
 {
     const DH *dh = keydata;
-    int ok = 0;
+    int ok = 1;
 
     if (!ossl_prov_is_running())
         return 0;
 
-    if ((selection & DH_POSSIBLE_SELECTIONS) != 0)
-        ok = 1;
+    if ((selection & DH_POSSIBLE_SELECTIONS) == 0)
+        return 1; /* nothing to validate */
 
     if ((selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) != 0) {
         /*
