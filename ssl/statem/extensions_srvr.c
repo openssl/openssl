@@ -725,7 +725,13 @@ int tls_parse_ctos_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
 
         /* parse the encoded_pt, which is either a classical, PQC, or hybrid (both) message. */
         if (do_hybrid) {
-          if (!OQS_decode_hybrid_message(PACKET_data(&encoded_pt), &classical_encoded_pt, &classical_encodedlen, &oqs_encoded_pt, &oqs_encodedlen)) {
+          if (!OQS_decode_hybrid_message(PACKET_data(&encoded_pt),
+                                         group_id,
+                                         true,
+                                         &classical_encoded_pt,
+                                         &classical_encodedlen,
+                                         &oqs_encoded_pt,
+                                         &oqs_encodedlen)) {
             has_error = 1;
             goto oqs_cleanup;
           }
