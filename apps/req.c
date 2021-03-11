@@ -1117,7 +1117,8 @@ static int make_REQ(X509_REQ *req, EVP_PKEY *pkey, X509_NAME *fsubj,
         }
     }
 
-    if (!X509_REQ_set_version(req, 0L)) /* so far there is only version 1 */
+    /* so far there is only version 1 */
+    if (!X509_REQ_set_version(req, X509_REQ_VERSION_1))
         goto err;
 
     if (fsubj != NULL)

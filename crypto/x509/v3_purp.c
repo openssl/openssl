@@ -425,7 +425,7 @@ int ossl_x509v3_cache_extensions(X509 *x)
     ERR_set_mark();
 
     /* V1 should mean no extensions ... */
-    if (X509_get_version(x) == 0)
+    if (X509_get_version(x) == X509_VERSION_1)
         x->ex_flags |= EXFLAG_V1;
 
     /* Handle basic constraints */
