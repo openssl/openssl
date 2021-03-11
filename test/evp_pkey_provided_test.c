@@ -344,7 +344,8 @@ static int test_fromdata_rsa(void)
                                         fromdata_params))
         || !TEST_int_eq(EVP_PKEY_bits(pk), 32)
         || !TEST_int_eq(EVP_PKEY_security_bits(pk), 8)
-        || !TEST_int_eq(EVP_PKEY_size(pk), 4))
+        || !TEST_int_eq(EVP_PKEY_size(pk), 4)
+        || !TEST_false(EVP_PKEY_missing_parameters(pk)))
         goto err;
 
     if (!TEST_ptr(key_ctx = EVP_PKEY_CTX_new_from_pkey(NULL, pk, "")))
@@ -509,7 +510,8 @@ static int test_fromdata_dh_named_group(void)
                                         fromdata_params))
         || !TEST_int_eq(EVP_PKEY_bits(pk), 2048)
         || !TEST_int_eq(EVP_PKEY_security_bits(pk), 112)
-        || !TEST_int_eq(EVP_PKEY_size(pk), 256))
+        || !TEST_int_eq(EVP_PKEY_size(pk), 256)
+        || !TEST_false(EVP_PKEY_missing_parameters(pk)))
         goto err;
 
     if (!TEST_true(EVP_PKEY_get_utf8_string_param(pk, OSSL_PKEY_PARAM_GROUP_NAME,
@@ -654,7 +656,8 @@ static int test_fromdata_dh_fips186_4(void)
                                         fromdata_params))
         || !TEST_int_eq(EVP_PKEY_bits(pk), 2048)
         || !TEST_int_eq(EVP_PKEY_security_bits(pk), 112)
-        || !TEST_int_eq(EVP_PKEY_size(pk), 256))
+        || !TEST_int_eq(EVP_PKEY_size(pk), 256)
+        || !TEST_false(EVP_PKEY_missing_parameters(pk)))
         goto err;
 
     if (!TEST_true(EVP_PKEY_get_utf8_string_param(pk, OSSL_PKEY_PARAM_GROUP_NAME,
@@ -926,7 +929,8 @@ static int test_fromdata_ecx(int tst)
                                         fromdata_params))
         || !TEST_int_eq(EVP_PKEY_bits(pk), bits)
         || !TEST_int_eq(EVP_PKEY_security_bits(pk), security_bits)
-        || !TEST_int_eq(EVP_PKEY_size(pk), size))
+        || !TEST_int_eq(EVP_PKEY_size(pk), size)
+        || !TEST_false(EVP_PKEY_missing_parameters(pk)))
         goto err;
 
     if (!TEST_ptr(ctx2 = EVP_PKEY_CTX_new_from_pkey(NULL, pk, NULL)))
@@ -1039,7 +1043,8 @@ static int test_fromdata_ec(void)
                                         fromdata_params))
         || !TEST_int_eq(EVP_PKEY_bits(pk), 256)
         || !TEST_int_eq(EVP_PKEY_security_bits(pk), 128)
-        || !TEST_int_eq(EVP_PKEY_size(pk), 2 + 35 * 2))
+        || !TEST_int_eq(EVP_PKEY_size(pk), 2 + 35 * 2)
+        || !TEST_false(EVP_PKEY_missing_parameters(pk)))
         goto err;
 
     if (!TEST_ptr(copy_pk = EVP_PKEY_new())
@@ -1298,7 +1303,8 @@ static int test_fromdata_dsa_fips186_4(void)
                                         fromdata_params))
         || !TEST_int_eq(EVP_PKEY_bits(pk), 2048)
         || !TEST_int_eq(EVP_PKEY_security_bits(pk), 112)
-        || !TEST_int_eq(EVP_PKEY_size(pk), 2 + 2 * (3 + sizeof(q_data))))
+        || !TEST_int_eq(EVP_PKEY_size(pk), 2 + 2 * (3 + sizeof(q_data)))
+        || !TEST_false(EVP_PKEY_missing_parameters(pk)))
         goto err;
 
     if (!TEST_false(EVP_PKEY_get_utf8_string_param(pk, OSSL_PKEY_PARAM_GROUP_NAME,

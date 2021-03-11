@@ -112,22 +112,22 @@ static void rsa_freedata(void *keydata)
 static int rsa_has(const void *keydata, int selection)
 {
     const RSA *rsa = keydata;
-    int ok = 0;
+    int ok = 1;
 
-    if (rsa != NULL && ossl_prov_is_running()) {
-        if ((selection & RSA_POSSIBLE_SELECTIONS) != 0)
-            ok = 1;
+    if (rsa == NULL || !ossl_prov_is_running())
+        return 0;
+    if ((selection & RSA_POSSIBLE_SELECTIONS) == 0)
+        return 1; /* the selection is not missing */
 
-        if ((selection & OSSL_KEYMGMT_SELECT_OTHER_PARAMETERS) != 0)
-            /* This will change with OAEP */
-            ok = ok && (RSA_test_flags(rsa, RSA_FLAG_TYPE_RSASSAPSS) != 0);
-        if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0)
-            ok = ok && (RSA_get0_e(rsa) != NULL);
-        if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0)
-            ok = ok && (RSA_get0_n(rsa) != NULL);
-        if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0)
-            ok = ok && (RSA_get0_d(rsa) != NULL);
-    }
+    if ((selection & OSSL_KEYMGMT_SELECT_OTHER_PARAMETERS) != 0)
+        /* This will change with OAEP */
+        ok = ok && (RSA_test_flags(rsa, RSA_FLAG_TYPE_RSASSAPSS) != 0);
+    if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0)
+        ok = ok && (RSA_get0_e(rsa) != NULL);
+    if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0)
+        ok = ok && (RSA_get0_n(rsa) != NULL);
+    if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0)
+        ok = ok && (RSA_get0_d(rsa) != NULL);
     return ok;
 }
 
@@ -185,6 +185,9 @@ static int rsa_export(void *keydata, int selection,
     int ok = 1;
 
     if (!ossl_prov_is_running() || rsa == NULL)
+        return 0;
+
+    if ((selection & RSA_POSSIBLE_SELECTIONS) == 0)
         return 0;
 
     tmpl = OSSL_PARAM_BLD_new();
@@ -358,24 +361,13 @@ static const OSSL_PARAM *rsa_gettable_params(void *provctx)
 static int rsa_validate(const void *keydata, int selection, int checktype)
 {
     const RSA *rsa = keydata;
-    int ok = 0;
+    int ok = 1;
 
     if (!ossl_prov_is_running())
         return 0;
 
-    /*
-     * Although an RSA key has no domain parameters, validating them should
-     * return true.
-     *
-     * RSA_POSSIBLE_SELECTIONS already includes
-     * OSSL_KEYMGMT_SELECT_OTHER_PARAMETERS. We explicitly add
-     * OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS here as well for completeness. In
-     * practice this makes little difference since EVP_PKEY_param_check() always
-     * checks the combination of "other" and "domain" parameters anyway.
-     */
-    if ((selection & (RSA_POSSIBLE_SELECTIONS
-                      | OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS)) != 0)
-        ok = 1;
+    if ((selection & RSA_POSSIBLE_SELECTIONS) == 0)
+        return 1; /* nothing to validate */
 
     /* If the whole key is selected, we do a pairwise validation */
     if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR)

@@ -93,7 +93,7 @@ static void kdf_freedata(void *kdfdata)
 
 static int kdf_has(const void *keydata, int selection)
 {
-    return 0;
+    return 1; /* nothing is missing */
 }
 
 const OSSL_DISPATCH ossl_kdf_keymgmt_functions[] = {
