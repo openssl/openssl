@@ -8,13 +8,14 @@
  */
 
 #include <openssl/err.h>
+#include "crypto/cryptlib.h"
 #include "crypto/store.h"
 #include "store_local.h"
 
 static CRYPTO_ONCE store_init = CRYPTO_ONCE_STATIC_INIT;
 DEFINE_RUN_ONCE_STATIC(do_store_init)
 {
-    return OPENSSL_init_crypto(0, NULL);
+    return OPENSSL_init_crypto(OPENSSL_INIT_BASE_ONLY, NULL);
 }
 
 int ossl_store_init_once(void)
