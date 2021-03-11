@@ -100,7 +100,7 @@ Sets the type of parameter generation. The shared valid values are:
 
 =item "fips186_4"
 
-The current standard. This is the default value.
+The current standard.
 
 =item "fips186_2"
 
@@ -108,8 +108,8 @@ The old standard that should only be used for legacy purposes.
 
 =item "default"
 
-This is an alias to use the latest implemented standard.
-It is currently set to "fips186_4".
+This can choose one of "fips186_4" or "fips186_2" depending on other
+parameters set for parameter generation.
 
 =back
 
