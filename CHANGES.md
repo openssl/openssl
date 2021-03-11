@@ -21,7 +21,7 @@ OpenSSL Releases
 OpenSSL 3.0
 -----------
 
-### Changes between 1.1.1 and 3.0 alpha 13 [11 Mar 2021]
+### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
 
  * Windows thread synchronization uses read/write primitives (SRWLock) when
    supported by the OS, otherwise CriticalSection continues to be used.
