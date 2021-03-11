@@ -17,6 +17,7 @@
 
 #define DSA_PARAMGEN_TYPE_FIPS_186_4   0   /* Use FIPS186-4 standard */
 #define DSA_PARAMGEN_TYPE_FIPS_186_2   1   /* Use legacy FIPS186-2 standard */
+#define DSA_PARAMGEN_TYPE_FIPS_DEFAULT 2
 
 DSA *ossl_dsa_new(OSSL_LIB_CTX *libctx);
 void ossl_dsa_set0_libctx(DSA *d, OSSL_LIB_CTX *libctx);

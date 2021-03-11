@@ -78,7 +78,7 @@ static const DSA_GENTYPE_NAME2ID dsatype2id[]=
 #ifdef FIPS_MODULE
     { "default", DSA_PARAMGEN_TYPE_FIPS_186_4 },
 #else
-    { "default", DSA_PARAMGEN_TYPE_FIPS_186_2 },
+    { "default", DSA_PARAMGEN_TYPE_FIPS_DEFAULT },
 #endif
     { "fips186_4", DSA_PARAMGEN_TYPE_FIPS_186_4 },
     { "fips186_2", DSA_PARAMGEN_TYPE_FIPS_186_2 },
@@ -381,7 +381,7 @@ static void *dsa_gen_init(void *provctx, int selection)
 #ifdef FIPS_MODULE
         gctx->gen_type = DSA_PARAMGEN_TYPE_FIPS_186_4;
 #else
-        gctx->gen_type = DSA_PARAMGEN_TYPE_FIPS_186_2;
+        gctx->gen_type = DSA_PARAMGEN_TYPE_FIPS_DEFAULT;
 #endif
         gctx->gindex = -1;
         gctx->pcounter = -1;
@@ -518,6 +518,10 @@ static void *dsa_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
     dsa = ossl_dsa_new(gctx->libctx);
     if (dsa == NULL)
         return NULL;
+
+    if (gctx->gen_type == DSA_PARAMGEN_TYPE_FIPS_DEFAULT)
+        gctx->gen_type = (gctx->pbits >= 2048 ? DSA_PARAMGEN_TYPE_FIPS_186_4 :
+                                                DSA_PARAMGEN_TYPE_FIPS_186_2);
 
     gctx->cb = osslcb;
     gctx->cbarg = cbarg;
