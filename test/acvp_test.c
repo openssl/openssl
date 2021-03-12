@@ -837,8 +837,9 @@ static int aes_gcm_enc_dec(const char *alg,
             goto err;
     }
     /*
-     * TODO(3.0): The IV should not be set outside the boundary as it is now.
-     * It needs to be fed in via a dummy entropy source for this test.
+     * For testing purposes the IV it being set here. In a compliant application
+     * the IV would be generated internally. A fake entropy source could also
+     * be used to feed in the random IV bytes (see fake_random.c)
      */
     if (!TEST_true(EVP_CipherInit_ex(ctx, NULL, NULL, key, iv, enc))
         || !TEST_true(EVP_CIPHER_CTX_set_padding(ctx, 0))
