@@ -911,7 +911,6 @@ void *ossl_provider_prov_ctx(const OSSL_PROVIDER *prov)
 
 OSSL_LIB_CTX *ossl_provider_libctx(const OSSL_PROVIDER *prov)
 {
-    /* TODO(3.0) just: return prov->libctx; */
     return prov != NULL ? prov->libctx : NULL;
 }
 
@@ -1113,7 +1112,14 @@ static OPENSSL_CORE_CTX *core_get_libctx(const OSSL_CORE_HANDLE *handle)
      */
     OSSL_PROVIDER *prov = (OSSL_PROVIDER *)handle;
 
-    return (OPENSSL_CORE_CTX *)ossl_provider_libctx(prov);
+    /*
+     * Using ossl_provider_libctx would be wrong as that returns
+     * NULL for |prov| == NULL and NULL libctx has a special meaning
+     * that does not apply here. Here |prov| == NULL can happen only in
+     * case of a coding error.
+     */
+    (void)ossl_assert(prov != NULL);
+    return (OPENSSL_CORE_CTX *)prov->libctx;
 }
 
 static int core_thread_start(const OSSL_CORE_HANDLE *handle,
@@ -1135,8 +1141,8 @@ static int core_thread_start(const OSSL_CORE_HANDLE *handle,
  */
 #ifndef FIPS_MODULE
 /*
- * TODO(3.0) These error functions should use |handle| to select the proper
- * library context to report in the correct error stack, at least if error
+ * These error functions should use |handle| to select the proper
+ * library context to report in the correct error stack if error
  * stacks become tied to the library context.
  * We cannot currently do that since there's no support for it in the
  * ERR subsystem.
