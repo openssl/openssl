@@ -65,7 +65,7 @@ IMPLEMENT_ASN1_DUP_FUNCTION(ESS_SIGNING_CERT_V2)
  * Returns < 0 if attribute is not found, 1 if found, or 
  * -1 on attribute parsing failure.
  */
-int ossl_cms_signerinfo_get_signing_cert_v2(CMS_SignerInfo *si,
+int ossl_cms_signerinfo_get_signing_cert_v2(const CMS_SignerInfo *si,
                                             ESS_SIGNING_CERT_V2 **psc)
 {
     ASN1_STRING *str;
@@ -92,7 +92,7 @@ int ossl_cms_signerinfo_get_signing_cert_v2(CMS_SignerInfo *si,
  * Returns < 0 if attribute is not found, 1 if found, or 
  * -1 on attribute parsing failure.
  */
-int ossl_cms_signerinfo_get_signing_cert(CMS_SignerInfo *si,
+int ossl_cms_signerinfo_get_signing_cert(const CMS_SignerInfo *si,
                                          ESS_SIGNING_CERT **psc)
 {
     ASN1_STRING *str;

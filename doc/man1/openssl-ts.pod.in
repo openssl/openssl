@@ -469,12 +469,13 @@ the TSA name field of the response. Default is no. (Optional)
 
 The SignedData objects created by the TSA always contain the
 certificate identifier of the signing certificate in a signed
-attribute (see RFC 2634, Enhanced Security Services). If this option
-is set to yes and either the B<certs> variable or the B<-chain> option
+attribute (see RFC 2634, Enhanced Security Services).
+If this variable is set to no, only this signing certificate identifier
+is included in the SigningCertificate signed attribute.
+If this variable is set to yes and the B<certs> variable or the B<-chain> option
 is specified then the certificate identifiers of the chain will also
-be included in the SigningCertificate signed attribute. If this
-variable is set to no, only the signing certificate identifier is
-included. Default is no. (Optional)
+be included, where the B<-chain> option overrides the B<certs> variable.
+Default is no.  (Optional)
 
 =item B<ess_cert_id_alg>
 
