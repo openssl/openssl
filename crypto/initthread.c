@@ -214,9 +214,9 @@ void OPENSSL_thread_stop_ex(OSSL_LIB_CTX *ctx)
 {
     ctx = ossl_lib_ctx_get_concrete(ctx);
     /*
-     * TODO(3.0). It would be nice if we could figure out a way to do this on
-     * all threads that have used the OSSL_LIB_CTX when the context is freed.
-     * This is currently not possible due to the use of thread local variables.
+     * It would be nice if we could figure out a way to do this on all threads
+     * that have used the OSSL_LIB_CTX when the context is freed. This is
+     * currently not possible due to the use of thread local variables.
      */
     ossl_ctx_thread_stop(ctx);
 }
