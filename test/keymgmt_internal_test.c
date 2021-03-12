@@ -142,8 +142,8 @@ static int test_pass_rsa(FIXTURE *fixture)
     RSA *rsa = NULL;
     BIGNUM *bn1 = NULL, *bn2 = NULL, *bn3 = NULL;
     EVP_PKEY *pk = NULL;
-    EVP_KEYMGMT *km1 = NULL, *km2 = NULL;
-    void *provkey = NULL;
+    EVP_KEYMGMT *km = NULL, *km1 = NULL, *km2 = NULL, *km3 = NULL;
+    void *provkey = NULL, *provkey2 = NULL;
     BIGNUM *bn_primes[1] = { NULL };
     BIGNUM *bn_exps[1] = { NULL };
     BIGNUM *bn_coeffs[1] = { NULL };
@@ -216,7 +216,14 @@ static int test_pass_rsa(FIXTURE *fixture)
 
     if (!TEST_ptr(km1 = EVP_KEYMGMT_fetch(fixture->ctx1, "RSA", NULL))
         || !TEST_ptr(km2 = EVP_KEYMGMT_fetch(fixture->ctx2, "RSA", NULL))
+        || !TEST_ptr(km3 = EVP_KEYMGMT_fetch(fixture->ctx1, "RSA-PSS", NULL))
         || !TEST_ptr_ne(km1, km2))
+        goto err;
+
+    km = km3;
+    /* Check that we can't export an RSA key into a RSA-PSS keymanager */
+    if (!TEST_ptr_null(provkey2 = evp_pkey_export_to_provider(pk, NULL, &km,
+                                                              NULL)))
         goto err;
 
     if (!TEST_ptr(provkey = evp_pkey_export_to_provider(pk, NULL, &km1, NULL))
@@ -249,6 +256,7 @@ static int test_pass_rsa(FIXTURE *fixture)
     EVP_PKEY_free(pk);
     EVP_KEYMGMT_free(km1);
     EVP_KEYMGMT_free(km2);
+    EVP_KEYMGMT_free(km3);
 
     return ret;
 }
