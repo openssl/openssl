@@ -153,13 +153,6 @@ struct ossl_store_ctx_st {
 };
 
 /*-
- *  OSSL_STORE init stuff
- *  ---------------------
- */
-
-int ossl_store_init_once(void);
-
-/*-
  *  'file' scheme stuff
  *  -------------------
  */
