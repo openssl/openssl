@@ -199,55 +199,80 @@ static int ts_check_signing_certs(PKCS7_SIGNER_INFO *si,
 {
     ESS_SIGNING_CERT *ss = ossl_ess_signing_cert_get(si);
     ESS_SIGNING_CERT_V2 *ssv2 = ossl_ess_signing_cert_v2_get(si);
-    X509 *cert;
-    int i = 0;
     int ret = 0;
-    int id_index;
-    int chain_length;
-    int verification_length;
-    void *cert_ids_generic;
+
+    /*
+      RFC 5035, section 2:
+      If both attributes (v1 and v2) exist in a single message,
+      they are independently evaluated.
+    */
+    /*
+      Introduce local generic types
+      so we can loop through multiple implementations.
+    */
     typedef int (*FindCert)(const void *, const X509 *);
-    FindCert find_cert_generic;
+    typedef struct _CheckingTuple {
+        void *cert_ids;
+        FindCert find_cert;
+        int verification_length;
+    } CheckingTuple;
 
-    if (ss != NULL) {
-        cert_ids_generic = ss->cert_ids;
-        find_cert_generic = (FindCert)&ossl_ess_find_cert;
-        verification_length = sk_ESS_CERT_ID_num(cert_ids_generic);
-    } else if (ssv2 != NULL) {
-        cert_ids_generic = ssv2->cert_ids;
-        find_cert_generic = (FindCert)&ossl_ess_find_cert_v2;
-        verification_length = sk_ESS_CERT_ID_V2_num(cert_ids_generic);
-    } else {
-        goto err;
-    }
+    /* list of all implementations */
+    const CheckingTuple checking_tuples[] = {
+        {
+            .cert_ids = ssv2 ? ssv2->cert_ids : NULL,
+            .find_cert = (FindCert)&ossl_ess_find_cert_v2,
+            .verification_length = ssv2 ? sk_ESS_CERT_ID_V2_num(ssv2->cert_ids) : 1,
+        },
+        {
+            .cert_ids = ss ? ss->cert_ids : NULL,
+            .find_cert = (FindCert)&ossl_ess_find_cert,
+            .verification_length = ss ? sk_ESS_CERT_ID_num(ss->cert_ids) : 1,
+        },
+    };
+    const int checking_size = sizeof(checking_tuples) / sizeof(*checking_tuples);
 
-    if (verification_length < 1) /* no signer's ESSCertID */
-        goto err;
-
-    chain_length = sk_X509_num(chain);
+    const int chain_length = sk_X509_num(chain);
     if (chain_length < 1) /* empty chain */
         goto err;
 
-    /* RFC 2634, section 5.4 */
-    if (verification_length > 1) {
-        if (chain_length > 1)
-            /* validate every certificate except root */
-            verification_length = chain_length - 1;
-        else
-            /* only validate the signing certificate */
-            verification_length = 1;
+    int checking_performed = 0;
+    for (int i = 0; i < checking_size; i++) {
+        const CheckingTuple *current_tuple = checking_tuples + i;
+        const void *cert_ids = current_tuple->cert_ids;
+        if (cert_ids == NULL)
+            continue;
+        checking_performed++;
+
+        int verification_length = current_tuple->verification_length;
+        if (verification_length < 1) /* no signer's ESSCertID */
+            goto err;
+
+        /* RFC 2634, section 5.4 */
+        if (verification_length > 1) {
+            if (chain_length > 1)
+                /* validate every certificate except root */
+                verification_length = chain_length - 1;
+            else
+                /* only validate the signing certificate */
+                verification_length = 1;
+        }
+
+        const FindCert find_cert = current_tuple->find_cert;
+        for (int j = 0; j < verification_length; j++) {
+            const X509 *cert = sk_X509_value(chain, j);
+            const int id_index = find_cert(cert_ids, cert);
+            if (
+                /* all certificates must be present in the list regardless of the order */
+                (id_index < 0) ||
+                /* the first ESSCertID must belong to the signer */
+                (j == 0 && id_index != 0))
+                goto err;
+        }
     }
 
-    for (i = 0; i < verification_length; i++) {
-        cert = sk_X509_value(chain, i);
-        id_index = find_cert_generic(cert_ids_generic, cert);
-        /* the first ESSCertID must belong to the signer */
-        if (i == 0 && id_index != 0)
-            goto err;
-        /* all certificates must be present in the list regardless of the order */
-        if (id_index < 0)
-            goto err;
-    }
+    if (checking_performed < 1)
+        goto err;
 
     ret = 1;
 
