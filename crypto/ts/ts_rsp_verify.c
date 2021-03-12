@@ -214,23 +214,21 @@ static int ts_check_signing_certs(PKCS7_SIGNER_INFO *si,
      * Check if first ESSCertIDs matches signer cert
      * and each further ESSCertIDs matches any cert in the chain.
      */
-    if (ss != NULL) {
+    if (ss != NULL)
         for (i = 0; i < sk_ESS_CERT_ID_num(ss->cert_ids); i++) {
             j = ossl_ess_find_cid(chain, sk_ESS_CERT_ID_value(ss->cert_ids, i),
                                   NULL);
             if (j < 0 || (i == 0 && j != 0))
                 goto err;
         }
-        ret = 1;
-    } else if (ssv2 != NULL) {
+    if (ssv2 != NULL)
         for (i = 0; i < sk_ESS_CERT_ID_V2_num(ssv2->cert_ids); i++) {
             j = ossl_ess_find_cid(chain, NULL,
                                   sk_ESS_CERT_ID_V2_value(ssv2->cert_ids, i));
             if (j < 0 || (i == 0 && j != 0))
                 goto err;
         }
-        ret = 1;
-    }
+    ret = 1;
 
  err:
     if (!ret)

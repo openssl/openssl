@@ -60,6 +60,7 @@ OpenSSL 3.0
 
  * Improved adherence to Enhanced Security Services (ESS, RFC 2634 and RFC 5035)
    for the TSP implementation.
+   As required by RFC 5035 check both ESSCertID and ESSCertIDv2 if both present.
    Correct the semantics of checking the validation chain in case ESSCertID{,v2}
    contains more than one certificate identifier: This means that all
    certificates referenced there MUST be part of the validation chain.
