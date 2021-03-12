@@ -922,17 +922,21 @@ X509_NAME *parse_name(const char *cp, int chtype, int canmulti,
 
 int pkey_ctrl_string(EVP_PKEY_CTX *ctx, const char *value)
 {
-    int rv;
+    int rv = 0;
     char *stmp, *vtmp = NULL;
+
     stmp = OPENSSL_strdup(value);
-    if (!stmp)
+    if (stmp == NULL)
         return -1;
     vtmp = strchr(stmp, ':');
-    if (vtmp) {
-        *vtmp = 0;
-        vtmp++;
-    }
+    if (vtmp == NULL)
+        goto err;
+
+    *vtmp = 0;
+    vtmp++;
     rv = EVP_PKEY_CTX_ctrl_str(ctx, stmp, vtmp);
+
+err:
     OPENSSL_free(stmp);
     return rv;
 }
