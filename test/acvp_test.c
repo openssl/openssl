@@ -127,7 +127,7 @@ static int ecdsa_keygen_test(int id)
         || !TEST_int_gt(EVP_PKEY_keygen_init(ctx), 0)
         || !TEST_true(EVP_PKEY_CTX_set_group_name(ctx, tst->curve_name))
         || !TEST_int_gt(EVP_PKEY_keygen(ctx, &pkey), 0)
-        || !TEST_int_eq(self_test_args.called, 3)
+        || !TEST_int_ge(self_test_args.called, 3)
         || !TEST_true(pkey_get_bn_bytes(pkey, OSSL_PKEY_PARAM_PRIV_KEY, &priv,
                                         &priv_len))
         || !TEST_true(pkey_get_bn_bytes(pkey, OSSL_PKEY_PARAM_EC_PUB_X, &pubx,
