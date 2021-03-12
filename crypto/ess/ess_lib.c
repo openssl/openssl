@@ -192,7 +192,7 @@ static ESS_CERT_ID_V2 *ESS_CERT_ID_V2_new_init(const EVP_MD *hash_alg,
     return NULL;
 }
 
-ESS_SIGNING_CERT *ossl_ess_signing_cert_get(PKCS7_SIGNER_INFO *si)
+ESS_SIGNING_CERT *ossl_ess_get_signing_cert(const PKCS7_SIGNER_INFO *si)
 {
     ASN1_TYPE *attr;
     const unsigned char *p;
@@ -204,7 +204,7 @@ ESS_SIGNING_CERT *ossl_ess_signing_cert_get(PKCS7_SIGNER_INFO *si)
     return d2i_ESS_SIGNING_CERT(NULL, &p, attr->value.sequence->length);
 }
 
-ESS_SIGNING_CERT_V2 *ossl_ess_signing_cert_v2_get(PKCS7_SIGNER_INFO *si)
+ESS_SIGNING_CERT_V2 *ossl_ess_get_signing_cert_v2(const PKCS7_SIGNER_INFO *si)
 {
     ASN1_TYPE *attr;
     const unsigned char *p;
@@ -289,93 +289,29 @@ static int ess_issuer_serial_cmp(const ESS_ISSUER_SERIAL *is, const X509 *cert)
     return ASN1_INTEGER_cmp(is->serial, X509_get0_serialNumber(cert));
 }
 
-/* Returns < 0 if certificate is not found, certificate index otherwise. */
-int ossl_ess_find_cert(const STACK_OF(ESS_CERT_ID) *cert_ids, X509 *cert)
+/*
+ * Find cert referenced by |cid| (if not NULL, else |cidv2|) in |certs|.
+ * If the cid{,v2} index is 0, the cert must be in the first in |certs| list.
+ * Return -1 on cid not found, -2 on other error, else position in |certs| list.
+ */
+static int find(const ESS_CERT_ID *cid, const ESS_CERT_ID_V2 *cid_v2,
+                int index, const STACK_OF(X509) *certs)
 {
-    int i;
-    unsigned char cert_sha1[SHA_DIGEST_LENGTH];
-
-    if (cert_ids == NULL || cert == NULL)
-        return -1;
-
-    /* Recompute SHA1 hash of certificate if necessary (side effect). */
-    if (!x509v3_cache_extensions(cert))
-        return -1;
-
-    /* TODO(3.0): fetch sha1 algorithm from providers */
-    if (!X509_digest(cert, EVP_sha1(), cert_sha1, NULL))
-        return -1;
-
-    /* Look for cert in the cert_ids vector. */
-    for (i = 0; i < sk_ESS_CERT_ID_num(cert_ids); ++i) {
-        const ESS_CERT_ID *cid = sk_ESS_CERT_ID_value(cert_ids, i);
-
-        if (cid->hash->length == SHA_DIGEST_LENGTH
-            && memcmp(cid->hash->data, cert_sha1, SHA_DIGEST_LENGTH) == 0) {
-            const ESS_ISSUER_SERIAL *is = cid->issuer_serial;
-
-            if (is == NULL || ess_issuer_serial_cmp(is, cert) == 0)
-                return i;
-        }
-    }
-
-    return -1;
-}
-
-/* Returns < 0 if certificate is not found, certificate index otherwise. */
-int ossl_ess_find_cert_v2(const STACK_OF(ESS_CERT_ID_V2) *cert_ids,
-                          const X509 *cert)
-{
-    int i;
-    unsigned char cert_digest[EVP_MAX_MD_SIZE];
-    unsigned int len;
-
-    /* Look for cert in the cert_ids vector. */
-    for (i = 0; i < sk_ESS_CERT_ID_V2_num(cert_ids); ++i) {
-        const ESS_CERT_ID_V2 *cid = sk_ESS_CERT_ID_V2_value(cert_ids, i);
-        const EVP_MD *md;
-
-        if (cid == NULL)
-            return -1;
-        if (cid->hash_alg != NULL)
-            md = EVP_get_digestbyobj(cid->hash_alg->algorithm);
-        else
-            md = EVP_sha256();
-
-        /* TODO(3.0): fetch sha1 algorithm from providers */
-        if (!X509_digest(cert, md, cert_digest, &len))
-            return -1;
-
-        if (cid->hash->length != (int)len)
-            return -1;
-
-        if (memcmp(cid->hash->data, cert_digest, cid->hash->length) == 0) {
-            const ESS_ISSUER_SERIAL *is = cid->issuer_serial;
-
-            if (is == NULL || ess_issuer_serial_cmp(is, cert) == 0)
-                return i;
-        }
-    }
-
-    return -1;
-}
-
-/* Returns < 0 if certificate is not found, certificate index otherwise. */
-int ossl_ess_find_cid(const STACK_OF(X509) *certs,
-                      ESS_CERT_ID *cid, ESS_CERT_ID_V2 *cid_v2)
-{
+    const X509 *cert;
+    const EVP_MD *md;
     unsigned char cert_digest[EVP_MAX_MD_SIZE];
     unsigned int len, cid_hash_len;
-    int i;
     const ESS_ISSUER_SERIAL *is;
+    int i;
 
-    if (certs == NULL || (cid == NULL && cid_v2 == NULL))
-        return -1;
+    if (cid == NULL && cid_v2 == NULL) {
+        ERR_raise(ERR_LIB_ESS, ERR_R_PASSED_INVALID_ARGUMENT);
+        return -2;
+    }
 
     /* Look for cert with cid in the certs. */
     for (i = 0; i < sk_X509_num(certs); ++i) {
-        const X509 *cert = sk_X509_value(certs, i);
-        const EVP_MD *md;
+        cert = sk_X509_value(certs, i);
 
         /* TODO(3.0): fetch sha algorithm from providers */
         if (cid != NULL)
@@ -383,18 +319,63 @@ int ossl_ess_find_cid(const STACK_OF(X509) *certs,
         else
             md = cid_v2->hash_alg == NULL ? EVP_sha256() :
                 EVP_get_digestbyobj(cid_v2->hash_alg->algorithm);
+        if (md == NULL) {
+            ERR_raise(ERR_LIB_ESS, ESS_R_ESS_DIGEST_ALG_UNKNOWN);
+            return -2;
+        }
+
         cid_hash_len = cid != NULL ? cid->hash->length : cid_v2->hash->length;
         if (!X509_digest(cert, md, cert_digest, &len)
-                || cid_hash_len != len)
-            return -1;
+                || cid_hash_len != len) {
+            ERR_raise(ERR_LIB_ESS, ESS_R_ESS_CERT_DIGEST_ERROR);
+            return -2;
+        }
 
         if (memcmp(cid != NULL ? cid->hash->data : cid_v2->hash->data,
                    cert_digest, len) == 0) {
             is = cid != NULL ? cid->issuer_serial : cid_v2->issuer_serial;
-            if (is == NULL || ess_issuer_serial_cmp(is, cert) == 0)
-                return i;
+            /* Well, it's not really required to matching the serial numbers. */
+            if (is == NULL || ess_issuer_serial_cmp(is, cert) == 0) {
+                if ((i == 0) == (index == 0))
+                    return i;
+                ERR_raise(ERR_LIB_ESS, ESS_R_ESS_CERT_ID_WRONG_ORDER);
+                return -2;
+            }
         }
     }
 
+    ERR_raise(ERR_LIB_ESS, ESS_R_ESS_CERT_ID_NOT_FOUND);
     return -1;
+}
+
+/*
+ * If ESSCertID and/or ESSCertIDv2 exist, which must be non-empty if given,
+ * check if their first ID entry matches the signer cert first in chain
+ * and each further ID entry matches any further cert in the chain.
+ */
+int ossl_ess_check_signing_certs(const ESS_SIGNING_CERT *ss,
+                                 const ESS_SIGNING_CERT_V2 *ssv2,
+                                 const STACK_OF(X509) *chain,
+                                 int require_signingCertificate)
+{
+    int n_v1 = ss == NULL ? -1 : sk_ESS_CERT_ID_num(ss->cert_ids);
+    int n_v2 = ssv2 == NULL ? -1 : sk_ESS_CERT_ID_V2_num(ssv2->cert_ids);
+    int i;
+
+    if (require_signingCertificate && ss == NULL && ssv2 == NULL) {
+        ERR_raise(ERR_LIB_CMS, ESS_R_MISSING_SIGNING_CERTIFICATE_ATTRIBUTE);
+        return 0;
+    }
+    if (n_v1 == 0 || n_v2 == 0) {
+        ERR_raise(ERR_LIB_ESS, ESS_R_EMPTY_ESS_CERT_ID_LIST);
+        return 0;
+    }
+    /* If both ss and ssv2 exist, as required evaluate them independently. */
+    for (i = 0; i < n_v1; i++)
+        if (find(sk_ESS_CERT_ID_value(ss->cert_ids, i), NULL, i, chain) < 0)
+            return 0;
+    for (i = 0; i < n_v2; i++)
+        if (find(NULL, sk_ESS_CERT_ID_V2_value(ssv2->cert_ids, i), i, chain) < 0)
+            return 0;
+    return 1;
 }

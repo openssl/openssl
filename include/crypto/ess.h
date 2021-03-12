@@ -13,14 +13,14 @@
 
 /* internal ESS related stuff */
 
-ESS_SIGNING_CERT *ossl_ess_signing_cert_get(PKCS7_SIGNER_INFO *si);
+ESS_SIGNING_CERT *ossl_ess_get_signing_cert(const PKCS7_SIGNER_INFO *si);
 int ossl_ess_signing_cert_add(PKCS7_SIGNER_INFO *si, ESS_SIGNING_CERT *sc);
 
 ESS_SIGNING_CERT *ossl_ess_signing_cert_new_init(X509 *signcert,
                                                  STACK_OF(X509) *certs,
                                                  int issuer_needed);
 
-ESS_SIGNING_CERT_V2 *ossl_ess_signing_cert_v2_get(PKCS7_SIGNER_INFO *si);
+ESS_SIGNING_CERT_V2 *ossl_ess_get_signing_cert_v2(const PKCS7_SIGNER_INFO *si);
 int ossl_ess_signing_cert_v2_add(PKCS7_SIGNER_INFO *si, ESS_SIGNING_CERT_V2 *sc);
 
 ESS_SIGNING_CERT_V2 *ossl_ess_signing_cert_v2_new_init(const EVP_MD *hash_alg,
@@ -28,12 +28,10 @@ ESS_SIGNING_CERT_V2 *ossl_ess_signing_cert_v2_new_init(const EVP_MD *hash_alg,
                                                        STACK_OF(X509) *certs,
                                                        int issuer_needed);
 
-/* Returns < 0 if certificate is not found, certificate index otherwise. */
-int ossl_ess_find_cert_v2(const STACK_OF(ESS_CERT_ID_V2) *cert_ids,
-                          const X509 *cert);
-int ossl_ess_find_cert(const STACK_OF(ESS_CERT_ID) *cert_ids, X509 *cert);
-int ossl_ess_find_cid(const STACK_OF(X509) *certs,
-                      ESS_CERT_ID *cid, ESS_CERT_ID_V2 *cid_v2);
+int ossl_ess_check_signing_certs(const ESS_SIGNING_CERT *ss,
+                                 const ESS_SIGNING_CERT_V2 *ssv2,
+                                 const STACK_OF(X509) *chain,
+                                 int require_signingCertificate);
 
 /*-
  * IssuerSerial ::= SEQUENCE {

@@ -381,7 +381,7 @@ int CMS_verify(CMS_ContentInfo *cms, STACK_OF(X509) *certs,
             if (cadesVerify) {
                 STACK_OF(X509) *si_chain = si_chains ? si_chains[i] : NULL;
 
-                if (ossl_ess_check_signing_certs(si, si_chain) <= 0)
+                if (ossl_cms_check_signing_certs(si, si_chain) <= 0)
                     goto err;
             }
         }

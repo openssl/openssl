@@ -17,8 +17,8 @@
 
 static int ts_verify_cert(X509_STORE *store, STACK_OF(X509) *untrusted,
                           X509 *signer, STACK_OF(X509) **chain);
-static int ts_check_signing_certs(PKCS7_SIGNER_INFO *si,
-                                  STACK_OF(X509) *chain);
+static int ts_check_signing_certs(const PKCS7_SIGNER_INFO *si,
+                                  const STACK_OF(X509) *chain);
 
 static int int_ts_RESP_verify_token(TS_VERIFY_CTX *ctx,
                                     PKCS7 *token, TS_TST_INFO *tst_info);
@@ -202,37 +202,13 @@ end:
     return ret;
 }
 
-static int ts_check_signing_certs(PKCS7_SIGNER_INFO *si,
-                                  STACK_OF(X509) *chain)
+static int ts_check_signing_certs(const PKCS7_SIGNER_INFO *si,
+                                  const STACK_OF(X509) *chain)
 {
-    ESS_SIGNING_CERT *ss = ossl_ess_signing_cert_get(si);
-    ESS_SIGNING_CERT_V2 *ssv2 = ossl_ess_signing_cert_v2_get(si);
-    int i, j;
-    int ret = 0;
+    ESS_SIGNING_CERT *ss = ossl_ess_get_signing_cert(si);
+    ESS_SIGNING_CERT_V2 *ssv2 = ossl_ess_get_signing_cert_v2(si);
+    int ret = ossl_ess_check_signing_certs(ss, ssv2, chain, 1);
 
-    /*
-     * Check if first ESSCertIDs matches signer cert
-     * and each further ESSCertIDs matches any cert in the chain.
-     */
-    if (ss != NULL)
-        for (i = 0; i < sk_ESS_CERT_ID_num(ss->cert_ids); i++) {
-            j = ossl_ess_find_cid(chain, sk_ESS_CERT_ID_value(ss->cert_ids, i),
-                                  NULL);
-            if (j < 0 || (i == 0 && j != 0))
-                goto err;
-        }
-    if (ssv2 != NULL)
-        for (i = 0; i < sk_ESS_CERT_ID_V2_num(ssv2->cert_ids); i++) {
-            j = ossl_ess_find_cid(chain, NULL,
-                                  sk_ESS_CERT_ID_V2_value(ssv2->cert_ids, i));
-            if (j < 0 || (i == 0 && j != 0))
-                goto err;
-        }
-    ret = 1;
-
- err:
-    if (!ret)
-        ERR_raise(ERR_LIB_TS, TS_R_ESS_SIGNING_CERTIFICATE_ERROR);
     ESS_SIGNING_CERT_free(ss);
     ESS_SIGNING_CERT_V2_free(ssv2);
     return ret;

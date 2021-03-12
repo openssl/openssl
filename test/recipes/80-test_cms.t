@@ -451,10 +451,11 @@ my @smime_cms_cades_tests = (
 );
 
 my @smime_cms_cades_ko_tests = (
-    [ "signed content DER format, RSA key, but verified as CAdES-BES compatible",
+    [ "sign content DER format, RSA key, not CAdES-BES compatible",
       [ @prov, "-sign", "-in", $smcont, "-outform", "DER", "-nodetach",
         "-certfile", catfile($smdir, "smroot.pem"),
         "-signer", catfile($smdir, "smrsa1.pem"), "-out", "{output}.cms" ],
+      "fail to verify token because requiring CAdES-BES compatibility",
       [ @prov, "-verify", "-cades", "-in", "{output}.cms", "-inform", "DER",
         "-CAfile", catfile($smdir, "smroot.pem"), "-out", "{output}.txt" ],
       \&final_compare
@@ -798,16 +799,15 @@ subtest "CAdES; cms incompatible arguments tests\n" => sub {
 };
 
 subtest "CAdES ko tests\n" => sub {
-    plan tests => (scalar @smime_cms_cades_ko_tests);
+    plan tests => 2 * scalar @smime_cms_cades_ko_tests;
 
     foreach (@smime_cms_cades_ko_tests) {
       SKIP: {
         my $skip_reason = check_availability($$_[0]);
         skip $skip_reason, 1 if $skip_reason;
 
-        ok(run(app(["openssl", "cms", @{$$_[1]}]))
-            && !run(app(["openssl", "cms", @{$$_[2]}])),
-            $$_[0]);
+        ok(run(app(["openssl", "cms", @{$$_[1]}])), $$_[0]);
+        ok(!run(app(["openssl", "cms", @{$$_[3]}])), $$_[2]);
         }
     }
 };

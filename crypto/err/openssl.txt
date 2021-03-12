@@ -299,7 +299,6 @@ CMS_R_ERROR_READING_MESSAGEDIGEST_ATTRIBUTE:114:\
 	error reading messagedigest attribute
 CMS_R_ERROR_SETTING_KEY:115:error setting key
 CMS_R_ERROR_SETTING_RECIPIENTINFO:116:error setting recipientinfo
-CMS_R_ESS_NO_SIGNING_CERTID_ATTRIBUTE:182:ess no signing certid attribute
 CMS_R_ESS_SIGNING_CERTID_MISMATCH_ERROR:183:ess signing certid mismatch error
 CMS_R_INVALID_ENCRYPTED_KEY_LENGTH:117:invalid encrypted key length
 CMS_R_INVALID_KEY_ENCRYPTION_PARAMETER:176:invalid key encryption parameter
@@ -629,9 +628,16 @@ ENGINE_R_UNIMPLEMENTED_CIPHER:146:unimplemented cipher
 ENGINE_R_UNIMPLEMENTED_DIGEST:147:unimplemented digest
 ENGINE_R_UNIMPLEMENTED_PUBLIC_KEY_METHOD:101:unimplemented public key method
 ENGINE_R_VERSION_INCOMPATIBILITY:145:version incompatibility
+ESS_R_EMPTY_ESS_CERT_ID_LIST:107:empty ess cert id list
+ESS_R_ESS_CERT_DIGEST_ERROR:103:ess cert digest error
+ESS_R_ESS_CERT_ID_NOT_FOUND:104:ess cert id not found
+ESS_R_ESS_CERT_ID_WRONG_ORDER:105:ess cert id wrong order
+ESS_R_ESS_DIGEST_ALG_UNKNOWN:106:ess digest alg unknown
 ESS_R_ESS_SIGNING_CERTIFICATE_ERROR:102:ess signing certificate error
 ESS_R_ESS_SIGNING_CERT_ADD_ERROR:100:ess signing cert add error
 ESS_R_ESS_SIGNING_CERT_V2_ADD_ERROR:101:ess signing cert v2 add error
+ESS_R_MISSING_SIGNING_CERTIFICATE_ATTRIBUTE:108:\
+	missing signing certificate attribute
 EVP_R_AES_KEY_SETUP_FAILED:143:aes key setup failed
 EVP_R_ARIA_KEY_SETUP_FAILED:176:aria key setup failed
 EVP_R_BAD_ALGORITHM_NAME:200:bad algorithm name
@@ -706,9 +712,9 @@ EVP_R_NO_KEY_SET:154:no key set
 EVP_R_NO_OPERATION_SET:149:no operation set
 EVP_R_NULL_MAC_PKEY_CTX:208:null mac pkey ctx
 EVP_R_ONLY_ONESHOT_SUPPORTED:177:only oneshot supported
+EVP_R_OPERATION_NOT_INITIALIZED:151:operation not initialized
 EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE:150:\
 	operation not supported for this keytype
-EVP_R_OPERATION_NOT_INITIALIZED:151:operation not initialized
 EVP_R_OUTPUT_WOULD_OVERFLOW:202:output would overflow
 EVP_R_PARAMETER_TOO_LARGE:187:parameter too large
 EVP_R_PARTIALLY_OVERLAPPING:162:partially overlapping buffers
