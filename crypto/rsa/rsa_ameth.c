@@ -856,15 +856,8 @@ static size_t rsa_pkey_dirty_cnt(const EVP_PKEY *pkey)
 }
 
 /*
- * For the moment, we trust the call path, where keys going through
- * rsa_pkey_export_to() match a KEYMGMT for the "RSA" keytype, while
- * keys going through rsa_pss_pkey_export_to() match a KEYMGMT for the
- * "RSA-PSS" keytype.
- * TODO(3.0) Investigate whether we should simply continue to trust the
- * call path, or if we should strengthen this function by checking that
- * |rsa_type| matches the RSA key subtype.  The latter requires ensuring
- * that the type flag for the RSA key is properly set by other functions
- * in this file.
+ * There is no need to do RSA_test_flags(rsa, RSA_FLAG_TYPE_RSASSAPSS)
+ * checks in this method since the caller tests EVP_KEYMGMT_is_a() first.
  */
 static int rsa_int_export_to(const EVP_PKEY *from, int rsa_type,
                              void *to_keydata, EVP_KEYMGMT *to_keymgmt,
