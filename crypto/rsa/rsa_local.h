@@ -133,7 +133,7 @@ struct rsa_meth_st {
      * New sign and verify functions: some libraries don't allow arbitrary
      * data to be signed/verified: this allows them to be used. Note: for
      * this to work the RSA_public_decrypt() and RSA_private_encrypt() should
-     * *NOT* be used RSA_sign(), RSA_verify() should be used instead.
+     * *NOT* be used. RSA_sign(), RSA_verify() should be used instead.
      */
     int (*rsa_sign) (int type,
                      const unsigned char *m, unsigned int m_length,
