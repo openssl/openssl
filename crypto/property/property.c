@@ -357,7 +357,7 @@ int ossl_method_store_fetch(OSSL_METHOD_STORE *store, int nid,
     }
 
     if (prop_query != NULL)
-        p2 = pq = ossl_parse_query(store->ctx, prop_query);
+        p2 = pq = ossl_parse_query(store->ctx, prop_query, 0);
     plp = ossl_ctx_global_properties(store->ctx, 0);
     if (plp != NULL && *plp != NULL) {
         if (pq == NULL) {
