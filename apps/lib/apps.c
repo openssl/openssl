@@ -661,7 +661,7 @@ static void warn_cert_msg(const char *uri, X509 *cert, const char *msg)
 {
     char *subj = X509_NAME_oneline(X509_get_subject_name(cert), NULL, 0);
 
-    BIO_printf(bio_err, "Warning: certificate from '%s' with subject '%s' %s",
+    BIO_printf(bio_err, "Warning: certificate from '%s' with subject '%s' %s\n",
                uri, subj, msg);
     OPENSSL_free(subj);
 }
