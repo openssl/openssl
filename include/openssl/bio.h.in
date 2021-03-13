@@ -1,7 +1,7 @@
 /*
  * {- join("\n * ", @autowarntext) -}
  *
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -647,6 +647,7 @@ const BIO_METHOD *BIO_s_bio(void);
 const BIO_METHOD *BIO_s_null(void);
 const BIO_METHOD *BIO_f_null(void);
 const BIO_METHOD *BIO_f_buffer(void);
+const BIO_METHOD *BIO_f_readbuffer(void);
 const BIO_METHOD *BIO_f_linebuffer(void);
 const BIO_METHOD *BIO_f_nbio_test(void);
 const BIO_METHOD *BIO_f_prefix(void);

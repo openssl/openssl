@@ -81,6 +81,5 @@ our @tests_tls1_2 = (
     },
 );
 
-#TODO(3.0): No Ed448 or X25519 in FIPS mode at the moment
-push @tests, @tests_ec unless disabled("ec") || $fips_mode;
-push @tests, @tests_tls1_2 unless disabled("tls1_2") || disabled("ec")|| $fips_mode;
+push @tests, @tests_ec unless disabled("ec");
+push @tests, @tests_tls1_2 unless disabled("tls1_2") || disabled("ec");

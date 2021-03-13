@@ -1570,7 +1570,7 @@ int tls_psk_do_binder(SSL *s, const EVP_MD *md, const unsigned char *msgstart,
 
     bindersize = hashsize;
     if (EVP_DigestSignInit_ex(mctx, NULL, EVP_MD_name(md), s->ctx->libctx,
-                              s->ctx->propq, mackey) <= 0
+                              s->ctx->propq, mackey, NULL) <= 0
             || EVP_DigestSignUpdate(mctx, hash, hashsize) <= 0
             || EVP_DigestSignFinal(mctx, binderout, &bindersize) <= 0
             || bindersize != hashsize) {

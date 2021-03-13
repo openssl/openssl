@@ -40,7 +40,8 @@ void ossl_gcm_initctx(void *provctx, PROV_GCM_CTX *ctx, size_t keybits,
 }
 
 static int gcm_init(void *vctx, const unsigned char *key, size_t keylen,
-                    const unsigned char *iv, size_t ivlen, int enc)
+                    const unsigned char *iv, size_t ivlen,
+                    const OSSL_PARAM params[], int enc)
 {
     PROV_GCM_CTX *ctx = (PROV_GCM_CTX *)vctx;
 
@@ -64,21 +65,24 @@ static int gcm_init(void *vctx, const unsigned char *key, size_t keylen,
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
             return 0;
         }
-        return ctx->hw->setkey(ctx, key, ctx->keylen);
+        if (!ctx->hw->setkey(ctx, key, ctx->keylen))
+            return 0;
     }
-    return 1;
+    return ossl_gcm_set_ctx_params(ctx, params);
 }
 
 int ossl_gcm_einit(void *vctx, const unsigned char *key, size_t keylen,
-                   const unsigned char *iv, size_t ivlen)
+                   const unsigned char *iv, size_t ivlen,
+                   const OSSL_PARAM params[])
 {
-    return gcm_init(vctx, key, keylen, iv, ivlen, 1);
+    return gcm_init(vctx, key, keylen, iv, ivlen, params, 1);
 }
 
 int ossl_gcm_dinit(void *vctx, const unsigned char *key, size_t keylen,
-                   const unsigned char *iv, size_t ivlen)
+                   const unsigned char *iv, size_t ivlen,
+                   const OSSL_PARAM params[])
 {
-    return gcm_init(vctx, key, keylen, iv, ivlen, 0);
+    return gcm_init(vctx, key, keylen, iv, ivlen, params, 0);
 }
 
 /* increment counter (64-bit int) by 1 */
@@ -222,6 +226,9 @@ int ossl_gcm_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     const OSSL_PARAM *p;
     size_t sz;
     void *vp;
+
+    if (params == NULL)
+        return 1;
 
     p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_AEAD_TAG);
     if (p != NULL) {

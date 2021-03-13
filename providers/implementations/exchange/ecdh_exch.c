@@ -21,6 +21,7 @@
 #include <openssl/ec.h>
 #include <openssl/params.h>
 #include <openssl/err.h>
+#include <openssl/proverr.h>
 #include "prov/provider_ctx.h"
 #include "prov/providercommon.h"
 #include "prov/implementations.h"
@@ -98,7 +99,7 @@ void *ecdh_newctx(void *provctx)
 }
 
 static
-int ecdh_init(void *vpecdhctx, void *vecdh)
+int ecdh_init(void *vpecdhctx, void *vecdh, const OSSL_PARAM params[])
 {
     PROV_ECDH_CTX *pecdhctx = (PROV_ECDH_CTX *)vpecdhctx;
 
@@ -111,7 +112,8 @@ int ecdh_init(void *vpecdhctx, void *vecdh)
     pecdhctx->k = vecdh;
     pecdhctx->cofactor_mode = -1;
     pecdhctx->kdf_type = PROV_ECDH_KDF_NONE;
-    return ossl_ec_check_key(vecdh, 1);
+    return ecdh_set_ctx_params(pecdhctx, params)
+           && ossl_ec_check_key(vecdh, 1);
 }
 
 static
@@ -205,8 +207,10 @@ int ecdh_set_ctx_params(void *vpecdhctx, const OSSL_PARAM params[])
     PROV_ECDH_CTX *pectx = (PROV_ECDH_CTX *)vpecdhctx;
     const OSSL_PARAM *p;
 
-    if (pectx == NULL || params == NULL)
+    if (pectx == NULL)
         return 0;
+    if (params == NULL)
+        return 1;
 
     p = OSSL_PARAM_locate_const(params, OSSL_EXCHANGE_PARAM_EC_ECDH_COFACTOR_MODE);
     if (p != NULL) {
@@ -297,7 +301,8 @@ static const OSSL_PARAM known_settable_ctx_params[] = {
 };
 
 static
-const OSSL_PARAM *ecdh_settable_ctx_params(ossl_unused void *provctx)
+const OSSL_PARAM *ecdh_settable_ctx_params(ossl_unused void *vpecdhctx,
+                                           ossl_unused void *provctx)
 {
     return known_settable_ctx_params;
 }
@@ -308,7 +313,7 @@ int ecdh_get_ctx_params(void *vpecdhctx, OSSL_PARAM params[])
     PROV_ECDH_CTX *pectx = (PROV_ECDH_CTX *)vpecdhctx;
     OSSL_PARAM *p;
 
-    if (pectx == NULL || params == NULL)
+    if (pectx == NULL)
         return 0;
 
     p = OSSL_PARAM_locate(params, OSSL_EXCHANGE_PARAM_EC_ECDH_COFACTOR_MODE);
@@ -374,7 +379,8 @@ static const OSSL_PARAM known_gettable_ctx_params[] = {
 };
 
 static
-const OSSL_PARAM *ecdh_gettable_ctx_params(ossl_unused void *provctx)
+const OSSL_PARAM *ecdh_gettable_ctx_params(ossl_unused void *vpecdhctx,
+                                           ossl_unused void *provctx)
 {
     return known_gettable_ctx_params;
 }
@@ -408,7 +414,7 @@ int ecdh_plain_derive(void *vpecdhctx, unsigned char *secret,
     int key_cofactor_mode;
 
     if (pecdhctx->k == NULL || pecdhctx->peerk == NULL) {
-        ERR_raise(ERR_LIB_PROV, EC_R_KEYS_NOT_SET);
+        ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_KEY);
         return 0;
     }
 
@@ -486,8 +492,10 @@ int ecdh_X9_63_kdf_derive(void *vpecdhctx, unsigned char *secret,
         return 1;
     }
 
-    if (pecdhctx->kdf_outlen > outlen)
+    if (pecdhctx->kdf_outlen > outlen) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
         return 0;
+    }
     if (!ecdh_plain_derive(vpecdhctx, NULL, &stmplen, 0))
         return 0;
     if ((stmp = OPENSSL_secure_malloc(stmplen)) == NULL) {

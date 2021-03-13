@@ -172,6 +172,9 @@ static int kdf_pbkdf2_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     int pkcs5;
     uint64_t iter, min_iter;
 
+    if (params == NULL)
+        return 1;
+
     if (!ossl_prov_digest_load_from_params(&ctx->digest, params, provctx))
         return 0;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -343,7 +343,7 @@ int SCT_validate(SCT *sct, const CT_POLICY_EVAL_CTX *ctx)
      * XXX: Potential for optimization.  This repeats some idempotent heavy
      * lifting on the certificate for each candidate SCT, and appears to not
      * use any information in the SCT itself, only the certificate is
-     * processed.  So it may make more sense to to do this just once, perhaps
+     * processed.  So it may make more sense to do this just once, perhaps
      * associated with the shared (by all SCTs) policy eval ctx.
      *
      * XXX: Failure here is global (SCT independent) and represents either an

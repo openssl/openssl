@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -183,6 +183,9 @@ static int cmac_set_ctx_params(void *vmacctx, const OSSL_PARAM params[])
     struct cmac_data_st *macctx = vmacctx;
     OSSL_LIB_CTX *ctx = PROV_LIBCTX_OF(macctx->provctx);
     const OSSL_PARAM *p;
+
+    if (params == NULL)
+        return 1;
 
     if (!ossl_prov_cipher_load_from_params(&macctx->cipher, params, ctx))
         return 0;

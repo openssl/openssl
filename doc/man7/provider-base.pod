@@ -56,28 +56,29 @@ provider-base
  int CRYPTO_secure_allocated(const void *ptr);
  void OPENSSL_cleanse(void *ptr, size_t len);
 
- OSSL_CORE_BIO * BIO_new_file(const char *filename, const char *mode)
- OSSL_CORE_BIO * BIO_new_membuf(const void *buf, int len)
+ OSSL_CORE_BIO *BIO_new_file(const char *filename, const char *mode);
+ OSSL_CORE_BIO *BIO_new_membuf(const void *buf, int len);
  int BIO_read_ex(OSSL_CORE_BIO *bio, void *data, size_t data_len,
-                 size_t *bytes_read))
+                 size_t *bytes_read);
  int BIO_write_ex(OSSL_CORE_BIO *bio, const void *data, size_t data_len,
-                  size_t *written)
- int BIO_free(OSSL_CORE_BIO *bio))
- int BIO_vprintf(OSSL_CORE_BIO *bio, const char *format, va_list args)
- int BIO_vsnprintf(char *buf, size_t n, const char *fmt, va_list args)
+                  size_t *written);
+ int BIO_up_ref(OSSL_CORE_BIO *bio);
+ int BIO_free(OSSL_CORE_BIO *bio);
+ int BIO_vprintf(OSSL_CORE_BIO *bio, const char *format, va_list args);
+ int BIO_vsnprintf(char *buf, size_t n, const char *fmt, va_list args);
 
- void self_test_cb(OPENSSL_CORE_CTX *ctx, OSSL_CALLBACK **cb, void **cbarg)
+ void self_test_cb(OPENSSL_CORE_CTX *ctx, OSSL_CALLBACK **cb, void **cbarg);
 
  size_t get_entropy(const OSSL_CORE_HANDLE *handle,
                     unsigned char **pout, int entropy,
-                    size_t min_len, size_t max_len)
+                    size_t min_len, size_t max_len);
  void cleanup_entropy(const OSSL_CORE_HANDLE *handle,
-                      unsigned char *buf, size_t len)
+                      unsigned char *buf, size_t len);
  size_t get_nonce(const OSSL_CORE_HANDLE *handle,
                   unsigned char **pout, size_t min_len, size_t max_len,
-                  const void *salt, size_t salt_len)
+                  const void *salt, size_t salt_len);
  void cleanup_nonce(const OSSL_CORE_HANDLE *handle,
-                    unsigned char *buf, size_t len)
+                    unsigned char *buf, size_t len);
 
  /* Functions offered by the provider to libcrypto */
  void provider_teardown(void *provctx);
@@ -140,6 +141,7 @@ provider):
  BIO_new_file                   OSSL_FUNC_BIO_NEW_FILE
  BIO_new_mem_buf                OSSL_FUNC_BIO_NEW_MEMBUF
  BIO_read_ex                    OSSL_FUNC_BIO_READ_EX
+ BIO_up_ref                     OSSL_FUNC_BIO_UP_REF
  BIO_free                       OSSL_FUNC_BIO_FREE
  BIO_vprintf                    OSSL_FUNC_BIO_VPRINTF
  OPENSSL_cleanse                OSSL_FUNC_OPENSSL_CLEANSE
@@ -225,7 +227,7 @@ CRYPTO_strndup(), CRYPTO_free(), CRYPTO_clear_free(),
 CRYPTO_realloc(), CRYPTO_clear_realloc(), CRYPTO_secure_malloc(),
 CRYPTO_secure_zalloc(), CRYPTO_secure_free(),
 CRYPTO_secure_clear_free(), CRYPTO_secure_allocated(),
-BIO_new_file(), BIO_new_mem_buf(), BIO_read_ex(), BIO_free(),
+BIO_new_file(), BIO_new_mem_buf(), BIO_read_ex(), BIO_up_ref(), BIO_free(),
 BIO_vprintf(), OPENSSL_cleanse(), and OPENSSL_hexstr2buf()
 correspond exactly to the public functions with the same name.
 As a matter of fact, the pointers in the B<OSSL_DISPATCH> array are

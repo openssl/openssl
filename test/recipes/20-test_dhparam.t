@@ -19,7 +19,7 @@ setup("test_dhparam");
 
 plan skip_all => "DH is not supported in this build"
     if disabled("dh");
-plan tests => 16;
+plan tests => 17;
 
 sub checkdhparams {
     my $file = shift; #Filename containing params
@@ -171,3 +171,7 @@ SKIP: {
         checkdhparams("gen-x942-0-512.der", "X9.42", 0, "DER", 512);
     };
 }
+
+ok(run(app(["openssl", "dhparam", "-noout", "-text"],
+           stdin => data_file("pkcs3-2-1024.pem"))),
+   "stdinbuffer input test that uses BIO_gets");

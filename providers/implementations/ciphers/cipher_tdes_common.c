@@ -62,7 +62,8 @@ void ossl_tdes_freectx(void *vctx)
 }
 
 static int tdes_init(void *vctx, const unsigned char *key, size_t keylen,
-                     const unsigned char *iv, size_t ivlen, int enc)
+                     const unsigned char *iv, size_t ivlen,
+                     const OSSL_PARAM params[], int enc)
 {
     PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
 
@@ -83,21 +84,24 @@ static int tdes_init(void *vctx, const unsigned char *key, size_t keylen,
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
             return 0;
         }
-        return ctx->hw->init(ctx, key, ctx->keylen);
+        if (!ctx->hw->init(ctx, key, ctx->keylen))
+            return 0;
     }
-    return 1;
+    return ossl_cipher_generic_set_ctx_params(ctx, params);
 }
 
 int ossl_tdes_einit(void *vctx, const unsigned char *key, size_t keylen,
-                    const unsigned char *iv, size_t ivlen)
+                    const unsigned char *iv, size_t ivlen,
+                    const OSSL_PARAM params[])
 {
-    return tdes_init(vctx, key, keylen, iv, ivlen, 1);
+    return tdes_init(vctx, key, keylen, iv, ivlen, params, 1);
 }
 
 int ossl_tdes_dinit(void *vctx, const unsigned char *key, size_t keylen,
-                    const unsigned char *iv, size_t ivlen)
+                    const unsigned char *iv, size_t ivlen,
+                    const OSSL_PARAM params[])
 {
-    return tdes_init(vctx, key, keylen, iv, ivlen, 0);
+    return tdes_init(vctx, key, keylen, iv, ivlen, params, 0);
 }
 
 CIPHER_DEFAULT_GETTABLE_CTX_PARAMS_START(ossl_tdes)

@@ -172,6 +172,9 @@ static int kdf_hkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     OSSL_LIB_CTX *provctx = PROV_LIBCTX_OF(ctx->provctx);
     int n;
 
+    if (params == NULL)
+        return 1;
+
     if (!ossl_prov_digest_load_from_params(&ctx->digest, params, provctx))
         return 0;
 

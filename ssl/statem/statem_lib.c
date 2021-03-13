@@ -310,7 +310,8 @@ int tls_construct_cert_verify(SSL *s, WPACKET *pkt)
     }
 
     if (EVP_DigestSignInit_ex(mctx, &pctx, md == NULL ? NULL : EVP_MD_name(md),
-                              s->ctx->libctx, s->ctx->propq, pkey) <= 0) {
+                              s->ctx->libctx, s->ctx->propq, pkey,
+                              NULL) <= 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
         goto err;
     }
@@ -329,10 +330,6 @@ int tls_construct_cert_verify(SSL *s, WPACKET *pkt)
          * in order to add the EVP_CTRL_SSL3_MASTER_SECRET call between them.
          */
         if (EVP_DigestSignUpdate(mctx, hdata, hdatalen) <= 0
-            /*
-             * TODO(3.0) Replace this when EVP_MD_CTX_ctrl() is deprecated
-             * with a call to ssl3_digest_master_key_set_params()
-             */
             || EVP_MD_CTX_ctrl(mctx, EVP_CTRL_SSL3_MASTER_SECRET,
                                (int)s->session->master_key_length,
                                s->session->master_key) <= 0
@@ -491,7 +488,8 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
 
     if (EVP_DigestVerifyInit_ex(mctx, &pctx,
                                 md == NULL ? NULL : EVP_MD_name(md),
-                                s->ctx->libctx, s->ctx->propq, pkey) <= 0) {
+                                s->ctx->libctx, s->ctx->propq, pkey,
+                                NULL) <= 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EVP_LIB);
         goto err;
     }
@@ -520,10 +518,6 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
         }
     }
     if (s->version == SSL3_VERSION) {
-        /*
-         * TODO(3.0) Replace this when EVP_MD_CTX_ctrl() is deprecated
-         * with a call to ssl3_digest_master_key_set_params()
-         */
         if (EVP_DigestVerifyUpdate(mctx, hdata, hdatalen) <= 0
                 || EVP_MD_CTX_ctrl(mctx, EVP_CTRL_SSL3_MASTER_SECRET,
                                    (int)s->session->master_key_length,

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -89,6 +89,7 @@ int TS_RESP_verify_signature(PKCS7 *token, STACK_OF(X509) *certs,
 {
     STACK_OF(PKCS7_SIGNER_INFO) *sinfos = NULL;
     PKCS7_SIGNER_INFO *si;
+    STACK_OF(X509) *untrusted = NULL;
     STACK_OF(X509) *signers = NULL;
     X509 *signer;
     STACK_OF(X509) *chain = NULL;
@@ -125,7 +126,13 @@ int TS_RESP_verify_signature(PKCS7 *token, STACK_OF(X509) *certs,
         goto err;
     signer = sk_X509_value(signers, 0);
 
-    if (!ts_verify_cert(store, certs, signer, &chain))
+    untrusted = sk_X509_new_reserve(NULL, sk_X509_num(certs)
+                                    + sk_X509_num(token->d.sign->cert));
+    if (untrusted == NULL
+            || !X509_add_certs(untrusted, certs, 0)
+            || !X509_add_certs(untrusted, token->d.sign->cert, 0))
+        goto err;
+    if (!ts_verify_cert(store, untrusted, signer, &chain))
         goto err;
     if (!ts_check_signing_certs(si, chain))
         goto err;
@@ -149,6 +156,7 @@ int TS_RESP_verify_signature(PKCS7 *token, STACK_OF(X509) *certs,
 
  err:
     BIO_free_all(p7bio);
+    sk_X509_free(untrusted);
     sk_X509_pop_free(chain, X509_free);
     sk_X509_free(signers);
 

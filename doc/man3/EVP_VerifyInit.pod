@@ -91,13 +91,13 @@ L<evp(7)>, L<HMAC(3)>, L<MD2(3)>,
 L<MD5(3)>, L<MDC2(3)>, L<RIPEMD160(3)>,
 L<SHA1(3)>, L<openssl-dgst(1)>
 
-head1 HISTORY
+=head1 HISTORY
 
 The function EVP_VerifyFinal_ex() was added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

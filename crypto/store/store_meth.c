@@ -93,7 +93,7 @@ struct loader_data_st {
     const char *scheme;          /* For get_loader_from_store() */
     const char *propquery;       /* For get_loader_from_store() */
 
-    unsigned int flag_construct_error_occured : 1;
+    unsigned int flag_construct_error_occurred : 1;
 };
 
 /*
@@ -253,7 +253,7 @@ static void *construct_loader(const OSSL_ALGORITHM *algodef,
      * record on inaccessible algorithms.
      */
     if (method == NULL)
-        methdata->flag_construct_error_occured = 1;
+        methdata->flag_construct_error_occurred = 1;
 
     return method;
 }
@@ -316,7 +316,7 @@ static OSSL_STORE_LOADER *inner_loader_fetch(OSSL_LIB_CTX *libctx,
         mcmdata.scheme_id = id;
         mcmdata.scheme = scheme;
         mcmdata.propquery = properties;
-        mcmdata.flag_construct_error_occured = 0;
+        mcmdata.flag_construct_error_occurred = 0;
         if ((method = ossl_method_construct(libctx, OSSL_OP_STORE,
                                             0 /* !force_cache */,
                                             &mcm, &mcmdata)) != NULL) {
@@ -335,7 +335,7 @@ static OSSL_STORE_LOADER *inner_loader_fetch(OSSL_LIB_CTX *libctx,
          * If we never were in the constructor, the algorithm to be fetched
          * is unsupported.
          */
-        unsupported = !mcmdata.flag_construct_error_occured;
+        unsupported = !mcmdata.flag_construct_error_occurred;
     }
 
     if (method == NULL) {

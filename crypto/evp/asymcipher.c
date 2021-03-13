@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -16,7 +16,8 @@
 #include "internal/provider.h"
 #include "evp_local.h"
 
-static int evp_pkey_asym_cipher_init(EVP_PKEY_CTX *ctx, int operation)
+static int evp_pkey_asym_cipher_init(EVP_PKEY_CTX *ctx, int operation,
+                                     const OSSL_PARAM params[])
 {
     int ret = 0;
     void *provkey = NULL;
@@ -111,7 +112,7 @@ static int evp_pkey_asym_cipher_init(EVP_PKEY_CTX *ctx, int operation)
             ret = -2;
             goto err;
         }
-        ret = cipher->encrypt_init(ctx->op.ciph.ciphprovctx, provkey);
+        ret = cipher->encrypt_init(ctx->op.ciph.ciphprovctx, provkey, params);
         break;
     case EVP_PKEY_OP_DECRYPT:
         if (cipher->decrypt_init == NULL) {
@@ -119,7 +120,7 @@ static int evp_pkey_asym_cipher_init(EVP_PKEY_CTX *ctx, int operation)
             ret = -2;
             goto err;
         }
-        ret = cipher->decrypt_init(ctx->op.ciph.ciphprovctx, provkey);
+        ret = cipher->decrypt_init(ctx->op.ciph.ciphprovctx, provkey, params);
         break;
     default:
         ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
@@ -168,7 +169,12 @@ static int evp_pkey_asym_cipher_init(EVP_PKEY_CTX *ctx, int operation)
 
 int EVP_PKEY_encrypt_init(EVP_PKEY_CTX *ctx)
 {
-    return evp_pkey_asym_cipher_init(ctx, EVP_PKEY_OP_ENCRYPT);
+    return evp_pkey_asym_cipher_init(ctx, EVP_PKEY_OP_ENCRYPT, NULL);
+}
+
+int EVP_PKEY_encrypt_init_ex(EVP_PKEY_CTX *ctx, const OSSL_PARAM params[])
+{
+    return evp_pkey_asym_cipher_init(ctx, EVP_PKEY_OP_ENCRYPT, params);
 }
 
 int EVP_PKEY_encrypt(EVP_PKEY_CTX *ctx,
@@ -183,7 +189,7 @@ int EVP_PKEY_encrypt(EVP_PKEY_CTX *ctx,
     }
 
     if (ctx->operation != EVP_PKEY_OP_ENCRYPT) {
-        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATON_NOT_INITIALIZED);
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_INITIALIZED);
         return -1;
     }
 
@@ -205,7 +211,12 @@ int EVP_PKEY_encrypt(EVP_PKEY_CTX *ctx,
 
 int EVP_PKEY_decrypt_init(EVP_PKEY_CTX *ctx)
 {
-    return evp_pkey_asym_cipher_init(ctx, EVP_PKEY_OP_DECRYPT);
+    return evp_pkey_asym_cipher_init(ctx, EVP_PKEY_OP_DECRYPT, NULL);
+}
+
+int EVP_PKEY_decrypt_init_ex(EVP_PKEY_CTX *ctx, const OSSL_PARAM params[])
+{
+    return evp_pkey_asym_cipher_init(ctx, EVP_PKEY_OP_DECRYPT, params);
 }
 
 int EVP_PKEY_decrypt(EVP_PKEY_CTX *ctx,
@@ -220,7 +231,7 @@ int EVP_PKEY_decrypt(EVP_PKEY_CTX *ctx,
     }
 
     if (ctx->operation != EVP_PKEY_OP_DECRYPT) {
-        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATON_NOT_INITIALIZED);
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_INITIALIZED);
         return -1;
     }
 
@@ -452,7 +463,7 @@ const OSSL_PARAM *EVP_ASYM_CIPHER_gettable_ctx_params(const EVP_ASYM_CIPHER *cip
         return NULL;
 
     provctx = ossl_provider_ctx(EVP_ASYM_CIPHER_provider(cip));
-    return cip->gettable_ctx_params(provctx);
+    return cip->gettable_ctx_params(NULL, provctx);
 }
 
 const OSSL_PARAM *EVP_ASYM_CIPHER_settable_ctx_params(const EVP_ASYM_CIPHER *cip)
@@ -463,5 +474,5 @@ const OSSL_PARAM *EVP_ASYM_CIPHER_settable_ctx_params(const EVP_ASYM_CIPHER *cip
         return NULL;
 
     provctx = ossl_provider_ctx(EVP_ASYM_CIPHER_provider(cip));
-    return cip->settable_ctx_params(provctx);
+    return cip->settable_ctx_params(NULL, provctx);
 }

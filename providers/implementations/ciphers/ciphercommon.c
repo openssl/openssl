@@ -107,6 +107,9 @@ int ossl_cipher_var_keylen_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
     const OSSL_PARAM *p;
 
+    if (params == NULL)
+        return 1;
+
     if (!ossl_cipher_generic_set_ctx_params(vctx, params))
         return 0;
     p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_KEYLEN);
@@ -174,7 +177,7 @@ void ossl_cipher_generic_reset_ctx(PROV_CIPHER_CTX *ctx)
 static int cipher_generic_init_internal(PROV_CIPHER_CTX *ctx,
                                         const unsigned char *key, size_t keylen,
                                         const unsigned char *iv, size_t ivlen,
-                                        int enc)
+                                        const OSSL_PARAM params[], int enc)
 {
     ctx->num = 0;
     ctx->bufsz = 0;
@@ -197,25 +200,26 @@ static int cipher_generic_init_internal(PROV_CIPHER_CTX *ctx,
         } else {
             ctx->keylen = keylen;
         }
-        return ctx->hw->init(ctx, key, ctx->keylen);
+        if (!ctx->hw->init(ctx, key, ctx->keylen))
+            return 0;
     }
-    return 1;
+    return ossl_cipher_generic_set_ctx_params(ctx, params);
 }
 
 int ossl_cipher_generic_einit(void *vctx, const unsigned char *key,
                               size_t keylen, const unsigned char *iv,
-                              size_t ivlen)
+                              size_t ivlen, const OSSL_PARAM params[])
 {
     return cipher_generic_init_internal((PROV_CIPHER_CTX *)vctx, key, keylen,
-                                        iv, ivlen, 1);
+                                        iv, ivlen, params, 1);
 }
 
 int ossl_cipher_generic_dinit(void *vctx, const unsigned char *key,
                               size_t keylen, const unsigned char *iv,
-                              size_t ivlen)
+                              size_t ivlen, const OSSL_PARAM params[])
 {
     return cipher_generic_init_internal((PROV_CIPHER_CTX *)vctx, key, keylen,
-                                        iv, ivlen, 0);
+                                        iv, ivlen, params, 0);
 }
 
 /* Max padding including padding length byte */
@@ -573,6 +577,9 @@ int ossl_cipher_generic_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
     PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
     const OSSL_PARAM *p;
+
+    if (params == NULL)
+        return 1;
 
     p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_PADDING);
     if (p != NULL) {

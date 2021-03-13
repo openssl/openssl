@@ -43,7 +43,7 @@ typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_INFORM, OPT_OUTFORM, OPT_KEYFORM, OPT_REQ, OPT_CAFORM,
     OPT_CAKEYFORM, OPT_VFYOPT, OPT_SIGOPT, OPT_DAYS, OPT_PASSIN, OPT_EXTFILE,
-    OPT_EXTENSIONS, OPT_IN, OPT_OUT, OPT_SIGNKEY, OPT_CA, OPT_CAKEY,
+    OPT_EXTENSIONS, OPT_IN, OPT_OUT, OPT_KEY, OPT_SIGNKEY, OPT_CA, OPT_CAKEY,
     OPT_CASERIAL, OPT_SET_SERIAL, OPT_NEW, OPT_FORCE_PUBKEY, OPT_SUBJ,
     OPT_ADDTRUST, OPT_ADDREJECT, OPT_SETALIAS, OPT_CERTOPT, OPT_NAMEOPT,
     OPT_EMAIL, OPT_OCSP_URI, OPT_SERIAL, OPT_NEXT_SERIAL,
@@ -73,8 +73,10 @@ const OPTIONS x509_options[] = {
     {"inform", OPT_INFORM, 'f',
      "CSR input file format (DER or PEM) - default PEM"},
     {"vfyopt", OPT_VFYOPT, 's', "CSR verification parameter in n:v form"},
+    {"key", OPT_KEY, 's',
+     "Key to be used in certificate or cert request"},
     {"signkey", OPT_SIGNKEY, 's',
-     "Key used to self-sign certificate or cert request"},
+     "Same as -key"},
     {"keyform", OPT_KEYFORM, 'E',
      "Key input format (ENGINE, other values ignored)"},
     {"out", OPT_OUT, '>', "Output file - default stdout"},
@@ -150,7 +152,7 @@ const OPTIONS x509_options[] = {
 
     OPT_SECTION("Micro-CA"),
     {"CA", OPT_CA, '<',
-     "Use the given CA certificate, conflicts with -signkey"},
+     "Use the given CA certificate, conflicts with -key"},
     {"CAform", OPT_CAFORM, 'F', "CA cert format (PEM/DER/P12); has no effect"},
     {"CAkey", OPT_CAKEY, 's', "The corresponding CA key; default is -CA arg"},
     {"CAkeyform", OPT_CAKEYFORM, 'E',
@@ -245,7 +247,7 @@ int x509_main(int argc, char **argv)
     CONF *extconf = NULL;
     int ext_copy = EXT_COPY_UNSET;
     X509V3_CTX ext_ctx;
-    EVP_PKEY *signkey = NULL, *CAkey = NULL, *pubkey = NULL;
+    EVP_PKEY *privkey = NULL, *CAkey = NULL, *pubkey = NULL;
     EVP_PKEY *pkey;
     int newcert = 0;
     char *subj = NULL, *digestname = NULL;
@@ -262,7 +264,7 @@ int x509_main(int argc, char **argv)
     char *checkhost = NULL, *checkemail = NULL, *checkip = NULL;
     char *ext_names = NULL;
     char *extsect = NULL, *extfile = NULL, *passin = NULL, *passinarg = NULL;
-    char *infile = NULL, *outfile = NULL, *signkeyfile = NULL, *CAfile = NULL;
+    char *infile = NULL, *outfile = NULL, *privkeyfile = NULL, *CAfile = NULL;
     char *prog;
     int days = UNSET_DAYS; /* not explicitly set */
     int x509toreq = 0, modulus = 0, print_pubkey = 0, pprint = 0;
@@ -375,8 +377,9 @@ int x509_main(int argc, char **argv)
         case OPT_EXTENSIONS:
             extsect = opt_arg();
             break;
+        case OPT_KEY:
         case OPT_SIGNKEY:
-            signkeyfile = opt_arg();
+            privkeyfile = opt_arg();
             break;
         case OPT_CA:
             CAfile = opt_arg();
@@ -606,9 +609,9 @@ int x509_main(int argc, char **argv)
                    "The -req option cannot be used with -new\n");
         goto end;
     }
-    if (signkeyfile != NULL) {
-        signkey = load_key(signkeyfile, keyformat, 0, passin, e, "private key");
-        if (signkey == NULL)
+    if (privkeyfile != NULL) {
+        privkey = load_key(privkeyfile, keyformat, 0, passin, e, "private key");
+        if (privkey == NULL)
             goto end;
     }
     if (pubkeyfile != NULL) {
@@ -623,9 +626,9 @@ int x509_main(int argc, char **argv)
                        "The -new option requires a subject to be set using -subj\n");
             goto end;
         }
-        if (signkeyfile == NULL && pubkeyfile == NULL) {
+        if (privkeyfile == NULL && pubkeyfile == NULL) {
             BIO_printf(bio_err,
-                       "The -new option without -signkey requires using -force_pubkey\n");
+                       "The -new option without -key requires using -force_pubkey\n");
             goto end;
         }
     }
@@ -636,8 +639,8 @@ int x509_main(int argc, char **argv)
     if (CAkeyfile == NULL)
         CAkeyfile = CAfile;
     if (CAfile != NULL) {
-        if (signkeyfile != NULL) {
-            BIO_printf(bio_err, "Cannot use both -signkey and -CA option\n");
+        if (privkeyfile != NULL) {
+            BIO_printf(bio_err, "Cannot use both -key and -CA option\n");
             goto end;
         }
     } else if (CAkeyfile != NULL) {
@@ -698,9 +701,9 @@ int x509_main(int argc, char **argv)
             BIO_printf(bio_err,
                        "Warning: ignoring -preserve_dates option with -req or -new\n");
         preserve_dates = 0;
-        if (signkeyfile == NULL && CAkeyfile == NULL) {
+        if (privkeyfile == NULL && CAkeyfile == NULL) {
             BIO_printf(bio_err,
-                       "We need a private key to sign with, use -signkey or -CAkey or -CA with private key\n");
+                       "We need a private key to sign with, use -key or -CAkey or -CA with private key\n");
             goto end;
         }
         if ((x = X509_new_ex(app_get0_libctx(), app_get0_propq())) == NULL)
@@ -728,9 +731,9 @@ int x509_main(int argc, char **argv)
         && !X509_set_subject_name(x, fsubj != NULL ? fsubj :
                                   X509_REQ_get_subject_name(req)))
         goto end;
-    if ((pubkey != NULL || signkey != NULL || req != NULL)
+    if ((pubkey != NULL || privkey != NULL || req != NULL)
         && !X509_set_pubkey(x, pubkey != NULL ? pubkey :
-                            signkey != NULL ? signkey :
+                            privkey != NULL ? privkey :
                             X509_REQ_get0_pubkey(req)))
         goto end;
 
@@ -788,7 +791,7 @@ int x509_main(int argc, char **argv)
     if (sno != NULL && !X509_set_serialNumber(x, sno))
         goto end;
 
-    if (reqfile || newcert || signkey != NULL || CAfile != NULL) {
+    if (reqfile || newcert || privkey != NULL || CAfile != NULL) {
         if (!preserve_dates && !set_cert_times(x, NULL, NULL, days))
             goto end;
         if (!X509_set_issuer_name(x, X509_get_subject_name(issuer_cert)))
@@ -814,15 +817,15 @@ int x509_main(int argc, char **argv)
     }
 
     if (x509toreq) { /* also works in conjunction with -req */
-        if (signkey == NULL) {
-            BIO_printf(bio_err, "Must specify request key using -signkey\n");
+        if (privkey == NULL) {
+            BIO_printf(bio_err, "Must specify request key using -key\n");
             goto end;
         }
         if (clrext && ext_copy != EXT_COPY_NONE) {
             BIO_printf(bio_err, "Must not use -clrext together with -copy_extensions\n");
             goto end;
         }
-        if ((rq = x509_to_req(x, signkey, digest, sigopts,
+        if ((rq = x509_to_req(x, privkey, digest, sigopts,
                               ext_copy, ext_names)) == NULL)
             goto end;
         if (!noout) {
@@ -839,8 +842,8 @@ int x509_main(int argc, char **argv)
             }
         }
         noout = 1;
-    } else if (signkey != NULL) {
-        if (!do_X509_sign(x, signkey, digest, sigopts, &ext_ctx))
+    } else if (privkey != NULL) {
+        if (!do_X509_sign(x, privkey, digest, sigopts, &ext_ctx))
             goto end;
     } else if (CAfile != NULL) {
         if (!reqfile && !newcert) { /* certificate should be self-signed */
@@ -1031,7 +1034,7 @@ int x509_main(int argc, char **argv)
     X509_REQ_free(req);
     X509_free(x);
     X509_free(xca);
-    EVP_PKEY_free(signkey);
+    EVP_PKEY_free(privkey);
     EVP_PKEY_free(CAkey);
     EVP_PKEY_free(pubkey);
     sk_OPENSSL_STRING_free(sigopts);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -107,7 +107,7 @@ void ossl_algorithm_do_all(OSSL_LIB_CTX *libctx, int operation_id,
     cbdata.data = data;
 
     if (provider == NULL)
-        ossl_provider_forall_loaded(libctx, algorithm_do_this, &cbdata);
+        ossl_provider_doall_activated(libctx, algorithm_do_this, &cbdata);
     else
         algorithm_do_this(provider, &cbdata);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -26,6 +26,7 @@
 #include "internal/thread_once.h"
 #include "internal/cryptlib.h"
 #include "internal/provider.h"
+#include "internal/bio.h"
 #include "crypto/store.h"
 #include "store_local.h"
 
@@ -941,9 +942,10 @@ OSSL_STORE_CTX *OSSL_STORE_attach(BIO *bp, const char *scheme,
         const OSSL_PROVIDER *provider =
             OSSL_STORE_LOADER_provider(fetched_loader);
         void *provctx = OSSL_PROVIDER_get0_provider_ctx(provider);
+        OSSL_CORE_BIO *cbio = ossl_core_bio_new_from_bio(bp);
 
-        if ((loader_ctx =
-             fetched_loader->p_attach(provctx, (OSSL_CORE_BIO *)bp)) == NULL) {
+        if (cbio == NULL
+            || (loader_ctx = fetched_loader->p_attach(provctx, cbio)) == NULL) {
             OSSL_STORE_LOADER_free(fetched_loader);
             fetched_loader = NULL;
         } else if (propq != NULL) {
@@ -961,6 +963,7 @@ OSSL_STORE_CTX *OSSL_STORE_attach(BIO *bp, const char *scheme,
             }
         }
         loader = fetched_loader;
+        ossl_core_bio_free(cbio);
     }
 
     if (loader_ctx == NULL) {

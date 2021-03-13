@@ -83,10 +83,6 @@ void sha512_block_data_order(void *ctx, const void *inp, size_t len)
         sha512_block_ppc(ctx, inp, len);
 }
 
-/*
- * TODO(3.0): Temporarily disabled some assembler that hasn't been brought into
- * the FIPS module yet.
- */
 #ifndef FIPS_MODULE
 # ifndef OPENSSL_NO_CHACHA
 void ChaCha20_ctr32_int(unsigned char *out, const unsigned char *inp,

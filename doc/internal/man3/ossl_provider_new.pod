@@ -8,7 +8,7 @@ ossl_provider_set_fallback, ossl_provider_set_module_path,
 ossl_provider_add_parameter,
 ossl_provider_activate, ossl_provider_deactivate, ossl_provider_available,
 ossl_provider_ctx,
-ossl_provider_forall_loaded,
+ossl_provider_doall_activated,
 ossl_provider_name, ossl_provider_dso,
 ossl_provider_module_name, ossl_provider_module_path,
 ossl_provider_libctx,
@@ -50,10 +50,10 @@ ossl_provider_get_capabilities
  void *ossl_provider_ctx(const OSSL_PROVIDER *prov);
 
  /* Iterate over all loaded providers */
- int ossl_provider_forall_loaded(OSSL_LIB_CTX *,
-                                 int (*cb)(OSSL_PROVIDER *provider,
-                                           void *cbdata),
-                                 void *cbdata);
+ int ossl_provider_doall_activated(OSSL_LIB_CTX *,
+                                   int (*cb)(OSSL_PROVIDER *provider,
+                                             void *cbdata),
+                                   void *cbdata);
 
  /* Getters for other library functions */
  const char *ossl_provider_name(OSSL_PROVIDER *prov);
@@ -197,10 +197,10 @@ ossl_provider_ctx() returns a context created by the provider.
 Outside of the provider, it's completely opaque, but it needs to be
 passed back to some of the provider functions.
 
-ossl_provider_forall_loaded() iterates over all the currently
+ossl_provider_doall_activated() iterates over all the currently
 "activated" providers, and calls I<cb> for each of them.
 If no providers have been "activated" yet, it tries to activate all
-available fallback providers and tries another iteration.
+available fallback providers before iterating over them.
 
 ossl_provider_name() returns the name that was given with
 ossl_provider_new().
@@ -287,6 +287,10 @@ it has been incremented.
 
 ossl_provider_free() doesn't return any value.
 
+ossl_provider_doall_activated() returns 1 if the callback was called for all
+activated providers.  A return value of 0 means that the callback was not
+called for any activated providers.
+
 ossl_provider_set_module_path(), ossl_provider_set_fallback(),
 ossl_provider_activate(), ossl_provider_activate_leave_fallbacks() and
 ossl_provider_deactivate() return 1 on success, or 0 on error.
@@ -329,7 +333,7 @@ The functions described here were all added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

@@ -15,7 +15,7 @@ B<openssl> B<cmp>
 
 Generic message options:
 
-[B<-cmd> I<i r|cr|kur|p10cr|rr|genm>]
+[B<-cmd> I<ir|cr|kur|p10cr|rr|genm>]
 [B<-infotype> I<name>]
 [B<-geninfo> I<OID:int:N>]
 
@@ -51,22 +51,22 @@ Message transfer options:
 [B<-path> I<remote_path>]
 [B<-proxy> I<[http[s]://][userinfo@]host[:port][/path][?query][#fragment]>]
 [B<-no_proxy> I<addresses>]
+[B<-recipient> I<name>]
 [B<-msg_timeout> I<seconds>]
 [B<-total_timeout> I<seconds>]
 
 Server authentication options:
 
 [B<-trusted> I<filenames>|I<uris>]
-[B<-untrusted> I<sources>]
+[B<-untrusted> I<filenames>|I<uris>]
 [B<-srvcert> I<filename>|I<uri>]
-[B<-recipient> I<name>]
 [B<-expect_sender> I<name>]
 [B<-ignore_keyusage>]
 [B<-unprotected_errors>]
 [B<-extracertsout> I<filename>]
 [B<-cacertsout> I<filename>]
 
-Client authentication options:
+Client authentication and protection options:
 
 [B<-ref> I<value>]
 [B<-secret> I<arg>]
@@ -76,7 +76,7 @@ Client authentication options:
 [B<-keypass> I<arg>]
 [B<-digest> I<name>]
 [B<-mac> I<name>]
-[B<-extracerts> I<sources>]
+[B<-extracerts> I<filenames>|I<uris>]
 [B<-unprotected_requests>]
 
 Credentials format options:
@@ -100,11 +100,11 @@ Client-side debugging options:
 
 [B<-batch>]
 [B<-repeat> I<number>]
-[B<-reqin>] I<filenames>
+[B<-reqin> I<filenames>]
 [B<-reqin_new_tid>]
-[B<-reqout>] I<filenames>
-[B<-rspin>] I<filenames>
-[B<-rspout>] I<filenames>
+[B<-reqout> I<filenames>]
+[B<-rspin> I<filenames>]
+[B<-rspout> I<filenames>]
 [B<-use_mock_srv>]
 
 Mock server options:
@@ -267,7 +267,7 @@ For KUR, it defaults to the public key
 in the PKCS#10 CSR given with the B<-csr> option, if provided,
 or of the reference certificate (see B<-oldcert>) if provided.
 This default is used for IR and CR only if no SANs are set.
-If the NULL-DN (C</>) is given then no subject is placed in the template.
+If the NULL-DN (C<"/">) is given then no subject is placed in the template.
 
 If provided and neither B<-cert> nor B<-oldcert> is given,
 the subject DN is used as fallback sender of outgoing CMP messages.
@@ -286,7 +286,7 @@ C</DC=org/DC=OpenSSL/DC=users/UID=123456+CN=John Doe>
 
 X509 issuer Distinguished Name (DN) of the CA server
 to place in the requested certificate template in IR/CR/KUR.
-If the NULL-DN (C</>) is given then no issuer is placed in the template.
+If the NULL-DN (C<"/">) is given then no issuer is placed in the template.
 
 If provided and neither B<-recipient> nor B<-srvcert> is given,
 the issuer DN is used as fallback recipient of outgoing CMP messages.
@@ -393,7 +393,7 @@ The file where the chain of the newly enrolled certificate should be saved.
 
 =over 4
 
-=item B<-oldcert> I<filename>|I<uri>]
+=item B<-oldcert> I<filename>|I<uri>
 
 The certificate to be updated (i.e., renewed or re-keyed) in Key Update Request
 (KUR) messages or to be revoked in Revocation Request (RR) messages.
@@ -466,6 +466,22 @@ not to use an HTTP(S) proxy for, separated by commas and/or whitespace
 (where in the latter case the whole argument must be enclosed in "...").
 Default is from the environment variable C<no_proxy> if set, else C<NO_PROXY>.
 
+=item B<-recipient> I<name>
+
+Distinguished Name (DN) to use in the recipient field of CMP request message
+headers, i.e., the CMP server (usually the addressed CA).
+
+The recipient field in the header of a CMP message is mandatory.
+If not given explicitly the recipient is determined in the following order:
+the subject of the CMP server certificate given with the B<-srvcert> option,
+the B<-issuer> option,
+the issuer of the certificate given with the B<-oldcert> option,
+the issuer of the CMP client certificate (B<-cert> option),
+as far as any of those is present, else the NULL-DN as last resort.
+
+The argument must be formatted as I</type0=value0/type1=value1/type2=...>.
+For details see the description of the B<-subject> option.
+
 =item B<-msg_timeout> I<seconds>
 
 Number of seconds (or 0 for infinite) a CMP request-response message round trip
@@ -504,7 +520,7 @@ The certificate verification options
 B<-verify_hostname>, B<-verify_ip>, and B<-verify_email>
 have no effect on the certificate verification enabled via this option.
 
-=item B<-untrusted> I<sources>
+=item B<-untrusted> I<filenames>|I<uris>
 
 Non-trusted intermediate CA certificate(s).
 Any extra certificates given with the B<-cert> option are appended to it.
@@ -518,7 +534,7 @@ CMP message protection) and when validating newly enrolled certificates.
 Multiple sources may be given, separated by commas and/or whitespace.
 Each file may contain multiple certificates.
 
-=item B<-srvcert> I<filename>|I<uri>]
+=item B<-srvcert> I<filename>|I<uri>
 
 The specific CMP server certificate to expect and directly trust (even if it is
 expired) when validating signature-based protection of CMP response messages.
@@ -527,22 +543,6 @@ May be set alternatively to the B<-trusted> option to pin the accepted server.
 If set, the subject of the certificate is also used
 as default value for the recipient of CMP requests
 and as default value for the expected sender of incoming CMP messages.
-
-=item B<-recipient> I<name>
-
-Distinguished Name (DN) to use in the recipient field of CMP request messages,
-i.e., the CMP server (usually the addressed CA).
-
-The recipient field in the header of a CMP message is mandatory.
-If not given explicitly the recipient is determined in the following order:
-the subject of the CMP server certificate given with the B<-srvcert> option,
-the B<-issuer> option,
-the issuer of the certificate given with the B<-oldcert> option,
-the issuer of the CMP client certificate (B<-cert> option),
-as far as any of those is present, else the NULL-DN as last resort.
-
-The argument must be formatted as I</type0=value0/type1=value1/type2=...>.
-For details see the description of the B<-subject> option.
 
 =item B<-expect_sender> I<name>
 
@@ -634,7 +634,7 @@ This takes precedence over the B<-cert> and B<-key> options.
 For more information about the format of B<arg> see
 L<openssl-passphrase-options(1)>.
 
-=item B<-cert> I<filename>|I<uri>]
+=item B<-cert> I<filename>|I<uri>
 
 The client's current CMP signer certificate.
 Requires the corresponding key to be given with B<-key>.
@@ -667,7 +667,7 @@ The certificate verification options
 B<-verify_hostname>, B<-verify_ip>, and B<-verify_email>
 have no effect on the certificate verification enabled via this option.
 
-=item B<-key> I<filename>|I<uri>]
+=item B<-key> I<filename>|I<uri>
 
 The corresponding private key file for the client's current certificate given in
 the B<-cert> option.
@@ -700,7 +700,7 @@ and possibly combine such a name with the name of a supported digest algorithm,
 e.g., hmacWithSHA256.
 Defaults to C<hmac-sha1> as per RFC 4210.
 
-=item B<-extracerts> I<sources>
+=item B<-extracerts> I<filenames>|I<uris>
 
 Certificates to append in the extraCerts field when sending messages.
 They can be used as the default CMP signer certificate chain to include.
@@ -768,7 +768,7 @@ B<-tls_key>.
 Enable using TLS (even when other TLS_related options are not set)
 when connecting to CMP server.
 
-=item B<-tls_cert> I<filename>|I<uri>]
+=item B<-tls_cert> I<filename>|I<uri>
 
 Client's TLS certificate.
 If the source includes further certs they are used (along with B<-untrusted>
@@ -893,11 +893,11 @@ Reference value to use as senderKID of server in case no B<-srv_cert> is given.
 
 Password source for server authentication with a pre-shared key (secret).
 
-=item B<-srv_cert> I<filename>|I<uri>]
+=item B<-srv_cert> I<filename>|I<uri>
 
 Certificate of the server.
 
-=item B<-srv_key> I<filename>|I<uri>]
+=item B<-srv_key> I<filename>|I<uri>
 
 Private key used by the server for signing messages.
 
@@ -917,7 +917,7 @@ have no effect on the certificate verification enabled via this option.
 
 Intermediate CA certs that may be useful when validating client certificates.
 
-=item B<-rsp_cert> I<filename>|I<uri>]
+=item B<-rsp_cert> I<filename>|I<uri>
 
 Certificate to be returned as mock enrollment result.
 
@@ -1022,8 +1022,7 @@ which can be used to interact conveniently with the Insta Demo CA.
 In order to enroll an initial certificate from that CA it is sufficient
 to issue the following shell commands.
 
-  cd /path/to/openssl
-  export OPENSSL_CONF=openssl.cnf
+  export OPENSSL_CONF=/path/to/openssl/apps/openssl.cnf
 
 =begin comment
 
@@ -1042,8 +1041,8 @@ It can be viewed using, e.g.,
   openssl x509 -noout -text -in insta.cert.pem
 
 In case the network setup requires using an HTTP proxy it may be given as usual
-via the environment variable B<http_proxy> or via the B<proxy> option or
-the CMP command-line argument B<-proxy>, for example
+via the environment variable B<http_proxy> or via the B<proxy> option in the
+configuration file or the CMP command-line argument B<-proxy>, for example
 
   -proxy http://192.168.1.1:8080
 
@@ -1085,7 +1084,7 @@ or
 
   openssl cmp -section insta,rr,signature
 
-Many more options can be used in the configuration file
+Many more options can be given in the configuration file
 and/or on the command line.
 For instance, the B<-reqexts> CLI option may refer to a section in the
 configuration file defining X.509 extensions to use in certificate requests,
@@ -1095,24 +1094,23 @@ such as B<v3_req> in F<openssl/apps/openssl.cnf>:
 
 =head2 Certificate enrollment
 
-The following examples at first do not make use of a configuration file.
+The following examples do not make use of a configuration file at first.
 They assume that a CMP server can be contacted on the local TCP port 80
 and accepts requests under the alias I</pkix/>.
 
-For enrolling its very first certificate the client generates a first client key
+For enrolling its very first certificate the client generates a client key
 and sends an initial request message to the local CMP server
 using a pre-shared secret key for mutual authentication.
 In this example the client does not have the CA certificate yet,
 so we specify the name of the CA with the B<-recipient> option
 and save any CA certificates that we may receive in the C<capubs.pem> file.
 
-In below command line usage examples the C<\> at line ends is just used
+In below command line usage examples the C<\> at line ends is used just
 for formatting; each of the command invocations should be on a single line.
 
   openssl genrsa -out cl_key.pem
-  openssl cmp -cmd ir -server 127.0.0.1:80/pkix/ \
-    -ref 1234 -secret pass:1234-5678-1234-5678 \
-    -recipient "/CN=CMPserver" \
+  openssl cmp -cmd ir -server 127.0.0.1:80/pkix/ -recipient "/CN=CMPserver" \
+    -ref 1234 -secret pass:1234-5678 \
     -newkey cl_key.pem -subject "/CN=MyName" \
     -cacertsout capubs.pem -certout cl_cert.pem
 
@@ -1138,9 +1136,8 @@ This command sequence can be repated as often as needed.
 Requesting "all relevant information" with an empty General Message.
 This prints information about all received ITAV B<infoType>s to stdout.
 
-  openssl cmp -cmd genm -server 127.0.0.1/pkix/ \
-    -ref 1234 -secret pass:1234-5678-1234-5678 \
-    -recipient "/CN=CMPserver"
+  openssl cmp -cmd genm -server 127.0.0.1/pkix/ -recipient "/CN=CMPserver" \
+    -ref 1234 -secret pass:1234-5678
 
 =head2 Using a custom configuration file
 
@@ -1163,7 +1160,7 @@ After including in the configuration file the following sections:
   newkey = cl_key.pem
   certout = cl_cert.pem
 
-  [cmp-init]
+  [init]
   recipient = "/CN=CMPserver"
   trusted =
   cert =
@@ -1173,14 +1170,14 @@ After including in the configuration file the following sections:
   subject = "/CN=MyName"
   cacertsout = capubs.pem
 
-the above enrollment invocations reduce to
+the above enrollment transactions reduce to
 
-  openssl cmp -section cmp,cmp-init
+  openssl cmp -section cmp,init
   openssl cmp -cmd kur -newkey cl_key_new.pem
 
-and the above genm call reduces to
+and the above transaction using a general message reduces to
 
-  openssl cmp -section cmp,cmp-init -cmd genm
+  openssl cmp -section cmp,init -cmd genm
 
 =head1 SEE ALSO
 

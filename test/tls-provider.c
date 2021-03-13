@@ -202,7 +202,8 @@ static void *xor_newctx(void *provctx)
     return pxorctx;
 }
 
-static int xor_init(void *vpxorctx, void *vkey)
+static int xor_init(void *vpxorctx, void *vkey,
+                    ossl_unused const OSSL_PARAM params[])
 {
     PROV_XOR_CTX *pxorctx = (PROV_XOR_CTX *)vpxorctx;
 
@@ -317,7 +318,7 @@ static int xor_encapsulate(void *vpxorctx,
     }
 
     /* 1. Generate keypair */
-    genctx = xor_gen_init(pxorctx->provctx, OSSL_KEYMGMT_SELECT_KEYPAIR);
+    genctx = xor_gen_init(pxorctx->provctx, OSSL_KEYMGMT_SELECT_KEYPAIR, NULL);
     if (genctx == NULL)
         goto end;
     ourkey = xor_gen(genctx, NULL, NULL);
@@ -331,7 +332,7 @@ static int xor_encapsulate(void *vpxorctx,
     /* 3. Derive ss via KEX */
     derivectx = xor_newctx(pxorctx->provctx);
     if (derivectx == NULL
-            || !xor_init(derivectx, ourkey)
+            || !xor_init(derivectx, ourkey, NULL)
             || !xor_set_peer(derivectx, pxorctx->key)
             || !xor_derive(derivectx, ss, sslen, XOR_KEY_SIZE))
         goto end;
@@ -378,7 +379,7 @@ static int xor_decapsulate(void *vpxorctx,
     /* Derive ss via KEX */
     derivectx = xor_newctx(pxorctx->provctx);
     if (derivectx == NULL
-            || !xor_init(derivectx, pxorctx->key)
+            || !xor_init(derivectx, pxorctx->key, NULL)
             || !xor_set_peer(derivectx, peerkey)
             || !xor_derive(derivectx, ss, sslen, XOR_KEY_SIZE))
         goto end;
@@ -537,7 +538,8 @@ struct xor_gen_ctx {
     OSSL_LIB_CTX *libctx;
 };
 
-static void *xor_gen_init(void *provctx, int selection)
+static void *xor_gen_init(void *provctx, int selection,
+                          const OSSL_PARAM params[])
 {
     struct xor_gen_ctx *gctx = NULL;
 
@@ -551,6 +553,10 @@ static void *xor_gen_init(void *provctx, int selection)
     /* Our provctx is really just an OSSL_LIB_CTX */
     gctx->libctx = (OSSL_LIB_CTX *)provctx;
 
+    if (!xor_gen_set_params(gctx, params)) {
+        OPENSSL_free(gctx);
+        return NULL;
+    }
     return gctx;
 }
 
@@ -573,7 +579,8 @@ static int xor_gen_set_params(void *genctx, const OSSL_PARAM params[])
     return 1;
 }
 
-static const OSSL_PARAM *xor_gen_settable_params(void *provctx)
+static const OSSL_PARAM *xor_gen_settable_params(ossl_unused void *genctx,
+                                                 ossl_unused void *provctx)
 {
     static OSSL_PARAM settable[] = {
         OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME, NULL, 0),

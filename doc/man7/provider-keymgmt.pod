@@ -19,10 +19,12 @@ provider-keymgmt - The KEYMGMT library E<lt>-E<gt> provider functions
  void OSSL_FUNC_keymgmt_free(void *keydata);
 
  /* Generation, a more complex constructor */
- void *OSSL_FUNC_keymgmt_gen_init(void *provctx, int selection);
+ void *OSSL_FUNC_keymgmt_gen_init(void *provctx, int selection,
+                                  const OSSL_PARAM params[]);
  int OSSL_FUNC_keymgmt_gen_set_template(void *genctx, void *template);
  int OSSL_FUNC_keymgmt_gen_set_params(void *genctx, const OSSL_PARAM params[]);
- const OSSL_PARAM *OSSL_FUNC_keymgmt_gen_settable_params(void *provctx);
+ const OSSL_PARAM *OSSL_FUNC_keymgmt_gen_settable_params(void *genctx,
+                                                         void *provctx);
  void *OSSL_FUNC_keymgmt_gen(void *genctx, OSSL_CALLBACK *cb, void *cbarg);
  void OSSL_FUNC_keymgmt_gen_cleanup(void *genctx);
 
@@ -221,6 +223,8 @@ more elaborate context based key object constructor.
 OSSL_FUNC_keymgmt_gen_init() should create the key object generation context
 and initialize it with I<selections>, which will determine what kind
 of contents the key object to be generated should get.
+The I<params>, if not NULL, should be set on the context in a manner similar to
+using OSSL_FUNC_keymgmt_set_params().
 
 OSSL_FUNC_keymgmt_gen_set_template() should add I<template> to the context
 I<genctx>.  The I<template> is assumed to be a key object constructed

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -16,7 +16,8 @@
 #include "internal/provider.h"
 #include "evp_local.h"
 
-static int evp_kem_init(EVP_PKEY_CTX *ctx, int operation)
+static int evp_kem_init(EVP_PKEY_CTX *ctx, int operation,
+                        const OSSL_PARAM params[])
 {
     int ret = 0;
     EVP_KEM *kem = NULL;
@@ -79,7 +80,7 @@ static int evp_kem_init(EVP_PKEY_CTX *ctx, int operation)
             ret = -2;
             goto err;
         }
-        ret = kem->encapsulate_init(ctx->op.encap.kemprovctx, provkey);
+        ret = kem->encapsulate_init(ctx->op.encap.kemprovctx, provkey, params);
         break;
     case EVP_PKEY_OP_DECAPSULATE:
         if (kem->decapsulate_init == NULL) {
@@ -87,7 +88,7 @@ static int evp_kem_init(EVP_PKEY_CTX *ctx, int operation)
             ret = -2;
             goto err;
         }
-        ret = kem->decapsulate_init(ctx->op.encap.kemprovctx, provkey);
+        ret = kem->decapsulate_init(ctx->op.encap.kemprovctx, provkey, params);
         break;
     default:
         ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
@@ -104,9 +105,9 @@ static int evp_kem_init(EVP_PKEY_CTX *ctx, int operation)
     return ret;
 }
 
-int EVP_PKEY_encapsulate_init(EVP_PKEY_CTX *ctx)
+int EVP_PKEY_encapsulate_init(EVP_PKEY_CTX *ctx, const OSSL_PARAM params[])
 {
-    return evp_kem_init(ctx, EVP_PKEY_OP_ENCAPSULATE);
+    return evp_kem_init(ctx, EVP_PKEY_OP_ENCAPSULATE, params);
 }
 
 int EVP_PKEY_encapsulate(EVP_PKEY_CTX *ctx,
@@ -117,7 +118,7 @@ int EVP_PKEY_encapsulate(EVP_PKEY_CTX *ctx,
         return 0;
 
     if (ctx->operation != EVP_PKEY_OP_ENCAPSULATE) {
-        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATON_NOT_INITIALIZED);
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_INITIALIZED);
         return -1;
     }
 
@@ -133,9 +134,9 @@ int EVP_PKEY_encapsulate(EVP_PKEY_CTX *ctx,
                                           out, outlen, secret, secretlen);
 }
 
-int EVP_PKEY_decapsulate_init(EVP_PKEY_CTX *ctx)
+int EVP_PKEY_decapsulate_init(EVP_PKEY_CTX *ctx, const OSSL_PARAM params[])
 {
-    return evp_kem_init(ctx, EVP_PKEY_OP_DECAPSULATE);
+    return evp_kem_init(ctx, EVP_PKEY_OP_DECAPSULATE, params);
 }
 
 int EVP_PKEY_decapsulate(EVP_PKEY_CTX *ctx,
@@ -148,7 +149,7 @@ int EVP_PKEY_decapsulate(EVP_PKEY_CTX *ctx,
         return 0;
 
     if (ctx->operation != EVP_PKEY_OP_DECAPSULATE) {
-        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATON_NOT_INITIALIZED);
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_INITIALIZED);
         return -1;
     }
 
@@ -367,7 +368,7 @@ const OSSL_PARAM *EVP_KEM_gettable_ctx_params(const EVP_KEM *kem)
         return NULL;
 
     provctx = ossl_provider_ctx(EVP_KEM_provider(kem));
-    return kem->gettable_ctx_params(provctx);
+    return kem->gettable_ctx_params(NULL, provctx);
 }
 
 const OSSL_PARAM *EVP_KEM_settable_ctx_params(const EVP_KEM *kem)
@@ -378,5 +379,5 @@ const OSSL_PARAM *EVP_KEM_settable_ctx_params(const EVP_KEM *kem)
         return NULL;
 
     provctx = ossl_provider_ctx(EVP_KEM_provider(kem));
-    return kem->settable_ctx_params(provctx);
+    return kem->settable_ctx_params(NULL, provctx);
 }

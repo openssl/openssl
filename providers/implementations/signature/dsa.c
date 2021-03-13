@@ -148,7 +148,7 @@ static int dsa_setup_md(PROV_DSA_CTX *ctx,
         EVP_MD_free(ctx->md);
 
         /*
-         * TODO(3.0) Should we care about DER writing errors?
+         * We do not care about DER writing errors.
          * All it really means is that for some reason, there's no
          * AlgorithmIdentifier to be had, but the operation itself is
          * still valid, just as long as it's not used to construct
@@ -171,7 +171,8 @@ static int dsa_setup_md(PROV_DSA_CTX *ctx,
     return 1;
 }
 
-static int dsa_signverify_init(void *vpdsactx, void *vdsa, int operation)
+static int dsa_signverify_init(void *vpdsactx, void *vdsa,
+                               const OSSL_PARAM params[], int operation)
 {
     PROV_DSA_CTX *pdsactx = (PROV_DSA_CTX *)vpdsactx;
 
@@ -183,6 +184,10 @@ static int dsa_signverify_init(void *vpdsactx, void *vdsa, int operation)
     DSA_free(pdsactx->dsa);
     pdsactx->dsa = vdsa;
     pdsactx->operation = operation;
+
+    if (!dsa_set_ctx_params(pdsactx, params))
+        return 0;
+
     if (!ossl_dsa_check_key(vdsa, operation == EVP_PKEY_OP_SIGN)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
         return 0;
@@ -190,14 +195,15 @@ static int dsa_signverify_init(void *vpdsactx, void *vdsa, int operation)
     return 1;
 }
 
-static int dsa_sign_init(void *vpdsactx, void *vdsa)
+static int dsa_sign_init(void *vpdsactx, void *vdsa, const OSSL_PARAM params[])
 {
-    return dsa_signverify_init(vpdsactx, vdsa, EVP_PKEY_OP_SIGN);
+    return dsa_signverify_init(vpdsactx, vdsa, params, EVP_PKEY_OP_SIGN);
 }
 
-static int dsa_verify_init(void *vpdsactx, void *vdsa)
+static int dsa_verify_init(void *vpdsactx, void *vdsa,
+                           const OSSL_PARAM params[])
 {
-    return dsa_signverify_init(vpdsactx, vdsa, EVP_PKEY_OP_VERIFY);
+    return dsa_signverify_init(vpdsactx, vdsa, params, EVP_PKEY_OP_VERIFY);
 }
 
 static int dsa_sign(void *vpdsactx, unsigned char *sig, size_t *siglen,
@@ -244,7 +250,8 @@ static int dsa_verify(void *vpdsactx, const unsigned char *sig, size_t siglen,
 }
 
 static int dsa_digest_signverify_init(void *vpdsactx, const char *mdname,
-                                      void *vdsa, int operation)
+                                      void *vdsa, const OSSL_PARAM params[],
+                                      int operation)
 {
     PROV_DSA_CTX *pdsactx = (PROV_DSA_CTX *)vpdsactx;
 
@@ -252,7 +259,7 @@ static int dsa_digest_signverify_init(void *vpdsactx, const char *mdname,
         return 0;
 
     pdsactx->flag_allow_md = 0;
-    if (!dsa_signverify_init(vpdsactx, vdsa, operation))
+    if (!dsa_signverify_init(vpdsactx, vdsa, params, operation))
         return 0;
 
     if (!dsa_setup_md(pdsactx, mdname, NULL))
@@ -262,7 +269,7 @@ static int dsa_digest_signverify_init(void *vpdsactx, const char *mdname,
     if (pdsactx->mdctx == NULL)
         goto error;
 
-    if (!EVP_DigestInit_ex(pdsactx->mdctx, pdsactx->md, NULL))
+    if (!EVP_DigestInit_ex2(pdsactx->mdctx, pdsactx->md, params))
         goto error;
 
     return 1;
@@ -276,14 +283,17 @@ static int dsa_digest_signverify_init(void *vpdsactx, const char *mdname,
 }
 
 static int dsa_digest_sign_init(void *vpdsactx, const char *mdname,
-                                      void *vdsa)
+                                void *vdsa, const OSSL_PARAM params[])
 {
-    return dsa_digest_signverify_init(vpdsactx, mdname, vdsa, EVP_PKEY_OP_SIGN);
+    return dsa_digest_signverify_init(vpdsactx, mdname, vdsa, params,
+                                      EVP_PKEY_OP_SIGN);
 }
 
-static int dsa_digest_verify_init(void *vpdsactx, const char *mdname, void *vdsa)
+static int dsa_digest_verify_init(void *vpdsactx, const char *mdname,
+                                  void *vdsa, const OSSL_PARAM params[])
 {
-    return dsa_digest_signverify_init(vpdsactx, mdname, vdsa, EVP_PKEY_OP_VERIFY);
+    return dsa_digest_signverify_init(vpdsactx, mdname, vdsa, params,
+                                      EVP_PKEY_OP_VERIFY);
 }
 
 int dsa_digest_signverify_update(void *vpdsactx, const unsigned char *data,
@@ -313,7 +323,7 @@ int dsa_digest_sign_final(void *vpdsactx, unsigned char *sig, size_t *siglen,
      */
     if (sig != NULL) {
         /*
-         * TODO(3.0): There is the possibility that some externally provided
+         * There is the possibility that some externally provided
          * digests exceed EVP_MAX_MD_SIZE. We should probably handle that somehow -
          * but that problem is much larger than just in DSA.
          */
@@ -338,7 +348,7 @@ int dsa_digest_verify_final(void *vpdsactx, const unsigned char *sig,
         return 0;
 
     /*
-     * TODO(3.0): There is the possibility that some externally provided
+     * There is the possibility that some externally provided
      * digests exceed EVP_MAX_MD_SIZE. We should probably handle that somehow -
      * but that problem is much larger than just in DSA.
      */
@@ -413,7 +423,7 @@ static int dsa_get_ctx_params(void *vpdsactx, OSSL_PARAM *params)
     PROV_DSA_CTX *pdsactx = (PROV_DSA_CTX *)vpdsactx;
     OSSL_PARAM *p;
 
-    if (pdsactx == NULL || params == NULL)
+    if (pdsactx == NULL)
         return 0;
 
     p = OSSL_PARAM_locate(params, OSSL_SIGNATURE_PARAM_ALGORITHM_ID);
@@ -434,7 +444,8 @@ static const OSSL_PARAM known_gettable_ctx_params[] = {
     OSSL_PARAM_END
 };
 
-static const OSSL_PARAM *dsa_gettable_ctx_params(ossl_unused void *vctx)
+static const OSSL_PARAM *dsa_gettable_ctx_params(ossl_unused void *ctx,
+                                                 ossl_unused void *provctx)
 {
     return known_gettable_ctx_params;
 }
@@ -444,8 +455,10 @@ static int dsa_set_ctx_params(void *vpdsactx, const OSSL_PARAM params[])
     PROV_DSA_CTX *pdsactx = (PROV_DSA_CTX *)vpdsactx;
     const OSSL_PARAM *p;
 
-    if (pdsactx == NULL || params == NULL)
+    if (pdsactx == NULL)
         return 0;
+    if (params == NULL)
+        return 1;
 
     p = OSSL_PARAM_locate_const(params, OSSL_SIGNATURE_PARAM_DIGEST);
     /* Not allowed during certain operations */
@@ -470,27 +483,24 @@ static int dsa_set_ctx_params(void *vpdsactx, const OSSL_PARAM params[])
     return 1;
 }
 
-static const OSSL_PARAM known_settable_ctx_params[] = {
+static const OSSL_PARAM settable_ctx_params[] = {
     OSSL_PARAM_utf8_string(OSSL_SIGNATURE_PARAM_DIGEST, NULL, 0),
     OSSL_PARAM_utf8_string(OSSL_SIGNATURE_PARAM_PROPERTIES, NULL, 0),
     OSSL_PARAM_END
 };
 
-static const OSSL_PARAM *dsa_settable_ctx_params(ossl_unused void *provctx)
+static const OSSL_PARAM settable_ctx_params_no_digest[] = {
+    OSSL_PARAM_END
+};
+
+static const OSSL_PARAM *dsa_settable_ctx_params(void *vpdsactx,
+                                                 ossl_unused void *provctx)
 {
-    /*
-     * TODO(3.0): Should this function return a different set of settable ctx
-     * params if the ctx is being used for a DigestSign/DigestVerify? In that
-     * case it is not allowed to set the digest size/digest name because the
-     * digest is explicitly set as part of the init.
-     * NOTE: Ideally we would check pdsactx->flag_allow_md, but this is
-     * problematic because there is no nice way of passing the
-     * PROV_DSA_CTX down to this function...
-     * Because we have API's that dont know about their parent..
-     * e.g: EVP_SIGNATURE_gettable_ctx_params(const EVP_SIGNATURE *sig).
-     * We could pass NULL for that case (but then how useful is the check?).
-     */
-    return known_settable_ctx_params;
+    PROV_DSA_CTX *pdsactx = (PROV_DSA_CTX *)vpdsactx;
+
+    if (pdsactx != NULL && !pdsactx->flag_allow_md)
+        return settable_ctx_params_no_digest;
+    return settable_ctx_params;
 }
 
 static int dsa_get_ctx_md_params(void *vpdsactx, OSSL_PARAM *params)

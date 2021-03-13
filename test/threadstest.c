@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+/* test_multi below tests the thread safety of a deprecated function */
+#define OPENSSL_SUPPRESS_DEPRECATED
+
 #if defined(_WIN32)
 # include <windows.h>
 #endif
@@ -401,22 +404,45 @@ static void thread_shared_evp_pkey(void)
         multi_success = 0;
 }
 
+static void thread_downgrade_shared_evp_pkey(void)
+{
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+    /*
+     * This test is only relevant for deprecated functions that perform
+     * downgrading
+     */
+    if (EVP_PKEY_get0_RSA(shared_evp_pkey) == NULL)
+        multi_success = 0;
+#else
+    /* Shouldn't ever get here */
+    multi_success = 0;
+#endif
+}
+
+
 /*
  * Do work in multiple worker threads at the same time.
  * Test 0: General worker, using the default provider
  * Test 1: General worker, using the fips provider
  * Test 2: Simple fetch worker
- * Test 3: Worker using a shared EVP_PKEY
+ * Test 3: Worker downgrading a shared EVP_PKEY
+ * Test 4: Worker using a shared EVP_PKEY
  */
 static int test_multi(int idx)
 {
     thread_t thread1, thread2;
     int testresult = 0;
     OSSL_PROVIDER *prov = NULL, *prov2 = NULL;
-    void (*worker)(void);
+    void (*worker)(void) = NULL;
+    void (*worker2)(void) = NULL;
 
     if (idx == 1 && !do_fips)
         return TEST_skip("FIPS not supported");
+
+#ifdef OPENSSL_NO_DEPRECATED_3_0
+    if (idx == 3)
+        return TEST_skip("Skipping tests for deprected functions");
+#endif
 
     multi_success = 1;
     multi_libctx = OSSL_LIB_CTX_new();
@@ -435,6 +461,9 @@ static int test_multi(int idx)
         worker = thread_multi_simple_fetch;
         break;
     case 3:
+        worker2 = thread_downgrade_shared_evp_pkey;
+        /* fall through */
+    case 4:
         /*
          * If available we have both the default and fips providers for this
          * test
@@ -450,9 +479,11 @@ static int test_multi(int idx)
         TEST_error("Invalid test index");
         goto err;
     }
+    if (worker2 == NULL)
+        worker2 = worker;
 
     if (!TEST_true(run_thread(&thread1, worker))
-            || !TEST_true(run_thread(&thread2, worker)))
+            || !TEST_true(run_thread(&thread2, worker2)))
         goto err;
 
     worker();
@@ -471,6 +502,34 @@ static int test_multi(int idx)
     EVP_PKEY_free(shared_evp_pkey);
     shared_evp_pkey = NULL;
     return testresult;
+}
+
+/*
+ * This test attempts to load several providers at the same time, and if
+ * run with a thread sanitizer, should crash if the core provider code
+ * doesn't synchronize well enough.
+ */
+#define MULTI_LOAD_THREADS 3
+static void test_multi_load_worker(void)
+{
+    OSSL_PROVIDER *prov;
+
+    TEST_ptr(prov = OSSL_PROVIDER_load(NULL, "default"));
+    TEST_true(OSSL_PROVIDER_unload(prov));
+}
+
+static int test_multi_load(void)
+{
+    thread_t threads[MULTI_LOAD_THREADS];
+    int i;
+
+    for (i = 0; i < MULTI_LOAD_THREADS; i++)
+        TEST_true(run_thread(&threads[i], test_multi_load_worker));
+
+    for (i = 0; i < MULTI_LOAD_THREADS; i++)
+        TEST_true(wait_for_thread(threads[i]));
+
+    return 1;
 }
 
 typedef enum OPTION_choice {
@@ -518,7 +577,8 @@ int setup_tests(void)
     ADD_TEST(test_once);
     ADD_TEST(test_thread_local);
     ADD_TEST(test_atomic);
-    ADD_ALL_TESTS(test_multi, 4);
+    ADD_TEST(test_multi_load);
+    ADD_ALL_TESTS(test_multi, 5);
     return 1;
 }
 

@@ -8,30 +8,26 @@
  */
 
 #include "e_os.h"                /* To get strncasecmp() on Windows */
+
 #include <string.h>
 #include <sys/stat.h>
-#include <ctype.h>
+#include <ctype.h>  /* isdigit */
 #include <assert.h>
 
-#include <openssl/core.h>
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
 #include <openssl/core_object.h>
-#include <openssl/crypto.h>
 #include <openssl/bio.h>
 #include <openssl/err.h>
-#include <openssl/buffer.h>
 #include <openssl/params.h>
 #include <openssl/decoder.h>
-#include <openssl/store.h>       /* The OSSL_STORE_INFO type numbers */
 #include <openssl/proverr.h>
+#include <openssl/store.h>       /* The OSSL_STORE_INFO type numbers */
 #include "internal/cryptlib.h"
 #include "internal/o_dir.h"
-#include "crypto/pem.h"          /* For PVK and "blob" PEM headers */
 #include "crypto/decoder.h"
 #include "prov/implementations.h"
 #include "prov/bio.h"
-#include "prov/provider_ctx.h"
 #include "file_store_local.h"
 
 DEFINE_STACK_OF(OSSL_STORE_INFO)
@@ -73,10 +69,6 @@ struct file_ctx_st {
         IS_FILE = 0,             /* Read file and pass results */
         IS_DIR                   /* Pass directory entry names */
     } type;
-
-    /* Flag bits */
-    unsigned int flag_attached:1;
-    unsigned int flag_buffered:1;
 
     union {
         /* Used with |IS_FILE| */
@@ -299,139 +291,18 @@ static void *file_open(void *provctx, const char *uri)
     return ctx;
 }
 
-/*
- * Attached input streams must be treated very very carefully to avoid
- * nasty surprises.
- *
- * This implementation tries to support input streams that can't be reset,
- * such as standard input.  However, OSSL_DECODER assumes resettable streams,
- * and because the PEM decoder may read quite a bit of the input file to skip
- * past any non-PEM text that precedes the PEM block, we may need to detect
- * if the input stream is a PEM file early.
- *
- * If the input stream supports BIO_tell(), we assume that it also supports
- * BIO_seek(), making it a resettable stream and therefore safe to fully
- * unleash OSSL_DECODER.
- *
- * If the input stream doesn't support BIO_tell(), we must assume that we
- * have a non-resettable stream, and must tread carefully.  We do so by
- * trying to detect if the input is PEM, MSBLOB or PVK, and if not, we
- * assume that it's DER.
- *
- * To detect if an input stream is PEM, MSBLOB or PVK, we use the buffer BIO
- * filter, which allows us a 4KiB resettable read-ahead.  We *hope* that 4KiB
- * will be enough to find the start of the PEM block.
- *
- * It should be possible to use this same technique to detect other file
- * types as well.
- *
- * An alternative technique would be to have an endlessly caching BIO filter.
- * That would take away the need for all the detection here, and simply leave
- * it for OSSL_DECODER to find out on its own while supporting its demand for
- * resettable input streams.
- * That's a possible future development.
- */
-
-# define INPUT_TYPE_ANY         NULL
-# define INPUT_TYPE_DER         "DER"
-# define INPUT_TYPE_PEM         "PEM"
-# define INPUT_TYPE_MSBLOB      "MSBLOB"
-# define INPUT_TYPE_PVK         "PVK"
-
 void *file_attach(void *provctx, OSSL_CORE_BIO *cin)
 {
+    struct file_ctx_st *ctx;
     BIO *new_bio = bio_new_from_core_bio(provctx, cin);
-    BIO *new_bio_tmp = NULL;
-    BIO *buff = NULL;
-    char peekbuf[4096] = { 0, };
-    int loc;
-    const char *input_type = NULL;
-    unsigned int flag_attached = 1;
-    unsigned int flag_buffered = 0;
-    struct file_ctx_st *ctx = NULL;
 
     if (new_bio == NULL)
-        return 0;
+        return NULL;
 
-    /* Try to get the current position */
-    loc = BIO_tell(new_bio);
-
-    if ((buff = BIO_new(BIO_f_buffer())) == NULL
-        || (new_bio_tmp = BIO_push(buff, new_bio)) == NULL)
-        goto err;
-
-    /* Assumption, if we can't detect PEM */
-    input_type = INPUT_TYPE_DER;
-    flag_buffered = 1;
-    new_bio = new_bio_tmp;
-
-    if (BIO_buffer_peek(new_bio, peekbuf, sizeof(peekbuf) - 1) > 0) {
-#ifndef OPENSSL_NO_DSA
-        const unsigned char *p = NULL;
-        unsigned int magic = 0, bitlen = 0;
-        int isdss = 0, ispub = -1;
-# ifndef OPENSSL_NO_RC4
-        unsigned int saltlen = 0, keylen = 0;
-# endif
-#endif
-
-        peekbuf[sizeof(peekbuf) - 1] = '\0';
-        if (strstr(peekbuf, "-----BEGIN ") != NULL)
-            input_type = INPUT_TYPE_PEM;
-#ifndef OPENSSL_NO_DSA
-        else if (p = (unsigned char *)peekbuf,
-                 ossl_do_blob_header(&p, sizeof(peekbuf), &magic, &bitlen,
-                                     &isdss, &ispub))
-            input_type = INPUT_TYPE_MSBLOB;
-# ifndef OPENSSL_NO_RC4
-        else if (p = (unsigned char *)peekbuf,
-                 ossl_do_PVK_header(&p, sizeof(peekbuf), 0, &saltlen, &keylen))
-            input_type = INPUT_TYPE_PVK;
-# endif
-#endif
-    }
-
-    /*
-     * After peeking, we know that the underlying source BIO has moved ahead
-     * from its earlier position and that if it supports BIO_tell(), that
-     * should be a number that differs from |loc|.  Otherwise, we will get
-     * the same value, which may one of:
-     *
-     * -   zero (the source BIO doesn't support BIO_tell() / BIO_seek() /
-     *     BIO_reset())
-     * -   -1 (the underlying operating system / C library routines do not
-     *     support BIO_tell() / BIO_seek() / BIO_reset())
-     *
-     * If it turns out that the source BIO does support BIO_tell(), we pop
-     * the buffer BIO filter and mark this input as |INPUT_TYPE_ANY|, which
-     * fully unleashes OSSL_DECODER to do its thing.
-     */
-    if (BIO_tell(new_bio) != loc) {
-        /* In this case, anything goes */
-        input_type = INPUT_TYPE_ANY;
-
-        /* Restore the source BIO like it was when entering this function */
-        new_bio = BIO_pop(buff);
-        BIO_free(buff);
-        (void)BIO_seek(new_bio, loc);
-
-        flag_buffered = 0;
-    }
-
-    if ((ctx = file_open_stream(new_bio, NULL, input_type, provctx)) == NULL)
-        goto err;
-
-    ctx->flag_attached = flag_attached;
-    ctx->flag_buffered = flag_buffered;
-
+    ctx = file_open_stream(new_bio, NULL, NULL, provctx);
+    if (ctx == NULL)
+        BIO_free(new_bio);
     return ctx;
- err:
-    if (flag_buffered) {
-        new_bio = BIO_pop(buff);
-        BIO_free(buff);
-    }
-    BIO_free(new_bio);           /* Removes the provider BIO filter */
-    return NULL;
 }
 
 /*-
@@ -454,6 +325,9 @@ static int file_set_ctx_params(void *loaderctx, const OSSL_PARAM params[])
 {
     struct file_ctx_st *ctx = loaderctx;
     const OSSL_PARAM *p;
+
+    if (params == NULL)
+        return 1;
 
     p = OSSL_PARAM_locate_const(params, OSSL_STORE_PARAM_PROPERTIES);
     if (p != NULL) {
@@ -854,30 +728,11 @@ static int file_close_dir(struct file_ctx_st *ctx)
 
 static int file_close_stream(struct file_ctx_st *ctx)
 {
-    if (ctx->flag_buffered) {
-        /*
-         * file_attach() pushed a BIO_f_buffer() on top of the regular BIO.
-         * Drop it.
-         */
-        BIO *buff = ctx->_.file.file;
-
-        /* Detach buff */
-        ctx->_.file.file = BIO_pop(ctx->_.file.file);
-
-        BIO_free(buff);
-    }
-
     /*
-     * If it was attached, we only free the top, as that's the provider BIO
-     * filter.  Otherwise, it was entirely allocated by this implementation,
-     * and can safely be completely freed.
+     * This frees either the provider BIO filter (for file_attach()) OR
+     * the allocated file BIO (for file_open()).
      */
-    if (ctx->flag_attached)
-        BIO_free(ctx->_.file.file);
-    else
-        BIO_free_all(ctx->_.file.file);
-
-    /* To avoid double free */
+    BIO_free(ctx->_.file.file);
     ctx->_.file.file = NULL;
 
     free_file_ctx(ctx);

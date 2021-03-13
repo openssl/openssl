@@ -641,6 +641,61 @@ end:
     return testresult;
 }
 
+static int test_ssl_build_cert_chain(void)
+{
+    int ret = 0;
+    SSL_CTX *ssl_ctx = NULL;
+    SSL *ssl = NULL;
+    char *skey = test_mk_file_path(certsdir, "leaf.key");
+    char *leaf_chain = test_mk_file_path(certsdir, "leaf-chain.pem");
+
+    if (!TEST_ptr(ssl_ctx = SSL_CTX_new_ex(libctx, NULL, TLS_server_method())))
+        goto end;
+    if (!TEST_ptr(ssl = SSL_new(ssl_ctx)))
+        goto end;
+    /* leaf_chain contains leaf + subinterCA + interCA + rootCA */
+    if (!TEST_int_eq(SSL_use_certificate_chain_file(ssl, leaf_chain), 1)
+        || !TEST_int_eq(SSL_use_PrivateKey_file(ssl, skey, SSL_FILETYPE_PEM), 1)
+        || !TEST_int_eq(SSL_check_private_key(ssl), 1))
+        goto end;
+    if (!TEST_true(SSL_build_cert_chain(ssl, SSL_BUILD_CHAIN_FLAG_NO_ROOT
+                                             | SSL_BUILD_CHAIN_FLAG_CHECK)))
+        goto end;
+    ret = 1;
+end:
+    SSL_free(ssl);
+    SSL_CTX_free(ssl_ctx);
+    OPENSSL_free(leaf_chain);
+    OPENSSL_free(skey);
+    return ret;
+}
+
+static int test_ssl_ctx_build_cert_chain(void)
+{
+    int ret = 0;
+    SSL_CTX *ctx = NULL;
+    char *skey = test_mk_file_path(certsdir, "leaf.key");
+    char *leaf_chain = test_mk_file_path(certsdir, "leaf-chain.pem");
+
+    if (!TEST_ptr(ctx = SSL_CTX_new_ex(libctx, NULL, TLS_server_method())))
+        goto end;
+    /* leaf_chain contains leaf + subinterCA + interCA + rootCA */
+    if (!TEST_int_eq(SSL_CTX_use_certificate_chain_file(ctx, leaf_chain), 1)
+        || !TEST_int_eq(SSL_CTX_use_PrivateKey_file(ctx, skey,
+                                                    SSL_FILETYPE_PEM), 1)
+        || !TEST_int_eq(SSL_CTX_check_private_key(ctx), 1))
+        goto end;
+    if (!TEST_true(SSL_CTX_build_cert_chain(ctx, SSL_BUILD_CHAIN_FLAG_NO_ROOT
+                                                | SSL_BUILD_CHAIN_FLAG_CHECK)))
+        goto end;
+    ret = 1;
+end:
+    SSL_CTX_free(ctx);
+    OPENSSL_free(leaf_chain);
+    OPENSSL_free(skey);
+    return ret;
+}
+
 #ifndef OPENSSL_NO_TLS1_2
 static int full_client_hello_callback(SSL *s, int *al, void *arg)
 {
@@ -8258,7 +8313,14 @@ static DH *tmp_dh_callback(SSL *s, int is_export, int keylen)
     if (!TEST_ptr(dhpkey))
         return NULL;
 
-    ret = EVP_PKEY_get0_DH(dhpkey);
+    /*
+     * libssl does not free the returned DH, so we free it now knowing that even
+     * after we free dhpkey, there will still be a reference to the owning
+     * EVP_PKEY in tmp_dh_params, and so the DH object will live for the length
+     * of time we need it for.
+     */
+    ret = EVP_PKEY_get1_DH(dhpkey);
+    DH_free(ret);
 
     EVP_PKEY_free(dhpkey);
 
@@ -8306,7 +8368,7 @@ static int test_set_tmp_dh(int idx)
     }
 #  ifndef OPENSSL_NO_DEPRECATED_3_0
     if (idx == 7 || idx == 8) {
-        dh = EVP_PKEY_get0_DH(dhpkey);
+        dh = EVP_PKEY_get1_DH(dhpkey);
         if (!TEST_ptr(dh))
             goto end;
     }
@@ -8376,6 +8438,9 @@ static int test_set_tmp_dh(int idx)
     testresult = 1;
 
  end:
+#  ifndef OPENSSL_NO_DEPRECATED_3_0
+    DH_free(dh);
+#  endif
     SSL_free(serverssl);
     SSL_free(clientssl);
     SSL_CTX_free(sctx);
@@ -8710,6 +8775,8 @@ int setup_tests(void)
     ADD_TEST(test_keylog_no_master_key);
 #endif
     ADD_TEST(test_client_cert_verify_cb);
+    ADD_TEST(test_ssl_build_cert_chain);
+    ADD_TEST(test_ssl_ctx_build_cert_chain);
 #ifndef OPENSSL_NO_TLS1_2
     ADD_TEST(test_client_hello_cb);
     ADD_TEST(test_no_ems);

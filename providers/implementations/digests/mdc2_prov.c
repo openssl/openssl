@@ -41,15 +41,17 @@ static int mdc2_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     const OSSL_PARAM *p;
     MDC2_CTX *ctx = (MDC2_CTX *)vctx;
 
-    if (ctx != NULL && params != NULL) {
-        p = OSSL_PARAM_locate_const(params, OSSL_DIGEST_PARAM_PAD_TYPE);
-        if (p != NULL && !OSSL_PARAM_get_uint(p, &ctx->pad_type)) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
-            return 0;
-        }
+    if (ctx == NULL)
+        return 0;
+    if (params == NULL)
         return 1;
+
+    p = OSSL_PARAM_locate_const(params, OSSL_DIGEST_PARAM_PAD_TYPE);
+    if (p != NULL && !OSSL_PARAM_get_uint(p, &ctx->pad_type)) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
+        return 0;
     }
-    return 0; /* Null Parameter */
+    return 1;
 }
 
 /* ossl_mdc2_functions */

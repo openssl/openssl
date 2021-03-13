@@ -33,6 +33,8 @@ const OSSL_DISPATCH ossl_##nm##kbits##sub##_functions[] = {                    \
 # define AES_CBC_HMAC_SHA_FLAGS (PROV_CIPHER_FLAG_AEAD                         \
                                  | PROV_CIPHER_FLAG_TLS1_MULTIBLOCK)
 
+static OSSL_FUNC_cipher_encrypt_init_fn aes_einit;
+static OSSL_FUNC_cipher_decrypt_init_fn aes_dinit;
 static OSSL_FUNC_cipher_freectx_fn aes_cbc_hmac_sha1_freectx;
 static OSSL_FUNC_cipher_freectx_fn aes_cbc_hmac_sha256_freectx;
 static OSSL_FUNC_cipher_get_ctx_params_fn aes_get_ctx_params;
@@ -40,11 +42,27 @@ static OSSL_FUNC_cipher_gettable_ctx_params_fn aes_gettable_ctx_params;
 static OSSL_FUNC_cipher_set_ctx_params_fn aes_set_ctx_params;
 static OSSL_FUNC_cipher_settable_ctx_params_fn aes_settable_ctx_params;
 # define aes_gettable_params ossl_cipher_generic_gettable_params
-# define aes_einit ossl_cipher_generic_einit
-# define aes_dinit ossl_cipher_generic_dinit
 # define aes_update ossl_cipher_generic_stream_update
 # define aes_final ossl_cipher_generic_stream_final
 # define aes_cipher ossl_cipher_generic_cipher
+
+static int aes_einit(void *ctx, const unsigned char *key, size_t keylen,
+                          const unsigned char *iv, size_t ivlen,
+                          const OSSL_PARAM params[])
+{
+    if (!ossl_cipher_generic_einit(ctx, key, keylen, iv, ivlen, NULL))
+        return 0;
+    return aes_set_ctx_params(ctx, params);
+}
+
+static int aes_dinit(void *ctx, const unsigned char *key, size_t keylen,
+                          const unsigned char *iv, size_t ivlen,
+                          const OSSL_PARAM params[])
+{
+    if (!ossl_cipher_generic_dinit(ctx, key, keylen, iv, ivlen, NULL))
+        return 0;
+    return aes_set_ctx_params(ctx, params);
+}
 
 static const OSSL_PARAM cipher_aes_known_settable_ctx_params[] = {
     OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_AEAD_MAC_KEY, NULL, 0),
@@ -75,6 +93,9 @@ static int aes_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 # if !defined(OPENSSL_NO_MULTIBLOCK)
     EVP_CTRL_TLS1_1_MULTIBLOCK_PARAM mb_param;
 # endif
+
+    if (params == NULL)
+        return 1;
 
     p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_AEAD_MAC_KEY);
     if (p != NULL) {

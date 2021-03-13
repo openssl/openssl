@@ -378,7 +378,8 @@ int tls1_change_cipher_state(SSL *s, int which)
         }
         if (mac_key == NULL
             || EVP_DigestSignInit_ex(mac_ctx, NULL, EVP_MD_name(m),
-                                     s->ctx->libctx, s->ctx->propq, mac_key) <= 0) {
+                                     s->ctx->libctx, s->ctx->propq, mac_key,
+                                     NULL) <= 0) {
             EVP_PKEY_free(mac_key);
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             goto err;
@@ -563,7 +564,7 @@ int tls1_setup_key_block(SSL *s)
     s->s3.tmp.key_block = p;
 
     OSSL_TRACE_BEGIN(TLS) {
-        BIO_printf(trc_out, "key block length: %ld\n", num);
+        BIO_printf(trc_out, "key block length: %zu\n", num);
         BIO_printf(trc_out, "client random\n");
         BIO_dump_indent(trc_out, s->s3.client_random, SSL3_RANDOM_SIZE, 4);
         BIO_printf(trc_out, "server random\n");

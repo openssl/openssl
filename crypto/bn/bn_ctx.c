@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -124,7 +124,7 @@ static void ctxdbg(BIO *channel, const char *text, BN_CTX *ctx)
         ctxdbg(trc_out, str, ctx);  \
     } OSSL_TRACE_END(BN_CTX)
 #else
-/* TODO(3.0): Consider if we want to do this in FIPS mode */
+/* We do not want tracing in FIPS module */
 # define CTXDBG(str, ctx) do {} while(0)
 #endif /* FIPS_MODULE */
 

@@ -66,7 +66,8 @@ static int aes_xts_check_keys_differ(const unsigned char *key, size_t bytes,
  * Provider dispatch functions
  */
 static int aes_xts_init(void *vctx, const unsigned char *key, size_t keylen,
-                        const unsigned char *iv, size_t ivlen, int enc)
+                        const unsigned char *iv, size_t ivlen,
+                        const OSSL_PARAM params[], int enc)
 {
     PROV_AES_XTS_CTX *xctx = (PROV_AES_XTS_CTX *)vctx;
     PROV_CIPHER_CTX *ctx = &xctx->base;
@@ -87,21 +88,24 @@ static int aes_xts_init(void *vctx, const unsigned char *key, size_t keylen,
         }
         if (!aes_xts_check_keys_differ(key, keylen / 2, enc))
             return 0;
-        return ctx->hw->init(ctx, key, keylen);
+        if (!ctx->hw->init(ctx, key, keylen))
+            return 0;
     }
-    return 1;
+    return aes_xts_set_ctx_params(ctx, params);
 }
 
 static int aes_xts_einit(void *vctx, const unsigned char *key, size_t keylen,
-                         const unsigned char *iv, size_t ivlen)
+                         const unsigned char *iv, size_t ivlen,
+                         const OSSL_PARAM params[])
 {
-    return aes_xts_init(vctx, key, keylen, iv, ivlen, 1);
+    return aes_xts_init(vctx, key, keylen, iv, ivlen, params, 1);
 }
 
 static int aes_xts_dinit(void *vctx, const unsigned char *key, size_t keylen,
-                         const unsigned char *iv, size_t ivlen)
+                         const unsigned char *iv, size_t ivlen,
+                         const OSSL_PARAM params[])
 {
-    return aes_xts_init(vctx, key, keylen, iv, ivlen, 0);
+    return aes_xts_init(vctx, key, keylen, iv, ivlen, params, 0);
 }
 
 static void *aes_xts_newctx(void *provctx, unsigned int mode, uint64_t flags,
@@ -228,6 +232,9 @@ static int aes_xts_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
     PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
     const OSSL_PARAM *p;
+
+    if (params == NULL)
+        return 1;
 
     p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_KEYLEN);
     if (p != NULL) {

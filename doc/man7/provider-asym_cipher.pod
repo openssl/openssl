@@ -23,13 +23,15 @@ provider-asym_cipher - The asym_cipher library E<lt>-E<gt> provider functions
  void *OSSL_FUNC_asym_cipher_dupctx(void *ctx);
 
  /* Encryption */
- int OSSL_FUNC_asym_cipher_encrypt_init(void *ctx, void *provkey);
+ int OSSL_FUNC_asym_cipher_encrypt_init(void *ctx, void *provkey,
+                                        const OSSL_PARAM params[]);
  int OSSL_FUNC_asym_cipher_encrypt(void *ctx, unsigned char *out, size_t *outlen,
                                    size_t outsize, const unsigned char *in,
                                    size_t inlen);
 
  /* Decryption */
- int OSSL_FUNC_asym_cipher_decrypt_init(void *ctx, void *provkey);
+ int OSSL_FUNC_asym_cipher_decrypt_init(void *ctx, void *provkey,
+                                        const OSSL_PARAM params[]);
  int OSSL_FUNC_asym_cipher_decrypt(void *ctx, unsigned char *out, size_t *outlen,
                                    size_t outsize, const unsigned char *in,
                                    size_t inlen);
@@ -122,10 +124,11 @@ context in the I<ctx> parameter and return the duplicate copy.
 OSSL_FUNC_asym_cipher_encrypt_init() initialises a context for an asymmetric encryption
 given a provider side asymmetric cipher context in the I<ctx> parameter, and a
 pointer to a provider key object in the I<provkey> parameter.
+The I<params>, if not NULL, should be set on the context in a manner similar to
+using OSSL_FUNC_asym_cipher_set_ctx_params().
 The key object should have been previously generated, loaded or imported into
 the provider using the key management (OSSL_OP_KEYMGMT) operation (see
 provider-keymgmt(7)>.
-
 OSSL_FUNC_asym_cipher_encrypt() performs the actual encryption itself.
 A previously initialised asymmetric cipher context is passed in the I<ctx>
 parameter.
@@ -143,6 +146,8 @@ written to I<*outlen>.
 OSSL_FUNC_asym_cipher_decrypt_init() initialises a context for an asymmetric decryption
 given a provider side asymmetric cipher context in the I<ctx> parameter, and a
 pointer to a provider key object in the I<provkey> parameter.
+The I<params>, if not NULL, should be set on the context in a manner similar to
+using OSSL_FUNC_asym_cipher_set_ctx_params().
 The key object should have been previously generated, loaded or imported into
 the provider using the key management (OSSL_OP_KEYMGMT) operation (see
 provider-keymgmt(7)>.
@@ -168,9 +173,12 @@ functions.
 OSSL_FUNC_asym_cipher_get_ctx_params() gets asymmetric cipher parameters associated
 with the given provider side asymmetric cipher context I<ctx> and stores them in
 I<params>.
+Passing NULL for I<params> should return true.
+
 OSSL_FUNC_asym_cipher_set_ctx_params() sets the asymmetric cipher parameters associated
 with the given provider side asymmetric cipher context I<ctx> to I<params>.
 Any parameter settings are additional to any that were previously set.
+Passing NULL for I<params> should return true.
 
 Parameters currently recognised by built-in asymmetric cipher algorithms are as
 follows.

@@ -22,7 +22,7 @@ provider-digest - The digest library E<lt>-E<gt> provider functions
  void *OSSL_FUNC_digest_dupctx(void *dctx);
 
  /* Digest generation */
- int OSSL_FUNC_digest_init(void *dctx);
+ int OSSL_FUNC_digest_init(void *dctx, const OSSL_PARAM params[]);
  int OSSL_FUNC_digest_update(void *dctx, const unsigned char *in, size_t inl);
  int OSSL_FUNC_digest_final(void *dctx, unsigned char *out, size_t *outl,
                             size_t outsz);
@@ -115,6 +115,8 @@ I<dctx> parameter and return the duplicate copy.
 
 OSSL_FUNC_digest_init() initialises a digest operation given a newly created
 provider side digest context in the I<dctx> parameter.
+The I<params>, if not NULL, should be set on the context in a manner similar to
+using OSSL_FUNC_digest_set_ctx_params().
 
 OSSL_FUNC_digest_update() is called to supply data to be digested as part of a
 previously initialised digest operation.
@@ -150,9 +152,11 @@ and stores them in I<params>.
 OSSL_FUNC_digest_set_ctx_params() sets digest operation parameters for the
 provider side digest context I<dctx> to I<params>.
 Any parameter settings are additional to any that were previously set.
+Passing NULL for I<params> should return true.
 
 OSSL_FUNC_digest_get_ctx_params() gets digest operation details details from
 the given provider side digest context I<dctx> and stores them in I<params>.
+Passing NULL for I<params> should return true.
 
 OSSL_FUNC_digest_gettable_params() returns a constant B<OSSL_PARAM> array
 containing descriptors of the parameters that OSSL_FUNC_digest_get_params()
@@ -249,6 +253,12 @@ OSSL_FUNC_digest_size() should return the digest size.
 OSSL_FUNC_digest_block_size() should return the block size of the underlying digest
 algorithm.
 
+=head1 BUGS
+
+The EVP_Digest() and EVP_DigestFinal_ex() libcrypto API calls do not
+expect the digest size to be larger than EVP_MAX_MD_SIZE. Any algorithm which
+produces larger digests is unusable with those API calls.
+
 =head1 SEE ALSO
 
 L<provider(7)>, L<OSSL_PROVIDER-FIPS(7)>, L<OSSL_PROVIDER-default(7)>,
@@ -260,7 +270,7 @@ The provider DIGEST interface was introduced in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -433,7 +433,10 @@ static int dh_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 {
     switch (op) {
     case ASN1_PKEY_CTRL_SET1_TLS_ENCPT:
-        return ossl_dh_buf2key(EVP_PKEY_get0_DH(pkey), arg2, arg1);
+        /* We should only be here if we have a legacy key */
+        if (!ossl_assert(evp_pkey_is_legacy(pkey)))
+            return 0;
+        return ossl_dh_buf2key(evp_pkey_get0_DH_int(pkey), arg2, arg1);
     case ASN1_PKEY_CTRL_GET1_TLS_ENCPT:
         return ossl_dh_key2buf(EVP_PKEY_get0_DH(pkey), arg2, 0, 1);
     default:

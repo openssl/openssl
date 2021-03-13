@@ -89,6 +89,7 @@ OSSL_FUNC_store_set_ctx_params() should set additional parameters, such as what
 kind of data to expect, search criteria, and so on.  More on those below, in
 L</Load Parameters>.  Whether unrecognised parameters are an error or simply
 ignored is at the implementation's discretion.
+Passing NULL for I<params> should return true.
 
 OSSL_FUNC_store_load() loads the next object from the URI opened by
 OSSL_FUNC_store_open(), creates an object abstraction for it (see

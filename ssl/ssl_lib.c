@@ -1595,7 +1595,7 @@ STACK_OF(X509) *SSL_get_peer_cert_chain(const SSL *s)
 int SSL_copy_session_id(SSL *t, const SSL *f)
 {
     int i;
-    /* Do we need to to SSL locking? */
+    /* Do we need to do SSL locking? */
     if (!SSL_set_session(t, SSL_get_session(f))) {
         return 0;
     }

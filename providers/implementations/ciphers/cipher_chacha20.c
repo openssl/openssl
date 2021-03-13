@@ -106,6 +106,9 @@ static int chacha20_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     const OSSL_PARAM *p;
     size_t len;
 
+    if (params == NULL)
+        return 1;
+
     p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_KEYLEN);
     if (p != NULL) {
         if (!OSSL_PARAM_get_size_t(p, &len)) {
@@ -143,34 +146,40 @@ const OSSL_PARAM *chacha20_settable_ctx_params(ossl_unused void *cctx,
 }
 
 int ossl_chacha20_einit(void *vctx, const unsigned char *key, size_t keylen,
-                        const unsigned char *iv, size_t ivlen)
+                        const unsigned char *iv, size_t ivlen,
+                        const OSSL_PARAM params[])
 {
     int ret;
 
     /* The generic function checks for ossl_prov_is_running() */
-    ret= ossl_cipher_generic_einit(vctx, key, keylen, iv, ivlen);
+    ret = ossl_cipher_generic_einit(vctx, key, keylen, iv, ivlen, NULL);
     if (ret && iv != NULL) {
         PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
         PROV_CIPHER_HW_CHACHA20 *hw = (PROV_CIPHER_HW_CHACHA20 *)ctx->hw;
 
         hw->initiv(ctx);
     }
+    if (ret && !chacha20_set_ctx_params(vctx, params))
+        ret = 0;
     return ret;
 }
 
 int ossl_chacha20_dinit(void *vctx, const unsigned char *key, size_t keylen,
-                        const unsigned char *iv, size_t ivlen)
+                        const unsigned char *iv, size_t ivlen,
+                        const OSSL_PARAM params[])
 {
     int ret;
 
     /* The generic function checks for ossl_prov_is_running() */
-    ret= ossl_cipher_generic_dinit(vctx, key, keylen, iv, ivlen);
+    ret = ossl_cipher_generic_dinit(vctx, key, keylen, iv, ivlen, NULL);
     if (ret && iv != NULL) {
         PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
         PROV_CIPHER_HW_CHACHA20 *hw = (PROV_CIPHER_HW_CHACHA20 *)ctx->hw;
 
         hw->initiv(ctx);
     }
+    if (ret && !chacha20_set_ctx_params(vctx, params))
+        ret = 0;
     return ret;
 }
 

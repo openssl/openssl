@@ -708,7 +708,7 @@ EVP_R_NULL_MAC_PKEY_CTX:208:null mac pkey ctx
 EVP_R_ONLY_ONESHOT_SUPPORTED:177:only oneshot supported
 EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE:150:\
 	operation not supported for this keytype
-EVP_R_OPERATON_NOT_INITIALIZED:151:operation not initialized
+EVP_R_OPERATION_NOT_INITIALIZED:151:operation not initialized
 EVP_R_OUTPUT_WOULD_OVERFLOW:202:output would overflow
 EVP_R_PARAMETER_TOO_LARGE:187:parameter too large
 EVP_R_PARTIALLY_OVERLAPPING:162:partially overlapping buffers

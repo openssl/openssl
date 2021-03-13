@@ -22,10 +22,13 @@
 
 #define RC5_FLAGS PROV_CIPHER_FLAG_VARIABLE_LENGTH
 
+static OSSL_FUNC_cipher_encrypt_init_fn rc5_einit;
+static OSSL_FUNC_cipher_decrypt_init_fn rc5_dinit;
 static OSSL_FUNC_cipher_freectx_fn rc5_freectx;
 static OSSL_FUNC_cipher_dupctx_fn rc5_dupctx;
 OSSL_FUNC_cipher_gettable_ctx_params_fn rc5_gettable_ctx_params;
 OSSL_FUNC_cipher_settable_ctx_params_fn rc5_settable_ctx_params;
+static OSSL_FUNC_cipher_set_ctx_params_fn rc5_set_ctx_params;
 
 static void rc5_freectx(void *vctx)
 {
@@ -53,10 +56,31 @@ static void *rc5_dupctx(void *ctx)
     return ret;
 }
 
+static int rc5_einit(void *ctx, const unsigned char *key, size_t keylen,
+                          const unsigned char *iv, size_t ivlen,
+                          const OSSL_PARAM params[])
+{
+    if (!ossl_cipher_generic_einit(ctx, key, keylen, iv, ivlen, NULL))
+        return 0;
+    return rc5_set_ctx_params(ctx, params);
+}
+
+static int rc5_dinit(void *ctx, const unsigned char *key, size_t keylen,
+                          const unsigned char *iv, size_t ivlen,
+                          const OSSL_PARAM params[])
+{
+    if (!ossl_cipher_generic_dinit(ctx, key, keylen, iv, ivlen, NULL))
+        return 0;
+    return rc5_set_ctx_params(ctx, params);
+}
+
 static int rc5_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
     PROV_RC5_CTX *ctx = (PROV_RC5_CTX *)vctx;
     const OSSL_PARAM *p;
+
+    if (params == NULL)
+        return 1;
 
     if (!ossl_cipher_var_keylen_set_ctx_params(vctx, params))
         return 0;
@@ -134,8 +158,8 @@ const OSSL_DISPATCH ossl_##alg##kbits##lcmode##_functions[] = {                \
       (void (*)(void)) alg##_##kbits##_##lcmode##_newctx },                    \
     { OSSL_FUNC_CIPHER_FREECTX, (void (*)(void)) alg##_freectx },              \
     { OSSL_FUNC_CIPHER_DUPCTX, (void (*)(void)) alg##_dupctx },                \
-    { OSSL_FUNC_CIPHER_ENCRYPT_INIT, (void (*)(void))ossl_cipher_generic_einit },\
-    { OSSL_FUNC_CIPHER_DECRYPT_INIT, (void (*)(void))ossl_cipher_generic_dinit },\
+    { OSSL_FUNC_CIPHER_ENCRYPT_INIT, (void (*)(void))rc5_einit },              \
+    { OSSL_FUNC_CIPHER_DECRYPT_INIT, (void (*)(void))rc5_dinit },              \
     { OSSL_FUNC_CIPHER_UPDATE, (void (*)(void))ossl_cipher_generic_##typ##_update },\
     { OSSL_FUNC_CIPHER_FINAL, (void (*)(void))ossl_cipher_generic_##typ##_final },  \
     { OSSL_FUNC_CIPHER_CIPHER, (void (*)(void))ossl_cipher_generic_cipher },   \

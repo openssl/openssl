@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -23,10 +23,10 @@ use lib srctop_dir('Configurations');
 use lib bldtop_dir('.');
 use platform;
 
-my $no_check = disabled('fips-securitychecks');
+my $no_check = disabled("fips") || disabled('fips-securitychecks');
 plan skip_all => "Test only supported in a fips build with security checks"
-    if disabled("fips") || disabled("fips-securitychecks");
-plan tests => 13;
+    if $no_check;
+plan tests => 11;
 
 my $fipsmodule = bldtop_file('providers', platform->dso('fips'));
 my $fipsconf = srctop_file("test", "fips-and-base.cnf");
@@ -34,17 +34,6 @@ my $defaultconf = srctop_file("test", "default.cnf");
 my $tbs_data = $fipsmodule;
 my $bogus_data = $fipsconf;
 
-# output a fipsmodule.cnf file containing mac data
-ok(run(app(['openssl', 'fipsinstall', '-out', 'fipsmodule.cnf',
-            '-module', $fipsmodule, ])),
-   "fipsinstall");
-
-# verify the $fipsconf file
-ok(run(app(['openssl', 'fipsinstall', '-in', 'fipsmodule.cnf', '-module', $fipsmodule,
-            '-verify'])),
-   "fipsinstall verify");
-
-$ENV{OPENSSL_CONF_INCLUDE} = abs2rel(curdir());
 $ENV{OPENSSL_CONF} = $fipsconf;
 
 ok(run(app(['openssl', 'list', '-public-key-methods', '-verbose'])),

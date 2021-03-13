@@ -606,11 +606,13 @@ static EVP_PKEY_CTX *init_ctx(const char *kdfalg, int *pkeysize,
 
         switch (pkey_op) {
         case EVP_PKEY_OP_SIGN:
-            rv = EVP_DigestSignInit_ex(mctx, NULL, digestname, libctx, propq, pkey);
+            rv = EVP_DigestSignInit_ex(mctx, NULL, digestname, libctx, propq,
+                                       pkey, NULL);
             break;
 
         case EVP_PKEY_OP_VERIFY:
-            rv = EVP_DigestVerifyInit_ex(mctx, NULL, digestname, libctx, propq, pkey);
+            rv = EVP_DigestVerifyInit_ex(mctx, NULL, digestname, libctx, propq,
+                                         pkey, NULL);
             break;
         }
 

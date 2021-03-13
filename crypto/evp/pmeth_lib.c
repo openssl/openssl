@@ -197,10 +197,7 @@ static EVP_PKEY_CTX *int_ctx_new(OSSL_LIB_CTX *libctx,
     }
 
 #ifndef FIPS_MODULE
-    /*
-     * TODO(3.0) This legacy code section should be removed when we stop
-     * supporting engines
-     */
+    /* Code below to be removed when legacy support is dropped. */
     /* BEGIN legacy */
     if (id == -1) {
         if (pkey != NULL)
@@ -269,8 +266,7 @@ static EVP_PKEY_CTX *int_ctx_new(OSSL_LIB_CTX *libctx,
         /*
          * Chase down the legacy NID, as that might be needed for diverse
          * purposes, such as ensure that EVP_PKEY_type() can return sensible
-         * values, or that there's a better chance to "downgrade" a key when
-         * needed.  We go through all keymgmt names, because the keytype
+         * values. We go through all keymgmt names, because the keytype
          * that's passed to this function doesn't necessarily translate
          * directly.
          * TODO: Remove this when #legacy keys are gone.
@@ -744,27 +740,31 @@ const OSSL_PARAM *EVP_PKEY_CTX_gettable_params(EVP_PKEY_CTX *ctx)
             && ctx->op.kex.exchange != NULL
             && ctx->op.kex.exchange->gettable_ctx_params != NULL) {
         provctx = ossl_provider_ctx(EVP_KEYEXCH_provider(ctx->op.kex.exchange));
-        return ctx->op.kex.exchange->gettable_ctx_params(provctx);
+        return ctx->op.kex.exchange->gettable_ctx_params(ctx->op.kex.exchprovctx,
+                                                         provctx);
     }
     if (EVP_PKEY_CTX_IS_SIGNATURE_OP(ctx)
             && ctx->op.sig.signature != NULL
             && ctx->op.sig.signature->gettable_ctx_params != NULL) {
         provctx = ossl_provider_ctx(
                       EVP_SIGNATURE_provider(ctx->op.sig.signature));
-        return ctx->op.sig.signature->gettable_ctx_params(provctx);
+        return ctx->op.sig.signature->gettable_ctx_params(ctx->op.sig.sigprovctx,
+                                                          provctx);
     }
     if (EVP_PKEY_CTX_IS_ASYM_CIPHER_OP(ctx)
             && ctx->op.ciph.cipher != NULL
             && ctx->op.ciph.cipher->gettable_ctx_params != NULL) {
         provctx = ossl_provider_ctx(
                       EVP_ASYM_CIPHER_provider(ctx->op.ciph.cipher));
-        return ctx->op.ciph.cipher->gettable_ctx_params(provctx);
+        return ctx->op.ciph.cipher->gettable_ctx_params(ctx->op.ciph.ciphprovctx,
+                                                        provctx);
     }
     if (EVP_PKEY_CTX_IS_KEM_OP(ctx)
         && ctx->op.encap.kem != NULL
         && ctx->op.encap.kem->gettable_ctx_params != NULL) {
         provctx = ossl_provider_ctx(EVP_KEM_provider(ctx->op.encap.kem));
-        return ctx->op.encap.kem->gettable_ctx_params(provctx);
+        return ctx->op.encap.kem->gettable_ctx_params(ctx->op.encap.kemprovctx,
+                                                      provctx);
     }
     return NULL;
 }
@@ -777,30 +777,38 @@ const OSSL_PARAM *EVP_PKEY_CTX_settable_params(EVP_PKEY_CTX *ctx)
             && ctx->op.kex.exchange != NULL
             && ctx->op.kex.exchange->settable_ctx_params != NULL) {
         provctx = ossl_provider_ctx(EVP_KEYEXCH_provider(ctx->op.kex.exchange));
-        return ctx->op.kex.exchange->settable_ctx_params(provctx);
+        return ctx->op.kex.exchange->settable_ctx_params(ctx->op.kex.exchprovctx,
+                                                         provctx);
     }
     if (EVP_PKEY_CTX_IS_SIGNATURE_OP(ctx)
             && ctx->op.sig.signature != NULL
             && ctx->op.sig.signature->settable_ctx_params != NULL) {
         provctx = ossl_provider_ctx(
                       EVP_SIGNATURE_provider(ctx->op.sig.signature));
-        return ctx->op.sig.signature->settable_ctx_params(provctx);
+        return ctx->op.sig.signature->settable_ctx_params(ctx->op.sig.sigprovctx,
+                                                          provctx);
     }
     if (EVP_PKEY_CTX_IS_ASYM_CIPHER_OP(ctx)
             && ctx->op.ciph.cipher != NULL
             && ctx->op.ciph.cipher->settable_ctx_params != NULL) {
         provctx = ossl_provider_ctx(
                       EVP_ASYM_CIPHER_provider(ctx->op.ciph.cipher));
-        return ctx->op.ciph.cipher->settable_ctx_params(provctx);
+        return ctx->op.ciph.cipher->settable_ctx_params(ctx->op.ciph.ciphprovctx,
+                                                        provctx);
     }
     if (EVP_PKEY_CTX_IS_GEN_OP(ctx)
-            && ctx->keymgmt != NULL)
-        return EVP_KEYMGMT_gen_settable_params(ctx->keymgmt);
+            && ctx->keymgmt != NULL
+            && ctx->keymgmt->gen_settable_params != NULL) {
+        provctx = ossl_provider_ctx(EVP_KEYMGMT_provider(ctx->keymgmt));
+        return ctx->keymgmt->gen_settable_params(ctx->op.keymgmt.genctx,
+                                                 provctx);
+    }
     if (EVP_PKEY_CTX_IS_KEM_OP(ctx)
         && ctx->op.encap.kem != NULL
         && ctx->op.encap.kem->settable_ctx_params != NULL) {
         provctx = ossl_provider_ctx(EVP_KEM_provider(ctx->op.encap.kem));
-        return ctx->op.encap.kem->settable_ctx_params(provctx);
+        return ctx->op.encap.kem->settable_ctx_params(ctx->op.encap.kemprovctx,
+                                                      provctx);
     }
     return NULL;
 }
@@ -867,6 +875,7 @@ int evp_pkey_ctx_get_params_strict(EVP_PKEY_CTX *ctx, OSSL_PARAM *params)
     return EVP_PKEY_CTX_get_params(ctx, params);
 }
 
+/* TODO(3.0): Deprecate in favour of get_signature_md_name */
 int EVP_PKEY_CTX_get_signature_md(EVP_PKEY_CTX *ctx, const EVP_MD **md)
 {
     OSSL_PARAM sig_md_params[2], *p = sig_md_params;
@@ -880,7 +889,6 @@ int EVP_PKEY_CTX_get_signature_md(EVP_PKEY_CTX *ctx, const EVP_MD **md)
         return -2;
     }
 
-    /* TODO(3.0): Remove this eventually when no more legacy */
     if (ctx->op.sig.sigprovctx == NULL)
         return EVP_PKEY_CTX_ctrl(ctx, -1, EVP_PKEY_OP_TYPE_SIG,
                                  EVP_PKEY_CTRL_GET_MD, 0, (void *)(md));
@@ -902,6 +910,10 @@ int EVP_PKEY_CTX_get_signature_md(EVP_PKEY_CTX *ctx, const EVP_MD **md)
     return 1;
 }
 
+/*
+ * TODO(3.0): Deprecate functions calling this in favour of
+ * functions setting md name.
+ */
 static int evp_pkey_ctx_set_md(EVP_PKEY_CTX *ctx, const EVP_MD *md,
                                int fallback, const char *param, int op,
                                int ctrl)
@@ -915,7 +927,6 @@ static int evp_pkey_ctx_set_md(EVP_PKEY_CTX *ctx, const EVP_MD *md,
         return -2;
     }
 
-    /* TODO(3.0): Remove this eventually when no more legacy */
     if (fallback)
         return EVP_PKEY_CTX_ctrl(ctx, -1, op, ctrl, 0, (void *)(md));
 
@@ -963,9 +974,10 @@ static int evp_pkey_ctx_set1_octet_string(EVP_PKEY_CTX *ctx, int fallback,
         return -2;
     }
 
-    /* TODO(3.0): Remove this eventually when no more legacy */
+    /* Code below to be removed when legacy support is dropped. */
     if (fallback)
         return EVP_PKEY_CTX_ctrl(ctx, -1, op, ctrl, datalen, (void *)(data));
+    /* end of legacy support */
 
     if (datalen < 0) {
         ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_LENGTH);
@@ -1051,11 +1063,11 @@ int EVP_PKEY_CTX_hkdf_mode(EVP_PKEY_CTX *ctx, int mode)
         return -2;
     }
 
-    /* TODO(3.0): Remove this eventually when no more legacy */
+    /* Code below to be removed when legacy support is dropped. */
     if (ctx->op.kex.exchprovctx == NULL)
         return EVP_PKEY_CTX_ctrl(ctx, -1, EVP_PKEY_OP_DERIVE,
                                  EVP_PKEY_CTRL_HKDF_MODE, mode, NULL);
-
+    /* end of legacy support */
 
     if (mode < 0) {
         ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_VALUE);
@@ -1099,9 +1111,10 @@ static int evp_pkey_ctx_set_uint64(EVP_PKEY_CTX *ctx, const char *param,
         return -2;
     }
 
-    /* TODO(3.0): Remove this eventually when no more legacy */
+    /* Code below to be removed when legacy support is dropped. */
     if (ctx->op.kex.exchprovctx == NULL)
         return EVP_PKEY_CTX_ctrl_uint64(ctx, -1, op, ctrl, val);
+    /* end of legacy support */
 
     *p++ = OSSL_PARAM_construct_uint64(param, &val);
     *p = OSSL_PARAM_construct_end();

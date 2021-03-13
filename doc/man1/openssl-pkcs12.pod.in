@@ -333,7 +333,7 @@ then both, the private key and the certificates are encrypted using triple DES.
 
 =item B<-macalg> I<digest>
 
-Specify the MAC digest algorithm. If not included them SHA1 will be used.
+Specify the MAC digest algorithm. If not included SHA1 will be used.
 
 =item B<-iter> I<count>
 
@@ -362,7 +362,9 @@ to be needed to use MAC iterations counts but they are now used by default.
 
 =item B<-nomac>
 
-Don't attempt to provide the MAC integrity.
+Do not attempt to provide the MAC integrity. This can be useful with the FIPS
+provider as the PKCS12 MAC requires PKCS12KDF which is not an approved FIPS
+algorithm and cannot be supported by the FIPS provider.
 
 =back
 

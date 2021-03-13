@@ -22,11 +22,8 @@ setup("test_ssl_old");
 
 use lib srctop_dir('Configurations');
 use lib bldtop_dir('.');
-use platform;
 
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
-my $infile = bldtop_file('providers', platform->dso('fips'));
-
 my ($no_rsa, $no_dsa, $no_dh, $no_ec, $no_psk,
     $no_ssl3, $no_tls1, $no_tls1_1, $no_tls1_2, $no_tls1_3,
     $no_dtls, $no_dtls1, $no_dtls1_2, $no_ct) =
@@ -81,17 +78,10 @@ my $client_sess="client.ss";
 # If you're adding tests here, you probably want to convert them to the
 # new format in ssl_test.c and add recipes to 80-test_ssl_new.t instead.
 plan tests =>
-   ($no_fips ? 0 : 1 + 5) # For fipsinstall + testssl with fips provider
+   ($no_fips ? 0 : 5)     # testssl with fips provider
     + 1                   # For testss
     + 5                   # For the testssl with default provider
     ;
-
-unless ($no_fips) {
-    ok(run(app(['openssl', 'fipsinstall',
-                '-out', bldtop_file('providers', 'fipsmodule.cnf'),
-                '-module', $infile])),
-       "fipsinstall");
-}
 
 subtest 'test_ss' => sub {
     if (testss()) {

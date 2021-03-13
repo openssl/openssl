@@ -97,7 +97,7 @@ static int sig_gen(EVP_PKEY *pkey, OSSL_PARAM *params, const char *digest_name,
     if (!TEST_ptr(sig = OPENSSL_malloc(sz))
         || !TEST_ptr(md_ctx = EVP_MD_CTX_new())
         || !TEST_int_eq(EVP_DigestSignInit_ex(md_ctx, NULL, digest_name, libctx,
-                                              NULL, pkey), 1)
+                                              NULL, pkey, NULL), 1)
         || !TEST_int_gt(EVP_DigestSign(md_ctx, sig, &sig_len, msg, msg_len), 0))
         goto err;
     *sig_out = sig;
@@ -127,7 +127,7 @@ static int ecdsa_keygen_test(int id)
         || !TEST_int_gt(EVP_PKEY_keygen_init(ctx), 0)
         || !TEST_true(EVP_PKEY_CTX_set_group_name(ctx, tst->curve_name))
         || !TEST_int_gt(EVP_PKEY_keygen(ctx, &pkey), 0)
-        || !TEST_int_eq(self_test_args.called, 3)
+        || !TEST_int_ge(self_test_args.called, 3)
         || !TEST_true(pkey_get_bn_bytes(pkey, OSSL_PKEY_PARAM_PRIV_KEY, &priv,
                                         &priv_len))
         || !TEST_true(pkey_get_bn_bytes(pkey, OSSL_PKEY_PARAM_EC_PUB_X, &pubx,
@@ -306,7 +306,7 @@ static int ecdsa_sigver_test(int id)
     ret = TEST_int_gt((sig_len = i2d_ECDSA_SIG(sign, &sig)), 0)
           && TEST_ptr(md_ctx = EVP_MD_CTX_new())
           && TEST_true(EVP_DigestVerifyInit_ex(md_ctx, NULL, tst->digest_alg,
-                                               libctx, NULL, pkey)
+                                               libctx, NULL, pkey, NULL)
           && TEST_int_eq(EVP_DigestVerify(md_ctx, sig, sig_len,
                                           tst->msg, tst->msg_len), tst->pass));
 err:
@@ -1249,7 +1249,7 @@ static int rsa_sigver_test(int id)
         || !TEST_ptr(md_ctx = EVP_MD_CTX_new())
         || !TEST_true(EVP_DigestVerifyInit_ex(md_ctx, &pkey_ctx,
                                               tst->digest_alg, libctx, NULL,
-                                              pkey)
+                                              pkey, NULL)
         || !TEST_true(EVP_PKEY_CTX_set_params(pkey_ctx, params))
         || !TEST_int_eq(EVP_DigestVerify(md_ctx, tst->sig, tst->sig_len,
                                          tst->msg, tst->msg_len), tst->pass)))

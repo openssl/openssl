@@ -564,8 +564,10 @@ static int try_pkcs12(struct extracted_param_data_st *data, OSSL_STORE_INFO **v,
                 }
                 pass = tpass;
                 if (!PKCS12_verify_mac(p12, pass, strlen(pass))) {
-                    ERR_raise(ERR_LIB_OSSL_STORE,
-                              OSSL_STORE_R_ERROR_VERIFYING_PKCS12_MAC);
+                    ERR_raise_data(ERR_LIB_OSSL_STORE,
+                                   OSSL_STORE_R_ERROR_VERIFYING_PKCS12_MAC,
+                                   strlen(pass) == 0 ? "empty password" :
+                                   "maybe wrong password");
                     goto p12_end;
                 }
             }

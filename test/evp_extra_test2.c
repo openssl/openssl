@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -8,7 +8,7 @@
  */
 
 /*
- * TODO(3.0): Really these tests should be in evp_extra_test - but that doesn't
+ * Really these tests should be in evp_extra_test - but that doesn't
  * yet support testing with a non-default libctx. Once it does we should move
  * everything into one file. Consequently some things are duplicated between
  * the two files.

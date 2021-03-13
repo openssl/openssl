@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -9,29 +9,49 @@
 
 #if defined(_WIN32)
 # include <windows.h>
+# if defined(_WIN32_WINNT) && _WIN32_WINNT >= 0x600
+#  include <synchapi.h>
+#  define USE_RWLOCK
+# endif
 #endif
 
 #include <openssl/crypto.h>
 
 #if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG) && defined(OPENSSL_SYS_WINDOWS)
 
+# ifdef USE_RWLOCK
+typedef struct {
+    SRWLOCK lock;
+    int exclusive;
+} CRYPTO_win_rwlock;
+# endif
+
 CRYPTO_RWLOCK *CRYPTO_THREAD_lock_new(void)
 {
     CRYPTO_RWLOCK *lock;
+# ifdef USE_RWLOCK
+    CRYPTO_win_rwlock *rwlock;
+
+    if ((lock = OPENSSL_zalloc(sizeof(CRYPTO_win_rwlock))) == NULL)
+        return NULL;
+    rwlock = lock;
+    InitializeSRWLock(&rwlock->lock);
+# else
 
     if ((lock = OPENSSL_zalloc(sizeof(CRITICAL_SECTION))) == NULL) {
         /* Don't set error, to avoid recursion blowup. */
         return NULL;
     }
 
-# if !defined(_WIN32_WCE)
+#  if !defined(_WIN32_WCE)
     /* 0x400 is the spin count value suggested in the documentation */
     if (!InitializeCriticalSectionAndSpinCount(lock, 0x400)) {
         OPENSSL_free(lock);
         return NULL;
     }
-# else
+#  else
     InitializeCriticalSection(lock);
+#  endif
 # endif
 
     return lock;
@@ -39,19 +59,43 @@ CRYPTO_RWLOCK *CRYPTO_THREAD_lock_new(void)
 
 int CRYPTO_THREAD_read_lock(CRYPTO_RWLOCK *lock)
 {
+# ifdef USE_RWLOCK
+    CRYPTO_win_rwlock *rwlock = lock;
+
+    AcquireSRWLockShared(&rwlock->lock);
+# else
     EnterCriticalSection(lock);
+# endif
     return 1;
 }
 
 int CRYPTO_THREAD_write_lock(CRYPTO_RWLOCK *lock)
 {
+# ifdef USE_RWLOCK
+    CRYPTO_win_rwlock *rwlock = lock;
+
+    AcquireSRWLockExclusive(&rwlock->lock);
+    rwlock->exclusive = 1;
+# else
     EnterCriticalSection(lock);
+# endif
     return 1;
 }
 
 int CRYPTO_THREAD_unlock(CRYPTO_RWLOCK *lock)
 {
+# ifdef USE_RWLOCK
+    CRYPTO_win_rwlock *rwlock = lock;
+
+    if (rwlock->exclusive) {
+        rwlock->exclusive = 0;
+        ReleaseSRWLockExclusive(&rwlock->lock);
+    } else {
+        ReleaseSRWLockShared(&rwlock->lock);
+    }
+# else
     LeaveCriticalSection(lock);
+# endif
     return 1;
 }
 
@@ -60,7 +104,9 @@ void CRYPTO_THREAD_lock_free(CRYPTO_RWLOCK *lock)
     if (lock == NULL)
         return;
 
+# ifndef USE_RWLOCK
     DeleteCriticalSection(lock);
+# endif
     OPENSSL_free(lock);
 
     return;

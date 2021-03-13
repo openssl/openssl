@@ -176,6 +176,11 @@ EVP_KEYEXCH *EVP_KEYEXCH_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
 
 int EVP_PKEY_derive_init(EVP_PKEY_CTX *ctx)
 {
+    return EVP_PKEY_derive_init_ex(ctx, NULL);
+}
+
+int EVP_PKEY_derive_init_ex(EVP_PKEY_CTX *ctx, const OSSL_PARAM params[])
+{
     int ret;
     void *provkey = NULL;
     EVP_KEYEXCH *exchange = NULL;
@@ -279,7 +284,7 @@ int EVP_PKEY_derive_init(EVP_PKEY_CTX *ctx)
         ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
         goto err;
     }
-    ret = exchange->init(ctx->op.kex.exchprovctx, provkey);
+    ret = exchange->init(ctx->op.kex.exchprovctx, provkey, params);
 
     return ret ? 1 : 0;
  err:
@@ -359,7 +364,7 @@ int EVP_PKEY_derive_set_peer(EVP_PKEY_CTX *ctx, EVP_PKEY *peer)
     if (ctx->operation != EVP_PKEY_OP_DERIVE
         && ctx->operation != EVP_PKEY_OP_ENCRYPT
         && ctx->operation != EVP_PKEY_OP_DECRYPT) {
-        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATON_NOT_INITIALIZED);
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_INITIALIZED);
         return -1;
     }
 
@@ -419,7 +424,7 @@ int EVP_PKEY_derive(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *pkeylen)
     }
 
     if (!EVP_PKEY_CTX_IS_DERIVE_OP(ctx)) {
-        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATON_NOT_INITIALIZED);
+        ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_INITIALIZED);
         return -1;
     }
 
@@ -478,7 +483,7 @@ const OSSL_PARAM *EVP_KEYEXCH_gettable_ctx_params(const EVP_KEYEXCH *keyexch)
         return NULL;
 
     provctx = ossl_provider_ctx(EVP_KEYEXCH_provider(keyexch));
-    return keyexch->gettable_ctx_params(provctx);
+    return keyexch->gettable_ctx_params(NULL, provctx);
 }
 
 const OSSL_PARAM *EVP_KEYEXCH_settable_ctx_params(const EVP_KEYEXCH *keyexch)
@@ -488,5 +493,5 @@ const OSSL_PARAM *EVP_KEYEXCH_settable_ctx_params(const EVP_KEYEXCH *keyexch)
     if (keyexch == NULL || keyexch->settable_ctx_params == NULL)
         return NULL;
     provctx = ossl_provider_ctx(EVP_KEYEXCH_provider(keyexch));
-    return keyexch->settable_ctx_params(provctx);
+    return keyexch->settable_ctx_params(NULL, provctx);
 }

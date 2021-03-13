@@ -1319,7 +1319,6 @@ static int test_EVP_SM2(void)
     if (!TEST_true(EVP_PKEY_paramgen_init(pctx) == 1))
         goto done;
 
-    /* TODO is this even needed? */
     if (!TEST_true(EVP_PKEY_CTX_set_ec_paramgen_curve_nid(pctx, NID_sm2)))
         goto done;
 
@@ -1889,7 +1888,7 @@ static int test_EVP_PKEY_CTX_get_set_params(EVP_PKEY *pkey)
     mdctx = EVP_MD_CTX_new();
     if (!TEST_ptr(mdctx)
         || !TEST_true(EVP_DigestSignInit_ex(mdctx, NULL, "SHA1", NULL, NULL,
-                                            pkey)))
+                                            pkey, NULL)))
         goto err;
 
     /*

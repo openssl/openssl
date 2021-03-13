@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -19,6 +19,7 @@ static OSSL_FUNC_BIO_write_ex_fn *c_bio_write_ex = NULL;
 static OSSL_FUNC_BIO_gets_fn *c_bio_gets = NULL;
 static OSSL_FUNC_BIO_puts_fn *c_bio_puts = NULL;
 static OSSL_FUNC_BIO_ctrl_fn *c_bio_ctrl = NULL;
+static OSSL_FUNC_BIO_up_ref_fn *c_bio_up_ref = NULL;
 static OSSL_FUNC_BIO_free_fn *c_bio_free = NULL;
 static OSSL_FUNC_BIO_vprintf_fn *c_bio_vprintf = NULL;
 
@@ -53,6 +54,10 @@ int ossl_prov_bio_from_dispatch(const OSSL_DISPATCH *fns)
         case OSSL_FUNC_BIO_CTRL:
             if (c_bio_ctrl == NULL)
                 c_bio_ctrl = OSSL_FUNC_BIO_ctrl(fns);
+            break;
+        case OSSL_FUNC_BIO_UP_REF:
+            if (c_bio_up_ref == NULL)
+                c_bio_up_ref = OSSL_FUNC_BIO_up_ref(fns);
             break;
         case OSSL_FUNC_BIO_FREE:
             if (c_bio_free == NULL)
@@ -117,6 +122,13 @@ int ossl_prov_bio_ctrl(OSSL_CORE_BIO *bio, int cmd, long num, void *ptr)
     if (c_bio_ctrl == NULL)
         return -1;
     return c_bio_ctrl(bio, cmd, num, ptr);
+}
+
+int ossl_prov_bio_up_ref(OSSL_CORE_BIO *bio)
+{
+    if (c_bio_up_ref == NULL)
+        return 0;
+    return c_bio_up_ref(bio);
 }
 
 int ossl_prov_bio_free(OSSL_CORE_BIO *bio)
@@ -186,6 +198,7 @@ static int bio_core_new(BIO *bio)
 static int bio_core_free(BIO *bio)
 {
     BIO_set_init(bio, 0);
+    ossl_prov_bio_free(BIO_get_data(bio));
 
     return 1;
 }
@@ -218,10 +231,13 @@ BIO *bio_new_from_core_bio(PROV_CTX *provctx, OSSL_CORE_BIO *corebio)
     if (corebiometh == NULL)
         return NULL;
 
-    outbio = BIO_new(corebiometh);
-    if (outbio != NULL)
-        BIO_set_data(outbio, corebio);
-
+    if ((outbio = BIO_new(corebiometh)) == NULL)
+        return NULL;
+    if (!ossl_prov_bio_up_ref(corebio)) {
+        BIO_free(outbio);
+        return NULL;
+    }
+    BIO_set_data(outbio, corebio);
     return outbio;
 }
 

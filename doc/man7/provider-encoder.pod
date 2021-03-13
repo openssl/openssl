@@ -197,6 +197,7 @@ OSSL_FUNC_encoder_newctx().
 OSSL_FUNC_encoder_set_ctx_params() sets context data according to parameters
 from I<params> that it recognises.  Unrecognised parameters should be
 ignored.
+Passing NULL for I<params> should return true.
 
 OSSL_FUNC_encoder_settable_ctx_params() returns a constant B<OSSL_PARAM>
 array describing the parameters that OSSL_FUNC_encoder_set_ctx_params()

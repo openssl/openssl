@@ -379,6 +379,9 @@ static int kmac_set_ctx_params(void *vmacctx, const OSSL_PARAM *params)
     struct kmac_data_st *kctx = vmacctx;
     const OSSL_PARAM *p;
 
+    if (params == NULL)
+        return 1;
+
     if ((p = OSSL_PARAM_locate_const(params, OSSL_MAC_PARAM_XOF)) != NULL
         && !OSSL_PARAM_get_int(p, &kctx->xof_mode))
         return 0;

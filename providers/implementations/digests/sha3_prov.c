@@ -28,6 +28,7 @@
  * of the functions in the dispatch table are correct.
  */
 static OSSL_FUNC_digest_init_fn keccak_init;
+static OSSL_FUNC_digest_init_fn keccak_init_params;
 static OSSL_FUNC_digest_update_fn keccak_update;
 static OSSL_FUNC_digest_final_fn keccak_final;
 static OSSL_FUNC_digest_freectx_fn keccak_freectx;
@@ -49,13 +50,19 @@ static sha3_final_fn generic_sha3_final;
 
 #endif
 
-static int keccak_init(void *vctx)
+static int keccak_init(void *vctx, ossl_unused const OSSL_PARAM params[])
 {
     if (!ossl_prov_is_running())
         return 0;
     /* The newctx() handles most of the ctx fixed setup. */
     ossl_sha3_reset((KECCAK1600_CTX *)vctx);
     return 1;
+}
+
+static int keccak_init_params(void *vctx, const OSSL_PARAM params[])
+{
+    return keccak_init(vctx, NULL)
+            && shake_set_ctx_params(vctx, params);
 }
 
 static int keccak_update(void *vctx, const unsigned char *inp, size_t len)
@@ -225,7 +232,6 @@ static void *uname##_newctx(void *provctx)                                     \
 PROV_FUNC_DIGEST_GET_PARAM(name, blksize, dgstsize, flags)                     \
 const OSSL_DISPATCH ossl_##name##_functions[] = {                              \
     { OSSL_FUNC_DIGEST_NEWCTX, (void (*)(void))name##_newctx },                \
-    { OSSL_FUNC_DIGEST_INIT, (void (*)(void))keccak_init },                    \
     { OSSL_FUNC_DIGEST_UPDATE, (void (*)(void))keccak_update },                \
     { OSSL_FUNC_DIGEST_FINAL, (void (*)(void))keccak_final },                  \
     { OSSL_FUNC_DIGEST_FREECTX, (void (*)(void))keccak_freectx },              \
@@ -234,10 +240,12 @@ const OSSL_DISPATCH ossl_##name##_functions[] = {                              \
 
 #define PROV_FUNC_SHA3_DIGEST(name, bitlen, blksize, dgstsize, flags)          \
     PROV_FUNC_SHA3_DIGEST_COMMON(name, bitlen, blksize, dgstsize, flags),      \
+    { OSSL_FUNC_DIGEST_INIT, (void (*)(void))keccak_init },                    \
     PROV_DISPATCH_FUNC_DIGEST_CONSTRUCT_END
 
 #define PROV_FUNC_SHAKE_DIGEST(name, bitlen, blksize, dgstsize, flags)         \
     PROV_FUNC_SHA3_DIGEST_COMMON(name, bitlen, blksize, dgstsize, flags),      \
+    { OSSL_FUNC_DIGEST_INIT, (void (*)(void))keccak_init_params },             \
     { OSSL_FUNC_DIGEST_SET_CTX_PARAMS, (void (*)(void))shake_set_ctx_params }, \
     { OSSL_FUNC_DIGEST_SETTABLE_CTX_PARAMS,                                    \
      (void (*)(void))shake_settable_ctx_params },                              \
@@ -276,15 +284,17 @@ static int shake_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     const OSSL_PARAM *p;
     KECCAK1600_CTX *ctx = (KECCAK1600_CTX *)vctx;
 
-    if (ctx != NULL && params != NULL) {
-        p = OSSL_PARAM_locate_const(params, OSSL_DIGEST_PARAM_XOFLEN);
-        if (p != NULL && !OSSL_PARAM_get_size_t(p, &ctx->md_size)) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
-            return 0;
-        }
+    if (ctx == NULL)
+        return 0;
+    if (params == NULL)
         return 1;
+
+    p = OSSL_PARAM_locate_const(params, OSSL_DIGEST_PARAM_XOFLEN);
+    if (p != NULL && !OSSL_PARAM_get_size_t(p, &ctx->md_size)) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
+        return 0;
     }
-    return 0; /* Null Parameter */
+    return 1;
 }
 
 #define IMPLEMENT_SHA3_functions(bitlen)                                       \

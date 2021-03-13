@@ -113,7 +113,8 @@ static void *sm2sig_newctx(void *provctx, const char *propq)
     return ctx;
 }
 
-static int sm2sig_signature_init(void *vpsm2ctx, void *ec)
+static int sm2sig_signature_init(void *vpsm2ctx, void *ec,
+                                 const OSSL_PARAM params[])
 {
     PROV_SM2_CTX *psm2ctx = (PROV_SM2_CTX *)vpsm2ctx;
 
@@ -121,7 +122,7 @@ static int sm2sig_signature_init(void *vpsm2ctx, void *ec)
         return 0;
     EC_KEY_free(psm2ctx->ec);
     psm2ctx->ec = ec;
-    return 1;
+    return sm2sig_set_ctx_params(psm2ctx, params);
 }
 
 static int sm2sig_sign(void *vpsm2ctx, unsigned char *sig, size_t *siglen,
@@ -173,7 +174,7 @@ static void free_md(PROV_SM2_CTX *ctx)
 }
 
 static int sm2sig_digest_signverify_init(void *vpsm2ctx, const char *mdname,
-                                         void *ec)
+                                         void *ec, const OSSL_PARAM params[])
 {
     PROV_SM2_CTX *ctx = (PROV_SM2_CTX *)vpsm2ctx;
     int md_nid = NID_sm3;
@@ -182,7 +183,7 @@ static int sm2sig_digest_signverify_init(void *vpsm2ctx, const char *mdname,
 
     free_md(ctx);
 
-    if (!sm2sig_signature_init(vpsm2ctx, ec))
+    if (!sm2sig_signature_init(vpsm2ctx, ec, params))
         return ret;
 
     ctx->md = EVP_MD_fetch(ctx->libctx, mdname, ctx->propq);
@@ -192,7 +193,7 @@ static int sm2sig_digest_signverify_init(void *vpsm2ctx, const char *mdname,
         goto error;
 
     /*
-     * TODO(3.0) Should we care about DER writing errors?
+     * We do not care about DER writing errors.
      * All it really means is that for some reason, there's no
      * AlgorithmIdentifier to be had, but the operation itself is
      * still valid, just as long as it's not used to construct
@@ -207,7 +208,7 @@ static int sm2sig_digest_signverify_init(void *vpsm2ctx, const char *mdname,
     }
     WPACKET_cleanup(&pkt);
 
-    if (!EVP_DigestInit_ex(ctx->mdctx, ctx->md, NULL))
+    if (!EVP_DigestInit_ex2(ctx->mdctx, ctx->md, params))
         goto error;
 
     ctx->flag_compute_z_digest = 1;
@@ -353,7 +354,7 @@ static int sm2sig_get_ctx_params(void *vpsm2ctx, OSSL_PARAM *params)
     PROV_SM2_CTX *psm2ctx = (PROV_SM2_CTX *)vpsm2ctx;
     OSSL_PARAM *p;
 
-    if (psm2ctx == NULL || params == NULL)
+    if (psm2ctx == NULL)
         return 0;
 
     p = OSSL_PARAM_locate(params, OSSL_SIGNATURE_PARAM_ALGORITHM_ID);
@@ -381,7 +382,8 @@ static const OSSL_PARAM known_gettable_ctx_params[] = {
     OSSL_PARAM_END
 };
 
-static const OSSL_PARAM *sm2sig_gettable_ctx_params(ossl_unused void *provctx)
+static const OSSL_PARAM *sm2sig_gettable_ctx_params(ossl_unused void *vpsm2ctx,
+                                                    ossl_unused void *provctx)
 {
     return known_gettable_ctx_params;
 }
@@ -392,8 +394,10 @@ static int sm2sig_set_ctx_params(void *vpsm2ctx, const OSSL_PARAM params[])
     const OSSL_PARAM *p;
     char *mdname;
 
-    if (psm2ctx == NULL || params == NULL)
+    if (psm2ctx == NULL)
         return 0;
+    if (params == NULL)
+        return 1;
 
     p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_DIST_ID);
     if (p != NULL) {
@@ -446,7 +450,8 @@ static const OSSL_PARAM known_settable_ctx_params[] = {
     OSSL_PARAM_END
 };
 
-static const OSSL_PARAM *sm2sig_settable_ctx_params(ossl_unused void *provctx)
+static const OSSL_PARAM *sm2sig_settable_ctx_params(ossl_unused void *vpsm2ctx,
+                                                    ossl_unused void *provctx)
 {
     /*
      * TODO(3.0): Should this function return a different set of settable ctx

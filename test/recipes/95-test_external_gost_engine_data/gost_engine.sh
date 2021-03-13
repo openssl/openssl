@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -12,14 +12,26 @@
 #
 set -e
 
-O_EXE=`pwd`/$BLDTOP/apps
-O_BINC=`pwd`/$BLDTOP/include
-O_SINC=`pwd`/$SRCTOP/include
-O_LIB=`pwd`/$BLDTOP
+PWD="$(pwd)"
 
-export PATH=$O_EXE:$PATH
-export LD_LIBRARY_PATH=$O_LIB:$LD_LIBRARY_PATH
-export OPENSSL_ROOT_DIR=$O_LIB
+SRCTOP="$(cd $SRCTOP; pwd)"
+BLDTOP="$(cd $BLDTOP; pwd)"
+
+if [ "$SRCTOP" != "$BLDTOP" ] ; then
+    echo "Out of tree builds not supported with gost_engine test!"
+    exit 1
+fi
+
+O_EXE="$BLDTOP/apps"
+O_BINC="$BLDTOP/include"
+O_SINC="$SRCTOP/include"
+O_LIB="$BLDTOP"
+
+unset OPENSSL_CONF
+
+export PATH="$O_EXE:$PATH"
+export LD_LIBRARY_PATH="$O_LIB:$LD_LIBRARY_PATH"
+export OPENSSL_ROOT_DIR="$O_LIB"
 
 # Check/Set openssl version
 OPENSSL_VERSION=`openssl version | cut -f 2 -d ' '`
@@ -33,13 +45,11 @@ echo "   OPENSSL_ROOT_DIR:   $OPENSSL_ROOT_DIR"
 echo "   OpenSSL version:    $OPENSSL_VERSION"
 echo "------------------------------------------------------------------"
 
-cd $SRCTOP/gost-engine
-rm -rf build
-mkdir -p build
-cd build
-cmake ..
+cmake $SRCTOP/gost-engine -DOPENSSL_ROOT_DIR="$OPENSSL_ROOT_DIR"
 make
-CTEST_OUTPUT_ON_FAILURE=1 HARNESS_OSSL_PREFIX='' OPENSSL_ENGINES=$OPENSSL_ROOT_DIR/gost-engine/build/bin make test
-
-exit 0
-
+export CTEST_OUTPUT_ON_FAILURE=1
+export HARNESS_OSSL_PREFIX=''
+export OPENSSL_ENGINES="$PWD/bin"
+export OPENSSL_APP="$O_EXE/openssl"
+make test
+make tcl_tests

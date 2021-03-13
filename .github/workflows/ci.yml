@@ -166,3 +166,30 @@ jobs:
     - name: make install
       run: make install
       working-directory: ./build
+
+  external-tests:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+    - name: package installs
+      run: |
+        sudo apt-get update
+        sudo apt-get -yq install bison dejagnu gettext keyutils ldap-utils libldap2-dev libkeyutils-dev python3 python3-paste python3-pyrad slapd tcl-dev tcl-thread tcsh python3-virtualenv virtualenv
+    - name: install cpanm and Test2::V0 for gost_engine testing
+      uses: perl-actions/install-with-cpanm@v1
+      with:
+        install: Test2::V0
+    - name: config
+      run: ./config --strict-warnings --debug no-afalgeng enable-rc5 enable-md2 enable-ssl3 enable-ssl3-method enable-weak-ssl-ciphers enable-zlib enable-ec_nistp_64_gcc_128 enable-external-tests && perl configdata.pm --dump
+    - name: make
+      run: make -s -j4
+    - name: test external gost-engine
+      run: make test TESTS="test_external_gost_engine"
+    - name: test external krb5
+      run: make test TESTS="test_external_krb5"
+#   - name: test external boringssl
+#     run: BORING_RUNNER_DIR=$(pwd)/boringssl/ssl/test/runner make test TESTS="test_external_boringssl"
+#   - name: test external pyca
+#     run: make test TESTS="test_external_pyca"

@@ -260,6 +260,7 @@ static int der2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
     EVP_PKEY *pkey = NULL;
     void *key = NULL;
     int orig_selection = selection;
+    int dec_err;
     int ok = 0;
 
     /*
@@ -319,8 +320,13 @@ static int der2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
             der = new_der;
             der_len = new_der_len;
         }
-        RESET_ERR_MARK();
+        /* decryption errors are fatal and should be reported */
+        dec_err = ERR_peek_last_error();
+        if (ERR_GET_LIB(dec_err) == ERR_LIB_PROV
+                && ERR_GET_REASON(dec_err) == PROV_R_BAD_DECRYPT)
+            goto end;
 
+        RESET_ERR_MARK();
         if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0) {
             derp = der;
             pkey = evp_privatekey_from_binary(ctx->desc->evp_type, NULL,
@@ -339,7 +345,7 @@ static int der2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
              * Tear out the low-level key pointer from the pkey,
              * but only if it matches the expected key type.
              *
-             * TODO: The check should be done with EVP_PKEY_is_a(), but
+             * The check should be done with EVP_PKEY_is_a(), but
              * as long as we still have #legacy internal keys, it's safer
              * to use the type numbers inside the provider.
              */

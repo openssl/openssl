@@ -234,11 +234,17 @@ EXT_RETURN tls_construct_ctos_supported_groups(SSL *s, WPACKET *pkt,
         }
     }
     if (!WPACKET_close(pkt) || !WPACKET_close(pkt)) {
-        if (added == 0 || (tls13added == 0 && max_version == TLS1_3_VERSION))
+        if (added == 0)
             SSLfatal_data(s, SSL_AD_INTERNAL_ERROR, SSL_R_NO_SUITABLE_GROUPS,
                           "No groups enabled for max supported SSL/TLS version");
         else
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return EXT_RETURN_FAIL;
+    }
+
+    if (tls13added == 0 && max_version == TLS1_3_VERSION) {
+        SSLfatal_data(s, SSL_AD_INTERNAL_ERROR, SSL_R_NO_SUITABLE_GROUPS,
+                      "No groups enabled for max supported SSL/TLS version");
         return EXT_RETURN_FAIL;
     }
 

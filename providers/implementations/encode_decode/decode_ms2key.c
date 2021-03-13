@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -148,7 +148,7 @@ static int ms2key_post(struct ms2key_ctx_st *ctx, EVP_PKEY *pkey,
          * Tear out the low-level key pointer from the pkey,
          * but only if it matches the expected key type.
          *
-         * TODO(3.0): The check should be done with EVP_PKEY_is_a(), but
+         * The check should be done with EVP_PKEY_is_a(), but
          * as long as we still have #legacy internal keys, it's safer to
          * use the type numbers in side the provider.
          */

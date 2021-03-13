@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -188,7 +188,7 @@ static int by_store_subject_ex(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
          *
          * To be noted is that X509_OBJECT_set1_* increment the refcount,
          * but so does X509_STORE_CTX_get_by_subject upon return of this
-         * function, so we must ensure the the refcount is decremented
+         * function, so we must ensure the refcount is decremented
          * before we return, or we will get a refcount leak.  We cannot do
          * this with X509_OBJECT_free(), though, as that will free a bit
          * too much.

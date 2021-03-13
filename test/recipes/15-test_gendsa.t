@@ -20,7 +20,6 @@ BEGIN {
 
 use lib srctop_dir('Configurations');
 use lib bldtop_dir('.');
-use platform;
 
 plan skip_all => "This test is unsupported in a no-dsa build"
     if disabled("dsa");
@@ -28,7 +27,7 @@ plan skip_all => "This test is unsupported in a no-dsa build"
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 
 plan tests =>
-    ($no_fips ? 0 : 3)          # FIPS install test + fips related tests
+    ($no_fips ? 0 : 2)          # FIPS related tests
     + 11;
 
 ok(run(app([ 'openssl', 'genpkey', '-genparam',
@@ -113,14 +112,6 @@ unless ($no_fips) {
     my $provpath = bldtop_dir("providers");
     my @prov = ( "-provider-path", $provpath,
                  "-config", $provconf);
-    my $infile = bldtop_file('providers', platform->dso('fips'));
-
-    ok(run(app(['openssl', 'fipsinstall',
-                '-out', bldtop_file('providers', 'fipsmodule.cnf'),
-                '-module', $infile,
-                '-provider_name', 'fips', '-mac_name', 'HMAC',
-                '-section_name', 'fips_sect'])),
-       "fipsinstall");
 
     $ENV{OPENSSL_TEST_LIBCTX} = "1";
 

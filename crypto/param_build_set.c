@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -75,7 +75,6 @@ int ossl_param_build_set_bn_pad(OSSL_PARAM_BLD *bld, OSSL_PARAM *p,
     if (p != NULL) {
         if (sz > p->data_size)
             return 0;
-        /* TODO(3.0) Change to use OSSL_PARAM_set_BN_pad */
         p->data_size = sz;
         return OSSL_PARAM_set_BN(p, bn);
     }

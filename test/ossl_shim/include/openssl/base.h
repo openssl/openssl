@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-2001 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1998-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -9,6 +9,9 @@
 
 #ifndef OSSL_TEST_SHIM_INCLUDE_OPENSSL_BASE_H
 #define OSSL_TEST_SHIM_INCLUDE_OPENSSL_BASE_H
+
+/* Needed for DH functions */
+#include "internal/deprecated.h"
 
 /* Needed for BORINGSSL_MAKE_DELETER */
 # include <openssl/bio.h>

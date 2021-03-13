@@ -84,7 +84,8 @@ static void *eddsa_newctx(void *provctx, const char *propq_unused)
 }
 
 static int eddsa_digest_signverify_init(void *vpeddsactx, const char *mdname,
-                                        void *vedkey)
+                                        void *vedkey,
+                                        ossl_unused const OSSL_PARAM params[])
 {
     PROV_EDDSA_CTX *peddsactx = (PROV_EDDSA_CTX *)vpeddsactx;
     ECX_KEY *edkey = (ECX_KEY *)vedkey;
@@ -105,7 +106,7 @@ static int eddsa_digest_signverify_init(void *vpeddsactx, const char *mdname,
     }
 
     /*
-     * TODO(3.0) Should we care about DER writing errors?
+     * We do not care about DER writing errors.
      * All it really means is that for some reason, there's no
      * AlgorithmIdentifier to be had, but the operation itself is
      * still valid, just as long as it's not used to construct
@@ -277,7 +278,7 @@ static int eddsa_get_ctx_params(void *vpeddsactx, OSSL_PARAM *params)
     PROV_EDDSA_CTX *peddsactx = (PROV_EDDSA_CTX *)vpeddsactx;
     OSSL_PARAM *p;
 
-    if (peddsactx == NULL || params == NULL)
+    if (peddsactx == NULL)
         return 0;
 
     p = OSSL_PARAM_locate(params, OSSL_SIGNATURE_PARAM_ALGORITHM_ID);
@@ -293,7 +294,8 @@ static const OSSL_PARAM known_gettable_ctx_params[] = {
     OSSL_PARAM_END
 };
 
-static const OSSL_PARAM *eddsa_gettable_ctx_params(ossl_unused void *provctx)
+static const OSSL_PARAM *eddsa_gettable_ctx_params(ossl_unused void *vpeddsactx,
+                                                   ossl_unused void *provctx)
 {
     return known_gettable_ctx_params;
 }

@@ -2,7 +2,8 @@
 
 =head1 NAME
 
-EVP_PKEY_derive_init, EVP_PKEY_derive_set_peer, EVP_PKEY_derive
+EVP_PKEY_derive_init, EVP_PKEY_derive_init_ex,
+EVP_PKEY_derive_set_peer, EVP_PKEY_derive
 - derive public key algorithm shared secret
 
 =head1 SYNOPSIS
@@ -10,6 +11,7 @@ EVP_PKEY_derive_init, EVP_PKEY_derive_set_peer, EVP_PKEY_derive
  #include <openssl/evp.h>
 
  int EVP_PKEY_derive_init(EVP_PKEY_CTX *ctx);
+ int EVP_PKEY_derive_init_ex(EVP_PKEY_CTX *ctx, const OSSL_PARAM params[]);
  int EVP_PKEY_derive_set_peer(EVP_PKEY_CTX *ctx, EVP_PKEY *peer);
  int EVP_PKEY_derive(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *keylen);
 
@@ -20,6 +22,9 @@ shared secret derivation using the algorithm given when the context was created
 using L<EVP_PKEY_CTX_new(3)> or variants thereof.  The algorithm is used to
 fetch a B<EVP_KEYEXCH> method implicitly, see L<provider(7)/Implicit fetch> for
 more information about implicit fetches.
+
+EVP_PKEY_derive_init_ex() is the same as EVP_PKEY_derive_init() but additionally
+sets the passed parameters I<params> on the context before returning.
 
 EVP_PKEY_derive_set_peer() sets the peer key: this will normally
 be a public key.
@@ -95,7 +100,10 @@ L<EVP_KEYEXCH_fetch(3)>
 
 =head1 HISTORY
 
-These functions were added in OpenSSL 1.0.0.
+The EVP_PKEY_derive_init(), EVP_PKEY_derive_set_peer() and EVP_PKEY_derive()
+functions were originally added in OpenSSL 1.0.0.
+
+The EVP_PKEY_derive_init_ex() function was added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

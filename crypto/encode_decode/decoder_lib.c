@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -13,9 +13,11 @@
 #include <openssl/provider.h>
 #include <openssl/evperr.h>
 #include <openssl/ecerr.h>
+#include <openssl/pkcs12err.h>
 #include <openssl/x509err.h>
 #include <openssl/trace.h>
 #include "internal/passphrase.h"
+#include "internal/bio.h"
 #include "crypto/decoder.h"
 #include "encoder_local.h"
 #include "e_os.h"
@@ -38,7 +40,14 @@ int OSSL_DECODER_from_bio(OSSL_DECODER_CTX *ctx, BIO *in)
 {
     struct decoder_process_data_st data;
     int ok = 0;
+    BIO *new_bio = NULL;
 
+    if (BIO_tell(in) < 0) {
+        new_bio = BIO_new(BIO_f_readbuffer());
+        if (new_bio == NULL)
+            return 0;
+        in = BIO_push(new_bio, in);
+    }
     memset(&data, 0, sizeof(data));
     data.ctx = ctx;
     data.bio = in;
@@ -51,6 +60,10 @@ int OSSL_DECODER_from_bio(OSSL_DECODER_CTX *ctx, BIO *in)
     /* Clear any internally cached passphrase */
     (void)ossl_pw_clear_passphrase_cache(&ctx->pwdata);
 
+    if (new_bio != NULL) {
+        BIO_pop(new_bio);
+        BIO_free(new_bio);
+    }
     return ok;
 }
 
@@ -508,10 +521,11 @@ static int decoder_process(const OSSL_PARAM params[], void *arg)
     OSSL_DECODER_CTX *ctx = data->ctx;
     OSSL_DECODER_INSTANCE *decoder_inst = NULL;
     OSSL_DECODER *decoder = NULL;
+    OSSL_CORE_BIO *cbio = NULL;
     BIO *bio = data->bio;
     long loc;
     size_t i;
-    int err, ok = 0;
+    int err, lib, reason, ok = 0;
     /* For recursions */
     struct decoder_process_data_st new_data;
     const char *data_type = NULL;
@@ -618,6 +632,11 @@ static int decoder_process(const OSSL_PARAM params[], void *arg)
 
     if ((loc = BIO_tell(bio)) < 0) {
         ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_BIO_LIB);
+        goto end;
+    }
+
+    if ((cbio = ossl_core_bio_new_from_bio(bio)) == NULL) {
+        ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_MALLOC_FAILURE);
         goto end;
     }
 
@@ -728,7 +747,7 @@ static int decoder_process(const OSSL_PARAM params[], void *arg)
         } OSSL_TRACE_END(DECODER);
 
         new_data.current_decoder_inst_index = i;
-        ok = new_decoder->decode(new_decoderctx, (OSSL_CORE_BIO *)bio,
+        ok = new_decoder->decode(new_decoderctx, cbio,
                                  new_data.ctx->selection,
                                  decoder_process, &new_data,
                                  ossl_pw_passphrase_callback_dec,
@@ -750,18 +769,21 @@ static int decoder_process(const OSSL_PARAM params[], void *arg)
          * errors, so we preserve them in the error queue and stop.
          */
         err = ERR_peek_last_error();
-        if ((ERR_GET_LIB(err) == ERR_LIB_EVP
-             && ERR_GET_REASON(err) == EVP_R_UNSUPPORTED_PRIVATE_KEY_ALGORITHM)
+        lib = ERR_GET_LIB(err);
+        reason = ERR_GET_REASON(err);
+        if ((lib == ERR_LIB_EVP
+             && reason == EVP_R_UNSUPPORTED_PRIVATE_KEY_ALGORITHM)
 #ifndef OPENSSL_NO_EC
-            || (ERR_GET_LIB(err) == ERR_LIB_EC
-                && ERR_GET_REASON(err) == EC_R_UNKNOWN_GROUP)
+            || (lib == ERR_LIB_EC && reason == EC_R_UNKNOWN_GROUP)
 #endif
-            || (ERR_GET_LIB(err) == ERR_LIB_X509
-                && ERR_GET_REASON(err) == X509_R_UNSUPPORTED_ALGORITHM))
+            || (lib == ERR_LIB_X509 && reason == X509_R_UNSUPPORTED_ALGORITHM)
+            || (lib == ERR_LIB_PKCS12
+                && reason == PKCS12_R_PKCS12_CIPHERFINAL_ERROR))
             goto end;
     }
 
  end:
+    ossl_core_bio_free(cbio);
     BIO_free(new_data.bio);
     return ok;
 }

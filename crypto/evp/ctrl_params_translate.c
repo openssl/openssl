@@ -202,7 +202,7 @@ struct translation_ctx_st {
      */
 
     /*
-     * Copy of the ctrl-style void* argument, if the the fixup_args function
+     * Copy of the ctrl-style void* argument, if the fixup_args function
      * needs to manipulate |p2| but wants to remember original.
      */
     void *orig_p2;
@@ -1481,7 +1481,7 @@ static int get_payload_group_name(enum state state,
 #ifndef OPENSSL_NO_DH
     case EVP_PKEY_DH:
         {
-            DH *dh = EVP_PKEY_get0_DH(pkey);
+            const DH *dh = EVP_PKEY_get0_DH(pkey);
             int uid = DH_get_nid(dh);
 
             if (uid != NID_undef) {
@@ -1531,7 +1531,7 @@ static int get_payload_private_key(enum state state,
 #ifndef OPENSSL_NO_DH
     case EVP_PKEY_DH:
         {
-            DH *dh = EVP_PKEY_get0_DH(pkey);
+            const DH *dh = EVP_PKEY_get0_DH(pkey);
 
             ctx->p2 = (BIGNUM *)DH_get0_priv_key(dh);
         }
@@ -1540,7 +1540,7 @@ static int get_payload_private_key(enum state state,
 #ifndef OPENSSL_NO_EC
     case EVP_PKEY_EC:
         {
-            EC_KEY *ec = EVP_PKEY_get0_EC_KEY(pkey);
+            const EC_KEY *ec = EVP_PKEY_get0_EC_KEY(pkey);
 
             ctx->p2 = (BIGNUM *)EC_KEY_get0_private_key(ec);
         }
@@ -1590,7 +1590,7 @@ static int get_payload_public_key(enum state state,
 #ifndef OPENSSL_NO_EC
     case EVP_PKEY_EC:
         if (ctx->params->data_type == OSSL_PARAM_OCTET_STRING) {
-            EC_KEY *eckey = EVP_PKEY_get0_EC_KEY(pkey);
+            const EC_KEY *eckey = EVP_PKEY_get0_EC_KEY(pkey);
             BN_CTX *bnctx = BN_CTX_new_ex(ossl_ec_key_get_libctx(eckey));
             const EC_GROUP *ecg = EC_KEY_get0_group(eckey);
             const EC_POINT *point = EC_KEY_get0_public_key(eckey);

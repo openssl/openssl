@@ -78,7 +78,7 @@ struct collected_encoder_st {
 
     OSSL_ENCODER_CTX *ctx;
 
-    int error_occured;
+    int error_occurred;
 };
 
 static void collect_encoder(OSSL_ENCODER *encoder, void *arg)
@@ -86,10 +86,10 @@ static void collect_encoder(OSSL_ENCODER *encoder, void *arg)
     struct collected_encoder_st *data = arg;
     size_t i, end_i;
 
-    if (data->error_occured)
+    if (data->error_occurred)
         return;
 
-    data->error_occured = 1;     /* Assume the worst */
+    data->error_occurred = 1;     /* Assume the worst */
 
     if (data->names == NULL)
         return;
@@ -110,27 +110,27 @@ static void collect_encoder(OSSL_ENCODER *encoder, void *arg)
             break;
     }
 
-    data->error_occured = 0;         /* All is good now */
+    data->error_occurred = 0;         /* All is good now */
 }
 
 struct collected_names_st {
     STACK_OF(OPENSSL_CSTRING) *names;
-    unsigned int error_occured:1;
+    unsigned int error_occurred:1;
 };
 
 static void collect_name(const char *name, void *arg)
 {
     struct collected_names_st *data = arg;
 
-    if (data->error_occured)
+    if (data->error_occurred)
         return;
 
-    data->error_occured = 1;         /* Assume the worst */
+    data->error_occurred = 1;         /* Assume the worst */
 
     if (sk_OPENSSL_CSTRING_push(data->names, name) <= 0)
         return;
 
-    data->error_occured = 0;         /* All is good now */
+    data->error_occurred = 0;         /* All is good now */
 }
 
 /*
@@ -241,9 +241,9 @@ static int ossl_encoder_ctx_setup_for_pkey(OSSL_ENCODER_CTX *ctx,
          * First, collect the keymgmt names, then the encoders that match.
          */
         keymgmt_data.names = sk_OPENSSL_CSTRING_new_null();
-        keymgmt_data.error_occured = 0;
+        keymgmt_data.error_occurred = 0;
         EVP_KEYMGMT_names_do_all(pkey->keymgmt, collect_name, &keymgmt_data);
-        if (keymgmt_data.error_occured) {
+        if (keymgmt_data.error_occurred) {
             sk_OPENSSL_CSTRING_free(keymgmt_data.names);
             goto err;
         }
@@ -251,11 +251,11 @@ static int ossl_encoder_ctx_setup_for_pkey(OSSL_ENCODER_CTX *ctx,
         encoder_data.names = keymgmt_data.names;
         encoder_data.output_type = ctx->output_type;
         encoder_data.output_structure = ctx->output_structure;
-        encoder_data.error_occured = 0;
+        encoder_data.error_occurred = 0;
         encoder_data.ctx = ctx;
         OSSL_ENCODER_do_all_provided(libctx, collect_encoder, &encoder_data);
         sk_OPENSSL_CSTRING_free(keymgmt_data.names);
-        if (encoder_data.error_occured) {
+        if (encoder_data.error_occurred) {
             ERR_raise(ERR_LIB_OSSL_ENCODER, ERR_R_MALLOC_FAILURE);
             goto err;
         }

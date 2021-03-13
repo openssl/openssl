@@ -34,6 +34,7 @@ static OSSL_FUNC_cipher_decrypt_init_fn aes_wrap_dinit;
 static OSSL_FUNC_cipher_update_fn aes_wrap_cipher;
 static OSSL_FUNC_cipher_final_fn aes_wrap_final;
 static OSSL_FUNC_cipher_freectx_fn aes_wrap_freectx;
+static OSSL_FUNC_cipher_set_ctx_params_fn aes_wrap_set_ctx_params;
 
 typedef struct prov_aes_wrap_ctx_st {
     PROV_CIPHER_CTX base;
@@ -75,7 +76,7 @@ static void aes_wrap_freectx(void *vctx)
 
 static int aes_wrap_init(void *vctx, const unsigned char *key,
                          size_t keylen, const unsigned char *iv,
-                         size_t ivlen, int enc)
+                         size_t ivlen, const OSSL_PARAM params[], int enc)
 {
     PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
     PROV_AES_WRAP_CTX *wctx = (PROV_AES_WRAP_CTX *)vctx;
@@ -121,19 +122,21 @@ static int aes_wrap_init(void *vctx, const unsigned char *key,
             ctx->block = (block128_f)AES_decrypt;
         }
     }
-    return 1;
+    return aes_wrap_set_ctx_params(ctx, params);
 }
 
 static int aes_wrap_einit(void *ctx, const unsigned char *key, size_t keylen,
-                          const unsigned char *iv, size_t ivlen)
+                          const unsigned char *iv, size_t ivlen,
+                          const OSSL_PARAM params[])
 {
-    return aes_wrap_init(ctx, key, keylen, iv, ivlen, 1);
+    return aes_wrap_init(ctx, key, keylen, iv, ivlen, params, 1);
 }
 
 static int aes_wrap_dinit(void *ctx, const unsigned char *key, size_t keylen,
-                          const unsigned char *iv, size_t ivlen)
+                          const unsigned char *iv, size_t ivlen,
+                          const OSSL_PARAM params[])
 {
-    return aes_wrap_init(ctx, key, keylen, iv, ivlen, 0);
+    return aes_wrap_init(ctx, key, keylen, iv, ivlen, params, 0);
 }
 
 static int aes_wrap_cipher_internal(void *vctx, unsigned char *out,
@@ -225,6 +228,9 @@ static int aes_wrap_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
     const OSSL_PARAM *p;
     size_t keylen = 0;
+
+    if (params == NULL)
+        return 1;
 
     p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_KEYLEN);
     if (p != NULL) {

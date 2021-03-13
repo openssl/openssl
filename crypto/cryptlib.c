@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1998-2021 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -432,7 +432,7 @@ void OPENSSL_die(const char *message, const char *file, int line)
 
 #if !defined(OPENSSL_CPUID_OBJ)
 /*
- * The volatile is used to to ensure that the compiler generates code that reads
+ * The volatile is used to ensure that the compiler generates code that reads
  * all values from the array and doesn't try to optimize this away. The standard
  * doesn't actually require this behavior if the original data pointed to is
  * not volatile, but compilers do this in practice anyway.

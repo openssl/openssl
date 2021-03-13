@@ -7,24 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/err.h>
 #include "crypto/store.h"
 #include "store_local.h"
-
-static CRYPTO_ONCE store_init = CRYPTO_ONCE_STATIC_INIT;
-DEFINE_RUN_ONCE_STATIC(do_store_init)
-{
-    return OPENSSL_init_crypto(0, NULL);
-}
-
-int ossl_store_init_once(void)
-{
-    if (!RUN_ONCE(&store_init, do_store_init)) {
-        ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_MALLOC_FAILURE);
-        return 0;
-    }
-    return 1;
-}
 
 void ossl_store_cleanup_int(void)
 {

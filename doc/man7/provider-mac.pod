@@ -137,10 +137,12 @@ provider algorithm and stores them in I<params>.
 OSSL_FUNC_mac_set_ctx_params() sets mac parameters associated with the given
 provider side mac context I<mctx> to I<params>.
 Any parameter settings are additional to any that were previously set.
+Passing NULL for I<params> should return true.
 
 OSSL_FUNC_mac_get_ctx_params() gets details of currently set parameter values
 associated with the given provider side mac context I<mctx> and stores them
 in I<params>.
+Passing NULL for I<params> should return true.
 
 OSSL_FUNC_mac_gettable_params(), OSSL_FUNC_mac_gettable_ctx_params(),
 and OSSL_FUNC_mac_settable_ctx_params() all return constant B<OSSL_PARAM>
@@ -152,9 +154,11 @@ with the provider side context I<mctx> in its current state if it is
 not NULL.  Otherwise, they return the parameters associated with the
 provider side algorithm I<provctx>.
 
+All MAC implementations are expected to handle the following parameters:
 
-Parameters currently recognised by built-in macs are as follows. Not all
-parameters are relevant to, or are understood by all macs:
+=over 4
+
+=item with OSSL_FUNC_set_ctx_params():
 
 =over 4
 
@@ -163,56 +167,21 @@ parameters are relevant to, or are understood by all macs:
 Sets the key in the associated MAC ctx.  This is identical to passing a I<key>
 argument to the OSSL_FUNC_mac_init() function.
 
-=item "iv" (B<OSSL_MAC_PARAM_IV>) <octet string>
+=back
 
-Sets the IV of the underlying cipher, when applicable.
+=item with OSSL_FUNC_get_params():
 
-=item "custom" (B<OSSL_MAC_PARAM_CUSTOM>) <UTF8 string>
-
-Sets the custom string in the associated MAC ctx.
-
-=item "salt" (B<OSSL_MAC_PARAM_SALT>) <octet string>
-
-Sets the salt of the underlying cipher, when applicable.
-
-=item "xof" (B<OSSL_MAC_PARAM_BLOCK_XOF>) <integer>
-
-Sets XOF mode in the associated MAC ctx.
-0 means no XOF mode, 1 means XOF mode.
-
-=item "digest-noinit" (B<OSSL_MAC_PARAM_DIGEST_NOINIT>) <integer>
-
-A simple flag to set the MAC digest to not initialise the
-implementation specific data. The value 0 or 1 is expected.
-
-=item "digest-oneshot" (B<OSSL_MAC_PARAM_DIGEST_ONESHOT>) <integer>
-
-A simple flag to set the MAC digest to be a oneshot operation.
-The value 0 or 1 is expected.
-
-
-=for comment We need to investigate if this is the right approach
-
-=item "cipher" (B<OSSL_MAC_PARAM_CIPHER>) <UTF8 string>
-
-=item "digest" (B<OSSL_MAC_PARAM_DIGEST>) <UTF8 string>
-
-Sets the name of the underlying cipher or digest to be used.
-It must name a suitable algorithm for the MAC that's being used.
-
-=item "properties" (B<OSSL_MAC_PARAM_PROPERTIES>) <UTF8 string>
-
-Sets the properties to be queried when trying to fetch the underlying algorithm.
-This must be given together with the algorithm naming parameter to be
-considered valid.
+=over 4
 
 =item "size" (B<OSSL_MAC_PARAM_SIZE>) <integer>
 
-Can be used to get the resulting MAC size.
+Can be used to get the default MAC size (which might be the only allowable
+MAC size for the implementation).
 
-With some MAC algorithms, it can also be used to set the size that the
-resulting MAC should have.
-Allowable sizes are decided within each implementation.
+Note that some implementations allow setting the size that the resulting MAC
+should have as well, see the documentation of the implementation.
+
+=back
 
 =back
 
@@ -231,7 +200,11 @@ array, or NULL if none is offered.
 
 =head1 SEE ALSO
 
-L<provider(7)>, L<EVP_MAC_init(3)>
+L<provider(7)>,
+L<EVP_MAC-BLAKE2(7)>, L<EVP_MAC-CMAC(7)>, L<EVP_MAC-GMAC(7)>,
+L<EVP_MAC-HMAC(7)>, L<EVP_MAC-KMAC(7)>, L<EVP_MAC-Poly1305(7)>,
+L<EVP_MAC-Siphash(7)>
+
 
 =head1 HISTORY
 

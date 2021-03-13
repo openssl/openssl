@@ -9,7 +9,7 @@ EVP_PKEY_decapsulate_init, EVP_PKEY_decapsulate
 
  #include <openssl/evp.h>
 
- int EVP_PKEY_decapsulate_init(EVP_PKEY_CTX *ctx);
+ int EVP_PKEY_decapsulate_init(EVP_PKEY_CTX *ctx, const OSSL_PARAM params[]);
  int EVP_PKEY_decapsulate(EVP_PKEY_CTX *ctx,
                           unsigned char *secret, size_t *secretlen,
                           const unsigned char *wrapped, size_t wrappedlen);
@@ -17,7 +17,8 @@ EVP_PKEY_decapsulate_init, EVP_PKEY_decapsulate
 =head1 DESCRIPTION
 
 The EVP_PKEY_decapsulate_init() function initializes a private key algorithm
-context I<ctx> for a decapsulation operation.
+context I<ctx> for a decapsulation operation and then sets the I<params>
+on the context in the same way as calling L<EVP_PKEY_CTX_set_params(3)>.
 
 The EVP_PKEY_decapsulate() function performs a private key decapsulation
 operation using I<ctx>. The data to be decapsulated is specified using the
@@ -30,8 +31,7 @@ the amount of data written to I<secretlen>.
 =head1 NOTES
 
 After the call to EVP_PKEY_decapsulate_init() algorithm specific parameters
-for the operation may be set using L<EVP_PKEY_CTX_set_params(3)>. There are no
-settable parameters currently.
+for the operation may be set or modified using L<EVP_PKEY_CTX_set_params(3)>.
 
 =head1 RETURN VALUES
 
@@ -57,7 +57,7 @@ Decapsulate data using RSA:
  ctx = EVP_PKEY_CTX_new_from_pkey(libctx, rsa_priv_key, NULL);
  if (ctx = NULL)
      /* Error */
- if (EVP_PKEY_decapsulate_init(ctx) <= 0)
+ if (EVP_PKEY_decapsulate_init(ctx, NULL) <= 0)
      /* Error */
 
  /* Set the mode - only 'RSASVE' is currently supported */

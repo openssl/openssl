@@ -58,11 +58,11 @@
 
 #include "testutil.h"
 
-typedef int PEM_write_bio_of_void_protected(BIO *out, void *obj,
+typedef int PEM_write_bio_of_void_protected(BIO *out, const void *obj,
                                             const EVP_CIPHER *enc,
                                             unsigned char *kstr, int klen,
                                             pem_password_cb *cb, void *u);
-typedef int PEM_write_bio_of_void_unprotected(BIO *out, void *obj);
+typedef int PEM_write_bio_of_void_unprotected(BIO *out, const void *obj);
 typedef void *PEM_read_bio_of_void(BIO *out, void **obj,
                                    pem_password_cb *cb, void *u);
 typedef int EVP_PKEY_print_fn(BIO *out, const EVP_PKEY *pkey,
@@ -294,7 +294,7 @@ static int test_membio_str_eq(BIO *bio_provided, BIO *bio_legacy)
 }
 
 static int test_protected_PEM(const char *keytype, int evp_type,
-                              void *legacy_key,
+                              const void *legacy_key,
                               PEM_write_bio_of_void_protected *pem_write_bio,
                               PEM_read_bio_of_void *pem_read_bio,
                               EVP_PKEY_eq_fn *evp_pkey_eq,
@@ -362,7 +362,7 @@ static int test_protected_PEM(const char *keytype, int evp_type,
 }
 
 static int test_unprotected_PEM(const char *keytype, int evp_type,
-                                void *legacy_key,
+                                const void *legacy_key,
                                 PEM_write_bio_of_void_unprotected *pem_write_bio,
                                 PEM_read_bio_of_void *pem_read_bio,
                                 EVP_PKEY_eq_fn *evp_pkey_eq,
@@ -429,7 +429,7 @@ static int test_unprotected_PEM(const char *keytype, int evp_type,
 }
 
 static int test_DER(const char *keytype, int evp_type,
-                    void *legacy_key, i2d_of_void *i2d, d2i_of_void *d2i,
+                    const void *legacy_key, i2d_of_void *i2d, d2i_of_void *d2i,
                     EVP_PKEY_eq_fn *evp_pkey_eq,
                     EVP_PKEY_print_fn *evp_pkey_print,
                     EVP_PKEY *provided_pkey, int selection,
@@ -506,7 +506,7 @@ static int test_key(int idx)
     int ok = 0;
     size_t i;
     EVP_PKEY *pkey = NULL, *downgraded_pkey = NULL;
-    void *legacy_obj = NULL;
+    const void *legacy_obj = NULL;
 
     /* Get the test data */
     if (!TEST_ptr(test_stanza = &test_stanzas[idx])

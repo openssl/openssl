@@ -85,6 +85,15 @@ EVP_PKEY *load_pubkey(const char *uri, int format, int maybe_stdin,
                       const char *pass, ENGINE *e, const char *desc);
 EVP_PKEY *load_keyparams(const char *uri, int maybe_stdin, const char *keytype,
                          const char *desc);
+char *next_item(char *opt); /* in list separated by comma and/or space */
+int load_cert_certs(const char *uri,
+                    X509 **pcert, STACK_OF(X509) **pcerts,
+                    int exclude_http, const char *pass, const char *desc,
+                    X509_VERIFY_PARAM *vpm);
+STACK_OF(X509) *load_certs_multifile(char *files, const char *pass,
+                                     const char *desc, X509_VERIFY_PARAM *vpm);
+X509_STORE *load_certstore(char *input, const char *pass, const char *desc,
+                           X509_VERIFY_PARAM *vpm);
 int load_certs(const char *uri, STACK_OF(X509) **certs,
                const char *pass, const char *desc);
 int load_crls(const char *uri, STACK_OF(X509_CRL) **crls,

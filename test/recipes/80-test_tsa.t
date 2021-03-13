@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2021 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -13,7 +13,7 @@ use warnings;
 use POSIX;
 use File::Spec::Functions qw/splitdir curdir catfile/;
 use File::Compare;
-use OpenSSL::Test qw/:DEFAULT cmdstr srctop_file/;
+use OpenSSL::Test qw/:DEFAULT cmdstr srctop_file data_file/;
 use OpenSSL::Test::Utils;
 
 setup("test_tsa");
@@ -26,7 +26,9 @@ plan skip_all => "TS is not supported by this OpenSSL build"
 my $openssl_conf;
 my $testtsa;
 my $CAtsa;
-my @RUN;
+my @QUERY = ("openssl", "ts", "-query");
+my @REPLY;
+my @VERIFY = ("openssl", "ts", "-verify");
 
 sub create_tsa_cert {
     my $INDEX = shift;
@@ -51,7 +53,7 @@ sub create_time_stamp_response {
     my $outputfile = shift;
     my $datafile = shift;
 
-    ok(run(app([@RUN, "-reply", "-section", "$datafile",
+    ok(run(app([@REPLY, "-section", "$datafile",
                 "-queryfile", "$queryfile", "-out", "$outputfile"])));
 }
 
@@ -60,10 +62,10 @@ sub verify_time_stamp_response {
     my $inputfile = shift;
     my $datafile = shift;
 
-    ok(run(app([@RUN, "-verify", "-queryfile", "$queryfile",
+    ok(run(app([@VERIFY, "-queryfile", "$queryfile",
                 "-in", "$inputfile", "-CAfile", "tsaca.pem",
                 "-untrusted", "tsa_cert1.pem"])));
-    ok(run(app([@RUN, "-verify", "-data", "$datafile",
+    ok(run(app([@VERIFY, "-data", "$datafile",
                 "-in", "$inputfile", "-CAfile", "tsaca.pem",
                 "-untrusted", "tsa_cert1.pem"])));
 }
@@ -72,7 +74,7 @@ sub verify_time_stamp_response_fail {
     my $queryfile = shift;
     my $inputfile = shift;
 
-    ok(!run(app([@RUN, "-verify", "-queryfile", "$queryfile",
+    ok(!run(app([@VERIFY, "-queryfile", "$queryfile",
                  "-in", "$inputfile", "-CAfile", "tsaca.pem",
                  "-untrusted", "tsa_cert1.pem"])));
 }
@@ -87,7 +89,7 @@ indir "tsa" => sub
     $openssl_conf = srctop_file("test", "CAtsa.cnf");
     $testtsa = srctop_file("test", "recipes", "80-test_tsa.t");
     $CAtsa = srctop_file("test", "CAtsa.cnf");
-    @RUN = ("openssl", "ts", "-config", $openssl_conf);
+    @REPLY = ("openssl", "ts", "-config", $openssl_conf, "-reply");
 
     # ../apps/CA.pl needs these
     $ENV{OPENSSL_CONFIG} = "-config $openssl_conf";
@@ -112,19 +114,19 @@ indir "tsa" => sub
      };
 
      skip "failed", 16
-         unless ok(run(app([@RUN, "-query", "-data", $testtsa,
+         unless ok(run(app([@QUERY, "-data", $testtsa,
                             "-tspolicy", "tsa_policy1", "-cert",
                             "-out", "req1.tsq"])),
                    'creating req1.req time stamp request for file testtsa');
 
-     ok(run(app([@RUN, "-query", "-in", "req1.tsq", "-text"])),
+     ok(run(app([@QUERY, "-in", "req1.tsq", "-text"])),
         'printing req1.req');
 
      subtest 'generating valid response for req1.req' => sub {
          create_time_stamp_response("req1.tsq", "resp1.tsr", "tsa_config1")
      };
 
-     ok(run(app([@RUN, "-reply", "-in", "resp1.tsr", "-text"])),
+     ok(run(app([@REPLY, "-in", "resp1.tsr", "-text"])),
         'printing response');
 
      subtest 'verifying valid response' => sub {
@@ -133,25 +135,23 @@ indir "tsa" => sub
 
      skip "failed", 11
          unless subtest 'verifying valid token' => sub {
-             ok(run(app([@RUN, "-reply", "-in", "resp1.tsr",
+             ok(run(app([@REPLY, "-in", "resp1.tsr",
                          "-out", "resp1.tsr.token", "-token_out"])));
-             ok(run(app([@RUN, "-verify", "-queryfile", "req1.tsq",
+             ok(run(app([@VERIFY, "-queryfile", "req1.tsq",
                          "-in", "resp1.tsr.token", "-token_in",
-                         "-CAfile", "tsaca.pem",
-                         "-untrusted", "tsa_cert1.pem"])));
-             ok(run(app([@RUN, "-verify", "-data", $testtsa,
+                         "-CAfile", "tsaca.pem"])));
+             ok(run(app([@VERIFY, "-data", $testtsa,
                          "-in", "resp1.tsr.token", "-token_in",
-                         "-CAfile", "tsaca.pem",
-                         "-untrusted", "tsa_cert1.pem"])));
+                         "-CAfile", "tsaca.pem"])));
      };
 
      skip "failed", 10
-         unless ok(run(app([@RUN, "-query", "-data", $testtsa,
+         unless ok(run(app([@QUERY, "-data", $testtsa,
                             "-tspolicy", "tsa_policy2", "-no_nonce",
                             "-out", "req2.tsq"])),
                    'creating req2.req time stamp request for file testtsa');
 
-     ok(run(app([@RUN, "-query", "-in", "req2.tsq", "-text"])),
+     ok(run(app([@QUERY, "-in", "req2.tsq", "-text"])),
         'printing req2.req');
 
      skip "failed", 8
@@ -164,20 +164,20 @@ indir "tsa" => sub
              my $RESPONSE2="resp2.tsr.copy.tsr";
              my $TOKEN_DER="resp2.tsr.token.der";
 
-             ok(run(app([@RUN, "-reply", "-in", "resp2.tsr",
+             ok(run(app([@REPLY, "-in", "resp2.tsr",
                          "-out", "$TOKEN_DER", "-token_out"])));
-             ok(run(app([@RUN, "-reply", "-in", "$TOKEN_DER",
+             ok(run(app([@REPLY, "-in", "$TOKEN_DER",
                          "-token_in", "-out", "$RESPONSE2"])));
              is(compare($RESPONSE2, "resp2.tsr"), 0);
-             ok(run(app([@RUN, "-reply", "-in", "resp2.tsr",
+             ok(run(app([@REPLY, "-in", "resp2.tsr",
                          "-text", "-token_out"])));
-             ok(run(app([@RUN, "-reply", "-in", "$TOKEN_DER",
+             ok(run(app([@REPLY, "-in", "$TOKEN_DER",
                          "-token_in", "-text", "-token_out"])));
-             ok(run(app([@RUN, "-reply", "-queryfile", "req2.tsq",
+             ok(run(app([@REPLY, "-queryfile", "req2.tsq",
                          "-text", "-token_out"])));
      };
 
-     ok(run(app([@RUN, "-reply", "-in", "resp2.tsr", "-text"])),
+     ok(run(app([@REPLY, "-in", "resp2.tsr", "-text"])),
         'printing response');
 
      subtest 'verifying valid response' => sub {
@@ -193,11 +193,11 @@ indir "tsa" => sub
      };
 
      skip "failure", 2
-         unless ok(run(app([@RUN, "-query", "-data", $CAtsa,
+         unless ok(run(app([@QUERY, "-data", $CAtsa,
                             "-no_nonce", "-out", "req3.tsq"])),
                    "creating req3.req time stamp request for file CAtsa.cnf");
 
-     ok(run(app([@RUN, "-query", "-in", "req3.tsq", "-text"])),
+     ok(run(app([@QUERY, "-in", "req3.tsq", "-text"])),
         'printing req3.req');
 
      subtest 'verifying response against wrong request, it should fail' => sub {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -15,6 +15,7 @@
 #include <openssl/params.h>
 #include <openssl/provider.h>
 #include <openssl/trace.h>
+#include "internal/bio.h"
 #include "encoder_local.h"
 
 struct encoder_process_data_st {
@@ -604,6 +605,7 @@ static int encoder_process(struct encoder_process_data_st *data)
         /* Calling the encoder implementation */
 
         if (ok) {
+            OSSL_CORE_BIO *cbio = NULL;
             BIO *current_out = NULL;
 
             /*
@@ -616,9 +618,10 @@ static int encoder_process(struct encoder_process_data_st *data)
                      == NULL)
                 ok = 0;     /* Assume BIO_new() recorded an error */
 
+            if (ok)
+                ok = (cbio = ossl_core_bio_new_from_bio(current_out)) != NULL;
             if (ok) {
-                ok = current_encoder->encode(current_encoder_ctx,
-                                             (OSSL_CORE_BIO *)current_out,
+                ok = current_encoder->encode(current_encoder_ctx, cbio,
                                              original_data, current_abstract,
                                              data->ctx->selection,
                                              ossl_pw_passphrase_callback_enc,
@@ -631,6 +634,7 @@ static int encoder_process(struct encoder_process_data_st *data)
                 } OSSL_TRACE_END(ENCODER);
             }
 
+            ossl_core_bio_free(cbio);
             data->prev_encoder_inst = current_encoder_inst;
         }
     }

@@ -9,7 +9,7 @@ EVP_PKEY_encapsulate_init, EVP_PKEY_encapsulate
 
  #include <openssl/evp.h>
 
- int EVP_PKEY_encapsulate_init(EVP_PKEY_CTX *ctx);
+ int EVP_PKEY_encapsulate_init(EVP_PKEY_CTX *ctx, const OSSL_PARAM params[]);
  int EVP_PKEY_encapsulate(EVP_PKEY_CTX *ctx,
                           unsigned char *out, size_t *outlen,
                           unsigned char *genkey, size_t *genkeylen);
@@ -17,7 +17,8 @@ EVP_PKEY_encapsulate_init, EVP_PKEY_encapsulate
 =head1 DESCRIPTION
 
 The EVP_PKEY_encapsulate_init() function initializes a public key algorithm
-context I<ctx> for an encapsulation operation.
+context I<ctx> for an encapsulation operation and then sets the I<params>
+on the context in the same way as calling L<EVP_PKEY_CTX_set_params(3)>.
 
 The EVP_PKEY_encapsulate() function performs a public key encapsulation
 operation using I<ctx> with the name I<name>.
@@ -31,7 +32,7 @@ I<out> and its size is written to I<*outlen>.
 =head1 NOTES
 
 After the call to EVP_PKEY_encapsulate_init() algorithm specific parameters
-for the operation may be set using L<EVP_PKEY_CTX_set_params(3)>.
+for the operation may be set or modified using L<EVP_PKEY_CTX_set_params(3)>.
 
 =head1 RETURN VALUES
 
@@ -56,7 +57,7 @@ Encapsulate an RSASVE key (for RSA keys).
  ctx = EVP_PKEY_CTX_new_from_pkey(libctx, rsa_pub_key, NULL);
  if (ctx = NULL)
      /* Error */
- if (EVP_PKEY_encapsulate_init(ctx) <= 0)
+ if (EVP_PKEY_encapsulate_init(ctx, NULL) <= 0)
      /* Error */
 
  /* Set the mode - only 'RSASVE' is currently supported */

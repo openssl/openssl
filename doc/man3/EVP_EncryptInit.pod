@@ -9,12 +9,15 @@ EVP_CIPHER_CTX_new,
 EVP_CIPHER_CTX_reset,
 EVP_CIPHER_CTX_free,
 EVP_EncryptInit_ex,
+EVP_EncryptInit_ex2,
 EVP_EncryptUpdate,
 EVP_EncryptFinal_ex,
 EVP_DecryptInit_ex,
+EVP_DecryptInit_ex2,
 EVP_DecryptUpdate,
 EVP_DecryptFinal_ex,
 EVP_CipherInit_ex,
+EVP_CipherInit_ex2,
 EVP_CipherUpdate,
 EVP_CipherFinal_ex,
 EVP_CIPHER_CTX_set_key_length,
@@ -84,18 +87,27 @@ EVP_CIPHER_do_all_provided
 
  int EVP_EncryptInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
                         ENGINE *impl, const unsigned char *key, const unsigned char *iv);
+ int EVP_EncryptInit_ex2(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
+                         const unsigned char *key, const unsigned char *iv,
+                         const OSSL_PARAM params[]);
  int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out,
                        int *outl, const unsigned char *in, int inl);
  int EVP_EncryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl);
 
  int EVP_DecryptInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
                         ENGINE *impl, const unsigned char *key, const unsigned char *iv);
+ int EVP_DecryptInit_ex2(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
+                         const unsigned char *key, const unsigned char *iv,
+                         const OSSL_PARAM params[]);
  int EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out,
                        int *outl, const unsigned char *in, int inl);
  int EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *outm, int *outl);
 
  int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
                        ENGINE *impl, const unsigned char *key, const unsigned char *iv, int enc);
+ int EVP_CipherInit_ex2(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
+                        const unsigned char *key, const unsigned char *iv,
+                        int enc, const OSSL_PARAM params[]);
  int EVP_CipherUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out,
                       int *outl, const unsigned char *in, int inl);
  int EVP_CipherFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *outm, int *outl);
@@ -196,6 +208,20 @@ itself. This function should be called after all operations using a
 cipher are complete so sensitive information does not remain in
 memory.
 
+EVP_EncryptInit_ex2() sets up cipher context B<ctx> for encryption
+with cipher B<type>. B<type> is typically supplied by a function such
+as EVP_aes_256_cbc(), or a value explicitly fetched with
+EVP_CIPHER_fetch(). B<key> is the symmetric key to use
+and B<iv> is the IV to use (if necessary), the actual number of bytes
+used for the key and IV depends on the cipher. The parameters B<params> will
+be set on the context after initialisation. It is possible to set
+all parameters to NULL except B<type> in an initial call and supply
+the remaining parameters in subsequent calls, all of which have B<type>
+set to NULL. This is done when the default cipher parameters are not
+appropriate.
+For EVP_CIPH_GCM_MODE the IV will be generated internally if it is not
+specified.
+
 EVP_EncryptInit_ex() sets up cipher context B<ctx> for encryption
 with cipher B<type>. B<type> is typically supplied by a function such
 as EVP_aes_256_cbc(), or a value explicitly fetched with
@@ -239,20 +265,22 @@ If padding is disabled then EVP_EncryptFinal_ex() will not encrypt any more
 data and it will return an error if any data remains in a partial block:
 that is if the total data length is not a multiple of the block size.
 
-EVP_DecryptInit_ex(), EVP_DecryptUpdate() and EVP_DecryptFinal_ex() are the
-corresponding decryption operations. EVP_DecryptFinal() will return an
-error code if padding is enabled and the final block is not correctly
-formatted. The parameters and restrictions are identical to the encryption
-operations except that if padding is enabled the decrypted data buffer B<out>
-passed to EVP_DecryptUpdate() should have sufficient room for
-(B<inl> + cipher_block_size) bytes unless the cipher block size is 1 in
-which case B<inl> bytes is sufficient.
+EVP_DecryptInit_ex2(), EVP_DecryptInit_ex(), EVP_DecryptUpdate()
+and EVP_DecryptFinal_ex() are the corresponding decryption
+operations. EVP_DecryptFinal() will return an error code if padding is
+enabled and the final block is not correctly formatted. The parameters
+and restrictions are identical to the encryption operations except
+that if padding is enabled the decrypted data buffer B<out> passed
+to EVP_DecryptUpdate() should have sufficient room for (B<inl> +
+cipher_block_size) bytes unless the cipher block size is 1 in which case
+B<inl> bytes is sufficient.
 
-EVP_CipherInit_ex(), EVP_CipherUpdate() and EVP_CipherFinal_ex() are
-functions that can be used for decryption or encryption. The operation
-performed depends on the value of the B<enc> parameter. It should be set
-to 1 for encryption, 0 for decryption and -1 to leave the value unchanged
-(the actual value of 'enc' being supplied in a previous call).
+EVP_CipherInit_ex2(), EVP_CipherInit_ex(), EVP_CipherUpdate() and
+EVP_CipherFinal_ex() are functions that can be used for decryption or
+encryption. The operation performed depends on the value of the B<enc>
+parameter. It should be set to 1 for encryption, 0 for decryption and -1
+to leave the value unchanged (the actual value of 'enc' being supplied
+in a previous call).
 
 EVP_CIPHER_CTX_reset() clears all information from a cipher context
 and free up any allocated memory associate with it, except the B<ctx>
@@ -290,8 +318,8 @@ IDENTIFIER.
 
 EVP_CIPHER_CTX_set_padding() enables or disables padding. This
 function should be called after the context is set up for encryption
-or decryption with EVP_EncryptInit_ex(), EVP_DecryptInit_ex() or
-EVP_CipherInit_ex(). By default encryption operations are padded using
+or decryption with EVP_EncryptInit_ex2(), EVP_DecryptInit_ex2() or
+EVP_CipherInit_ex2(). By default encryption operations are padded using
 standard block padding and the padding is checked and removed when
 decrypting. If the B<pad> parameter is zero then no padding is
 performed, the total amount of data encrypted or decrypted must then
@@ -436,13 +464,13 @@ EVP_CIPHER_up_ref() returns 1 for success or 0 otherwise.
 EVP_CIPHER_CTX_new() returns a pointer to a newly created
 B<EVP_CIPHER_CTX> for success and B<NULL> for failure.
 
-EVP_EncryptInit_ex(), EVP_EncryptUpdate() and EVP_EncryptFinal_ex()
+EVP_EncryptInit_ex2(), EVP_EncryptUpdate() and EVP_EncryptFinal_ex()
 return 1 for success and 0 for failure.
 
-EVP_DecryptInit_ex() and EVP_DecryptUpdate() return 1 for success and 0 for failure.
+EVP_DecryptInit_ex2() and EVP_DecryptUpdate() return 1 for success and 0 for failure.
 EVP_DecryptFinal_ex() returns 0 if the decrypt failed or 1 for success.
 
-EVP_CipherInit_ex() and EVP_CipherUpdate() return 1 for success and 0 for failure.
+EVP_CipherInit_ex2() and EVP_CipherUpdate() return 1 for success and 0 for failure.
 EVP_CipherFinal_ex() returns 0 for a decryption failure or 1 for success.
 
 EVP_Cipher() returns the amount of encrypted / decrypted bytes, or -1
@@ -692,12 +720,14 @@ the input data earlier on will not produce a final decrypt error.
 If padding is disabled then the decryption operation will always succeed if
 the total amount of data decrypted is a multiple of the block size.
 
-The functions EVP_EncryptInit(), EVP_EncryptFinal(), EVP_DecryptInit(),
-EVP_CipherInit() and EVP_CipherFinal() are obsolete but are retained for
-compatibility with existing code. New code should use EVP_EncryptInit_ex(),
-EVP_EncryptFinal_ex(), EVP_DecryptInit_ex(), EVP_DecryptFinal_ex(),
-EVP_CipherInit_ex() and EVP_CipherFinal_ex() because they can reuse an
-existing context without allocating and freeing it up on each call.
+The functions EVP_EncryptInit(), EVP_EncryptInit_ex1(),
+EVP_EncryptFinal(), EVP_DecryptInit(), EVP_DecryptInit_ex1(),
+EVP_CipherInit(), EVP_CipherInit_ex1() and EVP_CipherFinal() are obsolete
+but are retained for compatibility with existing code. New code should
+use EVP_EncryptInit_ex2(), EVP_EncryptFinal_ex(), EVP_DecryptInit_ex2(),
+EVP_DecryptFinal_ex(), EVP_CipherInit_ex2() and EVP_CipherFinal_ex()
+because they can reuse an existing context without allocating and freeing
+it up on each call.
 
 There are some differences between functions EVP_CipherInit() and
 EVP_CipherInit_ex(), significant in some circumstances. EVP_CipherInit() fills
@@ -740,7 +770,7 @@ Encrypt a string using IDEA:
      FILE *out;
 
      ctx = EVP_CIPHER_CTX_new();
-     EVP_EncryptInit_ex(ctx, EVP_idea_cbc(), NULL, key, iv);
+     EVP_EncryptInit_ex2(ctx, EVP_idea_cbc(), key, iv, NULL);
 
      if (!EVP_EncryptUpdate(ctx, outbuf, &outlen, intext, strlen(intext))) {
          /* Error */
@@ -798,13 +828,13 @@ with a 128-bit key:
 
      /* Don't set key or IV right away; we want to check lengths */
      ctx = EVP_CIPHER_CTX_new();
-     EVP_CipherInit_ex(ctx, EVP_aes_128_cbc(), NULL, NULL, NULL,
-                       do_encrypt);
+     EVP_CipherInit_ex2(ctx, EVP_aes_128_cbc(), NULL, NULL,
+                        do_encrypt, NULL);
      OPENSSL_assert(EVP_CIPHER_CTX_key_length(ctx) == 16);
      OPENSSL_assert(EVP_CIPHER_CTX_iv_length(ctx) == 16);
 
      /* Now we can set key and IV */
-     EVP_CipherInit_ex(ctx, NULL, NULL, key, iv, do_encrypt);
+     EVP_CipherInit_ex2(ctx, NULL, key, iv, do_encrypt, NULL);
 
      for (;;) {
          inlen = fread(inbuf, 1, 1024, in);
@@ -849,8 +879,6 @@ Encryption using AES-CBC with a 256-bit key with "CS1" ciphertext stealing.
      if (ctx == NULL || cipher == NULL)
          goto err;
 
-     if (!EVP_CipherInit_ex(ctx, cipher, NULL, key, iv, encrypt))
-         goto err;
      /*
       * The default is "CS1" so this is not really needed,
       * but would be needed to set either "CS2" or "CS3".
@@ -858,7 +886,8 @@ Encryption using AES-CBC with a 256-bit key with "CS1" ciphertext stealing.
      params[0] = OSSL_PARAM_construct_utf8_string(OSSL_CIPHER_PARAM_CTS_MODE,
                                                   "CS1", 0);
      params[1] = OSSL_PARAM_construct_end();
-     if (!EVP_CIPHER_CTX_set_params(ctx, params))
+
+     if (!EVP_CipherInit_ex2(ctx, cipher, key, iv, encrypt, params))
          goto err;
 
      /* NOTE: CTS mode does not support multiple calls to EVP_CipherUpdate() */
@@ -903,7 +932,8 @@ EVP_CIPHER_CTX_reset() appeared and EVP_CIPHER_CTX_cleanup()
 disappeared.  EVP_CIPHER_CTX_init() remains as an alias for
 EVP_CIPHER_CTX_reset().
 
-The EVP_CIPHER_fetch(), EVP_CIPHER_free(), EVP_CIPHER_up_ref(),
+The EVP_EncryptInit_ex2(), EVP_DecryptInit_ex2(), EVP_CipherInit_ex2(),
+EVP_CIPHER_fetch(), EVP_CIPHER_free(), EVP_CIPHER_up_ref(),
 EVP_CIPHER_get_params(), EVP_CIPHER_CTX_set_params(),
 EVP_CIPHER_CTX_get_params(), EVP_CIPHER_gettable_params(),
 EVP_CIPHER_settable_ctx_params(), EVP_CIPHER_gettable_ctx_params(),
@@ -912,7 +942,7 @@ functions were added in 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

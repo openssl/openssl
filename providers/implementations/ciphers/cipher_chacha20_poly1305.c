@@ -149,6 +149,9 @@ static int chacha20_poly1305_set_ctx_params(void *vctx,
     PROV_CIPHER_HW_CHACHA20_POLY1305 *hw =
         (PROV_CIPHER_HW_CHACHA20_POLY1305 *)ctx->base.hw;
 
+    if (params == NULL)
+        return 1;
+
     p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_KEYLEN);
     if (p != NULL) {
         if (!OSSL_PARAM_get_size_t(p, &len)) {
@@ -224,12 +227,12 @@ static int chacha20_poly1305_set_ctx_params(void *vctx,
 
 static int chacha20_poly1305_einit(void *vctx, const unsigned char *key,
                                   size_t keylen, const unsigned char *iv,
-                                  size_t ivlen)
+                                  size_t ivlen, const OSSL_PARAM params[])
 {
     int ret;
 
     /* The generic function checks for ossl_prov_is_running() */
-    ret = ossl_cipher_generic_einit(vctx, key, keylen, iv, ivlen);
+    ret = ossl_cipher_generic_einit(vctx, key, keylen, iv, ivlen, NULL);
     if (ret && iv != NULL) {
         PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
         PROV_CIPHER_HW_CHACHA20_POLY1305 *hw =
@@ -237,17 +240,19 @@ static int chacha20_poly1305_einit(void *vctx, const unsigned char *key,
 
         hw->initiv(ctx);
     }
+    if (ret && !chacha20_poly1305_set_ctx_params(vctx, params))
+        ret = 0;
     return ret;
 }
 
 static int chacha20_poly1305_dinit(void *vctx, const unsigned char *key,
                                   size_t keylen, const unsigned char *iv,
-                                  size_t ivlen)
+                                  size_t ivlen, const OSSL_PARAM params[])
 {
     int ret;
 
     /* The generic function checks for ossl_prov_is_running() */
-    ret = ossl_cipher_generic_dinit(vctx, key, keylen, iv, ivlen);
+    ret = ossl_cipher_generic_dinit(vctx, key, keylen, iv, ivlen, NULL);
     if (ret && iv != NULL) {
         PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
         PROV_CIPHER_HW_CHACHA20_POLY1305 *hw =
@@ -255,6 +260,8 @@ static int chacha20_poly1305_dinit(void *vctx, const unsigned char *key,
 
         hw->initiv(ctx);
     }
+    if (ret && !chacha20_poly1305_set_ctx_params(vctx, params))
+        ret = 0;
     return ret;
 }
 

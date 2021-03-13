@@ -693,7 +693,7 @@ err:
 
 /* TODO(3.0): An arbitrary amount for now. Take another look at this */
 # define MAX_GROUPLIST   40
-
+# define GROUP_NAME_BUFFER_LENGTH 64
 typedef struct {
     SSL_CTX *ctx;
     size_t gidcnt;
@@ -705,7 +705,7 @@ static int gid_cb(const char *elem, int len, void *arg)
     gid_cb_st *garg = arg;
     size_t i;
     uint16_t gid = 0;
-    char etmp[20];
+    char etmp[GROUP_NAME_BUFFER_LENGTH];
 
     if (elem == NULL)
         return 0;
