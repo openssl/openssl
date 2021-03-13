@@ -936,7 +936,7 @@ int pkey_ctrl_string(EVP_PKEY_CTX *ctx, const char *value)
     vtmp++;
     rv = EVP_PKEY_CTX_ctrl_str(ctx, stmp, vtmp);
 
-err:
+ err:
     OPENSSL_free(stmp);
     return rv;
 }
