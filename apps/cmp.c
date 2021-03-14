@@ -13,6 +13,7 @@
 #include <ctype.h>
 
 #include "apps.h"
+#include "apps_config.h"
 #include "http_server.h"
 #include "s_apps.h"
 #include "progs.h"

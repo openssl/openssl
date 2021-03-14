@@ -32,6 +32,7 @@
 #include <openssl/store.h>
 #include "s_apps.h"
 #include "apps.h"
+#include "apps_config.h"
 
 DEFINE_STACK_OF(CONF)
 

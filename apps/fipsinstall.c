@@ -17,6 +17,7 @@
 #include <openssl/self_test.h>
 #include <openssl/fipskey.h>
 #include "apps.h"
+#include "apps_config.h"
 #include "progs.h"
 
 #define BUFSIZE 4096
