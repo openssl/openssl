@@ -6,20 +6,8 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-#include <ctype.h>
-#include <openssl/bio.h>
-#include <openssl/err.h>
-#include <openssl/x509v3.h>
 
-#ifndef W_OK
-# ifdef OPENSSL_SYS_VMS
-#  include <unistd.h>
-# elif !defined(OPENSSL_SYS_VXWORKS) && !defined(OPENSSL_SYS_WINDOWS) && !defined(OPENSSL_SYS_TANDEM)
-#  include <sys/file.h>
-# endif
-#endif
-
-#include "apps.h"
+#include "apps_config.h"
 
 CONF *app_load_config_bio(BIO *in, const char *filename)
 {
