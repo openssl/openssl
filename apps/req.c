@@ -13,6 +13,7 @@
 #include <string.h>
 #include <ctype.h>
 #include "apps.h"
+#include "apps_config.h"
 #include "ca.h"
 #include "progs.h"
 #include <openssl/bio.h>

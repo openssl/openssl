@@ -20,6 +20,7 @@
 #endif
 
 #include "apps.h"
+#include "apps_config.h"
 
 static BIO *bio_open_default_(const char *filename, char mode, int format,
                               int quiet);

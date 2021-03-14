@@ -34,6 +34,7 @@
 #include "apps.h"
 #include "ca.h"
 #include "progs.h"
+#include "apps_config.h"
 
 #ifndef PATH_MAX
 # define PATH_MAX 4096
