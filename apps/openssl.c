@@ -27,6 +27,7 @@
 # include <unixio.h>
 #endif
 #include "apps.h"
+#include "apps_config.h"
 #include "progs.h"
 
 /*
