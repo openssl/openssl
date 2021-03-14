@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef OSSL_APPS_PROPQ_H
-#define OSSL_APPS_PROPQ_H
+#ifndef OSSL_APPS_APPS_PROPQ_H
+#define OSSL_APPS_APPS_PROPQ_H
 
 int app_set_propq(const char *arg);
 const char *app_get0_propq(void);
