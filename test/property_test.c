@@ -137,6 +137,7 @@ static int test_property_query_value_create(void)
         && TEST_int_eq(ossl_property_match_count(q, p), -1)
         && TEST_int_eq(ossl_property_match_count(q, o), 1))
         r = 1;
+    ossl_property_free(o);
     ossl_property_free(p);
     ossl_property_free(q);
     ossl_method_store_free(store);
