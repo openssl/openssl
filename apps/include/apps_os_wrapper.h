@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef OSSL_APPS_OS_SPECIFIC_H
-# define OSSL_APPS_OS_SPECIFIC_H
+#ifndef OSSL_APPS_OS_WRAPPER_H
+# define OSSL_APPS_OS_WRAPPER_H
 
 /* moved from apps.h */
 int app_access(const char *, int flag);

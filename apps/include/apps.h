@@ -33,7 +33,7 @@
 # include "platform.h"
 # include "engine_loader.h"
 # include "apps_extracted.h"
-# include "apps_os_specific.h"
+# include "apps_os_wrapper.h"
 
 /*
  * quick macro when you need to pass an unsigned char instead of a char.
