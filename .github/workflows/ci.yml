@@ -85,7 +85,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: config
-      run: ./config enable-asan enable-ubsan no-cached-fetch && perl configdata.pm --dump
+      run: ./config --debug enable-asan enable-ubsan no-cached-fetch && perl configdata.pm --dump
     - name: make
       run: make -s -j4
     - name: make test
