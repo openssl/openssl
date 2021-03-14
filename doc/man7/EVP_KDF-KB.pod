@@ -138,9 +138,7 @@ Label "label", and IV "sixteen bytes iv".
  *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SEED,
                                           iv, strlen(iv));
  *p = OSSL_PARAM_construct_end();
- if (EVP_KDF_CTX_set_params(kctx, params) <= 0)
-     error("EVP_KDF_CTX_set_params");
- else if (EVP_KDF_derive(kctx, out, sizeof(out)) <= 0)
+ if (EVP_KDF_derive(kctx, out, sizeof(out), params) <= 0)
      error("EVP_KDF_derive");
 
  EVP_KDF_CTX_free(kctx);
