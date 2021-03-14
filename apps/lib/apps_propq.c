@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 #include <stddef.h>
+#include "apps_propq.h"
 
 static const char *app_propq = NULL;
 
