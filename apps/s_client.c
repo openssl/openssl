@@ -30,6 +30,7 @@ typedef unsigned int u_int;
 #endif
 
 #include "apps.h"
+#include "apps_propq.h"
 #include "progs.h"
 #include <openssl/x509.h>
 #include <openssl/ssl.h>

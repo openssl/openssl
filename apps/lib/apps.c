@@ -33,6 +33,7 @@
 #include "s_apps.h"
 #include "apps.h"
 #include "apps_config.h"
+#include "apps_propq.h"
 
 DEFINE_STACK_OF(CONF)
 

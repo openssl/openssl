@@ -21,6 +21,7 @@
 
 #include "apps.h"
 #include "apps_config.h"
+#include "apps_propq.h"
 
 static BIO *bio_open_default_(const char *filename, char mode, int format,
                               int quiet);
@@ -168,18 +169,18 @@ OSSL_LIB_CTX *app_get0_libctx(void)
     return app_libctx;
 }
 
-static const char *app_propq = NULL;
-
-int app_set_propq(const char *arg)
-{
-    app_propq = arg;
-    return 1;
-}
-
-const char *app_get0_propq(void)
-{
-    return app_propq;
-}
+//static const char *app_propq = NULL;
+//
+//int app_set_propq(const char *arg)
+//{
+//    app_propq = arg;
+//    return 1;
+//}
+//
+//const char *app_get0_propq(void)
+//{
+//    return app_propq;
+//}
 
 OSSL_LIB_CTX *app_create_libctx(void)
 {

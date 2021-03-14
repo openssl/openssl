@@ -10,6 +10,7 @@
 #include <openssl/opensslconf.h>
 
 #include "apps.h"
+#include "apps_propq.h"
 #include "progs.h"
 #include <openssl/err.h>
 #include <openssl/pem.h>

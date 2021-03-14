@@ -10,6 +10,7 @@
 #include "opt.h"
 #include "ca.h"
 #include "apps_extracted.h"
+#include "apps_propq.h"
 #include <string.h>
 #include <openssl/err.h>
 #include <openssl/provider.h>
