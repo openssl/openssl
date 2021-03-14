@@ -12,6 +12,7 @@
 #include <string.h>
 #include "apps.h"
 #include "apps_config.h"
+#include "apps_propq.h"
 #include "ca.h"
 #include "progs.h"
 #include <openssl/bio.h>

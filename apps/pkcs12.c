@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "apps.h"
+#include "apps_propq.h"
 #include "progs.h"
 #include <openssl/crypto.h>
 #include <openssl/err.h>

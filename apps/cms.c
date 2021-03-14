@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "apps.h"
+#include "apps_propq.h"
 #include "progs.h"
 
 #ifndef OPENSSL_NO_CMS

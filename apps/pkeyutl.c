@@ -8,6 +8,7 @@
  */
 
 #include "apps.h"
+#include "apps_propq.h"
 #include "progs.h"
 #include <string.h>
 #include <openssl/err.h>
