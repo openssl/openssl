@@ -9,7 +9,7 @@
 
 #include <openssl/ssl.h>
 #include "apps.h"
-#include "apps_os_specific.h"
+#include "apps_os_wrapper.h"
 
 #if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS)
 # include <conio.h>
