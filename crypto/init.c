@@ -347,8 +347,8 @@ void OPENSSL_cleanup(void)
     OPENSSL_INIT_STOP *currhandler, *lasthandler;
 
     /*
-     * TODO(3.0): This function needs looking at with a view to moving most/all
-     * of this into onfree handlers in OSSL_LIB_CTX.
+     * At some point we should consider looking at this function with a view to
+     * moving most/all of this into onfree handlers in OSSL_LIB_CTX.
      */
 
     /* If we've not been inited then no need to deinit */
@@ -488,8 +488,8 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
     }
 
     /*
-     * TODO(3.0): This function needs looking at with a view to moving most/all
-     * of this into OSSL_LIB_CTX.
+     * At some point we should look at this function with a view to moving
+     * most/all of this into OSSL_LIB_CTX.
      */
 
     if (stopped) {
