@@ -221,7 +221,7 @@ int EVP_PKEY_missing_parameters(const EVP_PKEY *pkey)
 
 /*
  * This function is called for any mixture of keys except pure legacy pair.
- * TODO When legacy keys are gone, we replace a call to this functions with
+ * When legacy keys are gone, we replace a call to this functions with
  * a call to evp_keymgmt_util_match().
  */
 static int evp_pkey_cmp_any(const EVP_PKEY *a, const EVP_PKEY *b,
@@ -295,7 +295,7 @@ int EVP_PKEY_cmp_parameters(const EVP_PKEY *a, const EVP_PKEY *b)
 int EVP_PKEY_parameters_eq(const EVP_PKEY *a, const EVP_PKEY *b)
 {
     /*
-     * TODO: clean up legacy stuff from this function when legacy support
+     * This will just call evp_keymgmt_util_match when legacy support
      * is gone.
      */
 
@@ -318,7 +318,7 @@ int EVP_PKEY_cmp(const EVP_PKEY *a, const EVP_PKEY *b)
 int EVP_PKEY_eq(const EVP_PKEY *a, const EVP_PKEY *b)
 {
     /*
-     * TODO: clean up legacy stuff from this function when legacy support
+     * This will just call evp_keymgmt_util_match when legacy support
      * is gone.
      */
 
@@ -938,7 +938,7 @@ int EVP_PKEY_base_id(const EVP_PKEY *pkey)
  * names that we know.
  * On a similar topic, EVP_PKEY_type(EVP_PKEY_SM2) will result in
  * EVP_PKEY_EC, because of aliasing.
- * TODO Clean this away along with all other #legacy support.
+ * This should be cleaned away along with all other #legacy support.
  */
 static const OSSL_ITEM standard_name2type[] = {
     { EVP_PKEY_RSA,     "RSA" },
@@ -1814,8 +1814,7 @@ int evp_pkey_copy_downgraded(EVP_PKEY **dest, const EVP_PKEY *src)
          * If the type is EVP_PKEY_NONE, then we have a problem somewhere
          * else in our code.  If it's not one of the well known EVP_PKEY_xxx
          * values, it should at least be EVP_PKEY_KEYMGMT at this point.
-         * TODO(3.0) remove this check when we're confident that the rest
-         * of the code treats this correctly.
+         * The check is kept as a safety measure.
          */
         if (!ossl_assert(type != EVP_PKEY_NONE)) {
             ERR_raise_data(ERR_LIB_EVP, ERR_R_INTERNAL_ERROR,
@@ -2139,7 +2138,6 @@ int EVP_PKEY_set_params(EVP_PKEY *pkey, OSSL_PARAM params[])
         }
 #ifndef FIPS_MODULE
         /*
-         * TODO?
          * We will hopefully never find the need to set individual data in
          * EVP_PKEYs with a legacy internal key, but we can't be entirely
          * sure.  This bit of code can be enabled if we find the need.  If
