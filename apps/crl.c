@@ -308,7 +308,8 @@ int crl_main(int argc, char **argv)
                     X509_NAME_hash_ex(X509_CRL_get_issuer(x), app_get0_libctx(),
                                       app_get0_propq(), &ok);
 
-                BIO_printf(bio_out, "issuer name hash=");
+                if (num > 1)
+                    BIO_printf(bio_out, "issuer name hash=");
                 if (ok)
                     BIO_printf(bio_out, "%08lx\n", hash_value);
                 else
@@ -316,7 +317,8 @@ int crl_main(int argc, char **argv)
             }
 #ifndef OPENSSL_NO_MD5
             if (hash_old == i) {
-                BIO_printf(bio_out, "issuer name old hash=");
+                if (num > 1)
+                    BIO_printf(bio_out, "issuer name old hash=");
                 BIO_printf(bio_out, "%08lx\n",
                            X509_NAME_hash_old(X509_CRL_get_issuer(x)));
             }
