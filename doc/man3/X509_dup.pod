@@ -315,6 +315,14 @@ X509_dup,
  void TYPE_free(TYPE *a);
  int TYPE_print_ctx(BIO *out, TYPE *a, int indent, const ASN1_PCTX *pctx);
 
+Deprecated since OpenSSL 3.0, can be hidden entirely by defining
+B<OPENSSL_API_COMPAT> with a suitable version value, see
+L<openssl_user_macros(7)>:
+
+ DSA *DSAparams_dup(const DSA *dsa);
+ RSA *RSAPrivateKey_dup(const RSA *rsa);
+ RSA *RSAPublicKey_dup(const RSA *rsa);
+
 =head1 DESCRIPTION
 
 In the description below, B<I<TYPE>> is used
@@ -364,9 +372,12 @@ B<I<TYPE>_print_ctx>() returns 1 on success or zero on failure.
 The functions PKCS7_new_ex() and CMS_ContentInfo_new_ex() were
 added in OpenSSL 3.0.
 
+The functions DSAparams_dup(), RSAPrivateKey_dup() and RSAPublicKey_dup() were
+deprecated in 3.0.
+
 =head1 COPYRIGHT
 
-Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2016-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

@@ -8,6 +8,10 @@ DSA_sign, DSA_sign_setup, DSA_verify - DSA signatures
 
  #include <openssl/dsa.h>
 
+Deprecated since OpenSSL 3.0, can be hidden entirely by defining
+B<OPENSSL_API_COMPAT> with a suitable version value, see
+L<openssl_user_macros(7)>:
+
  int DSA_sign(int type, const unsigned char *dgst, int len,
               unsigned char *sigret, unsigned int *siglen, DSA *dsa);
 
@@ -58,6 +62,10 @@ Standard, DSS), ANSI X9.30
 L<DSA_new(3)>, L<ERR_get_error(3)>, L<RAND_bytes(3)>,
 L<DSA_do_sign(3)>,
 L<RAND(7)>
+
+=head1 HISTORY
+
+All of these functions were deprecated in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

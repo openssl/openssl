@@ -45,14 +45,6 @@ objects
                         const BIGNUM *b, BN_CTX *ctx);
  int EC_GROUP_get_curve(const EC_GROUP *group, BIGNUM *p, BIGNUM *a, BIGNUM *b,
                         BN_CTX *ctx);
- int EC_GROUP_set_curve_GFp(EC_GROUP *group, const BIGNUM *p,
-                            const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx);
- int EC_GROUP_get_curve_GFp(const EC_GROUP *group, BIGNUM *p,
-                            BIGNUM *a, BIGNUM *b, BN_CTX *ctx);
- int EC_GROUP_set_curve_GF2m(EC_GROUP *group, const BIGNUM *p,
-                             const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx);
- int EC_GROUP_get_curve_GF2m(const EC_GROUP *group, BIGNUM *p,
-                             BIGNUM *a, BIGNUM *b, BN_CTX *ctx);
 
  ECPARAMETERS *EC_GROUP_get_ecparameters(const EC_GROUP *group,
                                          ECPARAMETERS *params);
@@ -67,6 +59,17 @@ L<openssl_user_macros(7)>:
 
  EC_GROUP *EC_GROUP_new(const EC_METHOD *meth);
  void EC_GROUP_clear_free(EC_GROUP *group);
+
+ int EC_GROUP_set_curve_GFp(EC_GROUP *group, const BIGNUM *p,
+                            const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx);
+ int EC_GROUP_get_curve_GFp(const EC_GROUP *group, BIGNUM *p,
+                            BIGNUM *a, BIGNUM *b, BN_CTX *ctx);
+ int EC_GROUP_set_curve_GF2m(EC_GROUP *group, const BIGNUM *p,
+                             const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx);
+ int EC_GROUP_get_curve_GF2m(const EC_GROUP *group, BIGNUM *p,
+                             BIGNUM *a, BIGNUM *b, BN_CTX *ctx);
+
+
 
 =head1 DESCRIPTION
 
@@ -206,11 +209,17 @@ added in OpenSSL 3.0.
 EC_GROUP_clear_free() was deprecated in OpenSSL 3.0; use EC_GROUP_free()
 instead.
 
+=item *
+
+ EC_GROUP_set_curve_GFp(), EC_GROUP_get_curve_GFp(),
+ EC_GROUP_set_curve_GF2m() and EC_GROUP_get_curve_GF2m() were deprecated in
+ OpenSSL 3.0; use EC_GROUP_set_curve() and EC_GROUP_get_curve() instead.
+
 =back
 
 =head1 COPYRIGHT
 
-Copyright 2013-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2013-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

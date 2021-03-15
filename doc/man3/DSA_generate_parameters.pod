@@ -8,6 +8,10 @@ DSA_generate_parameters_ex, DSA_generate_parameters - generate DSA parameters
 
  #include <openssl/dsa.h>
 
+Deprecated since OpenSSL 3.0, can be hidden entirely by defining
+B<OPENSSL_API_COMPAT> with a suitable version value, see
+L<openssl_user_macros(7)>:
+
  int DSA_generate_parameters_ex(DSA *dsa, int bits,
                                 const unsigned char *seed, int seed_len,
                                 int *counter_ret, unsigned long *h_ret,
@@ -110,6 +114,8 @@ L<DSA_new(3)>, L<ERR_get_error(3)>, L<RAND_bytes(3)>,
 L<DSA_free(3)>, L<BN_generate_prime(3)>
 
 =head1 HISTORY
+
+DSA_generate_parameters_ex() was deprecated in OpenSSL 3.0.
 
 DSA_generate_parameters() was deprecated in OpenSSL 0.9.8; use
 DSA_generate_parameters_ex() instead.

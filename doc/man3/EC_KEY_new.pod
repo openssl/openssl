@@ -20,6 +20,10 @@ EC_KEY objects
 
  #include <openssl/ec.h>
 
+Deprecated since OpenSSL 3.0, can be hidden entirely by defining
+B<OPENSSL_API_COMPAT> with a suitable version value, see
+L<openssl_user_macros(7)>:
+
  EC_KEY *EC_KEY_new_ex(OSSL_LIB_CTX *ctx, const char *propq);
  EC_KEY *EC_KEY_new(void);
  int EC_KEY_get_flags(const EC_KEY *key);
@@ -57,12 +61,12 @@ EC_KEY objects
  size_t EC_KEY_priv2oct(const EC_KEY *eckey, unsigned char *buf, size_t len);
 
  size_t EC_KEY_priv2buf(const EC_KEY *eckey, unsigned char **pbuf);
-
-Deprecated since OpenSSL 3.0:
-
  int EC_KEY_precompute_mult(EC_KEY *key, BN_CTX *ctx);
 
 =head1 DESCRIPTION
+
+All of the functions described on this page are deprecated.
+Applications should instead use L<EVP_PKEY_new(3)> and L<EVP_PKEY_free(3)>.
 
 An EC_KEY represents a public key and, optionally, the associated private
 key.
@@ -213,11 +217,11 @@ L<OSSL_LIB_CTX(3)>
 
 =head1 HISTORY
 
-EC_KEY_precompute_mult() was deprecated in OpenSSL 3.0.
+All of these functions were deprecated in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2013-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2013-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

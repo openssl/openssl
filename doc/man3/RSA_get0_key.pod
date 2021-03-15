@@ -16,6 +16,10 @@ RSA_set0_multi_prime_params, RSA_get_version
 
  #include <openssl/rsa.h>
 
+Deprecated since OpenSSL 3.0, can be hidden entirely by defining
+B<OPENSSL_API_COMPAT> with a suitable version value, see
+L<openssl_user_macros(7)>:
+
  int RSA_set0_key(RSA *r, BIGNUM *n, BIGNUM *e, BIGNUM *d);
  int RSA_set0_factors(RSA *r, BIGNUM *p, BIGNUM *q);
  int RSA_set0_crt_params(RSA *r, BIGNUM *dmp1, BIGNUM *dmq1, BIGNUM *iqmp);
@@ -172,9 +176,11 @@ and RSA_get_version() functions were added in OpenSSL 1.1.1.
 
 Other functions described here were added in OpenSSL 1.1.0.
 
+All of these functions were deprecated in OpenSSL 3.0.
+
 =head1 COPYRIGHT
 
-Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2016-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

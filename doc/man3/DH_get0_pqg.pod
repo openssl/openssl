@@ -12,6 +12,10 @@ DH_get_length, DH_set_length - Routines for getting and setting data in a DH obj
 
  #include <openssl/dh.h>
 
+Deprecated since OpenSSL 3.0, can be hidden entirely by defining
+B<OPENSSL_API_COMPAT> with a suitable version value, see
+L<openssl_user_macros(7)>:
+
  void DH_get0_pqg(const DH *dh,
                   const BIGNUM **p, const BIGNUM **q, const BIGNUM **g);
  int DH_set0_pqg(DH *dh, BIGNUM *p, BIGNUM *q, BIGNUM *g);
@@ -29,10 +33,6 @@ DH_get_length, DH_set_length - Routines for getting and setting data in a DH obj
 
  long DH_get_length(const DH *dh);
  int DH_set_length(DH *dh, long length);
-
-Deprecated since OpenSSL 3.0, can be hidden entirely by defining
-B<OPENSSL_API_COMPAT> with a suitable version value, see
-L<openssl_user_macros(7)>:
 
  ENGINE *DH_get0_engine(DH *d);
 
@@ -128,9 +128,9 @@ L<DH_set_method(3)>, L<DH_size(3)>, L<DH_meth_new(3)>
 
 =head1 HISTORY
 
-The DH_get0_engine() function was deprecated in OpenSSL 3.0.
-
 The functions described here were added in OpenSSL 1.1.0.
+
+All of these functions were deprecated in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
