@@ -349,10 +349,6 @@ int EVP_PKEY_derive_set_peer(EVP_PKEY_CTX *ctx, EVP_PKEY *peer)
 #ifdef FIPS_MODULE
     return ret;
 #else
-    /*
-     * TODO(3.0) investigate the case where the operation is deemed legacy,
-     * but the given peer key is provider only.
-     */
     if (ctx->pmeth == NULL
         || !(ctx->pmeth->derive != NULL
              || ctx->pmeth->encrypt != NULL
