@@ -55,13 +55,63 @@ it in text or binary mode as is appropriate for the encoder output type.
 OSSL_ENCODER_to_bio(), OSSL_ENCODER_to_fp() and OSSL_ENCODER_to_data()
 return 1 on success, or 0 on failure.
 
-=begin comment TODO(3.0) Add examples!
-
 =head1 EXAMPLES
 
-Text, because pod2xxx doesn't like empty sections
+To encode a pkey as PKCS#8 with PEM format into a bio:
 
-=end comment
+ OSSL_ENCODER_CTX *ectx;
+ const char *format = "PEM";
+ const char *structure = "pkcs8"; /* PKCS#8 structure */
+ const unsigned char *pass = "my password";
+
+ ectx = OSSL_ENCODER_CTX_new_for_pkey(pkey,
+                                      OSSL_KEYMGMT_SELECT_KEYPAIR
+                                      | OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS,
+                                      format, structure,
+                                      NULL);
+ if (ectx == NULL) {
+     /* error: no suitable potential encoders found */
+ }
+ if (pass != NULL)
+     OSSL_ENCODER_CTX_set_passphrase(ectx, pass, strlen(pass));
+ if (OSSL_ENCODER_to_bio(ectx, bio)) {
+     /* pkey was successfully encoded into the bio */
+ } else {
+     /* encoding failure */
+ }
+ OSSL_ENCODER_CTX_free(ectx);
+
+To encode a pkey as PKCS#8 with DER format encrypted with
+AES-256-CBC into a buffer:
+
+ OSSL_ENCODER_CTX *ectx;
+ const char *format = "DER";
+ const char *structure = "pkcs8"; /* PKCS#8 structure */
+ const unsigned char *pass = "my password";
+ unsigned char *data = NULL;
+ size_t datalen;
+
+ ectx = OSSL_ENCODER_CTX_new_for_pkey(pkey,
+                                      OSSL_KEYMGMT_SELECT_KEYPAIR,
+                                      | OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS,
+                                      format, structure,
+                                      NULL);
+ if (ectx == NULL) {
+     /* error: no suitable potential encoders found */
+ }
+ if (pass != NULL) {
+     OSSL_ENCODER_CTX_set_passphrase(ectx, pass, strlen(pass));
+     OSSL_ENCODER_CTX_set_cipher(ctx, "AES-256-CBC", NULL);
+ }
+ if (OSSL_ENCODER_to_data(ectx, &data, &datalen)) {
+     /*
+      * pkey was successfully encoded into a newly allocated
+      * data buffer
+      */
+ } else {
+     /* encoding failure */
+ }
+ OSSL_ENCODER_CTX_free(ectx);
 
 =head1 SEE ALSO
 

@@ -116,13 +116,46 @@ OSSL_DECODER_fetch() may be called implicitly by other fetching
 functions, using the same library context and properties.
 Any other API that uses keys will typically do this.
 
-=begin comment TODO(3.0) Add examples!
-
 =head1 EXAMPLES
 
-Text, because pod2xxx doesn't like empty sections
+To list all decoders in a provider to a bio_out:
 
-=end comment
+ static void collect_decoders(OSSL_DECODER *decoder, void *stack)
+ {
+     STACK_OF(OSSL_DECODER) *decoder_stack = stack;
+
+     sk_OSSL_DECODER_push(decoder_stack, decoder);
+     OSSL_DECODER_up_ref(decoder);
+ }
+
+ void print_name(const char *name, void *vdata)
+ {
+     BIO *bio = vdata;
+
+     BIO_printf(bio, "%s ", name);
+ }
+
+
+ STACK_OF(OSSL_DECODER) *decoders;
+ int i;
+
+ decoders = sk_OSSL_DECODER_new_null();
+
+ BIO_printf(bio_out, "DECODERs provided by %s:\n", provider);
+ OSSL_DECODER_do_all_provided(NULL, collect_decoders,
+                              decoders);
+
+ for (i = 0; i < sk_OSSL_DECODER_num(decoders); i++) {
+     OSSL_DECODER *decoder = sk_OSSL_DECODER_value(decoders, i);
+
+     if (strcmp(OSSL_PROVIDER_name(OSSL_DECODER_provider(decoder)),
+                provider) != 0)
+         continue;
+
+     if (OSSL_DECODER_names_do_all(decoder, print_name, bio_out))
+            BIO_printf(bio_out, "\n");
+ }
+ sk_OSSL_DECODER_pop_free(decoders, OSSL_DECODER_free);
 
 =head1 SEE ALSO
 
