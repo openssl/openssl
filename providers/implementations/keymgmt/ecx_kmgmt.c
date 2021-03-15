@@ -729,6 +729,7 @@ static int ecx_validate(const void *keydata, int selection, int type, size_t key
 
     if (!ok) {
         ERR_raise(ERR_LIB_PROV, PROV_R_ALGORITHM_MISMATCH);
+        return 0;
     }
 
     if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0)
