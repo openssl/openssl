@@ -1104,6 +1104,7 @@ static OPENSSL_CORE_CTX *core_get_libctx(const OSSL_CORE_HANDLE *handle)
      * that does not apply here. Here |prov| == NULL can happen only in
      * case of coding error.
      */
+    (void)ossl_assert(prov != NULL);
     return (OPENSSL_CORE_CTX *)prov->libctx;
 }
 
@@ -1129,6 +1130,8 @@ static int core_thread_start(const OSSL_CORE_HANDLE *handle,
  * These error functions should use |handle| to select the proper
  * library context to report in the correct error stack if error
  * stacks become tied to the library context.
+ * We cannot currently do that since there's no support for it in the
+ * ERR subsystem.
  */
 static void core_new_error(const OSSL_CORE_HANDLE *handle)
 {
