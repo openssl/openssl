@@ -103,7 +103,7 @@ static int rsa_multiprime_keygen(RSA *rsa, int bits, int primes,
         goto err;
     }
 
-    ctx = BN_CTX_new();
+    ctx = BN_CTX_new_ex(rsa->libctx);
     if (ctx == NULL)
         goto err;
     BN_CTX_start(ctx);
@@ -187,7 +187,8 @@ static int rsa_multiprime_keygen(RSA *rsa, int bits, int primes,
 
         for (;;) {
  redo:
-            if (!BN_generate_prime_ex(prime, bitsr[i] + adj, 0, NULL, NULL, cb))
+            if (!BN_generate_prime_ex2(prime, bitsr[i] + adj, 0, NULL, NULL,
+                                       cb, ctx))
                 goto err;
             /*
              * prime should not be equal to p, q, r_3...
