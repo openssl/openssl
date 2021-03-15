@@ -9,6 +9,10 @@ DSA_set_method, DSA_new_method, DSA_OpenSSL - select DSA method
 
  #include <openssl/dsa.h>
 
+Deprecated since OpenSSL 3.0, can be hidden entirely by defining
+B<OPENSSL_API_COMPAT> with a suitable version value, see
+L<openssl_user_macros(7)>:
+
  void DSA_set_default_method(const DSA_METHOD *meth);
 
  const DSA_METHOD *DSA_get_default_method(void);
@@ -20,6 +24,9 @@ DSA_set_method, DSA_new_method, DSA_OpenSSL - select DSA method
  DSA_METHOD *DSA_OpenSSL(void);
 
 =head1 DESCRIPTION
+
+All of the functions described on this page are deprecated.
+Applications should providers instead of method overrides.
 
 A B<DSA_METHOD> specifies the functions that OpenSSL uses for DSA
 operations. By modifying the method, alternative implementations
@@ -76,9 +83,13 @@ fails. Otherwise it returns a pointer to the newly allocated structure.
 
 L<DSA_new(3)>, L<DSA_new(3)>, L<DSA_meth_new(3)>
 
+=head1 HISTORY
+
+All of these functions were deprecated in OpenSSL 3.0.
+
 =head1 COPYRIGHT
 
-Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

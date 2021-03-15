@@ -364,10 +364,14 @@ OSSL_STORE_LOADER_names_do_all() were added in OpenSSL 3.0.
 OSSL_STORE_open_ex_fn() was added in OpenSSL 3.0.
 
 B<OSSL_STORE_LOADER>, B<OSSL_STORE_LOADER_CTX>, OSSL_STORE_LOADER_new(),
-OSSL_STORE_LOADER_set0_scheme(), OSSL_STORE_LOADER_set_open(),
-OSSL_STORE_LOADER_set_ctrl(), OSSL_STORE_LOADER_set_load(),
-OSSL_STORE_LOADER_set_eof(), OSSL_STORE_LOADER_set_close(),
-OSSL_STORE_LOADER_free(), OSSL_STORE_register_loader(),
+OSSL_STORE_LOADER_set0_scheme(), OSSL_STORE_LOADER_get0_scheme(),
+OSSL_STORE_LOADER_get0_engine(), OSSL_STORE_LOADER_set_expect(),
+OSSL_STORE_LOADER_set_find(), OSSL_STORE_LOADER_set_attach(),
+OSSL_STORE_LOADER_set_open_ex(), OSSL_STORE_LOADER_set_open(),
+OSSL_STORE_LOADER_set_ctrl(),
+OSSL_STORE_LOADER_set_load(), OSSL_STORE_LOADER_set_eof(),
+OSSL_STORE_LOADER_set_close(), OSSL_STORE_LOADER_free(),
+OSSL_STORE_register_loader(), OSSL_STORE_LOADER_set_error(),
 OSSL_STORE_unregister_loader(), OSSL_STORE_open_fn(), OSSL_STORE_ctrl_fn(),
 OSSL_STORE_load_fn(), OSSL_STORE_eof_fn() and OSSL_STORE_close_fn()
 were added in OpenSSL 1.1.1, and became deprecated in OpenSSL 3.0.
