@@ -164,8 +164,6 @@ static int rsa_import(void *keydata, int selection, const OSSL_PARAM params[])
 
     rsa_type = RSA_test_flags(rsa, RSA_FLAG_TYPE_MASK);
 
-    /* TODO(3.0) OAEP should bring on parameters as well */
-
     if ((selection & OSSL_KEYMGMT_SELECT_OTHER_PARAMETERS) != 0)
         ok = ok && pss_params_fromdata(ossl_rsa_get0_pss_params_30(rsa),
                                        &pss_defaults_set,
@@ -188,8 +186,6 @@ static int rsa_export(void *keydata, int selection,
 
     if (!ossl_prov_is_running() || rsa == NULL)
         return 0;
-
-    /* TODO(3.0) OAEP should bring on parameters */
 
     tmpl = OSSL_PARAM_BLD_new();
     if (tmpl == NULL)
