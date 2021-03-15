@@ -55,7 +55,7 @@ const OPTIONS *test_get_options(void)
         { "config", OPT_CONFIG_FILE, '<',
           "The configuration file to use for the libctx" },
         { "provider", OPT_PROVIDER_NAME, 's',
-          "The provider to load (The default value is 'default'" },
+          "The provider to load (The default value is 'default')" },
         { NULL }
     };
     return test_options;

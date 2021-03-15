@@ -52,10 +52,11 @@ static int write_pvk(struct key2ms_ctx_st *ctx, OSSL_CORE_BIO *cout,
 {
     BIO *out = NULL;
     int ret = 0;
+    OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(ctx->provctx);
 
     out = ossl_bio_new_from_core_bio(ctx->provctx, cout);
-    ret = i2b_PVK_bio(out, pkey, ctx->pvk_encr_level,
-                      ossl_pw_pem_password, &ctx->pwdata);
+    ret = i2b_PVK_bio_ex(out, pkey, ctx->pvk_encr_level,
+                         ossl_pw_pem_password, &ctx->pwdata, libctx, NULL);
     BIO_free(out);
 
     return ret;

@@ -2779,6 +2779,10 @@ DEPEND[html/man3/X509v3_get_ext_by_NID.html]=man3/X509v3_get_ext_by_NID.pod
 GENERATE[html/man3/X509v3_get_ext_by_NID.html]=man3/X509v3_get_ext_by_NID.pod
 DEPEND[man/man3/X509v3_get_ext_by_NID.3]=man3/X509v3_get_ext_by_NID.pod
 GENERATE[man/man3/X509v3_get_ext_by_NID.3]=man3/X509v3_get_ext_by_NID.pod
+DEPEND[html/man3/b2i_PVK_bio_ex.html]=man3/b2i_PVK_bio_ex.pod
+GENERATE[html/man3/b2i_PVK_bio_ex.html]=man3/b2i_PVK_bio_ex.pod
+DEPEND[man/man3/b2i_PVK_bio_ex.3]=man3/b2i_PVK_bio_ex.pod
+GENERATE[man/man3/b2i_PVK_bio_ex.3]=man3/b2i_PVK_bio_ex.pod
 DEPEND[html/man3/d2i_PKCS8PrivateKey_bio.html]=man3/d2i_PKCS8PrivateKey_bio.pod
 GENERATE[html/man3/d2i_PKCS8PrivateKey_bio.html]=man3/d2i_PKCS8PrivateKey_bio.pod
 DEPEND[man/man3/d2i_PKCS8PrivateKey_bio.3]=man3/d2i_PKCS8PrivateKey_bio.pod
@@ -3398,6 +3402,7 @@ html/man3/X509_sign.html \
 html/man3/X509_verify.html \
 html/man3/X509_verify_cert.html \
 html/man3/X509v3_get_ext_by_NID.html \
+html/man3/b2i_PVK_bio_ex.html \
 html/man3/d2i_PKCS8PrivateKey_bio.html \
 html/man3/d2i_PrivateKey.html \
 html/man3/d2i_RSAPrivateKey.html \
@@ -3986,6 +3991,7 @@ man/man3/X509_sign.3 \
 man/man3/X509_verify.3 \
 man/man3/X509_verify_cert.3 \
 man/man3/X509v3_get_ext_by_NID.3 \
+man/man3/b2i_PVK_bio_ex.3 \
 man/man3/d2i_PKCS8PrivateKey_bio.3 \
 man/man3/d2i_PrivateKey.3 \
 man/man3/d2i_RSAPrivateKey.3 \
