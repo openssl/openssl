@@ -1102,7 +1102,7 @@ static OPENSSL_CORE_CTX *core_get_libctx(const OSSL_CORE_HANDLE *handle)
      * Using ossl_provider_libctx would be wrong as that returns
      * NULL for |prov| == NULL and NULL libctx has a special meaning
      * that does not apply here. Here |prov| == NULL can happen only in
-     * case of coding error.
+     * case of a coding error.
      */
     (void)ossl_assert(prov != NULL);
     return (OPENSSL_CORE_CTX *)prov->libctx;
