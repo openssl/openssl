@@ -16,12 +16,6 @@
 #include <openssl/proverr.h>
 
 #include "crypto/siphash.h"
-/*
- * TODO(3.0) when siphash has moved entirely to our providers, this
- * header should be moved to the provider include directory.  For the
- * moment, crypto/siphash/siphash_ameth.c has us stuck.
- */
-#include "../../../crypto/siphash/siphash_local.h"
 
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
