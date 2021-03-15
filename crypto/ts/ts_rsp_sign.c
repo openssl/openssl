@@ -687,7 +687,7 @@ static int ts_RESP_sign(TS_RESP_CTX *ctx)
     certs = ctx->flags & TS_ESS_CERT_ID_CHAIN ? ctx->certs : NULL;
     if (ctx->ess_cert_id_digest == NULL
         || EVP_MD_is_a(ctx->ess_cert_id_digest, SN_sha1)) {
-        if ((sc = ossl_ess_signing_cert_new_init(ctx->signer_cert,
+        if ((sc = OSSL_ESS_signing_cert_new_init(ctx->signer_cert,
                                                  certs, 0)) == NULL)
             goto err;
 
@@ -696,7 +696,7 @@ static int ts_RESP_sign(TS_RESP_CTX *ctx)
             goto err;
         }
     } else {
-        sc2 = ossl_ess_signing_cert_v2_new_init(ctx->ess_cert_id_digest,
+        sc2 = OSSL_ESS_signing_cert_v2_new_init(ctx->ess_cert_id_digest,
                                                 ctx->signer_cert, certs, 0);
         if (sc2 == NULL)
             goto err;

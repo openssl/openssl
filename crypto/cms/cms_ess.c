@@ -53,7 +53,7 @@ int ossl_cms_check_signing_certs(const CMS_SignerInfo *si,
     ESS_SIGNING_CERT_V2 *ssv2 = NULL;
     int ret = ossl_cms_signerinfo_get_signing_cert(si, &ss) >= 0
         && ossl_cms_signerinfo_get_signing_cert_v2(si, &ssv2) >= 0
-        && ossl_ess_check_signing_certs(ss, ssv2, chain, 1);
+        && OSSL_ESS_check_signing_certs(ss, ssv2, chain, 1) > 0;
 
     ESS_SIGNING_CERT_free(ss);
     ESS_SIGNING_CERT_V2_free(ssv2);

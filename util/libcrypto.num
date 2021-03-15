@@ -5315,6 +5315,9 @@ RAND_set_DRBG_type                      ?	3_0_0	EXIST::FUNCTION:
 RAND_set_seed_source_type               ?	3_0_0	EXIST::FUNCTION:
 BN_mod_exp_mont_consttime_x2            ?	3_0_0	EXIST::FUNCTION:
 BIO_f_readbuffer                        ?	3_0_0	EXIST::FUNCTION:
+OSSL_ESS_check_signing_certs            ?	3_0_0	EXIST::FUNCTION:
+OSSL_ESS_signing_cert_new_init          ?	3_0_0	EXIST::FUNCTION:
+OSSL_ESS_signing_cert_v2_new_init       ?	3_0_0	EXIST::FUNCTION:
 EVP_DigestInit_ex2                      ?	3_0_0	EXIST::FUNCTION:
 EVP_EncryptInit_ex2                     ?	3_0_0	EXIST::FUNCTION:
 EVP_DecryptInit_ex2                     ?	3_0_0	EXIST::FUNCTION:

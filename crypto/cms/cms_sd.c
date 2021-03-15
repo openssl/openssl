@@ -377,13 +377,13 @@ CMS_SignerInfo *CMS_add1_signer(CMS_ContentInfo *cms,
             int add_sc;
 
             if (md == NULL || EVP_MD_is_a(md, SN_sha1)) {
-                if ((sc = ossl_ess_signing_cert_new_init(signer,
+                if ((sc = OSSL_ESS_signing_cert_new_init(signer,
                                                          NULL, 1)) == NULL)
                     goto err;
                 add_sc = ossl_cms_add1_signing_cert(si, sc);
                 ESS_SIGNING_CERT_free(sc);
             } else {
-                if ((sc2 = ossl_ess_signing_cert_v2_new_init(md, signer,
+                if ((sc2 = OSSL_ESS_signing_cert_v2_new_init(md, signer,
                                                              NULL, 1)) == NULL)
                     goto err;
                 add_sc = ossl_cms_add1_signing_cert_v2(si, sc2);

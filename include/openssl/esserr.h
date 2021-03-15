@@ -16,8 +16,6 @@
 # include <openssl/symhacks.h>
 # include <openssl/cryptoerr_legacy.h>
 
-
-
 /*
  * ESS reason codes.
  */

@@ -208,7 +208,7 @@ static int ts_check_signing_certs(const PKCS7_SIGNER_INFO *si,
 {
     ESS_SIGNING_CERT *ss = ossl_ess_get_signing_cert(si);
     ESS_SIGNING_CERT_V2 *ssv2 = ossl_ess_get_signing_cert_v2(si);
-    int ret = ossl_ess_check_signing_certs(ss, ssv2, chain, 1);
+    int ret = OSSL_ESS_check_signing_certs(ss, ssv2, chain, 1) > 0;
 
     ESS_SIGNING_CERT_free(ss);
     ESS_SIGNING_CERT_V2_free(ssv2);
