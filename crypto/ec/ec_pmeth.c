@@ -161,8 +161,15 @@ static int pkey_ec_derive(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *keylen)
     size_t outlen;
     const EC_POINT *pubkey = NULL;
     EC_KEY *eckey;
+    const EC_KEY *eckeypub;
     EC_PKEY_CTX *dctx = ctx->data;
-    if (!ctx->pkey || !ctx->peerkey) {
+
+    if (ctx->pkey == NULL || ctx->peerkey == NULL) {
+        ERR_raise(ERR_LIB_EC, EC_R_KEYS_NOT_SET);
+        return 0;
+    }
+    eckeypub = EVP_PKEY_get0_EC_KEY(ctx->peerkey);
+    if (eckeypub == NULL) {
         ERR_raise(ERR_LIB_EC, EC_R_KEYS_NOT_SET);
         return 0;
     }
@@ -178,7 +185,7 @@ static int pkey_ec_derive(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *keylen)
         *keylen = (EC_GROUP_get_degree(group) + 7) / 8;
         return 1;
     }
-    pubkey = EC_KEY_get0_public_key(ctx->peerkey->pkey.ec);
+    pubkey = EC_KEY_get0_public_key(eckeypub);
 
     /*
      * NB: unlike PKCS#3 DH, if *outlen is less than maximum size this is not

@@ -766,7 +766,7 @@ static int validate_ecx_derive(EVP_PKEY_CTX *ctx, unsigned char *key,
         return 0;
     }
     ecxkey = ctx->pkey->pkey.ecx;
-    peerkey = ctx->peerkey->pkey.ecx;
+    peerkey = EVP_PKEY_get0(ctx->peerkey);
     if (ecxkey == NULL || ecxkey->privkey == NULL) {
         ERR_raise(ERR_LIB_EC, EC_R_INVALID_PRIVATE_KEY);
         return 0;
