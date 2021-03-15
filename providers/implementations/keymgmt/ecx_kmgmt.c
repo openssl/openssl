@@ -72,6 +72,8 @@ static OSSL_FUNC_keymgmt_import_types_fn ecx_imexport_types;
 static OSSL_FUNC_keymgmt_export_fn ecx_export;
 static OSSL_FUNC_keymgmt_export_types_fn ecx_imexport_types;
 
+#define ECX_POSSIBLE_SELECTIONS (OSSL_KEYMGMT_SELECT_KEYPAIR)
+
 struct ecx_gen_ctx {
     OSSL_LIB_CTX *libctx;
     char *propq;
