@@ -106,6 +106,7 @@ static X509_SIG *p8info_to_encp8(PKCS8_PRIV_KEY_INFO *p8info,
     X509_SIG *p8 = NULL;
     char kstr[PEM_BUFSIZE];
     size_t klen = 0;
+    OSSL_LIB_CTX *libctx = PROV_LIBCTX_OF(ctx->provctx);
 
     if (ctx->cipher == NULL)
         return NULL;
@@ -116,7 +117,8 @@ static X509_SIG *p8info_to_encp8(PKCS8_PRIV_KEY_INFO *p8info,
         return NULL;
     }
     /* First argument == -1 means "standard" */
-    p8 = PKCS8_encrypt(-1, ctx->cipher, kstr, klen, NULL, 0, 0, p8info);
+    p8 = PKCS8_encrypt_ex(-1, ctx->cipher, kstr, klen, NULL, 0, 0, p8info,
+                          libctx, NULL);
     OPENSSL_cleanse(kstr, klen);
     return p8;
 }

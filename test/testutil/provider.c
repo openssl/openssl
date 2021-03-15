@@ -15,9 +15,13 @@ int test_get_libctx(OSSL_LIB_CTX **libctx, OSSL_PROVIDER **default_null_prov,
                     const char *config_file,
                     OSSL_PROVIDER **provider, const char *module_name)
 {
-    if ((*libctx = OSSL_LIB_CTX_new()) == NULL) {
-        opt_printf_stderr("Failed to create libctx\n");
-        goto err;
+    OSSL_LIB_CTX *new_libctx = NULL;
+
+    if (libctx != NULL) {
+        if ((new_libctx = *libctx = OSSL_LIB_CTX_new()) == NULL) {
+            opt_printf_stderr("Failed to create libctx\n");
+            goto err;
+        }
     }
 
     if (default_null_prov != NULL
@@ -27,13 +31,13 @@ int test_get_libctx(OSSL_LIB_CTX **libctx, OSSL_PROVIDER **default_null_prov,
     }
 
     if (config_file != NULL
-            && !OSSL_LIB_CTX_load_config(*libctx, config_file)) {
+            && !OSSL_LIB_CTX_load_config(new_libctx, config_file)) {
         opt_printf_stderr("Error loading config from file %s\n", config_file);
         goto err;
     }
 
     if (module_name != NULL
-            && (*provider = OSSL_PROVIDER_load(*libctx, module_name)) == NULL) {
+            && (*provider = OSSL_PROVIDER_load(new_libctx, module_name)) == NULL) {
         opt_printf_stderr("Failed to load provider %s\n", module_name);
         goto err;
     }

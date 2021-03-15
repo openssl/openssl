@@ -5416,3 +5416,5 @@ OSSL_PROVIDER_get0_dispatch             5543	3_0_0	EXIST::FUNCTION:
 PKCS5_PBE_keyivgen_ex                   5544	3_0_0	EXIST::FUNCTION:
 EVP_MAC_CTX_get_block_size              5545	3_0_0	EXIST::FUNCTION:
 BIO_debug_callback_ex                   5546	3_0_0	EXIST::FUNCTION:
+b2i_PVK_bio_ex                          5547	3_0_0	EXIST::FUNCTION:
+i2b_PVK_bio_ex                          5548	3_0_0	EXIST::FUNCTION:
