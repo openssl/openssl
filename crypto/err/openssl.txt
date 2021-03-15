@@ -849,8 +849,10 @@ PEM_R_BAD_VERSION_NUMBER:117:bad version number
 PEM_R_BIO_WRITE_FAILURE:118:bio write failure
 PEM_R_CIPHER_IS_NULL:127:cipher is null
 PEM_R_ERROR_CONVERTING_PRIVATE_KEY:115:error converting private key
+PEM_R_EXPECTING_DSS_KEY_BLOB:131:expecting dss key blob
 PEM_R_EXPECTING_PRIVATE_KEY_BLOB:119:expecting private key blob
 PEM_R_EXPECTING_PUBLIC_KEY_BLOB:120:expecting public key blob
+PEM_R_EXPECTING_RSA_KEY_BLOB:132:expecting rsa key blob
 PEM_R_HEADER_TOO_LONG:128:header too long
 PEM_R_INCONSISTENT_HEADER:121:inconsistent header
 PEM_R_KEYBLOB_HEADER_PARSE_ERROR:122:keyblob header parse error
