@@ -28,7 +28,6 @@
 #include <openssl/crypto.h>
 
 #include "crypto/siphash.h"
-#include "siphash_local.h"
 
 #define ROTL(x, b) (uint64_t)(((x) << (b)) | ((x) >> (64 - (b))))
 
