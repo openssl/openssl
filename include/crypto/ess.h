@@ -31,7 +31,7 @@ ESS_SIGNING_CERT_V2 *ossl_ess_signing_cert_v2_new_init(const EVP_MD *hash_alg,
 int ossl_ess_check_signing_certs(const ESS_SIGNING_CERT *ss,
                                  const ESS_SIGNING_CERT_V2 *ssv2,
                                  const STACK_OF(X509) *chain,
-                                 int require_signingCertificate);
+                                 int require_signing_cert);
 
 /*-
  * IssuerSerial ::= SEQUENCE {

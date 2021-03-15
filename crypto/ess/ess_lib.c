@@ -313,7 +313,6 @@ static int find(const ESS_CERT_ID *cid, const ESS_CERT_ID_V2 *cid_v2,
     for (i = 0; i < sk_X509_num(certs); ++i) {
         cert = sk_X509_value(certs, i);
 
-        /* TODO(3.0): fetch sha algorithm from providers */
         if (cid != NULL)
             md = EVP_sha1();
         else
@@ -334,7 +333,7 @@ static int find(const ESS_CERT_ID *cid, const ESS_CERT_ID_V2 *cid_v2,
         if (memcmp(cid != NULL ? cid->hash->data : cid_v2->hash->data,
                    cert_digest, len) == 0) {
             is = cid != NULL ? cid->issuer_serial : cid_v2->issuer_serial;
-            /* Well, it's not really required to matching the serial numbers. */
+            /* Well, it's not really required to match the serial numbers. */
             if (is == NULL || ess_issuer_serial_cmp(is, cert) == 0) {
                 if ((i == 0) == (index == 0))
                     return i;
@@ -356,13 +355,13 @@ static int find(const ESS_CERT_ID *cid, const ESS_CERT_ID_V2 *cid_v2,
 int ossl_ess_check_signing_certs(const ESS_SIGNING_CERT *ss,
                                  const ESS_SIGNING_CERT_V2 *ssv2,
                                  const STACK_OF(X509) *chain,
-                                 int require_signingCertificate)
+                                 int require_signing_cert)
 {
     int n_v1 = ss == NULL ? -1 : sk_ESS_CERT_ID_num(ss->cert_ids);
     int n_v2 = ssv2 == NULL ? -1 : sk_ESS_CERT_ID_V2_num(ssv2->cert_ids);
     int i;
 
-    if (require_signingCertificate && ss == NULL && ssv2 == NULL) {
+    if (require_signing_cert && ss == NULL && ssv2 == NULL) {
         ERR_raise(ERR_LIB_CMS, ESS_R_MISSING_SIGNING_CERTIFICATE_ATTRIBUTE);
         return 0;
     }
