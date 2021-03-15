@@ -1511,6 +1511,19 @@ const char *SSL_group_to_name(SSL *s, int id);
 int SSL_set0_tmp_dh_pkey(SSL *s, EVP_PKEY *dhpkey);
 int SSL_CTX_set0_tmp_dh_pkey(SSL_CTX *ctx, EVP_PKEY *dhpkey);
 
+typedef enum {
+    ssl_grease_cipher = 0,
+    ssl_grease_group,
+    ssl_grease_extension1,
+    ssl_grease_extension2,
+    ssl_grease_version,
+    ssl_grease_ticket_extension,
+    ssl_grease_last_index = ssl_grease_ticket_extension,
+} SSL_GREASE_INDEX;
+
+uint16_t SSL_get_grease_value(SSL *s,
+                              SSL_GREASE_INDEX index);
+
 /*
  * The following symbol names are old and obsolete. They are kept
  * for compatibility reasons only and should not be used anymore.
