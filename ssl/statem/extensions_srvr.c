@@ -669,6 +669,8 @@ int tls_parse_ctos_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
         }
 
         s->s3.group_id = group_id;
+        /* Cache the selected group ID in the SSL_SESSION */
+        s->session->kex_group = group_id;
 
         if (EVP_PKEY_set1_encoded_public_key(s->s3.peer_tmp,
                 PACKET_data(&encoded_pt),
@@ -1705,6 +1707,7 @@ EXT_RETURN tls_construct_stoc_key_share(SSL *s, WPACKET *pkt,
             return EXT_RETURN_FAIL;
         }
     }
+    s->s3.did_kex = 1;
     return EXT_RETURN_SENT;
 #else
     return EXT_RETURN_FAIL;

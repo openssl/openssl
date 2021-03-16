@@ -1793,6 +1793,27 @@ int tls_parse_stoc_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
         SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_KEY_SHARE);
         return 0;
     }
+    /* Retain this group in the SSL_SESSION */
+    if (!s->hit) {
+        s->session->kex_group = group_id;
+    } else if (group_id != s->session->kex_group) {
+        /*
+         * If this is a resumption but changed what group was used, we need
+         * to record the new group in the session, but the session is not
+         * a new session and could be in use by other threads.  So, make
+         * a copy of the session to record the new information so that it's
+         * useful for any sessions resumed from tickets issued on this
+         * connection.
+         */
+        SSL_SESSION *new_sess;
+        if ((new_sess = ssl_session_dup(s->session, 0)) == NULL) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+            return 0;
+        }
+        SSL_SESSION_free(s->session);
+        s->session = new_sess;
+        s->session->kex_group = group_id;
+    }
 
     if ((ginf = tls1_group_id_lookup(s->ctx, group_id)) == NULL) {
         SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_KEY_SHARE);
@@ -1836,6 +1857,7 @@ int tls_parse_stoc_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
             return 0;
         }
     }
+    s->s3.did_kex = 1;
 #endif
 
     return 1;
