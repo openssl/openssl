@@ -18,7 +18,6 @@
 #include "internal/sizes.h"
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
-#include "crypto/cms.h"
 #include "crypto/ess.h"
 #include "crypto/x509.h" /* for ossl_x509_add_cert_new() */
 #include "cms_local.h"
@@ -251,6 +250,56 @@ static int cms_sd_asn1_ctrl(CMS_SignerInfo *si, int cmd)
         return 0;
     }
     return 1;
+}
+
+/* Add SigningCertificate signed attribute to the signer info. */
+static int ossl_cms_add1_signing_cert(CMS_SignerInfo *si,
+                                      const ESS_SIGNING_CERT *sc)
+{
+    ASN1_STRING *seq = NULL;
+    unsigned char *p, *pp = NULL;
+    int ret, len = i2d_ESS_SIGNING_CERT(sc, NULL);
+
+    if (len <= 0 || (pp = OPENSSL_malloc(len)) == NULL)
+        return 0;
+
+    p = pp;
+    i2d_ESS_SIGNING_CERT(sc, &p);
+    if (!(seq = ASN1_STRING_new()) || !ASN1_STRING_set(seq, pp, len)) {
+        ASN1_STRING_free(seq);
+        OPENSSL_free(pp);
+        return 0;
+    }
+    OPENSSL_free(pp);
+    ret = CMS_signed_add1_attr_by_NID(si, NID_id_smime_aa_signingCertificate,
+                                      V_ASN1_SEQUENCE, seq, -1);
+    ASN1_STRING_free(seq);
+    return ret;
+}
+
+/* Add SigningCertificateV2 signed attribute to the signer info. */
+static int ossl_cms_add1_signing_cert_v2(CMS_SignerInfo *si,
+                                         const ESS_SIGNING_CERT_V2 *sc)
+{
+    ASN1_STRING *seq = NULL;
+    unsigned char *p, *pp = NULL;
+    int ret, len = i2d_ESS_SIGNING_CERT_V2(sc, NULL);
+
+    if (len <= 0 || (pp = OPENSSL_malloc(len)) == NULL)
+        return 0;
+
+    p = pp;
+    i2d_ESS_SIGNING_CERT_V2(sc, &p);
+    if (!(seq = ASN1_STRING_new()) || !ASN1_STRING_set(seq, pp, len)) {
+        ASN1_STRING_free(seq);
+        OPENSSL_free(pp);
+        return 0;
+    }
+    OPENSSL_free(pp);
+    ret = CMS_signed_add1_attr_by_NID(si, NID_id_smime_aa_signingCertificateV2,
+                                      V_ASN1_SEQUENCE, seq, -1);
+    ASN1_STRING_free(seq);
+    return ret;
 }
 
 CMS_SignerInfo *CMS_add1_signer(CMS_ContentInfo *cms,
