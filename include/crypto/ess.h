@@ -11,17 +11,6 @@
 # define OSSL_CRYPTO_ESS_H
 # pragma once
 
-/* internal ESS related functions used for TS */
-/* TODO move these four decls to a new include/crypto/ts.h */
-
-ESS_SIGNING_CERT *ossl_ess_get_signing_cert(const PKCS7_SIGNER_INFO *si);
-int ossl_ess_signing_cert_add(PKCS7_SIGNER_INFO *si, ESS_SIGNING_CERT *sc);
-
-ESS_SIGNING_CERT_V2 *ossl_ess_get_signing_cert_v2(const PKCS7_SIGNER_INFO *si);
-int ossl_ess_signing_cert_v2_add(PKCS7_SIGNER_INFO *si, ESS_SIGNING_CERT_V2 *sc);
-
-/* internal ESS stuff */
-
 /*-
  * IssuerSerial ::= SEQUENCE {
  *        issuer                  GeneralNames,

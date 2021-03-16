@@ -203,6 +203,31 @@ end:
     return ret;
 }
 
+static ESS_SIGNING_CERT *ossl_ess_get_signing_cert(const PKCS7_SIGNER_INFO *si)
+{
+    ASN1_TYPE *attr;
+    const unsigned char *p;
+
+    attr = PKCS7_get_signed_attribute(si, NID_id_smime_aa_signingCertificate);
+    if (attr == NULL)
+        return NULL;
+    p = attr->value.sequence->data;
+    return d2i_ESS_SIGNING_CERT(NULL, &p, attr->value.sequence->length);
+}
+
+static
+ESS_SIGNING_CERT_V2 *ossl_ess_get_signing_cert_v2(const PKCS7_SIGNER_INFO *si)
+{
+    ASN1_TYPE *attr;
+    const unsigned char *p;
+
+    attr = PKCS7_get_signed_attribute(si, NID_id_smime_aa_signingCertificateV2);
+    if (attr == NULL)
+        return NULL;
+    p = attr->value.sequence->data;
+    return d2i_ESS_SIGNING_CERT_V2(NULL, &p, attr->value.sequence->length);
+}
+
 static int ts_check_signing_certs(const PKCS7_SIGNER_INFO *si,
                                   const STACK_OF(X509) *chain)
 {

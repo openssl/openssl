@@ -626,6 +626,52 @@ static int ts_RESP_process_extensions(TS_RESP_CTX *ctx)
 }
 
 /* Functions for signing the TS_TST_INFO structure of the context. */
+static int ossl_ess_add1_signing_cert(PKCS7_SIGNER_INFO *si,
+                                      const ESS_SIGNING_CERT *sc)
+{
+    ASN1_STRING *seq = NULL;
+    int len = i2d_ESS_SIGNING_CERT(sc, NULL);
+    unsigned char *p, *pp = OPENSSL_malloc(len);
+
+    if (pp == NULL)
+        return 0;
+
+    p = pp;
+    i2d_ESS_SIGNING_CERT(sc, &p);
+    if ((seq = ASN1_STRING_new()) == NULL || !ASN1_STRING_set(seq, pp, len)) {
+        ASN1_STRING_free(seq);
+        OPENSSL_free(pp);
+        return 0;
+    }
+
+    OPENSSL_free(pp);
+    return PKCS7_add_signed_attribute(si, NID_id_smime_aa_signingCertificate,
+                                      V_ASN1_SEQUENCE, seq);
+}
+
+static int ossl_ess_add1_signing_cert_v2(PKCS7_SIGNER_INFO *si,
+                                         const ESS_SIGNING_CERT_V2 *sc)
+{
+    ASN1_STRING *seq = NULL;
+    int len = i2d_ESS_SIGNING_CERT_V2(sc, NULL);
+    unsigned char *p, *pp = OPENSSL_malloc(len);
+
+    if (pp == NULL)
+        return 0;
+
+    p = pp;
+    i2d_ESS_SIGNING_CERT_V2(sc, &p);
+    if ((seq = ASN1_STRING_new()) == NULL || !ASN1_STRING_set(seq, pp, len)) {
+        ASN1_STRING_free(seq);
+        OPENSSL_free(pp);
+        return 0;
+    }
+
+    OPENSSL_free(pp);
+    return PKCS7_add_signed_attribute(si, NID_id_smime_aa_signingCertificateV2,
+                                      V_ASN1_SEQUENCE, seq);
+}
+
 static int ts_RESP_sign(TS_RESP_CTX *ctx)
 {
     int ret = 0;
@@ -691,7 +737,7 @@ static int ts_RESP_sign(TS_RESP_CTX *ctx)
                                                  certs, 0)) == NULL)
             goto err;
 
-        if (!ossl_ess_signing_cert_add(si, sc)) {
+        if (!ossl_ess_add1_signing_cert(si, sc)) {
             ERR_raise(ERR_LIB_TS, TS_R_ESS_ADD_SIGNING_CERT_ERROR);
             goto err;
         }
@@ -701,7 +747,7 @@ static int ts_RESP_sign(TS_RESP_CTX *ctx)
         if (sc2 == NULL)
             goto err;
 
-        if (!ossl_ess_signing_cert_v2_add(si, sc2)) {
+        if (!ossl_ess_add1_signing_cert_v2(si, sc2)) {
             ERR_raise(ERR_LIB_TS, TS_R_ESS_ADD_SIGNING_CERT_V2_ERROR);
             goto err;
         }
