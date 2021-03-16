@@ -129,11 +129,12 @@ static int test_property_query_value_create(void)
     OSSL_PROPERTY_LIST *p = NULL, *q = NULL, *o = NULL;
     int r = 0;
 
+    /* The property value used here must not be used in other test cases */
     if (TEST_ptr(store = ossl_method_store_new(NULL))
-        && add_property_names("sky", NULL)
-        && TEST_ptr(p = ossl_parse_query(NULL, "sky=green", 0)) /* undefined */
-        && TEST_ptr(q = ossl_parse_query(NULL, "sky=green", 1)) /* creates */
-        && TEST_ptr(o = ossl_parse_query(NULL, "sky=green", 0)) /* defined */
+        && add_property_names("wood", NULL)
+        && TEST_ptr(p = ossl_parse_query(NULL, "wood=oak", 0)) /* undefined */
+        && TEST_ptr(q = ossl_parse_query(NULL, "wood=oak", 1)) /* creates */
+        && TEST_ptr(o = ossl_parse_query(NULL, "wood=oak", 0)) /* defined */
         && TEST_int_eq(ossl_property_match_count(q, p), -1)
         && TEST_int_eq(ossl_property_match_count(q, o), 1))
         r = 1;
