@@ -5334,3 +5334,4 @@ EVP_PKEY_dup                            ?	3_0_0	EXIST::FUNCTION:
 RSA_PSS_PARAMS_dup                      ?	3_0_0	EXIST::FUNCTION:
 OSSL_DECODER_description                ?	3_0_0	EXIST::FUNCTION:
 OSSL_ENCODER_description                ?	3_0_0	EXIST::FUNCTION:
+OSSL_STORE_LOADER_description           ?	3_0_0	EXIST::FUNCTION:

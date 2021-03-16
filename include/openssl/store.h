@@ -260,6 +260,7 @@ const OSSL_PROVIDER *OSSL_STORE_LOADER_provider(const OSSL_STORE_LOADER *
                                                 loader);
 const char *OSSL_STORE_LOADER_properties(const OSSL_STORE_LOADER *loader);
 int OSSL_STORE_LOADER_number(const OSSL_STORE_LOADER *loader);
+const char *OSSL_STORE_LOADER_description(const OSSL_STORE_LOADER *loader);
 int OSSL_STORE_LOADER_is_a(const OSSL_STORE_LOADER *loader,
                            const char *scheme);
 void OSSL_STORE_LOADER_do_all_provided(OSSL_LIB_CTX *libctx,
