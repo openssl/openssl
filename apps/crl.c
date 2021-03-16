@@ -310,9 +310,9 @@ int crl_main(int argc, char **argv)
 
                 if (num > 1)
                     BIO_printf(bio_out, "issuer name hash=");
-                if (ok)
+                if (ok) {
                     BIO_printf(bio_out, "%08lx\n", hash_value);
-                else {
+                } else {
                     BIO_puts(bio_out, "<ERROR>");
                     goto end;
                 }
