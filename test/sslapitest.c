@@ -4592,7 +4592,9 @@ static int test_key_exchange(int idx)
         goto end;
 
     if (!TEST_true(SSL_CTX_set_cipher_list(sctx,
-                   TLS1_TXT_RSA_WITH_AES_128_SHA)))
+                   TLS1_TXT_ECDHE_RSA_WITH_AES_128_GCM_SHA256 ":"
+                   TLS1_TXT_DHE_RSA_WITH_AES_128_GCM_SHA256))
+            || !TEST_true(SSL_CTX_set_dh_auto(sctx, 1)))
         goto end;
 
     /*
@@ -4601,8 +4603,8 @@ static int test_key_exchange(int idx)
      */
 # ifndef OPENSSL_NO_TLS1_2
     if (!TEST_true(SSL_CTX_set_cipher_list(cctx,
-                   TLS1_TXT_ECDHE_ECDSA_WITH_AES_128_CCM ":"
-                   TLS1_TXT_RSA_WITH_AES_128_SHA)))
+                   TLS1_TXT_ECDHE_RSA_WITH_AES_128_GCM_SHA256 ":"
+                   TLS1_TXT_DHE_RSA_WITH_AES_128_GCM_SHA256)))
         goto end;
 # endif
 
@@ -4630,7 +4632,8 @@ static int test_key_exchange(int idx)
                      kexch_name0))
         goto end;
 
-    if (max_version == TLS1_3_VERSION) {
+    /* We don't implement RFC 7919 named groups for TLS 1.2. */
+    if (idx != 13) {
         if (!TEST_int_eq(SSL_get_negotiated_group(serverssl), kexch_groups[0]))
             goto end;
         if (!TEST_int_eq(SSL_get_negotiated_group(clientssl), kexch_groups[0]))
