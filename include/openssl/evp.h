@@ -18,6 +18,10 @@
 
 # include <stdarg.h>
 
+# ifndef OPENSSL_NO_STDIO
+#  include <stdio.h>
+# endif
+
 # include <openssl/opensslconf.h>
 # include <openssl/types.h>
 # include <openssl/core.h>
@@ -1354,6 +1358,14 @@ int EVP_PKEY_print_private(BIO *out, const EVP_PKEY *pkey,
                            int indent, ASN1_PCTX *pctx);
 int EVP_PKEY_print_params(BIO *out, const EVP_PKEY *pkey,
                           int indent, ASN1_PCTX *pctx);
+# ifndef OPENSSL_NO_STDIO
+int EVP_PKEY_print_public_fp(FILE *fp, const EVP_PKEY *pkey,
+                             int indent, ASN1_PCTX *pctx);
+int EVP_PKEY_print_private_fp(FILE *fp, const EVP_PKEY *pkey,
+                              int indent, ASN1_PCTX *pctx);
+int EVP_PKEY_print_params_fp(FILE *fp, const EVP_PKEY *pkey,
+                             int indent, ASN1_PCTX *pctx);
+# endif
 
 int EVP_PKEY_get_default_digest_nid(EVP_PKEY *pkey, int *pnid);
 int EVP_PKEY_get_default_digest_name(EVP_PKEY *pkey,
