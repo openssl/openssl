@@ -437,6 +437,11 @@ int OSSL_ENCODER_number(const OSSL_ENCODER *encoder)
     return encoder->base.id;
 }
 
+const char *OSSL_ENCODER_description(const OSSL_ENCODER *encoder)
+{
+    return encoder->base.description;
+}
+
 int OSSL_ENCODER_is_a(const OSSL_ENCODER *encoder, const char *name)
 {
     if (encoder->base.prov != NULL) {

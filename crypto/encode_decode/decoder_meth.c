@@ -425,6 +425,11 @@ int OSSL_DECODER_number(const OSSL_DECODER *decoder)
     return decoder->base.id;
 }
 
+const char *OSSL_DECODER_description(const OSSL_DECODER *decoder)
+{
+    return decoder->base.description;
+}
+
 int OSSL_DECODER_is_a(const OSSL_DECODER *decoder, const char *name)
 {
     if (decoder->base.prov != NULL) {
