@@ -75,7 +75,7 @@ static int prepare_from_text(const OSSL_PARAM *paramdefs, const char *key,
         *buf_n = (buf_bits + 7) / 8;
 
         /*
-         * A zero data size to simply mean "arbitrary size", so only do the
+         * A zero data size means "arbitrary size", so only do the
          * range checking if a size is specified.
          */
         if (p->data_size > 0) {
