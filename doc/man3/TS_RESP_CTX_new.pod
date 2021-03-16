@@ -19,7 +19,7 @@ TS_RESP_CTX_free - Timestamp response context object creation
 Creates a response context that can be used for generating responses.
 
 TS_RESP_CTX_new_ex() allocates and initializes a TS_RESP_CTX structure with a
-library context of I<libctx>, and a property query of <propq>.
+library context of I<libctx> and a property query of <propq>.
 The library context and property query can be used to select which providers
 supply the fetched algorithms.
 
