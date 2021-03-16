@@ -5,6 +5,7 @@
 EVP_ASYM_CIPHER_fetch, EVP_ASYM_CIPHER_free, EVP_ASYM_CIPHER_up_ref,
 EVP_ASYM_CIPHER_number, EVP_ASYM_CIPHER_is_a, EVP_ASYM_CIPHER_provider,
 EVP_ASYM_CIPHER_do_all_provided, EVP_ASYM_CIPHER_names_do_all,
+EVP_ASYM_CIPHER_description,
 EVP_ASYM_CIPHER_gettable_ctx_params, EVP_ASYM_CIPHER_settable_ctx_params
 - Functions to manage EVP_ASYM_CIPHER algorithm objects
 
@@ -26,6 +27,7 @@ EVP_ASYM_CIPHER_gettable_ctx_params, EVP_ASYM_CIPHER_settable_ctx_params
  int EVP_ASYM_CIPHER_names_do_all(const EVP_ASYM_CIPHER *cipher,
                                   void (*fn)(const char *name, void *data),
                                   void *data);
+ const char *EVP_ASYM_CIPHER_description(const EVP_ASYM_CIPHER *cipher);
  const OSSL_PARAM *EVP_ASYM_CIPHER_gettable_ctx_params(const EVP_ASYM_CIPHER *cip);
  const OSSL_PARAM *EVP_ASYM_CIPHER_settable_ctx_params(const EVP_ASYM_CIPHER *cip);
 
@@ -63,6 +65,10 @@ I<cipher>.
 
 EVP_ASYM_CIPHER_names_do_all() traverses all names for I<cipher>, and calls
 I<fn> with each name and I<data>.
+
+EVP_ASYM_CIPHER_description() returns a description of the I<cipher>, meant
+for display and human consumption.  The description is at the discretion of
+the I<cipher> implementation.
 
 EVP_ASYM_CIPHER_gettable_ctx_params() and EVP_ASYM_CIPHER_settable_ctx_params()
 return a constant B<OSSL_PARAM> array that describes the names and types of key

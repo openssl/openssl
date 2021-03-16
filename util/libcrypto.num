@@ -5335,3 +5335,14 @@ RSA_PSS_PARAMS_dup                      ?	3_0_0	EXIST::FUNCTION:
 OSSL_DECODER_description                ?	3_0_0	EXIST::FUNCTION:
 OSSL_ENCODER_description                ?	3_0_0	EXIST::FUNCTION:
 OSSL_STORE_LOADER_description           ?	3_0_0	EXIST::FUNCTION:
+EVP_MD_description                      ?	3_0_0	EXIST::FUNCTION:
+EVP_CIPHER_description                  ?	3_0_0	EXIST::FUNCTION:
+EVP_MAC_description                     ?	3_0_0	EXIST::FUNCTION:
+EVP_RAND_description                    ?	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_description                    ?	3_0_0	EXIST::FUNCTION:
+EVP_KEYMGMT_description                 ?	3_0_0	EXIST::FUNCTION:
+EVP_SIGNATURE_description               ?	3_0_0	EXIST::FUNCTION:
+EVP_ASYM_CIPHER_description             ?	3_0_0	EXIST::FUNCTION:
+EVP_KEM_description                     ?	3_0_0	EXIST::FUNCTION:
+EVP_KEYEXCH_description                 ?	3_0_0	EXIST::FUNCTION:
+EVP_KDF_description                     ?	3_0_0	EXIST::FUNCTION:

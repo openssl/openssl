@@ -341,6 +341,13 @@ int EVP_KEM_number(const EVP_KEM *kem)
     return kem->name_id;
 }
 
+const char *EVP_KEM_description(const EVP_KEM *kem)
+{
+    if (kem->prov != NULL)
+        return evp_description(kem->prov, kem->name_id);
+    return NULL;
+}
+
 void EVP_KEM_do_all_provided(OSSL_LIB_CTX *libctx,
                              void (*fn)(EVP_KEM *kem, void *arg),
                              void *arg)

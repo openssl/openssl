@@ -315,6 +315,7 @@ void evp_pkey_ctx_free_old_ops(EVP_PKEY_CTX *ctx);
 
 /* OSSL_PROVIDER * is only used to get the library context */
 const char *evp_first_name(const OSSL_PROVIDER *prov, int name_id);
+const char *evp_description(const OSSL_PROVIDER *prov, int name_id);
 int evp_is_a(OSSL_PROVIDER *prov, int number,
              const char *legacy_name, const char *name);
 int evp_names_do_all(OSSL_PROVIDER *prov, int number,

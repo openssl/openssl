@@ -249,6 +249,11 @@ int EVP_KEYMGMT_number(const EVP_KEYMGMT *keymgmt)
     return keymgmt->name_id;
 }
 
+const char *EVP_KEYMGMT_description(const EVP_KEYMGMT *keymgmt)
+{
+    return evp_description(keymgmt->prov, keymgmt->name_id);
+}
+
 const char *EVP_KEYMGMT_get0_first_name(const EVP_KEYMGMT *keymgmt)
 {
     return evp_first_name(keymgmt->prov, keymgmt->name_id);

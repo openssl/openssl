@@ -4,7 +4,7 @@
 
 EVP_KEM_fetch, EVP_KEM_free, EVP_KEM_up_ref,
 EVP_KEM_number, EVP_KEM_is_a, EVP_KEM_provider,
-EVP_KEM_do_all_provided, EVP_KEM_names_do_all,
+EVP_KEM_do_all_provided, EVP_KEM_names_do_all, EVP_KEM_description,
 EVP_KEM_gettable_ctx_params, EVP_KEM_settable_ctx_params
 - Functions to manage EVP_KEM algorithm objects
 
@@ -23,6 +23,7 @@ EVP_KEM_gettable_ctx_params, EVP_KEM_settable_ctx_params
                               void (*fn)(EVP_KEM *kem, void *arg), void *arg);
  int EVP_KEM_names_do_all(const EVP_KEM *kem,
                           void (*fn)(const char *name, void *data), void *data);
+ const char *EVP_KEM_description(const EVP_KEM *kem);
  const OSSL_PARAM *EVP_KEM_gettable_ctx_params(const EVP_KEM *kem);
  const OSSL_PARAM *EVP_KEM_settable_ctx_params(const EVP_KEM *kem);
 
@@ -57,6 +58,10 @@ EVP_KEM_number() returns the internal dynamic number assigned to I<kem>.
 
 EVP_KEM_names_do_all() traverses all names for I<kem>, and calls I<fn> with
 each name and I<data>.
+
+EVP_KEM_description() returns a description of the I<kem>, meant for display
+and human consumption.  The description is at the discretion of the I<kem>
+implementation.
 
 EVP_KEM_gettable_ctx_params() and EVP_KEM_settable_ctx_params() return
 a constant B<OSSL_PARAM> array that describes the names and types of key
