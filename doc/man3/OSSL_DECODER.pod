@@ -10,6 +10,7 @@ OSSL_DECODER_provider,
 OSSL_DECODER_properties,
 OSSL_DECODER_is_a,
 OSSL_DECODER_number,
+OSSL_DECODER_description,
 OSSL_DECODER_do_all_provided,
 OSSL_DECODER_names_do_all,
 OSSL_DECODER_gettable_params,
@@ -30,6 +31,7 @@ OSSL_DECODER_get_params
  const char *OSSL_DECODER_properties(const OSSL_DECODER *decoder);
  int OSSL_DECODER_is_a(const OSSL_DECODER *decoder, const char *name);
  int OSSL_DECODER_number(const OSSL_DECODER *decoder);
+ const char *OSSL_DECODER_description(const OSSL_DECODER *decoder);
  void OSSL_DECODER_do_all_provided(OSSL_LIB_CTX *libctx,
                                    void (*fn)(OSSL_DECODER *decoder, void *arg),
                                    void *arg);
@@ -72,6 +74,10 @@ of an algorithm that's identifiable with I<name>.
 OSSL_DECODER_number() returns the internal dynamic number assigned
 to the given I<decoder>.
 
+OSSL_DECODER_description() returns a description of the I<decoder>, meant
+for display and human consumption.  The description is at the discretion
+of the I<decoder> implementation.
+
 OSSL_DECODER_names_do_all() traverses all names for the given
 I<decoder>, and calls I<fn> with each name and I<data> as arguments.
 
@@ -106,6 +112,9 @@ OSSL_DECODER_is_a() returns 1 if I<decoder> was identifiable,
 otherwise 0.
 
 OSSL_DECODER_number() returns an integer.
+
+OSSL_DECODER_description() returns a pointer to a decription, or NULL if
+there isn't one.
 
 OSSL_DECODER_names_do_all() returns 1 if the callback was called for all
 names. A return value of 0 means that the callback was not called for any names.

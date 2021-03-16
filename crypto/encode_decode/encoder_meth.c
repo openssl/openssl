@@ -441,6 +441,17 @@ int OSSL_ENCODER_number(const OSSL_ENCODER *encoder)
     return encoder->base.id;
 }
 
+const char *OSSL_ENCODER_description(const OSSL_ENCODER *encoder)
+{
+    if (encoder->base.prov != NULL) {
+        OSSL_LIB_CTX *libctx = ossl_provider_libctx(encoder->base.prov);
+        OSSL_NAMEMAP *namemap = ossl_namemap_stored(libctx);
+
+        return ossl_namemap_num2desc(namemap, encoder->base.id);
+    }
+    return NULL;
+}
+
 int OSSL_ENCODER_is_a(const OSSL_ENCODER *encoder, const char *name)
 {
     if (encoder->base.prov != NULL) {
