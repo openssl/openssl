@@ -15,14 +15,14 @@
 #include "internal/property.h"
 #include "../crypto/property/property_local.h"
 
-static int add_property_names(const char *n, ...)
+static int add_property_names(OSSL_LIB_CTX *ctx, const char *n, ...)
 {
     va_list args;
     int res = 1;
 
     va_start(args, n);
     do {
-        if (!TEST_int_ne(ossl_property_name(NULL, n, 1), 0))
+        if (!TEST_int_ne(ossl_property_name(ctx, n, 1), 0))
             res = 0;
     } while ((n = va_arg(args, const char *)) != NULL);
     va_end(args);
@@ -111,8 +111,8 @@ static int test_property_parse(int n)
     int r = 0;
 
     if (TEST_ptr(store = ossl_method_store_new(NULL))
-        && add_property_names("sky", "groan", "cold", "today", "tomorrow", "n",
-                              NULL)
+        && add_property_names(NULL, "sky", "groan", "cold", "today",
+                              "tomorrow", "n", NULL)
         && TEST_ptr(p = ossl_parse_property(NULL, parser_tests[n].defn))
         && TEST_ptr(q = ossl_parse_query(NULL, parser_tests[n].query, 0))
         && TEST_int_eq(ossl_property_match_count(q, p), parser_tests[n].e))
@@ -125,15 +125,17 @@ static int test_property_parse(int n)
 
 static int test_property_query_value_create(void)
 {
-    OSSL_METHOD_STORE *store;
+    OSSL_METHOD_STORE *store = NULL;
+    OSSL_LIB_CTX *ctx;
     OSSL_PROPERTY_LIST *p = NULL, *q = NULL, *o = NULL;
     int r = 0;
 
-    if (TEST_ptr(store = ossl_method_store_new(NULL))
-        && add_property_names("sky", NULL)
-        && TEST_ptr(p = ossl_parse_query(NULL, "sky=green", 0)) /* undefined */
-        && TEST_ptr(q = ossl_parse_query(NULL, "sky=green", 1)) /* creates */
-        && TEST_ptr(o = ossl_parse_query(NULL, "sky=green", 0)) /* defined */
+    if (TEST_ptr(ctx = OSSL_LIB_CTX_new())
+        && TEST_ptr(store = ossl_method_store_new(ctx))
+        && add_property_names(ctx, "herb", NULL)
+        && TEST_ptr(p = ossl_parse_query(ctx, "herb=thyme", 0)) /* undefined */
+        && TEST_ptr(q = ossl_parse_query(ctx, "herb=thyme", 1)) /* creates */
+        && TEST_ptr(o = ossl_parse_query(ctx, "herb=thyme", 0)) /* defined */
         && TEST_int_eq(ossl_property_match_count(q, p), -1)
         && TEST_int_eq(ossl_property_match_count(q, o), 1))
         r = 1;
@@ -141,6 +143,7 @@ static int test_property_query_value_create(void)
     ossl_property_free(p);
     ossl_property_free(q);
     ossl_method_store_free(store);
+    OSSL_LIB_CTX_free(ctx);
     return r;
 }
 
@@ -178,8 +181,8 @@ static int test_property_merge(int n)
     int r = 0;
 
     if (TEST_ptr(store = ossl_method_store_new(NULL))
-        && add_property_names("colour", "urn", "clouds", "pot", "day", "night",
-                              NULL)
+        && add_property_names(NULL, "colour", "urn", "clouds", "pot",
+                              "day", "night", NULL)
         && TEST_ptr(prop = ossl_parse_property(NULL, merge_tests[n].prop))
         && TEST_ptr(q_global = ossl_parse_query(NULL, merge_tests[n].q_global,
                                                 0))
@@ -202,7 +205,7 @@ static int test_property_defn_cache(void)
     int r = 0;
 
     if (TEST_ptr(store = ossl_method_store_new(NULL))
-        && add_property_names("red", "blue", NULL)
+        && add_property_names(NULL, "red", "blue", NULL)
         && TEST_ptr(red = ossl_parse_property(NULL, "red"))
         && TEST_ptr(blue = ossl_parse_property(NULL, "blue"))
         && TEST_ptr_ne(red, blue)
@@ -240,7 +243,7 @@ static int test_definition_compares(int n)
     int r;
 
     r = TEST_ptr(store = ossl_method_store_new(NULL))
-        && add_property_names("alpha", "omega", NULL)
+        && add_property_names(NULL, "alpha", "omega", NULL)
         && TEST_ptr(d = ossl_parse_property(NULL, definition_tests[n].defn))
         && TEST_ptr(q = ossl_parse_query(NULL, definition_tests[n].query, 0))
         && TEST_int_eq(ossl_property_match_count(q, d), definition_tests[n].e);
@@ -268,7 +271,7 @@ static int test_register_deregister(void)
     OSSL_METHOD_STORE *store;
 
     if (!TEST_ptr(store = ossl_method_store_new(NULL))
-        || !add_property_names("position", NULL))
+        || !add_property_names(NULL, "position", NULL))
         goto err;
 
     for (i = 0; i < OSSL_NELEM(impls); i++)
@@ -336,7 +339,7 @@ static int test_property(void)
     void *result;
 
     if (!TEST_ptr(store = ossl_method_store_new(NULL))
-        || !add_property_names("fast", "colour", "sky", "furry", NULL))
+        || !add_property_names(NULL, "fast", "colour", "sky", "furry", NULL))
         goto err;
 
     for (i = 0; i < OSSL_NELEM(impls); i++)
@@ -375,7 +378,7 @@ static int test_query_cache_stochastic(void)
     int v[10001];
 
     if (!TEST_ptr(store = ossl_method_store_new(NULL))
-        || !add_property_names("n", NULL))
+        || !add_property_names(NULL, "n", NULL))
         goto err;
 
     for (i = 1; i <= max; i++) {
