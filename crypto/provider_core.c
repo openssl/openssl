@@ -359,9 +359,6 @@ void ossl_provider_free(OSSL_PROVIDER *prov)
          */
         if (ref == 0) {
             if (prov->flag_initialized) {
-#ifndef FIPS_MODULE
-                ossl_init_thread_deregister(prov);
-#endif
                 if (prov->teardown != NULL)
                     prov->teardown(prov->provctx);
 #ifndef OPENSSL_NO_ERR
@@ -380,6 +377,12 @@ void ossl_provider_free(OSSL_PROVIDER *prov)
             }
 
 #ifndef FIPS_MODULE
+            /*
+             * We deregister thread handling whether or not the provider was
+             * initialized. If init was attempted but was not successful then
+             * the provider may still have registered a thread handler.
+             */
+            ossl_init_thread_deregister(prov);
             DSO_free(prov->module);
 #endif
             OPENSSL_free(prov->name);
@@ -561,10 +564,6 @@ static int provider_init(OSSL_PROVIDER *prov)
                                 &provider_dispatch, &tmp_provctx)) {
         ERR_raise_data(ERR_LIB_CRYPTO, ERR_R_INIT_FAIL,
                        "name=%s", prov->name);
-#ifndef FIPS_MODULE
-        DSO_free(prov->module);
-        prov->module = NULL;
-#endif
         goto end;
     }
     prov->provctx = tmp_provctx;
