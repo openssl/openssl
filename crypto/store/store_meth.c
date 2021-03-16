@@ -402,6 +402,11 @@ int OSSL_STORE_LOADER_number(const OSSL_STORE_LOADER *loader)
     return loader->scheme_id;
 }
 
+const char *OSSL_STORE_LOADER_description(const OSSL_STORE_LOADER *loader)
+{
+    return loader->description;
+}
+
 int OSSL_STORE_LOADER_is_a(const OSSL_STORE_LOADER *loader, const char *name)
 {
     if (loader->prov != NULL) {
