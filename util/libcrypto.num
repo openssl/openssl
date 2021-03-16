@@ -5324,3 +5324,6 @@ EVP_PKEY_verify_recover_init_ex         ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_encrypt_init_ex                ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_decrypt_init_ex                ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_derive_init_ex                 ?	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_print_public_fp                ?	3_0_0	EXIST::FUNCTION:STDIO
+EVP_PKEY_print_private_fp               ?	3_0_0	EXIST::FUNCTION:STDIO
+EVP_PKEY_print_params_fp                ?	3_0_0	EXIST::FUNCTION:STDIO

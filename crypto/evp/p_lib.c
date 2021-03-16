@@ -832,9 +832,7 @@ DSA *EVP_PKEY_get1_DSA(EVP_PKEY *pkey)
     return ret;
 }
 # endif /*  OPENSSL_NO_DSA */
-#endif /* FIPS_MODULE */
 
-#ifndef FIPS_MODULE
 # ifndef OPENSSL_NO_EC
 static const ECX_KEY *evp_pkey_get0_ECX_KEY(const EVP_PKEY *pkey, int type)
 {
@@ -927,7 +925,6 @@ int EVP_PKEY_base_id(const EVP_PKEY *pkey)
     return EVP_PKEY_type(pkey->type);
 }
 
-#ifndef FIPS_MODULE
 /*
  * These hard coded cases are pure hackery to get around the fact
  * that names in crypto/objects/objects.txt are a mess.  There is
@@ -981,17 +978,14 @@ const char *evp_pkey_type2name(int type)
 
     return OBJ_nid2sn(type);
 }
-#endif
 
 int EVP_PKEY_is_a(const EVP_PKEY *pkey, const char *name)
 {
-#ifndef FIPS_MODULE
     if (pkey->keymgmt == NULL) {
         int type = evp_pkey_name2type(name);
 
         return pkey->type == type;
     }
-#endif
     return EVP_KEYMGMT_is_a(pkey->keymgmt, name);
 }
 
@@ -1017,17 +1011,17 @@ int EVP_PKEY_can_sign(const EVP_PKEY *pkey)
         switch (EVP_PKEY_base_id(pkey)) {
         case EVP_PKEY_RSA:
             return 1;
-#ifndef OPENSSL_NO_DSA
+# ifndef OPENSSL_NO_DSA
         case EVP_PKEY_DSA:
             return 1;
-#endif
-#ifndef OPENSSL_NO_EC
+# endif
+# ifndef OPENSSL_NO_EC
         case EVP_PKEY_ED25519:
         case EVP_PKEY_ED448:
             return 1;
         case EVP_PKEY_EC:        /* Including SM2 */
             return EC_KEY_can_sign(pkey->pkey.ec);
-#endif
+# endif
         default:
             break;
         }
@@ -1149,6 +1143,47 @@ int EVP_PKEY_print_params(BIO *out, const EVP_PKEY *pkey,
                       (pkey->ameth != NULL ? pkey->ameth->param_print : NULL),
                       pctx);
 }
+
+# ifndef OPENSSL_NO_STDIO
+int EVP_PKEY_print_public_fp(FILE *fp, const EVP_PKEY *pkey,
+                             int indent, ASN1_PCTX *pctx)
+{
+    int ret;
+    BIO *b = BIO_new_fp(fp, BIO_NOCLOSE);
+
+    if (b == NULL)
+        return 0;
+    ret = EVP_PKEY_print_public(b, pkey, indent, pctx);
+    BIO_free(b);
+    return ret;
+}
+
+int EVP_PKEY_print_private_fp(FILE *fp, const EVP_PKEY *pkey,
+                              int indent, ASN1_PCTX *pctx)
+{
+    int ret;
+    BIO *b = BIO_new_fp(fp, BIO_NOCLOSE);
+
+    if (b == NULL)
+        return 0;
+    ret = EVP_PKEY_print_private(b, pkey, indent, pctx);
+    BIO_free(b);
+    return ret;
+}
+
+int EVP_PKEY_print_params_fp(FILE *fp, const EVP_PKEY *pkey,
+                             int indent, ASN1_PCTX *pctx)
+{
+    int ret;
+    BIO *b = BIO_new_fp(fp, BIO_NOCLOSE);
+
+    if (b == NULL)
+        return 0;
+    ret = EVP_PKEY_print_params(b, pkey, indent, pctx);
+    BIO_free(b);
+    return ret;
+}
+# endif
 
 static void mdname2nid(const char *mdname, void *data)
 {
@@ -2188,7 +2223,7 @@ int EVP_PKEY_get_ec_point_conv_form(const EVP_PKEY *pkey)
 
     if (pkey->keymgmt == NULL
             || pkey->keydata == NULL) {
-#ifndef OPENSSL_NO_EC
+# ifndef OPENSSL_NO_EC
         /* Might work through the legacy route */
         const EC_KEY *ec = EVP_PKEY_get0_EC_KEY(pkey);
 
@@ -2196,9 +2231,9 @@ int EVP_PKEY_get_ec_point_conv_form(const EVP_PKEY *pkey)
             return 0;
 
         return EC_KEY_get_conv_form(ec);
-#else
+# else
         return 0;
-#endif
+# endif
     }
 
     if (!EVP_PKEY_get_utf8_string_param(pkey,
@@ -2228,7 +2263,7 @@ int EVP_PKEY_get_field_type(const EVP_PKEY *pkey)
 
     if (pkey->keymgmt == NULL
             || pkey->keydata == NULL) {
-#ifndef OPENSSL_NO_EC
+# ifndef OPENSSL_NO_EC
         /* Might work through the legacy route */
         const EC_KEY *ec = EVP_PKEY_get0_EC_KEY(pkey);
         const EC_GROUP *grp;
@@ -2240,9 +2275,9 @@ int EVP_PKEY_get_field_type(const EVP_PKEY *pkey)
             return 0;
 
         return EC_GROUP_get_field_type(grp);
-#else
+# else
         return 0;
-#endif
+# endif
     }
 
     if (!EVP_PKEY_get_utf8_string_param(pkey, OSSL_PKEY_PARAM_EC_FIELD_TYPE,
