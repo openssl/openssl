@@ -9,6 +9,7 @@ EVP_KEYMGMT_free,
 EVP_KEYMGMT_provider,
 EVP_KEYMGMT_is_a,
 EVP_KEYMGMT_number,
+EVP_KEYMGMT_description,
 EVP_KEYMGMT_get0_first_name,
 EVP_KEYMGMT_do_all_provided,
 EVP_KEYMGMT_names_do_all,
@@ -31,6 +32,7 @@ EVP_KEYMGMT_gen_settable_params
  int EVP_KEYMGMT_is_a(const EVP_KEYMGMT *keymgmt, const char *name);
  int EVP_KEYMGMT_number(const EVP_KEYMGMT *keymgmt);
  const char *EVP_KEYMGMT_get0_first_name(const EVP_KEYMGMT *keymgmt);
+ const char *EVP_KEYMGMT_description(const EVP_KEYMGMT *keymgmt);
 
  void EVP_KEYMGMT_do_all_provided(OSSL_LIB_CTX *libctx,
                                   void (*fn)(EVP_KEYMGMT *keymgmt, void *arg),
@@ -81,6 +83,10 @@ not be freed by the caller.
 EVP_KEYMGMT_names_do_all() traverses all names for the I<keymgmt>, and
 calls I<fn> with each name and I<data>.
 
+EVP_KEYMGMT_description() returns a description of the I<keymgmt>, meant for
+display and human consumption.  The description is at the discretion of the
+I<keymgmt> implementation.
+
 EVP_KEYMGMT_do_all_provided() traverses all key keymgmt implementations by
 all activated providers in the library context I<libctx>, and for each
 of the implementations, calls I<fn> with the implementation method and
@@ -124,6 +130,9 @@ otherwise 0.
 EVP_KEYMGMT_number() returns an integer.
 
 EVP_KEYMGMT_get0_first_name() returns the name that is found or NULL on error.
+
+EVP_KEYMGMT_description() returns a pointer to a decription, or NULL if
+there isn't one.
 
 EVP_KEYMGMT_gettable_params(), EVP_KEYMGMT_settable_params() and
 EVP_KEYMGMT_gen_settable_params() return a constant B<OSSL_PARAM> array or

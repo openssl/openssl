@@ -295,6 +295,11 @@ const char *EVP_RAND_name(const EVP_RAND *rand)
     return evp_first_name(rand->prov, rand->name_id);
 }
 
+const char *EVP_RAND_description(const EVP_RAND *rand)
+{
+    return rand->description;
+}
+
 int EVP_RAND_is_a(const EVP_RAND *rand, const char *name)
 {
     return evp_is_a(rand->prov, rand->name_id, NULL, name);

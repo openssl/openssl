@@ -319,6 +319,11 @@ int EVP_SIGNATURE_number(const EVP_SIGNATURE *signature)
     return signature->name_id;
 }
 
+const char *EVP_SIGNATURE_description(const EVP_SIGNATURE *signature)
+{
+    return signature->description;
+}
+
 void EVP_SIGNATURE_do_all_provided(OSSL_LIB_CTX *libctx,
                                    void (*fn)(EVP_SIGNATURE *signature,
                                               void *arg),

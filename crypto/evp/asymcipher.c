@@ -435,6 +435,11 @@ int EVP_ASYM_CIPHER_number(const EVP_ASYM_CIPHER *cipher)
     return cipher->name_id;
 }
 
+const char *EVP_ASYM_CIPHER_description(const EVP_ASYM_CIPHER *cipher)
+{
+    return cipher->description;
+}
+
 void EVP_ASYM_CIPHER_do_all_provided(OSSL_LIB_CTX *libctx,
                                      void (*fn)(EVP_ASYM_CIPHER *cipher,
                                                 void *arg),
