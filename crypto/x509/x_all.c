@@ -52,16 +52,15 @@ int X509_REQ_verify(X509_REQ *a, EVP_PKEY *r)
 
 int NETSCAPE_SPKI_verify(NETSCAPE_SPKI *a, EVP_PKEY *r)
 {
-    return (ASN1_item_verify(ASN1_ITEM_rptr(NETSCAPE_SPKAC),
-                             &a->sig_algor, a->signature, a->spkac, r));
+    return ASN1_item_verify(ASN1_ITEM_rptr(NETSCAPE_SPKAC),
+                            &a->sig_algor, a->signature, a->spkac, r);
 }
 
 int X509_sign(X509 *x, EVP_PKEY *pkey, const EVP_MD *md)
 {
     x->cert_info.enc.modified = 1;
-    return (ASN1_item_sign(ASN1_ITEM_rptr(X509_CINF), &x->cert_info.signature,
-                           &x->sig_alg, &x->signature, &x->cert_info, pkey,
-                           md));
+    return ASN1_item_sign(ASN1_ITEM_rptr(X509_CINF), &x->cert_info.signature,
+                          &x->sig_alg, &x->signature, &x->cert_info, pkey, md);
 }
 
 int X509_sign_ctx(X509 *x, EVP_MD_CTX *ctx)
@@ -90,8 +89,8 @@ X509 *X509_load_http(const char *url, BIO *bio, BIO *rbio, int timeout)
 
 int X509_REQ_sign(X509_REQ *x, EVP_PKEY *pkey, const EVP_MD *md)
 {
-    return (ASN1_item_sign(ASN1_ITEM_rptr(X509_REQ_INFO), &x->sig_alg, NULL,
-                           x->signature, &x->req_info, pkey, md));
+    return ASN1_item_sign(ASN1_ITEM_rptr(X509_REQ_INFO), &x->sig_alg, NULL,
+                          x->signature, &x->req_info, pkey, md);
 }
 
 int X509_REQ_sign_ctx(X509_REQ *x, EVP_MD_CTX *ctx)
@@ -104,8 +103,8 @@ int X509_REQ_sign_ctx(X509_REQ *x, EVP_MD_CTX *ctx)
 int X509_CRL_sign(X509_CRL *x, EVP_PKEY *pkey, const EVP_MD *md)
 {
     x->crl.enc.modified = 1;
-    return (ASN1_item_sign(ASN1_ITEM_rptr(X509_CRL_INFO), &x->crl.sig_alg,
-                           &x->sig_alg, &x->signature, &x->crl, pkey, md));
+    return ASN1_item_sign(ASN1_ITEM_rptr(X509_CRL_INFO), &x->crl.sig_alg,
+                          &x->sig_alg, &x->signature, &x->crl, pkey, md);
 }
 
 int X509_CRL_sign_ctx(X509_CRL *x, EVP_MD_CTX *ctx)
@@ -124,8 +123,8 @@ X509_CRL *X509_CRL_load_http(const char *url, BIO *bio, BIO *rbio, int timeout)
 
 int NETSCAPE_SPKI_sign(NETSCAPE_SPKI *x, EVP_PKEY *pkey, const EVP_MD *md)
 {
-    return (ASN1_item_sign(ASN1_ITEM_rptr(NETSCAPE_SPKAC), &x->sig_algor, NULL,
-                           x->signature, x->spkac, pkey, md));
+    return ASN1_item_sign(ASN1_ITEM_rptr(NETSCAPE_SPKAC), &x->sig_algor, NULL,
+                          x->signature, x->spkac, pkey, md);
 }
 
 #ifndef OPENSSL_NO_STDIO
@@ -399,8 +398,8 @@ int X509_digest(const X509 *cert, const EVP_MD *md, unsigned char *data,
         memcpy(data, cert->sha1_hash, sizeof(cert->sha1_hash));
         return 1;
     }
-    return (ossl_asn1_item_digest_ex(ASN1_ITEM_rptr(X509), md, (char *)cert,
-                                     data, len, cert->libctx, cert->propq));
+    return ossl_asn1_item_digest_ex(ASN1_ITEM_rptr(X509), md, (char *)cert,
+                                    data, len, cert->libctx, cert->propq);
 }
 
 /* calculate cert digest using the same hash algorithm as in its signature */
@@ -445,30 +444,30 @@ int X509_CRL_digest(const X509_CRL *data, const EVP_MD *type,
         memcpy(md, data->sha1_hash, sizeof(data->sha1_hash));
         return 1;
     }
-    return (asn1_item_digest_ex(ASN1_ITEM_rptr(X509_CRL), type, (char *)data,
-                                md, len, data->libctx, data->propq));
+    return asn1_item_digest_ex(ASN1_ITEM_rptr(X509_CRL), type, (char *)data,
+                               md, len, data->libctx, data->propq);
 }
 
 int X509_REQ_digest(const X509_REQ *data, const EVP_MD *type,
                     unsigned char *md, unsigned int *len)
 {
-    return (asn1_item_digest_ex(ASN1_ITEM_rptr(X509_REQ), type, (char *)data,
-                                md, len, data->libctx, data->propq));
+    return asn1_item_digest_ex(ASN1_ITEM_rptr(X509_REQ), type, (char *)data,
+                               md, len, data->libctx, data->propq);
 }
 
 int X509_NAME_digest(const X509_NAME *data, const EVP_MD *type,
                      unsigned char *md, unsigned int *len)
 {
-    return (ASN1_item_digest
-            (ASN1_ITEM_rptr(X509_NAME), type, (char *)data, md, len));
+    return ASN1_item_digest(ASN1_ITEM_rptr(X509_NAME), type, (char *)data,
+                            md, len);
 }
 
 int PKCS7_ISSUER_AND_SERIAL_digest(PKCS7_ISSUER_AND_SERIAL *data,
                                    const EVP_MD *type, unsigned char *md,
                                    unsigned int *len)
 {
-    return (ASN1_item_digest(ASN1_ITEM_rptr(PKCS7_ISSUER_AND_SERIAL), type,
-                             (char *)data, md, len));
+    return ASN1_item_digest(ASN1_ITEM_rptr(PKCS7_ISSUER_AND_SERIAL), type,
+                            (char *)data, md, len);
 }
 
 #ifndef OPENSSL_NO_STDIO
