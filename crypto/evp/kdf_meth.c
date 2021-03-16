@@ -52,10 +52,11 @@ static void *evp_kdf_new(void)
     return kdf;
 }
 
-static void *evp_kdf_from_dispatch(int name_id,
-                                   const OSSL_DISPATCH *fns,
-                                   OSSL_PROVIDER *prov)
+static void *evp_kdf_from_algorithm(int name_id,
+                                    const OSSL_ALGORITHM *algodef,
+                                    OSSL_PROVIDER *prov)
 {
+    const OSSL_DISPATCH *fns = algodef->implementation;
     EVP_KDF *kdf = NULL;
     int fnkdfcnt = 0, fnctxcnt = 0;
 
@@ -64,6 +65,7 @@ static void *evp_kdf_from_dispatch(int name_id,
         return NULL;
     }
     kdf->name_id = name_id;
+    kdf->description = algodef->algorithm_description;
 
     for (; fns->function_id != 0; fns++) {
         switch (fns->function_id) {
@@ -151,7 +153,7 @@ EVP_KDF *EVP_KDF_fetch(OSSL_LIB_CTX *libctx, const char *algorithm,
                        const char *properties)
 {
     return evp_generic_fetch(libctx, OSSL_OP_KDF, algorithm, properties,
-                             evp_kdf_from_dispatch, evp_kdf_up_ref,
+                             evp_kdf_from_algorithm, evp_kdf_up_ref,
                              evp_kdf_free);
 }
 
@@ -218,5 +220,5 @@ void EVP_KDF_do_all_provided(OSSL_LIB_CTX *libctx,
 {
     evp_generic_do_all(libctx, OSSL_OP_KDF,
                        (void (*)(void *, void *))fn, arg,
-                       evp_kdf_from_dispatch, evp_kdf_free);
+                       evp_kdf_from_algorithm, evp_kdf_free);
 }
