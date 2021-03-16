@@ -75,8 +75,8 @@ static int prepare_from_text(const OSSL_PARAM *paramdefs, const char *key,
         *buf_n = (buf_bits + 7) / 8;
 
         /*
-         * TODO(v3.0) is this the right way to do this?  This code expects
-         * a zero data size to simply mean "arbitrary size".
+         * A zero data size to simply mean "arbitrary size", so only do the
+         * range checking if a size is specified.
          */
         if (p->data_size > 0) {
             if (buf_bits > p->data_size * 8
