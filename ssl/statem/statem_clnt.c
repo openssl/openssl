@@ -2167,6 +2167,8 @@ static int tls_process_ske_ecdhe(SSL *s, PACKET *pkt, EVP_PKEY **pkey)
         *pkey = X509_get0_pubkey(s->session->peer);
     /* else anonymous ECDH, so no certificate or pkey. */
 
+    /* Cache the agreed upon group in the SSL_SESSION */
+    s->session->kex_group = curve_id;
     return 1;
 }
 

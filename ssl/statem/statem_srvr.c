@@ -2519,8 +2519,10 @@ int tls_construct_server_key_exchange(SSL *s, WPACKET *pkt)
                      SSL_R_UNSUPPORTED_ELLIPTIC_CURVE);
             goto err;
         }
-        s->s3.tmp.pkey = ssl_generate_pkey_group(s, curve_id);
+        /* Cache the group used in the SSL_SESSION */
+        s->session->kex_group = curve_id;
         /* Generate a new key for this curve */
+        s->s3.tmp.pkey = ssl_generate_pkey_group(s, curve_id);
         if (s->s3.tmp.pkey == NULL) {
             /* SSLfatal() already called */
             goto err;
