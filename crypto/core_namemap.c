@@ -34,7 +34,8 @@ struct ossl_namemap_st {
     unsigned int stored:1; /* If 1, it's stored in a library context */
 
     CRYPTO_RWLOCK *lock;
-    LHASH_OF(NAMENUM_ENTRY) *namenum;  /* Name->number mapping */
+    LHASH_OF(NAMENUM_ENTRY) *namenum;    /* Name->number mapping */
+    STACK_OF(OPENSSL_STRING) *namedesc; /* Number->description mapping */
 
 #ifdef tsan_ld_acq
     TSAN_QUALIFIER int max_number;     /* Current max number TSAN version */
@@ -244,6 +245,11 @@ const char *ossl_namemap_num2name(const OSSL_NAMEMAP *namemap, int number,
     return data.name;
 }
 
+const char *ossl_namemap_num2desc(const OSSL_NAMEMAP *namemap, int number)
+{
+    return sk_OPENSSL_STRING_value(namemap->namedesc, number);
+}
+
 static int namemap_add_name_n(OSSL_NAMEMAP *namemap, int number,
                               const char *name, size_t name_len)
 {
@@ -268,6 +274,32 @@ static int namemap_add_name_n(OSSL_NAMEMAP *namemap, int number,
 
  err:
     namenum_free(namenum);
+    return 0;
+}
+
+static int namemap_add_desc(OSSL_NAMEMAP *namemap, int number, const char *desc)
+{
+    char *curdesc = NULL;
+    char *newdesc = NULL;
+    int n;
+
+    if (number == 0 || desc == NULL || desc[0] == '\0')
+        goto err;
+
+    if ((curdesc = sk_OPENSSL_STRING_value(namemap->namedesc, number)) != NULL
+        && strcasecmp(curdesc, desc) != 0)
+        goto err;
+    if ((newdesc = OPENSSL_strdup(desc)) == NULL)
+        goto err;
+    n = sk_OPENSSL_STRING_num(namemap->namedesc);
+    if (n <= number)
+        sk_OPENSSL_STRING_reserve(namemap->namedesc, number - n + 1);
+    sk_OPENSSL_STRING_set(namemap->namedesc, number, newdesc);
+    OPENSSL_free(curdesc);
+    return 1;
+
+ err:
+    OPENSSL_free(newdesc);
     return 0;
 }
 
@@ -297,6 +329,20 @@ int ossl_namemap_add_name(OSSL_NAMEMAP *namemap, int number, const char *name)
         return 0;
 
     return ossl_namemap_add_name_n(namemap, number, name, strlen(name));
+}
+
+int ossl_namemap_add_desc(OSSL_NAMEMAP *namemap, int number, const char *desc)
+{
+    int ret;
+
+    if (namemap == NULL)
+        return 0;
+
+    if (!CRYPTO_THREAD_write_lock(namemap->lock))
+        return 0;
+    ret = namemap_add_desc(namemap, number, desc);
+    CRYPTO_THREAD_unlock(namemap->lock);
+    return ret;
 }
 
 int ossl_namemap_add_names(OSSL_NAMEMAP *namemap, int number,
@@ -378,45 +424,48 @@ int ossl_namemap_add_names(OSSL_NAMEMAP *namemap, int number,
 #include <openssl/evp.h>
 
 /* Creates an initial namemap with names found in the legacy method db */
-static void get_legacy_evp_names(const char *main_name, const char *alias,
-                                 void *arg)
+static void get_legacy_evp_names(int base_nid, int alias_nid,
+                                 const char *desc, void *arg)
 {
-    int main_id = ossl_namemap_add_name(arg, 0, main_name);
+    const char *base_sn = OBJ_nid2sn(base_nid);
+    const char *base_ln = OBJ_nid2ln(base_nid);
+    const char *alias_sn = OBJ_nid2sn(base_nid);
+    const char *alias_ln = OBJ_nid2ln(base_nid);
+    int num = 0;
 
-    /*
-     * We could check that the returned value is the same as main_id,
-     * but since this is a void function, there's no sane way to report
-     * the error.  The best we can do is trust ourselve to keep the legacy
-     * method database conflict free.
-     *
-     * This registers any alias with the same number as the main name.
-     * Should it be that the current |on| *has* the main name, this is
-     * simply a no-op.
-     */
-    if (alias != NULL) {
-        (void)ossl_namemap_add_name(arg, main_id, alias);
+    if (base_nid == NID_undef)
+        return;
+
+    num = ossl_namemap_add_name(arg, 0, base_sn);
+    if (base_ln != NULL)
+        (void)ossl_namemap_add_name(arg, num, base_ln);
+
+    if (base_nid != alias_nid && alias_nid != NID_undef) {
+        (void)ossl_namemap_add_name(arg, num, alias_sn);
+        if (alias_ln != NULL)
+            (void)ossl_namemap_add_name(arg, num, alias_ln);
     }
+
+    if (desc != NULL)
+        (void)ossl_namemap_add_desc(arg, num, desc);
 }
 
 static void get_legacy_cipher_names(const OBJ_NAME *on, void *arg)
 {
     const EVP_CIPHER *cipher = (void *)OBJ_NAME_get(on->name, on->type);
+    int nid = EVP_CIPHER_type(cipher);
 
-    get_legacy_evp_names(EVP_CIPHER_name(cipher), on->name, arg);
+    /* We know that the EVP_CIPHER long names are used as descriptions */
+    get_legacy_evp_names(nid, nid, OBJ_nid2ln(nid), arg);
 }
 
 static void get_legacy_md_names(const OBJ_NAME *on, void *arg)
 {
     const EVP_MD *md = (void *)OBJ_NAME_get(on->name, on->type);
-    /* We don't want the pkey_type names, so we need some extra care */
-    int snid, lnid;
+    int nid = EVP_MD_type(md);
 
-    snid = OBJ_sn2nid(on->name);
-    lnid = OBJ_ln2nid(on->name);
-    if (snid != EVP_MD_pkey_type(md) && lnid != EVP_MD_pkey_type(md))
-        get_legacy_evp_names(EVP_MD_name(md), on->name, arg);
-    else
-        get_legacy_evp_names(EVP_MD_name(md), NULL, arg);
+    /* We know that the EVP_MD long names are used as descriptions */
+    get_legacy_evp_names(nid, nid, OBJ_nid2ln(nid), arg);
 }
 #endif
 
@@ -468,7 +517,8 @@ OSSL_NAMEMAP *ossl_namemap_new(void)
     if ((namemap = OPENSSL_zalloc(sizeof(*namemap))) != NULL
         && (namemap->lock = CRYPTO_THREAD_lock_new()) != NULL
         && (namemap->namenum =
-            lh_NAMENUM_ENTRY_new(namenum_hash, namenum_cmp)) != NULL)
+            lh_NAMENUM_ENTRY_new(namenum_hash, namenum_cmp)) != NULL
+        && (namemap->namedesc = sk_OPENSSL_STRING_new_null()) != NULL)
         return namemap;
 
     ossl_namemap_free(namemap);
@@ -482,6 +532,7 @@ void ossl_namemap_free(OSSL_NAMEMAP *namemap)
 
     lh_NAMENUM_ENTRY_doall(namemap->namenum, namenum_free);
     lh_NAMENUM_ENTRY_free(namemap->namenum);
+    sk_OPENSSL_STRING_free(namemap->namedesc);
 
     CRYPTO_THREAD_lock_free(namemap->lock);
     OPENSSL_free(namemap);

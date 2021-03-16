@@ -194,6 +194,9 @@ static void *construct_evp_method(const OSSL_ALGORITHM *algodef,
     if (name_id == 0)
         return NULL;
 
+    if (algodef->algorithm_description != NULL)
+        (void)ossl_namemap_add_desc(namemap, name_id,
+                                    algodef->algorithm_description);
     method = methdata->method_from_dispatch(name_id, algodef->implementation,
                                             prov);
 

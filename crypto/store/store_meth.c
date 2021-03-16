@@ -244,8 +244,13 @@ static void *construct_loader(const OSSL_ALGORITHM *algodef,
     int id = ossl_namemap_add_name(namemap, 0, scheme);
     void *method = NULL;
 
-    if (id != 0)
-        method = loader_from_dispatch(id, algodef, prov);
+    if (id == 0)
+        return NULL;
+
+    if (algodef->algorithm_description != NULL)
+        (void)ossl_namemap_add_desc(namemap, id,
+                                    algodef->algorithm_description);
+    method = loader_from_dispatch(id, algodef, prov);
 
     /*
      * Flag to indicate that there was actual construction errors.  This

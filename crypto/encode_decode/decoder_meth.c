@@ -259,8 +259,13 @@ static void *construct_decoder(const OSSL_ALGORITHM *algodef,
     int id = ossl_namemap_add_names(namemap, 0, names, NAME_SEPARATOR);
     void *method = NULL;
 
-    if (id != 0)
-        method = ossl_decoder_from_dispatch(id, algodef, prov);
+    if (id == 0)
+        return NULL;
+
+    if (algodef->algorithm_description != NULL)
+        (void)ossl_namemap_add_desc(namemap, id,
+                                    algodef->algorithm_description);
+    method = ossl_decoder_from_dispatch(id, algodef, prov);
 
     /*
      * Flag to indicate that there was actual construction errors.  This
