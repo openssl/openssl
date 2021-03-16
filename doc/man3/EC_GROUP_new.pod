@@ -69,8 +69,6 @@ L<openssl_user_macros(7)>:
  int EC_GROUP_get_curve_GF2m(const EC_GROUP *group, BIGNUM *p,
                              BIGNUM *a, BIGNUM *b, BN_CTX *ctx);
 
-
-
 =head1 DESCRIPTION
 
 Within the library there are two forms of elliptic curve that are of interest.
