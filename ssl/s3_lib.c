@@ -3636,9 +3636,16 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
             return id;
         }
     case SSL_CTRL_GET_NEGOTIATED_GROUP:
-        ret = tls1_group_id2nid(s->s3.group_id, 1);
-        break;
+        {
+            unsigned int id;
 
+            if (SSL_IS_TLS13(s) && s->s3.did_kex)
+                id = s->s3.group_id;
+            else
+                id = s->session->kex_group;
+            ret = tls1_group_id2nid(id, 1);
+            break;
+        }
     case SSL_CTRL_SET_SIGALGS:
         return tls1_set_sigalgs(s->cert, parg, larg, 0);
 

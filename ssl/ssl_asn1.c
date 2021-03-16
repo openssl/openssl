@@ -43,6 +43,7 @@ typedef struct {
     ASN1_OCTET_STRING *alpn_selected;
     uint32_t tlsext_max_fragment_len_mode;
     ASN1_OCTET_STRING *ticket_appdata;
+    uint32_t kex_group;
 } SSL_SESSION_ASN1;
 
 ASN1_SEQUENCE(SSL_SESSION_ASN1) = {
@@ -73,7 +74,8 @@ ASN1_SEQUENCE(SSL_SESSION_ASN1) = {
     ASN1_EXP_OPT_EMBED(SSL_SESSION_ASN1, max_early_data, ZUINT32, 15),
     ASN1_EXP_OPT(SSL_SESSION_ASN1, alpn_selected, ASN1_OCTET_STRING, 16),
     ASN1_EXP_OPT_EMBED(SSL_SESSION_ASN1, tlsext_max_fragment_len_mode, ZUINT32, 17),
-    ASN1_EXP_OPT(SSL_SESSION_ASN1, ticket_appdata, ASN1_OCTET_STRING, 18)
+    ASN1_EXP_OPT(SSL_SESSION_ASN1, ticket_appdata, ASN1_OCTET_STRING, 18),
+    ASN1_EXP_OPT_EMBED(SSL_SESSION_ASN1, kex_group, UINT32, 19)
 } static_ASN1_SEQUENCE_END(SSL_SESSION_ASN1)
 
 IMPLEMENT_STATIC_ASN1_ENCODE_FUNCTIONS(SSL_SESSION_ASN1)
@@ -133,6 +135,8 @@ int i2d_SSL_SESSION(const SSL_SESSION *in, unsigned char **pp)
 
     as.version = SSL_SESSION_ASN1_VERSION;
     as.ssl_version = in->ssl_version;
+
+    as.kex_group = in->kex_group;
 
     if (in->cipher == NULL)
         l = in->cipher_id;
@@ -271,6 +275,8 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
     }
 
     ret->ssl_version = (int)as->ssl_version;
+
+    ret->kex_group = as->kex_group;
 
     if (as->cipher->length != 2) {
         ERR_raise(ERR_LIB_SSL, SSL_R_CIPHER_CODE_WRONG_LENGTH);
