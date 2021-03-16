@@ -12,6 +12,7 @@
 #include <openssl/lhash.h>
 #include "crypto/lhash.h"      /* ossl_lh_strcasehash */
 #include "internal/tsan_assist.h"
+#include "internal/sizes.h"
 
 /*-
  * The namenum entry
@@ -379,7 +380,7 @@ int ossl_namemap_add_names(OSSL_NAMEMAP *namemap, int number,
 
 /* Creates an initial namemap with names found in the legacy method db */
 static void get_legacy_evp_names(const char *name, const char *desc,
-                                 void *arg)
+                                 const ASN1_OBJECT *obj, void *arg)
 {
     int num = ossl_namemap_add_name(arg, 0, name);
 
@@ -401,6 +402,13 @@ static void get_legacy_evp_names(const char *name, const char *desc,
     if (desc != NULL) {
         (void)ossl_namemap_add_name(arg, num, desc);
     }
+
+    if (obj != NULL) {
+        char txtoid[OSSL_MAX_NAME_SIZE];
+
+        if (OBJ_obj2txt(txtoid, sizeof(txtoid), obj, 1))
+            (void)ossl_namemap_add_name(arg, num, txtoid);
+    }
 }
 
 static void get_legacy_cipher_names(const OBJ_NAME *on, void *arg)
@@ -408,7 +416,8 @@ static void get_legacy_cipher_names(const OBJ_NAME *on, void *arg)
     const EVP_CIPHER *cipher = (void *)OBJ_NAME_get(on->name, on->type);
     int nid = EVP_CIPHER_type(cipher);
 
-    get_legacy_evp_names(OBJ_nid2sn(nid), OBJ_nid2ln(nid), arg);
+    get_legacy_evp_names(OBJ_nid2sn(nid), OBJ_nid2ln(nid), OBJ_nid2obj(nid),
+                         arg);
 }
 
 static void get_legacy_md_names(const OBJ_NAME *on, void *arg)
@@ -416,7 +425,45 @@ static void get_legacy_md_names(const OBJ_NAME *on, void *arg)
     const EVP_MD *md = (void *)OBJ_NAME_get(on->name, on->type);
     int nid = EVP_MD_type(md);
 
-    get_legacy_evp_names(OBJ_nid2sn(nid), OBJ_nid2ln(nid), arg);
+    get_legacy_evp_names(OBJ_nid2sn(nid), OBJ_nid2ln(nid), OBJ_nid2obj(nid),
+                         arg);
+}
+
+static void get_legacy_pkey_meth_names(const EVP_PKEY_ASN1_METHOD *ameth,
+                                       void *arg)
+{
+    int nid = 0, base_nid = 0, flags = 0;
+
+    EVP_PKEY_asn1_get0_info(&nid, &base_nid, &flags, NULL, NULL, ameth);
+    if (nid != NID_undef) {
+        if ((flags & ASN1_PKEY_ALIAS) == 0) {
+            get_legacy_evp_names(OBJ_nid2sn(nid), OBJ_nid2ln(nid),
+                                 OBJ_nid2obj(nid), arg);
+        } else {
+            /*
+             * Treat aliases carefully, some of them are undesirable, or
+             * should not be treated as such for providers.
+             */
+
+            switch (nid) {
+            case EVP_PKEY_SM2:
+            case EVP_PKEY_DHX:
+                /*
+                 * SM2 is a separate keytype with providers, not an alias for
+                 * EC.
+                 * DHX is a separate keytype with providers, not an alias for
+                 * DH.
+                 */
+                get_legacy_evp_names(OBJ_nid2sn(nid), OBJ_nid2ln(nid),
+                                     OBJ_nid2obj(nid), arg);
+                break;
+            default:
+                /* Use the short name of the base nid as the common reference */
+                get_legacy_evp_names(OBJ_nid2sn(base_nid), OBJ_nid2ln(nid),
+                                     OBJ_nid2obj(nid), arg);
+            }
+        }
+    }
 }
 #endif
 
@@ -447,6 +494,8 @@ OSSL_NAMEMAP *ossl_namemap_stored(OSSL_LIB_CTX *libctx)
         return NULL;
     }
     if (nms == 1) {
+        int i, end;
+
         /* Before pilfering, we make sure the legacy database is populated */
         OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_CIPHERS
                             | OPENSSL_INIT_ADD_ALL_DIGESTS, NULL);
@@ -455,6 +504,10 @@ OSSL_NAMEMAP *ossl_namemap_stored(OSSL_LIB_CTX *libctx)
                         get_legacy_cipher_names, namemap);
         OBJ_NAME_do_all(OBJ_NAME_TYPE_MD_METH,
                         get_legacy_md_names, namemap);
+
+        /* We also pilfer data from the legacy EVP_PKEY_ASN1_METHODs */
+        for (i = 0, end = EVP_PKEY_asn1_get_count(); i < end; i++)
+            get_legacy_pkey_meth_names(EVP_PKEY_asn1_get0(i), namemap);
     }
 #endif
 
