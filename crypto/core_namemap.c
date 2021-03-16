@@ -467,6 +467,41 @@ static void get_legacy_md_names(const OBJ_NAME *on, void *arg)
     /* We know that the EVP_MD long names are used as descriptions */
     get_legacy_evp_names(nid, nid, OBJ_nid2ln(nid), arg);
 }
+
+static void get_legacy_pkey_meth_names(const EVP_PKEY_ASN1_METHOD *ameth,
+                                       void *arg)
+{
+    int nid = 0, base_nid = 0, flags = 0;
+    const char *pinfo = NULL;
+
+    EVP_PKEY_asn1_get0_info(&nid, &base_nid, &flags, &pinfo, NULL, ameth);
+    if (nid != NID_undef) {
+        if ((flags & ASN1_PKEY_ALIAS) == 0) {
+            get_legacy_evp_names(nid, nid, pinfo, arg);
+        } else {
+            /*
+             * Treat aliases carefully, some of them are undesirable, or
+             * should not be treated as such for providers.
+             */
+
+            switch (nid) {
+            case EVP_PKEY_SM2:
+            case EVP_PKEY_DHX:
+                /*
+                 * SM2 is a separate keytype with providers, not an alias for
+                 * EC.
+                 * DHX is a separate keytype with providers, not an alias for
+                 * DH.
+                 */
+                get_legacy_evp_names(nid, nid, OBJ_nid2ln(nid), arg);
+                break;
+            default:
+                /* Use the short name of the base nid as the common reference */
+                get_legacy_evp_names(base_nid, nid, NULL, arg);
+            }
+        }
+    }
+}
 #endif
 
 /*-
@@ -496,6 +531,8 @@ OSSL_NAMEMAP *ossl_namemap_stored(OSSL_LIB_CTX *libctx)
         return NULL;
     }
     if (nms == 1) {
+        int i, end;
+
         /* Before pilfering, we make sure the legacy database is populated */
         OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_CIPHERS
                             | OPENSSL_INIT_ADD_ALL_DIGESTS, NULL);
@@ -504,6 +541,10 @@ OSSL_NAMEMAP *ossl_namemap_stored(OSSL_LIB_CTX *libctx)
                         get_legacy_cipher_names, namemap);
         OBJ_NAME_do_all(OBJ_NAME_TYPE_MD_METH,
                         get_legacy_md_names, namemap);
+
+        /* We also pilfer data from the legacy EVP_PKEY_ASN1_METHODs */
+        for (i = 0, end = EVP_PKEY_asn1_get_count(); i < end; i++)
+            get_legacy_pkey_meth_names(EVP_PKEY_asn1_get0(i), namemap);
     }
 #endif
 
