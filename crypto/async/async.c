@@ -203,8 +203,9 @@ int ASYNC_start_job(ASYNC_JOB **job, ASYNC_WAIT_CTX *wctx, int *ret,
             }
 
             if (ctx->currjob->status == ASYNC_JOB_PAUSED) {
-                if ((ctx->currjob = *job) == NULL)
-                    continue;
+                if (*job == NULL)
+                    return ASYNC_ERR;
+                ctx->currjob = *job;
 
                 /*
                  * Restore the default libctx to what it was the last time the
