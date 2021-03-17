@@ -462,7 +462,12 @@ int EVP_DigestFinalXOF(EVP_MD_CTX *ctx, unsigned char *md, size_t size)
     OSSL_PARAM params[2];
     size_t i = 0;
 
-    if (ctx->digest == NULL || ctx->digest->prov == NULL)
+    if (ctx->digest == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_NULL_ALGORITHM);
+        return 0;
+    }
+
+    if (ctx->digest->prov == NULL)
         goto legacy;
 
     if (ctx->digest->dfinal == NULL) {
