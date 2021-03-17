@@ -65,7 +65,7 @@ use the FIPS module for cryptographic algorithms by default.
 
 This approach can be done purely via configuration. As long as applications are
 built and linked against OpenSSL 3.0 and do not override the loading of the
-default config file or its settings then they will automatically start using the
+default config file or its settings then they can automatically start using the
 FIPS module without the need for any further code changes.
 
 To do this the default OpenSSL config file will have to be modified. The
@@ -383,7 +383,7 @@ the key or parameter object. The built-in OpenSSL encoders and decoders are
 implemented in both the default and base providers and are not in the FIPS
 module boundary. However since they are not cryptographic algorithms themselves
 it is still possible to use them in conjunction with the FIPS module, and
-therefore these encoders/decodeers have the "fips=yes" property against them.
+therefore these encoders/decoders have the "fips=yes" property against them.
 You should ensure that either the default or base provider is loaded into the
 library context in this case.
 
@@ -398,7 +398,7 @@ in libssl. If you are using a non-default library context to load the FIPS
 provider then you can supply this to libssl using the function
 `SSL_CTX_new_ex()`. This works as a drop in replacement for the function
 `SSL_CTX_new()` except it provides you with the capability to specify the
-library context to be used. You can also use this same function to specify
+library context to be used. You can also use the same function to specify
 libssl specific properties to use.
 
 In this first example we create two SSL_CTX objects using two different library
