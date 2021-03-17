@@ -8297,7 +8297,7 @@ static EVP_PKEY *get_tmp_dh_params(void)
         OSSL_PARAM_BLD_free_params(params);
     }
 
-    if (!EVP_PKEY_up_ref(tmp_dh_params))
+    if (tmp_dh_params != NULL && !EVP_PKEY_up_ref(tmp_dh_params))
         return NULL;
 
     return tmp_dh_params;
