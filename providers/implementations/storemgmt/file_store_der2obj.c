@@ -101,7 +101,9 @@ static int der2obj_decode(void *provctx, OSSL_CORE_BIO *cin, int selection,
     err = ERR_peek_last_error();
     if (ERR_GET_LIB(err) == ERR_LIB_ASN1
             && (ERR_GET_REASON(err) == ASN1_R_HEADER_TOO_LONG
-                || ERR_GET_REASON(err) == ERR_R_NESTED_ASN1_ERROR))
+                || ERR_GET_REASON(err) == ASN1_R_UNSUPPORTED_TYPE
+                || ERR_GET_REASON(err) == ERR_R_NESTED_ASN1_ERROR
+                || ERR_GET_REASON(err) == ASN1_R_NOT_ENOUGH_DATA))
         ERR_pop_to_mark();
     else
         ERR_clear_last_mark();
