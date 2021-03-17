@@ -2905,6 +2905,7 @@ static int tls_construct_cke_psk_preamble(SSL *s, WPACKET *pkt)
     if (psklen > PSK_MAX_PSK_LEN) {
         SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE,
                  SSL_F_TLS_CONSTRUCT_CKE_PSK_PREAMBLE, ERR_R_INTERNAL_ERROR);
+        psklen = PSK_MAX_PSK_LEN;   /* Avoid overrunning the array on cleanse */
         goto err;
     } else if (psklen == 0) {
         SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE,
