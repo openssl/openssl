@@ -390,8 +390,8 @@ static int test_param_size_t(int n)
 static int test_param_time_t(int n)
 {
     time_t in, out;
-    unsigned char buf[MAX_LEN], cmp[sizeof(size_t)];
-    const size_t len = raw_values[n].len >= sizeof(size_t)
+    unsigned char buf[MAX_LEN], cmp[sizeof(time_t)];
+    const size_t len = raw_values[n].len >= sizeof(time_t)
                        ? sizeof(time_t) : raw_values[n].len;
     OSSL_PARAM param = OSSL_PARAM_time_t("a", NULL);
 
