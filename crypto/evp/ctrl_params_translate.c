@@ -1512,8 +1512,11 @@ static int get_payload_group_name(enum state state,
         return 0;
     }
 
-    if (ctx->p2 != NULL)
-        ctx->p1 = strlen(ctx->p2);
+    if (ctx->p2 == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_UNSUPPORTED_KEY_TYPE);
+        return 0;
+    }
+    ctx->p1 = strlen(ctx->p2);
     return default_fixup_args(state, translation, ctx);
 }
 
