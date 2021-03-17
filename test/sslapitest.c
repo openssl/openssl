@@ -4487,19 +4487,19 @@ static int test_ciphersuite_change(void)
  * Test 12 = Test all ECDHE with TLSv1.2 client and server
  * Test 13 = Test all FFDHE with TLSv1.2 client and server
  */
+# ifndef OPENSSL_NO_EC
+static int ecdhe_kexch_groups[] = {NID_X9_62_prime256v1, NID_secp384r1,
+                                   NID_secp521r1, NID_X25519, NID_X448};
+# endif
+# ifndef OPENSSL_NO_DH
+static int ffdhe_kexch_groups[] = {NID_ffdhe2048, NID_ffdhe3072, NID_ffdhe4096,
+                                   NID_ffdhe6144, NID_ffdhe8192};
+# endif
 static int test_key_exchange(int idx)
 {
     SSL_CTX *sctx = NULL, *cctx = NULL;
     SSL *serverssl = NULL, *clientssl = NULL;
     int testresult = 0;
-# ifndef OPENSSL_NO_EC
-    int ecdhe_kexch_groups[] = {NID_X9_62_prime256v1, NID_secp384r1,
-                                NID_secp521r1, NID_X25519, NID_X448};
-# endif
-# ifndef OPENSSL_NO_DH
-    int ffdhe_kexch_groups[] = {NID_ffdhe2048, NID_ffdhe3072, NID_ffdhe4096,
-                                NID_ffdhe6144, NID_ffdhe8192};
-# endif
     int kexch_alg;
     int *kexch_groups = &kexch_alg;
     int kexch_groups_size = 1;
