@@ -28,7 +28,7 @@ EVP_PKEY_print_params_fp - public key algorithm printing routines
 The functions EVP_PKEY_print_public(), EVP_PKEY_print_private() and
 EVP_PKEY_print_params() print out the public, private or parameter components
 of key I<pkey> respectively. The key is sent to B<BIO> I<out> in human readable
-form. The parameter I<indent> indicated how far the printout should be indented.
+form. The parameter I<indent> indicates how far the printout should be indented.
 
 The I<pctx> parameter allows the print output to be finely tuned by using
 ASN1 printing options. If I<pctx> is set to NULL then default values will
