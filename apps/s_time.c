@@ -320,7 +320,8 @@ int s_time_main(int argc, char **argv)
          nConn, totalTime, ((double)nConn / totalTime), bytes_read);
     printf
         ("%d connections in %ld real seconds, %ld bytes read per connection\n",
-         nConn, (long)time(NULL) - finishtime + maxtime, bytes_read / nConn);
+         nConn, (long)time(NULL) - finishtime + maxtime,
+         nConn > 0 ? bytes_read / nConn : 0l);
 
     /*
      * Now loop and time connections using the same session id over and over
