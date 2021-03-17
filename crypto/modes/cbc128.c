@@ -115,7 +115,8 @@ void CRYPTO_cbc128_decrypt(const unsigned char *in, unsigned char *out,
                 out += 16;
             }
         }
-        memcpy(ivec, iv, 16);
+        if (ivec != iv)
+            memcpy(ivec, iv, 16);
     } else {
         if (STRICT_ALIGNMENT &&
             ((size_t)in | (size_t)out | (size_t)ivec) % sizeof(size_t) != 0) {
