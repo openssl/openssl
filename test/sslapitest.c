@@ -625,10 +625,14 @@ static int test_client_cert_verify_cb(void)
 end:
     X509_free(crt1);
     X509_free(crt2);
-    SSL_shutdown(clientssl);
-    SSL_shutdown(serverssl);
-    SSL_free(serverssl);
-    SSL_free(clientssl);
+    if (clientssl != NULL) {
+        SSL_shutdown(clientssl);
+        SSL_free(clientssl);
+    }
+    if (serverssl != NULL) {
+        SSL_shutdown(serverssl);
+        SSL_free(serverssl);
+    }
     SSL_CTX_free(sctx);
     SSL_CTX_free(cctx);
 
