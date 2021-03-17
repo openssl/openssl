@@ -181,7 +181,7 @@ int ASYNC_start_job(ASYNC_JOB **job, ASYNC_WAIT_CTX *wctx, int *ret,
     if (ctx == NULL)
         return ASYNC_ERR;
 
-    if (*job)
+    if (*job != NULL)
         ctx->currjob = *job;
 
     for (;;) {
@@ -203,7 +203,9 @@ int ASYNC_start_job(ASYNC_JOB **job, ASYNC_WAIT_CTX *wctx, int *ret,
             }
 
             if (ctx->currjob->status == ASYNC_JOB_PAUSED) {
-                ctx->currjob = *job;
+                if ((ctx->currjob = *job) == NULL)
+                    continue;
+
                 /*
                  * Restore the default libctx to what it was the last time the
                  * fibre ran
