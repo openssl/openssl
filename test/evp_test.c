@@ -1460,15 +1460,16 @@ static void pkey_test_cleanup(EVP_TEST *t)
 static int pkey_test_ctrl(EVP_TEST *t, EVP_PKEY_CTX *pctx,
                           const char *value)
 {
-    int rv;
+    int rv = 0;
     char *p, *tmpval;
 
     if (!TEST_ptr(tmpval = OPENSSL_strdup(value)))
         return 0;
     p = strchr(tmpval, ':');
-    if (p != NULL)
+    if (p != NULL) {
         *p++ = '\0';
-    rv = EVP_PKEY_CTX_ctrl_str(pctx, tmpval, p);
+        rv = EVP_PKEY_CTX_ctrl_str(pctx, tmpval, p);
+    }
     if (rv == -2) {
         t->err = "PKEY_CTRL_INVALID";
         rv = 1;
