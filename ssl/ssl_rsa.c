@@ -424,6 +424,9 @@ static int use_certificate_chain_file(SSL_CTX *ctx, SSL *ssl, const char *file)
     void *passwd_callback_userdata;
     SSL_CTX *real_ctx = (ssl == NULL) ? ctx : ssl->ctx;
 
+    if (ctx == NULL && ssl == NULL)
+        return 0;
+
     ERR_clear_error();          /* clear error stack for
                                  * SSL_CTX_use_certificate() */
 
