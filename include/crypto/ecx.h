@@ -20,7 +20,9 @@
 #  include <openssl/core.h>
 #  include <openssl/e_os2.h>
 #  include <openssl/crypto.h>
+#  include <openssl/x509.h>
 #  include "internal/refcount.h"
+#  include "crypto/types.h"
 
 #  define X25519_KEYLEN         32
 #  define X448_KEYLEN           56
@@ -76,6 +78,7 @@ struct ecx_key_st {
 
 typedef struct ecx_key_st ECX_KEY;
 
+size_t ossl_ecx_key_length(ECX_KEY_TYPE type);
 ECX_KEY *ossl_ecx_key_new(OSSL_LIB_CTX *libctx, ECX_KEY_TYPE type,
                           int haspubkey, const char *propq);
 void ossl_ecx_key_set0_libctx(ECX_KEY *key, OSSL_LIB_CTX *libctx);
@@ -124,9 +127,22 @@ ossl_x448_public_from_private(uint8_t out_public_value[56],
 
 
 /* Backend support */
+typedef enum {
+    KEY_OP_PUBLIC,
+    KEY_OP_PRIVATE,
+    KEY_OP_KEYGEN
+} ecx_key_op_t;
+
+ECX_KEY *ossl_ecx_key_op(const X509_ALGOR *palg,
+                         const unsigned char *p, int plen,
+                         int pkey_id, ecx_key_op_t op,
+                         OSSL_LIB_CTX *libctx, const char *propq);
+
 int ossl_ecx_public_from_private(ECX_KEY *key);
 int ossl_ecx_key_fromdata(ECX_KEY *ecx, const OSSL_PARAM params[],
                           int include_private);
+ECX_KEY *ossl_ecx_key_from_pkcs8(const PKCS8_PRIV_KEY_INFO *p8inf,
+                                 OSSL_LIB_CTX *libctx, const char *propq);
 
 ECX_KEY *ossl_evp_pkey_get1_X25519(EVP_PKEY *pkey);
 ECX_KEY *ossl_evp_pkey_get1_X448(EVP_PKEY *pkey);

@@ -25,9 +25,6 @@
 #include "crypto/rsa.h"
 #include "rsa_local.h"
 
-static RSA_PSS_PARAMS *rsa_pss_decode(const X509_ALGOR *alg);
-static int rsa_sync_to_pss_params_30(RSA *rsa);
-
 /* Set any parameters associated with pkey */
 static int rsa_param_encode(const EVP_PKEY *pkey,
                             ASN1_STRING **pstr, int *pstrtype)
@@ -53,29 +50,6 @@ static int rsa_param_encode(const EVP_PKEY *pkey,
     return 1;
 }
 /* Decode any parameters and set them in RSA structure */
-static int rsa_param_decode(RSA *rsa, const X509_ALGOR *alg)
-{
-    const ASN1_OBJECT *algoid;
-    const void *algp;
-    int algptype;
-
-    X509_ALGOR_get0(&algoid, &algptype, &algp, alg);
-    if (OBJ_obj2nid(algoid) != EVP_PKEY_RSA_PSS)
-        return 1;
-    if (algptype == V_ASN1_UNDEF)
-        return 1;
-    if (algptype != V_ASN1_SEQUENCE) {
-        ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_PSS_PARAMETERS);
-        return 0;
-    }
-    rsa->pss = rsa_pss_decode(alg);
-    if (rsa->pss == NULL)
-        return 0;
-    if (!rsa_sync_to_pss_params_30(rsa))
-        return 0;
-    return 1;
-}
-
 static int rsa_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
 {
     unsigned char *penc = NULL;
@@ -107,7 +81,7 @@ static int rsa_pub_decode(EVP_PKEY *pkey, const X509_PUBKEY *pubkey)
         return 0;
     if ((rsa = d2i_RSAPublicKey(NULL, &p, pklen)) == NULL)
         return 0;
-    if (!rsa_param_decode(rsa, alg)) {
+    if (!ossl_rsa_param_decode(rsa, alg)) {
         RSA_free(rsa);
         return 0;
     }
@@ -194,38 +168,14 @@ static int rsa_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
 
 static int rsa_priv_decode(EVP_PKEY *pkey, const PKCS8_PRIV_KEY_INFO *p8)
 {
-    const unsigned char *p;
-    RSA *rsa;
-    int pklen;
-    const X509_ALGOR *alg;
+    int ret = 0;
+    RSA *rsa = ossl_rsa_key_from_pkcs8(p8, NULL, NULL);
 
-    if (!PKCS8_pkey_get0(NULL, &p, &pklen, &alg, p8))
-        return 0;
-    rsa = d2i_RSAPrivateKey(NULL, &p, pklen);
-    if (rsa == NULL) {
-        ERR_raise(ERR_LIB_RSA, ERR_R_RSA_LIB);
-        return 0;
+    if (rsa != NULL) {
+        ret = 1;
+        EVP_PKEY_assign(pkey, pkey->ameth->pkey_id, rsa);
     }
-    if (!rsa_param_decode(rsa, alg)) {
-        RSA_free(rsa);
-        return 0;
-    }
-
-    RSA_clear_flags(rsa, RSA_FLAG_TYPE_MASK);
-    switch (pkey->ameth->pkey_id) {
-    case EVP_PKEY_RSA:
-        RSA_set_flags(rsa, RSA_FLAG_TYPE_RSA);
-        break;
-    case EVP_PKEY_RSA_PSS:
-        RSA_set_flags(rsa, RSA_FLAG_TYPE_RSASSAPSS);
-        break;
-    default:
-        /* Leave the type bits zero */
-        break;
-    }
-
-    EVP_PKEY_assign(pkey, pkey->ameth->pkey_id, rsa);
-    return 1;
+    return ret;
 }
 
 static int int_rsa_size(const EVP_PKEY *pkey)
@@ -444,33 +394,12 @@ static int rsa_priv_print(BIO *bp, const EVP_PKEY *pkey, int indent,
     return pkey_rsa_print(bp, pkey, indent, 1);
 }
 
-static RSA_PSS_PARAMS *rsa_pss_decode(const X509_ALGOR *alg)
-{
-    RSA_PSS_PARAMS *pss;
-
-    pss = ASN1_TYPE_unpack_sequence(ASN1_ITEM_rptr(RSA_PSS_PARAMS),
-                                    alg->parameter);
-
-    if (pss == NULL)
-        return NULL;
-
-    if (pss->maskGenAlgorithm != NULL) {
-        pss->maskHash = ossl_x509_algor_mgf1_decode(pss->maskGenAlgorithm);
-        if (pss->maskHash == NULL) {
-            RSA_PSS_PARAMS_free(pss);
-            return NULL;
-        }
-    }
-
-    return pss;
-}
-
 static int rsa_sig_print(BIO *bp, const X509_ALGOR *sigalg,
                          const ASN1_STRING *sig, int indent, ASN1_PCTX *pctx)
 {
     if (OBJ_obj2nid(sigalg->algorithm) == EVP_PKEY_RSA_PSS) {
         int rv;
-        RSA_PSS_PARAMS *pss = rsa_pss_decode(sigalg);
+        RSA_PSS_PARAMS *pss = ossl_rsa_pss_decode(sigalg);
 
         rv = rsa_pss_param_print(bp, 0, pss, indent);
         RSA_PSS_PARAMS_free(pss);
@@ -601,7 +530,7 @@ int ossl_rsa_pss_to_ctx(EVP_MD_CTX *ctx, EVP_PKEY_CTX *pkctx,
         return -1;
     }
     /* Decode PSS parameters */
-    pss = rsa_pss_decode(sigalg);
+    pss = ossl_rsa_pss_decode(sigalg);
 
     if (!ossl_rsa_pss_get_param(pss, &md, &mgf1md, &saltlen)) {
         ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_PSS_PARAMETERS);
@@ -656,36 +585,6 @@ static int rsa_pss_verify_param(const EVP_MD **pmd, const EVP_MD **pmgf1md,
     return 1;
 }
 
-static int rsa_pss_get_param_unverified(const RSA_PSS_PARAMS *pss,
-                                        const EVP_MD **pmd,
-                                        const EVP_MD **pmgf1md,
-                                        int *psaltlen, int *ptrailerField)
-{
-    RSA_PSS_PARAMS_30 pss_params;
-
-    /* Get the defaults from the ONE place */
-    (void)ossl_rsa_pss_params_30_set_defaults(&pss_params);
-
-    if (pss == NULL)
-        return 0;
-    *pmd = ossl_x509_algor_get_md(pss->hashAlgorithm);
-    if (*pmd == NULL)
-        return 0;
-    *pmgf1md = ossl_x509_algor_get_md(pss->maskHash);
-    if (*pmgf1md == NULL)
-        return 0;
-    if (pss->saltLength)
-        *psaltlen = ASN1_INTEGER_get(pss->saltLength);
-    else
-        *psaltlen = ossl_rsa_pss_params_30_saltlen(&pss_params);
-    if (pss->trailerField)
-        *ptrailerField = ASN1_INTEGER_get(pss->trailerField);
-    else
-        *ptrailerField = ossl_rsa_pss_params_30_trailerfield(&pss_params);;
-
-    return 1;
-}
-
 int ossl_rsa_pss_get_param(const RSA_PSS_PARAMS *pss, const EVP_MD **pmd,
                            const EVP_MD **pmgf1md, int *psaltlen)
 {
@@ -699,43 +598,9 @@ int ossl_rsa_pss_get_param(const RSA_PSS_PARAMS *pss, const EVP_MD **pmd,
      */
     int trailerField = 0;
 
-    return rsa_pss_get_param_unverified(pss, pmd, pmgf1md, psaltlen,
-                                        &trailerField)
+    return ossl_rsa_pss_get_param_unverified(pss, pmd, pmgf1md, psaltlen,
+                                             &trailerField)
         && rsa_pss_verify_param(pmd, pmgf1md, psaltlen, &trailerField);
-}
-
-static int rsa_sync_to_pss_params_30(RSA *rsa)
-{
-    if (rsa != NULL && rsa->pss != NULL) {
-        const EVP_MD *md = NULL, *mgf1md = NULL;
-        int md_nid, mgf1md_nid, saltlen, trailerField;
-        RSA_PSS_PARAMS_30 pss_params;
-
-        /*
-         * We don't care about the validity of the fields here, we just
-         * want to synchronise values.  Verifying here makes it impossible
-         * to even read a key with invalid values, making it hard to test
-         * a bad situation.
-         *
-         * Other routines use ossl_rsa_pss_get_param(), so the values will be
-         * checked, eventually.
-         */
-        if (!rsa_pss_get_param_unverified(rsa->pss, &md, &mgf1md,
-                                          &saltlen, &trailerField))
-            return 0;
-        md_nid = EVP_MD_type(md);
-        mgf1md_nid = EVP_MD_type(mgf1md);
-        if (!ossl_rsa_pss_params_30_set_defaults(&pss_params)
-            || !ossl_rsa_pss_params_30_set_hashalg(&pss_params, md_nid)
-            || !ossl_rsa_pss_params_30_set_maskgenhashalg(&pss_params,
-                                                          mgf1md_nid)
-            || !ossl_rsa_pss_params_30_set_saltlen(&pss_params, saltlen)
-            || !ossl_rsa_pss_params_30_set_trailerfield(&pss_params,
-                                                        trailerField))
-            return 0;
-        rsa->pss_params = pss_params;
-    }
-    return 1;
 }
 
 /*
@@ -806,7 +671,7 @@ static int rsa_sig_info_set(X509_SIG_INFO *siginf, const X509_ALGOR *sigalg,
     if (OBJ_obj2nid(sigalg->algorithm) != EVP_PKEY_RSA_PSS)
         return 0;
     /* Decode PSS parameters */
-    pss = rsa_pss_decode(sigalg);
+    pss = ossl_rsa_pss_decode(sigalg);
     if (!ossl_rsa_pss_get_param(pss, &md, &mgf1md, &saltlen))
         goto err;
     mdnid = EVP_MD_type(md);
@@ -894,8 +759,8 @@ static int rsa_int_export_to(const EVP_PKEY *from, int rsa_type,
         int md_nid, mgf1md_nid, saltlen, trailerfield;
         RSA_PSS_PARAMS_30 pss_params;
 
-        if (!rsa_pss_get_param_unverified(rsa->pss, &md, &mgf1md,
-                                          &saltlen, &trailerfield))
+        if (!ossl_rsa_pss_get_param_unverified(rsa->pss, &md, &mgf1md,
+                                               &saltlen, &trailerfield))
             goto err;
         md_nid = EVP_MD_type(md);
         mgf1md_nid = EVP_MD_type(mgf1md);

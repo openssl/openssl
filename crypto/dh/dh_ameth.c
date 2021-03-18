@@ -163,53 +163,15 @@ static int dh_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
 
 static int dh_priv_decode(EVP_PKEY *pkey, const PKCS8_PRIV_KEY_INFO *p8)
 {
-    const unsigned char *p, *pm;
-    int pklen, pmlen;
-    int ptype;
-    const void *pval;
-    const ASN1_STRING *pstr;
-    const X509_ALGOR *palg;
-    ASN1_INTEGER *privkey = NULL;
-    DH *dh = NULL;
+    int ret = 0;
+    DH *dh = ossl_dh_key_from_pkcs8(p8, NULL, NULL);
 
-    if (!PKCS8_pkey_get0(NULL, &p, &pklen, &palg, p8))
-        return 0;
-
-    X509_ALGOR_get0(NULL, &ptype, &pval, palg);
-
-    if (ptype != V_ASN1_SEQUENCE)
-        goto decerr;
-    if ((privkey = d2i_ASN1_INTEGER(NULL, &p, pklen)) == NULL)
-        goto decerr;
-
-    pstr = pval;
-    pm = pstr->data;
-    pmlen = pstr->length;
-    if ((dh = d2i_dhp(pkey, &pm, pmlen)) == NULL)
-        goto decerr;
-
-    /* We have parameters now set private key */
-    if ((dh->priv_key = BN_secure_new()) == NULL
-        || !ASN1_INTEGER_to_BN(privkey, dh->priv_key)) {
-        ERR_raise(ERR_LIB_DH, DH_R_BN_ERROR);
-        goto dherr;
+    if (dh != NULL) {
+        ret = 1;
+        EVP_PKEY_assign(pkey, pkey->ameth->pkey_id, dh);
     }
-    /* Calculate public key, increments dirty_cnt */
-    if (!DH_generate_key(dh))
-        goto dherr;
 
-    EVP_PKEY_assign(pkey, pkey->ameth->pkey_id, dh);
-
-    ASN1_STRING_clear_free(privkey);
-
-    return 1;
-
- decerr:
-    ERR_raise(ERR_LIB_DH, EVP_R_DECODE_ERROR);
- dherr:
-    DH_free(dh);
-    ASN1_STRING_clear_free(privkey);
-    return 0;
+    return ret;
 }
 
 static int dh_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)

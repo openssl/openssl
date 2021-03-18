@@ -25,6 +25,7 @@ int evp_pkey_ctx_set_ec_param_enc_prov(EVP_PKEY_CTX *ctx, int param_enc);
 # ifndef OPENSSL_NO_EC
 #  include <openssl/core.h>
 #  include <openssl/ec.h>
+#  include <openssl/x509.h>
 #  include "crypto/types.h"
 
 /*-
@@ -78,6 +79,12 @@ int ossl_ec_group_set_params(EC_GROUP *group, const OSSL_PARAM params[]);
 int ossl_ec_key_fromdata(EC_KEY *ecx, const OSSL_PARAM params[],
                          int include_private);
 int ossl_ec_key_otherparams_fromdata(EC_KEY *ec, const OSSL_PARAM params[]);
+EC_KEY *ossl_ec_key_param_from_x509_algor(const X509_ALGOR *palg,
+                                          OSSL_LIB_CTX *libctx,
+                                          const char *propq);
+EC_KEY *ossl_ec_key_from_pkcs8(const PKCS8_PRIV_KEY_INFO *p8inf,
+                               OSSL_LIB_CTX *libctx, const char *propq);
+
 int ossl_ec_set_ecdh_cofactor_mode(EC_KEY *ec, int mode);
 int ossl_ec_encoding_name2id(const char *name);
 int ossl_ec_encoding_param2id(const OSSL_PARAM *p, int *id);

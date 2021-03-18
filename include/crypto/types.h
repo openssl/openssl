@@ -12,6 +12,12 @@
 #ifdef OPENSSL_NO_DEPRECATED_3_0
 typedef struct rsa_st RSA;
 typedef struct rsa_meth_st RSA_METHOD;
+# ifndef OPENSSL_NO_EC
 typedef struct ec_key_st EC_KEY;
 typedef struct ec_key_method_st EC_KEY_METHOD;
+# endif
+#endif
+
+#ifndef OPENSSL_NO_EC
+typedef struct ecx_key_st ECX_KEY;
 #endif
