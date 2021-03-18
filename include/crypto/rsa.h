@@ -13,6 +13,7 @@
 
 # include <openssl/core.h>
 # include <openssl/rsa.h>
+# include <openssl/x509.h>
 # include "crypto/types.h"
 
 typedef struct rsa_pss_params_30_st {
@@ -69,6 +70,14 @@ int ossl_rsa_pss_params_30_fromdata(RSA_PSS_PARAMS_30 *pss_params,
                                     int *defaults_set,
                                     const OSSL_PARAM params[],
                                     OSSL_LIB_CTX *libctx);
+int ossl_rsa_set0_pss_params(RSA *r, RSA_PSS_PARAMS *pss);
+int ossl_rsa_pss_get_param_unverified(const RSA_PSS_PARAMS *pss,
+                                      const EVP_MD **pmd, const EVP_MD **pmgf1md,
+                                      int *psaltlen, int *ptrailerField);
+RSA_PSS_PARAMS *ossl_rsa_pss_decode(const X509_ALGOR *alg);
+int ossl_rsa_param_decode(RSA *rsa, const X509_ALGOR *alg);
+RSA *ossl_rsa_key_from_pkcs8(const PKCS8_PRIV_KEY_INFO *p8inf,
+                             OSSL_LIB_CTX *libctx, const char *propq);
 
 int ossl_rsa_padding_check_PKCS1_type_2_TLS(OSSL_LIB_CTX *ctx, unsigned char *to,
                                             size_t tlen,
@@ -113,4 +122,5 @@ void ossl_rsa_acvp_test_free(RSA_ACVP_TEST *t);
 # define RSA_ACVP_TEST void
 # endif
 
+RSA *evp_pkey_get1_RSA_PSS(EVP_PKEY *pkey);
 #endif

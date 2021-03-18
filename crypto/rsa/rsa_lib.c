@@ -658,6 +658,18 @@ const RSA_PSS_PARAMS *RSA_get0_pss_params(const RSA *r)
 }
 
 /* Internal */
+int ossl_rsa_set0_pss_params(RSA *r, RSA_PSS_PARAMS *pss)
+{
+#ifdef FIPS_MODULE
+    return 0;
+#else
+    RSA_PSS_PARAMS_free(r->pss);
+    r->pss = pss;
+    return 1;
+#endif
+}
+
+/* Internal */
 RSA_PSS_PARAMS_30 *ossl_rsa_get0_pss_params_30(RSA *r)
 {
     return &r->pss_params;
