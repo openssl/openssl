@@ -250,6 +250,7 @@ static int rsa_decrypt(void *vprsactx, unsigned char *out, size_t *outlen,
             if (prsactx->oaep_md == NULL) {
                 prsactx->oaep_md = EVP_MD_fetch(prsactx->libctx, "SHA-1", NULL);
                 if (prsactx->oaep_md == NULL) {
+                    OPENSSL_free(tbuf);
                     ERR_raise(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR);
                     return 0;
                 }
