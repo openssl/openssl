@@ -846,8 +846,9 @@ static const ECX_KEY *evp_pkey_get0_ECX_KEY(const EVP_PKEY *pkey, int type)
 static ECX_KEY *evp_pkey_get1_ECX_KEY(EVP_PKEY *pkey, int type)
 {
     ECX_KEY *ret = (ECX_KEY *)evp_pkey_get0_ECX_KEY(pkey, type);
-    if (ret != NULL)
-        ossl_ecx_key_up_ref(ret);
+
+    if (ret != NULL && !ossl_ecx_key_up_ref(ret))
+        ret = NULL;
     return ret;
 }
 
