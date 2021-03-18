@@ -436,7 +436,7 @@ RAND_POOL *rand_pool_new(int entropy_requested, int secure,
     size_t min_alloc_size = RAND_POOL_MIN_ALLOCATION(secure);
 
     if (!RUN_ONCE(&rand_init, do_rand_init))
-        return 0;
+        return NULL;
 
     pool = OPENSSL_zalloc(sizeof(*pool));
     if (pool == NULL) {
