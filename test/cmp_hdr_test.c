@@ -318,12 +318,15 @@ execute_HDR_generalInfo_push1_items_test(CMP_HDR_TEST_FIXTURE *fixture)
     ASN1_INTEGER *asn1int = ASN1_INTEGER_new();
     ASN1_TYPE *val = ASN1_TYPE_new();
     ASN1_TYPE *pushed_val;
+    int res = 0;
 
     if (!TEST_ptr(asn1int))
         return 0;
 
-    if (!TEST_ptr(val))
-        goto err;
+    if (!TEST_ptr(val)) {
+        ASN1_INTEGER_free(asn1int);
+        return 0;
+    }
 
     ASN1_INTEGER_set(asn1int, 88);
     ASN1_TYPE_set(val, V_ASN1_INTEGER, asn1int);
@@ -343,13 +346,11 @@ execute_HDR_generalInfo_push1_items_test(CMP_HDR_TEST_FIXTURE *fixture)
     if (!TEST_int_eq(ASN1_TYPE_cmp(itav->infoValue.other, pushed_val), 0))
         goto err;
 
-    sk_OSSL_CMP_ITAV_pop_free(itavs, OSSL_CMP_ITAV_free);
-    return 1;
+    res = 1;
+
  err:
-    ASN1_INTEGER_free(asn1int);
-    ASN1_TYPE_free(val);
     sk_OSSL_CMP_ITAV_pop_free(itavs, OSSL_CMP_ITAV_free);
-    return 0;
+    return res;
 }
 
 static int test_HDR_generalInfo_push1_items(void)
