@@ -27,8 +27,7 @@ static int test_load(const char *path, const char *symbol)
 
     if (!sd_load(path, &sd, SD_MODULE))
         return 0;
-    ret = sd_load(path, &sd, SD_MODULE)
-          && (symbol == NULL || sd_sym(sd, symbol, &sym));
+    ret = symbol == NULL || sd_sym(sd, symbol, &sym);
     if (!sd_close(sd))
         ret = 0;
     return ret;
