@@ -868,10 +868,6 @@ int evp_set_default_properties_int(OSSL_LIB_CTX *libctx, const char *propq,
 
 void evp_md_ctx_clear_digest(EVP_MD_CTX *ctx, int force);
 
-EVP_PKEY *evp_privatekey_from_binary(int keytype, EVP_PKEY **a,
-                                     const unsigned char **pp, long length,
-                                     OSSL_LIB_CTX *libctx, const char *propq);
-
 /* Three possible states: */
 # define EVP_PKEY_STATE_UNKNOWN         0
 # define EVP_PKEY_STATE_LEGACY          1
