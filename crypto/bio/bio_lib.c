@@ -114,6 +114,10 @@ int BIO_free(BIO *a)
     if (a == NULL)
         return 0;
 
+    /* It's only safe to do this on source BIOs */
+    if (a->next_bio == NULL)
+        (void) BIO_flush(a);
+
     if (CRYPTO_DOWN_REF(&a->references, &ret, a->lock) <= 0)
         return 0;
 
