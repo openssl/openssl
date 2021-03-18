@@ -59,13 +59,14 @@ static int test_readbuffer_file_bio(int tstid)
                 if (!TEST_true(BIO_eof(in_bio)))
                     goto err;
             } else {
-                if (!TEST_int_gt(len, 0))
+                if (!TEST_int_gt(len, 0)
+                    || !TEST_int_le(len, (int)sizeof(buf) - 1))
                     goto err;
                 if (!TEST_true(buf[len] == 0))
                     goto err;
                 if (len > 1
-                    && len < ((int)sizeof(buf) - 1)
                     && !BIO_eof(in_bio)
+                    && len != ((int)sizeof(buf) - 1)
                     && !TEST_true(buf[len - 1] == '\n'))
                     goto err;
             }

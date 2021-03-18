@@ -230,12 +230,12 @@ static int readbuffer_gets(BIO *b, char *buf, int size)
 
     /* If data is already buffered then use this first */
     if (ctx->ibuf_len > 0) {
-        p = &(ctx->ibuf[ctx->ibuf_off]);
+        p = ctx->ibuf + ctx->ibuf_off;
         found_newline = 0;
         for (num_chars = 0;
              (num_chars < ctx->ibuf_len) && (num_chars < size);
              num_chars++) {
-            *(buf++) = p[num_chars];
+            *buf++ = p[num_chars];
             if (p[num_chars] == '\n') {
                 found_newline = 1;
                 num_chars++;
@@ -268,15 +268,15 @@ static int readbuffer_gets(BIO *b, char *buf, int size)
       * multiple times and need to read the next available block when using
       * stdin - so we need to READ one byte at a time!
       */
-     p = &(ctx->ibuf[ctx->ibuf_off]);
-     for (i = 0; i < (1 + size); ++i) {
+     p = ctx->ibuf + ctx->ibuf_off;
+     for (i = 0; i < size; ++i) {
          j = BIO_read(b->next_bio, p, 1);
          if (j <= 0) {
              BIO_copy_next_retry(b);
              *buf = '\0';
              return num > 0 ? num : j;
          }
-         *(buf++) = *p;
+         *buf++ = *p;
          num++;
          ctx->ibuf_off++;
          if (*p == '\n')

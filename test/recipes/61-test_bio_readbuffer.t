@@ -23,7 +23,7 @@ ok(run(app([ 'openssl', 'x509', '-inform', 'PEM', '-in', $pemfile,
    "Generate a DER certificate");
 
 ok(run(test(["bio_readbuffer_test", $derfile])),
-        "running bio_readbuffer_test $derfile");
+   "Running bio_readbuffer_test $derfile");
 
 ok(run(test(["bio_readbuffer_test", $pemfile])),
-        "running bio_readbuffer_test $pemfile");
+   "Running bio_readbuffer_test $pemfile");
