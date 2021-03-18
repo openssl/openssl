@@ -1433,9 +1433,10 @@ EOF
           # Also redo $gen0, to ensure that we have the proper extension where
           # necessary.
           $gen0 = platform->bin($gen0);
+          # Use $(PERL) to execute wrap.pl directly to avoid calling env
           return <<"EOF";
 $args{src}: $gen0 $deps \$(BLDDIR)/util/wrap.pl
-	\$(BLDDIR)/util/wrap.pl $gen0$gen_args > \$@
+	\$(PERL) \$(BLDDIR)/util/wrap.pl $gen0$gen_args > \$@
 EOF
       } else {
           #
