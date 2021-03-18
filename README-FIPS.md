@@ -246,8 +246,8 @@ default library context:
 
 If a fetch function has both an explicit property query specified, and a
 default property query is defined then the two queries are merged together and
-both apply. It is also possible for a locally specified property query to
-override the default properties.
+both apply. The local property query overrides the default properties if the
+same property name is specified in both.
 
 There are two important built-in properties that you should be aware of:
 
