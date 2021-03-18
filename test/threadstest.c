@@ -514,8 +514,8 @@ static void test_multi_load_worker(void)
 {
     OSSL_PROVIDER *prov;
 
-    TEST_ptr(prov = OSSL_PROVIDER_load(NULL, "default"));
-    TEST_true(OSSL_PROVIDER_unload(prov));
+    (void)TEST_ptr(prov = OSSL_PROVIDER_load(NULL, "default"));
+    (void)TEST_true(OSSL_PROVIDER_unload(prov));
 }
 
 static int test_multi_load(void)
@@ -524,10 +524,10 @@ static int test_multi_load(void)
     int i;
 
     for (i = 0; i < MULTI_LOAD_THREADS; i++)
-        TEST_true(run_thread(&threads[i], test_multi_load_worker));
+        (void)TEST_true(run_thread(&threads[i], test_multi_load_worker));
 
     for (i = 0; i < MULTI_LOAD_THREADS; i++)
-        TEST_true(wait_for_thread(threads[i]));
+        (void)TEST_true(wait_for_thread(threads[i]));
 
     return 1;
 }
