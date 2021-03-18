@@ -283,11 +283,12 @@ static int send_record(BIO *rbio, unsigned char type, uint64_t seqnr,
     unsigned char lenbytes[2];
     EVP_MAC *hmac;
     EVP_MAC_CTX *ctx;
-    EVP_CIPHER_CTX *enc_ctx;
+    EVP_CIPHER_CTX *enc_ctx = NULL;
     unsigned char iv[16];
     unsigned char pad;
     unsigned char *enc;
     OSSL_PARAM params[2];
+    int ret = 0;
 
     seq[0] = (seqnr >> 40) & 0xff;
     seq[1] = (seqnr >> 32) & 0xff;
@@ -330,11 +331,12 @@ static int send_record(BIO *rbio, unsigned char type, uint64_t seqnr,
     } while (len % 16);
 
     /* Generate IV, and encrypt */
-    RAND_bytes(iv, sizeof(iv));
-    enc_ctx = EVP_CIPHER_CTX_new();
-    EVP_CipherInit_ex(enc_ctx, EVP_aes_128_cbc(), NULL, enc_key, iv, 1);
-    EVP_Cipher(enc_ctx, enc, enc, len);
-    EVP_CIPHER_CTX_free(enc_ctx);
+    if (!TEST_true(RAND_bytes(iv, sizeof(iv)))
+            || !TEST_ptr(enc_ctx = EVP_CIPHER_CTX_new())
+            || !TEST_true(EVP_CipherInit_ex(enc_ctx, EVP_aes_128_cbc(), NULL,
+                                            enc_key, iv, 1))
+            || !TEST_int_ge(EVP_Cipher(enc_ctx, enc, enc, len), 0))
+        goto end;
 
     /* Finally write header (from fragmented variables), IV and encrypted record */
     BIO_write(rbio, &type, 1);
@@ -347,9 +349,11 @@ static int send_record(BIO *rbio, unsigned char type, uint64_t seqnr,
 
     BIO_write(rbio, iv, sizeof(iv));
     BIO_write(rbio, enc, len);
-
+    ret = 1;
+ end:
+    EVP_CIPHER_CTX_free(enc_ctx);
     OPENSSL_free(enc);
-    return 1;
+    return ret;
 }
 
 static int send_finished(SSL *s, BIO *rbio)
