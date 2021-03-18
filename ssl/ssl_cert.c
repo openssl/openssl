@@ -629,7 +629,13 @@ STACK_OF(X509_NAME) *SSL_load_client_CA_file_ex(const char *file,
         goto err;
 
     /* Internally lh_X509_NAME_retrieve() needs the libctx to retrieve SHA1 */
-    prev_libctx = OSSL_LIB_CTX_set0_default(libctx);
+    if (libctx != NULL) {
+        prev_libctx = OSSL_LIB_CTX_set0_default(libctx);
+        if (prev_libctx == NULL) {
+            ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+            goto err;
+        }
+    }
     for (;;) {
         if (PEM_read_bio_X509(in, &x, NULL, NULL) == NULL)
             break;
@@ -664,7 +670,8 @@ STACK_OF(X509_NAME) *SSL_load_client_CA_file_ex(const char *file,
     ret = NULL;
  done:
     /* restore the old libctx */
-    OSSL_LIB_CTX_set0_default(prev_libctx);
+    if (prev_libctx != NULL)
+        OSSL_LIB_CTX_set0_default(prev_libctx);
     BIO_free(in);
     X509_free(x);
     lh_X509_NAME_free(name_hash);
