@@ -42,12 +42,15 @@ static void tear_down(CMP_ASN_TEST_FIXTURE *fixture)
 
 static int execute_cmp_asn1_get_int_test(CMP_ASN_TEST_FIXTURE *fixture)
 {
+    int res;
     ASN1_INTEGER *asn1integer = ASN1_INTEGER_new();
-    ASN1_INTEGER_set(asn1integer, 77);
-    if (!TEST_int_eq(77, ossl_cmp_asn1_get_int(asn1integer)))
+
+    if (!TEST_ptr(asn1integer))
         return 0;
+    ASN1_INTEGER_set(asn1integer, 77);
+    res = TEST_int_eq(77, ossl_cmp_asn1_get_int(asn1integer));
     ASN1_INTEGER_free(asn1integer);
-    return 1;
+    return res;
 }
 
 static int test_cmp_asn1_get_int(void)
