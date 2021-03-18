@@ -1198,6 +1198,19 @@ struct ssl_ctx_st {
 
 typedef struct cert_pkey_st CERT_PKEY;
 
+typedef enum {
+    ssl_grease_cipher = 0,
+    ssl_grease_group,
+    ssl_grease_extension1,
+    ssl_grease_extension2,
+    ssl_grease_version,
+    ssl_grease_ticket_extension,
+    ssl_grease_last_index = ssl_grease_ticket_extension,
+} SSL_GREASE_INDEX;
+
+uint16_t SSL_get_grease_value(SSL *s,
+                              SSL_GREASE_INDEX index);
+
 struct ssl_st {
     /*
      * protocol version (one of SSL2_VERSION, SSL3_VERSION, TLS1_VERSION,
