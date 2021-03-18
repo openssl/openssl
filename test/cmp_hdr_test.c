@@ -334,8 +334,10 @@ execute_HDR_generalInfo_push1_items_test(CMP_HDR_TEST_FIXTURE *fixture)
         ASN1_TYPE_free(val);
         return 0;
     }
-    if (!TEST_true(OSSL_CMP_ITAV_push0_stack_item(&itavs, itav)))
-        goto err;
+    if (!TEST_true(OSSL_CMP_ITAV_push0_stack_item(&itavs, itav))) {
+        OSSL_CMP_ITAV_free(itav);
+        return 0;
+    }
 
     if (!TEST_int_eq(ossl_cmp_hdr_generalInfo_push1_items(fixture->hdr, itavs),
                      1))
