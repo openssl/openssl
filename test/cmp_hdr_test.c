@@ -331,7 +331,8 @@ execute_HDR_generalInfo_push1_items_test(CMP_HDR_TEST_FIXTURE *fixture)
     ASN1_INTEGER_set(asn1int, 88);
     ASN1_TYPE_set(val, V_ASN1_INTEGER, asn1int);
     itav = OSSL_CMP_ITAV_create(OBJ_txt2obj(oid, 1), val);
-    OSSL_CMP_ITAV_push0_stack_item(&itavs, itav);
+    if (!TEST_true(OSSL_CMP_ITAV_push0_stack_item(&itavs, itav)))
+        goto err;
 
     if (!TEST_int_eq(ossl_cmp_hdr_generalInfo_push1_items(fixture->hdr, itavs),
                      1))
