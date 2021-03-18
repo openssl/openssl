@@ -313,6 +313,7 @@ static EVP_PKEY_CTX *int_ctx_new(OSSL_LIB_CTX *libctx,
     if (propquery != NULL) {
         ret->propquery = OPENSSL_strdup(propquery);
         if (ret->propquery == NULL) {
+            OPENSSL_free(ret);
             EVP_KEYMGMT_free(keymgmt);
             return NULL;
         }
