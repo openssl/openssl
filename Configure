@@ -2356,7 +2356,7 @@ EOF
                 if ($d eq $src_configdata
                     || (grep { $d eq $_ }
                         map { cleanfile($srcdir, $_, $blddir) }
-                        grep { /\.h$/ } keys %{$unified_info{generate}})
+                        keys %{$unified_info{generate}})
                     || ! -f $d) {
                     $d = cleanfile($buildd, $_, $blddir);
                 }
