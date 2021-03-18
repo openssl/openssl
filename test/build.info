@@ -57,7 +57,8 @@ IF[{- !$disabled{tests} -}]
           http_test servername_test ocspapitest fatalerrtest tls13ccstest \
           sysdefaulttest errtest ssl_ctx_test gosttest \
           context_internal_test aesgcmtest params_test evp_pkey_dparams_test \
-          keymgmt_internal_test hexstr_test provider_status_test defltfips_test
+          keymgmt_internal_test hexstr_test provider_status_test defltfips_test \
+          bio_readbuffer_test
 
   IF[{- !$disabled{'deprecated-3.0'} -}]
     PROGRAMS{noinst}=enginetest
@@ -306,6 +307,10 @@ IF[{- !$disabled{tests} -}]
   SOURCE[bio_callback_test]=bio_callback_test.c
   INCLUDE[bio_callback_test]=../include ../apps/include
   DEPEND[bio_callback_test]=../libcrypto libtestutil.a
+
+  SOURCE[bio_readbuffer_test]=bio_readbuffer_test.c
+  INCLUDE[bio_readbuffer_test]=../include ../apps/include
+  DEPEND[bio_readbuffer_test]=../libcrypto libtestutil.a
 
   SOURCE[bio_memleak_test]=bio_memleak_test.c
   INCLUDE[bio_memleak_test]=../include ../apps/include
