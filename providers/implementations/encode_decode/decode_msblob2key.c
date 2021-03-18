@@ -105,7 +105,7 @@ static int msblob2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
                              OSSL_PASSPHRASE_CALLBACK *pw_cb, void *pw_cbarg)
 {
     struct msblob2key_ctx_st *ctx = vctx;
-    BIO *in = bio_new_from_core_bio(ctx->provctx, cin);
+    BIO *in = ossl_bio_new_from_core_bio(ctx->provctx, cin);
     const unsigned char *p;
     unsigned char hdr_buf[16], *buf = NULL;
     unsigned int bitlen, magic, length;

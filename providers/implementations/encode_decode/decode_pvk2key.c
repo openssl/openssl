@@ -103,7 +103,7 @@ static int pvk2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
                          OSSL_PASSPHRASE_CALLBACK *pw_cb, void *pw_cbarg)
 {
     struct pvk2key_ctx_st *ctx = vctx;
-    BIO *in = bio_new_from_core_bio(ctx->provctx, cin);
+    BIO *in = ossl_bio_new_from_core_bio(ctx->provctx, cin);
     void *key = NULL;
     int ok = 0;
 
