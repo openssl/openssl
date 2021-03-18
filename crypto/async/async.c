@@ -209,9 +209,15 @@ int ASYNC_start_job(ASYNC_JOB **job, ASYNC_WAIT_CTX *wctx, int *ret,
                  * fibre ran
                  */
                 libctx = OSSL_LIB_CTX_set0_default(ctx->currjob->libctx);
+                if (libctx == NULL) {
+                    /* Failed to set the default context */
+                    ERR_raise(ERR_LIB_ASYNC, ERR_R_INTERNAL_ERROR);
+                    goto err;
+                }
                 /* Resume previous job */
                 if (!async_fibre_swapcontext(&ctx->dispatcher,
                         &ctx->currjob->fibrectx, 1)) {
+                    ctx->currjob->libctx = OSSL_LIB_CTX_set0_default(libctx);
                     ERR_raise(ERR_LIB_ASYNC, ASYNC_R_FAILED_TO_SWAP_CONTEXT);
                     goto err;
                 }
