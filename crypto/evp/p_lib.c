@@ -1980,9 +1980,7 @@ int EVP_PKEY_get_bn_param(const EVP_PKEY *pkey, const char *key_name,
     size_t buf_sz = 0;
 
     if (key_name == NULL
-        || bn == NULL
-        || pkey == NULL
-        || !evp_pkey_is_provided(pkey))
+        || bn == NULL)
         return 0;
 
     memset(buffer, 0, sizeof(buffer));
@@ -2021,9 +2019,7 @@ int EVP_PKEY_get_octet_string_param(const EVP_PKEY *pkey, const char *key_name,
     OSSL_PARAM params[2];
     int ret1 = 0, ret2 = 0;
 
-    if (key_name == NULL
-        || pkey == NULL
-        || !evp_pkey_is_provided(pkey))
+    if (key_name == NULL)
         return 0;
 
     params[0] = OSSL_PARAM_construct_octet_string(key_name, buf, max_buf_sz);
