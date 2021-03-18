@@ -93,14 +93,14 @@ static int wait_for_thread(thread_t thread)
 static int test_lock(void)
 {
     CRYPTO_RWLOCK *lock = CRYPTO_THREAD_lock_new();
+    int res;
 
-    if (!TEST_true(CRYPTO_THREAD_read_lock(lock))
-        || !TEST_true(CRYPTO_THREAD_unlock(lock)))
-        return 0;
+    res = TEST_true(CRYPTO_THREAD_read_lock(lock))
+          && TEST_true(CRYPTO_THREAD_unlock(lock));
 
     CRYPTO_THREAD_lock_free(lock);
 
-    return 1;
+    return res;
 }
 
 static CRYPTO_ONCE once_run = CRYPTO_ONCE_STATIC_INIT;
