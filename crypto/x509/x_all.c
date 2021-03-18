@@ -444,15 +444,15 @@ int X509_CRL_digest(const X509_CRL *data, const EVP_MD *type,
         memcpy(md, data->sha1_hash, sizeof(data->sha1_hash));
         return 1;
     }
-    return asn1_item_digest_ex(ASN1_ITEM_rptr(X509_CRL), type, (char *)data,
-                               md, len, data->libctx, data->propq);
+    return ossl_asn1_item_digest_ex(ASN1_ITEM_rptr(X509_CRL), type, (char *)data,
+                                    md, len, data->libctx, data->propq);
 }
 
 int X509_REQ_digest(const X509_REQ *data, const EVP_MD *type,
                     unsigned char *md, unsigned int *len)
 {
-    return asn1_item_digest_ex(ASN1_ITEM_rptr(X509_REQ), type, (char *)data,
-                               md, len, data->libctx, data->propq);
+    return ossl_asn1_item_digest_ex(ASN1_ITEM_rptr(X509_REQ), type, (char *)data,
+                                    md, len, data->libctx, data->propq);
 }
 
 int X509_NAME_digest(const X509_NAME *data, const EVP_MD *type,
