@@ -29,6 +29,7 @@ static int prepare_from_text(const OSSL_PARAM *paramdefs, const char *key,
 {
     const OSSL_PARAM *p;
     size_t buf_bits;
+    int r;
 
     /*
      * ishex is used to translate legacy style string controls in hex format
@@ -49,11 +50,11 @@ static int prepare_from_text(const OSSL_PARAM *paramdefs, const char *key,
     case OSSL_PARAM_INTEGER:
     case OSSL_PARAM_UNSIGNED_INTEGER:
         if (*ishex)
-            BN_hex2bn(tmpbn, value);
+            r = BN_hex2bn(tmpbn, value);
         else
-            BN_asc2bn(tmpbn, value);
+            r = BN_asc2bn(tmpbn, value);
 
-        if (*tmpbn == NULL)
+        if (r == 0 || *tmpbn == NULL)
             return 0;
 
         /*
