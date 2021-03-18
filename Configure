@@ -2349,16 +2349,16 @@ EOF
             }
             foreach (@{$depends{$dest}}) {
                 my $d = cleanfile($sourced, $_, $blddir);
+                my $d2 = cleanfile($buildd, $_, $blddir);
 
                 # If we know it's generated, or assume it is because we can't
                 # find it in the source tree, we set file we depend on to be
                 # in the build tree rather than the source tree.
                 if ($d eq $src_configdata
-                    || (grep { $d eq $_ }
-                        map { cleanfile($srcdir, $_, $blddir) }
+                    || (grep { $d2 eq $_ }
                         keys %{$unified_info{generate}})
                     || ! -f $d) {
-                    $d = cleanfile($buildd, $_, $blddir);
+                    $d = $d2;
                 }
                 $unified_info{depends}->{$ddest}->{$d} = 1;
 
