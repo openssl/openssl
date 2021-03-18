@@ -5950,14 +5950,15 @@ int SSL_CTX_set0_tmp_dh_pkey(SSL_CTX *ctx, EVP_PKEY *dhpkey)
 
 uint16_t SSL_get_grease_value(SSL *s,
                               SSL_GREASE_INDEX index) {
+    uint16_t ret;
+
     RAND_bytes(s->grease_seed, sizeof(s->grease_seed));
 
     // This generates a random value of the form 0xωaωa, for all 0 ≤ ω < 16.
-    uint16_t ret = s->grease_seed[index];
+    ret = s->grease_seed[index];
     ret = (ret & 0xf0) | 0x0a;
     ret |= ret << 8;
 
     return ret;
 }
-
 
