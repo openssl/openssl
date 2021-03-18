@@ -107,11 +107,10 @@ ASN1_OCTET_STRING *X509_REQ_get0_distinguishing_id(X509_REQ *x)
     return x->distinguishing_id;
 }
 
-
 /*
- * This should only be used if the X509 object was embedded inside another
+ * This should only be used if the X509_REQ object was embedded inside another
  * asn1 object and it needs a libctx to operate.
- * Use X509_new_ex() instead if possible.
+ * Use X509_REQ_new_ex() instead if possible.
  */
 int ossl_x509_req_set0_libctx(X509_REQ *x, OSSL_LIB_CTX *libctx,
                               const char *propq)
