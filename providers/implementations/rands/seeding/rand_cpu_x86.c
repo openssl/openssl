@@ -35,7 +35,7 @@ static size_t get_hardware_random_value(unsigned char *buf, size_t len);
  * Returns the total entropy count, if it exceeds the requested
  * entropy count. Otherwise, returns an entropy count of 0.
  */
-size_t prov_acquire_entropy_from_cpu(RAND_POOL *pool)
+size_t ossl_prov_acquire_entropy_from_cpu(RAND_POOL *pool)
 {
     size_t bytes_needed;
     unsigned char *buffer;
