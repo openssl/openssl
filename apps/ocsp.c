@@ -241,14 +241,11 @@ int ocsp_main(int argc, char **argv)
     unsigned long sign_flags = 0, verify_flags = 0, rflags = 0;
     OPTION_CHOICE o;
 
-    reqnames = sk_OPENSSL_STRING_new_null();
-    if (reqnames == NULL)
+    
+    if ((reqnames = sk_OPENSSL_STRING_new_null()) == NULL
+            || (ids = sk_OCSP_CERTID_new_null()) == NULL
+            || (vpm = X509_VERIFY_PARAM_new()) == NULL)
         goto end;
-    ids = sk_OCSP_CERTID_new_null();
-    if (ids == NULL)
-        goto end;
-    if ((vpm = X509_VERIFY_PARAM_new()) == NULL)
-        return 1;
 
     prog = opt_init(argc, argv, ocsp_options);
     while ((o = opt_next()) != OPT_EOF) {
