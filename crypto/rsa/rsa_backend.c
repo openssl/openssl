@@ -394,10 +394,10 @@ int ossl_rsa_pss_get_param_unverified(const RSA_PSS_PARAMS *pss,
 
     if (pss == NULL)
         return 0;
-    *pmd = x509_algor_get_md(pss->hashAlgorithm);
+    *pmd = ossl_x509_algor_get_md(pss->hashAlgorithm);
     if (*pmd == NULL)
         return 0;
-    *pmgf1md = x509_algor_get_md(pss->maskHash);
+    *pmgf1md = ossl_x509_algor_get_md(pss->maskHash);
     if (*pmgf1md == NULL)
         return 0;
     if (pss->saltLength)
