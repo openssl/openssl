@@ -36,6 +36,7 @@
 #include "progs.h"
 #include "apps_config.h"
 #include "apps_propq.h"
+#include "apps_libctx.h"
 
 #ifndef PATH_MAX
 # define PATH_MAX 4096

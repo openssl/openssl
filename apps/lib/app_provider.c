@@ -11,6 +11,7 @@
 #include "ca.h"
 #include "apps_extracted.h"
 #include "apps_propq.h"
+#include "apps_libctx.h"
 #include <string.h>
 #include <openssl/err.h>
 #include <openssl/provider.h>

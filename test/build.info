@@ -528,7 +528,7 @@ IF[{- !$disabled{tests} -}]
                       ../apps/lib/app_provider.c ../apps/lib/fmt.c ../apps/lib/app_x509.c \
                       ../apps/lib/engine.c ../apps/lib/app_rand.c ../apps/lib/apps_ui.c \
                       ../apps/lib/apps_extracted.c ../crypto/ctype.c ../apps/lib/apps_os_wrapper.c \
-                      ../apps/lib/apps_propq.c
+                      ../apps/lib/apps_propq.c ../apps/lib/apps_libctx.c
   INCLUDE[ca_internals_test]=.. ../include ../apps/include
   DEPEND[ca_internals_test]=libtestutil.a ../libssl
 

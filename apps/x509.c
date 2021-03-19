@@ -13,6 +13,7 @@
 #include "apps.h"
 #include "apps_config.h"
 #include "apps_propq.h"
+#include "apps_libctx.h"
 #include "ca.h"
 #include "progs.h"
 #include <openssl/bio.h>
