@@ -39,6 +39,7 @@
 #include "crypto/evp.h"
 #include "crypto/ec.h"
 #include "crypto/ecx.h"
+#include "crypto/x509.h"
 #include "internal/provider.h"
 #include "evp_local.h"
 
@@ -1577,6 +1578,60 @@ int EVP_PKEY_up_ref(EVP_PKEY *pkey)
 }
 
 #ifndef FIPS_MODULE
+EVP_PKEY *EVP_PKEY_dup(EVP_PKEY *pkey)
+{
+    EVP_PKEY *dup_pk;
+
+    if (pkey == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+        return NULL;
+    }
+
+    if ((dup_pk = EVP_PKEY_new()) == NULL)
+        return NULL;
+
+    if (evp_pkey_is_blank(pkey))
+        goto done;
+
+    if (evp_pkey_is_provided(pkey)) {
+        if (!evp_keymgmt_util_copy(dup_pk, pkey,
+                                   OSSL_KEYMGMT_SELECT_ALL))
+            goto err;
+        goto done;
+    }
+
+    if (evp_pkey_is_legacy(pkey)) {
+        const EVP_PKEY_ASN1_METHOD *ameth = pkey->ameth;
+
+        if (ameth == NULL || ameth->copy == NULL) {
+            if (pkey->pkey.ptr == NULL /* empty key, just set type */
+                && EVP_PKEY_set_type(dup_pk, pkey->type) != 0)
+                goto done;
+            ERR_raise(ERR_LIB_EVP, EVP_R_UNSUPPORTED_KEY_TYPE);
+            goto err;
+        }
+        if (!ameth->copy(dup_pk, pkey))
+            goto err;
+        goto done;
+    }
+
+    goto err;
+done:
+    /* copy auxiliary data */
+    if (!CRYPTO_dup_ex_data(CRYPTO_EX_INDEX_EVP_PKEY,
+                            &dup_pk->ex_data, &pkey->ex_data))
+        goto err;
+
+    if (pkey->attributes != NULL) {
+        if ((dup_pk->attributes = ossl_x509at_dup(pkey->attributes)) == NULL)
+            goto err;
+    }
+    return dup_pk;
+err:
+    EVP_PKEY_free(dup_pk);
+    return NULL;
+}
+
 void evp_pkey_free_legacy(EVP_PKEY *x)
 {
     const EVP_PKEY_ASN1_METHOD *ameth = x->ameth;

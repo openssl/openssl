@@ -305,7 +305,7 @@ static int test_fromdata_rsa(void)
 {
     int ret = 0, i;
     EVP_PKEY_CTX *ctx = NULL, *key_ctx = NULL;
-    EVP_PKEY *pk = NULL, *copy_pk = NULL;
+    EVP_PKEY *pk = NULL, *copy_pk = NULL, *dup_pk = NULL;
     /*
      * 32-bit RSA key, extracted from this command,
      * executed with OpenSSL 1.0.2:
@@ -341,29 +341,45 @@ static int test_fromdata_rsa(void)
 
     if (!TEST_true(EVP_PKEY_fromdata_init(ctx))
         || !TEST_true(EVP_PKEY_fromdata(ctx, &pk, EVP_PKEY_KEYPAIR,
-                                        fromdata_params))
-        || !TEST_int_eq(EVP_PKEY_bits(pk), 32)
-        || !TEST_int_eq(EVP_PKEY_security_bits(pk), 8)
-        || !TEST_int_eq(EVP_PKEY_size(pk), 4)
-        || !TEST_false(EVP_PKEY_missing_parameters(pk)))
+                                        fromdata_params)))
         goto err;
 
-    if (!TEST_ptr(key_ctx = EVP_PKEY_CTX_new_from_pkey(NULL, pk, "")))
-        goto err;
+    while (dup_pk == NULL) {
+        if (!TEST_int_eq(EVP_PKEY_bits(pk), 32)
+            || !TEST_int_eq(EVP_PKEY_security_bits(pk), 8)
+            || !TEST_int_eq(EVP_PKEY_size(pk), 4)
+            || !TEST_false(EVP_PKEY_missing_parameters(pk)))
+            goto err;
 
-    if (!TEST_true(EVP_PKEY_check(key_ctx))
-        || !TEST_true(EVP_PKEY_public_check(key_ctx))
-        || !TEST_true(EVP_PKEY_private_check(key_ctx))
-        || !TEST_true(EVP_PKEY_pairwise_check(key_ctx)))
-        goto err;
+        EVP_PKEY_CTX_free(key_ctx);
+        if (!TEST_ptr(key_ctx = EVP_PKEY_CTX_new_from_pkey(NULL, pk, "")))
+            goto err;
 
-    /* EVP_PKEY_copy_parameters() should fail for RSA */
-    if (!TEST_ptr(copy_pk = EVP_PKEY_new())
-        || !TEST_false(EVP_PKEY_copy_parameters(copy_pk, pk)))
-        goto err;
+        if (!TEST_true(EVP_PKEY_check(key_ctx))
+            || !TEST_true(EVP_PKEY_public_check(key_ctx))
+            || !TEST_true(EVP_PKEY_private_check(key_ctx))
+            || !TEST_true(EVP_PKEY_pairwise_check(key_ctx)))
+            goto err;
 
-    ret = test_print_key_using_pem("RSA", pk)
-          && test_print_key_using_encoder("RSA", pk);
+        /* EVP_PKEY_copy_parameters() should fail for RSA */
+        EVP_PKEY_free(copy_pk);
+        if (!TEST_ptr(copy_pk = EVP_PKEY_new())
+            || !TEST_false(EVP_PKEY_copy_parameters(copy_pk, pk)))
+            goto err;
+
+        ret = test_print_key_using_pem("RSA", pk)
+              && test_print_key_using_encoder("RSA", pk);
+        if (!ret)
+            goto err;
+        if (!TEST_ptr(dup_pk = EVP_PKEY_dup(pk)))
+            goto err;
+
+        ret = ret && TEST_true(EVP_PKEY_eq(pk, dup_pk));
+        EVP_PKEY_free(pk);
+        pk = dup_pk;
+        if (!ret)
+            goto err;
+    }
  err:
     /* for better diagnostics always compare key params */
     for (i = 0; fromdata_params[i].key != NULL; ++i) {

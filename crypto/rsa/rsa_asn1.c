@@ -92,6 +92,7 @@ ASN1_SEQUENCE_cb(RSA_PSS_PARAMS, rsa_pss_cb) = {
 } ASN1_SEQUENCE_END_cb(RSA_PSS_PARAMS, RSA_PSS_PARAMS)
 
 IMPLEMENT_ASN1_FUNCTIONS(RSA_PSS_PARAMS)
+IMPLEMENT_ASN1_DUP_FUNCTION(RSA_PSS_PARAMS)
 
 /* Free up maskHash */
 static int rsa_oaep_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,

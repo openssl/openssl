@@ -15,6 +15,7 @@
 #include <openssl/evp.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
+#include "crypto/x509.h"
 #include "x509_local.h"
 
 int X509at_get_attr_count(const STACK_OF(X509_ATTRIBUTE) *x)
@@ -84,8 +85,9 @@ STACK_OF(X509_ATTRIBUTE) *X509at_add1_attr(STACK_OF(X509_ATTRIBUTE) **x,
     if (*x == NULL) {
         if ((sk = sk_X509_ATTRIBUTE_new_null()) == NULL)
             goto err;
-    } else
+    } else {
         sk = *x;
+    }
 
     if ((new_attr = X509_ATTRIBUTE_dup(attr)) == NULL)
         goto err2;
@@ -98,7 +100,8 @@ STACK_OF(X509_ATTRIBUTE) *X509at_add1_attr(STACK_OF(X509_ATTRIBUTE) **x,
     ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
  err2:
     X509_ATTRIBUTE_free(new_attr);
-    sk_X509_ATTRIBUTE_free(sk);
+    if (*x == NULL)
+        sk_X509_ATTRIBUTE_free(sk);
     return NULL;
 }
 
@@ -163,6 +166,22 @@ void *X509at_get0_data_by_OBJ(const STACK_OF(X509_ATTRIBUTE) *x,
     if (lastpos <= -3 && (X509_ATTRIBUTE_count(at) != 1))
         return NULL;
     return X509_ATTRIBUTE_get0_data(at, 0, type, NULL);
+}
+
+STACK_OF(X509_ATTRIBUTE) *ossl_x509at_dup(const STACK_OF(X509_ATTRIBUTE) *x)
+{
+    int i, n;
+    STACK_OF(X509_ATTRIBUTE) *sk = NULL;
+
+    n = sk_X509_ATTRIBUTE_num(x);
+    for (i = 0; i < n; ++i) {
+        X509_ATTRIBUTE *attr = sk_X509_ATTRIBUTE_value(x, i);
+        if (X509at_add1_attr(&sk, attr) == NULL) {
+            sk_X509_ATTRIBUTE_pop_free(sk, X509_ATTRIBUTE_free);
+            return NULL;
+        }
+    }
+    return sk;
 }
 
 X509_ATTRIBUTE *X509_ATTRIBUTE_create_by_NID(X509_ATTRIBUTE **attr, int nid,

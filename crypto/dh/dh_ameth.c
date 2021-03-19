@@ -536,6 +536,60 @@ static int dhx_pkey_import_from(const OSSL_PARAM params[], void *vpctx)
     return dh_pkey_import_from_type(params, vpctx, EVP_PKEY_DHX);
 }
 
+#define dh_bn_dup_check(bn) \
+{ \
+  const BIGNUM *f = DH_get0_##bn(dh); \
+  \
+  if (f != NULL && (dupkey->bn = BN_dup(f)) == NULL) \
+      goto err; \
+}
+
+static DH *dh_dup(const DH *dh)
+{
+    DH *dupkey = NULL;
+
+    /* Do not try to duplicate foreign DH keys */
+    if (ossl_dh_get_method(dh) != DH_OpenSSL())
+        return NULL;
+
+    if ((dupkey = ossl_dh_new_ex(dh->libctx)) == NULL)
+        return NULL;
+
+    dupkey->length = DH_get_length(dh);
+    if (!ossl_ffc_params_copy(&dupkey->params, &dh->params))
+        goto err;
+
+    dh_bn_dup_check(pub_key)
+    dh_bn_dup_check(priv_key)
+    if (!CRYPTO_dup_ex_data(CRYPTO_EX_INDEX_DH,
+                            &dupkey->ex_data, &dh->ex_data))
+        goto err;
+
+    return dupkey;
+
+ err:
+    DH_free(dupkey);
+    return NULL;
+}
+
+static int dh_pkey_copy(EVP_PKEY *to, EVP_PKEY *from)
+{
+    DH *dh = from->pkey.dh;
+    DH *dupkey = NULL;
+    int ret;
+
+    if (dh != NULL) {
+        dupkey = dh_dup(dh);
+        if (dupkey == NULL)
+            return 0;
+    }
+
+    ret = EVP_PKEY_assign(to, from->type, dupkey);
+    if (!ret)
+        DH_free(dupkey);
+    return ret;
+}
+
 const EVP_PKEY_ASN1_METHOD ossl_dh_asn1_meth = {
     EVP_PKEY_DH,
     EVP_PKEY_DH,
@@ -579,6 +633,7 @@ const EVP_PKEY_ASN1_METHOD ossl_dh_asn1_meth = {
     dh_pkey_dirty_cnt,
     dh_pkey_export_to,
     dh_pkey_import_from,
+    dh_pkey_copy
 };
 
 const EVP_PKEY_ASN1_METHOD ossl_dhx_asn1_meth = {
@@ -622,4 +677,5 @@ const EVP_PKEY_ASN1_METHOD ossl_dhx_asn1_meth = {
     dh_pkey_dirty_cnt,
     dh_pkey_export_to,
     dhx_pkey_import_from,
+    dh_pkey_copy
 };
