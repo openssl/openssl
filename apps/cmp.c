@@ -15,6 +15,7 @@
 #include "apps.h"
 #include "apps_config.h"
 #include "apps_propq.h"
+#include "apps_libctx.h"
 #include "http_server.h"
 #include "s_apps.h"
 #include "progs.h"

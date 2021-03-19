@@ -22,6 +22,7 @@
 #include "apps.h"
 #include "apps_config.h"
 #include "apps_propq.h"
+#include "apps_libctx.h"
 
 static BIO *bio_open_default_(const char *filename, char mode, int format,
                               int quiet);
@@ -33,7 +34,7 @@ typedef struct {
     unsigned long mask;
 } NAME_EX_TBL;
 
-static OSSL_LIB_CTX *app_libctx = NULL;
+//static OSSL_LIB_CTX *app_libctx = NULL;
 
 static int set_table_opts(unsigned long *flags, const char *arg,
                           const NAME_EX_TBL * in_tbl);
@@ -164,10 +165,10 @@ static char *app_get_pass(const char *arg, int keepbio)
     return OPENSSL_strdup(tpass);
 }
 
-OSSL_LIB_CTX *app_get0_libctx(void)
-{
-    return app_libctx;
-}
+//OSSL_LIB_CTX *app_get0_libctx(void)
+//{
+//    return app_libctx;
+//}
 
 //static const char *app_propq = NULL;
 //
@@ -182,31 +183,33 @@ OSSL_LIB_CTX *app_get0_libctx(void)
 //    return app_propq;
 //}
 
-OSSL_LIB_CTX *app_create_libctx(void)
-{
-    /*
-     * Load the NULL provider into the default library context and create a
-     * library context which will then be used for any OPT_PROV options.
-     */
-    if (app_libctx == NULL) {
-
-        if (!app_provider_load(NULL, "null")) {
-            BIO_puts(bio_err, "Failed to create null provider\n");
-            return NULL;
-        }
-        app_libctx = OSSL_LIB_CTX_new();
-    }
-    if (app_libctx == NULL)
-        BIO_puts(bio_err, "Failed to create library context\n");
-    return app_libctx;
-}
+//OSSL_LIB_CTX *app_create_libctx(void)
+//{
+//    /*
+//     * Load the NULL provider into the default library context and create a
+//     * library context which will then be used for any OPT_PROV options.
+//     */
+//    if (app_libctx == NULL) {
+//
+//        if (!app_provider_load(NULL, "null")) {
+//            BIO_puts(bio_err, "Failed to create null provider\n");
+//            return NULL;
+//        }
+//        app_libctx = OSSL_LIB_CTX_new();
+//    }
+//    if (app_libctx == NULL)
+//        BIO_puts(bio_err, "Failed to create library context\n");
+//    return app_libctx;
+//}
 
 CONF *app_load_config_bio(BIO *in, const char *filename)
 {
     long errorline = -1;
     CONF *conf;
     int i;
+    OSSL_LIB_CTX *app_libctx = NULL;
 
+    app_libctx = app_get0_libctx();
     conf = NCONF_new_ex(app_libctx, NULL);
     i = NCONF_load_bio(conf, in, &errorline);
     if (i > 0)

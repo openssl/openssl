@@ -28,6 +28,7 @@
 #endif
 #include "apps.h"
 #include "apps_config.h"
+#include "apps_libctx.h"
 #include "progs.h"
 
 /*
