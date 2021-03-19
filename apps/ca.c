@@ -34,6 +34,7 @@
 #include "apps.h"
 #include "ca.h"
 #include "progs.h"
+#include "apps_globals.h"
 #include "apps_config.h"
 #include "apps_propq.h"
 #include "apps_libctx.h"

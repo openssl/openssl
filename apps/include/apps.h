@@ -47,9 +47,9 @@ void app_RAND_write(void);
 int app_RAND_load(void);
 
 //extern char *default_config_file; /* may be "" */
-extern BIO *bio_in;
-extern BIO *bio_out;
-extern BIO *bio_err;
+//extern BIO *bio_in;
+//extern BIO *bio_out;
+//extern BIO *bio_err;
 extern const unsigned char tls13_aes128gcmsha256_id[];
 extern const unsigned char tls13_aes256gcmsha384_id[];
 extern BIO_ADDR *ourpeer;
