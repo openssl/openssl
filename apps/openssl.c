@@ -27,6 +27,7 @@
 # include <unixio.h>
 #endif
 #include "apps.h"
+#include "apps_globals.h"
 #include "app_provider.h"
 #include "apps_config.h"
 #include "apps_libctx.h"
