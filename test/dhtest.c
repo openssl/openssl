@@ -663,12 +663,12 @@ static int rfc7919_test(void)
     DH_get0_key(b, &bpub_key, NULL);
 
     alen = DH_size(a);
-    if (!TEST_ptr(abuf = OPENSSL_malloc(alen))
+    if (!TEST_int_gt(alen, 0) || !TEST_ptr(abuf = OPENSSL_malloc(alen))
             || !TEST_true((aout = DH_compute_key(abuf, bpub_key, a)) != -1))
         goto err;
 
     blen = DH_size(b);
-    if (!TEST_ptr(bbuf = OPENSSL_malloc(blen))
+    if (!TEST_int_gt(blen, 0) || !TEST_ptr(bbuf = OPENSSL_malloc(blen))
             || !TEST_true((bout = DH_compute_key(bbuf, apub_key, b)) != -1))
         goto err;
 
