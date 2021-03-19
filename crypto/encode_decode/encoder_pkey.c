@@ -261,7 +261,7 @@ static int ossl_encoder_ctx_setup_for_pkey(OSSL_ENCODER_CTX *ctx,
         }
     }
 
-    if (OSSL_ENCODER_CTX_get_num_encoders(ctx) != 0) {
+    if (data != NULL && OSSL_ENCODER_CTX_get_num_encoders(ctx) != 0) {
         if (!OSSL_ENCODER_CTX_set_construct(ctx, encoder_construct_pkey)
             || !OSSL_ENCODER_CTX_set_construct_data(ctx, data)
             || !OSSL_ENCODER_CTX_set_cleanup(ctx, encoder_destruct_pkey))
