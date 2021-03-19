@@ -376,7 +376,7 @@ opthelp:
 
     /* No extra arguments. */
     argc = opt_num_rest();
-    if (argc != 0)
+    if (argc != 0 || (verify && in_fname == NULL))
         goto opthelp;
 
     if (parent_config != NULL) {
@@ -389,9 +389,7 @@ opthelp:
         }
         goto end;
     }
-    if (module_fname == NULL
-            || (verify && in_fname == NULL)
-            || (!verify && out_fname == NULL))
+    if (module_fname == NULL)
         goto opthelp;
 
     tail = opt_path_end(module_fname);
@@ -490,7 +488,9 @@ opthelp:
         if (!load_fips_prov_and_run_self_test(prov_name))
             goto end;
 
-        fout = bio_open_default(out_fname, 'w', FORMAT_TEXT);
+        fout =
+            out_fname == NULL ? dup_bio_out(FORMAT_TEXT)
+                              : bio_open_default(out_fname, 'w', FORMAT_TEXT);
         if (fout == NULL) {
             BIO_printf(bio_err, "Failed to open file\n");
             goto end;

@@ -150,7 +150,7 @@ IF[{- !$disabled{fips} -}]
   DEPEND[|tests|]=fipsmodule.cnf
   GENERATE[fipsmodule.cnf]=../apps/openssl fipsinstall \
         -module providers/$(FIPSMODULENAME) -provider_name fips \
-        -mac_name HMAC -section_name fips_sect -out -
+        -mac_name HMAC -section_name fips_sect
   DEPEND[fipsmodule.cnf]=$FIPSGOAL
 ENDIF
 
