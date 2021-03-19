@@ -8,8 +8,7 @@
  */
 
 #include "apps_libctx.h"
-/* still required for app_provider load - should be an interimistic solution */
-#include "apps_extracted.h"
+#include "app_provider.h"
 /* TODO included for bio_err, ... - is there a better solution? */
 #include "apps.h"
 
