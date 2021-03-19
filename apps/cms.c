@@ -14,6 +14,7 @@
 #include "apps.h"
 #include "apps_propq.h"
 #include "apps_libctx.h"
+#include "apps_passwd.h"
 #include "progs.h"
 
 #ifndef OPENSSL_NO_CMS

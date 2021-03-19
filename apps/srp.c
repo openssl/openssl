@@ -27,6 +27,7 @@
 #include <openssl/srp.h>
 #include "apps.h"
 #include "apps_config.h"
+#include "apps_passwd.h"
 #include "ca.h"
 #include "progs.h"
 

@@ -43,8 +43,9 @@ extern BIO *bio_err;
 //# define EXT_COPY_ALL    2
 //
 //# define NETSCAPE_CERT_HDR       "certificate"
-//
-//# define APP_PASS_LEN    1024
+
+#define APP_PASS_LEN    1024
+#define PASS_SOURCE_SIZE_MAX 4
 
 /*
  * IETF RFC 5280 says serial number must be <= 20 bytes. Use 159 bits

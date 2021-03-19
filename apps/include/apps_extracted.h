@@ -39,7 +39,7 @@ int set_cert_ex(unsigned long *flags, const char *arg);
 int set_name_ex(unsigned long *flags, const char *arg);
 int set_ext_copy(int *copy_type, const char *arg);
 int copy_extensions(X509 *x, X509_REQ *req, int copy_type);
-int app_passwd(const char *arg1, const char *arg2, char **pass1, char **pass2);
+//int app_passwd(const char *arg1, const char *arg2, char **pass1, char **pass2);
 int add_oid_section(CONF *conf);
 X509_REQ *load_csr(const char *file, int format, const char *desc);
 X509 *load_cert_pass(const char *uri, int maybe_stdin,

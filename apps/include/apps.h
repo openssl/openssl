@@ -77,7 +77,7 @@ void print_name(BIO *out, const char *title, const X509_NAME *nm);
 void print_bignum_var(BIO *, const BIGNUM *, const char*,
                       int, unsigned char *);
 void print_array(BIO *, const char *, int, const unsigned char *);
-char *get_passwd(const char *pass, const char *desc);
+//char *get_passwd(const char *pass, const char *desc);
 #define load_cert(uri, desc) load_cert_pass(uri, 1, NULL, desc)
 X509_CRL *load_crl(const char *uri, const char *desc);
 void clear_free(char *str);
@@ -212,7 +212,7 @@ ASN1_VALUE *app_http_post_asn1(const char *host, const char *port,
 
 # define NETSCAPE_CERT_HDR       "certificate"
 
-# define APP_PASS_LEN    1024
+//# define APP_PASS_LEN    1024
 
 /*
  * IETF RFC 5280 says serial number must be <= 20 bytes. Use 159 bits

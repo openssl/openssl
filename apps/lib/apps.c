@@ -35,6 +35,7 @@
 #include "apps_config.h"
 #include "apps_propq.h"
 #include "apps_libctx.h"
+#include "apps_passwd.h"
 
 DEFINE_STACK_OF(CONF)
 
@@ -147,23 +148,23 @@ int wrap_password_callback(char *buf, int bufsiz, int verify, void *userdata)
     return password_callback(buf, bufsiz, verify, (PW_CB_DATA *)userdata);
 }
 
-char *get_passwd(const char *pass, const char *desc)
-{
-    char *result = NULL;
-
-    if (desc == NULL)
-        desc = "<unknown>";
-    if (!app_passwd(pass, NULL, &result, NULL))
-        BIO_printf(bio_err, "Error getting password for %s\n", desc);
-    if (pass != NULL && result == NULL) {
-        BIO_printf(bio_err,
-                   "Trying plain input string (better precede with 'pass:')\n");
-        result = OPENSSL_strdup(pass);
-        if (result == NULL)
-            BIO_printf(bio_err, "Out of memory getting password for %s\n", desc);
-    }
-    return result;
-}
+//char *get_passwd(const char *pass, const char *desc)
+//{
+//    char *result = NULL;
+//
+//    if (desc == NULL)
+//        desc = "<unknown>";
+//    if (!app_passwd(pass, NULL, &result, NULL))
+//        BIO_printf(bio_err, "Error getting password for %s\n", desc);
+//    if (pass != NULL && result == NULL) {
+//        BIO_printf(bio_err,
+//                   "Trying plain input string (better precede with 'pass:')\n");
+//        result = OPENSSL_strdup(pass);
+//        if (result == NULL)
+//            BIO_printf(bio_err, "Out of memory getting password for %s\n", desc);
+//    }
+//    return result;
+//}
 
 CONF *app_load_config_modules(const char *configfile)
 {
