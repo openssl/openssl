@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include "apps.h"
 #include "apps_globals.h"
+#include "apps_passwd.h"
 #include "progs.h"
 #include <openssl/bio.h>
 #include <openssl/err.h>

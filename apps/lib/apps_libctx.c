@@ -9,8 +9,6 @@
 
 #include "apps_libctx.h"
 #include "app_provider.h"
-/* TODO included for bio_err, ... - is there a better solution? */
-//#include "apps.h"
 #include "apps_globals.h"
 
 static OSSL_LIB_CTX *app_libctx = NULL;

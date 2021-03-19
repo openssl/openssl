@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "apps.h"
+#include "apps_passwd.h"
 #include "progs.h"
 #include "ec_common.h"
 #include <openssl/pem.h>

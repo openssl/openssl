@@ -18,6 +18,7 @@
 #include <openssl/err.h>
 
 #include "apps.h"
+#include "apps_passwd.h"
 #include "progs.h"
 #include "ec_common.h"
 
