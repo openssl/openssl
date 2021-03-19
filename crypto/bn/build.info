@@ -177,3 +177,4 @@ INCLUDE[armv4-mont.o]=..
 GENERATE[armv4-gf2m.S]=asm/armv4-gf2m.pl
 INCLUDE[armv4-gf2m.o]=..
 GENERATE[armv8-mont.S]=asm/armv8-mont.pl
+INCLUDE[armv8-mont.o]=..
