@@ -10,6 +10,7 @@
 #include "opt.h"
 #include "ca.h"
 #include "apps_extracted.h"
+#include "app_provider.h"
 #include "apps_propq.h"
 #include "apps_libctx.h"
 #include <string.h>

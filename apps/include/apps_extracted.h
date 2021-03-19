@@ -11,7 +11,6 @@
 #define OSSL_APPS_APPS_EXTRACTED_H
 
 #include "openssl/x509.h"
-#include "app_provider.h"
 
 //extern char *default_config_file; /* may be "" */
 BIO *dup_bio_in(int format);
