@@ -21,6 +21,7 @@
 #include <openssl/core_names.h>
 #include <openssl/rand.h>
 #include "apps.h"
+#include "apps_globals.h"
 #include "app_params.h"
 #include "progs.h"
 #include "opt.h"

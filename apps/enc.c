@@ -12,6 +12,7 @@
 #include <string.h>
 #include <limits.h>
 #include "apps.h"
+#include "apps_globals.h"
 #include "progs.h"
 #include <openssl/bio.h>
 #include <openssl/err.h>
