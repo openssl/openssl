@@ -10,6 +10,7 @@
 #ifndef OSSL_APPS_APP_PROVIDER_H
 #define OSSL_APPS_APP_PROVIDER_H
 
+int app_provider_load(OSSL_LIB_CTX *libctx, const char *provider_name);
 void app_providers_cleanup(void);
 
 #endif                          /* ! OSSL_APPS_APPS_EXTRACTED_H */
