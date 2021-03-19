@@ -78,6 +78,7 @@ static int evp_cipher_init_internal(EVP_CIPHER_CTX *ctx,
                                     const unsigned char *iv, int enc,
                                     const OSSL_PARAM params[])
 {
+    int n;
 #if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODULE)
     ENGINE *tmpimpl = NULL;
 #endif
@@ -336,9 +337,9 @@ static int evp_cipher_init_internal(EVP_CIPHER_CTX *ctx,
             /* fall-through */
 
         case EVP_CIPH_CBC_MODE:
-
-            OPENSSL_assert(EVP_CIPHER_CTX_iv_length(ctx) <=
-                           (int)sizeof(ctx->iv));
+            n = EVP_CIPHER_CTX_iv_length(ctx);
+            if (!ossl_assert(n >= 0 && n <= (int)sizeof(ctx->iv)))
+                    return 0;
             if (iv)
                 memcpy(ctx->oiv, iv, EVP_CIPHER_CTX_iv_length(ctx));
             memcpy(ctx->iv, ctx->oiv, EVP_CIPHER_CTX_iv_length(ctx));
