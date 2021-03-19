@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "apps.h"
+#include "app_provider.h"
 #include "apps_propq.h"
 #include "apps_libctx.h"
 #include "progs.h"
