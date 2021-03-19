@@ -319,6 +319,7 @@ struct rsa_pss_params_st {
 };
 
 DECLARE_ASN1_FUNCTIONS(RSA_PSS_PARAMS)
+DECLARE_ASN1_DUP_FUNCTION(RSA_PSS_PARAMS)
 
 typedef struct rsa_oaep_params_st {
     X509_ALGOR *hashFunc;

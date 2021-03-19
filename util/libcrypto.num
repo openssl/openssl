@@ -5330,3 +5330,5 @@ EVP_PKEY_print_private_fp               ?	3_0_0	EXIST::FUNCTION:STDIO
 EVP_PKEY_print_params_fp                ?	3_0_0	EXIST::FUNCTION:STDIO
 TS_RESP_CTX_new_ex                      ?	3_0_0	EXIST::FUNCTION:TS
 X509_REQ_new_ex                         ?	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_dup                            ?	3_0_0	EXIST::FUNCTION:
+RSA_PSS_PARAMS_dup                      ?	3_0_0	EXIST::FUNCTION:

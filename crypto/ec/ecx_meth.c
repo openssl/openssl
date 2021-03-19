@@ -404,6 +404,21 @@ static int ecx_generic_import_from(const OSSL_PARAM params[], void *vpctx,
     return 1;
 }
 
+static int ecx_pkey_copy(EVP_PKEY *to, EVP_PKEY *from)
+{
+    ECX_KEY *ecx = from->pkey.ecx;
+    int ret;
+
+    /* We can do just up-ref as ECX keys are immutable */
+    if (ecx != NULL && !ossl_ecx_key_up_ref(ecx))
+        return 0;
+
+    ret = EVP_PKEY_assign(to, from->type, ecx);
+    if (!ret)
+        ossl_ecx_key_free(ecx);
+    return ret;
+}
+
 static int x25519_import_from(const OSSL_PARAM params[], void *vpctx)
 {
     return ecx_generic_import_from(params, vpctx, EVP_PKEY_X25519);
@@ -453,6 +468,7 @@ const EVP_PKEY_ASN1_METHOD ossl_ecx25519_asn1_meth = {
     ecx_pkey_dirty_cnt,
     ecx_pkey_export_to,
     x25519_import_from,
+    ecx_pkey_copy,
 
     ecx_priv_decode_ex
 };
@@ -506,6 +522,7 @@ const EVP_PKEY_ASN1_METHOD ossl_ecx448_asn1_meth = {
     ecx_pkey_dirty_cnt,
     ecx_pkey_export_to,
     x448_import_from,
+    ecx_pkey_copy,
 
     ecx_priv_decode_ex
 };
@@ -632,6 +649,7 @@ const EVP_PKEY_ASN1_METHOD ossl_ed25519_asn1_meth = {
     ecx_pkey_dirty_cnt,
     ecx_pkey_export_to,
     ed25519_import_from,
+    ecx_pkey_copy,
 
     ecx_priv_decode_ex
 };
@@ -684,6 +702,7 @@ const EVP_PKEY_ASN1_METHOD ossl_ed448_asn1_meth = {
     ecx_pkey_dirty_cnt,
     ecx_pkey_export_to,
     ed448_import_from,
+    ecx_pkey_copy,
 
     ecx_priv_decode_ex
 };

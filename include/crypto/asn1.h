@@ -83,6 +83,7 @@ struct evp_pkey_asn1_method_st {
                       EVP_KEYMGMT *to_keymgmt, OSSL_LIB_CTX *libctx,
                       const char *propq);
     OSSL_CALLBACK *import_from;
+    int (*copy) (EVP_PKEY *to, EVP_PKEY *from);
 
     int (*priv_decode_ex) (EVP_PKEY *pk,
                                     const PKCS8_PRIV_KEY_INFO *p8inf,

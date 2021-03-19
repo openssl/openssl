@@ -83,7 +83,7 @@ static int test_dsa_param_keygen(int tstid)
     int expected;
     EVP_PKEY_CTX *gen_ctx = NULL;
     EVP_PKEY *pkey_parm = NULL;
-    EVP_PKEY *pkey = NULL;
+    EVP_PKEY *pkey = NULL, *dup_pk = NULL;
     DSA *dsa = NULL;
     int pind, qind, gind;
     BIGNUM *p = NULL, *q = NULL, *g = NULL;
@@ -127,9 +127,17 @@ static int test_dsa_param_keygen(int tstid)
         || !TEST_int_gt(EVP_PKEY_keygen_init(gen_ctx), 0)
         || !TEST_int_eq(EVP_PKEY_keygen(gen_ctx, &pkey), expected))
         goto err;
+
+    if (expected) {
+        if (!TEST_ptr(dup_pk = EVP_PKEY_dup(pkey))
+            || !TEST_int_eq(EVP_PKEY_eq(pkey, dup_pk), 1))
+            goto err;
+    }
+
     ret = 1;
 err:
     EVP_PKEY_free(pkey);
+    EVP_PKEY_free(dup_pk);
     EVP_PKEY_CTX_free(gen_ctx);
     EVP_PKEY_free(pkey_parm);
     DSA_free(dsa);
@@ -147,7 +155,7 @@ static int do_dh_param_keygen(int tstid, const BIGNUM **bn)
     int expected;
     EVP_PKEY_CTX *gen_ctx = NULL;
     EVP_PKEY *pkey_parm = NULL;
-    EVP_PKEY *pkey = NULL;
+    EVP_PKEY *pkey = NULL, *dup_pk = NULL;
     DH *dh = NULL;
     int pind, qind, gind;
     BIGNUM *p = NULL, *q = NULL, *g = NULL;
@@ -182,9 +190,17 @@ static int do_dh_param_keygen(int tstid, const BIGNUM **bn)
         || !TEST_int_gt(EVP_PKEY_keygen_init(gen_ctx), 0)
         || !TEST_int_eq(EVP_PKEY_keygen(gen_ctx, &pkey), expected))
         goto err;
+
+    if (expected) {
+        if (!TEST_ptr(dup_pk = EVP_PKEY_dup(pkey))
+            || !TEST_int_eq(EVP_PKEY_eq(pkey, dup_pk), 1))
+            goto err;
+    }
+
     ret = 1;
 err:
     EVP_PKEY_free(pkey);
+    EVP_PKEY_free(dup_pk);
     EVP_PKEY_CTX_free(gen_ctx);
     EVP_PKEY_free(pkey_parm);
     DH_free(dh);
