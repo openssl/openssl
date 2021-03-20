@@ -9,6 +9,13 @@
 
 #include "apps_globals.h"
 #include <ctype.h>
+#include <string.h>
+
+void cleanse(char *str)
+{
+    if (str != NULL)
+        OPENSSL_cleanse(str, strlen(str));
+}
 
 int parse_yesno(const char *str, int def)
 {

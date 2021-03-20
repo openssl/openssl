@@ -44,7 +44,7 @@ int add_oid_section(CONF *conf);
 X509_REQ *load_csr(const char *file, int format, const char *desc);
 X509 *load_cert_pass(const char *uri, int maybe_stdin,
                      const char *pass, const char *desc);
-void cleanse(char *str);
+//void cleanse(char *str);
 
 EVP_PKEY *load_key(const char *uri, int format, int maybe_stdin,
                    const char *pass, ENGINE *e, const char *desc);
