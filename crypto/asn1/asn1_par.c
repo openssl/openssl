@@ -325,6 +325,7 @@ static int asn1_parse2(BIO *bp, const unsigned char **pp, long length,
                 }
                 if (BIO_puts(bp, "]") <= 0)
                     goto end;
+                dump_cont = 0;
             }
 
             if (!nl) {
