@@ -631,45 +631,45 @@ int load_key_certs_crls(const char *uri, int maybe_stdin,
     return failed == NULL;
 }
 
-#define X509V3_EXT_UNKNOWN_MASK         (0xfL << 16)
-/* Return error for unknown extensions */
-#define X509V3_EXT_DEFAULT              0
-/* Print error for unknown extensions */
-#define X509V3_EXT_ERROR_UNKNOWN        (1L << 16)
-/* ASN1 parse unknown extensions */
-#define X509V3_EXT_PARSE_UNKNOWN        (2L << 16)
-/* BIO_dump unknown extensions */
-#define X509V3_EXT_DUMP_UNKNOWN         (3L << 16)
-
-#define X509_FLAG_CA (X509_FLAG_NO_ISSUER | X509_FLAG_NO_PUBKEY | \
-                         X509_FLAG_NO_HEADER | X509_FLAG_NO_VERSION)
-
-int set_cert_ex(unsigned long *flags, const char *arg)
-{
-    static const NAME_EX_TBL cert_tbl[] = {
-        {"compatible", X509_FLAG_COMPAT, 0xffffffffl},
-        {"ca_default", X509_FLAG_CA, 0xffffffffl},
-        {"no_header", X509_FLAG_NO_HEADER, 0},
-        {"no_version", X509_FLAG_NO_VERSION, 0},
-        {"no_serial", X509_FLAG_NO_SERIAL, 0},
-        {"no_signame", X509_FLAG_NO_SIGNAME, 0},
-        {"no_validity", X509_FLAG_NO_VALIDITY, 0},
-        {"no_subject", X509_FLAG_NO_SUBJECT, 0},
-        {"no_issuer", X509_FLAG_NO_ISSUER, 0},
-        {"no_pubkey", X509_FLAG_NO_PUBKEY, 0},
-        {"no_extensions", X509_FLAG_NO_EXTENSIONS, 0},
-        {"no_sigdump", X509_FLAG_NO_SIGDUMP, 0},
-        {"no_aux", X509_FLAG_NO_AUX, 0},
-        {"no_attributes", X509_FLAG_NO_ATTRIBUTES, 0},
-        {"ext_default", X509V3_EXT_DEFAULT, X509V3_EXT_UNKNOWN_MASK},
-        {"ext_error", X509V3_EXT_ERROR_UNKNOWN, X509V3_EXT_UNKNOWN_MASK},
-        {"ext_parse", X509V3_EXT_PARSE_UNKNOWN, X509V3_EXT_UNKNOWN_MASK},
-        {"ext_dump", X509V3_EXT_DUMP_UNKNOWN, X509V3_EXT_UNKNOWN_MASK},
-        {NULL, 0, 0}
-    };
-    return set_multi_opts(flags, arg, cert_tbl);
-}
-
+//#define X509V3_EXT_UNKNOWN_MASK         (0xfL << 16)
+///* Return error for unknown extensions */
+//#define X509V3_EXT_DEFAULT              0
+///* Print error for unknown extensions */
+//#define X509V3_EXT_ERROR_UNKNOWN        (1L << 16)
+///* ASN1 parse unknown extensions */
+//#define X509V3_EXT_PARSE_UNKNOWN        (2L << 16)
+///* BIO_dump unknown extensions */
+//#define X509V3_EXT_DUMP_UNKNOWN         (3L << 16)
+//
+/*#define X509_FLAG_CA (X509_FLAG_NO_ISSUER | X509_FLAG_NO_PUBKEY | \
+                         X509_FLAG_NO_HEADER | X509_FLAG_NO_VERSION) */
+//
+//int set_cert_ex(unsigned long *flags, const char *arg)
+//{
+//    static const NAME_EX_TBL cert_tbl[] = {
+//        {"compatible", X509_FLAG_COMPAT, 0xffffffffl},
+//        {"ca_default", X509_FLAG_CA, 0xffffffffl},
+//        {"no_header", X509_FLAG_NO_HEADER, 0},
+//        {"no_version", X509_FLAG_NO_VERSION, 0},
+//        {"no_serial", X509_FLAG_NO_SERIAL, 0},
+//        {"no_signame", X509_FLAG_NO_SIGNAME, 0},
+//        {"no_validity", X509_FLAG_NO_VALIDITY, 0},
+//        {"no_subject", X509_FLAG_NO_SUBJECT, 0},
+//        {"no_issuer", X509_FLAG_NO_ISSUER, 0},
+//        {"no_pubkey", X509_FLAG_NO_PUBKEY, 0},
+//        {"no_extensions", X509_FLAG_NO_EXTENSIONS, 0},
+//        {"no_sigdump", X509_FLAG_NO_SIGDUMP, 0},
+//        {"no_aux", X509_FLAG_NO_AUX, 0},
+//        {"no_attributes", X509_FLAG_NO_ATTRIBUTES, 0},
+//        {"ext_default", X509V3_EXT_DEFAULT, X509V3_EXT_UNKNOWN_MASK},
+//        {"ext_error", X509V3_EXT_ERROR_UNKNOWN, X509V3_EXT_UNKNOWN_MASK},
+//        {"ext_parse", X509V3_EXT_PARSE_UNKNOWN, X509V3_EXT_UNKNOWN_MASK},
+//        {"ext_dump", X509V3_EXT_DUMP_UNKNOWN, X509V3_EXT_UNKNOWN_MASK},
+//        {NULL, 0, 0}
+//    };
+//    return set_multi_opts(flags, arg, cert_tbl);
+//}
+//
 //int set_name_ex(unsigned long *flags, const char *arg)
 //{
 //    static const NAME_EX_TBL ex_tbl[] = {
