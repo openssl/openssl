@@ -21,24 +21,6 @@
 #include "opt.h"
 #include "engine_loader.h"
 #include <string.h>
-//#include "apps.h"
-
-//#include <ctype.h>
-//#include "apps.h"
-//#include "apps_config.h"
-//#include "apps_propq.h"
-//#include "apps_libctx.h"
-//#include "apps_globals.h"
-//#include "apps_opts.h"
-//#include "apps_keys.h"
-//
-//
-//# include <openssl/txt_db.h>
-//# include <openssl/http.h>
-//# include <signal.h>
-//# include "fmt.h"
-//# include "apps_ui.h"
-//# include "platform.h"
 
 /*
  * X509_ctrl_str() is sorely lacking in libcrypto, but is still needed to

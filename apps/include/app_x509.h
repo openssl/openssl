@@ -28,6 +28,7 @@ void store_setup_crl_download(X509_STORE *st);
 int x509_ctrl_string(X509 *x, const char *value);
 int copy_extensions(X509 *x, X509_REQ *req, int copy_type);
 X509_REQ *load_csr(const char *file, int format, const char *desc);
+#define load_cert(uri, desc) load_cert_pass(uri, 1, NULL, desc)
 X509 *load_cert_pass(const char *uri, int maybe_stdin,
                      const char *pass, const char *desc);
 
