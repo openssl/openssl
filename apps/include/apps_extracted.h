@@ -24,7 +24,7 @@
 //#define app_load_config_quiet(filename) app_load_config_internal(filename, 1)
 //CONF *app_load_config_internal(const char *filename, int quiet);
 //CONF *app_load_config_verbose(const char *filename, int verbose);
-int app_load_modules(const CONF *config);
+//int app_load_modules(const CONF *config);
 void unbuffer(FILE *fp);
 
 int set_cert_times(X509 *x, const char *startdate, const char *enddate,
@@ -40,7 +40,7 @@ int set_cert_ex(unsigned long *flags, const char *arg);
 int set_ext_copy(int *copy_type, const char *arg);
 int copy_extensions(X509 *x, X509_REQ *req, int copy_type);
 //int app_passwd(const char *arg1, const char *arg2, char **pass1, char **pass2);
-int add_oid_section(CONF *conf);
+//int add_oid_section(CONF *conf);
 X509_REQ *load_csr(const char *file, int format, const char *desc);
 X509 *load_cert_pass(const char *uri, int maybe_stdin,
                      const char *pass, const char *desc);
