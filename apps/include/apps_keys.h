@@ -10,6 +10,8 @@
 #ifndef OSSL_APPS_APPS_KEYS_H
 #define OSSL_APPS_APPS_KEYS_H
 
+#include "openssl/x509.h"
+
 EVP_PKEY *load_key(const char *uri, int format, int maybe_stdin,
                    const char *pass, ENGINE *e, const char *desc);
 int load_key_certs_crls(const char *uri, int maybe_stdin,
