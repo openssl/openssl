@@ -148,8 +148,6 @@ int x509_req_ctrl_string(X509_REQ *x, const char *value)
     return do_x509_ctrl_string(x509_req_ctrl, x, value);
 }
 
-/* imported from apps_extracted.c */
-
 #define IS_HTTP(uri) ((uri) != NULL \
         && strncmp(uri, OSSL_HTTP_PREFIX, strlen(OSSL_HTTP_PREFIX)) == 0)
 #define IS_HTTPS(uri) ((uri) != NULL \

@@ -260,8 +260,6 @@ const OPTIONS ca_options[] = {
     {NULL}
 };
 
-/* ----------------- parts from apps_extracted.c start ---------------------*/
-
 /* block of index functions start */
 static unsigned long index_serial_hash(const OPENSSL_CSTRING *a)
 {
@@ -688,8 +686,6 @@ int rand_serial(BIGNUM *b, ASN1_INTEGER *ai)
     return ret;
 }
 /* block of serial functions end */
-
-/* ----------------- parts from apps_extracted.c end -----------------------*/
 
 int ca_main(int argc, char **argv)
 {
