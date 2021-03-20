@@ -9,6 +9,7 @@
 
 #include "apps_globals.h"
 #include "fmt.h"
+#include "opt.h"
 #include <ctype.h>
 #include <string.h>
 
@@ -58,6 +59,11 @@ void make_uppercase(char *string)
 
     for (i = 0; string[i] != '\0'; i++)
         string[i] = toupper((unsigned char)string[i]);
+}
+
+int app_isdir(const char *name)
+{
+    return opt_isdir(name);
 }
 
 const char *modestr(char mode, int format)
