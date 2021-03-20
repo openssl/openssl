@@ -115,7 +115,7 @@ static const EC_NAME2NID curve_list[] = {
     {"SM2", NID_sm2 },
 };
 
-const char *ossl_ec_curve_nid2name(int nid)
+const char *OSSL_EC_curve_nid2name(int nid)
 {
     size_t i;
 

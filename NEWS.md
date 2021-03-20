@@ -26,6 +26,7 @@ OpenSSL 3.0
     RC4, RC5, and DES to the legacy provider.
   * Moved the EVP digests MD2, MD4, MDC2, WHIRLPOOL and RIPEMD-160 to the legacy
     provider.
+  * Added convenience functions for generating asymmetric key pairs.
   * Deprecated the `OCSP_REQ_CTX` type and functions.
   * Deprecated the `EC_KEY` and `EC_KEY_METHOD` types and functions.
   * Deprecated the `RSA` and `RSA_METHOD` types and functions.

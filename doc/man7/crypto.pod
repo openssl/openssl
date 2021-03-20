@@ -422,7 +422,7 @@ For information on the OpenSSL configuration file format see L<config(5)>.
 =head1 ENCODING AND DECODING KEYS
 
 Many algorithms require the use of a key. Keys can be generated dynamically
-using the EVP APIs (for example see L<EVP_PKEY_gen(3)>). However it is often
+using the EVP APIs (for example see L<EVP_PKEY_Q_keygen(3)>). However it is often
 necessary to save or load keys (or their associated parameters) to or from some
 external format such as PEM or DER (see L<openssl-glossary(7)>). OpenSSL uses
 encoders and decoders to perform this task.

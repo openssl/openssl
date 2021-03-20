@@ -84,25 +84,11 @@ An B<EVP_PKEY> context can be obtained by calling:
     EVP_PKEY_CTX *pctx =
         EVP_PKEY_CTX_new_from_name(NULL, "ED448", NULL);
 
-An B<ED25519> key can be generated like this:
+An B<X25519> key can be generated like this:
 
-    EVP_PKEY *pkey = NULL;
-    EVP_PKEY_CTX *pctx =
-        EVP_PKEY_CTX_new_from_name(NULL, "ED25519", NULL);
+    pkey = EVP_Q_keygen(NULL, NULL, "X25519");
 
-    EVP_PKEY_keygen_init(pctx);
-    EVP_PKEY_gen(pctx, &pkey);
-    EVP_PKEY_CTX_free(pctx);
-
-An B<X25519> key can be generated in a similar way:
-
-    EVP_PKEY *pkey = NULL;
-    EVP_PKEY_CTX *pctx =
-        EVP_PKEY_CTX_new_from_name(NULL, "X25519", NULL);
-
-    EVP_PKEY_keygen_init(pctx);
-    EVP_PKEY_gen(pctx, &pkey);
-    EVP_PKEY_CTX_free(pctx);
+An B<X448>, B<ED25519>, or B<ED448> key can be generated likewise.
 
 =head1 SEE ALSO
 

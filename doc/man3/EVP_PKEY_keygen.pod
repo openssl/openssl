@@ -2,7 +2,8 @@
 
 =head1 NAME
 
-EVP_PKEY_keygen_init, EVP_PKEY_paramgen_init, EVP_PKEY_gen,
+EVP_PKEY_Q_keygen,
+EVP_PKEY_keygen_init, EVP_PKEY_paramgen_init, EVP_PKEY_generate,
 EVP_PKEY_CTX_set_cb, EVP_PKEY_CTX_get_cb,
 EVP_PKEY_CTX_get_keygen_info, EVP_PKEY_CTX_set_app_data,
 EVP_PKEY_CTX_get_app_data,
@@ -14,9 +15,12 @@ EVP_PKEY_paramgen, EVP_PKEY_keygen
 
  #include <openssl/evp.h>
 
+ EVP_PKEY *EVP_PKEY_Q_keygen(OSSL_LIB_CTX *libctx, const char *propq,
+                             const char *type, ...);
+
  int EVP_PKEY_keygen_init(EVP_PKEY_CTX *ctx);
  int EVP_PKEY_paramgen_init(EVP_PKEY_CTX *ctx);
- int EVP_PKEY_gen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey);
+ int EVP_PKEY_generate(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey);
  int EVP_PKEY_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey);
  int EVP_PKEY_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey);
 
@@ -57,16 +61,16 @@ After initialization, generation parameters may be provided with
 L<EVP_PKEY_CTX_ctrl(3)> or L<EVP_PKEY_CTX_set_params(3)>, or any other
 function described in those manuals.
 
-EVP_PKEY_gen() performs the generation operation, the resulting key
+EVP_PKEY_generate() performs the generation operation, the resulting key
 parameters or key are written to I<*ppkey>.  If I<*ppkey> is NULL when this
 function is called, it will be allocated, and should be freed by the caller
 when no longer useful, using L<EVP_PKEY_free(3)>.
 
 EVP_PKEY_paramgen() and EVP_PKEY_keygen() do exactly the same thing as
-EVP_PKEY_gen(), after checking that the corresponding EVP_PKEY_paramgen_init()
+EVP_PKEY_generate(), after checking that the corresponding EVP_PKEY_paramgen_init()
 or EVP_PKEY_keygen_init() was used to initialize I<ctx>.
 These are older functions that are kept for backward compatibility.
-It is safe to use EVP_PKEY_gen() instead.
+It is safe to use EVP_PKEY_generate() instead.
 
 The function EVP_PKEY_set_cb() sets the key or parameter generation callback
 to I<cb>. The function EVP_PKEY_CTX_get_cb() returns the key or parameter
@@ -87,12 +91,26 @@ and retrieve an opaque pointer. This can be used to set some application
 defined value which can be retrieved in the callback: for example a handle
 which is used to update a "progress dialog".
 
+EVP_PKEY_Q_keygen() abstracts from the explicit use of B<EVP_PKEY_CTX> while
+providing a 'quick' but limited way of generating a new asymmetric key pair.
+It provides shorthands for simple and common cases of key generation.
+As usual, the library context I<libctx> and property query I<propq>
+can be given for fetching algorithms from providers.
+If I<type> is C<RSA>,
+a B<size_t> parameter must be given to specify the size of the RSA key.
+If I<type> is C<EC>,
+a string parameter must be given to specify the name of the EC curve.
+If I<type> is C<X25519>, C<X448>, C<ED25519>, or C<ED448>
+no further parameter is needed.
+
 =head1 RETURN VALUES
 
 EVP_PKEY_keygen_init(), EVP_PKEY_paramgen_init(), EVP_PKEY_keygen() and
 EVP_PKEY_paramgen() return 1 for success and 0 or a negative value for failure.
 In particular a return value of -2 indicates the operation is not supported by
 the public key algorithm.
+
+EVP_PKEY_Q_keygen() returns an B<EVP_PKEY>, or NULL on failure.
 
 =head1 NOTES
 
@@ -187,6 +205,7 @@ Example of generation callback for OpenSSL public key implementations:
 
 =head1 SEE ALSO
 
+L<EVP_RSA_gen(3)>, L<EVP_EC_gen(3)>,
 L<EVP_PKEY_CTX_new(3)>,
 L<EVP_PKEY_encrypt(3)>,
 L<EVP_PKEY_decrypt(3)>,
@@ -203,7 +222,7 @@ EVP_PKEY_CTX_get_cb(), EVP_PKEY_CTX_get_keygen_info(),
 EVP_PKEY_CTX_set_app_data() and EVP_PKEY_CTX_get_app_data() were added in
 OpenSSL 1.0.0.
 
-EVP_PKEY_gen() was added in OpenSSL 3.0.
+EVP_PKEY_Q_keygen() and EVP_PKEY_generate() were added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

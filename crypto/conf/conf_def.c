@@ -11,8 +11,8 @@
 
 #include <stdio.h>
 #include <string.h>
+#include "e_os.h" /* strcasecmp and struct stat */
 #ifdef __TANDEM
-# include <strings.h> /* strcasecmp */
 # include <sys/types.h> /* needed for stat.h */
 # include <sys/stat.h> /* struct stat */
 #endif
@@ -28,7 +28,6 @@
 # include <sys/stat.h>
 # ifdef _WIN32
 #  define stat    _stat
-#  define strcasecmp _stricmp
 # endif
 #endif
 

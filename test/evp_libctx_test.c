@@ -488,16 +488,12 @@ static void collect_cipher_names(EVP_CIPHER *cipher, void *cipher_names_list)
 static int rsa_keygen(int bits, EVP_PKEY **pub, EVP_PKEY **priv)
 {
     int ret = 0;
-    EVP_PKEY_CTX *keygen_ctx = NULL;
     unsigned char *pub_der = NULL;
     const unsigned char *pp = NULL;
     size_t len = 0;
     OSSL_ENCODER_CTX *ectx = NULL;
 
-    if (!TEST_ptr(keygen_ctx = EVP_PKEY_CTX_new_from_name(libctx, "RSA", NULL))
-        || !TEST_int_gt(EVP_PKEY_keygen_init(keygen_ctx), 0)
-        || !TEST_true(EVP_PKEY_CTX_set_rsa_keygen_bits(keygen_ctx, bits))
-        || !TEST_int_gt(EVP_PKEY_keygen(keygen_ctx, priv), 0)
+    if (!TEST_ptr(*priv = EVP_PKEY_Q_keygen(libctx, NULL, "RSA", bits))
         || !TEST_ptr(ectx =
                      OSSL_ENCODER_CTX_new_for_pkey(*priv,
                                                    EVP_PKEY_PUBLIC_KEY,
@@ -512,7 +508,6 @@ static int rsa_keygen(int bits, EVP_PKEY **pub, EVP_PKEY **priv)
 err:
     OSSL_ENCODER_CTX_free(ectx);
     OPENSSL_free(pub_der);
-    EVP_PKEY_CTX_free(keygen_ctx);
     return ret;
 }
 

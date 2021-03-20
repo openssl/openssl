@@ -405,6 +405,12 @@ OpenSSL 3.0
 
    *Dmitry Belyavskiy*
 
+ * Added convenience functions for generating asymmetric key pairs:
+   The 'quick' one-shot (yet somewhat limited) function L<EVP_PKEY_Q_keygen(3)>
+   and macros for the most common cases: <EVP_RSA_gen(3)> and L<EVP_EC_gen(3)>.
+
+   *David von Oheimb*
+
  * All of the low-level EC_KEY functions have been deprecated including:
 
    EC_KEY_OpenSSL, EC_KEY_get_default_method, EC_KEY_set_default_method,
@@ -429,7 +435,8 @@ OpenSSL 3.0
    Applications that need to implement an EC_KEY_METHOD need to consider
    implementation of the functionality in a special provider.
    For replacement of the functions manipulating the EC_KEY objects
-   see the EVP_PKEY-EC(7) manual page.
+   see the L<EVP_PKEY-EC(7)> manual page.
+   A simple way of generating EC keys is L<EVP_EC_gen(3)>.
 
    Additionally functions that read and write EC_KEY objects such as
    o2i_ECPublicKey, i2o_ECPublicKey, ECParameters_print_fp, EC_KEY_print_fp,
@@ -825,7 +832,7 @@ OpenSSL 3.0
 
  * All of the low-level RSA functions have been deprecated including:
 
-   RSA_new_method, RSA_size, RSA_security_bits, RSA_get0_pss_params,
+   RSA_new, RSA_new_method, RSA_size, RSA_security_bits, RSA_get0_pss_params,
    RSA_get_version, RSA_get0_engine, RSA_generate_key_ex,
    RSA_generate_multi_prime_key, RSA_X931_derive_ex, RSA_X931_generate_key_ex,
    RSA_check_key, RSA_check_key_ex, RSA_public_encrypt, RSA_private_encrypt,
@@ -858,6 +865,9 @@ OpenSSL 3.0
    time.  Instead applications should use L<EVP_PKEY_encrypt_init(3)>,
    L<EVP_PKEY_encrypt(3)>, L<EVP_PKEY_decrypt_init(3)> and
    L<EVP_PKEY_decrypt(3)>.
+   For replacement of the functions manipulating the RSA objects
+   see the L<EVP_PKEY-RSA(7)> manual page.
+   A simple way of generating RSA keys is L<EVP_RSA_gen(3)>.
 
    All of these low-level RSA functions have been deprecated without
    replacement:

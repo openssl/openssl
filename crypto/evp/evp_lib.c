@@ -14,11 +14,14 @@
 #include "internal/deprecated.h"
 
 #include <stdio.h>
+#include <string.h>
+#include "e_os.h" /* strcasecmp */
 #include "internal/cryptlib.h"
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include <openssl/params.h>
 #include <openssl/core_names.h>
+#include <openssl/rsa.h>
 #include <openssl/dh.h>
 #include <openssl/ec.h>
 #include "crypto/evp.h"
@@ -27,6 +30,7 @@
 #include "evp_local.h"
 
 #if !defined(FIPS_MODULE)
+
 int EVP_CIPHER_param_to_asn1(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
 {
     return evp_cipher_param_to_asn1_ex(c, type, NULL);
@@ -1110,4 +1114,60 @@ int EVP_PKEY_CTX_get_group_name(EVP_PKEY_CTX *ctx, char *name, size_t namelen)
     if (!EVP_PKEY_CTX_get_params(ctx, params))
         return -1;
     return 1;
+}
+
+/*
+ * evp_pkey_keygen() abstracts from the explicit use of B<EVP_PKEY_CTX>
+ * while providing a generic way of generating a new asymmetric key pair
+ * of algorithm type I<name> (e.g., C<RSA> or C<EC>).
+ * The library context I<libctx> and property query I<propq>
+ * are used when fetching algorithms from providers.
+ * The I<params> specify algorithm-specific parameters
+ * such as the RSA modulus size or the name of an EC curve.
+ */
+static EVP_PKEY *evp_pkey_keygen(OSSL_LIB_CTX *libctx, const char *name,
+                                 const char *propq, OSSL_PARAM *params)
+{
+    EVP_PKEY *pkey = NULL;
+    EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new_from_name(libctx, name, propq);
+
+    if (ctx != NULL
+            && EVP_PKEY_keygen_init(ctx) > 0
+            && EVP_PKEY_CTX_set_params(ctx, params))
+        (void)EVP_PKEY_generate(ctx, &pkey);
+
+    EVP_PKEY_CTX_free(ctx);
+    return pkey;
+}
+
+EVP_PKEY *EVP_PKEY_Q_keygen(OSSL_LIB_CTX *libctx, const char *propq,
+                            const char *type, ...)
+{
+    va_list args;
+    size_t bits;
+    char *name;
+    OSSL_PARAM params[] = { OSSL_PARAM_END, OSSL_PARAM_END };
+    EVP_PKEY *ret = NULL;
+
+    va_start(args, type);
+
+    if (strcasecmp(type, "RSA") == 0) {
+        bits = va_arg(args, size_t);
+        params[0] = OSSL_PARAM_construct_size_t(OSSL_PKEY_PARAM_RSA_BITS, &bits);
+    } else if (strcasecmp(type, "EC") == 0) {
+        name = va_arg(args, char *);
+        params[0] = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME,
+                                                     name, 0);
+    } else if (strcasecmp(type, "ED25519") != 0
+               && strcasecmp(type, "X25519") != 0
+               && strcasecmp(type, "ED448") != 0
+               && strcasecmp(type, "X448") != 0) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_INVALID_ARGUMENT);
+        goto end;
+    }
+    ret = evp_pkey_keygen(libctx, type, propq, params);
+
+ end:
+    va_end(args);
+    return ret;
 }

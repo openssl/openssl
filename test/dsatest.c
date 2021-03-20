@@ -256,10 +256,10 @@ static int dsa_keygen_test(void)
                                                          sizeof(seed_data)))
         || !TEST_true(EVP_PKEY_CTX_set_dsa_paramgen_md_props(pg_ctx, "SHA256",
                                                              ""))
-        || !TEST_int_gt(EVP_PKEY_gen(pg_ctx, &param_key), 0)
+        || !TEST_int_gt(EVP_PKEY_generate(pg_ctx, &param_key), 0)
         || !TEST_ptr(kg_ctx = EVP_PKEY_CTX_new_from_pkey(NULL, param_key, NULL))
         || !TEST_int_gt(EVP_PKEY_keygen_init(kg_ctx), 0)
-        || !TEST_int_gt(EVP_PKEY_gen(kg_ctx, &key), 0))
+        || !TEST_int_gt(EVP_PKEY_generate(kg_ctx, &key), 0))
         goto end;
 
     if (!TEST_true(EVP_PKEY_get_bn_param(key, OSSL_PKEY_PARAM_FFC_P, &p_out))
@@ -313,7 +313,7 @@ static int test_dsa_default_paramgen_validate(int i)
           && TEST_int_gt(EVP_PKEY_paramgen_init(gen_ctx), 0)
           && (i == 0
               || TEST_true(EVP_PKEY_CTX_set_dsa_paramgen_bits(gen_ctx, 512)))
-          && TEST_int_gt(EVP_PKEY_gen(gen_ctx, &params), 0)
+          && TEST_int_gt(EVP_PKEY_generate(gen_ctx, &params), 0)
           && TEST_ptr(check_ctx = EVP_PKEY_CTX_new_from_pkey(NULL, params, NULL))
           && TEST_int_gt(EVP_PKEY_param_check(check_ctx), 0);
 

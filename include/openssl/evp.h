@@ -1933,11 +1933,13 @@ int EVP_PKEY_set_octet_string_param(EVP_PKEY *pkey, const char *key_name,
 int EVP_PKEY_get_ec_point_conv_form(const EVP_PKEY *pkey);
 int EVP_PKEY_get_field_type(const EVP_PKEY *pkey);
 
+EVP_PKEY *EVP_PKEY_Q_keygen(OSSL_LIB_CTX *libctx, const char *propq,
+                            const char *type, ...);
 int EVP_PKEY_paramgen_init(EVP_PKEY_CTX *ctx);
 int EVP_PKEY_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey);
 int EVP_PKEY_keygen_init(EVP_PKEY_CTX *ctx);
 int EVP_PKEY_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey);
-int EVP_PKEY_gen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey);
+int EVP_PKEY_generate(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey);
 int EVP_PKEY_check(EVP_PKEY_CTX *ctx);
 int EVP_PKEY_public_check(EVP_PKEY_CTX *ctx);
 int EVP_PKEY_public_check_quick(EVP_PKEY_CTX *ctx);

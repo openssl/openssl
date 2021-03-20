@@ -1482,7 +1482,7 @@ static int get_payload_group_name(enum state state,
             if (grp != NULL)
                 nid = EC_GROUP_get_curve_name(grp);
             if (nid != NID_undef)
-                ctx->p2 = (char *)ossl_ec_curve_nid2name(nid);
+                ctx->p2 = (char *)OSSL_EC_curve_nid2name(nid);
         }
         break;
 #endif

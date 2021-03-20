@@ -249,7 +249,7 @@ static EVP_PKEY *make_key(const char *type,
             || EVP_PKEY_paramgen_init(ctx) <= 0
             || (gen_template_params[0].key != NULL
                 && EVP_PKEY_CTX_set_params(ctx, gen_template_params_noconst) <= 0)
-            || EVP_PKEY_gen(ctx, &template) <= 0))
+            || EVP_PKEY_generate(ctx, &template) <= 0))
         goto end;
     EVP_PKEY_CTX_free(ctx);
 

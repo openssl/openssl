@@ -81,7 +81,7 @@ static EVP_PKEY *make_template(const char *type, OSSL_PARAM *genparams)
            && EVP_PKEY_paramgen_init(ctx) > 0
            && (genparams == NULL
                || EVP_PKEY_CTX_set_params(ctx, genparams) > 0)
-           && EVP_PKEY_gen(ctx, &pkey) > 0);
+           && EVP_PKEY_generate(ctx, &pkey) > 0);
     EVP_PKEY_CTX_free(ctx);
 
     return pkey;
