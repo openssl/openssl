@@ -312,7 +312,7 @@ static int do_pkey_ctx_init(EVP_PKEY_CTX *pkctx, STACK_OF(OPENSSL_STRING) *opts)
     return 1;
 }
 
-int do_sign_init(EVP_MD_CTX *ctx, EVP_PKEY *pkey,
+static int do_sign_init_(EVP_MD_CTX *ctx, EVP_PKEY *pkey,
                         const EVP_MD *md, STACK_OF(OPENSSL_STRING) *sigopts)
 {
     EVP_PKEY_CTX *pkctx = NULL;
@@ -333,4 +333,9 @@ int do_sign_init(EVP_MD_CTX *ctx, EVP_PKEY *pkey,
         && do_pkey_ctx_init(pkctx, sigopts);
 }
 
+int do_sign_init(EVP_MD_CTX *ctx, EVP_PKEY *pkey,
+                        const EVP_MD *md, STACK_OF(OPENSSL_STRING) *sigopts)
+{
+    return do_sign_init_(ctx, pkey, md, sigopts);
+}
 
