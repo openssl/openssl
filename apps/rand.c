@@ -8,6 +8,7 @@
  */
 
 #include "apps.h"
+#include "apps_config.h"
 #include "progs.h"
 
 #include <ctype.h>

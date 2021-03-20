@@ -12,6 +12,7 @@
 #include "apps.h"
 #include "apps_propq.h"
 #include "apps_libctx.h"
+#include "apps_config.h"
 #include "progs.h"
 #include <openssl/bio.h>
 #include <openssl/err.h>

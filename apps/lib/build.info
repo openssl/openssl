@@ -11,7 +11,7 @@ ENDIF
 $LIBAPPSSRC=apps.c apps_ui.c opt.c fmt.c s_cb.c s_socket.c app_rand.c \
         columns.c app_params.c names.c app_provider.c app_x509.c http_server.c \
         engine.c engine_loader.c apps_extracted.c apps_os_wrapper.c apps_propq.c \
-        apps_libctx.c apps_passwd.c apps_opts.c apps_globals.c
+        apps_libctx.c apps_passwd.c apps_opts.c apps_globals.c apps_config.c
 
 IF[{- !$disabled{apps} -}]
   LIBS{noinst}=../libapps.a

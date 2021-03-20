@@ -34,6 +34,7 @@ typedef unsigned int u_int;
 #include "apps_libctx.h"
 #include "apps_passwd.h"
 #include "apps_opts.h"
+#include "apps_config.h"
 #include "progs.h"
 #include <openssl/x509.h>
 #include <openssl/ssl.h>

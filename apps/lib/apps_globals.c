@@ -8,6 +8,7 @@
  */
 
 #include "apps_globals.h"
+#include "fmt.h"
 #include <ctype.h>
 #include <string.h>
 
@@ -37,11 +38,41 @@ int parse_yesno(const char *str, int def)
     }
     return def;
 }
+
 void make_uppercase(char *string)
 {
     int i;
 
     for (i = 0; string[i] != '\0'; i++)
         string[i] = toupper((unsigned char)string[i]);
+}
+
+const char *modestr(char mode, int format)
+{
+    OPENSSL_assert(mode == 'a' || mode == 'r' || mode == 'w');
+
+    switch (mode) {
+    case 'a':
+        return FMT_istext(format) ? "a" : "ab";
+    case 'r':
+        return FMT_istext(format) ? "r" : "rb";
+    case 'w':
+        return FMT_istext(format) ? "w" : "wb";
+    }
+    /* The assert above should make sure we never reach this point */
+    return NULL;
+}
+
+const char *modeverb(char mode)
+{
+    switch (mode) {
+    case 'a':
+        return "appending";
+    case 'r':
+        return "reading";
+    case 'w':
+        return "writing";
+    }
+    return "(doing something)";
 }
 
