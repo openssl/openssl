@@ -36,7 +36,7 @@ int set_crl_nextupdate(X509_CRL *crl, const char *nextupdate,
 //int set_nameopt(const char *arg);
 //unsigned long get_nameopt(void);
 int set_cert_ex(unsigned long *flags, const char *arg);
-int set_name_ex(unsigned long *flags, const char *arg);
+//int set_name_ex(unsigned long *flags, const char *arg);
 int set_ext_copy(int *copy_type, const char *arg);
 int copy_extensions(X509 *x, X509_REQ *req, int copy_type);
 //int app_passwd(const char *arg1, const char *arg2, char **pass1, char **pass2);
