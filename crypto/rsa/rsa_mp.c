@@ -12,23 +12,23 @@
 #include <openssl/err.h>
 #include "rsa_local.h"
 
-void rsa_multip_info_free_ex(RSA_PRIME_INFO *pinfo)
+void ossl_rsa_multip_info_free_ex(RSA_PRIME_INFO *pinfo)
 {
     /* free pp and pinfo only */
     BN_clear_free(pinfo->pp);
     OPENSSL_free(pinfo);
 }
 
-void rsa_multip_info_free(RSA_PRIME_INFO *pinfo)
+void ossl_rsa_multip_info_free(RSA_PRIME_INFO *pinfo)
 {
     /* free a RSA_PRIME_INFO structure */
     BN_clear_free(pinfo->r);
     BN_clear_free(pinfo->d);
     BN_clear_free(pinfo->t);
-    rsa_multip_info_free_ex(pinfo);
+    ossl_rsa_multip_info_free_ex(pinfo);
 }
 
-RSA_PRIME_INFO *rsa_multip_info_new(void)
+RSA_PRIME_INFO *ossl_rsa_multip_info_new(void)
 {
     RSA_PRIME_INFO *pinfo;
 
@@ -58,7 +58,7 @@ RSA_PRIME_INFO *rsa_multip_info_new(void)
 }
 
 /* Refill products of primes */
-int rsa_multip_calc_product(RSA *rsa)
+int ossl_rsa_multip_calc_product(RSA *rsa)
 {
     RSA_PRIME_INFO *pinfo;
     BIGNUM *p1 = NULL, *p2 = NULL;
@@ -97,7 +97,7 @@ int rsa_multip_calc_product(RSA *rsa)
     return rv;
 }
 
-int rsa_multip_cap(int bits)
+int ossl_rsa_multip_cap(int bits)
 {
     int cap = 5;
 

@@ -25,7 +25,7 @@ static int copy_issuer(X509V3_CTX *ctx, GENERAL_NAMES *gens);
 static int do_othername(GENERAL_NAME *gen, const char *value, X509V3_CTX *ctx);
 static int do_dirname(GENERAL_NAME *gen, const char *value, X509V3_CTX *ctx);
 
-const X509V3_EXT_METHOD v3_alt[3] = {
+const X509V3_EXT_METHOD ossl_v3_alt[3] = {
     {NID_subject_alt_name, 0, ASN1_ITEM_ref(GENERAL_NAMES),
      0, 0, 0, 0,
      0, 0,
@@ -178,7 +178,7 @@ STACK_OF(CONF_VALUE) *i2v_GENERAL_NAME(X509V3_EXT_METHOD *method,
         break;
 
     case GEN_IPADD:
-        tmp = ipaddr_to_asc(gen->d.ip->data, gen->d.ip->length);
+        tmp = ossl_ipaddr_to_asc(gen->d.ip->data, gen->d.ip->length);
         if (tmp == NULL || !X509V3_add_value("IP Address", tmp, &ret))
             ret = NULL;
         OPENSSL_free(tmp);
@@ -267,7 +267,7 @@ int GENERAL_NAME_print(BIO *out, GENERAL_NAME *gen)
         break;
 
     case GEN_IPADD:
-        tmp = ipaddr_to_asc(gen->d.ip->data, gen->d.ip->length);
+        tmp = ossl_ipaddr_to_asc(gen->d.ip->data, gen->d.ip->length);
         if (tmp == NULL)
             return 0;
         BIO_printf(out, "IP Address:%s", tmp);
@@ -298,7 +298,7 @@ static GENERAL_NAMES *v2i_issuer_alt(X509V3_EXT_METHOD *method,
     for (i = 0; i < num; i++) {
         CONF_VALUE *cnf = sk_CONF_VALUE_value(nval, i);
 
-        if (!v3_name_cmp(cnf->name, "issuer")
+        if (!ossl_v3_name_cmp(cnf->name, "issuer")
             && cnf->value && strcmp(cnf->value, "copy") == 0) {
             if (!copy_issuer(ctx, gens))
                 goto err;
@@ -377,11 +377,11 @@ static GENERAL_NAMES *v2i_subject_alt(X509V3_EXT_METHOD *method,
 
     for (i = 0; i < num; i++) {
         cnf = sk_CONF_VALUE_value(nval, i);
-        if (!v3_name_cmp(cnf->name, "email")
+        if (!ossl_v3_name_cmp(cnf->name, "email")
             && cnf->value && strcmp(cnf->value, "copy") == 0) {
             if (!copy_email(ctx, gens, 0))
                 goto err;
-        } else if (!v3_name_cmp(cnf->name, "email")
+        } else if (!ossl_v3_name_cmp(cnf->name, "email")
                    && cnf->value && strcmp(cnf->value, "move") == 0) {
             if (!copy_email(ctx, gens, 1))
                 goto err;
@@ -597,19 +597,19 @@ GENERAL_NAME *v2i_GENERAL_NAME_ex(GENERAL_NAME *out,
         return NULL;
     }
 
-    if (!v3_name_cmp(name, "email"))
+    if (!ossl_v3_name_cmp(name, "email"))
         type = GEN_EMAIL;
-    else if (!v3_name_cmp(name, "URI"))
+    else if (!ossl_v3_name_cmp(name, "URI"))
         type = GEN_URI;
-    else if (!v3_name_cmp(name, "DNS"))
+    else if (!ossl_v3_name_cmp(name, "DNS"))
         type = GEN_DNS;
-    else if (!v3_name_cmp(name, "RID"))
+    else if (!ossl_v3_name_cmp(name, "RID"))
         type = GEN_RID;
-    else if (!v3_name_cmp(name, "IP"))
+    else if (!ossl_v3_name_cmp(name, "IP"))
         type = GEN_IPADD;
-    else if (!v3_name_cmp(name, "dirName"))
+    else if (!ossl_v3_name_cmp(name, "dirName"))
         type = GEN_DIRNAME;
-    else if (!v3_name_cmp(name, "otherName"))
+    else if (!ossl_v3_name_cmp(name, "otherName"))
         type = GEN_OTHERNAME;
     else {
         ERR_raise_data(ERR_LIB_X509V3, X509V3_R_UNSUPPORTED_OPTION,

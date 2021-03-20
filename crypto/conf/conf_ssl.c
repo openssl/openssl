@@ -176,7 +176,7 @@ void conf_ssl_get_cmd(const SSL_CONF_CMD *cmd, size_t idx, char **cmdstr,
     *arg = cmd[idx].arg;
 }
 
-void conf_add_ssl_module(void)
+void ossl_config_add_ssl_module(void)
 {
     CONF_module_add("ssl_conf", ssl_module_init, ssl_module_free);
 }

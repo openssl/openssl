@@ -15,6 +15,7 @@
 #include <openssl/core_names.h>
 #include <openssl/params.h>
 #include <openssl/err.h>
+#include <openssl/proverr.h>
 #include <openssl/evp.h>
 #include <openssl/rand.h>
 #include "internal/param_build_set.h"
@@ -582,21 +583,21 @@ static void *ecx_gen(struct ecx_gen_ctx *gctx)
         privkey[0] &= 248;
         privkey[X25519_KEYLEN - 1] &= 127;
         privkey[X25519_KEYLEN - 1] |= 64;
-        X25519_public_from_private(key->pubkey, privkey);
+        ossl_x25519_public_from_private(key->pubkey, privkey);
         break;
     case ECX_KEY_TYPE_X448:
         privkey[0] &= 252;
         privkey[X448_KEYLEN - 1] |= 128;
-        X448_public_from_private(key->pubkey, privkey);
+        ossl_x448_public_from_private(key->pubkey, privkey);
         break;
     case ECX_KEY_TYPE_ED25519:
-        if (!ED25519_public_from_private(gctx->libctx, key->pubkey, privkey,
-                                         gctx->propq))
+        if (!ossl_ed25519_public_from_private(gctx->libctx, key->pubkey, privkey,
+                                              gctx->propq))
             goto err;
         break;
     case ECX_KEY_TYPE_ED448:
-        if (!ED448_public_from_private(gctx->libctx, key->pubkey, privkey,
-                                       gctx->propq))
+        if (!ossl_ed448_public_from_private(gctx->libctx, key->pubkey, privkey,
+                                            gctx->propq))
             goto err;
         break;
     }
@@ -696,19 +697,19 @@ static int ecx_key_pairwise_check(const ECX_KEY *ecx, int type)
 
     switch (type) {
     case ECX_KEY_TYPE_X25519:
-        X25519_public_from_private(pub, ecx->privkey);
+        ossl_x25519_public_from_private(pub, ecx->privkey);
         break;
     case ECX_KEY_TYPE_X448:
-        X448_public_from_private(pub, ecx->privkey);
+        ossl_x448_public_from_private(pub, ecx->privkey);
         break;
     case ECX_KEY_TYPE_ED25519:
-        if (!ED25519_public_from_private(ecx->libctx, pub, ecx->privkey,
-                                         ecx->propq))
+        if (!ossl_ed25519_public_from_private(ecx->libctx, pub, ecx->privkey,
+                                              ecx->propq))
             return 0;
         break;
     case ECX_KEY_TYPE_ED448:
-        if (!ED448_public_from_private(ecx->libctx, pub, ecx->privkey,
-                                       ecx->propq))
+        if (!ossl_ed448_public_from_private(ecx->libctx, pub, ecx->privkey,
+                                            ecx->propq))
             return 0;
         break;
     default:
@@ -720,15 +721,18 @@ static int ecx_key_pairwise_check(const ECX_KEY *ecx, int type)
 static int ecx_validate(const void *keydata, int selection, int type, size_t keylen)
 {
     const ECX_KEY *ecx = keydata;
-    int ok = 0;
+    int ok = keylen == ecx->keylen;
 
     if (!ossl_prov_is_running())
         return 0;
 
-    assert(keylen == ecx->keylen);
+    if ((selection & ECX_POSSIBLE_SELECTIONS) == 0)
+        return 1; /* nothing to validate */
 
-    if ((selection & ECX_POSSIBLE_SELECTIONS) != 0)
-        ok = 1;
+    if (!ok) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_ALGORITHM_MISMATCH);
+        return 0;
+    }
 
     if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0)
         ok = ok && ecx->haspubkey;

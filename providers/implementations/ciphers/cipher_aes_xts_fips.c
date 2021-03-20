@@ -17,7 +17,7 @@
 #include "cipher_aes_xts.h"
 
 #ifdef FIPS_MODULE
-const int allow_insecure_decrypt = 0;
+const int ossl_aes_xts_allow_insecure_decrypt = 0;
 #else
-const int allow_insecure_decrypt = 1;
+const int ossl_aes_xts_allow_insecure_decrypt = 1;
 #endif /* FIPS_MODULE */

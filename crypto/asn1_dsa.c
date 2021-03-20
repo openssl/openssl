@@ -36,7 +36,7 @@
  *
  * Returns 1 on success or 0 on error.
  */
-int encode_der_length(WPACKET *pkt, size_t cont_len)
+int ossl_encode_der_length(WPACKET *pkt, size_t cont_len)
 {
     if (cont_len > 0xffff)
         return 0; /* Too large for supported length encodings */
@@ -63,7 +63,7 @@ int encode_der_length(WPACKET *pkt, size_t cont_len)
  *
  * Returns 1 on success or 0 on error.
  */
-int encode_der_integer(WPACKET *pkt, const BIGNUM *n)
+int ossl_encode_der_integer(WPACKET *pkt, const BIGNUM *n)
 {
     unsigned char *bnbytes;
     size_t cont_len;
@@ -84,7 +84,7 @@ int encode_der_integer(WPACKET *pkt, const BIGNUM *n)
 
     if (!WPACKET_start_sub_packet(pkt)
             || !WPACKET_put_bytes_u8(pkt, ID_INTEGER)
-            || !encode_der_length(pkt, cont_len)
+            || !ossl_encode_der_length(pkt, cont_len)
             || !WPACKET_allocate_bytes(pkt, cont_len, &bnbytes)
             || !WPACKET_close(pkt))
         return 0;
@@ -103,7 +103,7 @@ int encode_der_integer(WPACKET *pkt, const BIGNUM *n)
  *
  * Returns 1 on success or 0 on error.
  */
-int encode_der_dsa_sig(WPACKET *pkt, const BIGNUM *r, const BIGNUM *s)
+int ossl_encode_der_dsa_sig(WPACKET *pkt, const BIGNUM *r, const BIGNUM *s)
 {
     WPACKET tmppkt, *dummypkt;
     size_t cont_len;
@@ -122,8 +122,8 @@ int encode_der_dsa_sig(WPACKET *pkt, const BIGNUM *r, const BIGNUM *s)
     }
 
     /* Calculate the content length */
-    if (!encode_der_integer(dummypkt, r)
-            || !encode_der_integer(dummypkt, s)
+    if (!ossl_encode_der_integer(dummypkt, r)
+            || !ossl_encode_der_integer(dummypkt, s)
             || !WPACKET_get_length(dummypkt, &cont_len)
             || (!isnull && !WPACKET_finish(dummypkt))) {
         if (!isnull)
@@ -133,13 +133,13 @@ int encode_der_dsa_sig(WPACKET *pkt, const BIGNUM *r, const BIGNUM *s)
 
     /* Add the tag and length bytes */
     if (!WPACKET_put_bytes_u8(pkt, ID_SEQUENCE)
-            || !encode_der_length(pkt, cont_len)
+            || !ossl_encode_der_length(pkt, cont_len)
                /*
                 * Really encode the integers. We already wrote to the main pkt
                 * if it had a NULL buffer, so don't do it again
                 */
-            || (!isnull && !encode_der_integer(pkt, r))
-            || (!isnull && !encode_der_integer(pkt, s))
+            || (!isnull && !ossl_encode_der_integer(pkt, r))
+            || (!isnull && !ossl_encode_der_integer(pkt, s))
             || !WPACKET_close(pkt))
         return 0;
 
@@ -250,4 +250,3 @@ size_t ossl_decode_der_dsa_sig(BIGNUM *r, BIGNUM *s,
     *ppin += consumed;
     return consumed;
 }
-

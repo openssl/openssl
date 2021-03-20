@@ -608,7 +608,7 @@ static int decoder_process(const OSSL_PARAM params[], void *arg)
          * too special knowledge.
          */
         trace_data_structure = data_structure;
-        if (data_type != NULL
+        if (data_type != NULL && data_structure != NULL
             && strcasecmp(data_structure, "type-specific") == 0)
             data_structure = NULL;
 

@@ -29,7 +29,7 @@ static_ASN1_ITEM_TEMPLATE_END(TLS_FEATURE)
 
 IMPLEMENT_ASN1_ALLOC_FUNCTIONS(TLS_FEATURE)
 
-const X509V3_EXT_METHOD v3_tls_feature = {
+const X509V3_EXT_METHOD ossl_v3_tls_feature = {
     NID_tlsfeature, 0,
     ASN1_ITEM_ref(TLS_FEATURE),
     0, 0, 0, 0,

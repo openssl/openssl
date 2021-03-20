@@ -114,9 +114,31 @@ static int test_property_parse(int n)
         && add_property_names("sky", "groan", "cold", "today", "tomorrow", "n",
                               NULL)
         && TEST_ptr(p = ossl_parse_property(NULL, parser_tests[n].defn))
-        && TEST_ptr(q = ossl_parse_query(NULL, parser_tests[n].query))
+        && TEST_ptr(q = ossl_parse_query(NULL, parser_tests[n].query, 0))
         && TEST_int_eq(ossl_property_match_count(q, p), parser_tests[n].e))
         r = 1;
+    ossl_property_free(p);
+    ossl_property_free(q);
+    ossl_method_store_free(store);
+    return r;
+}
+
+static int test_property_query_value_create(void)
+{
+    OSSL_METHOD_STORE *store;
+    OSSL_PROPERTY_LIST *p = NULL, *q = NULL, *o = NULL;
+    int r = 0;
+
+    /* The property value used here must not be used in other test cases */
+    if (TEST_ptr(store = ossl_method_store_new(NULL))
+        && add_property_names("wood", NULL)
+        && TEST_ptr(p = ossl_parse_query(NULL, "wood=oak", 0)) /* undefined */
+        && TEST_ptr(q = ossl_parse_query(NULL, "wood=oak", 1)) /* creates */
+        && TEST_ptr(o = ossl_parse_query(NULL, "wood=oak", 0)) /* defined */
+        && TEST_int_eq(ossl_property_match_count(q, p), -1)
+        && TEST_int_eq(ossl_property_match_count(q, o), 1))
+        r = 1;
+    ossl_property_free(o);
     ossl_property_free(p);
     ossl_property_free(q);
     ossl_method_store_free(store);
@@ -160,8 +182,9 @@ static int test_property_merge(int n)
         && add_property_names("colour", "urn", "clouds", "pot", "day", "night",
                               NULL)
         && TEST_ptr(prop = ossl_parse_property(NULL, merge_tests[n].prop))
-        && TEST_ptr(q_global = ossl_parse_query(NULL, merge_tests[n].q_global))
-        && TEST_ptr(q_local = ossl_parse_query(NULL, merge_tests[n].q_local))
+        && TEST_ptr(q_global = ossl_parse_query(NULL, merge_tests[n].q_global,
+                                                0))
+        && TEST_ptr(q_local = ossl_parse_query(NULL, merge_tests[n].q_local, 0))
         && TEST_ptr(q_combined = ossl_property_merge(q_local, q_global))
         && TEST_int_ge(ossl_property_match_count(q_combined, prop), 0))
         r = 1;
@@ -220,7 +243,7 @@ static int test_definition_compares(int n)
     r = TEST_ptr(store = ossl_method_store_new(NULL))
         && add_property_names("alpha", "omega", NULL)
         && TEST_ptr(d = ossl_parse_property(NULL, definition_tests[n].defn))
-        && TEST_ptr(q = ossl_parse_query(NULL, definition_tests[n].query))
+        && TEST_ptr(q = ossl_parse_query(NULL, definition_tests[n].query, 0))
         && TEST_int_eq(ossl_property_match_count(q, d), definition_tests[n].e);
 
     ossl_property_free(d);
@@ -416,6 +439,7 @@ err:
 int setup_tests(void)
 {
     ADD_TEST(test_property_string);
+    ADD_TEST(test_property_query_value_create);
     ADD_ALL_TESTS(test_property_parse, OSSL_NELEM(parser_tests));
     ADD_ALL_TESTS(test_property_merge, OSSL_NELEM(merge_tests));
     ADD_TEST(test_property_defn_cache);

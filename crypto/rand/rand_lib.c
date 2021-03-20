@@ -57,7 +57,7 @@ DEFINE_RUN_ONCE_STATIC(do_rand_init)
         goto err;
 # endif
 
-    if (!rand_pool_init())
+    if (!ossl_rand_pool_init())
         goto err;
 
     rand_inited = 1;
@@ -75,7 +75,7 @@ DEFINE_RUN_ONCE_STATIC(do_rand_init)
     return 0;
 }
 
-void rand_cleanup_int(void)
+void ossl_rand_cleanup_int(void)
 {
 # ifndef OPENSSL_NO_DEPRECATED_3_0
     const RAND_METHOD *meth = default_RAND_meth;
@@ -87,7 +87,7 @@ void rand_cleanup_int(void)
         meth->cleanup();
     RAND_set_rand_method(NULL);
 # endif
-    rand_pool_cleanup();
+    ossl_rand_pool_cleanup();
 # ifndef OPENSSL_NO_ENGINE
     CRYPTO_THREAD_lock_free(rand_engine_lock);
     rand_engine_lock = NULL;
@@ -107,7 +107,7 @@ void rand_cleanup_int(void)
 void RAND_keep_random_devices_open(int keep)
 {
     if (RUN_ONCE(&rand_init, do_rand_init))
-        rand_pool_keep_random_devices_open(keep);
+        ossl_rand_pool_keep_random_devices_open(keep);
 }
 
 /*
@@ -128,9 +128,9 @@ int RAND_poll(void)
 
     if (!ret) {
         /* fill random pool and seed the current legacy RNG */
-        RAND_POOL *pool = rand_pool_new(RAND_DRBG_STRENGTH, 1,
-                                        (RAND_DRBG_STRENGTH + 7) / 8,
-                                        RAND_POOL_MAX_LENGTH);
+        RAND_POOL *pool = ossl_rand_pool_new(RAND_DRBG_STRENGTH, 1,
+                                             (RAND_DRBG_STRENGTH + 7) / 8,
+                                             RAND_POOL_MAX_LENGTH);
 
         if (pool == NULL)
             return 0;
@@ -139,14 +139,14 @@ int RAND_poll(void)
             goto err;
 
         if (meth->add == NULL
-            || meth->add(rand_pool_buffer(pool),
-                         rand_pool_length(pool),
-                         (rand_pool_entropy(pool) / 8.0)) == 0)
+            || meth->add(ossl_rand_pool_buffer(pool),
+                         ossl_rand_pool_length(pool),
+                         (ossl_rand_pool_entropy(pool) / 8.0)) == 0)
             goto err;
 
         ret = 1;
      err:
-        rand_pool_free(pool);
+        ossl_rand_pool_free(pool);
     }
     return ret;
 # else
@@ -163,7 +163,8 @@ int RAND_set_rand_method(const RAND_METHOD *meth)
     if (!RUN_ONCE(&rand_init, do_rand_init))
         return 0;
 
-    CRYPTO_THREAD_write_lock(rand_meth_lock);
+    if (!CRYPTO_THREAD_write_lock(rand_meth_lock))
+        return 0;
 #  ifndef OPENSSL_NO_ENGINE
     ENGINE_finish(funct_ref);
     funct_ref = NULL;
@@ -180,7 +181,8 @@ const RAND_METHOD *RAND_get_rand_method(void)
     if (!RUN_ONCE(&rand_init, do_rand_init))
         return NULL;
 
-    CRYPTO_THREAD_write_lock(rand_meth_lock);
+    if (!CRYPTO_THREAD_write_lock(rand_meth_lock))
+        return NULL;
     if (default_RAND_meth == NULL) {
 #  ifndef OPENSSL_NO_ENGINE
         ENGINE *e;
@@ -192,10 +194,10 @@ const RAND_METHOD *RAND_get_rand_method(void)
             default_RAND_meth = tmp_meth;
         } else {
             ENGINE_finish(e);
-            default_RAND_meth = &rand_meth;
+            default_RAND_meth = &ossl_rand_meth;
         }
 #  else
-        default_RAND_meth = &rand_meth;
+        default_RAND_meth = &ossl_rand_meth;
 #  endif
     }
     tmp_meth = default_RAND_meth;
@@ -220,7 +222,11 @@ int RAND_set_rand_engine(ENGINE *engine)
             return 0;
         }
     }
-    CRYPTO_THREAD_write_lock(rand_engine_lock);
+    if (!CRYPTO_THREAD_write_lock(rand_engine_lock)) {
+        ENGINE_finish(engine);
+        return 0;
+    }
+
     /* This function releases any prior ENGINE so call it first */
     RAND_set_rand_method(tmp_meth);
     funct_ref = engine;

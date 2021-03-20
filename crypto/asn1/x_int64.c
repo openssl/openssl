@@ -62,12 +62,12 @@ static int uint64_i2c(const ASN1_VALUE **pval, unsigned char *cont, int *putype,
         return -1;
     if ((it->size & INTxx_FLAG_SIGNED) == INTxx_FLAG_SIGNED
         && (int64_t)utmp < 0) {
-        /* i2c_uint64_int() assumes positive values */
+        /* ossl_i2c_uint64_int() assumes positive values */
         utmp = 0 - utmp;
         neg = 1;
     }
 
-    return i2c_uint64_int(cont, utmp, neg);
+    return ossl_i2c_uint64_int(cont, utmp, neg);
 }
 
 static int uint64_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
@@ -91,7 +91,7 @@ static int uint64_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
     if (len == 0)
         goto long_compat;
 
-    if (!c2i_uint64_int(&utmp, &neg, &cont, len))
+    if (!ossl_c2i_uint64_int(&utmp, &neg, &cont, len))
         return 0;
     if ((it->size & INTxx_FLAG_SIGNED) == 0 && neg) {
         ERR_raise(ERR_LIB_ASN1, ASN1_R_ILLEGAL_NEGATIVE_VALUE);
@@ -103,7 +103,7 @@ static int uint64_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
         return 0;
     }
     if (neg)
-        /* c2i_uint64_int() returns positive values */
+        /* ossl_c2i_uint64_int() returns positive values */
         utmp = 0 - utmp;
 
  long_compat:
@@ -157,12 +157,12 @@ static int uint32_i2c(const ASN1_VALUE **pval, unsigned char *cont, int *putype,
         return -1;
     if ((it->size & INTxx_FLAG_SIGNED) == INTxx_FLAG_SIGNED
         && (int32_t)utmp < 0) {
-        /* i2c_uint64_int() assumes positive values */
+        /* ossl_i2c_uint64_int() assumes positive values */
         utmp = 0 - utmp;
         neg = 1;
     }
 
-    return i2c_uint64_int(cont, (uint64_t)utmp, neg);
+    return ossl_i2c_uint64_int(cont, (uint64_t)utmp, neg);
 }
 
 /*
@@ -194,7 +194,7 @@ static int uint32_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
     if (len == 0)
         goto long_compat;
 
-    if (!c2i_uint64_int(&utmp, &neg, &cont, len))
+    if (!ossl_c2i_uint64_int(&utmp, &neg, &cont, len))
         return 0;
     if ((it->size & INTxx_FLAG_SIGNED) == 0 && neg) {
         ERR_raise(ERR_LIB_ASN1, ASN1_R_ILLEGAL_NEGATIVE_VALUE);

@@ -828,10 +828,11 @@ const EVP_CIPHER *evp_get_cipherbyname_ex(OSSL_LIB_CTX *libctx,
 const EVP_MD *evp_get_digestbyname_ex(OSSL_LIB_CTX *libctx,
                                       const char *name);
 
-int pkcs5_pbkdf2_hmac_ex(const char *pass, int passlen,
-                         const unsigned char *salt, int saltlen, int iter,
-                         const EVP_MD *digest, int keylen, unsigned char *out,
-                         OSSL_LIB_CTX *libctx, const char *propq);
+int ossl_pkcs5_pbkdf2_hmac_ex(const char *pass, int passlen,
+                              const unsigned char *salt, int saltlen, int iter,
+                              const EVP_MD *digest, int keylen,
+                              unsigned char *out,
+                              OSSL_LIB_CTX *libctx, const char *propq);
 
 # ifndef FIPS_MODULE
 /*
@@ -866,10 +867,6 @@ int evp_set_default_properties_int(OSSL_LIB_CTX *libctx, const char *propq,
                                    int loadconfig);
 
 void evp_md_ctx_clear_digest(EVP_MD_CTX *ctx, int force);
-
-EVP_PKEY *evp_privatekey_from_binary(int keytype, EVP_PKEY **a,
-                                     const unsigned char **pp, long length,
-                                     OSSL_LIB_CTX *libctx, const char *propq);
 
 /* Three possible states: */
 # define EVP_PKEY_STATE_UNKNOWN         0

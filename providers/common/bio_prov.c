@@ -203,7 +203,7 @@ static int bio_core_free(BIO *bio)
     return 1;
 }
 
-BIO_METHOD *bio_prov_init_bio_method(void)
+BIO_METHOD *ossl_bio_prov_init_bio_method(void)
 {
     BIO_METHOD *corebiometh = NULL;
 
@@ -223,7 +223,7 @@ BIO_METHOD *bio_prov_init_bio_method(void)
     return corebiometh;
 }
 
-BIO *bio_new_from_core_bio(PROV_CTX *provctx, OSSL_CORE_BIO *corebio)
+BIO *ossl_bio_new_from_core_bio(PROV_CTX *provctx, OSSL_CORE_BIO *corebio)
 {
     BIO *outbio;
     BIO_METHOD *corebiometh = ossl_prov_ctx_get0_core_bio_method(provctx);

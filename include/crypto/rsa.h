@@ -13,6 +13,7 @@
 
 # include <openssl/core.h>
 # include <openssl/rsa.h>
+# include <openssl/x509.h>
 # include "crypto/types.h"
 
 typedef struct rsa_pss_params_30_st {
@@ -69,6 +70,14 @@ int ossl_rsa_pss_params_30_fromdata(RSA_PSS_PARAMS_30 *pss_params,
                                     int *defaults_set,
                                     const OSSL_PARAM params[],
                                     OSSL_LIB_CTX *libctx);
+int ossl_rsa_set0_pss_params(RSA *r, RSA_PSS_PARAMS *pss);
+int ossl_rsa_pss_get_param_unverified(const RSA_PSS_PARAMS *pss,
+                                      const EVP_MD **pmd, const EVP_MD **pmgf1md,
+                                      int *psaltlen, int *ptrailerField);
+RSA_PSS_PARAMS *ossl_rsa_pss_decode(const X509_ALGOR *alg);
+int ossl_rsa_param_decode(RSA *rsa, const X509_ALGOR *alg);
+RSA *ossl_rsa_key_from_pkcs8(const PKCS8_PRIV_KEY_INFO *p8inf,
+                             OSSL_LIB_CTX *libctx, const char *propq);
 
 int ossl_rsa_padding_check_PKCS1_type_2_TLS(OSSL_LIB_CTX *ctx, unsigned char *to,
                                             size_t tlen,
@@ -86,10 +95,10 @@ int ossl_rsa_validate_public(const RSA *key);
 int ossl_rsa_validate_private(const RSA *key);
 int ossl_rsa_validate_pairwise(const RSA *key);
 
-int int_rsa_verify(int dtype, const unsigned char *m,
-                   unsigned int m_len, unsigned char *rm,
-                   size_t *prm_len, const unsigned char *sigbuf,
-                   size_t siglen, RSA *rsa);
+int ossl_rsa_verify(int dtype, const unsigned char *m,
+                    unsigned int m_len, unsigned char *rm,
+                    size_t *prm_len, const unsigned char *sigbuf,
+                    size_t siglen, RSA *rsa);
 
 const unsigned char *ossl_rsa_digestinfo_encoding(int md_nid, size_t *len);
 
@@ -102,15 +111,16 @@ int ossl_rsa_pss_to_ctx(EVP_MD_CTX *ctx, EVP_PKEY_CTX *pkctx,
                         const X509_ALGOR *sigalg, EVP_PKEY *pkey);
 
 # if defined(FIPS_MODULE) && !defined(OPENSSL_NO_ACVP_TESTS)
-int rsa_acvp_test_gen_params_new(OSSL_PARAM **dst, const OSSL_PARAM src[]);
-void rsa_acvp_test_gen_params_free(OSSL_PARAM *dst);
+int ossl_rsa_acvp_test_gen_params_new(OSSL_PARAM **dst, const OSSL_PARAM src[]);
+void ossl_rsa_acvp_test_gen_params_free(OSSL_PARAM *dst);
 
-int rsa_acvp_test_set_params(RSA *r, const OSSL_PARAM params[]);
-int rsa_acvp_test_get_params(RSA *r, OSSL_PARAM params[]);
+int ossl_rsa_acvp_test_set_params(RSA *r, const OSSL_PARAM params[]);
+int ossl_rsa_acvp_test_get_params(RSA *r, OSSL_PARAM params[]);
 typedef struct rsa_acvp_test_st RSA_ACVP_TEST;
-void rsa_acvp_test_free(RSA_ACVP_TEST *t);
+void ossl_rsa_acvp_test_free(RSA_ACVP_TEST *t);
 # else
 # define RSA_ACVP_TEST void
 # endif
 
+RSA *evp_pkey_get1_RSA_PSS(EVP_PKEY *pkey);
 #endif

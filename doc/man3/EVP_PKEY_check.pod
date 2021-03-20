@@ -22,7 +22,8 @@ EVP_PKEY_pairwise_check
 =head1 DESCRIPTION
 
 EVP_PKEY_param_check() validates the parameters component of the key
-given by B<ctx>.
+given by B<ctx>. This check will always succeed for key types that do not have
+parameters.
 
 EVP_PKEY_param_check_quick() validates the parameters component of the key
 given by B<ctx> like EVP_PKEY_param_check() does. However some algorithm

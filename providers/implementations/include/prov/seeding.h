@@ -11,13 +11,8 @@
 #include "crypto/rand_pool.h"
 
 /* Hardware-based seeding functions. */
-size_t prov_acquire_entropy_from_tsc(RAND_POOL *pool);
-size_t prov_acquire_entropy_from_cpu(RAND_POOL *pool);
-
-/* DRBG entropy callbacks. */
-size_t prov_drbg_get_additional_data(RAND_POOL *pool, unsigned char **pout);
-
-void prov_drbg_cleanup_additional_data(RAND_POOL *pool, unsigned char *out);
+size_t ossl_prov_acquire_entropy_from_tsc(RAND_POOL *pool);
+size_t ossl_prov_acquire_entropy_from_cpu(RAND_POOL *pool);
 
 /*
  * Add some platform specific additional data
@@ -28,7 +23,7 @@ void prov_drbg_cleanup_additional_data(RAND_POOL *pool, unsigned char *out);
  *
  * Returns 1 on success and 0 on failure.
  */
-int rand_pool_add_additional_data(RAND_POOL *pool);
+int ossl_rand_pool_add_additional_data(RAND_POOL *pool);
 
 /*
  * External seeding functions from the core dispatch table.

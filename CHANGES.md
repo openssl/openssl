@@ -23,6 +23,19 @@ OpenSSL 3.0
 
 ### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
 
+ * The EVP_PKEY_public_check() and EVP_PKEY_param_check() functions now work for
+   more key types including RSA, DSA, ED25519, X25519, ED448 and X448.
+   Previously (in 1.1.1) they would return -2. For key types that do not have
+   parameters then EVP_PKEY_param_check() will always return 1.
+
+ * The output from numerous "printing" functions such as X509_signature_print(),
+   X509_print_ex(), X509_CRL_print_ex(), and other similar functions has been
+   amended such that there may be cosmetic differences between the output
+   observed in 1.1.1 and 3.0. This also applies to the "-text" output from the
+   x509 and crl applications.
+
+   *David von Oheimb*
+
  * Windows thread synchronization uses read/write primitives (SRWLock) when
    supported by the OS, otherwise CriticalSection continues to be used.
 
@@ -44,6 +57,15 @@ OpenSSL 3.0
    using this function should be amended to handle the changed return value.
 
    *Richard Levitte*
+
+ * Improved adherence to Enhanced Security Services (ESS, RFC 2634 and RFC 5035)
+   for the TSP and CMS Advanced Electronic Signatures (CAdES) implementations.
+   As required by RFC 5035 check both ESSCertID and ESSCertIDv2 if both present.
+   Correct the semantics of checking the validation chain in case ESSCertID{,v2}
+   contains more than one certificate identifier: This means that all
+   certificates referenced there MUST be part of the validation chain.
+
+   *David von Oheimb*
 
  * The implementation of the EVP ciphers CAST5-ECB, CAST5-CBC, CAST5-OFB,
    CAST5-CFB, BF-ECB, BF-CBC, BF-OFB, BF-CFB, IDEA-ECB, IDEC-CBC, IDEA-OFB,

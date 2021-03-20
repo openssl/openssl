@@ -15,14 +15,14 @@ static int cipher_hw_sm4_initkey(PROV_CIPHER_CTX *ctx,
     PROV_SM4_CTX *sctx =  (PROV_SM4_CTX *)ctx;
     SM4_KEY *ks = &sctx->ks.ks;
 
-    SM4_set_key(key, ks);
+    ossl_sm4_set_key(key, ks);
     ctx->ks = ks;
     if (ctx->enc
             || (ctx->mode != EVP_CIPH_ECB_MODE
                 && ctx->mode != EVP_CIPH_CBC_MODE))
-        ctx->block = (block128_f)SM4_encrypt;
+        ctx->block = (block128_f)ossl_sm4_encrypt;
     else
-        ctx->block = (block128_f)SM4_decrypt;
+        ctx->block = (block128_f)ossl_sm4_decrypt;
     return 1;
 }
 

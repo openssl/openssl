@@ -86,7 +86,8 @@ int OBJ_NAME_new_index(unsigned long (*hash_func) (const char *),
     if (!OBJ_NAME_init())
         return 0;
 
-    CRYPTO_THREAD_write_lock(obj_lock);
+    if (!CRYPTO_THREAD_write_lock(obj_lock))
+        return 0;
 
     if (name_funcs_stack == NULL)
         name_funcs_stack = sk_NAME_FUNCS_new_null();
@@ -103,7 +104,7 @@ int OBJ_NAME_new_index(unsigned long (*hash_func) (const char *),
             ret = 0;
             goto out;
         }
-        name_funcs->hash_func = openssl_lh_strcasehash;
+        name_funcs->hash_func = ossl_lh_strcasehash;
         name_funcs->cmp_func = obj_strcasecmp;
         push = sk_NAME_FUNCS_push(name_funcs_stack, name_funcs);
 
@@ -153,7 +154,7 @@ static unsigned long obj_name_hash(const OBJ_NAME *a)
             sk_NAME_FUNCS_value(name_funcs_stack,
                                 a->type)->hash_func(a->name);
     } else {
-        ret = openssl_lh_strcasehash(a->name);
+        ret = ossl_lh_strcasehash(a->name);
     }
     ret ^= a->type;
     return ret;
@@ -169,7 +170,8 @@ const char *OBJ_NAME_get(const char *name, int type)
         return NULL;
     if (!OBJ_NAME_init())
         return NULL;
-    CRYPTO_THREAD_read_lock(obj_lock);
+    if (!CRYPTO_THREAD_read_lock(obj_lock))
+        return NULL;
 
     alias = type & OBJ_NAME_ALIAS;
     type &= ~OBJ_NAME_ALIAS;
@@ -207,17 +209,18 @@ int OBJ_NAME_add(const char *name, int type, const char *data)
     type &= ~OBJ_NAME_ALIAS;
 
     onp = OPENSSL_malloc(sizeof(*onp));
-    if (onp == NULL) {
-        /* ERROR */
-        goto unlock;
-    }
+    if (onp == NULL)
+        return 0;
 
     onp->name = name;
     onp->alias = alias;
     onp->type = type;
     onp->data = data;
 
-    CRYPTO_THREAD_write_lock(obj_lock);
+    if (!CRYPTO_THREAD_write_lock(obj_lock)) {
+        OPENSSL_free(onp);
+        return 0;
+    }
 
     ret = lh_OBJ_NAME_insert(names_lh, onp);
     if (ret != NULL) {
@@ -256,7 +259,8 @@ int OBJ_NAME_remove(const char *name, int type)
     if (!OBJ_NAME_init())
         return 0;
 
-    CRYPTO_THREAD_write_lock(obj_lock);
+    if (!CRYPTO_THREAD_write_lock(obj_lock))
+        return 0;
 
     type &= ~OBJ_NAME_ALIAS;
     on.name = name;

@@ -403,7 +403,7 @@ int evp_set_default_properties_int(OSSL_LIB_CTX *libctx, const char *propq,
 {
     OSSL_PROPERTY_LIST *pl = NULL;
 
-    if (propq != NULL && (pl = ossl_parse_query(libctx, propq)) == NULL) {
+    if (propq != NULL && (pl = ossl_parse_query(libctx, propq, 1)) == NULL) {
         ERR_raise(ERR_LIB_EVP, EVP_R_DEFAULT_QUERY_PARSE_ERROR);
         return 0;
     }
@@ -424,7 +424,7 @@ static int evp_default_properties_merge(OSSL_LIB_CTX *libctx, const char *propq)
         return 1;
     if (plp == NULL || *plp == NULL)
         return EVP_set_default_properties(libctx, propq);
-    if ((pl1 = ossl_parse_query(libctx, propq)) == NULL) {
+    if ((pl1 = ossl_parse_query(libctx, propq, 1)) == NULL) {
         ERR_raise(ERR_LIB_EVP, EVP_R_DEFAULT_QUERY_PARSE_ERROR);
         return 0;
     }

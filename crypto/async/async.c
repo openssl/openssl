@@ -181,7 +181,7 @@ int ASYNC_start_job(ASYNC_JOB **job, ASYNC_WAIT_CTX *wctx, int *ret,
     if (ctx == NULL)
         return ASYNC_ERR;
 
-    if (*job)
+    if (*job != NULL)
         ctx->currjob = *job;
 
     for (;;) {
@@ -203,15 +203,24 @@ int ASYNC_start_job(ASYNC_JOB **job, ASYNC_WAIT_CTX *wctx, int *ret,
             }
 
             if (ctx->currjob->status == ASYNC_JOB_PAUSED) {
+                if (*job == NULL)
+                    return ASYNC_ERR;
                 ctx->currjob = *job;
+
                 /*
                  * Restore the default libctx to what it was the last time the
                  * fibre ran
                  */
                 libctx = OSSL_LIB_CTX_set0_default(ctx->currjob->libctx);
+                if (libctx == NULL) {
+                    /* Failed to set the default context */
+                    ERR_raise(ERR_LIB_ASYNC, ERR_R_INTERNAL_ERROR);
+                    goto err;
+                }
                 /* Resume previous job */
                 if (!async_fibre_swapcontext(&ctx->dispatcher,
                         &ctx->currjob->fibrectx, 1)) {
+                    ctx->currjob->libctx = OSSL_LIB_CTX_set0_default(libctx);
                     ERR_raise(ERR_LIB_ASYNC, ASYNC_R_FAILED_TO_SWAP_CONTEXT);
                     goto err;
                 }
@@ -393,7 +402,6 @@ err:
     return 0;
 }
 
-/* TODO(3.0): arg ignored for now */
 static void async_delete_thread_state(void *arg)
 {
     async_pool *pool = (async_pool *)CRYPTO_THREAD_get_local(&poolkey);

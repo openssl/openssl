@@ -57,7 +57,7 @@ CRYPTO_RWLOCK *CRYPTO_THREAD_lock_new(void)
     return lock;
 }
 
-int CRYPTO_THREAD_read_lock(CRYPTO_RWLOCK *lock)
+__owur int CRYPTO_THREAD_read_lock(CRYPTO_RWLOCK *lock)
 {
 # ifdef USE_RWLOCK
     CRYPTO_win_rwlock *rwlock = lock;
@@ -69,7 +69,7 @@ int CRYPTO_THREAD_read_lock(CRYPTO_RWLOCK *lock)
     return 1;
 }
 
-int CRYPTO_THREAD_write_lock(CRYPTO_RWLOCK *lock)
+__owur int CRYPTO_THREAD_write_lock(CRYPTO_RWLOCK *lock)
 {
 # ifdef USE_RWLOCK
     CRYPTO_win_rwlock *rwlock = lock;

@@ -390,8 +390,8 @@ static int test_param_size_t(int n)
 static int test_param_time_t(int n)
 {
     time_t in, out;
-    unsigned char buf[MAX_LEN], cmp[sizeof(size_t)];
-    const size_t len = raw_values[n].len >= sizeof(size_t)
+    unsigned char buf[MAX_LEN], cmp[sizeof(time_t)];
+    const size_t len = raw_values[n].len >= sizeof(time_t)
                        ? sizeof(time_t) : raw_values[n].len;
     OSSL_PARAM param = OSSL_PARAM_time_t("a", NULL);
 
@@ -540,8 +540,10 @@ static int test_param_construct(void)
         || !TEST_true(OSSL_PARAM_set_utf8_string(cp, "abcdef"))
         || !TEST_size_t_eq(cp->return_size, sizeof("abcdef") - 1)
         || !TEST_true(OSSL_PARAM_get_utf8_string(cp, &bufp, 0))
-        || !TEST_str_eq(bufp, "abcdef"))
+        || !TEST_str_eq(bufp, "abcdef")) {
+        OPENSSL_free(bufp);
         goto err;
+    }
     OPENSSL_free(bufp);
     bufp = buf2;
     if (!TEST_true(OSSL_PARAM_get_utf8_string(cp, &bufp, sizeof(buf2)))

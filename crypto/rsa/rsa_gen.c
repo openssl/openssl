@@ -97,13 +97,13 @@ static int rsa_multiprime_keygen(RSA *rsa, int bits, int primes,
         return 0;
     }
 
-    if (primes < RSA_DEFAULT_PRIME_NUM || primes > rsa_multip_cap(bits)) {
+    if (primes < RSA_DEFAULT_PRIME_NUM || primes > ossl_rsa_multip_cap(bits)) {
         ok = 0;             /* we set our own err */
         ERR_raise(ERR_LIB_RSA, RSA_R_KEY_PRIME_NUM_INVALID);
         goto err;
     }
 
-    ctx = BN_CTX_new();
+    ctx = BN_CTX_new_ex(rsa->libctx);
     if (ctx == NULL)
         goto err;
     BN_CTX_start(ctx);
@@ -154,13 +154,14 @@ static int rsa_multiprime_keygen(RSA *rsa, int bits, int primes,
             goto err;
         if (rsa->prime_infos != NULL) {
             /* could this happen? */
-            sk_RSA_PRIME_INFO_pop_free(rsa->prime_infos, rsa_multip_info_free);
+            sk_RSA_PRIME_INFO_pop_free(rsa->prime_infos,
+                                       ossl_rsa_multip_info_free);
         }
         rsa->prime_infos = prime_infos;
 
         /* prime_info from 2 to |primes| -1 */
         for (i = 2; i < primes; i++) {
-            pinfo = rsa_multip_info_new();
+            pinfo = ossl_rsa_multip_info_new();
             if (pinfo == NULL)
                 goto err;
             (void)sk_RSA_PRIME_INFO_push(prime_infos, pinfo);
@@ -187,7 +188,8 @@ static int rsa_multiprime_keygen(RSA *rsa, int bits, int primes,
 
         for (;;) {
  redo:
-            if (!BN_generate_prime_ex(prime, bitsr[i] + adj, 0, NULL, NULL, cb))
+            if (!BN_generate_prime_ex2(prime, bitsr[i] + adj, 0, NULL, NULL,
+                                       cb, ctx))
                 goto err;
             /*
              * prime should not be equal to p, q, r_3...

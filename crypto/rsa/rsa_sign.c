@@ -328,9 +328,9 @@ err:
  *
  * It returns one on successful verification or zero otherwise.
  */
-int int_rsa_verify(int type, const unsigned char *m, unsigned int m_len,
-                   unsigned char *rm, size_t *prm_len,
-                   const unsigned char *sigbuf, size_t siglen, RSA *rsa)
+int ossl_rsa_verify(int type, const unsigned char *m, unsigned int m_len,
+                    unsigned char *rm, size_t *prm_len,
+                    const unsigned char *sigbuf, size_t siglen, RSA *rsa)
 {
     int len, ret = 0;
     size_t decrypt_len, encoded_len = 0;
@@ -453,5 +453,5 @@ int RSA_verify(int type, const unsigned char *m, unsigned int m_len,
     if (rsa->meth->rsa_verify != NULL)
         return rsa->meth->rsa_verify(type, m, m_len, sigbuf, siglen, rsa);
 
-    return int_rsa_verify(type, m, m_len, NULL, NULL, sigbuf, siglen, rsa);
+    return ossl_rsa_verify(type, m, m_len, NULL, NULL, sigbuf, siglen, rsa);
 }

@@ -13,6 +13,7 @@
  */
 #include "internal/deprecated.h"
 
+#include <openssl/err.h>
 #include <openssl/core_names.h>
 #include "internal/param_build_set.h"
 #include "crypto/dh.h"
@@ -115,3 +116,68 @@ int ossl_dh_key_todata(DH *dh, OSSL_PARAM_BLD *bld, OSSL_PARAM params[])
 
     return 1;
 }
+
+#ifndef FIPS_MODULE
+DH *ossl_dh_key_from_pkcs8(const PKCS8_PRIV_KEY_INFO *p8inf,
+                           OSSL_LIB_CTX *libctx, const char *propq)
+{
+    const unsigned char *p, *pm;
+    int pklen, pmlen;
+    int ptype;
+    const void *pval;
+    const ASN1_STRING *pstr;
+    const X509_ALGOR *palg;
+    BIGNUM *privkey_bn = NULL;
+    ASN1_INTEGER *privkey = NULL;
+    DH *dh = NULL;
+
+    if (!PKCS8_pkey_get0(NULL, &p, &pklen, &palg, p8inf))
+        return 0;
+
+    X509_ALGOR_get0(NULL, &ptype, &pval, palg);
+
+    if (ptype != V_ASN1_SEQUENCE)
+        goto decerr;
+    if ((privkey = d2i_ASN1_INTEGER(NULL, &p, pklen)) == NULL)
+        goto decerr;
+
+    pstr = pval;
+    pm = pstr->data;
+    pmlen = pstr->length;
+    switch (OBJ_obj2nid(palg->algorithm)) {
+    case NID_dhKeyAgreement:
+        dh = d2i_DHparams(NULL, &pm, pmlen);
+        break;
+    case NID_dhpublicnumber:
+        dh = d2i_DHxparams(NULL, &pm, pmlen);
+        break;
+    default:
+        goto decerr;
+    }
+    if (dh == NULL)
+        goto decerr;
+
+    /* We have parameters now set private key */
+    if ((privkey_bn = BN_secure_new()) == NULL
+        || !ASN1_INTEGER_to_BN(privkey, privkey_bn)) {
+        ERR_raise(ERR_LIB_DH, DH_R_BN_ERROR);
+        goto dherr;
+    }
+    if (!DH_set0_key(dh, NULL, privkey_bn))
+        goto dherr;
+    /* Calculate public key, increments dirty_cnt */
+    if (!DH_generate_key(dh))
+        goto dherr;
+
+    goto done;
+
+ decerr:
+    ERR_raise(ERR_LIB_DH, EVP_R_DECODE_ERROR);
+ dherr:
+    DH_free(dh);
+    dh = NULL;
+ done:
+    ASN1_STRING_clear_free(privkey);
+    return dh;
+}
+#endif

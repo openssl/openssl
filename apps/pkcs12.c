@@ -112,7 +112,7 @@ const OPTIONS pkcs12_options[] = {
     {"passcerts", OPT_PASSCERTS, 's', "Certificate file pass phrase source"},
     {"chain", OPT_CHAIN, '-', "Build and add certificate chain for EE cert,"},
     {OPT_MORE_STR, 0, 0,
-     "which is the 1st cert from -in matching the privte key (if given)"},
+     "which is the 1st cert from -in matching the private key (if given)"},
     {"untrusted", OPT_UNTRUSTED, '<', "Untrusted certificates for chain building"},
     {"CAfile", OPT_CAFILE, '<', "PEM-format file of CA's"},
     {"CApath", OPT_CAPATH, '/', "PEM-format directory of CA's"},
@@ -529,7 +529,7 @@ int pkcs12_main(int argc, char **argv)
 
         /* Load all certs in input file */
         if (!(options & NOCERTS)) {
-            if (!load_certs(infile, &certs, passin,
+            if (!load_certs(infile, 1, &certs, passin,
                             "certificates from -in file"))
                 goto export_end;
             if (sk_X509_num(certs) < 1) {
@@ -564,7 +564,7 @@ int pkcs12_main(int argc, char **argv)
 
         /* Load any untrusted certificates for chain building */
         if (untrusted != NULL) {
-            if (!load_certs(untrusted, &untrusted_certs, passcerts,
+            if (!load_certs(untrusted, 0, &untrusted_certs, passcerts,
                             "untrusted certificates"))
                 goto export_end;
         }
@@ -609,7 +609,7 @@ int pkcs12_main(int argc, char **argv)
 
         /* Add any extra certificates asked for */
         if (certfile != NULL) {
-            if (!load_certs(certfile, &certs, passcerts,
+            if (!load_certs(certfile, 0, &certs, passcerts,
                             "extra certificates from -certfile"))
                 goto export_end;
         }

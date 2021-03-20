@@ -1694,7 +1694,7 @@ int s_server_main(int argc, char *argv[])
         if (s_cert == NULL)
             goto end;
         if (s_chain_file != NULL) {
-            if (!load_certs(s_chain_file, &s_chain, NULL,
+            if (!load_certs(s_chain_file, 0, &s_chain, NULL,
                             "server certificate chain"))
                 goto end;
         }
@@ -1758,7 +1758,7 @@ int s_server_main(int argc, char *argv[])
             goto end;
         }
         if (s_dchain_file != NULL) {
-            if (!load_certs(s_dchain_file, &s_dchain, NULL,
+            if (!load_certs(s_dchain_file, 0, &s_dchain, NULL,
                             "second server certificate chain"))
                 goto end;
         }

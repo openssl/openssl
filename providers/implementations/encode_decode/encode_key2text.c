@@ -833,7 +833,7 @@ static int key2text_encode(void *vctx, const void *key, int selection,
                                            int selection),
                            OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
-    BIO *out = bio_new_from_core_bio(vctx, cout);
+    BIO *out = ossl_bio_new_from_core_bio(vctx, cout);
     int ret;
 
     if (out == NULL)

@@ -163,7 +163,8 @@ static BN_BLINDING *rsa_get_blinding(RSA *rsa, int *local, BN_CTX *ctx)
 {
     BN_BLINDING *ret;
 
-    CRYPTO_THREAD_write_lock(rsa->lock);
+    if (!CRYPTO_THREAD_write_lock(rsa->lock))
+        return NULL;
 
     if (rsa->blinding == NULL) {
         rsa->blinding = RSA_setup_blinding(rsa, ctx);

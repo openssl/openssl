@@ -477,7 +477,7 @@ static const OSSL_DISPATCH fips_dispatch_table[] = {
     { OSSL_FUNC_PROVIDER_GET_PARAMS, (void (*)(void))fips_get_params },
     { OSSL_FUNC_PROVIDER_QUERY_OPERATION, (void (*)(void))fips_query },
     { OSSL_FUNC_PROVIDER_GET_CAPABILITIES,
-      (void (*)(void))provider_get_capabilities },
+      (void (*)(void))ossl_prov_get_capabilities },
     { OSSL_FUNC_PROVIDER_SELF_TEST, (void (*)(void))fips_self_test },
     { 0, NULL }
 };
@@ -647,11 +647,11 @@ int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
  * the provider context of this inner instance with the same library context
  * that was used in the EVP call that initiated this recursive call.
  */
-OSSL_provider_init_fn fips_intern_provider_init;
-int fips_intern_provider_init(const OSSL_CORE_HANDLE *handle,
-                              const OSSL_DISPATCH *in,
-                              const OSSL_DISPATCH **out,
-                              void **provctx)
+OSSL_provider_init_fn ossl_fips_intern_provider_init;
+int ossl_fips_intern_provider_init(const OSSL_CORE_HANDLE *handle,
+                                   const OSSL_DISPATCH *in,
+                                   const OSSL_DISPATCH **out,
+                                   void **provctx)
 {
     OSSL_FUNC_core_get_libctx_fn *c_internal_get_libctx = NULL;
 

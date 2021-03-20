@@ -225,9 +225,9 @@ static int pkey_rsa_verifyrecover(EVP_PKEY_CTX *ctx,
                 memcpy(rout, rctx->tbuf, ret);
         } else if (rctx->pad_mode == RSA_PKCS1_PADDING) {
             size_t sltmp;
-            ret = int_rsa_verify(EVP_MD_type(rctx->md),
-                                 NULL, 0, rout, &sltmp,
-                                 sig, siglen, ctx->pkey->pkey.rsa);
+            ret = ossl_rsa_verify(EVP_MD_type(rctx->md),
+                                  NULL, 0, rout, &sltmp,
+                                  sig, siglen, ctx->pkey->pkey.rsa);
             if (ret <= 0)
                 return 0;
             ret = sltmp;
@@ -711,8 +711,9 @@ static int rsa_set_pss_param(RSA *rsa, EVP_PKEY_CTX *ctx)
     /* If all parameters are default values don't set pss */
     if (rctx->md == NULL && rctx->mgf1md == NULL && rctx->saltlen == -2)
         return 1;
-    rsa->pss = rsa_pss_params_create(rctx->md, rctx->mgf1md,
-                                     rctx->saltlen == -2 ? 0 : rctx->saltlen);
+    rsa->pss = ossl_rsa_pss_params_create(rctx->md, rctx->mgf1md,
+                                          rctx->saltlen == -2
+                                          ? 0 : rctx->saltlen);
     if (rsa->pss == NULL)
         return 0;
     return 1;
@@ -818,7 +819,7 @@ static int pkey_pss_init(EVP_PKEY_CTX *ctx)
     if (rsa->pss == NULL)
         return 1;
     /* Get and check parameters */
-    if (!rsa_pss_get_param(rsa->pss, &md, &mgf1md, &min_saltlen))
+    if (!ossl_rsa_pss_get_param(rsa->pss, &md, &mgf1md, &min_saltlen))
         return 0;
 
     /* See if minimum salt length exceeds maximum possible */

@@ -42,7 +42,7 @@ static int rsa_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
             /* not a multi-prime key, skip */
             return 1;
         }
-        return (rsa_multip_calc_product((RSA *)*pval) == 1) ? 2 : 0;
+        return (ossl_rsa_multip_calc_product((RSA *)*pval) == 1) ? 2 : 0;
     }
     return 1;
 }

@@ -291,13 +291,13 @@ int SRP_Verify_A_mod_N(const BIGNUM *A, const BIGNUM *N)
 }
 
 static SRP_gN knowngN[] = {
-    {"8192", &bn_generator_19, &bn_group_8192},
-    {"6144", &bn_generator_5, &bn_group_6144},
-    {"4096", &bn_generator_5, &bn_group_4096},
-    {"3072", &bn_generator_5, &bn_group_3072},
-    {"2048", &bn_generator_2, &bn_group_2048},
-    {"1536", &bn_generator_2, &bn_group_1536},
-    {"1024", &bn_generator_2, &bn_group_1024},
+    {"8192", &ossl_bn_generator_19, &ossl_bn_group_8192},
+    {"6144", &ossl_bn_generator_5, &ossl_bn_group_6144},
+    {"4096", &ossl_bn_generator_5, &ossl_bn_group_4096},
+    {"3072", &ossl_bn_generator_5, &ossl_bn_group_3072},
+    {"2048", &ossl_bn_generator_2, &ossl_bn_group_2048},
+    {"1536", &ossl_bn_generator_2, &ossl_bn_group_1536},
+    {"1024", &ossl_bn_generator_2, &ossl_bn_group_1024},
 };
 
 # define KNOWN_GN_NUMBER sizeof(knowngN) / sizeof(SRP_gN)

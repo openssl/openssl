@@ -130,7 +130,7 @@ const OPTIONS cms_options[] = {
     {"sign", OPT_SIGN, '-', "Sign message"},
     {"sign_receipt", OPT_SIGN_RECEIPT, '-', "Generate a signed receipt for the message"},
     {"resign", OPT_RESIGN, '-', "Resign a signed message"},
-    {"cades", OPT_CADES, '-', "Include signer certificate digest"},
+    {"cades", OPT_CADES, '-', "Include or check signingCertificate (CAdES-BES)"},
     {"verify", OPT_VERIFY, '-', "Verify signed message"},
     {"verify_retcode", OPT_VERIFY_RETCODE, '-',
         "Exit non-zero on verification failure"},
@@ -732,12 +732,12 @@ int cms_main(int argc, char **argv)
     if ((flags & CMS_CADES) != 0) {
         if ((flags & CMS_NOATTR) != 0) {
             BIO_puts(bio_err, "Incompatible options: "
-                     "CAdES required signed attributes\n");
+                     "CAdES requires signed attributes\n");
             goto opthelp;
         }
         if (operation == SMIME_VERIFY
                 && (flags & (CMS_NO_SIGNER_CERT_VERIFY | CMS_NO_ATTR_VERIFY)) != 0) {
-            BIO_puts(bio_err, "Incompatible options: CAdES validation require"
+            BIO_puts(bio_err, "Incompatible options: CAdES validation requires"
                      " certs and signed attributes validations\n");
             goto opthelp;
         }
@@ -830,7 +830,7 @@ int cms_main(int argc, char **argv)
     }
 
     if (certfile != NULL) {
-        if (!load_certs(certfile, &other, NULL, "certificate file")) {
+        if (!load_certs(certfile, 0, &other, NULL, "certificate file")) {
             ERR_print_errors(bio_err);
             goto end;
         }

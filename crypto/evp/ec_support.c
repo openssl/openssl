@@ -122,13 +122,6 @@ const char *ossl_ec_curve_nid2name(int nid)
     if (nid <= 0)
         return NULL;
 
-    /*
-     * TODO(3.0) Figure out if we should try to find the nid with
-     * EC_curve_nid2nist() first, i.e. make it a priority to return
-     * NIST names if there is one for the NID.  This is related to
-     * the TODO comment in ossl_ec_curve_name2nid().
-     */
-
     for (i = 0; i < OSSL_NELEM(curve_list); i++) {
         if (curve_list[i].nid == nid)
             return curve_list[i].name;

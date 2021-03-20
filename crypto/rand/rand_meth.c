@@ -50,7 +50,7 @@ static int drbg_bytes(unsigned char *out, int count)
     return EVP_RAND_generate(drbg, out, count, 0, 0, NULL, 0);
 }
 
-RAND_METHOD rand_meth = {
+RAND_METHOD ossl_rand_meth = {
     drbg_seed,
     drbg_bytes,
     NULL,
@@ -62,7 +62,7 @@ RAND_METHOD rand_meth = {
 RAND_METHOD *RAND_OpenSSL(void)
 {
 #ifndef FIPS_MODULE
-    return &rand_meth;
+    return &ossl_rand_meth;
 #else
     return NULL;
 #endif

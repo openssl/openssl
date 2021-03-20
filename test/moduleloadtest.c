@@ -23,10 +23,14 @@ static int test_load(const char *path, const char *symbol)
 #ifdef SD_INIT
     SD sd = SD_INIT;
     SD_SYM sym;
+    int ret;
 
-    return sd_load(path, &sd, SD_MODULE)
-        && (symbol == NULL || sd_sym(sd, symbol, &sym))
-        && sd_close(sd);
+    if (!sd_load(path, &sd, SD_MODULE))
+        return 0;
+    ret = symbol == NULL || sd_sym(sd, symbol, &sym);
+    if (!sd_close(sd))
+        ret = 0;
+    return ret;
 #else
     fprintf(stderr, "No dynamic loader\n");
     return 0;

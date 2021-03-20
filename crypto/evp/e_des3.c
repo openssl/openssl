@@ -397,7 +397,7 @@ static int des_ede3_wrap_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     if (inl >= EVP_MAXCHUNK || inl % 8)
         return -1;
 
-    if (is_partially_overlapping(out, in, inl)) {
+    if (ossl_is_partially_overlapping(out, in, inl)) {
         ERR_raise(ERR_LIB_EVP, EVP_R_PARTIALLY_OVERLAPPING);
         return 0;
     }

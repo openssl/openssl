@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include "crypto/ctype.h"
 #include "internal/cryptlib.h"
+#include "internal/unicode.h"
 #include <openssl/asn1.h>
 
 static int traverse_string(const unsigned char *p, int len, int inform,
@@ -242,6 +243,9 @@ static int traverse_string(const unsigned char *p, int len, int inform,
 static int in_utf8(unsigned long value, void *arg)
 {
     int *nchar;
+
+    if (!is_unicode_valid(value))
+        return -2;
     nchar = arg;
     (*nchar)++;
     return 1;
@@ -251,9 +255,13 @@ static int in_utf8(unsigned long value, void *arg)
 
 static int out_utf8(unsigned long value, void *arg)
 {
-    int *outlen;
+    int *outlen, len;
+
+    len = UTF8_putc(NULL, -1, value);
+    if (len <= 0)
+        return len;
     outlen = arg;
-    *outlen += UTF8_putc(NULL, -1, value);
+    *outlen += len;
     return 1;
 }
 
@@ -278,6 +286,8 @@ static int type_str(unsigned long value, void *arg)
         types &= ~B_ASN1_T61STRING;
     if ((types & B_ASN1_BMPSTRING) && (value > 0xffff))
         types &= ~B_ASN1_BMPSTRING;
+    if ((types & B_ASN1_UTF8STRING) && !is_unicode_valid(value))
+        types &= ~B_ASN1_UTF8STRING;
     if (!types)
         return -1;
     *((unsigned long *)arg) = types;

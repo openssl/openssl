@@ -29,7 +29,7 @@ static ENUMERATED_NAMES crl_reasons[] = {
     {-1, NULL, NULL}
 };
 
-const X509V3_EXT_METHOD v3_crl_reason = {
+const X509V3_EXT_METHOD ossl_v3_crl_reason = {
     NID_crl_reason, 0, ASN1_ITEM_ref(ASN1_ENUMERATED),
     0, 0, 0, 0,
     (X509V3_EXT_I2S)i2s_ASN1_ENUMERATED_TABLE,

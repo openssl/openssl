@@ -78,7 +78,7 @@ static const DSA_GENTYPE_NAME2ID dsatype2id[]=
 #ifdef FIPS_MODULE
     { "default", DSA_PARAMGEN_TYPE_FIPS_186_4 },
 #else
-    { "default", DSA_PARAMGEN_TYPE_FIPS_186_2 },
+    { "default", DSA_PARAMGEN_TYPE_FIPS_DEFAULT },
 #endif
     { "fips186_4", DSA_PARAMGEN_TYPE_FIPS_186_4 },
     { "fips186_2", DSA_PARAMGEN_TYPE_FIPS_186_2 },
@@ -128,19 +128,19 @@ static void dsa_freedata(void *keydata)
 static int dsa_has(const void *keydata, int selection)
 {
     const DSA *dsa = keydata;
-    int ok = 0;
+    int ok = 1;
 
-    if (ossl_prov_is_running() && dsa != NULL) {
-        if ((selection & DSA_POSSIBLE_SELECTIONS) != 0)
-            ok = 1;
+    if (!ossl_prov_is_running() || dsa == NULL)
+        return 0;
+    if ((selection & DSA_POSSIBLE_SELECTIONS) == 0)
+        return 1; /* the selection is not missing */
 
-        if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0)
-            ok = ok && (DSA_get0_pub_key(dsa) != NULL);
-        if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0)
-            ok = ok && (DSA_get0_priv_key(dsa) != NULL);
-        if ((selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) != 0)
-            ok = ok && (DSA_get0_p(dsa) != NULL && DSA_get0_g(dsa) != NULL);
-    }
+    if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0)
+        ok = ok && (DSA_get0_pub_key(dsa) != NULL);
+    if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0)
+        ok = ok && (DSA_get0_priv_key(dsa) != NULL);
+    if ((selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) != 0)
+        ok = ok && (DSA_get0_p(dsa) != NULL && DSA_get0_g(dsa) != NULL);
     return ok;
 }
 
@@ -341,13 +341,13 @@ static int dsa_validate_private(const DSA *dsa)
 static int dsa_validate(const void *keydata, int selection, int checktype)
 {
     const DSA *dsa = keydata;
-    int ok = 0;
+    int ok = 1;
 
     if (!ossl_prov_is_running())
         return 0;
 
-    if ((selection & DSA_POSSIBLE_SELECTIONS) != 0)
-        ok = 1;
+    if ((selection & DSA_POSSIBLE_SELECTIONS) == 0)
+        return 1; /* nothing to validate */
 
     if ((selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) != 0)
         ok = ok && dsa_validate_domparams(dsa, checktype);
@@ -382,7 +382,7 @@ static void *dsa_gen_init(void *provctx, int selection,
 #ifdef FIPS_MODULE
         gctx->gen_type = DSA_PARAMGEN_TYPE_FIPS_186_4;
 #else
-        gctx->gen_type = DSA_PARAMGEN_TYPE_FIPS_186_2;
+        gctx->gen_type = DSA_PARAMGEN_TYPE_FIPS_DEFAULT;
 #endif
         gctx->gindex = -1;
         gctx->pcounter = -1;
@@ -526,6 +526,10 @@ static void *dsa_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
     dsa = ossl_dsa_new(gctx->libctx);
     if (dsa == NULL)
         return NULL;
+
+    if (gctx->gen_type == DSA_PARAMGEN_TYPE_FIPS_DEFAULT)
+        gctx->gen_type = (gctx->pbits >= 2048 ? DSA_PARAMGEN_TYPE_FIPS_186_4 :
+                                                DSA_PARAMGEN_TYPE_FIPS_186_2);
 
     gctx->cb = osslcb;
     gctx->cbarg = cbarg;

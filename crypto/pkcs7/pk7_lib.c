@@ -439,12 +439,12 @@ void ossl_pkcs7_resolve_libctx(PKCS7 *p7)
         return;
 
     for (i = 0; i < sk_X509_num(certs); i++)
-        x509_set0_libctx(sk_X509_value(certs, i), libctx, propq);
+        ossl_x509_set0_libctx(sk_X509_value(certs, i), libctx, propq);
 
     for (i = 0; i < sk_PKCS7_RECIP_INFO_num(rinfos); i++) {
         PKCS7_RECIP_INFO *ri = sk_PKCS7_RECIP_INFO_value(rinfos, i);
 
-        x509_set0_libctx(ri->cert, libctx, propq);
+        ossl_x509_set0_libctx(ri->cert, libctx, propq);
     }
 
     for (i = 0; i < sk_PKCS7_SIGNER_INFO_num(sinfos); i++) {

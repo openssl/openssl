@@ -176,7 +176,8 @@ static ERR_STRING_DATA *int_err_get_item(const ERR_STRING_DATA *d)
 {
     ERR_STRING_DATA *p = NULL;
 
-    CRYPTO_THREAD_read_lock(err_string_lock);
+    if (!CRYPTO_THREAD_read_lock(err_string_lock))
+        return NULL;
     p = lh_ERR_STRING_DATA_retrieve(int_error_hash, d);
     CRYPTO_THREAD_unlock(err_string_lock);
 
@@ -238,7 +239,8 @@ static void err_patch(int lib, ERR_STRING_DATA *str)
  */
 static int err_load_strings(const ERR_STRING_DATA *str)
 {
-    CRYPTO_THREAD_write_lock(err_string_lock);
+    if (!CRYPTO_THREAD_write_lock(err_string_lock))
+        return 0;
     for (; str->error; str++)
         (void)lh_ERR_STRING_DATA_insert(int_error_hash,
                                        (ERR_STRING_DATA *)str);
@@ -281,7 +283,8 @@ int ERR_unload_strings(int lib, ERR_STRING_DATA *str)
     if (!RUN_ONCE(&err_string_init, do_err_strings_init))
         return 0;
 
-    CRYPTO_THREAD_write_lock(err_string_lock);
+    if (!CRYPTO_THREAD_write_lock(err_string_lock))
+        return 0;
     /*
      * We don't need to ERR_PACK the lib, since that was done (to
      * the table) when it was loaded.
@@ -306,7 +309,7 @@ void ERR_clear_error(void)
     int i;
     ERR_STATE *es;
 
-    es = err_get_state_int();
+    es = ossl_err_get_state_int();
     if (es == NULL)
         return;
 
@@ -420,7 +423,7 @@ static unsigned long get_error_values(ERR_GET_ACTION g,
     ERR_STATE *es;
     unsigned long ret;
 
-    es = err_get_state_int();
+    es = ossl_err_get_state_int();
     if (es == NULL)
         return 0;
 
@@ -630,7 +633,7 @@ DEFINE_RUN_ONCE_STATIC(err_do_init)
     return CRYPTO_THREAD_init_local(&err_thread_local, NULL);
 }
 
-ERR_STATE *err_get_state_int(void)
+ERR_STATE *ossl_err_get_state_int(void)
 {
     ERR_STATE *state;
     int saveerrno = get_last_sys_error();
@@ -672,7 +675,7 @@ ERR_STATE *err_get_state_int(void)
 #ifndef OPENSSL_NO_DEPRECATED_3_0
 ERR_STATE *ERR_get_state(void)
 {
-    return err_get_state_int();
+    return ossl_err_get_state_int();
 }
 #endif
 
@@ -728,7 +731,8 @@ int ERR_get_next_error_library(void)
     if (!RUN_ONCE(&err_string_init, do_err_strings_init))
         return 0;
 
-    CRYPTO_THREAD_write_lock(err_string_lock);
+    if (!CRYPTO_THREAD_write_lock(err_string_lock))
+        return 0;
     ret = int_err_library_number++;
     CRYPTO_THREAD_unlock(err_string_lock);
     return ret;
@@ -739,7 +743,7 @@ static int err_set_error_data_int(char *data, size_t size, int flags,
 {
     ERR_STATE *es;
 
-    es = err_get_state_int();
+    es = ossl_err_get_state_int();
     if (es == NULL)
         return 0;
 
@@ -784,7 +788,7 @@ void ERR_add_error_vdata(int num, va_list args)
     ERR_STATE *es;
 
     /* Get the current error data; if an allocated string get it. */
-    es = err_get_state_int();
+    es = ossl_err_get_state_int();
     if (es == NULL)
         return;
     i = es->top;
@@ -839,7 +843,7 @@ int ERR_set_mark(void)
 {
     ERR_STATE *es;
 
-    es = err_get_state_int();
+    es = ossl_err_get_state_int();
     if (es == NULL)
         return 0;
 
@@ -853,7 +857,7 @@ int ERR_pop_to_mark(void)
 {
     ERR_STATE *es;
 
-    es = err_get_state_int();
+    es = ossl_err_get_state_int();
     if (es == NULL)
         return 0;
 
@@ -874,7 +878,7 @@ int ERR_clear_last_mark(void)
     ERR_STATE *es;
     int top;
 
-    es = err_get_state_int();
+    es = ossl_err_get_state_int();
     if (es == NULL)
         return 0;
 
@@ -895,7 +899,7 @@ void err_clear_last_constant_time(int clear)
     ERR_STATE *es;
     int top;
 
-    es = err_get_state_int();
+    es = ossl_err_get_state_int();
     if (es == NULL)
         return;
 

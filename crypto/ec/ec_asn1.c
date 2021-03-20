@@ -1245,7 +1245,7 @@ int i2d_ECDSA_SIG(const ECDSA_SIG *sig, unsigned char **ppout)
             return -1;
     }
 
-    if (!encode_der_dsa_sig(&pkt, sig->r, sig->s)
+    if (!ossl_encode_der_dsa_sig(&pkt, sig->r, sig->s)
             || !WPACKET_get_total_written(&pkt, &encoded_len)
             || !WPACKET_finish(&pkt)) {
         BUF_MEM_free(buf);

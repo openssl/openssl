@@ -208,12 +208,14 @@ static int test_lib(void)
         fprintf(stderr, "Failed to close libcrypto\n");
         goto end;
     }
+    cryptolib = SD_INIT;
 
     if (test_type == CRYPTO_FIRST || test_type == SSL_FIRST) {
         if (!sd_close(ssllib)) {
             fprintf(stderr, "Failed to close libssl\n");
             goto end;
         }
+        ssllib = SD_INIT;
     }
 
 # if defined(OPENSSL_NO_PINSHARED) \
@@ -235,6 +237,10 @@ static int test_lib(void)
 
     result = 1;
 end:
+    if (cryptolib != SD_INIT)
+        sd_close(cryptolib);
+    if (ssllib != SD_INIT)
+        sd_close(ssllib);
     return result;
 }
 #endif

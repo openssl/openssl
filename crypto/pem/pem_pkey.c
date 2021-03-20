@@ -27,7 +27,7 @@
 #include "crypto/evp.h"
 #include "pem_local.h"
 
-int pem_check_suffix(const char *pem_str, const char *suffix);
+int ossl_pem_check_suffix(const char *pem_str, const char *suffix);
 
 static EVP_PKEY *pem_read_bio_key(BIO *bp, EVP_PKEY **x,
                                   pem_password_cb *cb, void *u,

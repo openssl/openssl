@@ -294,7 +294,10 @@ OSSL_FUNC_keymgmt_has() should check whether the given I<keydata> contains the s
 of data indicated by the I<selector>.  A combination of several
 selector bits must consider all those subsets, not just one.  An
 implementation is, however, free to consider an empty subset of data
-to still be a valid subset.
+to still be a valid subset. For algorithms where some selection is
+not meaningful such as B<OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS> for
+RSA keys the function should just return 1 as the selected subset
+is not really missing in the key.
 
 OSSL_FUNC_keymgmt_validate() should check if the I<keydata> contains valid
 data subsets indicated by I<selection>.  Some combined selections of
@@ -307,7 +310,10 @@ performed on the subset of data. Two types of check are defined:
 B<OSSL_KEYMGMT_VALIDATE_FULL_CHECK> and B<OSSL_KEYMGMT_VALIDATE_QUICK_CHECK>.
 The interpretation of how much checking is performed in a full check versus a
 quick check is key type specific. Some providers may have no distinction
-between a full check and a quick check.
+between a full check and a quick check. For algorithms where some selection is
+not meaningful such as B<OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS> for
+RSA keys the function should just return 1 as there is nothing to validate for
+that selection.
 
 OSSL_FUNC_keymgmt_match() should check if the data subset indicated by
 I<selection> in I<keydata1> and I<keydata2> match.  It is assumed that

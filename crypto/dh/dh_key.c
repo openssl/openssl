@@ -290,7 +290,7 @@ static int generate_key(DH *dh)
         /* Is it an approved safe prime ?*/
         if (DH_get_nid(dh) != NID_undef) {
             int max_strength =
-                    ifc_ffc_compute_security_bits(BN_num_bits(dh->params.p));
+                    ossl_ifc_ffc_compute_security_bits(BN_num_bits(dh->params.p));
 
             if (dh->params.q == NULL
                 || dh->length > BN_num_bits(dh->params.q))

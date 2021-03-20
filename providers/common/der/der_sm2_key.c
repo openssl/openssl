@@ -12,7 +12,7 @@
 #include "prov/der_ec.h"
 #include "prov/der_sm2.h"
 
-int DER_w_algorithmIdentifier_SM2(WPACKET *pkt, int cont, EC_KEY *ec)
+int ossl_DER_w_algorithmIdentifier_SM2(WPACKET *pkt, int cont, EC_KEY *ec)
 {
     return ossl_DER_w_begin_sequence(pkt, cont)
         /* No parameters (yet?) */

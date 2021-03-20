@@ -9,4 +9,4 @@
 
 #include <openssl/comp.h>
 
-void comp_zlib_cleanup_int(void);
+void ossl_comp_zlib_cleanup(void);

@@ -15,4 +15,4 @@ struct predefined_providers_st {
     unsigned int is_fallback:1;
 };
 
-extern const struct predefined_providers_st predefined_providers[];
+extern const struct predefined_providers_st ossl_predefined_providers[];

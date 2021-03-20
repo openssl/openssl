@@ -105,7 +105,7 @@ void ossl_cms_resolve_libctx(CMS_ContentInfo *ci)
         for (i = 0; i < sk_CMS_CertificateChoices_num(*pcerts); i++) {
             cch = sk_CMS_CertificateChoices_value(*pcerts, i);
             if (cch->type == CMS_CERTCHOICE_CERT)
-                x509_set0_libctx(cch->d.certificate, libctx, propq);
+                ossl_x509_set0_libctx(cch->d.certificate, libctx, propq);
         }
     }
 }
