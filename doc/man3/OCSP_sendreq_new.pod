@@ -45,7 +45,7 @@ structure using connection B<BIO> I<io>, the URL path I<path>, the OCSP
 request I<req>, and with a response header maximum line length of I<maxline>.
 If I<maxline> is zero a default value of 4k is used.
 The I<req> may be set to NULL and provided later using OCSP_REQ_CTX_set1_req()
-or L<OSSL_HTTP_REQ_CTX_i2d(3)> .
+or L<OSSL_HTTP_REQ_CTX_set1_req(3)> .
 
 The I<io> and I<path> arguments to OCSP_sendreq_new() correspond to the
 components of the URL.
@@ -65,12 +65,12 @@ for compatibility; use OCSP_sendreq_nbio() instead.
 
 OCSP_REQ_CTX_i2d(rctx, it, req) is equivalent to the following:
 
-  OSSL_HTTP_REQ_CTX_i2d(rctx, "application/ocsp-request", it, req)
+  OSSL_HTTP_REQ_CTX_set1_req(rctx, "application/ocsp-request", it, req)
 
 OCSP_REQ_CTX_set1_req(rctx, req) is equivalent to the following:
 
- OSSL_HTTP_REQ_CTX_i2d(rctx, "application/ocsp-request",
-                       ASN1_ITEM_rptr(OCSP_REQUEST), (ASN1_VALUE *)req)
+ OSSL_HTTP_REQ_CTX_set1_req(rctx, "application/ocsp-request",
+                            ASN1_ITEM_rptr(OCSP_REQUEST), (ASN1_VALUE *)req)
 
 The other deprecated type and functions have been superseded by the
 following equivalents:

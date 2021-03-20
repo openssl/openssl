@@ -186,7 +186,7 @@ typedef OSSL_HTTP_REQ_CTX OCSP_REQ_CTX;
 #   define OCSP_REQ_CTX_add1_header(r, n, v) \
         OSSL_HTTP_REQ_CTX_add1_header(r, n, v)
 #   define OCSP_REQ_CTX_i2d(r, i, req) \
-        OSSL_HTTP_REQ_CTX_i2d(r, "application/ocsp-request", i, req)
+        OSSL_HTTP_REQ_CTX_set1_req(r, "application/ocsp-request", i, req)
 #   define OCSP_REQ_CTX_nbio(r) \
         OSSL_HTTP_REQ_CTX_nbio(r)
 #   define OCSP_REQ_CTX_nbio_d2i(r, p, i)        \

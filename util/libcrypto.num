@@ -1577,7 +1577,7 @@ BIO_ADDRINFO_address                    1613	3_0_0	EXIST::FUNCTION:SOCK
 ASN1_STRING_print_ex                    1614	3_0_0	EXIST::FUNCTION:
 i2d_CMS_ReceiptRequest                  1615	3_0_0	EXIST::FUNCTION:CMS
 d2i_TS_REQ_fp                           1616	3_0_0	EXIST::FUNCTION:STDIO,TS
-OSSL_HTTP_REQ_CTX_i2d                   1617	3_0_0	EXIST::FUNCTION:
+OSSL_HTTP_REQ_CTX_set1_req              1617	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_get_default_digest_nid         1618	3_0_0	EXIST::FUNCTION:
 ASIdOrRange_new                         1619	3_0_0	EXIST::FUNCTION:RFC3779
 ASN1_SCTX_new                           1620	3_0_0	EXIST::FUNCTION:
