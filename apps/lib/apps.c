@@ -31,6 +31,7 @@
 #include <openssl/ssl.h>
 #include <openssl/store.h>
 #include "s_apps.h"
+#include "engine.h"
 #include "apps.h"
 #include "apps_config.h"
 #include "apps_globals.h"
@@ -38,6 +39,7 @@
 #include "apps_libctx.h"
 #include "apps_passwd.h"
 #include "apps_opts.h"
+#include "apps_keys.h"
 
 DEFINE_STACK_OF(CONF)
 

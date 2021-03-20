@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include "apps.h"
 #include "apps_config.h"
+#include "engine.h"
 #include "progs.h"
 #include <openssl/pem.h>
 #include <openssl/err.h>

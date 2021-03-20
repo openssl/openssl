@@ -16,6 +16,7 @@
 #include "apps_libctx.h"
 #include "apps_opts.h"
 #include "apps_config.h"
+#include "engine.h"
 #include "progs.h"
 #include <openssl/err.h>
 #include <openssl/objects.h>

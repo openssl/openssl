@@ -20,6 +20,8 @@
 #include "apps.h"
 #include "apps_passwd.h"
 #include "apps_config.h"
+#include "apps_keys.h"
+#include "engine.h"
 #include "progs.h"
 #include "ec_common.h"
 
