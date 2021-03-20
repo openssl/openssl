@@ -5952,7 +5952,14 @@ uint16_t SSL_get_grease_value(SSL *s,
                               SSL_GREASE_INDEX index) {
     uint16_t ret;
 
-    RAND_bytes(s->grease_seed, sizeof(s->grease_seed));
+    // Draw entropy for all GREASE values at once. This avoids calling
+    // |RAND_bytes| repeatedly and makes the values consistent within a
+    // connection. The latter is so the second ClientHello matches after
+    // HelloRetryRequest and so supported_groups and key_shares are consistent.
+    if (!s->grease_seeded) {
+      RAND_bytes(s->grease_seed, sizeof(s->grease_seed));
+      s->grease_seeded = 1;
+    }
 
     // This generates a random value of the form 0xωaωa, for all 0 ≤ ω < 16.
     ret = s->grease_seed[index];

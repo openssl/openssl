@@ -1797,6 +1797,9 @@ struct ssl_st {
     const struct sigalg_lookup_st **shared_sigalgs;
     size_t shared_sigalgslen;
     uint8_t grease_seed[ssl_grease_last_index + 1];
+
+    /* grease_seeded is true if |grease_seed| has been initialized. */
+    uint8_t grease_seeded : 1;
 };
 
 /*

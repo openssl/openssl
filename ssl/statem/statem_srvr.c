@@ -3928,7 +3928,8 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
             s->session->ext.alpn_selected_len = s->s3.alpn_selected_len;
         }
         s->session->ext.max_early_data = s->max_early_data;
-        s->session->ext.grease_value = SSL_get_grease_value(s, ssl_grease_ticket_extension);
+        s->session->ext.grease_value =
+            SSL_get_grease_value(s, ssl_grease_ticket_extension);
     }
 
     if (tctx->generate_ticket_cb != NULL &&
