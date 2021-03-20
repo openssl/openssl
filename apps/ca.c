@@ -42,6 +42,7 @@
 #include "apps_passwd.h"
 #include "apps_opts.h"
 #include "apps_keys.h"
+#include "app_x509.h"
 
 #ifndef PATH_MAX
 # define PATH_MAX 4096

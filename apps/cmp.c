@@ -20,6 +20,7 @@
 #include "apps_libctx.h"
 #include "apps_passwd.h"
 #include "apps_keys.h"
+#include "app_x509.h"
 #include "http_server.h"
 #include "s_apps.h"
 #include "progs.h"
