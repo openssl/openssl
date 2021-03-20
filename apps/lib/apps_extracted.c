@@ -1233,11 +1233,11 @@ void store_setup_crl_download(X509_STORE *st)
     X509_STORE_set_lookup_crls_cb(st, crls_http_cb);
 }
 
-int app_isdir(const char *name)
-{
-    return opt_isdir(name);
-}
-
+//int app_isdir(const char *name)
+//{
+//    return opt_isdir(name);
+//}
+//
 /*
  * Centralized handling of input and output files with format specification
  * The format is meant to show what the input and output is supposed to be,

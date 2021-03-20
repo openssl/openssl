@@ -68,7 +68,7 @@ int do_X509_sign(X509 *x, EVP_PKEY *pkey, const EVP_MD *md,
 int do_X509_REQ_verify(X509_REQ *x, EVP_PKEY *pkey,
                        STACK_OF(OPENSSL_STRING) *vfyopts);
 
-int app_isdir(const char *);
+//int app_isdir(const char *);
 
 //OSSL_LIB_CTX *app_create_libctx(void);
 //OSSL_LIB_CTX *app_get0_libctx(void);

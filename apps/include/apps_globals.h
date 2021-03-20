@@ -62,6 +62,6 @@ int parse_yesno(const char *str, int def);
 void make_uppercase(char *string);
 const char *modestr(char mode, int format);
 const char *modeverb(char mode);
-
+int app_isdir(const char *);
 
 #endif
