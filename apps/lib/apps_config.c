@@ -208,6 +208,50 @@ CONF *app_load_config_internal(const char *filename, int quiet)
     return conf;
 }
 
+int app_load_modules(const CONF *config)
+{
+    CONF *to_free = NULL;
+
+    if (config == NULL)
+        config = to_free = app_load_config_quiet(default_config_file);
+    if (config == NULL)
+        return 1;
+
+    if (CONF_modules_load(config, NULL, 0) <= 0) {
+        BIO_printf(bio_err, "Error configuring OpenSSL modules\n");
+        ERR_print_errors(bio_err);
+        NCONF_free(to_free);
+        return 0;
+    }
+    NCONF_free(to_free);
+    return 1;
+}
+
+int add_oid_section(CONF *conf)
+{
+    char *p;
+    STACK_OF(CONF_VALUE) *sktmp;
+    CONF_VALUE *cnf;
+    int i;
+
+    if ((p = NCONF_get_string(conf, NULL, "oid_section")) == NULL) {
+        ERR_clear_error();
+        return 1;
+    }
+    if ((sktmp = NCONF_get_section(conf, p)) == NULL) {
+        BIO_printf(bio_err, "problem loading oid section %s\n", p);
+        return 0;
+    }
+    for (i = 0; i < sk_CONF_VALUE_num(sktmp); i++) {
+        cnf = sk_CONF_VALUE_value(sktmp, i);
+        if (OBJ_create(cnf->value, cnf->name, cnf->name) == NID_undef) {
+            BIO_printf(bio_err, "problem creating object %s=%s\n",
+                       cnf->name, cnf->value);
+            return 0;
+        }
+    }
+    return 1;
+}
 BIO *bio_open_default(const char *filename, char mode, int format)
 {
     return bio_open_default_(filename, mode, format, 0);
