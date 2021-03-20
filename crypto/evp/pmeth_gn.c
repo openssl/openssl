@@ -123,7 +123,7 @@ static int ossl_callback_to_pkey_gencb(const OSSL_PARAM params[], void *arg)
     return ctx->pkey_gencb(ctx);
 }
 
-int EVP_PKEY_gen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey)
+int EVP_PKEY_generate(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey)
 {
     int ret = 0;
     OSSL_CALLBACK cb;
@@ -262,7 +262,7 @@ int EVP_PKEY_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey)
         ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_INITIALIZED);
         return -1;
     }
-    return EVP_PKEY_gen(ctx, ppkey);
+    return EVP_PKEY_generate(ctx, ppkey);
 }
 
 int EVP_PKEY_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey)
@@ -271,7 +271,7 @@ int EVP_PKEY_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey)
         ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_INITIALIZED);
         return -1;
     }
-    return EVP_PKEY_gen(ctx, ppkey);
+    return EVP_PKEY_generate(ctx, ppkey);
 }
 
 void EVP_PKEY_CTX_set_cb(EVP_PKEY_CTX *ctx, EVP_PKEY_gen_cb *cb)

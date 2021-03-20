@@ -2,6 +2,7 @@
 
 =head1 NAME
 
+EVP_EC_gen,
 EC_KEY_get_method, EC_KEY_set_method, EC_KEY_new_ex,
 EC_KEY_new, EC_KEY_get_flags, EC_KEY_set_flags, EC_KEY_clear_flags,
 EC_KEY_new_by_curve_name_ex, EC_KEY_new_by_curve_name, EC_KEY_free,
@@ -19,6 +20,8 @@ EC_KEY objects
 =head1 SYNOPSIS
 
  #include <openssl/ec.h>
+
+ EVP_PKEY *EVP_EC_gen(const char *curve);
 
 Deprecated since OpenSSL 3.0, can be hidden entirely by defining
 B<OPENSSL_API_COMPAT> with a suitable version value, see
@@ -65,8 +68,11 @@ L<openssl_user_macros(7)>:
 
 =head1 DESCRIPTION
 
-All of the functions described on this page are deprecated.
-Applications should instead use L<EVP_PKEY_new(3)> and L<EVP_PKEY_free(3)>.
+EVP_EC_gen() generates a new EC key pair on the given I<curve>.
+
+All of the functions described below are deprecated.
+Applications should instead use EVP_EC_gen(), L<EVP_PKEY_Q_keygen(3)>, or
+L<EVP_PKEY_keygen_init(3)> and L<EVP_PKEY_keygen(3)>.
 
 An EC_KEY represents a public key and, optionally, the associated private
 key.
@@ -152,7 +158,6 @@ EC_KEY_decoded_from_explicit_params() returns 1 if the group of the I<key> was
 decoded from data with explicitly encoded group parameters, -1 if the I<key>
 is NULL or the group parameters are missing, and 0 otherwise.
 
-Although deprecated in OpenSSL 3.0 and should no longer be used,
 EC_KEY_precompute_mult() stores multiples of the underlying EC_GROUP generator
 for faster point multiplication. See also L<EC_POINT_add(3)>.
 Modern versions should instead switch to named curves which OpenSSL has
@@ -208,6 +213,7 @@ of the buffer or 0 on error.
 
 =head1 SEE ALSO
 
+L<EVP_PKEY_Q_keygen(3)>
 L<crypto(7)>, L<EC_GROUP_new(3)>,
 L<EC_GROUP_copy(3)>, L<EC_POINT_new(3)>,
 L<EC_POINT_add(3)>,
@@ -217,7 +223,9 @@ L<OSSL_LIB_CTX(3)>
 
 =head1 HISTORY
 
-All of these functions were deprecated in OpenSSL 3.0.
+EVP_EC_gen() was added in OpenSSL 3.0.
+All other functions described here were deprecated in OpenSSL 3.0.
+For replacement see L<EVP_PKEY-EC(7)>.
 
 =head1 COPYRIGHT
 

@@ -16,7 +16,6 @@
 # include <openssl/opensslconf.h>
 # include <openssl/evp.h>
 
-const char *ossl_ec_curve_nid2name(int nid);
 int ossl_ec_curve_name2nid(const char *name);
 const char *ossl_ec_curve_nid2nist_int(int nid);
 int ossl_ec_curve_nist2nid_int(const char *name);

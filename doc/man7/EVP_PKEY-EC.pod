@@ -159,6 +159,10 @@ An B<EVP_PKEY> context can be obtained by calling:
 An B<EVP_PKEY> ECDSA or ECDH key can be generated with a "P-256" named group by
 calling:
 
+    pkey = EVP_EC_gen("P-256");
+
+or like this:
+
     EVP_PKEY *key = NULL;
     OSSL_PARAM params[2];
     EVP_PKEY_CTX *gctx =
@@ -171,7 +175,7 @@ calling:
     params[1] = OSSL_PARAM_construct_end();
     EVP_PKEY_CTX_set_params(gctx, params);
 
-    EVP_PKEY_gen(gctx, &key);
+    EVP_PKEY_generate(gctx, &key);
 
     EVP_PKEY_print_private(bio_out, key, 0, NULL);
     ...
@@ -201,7 +205,7 @@ An B<EVP_PKEY> EC CDH (Cofactor Diffie-Hellman) key can be generated with a
     params[2] = OSSL_PARAM_construct_end();
     EVP_PKEY_CTX_set_params(gctx, params);
 
-    EVP_PKEY_gen(gctx, &key);
+    EVP_PKEY_generate(gctx, &key);
     EVP_PKEY_print_private(bio_out, key, 0, NULL);
     ...
     EVP_PKEY_free(key);
@@ -209,6 +213,7 @@ An B<EVP_PKEY> EC CDH (Cofactor Diffie-Hellman) key can be generated with a
 
 =head1 SEE ALSO
 
+L<EVP_EC_gen(3)>,
 L<EVP_KEYMGMT(3)>,
 L<EVP_PKEY(3)>,
 L<provider-keymgmt(7)>,

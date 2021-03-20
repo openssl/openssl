@@ -328,7 +328,7 @@ int ossl_ec_group_todata(const EC_GROUP *group, OSSL_PARAM_BLD *tmpl,
 
     if (curve_nid != NID_undef) {
         /* Named curve */
-        const char *curve_name = ossl_ec_curve_nid2name(curve_nid);
+        const char *curve_name = OSSL_EC_curve_nid2name(curve_nid);
 
         if (curve_name == NULL
             || !ossl_param_build_set_utf8_string(tmpl, params,

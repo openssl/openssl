@@ -4413,6 +4413,7 @@ EVP_MAC_init                            ?	3_0_0	EXIST::FUNCTION:
 EVP_MAC_update                          ?	3_0_0	EXIST::FUNCTION:
 EVP_MAC_final                           ?	3_0_0	EXIST::FUNCTION:
 EVP_MAC_finalXOF                        ?	3_0_0	EXIST::FUNCTION:
+OSSL_EC_curve_nid2name                  ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_supports_digest_nid            ?	3_0_0	EXIST::FUNCTION:
 SRP_VBASE_add0_user                     ?	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,SRP
 SRP_user_pwd_new                        ?	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,SRP
@@ -4947,7 +4948,8 @@ OSSL_CMP_exec_GENM_ses                  ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_MSG_http_perform               ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_MSG_read                       ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_MSG_write                      ?	3_0_0	EXIST::FUNCTION:CMP
-EVP_PKEY_gen                            ?	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_Q_keygen                       ?	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_generate                       ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_CTX_set_rsa_keygen_bits        ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_CTX_set_rsa_keygen_pubexp      ?	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 EVP_PKEY_CTX_set1_rsa_keygen_pubexp     ?	3_0_0	EXIST::FUNCTION:
