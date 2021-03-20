@@ -38,10 +38,10 @@ extern BIO *bio_err;
 
 //extern char *psk_key;
 
-//# define EXT_COPY_NONE   0
-//# define EXT_COPY_ADD    1
-//# define EXT_COPY_ALL    2
-//
+# define EXT_COPY_NONE   0
+# define EXT_COPY_ADD    1
+# define EXT_COPY_ALL    2
+
 //# define NETSCAPE_CERT_HDR       "certificate"
 
 #define APP_PASS_LEN    1024
@@ -57,6 +57,7 @@ extern BIO *bio_err;
 //extern VERIFY_CB_ARGS verify_args;
 
 void cleanse(char *str);
+int set_ext_copy(int *copy_type, const char *arg);
 int parse_yesno(const char *str, int def);
 void make_uppercase(char *string);
 const char *modestr(char mode, int format);

@@ -710,19 +710,19 @@ int load_key_certs_crls(const char *uri, int maybe_stdin,
 //        *flags |= XN_FLAG_SEP_CPLUS_SPC;
 //    return 1;
 //}
-
-int set_ext_copy(int *copy_type, const char *arg)
-{
-    if (strcasecmp(arg, "none") == 0)
-        *copy_type = EXT_COPY_NONE;
-    else if (strcasecmp(arg, "copy") == 0)
-        *copy_type = EXT_COPY_ADD;
-    else if (strcasecmp(arg, "copyall") == 0)
-        *copy_type = EXT_COPY_ALL;
-    else
-        return 0;
-    return 1;
-}
+//
+//int set_ext_copy(int *copy_type, const char *arg)
+//{
+//    if (strcasecmp(arg, "none") == 0)
+//        *copy_type = EXT_COPY_NONE;
+//    else if (strcasecmp(arg, "copy") == 0)
+//        *copy_type = EXT_COPY_ADD;
+//    else if (strcasecmp(arg, "copyall") == 0)
+//        *copy_type = EXT_COPY_ALL;
+//    else
+//        return 0;
+//    return 1;
+//}
 
 int copy_extensions(X509 *x, X509_REQ *req, int copy_type)
 {
