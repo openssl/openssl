@@ -626,6 +626,7 @@ struct ssl_session_st {
          * performed at all.
          */
         uint8_t max_fragment_len_mode;
+        uint16_t grease_value;
     } ext;
 # ifndef OPENSSL_NO_SRP
     char *srp_username;
