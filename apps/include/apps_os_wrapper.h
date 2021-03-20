@@ -11,6 +11,7 @@
 # define OSSL_APPS_OS_WRAPPER_H
 
 /* moved from apps.h */
+void unbuffer(FILE *fp);
 int app_access(const char *, int flag);
 int fileno_stdin(void);
 int fileno_stdout(void);
