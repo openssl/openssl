@@ -442,6 +442,11 @@ int load_key_certs_crls(const char *uri, int maybe_stdin,
         cnt_expectations++;
         expect = OSSL_STORE_INFO_PUBKEY;
     }
+    if (pparams != NULL) {
+        *pparams = NULL;
+        cnt_expectations++;
+        expect = OSSL_STORE_INFO_PARAMS;
+    }
     if (pcert != NULL) {
         *pcert = NULL;
         cnt_expectations++;
