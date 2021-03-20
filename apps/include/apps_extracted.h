@@ -46,22 +46,22 @@ X509 *load_cert_pass(const char *uri, int maybe_stdin,
                      const char *pass, const char *desc);
 //void cleanse(char *str);
 
-EVP_PKEY *load_key(const char *uri, int format, int maybe_stdin,
-                   const char *pass, ENGINE *e, const char *desc);
-int load_key_certs_crls(const char *uri, int maybe_stdin,
-                        const char *pass, const char *desc,
-                        EVP_PKEY **ppkey, EVP_PKEY **ppubkey,
-                        EVP_PKEY **pparams,
-                        X509 **pcert, STACK_OF(X509) **pcerts,
-                        X509_CRL **pcrl, STACK_OF(X509_CRL) **pcrls);
+//EVP_PKEY *load_key(const char *uri, int format, int maybe_stdin,
+//                   const char *pass, ENGINE *e, const char *desc);
+//int load_key_certs_crls(const char *uri, int maybe_stdin,
+//                        const char *pass, const char *desc,
+//                        EVP_PKEY **ppkey, EVP_PKEY **ppubkey,
+//                        EVP_PKEY **pparams,
+//                        X509 **pcert, STACK_OF(X509) **pcerts,
+//                        X509_CRL **pcrl, STACK_OF(X509_CRL) **pcrls);
 
-void release_engine(ENGINE *e);
+//void release_engine(ENGINE *e);
 
-int parse_yesno(const char *str, int def);
+//int parse_yesno(const char *str, int def);
 X509_NAME *parse_name(const char *str, int chtype, int multirdn,
                       const char *desc);
 
-int pkey_ctrl_string(EVP_PKEY_CTX *ctx, const char *value);
+//int pkey_ctrl_string(EVP_PKEY_CTX *ctx, const char *value);
 int x509_req_ctrl_string(X509_REQ *x, const char *value);
 int do_X509_sign(X509 *x, EVP_PKEY *pkey, const EVP_MD *md,
                  STACK_OF(OPENSSL_STRING) *sigopts, X509V3_CTX *ext_ctx);

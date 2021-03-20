@@ -24,6 +24,7 @@
 #include "apps.h"
 #include "apps_passwd.h"
 #include "apps_config.h"
+#include "apps_keys.h"
 #include "ca.h"
 #include "http_server.h"
 #include "progs.h"

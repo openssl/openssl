@@ -19,6 +19,8 @@
 #include "apps_libctx.h"
 #include "apps_passwd.h"
 #include "apps_opts.h"
+#include "apps_keys.h"
+#include "engine.h"
 #include "ca.h"
 #include "progs.h"
 #include <openssl/bio.h>
