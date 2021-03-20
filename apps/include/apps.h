@@ -32,7 +32,6 @@
 # include "fmt.h"
 # include "platform.h"
 # include "engine_loader.h"
-# include "apps_extracted.h"
 # include "apps_os_wrapper.h"
 
 /*
@@ -79,7 +78,7 @@ void print_bignum_var(BIO *, const BIGNUM *, const char*,
 void print_array(BIO *, const char *, int, const unsigned char *);
 //char *get_passwd(const char *pass, const char *desc);
 #define load_cert(uri, desc) load_cert_pass(uri, 1, NULL, desc)
-X509_CRL *load_crl(const char *uri, const char *desc);
+//X509_CRL *load_crl(const char *uri, const char *desc);
 void clear_free(char *str);
 EVP_PKEY *load_pubkey(const char *uri, int format, int maybe_stdin,
                       const char *pass, ENGINE *e, const char *desc);
@@ -161,7 +160,7 @@ int unpack_revinfo(ASN1_TIME **prevtm, int *preason, ASN1_OBJECT **phold,
 //void* app_malloc(size_t sz, const char *what);
 void policies_print(X509_STORE_CTX *ctx);
 int bio_to_mem(unsigned char **out, int maxlen, BIO *in);
-int x509_ctrl_string(X509 *x, const char *value);
+//int x509_ctrl_string(X509 *x, const char *value);
 int init_gen_str(EVP_PKEY_CTX **pctx,
                  const char *algname, ENGINE *e, int do_param,
                  OSSL_LIB_CTX *libctx, const char *propq);

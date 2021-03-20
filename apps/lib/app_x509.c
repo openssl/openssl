@@ -17,12 +17,13 @@
 #include <openssl/err.h>
 #include <openssl/engine.h>
 #include <openssl/ocsp.h>
+#include <openssl/x509v3.h>
 #include "opt.h"
+#include "engine_loader.h"
 #include <string.h>
 //#include "apps.h"
 
 //#include <ctype.h>
-//#include <openssl/x509v3.h>
 //#include "apps.h"
 //#include "apps_config.h"
 //#include "apps_propq.h"
@@ -30,8 +31,8 @@
 //#include "apps_globals.h"
 //#include "apps_opts.h"
 //#include "apps_keys.h"
-
-
+//
+//
 //# include <openssl/txt_db.h>
 //# include <openssl/http.h>
 //# include <signal.h>
