@@ -33,8 +33,8 @@ int set_crl_lastupdate(X509_CRL *crl, const char *lastupdate);
 int set_crl_nextupdate(X509_CRL *crl, const char *nextupdate,
                        long days, long hours, long secs);
 
-int set_nameopt(const char *arg);
-unsigned long get_nameopt(void);
+//int set_nameopt(const char *arg);
+//unsigned long get_nameopt(void);
 int set_cert_ex(unsigned long *flags, const char *arg);
 int set_name_ex(unsigned long *flags, const char *arg);
 int set_ext_copy(int *copy_type, const char *arg);
