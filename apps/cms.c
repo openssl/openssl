@@ -17,6 +17,7 @@
 #include "apps_passwd.h"
 #include "apps_opts.h"
 #include "apps_config.h"
+#include "apps_globals.h"
 #include "progs.h"
 
 #ifndef OPENSSL_NO_CMS

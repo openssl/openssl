@@ -28,6 +28,7 @@
 #include <string.h>
 #include <math.h>
 #include "apps.h"
+#include "apps_globals.h"
 #include "progs.h"
 #include <openssl/crypto.h>
 #include <openssl/rand.h>

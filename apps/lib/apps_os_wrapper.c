@@ -7,18 +7,20 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "e_os.h"
+
 #ifndef W_OK
-# ifdef OPENSSL_SYS_VMS
+# if defined(OPENSSL_SYS_VMS) || defined(OPENSSL_SYS_UNIX)
 #  include <unistd.h>
 # elif !defined(OPENSSL_SYS_VXWORKS) && !defined(OPENSSL_SYS_WINDOWS) && !defined(OPENSSL_SYS_TANDEM)
 #  include <sys/file.h>
 # endif
 #endif
 
-#include <openssl/ssl.h>
-// TODO - can including apps.h be avoided here?
-#include "apps.h"
 #include "apps_os_wrapper.h"
+#include "apps_globals.h"
+#include "internal/sockets.h"
+#include <openssl/ssl.h>
 
 #if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS)
 # include <conio.h>
