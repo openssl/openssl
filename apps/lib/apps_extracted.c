@@ -808,27 +808,27 @@ int copy_extensions(X509 *x, X509_REQ *req, int copy_type)
 //    }
 //    return 0;
 //}
-
-int parse_yesno(const char *str, int def)
-{
-    if (str) {
-        switch (*str) {
-        case 'f':              /* false */
-        case 'F':              /* FALSE */
-        case 'n':              /* no */
-        case 'N':              /* NO */
-        case '0':              /* 0 */
-            return 0;
-        case 't':              /* true */
-        case 'T':              /* TRUE */
-        case 'y':              /* yes */
-        case 'Y':              /* YES */
-        case '1':              /* 1 */
-            return 1;
-        }
-    }
-    return def;
-}
+//
+//int parse_yesno(const char *str, int def)
+//{
+//    if (str) {
+//        switch (*str) {
+//        case 'f':              /* false */
+//        case 'F':              /* FALSE */
+//        case 'n':              /* no */
+//        case 'N':              /* NO */
+//        case '0':              /* 0 */
+//            return 0;
+//        case 't':              /* true */
+//        case 'T':              /* TRUE */
+//        case 'y':              /* yes */
+//        case 'Y':              /* YES */
+//        case '1':              /* 1 */
+//            return 1;
+//        }
+//    }
+//    return def;
+//}
 
 /*
  * name is expected to be in the format /type0=value0/type1=value1/type2=...
@@ -1506,11 +1506,11 @@ end:
     return ret;
 }
 
-void make_uppercase(char *string)
-{
-    int i;
-
-    for (i = 0; string[i] != '\0'; i++)
-        string[i] = toupper((unsigned char)string[i]);
-}
+//void make_uppercase(char *string)
+//{
+//    int i;
+//
+//    for (i = 0; string[i] != '\0'; i++)
+//        string[i] = toupper((unsigned char)string[i]);
+//}
 
