@@ -152,24 +152,6 @@ int wrap_password_callback(char *buf, int bufsiz, int verify, void *userdata)
     return password_callback(buf, bufsiz, verify, (PW_CB_DATA *)userdata);
 }
 
-//char *get_passwd(const char *pass, const char *desc)
-//{
-//    char *result = NULL;
-//
-//    if (desc == NULL)
-//        desc = "<unknown>";
-//    if (!app_passwd(pass, NULL, &result, NULL))
-//        BIO_printf(bio_err, "Error getting password for %s\n", desc);
-//    if (pass != NULL && result == NULL) {
-//        BIO_printf(bio_err,
-//                   "Trying plain input string (better precede with 'pass:')\n");
-//        result = OPENSSL_strdup(pass);
-//        if (result == NULL)
-//            BIO_printf(bio_err, "Out of memory getting password for %s\n", desc);
-//    }
-//    return result;
-//}
-
 CONF *app_load_config_modules(const char *configfile)
 {
     CONF *conf = NULL;
@@ -231,27 +213,6 @@ EVP_PKEY *load_keyparams(const char *uri, int maybe_stdin, const char *keytype,
     return params;
 }
 
-//void app_bail_out(char *fmt, ...)
-//{
-//    va_list args;
-//
-//    va_start(args, fmt);
-//    BIO_vprintf(bio_err, fmt, args);
-//    va_end(args);
-//    ERR_print_errors(bio_err);
-//    exit(1);
-//}
-//
-//void* app_malloc(size_t sz, const char *what)
-//{
-//    void *vp = OPENSSL_malloc(sz);
-//
-//    if (vp == NULL)
-//        app_bail_out("%s: Could not allocate %d bytes for %s\n",
-//                     opt_getprog(), sz, what);
-//    return vp;
-//}
-//
 char *next_item(char *opt) /* in list separated by comma and/or space */
 {
     /* advance to separator (comma or whitespace), if any */
