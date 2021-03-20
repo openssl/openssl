@@ -372,11 +372,11 @@ X509_REQ *load_csr(const char *file, int format, const char *desc)
     return req;
 }
 
-void cleanse(char *str)
-{
-    if (str != NULL)
-        OPENSSL_cleanse(str, strlen(str));
-}
+//void cleanse(char *str)
+//{
+//    if (str != NULL)
+//        OPENSSL_cleanse(str, strlen(str));
+//}
 
 EVP_PKEY *load_key(const char *uri, int format, int may_stdin,
                    const char *pass, ENGINE *e, const char *desc)

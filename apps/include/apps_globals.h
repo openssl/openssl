@@ -56,6 +56,7 @@ extern BIO *bio_err;
 
 //extern VERIFY_CB_ARGS verify_args;
 
+void cleanse(char *str);
 int parse_yesno(const char *str, int def);
 void make_uppercase(char *string);
 
