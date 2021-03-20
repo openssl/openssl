@@ -206,9 +206,9 @@ ASN1_VALUE *app_http_post_asn1(const char *host, const char *port,
                                long timeout, const ASN1_ITEM *rsp_it);
 # endif
 
-# define EXT_COPY_NONE   0
-# define EXT_COPY_ADD    1
-# define EXT_COPY_ALL    2
+//# define EXT_COPY_NONE   0
+//# define EXT_COPY_ADD    1
+//# define EXT_COPY_ALL    2
 
 # define NETSCAPE_CERT_HDR       "certificate"
 

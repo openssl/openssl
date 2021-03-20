@@ -18,6 +18,19 @@ void cleanse(char *str)
         OPENSSL_cleanse(str, strlen(str));
 }
 
+int set_ext_copy(int *copy_type, const char *arg)
+{
+    if (strcasecmp(arg, "none") == 0)
+        *copy_type = EXT_COPY_NONE;
+    else if (strcasecmp(arg, "copy") == 0)
+        *copy_type = EXT_COPY_ADD;
+    else if (strcasecmp(arg, "copyall") == 0)
+        *copy_type = EXT_COPY_ALL;
+    else
+        return 0;
+    return 1;
+}
+
 int parse_yesno(const char *str, int def)
 {
     if (str) {
