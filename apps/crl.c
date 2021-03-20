@@ -12,6 +12,7 @@
 #include <string.h>
 #include "apps.h"
 #include "apps_globals.h"
+#include "apps_config.h"
 #include "apps_propq.h"
 #include "apps_libctx.h"
 #include "apps_opts.h"

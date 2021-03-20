@@ -11,8 +11,7 @@
 #include <string.h>
 #include <openssl/bio.h>
 #include "fmt.h"
-// needed for dup_bio_in
-#include "apps_extracted.h"
+#include "apps_config.h"
 #include "apps_passwd.h"
 #include "apps_globals.h"
 

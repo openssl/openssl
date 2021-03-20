@@ -59,5 +59,8 @@ extern BIO *bio_err;
 void cleanse(char *str);
 int parse_yesno(const char *str, int def);
 void make_uppercase(char *string);
+const char *modestr(char mode, int format);
+const char *modeverb(char mode);
+
 
 #endif

@@ -13,6 +13,7 @@
 #include <openssl/opensslconf.h>
 
 #include "apps.h"
+#include "apps_config.h"
 #include "progs.h"
 #include <stdio.h>
 #include <stdlib.h>
