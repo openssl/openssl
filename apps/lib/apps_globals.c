@@ -10,6 +10,7 @@
 #include "apps_globals.h"
 #include "fmt.h"
 #include "opt.h"
+#include <openssl/err.h>
 #include <ctype.h>
 #include <string.h>
 
@@ -93,5 +94,26 @@ const char *modeverb(char mode)
         return "writing";
     }
     return "(doing something)";
+}
+
+void app_bail_out(char *fmt, ...)
+{
+    va_list args;
+
+    va_start(args, fmt);
+    BIO_vprintf(bio_err, fmt, args);
+    va_end(args);
+    ERR_print_errors(bio_err);
+    exit(1);
+}
+
+void* app_malloc(size_t sz, const char *what)
+{
+    void *vp = OPENSSL_malloc(sz);
+
+    if (vp == NULL)
+        app_bail_out("%s: Could not allocate %d bytes for %s\n",
+                     opt_getprog(), sz, what);
+    return vp;
 }
 

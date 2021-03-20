@@ -63,5 +63,7 @@ void make_uppercase(char *string);
 const char *modestr(char mode, int format);
 const char *modeverb(char mode);
 int app_isdir(const char *);
+void app_bail_out(char *fmt, ...);
+void* app_malloc(size_t sz, const char *what);
 
 #endif
