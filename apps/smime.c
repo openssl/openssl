@@ -17,6 +17,7 @@
 #include "apps_passwd.h"
 #include "apps_config.h"
 #include "apps_keys.h"
+#include "app_x509.h"
 #include "engine.h"
 #include "progs.h"
 #include <openssl/crypto.h>

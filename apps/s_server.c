@@ -45,6 +45,7 @@ typedef unsigned int u_int;
 #include "apps_config.h"
 #include "apps_globals.h"
 #include "apps_keys.h"
+#include "app_x509.h"
 #include "engine.h"
 #include "progs.h"
 #include <openssl/err.h>
