@@ -11,6 +11,7 @@
 #include <string.h>
 #include "apps.h"
 #include "apps_passwd.h"
+#include "apps_config.h"
 #include "progs.h"
 #include "ec_common.h"
 #include <openssl/pem.h>
