@@ -73,8 +73,7 @@ struct ossl_http_req_ctx_st {
 #define OHS_HTTP_HEADER    (9 | OHS_NOREAD) /* Headers set, w/o final \r\n */
 
 OSSL_HTTP_REQ_CTX *OSSL_HTTP_REQ_CTX_new(BIO *wbio, BIO *rbio,
-                                         int method_POST, int maxline,
-                                         unsigned long max_resp_len,
+                                         int maxline, unsigned long max_resp_len,
                                          int timeout, const char *expected_ct,
                                          int expect_asn1)
 {
@@ -96,7 +95,6 @@ OSSL_HTTP_REQ_CTX *OSSL_HTTP_REQ_CTX_new(BIO *wbio, BIO *rbio,
         OPENSSL_free(rctx);
         return NULL;
     }
-    rctx->method_POST = method_POST;
     rctx->expected_ct = expected_ct;
     rctx->expect_asn1 = expect_asn1;
     rctx->resp_len = 0;
@@ -135,10 +133,10 @@ void OSSL_HTTP_REQ_CTX_set_max_response_length(OSSL_HTTP_REQ_CTX *rctx,
 }
 
 /*
- * Create request line using |ctx| and |path| (or "/" in case |path| is NULL).
+ * Create request line using |rctx| and |path| (or "/" in case |path| is NULL).
  * Server name (and port) must be given if and only if plain HTTP proxy is used.
  */
-int OSSL_HTTP_REQ_CTX_set_request_line(OSSL_HTTP_REQ_CTX *rctx,
+int OSSL_HTTP_REQ_CTX_set_request_line(OSSL_HTTP_REQ_CTX *rctx, int method_POST,
                                        const char *server, const char *port,
                                        const char *path)
 {
@@ -150,6 +148,7 @@ int OSSL_HTTP_REQ_CTX_set_request_line(OSSL_HTTP_REQ_CTX *rctx,
     if ((rctx->mem = BIO_new(BIO_s_mem())) == NULL)
         return 0;
 
+    rctx->method_POST = method_POST != 0;
     if (BIO_printf(rctx->mem, "%s ", rctx->method_POST ? "POST" : "GET") <= 0)
         return 0;
 
@@ -202,7 +201,7 @@ int OSSL_HTTP_REQ_CTX_add1_header(OSSL_HTTP_REQ_CTX *rctx,
     return 1;
 }
 
-static int OSSL_HTTP_REQ_CTX_set_content(OSSL_HTTP_REQ_CTX *rctx,
+static int ossl_http_req_ctx_set_content(OSSL_HTTP_REQ_CTX *rctx,
                                          const char *content_type, BIO *req_mem)
 {
     const unsigned char *req;
@@ -259,7 +258,7 @@ int OSSL_HTTP_REQ_CTX_set1_req(OSSL_HTTP_REQ_CTX *rctx, const char *content_type
     }
 
     res = (mem = ossl_http_asn1_item2bio(it, req)) != NULL
-        && OSSL_HTTP_REQ_CTX_set_content(rctx, content_type, mem);
+        && ossl_http_req_ctx_set_content(rctx, content_type, mem);
     BIO_free(mem);
     return res;
 }
@@ -308,18 +307,17 @@ OSSL_HTTP_REQ_CTX
     }
     /* remaining parameters are checked indirectly by the functions called */
 
-    if ((rctx = OSSL_HTTP_REQ_CTX_new(wbio, rbio, req_mem != NULL, maxline,
-                                      max_resp_len, timeout,
+    if ((rctx = OSSL_HTTP_REQ_CTX_new(wbio, rbio, maxline, max_resp_len, timeout,
                                       expected_ct, expect_asn1))
         == NULL)
         return NULL;
 
-    if (OSSL_HTTP_REQ_CTX_set_request_line(rctx,
+    if (OSSL_HTTP_REQ_CTX_set_request_line(rctx, req_mem != NULL,
                                            use_http_proxy ? server : NULL, port,
                                            path)
         && OSSL_HTTP_REQ_CTX_add1_headers(rctx, headers, server)
         && (req_mem == NULL
-            || OSSL_HTTP_REQ_CTX_set_content(rctx, content_type, req_mem)))
+            || ossl_http_req_ctx_set_content(rctx, content_type, req_mem)))
         return rctx;
 
     OSSL_HTTP_REQ_CTX_free(rctx);
