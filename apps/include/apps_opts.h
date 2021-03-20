@@ -20,6 +20,7 @@ int set_multi_opts(unsigned long *flags, const char *arg,
                           const NAME_EX_TBL * in_tbl);
 int set_nameopt(const char *arg);
 unsigned long get_nameopt(void);
+int set_cert_ex(unsigned long *flags, const char *arg);
 int set_name_ex(unsigned long *flags, const char *arg);
 
 #endif                          /* ! OSSL_APPS_APPS_EXTRACTED_H */
