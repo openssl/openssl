@@ -14,6 +14,7 @@
 #include "apps_globals.h"
 #include "apps_propq.h"
 #include "apps_libctx.h"
+#include "apps_opts.h"
 #include "progs.h"
 #include <openssl/bio.h>
 #include <openssl/err.h>

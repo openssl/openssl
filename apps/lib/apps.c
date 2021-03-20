@@ -36,6 +36,7 @@
 #include "apps_propq.h"
 #include "apps_libctx.h"
 #include "apps_passwd.h"
+#include "apps_opts.h"
 
 DEFINE_STACK_OF(CONF)
 
