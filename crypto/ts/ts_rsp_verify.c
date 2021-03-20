@@ -17,8 +17,8 @@
 
 static int ts_verify_cert(X509_STORE *store, STACK_OF(X509) *untrusted,
                           X509 *signer, STACK_OF(X509) **chain);
-static int ts_check_signing_certs(PKCS7_SIGNER_INFO *si,
-                                  STACK_OF(X509) *chain);
+static int ts_check_signing_certs(const PKCS7_SIGNER_INFO *si,
+                                  const STACK_OF(X509) *chain);
 
 static int int_ts_RESP_verify_token(TS_VERIFY_CTX *ctx,
                                     PKCS7 *token, TS_TST_INFO *tst_info);
@@ -202,59 +202,13 @@ end:
     return ret;
 }
 
-static int ts_check_signing_certs(PKCS7_SIGNER_INFO *si,
-                                  STACK_OF(X509) *chain)
+static int ts_check_signing_certs(const PKCS7_SIGNER_INFO *si,
+                                  const STACK_OF(X509) *chain)
 {
-    ESS_SIGNING_CERT *ss = ossl_ess_signing_cert_get(si);
-    STACK_OF(ESS_CERT_ID) *cert_ids = NULL;
-    ESS_SIGNING_CERT_V2 *ssv2 = ossl_ess_signing_cert_v2_get(si);
-    STACK_OF(ESS_CERT_ID_V2) *cert_ids_v2 = NULL;
-    X509 *cert;
-    int i = 0;
-    int ret = 0;
+    ESS_SIGNING_CERT *ss = ossl_ess_get_signing_cert(si);
+    ESS_SIGNING_CERT_V2 *ssv2 = ossl_ess_get_signing_cert_v2(si);
+    int ret = ossl_ess_check_signing_certs(ss, ssv2, chain, 1);
 
-    if (ss != NULL) {
-        cert_ids = ss->cert_ids;
-        cert = sk_X509_value(chain, 0);
-        if (ossl_ess_find_cert(cert_ids, cert) != 0)
-            goto err;
-
-        /*
-         * Check the other certificates of the chain if there are more than one
-         * certificate ids in cert_ids.
-         */
-        if (sk_ESS_CERT_ID_num(cert_ids) > 1) {
-            for (i = 1; i < sk_X509_num(chain); ++i) {
-                cert = sk_X509_value(chain, i);
-                if (ossl_ess_find_cert(cert_ids, cert) < 0)
-                    goto err;
-            }
-        }
-    } else if (ssv2 != NULL) {
-        cert_ids_v2 = ssv2->cert_ids;
-        cert = sk_X509_value(chain, 0);
-        if (ossl_ess_find_cert_v2(cert_ids_v2, cert) != 0)
-            goto err;
-
-        /*
-         * Check the other certificates of the chain if there are more than one
-         * certificate ids in cert_ids.
-         */
-        if (sk_ESS_CERT_ID_V2_num(cert_ids_v2) > 1) {
-            for (i = 1; i < sk_X509_num(chain); ++i) {
-                cert = sk_X509_value(chain, i);
-                if (ossl_ess_find_cert_v2(cert_ids_v2, cert) < 0)
-                    goto err;
-            }
-        }
-    } else {
-        goto err;
-    }
-
-    ret = 1;
- err:
-    if (!ret)
-        ERR_raise(ERR_LIB_TS, TS_R_ESS_SIGNING_CERTIFICATE_ERROR);
     ESS_SIGNING_CERT_free(ss);
     ESS_SIGNING_CERT_V2_free(ssv2);
     return ret;
@@ -419,7 +373,7 @@ static int ts_check_status_info(TS_RESP *response)
 
 static char *ts_get_status_text(STACK_OF(ASN1_UTF8STRING) *text)
 {
-    return sk_ASN1_UTF8STRING2text(text, "/", TS_MAX_STATUS_LENGTH);
+    return ossl_sk_ASN1_UTF8STRING2text(text, "/", TS_MAX_STATUS_LENGTH);
 }
 
 static int ts_check_policy(const ASN1_OBJECT *req_oid,

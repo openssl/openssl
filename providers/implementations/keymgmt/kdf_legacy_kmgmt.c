@@ -26,7 +26,7 @@ static OSSL_FUNC_keymgmt_new_fn kdf_newdata;
 static OSSL_FUNC_keymgmt_free_fn kdf_freedata;
 static OSSL_FUNC_keymgmt_has_fn kdf_has;
 
-KDF_DATA *kdf_data_new(void *provctx)
+KDF_DATA *ossl_kdf_data_new(void *provctx)
 {
     KDF_DATA *kdfdata;
 
@@ -48,7 +48,7 @@ KDF_DATA *kdf_data_new(void *provctx)
     return kdfdata;
 }
 
-void kdf_data_free(KDF_DATA *kdfdata)
+void ossl_kdf_data_free(KDF_DATA *kdfdata)
 {
     int ref = 0;
 
@@ -63,7 +63,7 @@ void kdf_data_free(KDF_DATA *kdfdata)
     OPENSSL_free(kdfdata);
 }
 
-int kdf_data_up_ref(KDF_DATA *kdfdata)
+int ossl_kdf_data_up_ref(KDF_DATA *kdfdata)
 {
     int ref = 0;
 
@@ -83,17 +83,17 @@ int kdf_data_up_ref(KDF_DATA *kdfdata)
 
 static void *kdf_newdata(void *provctx)
 {
-    return kdf_data_new(provctx);
+    return ossl_kdf_data_new(provctx);
 }
 
 static void kdf_freedata(void *kdfdata)
 {
-    kdf_data_free(kdfdata);
+    ossl_kdf_data_free(kdfdata);
 }
 
 static int kdf_has(const void *keydata, int selection)
 {
-    return 0;
+    return 1; /* nothing is missing */
 }
 
 const OSSL_DISPATCH ossl_kdf_keymgmt_functions[] = {

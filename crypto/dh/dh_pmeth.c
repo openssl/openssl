@@ -421,23 +421,30 @@ static int pkey_dh_derive(EVP_PKEY_CTX *ctx, unsigned char *key,
 {
     int ret;
     DH *dh;
+    const DH *dhpub;
     DH_PKEY_CTX *dctx = ctx->data;
-    BIGNUM *dhpub;
-    if (!ctx->pkey || !ctx->peerkey) {
+    BIGNUM *dhpubbn;
+
+    if (ctx->pkey == NULL || ctx->peerkey == NULL) {
         ERR_raise(ERR_LIB_DH, DH_R_KEYS_NOT_SET);
         return 0;
     }
     dh = ctx->pkey->pkey.dh;
-    dhpub = ctx->peerkey->pkey.dh->pub_key;
+    dhpub = EVP_PKEY_get0_DH(ctx->peerkey);
+    if (dhpub == NULL) {
+        ERR_raise(ERR_LIB_DH, DH_R_KEYS_NOT_SET);
+        return 0;
+    }
+    dhpubbn = dhpub->pub_key;
     if (dctx->kdf_type == EVP_PKEY_DH_KDF_NONE) {
         if (key == NULL) {
             *keylen = DH_size(dh);
             return 1;
         }
         if (dctx->pad)
-            ret = DH_compute_key_padded(key, dhpub, dh);
+            ret = DH_compute_key_padded(key, dhpubbn, dh);
         else
-            ret = DH_compute_key(key, dhpub, dh);
+            ret = DH_compute_key(key, dhpubbn, dh);
         if (ret < 0)
             return ret;
         *keylen = ret;
@@ -461,7 +468,7 @@ static int pkey_dh_derive(EVP_PKEY_CTX *ctx, unsigned char *key,
         if (Z == NULL) {
             goto err;
         }
-        if (DH_compute_key_padded(Z, dhpub, dh) <= 0)
+        if (DH_compute_key_padded(Z, dhpubbn, dh) <= 0)
             goto err;
         if (!DH_KDF_X9_42(key, *keylen, Z, Zlen, dctx->kdf_oid,
                           dctx->kdf_ukm, dctx->kdf_ukmlen, dctx->kdf_md))

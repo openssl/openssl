@@ -127,12 +127,12 @@ int ASN1_item_ex_i2d(const ASN1_VALUE **pval, unsigned char **out,
         }
         if (asn1_cb && !asn1_cb(ASN1_OP_I2D_PRE, pval, it, NULL))
             return 0;
-        i = asn1_get_choice_selector_const(pval, it);
+        i = ossl_asn1_get_choice_selector_const(pval, it);
         if ((i >= 0) && (i < it->tcount)) {
             const ASN1_VALUE **pchval;
             const ASN1_TEMPLATE *chtt;
             chtt = it->templates + i;
-            pchval = asn1_get_const_field_ptr(pval, chtt);
+            pchval = ossl_asn1_get_const_field_ptr(pval, chtt);
             return asn1_template_ex_i2d(pchval, out, chtt, -1, aclass);
         }
         /* Fixme: error condition if selector out of range */
@@ -152,7 +152,7 @@ int ASN1_item_ex_i2d(const ASN1_VALUE **pval, unsigned char **out,
         /* fall through */
 
     case ASN1_ITYPE_SEQUENCE:
-        i = asn1_enc_restore(&seqcontlen, out, pval, it);
+        i = ossl_asn1_enc_restore(&seqcontlen, out, pval, it);
         /* An error occurred */
         if (i < 0)
             return 0;
@@ -175,10 +175,10 @@ int ASN1_item_ex_i2d(const ASN1_VALUE **pval, unsigned char **out,
             const ASN1_TEMPLATE *seqtt;
             const ASN1_VALUE **pseqval;
             int tmplen;
-            seqtt = asn1_do_adb(*pval, tt, 1);
+            seqtt = ossl_asn1_do_adb(*pval, tt, 1);
             if (!seqtt)
                 return 0;
-            pseqval = asn1_get_const_field_ptr(pval, seqtt);
+            pseqval = ossl_asn1_get_const_field_ptr(pval, seqtt);
             tmplen = asn1_template_ex_i2d(pseqval, NULL, seqtt, -1, aclass);
             if (tmplen == -1 || (tmplen > INT_MAX - seqcontlen))
                 return -1;
@@ -193,10 +193,10 @@ int ASN1_item_ex_i2d(const ASN1_VALUE **pval, unsigned char **out,
         for (i = 0, tt = it->templates; i < it->tcount; tt++, i++) {
             const ASN1_TEMPLATE *seqtt;
             const ASN1_VALUE **pseqval;
-            seqtt = asn1_do_adb(*pval, tt, 1);
+            seqtt = ossl_asn1_do_adb(*pval, tt, 1);
             if (!seqtt)
                 return 0;
-            pseqval = asn1_get_const_field_ptr(pval, seqtt);
+            pseqval = ossl_asn1_get_const_field_ptr(pval, seqtt);
             /* FIXME: check for errors in enhanced version */
             asn1_template_ex_i2d(pseqval, out, seqtt, -1, aclass);
         }
@@ -578,15 +578,15 @@ static int asn1_ex_i2c(const ASN1_VALUE **pval, unsigned char *cout, int *putype
         break;
 
     case V_ASN1_BIT_STRING:
-        return i2c_ASN1_BIT_STRING((ASN1_BIT_STRING *)*pval,
-                                   cout ? &cout : NULL);
+        return ossl_i2c_ASN1_BIT_STRING((ASN1_BIT_STRING *)*pval,
+                                        cout ? &cout : NULL);
 
     case V_ASN1_INTEGER:
     case V_ASN1_ENUMERATED:
         /*
          * These are all have the same content format as ASN1_INTEGER
          */
-        return i2c_ASN1_INTEGER((ASN1_INTEGER *)*pval, cout ? &cout : NULL);
+        return ossl_i2c_ASN1_INTEGER((ASN1_INTEGER *)*pval, cout ? &cout : NULL);
 
     case V_ASN1_OCTET_STRING:
     case V_ASN1_NUMERICSTRING:

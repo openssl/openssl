@@ -3567,7 +3567,7 @@ static int aes_wrap_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     /* If not padding input must be multiple of 8 */
     if (!pad && inlen & 0x7)
         return -1;
-    if (is_partially_overlapping(out, in, inlen)) {
+    if (ossl_is_partially_overlapping(out, in, inlen)) {
         ERR_raise(ERR_LIB_EVP, EVP_R_PARTIALLY_OVERLAPPING);
         return 0;
     }
@@ -3871,7 +3871,7 @@ static int aes_ocb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
             buf = octx->data_buf;
             buf_len = &(octx->data_buf_len);
 
-            if (is_partially_overlapping(out + *buf_len, in, len)) {
+            if (ossl_is_partially_overlapping(out + *buf_len, in, len)) {
                 ERR_raise(ERR_LIB_EVP, EVP_R_PARTIALLY_OVERLAPPING);
                 return 0;
             }

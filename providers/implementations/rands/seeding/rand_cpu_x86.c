@@ -35,25 +35,25 @@ static size_t get_hardware_random_value(unsigned char *buf, size_t len);
  * Returns the total entropy count, if it exceeds the requested
  * entropy count. Otherwise, returns an entropy count of 0.
  */
-size_t prov_acquire_entropy_from_cpu(RAND_POOL *pool)
+size_t ossl_prov_acquire_entropy_from_cpu(RAND_POOL *pool)
 {
     size_t bytes_needed;
     unsigned char *buffer;
 
-    bytes_needed = rand_pool_bytes_needed(pool, 1 /*entropy_factor*/);
+    bytes_needed = ossl_rand_pool_bytes_needed(pool, 1 /*entropy_factor*/);
     if (bytes_needed > 0) {
-        buffer = rand_pool_add_begin(pool, bytes_needed);
+        buffer = ossl_rand_pool_add_begin(pool, bytes_needed);
 
         if (buffer != NULL) {
             if (get_hardware_random_value(buffer, bytes_needed) == bytes_needed) {
-                rand_pool_add_end(pool, bytes_needed, 8 * bytes_needed);
+                ossl_rand_pool_add_end(pool, bytes_needed, 8 * bytes_needed);
             } else {
-                rand_pool_add_end(pool, 0, 0);
+                ossl_rand_pool_add_end(pool, 0, 0);
             }
         }
     }
 
-    return rand_pool_entropy_available(pool);
+    return ossl_rand_pool_entropy_available(pool);
 }
 
 #if defined(OPENSSL_SYS_TANDEM) && defined(_TNS_X_TARGET)

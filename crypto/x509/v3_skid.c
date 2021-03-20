@@ -15,7 +15,7 @@
 
 static ASN1_OCTET_STRING *s2i_skey_id(X509V3_EXT_METHOD *method,
                                       X509V3_CTX *ctx, char *str);
-const X509V3_EXT_METHOD v3_skey_id = {
+const X509V3_EXT_METHOD ossl_v3_skey_id = {
     NID_subject_key_identifier, 0, ASN1_ITEM_ref(ASN1_OCTET_STRING),
     0, 0, 0, 0,
     (X509V3_EXT_I2S)i2s_ASN1_OCTET_STRING,
@@ -52,7 +52,7 @@ ASN1_OCTET_STRING *s2i_ASN1_OCTET_STRING(X509V3_EXT_METHOD *method,
 
 }
 
-ASN1_OCTET_STRING *x509_pubkey_hash(X509_PUBKEY *pubkey)
+ASN1_OCTET_STRING *ossl_x509_pubkey_hash(X509_PUBKEY *pubkey)
 {
     ASN1_OCTET_STRING *oct;
     const unsigned char *pk;
@@ -94,7 +94,7 @@ static ASN1_OCTET_STRING *s2i_skey_id(X509V3_EXT_METHOD *method,
         return NULL;
     }
 
-    return x509_pubkey_hash(ctx->subject_req != NULL ?
-                            ctx->subject_req->req_info.pubkey :
-                            ctx->subject_cert->cert_info.key);
+    return ossl_x509_pubkey_hash(ctx->subject_req != NULL ?
+                                 ctx->subject_req->req_info.pubkey :
+                                 ctx->subject_cert->cert_info.key);
 }

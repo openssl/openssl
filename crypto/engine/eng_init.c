@@ -63,7 +63,8 @@ int engine_unlocked_finish(ENGINE *e, int unlock_for_handlers)
             CRYPTO_THREAD_unlock(global_engine_lock);
         to_return = e->finish(e);
         if (unlock_for_handlers)
-            CRYPTO_THREAD_write_lock(global_engine_lock);
+            if (!CRYPTO_THREAD_write_lock(global_engine_lock))
+                return 0;
         if (!to_return)
             return 0;
     }
@@ -88,7 +89,8 @@ int ENGINE_init(ENGINE *e)
         ERR_raise(ERR_LIB_ENGINE, ERR_R_MALLOC_FAILURE);
         return 0;
     }
-    CRYPTO_THREAD_write_lock(global_engine_lock);
+    if (!CRYPTO_THREAD_write_lock(global_engine_lock))
+        return 0;
     ret = engine_unlocked_init(e);
     CRYPTO_THREAD_unlock(global_engine_lock);
     return ret;
@@ -101,7 +103,8 @@ int ENGINE_finish(ENGINE *e)
 
     if (e == NULL)
         return 1;
-    CRYPTO_THREAD_write_lock(global_engine_lock);
+    if (!CRYPTO_THREAD_write_lock(global_engine_lock))
+        return 0;
     to_return = engine_unlocked_finish(e, 1);
     CRYPTO_THREAD_unlock(global_engine_lock);
     if (!to_return) {

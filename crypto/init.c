@@ -235,22 +235,22 @@ static int config_inited = 0;
 static const OPENSSL_INIT_SETTINGS *conf_settings = NULL;
 DEFINE_RUN_ONCE_STATIC(ossl_init_config)
 {
-    int ret = openssl_config_int(NULL);
+    int ret = ossl_config_int(NULL);
 
     config_inited = 1;
     return ret;
 }
 DEFINE_RUN_ONCE_STATIC_ALT(ossl_init_config_settings, ossl_init_config)
 {
-    int ret = openssl_config_int(conf_settings);
+    int ret = ossl_config_int(conf_settings);
 
     config_inited = 1;
     return ret;
 }
 DEFINE_RUN_ONCE_STATIC_ALT(ossl_init_no_config, ossl_init_config)
 {
-    OSSL_TRACE(INIT, "openssl_no_config_int()\n");
-    openssl_no_config_int();
+    OSSL_TRACE(INIT, "ossl_no_config_int()\n");
+    ossl_no_config_int();
     config_inited = 1;
     return 1;
 }
@@ -347,8 +347,8 @@ void OPENSSL_cleanup(void)
     OPENSSL_INIT_STOP *currhandler, *lasthandler;
 
     /*
-     * TODO(3.0): This function needs looking at with a view to moving most/all
-     * of this into onfree handlers in OSSL_LIB_CTX.
+     * At some point we should consider looking at this function with a view to
+     * moving most/all of this into onfree handlers in OSSL_LIB_CTX.
      */
 
     /* If we've not been inited then no need to deinit */
@@ -385,8 +385,8 @@ void OPENSSL_cleanup(void)
 
 #ifndef OPENSSL_NO_COMP
     if (zlib_inited) {
-        OSSL_TRACE(INIT, "OPENSSL_cleanup: comp_zlib_cleanup_int()\n");
-        comp_zlib_cleanup_int();
+        OSSL_TRACE(INIT, "OPENSSL_cleanup: ossl_comp_zlib_cleanup()\n");
+        ossl_comp_zlib_cleanup();
     }
 #endif
 
@@ -402,20 +402,20 @@ void OPENSSL_cleanup(void)
 
     /*
      * Note that cleanup order is important:
-     * - rand_cleanup_int could call an ENGINE's RAND cleanup function so
+     * - ossl_rand_cleanup_int could call an ENGINE's RAND cleanup function so
      * must be called before engine_cleanup_int()
      * - ENGINEs use CRYPTO_EX_DATA and therefore, must be cleaned up
      * before the ex data handlers are wiped during default ossl_lib_ctx deinit.
-     * - conf_modules_free_int() can end up in ENGINE code so must be called
+     * - ossl_config_modules_free() can end up in ENGINE code so must be called
      * before engine_cleanup_int()
      * - ENGINEs and additional EVP algorithms might use added OIDs names so
-     * obj_cleanup_int() must be called last
+     * ossl_obj_cleanup_int() must be called last
      */
-    OSSL_TRACE(INIT, "OPENSSL_cleanup: rand_cleanup_int()\n");
-    rand_cleanup_int();
+    OSSL_TRACE(INIT, "OPENSSL_cleanup: ossl_rand_cleanup_int()\n");
+    ossl_rand_cleanup_int();
 
-    OSSL_TRACE(INIT, "OPENSSL_cleanup: conf_modules_free_int()\n");
-    conf_modules_free_int();
+    OSSL_TRACE(INIT, "OPENSSL_cleanup: ossl_config_modules_free()\n");
+    ossl_config_modules_free();
 
 #ifndef OPENSSL_NO_ENGINE
     OSSL_TRACE(INIT, "OPENSSL_cleanup: engine_cleanup_int()\n");
@@ -438,8 +438,8 @@ void OPENSSL_cleanup(void)
     OSSL_TRACE(INIT, "OPENSSL_cleanup: evp_cleanup_int()\n");
     evp_cleanup_int();
 
-    OSSL_TRACE(INIT, "OPENSSL_cleanup: obj_cleanup_int()\n");
-    obj_cleanup_int();
+    OSSL_TRACE(INIT, "OPENSSL_cleanup: ossl_obj_cleanup_int()\n");
+    ossl_obj_cleanup_int();
 
     OSSL_TRACE(INIT, "OPENSSL_cleanup: err_int()\n");
     err_cleanup();
@@ -488,8 +488,8 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
     }
 
     /*
-     * TODO(3.0): This function needs looking at with a view to moving most/all
-     * of this into OSSL_LIB_CTX.
+     * At some point we should look at this function with a view to moving
+     * most/all of this into OSSL_LIB_CTX.
      */
 
     if (stopped) {
@@ -586,7 +586,8 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
         if (settings == NULL) {
             ret = RUN_ONCE(&config, ossl_init_config);
         } else {
-            CRYPTO_THREAD_write_lock(init_lock);
+            if (!CRYPTO_THREAD_write_lock(init_lock))
+                return 0;
             conf_settings = settings;
             ret = RUN_ONCE_ALT(&config, ossl_init_config_settings,
                                ossl_init_config);

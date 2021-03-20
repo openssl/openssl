@@ -570,3 +570,82 @@ int ossl_ec_pt_format_param2id(const OSSL_PARAM *p, int *id)
     }
     return 0;
 }
+
+#ifndef FIPS_MODULE
+EC_KEY *ossl_ec_key_param_from_x509_algor(const X509_ALGOR *palg,
+                                     OSSL_LIB_CTX *libctx, const char *propq)
+{
+    int ptype = 0;
+    const void *pval = NULL;
+    EC_KEY *eckey = NULL;
+    EC_GROUP *group = NULL;
+
+    X509_ALGOR_get0(NULL, &ptype, &pval, palg);
+    if ((eckey = EC_KEY_new_ex(libctx, propq)) == NULL) {
+        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
+        goto ecerr;
+    }
+
+    if (ptype == V_ASN1_SEQUENCE) {
+        const ASN1_STRING *pstr = pval;
+        const unsigned char *pm = pstr->data;
+        int pmlen = pstr->length;
+
+
+        if (d2i_ECParameters(&eckey, &pm, pmlen) == NULL) {
+            ERR_raise(ERR_LIB_EC, EC_R_DECODE_ERROR);
+            goto ecerr;
+        }
+    } else if (ptype == V_ASN1_OBJECT) {
+        const ASN1_OBJECT *poid = pval;
+
+        /*
+         * type == V_ASN1_OBJECT => the parameters are given by an asn1 OID
+         */
+
+        group = EC_GROUP_new_by_curve_name_ex(libctx, propq, OBJ_obj2nid(poid));
+        if (group == NULL)
+            goto ecerr;
+        EC_GROUP_set_asn1_flag(group, OPENSSL_EC_NAMED_CURVE);
+        if (EC_KEY_set_group(eckey, group) == 0)
+            goto ecerr;
+        EC_GROUP_free(group);
+    } else {
+        ERR_raise(ERR_LIB_EC, EC_R_DECODE_ERROR);
+        goto ecerr;
+    }
+
+    return eckey;
+
+ ecerr:
+    EC_KEY_free(eckey);
+    EC_GROUP_free(group);
+    return NULL;
+}
+
+EC_KEY *ossl_ec_key_from_pkcs8(const PKCS8_PRIV_KEY_INFO *p8inf,
+                               OSSL_LIB_CTX *libctx, const char *propq)
+{
+    const unsigned char *p = NULL;
+    int pklen;
+    EC_KEY *eckey = NULL;
+    const X509_ALGOR *palg;
+
+    if (!PKCS8_pkey_get0(NULL, &p, &pklen, &palg, p8inf))
+        return 0;
+    eckey = ossl_ec_key_param_from_x509_algor(palg, libctx, propq);
+    if (eckey == NULL)
+        goto err;
+
+    /* We have parameters now set private key */
+    if (!d2i_ECPrivateKey(&eckey, &p, pklen)) {
+        ERR_raise(ERR_LIB_EC, EC_R_DECODE_ERROR);
+        goto err;
+    }
+
+    return eckey;
+ err:
+    EC_KEY_free(eckey);
+    return NULL;
+}
+#endif

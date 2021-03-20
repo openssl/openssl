@@ -243,10 +243,10 @@ int evp_cipher_get_asn1_aead_params(EVP_CIPHER_CTX *c, ASN1_TYPE *type,
     if (type == NULL || asn1_params == NULL)
         return 0;
 
-    i = asn1_type_get_octetstring_int(type, &tl, NULL, EVP_MAX_IV_LENGTH);
+    i = ossl_asn1_type_get_octetstring_int(type, &tl, NULL, EVP_MAX_IV_LENGTH);
     if (i <= 0)
         return -1;
-    asn1_type_get_octetstring_int(type, &tl, iv, i);
+    ossl_asn1_type_get_octetstring_int(type, &tl, iv, i);
 
     memcpy(asn1_params->iv, iv, i);
     asn1_params->iv_len = i;
@@ -260,8 +260,9 @@ int evp_cipher_set_asn1_aead_params(EVP_CIPHER_CTX *c, ASN1_TYPE *type,
     if (type == NULL || asn1_params == NULL)
         return 0;
 
-    return asn1_type_set_octetstring_int(type, asn1_params->tag_len,
-                                         asn1_params->iv, asn1_params->iv_len);
+    return ossl_asn1_type_set_octetstring_int(type, asn1_params->tag_len,
+                                              asn1_params->iv,
+                                              asn1_params->iv_len);
 }
 #endif /* !defined(FIPS_MODULE) */
 

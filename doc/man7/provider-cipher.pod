@@ -292,10 +292,6 @@ The length of the "taglen" parameter should not exceed that of a B<size_t>.
 
 =item "tlsaad" (B<OSSL_CIPHER_PARAM_AEAD_TLS1_AAD>) <octet string>
 
-=for comment TODO(3.0): Consider changing this interface so that all ciphers
-use the standard AEAD interface - rather than having this special purpose
-interface for TLS
-
 Sets TLSv1.2 AAD information for the associated cipher ctx.
 TLSv1.2 AAD information is always 13 bytes in length and is as defined for the
 "additional_data" field described in section 6.2.3.3 of RFC5246.
@@ -307,8 +303,6 @@ tag for the associated cipher ctx.
 The length of the "tlsaadpad" parameter should not exceed that of a B<size_t>.
 
 =item "tlsivfixed" (B<OSSL_CIPHER_PARAM_AEAD_TLS1_IV_FIXED>) <octet string>
-
-=for comment TODO(3.0): This interface needs completely redesigning!
 
 Sets the fixed portion of an IV for an AEAD cipher used in a TLS record
 encryption/ decryption for the associated cipher ctx.

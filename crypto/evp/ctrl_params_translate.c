@@ -1512,8 +1512,14 @@ static int get_payload_group_name(enum state state,
         return 0;
     }
 
-    if (ctx->p2 != NULL)
-        ctx->p1 = strlen(ctx->p2);
+    /*
+     * Quietly ignoring unknown groups matches the behaviour on the provider
+     * side.
+     */
+    if (ctx->p2 == NULL)
+        return 1;
+
+    ctx->p1 = strlen(ctx->p2);
     return default_fixup_args(state, translation, ctx);
 }
 

@@ -302,6 +302,27 @@ end:
     return ret;
 }
 
+static int test_dsa_default_paramgen_validate(int i)
+{
+    int ret;
+    EVP_PKEY_CTX *gen_ctx = NULL;
+    EVP_PKEY_CTX *check_ctx = NULL;
+    EVP_PKEY *params = NULL;
+
+    ret = TEST_ptr(gen_ctx = EVP_PKEY_CTX_new_from_name(NULL, "DSA", NULL))
+          && TEST_int_gt(EVP_PKEY_paramgen_init(gen_ctx), 0)
+          && (i == 0
+              || TEST_true(EVP_PKEY_CTX_set_dsa_paramgen_bits(gen_ctx, 512)))
+          && TEST_int_gt(EVP_PKEY_gen(gen_ctx, &params), 0)
+          && TEST_ptr(check_ctx = EVP_PKEY_CTX_new_from_pkey(NULL, params, NULL))
+          && TEST_int_gt(EVP_PKEY_param_check(check_ctx), 0);
+
+    EVP_PKEY_free(params);
+    EVP_PKEY_CTX_free(check_ctx);
+    EVP_PKEY_CTX_free(gen_ctx);
+    return ret;
+}
+
 #endif /* OPENSSL_NO_DSA */
 
 int setup_tests(void)
@@ -309,6 +330,7 @@ int setup_tests(void)
 #ifndef OPENSSL_NO_DSA
     ADD_TEST(dsa_test);
     ADD_TEST(dsa_keygen_test);
+    ADD_ALL_TESTS(test_dsa_default_paramgen_validate, 2);
 #endif
     return 1;
 }

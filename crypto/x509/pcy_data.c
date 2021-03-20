@@ -15,7 +15,7 @@
 
 /* Policy Node routines */
 
-void policy_data_free(X509_POLICY_DATA *data)
+void ossl_policy_data_free(X509_POLICY_DATA *data)
 {
     if (data == NULL)
         return;
@@ -35,8 +35,8 @@ void policy_data_free(X509_POLICY_DATA *data)
  * source.
  */
 
-X509_POLICY_DATA *policy_data_new(POLICYINFO *policy,
-                                  const ASN1_OBJECT *cid, int crit)
+X509_POLICY_DATA *ossl_policy_data_new(POLICYINFO *policy,
+                                       const ASN1_OBJECT *cid, int crit)
 {
     X509_POLICY_DATA *ret;
     ASN1_OBJECT *id;

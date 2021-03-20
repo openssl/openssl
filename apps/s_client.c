@@ -1629,7 +1629,7 @@ int s_client_main(int argc, char **argv)
     }
 
     if (chain_file != NULL) {
-        if (!load_certs(chain_file, &chain, pass, "client certificate chain"))
+        if (!load_certs(chain_file, 0, &chain, pass, "client certificate chain"))
             goto end;
     }
 

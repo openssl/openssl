@@ -15,7 +15,7 @@
  * Available in cipher_fips.c, and compiled with different values depending
  * on we're in the FIPS module or not.
  */
-extern const int allow_insecure_decrypt;
+extern const int ossl_aes_xts_allow_insecure_decrypt;
 
 PROV_CIPHER_FUNC(void, xts_stream,
                  (const unsigned char *in, unsigned char *out, size_t len,

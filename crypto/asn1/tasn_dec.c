@@ -239,12 +239,12 @@ static int asn1_item_embed_d2i(ASN1_VALUE **pval, const unsigned char **in,
             goto auxerr;
         if (*pval) {
             /* Free up and zero CHOICE value if initialised */
-            i = asn1_get_choice_selector(pval, it);
+            i = ossl_asn1_get_choice_selector(pval, it);
             if ((i >= 0) && (i < it->tcount)) {
                 tt = it->templates + i;
-                pchptr = asn1_get_field_ptr(pval, tt);
-                asn1_template_free(pchptr, tt);
-                asn1_set_choice_selector(pval, -1, it);
+                pchptr = ossl_asn1_get_field_ptr(pval, tt);
+                ossl_asn1_template_free(pchptr, tt);
+                ossl_asn1_set_choice_selector(pval, -1, it);
             }
         } else if (!ASN1_item_ex_new(pval, it)) {
             ERR_raise(ERR_LIB_ASN1, ERR_R_NESTED_ASN1_ERROR);
@@ -253,7 +253,7 @@ static int asn1_item_embed_d2i(ASN1_VALUE **pval, const unsigned char **in,
         /* CHOICE type, try each possibility in turn */
         p = *in;
         for (i = 0, tt = it->templates; i < it->tcount; i++, tt++) {
-            pchptr = asn1_get_field_ptr(pval, tt);
+            pchptr = ossl_asn1_get_field_ptr(pval, tt);
             /*
              * We mark field as OPTIONAL so its absence can be recognised.
              */
@@ -268,7 +268,7 @@ static int asn1_item_embed_d2i(ASN1_VALUE **pval, const unsigned char **in,
              * Must be an ASN1 parsing error.
              * Free up any partial choice value
              */
-            asn1_template_free(pchptr, tt);
+            ossl_asn1_template_free(pchptr, tt);
             errtt = tt;
             ERR_raise(ERR_LIB_ASN1, ERR_R_NESTED_ASN1_ERROR);
             goto err;
@@ -286,7 +286,7 @@ static int asn1_item_embed_d2i(ASN1_VALUE **pval, const unsigned char **in,
             goto err;
         }
 
-        asn1_set_choice_selector(pval, i, it);
+        ossl_asn1_set_choice_selector(pval, i, it);
 
         if (asn1_cb && !asn1_cb(ASN1_OP_D2I_POST, pval, it, NULL))
             goto auxerr;
@@ -336,11 +336,11 @@ static int asn1_item_embed_d2i(ASN1_VALUE **pval, const unsigned char **in,
             if (tt->flags & ASN1_TFLG_ADB_MASK) {
                 const ASN1_TEMPLATE *seqtt;
                 ASN1_VALUE **pseqval;
-                seqtt = asn1_do_adb(*pval, tt, 0);
+                seqtt = ossl_asn1_do_adb(*pval, tt, 0);
                 if (seqtt == NULL)
                     continue;
-                pseqval = asn1_get_field_ptr(pval, seqtt);
-                asn1_template_free(pseqval, seqtt);
+                pseqval = ossl_asn1_get_field_ptr(pval, seqtt);
+                ossl_asn1_template_free(pseqval, seqtt);
             }
         }
 
@@ -348,10 +348,10 @@ static int asn1_item_embed_d2i(ASN1_VALUE **pval, const unsigned char **in,
         for (i = 0, tt = it->templates; i < it->tcount; i++, tt++) {
             const ASN1_TEMPLATE *seqtt;
             ASN1_VALUE **pseqval;
-            seqtt = asn1_do_adb(*pval, tt, 1);
+            seqtt = ossl_asn1_do_adb(*pval, tt, 1);
             if (seqtt == NULL)
                 goto err;
-            pseqval = asn1_get_field_ptr(pval, seqtt);
+            pseqval = ossl_asn1_get_field_ptr(pval, seqtt);
             /* Have we ran out of data? */
             if (!len)
                 break;
@@ -388,7 +388,7 @@ static int asn1_item_embed_d2i(ASN1_VALUE **pval, const unsigned char **in,
                 /*
                  * OPTIONAL component absent. Free and zero the field.
                  */
-                asn1_template_free(pseqval, seqtt);
+                ossl_asn1_template_free(pseqval, seqtt);
                 continue;
             }
             /* Update length */
@@ -413,13 +413,13 @@ static int asn1_item_embed_d2i(ASN1_VALUE **pval, const unsigned char **in,
          */
         for (; i < it->tcount; tt++, i++) {
             const ASN1_TEMPLATE *seqtt;
-            seqtt = asn1_do_adb(*pval, tt, 1);
+            seqtt = ossl_asn1_do_adb(*pval, tt, 1);
             if (seqtt == NULL)
                 goto err;
             if (seqtt->flags & ASN1_TFLG_OPTIONAL) {
                 ASN1_VALUE **pseqval;
-                pseqval = asn1_get_field_ptr(pval, seqtt);
-                asn1_template_free(pseqval, seqtt);
+                pseqval = ossl_asn1_get_field_ptr(pval, seqtt);
+                ossl_asn1_template_free(pseqval, seqtt);
             } else {
                 errtt = seqtt;
                 ERR_raise(ERR_LIB_ASN1, ASN1_R_FIELD_MISSING);
@@ -427,7 +427,7 @@ static int asn1_item_embed_d2i(ASN1_VALUE **pval, const unsigned char **in,
             }
         }
         /* Save encoding */
-        if (!asn1_enc_save(pval, *in, p - *in, it))
+        if (!ossl_asn1_enc_save(pval, *in, p - *in, it))
             goto auxerr;
         if (asn1_cb && !asn1_cb(ASN1_OP_D2I_POST, pval, it, NULL))
             goto auxerr;
@@ -814,7 +814,7 @@ static int asn1_ex_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
     }
     switch (utype) {
     case V_ASN1_OBJECT:
-        if (!c2i_ASN1_OBJECT((ASN1_OBJECT **)pval, &cont, len))
+        if (!ossl_c2i_ASN1_OBJECT((ASN1_OBJECT **)pval, &cont, len))
             goto err;
         break;
 
@@ -838,14 +838,14 @@ static int asn1_ex_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
         break;
 
     case V_ASN1_BIT_STRING:
-        if (!c2i_ASN1_BIT_STRING((ASN1_BIT_STRING **)pval, &cont, len))
+        if (!ossl_c2i_ASN1_BIT_STRING((ASN1_BIT_STRING **)pval, &cont, len))
             goto err;
         break;
 
     case V_ASN1_INTEGER:
     case V_ASN1_ENUMERATED:
         tint = (ASN1_INTEGER **)pval;
-        if (!c2i_ASN1_INTEGER(tint, &cont, len))
+        if (!ossl_c2i_ASN1_INTEGER(tint, &cont, len))
             goto err;
         /* Fixup type to match the expected form */
         (*tint)->type = utype | ((*tint)->type & V_ASN1_NEG);

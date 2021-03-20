@@ -154,7 +154,8 @@ static int ecx_derive(void *vecxctx, unsigned char *secret, size_t *secretlen,
             }
         } else
 #endif
-        if (X25519(secret, ecxctx->key->privkey, ecxctx->peerkey->pubkey) == 0) {
+        if (ossl_x25519(secret, ecxctx->key->privkey,
+                        ecxctx->peerkey->pubkey) == 0) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_DURING_DERIVATION);
             return 0;
         }
@@ -169,7 +170,8 @@ static int ecx_derive(void *vecxctx, unsigned char *secret, size_t *secretlen,
             }
         } else
 #endif
-        if (X448(secret, ecxctx->key->privkey, ecxctx->peerkey->pubkey) == 0) {
+        if (ossl_x448(secret, ecxctx->key->privkey,
+                      ecxctx->peerkey->pubkey) == 0) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_DURING_DERIVATION);
             return 0;
         }

@@ -29,7 +29,7 @@
 static int write_blob(void *provctx, OSSL_CORE_BIO *cout,
                       void *data, int len)
 {
-    BIO *out = bio_new_from_core_bio(provctx, cout);
+    BIO *out = ossl_bio_new_from_core_bio(provctx, cout);
     int ret = BIO_write(out, data, len);
 
     BIO_free(out);

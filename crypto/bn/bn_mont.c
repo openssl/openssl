@@ -430,7 +430,8 @@ BN_MONT_CTX *BN_MONT_CTX_set_locked(BN_MONT_CTX **pmont, CRYPTO_RWLOCK *lock,
 {
     BN_MONT_CTX *ret;
 
-    CRYPTO_THREAD_read_lock(lock);
+    if (!CRYPTO_THREAD_read_lock(lock))
+        return NULL;
     ret = *pmont;
     CRYPTO_THREAD_unlock(lock);
     if (ret)
@@ -453,7 +454,11 @@ BN_MONT_CTX *BN_MONT_CTX_set_locked(BN_MONT_CTX **pmont, CRYPTO_RWLOCK *lock,
     }
 
     /* The locked compare-and-set, after the local work is done. */
-    CRYPTO_THREAD_write_lock(lock);
+    if (!CRYPTO_THREAD_write_lock(lock)) {
+        BN_MONT_CTX_free(ret);
+        return NULL;
+    }
+
     if (*pmont) {
         BN_MONT_CTX_free(ret);
         ret = *pmont;

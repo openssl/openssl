@@ -15,7 +15,6 @@
 #include <openssl/bio.h>
 #include "testutil.h"
 #include "crypto/siphash.h"
-#include "../crypto/siphash/siphash_local.h"
 #include "internal/nelem.h"
 
 typedef struct {

@@ -171,7 +171,8 @@ err:
  */
 int ossl_rsa_sp800_56b_validate_strength(int nbits, int strength)
 {
-    int s = (int)ifc_ffc_compute_security_bits(nbits);
+    int s = (int)ossl_ifc_ffc_compute_security_bits(nbits);
+
 #ifdef FIPS_MODULE
     if (s < RSA_FIPS1864_MIN_KEYGEN_STRENGTH
             || s > RSA_FIPS1864_MAX_KEYGEN_STRENGTH) {

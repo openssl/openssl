@@ -58,7 +58,7 @@ static int verify_signature(const OSSL_CMP_CTX *cmp_ctx,
     }
 
  sig_err:
-    res = x509_print_ex_brief(bio, cert, X509_FLAG_NO_EXTENSIONS);
+    res = ossl_x509_print_ex_brief(bio, cert, X509_FLAG_NO_EXTENSIONS);
     ERR_raise(ERR_LIB_CMP, CMP_R_ERROR_VALIDATING_SIGNATURE);
     if (res)
         ERR_add_error_mem_bio("\n", bio);
@@ -266,7 +266,7 @@ static int cert_acceptable(const OSSL_CMP_CTX *ctx,
     if (!check_kid(ctx, X509_get0_subject_key_id(cert), msg->header->senderKID))
         return 0;
     /* prevent misleading error later in case x509v3_cache_extensions() fails */
-    if (!x509v3_cache_extensions(cert)) {
+    if (!ossl_x509v3_cache_extensions(cert)) {
         ossl_cmp_warn(ctx, "cert appears to be invalid");
         return 0;
     }

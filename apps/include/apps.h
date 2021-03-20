@@ -94,7 +94,7 @@ STACK_OF(X509) *load_certs_multifile(char *files, const char *pass,
                                      const char *desc, X509_VERIFY_PARAM *vpm);
 X509_STORE *load_certstore(char *input, const char *pass, const char *desc,
                            X509_VERIFY_PARAM *vpm);
-int load_certs(const char *uri, STACK_OF(X509) **certs,
+int load_certs(const char *uri, int maybe_stdin, STACK_OF(X509) **certs,
                const char *pass, const char *desc);
 int load_crls(const char *uri, STACK_OF(X509_CRL) **crls,
               const char *pass, const char *desc);

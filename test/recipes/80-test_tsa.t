@@ -48,40 +48,42 @@ sub create_tsa_cert {
                 "-extfile", $openssl_conf, "-extensions", $EXT])));
 }
 
-sub create_time_stamp_response {
+sub create_resp {
+    my $config = shift;
+    my $chain = shift;
     my $queryfile = shift;
     my $outputfile = shift;
-    my $datafile = shift;
 
-    ok(run(app([@REPLY, "-section", "$datafile",
-                "-queryfile", "$queryfile", "-out", "$outputfile"])));
+    ok(run(app([@REPLY, "-section", $config, "-queryfile", $queryfile,
+                "-chain", $chain, # this overrides "certs" entry in config
+                "-out", $outputfile])));
 }
 
-sub verify_time_stamp_response {
+sub verify_ok {
+    my $datafile = shift;
     my $queryfile = shift;
     my $inputfile = shift;
-    my $datafile = shift;
+    my $untrustedfile = shift;
 
-    ok(run(app([@VERIFY, "-queryfile", "$queryfile",
-                "-in", "$inputfile", "-CAfile", "tsaca.pem",
-                "-untrusted", "tsa_cert1.pem"])));
-    ok(run(app([@VERIFY, "-data", "$datafile",
-                "-in", "$inputfile", "-CAfile", "tsaca.pem",
-                "-untrusted", "tsa_cert1.pem"])));
+    ok(run(app([@VERIFY, "-queryfile", $queryfile, "-in", $inputfile,
+                "-CAfile", "tsaca.pem", "-untrusted", $untrustedfile])));
+    ok(run(app([@VERIFY, "-data", $datafile, "-in", $inputfile,
+                "-CAfile", "tsaca.pem", "-untrusted", $untrustedfile])));
 }
 
-sub verify_time_stamp_response_fail {
+sub verify_fail {
     my $queryfile = shift;
     my $inputfile = shift;
+    my $untrustedfile = shift; # is needed for resp2, but not for resp1
+    my $cafile = shift;
 
-    ok(!run(app([@VERIFY, "-queryfile", "$queryfile",
-                 "-in", "$inputfile", "-CAfile", "tsaca.pem",
-                 "-untrusted", "tsa_cert1.pem"])));
+    ok(!run(app([@VERIFY, "-queryfile", $queryfile, "-in", $inputfile,
+                 "-untrusted", $untrustedfile, "-CAfile", $cafile])));
 }
 
 # main functions
 
-plan tests => 20;
+plan tests => 27;
 
 note "setting up TSA test directory";
 indir "tsa" => sub
@@ -123,14 +125,19 @@ indir "tsa" => sub
         'printing req1.req');
 
      subtest 'generating valid response for req1.req' => sub {
-         create_time_stamp_response("req1.tsq", "resp1.tsr", "tsa_config1")
+         create_resp("tsa_config1", "tsaca.pem", "req1.tsq", "resp1.tsr")
+     };
+
+     subtest 'generating response with wrong 2nd certid for req1.req' => sub {
+         create_resp("tsa_config1", "tsa_cert1.pem", "req1.tsq",
+                     "resp1_invalid.tsr")
      };
 
      ok(run(app([@REPLY, "-in", "resp1.tsr", "-text"])),
         'printing response');
 
      subtest 'verifying valid response' => sub {
-         verify_time_stamp_response("req1.tsq", "resp1.tsr", $testtsa)
+         verify_ok($testtsa, "req1.tsq", "resp1.tsr", "tsa_cert1.pem")
      };
 
      skip "failed", 11
@@ -156,7 +163,7 @@ indir "tsa" => sub
 
      skip "failed", 8
          unless subtest 'generating valid response for req2.req' => sub {
-             create_time_stamp_response("req2.tsq", "resp2.tsr", "tsa_config1")
+             create_resp("tsa_config1", "tsaca.pem", "req2.tsq", "resp2.tsr")
      };
 
      skip "failed", 7
@@ -180,16 +187,32 @@ indir "tsa" => sub
      ok(run(app([@REPLY, "-in", "resp2.tsr", "-text"])),
         'printing response');
 
-     subtest 'verifying valid response' => sub {
-         verify_time_stamp_response("req2.tsq", "resp2.tsr", $testtsa)
+     subtest 'verifying valid resp1, wrong untrusted is not used' => sub {
+         verify_ok($testtsa, "req1.tsq", "resp1.tsr", "tsa_cert2.pem")
      };
 
-     subtest 'verifying response against wrong request, it should fail' => sub {
-         verify_time_stamp_response_fail("req1.tsq", "resp2.tsr")
+     subtest 'verifying invalid resp1 with wrong 2nd certid' => sub {
+         verify_fail($testtsa, "req1.tsq", "resp1_invalid.tsr", "tsa_cert2.pem")
      };
 
-     subtest 'verifying response against wrong request, it should fail' => sub {
-         verify_time_stamp_response_fail("req2.tsq", "resp1.tsr")
+     subtest 'verifying valid resp2, correct untrusted being used' => sub {
+         verify_ok($testtsa, "req2.tsq", "resp2.tsr", "tsa_cert1.pem")
+     };
+
+     subtest 'verifying resp2 against wrong req1 should fail' => sub {
+         verify_fail("req1.tsq", "resp2.tsr", "tsa_cert1.pem", "tsaca.pem")
+     };
+
+     subtest 'verifying resp1 against wrong req2 should fail' => sub {
+         verify_fail("req2.tsq", "resp1.tsr", "tsa_cert1.pem", "tsaca.pem")
+     };
+
+     subtest 'verifying resp1 using wrong untrusted should fail' => sub {
+         verify_fail("req2.tsq", "resp2.tsr", "tsa_cert2.pem", "tsaca.pem")
+     };
+
+     subtest 'verifying resp1 using wrong root should fail' => sub {
+         verify_fail("req1.tsq", "resp1.tsr", "tsa_cert1.pem", "tsa_cert1.pem")
      };
 
      skip "failure", 2
@@ -200,8 +223,25 @@ indir "tsa" => sub
      ok(run(app([@QUERY, "-in", "req3.tsq", "-text"])),
         'printing req3.req');
 
-     subtest 'verifying response against wrong request, it should fail' => sub {
-         verify_time_stamp_response_fail("req3.tsq", "resp1.tsr")
+     subtest 'verifying resp1 against wrong req3 should fail' => sub {
+         verify_fail("req3.tsq", "resp1.tsr", "tsa_cert1.pem", "tsaca.pem")
      };
     }
+
+    # verifying response with two ESSCertIDs, referring to leaf cert
+    # "sectigo-signer.pem" and intermediate cert "sectigo-time-stamping-ca.pem"
+    # 1. validation chain contains these certs and root "user-trust-ca.pem"
+    ok(run(app([@VERIFY, "-no_check_time",
+                "-queryfile", data_file("all-zero.tsq"),
+                "-in", data_file("sectigo-all-zero.tsr"),
+                "-CAfile", data_file("user-trust-ca.pem")])),
+     "validation with two ESSCertIDs and 3-element chain");
+    # 2. validation chain contains these certs, a cross-cert, and different root
+    ok(run(app([@VERIFY, "-no_check_time",
+                "-queryfile", data_file("all-zero.tsq"),
+                "-in", data_file("sectigo-all-zero.tsr"),
+                "-untrusted", data_file("user-trust-ca-aaa.pem"),
+                "-CAfile", data_file("comodo-aaa.pem")])),
+     "validation with two ESSCertIDs and 4-element chain");
+
 }, create => 1, cleanup => 1

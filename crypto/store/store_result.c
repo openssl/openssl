@@ -483,7 +483,7 @@ static int try_cert(struct extracted_param_data_st *data, OSSL_STORE_INFO **v,
             /* We determined the object type */
             data->object_type = OSSL_OBJECT_CERT;
 
-        if (cert != NULL && !x509_set0_libctx(cert, libctx, propq)) {
+        if (cert != NULL && !ossl_x509_set0_libctx(cert, libctx, propq)) {
             X509_free(cert);
             cert = NULL;
         }
@@ -510,7 +510,7 @@ static int try_crl(struct extracted_param_data_st *data, OSSL_STORE_INFO **v,
             /* We determined the object type */
             data->object_type = OSSL_OBJECT_CRL;
 
-        if (crl != NULL && !x509_crl_set0_libctx(crl, libctx, propq)) {
+        if (crl != NULL && !ossl_x509_crl_set0_libctx(crl, libctx, propq)) {
             X509_CRL_free(crl);
             crl = NULL;
         }

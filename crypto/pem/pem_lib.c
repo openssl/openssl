@@ -29,7 +29,7 @@
 
 static int load_iv(char **fromp, unsigned char *to, int num);
 static int check_pem(const char *nm, const char *name);
-int pem_check_suffix(const char *pem_str, const char *suffix);
+int ossl_pem_check_suffix(const char *pem_str, const char *suffix);
 
 int PEM_def_callback(char *buf, int num, int rwflag, void *userdata)
 {
@@ -138,7 +138,7 @@ static int check_pem(const char *nm, const char *name)
             return 1;
         if (strcmp(nm, PEM_STRING_PKCS8INF) == 0)
             return 1;
-        slen = pem_check_suffix(nm, "PRIVATE KEY");
+        slen = ossl_pem_check_suffix(nm, "PRIVATE KEY");
         if (slen > 0) {
             /*
              * NB: ENGINE implementations won't contain a deprecated old
@@ -154,7 +154,7 @@ static int check_pem(const char *nm, const char *name)
     if (strcmp(name, PEM_STRING_PARAMETERS) == 0) {
         int slen;
         const EVP_PKEY_ASN1_METHOD *ameth;
-        slen = pem_check_suffix(nm, "PARAMETERS");
+        slen = ossl_pem_check_suffix(nm, "PARAMETERS");
         if (slen > 0) {
             ENGINE *e;
             ameth = EVP_PKEY_asn1_find_str(&e, nm, slen);
@@ -1006,7 +1006,7 @@ int PEM_read_bio(BIO *bp, char **name, char **header, unsigned char **data,
  * string "RSA".
  */
 
-int pem_check_suffix(const char *pem_str, const char *suffix)
+int ossl_pem_check_suffix(const char *pem_str, const char *suffix)
 {
     int pem_len = strlen(pem_str);
     int suffix_len = strlen(suffix);

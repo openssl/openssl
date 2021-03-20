@@ -18,7 +18,8 @@
 #include "prov/der_rsa.h"
 #include "prov/der_digests.h"
 
-/* More complex pre-compiled sequences.  TODO(3.0) refactor? */
+/* More complex pre-compiled sequences. */
+
 /*-
  * From https://tools.ietf.org/html/rfc8017#appendix-A.2.1
  *

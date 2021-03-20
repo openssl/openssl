@@ -23,7 +23,8 @@ int ossl_property_parse_init(OSSL_LIB_CTX *ctx);
 /* Property definition parser */
 OSSL_PROPERTY_LIST *ossl_parse_property(OSSL_LIB_CTX *ctx, const char *defn);
 /* Property query parser */
-OSSL_PROPERTY_LIST *ossl_parse_query(OSSL_LIB_CTX *ctx, const char *s);
+OSSL_PROPERTY_LIST *ossl_parse_query(OSSL_LIB_CTX *ctx, const char *s,
+                                     int create_values);
 /* Property checker of query vs definition */
 int ossl_property_match_count(const OSSL_PROPERTY_LIST *query,
                               const OSSL_PROPERTY_LIST *defn);

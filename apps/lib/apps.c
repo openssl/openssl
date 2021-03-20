@@ -272,7 +272,7 @@ static void warn_cert_msg(const char *uri, X509 *cert, const char *msg)
 {
     char *subj = X509_NAME_oneline(X509_get_subject_name(cert), NULL, 0);
 
-    BIO_printf(bio_err, "Warning: certificate from '%s' with subject '%s' %s",
+    BIO_printf(bio_err, "Warning: certificate from '%s' with subject '%s' %s\n",
                uri, subj, msg);
     OPENSSL_free(subj);
 }
@@ -411,12 +411,12 @@ X509_STORE *load_certstore(char *input, const char *pass, const char *desc,
  * Initialize or extend, if *certs != NULL, a certificate stack.
  * The caller is responsible for freeing *certs if its value is left not NULL.
  */
-int load_certs(const char *uri, STACK_OF(X509) **certs,
+int load_certs(const char *uri, int maybe_stdin, STACK_OF(X509) **certs,
                const char *pass, const char *desc)
 {
     int was_NULL = *certs == NULL;
-    int ret = load_key_certs_crls(uri, 0, pass, desc, NULL, NULL, NULL,
-                                  NULL, certs, NULL, NULL);
+    int ret = load_key_certs_crls(uri, maybe_stdin, pass, desc, NULL, NULL,
+                                  NULL, NULL, certs, NULL, NULL);
 
     if (!ret && was_NULL) {
         sk_X509_pop_free(*certs, X509_free);

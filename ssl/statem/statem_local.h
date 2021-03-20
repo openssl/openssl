@@ -159,8 +159,8 @@ MSG_PROCESS_RETURN tls_process_end_of_early_data(SSL *s, PACKET *pkt);
 
 #ifndef OPENSSL_NO_GOST
 /* These functions are used in GOST18 CKE, both for client and server */
-int gost18_cke_cipher_nid(const SSL *s);
-int gost_ukm(const SSL *s, unsigned char *dgst_buf);
+int ossl_gost18_cke_cipher_nid(const SSL *s);
+int ossl_gost_ukm(const SSL *s, unsigned char *dgst_buf);
 #endif
 
 /* Extension processing */

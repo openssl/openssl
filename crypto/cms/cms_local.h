@@ -468,12 +468,13 @@ int ossl_cms_RecipientInfo_kari_encrypt(const CMS_ContentInfo *cms,
 int ossl_cms_RecipientInfo_pwri_crypt(const CMS_ContentInfo *cms,
                                       CMS_RecipientInfo *ri, int en_de);
 /* SignerInfo routines */
-int CMS_si_check_attributes(const CMS_SignerInfo *si);
+int ossl_cms_si_check_attributes(const CMS_SignerInfo *si);
 void ossl_cms_SignerInfos_set_cmsctx(CMS_ContentInfo *cms);
 
 
 /* ESS routines */
-int ossl_ess_check_signing_certs(CMS_SignerInfo *si, STACK_OF(X509) *chain);
+int ossl_cms_check_signing_certs(const CMS_SignerInfo *si,
+                                 const STACK_OF(X509) *chain);
 
 int ossl_cms_dh_envelope(CMS_RecipientInfo *ri, int decrypt);
 int ossl_cms_ecdh_envelope(CMS_RecipientInfo *ri, int decrypt);

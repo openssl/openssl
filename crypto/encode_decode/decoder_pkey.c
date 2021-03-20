@@ -312,6 +312,7 @@ int ossl_decoder_ctx_setup_for_pkey(OSSL_DECODER_CTX *ctx,
         EVP_KEYMGMT_free(keymgmt);
     }
     sk_EVP_KEYMGMT_free(keymgmts);
+    keymgmts = NULL;
 
     /*
      * Finally, find all decoders that have any keymgmt of the collected
@@ -325,6 +326,7 @@ int ossl_decoder_ctx_setup_for_pkey(OSSL_DECODER_CTX *ctx,
         OSSL_DECODER_do_all_provided(libctx,
                                      collect_decoder, &collect_decoder_data);
         sk_OPENSSL_CSTRING_free(names);
+        names = NULL;
 
         if (collect_decoder_data.error_occurred)
             goto err;
@@ -343,6 +345,9 @@ int ossl_decoder_ctx_setup_for_pkey(OSSL_DECODER_CTX *ctx,
     ok = 1;
  err:
     decoder_clean_pkey_construct_arg(process_data);
+    sk_EVP_KEYMGMT_pop_free(keymgmts, EVP_KEYMGMT_free);
+    sk_OPENSSL_CSTRING_free(names);
+
     return ok;
 }
 

@@ -340,7 +340,7 @@ ASN1_STRING *ASN1_STRING_type_new(int type)
     return ret;
 }
 
-void asn1_string_embed_free(ASN1_STRING *a, int embed)
+void ossl_asn1_string_embed_free(ASN1_STRING *a, int embed)
 {
     if (a == NULL)
         return;
@@ -354,7 +354,7 @@ void ASN1_STRING_free(ASN1_STRING *a)
 {
     if (a == NULL)
         return;
-    asn1_string_embed_free(a, a->flags & ASN1_STRING_FLAG_EMBED);
+    ossl_asn1_string_embed_free(a, a->flags & ASN1_STRING_FLAG_EMBED);
 }
 
 void ASN1_STRING_clear_free(ASN1_STRING *a)
@@ -411,8 +411,9 @@ unsigned char *ASN1_STRING_data(ASN1_STRING *x)
 }
 #endif
 
-char *sk_ASN1_UTF8STRING2text(STACK_OF(ASN1_UTF8STRING) *text, const char *sep,
-                              size_t max_len /* excluding NUL terminator */)
+char *ossl_sk_ASN1_UTF8STRING2text(STACK_OF(ASN1_UTF8STRING) *text,
+                                   const char *sep,
+                                   size_t max_len /* excluding NUL terminator */)
 {
     int i;
     ASN1_UTF8STRING *current;

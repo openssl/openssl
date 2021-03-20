@@ -1027,7 +1027,7 @@ X509 *ossl_cmp_certresponse_get1_cert(const OSSL_CMP_CERTRESPONSE *crep,
     if (crt == NULL)
         ERR_raise(ERR_LIB_CMP, CMP_R_CERTIFICATE_NOT_FOUND);
     else
-        (void)x509_set0_libctx(crt, ctx->libctx, ctx->propq);
+        (void)ossl_x509_set0_libctx(crt, ctx->libctx, ctx->propq);
     return crt;
 }
 

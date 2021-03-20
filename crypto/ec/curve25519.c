@@ -5437,9 +5437,10 @@ static void sc_muladd(uint8_t *s, const uint8_t *a, const uint8_t *b,
     s[31] = (uint8_t) (s11 >> 17);
 }
 
-int ED25519_sign(uint8_t *out_sig, const uint8_t *message, size_t message_len,
-                 const uint8_t public_key[32], const uint8_t private_key[32],
-                 OSSL_LIB_CTX *libctx, const char *propq)
+int
+ossl_ed25519_sign(uint8_t *out_sig, const uint8_t *message, size_t message_len,
+                  const uint8_t public_key[32], const uint8_t private_key[32],
+                  OSSL_LIB_CTX *libctx, const char *propq)
 {
     uint8_t az[SHA512_DIGEST_LENGTH];
     uint8_t nonce[SHA512_DIGEST_LENGTH];
@@ -5493,9 +5494,10 @@ err:
 
 static const char allzeroes[15];
 
-int ED25519_verify(const uint8_t *message, size_t message_len,
-                   const uint8_t signature[64], const uint8_t public_key[32],
-                   OSSL_LIB_CTX *libctx, const char *propq)
+int
+ossl_ed25519_verify(const uint8_t *message, size_t message_len,
+                    const uint8_t signature[64], const uint8_t public_key[32],
+                    OSSL_LIB_CTX *libctx, const char *propq)
 {
     int i;
     ge_p3 A;
@@ -5577,8 +5579,10 @@ err:
     return res;
 }
 
-int ED25519_public_from_private(OSSL_LIB_CTX *ctx, uint8_t out_public_key[32],
-                                const uint8_t private_key[32], const char *propq)
+int
+ossl_ed25519_public_from_private(OSSL_LIB_CTX *ctx, uint8_t out_public_key[32],
+                                 const uint8_t private_key[32],
+                                 const char *propq)
 {
     uint8_t az[SHA512_DIGEST_LENGTH];
     ge_p3 A;
@@ -5606,8 +5610,9 @@ int ED25519_public_from_private(OSSL_LIB_CTX *ctx, uint8_t out_public_key[32],
     return 1;
 }
 
-int X25519(uint8_t out_shared_key[32], const uint8_t private_key[32],
-           const uint8_t peer_public_value[32])
+int
+ossl_x25519(uint8_t out_shared_key[32], const uint8_t private_key[32],
+            const uint8_t peer_public_value[32])
 {
     static const uint8_t kZeros[32] = {0};
     x25519_scalar_mult(out_shared_key, private_key, peer_public_value);
@@ -5615,7 +5620,8 @@ int X25519(uint8_t out_shared_key[32], const uint8_t private_key[32],
     return CRYPTO_memcmp(kZeros, out_shared_key, 32) != 0;
 }
 
-void X25519_public_from_private(uint8_t out_public_value[32],
+void
+ossl_x25519_public_from_private(uint8_t out_public_value[32],
                                 const uint8_t private_key[32])
 {
     uint8_t e[32];

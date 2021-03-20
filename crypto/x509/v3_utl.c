@@ -398,7 +398,7 @@ static char *strip_spaces(char *name)
  * V2I name comparison function: returns zero if 'name' matches cmp or cmp.*
  */
 
-int v3_name_cmp(const char *name, const char *cmp)
+int ossl_v3_name_cmp(const char *name, const char *cmp)
 {
     int len, ret;
     char c;
@@ -972,13 +972,13 @@ int X509_check_ip_asc(X509 *x, const char *ipasc, unsigned int flags)
 
     if (ipasc == NULL)
         return -2;
-    iplen = (size_t)a2i_ipadd(ipout, ipasc);
+    iplen = (size_t)ossl_a2i_ipadd(ipout, ipasc);
     if (iplen == 0)
         return -2;
     return do_x509_check(x, (char *)ipout, iplen, flags, GEN_IPADD, NULL);
 }
 
-char *ipaddr_to_asc(unsigned char *p, int len)
+char *ossl_ipaddr_to_asc(unsigned char *p, int len)
 {
     /*
      * 40 is enough space for the longest IPv6 address + nul terminator byte
@@ -1022,7 +1022,7 @@ ASN1_OCTET_STRING *a2i_IPADDRESS(const char *ipasc)
 
     /* If string contains a ':' assume IPv6 */
 
-    iplen = a2i_ipadd(ipout, ipasc);
+    iplen = ossl_a2i_ipadd(ipout, ipasc);
 
     if (!iplen)
         return NULL;
@@ -1053,12 +1053,12 @@ ASN1_OCTET_STRING *a2i_IPADDRESS_NC(const char *ipasc)
     p = iptmp + (p - ipasc);
     *p++ = 0;
 
-    iplen1 = a2i_ipadd(ipout, iptmp);
+    iplen1 = ossl_a2i_ipadd(ipout, iptmp);
 
     if (!iplen1)
         goto err;
 
-    iplen2 = a2i_ipadd(ipout + iplen1, p);
+    iplen2 = ossl_a2i_ipadd(ipout + iplen1, p);
 
     OPENSSL_free(iptmp);
     iptmp = NULL;
@@ -1080,7 +1080,7 @@ ASN1_OCTET_STRING *a2i_IPADDRESS_NC(const char *ipasc)
     return NULL;
 }
 
-int a2i_ipadd(unsigned char *ipout, const char *ipasc)
+int ossl_a2i_ipadd(unsigned char *ipout, const char *ipasc)
 {
     /* If string contains a ':' assume IPv6 */
 

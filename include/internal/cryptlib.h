@@ -92,8 +92,8 @@ void OPENSSL_cpuid_setup(void);
 extern unsigned int OPENSSL_ia32cap_P[];
 #endif
 void OPENSSL_showfatal(const char *fmta, ...);
-int do_ex_data_init(OSSL_LIB_CTX *ctx);
-void crypto_cleanup_all_ex_data_int(OSSL_LIB_CTX *ctx);
+int ossl_do_ex_data_init(OSSL_LIB_CTX *ctx);
+void ossl_crypto_cleanup_all_ex_data_int(OSSL_LIB_CTX *ctx);
 int openssl_init_fork_handlers(void);
 int openssl_get_fork_id(void);
 
@@ -187,15 +187,15 @@ int ossl_lib_ctx_run_once(OSSL_LIB_CTX *ctx, unsigned int idx,
 int ossl_lib_ctx_onfree(OSSL_LIB_CTX *ctx, ossl_lib_ctx_onfree_fn onfreefn);
 const char *ossl_lib_ctx_get_descriptor(OSSL_LIB_CTX *libctx);
 
-OSSL_LIB_CTX *crypto_ex_data_get_ossl_lib_ctx(const CRYPTO_EX_DATA *ad);
-int crypto_new_ex_data_ex(OSSL_LIB_CTX *ctx, int class_index, void *obj,
-                          CRYPTO_EX_DATA *ad);
-int crypto_get_ex_new_index_ex(OSSL_LIB_CTX *ctx, int class_index,
-                               long argl, void *argp,
-                               CRYPTO_EX_new *new_func,
-                               CRYPTO_EX_dup *dup_func,
-                               CRYPTO_EX_free *free_func);
-int crypto_free_ex_index_ex(OSSL_LIB_CTX *ctx, int class_index, int idx);
+OSSL_LIB_CTX *ossl_crypto_ex_data_get_ossl_lib_ctx(const CRYPTO_EX_DATA *ad);
+int ossl_crypto_new_ex_data_ex(OSSL_LIB_CTX *ctx, int class_index, void *obj,
+                               CRYPTO_EX_DATA *ad);
+int ossl_crypto_get_ex_new_index_ex(OSSL_LIB_CTX *ctx, int class_index,
+                                    long argl, void *argp,
+                                    CRYPTO_EX_new *new_func,
+                                    CRYPTO_EX_dup *dup_func,
+                                    CRYPTO_EX_free *free_func);
+int ossl_crypto_free_ex_index_ex(OSSL_LIB_CTX *ctx, int class_index, int idx);
 
 /* Function for simple binary search */
 
@@ -247,13 +247,13 @@ static ossl_inline void ossl_sleep(unsigned long millis)
 }
 #endif /* defined OPENSSL_SYS_UNIX */
 
-char *sk_ASN1_UTF8STRING2text(STACK_OF(ASN1_UTF8STRING) *text, const char *sep,
-                              size_t max_len);
-char *ipaddr_to_asc(unsigned char *p, int len);
+char *ossl_sk_ASN1_UTF8STRING2text(STACK_OF(ASN1_UTF8STRING) *text,
+                                   const char *sep, size_t max_len);
+char *ossl_ipaddr_to_asc(unsigned char *p, int len);
 
-char *openssl_buf2hexstr_sep(const unsigned char *buf, long buflen, char sep);
-unsigned char *openssl_hexstr2buf_sep(const char *str, long *buflen,
-                                      const char sep);
+char *ossl_buf2hexstr_sep(const unsigned char *buf, long buflen, char sep);
+unsigned char *ossl_hexstr2buf_sep(const char *str, long *buflen,
+                                   const char sep);
 
 static ossl_inline int ossl_ends_with_dirsep(const char *path)
 {

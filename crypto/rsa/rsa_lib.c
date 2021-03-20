@@ -163,12 +163,12 @@ void RSA_free(RSA *r)
     BN_clear_free(r->iqmp);
 
 #if defined(FIPS_MODULE) && !defined(OPENSSL_NO_ACVP_TESTS)
-    rsa_acvp_test_free(r->acvp_test);
+    ossl_rsa_acvp_test_free(r->acvp_test);
 #endif
 
 #ifndef FIPS_MODULE
     RSA_PSS_PARAMS_free(r->pss);
-    sk_RSA_PRIME_INFO_pop_free(r->prime_infos, rsa_multip_info_free);
+    sk_RSA_PRIME_INFO_pop_free(r->prime_infos, ossl_rsa_multip_info_free);
 #endif
     BN_BLINDING_free(r->blinding);
     BN_BLINDING_free(r->mt_blinding);
@@ -309,7 +309,7 @@ static uint32_t ilog_e(uint64_t v)
  *           \cdot(log_e(nBits \cdot log_e(2))^{2/3} - 4.69}{log_e(2)}
  * The two cube roots are merged together here.
  */
-uint16_t ifc_ffc_compute_security_bits(int n)
+uint16_t ossl_ifc_ffc_compute_security_bits(int n)
 {
     uint64_t x;
     uint32_t lx;
@@ -357,11 +357,11 @@ int RSA_security_bits(const RSA *rsa)
         /* This ought to mean that we have private key at hand. */
         int ex_primes = sk_RSA_PRIME_INFO_num(rsa->prime_infos);
 
-        if (ex_primes <= 0 || (ex_primes + 2) > rsa_multip_cap(bits))
+        if (ex_primes <= 0 || (ex_primes + 2) > ossl_rsa_multip_cap(bits))
             return 0;
     }
 #endif
-    return ifc_ffc_compute_security_bits(bits);
+    return ossl_ifc_ffc_compute_security_bits(bits);
 }
 
 int RSA_set0_key(RSA *r, BIGNUM *n, BIGNUM *e, BIGNUM *d)
@@ -469,7 +469,7 @@ int RSA_set0_multi_prime_params(RSA *r, BIGNUM *primes[], BIGNUM *exps[],
         old = r->prime_infos;
 
     for (i = 0; i < pnum; i++) {
-        pinfo = rsa_multip_info_new();
+        pinfo = ossl_rsa_multip_info_new();
         if (pinfo == NULL)
             goto err;
         if (primes[i] != NULL && exps[i] != NULL && coeffs[i] != NULL) {
@@ -483,7 +483,7 @@ int RSA_set0_multi_prime_params(RSA *r, BIGNUM *primes[], BIGNUM *exps[],
             BN_set_flags(pinfo->d, BN_FLG_CONSTTIME);
             BN_set_flags(pinfo->t, BN_FLG_CONSTTIME);
         } else {
-            rsa_multip_info_free(pinfo);
+            ossl_rsa_multip_info_free(pinfo);
             goto err;
         }
         (void)sk_RSA_PRIME_INFO_push(prime_infos, pinfo);
@@ -491,7 +491,7 @@ int RSA_set0_multi_prime_params(RSA *r, BIGNUM *primes[], BIGNUM *exps[],
 
     r->prime_infos = prime_infos;
 
-    if (!rsa_multip_calc_product(r)) {
+    if (!ossl_rsa_multip_calc_product(r)) {
         r->prime_infos = old;
         goto err;
     }
@@ -503,7 +503,7 @@ int RSA_set0_multi_prime_params(RSA *r, BIGNUM *primes[], BIGNUM *exps[],
          * be freed in that case. So currently, stay consistent
          * with other *set0* functions: just free it...
          */
-        sk_RSA_PRIME_INFO_pop_free(old, rsa_multip_info_free);
+        sk_RSA_PRIME_INFO_pop_free(old, ossl_rsa_multip_info_free);
     }
 
     r->version = RSA_ASN1_VERSION_MULTI;
@@ -512,7 +512,7 @@ int RSA_set0_multi_prime_params(RSA *r, BIGNUM *primes[], BIGNUM *exps[],
     return 1;
  err:
     /* r, d, t should not be freed */
-    sk_RSA_PRIME_INFO_pop_free(prime_infos, rsa_multip_info_free_ex);
+    sk_RSA_PRIME_INFO_pop_free(prime_infos, ossl_rsa_multip_info_free_ex);
     return 0;
 }
 #endif
@@ -658,6 +658,18 @@ const RSA_PSS_PARAMS *RSA_get0_pss_params(const RSA *r)
 }
 
 /* Internal */
+int ossl_rsa_set0_pss_params(RSA *r, RSA_PSS_PARAMS *pss)
+{
+#ifdef FIPS_MODULE
+    return 0;
+#else
+    RSA_PSS_PARAMS_free(r->pss);
+    r->pss = pss;
+    return 1;
+#endif
+}
+
+/* Internal */
 RSA_PSS_PARAMS_30 *ossl_rsa_get0_pss_params_30(RSA *r)
 {
     return &r->pss_params;
@@ -749,7 +761,7 @@ int ossl_rsa_set0_all_params(RSA *r, const STACK_OF(BIGNUM) *primes,
             if (!ossl_assert(prime != NULL && exp != NULL && coeff != NULL))
                 goto err;
 
-            /* Using rsa_multip_info_new() is wasteful, so allocate directly */
+            /* Using ossl_rsa_multip_info_new() is wasteful, so allocate directly */
             if ((pinfo = OPENSSL_zalloc(sizeof(*pinfo))) == NULL) {
                 ERR_raise(ERR_LIB_RSA, ERR_R_MALLOC_FAILURE);
                 goto err;
@@ -766,7 +778,7 @@ int ossl_rsa_set0_all_params(RSA *r, const STACK_OF(BIGNUM) *primes,
 
         r->prime_infos = prime_infos;
 
-        if (!rsa_multip_calc_product(r)) {
+        if (!ossl_rsa_multip_calc_product(r)) {
             r->prime_infos = old_infos;
             goto err;
         }
@@ -783,7 +795,7 @@ int ossl_rsa_set0_all_params(RSA *r, const STACK_OF(BIGNUM) *primes,
          * be freed in that case. So currently, stay consistent
          * with other *set0* functions: just free it...
          */
-        sk_RSA_PRIME_INFO_pop_free(old_infos, rsa_multip_info_free);
+        sk_RSA_PRIME_INFO_pop_free(old_infos, ossl_rsa_multip_info_free);
     }
 #endif
 
@@ -794,7 +806,7 @@ int ossl_rsa_set0_all_params(RSA *r, const STACK_OF(BIGNUM) *primes,
 #ifndef FIPS_MODULE
  err:
     /* r, d, t should not be freed */
-    sk_RSA_PRIME_INFO_pop_free(prime_infos, rsa_multip_info_free_ex);
+    sk_RSA_PRIME_INFO_pop_free(prime_infos, ossl_rsa_multip_info_free_ex);
     return 0;
 #endif
 }

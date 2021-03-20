@@ -7,9 +7,11 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <string.h>
 #include <openssl/core_names.h>
 #include <openssl/params.h>
 #include <openssl/ec.h>
+#include <openssl/rand.h>
 #include <openssl/err.h>
 #include "crypto/ecx.h"
 #include "ecx_backend.h"
@@ -24,21 +26,21 @@ int ossl_ecx_public_from_private(ECX_KEY *key)
 {
     switch (key->type) {
     case ECX_KEY_TYPE_X25519:
-        X25519_public_from_private(key->pubkey, key->privkey);
+        ossl_x25519_public_from_private(key->pubkey, key->privkey);
         break;
     case ECX_KEY_TYPE_ED25519:
-        if (!ED25519_public_from_private(key->libctx, key->pubkey, key->privkey,
-                                         key->propq)) {
+        if (!ossl_ed25519_public_from_private(key->libctx, key->pubkey,
+                                              key->privkey, key->propq)) {
             ERR_raise(ERR_LIB_EC, EC_R_FAILED_MAKING_PUBLIC_KEY);
             return 0;
         }
         break;
     case ECX_KEY_TYPE_X448:
-        X448_public_from_private(key->pubkey, key->privkey);
+        ossl_x448_public_from_private(key->pubkey, key->privkey);
         break;
     case ECX_KEY_TYPE_ED448:
-        if (!ED448_public_from_private(key->libctx, key->pubkey, key->privkey,
-                                       key->propq)) {
+        if (!ossl_ed448_public_from_private(key->libctx, key->pubkey,
+                                            key->privkey, key->propq)) {
             ERR_raise(ERR_LIB_EC, EC_R_FAILED_MAKING_PUBLIC_KEY);
             return 0;
         }
@@ -90,3 +92,110 @@ int ossl_ecx_key_fromdata(ECX_KEY *ecx, const OSSL_PARAM params[],
     return 1;
 }
 
+#ifndef FIPS_MODULE
+ECX_KEY *ossl_ecx_key_op(const X509_ALGOR *palg,
+                         const unsigned char *p, int plen,
+                         int id, ecx_key_op_t op,
+                         OSSL_LIB_CTX *libctx, const char *propq)
+{
+    ECX_KEY *key = NULL;
+    unsigned char *privkey, *pubkey;
+
+    if (op != KEY_OP_KEYGEN) {
+        if (palg != NULL) {
+            int ptype;
+
+            /* Algorithm parameters must be absent */
+            X509_ALGOR_get0(NULL, &ptype, NULL, palg);
+            if (ptype != V_ASN1_UNDEF) {
+                ERR_raise(ERR_LIB_EC, EC_R_INVALID_ENCODING);
+                return 0;
+            }
+            if (id == EVP_PKEY_NONE)
+                id = OBJ_obj2nid(palg->algorithm);
+            else if (id != OBJ_obj2nid(palg->algorithm)) {
+                ERR_raise(ERR_LIB_EC, EC_R_INVALID_ENCODING);
+                return 0;
+            }
+        }
+
+        if (p == NULL || id == EVP_PKEY_NONE || plen != KEYLENID(id)) {
+            ERR_raise(ERR_LIB_EC, EC_R_INVALID_ENCODING);
+            return 0;
+        }
+    }
+
+    key = ossl_ecx_key_new(libctx, KEYNID2TYPE(id), 1, propq);
+    if (key == NULL) {
+        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
+        return 0;
+    }
+    pubkey = key->pubkey;
+
+    if (op == KEY_OP_PUBLIC) {
+        memcpy(pubkey, p, plen);
+    } else {
+        privkey = ossl_ecx_key_allocate_privkey(key);
+        if (privkey == NULL) {
+            ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
+            goto err;
+        }
+        if (op == KEY_OP_KEYGEN) {
+            if (id != EVP_PKEY_NONE) {
+                if (RAND_priv_bytes_ex(libctx, privkey, KEYLENID(id)) <= 0)
+                    goto err;
+                if (id == EVP_PKEY_X25519) {
+                    privkey[0] &= 248;
+                    privkey[X25519_KEYLEN - 1] &= 127;
+                    privkey[X25519_KEYLEN - 1] |= 64;
+                } else if (id == EVP_PKEY_X448) {
+                    privkey[0] &= 252;
+                    privkey[X448_KEYLEN - 1] |= 128;
+                }
+            }
+        } else {
+            memcpy(privkey, p, KEYLENID(id));
+        }
+        if (!ossl_ecx_public_from_private(key)) {
+            ERR_raise(ERR_LIB_EC, EC_R_FAILED_MAKING_PUBLIC_KEY);
+            goto err;
+        }
+    }
+
+    return key;
+ err:
+    ossl_ecx_key_free(key);
+    return NULL;
+}
+
+ECX_KEY *ossl_ecx_key_from_pkcs8(const PKCS8_PRIV_KEY_INFO *p8inf,
+                                 OSSL_LIB_CTX *libctx, const char *propq)
+{
+    ECX_KEY *ecx = NULL;
+    const unsigned char *p;
+    int plen;
+    ASN1_OCTET_STRING *oct = NULL;
+    const X509_ALGOR *palg;
+
+    if (!PKCS8_pkey_get0(NULL, &p, &plen, &palg, p8inf))
+        return 0;
+
+    oct = d2i_ASN1_OCTET_STRING(NULL, &p, plen);
+    if (oct == NULL) {
+        p = NULL;
+        plen = 0;
+    } else {
+        p = ASN1_STRING_get0_data(oct);
+        plen = ASN1_STRING_length(oct);
+    }
+
+    /*
+     * EVP_PKEY_NONE means that ecx_key_op() has to figure out the key type
+     * on its own.
+     */
+    ecx = ossl_ecx_key_op(palg, p, plen, EVP_PKEY_NONE, KEY_OP_PRIVATE,
+                          libctx, propq);
+    ASN1_OCTET_STRING_free(oct);
+    return ecx;
+}
+#endif

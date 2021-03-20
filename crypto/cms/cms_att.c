@@ -125,7 +125,8 @@ int CMS_signed_add1_attr_by_txt(CMS_SignerInfo *si,
     return 0;
 }
 
-void *CMS_signed_get0_data_by_OBJ(CMS_SignerInfo *si, const ASN1_OBJECT *oid,
+void *CMS_signed_get0_data_by_OBJ(const CMS_SignerInfo *si,
+                                  const ASN1_OBJECT *oid,
                                   int lastpos, int type)
 {
     return X509at_get0_data_by_OBJ(si->signedAttrs, oid, lastpos, type);
@@ -262,7 +263,7 @@ static int cms_check_attribute(int nid, int flags, int type,
  *     attributes. Only one instance of each is allowed, with each of these
  *     attributes containing a single attribute value in its set.
  */
-int CMS_si_check_attributes(const CMS_SignerInfo *si)
+int ossl_cms_si_check_attributes(const CMS_SignerInfo *si)
 {
     int i;
     int have_signed_attrs = (CMS_signed_get_attr_count(si) > 0);

@@ -112,8 +112,8 @@ typedef int (encoder)(void **encoded, long *encoded_len,
                       const char *output_type, const char *output_structure,
                       const char *pass, const char *pcipher);
 typedef int (decoder)(void **object, void *encoded, long encoded_len,
-                      const char *keytype, const char *input_type,
-                      int selection, const char *pass);
+                      const char *input_type, const char *structure_type,
+                      const char *keytype, int selection, const char *pass);
 typedef int (tester)(const void *data1, size_t data1_len,
                      const void *data2, size_t data2_len);
 typedef int (checker)(const char *type, const void *data, size_t data_len);
@@ -145,8 +145,9 @@ static int test_encode_decode(const char *type, EVP_PKEY *pkey,
                              output_type, output_structure, pass, pcipher))
         || !TEST_true(check_cb(type, encoded, encoded_len))
         || !TEST_true(decode_cb((void **)&pkey2, encoded, encoded_len,
+                                output_type, output_structure,
                                 (flags & FLAG_DECODE_WITH_TYPE ? type : NULL),
-                                output_type, selection, pass))
+                                selection, pass))
         || !TEST_true(encode_cb(&encoded2, &encoded2_len, pkey2, selection,
                                 output_type, output_structure, pass, pcipher)))
         goto end;
@@ -226,8 +227,10 @@ static int encode_EVP_PKEY_prov(void **encoded, long *encoded_len,
 }
 
 static int decode_EVP_PKEY_prov(void **object, void *encoded, long encoded_len,
-                                const char *keytype, const char *input_type,
-                                int selection, const char *pass)
+                                const char *input_type,
+                                const char *structure_type,
+                                const char *keytype, int selection,
+                                const char *pass)
 {
     EVP_PKEY *pkey = NULL, *testpkey = NULL;
     OSSL_DECODER_CTX *dctx = NULL;
@@ -258,7 +261,7 @@ static int decode_EVP_PKEY_prov(void **object, void *encoded, long encoded_len,
 
         if (!TEST_ptr(dctx = OSSL_DECODER_CTX_new_for_pkey(&testpkey,
                                                            testtype,
-                                                           NULL,
+                                                           structure_type,
                                                            keytype,
                                                            selection,
                                                            NULL, NULL))

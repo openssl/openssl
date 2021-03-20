@@ -138,7 +138,8 @@ ENGINE *ENGINE_get_first(void)
         return NULL;
     }
 
-    CRYPTO_THREAD_write_lock(global_engine_lock);
+    if (!CRYPTO_THREAD_write_lock(global_engine_lock))
+        return NULL;
     ret = engine_list_head;
     if (ret) {
         ret->struct_ref++;
@@ -157,7 +158,8 @@ ENGINE *ENGINE_get_last(void)
         return NULL;
     }
 
-    CRYPTO_THREAD_write_lock(global_engine_lock);
+    if (!CRYPTO_THREAD_write_lock(global_engine_lock))
+        return NULL;
     ret = engine_list_tail;
     if (ret) {
         ret->struct_ref++;
@@ -173,9 +175,10 @@ ENGINE *ENGINE_get_next(ENGINE *e)
     ENGINE *ret = NULL;
     if (e == NULL) {
         ERR_raise(ERR_LIB_ENGINE, ERR_R_PASSED_NULL_PARAMETER);
-        return 0;
+        return NULL;
     }
-    CRYPTO_THREAD_write_lock(global_engine_lock);
+    if (!CRYPTO_THREAD_write_lock(global_engine_lock))
+        return NULL;
     ret = e->next;
     if (ret) {
         /* Return a valid structural reference to the next ENGINE */
@@ -193,9 +196,10 @@ ENGINE *ENGINE_get_prev(ENGINE *e)
     ENGINE *ret = NULL;
     if (e == NULL) {
         ERR_raise(ERR_LIB_ENGINE, ERR_R_PASSED_NULL_PARAMETER);
-        return 0;
+        return NULL;
     }
-    CRYPTO_THREAD_write_lock(global_engine_lock);
+    if (!CRYPTO_THREAD_write_lock(global_engine_lock))
+        return NULL;
     ret = e->prev;
     if (ret) {
         /* Return a valid structural reference to the next ENGINE */
@@ -220,7 +224,8 @@ int ENGINE_add(ENGINE *e)
         ERR_raise(ERR_LIB_ENGINE, ENGINE_R_ID_OR_NAME_MISSING);
         return 0;
     }
-    CRYPTO_THREAD_write_lock(global_engine_lock);
+    if (!CRYPTO_THREAD_write_lock(global_engine_lock))
+        return 0;
     if (!engine_list_add(e)) {
         ERR_raise(ERR_LIB_ENGINE, ENGINE_R_INTERNAL_LIST_ERROR);
         to_return = 0;
@@ -237,7 +242,8 @@ int ENGINE_remove(ENGINE *e)
         ERR_raise(ERR_LIB_ENGINE, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
-    CRYPTO_THREAD_write_lock(global_engine_lock);
+    if (!CRYPTO_THREAD_write_lock(global_engine_lock))
+        return 0;
     if (!engine_list_remove(e)) {
         ERR_raise(ERR_LIB_ENGINE, ENGINE_R_INTERNAL_LIST_ERROR);
         to_return = 0;
@@ -289,7 +295,8 @@ ENGINE *ENGINE_by_id(const char *id)
         return NULL;
     }
 
-    CRYPTO_THREAD_write_lock(global_engine_lock);
+    if (!CRYPTO_THREAD_write_lock(global_engine_lock))
+        return NULL;
     iterator = engine_list_head;
     while (iterator && (strcmp(id, iterator->id) != 0))
         iterator = iterator->next;

@@ -11,4 +11,4 @@
  * Available in pbkdfe_fips.c, and compiled with different values depending
  * on we're in the FIPS module or not.
  */
-extern const int kdf_pbkdf2_default_checks;
+extern const int ossl_kdf_pbkdf2_default_checks;

@@ -204,7 +204,7 @@ static size_t c2i_ibuf(unsigned char *b, int *pneg,
     return plen;
 }
 
-int i2c_ASN1_INTEGER(ASN1_INTEGER *a, unsigned char **pp)
+int ossl_i2c_ASN1_INTEGER(ASN1_INTEGER *a, unsigned char **pp)
 {
     return i2c_ibuf(a->data, a->length, a->type & V_ASN1_NEG, pp);
 }
@@ -283,8 +283,8 @@ static int asn1_get_int64(int64_t *pr, const unsigned char *b, size_t blen,
 }
 
 /* Convert ASN1 INTEGER content octets to ASN1_INTEGER structure */
-ASN1_INTEGER *c2i_ASN1_INTEGER(ASN1_INTEGER **a, const unsigned char **pp,
-                               long len)
+ASN1_INTEGER *ossl_c2i_ASN1_INTEGER(ASN1_INTEGER **a, const unsigned char **pp,
+                                    long len)
 {
     ASN1_INTEGER *ret = NULL;
     size_t r;
@@ -609,7 +609,8 @@ BIGNUM *ASN1_ENUMERATED_to_BN(const ASN1_ENUMERATED *ai, BIGNUM *bn)
 }
 
 /* Internal functions used by x_int64.c */
-int c2i_uint64_int(uint64_t *ret, int *neg, const unsigned char **pp, long len)
+int ossl_c2i_uint64_int(uint64_t *ret, int *neg,
+                        const unsigned char **pp, long len)
 {
     unsigned char buf[sizeof(uint64_t)];
     size_t buflen;
@@ -625,7 +626,7 @@ int c2i_uint64_int(uint64_t *ret, int *neg, const unsigned char **pp, long len)
     return asn1_get_uint64(ret, buf, buflen);
 }
 
-int i2c_uint64_int(unsigned char *p, uint64_t r, int neg)
+int ossl_i2c_uint64_int(unsigned char *p, uint64_t r, int neg)
 {
     unsigned char buf[sizeof(uint64_t)];
     size_t off;

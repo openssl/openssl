@@ -140,11 +140,11 @@ int X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags,
             goto err;
         if (BIO_write(bp, "            Not Before: ", 24) <= 0)
             goto err;
-        if (asn1_time_print_ex(bp, X509_get0_notBefore(x)) == 0)
+        if (ossl_asn1_time_print_ex(bp, X509_get0_notBefore(x)) == 0)
             goto err;
         if (BIO_write(bp, "\n            Not After : ", 25) <= 0)
             goto err;
-        if (asn1_time_print_ex(bp, X509_get0_notAfter(x)) == 0)
+        if (ossl_asn1_time_print_ex(bp, X509_get0_notAfter(x)) == 0)
             goto err;
         if (BIO_write(bp, "\n", 1) <= 0)
             goto err;
@@ -386,7 +386,7 @@ int X509_aux_print(BIO *out, X509 *x, int indent)
  * Helper functions for improving certificate verification error diagnostics
  */
 
-int x509_print_ex_brief(BIO *bio, X509 *cert, unsigned long neg_cflags)
+int ossl_x509_print_ex_brief(BIO *bio, X509 *cert, unsigned long neg_cflags)
 {
     unsigned long flags = ASN1_STRFLGS_RFC2253 | ASN1_STRFLGS_ESC_QUOTE |
         XN_FLAG_SEP_CPLUS_SPC | XN_FLAG_FN_SN;
@@ -428,7 +428,7 @@ static int print_certs(BIO *bio, const STACK_OF(X509) *certs)
         X509 *cert = sk_X509_value(certs, i);
 
         if (cert != NULL) {
-            if (!x509_print_ex_brief(bio, cert, 0))
+            if (!ossl_x509_print_ex_brief(bio, cert, 0))
                 return 0;
             if (!X509V3_extensions_print(bio, NULL,
                                          X509_get0_extensions(cert),
@@ -495,8 +495,8 @@ int X509_STORE_CTX_print_verify_cb(int ok, X509_STORE_CTX *ctx)
         }
 
         BIO_printf(bio, "Failure for:\n");
-        x509_print_ex_brief(bio, X509_STORE_CTX_get_current_cert(ctx),
-                            X509_FLAG_NO_EXTENSIONS);
+        ossl_x509_print_ex_brief(bio, X509_STORE_CTX_get_current_cert(ctx),
+                                 X509_FLAG_NO_EXTENSIONS);
         if (cert_error == X509_V_ERR_CERT_UNTRUSTED
                 || cert_error == X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT
                 || cert_error == X509_V_ERR_SELF_SIGNED_CERT_IN_CHAIN

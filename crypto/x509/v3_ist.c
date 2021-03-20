@@ -134,7 +134,7 @@ static int i2r_issuer_sign_tool(X509V3_EXT_METHOD *method,
     return 1;
 }
 
-const X509V3_EXT_METHOD v3_issuer_sign_tool = {
+const X509V3_EXT_METHOD ossl_v3_issuer_sign_tool = {
     NID_issuerSignTool,                   /* nid */
     X509V3_EXT_MULTILINE,                 /* flags */
     ASN1_ITEM_ref(ISSUER_SIGN_TOOL),      /* template */

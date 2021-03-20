@@ -1014,7 +1014,7 @@ static int key2any_encode(struct key2any_ctx_st *ctx, OSSL_CORE_BIO *cout,
         ERR_raise(ERR_LIB_PROV, ERR_R_PASSED_NULL_PARAMETER);
     } else if (writer != NULL
                && (checker == NULL || checker(key, type))) {
-        BIO *out = bio_new_from_core_bio(ctx->provctx, cout);
+        BIO *out = ossl_bio_new_from_core_bio(ctx->provctx, cout);
 
         if (out != NULL
             && (pwcb == NULL

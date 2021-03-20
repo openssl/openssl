@@ -68,9 +68,9 @@ static int test_hexstr_sep_to_from(int test_index)
     char *out = NULL;
     struct testdata *test = &tbl_testdata[test_index];
 
-    if (!TEST_ptr(buf = openssl_hexstr2buf_sep(test->in, &len, test->sep))
+    if (!TEST_ptr(buf = ossl_hexstr2buf_sep(test->in, &len, test->sep))
         || !TEST_mem_eq(buf, len, test->expected, test->expected_len)
-        || !TEST_ptr(out = openssl_buf2hexstr_sep(buf, len, test->sep))
+        || !TEST_ptr(out = ossl_buf2hexstr_sep(buf, len, test->sep))
         || !TEST_str_eq(out, test->in))
        goto err;
 

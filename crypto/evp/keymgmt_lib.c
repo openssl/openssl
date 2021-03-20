@@ -101,7 +101,8 @@ void *evp_keymgmt_util_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt)
     if (pk->keymgmt == keymgmt)
         return pk->keydata;
 
-    CRYPTO_THREAD_read_lock(pk->lock);
+    if (!CRYPTO_THREAD_read_lock(pk->lock))
+        return NULL;
     /*
      * If the provider native "origin" hasn't changed since last time, we
      * try to find our keymgmt in the operation cache.  If it has changed
@@ -156,7 +157,10 @@ void *evp_keymgmt_util_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt)
         return NULL;
     }
 
-    CRYPTO_THREAD_write_lock(pk->lock);
+    if (!CRYPTO_THREAD_write_lock(pk->lock)) {
+        evp_keymgmt_freedata(keymgmt, import_data.keydata);
+        return NULL;
+    }
     /* Check to make sure some other thread didn't get there first */
     op = evp_keymgmt_util_find_operation_cache(pk, keymgmt);
     if (op != NULL && op->keydata != NULL) {
@@ -451,8 +455,10 @@ int evp_keymgmt_util_copy(EVP_PKEY *to, EVP_PKEY *from, int selection)
          * implemented, so just copy and be done
          */
         if (!evp_keymgmt_copy(to_keymgmt, to_keydata, from->keydata,
-                              selection))
+                              selection)) {
+            evp_keymgmt_freedata(to_keymgmt, alloc_keydata);
             return 0;
+        }
     } else if (match_type(to_keymgmt, from->keymgmt)) {
         struct evp_keymgmt_util_try_import_data_st import_data;
 
@@ -462,10 +468,8 @@ int evp_keymgmt_util_copy(EVP_PKEY *to, EVP_PKEY *from, int selection)
 
         if (!evp_keymgmt_util_export(from, selection,
                                      &evp_keymgmt_util_try_import,
-                                     &import_data)) {
-            evp_keymgmt_freedata(to_keymgmt, alloc_keydata);
+                                     &import_data))
             return 0;
-        }
 
         /*
          * In case to_keydata was previously unallocated,

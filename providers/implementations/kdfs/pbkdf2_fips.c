@@ -14,7 +14,7 @@
  * Extra checks are done by default in fips mode only.
  */
 #ifdef FIPS_MODULE
-const int kdf_pbkdf2_default_checks = 1;
+const int ossl_kdf_pbkdf2_default_checks = 1;
 #else
-const int kdf_pbkdf2_default_checks = 0;
+const int ossl_kdf_pbkdf2_default_checks = 0;
 #endif /* FIPS_MODULE */
