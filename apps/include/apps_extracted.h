@@ -25,7 +25,7 @@
 //CONF *app_load_config_internal(const char *filename, int quiet);
 //CONF *app_load_config_verbose(const char *filename, int verbose);
 //int app_load_modules(const CONF *config);
-void unbuffer(FILE *fp);
+//void unbuffer(FILE *fp);
 
 int set_cert_times(X509 *x, const char *startdate, const char *enddate,
                    int days);
