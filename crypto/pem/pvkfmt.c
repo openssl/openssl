@@ -323,7 +323,7 @@ EVP_PKEY *ossl_b2i_bio(BIO *in, int *ispub)
     const unsigned char *p;
     unsigned char hdr_buf[16], *buf = NULL;
     unsigned int bitlen, magic, length;
-    int isdss;
+    int isdss = -1;
     void *key = NULL;
     EVP_PKEY *pkey = NULL;
 
