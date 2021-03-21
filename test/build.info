@@ -23,7 +23,7 @@ IF[{- !$disabled{tests} -}]
           testutil/format_output.c testutil/load.c testutil/fake_random.c \
           testutil/test_cleanup.c testutil/main.c testutil/testutil_init.c \
           testutil/options.c testutil/test_options.c testutil/provider.c \
-          testutil/apps_mem.c testutil/random.c $LIBAPPSSRC
+          testutil/random.c $LIBAPPSSRC
   INCLUDE[libtestutil.a]=../include ../apps/include ..
   DEPEND[libtestutil.a]=../libcrypto
 
@@ -524,9 +524,10 @@ IF[{- !$disabled{tests} -}]
   SOURCE[ca_internals_test]=ca_internals_test.c ../apps/ca.c ../crypto/asn1/a_time.c \
                       ../apps/lib/app_provider.c ../apps/lib/fmt.c ../apps/lib/app_x509.c \
                       ../apps/lib/engine.c ../apps/lib/app_rand.c ../apps/lib/apps_ui.c \
-                      ../apps/lib/apps_extracted.c ../crypto/ctype.c ../apps/lib/apps_os_wrapper.c \
+                      ../crypto/ctype.c ../apps/lib/apps_os_wrapper.c \
                       ../apps/lib/apps_propq.c ../apps/lib/apps_libctx.c ../apps/lib/apps_passwd.c \
-                      ../apps/lib/apps_opts.c
+                      ../apps/lib/apps_opts.c ../apps/lib/apps_globals.c ../apps/lib/apps_config.c \
+                      ../apps/lib/apps_keys.c
   INCLUDE[ca_internals_test]=.. ../include ../apps/include
   DEPEND[ca_internals_test]=libtestutil.a ../libssl
 

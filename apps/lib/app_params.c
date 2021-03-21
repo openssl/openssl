@@ -7,7 +7,6 @@
  * https://www.openssl.org/source/license.html
  */
 
-//#include "apps.h"
 #include "apps_globals.h"
 #include "app_params.h"
 #include <openssl/params.h>

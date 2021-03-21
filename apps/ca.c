@@ -32,6 +32,7 @@
 #endif
 
 #include "apps.h"
+#include "engine.h"
 #include "ca.h"
 #include "progs.h"
 #include "apps_globals.h"
@@ -40,6 +41,8 @@
 #include "apps_libctx.h"
 #include "apps_passwd.h"
 #include "apps_opts.h"
+#include "apps_keys.h"
+#include "app_x509.h"
 
 #ifndef PATH_MAX
 # define PATH_MAX 4096
@@ -256,8 +259,6 @@ const OPTIONS ca_options[] = {
     {"certreq", 0, 0, "Certificate requests to be signed (optional)"},
     {NULL}
 };
-
-/* ----------------- parts from apps_extracted.c start ---------------------*/
 
 /* block of index functions start */
 static unsigned long index_serial_hash(const OPENSSL_CSTRING *a)
@@ -685,8 +686,6 @@ int rand_serial(BIGNUM *b, ASN1_INTEGER *ai)
     return ret;
 }
 /* block of serial functions end */
-
-/* ----------------- parts from apps_extracted.c end -----------------------*/
 
 int ca_main(int argc, char **argv)
 {

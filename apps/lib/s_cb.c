@@ -13,6 +13,9 @@
 #include <string.h> /* for memcpy() and strcmp() */
 #include "apps.h"
 #include "apps_opts.h"
+#include "apps_globals.h"
+#include "apps_keys.h"
+#include "app_x509.h"
 #include <openssl/core_names.h>
 #include <openssl/params.h>
 #include <openssl/err.h>

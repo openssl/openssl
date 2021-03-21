@@ -15,6 +15,8 @@
 #include <sys/stat.h>
 #include "apps.h"
 #include "apps_passwd.h"
+#include "apps_config.h"
+#include "engine.h"
 #include "progs.h"
 #include <openssl/bio.h>
 #include <openssl/err.h>

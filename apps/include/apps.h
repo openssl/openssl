@@ -32,7 +32,6 @@
 # include "fmt.h"
 # include "platform.h"
 # include "engine_loader.h"
-# include "apps_extracted.h"
 # include "apps_os_wrapper.h"
 
 /*
@@ -46,19 +45,11 @@ void app_RAND_load_conf(CONF *c, const char *section);
 void app_RAND_write(void);
 int app_RAND_load(void);
 
-//extern char *default_config_file; /* may be "" */
-//extern BIO *bio_in;
-//extern BIO *bio_out;
-//extern BIO *bio_err;
 extern const unsigned char tls13_aes128gcmsha256_id[];
 extern const unsigned char tls13_aes256gcmsha384_id[];
 extern BIO_ADDR *ourpeer;
 
 CONF *app_load_config_modules(const char *configfile);
-//void wait_for_async(SSL *s);
-//# if defined(OPENSSL_SYS_MSDOS)
-//int has_stdin_waiting(void);
-//# endif
 
 void corrupt_signature(const ASN1_STRING *signature);
 
@@ -77,9 +68,6 @@ void print_name(BIO *out, const char *title, const X509_NAME *nm);
 void print_bignum_var(BIO *, const BIGNUM *, const char*,
                       int, unsigned char *);
 void print_array(BIO *, const char *, int, const unsigned char *);
-//char *get_passwd(const char *pass, const char *desc);
-#define load_cert(uri, desc) load_cert_pass(uri, 1, NULL, desc)
-X509_CRL *load_crl(const char *uri, const char *desc);
 void clear_free(char *str);
 EVP_PKEY *load_pubkey(const char *uri, int format, int maybe_stdin,
                       const char *pass, ENGINE *e, const char *desc);
@@ -125,7 +113,6 @@ ENGINE *setup_engine_methods(const char *id, unsigned int methods, int debug);
 # define setup_engine(e, debug) setup_engine_methods(e, (unsigned int)-1, debug)
 int init_engine(ENGINE *e);
 int finish_engine(ENGINE *e);
-char *make_engine_uri(ENGINE *e, const char *key_id, const char *desc);
 
 int get_legacy_pkey_id(OSSL_LIB_CTX *libctx, const char *algname, ENGINE *e);
 const EVP_MD *get_digest_from_engine(const char *name);
@@ -157,19 +144,11 @@ int unpack_revinfo(ASN1_TIME **prevtm, int *preason, ASN1_OBJECT **phold,
 # define DB_TYPE_VAL     'V'    /* Valid ; inserted with: ca ... -valid */
 # define DB_TYPE_SUSP    'S'    /* Suspended  */
 
-void app_bail_out(char *fmt, ...);
-void* app_malloc(size_t sz, const char *what);
 void policies_print(X509_STORE_CTX *ctx);
 int bio_to_mem(unsigned char **out, int maxlen, BIO *in);
-int x509_ctrl_string(X509 *x, const char *value);
 int init_gen_str(EVP_PKEY_CTX **pctx,
                  const char *algname, ENGINE *e, int do_param,
                  OSSL_LIB_CTX *libctx, const char *propq);
-int do_X509_verify(X509 *x, EVP_PKEY *pkey, STACK_OF(OPENSSL_STRING) *vfyopts);
-int do_X509_REQ_sign(X509_REQ *x, EVP_PKEY *pkey, const EVP_MD *md,
-                     STACK_OF(OPENSSL_STRING) *sigopts);
-int do_X509_CRL_sign(X509_CRL *x, EVP_PKEY *pkey, const EVP_MD *md,
-                     STACK_OF(OPENSSL_STRING) *sigopts);
 
 extern char *psk_key;
 
@@ -206,13 +185,7 @@ ASN1_VALUE *app_http_post_asn1(const char *host, const char *port,
                                long timeout, const ASN1_ITEM *rsp_it);
 # endif
 
-# define EXT_COPY_NONE   0
-# define EXT_COPY_ADD    1
-# define EXT_COPY_ALL    2
-
 # define NETSCAPE_CERT_HDR       "certificate"
-
-//# define APP_PASS_LEN    1024
 
 /*
  * IETF RFC 5280 says serial number must be <= 20 bytes. Use 159 bits
@@ -220,16 +193,6 @@ ASN1_VALUE *app_http_post_asn1(const char *host, const char *port,
  * rules won't force a leading octet.
  */
 # define SERIAL_RAND_BITS        159
-
-//int app_access(const char *, int flag);
-//int fileno_stdin(void);
-//int fileno_stdout(void);
-//int raw_read_stdin(void *, int);
-//int raw_write_stdout(const void *, int);
-
-//# define TM_START        0
-//# define TM_STOP         1
-//double app_tminterval(int stop, int usertime);
 
 void make_uppercase(char *string);
 
@@ -245,8 +208,5 @@ extern VERIFY_CB_ARGS verify_args;
 OSSL_PARAM *app_params_new_from_opts(STACK_OF(OPENSSL_STRING) *opts,
                                      const OSSL_PARAM *paramdefs);
 void app_params_free(OSSL_PARAM *params);
-//void app_providers_cleanup(void);
-
-//int app_set_propq(const char *arg);
 
 #endif

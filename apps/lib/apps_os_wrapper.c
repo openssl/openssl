@@ -7,9 +7,20 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/ssl.h>
-#include "apps.h"
+#include "e_os.h"
+
+#ifndef W_OK
+# if defined(OPENSSL_SYS_VMS) || defined(OPENSSL_SYS_UNIX)
+#  include <unistd.h>
+# elif !defined(OPENSSL_SYS_VXWORKS) && !defined(OPENSSL_SYS_WINDOWS) && !defined(OPENSSL_SYS_TANDEM)
+#  include <sys/file.h>
+# endif
+#endif
+
 #include "apps_os_wrapper.h"
+#include "apps_globals.h"
+#include "internal/sockets.h"
+#include <openssl/ssl.h>
 
 #if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS)
 # include <conio.h>
@@ -375,6 +386,25 @@ int has_stdin_waiting(void)
     return _kbhit();
 }
 #endif
+
+void unbuffer(FILE *fp)
+{
+/*
+ * On VMS, setbuf() will only take 32-bit pointers, and a compilation
+ * with /POINTER_SIZE=64 will give off a MAYLOSEDATA2 warning here.
+ * However, we trust that the C RTL will never give us a FILE pointer
+ * above the first 4 GB of memory, so we simply turn off the warning
+ * temporarily.
+ */
+#if defined(OPENSSL_SYS_VMS) && defined(__DECC)
+# pragma environment save
+# pragma message disable maylosedata2
+#endif
+    setbuf(fp, NULL);
+#if defined(OPENSSL_SYS_VMS) && defined(__DECC)
+# pragma environment restore
+#endif
+}
 
 /*
  * OS independent functions to make use transparent

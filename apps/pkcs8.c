@@ -13,6 +13,9 @@
 #include "apps.h"
 #include "apps_globals.h"
 #include "apps_passwd.h"
+#include "apps_config.h"
+#include "apps_keys.h"
+#include "engine.h"
 #include "progs.h"
 #include <openssl/pem.h>
 #include <openssl/err.h>

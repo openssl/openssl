@@ -17,6 +17,9 @@
 #include "apps_propq.h"
 #include "apps_libctx.h"
 #include "apps_passwd.h"
+#include "apps_config.h"
+#include "apps_keys.h"
+#include "engine.h"
 #include "progs.h"
 #include <openssl/crypto.h>
 #include <openssl/err.h>
