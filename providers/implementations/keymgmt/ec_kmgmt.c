@@ -847,12 +847,12 @@ int sm2_validate(const void *keydata, int selection, int checktype)
     if (!ossl_prov_is_running())
         return 0;
 
+    if ((selection & EC_POSSIBLE_SELECTIONS) == 0)
+        return 1; /* nothing to validate */
+
     ctx = BN_CTX_new_ex(ossl_ec_key_get_libctx(eck));
     if  (ctx == NULL)
         return 0;
-
-    if ((selection & EC_POSSIBLE_SELECTIONS) == 0)
-        return 1; /* nothing to validate */
 
     if ((selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) != 0)
         ok = ok && EC_GROUP_check(EC_KEY_get0_group(eck), ctx);
