@@ -11,7 +11,7 @@
 #include <openssl/conf.h>
 #include <openssl/x509v3.h>
 #include "apps_opts.h"
-#include <strings.h>
+#include <string.h>
 
 static unsigned long nmflag = 0;
 static char nmflag_set = 0;
