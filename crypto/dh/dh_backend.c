@@ -161,6 +161,7 @@ DH *ossl_dh_key_from_pkcs8(const PKCS8_PRIV_KEY_INFO *p8inf,
     if ((privkey_bn = BN_secure_new()) == NULL
         || !ASN1_INTEGER_to_BN(privkey, privkey_bn)) {
         ERR_raise(ERR_LIB_DH, DH_R_BN_ERROR);
+        BN_clear_free(privkey_bn);
         goto dherr;
     }
     if (!DH_set0_key(dh, NULL, privkey_bn))
