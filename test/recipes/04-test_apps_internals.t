@@ -56,7 +56,7 @@ my @unsupported_commands = (
     }
 );
  
-# every "test_app_rename" makes 2 checks
+# every "test_app_rename" makes 3 checks
 plan tests => 3 * scalar(@app_rename_tests) +
               1 * scalar(@unsupported_commands);
 
