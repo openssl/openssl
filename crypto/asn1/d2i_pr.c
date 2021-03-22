@@ -29,7 +29,7 @@ d2i_PrivateKey_decoder(int keytype, EVP_PKEY **a, const unsigned char **pp,
 {
     OSSL_DECODER_CTX *dctx = NULL;
     size_t len = length;
-    EVP_PKEY *pkey = NULL;
+    EVP_PKEY *pkey = NULL, *bak_a = NULL;
     EVP_PKEY **ppkey = &pkey;
     const char *key_name = NULL;
     const char *input_structures[] = { "type-specific", "pkcs8", NULL };
@@ -40,15 +40,17 @@ d2i_PrivateKey_decoder(int keytype, EVP_PKEY **a, const unsigned char **pp,
         if (key_name == NULL)
             return NULL;
     }
-    if (a != NULL && *a != NULL)
-        ppkey = a;
 
     for (i = 0;  i < (int)OSSL_NELEM(input_structures); ++i) {
         const unsigned char *p = *pp;
 
+        if (a != NULL && (bak_a = *a) != NULL)
+            ppkey = a;
         dctx = OSSL_DECODER_CTX_new_for_pkey(ppkey, "DER",
                                              input_structures[i], key_name,
                                              EVP_PKEY_KEYPAIR, libctx, propq);
+        if (a != NULL)
+            *a = bak_a;
         if (dctx == NULL)
             return NULL;
 
@@ -56,8 +58,11 @@ d2i_PrivateKey_decoder(int keytype, EVP_PKEY **a, const unsigned char **pp,
         OSSL_DECODER_CTX_free(dctx);
         if (ret) {
             if (*ppkey != NULL
-                && evp_keymgmt_util_has(*ppkey, OSSL_KEYMGMT_SELECT_PRIVATE_KEY))
+                && evp_keymgmt_util_has(*ppkey, OSSL_KEYMGMT_SELECT_PRIVATE_KEY)) {
+                if (a != NULL)
+                    *a = *ppkey;
                 return *ppkey;
+            }
             *pp = p;
             goto err;
         }
@@ -76,7 +81,7 @@ d2i_PrivateKey_legacy(int keytype, EVP_PKEY **a, const unsigned char **pp,
     EVP_PKEY *ret;
     const unsigned char *p = *pp;
 
-    if ((a == NULL) || (*a == NULL)) {
+    if (a == NULL || *a == NULL) {
         if ((ret = EVP_PKEY_new()) == NULL) {
             ERR_raise(ERR_LIB_ASN1, ERR_R_EVP_LIB);
             return NULL;
@@ -127,7 +132,7 @@ d2i_PrivateKey_legacy(int keytype, EVP_PKEY **a, const unsigned char **pp,
     }
     *pp = p;
     if (a != NULL)
-        (*a) = ret;
+        *a = ret;
     return ret;
  err:
     if (a == NULL || *a != ret)
@@ -195,7 +200,7 @@ static EVP_PKEY *d2i_AutoPrivateKey_legacy(EVP_PKEY **a,
         if (ret == NULL)
             return NULL;
         *pp = p;
-        if (a) {
+        if (a != NULL) {
             *a = ret;
         }
         return ret;
