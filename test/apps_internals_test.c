@@ -17,7 +17,7 @@
 
 #define binname "apps_internals_test"
 
-char *default_config_file = NULL;
+//char *default_config_file = NULL;
 
 static int test_app_rename(void)
 {
