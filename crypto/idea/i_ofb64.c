@@ -35,6 +35,11 @@ void IDEA_ofb64_encrypt(const unsigned char *in, unsigned char *out,
     unsigned char *iv;
     int save = 0;
 
+    if (n < 0) {
+        *num = -1;
+        return;
+    }
+
     iv = (unsigned char *)ivec;
     n2l(iv, v0);
     n2l(iv, v1);

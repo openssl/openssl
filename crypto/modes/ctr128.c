@@ -155,7 +155,7 @@ void CRYPTO_ctr128_encrypt_ctr32(const unsigned char *in, unsigned char *out,
 {
     unsigned int n, ctr32;
 
-    n = *num;
+   n = *num;
 
     while (n && len) {
         *(out++) = *(in++) ^ ecount_buf[n];
