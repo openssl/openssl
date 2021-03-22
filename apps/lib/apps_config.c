@@ -17,12 +17,10 @@
 #include <errno.h>
 #include <fcntl.h>
 // TODO - move os specific parts to apps_os_wrapper
-#ifndef W_OK
-# if defined(OPENSSL_SYS_VMS) || defined(OPENSSL_SYS_UNIX)
-#  include <unistd.h>
-# elif !defined(OPENSSL_SYS_VXWORKS) && !defined(OPENSSL_SYS_WINDOWS) && !defined(OPENSSL_SYS_TANDEM)
-#  include <sys/file.h>
-# endif
+#if defined(OPENSSL_SYS_VMS) || defined(OPENSSL_SYS_UNIX)
+# include <unistd.h>
+#elif !defined(OPENSSL_SYS_VXWORKS) && !defined(OPENSSL_SYS_WINDOWS) && !defined(OPENSSL_SYS_TANDEM)
+# include <sys/file.h>
 #endif
 
 /*
