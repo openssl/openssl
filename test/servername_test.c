@@ -52,8 +52,8 @@ static int get_sni_from_client_hello(BIO *bio, char **sni)
     memset(&pkt4, 0, sizeof(pkt4));
     memset(&pkt5, 0, sizeof(pkt5));
 
-    len = BIO_get_mem_data(bio, (char **)&data);
-    if (!TEST_true(PACKET_buf_init(&pkt, data, len))
+    if (!TEST_long_ge(len = BIO_get_mem_data(bio, (char **)&data), 0)
+            || !TEST_true(PACKET_buf_init(&pkt, data, len))
                /* Skip the record header */
             || !PACKET_forward(&pkt, SSL3_RT_HEADER_LENGTH)
                /* Skip the handshake message header */
