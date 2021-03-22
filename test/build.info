@@ -58,7 +58,7 @@ IF[{- !$disabled{tests} -}]
           sysdefaulttest errtest ssl_ctx_test gosttest \
           context_internal_test aesgcmtest params_test evp_pkey_dparams_test \
           keymgmt_internal_test hexstr_test provider_status_test defltfips_test \
-          ca_internals_test bio_readbuffer_test
+          ca_internals_test bio_readbuffer_test apps_internals_test
 
   IF[{- !$disabled{'deprecated-3.0'} -}]
     PROGRAMS{noinst}=enginetest
@@ -534,6 +534,11 @@ IF[{- !$disabled{tests} -}]
                       ../apps/lib/apps_keys.c
   INCLUDE[ca_internals_test]=.. ../include ../apps/include
   DEPEND[ca_internals_test]=libtestutil.a ../libssl
+
+  SOURCE[apps_internals_test]=apps_internals_test.c ../apps/lib/apps_os_wrapper.c \
+                      ../apps/lib/apps_globals.c ../apps/lib/fmt.c
+  INCLUDE[apps_internals_test]=.. ../include ../apps/include
+  DEPEND[apps_internals_test]=libtestutil.a ../libssl
 
   # Internal test programs.  These are essentially a collection of internal
   # test routines.  Some of them need to reach internal symbols that aren't

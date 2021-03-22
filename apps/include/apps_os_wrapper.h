@@ -10,6 +10,9 @@
 #ifndef OSSL_APPS_OS_WRAPPER_H
 # define OSSL_APPS_OS_WRAPPER_H
 
+#include <openssl/ssl.h>
+#include <stdio.h>
+
 void unbuffer(FILE *fp);
 int app_access(const char *, int flag);
 int fileno_stdin(void);
