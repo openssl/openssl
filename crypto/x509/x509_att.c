@@ -176,6 +176,7 @@ STACK_OF(X509_ATTRIBUTE) *ossl_x509at_dup(const STACK_OF(X509_ATTRIBUTE) *x)
     n = sk_X509_ATTRIBUTE_num(x);
     for (i = 0; i < n; ++i) {
         X509_ATTRIBUTE *attr = sk_X509_ATTRIBUTE_value(x, i);
+
         if (X509at_add1_attr(&sk, attr) == NULL) {
             sk_X509_ATTRIBUTE_pop_free(sk, X509_ATTRIBUTE_free);
             return NULL;

@@ -948,6 +948,9 @@ static RSA *rsa_dup(const RSA *rsa)
             goto err;
     }
 
+    dupkey->version = rsa->version;
+    dupkey->flags = rsa->flags;
+
     dupkey->pss_params = rsa->pss_params;
 
     if (rsa->pss != NULL) {

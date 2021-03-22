@@ -559,6 +559,8 @@ static DH *dh_dup(const DH *dh)
     if (!ossl_ffc_params_copy(&dupkey->params, &dh->params))
         goto err;
 
+    dupkey->flags = dh->flags;
+
     dh_bn_dup_check(pub_key)
     dh_bn_dup_check(priv_key)
     if (!CRYPTO_dup_ex_data(CRYPTO_EX_INDEX_DH,

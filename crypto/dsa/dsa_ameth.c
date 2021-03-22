@@ -522,6 +522,8 @@ static DSA *dsa_dup(const DSA *dsa)
     if (!ossl_ffc_params_copy(&dupkey->params, &dsa->params))
         goto err;
 
+    dupkey->flags = dsa->flags;
+
     dsa_bn_dup_check(pub_key)
     dsa_bn_dup_check(priv_key)
 
