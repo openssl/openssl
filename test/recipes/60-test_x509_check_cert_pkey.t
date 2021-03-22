@@ -12,7 +12,7 @@ use OpenSSL::Test::Utils;
 
 setup("test_x509_check_cert_pkey");
 
-plan tests => 9;
+plan tests => 11;
 
 sub src_file {
     return srctop_file("test", "certs", shift);
@@ -60,4 +60,6 @@ ok(run(test(["x509_check_cert_pkey_test",
              src_file("wrongkey.pem"), "req", "failed"])));
 
 test_PEM_X509_INFO_read("root-cert.pem", "1");
+test_PEM_X509_INFO_read("root-key.pem", "1");
+test_PEM_X509_INFO_read("key-pass-12345.pem", "1");
 test_PEM_X509_INFO_read("cyrillic_crl.utf8", "1");
