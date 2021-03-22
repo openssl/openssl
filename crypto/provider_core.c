@@ -114,6 +114,7 @@ static int ossl_provider_cmp(const OSSL_PROVIDER * const *a,
 
 struct provider_store_st {
     STACK_OF(OSSL_PROVIDER) *providers;
+    CRYPTO_RWLOCK *default_path_lock;
     CRYPTO_RWLOCK *lock;
     char *default_path;
     unsigned int use_fallbacks:1;
@@ -140,6 +141,7 @@ static void provider_store_free(void *vstore)
         return;
     OPENSSL_free(store->default_path);
     sk_OSSL_PROVIDER_pop_free(store->providers, provider_deactivate_free);
+    CRYPTO_THREAD_lock_free(store->default_path_lock);
     CRYPTO_THREAD_lock_free(store->lock);
     OPENSSL_free(store);
 }
@@ -151,6 +153,7 @@ static void *provider_store_new(OSSL_LIB_CTX *ctx)
 
     if (store == NULL
         || (store->providers = sk_OSSL_PROVIDER_new(ossl_provider_cmp)) == NULL
+        || (store->default_path_lock = CRYPTO_THREAD_lock_new()) == NULL
         || (store->lock = CRYPTO_THREAD_lock_new()) == NULL) {
         provider_store_free(store);
         return NULL;
@@ -461,10 +464,10 @@ int OSSL_PROVIDER_set_default_search_path(OSSL_LIB_CTX *libctx,
         }
     }
     if ((store = get_provider_store(libctx)) != NULL
-            && CRYPTO_THREAD_write_lock(store->lock)) {
+            && CRYPTO_THREAD_write_lock(store->default_path_lock)) {
         OPENSSL_free(store->default_path);
         store->default_path = p;
-        CRYPTO_THREAD_unlock(store->lock);
+        CRYPTO_THREAD_unlock(store->default_path_lock);
         return 1;
     }
     OPENSSL_free(p);
@@ -513,6 +516,7 @@ static int provider_init(OSSL_PROVIDER *prov)
             const char *module_path = NULL;
             char *merged_path = NULL;
             const char *load_dir = NULL;
+            char *allocated_load_dir = NULL;
             struct provider_store_st *store;
 
             if ((prov->module = DSO_new()) == NULL) {
@@ -521,10 +525,20 @@ static int provider_init(OSSL_PROVIDER *prov)
             }
 
             if ((store = get_provider_store(prov->libctx)) == NULL
-                    || !CRYPTO_THREAD_read_lock(store->lock))
+                    || !CRYPTO_THREAD_read_lock(store->default_path_lock))
                 goto end;
-            load_dir = store->default_path;
-            CRYPTO_THREAD_unlock(store->lock);
+
+            if (store->default_path != NULL) {
+                allocated_load_dir = OPENSSL_strdup(store->default_path);
+                CRYPTO_THREAD_unlock(store->default_path_lock);
+                if (allocated_load_dir == NULL) {
+                    ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
+                    goto end;
+                }
+                load_dir = allocated_load_dir;
+            } else {
+                CRYPTO_THREAD_unlock(store->default_path_lock);
+            }
 
             if (load_dir == NULL) {
                 load_dir = ossl_safe_getenv("OPENSSL_MODULES");
@@ -550,6 +564,7 @@ static int provider_init(OSSL_PROVIDER *prov)
 
             OPENSSL_free(merged_path);
             OPENSSL_free(allocated_path);
+            OPENSSL_free(allocated_load_dir);
         }
 
         if (prov->module != NULL)
