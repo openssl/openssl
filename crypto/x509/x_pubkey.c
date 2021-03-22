@@ -209,7 +209,8 @@ X509_PUBKEY *X509_PUBKEY_dup(const X509_PUBKEY *a)
 {
     X509_PUBKEY *pubkey = NULL;
 
-    if (!x509_pubkey_ex_new(NULL, ASN1_ITEM_rptr(X509_PUBKEY_INTERNAL))
+    if (!x509_pubkey_ex_new((ASN1_VALUE **)&pubkey,
+                            ASN1_ITEM_rptr(X509_PUBKEY_INTERNAL))
         || !x509_pubkey_set0_libctx(pubkey, a->libctx, a->propq)
         || (pubkey->algor = X509_ALGOR_dup(a->algor)) == NULL
         || (pubkey->public_key = ASN1_BIT_STRING_new()) == NULL
