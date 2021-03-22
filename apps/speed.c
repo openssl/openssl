@@ -3613,7 +3613,10 @@ static void multiblock_speed(const EVP_CIPHER *evp_cipher, int lengths_single,
     ctx = EVP_CIPHER_CTX_new();
     EVP_EncryptInit_ex(ctx, evp_cipher, NULL, NULL, no_iv);
 
-    keylen = EVP_CIPHER_CTX_key_length(ctx);
+    if ((keylen = EVP_CIPHER_CTX_key_length(ctx)) < 0) {
+        BIO_printf(bio_err, "Impossible negative key length: %d\n", keylen);
+        return;
+    }
     key = app_malloc(keylen, "evp_cipher key");
     EVP_CIPHER_CTX_rand_key(ctx, key);
     EVP_EncryptInit_ex(ctx, NULL, NULL, key, NULL);
