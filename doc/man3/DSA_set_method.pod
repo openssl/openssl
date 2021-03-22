@@ -25,6 +25,9 @@ L<openssl_user_macros(7)>:
 
 =head1 DESCRIPTION
 
+All of the functions described on this page are deprecated.
+Applications should providers instead of method overrides.
+
 A B<DSA_METHOD> specifies the functions that OpenSSL uses for DSA
 operations. By modifying the method, alternative implementations
 such as hardware accelerators may be used. IMPORTANT: See the NOTES section for
@@ -86,7 +89,7 @@ All of these functions were deprecated in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

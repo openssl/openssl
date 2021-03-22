@@ -52,6 +52,10 @@ L<openssl_user_macros(7)>:
 
 =head1 DESCRIPTION
 
+All of the functions described on this page are deprecated.
+Applications should instead use L<EVP_PKEY_get_bn_param(3)> for any methods that
+return a B<BIGNUM>. Refer to L<EVP_PKEY-DH(7)> for more infomation.
+
 An RSA object contains the components for the public and private key,
 B<n>, B<e>, B<d>, B<p>, B<q>, B<dmp1>, B<dmq1> and B<iqmp>.  B<n> is
 the modulus common to both public and private key, B<e> is the public

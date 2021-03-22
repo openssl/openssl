@@ -19,6 +19,10 @@ L<openssl_user_macros(7)>:
 
 =head1 DESCRIPTION
 
+All of the functions described on this page are deprecated.
+Applications should instead use L<EVP_PKEY_sign_init(3)>, L<EVP_PKEY_sign(3)>,
+L<EVP_PKEY_verify_init(3)> and L<EVP_PKEY_verify(3)>.
+
 DSA_do_sign() computes a digital signature on the B<len> byte message
 digest B<dgst> using the private key B<dsa> and returns it in a
 newly allocated B<DSA_SIG> structure.

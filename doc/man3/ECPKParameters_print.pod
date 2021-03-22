@@ -18,6 +18,9 @@ L<openssl_user_macros(7)>:
 
 =head1 DESCRIPTION
 
+All of the functions described on this page are deprecated.
+Applications should instead use L<EVP_PKEY_print_params(3)>
+
 The ECPKParameters represent the public parameters for an
 B<EC_GROUP> structure, which represents a curve.
 

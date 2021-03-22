@@ -52,7 +52,12 @@ L<openssl_user_macros(7)>:
 =head1 DESCRIPTION
 
 DH_get_1024_160(), DH_get_2048_224(), and DH_get_2048_256() each return
-a DH object for the IETF RFC 5114 value.
+a DH object for the IETF RFC 5114 value. These functions are deprecated.
+Applications should instead use EVP_PKEY_CTX_set_dh_rfc5114() and
+EVP_PKEY_CTX_set_dhx_rfc5114() as described in L<EVP_PKEY_CTX_ctrl(3)> or
+by setting the B<OSSL_PKEY_PARAM_GROUP_NAME> as specified in
+L<EVP_PKEY-DH(7)/DH parameters>) to one of "dh_1024_160", "dh_2048_224" or
+"dh_2048_256".
 
 BN_get0_nist_prime_192(), BN_get0_nist_prime_224(), BN_get0_nist_prime_256(),
 BN_get0_nist_prime_384(), and BN_get0_nist_prime_521() functions return
