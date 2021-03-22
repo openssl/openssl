@@ -122,7 +122,8 @@ static int validate_client_hello(BIO *wbio)
     int cookie_found = 0;
     unsigned int u = 0;
 
-    len = BIO_get_mem_data(wbio, (char **)&data);
+    if ((len = BIO_get_mem_data(wbio, (char **)&data)) < 0)
+        return 0;
     if (!PACKET_buf_init(&pkt, data, len))
         return 0;
 
@@ -391,6 +392,9 @@ static int validate_ccs(BIO *wbio)
     unsigned int u;
 
     len = BIO_get_mem_data(wbio, (char **)&data);
+    if (len < 0)
+        return 0;
+
     if (!PACKET_buf_init(&pkt, data, len))
         return 0;
 
