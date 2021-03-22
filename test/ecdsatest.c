@@ -190,7 +190,7 @@ static int test_builtin(int n, int as)
     EC_KEY *eckey_neg = NULL, *eckey = NULL;
     unsigned char dirt, offset, tbs[128];
     unsigned char *sig = NULL;
-    EVP_PKEY *pkey_neg = NULL, *pkey = NULL;
+    EVP_PKEY *pkey_neg = NULL, *pkey = NULL, *dup_pk = NULL;
     EVP_MD_CTX *mctx = NULL;
     size_t sig_len;
     int nid, ret = 0;
@@ -235,6 +235,10 @@ static int test_builtin(int n, int as)
         || !TEST_ptr(pkey_neg = EVP_PKEY_new())
         || !TEST_false(EVP_PKEY_assign_EC_KEY(pkey_neg, NULL))
         || !TEST_true(EVP_PKEY_assign_EC_KEY(pkey_neg, eckey_neg)))
+        goto err;
+
+    if (!TEST_ptr(dup_pk = EVP_PKEY_dup(pkey))
+        || !TEST_int_eq(EVP_PKEY_eq(pkey, dup_pk), 1))
         goto err;
 
     temp = ECDSA_size(eckey);
@@ -337,6 +341,7 @@ static int test_builtin(int n, int as)
  err:
     EVP_PKEY_free(pkey);
     EVP_PKEY_free(pkey_neg);
+    EVP_PKEY_free(dup_pk);
     EVP_MD_CTX_free(mctx);
     OPENSSL_free(sig);
     return ret;

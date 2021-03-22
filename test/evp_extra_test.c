@@ -752,7 +752,7 @@ static int test_EC_priv_only_legacy(void)
     BIGNUM *priv = NULL;
     int ret = 0;
     EC_KEY *eckey = NULL;
-    EVP_PKEY *pkey = NULL;
+    EVP_PKEY *pkey = NULL, *dup_pk = NULL;
     EVP_MD_CTX *ctx = NULL;
 
     /* Create the low level EC_KEY */
@@ -774,19 +774,31 @@ static int test_EC_priv_only_legacy(void)
         goto err;
     eckey = NULL;
 
-    ctx = EVP_MD_CTX_new();
-    if (!TEST_ptr(ctx))
-        goto err;
+    while (dup_pk == NULL) {
+        ret = 0;
+        ctx = EVP_MD_CTX_new();
+        if (!TEST_ptr(ctx))
+            goto err;
 
-    /*
-     * The EVP_DigestSignInit function should create the key on the provider
-     * side which is sufficient for this test.
-     */
-    if (!TEST_true(EVP_DigestSignInit_ex(ctx, NULL, NULL, testctx, testpropq,
-                                         pkey, NULL)))
-        goto err;
+        /*
+         * The EVP_DigestSignInit function should create the key on the
+         * provider side which is sufficient for this test.
+         */
+        if (!TEST_true(EVP_DigestSignInit_ex(ctx, NULL, NULL, testctx,
+                                             testpropq, pkey, NULL)))
+            goto err;
+        EVP_MD_CTX_free(ctx);
+        ctx = NULL;
 
-    ret = 1;
+        if (!TEST_ptr(dup_pk = EVP_PKEY_dup(pkey)))
+            goto err;
+        /* EVP_PKEY_eq() returns -2 with missing public keys */
+        ret = TEST_int_eq(EVP_PKEY_eq(pkey, dup_pk), -2);
+        EVP_PKEY_free(pkey);
+        pkey = dup_pk;
+        if (!ret)
+            goto err;
+    }
 
  err:
     EVP_MD_CTX_free(ctx);
