@@ -434,16 +434,15 @@ static void *gen_init(void *provctx, int selection, int rsa_type,
             || !BN_set_word(gctx->pub_exp, RSA_F4)) {
             BN_free(gctx->pub_exp);
             OPENSSL_free(gctx);
-            gctx = NULL;
-        } else {
-            gctx->nbits = 2048;
-            gctx->primes = RSA_DEFAULT_PRIME_NUM;
-            gctx->rsa_type = rsa_type;
+            return NULL;
         }
+        gctx->nbits = 2048;
+        gctx->primes = RSA_DEFAULT_PRIME_NUM;
+        gctx->rsa_type = rsa_type;
     }
-    if (gctx != NULL && !rsa_gen_set_params(gctx, params)) {
+    if (!rsa_gen_set_params(gctx, params)) {
         OPENSSL_free(gctx);
-        gctx = NULL;
+        return NULL;
     }
     return gctx;
 }
