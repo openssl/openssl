@@ -3844,7 +3844,7 @@ static int construct_stateful_ticket(SSL *s, WPACKET *pkt, uint32_t age_add,
     return 1;
 }
 
-// Equivalent of add_new_session_tickets in bssl
+/* Equivalent of add_new_session_tickets in bssl */
 int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
 {
     SSL_CTX *tctx = s->session_ctx;
@@ -3924,7 +3924,9 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
             if (s->session->ext.alpn_selected == NULL) {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
                 goto err;
-            } // ext is CBB extensions in bssl
+            }
+
+            /* s->session->ext is CBB extensions in bssl */
             s->session->ext.alpn_selected_len = s->s3.alpn_selected_len;
         }
         s->session->ext.max_early_data = s->max_early_data;
