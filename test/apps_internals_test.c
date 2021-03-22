@@ -7,17 +7,12 @@
  * https://www.openssl.org/source/license.html
  */
 
-//#include "ca.h"
-//#include "apps_config.h"
 #include "apps_os_wrapper.h"
 #include "testutil.h"
-//#include "crypto/asn1.h"
 #include <string.h>
 #include <errno.h>
 
 #define binname "apps_internals_test"
-
-//char *default_config_file = NULL;
 
 static int test_app_rename(void)
 {
@@ -34,51 +29,6 @@ static int test_app_rename(void)
 
     return 0;
 }
-//int test_do_updatedb(void)
-//{
-//    CA_DB *db = NULL;
-//    time_t testdateutc;
-//    int rv;
-//    size_t argc = test_get_argument_count();
-//    BIO *bio_tmp;
-//
-//    if (argc != 3) {
-//        TEST_error("Usage: %s: do_updatedb dbfile testdate\n", binname);
-//        TEST_error("       testdate format: ASN1-String\n");
-//        return 0;
-//    }
-//
-//    char *testdate = test_get_argument(2);
-//    testdateutc = asn1_string_to_time_t(testdate);
-//    if (testdateutc < 0) {
-//        fprintf(stderr, "Error: testdate '%s' is invalid\n", testdate);
-//        return 0;
-//    }
-//
-//    char *indexfile = test_get_argument(1);
-//    db = load_index(indexfile, NULL);
-//    if (db == NULL) {
-//        fprintf(stderr, "Error: dbfile '%s' is not readable\n", indexfile);
-//        free(indexfile);
-//        return 0;
-//    }
-//
-//    bio_tmp = bio_err;
-//    bio_err = bio_out;
-//    rv = do_updatedb(db, &testdateutc);
-//    bio_err = bio_tmp;
-//
-//    if (rv > 0) {
-//        if (!save_index(indexfile, "new", db))
-//            goto end;
-//
-//        if (!rotate_index(indexfile, "new", "old"))
-//            goto end;
-//    }
-//end:
-//    free_index(db);
-//    return 1;
-//} 
 
 int setup_tests(void)
 {
