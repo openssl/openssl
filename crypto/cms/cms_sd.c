@@ -372,7 +372,7 @@ CMS_SignerInfo *CMS_add1_signer(CMS_ContentInfo *cms,
             ESS_SIGNING_CERT_V2 *sc2 = NULL;
             int add_sc;
 
-            if (md == EVP_sha1() || md == NULL) {
+            if (md == NULL || EVP_MD_is_a(md, SN_sha1)) {
                 if ((sc = ossl_ess_signing_cert_new_init(signer,
                                                          NULL, 1)) == NULL)
                     goto err;

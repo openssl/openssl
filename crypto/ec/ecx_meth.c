@@ -991,6 +991,8 @@ static int s390x_pkey_ecd_keygen25519(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
                                     ctx->propquery);
     unsigned char *privkey = NULL, *pubkey;
     unsigned int sz;
+    EVP_MD *md = NULL;
+    int rv;
 
     if (key == NULL) {
         ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
@@ -1008,7 +1010,13 @@ static int s390x_pkey_ecd_keygen25519(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
     if (RAND_priv_bytes_ex(ctx->libctx, privkey, ED25519_KEYLEN) <= 0)
         goto err;
 
-    if (!EVP_Digest(privkey, 32, buff, &sz, EVP_sha512(), NULL))
+    md = EVP_MD_fetch(ctx->libctx, "SHA512", ctx->propquery);
+    if (md == NULL)
+        goto err;
+
+    rv = EVP_Digest(privkey, 32, buff, &sz, md, NULL);
+    EVP_MD_free(md);
+    if (!rv)
         goto err;
 
     buff[0] &= 248;
@@ -1049,6 +1057,8 @@ static int s390x_pkey_ecd_keygen448(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
                                     ctx->propquery);
     unsigned char *privkey = NULL, *pubkey;
     EVP_MD_CTX *hashctx = NULL;
+    EVP_MD *md = NULL;
+    int rv;
 
     if (key == NULL) {
         ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
@@ -1069,8 +1079,16 @@ static int s390x_pkey_ecd_keygen448(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
     hashctx = EVP_MD_CTX_new();
     if (hashctx == NULL)
         goto err;
-    if (EVP_DigestInit_ex(hashctx, EVP_shake256(), NULL) != 1)
+
+    md = EVP_MD_fetch(ctx->libctx, "SHAKE256", ctx->propquery);
+    if (md == NULL)
         goto err;
+
+    rv = EVP_DigestInit_ex(hashctx, md, NULL);
+    EVP_MD_free(md);
+    if (rv != 1)
+        goto err;
+
     if (EVP_DigestUpdate(hashctx, privkey, 57) != 1)
         goto err;
     if (EVP_DigestFinalXOF(hashctx, buff, sizeof(buff)) != 1)

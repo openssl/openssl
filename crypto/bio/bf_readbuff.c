@@ -57,7 +57,7 @@ static int readbuffer_new(BIO *bi)
     if (ctx == NULL)
         return 0;
     ctx->ibuf_size = DEFAULT_BUFFER_SIZE;
-    ctx->ibuf = OPENSSL_malloc(DEFAULT_BUFFER_SIZE);
+    ctx->ibuf = OPENSSL_zalloc(DEFAULT_BUFFER_SIZE);
     if (ctx->ibuf == NULL) {
         OPENSSL_free(ctx);
         return 0;
@@ -220,6 +220,7 @@ static int readbuffer_gets(BIO *b, char *buf, int size)
     BIO_F_BUFFER_CTX *ctx;
     int num = 0, num_chars, found_newline;
     char *p;
+    int i, j;
 
     if (size == 0)
         return 0;
@@ -227,42 +228,61 @@ static int readbuffer_gets(BIO *b, char *buf, int size)
     ctx = (BIO_F_BUFFER_CTX *)b->ptr;
     BIO_clear_retry_flags(b);
 
-    for (;;) {
-        if (ctx->ibuf_len > 0) {
-            p = &(ctx->ibuf[ctx->ibuf_off]);
-            found_newline = 0;
-            for (num_chars = 0;
-                 (num_chars < ctx->ibuf_len) && (num_chars < size);
-                 num_chars++) {
-                *(buf++) = p[num_chars];
-                if (p[num_chars] == '\n') {
-                    found_newline = 1;
-                    num_chars++;
-                    break;
-                }
+    /* If data is already buffered then use this first */
+    if (ctx->ibuf_len > 0) {
+        p = ctx->ibuf + ctx->ibuf_off;
+        found_newline = 0;
+        for (num_chars = 0;
+             (num_chars < ctx->ibuf_len) && (num_chars < size);
+             num_chars++) {
+            *buf++ = p[num_chars];
+            if (p[num_chars] == '\n') {
+                found_newline = 1;
+                num_chars++;
+                break;
             }
-            num += num_chars;
-            size -= num_chars;
-            ctx->ibuf_len -= num_chars;
-            ctx->ibuf_off += num_chars;
-            if (found_newline || size == 0) {
-                *buf = '\0';
-                return num;
-            }
-        } else {
-            /* read another line and resize if we have to */
-            if (!readbuffer_resize(ctx, size))
-                return 0;
-
-            /* Read another line from the next bio using BIO_gets */
-            num_chars = BIO_gets(b->next_bio, ctx->ibuf + ctx->ibuf_off,
-                                 1 + size);
-            if (num_chars <= 0) {
-                BIO_copy_next_retry(b);
-                *buf = '\0';
-                return num > 0 ? num : num_chars;
-            }
-            ctx->ibuf_len = num_chars;
+        }
+        num += num_chars;
+        size -= num_chars;
+        ctx->ibuf_len -= num_chars;
+        ctx->ibuf_off += num_chars;
+        if (found_newline || size == 0) {
+            *buf = '\0';
+            return num;
         }
     }
+    /*
+     * If there is no buffered data left then read any remaining data from the
+     * next bio.
+     */
+
+     /* Resize if we have to */
+     if (!readbuffer_resize(ctx, 1 + size))
+         return 0;
+     /*
+      * Read more data from the next bio using BIO_read_ex:
+      * Note we cannot use BIO_gets() here as it does not work on a
+      * binary stream that contains 0x00. (Since strlen() will stop at
+      * any 0x00 not at the last read '\n' in a FILE bio).
+      * Also note that some applications open and close the file bio
+      * multiple times and need to read the next available block when using
+      * stdin - so we need to READ one byte at a time!
+      */
+     p = ctx->ibuf + ctx->ibuf_off;
+     for (i = 0; i < size; ++i) {
+         j = BIO_read(b->next_bio, p, 1);
+         if (j <= 0) {
+             BIO_copy_next_retry(b);
+             *buf = '\0';
+             return num > 0 ? num : j;
+         }
+         *buf++ = *p;
+         num++;
+         ctx->ibuf_off++;
+         if (*p == '\n')
+             break;
+         ++p;
+     }
+     *buf = '\0';
+     return num;
 }
