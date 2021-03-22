@@ -419,3 +419,12 @@ int app_rename(const char *_old, const char *_new)
 #endif
 }
 
+/*
+ * This is just to get rid of the os dependent include hell
+ * in other files.
+ */
+int app_close(int fd)
+{
+    return close(fd);
+}
+

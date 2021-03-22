@@ -46,5 +46,6 @@ int has_stdin_waiting(void);
 void close_stdin_sock(void);
 
 int app_rename(const char *_old, const char *_new);
+int app_close(int fd);
 
 #endif

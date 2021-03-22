@@ -7,8 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "apps_globals.h"
 #include "apps_config.h"
+#include "apps_globals.h"
+#include "apps_os_wrapper.h"
 #include "apps_libctx.h"
 #include "opt.h"
 #include <openssl/err.h>
@@ -16,12 +17,6 @@
 #include <string.h>
 #include <errno.h>
 #include <fcntl.h>
-// TODO - move os specific parts to apps_os_wrapper
-#if defined(OPENSSL_SYS_VMS) || defined(OPENSSL_SYS_UNIX)
-# include <unistd.h>
-#elif !defined(OPENSSL_SYS_VXWORKS) && !defined(OPENSSL_SYS_WINDOWS) && !defined(OPENSSL_SYS_TANDEM)
-# include <sys/file.h>
-#endif
 
 /*
  * Centralized handling of input and output files with format specification
@@ -126,7 +121,7 @@ BIO *bio_open_owner(const char *filename, int format, int private)
     if (fp)
         fclose(fp);
     else if (fd >= 0)
-        close(fd);
+        app_close(fd);
     return NULL;
 }
 
