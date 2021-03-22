@@ -92,7 +92,8 @@ void ERR_vset_error(int lib, int reason, const char *fmt, va_list args)
         }
         if (printed_len < 0)
             printed_len = 0;
-        buf[printed_len] = '\0';
+        if (buf != NULL)
+            buf[printed_len] = '\0';
 
         /*
          * Try to reduce the size, but only if we maximized above.  If that
@@ -103,6 +104,7 @@ void ERR_vset_error(int lib, int reason, const char *fmt, va_list args)
         if ((rbuf = OPENSSL_realloc(buf, printed_len + 1)) != NULL) {
             buf = rbuf;
             buf_size = printed_len + 1;
+            buf[printed_len] = '\0';
         }
 
         if (buf != NULL)
