@@ -16,7 +16,14 @@
 #include <string.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <unistd.h>
+// TODO - move os specific parts to apps_os_wrapper
+#ifndef W_OK
+# if defined(OPENSSL_SYS_VMS) || defined(OPENSSL_SYS_UNIX)
+#  include <unistd.h>
+# elif !defined(OPENSSL_SYS_VXWORKS) && !defined(OPENSSL_SYS_WINDOWS) && !defined(OPENSSL_SYS_TANDEM)
+#  include <sys/file.h>
+# endif
+#endif
 
 /*
  * Centralized handling of input and output files with format specification
