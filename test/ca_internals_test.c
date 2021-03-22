@@ -17,9 +17,7 @@
 
 char *default_config_file = NULL;
 
-int test_do_updatedb(void);
-
-int test_do_updatedb(void)
+static int test_do_updatedb(void)
 {
     CA_DB *db = NULL;
     time_t testdateutc;
