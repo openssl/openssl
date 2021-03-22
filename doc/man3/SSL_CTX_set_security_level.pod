@@ -106,6 +106,17 @@ versions below 1.2 are not permitted.
 Security level set to 256 bits of security. As a result RSA, DSA and DH keys
 shorter than 15360 bits and ECC keys shorter than 512 bits are prohibited.
 
+=item B<Exception ECC>
+
+256 bits are the minimum for ECC keys even at security level 2 and lower
+because, for example, P-224 is not enabled on default. Therefore, to use
+shorter keys, the default groups list must be changed as well.
+
+=item B<Exception DH>
+
+1024 bits are the minimum for DH keys even at security level 0. Therefore,
+to use shorter keys, an application defined security callback is required.
+
 =back
 
 =head1 APPLICATION DEFINED SECURITY CALLBACKS
