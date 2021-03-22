@@ -209,7 +209,8 @@ STACK_OF(X509_INFO) *PEM_X509_INFO_read_bio_ex(BIO *bp, STACK_OF(X509_INFO) *sk,
                     goto err;
                 p = data;
                 if (ptype) {
-                    if (!d2i_PrivateKey(ptype, pp, &p, len)) {
+                    if (d2i_PrivateKey_ex(ptype, pp, &p, len,
+                                          libctx, propq) == NULL) {
                         ERR_raise(ERR_LIB_PEM, ERR_R_ASN1_LIB);
                         goto err;
                     }
@@ -217,7 +218,7 @@ STACK_OF(X509_INFO) *PEM_X509_INFO_read_bio_ex(BIO *bp, STACK_OF(X509_INFO) *sk,
                     ERR_raise(ERR_LIB_PEM, ERR_R_ASN1_LIB);
                     goto err;
                 }
-            } else {            /* encrypted RSA data */
+            } else {            /* encrypted key data */
                 if (!PEM_get_EVP_CIPHER_INFO(header, &xi->enc_cipher))
                     goto err;
                 xi->enc_data = (char *)data;
