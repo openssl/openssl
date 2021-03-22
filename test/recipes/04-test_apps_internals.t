@@ -62,7 +62,7 @@ plan tests => 3 * scalar(@app_rename_tests) +
 
 
 foreach my $test (@app_rename_tests) {
-    test_updatedb($test);
+    test_app_rename($test);
 }
 foreach my $test (@unsupported_commands) {
     test_unsupported_commands($test);
@@ -85,7 +85,7 @@ sub test_unsupported_commands {
     is($exit, 0, "command '".$opts->{command}."' completed without an error");
 }
 
-sub test_updatedb {
+sub test_app_rename {
     my ($opts) = @_;
     my $srcexists = 0;
     my $dstexists = 0;
