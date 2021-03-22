@@ -81,7 +81,7 @@ SOURCE[../libcrypto]=$UTIL_COMMON \
         punycode.c \
         $UPLINKSRC
 SOURCE[../providers/libfips.a]=$UTIL_COMMON
-SOURCE[../providers/liblegacy.a]=$UTIL_COMMON
+SOURCE[../providers/liblegacy.a]=cryptlib.c $CPUIDASM ctype.c
 
 # Implementations are now spread across several libraries, so the defines
 # need to be applied to all affected libraries and modules.
