@@ -5959,8 +5959,8 @@ uint16_t SSL_get_grease_value(SSL *s,
      * HelloRetryRequest and so supported_groups and key_shares are consistent.
      */
     if (!s->grease_seeded) {
-      RAND_bytes(s->grease_seed, sizeof(s->grease_seed));
-      s->grease_seeded = 1;
+        RAND_bytes(s->grease_seed, sizeof(s->grease_seed));
+        s->grease_seeded = 1;
     }
 
     /* This generates a random value of the form 0xωaωa, for all 0 ≤ ω < 16. */
