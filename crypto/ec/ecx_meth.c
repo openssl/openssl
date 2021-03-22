@@ -18,6 +18,7 @@
 #include <openssl/ec.h>
 #include <openssl/core_names.h>
 #include <openssl/param_build.h>
+#include <openssl/rand.h>
 #include "internal/cryptlib.h"
 #include "internal/provider.h"
 #include "crypto/asn1.h"
