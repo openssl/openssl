@@ -50,5 +50,7 @@ void close_stdin_sock(void);
 
 int app_rename(const char *_old, const char *_new);
 int app_close(int fd);
+int app_open(const char *pathname, int flags, mode_t mode);
+int app_strcasecmp(const char *s1, const char *s2);
 
 #endif

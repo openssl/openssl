@@ -428,3 +428,12 @@ int app_close(int fd)
     return close(fd);
 }
 
+int app_open(const char *pathname, int flags, mode_t mode)
+{
+    return open(pathname, flags, mode);
+}
+
+int app_strcasecmp(const char *s1, const char *s2)
+{
+    return strcasecmp(s1, s2);
+}

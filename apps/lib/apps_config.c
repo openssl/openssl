@@ -100,7 +100,7 @@ BIO *bio_open_owner(const char *filename, int format, int private)
         fd = open(filename, mode, 0600, "ctx=bin");
     else
 #endif
-        fd = open(filename, mode, 0600);
+        fd = app_open(filename, mode, 0600);
     if (fd < 0)
         goto err;
     fp = fdopen(fd, modestr('w', format));

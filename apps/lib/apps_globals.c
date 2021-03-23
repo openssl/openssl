@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "apps_os_wrapper.h"
 #include "apps_globals.h"
 #include "fmt.h"
 #include "opt.h"
@@ -22,11 +23,11 @@ void cleanse(char *str)
 
 int set_ext_copy(int *copy_type, const char *arg)
 {
-    if (strcasecmp(arg, "none") == 0)
+    if (app_strcasecmp(arg, "none") == 0)
         *copy_type = EXT_COPY_NONE;
-    else if (strcasecmp(arg, "copy") == 0)
+    else if (app_strcasecmp(arg, "copy") == 0)
         *copy_type = EXT_COPY_ADD;
-    else if (strcasecmp(arg, "copyall") == 0)
+    else if (app_strcasecmp(arg, "copyall") == 0)
         *copy_type = EXT_COPY_ALL;
     else
         return 0;
