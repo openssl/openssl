@@ -690,13 +690,13 @@ rsaz_def_handler:
     .rva    .LSEH_end_RSAZ_amm52x20_x1_256
     .rva    .LSEH_info_RSAZ_amm52x20_x1_256
 
-    .rva    .LSEH_begin_extract_multiplier_2x20_win5
-    .rva    .LSEH_end_extract_multiplier_2x20_win5
-    .rva    .LSEH_info_extract_multiplier_2x20_win5
-
     .rva    .LSEH_begin_RSAZ_amm52x20_x2_256
     .rva    .LSEH_end_RSAZ_amm52x20_x2_256
     .rva    .LSEH_info_RSAZ_amm52x20_x2_256
+
+    .rva    .LSEH_begin_extract_multiplier_2x20_win5
+    .rva    .LSEH_end_extract_multiplier_2x20_win5
+    .rva    .LSEH_info_extract_multiplier_2x20_win5
 
 .section    .xdata
 .align  8
@@ -704,14 +704,14 @@ rsaz_def_handler:
     .byte   9,0,0,0
     .rva    rsaz_def_handler
     .rva    .Lrsaz_amm52x20_x1_256_body,.Lrsaz_amm52x20_x1_256_epilogue
-.LSEH_info_extract_multiplier_2x20_win5:
-    .byte   9,0,0,0
-    .rva    rsaz_def_handler
-    .rva    .LSEH_begin_extract_multiplier_2x20_win5,.LSEH_begin_extract_multiplier_2x20_win5
 .LSEH_info_RSAZ_amm52x20_x2_256:
     .byte   9,0,0,0
     .rva    rsaz_def_handler
     .rva    .Lrsaz_amm52x20_x2_256_body,.Lrsaz_amm52x20_x2_256_epilogue
+.LSEH_info_extract_multiplier_2x20_win5:
+    .byte   9,0,0,0
+    .rva    rsaz_def_handler
+    .rva    .LSEH_begin_extract_multiplier_2x20_win5,.LSEH_begin_extract_multiplier_2x20_win5
 ___
 }
 }}} else {{{                # fallback for old assembler
