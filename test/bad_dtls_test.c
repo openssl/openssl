@@ -306,23 +306,26 @@ static int send_record(BIO *rbio, unsigned char type, uint64_t seqnr,
     memcpy(enc, msg, len);
 
     /* Append HMAC to data */
-    hmac = EVP_MAC_fetch(NULL, "HMAC", NULL);
+    if ((hmac = EVP_MAC_fetch(NULL, "HMAC", NULL)) == NULL)
+        return 0;
     ctx = EVP_MAC_CTX_new(hmac);
     EVP_MAC_free(hmac);
+    if (ctx == NULL)
+        return 0;
     params[0] = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
                                                  "SHA1", 0);
     params[1] = OSSL_PARAM_construct_end();
-    EVP_MAC_init(ctx, mac_key, 20, params);
-    EVP_MAC_update(ctx, epoch, 2);
-    EVP_MAC_update(ctx, seq, 6);
-    EVP_MAC_update(ctx, &type, 1);
-    EVP_MAC_update(ctx, ver, 2); /* Version */
     lenbytes[0] = (unsigned char)(len >> 8);
     lenbytes[1] = (unsigned char)(len);
-    EVP_MAC_update(ctx, lenbytes, 2); /* Length */
-    EVP_MAC_update(ctx, enc, len); /* Finally the data itself */
-    EVP_MAC_final(ctx, enc + len, NULL, SHA_DIGEST_LENGTH);
-    EVP_MAC_CTX_free(ctx);
+    if (!EVP_MAC_init(ctx, mac_key, 20, params)
+            || !EVP_MAC_update(ctx, epoch, 2)
+            || !EVP_MAC_update(ctx, seq, 6)
+            || !EVP_MAC_update(ctx, &type, 1)
+            || !EVP_MAC_update(ctx, ver, 2)      /* Version */
+            || !EVP_MAC_update(ctx, lenbytes, 2) /* Length */
+            || !EVP_MAC_update(ctx, enc, len)    /* Finally the data itself */
+            || !EVP_MAC_final(ctx, enc + len, NULL, SHA_DIGEST_LENGTH))
+        goto end;
 
     /* Append padding bytes */
     len += SHA_DIGEST_LENGTH;
@@ -351,6 +354,7 @@ static int send_record(BIO *rbio, unsigned char type, uint64_t seqnr,
     BIO_write(rbio, enc, len);
     ret = 1;
  end:
+    EVP_MAC_CTX_free(ctx);
     EVP_CIPHER_CTX_free(enc_ctx);
     OPENSSL_free(enc);
     return ret;
