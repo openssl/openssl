@@ -67,6 +67,11 @@ int setup_tests(void)
 {
     char *command = test_get_argument(0);
 
+    if (test_get_argument_count()<1) {
+        TEST_error("%s: no command specified for testing\n", binname);
+        return 0;
+    }
+
     if (strcmp(command, "do_updatedb") == 0)
         return test_do_updatedb();
     

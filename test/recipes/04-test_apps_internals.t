@@ -47,6 +47,89 @@ my @app_rename_tests = (
         exit_expected => 0,
         src_expected => 1,
         dst_expected => 1
+    },
+    { 
+        description => 'no parameters',
+        srcname => '',
+        dstname => '',
+        exit_expected => 0,
+        src_expected => 0,
+        dst_expected => 0
+    },
+    { 
+        description => 'only one parameter but nonexisting file',
+        srcname => 'missing',
+        dstname => '',
+        exit_expected => 0,
+        src_expected => 0,
+        dst_expected => 0
+    },
+    { 
+        description => 'only one parameter, existing file',
+        srcname => 'simple.txt',
+        dstname => '',
+        exit_expected => 0,
+        src_expected => 1,
+        dst_expected => 0
+    }
+);
+
+my @app_strcasecmp_tests = (
+    { 
+        description => 'app_strcasecmp, first string is less than the second, same case',
+        string1 => 'string1',
+        string2 => 'string2',
+        amt_results_expected => 1,
+        exit_expected => 1,
+        result_expected => -1
+    },
+    { 
+        description => 'app_strcasecmp, first string is less than the second, different case',
+        string1 => 'STRING1',
+        string2 => 'string2',
+        amt_results_expected => 1,
+        exit_expected => 1,
+        result_expected => -1
+    },
+    { 
+        description => 'app_strcasecmp, first string is bigger than the second, same case',
+        string1 => 'string2',
+        string2 => 'string1',
+        amt_results_expected => 1,
+        exit_expected => 1,
+        result_expected => 1
+    },
+    { 
+        description => 'app_strcasecmp, first string is bigger than the second, different case',
+        string1 => 'STRING2',
+        string2 => 'string1',
+        amt_results_expected => 1,
+        exit_expected => 1,
+        result_expected => 1
+    },
+    { 
+        description => 'app_strcasecmp, identical strings, same case',
+        string1 => 'string1',
+        string2 => 'string1',
+        amt_results_expected => 1,
+        exit_expected => 1,
+        result_expected => 0
+    },
+    { 
+        description => 'app_strcasecmp, identical, different case',
+        string1 => 'STRING1',
+        string2 => 'string1',
+        amt_results_expected => 1,
+        exit_expected => 1,
+        result_expected => 0
+    },
+    { 
+        description => 'app_strcasecmp, identical strings with blanks',
+        string1 => 'The quick brown fox jumps over the lazy dog',
+        string2 => 'The quick brown fox jumps over the lazy dog',
+        amt_results_expected => 1,
+        exit_expected => 1,
+        result_expected => 0
     }
 );
 
@@ -58,11 +141,15 @@ my @unsupported_commands = (
  
 # every "test_app_rename" makes 3 checks
 plan tests => 3 * scalar(@app_rename_tests) +
+              3 * scalar(@app_strcasecmp_tests) +
               1 * scalar(@unsupported_commands);
 
 
 foreach my $test (@app_rename_tests) {
     test_app_rename($test);
+}
+foreach my $test (@app_strcasecmp_tests) {
+    test_app_strcasecmp($test);
 }
 foreach my $test (@unsupported_commands) {
     test_unsupported_commands($test);
@@ -111,10 +198,42 @@ sub test_app_rename {
         unlink($opts->{srcname});
     }
 
-    is($exit, $opts->{exit_expected}, "apps_internals_test: exit code is '$exit' insted of '".
+    is($exit, $opts->{exit_expected}, "apps_internals_test/app_rename: exit code is '$exit' instead of '".
         $opts->{exit_expected}."' (".$opts->{description}.")");
-    is($srcexists, $opts->{src_expected}, "apps_internals_test: srcfile is '$srcexists' instead of '".
+    is($srcexists, $opts->{src_expected}, "apps_internals_test/app_rename: srcfile is '$srcexists' instead of '".
         $opts->{src_expected}."' after rename (".$opts->{description}.")");
-    is($dstexists, $opts->{dst_expected}, "apps_internals_test: dstfile is '$dstexists' instead of '".
+    is($dstexists, $opts->{dst_expected}, "apps_internals_test/app_rename: dstfile is '$dstexists' instead of '".
         $opts->{dst_expected}."' after rename (".$opts->{description}.")");
+}
+
+sub test_app_strcasecmp {
+    my ($opts) = @_;
+    my @output;
+
+    @output = run(
+        test(['apps_internals_test',
+            'app_strcasecmp',
+            $opts->{string1},
+            $opts->{string2}
+        ]),
+        capture => 1,
+        statusvar => \my $exit
+    );
+
+    my $rv = 0;
+    my $amt = 0;
+    my $rs = '';
+    foreach my $tmp (@output) {
+        if ($tmp =~ /^[\s]+#\sResult:\s'([\-0-9]+[0-9]*)'$/) {
+            ($rv) = $tmp =~ /^[\s]+#\sResult:\s'([\-0-9]+[0-9]*)'$/;
+            $amt++;
+        }
+        $rs .= "'$tmp' ";
+    }
+    is($amt, $opts->{amt_results_expected}, "apps_internals_test/test_app_strcasecmp: strange amount of results: '$amt' instead of '".
+        $opts->{amt_results_expected}."' (".$opts->{description}.")");
+    is($exit, $opts->{exit_expected}, "apps_internals_test/test_app_strcasecmp: exit code is '$exit' instead of '".
+        $opts->{exit_expected}."' (".$opts->{description}.")");
+    is($rv, $opts->{result_expected}, "apps_internals_test/test_app_strcasecmp: result is '$rv' instead of '".
+        $opts->{result_expected}."' (".$opts->{description}.")");
 }
