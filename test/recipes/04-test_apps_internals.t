@@ -118,4 +118,3 @@ sub test_app_rename {
     is($dstexists, $opts->{dst_expected}, "apps_internals_test: dstfile is '$dstexists' instead of '".
         $opts->{dst_expected}."' after rename (".$opts->{description}.")");
 }
-
