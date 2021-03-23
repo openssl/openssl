@@ -21,6 +21,7 @@
 
 #include "internal/cryptlib.h"   /* ossl_assert */
 #include "crypto/pem.h"          /* For PVK and "blob" PEM headers */
+#include "crypto/evp.h"          /* For evp_pkey_is_provided() */
 
 #include "helpers/predefined_dhparams.h"
 #include "testutil.h"
@@ -498,6 +499,7 @@ static int check_unprotected_PKCS8_DER(const char *file, const int line,
                     TEST_note("%s isn't any of %s", type, namelist);
                 OPENSSL_free(namelist);
             }
+            ok = ok && TEST_FL_true(evp_pkey_is_provided(pkey));
             EVP_PKEY_free(pkey);
         }
     }
