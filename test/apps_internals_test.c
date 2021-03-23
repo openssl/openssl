@@ -16,9 +16,7 @@
 
 static int test_app_rename(void)
 {
-    size_t argc = test_get_argument_count();
-
-    if (argc != 3) {
+    if (test_get_argument_count() != 3) {
         TEST_error("Usage: %s: app_rename srcfile dstfile\n", binname);
         return 0;
     }
@@ -30,12 +28,32 @@ static int test_app_rename(void)
     return 0;
 }
 
+static int test_app_strcasecmp(void)
+{
+    int rv;
+
+    if (test_get_argument_count() != 3) {
+        TEST_error("Usage: %s: app_strcasecmp string1 string2\n", binname);
+        return 0;
+    }
+    rv = app_strcasecmp(test_get_argument(1), test_get_argument(2));
+    BIO_printf(bio_out, "Result: '%i'\n", rv);
+    return 1;
+}
+
 int setup_tests(void)
 {
     char *command = test_get_argument(0);
 
+    if (test_get_argument_count()<1) {
+        TEST_error("%s: no command specified for testing\n", binname);
+        return 0;
+    }
+
     if (strcmp(command, "app_rename") == 0)
         return test_app_rename();
+    if (strcmp(command, "app_strcasecmp") == 0)
+        return test_app_strcasecmp();
     
     TEST_error("%s: command '%s' is not supported for testing\n", binname, command);
     return 0;
