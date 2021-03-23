@@ -724,8 +724,9 @@ int X509_STORE_CTX_get1_issuer(X509 **issuer, X509_STORE_CTX *ctx, X509 *x)
 {
     const X509_NAME *xn;
     X509_OBJECT *obj = X509_OBJECT_new(), *pobj = NULL;
+    STACK_OF(X509_OBJECT) *stobjs = NULL;
     X509_STORE *store = ctx->store;
-    int i, ok, idx, ret;
+    int ok, idx, ret;
 
     if (obj == NULL)
         return -1;
@@ -761,38 +762,41 @@ int X509_STORE_CTX_get1_issuer(X509 **issuer, X509_STORE_CTX *ctx, X509 *x)
     /* Find index of first currently valid cert accepted by 'check_issued' */
     ret = 0;
     X509_STORE_lock(store);
-    idx = X509_OBJECT_idx_by_subject(store->objs, X509_LU_X509, xn);
-    if (idx != -1) { /* should be true as we've had at least one match */
-        /* Look through all matching certs for suitable issuer */
-        for (i = idx; i < sk_X509_OBJECT_num(store->objs); i++) {
-            pobj = sk_X509_OBJECT_value(store->objs, i);
-            /* See if we've run past the matches */
-            if (pobj->type != X509_LU_X509)
+    /* Shallow copy of the stack */
+    stobjs = sk_X509_OBJECT_dup(store->objs);
+    if (stobjs == NULL)
+        return -1;
+    /* Look through all matching certs for suitable issuer */
+    while((idx = X509_OBJECT_idx_by_subject(stobjs, X509_LU_X509, xn)) != -1) {
+        pobj = sk_X509_OBJECT_delete(stobjs, idx);
+        if (pobj == NULL) {
+            *issuer = NULL;
+            ret = -1;
+            break;
+        }
+
+        if (ctx->check_issued(ctx, x, pobj->data.x509)) {
+            ret = 1;
+            /* If times check fine, exit with match, else keep looking. */
+            if (ossl_x509_check_cert_time(ctx, pobj->data.x509, -1)) {
+                *issuer = pobj->data.x509;
                 break;
-            if (X509_NAME_cmp(X509_get_subject_name(pobj->data.x509), xn) != 0)
-                break; /* Not more cert matches xn */
-            if (ctx->check_issued(ctx, x, pobj->data.x509)) {
-                ret = 1;
-                /* If times check fine, exit with match, else keep looking. */
-                if (ossl_x509_check_cert_time(ctx, pobj->data.x509, -1)) {
-                    *issuer = pobj->data.x509;
-                    break;
-                }
-                /*
-                 * Leave the so far most recently expired match in *issuer
-                 * so we return nearest match if no certificate time is OK.
-                 */
-                if (*issuer == NULL
-                    || ASN1_TIME_compare(X509_get0_notAfter(pobj->data.x509),
-                                         X509_get0_notAfter(*issuer)) > 0)
-                    *issuer = pobj->data.x509;
             }
+            /*
+                * Leave the so far most recently expired match in *issuer
+                * so we return nearest match if no certificate time is OK.
+                */
+            if (*issuer == NULL
+                || ASN1_TIME_compare(X509_get0_notAfter(pobj->data.x509),
+                                        X509_get0_notAfter(*issuer)) > 0)
+                *issuer = pobj->data.x509;
         }
     }
     if (*issuer != NULL && !X509_up_ref(*issuer)) {
         *issuer = NULL;
         ret = -1;
     }
+    sk_X509_OBJECT_free(stobjs);
     X509_STORE_unlock(store);
     return ret;
 }
