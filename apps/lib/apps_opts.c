@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "apps_os_wrapper.h"
 #include <openssl/asn1.h>
 #include <openssl/conf.h>
 #include <openssl/x509v3.h>
