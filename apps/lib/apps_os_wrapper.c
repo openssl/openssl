@@ -21,6 +21,7 @@
 #include "apps_globals.h"
 #include "internal/sockets.h"
 #include <openssl/ssl.h>
+#include <fcntl.h>
 
 #if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS)
 # include <conio.h>
