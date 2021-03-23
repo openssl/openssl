@@ -727,6 +727,8 @@ void *evp_pkey_export_to_provider(EVP_PKEY *pk, OSSL_LIB_CTX *libctx,
 int evp_pkey_copy_downgraded(EVP_PKEY **dest, const EVP_PKEY *src);
 void *evp_pkey_get_legacy(EVP_PKEY *pk);
 void evp_pkey_free_legacy(EVP_PKEY *x);
+EVP_PKEY *evp_pkcs82pkey_legacy(const PKCS8_PRIV_KEY_INFO *p8inf,
+                                OSSL_LIB_CTX *libctx, const char *propq);
 #endif
 
 /*

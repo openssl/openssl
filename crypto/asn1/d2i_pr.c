@@ -106,7 +106,7 @@ d2i_PrivateKey_legacy(int keytype, EVP_PKEY **a, const unsigned char **pp,
                 ERR_clear_last_mark();
                 goto err;
             }
-            tmp = EVP_PKCS82PKEY_ex(p8, libctx, propq);
+            tmp = evp_pkcs82pkey_legacy(p8, libctx, propq);
             PKCS8_PRIV_KEY_INFO_free(p8);
             if (tmp == NULL) {
                 ERR_clear_last_mark();
@@ -190,7 +190,7 @@ static EVP_PKEY *d2i_AutoPrivateKey_legacy(EVP_PKEY **a,
             ERR_raise(ERR_LIB_ASN1, ASN1_R_UNSUPPORTED_PUBLIC_KEY_TYPE);
             return NULL;
         }
-        ret = EVP_PKCS82PKEY_ex(p8, libctx, propq);
+        ret = evp_pkcs82pkey_legacy(p8, libctx, propq);
         PKCS8_PRIV_KEY_INFO_free(p8);
         if (ret == NULL)
             return NULL;
