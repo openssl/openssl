@@ -429,7 +429,7 @@ int app_close(int fd)
     return close(fd);
 }
 
-int app_open(const char *pathname, int flags, mode_t mode)
+int app_open(const char *pathname, int flags, int mode)
 {
     return open(pathname, flags, mode);
 }
