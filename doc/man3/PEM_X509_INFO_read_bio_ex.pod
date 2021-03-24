@@ -24,11 +24,10 @@ PEM_X509_INFO_read_bio_ex, PEM_X509_INFO_read_ex
 
 PEM_X509_INFO_read_ex() loads the B<X509_INFO> objects from a file I<fp>.
 
-PEM_X509_INFO_read_bio_ex loads the B<X509_INFO> objects using a bio I<bp>.
+PEM_X509_INFO_read_bio_ex() loads the B<X509_INFO> objects using a bio I<bp>.
 
 Each of the loaded B<X509_INFO> objects can contain a CRL, a certificate,
 and/or a private key.
-
 The elements are read sequentially, and as far as they are of different type than
 the elements read before, they are combined into the same B<X509_INFO> object.
 The idea behind this is that if, for instance, a certificate is followed by
