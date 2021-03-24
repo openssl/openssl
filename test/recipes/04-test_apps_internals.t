@@ -133,6 +133,33 @@ my @app_strcasecmp_tests = (
     }
 );
 
+my @posix_file_io_tests = (
+    {
+        description => 'read a simple line from a file',
+        filenamecreate => 'testfile.txt',
+        filenamespecify => 'testfile.txt',
+        filecontent => 'Prall vom Whisky flog Quax den Jet zu Bruch.',
+        output_expected => 'Prall vom Whisky flog Quax den Jet zu Bruch.',
+        exit_expected => 1
+    },
+    {
+        description => 'don\'t specify filename',
+        filenamecreate => 'testfile.txt',
+        filenamespecify => '',
+        filecontent => 'Prall vom Whisky flog Quax den Jet zu Bruch.',
+        output_expected => '',
+        exit_expected => 0
+    },
+    {
+        description => 'Specify invalid file',
+        filenamecreate => 'testfile.txt',
+        filenamespecify => 'invalid.txt',
+        filecontent => 'Prall vom Whisky flog Quax den Jet zu Bruch.',
+        output_expected => '',
+        exit_expected => 0
+    }
+);
+
 my @unsupported_commands = (
     { 
         command => 'unsupported'
@@ -142,6 +169,7 @@ my @unsupported_commands = (
 # every "test_app_rename" makes 3 checks
 plan tests => 3 * scalar(@app_rename_tests) +
               3 * scalar(@app_strcasecmp_tests) +
+              2 * scalar(@posix_file_io_tests) +
               1 * scalar(@unsupported_commands);
 
 
@@ -150,6 +178,9 @@ foreach my $test (@app_rename_tests) {
 }
 foreach my $test (@app_strcasecmp_tests) {
     test_app_strcasecmp($test);
+}
+foreach my $test (@posix_file_io_tests) {
+    test_posix_file_io($test);
 }
 foreach my $test (@unsupported_commands) {
     test_unsupported_commands($test);
@@ -222,14 +253,13 @@ sub test_app_strcasecmp {
 
     my $rv = 0;
     my $amt = 0;
-    my $rs = '';
     foreach my $tmp (@output) {
         if ($tmp =~ /^[\s]+#\sResult:\s'([\-0-9]+[0-9]*)'$/) {
             ($rv) = $tmp =~ /^[\s]+#\sResult:\s'([\-0-9]+[0-9]*)'$/;
             $amt++;
         }
-        $rs .= "'$tmp' ";
     }
+
     is($amt, $opts->{amt_results_expected}, "apps_internals_test/test_app_strcasecmp: strange amount of results: '$amt' instead of '".
         $opts->{amt_results_expected}."' (".$opts->{description}.")");
     is($exit, $opts->{exit_expected}, "apps_internals_test/test_app_strcasecmp: exit code is '$exit' instead of '".
@@ -237,3 +267,32 @@ sub test_app_strcasecmp {
     is($rv, $opts->{result_expected}, "apps_internals_test/test_app_strcasecmp: result is '$rv' instead of '".
         $opts->{result_expected}."' (".$opts->{description}.")");
 }
+
+sub test_posix_file_io {
+    my ($opts) = @_;
+    my @output;
+
+    open(my $fh, '>', $opts->{filenamecreate});
+    print $fh $opts->{filecontent};
+    close $fh;
+    @output = run(
+        test(['apps_internals_test',
+            'posix_file_io',
+            $opts->{filenamespecify}
+        ]),
+        capture => 1,
+        statusvar => \my $exit
+    );
+    unlink $opts->{filenamecreate};
+    my $rv = '';
+    foreach my $tmp (@output) {
+        if ($tmp =~ /^[\s]+#\sContent:\s'/) {
+            ($rv) = $tmp =~ /^[\s]+#\sContent:\s'([^']*)'/;
+        }
+    }
+    is($rv, $opts->{output_expected}, "apps_internals_test/test_posix_file_io: result is '$rv' instead of '".
+        $opts->{output_expected}."' (".$opts->{description}.")");
+    is($exit, $opts->{exit_expected}, "apps_internals_test/test_posix_file_io: exit code is '$exit' instead of '".
+        $opts->{exit_expected}."' (".$opts->{description}.")");
+}
+
