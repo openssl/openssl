@@ -421,8 +421,8 @@ int app_rename(const char *_old, const char *_new)
 }
 
 /*
- * This is just to get rid of the os dependent include hell
- * in other files.
+ * The following functions are here just to get rid of 
+ * the os dependent include hell in other files.
  */
 int app_close(int fd)
 {
@@ -437,4 +437,9 @@ int app_open(const char *pathname, int flags, int mode)
 int app_strcasecmp(const char *s1, const char *s2)
 {
     return strcasecmp(s1, s2);
+}
+
+FILE *app_fdopen(int fd, const char *mode)
+{
+    return fdopen(fd, mode);
 }
