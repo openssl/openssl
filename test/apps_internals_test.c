@@ -62,7 +62,7 @@ static int test_posix_file_io(void)
     buf[rv] = 0;
     BIO_printf(bio_out, "Content: '");
     while (rv > 0) {
-        BIO_printf(bio_out, buf);
+        BIO_printf(bio_out, "%s", buf);
         rv = app_read(fd, buf, 99);
         buf[rv] = 0;
     }
