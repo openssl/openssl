@@ -9,6 +9,7 @@
 
 #include "apps_os_wrapper.h"
 #include "testutil.h"
+#include <sys/fcntl.h>
 #include <string.h>
 #include <errno.h>
 
@@ -41,6 +42,42 @@ static int test_app_strcasecmp(void)
     return 1;
 }
 
+static int test_posix_file_io(void)
+{
+    int fd;
+    int rv;
+    char buf[100];
+
+    if (test_get_argument_count() != 2) {
+        TEST_error("Usage: %s: posix_file_io file_to_read\n", binname);
+        return 0;
+    }
+
+    fd = app_open(test_get_argument(1), O_RDONLY, 0);
+    if (fd < 0) {
+        TEST_error("Error opening file '%s': %s\n", test_get_argument(1), strerror(errno));
+        return 0;
+    }
+    rv = app_read(fd, buf, 99);
+    buf[rv] = 0;
+    BIO_printf(bio_out, "Content: '");
+    while (rv > 0) {
+        BIO_printf(bio_out, buf);
+        rv = app_read(fd, buf, 99);
+        buf[rv] = 0;
+    }
+    BIO_printf(bio_out, "'\n");
+    if (rv < 0) {
+        TEST_error("Error reading from file '%s': %s\n", test_get_argument(1), strerror(errno));
+        return 0;
+    }
+    if (app_close(fd) < 0) {
+        TEST_error("Error closing file '%s': %s\n", test_get_argument(1), strerror(errno));
+        return 0;
+    }
+    return 1;
+}
+
 int setup_tests(void)
 {
     char *command = test_get_argument(0);
@@ -54,6 +91,8 @@ int setup_tests(void)
         return test_app_rename();
     if (strcmp(command, "app_strcasecmp") == 0)
         return test_app_strcasecmp();
+    if (strcmp(command, "posix_file_io") == 0)
+        return test_posix_file_io();
     
     TEST_error("%s: command '%s' is not supported for testing\n", binname, command);
     return 0;
