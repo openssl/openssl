@@ -280,7 +280,7 @@ static int rsa_pss_param_print(BIO *bp, int pss_key, RSA_PSS_PARAMS *pss,
     if (pss->trailerField) {
         if (i2a_ASN1_INTEGER(bp, pss->trailerField) <= 0)
             goto err;
-    } else if (BIO_puts(bp, "BC (default)") <= 0) {
+    } else if (BIO_puts(bp, "01 (default)") <= 0) {
         goto err;
     }
     BIO_puts(bp, "\n");
