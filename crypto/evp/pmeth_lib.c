@@ -650,7 +650,7 @@ int EVP_PKEY_CTX_is_a(EVP_PKEY_CTX *ctx, const char *keytype)
     return EVP_KEYMGMT_is_a(ctx->keymgmt, keytype);
 }
 
-int EVP_PKEY_CTX_set_params(EVP_PKEY_CTX *ctx, OSSL_PARAM *params)
+int EVP_PKEY_CTX_set_params(EVP_PKEY_CTX *ctx, const OSSL_PARAM *params)
 {
     switch (evp_pkey_ctx_state(ctx)) {
     case EVP_PKEY_STATE_PROVIDER:
