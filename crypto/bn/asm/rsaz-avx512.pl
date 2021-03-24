@@ -49,7 +49,7 @@ if (!$avx512 && $win64 && ($flavour =~ /nasm/ || $ENV{ASM} =~ /nasm/) &&
 }
 
 if (!$avx512 && `$ENV{CC} -v 2>&1` =~ /((?:clang|LLVM) version|.*based on LLVM) ([0-9]+\.[0-9]+)/) {
-    $avx512ifma = ($2>=6.0);
+    $avx512ifma = ($2>=7.0);
 }
 
 open OUT,"| \"$^X\" \"$xlate\" $flavour \"$output\""
