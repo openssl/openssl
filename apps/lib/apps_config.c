@@ -103,7 +103,7 @@ BIO *bio_open_owner(const char *filename, int format, int private)
         fd = app_open(filename, mode, 0600);
     if (fd < 0)
         goto err;
-    fp = fdopen(fd, modestr('w', format));
+    fp = app_fdopen(fd, modestr('w', format));
     if (fp == NULL)
         goto err;
     bflags = BIO_CLOSE;
