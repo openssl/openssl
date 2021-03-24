@@ -336,6 +336,10 @@ An B<EVP_RAND_CTX> needs to have locking enabled if it acts as the parent of
 more than one child and the children can be accessed concurrently.  This must
 be done by explicitly calling EVP_RAND_enable_locking().
 
+The RAND life-cycle is described in L<life_cycle-rand(7)>.  In the future,
+the transitions described there will be enforced.  When this is done, it will
+not be considered a breaking change to the API.
+
 =head1 RETURN VALUES
 
 EVP_RAND_fetch() returns a pointer to a newly fetched B<EVP_RAND>, or
@@ -382,7 +386,8 @@ L<EVP_RAND-CTR-DRBG(7)>,
 L<EVP_RAND-HASH-DRBG(7)>,
 L<EVP_RAND-HMAC-DRBG(7)>,
 L<EVP_RAND-TEST-RAND(7)>,
-L<provider-rand(7)>
+L<provider-rand(7)>,
+L<life_cycle-rand(7)>
 
 =head1 HISTORY
 

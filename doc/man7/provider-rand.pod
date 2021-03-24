@@ -272,11 +272,19 @@ error.
 
 All of the remaining functions should return 1 for success or 0 on error.
 
+=head1 NOTES
+
+The RAND life-cycle is described in L<life_cycle-rand(7)>.  Providers should
+ensure that the various transitions listed there are supported.  At some point
+the EVP layer will begin enforcing the listed transitions.
+
 =head1 SEE ALSO
 
 L<provider(7)>,
 L<RAND(7)>,
-L<EVP_RAND(7)>
+L<EVP_RAND(7)>,
+L<life_cycle-rand(7)>,
+L<EVP_RAND(3)>
 
 =head1 HISTORY
 
