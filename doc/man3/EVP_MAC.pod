@@ -304,6 +304,13 @@ EVP_MAC_init(), EVP_MAC_update() and EVP_MAC_final() for a full
 computation.
 Anything else may give undefined results.
 
+=head1 NOTES
+
+The MAC life-cycle is described in L<life_cycle-mac(7)>.  In the future,
+the transitions described there will be enforced.  When this is done, it will
+not be considered a breaking change to the API.
+
+
 =head1 RETURN VALUES
 
 EVP_MAC_fetch() returns a pointer to a newly fetched EVP_MAC, or
@@ -428,7 +435,9 @@ L<EVP_MAC-GMAC(7)>,
 L<EVP_MAC-HMAC(7)>,
 L<EVP_MAC-KMAC(7)>,
 L<EVP_MAC-Siphash(7)>,
-L<EVP_MAC-Poly1305(7)>
+L<EVP_MAC-Poly1305(7)>,
+L<provider-mac(7)>,
+L<life_cycle-mac(7)>
 
 =head1 HISTORY
 
