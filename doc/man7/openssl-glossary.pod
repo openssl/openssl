@@ -41,7 +41,7 @@ L<OSSL_PROVIDER-base(7)>
 A decoder is a type of algorithm used for decoding keys and parameters from some
 external format such as PEM or DER.
 
-L<OSSL_DECODER_CTX_new_for_pkey.pod>
+L<OSSL_DECODER_CTX_new_for_pkey(3)>
 
 =item Default Provider
 
@@ -67,7 +67,7 @@ L<https://www.itu.int/rec/T-REC-X.690>
 An encoder is a type of algorithm used for encoding keys and parameters to some
 external format such as PEM or DER.
 
-L<OSSL_ENCODER_CTX_new_for_pkey.pod>
+L<OSSL_ENCODER_CTX_new_for_pkey(3)>
 
 =item Fetching
 
