@@ -390,7 +390,7 @@ encryption/decryption, signatures, message authentication codes, etc.
      /* Now calculate the digest itself */
      if (!EVP_DigestFinal_ex(ctx, outdigest, &len))
          goto err;
- 
+
      /* Print out the digest result */
      BIO_dump_fp(stdout, outdigest, len);
 
