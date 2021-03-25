@@ -46,6 +46,9 @@ structure defined in RFC5280 and used in certificates and certificate requests.
 
 X509_PUBKEY_new() allocates and initializes an B<X509_PUBKEY> structure.
 
+X509_PUBKEY_dup() creates a duplicate copy of the B<X509_PUBKEY> object
+specified by I<a>.
+
 X509_PUBKEY_free() frees up B<X509_PUBKEY> structure B<a>. If B<a> is NULL
 nothing is done.
 
@@ -102,10 +105,9 @@ directly: they will instead call wrapper functions such as X509_get0_pubkey().
 
 =head1 RETURN VALUES
 
-If the allocation fails, X509_PUBKEY_new() returns B<NULL> and sets an error
-code that can be obtained by L<ERR_get_error(3)>.
-
-Otherwise it returns a pointer to the newly allocated structure.
+If the allocation fails, X509_PUBKEY_new() and X509_PUBKEY_dup() return
+B<NULL> and set an error code that can be obtained by L<ERR_get_error(3)>.
+Otherwise they return a pointer to the newly allocated structure.
 
 X509_PUBKEY_free() does not return a value.
 
