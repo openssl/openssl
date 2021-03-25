@@ -191,7 +191,7 @@ The B<EVP_CIPHER> type is a structure for cipher method implementation.
 EVP_CIPHER_fetch() fetches the cipher implementation for the given
 B<algorithm> from any provider offering it, within the criteria given
 by the B<properties>.
-See L<provider(7)/Fetching algorithms> for further information.
+See L<crypto(7)/ALGORITHM FETCHING> for further information.
 
 The returned value must eventually be freed with EVP_CIPHER_free().
 

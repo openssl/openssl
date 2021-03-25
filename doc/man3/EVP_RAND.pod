@@ -97,7 +97,7 @@ B<EVP_RAND_CTX> structures are reference counted.
 
 EVP_RAND_fetch() fetches an implementation of a RAND I<algorithm>, given
 a library context I<libctx> and a set of I<properties>.
-See L<provider(7)/Fetching algorithms> for further information.
+See L<crypto(7)/ALGORITHM FETCHING> for further information.
 
 The returned value must eventually be freed with
 L<EVP_RAND_free(3)>.

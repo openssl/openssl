@@ -38,7 +38,7 @@ B<algorithm> from any provider offering it, within the criteria given
 by the B<properties> and in the scope of the given library context B<ctx> (see
 L<OSSL_LIB_CTX(3)>). The algorithm will be one offering functions for performing
 asymmetric cipher related tasks such as asymmetric encryption and decryption.
-See L<provider(7)/Fetching algorithms> for further information.
+See L<crypto(7)/ALGORITHM FETCHING> for further information.
 
 The returned value must eventually be freed with EVP_ASYM_CIPHER_free().
 
@@ -90,7 +90,7 @@ return a constant B<OSSL_PARAM> array or NULL on error.
 
 =head1 SEE ALSO
 
-L<provider(7)/Fetching algorithms>, L<OSSL_PROVIDER(3)>
+L<crypto(7)/ALGORITHM FETCHING>, L<OSSL_PROVIDER(3)>
 
 =head1 HISTORY
 
