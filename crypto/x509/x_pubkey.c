@@ -220,7 +220,7 @@ X509_PUBKEY *X509_PUBKEY_dup(const X509_PUBKEY *a)
                             ASN1_ITEM_rptr(X509_PUBKEY_INTERNAL));
         ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
         return NULL;
-    };
+    }
     pubkey->pkey = a->pkey;
     return pubkey;
 }
