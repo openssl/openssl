@@ -72,7 +72,7 @@ B<EVP_KDF_CTX> is a context type that holds the algorithm inputs.
 
 EVP_KDF_fetch() fetches an implementation of a KDF I<algorithm>, given
 a library context I<libctx> and a set of I<properties>.
-See L<provider(7)/Fetching algorithms> for further information.
+See L<crypto(7)/ALGORITHM FETCHING> for further information.
 
 See L<OSSL_PROVIDER-default(7)/Key Derivation Function (KDF)> for the lists of
 algorithms supported by the default provider.

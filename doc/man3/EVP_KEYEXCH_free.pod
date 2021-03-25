@@ -33,7 +33,7 @@ EVP_KEYEXCH_gettable_ctx_params, EVP_KEYEXCH_settable_ctx_params
 EVP_KEYEXCH_fetch() fetches the key exchange implementation for the given
 I<algorithm> from any provider offering it, within the criteria given
 by the I<properties>.
-See L<provider(7)/Fetching algorithms> for further information.
+See L<crypto(7)/ALGORITHM FETCHING> for further information.
 
 The returned value must eventually be freed with EVP_KEYEXCH_free().
 
@@ -86,7 +86,7 @@ a constant B<OSSL_PARAM> array or NULL on error.
 
 =head1 SEE ALSO
 
-L<provider(7)/Fetching algorithms>, L<OSSL_PROVIDER(3)>
+L<crypto(7)/ALGORITHM FETCHING>, L<OSSL_PROVIDER(3)>
 
 =head1 HISTORY
 

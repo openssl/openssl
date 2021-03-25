@@ -79,7 +79,7 @@ library context I<libctx> (see L<OSSL_LIB_CTX(3)>) is used to provide the
 cryptographic algorithms needed for the session. Any cryptographic algorithms
 that are used by any B<SSL> objects created from this B<SSL_CTX> will be fetched
 from the I<libctx> using the property query string I<propq> (see
-L<provider(7)/Fetching algorithms>. Either or both the I<libctx> or I<propq>
+L<crypto(7)/ALGORITHM FETCHING>. Either or both the I<libctx> or I<propq>
 parameters may be NULL.
 
 SSL_CTX_new() does the same as SSL_CTX_new_ex() except that the default

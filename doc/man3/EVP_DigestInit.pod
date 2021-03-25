@@ -120,7 +120,7 @@ The B<EVP_MD> type is a structure for digest method implementation.
 
 Fetches the digest implementation for the given I<algorithm> from any
 provider offering it, within the criteria given by the I<properties>.
-See L<provider(7)/Fetching algorithms> for further information.
+See L<crypto(7)/ALGORITHM FETCHING> for further information.
 
 The returned value must eventually be freed with EVP_MD_free().
 
@@ -670,7 +670,7 @@ L<EVP_sha224(3)>,
 L<EVP_sha3_224(3)>,
 L<EVP_sm3(3)>,
 L<EVP_whirlpool(3)>
-L<provider(7)/Fetching algorithms>
+L<crypto(7)/ALGORITHM FETCHING>
 
 =head1 HISTORY
 

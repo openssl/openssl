@@ -36,7 +36,7 @@ B<algorithm> from any provider offering it, within the criteria given
 by the B<properties>.
 The algorithm will be one offering functions for performing signature related
 tasks such as signing and verifying.
-See L<provider(7)/Fetching algorithms> for further information.
+See L<crypto(7)/ALGORITHM FETCHING> for further information.
 
 The returned value must eventually be freed with EVP_SIGNATURE_free().
 
@@ -84,7 +84,7 @@ return a constant B<OSSL_PARAM> array or NULL on error.
 
 =head1 SEE ALSO
 
-L<provider(7)/Fetching algorithms>, L<OSSL_PROVIDER(3)>
+L<crypto(7)/ALGORITHM FETCHING>, L<OSSL_PROVIDER(3)>
 
 =head1 HISTORY
 
