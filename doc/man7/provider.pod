@@ -14,6 +14,8 @@ provider - OpenSSL operation implementation providers
 
 =head2 General
 
+This page contains information useful to provider authors.
+
 A I<provider>, in OpenSSL terms, is a unit of code that provides one
 or more implementations for various operations for diverse algorithms
 that one might want to perform.
@@ -27,9 +29,9 @@ Very often, the algorithms revolve around cryptographic operations,
 but may also revolve around other types of operation, such as managing
 certain types of objects.
 
-=head2 Provider
+See L<crypto(7)> for further details.
 
-I<NOTE: This section is mostly interesting for provider authors.>
+=head2 Provider
 
 A I<provider> offers an initialization function, as a set of base
 functions in the form of an B<OSSL_DISPATCH> array, and by extension,
@@ -90,11 +92,9 @@ implementations.
 The returned B<OSSL_ALGORITHM> is the foundation of any OpenSSL
 library API that uses providers for their implementation, most
 commonly in the I<fetching> type of functions
-(see L</Fetching algorithms> below).
+(see L<crypto(7)/ALGORITHM FETCHING>).
 
 =head2 Operations
-
-I<NOTE: This section is mostly interesting for provider authors.>
 
 Operations are referred to with numbers, via macros with names
 starting with C<OSSL_OP_>.
@@ -170,74 +170,6 @@ L<provider-encoder(7)>
 
 =back
 
-=head2 Fetching algorithms
-
-=head3 Explicit fetch
-
-I<NOTE: This section is mostly interesting to OpenSSL users.>
-
-Users of the OpenSSL libraries never query the provider directly for
-its diverse implementations and dispatch tables.
-Instead, the diverse OpenSSL APIs often have fetching functions that
-do the work, and they return an appropriate method object back to the
-user.
-These functions usually have the name C<APINAME_fetch>, where
-C<APINAME> is the name of the API, for example L<EVP_MD_fetch(3)>.
-
-These fetching functions follow a fairly common pattern, where three
-arguments are passed:
-
-=over 4
-
-=item The library context
-
-See L<OSSL_LIB_CTX(3)> for a more detailed description.
-This may be NULL to signify the default (global) library context, or a
-context created by the user.
-Only providers loaded in this library context (see
-L<OSSL_PROVIDER_load(3)>) will be considered by the fetching
-function. In case no provider has been loaded in this library context
-the default provider will be loaded as fallback (see
-L<OSSL_PROVIDER-default(7)>).
-
-=item An identifier
-
-This is most commonly an algorithm name (this is the case for all EVP
-methods), but may also be called something else.
-
-=for comment For example, an OSSL_STORE implementation would use the
-URI scheme as an identifier.
-
-=item A property query string
-
-See L<property(7)> for a more detailed description.
-This is used to select more exactly which providers will get to offer
-an implementation.
-
-=back
-
-The method object that is fetched can then be used with diverse other
-functions that use them, for example L<EVP_DigestInit_ex(3)>.
-
-=head3 Implicit fetch
-
-I<NOTE: This section is mostly interesting to OpenSSL users.>
-
-OpenSSL has a number of functions that return a method object with no
-associated implementation, such as L<EVP_sha256(3)>,
-L<EVP_blake2b512(3)> or L<EVP_aes_128_cbc(3)>, which are present for
-compatibility with OpenSSL before version 3.0.
-
-When they are used with functions like L<EVP_DigestInit_ex(3)> or
-L<EVP_CipherInit_ex(3)>, the actual implementation to be used is
-fetched implicitly using default search criteria.
-
-Implicit fetching can also occur when a NULL algorithm parameter is
-supplied.
-In this case an algorithm implementation is implicitly fetched using
-default search criteria and an algorithm name that is consistent with
-the type of EVP_PKEY being used.
-
 =head3 Algorithm naming
 
 Algorithm names are case insensitive. Any particular algorithm can have multiple
@@ -262,125 +194,9 @@ use alternative names or names that OpenSSL has used historically.
 
 =head1 OPENSSL PROVIDERS
 
-OpenSSL comes with a set of providers.
-
-The algorithms available in each of these providers may vary due to build time
-configuration options. The L<openssl-list(1)> command can be used to list the
-currently available algorithms.
-
-The names of the algorithms shown from L<openssl-list(1)> can be used as an
-algorithm identifier to the appropriate fetching function.
-
-=head2 Default provider
-
-The default provider is built in as part of the F<libcrypto> library.
-Should it be needed (if other providers are loaded and offer
-implementations of the same algorithms), the property "provider=default"
-can be used as a search criterion for these implementations.  The default
-provider includes all the functionality of the base provider below.
-
-=head2 Base provider
-
-The base provider is built in as part of the F<libcrypto> library.
-Should it be needed (if other providers are loaded and offer
-implementations of the same algorithms), the property "provider=base"
-can be used as a search criterion for these implementations. Some
-non-cryptographic algorithms (such as encoders for loading keys and
-parameters from files) are not FIPS algorithm implementations in themselves but
-support algorithms from the FIPS provider and are allowed for use in "FIPS
-mode". The property "fips=yes" can be used to select such algorithms.
-
-=head2 FIPS provider
-
-The FIPS provider is a dynamically loadable module, and must therefore
-be loaded explicitly, either in code or through OpenSSL configuration
-(see L<config(5)>).
-Should it be needed (if other providers are loaded and offer
-implementations of the same algorithms), the property "provider=fips" can
-be used as a search criterion for these implementations. All approved algorithm
-implementations in the FIPS provider can also be selected with the property
-"fips=yes". The FIPS provider also contains a number of non-approved algorithm
-implementations and these can be selected with the property "fips=no".
-
-=head2 Legacy provider
-
-The legacy provider is a dynamically loadable module, and must therefore
-be loaded explicitly, either in code or through OpenSSL configuration
-(see L<config(5)>).
-Should it be needed (if other providers are loaded and offer
-implementations of the same algorithms), the property "provider=legacy" can be
-used as a search criterion for these implementations.
-
-=head2 Null provider
-
-The null provider is built in as part of the F<libcrypto> library. It contains
-no algorithms in it at all. When fetching algorithms the default provider will
-be automatically loaded if no other provider has been explicitly loaded. To
-prevent that from happening you can explicitly load the null provider.
-
-=head1 EXAMPLES
-
-=head2 Fetching
-
-Fetch any available implementation of SHA2-256 in the default context:
-
- EVP_MD *md = EVP_MD_fetch(NULL, "SHA2-256", NULL);
- ...
- EVP_MD_free(md);
-
-Fetch any available implementation of AES-128-CBC in the default context:
-
- EVP_CIPHER *cipher = EVP_CIPHER_fetch(NULL, "AES-128-CBC", NULL);
- ...
- EVP_CIPHER_free(cipher);
-
-Fetch an implementation of SHA2-256 from the default provider in the default
-context:
-
- EVP_MD *md = EVP_MD_fetch(NULL, "SHA2-256", "provider=default");
- ...
- EVP_MD_free(md);
-
-Fetch an implementation of SHA2-256 that is not from the default provider in the
-default context:
-
- EVP_MD *md = EVP_MD_fetch(NULL, "SHA2-256", "provider!=default");
- ...
- EVP_MD_free(md);
-
-Fetch an implementation of SHA2-256 from the default provider in the specified
-context:
-
- EVP_MD *md = EVP_MD_fetch(ctx, "SHA2-256", "provider=default");
- ...
- EVP_MD_free(md);
-
-Load the legacy provider into the default context and then fetch an
-implementation of WHIRLPOOL from it:
-
- /* This only needs to be done once - usually at application start up */
- OSSL_PROVIDER *legacy = OSSL_PROVIDER_load(NULL, "legacy");
-
- EVP_MD *md = EVP_MD_fetch(NULL, "WHIRLPOOL", "provider=legacy");
- ...
- EVP_MD_free(md);
-
-Note that in the above example the property string "provider=legacy" is optional
-since, assuming no other providers have been loaded, the only implementation of
-the "whirlpool" algorithm is in the "legacy" provider. Also note that the
-default provider should be explicitly loaded if it is required in addition to
-other providers:
-
- /* This only needs to be done once - usually at application start up */
- OSSL_PROVIDER *legacy = OSSL_PROVIDER_load(NULL, "legacy");
- OSSL_PROVIDER *default = OSSL_PROVIDER_load(NULL, "default");
-
- EVP_MD *md_whirlpool = EVP_MD_fetch(NULL, "whirlpool", NULL);
- EVP_MD *md_sha256 = EVP_MD_fetch(NULL, "SHA2-256", NULL);
- ...
- EVP_MD_free(md_whirlpool);
- EVP_MD_free(md_sha256);
-
+OpenSSL provides a number of its own providers. These are the default, base,
+fips, legacy and null providers. See L<crypto(7)> for an overview of these
+providers.
 
 =head1 SEE ALSO
 
