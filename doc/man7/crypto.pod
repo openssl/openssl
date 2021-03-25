@@ -88,7 +88,7 @@ BIO_read() in another where both functions are passed the same B<BIO> object
 since both of them may attempt to make changes to the same B<BIO> object.
 
 There are exceptions to these rules. A small number of functions are not thread
-safe at all. Where this is the case this restriction will be noted in the
+safe at all. Where this is the case this restriction should be noted in the
 documentation for the function. Similarly some data structures may be partially
 or fully thread safe. For example it is safe to use an B<OSSL_LIB_CTX> in
 multiple threads.
@@ -178,7 +178,7 @@ is supplied. In this case an algorithm implementation is implicitly fetched
 using default search criteria and an algorithm name that is consistent with
 the context in which it is being used.
 
-=head1 Fetching examples
+=head1 FETCHING EXAMPLES
 
 The following section provides a series of examples of fetching algorithm
 implementations.
@@ -293,11 +293,11 @@ validated according to the FIPS 140-2 standard. Should it be needed (if other
 providers are loaded and offer implementations of the same algorithms), the
 property query string "provider=fips" can be used as a search criterion for
 these implementations. All approved algorithm implementations in the FIPS
-provider can also be selected with the property "fips=yes". The FIPS provide
+provider can also be selected with the property "fips=yes". The FIPS provider
 also contains a number of non-approved algorithm implementations and these can
 be selected with the property "fips=no".
 
-See L<OSSL_PROVIDER-fips(7)>.
+See L<OSSL_PROVIDER-FIPS(7)>.
 
 =head2 Legacy provider
 
@@ -344,7 +344,7 @@ encryption/decryption, signatures, message authentication codes, etc.
  #include <stdio.h>
  #include <openssl/evp.h>
  #include <openssl/bio.h>
- 
+
  int main(void)
  {
      EVP_MD_CTX *ctx = NULL;
@@ -354,7 +354,7 @@ encryption/decryption, signatures, message authentication codes, etc.
      };
      unsigned int len = 0;
      unsigned char *outdigest = NULL;
- 
+
      /* Create a context for the digest operation */
      ctx = EVP_MD_CTX_new();
      if (ctx == NULL)
@@ -393,13 +393,12 @@ encryption/decryption, signatures, message authentication codes, etc.
  
      /* Print out the digest result */
      BIO_dump_fp(stdout, outdigest, len);
- 
+
   err:
      /* Clean up all the resources we allocated */
      OPENSSL_free(outdigest);
      EVP_MD_free(sha256);
      EVP_MD_CTX_free(ctx);
- 
  }
 
 =head1 CONFIGURATION
@@ -457,7 +456,7 @@ still be responsible for freeing the I<obj> value where appropriate.
 
 L<openssl(1)>, L<ssl(7)>, L<evp(7)>, L<OSSL_LIB_CTX(3)>, L<openssl-threads(7)>,
 L<property(7)>, L<OSSL_PROVIDER-default(7)>, L<OSSL_PROVIDER-base(7)>,
-L<OSSL_PROVIDER-fips(7)>, L<OSSL_PROVIDER-legacy(7)>, L<OSSL_PROVIDER-null(7)>,
+L<OSSL_PROVIDER-FIPS(7)>, L<OSSL_PROVIDER-legacy(7)>, L<OSSL_PROVIDER-null(7)>,
 L<openssl-glossary(7)>, L<provider(7)>
 
 =head1 COPYRIGHT
