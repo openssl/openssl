@@ -82,7 +82,7 @@ L<EVP_aes_128_cbc(3)>. With implicit fetching an implementation is fetched
 automatically using default selection criteria the first time the algorithm is
 used.
 
-L<crypto(3)>
+L<crypto(7)>
 
 =item FIPS Provider
 
