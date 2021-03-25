@@ -7,7 +7,7 @@
  https://github.com/openssl/openssl/commits/ and pick the appropriate
  release branch.
 
- Changes between 1.1.1j and 1.1.1k [xx XXX xxxx]
+ Changes between 1.1.1j and 1.1.1k [25 Mar 2021]
 
   *) Fixed a problem with verifying a certificate chain when using the
      X509_V_FLAG_X509_STRICT flag. This flag enables additional security checks
