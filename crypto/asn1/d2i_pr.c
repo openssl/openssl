@@ -52,7 +52,7 @@ d2i_PrivateKey_decoder(int keytype, EVP_PKEY **a, const unsigned char **pp,
         if (a != NULL)
             *a = bak_a;
         if (dctx == NULL)
-            return NULL;
+            continue;
 
         ret = OSSL_DECODER_from_data(dctx, pp, &len);
         OSSL_DECODER_CTX_free(dctx);
