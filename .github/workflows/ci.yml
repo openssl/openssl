@@ -200,7 +200,5 @@ jobs:
       run: make test TESTS="test_external_gost_engine"
     - name: test external krb5
       run: make test TESTS="test_external_krb5"
-#   - name: test external boringssl
-#     run: BORING_RUNNER_DIR=$(pwd)/boringssl/ssl/test/runner make test TESTS="test_external_boringssl"
 #   - name: test external pyca
 #     run: make test TESTS="test_external_pyca"
