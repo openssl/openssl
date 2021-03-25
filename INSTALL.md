@@ -692,7 +692,7 @@ Enable building of integration with external test suites.
 This is a developer option and may not work on all platforms.  The following
 external test suites are currently supported:
 
- - BoringSSL test suite
+ - GOST engine test suite
  - Python PYCA/Cryptography test suite
  - krb5 test suite
 
