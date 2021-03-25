@@ -133,7 +133,7 @@ my @app_strcasecmp_tests = (
     }
 );
 
-my @posix_file_io_tests = (
+my @file_io_tests = (
     {
         description => 'read a simple line from a file',
         filenamecreate => 'testfile.txt',
@@ -169,7 +169,7 @@ my @unsupported_commands = (
 # every "test_app_rename" makes 3 checks
 plan tests => 3 * scalar(@app_rename_tests) +
               3 * scalar(@app_strcasecmp_tests) +
-              2 * scalar(@posix_file_io_tests) +
+              2 * 2 * scalar(@file_io_tests) +
               1 * scalar(@unsupported_commands);
 
 
@@ -179,8 +179,11 @@ foreach my $test (@app_rename_tests) {
 foreach my $test (@app_strcasecmp_tests) {
     test_app_strcasecmp($test);
 }
-foreach my $test (@posix_file_io_tests) {
-    test_posix_file_io($test);
+foreach my $test (@file_io_tests) {
+    test_file_io('posix_file_io', $test);
+}
+foreach my $test (@file_io_tests) {
+    test_file_io('app_fdopen', $test);
 }
 foreach my $test (@unsupported_commands) {
     test_unsupported_commands($test);
@@ -268,7 +271,8 @@ sub test_app_strcasecmp {
         $opts->{result_expected}."' (".$opts->{description}.")");
 }
 
-sub test_posix_file_io {
+sub test_file_io {
+    my $command = shift;
     my ($opts) = @_;
     my @output;
 
@@ -277,7 +281,7 @@ sub test_posix_file_io {
     close $fh;
     @output = run(
         test(['apps_internals_test',
-            'posix_file_io',
+            $command,
             $opts->{filenamespecify}
         ]),
         capture => 1,
