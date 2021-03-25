@@ -92,7 +92,7 @@ implementations.
 The returned B<OSSL_ALGORITHM> is the foundation of any OpenSSL
 library API that uses providers for their implementation, most
 commonly in the I<fetching> type of functions
-(see L</Fetching algorithms> below).
+(see L<crypto(7)/ALGORITHM FETCHING>).
 
 =head2 Operations
 
