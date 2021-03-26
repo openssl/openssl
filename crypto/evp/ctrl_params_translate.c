@@ -2188,7 +2188,7 @@ static const struct translation_st evp_pkey_ctx_translations[] = {
       EVP_PKEY_CTRL_SCRYPT_MAXMEM_BYTES, "maxmem_bytes", NULL,
       OSSL_KDF_PARAM_SCRYPT_MAXMEM, OSSL_PARAM_UNSIGNED_INTEGER, NULL },
 
-    { SET, -1, -1, EVP_PKEY_OP_KEYGEN,
+    { SET, -1, -1, EVP_PKEY_OP_KEYGEN | EVP_PKEY_OP_TYPE_CRYPT,
       EVP_PKEY_CTRL_CIPHER, NULL, NULL,
       OSSL_PKEY_PARAM_CIPHER, OSSL_PARAM_UTF8_STRING, fix_cipher },
     { SET, -1, -1, EVP_PKEY_OP_KEYGEN,
