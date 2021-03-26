@@ -536,12 +536,11 @@ static int dhx_pkey_import_from(const OSSL_PARAM params[], void *vpctx)
     return dh_pkey_import_from_type(params, vpctx, EVP_PKEY_DHX);
 }
 
-#define dh_bn_dup_check(bn) \
-{ \
-  const BIGNUM *f = DH_get0_##bn(dh); \
-  \
-  if (f != NULL && (dupkey->bn = BN_dup(f)) == NULL) \
-      goto err; \
+static ossl_inline int dh_bn_dup_check(BIGNUM **out, const BIGNUM *f)
+{
+    if (f != NULL && (*out = BN_dup(f)) == NULL)
+        return 0;
+    return 1;
 }
 
 static DH *dh_dup(const DH *dh)
@@ -561,8 +560,11 @@ static DH *dh_dup(const DH *dh)
 
     dupkey->flags = dh->flags;
 
-    dh_bn_dup_check(pub_key)
-    dh_bn_dup_check(priv_key)
+    if (!dh_bn_dup_check(&dupkey->pub_key, dh->pub_key))
+        goto err;
+    if (!dh_bn_dup_check(&dupkey->priv_key, dh->priv_key))
+        goto err;
+
     if (!CRYPTO_dup_ex_data(CRYPTO_EX_INDEX_DH,
                             &dupkey->ex_data, &dh->ex_data))
         goto err;

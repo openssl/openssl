@@ -500,12 +500,11 @@ static int dsa_pkey_import_from(const OSSL_PARAM params[], void *vpctx)
     return 1;
 }
 
-#define dsa_bn_dup_check(bn) \
-{ \
-  const BIGNUM *f = DSA_get0_##bn(dsa); \
-  \
-  if (f != NULL && (dupkey->bn = BN_dup(f)) == NULL) \
-      goto err; \
+static ossl_inline int dsa_bn_dup_check(BIGNUM **out, const BIGNUM *f)
+{
+    if (f != NULL && (*out = BN_dup(f)) == NULL)
+        return 0;
+    return 1;
 }
 
 static DSA *dsa_dup(const DSA *dsa)
@@ -524,8 +523,10 @@ static DSA *dsa_dup(const DSA *dsa)
 
     dupkey->flags = dsa->flags;
 
-    dsa_bn_dup_check(pub_key)
-    dsa_bn_dup_check(priv_key)
+    if (!dsa_bn_dup_check(&dupkey->pub_key, dsa->pub_key))
+        goto err;
+    if (!dsa_bn_dup_check(&dupkey->priv_key, dsa->priv_key))
+        goto err;
 
     if (!CRYPTO_dup_ex_data(CRYPTO_EX_INDEX_DSA,
                             &dupkey->ex_data, &dsa->ex_data))

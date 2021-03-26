@@ -884,20 +884,11 @@ static int rsa_pss_pkey_import_from(const OSSL_PARAM params[], void *vpctx)
     return rsa_int_import_from(params, vpctx, RSA_FLAG_TYPE_RSASSAPSS);
 }
 
-#define rsa_bn_dup_check(bn) \
-{ \
-  const BIGNUM *f = rsa->bn; \
-  \
-  if (f != NULL && (dupkey->bn = BN_dup(f)) == NULL) \
-      goto err; \
-}
-
-#define pinfo_bn_dup_check(bn) \
-{ \
-  const BIGNUM *f = pinfo->bn; \
-  \
-  if (f != NULL && (duppinfo->bn = BN_dup(f)) == NULL) \
-      goto err; \
+static ossl_inline int rsa_bn_dup_check(BIGNUM **out, const BIGNUM *f)
+{
+    if (f != NULL && (*out = BN_dup(f)) == NULL)
+        return 0;
+    return 1;
 }
 
 static RSA *rsa_dup(const RSA *rsa)
@@ -913,16 +904,24 @@ static RSA *rsa_dup(const RSA *rsa)
         return NULL;
 
     /* private and public key */
-    rsa_bn_dup_check(n)
-    rsa_bn_dup_check(e)
-    rsa_bn_dup_check(d)
+    if (!rsa_bn_dup_check(&dupkey->n, rsa->n))
+        goto err;
+    if (!rsa_bn_dup_check(&dupkey->e, rsa->e))
+        goto err;
+    if (!rsa_bn_dup_check(&dupkey->d, rsa->d))
+        goto err;
 
     /* factors and crt params */
-    rsa_bn_dup_check(p)
-    rsa_bn_dup_check(q)
-    rsa_bn_dup_check(dmp1)
-    rsa_bn_dup_check(dmq1)
-    rsa_bn_dup_check(iqmp)
+    if (!rsa_bn_dup_check(&dupkey->p, rsa->p))
+        goto err;
+    if (!rsa_bn_dup_check(&dupkey->q, rsa->q))
+        goto err;
+    if (!rsa_bn_dup_check(&dupkey->dmp1, rsa->dmp1))
+        goto err;
+    if (!rsa_bn_dup_check(&dupkey->dmq1, rsa->dmq1))
+        goto err;
+    if (!rsa_bn_dup_check(&dupkey->iqmp, rsa->iqmp))
+        goto err;
 
     /* multiprime */
     pnum = sk_RSA_PRIME_INFO_num(rsa->prime_infos);
@@ -940,9 +939,12 @@ static RSA *rsa_dup(const RSA *rsa)
             (void)sk_RSA_PRIME_INFO_push(dupkey->prime_infos, duppinfo);
 
             pinfo = sk_RSA_PRIME_INFO_value(rsa->prime_infos, i);
-            pinfo_bn_dup_check(r)
-            pinfo_bn_dup_check(d)
-            pinfo_bn_dup_check(t)
+            if (!rsa_bn_dup_check(&duppinfo->r, pinfo->r))
+                goto err;
+            if (!rsa_bn_dup_check(&duppinfo->d, pinfo->d))
+                goto err;
+            if (!rsa_bn_dup_check(&duppinfo->t, pinfo->t))
+                goto err;
         }
         if (!ossl_rsa_multip_calc_product(dupkey))
             goto err;
