@@ -19,6 +19,7 @@
 #include <openssl/err.h>
 #include <openssl/rsa.h>
 #include <openssl/evp.h>
+#include <openssl/proverr.h>
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 #include "prov/provider_ctx.h"
@@ -473,9 +474,14 @@ static int rsa_gen_set_params(void *genctx, const OSSL_PARAM params[])
     if (params == NULL)
         return 1;
 
-    if ((p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_RSA_BITS)) != NULL
-        && !OSSL_PARAM_get_size_t(p, &gctx->nbits))
-        return 0;
+    if ((p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_RSA_BITS)) != NULL) {
+        if (!OSSL_PARAM_get_size_t(p, &gctx->nbits))
+            return 0;
+        if (gctx->nbits < RSA_MIN_MODULUS_BITS) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_KEY_SIZE_TOO_SMALL);
+            return 0;
+        }
+    }
     if ((p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_RSA_PRIMES)) != NULL
         && !OSSL_PARAM_get_size_t(p, &gctx->primes))
         return 0;
