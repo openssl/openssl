@@ -14,7 +14,7 @@
 # include <openssl/core.h>
 # include <openssl/rsa.h>
 # include <openssl/x509.h>
-# include "crypto/types.h"
+# include <openssl/types.h>
 
 typedef struct rsa_pss_params_30_st {
     int hash_algorithm_nid;

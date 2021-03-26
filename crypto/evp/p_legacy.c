@@ -18,7 +18,6 @@
 #include <openssl/err.h>
 #include <openssl/rsa.h>
 #include <openssl/ec.h>
-#include "crypto/types.h"
 #include "crypto/evp.h"
 #include "evp_local.h"
 

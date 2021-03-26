@@ -12,7 +12,7 @@
 # pragma once
 
 # include <openssl/pem.h>
-# include "crypto/types.h"
+# include <openssl/types.h>
 
 /* Found in crypto/pem/pvkfmt.c */
 

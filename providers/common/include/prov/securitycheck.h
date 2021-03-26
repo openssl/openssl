@@ -7,7 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "crypto/types.h"
+#include <openssl/types.h>
 
 /* Functions that are common */
 int ossl_rsa_check_key(const RSA *rsa, int protect);

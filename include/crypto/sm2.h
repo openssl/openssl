@@ -18,7 +18,7 @@
 # ifndef OPENSSL_NO_SM2
 
 #  include <openssl/ec.h>
-#  include "crypto/types.h"
+#  include <openssl/types.h>
 
 int ossl_sm2_key_private_check(const EC_KEY *eckey);
 
