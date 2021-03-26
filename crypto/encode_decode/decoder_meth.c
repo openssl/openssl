@@ -427,13 +427,7 @@ int OSSL_DECODER_number(const OSSL_DECODER *decoder)
 
 const char *OSSL_DECODER_description(const OSSL_DECODER *decoder)
 {
-    if (decoder->base.prov != NULL) {
-        OSSL_LIB_CTX *libctx = ossl_provider_libctx(decoder->base.prov);
-        OSSL_NAMEMAP *namemap = ossl_namemap_stored(libctx);
-
-        return ossl_namemap_num2desc(namemap, decoder->base.id);
-    }
-    return NULL;
+    return decoder->base.description;
 }
 
 int OSSL_DECODER_is_a(const OSSL_DECODER *decoder, const char *name)
