@@ -297,7 +297,7 @@ struct servent *getservbyname(const char *name, const char *proto);
 
 /* ----------------------------- HP NonStop -------------------------------- */
 /* Required to support platform variant without getpid() and pid_t. */
-# ifdef __TANDEM
+# if defined(__TANDEM) && defined(_GUARDIAN_TARGET)
 #  include <strings.h>
 #  include <netdb.h>
 #  define getservbyname(name,proto)          getservbyname((char*)name,proto)

@@ -7,6 +7,15 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if defined (__TANDEM) && defined (_SPT_MODEL_)
+/*
+ * These definitions have to come first in SPT due to scoping of the
+ * declarations in c99 associated with SPT use of stat.
+ */
+# include <sys/types.h>
+# include <sys/stat.h>
+#endif
+
 #include "internal/cryptlib.h"
 
 #include <errno.h>
