@@ -978,7 +978,7 @@ int x509_main(int argc, char **argv)
                 BIO_printf(bio_err, "Out of memory\n");
                 goto end;
             }
-            BIO_printf(out, "%s Fingerprint=", OBJ_nid2sn(EVP_MD_type(fdig)));
+            BIO_printf(out, "%s Fingerprint=", EVP_MD_name(fdig));
             for (j = 0; j < (int)n; j++)
                 BIO_printf(out, "%02X%c", md[j], (j + 1 == (int)n) ? '\n' : ':');
         } else if (i == ocspid) {

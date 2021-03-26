@@ -282,7 +282,7 @@ int PEM_X509_INFO_write_bio(BIO *bp, const X509_INFO *xi, EVP_CIPHER *enc,
     const unsigned char *iv = NULL;
 
     if (enc != NULL) {
-        objstr = OBJ_nid2sn(EVP_CIPHER_nid(enc));
+        objstr = EVP_CIPHER_name(enc);
         if (objstr == NULL
                    /*
                     * Check "Proc-Type: 4,Encrypted\nDEK-Info: objstr,hex-iv\n"
@@ -317,7 +317,7 @@ int PEM_X509_INFO_write_bio(BIO *bp, const X509_INFO *xi, EVP_CIPHER *enc,
              * than what the user has passed us ... as we have to match
              * exactly for some strange reason
              */
-            objstr = OBJ_nid2sn(EVP_CIPHER_nid(xi->enc_cipher.cipher));
+            objstr = EVP_CIPHER_name(xi->enc_cipher.cipher);
             if (objstr == NULL) {
                 ERR_raise(ERR_LIB_PEM, PEM_R_UNSUPPORTED_CIPHER);
                 goto err;
