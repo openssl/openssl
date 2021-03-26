@@ -70,6 +70,27 @@ jobs:
       - name: make test
         run: make test
 
+  out-of-tree_build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: setup build dir
+        run: |
+            set -eux
+            mkdir -p ${myblddir:=../_build/nest/a/little/more}
+            echo "mysrcdir=$(realpath .)" | tee -a $GITHUB_ENV
+            echo "myblddir=$(realpath $myblddir)" | tee -a $GITHUB_ENV
+      - name: config
+        run: set -eux ; cd ${{ env.myblddir }} && ${{ env.mysrcdir }}/config --strict-warnings && perl configdata.pm --dump
+      - name: make build_generated
+        run: set -eux; cd ${{ env.myblddir }} && make -s build_generated
+      - name: make update
+        run: set -eux; cd ${{ env.myblddir }} && make update
+      - name: make
+        run: set -eux; cd ${{ env.myblddir }} && make -s -j4
+      - name: make test (minimal subset)
+        run: set -eux; cd ${{ env.myblddir }} && make test TESTS='0[0-9]'
+
   no-deprecated:
     runs-on: ubuntu-latest
     steps:

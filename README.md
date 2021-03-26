@@ -39,7 +39,7 @@ Note that, referencing the terminology defined by [ETSI](https://www.etsi.org/te
 
 ## Status
 
-This fork is currently in sync with the [OpenSSL\_1\_1\_1g tag](https://github.com/openssl/openssl/tree/OpenSSL_1_1_1g), and adds the following:
+This fork is currently in sync with the [OpenSSL\_1\_1\_1k tag](https://github.com/openssl/openssl/tree/OpenSSL_1_1_1k), and adds the following:
 
 - quantum-safe key exchange in TLS 1.3
 - hybrid (quantum-safe + elliptic curve) key exchange in TLS 1.3
