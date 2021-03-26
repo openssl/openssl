@@ -1,4 +1,4 @@
-OQS-OpenSSL_1\_1\_1-stable snapshot 2020-08
+OQS-OpenSSL_1\_1\_1-stable snapshot 2021-03
 ===========================================
 
 About
@@ -13,16 +13,23 @@ The **Open Quantum Safe (OQS) project** has the goal of developing and prototypi
 Release notes
 =============
 
-This is the 2020-08 snapshot release of OQS-OpenSSL, which was released on August 11, 2020. Its release page on GitHub is https://github.com/open-quantum-safe/openssl/releases/tag/OQS-OpenSSL_1_1_1-stable-snapshot-2020-08.  This release is intended to be used with liboqs version 0.4.0.
+This is the 2021-03 snapshot release of OQS-OpenSSL, which was released on March 26, 2021. Its release page on GitHub is https://github.com/open-quantum-safe/openssl/releases/tag/OQS-OpenSSL_1_1_1-stable-snapshot-2021-03.  This release is intended to be used with liboqs version 0.5.0.
 
 What's New
 ----------
 
-This is the fourth snapshot release of OQS-OpenSSL_1\_1\_1-stable.  It is based on OpenSSL 1.1.1g.
+This is the fifth snapshot release of OQS-OpenSSL_1\_1\_1-stable.  It is based on OpenSSL 1.1.1k.
 
-- Uses the updated NIST Round 2 submissions added to liboqs 0.4.0, as described in the [liboqs release notes](https://github.com/open-quantum-safe/liboqs/blob/main/RELEASE.md).
+- Removes algorithms from NIST PQC Round 2 that did not advance to Round 3: NewHope, ThreeBears, MQDSS, qTesla.
+- Updates algorithms to those used in liboqs 0.5.0, as described in the [liboqs release notes](https://github.com/open-quantum-safe/liboqs/blob/main/RELEASE.md).
+- Adds HQC, NTRUPrime.
+- Improvements to continuous integration testing and build process, including building of shared libraries.
+- Change format of hybrid key exchange in TLS 1.3 to follow https://tools.ietf.org/html/draft-ietf-tls-hybrid-design-01
 
-Deprecations
-------------
+Previous release notes
+----------------------
 
-As a result of NIST's announcement of Round 3 of the Post-Quantum Cryptography Standardization Project, this is the last release of OQS-OpenSSL that contain algorithms from Round 2 that are not Round 3 finalists or alternate candidates. Those algorithms will be removed in the next release. The algorithms in question are: NewHope, ThreeBears, MQDSS, and qTesla. These algorithms are considered deprecated within OQS-OpenSSL will receive no updates after this release.
+- [OQS-OpenSSL 1.1.1 snapshot 2020-08](https://github.com/open-quantum-safe/openssl/releases/tag/OQS-OpenSSL_1_1_1-stable-snapshot-2020-08) aligned with liboqs 0.4.0 (August 11, 2020)
+- [OQS-OpenSSL 1.1.1 snapshot 2020-07](https://github.com/open-quantum-safe/openssl/releases/tag/OQS-OpenSSL_1_1_1-stable-snapshot-2020-07) aligned with liboqs 0.3.0 (July 10, 2020)
+- [OQS-OpenSSL 1.1.1 snapshot 2019-10](https://github.com/open-quantum-safe/openssl/releases/tag/OQS-OpenSSL_1_1_1-stable-snapshot-2019-10) aligned with liboqs 0.2.0 (October 8, 2019)
+- [OQS-OpenSSL 1.1.1 snapshot 2018-11](https://github.com/open-quantum-safe/openssl/releases/tag/OQS-OpenSSL_1_1_1-stable-snapshot-2018-11) aligned with liboqs 0.1.0 (November 13, 2018)
