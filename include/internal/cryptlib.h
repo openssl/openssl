@@ -217,10 +217,18 @@ static ossl_inline void ossl_sleep(unsigned long millis)
     ts.tv_sec = (long int) (millis / 1000);
     ts.tv_nsec = (long int) (millis % 1000) * 1000000ul;
     nanosleep(&ts, NULL);
-# elif defined(__TANDEM) && !defined(_REENTRANT)
-#  include <cextdecs.h(PROCESS_DELAY_)>
+# elif defined(__TANDEM)
+#  if !defined(_REENTRANT)
+#   include <cextdecs.h(PROCESS_DELAY_)>
     /* HPNS does not support usleep for non threaded apps */
     PROCESS_DELAY_(millis * 1000);
+#  elif defined(_SPT_MODEL_)
+#   include <spthread.h>
+#   include <spt_extensions.h>
+    usleep(millis * 1000);
+#  else
+    usleep(millis * 1000);
+#  endif
 # else
     usleep(millis * 1000);
 # endif
