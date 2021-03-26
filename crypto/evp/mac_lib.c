@@ -33,6 +33,7 @@ EVP_MAC_CTX *EVP_MAC_CTX_new(EVP_MAC *mac)
         ctx = NULL;
     } else {
         ctx->meth = mac;
+        ctx->life_cycle = evp_mac_ctx_state_newed;
     }
     return ctx;
 }
@@ -108,12 +109,26 @@ size_t EVP_MAC_CTX_get_mac_size(EVP_MAC_CTX *ctx)
 int EVP_MAC_init(EVP_MAC_CTX *ctx, const unsigned char *key, size_t keylen,
                  const OSSL_PARAM params[])
 {
-    return ctx->meth->init(ctx->data, key, keylen, params);
+    int res = ctx->meth->init(ctx->data, key, keylen, params);
+
+    if (res)
+        ctx->life_cycle = evp_mac_ctx_state_initialised;
+    return res;
 }
 
 int EVP_MAC_update(EVP_MAC_CTX *ctx, const unsigned char *data, size_t datalen)
 {
-    return ctx->meth->update(ctx->data, data, datalen);
+    int res;
+
+    if (ctx->life_cycle != evp_mac_ctx_state_initialised
+            && ctx->life_cycle != evp_mac_ctx_state_updated) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_LIFE_CYCLE_ERROR);
+        return 0;
+    }
+    res = ctx->meth->update(ctx->data, data, datalen);
+    if (res)
+        ctx->life_cycle = evp_mac_ctx_state_updated;
+    return res;
 }
 
 int EVP_MAC_final(EVP_MAC_CTX *ctx,
@@ -122,9 +137,16 @@ int EVP_MAC_final(EVP_MAC_CTX *ctx,
     size_t l;
     int res = 1;
 
-    if (out != NULL)
+    if (ctx->life_cycle != evp_mac_ctx_state_updated) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_LIFE_CYCLE_ERROR);
+        return 0;
+    }
+    if (out != NULL) {
         res = ctx->meth->final(ctx->data, out, &l, outsize);
-    else
+        if (res)
+            ctx->life_cycle = evp_mac_ctx_state_finaled;
+    } else {
+    }
         l = EVP_MAC_CTX_get_mac_size(ctx);
     if (outl != NULL)
         *outl = l;

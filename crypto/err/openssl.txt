@@ -695,6 +695,7 @@ EVP_R_INVALID_SEED_LENGTH:220:invalid seed length
 EVP_R_INVALID_VALUE:222:invalid value
 EVP_R_KEYMGMT_EXPORT_FAILURE:205:keymgmt export failure
 EVP_R_KEY_SETUP_FAILED:180:key setup failed
+EVP_R_LIFE_CYCLE_ERROR:226:life cycle error
 EVP_R_LOCKING_NOT_SUPPORTED:213:locking not supported
 EVP_R_MEMORY_LIMIT_EXCEEDED:172:memory limit exceeded
 EVP_R_MESSAGE_DIGEST_IS_NULL:159:message digest is null

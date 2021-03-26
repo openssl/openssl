@@ -59,6 +59,12 @@ struct evp_cipher_ctx_st {
 struct evp_mac_ctx_st {
     EVP_MAC *meth;               /* Method structure */
     void *data;                  /* Individual method data */
+    enum {
+        evp_mac_ctx_state_newed,
+        evp_mac_ctx_state_initialised,
+        evp_mac_ctx_state_updated,
+        evp_mac_ctx_state_finaled
+    } life_cycle;                /* Life-cycle state */
 } /* EVP_MAC_CTX */;
 
 struct evp_kdf_ctx_st {
