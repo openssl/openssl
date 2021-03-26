@@ -1728,13 +1728,13 @@ const char *EVP_PKEY_description(const EVP_PKEY *pkey)
     if (!evp_pkey_is_assigned(pkey))
         return NULL;
 
-    if (evp_pkey_is_provided(pkey))
-        return evp_description(pkey->keymgmt->prov, pkey->keymgmt->name_id);
+    if (evp_pkey_is_provided(pkey) && pkey->keymgmt->description != NULL)
+        return pkey->keymgmt->description;
 #ifndef FIPS_MODULE
-    return pkey->ameth->info;
-#else
-    return NULL;
+    if (pkey->ameth != NULL)
+        return pkey->ameth->info;
 #endif
+    return NULL;
 }
 
 void *evp_pkey_export_to_provider(EVP_PKEY *pk, OSSL_LIB_CTX *libctx,

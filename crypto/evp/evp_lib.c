@@ -647,8 +647,8 @@ const char *EVP_CIPHER_name(const EVP_CIPHER *cipher)
 
 const char *EVP_CIPHER_description(const EVP_CIPHER *cipher)
 {
-    if (cipher->prov != NULL)
-        return evp_description(cipher->prov, cipher->name_id);
+    if (cipher->description != NULL)
+        return cipher->description;
 #ifndef FIPS_MODULE
     return OBJ_nid2ln(EVP_CIPHER_nid(cipher));
 #else
@@ -690,8 +690,8 @@ int EVP_MD_number(const EVP_MD *md)
 
 const char *EVP_MD_description(const EVP_MD *md)
 {
-    if (md->prov != NULL)
-        return evp_description(md->prov, md->name_id);
+    if (md->description != NULL)
+        return md->description;
 #ifndef FIPS_MODULE
     return OBJ_nid2ln(EVP_MD_nid(md));
 #else

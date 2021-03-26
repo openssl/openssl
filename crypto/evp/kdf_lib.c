@@ -97,9 +97,7 @@ const char *EVP_KDF_name(const EVP_KDF *kdf)
 
 const char *EVP_KDF_description(const EVP_KDF *kdf)
 {
-    if (kdf->prov != NULL)
-        return evp_description(kdf->prov, kdf->name_id);
-    return NULL;
+    return kdf->description;
 }
 
 int EVP_KDF_is_a(const EVP_KDF *kdf, const char *name)

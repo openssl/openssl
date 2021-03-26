@@ -297,9 +297,7 @@ const char *EVP_RAND_name(const EVP_RAND *rand)
 
 const char *EVP_RAND_description(const EVP_RAND *rand)
 {
-    if (rand->prov != NULL)
-        return evp_description(rand->prov, rand->name_id);
-    return NULL;
+    return rand->description;
 }
 
 int EVP_RAND_is_a(const EVP_RAND *rand, const char *name)

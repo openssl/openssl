@@ -172,9 +172,7 @@ const char *EVP_MAC_name(const EVP_MAC *mac)
 
 const char *EVP_MAC_description(const EVP_MAC *mac)
 {
-    if (mac->prov != NULL)
-        return evp_description(mac->prov, mac->name_id);
-    return NULL;
+    return mac->description;
 }
 
 int EVP_MAC_is_a(const EVP_MAC *mac, const char *name)

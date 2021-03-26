@@ -321,9 +321,7 @@ int EVP_SIGNATURE_number(const EVP_SIGNATURE *signature)
 
 const char *EVP_SIGNATURE_description(const EVP_SIGNATURE *signature)
 {
-    if (signature->prov != NULL)
-        return evp_description(signature->prov, signature->name_id);
-    return NULL;
+    return signature->description;
 }
 
 void EVP_SIGNATURE_do_all_provided(OSSL_LIB_CTX *libctx,
