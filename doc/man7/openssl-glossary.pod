@@ -69,18 +69,19 @@ external format such as PEM or DER.
 
 L<OSSL_ENCODER_CTX_new_for_pkey(3)>
 
+=item Explicit Fetching
+
+Explicit Fetching is a type of Fetching (see Fetching). Explicit Fetching is
+where a function call is made to obtain an algorithm object representing an
+implementation such as L<EVP_MD_fetch(3)> or L<EVP_CIPHER_fetch(3)>
+
 =item Fetching
 
 Fetching is the process of looking through the available algorithm
 implementations, applying selection criteria (via a property query string), and
-finally choosing the implementation that will be used. Fetches can either be
-explicit where a function call is made to obtain an algorithm object
-representing an implementation such as L<EVP_MD_fetch(3)> or
-L<EVP_CIPHER_fetch(3)>, or implicit where an algorithm object with no associated
-implementation is used such as the return value from L<EVP_sha256(3)> or
-L<EVP_aes_128_cbc(3)>. With implicit fetching an implementation is fetched
-automatically using default selection criteria the first time the algorithm is
-used.
+finally choosing the implementation that will be used.
+
+Also see Explicit Fetching and Implict Fetching.
 
 L<crypto(7)>
 
@@ -90,6 +91,14 @@ An OpenSSL Provider that contains OpenSSL algorithm implementations that have
 been validated according to the FIPS 140-2 standard.
 
 L<OSSL_PROVIDER-FIPS(7)>
+
+=item Implicit Fetching
+
+Implicit Fetching is a type of Fetching (see Fetching). Implicit Fetching is
+where an algorithm object with no associated implementation is used such as the
+return value from L<EVP_sha256(3)> or L<EVP_aes_128_cbc(3)>. With implicit
+fetching an implementation is fetched automatically using default selection
+criteria the first time the algorithm is used.
 
 =item Legacy Provider
 
@@ -167,6 +176,8 @@ A property is a key/value pair expressed as a string. For example all algorithm
 implementations in the default provider have the property "provider=default".
 An algorithm implementation can have multiple properties defined against it.
 
+Also see Property Query String.
+
 L<property(7)>
 
 =item Property Query String
@@ -175,6 +186,8 @@ A property query string is a string containing a sequence of properties that
 can be used to select an algorithm implementation. For example the query string
 "provider=example,foo=bar" will select algorithms from the "example" provider
 that have a "foo" property defined for them with a value of "bar".
+
+Property Query Strings are used during fetching. See Fetching.
 
 L<property(7)>
 
