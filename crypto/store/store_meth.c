@@ -404,13 +404,7 @@ int OSSL_STORE_LOADER_number(const OSSL_STORE_LOADER *loader)
 
 const char *OSSL_STORE_LOADER_description(const OSSL_STORE_LOADER *loader)
 {
-    if (loader->prov != NULL) {
-        OSSL_LIB_CTX *libctx = ossl_provider_libctx(loader->prov);
-        OSSL_NAMEMAP *namemap = ossl_namemap_stored(libctx);
-
-        return ossl_namemap_num2desc(namemap, loader->scheme_id);
-    }
-    return NULL;
+    return loader->description;
 }
 
 int OSSL_STORE_LOADER_is_a(const OSSL_STORE_LOADER *loader, const char *name)
