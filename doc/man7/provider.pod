@@ -14,7 +14,7 @@ provider - OpenSSL operation implementation providers
 
 =head2 General
 
-This page contains information useful to authors of OpenSSL providers.
+This page contains information useful to provider authors.
 
 A I<provider>, in OpenSSL terms, is a unit of code that provides one
 or more implementations for various operations for diverse algorithms
@@ -191,6 +191,12 @@ MODE is only present where applicable.
 
 Other aliases may exist for example where standards bodies or common practice
 use alternative names or names that OpenSSL has used historically.
+
+=head1 OPENSSL PROVIDERS
+
+OpenSSL providers a number of its own providers. These are the default, base,
+fips, legacy and null providers. See L<crypto(7)> for an overview of these
+providers.
 
 =head1 SEE ALSO
 
