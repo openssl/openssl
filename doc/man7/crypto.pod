@@ -16,20 +16,20 @@ provided by this library are used by the OpenSSL implementations of TLS and
 CMS, and they have also been used to implement many other third party products
 and protocols.
 
-The functionality includes symmetric encryption, public key cryptography and key
+The functionality includes symmetric encryption, public key cryptography, key
 agreement, certificate handling, cryptographic hash functions, cryptographic
 pseudo-random number generators, message authentication codes (MACs), key
 derivation functions (KDFs), and various utilities.
 
 =head2 Algorithms
 
-Cryptograpic primitives such as the SHA256 digest, or AES encryption are
-referred to in OpenSSL as "algorithms". An algorithm can have more than one
-implementation of it that is available for use. For example the RSA algorithm
-is available as a "default" implementation suitable for general use, and a
-"fips" implementation which has been validated to FIPS standards for situations
-where that is important. It is also possible that a third party could add
-additional implementations such as in a hardware security module (HSM).
+Cryptographic primitives such as the SHA256 digest, or AES encryption are
+referred to in OpenSSL as "algorithms". Each algorithm may have multiple
+implementations available for use. For example the RSA algorithm is available as
+a "default" implementation suitable for general use, and a "fips" implementation
+which has been validated to FIPS standards for situations where that is
+important. It is also possible that a third party could add additional
+implementations such as in a hardware security module (HSM).
 
 =head2 Operations
 
@@ -129,7 +129,9 @@ implementation. Instead, the diverse OpenSSL APIs often have explicit fetching
 functions that do the work, and they return an appropriate algorithm object back
 to the user. These functions usually have the name C<APINAME_fetch>, where
 C<APINAME> is the name of the operation. For example L<EVP_MD_fetch(3)> can
-be used to explicitly fetch a digest algorithm implementation.
+be used to explicitly fetch a digest algorithm implementation. The user is
+responsible for freeing the object returned from the C<APINAME_fetch> function
+using C<APINAME_free> when it is no longer needed.
 
 These fetching functions follow a fairly common pattern, where three
 arguments are passed:
@@ -142,7 +144,7 @@ See L<OSSL_LIB_CTX(3)> for a more detailed description.
 This may be NULL to signify the default (global) library context, or a
 context created by the user. Only providers loaded in this library context (see
 L<OSSL_PROVIDER_load(3)>) will be considered by the fetching function. In case
-no provider has been loaded in this library context then the  default provider
+no provider has been loaded in this library context then the default provider
 will be loaded as a fallback (see L<OSSL_PROVIDER-default(7)>).
 
 =item An identifier
@@ -156,7 +158,7 @@ implementation.
 
 =back
 
-The algorithm implementation that is fetched can then be used with diverse other
+The algorithm implementation that is fetched can then be used with other diverse
 functions that use them. For example the L<EVP_DigestInit_ex(3)> function takes
 as a parameter an B<EVP_MD> object which may have been returned from an earlier
 call to L<EVP_MD_fetch(3)>.
@@ -268,6 +270,10 @@ algorithms), the property query string "provider=default" can be used as a
 search criterion for these implementations.  The default provider includes all
 of the functionality in the base provider below.
 
+If you don't load any providers at all then the "default" provider will be
+automatically loaded. If you explicitly load any provider then the "default"
+provider would also need to be explicitly loaded if it is required.
+
 See L<OSSL_PROVIDER-default(7)>.
 
 =head2 Base provider
@@ -294,8 +300,8 @@ providers are loaded and offer implementations of the same algorithms), the
 property query string "provider=fips" can be used as a search criterion for
 these implementations. All approved algorithm implementations in the FIPS
 provider can also be selected with the property "fips=yes". The FIPS provider
-also contains a number of non-approved algorithm implementations and these can
-be selected with the property "fips=no".
+may also contain a non-approved algorithm implementations and these can be
+selected with the property "fips=no".
 
 See L<OSSL_PROVIDER-FIPS(7)>.
 
@@ -304,9 +310,9 @@ See L<OSSL_PROVIDER-FIPS(7)>.
 The legacy provider is a dynamically loadable module, and must therefore
 be loaded explicitly, either in code or through OpenSSL configuration
 (see L<config(5)>). It contains algorithm implementations that are considered
-insecure, or are no longer in common use. Should it be needed (if other
-providers are loaded and offer implementations of the same algorithms), the
-property "provider=legacy" can be used as a search criterion for these
+insecure, or are no longer in common use such as MD2 or RC4. Should it be needed
+(if othe providers are loaded and offer implementations of the same algorithms),
+the property "provider=legacy" can be used as a search criterion for these
 implementations.
 
 See L<OSSL_PROVIDER-legacy(7)>.
@@ -322,7 +328,7 @@ See L<OSSL_PROVIDER-null(7)>.
 
 =head1 USING ALGORITHMS IN APPLICATIONS
 
-Cryptographic algorithms are made available to applications through using the
+Cryptographic algorithms are made available to applications through use of the
 "EVP" APIs. Each of the various operations such as encryption, digesting,
 message authentication codes, etc., have a set of EVP function calls that can
 be invoked to use them. See the L<evp(7)> page for further details.
@@ -406,7 +412,7 @@ encryption/decryption, signatures, message authentication codes, etc.
 By default OpenSSL will load a configuration file when it is first used. This
 will set up various configuration settings within the default library context.
 Applications that create their own library contexts may optionally configure
-them will a config file using the L<OSSL_LIB_CTX_load_config(3)> function.
+them with a config file using the L<OSSL_LIB_CTX_load_config(3)> function.
 
 The configuration file can be used to automatically load providers and set up
 default property query strings.
