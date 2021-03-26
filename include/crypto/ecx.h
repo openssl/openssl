@@ -76,8 +76,6 @@ struct ecx_key_st {
     CRYPTO_RWLOCK *lock;
 };
 
-typedef struct ecx_key_st ECX_KEY;
-
 size_t ossl_ecx_key_length(ECX_KEY_TYPE type);
 ECX_KEY *ossl_ecx_key_new(OSSL_LIB_CTX *libctx, ECX_KEY_TYPE type,
                           int haspubkey, const char *propq);
