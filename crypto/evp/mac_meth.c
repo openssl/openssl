@@ -47,9 +47,10 @@ static void *evp_mac_new(void)
 }
 
 static void *evp_mac_from_dispatch(int name_id,
-                                   const OSSL_DISPATCH *fns,
+                                   const OSSL_ALGORITHM *algodef,
                                    OSSL_PROVIDER *prov)
 {
+    const OSSL_DISPATCH *fns = algodef->implementation;
     EVP_MAC *mac = NULL;
     int fnmaccnt = 0, fnctxcnt = 0;
 
@@ -58,6 +59,7 @@ static void *evp_mac_from_dispatch(int name_id,
         return NULL;
     }
     mac->name_id = name_id;
+    mac->description = algodef->algorithm_description;
 
     for (; fns->function_id != 0; fns++) {
         switch (fns->function_id) {

@@ -39,9 +39,10 @@ static EVP_SIGNATURE *evp_signature_new(OSSL_PROVIDER *prov)
 }
 
 static void *evp_signature_from_dispatch(int name_id,
-                                         const OSSL_DISPATCH *fns,
+                                         const OSSL_ALGORITHM *algodef,
                                          OSSL_PROVIDER *prov)
 {
+    const OSSL_DISPATCH *fns = algodef->implementation;
     EVP_SIGNATURE *signature = NULL;
     int ctxfncnt = 0, signfncnt = 0, verifyfncnt = 0, verifyrecfncnt = 0;
     int digsignfncnt = 0, digverifyfncnt = 0;
@@ -53,6 +54,7 @@ static void *evp_signature_from_dispatch(int name_id,
     }
 
     signature->name_id = name_id;
+    signature->description = algodef->algorithm_description;
 
     for (; fns->function_id != 0; fns++) {
         switch (fns->function_id) {

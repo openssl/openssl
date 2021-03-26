@@ -18,7 +18,6 @@ void ossl_namemap_free(OSSL_NAMEMAP *namemap);
 int ossl_namemap_empty(OSSL_NAMEMAP *namemap);
 
 int ossl_namemap_add_name(OSSL_NAMEMAP *namemap, int number, const char *name);
-int ossl_namemap_add_desc(OSSL_NAMEMAP *namemap, int number, const char *desc);
 int ossl_namemap_add_name_n(OSSL_NAMEMAP *namemap, int number,
                             const char *name, size_t name_len);
 
@@ -32,7 +31,6 @@ int ossl_namemap_name2num_n(const OSSL_NAMEMAP *namemap,
                             const char *name, size_t name_len);
 const char *ossl_namemap_num2name(const OSSL_NAMEMAP *namemap, int number,
                                   size_t idx);
-const char *ossl_namemap_num2desc(const OSSL_NAMEMAP *namemap, int number);
 int ossl_namemap_doall_names(const OSSL_NAMEMAP *namemap, int number,
                              void (*fn)(const char *name, void *data),
                              void *data);

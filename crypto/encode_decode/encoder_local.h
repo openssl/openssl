@@ -20,6 +20,7 @@ struct ossl_endecode_base_st {
     OSSL_PROVIDER *prov;
     int id;
     const char *propdef;
+    const char *description;
 
     CRYPTO_REF_COUNT refcnt;
     CRYPTO_RWLOCK *lock;

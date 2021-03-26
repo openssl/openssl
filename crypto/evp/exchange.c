@@ -39,9 +39,10 @@ static EVP_KEYEXCH *evp_keyexch_new(OSSL_PROVIDER *prov)
 }
 
 static void *evp_keyexch_from_dispatch(int name_id,
-                                       const OSSL_DISPATCH *fns,
+                                       const OSSL_ALGORITHM *algodef,
                                        OSSL_PROVIDER *prov)
 {
+    const OSSL_DISPATCH *fns = algodef->implementation;
     EVP_KEYEXCH *exchange = NULL;
     int fncnt = 0, sparamfncnt = 0, gparamfncnt = 0;
 
@@ -51,6 +52,7 @@ static void *evp_keyexch_from_dispatch(int name_id,
     }
 
     exchange->name_id = name_id;
+    exchange->description = algodef->algorithm_description;
 
     for (; fns->function_id != 0; fns++) {
         switch (fns->function_id) {

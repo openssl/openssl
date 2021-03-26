@@ -78,6 +78,7 @@ struct evp_keymgmt_st {
     int id;                      /* libcrypto internal */
 
     int name_id;
+    const char *description;
     OSSL_PROVIDER *prov;
     CRYPTO_REF_COUNT refcnt;
     CRYPTO_RWLOCK *lock;
@@ -116,6 +117,7 @@ struct evp_keymgmt_st {
 
 struct evp_keyexch_st {
     int name_id;
+    const char *description;
     OSSL_PROVIDER *prov;
     CRYPTO_REF_COUNT refcnt;
     CRYPTO_RWLOCK *lock;
@@ -134,6 +136,7 @@ struct evp_keyexch_st {
 
 struct evp_signature_st {
     int name_id;
+    const char *description;
     OSSL_PROVIDER *prov;
     CRYPTO_REF_COUNT refcnt;
     CRYPTO_RWLOCK *lock;
@@ -167,6 +170,7 @@ struct evp_signature_st {
 
 struct evp_asym_cipher_st {
     int name_id;
+    const char *description;
     OSSL_PROVIDER *prov;
     CRYPTO_REF_COUNT refcnt;
     CRYPTO_RWLOCK *lock;
@@ -186,6 +190,7 @@ struct evp_asym_cipher_st {
 
 struct evp_kem_st {
     int name_id;
+    const char *description;
     OSSL_PROVIDER *prov;
     CRYPTO_REF_COUNT refcnt;
     CRYPTO_RWLOCK *lock;
@@ -235,14 +240,14 @@ int ossl_is_partially_overlapping(const void *ptr1, const void *ptr2, int len);
 void *evp_generic_fetch(OSSL_LIB_CTX *ctx, int operation_id,
                         const char *name, const char *properties,
                         void *(*new_method)(int name_id,
-                                            const OSSL_DISPATCH *fns,
+                                            const OSSL_ALGORITHM *algodef,
                                             OSSL_PROVIDER *prov),
                         int (*up_ref_method)(void *),
                         void (*free_method)(void *));
 void *evp_generic_fetch_by_number(OSSL_LIB_CTX *ctx, int operation_id,
                                   int name_id, const char *properties,
                                   void *(*new_method)(int name_id,
-                                                      const OSSL_DISPATCH *fns,
+                                                      const OSSL_ALGORITHM *algodef,
                                                       OSSL_PROVIDER *prov),
                                   int (*up_ref_method)(void *),
                                   void (*free_method)(void *));
@@ -250,7 +255,7 @@ void evp_generic_do_all(OSSL_LIB_CTX *libctx, int operation_id,
                         void (*user_fn)(void *method, void *arg),
                         void *user_arg,
                         void *(*new_method)(int name_id,
-                                            const OSSL_DISPATCH *fns,
+                                            const OSSL_ALGORITHM *algodef,
                                             OSSL_PROVIDER *prov),
                         void (*free_method)(void *));
 

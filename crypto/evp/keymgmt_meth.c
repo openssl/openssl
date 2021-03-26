@@ -33,9 +33,10 @@ static void *keymgmt_new(void)
 }
 
 static void *keymgmt_from_dispatch(int name_id,
-                                   const OSSL_DISPATCH *fns,
+                                   const OSSL_ALGORITHM *algodef,
                                    OSSL_PROVIDER *prov)
 {
+    const OSSL_DISPATCH *fns = algodef->implementation;
     EVP_KEYMGMT *keymgmt = NULL;
     int setparamfncnt = 0, getparamfncnt = 0;
     int setgenparamfncnt = 0;
@@ -46,6 +47,7 @@ static void *keymgmt_from_dispatch(int name_id,
         return NULL;
     }
     keymgmt->name_id = name_id;
+    keymgmt->description = algodef->algorithm_description;
 
     for (; fns->function_id != 0; fns++) {
         switch (fns->function_id) {

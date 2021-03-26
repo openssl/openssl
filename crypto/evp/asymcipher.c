@@ -275,9 +275,10 @@ static EVP_ASYM_CIPHER *evp_asym_cipher_new(OSSL_PROVIDER *prov)
 }
 
 static void *evp_asym_cipher_from_dispatch(int name_id,
-                                           const OSSL_DISPATCH *fns,
+                                           const OSSL_ALGORITHM *algodef,
                                            OSSL_PROVIDER *prov)
 {
+    const OSSL_DISPATCH *fns = algodef->implementation;
     EVP_ASYM_CIPHER *cipher = NULL;
     int ctxfncnt = 0, encfncnt = 0, decfncnt = 0;
     int gparamfncnt = 0, sparamfncnt = 0;
@@ -288,6 +289,7 @@ static void *evp_asym_cipher_from_dispatch(int name_id,
     }
 
     cipher->name_id = name_id;
+    cipher->description = algodef->algorithm_description;
 
     for (; fns->function_id != 0; fns++) {
         switch (fns->function_id) {

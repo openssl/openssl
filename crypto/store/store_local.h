@@ -100,6 +100,7 @@ struct ossl_store_loader_st {
     OSSL_PROVIDER *prov;
     int scheme_id;
     const char *propdef;
+    const char *description;
 
     CRYPTO_REF_COUNT refcnt;
     CRYPTO_RWLOCK *lock;

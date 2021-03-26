@@ -169,6 +169,7 @@ static void *encoder_from_dispatch(int id, const OSSL_ALGORITHM *algodef,
         return NULL;
     encoder->base.id = id;
     encoder->base.propdef = algodef->property_definition;
+    encoder->base.description = algodef->algorithm_description;
 
     for (; fns->function_id != 0; fns++) {
         switch (fns->function_id) {
@@ -271,13 +272,8 @@ static void *construct_encoder(const OSSL_ALGORITHM *algodef,
     int id = ossl_namemap_add_names(namemap, 0, names, NAME_SEPARATOR);
     void *method = NULL;
 
-    if (id == 0)
-        return NULL;
-
-    if (algodef->algorithm_description != NULL)
-        (void)ossl_namemap_add_desc(namemap, id,
-                                    algodef->algorithm_description);
-    method = encoder_from_dispatch(id, algodef, prov);
+    if (id != 0)
+        method = encoder_from_dispatch(id, algodef, prov);
 
     /*
      * Flag to indicate that there was actual construction errors.  This

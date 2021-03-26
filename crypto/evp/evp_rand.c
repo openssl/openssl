@@ -28,6 +28,7 @@
 struct evp_rand_st {
     OSSL_PROVIDER *prov;
     int name_id;
+    const char *description;
     CRYPTO_REF_COUNT refcnt;
     CRYPTO_RWLOCK *refcnt_lock;
 
@@ -113,9 +114,10 @@ static void evp_rand_unlock(EVP_RAND_CTX *rand)
 }
 
 static void *evp_rand_from_dispatch(int name_id,
-                                    const OSSL_DISPATCH *fns,
+                                    const OSSL_ALGORITHM *algodef,
                                     OSSL_PROVIDER *prov)
 {
+    const OSSL_DISPATCH *fns = algodef->implementation;
     EVP_RAND *rand = NULL;
     int fnrandcnt = 0, fnctxcnt = 0, fnlockcnt = 0, fnenablelockcnt = 0;
 #ifdef FIPS_MODULE
@@ -127,6 +129,7 @@ static void *evp_rand_from_dispatch(int name_id,
         return NULL;
     }
     rand->name_id = name_id;
+    rand->description = algodef->algorithm_description;
     rand->dispatch = fns;
     for (; fns->function_id != 0; fns++) {
         switch (fns->function_id) {

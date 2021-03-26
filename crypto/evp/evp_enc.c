@@ -1441,9 +1441,10 @@ static void set_legacy_nid(const char *name, void *vlegacy_nid)
 #endif
 
 static void *evp_cipher_from_dispatch(const int name_id,
-                                      const OSSL_DISPATCH *fns,
+                                      const OSSL_ALGORITHM *algodef,
                                       OSSL_PROVIDER *prov)
 {
+    const OSSL_DISPATCH *fns = algodef->implementation;
     EVP_CIPHER *cipher = NULL;
     int fnciphcnt = 0, fnctxcnt = 0;
 
@@ -1464,6 +1465,7 @@ static void *evp_cipher_from_dispatch(const int name_id,
 #endif
 
     cipher->name_id = name_id;
+    cipher->description = algodef->algorithm_description;
 
     for (; fns->function_id != 0; fns++) {
         switch (fns->function_id) {

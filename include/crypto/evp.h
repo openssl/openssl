@@ -193,6 +193,7 @@ const EVP_PKEY_METHOD *ossl_rsa_pss_pkey_method(void);
 struct evp_mac_st {
     OSSL_PROVIDER *prov;
     int name_id;
+    const char *description;
 
     CRYPTO_REF_COUNT refcnt;
     CRYPTO_RWLOCK *lock;
@@ -214,6 +215,7 @@ struct evp_mac_st {
 struct evp_kdf_st {
     OSSL_PROVIDER *prov;
     int name_id;
+    const char *description;
     CRYPTO_REF_COUNT refcnt;
     CRYPTO_RWLOCK *lock;
 
@@ -251,6 +253,7 @@ struct evp_md_st {
     /* New structure members */
     /* Above comment to be removed when legacy has gone */
     int name_id;
+    const char *description;
     OSSL_PROVIDER *prov;
     CRYPTO_REF_COUNT refcnt;
     CRYPTO_RWLOCK *lock;
@@ -303,6 +306,7 @@ struct evp_cipher_st {
     /* New structure members */
     /* Above comment to be removed when legacy has gone */
     int name_id;
+    const char *description;
     OSSL_PROVIDER *prov;
     CRYPTO_REF_COUNT refcnt;
     CRYPTO_RWLOCK *lock;

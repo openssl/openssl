@@ -183,9 +183,10 @@ static EVP_KEM *evp_kem_new(OSSL_PROVIDER *prov)
     return kem;
 }
 
-static void *evp_kem_from_dispatch(int name_id, const OSSL_DISPATCH *fns,
+static void *evp_kem_from_dispatch(int name_id, const OSSL_ALGORITHM *algodef,
                                    OSSL_PROVIDER *prov)
 {
+    const OSSL_DISPATCH *fns = algodef->implementation;
     EVP_KEM *kem = NULL;
     int ctxfncnt = 0, encfncnt = 0, decfncnt = 0;
     int gparamfncnt = 0, sparamfncnt = 0;
@@ -196,6 +197,7 @@ static void *evp_kem_from_dispatch(int name_id, const OSSL_DISPATCH *fns,
     }
 
     kem->name_id = name_id;
+    kem->description = algodef->algorithm_description;
 
     for (; fns->function_id != 0; fns++) {
         switch (fns->function_id) {

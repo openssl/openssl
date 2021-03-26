@@ -53,9 +53,10 @@ static void *evp_kdf_new(void)
 }
 
 static void *evp_kdf_from_dispatch(int name_id,
-                                   const OSSL_DISPATCH *fns,
+                                   const OSSL_ALGORITHM *algodef,
                                    OSSL_PROVIDER *prov)
 {
+    const OSSL_DISPATCH *fns = algodef->implementation;
     EVP_KDF *kdf = NULL;
     int fnkdfcnt = 0, fnctxcnt = 0;
 
@@ -64,6 +65,7 @@ static void *evp_kdf_from_dispatch(int name_id,
         return NULL;
     }
     kdf->name_id = name_id;
+    kdf->description = algodef->algorithm_description;
 
     for (; fns->function_id != 0; fns++) {
         switch (fns->function_id) {
