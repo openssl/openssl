@@ -267,10 +267,10 @@ int evp_cipher_set_asn1_aead_params(EVP_CIPHER_CTX *c, ASN1_TYPE *type,
 #endif /* !defined(FIPS_MODULE) */
 
 /* Convert the various cipher NIDs and dummies to a proper OID NID */
-int EVP_CIPHER_type(const EVP_CIPHER *ctx)
+int EVP_CIPHER_type(const EVP_CIPHER *cipher)
 {
     int nid;
-    nid = EVP_CIPHER_nid(ctx);
+    nid = EVP_CIPHER_nid(cipher);
 
     switch (nid) {
 
