@@ -1415,7 +1415,7 @@ EVP_CIPHER *evp_cipher_new(void)
  * NIDs or any functionality that use them.
  */
 #ifndef FIPS_MODULE
-/* TODO(3.x) get rid of the need for legacy NIDs */
+/* After removal of legacy support get rid of the need for legacy NIDs */
 static void set_legacy_nid(const char *name, void *vlegacy_nid)
 {
     int nid;
@@ -1453,7 +1453,6 @@ static void *evp_cipher_from_dispatch(const int name_id,
     }
 
 #ifndef FIPS_MODULE
-    /* TODO(3.x) get rid of the need for legacy NIDs */
     cipher->nid = NID_undef;
     if (!evp_names_do_all(prov, name_id, set_legacy_nid, &cipher->nid)
             || cipher->nid == -1) {
