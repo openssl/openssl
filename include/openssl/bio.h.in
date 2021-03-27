@@ -109,7 +109,7 @@ extern "C" {
 # define BIO_CTRL_DGRAM_GET_SEND_TIMEOUT 36/* getsockopt, essentially */
 
 # define BIO_CTRL_DGRAM_GET_RECV_TIMER_EXP 37/* flag whether the last */
-# define BIO_CTRL_DGRAM_GET_SEND_TIMER_EXP 38/* I/O operation tiemd out */
+# define BIO_CTRL_DGRAM_GET_SEND_TIMER_EXP 38/* I/O operation timed out */
 
 /* #ifdef IP_MTU_DISCOVER */
 # define BIO_CTRL_DGRAM_MTU_DISCOVER       39/* set DF bit on egress packets */
