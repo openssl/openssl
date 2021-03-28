@@ -282,7 +282,7 @@ static int send_record(BIO *rbio, unsigned char type, uint64_t seqnr,
     static unsigned char ver[2] = { 0x01, 0x00 }; /* DTLS1_BAD_VER */
     unsigned char lenbytes[2];
     EVP_MAC *hmac;
-    EVP_MAC_CTX *ctx;
+    EVP_MAC_CTX *ctx = NULL;
     EVP_CIPHER_CTX *enc_ctx = NULL;
     unsigned char iv[16];
     unsigned char pad;
@@ -307,11 +307,11 @@ static int send_record(BIO *rbio, unsigned char type, uint64_t seqnr,
 
     /* Append HMAC to data */
     if ((hmac = EVP_MAC_fetch(NULL, "HMAC", NULL)) == NULL)
-        return 0;
+        goto end;
     ctx = EVP_MAC_CTX_new(hmac);
     EVP_MAC_free(hmac);
     if (ctx == NULL)
-        return 0;
+        goto end;
     params[0] = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
                                                  "SHA1", 0);
     params[1] = OSSL_PARAM_construct_end();
