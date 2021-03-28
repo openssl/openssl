@@ -2494,7 +2494,7 @@ static int make_revoked(X509_REVOKED *rev, const char *str)
 static int old_entry_print(const ASN1_OBJECT *obj, const ASN1_STRING *str)
 {
     char buf[25], *pbuf;
-    const char *p;
+    const unsigned char *p;
     int j;
 
     j = i2a_ASN1_OBJECT(bio_err, obj);
@@ -2516,13 +2516,13 @@ static int old_entry_print(const ASN1_OBJECT *obj, const ASN1_STRING *str)
     else
         BIO_printf(bio_err, "ASN.1 %2d:'", str->type);
 
-    p = (const char *)str->data;
+    p = str->data;
     for (j = str->length; j > 0; j--) {
         if ((*p >= ' ') && (*p <= '~'))
             BIO_printf(bio_err, "%c", *p);
         else if (*p & 0x80)
-            BIO_printf(bio_err, "\\0x%02X", *p);
-        else if ((unsigned char)*p == 0xf7)
+            BIO_printf(bio_err, "\\%02X", *p);
+        else if (*p == 0x7f)
             BIO_printf(bio_err, "^?");
         else
             BIO_printf(bio_err, "^%c", *p + '@');
