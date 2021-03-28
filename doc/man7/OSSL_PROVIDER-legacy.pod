@@ -64,7 +64,8 @@ Not all of these symmetric cipher algorithms are enabled by default.
 
 =item DES
 
-=item IDEA
+The algorithm names are: DES_ECB, DES_CBC, DES_OFB, DES_CFB, DES_CFB1, DES_CFB8
+and DESX_CBC.
 
 =item RC2
 
@@ -82,8 +83,6 @@ Disabled by default. Use I<enable-rc5> config option to enable.
 
 When algorithms for other operations start appearing, the
 following =head2 titles are appropriate to use:
-
-- Symmetric Ciphers
 
 - Message Authentication Code (MAC)
 
@@ -108,7 +107,7 @@ L<provider(7)>
 
 =head1 COPYRIGHT
 
-Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

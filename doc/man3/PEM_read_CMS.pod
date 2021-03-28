@@ -85,7 +85,7 @@ L<openssl_user_macros(7)>:
 =head1 DESCRIPTION
 
 All of the functions described on this page are deprecated.
-Applications should use OSSL_ENCODER_to_bio() and OSSL_ENCODER_from_bio()
+Applications should use OSSL_ENCODER_to_bio() and OSSL_DECODER_from_bio()
 instead.
 
 In the description below, B<I<TYPE>> is used
