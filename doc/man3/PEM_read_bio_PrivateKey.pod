@@ -194,7 +194,7 @@ L<openssl_user_macros(7)>:
 
 All of the functions described on this page that have a I<TYPE> of B<DH>, B<DSA>
 and B<RSA> are deprecated. Applications should use OSSL_ENCODER_to_bio() and
-OSSL_ENCODER_from_bio() instead.
+OSSL_DECODER_from_bio() instead.
 
 The PEM functions read or write structures in PEM format. In
 this sense PEM format is simply base64 encoded data surrounded

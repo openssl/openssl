@@ -75,6 +75,7 @@ Similarly when the application exits the default library context is
 automatically destroyed. No explicit de-initialisation steps need to be taken.
 
 See L<OSSL_LIB_CTX(3)> for more information about library contexts.
+See also L</ALGORITHM FETCHING>.
 
 =head2 Multi-threaded applications
 
@@ -303,7 +304,7 @@ provider can also be selected with the property "fips=yes". The FIPS provider
 may also contain non-approved algorithm implementations and these can be
 selected with the property "fips=no".
 
-See L<OSSL_PROVIDER-FIPS(7)>.
+See L<OSSL_PROVIDER-FIPS(7)> and L<fips_module(7)>.
 
 =head2 Legacy provider
 
