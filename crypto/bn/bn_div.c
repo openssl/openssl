@@ -97,7 +97,7 @@ BN_ULONG bn_div_3_words(const BN_ULONG *m, BN_ULONG d1, BN_ULONG d0);
  */
 #  if BN_BITS2 == 64 && defined(__SIZEOF_INT128__) && __SIZEOF_INT128__==16
 #   undef BN_ULLONG
-#   define BN_ULLONG __uint128_t
+#   define BN_ULLONG uint128_t
 #   define BN_LLONG
 #  endif
 
