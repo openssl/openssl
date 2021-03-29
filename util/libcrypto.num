@@ -2028,7 +2028,7 @@ MDC2_Init                               2075	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_
 i2o_SCT                                 2076	3_0_0	EXIST::FUNCTION:CT
 d2i_TS_STATUS_INFO                      2077	3_0_0	EXIST::FUNCTION:TS
 ERR_error_string_n                      2078	3_0_0	EXIST::FUNCTION:
-HMAC                                    2079	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
+HMAC                                    2079	3_0_0	EXIST::FUNCTION:
 BN_mul                                  2080	3_0_0	EXIST::FUNCTION:
 BN_get0_nist_prime_384                  2081	3_0_0	EXIST::FUNCTION:
 X509_VERIFY_PARAM_set1_ip_asc           2082	3_0_0	EXIST::FUNCTION:
@@ -4408,6 +4408,7 @@ EVP_MAC_CTX_free                        ?	3_0_0	EXIST::FUNCTION:
 EVP_MAC_CTX_dup                         ?	3_0_0	EXIST::FUNCTION:
 EVP_MAC_CTX_mac                         ?	3_0_0	EXIST::FUNCTION:
 EVP_MAC_CTX_get_mac_size                ?	3_0_0	EXIST::FUNCTION:
+EVP_Q_mac                               ?	3_0_0	EXIST::FUNCTION:
 EVP_MAC_init                            ?	3_0_0	EXIST::FUNCTION:
 EVP_MAC_update                          ?	3_0_0	EXIST::FUNCTION:
 EVP_MAC_final                           ?	3_0_0	EXIST::FUNCTION:

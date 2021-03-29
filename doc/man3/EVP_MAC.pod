@@ -7,8 +7,9 @@ EVP_MAC_number, EVP_MAC_name, EVP_MAC_names_do_all, EVP_MAC_description,
 EVP_MAC_provider, EVP_MAC_get_params, EVP_MAC_gettable_params,
 EVP_MAC_CTX, EVP_MAC_CTX_new, EVP_MAC_CTX_free, EVP_MAC_CTX_dup,
 EVP_MAC_CTX_mac, EVP_MAC_CTX_get_params, EVP_MAC_CTX_set_params,
-EVP_MAC_CTX_get_mac_size, EVP_MAC_init, EVP_MAC_update, EVP_MAC_final,
-EVP_MAC_finalXOF, EVP_MAC_gettable_ctx_params, EVP_MAC_settable_ctx_params,
+EVP_MAC_CTX_get_mac_size, EVP_Q_mac,
+EVP_MAC_init, EVP_MAC_update, EVP_MAC_final, EVP_MAC_finalXOF,
+EVP_MAC_gettable_ctx_params, EVP_MAC_settable_ctx_params,
 EVP_MAC_CTX_gettable_params, EVP_MAC_CTX_settable_params,
 EVP_MAC_do_all_provided - EVP MAC routines
 
@@ -41,6 +42,11 @@ EVP_MAC_do_all_provided - EVP MAC routines
  int EVP_MAC_CTX_set_params(EVP_MAC_CTX *ctx, const OSSL_PARAM params[]);
 
  size_t EVP_MAC_CTX_get_mac_size(EVP_MAC_CTX *ctx);
+ unsigned char *EVP_Q_mac(OSSL_LIB_CTX *libctx, const char *name, const char *propq,
+                          const char *subalg, const OSSL_PARAM *params,
+                          const void *key, size_t keylen,
+                          const unsigned char *data, size_t datalen,
+                          unsigned char *out, size_t outsize, unsigned int *outlen);
  int EVP_MAC_init(EVP_MAC_CTX *ctx, const unsigned char *key, size_t keylen,
                   const OSSL_PARAM params[]);
  int EVP_MAC_update(EVP_MAC_CTX *ctx, const unsigned char *data, size_t datalen);
@@ -119,6 +125,19 @@ I<ctx>.
 
 =head2 Computing functions
 
+EVP_Q_mac() computes the message authentication code
+of I<data> with length I<datalen>
+using the MAC algorithm I<name> and the key I<key> with length I<keylen>.
+The MAC algorithm is fetched using any given I<libctx> and property query
+string I<propq>. It takes parameters I<subalg> and further I<params>,
+both of which may be NULL if not needed.
+If I<out> is not NULL, it places the result in the memory pointed at by I<out>,
+but only if I<outsize> is sufficient (otherwise no computation is made).
+If I<out> is NULL, it allocates and uses a buffer of suitable length,
+which will be returned on success and must be freed by the caller.
+In either case, also on error,
+it assigns the number of bytes written to I<*outlen> unless I<outlen> is NULL.
+
 EVP_MAC_init() sets up the underlying context I<ctx> with information given
 via the I<key> and I<params> arguments.  The MAC I<key> has a length of
 I<keylen> and the parameters in I<params> are processed before setting
@@ -162,6 +181,7 @@ EVP_MAC_CTX_set_params() passes chosen parameters to the underlying
 context, given a context I<ctx>.
 The set of parameters given with I<params> determine exactly what
 parameters are passed down.
+If I<params> are NULL, the unterlying context should do nothing and return 1.
 Note that a parameter that is unknown in the underlying context is
 simply ignored.
 Also, what happens when a needed parameter isn't passed down is
@@ -325,7 +345,7 @@ not be considered a breaking change to the API.
 
 =head1 RETURN VALUES
 
-EVP_MAC_fetch() returns a pointer to a newly fetched EVP_MAC, or
+EVP_MAC_fetch() returns a pointer to a newly fetched B<EVP_MAC>, or
 NULL if allocation failed.
 
 EVP_MAC_up_ref() returns 1 on success, 0 on error.
@@ -351,7 +371,9 @@ EVP_MAC_CTX_free() returns nothing at all.
 EVP_MAC_CTX_get_params() and EVP_MAC_CTX_set_params() return 1 on
 success, 0 on error.
 
-EVP_MAC_init(), EVP_MAC_update(), EVP_MAC_final() and  EVP_MAC_finalXOF()
+EVP_Q_mac() returns a pointer to the computed MAC value, or NULL on error.
+
+EVP_MAC_init(), EVP_MAC_update(), EVP_MAC_final(), and EVP_MAC_finalXOF()
 return 1 on success, 0 on error.
 
 EVP_MAC_CTX_get_mac_size() returns the expected output size, or 0 if it isn't set.
