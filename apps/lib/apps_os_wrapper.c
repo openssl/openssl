@@ -436,7 +436,11 @@ int app_open(const char *pathname, int flags, int mode)
 
 ossl_ssize_t app_read(int fd, void *buf, size_t count)
 {
+#ifdef _WIN32
+    return _read(fd, buf, count);
+#else
     return read(fd, buf, count);
+#endif
 }
 
 int app_strcasecmp(const char *s1, const char *s2)
