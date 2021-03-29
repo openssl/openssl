@@ -249,7 +249,7 @@ OpenSSL 3.0
    type is OSSL_HTTP_REQ_CTX, and the deprecated functions are replaced
    with OSSL_HTTP_REQ_CTX_new(), OSSL_HTTP_REQ_CTX_free(),
    OSSL_HTTP_REQ_CTX_set_request_line(), OSSL_HTTP_REQ_CTX_add1_header(),
-   OSSL_HTTP_REQ_CTX_i2d(), OSSL_HTTP_REQ_CTX_nbio(),
+   OSSL_HTTP_REQ_CTX_set1_req(), OSSL_HTTP_REQ_CTX_nbio(),
    OSSL_HTTP_REQ_CTX_sendreq_d2i(), OSSL_HTTP_REQ_CTX_get0_mem_bio() and
    OSSL_HTTP_REQ_CTX_set_max_response_length().
 
