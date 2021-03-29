@@ -328,19 +328,16 @@ static int internal_find(OPENSSL_STACK *st, const void *data,
                      ret_val_options);
 
     if (pnum != NULL) {
+        *pnum = 0;
         if (r != NULL) {
             const void **p = (const void **)r;
 
-            *pnum = 0;
             while (p < st->data + st->num) {
-                if (st->comp(&data, p) == 0)
-                    ++*pnum;
-                else
+                if (st->comp(&data, p) != 0)
                     break;
+                ++*pnum;
                 ++p;
             }
-        } else {
-            *pnum = 0;
         }
     }
 
