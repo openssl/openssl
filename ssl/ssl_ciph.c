@@ -133,7 +133,7 @@ static int ssl_cipher_info_find(const ssl_cipher_table * table,
  * is engine-provided, we'll fill it only if corresponding EVP_PKEY_METHOD is
  * found
  */
-static int ssl_mac_pkey_id[SSL_MD_NUM_IDX] = {
+static const int default_mac_pkey_id[SSL_MD_NUM_IDX] = {
     /* MD5, SHA, GOST94, MAC89 */
     EVP_PKEY_HMAC, EVP_PKEY_HMAC, EVP_PKEY_HMAC, NID_undef,
     /* SHA256, SHA384, GOST2012_256, MAC89-12 */
@@ -395,29 +395,33 @@ int ssl_load_ciphers(SSL_CTX *ctx)
      * Check for presence of GOST 34.10 algorithms, and if they are not
      * present, disable appropriate auth and key exchange
      */
-    ssl_mac_pkey_id[SSL_MD_GOST89MAC_IDX] = get_optional_pkey_id(SN_id_Gost28147_89_MAC);
-    if (ssl_mac_pkey_id[SSL_MD_GOST89MAC_IDX])
+    memcpy(ctx->ssl_mac_pkey_id, default_mac_pkey_id,
+           sizeof(ctx->ssl_mac_pkey_id));
+
+    ctx->ssl_mac_pkey_id[SSL_MD_GOST89MAC_IDX] =
+        get_optional_pkey_id(SN_id_Gost28147_89_MAC);
+    if (ctx->ssl_mac_pkey_id[SSL_MD_GOST89MAC_IDX])
         ctx->ssl_mac_secret_size[SSL_MD_GOST89MAC_IDX] = 32;
     else
         ctx->disabled_mac_mask |= SSL_GOST89MAC;
 
-    ssl_mac_pkey_id[SSL_MD_GOST89MAC12_IDX] =
+    ctx->ssl_mac_pkey_id[SSL_MD_GOST89MAC12_IDX] =
         get_optional_pkey_id(SN_gost_mac_12);
-    if (ssl_mac_pkey_id[SSL_MD_GOST89MAC12_IDX])
+    if (ctx->ssl_mac_pkey_id[SSL_MD_GOST89MAC12_IDX])
         ctx->ssl_mac_secret_size[SSL_MD_GOST89MAC12_IDX] = 32;
     else
         ctx->disabled_mac_mask |= SSL_GOST89MAC12;
 
-    ssl_mac_pkey_id[SSL_MD_MAGMAOMAC_IDX] =
+    ctx->ssl_mac_pkey_id[SSL_MD_MAGMAOMAC_IDX] =
         get_optional_pkey_id(SN_magma_mac);
-    if (ssl_mac_pkey_id[SSL_MD_MAGMAOMAC_IDX])
+    if (ctx->ssl_mac_pkey_id[SSL_MD_MAGMAOMAC_IDX])
         ctx->ssl_mac_secret_size[SSL_MD_MAGMAOMAC_IDX] = 32;
     else
         ctx->disabled_mac_mask |= SSL_MAGMAOMAC;
 
-    ssl_mac_pkey_id[SSL_MD_KUZNYECHIKOMAC_IDX] =
+    ctx->ssl_mac_pkey_id[SSL_MD_KUZNYECHIKOMAC_IDX] =
         get_optional_pkey_id(SN_kuznyechik_mac);
-    if (ssl_mac_pkey_id[SSL_MD_KUZNYECHIKOMAC_IDX])
+    if (ctx->ssl_mac_pkey_id[SSL_MD_KUZNYECHIKOMAC_IDX])
         ctx->ssl_mac_secret_size[SSL_MD_KUZNYECHIKOMAC_IDX] = 32;
     else
         ctx->disabled_mac_mask |= SSL_KUZNYECHIKOMAC;
@@ -557,7 +561,7 @@ int ssl_cipher_get_evp(SSL_CTX *ctx, const SSL_SESSION *s,
         }
         *md = ctx->ssl_digest_methods[i];
         if (mac_pkey_type != NULL)
-            *mac_pkey_type = ssl_mac_pkey_id[i];
+            *mac_pkey_type = ctx->ssl_mac_pkey_id[i];
         if (mac_secret_size != NULL)
             *mac_secret_size = ctx->ssl_mac_secret_size[i];
     }
