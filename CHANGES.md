@@ -240,11 +240,11 @@ OpenSSL 3.0
 
    *Matt Caswell*
 
- * A number of functions handling low level keys or engines were deprecated
+ * A number of functions handling low-level keys or engines were deprecated
    including EVP_PKEY_set1_engine(), EVP_PKEY_get0_engine(), EVP_PKEY_assign(),
    EVP_PKEY_get0(), EVP_PKEY_get0_hmac(), EVP_PKEY_get0_poly1305() and
    EVP_PKEY_get0_siphash(). Applications using engines should instead use
-   providers. Applications getting or setting low level keys in an EVP_PKEY
+   providers. Applications getting or setting low-level keys in an EVP_PKEY
    should instead use the OSSL_ENCODER or OSSL_DECODER APIs, or alternatively
    use EVP_PKEY_fromdata() or EVP_PKEY_get_params().
 
@@ -405,7 +405,7 @@ OpenSSL 3.0
 
    *Dmitry Belyavskiy*
 
- * All of the low level EC_KEY functions have been deprecated including:
+ * All of the low-level EC_KEY functions have been deprecated including:
 
    EC_KEY_OpenSSL, EC_KEY_get_default_method, EC_KEY_set_default_method,
    EC_KEY_get_method, EC_KEY_set_method, EC_KEY_new_method
@@ -823,7 +823,7 @@ OpenSSL 3.0
 
    *David von Oheimb*
 
- * All of the low level RSA functions have been deprecated including:
+ * All of the low-level RSA functions have been deprecated including:
 
    RSA_new_method, RSA_size, RSA_security_bits, RSA_get0_pss_params,
    RSA_get_version, RSA_get0_engine, RSA_generate_key_ex,
@@ -854,12 +854,12 @@ OpenSSL 3.0
    RSA_meth_set_verify, RSA_meth_get_keygen, RSA_meth_set_keygen,
    RSA_meth_get_multi_prime_keygen and RSA_meth_set_multi_prime_keygen.
 
-   Use of these low level functions has been informally discouraged for a long
+   Use of these low-level functions has been informally discouraged for a long
    time.  Instead applications should use L<EVP_PKEY_encrypt_init(3)>,
    L<EVP_PKEY_encrypt(3)>, L<EVP_PKEY_decrypt_init(3)> and
    L<EVP_PKEY_decrypt(3)>.
 
-   All of these low level RSA functions have been deprecated without
+   All of these low-level RSA functions have been deprecated without
    replacement:
 
    RSA_blinding_off, RSA_blinding_on, RSA_clear_flags, RSA_get_version,
@@ -904,7 +904,7 @@ OpenSSL 3.0
 
    *Paul Dale*
 
- * All of the low level DH functions have been deprecated including:
+ * All of the low-level DH functions have been deprecated including:
 
    DH_OpenSSL, DH_set_default_method, DH_get_default_method, DH_set_method,
    DH_new_method, DH_new, DH_free, DH_up_ref, DH_bits, DH_set0_pqg, DH_size,
@@ -920,11 +920,11 @@ OpenSSL 3.0
    DH_meth_set_init, DH_meth_get_finish, DH_meth_set_finish,
    DH_meth_get_generate_params and DH_meth_set_generate_params.
 
-   Use of these low level functions has been informally discouraged for a long
+   Use of these low-level functions has been informally discouraged for a long
    time.  Instead applications should use L<EVP_PKEY_derive_init(3)>
    and L<EVP_PKEY_derive(3)>.
 
-   These low level DH functions have been deprecated without replacement:
+   These low-level DH functions have been deprecated without replacement:
 
    DH_clear_flags, DH_get_1024_160, DH_get_2048_224, DH_get_2048_256,
    DH_set_flags and DH_test_flags.
@@ -948,7 +948,7 @@ OpenSSL 3.0
 
    *Paul Dale and Matt Caswell*
 
- * All of the low level DSA functions have been deprecated including:
+ * All of the low-level DSA functions have been deprecated including:
 
    DSA_new, DSA_free, DSA_up_ref, DSA_bits, DSA_get0_pqg, DSA_set0_pqg,
    DSA_get0_key, DSA_set0_key, DSA_get0_p, DSA_get0_q, DSA_get0_g,
@@ -968,11 +968,11 @@ OpenSSL 3.0
    DSA_meth_get_finish, DSA_meth_set_finish, DSA_meth_get_paramgen,
    DSA_meth_set_paramgen, DSA_meth_get_keygen and DSA_meth_set_keygen.
 
-   Use of these low level functions has been informally discouraged for a long
+   Use of these low-level functions has been informally discouraged for a long
    time.  Instead applications should use L<EVP_DigestSignInit_ex(3)>,
    L<EVP_DigestSignUpdate(3)> and L<EVP_DigestSignFinal(3)>.
 
-   These low level DSA functions have been deprecated without replacement:
+   These low-level DSA functions have been deprecated without replacement:
 
    DSA_clear_flags, DSA_dup_DH, DSAparams_dup, DSA_set_flags and
    DSA_test_flags.
@@ -1002,13 +1002,13 @@ OpenSSL 3.0
 
    *Richard Levitte*
 
- * Deprecated low level ECDH and ECDSA functions.  These include:
+ * Deprecated low-level ECDH and ECDSA functions.  These include:
 
    ECDH_compute_key, ECDSA_do_sign, ECDSA_do_sign_ex, ECDSA_do_verify,
    ECDSA_sign_setup, ECDSA_sign, ECDSA_sign_ex, ECDSA_verify and
    ECDSA_size.
 
-   Use of these low level functions has been informally discouraged for a long
+   Use of these low-level functions has been informally discouraged for a long
    time.  Instead applications should use the EVP_PKEY_derive(3),
    EVP_DigestSign(3) and EVP_DigestVerify(3) functions.
 
@@ -1039,7 +1039,7 @@ OpenSSL 3.0
    HMAC_Init_ex, HMAC_Update, HMAC_Final, HMAC_CTX_copy, HMAC_CTX_set_flags
    and HMAC_CTX_get_md.
 
-   Use of these low level functions has been informally discouraged for a long
+   Use of these low-level functions has been informally discouraged for a long
    time.  Instead applications should use L<EVP_MAC_CTX_new(3)>,
    L<EVP_MAC_CTX_free(3)>, L<EVP_MAC_init(3)>, L<EVP_MAC_update(3)>
    and L<EVP_MAC_final(3)> or the single-shot MAC function L<EVP_Q_mac(3)>.
@@ -1058,19 +1058,19 @@ OpenSSL 3.0
 
    *Rich Salz*
 
- * All of the low level CMAC functions have been deprecated including:
+ * All of the low-level CMAC functions have been deprecated including:
 
    CMAC_CTX_new, CMAC_CTX_cleanup, CMAC_CTX_free, CMAC_CTX_get0_cipher_ctx,
    CMAC_CTX_copy, CMAC_Init, CMAC_Update, CMAC_Final and CMAC_resume.
 
-   Use of these low level functions has been informally discouraged for a long
+   Use of these low-level functions has been informally discouraged for a long
    time.  Instead applications should use L<EVP_MAC_CTX_new(3)>,
    L<EVP_MAC_CTX_free(3)>, L<EVP_MAC_init(3)>, L<EVP_MAC_update(3)>
    and L<EVP_MAC_final(3)>.
 
    *Paul Dale*
 
- * All of the low level MD2, MD4, MD5, MDC2, RIPEMD160, SHA1, SHA224, SHA256,
+ * The low-level MD2, MD4, MD5, MDC2, RIPEMD160, SHA1, SHA224, SHA256,
    SHA384, SHA512 and Whirlpool digest functions have been deprecated.
    These include:
 
@@ -1079,17 +1079,21 @@ OpenSSL 3.0
    MD5_Final, MD5_Transform, MDC2, MDC2_Init, MDC2_Update, MDC2_Final,
    RIPEMD160, RIPEMD160_Init, RIPEMD160_Update, RIPEMD160_Final,
    RIPEMD160_Transform, SHA1_Init, SHA1_Update, SHA1_Final, SHA1_Transform,
-   SHA224_Init, SHA224_Update, SHA224_Final, SHA224_Transform, SHA256_Init,
-   SHA256_Update, SHA256_Final, SHA256_Transform, SHA384, SHA384_Init,
-   SHA384_Update, SHA384_Final, SHA512, SHA512_Init, SHA512_Update,
-   SHA512_Final, SHA512_Transform, WHIRLPOOL, WHIRLPOOL_Init,
+   SHA224_Init, SHA224_Update, SHA224_Final, SHA224_Transform,
+   SHA256_Init, SHA256_Update, SHA256_Final, SHA256_Transform,
+   SHA384_Init, SHA384_Update, SHA384_Final,
+   SHA512_Init, SHA512_Update, SHA512_Final, SHA512_Transform,
+   WHIRLPOOL, WHIRLPOOL_Init,
    WHIRLPOOL_Update, WHIRLPOOL_BitUpdate and WHIRLPOOL_Final.
 
-   Use of these low level functions has been informally discouraged
-   for a long time.  Applications should use the EVP_DigestInit_ex(3),
-   EVP_DigestUpdate(3) and EVP_DigestFinal_ex(3) functions instead.
+   Use of these low-level functions has been informally discouraged
+   for a long time.  Applications should use the L<EVP_DigestInit_ex(3)>,
+   L<EVP_DigestUpdate(3)>, and L<EVP_DigestFinal_ex(3)> functions instead.
+   Alternatively, the quick one-shot function L<EVP_Q_digest(3)> can be used.
+   SHA1, SHA224, SHA256, SHA384 and SHA512 have changed from functions to macros
+   like this: (EVP_Q_digest(NULL, "SHA256", NULL, d, n, md, NULL) ? md : NULL).
 
-   *Paul Dale*
+   *Paul Dale and David von Oheimb*
 
  * Corrected the documentation of the return values from the `EVP_DigestSign*`
    set of functions.  The documentation mentioned negative values for some
@@ -1101,7 +1105,7 @@ OpenSSL 3.0
 
    *Richard Levitte*
 
- * All of the low level cipher functions have been deprecated including:
+ * All of the low-level cipher functions have been deprecated including:
 
    AES_options, AES_set_encrypt_key, AES_set_decrypt_key, AES_encrypt,
    AES_decrypt, AES_ecb_encrypt, AES_cbc_encrypt, AES_cfb128_encrypt,
@@ -1133,7 +1137,7 @@ OpenSSL 3.0
    SEED_set_key, SEED_encrypt, SEED_decrypt, SEED_ecb_encrypt,
    SEED_cbc_encrypt, SEED_cfb128_encrypt and SEED_ofb128_encrypt.
 
-   Use of these low level functions has been informally discouraged for
+   Use of these low-level functions has been informally discouraged for
    a long time. Applications should use the high level EVP APIs, e.g.
    EVP_EncryptInit_ex, EVP_EncryptUpdate, EVP_EncryptFinal_ex, and the
    equivalently named decrypt functions instead.
@@ -1168,7 +1172,7 @@ OpenSSL 3.0
    difficult to perform and are not believed likely. Attacks against DH512
    are considered just feasible. However, for an attack the target would
    have to re-use the DH512 private key, which is not recommended anyway.
-   Also applications directly using the low level API BN_mod_exp may be
+   Also applications directly using the low-level API BN_mod_exp may be
    affected if they use BN_FLG_CONSTTIME.
    ([CVE-2019-1551])
 
@@ -7652,11 +7656,11 @@ OpenSSL 1.0.1
 
    *Steve Henson*
 
- * Add similar low level API blocking to ciphers.
+ * Add similar low-level API blocking to ciphers.
 
    *Steve Henson*
 
- * Low level digest APIs are not approved in FIPS mode: any attempt
+ * low-level digest APIs are not approved in FIPS mode: any attempt
    to use these will cause a fatal error. Applications that *really* want
    to use them can use the `private_*` version instead.
 
@@ -11044,7 +11048,7 @@ OpenSSL 0.9.8.]
 
  * Add new 'medium level' PKCS#12 API. Certificates and keys
    can be added using this API to created arbitrary PKCS#12
-   files while avoiding the low level API.
+   files while avoiding the low-level API.
 
    New options to PKCS12_create(), key or cert can be NULL and
    will then be omitted from the output file. The encryption
@@ -11055,7 +11059,7 @@ OpenSSL 0.9.8.]
    options work when creating a PKCS#12 file. New option -nomac
    to omit the mac, NONE can be set for an encryption algorithm.
    New code is modified to use the enhanced PKCS12_create()
-   instead of the low level API.
+   instead of the low-level API.
 
    *Steve Henson*
 
@@ -12777,7 +12781,7 @@ s-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
 
    *Richard Levitte*
 
- * Change all calls to low level digest routines in the library and
+ * Change all calls to low-level digest routines in the library and
    applications to use EVP. Add missing calls to HMAC_cleanup() and
    don't assume HMAC_CTX can be copied using memcpy().
 
@@ -15360,7 +15364,7 @@ s-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
    *Bodo Moeller*
 
  * New openssl application 'rsautl'. This utility can be
-   used for low level RSA operations. DER public key
+   used for low-level RSA operations. DER public key
    BIO/fp routines also added.
 
    *Steve Henson*
@@ -17240,7 +17244,7 @@ s-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
    provides hooks that allow the default DSA functions or functions on a
    "per key" basis to be replaced. This allows hardware acceleration and
    hardware key storage to be handled without major modification to the
-   library. Also added low level modexp hooks and CRYPTO_EX structure and
+   library. Also added low-level modexp hooks and CRYPTO_EX structure and
    associated functions.
 
    *Steve Henson*
