@@ -36,6 +36,28 @@ jobs:
     - name: make doc-nits
       run: make doc-nits
 
+  # This checks that we use ANSI C language syntax and semantics.
+  # We are not as strict with libraries, but rather adapt to what's
+  # expected to be available in a certain version of each platform.
+  check-ansi:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: config
+      env:
+        CPPFLAGS=-ansi
+      run: ../config no-asm no-makedepend enable-buildtest-c++ --strict-warnings -D_DEFAULT_SOURCE && perl configdata.pm --dump
+      working-directory: ./build
+    - name: make
+      run: make -s -j4
+      working-directory: ./build
+    - name: make test
+      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
+      working-directory: ./build
+    - name: make install
+      run: make install
+      working-directory: ./build
+
   basic_gcc:
     runs-on: ubuntu-latest
     steps:
