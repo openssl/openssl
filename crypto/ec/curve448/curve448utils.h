@@ -15,6 +15,8 @@
 
 # include <openssl/e_os2.h>
 
+# include "internal/numbers.h"
+
 /*
  * Internal word types. Somewhat tricky.  This could be decided separately per
  * platform.  However, the structs do need to be all the same size and
@@ -41,9 +43,9 @@ typedef int64_t c448_sword_t;
 /* "Boolean" type, will be set to all-zero or all-one (i.e. -1u) */
 typedef uint64_t c448_bool_t;
 /* Double-word size for internal computations */
-typedef __uint128_t c448_dword_t;
+typedef uint128_t c448_dword_t;
 /* Signed double-word size for internal computations */
-typedef __int128_t c448_dsword_t;
+typedef int128_t c448_dsword_t;
 # elif C448_WORD_BITS == 32
 /* Word size for internal computations */
 typedef uint32_t c448_word_t;

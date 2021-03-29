@@ -94,11 +94,10 @@ poly1305_blocks(void *ctx, const unsigned char *inp, size_t len, u32 padbit);
          (a ^ ((a ^ b) | ((a - b) ^ b))) >> (sizeof(a) * 8 - 1) \
          )
 
-# if (defined(__SIZEOF_INT128__) && __SIZEOF_INT128__==16) && \
-     (defined(__SIZEOF_LONG__) && __SIZEOF_LONG__==8)
+# if defined(INT64_MAX) && defined(INT128_MAX)
 
 typedef unsigned long u64;
-typedef __uint128_t u128;
+typedef uint128_t u128;
 
 typedef struct {
     u64 h[3];

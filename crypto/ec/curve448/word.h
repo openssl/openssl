@@ -22,10 +22,10 @@
 
 # if (ARCH_WORD_BITS == 64)
 typedef uint64_t word_t, mask_t;
-typedef __uint128_t dword_t;
+typedef uint128_t dword_t;
 typedef int32_t hsword_t;
 typedef int64_t sword_t;
-typedef __int128_t dsword_t;
+typedef int128_t dsword_t;
 # elif (ARCH_WORD_BITS == 32)
 typedef uint32_t word_t, mask_t;
 typedef uint64_t dword_t;
