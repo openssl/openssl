@@ -87,10 +87,3 @@ GENERATE[ecp_nistz256-ppc64.s]=asm/ecp_nistz256-ppc64.pl
 
 GENERATE[x25519-x86_64.s]=asm/x25519-x86_64.pl
 GENERATE[x25519-ppc64.s]=asm/x25519-ppc64.pl
-
-INCLUDE[curve448/arch_32/f_impl.o]=curve448/arch_32 curve448
-INCLUDE[curve448/f_generic.o]=curve448/arch_32 curve448
-INCLUDE[curve448/scalar.o]=curve448/arch_32 curve448
-INCLUDE[curve448/curve448_tables.o]=curve448/arch_32 curve448
-INCLUDE[curve448/eddsa.o]=curve448/arch_32 curve448
-INCLUDE[curve448/curve448.o]=curve448/arch_32 curve448
