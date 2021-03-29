@@ -45,18 +45,10 @@ jobs:
     - uses: actions/checkout@v2
     - name: config
       env:
-        CPPFLAGS=-ansi
+        CPPFLAGS: -ansi
       run: ../config no-asm no-makedepend enable-buildtest-c++ --strict-warnings -D_DEFAULT_SOURCE && perl configdata.pm --dump
-      working-directory: ./build
     - name: make
       run: make -s -j4
-      working-directory: ./build
-    - name: make test
-      run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
-      working-directory: ./build
-    - name: make install
-      run: make install
-      working-directory: ./build
 
   basic_gcc:
     runs-on: ubuntu-latest
