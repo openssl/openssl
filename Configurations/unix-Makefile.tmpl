@@ -1607,7 +1607,7 @@ EOF
 
       my $recipe = '';
 
-      if (defined $simple) {
+      if (defined $simple && $simple ne $full) {
           if (sharedaix()) {
               $recipe .= <<"EOF";
 $simple: $full
