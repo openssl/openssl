@@ -434,8 +434,11 @@ ASN1_OCTET_STRING *X509_digest_sig(const X509 *cert)
 int X509_CRL_digest(const X509_CRL *data, const EVP_MD *type,
                     unsigned char *md, unsigned int *len)
 {
-    if (type != NULL
-            && EVP_MD_is_a(type, SN_sha1)
+    if (type == NULL) {
+        ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    if (EVP_MD_is_a(type, SN_sha1)
             && (data->flags & EXFLAG_SET) != 0
             && (data->flags & EXFLAG_NO_FINGERPRINT) == 0) {
         /* Asking for SHA1; always computed in CRL d2i. */
