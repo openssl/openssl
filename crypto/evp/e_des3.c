@@ -16,9 +16,9 @@
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #ifndef OPENSSL_NO_DES
-# include <openssl/evp.h>
 # include <openssl/objects.h>
 # include "crypto/evp.h"
+# include "crypto/sha.h"
 # include <openssl/des.h>
 # include <openssl/rand.h>
 # include "evp_local.h"
@@ -347,10 +347,8 @@ static int des_ede3_unwrap(EVP_CIPHER_CTX *ctx, unsigned char *out,
     /* Decrypt again using new IV */
     des_ede_cbc_cipher(ctx, out, out, inl - 16);
     des_ede_cbc_cipher(ctx, icv, icv, 8);
-    /* Work out SHA1 hash of first portion */
-    SHA1(out, inl - 16, sha1tmp);
-
-    if (!CRYPTO_memcmp(sha1tmp, icv, 8))
+    if (ossl_sha1(out, inl - 16, sha1tmp)  /* Work out hash of first portion */
+            && CRYPTO_memcmp(sha1tmp, icv, 8) == 0)
         rv = inl - 16;
     OPENSSL_cleanse(icv, 8);
     OPENSSL_cleanse(sha1tmp, SHA_DIGEST_LENGTH);
@@ -371,7 +369,8 @@ static int des_ede3_wrap(EVP_CIPHER_CTX *ctx, unsigned char *out,
     /* Copy input to output buffer + 8 so we have space for IV */
     memmove(out + 8, in, inl);
     /* Work out ICV */
-    SHA1(in, inl, sha1tmp);
+    if (!ossl_sha1(in, inl, sha1tmp))
+        return -1;
     memcpy(out + inl + 8, sha1tmp, 8);
     OPENSSL_cleanse(sha1tmp, SHA_DIGEST_LENGTH);
     /* Generate random IV */

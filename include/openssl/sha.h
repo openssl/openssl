@@ -17,6 +17,7 @@
 # endif
 
 # include <openssl/e_os2.h>
+# include <openssl/evp.h>
 # include <stddef.h>
 
 # ifdef  __cplusplus
@@ -45,15 +46,15 @@ typedef struct SHAstate_st {
     SHA_LONG data[SHA_LBLOCK];
     unsigned int num;
 } SHA_CTX;
-# endif /* !defined(OPENSSL_NO_DEPRECATED_3_0) */
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+
 OSSL_DEPRECATEDIN_3_0 int SHA1_Init(SHA_CTX *c);
 OSSL_DEPRECATEDIN_3_0 int SHA1_Update(SHA_CTX *c, const void *data, size_t len);
 OSSL_DEPRECATEDIN_3_0 int SHA1_Final(unsigned char *md, SHA_CTX *c);
-OSSL_DEPRECATEDIN_3_0 unsigned char *SHA1(const unsigned char *d, size_t n,
-                                          unsigned char *md);
 OSSL_DEPRECATEDIN_3_0 void SHA1_Transform(SHA_CTX *c, const unsigned char *data);
 # endif
+
+# define SHA1(d, n, md) \
+    (EVP_Q_digest(NULL, "SHA1", NULL, d, n, md, NULL) ? md : NULL)
 
 # ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define SHA256_CBLOCK   (SHA_LBLOCK*4)/* SHA-256 treats input data as a
@@ -66,23 +67,23 @@ typedef struct SHA256state_st {
     SHA_LONG data[SHA_LBLOCK];
     unsigned int num, md_len;
 } SHA256_CTX;
-# endif /* !defined(OPENSSL_NO_DEPRECATED_3_0) */
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+
 OSSL_DEPRECATEDIN_3_0 int SHA224_Init(SHA256_CTX *c);
 OSSL_DEPRECATEDIN_3_0 int SHA224_Update(SHA256_CTX *c,
                                         const void *data, size_t len);
 OSSL_DEPRECATEDIN_3_0 int SHA224_Final(unsigned char *md, SHA256_CTX *c);
-OSSL_DEPRECATEDIN_3_0 unsigned char *SHA224(const unsigned char *d, size_t n,
-                                            unsigned char *md);
 OSSL_DEPRECATEDIN_3_0 int SHA256_Init(SHA256_CTX *c);
 OSSL_DEPRECATEDIN_3_0 int SHA256_Update(SHA256_CTX *c,
                                         const void *data, size_t len);
 OSSL_DEPRECATEDIN_3_0 int SHA256_Final(unsigned char *md, SHA256_CTX *c);
-OSSL_DEPRECATEDIN_3_0 unsigned char *SHA256(const unsigned char *d, size_t n,
-                                            unsigned char *md);
 OSSL_DEPRECATEDIN_3_0 void SHA256_Transform(SHA256_CTX *c,
                                             const unsigned char *data);
 # endif
+
+# define SHA224(d, n, md) \
+    (EVP_Q_digest(NULL, "SHA224", NULL, d, n, md, NULL) ? md : NULL)
+# define SHA256(d, n, md) \
+    (EVP_Q_digest(NULL, "SHA256", NULL, d, n, md, NULL) ? md : NULL)
 
 # define SHA224_DIGEST_LENGTH    28
 # define SHA256_DIGEST_LENGTH    32
@@ -118,23 +119,23 @@ typedef struct SHA512state_st {
     } u;
     unsigned int num, md_len;
 } SHA512_CTX;
-# endif /* !defined(OPENSSL_NO_DEPRECATED_3_0) */
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+
 OSSL_DEPRECATEDIN_3_0 int SHA384_Init(SHA512_CTX *c);
 OSSL_DEPRECATEDIN_3_0 int SHA384_Update(SHA512_CTX *c,
                                         const void *data, size_t len);
 OSSL_DEPRECATEDIN_3_0 int SHA384_Final(unsigned char *md, SHA512_CTX *c);
-OSSL_DEPRECATEDIN_3_0 unsigned char *SHA384(const unsigned char *d, size_t n,
-                                            unsigned char *md);
 OSSL_DEPRECATEDIN_3_0 int SHA512_Init(SHA512_CTX *c);
 OSSL_DEPRECATEDIN_3_0 int SHA512_Update(SHA512_CTX *c,
                                         const void *data, size_t len);
 OSSL_DEPRECATEDIN_3_0 int SHA512_Final(unsigned char *md, SHA512_CTX *c);
-OSSL_DEPRECATEDIN_3_0 unsigned char *SHA512(const unsigned char *d, size_t n,
-                                            unsigned char *md);
 OSSL_DEPRECATEDIN_3_0 void SHA512_Transform(SHA512_CTX *c,
                                             const unsigned char *data);
 # endif
+
+# define SHA384(d, n, md) \
+    (EVP_Q_digest(NULL, "SHA384", NULL, d, n, md, NULL) ? md : NULL)
+# define SHA512(d, n, md) \
+    (EVP_Q_digest(NULL, "SHA512", NULL, d, n, md, NULL) ? md : NULL)
 
 # ifdef  __cplusplus
 }

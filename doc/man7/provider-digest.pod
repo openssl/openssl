@@ -255,7 +255,7 @@ algorithm.
 
 =head1 BUGS
 
-The EVP_Digest() and EVP_DigestFinal_ex() libcrypto API calls do not
+The EVP_Q_digest(), EVP_Digest() and EVP_DigestFinal_ex() API calls do not
 expect the digest size to be larger than EVP_MAX_MD_SIZE. Any algorithm which
 produces larger digests is unusable with those API calls.
 
