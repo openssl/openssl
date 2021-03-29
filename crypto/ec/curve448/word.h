@@ -17,7 +17,7 @@
 # include <assert.h>
 # include <stdlib.h>
 # include <openssl/e_os2.h>
-# include "arch_intrinsics.h"
+# include "arch_32/arch_intrinsics.h"
 # include "curve448utils.h"
 
 # if (ARCH_WORD_BITS == 64)
