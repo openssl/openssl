@@ -188,11 +188,6 @@ unencrypted example in L<BIO_s_connect(3)>.
      ERR_print_errors_fp(stderr);
      exit(1);
  }
- if (BIO_do_handshake(sbio) <= 0) {
-     fprintf(stderr, "Error establishing SSL connection\n");
-     ERR_print_errors_fp(stderr);
-     exit(1);
- }
 
  /* XXX Could examine ssl here to get connection info */
 
