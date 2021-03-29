@@ -33,15 +33,16 @@ static int dh_bn_mod_exp(const DH *dh, BIGNUM *r,
 static int dh_init(DH *dh);
 static int dh_finish(DH *dh);
 
-static int compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
+/*
+ * See SP800-56Ar3 Section 5.7.1.1
+ * Finite Field Cryptography Diffie-Hellman (FFC DH) Primitive
+ */
+int ossl_dh_compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
 {
     BN_CTX *ctx = NULL;
     BN_MONT_CTX *mont = NULL;
-    BIGNUM *tmp;
+    BIGNUM *z, *pminus1;
     int ret = -1;
-#ifndef FIPS_MODULE
-    int check_result;
-#endif
 
     if (BN_num_bits(dh->params.p) > OPENSSL_DH_MAX_MODULUS_BITS) {
         ERR_raise(ERR_LIB_DH, DH_R_MODULUS_TOO_LARGE);
@@ -57,8 +58,9 @@ static int compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
     if (ctx == NULL)
         goto err;
     BN_CTX_start(ctx);
-    tmp = BN_CTX_get(ctx);
-    if (tmp == NULL)
+    pminus1 = BN_CTX_get(ctx);
+    z = BN_CTX_get(ctx);
+    if (z == NULL)
         goto err;
 
     if (dh->priv_key == NULL) {
@@ -73,22 +75,27 @@ static int compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
         if (!mont)
             goto err;
     }
-/* TODO(3.0) : Solve in a PR related to Key validation for DH */
-#ifndef FIPS_MODULE
-    if (!DH_check_pub_key(dh, pub_key, &check_result) || check_result) {
-        ERR_raise(ERR_LIB_DH, DH_R_INVALID_PUBKEY);
-        goto err;
-    }
-#endif
-    if (!dh->meth->bn_mod_exp(dh, tmp, pub_key, dh->priv_key, dh->params.p, ctx,
+
+    /* (Step 1) Z = pub_key^priv_key mod p */
+    if (!dh->meth->bn_mod_exp(dh, z, pub_key, dh->priv_key, dh->params.p, ctx,
                               mont)) {
         ERR_raise(ERR_LIB_DH, ERR_R_BN_LIB);
         goto err;
     }
 
+    /* (Step 2) Error if z <= 1 or z = p - 1 */
+    if (BN_copy(pminus1, dh->params.p) == NULL
+        || !BN_sub_word(pminus1, 1)
+        || BN_cmp(z, BN_value_one()) <= 0
+        || BN_cmp(z, pminus1) == 0) {
+        ERR_raise(ERR_LIB_DH, DH_R_INVALID_SECRET);
+        goto err;
+    }
+
     /* return the padded key, i.e. same number of bytes as the modulus */
-    ret = BN_bn2binpad(tmp, key, BN_num_bytes(dh->params.p));
+    ret = BN_bn2binpad(z, key, BN_num_bytes(dh->params.p));
  err:
+    BN_clear(z); /* (Step 2) destroy intermediate values */
     BN_CTX_end(ctx);
     BN_CTX_free(ctx);
     return ret;
@@ -105,7 +112,7 @@ int DH_compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
 
     /* compute the key; ret is constant unless compute_key is external */
 #ifdef FIPS_MODULE
-    ret = compute_key(key, pub_key, dh);
+    ret = ossl_dh_compute_key(key, pub_key, dh);
 #else
     ret = dh->meth->compute_key(key, pub_key, dh);
 #endif
@@ -134,7 +141,7 @@ int DH_compute_key_padded(unsigned char *key, const BIGNUM *pub_key, DH *dh)
 
     /* rv is constant unless compute_key is external */
 #ifdef FIPS_MODULE
-    rv = compute_key(key, pub_key, dh);
+    rv = ossl_dh_compute_key(key, pub_key, dh);
 #else
     rv = dh->meth->compute_key(key, pub_key, dh);
 #endif
@@ -152,7 +159,7 @@ int DH_compute_key_padded(unsigned char *key, const BIGNUM *pub_key, DH *dh)
 static DH_METHOD dh_ossl = {
     "OpenSSL DH Method",
     generate_key,
-    compute_key,
+    ossl_dh_compute_key,
     dh_bn_mod_exp,
     dh_init,
     dh_finish,

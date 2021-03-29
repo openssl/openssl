@@ -23,6 +23,14 @@ OpenSSL 3.0
 
 ### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
 
+ * A public key check is now performed during EVP_PKEY_derive_set_peer().
+   Previously DH was internally doing this during EVP_PKEY_derive().
+   To disable this check use EVP_PKEY_derive_set_peer_ex(dh, peer, 0). This
+   may mean that an error can occur in EVP_PKEY_derive_set_peer() rather than
+   during EVP_PKEY_derive().
+
+   *Shane Lontis*
+
  * The EVP_PKEY_public_check() and EVP_PKEY_param_check() functions now work for
    more key types including RSA, DSA, ED25519, X25519, ED448 and X448.
    Previously (in 1.1.1) they would return -2. For key types that do not have

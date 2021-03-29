@@ -317,10 +317,12 @@ int EVP_PKEY_derive_init_ex(EVP_PKEY_CTX *ctx, const OSSL_PARAM params[])
 #endif
 }
 
-int EVP_PKEY_derive_set_peer(EVP_PKEY_CTX *ctx, EVP_PKEY *peer)
+int EVP_PKEY_derive_set_peer_ex(EVP_PKEY_CTX *ctx, EVP_PKEY *peer,
+                                int validate_peer)
 {
-    int ret = 0;
+    int ret = 0, check;
     void *provkey = NULL;
+    EVP_PKEY_CTX *check_ctx = NULL;
 
     if (ctx == NULL) {
         ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
@@ -333,6 +335,16 @@ int EVP_PKEY_derive_set_peer(EVP_PKEY_CTX *ctx, EVP_PKEY *peer)
     if (ctx->op.kex.exchange->set_peer == NULL) {
         ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
         return -2;
+    }
+
+    if (validate_peer) {
+        check_ctx = EVP_PKEY_CTX_new_from_pkey(ctx->libctx, peer, ctx->propquery);
+        if (check_ctx == NULL)
+            return -1;
+        check = EVP_PKEY_public_check(check_ctx);
+        EVP_PKEY_CTX_free(check_ctx);
+        if (check <= 0)
+            return -1;
     }
 
     provkey = evp_pkey_export_to_provider(peer, ctx->libctx, &ctx->keymgmt,
@@ -408,6 +420,11 @@ int EVP_PKEY_derive_set_peer(EVP_PKEY_CTX *ctx, EVP_PKEY *peer)
     EVP_PKEY_up_ref(peer);
     return 1;
 #endif
+}
+
+int EVP_PKEY_derive_set_peer(EVP_PKEY_CTX *ctx, EVP_PKEY *peer)
+{
+    return EVP_PKEY_derive_set_peer_ex(ctx, peer, 1);
 }
 
 int EVP_PKEY_derive(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *pkeylen)
