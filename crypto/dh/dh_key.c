@@ -41,7 +41,7 @@ int ossl_dh_compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
 {
     BN_CTX *ctx = NULL;
     BN_MONT_CTX *mont = NULL;
-    BIGNUM *z, *pminus1;
+    BIGNUM *z = NULL, *pminus1;
     int ret = -1;
 
     if (BN_num_bits(dh->params.p) > OPENSSL_DH_MAX_MODULUS_BITS) {
