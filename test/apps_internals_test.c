@@ -9,7 +9,7 @@
 
 #include "apps_os_wrapper.h"
 #include "testutil.h"
-#include <sys/fcntl.h>
+#include <fcntl.h>
 #include <string.h>
 #include <errno.h>
 
