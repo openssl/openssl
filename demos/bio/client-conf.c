@@ -102,12 +102,6 @@ int main(int argc, char **argv)
         goto end;
     }
 
-    if (BIO_do_handshake(sbio) <= 0) {
-        fprintf(stderr, "Error establishing SSL connection\n");
-        ERR_print_errors_fp(stderr);
-        goto end;
-    }
-
     /* Could examine ssl here to get connection info */
 
     BIO_puts(sbio, "GET / HTTP/1.0\n\n");
