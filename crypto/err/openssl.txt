@@ -477,6 +477,7 @@ DH_R_DECODE_ERROR:104:decode error
 DH_R_INVALID_PARAMETER_NAME:110:invalid parameter name
 DH_R_INVALID_PARAMETER_NID:114:invalid parameter nid
 DH_R_INVALID_PUBKEY:102:invalid public key
+DH_R_INVALID_SECRET:128:invalid secret
 DH_R_KDF_PARAMETER_ERROR:112:kdf parameter error
 DH_R_KEYS_NOT_SET:108:keys not set
 DH_R_MISSING_PUBKEY:125:missing pubkey

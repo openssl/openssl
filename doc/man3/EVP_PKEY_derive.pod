@@ -3,7 +3,7 @@
 =head1 NAME
 
 EVP_PKEY_derive_init, EVP_PKEY_derive_init_ex,
-EVP_PKEY_derive_set_peer, EVP_PKEY_derive
+EVP_PKEY_derive_set_peer_ex, EVP_PKEY_derive_set_peer, EVP_PKEY_derive
 - derive public key algorithm shared secret
 
 =head1 SYNOPSIS
@@ -12,6 +12,8 @@ EVP_PKEY_derive_set_peer, EVP_PKEY_derive
 
  int EVP_PKEY_derive_init(EVP_PKEY_CTX *ctx);
  int EVP_PKEY_derive_init_ex(EVP_PKEY_CTX *ctx, const OSSL_PARAM params[]);
+ int EVP_PKEY_derive_set_peer_ex(EVP_PKEY_CTX *ctx, EVP_PKEY *peer,
+                                 int validate_peer);
  int EVP_PKEY_derive_set_peer(EVP_PKEY_CTX *ctx, EVP_PKEY *peer);
  int EVP_PKEY_derive(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *keylen);
 
@@ -26,8 +28,12 @@ more information about implicit fetches.
 EVP_PKEY_derive_init_ex() is the same as EVP_PKEY_derive_init() but additionally
 sets the passed parameters I<params> on the context before returning.
 
-EVP_PKEY_derive_set_peer() sets the peer key: this will normally
-be a public key.
+EVP_PKEY_derive_set_peer_ex() sets the peer key: this will normally
+be a public key. The I<validate_peer> will validate the public key if this value
+is non zero.
+
+EVP_PKEY_derive_set_peer() is similiar to EVP_PKEY_derive_set_peer_ex() with
+I<validate_peer> set to 1.
 
 EVP_PKEY_derive() derives a shared secret using I<ctx>.
 If I<key> is NULL then the maximum size of the output buffer is written to the
@@ -103,11 +109,12 @@ L<EVP_KEYEXCH_fetch(3)>
 The EVP_PKEY_derive_init(), EVP_PKEY_derive_set_peer() and EVP_PKEY_derive()
 functions were originally added in OpenSSL 1.0.0.
 
-The EVP_PKEY_derive_init_ex() function was added in OpenSSL 3.0.
+The EVP_PKEY_derive_init_ex() and EVP_PKEY_derive_set_peer_ex() functions were
+added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2006-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2006-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
