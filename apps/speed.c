@@ -3603,8 +3603,8 @@ static void multiblock_speed(const EVP_CIPHER *evp_cipher, int lengths_single,
     const int *mblengths = mblengths_list;
     int j, count, keylen, num = OSSL_NELEM(mblengths_list);
     const char *alg_name;
-    unsigned char *inp, *out, *key, no_key[32], no_iv[16];
-    EVP_CIPHER_CTX *ctx;
+    unsigned char *inp = NULL, *out = NULL, *key, no_key[32], no_iv[16];
+    EVP_CIPHER_CTX *ctx = NULL;
     double d = 0.0;
 
     if (lengths_single) {
@@ -3621,7 +3621,7 @@ static void multiblock_speed(const EVP_CIPHER *evp_cipher, int lengths_single,
 
     if ((keylen = EVP_CIPHER_CTX_key_length(ctx)) < 0) {
         BIO_printf(bio_err, "Impossible negative key length: %d\n", keylen);
-        return;
+        goto err;
     }
     key = app_malloc(keylen, "evp_cipher key");
     if (!EVP_CIPHER_CTX_rand_key(ctx, key))
@@ -3710,6 +3710,7 @@ static void multiblock_speed(const EVP_CIPHER *evp_cipher, int lengths_single,
         fprintf(stdout, "\n");
     }
 
+ err:
     OPENSSL_free(inp);
     OPENSSL_free(out);
     EVP_CIPHER_CTX_free(ctx);
