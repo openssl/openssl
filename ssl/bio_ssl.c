@@ -451,6 +451,7 @@ BIO *BIO_new_ssl_connect(SSL_CTX *ctx)
         goto err;
     return ret;
  err:
+    BIO_free(ssl);
     BIO_free(con);
 #endif
     return NULL;
