@@ -1033,18 +1033,18 @@ OpenSSL 3.0
 
    *Paul Dale*
 
- * All of the low level HMAC functions have been deprecated including:
+ * All low level HMAC functions except for HMAC have been deprecated including:
 
-   HMAC, HMAC_size, HMAC_CTX_new, HMAC_CTX_reset, HMAC_CTX_free,
+   HMAC_size, HMAC_CTX_new, HMAC_CTX_reset, HMAC_CTX_free,
    HMAC_Init_ex, HMAC_Update, HMAC_Final, HMAC_CTX_copy, HMAC_CTX_set_flags
    and HMAC_CTX_get_md.
 
    Use of these low level functions has been informally discouraged for a long
    time.  Instead applications should use L<EVP_MAC_CTX_new(3)>,
    L<EVP_MAC_CTX_free(3)>, L<EVP_MAC_init(3)>, L<EVP_MAC_update(3)>
-   and L<EVP_MAC_final(3)>.
+   and L<EVP_MAC_final(3)> or the single-shot MAC function L<EVP_Q_mac(3)>.
 
-   *Paul Dale*
+   *Paul Dale and David von Oheimb*
 
  * Over two thousand fixes were made to the documentation, including:
    - Common options (such as -rand/-writerand, TLS version control, etc)

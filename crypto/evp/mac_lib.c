@@ -222,3 +222,65 @@ int EVP_MAC_names_do_all(const EVP_MAC *mac,
 
     return 1;
 }
+
+unsigned char *EVP_Q_mac(OSSL_LIB_CTX *libctx, const char *name, const char *propq,
+                         const char *subalg, const OSSL_PARAM *params,
+                         const void *key, size_t keylen,
+                         const unsigned char *data, size_t datalen,
+                         unsigned char *out, size_t outsize, unsigned int *outlen)
+{
+    EVP_MAC *mac = EVP_MAC_fetch(libctx, name, propq);
+    OSSL_PARAM subalg_param[] = { OSSL_PARAM_END, OSSL_PARAM_END };
+    EVP_MAC_CTX *ctx  = NULL;
+    size_t len;
+    unsigned char *res = NULL;
+
+    if (outlen != NULL)
+        *outlen = 0;
+    if (mac == NULL)
+        return NULL;
+    if (subalg != NULL) {
+        const OSSL_PARAM *defined_params = EVP_MAC_settable_ctx_params(mac);
+        const char *param_name = OSSL_MAC_PARAM_DIGEST;
+
+        /*
+         * The underlying algorithm may be a cipher or a digest.
+         * We don't know which it is, but we can ask the MAC what it
+         * should be and bet on that.
+         */
+        if (OSSL_PARAM_locate_const(defined_params, param_name) == NULL) {
+            param_name = OSSL_MAC_PARAM_CIPHER;
+            if (OSSL_PARAM_locate_const(defined_params, param_name) == NULL) {
+                ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_INVALID_ARGUMENT);
+                goto err;
+            }
+        }
+        subalg_param[0] =
+            OSSL_PARAM_construct_utf8_string(param_name, (char *)subalg, 0);
+    }
+    /* Single-shot - on NULL key input, set dummy key value for EVP_MAC_Init. */
+    if (key == NULL && keylen == 0)
+        key = data;
+    if ((ctx = EVP_MAC_CTX_new(mac)) != NULL
+            && EVP_MAC_CTX_set_params(ctx, subalg_param)
+            && EVP_MAC_CTX_set_params(ctx, params)
+            && EVP_MAC_init(ctx, key, keylen, params)
+            && EVP_MAC_update(ctx, data, datalen)
+            && EVP_MAC_final(ctx, out, &len, outsize)) {
+        if (out == NULL) {
+            out = OPENSSL_malloc(len);
+            if (out != NULL && !EVP_MAC_final(ctx, out, NULL, len)) {
+                OPENSSL_free(out);
+                out = NULL;
+            }
+        }
+        res = out;
+        if (res != NULL && outlen != NULL)
+            *outlen = (unsigned int)len;
+    }
+
+ err:
+    EVP_MAC_CTX_free(ctx);
+    EVP_MAC_free(mac);
+    return res;
+}

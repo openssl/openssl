@@ -16,6 +16,7 @@
 
 #include <openssl/rand.h>
 #include <openssl/evp.h>
+#include <openssl/hmac.h>
 
 /* explicit #includes not strictly needed since implied by the above: */
 #include <openssl/asn1t.h>
@@ -120,8 +121,8 @@ OSSL_CRMF_PBMPARAMETER *OSSL_CRMF_pbmp_new(OSSL_LIB_CTX *libctx, size_t slen,
  * |msglen| length of the message
  * |sec| key to use
  * |seclen| length of the key
- * |mac| pointer to the computed mac, will be set on success
- * |maclen| if not NULL, will set variable to the length of the mac on success
+ * |out| pointer to the computed mac, will be set on success
+ * |outlen| if not NULL, will set variable to the length of the mac on success
  * returns 1 on success, 0 on error
  */
 /* TODO try to combine with other MAC calculations in the libray */
@@ -140,10 +141,8 @@ int OSSL_CRMF_pbm_new(OSSL_LIB_CTX *libctx, const char *propq,
     unsigned int bklen = EVP_MAX_MD_SIZE;
     int64_t iterations;
     unsigned char *mac_res = 0;
+    unsigned int maclen;
     int ok = 0;
-    EVP_MAC *mac = NULL;
-    EVP_MAC_CTX *mctx = NULL;
-    OSSL_PARAM macparams[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
 
     if (out == NULL || pbmp == NULL || pbmp->mac == NULL
             || pbmp->mac->algorithm == NULL || msg == NULL || sec == NULL) {
@@ -208,23 +207,16 @@ int OSSL_CRMF_pbm_new(OSSL_LIB_CTX *libctx, const char *propq,
         ERR_raise(ERR_LIB_CRMF, CRMF_R_UNSUPPORTED_ALGORITHM);
         goto err;
     }
-
-    macparams[0] = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
-                                                    (char *)hmac_mdname, 0);
-    if ((mac = EVP_MAC_fetch(libctx, "HMAC", propq)) == NULL
-            || (mctx = EVP_MAC_CTX_new(mac)) == NULL
-            || !EVP_MAC_CTX_set_params(mctx, macparams)
-            || !EVP_MAC_init(mctx, basekey, bklen, macparams)
-            || !EVP_MAC_update(mctx, msg, msglen)
-            || !EVP_MAC_final(mctx, mac_res, outlen, EVP_MAX_MD_SIZE))
+    /* TODO generalize to non-HMAC: */
+    if (EVP_Q_mac(libctx, "HMAC", propq, hmac_mdname, NULL, basekey, bklen,
+                  msg, msglen, mac_res, EVP_MAX_MD_SIZE, &maclen) == NULL)
         goto err;
 
+    *outlen = (size_t)maclen;
     ok = 1;
 
  err:
     OPENSSL_cleanse(basekey, bklen);
-    EVP_MAC_CTX_free(mctx);
-    EVP_MAC_free(mac);
     EVP_MD_free(owf);
     EVP_MD_CTX_free(ctx);
 

@@ -306,22 +306,14 @@ size_t tls13_final_finish_mac(SSL *s, const char *str, size_t slen,
                              unsigned char *out)
 {
     const char *mdname = EVP_MD_name(ssl_handshake_md(s));
-    EVP_MAC *hmac = EVP_MAC_fetch(s->ctx->libctx, "HMAC", s->ctx->propq);
     unsigned char hash[EVP_MAX_MD_SIZE];
     unsigned char finsecret[EVP_MAX_MD_SIZE];
     unsigned char *key = NULL;
+    unsigned int len = 0;
     size_t hashlen, ret = 0;
-    EVP_MAC_CTX *ctx = NULL;
-    OSSL_PARAM params[3], *p = params;
-
-    if (hmac == NULL) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
+    OSSL_PARAM params[2], *p = params;
 
     /* Safe to cast away const here since we're not "getting" any data */
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_ALG_PARAM_DIGEST,
-                                            (char *)mdname, 0);
     if (s->ctx->propq != NULL)
         *p++ = OSSL_PARAM_construct_utf8_string(OSSL_ALG_PARAM_PROPERTIES,
                                                 (char *)s->ctx->propq,
@@ -345,21 +337,17 @@ size_t tls13_final_finish_mac(SSL *s, const char *str, size_t slen,
         key = finsecret;
     }
 
-    ctx = EVP_MAC_CTX_new(hmac);
-    if (ctx == NULL
-            || !EVP_MAC_init(ctx, key, hashlen, params)
-            || !EVP_MAC_update(ctx, hash, hashlen)
-               /* outsize as per sizeof(peer_finish_md) */
-            || !EVP_MAC_final(ctx, out, &hashlen, EVP_MAX_MD_SIZE * 2)) {
+    if (!EVP_Q_mac(s->ctx->libctx, "HMAC", s->ctx->propq, mdname,
+                   params, key, hashlen, hash, hashlen,
+                   /* outsize as per sizeof(peer_finish_md) */
+                   out, EVP_MAX_MD_SIZE * 2, &len)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto err;
     }
 
-    ret = hashlen;
+    ret = len;
  err:
     OPENSSL_cleanse(finsecret, sizeof(finsecret));
-    EVP_MAC_CTX_free(ctx);
-    EVP_MAC_free(hmac);
     return ret;
 }
 
