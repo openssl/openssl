@@ -73,7 +73,8 @@ EVP_PKEY *EVP_PKCS82PKEY_ex(const PKCS8_PRIV_KEY_INFO *p8, OSSL_LIB_CTX *libctx,
     size_t len;
     OSSL_DECODER_CTX *dctx = NULL;
 
-    if ((encoded_len = i2d_PKCS8_PRIV_KEY_INFO(p8, &encoded_data)) <= 0)
+    if ((encoded_len = i2d_PKCS8_PRIV_KEY_INFO(p8, &encoded_data)) <= 0
+            || encoded_data == NULL)
         return NULL;
 
     p8_data = encoded_data;
