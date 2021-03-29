@@ -74,7 +74,7 @@ EVP_PKEY *EVP_PKCS82PKEY_ex(const PKCS8_PRIV_KEY_INFO *p8, OSSL_LIB_CTX *libctx,
     OSSL_DECODER_CTX *dctx = NULL;
 
     if ((encoded_len = i2d_PKCS8_PRIV_KEY_INFO(p8, &encoded_data)) <= 0)
-        goto end;
+        return NULL;
 
     p8_data = encoded_data;
     len = encoded_len;
@@ -85,7 +85,6 @@ EVP_PKEY *EVP_PKCS82PKEY_ex(const PKCS8_PRIV_KEY_INFO *p8, OSSL_LIB_CTX *libctx,
         /* try legacy */
         pkey = evp_pkcs82pkey_legacy(p8, libctx, propq);
 
- end:
     OPENSSL_clear_free(encoded_data, encoded_len);
     OSSL_DECODER_CTX_free(dctx);
     return pkey;
