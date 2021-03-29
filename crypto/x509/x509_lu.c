@@ -516,19 +516,7 @@ static int x509_object_idx_cnt(STACK_OF(X509_OBJECT) *h, X509_LOOKUP_TYPE type,
         return -1;
     }
 
-    idx = sk_X509_OBJECT_find(h, &stmp);
-    if (idx >= 0 && pnmatch) {
-        int tidx;
-        const X509_OBJECT *tobj, *pstmp;
-        *pnmatch = 1;
-        pstmp = &stmp;
-        for (tidx = idx + 1; tidx < sk_X509_OBJECT_num(h); tidx++) {
-            tobj = sk_X509_OBJECT_value(h, tidx);
-            if (x509_object_cmp(&tobj, &pstmp))
-                break;
-            (*pnmatch)++;
-        }
-    }
+    idx = sk_X509_OBJECT_find_all(h, &stmp, pnmatch);
     return idx;
 }
 
@@ -725,7 +713,7 @@ int X509_STORE_CTX_get1_issuer(X509 **issuer, X509_STORE_CTX *ctx, X509 *x)
     const X509_NAME *xn;
     X509_OBJECT *obj = X509_OBJECT_new(), *pobj = NULL;
     X509_STORE *store = ctx->store;
-    int i, ok, idx, ret;
+    int i, ok, idx, ret, nmatch = 0;
 
     if (obj == NULL)
         return -1;
@@ -761,16 +749,14 @@ int X509_STORE_CTX_get1_issuer(X509 **issuer, X509_STORE_CTX *ctx, X509 *x)
     /* Find index of first currently valid cert accepted by 'check_issued' */
     ret = 0;
     X509_STORE_lock(store);
-    idx = X509_OBJECT_idx_by_subject(store->objs, X509_LU_X509, xn);
+    idx = x509_object_idx_cnt(store->objs, X509_LU_X509, xn, &nmatch);
     if (idx != -1) { /* should be true as we've had at least one match */
         /* Look through all matching certs for suitable issuer */
-        for (i = idx; i < sk_X509_OBJECT_num(store->objs); i++) {
+        for (i = idx; i < idx + nmatch; i++) {
             pobj = sk_X509_OBJECT_value(store->objs, i);
             /* See if we've run past the matches */
             if (pobj->type != X509_LU_X509)
                 break;
-            if (X509_NAME_cmp(X509_get_subject_name(pobj->data.x509), xn) != 0)
-                break; /* Not more cert matches xn */
             if (ctx->check_issued(ctx, x, pobj->data.x509)) {
                 ret = 1;
                 /* If times check fine, exit with match, else keep looking. */

@@ -45,6 +45,7 @@ void *OPENSSL_sk_delete(OPENSSL_STACK *st, int loc);
 void *OPENSSL_sk_delete_ptr(OPENSSL_STACK *st, const void *p);
 int OPENSSL_sk_find(OPENSSL_STACK *st, const void *data);
 int OPENSSL_sk_find_ex(OPENSSL_STACK *st, const void *data);
+int OPENSSL_sk_find_all(OPENSSL_STACK *st, const void *data, int *pnum);
 int OPENSSL_sk_push(OPENSSL_STACK *st, const void *data);
 int OPENSSL_sk_unshift(OPENSSL_STACK *st, const void *data);
 void *OPENSSL_sk_shift(OPENSSL_STACK *st);
