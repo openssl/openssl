@@ -80,9 +80,6 @@ int main(int argc, char **argv)
         goto end;
     }
 
-    /* Don't want any retries */
-    SSL_set_mode(ssl, SSL_MODE_AUTO_RETRY);
-
     /* We might want to do other things with ssl here */
 
     BIO_set_conn_hostname(sbio, connect_str);
