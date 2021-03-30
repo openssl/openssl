@@ -303,6 +303,11 @@ However, it is recommended that implementations that do not handle
 property strings return an error on receiving this parameter unless
 its value NULL or the empty string.
 
+=item "save-parameters" (B<OSSL_ENCODER_PARAM_SAVE_PARAMETERS>) <integer>
+
+If set to 0 disables saving of key domain parameters. Default is 1.
+It currently has an effect only on DSA keys.
+
 =back
 
 Parameters currently recognised by the built-in pass phrase callback:
