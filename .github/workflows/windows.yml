@@ -15,4 +15,4 @@ jobs:
       run: |
         mkdir _build
         cd _build
-        perl ..\Configure env.TARGET no-makedepend env.CONFIG_OPTS
+        perl ..\Configure $TARGET no-makedepend $CONFIG_OPTS
