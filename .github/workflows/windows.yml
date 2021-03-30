@@ -11,7 +11,7 @@ jobs:
     - name: configbuildandtest
       env:
         CONFIG_OPTS: no-bulk no-deprecated no-fips no-asm -DOPENSSL_SMALL_FOOTPRINT
-        TARGET: VC-WIN64A-masm
+        TARGET: VC-WIN64A
       run: |
         mkdir _build
         cd _build
