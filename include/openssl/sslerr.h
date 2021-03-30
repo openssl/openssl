@@ -159,6 +159,7 @@
 # define SSL_R_MISSING_ECDSA_SIGNING_CERT                 381
 # define SSL_R_MISSING_FATAL                              256
 # define SSL_R_MISSING_PARAMETERS                         290
+# define SSL_R_MISSING_PSK_KEX_MODES_EXTENSION            310
 # define SSL_R_MISSING_RSA_CERTIFICATE                    168
 # define SSL_R_MISSING_RSA_ENCRYPTING_CERT                169
 # define SSL_R_MISSING_RSA_SIGNING_CERT                   170
