@@ -3153,11 +3153,6 @@ static int build_chain(X509_STORE_CTX *ctx)
                     if ((self_signed = X509_self_signed(issuer, 0)) < 0)
                         goto int_err;
                 } else {
-                    /* This should be the first self-signed trusted cert */
-                    if (!ossl_assert(ctx->num_untrusted == num)) {
-                        X509_free(issuer);
-                        goto int_err;
-                    }
                     /*
                      * We have a self-signed certificate that has the same
                      * subject name (and perhaps keyid and/or serial number) as
