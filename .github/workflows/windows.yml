@@ -1,4 +1,4 @@
-name: Window GitHub CI
+name: Windows GitHub CI
 
 on: [pull_request, push]
 
@@ -6,19 +6,13 @@ jobs:
   minimal:
     runs-on: windows-latest
     steps:
-    - name: checkout
     - uses: actions/checkout@v2
-    - name: build
     - uses: ilammy/msvc-dev-cmd@v1
     - name: configbuildandtest
       run: |
         mkdir _build
         cd _build
         perl ..\Configure env.TARGET no-makedepend env.CONFIG_OPTS
-        perl configdata.pm --dump
-        nmake build_all_generated
-        nmake PERL=no-perl
-        cmd /c nmake test VERBOSE_FAILURE=yes TESTS=-test_fuzz 2>&1
       env:
          CONFIG_OPTS: no-bulk no-deprecated no-fips no-asm -DOPENSSL_SMALL_FOOTPRINT
          TARGET: VC-WIN64A-masm
