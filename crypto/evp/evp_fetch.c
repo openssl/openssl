@@ -371,12 +371,13 @@ void *evp_generic_fetch_by_number(OSSL_LIB_CTX *libctx, int operation_id,
                                    free_method);
 }
 
-void evp_method_store_flush(OSSL_LIB_CTX *libctx)
+int evp_method_store_flush(OSSL_LIB_CTX *libctx)
 {
     OSSL_METHOD_STORE *store = get_evp_method_store(libctx);
 
     if (store != NULL)
-        ossl_method_store_flush_cache(store, 1);
+        return ossl_method_store_flush_cache(store, 1);
+    return 1;
 }
 
 static int evp_set_parsed_default_properties(OSSL_LIB_CTX *libctx,
@@ -390,7 +391,7 @@ static int evp_set_parsed_default_properties(OSSL_LIB_CTX *libctx,
         ossl_property_free(*plp);
         *plp = def_prop;
         if (store != NULL)
-            ossl_method_store_flush_cache(store, 0);
+            return ossl_method_store_flush_cache(store, 0);
         return 1;
     }
     ERR_raise(ERR_LIB_EVP, ERR_R_INTERNAL_ERROR);

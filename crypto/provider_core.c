@@ -941,7 +941,7 @@ int ossl_provider_self_test(const OSSL_PROVIDER *prov)
         return 1;
     ret = prov->self_test(prov->provctx);
     if (ret == 0)
-        evp_method_store_flush(ossl_provider_libctx(prov));
+        (void)evp_method_store_flush(ossl_provider_libctx(prov));
     return ret;
 }
 

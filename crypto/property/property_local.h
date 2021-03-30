@@ -27,9 +27,3 @@ int ossl_property_has_optional(const OSSL_PROPERTY_LIST *query);
 OSSL_PROPERTY_LIST *ossl_prop_defn_get(OSSL_LIB_CTX *ctx, const char *prop);
 int ossl_prop_defn_set(OSSL_LIB_CTX *ctx, const char *prop,
                        OSSL_PROPERTY_LIST *pl);
-
-/* Property cache lock / unlock */
-int ossl_property_write_lock(OSSL_METHOD_STORE *);
-int ossl_property_read_lock(OSSL_METHOD_STORE *);
-int ossl_property_unlock(OSSL_METHOD_STORE *);
-
