@@ -9,10 +9,10 @@ jobs:
     - uses: actions/checkout@v2
     - uses: ilammy/msvc-dev-cmd@v1
     - name: configbuildandtest
+      env:
+        CONFIG_OPTS: no-bulk no-deprecated no-fips no-asm -DOPENSSL_SMALL_FOOTPRINT
+        TARGET: VC-WIN64A-masm
       run: |
         mkdir _build
         cd _build
         perl ..\Configure env.TARGET no-makedepend env.CONFIG_OPTS
-      env:
-         CONFIG_OPTS: no-bulk no-deprecated no-fips no-asm -DOPENSSL_SMALL_FOOTPRINT
-         TARGET: VC-WIN64A-masm
