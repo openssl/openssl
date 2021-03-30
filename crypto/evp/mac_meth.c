@@ -46,9 +46,9 @@ static void *evp_mac_new(void)
     return mac;
 }
 
-static void *evp_mac_from_dispatch(int name_id,
-                                   const OSSL_ALGORITHM *algodef,
-                                   OSSL_PROVIDER *prov)
+static void *evp_mac_from_algorithm(int name_id,
+                                    const OSSL_ALGORITHM *algodef,
+                                    OSSL_PROVIDER *prov)
 {
     const OSSL_DISPATCH *fns = algodef->implementation;
     EVP_MAC *mac = NULL;
@@ -155,7 +155,7 @@ EVP_MAC *EVP_MAC_fetch(OSSL_LIB_CTX *libctx, const char *algorithm,
                        const char *properties)
 {
     return evp_generic_fetch(libctx, OSSL_OP_MAC, algorithm, properties,
-                             evp_mac_from_dispatch, evp_mac_up_ref,
+                             evp_mac_from_algorithm, evp_mac_up_ref,
                              evp_mac_free);
 }
 
@@ -227,5 +227,5 @@ void EVP_MAC_do_all_provided(OSSL_LIB_CTX *libctx,
 {
     evp_generic_do_all(libctx, OSSL_OP_MAC,
                        (void (*)(void *, void *))fn, arg,
-                       evp_mac_from_dispatch, evp_mac_free);
+                       evp_mac_from_algorithm, evp_mac_free);
 }

@@ -162,8 +162,8 @@ static int put_loader_in_store(OSSL_LIB_CTX *libctx, void *store,
                                  up_ref_loader, free_loader);
 }
 
-static void *loader_from_dispatch(int scheme_id, const OSSL_ALGORITHM *algodef,
-                                  OSSL_PROVIDER *prov)
+static void *loader_from_algorithm(int scheme_id, const OSSL_ALGORITHM *algodef,
+                                   OSSL_PROVIDER *prov)
 {
     OSSL_STORE_LOADER *loader = NULL;
     const OSSL_DISPATCH *fns = algodef->implementation;
@@ -227,7 +227,7 @@ static void *loader_from_dispatch(int scheme_id, const OSSL_ALGORITHM *algodef,
 /*
  * The core fetching functionality passes the scheme of the implementation.
  * This function is responsible to getting an identity number for them,
- * then call loader_from_dispatch() with that identity number.
+ * then call loader_from_algorithm() with that identity number.
  */
 static void *construct_loader(const OSSL_ALGORITHM *algodef,
                               OSSL_PROVIDER *prov, void *data)
@@ -246,7 +246,7 @@ static void *construct_loader(const OSSL_ALGORITHM *algodef,
     void *method = NULL;
 
     if (id != 0)
-        method = loader_from_dispatch(id, algodef, prov);
+        method = loader_from_algorithm(id, algodef, prov);
 
     /*
      * Flag to indicate that there was actual construction errors.  This
@@ -436,7 +436,7 @@ static void loader_do_one(OSSL_PROVIDER *provider,
 
     if (id != 0)
         method =
-            loader_from_dispatch(id, algodef, provider);
+            loader_from_algorithm(id, algodef, provider);
 
     if (method != NULL) {
         data->user_fn(method, data->user_arg);

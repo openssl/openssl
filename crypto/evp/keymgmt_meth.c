@@ -32,9 +32,9 @@ static void *keymgmt_new(void)
     return keymgmt;
 }
 
-static void *keymgmt_from_dispatch(int name_id,
-                                   const OSSL_ALGORITHM *algodef,
-                                   OSSL_PROVIDER *prov)
+static void *keymgmt_from_algorithm(int name_id,
+                                    const OSSL_ALGORITHM *algodef,
+                                    OSSL_PROVIDER *prov)
 {
     const OSSL_DISPATCH *fns = algodef->implementation;
     EVP_KEYMGMT *keymgmt = NULL;
@@ -204,7 +204,7 @@ EVP_KEYMGMT *evp_keymgmt_fetch_by_number(OSSL_LIB_CTX *ctx, int name_id,
 {
     return evp_generic_fetch_by_number(ctx,
                                        OSSL_OP_KEYMGMT, name_id, properties,
-                                       keymgmt_from_dispatch,
+                                       keymgmt_from_algorithm,
                                        (int (*)(void *))EVP_KEYMGMT_up_ref,
                                        (void (*)(void *))EVP_KEYMGMT_free);
 }
@@ -213,7 +213,7 @@ EVP_KEYMGMT *EVP_KEYMGMT_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
                                const char *properties)
 {
     return evp_generic_fetch(ctx, OSSL_OP_KEYMGMT, algorithm, properties,
-                             keymgmt_from_dispatch,
+                             keymgmt_from_algorithm,
                              (int (*)(void *))EVP_KEYMGMT_up_ref,
                              (void (*)(void *))EVP_KEYMGMT_free);
 }
@@ -272,7 +272,7 @@ void EVP_KEYMGMT_do_all_provided(OSSL_LIB_CTX *libctx,
 {
     evp_generic_do_all(libctx, OSSL_OP_KEYMGMT,
                        (void (*)(void *, void *))fn, arg,
-                       keymgmt_from_dispatch,
+                       keymgmt_from_algorithm,
                        (void (*)(void *))EVP_KEYMGMT_free);
 }
 

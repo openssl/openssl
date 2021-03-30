@@ -50,8 +50,8 @@ struct evp_method_data_st {
 
     unsigned int flag_construct_error_occurred : 1;
 
-    void *(*method_from_dispatch)(int name_id, const OSSL_ALGORITHM *,
-                                  OSSL_PROVIDER *);
+    void *(*method_from_algorithm)(int name_id, const OSSL_ALGORITHM *,
+                                   OSSL_PROVIDER *);
     int (*refcnt_up_method)(void *method);
     void (*destruct_method)(void *method);
 };
@@ -194,7 +194,7 @@ static void *construct_evp_method(const OSSL_ALGORITHM *algodef,
     if (name_id == 0)
         return NULL;
 
-    method = methdata->method_from_dispatch(name_id, algodef, prov);
+    method = methdata->method_from_algorithm(name_id, algodef, prov);
 
     /*
      * Flag to indicate that there was actual construction errors.  This
@@ -295,7 +295,7 @@ inner_evp_generic_fetch(OSSL_LIB_CTX *libctx, int operation_id,
         mcmdata.name_id = name_id;
         mcmdata.names = name;
         mcmdata.propquery = properties;
-        mcmdata.method_from_dispatch = new_method;
+        mcmdata.method_from_algorithm = new_method;
         mcmdata.refcnt_up_method = up_ref_method;
         mcmdata.destruct_method = free_method;
         mcmdata.flag_construct_error_occurred = 0;

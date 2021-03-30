@@ -159,8 +159,8 @@ static int put_encoder_in_store(OSSL_LIB_CTX *libctx, void *store,
 }
 
 /* Create and populate a encoder method */
-static void *encoder_from_dispatch(int id, const OSSL_ALGORITHM *algodef,
-                                   OSSL_PROVIDER *prov)
+static void *encoder_from_algorithm(int id, const OSSL_ALGORITHM *algodef,
+                                    OSSL_PROVIDER *prov)
 {
     OSSL_ENCODER *encoder = NULL;
     const OSSL_DISPATCH *fns = algodef->implementation;
@@ -254,7 +254,7 @@ static void *encoder_from_dispatch(int id, const OSSL_ALGORITHM *algodef,
 /*
  * The core fetching functionality passes the names of the implementation.
  * This function is responsible to getting an identity number for them,
- * then call encoder_from_dispatch() with that identity number.
+ * then call encoder_from_algorithm() with that identity number.
  */
 static void *construct_encoder(const OSSL_ALGORITHM *algodef,
                                OSSL_PROVIDER *prov, void *data)
@@ -273,7 +273,7 @@ static void *construct_encoder(const OSSL_ALGORITHM *algodef,
     void *method = NULL;
 
     if (id != 0)
-        method = encoder_from_dispatch(id, algodef, prov);
+        method = encoder_from_algorithm(id, algodef, prov);
 
     /*
      * Flag to indicate that there was actual construction errors.  This
@@ -471,7 +471,7 @@ static void encoder_do_one(OSSL_PROVIDER *provider,
 
     if (id != 0)
         method =
-            encoder_from_dispatch(id, algodef, provider);
+            encoder_from_algorithm(id, algodef, provider);
 
     if (method != NULL) {
         data->user_fn(method, data->user_arg);

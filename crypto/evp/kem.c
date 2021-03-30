@@ -183,8 +183,8 @@ static EVP_KEM *evp_kem_new(OSSL_PROVIDER *prov)
     return kem;
 }
 
-static void *evp_kem_from_dispatch(int name_id, const OSSL_ALGORITHM *algodef,
-                                   OSSL_PROVIDER *prov)
+static void *evp_kem_from_algorithm(int name_id, const OSSL_ALGORITHM *algodef,
+                                    OSSL_PROVIDER *prov)
 {
     const OSSL_DISPATCH *fns = algodef->implementation;
     EVP_KEM *kem = NULL;
@@ -328,7 +328,7 @@ EVP_KEM *EVP_KEM_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
                        const char *properties)
 {
     return evp_generic_fetch(ctx, OSSL_OP_KEM, algorithm, properties,
-                             evp_kem_from_dispatch,
+                             evp_kem_from_algorithm,
                              (int (*)(void *))EVP_KEM_up_ref,
                              (void (*)(void *))EVP_KEM_free);
 }
@@ -353,7 +353,7 @@ void EVP_KEM_do_all_provided(OSSL_LIB_CTX *libctx,
                              void *arg)
 {
     evp_generic_do_all(libctx, OSSL_OP_KEM, (void (*)(void *, void *))fn, arg,
-                       evp_kem_from_dispatch,
+                       evp_kem_from_algorithm,
                        (void (*)(void *))EVP_KEM_free);
 }
 

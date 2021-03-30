@@ -274,9 +274,9 @@ static EVP_ASYM_CIPHER *evp_asym_cipher_new(OSSL_PROVIDER *prov)
     return cipher;
 }
 
-static void *evp_asym_cipher_from_dispatch(int name_id,
-                                           const OSSL_ALGORITHM *algodef,
-                                           OSSL_PROVIDER *prov)
+static void *evp_asym_cipher_from_algorithm(int name_id,
+                                            const OSSL_ALGORITHM *algodef,
+                                            OSSL_PROVIDER *prov)
 {
     const OSSL_DISPATCH *fns = algodef->implementation;
     EVP_ASYM_CIPHER *cipher = NULL;
@@ -420,7 +420,7 @@ EVP_ASYM_CIPHER *EVP_ASYM_CIPHER_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
                                        const char *properties)
 {
     return evp_generic_fetch(ctx, OSSL_OP_ASYM_CIPHER, algorithm, properties,
-                             evp_asym_cipher_from_dispatch,
+                             evp_asym_cipher_from_algorithm,
                              (int (*)(void *))EVP_ASYM_CIPHER_up_ref,
                              (void (*)(void *))EVP_ASYM_CIPHER_free);
 }
@@ -447,7 +447,7 @@ void EVP_ASYM_CIPHER_do_all_provided(OSSL_LIB_CTX *libctx,
 {
     evp_generic_do_all(libctx, OSSL_OP_ASYM_CIPHER,
                        (void (*)(void *, void *))fn, arg,
-                       evp_asym_cipher_from_dispatch,
+                       evp_asym_cipher_from_algorithm,
                        (void (*)(void *))EVP_ASYM_CIPHER_free);
 }
 

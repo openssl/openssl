@@ -159,8 +159,8 @@ static int put_decoder_in_store(OSSL_LIB_CTX *libctx, void *store,
 }
 
 /* Create and populate a decoder method */
-void *ossl_decoder_from_dispatch(int id, const OSSL_ALGORITHM *algodef,
-                                 OSSL_PROVIDER *prov)
+void *ossl_decoder_from_algorithm(int id, const OSSL_ALGORITHM *algodef,
+                                  OSSL_PROVIDER *prov)
 {
     OSSL_DECODER *decoder = NULL;
     const OSSL_DISPATCH *fns = algodef->implementation;
@@ -242,7 +242,7 @@ void *ossl_decoder_from_dispatch(int id, const OSSL_ALGORITHM *algodef,
 /*
  * The core fetching functionality passes the names of the implementation.
  * This function is responsible to getting an identity number for them,
- * then call ossl_decoder_from_dispatch() with that identity number.
+ * then call ossl_decoder_from_algorithm() with that identity number.
  */
 static void *construct_decoder(const OSSL_ALGORITHM *algodef,
                                OSSL_PROVIDER *prov, void *data)
@@ -261,7 +261,7 @@ static void *construct_decoder(const OSSL_ALGORITHM *algodef,
     void *method = NULL;
 
     if (id != 0)
-        method = ossl_decoder_from_dispatch(id, algodef, prov);
+        method = ossl_decoder_from_algorithm(id, algodef, prov);
 
     /*
      * Flag to indicate that there was actual construction errors.  This
@@ -458,7 +458,7 @@ static void decoder_do_one(OSSL_PROVIDER *provider,
     void *method = NULL;
 
     if (id != 0)
-        method = ossl_decoder_from_dispatch(id, algodef, provider);
+        method = ossl_decoder_from_algorithm(id, algodef, provider);
 
     if (method != NULL) {
         data->user_fn(method, data->user_arg);
