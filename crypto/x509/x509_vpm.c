@@ -199,7 +199,8 @@ int X509_VERIFY_PARAM_inherit(X509_VERIFY_PARAM *dest,
             return 0;
     }
 
-    /* Copy the host flags if and only if we're copying the host list */
+    x509_verify_param_copy(hostflags, 0);
+
     if (test_x509_verify_param_copy(hosts, NULL)) {
         sk_OPENSSL_STRING_pop_free(dest->hosts, str_free);
         dest->hosts = NULL;
@@ -208,7 +209,6 @@ int X509_VERIFY_PARAM_inherit(X509_VERIFY_PARAM *dest,
                 sk_OPENSSL_STRING_deep_copy(src->hosts, str_copy, str_free);
             if (dest->hosts == NULL)
                 return 0;
-            dest->hostflags = src->hostflags;
         }
     }
 
