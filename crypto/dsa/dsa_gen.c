@@ -58,7 +58,7 @@ int DSA_generate_parameters_ex(DSA *dsa, int bits,
         return 0;
 
     /* The old code used FIPS 186-2 DSA Parameter generation */
-    if (bits <= 1024 && seed_len == 20) {
+    if (bits < 2048 && seed_len <= 20) {
         if (!ossl_dsa_generate_ffc_parameters(dsa, DSA_PARAMGEN_TYPE_FIPS_186_2,
                                               bits, 160, cb))
             return 0;
