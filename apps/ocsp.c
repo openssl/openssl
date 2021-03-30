@@ -1202,7 +1202,6 @@ OCSP_RESPONSE *process_responder(OCSP_REQUEST *req,
             BIO_printf(bio_err, "Error creating SSL context.\n");
             goto end;
         }
-        SSL_CTX_set_mode(ctx, SSL_MODE_AUTO_RETRY);
     }
 
     resp = (OCSP_RESPONSE *)

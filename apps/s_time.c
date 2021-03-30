@@ -246,7 +246,6 @@ int s_time_main(int argc, char **argv)
     if ((ctx = SSL_CTX_new(meth)) == NULL)
         goto end;
 
-    SSL_CTX_set_mode(ctx, SSL_MODE_AUTO_RETRY);
     SSL_CTX_set_quiet_shutdown(ctx, 1);
     if (SSL_CTX_set_min_proto_version(ctx, min_version) == 0)
         goto end;
