@@ -821,7 +821,7 @@ end_of_options:
         }
         if (verbose)
             BIO_printf(bio_err, "message digest is %s\n",
-                       OBJ_nid2ln(EVP_MD_type(dgst)));
+                       EVP_MD_name(dgst));
         if (policy == NULL
             && (policy = lookup_conf(conf, section, ENV_POLICY)) == NULL)
             goto end;
