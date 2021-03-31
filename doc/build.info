@@ -4272,6 +4272,10 @@ DEPEND[html/man7/provider-cipher.html]=man7/provider-cipher.pod
 GENERATE[html/man7/provider-cipher.html]=man7/provider-cipher.pod
 DEPEND[man/man7/provider-cipher.7]=man7/provider-cipher.pod
 GENERATE[man/man7/provider-cipher.7]=man7/provider-cipher.pod
+DEPEND[html/man7/provider-decoder.html]=man7/provider-decoder.pod
+GENERATE[html/man7/provider-decoder.html]=man7/provider-decoder.pod
+DEPEND[man/man7/provider-decoder.7]=man7/provider-decoder.pod
+GENERATE[man/man7/provider-decoder.7]=man7/provider-decoder.pod
 DEPEND[html/man7/provider-digest.html]=man7/provider-digest.pod
 GENERATE[html/man7/provider-digest.html]=man7/provider-digest.pod
 DEPEND[man/man7/provider-digest.7]=man7/provider-digest.pod
@@ -4419,6 +4423,7 @@ html/man7/property.html \
 html/man7/provider-asym_cipher.html \
 html/man7/provider-base.html \
 html/man7/provider-cipher.html \
+html/man7/provider-decoder.html \
 html/man7/provider-digest.html \
 html/man7/provider-encoder.html \
 html/man7/provider-kdf.html \
@@ -4521,6 +4526,7 @@ man/man7/property.7 \
 man/man7/provider-asym_cipher.7 \
 man/man7/provider-base.7 \
 man/man7/provider-cipher.7 \
+man/man7/provider-decoder.7 \
 man/man7/provider-digest.7 \
 man/man7/provider-encoder.7 \
 man/man7/provider-kdf.7 \
