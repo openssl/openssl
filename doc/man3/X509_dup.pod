@@ -351,7 +351,7 @@ The object returned must be released by calling B<I<TYPE>_free>().
 B<I<TYPE>_new_ex>() is similiar to B<I<TYPE>_new>() but also passes the
 library context I<libctx> and the property query I<propq> to use when retrieving
 algorithms from providers. This created object can then be used when loading
-binary datat using B<d2i_I<TYPE>>().
+binary data using B<d2i_I<TYPE>>().
 
 B<I<TYPE>_dup>() copies an existing object, leaving it untouched.
 
