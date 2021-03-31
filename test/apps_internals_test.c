@@ -94,7 +94,7 @@ static int test_app_fdopen(void)
         TEST_error("Error opening file '%s': %s\n", test_get_argument(1), strerror(errno));
         return 0;
     }
-    file = fdopen(fd, "r");
+    file = app_fdopen(fd, "r");
     if (file == NULL) {
         TEST_error("Error opening file '%s': %s\n", test_get_argument(1), strerror(errno));
         return 0;
