@@ -4306,7 +4306,7 @@ int SSL_CTX_set_default_verify_file(SSL_CTX *ctx)
     if (lookup == NULL)
         return 0;
 
-    /* We ignore errors, in case the directory doesn't exist */
+    /* We ignore errors, in case the file doesn't exist */
     ERR_set_mark();
 
     X509_LOOKUP_load_file_ex(lookup, NULL, X509_FILETYPE_DEFAULT, ctx->libctx,
