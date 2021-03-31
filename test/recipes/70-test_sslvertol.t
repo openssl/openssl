@@ -11,7 +11,7 @@ use OpenSSL::Test qw/:DEFAULT cmdstr srctop_file bldtop_dir/;
 use OpenSSL::Test::Utils;
 use TLSProxy::Proxy;
 
-my $test_name = "test_sslextension";
+my $test_name = "test_sslvertol";
 setup($test_name);
 
 plan skip_all => "TLSProxy isn't usable on $^O"

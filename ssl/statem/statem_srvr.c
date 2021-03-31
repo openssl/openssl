@@ -2116,6 +2116,7 @@ int tls_handle_alpn(SSL *s)
             OPENSSL_free(s->s3.alpn_selected);
             s->s3.alpn_selected = OPENSSL_memdup(selected, selected_len);
             if (s->s3.alpn_selected == NULL) {
+                s->s3.alpn_selected_len = 0;
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 return 0;
             }
@@ -2725,10 +2726,15 @@ int tls_construct_certificate_request(SSL *s, WPACKET *pkt)
         if (s->post_handshake_auth == SSL_PHA_REQUEST_PENDING) {
             OPENSSL_free(s->pha_context);
             s->pha_context_len = 32;
-            if ((s->pha_context = OPENSSL_malloc(s->pha_context_len)) == NULL
-                    || RAND_bytes_ex(s->ctx->libctx, s->pha_context,
+            if ((s->pha_context = OPENSSL_malloc(s->pha_context_len)) == NULL) {
+                s->pha_context_len = 0;
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                return 0;
+            }
+            if (RAND_bytes_ex(s->ctx->libctx, s->pha_context,
                                      s->pha_context_len) <= 0
-                    || !WPACKET_sub_memcpy_u8(pkt, s->pha_context, s->pha_context_len)) {
+                    || !WPACKET_sub_memcpy_u8(pkt, s->pha_context,
+                                              s->pha_context_len)) {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 return 0;
             }
@@ -2828,6 +2834,7 @@ static int tls_process_cke_psk_preamble(SSL *s, PACKET *pkt)
     OPENSSL_cleanse(psk, psklen);
 
     if (s->s3.tmp.psk == NULL) {
+        s->s3.tmp.psklen = 0;
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
         return 0;
     }
@@ -3329,6 +3336,7 @@ MSG_PROCESS_RETURN tls_process_client_key_exchange(SSL *s, PACKET *pkt)
 #ifndef OPENSSL_NO_PSK
     OPENSSL_clear_free(s->s3.tmp.psk, s->s3.tmp.psklen);
     s->s3.tmp.psk = NULL;
+    s->s3.tmp.psklen = 0;
 #endif
     return MSG_PROCESS_ERROR;
 }
@@ -3921,6 +3929,7 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
             s->session->ext.alpn_selected =
                 OPENSSL_memdup(s->s3.alpn_selected, s->s3.alpn_selected_len);
             if (s->session->ext.alpn_selected == NULL) {
+                s->session->ext.alpn_selected_len = 0;
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
                 goto err;
             }

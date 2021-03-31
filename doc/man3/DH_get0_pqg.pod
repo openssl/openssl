@@ -12,6 +12,10 @@ DH_get_length, DH_set_length - Routines for getting and setting data in a DH obj
 
  #include <openssl/dh.h>
 
+Deprecated since OpenSSL 3.0, can be hidden entirely by defining
+B<OPENSSL_API_COMPAT> with a suitable version value, see
+L<openssl_user_macros(7)>:
+
  void DH_get0_pqg(const DH *dh,
                   const BIGNUM **p, const BIGNUM **q, const BIGNUM **g);
  int DH_set0_pqg(DH *dh, BIGNUM *p, BIGNUM *q, BIGNUM *g);
@@ -30,13 +34,13 @@ DH_get_length, DH_set_length - Routines for getting and setting data in a DH obj
  long DH_get_length(const DH *dh);
  int DH_set_length(DH *dh, long length);
 
-Deprecated since OpenSSL 3.0, can be hidden entirely by defining
-B<OPENSSL_API_COMPAT> with a suitable version value, see
-L<openssl_user_macros(7)>:
-
  ENGINE *DH_get0_engine(DH *d);
 
 =head1 DESCRIPTION
+
+All of the functions described on this page are deprecated.
+Applications should instead use L<EVP_PKEY_get_bn_param(3)> for any methods that
+return a B<BIGNUM>. Refer to L<EVP_PKEY-DH(7)> for more infomation.
 
 A DH object contains the parameters I<p>, I<q> and I<g>. Note that the I<q>
 parameter is optional. It also contains a public key (I<pub_key>) and
@@ -89,15 +93,18 @@ zero if none of the flags are set. DH_clear_flags() clears the specified flags
 within the DH object.
 
 DH_get0_engine() returns a handle to the ENGINE that has been set for this DH
-object, or NULL if no such ENGINE has been set. This function is deprecated.
+object, or NULL if no such ENGINE has been set. This function is deprecated. All
+engines should be replaced by providers.
 
 The DH_get_length() and DH_set_length() functions get and set the optional
 length parameter associated with this DH object. If the length is nonzero then
 it is used, otherwise it is ignored. The I<length> parameter indicates the
-length of the secret exponent (private key) in bits. These functions are
-deprecated. For safe prime groups the optional length parameter I<length> can be
+length of the secret exponent (private key) in bits. For safe prime groups the optional length parameter I<length> can be
 set to a value greater or equal to 2 * maximum_target_security_strength(BN_num_bits(I<p>))
 as listed in SP800-56Ar3 Table(s) 25 & 26.
+These functions are deprecated and should be replaced with
+EVP_PKEY_CTX_set_params() and EVP_PKEY_get_int_param() using the parameter key
+B<OSSL_PKEY_PARAM_DH_PRIV_LEN> as described in L<EVP_PKEY-DH(7)>.
 
 =head1 NOTES
 
@@ -128,13 +135,13 @@ L<DH_set_method(3)>, L<DH_size(3)>, L<DH_meth_new(3)>
 
 =head1 HISTORY
 
-The DH_get0_engine() function was deprecated in OpenSSL 3.0.
-
 The functions described here were added in OpenSSL 1.1.0.
+
+All of these functions were deprecated in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2016-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

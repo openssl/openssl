@@ -247,8 +247,8 @@ BIO *ossl_http_asn1_item2bio(const ASN1_ITEM *it, const ASN1_VALUE *val)
     return res;
 }
 
-int OSSL_HTTP_REQ_CTX_i2d(OSSL_HTTP_REQ_CTX *rctx, const char *content_type,
-                          const ASN1_ITEM *it, ASN1_VALUE *req)
+int OSSL_HTTP_REQ_CTX_set1_req(OSSL_HTTP_REQ_CTX *rctx, const char *content_type,
+                               const ASN1_ITEM *it, ASN1_VALUE *req)
 {
     BIO *mem;
     int res;
@@ -747,7 +747,7 @@ static ASN1_VALUE *BIO_mem_d2i(BIO *mem, const ASN1_ITEM *it)
     return resp;
 }
 
-static BIO *OSSL_HTTP_REQ_CTX_transfer(OSSL_HTTP_REQ_CTX *rctx)
+static BIO *ossl_http_req_ctx_transfer(OSSL_HTTP_REQ_CTX *rctx)
 {
     int sending = 1;
     int rv;
@@ -777,8 +777,6 @@ static BIO *OSSL_HTTP_REQ_CTX_transfer(OSSL_HTTP_REQ_CTX *rctx)
         }
         return NULL;
     }
-    if (!BIO_up_ref(rctx->mem))
-        return NULL;
     return rctx->mem;
 }
 
@@ -790,7 +788,7 @@ ASN1_VALUE *OSSL_HTTP_REQ_CTX_sendreq_d2i(OSSL_HTTP_REQ_CTX *rctx,
         ERR_raise(ERR_LIB_HTTP, ERR_R_PASSED_NULL_PARAMETER);
         return NULL;
     }
-    return BIO_mem_d2i(OSSL_HTTP_REQ_CTX_transfer(rctx), it);
+    return BIO_mem_d2i(ossl_http_req_ctx_transfer(rctx), it);
 }
 
 static int update_timeout(int timeout, time_t start_time)
@@ -902,7 +900,7 @@ BIO *OSSL_HTTP_transfer(const char *server, const char *port, const char *path,
     if (rctx == NULL)
         goto end;
 
-    resp = OSSL_HTTP_REQ_CTX_transfer(rctx);
+    resp = ossl_http_req_ctx_transfer(rctx);
     if (resp == NULL) {
         if (rctx->redirection_url != NULL) {
             if (redirection_url == NULL)
@@ -937,14 +935,14 @@ BIO *OSSL_HTTP_transfer(const char *server, const char *port, const char *path,
             }
         }
     }
-    OSSL_HTTP_REQ_CTX_free(rctx);
-
     /* callback can be used to clean up TLS session */
     if (bio_update_fn != NULL
-            && (*bio_update_fn)(cbio, arg, 0, resp != NULL) == NULL) {
-        BIO_free(resp);
+            && (*bio_update_fn)(cbio, arg, 0, resp != NULL) == NULL)
         resp = NULL;
-    }
+
+    if (resp != NULL && !BIO_up_ref(resp))
+        resp = NULL;
+    OSSL_HTTP_REQ_CTX_free(rctx);
 
  end:
     /*

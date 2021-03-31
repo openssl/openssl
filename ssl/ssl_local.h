@@ -1178,6 +1178,7 @@ struct ssl_ctx_st {
 
     char *propq;
 
+    int ssl_mac_pkey_id[SSL_MD_NUM_IDX];
     const EVP_CIPHER *ssl_cipher_methods[SSL_ENC_NUM_IDX];
     const EVP_MD *ssl_digest_methods[SSL_MD_NUM_IDX];
     size_t ssl_mac_secret_size[SSL_MD_NUM_IDX];

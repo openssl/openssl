@@ -61,8 +61,8 @@ the new chain is B<md1-md2-b64-f>. Data written to B<md1> will be digested
 by B<md1> and B<md2>, B<base64> encoded and written to B<f>.
 
 It should be noted that reading causes data to pass in the reverse
-direction, that is data is read from B<f>, base64 B<decoded> and digested
-by B<md1> and B<md2>. If the call:
+direction, that is data is read from B<f>, B<base64> decoded and digested
+by B<md2> and B<md1>. If the call:
 
  BIO_pop(md2);
 

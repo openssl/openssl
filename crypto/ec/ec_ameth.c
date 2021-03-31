@@ -640,6 +640,27 @@ static int ec_pkey_import_from(const OSSL_PARAM params[], void *vpctx)
     return 1;
 }
 
+static int ec_pkey_copy(EVP_PKEY *to, EVP_PKEY *from)
+{
+    EC_KEY *eckey = from->pkey.ec;
+    EC_KEY *dupkey = NULL;
+    int ret;
+
+    if (eckey != NULL) {
+        dupkey = EC_KEY_dup(eckey);
+        if (dupkey == NULL)
+            return 0;
+    } else {
+        /* necessary to properly copy empty SM2 keys */
+        return EVP_PKEY_set_type(to, from->type);
+    }
+
+    ret = EVP_PKEY_assign_EC_KEY(to, dupkey);
+    if (!ret)
+        EC_KEY_free(dupkey);
+    return ret;
+}
+
 const EVP_PKEY_ASN1_METHOD ossl_eckey_asn1_meth = {
     EVP_PKEY_EC,
     EVP_PKEY_EC,
@@ -687,6 +708,7 @@ const EVP_PKEY_ASN1_METHOD ossl_eckey_asn1_meth = {
     ec_pkey_dirty_cnt,
     ec_pkey_export_to,
     ec_pkey_import_from,
+    ec_pkey_copy,
     eckey_priv_decode_ex
 };
 

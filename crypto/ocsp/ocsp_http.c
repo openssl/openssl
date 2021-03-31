@@ -27,9 +27,10 @@ OSSL_HTTP_REQ_CTX *OCSP_sendreq_new(BIO *io, const char *path,
     if (!OSSL_HTTP_REQ_CTX_set_request_line(rctx, NULL, NULL, path))
         goto err;
 
-    if (req != NULL && !OSSL_HTTP_REQ_CTX_i2d(rctx, "application/ocsp-request",
-                                              ASN1_ITEM_rptr(OCSP_REQUEST),
-                                              (ASN1_VALUE *)req))
+    if (req != NULL
+        && !OSSL_HTTP_REQ_CTX_set1_req(rctx, "application/ocsp-request",
+                                       ASN1_ITEM_rptr(OCSP_REQUEST),
+                                       (ASN1_VALUE *)req))
         goto err;
 
     return rctx;

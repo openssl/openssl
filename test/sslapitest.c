@@ -5960,7 +5960,8 @@ static int get_MFL_from_client_hello(BIO *bio, int *mfl_codemfl_code)
     memset(&pkt2, 0, sizeof(pkt2));
     memset(&pkt3, 0, sizeof(pkt3));
 
-    if (!TEST_true( PACKET_buf_init( &pkt, data, len ) )
+    if (!TEST_long_gt(len, 0)
+            || !TEST_true( PACKET_buf_init( &pkt, data, len ) )
                /* Skip the record header */
             || !PACKET_forward(&pkt, SSL3_RT_HEADER_LENGTH)
                /* Skip the handshake message header */

@@ -29,6 +29,11 @@ void CRYPTO_ofb128_encrypt(const unsigned char *in, unsigned char *out,
     unsigned int n;
     size_t l = 0;
 
+    if (*num < 0) {
+        /* There is no good way to signal an error return from here */
+        *num = -1;
+        return;
+    }
     n = *num;
 
 #if !defined(OPENSSL_SMALL_FOOTPRINT)

@@ -41,6 +41,7 @@ Table of Contents
    - [Notes on multi-threading](#notes-on-multi-threading)
    - [Notes on shared libraries](#notes-on-shared-libraries)
    - [Notes on random number generation](#notes-on-random-number-generation)
+   - [Notes on assembler modules compilation](#notes-on-assembler-modules-compilation)
 
 Prerequisites
 =============
@@ -692,7 +693,7 @@ Enable building of integration with external test suites.
 This is a developer option and may not work on all platforms.  The following
 external test suites are currently supported:
 
- - BoringSSL test suite
+ - GOST engine test suite
  - Python PYCA/Cryptography test suite
  - krb5 test suite
 
@@ -1610,8 +1611,8 @@ build.  Use this command:
     $ mms clean                                      ! (or mmk) OpenVMS
     $ nmake clean                                    # Windows
 
-Assembler error messages can sometimes be sidestepped by using the
-`no-asm` configuration option.
+Assembler error messages can sometimes be sidestepped by using the `no-asm`
+configuration option. See also [notes](#notes-on-assembler-modules-compilation).
 
 Compiling parts of OpenSSL with gcc and others with the system compiler will
 result in unresolved symbols on some systems.
@@ -1733,6 +1734,41 @@ and reseeding is disabled (`--with-rand-seed=none`) and it may be necessary
 to install additional support software to obtain a random seed and reseed
 the CSPRNG manually.  Please check out the manual pages for `RAND_add()`,
 `RAND_bytes()`, `RAND_egd()`, and the FAQ for more information.
+
+Notes on assembler modules compilation
+--------------------------------------
+
+Compilation of some code paths in assembler modules might depend on whether the
+current assembler version supports certain ISA extensions or not. Code paths
+that use the AES-NI, PCLMULQDQ, SSSE3, and SHA extensions are always assembled.
+Apart from that, the minimum requirements for the assembler versions are shown
+in the table below:
+
+| ISA extension | GNU as | nasm   | llvm    |
+|---------------|--------|--------|---------|
+| AVX           | 2.19   | 2.09   | 3.0     |
+| AVX2          | 2.22   | 2.10   | 3.1     |
+| ADCX/ADOX     | 2.23   | 2.10   | 3.3     |
+| AVX512        | 2.25   | 2.11.8 | 3.6 (*) |
+| AVX512IFMA    | 2.26   | 2.11.8 | 6.0 (*) |
+| VAES          | 2.30   | 2.13.3 | 6.0 (*) |
+
+---
+
+(*) Even though AVX512 support was implemented in llvm 3.6, prior to version 7.0
+an explicit -march flag was apparently required to compile assembly modules. But
+then the compiler generates processor-specific code, which in turn contradicts
+the idea of performing dispatch at run-time, which is facilitated by the special
+variable `OPENSSL_ia32cap`. For versions older than 7.0, it is possible to work
+around the problem by forcing the build procedure to use the following script:
+
+    #!/bin/sh
+    exec clang -no-integrated-as "$@"
+
+instead of the real clang. In which case it doesn't matter what clang version
+is used, as it is the version of the GNU assembler that will be checked.
+
+---
 
 <!-- Links  -->
 

@@ -207,21 +207,20 @@ IMPLEMENT_ASN1_FUNCTIONS(X509_PUBKEY)
  */
 X509_PUBKEY *X509_PUBKEY_dup(const X509_PUBKEY *a)
 {
-    X509_PUBKEY *pubkey = NULL;
+    X509_PUBKEY *pubkey = OPENSSL_zalloc(sizeof(*pubkey));
 
-    if (!x509_pubkey_ex_new(NULL, ASN1_ITEM_rptr(X509_PUBKEY_INTERNAL))
-        || !x509_pubkey_set0_libctx(pubkey, a->libctx, a->propq)
-        || (pubkey->algor = X509_ALGOR_dup(a->algor)) == NULL
-        || (pubkey->public_key = ASN1_BIT_STRING_new()) == NULL
-        || !ASN1_BIT_STRING_set(pubkey->public_key,
-                                a->public_key->data, a->public_key->length)
-        || (a->pkey != NULL && !EVP_PKEY_up_ref(a->pkey))) {
+    if (pubkey == NULL
+            || !x509_pubkey_set0_libctx(pubkey, a->libctx, a->propq)
+            || (pubkey->algor = X509_ALGOR_dup(a->algor)) == NULL
+            || (pubkey->public_key = ASN1_BIT_STRING_new()) == NULL
+            || !ASN1_BIT_STRING_set(pubkey->public_key,
+                                    a->public_key->data, a->public_key->length)
+            || (a->pkey != NULL && !EVP_PKEY_up_ref(a->pkey))) {
         x509_pubkey_ex_free((ASN1_VALUE **)&pubkey,
                             ASN1_ITEM_rptr(X509_PUBKEY_INTERNAL));
         ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
-
     pubkey->pkey = a->pkey;
     return pubkey;
 }

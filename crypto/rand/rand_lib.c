@@ -158,7 +158,8 @@ int RAND_poll(void)
 }
 
 # ifndef OPENSSL_NO_DEPRECATED_3_0
-int RAND_set_rand_method(const RAND_METHOD *meth)
+static int rand_set_rand_method_internal(const RAND_METHOD *meth,
+                                         ossl_unused ENGINE *e)
 {
     if (!RUN_ONCE(&rand_init, do_rand_init))
         return 0;
@@ -167,11 +168,16 @@ int RAND_set_rand_method(const RAND_METHOD *meth)
         return 0;
 #  ifndef OPENSSL_NO_ENGINE
     ENGINE_finish(funct_ref);
-    funct_ref = NULL;
+    funct_ref = e;
 #  endif
     default_RAND_meth = meth;
     CRYPTO_THREAD_unlock(rand_meth_lock);
     return 1;
+}
+
+int RAND_set_rand_method(const RAND_METHOD *meth)
+{
+    return rand_set_rand_method_internal(meth, NULL);
 }
 
 const RAND_METHOD *RAND_get_rand_method(void)
@@ -228,8 +234,7 @@ int RAND_set_rand_engine(ENGINE *engine)
     }
 
     /* This function releases any prior ENGINE so call it first */
-    RAND_set_rand_method(tmp_meth);
-    funct_ref = engine;
+    rand_set_rand_method_internal(tmp_meth, engine);
     CRYPTO_THREAD_unlock(rand_engine_lock);
     return 1;
 }

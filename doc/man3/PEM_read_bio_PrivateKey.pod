@@ -98,6 +98,46 @@ PEM_write_bio_PKCS7, PEM_write_PKCS7 - PEM routines
                          OSSL_LIB_CTX *libctx, const char *propq);
  int PEM_write_PUBKEY(FILE *fp, EVP_PKEY *x);
 
+ EVP_PKEY *PEM_read_bio_Parameters_ex(BIO *bp, EVP_PKEY **x,
+                                      OSSL_LIB_CTX *libctx, const char *propq);
+ EVP_PKEY *PEM_read_bio_Parameters(BIO *bp, EVP_PKEY **x);
+ int PEM_write_bio_Parameters(BIO *bp, const EVP_PKEY *x);
+
+ X509 *PEM_read_bio_X509(BIO *bp, X509 **x, pem_password_cb *cb, void *u);
+ X509 *PEM_read_X509(FILE *fp, X509 **x, pem_password_cb *cb, void *u);
+ int PEM_write_bio_X509(BIO *bp, X509 *x);
+ int PEM_write_X509(FILE *fp, X509 *x);
+
+ X509 *PEM_read_bio_X509_AUX(BIO *bp, X509 **x, pem_password_cb *cb, void *u);
+ X509 *PEM_read_X509_AUX(FILE *fp, X509 **x, pem_password_cb *cb, void *u);
+ int PEM_write_bio_X509_AUX(BIO *bp, X509 *x);
+ int PEM_write_X509_AUX(FILE *fp, X509 *x);
+
+ X509_REQ *PEM_read_bio_X509_REQ(BIO *bp, X509_REQ **x,
+                                 pem_password_cb *cb, void *u);
+ X509_REQ *PEM_read_X509_REQ(FILE *fp, X509_REQ **x,
+                             pem_password_cb *cb, void *u);
+ int PEM_write_bio_X509_REQ(BIO *bp, X509_REQ *x);
+ int PEM_write_X509_REQ(FILE *fp, X509_REQ *x);
+ int PEM_write_bio_X509_REQ_NEW(BIO *bp, X509_REQ *x);
+ int PEM_write_X509_REQ_NEW(FILE *fp, X509_REQ *x);
+
+ X509_CRL *PEM_read_bio_X509_CRL(BIO *bp, X509_CRL **x,
+                                 pem_password_cb *cb, void *u);
+ X509_CRL *PEM_read_X509_CRL(FILE *fp, X509_CRL **x,
+                             pem_password_cb *cb, void *u);
+ int PEM_write_bio_X509_CRL(BIO *bp, X509_CRL *x);
+ int PEM_write_X509_CRL(FILE *fp, X509_CRL *x);
+
+ PKCS7 *PEM_read_bio_PKCS7(BIO *bp, PKCS7 **x, pem_password_cb *cb, void *u);
+ PKCS7 *PEM_read_PKCS7(FILE *fp, PKCS7 **x, pem_password_cb *cb, void *u);
+ int PEM_write_bio_PKCS7(BIO *bp, PKCS7 *x);
+ int PEM_write_PKCS7(FILE *fp, PKCS7 *x);
+
+Deprecated since OpenSSL 3.0, can be hidden entirely by defining
+B<OPENSSL_API_COMPAT> with a suitable version value, see
+L<openssl_user_macros(7)>:
+
  RSA *PEM_read_bio_RSAPrivateKey(BIO *bp, RSA **x,
                                  pem_password_cb *cb, void *u);
  RSA *PEM_read_RSAPrivateKey(FILE *fp, RSA **x,
@@ -140,12 +180,6 @@ PEM_write_bio_PKCS7, PEM_write_PKCS7 - PEM routines
                           pem_password_cb *cb, void *u);
  int PEM_write_bio_DSA_PUBKEY(BIO *bp, DSA *x);
  int PEM_write_DSA_PUBKEY(FILE *fp, DSA *x);
-
- EVP_PKEY *PEM_read_bio_Parameters_ex(BIO *bp, EVP_PKEY **x,
-                                      OSSL_LIB_CTX *libctx, const char *propq);
- EVP_PKEY *PEM_read_bio_Parameters(BIO *bp, EVP_PKEY **x);
- int PEM_write_bio_Parameters(BIO *bp, const EVP_PKEY *x);
-
  DSA *PEM_read_bio_DSAparams(BIO *bp, DSA **x, pem_password_cb *cb, void *u);
  DSA *PEM_read_DSAparams(FILE *fp, DSA **x, pem_password_cb *cb, void *u);
  int PEM_write_bio_DSAparams(BIO *bp, DSA *x);
@@ -156,38 +190,11 @@ PEM_write_bio_PKCS7, PEM_write_PKCS7 - PEM routines
  int PEM_write_bio_DHparams(BIO *bp, DH *x);
  int PEM_write_DHparams(FILE *fp, DH *x);
 
- X509 *PEM_read_bio_X509(BIO *bp, X509 **x, pem_password_cb *cb, void *u);
- X509 *PEM_read_X509(FILE *fp, X509 **x, pem_password_cb *cb, void *u);
- int PEM_write_bio_X509(BIO *bp, X509 *x);
- int PEM_write_X509(FILE *fp, X509 *x);
-
- X509 *PEM_read_bio_X509_AUX(BIO *bp, X509 **x, pem_password_cb *cb, void *u);
- X509 *PEM_read_X509_AUX(FILE *fp, X509 **x, pem_password_cb *cb, void *u);
- int PEM_write_bio_X509_AUX(BIO *bp, X509 *x);
- int PEM_write_X509_AUX(FILE *fp, X509 *x);
-
- X509_REQ *PEM_read_bio_X509_REQ(BIO *bp, X509_REQ **x,
-                                 pem_password_cb *cb, void *u);
- X509_REQ *PEM_read_X509_REQ(FILE *fp, X509_REQ **x,
-                             pem_password_cb *cb, void *u);
- int PEM_write_bio_X509_REQ(BIO *bp, X509_REQ *x);
- int PEM_write_X509_REQ(FILE *fp, X509_REQ *x);
- int PEM_write_bio_X509_REQ_NEW(BIO *bp, X509_REQ *x);
- int PEM_write_X509_REQ_NEW(FILE *fp, X509_REQ *x);
-
- X509_CRL *PEM_read_bio_X509_CRL(BIO *bp, X509_CRL **x,
-                                 pem_password_cb *cb, void *u);
- X509_CRL *PEM_read_X509_CRL(FILE *fp, X509_CRL **x,
-                             pem_password_cb *cb, void *u);
- int PEM_write_bio_X509_CRL(BIO *bp, X509_CRL *x);
- int PEM_write_X509_CRL(FILE *fp, X509_CRL *x);
-
- PKCS7 *PEM_read_bio_PKCS7(BIO *bp, PKCS7 **x, pem_password_cb *cb, void *u);
- PKCS7 *PEM_read_PKCS7(FILE *fp, PKCS7 **x, pem_password_cb *cb, void *u);
- int PEM_write_bio_PKCS7(BIO *bp, PKCS7 *x);
- int PEM_write_PKCS7(FILE *fp, PKCS7 *x);
-
 =head1 DESCRIPTION
+
+All of the functions described on this page that have a I<TYPE> of B<DH>, B<DSA>
+and B<RSA> are deprecated. Applications should use OSSL_ENCODER_to_bio() and
+OSSL_ENCODER_from_bio() instead.
 
 The PEM functions read or write structures in PEM format. In
 this sense PEM format is simply base64 encoded data surrounded
@@ -536,9 +543,25 @@ PEM_read_bio_PrivateKey_ex(), PEM_read_PrivateKey_ex(),
 PEM_read_bio_PUBKEY_ex(), PEM_read_PUBKEY_ex() and
 PEM_read_bio_Parameters_ex() were introduced in OpenSSL 3.0.
 
+The functions PEM_read_bio_RSAPrivateKey(), PEM_read_RSAPrivateKey(),
+PEM_write_bio_RSAPrivateKey(), PEM_write_RSAPrivateKey(),
+PEM_read_bio_RSAPublicKey(), PEM_read_RSAPublicKey(),
+PEM_write_bio_RSAPublicKey(), PEM_write_RSAPublicKey(),
+PEM_read_bio_RSA_PUBKEY(), PEM_read_RSA_PUBKEY(),
+PEM_write_bio_RSA_PUBKEY(), PEM_write_RSA_PUBKEY(),
+PEM_read_bio_DSAPrivateKey(), PEM_read_DSAPrivateKey(),
+PEM_write_bio_DSAPrivateKey(), PEM_write_DSAPrivateKey(),
+PEM_read_bio_DSA_PUBKEY(), PEM_read_DSA_PUBKEY(),
+PEM_write_bio_DSA_PUBKEY(), PEM_write_DSA_PUBKEY();
+PEM_read_bio_DSAparams(), PEM_read_DSAparams(),
+PEM_write_bio_DSAparams(), PEM_write_DSAparams(),
+PEM_read_bio_DHparams(), PEM_read_DHparams(),
+PEM_write_bio_DHparams() and PEM_write_DHparams() were deprecated in 3.0.
+
+
 =head1 COPYRIGHT
 
-Copyright 2001-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2001-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

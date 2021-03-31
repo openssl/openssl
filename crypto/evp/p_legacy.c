@@ -57,11 +57,13 @@ RSA *EVP_PKEY_get1_RSA(EVP_PKEY *pkey)
 #ifndef OPENSSL_NO_EC
 int EVP_PKEY_set1_EC_KEY(EVP_PKEY *pkey, EC_KEY *key)
 {
-    int ret = EVP_PKEY_assign_EC_KEY(pkey, key);
-
-    if (ret)
-        EC_KEY_up_ref(key);
-    return ret;
+    if (!EC_KEY_up_ref(key))
+        return 0;
+    if (!EVP_PKEY_assign_EC_KEY(pkey, key)) {
+        EC_KEY_free(key);
+        return 0;
+    }
+    return 1;
 }
 
 EC_KEY *evp_pkey_get0_EC_KEY_int(const EVP_PKEY *pkey)
@@ -82,8 +84,8 @@ EC_KEY *EVP_PKEY_get1_EC_KEY(EVP_PKEY *pkey)
 {
     EC_KEY *ret = evp_pkey_get0_EC_KEY_int(pkey);
 
-    if (ret != NULL)
-        EC_KEY_up_ref(ret);
+    if (ret != NULL && !EC_KEY_up_ref(ret))
+        ret = NULL;
     return ret;
 }
 #endif /* OPENSSL_NO_EC */

@@ -279,9 +279,16 @@ The remaining functions return 1 for success and 0 or a negative value for
 failure.  In particular, a return value of -2 indicates the operation is not
 supported by the KDF algorithm.
 
+=head1 NOTES
+
+The KDF life-cycle is described in L<life_cycle-kdf(7)>.  In the future,
+the transitions described there will be enforced.  When this is done, it will
+not be considered a breaking change to the API.
+
 =head1 SEE ALSO
 
-L<OSSL_PROVIDER-default(7)/Key Derivation Function (KDF)>
+L<OSSL_PROVIDER-default(7)/Key Derivation Function (KDF)>,
+L<life_cycle-kdf(7)>.
 
 =head1 HISTORY
 

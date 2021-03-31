@@ -63,8 +63,7 @@ int gendsa_main(int argc, char **argv)
     char *dsaparams = NULL, *ciphername = NULL;
     char *outfile = NULL, *passoutarg = NULL, *passout = NULL, *prog;
     OPTION_CHOICE o;
-    int ret = 1, private = 0, verbose = 0;
-    const BIGNUM *p = NULL;
+    int ret = 1, private = 0, verbose = 0, nbits;
 
     prog = opt_init(argc, argv, gendsa_options);
     while ((o = opt_next()) != OPT_EOF) {
@@ -129,7 +128,8 @@ int gendsa_main(int argc, char **argv)
     if (out == NULL)
         goto end2;
 
-    if (EVP_PKEY_bits(pkey) > OPENSSL_DSA_MAX_MODULUS_BITS)
+    nbits = EVP_PKEY_bits(pkey);
+    if (nbits > OPENSSL_DSA_MAX_MODULUS_BITS)
         BIO_printf(bio_err,
                    "Warning: It is not recommended to use more than %d bit for DSA keys.\n"
                    "         Your key size is %d! Larger key size may behave not as expected.\n",
@@ -147,7 +147,7 @@ int gendsa_main(int argc, char **argv)
         goto end;
     }
     if (verbose)
-        BIO_printf(bio_err, "Generating DSA key, %d bits\n", BN_num_bits(p));
+        BIO_printf(bio_err, "Generating DSA key, %d bits\n", nbits);
     if (EVP_PKEY_keygen(ctx, &pkey) <= 0) {
         BIO_printf(bio_err, "unable to generate key\n");
         goto end;

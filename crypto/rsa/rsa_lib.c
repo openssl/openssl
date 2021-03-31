@@ -172,7 +172,6 @@ void RSA_free(RSA *r)
 #endif
     BN_BLINDING_free(r->blinding);
     BN_BLINDING_free(r->mt_blinding);
-    OPENSSL_free(r->bignum_data);
     OPENSSL_free(r);
 }
 

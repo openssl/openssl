@@ -88,8 +88,8 @@ Filename to output the configuration data to; the default is standard output.
 
 =item B<-in> I<configfilename>
 
-Input filename to load configuration data from. Used with the B<-verify> option.
-Standard input is used if the filename is C<->.
+Input filename to load configuration data from.
+Must be used if the B<-verify> option is specified.
 
 =item B<-verify>
 

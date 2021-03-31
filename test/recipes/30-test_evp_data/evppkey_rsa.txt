@@ -614,5 +614,5 @@ Title = Test RSA keygen
 KeyGen = rsaEncryption
 Ctrl = rsa_keygen_bits:128
 KeyName = tmprsa
-Result = KEYGEN_GENERATE_ERROR
+Result = PKEY_CTRL_ERROR
 Reason = key size too small

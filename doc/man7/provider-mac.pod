@@ -185,6 +185,12 @@ should have as well, see the documentation of the implementation.
 
 =back
 
+=head1 NOTES
+
+The MAC life-cycle is described in L<life_cycle-rand(7)>.  Providers should
+ensure that the various transitions listed there are supported.  At some point
+the EVP layer will begin enforcing the listed transitions.
+
 =head1 RETURN VALUES
 
 OSSL_FUNC_mac_newctx() and OSSL_FUNC_mac_dupctx() should return the newly created
@@ -203,8 +209,8 @@ array, or NULL if none is offered.
 L<provider(7)>,
 L<EVP_MAC-BLAKE2(7)>, L<EVP_MAC-CMAC(7)>, L<EVP_MAC-GMAC(7)>,
 L<EVP_MAC-HMAC(7)>, L<EVP_MAC-KMAC(7)>, L<EVP_MAC-Poly1305(7)>,
-L<EVP_MAC-Siphash(7)>
-
+L<EVP_MAC-Siphash(7)>,
+L<life_cycle-mac(7)>, L<EVP_MAC(3)>
 
 =head1 HISTORY
 

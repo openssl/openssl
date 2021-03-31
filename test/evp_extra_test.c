@@ -752,7 +752,7 @@ static int test_EC_priv_only_legacy(void)
     BIGNUM *priv = NULL;
     int ret = 0;
     EC_KEY *eckey = NULL;
-    EVP_PKEY *pkey = NULL;
+    EVP_PKEY *pkey = NULL, *dup_pk = NULL;
     EVP_MD_CTX *ctx = NULL;
 
     /* Create the low level EC_KEY */
@@ -774,19 +774,31 @@ static int test_EC_priv_only_legacy(void)
         goto err;
     eckey = NULL;
 
-    ctx = EVP_MD_CTX_new();
-    if (!TEST_ptr(ctx))
-        goto err;
+    while (dup_pk == NULL) {
+        ret = 0;
+        ctx = EVP_MD_CTX_new();
+        if (!TEST_ptr(ctx))
+            goto err;
 
-    /*
-     * The EVP_DigestSignInit function should create the key on the provider
-     * side which is sufficient for this test.
-     */
-    if (!TEST_true(EVP_DigestSignInit_ex(ctx, NULL, NULL, testctx, testpropq,
-                                         pkey, NULL)))
-        goto err;
+        /*
+         * The EVP_DigestSignInit function should create the key on the
+         * provider side which is sufficient for this test.
+         */
+        if (!TEST_true(EVP_DigestSignInit_ex(ctx, NULL, NULL, testctx,
+                                             testpropq, pkey, NULL)))
+            goto err;
+        EVP_MD_CTX_free(ctx);
+        ctx = NULL;
 
-    ret = 1;
+        if (!TEST_ptr(dup_pk = EVP_PKEY_dup(pkey)))
+            goto err;
+        /* EVP_PKEY_eq() returns -2 with missing public keys */
+        ret = TEST_int_eq(EVP_PKEY_eq(pkey, dup_pk), -2);
+        EVP_PKEY_free(pkey);
+        pkey = dup_pk;
+        if (!ret)
+            goto err;
+    }
 
  err:
     EVP_MD_CTX_free(ctx);
@@ -1856,31 +1868,70 @@ static int test_emptyikm_HKDF(void)
 #ifndef OPENSSL_NO_EC
 static int test_X509_PUBKEY_inplace(void)
 {
-  int ret = 0;
-  X509_PUBKEY *xp = NULL;
-  const unsigned char *p = kExampleECPubKeyDER;
-  size_t input_len = sizeof(kExampleECPubKeyDER);
+    int ret = 0;
+    X509_PUBKEY *xp = NULL;
+    const unsigned char *p = kExampleECPubKeyDER;
+    size_t input_len = sizeof(kExampleECPubKeyDER);
 
-  if (!TEST_ptr(xp = d2i_X509_PUBKEY(NULL, &p, input_len)))
-    goto done;
+    if (!TEST_ptr(xp = d2i_X509_PUBKEY(NULL, &p, input_len)))
+        goto done;
 
-  if (!TEST_ptr(X509_PUBKEY_get0(xp)))
-    goto done;
+    if (!TEST_ptr(X509_PUBKEY_get0(xp)))
+        goto done;
 
-  p = kExampleBadECPubKeyDER;
-  input_len = sizeof(kExampleBadECPubKeyDER);
+    p = kExampleBadECPubKeyDER;
+    input_len = sizeof(kExampleBadECPubKeyDER);
 
-  if (!TEST_ptr(xp = d2i_X509_PUBKEY(&xp, &p, input_len)))
-    goto done;
+    if (!TEST_ptr(xp = d2i_X509_PUBKEY(&xp, &p, input_len)))
+        goto done;
 
-  if (!TEST_true(X509_PUBKEY_get0(xp) == NULL))
-    goto done;
+    if (!TEST_true(X509_PUBKEY_get0(xp) == NULL))
+        goto done;
 
-  ret = 1;
+    ret = 1;
 
-done:
-  X509_PUBKEY_free(xp);
-  return ret;
+ done:
+    X509_PUBKEY_free(xp);
+    return ret;
+}
+
+static int test_X509_PUBKEY_dup(void)
+{
+    int ret = 0;
+    X509_PUBKEY *xp = NULL, *xq = NULL;
+    const unsigned char *p = kExampleECPubKeyDER;
+    size_t input_len = sizeof(kExampleECPubKeyDER);
+
+    if (!TEST_ptr(xp = d2i_X509_PUBKEY(NULL, &p, input_len))
+            || !TEST_ptr(xq = X509_PUBKEY_dup(xp))
+            || !TEST_ptr_ne(xp, xq))
+        goto done;
+
+    if (!TEST_ptr(X509_PUBKEY_get0(xq))
+            || !TEST_ptr(X509_PUBKEY_get0(xp))
+            || !TEST_ptr_eq(X509_PUBKEY_get0(xq), X509_PUBKEY_get0(xp)))
+        goto done;
+
+    X509_PUBKEY_free(xq);
+    xq = NULL;
+    p = kExampleBadECPubKeyDER;
+    input_len = sizeof(kExampleBadECPubKeyDER);
+
+    if (!TEST_ptr(xp = d2i_X509_PUBKEY(&xp, &p, input_len))
+            || !TEST_ptr(xq = X509_PUBKEY_dup(xp)))
+        goto done;
+
+    X509_PUBKEY_free(xp);
+    xp = NULL;
+    if (!TEST_true(X509_PUBKEY_get0(xq) == NULL))
+        goto done;
+
+    ret = 1;
+
+ done:
+    X509_PUBKEY_free(xp);
+    X509_PUBKEY_free(xq);
+    return ret;
 }
 #endif /* OPENSSL_NO_EC */
 
@@ -2703,6 +2754,7 @@ int setup_tests(void)
     ADD_TEST(test_emptyikm_HKDF);
 #ifndef OPENSSL_NO_EC
     ADD_TEST(test_X509_PUBKEY_inplace);
+    ADD_TEST(test_X509_PUBKEY_dup);
     ADD_ALL_TESTS(test_invalide_ec_char2_pub_range_decode,
                   OSSL_NELEM(ec_der_pub_keys));
 #endif

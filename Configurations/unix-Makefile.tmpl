@@ -544,8 +544,14 @@ libclean:
 	$(RM) *{- platform->defext() -}
 
 clean: libclean
-	$(RM) $(HTMLDOCS1) $(HTMLDOCS3) $(HTMLDOCS5) $(HTMLDOCS7)
-	$(RM) $(MANDOCS1) $(MANDOCS3) $(MANDOCS5) $(MANDOCS7)
+	$(RM) $(HTMLDOCS1)
+	$(RM) $(HTMLDOCS3)
+	$(RM) $(HTMLDOCS5)
+	$(RM) $(HTMLDOCS7)
+	$(RM) $(MANDOCS1)
+	$(RM) $(MANDOCS3)
+	$(RM) $(MANDOCS5)
+	$(RM) $(MANDOCS7)
 	$(RM) $(PROGRAMS) $(TESTPROGS) $(MODULES) $(SCRIPTS)
 	$(RM) $(GENERATED_MANDATORY) $(GENERATED)
 	-find . -name '*{- platform->depext() -}' \! -name '.*' \! -type d -exec $(RM) {} \;
@@ -1433,9 +1439,10 @@ EOF
           # Also redo $gen0, to ensure that we have the proper extension where
           # necessary.
           $gen0 = platform->bin($gen0);
+          # Use $(PERL) to execute wrap.pl directly to avoid calling env
           return <<"EOF";
 $args{src}: $gen0 $deps \$(BLDDIR)/util/wrap.pl
-	\$(BLDDIR)/util/wrap.pl $gen0$gen_args > \$@
+	\$(PERL) \$(BLDDIR)/util/wrap.pl $gen0$gen_args > \$@
 EOF
       } else {
           #
@@ -1606,7 +1613,7 @@ EOF
 
       my $recipe = '';
 
-      if (defined $simple) {
+      if (defined $simple && $simple ne $full) {
           if (sharedaix()) {
               $recipe .= <<"EOF";
 $simple: $full
