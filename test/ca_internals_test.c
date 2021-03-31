@@ -24,6 +24,8 @@ static int test_do_updatedb(void)
     int rv;
     size_t argc = test_get_argument_count();
     BIO *bio_tmp;
+    char *testdate;
+    char *indexfile;
 
     if (argc != 3) {
         TEST_error("Usage: %s: do_updatedb dbfile testdate\n", binname);
@@ -31,14 +33,14 @@ static int test_do_updatedb(void)
         return 0;
     }
 
-    char *testdate = test_get_argument(2);
+    testdate = test_get_argument(2);
     testdateutc = asn1_string_to_time_t(testdate);
     if (testdateutc < 0) {
         fprintf(stderr, "Error: testdate '%s' is invalid\n", testdate);
         return 0;
     }
 
-    char *indexfile = test_get_argument(1);
+    indexfile = test_get_argument(1);
     db = load_index(indexfile, NULL);
     if (db == NULL) {
         fprintf(stderr, "Error: dbfile '%s' is not readable\n", indexfile);
