@@ -217,30 +217,30 @@ struct ocsp_service_locator_st {
     STACK_OF(ACCESS_DESCRIPTION) *locator;
 };
 
-#  define OCSP_REQUEST_sign(o,pkey,md,libctx,propq)\
+#  define OCSP_REQUEST_sign(o, pkey, md, libctx, propq)\
         ASN1_item_sign_ex(ASN1_ITEM_rptr(OCSP_REQINFO),\
                           &(o)->optionalSignature->signatureAlgorithm, NULL,\
                          (o)->optionalSignature->signature, &(o)->tbsRequest,\
                          NULL, pkey, md, libctx, propq)
 
-#  define OCSP_BASICRESP_sign(o,pkey,md,d,libctx,propq)\
+#  define OCSP_BASICRESP_sign(o, pkey, md, d, libctx, propq)\
         ASN1_item_sign_ex(ASN1_ITEM_rptr(OCSP_RESPDATA),\
                           &(o)->signatureAlgorithm, NULL,\
                           (o)->signature, &(o)->tbsResponseData,\
                           NULL, pkey, md, libctx, propq)
 
-#  define OCSP_BASICRESP_sign_ctx(o,ctx,d)\
+#  define OCSP_BASICRESP_sign_ctx(o, ctx, d)\
         ASN1_item_sign_ctx(ASN1_ITEM_rptr(OCSP_RESPDATA),\
                            &(o)->signatureAlgorithm, NULL,\
                            (o)->signature, &(o)->tbsResponseData, ctx)
 
-#  define OCSP_REQUEST_verify(a,r,libctx,propq)\
+#  define OCSP_REQUEST_verify(a, r, libctx, propq)\
         ASN1_item_verify_ex(ASN1_ITEM_rptr(OCSP_REQINFO),\
                             &(a)->optionalSignature->signatureAlgorithm,\
                             (a)->optionalSignature->signature, &(a)->tbsRequest,\
                             NULL, r, libctx, propq)
 
-#  define OCSP_BASICRESP_verify(a,r,libctx,propq)\
+#  define OCSP_BASICRESP_verify(a, r, libctx, propq)\
         ASN1_item_verify_ex(ASN1_ITEM_rptr(OCSP_RESPDATA),\
                             &(a)->signatureAlgorithm, (a)->signature,\
                             &(a)->tbsResponseData, NULL, r, libctx, propq)
