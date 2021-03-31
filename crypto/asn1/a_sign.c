@@ -136,6 +136,7 @@ int ASN1_item_sign_ex(const ASN1_ITEM *it, X509_ALGOR *algor1,
         ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
         return 0;
     }
+    /* We can use the non _ex variant here since the pkey is already setup */
     if (!EVP_DigestSignInit(ctx, NULL, md, NULL, pkey))
         goto err;
 

@@ -223,7 +223,8 @@ int OCSP_basic_sign(OCSP_BASICRESP *brsp,
     if (ctx == NULL)
         return 0;
 
-    if (!EVP_DigestSignInit(ctx, &pkctx, dgst, NULL, key)) {
+    if (!EVP_DigestSignInit_ex(ctx, &pkctx, EVP_MD_name(dgst),
+                               signer->libctx, signer->propq, key, NULL)) {
         EVP_MD_CTX_free(ctx);
         return 0;
     }
@@ -277,7 +278,7 @@ int OCSP_RESPID_set_by_key_ex(OCSP_RESPID *respid, X509 *cert,
 
 int OCSP_RESPID_set_by_key(OCSP_RESPID *respid, X509 *cert)
 {
-    return OCSP_RESPID_set_by_key_ex(respid, cert, NULL, NULL);
+    return OCSP_RESPID_set_by_key_ex(respid, cert, cert->libctx, cert->propq);
 }
 
 int OCSP_RESPID_match_ex(OCSP_RESPID *respid, X509 *cert, OSSL_LIB_CTX *libctx,
@@ -318,5 +319,5 @@ int OCSP_RESPID_match_ex(OCSP_RESPID *respid, X509 *cert, OSSL_LIB_CTX *libctx,
 
 int OCSP_RESPID_match(OCSP_RESPID *respid, X509 *cert)
 {
-    return OCSP_RESPID_match_ex(respid, cert, NULL, NULL);
+    return OCSP_RESPID_match_ex(respid, cert, cert->libctx, cert->propq);
 }

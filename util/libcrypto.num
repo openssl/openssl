@@ -5347,3 +5347,4 @@ EVP_ASYM_CIPHER_description             ?	3_0_0	EXIST::FUNCTION:
 EVP_KEM_description                     ?	3_0_0	EXIST::FUNCTION:
 EVP_KEYEXCH_description                 ?	3_0_0	EXIST::FUNCTION:
 EVP_KDF_description                     ?	3_0_0	EXIST::FUNCTION:
+X509_CRL_new_ex                         ?	3_0_0	EXIST::FUNCTION:
