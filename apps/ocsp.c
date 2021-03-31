@@ -676,8 +676,7 @@ redo_accept:
         if (key == NULL)
             goto end;
 
-        if (!OCSP_request_sign
-            (req, signer, key, NULL, sign_other, sign_flags)) {
+        if (!OCSP_request_sign(req, signer, key, NULL, sign_other, sign_flags)) {
             BIO_printf(bio_err, "Error signing OCSP request\n");
             goto end;
         }

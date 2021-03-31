@@ -802,7 +802,7 @@ int req_main(int argc, char **argv)
         }
 
         if (req == NULL) {
-            req = X509_REQ_new();
+            req = X509_REQ_new_ex(app_get0_libctx(), app_get0_propq());
             if (req == NULL) {
                 goto end;
             }
