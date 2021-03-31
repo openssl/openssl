@@ -101,7 +101,7 @@ of the provider initialization function.  See L<provider(7)/Provider>
 for a description of the initialization function.
 
 All these "functions" have a corresponding function type definition
-named B<OSSL_{name}_fn>, and a helper function to retrieve the
+named B<OSSL_FUNC_{name}_fn>, and a helper function to retrieve the
 function pointer from a B<OSSL_DISPATCH> element named
 B<OSSL_FUNC_{name}>.
 For example, the "function" core_gettable_params() has these:

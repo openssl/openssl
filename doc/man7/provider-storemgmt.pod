@@ -50,7 +50,7 @@ provider_query_operation() function
 (see L<provider-base(7)/Provider Functions>).
 
 All these "functions" have a corresponding function type definition named
-B<OSSL_{name}_fn>, and a helper function to retrieve the function pointer
+B<OSSL_FUNC_{name}_fn>, and a helper function to retrieve the function pointer
 from a B<OSSL_DISPATCH> element named B<OSSL_get_{name}>.
 For example, the "function" OSSL_FUNC_store_load() has these:
 
