@@ -99,9 +99,9 @@ with a B<->.
 
 =item I<certificate> ...
 
-One or more target certificates to verify. If no certificates are given,
-this command will attempt to read a certificate from standard input.
-If a certificate chain has multiple problems, this program attempts to
+One or more target certificates to verify, one per file. If no certificates are
+given, this command will attempt to read a single certificate from standard
+input. If a certificate chain has multiple problems, this program attempts to
 display all of them.
 
 =back
