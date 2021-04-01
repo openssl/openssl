@@ -67,6 +67,9 @@ int ossl_rsa_check_key(const RSA *rsa, int operation)
             return 0;
         }
     }
+#else
+    /* make protect used */
+    (void)protect;
 #endif /* OPENSSL_NO_FIPS_SECURITYCHECKS */
     return 1;
 }
