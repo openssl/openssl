@@ -1137,14 +1137,15 @@ static int asn1_check_tlen(long *olen, int *otag, unsigned char *oclass,
              */
             if ((i & 0x81) == 0 && (plen + ctx->hdrlen) > len) {
                 ERR_raise(ERR_LIB_ASN1, ASN1_R_TOO_LONG);
-                asn1_tlc_clear(ctx);
-                return 0;
+                goto err;
             }
         }
     }
 
-    if ((i & 0x80) != 0)
+    if ((i & 0x80) != 0) {
+        ERR_raise(ERR_LIB_ASN1, ASN1_R_BAD_OBJECT_HEADER);
         goto err;
+    }
     if (exptag >= 0) {
         if (exptag != ptag || expclass != pclass) {
             /*
@@ -1152,9 +1153,8 @@ static int asn1_check_tlen(long *olen, int *otag, unsigned char *oclass,
              */
             if (opt != 0)
                 return -1;
-            asn1_tlc_clear(ctx);
             ERR_raise(ERR_LIB_ASN1, ASN1_R_WRONG_TAG);
-            return 0;
+            goto err;
         }
         /*
          * We have a tag and class match: assume we are going to do something
@@ -1185,7 +1185,6 @@ static int asn1_check_tlen(long *olen, int *otag, unsigned char *oclass,
     return 1;
 
  err:
-    ERR_raise(ERR_LIB_ASN1, ASN1_R_BAD_OBJECT_HEADER);
     asn1_tlc_clear(ctx);
     return 0;
 }
