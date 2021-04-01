@@ -10,7 +10,7 @@
 #include "crypto/types.h"
 
 /* Functions that are common */
-int ossl_rsa_check_key(const RSA *rsa, int protect);
+int ossl_rsa_check_key(const RSA *rsa, int operation);
 int ossl_ec_check_key(const EC_KEY *ec, int protect);
 int ossl_dsa_check_key(const DSA *dsa, int sign);
 int ossl_dh_check_key(const DH *dh);

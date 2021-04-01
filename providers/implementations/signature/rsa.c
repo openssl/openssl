@@ -365,20 +365,20 @@ static int rsa_signverify_init(void *vprsactx, void *vrsa,
     if (!ossl_prov_is_running())
         return 0;
 
-    if (prsactx == NULL || vrsa == NULL || !RSA_up_ref(vrsa))
+    if (prsactx == NULL || vrsa == NULL)
         return 0;
 
+    if (!ossl_rsa_check_key(vrsa, operation))
+        return 0;
+
+    if (!RSA_up_ref(vrsa))
+        return 0;
     RSA_free(prsactx->rsa);
     prsactx->rsa = vrsa;
     prsactx->operation = operation;
 
     if (!rsa_set_ctx_params(prsactx, params))
         return 0;
-
-    if (!ossl_rsa_check_key(vrsa, operation == EVP_PKEY_OP_SIGN)) {
-        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
-        return 0;
-    }
 
     /* Maximum for sign, auto for verify */
     prsactx->saltlen = RSA_PSS_SALTLEN_AUTO;

@@ -1632,16 +1632,18 @@ int EVP_PKEY_CTX_set_mac_key(EVP_PKEY_CTX *ctx, const unsigned char *key,
 
 # define EVP_PKEY_CTRL_MD                1
 # define EVP_PKEY_CTRL_PEER_KEY          2
-# define EVP_PKEY_CTRL_PKCS7_ENCRYPT     3
-# define EVP_PKEY_CTRL_PKCS7_DECRYPT     4
-# define EVP_PKEY_CTRL_PKCS7_SIGN        5
 # define EVP_PKEY_CTRL_SET_MAC_KEY       6
 # define EVP_PKEY_CTRL_DIGESTINIT        7
 /* Used by GOST key encryption in TLS */
 # define EVP_PKEY_CTRL_SET_IV            8
-# define EVP_PKEY_CTRL_CMS_ENCRYPT       9
-# define EVP_PKEY_CTRL_CMS_DECRYPT       10
-# define EVP_PKEY_CTRL_CMS_SIGN          11
+# ifndef OPENSSL_NO_DEPRECATED_3_0
+#  define EVP_PKEY_CTRL_PKCS7_ENCRYPT     3
+#  define EVP_PKEY_CTRL_PKCS7_DECRYPT     4
+#  define EVP_PKEY_CTRL_PKCS7_SIGN        5
+#  define EVP_PKEY_CTRL_CMS_ENCRYPT       9
+#  define EVP_PKEY_CTRL_CMS_DECRYPT       10
+#  define EVP_PKEY_CTRL_CMS_SIGN          11
+# endif
 # define EVP_PKEY_CTRL_CIPHER            12
 # define EVP_PKEY_CTRL_GET_MD            13
 # define EVP_PKEY_CTRL_SET_DIGEST_SIZE   14

@@ -96,10 +96,13 @@ static int rsa_init(void *vprsactx, void *vrsa, const OSSL_PARAM params[],
 {
     PROV_RSA_CTX *prsactx = (PROV_RSA_CTX *)vprsactx;
 
-    if (!ossl_prov_is_running()
-            || prsactx == NULL
-            || vrsa == NULL
-            || !RSA_up_ref(vrsa))
+    if (!ossl_prov_is_running() || prsactx == NULL || vrsa == NULL)
+        return 0;
+
+    if (!ossl_rsa_check_key(vrsa, operation))
+        return 0;
+
+    if (!RSA_up_ref(vrsa))
         return 0;
     RSA_free(prsactx->rsa);
     prsactx->rsa = vrsa;
@@ -110,11 +113,8 @@ static int rsa_init(void *vprsactx, void *vrsa, const OSSL_PARAM params[],
         prsactx->pad_mode = RSA_PKCS1_PADDING;
         break;
     default:
-        ERR_raise(ERR_LIB_PROV, PROV_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
-        return 0;
-    }
-    if (!ossl_rsa_check_key(vrsa, operation == EVP_PKEY_OP_ENCRYPT)) {
-        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
+        /* This should not happen due to the check above */
+        ERR_raise(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR);
         return 0;
     }
     return rsa_set_ctx_params(prsactx, params);
