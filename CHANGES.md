@@ -31,6 +31,15 @@ OpenSSL 3.0
 
    *Shane Lontis*
 
+ * The EVP_PKEY_CTRL_PKCS7_ENCRYPT, EVP_PKEY_CTRL_PKCS7_DECRYPT,
+   EVP_PKEY_CTRL_PKCS7_SIGN, EVP_PKEY_CTRL_CMS_ENCRYPT,
+   EVP_PKEY_CTRL_CMS_DECRYPT, and EVP_PKEY_CTRL_CMS_SIGN control operations
+   are deprecated. They are not invoked by the OpenSSL library anymore and
+   are replaced by direct checks of the key operation against the key type
+   when the operation is initialized.
+
+   *Tomáš Mráz*
+
  * The EVP_PKEY_public_check() and EVP_PKEY_param_check() functions now work for
    more key types including RSA, DSA, ED25519, X25519, ED448 and X448.
    Previously (in 1.1.1) they would return -2. For key types that do not have

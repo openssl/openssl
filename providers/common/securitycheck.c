@@ -13,6 +13,7 @@
 #include <openssl/dsa.h>
 #include <openssl/dh.h>
 #include <openssl/ec.h>
+#include <openssl/evp.h>
 #include <openssl/err.h>
 #include <openssl/proverr.h>
 #include <openssl/core_names.h>
@@ -25,13 +26,46 @@
  * Set protect = 1 for encryption or signing operations, or 0 otherwise. See
  * https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-131Ar2.pdf.
  */
-int ossl_rsa_check_key(const RSA *rsa, int protect)
+int ossl_rsa_check_key(const RSA *rsa, int operation)
 {
+    int protect = 0;
+
+    switch (operation) {
+        case EVP_PKEY_OP_SIGN:
+            protect = 1;
+            /* fallthrough */
+        case EVP_PKEY_OP_VERIFY:
+            break;
+        case EVP_PKEY_OP_ENCAPSULATE:
+        case EVP_PKEY_OP_ENCRYPT:
+            protect = 1;
+            /* fallthrough */
+        case EVP_PKEY_OP_VERIFYRECOVER:
+        case EVP_PKEY_OP_DECAPSULATE:
+        case EVP_PKEY_OP_DECRYPT:
+            if (RSA_test_flags(rsa,
+                               RSA_FLAG_TYPE_MASK) == RSA_FLAG_TYPE_RSASSAPSS) {
+                ERR_raise_data(ERR_LIB_PROV,
+                               PROV_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE,
+                               "operation: %d", operation);
+                return 0;
+            }
+            break;
+        default:
+            ERR_raise_data(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR,
+                           "invalid operation: %d", operation);
+            return 0;
+    }
+
 #if !defined(OPENSSL_NO_FIPS_SECURITYCHECKS)
     if (ossl_securitycheck_enabled()) {
         int sz = RSA_bits(rsa);
 
-        return protect ? (sz >= 2048) : (sz >= 1024);
+        if (protect ? (sz < 2048) : (sz < 1024)) {
+            ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH,
+                           "operation: %d", operation);
+            return 0;
+        }
     }
 #endif /* OPENSSL_NO_FIPS_SECURITYCHECKS */
     return 1;

@@ -1432,34 +1432,6 @@ static int fix_hkdf_mode(enum state state,
     return 1;
 }
 
-static int hack_pkcs7_cms(enum state state,
-                          const struct translation_st *translation,
-                          struct translation_ctx_st *ctx)
-{
-    int ret = 1;
-
-    /* Make sure that this has no further effect */
-    ctx->action_type = 0;
-
-    switch (state) {
-    case PRE_CTRL_TO_PARAMS:
-        /* TODO (3.0) Temporary hack, this should probe */
-        if (EVP_PKEY_is_a(EVP_PKEY_CTX_get0_pkey(ctx->pctx), "RSASSA-PSS")) {
-            ERR_raise(ERR_LIB_EVP,
-                      EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
-            ret = -2;
-        }
-        break;
-    case POST_CTRL_TO_PARAMS:
-        break;
-    default:
-        ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
-        ret = -2;
-        break;
-    }
-    return ret;
-}
-
 /*-
  * Payload getters
  * ===============
@@ -2120,16 +2092,6 @@ static const struct translation_st evp_pkey_ctx_translations[] = {
     { SET, EVP_PKEY_RSA, 0, EVP_PKEY_OP_KEYGEN,
       EVP_PKEY_CTRL_RSA_KEYGEN_PRIMES, "rsa_keygen_primes", NULL,
       OSSL_PKEY_PARAM_RSA_PRIMES, OSSL_PARAM_UNSIGNED_INTEGER, NULL },
-
-    /* PKCS#7 and CMS hacks */
-    { SET, -1, -1, EVP_PKEY_OP_ENCRYPT,
-      EVP_PKEY_CTRL_PKCS7_ENCRYPT, NULL, NULL, NULL, 0, hack_pkcs7_cms },
-    { SET, -1, -1, EVP_PKEY_OP_DECRYPT,
-      EVP_PKEY_CTRL_PKCS7_DECRYPT, NULL, NULL, NULL, 0, hack_pkcs7_cms },
-    { SET, -1, -1, EVP_PKEY_OP_ENCRYPT,
-      EVP_PKEY_CTRL_CMS_ENCRYPT, NULL, NULL, NULL, 0, hack_pkcs7_cms },
-    { SET, -1, -1, EVP_PKEY_OP_DECRYPT,
-      EVP_PKEY_CTRL_CMS_DECRYPT, NULL, NULL, NULL, 0, hack_pkcs7_cms },
 
     /*-
      * TLS1-PRF
