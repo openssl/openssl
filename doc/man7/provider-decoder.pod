@@ -41,13 +41,13 @@ provider-decoder - The OSSL_DECODER library E<lt>-E<gt> provider functions
 
 =head1 DESCRIPTION
 
-I<We use the wide term "decode" in this manual.  This includes but is
+I<The term "decode" is used throughout this manual.  This includes but is
 not limited to deserialization.>
 
 The DECODER operation is a generic method to create a provider-native
 object reference or intermediate decoded data from an encoded form
 read from the given B<OSSL_CORE_BIO>. If the caller wants to decode
-a memory data, it should provide a L<BIO_s_mem(3)> B<BIO>. The decoded
+data from memory, it should provide a L<BIO_s_mem(3)> B<BIO>. The decoded
 data or object reference is passed along with eventual metadata
 to the I<metadata_cb> as B<OSSL_PARAM> parameters.
 
@@ -60,11 +60,10 @@ passed from one to the next.  For example, there may be an
 implementation to decode an object from PEM to DER, and another one
 that decodes DER to an provider-native object.
 
-As the last decoding step in the decoding chain is supposed to create
-a provider-native object referenced by an object reference the
-OSSL_FUNC_decoder_export_object() allows importing that object into
-a different provider directly as the final step of the decoding
-process.
+The last decoding step in the decoding chain is usually supposed to create
+a provider-native object referenced by an object reference. To import
+that object into a different provider the OSSL_FUNC_decoder_export_object()
+can be called as the final step of the decoding process.
 
 All "functions" mentioned here are passed as function pointers between
 F<libcrypto> and the provider in B<OSSL_DISPATCH> arrays via
@@ -222,6 +221,28 @@ This is used to specify the input type for a decoder implementation.
 
 This parameter is I<mandatory>.
 
+Input types currently recognized by built-in decoders:
+
+=over 4
+
+=item "DER"
+
+ASN.1 DER encoded binary data
+
+=item "PEM"
+
+Base64 encoded data with PEM headers
+
+=item "MSBLOB"
+
+Private or public key encoding according to Microsoft specification
+
+=item "PVK"
+
+Encrypted private key encoding according to Microsoft specification
+
+=back
+
 =for comment If we had functionality to get the value of a specific property
 in a set of properties, it would be possible to determine the input type
 from the C<input> property.
@@ -234,6 +255,26 @@ implementation.
 For example, an input of type "DER" for a key pair could be structured
 using PKCS#8, or a key type specific structure, such as PKCS#1 for RSA
 keys.
+
+This parameter is I<optional>.
+
+Input structures currently recognized by built-in decoders:
+
+=over 4
+
+=item "type-specific"
+
+Type specific structure.
+
+=item "PKCS8"
+
+Structure according to the PKCS#8 specification.
+
+=item "SubjectPublicKeyInfo"
+
+Encoding of public keys according to the Subject Public Key Info of RFC 5280.
+
+=back
 
 =for comment If we had functionality to get the value of a specific property
 in a set of properties, it would be possible to determine the input
