@@ -1826,8 +1826,10 @@ static int execute_test_ssl_bio(int pop_ssl, bio_change_t change_bio)
 
     /* Verify changing the rbio/wbio directly does not cause leaks */
     if (change_bio != NO_BIO_CHANGE) {
-        if (!TEST_ptr(membio2 = BIO_new(BIO_s_mem())))
+        if (!TEST_ptr(membio2 = BIO_new(BIO_s_mem()))) {
+            ssl = NULL;
             goto end;
+        }
         if (change_bio == CHANGE_RBIO)
             SSL_set0_rbio(ssl, membio2);
         else
