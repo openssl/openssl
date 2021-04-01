@@ -369,15 +369,15 @@ static const OSSL_ALGORITHM deflt_rands[] = {
 
 static const OSSL_ALGORITHM deflt_signature[] = {
 #ifndef OPENSSL_NO_DSA
-    { "DSA:dsaEncryption", "provider=default", ossl_dsa_signature_functions },
+    { "DSA:dsaEncryption", "provider=default,blinding=yes", ossl_dsa_signature_functions },
 #endif
-    { "RSA:rsaEncryption", "provider=default", ossl_rsa_signature_functions },
+    { "RSA:rsaEncryption", "provider=default,blinding=yes", ossl_rsa_signature_functions },
 #ifndef OPENSSL_NO_EC
     { "ED25519", "provider=default", ossl_ed25519_signature_functions },
     { "ED448", "provider=default", ossl_ed448_signature_functions },
-    { "ECDSA", "provider=default", ossl_ecdsa_signature_functions },
+    { "ECDSA", "provider=default,blinding=yes", ossl_ecdsa_signature_functions },
 # ifndef OPENSSL_NO_SM2
-    { "SM2", "provider=default", ossl_sm2_signature_functions },
+    { "SM2", "provider=default,blinding=yes", ossl_sm2_signature_functions },
 # endif
 #endif
     { "HMAC", "provider=default", ossl_mac_legacy_hmac_signature_functions },
@@ -394,7 +394,7 @@ static const OSSL_ALGORITHM deflt_signature[] = {
 };
 
 static const OSSL_ALGORITHM deflt_asym_cipher[] = {
-    { "RSA:rsaEncryption", "provider=default", ossl_rsa_asym_cipher_functions },
+    { "RSA:rsaEncryption", "provider=default,blinding=yes", ossl_rsa_asym_cipher_functions },
 #ifndef OPENSSL_NO_SM2
     { "SM2", "provider=default", ossl_sm2_asym_cipher_functions },
 #endif

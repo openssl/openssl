@@ -325,6 +325,20 @@ initialised verification context is passed in the I<ctx> parameter. The data to 
 verified is in I<tbs> which should be I<tbslen> bytes long. The signature to be
 verified is in I<sig> which is I<siglen> bytes long.
 
+=head2 Properties
+
+The following property is set by some of the OpenSSL signature algorithms.
+Third party implementations can set additional properties not mentioned here.
+
+=over 4
+
+=item "blinding"
+
+This boolean property is set to "yes" if the implementation performs blinding
+to prevent some side-channel attacks.
+
+=back
+
 =head2 Signature parameters
 
 See L<OSSL_PARAM(3)> for further details on the parameters structure used by

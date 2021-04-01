@@ -164,6 +164,21 @@ The length of the decrypted data should be written to I<*outlen>.
 If I<out> is NULL then the maximum length of the decrypted data should be
 written to I<*outlen>.
 
+=head2 Properties
+
+The following property is set by some of the OpenSSL asymmetric cipher
+algorithms. Third party implementations can set additional properties not
+mentioned here.
+
+=over 4
+
+=item "blinding"
+
+This boolean property is set to "yes" if the implementation performs blinding
+to prevent some side-channel attacks.
+
+=back
+
 =head2 Asymmetric Cipher Parameters
 
 See L<OSSL_PARAM(3)> for further details on the parameters structure used by

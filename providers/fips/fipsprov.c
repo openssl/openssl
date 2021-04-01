@@ -22,6 +22,7 @@
 #include "self_test.h"
 
 static const char FIPS_DEFAULT_PROPERTIES[] = "provider=fips,fips=yes";
+static const char FIPS_DEFAULT_PROPERTIES_W_BLINDING[] = "provider=fips,fips=yes,blinding=yes";
 static const char FIPS_UNAPPROVED_PROPERTIES[] = "provider=fips,fips=no";
 
 /*
@@ -362,15 +363,15 @@ static const OSSL_ALGORITHM fips_keyexch[] = {
 
 static const OSSL_ALGORITHM fips_signature[] = {
 #ifndef OPENSSL_NO_DSA
-    { "DSA:dsaEncryption", FIPS_DEFAULT_PROPERTIES,
+    { "DSA:dsaEncryption", FIPS_DEFAULT_PROPERTIES_W_BLINDING,
       ossl_dsa_signature_functions },
 #endif
-    { "RSA:rsaEncryption", FIPS_DEFAULT_PROPERTIES,
+    { "RSA:rsaEncryption", FIPS_DEFAULT_PROPERTIES_W_BLINDING,
       ossl_rsa_signature_functions },
 #ifndef OPENSSL_NO_EC
     { "ED25519", FIPS_DEFAULT_PROPERTIES, ossl_ed25519_signature_functions },
     { "ED448", FIPS_DEFAULT_PROPERTIES, ossl_ed448_signature_functions },
-    { "ECDSA", FIPS_DEFAULT_PROPERTIES, ossl_ecdsa_signature_functions },
+    { "ECDSA", FIPS_DEFAULT_PROPERTIES_W_BLINDING, ossl_ecdsa_signature_functions },
 #endif
     { "HMAC", FIPS_DEFAULT_PROPERTIES,
       ossl_mac_legacy_hmac_signature_functions },
@@ -382,7 +383,7 @@ static const OSSL_ALGORITHM fips_signature[] = {
 };
 
 static const OSSL_ALGORITHM fips_asym_cipher[] = {
-    { "RSA:rsaEncryption", FIPS_DEFAULT_PROPERTIES,
+    { "RSA:rsaEncryption", FIPS_DEFAULT_PROPERTIES_W_BLINDING,
       ossl_rsa_asym_cipher_functions },
     { NULL, NULL, NULL }
 };

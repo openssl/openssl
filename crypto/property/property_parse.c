@@ -600,6 +600,7 @@ int ossl_property_parse_init(OSSL_LIB_CTX *ctx)
         "output",       /* Output type for encoders */
         "input",        /* Input type for decoders */
         "structure",    /* Structure name for encoders and decoders */
+        "blinding"      /* Algorithm implements blinding of some kind */
     };
     size_t i;
 
