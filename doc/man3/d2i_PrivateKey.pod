@@ -58,7 +58,7 @@ example to automatically derive the public key if it is not explicitly
 included in the encoding). In this case the supplied library context I<libctx>
 and property query string I<propq> are used.
 If successful and the I<a> parameter is not NULL the function assigns the
-returned B<EVP_KEY> structure pointer to I<*a>, overwriting any previous value.
+returned B<EVP_PKEY> structure pointer to I<*a>, overwriting any previous value.
 
 d2i_PrivateKey() does the same as d2i_PrivateKey_ex() except that the default
 library context and property query string are used.
@@ -99,7 +99,7 @@ EC_GROUP.
 The d2i_PrivateKey_ex(), d2i_PrivateKey(), d2i_AutoPrivateKey_ex(),
 d2i_AutoPrivateKey(), d2i_PrivateKey_ex_bio(), d2i_PrivateKey_bio(),
 d2i_PrivateKey_ex_fp(), d2i_PrivateKey_fp(), d2i_PublicKey(), d2i_KeyParams()
-and d2i_KeyParams_bio() functions return a valid B<EVP_KEY> structure or B<NULL>
+and d2i_KeyParams_bio() functions return a valid B<EVP_PKEY> structure or NULL
 if an error occurs. The error code can be obtained by calling
 L<ERR_get_error(3)>.
 
