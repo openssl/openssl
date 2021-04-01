@@ -1687,7 +1687,7 @@ unless ($disabled{devcryptoeng}) {
 
 unless ($disabled{ktls}) {
     $config{ktls}="";
-    if ($target =~ m/^linux/) {
+    if (grep { $_ eq 'afalgeng' } @{$target{enable}}) {
         my $usr = "/usr/$config{cross_compile_prefix}";
         chop($usr);
         if ($config{cross_compile_prefix} eq "") {
