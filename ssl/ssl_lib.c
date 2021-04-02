@@ -2327,10 +2327,14 @@ int SSL_renegotiate_pending(const SSL *s)
 
 int SSL_new_session_ticket(SSL *s)
 {
-    if (SSL_in_init(s) || SSL_IS_FIRST_HANDSHAKE(s) || !s->server
+    /* If we are in init because we're sending tickets, okay to send more. */
+    if ((SSL_in_init(s) && s->ext.extra_tickets_expected == 0)
+            || SSL_IS_FIRST_HANDSHAKE(s) || !s->server
             || !SSL_IS_TLS13(s))
         return 0;
     s->ext.extra_tickets_expected++;
+    if (s->rlayer.wbuf[0].left == 0 && !SSL_in_init(s))
+        ossl_statem_set_in_init(s, 1);
     return 1;
 }
 
