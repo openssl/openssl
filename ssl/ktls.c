@@ -137,12 +137,15 @@ int ktls_check_supported_cipher(const SSL *s, const EVP_CIPHER *c,
           return 0;
 # endif
 # ifdef OPENSSL_KTLS_AES_GCM_128
+        /* fall thru */
     case NID_aes_128_gcm:
 # endif
 # ifdef OPENSSL_KTLS_AES_GCM_256
+        /* fall thru */
     case NID_aes_256_gcm:
 # endif
 # ifdef OPENSSL_KTLS_CHACHA20_POLY1305
+        /* fall thru */
     case NID_chacha20_poly1305:
 # endif
         return 1;
