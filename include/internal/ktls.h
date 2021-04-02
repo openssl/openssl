@@ -262,7 +262,7 @@ struct tls_crypto_info_all {
 #   ifdef OPENSSL_KTLS_CHACHA20_POLY1305
         struct tls12_crypto_info_chacha20_poly1305 chacha20poly1305;
 #   endif
-    };
+    } u;
     size_t tls_crypto_info_len;
 };
 

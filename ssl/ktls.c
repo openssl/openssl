@@ -178,47 +178,47 @@ int ktls_configure_crypto(const SSL *s, const EVP_CIPHER *c, EVP_CIPHER_CTX *dd,
     {
 # ifdef OPENSSL_KTLS_AES_GCM_128
     case NID_aes_128_gcm:
-        crypto_info->gcm128.info.cipher_type = TLS_CIPHER_AES_GCM_128;
-        crypto_info->gcm128.info.version = s->version;
-        crypto_info->tls_crypto_info_len = sizeof(crypto_info->gcm128);
-        memcpy(crypto_info->gcm128.iv, iiv + EVP_GCM_TLS_FIXED_IV_LEN,
+        crypto_info->u.gcm128.info.cipher_type = TLS_CIPHER_AES_GCM_128;
+        crypto_info->u.gcm128.info.version = s->version;
+        crypto_info->tls_crypto_info_len = sizeof(crypto_info->u.gcm128);
+        memcpy(crypto_info->u.gcm128.iv, iiv + EVP_GCM_TLS_FIXED_IV_LEN,
                 TLS_CIPHER_AES_GCM_128_IV_SIZE);
-        memcpy(crypto_info->gcm128.salt, iiv, TLS_CIPHER_AES_GCM_128_SALT_SIZE);
-        memcpy(crypto_info->gcm128.key, key, EVP_CIPHER_key_length(c));
-        memcpy(crypto_info->gcm128.rec_seq, rl_sequence,
+        memcpy(crypto_info->u.gcm128.salt, iiv, TLS_CIPHER_AES_GCM_128_SALT_SIZE);
+        memcpy(crypto_info->u.gcm128.key, key, EVP_CIPHER_key_length(c));
+        memcpy(crypto_info->u.gcm128.rec_seq, rl_sequence,
                 TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE);
         if (rec_seq != NULL)
-            *rec_seq = crypto_info->gcm128.rec_seq;
+            *rec_seq = crypto_info->u.gcm128.rec_seq;
         return 1;
 # endif
 # ifdef OPENSSL_KTLS_AES_GCM_256
     case NID_aes_256_gcm:
-        crypto_info->gcm256.info.cipher_type = TLS_CIPHER_AES_GCM_256;
-        crypto_info->gcm256.info.version = s->version;
-        crypto_info->tls_crypto_info_len = sizeof(crypto_info->gcm256);
-        memcpy(crypto_info->gcm256.iv, iiv + EVP_GCM_TLS_FIXED_IV_LEN,
+        crypto_info->u.gcm256.info.cipher_type = TLS_CIPHER_AES_GCM_256;
+        crypto_info->u.gcm256.info.version = s->version;
+        crypto_info->tls_crypto_info_len = sizeof(crypto_info->u.gcm256);
+        memcpy(crypto_info->u.gcm256.iv, iiv + EVP_GCM_TLS_FIXED_IV_LEN,
                 TLS_CIPHER_AES_GCM_256_IV_SIZE);
-        memcpy(crypto_info->gcm256.salt, iiv, TLS_CIPHER_AES_GCM_256_SALT_SIZE);
-        memcpy(crypto_info->gcm256.key, key, EVP_CIPHER_key_length(c));
-        memcpy(crypto_info->gcm256.rec_seq, rl_sequence,
+        memcpy(crypto_info->u.gcm256.salt, iiv, TLS_CIPHER_AES_GCM_256_SALT_SIZE);
+        memcpy(crypto_info->u.gcm256.key, key, EVP_CIPHER_key_length(c));
+        memcpy(crypto_info->u.gcm256.rec_seq, rl_sequence,
                 TLS_CIPHER_AES_GCM_256_REC_SEQ_SIZE);
         if (rec_seq != NULL)
-            *rec_seq = crypto_info->gcm256.rec_seq;
+            *rec_seq = crypto_info->u.gcm256.rec_seq;
         return 1;
 # endif
 # ifdef OPENSSL_KTLS_AES_CCM_128
     case NID_aes_128_ccm:
-        crypto_info->ccm128.info.cipher_type = TLS_CIPHER_AES_CCM_128;
-        crypto_info->ccm128.info.version = s->version;
-        crypto_info->tls_crypto_info_len = sizeof(crypto_info->ccm128);
-        memcpy(crypto_info->ccm128.iv, iiv + EVP_CCM_TLS_FIXED_IV_LEN,
+        crypto_info->u.ccm128.info.cipher_type = TLS_CIPHER_AES_CCM_128;
+        crypto_info->u.ccm128.info.version = s->version;
+        crypto_info->tls_crypto_info_len = sizeof(crypto_info->u.ccm128);
+        memcpy(crypto_info->u.ccm128.iv, iiv + EVP_CCM_TLS_FIXED_IV_LEN,
                 TLS_CIPHER_AES_CCM_128_IV_SIZE);
-        memcpy(crypto_info->ccm128.salt, iiv, TLS_CIPHER_AES_CCM_128_SALT_SIZE);
-        memcpy(crypto_info->ccm128.key, key, EVP_CIPHER_key_length(c));
-        memcpy(crypto_info->ccm128.rec_seq, rl_sequence,
+        memcpy(crypto_info->u.ccm128.salt, iiv, TLS_CIPHER_AES_CCM_128_SALT_SIZE);
+        memcpy(crypto_info->u.ccm128.key, key, EVP_CIPHER_key_length(c));
+        memcpy(crypto_info->u.ccm128.rec_seq, rl_sequence,
                 TLS_CIPHER_AES_CCM_128_REC_SEQ_SIZE);
         if (rec_seq != NULL)
-            *rec_seq = crypto_info->ccm128.rec_seq;
+            *rec_seq = crypto_info->u.ccm128.rec_seq;
         return 1;
 # endif
 # ifdef OPENSSL_KTLS_CHACHA20_POLY1305
