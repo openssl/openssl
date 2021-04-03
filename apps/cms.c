@@ -296,10 +296,10 @@ int cms_main(int argc, char **argv)
     EVP_MD *sign_md = NULL;
     STACK_OF(OPENSSL_STRING) *rr_to = NULL, *rr_from = NULL;
     STACK_OF(OPENSSL_STRING) *sksigners = NULL, *skkeys = NULL;
-    STACK_OF(X509) *encerts = NULL, *other = NULL;
+    STACK_OF(X509) *encerts = sk_X509_new_null(), *other = NULL;
     X509 *cert = NULL, *recip = NULL, *signer = NULL, *originator = NULL;
     X509_STORE *store = NULL;
-    X509_VERIFY_PARAM *vpm = NULL;
+    X509_VERIFY_PARAM *vpm = X509_VERIFY_PARAM_new();
     char *certfile = NULL, *keyfile = NULL, *contfile = NULL;
     const char *CAfile = NULL, *CApath = NULL, *CAstore = NULL;
     char *certsoutfile = NULL, *digestname = NULL, *wrapname = NULL;
@@ -321,8 +321,8 @@ int cms_main(int argc, char **argv)
     OPTION_CHOICE o;
     OSSL_LIB_CTX *libctx = app_get0_libctx();
 
-    if ((vpm = X509_VERIFY_PARAM_new()) == NULL)
-        return 1;
+    if (encerts == NULL || vpm == NULL)
+        goto end;
 
     prog = opt_init(argc, argv, cms_options);
     while ((o = opt_next()) != OPT_EOF) {
@@ -628,8 +628,6 @@ int cms_main(int argc, char **argv)
             break;
         case OPT_RECIP:
             if (operation == SMIME_ENCRYPT) {
-                if (encerts == NULL && (encerts = sk_X509_new_null()) == NULL)
-                    goto end;
                 cert = load_cert(opt_arg(), FORMAT_UNDEF,
                                  "recipient certificate file");
                 if (cert == NULL)
@@ -646,7 +644,7 @@ int cms_main(int argc, char **argv)
         case OPT_KEYOPT:
             keyidx = -1;
             if (operation == SMIME_ENCRYPT) {
-                if (encerts != NULL)
+                if (sk_X509_num(encerts) > 0)
                     keyidx += sk_X509_num(encerts);
             } else {
                 if (keyfile != NULL || signerfile != NULL)
@@ -784,7 +782,7 @@ int cms_main(int argc, char **argv)
         }
     } else if (operation == SMIME_ENCRYPT) {
         if (*argv == NULL && secret_key == NULL
-            && pwri_pass == NULL && encerts == NULL) {
+            && pwri_pass == NULL && sk_X509_num(encerts) <= 0) {
             BIO_printf(bio_err, "No recipient(s) certificate(s) specified\n");
             goto opthelp;
         }
@@ -825,16 +823,19 @@ int cms_main(int argc, char **argv)
             goto end;
         }
 
-        if (*argv && encerts == NULL)
-            if ((encerts = sk_X509_new_null()) == NULL)
-                goto end;
-        while (*argv) {
-            if ((cert = load_cert(*argv, FORMAT_UNDEF,
-                                  "recipient certificate file")) == NULL)
-                goto end;
-            sk_X509_push(encerts, cert);
-            cert = NULL;
-            argv++;
+        if (*argv != NULL) {
+            if (operation == SMIME_ENCRYPT) {
+                for (; *argv != NULL; argv++) {
+                    cert = load_cert(*argv, FORMAT_UNDEF,
+                                     "recipient certificate file");
+                    if (cert == NULL)
+                        goto end;
+                    sk_X509_push(encerts, cert);
+                    cert = NULL;
+                }
+            } else {
+                BIO_printf(bio_err, "Warning: recipient certificate file parameters ignored for operation other than -encrypt\n");
+            }
         }
     }
 
@@ -1169,9 +1170,10 @@ int cms_main(int argc, char **argv)
     } else if (operation == SMIME_VERIFY) {
         if (CMS_verify(cms, other, store, indata, out, flags) > 0) {
             BIO_printf(bio_err, "%s Verification successful\n",
-                       (flags & CMS_CADES) ? "CAdES" : "CMS");
+                       (flags & CMS_CADES) != 0 ? "CAdES" : "CMS");
         } else {
-            BIO_printf(bio_err, "Verification failure\n");
+            BIO_printf(bio_err, "%s Verification failure\n",
+                       (flags & CMS_CADES) != 0 ? "CAdES" : "CMS");
             if (verify_retcode)
                 ret = verify_err + 32;
             goto end;
