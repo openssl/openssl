@@ -180,6 +180,7 @@ indir data_dir() => sub {
         $server_name = chop_dblquot($server_name);
         load_config($server_name, $server_name);
         {
+          SKIP: {
             my $pid;
             if ($server_name eq "Mock") {
                 indir "Mock" => sub {
@@ -198,6 +199,7 @@ indir data_dir() => sub {
                 };
             };
             stop_mock_server($pid) if $pid;
+          }
         }
     };
 };
