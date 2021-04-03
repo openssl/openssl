@@ -162,6 +162,9 @@ char *opt_init(int ac, char **av, const OPTIONS *o)
     opts = o;
     unknown = NULL;
 
+    /* Make sure prog name is set for usage output */
+    (void)opt_progname(argv[0]);
+
     /* Check all options up until the PARAM marker (if present) */
     for (; o->name != NULL && o->name != OPT_PARAM_STR; ++o) {
 #ifndef NDEBUG

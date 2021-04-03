@@ -3566,8 +3566,7 @@ const OPTIONS *test_get_options(void)
         OPT_TEST_OPTIONS_WITH_EXTRA_USAGE("[file...]\n"),
         { "config", OPT_CONFIG_FILE, '<',
           "The configuration file to use for the libctx" },
-        { OPT_HELP_STR, 1, '-',
-          "file\tFile to run tests on.\n" },
+        { OPT_HELP_STR, 1, '-', "file\tFile to run tests on.\n" },
         { NULL }
     };
     return test_options;

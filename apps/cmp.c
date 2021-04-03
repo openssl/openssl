@@ -2536,8 +2536,8 @@ int cmp_main(int argc, char **argv)
     char mock_server[] = "mock server:1";
     int ret = 0; /* default: failure */
 
+    prog = opt_appname(argv[0]);
     if (argc <= 1) {
-        prog = opt_appname(argv[0]);
         opt_help(cmp_options);
         goto err;
     }

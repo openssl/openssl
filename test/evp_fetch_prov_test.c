@@ -47,8 +47,7 @@ const OPTIONS *test_get_options(void)
         { "fetchfail", OPT_FETCH_FAILURE, '-', "fetch is expected to fail" },
         { "defaultctx", OPT_USE_DEFAULTCTX, '-',
           "Use the default context if this is set" },
-        { OPT_HELP_STR, 1, '-',
-          "file\tProvider names to explicitly load\n" },
+        { OPT_HELP_STR, 1, '-', "file\tProvider names to explicitly load\n" },
         { NULL }
     };
     return test_options;
