@@ -258,7 +258,7 @@
 
 # define OPT_R_OPTIONS \
     OPT_SECTION("Random state"), \
-    {"rand", OPT_R_RAND, 's', "Load the file(s) into the random number generator"}, \
+    {"rand", OPT_R_RAND, 's', "Load the given file(s) into the random number generator"}, \
     {"writerand", OPT_R_WRITERAND, '>', "Write random data to the specified file"}
 
 # define OPT_R_CASES \

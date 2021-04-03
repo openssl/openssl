@@ -292,7 +292,9 @@ int ts_main(int argc, char **argv)
     if (argc != 0 || mode == OPT_ERR)
         goto opthelp;
 
-    app_RAND_load();
+    if (!app_RAND_load())
+        goto end;
+
     if (digestname != NULL) {
         if (!opt_md(digestname, &md))
             goto opthelp;

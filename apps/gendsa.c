@@ -107,7 +107,9 @@ int gendsa_main(int argc, char **argv)
         goto opthelp;
     dsaparams = argv[0];
 
-    app_RAND_load();
+    if (!app_RAND_load())
+        goto end;
+
     if (ciphername != NULL) {
         if (!opt_cipher(ciphername, &enc))
             goto end;

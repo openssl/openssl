@@ -195,7 +195,9 @@ int passwd_main(int argc, char **argv)
         passwds = argv;
     }
 
-    app_RAND_load();
+    if (!app_RAND_load())
+        goto end;
+
     if (mode == passwd_unset) {
         /* use default */
         mode = passwd_md5;

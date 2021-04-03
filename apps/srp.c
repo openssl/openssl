@@ -309,7 +309,9 @@ int srp_main(int argc, char **argv)
     argc = opt_num_rest();
     argv = opt_rest();
 
-    app_RAND_load();
+    if (!app_RAND_load())
+        goto end;
+
     if (srpvfile != NULL && configfile != NULL) {
         BIO_printf(bio_err,
                    "-srpvfile and -configfile cannot be specified together.\n");

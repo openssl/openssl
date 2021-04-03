@@ -225,7 +225,9 @@ int dgst_main(int argc, char **argv)
         BIO_printf(bio_err, "%s: Can only sign or verify one file.\n", prog);
         goto end;
     }
-    app_RAND_load();
+    if (!app_RAND_load())
+        goto end;
+
     if (digestname != NULL) {
         if (!opt_md(digestname, &md))
             goto opthelp;

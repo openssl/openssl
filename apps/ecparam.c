@@ -190,7 +190,9 @@ int ecparam_main(int argc, char **argv)
     if (argc != 0)
         goto opthelp;
 
-    app_RAND_load();
+    if (!app_RAND_load())
+        goto end;
+
     private = genkey ? 1 : 0;
 
     in = bio_open_default(infile, 'r', informat);

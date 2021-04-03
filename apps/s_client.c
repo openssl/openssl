@@ -1475,7 +1475,8 @@ int s_client_main(int argc, char **argv)
     } else if (argc != 0) {
         goto opthelp;
     }
-    app_RAND_load();
+    if (!app_RAND_load())
+        goto end;
 
     if (count4or6 >= 2) {
         BIO_printf(bio_err, "%s: Can't use both -4 and -6\n", prog);

@@ -46,7 +46,7 @@
 # define _UC(c) ((unsigned char)(c))
 
 void app_RAND_load_conf(CONF *c, const char *section);
-void app_RAND_write(void);
+int app_RAND_write(void);
 int app_RAND_load(void);
 
 extern char *default_config_file; /* may be "" */
