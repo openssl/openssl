@@ -63,9 +63,6 @@ int app_RAND_load(void)
     char *p;
     int i, ret = 1;
 
-    if (randfiles == NULL)
-        return 1;
-
     for (i = 0; i < sk_OPENSSL_STRING_num(randfiles); i++) {
         p = sk_OPENSSL_STRING_value(randfiles, i);
         if (!loadfiles(p))
@@ -75,16 +72,20 @@ int app_RAND_load(void)
     return ret;
 }
 
-void app_RAND_write(void)
+int app_RAND_write(void)
 {
+    int ret = 1;
+
     if (save_rand_file == NULL)
-        return;
+        return 1;
     if (RAND_write_file(save_rand_file) == -1) {
         BIO_printf(bio_err, "Cannot write random bytes:\n");
         ERR_print_errors(bio_err);
+        ret = 0;
     }
     OPENSSL_free(save_rand_file);
     save_rand_file =  NULL;
+    return ret;
 }
 
 

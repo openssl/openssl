@@ -345,7 +345,9 @@ int pkcs12_main(int argc, char **argv)
     if (argc != 0)
         goto opthelp;
 
-    app_RAND_load();
+    if (!app_RAND_load())
+        goto end;
+
     if (ciphername != NULL) {
         if (!opt_cipher(ciphername, &enc))
             goto opthelp;

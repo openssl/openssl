@@ -521,7 +521,8 @@ end_of_options:
         goto end;
 
     app_RAND_load_conf(conf, BASE_SECTION);
-    app_RAND_load();
+    if (!app_RAND_load())
+        goto end;
 
     f = NCONF_get_string(conf, section, STRING_MASK);
     if (f == NULL)
