@@ -184,9 +184,13 @@ char *opt_init(int ac, char **av, const OPTIONS *o)
 
         /* Make sure options are legit. */
         OPENSSL_assert(o->name[0] != '-');
-        OPENSSL_assert(o->retval > 0);
+        if (o->valtype == '.')
+            OPENSSL_assert(o->retval == OPT_PARAM);
+        else
+            OPENSSL_assert(o->retval > OPT_PARAM);
         switch (i) {
-        case   0: case '-': case '/': case '<': case '>': case 'E': case 'F':
+        case   0: case '-': case '.':
+        case '/': case '<': case '>': case 'E': case 'F':
         case 'M': case 'U': case 'f': case 'l': case 'n': case 'p': case 's':
         case 'u': case 'c': case ':': case 'N':
             break;
@@ -820,6 +824,9 @@ int opt_next(void)
         case 's':
         case ':':
             /* Just a string. */
+            break;
+        case '.':
+            /* Parameters */
             break;
         case '/':
             if (opt_isdir(arg) > 0)
