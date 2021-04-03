@@ -22,6 +22,9 @@
 
 int OSSL_CMP_log_open(void) /* is designed to be idempotent */
 {
+#ifdef OPENSSL_NO_TRACE
+    return 1;
+#endif
 #ifndef OPENSSL_NO_STDIO
     BIO *bio = BIO_new_fp(stdout, BIO_NOCLOSE);
 
