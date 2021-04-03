@@ -279,7 +279,8 @@ sub start_mock_server {
         print "Mock server already running with pid=$pid\n";
         return $pid;
     }
-    print "Launching mock server: $cmd\n";
+    print "Current directory is ".getcwd()."\n";
+    print "Launching mock server listening on port $server_port: $cmd\n";
     return system("$cmd &") == 0 # start in background, check for success
         ? (sleep 1, mock_server_pid()) : 0;
 }
