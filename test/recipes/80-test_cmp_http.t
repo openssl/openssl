@@ -34,9 +34,9 @@ plan skip_all => "Tests involving local HTTP server not available on Windows, AI
 plan skip_all => "Tests involving local HTTP server not available in cross-compile builds"
     if defined $ENV{EXE_SHELL};
 plan skip_all => "Tests involving local HTTP server require 'kill' command"
-    if system("which kill");
+    if system("which kill >/dev/null");
 plan skip_all => "Tests involving local HTTP server require 'lsof' command"
-    if system("which lsof"); # this typically excludes Solaris
+    if system("which lsof >/dev/null"); # this typically excludes Solaris
 
 sub chop_dblquot { # chop any leading and trailing '"' (needed for Windows)
     my $str = shift;
