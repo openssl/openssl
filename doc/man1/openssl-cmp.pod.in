@@ -743,8 +743,6 @@ L<openssl-passphrase-options(1)>.
 
 {- $OpenSSL::safe::opt_engine_item -}
 
-=back
-
 {- output_off() if $disabled{"deprecated-3.0"}; "" -}
 As an alternative to using this combination:
 
@@ -758,6 +756,16 @@ like this:
 This applies to all options specifying keys: B<-key>, B<-newkey>, and
 B<-tls_key>.
 {- output_on() if $disabled{"deprecated-3.0"}; "" -}
+
+=back
+
+=head2 Provider options
+
+=over 4
+
+{- $OpenSSL::safe::opt_provider_item -}
+
+=back
 
 =head2 TLS connection options
 
