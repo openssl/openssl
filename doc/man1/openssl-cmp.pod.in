@@ -86,6 +86,10 @@ Credentials format options:
 [B<-otherpass> I<arg>]
 {- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
 
+Random state options:
+
+{- $OpenSSL::safe::opt_r_synopsis -}
+
 TLS connection options:
 
 [B<-tls_used>]
@@ -764,6 +768,14 @@ B<-tls_key>.
 =over 4
 
 {- $OpenSSL::safe::opt_provider_item -}
+
+=back
+
+=head2 Random state options
+
+=over 4
+
+{- $OpenSSL::safe::opt_r_item -}
 
 =back
 
