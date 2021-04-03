@@ -222,6 +222,7 @@ typedef enum OPTION_choice {
     OPT_ENGINE,
 #endif
     OPT_PROV_ENUM,
+    OPT_R_ENUM,
 
     OPT_TLS_USED, OPT_TLS_CERT, OPT_TLS_KEY,
     OPT_TLS_KEYPASS,
@@ -412,6 +413,7 @@ const OPTIONS cmp_options[] = {
      "Engines may also be defined in OpenSSL config file engine section."},
 #endif
     OPT_PROV_OPTIONS,
+    OPT_R_OPTIONS,
 
     OPT_SECTION("TLS connection"),
     {"tls_used", OPT_TLS_USED, '-',
@@ -2058,8 +2060,6 @@ static int read_config(void)
     long num = 0;
     char *txt = NULL;
     const OPTIONS *opt;
-    int provider_option;
-    int verification_option;
     int start = OPT_VERBOSITY;
     /*
      * starting with offset OPT_VERBOSITY because OPT_CONFIG and OPT_SECTION
@@ -2075,19 +2075,23 @@ static int read_config(void)
             n_options--;
     OPENSSL_assert(OSSL_NELEM(cmp_vars) == n_options
                  + OPT_PROV__FIRST + 1 - OPT_PROV__LAST
+                 + OPT_R__FIRST + 1 - OPT_R__LAST
                  + OPT_V__FIRST + 1 - OPT_V__LAST);
     for (i = start - OPT_HELP, opt = &cmp_options[start];
          opt->name; i++, opt++) {
-        if (!strcmp(opt->name, OPT_SECTION_STR)
-                || !strcmp(opt->name, OPT_MORE_STR)) {
+        int provider_option = (OPT_PROV__FIRST <= opt->retval
+                               && opt->retval < OPT_PROV__LAST);
+        int rand_state_option = (OPT_R__FIRST <= opt->retval
+                                 && opt->retval < OPT_R__LAST);
+        int verification_option = (OPT_V__FIRST <= opt->retval
+                                   && opt->retval < OPT_V__LAST);
+
+        if (strcmp(opt->name, OPT_SECTION_STR) == 0
+                || strcmp(opt->name, OPT_MORE_STR) == 0) {
             i--;
             continue;
         }
-        provider_option = (OPT_PROV__FIRST <= opt->retval
-                               && opt->retval < OPT_PROV__LAST);
-        verification_option = (OPT_V__FIRST <= opt->retval
-                                   && opt->retval < OPT_V__LAST);
-        if (provider_option || verification_option)
+        if (provider_option || rand_state_option || verification_option)
             i--;
         switch (opt->valtype) {
         case '-':
@@ -2099,6 +2103,7 @@ static int read_config(void)
             }
             break;
         case 's':
+        case '>':
         case 'M':
             txt = conf_get_string(conf, opt_section, opt->name);
             if (txt == NULL) {
@@ -2413,6 +2418,10 @@ static int get_opts(int argc, char **argv)
 #endif
         case OPT_PROV_CASES:
             if (!opt_provider(o))
+                goto opthelp;
+            break;
+        case OPT_R_CASES:
+            if (!opt_rand(o))
                 goto opthelp;
             break;
 
