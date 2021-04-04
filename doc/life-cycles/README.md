@@ -16,3 +16,19 @@ Running `make` will produce a number of `.txt` and `.png` files.
 These are the rendered `.dot` files.  The `.txt` files require
 additional editing before they can be added to the manual pages in
 `internal/man7/life_cycle-*.pod`.
+
+## diagrams
+
+![cipher hosted on pointillism.io](https://pointillism.io/openssl/openssl/blob/master/doc/life-cycles/cipher.dot)
+
+![digest hosted on pointillism.io](https://pointillism.io/openssl/openssl/blob/master/doc/life-cycles/digest.dot)
+
+![kdf hosted on pointillism.io](https://pointillism.io/openssl/openssl/blob/master/doc/life-cycles/kdf.dot)
+
+![mac hosted on pointillism.io](https://pointillism.io/openssl/openssl/blob/master/doc/life-cycles/mac.dot)
+
+![pkey hosted on pointillism.io](https://pointillism.io/openssl/openssl/blob/master/doc/life-cycles/pkey.dot)
+
+![rand hosted on pointillism.io](https://pointillism.io/openssl/openssl/blob/master/doc/life-cycles/rand.dot)
+
+![cipher hosted on pointillism.io](https://pointillism.io/openssl/openssl/blob/master/doc/life-cycles/cipher.dot)
