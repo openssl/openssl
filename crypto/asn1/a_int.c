@@ -308,8 +308,10 @@ ASN1_INTEGER *ossl_c2i_ASN1_INTEGER(ASN1_INTEGER **a, const unsigned char **pp,
 
     c2i_ibuf(ret->data, &neg, *pp, len);
 
-    if (neg)
+    if (neg != 0)
         ret->type |= V_ASN1_NEG;
+    else
+        ret->type &= ~V_ASN1_NEG;
 
     *pp += len;
     if (a != NULL)
@@ -317,7 +319,7 @@ ASN1_INTEGER *ossl_c2i_ASN1_INTEGER(ASN1_INTEGER **a, const unsigned char **pp,
     return ret;
  err:
     ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
-    if ((a == NULL) || (*a != ret))
+    if (a == NULL || *a != ret)
         ASN1_INTEGER_free(ret);
     return NULL;
 }
