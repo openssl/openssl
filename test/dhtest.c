@@ -282,6 +282,7 @@ static int dh_computekey_range_test(void)
     ret = 1;
 err:
     OPENSSL_free(buf);
+    BN_free(priv);
     BN_free(pub);
     BN_free(g);
     BN_free(q);
