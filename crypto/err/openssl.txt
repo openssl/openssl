@@ -66,6 +66,7 @@ ASN1_R_INVALID_STRING_TABLE_VALUE:218:invalid string table value
 ASN1_R_INVALID_UNIVERSALSTRING_LENGTH:133:invalid universalstring length
 ASN1_R_INVALID_UTF8STRING:134:invalid utf8string
 ASN1_R_INVALID_VALUE:219:invalid value
+ASN1_R_LENGTH_TOO_LONG:231:length too long
 ASN1_R_LIST_ERROR:188:list error
 ASN1_R_MIME_NO_CONTENT_TYPE:206:mime no content type
 ASN1_R_MIME_PARSE_ERROR:207:mime parse error

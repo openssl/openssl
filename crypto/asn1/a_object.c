@@ -194,6 +194,10 @@ int i2a_ASN1_OBJECT(BIO *bp, const ASN1_OBJECT *a)
             ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
             return -1;
         }
+        if (i > INT_MAX - 1) {  /* catch an integer overflow */
+            ERR_raise((ERR_LIB_ASN1, ASN1_R_LENGTH_TOO_LONG);
+            return -1;
+        }
         i2t_ASN1_OBJECT(p, i + 1, a);
     }
     if (i <= 0) {
