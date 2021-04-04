@@ -249,9 +249,9 @@ static int dh_computekey_range_test(void)
         || !TEST_true(DH_set0_pqg(dh, p, q, g)))
         goto err;
     p = q = g = NULL;
-    sz = DH_size(dh);
 
-    if (!TEST_ptr(buf = OPENSSL_malloc(sz))
+    if (!TEST_int_gt(sz = DH_size(dh), 0)
+        || !TEST_ptr(buf = OPENSSL_malloc(sz))
         || !TEST_ptr(pub = BN_new())
         || !TEST_ptr(priv = BN_new()))
         goto err;
