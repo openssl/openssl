@@ -195,7 +195,7 @@ int i2a_ASN1_OBJECT(BIO *bp, const ASN1_OBJECT *a)
             return -1;
         }
         if (i > INT_MAX - 1) {  /* catch an integer overflow */
-            ERR_raise((ERR_LIB_ASN1, ASN1_R_LENGTH_TOO_LONG);
+            ERR_raise(ERR_LIB_ASN1, ASN1_R_LENGTH_TOO_LONG);
             return -1;
         }
         i2t_ASN1_OBJECT(p, i + 1, a);
@@ -353,9 +353,11 @@ void ASN1_OBJECT_free(ASN1_OBJECT *a)
     if (a == NULL)
         return;
     if (a->flags & ASN1_OBJECT_FLAG_DYNAMIC_STRINGS) {
-#ifndef CONST_STRICT            /* disable purely for compile-time strict
-                                 * const checking. Doing this on a "real"
-                                 * compile will cause memory leaks */
+#ifndef CONST_STRICT
+        /*
+         * Disable purely for compile-time strict const checking.  Doing this
+         * on a "real" compile will cause memory leaks
+         */
         OPENSSL_free((void*)a->sn);
         OPENSSL_free((void*)a->ln);
 #endif
