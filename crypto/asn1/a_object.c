@@ -190,12 +190,12 @@ int i2a_ASN1_OBJECT(BIO *bp, const ASN1_OBJECT *a)
         return BIO_write(bp, "NULL", 4);
     i = i2t_ASN1_OBJECT(buf, sizeof(buf), a);
     if (i > (int)(sizeof(buf) - 1)) {
-        if ((p = OPENSSL_malloc(i + 1)) == NULL) {
-            ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
-            return -1;
-        }
         if (i > INT_MAX - 1) {  /* catch an integer overflow */
             ERR_raise(ERR_LIB_ASN1, ASN1_R_LENGTH_TOO_LONG);
+            return -1;
+        }
+        if ((p = OPENSSL_malloc(i + 1)) == NULL) {
+            ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
             return -1;
         }
         i2t_ASN1_OBJECT(p, i + 1, a);
