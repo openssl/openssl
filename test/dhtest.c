@@ -257,8 +257,10 @@ static int dh_computekey_range_test(void)
         goto err;
 
     if (!TEST_true(BN_set_word(priv, 1))
-        || !TEST_true(DH_set0_key(dh, NULL, priv))
-        || !TEST_true(BN_set_word(pub, 1)))
+        || !TEST_true(DH_set0_key(dh, NULL, priv)))
+        goto err;
+    priv = NULL;
+    if (!TEST_true(BN_set_word(pub, 1)))
         goto err;
 
     /* Given z = pub ^ priv mod p */
