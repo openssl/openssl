@@ -114,9 +114,11 @@ err:
 
 static int template_private_test(void)
 {
-    static int data1[] = { 2, 3, 5, 7, 11, 15, 17 };
+    int *data1, j;
+    const int data1_num = 12;
+    const int data1_size = data1_num * sizeof(int);
     static unsigned char data2[] = { 2, 4, 6, 8, 10 };
-    OSSL_PARAM_BLD *bld = OSSL_PARAM_BLD_new();
+    OSSL_PARAM_BLD *bld = NULL;
     OSSL_PARAM *params = NULL, *p;
     unsigned int i;
     unsigned long int l;
@@ -126,8 +128,14 @@ static int template_private_test(void)
     BIGNUM *bn = NULL, *bn_res = NULL;
     int res = 0;
 
-    if (!TEST_ptr(bld)
-        || !TEST_true(OSSL_PARAM_BLD_push_uint(bld, "i", 6))
+    if (!TEST_ptr(data1 = OPENSSL_secure_malloc(data1_size))
+            || !TEST_ptr(bld = OSSL_PARAM_BLD_new()))
+        goto err;
+
+    for (j = 0; j < data1_num; j++)
+        data1[j] = -16 * j;
+
+    if (!TEST_true(OSSL_PARAM_BLD_push_uint(bld, "i", 6))
         || !TEST_true(OSSL_PARAM_BLD_push_ulong(bld, "l", 42))
         || !TEST_true(OSSL_PARAM_BLD_push_uint32(bld, "i32", 1532))
         || !TEST_true(OSSL_PARAM_BLD_push_uint64(bld, "i64", 9999999))
@@ -196,6 +204,7 @@ static int template_private_test(void)
 err:
     OSSL_PARAM_BLD_free_params(params);
     OSSL_PARAM_BLD_free(bld);
+    OPENSSL_secure_free(data1);
     BN_free(bn);
     BN_free(bn_res);
     return res;
