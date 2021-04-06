@@ -66,7 +66,7 @@ static const unsigned long tag2bit[32] = {
     /* tags  4- 7 */
     B_ASN1_OCTET_STRING, 0, 0, B_ASN1_UNKNOWN,
     /* tags  8-11 */
-    B_ASN1_UNKNOWN, B_ASN1_UNKNOWN, B_ASN1_UNKNOWN, B_ASN1_UNKNOWN,
+    B_ASN1_UNKNOWN, B_ASN1_UNKNOWN, 0, B_ASN1_UNKNOWN,
     /* tags 12-15 */
     B_ASN1_UTF8STRING, B_ASN1_UNKNOWN, B_ASN1_UNKNOWN, B_ASN1_UNKNOWN,
     /* tags 16-19 */
