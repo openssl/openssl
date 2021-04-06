@@ -2088,7 +2088,7 @@ int speed_main(int argc, char **argv)
         if (doit[algindex]) {
             int st = 1;
 
-            keylen = 16 + i * 8;
+            keylen = 16 + k * 8;
             for (i = 0; st && i < loopargs_len; i++) {
                 loopargs[i].ctx = init_evp_cipher_ctx(names[algindex],
                                                       key32, keylen);
