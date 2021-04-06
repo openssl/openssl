@@ -167,8 +167,7 @@ written to I<*outlen>.
 =head2 Properties
 
 The following property is set by some of the OpenSSL asymmetric cipher
-algorithms. Third party implementations can set additional properties not
-mentioned here.
+algorithms.
 
 =over 4
 
