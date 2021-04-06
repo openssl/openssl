@@ -281,7 +281,7 @@ static OSSL_STORE_LOADER *inner_loader_fetch(OSSL_LIB_CTX *libctx,
     }
 
     /*
-     * If we have been passed neither a scheme_id or a scheme, we have an
+     * If we have been passed neither a scheme_id nor a scheme, we have an
      * internal programming error.
      */
     if (!ossl_assert(id != 0 || scheme != NULL)) {
