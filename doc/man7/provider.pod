@@ -194,7 +194,7 @@ use alternative names or names that OpenSSL has used historically.
 
 =head1 OPENSSL PROVIDERS
 
-OpenSSL providers a number of its own providers. These are the default, base,
+OpenSSL provides a number of its own providers. These are the default, base,
 fips, legacy and null providers. See L<crypto(7)> for an overview of these
 providers.
 
