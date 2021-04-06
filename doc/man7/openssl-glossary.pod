@@ -132,9 +132,8 @@ L<OSSL_PROVIDER-null(7)>
 
 =item Operation
 
-An operation in OpenSSL is a group of algorithms with a common purpose such as
-encryption, or digesting. Each operation has a set of OpenSSL functions
-associated with it for using that operation.
+An operation is a group of OpenSSL functions with a common purpose such as 
+encryption, or digesting.
 
 L<crypto(7)>
 
