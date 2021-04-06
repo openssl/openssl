@@ -212,7 +212,7 @@ int CRYPTO_secure_allocated(const void *ptr)
 
     if (!secure_mem_initialized)
         return 0;
-    if (!CRYPTO_THREAD_write_lock(sec_malloc_lock))
+    if (!CRYPTO_THREAD_read_lock(sec_malloc_lock))
         return 0;
     ret = sh_allocated(ptr);
     CRYPTO_THREAD_unlock(sec_malloc_lock);
