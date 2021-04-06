@@ -324,6 +324,8 @@ static int internal_find(OPENSSL_STACK *st, const void *data,
     }
     if (data == NULL)
         return -1;
+    if (pnum != NULL)
+        ret_val_options |= OSSL_BSEARCH_FIRST_VALUE_ON_MATCH;
     r = ossl_bsearch(&data, st->data, st->num, sizeof(void *), st->comp,
                      ret_val_options);
 
