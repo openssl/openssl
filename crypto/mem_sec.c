@@ -208,15 +208,14 @@ void CRYPTO_secure_clear_free(void *ptr, size_t num,
 int CRYPTO_secure_allocated(const void *ptr)
 {
 #ifndef OPENSSL_NO_SECURE_MEMORY
-    int ret;
-
     if (!secure_mem_initialized)
         return 0;
-    if (!CRYPTO_THREAD_read_lock(sec_malloc_lock))
-        return 0;
-    ret = sh_allocated(ptr);
-    CRYPTO_THREAD_unlock(sec_malloc_lock);
-    return ret;
+    /*
+     * Only read accesses to the arena take place in sh_allocated() and this
+     * is only changed by the sh_init() and sh_done() calls which are not
+     * locked.  Hence, it is safe to make this check without a lock too.
+     */
+    return sh_allocated(ptr);
 #else
     return 0;
 #endif /* OPENSSL_NO_SECURE_MEMORY */
