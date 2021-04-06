@@ -300,7 +300,7 @@ providers are loaded and offer implementations of the same algorithms), the
 property query string "provider=fips" can be used as a search criterion for
 these implementations. All approved algorithm implementations in the FIPS
 provider can also be selected with the property "fips=yes". The FIPS provider
-may also contain a non-approved algorithm implementations and these can be
+may also contain non-approved algorithm implementations and these can be
 selected with the property "fips=no".
 
 See L<OSSL_PROVIDER-FIPS(7)>.
@@ -311,7 +311,7 @@ The legacy provider is a dynamically loadable module, and must therefore
 be loaded explicitly, either in code or through OpenSSL configuration
 (see L<config(5)>). It contains algorithm implementations that are considered
 insecure, or are no longer in common use such as MD2 or RC4. Should it be needed
-(if othe providers are loaded and offer implementations of the same algorithms),
+(if other providers are loaded and offer implementations of the same algorithms),
 the property "provider=legacy" can be used as a search criterion for these
 implementations.
 
