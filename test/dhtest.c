@@ -250,7 +250,7 @@ static int dh_computekey_range_test(void)
         goto err;
     p = q = g = NULL;
 
-    if (!TEST_int_ge(sz = DH_size(dh), 0)
+    if (!TEST_int_gt(sz = DH_size(dh), 0)
         || !TEST_ptr(buf = OPENSSL_malloc(sz))
         || !TEST_ptr(pub = BN_new())
         || !TEST_ptr(priv = BN_new()))
