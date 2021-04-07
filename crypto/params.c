@@ -1291,4 +1291,3 @@ int OSSL_PARAM_get_octet_string_ptr(const OSSL_PARAM *p, const void **val,
     return OSSL_PARAM_get_octet_ptr(p, val, used_len)
         || get_string_ptr_internal(p, val, used_len, OSSL_PARAM_OCTET_STRING);
 }
-

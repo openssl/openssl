@@ -1626,6 +1626,10 @@ DEPEND[html/man3/OSSL_PARAM_allocate_from_text.html]=man3/OSSL_PARAM_allocate_fr
 GENERATE[html/man3/OSSL_PARAM_allocate_from_text.html]=man3/OSSL_PARAM_allocate_from_text.pod
 DEPEND[man/man3/OSSL_PARAM_allocate_from_text.3]=man3/OSSL_PARAM_allocate_from_text.pod
 GENERATE[man/man3/OSSL_PARAM_allocate_from_text.3]=man3/OSSL_PARAM_allocate_from_text.pod
+DEPEND[html/man3/OSSL_PARAM_dup.html]=man3/OSSL_PARAM_dup.pod
+GENERATE[html/man3/OSSL_PARAM_dup.html]=man3/OSSL_PARAM_dup.pod
+DEPEND[man/man3/OSSL_PARAM_dup.3]=man3/OSSL_PARAM_dup.pod
+GENERATE[man/man3/OSSL_PARAM_dup.3]=man3/OSSL_PARAM_dup.pod
 DEPEND[html/man3/OSSL_PARAM_int.html]=man3/OSSL_PARAM_int.pod
 GENERATE[html/man3/OSSL_PARAM_int.html]=man3/OSSL_PARAM_int.pod
 DEPEND[man/man3/OSSL_PARAM_int.3]=man3/OSSL_PARAM_int.pod
@@ -3048,6 +3052,7 @@ html/man3/OSSL_LIB_CTX.html \
 html/man3/OSSL_PARAM.html \
 html/man3/OSSL_PARAM_BLD.html \
 html/man3/OSSL_PARAM_allocate_from_text.html \
+html/man3/OSSL_PARAM_dup.html \
 html/man3/OSSL_PARAM_int.html \
 html/man3/OSSL_PROVIDER.html \
 html/man3/OSSL_SELF_TEST_new.html \
@@ -3621,6 +3626,7 @@ man/man3/OSSL_LIB_CTX.3 \
 man/man3/OSSL_PARAM.3 \
 man/man3/OSSL_PARAM_BLD.3 \
 man/man3/OSSL_PARAM_allocate_from_text.3 \
+man/man3/OSSL_PARAM_dup.3 \
 man/man3/OSSL_PARAM_int.3 \
 man/man3/OSSL_PROVIDER.3 \
 man/man3/OSSL_SELF_TEST_new.3 \
