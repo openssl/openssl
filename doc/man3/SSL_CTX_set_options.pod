@@ -279,6 +279,29 @@ responsible for cleansing all other buffers. Most notably, this
 applies to buffers passed to functions like L<SSL_read(3)>,
 L<SSL_peek(3)> but also like L<SSL_write(3)>.
 
+=item SSL_OP_ENABLE_KTLS
+
+Enable the use of kernel TLS. In order to benefit from kernel TLS OpenSSL must
+have been compiled with support for it, and it must be supported by the
+negotiated ciphersuites and extensions. The specific ciphersuites and extensions
+that are supported may vary by platform and kernel version.
+
+The kernel TLS data-path implements the record layer, and the encryption
+algorithm. The kernel will utilize the best hardware
+available for encryption. Using the kernel data-path should reduce the memory
+footprint of OpenSSL because no buffering is required. Also, the throughput
+should improve because data copy is avoided when user data is encrypted into
+kernel memory instead of the usual encrypt then copy to kernel.
+
+Kernel TLS might not support all the features of OpenSSL. For instance,
+renegotiation, and setting the maximum fragment size is not possible as of
+Linux 4.20.
+
+Note that with kernel TLS enabled some cryptographic operations are performed
+by the kernel directly and not via any available OpenSSL Providers. This might
+be undesirable if, for example, the application requires all cryptographic
+operations to be performed by the FIPS provider.
+
 =back
 
 The following options no longer have any effect but their identifiers are

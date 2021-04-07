@@ -23,6 +23,12 @@ OpenSSL 3.0
 
 ### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
 
+ * Added support for Kernel TLS (KTLS). In order to use KTLS, support for it
+   must be compiled in using the "enable-ktls" compile time option. It must
+   also be enabled at run time using the SSL_OP_ENABLE_KTLS option.
+
+   *Boris Pismenny, John Baldwin and Andrew Gallatin*
+
  * A public key check is now performed during EVP_PKEY_derive_set_peer().
    Previously DH was internally doing this during EVP_PKEY_derive().
    To disable this check use EVP_PKEY_derive_set_peer_ex(dh, peer, 0). This
