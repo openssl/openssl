@@ -137,6 +137,7 @@ int ktls_check_supported_cipher(const SSL *s, const EVP_CIPHER *c,
           return 0;
 # endif
 # ifdef OPENSSL_KTLS_AES_GCM_128
+        /* Fall through */
     case NID_aes_128_gcm:
 # endif
 # ifdef OPENSSL_KTLS_AES_GCM_256

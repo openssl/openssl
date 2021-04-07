@@ -434,11 +434,7 @@ int tls1_change_cipher_state(SSL *s, int which)
     }
 
 #ifndef OPENSSL_NO_KTLS
-    if (s->compress)
-        goto skip_ktls;
-
-    if (((which & SSL3_CC_READ) && (s->mode & SSL_MODE_NO_KTLS_RX))
-        || ((which & SSL3_CC_WRITE) && (s->mode & SSL_MODE_NO_KTLS_TX)))
+    if (s->compress || (s->options & SSL_OP_ENABLE_KTLS) == 0)
         goto skip_ktls;
 
     /* ktls supports only the maximum fragment size */
