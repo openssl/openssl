@@ -1761,7 +1761,7 @@ static MSG_PROCESS_RETURN tls_process_as_hello_retry_request(SSL *s,
     return MSG_PROCESS_ERROR;
 }
 
-/* prepare server cert verificaton by setting s->session->peer_chain from pkt */
+/* prepare server cert verification by setting s->session->peer_chain from pkt */
 MSG_PROCESS_RETURN tls_process_server_certificate(SSL *s, PACKET *pkt)
 {
     unsigned long cert_list_len, cert_len;
