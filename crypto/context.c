@@ -11,6 +11,7 @@
 #include <openssl/conf.h>
 #include "internal/thread_once.h"
 #include "internal/property.h"
+#include "internal/core.h"
 
 struct ossl_lib_ctx_onfree_list_st {
     ossl_lib_ctx_onfree_fn *fn;
@@ -38,6 +39,21 @@ struct ossl_lib_ctx_st {
     int run_once_ret[OSSL_LIB_CTX_MAX_RUN_ONCE];
     struct ossl_lib_ctx_onfree_list_st *onfreelist;
 };
+
+int ossl_lib_ctx_write_lock(OSSL_LIB_CTX *ctx)
+{
+    return CRYPTO_THREAD_write_lock(ossl_lib_ctx_get_concrete(ctx)->lock);
+}
+
+int ossl_lib_ctx_read_lock(OSSL_LIB_CTX *ctx)
+{
+    return CRYPTO_THREAD_read_lock(ossl_lib_ctx_get_concrete(ctx)->lock);
+}
+
+int ossl_lib_ctx_unlock(OSSL_LIB_CTX *ctx)
+{
+    return CRYPTO_THREAD_unlock(ossl_lib_ctx_get_concrete(ctx)->lock);
+}
 
 static int context_init(OSSL_LIB_CTX *ctx)
 {
