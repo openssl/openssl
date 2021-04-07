@@ -524,6 +524,10 @@ B<CANames>: use CA names extension, enabled by
 default. Inverse of B<SSL_OP_DISABLE_TLSEXT_CA_NAMES>: that is,
 B<-CANames> is the same as setting B<SSL_OP_DISABLE_TLSEXT_CA_NAMES>.
 
+B<KTLS>: Enables kernel TLS if support has been compiled in, and it is supported
+by the negotiated ciphersuites and extensions. Equivalent to
+B<SSL_OP_ENABLE_KTLS>.
+
 =item B<VerifyMode>
 
 The B<value> argument is a comma separated list of flags to set.
