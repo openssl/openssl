@@ -1857,7 +1857,7 @@ void *evp_pkey_export_to_provider(EVP_PKEY *pk, OSSL_LIB_CTX *libctx,
 
         /* Synchronize the dirty count */
         pk->dirty_cnt_copy = pk->ameth->dirty_cnt(pk);
-    
+
         CRYPTO_THREAD_unlock(pk->lock);
         goto end;
     }

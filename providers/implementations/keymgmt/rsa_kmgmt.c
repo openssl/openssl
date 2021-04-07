@@ -49,6 +49,7 @@ static OSSL_FUNC_keymgmt_import_types_fn rsa_import_types;
 static OSSL_FUNC_keymgmt_export_fn rsa_export;
 static OSSL_FUNC_keymgmt_export_types_fn rsa_export_types;
 static OSSL_FUNC_keymgmt_query_operation_name_fn rsa_query_operation_name;
+static OSSL_FUNC_keymgmt_dup_fn rsa_dup;
 
 #define RSA_DEFAULT_MD "SHA256"
 #define RSA_PSS_DEFAULT_MD OSSL_DIGEST_NAME_SHA1
@@ -645,6 +646,13 @@ static void *rsapss_load(const void *reference, size_t reference_sz)
     return common_load(reference, reference_sz, RSA_FLAG_TYPE_RSASSAPSS);
 }
 
+static void *rsa_dup(const void *keydata_from)
+{
+    if (ossl_prov_is_running())
+        return ossl_rsa_dup(keydata_from);
+    return NULL;
+}
+
 /* For any RSA key, we use the "RSA" algorithms regardless of sub-type. */
 static const char *rsa_query_operation_name(int operation_id)
 {
@@ -671,6 +679,7 @@ const OSSL_DISPATCH ossl_rsa_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_IMPORT_TYPES, (void (*)(void))rsa_import_types },
     { OSSL_FUNC_KEYMGMT_EXPORT, (void (*)(void))rsa_export },
     { OSSL_FUNC_KEYMGMT_EXPORT_TYPES, (void (*)(void))rsa_export_types },
+    { OSSL_FUNC_KEYMGMT_DUP, (void (*)(void))rsa_dup },
     { 0, NULL }
 };
 
@@ -695,5 +704,6 @@ const OSSL_DISPATCH ossl_rsapss_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_EXPORT_TYPES, (void (*)(void))rsa_export_types },
     { OSSL_FUNC_KEYMGMT_QUERY_OPERATION_NAME,
       (void (*)(void))rsa_query_operation_name },
+    { OSSL_FUNC_KEYMGMT_DUP, (void (*)(void))rsa_dup },
     { 0, NULL }
 };

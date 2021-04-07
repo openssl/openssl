@@ -459,6 +459,12 @@ int evp_keymgmt_util_copy(EVP_PKEY *to, EVP_PKEY *from, int selection)
             evp_keymgmt_freedata(to_keymgmt, alloc_keydata);
             return 0;
         }
+    } else if (to_keymgmt == from->keymgmt && to_keymgmt->dup != NULL
+               && to_keydata == NULL
+               && selection == OSSL_KEYMGMT_SELECT_ALL) {
+        to_keydata = alloc_keydata = evp_keymgmt_dup(to_keymgmt, from->keydata);
+        if (to_keydata == NULL)
+            return 0;
     } else if (match_type(to_keymgmt, from->keymgmt)) {
         struct evp_keymgmt_util_try_import_data_st import_data;
 

@@ -406,16 +406,18 @@ static int ecx_generic_import_from(const OSSL_PARAM params[], void *vpctx,
 
 static int ecx_pkey_copy(EVP_PKEY *to, EVP_PKEY *from)
 {
-    ECX_KEY *ecx = from->pkey.ecx;
+    ECX_KEY *ecx = from->pkey.ecx, *dupkey = NULL;
     int ret;
 
-    /* We can do just up-ref as ECX keys are immutable */
-    if (ecx != NULL && !ossl_ecx_key_up_ref(ecx))
-        return 0;
+    if (ecx != NULL) {
+        dupkey = ossl_ecx_key_dup(ecx);
+        if (dupkey == NULL)
+            return 0;
+    }
 
-    ret = EVP_PKEY_assign(to, from->type, ecx);
+    ret = EVP_PKEY_assign(to, from->type, dupkey);
     if (!ret)
-        ossl_ecx_key_free(ecx);
+        ossl_ecx_key_free(dupkey);
     return ret;
 }
 

@@ -45,6 +45,7 @@ static OSSL_FUNC_keymgmt_import_fn dh_import;
 static OSSL_FUNC_keymgmt_import_types_fn dh_import_types;
 static OSSL_FUNC_keymgmt_export_fn dh_export;
 static OSSL_FUNC_keymgmt_export_types_fn dh_export_types;
+static OSSL_FUNC_keymgmt_dup_fn dh_dup;
 
 #define DH_POSSIBLE_SELECTIONS                                                 \
     (OSSL_KEYMGMT_SELECT_KEYPAIR | OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS)
@@ -707,7 +708,7 @@ static void dh_gen_cleanup(void *genctx)
     OPENSSL_free(gctx);
 }
 
-void *dh_load(const void *reference, size_t reference_sz)
+static void *dh_load(const void *reference, size_t reference_sz)
 {
     DH *dh = NULL;
 
@@ -718,6 +719,13 @@ void *dh_load(const void *reference, size_t reference_sz)
         *(DH **)reference = NULL;
         return dh;
     }
+    return NULL;
+}
+
+static void *dh_dup(const void *keydata_from)
+{
+    if (ossl_prov_is_running())
+        return ossl_dh_dup(keydata_from);
     return NULL;
 }
 
@@ -743,6 +751,7 @@ const OSSL_DISPATCH ossl_dh_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_IMPORT_TYPES, (void (*)(void))dh_import_types },
     { OSSL_FUNC_KEYMGMT_EXPORT, (void (*)(void))dh_export },
     { OSSL_FUNC_KEYMGMT_EXPORT_TYPES, (void (*)(void))dh_export_types },
+    { OSSL_FUNC_KEYMGMT_DUP, (void (*)(void))dh_dup },
     { 0, NULL }
 };
 
@@ -776,5 +785,6 @@ const OSSL_DISPATCH ossl_dhx_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_EXPORT_TYPES, (void (*)(void))dh_export_types },
     { OSSL_FUNC_KEYMGMT_QUERY_OPERATION_NAME,
       (void (*)(void))dhx_query_operation_name },
+    { OSSL_FUNC_KEYMGMT_DUP, (void (*)(void))dh_dup },
     { 0, NULL }
 };

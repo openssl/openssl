@@ -71,6 +71,7 @@ static OSSL_FUNC_keymgmt_import_fn ecx_import;
 static OSSL_FUNC_keymgmt_import_types_fn ecx_imexport_types;
 static OSSL_FUNC_keymgmt_export_fn ecx_export;
 static OSSL_FUNC_keymgmt_export_types_fn ecx_imexport_types;
+static OSSL_FUNC_keymgmt_dup_fn ecx_dup;
 
 #define ECX_POSSIBLE_SELECTIONS (OSSL_KEYMGMT_SELECT_KEYPAIR)
 
@@ -691,6 +692,13 @@ void *ecx_load(const void *reference, size_t reference_sz)
     return NULL;
 }
 
+static void *ecx_dup(const void *keydata_from)
+{
+    if (ossl_prov_is_running())
+        return ossl_ecx_key_dup(keydata_from);
+    return NULL;
+}
+
 static int ecx_key_pairwise_check(const ECX_KEY *ecx, int type)
 {
     uint8_t pub[64];
@@ -788,6 +796,7 @@ static int ed448_validate(const void *keydata, int selection, int checktype)
         { OSSL_FUNC_KEYMGMT_GEN, (void (*)(void))alg##_gen }, \
         { OSSL_FUNC_KEYMGMT_GEN_CLEANUP, (void (*)(void))ecx_gen_cleanup }, \
         { OSSL_FUNC_KEYMGMT_LOAD, (void (*)(void))ecx_load }, \
+        { OSSL_FUNC_KEYMGMT_DUP, (void (*)(void))ecx_dup }, \
         { 0, NULL } \
     };
 

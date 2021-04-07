@@ -55,6 +55,9 @@ provider-keymgmt - The KEYMGMT library E<lt>-E<gt> provider functions
  /* Key object copy */
  int OSSL_FUNC_keymgmt_copy(void *keydata_to, const void *keydata_from, int selection);
 
+ /* Key object duplication, a constructor */
+ void *OSSL_FUNC_keymgmt_dup(const void *keydata_from);
+
  /* Key object validation */
  int OSSL_FUNC_keymgmt_validate(const void *keydata, int selection, int checktype);
 
@@ -119,6 +122,7 @@ macros in L<openssl-core_dispatch.h(7)>, as follows:
  OSSL_FUNC_keymgmt_export_types         OSSL_FUNC_KEYMGMT_EXPORT_TYPES
 
  OSSL_FUNC_keymgmt_copy                 OSSL_FUNC_KEYMGMT_COPY
+ OSSL_FUNC_keymgmt_dup                  OSSL_FUNC_KEYMGMT_DUP
 
 =head2 Key Objects
 
@@ -342,6 +346,9 @@ from I<keydata_from> to I<keydata_to>.  It is assumed that the caller
 has ensured that I<keydata_to> and I<keydata_from> are both owned by
 the implementation of this function.
 
+OSSL_FUNC_keymgmt_dup() should duplicate the key data I<keydata_from> and
+create a new provider side key object with the data.
+
 =head2 Common Information Parameters
 
 See L<OSSL_PARAM(3)> for further details on the parameters structure.
@@ -379,8 +386,8 @@ Bits of security is defined in SP800-57.
 
 =head1 RETURN VALUES
 
-OSSL_FUNC_keymgmt_new() should return a valid reference to the newly created provider
-side key object, or NULL on failure.
+OSSL_FUNC_keymgmt_new() and OSSL_FUNC_keymgmt_dup() should return a valid
+reference to the newly created provider side key object, or NULL on failure.
 
 OSSL_FUNC_keymgmt_import(), OSSL_FUNC_keymgmt_export(), OSSL_FUNC_keymgmt_get_params() and
 OSSL_FUNC_keymgmt_set_params() should return 1 for success or 0 on error.
