@@ -13,6 +13,17 @@
 
 # include <openssl/safestack.h>
 # include <openssl/param_build.h>
+# include "internal/cryptlib.h"
+
+typedef union {
+    OSSL_UNION_ALIGN;
+} OSSL_PARAM_ALIGNED_BLOCK;
+
+# define OSSL_PARAM_ALIGN_SIZE  sizeof(OSSL_PARAM_ALIGNED_BLOCK)
+
+size_t ossl_param_bytes_to_blocks(size_t bytes);
+void ossl_param_set_secure_block(OSSL_PARAM *last, void *secure_buffer,
+                                 size_t secure_buffer_sz);
 
 int ossl_param_build_set_int(OSSL_PARAM_BLD *bld, OSSL_PARAM *p,
                              const char *key, int num);
