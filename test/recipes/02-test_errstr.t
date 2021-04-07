@@ -69,8 +69,8 @@ foreach my $errname (@Errno::EXPORT_OK) {
       # is to skip this errcode.
       skip "perl error strings and ssystem error strings for errcode 0 differ", 1
           if $errcode == 0;
-      # On some systems, there are negative error codes.  These are currently
-      # unsupported in OpenSSL error reports.
+      # On some systems (for example Hurd), there are negative error codes.
+      # These are currently unsupported in OpenSSL error reports.
       skip "negative error codes are not supported in OpenSSL", 1
           if $errcode < 0;
 
