@@ -611,7 +611,7 @@ int ec_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
 
  err:
     OSSL_PARAM_BLD_free(tmpl);
-    OSSL_PARAM_BLD_free_params(params);
+    OSSL_PARAM_free(params);
     OPENSSL_free(pub_key_buf);
     OPENSSL_free(gen_buf);
     BN_CTX_end(bnctx);

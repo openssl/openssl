@@ -781,7 +781,7 @@ static int rsa_int_export_to(const EVP_PKEY *from, int rsa_type,
     rv = evp_keymgmt_import(to_keymgmt, to_keydata, selection, params);
 
  err:
-    OSSL_PARAM_BLD_free_params(params);
+    OSSL_PARAM_free(params);
     OSSL_PARAM_BLD_free(tmpl);
     return rv;
 }

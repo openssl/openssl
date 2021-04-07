@@ -574,7 +574,7 @@ static int test_EVP_PKEY_ffc_priv_pub(char *keytype)
 
     if (!test_fromdata(keytype, params))
         goto err;
-    OSSL_PARAM_BLD_free_params(params);
+    OSSL_PARAM_free(params);
     OSSL_PARAM_BLD_free(bld);
 
     /* Test priv and !pub */
@@ -590,7 +590,7 @@ static int test_EVP_PKEY_ffc_priv_pub(char *keytype)
 
     if (!test_fromdata(keytype, params))
         goto err;
-    OSSL_PARAM_BLD_free_params(params);
+    OSSL_PARAM_free(params);
     OSSL_PARAM_BLD_free(bld);
 
     /* Test !priv and pub */
@@ -606,7 +606,7 @@ static int test_EVP_PKEY_ffc_priv_pub(char *keytype)
 
     if (!test_fromdata(keytype, params))
         goto err;
-    OSSL_PARAM_BLD_free_params(params);
+    OSSL_PARAM_free(params);
     OSSL_PARAM_BLD_free(bld);
 
     /* Test priv and pub */
@@ -627,7 +627,7 @@ static int test_EVP_PKEY_ffc_priv_pub(char *keytype)
 
     ret = 1;
  err:
-    OSSL_PARAM_BLD_free_params(params);
+    OSSL_PARAM_free(params);
     OSSL_PARAM_BLD_free(bld);
     BN_free(p);
     BN_free(q);
@@ -683,7 +683,7 @@ static int test_EC_priv_pub(void)
 
     if (!test_fromdata("EC", params))
         goto err;
-    OSSL_PARAM_BLD_free_params(params);
+    OSSL_PARAM_free(params);
     OSSL_PARAM_BLD_free(bld);
 
     /* Test priv and !pub */
@@ -699,7 +699,7 @@ static int test_EC_priv_pub(void)
 
     if (!test_fromdata("EC", params))
         goto err;
-    OSSL_PARAM_BLD_free_params(params);
+    OSSL_PARAM_free(params);
     OSSL_PARAM_BLD_free(bld);
 
     /* Test !priv and pub */
@@ -716,7 +716,7 @@ static int test_EC_priv_pub(void)
 
     if (!test_fromdata("EC", params))
         goto err;
-    OSSL_PARAM_BLD_free_params(params);
+    OSSL_PARAM_free(params);
     OSSL_PARAM_BLD_free(bld);
 
     /* Test priv and pub */
@@ -738,7 +738,7 @@ static int test_EC_priv_pub(void)
 
     ret = 1;
  err:
-    OSSL_PARAM_BLD_free_params(params);
+    OSSL_PARAM_free(params);
     OSSL_PARAM_BLD_free(bld);
     BN_free(priv);
 
@@ -2083,7 +2083,7 @@ static int test_DSA_get_set_params(void)
  err:
     EVP_PKEY_free(pkey);
     EVP_PKEY_CTX_free(pctx);
-    OSSL_PARAM_BLD_free_params(params);
+    OSSL_PARAM_free(params);
     OSSL_PARAM_BLD_free(bld);
     BN_free(p);
     BN_free(q);
@@ -2144,7 +2144,7 @@ static int test_RSA_get_set_params(void)
  err:
     EVP_PKEY_free(pkey);
     EVP_PKEY_CTX_free(pctx);
-    OSSL_PARAM_BLD_free_params(params);
+    OSSL_PARAM_free(params);
     OSSL_PARAM_BLD_free(bld);
     BN_free(n);
     BN_free(e);

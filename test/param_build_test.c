@@ -130,7 +130,7 @@ err:
     OPENSSL_free(p1);
     if (params != params_blt)
         OPENSSL_free(params);
-    OSSL_PARAM_BLD_free_params(params_blt);
+    OSSL_PARAM_free(params_blt);
     OSSL_PARAM_BLD_free(bld);
     OPENSSL_free(utf);
     BN_free(bn);
@@ -265,7 +265,7 @@ err:
     OSSL_PARAM_free(p1);
     if (params != params_blt)
         OSSL_PARAM_free(params);
-    OSSL_PARAM_BLD_free_params(params_blt);
+    OSSL_PARAM_free(params_blt);
     OSSL_PARAM_BLD_free(bld);
     OPENSSL_secure_free(data1);
     OPENSSL_secure_free(data2);
@@ -300,7 +300,7 @@ static int builder_limit_test(void)
         goto err;
 
     /* Verify that the build, cleared the builder structure */
-    OSSL_PARAM_BLD_free_params(params);
+    OSSL_PARAM_free(params);
     params = NULL;
 
     if (!TEST_true(OSSL_PARAM_BLD_push_int(bld, "g", 2))
@@ -312,7 +312,7 @@ static int builder_limit_test(void)
         goto err;
     res = 1;
 err:
-    OSSL_PARAM_BLD_free_params(params);
+    OSSL_PARAM_free(params);
     OSSL_PARAM_BLD_free(bld);
     return res;
 }

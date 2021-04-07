@@ -2104,7 +2104,7 @@ static int tls_process_ske_dhe(SSL *s, PACKET *pkt, EVP_PKEY **pkey)
 
  err:
     OSSL_PARAM_BLD_free(tmpl);
-    OSSL_PARAM_BLD_free_params(params);
+    OSSL_PARAM_free(params);
     EVP_PKEY_free(peer_tmp);
     EVP_PKEY_CTX_free(pctx);
     BN_free(p);

@@ -8302,7 +8302,7 @@ static EVP_PKEY *get_tmp_dh_params(void)
         BN_free(p);
         EVP_PKEY_CTX_free(pctx);
         OSSL_PARAM_BLD_free(tmpl);
-        OSSL_PARAM_BLD_free_params(params);
+        OSSL_PARAM_free(params);
     }
 
     if (tmp_dh_params != NULL && !EVP_PKEY_up_ref(tmp_dh_params))

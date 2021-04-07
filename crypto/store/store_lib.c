@@ -337,7 +337,7 @@ int OSSL_STORE_find(OSSL_STORE_CTX *ctx, const OSSL_STORE_SEARCH *search)
             params = OSSL_PARAM_BLD_to_param(bld);
             ret = ctx->fetched_loader->p_set_ctx_params(ctx->loader_ctx,
                                                         params);
-            OSSL_PARAM_BLD_free_params(params);
+            OSSL_PARAM_free(params);
         }
         OSSL_PARAM_BLD_free(bld);
         OPENSSL_free(name_der);

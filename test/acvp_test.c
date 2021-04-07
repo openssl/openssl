@@ -176,7 +176,7 @@ static int ecdsa_create_pkey(EVP_PKEY **pkey, const char *curve_name,
 
     ret = 1;
 err:
-    OSSL_PARAM_BLD_free_params(params);
+    OSSL_PARAM_free(params);
     OSSL_PARAM_BLD_free(bld);
     EVP_PKEY_CTX_free(ctx);
     return ret;
@@ -517,7 +517,7 @@ static int dsa_create_pkey(EVP_PKEY **pkey,
 
     ret = 1;
 err:
-    OSSL_PARAM_BLD_free_params(params);
+    OSSL_PARAM_free(params);
     OSSL_PARAM_BLD_free(bld);
     EVP_PKEY_CTX_free(ctx);
     return ret;
@@ -939,7 +939,7 @@ static int dh_create_pkey(EVP_PKEY **pkey, const char *group_name,
 
     ret = 1;
 err:
-    OSSL_PARAM_BLD_free_params(params);
+    OSSL_PARAM_free(params);
     OSSL_PARAM_BLD_free(bld);
     EVP_PKEY_CTX_free(ctx);
     return ret;
@@ -1062,7 +1062,7 @@ static int rsa_create_pkey(EVP_PKEY **pkey,
 
     ret = 1;
 err:
-    OSSL_PARAM_BLD_free_params(params);
+    OSSL_PARAM_free(params);
     OSSL_PARAM_BLD_free(bld);
     EVP_PKEY_CTX_free(ctx);
     return ret;
@@ -1170,7 +1170,7 @@ err:
     OPENSSL_free(d);
     EVP_PKEY_free(pkey);
     EVP_PKEY_CTX_free(ctx);
-    OSSL_PARAM_BLD_free_params(params);
+    OSSL_PARAM_free(params);
     OSSL_PARAM_BLD_free(bld);
     return ret;
 }

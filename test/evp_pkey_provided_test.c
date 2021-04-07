@@ -446,7 +446,7 @@ static int test_evp_pkey_get_bn_param_large(void)
     EVP_PKEY_free(pk);
     EVP_PKEY_CTX_free(key_ctx);
     EVP_PKEY_CTX_free(ctx);
-    OSSL_PARAM_BLD_free_params(fromdata_params);
+    OSSL_PARAM_free(fromdata_params);
     OSSL_PARAM_BLD_free(bld);
     return ret;
 }
@@ -627,7 +627,7 @@ err:
     EVP_PKEY_free(pk);
     EVP_PKEY_CTX_free(ctx);
     EVP_PKEY_CTX_free(key_ctx);
-    OSSL_PARAM_BLD_free_params(fromdata_params);
+    OSSL_PARAM_free(fromdata_params);
     OSSL_PARAM_BLD_free(bld);
 
     return ret;
@@ -801,7 +801,7 @@ err:
     EVP_PKEY_free(pk);
     EVP_PKEY_CTX_free(ctx);
     EVP_PKEY_CTX_free(key_ctx);
-    OSSL_PARAM_BLD_free_params(fromdata_params);
+    OSSL_PARAM_free(fromdata_params);
     OSSL_PARAM_BLD_free(bld);
 
     return ret;
@@ -1200,7 +1200,7 @@ static int test_fromdata_ec(void)
 err:
     BN_free(bn_priv);
     BN_free(ec_priv_bn);
-    OSSL_PARAM_BLD_free_params(fromdata_params);
+    OSSL_PARAM_free(fromdata_params);
     OSSL_PARAM_BLD_free(bld);
     EVP_PKEY_free(pk);
     EVP_PKEY_free(copy_pk);
@@ -1519,7 +1519,7 @@ static int test_fromdata_dsa_fips186_4(void)
     }
 
  err:
-    OSSL_PARAM_BLD_free_params(fromdata_params);
+    OSSL_PARAM_free(fromdata_params);
     OSSL_PARAM_BLD_free(bld);
     BN_free(p);
     BN_free(q);
