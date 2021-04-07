@@ -114,10 +114,11 @@ err:
 
 static int template_private_test(void)
 {
-    int *data1, j;
+    int *data1 = NULL, *data2 = NULL, j;
     const int data1_num = 12;
     const int data1_size = data1_num * sizeof(int);
-    static unsigned char data2[] = { 2, 4, 6, 8, 10 };
+    const int data2_num = 5;
+    const int data2_size = data2_num * sizeof(int);
     OSSL_PARAM_BLD *bld = NULL;
     OSSL_PARAM *params = NULL, *p;
     unsigned int i;
@@ -129,11 +130,14 @@ static int template_private_test(void)
     int res = 0;
 
     if (!TEST_ptr(data1 = OPENSSL_secure_malloc(data1_size))
+            || !TEST_ptr(data2 = OPENSSL_secure_malloc(data2_size))
             || !TEST_ptr(bld = OSSL_PARAM_BLD_new()))
         goto err;
 
     for (j = 0; j < data1_num; j++)
         data1[j] = -16 * j;
+    for (j = 0; j < data2_num; j++)
+        data2[j] = 2 * j;
 
     if (!TEST_true(OSSL_PARAM_BLD_push_uint(bld, "i", 6))
         || !TEST_true(OSSL_PARAM_BLD_push_ulong(bld, "l", 42))
@@ -144,12 +148,13 @@ static int template_private_test(void)
         || !TEST_true(BN_set_word(bn, 1729))
         || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, "bignumber", bn))
         || !TEST_true(OSSL_PARAM_BLD_push_octet_string(bld, "oct_s", data1,
-                                                       sizeof(data1)))
+                                                       data1_size))
         || !TEST_true(OSSL_PARAM_BLD_push_octet_ptr(bld, "oct_p", data2,
-                                                    sizeof(data2)))
+                                                    data2_size))
         || !TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld))
         /* Check unsigned int */
         || !TEST_ptr(p = OSSL_PARAM_locate(params, "i"))
+        || !TEST_false(CRYPTO_secure_allocated(p->data))
         || !TEST_true(OSSL_PARAM_get_uint(p, &i))
         || !TEST_str_eq(p->key, "i")
         || !TEST_uint_eq(p->data_type, OSSL_PARAM_UNSIGNED_INTEGER)
@@ -157,6 +162,7 @@ static int template_private_test(void)
         || !TEST_uint_eq(i, 6)
         /* Check unsigned int32 */
         || !TEST_ptr(p = OSSL_PARAM_locate(params, "i32"))
+        || !TEST_false(CRYPTO_secure_allocated(p->data))
         || !TEST_true(OSSL_PARAM_get_uint32(p, &i32))
         || !TEST_str_eq(p->key, "i32")
         || !TEST_uint_eq(p->data_type, OSSL_PARAM_UNSIGNED_INTEGER)
@@ -164,6 +170,7 @@ static int template_private_test(void)
         || !TEST_uint_eq((unsigned int)i32, 1532)
         /* Check unsigned int64 */
         || !TEST_ptr(p = OSSL_PARAM_locate(params, "i64"))
+        || !TEST_false(CRYPTO_secure_allocated(p->data))
         || !TEST_str_eq(p->key, "i64")
         || !TEST_uint_eq(p->data_type, OSSL_PARAM_UNSIGNED_INTEGER)
         || !TEST_size_t_eq(p->data_size, sizeof(int64_t))
@@ -171,6 +178,7 @@ static int template_private_test(void)
         || !TEST_ulong_eq((unsigned long)i64, 9999999)
         /* Check unsigned long int */
         || !TEST_ptr(p = OSSL_PARAM_locate(params, "l"))
+        || !TEST_false(CRYPTO_secure_allocated(p->data))
         || !TEST_str_eq(p->key, "l")
         || !TEST_uint_eq(p->data_type, OSSL_PARAM_UNSIGNED_INTEGER)
         || !TEST_size_t_eq(p->data_size, sizeof(unsigned long int))
@@ -178,6 +186,7 @@ static int template_private_test(void)
         || !TEST_ulong_eq(l, 42)
         /* Check size_t */
         || !TEST_ptr(p = OSSL_PARAM_locate(params, "st"))
+        || !TEST_false(CRYPTO_secure_allocated(p->data))
         || !TEST_str_eq(p->key, "st")
         || !TEST_uint_eq(p->data_type, OSSL_PARAM_UNSIGNED_INTEGER)
         || !TEST_size_t_eq(p->data_size, sizeof(size_t))
@@ -185,19 +194,24 @@ static int template_private_test(void)
         || !TEST_size_t_eq(st, 65537)
         /* Check octet string */
         || !TEST_ptr(p = OSSL_PARAM_locate(params, "oct_s"))
+        || !TEST_true(CRYPTO_secure_allocated(p->data))
         || !TEST_str_eq(p->key, "oct_s")
         || !TEST_uint_eq(p->data_type, OSSL_PARAM_OCTET_STRING)
-        || !TEST_mem_eq(p->data, p->data_size, data1, sizeof(data1))
+        || !TEST_mem_eq(p->data, p->data_size, data1, data1_size)
         /* Check octet pointer */
         || !TEST_ptr(p = OSSL_PARAM_locate(params, "oct_p"))
+        || !TEST_false(CRYPTO_secure_allocated(p->data))
+        || !TEST_true(CRYPTO_secure_allocated(*(void **)p->data))
         || !TEST_str_eq(p->key, "oct_p")
         || !TEST_uint_eq(p->data_type, OSSL_PARAM_OCTET_PTR)
-        || !TEST_mem_eq(*(void **)p->data, p->data_size, data2, sizeof(data2))
+        || !TEST_mem_eq(*(void **)p->data, p->data_size, data2, data2_size)
         /* Check BN */
         || !TEST_ptr(p = OSSL_PARAM_locate(params, "bignumber"))
+        || !TEST_true(CRYPTO_secure_allocated(p->data))
         || !TEST_str_eq(p->key, "bignumber")
         || !TEST_uint_eq(p->data_type, OSSL_PARAM_UNSIGNED_INTEGER)
         || !TEST_true(OSSL_PARAM_get_BN(p, &bn_res))
+        || !TEST_int_eq(BN_get_flags(bn, BN_FLG_SECURE), BN_FLG_SECURE)
         || !TEST_int_eq(BN_cmp(bn_res, bn), 0))
         goto err;
     res = 1;
@@ -205,6 +219,7 @@ err:
     OSSL_PARAM_BLD_free_params(params);
     OSSL_PARAM_BLD_free(bld);
     OPENSSL_secure_free(data1);
+    OPENSSL_secure_free(data2);
     BN_free(bn);
     BN_free(bn_res);
     return res;
@@ -256,7 +271,9 @@ err:
 int setup_tests(void)
 {
     ADD_TEST(template_public_test);
-    ADD_TEST(template_private_test);
+    /* Only run the secure memory testing if we have secure memory available */
+    if (CRYPTO_secure_malloc_init(1<<16, 16))
+        ADD_TEST(template_private_test);
     ADD_TEST(builder_limit_test);
     return 1;
 }
