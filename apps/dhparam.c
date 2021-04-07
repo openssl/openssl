@@ -396,7 +396,7 @@ static EVP_PKEY *dsa_to_dh(EVP_PKEY *dh)
 
  err:
     EVP_PKEY_CTX_free(ctx);
-    OSSL_PARAM_BLD_free_params(params);
+    OSSL_PARAM_free(params);
     OSSL_PARAM_BLD_free(tmpl);
     BN_free(bn_p);
     BN_free(bn_q);

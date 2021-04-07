@@ -377,8 +377,3 @@ OSSL_PARAM *OSSL_PARAM_BLD_to_param(OSSL_PARAM_BLD *bld)
     free_all_params(bld);
     return params;
 }
-
-void OSSL_PARAM_BLD_free_params(OSSL_PARAM *params)
-{
-    OSSL_PARAM_free(params);
-}

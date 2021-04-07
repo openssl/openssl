@@ -208,7 +208,7 @@ static int dsa_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
         goto err;;
 
     ok = param_cb(params, cbarg);
-    OSSL_PARAM_BLD_free_params(params);
+    OSSL_PARAM_free(params);
 err:
     OSSL_PARAM_BLD_free(tmpl);
     return ok;

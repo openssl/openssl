@@ -233,7 +233,7 @@ err:
     EVP_KDF_free(kdf);
     EVP_KDF_CTX_free(ctx);
     BN_CTX_free(bnctx);
-    OSSL_PARAM_BLD_free_params(params);
+    OSSL_PARAM_free(params);
     OSSL_PARAM_BLD_free(bld);
     OSSL_SELF_TEST_onend(st, ret);
     return ret;
@@ -420,8 +420,8 @@ err:
     EVP_PKEY_free(peerkey);
     EVP_PKEY_CTX_free(kactx);
     EVP_PKEY_CTX_free(dctx);
-    OSSL_PARAM_BLD_free_params(params_peer);
-    OSSL_PARAM_BLD_free_params(params);
+    OSSL_PARAM_free(params_peer);
+    OSSL_PARAM_free(params);
     OSSL_PARAM_BLD_free(bld);
     OSSL_SELF_TEST_onend(st, ret);
     return ret;
@@ -505,8 +505,8 @@ err:
     EVP_PKEY_free(pkey);
     EVP_PKEY_CTX_free(kctx);
     EVP_PKEY_CTX_free(sctx);
-    OSSL_PARAM_BLD_free_params(params);
-    OSSL_PARAM_BLD_free_params(params_sig);
+    OSSL_PARAM_free(params);
+    OSSL_PARAM_free(params_sig);
     OSSL_PARAM_BLD_free(bld);
     OSSL_SELF_TEST_onend(st, ret);
     return ret;
@@ -591,9 +591,9 @@ err:
     EVP_PKEY_free(key);
     EVP_PKEY_CTX_free(encctx);
     EVP_PKEY_CTX_free(keyctx);
-    OSSL_PARAM_BLD_free_params(keyparams);
+    OSSL_PARAM_free(keyparams);
     OSSL_PARAM_BLD_free(keybld);
-    OSSL_PARAM_BLD_free_params(initparams);
+    OSSL_PARAM_free(initparams);
     OSSL_PARAM_BLD_free(initbld);
     OSSL_SELF_TEST_onend(st, ret);
     return ret;

@@ -22,7 +22,6 @@ extern "C" {
 OSSL_PARAM_BLD *OSSL_PARAM_BLD_new(void);
 OSSL_PARAM *OSSL_PARAM_BLD_to_param(OSSL_PARAM_BLD *bld);
 void OSSL_PARAM_BLD_free(OSSL_PARAM_BLD *bld);
-void OSSL_PARAM_BLD_free_params(OSSL_PARAM *params);
 
 int OSSL_PARAM_BLD_push_int(OSSL_PARAM_BLD *bld, const char *key, int val);
 int OSSL_PARAM_BLD_push_uint(OSSL_PARAM_BLD *bld, const char *key,

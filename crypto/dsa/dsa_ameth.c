@@ -474,7 +474,7 @@ static int dsa_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
     /* We export, the provider imports */
     rv = evp_keymgmt_import(to_keymgmt, to_keydata, selection, params);
 
-    OSSL_PARAM_BLD_free_params(params);
+    OSSL_PARAM_free(params);
  err:
     OSSL_PARAM_BLD_free(tmpl);
     return rv;

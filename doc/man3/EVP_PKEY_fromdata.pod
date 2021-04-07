@@ -198,7 +198,7 @@ TODO Write a set of cookbook documents and link to them.
 
      EVP_PKEY_free(pkey);
      EVP_PKEY_CTX_free(ctx);
-     OSSL_PARAM_BLD_free_params(params);
+     OSSL_PARAM_free(params);
      OSSL_PARAM_BLD_free(param_bld);
      BN_free(priv);
 

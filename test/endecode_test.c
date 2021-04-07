@@ -1332,13 +1332,13 @@ int setup_tests(void)
 void cleanup_tests(void)
 {
 #ifndef OPENSSL_NO_EC
-    OSSL_PARAM_BLD_free_params(ec_explicit_prime_params_nc);
-    OSSL_PARAM_BLD_free_params(ec_explicit_prime_params_explicit);
+    OSSL_PARAM_free(ec_explicit_prime_params_nc);
+    OSSL_PARAM_free(ec_explicit_prime_params_explicit);
     OSSL_PARAM_BLD_free(bld_prime_nc);
     OSSL_PARAM_BLD_free(bld_prime);
 # ifndef OPENSSL_NO_EC2M
-    OSSL_PARAM_BLD_free_params(ec_explicit_tri_params_nc);
-    OSSL_PARAM_BLD_free_params(ec_explicit_tri_params_explicit);
+    OSSL_PARAM_free(ec_explicit_tri_params_nc);
+    OSSL_PARAM_free(ec_explicit_tri_params_explicit);
     OSSL_PARAM_BLD_free(bld_tri_nc);
     OSSL_PARAM_BLD_free(bld_tri);
 # endif

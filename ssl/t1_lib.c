@@ -2916,7 +2916,7 @@ EVP_PKEY *ssl_get_auto_dh(SSL *s)
         goto err;
 
 err:
-    OSSL_PARAM_BLD_free_params(params);
+    OSSL_PARAM_free(params);
     OSSL_PARAM_BLD_free(tmpl);
     EVP_PKEY_CTX_free(pctx);
     BN_free(p);

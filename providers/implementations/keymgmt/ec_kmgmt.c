@@ -489,7 +489,7 @@ int ec_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
     if (ok && (params = OSSL_PARAM_BLD_to_param(tmpl)) != NULL)
         ok = param_cb(params, cbarg);
 end:
-    OSSL_PARAM_BLD_free_params(params);
+    OSSL_PARAM_free(params);
     OSSL_PARAM_BLD_free(tmpl);
     OPENSSL_free(pub_key);
     OPENSSL_free(genbuf);
@@ -1158,7 +1158,7 @@ build:
 
     ret = 1;
 err:
-    OSSL_PARAM_BLD_free_params(params);
+    OSSL_PARAM_free(params);
     OSSL_PARAM_BLD_free(bld);
     return ret;
 }

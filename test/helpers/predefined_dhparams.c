@@ -40,7 +40,7 @@ static EVP_PKEY *get_dh_from_pg_bn(OSSL_LIB_CTX *libctx, const char *type,
 
  err:
     EVP_PKEY_CTX_free(pctx);
-    OSSL_PARAM_BLD_free_params(params);
+    OSSL_PARAM_free(params);
     OSSL_PARAM_BLD_free(tmpl);
     return dhpkey;
 }

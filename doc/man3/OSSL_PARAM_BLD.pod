@@ -3,7 +3,7 @@
 =head1 NAME
 
 OSSL_PARAM_BLD, OSSL_PARAM_BLD_new, OSSL_PARAM_BLD_to_param,
-OSSL_PARAM_BLD_free_params, OSSL_PARAM_BLD_free, OSSL_PARAM_BLD_push_int,
+OSSL_PARAM_BLD_free, OSSL_PARAM_BLD_push_int,
 OSSL_PARAM_BLD_push_uint, OSSL_PARAM_BLD_push_long,
 OSSL_PARAM_BLD_push_ulong, OSSL_PARAM_BLD_push_int32,
 OSSL_PARAM_BLD_push_uint32, OSSL_PARAM_BLD_push_int64,
@@ -24,7 +24,6 @@ OSSL_PARAM_BLD_push_octet_string, OSSL_PARAM_BLD_push_octet_ptr
 
  OSSL_PARAM_BLD *OSSL_PARAM_BLD_new(void);
  OSSL_PARAM *OSSL_PARAM_BLD_to_param(OSSL_PARAM_BLD *bld);
- void OSSL_PARAM_BLD_free_params(OSSL_PARAM *params);
  void OSSL_PARAM_BLD_free(OSSL_PARAM_BLD *bld);
 
  int OSSL_PARAM_BLD_push_TYPE(OSSL_PARAM_BLD *bld, const char *key, TYPE val);
@@ -58,11 +57,8 @@ OSSL_PARAM_BLD_free() deallocates the memory allocates by OSSL_PARAM_BLD_new().
 OSSL_PARAM_BLD_to_param() converts a built up OSSL_PARAM_BLD structure
 I<bld> into an allocated OSSL_PARAM array.
 The OSSL_PARAM array and all associated storage must be freed by calling
-OSSL_PARAM_BLD_free_params() with the functions return value.
+OSSL_PARAM_free() with the functions return value.
 OSSL_PARAM_BLD_free() can safely be called any time after this function is.
-
-OSSL_PARAM_BLD_free_params() deallocates the memory allocated by
-OSSL_PARAM_BLD_to_param().
 
 =begin comment
 
@@ -155,7 +151,7 @@ private key.
     OSSL_PARAM_BLD_free(bld);
     /* Use params */
     ...
-    OSSL_PARAM_BLD_free_params(params);
+    OSSL_PARAM_free(params);
 
 =head2 Example 2
 
@@ -173,11 +169,11 @@ public key.
     OSSL_PARAM_BLD_free(bld);
     /* Use params */
     ...
-    OSSL_PARAM_BLD_free_params(params);
+    OSSL_PARAM_free(params);
 
 =head1 SEE ALSO
 
-L<OSSL_PARAM_int(3)>, L<OSSL_PARAM(3)>
+L<OSSL_PARAM_int(3)>, L<OSSL_PARAM(3)>, L<OSSL_PARAM_free(3)>
 
 =head1 HISTORY
 

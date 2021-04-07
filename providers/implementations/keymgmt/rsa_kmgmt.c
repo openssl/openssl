@@ -207,7 +207,7 @@ static int rsa_export(void *keydata, int selection,
         goto err;
 
     ok = param_callback(params, cbarg);
-    OSSL_PARAM_BLD_free_params(params);
+    OSSL_PARAM_free(params);
 err:
     OSSL_PARAM_BLD_free(tmpl);
     return ok;

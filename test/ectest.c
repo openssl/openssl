@@ -2549,7 +2549,7 @@ err:
     BN_free(a_out);
     BN_free(b_out);
     BN_free(p_out);
-    OSSL_PARAM_BLD_free_params(params);
+    OSSL_PARAM_free(params);
     OSSL_PARAM_BLD_free(bld);
     EVP_PKEY_free(pkeyparam);
     EVP_PKEY_CTX_free(pctx);
@@ -2896,8 +2896,8 @@ static int custom_params_test(int id)
     BN_CTX_end(ctx);
     BN_CTX_free(ctx);
     OSSL_PARAM_BLD_free(param_bld);
-    OSSL_PARAM_BLD_free_params(params1);
-    OSSL_PARAM_BLD_free_params(params2);
+    OSSL_PARAM_free(params1);
+    OSSL_PARAM_free(params2);
     EC_POINT_free(Q1);
     EC_POINT_free(Q2);
     EC_POINT_free(G2);
