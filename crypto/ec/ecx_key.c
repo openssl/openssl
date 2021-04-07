@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <string.h>
 #include <openssl/err.h>
 #include "crypto/ecx.h"
 
@@ -39,7 +40,6 @@ ECX_KEY *ossl_ecx_key_new(OSSL_LIB_CTX *libctx, ECX_KEY_TYPE type, int haspubkey
 
     if (propq != NULL) {
         ret->propq = OPENSSL_strdup(propq);
-        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
         if (ret->propq == NULL)
             goto err;
     }
@@ -95,4 +95,47 @@ unsigned char *ossl_ecx_key_allocate_privkey(ECX_KEY *key)
     key->privkey = OPENSSL_secure_zalloc(key->keylen);
 
     return key->privkey;
+}
+
+ECX_KEY *ossl_ecx_key_dup(const ECX_KEY *key)
+{
+    ECX_KEY *ret = OPENSSL_zalloc(sizeof(*ret));
+
+    if (ret == NULL) {
+        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
+        return NULL;
+    }
+
+    ret->lock = CRYPTO_THREAD_lock_new();
+    if (ret->lock == NULL) {
+        OPENSSL_free(ret);
+        return NULL;
+    }
+
+    ret->libctx = key->libctx;
+    ret->haspubkey = key->haspubkey;
+    ret->keylen = key->keylen;
+    ret->type = key->type;
+    ret->references = 1;
+
+    if (key->propq != NULL) {
+        ret->propq = OPENSSL_strdup(key->propq);
+        if (ret->propq == NULL)
+            goto err;
+    }
+
+    memcpy(ret->pubkey, key->pubkey, sizeof(ret->pubkey));
+
+    if (key->privkey != NULL) {
+        if (ossl_ecx_key_allocate_privkey(ret) == NULL)
+            goto err;
+        memcpy(ret->privkey, key->privkey, ret->keylen);
+    }
+
+    return ret;
+
+err:
+    ossl_ecx_key_free(ret);
+    ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
+    return NULL;
 }

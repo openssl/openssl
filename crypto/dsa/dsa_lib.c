@@ -358,3 +358,48 @@ int ossl_dsa_ffc_params_fromdata(DSA *dsa, const OSSL_PARAM params[])
         dsa->dirty_cnt++;
     return ret;
 }
+
+static ossl_inline int dsa_bn_dup_check(BIGNUM **out, const BIGNUM *f)
+{
+    if (f != NULL && (*out = BN_dup(f)) == NULL)
+        return 0;
+    return 1;
+}
+
+DSA *ossl_dsa_dup(const DSA *dsa)
+{
+    DSA *dupkey = NULL;
+
+#ifndef FIPS_MODULE
+    /* Do not try to duplicate foreign DSA keys */
+    if (DSA_get_method((DSA *)dsa) != DSA_OpenSSL())
+        return NULL;
+#endif
+
+    if ((dupkey = ossl_dsa_new(dsa->libctx)) == NULL)
+        return NULL;
+
+    if (!ossl_ffc_params_copy(&dupkey->params, &dsa->params))
+        goto err;
+
+    dupkey->flags = dsa->flags;
+
+    if (!dsa_bn_dup_check(&dupkey->pub_key, dsa->pub_key))
+        goto err;
+    if (!dsa_bn_dup_check(&dupkey->priv_key, dsa->priv_key))
+        goto err;
+
+#ifndef FIPS_MODULE
+    if (!CRYPTO_dup_ex_data(CRYPTO_EX_INDEX_DSA,
+                            &dupkey->ex_data, &dsa->ex_data))
+        goto err;
+#endif
+
+    return dupkey;
+
+ err:
+    DSA_free(dupkey);
+    return NULL;
+}
+
+

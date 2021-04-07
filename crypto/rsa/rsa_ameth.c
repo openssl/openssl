@@ -884,98 +884,6 @@ static int rsa_pss_pkey_import_from(const OSSL_PARAM params[], void *vpctx)
     return rsa_int_import_from(params, vpctx, RSA_FLAG_TYPE_RSASSAPSS);
 }
 
-static ossl_inline int rsa_bn_dup_check(BIGNUM **out, const BIGNUM *f)
-{
-    if (f != NULL && (*out = BN_dup(f)) == NULL)
-        return 0;
-    return 1;
-}
-
-static RSA *rsa_dup(const RSA *rsa)
-{
-    RSA *dupkey = NULL;
-    int pnum, i;
-
-    /* Do not try to duplicate foreign RSA keys */
-    if (RSA_get_method(rsa) != RSA_PKCS1_OpenSSL())
-        return NULL;
-
-    if ((dupkey = ossl_rsa_new_with_ctx(rsa->libctx)) == NULL)
-        return NULL;
-
-    /* private and public key */
-    if (!rsa_bn_dup_check(&dupkey->n, rsa->n))
-        goto err;
-    if (!rsa_bn_dup_check(&dupkey->e, rsa->e))
-        goto err;
-    if (!rsa_bn_dup_check(&dupkey->d, rsa->d))
-        goto err;
-
-    /* factors and crt params */
-    if (!rsa_bn_dup_check(&dupkey->p, rsa->p))
-        goto err;
-    if (!rsa_bn_dup_check(&dupkey->q, rsa->q))
-        goto err;
-    if (!rsa_bn_dup_check(&dupkey->dmp1, rsa->dmp1))
-        goto err;
-    if (!rsa_bn_dup_check(&dupkey->dmq1, rsa->dmq1))
-        goto err;
-    if (!rsa_bn_dup_check(&dupkey->iqmp, rsa->iqmp))
-        goto err;
-
-    /* multiprime */
-    pnum = sk_RSA_PRIME_INFO_num(rsa->prime_infos);
-    if (pnum > 0) {
-        dupkey->prime_infos = sk_RSA_PRIME_INFO_new_reserve(NULL, pnum);
-        for (i = 0; i < pnum; i++) {
-            const RSA_PRIME_INFO *pinfo = NULL;
-            RSA_PRIME_INFO *duppinfo = NULL;
-
-            if ((duppinfo = OPENSSL_zalloc(sizeof(*duppinfo))) == NULL) {
-                ERR_raise(ERR_LIB_RSA, ERR_R_MALLOC_FAILURE);
-                goto err;
-            }
-            /* push first so cleanup in error case works */
-            (void)sk_RSA_PRIME_INFO_push(dupkey->prime_infos, duppinfo);
-
-            pinfo = sk_RSA_PRIME_INFO_value(rsa->prime_infos, i);
-            if (!rsa_bn_dup_check(&duppinfo->r, pinfo->r))
-                goto err;
-            if (!rsa_bn_dup_check(&duppinfo->d, pinfo->d))
-                goto err;
-            if (!rsa_bn_dup_check(&duppinfo->t, pinfo->t))
-                goto err;
-        }
-        if (!ossl_rsa_multip_calc_product(dupkey))
-            goto err;
-    }
-
-    dupkey->version = rsa->version;
-    dupkey->flags = rsa->flags;
-
-    dupkey->pss_params = rsa->pss_params;
-
-    if (rsa->pss != NULL) {
-        dupkey->pss = RSA_PSS_PARAMS_dup(rsa->pss);
-        if (rsa->pss->maskGenAlgorithm != NULL
-            && dupkey->pss->maskGenAlgorithm == NULL) {
-            dupkey->pss->maskHash = ossl_x509_algor_mgf1_decode(rsa->pss->maskGenAlgorithm);
-            if (dupkey->pss->maskHash == NULL)
-                goto err;
-        }
-    }
-
-    if (!CRYPTO_dup_ex_data(CRYPTO_EX_INDEX_RSA,
-                            &dupkey->ex_data, &rsa->ex_data))
-        goto err;
-
-    return dupkey;
-
- err:
-    RSA_free(dupkey);
-    return NULL;
-}
-
 static int rsa_pkey_copy(EVP_PKEY *to, EVP_PKEY *from)
 {
     RSA *rsa = from->pkey.rsa;
@@ -983,7 +891,7 @@ static int rsa_pkey_copy(EVP_PKEY *to, EVP_PKEY *from)
     int ret;
 
     if (rsa != NULL) {
-        dupkey = rsa_dup(rsa);
+        dupkey = ossl_rsa_dup(rsa);
         if (dupkey == NULL)
             return 0;
     }
