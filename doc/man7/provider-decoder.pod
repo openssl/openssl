@@ -21,7 +21,7 @@ provider-decoder - The OSSL_DECODER library E<lt>-E<gt> provider functions
  /* Functions to construct / destruct / manipulate the decoder context */
  void *OSSL_FUNC_decoder_newctx(void *provctx);
  void OSSL_FUNC_decoder_freectx(void *ctx);
- const OSSL_PARAM *OSSL_FUNC_decoder_settable_ctx_params(void *provctx)
+ const OSSL_PARAM *OSSL_FUNC_decoder_settable_ctx_params(void *provctx);
  int OSSL_FUNC_decoder_set_ctx_params(void *ctx, const OSSL_PARAM params[]);
 
  /* Functions to check selection support */
@@ -42,7 +42,8 @@ provider-decoder - The OSSL_DECODER library E<lt>-E<gt> provider functions
 =head1 DESCRIPTION
 
 I<The term "decode" is used throughout this manual.  This includes but is
-not limited to deserialization.>
+not limited to deserialization as individual decoders can do also
+decoding into intermediate data formats.>
 
 The DECODER operation is a generic method to create a provider-native
 object reference or intermediate decoded data from an encoded form
@@ -58,7 +59,7 @@ L<provider-base(7)/Core functions>).
 The DECODER implementation may be part of a chain, where data is
 passed from one to the next.  For example, there may be an
 implementation to decode an object from PEM to DER, and another one
-that decodes DER to an provider-native object.
+that decodes DER to a provider-native object.
 
 The last decoding step in the decoding chain is usually supposed to create
 a provider-native object referenced by an object reference. To import
@@ -73,7 +74,7 @@ provider_query_operation() function
 
 All these "functions" have a corresponding function type definition
 named B<OSSL_FUNC_{name}_fn>, and a helper function to retrieve the
-function pointer from a B<OSSL_DISPATCH> element named
+function pointer from an B<OSSL_DISPATCH> element named
 B<OSSL_FUNC_{name}>.
 For example, the "function" OSSL_FUNC_decoder_decode() has these:
 
@@ -116,7 +117,7 @@ Properties can be used to further specify details about an implementation:
 =item input
 
 This property is used to specify what format of input the implementation
-can decode.  Currently known input types are:
+can decode.  OpenSSL providers recognize the following input types:
 
 =over 4
 
@@ -148,7 +149,7 @@ is wrapped in a PKCS#8 structure.
 =back
 
 The possible values of both these properties is open ended.  A provider may
-very well specify output types and structures that libcrypto doesn't know
+very well specify input types and structures that libcrypto doesn't know
 anything about.
 
 =head2 Subset selections
@@ -160,7 +161,8 @@ be decoded, with a set of bits I<selection> that are passed in an B<int>.
 This set of bits depend entirely on what kind of provider-side object is
 to be decoded.  For example, those bits are assumed to be the same as those
 used with L<provider-keymgmt(7)> (see L<provider-keymgmt(7)/Key Objects>) when
-the object is an asymmetric keypair.
+the object is an asymmetric keypair - e.g., B<OSSL_KEYMGMT_SELECT_PRIVATE_KEY>
+if the object to be decoded is supposed to contain private key components.
 
 OSSL_FUNC_decoder_does_selection() should tell if a particular implementation
 supports any of the combinations given by I<selection>.
