@@ -22,7 +22,7 @@ provider-encoder - The OSSL_ENCODER library E<lt>-E<gt> provider functions
  void *OSSL_FUNC_encoder_newctx(void *provctx);
  void OSSL_FUNC_encoder_freectx(void *ctx);
  int OSSL_FUNC_encoder_set_ctx_params(void *ctx, const OSSL_PARAM params[]);
- const OSSL_PARAM *OSSL_FUNC_encoder_settable_ctx_params(void *provctx)
+ const OSSL_PARAM *OSSL_FUNC_encoder_settable_ctx_params(void *provctx);
 
  /* Functions to check selection support */
  int OSSL_FUNC_encoder_does_selection(void *provctx, int selection);
@@ -90,7 +90,7 @@ provider_query_operation() function
 
 All these "functions" have a corresponding function type definition
 named B<OSSL_FUNC_{name}_fn>, and a helper function to retrieve the
-function pointer from a B<OSSL_DISPATCH> element named
+function pointer from an B<OSSL_DISPATCH> element named
 B<OSSL_FUNC_{name}>.
 For example, the "function" OSSL_FUNC_encoder_encode() has these:
 
@@ -134,7 +134,7 @@ Properties can be used to further specify details about an implementation:
 =item output
 
 This property is used to specify what type of output implementation
-produces.  Currently known output types are:
+produces.  OpenSSL providers recognize the following output types:
 
 =over 4
 
@@ -232,7 +232,7 @@ OSSL_FUNC_encoder_import_object().
 
 =head2 Encoding functions
 
-OSSL_FUNC_encoder_encode() should take an provider-native object (in
+OSSL_FUNC_encoder_encode() should take a provider-native object (in
 I<obj_raw>) or an object abstraction (in I<obj_abstract>), and should output
 the object in encoded form to the B<OSSL_CORE_BIO>.  The I<selection> bits,
 if relevant, should determine in greater detail what will be output.
