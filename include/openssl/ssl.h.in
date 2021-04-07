@@ -316,11 +316,6 @@ typedef int (*SSL_verify_cb)(int preverify_ok, X509_STORE_CTX *x509_ctx);
 /* Typedef for SSL async callback */
 typedef int (*SSL_async_callback_fn)(SSL *s, void *arg);
 
-/*
- * Some values are reserved until OpenSSL 3.0.0 because they were previously
- * included in SSL_OP_ALL in a 1.1.x release.
- */
-
 /* Disable Extended master secret */
 # define SSL_OP_NO_EXTENDED_MASTER_SECRET                0x00000001U
 
@@ -329,6 +324,9 @@ typedef int (*SSL_async_callback_fn)(SSL *s, void *arg);
 
 /* Allow initial connection to servers that don't support RI */
 # define SSL_OP_LEGACY_SERVER_CONNECT                    0x00000004U
+
+/* Enable support for Kernel TLS */
+# define SSL_OP_ENABLE_KTLS                              0x00000008U
 
 # define SSL_OP_TLSEXT_PADDING                           0x00000010U
 # define SSL_OP_SAFARI_ECDHE_ECDSA_BUG                   0x00000040U
@@ -516,10 +514,7 @@ typedef int (*SSL_async_callback_fn)(SSL *s, void *arg);
  * Support Asynchronous operation
  */
 # define SSL_MODE_ASYNC 0x00000100U
-/*
- * Don't use the kernel TLS data-path for sending.
- */
-# define SSL_MODE_NO_KTLS_TX 0x00000200U
+
 /*
  * When using DTLS/SCTP, include the terminating zero in the label
  * used for computing the endpoint-pair shared secret. Required for
@@ -532,10 +527,6 @@ typedef int (*SSL_async_callback_fn)(SSL *s, void *arg);
  * - OpenSSL 1.1.1 and 1.1.1a
  */
 # define SSL_MODE_DTLS_SCTP_LABEL_LENGTH_BUG 0x00000400U
-/*
- * Don't use the kernel TLS data-path for receiving.
- */
-# define SSL_MODE_NO_KTLS_RX 0x00000800U
 
 /* Cert related flags */
 /*

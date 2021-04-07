@@ -1083,7 +1083,7 @@ static int ping_pong_query(SSL *clientssl, SSL *serverssl, int cfd, int sfd, int
         goto end;
 
     /* ktls is used then kernel sequences are used instead of OpenSSL sequences */
-    if (clientssl->mode & SSL_MODE_NO_KTLS_TX) {
+    if ((SSL_get_options(clientssl) & SSL_OP_ENABLE_KTLS) == 0) {
         if (!TEST_mem_ne(crec_wseq_before, rec_seq_size,
                          crec_wseq_after, rec_seq_size))
             goto end;
@@ -1093,7 +1093,7 @@ static int ping_pong_query(SSL *clientssl, SSL *serverssl, int cfd, int sfd, int
             goto end;
     }
 
-    if (serverssl->mode & SSL_MODE_NO_KTLS_TX) {
+    if ((SSL_get_options(serverssl) & SSL_OP_ENABLE_KTLS) == 0) {
         if (!TEST_mem_ne(srec_wseq_before, rec_seq_size,
                          srec_wseq_after, rec_seq_size))
             goto end;
@@ -1103,7 +1103,11 @@ static int ping_pong_query(SSL *clientssl, SSL *serverssl, int cfd, int sfd, int
             goto end;
     }
 
-    if (clientssl->mode & SSL_MODE_NO_KTLS_RX) {
+    if ((SSL_get_options(clientssl) & SSL_OP_ENABLE_KTLS) == 0
+#if defined(OPENSSL_NO_KTLS_RX)
+        || 1
+#endif
+       ) {
         if (!TEST_mem_ne(crec_rseq_before, rec_seq_size,
                          crec_rseq_after, rec_seq_size))
             goto end;
@@ -1113,7 +1117,11 @@ static int ping_pong_query(SSL *clientssl, SSL *serverssl, int cfd, int sfd, int
             goto end;
     }
 
-    if (serverssl->mode & SSL_MODE_NO_KTLS_RX) {
+    if ((SSL_get_options(serverssl) & SSL_OP_ENABLE_KTLS) == 0
+#if defined(OPENSSL_NO_KTLS_RX)
+        || 1
+#endif
+       ) {
         if (!TEST_mem_ne(srec_rseq_before, rec_seq_size,
                          srec_rseq_after, rec_seq_size))
             goto end;
@@ -1128,8 +1136,7 @@ end:
     return 0;
 }
 
-static int execute_test_ktls(int cis_ktls_tx, int cis_ktls_rx,
-                             int sis_ktls_tx, int sis_ktls_rx,
+static int execute_test_ktls(int cis_ktls, int sis_ktls,
                              int tls_version, const char *cipher,
                              int rec_seq_size)
 {
@@ -1156,23 +1163,13 @@ static int execute_test_ktls(int cis_ktls_tx, int cis_ktls_rx,
                                           &clientssl, sfd, cfd)))
         goto end;
 
-    if (!cis_ktls_tx) {
-        if (!TEST_true(SSL_set_mode(clientssl, SSL_MODE_NO_KTLS_TX)))
+    if (cis_ktls) {
+        if (!TEST_true(SSL_set_options(clientssl, SSL_OP_ENABLE_KTLS)))
             goto end;
     }
 
-    if (!sis_ktls_tx) {
-        if (!TEST_true(SSL_set_mode(serverssl, SSL_MODE_NO_KTLS_TX)))
-            goto end;
-    }
-
-    if (!cis_ktls_rx) {
-        if (!TEST_true(SSL_set_mode(clientssl, SSL_MODE_NO_KTLS_RX)))
-            goto end;
-    }
-
-    if (!sis_ktls_rx) {
-        if (!TEST_true(SSL_set_mode(serverssl, SSL_MODE_NO_KTLS_RX)))
+    if (sis_ktls) {
+        if (!TEST_true(SSL_set_mode(serverssl, SSL_OP_ENABLE_KTLS)))
             goto end;
     }
 
@@ -1180,7 +1177,7 @@ static int execute_test_ktls(int cis_ktls_tx, int cis_ktls_rx,
                                                 SSL_ERROR_NONE)))
         goto end;
 
-    if (!cis_ktls_tx) {
+    if (!cis_ktls) {
         if (!TEST_false(BIO_get_ktls_send(clientssl->wbio)))
             goto end;
     } else {
@@ -1188,7 +1185,7 @@ static int execute_test_ktls(int cis_ktls_tx, int cis_ktls_rx,
             goto end;
     }
 
-    if (!sis_ktls_tx) {
+    if (!sis_ktls) {
         if (!TEST_false(BIO_get_ktls_send(serverssl->wbio)))
             goto end;
     } else {
@@ -1196,7 +1193,11 @@ static int execute_test_ktls(int cis_ktls_tx, int cis_ktls_rx,
             goto end;
     }
 
-    if (!cis_ktls_rx) {
+    if (!cis_ktls
+#if defined(OPENSSL_NO_KTLS_RX)
+        || 1
+#endif
+       ) {
         if (!TEST_false(BIO_get_ktls_recv(clientssl->rbio)))
             goto end;
     } else {
@@ -1204,7 +1205,11 @@ static int execute_test_ktls(int cis_ktls_tx, int cis_ktls_rx,
             goto end;
     }
 
-    if (!sis_ktls_rx) {
+    if (!sis_ktls
+#if defined(OPENSSL_NO_KTLS_RX)
+        || 1
+#endif
+       ) {
         if (!TEST_false(BIO_get_ktls_recv(serverssl->rbio)))
             goto end;
     } else {
@@ -1342,14 +1347,14 @@ end:
 #if !defined(OPENSSL_NO_TLS1_2) || !defined(OSSL_NO_USABLE_TLS1_3)
 static int test_ktls(int test)
 {
-    int cis_ktls_tx, cis_ktls_rx, sis_ktls_tx, sis_ktls_rx;
+    int cis_ktls, sis_ktls;
     int tlsver, testresult;
 
-    if (test > 15) {
+    if (test > 3) {
 #if defined(OSSL_NO_USABLE_TLS1_3)
         return 1;
 #else
-        test -= 16;
+        test -= 4;
         tlsver = TLS1_3_VERSION;
 #endif
     } else {
@@ -1360,34 +1365,22 @@ static int test_ktls(int test)
 #endif
     }
 
-    cis_ktls_tx = (test & 1) != 0;
-    cis_ktls_rx = (test & 2) != 0;
-    sis_ktls_tx = (test & 4) != 0;
-    sis_ktls_rx = (test & 8) != 0;
-
-#if defined(OPENSSL_NO_KTLS_RX)
-    if (cis_ktls_rx || sis_ktls_rx)
-        return 1;
-#endif
-#if !defined(OSSL_NO_USABLE_TLS1_3)
-    if (tlsver == TLS1_3_VERSION && (cis_ktls_rx || sis_ktls_rx))
-        return 1;
-#endif
+    cis_ktls = (test & 1) != 0;
+    sis_ktls = (test & 2) != 0;
 
     testresult = 1;
 #ifdef OPENSSL_KTLS_AES_GCM_128
-    testresult &= execute_test_ktls(cis_ktls_tx, cis_ktls_rx, sis_ktls_tx,
-                                    sis_ktls_rx, tlsver, "AES128-GCM-SHA256",
+    testresult &= execute_test_ktls(cis_ktls, sis_ktls, tlsver,
+                                    "AES128-GCM-SHA256",
                                     TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE);
 #endif
 #ifdef OPENSSL_KTLS_AES_CCM_128
-    testresult &= execute_test_ktls(cis_ktls_tx, cis_ktls_rx, sis_ktls_tx,
-                                    sis_ktls_rx, tlsver, "AES128-CCM",
+    testresult &= execute_test_ktls(cis_ktls, sis_ktls, tlsver, "AES128-CCM",
                                     TLS_CIPHER_AES_CCM_128_REC_SEQ_SIZE);
 #endif
 #ifdef OPENSSL_KTLS_AES_GCM_256
-    testresult &= execute_test_ktls(cis_ktls_tx, cis_ktls_rx, sis_ktls_tx,
-                                    sis_ktls_rx, tlsver, "AES256-GCM-SHA384",
+    testresult &= execute_test_ktls(cis_ktls, sis_ktls, tlsver,
+                                    "AES256-GCM-SHA384",
                                     TLS_CIPHER_AES_GCM_256_REC_SEQ_SIZE);
 #endif
     return testresult;
@@ -8788,7 +8781,7 @@ int setup_tests(void)
 
 #if !defined(OPENSSL_NO_KTLS) && !defined(OPENSSL_NO_SOCK)
 # if !defined(OPENSSL_NO_TLS1_2) || !defined(OSSL_NO_USABLE_TLS1_3)
-    ADD_ALL_TESTS(test_ktls, 32);
+    ADD_ALL_TESTS(test_ktls, 8);
     ADD_ALL_TESTS(test_ktls_sendfile_anytls, 6);
 # endif
 #endif
