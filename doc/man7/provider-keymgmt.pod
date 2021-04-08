@@ -52,9 +52,6 @@ provider-keymgmt - The KEYMGMT library E<lt>-E<gt> provider functions
                               OSSL_CALLBACK *param_cb, void *cbarg);
  const OSSL_PARAM *OSSL_FUNC_keymgmt_export_types(int selection);
 
- /* Key object copy */
- int OSSL_FUNC_keymgmt_copy(void *keydata_to, const void *keydata_from, int selection);
-
  /* Key object duplication, a constructor */
  void *OSSL_FUNC_keymgmt_dup(const void *keydata_from, int selection);
 
@@ -121,7 +118,6 @@ macros in L<openssl-core_dispatch.h(7)>, as follows:
  OSSL_FUNC_keymgmt_export               OSSL_FUNC_KEYMGMT_EXPORT
  OSSL_FUNC_keymgmt_export_types         OSSL_FUNC_KEYMGMT_EXPORT_TYPES
 
- OSSL_FUNC_keymgmt_copy                 OSSL_FUNC_KEYMGMT_COPY
  OSSL_FUNC_keymgmt_dup                  OSSL_FUNC_KEYMGMT_DUP
 
 =head2 Key Objects
@@ -324,7 +320,7 @@ I<selection> in I<keydata1> and I<keydata2> match.  It is assumed that
 the caller has ensured that I<keydata1> and I<keydata2> are both owned
 by the implementation of this function.
 
-=head2 Key Object Import, Export and Copy Functions
+=head2 Key Object Import, Export and Duplication Functions
 
 OSSL_FUNC_keymgmt_import() should import data indicated by I<selection> into
 I<keydata> with values taken from the B<OSSL_PARAM> array I<params>.
@@ -340,11 +336,6 @@ OSSL_FUNC_keymgmt_import() can handle.
 OSSL_FUNC_keymgmt_export_types() should return a constant array of descriptor
 B<OSSL_PARAM> for data indicated by I<selection>, that the
 OSSL_FUNC_keymgmt_export() callback can expect to receive.
-
-OSSL_FUNC_keymgmt_copy() should copy data subsets indicated by I<selection>
-from I<keydata_from> to I<keydata_to>.  It is assumed that the caller
-has ensured that I<keydata_to> and I<keydata_from> are both owned by
-the implementation of this function.
 
 OSSL_FUNC_keymgmt_dup() should duplicate data subsets indicated by
 I<selection> or the whole key data I<keydata_from> and create a new

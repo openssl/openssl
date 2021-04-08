@@ -112,7 +112,6 @@ struct evp_keymgmt_st {
     OSSL_FUNC_keymgmt_import_types_fn *import_types;
     OSSL_FUNC_keymgmt_export_fn *export;
     OSSL_FUNC_keymgmt_export_types_fn *export_types;
-    OSSL_FUNC_keymgmt_copy_fn *copy;
     OSSL_FUNC_keymgmt_dup_fn *dup;
 } /* EVP_KEYMGMT */ ;
 

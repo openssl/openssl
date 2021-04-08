@@ -52,7 +52,7 @@ typedef struct xorkey_st {
 static OSSL_FUNC_keymgmt_new_fn xor_newdata;
 static OSSL_FUNC_keymgmt_free_fn xor_freedata;
 static OSSL_FUNC_keymgmt_has_fn xor_has;
-static OSSL_FUNC_keymgmt_copy_fn xor_copy;
+static OSSL_FUNC_keymgmt_dup_fn xor_dup;
 static OSSL_FUNC_keymgmt_gen_init_fn xor_gen_init;
 static OSSL_FUNC_keymgmt_gen_set_params_fn xor_gen_set_params;
 static OSSL_FUNC_keymgmt_gen_settable_params_fn xor_gen_settable_params;
@@ -440,9 +440,9 @@ static int xor_has(const void *vkey, int selection)
     return ok;
 }
 
-static int xor_copy(void *vtokey, const void *vfromkey, int selection)
+static void *xor_dup(const void *vfromkey, int selection)
 {
-    XORKEY *tokey = vtokey;
+    XORKEY *tokey = xor_newdata(NULL);
     const XORKEY *fromkey = vfromkey;
     int ok = 0;
 
@@ -466,7 +466,11 @@ static int xor_copy(void *vtokey, const void *vfromkey, int selection)
             }
         }
     }
-    return ok;
+    if (!ok) {
+        xor_freedata(tokey);
+        tokey = NULL;
+    }
+    return tokey;
 }
 
 static ossl_inline int xor_get_params(void *vkey, OSSL_PARAM params[])
@@ -706,7 +710,7 @@ static const OSSL_DISPATCH xor_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_SET_PARAMS, (void (*) (void))xor_set_params },
     { OSSL_FUNC_KEYMGMT_SETTABLE_PARAMS, (void (*) (void))xor_settable_params },
     { OSSL_FUNC_KEYMGMT_HAS, (void (*)(void))xor_has },
-    { OSSL_FUNC_KEYMGMT_COPY, (void (*)(void))xor_copy },
+    { OSSL_FUNC_KEYMGMT_DUP, (void (*)(void))xor_dup },
     { OSSL_FUNC_KEYMGMT_FREE, (void (*)(void))xor_freedata },
     { OSSL_FUNC_KEYMGMT_IMPORT, (void (*)(void))xor_import },
     { OSSL_FUNC_KEYMGMT_IMPORT_TYPES, (void (*)(void))xor_import_types },

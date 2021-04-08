@@ -595,13 +595,8 @@ OSSL_CORE_MAKE_FUNC(int, keymgmt_export,
 OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, keymgmt_export_types,
                     (int selection))
 
-/* Copy function, only works for matching keymgmt */
-# define OSSL_FUNC_KEYMGMT_COPY                       44
-OSSL_CORE_MAKE_FUNC(int, keymgmt_copy,
-                    (void *keydata_to, const void *keydata_from,
-                     int selection))
 /* Dup function, constructor */
-# define OSSL_FUNC_KEYMGMT_DUP                        45
+# define OSSL_FUNC_KEYMGMT_DUP                        44
 OSSL_CORE_MAKE_FUNC(void *, keymgmt_dup,
                     (const void *keydata_from, int selection))
 

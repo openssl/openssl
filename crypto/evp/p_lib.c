@@ -180,10 +180,12 @@ int EVP_PKEY_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from)
 
     /*
      * If |to| is provided, we know that |from| is legacy at this point.
-     * Try exporting |from| to |to|'s keymgmt, then use evp_keymgmt_copy()
+     * Try exporting |from| to |to|'s keymgmt, then use evp_keymgmt_dup()
      * to copy the appropriate data to |to|'s keydata.
+     * We cannot override existing data so do it only if there is no keydata
+     * in |to| yet.
      */
-    if (to->keymgmt != NULL) {
+    if (to->keymgmt != NULL && to->keydata == NULL) {
         EVP_KEYMGMT *to_keymgmt = to->keymgmt;
         void *from_keydata =
             evp_pkey_export_to_provider((EVP_PKEY *)from, NULL, &to_keymgmt,
@@ -196,8 +198,9 @@ int EVP_PKEY_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from)
         if (from_keydata == NULL)
             ERR_raise(ERR_LIB_EVP, EVP_R_DIFFERENT_KEY_TYPES);
         else
-            ok = evp_keymgmt_copy(to->keymgmt, to->keydata, from_keydata,
-                                  SELECT_PARAMETERS);
+            ok = (to->keydata = evp_keymgmt_dup(to->keymgmt,
+                                                from_keydata,
+                                                SELECT_PARAMETERS)) != NULL;
         goto end;
     }
 
