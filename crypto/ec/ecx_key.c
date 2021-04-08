@@ -96,4 +96,3 @@ unsigned char *ossl_ecx_key_allocate_privkey(ECX_KEY *key)
 
     return key->privkey;
 }
-
