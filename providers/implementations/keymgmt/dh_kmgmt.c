@@ -724,9 +724,8 @@ static void *dh_load(const void *reference, size_t reference_sz)
 
 static void *dh_dup(const void *keydata_from)
 {
-    if (ossl_prov_is_running()) {
+    if (ossl_prov_is_running())
         return ossl_dh_dup(keydata_from);
-    }
     return NULL;
 }
 

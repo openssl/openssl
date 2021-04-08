@@ -92,6 +92,49 @@ int ossl_ecx_key_fromdata(ECX_KEY *ecx, const OSSL_PARAM params[],
     return 1;
 }
 
+ECX_KEY *ossl_ecx_key_dup(const ECX_KEY *key)
+{
+    ECX_KEY *ret = OPENSSL_zalloc(sizeof(*ret));
+
+    if (ret == NULL) {
+        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
+        return NULL;
+    }
+
+    ret->lock = CRYPTO_THREAD_lock_new();
+    if (ret->lock == NULL) {
+        OPENSSL_free(ret);
+        return NULL;
+    }
+
+    ret->libctx = key->libctx;
+    ret->haspubkey = key->haspubkey;
+    ret->keylen = key->keylen;
+    ret->type = key->type;
+    ret->references = 1;
+
+    if (key->propq != NULL) {
+        ret->propq = OPENSSL_strdup(key->propq);
+        if (ret->propq == NULL)
+            goto err;
+    }
+
+    memcpy(ret->pubkey, key->pubkey, sizeof(ret->pubkey));
+
+    if (key->privkey != NULL) {
+        if (ossl_ecx_key_allocate_privkey(ret) == NULL)
+            goto err;
+        memcpy(ret->privkey, key->privkey, ret->keylen);
+    }
+
+    return ret;
+
+err:
+    ossl_ecx_key_free(ret);
+    ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
+    return NULL;
+}
+
 #ifndef FIPS_MODULE
 ECX_KEY *ossl_ecx_key_op(const X509_ALGOR *palg,
                          const unsigned char *p, int plen,

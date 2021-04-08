@@ -1364,9 +1364,8 @@ static void *sm2_load(const void *reference, size_t reference_sz)
 
 static void *ec_dup(const void *keydata_from)
 {
-    if (ossl_prov_is_running()) {
+    if (ossl_prov_is_running())
         return EC_KEY_dup(keydata_from);
-    }
     return NULL;
 }
 

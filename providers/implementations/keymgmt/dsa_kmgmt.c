@@ -614,9 +614,8 @@ static void *dsa_load(const void *reference, size_t reference_sz)
 
 static void *dsa_dup(const void *keydata_from)
 {
-    if (ossl_prov_is_running()) {
+    if (ossl_prov_is_running())
         return ossl_dsa_dup(keydata_from);
-    }
     return NULL;
 }
 
