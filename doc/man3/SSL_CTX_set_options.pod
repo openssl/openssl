@@ -291,7 +291,7 @@ algorithm. The kernel will utilize the best hardware
 available for encryption. Using the kernel data-path should reduce the memory
 footprint of OpenSSL because no buffering is required. Also, the throughput
 should improve because data copy is avoided when user data is encrypted into
-kernel memory instead of the usual encrypt than copy to kernel.
+kernel memory instead of the usual encrypt then copy to kernel.
 
 Kernel TLS might not support all the features of OpenSSL. For instance,
 renegotiation, and setting the maximum fragment size is not possible as of
@@ -300,7 +300,7 @@ Linux 4.20.
 Note that with kernel TLS enabled some cryptographic operations are performed
 by the kernel directly and not via any available OpenSSL Providers. This might
 be undesirable if, for example, the application requires all cryptographic
-operations to be performmed by the FIPS provider.
+operations to be performed by the FIPS provider.
 
 =back
 
