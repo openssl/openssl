@@ -306,15 +306,16 @@ static int rsa_get_params(void *key, OSSL_PARAM params[])
     const RSA_PSS_PARAMS_30 *pss_params = ossl_rsa_get0_pss_params_30(rsa);
     int rsa_type = RSA_test_flags(rsa, RSA_FLAG_TYPE_MASK);
     OSSL_PARAM *p;
+    int empty = RSA_get0_n(rsa) == NULL;
 
     if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_BITS)) != NULL
-        && !OSSL_PARAM_set_int(p, RSA_bits(rsa)))
+        && (empty || !OSSL_PARAM_set_int(p, RSA_bits(rsa))))
         return 0;
     if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_SECURITY_BITS)) != NULL
-        && !OSSL_PARAM_set_int(p, RSA_security_bits(rsa)))
+        && (empty || !OSSL_PARAM_set_int(p, RSA_security_bits(rsa))))
         return 0;
     if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_MAX_SIZE)) != NULL
-        && !OSSL_PARAM_set_int(p, RSA_size(rsa)))
+        && (empty || !OSSL_PARAM_set_int(p, RSA_size(rsa))))
         return 0;
 
     /*
@@ -648,7 +649,9 @@ static void *rsapss_load(const void *reference, size_t reference_sz)
 
 static void *rsa_dup(const void *keydata_from, int selection)
 {
-    if (ossl_prov_is_running())
+    if (ossl_prov_is_running()
+        /* do not allow creating empty keys by duplication */
+        && (selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0)
         return ossl_rsa_dup(keydata_from, selection);
     return NULL;
 }
