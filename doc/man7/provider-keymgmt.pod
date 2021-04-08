@@ -56,7 +56,7 @@ provider-keymgmt - The KEYMGMT library E<lt>-E<gt> provider functions
  int OSSL_FUNC_keymgmt_copy(void *keydata_to, const void *keydata_from, int selection);
 
  /* Key object duplication, a constructor */
- void *OSSL_FUNC_keymgmt_dup(const void *keydata_from);
+ void *OSSL_FUNC_keymgmt_dup(const void *keydata_from, int selection);
 
  /* Key object validation */
  int OSSL_FUNC_keymgmt_validate(const void *keydata, int selection, int checktype);
@@ -346,8 +346,9 @@ from I<keydata_from> to I<keydata_to>.  It is assumed that the caller
 has ensured that I<keydata_to> and I<keydata_from> are both owned by
 the implementation of this function.
 
-OSSL_FUNC_keymgmt_dup() should duplicate the key data I<keydata_from> and
-create a new provider side key object with the data.
+OSSL_FUNC_keymgmt_dup() should duplicate data subsets indicated by
+I<selection> or the whole key data I<keydata_from> and create a new
+provider side key object with the data.
 
 =head2 Common Information Parameters
 

@@ -125,7 +125,7 @@ static ossl_inline int dh_bn_dup_check(BIGNUM **out, const BIGNUM *f)
     return 1;
 }
 
-DH *ossl_dh_dup(const DH *dh)
+DH *ossl_dh_dup(const DH *dh, int selection)
 {
     DH *dupkey = NULL;
 
@@ -139,14 +139,20 @@ DH *ossl_dh_dup(const DH *dh)
         return NULL;
 
     dupkey->length = DH_get_length(dh);
-    if (!ossl_ffc_params_copy(&dupkey->params, &dh->params))
+    if ((selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) != 0
+        && !ossl_ffc_params_copy(&dupkey->params, &dh->params))
         goto err;
 
     dupkey->flags = dh->flags;
 
-    if (!dh_bn_dup_check(&dupkey->pub_key, dh->pub_key))
+    if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0
+        && ((selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) == 0
+            || !dh_bn_dup_check(&dupkey->pub_key, dh->pub_key)))
         goto err;
-    if (!dh_bn_dup_check(&dupkey->priv_key, dh->priv_key))
+
+    if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0
+        && ((selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) == 0
+            || !dh_bn_dup_check(&dupkey->priv_key, dh->priv_key)))
         goto err;
 
 #ifndef FIPS_MODULE
@@ -161,6 +167,7 @@ DH *ossl_dh_dup(const DH *dh)
     DH_free(dupkey);
     return NULL;
 }
+
 #ifndef FIPS_MODULE
 DH *ossl_dh_key_from_pkcs8(const PKCS8_PRIV_KEY_INFO *p8inf,
                            OSSL_LIB_CTX *libctx, const char *propq)

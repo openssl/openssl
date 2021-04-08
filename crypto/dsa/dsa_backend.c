@@ -64,7 +64,7 @@ static ossl_inline int dsa_bn_dup_check(BIGNUM **out, const BIGNUM *f)
     return 1;
 }
 
-DSA *ossl_dsa_dup(const DSA *dsa)
+DSA *ossl_dsa_dup(const DSA *dsa, int selection)
 {
     DSA *dupkey = NULL;
 
@@ -77,14 +77,20 @@ DSA *ossl_dsa_dup(const DSA *dsa)
     if ((dupkey = ossl_dsa_new(dsa->libctx)) == NULL)
         return NULL;
 
-    if (!ossl_ffc_params_copy(&dupkey->params, &dsa->params))
+    if ((selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) != 0
+        && !ossl_ffc_params_copy(&dupkey->params, &dsa->params))
         goto err;
 
     dupkey->flags = dsa->flags;
 
-    if (!dsa_bn_dup_check(&dupkey->pub_key, dsa->pub_key))
+    if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0
+        && ((selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) == 0
+            || !dsa_bn_dup_check(&dupkey->pub_key, dsa->pub_key)))
         goto err;
-    if (!dsa_bn_dup_check(&dupkey->priv_key, dsa->priv_key))
+
+    if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0
+        && ((selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) == 0
+            || !dsa_bn_dup_check(&dupkey->priv_key, dsa->priv_key)))
         goto err;
 
 #ifndef FIPS_MODULE

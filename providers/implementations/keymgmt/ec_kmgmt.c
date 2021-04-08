@@ -1362,10 +1362,10 @@ static void *sm2_load(const void *reference, size_t reference_sz)
 # endif
 #endif
 
-static void *ec_dup(const void *keydata_from)
+static void *ec_dup(const void *keydata_from, int selection)
 {
     if (ossl_prov_is_running())
-        return EC_KEY_dup(keydata_from);
+        return ossl_ec_key_dup(keydata_from, selection);
     return NULL;
 }
 

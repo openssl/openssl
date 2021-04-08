@@ -410,7 +410,7 @@ static int ecx_pkey_copy(EVP_PKEY *to, EVP_PKEY *from)
     int ret;
 
     if (ecx != NULL) {
-        dupkey = ossl_ecx_key_dup(ecx);
+        dupkey = ossl_ecx_key_dup(ecx, OSSL_KEYMGMT_SELECT_ALL);
         if (dupkey == NULL)
             return 0;
     }

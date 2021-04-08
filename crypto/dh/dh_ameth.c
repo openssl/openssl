@@ -543,7 +543,7 @@ static int dh_pkey_copy(EVP_PKEY *to, EVP_PKEY *from)
     int ret;
 
     if (dh != NULL) {
-        dupkey = ossl_dh_dup(dh);
+        dupkey = ossl_dh_dup(dh, OSSL_KEYMGMT_SELECT_ALL);
         if (dupkey == NULL)
             return 0;
     }

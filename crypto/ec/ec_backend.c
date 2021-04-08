@@ -17,6 +17,7 @@
 #include <openssl/objects.h>
 #include <openssl/params.h>
 #include <openssl/err.h>
+#include <openssl/engine.h>
 #include "crypto/bn.h"
 #include "crypto/ec.h"
 #include "ec_local.h"
@@ -517,6 +518,93 @@ int ossl_ec_key_otherparams_fromdata(EC_KEY *ec, const OSSL_PARAM params[])
     if (!ec_key_group_check_fromdata(ec, params))
         return 0;
     return 1;
+}
+
+EC_KEY *ossl_ec_key_dup(const EC_KEY *src, int selection)
+{
+    EC_KEY *ret = ossl_ec_key_new_method_int(src->libctx, src->propq,
+                                             src->engine);
+
+    if (ret == NULL)
+        return NULL;
+
+    if (src == NULL) {
+        ERR_raise(ERR_LIB_EC, ERR_R_PASSED_NULL_PARAMETER);
+        goto err;
+    }
+
+    /* copy the parameters */
+    if (src->group != NULL
+        && (selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) != 0) {
+        ret->group = ossl_ec_group_new_ex(src->libctx, src->propq,
+                                          src->group->meth);
+        if (ret->group == NULL
+            || !EC_GROUP_copy(ret->group, src->group))
+            goto err;
+
+        if (src->meth != NULL) {
+#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODULE)
+            if (src->engine != NULL && ENGINE_init(src->engine) == 0)
+                goto err;
+            ret->engine = src->engine;
+#endif
+            ret->meth = src->meth;
+        }
+    }
+
+    /*  copy the public key */
+    if (src->pub_key != NULL
+        && (selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0) {
+        if (ret->group == NULL)
+            /* no parameter-less keys allowed */
+            goto err;
+        ret->pub_key = EC_POINT_new(ret->group);
+        if (ret->pub_key == NULL
+            || !EC_POINT_copy(ret->pub_key, src->pub_key))
+                goto err;
+    }
+
+    /* copy the private key */
+    if (src->priv_key != NULL
+        && (selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0) {
+        if (ret->group == NULL)
+            /* no parameter-less keys allowed */
+            goto err;
+        ret->priv_key = BN_new();
+        if (ret->priv_key == NULL || !BN_copy(ret->priv_key, src->priv_key))
+            goto err;
+        if (ret->group->meth->keycopy
+            && ret->group->meth->keycopy(ret, src) == 0)
+            goto err;
+    }
+
+    /* copy the rest */
+    if ((selection & OSSL_KEYMGMT_SELECT_OTHER_PARAMETERS) != 0) {
+        ret->enc_flag = src->enc_flag;
+        ret->conv_form = src->conv_form;
+    }
+
+    ret->version = src->version;
+    ret->flags = src->flags;
+
+#ifndef FIPS_MODULE
+    if (!CRYPTO_dup_ex_data(CRYPTO_EX_INDEX_EC_KEY,
+                            &ret->ex_data, &src->ex_data))
+        goto err;
+#endif
+
+    if (ret->meth != NULL && ret->meth->copy != NULL) {
+        if ((selection
+             & OSSL_KEYMGMT_SELECT_KEYPAIR) != OSSL_KEYMGMT_SELECT_KEYPAIR)
+            goto err;
+        if (ret->meth->copy(ret, src) == 0)
+            goto err;
+    }
+
+    return ret;
+ err:
+    EC_KEY_free(ret);
+    return NULL;
 }
 
 int ossl_ec_encoding_param2id(const OSSL_PARAM *p, int *id)

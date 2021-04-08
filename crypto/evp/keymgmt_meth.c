@@ -477,10 +477,11 @@ int evp_keymgmt_copy(const EVP_KEYMGMT *keymgmt,
     return keymgmt->copy(keydata_to, keydata_from, selection);
 }
 
-void *evp_keymgmt_dup(const EVP_KEYMGMT *keymgmt, const void *keydata_from)
+void *evp_keymgmt_dup(const EVP_KEYMGMT *keymgmt, const void *keydata_from,
+                      int selection)
 {
     /* We assume no dup if the implementation doesn't have a function */
     if (keymgmt->dup == NULL)
         return NULL;
-    return keymgmt->dup(keydata_from);
+    return keymgmt->dup(keydata_from, selection);
 }

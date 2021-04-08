@@ -814,7 +814,7 @@ int evp_keymgmt_copy(const EVP_KEYMGMT *keymgmt,
                      void *keydata_to, const void *keydata_from,
                      int selection);
 void *evp_keymgmt_dup(const EVP_KEYMGMT *keymgmt,
-                      const void *keydata_from);
+                      const void *keydata_from, int selection);
 
 /* Pulling defines out of C source files */
 
