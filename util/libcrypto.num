@@ -5350,3 +5350,5 @@ X509_CRL_new_ex                         ?	3_0_0	EXIST::FUNCTION:
 OSSL_PARAM_dup                          ?	3_0_0	EXIST::FUNCTION:
 OSSL_PARAM_merge                        ?	3_0_0	EXIST::FUNCTION:
 OSSL_PARAM_free                         ?	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_todata                         ?	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_export                         ?	3_0_0	EXIST::FUNCTION:

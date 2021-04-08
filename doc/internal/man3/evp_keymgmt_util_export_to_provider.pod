@@ -33,7 +33,8 @@ OP_CACHE_ELEM
 =head1 DESCRIPTION
 
 evp_keymgmt_util_export() calls L<evp_keymgmt_export(3)> with the
-I<keymgmt> and I<keydata> from I<pk>.  This is a convenience function.
+I<keymgmt> and I<keydata> from I<pk>.  This is used as a
+helper for L<EVP_PKEY_todata(3)>.
 
 evp_keymgmt_util_export_to_provider() exports cached key material
 (provider side key material) from the given key I<pk> to a provider

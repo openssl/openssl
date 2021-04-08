@@ -1266,6 +1266,10 @@ DEPEND[html/man3/EVP_PKEY_supports_digest_nid.html]=man3/EVP_PKEY_supports_diges
 GENERATE[html/man3/EVP_PKEY_supports_digest_nid.html]=man3/EVP_PKEY_supports_digest_nid.pod
 DEPEND[man/man3/EVP_PKEY_supports_digest_nid.3]=man3/EVP_PKEY_supports_digest_nid.pod
 GENERATE[man/man3/EVP_PKEY_supports_digest_nid.3]=man3/EVP_PKEY_supports_digest_nid.pod
+DEPEND[html/man3/EVP_PKEY_todata.html]=man3/EVP_PKEY_todata.pod
+GENERATE[html/man3/EVP_PKEY_todata.html]=man3/EVP_PKEY_todata.pod
+DEPEND[man/man3/EVP_PKEY_todata.3]=man3/EVP_PKEY_todata.pod
+GENERATE[man/man3/EVP_PKEY_todata.3]=man3/EVP_PKEY_todata.pod
 DEPEND[html/man3/EVP_PKEY_verify.html]=man3/EVP_PKEY_verify.pod
 GENERATE[html/man3/EVP_PKEY_verify.html]=man3/EVP_PKEY_verify.pod
 DEPEND[man/man3/EVP_PKEY_verify.3]=man3/EVP_PKEY_verify.pod
@@ -2962,6 +2966,7 @@ html/man3/EVP_PKEY_settable_params.html \
 html/man3/EVP_PKEY_sign.html \
 html/man3/EVP_PKEY_size.html \
 html/man3/EVP_PKEY_supports_digest_nid.html \
+html/man3/EVP_PKEY_todata.html \
 html/man3/EVP_PKEY_verify.html \
 html/man3/EVP_PKEY_verify_recover.html \
 html/man3/EVP_RAND.html \
@@ -3536,6 +3541,7 @@ man/man3/EVP_PKEY_settable_params.3 \
 man/man3/EVP_PKEY_sign.3 \
 man/man3/EVP_PKEY_size.3 \
 man/man3/EVP_PKEY_supports_digest_nid.3 \
+man/man3/EVP_PKEY_todata.3 \
 man/man3/EVP_PKEY_verify.3 \
 man/man3/EVP_PKEY_verify_recover.3 \
 man/man3/EVP_RAND.3 \

@@ -80,6 +80,8 @@ EVP_PKEY *evp_keymgmt_util_make_pkey(EVP_KEYMGMT *keymgmt, void *keydata)
 int evp_keymgmt_util_export(const EVP_PKEY *pk, int selection,
                             OSSL_CALLBACK *export_cb, void *export_cbarg)
 {
+    if (pk == NULL || export_cb == NULL)
+        return 0;
     return evp_keymgmt_export(pk->keymgmt, pk->keydata, selection,
                               export_cb, export_cbarg);
 }
