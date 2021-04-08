@@ -330,7 +330,7 @@ static ossl_inline int rsa_bn_dup_check(BIGNUM **out, const BIGNUM *f)
     return 1;
 }
 
-RSA *ossl_rsa_dup(const RSA *rsa)
+RSA *ossl_rsa_dup(const RSA *rsa, int selection)
 {
     RSA *dupkey = NULL;
 #ifndef FIPS_MODULE
@@ -344,34 +344,42 @@ RSA *ossl_rsa_dup(const RSA *rsa)
     if ((dupkey = ossl_rsa_new_with_ctx(rsa->libctx)) == NULL)
         return NULL;
 
-    /* private and public key */
-    if (!rsa_bn_dup_check(&dupkey->n, rsa->n))
-        goto err;
-    if (!rsa_bn_dup_check(&dupkey->e, rsa->e))
-        goto err;
-    if (!rsa_bn_dup_check(&dupkey->d, rsa->d))
-        goto err;
+    /* public key */
+    if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0) {
+        if (!rsa_bn_dup_check(&dupkey->n, rsa->n))
+            goto err;
+        if (!rsa_bn_dup_check(&dupkey->e, rsa->e))
+            goto err;
+    }
 
-    /* factors and crt params */
-    if (!rsa_bn_dup_check(&dupkey->p, rsa->p))
-        goto err;
-    if (!rsa_bn_dup_check(&dupkey->q, rsa->q))
-        goto err;
-    if (!rsa_bn_dup_check(&dupkey->dmp1, rsa->dmp1))
-        goto err;
-    if (!rsa_bn_dup_check(&dupkey->dmq1, rsa->dmq1))
-        goto err;
-    if (!rsa_bn_dup_check(&dupkey->iqmp, rsa->iqmp))
-        goto err;
+    if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0) {
+
+        /* private key */
+        if (!rsa_bn_dup_check(&dupkey->d, rsa->d))
+            goto err;
+
+        /* factors and crt params */
+        if (!rsa_bn_dup_check(&dupkey->p, rsa->p))
+            goto err;
+        if (!rsa_bn_dup_check(&dupkey->q, rsa->q))
+            goto err;
+        if (!rsa_bn_dup_check(&dupkey->dmp1, rsa->dmp1))
+            goto err;
+        if (!rsa_bn_dup_check(&dupkey->dmq1, rsa->dmq1))
+            goto err;
+        if (!rsa_bn_dup_check(&dupkey->iqmp, rsa->iqmp))
+            goto err;
+    }
 
     dupkey->version = rsa->version;
     dupkey->flags = rsa->flags;
+    /* we always copy the PSS parameters regardless of selection */
     dupkey->pss_params = rsa->pss_params;
 
 #ifndef FIPS_MODULE
     /* multiprime */
-    pnum = sk_RSA_PRIME_INFO_num(rsa->prime_infos);
-    if (pnum > 0) {
+    if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0
+        && (pnum = sk_RSA_PRIME_INFO_num(rsa->prime_infos)) > 0) {
         dupkey->prime_infos = sk_RSA_PRIME_INFO_new_reserve(NULL, pnum);
         for (i = 0; i < pnum; i++) {
             const RSA_PRIME_INFO *pinfo = NULL;

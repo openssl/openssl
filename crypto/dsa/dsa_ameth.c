@@ -507,7 +507,7 @@ static int dsa_pkey_copy(EVP_PKEY *to, EVP_PKEY *from)
     int ret;
 
     if (dsa != NULL) {
-        dupkey = ossl_dsa_dup(dsa);
+        dupkey = ossl_dsa_dup(dsa, OSSL_KEYMGMT_SELECT_ALL);
         if (dupkey == NULL)
             return 0;
     }

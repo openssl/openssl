@@ -460,9 +460,10 @@ int evp_keymgmt_util_copy(EVP_PKEY *to, EVP_PKEY *from, int selection)
             return 0;
         }
     } else if (to_keymgmt == from->keymgmt && to_keymgmt->dup != NULL
-               && to_keydata == NULL
-               && selection == OSSL_KEYMGMT_SELECT_ALL) {
-        to_keydata = alloc_keydata = evp_keymgmt_dup(to_keymgmt, from->keydata);
+               && to_keydata == NULL) {
+        to_keydata = alloc_keydata = evp_keymgmt_dup(to_keymgmt,
+                                                     from->keydata,
+                                                     selection);
         if (to_keydata == NULL)
             return 0;
     } else if (match_type(to_keymgmt, from->keymgmt)) {

@@ -646,10 +646,10 @@ static void *rsapss_load(const void *reference, size_t reference_sz)
     return common_load(reference, reference_sz, RSA_FLAG_TYPE_RSASSAPSS);
 }
 
-static void *rsa_dup(const void *keydata_from)
+static void *rsa_dup(const void *keydata_from, int selection)
 {
     if (ossl_prov_is_running())
-        return ossl_rsa_dup(keydata_from);
+        return ossl_rsa_dup(keydata_from, selection);
     return NULL;
 }
 

@@ -603,7 +603,7 @@ OSSL_CORE_MAKE_FUNC(int, keymgmt_copy,
 /* Dup function, constructor */
 # define OSSL_FUNC_KEYMGMT_DUP                        45
 OSSL_CORE_MAKE_FUNC(void *, keymgmt_dup,
-                    (const void *keydata_from))
+                    (const void *keydata_from, int selection))
 
 /* Key Exchange */
 

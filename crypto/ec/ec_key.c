@@ -184,17 +184,7 @@ EC_KEY *EC_KEY_copy(EC_KEY *dest, const EC_KEY *src)
 
 EC_KEY *EC_KEY_dup(const EC_KEY *ec_key)
 {
-    EC_KEY *ret = ossl_ec_key_new_method_int(ec_key->libctx, ec_key->propq,
-                                             ec_key->engine);
-
-    if (ret == NULL)
-        return NULL;
-
-    if (EC_KEY_copy(ret, ec_key) == NULL) {
-        EC_KEY_free(ret);
-        return NULL;
-    }
-    return ret;
+    return ossl_ec_key_dup(ec_key, OSSL_KEYMGMT_SELECT_ALL);
 }
 
 int EC_KEY_up_ref(EC_KEY *r)

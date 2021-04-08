@@ -891,7 +891,7 @@ static int rsa_pkey_copy(EVP_PKEY *to, EVP_PKEY *from)
     int ret;
 
     if (rsa != NULL) {
-        dupkey = ossl_rsa_dup(rsa);
+        dupkey = ossl_rsa_dup(rsa, OSSL_KEYMGMT_SELECT_ALL);
         if (dupkey == NULL)
             return 0;
     }

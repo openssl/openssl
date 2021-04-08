@@ -692,10 +692,10 @@ void *ecx_load(const void *reference, size_t reference_sz)
     return NULL;
 }
 
-static void *ecx_dup(const void *keydata_from)
+static void *ecx_dup(const void *keydata_from, int selection)
 {
     if (ossl_prov_is_running())
-        return ossl_ecx_key_dup(keydata_from);
+        return ossl_ecx_key_dup(keydata_from, selection);
     return NULL;
 }
 

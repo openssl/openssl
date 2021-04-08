@@ -92,7 +92,7 @@ int ossl_ecx_key_fromdata(ECX_KEY *ecx, const OSSL_PARAM params[],
     return 1;
 }
 
-ECX_KEY *ossl_ecx_key_dup(const ECX_KEY *key)
+ECX_KEY *ossl_ecx_key_dup(const ECX_KEY *key, int selection)
 {
     ECX_KEY *ret = OPENSSL_zalloc(sizeof(*ret));
 
@@ -119,9 +119,11 @@ ECX_KEY *ossl_ecx_key_dup(const ECX_KEY *key)
             goto err;
     }
 
-    memcpy(ret->pubkey, key->pubkey, sizeof(ret->pubkey));
+    if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0)
+        memcpy(ret->pubkey, key->pubkey, sizeof(ret->pubkey));
 
-    if (key->privkey != NULL) {
+    if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0
+        && key->privkey != NULL) {
         if (ossl_ecx_key_allocate_privkey(ret) == NULL)
             goto err;
         memcpy(ret->privkey, key->privkey, ret->keylen);
