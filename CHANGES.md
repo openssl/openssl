@@ -21,7 +21,7 @@ OpenSSL Releases
 OpenSSL 3.0
 -----------
 
-### Changes between 1.1.1 and 3.0 alpha 14 [8 Apr 2021]
+### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
 
  * A public key check is now performed during EVP_PKEY_derive_set_peer().
    Previously DH was internally doing this during EVP_PKEY_derive().
