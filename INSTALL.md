@@ -705,9 +705,9 @@ for further details.
 Don't compile in filename and line number information (e.g.  for errors and
 memory allocation).
 
-### no-fips
+### enable-fips
 
-Don't compile the FIPS provider
+Build (and install) the FIPS provider
 
 ### no-fips-securitychecks
 
