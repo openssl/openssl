@@ -42,7 +42,7 @@ provider-decoder - The OSSL_DECODER library E<lt>-E<gt> provider functions
 =head1 DESCRIPTION
 
 I<The term "decode" is used throughout this manual.  This includes but is
-not limited to deserialization as individual decoders can do also
+not limited to deserialization as individual decoders can also do
 decoding into intermediate data formats.>
 
 The DECODER operation is a generic method to create a provider-native
