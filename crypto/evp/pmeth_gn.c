@@ -395,3 +395,26 @@ const OSSL_PARAM *EVP_PKEY_fromdata_settable(EVP_PKEY_CTX *ctx, int selection)
         return evp_keymgmt_import_types(ctx->keymgmt, selection);
     return NULL;
 }
+
+static OSSL_CALLBACK ossl_pkey_todata_cb;
+
+static int ossl_pkey_todata_cb(const OSSL_PARAM params[], void *arg)
+{
+    OSSL_PARAM **ret = arg;
+
+    *ret = OSSL_PARAM_dup(params);
+    return 1;
+}
+
+int EVP_PKEY_todata(const EVP_PKEY *pkey, int selection, OSSL_PARAM **params)
+{
+    if (params == NULL)
+        return 0;
+    return EVP_PKEY_export(pkey, selection, ossl_pkey_todata_cb, params);
+}
+
+int EVP_PKEY_export(const EVP_PKEY *pkey, int selection,
+                    OSSL_CALLBACK *export_cb, void *export_cbarg)
+{
+    return evp_keymgmt_util_export(pkey, selection, export_cb, export_cbarg);
+}
