@@ -4956,7 +4956,6 @@ NCONF_new_ex                            ?	3_0_0	EXIST::FUNCTION:
 CONF_modules_load_file_ex               ?	3_0_0	EXIST::FUNCTION:
 OSSL_LIB_CTX_load_config                ?	3_0_0	EXIST::FUNCTION:
 OSSL_PARAM_BLD_to_param                 ?	3_0_0	EXIST::FUNCTION:
-OSSL_PARAM_BLD_free_params              ?	3_0_0	EXIST::FUNCTION:
 OSSL_PARAM_BLD_push_int                 ?	3_0_0	EXIST::FUNCTION:
 OSSL_PARAM_BLD_push_uint                ?	3_0_0	EXIST::FUNCTION:
 OSSL_PARAM_BLD_push_long                ?	3_0_0	EXIST::FUNCTION:
