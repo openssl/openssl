@@ -435,7 +435,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(template_public_test, 5);
     /* Only run the secure memory testing if we have secure memory available */
     if (CRYPTO_secure_malloc_init(1<<16, 16))
-        ADD_TESTS_ALL(template_private_test, 5);
+        ADD_ALL_TESTS(template_private_test, 5);
     ADD_TEST(builder_limit_test);
     ADD_TEST(builder_merge_test);
     return 1;

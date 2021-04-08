@@ -155,12 +155,14 @@ OSSL_PARAM *OSSL_PARAM_merge(const OSSL_PARAM *p1, const OSSL_PARAM *p2)
     size_t  list1_sz = 0, list2_sz = 0;
     int diff;
 
-    if (p1 == NULL)
+    if (p1 == NULL && p2 == NULL)
         return NULL;
 
     /* Copy p1 to list1 */
-    for (p = p1; p->key != NULL && list1_sz < OSSL_PARAM_MERGE_LIST_MAX; p++)
-        list1[list1_sz++] = p;
+    if (p1 != NULL) {
+        for (p = p1; p->key != NULL && list1_sz < OSSL_PARAM_MERGE_LIST_MAX; p++)
+            list1[list1_sz++] = p;
+    }
     list1[list1_sz] = NULL;
 
     /* copy p2 to a list2 */

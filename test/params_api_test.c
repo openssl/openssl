@@ -663,16 +663,31 @@ static int test_param_modified(void)
 
 static int test_param_copy_null(void)
 {
-    int ret;
-    OSSL_PARAM *cp = NULL;
-    OSSL_PARAM param[3] = { OSSL_PARAM_int("a", NULL),
-                            OSSL_PARAM_int("b", NULL),
+    int ret, val;
+    int a = 1, b = 2;
+    OSSL_PARAM *cp1 = NULL, *cp2 = NULL, *p;
+    OSSL_PARAM param[3] = { OSSL_PARAM_int("a", &a),
+                            OSSL_PARAM_int("b", &b),
                             OSSL_PARAM_END };
 
     ret = TEST_ptr_null(OSSL_PARAM_dup(NULL))
-          && TEST_ptr_null(OSSL_PARAM_merge(NULL, param))
-          && TEST_ptr(cp = OSSL_PARAM_merge(param, NULL));
-    OSSL_PARAM_free(cp);
+          && TEST_ptr(cp1 = OSSL_PARAM_merge(NULL, param))
+          && TEST_ptr(p = OSSL_PARAM_locate(cp1, "a"))
+          && TEST_true(OSSL_PARAM_get_int(p, &val))
+          && TEST_int_eq(val, 1)
+          && TEST_ptr(p = OSSL_PARAM_locate(cp1, "b"))
+          && TEST_true(OSSL_PARAM_get_int(p, &val))
+          && TEST_int_eq(val, 2)
+          && TEST_ptr(cp2 = OSSL_PARAM_merge(param, NULL))
+          && TEST_ptr(p = OSSL_PARAM_locate(cp2, "a"))
+          && TEST_true(OSSL_PARAM_get_int(p, &val))
+          && TEST_int_eq(val, 1)
+          && TEST_ptr(p = OSSL_PARAM_locate(cp2, "b"))
+          && TEST_true(OSSL_PARAM_get_int(p, &val))
+          && TEST_int_eq(val, 2)
+          && TEST_ptr_null(OSSL_PARAM_merge(NULL, NULL));
+    OSSL_PARAM_free(cp2);
+    OSSL_PARAM_free(cp1);
     return ret;
 }
 
