@@ -243,18 +243,6 @@ static int test_builtin(int n, int as)
 
     temp = ECDSA_size(eckey);
 
-    /*
-     * |as| indicates how we want to treat the key, i.e. what sort of
-     * computation we want to do with it.  The two choices are the key
-     * types EVP_PKEY_EC and EVP_PKEY_SM2.  It's perfectly possible to
-     * switch back and forth between those two key types, regardless of
-     * curve, even though the default is to have EVP_PKEY_SM2 for the
-     * SM2 curve and EVP_PKEY_EC for all other curves.
-     */
-    if (!TEST_true(EVP_PKEY_set_alias_type(pkey, as))
-        || !TEST_true(EVP_PKEY_set_alias_type(pkey_neg, as)))
-            goto err;
-
     if (!TEST_int_ge(temp, 0)
         || !TEST_ptr(sig = OPENSSL_malloc(sig_len = (size_t)temp))
         /* create a signature */

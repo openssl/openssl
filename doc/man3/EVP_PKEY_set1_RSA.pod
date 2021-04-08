@@ -9,7 +9,7 @@ EVP_PKEY_assign_RSA, EVP_PKEY_assign_DSA, EVP_PKEY_assign_DH,
 EVP_PKEY_assign_EC_KEY, EVP_PKEY_assign_POLY1305, EVP_PKEY_assign_SIPHASH,
 EVP_PKEY_get0_hmac, EVP_PKEY_get0_poly1305, EVP_PKEY_get0_siphash,
 EVP_PKEY_get0, EVP_PKEY_type, EVP_PKEY_id, EVP_PKEY_base_id,
-EVP_PKEY_set_alias_type, EVP_PKEY_set1_engine, EVP_PKEY_get0_engine -
+EVP_PKEY_set1_engine, EVP_PKEY_get0_engine -
 EVP_PKEY assignment functions
 
 =head1 SYNOPSIS
@@ -23,8 +23,6 @@ EVP_PKEY assignment functions
 Deprecated since OpenSSL 3.0, can be hidden entirely by defining
 B<OPENSSL_API_COMPAT> with a suitable version value, see
 L<openssl_user_macros(7)>:
-
- int EVP_PKEY_set_alias_type(EVP_PKEY *pkey, int type);
 
  int EVP_PKEY_set1_RSA(EVP_PKEY *pkey, RSA *key);
  int EVP_PKEY_set1_DSA(EVP_PKEY *pkey, DSA *key);
@@ -130,19 +128,12 @@ If I<engine> does not include an B<EVP_PKEY_METHOD> for I<pkey> an
 error occurs. This function is deprecated. Applications should use providers
 instead of engines (see L<provider(7)> for details).
 
-EVP_PKEY_set_alias_type() allows modifying an EVP_PKEY to use a
-different set of algorithms than the default. This function is deprecated and
-was previously needed as a workaround to recognise SM2 keys. From OpenSSL 3.0,
-this key type is internally recognised so the workaround is no longer needed.
-Functionality is still retained as it is, but will only work with EVP_PKEYs
-with a legacy internal key.
-
 =head1 WARNINGS
 
 The following functions are only reliable with B<EVP_PKEY>s that have
 been assigned an internal key with EVP_PKEY_assign_*():
 
-EVP_PKEY_id(), EVP_PKEY_base_id(), EVP_PKEY_type(), EVP_PKEY_set_alias_type()
+EVP_PKEY_id(), EVP_PKEY_base_id(), EVP_PKEY_type()
 
 For EVP_PKEY key type checking purposes, L<EVP_PKEY_is_a(3)> is more generic.
 
@@ -170,12 +161,6 @@ and EVP_PKEY_assign_SIPHASH() are implemented as macros.
 EVP_PKEY_assign_EC_KEY() looks at the curve name id to determine if
 the passed B<EC_KEY> is an L<SM2(7)> key, and will set the B<EVP_PKEY>
 type to B<EVP_PKEY_SM2> in that case, instead of B<EVP_PKEY_EC>.
-
-It's possible to switch back and forth between the types B<EVP_PKEY_EC>
-and B<EVP_PKEY_SM2> with a call to EVP_PKEY_set_alias_type() on keys
-assigned with this macro if it's desirable to do a normal EC
-computations with the SM2 curve instead of the special SM2
-computations, and vice versa.
 
 Most applications wishing to know a key type will simply call
 EVP_PKEY_base_id() and will not care about the actual type:
@@ -206,15 +191,6 @@ type or B<NID_undef> (equivalently B<EVP_PKEY_NONE>) on error.
 
 EVP_PKEY_set1_engine() returns 1 for success and 0 for failure.
 
-EVP_PKEY_set_alias_type() returns 1 for success and 0 for error.
-
-=head1 EXAMPLES
-
-After loading an ECC key, it is possible to convert it to using SM2
-algorithms with EVP_PKEY_set_alias_type:
-
- EVP_PKEY_set_alias_type(pkey, EVP_PKEY_SM2);
-
 =head1 SEE ALSO
 
 L<EVP_PKEY_new(3)>, L<SM2(7)>
@@ -227,11 +203,13 @@ EVP_PKEY_get0_RSA, EVP_PKEY_get0_DSA, EVP_PKEY_get0_DH, EVP_PKEY_get0_EC_KEY,
 EVP_PKEY_assign_RSA, EVP_PKEY_assign_DSA, EVP_PKEY_assign_DH,
 EVP_PKEY_assign_EC_KEY, EVP_PKEY_assign_POLY1305, EVP_PKEY_assign_SIPHASH,
 EVP_PKEY_get0_hmac, EVP_PKEY_get0_poly1305, EVP_PKEY_get0_siphash,
-EVP_PKEY_set_alias_type, EVP_PKEY_set1_engine and EVP_PKEY_get0_engine were
-deprecated in OpenSSL 3.0.
+EVP_PKEY_set1_engine and EVP_PKEY_get0_engine were deprecated in OpenSSL 3.0.
 
 The return value from EVP_PKEY_get0_RSA, EVP_PKEY_get0_DSA, EVP_PKEY_get0_DH,
 EVP_PKEY_get0_EC_KEY were made const in OpenSSL 3.0.
+
+The function EVP_PKEY_set_alias_type() was previously documented on this page.
+It was removed in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

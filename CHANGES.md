@@ -432,12 +432,11 @@ OpenSSL 3.0
 
    *Paul Dale*
 
- * Deprecated EVP_PKEY_set_alias_type().  This function was previously
+ * Removed EVP_PKEY_set_alias_type().  This function was previously
    needed as a workaround to recognise SM2 keys.  With OpenSSL 3.0, this key
    type is internally recognised so the workaround is no longer needed.
 
-   Functionality is still retained as it is, but will only work with
-   EVP_PKEYs with a legacy internal key.
+   This is a breaking change from previous OpenSSL versions.
 
    *Richard Levitte*
 
@@ -863,16 +862,16 @@ OpenSSL 3.0
    *Paul Dale*
 
  * Reworked the treatment of EC EVP_PKEYs with the SM2 curve to
-   automatically become EVP_PKEY_SM2 rather than EVP_PKEY_EC.
-   This means that applications don't have to look at the curve NID and
-   `EVP_PKEY_set_alias_type(pkey, EVP_PKEY_SM2)` to get SM2 computations.
-   However, they still can, that `EVP_PKEY_set_alias_type()` call acts as
-   a no-op when the EVP_PKEY is already of the given type.
+   automatically become EVP_PKEY_SM2 rather than EVP_PKEY_EC. This is a breaking
+   change from previous OpenSSL versions.
+
+   Unlike in previous OpenSSL versions, this means that applications must not
+   call `EVP_PKEY_set_alias_type(pkey, EVP_PKEY_SM2)` to get SM2 computations.
+   The `EVP_PKEY_set_alias_type` function has now been removed.
 
    Parameter and key generation is also reworked to make it possible
-   to generate EVP_PKEY_SM2 parameters and keys without having to go
-   through EVP_PKEY_EC generation and then change the EVP_PKEY type.
-   However, code that does the latter will still work as before.
+   to generate EVP_PKEY_SM2 parameters and keys. Applications must now generate
+   SM2 keys directly and must not create an EVP_PKEY_EC key first.
 
    *Richard Levitte*
 

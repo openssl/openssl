@@ -662,37 +662,6 @@ int EVP_PKEY_set_type_str(EVP_PKEY *pkey, const char *str, int len)
     return pkey_set_type(pkey, NULL, EVP_PKEY_NONE, str, len, NULL);
 }
 
-# ifndef OPENSSL_NO_DEPRECATED_3_0
-int EVP_PKEY_set_alias_type(EVP_PKEY *pkey, int type)
-{
-    if (!evp_pkey_is_legacy(pkey)) {
-        const char *name = OBJ_nid2sn(type);
-
-        if (name != NULL && EVP_PKEY_is_a(pkey, name))
-            return 1;
-
-        ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_OPERATION);
-        return 0;
-    }
-
-    if (pkey->type == type) {
-        return 1; /* it already is that type */
-    }
-
-    /*
-     * The application is requesting to alias this to a different pkey type,
-     * but not one that resolves to the base type.
-     */
-    if (EVP_PKEY_type(type) != EVP_PKEY_base_id(pkey)) {
-        ERR_raise(ERR_LIB_EVP, EVP_R_UNSUPPORTED_ALGORITHM);
-        return 0;
-    }
-
-    pkey->type = type;
-    return 1;
-}
-# endif
-
 # ifndef OPENSSL_NO_ENGINE
 int EVP_PKEY_set1_engine(EVP_PKEY *pkey, ENGINE *e)
 {
@@ -721,21 +690,31 @@ ENGINE *EVP_PKEY_get0_engine(const EVP_PKEY *pkey)
 # ifndef OPENSSL_NO_DEPRECATED_3_0
 int EVP_PKEY_assign(EVP_PKEY *pkey, int type, void *key)
 {
-    int alias = type;
-
 #  ifndef OPENSSL_NO_EC
-    if ((key != NULL) && (EVP_PKEY_type(type) == EVP_PKEY_EC)) {
+    int pktype;
+
+    pktype = EVP_PKEY_type(type);
+    if ((key != NULL) && (pktype == EVP_PKEY_EC || pktype == EVP_PKEY_SM2)) {
         const EC_GROUP *group = EC_KEY_get0_group(key);
 
-        if (group != NULL && EC_GROUP_get_curve_name(group) == NID_sm2)
-            alias = EVP_PKEY_SM2;
+        if (group != NULL) {
+            int curve = EC_GROUP_get_curve_name(group);
+
+            /*
+             * Regardless of what is requested the SM2 curve must be SM2 type,
+             * and non SM2 curves are EC type.
+             */
+            if (curve == NID_sm2 && pktype == EVP_PKEY_EC)
+                type = EVP_PKEY_SM2;
+            else if(curve != NID_sm2 && pktype == EVP_PKEY_SM2)
+                type = EVP_PKEY_EC;
+        }
     }
 #  endif
 
     if (pkey == NULL || !EVP_PKEY_set_type(pkey, type))
         return 0;
-    if (!EVP_PKEY_set_alias_type(pkey, alias))
-        return 0;
+
     pkey->pkey.ptr = key;
     return (key != NULL);
 }
@@ -1505,10 +1484,12 @@ static int pkey_set_type(EVP_PKEY *pkey, ENGINE *e, int type, const char *str,
          * EVP_PKEY_KEYMGMT, which indicates that one should be cautious
          * with functions that expect legacy internal keys.
          */
-        if (ameth != NULL)
-            pkey->type = ameth->pkey_id;
-        else
+        if (ameth != NULL) {
+            if (type == EVP_PKEY_NONE)
+                pkey->type = ameth->pkey_id;
+        } else {
             pkey->type = EVP_PKEY_KEYMGMT;
+        }
 #endif
     }
     return 1;
