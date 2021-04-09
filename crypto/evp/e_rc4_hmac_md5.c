@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2011-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -46,8 +46,12 @@ static int rc4_hmac_md5_init_key(EVP_CIPHER_CTX *ctx,
                                  const unsigned char *iv, int enc)
 {
     EVP_RC4_HMAC_MD5 *key = data(ctx);
+    const int keylen = EVP_CIPHER_CTX_key_length(ctx);
 
-    RC4_set_key(&key->ks, EVP_CIPHER_CTX_key_length(ctx), inkey);
+    if (keylen <= 0)
+        return 0;
+
+    RC4_set_key(&key->ks, keylen, inkey);
 
     MD5_Init(&key->head);       /* handy when benchmarking */
     key->tail = key->head;

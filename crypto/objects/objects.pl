@@ -7,12 +7,15 @@
 # https://www.openssl.org/source/license.html
 
 use Getopt::Std;
+use FindBin;
+use lib "$FindBin::Bin/../../util/perl";
+use OpenSSL::copyright;
 
 our($opt_n);
 getopts('n');
 
 # The year the output file is generated.
-my $YEAR = [localtime()]->[5] + 1900;
+my $YEAR = OpenSSL::copyright::latest(($0, $ARGV[1], $ARGV[0]));
 
 open (NUMIN,"$ARGV[1]") || die "Can't open number file $ARGV[1]";
 $max_nid=0;

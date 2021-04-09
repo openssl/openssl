@@ -485,12 +485,6 @@ static int cms_RecipientInfo_ktri_encrypt(const CMS_ContentInfo *cms,
             goto err;
     }
 
-    if (EVP_PKEY_CTX_ctrl(pctx, -1, EVP_PKEY_OP_ENCRYPT,
-                          EVP_PKEY_CTRL_CMS_ENCRYPT, 0, ri) <= 0) {
-        ERR_raise(ERR_LIB_CMS, CMS_R_CTRL_ERROR);
-        goto err;
-    }
-
     if (EVP_PKEY_encrypt(pctx, NULL, &eklen, ec->key, ec->keylen) <= 0)
         goto err;
 
@@ -573,12 +567,6 @@ static int cms_RecipientInfo_ktri_decrypt(CMS_ContentInfo *cms,
 
     if (!ossl_cms_env_asn1_ctrl(ri, 1))
         goto err;
-
-    if (EVP_PKEY_CTX_ctrl(ktri->pctx, -1, EVP_PKEY_OP_DECRYPT,
-                          EVP_PKEY_CTRL_CMS_DECRYPT, 0, ri) <= 0) {
-        ERR_raise(ERR_LIB_CMS, CMS_R_CTRL_ERROR);
-        goto err;
-    }
 
     if (EVP_PKEY_decrypt(ktri->pctx, NULL, &eklen,
                          ktri->encryptedKey->data,

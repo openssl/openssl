@@ -13,6 +13,8 @@
 #include <string.h>
 #ifdef __TANDEM
 # include <strings.h> /* strcasecmp */
+# include <sys/types.h> /* needed for stat.h */
+# include <sys/stat.h> /* struct stat */
 #endif
 #include "internal/cryptlib.h"
 #include "internal/o_dir.h"

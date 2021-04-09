@@ -42,7 +42,7 @@ The SRP_create_verifier_BN_ex() function creates an SRP password verifier from
 the supplied parameters as defined in section 2.4 of RFC 5054 using the library
 context I<libctx> and property query string I<propq>. Any cryptographic
 algorithms that need to be fetched will use the I<libctx> and I<propq>. See
-L<provider(7)/Fetching algorithms>.
+L<crypto(7)/ALGORITHM FETCHING>.
 
 SRP_create_verifier_BN() is the same as SRP_create_verifier_BN_ex() except the
 default library context and property query string is used.

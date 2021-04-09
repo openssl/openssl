@@ -114,10 +114,10 @@ And here's the implementation of the FOO method fetcher:
      * In this example, we have a public method creator and destructor.
      * It's not absolutely necessary, but is in the spirit of OpenSSL.
      */
-    EVP_FOO *EVP_FOO_meth_from_dispatch(int name_id,
-                                        const OSSL_DISPATCH *fns,
-                                        OSSL_PROVIDER *prov,
-                                        void *data)
+    EVP_FOO *EVP_FOO_meth_from_algorithm(int name_id,
+                                         const OSSL_DISPATCH *fns,
+                                         OSSL_PROVIDER *prov,
+                                         void *data)
     {
         EVP_FOO *foo = NULL;
 
@@ -162,10 +162,10 @@ And here's the implementation of the FOO method fetcher:
         }
     }
 
-    static void *foo_from_dispatch(const OSSL_DISPATCH *fns,
-                                   OSSL_PROVIDER *prov)
+    static void *foo_from_algorithm(const OSSL_DISPATCH *fns,
+                                    OSSL_PROVIDER *prov)
     {
-        return EVP_FOO_meth_from_dispatch(fns, prov);
+        return EVP_FOO_meth_from_algorithm(fns, prov);
     }
 
     static int foo_up_ref(void *vfoo)
@@ -188,7 +188,7 @@ And here's the implementation of the FOO method fetcher:
     {
         EVP_FOO *foo =
             evp_generic_fetch(ctx, OSSL_OP_FOO, name, properties,
-                              foo_from_dispatch, foo_up_ref, foo_free);
+                              foo_from_algorithm, foo_up_ref, foo_free);
 
         /*
          * If this method exists in legacy form, with a constant NID for the
@@ -261,7 +261,7 @@ The functions described here were all added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

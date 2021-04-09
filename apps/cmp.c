@@ -1199,8 +1199,6 @@ static SSL_CTX *setup_ssl_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
     if (ssl_ctx == NULL)
         return NULL;
 
-    SSL_CTX_set_mode(ssl_ctx, SSL_MODE_AUTO_RETRY);
-
     if (opt_tls_trusted != NULL) {
         trust_store = load_certstore(opt_tls_trusted, opt_otherpass,
                                      "trusted TLS certificates", vpm);

@@ -97,15 +97,19 @@ static void list_ciphers(void)
             print_names(bio_out, names);
 
             BIO_printf(bio_out, " @ %s\n",
-                    OSSL_PROVIDER_name(EVP_CIPHER_provider(c)));
+                       OSSL_PROVIDER_name(EVP_CIPHER_provider(c)));
 
             if (verbose) {
+                const char *desc = EVP_CIPHER_description(c);
+
+                if (desc != NULL)
+                    BIO_printf(bio_out, "    description: %s\n", desc);
                 print_param_types("retrievable algorithm parameters",
-                                EVP_CIPHER_gettable_params(c), 4);
+                                  EVP_CIPHER_gettable_params(c), 4);
                 print_param_types("retrievable operation parameters",
-                                EVP_CIPHER_gettable_ctx_params(c), 4);
+                                  EVP_CIPHER_gettable_ctx_params(c), 4);
                 print_param_types("settable operation parameters",
-                                EVP_CIPHER_settable_ctx_params(c), 4);
+                                  EVP_CIPHER_settable_ctx_params(c), 4);
             }
         }
         sk_OPENSSL_CSTRING_free(names);
@@ -177,6 +181,10 @@ static void list_digests(void)
             BIO_printf(bio_out, " @ %s\n", OSSL_PROVIDER_name(EVP_MD_provider(m)));
 
             if (verbose) {
+                const char *desc = EVP_MD_description(m);
+
+                if (desc != NULL)
+                    BIO_printf(bio_out, "    description: %s\n", desc);
                 print_param_types("retrievable algorithm parameters",
                                 EVP_MD_gettable_params(m), 4);
                 print_param_types("retrievable operation parameters",
@@ -237,6 +245,10 @@ static void list_macs(void)
             BIO_printf(bio_out, " @ %s\n", OSSL_PROVIDER_name(EVP_MAC_provider(m)));
 
             if (verbose) {
+                const char *desc = EVP_MAC_description(m);
+
+                if (desc != NULL)
+                    BIO_printf(bio_out, "    description: %s\n", desc);
                 print_param_types("retrievable algorithm parameters",
                                 EVP_MAC_gettable_params(m), 4);
                 print_param_types("retrievable operation parameters",
@@ -300,6 +312,10 @@ static void list_kdfs(void)
             BIO_printf(bio_out, " @ %s\n", OSSL_PROVIDER_name(EVP_KDF_provider(k)));
 
             if (verbose) {
+                const char *desc = EVP_KDF_description(k);
+
+                if (desc != NULL)
+                    BIO_printf(bio_out, "    description: %s\n", desc);
                 print_param_types("retrievable algorithm parameters",
                                 EVP_KDF_gettable_params(k), 4);
                 print_param_types("retrievable operation parameters",
@@ -359,6 +375,10 @@ static void list_random_generators(void)
         BIO_printf(bio_out, " @ %s\n", OSSL_PROVIDER_name(EVP_RAND_provider(m)));
 
         if (verbose) {
+            const char *desc = EVP_RAND_description(m);
+
+            if (desc != NULL)
+                BIO_printf(bio_out, "    description: %s\n", desc);
             print_param_types("retrievable algorithm parameters",
                               EVP_RAND_gettable_params(m), 4);
             print_param_types("retrievable operation parameters",
@@ -492,6 +512,10 @@ static void list_encoders(void)
                     OSSL_ENCODER_properties(k));
 
             if (verbose) {
+                const char *desc = OSSL_ENCODER_description(k);
+
+                if (desc != NULL)
+                    BIO_printf(bio_out, "    description: %s\n", desc);
                 print_param_types("settable operation parameters",
                                 OSSL_ENCODER_settable_ctx_params(k), 4);
             }
@@ -556,6 +580,10 @@ static void list_decoders(void)
                     OSSL_DECODER_properties(k));
 
             if (verbose) {
+                const char *desc = OSSL_DECODER_description(k);
+
+                if (desc != NULL)
+                    BIO_printf(bio_out, "    description: %s\n", desc);
                 print_param_types("settable operation parameters",
                                 OSSL_DECODER_settable_ctx_params(k), 4);
             }
@@ -602,9 +630,17 @@ static void list_keymanagers(void)
 
         names = sk_OPENSSL_CSTRING_new(name_cmp);
         if (names != NULL && EVP_KEYMGMT_names_do_all(k, collect_names, names)) {
-            BIO_printf(bio_out, "  ");
-            print_names(bio_out, names);
+            const char *desc = EVP_KEYMGMT_description(k);
 
+            BIO_printf(bio_out, "  Name: ");
+            if (desc != NULL)
+                BIO_printf(bio_out, "%s", desc);
+            else
+                BIO_printf(bio_out, "%s", sk_OPENSSL_CSTRING_value(names, 0));
+            BIO_printf(bio_out, "\n");
+            BIO_printf(bio_out, "    Type: Provider Algorithm\n");
+            BIO_printf(bio_out, "    IDs: ");
+            print_names(bio_out, names);
             BIO_printf(bio_out, " @ %s\n",
                     OSSL_PROVIDER_name(EVP_KEYMGMT_provider(k)));
 
@@ -667,6 +703,10 @@ static void list_signatures(void)
                     OSSL_PROVIDER_name(EVP_SIGNATURE_provider(k)));
 
             if (verbose) {
+                const char *desc = EVP_SIGNATURE_description(k);
+
+                if (desc != NULL)
+                    BIO_printf(bio_out, "    description: %s\n", desc);
                 print_param_types("settable operation parameters",
                                 EVP_SIGNATURE_settable_ctx_params(k), 4);
                 print_param_types("retrievable operation parameters",
@@ -724,6 +764,10 @@ static void list_kems(void)
             BIO_printf(bio_out, " @ %s\n", OSSL_PROVIDER_name(EVP_KEM_provider(k)));
 
             if (verbose) {
+                const char *desc = EVP_KEM_description(k);
+
+                if (desc != NULL)
+                    BIO_printf(bio_out, "    description: %s\n", desc);
                 print_param_types("settable operation parameters",
                                 EVP_KEM_settable_ctx_params(k), 4);
                 print_param_types("retrievable operation parameters",
@@ -784,6 +828,10 @@ static void list_asymciphers(void)
                     OSSL_PROVIDER_name(EVP_ASYM_CIPHER_provider(k)));
 
             if (verbose) {
+                const char *desc = EVP_ASYM_CIPHER_description(k);
+
+                if (desc != NULL)
+                    BIO_printf(bio_out, "    description: %s\n", desc);
                 print_param_types("settable operation parameters",
                                 EVP_ASYM_CIPHER_settable_ctx_params(k), 4);
                 print_param_types("retrievable operation parameters",
@@ -842,6 +890,10 @@ static void list_keyexchanges(void)
                     OSSL_PROVIDER_name(EVP_KEYEXCH_provider(k)));
 
             if (verbose) {
+                const char *desc = EVP_KEYEXCH_description(k);
+
+                if (desc != NULL)
+                    BIO_printf(bio_out, "    description: %s\n", desc);
                 print_param_types("settable operation parameters",
                                 EVP_KEYEXCH_settable_ctx_params(k), 4);
                 print_param_types("retrievable operation parameters",

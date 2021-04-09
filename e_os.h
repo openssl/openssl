@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -297,7 +297,7 @@ struct servent *getservbyname(const char *name, const char *proto);
 
 /* ----------------------------- HP NonStop -------------------------------- */
 /* Required to support platform variant without getpid() and pid_t. */
-# ifdef __TANDEM
+# if defined(__TANDEM) && defined(_GUARDIAN_TARGET)
 #  include <strings.h>
 #  include <netdb.h>
 #  define getservbyname(name,proto)          getservbyname((char*)name,proto)

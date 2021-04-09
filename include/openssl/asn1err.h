@@ -81,6 +81,7 @@
 # define ASN1_R_INVALID_UNIVERSALSTRING_LENGTH            133
 # define ASN1_R_INVALID_UTF8STRING                        134
 # define ASN1_R_INVALID_VALUE                             219
+# define ASN1_R_LENGTH_TOO_LONG                           231
 # define ASN1_R_LIST_ERROR                                188
 # define ASN1_R_MIME_NO_CONTENT_TYPE                      206
 # define ASN1_R_MIME_PARSE_ERROR                          207

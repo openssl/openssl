@@ -70,6 +70,7 @@ struct ossl_algorithm_st {
     const char *algorithm_names;     /* key */
     const char *property_definition; /* key */
     const OSSL_DISPATCH *implementation;
+    const char *algorithm_description;
 };
 
 /*

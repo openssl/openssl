@@ -34,6 +34,7 @@ EVP_KDF_CTX *EVP_KDF_CTX_new(EVP_KDF *kdf);
 void EVP_KDF_CTX_free(EVP_KDF_CTX *ctx);
 EVP_KDF_CTX *EVP_KDF_CTX_dup(const EVP_KDF_CTX *src);
 int EVP_KDF_number(const EVP_KDF *kdf);
+const char *EVP_KDF_description(const EVP_KDF *kdf);
 int EVP_KDF_is_a(const EVP_KDF *kdf, const char *name);
 const char *EVP_KDF_name(const EVP_KDF *kdf);
 const OSSL_PROVIDER *EVP_KDF_provider(const EVP_KDF *kdf);

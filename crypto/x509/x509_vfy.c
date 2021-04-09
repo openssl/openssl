@@ -2052,7 +2052,7 @@ X509_CRL *X509_CRL_diff(X509_CRL *base, X509_CRL *newer,
         return NULL;
     }
     /* Create new CRL */
-    crl = X509_CRL_new();
+    crl = X509_CRL_new_ex(base->libctx, base->propq);
     if (crl == NULL || !X509_CRL_set_version(crl, 1))
         goto memerr;
     /* Set issuer name */

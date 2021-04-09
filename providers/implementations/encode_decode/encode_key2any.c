@@ -43,6 +43,9 @@
 struct key2any_ctx_st {
     PROV_CTX *provctx;
 
+    /* Set to 0 if parameters should not be saved (dsa only) */
+    int save_parameters;
+
     /* Set to 1 if intending to encrypt/decrypt, otherwise 0 */
     int cipher_intent;
 
@@ -52,7 +55,7 @@ struct key2any_ctx_st {
 };
 
 typedef int check_key_type_fn(const void *key, int nid);
-typedef int key_to_paramstring_fn(const void *key, int nid,
+typedef int key_to_paramstring_fn(const void *key, int nid, int save,
                                   void **str, int *strtype);
 typedef int key_to_der_fn(BIO *out, const void *key,
                           int key_nid, const char *pemname,
@@ -174,7 +177,8 @@ static int key_to_pkcs8_der_priv_bio(BIO *out, const void *key,
     void *str = NULL;
     int strtype = V_ASN1_UNDEF;
 
-    if (p2s != NULL && !p2s(key, key_nid, &str, &strtype))
+    if (p2s != NULL && !p2s(key, key_nid, ctx->save_parameters,
+                            &str, &strtype))
         return 0;
 
     if (ctx->cipher_intent) {
@@ -210,7 +214,8 @@ static int key_to_pkcs8_pem_priv_bio(BIO *out, const void *key,
     void *str = NULL;
     int strtype = V_ASN1_UNDEF;
 
-    if (p2s != NULL && !p2s(key, key_nid, &str, &strtype))
+    if (p2s != NULL && !p2s(key, key_nid, ctx->save_parameters,
+                            &str, &strtype))
         return 0;
 
     if (ctx->cipher_intent) {
@@ -247,7 +252,8 @@ static int key_to_spki_der_pub_bio(BIO *out, const void *key,
     int strtype = V_ASN1_UNDEF;
     X509_PUBKEY *xpk = NULL;
 
-    if (p2s != NULL && !p2s(key, key_nid, &str, &strtype))
+    if (p2s != NULL && !p2s(key, key_nid, ctx->save_parameters,
+                            &str, &strtype))
         return 0;
 
     xpk = key_to_pubkey(key, key_nid, str, strtype, k2d);
@@ -272,7 +278,8 @@ static int key_to_spki_pem_pub_bio(BIO *out, const void *key,
     int strtype = V_ASN1_UNDEF;
     X509_PUBKEY *xpk = NULL;
 
-    if (p2s != NULL && !p2s(key, key_nid, &str, &strtype))
+    if (p2s != NULL && !p2s(key, key_nid, ctx->save_parameters,
+                            &str, &strtype))
         return 0;
 
     xpk = key_to_pubkey(key, key_nid, str, strtype, k2d);
@@ -374,7 +381,7 @@ static int key_to_type_specific_pem_param_bio(BIO *out, const void *key,
 /* ---------------------------------------------------------------------- */
 
 #ifndef OPENSSL_NO_DH
-static int prepare_dh_params(const void *dh, int nid,
+static int prepare_dh_params(const void *dh, int nid, int save,
                              void **pstr, int *pstrtype)
 {
     ASN1_STRING *params = ASN1_STRING_new();
@@ -476,8 +483,8 @@ static int dh_check_key_type(const void *dh, int expected_type)
 /* ---------------------------------------------------------------------- */
 
 #ifndef OPENSSL_NO_DSA
-static int prepare_some_dsa_params(const void *dsa, int nid,
-                                   void **pstr, int *pstrtype)
+static int encode_dsa_params(const void *dsa, int nid,
+                             void **pstr, int *pstrtype)
 {
     ASN1_STRING *params = ASN1_STRING_new();
 
@@ -499,33 +506,19 @@ static int prepare_some_dsa_params(const void *dsa, int nid,
     return 1;
 }
 
-static int prepare_all_dsa_params(const void *dsa, int nid,
-                                  void **pstr, int *pstrtype)
+static int prepare_dsa_params(const void *dsa, int nid, int save,
+                              void **pstr, int *pstrtype)
 {
     const BIGNUM *p = DSA_get0_p(dsa);
     const BIGNUM *q = DSA_get0_q(dsa);
     const BIGNUM *g = DSA_get0_g(dsa);
 
-    if (p != NULL && q != NULL && g != NULL)
-        return prepare_some_dsa_params(dsa, nid, pstr, pstrtype);
+    if (save && p != NULL && q != NULL && g != NULL)
+        return encode_dsa_params(dsa, nid, pstr, pstrtype);
 
     *pstr = NULL;
     *pstrtype = V_ASN1_UNDEF;
     return 1;
-}
-
-static int prepare_dsa_params(const void *dsa, int nid,
-                              void **pstr, int *pstrtype)
-{
-    /*
-     * TODO(v3.0) implement setting save_parameters, see dsa_pub_encode()
-     * in crypto/dsa/dsa_ameth.c
-     */
-    int save_parameters = 1;
-
-    return save_parameters
-        ?  prepare_all_dsa_params(dsa, nid, pstr, pstrtype)
-        :  prepare_some_dsa_params(dsa, nid, pstr, pstrtype);
 }
 
 static int dsa_spki_pub_to_der(const void *dsa, unsigned char **pder)
@@ -610,7 +603,7 @@ static int prepare_ec_explicit_params(const void *eckey,
  * is a curve name (curve nid) to be found or not.  See RFC 3279 for details.
  * TODO: shouldn't we use i2d_ECPKParameters()?
  */
-static int prepare_ec_params(const void *eckey, int nid,
+static int prepare_ec_params(const void *eckey, int nid, int save,
                              void **pstr, int *pstrtype)
 {
     int curve_nid;
@@ -763,7 +756,7 @@ static int ecx_pkcs8_priv_to_der(const void *vecxkey, unsigned char **pder)
  * functionality doesn't allow that.
  */
 
-static int prepare_rsa_params(const void *rsa, int nid,
+static int prepare_rsa_params(const void *rsa, int nid, int save,
                               void **pstr, int *pstrtype)
 {
     const RSA_PSS_PARAMS_30 *pss = ossl_rsa_get0_pss_params_30((RSA *)rsa);
@@ -871,8 +864,10 @@ static void *key2any_newctx(void *provctx)
 {
     struct key2any_ctx_st *ctx = OPENSSL_zalloc(sizeof(*ctx));
 
-    if (ctx != NULL)
+    if (ctx != NULL) {
         ctx->provctx = provctx;
+        ctx->save_parameters = 1;
+    }
 
     return ctx;
 }
@@ -946,6 +941,8 @@ static int key2any_set_ctx_params(void *vctx, const OSSL_PARAM params[])
         OSSL_PARAM_locate_const(params, OSSL_ENCODER_PARAM_CIPHER);
     const OSSL_PARAM *propsp =
         OSSL_PARAM_locate_const(params, OSSL_ENCODER_PARAM_PROPERTIES);
+    const OSSL_PARAM *save_paramsp =
+        OSSL_PARAM_locate_const(params, OSSL_ENCODER_PARAM_SAVE_PARAMETERS);
 
     if (cipherp != NULL) {
         const char *ciphername = NULL;
@@ -962,6 +959,11 @@ static int key2any_set_ctx_params(void *vctx, const OSSL_PARAM params[])
         if (ciphername != NULL
             && ((ctx->cipher =
                  EVP_CIPHER_fetch(libctx, ciphername, props)) == NULL))
+            return 0;
+    }
+
+    if (save_paramsp != NULL) {
+        if (!OSSL_PARAM_get_int(save_paramsp, &ctx->save_parameters))
             return 0;
     }
     return 1;

@@ -10,6 +10,7 @@ OSSL_ENCODER_provider,
 OSSL_ENCODER_properties,
 OSSL_ENCODER_is_a,
 OSSL_ENCODER_number,
+OSSL_ENCODER_description,
 OSSL_ENCODER_do_all_provided,
 OSSL_ENCODER_names_do_all,
 OSSL_ENCODER_gettable_params,
@@ -30,6 +31,7 @@ OSSL_ENCODER_get_params
  const char *OSSL_ENCODER_properties(const OSSL_ENCODER *encoder);
  int OSSL_ENCODER_is_a(const OSSL_ENCODER *encoder, const char *name);
  int OSSL_ENCODER_number(const OSSL_ENCODER *encoder);
+ const char *OSSL_ENCODER_description(const OSSL_ENCODER *encoder);
  void OSSL_ENCODER_do_all_provided(OSSL_LIB_CTX *libctx,
                                    void (*fn)(OSSL_ENCODER *encoder, void *arg),
                                    void *arg);
@@ -72,6 +74,10 @@ algorithm that's identifiable with I<name>.
 OSSL_ENCODER_number() returns the internal dynamic number assigned to
 the given I<encoder>.
 
+OSSL_ENCODER_description() returns a description of the I<loader>, meant
+for display and human consumption.  The description is at the discretion of the
+I<loader> implementation.
+
 OSSL_ENCODER_names_do_all() traverses all names for the given
 I<encoder>, and calls I<fn> with each name and I<data> as arguments.
 
@@ -107,6 +113,9 @@ OSSL_ENCODER_is_a() returns 1 of I<encoder> was identifiable,
 otherwise 0.
 
 OSSL_ENCODER_number() returns an integer.
+
+OSSL_ENCODER_description() returns a pointer to a decription, or NULL if
+there isn't one.
 
 OSSL_ENCODER_names_do_all() returns 1 if the callback was called for all
 names. A return value of 0 means that the callback was not called for any names.

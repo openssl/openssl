@@ -354,8 +354,7 @@ int crl_main(int argc, char **argv)
                     BIO_printf(bio_err, "out of memory\n");
                     goto end;
                 }
-                BIO_printf(bio_out, "%s Fingerprint=",
-                           OBJ_nid2sn(EVP_MD_type(digest)));
+                BIO_printf(bio_out, "%s Fingerprint=", EVP_MD_name(digest));
                 for (j = 0; j < (int)n; j++) {
                     BIO_printf(bio_out, "%02X%c", md[j], (j + 1 == (int)n)
                                ? '\n' : ':');

@@ -394,30 +394,40 @@ static const OSSL_ALGORITHM fips_asym_kem[] = {
 
 static const OSSL_ALGORITHM fips_keymgmt[] = {
 #ifndef OPENSSL_NO_DH
-    { "DH:dhKeyAgreement", FIPS_DEFAULT_PROPERTIES, ossl_dh_keymgmt_functions },
+    { "DH:dhKeyAgreement", FIPS_DEFAULT_PROPERTIES, ossl_dh_keymgmt_functions,
+      "OpenSSL PKCS#3 DH FIPS implementation" },
     { "DHX:X9.42 DH:dhpublicnumber", FIPS_DEFAULT_PROPERTIES,
-      ossl_dhx_keymgmt_functions },
+      ossl_dhx_keymgmt_functions, "OpenSSL X9.42 DH FIPS implementation" },
 #endif
 #ifndef OPENSSL_NO_DSA
-    { "DSA", FIPS_DEFAULT_PROPERTIES, ossl_dsa_keymgmt_functions },
+    { "DSA", FIPS_DEFAULT_PROPERTIES, ossl_dsa_keymgmt_functions,
+      "OpenSSL DSA FIPS implementation" },
 #endif
     { "RSA:rsaEncryption", FIPS_DEFAULT_PROPERTIES,
-      ossl_rsa_keymgmt_functions },
+      ossl_rsa_keymgmt_functions, "OpenSSL RSA FIPS implementation" },
     { "RSA-PSS:RSASSA-PSS", FIPS_DEFAULT_PROPERTIES,
-      ossl_rsapss_keymgmt_functions },
+      ossl_rsapss_keymgmt_functions, "OpenSSL RSA-PSS FIPS implementation" },
 #ifndef OPENSSL_NO_EC
-    { "EC:id-ecPublicKey", FIPS_DEFAULT_PROPERTIES, ossl_ec_keymgmt_functions },
-    { "X25519", FIPS_DEFAULT_PROPERTIES, ossl_x25519_keymgmt_functions },
-    { "X448", FIPS_DEFAULT_PROPERTIES, ossl_x448_keymgmt_functions },
-    { "ED25519", FIPS_DEFAULT_PROPERTIES, ossl_ed25519_keymgmt_functions },
-    { "ED448", FIPS_DEFAULT_PROPERTIES, ossl_ed448_keymgmt_functions },
+    { "EC:id-ecPublicKey", FIPS_DEFAULT_PROPERTIES, ossl_ec_keymgmt_functions,
+      "OpenSSL EC FIPS implementation" },
+    { "X25519", FIPS_DEFAULT_PROPERTIES, ossl_x25519_keymgmt_functions,
+      "OpenSSL X25519 FIPS implementation" },
+    { "X448", FIPS_DEFAULT_PROPERTIES, ossl_x448_keymgmt_functions,
+      "OpenSSL X448 FIPS implementation" },
+    { "ED25519", FIPS_DEFAULT_PROPERTIES, ossl_ed25519_keymgmt_functions,
+      "OpenSSL ED25519 FIPS implementation" },
+    { "ED448", FIPS_DEFAULT_PROPERTIES, ossl_ed448_keymgmt_functions,
+      "OpenSSL ED448 FIPS implementation" },
 #endif
-    { "TLS1-PRF", FIPS_DEFAULT_PROPERTIES, ossl_kdf_keymgmt_functions },
-    { "HKDF", FIPS_DEFAULT_PROPERTIES, ossl_kdf_keymgmt_functions },
-    { "HMAC", FIPS_DEFAULT_PROPERTIES, ossl_mac_legacy_keymgmt_functions },
+    { "TLS1-PRF", FIPS_DEFAULT_PROPERTIES, ossl_kdf_keymgmt_functions,
+      "OpenSSL TLS1-PRF via EVP_PKEY FIPS implementation" },
+    { "HKDF", FIPS_DEFAULT_PROPERTIES, ossl_kdf_keymgmt_functions,
+      "OpenSSL HKDF via EVP_PKEY FIPS implementation" },
+    { "HMAC", FIPS_DEFAULT_PROPERTIES, ossl_mac_legacy_keymgmt_functions,
+      "OpenSSL HMAC via EVP_PKEY FIPS implementation" },
 #ifndef OPENSSL_NO_CMAC
-    { "CMAC", FIPS_DEFAULT_PROPERTIES,
-      ossl_cossl_mac_legacy_keymgmt_functions },
+    { "CMAC", FIPS_DEFAULT_PROPERTIES, ossl_cossl_mac_legacy_keymgmt_functions,
+      "OpenSSL CMAC via EVP_PKEY FIPS implementation" },
 #endif
     { NULL, NULL, NULL }
 };

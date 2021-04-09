@@ -36,7 +36,7 @@
 
 /*
  * newctx and freectx are not strictly necessary.  However, the method creator,
- * ossl_decoder_from_dispatch(), demands that they exist, so we make sure to
+ * ossl_decoder_from_algorithm(), demands that they exist, so we make sure to
  * oblige.
  */
 

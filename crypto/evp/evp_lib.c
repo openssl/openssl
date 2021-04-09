@@ -267,10 +267,10 @@ int evp_cipher_set_asn1_aead_params(EVP_CIPHER_CTX *c, ASN1_TYPE *type,
 #endif /* !defined(FIPS_MODULE) */
 
 /* Convert the various cipher NIDs and dummies to a proper OID NID */
-int EVP_CIPHER_type(const EVP_CIPHER *ctx)
+int EVP_CIPHER_type(const EVP_CIPHER *cipher)
 {
     int nid;
-    nid = EVP_CIPHER_nid(ctx);
+    nid = EVP_CIPHER_nid(cipher);
 
     switch (nid) {
 
@@ -645,6 +645,17 @@ const char *EVP_CIPHER_name(const EVP_CIPHER *cipher)
 #endif
 }
 
+const char *EVP_CIPHER_description(const EVP_CIPHER *cipher)
+{
+    if (cipher->description != NULL)
+        return cipher->description;
+#ifndef FIPS_MODULE
+    return OBJ_nid2ln(EVP_CIPHER_nid(cipher));
+#else
+    return NULL;
+#endif
+}
+
 int EVP_CIPHER_names_do_all(const EVP_CIPHER *cipher,
                             void (*fn)(const char *name, void *data),
                             void *data)
@@ -675,6 +686,17 @@ int EVP_MD_is_a(const EVP_MD *md, const char *name)
 int EVP_MD_number(const EVP_MD *md)
 {
     return md->name_id;
+}
+
+const char *EVP_MD_description(const EVP_MD *md)
+{
+    if (md->description != NULL)
+        return md->description;
+#ifndef FIPS_MODULE
+    return OBJ_nid2ln(EVP_MD_nid(md));
+#else
+    return NULL;
+#endif
 }
 
 const char *EVP_MD_name(const EVP_MD *md)

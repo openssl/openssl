@@ -463,10 +463,11 @@ static int pkey_dh_derive(EVP_PKEY_CTX *ctx, unsigned char *key,
         if (*keylen != dctx->kdf_outlen)
             return 0;
         ret = 0;
-        Zlen = DH_size(dh);
-        Z = OPENSSL_malloc(Zlen);
-        if (Z == NULL) {
-            goto err;
+        if ((Zlen = DH_size(dh)) <= 0)
+            return 0;
+        if ((Z = OPENSSL_malloc(Zlen)) == NULL) {
+            ERR_raise(ERR_LIB_DH, ERR_R_MALLOC_FAILURE);
+            return 0;
         }
         if (DH_compute_key_padded(Z, dhpubbn, dh) <= 0)
             goto err;

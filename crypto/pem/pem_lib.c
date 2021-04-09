@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -323,7 +323,7 @@ int PEM_ASN1_write_bio(i2d_of_void *i2d, const char *name, BIO *bp,
     unsigned char iv[EVP_MAX_IV_LENGTH];
 
     if (enc != NULL) {
-        objstr = OBJ_nid2sn(EVP_CIPHER_nid(enc));
+        objstr = EVP_CIPHER_name(enc);
         if (objstr == NULL || EVP_CIPHER_iv_length(enc) == 0
                 || EVP_CIPHER_iv_length(enc) > (int)sizeof(iv)
                    /*

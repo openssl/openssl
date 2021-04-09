@@ -78,6 +78,7 @@ static int evp_cipher_init_internal(EVP_CIPHER_CTX *ctx,
                                     const unsigned char *iv, int enc,
                                     const OSSL_PARAM params[])
 {
+    int n;
 #if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODULE)
     ENGINE *tmpimpl = NULL;
 #endif
@@ -336,9 +337,9 @@ static int evp_cipher_init_internal(EVP_CIPHER_CTX *ctx,
             /* fall-through */
 
         case EVP_CIPH_CBC_MODE:
-
-            OPENSSL_assert(EVP_CIPHER_CTX_iv_length(ctx) <=
-                           (int)sizeof(ctx->iv));
+            n = EVP_CIPHER_CTX_iv_length(ctx);
+            if (!ossl_assert(n >= 0 && n <= (int)sizeof(ctx->iv)))
+                    return 0;
             if (iv)
                 memcpy(ctx->oiv, iv, EVP_CIPHER_CTX_iv_length(ctx));
             memcpy(ctx->iv, ctx->oiv, EVP_CIPHER_CTX_iv_length(ctx));
@@ -1415,7 +1416,7 @@ EVP_CIPHER *evp_cipher_new(void)
  * NIDs or any functionality that use them.
  */
 #ifndef FIPS_MODULE
-/* TODO(3.x) get rid of the need for legacy NIDs */
+/* After removal of legacy support get rid of the need for legacy NIDs */
 static void set_legacy_nid(const char *name, void *vlegacy_nid)
 {
     int nid;
@@ -1440,10 +1441,11 @@ static void set_legacy_nid(const char *name, void *vlegacy_nid)
 }
 #endif
 
-static void *evp_cipher_from_dispatch(const int name_id,
-                                      const OSSL_DISPATCH *fns,
-                                      OSSL_PROVIDER *prov)
+static void *evp_cipher_from_algorithm(const int name_id,
+                                       const OSSL_ALGORITHM *algodef,
+                                       OSSL_PROVIDER *prov)
 {
+    const OSSL_DISPATCH *fns = algodef->implementation;
     EVP_CIPHER *cipher = NULL;
     int fnciphcnt = 0, fnctxcnt = 0;
 
@@ -1453,7 +1455,6 @@ static void *evp_cipher_from_dispatch(const int name_id,
     }
 
 #ifndef FIPS_MODULE
-    /* TODO(3.x) get rid of the need for legacy NIDs */
     cipher->nid = NID_undef;
     if (!evp_names_do_all(prov, name_id, set_legacy_nid, &cipher->nid)
             || cipher->nid == -1) {
@@ -1464,6 +1465,7 @@ static void *evp_cipher_from_dispatch(const int name_id,
 #endif
 
     cipher->name_id = name_id;
+    cipher->description = algodef->algorithm_description;
 
     for (; fns->function_id != 0; fns++) {
         switch (fns->function_id) {
@@ -1588,7 +1590,7 @@ EVP_CIPHER *EVP_CIPHER_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
 {
     EVP_CIPHER *cipher =
         evp_generic_fetch(ctx, OSSL_OP_CIPHER, algorithm, properties,
-                          evp_cipher_from_dispatch, evp_cipher_up_ref,
+                          evp_cipher_from_algorithm, evp_cipher_up_ref,
                           evp_cipher_free);
 
     return cipher;
@@ -1623,5 +1625,5 @@ void EVP_CIPHER_do_all_provided(OSSL_LIB_CTX *libctx,
 {
     evp_generic_do_all(libctx, OSSL_OP_CIPHER,
                        (void (*)(void *, void *))fn, arg,
-                       evp_cipher_from_dispatch, evp_cipher_free);
+                       evp_cipher_from_algorithm, evp_cipher_free);
 }
