@@ -78,17 +78,15 @@ static OSSL_FUNC_mac_update_fn kmac_update;
 static OSSL_FUNC_mac_final_fn kmac_final;
 
 #define KMAC_MAX_BLOCKSIZE ((1600 - 128*2) / 8) /* 168 */
-#define KMAC_MIN_BLOCKSIZE ((1600 - 256*2) / 8) /* 136 */
 
 /* Length encoding will be  a 1 byte size + length in bits (2 bytes max) */
 #define KMAC_MAX_ENCODED_HEADER_LEN 3
 
 /*
- * Custom string max size is chosen such that:
- *   len(encoded_string(custom) + len(kmac_encoded_string) <= KMAC_MIN_BLOCKSIZE
- *   i.e: (KMAC_MAX_CUSTOM + KMAC_MAX_ENCODED_LEN) + 6 <= 136
+ * Restrict the maximum length of the customisation string.  This must not
+ * exceed 64 bits = 8k bytes.
  */
-#define KMAC_MAX_CUSTOM 127
+#define KMAC_MAX_CUSTOM 256
 
 /* Maximum size of encoded custom string */
 #define KMAC_MAX_CUSTOM_ENCODED (KMAC_MAX_CUSTOM + KMAC_MAX_ENCODED_HEADER_LEN)
@@ -116,8 +114,8 @@ struct kmac_data_st {
     EVP_MD_CTX *ctx;
     PROV_DIGEST digest;
     size_t out_len;
-    int key_len;
-    int custom_len;
+    size_t key_len;
+    size_t custom_len;
     /* If xof_mode = 1 then we use right_encode(0) */
     int xof_mode;
     /* key and custom are stored in encoded form */
@@ -125,16 +123,16 @@ struct kmac_data_st {
     unsigned char custom[KMAC_MAX_CUSTOM_ENCODED];
 };
 
-static int encode_string(unsigned char *out, int *out_len,
-                         const unsigned char *in, int in_len);
-static int right_encode(unsigned char *out, int *out_len, size_t bits);
-static int bytepad(unsigned char *out, int *out_len,
-                   const unsigned char *in1, int in1_len,
-                   const unsigned char *in2, int in2_len,
-                   int w);
-static int kmac_bytepad_encode_key(unsigned char *out, int *out_len,
-                                   const unsigned char *in, int in_len,
-                                   int w);
+static int encode_string(unsigned char *out, size_t *out_len,
+                         const unsigned char *in, size_t in_len);
+static int right_encode(unsigned char *out, size_t *out_len, size_t bits);
+static int bytepad(unsigned char *out, size_t *out_len,
+                   const unsigned char *in1, size_t in1_len,
+                   const unsigned char *in2, size_t in2_len,
+                   size_t w);
+static int kmac_bytepad_encode_key(unsigned char *out, size_t *out_len,
+                                   const unsigned char *in, size_t in_len,
+                                   size_t w);
 
 static void kmac_free(void *vmacctx)
 {
@@ -245,13 +243,18 @@ static int kmac_setkey(struct kmac_data_st *kctx, const unsigned char *key,
                        size_t keylen)
 {
     const EVP_MD *digest = ossl_prov_digest_md(&kctx->digest);
+    int w = EVP_MD_block_size(digest);
 
     if (keylen < 4 || keylen > KMAC_MAX_KEY) {
         ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
         return 0;
     }
+    if (w < 0) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_DIGEST_LENGTH);
+        return 0;
+    }
     if (!kmac_bytepad_encode_key(kctx->key, &kctx->key_len,
-                                 key, keylen, EVP_MD_block_size(digest)))
+                                 key, keylen, (size_t)w))
         return 0;
     return 1;
 }
@@ -266,11 +269,13 @@ static int kmac_init(void *vmacctx, const unsigned char *key,
 {
     struct kmac_data_st *kctx = vmacctx;
     EVP_MD_CTX *ctx = kctx->ctx;
-    unsigned char out[KMAC_MAX_BLOCKSIZE];
-    int out_len, block_len;
+    unsigned char *out;
+    size_t out_len, block_len;
+    int res, t;
 
     if (!ossl_prov_is_running() || !kmac_set_ctx_params(kctx, params))
         return 0;
+
     if (key != NULL) {
         if (!kmac_setkey(kctx, key, keylen))
             return 0;
@@ -283,9 +288,12 @@ static int kmac_init(void *vmacctx, const unsigned char *key,
                            NULL))
         return 0;
 
-    block_len = EVP_MD_block_size(ossl_prov_digest_md(&kctx->digest));
-    if (block_len < 0)
+    t = EVP_MD_block_size(ossl_prov_digest_md(&kctx->digest));
+    if (t < 0) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_DIGEST_LENGTH);
         return 0;
+    }
+    block_len = t;
 
     /* Set default custom string if it is not already set */
     if (kctx->custom_len == 0) {
@@ -296,10 +304,22 @@ static int kmac_init(void *vmacctx, const unsigned char *key,
         (void)kmac_set_ctx_params(kctx, cparams);
     }
 
-    return bytepad(out, &out_len, kmac_string, sizeof(kmac_string),
-                   kctx->custom, kctx->custom_len, block_len)
-           && EVP_DigestUpdate(ctx, out, out_len)
-           && EVP_DigestUpdate(ctx, kctx->key, kctx->key_len);
+    if (!bytepad(NULL, &out_len, kmac_string, sizeof(kmac_string),
+                 kctx->custom, kctx->custom_len, block_len)) {
+        ERR_raise(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+    out = OPENSSL_malloc(out_len);
+    if (out == NULL) {
+        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+        return 0;
+    }
+    res = bytepad(out, NULL, kmac_string, sizeof(kmac_string),
+                  kctx->custom, kctx->custom_len, block_len)
+          && EVP_DigestUpdate(ctx, out, out_len)
+          && EVP_DigestUpdate(ctx, kctx->key, kctx->key_len);
+    OPENSSL_free(out);
+    return res;
 }
 
 static int kmac_update(void *vmacctx, const unsigned char *data,
@@ -315,7 +335,7 @@ static int kmac_final(void *vmacctx, unsigned char *out, size_t *outl,
 {
     struct kmac_data_st *kctx = vmacctx;
     EVP_MD_CTX *ctx = kctx->ctx;
-    int lbits, len;
+    size_t lbits, len;
     unsigned char encoded_outlen[KMAC_MAX_ENCODED_HEADER_LEN];
     int ok;
 
@@ -431,14 +451,16 @@ static unsigned int get_encode_size(size_t bits)
  * e.g if bits = 32, out[2] = { 0x20, 0x01 }
  *
  */
-static int right_encode(unsigned char *out, int *out_len, size_t bits)
+static int right_encode(unsigned char *out, size_t *out_len, size_t bits)
 {
     unsigned int len = get_encode_size(bits);
     int i;
 
     /* The length is constrained to a single byte: 2040/8 = 255 */
-    if (len > 0xFF)
+    if (len > 0xFF) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_LENGTH_TOO_LARGE);
         return 0;
+    }
 
     /* MSB's are at the start of the bytes array */
     for (i = len - 1; i >= 0; --i) {
@@ -460,18 +482,20 @@ static int right_encode(unsigned char *out, int *out_len, size_t bits)
  * e.g- in="KMAC" gives out[6] = { 0x01, 0x20, 0x4B, 0x4D, 0x41, 0x43 }
  *                                 len   bits    K     M     A     C
  */
-static int encode_string(unsigned char *out, int *out_len,
-                         const unsigned char *in, int in_len)
+static int encode_string(unsigned char *out, size_t *out_len,
+                         const unsigned char *in, size_t in_len)
 {
     if (in == NULL) {
         *out_len = 0;
     } else {
-        int i, bits, len;
+        size_t i, bits, len;
 
         bits = 8 * in_len;
         len = get_encode_size(bits);
-        if (len > 0xFF)
+        if (len > 0xFF) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_LENGTH_TOO_LARGE);
             return 0;
+        }
 
         out[0] = len;
         for (i = len; i > 0; --i) {
@@ -492,13 +516,23 @@ static int encode_string(unsigned char *out, int *out_len,
  * The returned output is:
  *    zero_padded(multiple of w, (left_encode(w) || in1 [|| in2])
  */
-static int bytepad(unsigned char *out, int *out_len,
-                   const unsigned char *in1, int in1_len,
-                   const unsigned char *in2, int in2_len, int w)
+static int bytepad(unsigned char *out, size_t *out_len,
+                   const unsigned char *in1, size_t in1_len,
+                   const unsigned char *in2, size_t in2_len, size_t w)
 {
     int len;
     unsigned char *p = out;
     int sz = w;
+
+    if (out == NULL) {
+        if (out_len == NULL) {
+            ERR_raise(ERR_LIB_PROV, ERR_R_PASSED_NULL_PARAMETER);
+            return 0;
+        }
+        sz = 2 + in1_len + (in2 != NULL ? in2_len : 0);
+        *out_len = (sz + w - 1) / w * w;
+        return 1;
+    }
 
     /* Left encoded w */
     *p++ = 1;
@@ -513,24 +547,24 @@ static int bytepad(unsigned char *out, int *out_len,
     }
     /* Figure out the pad size (divisible by w) */
     len = p - out;
-    while (len > sz) {
-        sz += w;
-    }
+    sz = (len + w - 1) / w * w;
     /* zero pad the end of the buffer */
-    memset(p, 0, sz - len);
-    *out_len = sz;
+    if (sz != len)
+        memset(p, 0, sz - len);
+    if (out_len != NULL)
+        *out_len = sz;
     return 1;
 }
 
 /*
  * Returns out = bytepad(encode_string(in), w)
  */
-static int kmac_bytepad_encode_key(unsigned char *out, int *out_len,
-                                   const unsigned char *in, int in_len,
-                                   int w)
+static int kmac_bytepad_encode_key(unsigned char *out, size_t *out_len,
+                                   const unsigned char *in, size_t in_len,
+                                   size_t w)
 {
     unsigned char tmp[KMAC_MAX_KEY + KMAC_MAX_ENCODED_HEADER_LEN];
-    int tmp_len;
+    size_t tmp_len;
 
     if (!encode_string(tmp, &tmp_len, in, in_len))
         return 0;
