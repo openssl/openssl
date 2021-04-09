@@ -113,7 +113,7 @@ int ecdh_init(void *vpecdhctx, void *vecdh, const OSSL_PARAM params[])
     pecdhctx->cofactor_mode = -1;
     pecdhctx->kdf_type = PROV_ECDH_KDF_NONE;
     return ecdh_set_ctx_params(pecdhctx, params)
-           && ossl_ec_check_key(vecdh, 1);
+           && ossl_ec_check_key(pecdhctx->libctx, vecdh, 1);
 }
 
 static
@@ -147,7 +147,7 @@ int ecdh_set_peer(void *vpecdhctx, void *vecdh)
             || pecdhctx == NULL
             || vecdh == NULL
             || !ecdh_match_params(pecdhctx->k, vecdh)
-            || !ossl_ec_check_key(vecdh, 1)
+            || !ossl_ec_check_key(pecdhctx->libctx, vecdh, 1)
             || !EC_KEY_up_ref(vecdh))
         return 0;
 
@@ -283,7 +283,7 @@ int ecdh_set_ctx_params(void *vpecdhctx, const OSSL_PARAM params[])
 
         EVP_MD_free(pectx->kdf_md);
         pectx->kdf_md = EVP_MD_fetch(pectx->libctx, name, mdprops);
-        if (!ossl_digest_is_allowed(pectx->kdf_md)) {
+        if (!ossl_digest_is_allowed(pectx->libctx, pectx->kdf_md)) {
             EVP_MD_free(pectx->kdf_md);
             pectx->kdf_md = NULL;
         }

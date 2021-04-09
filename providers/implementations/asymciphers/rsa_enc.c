@@ -99,7 +99,7 @@ static int rsa_init(void *vprsactx, void *vrsa, const OSSL_PARAM params[],
     if (!ossl_prov_is_running() || prsactx == NULL || vrsa == NULL)
         return 0;
 
-    if (!ossl_rsa_check_key(vrsa, operation))
+    if (!ossl_rsa_check_key(prsactx->libctx, vrsa, operation))
         return 0;
 
     if (!RSA_up_ref(vrsa))

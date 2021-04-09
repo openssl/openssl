@@ -127,7 +127,8 @@ static int dsa_setup_md(PROV_DSA_CTX *ctx,
         int sha1_allowed = (ctx->operation != EVP_PKEY_OP_SIGN);
         WPACKET pkt;
         EVP_MD *md = EVP_MD_fetch(ctx->libctx, mdname, mdprops);
-        int md_nid = ossl_digest_get_approved_nid_with_sha1(md, sha1_allowed);
+        int md_nid = ossl_digest_get_approved_nid_with_sha1(ctx->libctx, md,
+                                                            sha1_allowed);
         size_t mdname_len = strlen(mdname);
 
         if (md == NULL || md_nid == NID_undef) {
@@ -188,7 +189,8 @@ static int dsa_signverify_init(void *vpdsactx, void *vdsa,
     if (!dsa_set_ctx_params(pdsactx, params))
         return 0;
 
-    if (!ossl_dsa_check_key(vdsa, operation == EVP_PKEY_OP_SIGN)) {
+    if (!ossl_dsa_check_key(pdsactx->libctx, vdsa,
+                            operation == EVP_PKEY_OP_SIGN)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
         return 0;
     }

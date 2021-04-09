@@ -140,7 +140,7 @@ static int ecdsa_signverify_init(void *vctx, void *ec,
     ctx->operation = operation;
     if (!ecdsa_set_ctx_params(ctx, params))
         return 0;
-    return ossl_ec_check_key(ec, operation == EVP_PKEY_OP_SIGN);
+    return ossl_ec_check_key(ctx->libctx, ec, operation == EVP_PKEY_OP_SIGN);
 }
 
 static int ecdsa_sign_init(void *vctx, void *ec, const OSSL_PARAM params[])
@@ -225,7 +225,8 @@ static int ecdsa_setup_md(PROV_ECDSA_CTX *ctx, const char *mdname,
         return 0;
     }
     sha1_allowed = (ctx->operation != EVP_PKEY_OP_SIGN);
-    md_nid = ossl_digest_get_approved_nid_with_sha1(md, sha1_allowed);
+    md_nid = ossl_digest_get_approved_nid_with_sha1(ctx->libctx, md,
+                                                    sha1_allowed);
     if (md_nid == NID_undef) {
         ERR_raise_data(ERR_LIB_PROV, PROV_R_DIGEST_NOT_ALLOWED,
                        "digest=%s", mdname);

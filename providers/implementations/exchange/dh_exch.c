@@ -105,7 +105,8 @@ static int dh_init(void *vpdhctx, void *vdh, const OSSL_PARAM params[])
     DH_free(pdhctx->dh);
     pdhctx->dh = vdh;
     pdhctx->kdf_type = PROV_DH_KDF_NONE;
-    return dh_set_ctx_params(pdhctx, params) && ossl_dh_check_key(vdh);
+    return dh_set_ctx_params(pdhctx, params)
+           && ossl_dh_check_key(pdhctx->libctx, vdh);
 }
 
 /* The 2 parties must share the same domain parameters */
@@ -345,7 +346,7 @@ static int dh_set_ctx_params(void *vpdhctx, const OSSL_PARAM params[])
 
         EVP_MD_free(pdhctx->kdf_md);
         pdhctx->kdf_md = EVP_MD_fetch(pdhctx->libctx, name, mdprops);
-        if (!ossl_digest_is_allowed(pdhctx->kdf_md)) {
+        if (!ossl_digest_is_allowed(pdhctx->libctx, pdhctx->kdf_md)) {
             EVP_MD_free(pdhctx->kdf_md);
             pdhctx->kdf_md = NULL;
         }
