@@ -2516,11 +2516,22 @@ static int test_extra_tickets(int idx)
             || !TEST_int_eq(4, new_called))
         goto end;
 
+    /* Once more, but with SSL_do_handshake() to drive the ticket generation */
+    c = '4';
+    new_called = 0;
+    if (!TEST_true(SSL_new_session_ticket(serverssl))
+            || !TEST_true(SSL_new_session_ticket(serverssl))
+            || !TEST_true(SSL_do_handshake(serverssl))
+            || !TEST_int_eq(2, new_called)
+            || !TEST_false(SSL_read_ex(clientssl, buf, sizeof(buf), &nbytes))
+            || !TEST_int_eq(4, new_called))
+        goto end;
+
     /*
      * Use the always-retry BIO to exercise the logic that forces ticket
      * generation to wait until a record boundary.
      */
-    c = '4';
+    c = '5';
     new_called = 0;
     tmp = SSL_get_wbio(serverssl);
     if (!TEST_ptr(tmp) || !TEST_true(BIO_up_ref(tmp))) {
@@ -2536,9 +2547,14 @@ static int test_extra_tickets(int idx)
     /* Restore a BIO that will let the write succeed */
     SSL_set0_wbio(serverssl, tmp);
     tmp = NULL;
-    /* These calls should just queue the request and not send anything. */
+    /*
+     * These calls should just queue the request and not send anything
+     * even if we explicitly try to hit the state machine.
+     */
     if (!TEST_true(SSL_new_session_ticket(serverssl))
             || !TEST_true(SSL_new_session_ticket(serverssl))
+            || !TEST_int_eq(0, new_called)
+            || !TEST_true(SSL_do_handshake(serverssl))
             || !TEST_int_eq(0, new_called))
         goto end;
     /* Re-do the write; still no tickets sent */
@@ -2551,8 +2567,12 @@ static int test_extra_tickets(int idx)
             || !TEST_int_eq(c, buf[0])
             || !TEST_false(SSL_read_ex(clientssl, buf, sizeof(buf), &nbytes)))
         goto end;
+    /* Even trying to hit the state machine now will still not send tickets */
+    if (!TEST_true(SSL_do_handshake(serverssl))
+            || !TEST_int_eq(0, new_called))
+        goto end;
     /* Now the *next* write should send the tickets */
-    c = '5';
+    c = '6';
     if (!TEST_true(SSL_write_ex(serverssl, &c, 1, &nbytes))
             || !TEST_size_t_eq(1, nbytes)
             || !TEST_int_eq(2, new_called)
