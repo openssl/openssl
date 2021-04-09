@@ -78,17 +78,15 @@ static OSSL_FUNC_mac_update_fn kmac_update;
 static OSSL_FUNC_mac_final_fn kmac_final;
 
 #define KMAC_MAX_BLOCKSIZE ((1600 - 128*2) / 8) /* 168 */
-#define KMAC_MIN_BLOCKSIZE ((1600 - 256*2) / 8) /* 136 */
 
 /* Length encoding will be  a 1 byte size + length in bits (2 bytes max) */
 #define KMAC_MAX_ENCODED_HEADER_LEN 3
 
 /*
- * Custom string max size is chosen such that:
- *   len(encoded_string(custom) + len(kmac_encoded_string) <= KMAC_MIN_BLOCKSIZE
- *   i.e: (KMAC_MAX_CUSTOM + KMAC_MAX_ENCODED_LEN) + 6 <= 136
+ * Restrict the maximum length of the customisation string.  This must not
+ * exceed 64 bits = 8k bytes.
  */
-#define KMAC_MAX_CUSTOM 127
+#define KMAC_MAX_CUSTOM 256
 
 /* Maximum size of encoded custom string */
 #define KMAC_MAX_CUSTOM_ENCODED (KMAC_MAX_CUSTOM + KMAC_MAX_ENCODED_HEADER_LEN)
@@ -266,11 +264,13 @@ static int kmac_init(void *vmacctx, const unsigned char *key,
 {
     struct kmac_data_st *kctx = vmacctx;
     EVP_MD_CTX *ctx = kctx->ctx;
-    unsigned char out[KMAC_MAX_BLOCKSIZE];
-    int out_len, block_len;
+    unsigned char *out;
+    size_t out_max;
+    int out_len, block_len, res;
 
     if (!ossl_prov_is_running() || !kmac_set_ctx_params(kctx, params))
         return 0;
+
     if (key != NULL) {
         if (!kmac_setkey(kctx, key, keylen))
             return 0;
@@ -286,6 +286,17 @@ static int kmac_init(void *vmacctx, const unsigned char *key,
     block_len = EVP_MD_block_size(ossl_prov_digest_md(&kctx->digest));
     if (block_len < 0)
         return 0;
+    /*
+     * The temporary buffer for the customisation and header needs to contain:
+     *      len(encoded_int(block_len)) + len(encoded_string(custom))
+     *      + len(kmac_encoded_string)
+     * bytes rounded up to the next block_size multiple.
+     */
+    out_max = ((2 + kctx->custom_len + sizeof(kmac_string) + block_len - 1)
+               / block_len) * block_len;
+    out = OPENSSL_malloc(out_max);
+    if (out == NULL)
+        return 0;
 
     /* Set default custom string if it is not already set */
     if (kctx->custom_len == 0) {
@@ -296,10 +307,12 @@ static int kmac_init(void *vmacctx, const unsigned char *key,
         (void)kmac_set_ctx_params(kctx, cparams);
     }
 
-    return bytepad(out, &out_len, kmac_string, sizeof(kmac_string),
-                   kctx->custom, kctx->custom_len, block_len)
-           && EVP_DigestUpdate(ctx, out, out_len)
-           && EVP_DigestUpdate(ctx, kctx->key, kctx->key_len);
+    res = bytepad(out, &out_len, kmac_string, sizeof(kmac_string),
+                  kctx->custom, kctx->custom_len, block_len)
+          && EVP_DigestUpdate(ctx, out, out_len)
+          && EVP_DigestUpdate(ctx, kctx->key, kctx->key_len);
+    OPENSSL_free(out);
+    return res;
 }
 
 static int kmac_update(void *vmacctx, const unsigned char *data,
@@ -517,7 +530,8 @@ static int bytepad(unsigned char *out, int *out_len,
         sz += w;
     }
     /* zero pad the end of the buffer */
-    memset(p, 0, sz - len);
+    if (sz != len)
+        memset(p, 0, sz - len);
     *out_len = sz;
     return 1;
 }
