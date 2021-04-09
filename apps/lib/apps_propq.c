@@ -11,13 +11,7 @@
 
 static const char *app_propq = NULL;
 
-<<<<<<< HEAD:apps/lib/apps_propq.c
 int app_set_propq(const char *arg)
-=======
-/* shim that avoids sucking in too much from apps/apps.c */
-
-void *app_malloc(size_t sz, const char *what)
->>>>>>> b1c908f421b3466aecf980603132bcab89d1ce99:test/testutil/apps_mem.c
 {
     app_propq = arg;
     return 1;
