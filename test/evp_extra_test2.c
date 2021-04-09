@@ -347,6 +347,26 @@ static int test_d2i_PrivateKey_ex(void) {
 
     return ok;
 }
+
+static int do_fromdata_key_is_equal(const OSSL_PARAM params[],
+                                    const EVP_PKEY *expected, const char *type)
+{
+    EVP_PKEY_CTX *ctx = NULL;
+    EVP_PKEY *pkey = NULL;
+    int ret;
+
+    ret = TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(mainctx, type, NULL))
+          && TEST_int_eq(EVP_PKEY_fromdata_init(ctx), 1)
+          && TEST_int_eq(EVP_PKEY_fromdata(ctx, &pkey,
+                                           EVP_PKEY_KEYPAIR,
+                                           (OSSL_PARAM *)params), 1)
+          && TEST_true(EVP_PKEY_eq(pkey, expected));
+    EVP_PKEY_CTX_free(ctx);
+    EVP_PKEY_free(pkey);
+    return ret;
+}
+
+#ifndef OPENSSL_NO_DSA
 /*
  * This data was generated using:
  * > openssl genpkey \
@@ -596,8 +616,13 @@ static int test_dsa_todata(void)
         || !do_check_int(to_params, OSSL_PKEY_PARAM_FFC_H, 0)
         || !do_check_utf8_str(to_params, OSSL_PKEY_PARAM_FFC_VALIDATE_TYPE,
                               OSSL_FFC_PARAM_VALIDATE_PQG)
-        || !TEST_ptr_null(OSSL_PARAM_locate(to_params, OSSL_PKEY_PARAM_FFC_SEED))
-        || !TEST_ptr(all_params = OSSL_PARAM_merge(to_params, gen_params))
+        || !TEST_ptr_null(OSSL_PARAM_locate(to_params, OSSL_PKEY_PARAM_FFC_SEED)))
+        goto err;
+
+    if (!do_fromdata_key_is_equal(to_params, pkey, "DSA"))
+        goto err;
+
+    if (!TEST_ptr(all_params = OSSL_PARAM_merge(to_params, gen_params))
         || !do_check_params(all_params, 1))
         goto err;
     gen_params[1] = OSSL_PARAM_construct_int(OSSL_PKEY_PARAM_FFC_GINDEX,
@@ -628,6 +653,62 @@ err:
     OSSL_PARAM_free(to_params);
     return ret;
 }
+#endif /* OPENSSL_NO_DSA */
+
+static int test_pkey_todata_null(void)
+{
+    OSSL_PARAM *params = NULL;
+    EVP_PKEY *pkey = NULL;
+    int ret = 0;
+    const unsigned char *pdata = keydata[0].kder;
+
+    ret = TEST_ptr(pkey = d2i_AutoPrivateKey_ex(NULL, &pdata, keydata[0].size,
+                                                mainctx, NULL))
+          && TEST_int_eq(EVP_PKEY_todata(NULL, EVP_PKEY_KEYPAIR, &params), 0)
+          && TEST_int_eq(EVP_PKEY_todata(pkey, EVP_PKEY_KEYPAIR, NULL), 0);
+    EVP_PKEY_free(pkey);
+    return ret;
+}
+
+static OSSL_CALLBACK test_pkey_export_cb;
+
+static int test_pkey_export_cb(const OSSL_PARAM params[], void *arg)
+{
+    if (arg == NULL)
+        return 0;
+    return do_fromdata_key_is_equal(params, (EVP_PKEY *)arg, "RSA");
+}
+
+static int test_pkey_export_null(void)
+{
+    EVP_PKEY *pkey = NULL;
+    int ret = 0;
+    const unsigned char *pdata = keydata[0].kder;
+
+    ret = TEST_ptr(pkey = d2i_AutoPrivateKey_ex(NULL, &pdata, keydata[0].size,
+                                                mainctx, NULL))
+          && TEST_int_eq(EVP_PKEY_export(NULL, EVP_PKEY_KEYPAIR,
+                                         test_pkey_export_cb, NULL), 0)
+          && TEST_int_eq(EVP_PKEY_export(pkey, EVP_PKEY_KEYPAIR, NULL, NULL), 0);
+    EVP_PKEY_free(pkey);
+    return ret;
+}
+
+static int test_pkey_export(void)
+{
+    EVP_PKEY *pkey = NULL;
+    int ret = 0;
+    const unsigned char *pdata = keydata[0].kder;
+
+    ret = TEST_ptr(pkey = d2i_AutoPrivateKey_ex(NULL, &pdata, keydata[0].size,
+                                                mainctx, NULL))
+          && TEST_int_eq(EVP_PKEY_export(pkey, EVP_PKEY_KEYPAIR,
+                                         test_pkey_export_cb, pkey), 1)
+          && TEST_int_eq(EVP_PKEY_export(pkey, EVP_PKEY_KEYPAIR,
+                                         test_pkey_export_cb, NULL), 0);
+    EVP_PKEY_free(pkey);
+    return ret;
+}
 
 int setup_tests(void)
 {
@@ -640,8 +721,12 @@ int setup_tests(void)
     ADD_TEST(test_alternative_default);
     ADD_ALL_TESTS(test_d2i_AutoPrivateKey_ex, OSSL_NELEM(keydata));
     ADD_TEST(test_d2i_PrivateKey_ex);
+#ifndef OPENSSL_NO_DSA
     ADD_TEST(test_dsa_todata);
-
+#endif
+    ADD_TEST(test_pkey_todata_null);
+    ADD_TEST(test_pkey_export_null);
+    ADD_TEST(test_pkey_export);
     return 1;
 }
 

@@ -27,7 +27,8 @@ EVP_PKEY_export() is similiar to EVP_PKEY_todata() but uses a callback
 I<export_cb> that gets passed the value of I<export_cbarg>.
 See L<openssl-core.h(7)> for more information about the callback. Note that the
 B<OSSL_PARAM> array that is passed to the callback is not persistent after the
-callback returns. Use EVP_PKEY_todata() if persistent data is required.
+callback returns. The user must preserve the items of interest, or use
+EVP_PKEY_todata() if persistence is required.
 
 =head1 NOTES
 
@@ -36,8 +37,7 @@ This is the mirror function to L<EVP_PKEY_fromdata(3)>.
 
 =head1 RETURN VALUES
 
-EVP_PKEY_todata() and EVP_PKEY_export() return 1 for success and 0 or
-a negative value for failure.
+EVP_PKEY_todata() and EVP_PKEY_export() return 1 for success and 0 for failure.
 
 =head1 SEE ALSO
 

@@ -33,7 +33,7 @@ described on the L<EVP_PKEY_fromdata(3)> page, or
 new keys can be generated using L<EVP_PKEY_keygen(3)>.
 EVP_PKEYs can be compared using L<EVP_PKEY_cmp(3)>, or printed using
 L<EVP_PKEY_print_private(3)>. L<EVP_PKEY_todata(3)> can be used to convert a
-key back into raw parameter data.
+key back into an L<OSSL_PARAM(3)> array.
 
 The EVP_PKEY functions support the full range of asymmetric algorithm operations:
 
