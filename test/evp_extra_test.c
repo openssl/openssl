@@ -2446,6 +2446,8 @@ static int test_evp_iv(int idx)
 
     unsigned char ofb_state[16] = {0x76, 0xe6, 0x66, 0x61, 0xd0, 0x8a, 0xe4, 0x64,
                                    0xdd, 0x66, 0xbf, 0x00, 0xf0, 0xe3, 0x6f, 0xfd};
+    unsigned char cfb_state[16] = {0x77, 0xe4, 0x65, 0x65, 0xd5, 0x8c, 0xe3, 0x6c,
+                                   0xd4, 0x6c, 0xb4, 0x0c, 0xfd, 0xed, 0x60, 0xed};
     unsigned char gcm_state[12] = {0x57, 0x71, 0x7d, 0xad, 0xdb, 0x9b,
                                    0x98, 0x82, 0x5a, 0x55, 0x91, 0x81};
     unsigned char ccm_state[7] = {0x57, 0x71, 0x7d, 0xad, 0xdb, 0x9b, 0x98};
@@ -2456,56 +2458,69 @@ static int test_evp_iv(int idx)
     int len = sizeof(ciphertext);
     size_t ivlen, ref_len;
     const EVP_CIPHER *type = NULL;
+    int iv_reset = 0;
 
-    if (nullprov != NULL && idx < 5)
+    if (nullprov != NULL && idx < 6)
         return TEST_skip("Test does not support a non-default library context");
 
     switch(idx) {
     case 0:
         type = EVP_aes_128_cbc();
         /* FALLTHROUGH */
-    case 5:
+    case 6:
         type = (type != NULL) ? type :
                                 EVP_CIPHER_fetch(testctx, "aes-128-cbc", testpropq);
         ref_iv = cbc_state;
         ref_len = sizeof(cbc_state);
+        iv_reset = 1;
         break;
     case 1:
         type = EVP_aes_128_ofb();
         /* FALLTHROUGH */
-    case 6:
+    case 7:
         type = (type != NULL) ? type :
                                 EVP_CIPHER_fetch(testctx, "aes-128-ofb", testpropq);
         ref_iv = ofb_state;
         ref_len = sizeof(ofb_state);
+        iv_reset = 1;
         break;
     case 2:
+        type = EVP_aes_128_cfb();
+        /* FALLTHROUGH */
+    case 8:
+        type = (type != NULL) ? type :
+                                EVP_CIPHER_fetch(testctx, "aes-128-cfb", testpropq);
+        ref_iv = cfb_state;
+        ref_len = sizeof(cfb_state);
+        iv_reset = 1;
+        break;
+    case 3:
         type = EVP_aes_128_gcm();
         /* FALLTHROUGH */
-    case 7:
+    case 9:
         type = (type != NULL) ? type :
                                 EVP_CIPHER_fetch(testctx, "aes-128-gcm", testpropq);
         ref_iv = gcm_state;
         ref_len = sizeof(gcm_state);
         break;
-    case 3:
+    case 4:
         type = EVP_aes_128_ccm();
         /* FALLTHROUGH */
-    case 8:
+    case 10:
         type = (type != NULL) ? type :
                                 EVP_CIPHER_fetch(testctx, "aes-128-ccm", testpropq);
         ref_iv = ccm_state;
         ref_len = sizeof(ccm_state);
         break;
 #ifdef OPENSSL_NO_OCB
-    case 4:
-    case 9:
+    case 5:
+    case 11:
         return 1;
 #else
-    case 4:
+    case 5:
         type = EVP_aes_128_ocb();
         /* FALLTHROUGH */
-    case 9:
+    case 11:
         type = (type != NULL) ? type :
                                 EVP_CIPHER_fetch(testctx, "aes-128-ocb", testpropq);
         ref_iv = ocb_state;
@@ -2530,10 +2545,22 @@ static int test_evp_iv(int idx)
             || !TEST_mem_eq(ref_iv, ref_len, iv, ivlen))
         goto err;
 
+    /* CBC, OFB, and CFB modes: the updated iv must be reset after reinit */
+    if (!TEST_true(EVP_EncryptInit_ex(ctx, NULL, NULL, NULL, NULL))
+        || !TEST_true(EVP_CIPHER_CTX_get_updated_iv(ctx, iv, sizeof(iv))))
+        goto err;
+    if (iv_reset) {
+        if (!TEST_mem_eq(init_iv, ivlen, iv, ivlen))
+            goto err;
+    } else {
+        if (!TEST_mem_eq(ref_iv, ivlen, iv, ivlen))
+            goto err;
+    }
+
     ret = 1;
 err:
     EVP_CIPHER_CTX_free(ctx);
-    if (idx >= 5)
+    if (idx >= 6)
         EVP_CIPHER_free((EVP_CIPHER *)type);
     return ret;
 }
@@ -2782,7 +2809,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_pkey_ctx_fail_without_provider, 2);
 
     ADD_TEST(test_rand_agglomeration);
-    ADD_ALL_TESTS(test_evp_iv, 10);
+    ADD_ALL_TESTS(test_evp_iv, 12);
     ADD_TEST(test_EVP_rsa_pss_with_keygen_bits);
 #ifndef OPENSSL_NO_EC
     ADD_ALL_TESTS(test_ecpub, OSSL_NELEM(ecpub_nids));

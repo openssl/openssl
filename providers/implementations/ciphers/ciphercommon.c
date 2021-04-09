@@ -191,6 +191,13 @@ static int cipher_generic_init_internal(PROV_CIPHER_CTX *ctx,
         if (!ossl_cipher_generic_initiv(ctx, iv, ivlen))
             return 0;
     }
+    if (iv == NULL && ctx->iv_set
+        && (ctx->mode == EVP_CIPH_CBC_MODE
+            || ctx->mode == EVP_CIPH_CFB_MODE
+            || ctx->mode == EVP_CIPH_OFB_MODE))
+        /* reset IV for these modes to keep compatibility with 1.1.1 */
+        memcpy(ctx->iv, ctx->oiv, ctx->ivlen);
+
     if (key != NULL) {
         if (ctx->variable_keylength == 0) {
             if (keylen != ctx->keylen) {
