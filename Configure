@@ -1577,7 +1577,8 @@ if (!$disabled{asm} && !$predefined_C{__MACH__} && $^O ne 'VMS') {
 $config{use_int128} = 0;
 {
     my $cc = $config{CROSS_COMPILE}.$config{CC};
-    open(PIPE, "$cc -E -dM - </dev/null 2>&1 |");
+    $target{cflags} =~ /(-target (\w|-)+)/;
+    open(PIPE, "$cc $1 -E -dM - </dev/null 2>&1 |");
     while(<PIPE>) {
         if (m/__SIZEOF_INT128__/) {
             $config{use_int128} = 1;
