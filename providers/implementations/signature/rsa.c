@@ -275,7 +275,8 @@ static int rsa_setup_md(PROV_RSA_CTX *ctx, const char *mdname,
     if (mdname != NULL) {
         EVP_MD *md = EVP_MD_fetch(ctx->libctx, mdname, mdprops);
         int sha1_allowed = (ctx->operation != EVP_PKEY_OP_SIGN);
-        int md_nid = ossl_digest_rsa_sign_get_md_nid(md, sha1_allowed);
+        int md_nid = ossl_digest_rsa_sign_get_md_nid(ctx->libctx, md,
+                                                     sha1_allowed);
         size_t mdname_len = strlen(mdname);
 
         if (md == NULL
@@ -334,7 +335,7 @@ static int rsa_setup_mgf1_md(PROV_RSA_CTX *ctx, const char *mdname,
         return 0;
     }
     /* The default for mgf1 is SHA1 - so allow SHA1 */
-    if ((mdnid = ossl_digest_rsa_sign_get_md_nid(md, 1)) == NID_undef
+    if ((mdnid = ossl_digest_rsa_sign_get_md_nid(ctx->libctx, md, 1)) == NID_undef
         || !rsa_check_padding(ctx, NULL, mdname, mdnid)) {
         if (mdnid == NID_undef)
             ERR_raise_data(ERR_LIB_PROV, PROV_R_DIGEST_NOT_ALLOWED,
@@ -368,7 +369,7 @@ static int rsa_signverify_init(void *vprsactx, void *vrsa,
     if (prsactx == NULL || vrsa == NULL)
         return 0;
 
-    if (!ossl_rsa_check_key(vrsa, operation))
+    if (!ossl_rsa_check_key(prsactx->libctx, vrsa, operation))
         return 0;
 
     if (!RSA_up_ref(vrsa))

@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <assert.h>
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
 #include <openssl/params.h>
@@ -37,18 +38,12 @@ static OSSL_FUNC_provider_query_operation_fn fips_query;
 #define ALG(NAMES, FUNC) ALGC(NAMES, FUNC, NULL)
 
 extern OSSL_FUNC_core_thread_start_fn *c_thread_start;
-int FIPS_security_check_enabled(void);
+int FIPS_security_check_enabled(OSSL_LIB_CTX *libctx);
 
 /*
- * TODO(3.0): Should these be stored in the provider side provctx? Could they
- * ever be different from one init to the next? Unfortunately we can't do this
- * at the moment because c_put_error/c_add_error_vdata do not provide
- * us with the OSSL_LIB_CTX as a parameter.
+ * Should these function pointers be stored in the provider side provctx? Could
+ * they ever be different from one init to the next? We assume not for now.
  */
-
-static SELF_TEST_POST_PARAMS selftest_params;
-static int fips_security_checks = 1;
-static const char *fips_security_check_option = "1";
 
 /* Functions provided by the core */
 static OSSL_FUNC_core_gettable_params_fn *c_gettable_params;
@@ -77,11 +72,17 @@ static OSSL_FUNC_core_get_libctx_fn *c_get_libctx = NULL;
 
 typedef struct fips_global_st {
     const OSSL_CORE_HANDLE *handle;
+    SELF_TEST_POST_PARAMS selftest_params;
+    int fips_security_checks;
+    const char *fips_security_check_option;
 } FIPS_GLOBAL;
 
 static void *fips_prov_ossl_ctx_new(OSSL_LIB_CTX *libctx)
 {
     FIPS_GLOBAL *fgbl = OPENSSL_zalloc(sizeof(*fgbl));
+
+    fgbl->fips_security_checks = 1;
+    fgbl->fips_security_check_option = "1";
 
     return fgbl;
 }
@@ -107,38 +108,48 @@ static const OSSL_PARAM fips_param_types[] = {
     OSSL_PARAM_END
 };
 
-/*
- * Parameters to retrieve from the core provider - required for self testing.
- * NOTE: inside core_get_params() these will be loaded from config items
- * stored inside prov->parameters (except for
- * OSSL_PROV_PARAM_CORE_MODULE_FILENAME).
- * OSSL_PROV_FIPS_PARAM_SECURITY_CHECKS is not a self test parameter.
- */
-static OSSL_PARAM core_params[] =
+static int fips_get_params_from_core(FIPS_GLOBAL *fgbl)
 {
-    OSSL_PARAM_utf8_ptr(OSSL_PROV_PARAM_CORE_MODULE_FILENAME,
-                        &selftest_params.module_filename,
-                        sizeof(selftest_params.module_filename)),
-    OSSL_PARAM_utf8_ptr(OSSL_PROV_FIPS_PARAM_MODULE_MAC,
-                        &selftest_params.module_checksum_data,
-                        sizeof(selftest_params.module_checksum_data)),
-    OSSL_PARAM_utf8_ptr(OSSL_PROV_FIPS_PARAM_INSTALL_MAC,
-                        &selftest_params.indicator_checksum_data,
-                        sizeof(selftest_params.indicator_checksum_data)),
-    OSSL_PARAM_utf8_ptr(OSSL_PROV_FIPS_PARAM_INSTALL_STATUS,
-                        &selftest_params.indicator_data,
-                        sizeof(selftest_params.indicator_data)),
-    OSSL_PARAM_utf8_ptr(OSSL_PROV_FIPS_PARAM_INSTALL_VERSION,
-                        &selftest_params.indicator_version,
-                        sizeof(selftest_params.indicator_version)),
-    OSSL_PARAM_utf8_ptr(OSSL_PROV_FIPS_PARAM_CONDITIONAL_ERRORS,
-                        &selftest_params.conditional_error_check,
-                        sizeof(selftest_params.conditional_error_check)),
-    OSSL_PARAM_utf8_ptr(OSSL_PROV_FIPS_PARAM_SECURITY_CHECKS,
-                        &fips_security_check_option,
-                        sizeof(fips_security_check_option)),
-    OSSL_PARAM_END
-};
+    /*
+    * Parameters to retrieve from the core provider - required for self testing.
+    * NOTE: inside core_get_params() these will be loaded from config items
+    * stored inside prov->parameters (except for
+    * OSSL_PROV_PARAM_CORE_MODULE_FILENAME).
+    * OSSL_PROV_FIPS_PARAM_SECURITY_CHECKS is not a self test parameter.
+    */
+    OSSL_PARAM core_params[] =
+    {
+        OSSL_PARAM_utf8_ptr(OSSL_PROV_PARAM_CORE_MODULE_FILENAME,
+                            &fgbl->selftest_params.module_filename,
+                            sizeof(fgbl->selftest_params.module_filename)),
+        OSSL_PARAM_utf8_ptr(OSSL_PROV_FIPS_PARAM_MODULE_MAC,
+                            &fgbl->selftest_params.module_checksum_data,
+                            sizeof(fgbl->selftest_params.module_checksum_data)),
+        OSSL_PARAM_utf8_ptr(OSSL_PROV_FIPS_PARAM_INSTALL_MAC,
+                            &fgbl->selftest_params.indicator_checksum_data,
+                            sizeof(fgbl->selftest_params.indicator_checksum_data)),
+        OSSL_PARAM_utf8_ptr(OSSL_PROV_FIPS_PARAM_INSTALL_STATUS,
+                            &fgbl->selftest_params.indicator_data,
+                            sizeof(fgbl->selftest_params.indicator_data)),
+        OSSL_PARAM_utf8_ptr(OSSL_PROV_FIPS_PARAM_INSTALL_VERSION,
+                            &fgbl->selftest_params.indicator_version,
+                            sizeof(fgbl->selftest_params.indicator_version)),
+        OSSL_PARAM_utf8_ptr(OSSL_PROV_FIPS_PARAM_CONDITIONAL_ERRORS,
+                            &fgbl->selftest_params.conditional_error_check,
+                            sizeof(fgbl->selftest_params.conditional_error_check)),
+        OSSL_PARAM_utf8_ptr(OSSL_PROV_FIPS_PARAM_SECURITY_CHECKS,
+                            &fgbl->fips_security_check_option,
+                            sizeof(fgbl->fips_security_check_option)),
+        OSSL_PARAM_END
+    };
+
+    if (!c_get_params(fgbl->handle, core_params)) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
+        return 0;
+    }
+
+    return 1;
+}
 
 static const OSSL_PARAM *fips_gettable_params(void *provctx)
 {
@@ -148,6 +159,9 @@ static const OSSL_PARAM *fips_gettable_params(void *provctx)
 static int fips_get_params(void *provctx, OSSL_PARAM params[])
 {
     OSSL_PARAM *p;
+    FIPS_GLOBAL *fgbl = ossl_lib_ctx_get_data(ossl_prov_ctx_get0_libctx(provctx),
+                                              OSSL_LIB_CTX_FIPS_PROV_INDEX,
+                                              &fips_prov_ossl_ctx_method);
 
     p = OSSL_PARAM_locate(params, OSSL_PROV_PARAM_NAME);
     if (p != NULL && !OSSL_PARAM_set_utf8_ptr(p, "OpenSSL FIPS Provider"))
@@ -162,26 +176,33 @@ static int fips_get_params(void *provctx, OSSL_PARAM params[])
     if (p != NULL && !OSSL_PARAM_set_int(p, ossl_prov_is_running()))
         return 0;
     p = OSSL_PARAM_locate(params, OSSL_PROV_PARAM_SECURITY_CHECKS);
-    if (p != NULL && !OSSL_PARAM_set_int(p, fips_security_checks))
+    if (p != NULL && !OSSL_PARAM_set_int(p, fgbl->fips_security_checks))
         return 0;
     return 1;
 }
 
-static void set_self_test_cb(const OSSL_CORE_HANDLE *handle)
+static void set_self_test_cb(FIPS_GLOBAL *fgbl)
 {
+    const OSSL_CORE_HANDLE *handle =
+        FIPS_get_core_handle(fgbl->selftest_params.libctx);
+
     if (c_stcbfn != NULL && c_get_libctx != NULL) {
-        c_stcbfn(c_get_libctx(handle), &selftest_params.cb,
-                              &selftest_params.cb_arg);
+        c_stcbfn(c_get_libctx(handle), &fgbl->selftest_params.cb,
+                              &fgbl->selftest_params.cb_arg);
     } else {
-        selftest_params.cb = NULL;
-        selftest_params.cb_arg = NULL;
+        fgbl->selftest_params.cb = NULL;
+        fgbl->selftest_params.cb_arg = NULL;
     }
 }
 
 static int fips_self_test(void *provctx)
 {
-    set_self_test_cb(FIPS_get_core_handle(selftest_params.libctx));
-    return SELF_TEST_post(&selftest_params, 1) ? 1 : 0;
+    FIPS_GLOBAL *fgbl = ossl_lib_ctx_get_data(ossl_prov_ctx_get0_libctx(provctx),
+                                              OSSL_LIB_CTX_FIPS_PROV_INDEX,
+                                              &fips_prov_ossl_ctx_method);
+
+    set_self_test_cb(fgbl);
+    return SELF_TEST_post(&fgbl->selftest_params, 1) ? 1 : 0;
 }
 
 /*
@@ -506,6 +527,9 @@ int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
 {
     FIPS_GLOBAL *fgbl;
     OSSL_LIB_CTX *libctx = NULL;
+    SELF_TEST_POST_PARAMS selftest_params;
+
+    memset(&selftest_params, 0, sizeof(selftest_params));
 
     if (!ossl_prov_seeding_from_dispatch(in))
         return 0;
@@ -578,7 +602,8 @@ int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
             selftest_params.bio_new_file_cb = OSSL_FUNC_BIO_new_file(in);
             break;
         case OSSL_FUNC_BIO_NEW_MEMBUF:
-            selftest_params.bio_new_buffer_cb = OSSL_FUNC_BIO_new_membuf(in);
+            selftest_params.bio_new_buffer_cb
+                = OSSL_FUNC_BIO_new_membuf(in);
             break;
         case OSSL_FUNC_BIO_READ_EX:
             selftest_params.bio_read_ex_cb = OSSL_FUNC_BIO_read_ex(in);
@@ -597,22 +622,6 @@ int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
             break;
         }
     }
-
-    set_self_test_cb(handle);
-
-    if (!c_get_params(handle, core_params)) {
-        ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
-        return 0;
-    }
-    /* Disable the conditional error check if is disabled in the fips config file*/
-    if (selftest_params.conditional_error_check != NULL
-        && strcmp(selftest_params.conditional_error_check, "0") == 0)
-        SELF_TEST_disable_conditional_error_state();
-
-    /* Disable the security check if is disabled in the fips config file*/
-    if (fips_security_check_option != NULL
-        && strcmp(fips_security_check_option, "0") == 0)
-        fips_security_checks = 0;
 
     /*  Create a context. */
     if ((*provctx = ossl_prov_ctx_new()) == NULL
@@ -634,10 +643,34 @@ int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
 
     fgbl->handle = handle;
 
+    /*
+     * We did initial set up of selttest_params in a local copy, because we
+     * could not create fgbl until c_CRYPTO_zalloc was defined in the loop
+     * above.
+     */
+    fgbl->selftest_params = selftest_params;
+
+    fgbl->selftest_params.libctx = libctx;
+
+    set_self_test_cb(fgbl);
+
+    if (!fips_get_params_from_core(fgbl)) {
+        /* Error already raised */
+        return 0;
+    }
+    /* Disable the conditional error check if is disabled in the fips config file*/
+    if (fgbl->selftest_params.conditional_error_check != NULL
+        && strcmp(fgbl->selftest_params.conditional_error_check, "0") == 0)
+        SELF_TEST_disable_conditional_error_state();
+
+    /* Disable the security check if is disabled in the fips config file*/
+    if (fgbl->fips_security_check_option != NULL
+        && strcmp(fgbl->fips_security_check_option, "0") == 0)
+        fgbl->fips_security_checks = 0;
+
     ossl_prov_cache_exported_algorithms(fips_ciphers, exported_fips_ciphers);
 
-    selftest_params.libctx = libctx;
-    if (!SELF_TEST_post(&selftest_params, 0)) {
+    if (!SELF_TEST_post(&fgbl->selftest_params, 0)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_SELF_TEST_POST_FAILURE);
         goto err;
     }
@@ -819,16 +852,18 @@ int BIO_snprintf(char *buf, size_t n, const char *format, ...)
     return ret;
 }
 
-int FIPS_security_check_enabled(void)
+int FIPS_security_check_enabled(OSSL_LIB_CTX *libctx)
 {
-    return fips_security_checks;
+    FIPS_GLOBAL *fgbl = ossl_lib_ctx_get_data(libctx,
+                                              OSSL_LIB_CTX_FIPS_PROV_INDEX,
+                                              &fips_prov_ossl_ctx_method);
+    return fgbl->fips_security_checks;
 }
 
 void OSSL_SELF_TEST_get_callback(OSSL_LIB_CTX *libctx, OSSL_CALLBACK **cb,
                                  void **cbarg)
 {
-    if (libctx == NULL)
-        libctx = selftest_params.libctx;
+    assert(libctx != NULL);
 
     if (c_stcbfn != NULL && c_get_libctx != NULL) {
         /* Get the parent libctx */

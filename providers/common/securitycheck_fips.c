@@ -19,22 +19,23 @@
 #include <openssl/obj_mac.h>
 #include "prov/securitycheck.h"
 
-extern int FIPS_security_check_enabled(void);
+int FIPS_security_check_enabled(OSSL_LIB_CTX *libctx);
 
-int ossl_securitycheck_enabled(void)
+int ossl_securitycheck_enabled(OSSL_LIB_CTX *libctx)
 {
 #if !defined(OPENSSL_NO_FIPS_SECURITYCHECKS)
-    return FIPS_security_check_enabled();
+    return FIPS_security_check_enabled(libctx);
 #else
     return 0;
 #endif /* OPENSSL_NO_FIPS_SECURITYCHECKS */
 }
 
-int ossl_digest_rsa_sign_get_md_nid(const EVP_MD *md, int sha1_allowed)
+int ossl_digest_rsa_sign_get_md_nid(OSSL_LIB_CTX *ctx, const EVP_MD *md,
+                                    int sha1_allowed)
 {
 #if !defined(OPENSSL_NO_FIPS_SECURITYCHECKS)
-    if (ossl_securitycheck_enabled())
-        return ossl_digest_get_approved_nid_with_sha1(md, sha1_allowed);
+    if (ossl_securitycheck_enabled(ctx))
+        return ossl_digest_get_approved_nid_with_sha1(ctx, md, sha1_allowed);
 #endif /* OPENSSL_NO_FIPS_SECURITYCHECKS */
     return ossl_digest_get_approved_nid(md);
 }
