@@ -6734,7 +6734,7 @@ static int test_set_alpn(void)
     if (!TEST_ptr(ctx))
         goto end;
 
-    /* the set_alpn functions return 0 (false) on succesa, non-zero (true) on failure */
+    /* the set_alpn functions return 0 (false) on success, non-zero (true) on failure */
     if (!TEST_false(SSL_CTX_set_alpn_protos(ctx, NULL, 2)))
         goto end;
     if (!TEST_false(SSL_CTX_set_alpn_protos(ctx, good, 0)))

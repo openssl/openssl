@@ -2831,18 +2831,16 @@ void SSL_CTX_set_npn_select_cb(SSL_CTX *ctx,
 
 static int alpn_value_ok(const unsigned char *protos, unsigned int protos_len)
 {
-    const unsigned char *limit;
+    unsigned int idx;
 
     if (protos_len < 2 || protos == NULL)
         return 0;
 
-    limit = protos + protos_len;
-    while (protos < limit) {
-        if (*protos == 0)
+    for (idx = 0; idx < protos_len; idx += protos[idx] + 1) {
+        if (protos[idx] == 0)
             return 0;
-        protos += 1 + *protos;
     }
-    return protos == limit;
+    return idx == protos_len;
 }
 /*
  * SSL_CTX_set_alpn_protos sets the ALPN protocol list on |ctx| to |protos|.
@@ -2869,6 +2867,7 @@ int SSL_CTX_set_alpn_protos(SSL_CTX *ctx, const unsigned char *protos,
         SSLerr(SSL_F_SSL_CTX_SET_ALPN_PROTOS, ERR_R_MALLOC_FAILURE);
         return 1;
     }
+    OPENSSL_free(ctx->ext.alpn);
     ctx->ext.alpn = alpn;
     ctx->ext.alpn_len = protos_len;
 
@@ -2900,6 +2899,7 @@ int SSL_set_alpn_protos(SSL *ssl, const unsigned char *protos,
         SSLerr(SSL_F_SSL_SET_ALPN_PROTOS, ERR_R_MALLOC_FAILURE);
         return 1;
     }
+    OPENSSL_free(ssl->ext.alpn);
     ssl->ext.alpn = alpn;
     ssl->ext.alpn_len = protos_len;
 
