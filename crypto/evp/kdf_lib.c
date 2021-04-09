@@ -95,6 +95,11 @@ const char *EVP_KDF_name(const EVP_KDF *kdf)
     return NULL;
 }
 
+const char *EVP_KDF_description(const EVP_KDF *kdf)
+{
+    return kdf->description;
+}
+
 int EVP_KDF_is_a(const EVP_KDF *kdf, const char *name)
 {
     return evp_is_a(kdf->prov, kdf->name_id, NULL, name);

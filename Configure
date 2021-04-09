@@ -1573,6 +1573,20 @@ if (!$disabled{asm} && !$predefined_C{__MACH__} && $^O ne 'VMS') {
     }
 }
 
+# Check if __SIZEOF_INT128__ is defined by compiler
+$config{use_int128} = 0;
+{
+    my $cc = $config{CROSS_COMPILE}.$config{CC};
+    open(PIPE, "$cc -E -dM - </dev/null 2>&1 |");
+    while(<PIPE>) {
+        if (m/__SIZEOF_INT128__/) {
+            $config{use_int128} = 1;
+            last;
+        }
+    }
+    close(PIPE);
+}
+
 # Deal with bn_ops ###################################################
 
 $config{bn_ll}                  =0;

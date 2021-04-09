@@ -1252,7 +1252,7 @@ end_of_options:
         }
         if (verbose)
             BIO_printf(bio_err, "message digest is %s\n",
-                       OBJ_nid2ln(EVP_MD_type(dgst)));
+                       EVP_MD_name(dgst));
         if (policy == NULL
             && (policy = lookup_conf(conf, section, ENV_POLICY)) == NULL)
             goto end;
@@ -1609,7 +1609,7 @@ end_of_options:
 
         if (verbose)
             BIO_printf(bio_err, "making CRL\n");
-        if ((crl = X509_CRL_new()) == NULL)
+        if ((crl = X509_CRL_new_ex(app_get0_libctx(), app_get0_propq())) == NULL)
             goto end;
         if (!X509_CRL_set_issuer_name(crl, X509_get_subject_name(x509)))
             goto end;

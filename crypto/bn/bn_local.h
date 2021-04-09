@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -23,6 +23,7 @@
 
 # include "crypto/bn.h"
 # include "internal/cryptlib.h"
+# include "internal/numbers.h"
 
 /*
  * These preprocessor symbols control various aspects of the bignum headers
@@ -375,9 +376,9 @@ struct bn_gencb_st {
  */
 #  if defined(__SIZEOF_INT128__) && __SIZEOF_INT128__==16 && \
       (defined(SIXTY_FOUR_BIT) || defined(SIXTY_FOUR_BIT_LONG))
-#   define BN_UMULT_HIGH(a,b)          (((__uint128_t)(a)*(b))>>64)
+#   define BN_UMULT_HIGH(a,b)          (((uint128_t)(a)*(b))>>64)
 #   define BN_UMULT_LOHI(low,high,a,b) ({       \
-        __uint128_t ret=(__uint128_t)(a)*(b);   \
+        uint128_t ret=(uint128_t)(a)*(b);   \
         (high)=ret>>64; (low)=ret;      })
 #  elif defined(__alpha) && (defined(SIXTY_FOUR_BIT_LONG) || defined(SIXTY_FOUR_BIT))
 #   if defined(__DECC)

@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -247,7 +247,6 @@ int s_time_main(int argc, char **argv)
     if ((ctx = SSL_CTX_new(meth)) == NULL)
         goto end;
 
-    SSL_CTX_set_mode(ctx, SSL_MODE_AUTO_RETRY);
     SSL_CTX_set_quiet_shutdown(ctx, 1);
     if (SSL_CTX_set_min_proto_version(ctx, min_version) == 0)
         goto end;

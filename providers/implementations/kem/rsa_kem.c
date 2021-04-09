@@ -122,15 +122,17 @@ static int rsakem_init(void *vprsactx, void *vrsa,
 {
     PROV_RSA_CTX *prsactx = (PROV_RSA_CTX *)vprsactx;
 
-    if (prsactx == NULL || vrsa == NULL || !RSA_up_ref(vrsa))
+    if (prsactx == NULL || vrsa == NULL)
+        return 0;
+
+    if (!ossl_rsa_check_key(vrsa, operation))
+        return 0;
+
+    if (!RSA_up_ref(vrsa))
         return 0;
     RSA_free(prsactx->rsa);
     prsactx->rsa = vrsa;
 
-    if (!ossl_rsa_check_key(vrsa, operation == EVP_PKEY_OP_ENCAPSULATE)) {
-        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
-        return 0;
-    }
     return rsakem_set_ctx_params(prsactx, params);
 }
 

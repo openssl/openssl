@@ -94,7 +94,7 @@ int OCSP_request_sign(OCSP_REQUEST *req,
                       OCSP_R_PRIVATE_KEY_DOES_NOT_MATCH_CERTIFICATE);
             goto err;
         }
-        if (!OCSP_REQUEST_sign(req, key, dgst))
+        if (!OCSP_REQUEST_sign(req, key, dgst, signer->libctx, signer->propq))
             goto err;
     }
 

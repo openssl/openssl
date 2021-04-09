@@ -84,9 +84,9 @@ static int ocsp_verify(OCSP_REQUEST *req, OCSP_BASICRESP *bs,
             return -1;
         }
         if (req != NULL)
-            ret = OCSP_REQUEST_verify(req, skey);
+            ret = OCSP_REQUEST_verify(req, skey, signer->libctx, signer->propq);
         else
-            ret = OCSP_BASICRESP_verify(bs, skey);
+            ret = OCSP_BASICRESP_verify(bs, skey, signer->libctx, signer->propq);
         if (ret <= 0)
             ERR_raise(ERR_LIB_OCSP, OCSP_R_SIGNATURE_FAILURE);
     }

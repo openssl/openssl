@@ -170,7 +170,10 @@ jobs:
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
   out-of-source-and-install:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest ]
+    runs-on: ${{matrix.os}}
     steps:
     - uses: actions/checkout@v2
     - name: extra preparations

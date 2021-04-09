@@ -4275,12 +4275,8 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
             if (prefer_sha256) {
                 const SSL_CIPHER *tmp = sk_SSL_CIPHER_value(allow, ii);
 
-                /*
-                 * TODO: When there are no more legacy digests we can just use
-                 * OSSL_DIGEST_NAME_SHA2_256 instead of calling OBJ_nid2sn
-                 */
                 if (EVP_MD_is_a(ssl_md(s->ctx, tmp->algorithm2),
-                                       OBJ_nid2sn(NID_sha256))) {
+                                       OSSL_DIGEST_NAME_SHA2_256)) {
                     ret = tmp;
                     break;
                 }

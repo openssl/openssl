@@ -1,11 +1,20 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+
+#if defined (__TANDEM) && defined (_SPT_MODEL_)
+/*
+ * These definitions have to come first in SPT due to scoping of the
+ * declarations in c99 associated with SPT use of stat.
+ */
+# include <sys/types.h>
+# include <sys/stat.h>
+#endif
 
 #include "internal/cryptlib.h"
 

@@ -408,35 +408,52 @@ static const OSSL_ALGORITHM deflt_asym_kem[] = {
 
 static const OSSL_ALGORITHM deflt_keymgmt[] = {
 #ifndef OPENSSL_NO_DH
-    { "DH:dhKeyAgreement", "provider=default", ossl_dh_keymgmt_functions },
+    { "DH:dhKeyAgreement", "provider=default", ossl_dh_keymgmt_functions,
+      "OpenSSL PKCS#3 DH implementation" },
     { "DHX:X9.42 DH:dhpublicnumber", "provider=default",
-      ossl_dhx_keymgmt_functions },
+      ossl_dhx_keymgmt_functions, "OpenSSL X9.42 DH implementation" },
 #endif
 #ifndef OPENSSL_NO_DSA
-    { "DSA:dsaEncryption", "provider=default", ossl_dsa_keymgmt_functions },
+    { "DSA:dsaEncryption", "provider=default", ossl_dsa_keymgmt_functions,
+      "OpenSSL DSA implementation" },
 #endif
-    { "RSA:rsaEncryption", "provider=default", ossl_rsa_keymgmt_functions },
-    { "RSA-PSS:RSASSA-PSS", "provider=default", ossl_rsapss_keymgmt_functions },
+    { "RSA:rsaEncryption", "provider=default", ossl_rsa_keymgmt_functions,
+      "OpenSSL RSA implementation" },
+    { "RSA-PSS:RSASSA-PSS", "provider=default", ossl_rsapss_keymgmt_functions,
+      "OpenSSL RSA-PSS implementation" },
 #ifndef OPENSSL_NO_EC
-    { "EC:id-ecPublicKey", "provider=default", ossl_ec_keymgmt_functions },
-    { "X25519", "provider=default", ossl_x25519_keymgmt_functions },
-    { "X448", "provider=default", ossl_x448_keymgmt_functions },
-    { "ED25519", "provider=default", ossl_ed25519_keymgmt_functions },
-    { "ED448", "provider=default", ossl_ed448_keymgmt_functions },
+    { "EC:id-ecPublicKey", "provider=default", ossl_ec_keymgmt_functions,
+      "OpenSSL EC implementation" },
+    { "X25519", "provider=default", ossl_x25519_keymgmt_functions,
+      "OpenSSL X25519 implementation" },
+    { "X448", "provider=default", ossl_x448_keymgmt_functions,
+      "OpenSSL X448 implementation" },
+    { "ED25519", "provider=default", ossl_ed25519_keymgmt_functions,
+      "OpenSSL ED25519 implementation" },
+    { "ED448", "provider=default", ossl_ed448_keymgmt_functions,
+      "OpenSSL ED448 implementation" },
 #endif
-    { "TLS1-PRF", "provider=default", ossl_kdf_keymgmt_functions },
-    { "HKDF", "provider=default", ossl_kdf_keymgmt_functions },
-    { "SCRYPT:id-scrypt", "provider=default", ossl_kdf_keymgmt_functions },
-    { "HMAC", "provider=default", ossl_mac_legacy_keymgmt_functions },
-    { "SIPHASH", "provider=default", ossl_mac_legacy_keymgmt_functions },
+    { "TLS1-PRF", "provider=default", ossl_kdf_keymgmt_functions,
+      "OpenSSL TLS1-PRF via EVP_PKEY implementation" },
+    { "HKDF", "provider=default", ossl_kdf_keymgmt_functions,
+      "OpenSSL HKDF via EVP_PKEY implementation" },
+    { "SCRYPT:id-scrypt", "provider=default", ossl_kdf_keymgmt_functions,
+      "OpenSSL SCRYPT via EVP_PKEY implementation" },
+    { "HMAC", "provider=default", ossl_mac_legacy_keymgmt_functions,
+      "OpenSSL HMAC via EVP_PKEY implementation" },
+    { "SIPHASH", "provider=default", ossl_mac_legacy_keymgmt_functions,
+      "OpenSSL SIPHASH via EVP_PKEY implementation" },
 #ifndef OPENSSL_NO_POLY1305
-    { "POLY1305", "provider=default", ossl_mac_legacy_keymgmt_functions },
+    { "POLY1305", "provider=default", ossl_mac_legacy_keymgmt_functions,
+      "OpenSSL POLY1305 via EVP_PKEY implementation" },
 #endif
 #ifndef OPENSSL_NO_CMAC
-    { "CMAC", "provider=default", ossl_cossl_mac_legacy_keymgmt_functions },
+    { "CMAC", "provider=default", ossl_cossl_mac_legacy_keymgmt_functions,
+      "OpenSSL CMAC via EVP_PKEY implementation" },
 #endif
 #ifndef OPENSSL_NO_SM2
-    { "SM2", "provider=default", ossl_sm2_keymgmt_functions },
+    { "SM2", "provider=default", ossl_sm2_keymgmt_functions,
+      "OpenSSL SM2 implementation" },
 #endif
     { NULL, NULL, NULL }
 };

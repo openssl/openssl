@@ -1723,6 +1723,20 @@ int EVP_PKEY_size(const EVP_PKEY *pkey)
     return size < 0 ? 0 : size;
 }
 
+const char *EVP_PKEY_description(const EVP_PKEY *pkey)
+{
+    if (!evp_pkey_is_assigned(pkey))
+        return NULL;
+
+    if (evp_pkey_is_provided(pkey) && pkey->keymgmt->description != NULL)
+        return pkey->keymgmt->description;
+#ifndef FIPS_MODULE
+    if (pkey->ameth != NULL)
+        return pkey->ameth->info;
+#endif
+    return NULL;
+}
+
 void *evp_pkey_export_to_provider(EVP_PKEY *pk, OSSL_LIB_CTX *libctx,
                                   EVP_KEYMGMT **keymgmt,
                                   const char *propquery)

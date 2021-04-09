@@ -17,11 +17,9 @@ EVP_default_properties_is_fips_enabled
 =head1 DESCRIPTION
 
 EVP_set_default_properties() sets the default properties for all
-future EVP algorithm fetches, implicit as well as explicit.
-
-=for comment TODO(3.0) We should consider having an EVP document in
-section 7 that details everything about implicit vs explicit fetches
-and how they relate to properties.
+future EVP algorithm fetches, implicit as well as explicit. See
+L<crypto(7)/ALGORITHM FETCHING> for information about implicit and explicit
+fetching.
 
 EVP_set_default_properties stores the properties given with the string
 I<propq> among the EVP data that's been stored in the library context
@@ -57,7 +55,7 @@ The functions described here were added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

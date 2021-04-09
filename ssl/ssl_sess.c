@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright 2005 Nokia. All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -8,6 +8,10 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if defined(__TANDEM) && defined(_SPT_MODEL_)
+# include <spthread.h>
+# include <spt_extensions.h> /* timeval */
+#endif
 #include <stdio.h>
 #include <openssl/rand.h>
 #include <openssl/engine.h>

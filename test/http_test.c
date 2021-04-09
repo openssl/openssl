@@ -204,7 +204,7 @@ static int test_http_url_ipv4(void)
 
 static int test_http_url_ipv6(void)
 {
-    return test_http_url_ok("http://[FF01::101]:6", 0, "FF01::101", "6", "/");
+    return test_http_url_ok("http://[FF01::101]:6", 0, "[FF01::101]", "6", "/");
 }
 
 static int test_http_url_invalid(const char *url)

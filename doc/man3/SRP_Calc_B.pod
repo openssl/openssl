@@ -63,7 +63,7 @@ BIGNUM parameters to these functions.
 Most of these functions come in two forms. Those that take a I<libctx> and
 I<propq> parameter, and those that don't. Any cryptogrpahic functions that
 are fetched and used during the calculation use the provided I<libctx> and
-I<propq>. See L<provider(7)/Fetching algorithms> for more details. The variants
+I<propq>. See L<crypto(7)/ALGORITHM FETCHING> for more details. The variants
 that do not take a I<libctx> and I<propq> parameter use the default library
 context and property query string. The SRP_Calc_server_key() and SRP_Calc_A()
 functions do not have a form that takes I<libctx> or I<propq> parameters because

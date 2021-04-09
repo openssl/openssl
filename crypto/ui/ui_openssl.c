@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -127,7 +127,7 @@
 #  define TTY_set(tty,data)      ioctl(tty,TIOCSETP,data)
 # endif
 
-# if !defined(_LIBC) && !defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_VMS)
+# if !defined(_LIBC) && !defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_VMS) && ! (defined(OPENSSL_SYS_TANDEM) && defined(_SPT_MODEL_))
 #  include <sys/ioctl.h>
 # endif
 

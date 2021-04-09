@@ -851,7 +851,7 @@ OSSL_CORE_MAKE_FUNC(int, decoder_does_selection,
                     (void *provctx, int selection))
 OSSL_CORE_MAKE_FUNC(int, decoder_decode,
                     (void *ctx, OSSL_CORE_BIO *in, int selection,
-                     OSSL_CALLBACK *metadata_cb, void *metadata_cbarg,
+                     OSSL_CALLBACK *data_cb, void *data_cbarg,
                      OSSL_PASSPHRASE_CALLBACK *pw_cb, void *pw_cbarg))
 OSSL_CORE_MAKE_FUNC(int, decoder_export_object,
                     (void *ctx, const void *objref, size_t objref_sz,

@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -190,6 +190,10 @@ int i2a_ASN1_OBJECT(BIO *bp, const ASN1_OBJECT *a)
         return BIO_write(bp, "NULL", 4);
     i = i2t_ASN1_OBJECT(buf, sizeof(buf), a);
     if (i > (int)(sizeof(buf) - 1)) {
+        if (i > INT_MAX - 1) {  /* catch an integer overflow */
+            ERR_raise(ERR_LIB_ASN1, ASN1_R_LENGTH_TOO_LONG);
+            return -1;
+        }
         if ((p = OPENSSL_malloc(i + 1)) == NULL) {
             ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
             return -1;
@@ -349,9 +353,11 @@ void ASN1_OBJECT_free(ASN1_OBJECT *a)
     if (a == NULL)
         return;
     if (a->flags & ASN1_OBJECT_FLAG_DYNAMIC_STRINGS) {
-#ifndef CONST_STRICT            /* disable purely for compile-time strict
-                                 * const checking. Doing this on a "real"
-                                 * compile will cause memory leaks */
+#ifndef CONST_STRICT
+        /*
+         * Disable purely for compile-time strict const checking.  Doing this
+         * on a "real" compile will cause memory leaks
+         */
         OPENSSL_free((void*)a->sn);
         OPENSSL_free((void*)a->ln);
 #endif

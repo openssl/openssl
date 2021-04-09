@@ -34,6 +34,7 @@ EVP_get_cipherbynid,
 EVP_get_cipherbyobj,
 EVP_CIPHER_is_a,
 EVP_CIPHER_name,
+EVP_CIPHER_description,
 EVP_CIPHER_number,
 EVP_CIPHER_names_do_all,
 EVP_CIPHER_provider,
@@ -143,13 +144,14 @@ EVP_CIPHER_do_all_provided
                              void (*fn)(const char *name, void *data),
                              void *data);
  const char *EVP_CIPHER_name(const EVP_CIPHER *cipher);
+ const char *EVP_CIPHER_description(const EVP_CIPHER *cipher);
  const OSSL_PROVIDER *EVP_CIPHER_provider(const EVP_CIPHER *cipher);
  int EVP_CIPHER_block_size(const EVP_CIPHER *e);
  int EVP_CIPHER_key_length(const EVP_CIPHER *e);
  int EVP_CIPHER_iv_length(const EVP_CIPHER *e);
  unsigned long EVP_CIPHER_flags(const EVP_CIPHER *e);
  unsigned long EVP_CIPHER_mode(const EVP_CIPHER *e);
- int EVP_CIPHER_type(const EVP_CIPHER *ctx);
+ int EVP_CIPHER_type(const EVP_CIPHER *cipher);
 
  const EVP_CIPHER *EVP_CIPHER_CTX_cipher(const EVP_CIPHER_CTX *ctx);
  int EVP_CIPHER_CTX_nid(const EVP_CIPHER_CTX *ctx);
@@ -189,7 +191,7 @@ The B<EVP_CIPHER> type is a structure for cipher method implementation.
 EVP_CIPHER_fetch() fetches the cipher implementation for the given
 B<algorithm> from any provider offering it, within the criteria given
 by the B<properties>.
-See L<provider(7)/Fetching algorithms> for further information.
+See L<crypto(7)/ALGORITHM FETCHING> for further information.
 
 The returned value must eventually be freed with EVP_CIPHER_free().
 
@@ -407,6 +409,10 @@ instead.
 EVP_CIPHER_names_do_all() traverses all names for the I<cipher>, and
 calls I<fn> with each name and I<data>.  This is only useful with
 fetched B<EVP_CIPHER>s.
+
+EVP_CIPHER_description() returns a description of the cipher, meant for
+display and human consumption.  The description is at the discretion of the
+cipher implementation.
 
 EVP_CIPHER_provider() returns an B<OSSL_PROVIDER> pointer to the provider
 that implements the given B<EVP_CIPHER>.

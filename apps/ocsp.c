@@ -474,7 +474,8 @@ int ocsp_main(int argc, char **argv)
         case OPT_RSIGOPT:
             if (rsign_sigopts == NULL)
                 rsign_sigopts = sk_OPENSSL_STRING_new_null();
-            if (rsign_sigopts == NULL || !sk_OPENSSL_STRING_push(rsign_sigopts, opt_arg()))
+            if (rsign_sigopts == NULL
+                || !sk_OPENSSL_STRING_push(rsign_sigopts, opt_arg()))
                 goto end;
             break;
         case OPT_HEADER:
@@ -681,8 +682,8 @@ redo_accept:
         if (key == NULL)
             goto end;
 
-        if (!OCSP_request_sign
-            (req, signer, key, NULL, sign_other, sign_flags)) {
+        if (!OCSP_request_sign(req, signer, key, NULL,
+                               sign_other, sign_flags)) {
             BIO_printf(bio_err, "Error signing OCSP request\n");
             goto end;
         }
@@ -701,8 +702,8 @@ redo_accept:
 
     if (rdb != NULL) {
         make_ocsp_response(bio_err, &resp, req, rdb, rca_cert, rsigner, rkey,
-                           rsign_md, rsign_sigopts, rother, rflags, nmin, ndays, badsig,
-                           resp_certid_md);
+                           rsign_md, rsign_sigopts, rother, rflags, nmin, ndays,
+                           badsig, resp_certid_md);
         if (cbio != NULL)
             send_ocsp_response(cbio, resp);
     } else if (host != NULL) {
@@ -1207,7 +1208,6 @@ OCSP_RESPONSE *process_responder(OCSP_REQUEST *req,
             BIO_printf(bio_err, "Error creating SSL context.\n");
             goto end;
         }
-        SSL_CTX_set_mode(ctx, SSL_MODE_AUTO_RETRY);
     }
 
     resp = (OCSP_RESPONSE *)

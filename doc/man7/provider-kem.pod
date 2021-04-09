@@ -56,7 +56,7 @@ provider_query_operation() function
 (see L<provider-base(7)/Provider Functions>).
 
 All these "functions" have a corresponding function type definition
-named B<OSSL_{name}_fn>, and a helper function to retrieve the
+named B<OSSL_FUNC_{name}_fn>, and a helper function to retrieve the
 function pointer from an B<OSSL_DISPATCH> element named
 B<OSSL_FUNC_{name}>.
 For example, the "function" OSSL_FUNC_kem_newctx() has these:

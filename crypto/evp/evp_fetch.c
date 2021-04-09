@@ -50,8 +50,8 @@ struct evp_method_data_st {
 
     unsigned int flag_construct_error_occurred : 1;
 
-    void *(*method_from_dispatch)(int name_id, const OSSL_DISPATCH *,
-                                  OSSL_PROVIDER *);
+    void *(*method_from_algorithm)(int name_id, const OSSL_ALGORITHM *,
+                                   OSSL_PROVIDER *);
     int (*refcnt_up_method)(void *method);
     void (*destruct_method)(void *method);
 };
@@ -194,8 +194,7 @@ static void *construct_evp_method(const OSSL_ALGORITHM *algodef,
     if (name_id == 0)
         return NULL;
 
-    method = methdata->method_from_dispatch(name_id, algodef->implementation,
-                                            prov);
+    method = methdata->method_from_algorithm(name_id, algodef, prov);
 
     /*
      * Flag to indicate that there was actual construction errors.  This
@@ -220,7 +219,7 @@ inner_evp_generic_fetch(OSSL_LIB_CTX *libctx, int operation_id,
                         int name_id, const char *name,
                         const char *properties,
                         void *(*new_method)(int name_id,
-                                            const OSSL_DISPATCH *fns,
+                                            const OSSL_ALGORITHM *algodef,
                                             OSSL_PROVIDER *prov),
                         int (*up_ref_method)(void *),
                         void (*free_method)(void *))
@@ -296,7 +295,7 @@ inner_evp_generic_fetch(OSSL_LIB_CTX *libctx, int operation_id,
         mcmdata.name_id = name_id;
         mcmdata.names = name;
         mcmdata.propquery = properties;
-        mcmdata.method_from_dispatch = new_method;
+        mcmdata.method_from_algorithm = new_method;
         mcmdata.refcnt_up_method = up_ref_method;
         mcmdata.destruct_method = free_method;
         mcmdata.flag_construct_error_occurred = 0;
@@ -341,7 +340,7 @@ inner_evp_generic_fetch(OSSL_LIB_CTX *libctx, int operation_id,
 void *evp_generic_fetch(OSSL_LIB_CTX *libctx, int operation_id,
                         const char *name, const char *properties,
                         void *(*new_method)(int name_id,
-                                            const OSSL_DISPATCH *fns,
+                                            const OSSL_ALGORITHM *algodef,
                                             OSSL_PROVIDER *prov),
                         int (*up_ref_method)(void *),
                         void (*free_method)(void *))
@@ -361,7 +360,7 @@ void *evp_generic_fetch(OSSL_LIB_CTX *libctx, int operation_id,
 void *evp_generic_fetch_by_number(OSSL_LIB_CTX *libctx, int operation_id,
                                   int name_id, const char *properties,
                                   void *(*new_method)(int name_id,
-                                                      const OSSL_DISPATCH *fns,
+                                                      const OSSL_ALGORITHM *algodef,
                                                       OSSL_PROVIDER *prov),
                                   int (*up_ref_method)(void *),
                                   void (*free_method)(void *))
@@ -372,12 +371,13 @@ void *evp_generic_fetch_by_number(OSSL_LIB_CTX *libctx, int operation_id,
                                    free_method);
 }
 
-void evp_method_store_flush(OSSL_LIB_CTX *libctx)
+int evp_method_store_flush(OSSL_LIB_CTX *libctx)
 {
     OSSL_METHOD_STORE *store = get_evp_method_store(libctx);
 
     if (store != NULL)
-        ossl_method_store_flush_cache(store, 1);
+        return ossl_method_store_flush_cache(store, 1);
+    return 1;
 }
 
 static int evp_set_parsed_default_properties(OSSL_LIB_CTX *libctx,
@@ -391,7 +391,7 @@ static int evp_set_parsed_default_properties(OSSL_LIB_CTX *libctx,
         ossl_property_free(*plp);
         *plp = def_prop;
         if (store != NULL)
-            ossl_method_store_flush_cache(store, 0);
+            return ossl_method_store_flush_cache(store, 0);
         return 1;
     }
     ERR_raise(ERR_LIB_EVP, ERR_R_INTERNAL_ERROR);
@@ -461,7 +461,7 @@ int EVP_default_properties_enable_fips(OSSL_LIB_CTX *libctx, int enable)
 struct do_all_data_st {
     void (*user_fn)(void *method, void *arg);
     void *user_arg;
-    void *(*new_method)(const int name_id, const OSSL_DISPATCH *fns,
+    void *(*new_method)(const int name_id, const OSSL_ALGORITHM *algodef,
                         OSSL_PROVIDER *prov);
     void (*free_method)(void *);
 };
@@ -477,7 +477,7 @@ static void do_one(OSSL_PROVIDER *provider, const OSSL_ALGORITHM *algo,
     void *method = NULL;
 
     if (name_id != 0)
-        method = data->new_method(name_id, algo->implementation, provider);
+        method = data->new_method(name_id, algo, provider);
 
     if (method != NULL) {
         data->user_fn(method, data->user_arg);
@@ -489,7 +489,7 @@ void evp_generic_do_all(OSSL_LIB_CTX *libctx, int operation_id,
                         void (*user_fn)(void *method, void *arg),
                         void *user_arg,
                         void *(*new_method)(int name_id,
-                                            const OSSL_DISPATCH *fns,
+                                            const OSSL_ALGORITHM *algodef,
                                             OSSL_PROVIDER *prov),
                         void (*free_method)(void *))
 {

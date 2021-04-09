@@ -274,10 +274,11 @@ static EVP_ASYM_CIPHER *evp_asym_cipher_new(OSSL_PROVIDER *prov)
     return cipher;
 }
 
-static void *evp_asym_cipher_from_dispatch(int name_id,
-                                           const OSSL_DISPATCH *fns,
-                                           OSSL_PROVIDER *prov)
+static void *evp_asym_cipher_from_algorithm(int name_id,
+                                            const OSSL_ALGORITHM *algodef,
+                                            OSSL_PROVIDER *prov)
 {
+    const OSSL_DISPATCH *fns = algodef->implementation;
     EVP_ASYM_CIPHER *cipher = NULL;
     int ctxfncnt = 0, encfncnt = 0, decfncnt = 0;
     int gparamfncnt = 0, sparamfncnt = 0;
@@ -288,6 +289,7 @@ static void *evp_asym_cipher_from_dispatch(int name_id,
     }
 
     cipher->name_id = name_id;
+    cipher->description = algodef->algorithm_description;
 
     for (; fns->function_id != 0; fns++) {
         switch (fns->function_id) {
@@ -418,7 +420,7 @@ EVP_ASYM_CIPHER *EVP_ASYM_CIPHER_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
                                        const char *properties)
 {
     return evp_generic_fetch(ctx, OSSL_OP_ASYM_CIPHER, algorithm, properties,
-                             evp_asym_cipher_from_dispatch,
+                             evp_asym_cipher_from_algorithm,
                              (int (*)(void *))EVP_ASYM_CIPHER_up_ref,
                              (void (*)(void *))EVP_ASYM_CIPHER_free);
 }
@@ -433,6 +435,11 @@ int EVP_ASYM_CIPHER_number(const EVP_ASYM_CIPHER *cipher)
     return cipher->name_id;
 }
 
+const char *EVP_ASYM_CIPHER_description(const EVP_ASYM_CIPHER *cipher)
+{
+    return cipher->description;
+}
+
 void EVP_ASYM_CIPHER_do_all_provided(OSSL_LIB_CTX *libctx,
                                      void (*fn)(EVP_ASYM_CIPHER *cipher,
                                                 void *arg),
@@ -440,7 +447,7 @@ void EVP_ASYM_CIPHER_do_all_provided(OSSL_LIB_CTX *libctx,
 {
     evp_generic_do_all(libctx, OSSL_OP_ASYM_CIPHER,
                        (void (*)(void *, void *))fn, arg,
-                       evp_asym_cipher_from_dispatch,
+                       evp_asym_cipher_from_algorithm,
                        (void (*)(void *))EVP_ASYM_CIPHER_free);
 }
 

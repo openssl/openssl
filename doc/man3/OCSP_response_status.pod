@@ -54,7 +54,7 @@ OCSP_RESPID_set_by_key_ex() sets the key of the OCSP_RESPID to be the same as th
 key in the supplied X509 certificate I<cert> for the OCSP responder. The key is
 stored as a SHA1 hash. To calculate the hash the SHA1 algorithm is fetched using
 the library ctx I<libctx> and the property query string I<propq> (see
-L<provider(7)/Fetching algorithms> for further information).
+L<crypto(7)/ALGORITHM FETCHING> for further information).
 
 OCSP_RESPID_set_by_key() does the same as OCSP_RESPID_set_by_key_ex() except
 that the default library context is used with an empty property query string.
@@ -66,7 +66,7 @@ setting.
 OCSP_RESPID_match_ex() tests whether the OCSP_RESPID given in I<respid> matches
 with the X509 certificate I<cert> based on the SHA1 hash. To calculate the hash
 the SHA1 algorithm is fetched using the library ctx I<libctx> and the property
-query string I<propq> (see L<provider(7)/Fetching algorithms> for further
+query string I<propq> (see L<crypto(7)/ALGORITHM FETCHING> for further
 information).
 
 OCSP_RESPID_match() does the same as OCSP_RESPID_match_ex() except that the
@@ -123,7 +123,7 @@ The OCSP_basic_sign_ctx() function was added in OpenSSL 1.1.1.
 
 =head1 COPYRIGHT
 
-Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2015-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

@@ -193,6 +193,7 @@ const EVP_PKEY_METHOD *ossl_rsa_pss_pkey_method(void);
 struct evp_mac_st {
     OSSL_PROVIDER *prov;
     int name_id;
+    const char *description;
 
     CRYPTO_REF_COUNT refcnt;
     CRYPTO_RWLOCK *lock;
@@ -214,6 +215,7 @@ struct evp_mac_st {
 struct evp_kdf_st {
     OSSL_PROVIDER *prov;
     int name_id;
+    const char *description;
     CRYPTO_REF_COUNT refcnt;
     CRYPTO_RWLOCK *lock;
 
@@ -251,6 +253,7 @@ struct evp_md_st {
     /* New structure members */
     /* Above comment to be removed when legacy has gone */
     int name_id;
+    const char *description;
     OSSL_PROVIDER *prov;
     CRYPTO_REF_COUNT refcnt;
     CRYPTO_RWLOCK *lock;
@@ -303,6 +306,7 @@ struct evp_cipher_st {
     /* New structure members */
     /* Above comment to be removed when legacy has gone */
     int name_id;
+    const char *description;
     OSSL_PROVIDER *prov;
     CRYPTO_REF_COUNT refcnt;
     CRYPTO_RWLOCK *lock;
@@ -864,7 +868,7 @@ int evp_pkey_ctx_get1_id_len_prov(EVP_PKEY_CTX *ctx, size_t *id_len);
 int evp_pkey_ctx_use_cached_data(EVP_PKEY_CTX *ctx);
 # endif /* !defined(FIPS_MODULE) */
 
-void evp_method_store_flush(OSSL_LIB_CTX *libctx);
+int evp_method_store_flush(OSSL_LIB_CTX *libctx);
 int evp_set_default_properties_int(OSSL_LIB_CTX *libctx, const char *propq,
                                    int loadconfig);
 

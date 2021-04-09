@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -18,6 +18,8 @@
 #include "ec_local.h"
 #include <openssl/evp.h>
 #include <openssl/sha.h>
+
+#include "internal/numbers.h"
 
 #if defined(X25519_ASM) && (defined(__x86_64) || defined(__x86_64__) || \
                             defined(_M_AMD64) || defined(_M_X64))
@@ -260,7 +262,7 @@ static void x25519_scalar_mulx(uint8_t out[32], const uint8_t scalar[32],
 #endif
 
 #if defined(X25519_ASM) \
-    || ( (defined(__SIZEOF_INT128__) && __SIZEOF_INT128__ == 16) \
+    || ( defined(INT128_MAX) \
          && !defined(__sparc__) \
          && (!defined(__SIZEOF_LONG__) || (__SIZEOF_LONG__ == 8)) \
          && !(defined(__ANDROID__) && !defined(__clang__)) )
@@ -393,7 +395,7 @@ void x25519_fe51_mul121666(fe51 h, fe51 f);
 #  define fe51_mul121666 x25519_fe51_mul121666
 # else
 
-typedef __uint128_t u128;
+typedef uint128_t u128;
 
 static void fe51_mul(fe51 h, const fe51 f, const fe51 g)
 {

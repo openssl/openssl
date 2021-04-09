@@ -273,12 +273,17 @@ sub start_mock_server {
     my $cmd = "LD_LIBRARY_PATH=$dir DYLD_LIBRARY_PATH=$dir " .
         bldtop_dir($app) . " -config server.cnf $args";
     my $pid = mock_server_pid();
-    return $pid if $pid; # already running
+    if ($pid) {
+        print "Mock server already running with pid=$pid\n";
+        return $pid;
+    }
+    print "Launching mock server: $cmd\n";
     return system("$cmd &") == 0 # start in background, check for success
         ? (sleep 1, mock_server_pid()) : 0;
 }
 
 sub stop_mock_server {
     my $pid = $_[0];
+    print "Killing mock server with pid=$pid\n";
     system("kill $pid") if $pid;
 }

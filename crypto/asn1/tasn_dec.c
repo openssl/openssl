@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -66,7 +66,7 @@ static const unsigned long tag2bit[32] = {
     /* tags  4- 7 */
     B_ASN1_OCTET_STRING, 0, 0, B_ASN1_UNKNOWN,
     /* tags  8-11 */
-    B_ASN1_UNKNOWN, B_ASN1_UNKNOWN, B_ASN1_UNKNOWN, B_ASN1_UNKNOWN,
+    B_ASN1_UNKNOWN, B_ASN1_UNKNOWN, 0, B_ASN1_UNKNOWN,
     /* tags 12-15 */
     B_ASN1_UTF8STRING, B_ASN1_UNKNOWN, B_ASN1_UNKNOWN, B_ASN1_UNKNOWN,
     /* tags 16-19 */

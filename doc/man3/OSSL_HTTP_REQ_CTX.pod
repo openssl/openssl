@@ -21,14 +21,13 @@ OSSL_HTTP_REQ_CTX_set_max_response_length
  typedef struct ossl_http_req_ctx_st OSSL_HTTP_REQ_CTX;
 
  OSSL_HTTP_REQ_CTX *OSSL_HTTP_REQ_CTX_new(BIO *wbio, BIO *rbio,
-                                          int method_POST, int maxline,
-                                          unsigned long max_resp_len,
+                                          int maxline, unsigned long max_resp_len,
                                           int timeout,
                                           const char *expected_content_type,
                                           int expect_asn1);
  void OSSL_HTTP_REQ_CTX_free(OSSL_HTTP_REQ_CTX *rctx);
 
- int OSSL_HTTP_REQ_CTX_set_request_line(OSSL_HTTP_REQ_CTX *rctx,
+ int OSSL_HTTP_REQ_CTX_set_request_line(OSSL_HTTP_REQ_CTX *rctx, int method_POST,
                                         const char *server, const char *port,
                                         const char *path);
  int OSSL_HTTP_REQ_CTX_add1_header(OSSL_HTTP_REQ_CTX *rctx,
@@ -59,8 +58,6 @@ the B<BIO> to read the response from (I<rbio>, which may be equal to I<wbio>),
 the maximum expected response header line length (I<maxline>, where a value <= 0
 indicates that the B<HTTP_DEFAULT_MAX_LINE_LENGTH> of 4KiB should be used;
 this length is also used as the number of content bytes read at a time),
-the request method (I<method_POST>, which may be 1 to indicate that the C<POST>
-method is to be used, or 0 to indicate that the C<GET> method is to be used),
 the maximum allowed response content length (I<max_resp_len>, where 0 means
 that the B<HTTP_DEFAULT_MAX_RESP_LEN> is used, which currently is 100 KiB),
 a response timeout measure in seconds (I<timeout>,
@@ -78,11 +75,11 @@ The I<wbio> and I<rbio> are not free'd and it is up to the application
 to do so.
 
 OSSL_HTTP_REQ_CTX_set_request_line() adds the HTTP request line to the context.
-The request method itself becomes C<GET> or C<POST> depending on the value
-of I<method_POST> in the OSSL_HTTP_REQ_CTX_new() call.  I<server> and I<port>
-may be set to indicate a proxy server and port that the request should go
-through, otherwise they should be left NULL.  I<path> is the HTTP request path;
-if left NULL, C</> is used.
+The HTTP method is determined by I<method_POST>,
+which should be 1 to indicate C<POST> or 0 to indicate C<GET>.
+I<server> and I<port> may be set to indicate a proxy server and port
+that the request should go through, otherwise they should be left NULL.
+I<path> is the HTTP request path; if left NULL, C</> is used.
 
 OSSL_HTTP_REQ_CTX_add1_header() adds header I<name> with value I<value> to the
 context I<rctx>. It can be called more than once to add multiple headers.
@@ -90,12 +87,14 @@ For example, to add a C<Host> header for C<example.com> you would call:
 
  OSSL_HTTP_REQ_CTX_add1_header(ctx, "Host", "example.com");
 
-OSSL_HTTP_REQ_CTX_set1_req() finalizes the HTTP request context by adding
-the DER encoding of I<req>, using the ASN.1 template I<it> to do the encoding.
-The HTTP header C<Content-Length> is automatically filled out, and if
-I<content_type> isn't NULL, the HTTP header C<Content-Type> is also added with
-its content as value.  All of this ends up in the internal memory B<BIO>.
-This requires that I<method_POST> was 1 in the OSSL_HTTP_REQ_CTX_new() call.
+OSSL_HTTP_REQ_CTX_set1_req() is to be used if and only if the I<method_POST>
+parameter in the OSSL_HTTP_REQ_CTX_set_request_line() call was 1.
+It finalizes the HTTP request context by adding the DER encoding of I<req>,
+using the ASN.1 template I<it> to do the encoding.
+The HTTP header C<Content-Length> is filled out with the length of the request.
+If I<content_type> isn't NULL,
+the HTTP header C<Content-Type> is also added with its content as value.
+All of this ends up in the internal memory B<BIO>.
 
 OSSL_HTTP_REQ_CTX_nbio() attempts to send the request prepared I<rctx>
 and gathering the response via HTTP, using the I<rbio> and I<wbio>
@@ -150,8 +149,8 @@ This is optional and may be done multiple times with different names.
 =item 3.
 
 Add C<POST> data with OSSL_HTTP_REQ_CTX_set1_req().  This may only be done if
-I<method_POST> was 1 in the OSSL_HTTP_REQ_CTX_new() call, and must be done
-exactly once in that case.
+I<method_POST> was 1 in the OSSL_HTTP_REQ_CTX_set_request_line() call,
+and must be done exactly once in that case.
 
 =back
 
