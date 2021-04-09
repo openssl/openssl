@@ -2545,7 +2545,7 @@ static int test_evp_iv(int idx)
             || !TEST_mem_eq(ref_iv, ref_len, iv, ivlen))
         goto err;
 
-    /* For CBC cipher test that the updated iv is reset after reinit */
+    /* CBC, OFB, and CFB modes: the updated iv must be reset after reinit */
     if (!TEST_true(EVP_EncryptInit_ex(ctx, NULL, NULL, NULL, NULL))
         || !TEST_true(EVP_CIPHER_CTX_get_updated_iv(ctx, iv, sizeof(iv))))
         goto err;
