@@ -664,11 +664,13 @@ static int test_param_modified(void)
 static int test_param_copy_null(void)
 {
     int ret, val;
-    int a = 1, b = 2;
+    int a = 1, b = 2, i= 0;
     OSSL_PARAM *cp1 = NULL, *cp2 = NULL, *p;
-    OSSL_PARAM param[3] = { OSSL_PARAM_int("a", &a),
-                            OSSL_PARAM_int("b", &b),
-                            OSSL_PARAM_END };
+    OSSL_PARAM param[3];
+
+    param[i++] = OSSL_PARAM_construct_int("a", &a);
+    param[i++] = OSSL_PARAM_construct_int("b", &b);
+    param[i] = OSSL_PARAM_construct_end();
 
     ret = TEST_ptr_null(OSSL_PARAM_dup(NULL))
           && TEST_ptr(cp1 = OSSL_PARAM_merge(NULL, param))
