@@ -628,12 +628,12 @@ void app_bail_out(char *fmt, ...)
     exit(1);
 }
 
-void* app_malloc(int sz, const char *what)
+void *app_malloc(size_t sz, const char *what)
 {
     void *vp = OPENSSL_malloc(sz);
 
     if (vp == NULL)
-        app_bail_out("%s: Could not allocate %d bytes for %s\n",
+        app_bail_out("%s: Could not allocate %zu bytes for %s\n",
                      opt_getprog(), sz, what);
     return vp;
 }

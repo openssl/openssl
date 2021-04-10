@@ -11,7 +11,7 @@
 
 /* shim that avoids sucking in too much from apps/apps.c */
 
-void* app_malloc(int sz, const char *what)
+void *app_malloc(size_t sz, const char *what)
 {
     void *vp = OPENSSL_malloc(sz);
 
