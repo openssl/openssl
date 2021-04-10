@@ -299,27 +299,28 @@ static int x509_name_ex_print(BIO *out, const ASN1_VALUE **pval,
  * memcmp() of the canonical encoding. By omitting the leading SEQUENCE name
  * constraints of type dirName can also be checked with a simple memcmp().
  */
-
 static int x509_name_canon(X509_NAME *a)
 {
     unsigned char *p;
-    STACK_OF(STACK_OF_X509_NAME_ENTRY) *intname;
+    STACK_OF(STACK_OF_X509_NAME_ENTRY) *intname = NULL;
     STACK_OF(X509_NAME_ENTRY) *entries = NULL;
     X509_NAME_ENTRY *entry, *tmpentry = NULL;
     int i, set = -1, ret = 0, len;
 
     OPENSSL_free(a->canon_enc);
     a->canon_enc = NULL;
-    /* Special case: empty X509_NAME => null encoding */
+
+    /* Special case: empty X509_NAME (NULL-DN) */
     if (sk_X509_NAME_ENTRY_num(a->entries) == 0) {
         a->canon_enclen = 0;
+        if ((a->canon_enc = (unsigned char *)OPENSSL_strdup("")) == NULL)
+            goto oom;
         return 1;
     }
+
     intname = sk_STACK_OF_X509_NAME_ENTRY_new_null();
-    if (intname == NULL) {
-        ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
-        goto err;
-    }
+    if (intname == NULL)
+        goto oom;
     for (i = 0; i < sk_X509_NAME_ENTRY_num(a->entries); i++) {
         entry = sk_X509_NAME_ENTRY_value(a->entries, i);
         if (entry->set != set) {
@@ -328,27 +329,20 @@ static int x509_name_canon(X509_NAME *a)
                 goto err;
             if (!sk_STACK_OF_X509_NAME_ENTRY_push(intname, entries)) {
                 sk_X509_NAME_ENTRY_free(entries);
-                ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
-                goto err;
+                goto oom;
             }
             set = entry->set;
         }
         tmpentry = X509_NAME_ENTRY_new();
-        if (tmpentry == NULL) {
-            ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
-            goto err;
-        }
+        if (tmpentry == NULL)
+            goto oom;
         tmpentry->object = OBJ_dup(entry->object);
-        if (tmpentry->object == NULL) {
-            ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
-            goto err;
-        }
+        if (tmpentry->object == NULL)
+            goto oom;
         if (!asn1_string_canon(tmpentry->value, entry->value))
             goto err;
-        if (!sk_X509_NAME_ENTRY_push(entries, tmpentry)) {
-            ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
-            goto err;
-        }
+        if (!sk_X509_NAME_ENTRY_push(entries, tmpentry))
+            goto oom;
         tmpentry = NULL;
     }
 
@@ -359,10 +353,8 @@ static int x509_name_canon(X509_NAME *a)
     a->canon_enclen = len;
 
     p = OPENSSL_malloc(a->canon_enclen);
-    if (p == NULL) {
-        ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
-        goto err;
-    }
+    if (p == NULL)
+        goto oom;
 
     a->canon_enc = p;
 
@@ -370,6 +362,9 @@ static int x509_name_canon(X509_NAME *a)
 
     ret = 1;
 
+ oom:
+    if (ret == 0)
+        ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
  err:
     X509_NAME_ENTRY_free(tmpentry);
     sk_STACK_OF_X509_NAME_ENTRY_pop_free(intname,
