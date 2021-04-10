@@ -110,6 +110,7 @@ static const ERR_STRING_DATA PROV_str_reasons[] = {
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_KEY_SETUP_FAILED), "key setup failed"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_KEY_SIZE_TOO_SMALL),
     "key size too small"},
+    {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_LENGTH_TOO_LARGE), "length too large"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_MISSING_CEK_ALG), "missing cek alg"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_MISSING_CIPHER), "missing cipher"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_MISSING_CONFIG_DATA),

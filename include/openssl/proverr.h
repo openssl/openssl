@@ -79,6 +79,7 @@
 # define PROV_R_IN_ERROR_STATE                            192
 # define PROV_R_KEY_SETUP_FAILED                          101
 # define PROV_R_KEY_SIZE_TOO_SMALL                        171
+# define PROV_R_LENGTH_TOO_LARGE                          202
 # define PROV_R_MISSING_CEK_ALG                           144
 # define PROV_R_MISSING_CIPHER                            155
 # define PROV_R_MISSING_CONFIG_DATA                       213
