@@ -56,7 +56,10 @@ my @files = qw(
                 evppkey_rsa_common.txt
                 evprand.txt
               );
-push @files, qw(evppkey_ffdhe.txt) unless $no_dh;
+push @files, qw(
+                evppkey_ffdhe.txt
+                evppkey_dh.txt
+               ) unless $no_dh;
 push @files, qw(evppkey_dsa.txt) unless $no_dsa;
 push @files, qw(evppkey_ecx.txt) unless $no_ec;
 push @files, qw(
@@ -65,7 +68,7 @@ push @files, qw(
                 evppkey_ecdsa.txt
                 evppkey_kas.txt
                 evppkey_mismatch.txt
-              ) unless $no_ec || $no_gost;
+               ) unless $no_ec || $no_gost;
 
 # A list of tests that only run with the default provider
 # (i.e. The algorithms are not present in the fips provider)
