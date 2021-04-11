@@ -1627,12 +1627,16 @@ static int pderive_test_parse(EVP_TEST *t,
                               const char *keyword, const char *value)
 {
     PKEY_DATA *kdata = t->data;
+    int validate = 0;
 
-    if (strcmp(keyword, "PeerKey") == 0) {
+    if (strcmp(keyword, "PeerKeyValidate") == 0)
+        validate = 1;
+
+    if (validate || strcmp(keyword, "PeerKey") == 0) {
         EVP_PKEY *peer;
         if (find_key(&peer, value, public_keys) == 0)
             return -1;
-        if (EVP_PKEY_derive_set_peer_ex(kdata->ctx, peer, 0) <= 0) {
+        if (EVP_PKEY_derive_set_peer_ex(kdata->ctx, peer, validate) <= 0) {
             t->err = "DERIVE_SET_PEER_ERROR";
             return 1;
         }
