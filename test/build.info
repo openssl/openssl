@@ -56,7 +56,6 @@ IF[{- !$disabled{tests} -}]
           sysdefaulttest errtest ssl_ctx_test gosttest \
           context_internal_test aesgcmtest params_test evp_pkey_dparams_test \
           keymgmt_internal_test hexstr_test provider_status_test defltfips_test \
-          bio_readbuffer_test \
           ca_internals_test bio_readbuffer_test apps_internals_test
 
   IF[{- !$disabled{'deprecated-3.0'} -}]
