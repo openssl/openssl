@@ -231,7 +231,7 @@ This option cannot be used in conjunction with B<-noservername>.
 
 Suppresses sending of the SNI (Server Name Indication) extension in the
 ClientHello message. Cannot be used in conjunction with the B<-servername> or
-<-dane_tlsa_domain> options.
+B<-dane_tlsa_domain> options.
 
 =item B<-cert> I<filename>
 
