@@ -542,88 +542,103 @@ int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
     if (!ossl_prov_seeding_from_dispatch(in))
         return 0;
     for (; in->function_id != 0; in++) {
+        /*
+        * We do not support the scenario of an application linked against
+        * multiple versions of libcrypto (e.g. one static and one dynamic), but
+        * sharing a single fips.so. We do a simple sanity check here.
+        */
+#define set_func(c, f) if (c != NULL && c != f) goto err; else c = f;
         switch (in->function_id) {
         case OSSL_FUNC_CORE_GET_LIBCTX:
-            c_get_libctx = OSSL_FUNC_core_get_libctx(in);
+            set_func(c_get_libctx, OSSL_FUNC_core_get_libctx(in));
             break;
         case OSSL_FUNC_CORE_GETTABLE_PARAMS:
-            c_gettable_params = OSSL_FUNC_core_gettable_params(in);
+            set_func(c_gettable_params, OSSL_FUNC_core_gettable_params(in));
             break;
         case OSSL_FUNC_CORE_GET_PARAMS:
-            c_get_params = OSSL_FUNC_core_get_params(in);
+            set_func(c_get_params, OSSL_FUNC_core_get_params(in));
             break;
         case OSSL_FUNC_CORE_THREAD_START:
-            c_thread_start = OSSL_FUNC_core_thread_start(in);
+            set_func(c_thread_start, OSSL_FUNC_core_thread_start(in));
             break;
         case OSSL_FUNC_CORE_NEW_ERROR:
-            c_new_error = OSSL_FUNC_core_new_error(in);
+            set_func(c_new_error, OSSL_FUNC_core_new_error(in));
             break;
         case OSSL_FUNC_CORE_SET_ERROR_DEBUG:
-            c_set_error_debug = OSSL_FUNC_core_set_error_debug(in);
+            set_func(c_set_error_debug, OSSL_FUNC_core_set_error_debug(in));
             break;
         case OSSL_FUNC_CORE_VSET_ERROR:
-            c_vset_error = OSSL_FUNC_core_vset_error(in);
+            set_func(c_vset_error, OSSL_FUNC_core_vset_error(in));
             break;
         case OSSL_FUNC_CORE_SET_ERROR_MARK:
-            c_set_error_mark = OSSL_FUNC_core_set_error_mark(in);
+            set_func(c_set_error_mark, OSSL_FUNC_core_set_error_mark(in));
             break;
         case OSSL_FUNC_CORE_CLEAR_LAST_ERROR_MARK:
-            c_clear_last_error_mark = OSSL_FUNC_core_clear_last_error_mark(in);
+            set_func(c_clear_last_error_mark,
+                     OSSL_FUNC_core_clear_last_error_mark(in));
             break;
         case OSSL_FUNC_CORE_POP_ERROR_TO_MARK:
-            c_pop_error_to_mark = OSSL_FUNC_core_pop_error_to_mark(in);
+            set_func(c_pop_error_to_mark, OSSL_FUNC_core_pop_error_to_mark(in));
             break;
         case OSSL_FUNC_CRYPTO_MALLOC:
-            c_CRYPTO_malloc = OSSL_FUNC_CRYPTO_malloc(in);
+            set_func(c_CRYPTO_malloc, OSSL_FUNC_CRYPTO_malloc(in));
             break;
         case OSSL_FUNC_CRYPTO_ZALLOC:
-            c_CRYPTO_zalloc = OSSL_FUNC_CRYPTO_zalloc(in);
+            set_func(c_CRYPTO_zalloc, OSSL_FUNC_CRYPTO_zalloc(in));
             break;
         case OSSL_FUNC_CRYPTO_FREE:
-            c_CRYPTO_free = OSSL_FUNC_CRYPTO_free(in);
+            set_func(c_CRYPTO_free, OSSL_FUNC_CRYPTO_free(in));
             break;
         case OSSL_FUNC_CRYPTO_CLEAR_FREE:
-            c_CRYPTO_clear_free = OSSL_FUNC_CRYPTO_clear_free(in);
+            set_func(c_CRYPTO_clear_free, OSSL_FUNC_CRYPTO_clear_free(in));
             break;
         case OSSL_FUNC_CRYPTO_REALLOC:
-            c_CRYPTO_realloc = OSSL_FUNC_CRYPTO_realloc(in);
+            set_func(c_CRYPTO_realloc, OSSL_FUNC_CRYPTO_realloc(in));
             break;
         case OSSL_FUNC_CRYPTO_CLEAR_REALLOC:
-            c_CRYPTO_clear_realloc = OSSL_FUNC_CRYPTO_clear_realloc(in);
+            set_func(c_CRYPTO_clear_realloc,
+                     OSSL_FUNC_CRYPTO_clear_realloc(in));
             break;
         case OSSL_FUNC_CRYPTO_SECURE_MALLOC:
-            c_CRYPTO_secure_malloc = OSSL_FUNC_CRYPTO_secure_malloc(in);
+            set_func(c_CRYPTO_secure_malloc,
+                     OSSL_FUNC_CRYPTO_secure_malloc(in));
             break;
         case OSSL_FUNC_CRYPTO_SECURE_ZALLOC:
-            c_CRYPTO_secure_zalloc = OSSL_FUNC_CRYPTO_secure_zalloc(in);
+            set_func(c_CRYPTO_secure_zalloc,
+                     OSSL_FUNC_CRYPTO_secure_zalloc(in));
             break;
         case OSSL_FUNC_CRYPTO_SECURE_FREE:
-            c_CRYPTO_secure_free = OSSL_FUNC_CRYPTO_secure_free(in);
+            set_func(c_CRYPTO_secure_free,
+                     OSSL_FUNC_CRYPTO_secure_free(in));
             break;
         case OSSL_FUNC_CRYPTO_SECURE_CLEAR_FREE:
-            c_CRYPTO_secure_clear_free = OSSL_FUNC_CRYPTO_secure_clear_free(in);
+            set_func(c_CRYPTO_secure_clear_free,
+                     OSSL_FUNC_CRYPTO_secure_clear_free(in));
             break;
         case OSSL_FUNC_CRYPTO_SECURE_ALLOCATED:
-            c_CRYPTO_secure_allocated = OSSL_FUNC_CRYPTO_secure_allocated(in);
+            set_func(c_CRYPTO_secure_allocated,
+                     OSSL_FUNC_CRYPTO_secure_allocated(in));
             break;
         case OSSL_FUNC_BIO_NEW_FILE:
-            selftest_params.bio_new_file_cb = OSSL_FUNC_BIO_new_file(in);
+            set_func(selftest_params.bio_new_file_cb,
+                     OSSL_FUNC_BIO_new_file(in));
             break;
         case OSSL_FUNC_BIO_NEW_MEMBUF:
-            selftest_params.bio_new_buffer_cb
-                = OSSL_FUNC_BIO_new_membuf(in);
+            set_func(selftest_params.bio_new_buffer_cb,
+                     OSSL_FUNC_BIO_new_membuf(in));
             break;
         case OSSL_FUNC_BIO_READ_EX:
-            selftest_params.bio_read_ex_cb = OSSL_FUNC_BIO_read_ex(in);
+            set_func(selftest_params.bio_read_ex_cb,
+                     OSSL_FUNC_BIO_read_ex(in));
             break;
         case OSSL_FUNC_BIO_FREE:
-            selftest_params.bio_free_cb = OSSL_FUNC_BIO_free(in);
+            set_func(selftest_params.bio_free_cb, OSSL_FUNC_BIO_free(in));
             break;
         case OSSL_FUNC_BIO_VSNPRINTF:
-            c_BIO_vsnprintf = OSSL_FUNC_BIO_vsnprintf(in);
+            set_func(c_BIO_vsnprintf, OSSL_FUNC_BIO_vsnprintf(in));
             break;
         case OSSL_FUNC_SELF_TEST_CB:
-            c_stcbfn = OSSL_FUNC_self_test_cb(in);
+            set_func(c_stcbfn, OSSL_FUNC_self_test_cb(in));
             break;
         default:
             /* Just ignore anything we don't understand */

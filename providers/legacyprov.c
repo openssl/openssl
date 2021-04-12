@@ -32,10 +32,6 @@ OSSL_provider_init_fn ossl_legacy_provider_init;
 # define OSSL_provider_init ossl_legacy_provider_init
 #endif
 
-/* Functions provided by the core */
-static OSSL_FUNC_core_gettable_params_fn *c_gettable_params = NULL;
-static OSSL_FUNC_core_get_params_fn *c_get_params = NULL;
-
 /* Parameters we provide to the core */
 static const OSSL_PARAM legacy_param_types[] = {
     OSSL_PARAM_DEFN(OSSL_PROV_PARAM_NAME, OSSL_PARAM_UTF8_PTR, NULL, 0),
@@ -179,28 +175,12 @@ int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
                        const OSSL_DISPATCH **out,
                        void **provctx)
 {
-    OSSL_FUNC_core_get_libctx_fn *c_get_libctx = NULL;
     OSSL_LIB_CTX *libctx = NULL;
 
-    for (; in->function_id != 0; in++) {
-        switch (in->function_id) {
-        case OSSL_FUNC_CORE_GETTABLE_PARAMS:
-            c_gettable_params = OSSL_FUNC_core_gettable_params(in);
-            break;
-        case OSSL_FUNC_CORE_GET_PARAMS:
-            c_get_params = OSSL_FUNC_core_get_params(in);
-            break;
-        case OSSL_FUNC_CORE_GET_LIBCTX:
-            c_get_libctx = OSSL_FUNC_core_get_libctx(in);
-            break;
-        /* Just ignore anything we don't understand */
-        default:
-            break;
-        }
-    }
-
-    if (c_get_libctx == NULL)
-        return 0;
+    /*
+     * We do not need to use an up-calls proviced by libcrypto, so we ignore
+     * the "in" dispatch table.
+     */
 
     if ((*provctx = ossl_prov_ctx_new()) == NULL
         || (libctx = OSSL_LIB_CTX_new()) == NULL) {
