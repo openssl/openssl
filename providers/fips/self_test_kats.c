@@ -85,7 +85,7 @@ static int cipher_init(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
 static int self_test_cipher(const ST_KAT_CIPHER *t, OSSL_SELF_TEST *st,
                             OSSL_LIB_CTX *libctx)
 {
-    int ret = 0, encrypt = 1, len, ct_len = 0, pt_len = 0;
+    int ret = 0, encrypt = 1, len = 0, ct_len = 0, pt_len = 0;
     EVP_CIPHER_CTX *ctx = NULL;
     EVP_CIPHER *cipher = NULL;
     unsigned char ct_buf[256] = { 0 };
