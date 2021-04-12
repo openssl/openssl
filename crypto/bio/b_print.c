@@ -620,6 +620,7 @@ fmtfp(char **sbuffer,
                     /*
                      * Should not happen. If we're in F_FORMAT then exp < max?
                      */
+                    (void)doapr_outch(sbuffer, buffer, currlen, maxlen, '\0');
                     return 0;
                 }
             } else {
@@ -641,6 +642,7 @@ fmtfp(char **sbuffer,
      */
     if (ufvalue >= (double)(ULONG_MAX - 65535) + 65536.0) {
         /* Number too big */
+        (void)doapr_outch(sbuffer, buffer, currlen, maxlen, '\0');
         return 0;
     }
     intpart = (unsigned long)ufvalue;
@@ -704,8 +706,10 @@ fmtfp(char **sbuffer,
             tmpexp = (tmpexp / 10);
         } while (tmpexp > 0 && eplace < (int)sizeof(econvert));
         /* Exponent is huge!! Too big to print */
-        if (tmpexp > 0)
+        if (tmpexp > 0) {
+            (void)doapr_outch(sbuffer, buffer, currlen, maxlen, '\0');
             return 0;
+        }
         /* Add a leading 0 for single digit exponents */
         if (eplace == 1)
             econvert[eplace++] = '0';
