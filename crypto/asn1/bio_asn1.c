@@ -138,6 +138,11 @@ static int asn1_bio_free(BIO *b)
     if (ctx == NULL)
         return 0;
 
+    if (ctx->prefix_free != NULL)
+        ctx->prefix_free(b, &ctx->ex_buf, &ctx->ex_len, &ctx->ex_arg);
+    if (ctx->suffix_free != NULL)
+        ctx->suffix_free(b, &ctx->ex_buf, &ctx->ex_len, &ctx->ex_arg);
+
     OPENSSL_free(ctx->buf);
     OPENSSL_free(ctx);
     BIO_set_data(b, NULL);
