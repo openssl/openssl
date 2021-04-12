@@ -835,9 +835,12 @@ doapr_outch(char **sbuffer,
             *sbuffer = NULL;
         } else {
             char *tmpbuf;
+
             tmpbuf = OPENSSL_realloc(*buffer, *maxlen);
-            if (tmpbuf == NULL)
+            if (tmpbuf == NULL) {
+                ERR_raise(ERR_LIB_BIO, ERR_R_MALLOC_FAILURE);
                 return 0;
+            }
             *buffer = tmpbuf;
         }
     }
@@ -929,6 +932,5 @@ int BIO_vsnprintf(char *buf, size_t n, const char *format, va_list args)
          * been large enough.)
          */
         return -1;
-    else
-        return (retlen <= INT_MAX) ? (int)retlen : -1;
+    return (retlen <= INT_MAX) ? (int)retlen : -1;
 }
