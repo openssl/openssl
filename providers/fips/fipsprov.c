@@ -543,11 +543,11 @@ int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
         return 0;
     for (; in->function_id != 0; in++) {
         /*
-        * We do not support the scenario of an application linked against
-        * multiple versions of libcrypto (e.g. one static and one dynamic), but
-        * sharing a single fips.so. We do a simple sanity check here.
-        */
-#define set_func(c, f) if (c != NULL && c != f) goto err; else c = f;
+         * We do not support the scenario of an application linked against
+         * multiple versions of libcrypto (e.g. one static and one dynamic), but
+         * sharing a single fips.so. We do a simple sanity check here.
+         */
+#define set_func(c, f) if (c == NULL) c = f; else if (c != f) return 0;
         switch (in->function_id) {
         case OSSL_FUNC_CORE_GET_LIBCTX:
             set_func(c_get_libctx, OSSL_FUNC_core_get_libctx(in));

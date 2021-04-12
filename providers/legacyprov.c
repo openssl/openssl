@@ -178,7 +178,7 @@ int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
     OSSL_LIB_CTX *libctx = NULL;
 
     /*
-     * We do not need to use an up-calls proviced by libcrypto, so we ignore
+     * We do not need to use any up-calls provided by libcrypto, so we ignore
      * the "in" dispatch table.
      */
 
