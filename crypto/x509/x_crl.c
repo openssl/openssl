@@ -393,9 +393,9 @@ int X509_CRL_get0_by_cert(X509_CRL *crl, X509_REVOKED **ret, X509 *x)
 
 static int def_crl_verify(X509_CRL *crl, EVP_PKEY *r)
 {
-    return (ASN1_item_verify_ex(ASN1_ITEM_rptr(X509_CRL_INFO),
-                                &crl->sig_alg, &crl->signature, &crl->crl, NULL,
-                                r, crl->libctx, crl->propq));
+    return ASN1_item_verify_ex(ASN1_ITEM_rptr(X509_CRL_INFO),
+                               &crl->sig_alg, &crl->signature, &crl->crl, NULL,
+                               r, crl->libctx, crl->propq);
 }
 
 static int crl_revoked_issuer_match(X509_CRL *crl, const X509_NAME *nm,

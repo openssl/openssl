@@ -701,6 +701,8 @@ const char *EVP_MD_description(const EVP_MD *md)
 
 const char *EVP_MD_name(const EVP_MD *md)
 {
+    if (md == NULL)
+        return NULL;
     if (md->prov != NULL)
         return evp_first_name(md->prov, md->name_id);
 #ifndef FIPS_MODULE
