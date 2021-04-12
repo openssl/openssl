@@ -24,7 +24,7 @@ use platform;
 
 plan skip_all => "Test only supported in a fips build" if disabled("fips");
 
-plan tests => 24;
+plan tests => 26;
 
 my $infile = bldtop_file('providers', platform->dso('fips'));
 my $fipskey = $ENV{FIPSKEY} // '00';
@@ -190,6 +190,20 @@ ok(!run(app(['openssl', 'fipsinstall', '-out', 'fips_fail.cnf', '-module', $infi
             '-macopt', 'digest:SHA256', '-macopt', "hexkey:$fipskey",
             '-section_name', 'fips_sect', '-corrupt_desc', 'SHA3'])),
    "fipsinstall fails when the digest result is corrupted");
+
+# corrupt cipher encrypt test
+ok(!run(app(['openssl', 'fipsinstall', '-out', 'fips_fail.cnf', '-module', $infile,
+            '-provider_name', 'fips', '-mac_name', 'HMAC',
+            '-macopt', 'digest:SHA256', '-macopt', "hexkey:$fipskey",
+            '-section_name', 'fips_sect', '-corrupt_desc', 'AES_GCM_Encrypt'])),
+   "fipsinstall fails when the AES_GCM result is corrupted");
+
+# corrupt cipher decrypt test
+ok(!run(app(['openssl', 'fipsinstall', '-out', 'fips_fail.cnf', '-module', $infile,
+            '-provider_name', 'fips', '-mac_name', 'HMAC',
+            '-macopt', 'digest:SHA256', '-macopt', "hexkey:$fipskey",
+            '-section_name', 'fips_sect', '-corrupt_desc', 'AES_ECB_Decrypt'])),
+   "fipsinstall fails when the AES_ECB result is corrupted");
 
 # corrupt DRBG
 ok(!run(app(['openssl', 'fipsinstall', '-out', 'fips_fail.cnf', '-module', $infile,

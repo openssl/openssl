@@ -40,9 +40,14 @@ typedef struct st_kat_st {
     size_t expected_len;
 } ST_KAT;
 
+#define CIPHER_MODE_ENCRYPT 1
+#define CIPHER_MODE_DECRYPT 2
+#define CIPHER_MODE_ALL     (CIPHER_MODE_ENCRYPT | CIPHER_MODE_DECRYPT)
+
 typedef ST_KAT ST_KAT_DIGEST;
 typedef struct st_kat_cipher_st {
     ST_KAT base;
+    int mode;
     const unsigned char *key;
     size_t key_len;
     const unsigned char *iv;
@@ -215,6 +220,20 @@ static const unsigned char aes_256_gcm_tag[] = {
     0x14, 0xd9, 0xc5, 0x1e, 0x1d, 0xa4, 0x74, 0xab
 };
 
+/* AES-ECB test data */
+static const unsigned char aes_128_ecb_key[] = {
+    0x10, 0xa5, 0x88, 0x69, 0xd7, 0x4b, 0xe5, 0xa3,
+    0x74, 0xcf, 0x86, 0x7c, 0xfb, 0x47, 0x38, 0x59
+};
+static const unsigned char aes_128_ecb_pt[] = {
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+};
+static const unsigned char aes_128_ecb_ct[] = {
+    0x6d, 0x25, 0x1e, 0x69, 0x44, 0xb0, 0x51, 0xe0,
+    0x4e, 0xaa, 0x6f, 0xb4, 0xdb, 0xf7, 0x84, 0x65
+};
+
 static const ST_KAT_CIPHER st_kat_cipher_tests[] = {
 #ifndef OPENSSL_NO_DES
     {
@@ -224,6 +243,7 @@ static const ST_KAT_CIPHER st_kat_cipher_tests[] = {
             ITM(des_ede3_cbc_pt),
             ITM(des_ede3_cbc_ct)
         },
+        CIPHER_MODE_ENCRYPT | CIPHER_MODE_DECRYPT,
         ITM(des_ede3_cbc_key),
         ITM(des_ede3_cbc_iv),
     },
@@ -233,12 +253,23 @@ static const ST_KAT_CIPHER st_kat_cipher_tests[] = {
             OSSL_SELF_TEST_DESC_CIPHER_AES_GCM,
             "AES-256-GCM",
             ITM(aes_256_gcm_pt),
-            ITM(aes_256_gcm_ct),
+            ITM(aes_256_gcm_ct)
         },
+        CIPHER_MODE_ENCRYPT,
         ITM(aes_256_gcm_key),
         ITM(aes_256_gcm_iv),
         ITM(aes_256_gcm_aad),
         ITM(aes_256_gcm_tag)
+    },
+    {
+        {
+            OSSL_SELF_TEST_DESC_CIPHER_AES_ECB,
+            "AES-128-ECB",
+            ITM(aes_128_ecb_pt),
+            ITM(aes_128_ecb_ct)
+        },
+        CIPHER_MODE_DECRYPT,
+        ITM(aes_128_ecb_key)
     }
 };
 
