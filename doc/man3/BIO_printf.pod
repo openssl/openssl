@@ -38,6 +38,11 @@ All functions return the number of bytes written, or -1 on error.
 For BIO_snprintf() and BIO_vsnprintf() this includes when the output
 buffer is too small.
 
+=head1 NOTES
+
+Both BIO_snprintf() and BIO_vsnprintf() null terminate their output when there
+is insufficient space.
+
 =head1 COPYRIGHT
 
 Copyright 2017-2020 The OpenSSL Project Authors. All Rights Reserved.
