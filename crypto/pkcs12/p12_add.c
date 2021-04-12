@@ -103,9 +103,9 @@ PKCS7 *PKCS12_pack_p7encdata_ex(int pbe_nid, const char *pass, int passlen,
     }
 
     pbe_ciph = pbe_ciph_fetch = EVP_CIPHER_fetch(ctx, OBJ_nid2sn(pbe_nid), propq);
-    if (pbe_ciph == NULL) {
+    if (pbe_ciph == NULL)
         pbe_ciph = EVP_get_cipherbynid(pbe_nid);
-    }
+
     if (pbe_ciph != NULL) {
         pbe = PKCS5_pbe2_set_iv_ex(pbe_ciph, iter, salt, saltlen, NULL, -1, ctx, propq);
     } else {

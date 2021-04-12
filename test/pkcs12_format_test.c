@@ -651,8 +651,14 @@ int setup_tests(void)
                 return 0;
             /* Swap the libctx to test non-default context only */
             nullprov = OSSL_PROVIDER_load(NULL, "null");
+            if (!TEST_ptr(nullprov))
+                return 0;
             deflprov = OSSL_PROVIDER_load(testctx, "default");
+            if (!TEST_ptr(deflprov))
+                return 0;
             lgcyprov = OSSL_PROVIDER_load(testctx, "legacy");
+            if (!TEST_ptr(lgcyprov))
+                return 0;
             PKCS12_helper_set_libctx(testctx);
             break;
         case OPT_TEST_CASES:

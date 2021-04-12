@@ -59,7 +59,7 @@ passphrase and I<iter> is the iteration count. If I<iter> is zero then a default
 value of 2048 is used. If I<salt> is NULL then a salt is generated randomly.
 
 PKCS12_SAFEBAG_create_pkcs8_encrypt_ex() is identical to PKCS12_SAFEBAG_create_pkcs8_encrypt()
-but allows for a library context I<ctx> and property query I<propq> to be use to select
+but allows for a library context I<ctx> and property query I<propq> to be used to select
 algorithm implementations.
 
 =head1 NOTES

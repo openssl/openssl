@@ -51,7 +51,7 @@ for more information.
 PKCS12_init() and PKCS12_init_ex() return a valid B<PKCS12> structure or NULL
 if an error occurred.
 
-Other functions return 1 and success and 0 if an error occurred.
+Other functions return 1 on success and 0 if an error occurred.
 
 =head1 CONFORMING TO
 

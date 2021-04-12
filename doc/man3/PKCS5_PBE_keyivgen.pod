@@ -81,7 +81,7 @@ PKCS5_pbkdf2_set, PKCS5_pbkdf2_set_ex, EVP_PBE_scrypt, EVP_PBE_scrypt_ex
 
 PKCS5_PBE_keyivgen() takes a password I<pass> of
 length I<passlen>, parameters I<param> and a message digest function I<md_type>
-and perform a key derivation according to PKCS#5 PBES1. The resulting key is
+and performs a key derivation according to PKCS#5 PBES1. The resulting key is
 then used to initialise the cipher context I<ctx> with a cipher I<cipher> for
 encryption (I<en_de>=1) or decryption (I<en_de>=0).
 
@@ -151,6 +151,12 @@ IETF RFC 8018 (L<https://tools.ietf.org/html/rfc8018>)
 L<EVP_PBE_CipherInit_ex(3)>,
 L<PKCS12_pbe_crypt_ex(3)>,
 L<passphrase-encoding(7)>
+
+=head1 HISTORY
+
+PKCS5_v2_PBE_keyivgen_ex(), EVP_PBE_scrypt_ex(), PKCS5_v2_scrypt_keyivgen_ex(),
+PKCS5_pbe_set0_algor_ex(), PKCS5_pbe_set_ex(), PKCS5_pbe2_set_iv_ex() and
+PKCS5_pbkdf2_set_ex() were added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

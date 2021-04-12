@@ -109,10 +109,10 @@ static int pkcs12_gen_mac(PKCS12 *p12, const char *pass, int passlen,
     if (OBJ_obj2txt(md_name, sizeof(md_name), macoid, 0) < 0)
         return 0;
     md = md_fetch = EVP_MD_fetch(p12->authsafes->ctx.libctx, md_name,
-                           p12->authsafes->ctx.propq);
-    if (md == NULL) {
+                                 p12->authsafes->ctx.propq);
+    if (md == NULL)
         md = EVP_get_digestbynid(OBJ_obj2nid(macoid));
-    }
+
     if (md == NULL) {
         ERR_raise(ERR_LIB_PKCS12, PKCS12_R_UNKNOWN_DIGEST_ALGORITHM);
         return 0;
