@@ -223,6 +223,8 @@ int ossl_ess_signing_cert_add(PKCS7_SIGNER_INFO *si, ESS_SIGNING_CERT *sc)
     int len;
 
     len = i2d_ESS_SIGNING_CERT(sc, NULL);
+    if (len <= 0)
+        goto err;
     if ((pp = OPENSSL_malloc(len)) == NULL) {
         ERR_raise(ERR_LIB_ESS, ERR_R_MALLOC_FAILURE);
         goto err;
@@ -251,6 +253,8 @@ int ossl_ess_signing_cert_v2_add(PKCS7_SIGNER_INFO *si, ESS_SIGNING_CERT_V2 *sc)
     unsigned char *p, *pp = NULL;
     int len = i2d_ESS_SIGNING_CERT_V2(sc, NULL);
 
+    if (len <= 0)
+        goto err;
     if ((pp = OPENSSL_malloc(len)) == NULL) {
         ERR_raise(ERR_LIB_ESS, ERR_R_MALLOC_FAILURE);
         goto err;

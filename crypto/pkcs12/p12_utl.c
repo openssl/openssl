@@ -21,6 +21,8 @@ unsigned char *OPENSSL_asc2uni(const char *asc, int asclen,
 
     if (asclen == -1)
         asclen = strlen(asc);
+    if (asclen < 0)
+        return NULL;
     ulen = asclen * 2 + 2;
     if ((unitmp = OPENSSL_malloc(ulen)) == NULL) {
         ERR_raise(ERR_LIB_PKCS12, ERR_R_MALLOC_FAILURE);
@@ -44,8 +46,11 @@ char *OPENSSL_uni2asc(const unsigned char *uni, int unilen)
 {
     int asclen, i;
     char *asctmp;
+
     /* string must contain an even number of bytes */
     if (unilen & 1)
+        return NULL;
+    if (unilen < 0)
         return NULL;
     asclen = unilen / 2;
     /* If no terminating zero allow for one */

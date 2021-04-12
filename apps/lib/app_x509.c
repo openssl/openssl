@@ -26,7 +26,7 @@ static ASN1_OCTET_STRING *mk_octet_string(void *value, size_t value_n)
 
     if (v == NULL) {
         BIO_printf(bio_err, "error: allocation failed\n");
-    } else if (!ASN1_OCTET_STRING_set(v, value, value_n)) {
+    } else if (!ASN1_OCTET_STRING_set(v, value, (int)value_n)) {
         ASN1_OCTET_STRING_free(v);
         v = NULL;
     }
