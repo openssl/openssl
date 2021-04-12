@@ -664,7 +664,7 @@ static int test_param_modified(void)
 static int test_param_copy_null(void)
 {
     int ret, val;
-    int a = 1, b = 2, i= 0;
+    int a = 1, b = 2, i = 0;
     OSSL_PARAM *cp1 = NULL, *cp2 = NULL, *p;
     OSSL_PARAM param[3];
 
