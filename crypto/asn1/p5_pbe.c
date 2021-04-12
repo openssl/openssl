@@ -44,6 +44,8 @@ int PKCS5_pbe_set0_algor(X509_ALGOR *algor, int alg, int iter,
     }
     if (!saltlen)
         saltlen = PKCS5_SALT_LEN;
+    if (saltlen < 0)
+        goto err;
 
     sstr = OPENSSL_malloc(saltlen);
     if (sstr == NULL) {

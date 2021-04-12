@@ -234,6 +234,8 @@ int PKCS12_setup_mac(PKCS12 *p12, int iter, unsigned char *salt, int saltlen,
     }
     if (!saltlen)
         saltlen = PKCS12_SALT_LEN;
+    if (saltlen < 0)
+        return 0;
     if ((p12->mac->salt->data = OPENSSL_malloc(saltlen)) == NULL) {
         ERR_raise(ERR_LIB_PKCS12, ERR_R_MALLOC_FAILURE);
         return 0;
