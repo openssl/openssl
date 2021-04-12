@@ -237,7 +237,7 @@ static long linebuffer_ctrl(BIO *b, int cmd, long num, void *ptr)
         if ((obs > DEFAULT_LINEBUFFER_SIZE) && (obs != ctx->obuf_size)) {
             if (num < 0)
                 return 0;
-            p = OPENSSL_malloc((int)num);
+            p = OPENSSL_malloc((size_t)num);
             if (p == NULL)
                 goto malloc_error;
         }

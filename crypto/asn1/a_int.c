@@ -398,7 +398,7 @@ ASN1_INTEGER *d2i_ASN1_UINTEGER(ASN1_INTEGER **a, const unsigned char **pp,
     ASN1_INTEGER *ret = NULL;
     const unsigned char *p;
     unsigned char *s;
-    long len;
+    long len = 0;
     int inf, tag, xclass;
     int i;
 
@@ -421,8 +421,10 @@ ASN1_INTEGER *d2i_ASN1_UINTEGER(ASN1_INTEGER **a, const unsigned char **pp,
         goto err;
     }
 
-    if (len < 0)
+    if (len < 0) {
+        i = ASN1_R_ILLEGAL_NEGATIVE_VALUE;
         goto err;
+    }
     /*
      * We must OPENSSL_malloc stuff, even for 0 bytes otherwise it signifies
      * a missing NULL parameter.
