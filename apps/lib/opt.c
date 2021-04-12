@@ -187,7 +187,7 @@ char *opt_init(int ac, char **av, const OPTIONS *o)
         if (o->valtype == '.')
             OPENSSL_assert(o->retval == OPT_PARAM);
         else
-            OPENSSL_assert(o->retval > OPT_PARAM);
+            OPENSSL_assert(o->retval == OPT_DUP || o->retval > OPT_PARAM);
         switch (i) {
         case   0: case '-': case '.':
         case '/': case '<': case '>': case 'E': case 'F':
@@ -203,8 +203,13 @@ char *opt_init(int ac, char **av, const OPTIONS *o)
             /*
              * Some compilers inline strcmp and the assert string is too long.
              */
-            duplicated = strcmp(o->name, next->name) == 0;
-            OPENSSL_assert(!duplicated);
+            duplicated = next->retval != OPT_DUP
+                && strcmp(o->name, next->name) == 0;
+            if (duplicated) {
+                opt_printf_stderr("%s: Internal error: duplicate option %s\n",
+                                  prog, o->name);
+                OPENSSL_assert(!duplicated);
+            }
         }
 #endif
         if (o->name[0] == '\0') {
