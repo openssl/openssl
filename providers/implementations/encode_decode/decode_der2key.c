@@ -36,26 +36,6 @@
 #include "prov/implementations.h"
 #include "endecoder_local.h"
 
-#define SET_ERR_MARK() ERR_set_mark()
-#define CLEAR_ERR_MARK()                                                \
-    do {                                                                \
-        int err = ERR_peek_last_error();                                \
-                                                                        \
-        if (ERR_GET_LIB(err) == ERR_LIB_ASN1                            \
-            && (ERR_GET_REASON(err) == ASN1_R_HEADER_TOO_LONG           \
-                || ERR_GET_REASON(err) == ASN1_R_UNSUPPORTED_TYPE       \
-                || ERR_GET_REASON(err) == ERR_R_NESTED_ASN1_ERROR       \
-                || ERR_GET_REASON(err) == ASN1_R_NOT_ENOUGH_DATA))      \
-            ERR_pop_to_mark();                                          \
-        else                                                            \
-            ERR_clear_last_mark();                                      \
-    } while(0)
-#define RESET_ERR_MARK()                                                \
-    do {                                                                \
-        CLEAR_ERR_MARK();                                               \
-        SET_ERR_MARK();                                                 \
-    } while(0)
-
 struct der2key_ctx_st;           /* Forward declaration */
 typedef int check_key_fn(void *, struct der2key_ctx_st *ctx);
 typedef void adjust_key_fn(void *, struct der2key_ctx_st *ctx);
@@ -143,6 +123,7 @@ static void *der2key_decode_p8(const unsigned char **input_der,
     void *key = NULL;
 
     ctx->flag_fatal = 0;
+
     if ((p8 = d2i_X509_SIG(NULL, input_der, input_der_len)) != NULL) {
         char pbuf[PEM_BUFSIZE];
         size_t plen = 0;
@@ -162,6 +143,7 @@ static void *der2key_decode_p8(const unsigned char **input_der,
         && OBJ_obj2nid(alg->algorithm) == ctx->desc->evp_type)
         key = key_from_pkcs8(p8inf, PROV_LIBCTX_OF(ctx->provctx), NULL);
     PKCS8_PRIV_KEY_INFO_free(p8inf);
+
     return key;
 }
 
@@ -284,12 +266,13 @@ static int der2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
         return 0;
     }
 
-    SET_ERR_MARK();
-    if (!read_der(ctx->provctx, cin, &der, &der_len))
+    ok = read_der(ctx->provctx, cin, &der, &der_len);
+    if (!ok)
         goto next;
 
+    ok = 0;                      /* Assume that we fail */
+
     if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0) {
-        RESET_ERR_MARK();
         derp = der;
         if (ctx->desc->d2i_PKCS8 != NULL) {
             key = ctx->desc->d2i_PKCS8(NULL, &derp, der_len, ctx,
@@ -303,7 +286,6 @@ static int der2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
             goto next;
     }
     if (key == NULL && (selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0) {
-        RESET_ERR_MARK();
         derp = der;
         if (ctx->desc->d2i_PUBKEY != NULL)
             key = ctx->desc->d2i_PUBKEY(NULL, &derp, der_len);
@@ -313,19 +295,25 @@ static int der2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
             goto next;
     }
     if (key == NULL && (selection & OSSL_KEYMGMT_SELECT_ALL_PARAMETERS) != 0) {
-        RESET_ERR_MARK();
         derp = der;
         if (ctx->desc->d2i_key_params != NULL)
             key = ctx->desc->d2i_key_params(NULL, &derp, der_len);
         if (key == NULL && orig_selection != 0)
             goto next;
     }
-    RESET_ERR_MARK();
+
+    /*
+     * Last minute check to see if this was the correct type of key.  This
+     * should never lead to a fatal error, i.e. the decoding itself was
+     * correct, it was just an unexpected key type.  This is generally for
+     * classes of key types that have subtle variants, like RSA-PSS keys as
+     * opposed to plain RSA keys.
+     */
     if (key != NULL
         && ctx->desc->check_key != NULL
         && !ctx->desc->check_key(key, ctx)) {
-        CLEAR_ERR_MARK();
-        goto end;
+        ctx->desc->free_key(key);
+        key = NULL;
     }
 
     if (key != NULL && ctx->desc->adjust_key != NULL)
@@ -333,11 +321,10 @@ static int der2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
 
  next:
     /*
-     * Prune low-level ASN.1 parse errors from error queue, assuming
-     * that this is called by decoder_process() in a loop trying several
-     * formats.
+     * Indicated that we successfully decoded something, or not at all.
+     * Ending up "empty handed" is not an error.
      */
-    CLEAR_ERR_MARK();
+    ok = 1;
 
     /*
      * We free memory here so it's not held up during the callback, because
