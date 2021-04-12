@@ -98,16 +98,22 @@ static int der2obj_decode(void *provctx, OSSL_CORE_BIO *cin, int selection,
      * Prune low-level ASN.1 parse errors from error queue, assuming that
      * this is called by decoder_process() in a loop trying several formats.
      */
-    err = ERR_peek_last_error();
-    if (ERR_GET_LIB(err) == ERR_LIB_ASN1
+    if (!ok) {
+        err = ERR_peek_last_error();
+        if (ERR_GET_LIB(err) == ERR_LIB_ASN1
             && (ERR_GET_REASON(err) == ASN1_R_HEADER_TOO_LONG
                 || ERR_GET_REASON(err) == ASN1_R_UNSUPPORTED_TYPE
                 || ERR_GET_REASON(err) == ERR_R_NESTED_ASN1_ERROR
-                || ERR_GET_REASON(err) == ASN1_R_NOT_ENOUGH_DATA))
-        ERR_pop_to_mark();
-    else
-        ERR_clear_last_mark();
-    if (ok) {
+                || ERR_GET_REASON(err) == ASN1_R_NOT_ENOUGH_DATA)) {
+            ERR_pop_to_mark();
+        } else {
+            ERR_clear_last_mark();
+            goto end;
+        }
+    }
+
+    ok = 1;
+    if (mem != NULL) {
         OSSL_PARAM params[3];
         int object_type = OSSL_OBJECT_UNKNOWN;
 
@@ -122,6 +128,7 @@ static int der2obj_decode(void *provctx, OSSL_CORE_BIO *cin, int selection,
         OPENSSL_free(mem->data);
         OPENSSL_free(mem);
     }
+ end:
     BIO_free(in);
     return ok;
 }

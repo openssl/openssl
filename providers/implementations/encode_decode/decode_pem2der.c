@@ -145,9 +145,11 @@ static int pem2der_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
     int objtype = OSSL_OBJECT_UNKNOWN;
     const char *data_structure = NULL;
 
-    if (read_pem(ctx->provctx, cin, &pem_name, &pem_header,
-                 &der, &der_len) <= 0)
-        return 0;
+    ok = read_pem(ctx->provctx, cin, &pem_name, &pem_header,
+                  &der, &der_len) > 0;
+    /* We return "empty handed".  This is not an error. */
+    if (!ok)
+        return 1;
 
     /*
      * 10 is the number of characters in "Proc-Type:", which
@@ -159,6 +161,7 @@ static int pem2der_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
         EVP_CIPHER_INFO cipher;
         struct pem2der_pass_data_st pass_data;
 
+        ok = 0;                  /* Assume that we fail */
         pass_data.cb = pw_cb;
         pass_data.cbarg = pw_cbarg;
         if (!PEM_get_EVP_CIPHER_INFO(pem_header, &cipher)
@@ -166,6 +169,12 @@ static int pem2der_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
                               pem2der_pass_helper, &pass_data))
             goto end;
     }
+
+    /*
+     * Indicated that we successfully decoded something, or not at all.
+     * Ending up "empty handed" is not an error.
+     */
+    ok = 1;
 
     /*
      * Peal off certain strings from the end of |pem_name|, as they serve

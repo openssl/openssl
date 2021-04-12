@@ -20,6 +20,7 @@
 #include <openssl/core_object.h>
 #include <openssl/crypto.h>
 #include <openssl/params.h>
+#include <openssl/err.h>
 #include <openssl/pem.h>         /* For public PVK functions */
 #include <openssl/x509.h>
 #include "internal/passphrase.h"
@@ -111,11 +112,30 @@ static int pvk2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
          || (selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0)
         && ctx->desc->read_private_key != NULL) {
         struct ossl_passphrase_data_st pwdata;
+        int err, lib, reason;
 
         memset(&pwdata, 0, sizeof(pwdata));
         if (!ossl_pw_set_ossl_passphrase_cb(&pwdata, pw_cb, pw_cbarg))
             goto end;
+
         key = ctx->desc->read_private_key(in, ossl_pw_pem_password, &pwdata);
+
+        /*
+         * Because the PVK API doesn't have a separate decrypt call, we need
+         * to check the error queue for certain well known errors that are
+         * considered fatal and which we pass through, while the rest gets
+         * thrown away.
+         */
+        err = ERR_peek_last_error();
+        lib = ERR_GET_LIB(err);
+        reason = ERR_GET_REASON(err);
+        if (lib == ERR_LIB_PEM
+            && (reason == PEM_R_BAD_PASSWORD_READ
+                || reason == PEM_R_BAD_DECRYPT)) {
+            ERR_clear_last_mark();
+            goto end;
+        }
+
         if (selection != 0 && key == NULL)
             goto next;
     }
@@ -124,6 +144,12 @@ static int pvk2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
         ctx->desc->adjust_key(key, ctx);
 
  next:
+    /*
+     * Indicated that we successfully decoded something, or not at all.
+     * Ending up "empty handed" is not an error.
+     */
+    ok = 1;
+
     /*
      * We free resources here so it's not held up during the callback, because
      * we know the process is recursive and the allocated chunks of memory
