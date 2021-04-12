@@ -16,5 +16,6 @@ int ossl_err_load_crypto_strings(void);
 void err_cleanup(void);
 int err_shelve_state(void **);
 void err_unshelve_state(void *);
+void ossl_err_raise_malloc_failure(const char *file, int line);
 
 #endif

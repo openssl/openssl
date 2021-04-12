@@ -10,6 +10,7 @@
 #include "internal/e_os.h"
 #include "internal/cryptlib.h"
 #include "crypto/cryptlib.h"
+#include "crypto/err.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
@@ -170,9 +171,14 @@ void ossl_malloc_setup_failures(void)
 
 void *CRYPTO_malloc(size_t num, const char *file, int line)
 {
+    void *result;
+
     INCREMENT(malloc_count);
-    if (malloc_impl != CRYPTO_malloc)
-        return malloc_impl(num, file, line);
+    if (malloc_impl != CRYPTO_malloc) {
+        if ((result = malloc_impl(num, file, line)) == NULL && num != 0)
+            ossl_err_raise_malloc_failure(file, line);
+        return result;
+    }
 
     if (num == 0)
         return NULL;
@@ -187,7 +193,9 @@ void *CRYPTO_malloc(size_t num, const char *file, int line)
         allow_customize = 0;
     }
 
-    return malloc(num);
+    if ((result = malloc(num)) == NULL)
+        ossl_err_raise_malloc_failure(file, line);
+    return result;
 }
 
 void *CRYPTO_zalloc(size_t num, const char *file, int line)
@@ -204,9 +212,14 @@ void *CRYPTO_zalloc(size_t num, const char *file, int line)
 
 void *CRYPTO_realloc(void *str, size_t num, const char *file, int line)
 {
+    void *result;
+
     INCREMENT(realloc_count);
-    if (realloc_impl != CRYPTO_realloc)
-        return realloc_impl(str, num, file, line);
+    if (realloc_impl != CRYPTO_realloc) {
+        if ((result = realloc_impl(str, num, file, line)) == NULL && num != 0)
+            ossl_err_raise_malloc_failure(file, line);
+        return result;
+    }
 
     FAILTEST();
     if (str == NULL)
@@ -217,7 +230,9 @@ void *CRYPTO_realloc(void *str, size_t num, const char *file, int line)
         return NULL;
     }
 
-    return realloc(str, num);
+    if ((result = realloc(str, num)) == NULL)
+        ossl_err_raise_malloc_failure(file, line);
+    return result;
 }
 
 void *CRYPTO_clear_realloc(void *str, size_t old_len, size_t num,

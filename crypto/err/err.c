@@ -895,3 +895,25 @@ void err_clear_last_constant_time(int clear)
                                      0, ERR_FLAG_CLEAR);
     es->err_flags[top] |= clear;
 }
+
+void ossl_err_raise_malloc_failure(const char *file, int line)
+{
+    unsigned long mallocerr = ERR_PACK(ERR_LIB_CRYPTO, 0, ERR_R_MALLOC_FAILURE);
+    ERR_STATE *es;
+    int i;
+
+    /* prevent error-in-error-handler malloc loop */
+    if (!RUN_ONCE(&err_init, err_do_init))
+        return;
+    es = CRYPTO_THREAD_get_local(&err_thread_local);
+    if (es == (ERR_STATE*)-1 || es == NULL)
+        return;
+    for (i = es->top; i != es->bottom; i = (i > 0 ? i : ERR_NUM_ERRORS) - 1) {
+        if (es->err_buffer[i] == mallocerr)
+            return;
+    }
+
+    ERR_new();
+    ERR_set_debug(file, line, NULL);
+    ERR_set_error(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE, NULL);
+}
