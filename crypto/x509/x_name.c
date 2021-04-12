@@ -298,6 +298,7 @@ static int x509_name_ex_print(BIO *out, const ASN1_VALUE **pval,
  * comparison of Name structures can be rapidly performed by just using
  * memcmp() of the canonical encoding. By omitting the leading SEQUENCE name
  * constraints of type dirName can also be checked with a simple memcmp().
+ * NOTE: For empty X509_NAME (NULL-DN), canon_enclen == 0 && canon_enc == NULL
  */
 
 static int x509_name_canon(X509_NAME *a)
