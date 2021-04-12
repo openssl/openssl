@@ -762,6 +762,19 @@ OpenSSL 3.0
    L<EVP_PKEY_encrypt(3)>, L<EVP_PKEY_decrypt_init(3)> and
    L<EVP_PKEY_decrypt(3)>.
 
+   All of these low level RSA functions have been deprecated without
+   replacement:
+
+   RSA_blinding_off, RSA_blinding_on, RSA_clear_flags, RSA_get_version,
+   RSAPrivateKey_dup, RSAPublicKey_dup, RSA_set_flags, RSA_setup_blinding and
+   RSA_test_flags.
+
+   All of these RSA flags have been deprecated without replacement:
+
+   RSA_FLAG_BLINDING, RSA_FLAG_CACHE_PRIVATE, RSA_FLAG_CACHE_PUBLIC,
+   RSA_FLAG_EXT_PKEY, RSA_FLAG_NO_BLINDING, RSA_FLAG_THREAD_SAFE and
+   RSA_METHOD_FLAG_NO_CHECK.
+
    *Paul Dale*
 
  * X509 certificates signed using SHA1 are no longer allowed at security
@@ -814,12 +827,22 @@ OpenSSL 3.0
    time.  Instead applications should use L<EVP_PKEY_derive_init(3)>
    and L<EVP_PKEY_derive(3)>.
 
+   These low level DH functions have been deprecated without replacement:
+
+   DH_clear_flags, DH_get_1024_160, DH_get_2048_224, DH_get_2048_256,
+   DH_set_flags and DH_test_flags.
+
+   The DH_FLAG_CACHE_MONT_P flag has been deprecated without replacement.
+   The DH_FLAG_TYPE_DH and DH_FLAG_TYPE_DHX have been deprecated.  Use
+   EVP_PKEY_is_a() to determine the type of a key.  There is no replacement for
+   setting these flags.
+
    Additionally functions that read and write DH objects such as d2i_DHparams,
    i2d_DHparams, PEM_read_DHparam, PEM_write_DHparams and other similar
    functions have also been deprecated. Applications should instead use the
    OSSL_DECODER and OSSL_ENCODER APIs to read and write DH files.
 
-   Finaly functions that assign or obtain DH objects from an EVP_PKEY such as
+   Finally functions that assign or obtain DH objects from an EVP_PKEY such as
    `EVP_PKEY_assign_DH()`, `EVP_PKEY_get0_DH()`, `EVP_PKEY_get1_DH()`, and
    `EVP_PKEY_set1_DH()` are also deprecated.
    Applications should instead either read or write an
@@ -852,7 +875,14 @@ OpenSSL 3.0
    time.  Instead applications should use L<EVP_DigestSignInit_ex(3)>,
    L<EVP_DigestSignUpdate(3)> and L<EVP_DigestSignFinal(3)>.
 
-   Finaly functions that assign or obtain DSA objects from an EVP_PKEY such as
+   These low level DSA functions have been deprecated without replacement:
+
+   DSA_clear_flags, DSA_dup_DH, DSAparams_dup, DSA_set_flags and
+   DSA_test_flags.
+
+   The DSA_FLAG_CACHE_MONT_P flag has been deprecated without replacement.
+
+   Finally functions that assign or obtain DSA objects from an EVP_PKEY such as
    `EVP_PKEY_assign_DSA()`, `EVP_PKEY_get0_DSA()`, `EVP_PKEY_get1_DSA()`, and
    `EVP_PKEY_set1_DSA()` are also deprecated.
    Applications should instead either read or write an
