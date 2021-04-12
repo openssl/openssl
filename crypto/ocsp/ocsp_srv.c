@@ -278,6 +278,8 @@ int OCSP_RESPID_set_by_key_ex(OCSP_RESPID *respid, X509 *cert,
 
 int OCSP_RESPID_set_by_key(OCSP_RESPID *respid, X509 *cert)
 {
+    if (cert == NULL)
+        return 0;
     return OCSP_RESPID_set_by_key_ex(respid, cert, cert->libctx, cert->propq);
 }
 
@@ -319,5 +321,7 @@ int OCSP_RESPID_match_ex(OCSP_RESPID *respid, X509 *cert, OSSL_LIB_CTX *libctx,
 
 int OCSP_RESPID_match(OCSP_RESPID *respid, X509 *cert)
 {
+    if (cert == NULL)
+        return 0;
     return OCSP_RESPID_match_ex(respid, cert, cert->libctx, cert->propq);
 }
