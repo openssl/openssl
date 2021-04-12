@@ -288,7 +288,7 @@ HTMLDIR=$(DOCDIR)/html
 # MANSUFFIX is for the benefit of anyone who may want to have a suffix
 # appended after the manpage file section number.  "ssl" is popular,
 # resulting in files such as config.5ssl rather than config.5.
-MANSUFFIX=
+MANSUFFIX=ossl
 HTMLSUFFIX=html
 
 # For "optional" echo messages, to get "real" silence
@@ -1356,7 +1356,7 @@ EOF
           my $pod = $gen0;
           return <<"EOF";
 $args{src}: $pod
-	pod2man --name=$name --section=$section --center=OpenSSL \\
+	pod2man --name=$name --section=$section\$(MANSUFFIX) --center=OpenSSL \\
 		--release=\$(VERSION) $pod >\$\@
 EOF
       } elsif (platform->isdef($args{src})) {
