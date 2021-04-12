@@ -757,7 +757,7 @@ OpenSSL 3.0
    L<EVP_PKEY_encrypt(3)>, L<EVP_PKEY_decrypt_init(3)> and
    L<EVP_PKEY_decrypt(3)>.
    
-   All of theese low level RSA functions have been deprecated without
+   All of these low level RSA functions have been deprecated without
    replacement:
 
    RSA_blinding_off, RSA_blinding_on, RSA_clear_flags, RSA_get_version,
@@ -837,7 +837,7 @@ OpenSSL 3.0
    functions have also been deprecated. Applications should instead use the
    OSSL_DECODER and OSSL_ENCODER APIs to read and write DH files.
 
-   Finaly functions that assign or obtain DH objects from an EVP_PKEY such as
+   Finally functions that assign or obtain DH objects from an EVP_PKEY such as
    `EVP_PKEY_assign_DH()`, `EVP_PKEY_get0_DH()`, `EVP_PKEY_get1_DH()`, and
    `EVP_PKEY_set1_DH()` are also deprecated.
    Applications should instead either read or write an
@@ -877,7 +877,7 @@ OpenSSL 3.0
 
    The DSA_FLAG_CACHE_MONT_P flag has been deprecated without replacement.
 
-   Finaly functions that assign or obtain DSA objects from an EVP_PKEY such as
+   Finally functions that assign or obtain DSA objects from an EVP_PKEY such as
    `EVP_PKEY_assign_DSA()`, `EVP_PKEY_get0_DSA()`, `EVP_PKEY_get1_DSA()`, and
    `EVP_PKEY_set1_DSA()` are also deprecated.
    Applications should instead either read or write an
