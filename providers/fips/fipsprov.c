@@ -81,6 +81,8 @@ static void *fips_prov_ossl_ctx_new(OSSL_LIB_CTX *libctx)
 {
     FIPS_GLOBAL *fgbl = OPENSSL_zalloc(sizeof(*fgbl));
 
+    if (fgbl == NULL)
+        return NULL;
     fgbl->fips_security_checks = 1;
     fgbl->fips_security_check_option = "1";
 
@@ -117,31 +119,37 @@ static int fips_get_params_from_core(FIPS_GLOBAL *fgbl)
     * OSSL_PROV_PARAM_CORE_MODULE_FILENAME).
     * OSSL_PROV_FIPS_PARAM_SECURITY_CHECKS is not a self test parameter.
     */
-    OSSL_PARAM core_params[] =
-    {
-        OSSL_PARAM_utf8_ptr(OSSL_PROV_PARAM_CORE_MODULE_FILENAME,
-                            &fgbl->selftest_params.module_filename,
-                            sizeof(fgbl->selftest_params.module_filename)),
-        OSSL_PARAM_utf8_ptr(OSSL_PROV_FIPS_PARAM_MODULE_MAC,
-                            &fgbl->selftest_params.module_checksum_data,
-                            sizeof(fgbl->selftest_params.module_checksum_data)),
-        OSSL_PARAM_utf8_ptr(OSSL_PROV_FIPS_PARAM_INSTALL_MAC,
-                            &fgbl->selftest_params.indicator_checksum_data,
-                            sizeof(fgbl->selftest_params.indicator_checksum_data)),
-        OSSL_PARAM_utf8_ptr(OSSL_PROV_FIPS_PARAM_INSTALL_STATUS,
-                            &fgbl->selftest_params.indicator_data,
-                            sizeof(fgbl->selftest_params.indicator_data)),
-        OSSL_PARAM_utf8_ptr(OSSL_PROV_FIPS_PARAM_INSTALL_VERSION,
-                            &fgbl->selftest_params.indicator_version,
-                            sizeof(fgbl->selftest_params.indicator_version)),
-        OSSL_PARAM_utf8_ptr(OSSL_PROV_FIPS_PARAM_CONDITIONAL_ERRORS,
-                            &fgbl->selftest_params.conditional_error_check,
-                            sizeof(fgbl->selftest_params.conditional_error_check)),
-        OSSL_PARAM_utf8_ptr(OSSL_PROV_FIPS_PARAM_SECURITY_CHECKS,
-                            &fgbl->fips_security_check_option,
-                            sizeof(fgbl->fips_security_check_option)),
-        OSSL_PARAM_END
-    };
+    OSSL_PARAM core_params[8], *p = core_params;
+
+    *p++ = OSSL_PARAM_construct_utf8_ptr(
+            OSSL_PROV_PARAM_CORE_MODULE_FILENAME,
+            (char **)&fgbl->selftest_params.module_filename,
+            sizeof(fgbl->selftest_params.module_filename));
+    *p++ = OSSL_PARAM_construct_utf8_ptr(
+            OSSL_PROV_FIPS_PARAM_MODULE_MAC,
+            (char **)&fgbl->selftest_params.module_checksum_data,
+            sizeof(fgbl->selftest_params.module_checksum_data));
+    *p++ = OSSL_PARAM_construct_utf8_ptr(
+            OSSL_PROV_FIPS_PARAM_INSTALL_MAC,
+            (char **)&fgbl->selftest_params.indicator_checksum_data,
+            sizeof(fgbl->selftest_params.indicator_checksum_data));
+    *p++ = OSSL_PARAM_construct_utf8_ptr(
+            OSSL_PROV_FIPS_PARAM_INSTALL_STATUS,
+            (char **)&fgbl->selftest_params.indicator_data,
+            sizeof(fgbl->selftest_params.indicator_data));
+    *p++ = OSSL_PARAM_construct_utf8_ptr(
+            OSSL_PROV_FIPS_PARAM_INSTALL_VERSION,
+            (char **)&fgbl->selftest_params.indicator_version,
+            sizeof(fgbl->selftest_params.indicator_version));
+    *p++ = OSSL_PARAM_construct_utf8_ptr(
+            OSSL_PROV_FIPS_PARAM_CONDITIONAL_ERRORS,
+            (char **)&fgbl->selftest_params.conditional_error_check,
+            sizeof(fgbl->selftest_params.conditional_error_check));
+    *p++ = OSSL_PARAM_construct_utf8_ptr(
+            OSSL_PROV_FIPS_PARAM_SECURITY_CHECKS,
+            (char **)&fgbl->fips_security_check_option,
+            sizeof(fgbl->fips_security_check_option));
+    *p = OSSL_PARAM_construct_end();
 
     if (!c_get_params(fgbl->handle, core_params)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
@@ -644,7 +652,7 @@ int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
     fgbl->handle = handle;
 
     /*
-     * We did initial set up of selttest_params in a local copy, because we
+     * We did initial set up of selftest_params in a local copy, because we
      * could not create fgbl until c_CRYPTO_zalloc was defined in the loop
      * above.
      */
@@ -658,12 +666,15 @@ int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
         /* Error already raised */
         return 0;
     }
-    /* Disable the conditional error check if is disabled in the fips config file*/
+    /*
+     * Disable the conditional error check if is disabled in the fips config
+     * file
+     */
     if (fgbl->selftest_params.conditional_error_check != NULL
         && strcmp(fgbl->selftest_params.conditional_error_check, "0") == 0)
         SELF_TEST_disable_conditional_error_state();
 
-    /* Disable the security check if is disabled in the fips config file*/
+    /* Disable the security check if is disabled in the fips config file */
     if (fgbl->fips_security_check_option != NULL
         && strcmp(fgbl->fips_security_check_option, "0") == 0)
         fgbl->fips_security_checks = 0;
@@ -857,6 +868,7 @@ int FIPS_security_check_enabled(OSSL_LIB_CTX *libctx)
     FIPS_GLOBAL *fgbl = ossl_lib_ctx_get_data(libctx,
                                               OSSL_LIB_CTX_FIPS_PROV_INDEX,
                                               &fips_prov_ossl_ctx_method);
+
     return fgbl->fips_security_checks;
 }
 
