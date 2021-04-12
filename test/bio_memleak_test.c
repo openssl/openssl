@@ -35,7 +35,7 @@ static int test_bio_memleak(void)
         goto finish;
     ok = 1;
 
-finish:
+ finish:
     BIO_free(bio);
     return ok;
 }
@@ -221,6 +221,71 @@ finish:
     return ok;
 }
 
+static int error_callback_fired;
+static long BIO_error_callback(BIO *bio, int cmd, const char *argp,
+                               size_t len, int argi,
+                               long argl, int ret, size_t *processed)
+{
+    if ((cmd & (BIO_CB_READ | BIO_CB_RETURN)) != 0) {
+        error_callback_fired = 1;
+        ret = 0;  /* fail for read operations to simulate error in input BIO */
+    }
+    return ret;
+}
+
+/* Checks i2d_ASN1_bio_stream() is freeing all memory when input BIO ends unexpectedly. */
+static int test_bio_i2d_ASN1_mime(void)
+{
+    int ok = 0;
+    BIO *bio = NULL, *out = NULL;
+    BUF_MEM bufmem;
+    static const char str[] = "BIO mime test\n";
+    PKCS7 *p7 = NULL;
+    error_callback_fired = 0;
+
+    bio = BIO_new(BIO_s_mem());
+    if (!TEST_ptr(bio))
+        goto finish;
+
+    bufmem.length = sizeof(str);
+    bufmem.data = (char *) str;
+    bufmem.max = bufmem.length;
+    BIO_set_mem_buf(bio, &bufmem, BIO_NOCLOSE);
+    BIO_set_flags(bio, BIO_FLAGS_MEM_RDONLY);
+    BIO_set_callback_ex(bio, BIO_error_callback);
+
+    out = BIO_new(BIO_s_mem());
+    if (!TEST_ptr(out))
+        goto finish;
+
+    p7 = PKCS7_new();
+    if (!TEST_ptr(p7))
+        goto finish;
+    if (!PKCS7_set_type(p7, NID_pkcs7_data))
+        goto finish;
+
+    /*
+     * The call succeeds even if the input stream ends unexpectedly as
+     * there is no handling for this case in SMIME_crlf_copy().
+     */
+    if (!i2d_ASN1_bio_stream(out, (ASN1_VALUE*) p7, bio,
+                             SMIME_STREAM | SMIME_BINARY,
+                             ASN1_ITEM_rptr(PKCS7))) {
+        goto finish;
+    }
+
+    if (!TEST_int_eq(1, error_callback_fired))
+        goto finish;
+
+    ok = 1;
+
+finish:
+    BIO_free(bio);
+    BIO_free(out);
+    PKCS7_free(p7);
+    return ok;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(test_bio_memleak);
@@ -229,5 +294,6 @@ int setup_tests(void)
     ADD_TEST(test_bio_rdonly_mem_buf);
     ADD_TEST(test_bio_rdwr_rdonly);
     ADD_TEST(test_bio_nonclear_rst);
+    ADD_TEST(test_bio_i2d_ASN1_mime);
     return 1;
 }
