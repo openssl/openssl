@@ -624,6 +624,8 @@ int EVP_CIPHER_CTX_nid(const EVP_CIPHER_CTX *ctx)
 
 int EVP_CIPHER_is_a(const EVP_CIPHER *cipher, const char *name)
 {
+    if (cipher == NULL || name == NULL)
+        return 0;
     if (cipher->prov != NULL)
         return evp_is_a(cipher->prov, cipher->name_id, NULL, name);
     return evp_is_a(NULL, 0, EVP_CIPHER_name(cipher), name);
@@ -678,6 +680,8 @@ int EVP_CIPHER_mode(const EVP_CIPHER *cipher)
 
 int EVP_MD_is_a(const EVP_MD *md, const char *name)
 {
+    if (md == NULL || name == NULL)
+        return 0;
     if (md->prov != NULL)
         return evp_is_a(md->prov, md->name_id, NULL, name);
     return evp_is_a(NULL, 0, EVP_MD_name(md), name);

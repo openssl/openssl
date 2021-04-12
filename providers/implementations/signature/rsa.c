@@ -136,9 +136,8 @@ static int rsa_check_padding(const PROV_RSA_CTX *prsactx,
             break;
         case RSA_PKCS1_PSS_PADDING:
             if (rsa_pss_restricted(prsactx))
-                if ((mdname != NULL && !EVP_MD_is_a(prsactx->md, mdname))
-                    || (mgf1_mdname != NULL
-                        && !EVP_MD_is_a(prsactx->mgf1_md, mgf1_mdname))) {
+                if (!EVP_MD_is_a(prsactx->md, mdname)
+                    || !EVP_MD_is_a(prsactx->mgf1_md, mgf1_mdname)) {
                     ERR_raise(ERR_LIB_PROV, PROV_R_DIGEST_NOT_ALLOWED);
                     return 0;
                 }
