@@ -162,6 +162,23 @@ void ossl_malloc_setup_failures(void)
 }
 #endif
 
+static void *report_malloc_failure(void *result, const char *file, int line)
+{
+    if (result == NULL && file != NULL) {
+        int len = strlen(file);
+
+        /* prevent error-in-error-handler malloc loop */
+        if (len < 6
+            ? strcmp(file, "err.c") != 0
+            : strcmp(file + len - 6, "/err.c") != 0) {
+            ERR_new();
+            ERR_set_debug(file, line, NULL);
+            ERR_set_error(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE, NULL);
+        }
+    }
+    return result;
+}
+
 void *CRYPTO_malloc(size_t num, const char *file, int line)
 {
     INCREMENT(malloc_count);
@@ -181,7 +198,7 @@ void *CRYPTO_malloc(size_t num, const char *file, int line)
         allow_customize = 0;
     }
 
-    return malloc(num);
+    return report_malloc_failure(malloc(num), file, line);
 }
 
 void *CRYPTO_zalloc(size_t num, const char *file, int line)
@@ -211,7 +228,7 @@ void *CRYPTO_realloc(void *str, size_t num, const char *file, int line)
         return NULL;
     }
 
-    return realloc(str, num);
+    return report_malloc_failure(realloc(str, num), file, line);
 }
 
 void *CRYPTO_clear_realloc(void *str, size_t old_len, size_t num,
