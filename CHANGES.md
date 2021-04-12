@@ -829,7 +829,7 @@ OpenSSL 3.0
 
    The DH_FLAG_CACHE_MONT_P flag has been deprecated without replacement.
    The DH_FLAG_TYPE_DH and DH_FLAG_TYPE_DHX have been deprecated.  Use
-   EVP_is_a() to determine the type of a key.  There is no replacement for
+   EVP_PKEY_is_a() to determine the type of a key.  There is no replacement for
    setting these flags.
 
    Additionally functions that read and write DH objects such as d2i_DHparams,
