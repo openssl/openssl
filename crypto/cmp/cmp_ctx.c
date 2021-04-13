@@ -108,7 +108,7 @@ OSSL_CMP_CTX *OSSL_CMP_CTX_new(OSSL_LIB_CTX *libctx, const char *propq)
 
     ctx->libctx = libctx;
     if (propq != NULL && (ctx->propq = OPENSSL_strdup(propq)) == NULL)
-        goto err;
+        goto oom;
 
     ctx->log_verbosity = OSSL_CMP_LOG_INFO;
 
@@ -118,7 +118,7 @@ OSSL_CMP_CTX *OSSL_CMP_CTX_new(OSSL_LIB_CTX *libctx, const char *propq)
     ctx->msg_timeout = 2 * 60;
 
     if ((ctx->untrusted = sk_X509_new_null()) == NULL)
-        goto err;
+        goto oom;
 
     ctx->pbm_slen = 16;
     if (!cmp_ctx_set_md(ctx, &ctx->pbm_owf, NID_sha256))
@@ -134,9 +134,10 @@ OSSL_CMP_CTX *OSSL_CMP_CTX_new(OSSL_LIB_CTX *libctx, const char *propq)
     /* all other elements are initialized to 0 or NULL, respectively */
     return ctx;
 
+ oom:
+    ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
  err:
     OSSL_CMP_CTX_free(ctx);
-    ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
     return NULL;
 }
 
