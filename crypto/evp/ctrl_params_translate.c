@@ -2094,6 +2094,14 @@ static const struct translation_st evp_pkey_ctx_translations[] = {
       OSSL_PKEY_PARAM_RSA_PRIMES, OSSL_PARAM_UNSIGNED_INTEGER, NULL },
 
     /*-
+     * SipHash
+     * ======
+     */
+    { SET, -1, -1, -1,
+      EVP_PKEY_CTRL_SET_DIGEST_SIZE, "digestsize", NULL,
+      OSSL_MAC_PARAM_SIZE, OSSL_PARAM_UNSIGNED_INTEGER, NULL },
+
+    /*-
      * TLS1-PRF
      * ========
      */
