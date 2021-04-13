@@ -2097,7 +2097,7 @@ static const struct translation_st evp_pkey_ctx_translations[] = {
      * SipHash
      * ======
      */
-    { SET, -1, -1, -1,
+    { SET, -1, -1, EVP_PKEY_OP_TYPE_SIG,
       EVP_PKEY_CTRL_SET_DIGEST_SIZE, "digestsize", NULL,
       OSSL_MAC_PARAM_SIZE, OSSL_PARAM_UNSIGNED_INTEGER, NULL },
 
