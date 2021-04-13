@@ -59,6 +59,7 @@
 #include "prov/provider_ctx.h"
 #include "prov/provider_util.h"
 #include "prov/providercommon.h"
+#include "internal/cryptlib.h" /* ossl_assert */
 
 /*
  * Forward declaration of everything implemented here.  This is not strictly
@@ -497,7 +498,7 @@ static int encode_string(unsigned char *out, size_t *out_len,
             return 0;
         }
 
-        out[0] = len;
+        out[0] = (unsigned char)len;
         for (i = len; i > 0; --i) {
             out[i] = (bits & 0xFF);
             bits >>= 8;
@@ -534,9 +535,12 @@ static int bytepad(unsigned char *out, size_t *out_len,
         return 1;
     }
 
+    if (!ossl_assert(w <= 255))
+        return 0;
+
     /* Left encoded w */
     *p++ = 1;
-    *p++ = w;
+    *p++ = (unsigned char)w;
     /* || in1 */
     memcpy(p, in1, in1_len);
     p += in1_len;
