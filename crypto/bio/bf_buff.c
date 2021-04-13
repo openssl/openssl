@@ -289,7 +289,7 @@ static long buffer_ctrl(BIO *b, int cmd, long num, void *ptr)
         break;
     case BIO_C_SET_BUFF_READ_DATA:
         if (num > ctx->ibuf_size) {
-            if (num < 0)
+            if (num <= 0)
                 return 0;
             p1 = OPENSSL_malloc((size_t)num);
             if (p1 == NULL)
@@ -320,7 +320,7 @@ static long buffer_ctrl(BIO *b, int cmd, long num, void *ptr)
         p1 = ctx->ibuf;
         p2 = ctx->obuf;
         if ((ibs > DEFAULT_BUFFER_SIZE) && (ibs != ctx->ibuf_size)) {
-            if (num < 0)
+            if (num <= 0)
                 return 0;
             p1 = OPENSSL_malloc((size_t)num);
             if (p1 == NULL)

@@ -60,7 +60,7 @@ char *NETSCAPE_SPKI_b64_encode(NETSCAPE_SPKI *spki)
     int der_len;
 
     der_len = i2d_NETSCAPE_SPKI(spki, NULL);
-    if (der_len < 0)
+    if (der_len <= 0)
         return NULL;
     der_spki = OPENSSL_malloc(der_len);
     b64_str = OPENSSL_malloc(der_len * 2);

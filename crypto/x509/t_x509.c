@@ -236,7 +236,7 @@ int X509_ocspid_print(BIO *bp, X509 *x)
         goto err;
     subj = X509_get_subject_name(x);
     derlen = i2d_X509_NAME(subj, NULL);
-    if (derlen < 0)
+    if (derlen <= 0)
         goto err;
     if ((der = dertmp = OPENSSL_malloc(derlen)) == NULL)
         goto err;
