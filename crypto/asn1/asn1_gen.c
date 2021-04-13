@@ -498,6 +498,7 @@ static int append_exp(tag_exp_arg *arg, int exp_tag, int exp_class,
 static int asn1_str2tag(const char *tagstr, int len)
 {
     unsigned int i;
+    /* documented in ASN1_generate_nconf() */
     static const struct tag_name_st *tntmp, tnst[] = {
         ASN1_GEN_STR("BOOL", V_ASN1_BOOLEAN),
         ASN1_GEN_STR("BOOLEAN", V_ASN1_BOOLEAN),
@@ -520,8 +521,10 @@ static int asn1_str2tag(const char *tagstr, int len)
         ASN1_GEN_STR("UNIV", V_ASN1_UNIVERSALSTRING),
         ASN1_GEN_STR("IA5", V_ASN1_IA5STRING),
         ASN1_GEN_STR("IA5STRING", V_ASN1_IA5STRING),
+        ASN1_GEN_STR("IA5String", V_ASN1_IA5STRING),
         ASN1_GEN_STR("UTF8", V_ASN1_UTF8STRING),
         ASN1_GEN_STR("UTF8String", V_ASN1_UTF8STRING),
+        ASN1_GEN_STR("UTF8STRING", V_ASN1_UTF8STRING),
         ASN1_GEN_STR("BMP", V_ASN1_BMPSTRING),
         ASN1_GEN_STR("BMPSTRING", V_ASN1_BMPSTRING),
         ASN1_GEN_STR("VISIBLESTRING", V_ASN1_VISIBLESTRING),
@@ -530,6 +533,7 @@ static int asn1_str2tag(const char *tagstr, int len)
         ASN1_GEN_STR("PRINTABLE", V_ASN1_PRINTABLESTRING),
         ASN1_GEN_STR("T61", V_ASN1_T61STRING),
         ASN1_GEN_STR("T61STRING", V_ASN1_T61STRING),
+        ASN1_GEN_STR("T61String", V_ASN1_T61STRING),
         ASN1_GEN_STR("TELETEXSTRING", V_ASN1_T61STRING),
         ASN1_GEN_STR("GeneralString", V_ASN1_GENERALSTRING),
         ASN1_GEN_STR("GENSTR", V_ASN1_GENERALSTRING),
