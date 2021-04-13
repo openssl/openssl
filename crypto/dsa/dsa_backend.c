@@ -57,6 +57,15 @@ int ossl_dsa_key_fromdata(DSA *dsa, const OSSL_PARAM params[])
     return 0;
 }
 
+int ossl_dsa_is_foreign(const DSA *dsa)
+{
+#ifndef FIPS_MODULE
+    if (dsa->engine != NULL || DSA_get_method((DSA *)dsa) != DSA_OpenSSL())
+        return 1;
+#endif
+    return 0;
+}
+
 static ossl_inline int dsa_bn_dup_check(BIGNUM **out, const BIGNUM *f)
 {
     if (f != NULL && (*out = BN_dup(f)) == NULL)
@@ -68,11 +77,9 @@ DSA *ossl_dsa_dup(const DSA *dsa, int selection)
 {
     DSA *dupkey = NULL;
 
-#ifndef FIPS_MODULE
     /* Do not try to duplicate foreign DSA keys */
-    if (DSA_get_method((DSA *)dsa) != DSA_OpenSSL())
+    if (ossl_dsa_is_foreign(dsa))
         return NULL;
-#endif
 
     if ((dupkey = ossl_dsa_new(dsa->libctx)) == NULL)
         return NULL;

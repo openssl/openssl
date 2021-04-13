@@ -37,13 +37,14 @@
 #include "internal/ffc.h"
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
+#include "crypto/dh.h"
+#include "crypto/dsa.h"
 #include "crypto/ec.h"
 #include "crypto/ecx.h"
+#include "crypto/rsa.h"
 #include "crypto/x509.h"
 #include "internal/provider.h"
 #include "evp_local.h"
-
-#include "crypto/ec.h"
 
 #include "e_os.h"                /* strcasecmp on Windows */
 
@@ -691,6 +692,38 @@ ENGINE *EVP_PKEY_get0_engine(const EVP_PKEY *pkey)
 # endif
 
 # ifndef OPENSSL_NO_DEPRECATED_3_0
+static void detect_foreign_key(EVP_PKEY *pkey)
+{
+    switch (pkey->type) {
+    case EVP_PKEY_RSA:
+        pkey->foreign = pkey->pkey.rsa != NULL
+                        && ossl_rsa_is_foreign(pkey->pkey.rsa);
+        break;
+#  ifndef OPENSSL_NO_EC
+    case EVP_PKEY_SM2:
+    case EVP_PKEY_EC:
+        pkey->foreign = pkey->pkey.ec != NULL
+                        && ossl_ec_key_is_foreign(pkey->pkey.ec);
+        break;
+#  endif
+#  ifndef OPENSSL_NO_DSA
+    case EVP_PKEY_DSA:
+        pkey->foreign = pkey->pkey.dsa != NULL
+                        && ossl_dsa_is_foreign(pkey->pkey.dsa);
+        break;
+#endif
+#  ifndef OPENSSL_NO_DH
+    case EVP_PKEY_DH:
+        pkey->foreign = pkey->pkey.dh != NULL
+                        && ossl_dh_is_foreign(pkey->pkey.dh);
+        break;
+#endif
+    default:
+        pkey->foreign = 0;
+        break;
+    }
+}
+
 int EVP_PKEY_assign(EVP_PKEY *pkey, int type, void *key)
 {
 #  ifndef OPENSSL_NO_EC
@@ -719,6 +752,8 @@ int EVP_PKEY_assign(EVP_PKEY *pkey, int type, void *key)
         return 0;
 
     pkey->pkey.ptr = key;
+    detect_foreign_key(pkey);
+
     return (key != NULL);
 }
 # endif
@@ -1354,7 +1389,6 @@ EVP_PKEY *EVP_PKEY_new(void)
     ret->type = EVP_PKEY_NONE;
     ret->save_type = EVP_PKEY_NONE;
     ret->references = 1;
-    ret->save_parameters = 1;
 
     ret->lock = CRYPTO_THREAD_lock_new();
     if (ret->lock == NULL) {
@@ -1363,6 +1397,7 @@ EVP_PKEY *EVP_PKEY_new(void)
     }
 
 #ifndef FIPS_MODULE
+    ret->save_parameters = 1;
     if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_EVP_PKEY, ret, &ret->ex_data)) {
         ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
         goto err;

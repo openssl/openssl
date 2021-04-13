@@ -323,6 +323,15 @@ int ossl_rsa_pss_params_30_fromdata(RSA_PSS_PARAMS_30 *pss_params,
     return ret;
 }
 
+int ossl_rsa_is_foreign(const RSA *rsa)
+{
+#ifndef FIPS_MODULE
+    if (rsa->engine != NULL || RSA_get_method(rsa) != RSA_PKCS1_OpenSSL())
+        return 1;
+#endif
+    return 0;
+}
+
 static ossl_inline int rsa_bn_dup_check(BIGNUM **out, const BIGNUM *f)
 {
     if (f != NULL && (*out = BN_dup(f)) == NULL)
@@ -335,11 +344,11 @@ RSA *ossl_rsa_dup(const RSA *rsa, int selection)
     RSA *dupkey = NULL;
 #ifndef FIPS_MODULE
     int pnum, i;
+#endif
 
     /* Do not try to duplicate foreign RSA keys */
-    if (RSA_get_method(rsa) != RSA_PKCS1_OpenSSL())
+    if (ossl_rsa_is_foreign(rsa))
         return NULL;
-#endif
 
     if ((dupkey = ossl_rsa_new_with_ctx(rsa->libctx)) == NULL)
         return NULL;

@@ -118,6 +118,15 @@ int ossl_dh_key_todata(DH *dh, OSSL_PARAM_BLD *bld, OSSL_PARAM params[])
     return 1;
 }
 
+int ossl_dh_is_foreign(const DH *dh)
+{
+#ifndef FIPS_MODULE
+    if (dh->engine != NULL || ossl_dh_get_method(dh) != DH_OpenSSL())
+        return 1;
+#endif
+    return 0;
+}
+
 static ossl_inline int dh_bn_dup_check(BIGNUM **out, const BIGNUM *f)
 {
     if (f != NULL && (*out = BN_dup(f)) == NULL)
@@ -129,11 +138,9 @@ DH *ossl_dh_dup(const DH *dh, int selection)
 {
     DH *dupkey = NULL;
 
-#ifndef FIPS_MODULE
     /* Do not try to duplicate foreign DH keys */
-    if (ossl_dh_get_method(dh) != DH_OpenSSL())
+    if (ossl_dh_is_foreign(dh))
         return NULL;
-#endif
 
     if ((dupkey = ossl_dh_new_ex(dh->libctx)) == NULL)
         return NULL;

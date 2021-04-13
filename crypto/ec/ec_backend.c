@@ -520,6 +520,16 @@ int ossl_ec_key_otherparams_fromdata(EC_KEY *ec, const OSSL_PARAM params[])
     return 1;
 }
 
+int ossl_ec_key_is_foreign(const EC_KEY *ec)
+{
+#ifndef FIPS_MODULE
+    if (ec->engine != NULL || EC_KEY_get_method(ec) != EC_KEY_OpenSSL())
+        return 1;
+#endif
+    return 0;
+
+}
+
 EC_KEY *ossl_ec_key_dup(const EC_KEY *src, int selection)
 {
     EC_KEY *ret = ossl_ec_key_new_method_int(src->libctx, src->propq,

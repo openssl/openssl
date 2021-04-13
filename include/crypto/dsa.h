@@ -43,6 +43,7 @@ int ossl_dsa_check_pub_key_partial(const DSA *dsa, const BIGNUM *pub_key,
                                    int *ret);
 int ossl_dsa_check_priv_key(const DSA *dsa, const BIGNUM *priv_key, int *ret);
 int ossl_dsa_check_pairwise(const DSA *dsa);
+int ossl_dsa_is_foreign(const DSA *dsa);
 DSA *ossl_dsa_dup(const DSA *dsa, int selection);
 
 #endif
