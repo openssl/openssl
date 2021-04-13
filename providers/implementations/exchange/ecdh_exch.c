@@ -125,11 +125,15 @@ int ecdh_match_params(const EC_KEY *priv, const EC_KEY *peer)
     const EC_GROUP *group_peer = EC_KEY_get0_group(peer);
 
     ctx = BN_CTX_new_ex(ossl_ec_key_get_libctx(priv));
-    if (group_priv == NULL
-        || group_peer == NULL
-        || ctx == NULL)
+    if (ctx == NULL) {
+        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
         return 0;
-    ret = EC_GROUP_cmp(group_priv, group_peer, ctx) == 0;
+    }
+    ret = group_priv != NULL
+          && group_peer != NULL
+          && EC_GROUP_cmp(group_priv, group_peer, ctx) == 0;
+    if (!ret)
+        ERR_raise(ERR_LIB_PROV, PROV_R_MISMATCHING_SHARED_PARAMETERS);
     BN_CTX_free(ctx);
     return ret;
 }

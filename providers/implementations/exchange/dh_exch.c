@@ -111,12 +111,16 @@ static int dh_init(void *vpdhctx, void *vdh, const OSSL_PARAM params[])
 /* The 2 parties must share the same domain parameters */
 static int dh_match_params(DH *priv, DH *peer)
 {
+    int ret;
     FFC_PARAMS *dhparams_priv = ossl_dh_get0_params(priv);
     FFC_PARAMS *dhparams_peer = ossl_dh_get0_params(peer);
 
-    return dhparams_priv != NULL
-           && dhparams_peer != NULL
-           && ossl_ffc_params_cmp(dhparams_priv, dhparams_peer, 1);
+    ret = dhparams_priv != NULL
+          && dhparams_peer != NULL
+          && ossl_ffc_params_cmp(dhparams_priv, dhparams_peer, 1);
+    if (!ret)
+        ERR_raise(ERR_LIB_PROV, PROV_R_MISMATCHING_SHARED_PARAMETERS);
+    return ret;
 }
 
 static int dh_set_peer(void *vpdhctx, void *vdh)
