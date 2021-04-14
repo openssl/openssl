@@ -18,13 +18,6 @@
  */
 #include "internal/deprecated.h"
 
-/*
- * Parameter generation follows the updated Appendix 2.2 for FIPS PUB 186,
- * also Appendix 2.2 of FIPS PUB 186-1 (i.e. use SHA as defined in FIPS PUB
- * 180-1)
- */
-#define xxxHASH    EVP_sha1()
-
 #include <openssl/opensslconf.h>
 
 #include <stdio.h>
