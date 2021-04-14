@@ -1,0 +1,1 @@
+Implemented installation support for GNU/Linux
