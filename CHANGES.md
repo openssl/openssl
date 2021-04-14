@@ -29,6 +29,12 @@ OpenSSL 3.0
 
    *Boris Pismenny, John Baldwin and Andrew Gallatin*
 
+ * The error return values from some control calls (ctrl) have changed.
+   One significant change is that controls which used to return -2 for
+   invalid inputs, now return -1 indicating a generic error condition instead.
+
+   *Paul Dale*
+
  * A public key check is now performed during EVP_PKEY_derive_set_peer().
    Previously DH was internally doing this during EVP_PKEY_derive().
    To disable this check use EVP_PKEY_derive_set_peer_ex(dh, peer, 0). This
