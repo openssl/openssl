@@ -222,6 +222,7 @@ static unsigned char *rsa_generate_signature_aid(PROV_RSA_CTX *ctx,
     unsigned char *aid = NULL;
     int saltlen;
     RSA_PSS_PARAMS_30 pss_params;
+    int ret;
 
     if (!WPACKET_init_der(&pkt, aid_buf, buf_len)) {
         ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
@@ -229,33 +230,41 @@ static unsigned char *rsa_generate_signature_aid(PROV_RSA_CTX *ctx,
     }
 
     switch(ctx->pad_mode) {
-        case RSA_PKCS1_PADDING:
-            if (!ossl_DER_w_algorithmIdentifier_MDWithRSAEncryption(&pkt, -1,
-                                                                    ctx->mdnid)) {
-                ERR_raise(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR);
-                goto cleanup;
-            }
+    case RSA_PKCS1_PADDING:
+        ret = ossl_DER_w_algorithmIdentifier_MDWithRSAEncryption(&pkt, -1,
+                                                                 ctx->mdnid);
+
+        if (ret > 0) {
             break;
-        case RSA_PKCS1_PSS_PADDING:
-            saltlen = rsa_pss_compute_saltlen(ctx);
-            if (saltlen < 0)
-                goto cleanup;
-            if (!ossl_rsa_pss_params_30_set_defaults(&pss_params)
-                || !ossl_rsa_pss_params_30_set_hashalg(&pss_params, ctx->mdnid)
-                || !ossl_rsa_pss_params_30_set_maskgenhashalg(&pss_params,
-                                                              ctx->mgf1_mdnid)
-                || !ossl_rsa_pss_params_30_set_saltlen(&pss_params, saltlen)
-                || !ossl_DER_w_algorithmIdentifier_RSA_PSS(&pkt, -1,
-                                                           RSA_FLAG_TYPE_RSASSAPSS,
-                                                           &pss_params)) {
-                ERR_raise(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR);
-                goto cleanup;
-            }
-            break;
-        default:
-            ERR_raise_data(ERR_LIB_PROV, ERR_R_UNSUPPORTED,
-                           "Algorithm ID generation");
+        } else if (ret == 0) {
+            ERR_raise(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR);
             goto cleanup;
+        }
+        ERR_raise_data(ERR_LIB_PROV, ERR_R_UNSUPPORTED,
+                       "Algorithm ID generation - md NID: %d",
+                       ctx->mdnid);
+        goto cleanup;
+    case RSA_PKCS1_PSS_PADDING:
+        saltlen = rsa_pss_compute_saltlen(ctx);
+        if (saltlen < 0)
+            goto cleanup;
+        if (!ossl_rsa_pss_params_30_set_defaults(&pss_params)
+            || !ossl_rsa_pss_params_30_set_hashalg(&pss_params, ctx->mdnid)
+            || !ossl_rsa_pss_params_30_set_maskgenhashalg(&pss_params,
+                                                          ctx->mgf1_mdnid)
+            || !ossl_rsa_pss_params_30_set_saltlen(&pss_params, saltlen)
+            || !ossl_DER_w_algorithmIdentifier_RSA_PSS(&pkt, -1,
+                                                       RSA_FLAG_TYPE_RSASSAPSS,
+                                                       &pss_params)) {
+            ERR_raise(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR);
+            goto cleanup;
+        }
+        break;
+    default:
+        ERR_raise_data(ERR_LIB_PROV, ERR_R_UNSUPPORTED,
+                       "Algorithm ID generation - pad mode: %d",
+                       ctx->pad_mode);
+        goto cleanup;
     }
     if (WPACKET_finish(&pkt)) {
         WPACKET_get_total_written(&pkt, aid_len);
