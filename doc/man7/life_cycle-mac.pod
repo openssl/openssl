@@ -99,10 +99,10 @@ This is the canonical list.
  EVP_MAC_update                                     updated     updated
  EVP_MAC_final                                                  finaled
  EVP_MAC_CTX_free                freed   freed       freed       freed       freed
- EVP_MAC_get_ctx_params                  newed    initialised   updated    
- EVP_MAC_set_ctx_params                  newed    initialised   updated
  EVP_MAC_CTX_get_params                  newed    initialised   updated
  EVP_MAC_CTX_set_params                  newed    initialised   updated
+ EVP_MAC_CTX_gettable_params             newed    initialised   updated
+ EVP_MAC_CTX_settable_params             newed    initialised   updated
 
 =end man
 
@@ -153,20 +153,6 @@ This is the canonical list.
     <td style="border:1px solid" align="center">freed</td>
     <td style="border:1px solid" align="center">freed</td>
     <td style="border:1px solid" align="center"></td></tr>
-<tr><th style="border:1px solid" align="left">EVP_MAC_get_ctx_params</th>
-    <td style="border:1px solid" align="center"></td>
-    <td style="border:1px solid" align="center">newed</td>
-    <td style="border:1px solid" align="center">initialised</td>
-    <td style="border:1px solid" align="center">updated</td>
-    <td style="border:1px solid" align="center"></td>
-    <td style="border:1px solid" align="center"></td></tr>
-<tr><th style="border:1px solid" align="left">EVP_MAC_set_ctx_params</th>
-    <td style="border:1px solid" align="center"></td>
-    <td style="border:1px solid" align="center">newed</td>
-    <td style="border:1px solid" align="center">initialised</td>
-    <td style="border:1px solid" align="center">updated</td>
-    <td style="border:1px solid" align="center"></td>
-    <td style="border:1px solid" align="center"></td></tr>
 <tr><th style="border:1px solid" align="left">EVP_MAC_CTX_get_params</th>
     <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center">newed</td>
@@ -175,6 +161,20 @@ This is the canonical list.
     <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center"></td></tr>
 <tr><th style="border:1px solid" align="left">EVP_MAC_CTX_set_params</th>
+    <td style="border:1px solid" align="center"></td>
+    <td style="border:1px solid" align="center">newed</td>
+    <td style="border:1px solid" align="center">initialised</td>
+    <td style="border:1px solid" align="center">updated</td>
+    <td style="border:1px solid" align="center"></td>
+    <td style="border:1px solid" align="center"></td></tr>
+<tr><th style="border:1px solid" align="left">EVP_MAC_CTX_getablet_params</th>
+    <td style="border:1px solid" align="center"></td>
+    <td style="border:1px solid" align="center">newed</td>
+    <td style="border:1px solid" align="center">initialised</td>
+    <td style="border:1px solid" align="center">updated</td>
+    <td style="border:1px solid" align="center"></td>
+    <td style="border:1px solid" align="center"></td></tr>
+<tr><th style="border:1px solid" align="left">EVP_MAC_CTX_settable_params</th>
     <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center">newed</td>
     <td style="border:1px solid" align="center">initialised</td>
