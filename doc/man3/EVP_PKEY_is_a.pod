@@ -31,7 +31,7 @@ be named both C<RSA> and C<rsaEncryption>.
 The order of the names depends on the provider implementation that holds
 the key.
 
-EVP_PKEY_get0_type_name() returns the first algorithm type name that is found
+EVP_PKEY_get0_type_name() returns the first key type name that is found
 for the given I<pkey>. Note that the I<pkey> may have multiple synonyms
 associated with it. In this case it depends on the provider implementation
 that holds the key which one will be returned.
