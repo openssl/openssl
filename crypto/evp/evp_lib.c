@@ -1126,7 +1126,7 @@ int EVP_PKEY_CTX_get_group_name(EVP_PKEY_CTX *ctx, char *name, size_t namelen)
  * such as the RSA modulus size or the name of an EC curve.
  */
 static EVP_PKEY *evp_pkey_keygen(OSSL_LIB_CTX *libctx, const char *name,
-                                 const char *propq, OSSL_PARAM *params)
+                                 const char *propq, const OSSL_PARAM *params)
 {
     EVP_PKEY *pkey = NULL;
     EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new_from_name(libctx, name, propq);

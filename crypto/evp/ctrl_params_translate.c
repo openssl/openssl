@@ -2623,9 +2623,9 @@ static int evp_pkey_ctx_setget_params_to_ctrl(EVP_PKEY_CTX *pctx,
     return 1;
 }
 
-int evp_pkey_ctx_set_params_to_ctrl(EVP_PKEY_CTX *ctx, OSSL_PARAM *params)
+int evp_pkey_ctx_set_params_to_ctrl(EVP_PKEY_CTX *ctx, const OSSL_PARAM *params)
 {
-    return evp_pkey_ctx_setget_params_to_ctrl(ctx, SET, params);
+    return evp_pkey_ctx_setget_params_to_ctrl(ctx, SET, (OSSL_PARAM *)params);
 }
 
 int evp_pkey_ctx_get_params_to_ctrl(EVP_PKEY_CTX *ctx, OSSL_PARAM *params)
