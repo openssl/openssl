@@ -221,6 +221,8 @@ jobs:
       uses: perl-actions/install-with-cpanm@v1
       with:
         install: Test2::V0
+    - name: setup hostname workaround
+      run: sudo hostname localhost
     - name: config
       run: ./config --strict-warnings --debug no-afalgeng enable-rc5 enable-md2 enable-ssl3 enable-ssl3-method enable-weak-ssl-ciphers enable-zlib enable-ec_nistp_64_gcc_128 enable-external-tests && perl configdata.pm --dump
     - name: make
