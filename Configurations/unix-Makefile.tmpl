@@ -594,7 +594,7 @@ install_docs: install_man_docs install_html_docs
 uninstall_docs: uninstall_man_docs uninstall_html_docs
 	$(RM) -r $(DESTDIR)$(DOCDIR)
 
-install_fips:
+install_fips: build_sw providers/fipsmodule.cnf
 	@[ -n "$(INSTALLTOP)" ] || (echo INSTALLTOP should not be empty; exit 1)
 	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(MODULESDIR)
 	@$(ECHO) "*** Installing FIPS module"
@@ -604,11 +604,8 @@ install_fips:
 	@mv -f $(DESTDIR)$(MODULESDIR)/$(FIPSMODULENAME).new \
 	       $(DESTDIR)$(MODULESDIR)/$(FIPSMODULENAME)
 	@$(ECHO) "*** Installing FIPS module configuration"
-	@$(ECHO) "fipsinstall $(DESTDIR)$(OPENSSLDIR)/fipsmodule.cnf"
-	@$(PERL) $(BLDDIR)/util/wrap.pl $(BLDDIR)/apps/openssl fipsinstall \
-		-module $(DESTDIR)$(MODULESDIR)/$(FIPSMODULENAME) \
-		-out $(DESTDIR)$(OPENSSLDIR)/fipsmodule.cnf \
-		-macopt 'hexkey:$(FIPSKEY)'
+	@$(ECHO) "install providers/fipsmodule.cnf -> $(DESTDIR)$(OPENSSLDIR)/fipsmodule.cnf"
+	@cp providers/fipsmodule.cnf $(DESTDIR)$(OPENSSLDIR)/fipsmodule.cnf
 
 uninstall_fips:
 	@$(ECHO) "*** Uninstalling FIPS module configuration"
