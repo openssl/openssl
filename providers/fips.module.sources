@@ -42,6 +42,7 @@ crypto/bn/asm/mips.pl
 crypto/bn/asm/parisc-mont.pl
 crypto/bn/asm/ppc-mont.pl
 crypto/bn/asm/ppc.pl
+crypto/bn/asm/ppc64-mont-fixed.pl
 crypto/bn/asm/ppc64-mont.pl
 crypto/bn/asm/rsaz-avx2.pl
 crypto/bn/asm/rsaz-avx512.pl
