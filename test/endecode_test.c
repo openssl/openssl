@@ -494,7 +494,7 @@ static int check_unprotected_PKCS8_DER(const char *file, const int line,
 
         if (TEST_FL_ptr(pkey)) {
             if (!(ok = TEST_FL_true(EVP_PKEY_is_a(pkey, type)))) {
-                EVP_PKEY_typenames_do_all(pkey, collect_name, &namelist);
+                EVP_PKEY_type_names_do_all(pkey, collect_name, &namelist);
                 if (namelist != NULL)
                     TEST_note("%s isn't any of %s", type, namelist);
                 OPENSSL_free(namelist);

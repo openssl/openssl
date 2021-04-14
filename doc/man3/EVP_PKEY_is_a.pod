@@ -2,8 +2,8 @@
 
 =head1 NAME
 
-EVP_PKEY_is_a, EVP_PKEY_can_sign, EVP_PKEY_typenames_do_all,
-EVP_PKEY_get0_first_alg_name
+EVP_PKEY_is_a, EVP_PKEY_can_sign, EVP_PKEY_type_names_do_all,
+EVP_PKEY_get0_type_name
 - key type and capabilities functions
 
 =head1 SYNOPSIS
@@ -12,10 +12,10 @@ EVP_PKEY_get0_first_alg_name
 
  int EVP_PKEY_is_a(const EVP_PKEY *pkey, const char *name);
  int EVP_PKEY_can_sign(const EVP_PKEY *pkey);
- int EVP_PKEY_typenames_do_all(const EVP_PKEY *pkey,
-                               void (*fn)(const char *name, void *data),
-                               void *data);
- const char *EVP_PKEY_get0_first_alg_name(const EVP_PKEY *key);
+ int EVP_PKEY_type_names_do_all(const EVP_PKEY *pkey,
+                                void (*fn)(const char *name, void *data),
+                                void *data);
+ const char *EVP_PKEY_get0_type_name(const EVP_PKEY *key);
 
 =head1 DESCRIPTION
 
@@ -25,14 +25,16 @@ EVP_PKEY_can_sign() checks if the functionality for the key type of
 I<pkey> supports signing.  No other check is done, such as whether
 I<pkey> contains a private key.
 
-EVP_PKEY_typenames_do_all() traverses all names for I<pkey>'s key type, and
+EVP_PKEY_type_names_do_all() traverses all names for I<pkey>'s key type, and
 calls I<fn> with each name and I<data>.  For example, an RSA B<EVP_PKEY> may
 be named both C<RSA> and C<rsaEncryption>.
-The order of the names is undefined.
+The order of the names depends on the provider implementation that holds
+the key.
 
-EVP_PKEY_get0_first_alg_name() returns the first algorithm name that is found
+EVP_PKEY_get0_type_name() returns the first key type name that is found
 for the given I<pkey>. Note that the I<pkey> may have multiple synonyms
-associated with it. In this case it is undefined which one will be returned.
+associated with it. In this case it depends on the provider implementation
+that holds the key which one will be returned.
 Ownership of the returned string is retained by the I<pkey> object and should
 not be freed by the caller.
 
@@ -44,10 +46,11 @@ otherwise 0.
 EVP_PKEY_can_sign() returns 1 if the I<pkey> key type functionality
 supports signing, otherwise 0.
 
-EVP_PKEY_get0_first_alg_name() returns the name that is found or NULL on error.
+EVP_PKEY_get0_type_name() returns the name that is found or NULL on error.
 
-EVP_PKEY_typenames_do_all() returns 1 if the callback was called for all names.
-A return value of 0 means that the callback was not called for any names.
+EVP_PKEY_type_names_do_all() returns 1 if the callback was called for all
+names. A return value of 0 means that the callback was not called for any
+names.
 
 =head1 EXAMPLES
 

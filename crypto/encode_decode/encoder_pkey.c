@@ -316,7 +316,7 @@ OSSL_ENCODER_CTX *OSSL_ENCODER_CTX_new_for_pkey(const EVP_PKEY *pkey,
     OSSL_TRACE_BEGIN(ENCODER) {
         BIO_printf(trc_out,
                    "(ctx %p) Looking for %s encoders with selection %d\n",
-                   (void *)ctx, EVP_PKEY_get0_first_alg_name(pkey), selection);
+                   (void *)ctx, EVP_PKEY_get0_type_name(pkey), selection);
         BIO_printf(trc_out, "    output type: %s, output structure: %s\n",
                    output_type, output_struct);
     } OSSL_TRACE_END(ENCODER);
