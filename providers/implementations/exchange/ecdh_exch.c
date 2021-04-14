@@ -133,7 +133,7 @@ int ecdh_match_params(const EC_KEY *priv, const EC_KEY *peer)
           && group_peer != NULL
           && EC_GROUP_cmp(group_priv, group_peer, ctx) == 0;
     if (!ret)
-        ERR_raise(ERR_LIB_PROV, PROV_R_MISMATCHING_SHARED_PARAMETERS);
+        ERR_raise(ERR_LIB_PROV, PROV_R_MISMATCHING_DOMAIN_PARAMETERS);
     BN_CTX_free(ctx);
     return ret;
 }

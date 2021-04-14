@@ -119,7 +119,7 @@ static int dh_match_params(DH *priv, DH *peer)
           && dhparams_peer != NULL
           && ossl_ffc_params_cmp(dhparams_priv, dhparams_peer, 1);
     if (!ret)
-        ERR_raise(ERR_LIB_PROV, PROV_R_MISMATCHING_SHARED_PARAMETERS);
+        ERR_raise(ERR_LIB_PROV, PROV_R_MISMATCHING_DOMAIN_PARAMETERS);
     return ret;
 }
 
