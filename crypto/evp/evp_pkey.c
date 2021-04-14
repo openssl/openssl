@@ -219,7 +219,7 @@ int EVP_PKEY_add1_attr_by_txt(EVP_PKEY *key,
     return 0;
 }
 
-const char *EVP_PKEY_get0_first_alg_name(const EVP_PKEY *key)
+const char *EVP_PKEY_get0_type_name(const EVP_PKEY *key)
 {
     const EVP_PKEY_ASN1_METHOD *ameth;
     const char *name = NULL;

@@ -5228,7 +5228,7 @@ EVP_PKEY_CTX_get1_id_len                ?	3_0_0	EXIST::FUNCTION:
 CMS_AuthEnvelopedData_create            ?	3_0_0	EXIST::FUNCTION:CMS
 CMS_AuthEnvelopedData_create_ex         ?	3_0_0	EXIST::FUNCTION:CMS
 EVP_PKEY_CTX_set_ec_param_enc           ?	3_0_0	EXIST::FUNCTION:
-EVP_PKEY_get0_first_alg_name            ?	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_get0_type_name                 ?	3_0_0	EXIST::FUNCTION:
 EVP_KEYMGMT_get0_first_name             ?	3_0_0	EXIST::FUNCTION:
 EC_KEY_decoded_from_explicit_params     ?	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,EC
 EVP_KEM_free                            ?	3_0_0	EXIST::FUNCTION:
@@ -5259,7 +5259,7 @@ OSSL_ENCODER_CTX_set_construct          ?	3_0_0	EXIST::FUNCTION:
 OSSL_ENCODER_CTX_set_construct_data     ?	3_0_0	EXIST::FUNCTION:
 OSSL_ENCODER_CTX_set_cleanup            ?	3_0_0	EXIST::FUNCTION:
 OSSL_ENCODER_CTX_set_passphrase_cb      ?	3_0_0	EXIST::FUNCTION:
-EVP_PKEY_typenames_do_all               ?	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_type_names_do_all              ?	3_0_0	EXIST::FUNCTION:
 OSSL_DECODER_INSTANCE_get_input_type    ?	3_0_0	EXIST::FUNCTION:
 EVP_ASYM_CIPHER_gettable_ctx_params     ?	3_0_0	EXIST::FUNCTION:
 EVP_ASYM_CIPHER_settable_ctx_params     ?	3_0_0	EXIST::FUNCTION:

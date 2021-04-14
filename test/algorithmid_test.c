@@ -152,7 +152,7 @@ static int test_x509_sig_aid(X509 *eecert, const char *ee_filename,
                   ca_filename, ee_filename);
         TEST_info("Signature algorithm is %s (pkey type %s, hash type %s)",
                   OBJ_nid2sn(sig_nid), OBJ_nid2sn(pkey_nid), OBJ_nid2sn(dig_nid));
-        TEST_info("Pkey key type is %s", EVP_PKEY_get0_first_alg_name(pkey));
+        TEST_info("Pkey key type is %s", EVP_PKEY_get0_type_name(pkey));
         goto end;
     }
 

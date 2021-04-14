@@ -427,7 +427,7 @@ int dgst_main(int argc, char **argv)
         const char *sig_name = NULL;
         if (!out_bin) {
             if (sigkey != NULL)
-                sig_name = EVP_PKEY_get0_first_alg_name(sigkey);
+                sig_name = EVP_PKEY_get0_type_name(sigkey);
         }
         ret = 0;
         for (i = 0; i < argc; i++) {
