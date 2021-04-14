@@ -81,8 +81,8 @@ This is the canonical list.
  EVP_KDF_CTX_reset                           newed        newed
  EVP_KDF_CTX_get_params                      newed       deriving
  EVP_KDF_CTX_set_params                      newed       deriving
- EVP_KDF_CTX_gettable_params                 newed       deriving
- EVP_KDF_CTX_settable_params                 newed       deriving
+ EVP_KDF_CTX_get_params                      newed       deriving
+ EVP_KDF_CTX_set_params                      newed       deriving
 
 =end man
 
@@ -126,12 +126,12 @@ This is the canonical list.
     <td style="border:1px solid" align="center">newed</td>
     <td style="border:1px solid" align="center">deriving</td>
     <td style="border:1px solid"></td></tr>
-<tr><th style="border:1px solid" align="left">EVP_KDF_CTX_gettable_params</th>
+<tr><th style="border:1px solid" align="left">EVP_KDF_CTX_get_params</th>
     <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center">newed</td>
     <td style="border:1px solid" align="center">deriving</td>
     <td style="border:1px solid"></td></tr>
-<tr><th style="border:1px solid" align="left">EVP_KDF_CTX_settable_params</th>
+<tr><th style="border:1px solid" align="left">EVP_KDF_CTX_set_params</th>
     <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center">newed</td>
     <td style="border:1px solid" align="center">deriving</td>
