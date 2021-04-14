@@ -296,7 +296,7 @@ unsigned char *EC_GROUP_get0_seed(const EC_GROUP *x);
 size_t EC_GROUP_get_seed_len(const EC_GROUP *);
 size_t EC_GROUP_set_seed(EC_GROUP *, const unsigned char *, size_t len);
 
-/** Sets the parameters of a ec curve defined by y^2 = x^3 + a*x + b (for GFp)
+/** Sets the parameters of an ec curve defined by y^2 = x^3 + a*x + b (for GFp)
  *  or y^2 + x*y = x^3 + a*x^2 + b (for GF2m)
  *  \param  group  EC_GROUP object
  *  \param  p      BIGNUM with the prime number (GFp) or the polynomial
@@ -1222,7 +1222,7 @@ OSSL_DEPRECATEDIN_3_0 int i2d_ECParameters(const EC_KEY *key,
 /*         (octet string, not DER -- hence 'o2i' and 'i2o')         */
 /********************************************************************/
 
-/** Decodes a ec public key from a octet string.
+/** Decodes an ec public key from a octet string.
  *  \param  key  a pointer to a EC_KEY object which should be used
  *  \param  in   memory buffer with the encoded public key
  *  \param  len  length of the encoded public key
@@ -1232,7 +1232,7 @@ OSSL_DEPRECATEDIN_3_0 int i2d_ECParameters(const EC_KEY *key,
 OSSL_DEPRECATEDIN_3_0 EC_KEY *o2i_ECPublicKey(EC_KEY **key,
                                               const unsigned char **in, long len);
 
-/** Encodes a ec public key in an octet string.
+/** Encodes an ec public key in an octet string.
  *  \param  key  the EC_KEY object with the public key
  *  \param  out  the buffer for the result (if NULL the function returns number
  *               of bytes needed).
