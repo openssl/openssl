@@ -792,10 +792,21 @@ EVP_MD *EVP_MD_meth_dup(const EVP_MD *md)
     return to;
 }
 
+void evp_md_free_int(EVP_MD *md)
+{
+    ossl_provider_free(md->prov);
+    CRYPTO_THREAD_lock_free(md->lock);
+    OPENSSL_free(md);
+}
+
 void EVP_MD_meth_free(EVP_MD *md)
 {
-    EVP_MD_free(md);
+    if (md == NULL || md->origin != EVP_ORIG_METH)
+       return;
+
+    evp_md_free_int(md);
 }
+
 int EVP_MD_meth_set_input_blocksize(EVP_MD *md, int blocksize)
 {
     if (md->block_size != 0)
@@ -951,7 +962,8 @@ EVP_MD *EVP_MD_CTX_get1_md(EVP_MD_CTX *ctx)
     if (ctx == NULL)
         return NULL;
     md = (EVP_MD *)ctx->reqdigest;
-    ctx->reqdigest = NULL;
+    if (!EVP_MD_up_ref(md))
+        return NULL;
     return md;
 }
 

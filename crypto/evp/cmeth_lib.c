@@ -56,7 +56,10 @@ EVP_CIPHER *EVP_CIPHER_meth_dup(const EVP_CIPHER *cipher)
 
 void EVP_CIPHER_meth_free(EVP_CIPHER *cipher)
 {
-    EVP_CIPHER_free(cipher);
+    if (cipher == NULL || cipher->origin != EVP_ORIG_METH)
+       return;
+
+    evp_cipher_free_int(cipher);
 }
 
 int EVP_CIPHER_meth_set_iv_length(EVP_CIPHER *cipher, int iv_len)

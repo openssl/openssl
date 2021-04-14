@@ -1607,22 +1607,24 @@ int EVP_CIPHER_up_ref(EVP_CIPHER *cipher)
     return 1;
 }
 
+void evp_cipher_free_int(EVP_CIPHER *cipher)
+{
+    ossl_provider_free(cipher->prov);
+    CRYPTO_THREAD_lock_free(cipher->lock);
+    OPENSSL_free(cipher);
+}
+
 void EVP_CIPHER_free(EVP_CIPHER *cipher)
 {
     int i;
 
-    if (cipher == NULL || cipher->origin == EVP_ORIG_GLOBAL)
+    if (cipher == NULL || cipher->origin != EVP_ORIG_DYNAMIC)
         return;
 
-    if (cipher->origin == EVP_ORIG_DYNAMIC) {
-        CRYPTO_DOWN_REF(&cipher->refcnt, &i, cipher->lock);
-        if (i > 0)
-            return;
-    }
-
-    ossl_provider_free(cipher->prov);
-    CRYPTO_THREAD_lock_free(cipher->lock);
-    OPENSSL_free(cipher);
+    CRYPTO_DOWN_REF(&cipher->refcnt, &i, cipher->lock);
+    if (i > 0)
+        return;
+    evp_cipher_free_int(cipher);
 }
 
 void EVP_CIPHER_do_all_provided(OSSL_LIB_CTX *libctx,
