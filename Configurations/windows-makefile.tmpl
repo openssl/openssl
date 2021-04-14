@@ -789,8 +789,8 @@ EOF
           # Also redo $gen0, to ensure that we have the proper extension.
           $gen0 = platform->bin($gen0);
           return <<"EOF";
-$args{src}: $gen0 $deps
-	$gen0$gen_args > \$@
+$args{src}: $gen0 $deps "\$(BLDDIR)\\util\\wrap.pl"
+	"\$(PERL)" "\$(BLDDIR)\\util\\wrap.pl" $gen0$gen_args > \$@
 EOF
       } else {
           #
