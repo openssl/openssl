@@ -668,8 +668,8 @@ EVP_R_EXPECTING_AN_HMAC_KEY:174:expecting an hmac key
 EVP_R_EXPECTING_AN_RSA_KEY:127:expecting an rsa key
 EVP_R_EXPECTING_A_DH_KEY:128:expecting a dh key
 EVP_R_EXPECTING_A_DSA_KEY:129:expecting a dsa key
-EVP_R_EXPECTING_A_ECX_KEY:219:expecting a ecx key
-EVP_R_EXPECTING_A_EC_KEY:142:expecting a ec key
+EVP_R_EXPECTING_A_ECX_KEY:219:expecting an ecx key
+EVP_R_EXPECTING_A_EC_KEY:142:expecting an ec key
 EVP_R_EXPECTING_A_POLY1305_KEY:164:expecting a poly1305 key
 EVP_R_EXPECTING_A_SIPHASH_KEY:175:expecting a siphash key
 EVP_R_FINAL_ERROR:188:final error

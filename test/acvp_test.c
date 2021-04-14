@@ -206,7 +206,7 @@ err:
     return ret;
 }
 
-/* Extract r and s  from a ecdsa signature */
+/* Extract r and s  from an ecdsa signature */
 static int get_ecdsa_sig_rs_bytes(const unsigned char *sig, size_t sig_len,
                                   unsigned char **r, unsigned char **s,
                                   size_t *rlen, size_t *slen)
