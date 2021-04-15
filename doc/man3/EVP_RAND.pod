@@ -9,8 +9,8 @@ EVP_RAND_enable_locking, EVP_RAND_verify_zeroization, EVP_RAND_strength,
 EVP_RAND_state,
 EVP_RAND_provider, EVP_RAND_CTX_rand, EVP_RAND_is_a, EVP_RAND_number,
 EVP_RAND_name, EVP_RAND_names_do_all, EVP_RAND_description,
-EVP_RAND_get_ctx_params,
-EVP_RAND_set_ctx_params, EVP_RAND_do_all_provided, EVP_RAND_get_params,
+EVP_RAND_CTX_get_params,
+EVP_RAND_CTX_set_params, EVP_RAND_do_all_provided, EVP_RAND_get_params,
 EVP_RAND_gettable_ctx_params, EVP_RAND_settable_ctx_params,
 EVP_RAND_CTX_gettable_params, EVP_RAND_CTX_settable_params,
 EVP_RAND_gettable_params, EVP_RAND_STATE_UNINITIALISED, EVP_RAND_STATE_READY,
@@ -31,8 +31,8 @@ EVP_RAND_STATE_ERROR - EVP RAND routines
  void EVP_RAND_CTX_free(EVP_RAND_CTX *ctx);
  EVP_RAND *EVP_RAND_CTX_rand(EVP_RAND_CTX *ctx);
  int EVP_RAND_get_params(EVP_RAND *rand, OSSL_PARAM params[]);
- int EVP_RAND_get_ctx_params(EVP_RAND_CTX *ctx, OSSL_PARAM params[]);
- int EVP_RAND_set_ctx_params(EVP_RAND_CTX *ctx, const OSSL_PARAM params[]);
+ int EVP_RAND_CTX_get_params(EVP_RAND_CTX *ctx, OSSL_PARAM params[]);
+ int EVP_RAND_CTX_set_params(EVP_RAND_CTX *ctx, const OSSL_PARAM params[]);
  const OSSL_PARAM *EVP_RAND_gettable_params(const EVP_RAND *rand);
  const OSSL_PARAM *EVP_RAND_gettable_ctx_params(const EVP_RAND *rand);
  const OSSL_PARAM *EVP_RAND_settable_ctx_params(const EVP_RAND *rand);
@@ -83,7 +83,7 @@ RAND and RAND_DRBG functions.
 After creating a B<EVP_RAND_CTX> for the required algorithm using
 EVP_RAND_CTX_new(), inputs to the algorithm are supplied either by
 passing them as part of the EVP_RAND_instantiate() call or using calls to
-EVP_RAND_set_ctx_params() before calling EVP_RAND_instantiate().  Finally,
+EVP_RAND_CTX_set_params() before calling EVP_RAND_instantiate().  Finally,
 call EVP_RAND_generate() to produce cryptographically secure random bytes.
 
 =head2 Types
@@ -170,14 +170,14 @@ parameters should be retrieved.
 Note that a parameter that is unknown in the underlying context is
 simply ignored.
 
-EVP_RAND_get_ctx_params() retrieves chosen parameters, given the
+EVP_RAND_CTX_get_params() retrieves chosen parameters, given the
 context I<ctx> and its underlying context.
 The set of parameters given with I<params> determine exactly what
 parameters should be retrieved.
 Note that a parameter that is unknown in the underlying context is
 simply ignored.
 
-EVP_RAND_set_ctx_params() passes chosen parameters to the underlying
+EVP_RAND_CTX_set_params() passes chosen parameters to the underlying
 context, given a context I<ctx>.
 The set of parameters given with I<params> determine exactly what
 parameters are passed down.

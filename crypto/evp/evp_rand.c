@@ -397,7 +397,7 @@ static int evp_rand_get_ctx_params_locked(EVP_RAND_CTX *ctx,
     return ctx->meth->get_ctx_params(ctx->data, params);
 }
 
-int EVP_RAND_get_ctx_params(EVP_RAND_CTX *ctx, OSSL_PARAM params[])
+int EVP_RAND_CTX_get_params(EVP_RAND_CTX *ctx, OSSL_PARAM params[])
 {
     int res;
 
@@ -416,7 +416,7 @@ static int evp_rand_set_ctx_params_locked(EVP_RAND_CTX *ctx,
     return 1;
 }
 
-int EVP_RAND_set_ctx_params(EVP_RAND_CTX *ctx, const OSSL_PARAM params[])
+int EVP_RAND_CTX_set_params(EVP_RAND_CTX *ctx, const OSSL_PARAM params[])
 {
     int res;
 
@@ -653,7 +653,7 @@ int EVP_RAND_state(EVP_RAND_CTX *ctx)
     int state;
 
     params[0] = OSSL_PARAM_construct_int(OSSL_RAND_PARAM_STATE, &state);
-    if (!EVP_RAND_get_ctx_params(ctx, params))
+    if (!EVP_RAND_CTX_get_params(ctx, params))
         state = EVP_RAND_STATE_ERROR;
     return state;
 }

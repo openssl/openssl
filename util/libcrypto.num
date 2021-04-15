@@ -5043,8 +5043,8 @@ EVP_RAND_get_params                     ?	3_0_0	EXIST::FUNCTION:
 EVP_RAND_CTX_new                        ?	3_0_0	EXIST::FUNCTION:
 EVP_RAND_CTX_free                       ?	3_0_0	EXIST::FUNCTION:
 EVP_RAND_CTX_rand                       ?	3_0_0	EXIST::FUNCTION:
-EVP_RAND_get_ctx_params                 ?	3_0_0	EXIST::FUNCTION:
-EVP_RAND_set_ctx_params                 ?	3_0_0	EXIST::FUNCTION:
+EVP_RAND_CTX_get_params                 ?	3_0_0	EXIST::FUNCTION:
+EVP_RAND_CTX_set_params                 ?	3_0_0	EXIST::FUNCTION:
 EVP_RAND_gettable_params                ?	3_0_0	EXIST::FUNCTION:
 EVP_RAND_gettable_ctx_params            ?	3_0_0	EXIST::FUNCTION:
 EVP_RAND_settable_ctx_params            ?	3_0_0	EXIST::FUNCTION:

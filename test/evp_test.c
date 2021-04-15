@@ -2117,7 +2117,7 @@ static int rand_test_init(EVP_TEST *t, const char *name)
         goto err;
 
     *params = OSSL_PARAM_construct_uint(OSSL_RAND_PARAM_STRENGTH, &strength);
-    if (!EVP_RAND_set_ctx_params(rdata->parent, params))
+    if (!EVP_RAND_CTX_set_params(rdata->parent, params))
         goto err;
 
     rand = EVP_RAND_fetch(libctx, name, NULL);
@@ -2250,7 +2250,7 @@ static int rand_test_run(EVP_TEST *t)
                                                 expected->digest, 0);
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_DRBG_PARAM_MAC, "HMAC", 0);
     *p = OSSL_PARAM_construct_end();
-    if (!TEST_true(EVP_RAND_set_ctx_params(expected->ctx, params)))
+    if (!TEST_true(EVP_RAND_CTX_set_params(expected->ctx, params)))
         goto err;
 
     strength = EVP_RAND_strength(expected->ctx);
@@ -2281,7 +2281,7 @@ static int rand_test_run(EVP_TEST *t)
                            (OSSL_RAND_PARAM_TEST_ENTROPY, item->reseed_entropy,
                             item->reseed_entropy_len);
             params[1] = OSSL_PARAM_construct_end();
-            if (!TEST_true(EVP_RAND_set_ctx_params(expected->parent, params)))
+            if (!TEST_true(EVP_RAND_CTX_set_params(expected->parent, params)))
                 goto err;
 
             if (!TEST_true(EVP_RAND_reseed
@@ -2295,7 +2295,7 @@ static int rand_test_run(EVP_TEST *t)
                            (OSSL_RAND_PARAM_TEST_ENTROPY, item->pr_entropyA,
                             item->pr_entropyA_len);
             params[1] = OSSL_PARAM_construct_end();
-            if (!TEST_true(EVP_RAND_set_ctx_params(expected->parent, params)))
+            if (!TEST_true(EVP_RAND_CTX_set_params(expected->parent, params)))
                 goto err;
         }
         if (!TEST_true(EVP_RAND_generate
@@ -2309,7 +2309,7 @@ static int rand_test_run(EVP_TEST *t)
                            (OSSL_RAND_PARAM_TEST_ENTROPY, item->pr_entropyB,
                             item->pr_entropyB_len);
             params[1] = OSSL_PARAM_construct_end();
-            if (!TEST_true(EVP_RAND_set_ctx_params(expected->parent, params)))
+            if (!TEST_true(EVP_RAND_CTX_set_params(expected->parent, params)))
                 return 0;
         }
         if (!TEST_true(EVP_RAND_generate
