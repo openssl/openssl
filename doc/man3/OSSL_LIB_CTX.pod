@@ -41,7 +41,9 @@ default OpenSSL library context.
 OSSL_LIB_CTX_set0_default() sets the default OpenSSL library context to be
 I<ctx> in the current thread.  The previous default library context is
 returned.  Care should be taken by the caller to restore the previous
-default library context with a subsequent call of this function.
+default library context with a subsequent call of this function. If I<ctx> is
+NULL then no change is made to the default library context, but a pointer to
+the current library context is still returned.
 
 Care should be taken when changing the default library context and starting
 async jobs (see L<ASYNC_start_job(3)>), as the default library context when
