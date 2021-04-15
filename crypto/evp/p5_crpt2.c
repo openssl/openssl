@@ -92,8 +92,14 @@ int PKCS5_PBKDF2_HMAC_SHA1(const char *pass, int passlen,
                            const unsigned char *salt, int saltlen, int iter,
                            int keylen, unsigned char *out)
 {
-    return PKCS5_PBKDF2_HMAC(pass, passlen, salt, saltlen, iter, EVP_sha1(),
-                             keylen, out);
+    EVP_MD *digest;
+    int r = 0;
+
+    if ((digest = EVP_MD_fetch(NULL, SN_sha1, NULL)) != NULL)
+        r = ossl_pkcs5_pbkdf2_hmac_ex(pass, passlen, salt, saltlen, iter,
+                                      digest, keylen, out, NULL, NULL);
+    EVP_MD_free(digest);
+    return r;
 }
 
 /*

@@ -75,8 +75,8 @@ int ossl_asn1_item_digest_ex(const ASN1_ITEM *it, const EVP_MD *md, void *asn,
 #endif
             fetched_md = EVP_MD_fetch(libctx, EVP_MD_name(md), propq);
     }
-     if (fetched_md == NULL)
-         goto err;
+    if (fetched_md == NULL)
+        goto err;
 
     ret = EVP_Digest(str, i, data, len, fetched_md, NULL);
 err:
