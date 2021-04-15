@@ -169,7 +169,7 @@ static const OSSL_PARAM xor_kemgroup_params[] = {
 };
 
 #define NUM_DUMMY_GROUPS 50
-char *dummy_group_names[NUM_DUMMY_GROUPS];
+static char *dummy_group_names[NUM_DUMMY_GROUPS];
 
 static int tls_prov_get_capabilities(void *provctx, const char *capability,
                                      OSSL_CALLBACK *cb, void *arg)
