@@ -551,6 +551,7 @@ SRP_user_pwd *SRP_VBASE_get1_by_user(SRP_VBASE *vb, char *username)
     unsigned char digv[SHA_DIGEST_LENGTH];
     unsigned char digs[SHA_DIGEST_LENGTH];
     EVP_MD_CTX *ctxt = NULL;
+    EVP_MD *md = NULL;
 
     if (vb == NULL)
         return NULL;
@@ -574,21 +575,27 @@ SRP_user_pwd *SRP_VBASE_get1_by_user(SRP_VBASE *vb, char *username)
 
     if (RAND_priv_bytes(digv, SHA_DIGEST_LENGTH) <= 0)
         goto err;
+    md = EVP_MD_fetch(NULL, SN_sha1, NULL);
+    if (md == NULL)
+        goto err;
     ctxt = EVP_MD_CTX_new();
     if (ctxt == NULL
-        || !EVP_DigestInit_ex(ctxt, EVP_sha1(), NULL)
+        || !EVP_DigestInit_ex(ctxt, md, NULL)
         || !EVP_DigestUpdate(ctxt, vb->seed_key, strlen(vb->seed_key))
         || !EVP_DigestUpdate(ctxt, username, strlen(username))
         || !EVP_DigestFinal_ex(ctxt, digs, NULL))
         goto err;
     EVP_MD_CTX_free(ctxt);
     ctxt = NULL;
+    EVP_MD_free(md);
+    md = NULL;
     if (SRP_user_pwd_set0_sv(user,
-                               BN_bin2bn(digs, SHA_DIGEST_LENGTH, NULL),
-                               BN_bin2bn(digv, SHA_DIGEST_LENGTH, NULL)))
+                             BN_bin2bn(digs, SHA_DIGEST_LENGTH, NULL),
+                             BN_bin2bn(digv, SHA_DIGEST_LENGTH, NULL)))
         return user;
 
  err:
+    EVP_MD_free(md);
     EVP_MD_CTX_free(ctxt);
     SRP_user_pwd_free(user);
     return NULL;
