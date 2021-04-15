@@ -204,9 +204,11 @@ OSSL_LIB_CTX *OSSL_LIB_CTX_set0_default(OSSL_LIB_CTX *libctx)
 #ifndef FIPS_MODULE
     OSSL_LIB_CTX *current_defctx;
 
-    if ((current_defctx = get_default_context()) != NULL
-        && set_default_context(libctx))
+    if ((current_defctx = get_default_context()) != NULL) {
+        if (libctx != NULL)
+            set_default_context(libctx);
         return current_defctx;
+    }
 #endif
 
     return NULL;
