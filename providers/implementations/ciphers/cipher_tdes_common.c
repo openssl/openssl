@@ -77,6 +77,12 @@ static int tdes_init(void *vctx, const unsigned char *key, size_t keylen,
     if (iv != NULL) {
         if (!ossl_cipher_generic_initiv(ctx, iv, ivlen))
             return 0;
+    } else if (ctx->iv_set
+               && (ctx->mode == EVP_CIPH_CBC_MODE
+                   || ctx->mode == EVP_CIPH_CFB_MODE
+                   || ctx->mode == EVP_CIPH_OFB_MODE)) {
+        /* reset IV to keep compatibility with 1.1.1 */
+        memcpy(ctx->iv, ctx->oiv, ctx->ivlen);
     }
 
     if (key != NULL) {
