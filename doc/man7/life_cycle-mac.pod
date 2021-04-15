@@ -167,7 +167,7 @@ This is the canonical list.
     <td style="border:1px solid" align="center">updated</td>
     <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center"></td></tr>
-<tr><th style="border:1px solid" align="left">EVP_MAC_CTX_getablet_params</th>
+<tr><th style="border:1px solid" align="left">EVP_MAC_CTX_gettable_params</th>
     <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center">newed</td>
     <td style="border:1px solid" align="center">initialised</td>
