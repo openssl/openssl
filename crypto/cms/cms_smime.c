@@ -169,6 +169,10 @@ CMS_ContentInfo *CMS_digest_create_ex(BIO *in, const EVP_MD *md,
 {
     CMS_ContentInfo *cms;
 
+    /*
+     * Because the EVP_MD is cached and can be a legacy algorithm, we
+     * cannot fetch the algorithm if it isn't supplied.
+     */
     if (md == NULL)
         md = EVP_sha1();
     cms = ossl_cms_DigestedData_create(md, ctx, propq);
