@@ -14,6 +14,7 @@
 #include <openssl/params.h>
 /* For TLS1_3_VERSION */
 #include <openssl/ssl.h>
+#include <internal/nelem.h>
 
 static OSSL_FUNC_keymgmt_import_fn xor_import;
 static OSSL_FUNC_keymgmt_import_types_fn xor_import_types;
@@ -167,16 +168,52 @@ static const OSSL_PARAM xor_kemgroup_params[] = {
     OSSL_PARAM_END
 };
 
+#define NUM_DUMMY_GROUPS 50
+char *dummy_group_names[NUM_DUMMY_GROUPS];
 
 static int tls_prov_get_capabilities(void *provctx, const char *capability,
                                      OSSL_CALLBACK *cb, void *arg)
 {
-    if (strcmp(capability, "TLS-GROUP") == 0)
-        return cb(xor_group_params, arg)
-            && cb(xor_kemgroup_params, arg);
+    int ret;
+    int i;
+    const char *dummy_base = "dummy";
+    const size_t dummy_name_max_size = strlen(dummy_base) + 3;
 
-    /* We don't support this capability */
-    return 0;
+    if (strcmp(capability, "TLS-GROUP") != 0) {
+        /* We don't support this capability */
+        return 0;
+    }
+
+    /* Register our 2 groups */
+    ret = cb(xor_group_params, arg);
+    ret &= cb(xor_kemgroup_params, arg);
+
+    /*
+     * Now register some dummy groups > GROUPLIST_INCREMENT (== 40) as defined
+     * in ssl/t1_lib.c, to make sure we exercise the code paths for registering
+     * large numbers of groups.
+     */
+
+    for (i = 0; i < NUM_DUMMY_GROUPS; i++) {
+        OSSL_PARAM dummygroup[OSSL_NELEM(xor_group_params)];
+        
+        memcpy(dummygroup, xor_group_params, sizeof(xor_group_params));
+
+        /* Give the dummy group a unique name */
+        if (dummy_group_names[i] == NULL) {
+            dummy_group_names[i] = OPENSSL_zalloc(dummy_name_max_size);
+            if (dummy_group_names[i] == NULL)
+                return 0;
+            BIO_snprintf(dummy_group_names[i],
+                         dummy_name_max_size,
+                         "%s%d", dummy_base, i);
+        }
+        dummygroup[0].data = dummy_group_names[i];
+        dummygroup[0].data_size = strlen(dummy_group_names[i]) + 1;
+        ret &= cb(dummygroup, arg);
+    }
+
+    return ret;
 }
 
 /*
@@ -739,9 +776,21 @@ static const OSSL_ALGORITHM *tls_prov_query(void *provctx, int operation_id,
     return NULL;
 }
 
+static void tls_prov_teardown(void *provctx)
+{
+    int i;
+
+    OSSL_LIB_CTX_free(provctx);
+
+    for (i = 0; i < NUM_DUMMY_GROUPS; i++) {
+        OPENSSL_free(dummy_group_names[i]);
+        dummy_group_names[i] = NULL;
+    }
+}
+
 /* Functions we provide to the core */
 static const OSSL_DISPATCH tls_prov_dispatch_table[] = {
-    { OSSL_FUNC_PROVIDER_TEARDOWN, (void (*)(void))OSSL_LIB_CTX_free },
+    { OSSL_FUNC_PROVIDER_TEARDOWN, (void (*)(void))tls_prov_teardown },
     { OSSL_FUNC_PROVIDER_QUERY_OPERATION, (void (*)(void))tls_prov_query },
     { OSSL_FUNC_PROVIDER_GET_CAPABILITIES, (void (*)(void))tls_prov_get_capabilities },
     { 0, NULL }
