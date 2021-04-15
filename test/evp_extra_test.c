@@ -2416,7 +2416,7 @@ static int test_rand_agglomeration(void)
                                              seed, sizeof(seed));
     *p++ = OSSL_PARAM_construct_uint(OSSL_RAND_PARAM_MAX_REQUEST, &step);
     *p = OSSL_PARAM_construct_end();
-    res = TEST_true(EVP_RAND_set_ctx_params(ctx, params))
+    res = TEST_true(EVP_RAND_CTX_set_params(ctx, params))
           && TEST_true(EVP_RAND_generate(ctx, out, sizeof(out), 0, 1, NULL, 0))
           && TEST_mem_eq(seed, sizeof(seed), out, sizeof(out));
     EVP_RAND_CTX_free(ctx);

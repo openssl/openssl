@@ -92,8 +92,8 @@ This is the canonical list.
  EVP_RAND_generate                          instantiated
  EVP_RAND_uninstantiate                    uninstantiated
  EVP_RAND_CTX_free          freed   freed      freed          freed
- EVP_RAND_get_ctx_params            newed   instantiated  uninstantiated  freed
- EVP_RAND_set_ctx_params            newed   instantiated  uninstantiated  freed
+ EVP_RAND_CTX_get_params            newed   instantiated  uninstantiated  freed
+ EVP_RAND_CTX_set_params            newed   instantiated  uninstantiated  freed
  EVP_RAND_CTX_gettable_params       newed   instantiated  uninstantiated  freed
  EVP_RAND_CTX_settable_params       newed   instantiated  uninstantiated  freed
 
@@ -140,13 +140,13 @@ This is the canonical list.
     <td style="border:1px solid" align="center">freed</td>
     <td style="border:1px solid" align="center">freed</td>
     <td style="border:1px solid" align="center"></td></tr>
-<tr><th style="border:1px solid" align="left">EVP_RAND_get_ctx_params</th>
+<tr><th style="border:1px solid" align="left">EVP_RAND_CTX_get_params</th>
     <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center">newed</td>
     <td style="border:1px solid" align="center">instantiated</td>
     <td style="border:1px solid" align="center">uninstantiated</td>
     <td style="border:1px solid" align="center"></td></tr>
-<tr><th style="border:1px solid" align="left">EVP_RAND_set_ctx_params</th>
+<tr><th style="border:1px solid" align="left">EVP_RAND_CTX_set_params</th>
     <td style="border:1px solid" align="center"></td>
     <td style="border:1px solid" align="center">newed</td>
     <td style="border:1px solid" align="center">instantiated</td>

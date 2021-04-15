@@ -273,7 +273,7 @@ static int self_test_drbg(const ST_KAT_DRBG *t, OSSL_SELF_TEST *st,
 
     drbg_params[0] = OSSL_PARAM_construct_uint(OSSL_RAND_PARAM_STRENGTH,
                                                &strength);
-    if (!EVP_RAND_set_ctx_params(test, drbg_params))
+    if (!EVP_RAND_CTX_set_params(test, drbg_params))
         goto err;
 
     rand = EVP_RAND_fetch(libctx, t->algorithm, NULL);
@@ -292,7 +292,7 @@ static int self_test_drbg(const ST_KAT_DRBG *t, OSSL_SELF_TEST *st,
     /* This is only used by HMAC-DRBG but it is ignored by the others */
     drbg_params[1] =
         OSSL_PARAM_construct_utf8_string(OSSL_DRBG_PARAM_MAC, "HMAC", 0);
-    if (!EVP_RAND_set_ctx_params(drbg, drbg_params))
+    if (!EVP_RAND_CTX_set_params(drbg, drbg_params))
         goto err;
 
     drbg_params[0] =
@@ -312,7 +312,7 @@ static int self_test_drbg(const ST_KAT_DRBG *t, OSSL_SELF_TEST *st,
         OSSL_PARAM_construct_octet_string(OSSL_RAND_PARAM_TEST_ENTROPY,
                                           (void *)t->entropyinpr1,
                                           t->entropyinpr1len);
-    if (!EVP_RAND_set_ctx_params(test, drbg_params))
+    if (!EVP_RAND_CTX_set_params(test, drbg_params))
         goto err;
 
     if (!EVP_RAND_generate(drbg, out, t->expectedlen, strength,
@@ -324,7 +324,7 @@ static int self_test_drbg(const ST_KAT_DRBG *t, OSSL_SELF_TEST *st,
         OSSL_PARAM_construct_octet_string(OSSL_RAND_PARAM_TEST_ENTROPY,
                                          (void *)t->entropyinpr2,
                                          t->entropyinpr2len);
-    if (!EVP_RAND_set_ctx_params(test, drbg_params))
+    if (!EVP_RAND_CTX_set_params(test, drbg_params))
         goto err;
 
     /*

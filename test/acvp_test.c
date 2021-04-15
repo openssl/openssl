@@ -1351,7 +1351,7 @@ static int drbg_test(int id)
 
     params[0] = OSSL_PARAM_construct_uint(OSSL_RAND_PARAM_STRENGTH, &strength);
     params[1] = OSSL_PARAM_construct_end();
-    if (!TEST_true(EVP_RAND_set_ctx_params(parent, params)))
+    if (!TEST_true(EVP_RAND_CTX_set_params(parent, params)))
         goto err;
 
     /* Get the DRBG */
@@ -1365,7 +1365,7 @@ static int drbg_test(int id)
     params[1] = OSSL_PARAM_construct_utf8_string(OSSL_DRBG_PARAM_CIPHER,
                                                  (char *)tst->cipher, 0);
     params[2] = OSSL_PARAM_construct_end();
-    if (!TEST_true(EVP_RAND_set_ctx_params(ctx, params)))
+    if (!TEST_true(EVP_RAND_CTX_set_params(ctx, params)))
         goto err;
 
     /* Feed in the entropy and nonce */
@@ -1376,7 +1376,7 @@ static int drbg_test(int id)
                                                   (void *)tst->nonce,
                                                   tst->nonce_len);
     params[2] = OSSL_PARAM_construct_end();
-    if (!TEST_true(EVP_RAND_set_ctx_params(parent, params)))
+    if (!TEST_true(EVP_RAND_CTX_set_params(parent, params)))
         goto err;
 
     /*

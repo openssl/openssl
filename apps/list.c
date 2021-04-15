@@ -444,7 +444,7 @@ static void display_random(const char *name, EVP_RAND_CTX *drbg)
                     params->data_size = sizeof(buf);
                 }
                 params->return_size = 0;
-                if (EVP_RAND_get_ctx_params(drbg, params))
+                if (EVP_RAND_CTX_get_params(drbg, params))
                     print_param_value(params, 2);
             }
     }
