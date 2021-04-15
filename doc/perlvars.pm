@@ -102,7 +102,7 @@ $OpenSSL::safe::opt_provider_item = ""
 . "\n"
 . "=item B<-propquery> I<propq>\n"
 . "\n"
-. "See L<openssl(1)/Provider Options>.";
+. "See L<openssl(1)/Provider Options>, L<provider(7)>, and L<property(7)>.";
 
 # Configuration option
 $OpenSSL::safe::opt_config_synopsis = ""

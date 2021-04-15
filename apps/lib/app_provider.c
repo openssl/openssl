@@ -33,7 +33,8 @@ int app_provider_load(OSSL_LIB_CTX *libctx, const char *provider_name)
 
     prov = OSSL_PROVIDER_load(libctx, provider_name);
     if (prov == NULL) {
-        opt_printf_stderr("%s: unable to load provider %s\n",
+        opt_printf_stderr("%s: unable to load provider %s\n"
+                          "Hint: use -provider-path option or OPENSSL_MODULES environment variable.\n",
                           opt_getprog(), provider_name);
         return 0;
     }

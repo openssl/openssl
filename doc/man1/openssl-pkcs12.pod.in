@@ -85,7 +85,11 @@ The PKCS#12 export encryption and MAC options such as B<-certpbe> and B<-iter>
 and many further options such as B<-chain> are relevant only with B<-export>.
 Conversely, the options regarding encryption of private keys when outputting
 PKCS#12 input are relevant only when the B<-export> option is not given.
+
 The default encryption algorithm is AES-256-CBC with PBKDF2 for key derivation.
+
+On trouble loading legacy PKCS#12 files involving for instance C<RC2-40-CBC>,
+use the B<-legacy> option and, as far as needed, the B<-provider-path> option.
 
 =over 4
 
@@ -132,6 +136,10 @@ and so the input is just verified.
 =item B<-legacy>
 
 Use legacy mode of operation and automatically load the legacy provider.
+If OpenSSL is not installed system-wide, it is necessary to use in addition,
+e.g., B<-provider-path ./providers> or to set the environment variable
+B<OPENSSL_MODULES> to point to the directory where the providers can be found.
+
 In the legacy mode, the default algorithm for certificate encryption
 is RC2_CBC or 3DES_CBC depending on whether the RC2 cipher is enabled
 in the build. The default algorithm for private key encryption is 3DES_CBC.
