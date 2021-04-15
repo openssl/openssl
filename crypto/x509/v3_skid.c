@@ -59,20 +59,31 @@ ASN1_OCTET_STRING *ossl_x509_pubkey_hash(X509_PUBKEY *pubkey)
     int pklen;
     unsigned char pkey_dig[EVP_MAX_MD_SIZE];
     unsigned int diglen;
+    const char *propq;
+    OSSL_LIB_CTX *libctx;
+    EVP_MD *md;
 
     if (pubkey == NULL) {
         ERR_raise(ERR_LIB_X509V3, X509V3_R_NO_PUBLIC_KEY);
         return NULL;
     }
-    if ((oct = ASN1_OCTET_STRING_new()) == NULL)
+    if (!ossl_x509_PUBKEY_get0_libctx(&libctx, &propq, pubkey))
         return NULL;
+    if ((md = EVP_MD_fetch(libctx, SN_sha1, propq)) == NULL)
+        return NULL;
+    if ((oct = ASN1_OCTET_STRING_new()) == NULL) {
+        EVP_MD_free(md);
+        return NULL;
+    }
 
     X509_PUBKEY_get0_param(NULL, &pk, &pklen, NULL, pubkey);
-    /* TODO(3.0) - explicitly fetch the digest */
-    if (EVP_Digest(pk, pklen, pkey_dig, &diglen, EVP_sha1(), NULL)
-            && ASN1_OCTET_STRING_set(oct, pkey_dig, diglen))
+    if (EVP_Digest(pk, pklen, pkey_dig, &diglen, md, NULL)
+            && ASN1_OCTET_STRING_set(oct, pkey_dig, diglen)) {
+        EVP_MD_free(md);
         return oct;
+    }
 
+    EVP_MD_free(md);
     ASN1_OCTET_STRING_free(oct);
     return NULL;
 }
