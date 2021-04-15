@@ -228,7 +228,10 @@ int X509_ocspid_print(BIO *bp, X509 *x)
     unsigned char SHA1md[SHA_DIGEST_LENGTH];
     ASN1_BIT_STRING *keybstr;
     const X509_NAME *subj;
+    EVP_MD *md = NULL;
 
+    if (x == NULL || bp == NULL)
+        return 0;
     /*
      * display the hash of the subject as it would appear in OCSP requests
      */
@@ -240,7 +243,10 @@ int X509_ocspid_print(BIO *bp, X509 *x)
         goto err;
     i2d_X509_NAME(subj, &dertmp);
 
-    if (!EVP_Digest(der, derlen, SHA1md, NULL, EVP_sha1(), NULL))
+    md = EVP_MD_fetch(x->libctx, SN_sha1, x->propq);
+    if (md == NULL)
+        goto err;
+    if (!EVP_Digest(der, derlen, SHA1md, NULL, md, NULL))
         goto err;
     for (i = 0; i < SHA_DIGEST_LENGTH; i++) {
         if (BIO_printf(bp, "%02X", SHA1md[i]) <= 0)
@@ -261,18 +267,19 @@ int X509_ocspid_print(BIO *bp, X509 *x)
         goto err;
 
     if (!EVP_Digest(ASN1_STRING_get0_data(keybstr),
-                    ASN1_STRING_length(keybstr), SHA1md, NULL, EVP_sha1(),
-                    NULL))
+                    ASN1_STRING_length(keybstr), SHA1md, NULL, md, NULL))
         goto err;
     for (i = 0; i < SHA_DIGEST_LENGTH; i++) {
         if (BIO_printf(bp, "%02X", SHA1md[i]) <= 0)
             goto err;
     }
     BIO_printf(bp, "\n");
+    EVP_MD_free(md);
 
     return 1;
  err:
     OPENSSL_free(der);
+    EVP_MD_free(md);
     return 0;
 }
 
