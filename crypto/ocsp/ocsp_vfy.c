@@ -187,8 +187,9 @@ static int ocsp_find_signer(X509 **psigner, OCSP_BASICRESP *bs,
 
 static X509 *ocsp_find_signer_sk(STACK_OF(X509) *certs, OCSP_RESPID *id)
 {
-    int i;
+    int i, r;
     unsigned char tmphash[SHA_DIGEST_LENGTH], *keyhash;
+    EVP_MD *md;
     X509 *x;
 
     /* Easy if lookup by name */
@@ -203,11 +204,16 @@ static X509 *ocsp_find_signer_sk(STACK_OF(X509) *certs, OCSP_RESPID *id)
     keyhash = id->value.byKey->data;
     /* Calculate hash of each key and compare */
     for (i = 0; i < sk_X509_num(certs); i++) {
-        x = sk_X509_value(certs, i);
-        if (!X509_pubkey_digest(x, EVP_sha1(), tmphash, NULL))
-            break;
-        if (memcmp(keyhash, tmphash, SHA_DIGEST_LENGTH) == 0)
-            return x;
+        if ((x = sk_X509_value(certs, i)) != NULL) {
+            if ((md = EVP_MD_fetch(x->libctx, SN_sha1, x->propq)) == NULL)
+                break;
+            r = X509_pubkey_digest(x, md, tmphash, NULL);
+            EVP_MD_free(md);
+            if (!r)
+                break;
+            if (memcmp(keyhash, tmphash, SHA_DIGEST_LENGTH) == 0)
+                return x;
+        }
     }
     return NULL;
 }
