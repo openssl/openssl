@@ -342,7 +342,7 @@ struct evp_cipher_st {
 
 #define BLOCK_CIPHER_ecb_loop() \
         size_t i, bl; \
-        bl = EVP_CIPHER_CTX_cipher(ctx)->block_size;    \
+        bl = EVP_CIPHER_CTX_get0_cipher(ctx)->block_size;    \
         if (inl < bl) return 1;\
         inl -= bl; \
         for (i=0; i <= inl; i+=bl)

@@ -48,6 +48,8 @@ EVP_CIPHER_flags,
 EVP_CIPHER_mode,
 EVP_CIPHER_type,
 EVP_CIPHER_CTX_cipher,
+EVP_CIPHER_CTX_get0_cipher,
+EVP_CIPHER_CTX_get1_cipher,
 EVP_CIPHER_CTX_name,
 EVP_CIPHER_CTX_nid,
 EVP_CIPHER_CTX_get_params,
@@ -153,7 +155,8 @@ EVP_CIPHER_do_all_provided
  unsigned long EVP_CIPHER_mode(const EVP_CIPHER *e);
  int EVP_CIPHER_type(const EVP_CIPHER *cipher);
 
- const EVP_CIPHER *EVP_CIPHER_CTX_cipher(const EVP_CIPHER_CTX *ctx);
+ const EVP_CIPHER *EVP_CIPHER_CTX_get0_cipher(const EVP_CIPHER_CTX *ctx);
+ EVP_CIPHER *EVP_CIPHER_CTX_get1_cipher(const EVP_CIPHER_CTX *ctx);
  int EVP_CIPHER_CTX_nid(const EVP_CIPHER_CTX *ctx);
  const char *EVP_CIPHER_CTX_name(const EVP_CIPHER_CTX *ctx);
 
@@ -180,6 +183,12 @@ EVP_CIPHER_do_all_provided
  void EVP_CIPHER_do_all_provided(OSSL_LIB_CTX *libctx,
                                  void (*fn)(EVP_CIPHER *cipher, void *arg),
                                  void *arg);
+
+Deprecated since OpenSSL 3.0, can be hidden entirely by defining
+B<OPENSSL_API_COMPAT> with a suitable version value, see
+L<openssl_user_macros(7)>:
+
+ const EVP_CIPHER *EVP_CIPHER_CTX_cipher(const EVP_CIPHER_CTX *ctx);
 
 =head1 DESCRIPTION
 
@@ -417,8 +426,10 @@ cipher implementation.
 EVP_CIPHER_provider() returns an B<OSSL_PROVIDER> pointer to the provider
 that implements the given B<EVP_CIPHER>.
 
-EVP_CIPHER_CTX_cipher() returns the B<EVP_CIPHER> structure when passed
+EVP_CIPHER_CTX_get0_cipher() returns the B<EVP_CIPHER> structure when passed
 an B<EVP_CIPHER_CTX> structure.
+EVP_CIPHER_CTX_get1_cipher() is the same except the ownership is passed to
+the caller.
 
 EVP_CIPHER_mode() and EVP_CIPHER_CTX_mode() return the block cipher mode:
 EVP_CIPH_ECB_MODE, EVP_CIPH_CBC_MODE, EVP_CIPH_CFB_MODE, EVP_CIPH_OFB_MODE,
@@ -938,8 +949,12 @@ EVP_CIPHER_CTX_reset() appeared and EVP_CIPHER_CTX_cleanup()
 disappeared.  EVP_CIPHER_CTX_init() remains as an alias for
 EVP_CIPHER_CTX_reset().
 
+The EVP_CIPHER_CTX_cipher() function was deprecated in OpenSSL 3.0; use
+EVP_CIPHER_CTX_get0_cipher() instead.
+
 The EVP_EncryptInit_ex2(), EVP_DecryptInit_ex2(), EVP_CipherInit_ex2(),
 EVP_CIPHER_fetch(), EVP_CIPHER_free(), EVP_CIPHER_up_ref(),
+EVP_CIPHER_CTX_get0_cipher(), EVP_CIPHER_CTX_get1_cipher(),
 EVP_CIPHER_get_params(), EVP_CIPHER_CTX_set_params(),
 EVP_CIPHER_CTX_get_params(), EVP_CIPHER_gettable_params(),
 EVP_CIPHER_settable_ctx_params(), EVP_CIPHER_gettable_ctx_params(),

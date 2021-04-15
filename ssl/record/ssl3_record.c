@@ -480,8 +480,8 @@ int ssl3_get_record(SSL *s)
              && thisrr->type == SSL3_RT_APPLICATION_DATA
              && SSL_USE_EXPLICIT_IV(s)
              && s->enc_read_ctx != NULL
-             && (EVP_CIPHER_flags(EVP_CIPHER_CTX_cipher(s->enc_read_ctx))
-                 & EVP_CIPH_FLAG_PIPELINE)
+             && (EVP_CIPHER_flags(EVP_CIPHER_CTX_get0_cipher(s->enc_read_ctx))
+                 & EVP_CIPH_FLAG_PIPELINE) != 0
              && ssl3_record_app_data_waiting(s));
 
     if (num_recs == 1
@@ -842,13 +842,13 @@ int ssl3_enc(SSL *s, SSL3_RECORD *inrecs, size_t n_recs, int sending,
         if (s->enc_write_ctx == NULL)
             enc = NULL;
         else
-            enc = EVP_CIPHER_CTX_cipher(s->enc_write_ctx);
+            enc = EVP_CIPHER_CTX_get0_cipher(s->enc_write_ctx);
     } else {
         ds = s->enc_read_ctx;
         if (s->enc_read_ctx == NULL)
             enc = NULL;
         else
-            enc = EVP_CIPHER_CTX_cipher(s->enc_read_ctx);
+            enc = EVP_CIPHER_CTX_get0_cipher(s->enc_read_ctx);
     }
 
     if ((s->session == NULL) || (ds == NULL) || (enc == NULL)) {
@@ -979,7 +979,8 @@ int tls1_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending,
             enc = NULL;
         else {
             int ivlen;
-            enc = EVP_CIPHER_CTX_cipher(s->enc_write_ctx);
+
+            enc = EVP_CIPHER_CTX_get0_cipher(s->enc_write_ctx);
             /* For TLSv1.1 and later explicit IV */
             if (SSL_USE_EXPLICIT_IV(s)
                 && EVP_CIPHER_mode(enc) == EVP_CIPH_CBC_MODE)
@@ -1015,7 +1016,7 @@ int tls1_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending,
         if (s->enc_read_ctx == NULL)
             enc = NULL;
         else
-            enc = EVP_CIPHER_CTX_cipher(s->enc_read_ctx);
+            enc = EVP_CIPHER_CTX_get0_cipher(s->enc_read_ctx);
     }
 
     if ((s->session == NULL) || (ds == NULL) || (enc == NULL)) {
@@ -1026,11 +1027,11 @@ int tls1_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending,
     } else {
         int provided = (EVP_CIPHER_provider(enc) != NULL);
 
-        bs = EVP_CIPHER_block_size(EVP_CIPHER_CTX_cipher(ds));
+        bs = EVP_CIPHER_block_size(EVP_CIPHER_CTX_get0_cipher(ds));
 
         if (n_recs > 1) {
-            if (!(EVP_CIPHER_flags(EVP_CIPHER_CTX_cipher(ds))
-                  & EVP_CIPH_FLAG_PIPELINE)) {
+            if ((EVP_CIPHER_flags(EVP_CIPHER_CTX_get0_cipher(ds))
+                  & EVP_CIPH_FLAG_PIPELINE) == 0) {
                 /*
                  * We shouldn't have been called with pipeline data if the
                  * cipher doesn't support pipelining
@@ -1042,8 +1043,8 @@ int tls1_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending,
         for (ctr = 0; ctr < n_recs; ctr++) {
             reclen[ctr] = recs[ctr].length;
 
-            if (EVP_CIPHER_flags(EVP_CIPHER_CTX_cipher(ds))
-                & EVP_CIPH_FLAG_AEAD_CIPHER) {
+            if ((EVP_CIPHER_flags(EVP_CIPHER_CTX_get0_cipher(ds))
+                        & EVP_CIPH_FLAG_AEAD_CIPHER) != 0) {
                 unsigned char *seq;
 
                 seq = sending ? RECORD_LAYER_get_write_sequence(&s->rlayer)
@@ -1214,8 +1215,8 @@ int tls1_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending,
             /* TODO(size_t): Convert this call */
             tmpr = EVP_Cipher(ds, recs[0].data, recs[0].input,
                               (unsigned int)reclen[0]);
-            if ((EVP_CIPHER_flags(EVP_CIPHER_CTX_cipher(ds))
-                 & EVP_CIPH_FLAG_CUSTOM_CIPHER)
+            if ((EVP_CIPHER_flags(EVP_CIPHER_CTX_get0_cipher(ds))
+                 & EVP_CIPH_FLAG_CUSTOM_CIPHER) != 0
                 ? (tmpr < 0)
                 : (tmpr == 0)) {
                 /* AEAD can fail to verify MAC */

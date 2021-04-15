@@ -422,7 +422,7 @@ static int cms_wrap_init(CMS_KeyAgreeRecipientInfo *kari,
     int ret;
 
     /* If a suitable wrap algorithm is already set nothing to do */
-    kekcipher = EVP_CIPHER_CTX_cipher(ctx);
+    kekcipher = EVP_CIPHER_CTX_get0_cipher(ctx);
     if (kekcipher != NULL) {
         if (EVP_CIPHER_CTX_mode(ctx) != EVP_CIPH_WRAP_MODE)
             return 0;

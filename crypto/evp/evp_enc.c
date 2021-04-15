@@ -325,7 +325,8 @@ static int evp_cipher_init_internal(EVP_CIPHER_CTX *ctx,
         return 0;
     }
 
-    if (!(EVP_CIPHER_flags(EVP_CIPHER_CTX_cipher(ctx)) & EVP_CIPH_CUSTOM_IV)) {
+    if ((EVP_CIPHER_flags(EVP_CIPHER_CTX_get0_cipher(ctx))
+                & EVP_CIPH_CUSTOM_IV) == 0) {
         switch (EVP_CIPHER_CTX_mode(ctx)) {
 
         case EVP_CIPH_STREAM_CIPHER:

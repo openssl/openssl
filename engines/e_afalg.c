@@ -553,7 +553,7 @@ static int afalg_cipher_init(EVP_CIPHER_CTX *ctx, const unsigned char *key,
         return 0;
     }
 
-    if (EVP_CIPHER_CTX_cipher(ctx) == NULL) {
+    if (EVP_CIPHER_CTX_get0_cipher(ctx) == NULL) {
         ALG_WARN("%s(%d): Cipher object NULL\n", __FILE__, __LINE__);
         return 0;
     }

@@ -422,9 +422,32 @@ int EVP_Cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     return ctx->cipher->do_cipher(ctx, out, in, inl);
 }
 
+#ifndef OPENSSL_NO_DEPRECATED_3_0
 const EVP_CIPHER *EVP_CIPHER_CTX_cipher(const EVP_CIPHER_CTX *ctx)
 {
+    if (ctx == NULL)
+        return NULL;
     return ctx->cipher;
+}
+#endif
+
+const EVP_CIPHER *EVP_CIPHER_CTX_get0_cipher(const EVP_CIPHER_CTX *ctx)
+{
+    if (ctx == NULL)
+        return NULL;
+    return ctx->cipher;
+}
+
+EVP_CIPHER *EVP_CIPHER_CTX_get1_cipher(EVP_CIPHER_CTX *ctx)
+{
+    EVP_CIPHER *cipher;
+
+    if (ctx == NULL)
+        return NULL;
+    cipher = (EVP_CIPHER *)ctx->cipher;
+    if (!EVP_CIPHER_up_ref(cipher))
+        return NULL;
+    return cipher;
 }
 
 int EVP_CIPHER_CTX_encrypting(const EVP_CIPHER_CTX *ctx)

@@ -137,7 +137,7 @@ int CMAC_Init(CMAC_CTX *ctx, const void *key, size_t keylen,
 
         /* If anything fails then ensure we can't use this ctx */
         ctx->nlast_block = -1;
-        if (!EVP_CIPHER_CTX_cipher(ctx->cctx))
+        if (!EVP_CIPHER_CTX_get0_cipher(ctx->cctx))
             return 0;
         if (!EVP_CIPHER_CTX_set_key_length(ctx->cctx, keylen))
             return 0;
