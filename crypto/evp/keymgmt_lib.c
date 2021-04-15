@@ -123,10 +123,6 @@ void *evp_keymgmt_util_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt)
     CRYPTO_THREAD_unlock(pk->lock);
 
     /* If the "origin" |keymgmt| doesn't support exporting, give up */
-    /*
-     * TODO(3.0) consider an evp_keymgmt_export() return value that indicates
-     * that the method is unsupported.
-     */
     if (pk->keymgmt->export == NULL)
         return NULL;
 
