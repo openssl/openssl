@@ -2428,7 +2428,7 @@ static int test_rand_agglomeration(void)
  * an encryption operation.
  * Run multiple times for some different relevant algorithms/modes.
  */
-static int test_evp_iv(int idx)
+static int test_evp_iv_aes(int idx)
 {
     int ret = 0;
     EVP_CIPHER_CTX *ctx = NULL;
@@ -2564,6 +2564,111 @@ err:
         EVP_CIPHER_free((EVP_CIPHER *)type);
     return ret;
 }
+
+#ifndef OPENSSL_NO_DES
+static int test_evp_iv_des(int idx)
+{
+    int ret = 0;
+    EVP_CIPHER_CTX *ctx = NULL;
+    static const unsigned char key[24] = {
+        0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef,
+        0xf1, 0xe0, 0xd3, 0xc2, 0xb5, 0xa4, 0x97, 0x86,
+        0xfe, 0xdc, 0xba, 0x98, 0x76, 0x54, 0x32, 0x10
+    };
+    static const unsigned char init_iv[8] = {
+        0xfe, 0xdc, 0xba, 0x98, 0x76, 0x54, 0x32, 0x10
+    };
+    static const unsigned char msg[] = { 1, 2, 3, 4, 5, 6, 7, 8,
+                                         9, 10, 11, 12, 13, 14, 15, 16 };
+    unsigned char ciphertext[32], oiv[8], iv[8];
+    unsigned const char *ref_iv;
+    static const unsigned char cbc_state_des[8] = {
+        0x4f, 0xa3, 0x85, 0xcd, 0x8b, 0xf3, 0x06, 0x2a
+    };
+    static const unsigned char cbc_state_3des[8] = {
+        0x35, 0x27, 0x7d, 0x65, 0x6c, 0xfb, 0x50, 0xd9
+    };
+    static const unsigned char ofb_state_des[8] = {
+        0xa7, 0x0d, 0x1d, 0x45, 0xf9, 0x96, 0x3f, 0x2c
+    };
+    static const unsigned char ofb_state_3des[8] = {
+        0xab, 0x16, 0x24, 0xbb, 0x5b, 0xac, 0xed, 0x5e
+    };
+    static const unsigned char cfb_state_des[8] = {
+        0x91, 0xeb, 0x6d, 0x29, 0x4b, 0x08, 0xbd, 0x73
+    };
+    static const unsigned char cfb_state_3des[8] = {
+        0x34, 0xdd, 0xfb, 0x47, 0x33, 0x1c, 0x61, 0xf7
+    };
+    int len = sizeof(ciphertext);
+    size_t ivlen, ref_len;
+    EVP_CIPHER *type = NULL;
+
+    if (lgcyprov == NULL && idx < 3)
+        return TEST_skip("Test requires legacy provider to be loaded");
+
+    switch(idx) {
+    case 0:
+        type = EVP_CIPHER_fetch(testctx, "des-cbc", testpropq);
+        ref_iv = cbc_state_des;
+        ref_len = sizeof(cbc_state_des);
+        break;
+    case 1:
+        type = EVP_CIPHER_fetch(testctx, "des-ofb", testpropq);
+        ref_iv = ofb_state_des;
+        ref_len = sizeof(ofb_state_des);
+        break;
+    case 2:
+        type = EVP_CIPHER_fetch(testctx, "des-cfb", testpropq);
+        ref_iv = cfb_state_des;
+        ref_len = sizeof(cfb_state_des);
+        break;
+    case 3:
+        type = EVP_CIPHER_fetch(testctx, "des-ede3-cbc", testpropq);
+        ref_iv = cbc_state_3des;
+        ref_len = sizeof(cbc_state_3des);
+        break;
+    case 4:
+        type = EVP_CIPHER_fetch(testctx, "des-ede3-ofb", testpropq);
+        ref_iv = ofb_state_3des;
+        ref_len = sizeof(ofb_state_3des);
+        break;
+    case 5:
+        type = EVP_CIPHER_fetch(testctx, "des-ede3-cfb", testpropq);
+        ref_iv = cfb_state_3des;
+        ref_len = sizeof(cfb_state_3des);
+        break;
+    default:
+        return 0;
+    }
+
+    if (!TEST_ptr(type)
+            || !TEST_ptr((ctx = EVP_CIPHER_CTX_new()))
+            || !TEST_true(EVP_EncryptInit_ex(ctx, type, NULL, key, init_iv))
+            || !TEST_true(EVP_EncryptUpdate(ctx, ciphertext, &len, msg,
+                          (int)sizeof(msg)))
+            || !TEST_true(EVP_CIPHER_CTX_get_original_iv(ctx, oiv, sizeof(oiv)))
+            || !TEST_true(EVP_CIPHER_CTX_get_updated_iv(ctx, iv, sizeof(iv)))
+            || !TEST_true(EVP_EncryptFinal_ex(ctx, ciphertext, &len)))
+        goto err;
+    ivlen = EVP_CIPHER_CTX_iv_length(ctx);
+    if (!TEST_mem_eq(init_iv, ivlen, oiv, ivlen)
+            || !TEST_mem_eq(ref_iv, ref_len, iv, ivlen))
+        goto err;
+
+    if (!TEST_true(EVP_EncryptInit_ex(ctx, NULL, NULL, NULL, NULL))
+        || !TEST_true(EVP_CIPHER_CTX_get_updated_iv(ctx, iv, sizeof(iv))))
+        goto err;
+    if (!TEST_mem_eq(init_iv, ivlen, iv, ivlen))
+        goto err;
+
+    ret = 1;
+err:
+    EVP_CIPHER_CTX_free(ctx);
+    EVP_CIPHER_free(type);
+    return ret;
+}
+#endif
 
 #ifndef OPENSSL_NO_EC
 static int ecpub_nids[] = { NID_brainpoolP256r1, NID_X9_62_prime256v1,
@@ -2809,7 +2914,10 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_pkey_ctx_fail_without_provider, 2);
 
     ADD_TEST(test_rand_agglomeration);
-    ADD_ALL_TESTS(test_evp_iv, 12);
+    ADD_ALL_TESTS(test_evp_iv_aes, 12);
+#ifndef OPENSSL_NO_DES
+    ADD_ALL_TESTS(test_evp_iv_des, 6);
+#endif
     ADD_TEST(test_EVP_rsa_pss_with_keygen_bits);
 #ifndef OPENSSL_NO_EC
     ADD_ALL_TESTS(test_ecpub, OSSL_NELEM(ecpub_nids));
