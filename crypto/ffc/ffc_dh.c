@@ -113,9 +113,7 @@ const DH_NAMED_GROUP *ossl_ffc_numbers_to_dh_named_group(const BIGNUM *p,
         if (BN_cmp(p, dh_named_groups[i].p) == 0
             && BN_cmp(g, dh_named_groups[i].g) == 0
             /* Verify q is correct if it exists */
-            && ((q != NULL && BN_cmp(q, dh_named_groups[i].q) == 0)
-                /* Do not match RFC 5114 groups without q */
-                || (q == NULL && dh_named_groups[i].uid > 3)))
+            && (q == NULL || BN_cmp(q, dh_named_groups[i].q) == 0))
             return &dh_named_groups[i];
     }
     return NULL;
