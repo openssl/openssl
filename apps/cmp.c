@@ -671,7 +671,7 @@ static X509_REQ *load_csr_autofmt(const char *infile, const char *desc)
 }
 
 /* set expected host name/IP addr and clears the email addr in the given ts */
-static int truststore_set_host_etc(X509_STORE *ts, char *host)
+static int truststore_set_host_etc(X509_STORE *ts, const char *host)
 {
     X509_VERIFY_PARAM *ts_vpm = X509_STORE_get0_param(ts);
 
@@ -1179,7 +1179,8 @@ static int setup_verification_ctx(OSSL_CMP_CTX *ctx)
  * set up ssl_ctx for the OSSL_CMP_CTX based on options from config file/CLI.
  * Returns pointer on success, NULL on error
  */
-static SSL_CTX *setup_ssl_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
+static SSL_CTX *setup_ssl_ctx(OSSL_CMP_CTX *ctx, const char *host,
+                              ENGINE *engine)
 {
     STACK_OF(X509) *untrusted = OSSL_CMP_CTX_get0_untrusted(ctx);
     EVP_PKEY *pkey = NULL;
@@ -1311,8 +1312,7 @@ static SSL_CTX *setup_ssl_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
     if (opt_tls_trusted != NULL) {
         /* enable and parameterize server hostname/IP address check */
         if (!truststore_set_host_etc(trust_store,
-                                     opt_tls_host != NULL ?
-                                     opt_tls_host : opt_server))
+                                     opt_tls_host != NULL ? opt_tls_host : host))
             /* TODO: is the server host name correct for TLS via proxy? */
             goto err;
         SSL_CTX_set_verify(ssl_ctx, SSL_VERIFY_PEER, NULL);
@@ -1765,7 +1765,7 @@ static int handle_opt_geninfo(OSSL_CMP_CTX *ctx)
 static int setup_client_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
 {
     int ret = 0;
-    char *server = NULL, *port = NULL, *path = NULL, *used_path;
+    char *host = NULL, *port = NULL, *path = NULL, *used_path;
     int portnum, ssl;
     char server_buf[200] = { '\0' };
     char proxy_buf[200] = { '\0' };
@@ -1776,7 +1776,7 @@ static int setup_client_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
         CMP_err("missing -server option");
         goto err;
     }
-    if (!OSSL_HTTP_parse_url(opt_server, &ssl, NULL /* user */, &server, &port,
+    if (!OSSL_HTTP_parse_url(opt_server, &ssl, NULL /* user */, &host, &port,
                              &portnum, &path, NULL /* q */, NULL /* frag */)) {
         CMP_err1("cannot parse -server URL: %s", opt_server);
         goto err;
@@ -1787,7 +1787,7 @@ static int setup_client_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
     }
     BIO_snprintf(server_port, sizeof(server_port), "%s", port);
     used_path = opt_path != NULL ? opt_path : path;
-    if (!OSSL_CMP_CTX_set1_server(ctx, server)
+    if (!OSSL_CMP_CTX_set1_server(ctx, host)
             || !OSSL_CMP_CTX_set_serverPort(ctx, portnum)
             || !OSSL_CMP_CTX_set1_serverPath(ctx, used_path))
         goto oom;
@@ -1796,7 +1796,7 @@ static int setup_client_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
     if (opt_no_proxy != NULL && !OSSL_CMP_CTX_set1_no_proxy(ctx, opt_no_proxy))
         goto oom;
     (void)BIO_snprintf(server_buf, sizeof(server_buf), "http%s://%s:%s/%s",
-                       opt_tls_used ? "s" : "", server, port,
+                       opt_tls_used ? "s" : "", host, port,
                        *used_path == '/' ? used_path + 1 : used_path);
 
     if (opt_proxy != NULL)
@@ -1867,7 +1867,7 @@ static int setup_client_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
         info->port = server_port;
         info->use_proxy = opt_proxy != NULL;
         info->timeout = OSSL_CMP_CTX_get_option(ctx, OSSL_CMP_OPT_MSG_TIMEOUT);
-        info->ssl_ctx = setup_ssl_ctx(ctx, engine);
+        info->ssl_ctx = setup_ssl_ctx(ctx, host, engine);
         if (info->ssl_ctx == NULL)
             goto err;
         (void)OSSL_CMP_CTX_set_http_cb(ctx, app_http_tls_cb);
@@ -1894,7 +1894,7 @@ static int setup_client_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
     ret = 1;
 
  err:
-    OPENSSL_free(server);
+    OPENSSL_free(host);
     OPENSSL_free(port);
     OPENSSL_free(path);
     OPENSSL_free(proxy_host);
