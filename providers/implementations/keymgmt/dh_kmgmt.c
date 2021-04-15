@@ -519,7 +519,6 @@ static int dh_gen_set_params(void *genctx, const OSSL_PARAM params[])
             ERR_raise(ERR_LIB_PROV, ERR_R_PASSED_INVALID_ARGUMENT);
             return 0;
         }
-        gctx->gen_type = DH_PARAMGEN_TYPE_GROUP;
     }
     p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_DH_GENERATOR);
     if (p != NULL && !OSSL_PARAM_get_int(p, &gctx->generator))
@@ -611,6 +610,14 @@ static void *dh_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
 
     if (!ossl_prov_is_running() || gctx == NULL)
         return NULL;
+
+    /*
+     * If a group name is selected then the type is group regardless of what the
+     * the user selected. This overrides rather than errors for backwards
+     * compatibility.
+     */
+    if (gctx->group_nid != NID_undef)
+        gctx->gen_type = DH_PARAMGEN_TYPE_GROUP;
 
     /* For parameter generation - If there is a group name just create it */
     if (gctx->gen_type == DH_PARAMGEN_TYPE_GROUP
