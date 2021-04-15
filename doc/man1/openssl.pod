@@ -652,10 +652,12 @@ the PKCS#11 URI as defined in RFC 7512 should be possible to use directly:
 =item B<-provider> I<name>
 
 Load and initialize the provider identified by I<name>.
+See L<provider(7)> for a more detailed description.
 
 =item B<-provider-path> I<path>
 
 Specifies the search path that is to be used for looking for providers.
+Equivalently, the B<OPENSSL_MODULES> environment variable may be set.
 
 =item B<-propquery> I<propq>
 
