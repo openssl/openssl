@@ -199,14 +199,15 @@ void OSSL_LIB_CTX_free(OSSL_LIB_CTX *ctx)
     OPENSSL_free(ctx);
 }
 
+#ifndef FIPS_MODULE
 OSSL_LIB_CTX *OSSL_LIB_CTX_get0_global_default(void)
 {
-#ifndef FIPS_MODULE
+    if (!RUN_ONCE(&default_context_init, default_context_do_init))
+        return NULL;
+
     return &default_context_int;
-#else
-    return NULL;
-#endif
 }
+#endif
 
 OSSL_LIB_CTX *OSSL_LIB_CTX_set0_default(OSSL_LIB_CTX *libctx)
 {
