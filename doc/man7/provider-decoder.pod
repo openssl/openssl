@@ -210,6 +210,32 @@ The decoding functions also take an B<OSSL_PASSPHRASE_CALLBACK> function
 pointer along with a pointer to application data I<cbarg>, which should be
 used when a pass phrase prompt is needed.
 
+It's important to understand that the return value from this function is
+interpreted as follows:
+
+=over 4
+
+=item True (1)
+
+This means "carry on the decoding process", and is meaningful even though
+this function couldn't decode the input into anything, because there may be
+another decoder implementation that can decode it into something.
+
+The I<data_cb> callback should never be called when this function can't
+decode the input into anything.
+
+=item False (0)
+
+This means "stop the decoding process", and is meaningful when the input
+could be decoded into some sort of object that this function understands,
+but further treatment of that object results into errors that won't be
+possible for some other decoder implementation to get a different result.
+
+=back
+
+The conditions to stop the decoding process are at the discretion of the
+implementation.
+
 =head2 Decoder parameters
 
 The decoder implementation itself has parameters that can be used to
@@ -315,7 +341,8 @@ constant B<OSSL_PARAM> elements.
 OSSL_FUNC_decoder_does_selection() returns 1 if the decoder implementation
 supports any of the I<selection> bits, otherwise 0.
 
-OSSL_FUNC_decoder_decode() returns 1 on success, or 0 on failure.
+OSSL_FUNC_decoder_decode() returns 1 to signal that the decoding process
+should continue, or 0 to signal that it should stop.
 
 =head1 SEE ALSO
 
