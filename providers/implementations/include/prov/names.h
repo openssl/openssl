@@ -8,7 +8,7 @@
  */
 
 /*
- * Macros for use as names in our providers' OSSL_ALGORITHM.
+ * Macros for use as names and descriptions in our providers' OSSL_ALGORITHM.
  *
  * All the strings are formatted the same way:
  *
@@ -248,15 +248,18 @@
  * -----------
  */
 #define OSSL_NAMES_HKDF "HKDF"
+#define OSSL_NAMES_HKDF_SIGN "OpenSSL HKDF via EVP_PKEY implementation"
 #define OSSL_NAMES_SSKDF "SSKDF"
 #define OSSL_NAMES_PBKDF2 "PBKDF2:1.2.840.113549.1.5.12"
 #define OSSL_NAMES_SSHKDF "SSHKDF"
 #define OSSL_NAMES_X963KDF "X963KDF:X942KDF-CONCAT"
 #define OSSL_NAMES_X942KDF_ASN1 "X942KDF-ASN1:X942KDF"
 #define OSSL_NAMES_TLS1_PRF "TLS1-PRF"
+#define OSSL_NAMES_TLS1_PRF_SIGN "OpenSSL TLS1_PRF via EVP_PKEY implementation"
 #define OSSL_NAMES_KBKDF "KBKDF"
 #define OSSL_NAMES_PKCS12KDF "PKCS12KDF"
 #define OSSL_NAMES_SCRYPT "SCRYPT:id-scrypt:1.3.6.1.4.1.11591.4.11"
+#define OSSL_NAMES_SCRYPT_SIGN "OpenSSL SCRYPT via EVP_PKEY implementation"
 #define OSSL_NAMES_KRB5KDF "KRB5KDF"
 
 /*-
@@ -264,9 +267,13 @@
  * ----
  */
 #define OSSL_NAMES_HMAC "HMAC"
+#define OSSL_NAMES_HMAC_SIGN "OpenSSL HMAC via EVP_PKEY implementation"
 #define OSSL_NAMES_CMAC "CMAC"
+#define OSSL_NAMES_CMAC_SIGN "OpenSSL CMAC via EVP_PKEY implementation"
 #define OSSL_NAMES_SIPHASH "SIPHASH"
+#define OSSL_NAMES_SIPHASH_SIGN "OpenSSL SIPHASH via EVP_PKEY implementation"
 #define OSSL_NAMES_POLY1305 "POLY1305"
+#define OSSL_NAMES_POLY1305_SIGN "OpenSSL POLY1305 via EVP_PKEY implementation"
 #define OSSL_NAMES_GMAC "GMAC:1.0.9797.3.4"
 #define OSSL_NAMES_KMAC_128 "KMAC-128:KMAC128:2.16.840.1.101.3.4.2.19"
 #define OSSL_NAMES_KMAC_256 "KMAC-256:KMAC256:2.16.840.1.101.3.4.2.20"
@@ -288,15 +295,28 @@
  * ----------------
  */
 #define OSSL_NAMES_EC "EC:id-ecPublicKey:1.2.840.10045.2.1"
+#define OSSL_DESCS_EC "OpenSSL EC implementation"
 #define OSSL_NAMES_ECDH "ECDH"
+#define OSSL_DESCS_ECDH "OpenSSL ECDH implementation"
 #define OSSL_NAMES_ECDSA "ECDSA"
+#define OSSL_DESCS_ECDSA "OpenSSL ECDSA implementation"
 #define OSSL_NAMES_X25519 "X25519:1.3.101.110"
+#define OSSL_DESCS_X25519 "OpenSSL X25519 implementation"
 #define OSSL_NAMES_X448 "X448:1.3.101.111"
+#define OSSL_DESCS_X448 "OpenSSL X448 implementation"
 #define OSSL_NAMES_ED25519 "ED25519:1.3.101.112"
+#define OSSL_DESCS_ED25519 "OpenSSL ED25519 implementation"
 #define OSSL_NAMES_ED448 "ED448:1.3.101.113"
+#define OSSL_DESCS_ED448 "OpenSSL ED448 implementation"
 #define OSSL_NAMES_DH "DH:dhKeyAgreement:1.2.840.113549.1.3.1"
+#define OSSL_DESCS_DH "OpenSSL PKCS#3 DH implementation"
 #define OSSL_NAMES_DHX "DHX:X9.42 DH:dhpublicnumber:1.2.840.10046.2.1"
+#define OSSL_DESCS_DHX "OpenSSL X9.42 DH implementation"
 #define OSSL_NAMES_DSA "DSA:dsaEncryption:1.2.840.10040.4.1"
+#define OSSL_DESCS_DSA "OpenSSL DSA implementation"
 #define OSSL_NAMES_RSA "RSA:rsaEncryption:1.2.840.113549.1.1.1"
+#define OSSL_DESCS_RSA "OpenSSL RSA implementation"
 #define OSSL_NAMES_RSA_PSS "RSA-PSS:RSASSA-PSS:1.2.840.113549.1.1.10"
+#define OSSL_DESCS_RSA_PSS "OpenSSL RSA-PSS implementation"
 #define OSSL_NAMES_SM2 "SM2:1.2.156.10197.1.301"
+#define OSSL_DESCS_SM2 "OpenSSL SM2 implementation"
