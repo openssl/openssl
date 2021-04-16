@@ -89,7 +89,7 @@ void aes_ccm_decrypt(void)
     EVP_CIPHER_CTX *ctx;
     int outlen, tmplen, rv;
     unsigned char outbuf[1024];
-    printf("AES CCM Derypt:\n");
+    printf("AES CCM Decrypt:\n");
     printf("Ciphertext:\n");
     BIO_dump_fp(stdout, ccm_ct, sizeof(ccm_ct));
     ctx = EVP_CIPHER_CTX_new();
