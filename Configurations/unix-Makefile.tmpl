@@ -506,7 +506,8 @@ build_all_generated: $(GENERATED_MANDATORY) $(GENERATED) build_docs
 all: build_sw build_docs
 
 test: tests
-{- dependmagic('tests'); -}: build_programs_nodep build_modules_nodep link-utils
+{- dependmagic('tests'); -}: build_programs_nodep build_modules_nodep link-utils run_tests
+run_tests:
 	@ : {- output_off() if $disabled{tests}; "" -}
 	( SRCTOP=$(SRCDIR) \
 	  BLDTOP=$(BLDDIR) \
@@ -520,8 +521,7 @@ test: tests
 
 list-tests:
 	@ : {- output_off() if $disabled{tests}; "" -}
-	@SRCTOP="$(SRCDIR)" \
-	 $(PERL) $(SRCDIR)/test/run_tests.pl list
+	$(MAKE) run_tests TESTS=list
 	@ : {- if ($disabled{tests}) { output_on(); } else { output_off(); } "" -}
 	@echo "Tests are not supported with your chosen Configure options"
 	@ : {- output_on() if !$disabled{tests}; "" -}
@@ -1254,10 +1254,7 @@ ordinals: build_generated
                 $(SSLHEADERS)
 
 test_ordinals:
-	( cd test; \
-	  SRCTOP=../$(SRCDIR) \
-	  BLDTOP=../$(BLDDIR) \
-	    $(PERL) ../$(SRCDIR)/test/run_tests.pl test_ordinals )
+	$(MAKE) run_tests TESTS=test_ordinals
 
 tags TAGS: FORCE
 	rm -f TAGS tags
