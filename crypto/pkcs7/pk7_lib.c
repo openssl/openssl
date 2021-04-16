@@ -229,7 +229,7 @@ int PKCS7_add_signer(PKCS7 *p7, PKCS7_SIGNER_INFO *psi)
         }
         /*
          * If there is a constant copy of the ASN1 OBJECT in libcrypto, then
-         * use that.  Otherwise, use a dyncamically duplicated copy
+         * use that.  Otherwise, use a dynamically duplicated copy
          */
         if ((nid = OBJ_obj2nid(obj)) != NID_undef)
             alg->algorithm = OBJ_nid2obj(nid);
