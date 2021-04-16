@@ -29,6 +29,7 @@ int PKCS12_PBE_keyivgen_ex(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
     int saltlen, iter, ret;
     unsigned char *salt;
     unsigned char key[EVP_MAX_KEY_LENGTH], iv[EVP_MAX_IV_LENGTH];
+    unsigned char *piv = iv;
 
     if (cipher == NULL)
         return 0;
@@ -54,15 +55,19 @@ int PKCS12_PBE_keyivgen_ex(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
         PBEPARAM_free(pbe);
         return 0;
     }
-    if (!PKCS12_key_gen_utf8_ex(pass, passlen, salt, saltlen, PKCS12_IV_ID,
-                                iter, EVP_CIPHER_iv_length(cipher), iv, md,
-                                libctx, propq)) {
-        ERR_raise(ERR_LIB_PKCS12, PKCS12_R_IV_GEN_ERROR);
-        PBEPARAM_free(pbe);
-        return 0;
+    if (EVP_CIPHER_iv_length(cipher) > 0) {
+        if (!PKCS12_key_gen_utf8_ex(pass, passlen, salt, saltlen, PKCS12_IV_ID,
+                                    iter, EVP_CIPHER_iv_length(cipher), iv, md,
+                                    libctx, propq)) {
+            ERR_raise(ERR_LIB_PKCS12, PKCS12_R_IV_GEN_ERROR);
+            PBEPARAM_free(pbe);
+            return 0;
+        }
+    } else {
+        piv = NULL;
     }
     PBEPARAM_free(pbe);
-    ret = EVP_CipherInit_ex(ctx, cipher, NULL, key, iv, en_de);
+    ret = EVP_CipherInit_ex(ctx, cipher, NULL, key, piv, en_de);
     OPENSSL_cleanse(key, EVP_MAX_KEY_LENGTH);
     OPENSSL_cleanse(iv, EVP_MAX_IV_LENGTH);
     return ret;

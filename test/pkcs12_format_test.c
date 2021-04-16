@@ -21,6 +21,7 @@
 #include "testutil.h"
 #include "helpers/pkcs12.h"
 
+static int default_libctx = 1;
 
 static OSSL_LIB_CTX *testctx = NULL;
 static OSSL_PROVIDER *nullprov = NULL;
@@ -221,15 +222,12 @@ static const int enc_nids[] = {
     NID_aes_128_cbc,
     NID_aes_256_cbc,
     NID_des_ede3_cbc,
-/*
- * Other PBE algorithms which are not currently working/supported for PKCS#12.
- */
-/*
     NID_des_cbc,
 
+#ifndef OPENSSL_NO_MD2
     NID_pbeWithMD2AndDES_CBC,
     NID_pbeWithMD2AndRC2_CBC,
-    NID_pbeWithMD5AndCast5_CBC,
+#endif
     NID_pbeWithMD5AndDES_CBC,
     NID_pbeWithMD5AndRC2_CBC,
     NID_pbe_WithSHA1And128BitRC2_CBC,
@@ -238,7 +236,6 @@ static const int enc_nids[] = {
     NID_pbe_WithSHA1And40BitRC4,
     NID_pbeWithSHA1AndDES_CBC,
     NID_pbeWithSHA1AndRC2_CBC,
-*/
     NID_pbe_WithSHA1And2_Key_TripleDES_CBC,
     NID_pbe_WithSHA1And3_Key_TripleDES_CBC,
 };
@@ -315,7 +312,7 @@ static int test_single_key(PKCS12_ENC *enc)
 {
     char fname[80];
     PKCS12_BUILDER *pb;
-    sprintf(fname, "1key_ciph-%d_iter-%d.p12", enc->nid, enc->iter);
+    sprintf(fname, "1key_ciph-%s_iter-%d.p12", OBJ_nid2sn(enc->nid), enc->iter);
 
     pb = new_pkcs12_builder(fname);
 
@@ -410,7 +407,7 @@ static int test_single_cert_mac(PKCS12_ENC *mac)
 {
     char fname[80];
     PKCS12_BUILDER *pb;
-    sprintf(fname, "1cert_mac-%d_iter-%d.p12", mac->nid, mac->iter);
+    sprintf(fname, "1cert_mac-%s_iter-%d.p12", OBJ_nid2sn(mac->nid), mac->iter);
 
     pb = new_pkcs12_builder(fname);
 
@@ -646,20 +643,7 @@ int setup_tests(void)
             PKCS12_helper_set_legacy(1);
             break;
         case OPT_CONTEXT:
-            testctx = OSSL_LIB_CTX_new();
-            if (!TEST_ptr(testctx))
-                return 0;
-            /* Swap the libctx to test non-default context only */
-            nullprov = OSSL_PROVIDER_load(NULL, "null");
-            if (!TEST_ptr(nullprov))
-                return 0;
-            deflprov = OSSL_PROVIDER_load(testctx, "default");
-            if (!TEST_ptr(deflprov))
-                return 0;
-            lgcyprov = OSSL_PROVIDER_load(testctx, "legacy");
-            if (!TEST_ptr(lgcyprov))
-                return 0;
-            PKCS12_helper_set_libctx(testctx);
+            default_libctx = 0;
             break;
         case OPT_TEST_CASES:
             break;
@@ -668,11 +652,27 @@ int setup_tests(void)
         }
     }
 
+    if (!default_libctx) {
+        testctx = OSSL_LIB_CTX_new();
+        if (!TEST_ptr(testctx))
+            return 0;
+        nullprov = OSSL_PROVIDER_load(NULL, "null");
+        if (!TEST_ptr(nullprov))
+            return 0;
+    }
+
+    deflprov = OSSL_PROVIDER_load(testctx, "default");
+    if (!TEST_ptr(deflprov))
+        return 0;
+    lgcyprov = OSSL_PROVIDER_load(testctx, "legacy");
+
+    PKCS12_helper_set_libctx(testctx);
+
     /*
      * Verify that the default and fips providers in the default libctx are not
      * available if we are using a standalone context
      */
-    if (testctx != NULL) {
+    if (!default_libctx) {
         if (!TEST_false(OSSL_PROVIDER_available(NULL, "default"))
                 || !TEST_false(OSSL_PROVIDER_available(NULL, "fips")))
             return 0;
