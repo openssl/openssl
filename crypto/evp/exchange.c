@@ -11,9 +11,10 @@
 #include <openssl/evp.h>
 #include <openssl/err.h>
 #include "internal/refcount.h"
-#include "crypto/evp.h"
 #include "internal/provider.h"
+#include "internal/core.h"
 #include "internal/numbers.h"   /* includes SIZE_MAX */
+#include "crypto/evp.h"
 #include "evp_local.h"
 
 static EVP_KEYEXCH *evp_keyexch_new(OSSL_PROVIDER *prov)
@@ -52,6 +53,8 @@ static void *evp_keyexch_from_algorithm(int name_id,
     }
 
     exchange->name_id = name_id;
+    if ((exchange->type_name = ossl_algorithm_get1_first_name(algodef)) == NULL)
+        goto err;
     exchange->description = algodef->algorithm_description;
 
     for (; fns->function_id != 0; fns++) {
@@ -149,6 +152,7 @@ void EVP_KEYEXCH_free(EVP_KEYEXCH *exchange)
     CRYPTO_DOWN_REF(&exchange->refcnt, &i, exchange->lock);
     if (i > 0)
         return;
+    OPENSSL_free(exchange->type_name);
     ossl_provider_free(exchange->prov);
     CRYPTO_THREAD_lock_free(exchange->lock);
     OPENSSL_free(exchange);
@@ -463,6 +467,11 @@ int EVP_PKEY_derive(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *pkeylen)
 int EVP_KEYEXCH_number(const EVP_KEYEXCH *keyexch)
 {
     return keyexch->name_id;
+}
+
+const char *EVP_KEYEXCH_name(const EVP_KEYEXCH *keyexch)
+{
+    return keyexch->type_name;
 }
 
 const char *EVP_KEYEXCH_description(const EVP_KEYEXCH *keyexch)

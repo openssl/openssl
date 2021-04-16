@@ -12,8 +12,9 @@
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 #include "internal/cryptlib.h"
-#include "crypto/evp.h"
 #include "internal/provider.h"
+#include "internal/core.h"
+#include "crypto/evp.h"
 #include "evp_local.h"
 
 static int evp_kem_init(EVP_PKEY_CTX *ctx, int operation,
@@ -197,6 +198,8 @@ static void *evp_kem_from_algorithm(int name_id, const OSSL_ALGORITHM *algodef,
     }
 
     kem->name_id = name_id;
+    if ((kem->type_name = ossl_algorithm_get1_first_name(algodef)) == NULL)
+        goto err;
     kem->description = algodef->algorithm_description;
 
     for (; fns->function_id != 0; fns++) {
@@ -307,6 +310,7 @@ void EVP_KEM_free(EVP_KEM *kem)
     CRYPTO_DOWN_REF(&kem->refcnt, &i, kem->lock);
     if (i > 0)
         return;
+    OPENSSL_free(kem->type_name);
     ossl_provider_free(kem->prov);
     CRYPTO_THREAD_lock_free(kem->lock);
     OPENSSL_free(kem);
@@ -342,6 +346,11 @@ int EVP_KEM_is_a(const EVP_KEM *kem, const char *name)
 int EVP_KEM_number(const EVP_KEM *kem)
 {
     return kem->name_id;
+}
+
+const char *EVP_KEM_name(const EVP_KEM *kem)
+{
+    return kem->type_name;
 }
 
 const char *EVP_KEM_description(const EVP_KEM *kem)

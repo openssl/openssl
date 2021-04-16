@@ -13,6 +13,7 @@
 #include <openssl/err.h>
 #include "internal/provider.h"
 #include "internal/refcount.h"
+#include "internal/core.h"
 #include "crypto/evp.h"
 #include "evp_local.h"
 
@@ -42,11 +43,14 @@ static void *keymgmt_from_algorithm(int name_id,
     int setgenparamfncnt = 0;
     int importfncnt = 0, exportfncnt = 0;
 
-    if ((keymgmt = keymgmt_new()) == NULL) {
+    if ((keymgmt = keymgmt_new()) == NULL)
+        return NULL;
+
+    keymgmt->name_id = name_id;
+    if ((keymgmt->type_name = ossl_algorithm_get1_first_name(algodef)) == NULL) {
         EVP_KEYMGMT_free(keymgmt);
         return NULL;
     }
-    keymgmt->name_id = name_id;
     keymgmt->description = algodef->algorithm_description;
 
     for (; fns->function_id != 0; fns++) {
@@ -236,6 +240,7 @@ void EVP_KEYMGMT_free(EVP_KEYMGMT *keymgmt)
     CRYPTO_DOWN_REF(&keymgmt->refcnt, &ref, keymgmt->lock);
     if (ref > 0)
         return;
+    OPENSSL_free(keymgmt->type_name);
     ossl_provider_free(keymgmt->prov);
     CRYPTO_THREAD_lock_free(keymgmt->lock);
     OPENSSL_free(keymgmt);
@@ -256,9 +261,9 @@ const char *EVP_KEYMGMT_description(const EVP_KEYMGMT *keymgmt)
     return keymgmt->description;
 }
 
-const char *EVP_KEYMGMT_get0_first_name(const EVP_KEYMGMT *keymgmt)
+const char *EVP_KEYMGMT_name(const EVP_KEYMGMT *keymgmt)
 {
-    return evp_first_name(keymgmt->prov, keymgmt->name_id);
+    return keymgmt->type_name;
 }
 
 int EVP_KEYMGMT_is_a(const EVP_KEYMGMT *keymgmt, const char *name)

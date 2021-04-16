@@ -2,8 +2,9 @@
 #include <openssl/err.h>
 #include <openssl/core.h>
 #include <openssl/core_dispatch.h>
-#include "crypto/evp.h"
 #include "internal/provider.h"
+#include "internal/core.h"
+#include "crypto/evp.h"
 #include "evp_local.h"
 
 static int evp_mac_up_ref(void *vmac)
@@ -26,6 +27,7 @@ static void evp_mac_free(void *vmac)
     CRYPTO_DOWN_REF(&mac->refcnt, &ref, mac->lock);
     if (ref > 0)
         return;
+    OPENSSL_free(mac->type_name);
     ossl_provider_free(mac->prov);
     CRYPTO_THREAD_lock_free(mac->lock);
     OPENSSL_free(mac);
@@ -59,6 +61,10 @@ static void *evp_mac_from_algorithm(int name_id,
         return NULL;
     }
     mac->name_id = name_id;
+    if ((mac->type_name = ossl_algorithm_get1_first_name(algodef)) == NULL) {
+        evp_mac_free(mac);
+        return NULL;
+    }
     mac->description = algodef->algorithm_description;
 
     for (; fns->function_id != 0; fns++) {

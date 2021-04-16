@@ -1050,7 +1050,7 @@ int EVP_PKEY_can_sign(const EVP_PKEY *pkey)
         const char *supported_sig =
             pkey->keymgmt->query_operation_name != NULL
             ? pkey->keymgmt->query_operation_name(OSSL_OP_SIGNATURE)
-            : evp_first_name(prov, pkey->keymgmt->name_id);
+            : EVP_KEYMGMT_name(pkey->keymgmt);
         EVP_SIGNATURE *signature = NULL;
 
         signature = EVP_SIGNATURE_fetch(libctx, supported_sig, NULL);
@@ -1931,8 +1931,7 @@ int evp_pkey_copy_downgraded(EVP_PKEY **dest, const EVP_PKEY *src)
         int type = src->type;
         const char *keytype = NULL;
 
-        keytype = evp_first_name(EVP_KEYMGMT_provider(keymgmt),
-                                 keymgmt->name_id);
+        keytype = EVP_KEYMGMT_name(keymgmt);
 
         /*
          * If the type is EVP_PKEY_NONE, then we have a problem somewhere

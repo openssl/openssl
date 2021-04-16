@@ -12,8 +12,9 @@
 #include <openssl/core.h>
 #include <openssl/core_dispatch.h>
 #include <openssl/kdf.h>
-#include "crypto/evp.h"
 #include "internal/provider.h"
+#include "internal/core.h"
+#include "crypto/evp.h"
 #include "evp_local.h"
 
 static int evp_kdf_up_ref(void *vkdf)
@@ -36,6 +37,7 @@ static void evp_kdf_free(void *vkdf)
     CRYPTO_DOWN_REF(&kdf->refcnt, &ref, kdf->lock);
     if (ref > 0)
         return;
+    OPENSSL_free(kdf->type_name);
     ossl_provider_free(kdf->prov);
     CRYPTO_THREAD_lock_free(kdf->lock);
     OPENSSL_free(kdf);
@@ -67,6 +69,10 @@ static void *evp_kdf_from_algorithm(int name_id,
         return NULL;
     }
     kdf->name_id = name_id;
+    if ((kdf->type_name = ossl_algorithm_get1_first_name(algodef)) == NULL) {
+        evp_kdf_free(kdf);
+        return NULL;
+    }
     kdf->description = algodef->algorithm_description;
 
     for (; fns->function_id != 0; fns++) {

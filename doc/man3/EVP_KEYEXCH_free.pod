@@ -5,7 +5,7 @@
 EVP_KEYEXCH_fetch, EVP_KEYEXCH_free, EVP_KEYEXCH_up_ref, EVP_KEYEXCH_provider,
 EVP_KEYEXCH_is_a, EVP_KEYEXCH_do_all_provided,
 EVP_KEYEXCH_number, EVP_KEYEXCH_names_do_all,
-EVP_KEYEXCH_description,
+EVP_KEYEXCH_name, EVP_KEYEXCH_description,
 EVP_KEYEXCH_gettable_ctx_params, EVP_KEYEXCH_settable_ctx_params
 - Functions to manage EVP_KEYEXCH algorithm objects
 
@@ -20,6 +20,7 @@ EVP_KEYEXCH_gettable_ctx_params, EVP_KEYEXCH_settable_ctx_params
  OSSL_PROVIDER *EVP_KEYEXCH_provider(const EVP_KEYEXCH *exchange);
  int EVP_KEYEXCH_is_a(const EVP_KEYEXCH *exchange, const char *name);
  int EVP_KEYEXCH_number(const EVP_KEYEXCH *exchange);
+ const char *EVP_KEYEXCH_name(const EVP_KEYEXCH *exchange);
  void EVP_KEYEXCH_do_all_provided(OSSL_LIB_CTX *libctx,
                                   void (*fn)(EVP_KEYEXCH *exchange, void *arg),
                                   void *arg);
@@ -54,6 +55,12 @@ algorithm that's identifiable with I<name>.
 
 EVP_KEYEXCH_number() returns the internal dynamic number assigned to
 the I<exchange>.
+
+EVP_KEYEXCH_name() returns the algorithm name from the provided
+implementation for the given I<exchange>. Note that the I<exchange> may have
+multiple synonyms associated with it. In this case the first name from the
+algorithm definition is returned. Ownership of the returned string is retained
+by the I<exchange> object and should not be freed by the caller.
 
 EVP_KEYEXCH_names_do_all() traverses all names for the I<exchange>, and
 calls I<fn> with each name and I<data>.

@@ -5229,7 +5229,7 @@ CMS_AuthEnvelopedData_create            ?	3_0_0	EXIST::FUNCTION:CMS
 CMS_AuthEnvelopedData_create_ex         ?	3_0_0	EXIST::FUNCTION:CMS
 EVP_PKEY_CTX_set_ec_param_enc           ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_get0_type_name                 ?	3_0_0	EXIST::FUNCTION:
-EVP_KEYMGMT_get0_first_name             ?	3_0_0	EXIST::FUNCTION:
+EVP_KEYMGMT_name                        ?	3_0_0	EXIST::FUNCTION:
 EC_KEY_decoded_from_explicit_params     ?	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,EC
 EVP_KEM_free                            ?	3_0_0	EXIST::FUNCTION:
 EVP_KEM_up_ref                          ?	3_0_0	EXIST::FUNCTION:
@@ -5357,3 +5357,7 @@ EVP_MD_CTX_get1_md                      ?	3_0_0	EXIST::FUNCTION:
 EVP_CIPHER_CTX_get0_cipher              ?	3_0_0	EXIST::FUNCTION:
 EVP_CIPHER_CTX_get1_cipher              ?	3_0_0	EXIST::FUNCTION:
 OSSL_LIB_CTX_get0_global_default        ?	3_0_0	EXIST::FUNCTION:
+EVP_SIGNATURE_name                      ?	3_0_0	EXIST::FUNCTION:
+EVP_ASYM_CIPHER_name                    ?	3_0_0	EXIST::FUNCTION:
+EVP_KEM_name                            ?	3_0_0	EXIST::FUNCTION:
+EVP_KEYEXCH_name                        ?	3_0_0	EXIST::FUNCTION:
