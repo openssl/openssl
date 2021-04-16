@@ -3264,9 +3264,11 @@ static void free_key_list(KEY_LIST *lst)
 static int key_unsupported(void)
 {
     long err = ERR_peek_last_error();
+    int lib = ERR_GET_LIB(err);
+    long reason = ERR_GET_REASON(err);
 
-    if (ERR_GET_LIB(err) == ERR_LIB_EVP
-            && (ERR_GET_REASON(err) == EVP_R_UNSUPPORTED_ALGORITHM)) {
+    if ((lib == ERR_LIB_EVP && reason == EVP_R_UNSUPPORTED_ALGORITHM)
+        || reason == ERR_R_UNSUPPORTED) {
         ERR_clear_error();
         return 1;
     }
@@ -3276,9 +3278,9 @@ static int key_unsupported(void)
      * hint to an unsupported algorithm/curve (e.g. if binary EC support is
      * disabled).
      */
-    if (ERR_GET_LIB(err) == ERR_LIB_EC
-        && (ERR_GET_REASON(err) == EC_R_UNKNOWN_GROUP
-            || ERR_GET_REASON(err) == EC_R_INVALID_CURVE)) {
+    if (lib == ERR_LIB_EC
+        && (reason == EC_R_UNKNOWN_GROUP
+            || reason == EC_R_INVALID_CURVE)) {
         ERR_clear_error();
         return 1;
     }
