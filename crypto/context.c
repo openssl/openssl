@@ -199,9 +199,17 @@ void OSSL_LIB_CTX_free(OSSL_LIB_CTX *ctx)
     OPENSSL_free(ctx);
 }
 
+#ifndef FIPS_MODULE
+OSSL_LIB_CTX *OSSL_LIB_CTX_get0_global_default(void)
+{
+    if (!RUN_ONCE(&default_context_init, default_context_do_init))
+        return NULL;
+
+    return &default_context_int;
+}
+
 OSSL_LIB_CTX *OSSL_LIB_CTX_set0_default(OSSL_LIB_CTX *libctx)
 {
-#ifndef FIPS_MODULE
     OSSL_LIB_CTX *current_defctx;
 
     if ((current_defctx = get_default_context()) != NULL) {
@@ -209,10 +217,10 @@ OSSL_LIB_CTX *OSSL_LIB_CTX_set0_default(OSSL_LIB_CTX *libctx)
             set_default_context(libctx);
         return current_defctx;
     }
-#endif
 
     return NULL;
 }
+#endif
 
 OSSL_LIB_CTX *ossl_lib_ctx_get_concrete(OSSL_LIB_CTX *ctx)
 {

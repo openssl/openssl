@@ -5356,3 +5356,4 @@ EVP_MD_CTX_get0_md                      ?	3_0_0	EXIST::FUNCTION:
 EVP_MD_CTX_get1_md                      ?	3_0_0	EXIST::FUNCTION:
 EVP_CIPHER_CTX_get0_cipher              ?	3_0_0	EXIST::FUNCTION:
 EVP_CIPHER_CTX_get1_cipher              ?	3_0_0	EXIST::FUNCTION:
+OSSL_LIB_CTX_get0_global_default        ?	3_0_0	EXIST::FUNCTION:
