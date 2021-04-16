@@ -72,77 +72,77 @@ static int legacy_get_params(void *provctx, OSSL_PARAM params[])
 
 static const OSSL_ALGORITHM legacy_digests[] = {
 #ifndef OPENSSL_NO_MD2
-    ALG(OSSL_NAMES_MD2, ossl_md2_functions),
+    ALG(PROV_NAMES_MD2, ossl_md2_functions),
 #endif
 #ifndef OPENSSL_NO_MD4
-    ALG(OSSL_NAMES_MD4, ossl_md4_functions),
+    ALG(PROV_NAMES_MD4, ossl_md4_functions),
 #endif
 #ifndef OPENSSL_NO_MDC2
-    ALG(OSSL_NAMES_MDC2, ossl_mdc2_functions),
+    ALG(PROV_NAMES_MDC2, ossl_mdc2_functions),
 #endif /* OPENSSL_NO_MDC2 */
 #ifndef OPENSSL_NO_WHIRLPOOL
-    ALG(OSSL_NAMES_WHIRLPOOL, ossl_wp_functions),
+    ALG(PROV_NAMES_WHIRLPOOL, ossl_wp_functions),
 #endif /* OPENSSL_NO_WHIRLPOOL */
 #ifndef OPENSSL_NO_RMD160
-    ALG(OSSL_NAMES_RIPEMD_160, ossl_ripemd160_functions),
+    ALG(PROV_NAMES_RIPEMD_160, ossl_ripemd160_functions),
 #endif /* OPENSSL_NO_RMD160 */
     { NULL, NULL, NULL }
 };
 
 static const OSSL_ALGORITHM legacy_ciphers[] = {
 #ifndef OPENSSL_NO_CAST
-    ALG(OSSL_NAMES_CAST5_ECB, ossl_cast5128ecb_functions),
-    ALG(OSSL_NAMES_CAST5_CBC, ossl_cast5128cbc_functions),
-    ALG(OSSL_NAMES_CAST5_OFB, ossl_cast5128ofb64_functions),
-    ALG(OSSL_NAMES_CAST5_CFB, ossl_cast5128cfb64_functions),
+    ALG(PROV_NAMES_CAST5_ECB, ossl_cast5128ecb_functions),
+    ALG(PROV_NAMES_CAST5_CBC, ossl_cast5128cbc_functions),
+    ALG(PROV_NAMES_CAST5_OFB, ossl_cast5128ofb64_functions),
+    ALG(PROV_NAMES_CAST5_CFB, ossl_cast5128cfb64_functions),
 #endif /* OPENSSL_NO_CAST */
 #ifndef OPENSSL_NO_BF
-    ALG(OSSL_NAMES_BF_ECB, ossl_blowfish128ecb_functions),
-    ALG(OSSL_NAMES_BF_CBC, ossl_blowfish128cbc_functions),
-    ALG(OSSL_NAMES_BF_OFB, ossl_blowfish64ofb64_functions),
-    ALG(OSSL_NAMES_BF_CFB, ossl_blowfish64cfb64_functions),
+    ALG(PROV_NAMES_BF_ECB, ossl_blowfish128ecb_functions),
+    ALG(PROV_NAMES_BF_CBC, ossl_blowfish128cbc_functions),
+    ALG(PROV_NAMES_BF_OFB, ossl_blowfish64ofb64_functions),
+    ALG(PROV_NAMES_BF_CFB, ossl_blowfish64cfb64_functions),
 #endif /* OPENSSL_NO_BF */
 #ifndef OPENSSL_NO_IDEA
-    ALG(OSSL_NAMES_IDEA_ECB, ossl_idea128ecb_functions),
-    ALG(OSSL_NAMES_IDEA_CBC, ossl_idea128cbc_functions),
-    ALG(OSSL_NAMES_IDEA_OFB, ossl_idea128ofb64_functions),
-    ALG(OSSL_NAMES_IDEA_CFB, ossl_idea128cfb64_functions),
+    ALG(PROV_NAMES_IDEA_ECB, ossl_idea128ecb_functions),
+    ALG(PROV_NAMES_IDEA_CBC, ossl_idea128cbc_functions),
+    ALG(PROV_NAMES_IDEA_OFB, ossl_idea128ofb64_functions),
+    ALG(PROV_NAMES_IDEA_CFB, ossl_idea128cfb64_functions),
 #endif /* OPENSSL_NO_IDEA */
 #ifndef OPENSSL_NO_SEED
-    ALG(OSSL_NAMES_SEED_ECB, ossl_seed128ecb_functions),
-    ALG(OSSL_NAMES_SEED_CBC, ossl_seed128cbc_functions),
-    ALG(OSSL_NAMES_SEED_OFB, ossl_seed128ofb128_functions),
-    ALG(OSSL_NAMES_SEED_CFB, ossl_seed128cfb128_functions),
+    ALG(PROV_NAMES_SEED_ECB, ossl_seed128ecb_functions),
+    ALG(PROV_NAMES_SEED_CBC, ossl_seed128cbc_functions),
+    ALG(PROV_NAMES_SEED_OFB, ossl_seed128ofb128_functions),
+    ALG(PROV_NAMES_SEED_CFB, ossl_seed128cfb128_functions),
 #endif /* OPENSSL_NO_SEED */
 #ifndef OPENSSL_NO_RC2
-    ALG(OSSL_NAMES_RC2_ECB, ossl_rc2128ecb_functions),
-    ALG(OSSL_NAMES_RC2_CBC, ossl_rc2128cbc_functions),
-    ALG(OSSL_NAMES_RC2_40_CBC, ossl_rc240cbc_functions),
-    ALG(OSSL_NAMES_RC2_64_CBC, ossl_rc264cbc_functions),
-    ALG(OSSL_NAMES_RC2_CFB, ossl_rc2128cfb128_functions),
-    ALG(OSSL_NAMES_RC2_OFB, ossl_rc2128ofb128_functions),
+    ALG(PROV_NAMES_RC2_ECB, ossl_rc2128ecb_functions),
+    ALG(PROV_NAMES_RC2_CBC, ossl_rc2128cbc_functions),
+    ALG(PROV_NAMES_RC2_40_CBC, ossl_rc240cbc_functions),
+    ALG(PROV_NAMES_RC2_64_CBC, ossl_rc264cbc_functions),
+    ALG(PROV_NAMES_RC2_CFB, ossl_rc2128cfb128_functions),
+    ALG(PROV_NAMES_RC2_OFB, ossl_rc2128ofb128_functions),
 #endif /* OPENSSL_NO_RC2 */
 #ifndef OPENSSL_NO_RC4
-    ALG(OSSL_NAMES_RC4, ossl_rc4128_functions),
-    ALG(OSSL_NAMES_RC4_40, ossl_rc440_functions),
+    ALG(PROV_NAMES_RC4, ossl_rc4128_functions),
+    ALG(PROV_NAMES_RC4_40, ossl_rc440_functions),
 # ifndef OPENSSL_NO_MD5
-    ALG(OSSL_NAMES_RC4_HMAC_MD5, ossl_rc4_hmac_ossl_md5_functions),
+    ALG(PROV_NAMES_RC4_HMAC_MD5, ossl_rc4_hmac_ossl_md5_functions),
 # endif /* OPENSSL_NO_MD5 */
 #endif /* OPENSSL_NO_RC4 */
 #ifndef OPENSSL_NO_RC5
-    ALG(OSSL_NAMES_RC5_ECB, ossl_rc5128ecb_functions),
-    ALG(OSSL_NAMES_RC5_CBC, ossl_rc5128cbc_functions),
-    ALG(OSSL_NAMES_RC5_OFB, ossl_rc5128ofb64_functions),
-    ALG(OSSL_NAMES_RC5_CFB, ossl_rc5128cfb64_functions),
+    ALG(PROV_NAMES_RC5_ECB, ossl_rc5128ecb_functions),
+    ALG(PROV_NAMES_RC5_CBC, ossl_rc5128cbc_functions),
+    ALG(PROV_NAMES_RC5_OFB, ossl_rc5128ofb64_functions),
+    ALG(PROV_NAMES_RC5_CFB, ossl_rc5128cfb64_functions),
 #endif /* OPENSSL_NO_RC5 */
 #ifndef OPENSSL_NO_DES
-    ALG(OSSL_NAMES_DESX_CBC, ossl_tdes_desx_cbc_functions),
-    ALG(OSSL_NAMES_DES_ECB, ossl_des_ecb_functions),
-    ALG(OSSL_NAMES_DES_CBC, ossl_des_cbc_functions),
-    ALG(OSSL_NAMES_DES_OFB, ossl_des_ofb64_functions),
-    ALG(OSSL_NAMES_DES_CFB, ossl_des_cfb64_functions),
-    ALG(OSSL_NAMES_DES_CFB1, ossl_des_cfb1_functions),
-    ALG(OSSL_NAMES_DES_CFB8, ossl_des_cfb8_functions),
+    ALG(PROV_NAMES_DESX_CBC, ossl_tdes_desx_cbc_functions),
+    ALG(PROV_NAMES_DES_ECB, ossl_des_ecb_functions),
+    ALG(PROV_NAMES_DES_CBC, ossl_des_cbc_functions),
+    ALG(PROV_NAMES_DES_OFB, ossl_des_ofb64_functions),
+    ALG(PROV_NAMES_DES_CFB, ossl_des_cfb64_functions),
+    ALG(PROV_NAMES_DES_CFB1, ossl_des_cfb1_functions),
+    ALG(PROV_NAMES_DES_CFB8, ossl_des_cfb8_functions),
 #endif /* OPENSSL_NO_DES */
     { NULL, NULL, NULL }
 };
