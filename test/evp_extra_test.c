@@ -1412,10 +1412,10 @@ static int test_EVP_SM2(void)
     EVP_MD_CTX_set_pkey_ctx(md_ctx, sctx);
     EVP_MD_CTX_set_pkey_ctx(md_ctx_verify, sctx);
 
-    if (!TEST_ptr(sm3 = EVP_MD_fetch(testctx, "sm3", testpropq)))
+    if (!TEST_ptr(check_md = EVP_MD_fetch(testctx, "sm3", testpropq)))
         goto done;
 
-    if (!TEST_true(EVP_DigestSignInit(md_ctx, NULL, sm3, NULL, pkey)))
+    if (!TEST_true(EVP_DigestSignInit(md_ctx, NULL, check_md, NULL, pkey)))
         goto done;
 
     if (!TEST_int_gt(EVP_PKEY_CTX_set1_id(sctx, sm2_id, sizeof(sm2_id)), 0))
@@ -1436,7 +1436,8 @@ static int test_EVP_SM2(void)
 
     /* Ensure that the signature round-trips. */
 
-    if (!TEST_true(EVP_DigestVerifyInit(md_ctx_verify, NULL, sm3, NULL, pkey)))
+    if (!TEST_true(EVP_DigestVerifyInit(md_ctx_verify, NULL, check_md, NULL,
+                                        pkey)))
         goto done;
 
     if (!TEST_int_gt(EVP_PKEY_CTX_set1_id(sctx, sm2_id, sizeof(sm2_id)), 0))
@@ -1453,13 +1454,24 @@ static int test_EVP_SM2(void)
     gparams[0] = OSSL_PARAM_construct_utf8_string(OSSL_ASYM_CIPHER_PARAM_DIGEST,
                                                   mdname, sizeof(mdname));
     for (i = 0; i < 2; i++) {
+        const char *mdnames[] = {
+#ifndef OPENSSL_NO_SM3
+            "SM3",
+#else
+            NULL,
+#endif
+            "SHA2-256" };
         EVP_PKEY_CTX_free(cctx);
 
-        sparams[0] = OSSL_PARAM_construct_utf8_string(OSSL_ASYM_CIPHER_PARAM_DIGEST,
-                                                      i == 0 ? "SM3" : "SHA2-256",
-                                                      0);
+        if (mdnames[i] == NULL)
+            continue;
 
-        if (!TEST_ptr(cctx = EVP_PKEY_CTX_new_from_pkey(testctx, pkey, testpropq)))
+        sparams[0] =
+            OSSL_PARAM_construct_utf8_string(OSSL_ASYM_CIPHER_PARAM_DIGEST,
+                                             (char *)mdnames[i], 0);
+
+        if (!TEST_ptr(cctx = EVP_PKEY_CTX_new_from_pkey(testctx,
+                                                        pkey, testpropq)))
             goto done;
 
         if (!TEST_true(EVP_PKEY_encrypt_init(cctx)))
@@ -1491,14 +1503,10 @@ static int test_EVP_SM2(void)
          * check the name with EVP_MD_is_a().
          */
         EVP_MD_free(check_md);
-        if (!TEST_ptr(check_md = EVP_MD_fetch(NULL, mdname, NULL)))
+        if (!TEST_ptr(check_md = EVP_MD_fetch(testctx, mdname, testpropq)))
             goto done;
-        if (i == 0 && !TEST_true(EVP_MD_is_a(check_md, "SM3"))) {
-            TEST_info("Fetched md %s isn't SM3", mdname);
-            goto done;
-        }
-        if (i == 1 && !TEST_true(EVP_MD_is_a(check_md, "SHA2-256"))) {
-            TEST_info("Fetched md %s isn't SHA2-256", mdname);
+        if (!TEST_true(EVP_MD_is_a(check_md, mdnames[i]))) {
+            TEST_info("Fetched md %s isn't %s", mdname, mdnames[i]);
             goto done;
         }
 
