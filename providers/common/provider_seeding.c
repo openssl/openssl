@@ -23,7 +23,8 @@ int ossl_prov_seeding_from_dispatch(const OSSL_DISPATCH *fns)
          * multiple versions of libcrypto (e.g. one static and one dynamic), but
          * sharing a single fips.so. We do a simple sanity check here.
          */
-#define set_func(c, f) if (c == NULL) c = f; else if (c != f) return 0;
+#define set_func(c, f) \
+    do { if (c == NULL) c = f; else if (c != f) return 0; } while (0)
         switch (fns->function_id) {
         case OSSL_FUNC_GET_ENTROPY:
             set_func(c_get_entropy, OSSL_FUNC_get_entropy(fns));
@@ -38,6 +39,7 @@ int ossl_prov_seeding_from_dispatch(const OSSL_DISPATCH *fns)
             set_func(c_cleanup_nonce, OSSL_FUNC_cleanup_nonce(fns));
             break;
         }
+#undef set_func
     }
     return 1;
 }
