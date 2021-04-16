@@ -3,7 +3,7 @@
 =head1 NAME
 
 OSSL_LIB_CTX, OSSL_LIB_CTX_new, OSSL_LIB_CTX_free, OSSL_LIB_CTX_load_config,
-OSSL_LIB_CTX_set0_default
+OSSL_LIB_CTX_get0_global_default, OSSL_LIB_CTX_set0_default
 - OpenSSL library context
 
 =head1 SYNOPSIS
@@ -15,6 +15,7 @@ OSSL_LIB_CTX_set0_default
  OSSL_LIB_CTX *OSSL_LIB_CTX_new(void);
  int OSSL_LIB_CTX_load_config(OSSL_LIB_CTX *ctx, const char *config_file);
  void OSSL_LIB_CTX_free(OSSL_LIB_CTX *ctx);
+ OSSL_LIB_CTX *OSSL_LIB_CTX_get0_global_default(void);
  OSSL_LIB_CTX *OSSL_LIB_CTX_set0_default(OSSL_LIB_CTX *ctx);
 
 =head1 DESCRIPTION
@@ -38,12 +39,17 @@ from a configuration.
 OSSL_LIB_CTX_free() frees the given I<ctx>, unless it happens to be the
 default OpenSSL library context.
 
+OSSL_LIB_CTX_get0_global_default() returns a concrete (non NULL) reference to
+the global default library context.
+
 OSSL_LIB_CTX_set0_default() sets the default OpenSSL library context to be
 I<ctx> in the current thread.  The previous default library context is
 returned.  Care should be taken by the caller to restore the previous
 default library context with a subsequent call of this function. If I<ctx> is
 NULL then no change is made to the default library context, but a pointer to
-the current library context is still returned.
+the current library context is still returned. On a successful call of this
+function the returned value will always be a concrete (non NULL) library
+context.
 
 Care should be taken when changing the default library context and starting
 async jobs (see L<ASYNC_start_job(3)>), as the default library context when
@@ -55,15 +61,17 @@ that job has finished.
 
 =head1 RETURN VALUES
 
-OSSL_LIB_CTX_new() and OSSL_LIB_CTX_set0_default() return a library context
-pointer on success, or NULL on error.
+OSSL_LIB_CTX_new(), OSSL_LIB_CTX_get0_global_default() and
+OSSL_LIB_CTX_set0_default() return a library context pointer on success, or NULL
+on error.
 
 OSSL_LIB_CTX_free() doesn't return any value.
 
 =head1 HISTORY
 
-OSSL_LIB_CTX, OSSL_LIB_CTX_new(), OSSL_LIB_CTX_load_config(), OSSL_LIB_CTX_free()
-and OSSL_LIB_CTX_set0_default() were added in OpenSSL 3.0.
+OSSL_LIB_CTX, OSSL_LIB_CTX_new(), OSSL_LIB_CTX_load_config(),
+OSSL_LIB_CTX_free(), OSSL_LIB_CTX_get0_global_default() and
+OSSL_LIB_CTX_set0_default() were added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

@@ -5352,3 +5352,4 @@ OSSL_PARAM_merge                        ?	3_0_0	EXIST::FUNCTION:
 OSSL_PARAM_free                         ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_todata                         ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_export                         ?	3_0_0	EXIST::FUNCTION:
+OSSL_LIB_CTX_get0_global_default        ?	3_0_0	EXIST::FUNCTION:
