@@ -171,7 +171,7 @@ SKIP: {
     ok(test_errors(key => 'server-dsa-pubkey.pem',
                    out => 'server-dsa-pubkey.err',
                    args => [ '-pubin' ],
-                   expected => 'unsupported algorithm'),
+                   expected => 'unsupported'),
        "expected error loading unsupported dsa public key");
 }
 
