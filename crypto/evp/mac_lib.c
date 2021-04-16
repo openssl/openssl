@@ -165,9 +165,7 @@ int EVP_MAC_number(const EVP_MAC *mac)
 
 const char *EVP_MAC_name(const EVP_MAC *mac)
 {
-    if (mac->prov != NULL)
-        return evp_first_name(mac->prov, mac->name_id);
-    return NULL;
+    return mac->type_name;
 }
 
 const char *EVP_MAC_description(const EVP_MAC *mac)

@@ -192,7 +192,7 @@ static EVP_PKEY_CTX *int_ctx_new(OSSL_LIB_CTX *libctx,
         /* If we have an engine, something went wrong somewhere... */
         if (!ossl_assert(e == NULL))
             return NULL;
-        keytype = evp_first_name(pkey->keymgmt->prov, pkey->keymgmt->name_id);
+        keytype = EVP_KEYMGMT_name(pkey->keymgmt);
         goto common;
     }
 

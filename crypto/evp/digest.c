@@ -18,8 +18,9 @@
 #include <openssl/params.h>
 #include <openssl/core_names.h>
 #include "internal/cryptlib.h"
-#include "crypto/evp.h"
 #include "internal/provider.h"
+#include "internal/core.h"
+#include "crypto/evp.h"
 #include "evp_local.h"
 
 
@@ -906,6 +907,10 @@ static void *evp_md_from_algorithm(int name_id,
 #endif
 
     md->name_id = name_id;
+    if ((md->type_name = ossl_algorithm_get1_first_name(algodef)) == NULL) {
+        EVP_MD_free(md);
+        return NULL;
+    }
     md->description = algodef->algorithm_description;
 
     for (; fns->function_id != 0; fns++) {

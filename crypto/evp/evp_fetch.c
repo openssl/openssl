@@ -508,14 +508,6 @@ void evp_generic_do_all(OSSL_LIB_CTX *libctx, int operation_id,
                           &data);
 }
 
-const char *evp_first_name(const OSSL_PROVIDER *prov, int name_id)
-{
-    OSSL_LIB_CTX *libctx = ossl_provider_libctx(prov);
-    OSSL_NAMEMAP *namemap = ossl_namemap_stored(libctx);
-
-    return ossl_namemap_num2name(namemap, name_id, 0);
-}
-
 int evp_is_a(OSSL_PROVIDER *prov, int number,
              const char *legacy_name, const char *name)
 {

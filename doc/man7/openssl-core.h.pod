@@ -60,6 +60,9 @@ identity zero and function pointer NULL.
 The algorithm names and property definitions are defined by the
 providers.
 
+The OpenSSL libraries use the first of the algorithm names as the main
+or canonical name, on a per algorithm implementation basis.
+
 =item B<OSSL_PARAM>
 
 This type is a structure that allows passing arbitrary object data

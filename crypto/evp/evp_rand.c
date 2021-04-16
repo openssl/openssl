@@ -18,16 +18,18 @@
 #include <openssl/core.h>
 #include <openssl/core_names.h>
 #include <openssl/crypto.h>
-#include "crypto/asn1.h"
-#include "crypto/evp.h"
 #include "internal/cryptlib.h"
 #include "internal/numbers.h"
 #include "internal/provider.h"
+#include "internal/core.h"
+#include "crypto/asn1.h"
+#include "crypto/evp.h"
 #include "evp_local.h"
 
 struct evp_rand_st {
     OSSL_PROVIDER *prov;
     int name_id;
+    char *type_name;
     const char *description;
     CRYPTO_REF_COUNT refcnt;
     CRYPTO_RWLOCK *refcnt_lock;
@@ -72,6 +74,7 @@ static void evp_rand_free(void *vrand)
     CRYPTO_DOWN_REF(&rand->refcnt, &ref, rand->refcnt_lock);
     if (ref > 0)
         return;
+    OPENSSL_free(rand->type_name);
     ossl_provider_free(rand->prov);
     CRYPTO_THREAD_lock_free(rand->refcnt_lock);
     OPENSSL_free(rand);
@@ -130,6 +133,10 @@ static void *evp_rand_from_algorithm(int name_id,
         return NULL;
     }
     rand->name_id = name_id;
+    if ((rand->type_name = ossl_algorithm_get1_first_name(algodef)) == NULL) {
+        evp_rand_free(rand);
+        return NULL;
+    }
     rand->description = algodef->algorithm_description;
     rand->dispatch = fns;
     for (; fns->function_id != 0; fns++) {
@@ -293,7 +300,7 @@ int EVP_RAND_number(const EVP_RAND *rand)
 
 const char *EVP_RAND_name(const EVP_RAND *rand)
 {
-    return evp_first_name(rand->prov, rand->name_id);
+    return rand->type_name;
 }
 
 const char *EVP_RAND_description(const EVP_RAND *rand)

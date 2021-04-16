@@ -13,15 +13,16 @@
 #include <stdio.h>
 #include <limits.h>
 #include <assert.h>
-#include "internal/cryptlib.h"
 #include <openssl/evp.h>
 #include <openssl/err.h>
 #include <openssl/rand.h>
 #include <openssl/engine.h>
 #include <openssl/params.h>
 #include <openssl/core_names.h>
-#include "crypto/evp.h"
+#include "internal/cryptlib.h"
 #include "internal/provider.h"
+#include "internal/core.h"
+#include "crypto/evp.h"
 #include "evp_local.h"
 
 int EVP_CIPHER_CTX_reset(EVP_CIPHER_CTX *ctx)
@@ -1468,6 +1469,10 @@ static void *evp_cipher_from_algorithm(const int name_id,
 #endif
 
     cipher->name_id = name_id;
+    if ((cipher->type_name = ossl_algorithm_get1_first_name(algodef)) == NULL) {
+        EVP_CIPHER_free(cipher);
+        return NULL;
+    }
     cipher->description = algodef->algorithm_description;
 
     for (; fns->function_id != 0; fns++) {
@@ -1610,6 +1615,7 @@ int EVP_CIPHER_up_ref(EVP_CIPHER *cipher)
 
 void evp_cipher_free_int(EVP_CIPHER *cipher)
 {
+    OPENSSL_free(cipher->type_name);
     ossl_provider_free(cipher->prov);
     CRYPTO_THREAD_lock_free(cipher->lock);
     OPENSSL_free(cipher);
