@@ -467,7 +467,8 @@ typedef enum OPTION_choice {
     OPT_DANE_TLSA_RRDATA, OPT_DANE_EE_NO_NAME,
     OPT_ENABLE_PHA,
     OPT_SCTP_LABEL_BUG,
-    OPT_R_ENUM, OPT_PROV_ENUM
+    OPT_R_ENUM, OPT_PROV_ENUM,
+    OPT_CONNECTED_COMMANDS_DISABLED
 } OPTION_CHOICE;
 
 const OPTIONS s_client_options[] = {
@@ -548,6 +549,8 @@ const OPTIONS s_client_options[] = {
     {"psk_session", OPT_PSK_SESS, '<', "File to read PSK SSL session from"},
     {"name", OPT_PROTOHOST, 's',
      "Hostname to use for \"-starttls lmtp\", \"-starttls smtp\" or \"-starttls xmpp[-server]\""},
+    {"disable_connected_commands", OPT_CONNECTED_COMMANDS_DISABLE, '-',
+     "Disables s_client connected commands"},
 
     OPT_SECTION("Session"),
     {"reconnect", OPT_RECONNECT, '-',
@@ -888,6 +891,7 @@ int s_client_main(int argc, char **argv)
     int sctp_label_bug = 0;
 #endif
     int ignore_unexpected_eof = 0;
+    int connected_commands_enabled = 1;
 
     FD_ZERO(&readfds);
     FD_ZERO(&writefds);
@@ -1457,6 +1461,8 @@ int s_client_main(int argc, char **argv)
         case OPT_ENABLE_PHA:
             enable_pha = 1;
             break;
+        case OPT_CONNECTED_COMMANDS_DISABLED:
+            connected_commands_enabled = 0;
         }
     }
 
@@ -2958,18 +2964,20 @@ int s_client_main(int argc, char **argv)
                 at_eof = 1;
 #endif
 
-            if ((!c_ign_eof) && ((i <= 0) || (cbuf[0] == 'Q' && cmdletters))) {
+            if ((!c_ign_eof) && ((i <= 0) || (cbuf[0] == 'Q' && cmdletters
+             && connected_commands_enabled))) {
                 BIO_printf(bio_err, "DONE\n");
                 ret = 0;
                 goto shut;
             }
 
-            if ((!c_ign_eof) && (cbuf[0] == 'R' && cmdletters)) {
+            if ((!c_ign_eof) && (cbuf[0] == 'R' && cmdletters)
+             && connected_commands_enabled) {
                 BIO_printf(bio_err, "RENEGOTIATING\n");
                 SSL_renegotiate(con);
                 cbuf_len = 0;
             } else if (!c_ign_eof && (cbuf[0] == 'K' || cbuf[0] == 'k' )
-                    && cmdletters) {
+                    && cmdletters && connected_commands_enabled) {
                 BIO_printf(bio_err, "KEYUPDATE\n");
                 SSL_key_update(con,
                                cbuf[0] == 'K' ? SSL_KEY_UPDATE_REQUESTED
