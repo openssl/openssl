@@ -119,7 +119,7 @@ IF[{- !$disabled{fips} -}]
   # the generated commands in build templates are expected to catch that,
   # and thereby keep control over the exact output file location.
   IF[{- !$disabled{tests} -}]
-    DEPEND[|tests|]=fipsmodule.cnf
+    DEPEND[|run_tests|]=fipsmodule.cnf
     GENERATE[fipsmodule.cnf]=../apps/openssl fipsinstall \
           -module providers/$(FIPSMODULENAME) -provider_name fips \
           -mac_name HMAC -section_name fips_sect
