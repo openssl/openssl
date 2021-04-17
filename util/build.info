@@ -6,3 +6,17 @@ ELSIF[{- $target{build_scheme}->[1] eq "unix" -}]
  SCRIPTS{noinst}=shlib_wrap.sh
  SOURCE[shlib_wrap.sh]=shlib_wrap.sh.in
 ENDIF
+
+# Auxiliary program source (copied from ../apps/build.info)
+IF[{- $config{target} =~ /^(?:VC-|mingw)/ -}]
+  # It's called 'init', but doesn't have much 'init' in it...
+  $AUXLIBAPPSSRC=../apps/lib/win32_init.c
+ENDIF
+IF[{- $config{target} =~ /^vms-/ -}]
+  $AUXLIBAPPSSRC=../apps/lib/vms_term_sock.c ../apps/lib/vms_decc_argv.c
+ENDIF
+$LIBAPPSSRC=../apps/lib/opt.c $AUXLIBAPPSSRC
+PROGRAMS{noinst}=namemapdump
+SOURCE[namemapdump]=namemapdump.c $LIBAPPSSRC
+INCLUDE[namemapdump]=../include ../apps/include
+DEPEND[namemapdump]=../libcrypto.a
