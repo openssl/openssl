@@ -174,6 +174,22 @@ int ossl_namemap_doall_names(const OSSL_NAMEMAP *namemap, int number,
     return 1;
 }
 
+int ossl_namemap_doall_nums(const OSSL_NAMEMAP *namemap,
+                            void (*fn)(int number, void *data), void *data)
+{
+    int i, current_max;
+
+    if (namemap == NULL)
+        return 0;
+    if (!CRYPTO_THREAD_read_lock(namemap->lock))
+        return 0;
+    current_max = namemap->max_number;
+    CRYPTO_THREAD_unlock(namemap->lock);
+    for (i = 1; i < current_max; i++)
+        fn(i, data);
+    return 1;
+}
+
 static int namemap_name2num_n(const OSSL_NAMEMAP *namemap,
                               const char *name, size_t name_len)
 {

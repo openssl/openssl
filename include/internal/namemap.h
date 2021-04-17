@@ -34,6 +34,8 @@ const char *ossl_namemap_num2name(const OSSL_NAMEMAP *namemap, int number,
 int ossl_namemap_doall_names(const OSSL_NAMEMAP *namemap, int number,
                              void (*fn)(const char *name, void *data),
                              void *data);
+int ossl_namemap_doall_nums(const OSSL_NAMEMAP *namemap,
+                            void (*fn)(int number, void *data), void *data);
 
 /*
  * A utility that handles several names in a string, divided by a given
