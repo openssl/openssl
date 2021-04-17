@@ -439,7 +439,8 @@ static void loader_do_one(OSSL_PROVIDER *provider,
             loader_from_algorithm(id, algodef, provider);
 
     if (method != NULL) {
-        data->user_fn(method, data->user_arg);
+        if (data->user_fn != NULL)
+            data->user_fn(method, data->user_arg);
         OSSL_STORE_LOADER_free(method);
     }
 }

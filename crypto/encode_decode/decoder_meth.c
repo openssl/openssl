@@ -461,7 +461,8 @@ static void decoder_do_one(OSSL_PROVIDER *provider,
         method = ossl_decoder_from_algorithm(id, algodef, provider);
 
     if (method != NULL) {
-        data->user_fn(method, data->user_arg);
+        if (data->user_fn != NULL)
+            data->user_fn(method, data->user_arg);
         OSSL_DECODER_free(method);
     }
 }

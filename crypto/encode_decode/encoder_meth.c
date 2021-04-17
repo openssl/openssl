@@ -474,7 +474,8 @@ static void encoder_do_one(OSSL_PROVIDER *provider,
             encoder_from_algorithm(id, algodef, provider);
 
     if (method != NULL) {
-        data->user_fn(method, data->user_arg);
+        if (data->user_fn != NULL)
+            data->user_fn(method, data->user_arg);
         OSSL_ENCODER_free(method);
     }
 }

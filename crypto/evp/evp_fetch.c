@@ -480,7 +480,8 @@ static void do_one(OSSL_PROVIDER *provider, const OSSL_ALGORITHM *algo,
         method = data->new_method(name_id, algo, provider);
 
     if (method != NULL) {
-        data->user_fn(method, data->user_arg);
+        if (data->user_fn != NULL)
+            data->user_fn(method, data->user_arg);
         data->free_method(method);
     }
 }
