@@ -60,6 +60,7 @@ static int req_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
 
     case ASN1_OP_FREE_POST:
         ASN1_OCTET_STRING_free(ret->distinguishing_id);
+        OPENSSL_free(ret->propq);
         break;
     case ASN1_OP_DUP_POST:
         {
