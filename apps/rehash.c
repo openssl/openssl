@@ -9,6 +9,9 @@
  */
 
 #include "apps.h"
+#include "apps_globals.h"
+#include "apps_propq.h"
+#include "apps_libctx.h"
 #include "progs.h"
 
 #if defined(OPENSSL_SYS_UNIX) || defined(__APPLE__) || \

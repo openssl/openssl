@@ -8,6 +8,8 @@
  */
 
 #include "apps.h"
+#include "apps_config.h"
+#include "engine.h"
 #include "progs.h"
 
 #include <ctype.h>

@@ -12,6 +12,10 @@
 #include <string.h>
 #include <time.h>
 #include "apps.h"
+#include "apps_config.h"
+#include "apps_passwd.h"
+#include "apps_keys.h"
+#include "engine.h"
 #include "progs.h"
 #include <openssl/bio.h>
 #include <openssl/conf.h>

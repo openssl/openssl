@@ -32,13 +32,17 @@
 #endif
 
 #include "apps.h"
+#include "engine.h"
+#include "ca.h"
 #include "progs.h"
-
-#ifndef W_OK
-# define F_OK 0
-# define W_OK 2
-# define R_OK 4
-#endif
+#include "apps_globals.h"
+#include "apps_config.h"
+#include "apps_propq.h"
+#include "apps_libctx.h"
+#include "apps_passwd.h"
+#include "apps_opts.h"
+#include "apps_keys.h"
+#include "app_x509.h"
 
 #ifndef PATH_MAX
 # define PATH_MAX 4096
@@ -129,7 +133,7 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
                    CONF *conf, unsigned long certopt, unsigned long nameopt,
                    int default_op, int ext_copy, int selfsign);
 static int get_certificate_status(const char *ser_status, CA_DB *db);
-static int do_updatedb(CA_DB *db);
+int do_updatedb(CA_DB *db, time_t *now);
 static int check_time_format(const char *str);
 static int do_revoke(X509 *x509, CA_DB *db, REVINFO_TYPE rev_type,
                      const char *extval);
@@ -255,6 +259,433 @@ const OPTIONS ca_options[] = {
     {"certreq", 0, 0, "Certificate requests to be signed (optional)"},
     {NULL}
 };
+
+/* block of index functions start */
+static unsigned long index_serial_hash(const OPENSSL_CSTRING *a)
+{
+    const char *n;
+
+    n = a[DB_serial];
+    while (*n == '0')
+        n++;
+    return OPENSSL_LH_strhash(n);
+}
+
+static int index_serial_cmp(const OPENSSL_CSTRING *a,
+                            const OPENSSL_CSTRING *b)
+{
+    const char *aa, *bb;
+
+    for (aa = a[DB_serial]; *aa == '0'; aa++) ;
+    for (bb = b[DB_serial]; *bb == '0'; bb++) ;
+    return strcmp(aa, bb);
+}
+
+static int index_name_qual(char **a)
+{
+    return (a[0][0] == 'V');
+}
+
+static unsigned long index_name_hash(const OPENSSL_CSTRING *a)
+{
+    return OPENSSL_LH_strhash(a[DB_name]);
+}
+
+int index_name_cmp(const OPENSSL_CSTRING *a, const OPENSSL_CSTRING *b)
+{
+    return strcmp(a[DB_name], b[DB_name]);
+}
+static IMPLEMENT_LHASH_HASH_FN(index_serial, OPENSSL_CSTRING)
+static IMPLEMENT_LHASH_COMP_FN(index_serial, OPENSSL_CSTRING)
+static IMPLEMENT_LHASH_HASH_FN(index_name, OPENSSL_CSTRING)
+static IMPLEMENT_LHASH_COMP_FN(index_name, OPENSSL_CSTRING)
+
+#undef BSIZE
+#define BSIZE 256
+
+CA_DB *load_index(const char *dbfile, DB_ATTR *db_attr)
+{
+    CA_DB *retdb = NULL;
+    TXT_DB *tmpdb = NULL;
+    BIO *in;
+    CONF *dbattr_conf = NULL;
+    char buf[BSIZE];
+#ifndef OPENSSL_NO_POSIX_IO
+    FILE *dbfp;
+    struct stat dbst;
+#endif
+
+    in = BIO_new_file(dbfile, "r");
+    if (in == NULL)
+        goto err;
+
+#ifndef OPENSSL_NO_POSIX_IO
+    BIO_get_fp(in, &dbfp);
+    if (fstat(fileno(dbfp), &dbst) == -1) {
+        ERR_raise_data(ERR_LIB_SYS, errno,
+                       "calling fstat(%s)", dbfile);
+        goto err;
+    }
+#endif
+
+    if ((tmpdb = TXT_DB_read(in, DB_NUMBER)) == NULL)
+        goto err;
+
+#ifndef OPENSSL_SYS_VMS
+    BIO_snprintf(buf, sizeof(buf), "%s.attr", dbfile);
+#else
+    BIO_snprintf(buf, sizeof(buf), "%s-attr", dbfile);
+#endif
+    dbattr_conf = app_load_config_quiet(buf);
+
+    retdb = app_malloc(sizeof(*retdb), "new DB");
+    retdb->db = tmpdb;
+    tmpdb = NULL;
+    if (db_attr)
+        retdb->attributes = *db_attr;
+    else {
+        retdb->attributes.unique_subject = 1;
+    }
+
+    if (dbattr_conf) {
+        char *p = NCONF_get_string(dbattr_conf, NULL, "unique_subject");
+        if (p) {
+            retdb->attributes.unique_subject = parse_yesno(p, 1);
+        }
+    }
+
+    retdb->dbfname = OPENSSL_strdup(dbfile);
+#ifndef OPENSSL_NO_POSIX_IO
+    retdb->dbst = dbst;
+#endif
+
+ err:
+    ERR_print_errors(bio_err);
+    NCONF_free(dbattr_conf);
+    TXT_DB_free(tmpdb);
+    BIO_free_all(in);
+    return retdb;
+}
+
+/*
+ * Returns > 0 on success, <= 0 on error
+ */
+int index_index(CA_DB *db)
+{
+    if (!TXT_DB_create_index(db->db, DB_serial, NULL,
+                             LHASH_HASH_FN(index_serial),
+                             LHASH_COMP_FN(index_serial))) {
+        BIO_printf(bio_err,
+                   "Error creating serial number index:(%ld,%ld,%ld)\n",
+                   db->db->error, db->db->arg1, db->db->arg2);
+        goto err;
+    }
+
+    if (db->attributes.unique_subject
+        && !TXT_DB_create_index(db->db, DB_name, index_name_qual,
+                                LHASH_HASH_FN(index_name),
+                                LHASH_COMP_FN(index_name))) {
+        BIO_printf(bio_err, "Error creating name index:(%ld,%ld,%ld)\n",
+                   db->db->error, db->db->arg1, db->db->arg2);
+        goto err;
+    }
+    return 1;
+ err:
+    ERR_print_errors(bio_err);
+    return 0;
+}
+
+int save_index(const char *dbfile, const char *suffix, CA_DB *db)
+{
+    char buf[3][BSIZE];
+    BIO *out;
+    int j;
+
+    j = strlen(dbfile) + strlen(suffix);
+    if (j + 6 >= BSIZE) {
+        BIO_printf(bio_err, "File name too long\n");
+        goto err;
+    }
+#ifndef OPENSSL_SYS_VMS
+    j = BIO_snprintf(buf[2], sizeof(buf[2]), "%s.attr", dbfile);
+    j = BIO_snprintf(buf[1], sizeof(buf[1]), "%s.attr.%s", dbfile, suffix);
+    j = BIO_snprintf(buf[0], sizeof(buf[0]), "%s.%s", dbfile, suffix);
+#else
+    j = BIO_snprintf(buf[2], sizeof(buf[2]), "%s-attr", dbfile);
+    j = BIO_snprintf(buf[1], sizeof(buf[1]), "%s-attr-%s", dbfile, suffix);
+    j = BIO_snprintf(buf[0], sizeof(buf[0]), "%s-%s", dbfile, suffix);
+#endif
+    out = BIO_new_file(buf[0], "w");
+    if (out == NULL) {
+        perror(dbfile);
+        BIO_printf(bio_err, "Unable to open '%s'\n", dbfile);
+        goto err;
+    }
+    j = TXT_DB_write(out, db->db);
+    BIO_free(out);
+    if (j <= 0)
+        goto err;
+
+    out = BIO_new_file(buf[1], "w");
+    if (out == NULL) {
+        perror(buf[2]);
+        BIO_printf(bio_err, "Unable to open '%s'\n", buf[2]);
+        goto err;
+    }
+    BIO_printf(out, "unique_subject = %s\n",
+               db->attributes.unique_subject ? "yes" : "no");
+    BIO_free(out);
+
+    return 1;
+ err:
+    ERR_print_errors(bio_err);
+    return 0;
+}
+
+int rotate_index(const char *dbfile, const char *new_suffix,
+                 const char *old_suffix)
+{
+    char buf[5][BSIZE];
+    int i, j;
+
+    i = strlen(dbfile) + strlen(old_suffix);
+    j = strlen(dbfile) + strlen(new_suffix);
+    if (i > j)
+        j = i;
+    if (j + 6 >= BSIZE) {
+        BIO_printf(bio_err, "File name too long\n");
+        goto err;
+    }
+#ifndef OPENSSL_SYS_VMS
+    j = BIO_snprintf(buf[4], sizeof(buf[4]), "%s.attr", dbfile);
+    j = BIO_snprintf(buf[3], sizeof(buf[3]), "%s.attr.%s", dbfile, old_suffix);
+    j = BIO_snprintf(buf[2], sizeof(buf[2]), "%s.attr.%s", dbfile, new_suffix);
+    j = BIO_snprintf(buf[1], sizeof(buf[1]), "%s.%s", dbfile, old_suffix);
+    j = BIO_snprintf(buf[0], sizeof(buf[0]), "%s.%s", dbfile, new_suffix);
+#else
+    j = BIO_snprintf(buf[4], sizeof(buf[4]), "%s-attr", dbfile);
+    j = BIO_snprintf(buf[3], sizeof(buf[3]), "%s-attr-%s", dbfile, old_suffix);
+    j = BIO_snprintf(buf[2], sizeof(buf[2]), "%s-attr-%s", dbfile, new_suffix);
+    j = BIO_snprintf(buf[1], sizeof(buf[1]), "%s-%s", dbfile, old_suffix);
+    j = BIO_snprintf(buf[0], sizeof(buf[0]), "%s-%s", dbfile, new_suffix);
+#endif
+    if (app_rename(dbfile, buf[1]) < 0 && errno != ENOENT
+#ifdef ENOTDIR
+        && errno != ENOTDIR
+#endif
+        ) {
+        BIO_printf(bio_err, "Unable to rename %s to %s\n", dbfile, buf[1]);
+        perror("reason");
+        goto err;
+    }
+    if (app_rename(buf[0], dbfile) < 0) {
+        BIO_printf(bio_err, "Unable to rename %s to %s\n", buf[0], dbfile);
+        perror("reason");
+        app_rename(buf[1], dbfile);
+        goto err;
+    }
+    if (app_rename(buf[4], buf[3]) < 0 && errno != ENOENT
+#ifdef ENOTDIR
+        && errno != ENOTDIR
+#endif
+        ) {
+        BIO_printf(bio_err, "Unable to rename %s to %s\n", buf[4], buf[3]);
+        perror("reason");
+        app_rename(dbfile, buf[0]);
+        app_rename(buf[1], dbfile);
+        goto err;
+    }
+    if (app_rename(buf[2], buf[4]) < 0) {
+        BIO_printf(bio_err, "Unable to rename %s to %s\n", buf[2], buf[4]);
+        perror("reason");
+        app_rename(buf[3], buf[4]);
+        app_rename(dbfile, buf[0]);
+        app_rename(buf[1], dbfile);
+        goto err;
+    }
+    return 1;
+ err:
+    ERR_print_errors(bio_err);
+    return 0;
+}
+
+void free_index(CA_DB *db)
+{
+    if (db) {
+        TXT_DB_free(db->db);
+        OPENSSL_free(db->dbfname);
+        OPENSSL_free(db);
+    }
+}
+
+/* block of index functions end */
+
+/* block of serial functions start */
+
+BIGNUM *load_serial(const char *serialfile, int create, ASN1_INTEGER **retai)
+{
+    BIO *in = NULL;
+    BIGNUM *ret = NULL;
+    char buf[1024];
+    ASN1_INTEGER *ai = NULL;
+
+    ai = ASN1_INTEGER_new();
+    if (ai == NULL)
+        goto err;
+
+    in = BIO_new_file(serialfile, "r");
+    if (in == NULL) {
+        if (!create) {
+            perror(serialfile);
+            goto err;
+        }
+        ERR_clear_error();
+        ret = BN_new();
+        if (ret == NULL || !rand_serial(ret, ai))
+            BIO_printf(bio_err, "Out of memory\n");
+    } else {
+        if (!a2i_ASN1_INTEGER(in, ai, buf, 1024)) {
+            BIO_printf(bio_err, "Unable to load number from %s\n",
+                       serialfile);
+            goto err;
+        }
+        ret = ASN1_INTEGER_to_BN(ai, NULL);
+        if (ret == NULL) {
+            BIO_printf(bio_err, "Error converting number from bin to BIGNUM\n");
+            goto err;
+        }
+    }
+
+    if (ret && retai) {
+        *retai = ai;
+        ai = NULL;
+    }
+ err:
+    ERR_print_errors(bio_err);
+    BIO_free(in);
+    ASN1_INTEGER_free(ai);
+    return ret;
+}
+
+int save_serial(const char *serialfile, const char *suffix, const BIGNUM *serial,
+                ASN1_INTEGER **retai)
+{
+    char buf[1][BSIZE];
+    BIO *out = NULL;
+    int ret = 0;
+    ASN1_INTEGER *ai = NULL;
+    int j;
+
+    if (suffix == NULL)
+        j = strlen(serialfile);
+    else
+        j = strlen(serialfile) + strlen(suffix) + 1;
+    if (j >= BSIZE) {
+        BIO_printf(bio_err, "File name too long\n");
+        goto err;
+    }
+
+    if (suffix == NULL)
+        OPENSSL_strlcpy(buf[0], serialfile, BSIZE);
+    else {
+#ifndef OPENSSL_SYS_VMS
+        j = BIO_snprintf(buf[0], sizeof(buf[0]), "%s.%s", serialfile, suffix);
+#else
+        j = BIO_snprintf(buf[0], sizeof(buf[0]), "%s-%s", serialfile, suffix);
+#endif
+    }
+    out = BIO_new_file(buf[0], "w");
+    if (out == NULL) {
+        goto err;
+    }
+
+    if ((ai = BN_to_ASN1_INTEGER(serial, NULL)) == NULL) {
+        BIO_printf(bio_err, "error converting serial to ASN.1 format\n");
+        goto err;
+    }
+    i2a_ASN1_INTEGER(out, ai);
+    BIO_puts(out, "\n");
+    ret = 1;
+    if (retai) {
+        *retai = ai;
+        ai = NULL;
+    }
+ err:
+    if (!ret)
+        ERR_print_errors(bio_err);
+    BIO_free_all(out);
+    ASN1_INTEGER_free(ai);
+    return ret;
+}
+
+int rotate_serial(const char *serialfile, const char *new_suffix,
+                  const char *old_suffix)
+{
+    char buf[2][BSIZE];
+    int i, j;
+
+    i = strlen(serialfile) + strlen(old_suffix);
+    j = strlen(serialfile) + strlen(new_suffix);
+    if (i > j)
+        j = i;
+    if (j + 1 >= BSIZE) {
+        BIO_printf(bio_err, "File name too long\n");
+        goto err;
+    }
+#ifndef OPENSSL_SYS_VMS
+    j = BIO_snprintf(buf[0], sizeof(buf[0]), "%s.%s", serialfile, new_suffix);
+    j = BIO_snprintf(buf[1], sizeof(buf[1]), "%s.%s", serialfile, old_suffix);
+#else
+    j = BIO_snprintf(buf[0], sizeof(buf[0]), "%s-%s", serialfile, new_suffix);
+    j = BIO_snprintf(buf[1], sizeof(buf[1]), "%s-%s", serialfile, old_suffix);
+#endif
+    if (app_rename(serialfile, buf[1]) < 0 && errno != ENOENT
+#ifdef ENOTDIR
+        && errno != ENOTDIR
+#endif
+        ) {
+        BIO_printf(bio_err,
+                   "Unable to rename %s to %s\n", serialfile, buf[1]);
+        perror("reason");
+        goto err;
+    }
+    if (app_rename(buf[0], serialfile) < 0) {
+        BIO_printf(bio_err,
+                   "Unable to rename %s to %s\n", buf[0], serialfile);
+        perror("reason");
+        app_rename(buf[1], serialfile);
+        goto err;
+    }
+    return 1;
+ err:
+    ERR_print_errors(bio_err);
+    return 0;
+}
+
+int rand_serial(BIGNUM *b, ASN1_INTEGER *ai)
+{
+    BIGNUM *btmp;
+    int ret = 0;
+
+    btmp = b == NULL ? BN_new() : b;
+    if (btmp == NULL)
+        return 0;
+
+    if (!BN_rand(btmp, SERIAL_RAND_BITS, BN_RAND_TOP_ANY, BN_RAND_BOTTOM_ANY))
+        goto error;
+    if (ai && !BN_to_ASN1_INTEGER(btmp, ai))
+        goto error;
+
+    ret = 1;
+
+ error:
+
+    if (btmp != b)
+        BN_free(btmp);
+
+    return ret;
+}
+/* block of serial functions end */
 
 int ca_main(int argc, char **argv)
 {
@@ -741,7 +1172,7 @@ end_of_options:
         if (verbose)
             BIO_printf(bio_err, "Updating %s ...\n", dbfile);
 
-        i = do_updatedb(db);
+        i = do_updatedb(db, NULL);
         if (i == -1) {
             BIO_printf(bio_err, "Malloc failure\n");
             goto end;
@@ -2271,7 +2702,7 @@ static int get_certificate_status(const char *serial, CA_DB *db)
     return ok;
 }
 
-static int do_updatedb(CA_DB *db)
+int do_updatedb(CA_DB *db, time_t *now)
 {
     ASN1_TIME *a_tm = NULL;
     int i, cnt = 0;
@@ -2281,8 +2712,7 @@ static int do_updatedb(CA_DB *db)
     if (a_tm == NULL)
         return -1;
 
-    /* get actual time */
-    if (X509_gmtime_adj(a_tm, 0) == NULL) {
+    if (X509_time_adj(a_tm, 0, now) == NULL) {
         ASN1_TIME_free(a_tm);
         return -1;
     }
@@ -2291,7 +2721,6 @@ static int do_updatedb(CA_DB *db)
         rrow = sk_OPENSSL_PSTRING_value(db->db->data, i);
 
         if (rrow[DB_type][0] == DB_TYPE_VAL) {
-            /* ignore entries that are not valid */
             ASN1_TIME *exp_date = NULL;
 
             exp_date = ASN1_TIME_new();
@@ -2643,3 +3072,4 @@ int unpack_revinfo(ASN1_TIME **prevtm, int *preason, ASN1_OBJECT **phold,
 
     return ret;
 }
+

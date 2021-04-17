@@ -17,6 +17,7 @@
 # define _POSIX_C_SOURCE 2
 #endif
 
+#include "apps_globals.h"
 #include <string.h>
 #include <ctype.h>
 #include "http_server.h"

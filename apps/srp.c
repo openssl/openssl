@@ -26,6 +26,11 @@
 #include <openssl/buffer.h>
 #include <openssl/srp.h>
 #include "apps.h"
+#include "apps_config.h"
+#include "apps_passwd.h"
+#include "apps_globals.h"
+#include "engine.h"
+#include "ca.h"
 #include "progs.h"
 
 #define BASE_SECTION    "srp"

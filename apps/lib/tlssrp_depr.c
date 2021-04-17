@@ -22,6 +22,7 @@
 #include <openssl/srp.h>
 #include "apps_ui.h"
 #include "apps.h"
+#include "apps_globals.h"
 #include "s_apps.h"
 
 static int srp_Verify_N_and_g(const BIGNUM *N, const BIGNUM *g)

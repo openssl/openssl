@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,13 +7,10 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "apps.h"
+#ifndef OSSL_APPS_APPS_PROPQ_H
+#define OSSL_APPS_APPS_PROPQ_H
 
-/* shim that avoids sucking in too much from apps/apps.c */
+int app_set_propq(const char *arg);
+const char *app_get0_propq(void);
 
-void *app_malloc(size_t sz, const char *what)
-{
-    void *vp = OPENSSL_malloc(sz);
-
-    return vp;
-}
+#endif                          /* ! OSSL_APPS_PROPQ_H */
