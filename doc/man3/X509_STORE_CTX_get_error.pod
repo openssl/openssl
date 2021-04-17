@@ -444,6 +444,10 @@ The issuer certificate does not have a public key.
 The issuer's public key is not of the type required by the signature in
 the subject's certificate.
 
+=item B<X509_V_ERR_INVALID_PURPOSE: unsupported Extended Key Usage>
+
+The target certificate cannot be used for the specified Extended Key Usage (EKU).
+
 =back
 
 =head1 NOTES

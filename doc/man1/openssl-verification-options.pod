@@ -46,10 +46,12 @@ The last certificate (which typically is of a root CA) is always looked up
 in the trusted certificate list; an exact match must be found there.
 
 The second step is to check the extensions of every untrusted certificate
-for consistency with the supplied purpose.
-If the B<-purpose> option is not included then no checks are done.
+for consistency with the supplied purpose or Extended Key Usage (EKU),
+where the latter overrides any purpose requirements for untrusted certificates.
+If the B<-purpose> and B<-eku> options are not given then no checks are done.
 The target or "leaf" certificate must have extensions compatible with the
-supplied purpose and all other certificates must also be valid CA certificates.
+given EKU or purpose
+and all other certificates must also be valid CA certificates.
 The precise extensions required are described in more detail in
 L<openssl-x509(1)/CERTIFICATE EXTENSIONS>.
 

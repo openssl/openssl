@@ -163,8 +163,10 @@ static int verify_cb_cert(X509_STORE_CTX *ctx, X509 *x, int depth, int err)
 }
 
 #define CB_FAIL_IF(cond, ctx, cert, depth, err) \
-    if ((cond) && verify_cb_cert(ctx, cert, depth, err) == 0) \
-        return 0
+    do {                                                          \
+        if ((cond) && verify_cb_cert(ctx, cert, depth, err) == 0) \
+            return 0;                                             \
+    } while (0)
 
 /*-
  * Inform the verify callback of an error, CRL-specific variant.  Here, the
@@ -392,7 +394,7 @@ static STACK_OF(X509) *lookup_certs_sk(X509_STORE_CTX *ctx,
 
 /*
  * Check EE or CA certificate purpose.  For trusted certificates explicit local
- * auxiliary trust can be used to override EKU-restrictions.
+ * auxiliary trust can be used to override EKU-restrictions in these certs.
  * Sadly, returns 0 also on internal error.
  */
 static int check_purpose(X509_STORE_CTX *ctx, X509 *x, int purpose, int depth,
@@ -426,6 +428,7 @@ static int check_purpose(X509_STORE_CTX *ctx, X509 *x, int purpose, int depth,
         return 1;
     case X509_TRUST_REJECTED:
         break;
+    case X509_TRUST_UNTRUSTED:
     default:
         switch (X509_check_purpose(x, purpose, must_be_ca > 0)) {
         case 1:
@@ -443,7 +446,8 @@ static int check_purpose(X509_STORE_CTX *ctx, X509 *x, int purpose, int depth,
 }
 
 /*
- * Check extensions of a cert chain for consistency with the supplied purpose.
+ * Check extensions of a cert chain for consistency with the supplied purpose
+ * and leaf cert EKU.
  * Sadly, returns 0 also on internal error.
  */
 static int check_extensions(X509_STORE_CTX *ctx)
@@ -451,6 +455,7 @@ static int check_extensions(X509_STORE_CTX *ctx)
     int i, must_be_ca, plen = 0;
     X509 *x;
     int ret, proxy_path_length = 0;
+    int eku = ctx->param->eku;
     int purpose, allow_proxy_certs, num = sk_X509_num(ctx->chain);
 
     /*-
@@ -579,8 +584,12 @@ static int check_extensions(X509_STORE_CTX *ctx)
             }
         }
 
+        if (eku != 0 && i < ctx->num_untrusted)
+            /* EKU requirement overrides purpose check for untrusted certs */
+            CB_FAIL_IF(X509_check_eku(x, eku) <= 0, ctx, x, i,
+                       X509_V_ERR_INVALID_EXTENDED_KEY_USAGE);
         /* check_purpose() makes the callback as needed */
-        if (purpose > 0 && !check_purpose(ctx, x, purpose, i, must_be_ca))
+        else if (purpose > 0 && !check_purpose(ctx, x, purpose, i, must_be_ca))
             return 0;
         /* Check path length */
         CB_FAIL_IF(i > 1 && x->ex_pathlen != -1
