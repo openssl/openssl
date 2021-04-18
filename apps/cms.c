@@ -14,14 +14,12 @@
 #include "apps.h"
 #include "progs.h"
 
-#ifndef OPENSSL_NO_CMS
-
-# include <openssl/crypto.h>
-# include <openssl/pem.h>
-# include <openssl/err.h>
-# include <openssl/x509_vfy.h>
-# include <openssl/x509v3.h>
-# include <openssl/cms.h>
+#include <openssl/crypto.h>
+#include <openssl/pem.h>
+#include <openssl/err.h>
+#include <openssl/x509_vfy.h>
+#include <openssl/x509v3.h>
+#include <openssl/cms.h>
 
 static int save_certs(char *signerfile, STACK_OF(X509) *signers);
 static int cms_cb(int ok, X509_STORE_CTX *ctx);
@@ -32,25 +30,25 @@ static CMS_ReceiptRequest *make_receipt_request(
 static int cms_set_pkey_param(EVP_PKEY_CTX *pctx,
                               STACK_OF(OPENSSL_STRING) *param);
 
-# define SMIME_OP        0x10
-# define SMIME_IP        0x20
-# define SMIME_SIGNERS   0x40
-# define SMIME_ENCRYPT           (1 | SMIME_OP)
-# define SMIME_DECRYPT           (2 | SMIME_IP)
-# define SMIME_SIGN              (3 | SMIME_OP | SMIME_SIGNERS)
-# define SMIME_VERIFY            (4 | SMIME_IP)
-# define SMIME_CMSOUT            (5 | SMIME_IP | SMIME_OP)
-# define SMIME_RESIGN            (6 | SMIME_IP | SMIME_OP | SMIME_SIGNERS)
-# define SMIME_DATAOUT           (7 | SMIME_IP)
-# define SMIME_DATA_CREATE       (8 | SMIME_OP)
-# define SMIME_DIGEST_VERIFY     (9 | SMIME_IP)
-# define SMIME_DIGEST_CREATE     (10 | SMIME_OP)
-# define SMIME_UNCOMPRESS        (11 | SMIME_IP)
-# define SMIME_COMPRESS          (12 | SMIME_OP)
-# define SMIME_ENCRYPTED_DECRYPT (13 | SMIME_IP)
-# define SMIME_ENCRYPTED_ENCRYPT (14 | SMIME_OP)
-# define SMIME_SIGN_RECEIPT      (15 | SMIME_IP | SMIME_OP)
-# define SMIME_VERIFY_RECEIPT    (16 | SMIME_IP)
+#define SMIME_OP        0x10
+#define SMIME_IP        0x20
+#define SMIME_SIGNERS   0x40
+#define SMIME_ENCRYPT           (1 | SMIME_OP)
+#define SMIME_DECRYPT           (2 | SMIME_IP)
+#define SMIME_SIGN              (3 | SMIME_OP | SMIME_SIGNERS)
+#define SMIME_VERIFY            (4 | SMIME_IP)
+#define SMIME_CMSOUT            (5 | SMIME_IP | SMIME_OP)
+#define SMIME_RESIGN            (6 | SMIME_IP | SMIME_OP | SMIME_SIGNERS)
+#define SMIME_DATAOUT           (7 | SMIME_IP)
+#define SMIME_DATA_CREATE       (8 | SMIME_OP)
+#define SMIME_DIGEST_VERIFY     (9 | SMIME_IP)
+#define SMIME_DIGEST_CREATE     (10 | SMIME_OP)
+#define SMIME_UNCOMPRESS        (11 | SMIME_IP)
+#define SMIME_COMPRESS          (12 | SMIME_OP)
+#define SMIME_ENCRYPTED_DECRYPT (13 | SMIME_IP)
+#define SMIME_ENCRYPTED_ENCRYPT (14 | SMIME_OP)
+#define SMIME_SIGN_RECEIPT      (15 | SMIME_IP | SMIME_OP)
+#define SMIME_VERIFY_RECEIPT    (16 | SMIME_IP)
 
 static int verify_err = 0;
 
@@ -972,7 +970,7 @@ int cms_main(int argc, char **argv)
                 goto end;
 
             if (CMS_RecipientInfo_type(ri) == CMS_RECIPINFO_AGREE
-                && wrap_cipher) {
+                    && wrap_cipher != NULL) {
                 EVP_CIPHER_CTX *wctx;
                 wctx = CMS_RecipientInfo_kari_get0_ctx(ri);
                 EVP_EncryptInit_ex(wctx, wrap_cipher, NULL, NULL, NULL);
@@ -1439,5 +1437,3 @@ static int cms_set_pkey_param(EVP_PKEY_CTX *pctx,
     }
     return 1;
 }
-
-#endif
