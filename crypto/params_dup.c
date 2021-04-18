@@ -147,8 +147,8 @@ static int compare_params(const void *left, const void *right)
 
 OSSL_PARAM *OSSL_PARAM_merge(const OSSL_PARAM *p1, const OSSL_PARAM *p2)
 {
-    const OSSL_PARAM *list1[OSSL_PARAM_MERGE_LIST_MAX];
-    const OSSL_PARAM *list2[OSSL_PARAM_MERGE_LIST_MAX];
+    const OSSL_PARAM *list1[OSSL_PARAM_MERGE_LIST_MAX + 1];
+    const OSSL_PARAM *list2[OSSL_PARAM_MERGE_LIST_MAX + 1];
     const OSSL_PARAM *p = NULL;
     const OSSL_PARAM **p1cur, **p2cur;
     OSSL_PARAM *params, *dst;
