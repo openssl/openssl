@@ -479,6 +479,7 @@ static OSSL_STORE_INFO *try_decode_PKCS8Encrypted(const char *pem_name,
     mem->data = (char *)new_data;
     mem->max = mem->length = (size_t)new_data_len;
     X509_SIG_free(p8);
+    p8 = NULL;
 
     store_info = new_EMBEDDED(PEM_STRING_PKCS8INF, mem);
     if (store_info == NULL) {
