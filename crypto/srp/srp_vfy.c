@@ -712,7 +712,7 @@ int SRP_create_verifier_BN_ex(const char *user, const char *pass, BIGNUM **salt,
     BIGNUM *x = NULL;
     BN_CTX *bn_ctx = BN_CTX_new_ex(libctx);
     unsigned char tmp2[MAX_LEN];
-    BIGNUM *salttmp = NULL;
+    BIGNUM *salttmp = NULL, *verif;
 
     if ((user == NULL) ||
         (pass == NULL) ||
@@ -735,17 +735,18 @@ int SRP_create_verifier_BN_ex(const char *user, const char *pass, BIGNUM **salt,
     if (x == NULL)
         goto err;
 
-    *verifier = BN_new();
-    if (*verifier == NULL)
+    verif = BN_new();
+    if (verif == NULL)
         goto err;
 
-    if (!BN_mod_exp(*verifier, g, x, N, bn_ctx)) {
-        BN_clear_free(*verifier);
+    if (!BN_mod_exp(verif, g, x, N, bn_ctx)) {
+        BN_clear_free(verif);
         goto err;
     }
 
     result = 1;
     *salt = salttmp;
+    *verifier = verif;
 
  err:
     if (salt != NULL && *salt != salttmp)
