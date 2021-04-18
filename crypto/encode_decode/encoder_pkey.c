@@ -76,6 +76,7 @@ struct collected_encoder_st {
     const char *output_structure;
     const char *output_type;
 
+    const OSSL_PROVIDER *keymgmt_prov;
     OSSL_ENCODER_CTX *ctx;
 
     int error_occurred;
@@ -102,7 +103,9 @@ static void collect_encoder(OSSL_ENCODER *encoder, void *arg)
 
         if (!OSSL_ENCODER_is_a(encoder, name)
             || (encoder->does_selection != NULL
-                && !encoder->does_selection(provctx, data->ctx->selection)))
+                && !encoder->does_selection(provctx, data->ctx->selection))
+            || (data->keymgmt_prov != prov
+                && encoder->import_object == NULL))
             continue;
 
         /* Only add each encoder implementation once */
@@ -213,6 +216,7 @@ static int ossl_encoder_ctx_setup_for_pkey(OSSL_ENCODER_CTX *ctx,
                                            const char *propquery)
 {
     struct construct_data_st *data = NULL;
+    const OSSL_PROVIDER *prov = NULL;
     OSSL_LIB_CTX *libctx = NULL;
     int ok = 0;
 
@@ -222,8 +226,7 @@ static int ossl_encoder_ctx_setup_for_pkey(OSSL_ENCODER_CTX *ctx,
     }
 
     if (evp_pkey_is_provided(pkey)) {
-        const OSSL_PROVIDER *prov = EVP_KEYMGMT_provider(pkey->keymgmt);
-
+        prov = EVP_KEYMGMT_provider(pkey->keymgmt);
         libctx = ossl_provider_libctx(prov);
     }
 
@@ -252,6 +255,7 @@ static int ossl_encoder_ctx_setup_for_pkey(OSSL_ENCODER_CTX *ctx,
         encoder_data.output_type = ctx->output_type;
         encoder_data.output_structure = ctx->output_structure;
         encoder_data.error_occurred = 0;
+        encoder_data.keymgmt_prov = prov;
         encoder_data.ctx = ctx;
         OSSL_ENCODER_do_all_provided(libctx, collect_encoder, &encoder_data);
         sk_OPENSSL_CSTRING_free(keymgmt_data.names);
