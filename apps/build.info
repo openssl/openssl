@@ -12,7 +12,7 @@ ENDIF
 # Source for the 'openssl' program
 $OPENSSLSRC=\
         openssl.c progs.c \
-        asn1pars.c ca.c ciphers.c cms.c crl.c crl2p7.c dgst.c \
+        asn1pars.c ca.c ciphers.c crl.c crl2p7.c dgst.c \
         enc.c errstr.c \
         genpkey.c kdf.c mac.c nseq.c passwd.c pkcs7.c \
         pkcs8.c pkey.c pkeyparam.c pkeyutl.c prime.c rand.c req.c \
@@ -50,6 +50,9 @@ IF[{- !$disabled{'deprecated-3.0'} -}]
   IF[{- !$disabled{'rsa'} -}]
     $OPENSSLSRC=$OPENSSLSRC rsautl.c
   ENDIF
+ENDIF
+IF[{- !$disabled{'cms'} -}]
+  $OPENSSLSRC=$OPENSSLSRC cms.c
 ENDIF
 IF[{- !$disabled{'cmp'} -}]
   $OPENSSLSRC=$OPENSSLSRC cmp.c cmp_mock_srv.c
