@@ -575,6 +575,7 @@ static int test_EVP_PKEY_ffc_priv_pub(char *keytype)
     if (!test_fromdata(keytype, params))
         goto err;
     OSSL_PARAM_free(params);
+    params = NULL;
     OSSL_PARAM_BLD_free(bld);
 
     /* Test priv and !pub */
@@ -591,6 +592,7 @@ static int test_EVP_PKEY_ffc_priv_pub(char *keytype)
     if (!test_fromdata(keytype, params))
         goto err;
     OSSL_PARAM_free(params);
+    params = NULL;
     OSSL_PARAM_BLD_free(bld);
 
     /* Test !priv and pub */
@@ -607,6 +609,7 @@ static int test_EVP_PKEY_ffc_priv_pub(char *keytype)
     if (!test_fromdata(keytype, params))
         goto err;
     OSSL_PARAM_free(params);
+    params = NULL;
     OSSL_PARAM_BLD_free(bld);
 
     /* Test priv and pub */
