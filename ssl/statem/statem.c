@@ -582,7 +582,7 @@ static SUB_STATE_RETURN read_state_machine(SSL *s)
                 /*
                  * In DTLS we get the whole message in one go - header and body
                  */
-                ret = dtls_get_message(s, &mt, &len);
+                ret = dtls_get_message(s, &mt);
             } else {
                 ret = tls_get_message_header(s, &mt);
             }
@@ -625,13 +625,18 @@ static SUB_STATE_RETURN read_state_machine(SSL *s)
             /* Fall through */
 
         case READ_STATE_BODY:
-            if (!SSL_IS_DTLS(s)) {
-                /* We already got this above for DTLS */
+            if (SSL_IS_DTLS(s)) {
+                /*
+                 * Actually we already have the body, but we give DTLS the
+                 * opportunity to do any further processing.
+                 */
+                ret = dtls_get_message_body(s, &len);
+            } else {
                 ret = tls_get_message_body(s, &len);
-                if (ret == 0) {
-                    /* Could be non-blocking IO */
-                    return SUB_STATE_ERROR;
-                }
+            }
+            if (ret == 0) {
+                /* Could be non-blocking IO */
+                return SUB_STATE_ERROR;
             }
 
             s->first_packet = 0;

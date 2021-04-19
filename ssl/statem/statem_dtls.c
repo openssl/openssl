@@ -328,7 +328,7 @@ int dtls1_do_write(SSL *s, int type)
     return 0;
 }
 
-int dtls_get_message(SSL *s, int *mt, size_t *len)
+int dtls_get_message(SSL *s, int *mt)
 {
     struct hm_header_st *msg_hdr;
     unsigned char *p;
@@ -352,7 +352,6 @@ int dtls_get_message(SSL *s, int *mt, size_t *len)
     *mt = s->s3.tmp.message_type;
 
     p = (unsigned char *)s->init_buf->data;
-    *len = s->init_num;
 
     if (*mt == SSL3_MT_CHANGE_CIPHER_SPEC) {
         if (s->msg_callback) {
@@ -373,25 +372,6 @@ int dtls_get_message(SSL *s, int *mt, size_t *len)
     s2n(msg_hdr->seq, p);
     l2n3(0, p);
     l2n3(msg_len, p);
-    if (s->version != DTLS1_BAD_VER) {
-        p -= DTLS1_HM_HEADER_LENGTH;
-        msg_len += DTLS1_HM_HEADER_LENGTH;
-    }
-
-    /*
-     * If receiving Finished, record MAC of prior handshake messages for
-     * Finished verification.
-     */
-    if (*mt == SSL3_MT_FINISHED && !ssl3_take_mac(s)) {
-        /* SSLfatal() already called */
-        return 0;
-    }
-
-    if (!ssl3_finish_mac(s, p, msg_len))
-        return 0;
-    if (s->msg_callback)
-        s->msg_callback(0, s->version, SSL3_RT_HANDSHAKE,
-                        p, msg_len, s, s->msg_callback_arg);
 
     memset(msg_hdr, 0, sizeof(*msg_hdr));
 
@@ -399,6 +379,47 @@ int dtls_get_message(SSL *s, int *mt, size_t *len)
 
     s->init_msg = s->init_buf->data + DTLS1_HM_HEADER_LENGTH;
 
+    return 1;
+}
+
+/*
+ * Actually we already have the message body - but this is an opportunity for
+ * DTLS to do any further processing it wants at the same point that TLS would
+ * be asked for the message body.
+ */
+int dtls_get_message_body(SSL *s, size_t *len)
+{
+    unsigned char *msg = (unsigned char *)s->init_buf->data;
+    size_t msg_len = s->init_num + DTLS1_HM_HEADER_LENGTH;
+
+    if (s->s3.tmp.message_type == SSL3_MT_CHANGE_CIPHER_SPEC) {
+        /* Nothing to be done */
+        goto end;
+    }
+    /*
+     * If receiving Finished, record MAC of prior handshake messages for
+     * Finished verification.
+     */
+    if (*(s->init_buf->data) == SSL3_MT_FINISHED && !ssl3_take_mac(s)) {
+        /* SSLfatal() already called */
+        return 0;
+    }
+
+    if (s->version == DTLS1_BAD_VER) {
+        msg += DTLS1_HM_HEADER_LENGTH;
+        msg_len -= DTLS1_HM_HEADER_LENGTH;
+    }
+
+    if (!ssl3_finish_mac(s, msg, msg_len))
+        return 0;
+
+    if (s->msg_callback)
+        s->msg_callback(0, s->version, SSL3_RT_HANDSHAKE,
+                        s->init_buf->data, s->init_num + DTLS1_HM_HEADER_LENGTH,
+                        s, s->msg_callback_arg);
+
+ end:
+    *len = s->init_num;
     return 1;
 }
 
