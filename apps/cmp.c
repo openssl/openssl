@@ -1606,6 +1606,7 @@ static int setup_request_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
         OSSL_CMP_CTX_set0_reqExtensions(ctx, exts);
     }
     X509_REQ_free(csr);
+    /* After here, must not goto oom/exts_err */
 
     if (OSSL_CMP_CTX_reqExtensions_have_SAN(ctx) && opt_sans != NULL) {
         CMP_err("cannot have Subject Alternative Names both via -reqexts and via -sans");
