@@ -20,6 +20,7 @@
  * internal use.
  */
 #include "internal/deprecated.h"
+#include <assert.h>
 #include <openssl/evp.h>
 #include <openssl/provider.h>
 #include <openssl/dsa.h>
