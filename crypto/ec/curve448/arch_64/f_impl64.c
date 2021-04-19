@@ -10,7 +10,15 @@
  * Originally written by Mike Hamburg
  */
 
-#include "../field.h"
+#include "openssl/macros.h"
+#include "internal/numbers.h"
+
+#ifndef UINT128_MAX
+/* No support for 128 bit ints, so do nothing here */
+NON_EMPTY_TRANSLATION_UNIT
+#else
+
+# include "../field.h"
 
 void gf_mul(gf_s * RESTRICT cs, const gf as, const gf bs)
 {
@@ -198,3 +206,4 @@ void gf_sqr(gf_s * RESTRICT cs, const gf as)
     c[4] += ((uint64_t)(accum0)) + ((uint64_t)(accum1));
     c[0] += ((uint64_t)(accum1));
 }
+#endif
