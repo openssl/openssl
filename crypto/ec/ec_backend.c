@@ -532,16 +532,16 @@ int ossl_ec_key_is_foreign(const EC_KEY *ec)
 
 EC_KEY *ossl_ec_key_dup(const EC_KEY *src, int selection)
 {
-    EC_KEY *ret = ossl_ec_key_new_method_int(src->libctx, src->propq,
-                                             src->engine);
-
-    if (ret == NULL)
-        return NULL;
+    EC_KEY *ret;
 
     if (src == NULL) {
         ERR_raise(ERR_LIB_EC, ERR_R_PASSED_NULL_PARAMETER);
-        goto err;
+        return NULL;
     }
+
+    if ((ret = ossl_ec_key_new_method_int(src->libctx, src->propq,
+                                          src->engine)) == NULL)
+        return NULL;
 
     /* copy the parameters */
     if (src->group != NULL
