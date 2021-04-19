@@ -217,7 +217,7 @@ static const PKCS12_ENC mac_default = {
     1000
 };
 
-static const int enc_nids[] = {
+static const int enc_nids_all[] = {
     /* NOTE: To use PBES2 we pass the desired cipher NID instead of NID_pbes2 */
     NID_aes_128_cbc,
     NID_aes_256_cbc,
@@ -236,6 +236,15 @@ static const int enc_nids[] = {
     NID_pbe_WithSHA1And40BitRC4,
     NID_pbeWithSHA1AndDES_CBC,
     NID_pbeWithSHA1AndRC2_CBC,
+    NID_pbe_WithSHA1And2_Key_TripleDES_CBC,
+    NID_pbe_WithSHA1And3_Key_TripleDES_CBC,
+};
+
+static const int enc_nids_no_legacy[] = {
+    /* NOTE: To use PBES2 we pass the desired cipher NID instead of NID_pbes2 */
+    NID_aes_128_cbc,
+    NID_aes_256_cbc,
+    NID_des_ede3_cbc,
     NID_pbe_WithSHA1And2_Key_TripleDES_CBC,
     NID_pbe_WithSHA1And3_Key_TripleDES_CBC,
 };
@@ -345,7 +354,10 @@ static int test_single_key_enc_alg(int z)
 {
     PKCS12_ENC enc;
 
-    enc.nid = enc_nids[z];
+    if (lgcyprov == NULL)
+        enc.nid = enc_nids_no_legacy[z];
+    else
+        enc.nid = enc_nids_all[z];
     enc.pass = enc_default.pass;
     enc.iter = enc_default.iter;
 
@@ -679,7 +691,10 @@ int setup_tests(void)
     }
 
     ADD_TEST(test_single_cert_no_attrs);
-    ADD_ALL_TESTS(test_single_key_enc_alg, OSSL_NELEM(enc_nids));
+    if (lgcyprov == NULL)
+        ADD_ALL_TESTS(test_single_key_enc_alg, OSSL_NELEM(enc_nids_no_legacy));
+    else
+        ADD_ALL_TESTS(test_single_key_enc_alg, OSSL_NELEM(enc_nids_all));
     ADD_ALL_TESTS(test_single_key_enc_pass, OSSL_NELEM(passwords));
     ADD_ALL_TESTS(test_single_key_enc_iter, OSSL_NELEM(iters));
     ADD_TEST(test_single_key_with_attrs);
