@@ -4,6 +4,7 @@ Notes on Perl
  - [General Notes](#general-notes)
  - [Perl on Windows](#perl-on-windows)
  - [Perl on VMS](#perl-on-vms)
+ - [Perl on NonStop](#perl-on-nonstop)
  - [Required Perl modules](#required-perl-modules)
  - [Notes on installing a Perl module](#notes-on-installing-a-perl-module])
 
@@ -51,6 +52,17 @@ download the source from <http://perl.org/>, unpacking it, reading
 `README-VMS.md` and follow the instructions.  Another way is to download a
 `.PCSI` file from <http://www.vmsperl.com/> and install it using the
 POLYCENTER install tool.
+
+Perl on NonStop
+---------------
+
+Perl is installed on HPE NonStop platforms as part of the Scripting Languages
+package T1203PAX file. The package is shipped as part of a NonStop RVU
+(Release Version Updates) package. Individual SPRs (Software Product Release)
+representing fixes can be obtained from the Scout website at
+<https://h22204.www2.hpe.com/NEP>. Follow the appropriate set of installation
+instructions for your operating system release as described in the
+Script Language User Guide available from the NonStop Technical Library.
 
 Required Perl modules
 ---------------------
