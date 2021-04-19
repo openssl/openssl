@@ -283,10 +283,12 @@ static EVP_PKEY *try_key_value_legacy(struct extracted_param_data_st *data,
     if (ctx->expected_type == 0
         || ctx->expected_type == OSSL_STORE_INFO_PUBKEY) {
         /* Discard DER decoding errors, it only means we return "empty handed" */
-        ERR_set_mark();
+        if (ctx->expected_type == 0)
+            ERR_set_mark();
         derp = der;
         pk = d2i_PUBKEY_ex(NULL, &derp, der_len, libctx, propq);
-        ERR_pop_to_mark();
+        if (ctx->expected_type == 0)
+            ERR_pop_to_mark();
 
         if (pk != NULL)
             *store_info_new = OSSL_STORE_INFO_new_PUBKEY;
@@ -304,10 +306,12 @@ static EVP_PKEY *try_key_value_legacy(struct extracted_param_data_st *data,
          * See if it's an encrypted PKCS#8 and decrypt it.  Discard DER
          * decoding errors, a failed decode only means we return "empty handed"
          */
-        ERR_set_mark();
+        if (ctx->expected_type == 0)
+            ERR_set_mark();
         derp = der;
         p8 = d2i_X509_SIG(NULL, &derp, der_len);
-        ERR_pop_to_mark();
+        if (ctx->expected_type == 0)
+            ERR_pop_to_mark();
 
         if (p8 != NULL) {
             char pbuf[PEM_BUFSIZE];
@@ -461,13 +465,15 @@ static int try_cert(struct extracted_param_data_st *data, OSSL_STORE_INFO **v,
             ignore_trusted = 0;
 
         /* Discard DER decoding errors, it only means we return "empty handed" */
-        ERR_set_mark();
+        if (data->object_type == OSSL_OBJECT_UNKNOWN)
+            ERR_set_mark();
         cert = d2i_X509_AUX(NULL, (const unsigned char **)&data->octet_data,
                             data->octet_data_size);
         if (cert == NULL && ignore_trusted)
             cert = d2i_X509(NULL, (const unsigned char **)&data->octet_data,
                             data->octet_data_size);
-        ERR_pop_to_mark();
+        if (data->object_type == OSSL_OBJECT_UNKNOWN)
+            ERR_pop_to_mark();
 
         if (cert != NULL)
             /* We determined the object type */
@@ -495,10 +501,12 @@ static int try_crl(struct extracted_param_data_st *data, OSSL_STORE_INFO **v,
         X509_CRL *crl;
 
         /* Discard DER decoding errors, it only means we return "empty handed" */
-        ERR_set_mark();
+        if (data->object_type == OSSL_OBJECT_UNKNOWN)
+            ERR_set_mark();
         crl = d2i_X509_CRL(NULL, (const unsigned char **)&data->octet_data,
                            data->octet_data_size);
-        ERR_pop_to_mark();
+        if (data->object_type == OSSL_OBJECT_UNKNOWN)
+            ERR_pop_to_mark();
 
         if (crl != NULL)
             /* We determined the object type */
