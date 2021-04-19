@@ -578,15 +578,16 @@ static int test_EVP_PKEY_ffc_priv_pub(char *keytype)
     OSSL_PARAM_BLD_free(bld);
 
     /* Test priv and !pub */
-    if (!TEST_ptr(bld = OSSL_PARAM_BLD_new())
-        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_P, p))
+    if (!TEST_ptr(bld = OSSL_PARAM_BLD_new()))
+        goto err3;
+    if (!TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_P, p))
         || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_Q, q))
         || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_G, g))
         || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_PRIV_KEY,
                                              priv)))
-        goto err;
+        goto err2;
     if (!TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld)))
-        goto err;
+        goto err2;
 
     if (!test_fromdata(keytype, params))
         goto err;
@@ -594,15 +595,16 @@ static int test_EVP_PKEY_ffc_priv_pub(char *keytype)
     OSSL_PARAM_BLD_free(bld);
 
     /* Test !priv and pub */
-    if (!TEST_ptr(bld = OSSL_PARAM_BLD_new())
-        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_P, p))
+    if (!TEST_ptr(bld = OSSL_PARAM_BLD_new()))
+        goto err3;
+    if (!TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_P, p))
         || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_Q, q))
         || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_G, g))
         || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_PUB_KEY,
                                              pub)))
         goto err;
     if (!TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld)))
-        goto err;
+        goto err2;
 
     if (!test_fromdata(keytype, params))
         goto err;
@@ -610,8 +612,9 @@ static int test_EVP_PKEY_ffc_priv_pub(char *keytype)
     OSSL_PARAM_BLD_free(bld);
 
     /* Test priv and pub */
-    if (!TEST_ptr(bld = OSSL_PARAM_BLD_new())
-        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_P, p))
+    if (!TEST_ptr(bld = OSSL_PARAM_BLD_new()))
+        goto err3;
+    if (!TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_P, p))
         || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_Q, q))
         || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_G, g))
         || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_PUB_KEY,
@@ -620,7 +623,7 @@ static int test_EVP_PKEY_ffc_priv_pub(char *keytype)
                                              priv)))
         goto err;
     if (!TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld)))
-        goto err;
+        goto err2;
 
     if (!test_fromdata(keytype, params))
         goto err;
@@ -628,7 +631,9 @@ static int test_EVP_PKEY_ffc_priv_pub(char *keytype)
     ret = 1;
  err:
     OSSL_PARAM_free(params);
+ err2:
     OSSL_PARAM_BLD_free(bld);
+ err3:
     BN_free(p);
     BN_free(q);
     BN_free(g);
