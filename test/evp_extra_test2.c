@@ -566,7 +566,7 @@ static int do_check_utf8_str(OSSL_PARAM params[], const char *key,
                              const char *expected)
 {
     OSSL_PARAM *p;
-    char *bufp = 0;
+    char *bufp = NULL;
     int ret;
 
     ret = TEST_ptr(p = OSSL_PARAM_locate(params, key))
