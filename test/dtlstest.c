@@ -337,6 +337,79 @@ static int test_dtls_duplicate_records(void)
     return testresult;
 }
 
+/*
+ * Test just sending a Finished message as the first message. Should fail due
+ * to an unexpected message.
+ */
+static int test_just_finished(void)
+{
+    int testresult = 0, ret;
+    SSL_CTX *sctx = NULL;
+    SSL *serverssl = NULL;
+    BIO *rbio = NULL, *wbio = NULL, *sbio = NULL;
+    unsigned char buf[] = {
+        /* Record header */
+        SSL3_RT_HANDSHAKE, /* content type */
+        (DTLS1_2_VERSION >> 8) & 0xff, /* protocol version hi byte */
+        DTLS1_2_VERSION & 0xff, /* protocol version lo byte */
+        0, 0, /* epoch */
+        0, 0, 0, 0, 0, 0, /* record sequence */
+        0, DTLS1_HM_HEADER_LENGTH + SHA_DIGEST_LENGTH, /* record length */
+
+        /* Message header */
+        SSL3_MT_FINISHED, /* message type */
+        0, 0, SHA_DIGEST_LENGTH, /* message length */
+        0, 0, /* message sequence */
+        0, 0, 0, /* fragment offset */
+        0, 0, SHA_DIGEST_LENGTH, /* fragment length */
+
+        /* Message body */
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    };
+
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+                                       NULL, 0, 0,
+                                       &sctx, NULL, cert, privkey)))
+        return 0;
+
+    serverssl = SSL_new(sctx);
+    rbio = BIO_new(BIO_s_mem());
+    wbio = BIO_new(BIO_s_mem());
+
+    if (!TEST_ptr(serverssl) || !TEST_ptr(rbio) || !TEST_ptr(wbio))
+        goto end;
+
+    sbio = rbio;
+    SSL_set0_rbio(serverssl, rbio);
+    SSL_set0_wbio(serverssl, wbio);
+    rbio = wbio = NULL;
+    DTLS_set_timer_cb(serverssl, timer_cb);
+
+    if (!TEST_int_eq(BIO_write(sbio, buf, sizeof(buf)), sizeof(buf)))
+        goto end;
+
+    /* We expect the attempt to process the message to fail */
+    if (!TEST_int_le(ret = SSL_accept(serverssl), 0))
+        goto end;
+
+    /* Check that we got the error we were expecting */
+    if (!TEST_int_eq(SSL_get_error(serverssl, ret), SSL_ERROR_SSL))
+        goto end;
+
+    if (!TEST_int_eq(ERR_GET_REASON(ERR_get_error()), SSL_R_UNEXPECTED_MESSAGE))
+        goto end;
+
+    testresult = 1;
+ end:
+    BIO_free(rbio);
+    BIO_free(wbio);
+    SSL_free(serverssl);
+    SSL_CTX_free(sctx);
+
+    return testresult;
+}
+
 OPT_TEST_DECLARE_USAGE("certfile privkeyfile\n")
 
 int setup_tests(void)
@@ -356,6 +429,7 @@ int setup_tests(void)
 #endif
     ADD_TEST(test_cookie);
     ADD_TEST(test_dtls_duplicate_records);
+    ADD_TEST(test_just_finished);
 
     return 1;
 }
