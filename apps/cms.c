@@ -274,7 +274,6 @@ int cms_main(int argc, char **argv)
     CMS_ReceiptRequest *rr = NULL;
     ENGINE *e = NULL;
     EVP_PKEY *key = NULL;
-    char *wrapname = NULL;
     const EVP_CIPHER *cipher = NULL, *wrap_cipher = NULL;
     const EVP_MD *sign_md = NULL;
     STACK_OF(OPENSSL_STRING) *rr_to = NULL, *rr_from = NULL;
@@ -691,7 +690,8 @@ int cms_main(int argc, char **argv)
             wrap_cipher = EVP_aes_256_wrap();
             break;
         case OPT_WRAP:
-            wrapname = opt_unknown();
+            if (!opt_cipher(opt_unknown(), &wrap_cipher))
+                goto end;
             break;
         }
     }
@@ -704,10 +704,6 @@ int cms_main(int argc, char **argv)
     }
     if (ciphername != NULL) {
         if (!opt_cipher(ciphername, &cipher))
-            goto end;
-    }
-    if (wrapname != NULL) {
-        if (!opt_cipher(wrapname, &wrap_cipher))
             goto end;
     }
 
