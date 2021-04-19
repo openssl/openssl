@@ -2185,6 +2185,7 @@ static const EVP_CIPHER s390x_aes_##keylen##_##mode = {                 \
     keylen / 8,                                                         \
     ivlen,                                                              \
     flags | EVP_CIPH_##MODE##_MODE,                                     \
+    EVP_ORIG_GLOBAL,                                                    \
     s390x_aes_##mode##_init_key,                                        \
     s390x_aes_##mode##_cipher,                                          \
     NULL,                                                               \
@@ -2200,6 +2201,7 @@ static const EVP_CIPHER aes_##keylen##_##mode = {                       \
     keylen / 8,                                                         \
     ivlen,                                                              \
     flags | EVP_CIPH_##MODE##_MODE,                                     \
+    EVP_ORIG_GLOBAL,                                                    \
     aes_init_key,                                                       \
     aes_##mode##_cipher,                                                \
     NULL,                                                               \
@@ -2222,6 +2224,7 @@ static const EVP_CIPHER s390x_aes_##keylen##_##mode = {                 \
     (EVP_CIPH_##MODE##_MODE==EVP_CIPH_XTS_MODE||EVP_CIPH_##MODE##_MODE==EVP_CIPH_SIV_MODE ? 2 : 1) * keylen / 8,        \
     ivlen,                                                              \
     flags | EVP_CIPH_##MODE##_MODE,                                     \
+    EVP_ORIG_GLOBAL,                                                    \
     s390x_aes_##mode##_init_key,                                        \
     s390x_aes_##mode##_cipher,                                          \
     s390x_aes_##mode##_cleanup,                                         \
@@ -2236,6 +2239,7 @@ static const EVP_CIPHER aes_##keylen##_##mode = {                       \
     (EVP_CIPH_##MODE##_MODE==EVP_CIPH_XTS_MODE||EVP_CIPH_##MODE##_MODE==EVP_CIPH_SIV_MODE ? 2 : 1) * keylen / 8,        \
     ivlen,                                                              \
     flags | EVP_CIPH_##MODE##_MODE,                                     \
+    EVP_ORIG_GLOBAL,                                                    \
     aes_##mode##_init_key,                                              \
     aes_##mode##_cipher,                                                \
     aes_##mode##_cleanup,                                               \
