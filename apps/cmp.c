@@ -1580,18 +1580,15 @@ static int setup_request_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
         if (opt_cmd == CMP_GENM) {
             CMP_warn("-csr option is ignored for command 'genm'");
         } else {
-            csr = load_csr_autofmt(opt_csr, "PKCS#10 CSR");
-            if (csr == NULL)
+            if ((csr = load_csr_autofmt(opt_csr, "PKCS#10 CSR")) == NULL)
                 return 0;
-            if (!OSSL_CMP_CTX_set1_p10CSR(ctx, csr)) {
-                X509_REQ_free(csr);
+            if (!OSSL_CMP_CTX_set1_p10CSR(ctx, csr))
                 goto oom;
-            }
         }
     }
     if (opt_reqexts != NULL || opt_policies != NULL) {
         if ((exts = sk_X509_EXTENSION_new_null()) == NULL)
-            goto exts_err;
+            goto oom;
         X509V3_set_ctx(&ext_ctx, NULL, NULL, csr, NULL, X509V3_CTX_REPLACE);
         X509V3_set_nconf(&ext_ctx, conf);
         if (opt_reqexts != NULL
@@ -1607,15 +1604,14 @@ static int setup_request_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
             goto exts_err;
         }
         OSSL_CMP_CTX_set0_reqExtensions(ctx, exts);
-        exts = NULL;
     }
     X509_REQ_free(csr);
-    csr = NULL;
+    /* After here, must not goto oom/exts_err */
+
     if (OSSL_CMP_CTX_reqExtensions_have_SAN(ctx) && opt_sans != NULL) {
         CMP_err("cannot have Subject Alternative Names both via -reqexts and via -sans");
         return 0;
     }
-
     if (!set_gennames(ctx, opt_sans, "Subject Alternative Name"))
         return 0;
 
@@ -1675,7 +1671,8 @@ static int setup_request_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
                 return 0;
             if (!OSSL_CMP_CTX_set1_oldCert(ctx, oldcert)) {
                 X509_free(oldcert);
-                goto oom;
+                CMP_err("out of memory");
+                return 0;
             }
             X509_free(oldcert);
         }
