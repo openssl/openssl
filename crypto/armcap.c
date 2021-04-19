@@ -13,6 +13,9 @@
 #include <setjmp.h>
 #include <signal.h>
 #include <openssl/crypto.h>
+#ifdef __APPLE__
+#include <sys/sysctl.h>
+#endif
 #include "internal/cryptlib.h"
 
 #include "arm_arch.h"
@@ -135,7 +138,8 @@ void OPENSSL_cpuid_setup(void)
         return;
     }
 
-# if defined(__APPLE__) && !defined(__aarch64__)
+# if defined(__APPLE__)
+#   if !defined(__aarch64__)
     /*
      * Capability probing by catching SIGILL appears to be problematic
      * on iOS. But since Apple universe is "monocultural", it's actually
@@ -151,6 +155,15 @@ void OPENSSL_cpuid_setup(void)
      * Unified code works because it never triggers SIGILL on Apple
      * devices...
      */
+#   else
+    {
+        unsigned int sha512;
+        size_t len = sizeof(sha512);
+
+        if (sysctlbyname("hw.optional.armv8_2_sha512", &sha512, &len, NULL, 0) == 0 && sha512 == 1)
+            OPENSSL_armcap_P |= ARMV8_SHA512;
+    }
+#   endif
 # endif
 
     OPENSSL_armcap_P = 0;
