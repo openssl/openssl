@@ -232,12 +232,12 @@ static long linebuffer_ctrl(BIO *b, int cmd, long num, void *ptr)
         }
         break;
     case BIO_C_SET_BUFF_SIZE:
+        if (num > INT_MAX)
+            return 0;
         obs = (int)num;
         p = ctx->obuf;
         if ((obs > DEFAULT_LINEBUFFER_SIZE) && (obs != ctx->obuf_size)) {
-            if (num <= 0)
-                return 0;
-            p = OPENSSL_malloc((size_t)num);
+            p = OPENSSL_malloc((size_t)obs);
             if (p == NULL)
                 goto malloc_error;
         }
