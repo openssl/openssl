@@ -477,9 +477,9 @@ static void collect_cipher_names(EVP_CIPHER *cipher, void *cipher_names_list)
     const char *name = EVP_CIPHER_name(cipher);
     char *namedup = NULL;
 
+    assert(name != NULL);
     /* the cipher will be freed after returning, strdup is needed */
-    if (name != NULL
-        && (namedup = OPENSSL_strdup(name)) != NULL
+    if ((namedup = OPENSSL_strdup(name)) != NULL
         && !sk_OPENSSL_STRING_push(names, namedup))
         OPENSSL_free(namedup);
 }
