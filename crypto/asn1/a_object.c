@@ -312,8 +312,8 @@ ASN1_OBJECT *c2i_ASN1_OBJECT(ASN1_OBJECT **a, const unsigned char **pp,
     memcpy(data, p, length);
     /* If there are dynamic strings, free them here, and clear the flag */
     if ((ret->flags & ASN1_OBJECT_FLAG_DYNAMIC_STRINGS) != 0) {
-        OPENSSL_free(ret->sn);
-        OPENSSL_free(ret->ln);
+        OPENSSL_free((char *)ret->sn);
+        OPENSSL_free((char *)ret->ln);
         ret->flags &= ~ASN1_OBJECT_FLAG_DYNAMIC_STRINGS;
     }
     /* reattach data to object, after which it remains const */
