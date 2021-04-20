@@ -263,6 +263,10 @@ This command can be used to verify (and extract the contents) of the CMS file re
 
 The contents of `inputfile` and the resultant `signeddatafile` should be the same.
 
+Also supported are general signing operations using the standard [OpenSSL dgst](https://www.openssl.org/docs/man1.1.1/man1/dgst.html) commands using QSC public/private keys of [any of the supported signature algorithms](#authentication). Example command using the same file notation used above:
+
+        echo TestDataToSign | apps/openssl dgst -sha256 -sign <SIG>_srv.key -out signature
+
 #### Performance testing
 
 ##### TLS end-to-end testing

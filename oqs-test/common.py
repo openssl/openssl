@@ -25,7 +25,7 @@ signatures = [
 
 SERVER_START_ATTEMPTS = 10
 
-def run_subprocess(command, working_dir='.', expected_returncode=0, input=None):
+def run_subprocess(command, working_dir='.', expected_returncode=0, input=None, env=None):
     """
     Helper function to run a shell command and report success/failure
     depending on the exit status of the shell command.
@@ -41,6 +41,7 @@ def run_subprocess(command, working_dir='.', expected_returncode=0, input=None):
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         cwd=working_dir,
+        env=env
     )
     if result.returncode != expected_returncode:
         print(result.stdout.decode('utf-8'))
@@ -143,3 +144,11 @@ def gen_keys(ossl, ossl_config, sig_alg, test_artifacts_dir, filename_prefix):
                                   '-CAkey', os.path.join(test_artifacts_dir, '{}_{}_CA.key'.format(filename_prefix, sig_alg)),
                                   '-CAcreateserial',
                                   '-days', '365'])
+
+    # also create pubkeys from certs for dgst verify tests:
+    env = os.environ
+    env["OPENSSL_CONF"]=os.path.join("apps", "openssl.cnf")
+    run_subprocess([ossl, 'req',
+                                  '-in', os.path.join(test_artifacts_dir, '{}_{}_srv.csr'.format(filename_prefix, sig_alg)),
+                                  '-pubkey', '-out', os.path.join(test_artifacts_dir, '{}_{}_srv.pubk'.format(filename_prefix, sig_alg)) ],
+                   env=env)

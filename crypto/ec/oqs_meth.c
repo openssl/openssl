@@ -1647,17 +1647,27 @@ static int pkey_oqs_digestverify(EVP_MD_CTX *ctx, const unsigned char *sig,
 
 static int pkey_oqs_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 {
+    OQS_KEY *oqs_key = (OQS_KEY*) EVP_PKEY_CTX_get0_pkey(ctx)->pkey.ptr;
+
     switch (type) {
     case EVP_PKEY_CTRL_MD:
         /* NULL allowed as digest */
-        if (p2 == NULL)
+        if (p2 == NULL) {
             return 1;
-        /* accept SHA512 as digest for CMS */
-        if (*(int*)p2 == NID_sha512) {
-               return 1;
-        }
-        ECerr(EC_F_PKEY_OQS_CTRL, EC_R_WRONG_DIGEST);
-        return 0;
+	}
+
+	if (oqs_key->digest == NULL) { // allocate fitting digest engine
+        	if ((oqs_key->digest = EVP_MD_CTX_create()) == NULL) {
+           		return 0;
+		}
+
+	        if (EVP_DigestInit_ex(oqs_key->digest, EVP_get_digestbynid(*(int*)p2), NULL) <= 0) {
+           		return 0;
+        	}
+		
+	}
+	return 1; // accept any digest
+
 
     case EVP_PKEY_CTRL_DIGESTINIT:
         return 1;
@@ -1677,21 +1687,23 @@ static int pkey_oqs_sign(EVP_PKEY_CTX *ctx, unsigned char *sig,
                                size_t *siglen, const unsigned char *tbs,
                                size_t tbslen)
 {
-   return 1;
+   printf("oqs sign without digest auto fail\n");
+   return 0;
 }
 
 static int oqs_int_update(EVP_MD_CTX *ctx, const void *data, size_t count)
 {
     OQS_KEY *oqs_key = (OQS_KEY*) EVP_MD_CTX_pkey_ctx(ctx)->pkey->pkey.ptr;
 
+    /* chose SHA512 as default digest if none other explicitly set */
     if (oqs_key->digest == NULL) {
-        if ((oqs_key->digest = EVP_MD_CTX_create()) == NULL) {
-           return 0;
-        }
+       	if ((oqs_key->digest = EVP_MD_CTX_create()) == NULL) {
+       		return 0;
+	}
 
         if (EVP_DigestInit_ex(oqs_key->digest, EVP_sha512(), NULL) <= 0) {
-           return 0;
-        }
+       		return 0;
+       	}
     }
 
     if(EVP_DigestUpdate(oqs_key->digest, data, count)<=0) {
@@ -1713,21 +1725,21 @@ static int pkey_oqs_signctx(EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *sigle
     unsigned char* tbs = NULL;
     unsigned int tbslen = 0;
 
-
     if (sig != NULL) {
-       tbslen = 512/8; // as per https://tools.ietf.org/id/draft-ietf-lamps-cms-shakes-08.html
-       // Finalize SHAKE:
-       if (oqs_key->digest == NULL) {
-         return 0;
-       }
+	// support any digest requested:
+	tbslen = EVP_MD_CTX_size(oqs_key->digest);
 
-       if((tbs = (unsigned char *)OPENSSL_malloc(tbslen)) == NULL) {
-         return 0;
-       }
+	if (oqs_key->digest == NULL) { // error; ctrl not called?
+		return 0;
+	}
 
-       if(EVP_DigestFinal(oqs_key->digest, tbs, &tbslen) <= 0) {
-         return 0;
-       }
+	if((tbs = (unsigned char *)OPENSSL_malloc(tbslen)) == NULL) {
+		return 0;
+	}
+
+	if(EVP_DigestFinal(oqs_key->digest, tbs, &tbslen) <= 0) {
+		return 0;
+	}
 
     }
     int ret = pkey_oqs_digestsign(mctx, sig, siglen, tbs, tbslen);
@@ -1756,8 +1768,10 @@ static int pkey_oqs_verify_init(EVP_PKEY_CTX *ctx) {
 static int pkey_oqs_verify(EVP_PKEY_CTX *ctx,
                    const unsigned char *sig, size_t siglen,
                    const unsigned char *tbs, size_t tbslen) {
-   return 1;
+	printf("oqs verify auto fail without digest\n");
+	return 0;
 }
+
 static int pkey_oqs_verifyctx_init(EVP_PKEY_CTX *ctx, EVP_MD_CTX *mctx) {
 
    EVP_MD_CTX_set_flags(mctx, EVP_MD_CTX_FLAG_NO_INIT);
@@ -1768,13 +1782,54 @@ static int pkey_oqs_verifyctx_init(EVP_PKEY_CTX *ctx, EVP_MD_CTX *mctx) {
 
 static int pkey_oqs_verifyctx(EVP_PKEY_CTX *ctx, const unsigned char *sig, int siglen,
                       EVP_MD_CTX *mctx) {
-   return 1;
+    OQS_KEY *oqs_key = (OQS_KEY*) EVP_MD_CTX_pkey_ctx(mctx)->pkey->pkey.ptr;
+    unsigned char* tbs = NULL;
+    unsigned int tbslen = 0;
+
+    if (sig != NULL) {
+        // support any digest requested:
+        tbslen = EVP_MD_CTX_size(oqs_key->digest);
+
+        if (oqs_key->digest == NULL) { // error; ctrl not called?
+                return 0;
+        }
+
+        if((tbs = (unsigned char *)OPENSSL_malloc(tbslen)) == NULL) {
+                return 0;
+        }
+
+        if(EVP_DigestFinal(oqs_key->digest, tbs, &tbslen) <= 0) {
+                return 0;
+        }
+
+    }
+
+    int ret = pkey_oqs_digestverify(mctx, sig, siglen, tbs, tbslen); 
+    if (sig != NULL) { // cleanup only if it's not the empty setup call
+       OPENSSL_free(tbs);
+       EVP_MD_CTX_destroy(oqs_key->digest);
+       oqs_key->digest = NULL;
+    }
+    if (ret <= 0) {
+    }
+    else {
+       EVP_MD_CTX_set_flags(mctx, EVP_MD_CTX_FLAG_FINALISE); // don't go around again...
+    }
+
+   return ret;
 }
+
+static int pkey_oqs_copy(EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src)
+{
+    // nothing specific needed, but EVP depends on its presence
+    return 1;
+}
+
 
 #define DEFINE_OQS_EVP_PKEY_METHOD(ALG, NID_ALG)    \
 const EVP_PKEY_METHOD ALG##_pkey_meth = {           \
     NID_ALG, EVP_PKEY_FLAG_SIGCTX_CUSTOM,           \
-    0, 0, 0, 0, 0, 0,                               \
+    0, pkey_oqs_copy, 0, 0, 0, 0,                   \
     pkey_oqs_keygen,                                \
     pkey_oqs_sign_init, pkey_oqs_sign,              \
     pkey_oqs_verify_init, pkey_oqs_verify,          \

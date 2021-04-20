@@ -1,9 +1,5 @@
 version: 2.1
 
-require_testapproval: &require_testapproval
-  requires:
-    - testapproval
-
 parameters:
   run_downstream_tests:
     type: boolean
@@ -34,7 +30,7 @@ jobs:
       TESTSET:
         description: "OQS test set."
         type: string
-        default: oqs-test/test_tls_basic.py
+        default: oqs-test/test_tls_basic.py oqs-test/test_dgst.py
     docker:
       - image: openquantumsafe/ci-ubuntu-focal-x86_64:latest
 # Re-enable iff docker enforces rate limitations without auth:
@@ -75,7 +71,7 @@ jobs:
       TESTSET:
         description: "OQS test set."
         type: string
-        default: oqs-test/test_tls_basic.py
+        default: oqs-test/test_tls_basic.py oqs-test/test_dgst.py
     steps:
       - checkout # change this from "checkout" to "*localCheckout" when running CircleCI locally
       - run:
@@ -164,24 +160,29 @@ workflows:
           name: macOS-shared_oqs-shared_ossl
           LIBOQS_SHARED: true
           OPENSSL_SHARED: true
-      - testapproval:
+      - cond-testapproval:
           requires:
             - ubuntu-static_oqs-static_ossl
+          when:
+            equal: [ false , << pipeline.parameters.run_downstream_tests >> ]
           type: approval
       - macOS:
-          <<: *require_testapproval
           name: macOS-static_oqs-static_ossl
-          TESTSET: oqs-test/test_tls_full.py oqs-test/test_cms.py oqs-test/test_speed.py
+          requires: 
+            - cond-testapproval
+          TESTSET: oqs-test/test_tls_full.py oqs-test/test_cms.py oqs-test/test_speed.py oqs-test/test_dgst.py
       - ubuntu_focal:
-          <<: *require_testapproval
           name: ubuntu-shared_oqs-shared_ossl
+          requires: 
+            - cond-testapproval
           context: openquantumsafe
           LIBOQS_SHARED: true
           OPENSSL_SHARED: true
-          TESTSET: oqs-test/test_tls_full.py oqs-test/test_cms.py oqs-test/test_speed.py
+          TESTSET: oqs-test/test_tls_full.py oqs-test/test_cms.py oqs-test/test_speed.py oqs-test/test_dgst.py
       - ubuntu_boringssl_interop:
-          <<: *require_testapproval
           name: boringssl-interop
+          requires: 
+            - cond-testapproval
           context: openquantumsafe
   on-main-branch:
     when:
