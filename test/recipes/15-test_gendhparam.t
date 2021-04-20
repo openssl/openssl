@@ -96,8 +96,9 @@ my @testdata = (
 #    },
 );
 
-plan tests => scalar @testdata;
 plan skip_all => "DH isn't supported in this build" if disabled("dh");
+
+plan tests => scalar @testdata;
 
 foreach my $test (@testdata) {
     my $alg = $test->{algorithm};
