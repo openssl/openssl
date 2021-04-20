@@ -161,9 +161,10 @@ A B<DH> key can be generated with a named safe prime group by calling:
 
 B<DHX> domain parameters can be generated according to B<FIPS 186-4> by calling:
 
+    int gindex = 2;
     unsigned int pbits = 2048;
     unsigned int qbits = 256;
-    OSSL_PARAM params[5];
+    OSSL_PARAM params[6];
     EVP_PKEY *param_key = NULL;
     EVP_PKEY_CTX *pctx = NULL;
 
@@ -172,9 +173,10 @@ B<DHX> domain parameters can be generated according to B<FIPS 186-4> by calling:
 
     params[0] = OSSL_PARAM_construct_uint("pbits", &pbits);
     params[1] = OSSL_PARAM_construct_uint("qbits", &qbits);
-    params[2] = OSSL_PARAM_construct_utf8_string("type", "fips186_4", 0);
-    params[3] = OSSL_PARAM_construct_utf8_string("digest", "SHA256", 0);
-    params[4] = OSSL_PARAM_construct_end();
+    params[2] = OSSL_PARAM_construct_int("gindex", &gindex);
+    params[3] = OSSL_PARAM_construct_utf8_string("type", "fips186_4", 0);
+    params[4] = OSSL_PARAM_construct_utf8_string("digest", "SHA256", 0);
+    params[5] = OSSL_PARAM_construct_end();
     EVP_PKEY_CTX_set_params(pctx, params);
 
     EVP_PKEY_gen(pctx, &param_key);
@@ -202,7 +204,7 @@ be set into the key.
 
 EVP_PKEY_todata(), OSSL_PARAM_merge(), and EVP_PKEY_fromdata() are useful
 to add these parameters to the original key or domain parameters before
-the actual validation.
+the actual validation. In production code the return values should be checked.
 
     EVP_PKEY *received_domp = ...; /* parameters received and decoded */
     unsigned char *seed = ...;     /* and additional parameters received */
@@ -210,7 +212,7 @@ the actual validation.
     int gindex = ...;              /* for the validation */
     int pcounter = ...;
     int hindex = ...;
-    OSSL_PARAM extra_params[5];
+    OSSL_PARAM extra_params[4];
     OSSL_PARAM *domain_params = NULL;
     OSSL_PARAM *merged_params = NULL;
     EVP_PKEY_CTX *ctx = NULL, *validate_ctx = NULL;
@@ -219,10 +221,13 @@ the actual validation.
     EVP_PKEY_todata(received_domp, OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS,
                     &domain_params);
     extra_params[0] = OSSL_PARAM_construct_octet_string("seed", seed, seedlen);
+    /*
+     * NOTE: For unverifiable g use "hindex" instead of "gindex"
+     * extra_params[1] = OSSL_PARAM_construct_int("hindex", &hindex);
+     */
     extra_params[1] = OSSL_PARAM_construct_int("gindex", &gindex);
     extra_params[2] = OSSL_PARAM_construct_int("pcounter", &pcounter);
-    extra_params[3] = OSSL_PARAM_construct_int("hindex", &hindex);
-    extra_params[4] = OSSL_PARAM_construct_end();
+    extra_params[3] = OSSL_PARAM_construct_end();
     merged_params = OSSL_PARAM_merge(domain_params, extra_params);
 
     ctx = EVP_PKEY_CTX_new_from_name(NULL, "DHX", NULL);
