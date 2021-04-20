@@ -478,7 +478,8 @@ static EVP_PKEY *load_example_hmac_key(void)
         0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f
     };
 
-    pkey = EVP_PKEY_new_raw_private_key(EVP_PKEY_HMAC, NULL, key, sizeof(key));
+    pkey = EVP_PKEY_new_raw_private_key_ex(testctx, "HMAC",
+                                           NULL, key, sizeof(key));
     if (!TEST_ptr(pkey))
         return NULL;
 
@@ -1573,11 +1574,8 @@ static int test_set_get_raw_keys_int(int tst, int pub, int uselibctx)
     size_t inlen, len = 0;
     EVP_PKEY *pkey;
 
-    if (nullprov != NULL)
-        return TEST_skip("Test does not support a non-default library context");
-
     /* Check if this algorithm supports public keys */
-    if (keys[tst].pub == NULL)
+    if (pub && keys[tst].pub == NULL)
         return 1;
 
     memset(buf, 0, sizeof(buf));
@@ -1616,6 +1614,7 @@ static int test_set_get_raw_keys_int(int tst, int pub, int uselibctx)
     }
 
     if (!TEST_ptr(pkey)
+            || !TEST_int_eq(EVP_PKEY_eq(pkey, pkey), 1)
             || (!pub && !TEST_true(EVP_PKEY_get_raw_private_key(pkey, NULL, &len)))
             || (pub && !TEST_true(EVP_PKEY_get_raw_public_key(pkey, NULL, &len)))
             || !TEST_true(len == inlen)
@@ -1632,9 +1631,9 @@ static int test_set_get_raw_keys_int(int tst, int pub, int uselibctx)
 
 static int test_set_get_raw_keys(int tst)
 {
-    return test_set_get_raw_keys_int(tst, 0, 0)
+    return (nullprov != NULL || test_set_get_raw_keys_int(tst, 0, 0))
            && test_set_get_raw_keys_int(tst, 0, 1)
-           && test_set_get_raw_keys_int(tst, 1, 0)
+           && (nullprov != NULL || test_set_get_raw_keys_int(tst, 1, 0))
            && test_set_get_raw_keys_int(tst, 1, 1);
 }
 
