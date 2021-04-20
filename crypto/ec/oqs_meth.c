@@ -27,6 +27,7 @@
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/x509.h>
+#include <openssl/rsa.h>
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
 
@@ -1333,6 +1334,7 @@ int oqs_ameth_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2) {
    case ASN1_PKEY_CTRL_DEFAULT_MD_NID:
 	*(int *)arg2 = NID_sha512;
 	return 1;
+#ifndef OPENSSL_NO_CMS
    case ASN1_PKEY_CTRL_CMS_SIGN:
       if (arg1 == 0) {
             int snid, hnid;
@@ -1352,6 +1354,7 @@ int oqs_ameth_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2) {
       }
 
       return 1;
+#endif
    }
    ECerr(EC_F_PKEY_OQS_CTRL, ERR_R_FATAL);
    return 0;
