@@ -1413,7 +1413,7 @@ static CMS_ReceiptRequest *make_receipt_request(
         rct_from = NULL;
     }
     rr = CMS_ReceiptRequest_create0_ex(NULL, -1, rr_allorfirst, rct_from,
-                                       rct_to, libctx, app_get0_propq());
+                                       rct_to, libctx);
     return rr;
  err:
     sk_GENERAL_NAMES_pop_free(rct_to, GENERAL_NAMES_free);
