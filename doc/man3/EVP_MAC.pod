@@ -118,12 +118,15 @@ I<ctx>.
 
 =head2 Computing functions
 
-EVP_MAC_init() sets up the underlying context with information given
+EVP_MAC_init() sets up the underlying context I<ctx> with information given
 via the I<key> and I<params> arguments.  The MAC I<key> has a length of
 I<keylen> and the parameters in I<params> are processed before setting
-the key.  If I<key> is NULL, the key must be set via params either
+the key.  If I<key> is NULL, the key must be set via I<params> either
 as part of this call or separately using EVP_MAC_CTX_set_params().
-This should be called before calling EVP_MAC_update() and EVP_MAC_final().
+Providing non-NULL I<params> to this function is equivalent to calling
+EVP_MAC_CTX_set_params() with those I<params> for the same I<ctx> beforehand.
+
+EVP_MAC_init() should be called before EVP_MAC_update() and EVP_MAC_final().
 
 EVP_MAC_update() adds I<datalen> bytes from I<data> to the MAC input.
 
