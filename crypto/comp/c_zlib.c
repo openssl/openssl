@@ -238,8 +238,7 @@ DEFINE_RUN_ONCE_STATIC(ossl_comp_zlib_init)
             if (p_compress == NULL || p_inflateEnd == NULL
                     || p_inflate == NULL || p_inflateInit_ == NULL
                     || p_deflateEnd == NULL || p_deflate == NULL
-                    || p_deflateInit_ == NULL || p_zError == NULL
-                    || !OPENSSL_init_crypto(OPENSSL_INIT_ZLIB, NULL)) {
+                    || p_deflateInit_ == NULL || p_zError == NULL) {
                 ossl_comp_zlib_cleanup();
                 return 0;
             }
@@ -262,7 +261,7 @@ COMP_METHOD *COMP_zlib(void)
     return meth;
 }
 
-
+/* Also called from OPENSSL_cleanup() */
 void ossl_comp_zlib_cleanup(void)
 {
 #ifdef ZLIB_SHARED

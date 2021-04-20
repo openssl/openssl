@@ -330,18 +330,6 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_engine_afalg)
 # endif
 #endif
 
-#ifndef OPENSSL_NO_COMP
-static CRYPTO_ONCE zlib = CRYPTO_ONCE_STATIC_INIT;
-
-static int zlib_inited = 0;
-DEFINE_RUN_ONCE_STATIC(ossl_init_zlib)
-{
-    /* Do nothing - we need to know about this for the later cleanup */
-    zlib_inited = 1;
-    return 1;
-}
-#endif
-
 void OPENSSL_cleanup(void)
 {
     OPENSSL_INIT_STOP *currhandler, *lasthandler;
@@ -384,10 +372,8 @@ void OPENSSL_cleanup(void)
      */
 
 #ifndef OPENSSL_NO_COMP
-    if (zlib_inited) {
-        OSSL_TRACE(INIT, "OPENSSL_cleanup: ossl_comp_zlib_cleanup()\n");
-        ossl_comp_zlib_cleanup();
-    }
+    OSSL_TRACE(INIT, "OPENSSL_cleanup: ossl_comp_zlib_cleanup()\n");
+    ossl_comp_zlib_cleanup();
 #endif
 
     if (async_inited) {
@@ -642,12 +628,6 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
                 | OPENSSL_INIT_ENGINE_AFALG)) {
         ENGINE_register_all_complete();
     }
-#endif
-
-#ifndef OPENSSL_NO_COMP
-    if ((opts & OPENSSL_INIT_ZLIB)
-            && !RUN_ONCE(&zlib, ossl_init_zlib))
-        return 0;
 #endif
 
     if (!CRYPTO_atomic_or(&optsdone, opts, &tmp, init_lock))
