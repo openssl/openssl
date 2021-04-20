@@ -324,8 +324,7 @@ static int bio_zlib_new(BIO *bi)
     BIO_ZLIB_CTX *ctx;
 
 # ifdef ZLIB_SHARED
-    (void)COMP_zlib();
-    if (zlib_dso == NULL) {
+    if (!RUN_ONCE(&zlib_once, ossl_comp_zlib_init)) {
         ERR_raise(ERR_LIB_COMP, COMP_R_ZLIB_NOT_SUPPORTED);
         return 0;
     }
