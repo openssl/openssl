@@ -63,7 +63,7 @@ int ossl_cms_check_signing_certs(const CMS_SignerInfo *si,
 CMS_ReceiptRequest *CMS_ReceiptRequest_create0_ex(
     unsigned char *id, int idlen, int allorfirst,
     STACK_OF(GENERAL_NAMES) *receiptList, STACK_OF(GENERAL_NAMES) *receiptsTo,
-    OSSL_LIB_CTX *libctx, const char *propq)
+    OSSL_LIB_CTX *libctx)
 {
     CMS_ReceiptRequest *rr;
 
@@ -106,7 +106,7 @@ CMS_ReceiptRequest *CMS_ReceiptRequest_create0(
     STACK_OF(GENERAL_NAMES) *receiptList, STACK_OF(GENERAL_NAMES) *receiptsTo)
 {
     return CMS_ReceiptRequest_create0_ex(id, idlen, allorfirst, receiptList,
-                                         receiptsTo, NULL, NULL);
+                                         receiptsTo, NULL);
 }
 
 int CMS_add1_ReceiptRequest(CMS_SignerInfo *si, CMS_ReceiptRequest *rr)
