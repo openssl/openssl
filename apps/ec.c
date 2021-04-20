@@ -211,10 +211,16 @@ int ec_main(int argc, char **argv)
         goto end;
     }
 
-    if (no_public
-        && !EVP_PKEY_set_int_param(eckey, OSSL_PKEY_PARAM_EC_INCLUDE_PUBLIC, 0)) {
-        BIO_printf(bio_err, "unable to disable public key encoding\n");
-        goto end;
+    if (no_public) {
+        if (!EVP_PKEY_set_int_param(eckey, OSSL_PKEY_PARAM_EC_INCLUDE_PUBLIC, 0)) {
+            BIO_printf(bio_err, "unable to disable public key encoding\n");
+            goto end;
+        }
+    } else {
+        if (!EVP_PKEY_set_int_param(eckey, OSSL_PKEY_PARAM_EC_INCLUDE_PUBLIC, 1)) {
+            BIO_printf(bio_err, "unable to enable public key encoding\n");
+            goto end;
+        }
     }
 
     if (text) {
