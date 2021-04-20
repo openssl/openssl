@@ -10,6 +10,10 @@ SSL_COMP_get0_name, SSL_COMP_get_id, SSL_COMP_free_compression_methods
 
  #include <openssl/ssl.h>
 
+Deprecated since OpenSSL 3.0, can be hidden entirely by defining
+B<OPENSSL_API_COMPAT> with a suitable version value, see
+L<openssl_user_macros(7)>:
+
  int SSL_COMP_add_compression_method(int id, COMP_METHOD *cm);
  STACK_OF(SSL_COMP) *SSL_COMP_get_compression_methods(void);
  const char *SSL_COMP_get0_name(const SSL_COMP *comp);
@@ -40,13 +44,15 @@ maintain the internal table of compression methods.
 
 =head1 NOTES
 
-The TLS standard (or SSLv3) allows the integration of compression methods
-into the communication. The TLS RFC does however not specify compression
-methods or their corresponding identifiers, so there is currently no compatible
-way to integrate compression with unknown peers. It is therefore currently not
-recommended to integrate compression into applications. Applications for
-non-public use may agree on certain compression methods. Using different
-compression methods with the same identifier will lead to connection failure.
+Some versions of the TLS specifications (and SSLv3) allow
+the integration of compression methods
+into the communication. Identifiers for the compression mechanism are
+not defined, so there is currently no compatible
+way to integrate compression with unknown peers.
+There are also security issues that can be exploited if compression
+is done at the TLS layer, rather than at the application layer.
+Because of this, compression is not enabled by default and this
+API is being deprecated.
 
 An OpenSSL client speaking a protocol that allows compression (SSLv3, TLSv1)
 will unconditionally send the list of all compression methods enabled with
@@ -94,9 +100,11 @@ L<ssl(7)>
 The SSL_COMP_free_compression_methods() function was deprecated in OpenSSL 1.1.0.
 The SSL_COMP_get0_name() and SSL_comp_get_id() functions were added in OpenSSL 1.1.0d.
 
+All functions described here were deprecated in OpenSSL 3.0.
+
 =head1 COPYRIGHT
 
-Copyright 2001-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2001-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

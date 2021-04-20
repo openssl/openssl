@@ -8,6 +8,7 @@
  * or in the file LICENSE in the source distribution.
  */
 
+#define OPENSSL_SUPPRESS_DEPRECATED /* For SSL_COMP_, COMP_ API's */
 #include <time.h>
 #include <openssl/rand.h>
 #include <openssl/ssl.h>

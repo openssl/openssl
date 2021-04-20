@@ -8,6 +8,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#define OPENSSL_SUPPRESS_DEPRECATED /* For COMP functions */
 #include <stdio.h>
 #include "ssl_local.h"
 #include "record/record_local.h"
@@ -20,6 +21,10 @@
 #include <openssl/obj_mac.h>
 #include <openssl/core_names.h>
 #include <openssl/trace.h>
+
+#if defined(OPENSSL_NO_DEPRECATED_3_0) && !defined(OPENSSL_NO_COMP)
+# define OPENSSL_NO_COMP
+#endif
 
 /* seed1 through seed5 are concatenated */
 static int tls1_PRF(SSL *s,

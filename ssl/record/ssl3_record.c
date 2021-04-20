@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#define OPENSSL_SUPPRESS_DEPRECATED /* For COMP functions */
 #include "../ssl_local.h"
 #include <openssl/trace.h>
 #include <openssl/rand.h>

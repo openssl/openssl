@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#define OPENSSL_SUPPRESS_DEPRECATED /* For SSL_COMP_, COMP_ API's */
 #include <string.h>
 
 #include <openssl/bio.h>

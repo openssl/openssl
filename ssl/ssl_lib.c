@@ -9,6 +9,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#define OPENSSL_SUPPRESS_DEPRECATED /* For SSL_COMP_, COMP_ API's */
 #include <stdio.h>
 #include "ssl_local.h"
 #include "e_os.h"
@@ -24,6 +25,10 @@
 #include "internal/cryptlib.h"
 #include "internal/refcount.h"
 #include "internal/ktls.h"
+
+#if defined(OPENSSL_NO_DEPRECATED_3_0) && !defined(OPENSSL_NO_COMP)
+# define OPENSSL_NO_COMP
+#endif
 
 static int ssl_undefined_function_1(SSL *ssl, SSL3_RECORD *r, size_t s, int t,
                                     SSL_MAC_BUF *mac, size_t macsize)

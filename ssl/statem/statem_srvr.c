@@ -9,6 +9,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#define OPENSSL_SUPPRESS_DEPRECATED /* For SSL_COMP_, COMP_ API's */
 #include <stdio.h>
 #include "../ssl_local.h"
 #include "statem_local.h"

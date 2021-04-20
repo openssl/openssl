@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#define OPENSSL_SUPPRESS_DEPRECATED /* For BIO_f_zlib */
 #include "internal/cryptlib.h"
 #include <openssl/asn1t.h>
 #include <openssl/pem.h>

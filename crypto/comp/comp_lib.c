@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <openssl/macros.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -15,6 +16,7 @@
 #include <openssl/err.h>
 #include "comp_local.h"
 
+#if !defined(OPENSSL_NO_DEPRECATED_3_0) && !defined(OPENSSL_NO_COMP)
 COMP_CTX *COMP_CTX_new(COMP_METHOD *meth)
 {
     COMP_CTX *ret;
@@ -91,3 +93,4 @@ int COMP_CTX_get_type(const COMP_CTX* comp)
 {
     return comp->meth ? comp->meth->type : NID_undef;
 }
+#endif

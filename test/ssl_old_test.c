@@ -9,6 +9,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#define OPENSSL_SUPPRESS_DEPRECATED /* For COMP functions */
 #include "e_os.h"
 
 /* Or gethostname won't be declared properly on Linux and GNU platforms. */

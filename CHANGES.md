@@ -47,6 +47,10 @@ OpenSSL 3.0
 
    *Shane Lontis*
 
+ * The COMP_xxx API is now deprecated
+
+   *Rich Salz*
+
  * The EVP_PKEY_CTRL_PKCS7_ENCRYPT, EVP_PKEY_CTRL_PKCS7_DECRYPT,
    EVP_PKEY_CTRL_PKCS7_SIGN, EVP_PKEY_CTRL_CMS_ENCRYPT,
    EVP_PKEY_CTRL_CMS_DECRYPT, and EVP_PKEY_CTRL_CMS_SIGN control operations

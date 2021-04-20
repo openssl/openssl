@@ -8,12 +8,18 @@
  * https://www.openssl.org/source/license.html
  */
 
+#define OPENSSL_SUPPRESS_DEPRECATED /* For COMP functions */
+
 #include <stdio.h>
 #include "ssl_local.h"
 #include <openssl/evp.h>
 #include <openssl/md5.h>
 #include <openssl/core_names.h>
 #include "internal/cryptlib.h"
+
+#if defined(OPENSSL_NO_DEPRECATED_3_0) && !defined(OPENSSL_NO_COMP)
+# define OPENSSL_NO_COMP
+#endif
 
 static int ssl3_generate_key_block(SSL *s, unsigned char *km, int num)
 {

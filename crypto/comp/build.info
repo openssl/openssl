@@ -1,4 +1,6 @@
+$COMPSRC =
+IF[{- !$disabled{'comp'} -}]
+  $COMPSRC = $COMPSRC comp_lib.c comp_err.c c_zlib.c
+ENDIF
 LIBS=../../libcrypto
-SOURCE[../../libcrypto]= \
-        comp_lib.c comp_err.c \
-        c_zlib.c
+SOURCE[../../libcrypto]= $COMPSRC

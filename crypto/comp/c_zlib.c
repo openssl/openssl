@@ -7,6 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
+#define OPENSSL_NO_DEPRECATED
+#include <openssl/macros.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
