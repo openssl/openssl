@@ -1585,6 +1585,7 @@ static int test_set_get_raw_keys_int(int tst, int pub, int uselibctx)
     memset(buf, 0, sizeof(buf));
 
     if (pub) {
+#ifndef OPENSSL_NO_EC
         inlen = strlen(keys[tst].pub);
         in = (unsigned char *)keys[tst].pub;
         if (uselibctx) {
@@ -1600,6 +1601,9 @@ static int test_set_get_raw_keys_int(int tst, int pub, int uselibctx)
                                                in,
                                                inlen);
         }
+#else
+        return 1;
+#endif
     } else {
         inlen = strlen(keys[tst].priv);
         in = (unsigned char *)keys[tst].priv;
