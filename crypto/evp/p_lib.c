@@ -327,6 +327,12 @@ int EVP_PKEY_eq(const EVP_PKEY *a, const EVP_PKEY *b)
      * is gone.
      */
 
+    /* Trivial shortcuts */
+    if (a == b)
+        return 1;
+    if (a == NULL || b == NULL)
+        return 0;
+
     if (a->keymgmt != NULL || b->keymgmt != NULL)
         return evp_pkey_cmp_any(a, b, (SELECT_PARAMETERS
                                        | OSSL_KEYMGMT_SELECT_PUBLIC_KEY));
