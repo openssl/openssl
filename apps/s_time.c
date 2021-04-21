@@ -154,8 +154,7 @@ int s_time_main(int argc, char **argv)
             perform = 1;
             break;
         case OPT_VERIFY:
-            if (!opt_int(opt_arg(), &verify_args.depth))
-                goto opthelp;
+            verify_args.depth = opt_int_arg();
             BIO_printf(bio_err, "%s: verify depth is %d\n",
                        prog, verify_args.depth);
             break;
@@ -197,8 +196,7 @@ int s_time_main(int argc, char **argv)
             st_bugs = 1;
             break;
         case OPT_TIME:
-            if (!opt_int(opt_arg(), &maxtime))
-                goto opthelp;
+            maxtime = opt_int_arg();
             break;
         case OPT_WWW:
             www_path = opt_arg();

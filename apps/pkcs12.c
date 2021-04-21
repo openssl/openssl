@@ -235,9 +235,7 @@ int pkcs12_main(int argc, char **argv)
             enc_flag = opt_unknown();
             break;
         case OPT_ITER:
-            if (!opt_int(opt_arg(), &iter))
-                goto opthelp;
-            maciter = iter;
+            maciter = iter = opt_int_arg();
             break;
         case OPT_NOITER:
             iter = 1;

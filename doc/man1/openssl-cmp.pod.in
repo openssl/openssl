@@ -843,7 +843,7 @@ This can be useful for batch processing and testing.
 
 =item B<-repeat> I<number>
 
-Invoke the command the given number of times with the same parameters.
+Invoke the command the given positive number of times with the same parameters.
 Default is one invocation.
 
 =item B<-reqin> I<filenames>

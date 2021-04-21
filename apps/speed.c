@@ -1596,8 +1596,7 @@ int speed_main(int argc, char **argv)
 #endif
             break;
         case OPT_MISALIGN:
-            if (!opt_int(opt_arg(), &misalign))
-                goto end;
+            misalign = opt_int_arg();
             if (misalign > MISALIGN) {
                 BIO_printf(bio_err,
                            "%s: Maximum offset is %d\n", prog, MISALIGN);
@@ -1625,8 +1624,7 @@ int speed_main(int argc, char **argv)
                 goto end;
             break;
         case OPT_PRIMES:
-            if (!opt_int(opt_arg(), &primes))
-                goto end;
+            primes = opt_int_arg();
             break;
         case OPT_SECONDS:
             seconds.sym = seconds.rsa = seconds.dsa = seconds.ecdsa

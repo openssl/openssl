@@ -157,8 +157,7 @@ int pkcs8_main(int argc, char **argv)
                 cipher = (EVP_CIPHER *)EVP_aes_256_cbc();
             break;
         case OPT_ITER:
-            if (!opt_int(opt_arg(), &iter))
-                goto opthelp;
+            iter =  opt_int_arg();
             break;
         case OPT_PASSIN:
             passinarg = opt_arg();
