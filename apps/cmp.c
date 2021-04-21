@@ -2851,15 +2851,7 @@ int cmp_main(int argc, char **argv)
         OSSL_CMP_CTX_print_errors(cmp_ctx);
 
     ossl_cmp_mock_srv_free(OSSL_CMP_CTX_get_transfer_cb_arg(cmp_ctx));
-    {
-        APP_HTTP_TLS_INFO *http_tls_info =
-            OSSL_CMP_CTX_get_http_cb_arg(cmp_ctx);
-
-        if (http_tls_info != NULL) {
-            SSL_CTX_free(http_tls_info->ssl_ctx);
-            OPENSSL_free(http_tls_info);
-        }
-    }
+    APP_HTTP_TLS_INFO_free(OSSL_CMP_CTX_get_http_cb_arg(cmp_ctx));
     X509_STORE_free(OSSL_CMP_CTX_get_certConf_cb_arg(cmp_ctx));
     OSSL_CMP_CTX_free(cmp_ctx);
     X509_VERIFY_PARAM_free(vpm);
