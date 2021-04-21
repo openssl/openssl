@@ -7,11 +7,12 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stdio.h>       /* for sscanf() */
+#include <string.h>
 #include <openssl/http.h>
 #include <openssl/httperr.h>
 #include <openssl/bio.h> /* for BIO_snprintf() */
 #include <openssl/err.h>
-#include <string.h>
 #include "internal/cryptlib.h" /* for ossl_assert() */
 
 #include "http_local.h"
