@@ -195,6 +195,30 @@ static int test_invalid_template(void)
     return 0;
 }
 
+static int test_reuse_asn1_object(void)
+{
+    static unsigned char cn_der[] = { 0x06, 0x03, 0x55, 0x04, 0x06 };
+    static unsigned char oid_der[] = {
+        0x06, 0x06, 0x2a, 0x03, 0x04, 0x05, 0x06, 0x07
+    };
+    int ret = 0;
+    ASN1_OBJECT *obj;
+    unsigned char const *p = oid_der;
+
+    /* Create an object that owns dynamically allocated 'sn' and 'ln' fields */
+
+    if (!TEST_ptr(obj = ASN1_OBJECT_create(NID_undef, cn_der, sizeof(cn_der),
+                                           "C", "countryName")))
+        goto err;
+    /* reuse obj - this should not leak sn and ln */
+    if (!TEST_ptr(d2i_ASN1_OBJECT(&obj, &p, sizeof(oid_der))))
+        goto err;
+    ret = 1;
+err:
+    ASN1_OBJECT_free(obj);
+    return ret;
+}
+
 int setup_tests(void)
 {
 #ifndef OPENSSL_NO_DEPRECATED_3_0
@@ -205,5 +229,6 @@ int setup_tests(void)
     ADD_TEST(test_int64);
     ADD_TEST(test_uint64);
     ADD_TEST(test_invalid_template);
+    ADD_TEST(test_reuse_asn1_object);
     return 1;
 }
