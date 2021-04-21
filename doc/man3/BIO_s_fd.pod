@@ -38,8 +38,8 @@ B<lseek(fd, 0, 1)>.
 BIO_set_fd() sets the file descriptor of BIO B<b> to B<fd> and the close
 flag to B<c>.
 
-BIO_get_fd() places the file descriptor in B<c> if it is not NULL, it also
-returns the file descriptor.
+BIO_get_fd() places the file descriptor of BIO B<b> in B<c> if it is not NULL.
+It also returns the file descriptor.
 
 BIO_new_fd() returns a file descriptor BIO using B<fd> and B<close_flag>.
 
