@@ -232,6 +232,8 @@ static long linebuffer_ctrl(BIO *b, int cmd, long num, void *ptr)
         }
         break;
     case BIO_C_SET_BUFF_SIZE:
+        if (num > INT_MAX)
+            return 0;
         obs = (int)num;
         p = ctx->obuf;
         if ((obs > DEFAULT_LINEBUFFER_SIZE) && (obs != ctx->obuf_size)) {
