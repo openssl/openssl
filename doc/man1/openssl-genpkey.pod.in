@@ -450,7 +450,7 @@ Output 2048 bit DH parameters:
  openssl genpkey -genparam -algorithm DH -out dhp.pem \
      -pkeyopt dh_paramgen_prime_len:2048
 
-Output 2048 bit X9.42 DH parameters using a generator:
+Output 2048 bit DH parameters using a generator:
 
  openssl genpkey -genparam -algorithm DH -out dhpx.pem \
      -pkeyopt dh_paramgen_prime_len:2048 \

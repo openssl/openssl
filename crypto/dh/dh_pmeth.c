@@ -330,7 +330,7 @@ static int pkey_dh_paramgen(EVP_PKEY_CTX *ctx,
     /*
      * Look for a safe prime group for key establishment. Which uses
      * either RFC_3526 (modp_XXXX) or RFC_7919 (ffdheXXXX).
-     * RFC_5114 is also handles here for param_nid = (1..3)
+     * RFC_5114 is also handled here for param_nid = (1..3)
      */
     if (dctx->param_nid != NID_undef) {
         int type = dctx->param_nid <= 3 ? EVP_PKEY_DHX : EVP_PKEY_DH;
