@@ -44,6 +44,7 @@ const OSSL_ALGORITHM *OSSL_PROVIDER_query_operation(const OSSL_PROVIDER *prov,
 void OSSL_PROVIDER_unquery_operation(const OSSL_PROVIDER *prov,
                                      int operation_id, const OSSL_ALGORITHM *algs);
 void *OSSL_PROVIDER_get0_provider_ctx(const OSSL_PROVIDER *prov);
+const OSSL_DISPATCH *OSSL_PROVIDER_get0_dispatch(const OSSL_PROVIDER *prov);
 
 /* Add a built in providers */
 int OSSL_PROVIDER_add_builtin(OSSL_LIB_CTX *, const char *name,

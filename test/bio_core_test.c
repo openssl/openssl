@@ -55,7 +55,7 @@ static const OSSL_DISPATCH biocbs[] = {
 static int test_bio_core(void)
 {
     BIO *cbio = NULL, *cbiobad = NULL;
-    OSSL_LIB_CTX *libctx = OSSL_LIB_CTX_new_from_dispatch(biocbs);
+    OSSL_LIB_CTX *libctx = OSSL_LIB_CTX_new_from_dispatch(NULL, biocbs);
     int testresult = 0;
     OSSL_CORE_BIO corebio;
     const char *msg = "Hello world";

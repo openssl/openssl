@@ -30,6 +30,7 @@ extern "C" {
 typedef struct ossl_core_handle_st OSSL_CORE_HANDLE;
 typedef struct openssl_core_ctx_st OPENSSL_CORE_CTX;
 typedef struct ossl_core_bio_st OSSL_CORE_BIO;
+typedef struct ossl_core_provider_st OSSL_CORE_PROVIDER;
 
 /*
  * Dispatch table element.  function_id numbers and the functions are defined

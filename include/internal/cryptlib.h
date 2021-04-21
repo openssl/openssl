@@ -165,7 +165,8 @@ typedef struct ossl_ex_data_global_st {
 # define OSSL_LIB_CTX_STORE_LOADER_STORE_INDEX      15
 # define OSSL_LIB_CTX_PROVIDER_CONF_INDEX           16
 # define OSSL_LIB_CTX_BIO_CORE_INDEX                17
-# define OSSL_LIB_CTX_MAX_INDEXES                   18
+# define OSSL_LIB_CTX_CHILD_PROVIDER_INDEX          18
+# define OSSL_LIB_CTX_MAX_INDEXES                   19
 
 # define OSSL_LIB_CTX_METHOD_DEFAULT_PRIORITY       0
 # define OSSL_LIB_CTX_METHOD_HIGH_PRIORITY          1

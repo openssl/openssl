@@ -13,6 +13,7 @@
 #include "internal/property.h"
 #include "internal/core.h"
 #include "internal/bio.h"
+#include "internal/provider.h"
 
 struct ossl_lib_ctx_onfree_list_st {
     ossl_lib_ctx_onfree_fn *fn;
@@ -39,6 +40,7 @@ struct ossl_lib_ctx_st {
     int run_once_done[OSSL_LIB_CTX_MAX_RUN_ONCE];
     int run_once_ret[OSSL_LIB_CTX_MAX_RUN_ONCE];
     struct ossl_lib_ctx_onfree_list_st *onfreelist;
+    unsigned int ischild:1;
 };
 
 int ossl_lib_ctx_write_lock(OSSL_LIB_CTX *ctx)
@@ -54,6 +56,15 @@ int ossl_lib_ctx_read_lock(OSSL_LIB_CTX *ctx)
 int ossl_lib_ctx_unlock(OSSL_LIB_CTX *ctx)
 {
     return CRYPTO_THREAD_unlock(ossl_lib_ctx_get_concrete(ctx)->lock);
+}
+
+int ossl_lib_ctx_is_child(OSSL_LIB_CTX *ctx)
+{
+    ctx = ossl_lib_ctx_get_concrete(ctx);
+
+    if (ctx == NULL)
+        return 0;
+    return ctx->ischild;
 }
 
 static int context_init(OSSL_LIB_CTX *ctx)
@@ -185,7 +196,8 @@ OSSL_LIB_CTX *OSSL_LIB_CTX_new(void)
 }
 
 #ifndef FIPS_MODULE
-OSSL_LIB_CTX *OSSL_LIB_CTX_new_from_dispatch(const OSSL_DISPATCH *in)
+OSSL_LIB_CTX *OSSL_LIB_CTX_new_from_dispatch(const OSSL_CORE_HANDLE *handle,
+                                             const OSSL_DISPATCH *in)
 {
     OSSL_LIB_CTX *ctx = OSSL_LIB_CTX_new();
 
@@ -196,6 +208,23 @@ OSSL_LIB_CTX *OSSL_LIB_CTX_new_from_dispatch(const OSSL_DISPATCH *in)
         OSSL_LIB_CTX_free(ctx);
         return NULL;
     }
+
+    return ctx;
+}
+
+OSSL_LIB_CTX *OSSL_LIB_CTX_new_child(const OSSL_CORE_HANDLE *handle,
+                                     const OSSL_DISPATCH *in)
+{
+    OSSL_LIB_CTX *ctx = OSSL_LIB_CTX_new_from_dispatch(handle, in);
+
+    if (ctx == NULL)
+        return NULL;
+
+    if (!ossl_provider_init_as_child(ctx, handle, in)) {
+        OSSL_LIB_CTX_free(ctx);
+        return NULL;
+    }
+    ctx->ischild = 1;
 
     return ctx;
 }

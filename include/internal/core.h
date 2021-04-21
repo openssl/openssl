@@ -64,5 +64,6 @@ char *ossl_algorithm_get1_first_name(const OSSL_ALGORITHM *algo);
 __owur int ossl_lib_ctx_write_lock(OSSL_LIB_CTX *ctx);
 __owur int ossl_lib_ctx_read_lock(OSSL_LIB_CTX *ctx);
 int ossl_lib_ctx_unlock(OSSL_LIB_CTX *ctx);
+int ossl_lib_ctx_is_child(OSSL_LIB_CTX *ctx);
 
 #endif
