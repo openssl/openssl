@@ -43,7 +43,7 @@ ok(run(app([ 'openssl', 'genpkey', '-genparam',
 ok(run(app([ 'openssl', 'genpkey',
              '-paramfile', 'dhgen.pem',
              '-pkeyopt', 'gindex:1',
-             '-pkeyopt', 'hexseed:0102030405060708090A0B0C0D0E0F1011121314',
+             '-pkeyopt', 'hexseed:ed2927f2139eb61495d6641efda1243f93ebe482b5bfc2c755a53825',
              '-pkeyopt', 'pcounter:25',
              '-text' ])),
    "genpkey DH fips186_4 with PEM params");
