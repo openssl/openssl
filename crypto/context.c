@@ -277,7 +277,6 @@ static void ossl_lib_ctx_generic_free(void *parent_ign, void *ptr,
     meth->free_func(ptr);
 }
 
-/* Non-static so we can use it in context_internal_test */
 static int ossl_lib_ctx_init_index(OSSL_LIB_CTX *ctx, int static_index,
                                    const OSSL_LIB_CTX_METHOD *meth)
 {
