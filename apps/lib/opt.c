@@ -105,7 +105,8 @@ char *opt_progname(const char *argv0)
     /* Find last special character sys:[foo.bar]openssl */
     p = opt_path_end(argv0);
     q = strrchr(p, '.');
-    strncpy(prog, p, sizeof(prog) - 1);
+    if (prog != p)
+        strncpy(prog, p, sizeof(prog) - 1);
     prog[sizeof(prog) - 1] = '\0';
     if (q != NULL && q - p < sizeof(prog))
         prog[q - p] = '\0';
@@ -132,7 +133,8 @@ char *opt_progname(const char *argv0)
     const char *p;
 
     p = opt_path_end(argv0);
-    strncpy(prog, p, sizeof(prog) - 1);
+    if (prog != p)
+        strncpy(prog, p, sizeof(prog) - 1);
     prog[sizeof(prog) - 1] = '\0';
     return prog;
 }
