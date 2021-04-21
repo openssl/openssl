@@ -351,6 +351,7 @@ void opt_begin(void);
 int opt_format(const char *s, unsigned long flags, int *result);
 const char *format2str(int format);
 int opt_int(const char *arg, int *result);
+int opt_nat0(void);
 int opt_ulong(const char *arg, unsigned long *result);
 int opt_long(const char *arg, long *result);
 #if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L && \
@@ -368,6 +369,7 @@ int opt_pair(const char *arg, const OPT_PAIR * pairs, int *result);
 int opt_string(const char *name, const char **options);
 int opt_cipher(const char *name, EVP_CIPHER **cipherp);
 int opt_md(const char *name, EVP_MD **mdp);
+char *opt_name(void);
 char *opt_arg(void);
 char *opt_flag(void);
 char *opt_unknown(void);

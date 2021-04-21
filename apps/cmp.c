@@ -2168,28 +2168,18 @@ static int read_config(void)
     return 1;
 }
 
-static char *opt_str(char *opt)
+static char *opt_str(void)
 {
     char *arg = opt_arg();
 
     if (arg[0] == '\0') {
-        CMP_warn1("argument of -%s option is empty string, resetting option",
-                  opt);
+        CMP_warn1("%s option argument is empty string, resetting option",
+                  opt_name());
         arg = NULL;
     } else if (arg[0] == '-') {
-        CMP_warn1("argument of -%s option starts with hyphen", opt);
+        CMP_warn1("%s option argument starts with hyphen", opt_name());
     }
     return arg;
-}
-
-static int opt_nat(void)
-{
-    int result = -1;
-
-    if (opt_int(opt_arg(), &result) && result < 0)
-        BIO_printf(bio_err, "error: argument '%s' must not be negative\n",
-                   opt_arg());
-    return result;
 }
 
 /* returns 1 on success, 0 on error, -1 on -help (i.e., stop with success) */
@@ -2214,91 +2204,91 @@ static int get_opts(int argc, char **argv)
         case OPT_VERBOSITY: /* has already been handled */
             break;
         case OPT_SERVER:
-            opt_server = opt_str("server");
+            opt_server = opt_str();
             break;
         case OPT_PROXY:
-            opt_proxy = opt_str("proxy");
+            opt_proxy = opt_str();
             break;
         case OPT_NO_PROXY:
-            opt_no_proxy = opt_str("no_proxy");
+            opt_no_proxy = opt_str();
             break;
         case OPT_PATH:
-            opt_path = opt_str("path");
+            opt_path = opt_str();
             break;
         case OPT_RECIPIENT:
-            opt_recipient = opt_str("recipient");
+            opt_recipient = opt_str();
             break;
         case OPT_MSG_TIMEOUT:
-            if ((opt_msg_timeout = opt_nat()) < 0)
+            if ((opt_msg_timeout = opt_nat0()) < 0)
                 goto opthelp;
             break;
         case OPT_TOTAL_TIMEOUT:
-            if ((opt_total_timeout = opt_nat()) < 0)
+            if ((opt_total_timeout = opt_nat0()) < 0)
                 goto opthelp;
             break;
         case OPT_TLS_USED:
             opt_tls_used = 1;
             break;
         case OPT_TLS_CERT:
-            opt_tls_cert = opt_str("tls_cert");
+            opt_tls_cert = opt_str();
             break;
         case OPT_TLS_KEY:
-            opt_tls_key = opt_str("tls_key");
+            opt_tls_key = opt_str();
             break;
         case OPT_TLS_KEYPASS:
-            opt_tls_keypass = opt_str("tls_keypass");
+            opt_tls_keypass = opt_str();
             break;
         case OPT_TLS_EXTRA:
-            opt_tls_extra = opt_str("tls_extra");
+            opt_tls_extra = opt_str();
             break;
         case OPT_TLS_TRUSTED:
-            opt_tls_trusted = opt_str("tls_trusted");
+            opt_tls_trusted = opt_str();
             break;
         case OPT_TLS_HOST:
-            opt_tls_host = opt_str("tls_host");
+            opt_tls_host = opt_str();
             break;
         case OPT_REF:
-            opt_ref = opt_str("ref");
+            opt_ref = opt_str();
             break;
         case OPT_SECRET:
-            opt_secret = opt_str("secret");
+            opt_secret = opt_str();
             break;
         case OPT_CERT:
-            opt_cert = opt_str("cert");
+            opt_cert = opt_str();
             break;
         case OPT_OWN_TRUSTED:
-            opt_own_trusted = opt_str("own_trusted");
+            opt_own_trusted = opt_str();
             break;
         case OPT_KEY:
-            opt_key = opt_str("key");
+            opt_key = opt_str();
             break;
         case OPT_KEYPASS:
-            opt_keypass = opt_str("keypass");
+            opt_keypass = opt_str();
             break;
         case OPT_DIGEST:
-            opt_digest = opt_str("digest");
+            opt_digest = opt_str();
             break;
         case OPT_MAC:
-            opt_mac = opt_str("mac");
+            opt_mac = opt_str();
             break;
         case OPT_EXTRACERTS:
-            opt_extracerts = opt_str("extracerts");
+            opt_extracerts = opt_str();
             break;
         case OPT_UNPROTECTED_REQUESTS:
             opt_unprotected_requests = 1;
             break;
 
         case OPT_TRUSTED:
-            opt_trusted = opt_str("trusted");
+            opt_trusted = opt_str();
             break;
         case OPT_UNTRUSTED:
-            opt_untrusted = opt_str("untrusted");
+            opt_untrusted = opt_str();
             break;
         case OPT_SRVCERT:
-            opt_srvcert = opt_str("srvcert");
+            opt_srvcert = opt_str();
             break;
         case OPT_EXPECT_SENDER:
-            opt_expect_sender = opt_str("expect_sender");
+            opt_expect_sender = opt_str();
             break;
         case OPT_IGNORE_KEYUSAGE:
             opt_ignore_keyusage = 1;
@@ -2307,10 +2297,10 @@ static int get_opts(int argc, char **argv)
             opt_unprotected_errors = 1;
             break;
         case OPT_EXTRACERTSOUT:
-            opt_extracertsout = opt_str("extracertsout");
+            opt_extracertsout = opt_str();
             break;
         case OPT_CACERTSOUT:
-            opt_cacertsout = opt_str("cacertsout");
+            opt_cacertsout = opt_str();
             break;
 
         case OPT_V_CASES:
@@ -2318,45 +2308,45 @@ static int get_opts(int argc, char **argv)
                 goto opthelp;
             break;
         case OPT_CMD:
-            opt_cmd_s = opt_str("cmd");
+            opt_cmd_s = opt_str();
             break;
         case OPT_INFOTYPE:
-            opt_infotype_s = opt_str("infotype");
+            opt_infotype_s = opt_str();
             break;
         case OPT_GENINFO:
-            opt_geninfo = opt_str("geninfo");
+            opt_geninfo = opt_str();
             break;
 
         case OPT_NEWKEY:
-            opt_newkey = opt_str("newkey");
+            opt_newkey = opt_str();
             break;
         case OPT_NEWKEYPASS:
-            opt_newkeypass = opt_str("newkeypass");
+            opt_newkeypass = opt_str();
             break;
         case OPT_SUBJECT:
-            opt_subject = opt_str("subject");
+            opt_subject = opt_str();
             break;
         case OPT_ISSUER:
-            opt_issuer = opt_str("issuer");
+            opt_issuer = opt_str();
             break;
         case OPT_DAYS:
-            if ((opt_days = opt_nat()) < 0)
+            if ((opt_days = opt_nat0()) < 0)
                 goto opthelp;
             break;
         case OPT_REQEXTS:
-            opt_reqexts = opt_str("reqexts");
+            opt_reqexts = opt_str();
             break;
         case OPT_SANS:
-            opt_sans = opt_str("sans");
+            opt_sans = opt_str();
             break;
         case OPT_SAN_NODEFAULT:
             opt_san_nodefault = 1;
             break;
         case OPT_POLICIES:
-            opt_policies = opt_str("policies");
+            opt_policies = opt_str();
             break;
         case OPT_POLICY_OIDS:
-            opt_policy_oids = opt_str("policy_oids");
+            opt_policy_oids = opt_str();
             break;
         case OPT_POLICY_OIDS_CRITICAL:
             opt_policy_oids_critical = 1;
@@ -2373,7 +2363,7 @@ static int get_opts(int argc, char **argv)
             opt_csr = opt_arg();
             break;
         case OPT_OUT_TRUSTED:
-            opt_out_trusted = opt_str("out_trusted");
+            opt_out_trusted = opt_str();
             break;
         case OPT_IMPLICIT_CONFIRM:
             opt_implicit_confirm = 1;
@@ -2382,13 +2372,13 @@ static int get_opts(int argc, char **argv)
             opt_disable_confirm = 1;
             break;
         case OPT_CERTOUT:
-            opt_certout = opt_str("certout");
+            opt_certout = opt_str();
             break;
         case OPT_CHAINOUT:
-            opt_chainout = opt_str("chainout");
+            opt_chainout = opt_str();
             break;
         case OPT_OLDCERT:
-            opt_oldcert = opt_str("oldcert");
+            opt_oldcert = opt_str();
             break;
         case OPT_REVREASON:
             if (!opt_int(opt_arg(), &opt_revreason)
@@ -2400,17 +2390,17 @@ static int get_opts(int argc, char **argv)
             }
             break;
         case OPT_CERTFORM:
-            opt_certform_s = opt_str("certform");
+            opt_certform_s = opt_str();
             break;
         case OPT_KEYFORM:
-            opt_keyform_s = opt_str("keyform");
+            opt_keyform_s = opt_str();
             break;
         case OPT_OTHERPASS:
-            opt_otherpass = opt_str("otherpass");
+            opt_otherpass = opt_str();
             break;
 #ifndef OPENSSL_NO_ENGINE
         case OPT_ENGINE:
-            opt_engine = opt_str("engine");
+            opt_engine = opt_str();
             break;
 #endif
         case OPT_PROV_CASES:
@@ -2426,83 +2416,83 @@ static int get_opts(int argc, char **argv)
             opt_batch = 1;
             break;
         case OPT_REPEAT:
-            opt_repeat = opt_nat();
+            opt_repeat = opt_nat0();
             break;
         case OPT_REQIN:
-            opt_reqin = opt_str("reqin");
+            opt_reqin = opt_str();
             break;
         case OPT_REQIN_NEW_TID:
             opt_reqin_new_tid = 1;
             break;
         case OPT_REQOUT:
-            opt_reqout = opt_str("reqout");
+            opt_reqout = opt_str();
             break;
         case OPT_RSPIN:
-            opt_rspin = opt_str("rspin");
+            opt_rspin = opt_str();
             break;
         case OPT_RSPOUT:
-            opt_rspout = opt_str("rspout");
+            opt_rspout = opt_str();
             break;
         case OPT_USE_MOCK_SRV:
             opt_use_mock_srv = 1;
             break;
         case OPT_PORT:
-            opt_port = opt_str("port");
+            opt_port = opt_str();
             break;
         case OPT_MAX_MSGS:
-            if ((opt_max_msgs = opt_nat()) < 0)
+            if ((opt_max_msgs = opt_nat0()) < 0)
                 goto opthelp;
             break;
         case OPT_SRV_REF:
-            opt_srv_ref = opt_str("srv_ref");
+            opt_srv_ref = opt_str();
             break;
         case OPT_SRV_SECRET:
-            opt_srv_secret = opt_str("srv_secret");
+            opt_srv_secret = opt_str();
             break;
         case OPT_SRV_CERT:
-            opt_srv_cert = opt_str("srv_cert");
+            opt_srv_cert = opt_str();
             break;
         case OPT_SRV_KEY:
-            opt_srv_key = opt_str("srv_key");
+            opt_srv_key = opt_str();
             break;
         case OPT_SRV_KEYPASS:
-            opt_srv_keypass = opt_str("srv_keypass");
+            opt_srv_keypass = opt_str();
             break;
         case OPT_SRV_TRUSTED:
-            opt_srv_trusted = opt_str("srv_trusted");
+            opt_srv_trusted = opt_str();
             break;
         case OPT_SRV_UNTRUSTED:
-            opt_srv_untrusted = opt_str("srv_untrusted");
+            opt_srv_untrusted = opt_str();
             break;
         case OPT_RSP_CERT:
-            opt_rsp_cert = opt_str("rsp_cert");
+            opt_rsp_cert = opt_str();
             break;
         case OPT_RSP_EXTRACERTS:
-            opt_rsp_extracerts = opt_str("rsp_extracerts");
+            opt_rsp_extracerts = opt_str();
             break;
         case OPT_RSP_CAPUBS:
-            opt_rsp_capubs = opt_str("rsp_capubs");
+            opt_rsp_capubs = opt_str();
             break;
         case OPT_POLL_COUNT:
-            opt_poll_count = opt_nat();
+            opt_poll_count = opt_nat0();
             break;
         case OPT_CHECK_AFTER:
-            opt_check_after = opt_nat();
+            opt_check_after = opt_nat0();
             break;
         case OPT_GRANT_IMPLICITCONF:
             opt_grant_implicitconf = 1;
             break;
         case OPT_PKISTATUS:
-            opt_pkistatus = opt_nat();
+            opt_pkistatus = opt_nat0();
             break;
         case OPT_FAILURE:
-            opt_failure = opt_nat();
+            opt_failure = opt_nat0();
             break;
         case OPT_FAILUREBITS:
-            opt_failurebits = opt_nat();
+            opt_failurebits = opt_nat0();
             break;
         case OPT_STATUSSTRING:
-            opt_statusstring = opt_str("statusstring");
+            opt_statusstring = opt_str();
             break;
         case OPT_SEND_ERROR:
             opt_send_error = 1;

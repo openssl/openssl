@@ -35,6 +35,7 @@ const char OPT_PARAM_STR[] = "-P";
 static char **argv;
 static int argc;
 static int opt_index;
+static char *param_name;
 static char *arg;
 static char *flag;
 static char *dunno;
@@ -432,6 +433,17 @@ int opt_int(const char *value, int *result)
     return 1;
 }
 
+/* Parse and return a natural number or 0; return -1 on failure. */
+int opt_nat0(void)
+{
+    int result = -1;
+
+    if (opt_int(arg, &result) && result < 0)
+        opt_printf_stderr("%s: Error: option '%s' argument '%s' must not be negative\n",
+                          prog, param_name, arg);
+    return result;
+}
+
 static void opt_number_error(const char *v)
 {
     size_t i = 0;
@@ -735,7 +747,7 @@ int opt_next(void)
 
     /* Look at current arg; at end of the list? */
     arg = NULL;
-    p = argv[opt_index];
+    p = param_name = argv[opt_index];
     if (p == NULL)
         return 0;
 
@@ -850,6 +862,12 @@ int opt_next(void)
     }
     opt_printf_stderr("%s: Unknown option: -%s\n", prog, p);
     return -1;
+}
+
+/* Return the name of the most recent flag parameter. */
+char *opt_name(void)
+{
+    return param_name;
 }
 
 /* Return the most recent flag parameter. */
