@@ -41,6 +41,7 @@ int ossl_provider_set_fallback(OSSL_PROVIDER *prov);
 int ossl_provider_set_module_path(OSSL_PROVIDER *prov, const char *module_path);
 int ossl_provider_add_parameter(OSSL_PROVIDER *prov, const char *name,
                                 const char *value);
+void ossl_provider_set_child(OSSL_PROVIDER *prov);
 
 /* Disable fallback loading */
 int ossl_provider_disable_fallback_loading(OSSL_LIB_CTX *libctx);
@@ -69,6 +70,7 @@ const DSO *ossl_provider_dso(const OSSL_PROVIDER *prov);
 const char *ossl_provider_module_name(const OSSL_PROVIDER *prov);
 const char *ossl_provider_module_path(const OSSL_PROVIDER *prov);
 void *ossl_provider_prov_ctx(const OSSL_PROVIDER *prov);
+const OSSL_DISPATCH *ossl_provider_get0_dispatch(const OSSL_PROVIDER *prov);
 OSSL_LIB_CTX *ossl_provider_libctx(const OSSL_PROVIDER *prov);
 
 /* Thin wrappers around calls to the provider */
@@ -95,6 +97,12 @@ int ossl_provider_clear_all_operation_bits(OSSL_LIB_CTX *libctx);
 
 /* Configuration */
 void ossl_provider_add_conf_module(void);
+
+/* Child providers */
+int ossl_provider_init_child_providers(OSSL_LIB_CTX *ctx);
+int ossl_provider_init_as_child(OSSL_LIB_CTX *ctx,
+                                const OSSL_CORE_HANDLE *handle,
+                                const OSSL_DISPATCH *in);
 
 # ifdef __cplusplus
 }

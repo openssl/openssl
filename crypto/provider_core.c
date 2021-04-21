@@ -22,6 +22,7 @@
 #include "internal/provider.h"
 #include "internal/refcount.h"
 #include "internal/bio.h"
+#include "internal/core.h"
 #include "provider_local.h"
 #ifndef FIPS_MODULE
 # include <openssl/self_test.h>
@@ -91,8 +92,12 @@ struct ossl_provider_st {
     size_t operation_bits_sz;
     CRYPTO_RWLOCK *opbits_lock;
 
+    /* Whether this provider is the child of some other provider */
+    unsigned int ischild:1;
+
     /* Provider side data */
     void *provctx;
+    const OSSL_DISPATCH *dispatch;
 };
 DEFINE_STACK_OF(OSSL_PROVIDER)
 
@@ -234,8 +239,13 @@ OSSL_PROVIDER *ossl_provider_find(OSSL_LIB_CTX *libctx, const char *name,
          * Make sure any providers are loaded from config before we try to find
          * them.
          */
-        if (!noconfig && ossl_lib_ctx_is_default(libctx))
-            OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, NULL);
+        if (!noconfig) {
+            if (ossl_lib_ctx_is_default(libctx))
+                OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, NULL);
+            if (ossl_lib_ctx_is_child(libctx)
+                    && !ossl_provider_init_child_providers(libctx))
+                return NULL;
+        }
 #endif
 
         tmpl.name = (char *)name;
@@ -362,8 +372,7 @@ void ossl_provider_free(OSSL_PROVIDER *prov)
          */
         if (ref == 0) {
             if (prov->flag_initialized) {
-                if (prov->teardown != NULL)
-                    prov->teardown(prov->provctx);
+                ossl_provider_teardown(prov);
 #ifndef OPENSSL_NO_ERR
 # ifndef FIPS_MODULE
                 if (prov->error_strings != NULL) {
@@ -581,6 +590,7 @@ static int provider_init(OSSL_PROVIDER *prov, int flag_lock)
         goto end;
     }
     prov->provctx = tmp_provctx;
+    prov->dispatch = provider_dispatch;
 
     for (; provider_dispatch->function_id != 0; provider_dispatch++) {
         switch (provider_dispatch->function_id) {
@@ -845,6 +855,9 @@ int ossl_provider_doall_activated(OSSL_LIB_CTX *ctx,
      */
     if (ossl_lib_ctx_is_default(ctx))
         OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, NULL);
+    if (ossl_lib_ctx_is_child(ctx)
+            && !ossl_provider_init_child_providers(ctx))
+        return 0;
 #endif
 
     if (store == NULL)
@@ -990,6 +1003,14 @@ void *ossl_provider_prov_ctx(const OSSL_PROVIDER *prov)
     return NULL;
 }
 
+const OSSL_DISPATCH *ossl_provider_get0_dispatch(const OSSL_PROVIDER *prov)
+{
+    if (prov != NULL)
+        return prov->dispatch;
+
+    return NULL;
+}
+
 OSSL_LIB_CTX *ossl_provider_libctx(const OSSL_PROVIDER *prov)
 {
     return prov != NULL ? prov->libctx : NULL;
@@ -998,7 +1019,7 @@ OSSL_LIB_CTX *ossl_provider_libctx(const OSSL_PROVIDER *prov)
 /* Wrappers around calls to the provider */
 void ossl_provider_teardown(const OSSL_PROVIDER *prov)
 {
-    if (prov->teardown != NULL)
+    if (prov->teardown != NULL && !prov->ischild)
         prov->teardown(prov->provctx);
 }
 
@@ -1131,6 +1152,11 @@ int ossl_provider_test_operation_bit(OSSL_PROVIDER *provider, size_t bitnum,
         *result = ((provider->operation_bits[byte] & bit) != 0);
     CRYPTO_THREAD_unlock(provider->opbits_lock);
     return 1;
+}
+
+void ossl_provider_set_child(OSSL_PROVIDER *prov)
+{
+    prov->ischild = 1;
 }
 
 /*-
@@ -1350,7 +1376,15 @@ static const OSSL_DISPATCH core_dispatch_[] = {
     { OSSL_FUNC_CRYPTO_SECURE_ALLOCATED,
         (void (*)(void))CRYPTO_secure_allocated },
     { OSSL_FUNC_OPENSSL_CLEANSE, (void (*)(void))OPENSSL_cleanse },
-
+#ifndef FIPS_MODULE
+    { OSSL_FUNC_CORE_PROVIDER_DO_ALL, (void (*)(void))OSSL_PROVIDER_do_all },
+    { OSSL_FUNC_CORE_PROVIDER_NAME,
+        (void (*)(void))OSSL_PROVIDER_name },
+    { OSSL_FUNC_CORE_PROVIDER_GET0_PROVIDER_CTX,
+        (void (*)(void))OSSL_PROVIDER_get0_provider_ctx },
+    { OSSL_FUNC_CORE_PROVIDER_GET0_DISPATCH,
+        (void (*)(void))OSSL_PROVIDER_get0_dispatch },
+#endif
     { 0, NULL }
 };
 static const OSSL_DISPATCH *core_dispatch = core_dispatch_;
