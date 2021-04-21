@@ -1718,6 +1718,10 @@ OpenSSL 3.0
 
    *Randall S. Becker*
 
+ * Added support for FFDHE key exchange in TLS 1.3.
+
+   *Raja Ashok*
+
 OpenSSL 1.1.1
 -------------
 
