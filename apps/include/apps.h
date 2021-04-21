@@ -271,6 +271,7 @@ typedef struct app_http_tls_info_st {
 } APP_HTTP_TLS_INFO;
 BIO *app_http_tls_cb(BIO *hbio, /* APP_HTTP_TLS_INFO */ void *arg,
                      int connect, int detail);
+void APP_HTTP_TLS_INFO_free(APP_HTTP_TLS_INFO *info);
 # ifndef OPENSSL_NO_SOCK
 ASN1_VALUE *app_http_get_asn1(const char *url, const char *proxy,
                               const char *no_proxy, SSL_CTX *ssl_ctx,

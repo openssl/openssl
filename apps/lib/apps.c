@@ -2392,12 +2392,12 @@ static const char *tls_error_hint(void)
 /* HTTP callback function that supports TLS connection also via HTTPS proxy */
 BIO *app_http_tls_cb(BIO *hbio, void *arg, int connect, int detail)
 {
-    APP_HTTP_TLS_INFO *info = (APP_HTTP_TLS_INFO *)arg;
-    SSL_CTX *ssl_ctx = info->ssl_ctx;
-    SSL *ssl;
-    BIO *sbio = NULL;
-
     if (connect && detail) { /* connecting with TLS */
+        APP_HTTP_TLS_INFO *info = (APP_HTTP_TLS_INFO *)arg;
+        SSL_CTX *ssl_ctx = info->ssl_ctx;
+        SSL *ssl;
+        BIO *sbio = NULL;
+
         if ((info->use_proxy
              && !OSSL_HTTP_proxy_connect(hbio, info->server, info->port,
                                          NULL, NULL, /* no proxy credentials */
@@ -2418,6 +2418,7 @@ BIO *app_http_tls_cb(BIO *hbio, void *arg, int connect, int detail)
         hbio = BIO_push(sbio, hbio);
     } else if (!connect && !detail) { /* disconnecting after error */
         const char *hint = tls_error_hint();
+
         if (hint != NULL)
             ERR_add_error_data(2, " : ", hint);
         /*
@@ -2426,6 +2427,14 @@ BIO *app_http_tls_cb(BIO *hbio, void *arg, int connect, int detail)
          */
     }
     return hbio;
+}
+
+void APP_HTTP_TLS_INFO_free(APP_HTTP_TLS_INFO *info)
+{
+    if (info != NULL) {
+        SSL_CTX_free(info->ssl_ctx);
+        OPENSSL_free(info);
+    }
 }
 
 ASN1_VALUE *app_http_get_asn1(const char *url, const char *proxy,
