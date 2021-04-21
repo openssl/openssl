@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-EVP_PKEY-FFC - EVP_PKEY DSA and DH shared FFC parameters.
+EVP_PKEY-FFC - EVP_PKEY DSA and DH/DHX shared FFC parameters.
 
 =head1 DESCRIPTION
 
@@ -11,9 +11,9 @@ cryptography using finite field mathematics. DSA is an example of FFC and
 Diffie-Hellman key establishment algorithms specified in SP800-56A can also be
 implemented as FFC.
 
-The B<DSA> and B<DH> keytypes are implemented in OpenSSL's default and FIPS
-providers.
-The implementations support the basic DSA and DH keys, containing the public
+The B<DSA>, B<DH> and B<DHX> keytypes are implemented in OpenSSL's default and
+FIPS providers.
+The implementations support the basic DSA, DH and DHX keys, containing the public
 and private keys I<pub> and I<priv> as well as the three main domain parameters
 I<p>, I<q> and I<g>.
 
@@ -26,10 +26,14 @@ For B<DH> the I<seed> and I<pcounter> can be stored in ASN1 data
 (but the I<gindex> is not). For B<DSA> however, these fields are not stored in
 the ASN1 data so they need to be stored externally if validation is required.
 
+The B<DH> key type uses PKCS#3 format which saves p and g, but not the 'q' value.
+The B<DHX> key type uses X9.42 format which saves the value of 'q' and this
+must be used for FIPS186-4.
+
 =head2 FFC parameters
 
 In addition to the common parameters that all keytypes should support (see
-L<provider-keymgmt(7)/Common parameters>), the B<DSA> and B<DH> keytype
+L<provider-keymgmt(7)/Common parameters>), the B<DSA>, B<DH> and B<DHX> keytype
 implementations support the following.
 
 =over 4
@@ -42,17 +46,29 @@ The public key value.
 
 The private key value.
 
+=back
+
+=head2 FFC DSA, DH and DHX domain parameters
+
+=over 4
+
 =item "p" (B<OSSL_PKEY_PARAM_FFC_P>) <unsigned integer>
 
 A DSA or Diffie-Hellman prime "p" value.
 
-=item "q" (B<OSSL_PKEY_PARAM_FFC_Q>) <unsigned integer>
-
-A DSA or Diffie-Hellman prime "q" value.
-
 =item "g" (B<OSSL_PKEY_PARAM_FFC_G>) <unsigned integer>
 
 A DSA or Diffie-Hellman generator "g" value.
+
+=back
+
+=head2 FFC DSA and DHX domain parameters
+
+=over 4
+
+=item "q" (B<OSSL_PKEY_PARAM_FFC_Q>) <unsigned integer>
+
+A DSA or Diffie-Hellman prime "q" value.
 
 =item "seed" (B<OSSL_PKEY_PARAM_FFC_SEED>) <octet string>
 
@@ -88,7 +104,7 @@ An optional informational cofactor parameter that should equal to (p - 1) / q.
 
 =head2 FFC key generation parameters
 
-The following key generation types are available for DSA and DH algorithms:
+The following key generation types are available for DSA and DHX algorithms:
 
 =over 4
 

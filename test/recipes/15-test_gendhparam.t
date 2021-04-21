@@ -16,16 +16,28 @@ setup("test_gendhparam");
 
 my @testdata = (
     {
+        algorithm => 'DHX',
+        pkeyopts => [ "type:fips186_4", 'digest:SHA256', 'gindex:1' ],
+        expect => [ 'BEGIN X9.42 DH PARAMETERS', 'gindex:', 'pcounter:', 'SEED:' ],
+        message   => 'DH fips186_4 param gen with verifiable g',
+    },
+    {
         algorithm => 'DH',
         pkeyopts => [ "type:fips186_4", 'digest:SHA256', 'gindex:1' ],
-        expect => [ 'BEGIN DH PARAMETERS', 'gindex:', 'pcounter:', 'SEED:' ],
-        message   => 'DH fips186_4 param gen',
+        expect => [ 'ERROR' ],
+        message   => 'fips186_4 param gen should fail if DHX is not used',
+    },
+    {
+        algorithm => 'DHX',
+        pkeyopts => [ "type:fips186_4", 'digest:SHA512-224', 'gindex:1' ],
+        expect => [ 'BEGIN X9.42 DH PARAMETERS', 'gindex:', 'pcounter:', 'SEED:' ],
+        message   => 'DH fips186_4 param gen with verifiable g and truncated digest',
     },
     {
         algorithm => 'DHX',
         pkeyopts => [ 'type:fips186_2', 'pbits:1024', 'qbits:160' ],
-        message   => 'DHX fips186_2 param gen with a selected p and q size',
         expect => [ 'BEGIN X9.42 DH PARAMETERS', 'h:', 'pcounter:', 'SEED:' ],
+        message   => 'DHX fips186_2 param gen with a selected p and q size with unverifyable g',
     },
     {
         algorithm => 'DHX',
@@ -94,6 +106,12 @@ my @testdata = (
 #        expect => [ 'BEGIN DH PARAMETERS', 'G:    5' ],
 #        message   => 'DH safe prime generator using an alias',
 #    },
+     {
+        algorithm => 'DHX',
+        pkeyopts => [ 'type:generator', 'safeprime-generator:5'],
+        expect => [ 'ERROR' ],
+        message   => 'safe prime generator should fail for DHX',
+    },
 );
 
 plan skip_all => "DH isn't supported in this build" if disabled("dh");
@@ -122,7 +140,7 @@ sub compareline {
     my @lines = @$ref_lines;
     my @expected = @$ref_expected;
 
-    if (@lines == 0 and $expected[0] == 'ERROR') {
+    if (@lines == 0 and $expected[0] eq 'ERROR') {
         return 1;
     }
     print "-----------------\n";

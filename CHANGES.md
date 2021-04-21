@@ -23,18 +23,10 @@ OpenSSL 3.0
 
 ### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
 
- * DH and DHX are seperate key types that are created within a provider. These
-   key objects are not interchangeable once they are created. The genpkey
-   application can be used to create DH domain parameters using the options
-   -genparam and -algorithm [DH or DHX]. The application then applies other
-   options using the created key. Some options are only valid for DH keys, and
-   others may be valid for DHX keys. In previous versions of OpenSSL it would
-   ignore these inconsistencies so that specifying -algorithm DH could actually
-   generate a DHX key for some options. Some of these inconsistencies may now
-   result in errors. See the openssl-genpkey(1) for further details on what
-   options should be used for the 2 key types. In general it is recommended to
-   not generate DH parameters at all, but instead to just pass a named group
-   such as ffdhe2048 to the key generation using the option -group.
+ * For the key types DH and DHX the allowed settable parameters are now different.
+   Previously (in 1.1.1) these conflicting parameters were allowed, but will now
+   result in errors. See EVP_PKEY-DH(7) for further details. This affects the
+   behaviour of openssl-genpkey(1) for DH parameter generation.
 
    *Shane Lontis*
 

@@ -26,7 +26,7 @@ int ossl_dh_generate_public_key(BN_CTX *ctx, const DH *dh,
                                 const BIGNUM *priv_key, BIGNUM *pub_key);
 int ossl_dh_get_named_group_uid_from_size(int pbits);
 const char *ossl_dh_gen_type_id2name(int id);
-int ossl_dh_gen_type_name2id(const char *name);
+int ossl_dh_gen_type_name2id(const char *name, int type);
 void ossl_dh_cache_named_group(DH *dh);
 int ossl_dh_is_named_safe_prime_group(const DH *dh);
 
