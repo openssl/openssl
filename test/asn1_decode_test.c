@@ -12,6 +12,7 @@
 
 #include <openssl/rand.h>
 #include <openssl/asn1t.h>
+#include <openssl/obj_mac.h>
 #include "internal/numbers.h"
 #include "testutil.h"
 
