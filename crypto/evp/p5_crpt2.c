@@ -221,9 +221,8 @@ int PKCS5_v2_PBKDF2_keyivgen_ex(EVP_CIPHER_CTX *ctx, const char *pass,
     }
 
     prfmd = prfmd_fetch = EVP_MD_fetch(libctx, OBJ_nid2sn(hmac_md_nid), propq);
-    if (prfmd == NULL) {
+    if (prfmd == NULL)
         prfmd = EVP_get_digestbynid(hmac_md_nid);
-    }
     if (prfmd == NULL) {
         ERR_raise(ERR_LIB_EVP, EVP_R_UNSUPPORTED_PRF);
         goto err;

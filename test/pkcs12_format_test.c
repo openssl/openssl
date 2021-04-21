@@ -206,7 +206,11 @@ static const PKCS12_ATTR ATTRS2[] = {
 };
 
 static const PKCS12_ENC enc_default = {
+#ifndef OPENSSL_NO_DES
     NID_pbe_WithSHA1And3_Key_TripleDES_CBC,
+#else
+    NID_aes_128_cbc,
+#endif
     "Password1",
     1000
 };
@@ -221,32 +225,55 @@ static const int enc_nids_all[] = {
     /* NOTE: To use PBES2 we pass the desired cipher NID instead of NID_pbes2 */
     NID_aes_128_cbc,
     NID_aes_256_cbc,
+#ifndef OPENSSL_NO_DES
     NID_des_ede3_cbc,
     NID_des_cbc,
+#endif
 
 #ifndef OPENSSL_NO_MD2
+# ifndef OPENSSL_NO_DES
     NID_pbeWithMD2AndDES_CBC,
+# endif
+# ifndef OPENSSL_NO_RC2
     NID_pbeWithMD2AndRC2_CBC,
+# endif
 #endif
+
+#ifndef OPENSSL_NO_MD5
+# ifndef OPENSSL_NO_DES
     NID_pbeWithMD5AndDES_CBC,
+# endif
+# ifndef OPENSSL_NO_RC2
     NID_pbeWithMD5AndRC2_CBC,
-    NID_pbe_WithSHA1And128BitRC2_CBC,
-    NID_pbe_WithSHA1And128BitRC4,
-    NID_pbe_WithSHA1And40BitRC2_CBC,
-    NID_pbe_WithSHA1And40BitRC4,
+# endif
+#endif
+#ifndef OPENSSL_NO_DES
     NID_pbeWithSHA1AndDES_CBC,
+#endif
+#ifndef OPENSSL_NO_RC2
+    NID_pbe_WithSHA1And128BitRC2_CBC,
+    NID_pbe_WithSHA1And40BitRC2_CBC,
     NID_pbeWithSHA1AndRC2_CBC,
+#endif
+#ifndef OPENSSL_NO_RC4
+    NID_pbe_WithSHA1And128BitRC4,
+    NID_pbe_WithSHA1And40BitRC4,
+#endif
+#ifndef OPENSSL_NO_DES
     NID_pbe_WithSHA1And2_Key_TripleDES_CBC,
     NID_pbe_WithSHA1And3_Key_TripleDES_CBC,
+#endif
 };
 
 static const int enc_nids_no_legacy[] = {
     /* NOTE: To use PBES2 we pass the desired cipher NID instead of NID_pbes2 */
     NID_aes_128_cbc,
     NID_aes_256_cbc,
+#ifndef OPENSSL_NO_DES
     NID_des_ede3_cbc,
     NID_pbe_WithSHA1And2_Key_TripleDES_CBC,
     NID_pbe_WithSHA1And3_Key_TripleDES_CBC,
+#endif
 };
 
 static const int mac_nids[] = {
@@ -321,6 +348,7 @@ static int test_single_key(PKCS12_ENC *enc)
 {
     char fname[80];
     PKCS12_BUILDER *pb;
+
     sprintf(fname, "1key_ciph-%s_iter-%d.p12", OBJ_nid2sn(enc->nid), enc->iter);
 
     pb = new_pkcs12_builder(fname);
@@ -419,6 +447,7 @@ static int test_single_cert_mac(PKCS12_ENC *mac)
 {
     char fname[80];
     PKCS12_BUILDER *pb;
+
     sprintf(fname, "1cert_mac-%s_iter-%d.p12", OBJ_nid2sn(mac->nid), mac->iter);
 
     pb = new_pkcs12_builder(fname);

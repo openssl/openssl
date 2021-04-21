@@ -16,9 +16,6 @@ use Encode;
 
 setup("test_pkcs12");
 
-plan skip_all => "The PKCS12 command line utility is not supported by this OpenSSL build"
-    if disabled("des");
-
 my $pass = "σύνθημα γνώρισμα";
 
 my $savedcp;
@@ -86,13 +83,17 @@ ok(run(app(["openssl", "pkcs12", "-export", "-chain",
    "test_pkcs12_chain_untrusted");
 
 # Test the -passcerts option
-ok(run(app(["openssl", "pkcs12", "-export",
+SKIP: {
+    skip "Skipping PKCS#12 test because DES is disabled in this build", 1
+        if disabled("des");
+    ok(run(app(["openssl", "pkcs12", "-export",
             "-in", srctop_file(@path, "ee-cert.pem"),
             "-certfile", srctop_file(@path, "v3-certs-TDES.p12"),
             "-passcerts", "pass:v3-certs",
             "-nokeys", "-passout", "pass:v3-certs", "-descert",
             "-out", $outfile2])),
    "test_pkcs12_passcerts");
+}
 
 SKIP: {
     skip "Skipping legacy PKCS#12 test because RC2 is disabled in this build", 1
