@@ -134,8 +134,7 @@ opthelp:
             ciphername = opt_unknown();
             break;
         case OPT_PRIMES:
-            if (!opt_int(opt_arg(), &primes))
-                goto end;
+            primes = opt_int_arg();
             break;
         case OPT_VERBOSE:
             verbose = 1;

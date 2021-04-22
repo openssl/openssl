@@ -188,7 +188,7 @@ char *opt_init(int ac, char **av, const OPTIONS *o)
         switch (i) {
         case   0: case '-': case '/': case '<': case '>': case 'E': case 'F':
         case 'M': case 'U': case 'f': case 'l': case 'n': case 'p': case 's':
-        case 'u': case 'c': case ':':
+        case 'u': case 'c': case ':': case 'N':
             break;
         default:
             OPENSSL_assert(0);
@@ -433,14 +433,12 @@ int opt_int(const char *value, int *result)
     return 1;
 }
 
-/* Parse and return a natural number or 0; return -1 on failure. */
-int opt_nat0(void)
+/* Parse and return a natural number, assuming range has been checked before. */
+int opt_int_arg(void)
 {
     int result = -1;
 
-    if (opt_int(arg, &result) && result < 0)
-        opt_printf_stderr("%s: Error: option '%s' argument '%s' must not be negative\n",
-                          prog, param_name, arg);
+    (void)opt_int(arg, &result);
     return result;
 }
 
@@ -814,10 +812,16 @@ int opt_next(void)
             break;
         case 'p':
         case 'n':
+        case 'N':
             if (!opt_int(arg, &ival))
                 return -1;
             if (o->valtype == 'p' && ival <= 0) {
-                opt_printf_stderr("%s: Non-positive number \"%s\" for -%s\n",
+                opt_printf_stderr("%s: Non-positive number \"%s\" for option -%s\n",
+                                  prog, arg, o->name);
+                return -1;
+            }
+            if (o->valtype == 'N' && ival < 0) {
+                opt_printf_stderr("%s: Negative number \"%s\" for option -%s\n",
                                   prog, arg, o->name);
                 return -1;
             }
@@ -848,7 +852,7 @@ int opt_next(void)
                            o->valtype == 'F' ? OPT_FMT_PEMDER
                            : OPT_FMT_ANY, &ival))
                 break;
-            opt_printf_stderr("%s: Invalid format \"%s\" for -%s\n",
+            opt_printf_stderr("%s: Invalid format \"%s\" for option -%s\n",
                               prog, arg, o->name);
             return -1;
         }
@@ -938,6 +942,8 @@ static const char *valtype2param(const OPTIONS *o)
         return "format";
     case 'M':
         return "intmax";
+    case 'N':
+        return "nonneg";
     case 'U':
         return "uintmax";
     }

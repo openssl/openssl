@@ -441,12 +441,12 @@ int ocsp_main(int argc, char **argv)
             rca_filename = opt_arg();
             break;
         case OPT_NMIN:
-            opt_int(opt_arg(), &nmin);
+            nmin = opt_int_arg();
             if (ndays == -1)
                 ndays = 0;
             break;
         case OPT_REQUEST:
-            opt_int(opt_arg(), &accept_count);
+            accept_count = opt_int_arg();
             break;
         case OPT_NDAYS:
             ndays = atoi(opt_arg());

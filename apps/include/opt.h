@@ -351,7 +351,7 @@ void opt_begin(void);
 int opt_format(const char *s, unsigned long flags, int *result);
 const char *format2str(int format);
 int opt_int(const char *arg, int *result);
-int opt_nat0(void);
+int opt_int_arg(void);
 int opt_ulong(const char *arg, unsigned long *result);
 int opt_long(const char *arg, long *result);
 #if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L && \

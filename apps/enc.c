@@ -266,8 +266,7 @@ int enc_main(int argc, char **argv)
             ciphername = opt_unknown();
             break;
         case OPT_ITER:
-            if (!opt_int(opt_arg(), &iter))
-                goto opthelp;
+            iter = opt_int_arg();
             pbkdf2 = 1;
             break;
         case OPT_PBKDF2:

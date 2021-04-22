@@ -255,7 +255,7 @@ const OPTIONS cmp_options[] = {
      "Configuration file to use. \"\" = none. Default from env variable OPENSSL_CONF"},
     {"section", OPT_SECTION, 's',
      "Section(s) in config file to get options from. \"\" = 'default'. Default 'cmp'"},
-    {"verbosity", OPT_VERBOSITY, 'n',
+    {"verbosity", OPT_VERBOSITY, 'N',
      "Log level; 3=ERR, 4=WARN, 6=INFO, 7=DEBUG, 8=TRACE. Default 6 = INFO"},
 
     OPT_SECTION("Generic message"),
@@ -281,7 +281,7 @@ const OPTIONS cmp_options[] = {
      "DN of the issuer to place in the requested certificate template"},
     {OPT_MORE_STR, 0, 0,
      "also used as recipient if neither -recipient nor -srvcert are given"},
-    {"days", OPT_DAYS, 'n',
+    {"days", OPT_DAYS, 'N',
      "Requested validity time of the new certificate in number of days"},
     {"reqexts", OPT_REQEXTS, 's',
      "Name of config file section defining certificate request extensions."},
@@ -344,9 +344,9 @@ const OPTIONS cmp_options[] = {
      "Default from environment variable 'no_proxy', else 'NO_PROXY', else none"},
     {"recipient", OPT_RECIPIENT, 's',
      "DN of CA. Default: subject of -srvcert, -issuer, issuer of -oldcert or -cert"},
-    {"msg_timeout", OPT_MSG_TIMEOUT, 'n',
+    {"msg_timeout", OPT_MSG_TIMEOUT, 'N',
      "Timeout per CMP message round trip (or 0 for none). Default 120 seconds"},
-    {"total_timeout", OPT_TOTAL_TIMEOUT, 'n',
+    {"total_timeout", OPT_TOTAL_TIMEOUT, 'N',
      "Overall time an enrollment incl. polling may take. Default 0 = infinite"},
 
     OPT_SECTION("Server authentication"),
@@ -435,8 +435,8 @@ const OPTIONS cmp_options[] = {
     OPT_SECTION("Client-side debugging"),
     {"batch", OPT_BATCH, '-',
      "Do not interactively prompt for input when a password is required etc."},
-    {"repeat", OPT_REPEAT, 'n',
-     "Invoke the transaction the given number of times. Default 1"},
+    {"repeat", OPT_REPEAT, 'p',
+     "Invoke the transaction the given positive number of times. Default 1"},
     {"reqin", OPT_REQIN, 's', "Take sequence of CMP requests from file(s)"},
     {"reqin_new_tid", OPT_REQIN_NEW_TID, '-',
      "Use fresh transactionID for CMP requests read from -reqin"},
@@ -449,7 +449,7 @@ const OPTIONS cmp_options[] = {
 
     OPT_SECTION("Mock server"),
     {"port", OPT_PORT, 's', "Act as HTTP mock server listening on given port"},
-    {"max_msgs", OPT_MAX_MSGS, 'n',
+    {"max_msgs", OPT_MAX_MSGS, 'N',
      "max number of messages handled by HTTP mock server. Default: 0 = unlimited"},
 
     {"srv_ref", OPT_SRV_REF, 's',
@@ -472,18 +472,18 @@ const OPTIONS cmp_options[] = {
      "Extra certificates to be included in mock certification responses"},
     {"rsp_capubs", OPT_RSP_CAPUBS, 's',
      "CA certificates to be included in mock ip response"},
-    {"poll_count", OPT_POLL_COUNT, 'n',
+    {"poll_count", OPT_POLL_COUNT, 'N',
      "Number of times the client must poll before receiving a certificate"},
-    {"check_after", OPT_CHECK_AFTER, 'n',
+    {"check_after", OPT_CHECK_AFTER, 'N',
      "The check_after value (time to wait) to include in poll response"},
     {"grant_implicitconf", OPT_GRANT_IMPLICITCONF, '-',
      "Grant implicit confirmation of newly enrolled certificate"},
 
-    {"pkistatus", OPT_PKISTATUS, 'n',
+    {"pkistatus", OPT_PKISTATUS, 'N',
      "PKIStatus to be included in server response. Possible values: 0..6"},
-    {"failure", OPT_FAILURE, 'n',
+    {"failure", OPT_FAILURE, 'N',
      "A single failure info bit number to include in server response, 0..26"},
-    {"failurebits", OPT_FAILUREBITS, 'n',
+    {"failurebits", OPT_FAILUREBITS, 'N',
      "Number representing failure bits to include in server response, 0..2^27 - 1"},
     {"statusstring", OPT_STATUSSTRING, 's',
      "Status string to be included in server response"},
@@ -2092,11 +2092,23 @@ static int read_config(void)
             i--;
         switch (opt->valtype) {
         case '-':
+        case 'p':
         case 'n':
+        case 'N':
         case 'l':
             if (!conf_get_number_e(conf, opt_section, opt->name, &num)) {
                 ERR_clear_error();
                 continue; /* option not provided */
+            }
+            if (opt->valtype == 'p' && num <= 0) {
+                opt_printf_stderr("Non-positive number \"%ld\" for config option -%s\n",
+                                  num, opt->name);
+                return -1;
+            }
+            if (opt->valtype == 'N' && num <= 0) {
+                opt_printf_stderr("Negative number \"%ld\" for config option -%s\n",
+                                  num, opt->name);
+                return -1;
             }
             break;
         case 's':
@@ -2144,7 +2156,9 @@ static int read_config(void)
         } else {
             switch (opt->valtype) {
             case '-':
+            case 'p':
             case 'n':
+            case 'N':
                 if (num < INT_MIN || INT_MAX < num) {
                     BIO_printf(bio_err,
                                "integer value out of range for option '%s'\n",
@@ -2219,12 +2233,10 @@ static int get_opts(int argc, char **argv)
             opt_recipient = opt_str();
             break;
         case OPT_MSG_TIMEOUT:
-            if ((opt_msg_timeout = opt_nat0()) < 0)
-                goto opthelp;
+            opt_msg_timeout = opt_int_arg();
             break;
         case OPT_TOTAL_TIMEOUT:
-            if ((opt_total_timeout = opt_nat0()) < 0)
-                goto opthelp;
+            opt_total_timeout = opt_int_arg();
             break;
         case OPT_TLS_USED:
             opt_tls_used = 1;
@@ -2330,8 +2342,7 @@ static int get_opts(int argc, char **argv)
             opt_issuer = opt_str();
             break;
         case OPT_DAYS:
-            if ((opt_days = opt_nat0()) < 0)
-                goto opthelp;
+            opt_days = opt_int_arg();
             break;
         case OPT_REQEXTS:
             opt_reqexts = opt_str();
@@ -2352,8 +2363,8 @@ static int get_opts(int argc, char **argv)
             opt_policy_oids_critical = 1;
             break;
         case OPT_POPO:
-            if (!opt_int(opt_arg(), &opt_popo)
-                    || opt_popo < OSSL_CRMF_POPO_NONE
+            opt_popo = opt_int_arg();
+            if (opt_popo < OSSL_CRMF_POPO_NONE
                     || opt_popo > OSSL_CRMF_POPO_KEYENC) {
                 CMP_err("invalid popo spec. Valid values are -1 .. 2");
                 goto opthelp;
@@ -2381,8 +2392,8 @@ static int get_opts(int argc, char **argv)
             opt_oldcert = opt_str();
             break;
         case OPT_REVREASON:
-            if (!opt_int(opt_arg(), &opt_revreason)
-                    || opt_revreason < CRL_REASON_NONE
+            opt_revreason = opt_int_arg();
+                if (opt_revreason < CRL_REASON_NONE
                     || opt_revreason > CRL_REASON_AA_COMPROMISE
                     || opt_revreason == 7) {
                 CMP_err("invalid revreason. Valid values are -1 .. 6, 8 .. 10");
@@ -2416,7 +2427,7 @@ static int get_opts(int argc, char **argv)
             opt_batch = 1;
             break;
         case OPT_REPEAT:
-            opt_repeat = opt_nat0();
+            opt_repeat = opt_int_arg();
             break;
         case OPT_REQIN:
             opt_reqin = opt_str();
@@ -2440,8 +2451,7 @@ static int get_opts(int argc, char **argv)
             opt_port = opt_str();
             break;
         case OPT_MAX_MSGS:
-            if ((opt_max_msgs = opt_nat0()) < 0)
-                goto opthelp;
+            opt_max_msgs = opt_int_arg();
             break;
         case OPT_SRV_REF:
             opt_srv_ref = opt_str();
@@ -2474,22 +2484,22 @@ static int get_opts(int argc, char **argv)
             opt_rsp_capubs = opt_str();
             break;
         case OPT_POLL_COUNT:
-            opt_poll_count = opt_nat0();
+            opt_poll_count = opt_int_arg();
             break;
         case OPT_CHECK_AFTER:
-            opt_check_after = opt_nat0();
+            opt_check_after = opt_int_arg();
             break;
         case OPT_GRANT_IMPLICITCONF:
             opt_grant_implicitconf = 1;
             break;
         case OPT_PKISTATUS:
-            opt_pkistatus = opt_nat0();
+            opt_pkistatus = opt_int_arg();
             break;
         case OPT_FAILURE:
-            opt_failure = opt_nat0();
+            opt_failure = opt_int_arg();
             break;
         case OPT_FAILUREBITS:
-            opt_failurebits = opt_nat0();
+            opt_failurebits = opt_int_arg();
             break;
         case OPT_STATUSSTRING:
             opt_statusstring = opt_str();
@@ -2589,8 +2599,12 @@ int cmp_main(int argc, char **argv)
                     }
                 }
             }
-            if (!read_config())
+            ret = read_config();
+            if (ret <= 0) {
+                if (ret == -1)
+                    BIO_printf(bio_err, "Use -help for summary.\n");
                 goto err;
+            }
         }
     }
     (void)BIO_flush(bio_err); /* prevent interference with opt_help() */
