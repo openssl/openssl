@@ -74,7 +74,10 @@ static int test_print_error_format(void)
         goto err;
     }
 
-# ifndef OPENSSL_NO_ERR
+# if defined(OPENSSL_NO_AUTOERRINIT)
+    lib = "lib(2)";
+    reason = strerror(syserr);
+# elif !defined(OPENSSL_NO_ERR)
     lib = "system library";
     reason = strerror(syserr);
 # else
