@@ -185,7 +185,7 @@ char *opt_init(int ac, char **av, const OPTIONS *o)
         switch (i) {
         case   0: case '-': case '/': case '<': case '>': case 'E': case 'F':
         case 'M': case 'U': case 'f': case 'l': case 'n': case 'p': case 's':
-        case 'u': case 'c': case ':':
+        case 'u': case 'c': case ':': case 'N':
             break;
         default:
             OPENSSL_assert(0);
@@ -804,6 +804,15 @@ int opt_next(void)
                 return -1;
             if (o->valtype == 'p' && ival <= 0) {
                 opt_printf_stderr("%s: Non-positive number \"%s\" for -%s\n",
+                                  prog, arg, o->name);
+                return -1;
+            }
+            break;
+        case 'N':
+            if (!opt_int(arg, &ival))
+                return -1;
+            if (ival < 0) {
+                opt_printf_stderr("%s: Must be greater than zero, \"%s\" for -%s\n",
                                   prog, arg, o->name);
                 return -1;
             }

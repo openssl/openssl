@@ -281,7 +281,7 @@ const OPTIONS cmp_options[] = {
      "DN of the issuer to place in the requested certificate template"},
     {OPT_MORE_STR, 0, 0,
      "also used as recipient if neither -recipient nor -srvcert are given"},
-    {"days", OPT_DAYS, 'n',
+    {"days", OPT_DAYS, 'N',
      "Requested validity time of the new certificate in number of days"},
     {"reqexts", OPT_REQEXTS, 's',
      "Name of config file section defining certificate request extensions."},
@@ -344,9 +344,9 @@ const OPTIONS cmp_options[] = {
      "Default from environment variable 'no_proxy', else 'NO_PROXY', else none"},
     {"recipient", OPT_RECIPIENT, 's',
      "DN of CA. Default: subject of -srvcert, -issuer, issuer of -oldcert or -cert"},
-    {"msg_timeout", OPT_MSG_TIMEOUT, 'n',
+    {"msg_timeout", OPT_MSG_TIMEOUT, 'N',
      "Timeout per CMP message round trip (or 0 for none). Default 120 seconds"},
-    {"total_timeout", OPT_TOTAL_TIMEOUT, 'n',
+    {"total_timeout", OPT_TOTAL_TIMEOUT, 'N',
      "Overall time an enrollment incl. polling may take. Default 0 = infinite"},
 
     OPT_SECTION("Server authentication"),
@@ -435,7 +435,7 @@ const OPTIONS cmp_options[] = {
     OPT_SECTION("Client-side debugging"),
     {"batch", OPT_BATCH, '-',
      "Do not interactively prompt for input when a password is required etc."},
-    {"repeat", OPT_REPEAT, 'n',
+    {"repeat", OPT_REPEAT, 'N',
      "Invoke the transaction the given number of times. Default 1"},
     {"reqin", OPT_REQIN, 's', "Take sequence of CMP requests from file(s)"},
     {"reqin_new_tid", OPT_REQIN_NEW_TID, '-',
@@ -449,7 +449,7 @@ const OPTIONS cmp_options[] = {
 
     OPT_SECTION("Mock server"),
     {"port", OPT_PORT, 's', "Act as HTTP mock server listening on given port"},
-    {"max_msgs", OPT_MAX_MSGS, 'n',
+    {"max_msgs", OPT_MAX_MSGS, 'N',
      "max number of messages handled by HTTP mock server. Default: 0 = unlimited"},
 
     {"srv_ref", OPT_SRV_REF, 's',
@@ -472,18 +472,18 @@ const OPTIONS cmp_options[] = {
      "Extra certificates to be included in mock certification responses"},
     {"rsp_capubs", OPT_RSP_CAPUBS, 's',
      "CA certificates to be included in mock ip response"},
-    {"poll_count", OPT_POLL_COUNT, 'n',
+    {"poll_count", OPT_POLL_COUNT, 'N',
      "Number of times the client must poll before receiving a certificate"},
-    {"check_after", OPT_CHECK_AFTER, 'n',
+    {"check_after", OPT_CHECK_AFTER, 'N',
      "The check_after value (time to wait) to include in poll response"},
     {"grant_implicitconf", OPT_GRANT_IMPLICITCONF, '-',
      "Grant implicit confirmation of newly enrolled certificate"},
 
-    {"pkistatus", OPT_PKISTATUS, 'n',
+    {"pkistatus", OPT_PKISTATUS, 'N',
      "PKIStatus to be included in server response. Possible values: 0..6"},
     {"failure", OPT_FAILURE, 'n',
      "A single failure info bit number to include in server response, 0..26"},
-    {"failurebits", OPT_FAILUREBITS, 'n',
+    {"failurebits", OPT_FAILUREBITS, 'N',
      "Number representing failure bits to include in server response, 0..2^27 - 1"},
     {"statusstring", OPT_STATUSSTRING, 's',
      "Status string to be included in server response"},
@@ -2182,16 +2182,6 @@ static char *opt_str(char *opt)
     return arg;
 }
 
-static int opt_nat(void)
-{
-    int result = -1;
-
-    if (opt_int(opt_arg(), &result) && result < 0)
-        BIO_printf(bio_err, "error: argument '%s' must not be negative\n",
-                   opt_arg());
-    return result;
-}
-
 /* returns 1 on success, 0 on error, -1 on -help (i.e., stop with success) */
 static int get_opts(int argc, char **argv)
 {
@@ -2229,11 +2219,11 @@ static int get_opts(int argc, char **argv)
             opt_recipient = opt_str("recipient");
             break;
         case OPT_MSG_TIMEOUT:
-            if ((opt_msg_timeout = opt_nat()) < 0)
+            if (!opt_int(opt_arg(), &opt_msg_timeout))
                 goto opthelp;
             break;
         case OPT_TOTAL_TIMEOUT:
-            if ((opt_total_timeout = opt_nat()) < 0)
+            if (!opt_int(opt_arg(), &opt_total_timeout))
                 goto opthelp;
             break;
         case OPT_TLS_USED:
@@ -2340,7 +2330,7 @@ static int get_opts(int argc, char **argv)
             opt_issuer = opt_str("issuer");
             break;
         case OPT_DAYS:
-            if ((opt_days = opt_nat()) < 0)
+            if (!opt_int(opt_arg(), &opt_days))
                 goto opthelp;
             break;
         case OPT_REQEXTS:
@@ -2426,7 +2416,8 @@ static int get_opts(int argc, char **argv)
             opt_batch = 1;
             break;
         case OPT_REPEAT:
-            opt_repeat = opt_nat();
+            if (!opt_int(opt_arg(), &opt_repeat))
+                goto opthelp;
             break;
         case OPT_REQIN:
             opt_reqin = opt_str("reqin");
@@ -2450,7 +2441,7 @@ static int get_opts(int argc, char **argv)
             opt_port = opt_str("port");
             break;
         case OPT_MAX_MSGS:
-            if ((opt_max_msgs = opt_nat()) < 0)
+            if (!opt_int(opt_arg(), &opt_max_msgs))
                 goto opthelp;
             break;
         case OPT_SRV_REF:
@@ -2484,22 +2475,27 @@ static int get_opts(int argc, char **argv)
             opt_rsp_capubs = opt_str("rsp_capubs");
             break;
         case OPT_POLL_COUNT:
-            opt_poll_count = opt_nat();
+            if (!opt_int(opt_arg(), &opt_poll_count))
+                goto opthelp;
             break;
         case OPT_CHECK_AFTER:
-            opt_check_after = opt_nat();
+            if (!opt_int(opt_arg(), &opt_check_after))
+                goto opthelp;
             break;
         case OPT_GRANT_IMPLICITCONF:
             opt_grant_implicitconf = 1;
             break;
         case OPT_PKISTATUS:
-            opt_pkistatus = opt_nat();
+            if (!opt_int(opt_arg(), &opt_pkistatus))
+                goto opthelp;
             break;
         case OPT_FAILURE:
-            opt_failure = opt_nat();
+            if (!opt_int(opt_arg(), &opt_failure))
+                goto opthelp;
             break;
         case OPT_FAILUREBITS:
-            opt_failurebits = opt_nat();
+            if (!opt_int(opt_arg(), &opt_failurebits))
+                goto opthelp;
             break;
         case OPT_STATUSSTRING:
             opt_statusstring = opt_str("statusstring");
