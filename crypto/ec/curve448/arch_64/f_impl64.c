@@ -10,6 +10,7 @@
  * Originally written by Mike Hamburg
  */
 
+#include "e_os.h"
 #include "openssl/macros.h"
 #include "internal/numbers.h"
 
