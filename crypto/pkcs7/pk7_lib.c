@@ -469,12 +469,12 @@ const PKCS7_CTX *ossl_pkcs7_get0_ctx(const PKCS7 *p7)
     return p7 != NULL ? &p7->ctx : NULL;
 }
 
-static void ossl_pkcs7_set0_libctx(PKCS7 *p7, OSSL_LIB_CTX *ctx)
+void ossl_pkcs7_set0_libctx(PKCS7 *p7, OSSL_LIB_CTX *ctx)
 {
     p7->ctx.libctx = ctx;
 }
 
-static int ossl_pkcs7_set1_propq(PKCS7 *p7, const char *propq)
+int ossl_pkcs7_set1_propq(PKCS7 *p7, const char *propq)
 {
     if (p7->ctx.propq != NULL) {
         OPENSSL_free(p7->ctx.propq);

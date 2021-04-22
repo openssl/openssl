@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/pkcs12.h>
+#include "crypto/pkcs7.h"
 #include "p12_local.h"
 
 /* Initialise a PKCS12 structure to take data */
@@ -25,15 +26,11 @@ PKCS12 *PKCS12_init_ex(int mode, OSSL_LIB_CTX *ctx, const char *propq)
     if (!ASN1_INTEGER_set(pkcs12->version, 3))
         goto err;
     pkcs12->authsafes->type = OBJ_nid2obj(mode);
-    pkcs12->authsafes->ctx.libctx = ctx;
-    if (propq != NULL) {
-        pkcs12->authsafes->ctx.propq = OPENSSL_strdup(propq);
-        if (pkcs12->authsafes->ctx.propq == NULL) {
-            ERR_raise(ERR_LIB_PKCS12, ERR_R_MALLOC_FAILURE);
-            goto err;
-        }
-    } else {
-        pkcs12->authsafes->ctx.propq = NULL;
+
+    ossl_pkcs7_set0_libctx(pkcs12->authsafes, ctx);
+    if (!ossl_pkcs7_set1_propq(pkcs12->authsafes, propq)) {
+        ERR_raise(ERR_LIB_PKCS12, ERR_R_MALLOC_FAILURE);
+        goto err;
     }
 
     switch (mode) {
