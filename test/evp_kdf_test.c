@@ -1291,7 +1291,7 @@ static int test_kdf_get_kdf(void)
     return ok;
 }
 
-#ifndef OPENSSL_NO_CMS
+#if !defined(OPENSSL_NO_CMS) && !defined(OPENSSL_NO_DES)
 static int test_kdf_x942_asn1(void)
 {
     int ret;
@@ -1409,7 +1409,7 @@ int setup_tests(void)
     ADD_TEST(test_kdf_ss_kmac);
     ADD_TEST(test_kdf_sshkdf);
     ADD_TEST(test_kdf_x963);
-#ifndef OPENSSL_NO_CMS
+#if !defined(OPENSSL_NO_CMS) && !defined(OPENSSL_NO_DES)
     ADD_TEST(test_kdf_x942_asn1);
 #endif
     ADD_TEST(test_kdf_krb5kdf);
