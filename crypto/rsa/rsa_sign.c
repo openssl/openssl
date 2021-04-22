@@ -97,7 +97,7 @@ int RSA_sign(int type, const unsigned char *m, unsigned int m_len,
             return 0;
         }
         
-        if (m_len != EVP_MD_size(md)) {
+        if (m_len != (size_t)EVP_MD_size(md)) {
             RSAerr(RSA_F_RSA_SIGN, RSA_R_INVALID_MESSAGE_LENGTH);
             return 0;
         }
