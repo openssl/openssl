@@ -21,7 +21,7 @@ OpenSSL Releases
 OpenSSL 3.0
 -----------
 
-### Changes between 1.1.1 and 3.0 alpha 15 [22 Apr 2021]
+### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
 
  * The default manual page suffix ($MANSUFFIX) has been changed to "ossl"
 
