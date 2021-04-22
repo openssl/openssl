@@ -601,7 +601,7 @@ my @disable_cascades = (
     "hw"                => [ "padlockeng" ],
 
     # no-autoalginit is only useful when building non-shared
-    "autoalginit"       => [ "shared", "apps" ],
+    "autoalginit"       => [ "shared", "apps", "fips" ],
 
     "stdio"             => [ "apps", "capieng", "egd" ],
     "apps"              => [ "tests" ],
