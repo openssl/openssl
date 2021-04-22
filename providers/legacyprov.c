@@ -178,13 +178,8 @@ int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
 {
     OSSL_LIB_CTX *libctx = NULL;
 
-    /*
-     * We do not need to use any up-calls provided by libcrypto, so we ignore
-     * the "in" dispatch table.
-     */
-
     if ((*provctx = ossl_prov_ctx_new()) == NULL
-        || (libctx = OSSL_LIB_CTX_new()) == NULL) {
+        || (libctx = OSSL_LIB_CTX_new_child(handle, in)) == NULL) {
         OSSL_LIB_CTX_free(libctx);
         legacy_teardown(*provctx);
         *provctx = NULL;
