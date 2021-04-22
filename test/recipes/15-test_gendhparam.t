@@ -93,6 +93,18 @@ my @testdata = (
         expect => [ 'BEGIN X9.42 DH PARAMETERS', 'GROUP:' ],
         message   => 'DHX RFC5114 named group selection using an id',
     },
+    {
+        algorithm => 'DHX',
+        pkeyopts => [ 'dh_rfc5114:1', 'dh_paramgen_type:1' ],
+        expect => [ 'BEGIN X9.42 DH PARAMETERS', 'GROUP:' ],
+        message   => 'DHX paramgen_type is ignored if the group is set',
+    },
+    {
+        algorithm => 'DH',
+        pkeyopts => [ 'dh_rfc5114:1', 'dh_paramgen_type:1' ],
+        expect => [ 'ERROR' ],
+        message   => "Setting dh_paramgen_type to fips186 should fail for DH keys",
+    },
 # These tests using the safeprime generator were removed as they are slow..
 #    {
 #        algorithm => 'DH',

@@ -886,8 +886,7 @@ IMPLEMENT_ECX_VARIANT(ED448)
 
 int EVP_PKEY_set1_DH(EVP_PKEY *pkey, DH *dhkey)
 {
-    int type;
-    int ret;
+    int ret, type;
 
     /*
      * ossl_dh_is_named_safe_prime_group() returns 1 for named safe prime groups
