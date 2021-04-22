@@ -28,7 +28,6 @@ TESTDIR=test/recipes/20-test_dhparam_check_data/valid
 rm -rf $TESTDIR
 mkdir -p $TESTDIR
 
-#TODO(3.0): These 3 currently create invalid output - see issue #14145
 ./util/opensslwrap.sh genpkey -genparam -algorithm DH -pkeyopt dh_rfc5114:1 -out $TESTDIR/dh_5114_1.pem
 ./util/opensslwrap.sh genpkey -genparam -algorithm DH -pkeyopt dh_rfc5114:2 -out $TESTDIR/dh_5114_2.pem
 ./util/opensslwrap.sh genpkey -genparam -algorithm DH -pkeyopt dh_rfc5114:3 -out $TESTDIR/dh_5114_3.pem
