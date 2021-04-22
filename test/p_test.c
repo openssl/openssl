@@ -30,11 +30,14 @@
 #include <openssl/core.h>
 #include <openssl/core_dispatch.h>
 #include <openssl/err.h>
+#include <openssl/evp.h>
+#include <openssl/crypto.h>
 
 typedef struct p_test_ctx {
     char *thisfile;
     char *thisfunc;
     const OSSL_CORE_HANDLE *handle;
+    OSSL_LIB_CTX *libctx;
 } P_TEST_CTX;
 
 static OSSL_FUNC_core_gettable_params_fn *c_gettable_params = NULL;
@@ -46,6 +49,7 @@ static OSSL_FUNC_core_vset_error_fn *c_vset_error;
 /* Tell the core what params we provide and what type they are */
 static const OSSL_PARAM p_param_types[] = {
     { "greeting", OSSL_PARAM_UTF8_STRING, NULL, 0, 0 },
+    { "digest-check", OSSL_PARAM_UNSIGNED_INTEGER, NULL, 0, 0},
     { NULL, 0, NULL, 0, 0 }
 };
 
@@ -109,6 +113,36 @@ static int p_get_params(void *provctx, OSSL_PARAM params[])
                 strcpy(p->data, buf);
             else
                 ok = 0;
+        } else if (strcmp(p->key, "digest-check") == 0) {
+            unsigned int digestsuccess = 0;
+
+            /*
+             * Test we can use an algorithm from another provider. We're using
+             * legacy to check that legacy is actually available and we haven't
+             * just fallen back to default.
+             */
+#ifdef PROVIDER_INIT_FUNCTION_NAME
+            EVP_MD *md4 = EVP_MD_fetch(ctx->libctx, "MD4", NULL);
+            EVP_MD_CTX *mdctx = EVP_MD_CTX_new();
+            const char *msg = "Hello world";
+            unsigned char out[16];
+
+            if (md4 != NULL && mdctx != NULL) {
+                if (EVP_DigestInit_ex(mdctx, md4, NULL)
+                        && EVP_DigestUpdate(mdctx, (const unsigned char *)msg,
+                                            strlen(msg))
+                        &&EVP_DigestFinal(mdctx, out, NULL))
+                    digestsuccess = 1;
+            }
+            EVP_MD_CTX_free(mdctx);
+            EVP_MD_free(md4);
+#endif
+            if (p->data_size >= sizeof(digestsuccess)) {
+                *(unsigned int *)p->data = digestsuccess;
+                p->return_size = sizeof(digestsuccess);
+            } else {
+                ok = 0;
+            }
         }
     }
     return ok;
@@ -146,11 +180,12 @@ static const OSSL_DISPATCH p_test_table[] = {
 };
 
 int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
-                       const OSSL_DISPATCH *in,
+                       const OSSL_DISPATCH *oin,
                        const OSSL_DISPATCH **out,
                        void **provctx)
 {
     P_TEST_CTX *ctx;
+    const OSSL_DISPATCH *in = oin;
 
     for (; in->function_id != 0; in++) {
         switch (in->function_id) {
@@ -191,6 +226,14 @@ int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
     ctx->thisfile = strdup(OPENSSL_FILE);
     ctx->thisfunc = strdup(OPENSSL_FUNC);
     ctx->handle = handle;
+#ifdef PROVIDER_INIT_FUNCTION_NAME
+    /* We only do this if we are linked with libcrypto */
+    ctx->libctx = OSSL_LIB_CTX_new_child(handle, oin);
+    if (ctx->libctx == NULL) {
+        p_teardown(ctx);
+        return 0;
+    }
+#endif
 
     /*
      * Set a spurious error to check error handling works correctly. This will
@@ -207,6 +250,9 @@ static void p_teardown(void *provctx)
 {
     P_TEST_CTX *ctx = (P_TEST_CTX *)provctx;
 
+#ifdef PROVIDER_INIT_FUNCTION_NAME
+    OSSL_LIB_CTX_free(ctx->libctx);
+#endif
     free(ctx->thisfile);
     free(ctx->thisfunc);
     free(ctx);
