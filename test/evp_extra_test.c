@@ -2585,10 +2585,15 @@ err:
 }
 
 #ifndef OPENSSL_NO_EC
-static int ecpub_nids[] = { NID_brainpoolP256r1, NID_X9_62_prime256v1,
-    NID_secp384r1, NID_secp521r1, NID_sect233k1, NID_sect233r1, NID_sect283r1,
+static int ecpub_nids[] = {
+    NID_brainpoolP256r1, NID_X9_62_prime256v1,
+    NID_secp384r1, NID_secp521r1,
+# ifndef OPENSSL_NO_EC2M
+    NID_sect233k1, NID_sect233r1, NID_sect283r1,
     NID_sect409k1, NID_sect409r1, NID_sect571k1, NID_sect571r1,
-    NID_brainpoolP384r1, NID_brainpoolP512r1};
+# endif
+    NID_brainpoolP384r1, NID_brainpoolP512r1
+};
 
 static int test_ecpub(int idx)
 {
