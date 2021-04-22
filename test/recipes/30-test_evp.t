@@ -22,6 +22,7 @@ use lib bldtop_dir('.');
 
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 my $no_legacy = disabled('legacy') || ($ENV{NO_LEGACY} // 0);
+my $no_des = disabled("des");
 my $no_dh = disabled("dh");
 my $no_dsa = disabled("dsa");
 my $no_ec = disabled("ec");
@@ -60,6 +61,10 @@ push @files, qw(
                 evppkey_ffdhe.txt
                 evppkey_dh.txt
                ) unless $no_dh;
+push @files, qw(
+                evpkdf_x942_des.txt
+                evpmac_cmac_des.txt
+               ) unless $no_des;
 push @files, qw(evppkey_dsa.txt) unless $no_dsa;
 push @files, qw(evppkey_ecx.txt) unless $no_ec;
 push @files, qw(
