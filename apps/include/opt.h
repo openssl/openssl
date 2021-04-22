@@ -377,8 +377,6 @@ int opt_verify(int i, X509_VERIFY_PARAM *vpm);
 int opt_rand(int i);
 int opt_provider(int i);
 void opt_help(const OPTIONS * list);
-void opt_print(const OPTIONS * opt, int doingparams, int width);
-int opt_format_error(const char *s, unsigned long flags);
 void print_format_error(int format, unsigned long flags);
 int opt_isdir(const char *name);
 int opt_printf_stderr(const char *fmt, ...);
