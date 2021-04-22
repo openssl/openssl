@@ -348,8 +348,8 @@ The digest to use during parameter generation. Must be one of B<sha1>, B<sha224>
 or B<sha256>. If set, then the number of bits in B<qbits> will match the output
 size of the specified digest and the B<qbits> parameter will be
 ignored. If not set, then a digest will be used that gives an output matching
-the number of bits in B<q>, i.e. B<sha1> if q length is 160, B<sha224> if it 224
-or B<sha256> if it is 256.
+the number of bits in B<q>, i.e. B<sha1> if q length is 160, B<sha224> if it is
+224 or B<sha256> if it is 256.
 This is only used by "fips186_4" and "fips186_2" key generation.
 
 =item B<properties>:I<query>

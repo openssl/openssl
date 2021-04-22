@@ -531,7 +531,7 @@ static int dh_gen_common_set_params(void *genctx, const OSSL_PARAM params[])
 static const OSSL_PARAM *dh_gen_settable_params(ossl_unused void *genctx,
                                                 ossl_unused void *provctx)
 {
-    static OSSL_PARAM dh_gen_settable[] = {
+    static const OSSL_PARAM dh_gen_settable[] = {
         OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_FFC_TYPE, NULL, 0),
         OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME, NULL, 0),
         OSSL_PARAM_int(OSSL_PKEY_PARAM_DH_PRIV_LEN, NULL),
@@ -545,7 +545,7 @@ static const OSSL_PARAM *dh_gen_settable_params(ossl_unused void *genctx,
 static const OSSL_PARAM *dhx_gen_settable_params(ossl_unused void *genctx,
                                                  ossl_unused void *provctx)
 {
-    static OSSL_PARAM dhx_gen_settable[] = {
+    static const OSSL_PARAM dhx_gen_settable[] = {
         OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_FFC_TYPE, NULL, 0),
         OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME, NULL, 0),
         OSSL_PARAM_int(OSSL_PKEY_PARAM_DH_PRIV_LEN, NULL),

@@ -25,19 +25,19 @@ validation. This means that optional FFC domain parameter values for
 I<seed>, I<pcounter> and I<gindex> or I<hindex> may need to be stored for
 validation purposes.
 For B<DHX> the I<seed> and I<pcounter> can be stored in ASN1 data
-(but the I<gindex> or I<hindex> is not).
+(but the I<gindex> or I<hindex> can not be stored).
 
 =head2 DH and DHX domain parameters
 
 In addition to the common FCC parameters that all FFC keytypes should support
 (see L<EVP_PKEY-FFC(7)/FFC parameters>) the B<DHX> and B<DH> keytype
-implementation support the following:
+implementations support the following:
 
 =over 4
 
 =item "group" (B<OSSL_PKEY_PARAM_GROUP_NAME>) <UTF8 string>
 
-Set or gets a string that associates a B<DH> or B<DHX> named safe prime group
+Sets or gets a string that associates a B<DH> or B<DHX> named safe prime group
 with known values for I<p>, I<q> and I<g>.
 
 The following values can be used by the OpenSSL's default and FIPS providers:
@@ -76,8 +76,9 @@ The default value is 2.
 It is recommended to use a named safe prime group instead, if domain parameter
 validation is required. 
 
-These are not 'named' safe prime groups so setting this value for the OpenSSL FIPS
-provider will instead choose a named safe prime group based on the size of I<p>.
+Randomly generated safe primes are not allowed by FIPS, so setting this value
+for the OpenSSL FIPS provider will instead choose a named safe prime group
+based on the size of I<p>.
 
 =back
 
