@@ -684,7 +684,7 @@ static int provider_deactivate(OSSL_PROVIDER *prov)
     if (!CRYPTO_THREAD_write_lock(prov->flag_lock))
         return 0;
 
-    if (prov->activatecnt-- < 1)
+    if (--prov->activatecnt < 1)
         prov->flag_activated = 0;
 
     CRYPTO_THREAD_unlock(prov->flag_lock);
