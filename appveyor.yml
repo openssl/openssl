@@ -16,15 +16,6 @@ configuration:
 
 for:
     -
-        only_commits:
-            message: /\[extended tests\]/
-        configuration:
-            - shared
-            - plain
-            - minimal
-        environment:
-            EXTENDED_TESTS: yes
-    -
         branches:
             only:
                 - master
@@ -36,6 +27,12 @@ for:
             EXTENDED_TESTS: yes
 
 before_build:
+    - ps: >-
+        $merge = (cmd /c "git rev-list -1 --merges HEAD~1..HEAD")
+    - ps: >-
+        If ($merge) {
+            Exit-AppveyorBuild
+        }
     - ps: >-
         Install-Module VSSetup -Scope CurrentUser
     - ps: >-
