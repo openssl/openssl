@@ -40,9 +40,10 @@ buffer is too small.
 
 =head1 NOTES
 
-Except when I<n> is 0, both BIO_snprintf() and BIO_vsnprintf() terminate
-their output with C<'\0'> even when there is insufficient space to output
-the whole string.
+Except when I<n> is 0, both BIO_snprintf() and BIO_vsnprintf() always
+terminate their output with C<'\0'>.  This includes cases where -1 is
+returned, such as when there is insufficient space to output the whole
+string.
 
 =head1 COPYRIGHT
 
