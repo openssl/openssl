@@ -23,6 +23,27 @@ OpenSSL 3.0
 
 ### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
 
+ * Added enhanced PKCS#12 APIs which accept a library context `OSSL_LIB_CTX`
+   and (where relevant) a property query. Other APIs which handle PKCS#7 and
+   PKCS#8 objects have also been enhanced where required. This includes:
+
+   PKCS12_add_key_ex(), PKCS12_add_safe_ex(), PKCS12_add_safes_ex(),
+   PKCS12_create_ex(), PKCS12_decrypt_skey_ex(), PKCS12_init_ex(),
+   PKCS12_item_decrypt_d2i_ex(), PKCS12_item_i2d_encrypt_ex(),
+   PKCS12_key_gen_asc_ex(), PKCS12_key_gen_uni_ex(), PKCS12_key_gen_utf8_ex(),
+   PKCS12_pack_p7encdata_ex(), PKCS12_pbe_crypt_ex(), PKCS12_PBE_keyivgen_ex(),
+   PKCS12_SAFEBAG_create_pkcs8_encrypt_ex(), PKCS5_pbe2_set_iv_ex(),
+   PKCS5_pbe_set0_algor_ex(), PKCS5_pbe_set_ex(), PKCS5_pbkdf2_set_ex(),
+   PKCS5_v2_PBE_keyivgen_ex(), PKCS5_v2_scrypt_keyivgen_ex(),
+   PKCS8_decrypt_ex(), PKCS8_encrypt_ex(), PKCS8_set0_pbe_ex().
+ 
+   As part of this change the EVP_PBE_xxx APIs can also accept a library
+   context and property query and will call an extended version of the key/IV
+   derivation function which supports these parameters. This includes
+   EVP_PBE_CipherInit_ex(), EVP_PBE_find_ex() and EVP_PBE_scrypt_ex().
+
+   *Jon Spillett*
+
  * The default manual page suffix ($MANSUFFIX) has been changed to "ossl"
 
    *Matt Caswell*
