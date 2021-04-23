@@ -18,15 +18,16 @@ DEFINE_STACK_OF(OSSL_PROVIDER)
 
 struct child_prov_globals {
     const OSSL_CORE_HANDLE *handle;
-    OSSL_CORE_PROVIDER *curr_prov;
+    const OSSL_CORE_HANDLE *curr_prov;
     STACK_OF(OSSL_PROVIDER) *childprovs;
     unsigned int isinited:1;
     CRYPTO_RWLOCK *lock;
     OSSL_FUNC_core_get_libctx_fn *c_get_libctx;
-    OSSL_FUNC_core_provider_do_all_fn *c_prov_do_all;
-    OSSL_FUNC_core_provider_name_fn *c_prov_name;
-    OSSL_FUNC_core_provider_get0_provider_ctx_fn *c_prov_get0_provider_ctx;
-    OSSL_FUNC_core_provider_get0_dispatch_fn *c_prov_get0_dispatch;
+    OSSL_FUNC_provider_register_child_cb_fn *c_provider_register_child_cb;
+    OSSL_FUNC_provider_deregister_child_cb_fn *c_provider_deregister_child_cb;
+    OSSL_FUNC_provider_name_fn *c_prov_name;
+    OSSL_FUNC_provider_get0_provider_ctx_fn *c_prov_get0_provider_ctx;
+    OSSL_FUNC_provider_get0_dispatch_fn *c_prov_get0_dispatch;
 };
 
 static void *child_prov_ossl_ctx_new(OSSL_LIB_CTX *libctx)
@@ -44,6 +45,7 @@ static void child_prov_ossl_ctx_free(void *vgbl)
 {
     struct child_prov_globals *gbl = vgbl;
 
+    gbl->c_provider_deregister_child_cb(gbl->handle);
     sk_OSSL_PROVIDER_pop_free(gbl->childprovs, ossl_prov_free);
     CRYPTO_THREAD_lock_free(gbl->lock);
     OPENSSL_free(gbl);
@@ -98,16 +100,24 @@ static int ossl_child_provider_init(const OSSL_CORE_HANDLE *handle,
     return 1;
 }
 
-static int provider_create_child_cb(OSSL_CORE_PROVIDER *prov, void *cbdata)
+static int provider_create_child_cb(const OSSL_CORE_HANDLE *prov, void *cbdata)
 {
     OSSL_LIB_CTX *ctx = cbdata;
     struct child_prov_globals *gbl;
     const char *provname;
     OSSL_PROVIDER *cprov;
+    int ret = 0;
 
     gbl = ossl_lib_ctx_get_data(ctx, OSSL_LIB_CTX_CHILD_PROVIDER_INDEX,
                                 &child_prov_ossl_ctx_method);
     if (gbl == NULL)
+        return 0;
+
+    /*
+     * If !gbl->isinited, then we are still initing and we already hold the
+     * lock - so don't take it again.
+     */
+    if (gbl->isinited && !CRYPTO_THREAD_write_lock(gbl->lock))
         return 0;
 
     provname = gbl->c_prov_name(prov);
@@ -124,18 +134,41 @@ static int provider_create_child_cb(OSSL_CORE_PROVIDER *prov, void *cbdata)
      */
     if ((cprov = ossl_provider_new(ctx, provname, ossl_child_provider_init,
                                    1)) == NULL)
-        return 0;
+        goto err;
 
     if (!ossl_provider_activate(cprov, 0)) {
         ossl_provider_free(cprov);
-        return 0;
+        goto err;
     }
     ossl_provider_set_child(cprov);
 
     if (!sk_OSSL_PROVIDER_push(gbl->childprovs, cprov)) {
-        OSSL_PROVIDER_unload(cprov);
-        return 0;
+        ossl_provider_free(cprov);
+        goto err;
     }
+
+    ret = 1;
+ err:
+    if (gbl->isinited)
+        CRYPTO_THREAD_unlock(gbl->lock);
+    return ret;
+}
+
+static int provider_remove_child_cb(const OSSL_CORE_HANDLE *prov, void *cbdata)
+{
+    OSSL_LIB_CTX *ctx = cbdata;
+    struct child_prov_globals *gbl;
+    const char *provname;
+    OSSL_PROVIDER *cprov;
+
+    gbl = ossl_lib_ctx_get_data(ctx, OSSL_LIB_CTX_CHILD_PROVIDER_INDEX,
+                                &child_prov_ossl_ctx_method);
+    if (gbl == NULL)
+        return 0;
+
+    provname = gbl->c_prov_name(prov);
+    cprov = ossl_provider_find(ctx, provname, 1);
+    OSSL_PROVIDER_unload(cprov);
 
     return 1;
 }
@@ -164,8 +197,10 @@ int ossl_provider_init_child_providers(OSSL_LIB_CTX *ctx)
     if (!CRYPTO_THREAD_write_lock(gbl->lock))
         return 0;
     if (!gbl->isinited) {
-        if (!gbl->c_prov_do_all(gbl->c_get_libctx(gbl->handle),
-                                provider_create_child_cb, ctx)) {
+        if (!gbl->c_provider_register_child_cb(gbl->handle,
+                                               provider_create_child_cb,
+                                               provider_remove_child_cb,
+                                               ctx)) {
             CRYPTO_THREAD_unlock(gbl->lock);
             return 0;
         }
@@ -196,18 +231,23 @@ int ossl_provider_init_as_child(OSSL_LIB_CTX *ctx,
         case OSSL_FUNC_CORE_GET_LIBCTX:
             gbl->c_get_libctx = OSSL_FUNC_core_get_libctx(in);
             break;
-        case OSSL_FUNC_CORE_PROVIDER_DO_ALL:
-            gbl->c_prov_do_all = OSSL_FUNC_core_provider_do_all(in);
+        case OSSL_FUNC_PROVIDER_REGISTER_CHILD_CB:
+            gbl->c_provider_register_child_cb
+                = OSSL_FUNC_provider_register_child_cb(in);
             break;
-        case OSSL_FUNC_CORE_PROVIDER_NAME:
-            gbl->c_prov_name = OSSL_FUNC_core_provider_name(in);
+        case OSSL_FUNC_PROVIDER_DEREGISTER_CHILD_CB:
+            gbl->c_provider_deregister_child_cb
+                = OSSL_FUNC_provider_deregister_child_cb(in);
             break;
-        case OSSL_FUNC_CORE_PROVIDER_GET0_PROVIDER_CTX:
+        case OSSL_FUNC_PROVIDER_NAME:
+            gbl->c_prov_name = OSSL_FUNC_provider_name(in);
+            break;
+        case OSSL_FUNC_PROVIDER_GET0_PROVIDER_CTX:
             gbl->c_prov_get0_provider_ctx
-                = OSSL_FUNC_core_provider_get0_provider_ctx(in);
+                = OSSL_FUNC_provider_get0_provider_ctx(in);
             break;
-        case OSSL_FUNC_CORE_PROVIDER_GET0_DISPATCH:
-            gbl->c_prov_get0_dispatch = OSSL_FUNC_core_provider_get0_dispatch(in);
+        case OSSL_FUNC_PROVIDER_GET0_DISPATCH:
+            gbl->c_prov_get0_dispatch = OSSL_FUNC_provider_get0_dispatch(in);
             break;
         default:
             /* Just ignore anything we don't understand */
@@ -215,7 +255,8 @@ int ossl_provider_init_as_child(OSSL_LIB_CTX *ctx,
         }
     }
 
-    if (gbl->c_prov_do_all == NULL
+    if (gbl->c_get_libctx == NULL
+            || gbl->c_provider_register_child_cb == NULL
             || gbl->c_prov_name == NULL
             || gbl->c_prov_get0_provider_ctx == NULL
             || gbl->c_prov_get0_dispatch == NULL)
