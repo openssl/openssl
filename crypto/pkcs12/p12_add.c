@@ -107,10 +107,10 @@ PKCS7 *PKCS12_pack_p7encdata_ex(int pbe_nid, const char *pass, int passlen,
         pbe_ciph = EVP_get_cipherbynid(pbe_nid);
 
     if (pbe_ciph != NULL) {
-        pbe = PKCS5_pbe2_set_iv_ex(pbe_ciph, iter, salt, saltlen, NULL, -1, ctx, propq);
+        pbe = PKCS5_pbe2_set_iv_ex(pbe_ciph, iter, salt, saltlen, NULL, -1, ctx);
     } else {
         ERR_clear_error();
-        pbe = PKCS5_pbe_set_ex(pbe_nid, iter, salt, saltlen, ctx, propq);
+        pbe = PKCS5_pbe_set_ex(pbe_nid, iter, salt, saltlen, ctx);
     }
 
     if (pbe == NULL) {
