@@ -17,7 +17,8 @@
 #ifndef OSSL_APPS_FMT_H
 #define OSSL_APPS_FMT_H
 
-/* On some platforms, it's important to distinguish between text and binary
+/*
+ * On some platforms, it's important to distinguish between text and binary
  * files.  On some, there might even be specific file formats for different
  * contents.  The FORMAT_xxx macros are meant to express an intent with the
  * file being read or created.

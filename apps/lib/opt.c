@@ -321,7 +321,7 @@ int opt_format(const char *s, unsigned long flags, int *result)
 }
 
 /* Return string representing the given format. */
-const char *format2str(int format)
+static const char *format2str(int format)
 {
     switch (format) {
     default:
