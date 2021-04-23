@@ -947,12 +947,14 @@ PrivPubKeyPair = BOB_sect163r1:BOB_sect163r1_PUB
 
 # ECDH Alice with Bob peer
 
+Availablein=default
 Derive=ALICE_sect163r1
 PeerKey=BOB_sect163r1_PUB
 SharedSecret=02355c765bbc07fcc44bb1496e490912f6df56e6d4
 
 # ECDH Bob with Alice peer
 
+Availablein=default
 Derive=BOB_sect163r1
 PeerKey=ALICE_sect163r1_PUB
 SharedSecret=02355c765bbc07fcc44bb1496e490912f6df56e6d4
@@ -993,12 +995,14 @@ PrivPubKeyPair = BOB_sect193r1:BOB_sect193r1_PUB
 
 # ECDH Alice with Bob peer
 
+Availablein=default
 Derive=ALICE_sect193r1
 PeerKey=BOB_sect193r1_PUB
 SharedSecret=00458b4c5ad122de5a377bea0adf1ab87bcb961b24ed764f47
 
 # ECDH Bob with Alice peer
 
+Availablein=default
 Derive=BOB_sect193r1
 PeerKey=ALICE_sect193r1_PUB
 SharedSecret=00458b4c5ad122de5a377bea0adf1ab87bcb961b24ed764f47
@@ -1039,12 +1043,14 @@ PrivPubKeyPair = BOB_sect193r2:BOB_sect193r2_PUB
 
 # ECDH Alice with Bob peer
 
+Availablein=default
 Derive=ALICE_sect193r2
 PeerKey=BOB_sect193r2_PUB
 SharedSecret=019d1f316d204a9cd1b9632cebb4accddb204158be3e435891
 
 # ECDH Bob with Alice peer
 
+Availablein=default
 Derive=BOB_sect193r2
 PeerKey=ALICE_sect193r2_PUB
 SharedSecret=019d1f316d204a9cd1b9632cebb4accddb204158be3e435891
@@ -1085,12 +1091,14 @@ PrivPubKeyPair = BOB_sect239k1:BOB_sect239k1_PUB
 
 # ECDH Alice with Bob peer
 
+Availablein=default
 Derive=ALICE_sect239k1
 PeerKey=BOB_sect239k1_PUB
 SharedSecret=4d1c9a8ae73f754d0a593d6e426114f4f67d7c8082ccc4e04a72b0d2aff8
 
 # ECDH Bob with Alice peer
 
+Availablein=default
 Derive=BOB_sect239k1
 PeerKey=ALICE_sect239k1_PUB
 SharedSecret=4d1c9a8ae73f754d0a593d6e426114f4f67d7c8082ccc4e04a72b0d2aff8
