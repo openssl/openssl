@@ -190,7 +190,7 @@ EVP_DigestInit                          193	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_meth_find                      194	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 X509_VERIFY_PARAM_get_count             195	3_0_0	EXIST::FUNCTION:
 ASN1_BIT_STRING_get_bit                 196	3_0_0	EXIST::FUNCTION:
-EVP_PKEY_cmp                            197	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_cmp                            197	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 d2i_X509_ALGORS                         198	3_0_0	EXIST::FUNCTION:
 EVP_PKEY2PKCS8                          199	3_0_0	EXIST::FUNCTION:
 BN_nist_mod_256                         200	3_0_0	EXIST::FUNCTION:
@@ -3460,7 +3460,7 @@ ERR_print_errors_cb                     3531	3_0_0	EXIST::FUNCTION:
 ENGINE_set_default_string               3532	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,ENGINE
 BIO_number_read                         3533	3_0_0	EXIST::FUNCTION:
 CRYPTO_zalloc                           3534	3_0_0	EXIST::FUNCTION:
-EVP_PKEY_cmp_parameters                 3535	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_cmp_parameters                 3535	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 EVP_PKEY_CTX_new_id                     3537	3_0_0	EXIST::FUNCTION:
 TLS_FEATURE_free                        3538	3_0_0	EXIST::FUNCTION:
 d2i_BASIC_CONSTRAINTS                   3539	3_0_0	EXIST::FUNCTION:

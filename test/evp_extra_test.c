@@ -2758,7 +2758,7 @@ static int test_ecpub(int idx)
     if (!TEST_ptr(d2i_PublicKey(EVP_PKEY_EC, &pkey2, &q, savelen)))
         goto done;
     /* The keys should match. */
-    if (!TEST_int_eq(EVP_PKEY_cmp(pkey, pkey2), 1))
+    if (!TEST_int_eq(EVP_PKEY_eq(pkey, pkey2), 1))
         goto done;
 # endif
 

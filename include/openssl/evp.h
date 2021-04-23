@@ -1356,11 +1356,15 @@ EVP_PKEY *d2i_KeyParams_bio(int type, EVP_PKEY **a, BIO *in);
 int EVP_PKEY_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from);
 int EVP_PKEY_missing_parameters(const EVP_PKEY *pkey);
 int EVP_PKEY_save_parameters(EVP_PKEY *pkey, int mode);
-int EVP_PKEY_cmp_parameters(const EVP_PKEY *a, const EVP_PKEY *b);
 int EVP_PKEY_parameters_eq(const EVP_PKEY *a, const EVP_PKEY *b);
-
-int EVP_PKEY_cmp(const EVP_PKEY *a, const EVP_PKEY *b);
 int EVP_PKEY_eq(const EVP_PKEY *a, const EVP_PKEY *b);
+
+# ifndef OPENSSL_NO_DEPRECATED_3_0
+OSSL_DEPRECATEDIN_3_0
+int EVP_PKEY_cmp_parameters(const EVP_PKEY *a, const EVP_PKEY *b);
+OSSL_DEPRECATEDIN_3_0
+int EVP_PKEY_cmp(const EVP_PKEY *a, const EVP_PKEY *b);
+# endif
 
 int EVP_PKEY_print_public(BIO *out, const EVP_PKEY *pkey,
                           int indent, ASN1_PCTX *pctx);
