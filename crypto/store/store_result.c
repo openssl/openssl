@@ -126,19 +126,33 @@ int ossl_store_handle_load_result(const OSSL_PARAM params[], void *arg)
      * The helper functions return 0 on actual errors, otherwise 1, even if
      * they didn't fill out |*v|.
      */
-    if (!try_name(&helper_data, v))
+    ERR_set_mark();
+    if (*v == NULL && !try_name(&helper_data, v))
         goto err;
-    if (!try_key(&helper_data, v, ctx, provider, libctx, propq))
+    ERR_pop_to_mark();
+    ERR_set_mark();
+    if (*v == NULL && !try_key(&helper_data, v, ctx, provider, libctx, propq))
         goto err;
-    if (!try_cert(&helper_data, v, libctx, propq))
+    ERR_pop_to_mark();
+    ERR_set_mark();
+    if (*v == NULL && !try_cert(&helper_data, v, libctx, propq))
         goto err;
-    if (!try_crl(&helper_data, v, libctx, propq))
+    ERR_pop_to_mark();
+    ERR_set_mark();
+    if (*v == NULL && !try_crl(&helper_data, v, libctx, propq))
         goto err;
-    if (!try_pkcs12(&helper_data, v, ctx, libctx, propq))
+    ERR_pop_to_mark();
+    ERR_set_mark();
+    if (*v == NULL && !try_pkcs12(&helper_data, v, ctx, libctx, propq))
         goto err;
+    ERR_pop_to_mark();
+
+    if (*v == NULL)
+        ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_UNSUPPORTED);
 
     return (*v != NULL);
  err:
+    ERR_clear_last_mark();
     return 0;
 }
 
@@ -282,13 +296,8 @@ static EVP_PKEY *try_key_value_legacy(struct extracted_param_data_st *data,
     /* Try PUBKEY first, that's a real easy target */
     if (ctx->expected_type == 0
         || ctx->expected_type == OSSL_STORE_INFO_PUBKEY) {
-        /* Discard DER decoding errors, it only means we return "empty handed" */
-        if (ctx->expected_type == 0)
-            ERR_set_mark();
         derp = der;
         pk = d2i_PUBKEY_ex(NULL, &derp, der_len, libctx, propq);
-        if (ctx->expected_type == 0)
-            ERR_pop_to_mark();
 
         if (pk != NULL)
             *store_info_new = OSSL_STORE_INFO_new_PUBKEY;
@@ -302,16 +311,9 @@ static EVP_PKEY *try_key_value_legacy(struct extracted_param_data_st *data,
         X509_SIG *p8 = NULL;
         PKCS8_PRIV_KEY_INFO *p8info = NULL;
 
-        /*
-         * See if it's an encrypted PKCS#8 and decrypt it.  Discard DER
-         * decoding errors, a failed decode only means we return "empty handed"
-         */
-        if (ctx->expected_type == 0)
-            ERR_set_mark();
+        /* See if it's an encrypted PKCS#8 and decrypt it. */
         derp = der;
         p8 = d2i_X509_SIG(NULL, &derp, der_len);
-        if (ctx->expected_type == 0)
-            ERR_pop_to_mark();
 
         if (p8 != NULL) {
             char pbuf[PEM_BUFSIZE];
@@ -344,15 +346,9 @@ static EVP_PKEY *try_key_value_legacy(struct extracted_param_data_st *data,
          * |der| is NULL
          */
         if (der != NULL) {
-            /*
-             * Try to unpack an unencrypted PKCS#8, that's easy. Discard DER
-             * decoding errors, a failed decode only means we return "empty
-             * handed"
-             */
-            ERR_set_mark();
+            /* Try to unpack an unencrypted PKCS#8, that's easy */
             derp = der;
             p8info = d2i_PKCS8_PRIV_KEY_INFO(NULL, &derp, der_len);
-            ERR_pop_to_mark();
 
             if (p8info != NULL) {
                 pk = EVP_PKCS82PKEY_ex(p8info, libctx, propq);
@@ -399,8 +395,8 @@ static int try_key(struct extracted_param_data_st *data, OSSL_STORE_INFO **v,
 
             /*
              * Desperate last maneuver, in case the decoders don't support
-             * the data we have, then we try on our own to at least get a
-             * legacy key.
+             * the data we have, then we try on our own to at least get an
+             * engine provided legacy key.
              * This is the same as der2key_decode() does, but in a limited
              * way and within the walls of libcrypto.
              *
@@ -464,16 +460,11 @@ static int try_cert(struct extracted_param_data_st *data, OSSL_STORE_INFO **v,
             && (strcasecmp(data->data_type, PEM_STRING_X509_TRUSTED) == 0))
             ignore_trusted = 0;
 
-        /* Discard DER decoding errors, it only means we return "empty handed" */
-        if (data->object_type == OSSL_OBJECT_UNKNOWN)
-            ERR_set_mark();
         cert = d2i_X509_AUX(NULL, (const unsigned char **)&data->octet_data,
                             data->octet_data_size);
         if (cert == NULL && ignore_trusted)
             cert = d2i_X509(NULL, (const unsigned char **)&data->octet_data,
                             data->octet_data_size);
-        if (data->object_type == OSSL_OBJECT_UNKNOWN)
-            ERR_pop_to_mark();
 
         if (cert != NULL)
             /* We determined the object type */
@@ -500,13 +491,8 @@ static int try_crl(struct extracted_param_data_st *data, OSSL_STORE_INFO **v,
         || data->object_type == OSSL_OBJECT_CRL) {
         X509_CRL *crl;
 
-        /* Discard DER decoding errors, it only means we return "empty handed" */
-        if (data->object_type == OSSL_OBJECT_UNKNOWN)
-            ERR_set_mark();
         crl = d2i_X509_CRL(NULL, (const unsigned char **)&data->octet_data,
                            data->octet_data_size);
-        if (data->object_type == OSSL_OBJECT_UNKNOWN)
-            ERR_pop_to_mark();
 
         if (crl != NULL)
             /* We determined the object type */
@@ -537,11 +523,8 @@ static int try_pkcs12(struct extracted_param_data_st *data, OSSL_STORE_INFO **v,
         /* Initial parsing */
         PKCS12 *p12;
 
-        /* Discard DER decoding errors, it only means we return "empty handed" */
-        ERR_set_mark();
         p12 = d2i_PKCS12(NULL, (const unsigned char **)&data->octet_data,
                          data->octet_data_size);
-        ERR_pop_to_mark();
 
         if (p12 != NULL) {
             char *pass = NULL;
