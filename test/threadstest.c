@@ -419,6 +419,16 @@ static void thread_downgrade_shared_evp_pkey(void)
 #endif
 }
 
+static void thread_provider_load_unload(void)
+{
+    OSSL_PROVIDER *deflt = OSSL_PROVIDER_load(multi_libctx, "default");
+
+    if (!TEST_ptr(deflt)
+            || !TEST_true(OSSL_PROVIDER_available(multi_libctx, "default")))
+        multi_success = 0;
+
+    OSSL_PROVIDER_unload(deflt);
+}
 
 /*
  * Do work in multiple worker threads at the same time.
@@ -427,6 +437,7 @@ static void thread_downgrade_shared_evp_pkey(void)
  * Test 2: Simple fetch worker
  * Test 3: Worker downgrading a shared EVP_PKEY
  * Test 4: Worker using a shared EVP_PKEY
+ * Test 5: Workder loading and unloading a provider
  */
 static int test_multi(int idx)
 {
@@ -435,6 +446,7 @@ static int test_multi(int idx)
     OSSL_PROVIDER *prov = NULL, *prov2 = NULL;
     void (*worker)(void) = NULL;
     void (*worker2)(void) = NULL;
+    EVP_MD *sha256 = NULL;
 
     if (idx == 1 && !do_fips)
         return TEST_skip("FIPS not supported");
@@ -475,6 +487,17 @@ static int test_multi(int idx)
             goto err;
         worker = thread_shared_evp_pkey;
         break;
+    case 5:
+        /*
+         * We ensure we get an md from the default provider, and then unload the
+         * provider. This ensures the provider remains around but in a
+         * deactivated state.
+         */
+        sha256 = EVP_MD_fetch(multi_libctx, "SHA2-256", NULL);
+        OSSL_PROVIDER_unload(prov);
+        prov = NULL;
+        worker = thread_provider_load_unload;
+        break;
     default:
         TEST_error("Invalid test index");
         goto err;
@@ -496,6 +519,7 @@ static int test_multi(int idx)
     testresult = 1;
 
  err:
+    EVP_MD_free(sha256);
     OSSL_PROVIDER_unload(prov);
     OSSL_PROVIDER_unload(prov2);
     OSSL_LIB_CTX_free(multi_libctx);
@@ -612,7 +636,7 @@ int setup_tests(void)
     ADD_TEST(test_thread_local);
     ADD_TEST(test_atomic);
     ADD_TEST(test_multi_load);
-    ADD_ALL_TESTS(test_multi, 5);
+    ADD_ALL_TESTS(test_multi, 6);
     return 1;
 }
 
