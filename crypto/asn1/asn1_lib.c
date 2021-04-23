@@ -155,7 +155,7 @@ static int asn1_get_length(const unsigned char **pp, int *inf, long *rl,
 }
 
 /*
- * class 0 is constructed constructed == 2 for indefinite length constructed
+ * constructed == 2 for indefinite length constructed
  */
 void ASN1_put_object(unsigned char **pp, int constructed, int length, int tag,
                      int xclass)
