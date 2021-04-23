@@ -836,7 +836,7 @@ $obj: $deps
 	\$(CC) $cflags $defs -c \$(COUTFLAG)\$\@ $srcs
 EOF
      $recipe .= <<"EOF"	unless $disabled{makedepend};
-	cmd /C "\$(CPP) $cflags $defs $target{cpp_depend_flags} $srcs > $dep 2>&1"
+	cmd /C "\$(CPP) $cflags $defs $target{cpp_depend_flags} $srcs > $dep 2>&1 & del temp.i"
 EOF
      return $recipe;
  }
