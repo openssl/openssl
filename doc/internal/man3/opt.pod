@@ -11,7 +11,7 @@ opt_num_rest, opt_rest, opt_help, opt_isdir, opt_progname opt_next
 
 =head1 SYNOPSIS
 
- #include "apps/include/opt.h"
+ #include "opt.h"
 
  typedef struct { ... } OPTIONS;
  typedef struct { ... } OPT_PAIR;
@@ -56,7 +56,10 @@ The functions on this page provide a common set of option-parsing for
 the OpenSSL command and the internal test programs.
 It is intended to be used like the standard getopt(3) routine, except
 that multi-character flag names are supported, and a variety of parsing
-and other utilities functions are also provided.
+and other utility functions are also provided.
+
+Programs that use this should make sure to set the appropriate C<-I>
+flag.
 
 =head2 Data Types
 
@@ -72,7 +75,7 @@ The first two lines must appear exactly as shown. The third line is a sample
 set of flags, and the closing C<typedef> name is used for error-checking
 as discussed below.
 
-The B<OPTIONS> C<typedef> specifies an options, what type of argument
+The B<OPTIONS> C<typedef> specifies an option: what type of argument
 it takes (if any), and an optional "help" string.  It is a C<struct>
 containing these fields:
 
@@ -86,7 +89,7 @@ are words preceeded with a minus sign. If the user uses two minus signs,
 this is also accepted for compatibility with other GNU software. Some
 names are special, and are described below.
 
-The B<retval> is a the value to return if the option is found. It should be
+The B<retval> is the value to return if the option is found. It should be
 one of the choices in the enumeration above.
 
 The B<valtype> defines what the option's parameter must be. It should
@@ -103,7 +106,7 @@ be chosen from the following set:
     'M' A signed number that fits in the C<intmax_t> type
     'U' An unsigned number that fits in the C<uintmax_t> type
     'l' A signed number that fits in the C<long> type
-    'u' Aunsigned number that fits in the C<unsigned long> type
+    'u' An unsigned number that fits in the C<unsigned long> type
     'c' File of fomer PEM, DER, or S/MIME
     'F' A file in PEM or DER format
     'E' Like 'F' but also allows ENGINE
@@ -127,14 +130,14 @@ an entry of all-null's. The other two special options, B<OPT_ERR> and B<OPT_EOF>
 should not appear in the array.
 
 If the help string is too long to fit into one line, it may be continued
-on multiple lines each entry should use B<OPT_MORE_STR>, like this:
+on multiple lines; each entry should use B<OPT_MORE_STR>, like this:
 
         {"output" OPT_OFILE, '>', "Output file; default is stdout"},
         {OPT_MORE_STR, 0, 0,
          "This flag is not really needed on Unix systems"}
         {OPT_MORE_STR, 0, 0,
 
-Each subsequent line will be indent the correct amount.
+Each subsequent line will be indented the correct amount.
 
 By default, the help display will include a standard prolog:
 
