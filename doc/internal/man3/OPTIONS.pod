@@ -66,12 +66,18 @@ that is the set of options the program accepts. For example:
 
     typedef enum OPTION_choice {
         OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
-        OPT_YES, OPT_NAME, OPT_COUNT, OPT_OFILE
+        OPT_YES, OPT_NAME, OPT_COUNT, OPT_OFILE,
+        ...
     } OPTION_CHOICE;
 
-The first two lines must appear exactly as shown. The third line is a sample
+The first two lines must appear exactly as shown. In addition to
+defining symbolic names for the constants that opt_next() returns,
+it also helps guarantee that every command has a C<-help> option.
+The third line is a sample
 set of flags, and the closing C<typedef> name is used for error-checking
 as discussed below.
+Note that this could be cast in the C<switch> statement below, and
+the compiler would check that all specified options are handled.
 
 The B<OPTIONS> C<typedef> specifies an option: what type of argument
 it takes (if any), and an optional "help" string.  It is a C<struct>
@@ -100,7 +106,7 @@ be chosen from the following set:
     '<' Name of file to open for input
     '>' Name of file to open for output
     'n' A signed number that fits in the C<int> type
-    'p' A nonnegative number that fits in the C<int> type
+    'p' A positive number that fits in the C<int> type
     'M' A signed number that fits in the C<intmax_t> type
     'U' An unsigned number that fits in the C<uintmax_t> type
     'l' A signed number that fits in the C<long> type
@@ -110,10 +116,12 @@ be chosen from the following set:
     'E' Like 'F' but also allows ENGINE
     'f' Any file format
 
-The B<helpstr> is what to display when the user uses the help flag,
+The B<helpstr> is what to display when the user uses the help option,
 which should be C<"help">.
 
-A program should declare its options right after the enumeration:
+A program should declare its options right after the enumeration,
+and should follow the ordering of the enumeration as this helps
+readability and maintainability:
 
     static OPTIONS my_options[] = {
         {"help", OPT_HELP, '-', "Display this summary"},
@@ -233,7 +241,7 @@ such as used in with the B<-informat> or related flags, and fills
 the value from the constants in F<fmt.h> file.
 
 The opt_string() function checks that B<name> appears in the
-B<NULL>-terminated array of strings. It returns B<1>ne if found,
+B<NULL>-terminated array of strings. It returns B<1> if found,
 or prints a diagnostic and returns B<0> if not.
 
 The opt_pair() function takes a list of B<pairs>, each of which
@@ -246,16 +254,41 @@ left, and opt_rest() returns a pointer to the first non-option.
 If there were no parameters, it will point to the B<NULL> that is
 at the end of the standard B<argv> array.
 
-=head2 Example
+=head2 Common Options
+
+There are a few groups of options that are common to many OpenSSL programs.
+These are handled with sets of macros that define common option names
+and common code to handle them.  The categories are identified by a
+letter:
+
+    V   Validation
+    X   Extended certificate
+    S   TLS/SSL
+    R   Random state
+
+The B<OPT_x_ENUM> macro is used to define the numeration values, where B<x>
+is one of the letters above.  The B<OPT_x_OPTIONS> macro is used to
+list the set of common options, and the B<OPT_R_CASES> is used in
+the C<switch> statement.
+
+The common options are used throughout the sources for the OpenSSL commands.
+They are also used with common descriptions when generating the
+manpages, in the file C<doc/perlvars.pm>, which follow a similar naming
+convention.
+
+=head1 RETURN VALUES
+
+Detailed above.
+
+=head1 EXAMPLES
 
 The best examples can be found in sources for the commands in the F<apps>
 directory of the source tree.
 A notable exception is F<apps/cmp.c> which uses this API, but does
 things very differently.
 
-=head1 RETURN VALUES
-
-Detailed above.
+For an example of casting mentioned above, see
+opt_verify() in C<apps/lib/opt.c>.
 
 =head1 COPYRIGHT
 
