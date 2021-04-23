@@ -1,32 +1,33 @@
 =pod
 
 =head1 NAME
-OPTIONS, OPT_PAIR, OPT_HELP_STR, OPT_MORE_STR, OPT_SECTION_STR,
-OPT_PARAM_STR, opt_progname, opt_appname, opt_getprog, opt_init, opt_format,
-format2str, opt_int, opt_long, opt_imax, opt_umax, opt_ulong, opt_pair,
-opt_string, opt_cipher, opt_md, opt_next, opt_arg, opt_flag, opt_unknown,
-opt_num_rest, opt_rest, opt_help, opt_isdir, opt_progname opt_next
 
+OPTIONS, OPT_PAIR,
+opt_progname, opt_appname, opt_getprog, opt_init, opt_format,
+opt_int, opt_long, opt_imax, opt_umax, opt_ulong, opt_pair,
+opt_string, opt_cipher, opt_md, opt_next, opt_arg, opt_flag, opt_unknown,
+opt_num_rest, opt_rest, opt_help, opt_isdir
 - Option parsing for commands and tests
 
 =head1 SYNOPSIS
 
  #include "opt.h"
 
- typedef struct { ... } OPTIONS;
+ typedef struct { ... }  OPTIONS;
  typedef struct { ... } OPT_PAIR;
- extern const char OPT_HELP_STR[];
- extern const char OPT_MORE_STR[];
- extern const char OPT_SECTION_STR[];
- extern const char OPT_PARAM_STR[];
 
  char *opt_progname(const char *argv0);
  char *opt_appname(const char *arg0);
  char *opt_getprog(void);
  char *opt_init(int argc, char **argv, const OPTIONS *o);
 
- int opt_format(const char *s, unsigned long flags, int *result);
- const char *format2str(int format);
+ int opt_next(void);
+ void opt_help(const OPTIONS *list);
+ char *opt_arg(void);
+ char *opt_flag(void);
+ char *opt_unknown(void);
+ int opt_cipher(const char *name, EVP_CIPHER **cipherp);
+ int opt_md(const char *name, EVP_MD **mdp);
 
  int opt_int(const char *value, int *result);
  int opt_long(const char *value, long *result);
@@ -34,21 +35,14 @@ opt_num_rest, opt_rest, opt_help, opt_isdir, opt_progname opt_next
  int opt_umax(const char *value, uintmax_t *result);
  int opt_ulong(const char *value, unsigned long *result);
 
+ int opt_isdir(const char *name);
+
+ int opt_format(const char *s, unsigned long flags, int *result);
+ int opt_string(const char *name, const char **options);
  int opt_pair(const char *name, const OPT_PAIR* pairs, int *result);
- int opt_string(const char *name, conwst char **options);
-
- int opt_cipher(const char *name, EVP_CIPHER **cipherp);
- int opt_md(const char *name, EVP_MD **mdp);
-
- int opt_next(void);
- char *opt_arg(void);
- char *opt_flag(void);
- char *opt_unknown(void);
 
  int opt_num_rest(void);
  char **opt_rest(void);
- void opt_help(const OPTIONS *list);
- int opt_isdir(const char *name);
 
 =head1 DESCRIPTION
 
@@ -60,6 +54,10 @@ and other utility functions are also provided.
 
 Programs that use this should make sure to set the appropriate C<-I>
 flag.
+
+These routines expect a global B<BIO> named B<bio_err> to point to
+the equivalent of B<stderr>. This is already done in the OpenSSL
+application.
 
 =head2 Data Types
 
@@ -102,7 +100,7 @@ be chosen from the following set:
     '<' Name of file to open for input
     '>' Name of file to open for output
     'n' A signed number that fits in the C<int> type
-    'p' A non-negative number that fits in the C<int> type
+    'p' A nonnegative number that fits in the C<int> type
     'M' A signed number that fits in the C<intmax_t> type
     'U' An unsigned number that fits in the C<uintmax_t> type
     'l' A signed number that fits in the C<long> type
@@ -122,7 +120,7 @@ A program should declare its options right after the enumeration:
         {"yes", OPT_YES, '-', "Print an affirmative reply"},
         {"count", OPT_COUNT, 'p', "Repeat count"},
         {"output" OPT_OFILE, '>', "Output file; default is stdout"},
-        {NULL},
+        {NULL}
     };
 
 Note that the B<OPT_HELP> option is explicitly listed, and the list ends with
@@ -134,8 +132,9 @@ on multiple lines; each entry should use B<OPT_MORE_STR>, like this:
 
         {"output" OPT_OFILE, '>', "Output file; default is stdout"},
         {OPT_MORE_STR, 0, 0,
-         "This flag is not really needed on Unix systems"}
+         "This flag is not really needed on Unix systems"},
         {OPT_MORE_STR, 0, 0,
+         "(Unix and descendents for ths win!)"}
 
 Each subsequent line will be indented the correct amount.
 
@@ -148,15 +147,15 @@ By default, the help display will include a standard prolog:
 Sometimes there are parameters that should appear in the synopsis.
 Use B<OPT_HELP_STR> as the first entry in your array:
 
-    {OPT_HELP_STR, 1, '-', Usage: %s [options] [algorithm...]\n"}
+    {OPT_HELP_STR, 1, '-', Usage: %s [options] [text...]\n"}
 
 The B<retval> and B<valtype> are ignored, and the B<helpstr> should
 follow the general construction as shown. The B<%s> will get the program
 name.
 
 If a command has a large set of options, it can be useful to break them
-into sections.  Use B<OPT_SECTION_STR> or the macro B<OPT_SECTION>
-to indicate this (the two lines below are equivalent).
+into sections.  Use the macro B<OPT_SECTION> or B<OPT_SECTION_STR>
+to indicate this. The two lines below are equivalent:
 
     OPT_SECTION("Validation"),
     {OPT_SECTION_STR, 1, '-', "Validation options:\n"},
@@ -169,9 +168,94 @@ B<OPT_PARAMETERS> macro:
     OPT_PARAMETERS()
     {OPT_PARAM_STR, 1, '-', "Parameters:\n"}
 
-=head2 API
+Every "option" after after this should contain the parameter and 
+the help string:
+
+    {"text", 0, 0, "Words to display (optional)"},
+
+=head2 Functions
+
+The opt_init() function takes the parameters given to main() and
+a pointer to the list of options. It returns the simple program
+name, as defined by opt_progname().
+
+The opt_progname() function tags the full pathname, C<argv[0]> and return
+the simple short name of the executable, to be used for error messages and
+the like.  The opt_appname() functions takes the "application" name (such
+as the specific command from L<openssl(1)> and appends it to the program
+name. This function should only be called once.  Once set, opt_getprog()
+also returns the value.
+
+Once opt_init() has been called, opt_next() can be called in a loop to
+fetch each option in turn. It returns B<-1>, or B<OPT_EOF> when the
+end of arguments has been reached. This is typically done like this:
+
+    prog = opt_init(argc, argv, my_options);
+    while ((o = opt_next()) != OPT_EOF) {
+        switch (o) {
+        case OPT_EOF:
+        case OPT_ERR:
+    opthelp:
+            fprintf(stderr, "%s: Use -help for summary\n", prog);
+            exit(1);
+        case OPT_HELP:
+            opt_help(my_options);
+            exit(0);
+        ...other options...
+        }
+    }
+
+The opt_help() function takes a list of option definitions and prints a
+nicely-formatted output.
+
+Within the option parsing loop, opt_flag() returns the option,
+without any leading hyphens. The opt_arg() function returns
+the option's value, if present.
+
+In an option list, there can be a single option with the empty string.
+This is a "wildcard" or "unknown" option. For example, it allows an
+option to be be taken as digest algorithm, like B<-sha1>. The
+function opt_cipher() takes the specified B<name> and fills in
+the cipher into B<cipherp>.  The function opt_md() does the same
+thing for message digest.
+
+There are a several useful functions for parsing numbers.  Theseare
+opt_int(), opt_long(), opt_ulong(), opt_imax(), and opt_umax().  They all
+take C<0x> to mean hexadecimal and C<0> to mean octal, and will do the
+necessary range-checking. They return B<1> if succcessful and fill in the
+C<result> pointer with the value, or B<0> on error. Note that opt_next()
+will also do range-check on the argument if the appropriate B<valtype>
+field is specified for the option.
+
+The opt_isdir() function returns B<1> if the specified B<name> is
+a directory, or B<0> if not. The opt_format() takes a string value,
+such as used in with the B<-informat> or related flags, and fills
+the value from the constants in F<fmt.h> file.
+
+The opt_string() function checks that B<name> appears in the
+B<NULL>-terminated array of strings. It returns B<1>ne if found,
+or prints a diagnostic and returns B<0> if not.
+
+The opt_pair() function takes a list of B<pairs>, each of which
+has a text name and numeric value. The specified B<name> is
+found on the list, it puts the index in B<*result>, and returns
+B<1>. If not found, it returns B<0>.
+
+After processing all the options, the opt_num_rest() returns what is
+left, and opt_rest() returns a pointer to the first non-option.
+If there were no parameters, it will point to the B<NULL> that is
+at the end of the standard B<argv> array.
+
+=head2 Example
+
+The best examples can be found in sources for the commands in the F<apps>
+directory of the source tree.
+A notable exception is F<apps/cmp.c> which uses this API, but does
+things very differently.
 
 =head1 RETURN VALUES
+
+Detailed above.
 
 =head1 COPYRIGHT
 
