@@ -13,12 +13,12 @@
 #include <openssl/core.h>
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
+#include <openssl/prov_names.h>
 #include <openssl/params.h>
 #include "prov/bio.h"
 #include "prov/provider_ctx.h"
 #include "prov/providercommon.h"
 #include "prov/implementations.h"
-#include "prov/names.h"
 #include "prov/provider_util.h"
 #include "prov/seeding.h"
 #include "internal/nelem.h"

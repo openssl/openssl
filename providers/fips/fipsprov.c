@@ -10,13 +10,13 @@
 #include <assert.h>
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
+#include <openssl/prov_names.h>
 #include <openssl/params.h>
 #include <openssl/fips_names.h>
 #include <openssl/rand.h> /* RAND_get0_public() */
 #include <openssl/proverr.h>
 #include "internal/cryptlib.h"
 #include "prov/implementations.h"
-#include "prov/names.h"
 #include "prov/provider_ctx.h"
 #include "prov/providercommon.h"
 #include "prov/provider_util.h"
