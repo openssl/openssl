@@ -32,6 +32,10 @@ L<d2i_PKCS12(3)>,
 L<PKCS12_create(3)>,
 L<passphrase-encoding(7)>
 
+=head1 HISTORY
+
+PKCS12_init_ex() was added in OpenSSL 3.0.
+
 =head1 COPYRIGHT
 
 Copyright 2021 The OpenSSL Project Authors. All Rights Reserved.

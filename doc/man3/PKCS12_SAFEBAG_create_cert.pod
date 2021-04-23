@@ -84,6 +84,10 @@ L<PKCS12_create(3)>,
 L<PKCS12_add_safe(3)>,
 L<PKCS12_add_safes(3)>
 
+=head1 HISTORY
+
+PKCS12_SAFEBAG_create_pkcs8_encrypt_ex() was added in OpenSSL 3.0.
+
 =head1 COPYRIGHT
 
 Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.

@@ -47,13 +47,13 @@ PKCS5_pbkdf2_set, PKCS5_pbkdf2_set_ex, EVP_PBE_scrypt, EVP_PBE_scrypt_ex
                           const unsigned char *salt, int saltlen);
  int PKCS5_pbe_set0_algor_ex(X509_ALGOR *algor, int alg, int iter,
                              const unsigned char *salt, int saltlen,
-                             OSSL_LIB_CTX *libctx, const char *propq);
+                             OSSL_LIB_CTX *libctx);
 
  X509_ALGOR *PKCS5_pbe_set(int alg, int iter,
                            const unsigned char *salt, int saltlen);
  X509_ALGOR *PKCS5_pbe_set_ex(int alg, int iter,
                               const unsigned char *salt, int saltlen,
-                              OSSL_LIB_CTX *libctx, const char *propq);
+                              OSSL_LIB_CTX *libctx);
 
  X509_ALGOR *PKCS5_pbe2_set(const EVP_CIPHER *cipher, int iter,
                             unsigned char *salt, int saltlen);
@@ -63,7 +63,7 @@ PKCS5_pbkdf2_set, PKCS5_pbkdf2_set_ex, EVP_PBE_scrypt, EVP_PBE_scrypt_ex
  X509_ALGOR *PKCS5_pbe2_set_iv_ex(const EVP_CIPHER *cipher, int iter,
                                   unsigned char *salt, int saltlen,
                                   unsigned char *aiv, int prf_nid,
-                                  OSSL_LIB_CTX *libctx, const char *propq);
+                                  OSSL_LIB_CTX *libctx);
  X509_ALGOR *PKCS5_pbe2_set_scrypt(const EVP_CIPHER *cipher,
                                    const unsigned char *salt, int saltlen,
                                    unsigned char *aiv, uint64_t N, uint64_t r,
@@ -73,7 +73,7 @@ PKCS5_pbkdf2_set, PKCS5_pbkdf2_set_ex, EVP_PBE_scrypt, EVP_PBE_scrypt_ex
                               int prf_nid, int keylen);
  X509_ALGOR *PKCS5_pbkdf2_set_ex(int iter, unsigned char *salt, int saltlen,
                                  int prf_nid, int keylen,
-                                 OSSL_LIB_CTX *libctx, const char *propq);
+                                 OSSL_LIB_CTX *libctx);
 
 =head1 DESCRIPTION
 

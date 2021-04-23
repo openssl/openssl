@@ -57,6 +57,10 @@ data as an ASN.1 Octet String or NULL if an error occurred.
 L<PKCS12_pbe_crypt_ex(3)>,
 L<PKCS8_encrypt_ex(3)>
 
+=head1 HISTORY
+
+PKCS12_item_decrypt_d2i_ex() and PKCS12_item_i2d_encrypt_ex() were added in OpenSSL 3.0.
+
 =head1 COPYRIGHT
 
 Copyright 2021 The OpenSSL Project Authors. All Rights Reserved.

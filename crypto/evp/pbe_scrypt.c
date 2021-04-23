@@ -64,7 +64,7 @@ int EVP_PBE_scrypt_ex(const char *pass, size_t passlen,
         maxmem = SCRYPT_MAX_MEM;
 
     /* Use OSSL_LIB_CTX_set0_default() if you need a library context */
-    kdf = EVP_KDF_fetch(NULL, OSSL_KDF_NAME_SCRYPT, NULL);
+    kdf = EVP_KDF_fetch(ctx, OSSL_KDF_NAME_SCRYPT, propq);
     kctx = EVP_KDF_CTX_new(kdf);
     EVP_KDF_free(kdf);
     if (kctx == NULL)

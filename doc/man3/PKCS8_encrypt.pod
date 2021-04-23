@@ -25,7 +25,7 @@ PKCS8_set0_pbe, PKCS8_set0_pbe_ex - PKCS8 encrypt/decrypt functions
                          PKCS8_PRIV_KEY_INFO *p8inf, X509_ALGOR *pbe);
  X509_SIG *PKCS8_set0_pbe_ex(const char *pass, int passlen,
                              PKCS8_PRIV_KEY_INFO *p8inf, X509_ALGOR *pbe,
-                             OSSL_LIB_CTX *ctx, const char *propq);
+                             OSSL_LIB_CTX *ctx);
 
 =head1 DESCRIPTION
 
@@ -60,6 +60,11 @@ IETF RFC 7292 (L<https://tools.ietf.org/html/rfc7292>)
 =head1 SEE ALSO
 
 L<crypto(7)>
+
+=head1 HISTORY
+
+PKCS8_decrypt_ex(), PKCS8_encrypt_ex() and PKCS8_set0_pbe_ex() were added in
+OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

@@ -53,8 +53,6 @@ PKCS12_add_key() makes assumptions regarding the encoding of the given pass
 phrase.
 See L<passphrase-encoding(7)> for more information.
 
-PKCS12_add_secret() and PKCS12_add_key_ex() were added in OpenSSL 3.0.
-
 =head1 RETURN VALUES
 
 A valid B<PKCS12_SAFEBAG> structure or NULL if an error occurred.
@@ -66,6 +64,10 @@ IETF RFC 7292 (L<https://tools.ietf.org/html/rfc7292>)
 =head1 SEE ALSO
 
 L<PKCS12_create(3)>
+
+=head1 HISTORY
+
+PKCS12_add_secret() and PKCS12_add_key_ex() were added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

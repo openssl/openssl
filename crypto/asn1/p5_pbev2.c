@@ -42,7 +42,7 @@ IMPLEMENT_ASN1_FUNCTIONS(PBKDF2PARAM)
 X509_ALGOR *PKCS5_pbe2_set_iv_ex(const EVP_CIPHER *cipher, int iter,
                                  unsigned char *salt, int saltlen,
                                  unsigned char *aiv, int prf_nid,
-                                 OSSL_LIB_CTX *libctx, const char *propq)
+                                 OSSL_LIB_CTX *libctx)
 {
     X509_ALGOR *scheme = NULL, *ret = NULL;
     int alg_nid, keylen;
@@ -108,7 +108,7 @@ X509_ALGOR *PKCS5_pbe2_set_iv_ex(const EVP_CIPHER *cipher, int iter,
     X509_ALGOR_free(pbe2->keyfunc);
 
     pbe2->keyfunc = PKCS5_pbkdf2_set_ex(iter, salt, saltlen, prf_nid, keylen,
-                                        libctx, propq);
+                                        libctx);
 
     if (pbe2->keyfunc == NULL)
         goto merr;
@@ -148,20 +148,20 @@ X509_ALGOR *PKCS5_pbe2_set_iv(const EVP_CIPHER *cipher, int iter,
                               unsigned char *aiv, int prf_nid)
 {
     return PKCS5_pbe2_set_iv_ex(cipher, iter, salt, saltlen, aiv, prf_nid,
-                                NULL, NULL);
+                                NULL);
 }
 
 X509_ALGOR *PKCS5_pbe2_set(const EVP_CIPHER *cipher, int iter,
                            unsigned char *salt, int saltlen)
 {
     return PKCS5_pbe2_set_iv_ex(cipher, iter, salt, saltlen, NULL, -1,
-                                NULL, NULL);
+                                NULL);
 }
 
 
 X509_ALGOR *PKCS5_pbkdf2_set_ex(int iter, unsigned char *salt, int saltlen,
                                 int prf_nid, int keylen,
-                                OSSL_LIB_CTX *libctx, const char *propq)
+                                OSSL_LIB_CTX *libctx)
 {
     X509_ALGOR *keyfunc = NULL;
     PBKDF2PARAM *kdf = NULL;
@@ -239,6 +239,6 @@ X509_ALGOR *PKCS5_pbkdf2_set_ex(int iter, unsigned char *salt, int saltlen,
 X509_ALGOR *PKCS5_pbkdf2_set(int iter, unsigned char *salt, int saltlen,
                              int prf_nid, int keylen)
 {
-    return PKCS5_pbkdf2_set_ex(iter, salt, saltlen, prf_nid, keylen, NULL, NULL);
+    return PKCS5_pbkdf2_set_ex(iter, salt, saltlen, prf_nid, keylen, NULL);
 }
 

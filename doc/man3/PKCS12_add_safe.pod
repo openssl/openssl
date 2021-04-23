@@ -71,6 +71,10 @@ IETF RFC 7292 (L<https://tools.ietf.org/html/rfc7292>)
 
 L<PKCS12_create(3)>
 
+=head1 HISTORY
+
+PKCS12_add_safe_ex() and PKCS12_add_safes_ex() were added in OpenSSL 3.0.
+
 =head1 COPYRIGHT
 
 Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.

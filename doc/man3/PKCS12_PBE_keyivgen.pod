@@ -92,6 +92,10 @@ L<EVP_PBE_CipherInit_ex(3)>,
 L<PKCS8_encrypt_ex(3)>,
 L<passphrase-encoding(7)>
 
+=head1 HISTORY
+
+PKCS12_PBE_keyivgen_ex() and PKCS12_pbe_crypt_ex() were added in OpenSSL 3.0.
+
 =head1 COPYRIGHT
 
 Copyright 2014-2021 The OpenSSL Project Authors. All Rights Reserved.
