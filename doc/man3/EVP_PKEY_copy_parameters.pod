@@ -14,8 +14,13 @@ EVP_PKEY_cmp - public key parameter and comparison functions
  int EVP_PKEY_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from);
 
  int EVP_PKEY_parameters_eq(const EVP_PKEY *a, const EVP_PKEY *b);
- int EVP_PKEY_cmp_parameters(const EVP_PKEY *a, const EVP_PKEY *b);
  int EVP_PKEY_eq(const EVP_PKEY *a, const EVP_PKEY *b);
+
+Deprecated since OpenSSL 3.0, can be hidden entirely by defining
+B<OPENSSL_API_COMPAT> with a suitable version value, see
+L<openssl_user_macros(7)>:
+
+ int EVP_PKEY_cmp_parameters(const EVP_PKEY *a, const EVP_PKEY *b);
  int EVP_PKEY_cmp(const EVP_PKEY *a, const EVP_PKEY *b);
 
 =head1 DESCRIPTION
@@ -46,10 +51,9 @@ Since OpenSSL private keys contain public key components too the function
 EVP_PKEY_eq() can also be used to determine if a private key matches
 a public key.
 
-EVP_PKEY_cmp() and EVP_PKEY_cmp_parameters() differ in their return values 
-compared to other _cmp() functions. They are aliases for EVP_PKEY_eq() and 
-EVP_PKEY_parameters_eq() functions provided for backwards compatibility 
-with existing applications.
+The deprecated functions EVP_PKEY_cmp() and EVP_PKEY_cmp_parameters() differ in
+their return values  compared to other _cmp() functions. They are aliases for
+EVP_PKEY_eq() and EVP_PKEY_parameters_eq().
 
 =head1 RETURN VALUES
 
@@ -72,14 +76,15 @@ L<EVP_PKEY_keygen(3)>
 
 =head1 HISTORY
 
-EVP_PKEY_eq() and EVP_PKEY_parameters_eq() were added in OpenSSL 3.0 to 
-avoid confusion on the return values of EVP_PKEY_cmp() and 
-EVP_PKEY_cmp_parameters() which unlike other _cmp()
-functions do not return 0 in case their arguments are equal.
+The EVP_PKEY_cmp() and EVP_PKEY_cmp_parameters() functions were deprecated in
+OpenSSL 3.0.
+
+The EVP_PKEY_eq() and EVP_PKEY_parameters_eq() were added in OpenSSL 3.0 to
+replace EVP_PKEY_cmp() and EVP_PKEY_cmp_parameters().
 
 =head1 COPYRIGHT
 
-Copyright 2006-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2006-2021 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
