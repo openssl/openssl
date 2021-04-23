@@ -184,21 +184,25 @@ OSSL_CORE_MAKE_FUNC(void, cleanup_nonce, (const OSSL_CORE_HANDLE *handle,
                                           unsigned char *buf, size_t len))
 
 /* Functions to access the core's providers */
-#define OSSL_FUNC_CORE_PROVIDER_DO_ALL            105
-#define OSSL_FUNC_CORE_PROVIDER_NAME              106
-#define OSSL_FUNC_CORE_PROVIDER_GET0_PROVIDER_CTX 107
-#define OSSL_FUNC_CORE_PROVIDER_GET0_DISPATCH     108
+#define OSSL_FUNC_PROVIDER_REGISTER_CHILD_CB   105
+#define OSSL_FUNC_PROVIDER_DEREGISTER_CHILD_CB 106
+#define OSSL_FUNC_PROVIDER_NAME                107
+#define OSSL_FUNC_PROVIDER_GET0_PROVIDER_CTX   108
+#define OSSL_FUNC_PROVIDER_GET0_DISPATCH       109
 
-OSSL_CORE_MAKE_FUNC(int, core_provider_do_all, (const OPENSSL_CORE_CTX *ctx,
-                                                int (*cb)(OSSL_CORE_PROVIDER *provider,
-                                                          void *cbdata),
-                                                void *cbdata))
-OSSL_CORE_MAKE_FUNC(const char *, core_provider_name,
-                    (const OSSL_CORE_PROVIDER *prov))
-OSSL_CORE_MAKE_FUNC(void *, core_provider_get0_provider_ctx,
-                    (const OSSL_CORE_PROVIDER *prov))
-OSSL_CORE_MAKE_FUNC(const OSSL_DISPATCH *, core_provider_get0_dispatch,
-                    (const OSSL_CORE_PROVIDER *prov))
+OSSL_CORE_MAKE_FUNC(int, provider_register_child_cb,
+                    (const OSSL_CORE_HANDLE *handle,
+                     int (*create_cb)(const OSSL_CORE_HANDLE *provider, void *cbdata),
+                     int (*remove_cb)(const OSSL_CORE_HANDLE *provider, void *cbdata),
+                     void *cbdata))
+OSSL_CORE_MAKE_FUNC(void, provider_deregister_child_cb,
+                    (const OSSL_CORE_HANDLE *handle))
+OSSL_CORE_MAKE_FUNC(const char *, provider_name,
+                    (const OSSL_CORE_HANDLE *prov))
+OSSL_CORE_MAKE_FUNC(void *, provider_get0_provider_ctx,
+                    (const OSSL_CORE_HANDLE *prov))
+OSSL_CORE_MAKE_FUNC(const OSSL_DISPATCH *, provider_get0_dispatch,
+                    (const OSSL_CORE_HANDLE *prov))
 
 /* Functions provided by the provider to the Core, reserved numbers 1024-1535 */
 # define OSSL_FUNC_PROVIDER_TEARDOWN           1024
