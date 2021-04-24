@@ -2150,23 +2150,25 @@ static int do_x509_req_init(X509_REQ *x, STACK_OF(OPENSSL_STRING) *opts)
 }
 
 static int do_sign_init(EVP_MD_CTX *ctx, EVP_PKEY *pkey,
-                        const EVP_MD *md, STACK_OF(OPENSSL_STRING) *sigopts)
+                        const char *md, STACK_OF(OPENSSL_STRING) *sigopts)
 {
     EVP_PKEY_CTX *pkctx = NULL;
-    int def_nid;
+    char def_md[80];
 
     if (ctx == NULL)
         return 0;
     /*
-     * EVP_PKEY_get_default_digest_nid() returns 2 if the digest is mandatory
+     * EVP_PKEY_get_default_digest_name() returns 2 if the digest is mandatory
      * for this algorithm.
      */
-    if (EVP_PKEY_get_default_digest_nid(pkey, &def_nid) == 2
-            && def_nid == NID_undef) {
+    if (EVP_PKEY_get_default_digest_name(pkey, def_md, sizeof(def_md)) == 2
+            && strcmp(def_md, "UNDEF") == 0) {
         /* The signing algorithm requires there to be no digest */
         md = NULL;
     }
-    return EVP_DigestSignInit(ctx, &pkctx, md, NULL, pkey)
+
+    return EVP_DigestSignInit_ex(ctx, &pkctx, md, app_get0_libctx(),
+                                 app_get0_propq(), pkey, NULL)
         && do_pkey_ctx_init(pkctx, sigopts);
 }
 
@@ -2199,7 +2201,7 @@ static int adapt_keyid_ext(X509 *cert, X509V3_CTX *ext_ctx,
 }
 
 /* Ensure RFC 5280 compliance, adapt keyIDs as needed, and sign the cert info */
-int do_X509_sign(X509 *cert, EVP_PKEY *pkey, const EVP_MD *md,
+int do_X509_sign(X509 *cert, EVP_PKEY *pkey, const char *md,
                  STACK_OF(OPENSSL_STRING) *sigopts, X509V3_CTX *ext_ctx)
 {
     const STACK_OF(X509_EXTENSION) *exts = X509_get0_extensions(cert);
@@ -2238,7 +2240,7 @@ int do_X509_sign(X509 *cert, EVP_PKEY *pkey, const EVP_MD *md,
 }
 
 /* Sign the certificate request info */
-int do_X509_REQ_sign(X509_REQ *x, EVP_PKEY *pkey, const EVP_MD *md,
+int do_X509_REQ_sign(X509_REQ *x, EVP_PKEY *pkey, const char *md,
                      STACK_OF(OPENSSL_STRING) *sigopts)
 {
     int rv = 0;
@@ -2251,7 +2253,7 @@ int do_X509_REQ_sign(X509_REQ *x, EVP_PKEY *pkey, const EVP_MD *md,
 }
 
 /* Sign the CRL info */
-int do_X509_CRL_sign(X509_CRL *x, EVP_PKEY *pkey, const EVP_MD *md,
+int do_X509_CRL_sign(X509_CRL *x, EVP_PKEY *pkey, const char *md,
                      STACK_OF(OPENSSL_STRING) *sigopts)
 {
     int rv = 0;

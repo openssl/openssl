@@ -90,7 +90,7 @@ static char *lookup_conf(const CONF *conf, const char *group, const char *tag);
 
 static int certify(X509 **xret, const char *infile, int informat,
                    EVP_PKEY *pkey, X509 *x509,
-                   const EVP_MD *dgst,
+                   const char *dgst,
                    STACK_OF(OPENSSL_STRING) *sigopts,
                    STACK_OF(OPENSSL_STRING) *vfyopts,
                    STACK_OF(CONF_VALUE) *policy, CA_DB *db,
@@ -102,7 +102,7 @@ static int certify(X509 **xret, const char *infile, int informat,
                    int default_op, int ext_copy, int selfsign);
 static int certify_cert(X509 **xret, const char *infile, int certformat,
                         const char *passin, EVP_PKEY *pkey, X509 *x509,
-                        const EVP_MD *dgst,
+                        const char *dgst,
                         STACK_OF(OPENSSL_STRING) *sigopts,
                         STACK_OF(OPENSSL_STRING) *vfyopts,
                         STACK_OF(CONF_VALUE) *policy, CA_DB *db,
@@ -112,7 +112,7 @@ static int certify_cert(X509 **xret, const char *infile, int certformat,
                         CONF *conf, int verbose, unsigned long certopt,
                         unsigned long nameopt, int default_op, int ext_copy);
 static int certify_spkac(X509 **xret, const char *infile, EVP_PKEY *pkey,
-                         X509 *x509, const EVP_MD *dgst,
+                         X509 *x509, const char *dgst,
                          STACK_OF(OPENSSL_STRING) *sigopts,
                          STACK_OF(CONF_VALUE) *policy, CA_DB *db,
                          BIGNUM *serial, const char *subj, unsigned long chtype,
@@ -121,7 +121,7 @@ static int certify_spkac(X509 **xret, const char *infile, EVP_PKEY *pkey,
                          int verbose, unsigned long certopt,
                          unsigned long nameopt, int default_op, int ext_copy);
 static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
-                   const EVP_MD *dgst, STACK_OF(OPENSSL_STRING) *sigopts,
+                   const char *dgst, STACK_OF(OPENSSL_STRING) *sigopts,
                    STACK_OF(CONF_VALUE) *policy, CA_DB *db, BIGNUM *serial,
                    const char *subj, unsigned long chtype, int multirdn,
                    int email_dn, const char *startdate, const char *enddate, long days,
@@ -270,9 +270,9 @@ int ca_main(int argc, char **argv)
     STACK_OF(OPENSSL_STRING) *sigopts = NULL, *vfyopts = NULL;
     STACK_OF(X509) *cert_sk = NULL;
     X509_CRL *crl = NULL;
-    EVP_MD *dgst = NULL;
     char *configfile = default_config_file, *section = NULL;
-    char *md = NULL, *policy = NULL, *keyfile = NULL;
+    char def_dgst[80] = "";
+    char *dgst = NULL, *policy = NULL, *keyfile = NULL;
     char *certfile = NULL, *crl_ext = NULL, *crlnumberfile = NULL;
     int certformat = FORMAT_PEM, informat = FORMAT_PEM;
     const char *infile = NULL, *spkac_file = NULL, *ss_cert_file = NULL;
@@ -291,7 +291,7 @@ int ca_main(int argc, char **argv)
     int batch = 0, default_op = 1, doupdatedb = 0, ext_copy = EXT_COPY_NONE;
     int keyformat = FORMAT_PEM, multirdn = 1, notext = 0, output_der = 0;
     int ret = 1, email_dn = 1, req = 0, verbose = 0, gencrl = 0, dorevoke = 0;
-    int rand_ser = 0, i, j, selfsign = 0, def_nid, def_ret;
+    int rand_ser = 0, i, j, selfsign = 0, def_ret;
     char *crl_lastupdate = NULL, *crl_nextupdate = NULL;
     long crldays = 0, crlhours = 0, crlsec = 0, days = 0;
     unsigned long chtype = MBSTRING_ASC, certopt = 0;
@@ -358,7 +358,7 @@ opthelp:
             days = atoi(opt_arg());
             break;
         case OPT_MD:
-            md = opt_arg();
+            dgst = opt_arg();
             break;
         case OPT_POLICY:
             policy = opt_arg();
@@ -788,28 +788,25 @@ end_of_options:
         }
     }
 
-    def_ret = EVP_PKEY_get_default_digest_nid(pkey, &def_nid);
+    def_ret = EVP_PKEY_get_default_digest_name(pkey, def_dgst, sizeof(def_dgst));
     /*
-     * EVP_PKEY_get_default_digest_nid() returns 2 if the digest is
+     * EVP_PKEY_get_default_digest_name() returns 2 if the digest is
      * mandatory for this algorithm.
      */
-    if (def_ret == 2 && def_nid == NID_undef) {
+    if (def_ret == 2 && strcmp(def_dgst, "UNDEF") == 0) {
         /* The signing algorithm requires there to be no digest */
-        dgst = (EVP_MD *)EVP_md_null();
-    } else if (md == NULL
-               && (md = lookup_conf(conf, section, ENV_DEFAULT_MD)) == NULL) {
+        dgst = NULL;
+    } else if (dgst == NULL
+               && (dgst = lookup_conf(conf, section, ENV_DEFAULT_MD)) == NULL) {
         goto end;
     } else {
-        if (strcmp(md, "default") == 0) {
+        if (strcmp(dgst, "default") == 0) {
             if (def_ret <= 0) {
                 BIO_puts(bio_err, "no default digest\n");
                 goto end;
             }
-            md = (char *)OBJ_nid2sn(def_nid);
+            dgst = def_dgst;
         }
-
-        if (!opt_md(md, &dgst))
-            goto end;
     }
 
     if (req) {
@@ -821,8 +818,7 @@ end_of_options:
                 email_dn = 0;
         }
         if (verbose)
-            BIO_printf(bio_err, "message digest is %s\n",
-                       EVP_MD_name(dgst));
+            BIO_printf(bio_err, "message digest is %s\n", dgst);
         if (policy == NULL
             && (policy = lookup_conf(conf, section, ENV_POLICY)) == NULL)
             goto end;
@@ -1330,7 +1326,6 @@ end_of_options:
     sk_OPENSSL_STRING_free(sigopts);
     sk_OPENSSL_STRING_free(vfyopts);
     EVP_PKEY_free(pkey);
-    EVP_MD_free(dgst);
     X509_free(x509);
     X509_CRL_free(crl);
     NCONF_free(conf);
@@ -1349,7 +1344,7 @@ static char *lookup_conf(const CONF *conf, const char *section, const char *tag)
 
 static int certify(X509 **xret, const char *infile, int informat,
                    EVP_PKEY *pkey, X509 *x509,
-                   const EVP_MD *dgst,
+                   const char *dgst,
                    STACK_OF(OPENSSL_STRING) *sigopts,
                    STACK_OF(OPENSSL_STRING) *vfyopts,
                    STACK_OF(CONF_VALUE) *policy, CA_DB *db,
@@ -1407,7 +1402,7 @@ static int certify(X509 **xret, const char *infile, int informat,
 
 static int certify_cert(X509 **xret, const char *infile, int certformat,
                         const char *passin, EVP_PKEY *pkey, X509 *x509,
-                        const EVP_MD *dgst,
+                        const char *dgst,
                         STACK_OF(OPENSSL_STRING) *sigopts,
                         STACK_OF(OPENSSL_STRING) *vfyopts,
                         STACK_OF(CONF_VALUE) *policy, CA_DB *db,
@@ -1463,7 +1458,7 @@ static int certify_cert(X509 **xret, const char *infile, int certformat,
 }
 
 static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
-                   const EVP_MD *dgst, STACK_OF(OPENSSL_STRING) *sigopts,
+                   const char *dgst, STACK_OF(OPENSSL_STRING) *sigopts,
                    STACK_OF(CONF_VALUE) *policy, CA_DB *db, BIGNUM *serial,
                    const char *subj, unsigned long chtype, int multirdn,
                    int email_dn, const char *startdate, const char *enddate, long days,
@@ -1964,7 +1959,7 @@ static void write_new_certificate(BIO *bp, X509 *x, int output_der, int notext)
 }
 
 static int certify_spkac(X509 **xret, const char *infile, EVP_PKEY *pkey,
-                         X509 *x509, const EVP_MD *dgst,
+                         X509 *x509, const char *dgst,
                          STACK_OF(OPENSSL_STRING) *sigopts,
                          STACK_OF(CONF_VALUE) *policy, CA_DB *db,
                          BIGNUM *serial, const char *subj, unsigned long chtype,
