@@ -231,5 +231,32 @@ jobs:
       run: make test TESTS="test_external_gost_engine"
     - name: test external krb5
       run: make test TESTS="test_external_krb5"
-#   - name: test external pyca
-#     run: make test TESTS="test_external_pyca"
+
+  external-test-pyca:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        RUST:
+          - 1.51.0
+        PYTHON:
+          - 3.9
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+    - name: Configure OpenSSL
+      run: ./config --strict-warnings --debug enable-external-tests && perl configdata.pm --dump
+    - name: make
+      run: make -s -j4
+    - name: Setup Python
+      uses: actions/setup-python@v2.2.2
+      with:
+        python-version: ${{ matrix.PYTHON }}
+    - uses: actions-rs/toolchain@v1
+      with:
+        profile: minimal
+        toolchain: ${{ matrix.RUST }}
+        override: true
+        default: true
+    - name: test external pyca
+      run: make test TESTS="test_external_pyca"
