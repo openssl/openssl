@@ -240,12 +240,11 @@ int req_main(int argc, char **argv)
     X509 *new_x509 = NULL, *CAcert = NULL;
     X509_REQ *req = NULL;
     EVP_CIPHER *cipher = NULL;
-    EVP_MD *digest = NULL;
     int ext_copy = EXT_COPY_UNSET;
     BIO *addext_bio = NULL;
     char *extensions = NULL;
     const char *infile = NULL, *CAfile = NULL, *CAkeyfile = NULL;
-    char *outfile = NULL, *keyfile = NULL, *digestname = NULL;
+    char *outfile = NULL, *keyfile = NULL, *digest = NULL;
     char *keyalgstr = NULL, *p, *prog, *passargin = NULL, *passargout = NULL;
     char *passin = NULL, *passout = NULL;
     char *nofree_passin = NULL, *nofree_passout = NULL;
@@ -468,7 +467,7 @@ int req_main(int argc, char **argv)
             newreq = precert = 1;
             break;
         case OPT_MD:
-            digestname = opt_unknown();
+            digest = opt_unknown();
             break;
         }
     }
@@ -480,11 +479,6 @@ int req_main(int argc, char **argv)
 
     if (!app_RAND_load())
         goto end;
-
-    if (digestname != NULL) {
-        if (!opt_md(digestname, &digest))
-            goto opthelp;
-    }
 
     if (!gen_x509) {
         if (days != UNSET_DAYS)
@@ -537,12 +531,10 @@ int req_main(int argc, char **argv)
 
     if (digest == NULL) {
         p = NCONF_get_string(req_conf, section, "default_md");
-        if (p == NULL) {
+        if (p == NULL)
             ERR_clear_error();
-        } else {
-            if (!opt_md(p, &digest))
-                goto opthelp;
-        }
+        else
+            digest = p;
     }
 
     if (extensions == NULL) {
@@ -1056,7 +1048,6 @@ int req_main(int argc, char **argv)
     BIO_free(addext_bio);
     BIO_free_all(out);
     EVP_PKEY_free(pkey);
-    EVP_MD_free(digest);
     EVP_PKEY_CTX_free(genctx);
     sk_OPENSSL_STRING_free(pkeyopts);
     sk_OPENSSL_STRING_free(sigopts);
