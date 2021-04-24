@@ -10,3 +10,6 @@
 	path = gost-engine
 	url = https://github.com/gost-engine/engine
 	update = rebase
+[submodule "wycheproof"]
+	path = wycheproof
+	url = https://github.com/google/wycheproof
