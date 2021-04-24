@@ -348,20 +348,14 @@ static int ebcdic_write(BIO *b, const char *in, int inl)
 
 static long ebcdic_ctrl(BIO *b, int cmd, long num, void *ptr)
 {
-    long ret;
     BIO *next = BIO_next(b);
 
     if (next == NULL)
         return 0;
     switch (cmd) {
-    case BIO_CTRL_DUP:
-        ret = 0L;
-        break;
-    default:
-        ret = BIO_ctrl(next, cmd, num, ptr);
-        break;
-    }
-    return ret;
+    if (cmd == BIO_CTRL_DUP)
+        return 0L;
+    return BIO_ctrl(next, cmd, num, ptr);
 }
 
 static int ebcdic_gets(BIO *bp, char *buf, int size)
@@ -1066,7 +1060,7 @@ int s_server_main(int argc, char *argv[])
                        "Cannot supply both a protocol flag and '-no_<prot>'\n");
             goto end;
         }
-        switch (o) {
+        switch ((OPTION_CHOICE)o) {
         case OPT_EOF:
         case OPT_ERR:
  opthelp:

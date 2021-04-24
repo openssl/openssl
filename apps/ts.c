@@ -183,7 +183,7 @@ int ts_main(int argc, char **argv)
 
     prog = opt_init(argc, argv, ts_options);
     while ((o = opt_next()) != OPT_EOF) {
-        switch (o) {
+        switch ((OPTION_CHOICE)o) {
         case OPT_EOF:
         case OPT_ERR:
  opthelp:

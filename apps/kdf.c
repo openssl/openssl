@@ -59,7 +59,7 @@ int kdf_main(int argc, char **argv)
 
     prog = opt_init(argc, argv, kdf_options);
     while ((o = opt_next()) != OPT_EOF) {
-        switch (o) {
+        switch ((OPTION_CHOICE)o) {
         default:
 opthelp:
             BIO_printf(bio_err, "%s: Use -help for summary.\n", prog);

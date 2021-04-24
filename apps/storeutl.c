@@ -87,7 +87,7 @@ int storeutl_main(int argc, char *argv[])
     OSSL_LIB_CTX *libctx = app_get0_libctx();
 
     while ((o = opt_next()) != OPT_EOF) {
-        switch (o) {
+        switch ((OPTION_CHOICE)o) {
         case OPT_EOF:
         case OPT_ERR:
  opthelp:

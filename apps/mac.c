@@ -69,7 +69,7 @@ int mac_main(int argc, char **argv)
     prog = opt_init(argc, argv, mac_options);
     buf = app_malloc(BUFSIZE, "I/O buffer");
     while ((o = opt_next()) != OPT_EOF) {
-        switch (o) {
+        switch ((OPTION_CHOICE)o) {
         default:
 opthelp:
             BIO_printf(bio_err, "%s: Use -help for summary.\n", prog);

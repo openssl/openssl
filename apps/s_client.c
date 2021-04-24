@@ -2117,7 +2117,7 @@ int s_client_main(int argc, char **argv)
     sbuf_len = 0;
     sbuf_off = 0;
 
-    switch ((PROTOCOL_CHOICE) starttls_proto) {
+    switch ((PROTOCOL_CHOICE)starttls_proto) {
     case PROTO_OFF:
         break;
     case PROTO_LMTP:

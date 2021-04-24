@@ -1491,7 +1491,7 @@ int list_main(int argc, char **argv)
 
     prog = opt_init(argc, argv, list_options);
     while ((o = opt_next()) != OPT_EOF) {
-        switch (o) {
+        switch ((HELPLIST_CHOICE)o) {
         case OPT_EOF:  /* Never hit, but suppresses warning */
         case OPT_ERR:
 opthelp:

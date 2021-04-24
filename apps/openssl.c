@@ -336,7 +336,7 @@ int help_main(int argc, char **argv)
 
     prog = opt_init(argc, argv, help_options);
     while ((o = opt_next()) != OPT_hEOF) {
-        switch (o) {
+        switch ((HELP_CHOICE)o) {
         case OPT_hERR:
         case OPT_hEOF:
             BIO_printf(bio_err, "%s: Use -help for summary.\n", prog);
