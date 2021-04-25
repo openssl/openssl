@@ -679,6 +679,7 @@ EOF
         }
       ],
       [ '.*86-.*-linux1',         { target => "linux-aout" } ],
+      [ 'riscv64-.*-linux.',      { target => "linux64-riscv64" } ],
       [ '.*-.*-linux.',           { target => "linux-generic32" } ],
       [ 'sun4[uv].*-.*-solaris2',
         sub {
