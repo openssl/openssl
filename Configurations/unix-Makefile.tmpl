@@ -526,9 +526,9 @@ list-tests:
 	@echo "Tests are not supported with your chosen Configure options"
 	@ : {- output_on() if !$disabled{tests}; "" -}
 
-install: install_sw install_ssldirs install_docs
+install: install_sw install_ssldirs install_docs {- $disabled{fips} ? "" : "install_fips" -}
 
-uninstall: uninstall_docs uninstall_sw
+uninstall: uninstall_docs uninstall_sw {- $disabled{fips} ? "" : "uninstall_fips" -}
 
 libclean:
 	@set -e; for s in $(SHLIB_INFO); do \
@@ -594,6 +594,7 @@ install_docs: install_man_docs install_html_docs
 uninstall_docs: uninstall_man_docs uninstall_html_docs
 	$(RM) -r $(DESTDIR)$(DOCDIR)
 
+{- output_off() if $disabled{fips}; "" -}
 install_fips: build_sw providers/fipsmodule.cnf
 	@[ -n "$(INSTALLTOP)" ] || (echo INSTALLTOP should not be empty; exit 1)
 	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(MODULESDIR)
@@ -612,6 +613,14 @@ uninstall_fips:
 	$(RM) $(DESTDIR)$(OPENSSLDIR)/fipsmodule.cnf
 	@$(ECHO) "*** Uninstalling FIPS module"
 	$(RM) $(DESTDIR)$(MODULESDIR)/$(FIPSMODULENAME)
+{- if ($disabled{fips}) { output_on(); } else { output_off(); } "" -}
+install_fips:
+	@$(ECHO) "The 'install_fips' target requires the 'enable-fips' option"
+
+uninstall_fips:
+	@$(ECHO) "The 'uninstall_fips' target requires the 'enable-fips' option"
+{- output_on() if !$disabled{fips}; "" -}
+
 
 install_ssldirs:
 	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(OPENSSLDIR)/certs
