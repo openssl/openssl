@@ -259,4 +259,4 @@ jobs:
         override: true
         default: true
     - name: test external pyca
-      run: make test TESTS="test_external_pyca"
+      run: make test TESTS="test_external_pyca" VERBOSE=1
