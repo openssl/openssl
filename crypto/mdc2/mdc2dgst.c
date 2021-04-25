@@ -48,7 +48,7 @@ int MDC2_Update(MDC2_CTX *c, const unsigned char *in, size_t len)
 
     i = c->num;
     if (i != 0) {
-          /* repair CVE-2016-6303, avoid overflow */
+        /* fixes CVE-2016-6303, avoid overflow */
         if (len + i < MDC2_BLOCK) {
             /* partial block */
             memcpy(&(c->data[i]), in, len);
