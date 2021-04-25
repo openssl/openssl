@@ -108,7 +108,14 @@
         */
 #    include <winsock2.h>
 #    include <ws2tcpip.h>
-#    include <wspiapi.h>
+       /*
+        * Clang-based C++Builder 10.3.3 toolchains cannot find C inline
+        * definitions at link-time.  This header defines WspiapiLoad() as an
+        * __inline function.  https://quality.embarcadero.com/browse/RSP-33806
+        */
+#    if !defined(__BORLANDC__) || !defined(__clang__)
+#     include <wspiapi.h>
+#    endif
        /* yes, they have to be #included prior to <windows.h> */
 #   endif
 #   include <windows.h>
