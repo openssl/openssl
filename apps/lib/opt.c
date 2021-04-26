@@ -376,10 +376,12 @@ int opt_cipher(const char *name, EVP_CIPHER **cipherp)
  */
 int opt_md(const char *name, EVP_MD **mdp)
 {
-    *mdp = (EVP_MD *)EVP_get_digestbyname(name);
+    if (*mdp != NULL)
+        EVP_MD_free(*mdp);
+    *mdp = EVP_MD_fetch(NULL, name, NULL);
     if (*mdp != NULL)
         return 1;
-    *mdp = EVP_MD_fetch(NULL, name, NULL);
+    *mdp = (EVP_MD *)EVP_get_digestbyname(name);
     if (*mdp != NULL)
         return 1;
     opt_printf_stderr("%s: Unknown option or message digest: %s\n", prog,

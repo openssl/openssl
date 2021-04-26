@@ -502,17 +502,15 @@ static const char *evp_md_name = NULL;
 static char *evp_mac_ciphername = "aes-128-cbc";
 static char *evp_cmac_name = NULL;
 
-static EVP_MD *obtain_md(const char *name, int *fetched)
+static EVP_MD *obtain_md(const char *name)
 {
     EVP_MD *md = NULL;
 
-    *fetched = 0;
     /* Look through providers' digests */
     ERR_set_mark();
     md = EVP_MD_fetch(NULL, name, NULL);
     ERR_pop_to_mark();
     if (md != NULL) {
-        *fetched = 1;
         return md;
     }
 
@@ -521,9 +519,8 @@ static EVP_MD *obtain_md(const char *name, int *fetched)
 
 static int have_md(const char *name)
 {
-    int fetched = 0;
     int ret = 0;
-    EVP_MD *md = obtain_md(name, &fetched);
+    EVP_MD *md = obtain_md(name);
 
     if (md != NULL) {
         EVP_MD_CTX *ctx = EVP_MD_CTX_new();
@@ -531,23 +528,20 @@ static int have_md(const char *name)
         if (ctx != NULL && EVP_DigestInit(ctx, md) > 0)
             ret = 1;
         EVP_MD_CTX_free(ctx);
-        if (fetched)
-            EVP_MD_free(md);
+        EVP_MD_free(md);
     }
     return ret;
 }
 
-static EVP_CIPHER *obtain_cipher(const char *name, int *fetched)
+static EVP_CIPHER *obtain_cipher(const char *name)
 {
     EVP_CIPHER *cipher = NULL;
 
-    *fetched = 0;
     /* Look through providers' digests */
     ERR_set_mark();
     cipher = EVP_CIPHER_fetch(NULL, name, NULL);
     ERR_pop_to_mark();
     if (cipher != NULL) {
-        *fetched = 1;
         return cipher;
     }
 
@@ -556,9 +550,8 @@ static EVP_CIPHER *obtain_cipher(const char *name, int *fetched)
 
 static int have_cipher(const char *name)
 {
-    int fetched = 0;
     int ret = 0;
-    EVP_CIPHER *cipher = obtain_cipher(name, &fetched);
+    EVP_CIPHER *cipher = obtain_cipher(name);
 
     if (cipher != NULL) {
         EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
@@ -567,8 +560,7 @@ static int have_cipher(const char *name)
             && EVP_CipherInit_ex(ctx, cipher, NULL, NULL, NULL, 1) > 0)
             ret = 1;
         EVP_CIPHER_CTX_free(ctx);
-        if (fetched)
-            EVP_CIPHER_free(cipher);
+        EVP_CIPHER_free(cipher);
     }
     return ret;
 }
@@ -578,8 +570,8 @@ static int EVP_Digest_loop(const char *mdname, int algindex, void *args)
     loopargs_t *tempargs = *(loopargs_t **) args;
     unsigned char *buf = tempargs->buf;
     unsigned char digest[EVP_MAX_MD_SIZE];
-    int count, fetched = 0;
-    EVP_MD *md = obtain_md(mdname, &fetched);
+    int count;
+    EVP_MD *md = obtain_md(mdname);
 
     if (md == NULL)
         return -1;
@@ -590,8 +582,7 @@ static int EVP_Digest_loop(const char *mdname, int algindex, void *args)
             break;
         }
     }
-    if (fetched)
-        EVP_MD_free(md);
+    EVP_MD_free(md);
     return count;
 }
 
@@ -714,8 +705,7 @@ static EVP_CIPHER_CTX *init_evp_cipher_ctx(const char *ciphername,
                                            int keylen)
 {
     EVP_CIPHER_CTX *ctx = NULL;
-    int fetched = 0;
-    EVP_CIPHER *cipher = obtain_cipher(ciphername, &fetched);
+    EVP_CIPHER *cipher = obtain_cipher(ciphername);
 
     if (cipher == NULL)
         return NULL;
@@ -742,8 +732,7 @@ static EVP_CIPHER_CTX *init_evp_cipher_ctx(const char *ciphername,
     }
 
 end:
-    if (fetched)
-        EVP_CIPHER_free(cipher);
+    EVP_CIPHER_free(cipher);
     return ctx;
 }
 
@@ -1388,7 +1377,6 @@ int speed_main(int argc, char **argv)
     unsigned int i, k, loopargs_len = 0, async_jobs = 0;
     int keylen;
     int buflen;
-    int fetched_cipher = 0;
     BIGNUM *bn = NULL;
     EVP_PKEY_CTX *genctx = NULL;
 #ifndef NO_FORK
@@ -1533,7 +1521,7 @@ int speed_main(int argc, char **argv)
                 BIO_printf(bio_err, "%s: -evp option cannot be used more than once\n", prog);
                 goto opterr;
             }
-            evp_cipher = obtain_cipher(opt_arg(), &fetched_cipher);
+            evp_cipher = obtain_cipher(opt_arg());
             if (evp_cipher == NULL) {
                 if (have_md(opt_arg()))
                     evp_md_name = opt_arg();
@@ -2295,16 +2283,14 @@ int speed_main(int argc, char **argv)
         EVP_MAC *mac = EVP_MAC_fetch(NULL, "CMAC", NULL);
         OSSL_PARAM params[3];
         EVP_CIPHER *cipher;
-        int fetched = 0;
 
         if (mac == NULL || evp_mac_ciphername == NULL)
             goto end;
-        if ((cipher = obtain_cipher(evp_mac_ciphername, &fetched)) == NULL)
+        if ((cipher = obtain_cipher(evp_mac_ciphername)) == NULL)
             goto end;
 
         keylen = EVP_CIPHER_key_length(cipher);
-        if (fetched)
-            EVP_CIPHER_free(cipher);
+        EVP_CIPHER_free(cipher);
         if (keylen <= 0 || keylen > (int)sizeof(key32)) {
             BIO_printf(bio_err, "\nRequested CMAC cipher with unsupported key length.\n");
             goto end;
@@ -3360,9 +3346,7 @@ int speed_main(int argc, char **argv)
     }
     OPENSSL_free(loopargs);
     release_engine(e);
-    if (fetched_cipher) {
-        EVP_CIPHER_free(evp_cipher);
-    }
+    EVP_CIPHER_free(evp_cipher);
     return ret;
 }
 
