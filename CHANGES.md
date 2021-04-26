@@ -23,6 +23,22 @@ OpenSSL 3.0
 
 ### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
 
+ * OpenSSL includes a cryptographic module that is intended to be FIPS 140-2
+   validated. The module is implemented as an OpenSSL provider, the so-called
+   FIPS provider. A list of all changes related to the FIPS provider would go
+   beyond the scope of this CHANGES file, please consult the README-FIPS and
+   README-PROVIDERS files, as well as the migration guide.
+
+   The FIPS provider is disabled by default and needs to be enabled explicitly
+   at configuration time using the `enable-fips` option. If it is enabled,
+   the FIPS provider gets built and installed in addition to the default and
+   the legacy provider. No separate installation procedure is necessary.
+   There is however a dedicated `install_fips` make target, which serves the
+   special purpose of installing only the FIPS provider into an existing
+   OpenSSL installation.
+
+   *OpenSSL team members and many third party contributors*
+
  * For the key types DH and DHX the allowed settable parameters are now different.
    Previously (in 1.1.1) these conflicting parameters were allowed, but will now
    result in errors. See EVP_PKEY-DH(7) for further details. This affects the
