@@ -463,7 +463,7 @@ int OSSL_STORE_eof(OSSL_STORE_CTX *ctx)
     if (ctx->fetched_loader == NULL)
         ret = ctx->loader->eof(ctx->loader_ctx);
 #endif
-    return ret;
+    return ret != 0;
 }
 
 static int ossl_store_close_it(OSSL_STORE_CTX *ctx)

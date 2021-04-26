@@ -143,8 +143,8 @@ on error or when end of data is reached.
 Use OSSL_STORE_error() and OSSL_STORE_eof() to determine the meaning of a
 returned NULL.
 
-OSSL_STORE_eof() returns 1 if the end of data has been reached, otherwise
-0.
+OSSL_STORE_eof() returns 1 if the end of data has been reached
+or an error occurred, 0 otherwise.
 
 OSSL_STORE_error() returns 1 if an error occurred in an OSSL_STORE_load() call,
 otherwise 0.
