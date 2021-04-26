@@ -107,7 +107,7 @@ be chosen from the following set:
     '>' Name of file to open for output
     'n' A signed number that fits in the C<int> type
     'p' A positive number that fits in the C<int> type
-    'N' A non-negative number that fits in the C<int> type
+    'N' A nonnegative number that fits in the C<int> type
     'M' A signed number that fits in the C<intmax_t> type
     'U' An unsigned number that fits in the C<uintmax_t> type
     'l' A signed number that fits in the C<long> type
