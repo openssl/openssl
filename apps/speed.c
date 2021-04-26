@@ -502,27 +502,12 @@ static const char *evp_md_name = NULL;
 static char *evp_mac_ciphername = "aes-128-cbc";
 static char *evp_cmac_name = NULL;
 
-static EVP_MD *obtain_md(const char *name)
-{
-    EVP_MD *md = NULL;
-
-    /* Look through providers' digests */
-    ERR_set_mark();
-    md = EVP_MD_fetch(NULL, name, NULL);
-    ERR_pop_to_mark();
-    if (md != NULL) {
-        return md;
-    }
-
-    return (EVP_MD *)EVP_get_digestbyname(name);
-}
-
 static int have_md(const char *name)
 {
     int ret = 0;
-    EVP_MD *md = obtain_md(name);
+    EVP_MD *md = NULL;
 
-    if (md != NULL) {
+    if (opt_md_silent(name, &md)) {
         EVP_MD_CTX *ctx = EVP_MD_CTX_new();
 
         if (ctx != NULL && EVP_DigestInit(ctx, md) > 0)
@@ -533,27 +518,12 @@ static int have_md(const char *name)
     return ret;
 }
 
-static EVP_CIPHER *obtain_cipher(const char *name)
-{
-    EVP_CIPHER *cipher = NULL;
-
-    /* Look through providers' digests */
-    ERR_set_mark();
-    cipher = EVP_CIPHER_fetch(NULL, name, NULL);
-    ERR_pop_to_mark();
-    if (cipher != NULL) {
-        return cipher;
-    }
-
-    return (EVP_CIPHER *)EVP_get_cipherbyname(name);
-}
-
 static int have_cipher(const char *name)
 {
     int ret = 0;
-    EVP_CIPHER *cipher = obtain_cipher(name);
+    EVP_CIPHER *cipher = NULL;
 
-    if (cipher != NULL) {
+    if (opt_cipher_silent(name, &cipher)) {
         EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
 
         if (ctx != NULL
@@ -571,9 +541,9 @@ static int EVP_Digest_loop(const char *mdname, int algindex, void *args)
     unsigned char *buf = tempargs->buf;
     unsigned char digest[EVP_MAX_MD_SIZE];
     int count;
-    EVP_MD *md = obtain_md(mdname);
+    EVP_MD *md = NULL;
 
-    if (md == NULL)
+    if (!opt_md_silent(mdname, &md))
         return -1;
     for (count = 0; COND(c[algindex][testnum]); count++) {
         if (!EVP_Digest(buf, (size_t)lengths[testnum], digest, NULL, md,
@@ -705,9 +675,9 @@ static EVP_CIPHER_CTX *init_evp_cipher_ctx(const char *ciphername,
                                            int keylen)
 {
     EVP_CIPHER_CTX *ctx = NULL;
-    EVP_CIPHER *cipher = obtain_cipher(ciphername);
+    EVP_CIPHER *cipher = NULL;
 
-    if (cipher == NULL)
+    if (!opt_cipher_silent(ciphername, &cipher))
         return NULL;
 
     if ((ctx = EVP_CIPHER_CTX_new()) == NULL)
@@ -1521,17 +1491,19 @@ int speed_main(int argc, char **argv)
                 BIO_printf(bio_err, "%s: -evp option cannot be used more than once\n", prog);
                 goto opterr;
             }
-            evp_cipher = obtain_cipher(opt_arg());
-            if (evp_cipher == NULL) {
+            ERR_set_mark();
+            if (!opt_cipher_silent(opt_arg(), &evp_cipher)) {
                 if (have_md(opt_arg()))
                     evp_md_name = opt_arg();
             }
             if (evp_cipher == NULL && evp_md_name == NULL) {
+                ERR_clear_last_mark();
                 BIO_printf(bio_err,
                            "%s: %s is an unknown cipher or digest\n",
                            prog, opt_arg());
                 goto end;
             }
+            ERR_pop_to_mark();
             doit[D_EVP] = 1;
             break;
         case OPT_HMAC:
@@ -2282,11 +2254,11 @@ int speed_main(int argc, char **argv)
     if (doit[D_EVP_CMAC]) {
         EVP_MAC *mac = EVP_MAC_fetch(NULL, "CMAC", NULL);
         OSSL_PARAM params[3];
-        EVP_CIPHER *cipher;
+        EVP_CIPHER *cipher = NULL;
 
         if (mac == NULL || evp_mac_ciphername == NULL)
             goto end;
-        if ((cipher = obtain_cipher(evp_mac_ciphername)) == NULL)
+        if (!opt_cipher(evp_mac_ciphername, &cipher))
             goto end;
 
         keylen = EVP_CIPHER_key_length(cipher);

@@ -22,6 +22,7 @@
 #include <errno.h>
 #include <ctype.h>
 #include <limits.h>
+#include <openssl/err.h>
 #include <openssl/bio.h>
 #include <openssl/x509v3.h>
 
@@ -359,34 +360,54 @@ void print_format_error(int format, unsigned long flags)
 }
 
 /* Parse a cipher name, put it in *EVP_CIPHER; return 0 on failure, else 1. */
+int opt_cipher_silent(const char *name, EVP_CIPHER **cipherp)
+{
+    EVP_CIPHER_free(*cipherp);
+
+    ERR_set_mark();
+    if ((*cipherp = EVP_CIPHER_fetch(NULL, name, NULL)) != NULL
+        || (*cipherp = (EVP_CIPHER *)EVP_get_cipherbyname(name)) != NULL) {
+        ERR_pop_to_mark();
+        return 1;
+    }
+    ERR_clear_last_mark();
+    return 0;
+}
+
 int opt_cipher(const char *name, EVP_CIPHER **cipherp)
 {
-    *cipherp = EVP_CIPHER_fetch(NULL, name, NULL);
-    if (*cipherp != NULL)
-        return 1;
-    *cipherp = (EVP_CIPHER *)EVP_get_cipherbyname(name);
-    if (*cipherp != NULL)
-        return 1;
-    opt_printf_stderr("%s: Unknown cipher: %s\n", prog, name);
-    return 0;
+    int ret;
+
+    if ((ret = opt_cipher_silent(name, cipherp)) == 0)
+       opt_printf_stderr("%s: Unknown cipher: %s\n", prog, name);
+    return ret;
 }
 
 /*
  * Parse message digest name, put it in *EVP_MD; return 0 on failure, else 1.
  */
+int opt_md_silent(const char *name, EVP_MD **mdp)
+{
+    EVP_MD_free(*mdp);
+
+    ERR_set_mark();
+    if ((*mdp = EVP_MD_fetch(NULL, name, NULL)) != NULL
+        || (*mdp = (EVP_MD *)EVP_get_digestbyname(name)) != NULL) {
+        ERR_pop_to_mark();
+        return 1;
+    }
+    ERR_clear_last_mark();
+    return 0;
+}
+
 int opt_md(const char *name, EVP_MD **mdp)
 {
-    if (*mdp != NULL)
-        EVP_MD_free(*mdp);
-    *mdp = EVP_MD_fetch(NULL, name, NULL);
-    if (*mdp != NULL)
-        return 1;
-    *mdp = (EVP_MD *)EVP_get_digestbyname(name);
-    if (*mdp != NULL)
-        return 1;
-    opt_printf_stderr("%s: Unknown option or message digest: %s\n", prog,
-                      name != NULL ? name : "\"\"");
-    return 0;
+    int ret;
+
+    if ((ret = opt_md_silent(name, mdp)) == 0)
+        opt_printf_stderr("%s: Unknown option or message digest: %s\n", prog,
+                          name != NULL ? name : "\"\"");
+    return ret;
 }
 
 /* Look through a list of name/value pairs. */
