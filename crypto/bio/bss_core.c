@@ -30,6 +30,7 @@ static void *bio_core_globals_new(OSSL_LIB_CTX *ctx)
 }
 
 static const OSSL_LIB_CTX_METHOD bio_core_globals_method = {
+    OSSL_LIB_CTX_METHOD_DEFAULT_PRIORITY,
     bio_core_globals_new,
     bio_core_globals_free,
 };

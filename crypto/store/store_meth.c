@@ -81,6 +81,7 @@ static void *loader_store_new(OSSL_LIB_CTX *ctx)
 
 
 static const OSSL_LIB_CTX_METHOD loader_store_method = {
+    OSSL_LIB_CTX_METHOD_DEFAULT_PRIORITY,
     loader_store_new,
     loader_store_free,
 };

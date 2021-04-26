@@ -76,6 +76,7 @@ static void *decoder_store_new(OSSL_LIB_CTX *ctx)
 
 
 static const OSSL_LIB_CTX_METHOD decoder_store_method = {
+    OSSL_LIB_CTX_METHOD_DEFAULT_PRIORITY,
     decoder_store_new,
     decoder_store_free,
 };
