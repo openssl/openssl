@@ -23,7 +23,7 @@ sub resext              { '.res.obj' }
 sub shlibext            { '.dll' }
 sub shlibextimport      { $target{shared_import_extension} || '.dll.a' }
 sub shlibextsimple      { undef }
-sub makedepprog         { $disabled{makedepend} ? undef : $config{makedepprog} }
+sub makedepcmd          { $disabled{makedepend} ? undef : $config{makedepcmd} }
 
 (my $sover_filename = $config{shlib_version}) =~ s|\.|_|g;
 sub shlib_version_as_filename {
