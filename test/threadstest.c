@@ -446,7 +446,7 @@ static int test_multi(int idx)
     OSSL_PROVIDER *prov = NULL, *prov2 = NULL;
     void (*worker)(void) = NULL;
     void (*worker2)(void) = NULL;
-    EVP_MD *sha256;
+    EVP_MD *sha256 = NULL;
 
     if (idx == 1 && !do_fips)
         return TEST_skip("FIPS not supported");
