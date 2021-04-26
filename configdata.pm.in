@@ -112,13 +112,14 @@ unless (caller) {
     use File::Basename;
     use Pod::Usage;
 
+    use lib '{- sourcedir('util', 'perl') -}';
+    use OpenSSL::fallback '{- sourcefile('external', 'perl', 'MODULES.txt') -}';
+
     my $here = dirname($0);
 
     if (scalar @ARGV == 0) {
         # With no arguments, re-create the build file
 
-        use lib '{- sourcedir('util', 'perl') -}';
-        use OpenSSL::fallback '{- sourcefile('external', 'perl', 'MODULES.txt') -}';
         use OpenSSL::Template;
 
         my $prepend = <<'_____';
@@ -172,6 +173,7 @@ _____
     my $buildparams = undef;
     my $reconf = undef;
     my $verbose = undef;
+    my $query = undef;
     my $help = undef;
     my $man = undef;
     GetOptions('dump|d'                 => \$dump,
@@ -183,6 +185,7 @@ _____
                'build-parameters|b'     => \$buildparams,
                'reconfigure|reconf|r'   => \$reconf,
                'verbose|v'              => \$verbose,
+               'query|q=s'              => \$query,
                'help'                   => \$help,
                'man'                    => \$man)
         or die "Errors in command line arguments\n";
@@ -319,6 +322,25 @@ _____
 
         chdir $here;
         exec $^X,catfile($config{sourcedir}, 'Configure'),'reconf';
+    }
+    if ($query) {
+        use OpenSSL::Config::Query;
+
+        my $confquery = OpenSSL::Config::Query->new(info => \%unified_info,
+                                                    config => \%config);
+        my $result = eval "\$confquery->$query";
+
+        # We may need a result class with a printing function at some point.
+        # Until then, we assume that we get a scalar, or a list or a hash table
+        # with scalar values and simply print them in some orderly fashion.
+        if (ref $result eq 'ARRAY') {
+            print "$_\n" foreach @$result;
+        } elsif (ref $result eq 'HASH') {
+            print "$_ : \\\n  ", join(" \\\n  ", @{$result->{$_}}), "\n"
+                foreach sort keys %$result;
+        } elsif (ref $result eq 'SCALAR') {
+            print "$$result\n";
+        }
     }
 }
 
