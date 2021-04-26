@@ -241,6 +241,11 @@ int OSSL_STORE_expect(OSSL_STORE_CTX *ctx, int expected_type)
 {
     int ret = 1;
 
+    if (ctx == NULL
+            || expected_type < 0 || expected_type > OSSL_STORE_INFO_CRL) {
+        ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_PASSED_INVALID_ARGUMENT);
+        return 0;
+    }
     if (ctx->loading) {
         ERR_raise(ERR_LIB_OSSL_STORE, OSSL_STORE_R_LOADING_STARTED);
         return 0;
