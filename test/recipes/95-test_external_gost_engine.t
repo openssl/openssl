@@ -9,7 +9,7 @@
 
 use OpenSSL::Test;
 use OpenSSL::Test::Utils;
-use OpenSSL::Test qw/:DEFAULT bldtop_file data_file srctop_file cmdstr/;
+use OpenSSL::Test qw/:DEFAULT data_file bldtop_dir srctop_dir cmdstr/;
 
 setup("test_external_gost_engine");
 
@@ -19,6 +19,8 @@ plan skip_all => "GOST engine tests not available on Windows or VMS"
     if $^O =~ /^(VMS|MSWin32)$/;
 plan skip_all => "GOST engine tests only available in a shared build"
     if disabled("shared");
+plan skip_all => "GOST engine tests not supported in out of tree builds"
+    if bldtop_dir() ne srctop_dir();
 
 plan tests => 1;
 
