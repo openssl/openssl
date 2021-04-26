@@ -169,6 +169,14 @@ my %procedures = (
             #
             #   Note: including file: {whatever header file}
             #
+            # This output is localized, so for example, the German pack gives
+            # us this:
+            #
+            #   Hinweis: Einlesen der Datei:   {whatever header file}
+            #
+            # To accomodate, we need to use a very general regular expression
+            # to parse those lines.
+            #
             # Since there's no object file name at all in that information,
             # we must construct it ourselves.
 
@@ -179,7 +187,7 @@ my %procedures = (
             # warnings, so we simply discard anything that doesn't start with
             # the Note:
 
-            if (/^Note: including file: */) {
+            if (/^[^:]*: [^:]*: */) {
                 (my $tail = $') =~ s/\s*\R$//;
 
                 # VC gives us absolute paths for all include files, so to
