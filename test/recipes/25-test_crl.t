@@ -34,7 +34,7 @@ ok(compare1stline([qw{openssl crl -noout -fingerprint -in},
                   'SHA1 Fingerprint=BA:F4:1B:AD:7A:9B:2F:09:16:BC:60:A7:0E:CE:79:2E:36:00:E7:B2'));
 ok(compare1stline([qw{openssl crl -noout -fingerprint -sha256 -in},
                    srctop_file('test', 'testcrl.pem')],
-                  'SHA256 Fingerprint=B3:A9:FD:A7:2E:8C:3D:DF:D0:F1:C3:1A:96:60:B5:FD:B0:99:7C:7F:0E:E4:34:F5:DB:87:62:36:BC:F1:BC:1B'));
+                  'SHA2-256 Fingerprint=B3:A9:FD:A7:2E:8C:3D:DF:D0:F1:C3:1A:96:60:B5:FD:B0:99:7C:7F:0E:E4:34:F5:DB:87:62:36:BC:F1:BC:1B'));
 
 ok(run(app(["openssl", "crl", "-text", "-in", $pem, "-out", $out,
             "-nameopt", "utf8"])));
