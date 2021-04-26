@@ -162,7 +162,8 @@ typedef struct ossl_ex_data_global_st {
 # define OSSL_LIB_CTX_BIO_PROV_INDEX                13
 # define OSSL_LIB_CTX_GLOBAL_PROPERTIES             14
 # define OSSL_LIB_CTX_STORE_LOADER_STORE_INDEX      15
-# define OSSL_LIB_CTX_MAX_INDEXES                   16
+# define OSSL_LIB_CTX_PROVIDER_CONF_INDEX           16
+# define OSSL_LIB_CTX_MAX_INDEXES                   17
 
 typedef struct ossl_lib_ctx_method {
     void *(*new_func)(OSSL_LIB_CTX *ctx);
