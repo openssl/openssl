@@ -154,29 +154,20 @@ my %procedures = (
             }
             return ($objfile, $depconv_cache{$line})
                 if defined $depconv_cache{$line};
-            print STDERR "DEBUG[VMS C]: ignoring $objfile <- $line\n"
+            print STDERR "DEBUG[$producer]: ignoring $objfile <- $line\n"
                 if $debug;
 
             return undef;
         },
     'VC' =>
         sub {
-            # On Windows, with Microsoft Visual C the flags /Zs /showIncludes
-            # give us the necessary output to be able to create dependencies
-            # that nmake (or any 'make' implementation) should be able to read,
-            # with a bit of help.  The output we're interested in looks like
-            # this (it always starts the same)
+            # With Microsoft Visual C the flags /Zs /showIncludes give us the
+            # necessary output to be able to create dependencies that nmake
+            # (or any 'make' implementation) should be able to read, with a
+            # bit of help.  The output we're interested in looks something
+            # like this (it always starts the same)
             #
             #   Note: including file: {whatever header file}
-            #
-            # With Embarcadero C++Builder's preprocessor (cpp32.exe) the -Hp
-            # flag gives us the preprocessed output annotated with the following
-            # note whenever a #include file is read:
-            #
-            #    Including ->->{whatever header file}
-            #
-            # where each "->" indicates the nesting level of the #include.  The
-            # logic here is otherwise the same as the 'VC' case.
             #
             # Since there's no object file name at all in that information,
             # we must construct it ourselves.
@@ -188,13 +179,59 @@ my %procedures = (
             # warnings, so we simply discard anything that doesn't start with
             # the Note:
 
-            if (/^Note: including file: */ or /^Including (->)*/) {
+            if (/^Note: including file: */) {
                 (my $tail = $') =~ s/\s*\R$//;
 
                 # VC gives us absolute paths for all include files, so to
                 # remove system header dependencies, we need to check that
-                # they don't match $abs_srcdir or $abs_blddir.  C++Builder gives
-                # us relative paths when possible, so convert to absolute paths.
+                # they don't match $abs_srcdir or $abs_blddir.
+                $tail = canonpath($tail);
+
+                unless (defined $depconv_cache{$tail}) {
+                    my $dep = $tail;
+                    # Since we have already pre-populated the cache with
+                    # mappings for generated headers, we only need to deal
+                    # with the source tree.
+                    if ($dep =~ s|^\Q$abs_srcdir\E\\|\$(SRCDIR)\\|i) {
+                        $depconv_cache{$tail} = $dep;
+                    }
+                }
+                return ($objfile, '"'.$depconv_cache{$tail}.'"')
+                    if defined $depconv_cache{$tail};
+                print STDERR "DEBUG[$producer]: ignoring $objfile <- $tail\n"
+                    if $debug;
+            }
+
+            return undef;
+        },
+    'embarcadero' =>
+        sub {
+            # With Embarcadero C++Builder's preprocessor (cpp32.exe) the -Hp
+            # flag gives us the preprocessed output annotated with the following
+            # note whenever a #include file is read:
+            #
+            #    Including ->->{whatever header file}
+            #
+            # where each "->" indicates the nesting level of the #include.  The
+            # logic here is otherwise the same as the 'VC' scheme.
+            #
+            # Since there's no object file name at all in that information,
+            # we must construct it ourselves.
+
+            (my $objfile = shift) =~ s|\.d$|.obj|i;
+            my $line = shift;
+
+            # There are also other lines mixed in, for example compiler
+            # warnings, so we simply discard anything that doesn't start with
+            # the Note:
+
+            if (/^Including (->)*/) {
+                (my $tail = $') =~ s/\s*\R$//;
+
+                # C++Builder gives us relative paths when possible, so to
+                # remove system header dependencies, we convert them to
+                # absolute paths and check that they don't match $abs_srcdir
+                # or $abs_blddir, just as the 'VC' scheme.
                 $tail = rel2abs($tail);
 
                 unless (defined $depconv_cache{$tail}) {
@@ -208,7 +245,7 @@ my %procedures = (
                 }
                 return ($objfile, '"'.$depconv_cache{$tail}.'"')
                     if defined $depconv_cache{$tail};
-                print STDERR "DEBUG[VC]: ignoring $objfile <- $tail\n"
+                print STDERR "DEBUG[$producer]: ignoring $objfile <- $tail\n"
                     if $debug;
             }
 
@@ -220,6 +257,7 @@ my %continuations = (
     'makedepend' => "\\",
     'VMS C' => "-",
     'VC' => "\\",
+    'embarcadero' => "\\",
 );
 
 die "Producer unrecognised: $producer\n"
