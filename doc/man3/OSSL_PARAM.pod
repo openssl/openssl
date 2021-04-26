@@ -160,6 +160,8 @@ systems.
 =item B<OSSL_PARAM_REAL>
 
 The parameter data is a floating point value in native form.
+The OpenSSL providers and helper functions support only C<double>-sized
+values.
 
 =item B<OSSL_PARAM_UTF8_STRING>
 
