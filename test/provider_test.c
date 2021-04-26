@@ -34,6 +34,7 @@ static int test_provider(OSSL_LIB_CTX **libctx, const char *name,
     char expected_greeting[256];
     int ok = 0;
     long err;
+    int dolegacycheck = (legacy != NULL);
 
     BIO_snprintf(expected_greeting, sizeof(expected_greeting),
                  "Hello OpenSSL %.20s, greetings from %s!",
@@ -41,7 +42,7 @@ static int test_provider(OSSL_LIB_CTX **libctx, const char *name,
 
     if (!TEST_ptr(prov = OSSL_PROVIDER_load(*libctx, name)))
         goto err;
-    if (legacy != NULL) {
+    if (dolegacycheck) {
         if (!TEST_true(OSSL_PROVIDER_get_params(prov, digest_check))
                 || !TEST_true(digestsuccess))
             goto err;
@@ -49,13 +50,39 @@ static int test_provider(OSSL_LIB_CTX **libctx, const char *name,
     if (!TEST_true(OSSL_PROVIDER_get_params(prov, greeting_request))
             || !TEST_ptr(greeting = greeting_request[0].data)
             || !TEST_size_t_gt(greeting_request[0].data_size, 0)
-            || !TEST_str_eq(greeting, expected_greeting)
-            || !TEST_true(OSSL_PROVIDER_unload(prov)))
+            || !TEST_str_eq(greeting, expected_greeting))
         goto err;
 
-    prov = NULL;
+    /* Make sure we got the error we were expecting */
+    err = ERR_peek_last_error();
+    if (!TEST_int_gt(err, 0)
+            || !TEST_int_eq(ERR_GET_REASON(err), 1))
+        goto err;
+
     OSSL_PROVIDER_unload(legacy);
     legacy = NULL;
+
+    if (dolegacycheck) {
+        /* Legacy provider should also be unloaded from child libctx */
+        if (!TEST_true(OSSL_PROVIDER_get_params(prov, digest_check))
+                || !TEST_false(digestsuccess))
+            goto err;
+        /*
+         * Loading the legacy provider again should make it available again in
+         * the child libctx.
+         */
+        legacy = OSSL_PROVIDER_load(*libctx, "legacy");
+        if (!TEST_ptr(legacy)
+                || !TEST_true(OSSL_PROVIDER_get_params(prov, digest_check))
+                || !TEST_true(digestsuccess))
+        goto err;
+        OSSL_PROVIDER_unload(legacy);
+        legacy = NULL;
+    }
+
+    if (!TEST_true(OSSL_PROVIDER_unload(prov)))
+        goto err;
+    prov = NULL;
 
     /*
      * We must free the libctx to force the provider to really be unloaded from
@@ -63,12 +90,6 @@ static int test_provider(OSSL_LIB_CTX **libctx, const char *name,
      */
     OSSL_LIB_CTX_free(*libctx);
     *libctx = NULL;
-
-    /* Make sure we got the error we were expecting */
-    err = ERR_peek_last_error();
-    if (!TEST_int_gt(err, 0)
-            || !TEST_int_eq(ERR_GET_REASON(err), 1))
-        goto err;
 
     /* We print out all the data to make sure it can still be accessed */
     ERR_print_errors_fp(stderr);
