@@ -105,6 +105,7 @@ err:
 }
 
 static const OSSL_LIB_CTX_METHOD property_string_data_method = {
+    OSSL_LIB_CTX_METHOD_DEFAULT_PRIORITY,
     property_string_data_new,
     property_string_data_free,
 };

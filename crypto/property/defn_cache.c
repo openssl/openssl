@@ -63,6 +63,7 @@ static void *property_defns_new(OSSL_LIB_CTX *ctx) {
 }
 
 static const OSSL_LIB_CTX_METHOD property_defns_method = {
+    OSSL_LIB_CTX_METHOD_DEFAULT_PRIORITY,
     property_defns_new,
     property_defns_free,
 };

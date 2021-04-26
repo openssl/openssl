@@ -39,6 +39,7 @@ static void foo_free(void *ptr)
     OPENSSL_free(ptr);
 }
 static const OSSL_LIB_CTX_METHOD foo_method = {
+    OSSL_LIB_CTX_METHOD_DEFAULT_PRIORITY,
     foo_new,
     foo_free
 };

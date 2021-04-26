@@ -76,6 +76,7 @@ static void *encoder_store_new(OSSL_LIB_CTX *ctx)
 
 
 static const OSSL_LIB_CTX_METHOD encoder_store_method = {
+    OSSL_LIB_CTX_METHOD_DEFAULT_PRIORITY,
     encoder_store_new,
     encoder_store_free,
 };

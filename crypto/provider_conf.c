@@ -45,6 +45,8 @@ static void prov_conf_ossl_ctx_free(void *vpcgbl)
 }
 
 static const OSSL_LIB_CTX_METHOD provider_conf_ossl_ctx_method = {
+    /* Must be freed before the provider store is freed */
+    OSSL_LIB_CTX_METHOD_HIGH_PRIORITY,
     prov_conf_ossl_ctx_new,
     prov_conf_ossl_ctx_free,
 };

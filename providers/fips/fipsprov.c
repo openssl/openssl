@@ -96,6 +96,7 @@ static void fips_prov_ossl_ctx_free(void *fgbl)
 }
 
 static const OSSL_LIB_CTX_METHOD fips_prov_ossl_ctx_method = {
+    OSSL_LIB_CTX_METHOD_DEFAULT_PRIORITY,
     fips_prov_ossl_ctx_new,
     fips_prov_ossl_ctx_free,
 };

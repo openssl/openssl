@@ -278,6 +278,7 @@ static void thread_event_ossl_ctx_free(void *tlocal)
 }
 
 static const OSSL_LIB_CTX_METHOD thread_event_ossl_ctx_method = {
+    OSSL_LIB_CTX_METHOD_DEFAULT_PRIORITY,
     thread_event_ossl_ctx_new,
     thread_event_ossl_ctx_free,
 };

@@ -83,6 +83,7 @@ static void *rand_crng_ossl_ctx_new(OSSL_LIB_CTX *ctx)
 }
 
 static const OSSL_LIB_CTX_METHOD rand_crng_ossl_ctx_method = {
+    OSSL_LIB_CTX_METHOD_DEFAULT_PRIORITY,
     rand_crng_ossl_ctx_new,
     rand_crng_ossl_ctx_free,
 };

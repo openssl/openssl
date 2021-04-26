@@ -94,6 +94,7 @@ static void *ossl_ctx_global_properties_new(OSSL_LIB_CTX *ctx)
 
 
 static const OSSL_LIB_CTX_METHOD ossl_ctx_global_properties_method = {
+    OSSL_LIB_CTX_METHOD_DEFAULT_PRIORITY,
     ossl_ctx_global_properties_new,
     ossl_ctx_global_properties_free,
 };

@@ -46,6 +46,7 @@ static void self_test_set_callback_free(void *stcb)
 }
 
 static const OSSL_LIB_CTX_METHOD self_test_set_callback_method = {
+    OSSL_LIB_CTX_METHOD_DEFAULT_PRIORITY,
     self_test_set_callback_new,
     self_test_set_callback_free,
 };

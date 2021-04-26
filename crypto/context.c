@@ -305,7 +305,8 @@ static int ossl_lib_ctx_init_index(OSSL_LIB_CTX *ctx, int static_index,
     idx = ossl_crypto_get_ex_new_index_ex(ctx, CRYPTO_EX_INDEX_OSSL_LIB_CTX, 0,
                                           (void *)meth,
                                           ossl_lib_ctx_generic_new,
-                                          NULL, ossl_lib_ctx_generic_free);
+                                          NULL, ossl_lib_ctx_generic_free,
+                                          meth->priority);
     if (idx < 0)
         return 0;
 
