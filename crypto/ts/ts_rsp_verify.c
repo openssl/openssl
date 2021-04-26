@@ -8,12 +8,13 @@
  */
 
 #include <stdio.h>
-#include "internal/cryptlib.h"
 #include <openssl/objects.h>
 #include <openssl/ts.h>
 #include <openssl/pkcs7.h>
-#include "ts_local.h"
+#include "internal/cryptlib.h"
+#include "internal/sizes.h"
 #include "crypto/ess.h"
+#include "ts_local.h"
 
 static int ts_verify_cert(X509_STORE *store, STACK_OF(X509) *untrusted,
                           X509 *signer, STACK_OF(X509) **chain);
@@ -395,9 +396,10 @@ static int ts_compute_imprint(BIO *data, TS_TST_INFO *tst_info,
 {
     TS_MSG_IMPRINT *msg_imprint = tst_info->msg_imprint;
     X509_ALGOR *md_alg_resp = msg_imprint->hash_algo;
-    const EVP_MD *md;
+    EVP_MD *md = NULL;
     EVP_MD_CTX *md_ctx = NULL;
     unsigned char buffer[4096];
+    char name[OSSL_MAX_NAME_SIZE];
     int length;
 
     *md_alg = NULL;
@@ -405,10 +407,21 @@ static int ts_compute_imprint(BIO *data, TS_TST_INFO *tst_info,
 
     if ((*md_alg = X509_ALGOR_dup(md_alg_resp)) == NULL)
         goto err;
-    if ((md = EVP_get_digestbyobj((*md_alg)->algorithm)) == NULL) {
-        ERR_raise(ERR_LIB_TS, TS_R_UNSUPPORTED_MD_ALGORITHM);
+
+    OBJ_obj2txt(name, sizeof(name), md_alg_resp->algorithm, 0);
+
+    (void)ERR_set_mark();
+    md = EVP_MD_fetch(NULL, name, NULL);
+
+    if (md == NULL)
+        md = (EVP_MD *)EVP_get_digestbyname(name);
+
+    if (md == NULL) {
+        (void)ERR_clear_last_mark();
         goto err;
     }
+    (void)ERR_pop_to_mark();
+
     length = EVP_MD_size(md);
     if (length < 0)
         goto err;
@@ -425,6 +438,8 @@ static int ts_compute_imprint(BIO *data, TS_TST_INFO *tst_info,
     }
     if (!EVP_DigestInit(md_ctx, md))
         goto err;
+    EVP_MD_free(md);
+    md = NULL;
     while ((length = BIO_read(data, buffer, sizeof(buffer))) > 0) {
         if (!EVP_DigestUpdate(md_ctx, buffer, length))
             goto err;
@@ -436,6 +451,7 @@ static int ts_compute_imprint(BIO *data, TS_TST_INFO *tst_info,
     return 1;
  err:
     EVP_MD_CTX_free(md_ctx);
+    EVP_MD_free(md);
     X509_ALGOR_free(*md_alg);
     *md_alg = NULL;
     OPENSSL_free(*imprint);

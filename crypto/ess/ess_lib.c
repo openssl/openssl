@@ -11,6 +11,7 @@
 #include <openssl/x509v3.h>
 #include <openssl/err.h>
 #include <openssl/ess.h>
+#include "internal/sizes.h"
 #include "crypto/ess.h"
 #include "crypto/x509.h"
 
@@ -302,36 +303,48 @@ static int find(const ESS_CERT_ID *cid, const ESS_CERT_ID_V2 *cid_v2,
                 int index, const STACK_OF(X509) *certs)
 {
     const X509 *cert;
-    const EVP_MD *md;
+    EVP_MD *md = NULL;
+    char name[OSSL_MAX_NAME_SIZE];
     unsigned char cert_digest[EVP_MAX_MD_SIZE];
     unsigned int len, cid_hash_len;
     const ESS_ISSUER_SERIAL *is;
     int i;
+    int ret = -1;
 
     if (cid == NULL && cid_v2 == NULL) {
         ERR_raise(ERR_LIB_ESS, ERR_R_PASSED_INVALID_ARGUMENT);
         return -1;
     }
 
+    if (cid != NULL)
+        strcpy(name, "SHA1");
+    else if (cid_v2->hash_alg == NULL)
+        strcpy(name, "SHA256");
+    else
+        OBJ_obj2txt(name, sizeof(name), cid_v2->hash_alg->algorithm, 0);
+
+    (void)ERR_set_mark();
+    md = EVP_MD_fetch(NULL, name, NULL);
+
+    if (md == NULL)
+        md = (EVP_MD *)EVP_get_digestbyname(name);
+
+    if (md == NULL) {
+        (void)ERR_clear_last_mark();
+        ERR_raise(ERR_LIB_ESS, ESS_R_ESS_DIGEST_ALG_UNKNOWN);
+        goto end;
+    }
+    (void)ERR_pop_to_mark();
+
     /* Look for cert with cid in the certs. */
     for (i = 0; i < sk_X509_num(certs); ++i) {
         cert = sk_X509_value(certs, i);
-
-        if (cid != NULL)
-            md = EVP_sha1();
-        else
-            md = cid_v2->hash_alg == NULL ? EVP_sha256() :
-                EVP_get_digestbyobj(cid_v2->hash_alg->algorithm);
-        if (md == NULL) {
-            ERR_raise(ERR_LIB_ESS, ESS_R_ESS_DIGEST_ALG_UNKNOWN);
-            return -1;
-        }
 
         cid_hash_len = cid != NULL ? cid->hash->length : cid_v2->hash->length;
         if (!X509_digest(cert, md, cert_digest, &len)
                 || cid_hash_len != len) {
             ERR_raise(ERR_LIB_ESS, ESS_R_ESS_CERT_DIGEST_ERROR);
-            return -1;
+            goto end;
         }
 
         if (memcmp(cid != NULL ? cid->hash->data : cid_v2->hash->data,
@@ -339,16 +352,21 @@ static int find(const ESS_CERT_ID *cid, const ESS_CERT_ID_V2 *cid_v2,
             is = cid != NULL ? cid->issuer_serial : cid_v2->issuer_serial;
             /* Well, it's not really required to match the serial numbers. */
             if (is == NULL || ess_issuer_serial_cmp(is, cert) == 0) {
-                if ((i == 0) == (index == 0))
-                    return i + 1;
+                if ((i == 0) == (index == 0)) {
+                    ret = i + 1;
+                    goto end;
+                }
                 ERR_raise(ERR_LIB_ESS, ESS_R_ESS_CERT_ID_WRONG_ORDER);
-                return -1;
+                goto end;
             }
         }
     }
 
+    ret = 0;
     ERR_raise(ERR_LIB_ESS, ESS_R_ESS_CERT_ID_NOT_FOUND);
-    return 0;
+end:
+    EVP_MD_free(md);
+    return ret;
 }
 
 /*

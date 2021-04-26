@@ -30,6 +30,7 @@
 
 #include "crmf_local.h"
 #include "internal/constant_time.h"
+#include "internal/sizes.h"
 
 /* explicit #includes not strictly needed since implied by the above: */
 #include <openssl/crmf.h>
@@ -589,24 +590,37 @@ X509
     EVP_CIPHER_CTX *evp_ctx = NULL; /* context for symmetric encryption */
     unsigned char *ek = NULL; /* decrypted symmetric encryption key */
     size_t eksize = 0; /* size of decrypted symmetric encryption key */
-    const EVP_CIPHER *cipher = NULL; /* used cipher */
+    EVP_CIPHER *cipher = NULL; /* used cipher */
     int cikeysize = 0; /* key size from cipher */
     unsigned char *iv = NULL; /* initial vector for symmetric encryption */
     unsigned char *outbuf = NULL; /* decryption output buffer */
     const unsigned char *p = NULL; /* needed for decoding ASN1 */
     int n, outlen = 0;
     EVP_PKEY_CTX *pkctx = NULL; /* private key context */
+    char name[OSSL_MAX_NAME_SIZE];
 
     if (ecert == NULL || ecert->symmAlg == NULL || ecert->encSymmKey == NULL
             || ecert->encValue == NULL || pkey == NULL) {
         ERR_raise(ERR_LIB_CRMF, CRMF_R_NULL_ARGUMENT);
         return NULL;
     }
+
     /* select symmetric cipher based on algorithm given in message */
-    if ((cipher = EVP_get_cipherbyobj(ecert->symmAlg->algorithm)) == NULL) {
+    OBJ_obj2txt(name, sizeof(name), ecert->symmAlg->algorithm, 0);
+
+    (void)ERR_set_mark();
+    cipher = EVP_CIPHER_fetch(NULL, name, NULL);
+
+    if (cipher == NULL)
+        cipher = (EVP_CIPHER *)EVP_get_cipherbyname(name);
+
+    if (cipher == NULL) {
+        (void)ERR_clear_last_mark();
         ERR_raise(ERR_LIB_CRMF, CRMF_R_UNSUPPORTED_CIPHER);
         goto end;
     }
+    (void)ERR_pop_to_mark();
+
     cikeysize = EVP_CIPHER_key_length(cipher);
     /* first the symmetric key needs to be decrypted */
     pkctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey, propq);
@@ -670,6 +684,7 @@ X509
     EVP_PKEY_CTX_free(pkctx);
     OPENSSL_free(outbuf);
     EVP_CIPHER_CTX_free(evp_ctx);
+    EVP_CIPHER_free(cipher);
     OPENSSL_clear_free(ek, eksize);
     OPENSSL_free(iv);
     return cert;
