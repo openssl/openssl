@@ -303,6 +303,7 @@ static void prov_drbg_nonce_ossl_ctx_free(void *vdngbl)
 }
 
 static const OSSL_LIB_CTX_METHOD drbg_nonce_ossl_ctx_method = {
+    OSSL_LIB_CTX_METHOD_DEFAULT_PRIORITY,
     prov_drbg_nonce_ossl_ctx_new,
     prov_drbg_nonce_ossl_ctx_free,
 };

@@ -87,6 +87,7 @@ static void stored_namemap_free(void *vnamemap)
 }
 
 static const OSSL_LIB_CTX_METHOD stored_namemap_method = {
+    OSSL_LIB_CTX_METHOD_DEFAULT_PRIORITY,
     stored_namemap_new,
     stored_namemap_free,
 };

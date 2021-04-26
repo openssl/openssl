@@ -189,6 +189,7 @@ static void *provider_store_new(OSSL_LIB_CTX *ctx)
 }
 
 static const OSSL_LIB_CTX_METHOD provider_store_method = {
+    OSSL_LIB_CTX_METHOD_DEFAULT_PRIORITY,
     provider_store_new,
     provider_store_free,
 };

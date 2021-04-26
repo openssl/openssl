@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stdlib.h>
 #include "crypto/cryptlib.h"
 #include "internal/thread_once.h"
 
@@ -141,7 +142,8 @@ int ossl_crypto_get_ex_new_index_ex(OSSL_LIB_CTX *ctx, int class_index,
                                     long argl, void *argp,
                                     CRYPTO_EX_new *new_func,
                                     CRYPTO_EX_dup *dup_func,
-                                    CRYPTO_EX_free *free_func)
+                                    CRYPTO_EX_free *free_func,
+                                    int priority)
 {
     int toret = -1;
     EX_CALLBACK *a;
@@ -176,6 +178,7 @@ int ossl_crypto_get_ex_new_index_ex(OSSL_LIB_CTX *ctx, int class_index,
     a->new_func = new_func;
     a->dup_func = dup_func;
     a->free_func = free_func;
+    a->priority = priority;
 
     if (!sk_EX_CALLBACK_push(ip->meth, NULL)) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
@@ -195,7 +198,7 @@ int CRYPTO_get_ex_new_index(int class_index, long argl, void *argp,
                             CRYPTO_EX_free *free_func)
 {
     return ossl_crypto_get_ex_new_index_ex(NULL, class_index, argl, argp,
-                                           new_func, dup_func, free_func);
+                                           new_func, dup_func, free_func, 0);
 }
 
 /*
@@ -331,6 +334,27 @@ int CRYPTO_dup_ex_data(int class_index, CRYPTO_EX_DATA *to,
     return toret;
 }
 
+struct ex_callback_entry {
+    const EX_CALLBACK *excb;
+    int index;
+};
+
+static int ex_callback_compare(const void *a, const void *b)
+{
+    const struct ex_callback_entry *ap = (const struct ex_callback_entry *)a;
+    const struct ex_callback_entry *bp = (const struct ex_callback_entry *)b;
+
+    if (ap->excb == bp->excb)
+        return 0;
+
+    if (ap->excb == NULL)
+        return 1;
+    if (bp->excb == NULL)
+        return -1;
+    if (ap->excb->priority == bp->excb->priority)
+        return 0;
+    return ap->excb->priority > bp->excb->priority ? -1 : 1;
+}
 
 /*
  * Cleanup a CRYPTO_EX_DATA variable - including calling free() callbacks for
@@ -341,9 +365,9 @@ void CRYPTO_free_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad)
     int mx, i;
     EX_CALLBACKS *ip;
     void *ptr;
-    EX_CALLBACK *f;
-    EX_CALLBACK *stack[10];
-    EX_CALLBACK **storage = NULL;
+    const EX_CALLBACK *f;
+    struct ex_callback_entry stack[10];
+    struct ex_callback_entry *storage = NULL;
     OSSL_EX_DATA_GLOBAL *global = ossl_lib_ctx_get_ex_data_global(ad->ctx);
 
     if (global == NULL)
@@ -360,23 +384,23 @@ void CRYPTO_free_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad)
         else
             storage = OPENSSL_malloc(sizeof(*storage) * mx);
         if (storage != NULL)
-            for (i = 0; i < mx; i++)
-                storage[i] = sk_EX_CALLBACK_value(ip->meth, i);
+            for (i = 0; i < mx; i++) {
+                storage[i].excb = sk_EX_CALLBACK_value(ip->meth, i);
+                storage[i].index = i;
+            }
     }
     CRYPTO_THREAD_unlock(global->ex_data_lock);
 
-    for (i = 0; i < mx; i++) {
-        if (storage != NULL)
-            f = storage[i];
-        else {
-            if (!CRYPTO_THREAD_write_lock(global->ex_data_lock))
-                continue;
-            f = sk_EX_CALLBACK_value(ip->meth, i);
-            CRYPTO_THREAD_unlock(global->ex_data_lock);
-        }
-        if (f != NULL && f->free_func != NULL) {
-            ptr = CRYPTO_get_ex_data(ad, i);
-            f->free_func(obj, ptr, ad, i, f->argl, f->argp);
+    if (storage != NULL) {
+        /* Sort according to priority. High priority first */
+        qsort(storage, mx, sizeof(*storage), ex_callback_compare);
+        for (i = 0; i < mx; i++) {
+            f = storage[i].excb;
+
+            if (f != NULL && f->free_func != NULL) {
+                ptr = CRYPTO_get_ex_data(ad, storage[i].index);
+                f->free_func(obj, ptr, ad, storage[i].index, f->argl, f->argp);
+            }
         }
     }
 
