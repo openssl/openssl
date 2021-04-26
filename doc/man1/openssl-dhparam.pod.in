@@ -30,6 +30,10 @@ B<openssl dhparam>
 
 This command is used to manipulate DH parameter files.
 
+See L<openssl-genpkey(1)/EXAMPLES> for examples on how to generate
+a key using a named safe prime group without generating intermediate
+parameters.
+
 =head1 OPTIONS
 
 =over 4
@@ -109,20 +113,12 @@ This option prints out the DH parameters in human readable form.
 This command replaces the B<dh> and B<gendh> commands of previous
 releases.
 
-OpenSSL currently only supports the older PKCS#3 DH, not the newer X9.42
-DH.
-
-This command manipulates DH parameters not keys.
-
-=head1 BUGS
-
-There should be a way to generate and manipulate DH keys.
-
 =head1 SEE ALSO
 
 L<openssl(1)>,
 L<openssl-pkeyparam(1)>,
-L<openssl-dsaparam(1)>
+L<openssl-dsaparam(1)>,
+L<openssl-genpkey(1)>.
 
 =head1 HISTORY
 
