@@ -828,6 +828,8 @@ int load_crls(const char *uri, STACK_OF(X509_CRL) **crls,
     return ret;
 }
 
+/* Set type expectation, but clear it if objects of different types expected. */
+#define SET_EXPECT(val) expect = expect < 0 ? val : (expect == val ? val : 0);
 /*
  * Load those types of credentials for which the result pointer is not NULL.
  * Reads from stdio if uri is NULL and maybe_stdin is nonzero.
@@ -860,47 +862,41 @@ int load_key_certs_crls(const char *uri, int maybe_stdin,
         pcrl != NULL ? "CRL" : pcerts != NULL ? "certs" :
         pcrls != NULL ? "CRLs" : NULL;
     int cnt_expectations = 0;
-    int expect = 0;
+    int expect = -1;
     /* TODO make use of the engine reference 'eng' when loading pkeys */
 
     if (ppkey != NULL) {
         *ppkey = NULL;
         cnt_expectations++;
-        expect = OSSL_STORE_INFO_PKEY;
+        SET_EXPECT(OSSL_STORE_INFO_PKEY);
     }
     if (ppubkey != NULL) {
         *ppubkey = NULL;
         cnt_expectations++;
-        expect = OSSL_STORE_INFO_PUBKEY;
+        SET_EXPECT(OSSL_STORE_INFO_PUBKEY);
     }
     if (pparams != NULL) {
         *pparams = NULL;
         cnt_expectations++;
-        expect = OSSL_STORE_INFO_PARAMS;
+        SET_EXPECT(OSSL_STORE_INFO_PARAMS);
     }
     if (pcert != NULL) {
         *pcert = NULL;
         cnt_expectations++;
-        expect = OSSL_STORE_INFO_CERT;
+        SET_EXPECT(OSSL_STORE_INFO_CERT);
     }
-    if (failed == NULL) {
-        BIO_printf(bio_err, "Internal error: nothing to load into from %s\n",
-                   uri != NULL ? uri : "<stdin>");
-        return 0;
-    }
-
     if (pcerts != NULL) {
         if (*pcerts == NULL && (*pcerts = sk_X509_new_null()) == NULL) {
             BIO_printf(bio_err, "Out of memory loading");
             goto end;
         }
         cnt_expectations++;
-        expect = OSSL_STORE_INFO_CERT;
+        SET_EXPECT(OSSL_STORE_INFO_CERT);
     }
     if (pcrl != NULL) {
         *pcrl = NULL;
         cnt_expectations++;
-        expect = OSSL_STORE_INFO_CRL;
+        SET_EXPECT(OSSL_STORE_INFO_CRL);
     }
     if (pcrls != NULL) {
         if (*pcrls == NULL && (*pcrls = sk_X509_CRL_new_null()) == NULL) {
@@ -908,7 +904,12 @@ int load_key_certs_crls(const char *uri, int maybe_stdin,
             goto end;
         }
         cnt_expectations++;
-        expect = OSSL_STORE_INFO_CRL;
+        SET_EXPECT(OSSL_STORE_INFO_CRL);
+    }
+    if (cnt_expectations == 0) {
+        BIO_printf(bio_err, "Internal error: nothing to load from %s\n",
+                   uri != NULL ? uri : "<stdin>");
+        return 0;
     }
 
     uidata.password = pass;
@@ -935,10 +936,7 @@ int load_key_certs_crls(const char *uri, int maybe_stdin,
         BIO_printf(bio_err, "Could not open file or uri for loading");
         goto end;
     }
-
-    if (cnt_expectations != 1)
-        expect = 0;
-    if (!OSSL_STORE_expect(ctx, expect))
+    if (expect > 0 && !OSSL_STORE_expect(ctx, expect))
         goto end;
 
     failed = NULL;
