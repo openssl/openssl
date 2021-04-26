@@ -169,6 +169,14 @@ my %procedures = (
             #
             #   Note: including file: {whatever header file}
             #
+            # This output is localized, so for example, the German pack gives
+            # us this:
+            #
+            #   Hinweis: Einlesen der Datei:   {whatever header file}
+            #
+            # To accomodate, we need to use a very general regular expression
+            # to parse those lines.
+            #
             # Since there's no object file name at all in that information,
             # we must construct it ourselves.
 
@@ -179,7 +187,7 @@ my %procedures = (
             # warnings, so we simply discard anything that doesn't start with
             # the Note:
 
-            if (/^Note: including file: */) {
+            if (/^[^:]*: [^:]*: */) {
                 (my $tail = $') =~ s/\s*\R$//;
 
                 # VC gives us absolute paths for all include files, so to
@@ -206,11 +214,10 @@ my %procedures = (
         },
     'embarcadero' =>
         sub {
-            # With Embarcadero C++Builder's preprocessor (cpp32.exe) the -Hp
-            # flag gives us the preprocessed output annotated with the following
-            # note whenever a #include file is read:
+            # With Embarcadero C++Builder's preprocessor (cpp32.exe) the -Sx -Hp
+            # flags give us the list of #include files read, like the following:
             #
-            #    Including ->->{whatever header file}
+            #   Including ->->{whatever header file}
             #
             # where each "->" indicates the nesting level of the #include.  The
             # logic here is otherwise the same as the 'VC' scheme.
