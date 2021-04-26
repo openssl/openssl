@@ -1137,6 +1137,42 @@ generate_doc_buildinfo:
                 mv $(SRCDIR)/doc/build.info.new $(SRCDIR)/doc/build.info; \
           fi )
 
+{- output_off() if $disabled{fips}; "" -}
+generate_fips_sources: $(SRCDIR)/providers/fips.module.sources
+$(SRCDIR)/providers/fips.module.sources: \
+                $(SRCDIR)/Configure \
+                {- join(" \\\n" . ' ' x 16,
+                        fill_lines(" ", $COLUMNS - 16,
+                                   @{$config{build_file_templates}},
+                                   @{$config{build_infos}},
+                                   @{$config{conf_files}})) -}
+	rm -rf sources-tmp
+	mkdir sources-tmp
+	( \
+	  srcdir=`cd $(SRCDIR); pwd`; \
+	  cd sources-tmp \
+	  && $$srcdir/Configure enable-fips \
+	  && ./configdata.pm --query 'get_sources("providers/fips")' > sources1 \
+	  && $$srcdir/Configure enable-fips no-asm \
+	  && ./configdata.pm --query 'get_sources("providers/fips")' > sources2 \
+	)
+	( \
+	  srcdir2=`if [ "$(SRCDIR)" = "." ]; then echo ".."; elif echo "$(SRCDIR)" | grep '^/' > /dev/null; then echo "$(SRCDIR)"; else echo "../$(SRCDIR)"; fi`; \
+	  cat sources-tmp/sources1 sources-tmp/sources2 \
+	  | grep -v ' : \\$$' | sed -e 's| \\$$||' -e "s|^  $$srcdir2/||"; \
+	  cd $(SRCDIR); \
+	  for x in crypto/bn/asm/*.pl crypto/bn/asm/*.S \
+		   crypto/aes/asm/*.pl crypto/aes/asm/*.S \
+		   crypto/ec/asm/*.pl \
+		   crypto/md5/asm/*.pl \
+		   crypto/modes/asm/*.pl \
+		   crypto/sha/asm/*.pl; do \
+	    echo "$$x"; \
+	  done \
+	) | sort | uniq > $(SRCDIR)/providers/fips.module.sources
+	rm -rf sources-tmp
+{- output_on() if $disabled{fips}; "" -}
+
 # Set to -force to force a rebuild
 ERROR_REBUILD=
 errors:
