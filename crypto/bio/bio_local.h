@@ -113,6 +113,7 @@ typedef struct bio_f_buffer_ctx_struct {
 } BIO_F_BUFFER_CTX;
 
 struct bio_st {
+    OSSL_LIB_CTX *libctx;
     const BIO_METHOD *method;
     /* bio, mode, argp, argi, argl, ret */
     BIO_callback_fn callback;

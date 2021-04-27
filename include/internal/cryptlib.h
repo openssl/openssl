@@ -156,14 +156,15 @@ typedef struct ossl_ex_data_global_st {
 # define OSSL_LIB_CTX_RAND_CRNGT_INDEX               7
 # define OSSL_LIB_CTX_THREAD_EVENT_HANDLER_INDEX     8
 # define OSSL_LIB_CTX_FIPS_PROV_INDEX                9
-# define OSSL_LIB_CTX_ENCODER_STORE_INDEX        10
-# define OSSL_LIB_CTX_DECODER_STORE_INDEX      11
+# define OSSL_LIB_CTX_ENCODER_STORE_INDEX           10
+# define OSSL_LIB_CTX_DECODER_STORE_INDEX           11
 # define OSSL_LIB_CTX_SELF_TEST_CB_INDEX            12
 # define OSSL_LIB_CTX_BIO_PROV_INDEX                13
 # define OSSL_LIB_CTX_GLOBAL_PROPERTIES             14
 # define OSSL_LIB_CTX_STORE_LOADER_STORE_INDEX      15
 # define OSSL_LIB_CTX_PROVIDER_CONF_INDEX           16
-# define OSSL_LIB_CTX_MAX_INDEXES                   17
+# define OSSL_LIB_CTX_BIO_CORE_INDEX                17
+# define OSSL_LIB_CTX_MAX_INDEXES                   18
 
 typedef struct ossl_lib_ctx_method {
     void *(*new_func)(OSSL_LIB_CTX *ctx);
