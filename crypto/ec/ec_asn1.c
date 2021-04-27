@@ -965,6 +965,9 @@ EC_KEY *d2i_ECPrivateKey(EC_KEY **a, const unsigned char **in, long len)
         goto err;
     }
 
+    if (EC_GROUP_get_curve_name(ret->group) == NID_sm2)
+        EC_KEY_set_flags(ret, EC_FLAG_SM2_RANGE);
+
     EC_POINT_clear_free(ret->pub_key);
     ret->pub_key = EC_POINT_new(ret->group);
     if (ret->pub_key == NULL) {
@@ -1109,6 +1112,10 @@ EC_KEY *d2i_ECParameters(EC_KEY **a, const unsigned char **in, long len)
             ret->dirty_cnt++;
         return NULL;
     }
+
+    if (EC_GROUP_get_curve_name(ret->group) == NID_sm2)
+        EC_KEY_set_flags(ret, EC_FLAG_SM2_RANGE);
+
     ret->dirty_cnt++;
 
     if (a)

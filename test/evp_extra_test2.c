@@ -371,10 +371,17 @@ static int test_d2i_PrivateKey_ex(void) {
     provider = OSSL_PROVIDER_load(NULL, "default");
     key_bio = BIO_new_mem_buf((&keydata[0])->kder, (&keydata)[0]->size);
 
-    ok = TEST_ptr(pkey = PEM_read_bio_PrivateKey(key_bio, NULL, NULL, NULL));
+    if (!TEST_ptr_null(pkey = PEM_read_bio_PrivateKey(key_bio, NULL, NULL, NULL)))
+        goto err;
+
+    ERR_clear_error();
+    if (!TEST_int_ge(BIO_seek(key_bio, 0), 0))
+        goto err;
+    ok = TEST_ptr(pkey = d2i_PrivateKey_bio(key_bio, NULL));
     TEST_int_eq(ERR_peek_error(), 0);
     test_openssl_errors();
 
+ err:
     EVP_PKEY_free(pkey);
     BIO_free(key_bio);
     OSSL_PROVIDER_unload(provider);

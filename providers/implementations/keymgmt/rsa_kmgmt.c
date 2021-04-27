@@ -122,9 +122,7 @@ static int rsa_has(const void *keydata, int selection)
     if ((selection & RSA_POSSIBLE_SELECTIONS) == 0)
         return 1; /* the selection is not missing */
 
-    if ((selection & OSSL_KEYMGMT_SELECT_OTHER_PARAMETERS) != 0)
-        /* This will change with OAEP */
-        ok = ok && (RSA_test_flags(rsa, RSA_FLAG_TYPE_RSASSAPSS) != 0);
+    /* OSSL_KEYMGMT_SELECT_OTHER_PARAMETERS are always available even if empty */
     if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0)
         ok = ok && (RSA_get0_e(rsa) != NULL);
     if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0)

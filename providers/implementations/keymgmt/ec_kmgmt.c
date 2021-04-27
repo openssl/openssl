@@ -1288,14 +1288,8 @@ static void *sm2_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
     ret = ec_gen_assign_group(ec, gctx->gen_group);
 
     /* Whether you want it or not, you get a keypair, not just one half */
-    if ((gctx->selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0) {
-        /*
-         * For SM2, we need a new flag to indicate the 'generate' function
-         * to use a new range
-         */
-        EC_KEY_set_flags(ec, EC_FLAG_SM2_RANGE);
+    if ((gctx->selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0)
         ret = ret && EC_KEY_generate_key(ec);
-    }
 
     if (ret)
         return ec;
