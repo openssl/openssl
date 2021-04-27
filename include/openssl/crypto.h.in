@@ -517,6 +517,7 @@ CRYPTO_THREAD_ID CRYPTO_THREAD_get_current_id(void);
 int CRYPTO_THREAD_compare_id(CRYPTO_THREAD_ID a, CRYPTO_THREAD_ID b);
 
 OSSL_LIB_CTX *OSSL_LIB_CTX_new(void);
+OSSL_LIB_CTX *OSSL_LIB_CTX_new_from_dispatch(const OSSL_DISPATCH *in);
 int OSSL_LIB_CTX_load_config(OSSL_LIB_CTX *ctx, const char *config_file);
 void OSSL_LIB_CTX_free(OSSL_LIB_CTX *);
 OSSL_LIB_CTX *OSSL_LIB_CTX_get0_global_default(void);
