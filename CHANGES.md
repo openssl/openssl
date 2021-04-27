@@ -23,6 +23,12 @@ OpenSSL 3.0
 
 ### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
 
+ * Client-initiated renegotiation is now disabled by default. To enable it,
+   use SSL_clear_options or SSL_CTX_clear_options to clear the
+   SSL_OP_NO_RENEGOTIATION flag.
+
+   *Rich Salz*
+
  * For the key types DH and DHX the allowed settable parameters are now different.
    Previously (in 1.1.1) these conflicting parameters were allowed, but will now
    result in errors. See EVP_PKEY-DH(7) for further details. This affects the

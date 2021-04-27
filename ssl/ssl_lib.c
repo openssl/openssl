@@ -3321,7 +3321,8 @@ SSL_CTX *SSL_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
      * middlebox compatibility by default. This may be disabled by default in
      * a later OpenSSL version.
      */
-    ret->options |= SSL_OP_NO_COMPRESSION | SSL_OP_ENABLE_MIDDLEBOX_COMPAT;
+    ret->options |= SSL_OP_NO_COMPRESSION | SSL_OP_ENABLE_MIDDLEBOX_COMPAT
+        | SSL_OP_NO_RENEGOTIATION;
 
     ret->ext.status_type = TLSEXT_STATUSTYPE_nothing;
 

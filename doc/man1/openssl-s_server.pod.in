@@ -132,6 +132,7 @@ B<openssl> B<s_server>
 [B<-max_early_data> I<int>]
 [B<-early_data>]
 [B<-stateless>]
+[B<-no_reneg>]
 [B<-anti_replay>]
 [B<-no_anti_replay>]
 [B<-num_tickets>]
@@ -712,6 +713,10 @@ B<-WWW>, B<-HTTP> or B<-rev>.
 =item B<-stateless>
 
 Require TLSv1.3 cookies.
+
+=item B<-noreneg>
+
+Do not allow renegotation.
 
 =item B<-anti_replay>, B<-no_anti_replay>
 

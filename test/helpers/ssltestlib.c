@@ -697,6 +697,7 @@ int create_ssl_ctx_pair(OSSL_LIB_CTX *libctx, const SSL_METHOD *sm,
             serverctx = *sctx;
         else if (!TEST_ptr(serverctx = SSL_CTX_new_ex(libctx, NULL, sm)))
             goto err;
+        SSL_CTX_clear_options(serverctx, SSL_OP_NO_RENEGOTIATION);
     }
 
     if (cctx != NULL) {
@@ -704,6 +705,7 @@ int create_ssl_ctx_pair(OSSL_LIB_CTX *libctx, const SSL_METHOD *sm,
             clientctx = *cctx;
         else if (!TEST_ptr(clientctx = SSL_CTX_new_ex(libctx, NULL, cm)))
             goto err;
+        SSL_CTX_clear_options(clientctx, SSL_OP_NO_RENEGOTIATION);
     }
 
 #if !defined(OPENSSL_NO_TLS1_3) \

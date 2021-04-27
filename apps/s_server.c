@@ -81,6 +81,7 @@ static int s_crlf = 0;
 static SSL_CTX *ctx = NULL;
 static SSL_CTX *ctx2 = NULL;
 static int www = 0;
+static int allow_renegotiation = 1;
 
 static BIO *bio_s_out = NULL;
 static BIO *bio_s_msg = NULL;
@@ -698,6 +699,7 @@ typedef enum OPTION_choice {
     OPT_CERT2, OPT_KEY2, OPT_NEXTPROTONEG, OPT_ALPN, OPT_SENDFILE,
     OPT_SRTP_PROFILES, OPT_KEYMATEXPORT, OPT_KEYMATEXPORTLEN,
     OPT_KEYLOG_FILE, OPT_MAX_EARLY, OPT_RECV_MAX_EARLY, OPT_EARLY_DATA,
+    OPT_NO_RENEG,
     OPT_S_NUM_TICKETS, OPT_ANTI_REPLAY, OPT_NO_ANTI_REPLAY, OPT_SCTP_LABEL_BUG,
     OPT_HTTP_SERVER_BINMODE, OPT_NOCANAMES, OPT_IGNORE_UNEXPECTED_EOF,
     OPT_R_ENUM,
@@ -887,6 +889,7 @@ const OPTIONS s_server_options[] = {
     {"early_data", OPT_EARLY_DATA, '-', "Attempt to read early data"},
     {"num_tickets", OPT_S_NUM_TICKETS, 'n',
      "The number of TLSv1.3 session tickets that a server will automatically issue" },
+    {"no_reneg", OPT_NO_RENEG, '-', "Disallow renegotiation"},
     {"anti_replay", OPT_ANTI_REPLAY, '-', "Switch on anti-replay protection (default)"},
     {"no_anti_replay", OPT_NO_ANTI_REPLAY, '-', "Switch off anti-replay protection"},
     {"http_server_binmode", OPT_HTTP_SERVER_BINMODE, '-', "opening files in binary mode when acting as http server (-WWW and -HTTP)"},
@@ -1256,6 +1259,9 @@ int s_server_main(int argc, char *argv[])
         case OPT_CRLFORM:
             if (!opt_format(opt_arg(), OPT_FMT_PEMDER, &crl_format))
                 goto opthelp;
+            break;
+        case OPT_NO_RENEG:
+            allow_renegotiation = 0;
             break;
         case OPT_S_CASES:
         case OPT_S_NUM_TICKETS:
@@ -1787,6 +1793,8 @@ int s_server_main(int argc, char *argv[])
         ERR_print_errors(bio_err);
         goto end;
     }
+    if (allow_renegotiation)
+        SSL_CTX_clear_options(ctx, SSL_OP_NO_RENEGOTIATION);
 
     SSL_CTX_clear_mode(ctx, SSL_MODE_AUTO_RETRY);
 
@@ -1908,6 +1916,8 @@ int s_server_main(int argc, char *argv[])
 
     if (s_cert2) {
         ctx2 = SSL_CTX_new_ex(app_get0_libctx(), app_get0_propq(), meth);
+        if (allow_renegotiation)
+            SSL_CTX_clear_options(ctx2, SSL_OP_NO_RENEGOTIATION);
         if (ctx2 == NULL) {
             ERR_print_errors(bio_err);
             goto end;

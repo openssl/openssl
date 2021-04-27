@@ -656,6 +656,7 @@ static int test_ssl_build_cert_chain(void)
 
     if (!TEST_ptr(ssl_ctx = SSL_CTX_new_ex(libctx, NULL, TLS_server_method())))
         goto end;
+    SSL_CTX_clear_options(ssl_ctx, SSL_OP_NO_RENEGOTIATION);
     if (!TEST_ptr(ssl = SSL_new(ssl_ctx)))
         goto end;
     /* leaf_chain contains leaf + subinterCA + interCA + rootCA */
@@ -684,6 +685,7 @@ static int test_ssl_ctx_build_cert_chain(void)
 
     if (!TEST_ptr(ctx = SSL_CTX_new_ex(libctx, NULL, TLS_server_method())))
         goto end;
+    SSL_CTX_clear_options(ctx, SSL_OP_NO_RENEGOTIATION);
     /* leaf_chain contains leaf + subinterCA + interCA + rootCA */
     if (!TEST_int_eq(SSL_CTX_use_certificate_chain_file(ctx, leaf_chain), 1)
         || !TEST_int_eq(SSL_CTX_use_PrivateKey_file(ctx, skey,
@@ -2727,6 +2729,7 @@ static int execute_test_ssl_bio(int pop_ssl, bio_change_t change_bio)
             || !TEST_ptr(sslbio = BIO_new(BIO_f_ssl()))
             || !TEST_ptr(membio1 = BIO_new(BIO_s_mem())))
         goto end;
+    SSL_CTX_clear_options(ctx, SSL_OP_NO_RENEGOTIATION);
 
     BIO_set_ssl(sslbio, ssl, BIO_CLOSE);
 
@@ -5457,6 +5460,7 @@ static int test_serverinfo(int tst)
     ctx = SSL_CTX_new_ex(libctx, NULL, TLS_method());
     if (!TEST_ptr(ctx))
         goto end;
+    SSL_CTX_clear_options(ctx, SSL_OP_NO_RENEGOTIATION);
 
     if ((tst & 0x01) == 0x01)
         version = SSL_SERVERINFOV2;
@@ -6760,10 +6764,12 @@ static int int_test_ssl_get_shared_ciphers(int tst, int clnt)
         cctx = SSL_CTX_new_ex(tmplibctx, NULL, TLS_client_method());
         if (!TEST_ptr(cctx))
             goto end;
+        SSL_CTX_clear_options(cctx, SSL_OP_NO_RENEGOTIATION);
     } else {
         sctx = SSL_CTX_new_ex(tmplibctx, NULL, TLS_server_method());
         if (!TEST_ptr(sctx))
             goto end;
+        SSL_CTX_clear_options(sctx, SSL_OP_NO_RENEGOTIATION);
     }
 
     if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
@@ -7447,8 +7453,11 @@ static int test_cert_cb_int(int prot, int tst)
     else
         cert_cb_cnt = 0;
 
-    if (tst == 2)
+    if (tst == 2) {
         snictx = SSL_CTX_new(TLS_server_method());
+        if (snictx != NULL)
+            SSL_CTX_clear_options(snictx, SSL_OP_NO_RENEGOTIATION);
+    }
     SSL_CTX_set_cert_cb(sctx, cert_cb, snictx);
 
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
@@ -8046,6 +8055,8 @@ static int test_sigalgs_available(int idx)
     sctx = SSL_CTX_new_ex(serverctx, NULL, TLS_server_method());
     if (!TEST_ptr(cctx) || !TEST_ptr(sctx))
         goto end;
+    SSL_CTX_clear_options(cctx, SSL_OP_NO_RENEGOTIATION);
+    SSL_CTX_clear_options(sctx, SSL_OP_NO_RENEGOTIATION);
 
     if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
                                        TLS_client_method(),
@@ -8580,6 +8591,7 @@ static int test_sni_tls13(void)
     sctx = SSL_CTX_new_ex(libctx, NULL, TLS_server_method());
     if (!TEST_ptr(sctx))
         goto end;
+    SSL_CTX_clear_options(sctx, SSL_OP_NO_RENEGOTIATION);
     /* Require TLSv1.3 as a minimum */
     if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
                                        TLS_client_method(), TLS1_3_VERSION, 0,
@@ -8636,6 +8648,7 @@ static int test_set_alpn(void)
     ctx = SSL_CTX_new_ex(libctx, NULL, TLS_server_method());
     if (!TEST_ptr(ctx))
         goto end;
+    SSL_CTX_clear_options(ctx, SSL_OP_NO_RENEGOTIATION);
 
     /* the set_alpn functions return 0 (false) on success, non-zero (true) on failure */
     if (!TEST_false(SSL_CTX_set_alpn_protos(ctx, NULL, 2)))
@@ -8701,6 +8714,7 @@ static int test_inherit_verify_param(void)
     ctx = SSL_CTX_new_ex(libctx, NULL, TLS_server_method());
     if (!TEST_ptr(ctx))
         goto end;
+    SSL_CTX_clear_options(ctx, SSL_OP_NO_RENEGOTIATION);
 
     cp = SSL_CTX_get0_param(ctx);
     if (!TEST_ptr(cp))
