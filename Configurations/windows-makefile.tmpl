@@ -4,7 +4,7 @@
 ## {- join("\n## ", @autowarntext) -}
 {-
  use File::Basename;
-
+ exit 1;
  our $sover_dirname = platform->shlib_version_as_filename();
 
  my $build_scheme = $target{build_scheme};
