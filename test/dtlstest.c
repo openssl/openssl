@@ -67,8 +67,16 @@ static int test_dtls_unprocessed(int testidx)
                                        &sctx, &cctx, cert, privkey)))
         return 0;
 
+#ifndef OPENSSL_NO_DTLS1_2
     if (!TEST_true(SSL_CTX_set_cipher_list(cctx, "AES128-SHA")))
         goto end;
+#else
+    /* Default sigalgs are SHA1 based in <DTLS1.2 which is in security level 0 */
+    if (!TEST_true(SSL_CTX_set_cipher_list(sctx, "AES128-SHA:@SECLEVEL=0"))
+            || !TEST_true(SSL_CTX_set_cipher_list(cctx,
+                                                  "AES128-SHA:@SECLEVEL=0")))
+        goto end;
+#endif
 
     c_to_s_fbio = BIO_new(bio_f_tls_dump_filter());
     if (!TEST_ptr(c_to_s_fbio))
@@ -166,6 +174,14 @@ static int test_dtls_drop_records(int idx)
                                        DTLS1_VERSION, 0,
                                        &sctx, &cctx, cert, privkey)))
         return 0;
+
+#ifdef OPENSSL_NO_DTLS1_2
+    /* Default sigalgs are SHA1 based in <DTLS1.2 which is in security level 0 */
+    if (!TEST_true(SSL_CTX_set_cipher_list(sctx, "DEFAULT:@SECLEVEL=0"))
+            || !TEST_true(SSL_CTX_set_cipher_list(cctx,
+                                                  "DEFAULT:@SECLEVEL=0")))
+        goto end;
+#endif
 
     if (!TEST_true(SSL_CTX_set_dh_auto(sctx, 1)))
         goto end;
@@ -286,6 +302,14 @@ static int test_cookie(void)
     SSL_CTX_set_cookie_generate_cb(sctx, generate_cookie_cb);
     SSL_CTX_set_cookie_verify_cb(sctx, verify_cookie_cb);
 
+#ifdef OPENSSL_NO_DTLS1_2
+    /* Default sigalgs are SHA1 based in <DTLS1.2 which is in security level 0 */
+    if (!TEST_true(SSL_CTX_set_cipher_list(sctx, "DEFAULT:@SECLEVEL=0"))
+            || !TEST_true(SSL_CTX_set_cipher_list(cctx,
+                                                  "DEFAULT:@SECLEVEL=0")))
+        goto end;
+#endif
+
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
                                       NULL, NULL))
             || !TEST_true(create_ssl_connection(serverssl, clientssl,
@@ -313,6 +337,14 @@ static int test_dtls_duplicate_records(void)
                                        DTLS1_VERSION, 0,
                                        &sctx, &cctx, cert, privkey)))
         return 0;
+
+#ifdef OPENSSL_NO_DTLS1_2
+    /* Default sigalgs are SHA1 based in <DTLS1.2 which is in security level 0 */
+    if (!TEST_true(SSL_CTX_set_cipher_list(sctx, "DEFAULT:@SECLEVEL=0"))
+            || !TEST_true(SSL_CTX_set_cipher_list(cctx,
+                                                  "DEFAULT:@SECLEVEL=0")))
+        goto end;
+#endif
 
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
                                       NULL, NULL)))
