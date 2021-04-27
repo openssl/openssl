@@ -22,12 +22,12 @@ client = 0-renegotiate-client-no-resume-client
 
 [0-renegotiate-client-no-resume-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 Options = NoResumptionOnRenegotiation
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [0-renegotiate-client-no-resume-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
@@ -50,11 +50,11 @@ client = 1-renegotiate-client-resume-client
 
 [1-renegotiate-client-resume-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [1-renegotiate-client-resume-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
@@ -77,11 +77,11 @@ client = 2-renegotiate-server-resume-client
 
 [2-renegotiate-server-resume-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [2-renegotiate-server-resume-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
@@ -104,14 +104,14 @@ client = 3-renegotiate-client-auth-require-client
 
 [3-renegotiate-client-auth-require-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/root-cert.pem
 VerifyMode = Require
 
 [3-renegotiate-client-auth-require-client]
 Certificate = ${ENV::TEST_CERTS_DIR}/ee-client-chain.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 PrivateKey = ${ENV::TEST_CERTS_DIR}/ee-key.pem
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
@@ -135,14 +135,14 @@ client = 4-renegotiate-client-auth-once-client
 
 [4-renegotiate-client-auth-once-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/root-cert.pem
 VerifyMode = Once
 
 [4-renegotiate-client-auth-once-client]
 Certificate = ${ENV::TEST_CERTS_DIR}/ee-client-chain.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 PrivateKey = ${ENV::TEST_CERTS_DIR}/ee-key.pem
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
