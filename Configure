@@ -523,6 +523,7 @@ our %disabled = ( # "what"         => "comment"
                   "fuzz-afl"            => "default",
                   "fuzz-libfuzzer"      => "default",
                   "ktls"                => "default",
+                  "makedepend"          => "default",
                   "md2"                 => "default",
                   "msan"                => "default",
                   "rc5"                 => "default",
