@@ -85,6 +85,43 @@ static int test_configured_provider(void)
 }
 #endif
 
+static int test_cache_flushes(void)
+{
+    OSSL_LIB_CTX *ctx;
+    OSSL_PROVIDER *prov = NULL;
+    EVP_MD *md = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(ctx = OSSL_LIB_CTX_new())
+            || !TEST_ptr(prov = OSSL_PROVIDER_load(ctx, "default"))
+            || !TEST_true(OSSL_PROVIDER_available(ctx, "default"))
+            || !TEST_ptr(md = EVP_MD_fetch(ctx, "SHA256", NULL)))
+        goto err;
+    EVP_MD_free(md);
+    md = NULL;
+    OSSL_PROVIDER_unload(prov);
+    prov = NULL;
+
+    if (!TEST_false(OSSL_PROVIDER_available(ctx, "default")))
+        goto err;
+
+    if (!TEST_ptr_null(md = EVP_MD_fetch(ctx, "SHA256", NULL))) {
+        const char *provname = OSSL_PROVIDER_name(EVP_MD_provider(md));
+
+        if (OSSL_PROVIDER_available(NULL, provname))
+            TEST_info("%s provider is available\n", provname);
+        else
+            TEST_info("%s provider is not available\n", provname);
+    }
+
+    ret = 1;
+ err:
+    OSSL_PROVIDER_unload(prov);
+    EVP_MD_free(md);
+    OSSL_LIB_CTX_free(ctx);
+    return ret;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(test_builtin_provider);
@@ -92,6 +129,7 @@ int setup_tests(void)
     ADD_TEST(test_loaded_provider);
     ADD_TEST(test_configured_provider);
 #endif
+    ADD_TEST(test_cache_flushes);
     return 1;
 }
 
