@@ -760,6 +760,7 @@ HTTP_R_ERROR_PARSING_URL:101:error parsing url
 HTTP_R_ERROR_RECEIVING:103:error receiving
 HTTP_R_ERROR_SENDING:102:error sending
 HTTP_R_FAILED_READING_DATA:128:failed reading data
+HTTP_R_HEADER_PARSE_ERROR:126:header parse error
 HTTP_R_INCONSISTENT_CONTENT_LENGTH:120:inconsistent content length
 HTTP_R_INVALID_PORT_NUMBER:123:invalid port number
 HTTP_R_INVALID_URL_PATH:125:invalid url path
@@ -774,6 +775,7 @@ HTTP_R_REDIRECTION_FROM_HTTPS_TO_HTTP:112:redirection from https to http
 HTTP_R_REDIRECTION_NOT_ENABLED:116:redirection not enabled
 HTTP_R_RESPONSE_LINE_TOO_LONG:113:response line too long
 HTTP_R_RESPONSE_PARSE_ERROR:104:response parse error
+HTTP_R_SERVER_CANCELED_CONNECTION:127:server canceled connection
 HTTP_R_SOCK_NOT_SUPPORTED:122:sock not supported
 HTTP_R_STATUS_CODE_UNSUPPORTED:114:status code unsupported
 HTTP_R_TLS_NOT_ENABLED:107:tls not enabled

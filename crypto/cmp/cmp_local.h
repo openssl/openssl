@@ -40,11 +40,13 @@ struct ossl_cmp_ctx_st {
     OSSL_CMP_transfer_cb_t transfer_cb; /* default: OSSL_CMP_MSG_http_perform */
     void *transfer_cb_arg; /* allows to store optional argument to cb */
     /* HTTP-based transfer */
+    OSSL_HTTP_REQ_CTX *http_ctx;
     char *serverPath;
     char *server;
     int serverPort;
     char *proxy;
     char *no_proxy;
+    int keep_alive; /* persistent connection: 0=no, 1=prefer, 2=require */
     int msg_timeout; /* max seconds to wait for each CMP message round trip */
     int total_timeout; /* max number of seconds an enrollment may take, incl. */
     /* attempts polling for a response if a 'waiting' PKIStatus is received */

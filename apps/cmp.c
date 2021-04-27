@@ -72,6 +72,7 @@ static char *opt_path = NULL;
 static char *opt_proxy = NULL;
 static char *opt_no_proxy = NULL;
 static char *opt_recipient = NULL;
+static int opt_keep_alive = 1;
 static int opt_msg_timeout = -1;
 static int opt_total_timeout = -1;
 
@@ -205,7 +206,7 @@ typedef enum OPTION_choice {
 
     OPT_SERVER, OPT_PATH, OPT_PROXY, OPT_NO_PROXY,
     OPT_RECIPIENT,
-    OPT_MSG_TIMEOUT, OPT_TOTAL_TIMEOUT,
+    OPT_KEEP_ALIVE, OPT_MSG_TIMEOUT, OPT_TOTAL_TIMEOUT,
 
     OPT_TRUSTED, OPT_UNTRUSTED, OPT_SRVCERT,
     OPT_EXPECT_SENDER,
@@ -344,8 +345,10 @@ const OPTIONS cmp_options[] = {
      "Default from environment variable 'no_proxy', else 'NO_PROXY', else none"},
     {"recipient", OPT_RECIPIENT, 's',
      "DN of CA. Default: subject of -srvcert, -issuer, issuer of -oldcert or -cert"},
+    {"keep_alive", OPT_KEEP_ALIVE, 'N',
+     "Persistent HTTP connections. 0: no, 1 (the default): request, 2: require"},
     {"msg_timeout", OPT_MSG_TIMEOUT, 'N',
-     "Timeout per CMP message round trip (or 0 for none). Default 120 seconds"},
+     "Number of seconds allowed per CMP message round trip, or 0 for infinite"},
     {"total_timeout", OPT_TOTAL_TIMEOUT, 'N',
      "Overall time an enrollment incl. polling may take. Default 0 = infinite"},
 
@@ -530,7 +533,7 @@ static varref cmp_vars[] = { /* must be in same order as enumerated above! */
     {&opt_oldcert}, {(char **)&opt_revreason},
 
     {&opt_server}, {&opt_path}, {&opt_proxy}, {&opt_no_proxy},
-    {&opt_recipient},
+    {&opt_recipient}, {(char **)&opt_keep_alive},
     {(char **)&opt_msg_timeout}, {(char **)&opt_total_timeout},
 
     {&opt_trusted}, {&opt_untrusted}, {&opt_srvcert},
@@ -1817,6 +1820,15 @@ static int setup_client_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
     if (!setup_verification_ctx(ctx))
         goto err;
 
+    if (opt_keep_alive != 1)
+        (void)OSSL_CMP_CTX_set_option(ctx, OSSL_CMP_OPT_KEEP_ALIVE,
+                                      opt_keep_alive);
+    if (opt_total_timeout > 0 && opt_msg_timeout > 0
+            && opt_total_timeout < opt_msg_timeout) {
+        CMP_err2("-total_timeout argument = %d must not be < %d (-msg_timeout)",
+                 opt_total_timeout, opt_msg_timeout);
+        goto err;
+    }
     if (opt_msg_timeout >= 0) /* must do this before setup_ssl_ctx() */
         (void)OSSL_CMP_CTX_set_option(ctx, OSSL_CMP_OPT_MSG_TIMEOUT,
                                       opt_msg_timeout);
@@ -2231,6 +2243,13 @@ static int get_opts(int argc, char **argv)
             break;
         case OPT_RECIPIENT:
             opt_recipient = opt_str();
+            break;
+        case OPT_KEEP_ALIVE:
+            opt_keep_alive = opt_int_arg();
+            if (opt_keep_alive > 2) {
+                CMP_err("-keep_alive argument must be 0, 1, or 2");
+                goto opthelp;
+            }
             break;
         case OPT_MSG_TIMEOUT:
             opt_msg_timeout = opt_int_arg();
@@ -2668,6 +2687,7 @@ int cmp_main(int argc, char **argv)
 #else
         BIO *acbio;
         BIO *cbio = NULL;
+        int keep_alive = 0;
         int msgs = 0;
         int retry = 1;
 
@@ -2680,7 +2700,8 @@ int cmp_main(int argc, char **argv)
 
             ret = http_server_get_asn1_req(ASN1_ITEM_rptr(OSSL_CMP_MSG),
                                            (ASN1_VALUE **)&req, &path,
-                                           &cbio, acbio, prog, 0, 0);
+                                           &cbio, acbio, &keep_alive,
+                                           prog, opt_port, 0, 0);
             if (ret == 0) { /* no request yet */
                 if (retry) {
                     sleep(1);
@@ -2712,7 +2733,8 @@ int cmp_main(int argc, char **argv)
                                                   500, "Internal Server Error");
                     break; /* treated as fatal error */
                 }
-                ret = http_server_send_asn1_resp(cbio, "application/pkixcmp",
+                ret = http_server_send_asn1_resp(cbio, keep_alive,
+                                                 "application/pkixcmp",
                                                  ASN1_ITEM_rptr(OSSL_CMP_MSG),
                                                  (const ASN1_VALUE *)resp);
                 OSSL_CMP_MSG_free(resp);
@@ -2724,8 +2746,12 @@ int cmp_main(int argc, char **argv)
                 (void)OSSL_CMP_CTX_set1_transactionID(srv_cmp_ctx, NULL);
                 (void)OSSL_CMP_CTX_set1_senderNonce(srv_cmp_ctx, NULL);
             }
-            BIO_free_all(cbio);
-            cbio = NULL;
+            if (!ret || !keep_alive
+                || OSSL_CMP_CTX_get_status(srv_cmp_ctx) == -1
+                 /* transaction closed by OSSL_CMP_CTX_server_perform() */) {
+                BIO_free_all(cbio);
+                cbio = NULL;
+            }
         }
         BIO_free_all(cbio);
         BIO_free_all(acbio);

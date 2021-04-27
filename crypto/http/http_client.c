@@ -27,14 +27,16 @@
 
 #define HTTP_PREFIX "HTTP/"
 #define HTTP_VERSION_PATT "1." /* allow 1.x */
-#define HTTP_VERSION_STR_LEN 3
-#define HTTP_LINE1_MINLEN ((int)strlen(HTTP_PREFIX HTTP_VERSION_PATT "x 200\n"))
+#define HTTP_PREFIX_VERSION HTTP_PREFIX""HTTP_VERSION_PATT
+#define HTTP_1_0 HTTP_PREFIX_VERSION"0" /* "HTTP/1.0" */
+#define HTTP_VERSION_PATT_LEN strlen(HTTP_PREFIX_VERSION)
+#define HTTP_VERSION_STR_LEN (HTTP_VERSION_PATT_LEN + 1)
+#define HTTP_LINE1_MINLEN ((int)strlen(HTTP_PREFIX_VERSION "x 200\n"))
 #define HTTP_VERSION_MAX_REDIRECTIONS 50
 
 #define HTTP_STATUS_CODE_OK                200
 #define HTTP_STATUS_CODE_MOVED_PERMANENTLY 301
 #define HTTP_STATUS_CODE_FOUND             302
-
 
 /* Stateful HTTP request code, supporting blocking and non-blocking I/O */
 
@@ -44,19 +46,26 @@ struct ossl_http_req_ctx_st {
     int state;                  /* Current I/O state */
     unsigned char *readbuf;     /* Buffer for reading response by line */
     int readbuflen;             /* Buffer length, equals buf_size */
-    BIO *wbio;                  /* BIO to send request to */
-    BIO *rbio;                  /* BIO to read response from */
-    BIO *mem;                   /* Memory BIO response is built into */
-    int method_POST;            /* HTTP method is "POST" (else "GET") */
-    char *expected_ct;          /* expected Content-Type, or NULL */
-    int expect_asn1;            /* response must be ASN.1-encoded */
-    long len_to_send;           /* number of bytes in request still to send */
-    unsigned long resp_len;     /* length of response */
+    int free_wbio;              /* wbio allocated internally, free with ctx */
+    BIO *wbio;                  /* BIO to write/send request to */
+    BIO *rbio;                  /* BIO to read/receive response from */
+    OSSL_HTTP_bio_cb_t upd_fn;  /* Optional BIO update callback used for TLS */
+    void *upd_arg;              /* Optional arg for update callback function */
+    int use_ssl;                /* Use HTTPS */
+    char *proxy;                /* Optional proxy name or URI */
+    char *server;               /* Optional server host name */
+    char *port;                 /* Optional server port */
+    BIO *mem;                   /* Memory BIO holding request and response */
+    int method_POST;            /* HTTP method is POST (else GET) */
+    char *expected_ct;          /* Optional expected Content-Type */
+    int expect_asn1;            /* Response must be ASN.1-encoded */
+    long len_to_send;           /* Number of bytes in request still to send */
+    unsigned long resp_len;     /* Length of response */
     size_t max_resp_len;        /* Maximum length of response */
     int keep_alive;             /* Persistent conn. 0=no, 1=prefer, 2=require */
     time_t max_time;            /* Maximum end time of current transfer, or 0 */
     time_t max_total_time;      /* Maximum end time of total transfer, or 0 */
-    char *redirection_url;      /* Location given with HTTP status 301/302 */
+    char *redirection_url;      /* Location obtained from HTTP status 301/302 */
 };
 
 /* HTTP states */
@@ -73,6 +82,8 @@ struct ossl_http_req_ctx_st {
 #define OHS_FLUSH          (7 | OHS_NOREAD) /* Request being flushed */
 #define OHS_DONE           (8 | OHS_NOREAD) /* Completed */
 #define OHS_HTTP_HEADER    (9 | OHS_NOREAD) /* Headers set, w/o final \r\n */
+
+/* Low-level HTTP API implementation */
 
 OSSL_HTTP_REQ_CTX *OSSL_HTTP_REQ_CTX_new(BIO *wbio, BIO *rbio, int buf_size)
 {
@@ -94,7 +105,6 @@ OSSL_HTTP_REQ_CTX *OSSL_HTTP_REQ_CTX_new(BIO *wbio, BIO *rbio, int buf_size)
         OPENSSL_free(rctx);
         return NULL;
     }
-    rctx->resp_len = 0;
     rctx->max_resp_len = HTTP_DEFAULT_MAX_RESP_LEN;
     /* everything else is 0, e.g. rctx->len_to_send, or NULL, e.g. rctx->mem  */
     return rctx;
@@ -104,8 +114,19 @@ void OSSL_HTTP_REQ_CTX_free(OSSL_HTTP_REQ_CTX *rctx)
 {
     if (rctx == NULL)
         return;
+    /*
+     * Use BIO_free_all() because bio_update_fn may prepend or append to cbio.
+     * This also frees any (e.g., SSL/TLS) BIOs linked with bio and,
+     * like BIO_reset(bio), calls SSL_shutdown() to notify/alert the peer.
+     */
+    if (rctx->free_wbio)
+        BIO_free_all(rctx->wbio);
+    /* do not free rctx->rbio */
     BIO_free(rctx->mem); /* this may indirectly call ERR_clear_error() */
     OPENSSL_free(rctx->readbuf);
+    OPENSSL_free(rctx->proxy);
+    OPENSSL_free(rctx->server);
+    OPENSSL_free(rctx->port);
     OPENSSL_free(rctx->expected_ct);
     OPENSSL_free(rctx);
 }
@@ -175,8 +196,9 @@ int OSSL_HTTP_REQ_CTX_set_request_line(OSSL_HTTP_REQ_CTX *rctx, int method_POST,
     if (path[0] != '/' && BIO_printf(rctx->mem, "/") <= 0)
         return 0;
 
-    if (BIO_printf(rctx->mem, "%s "HTTP_PREFIX"1.0\r\n", path) <= 0)
+    if (BIO_printf(rctx->mem, "%s "HTTP_1_0"\r\n", path) <= 0)
         return 0;
+    rctx->resp_len = 0;
     rctx->state = OHS_HTTP_HEADER;
     return 1;
 }
@@ -201,10 +223,7 @@ int OSSL_HTTP_REQ_CTX_add1_header(OSSL_HTTP_REQ_CTX *rctx,
         if (BIO_puts(rctx->mem, value) <= 0)
             return 0;
     }
-    if (BIO_write(rctx->mem, "\r\n", 2) != 2)
-        return 0;
-    rctx->state = OHS_HTTP_HEADER;
-    return 1;
+    return BIO_write(rctx->mem, "\r\n", 2) == 2;
 }
 
 int OSSL_HTTP_REQ_CTX_set_expected(OSSL_HTTP_REQ_CTX *rctx,
@@ -216,7 +235,7 @@ int OSSL_HTTP_REQ_CTX_set_expected(OSSL_HTTP_REQ_CTX *rctx,
         return 0;
     }
     if (keep_alive != 0
-            && rctx->state != OHS_ERROR && rctx->state != OHS_HEADERS) {
+            && rctx->state != OHS_ERROR && rctx->state != OHS_HTTP_HEADER) {
         /* Cannot anymore set keep-alive in request header */
         ERR_raise(ERR_LIB_HTTP, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
         return 0;
@@ -243,11 +262,19 @@ static int ossl_http_req_ctx_set_content(OSSL_HTTP_REQ_CTX *rctx,
     const unsigned char *req;
     long req_len;
 
-    if (rctx == NULL || req_mem == NULL) {
+    if (rctx == NULL || (req_mem == NULL && content_type != NULL)) {
         ERR_raise(ERR_LIB_HTTP, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
-    if (rctx->mem == NULL || !rctx->method_POST) {
+
+    if (rctx->keep_alive != 0
+            && !OSSL_HTTP_REQ_CTX_add1_header(rctx, "Connection", "keep-alive"))
+        return 0;
+    rctx->state = OHS_WRITE_INIT;
+
+    if (req_mem == NULL)
+        return 1;
+    if (!rctx->method_POST) {
         ERR_raise(ERR_LIB_HTTP, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
         return 0;
     }
@@ -258,7 +285,6 @@ static int ossl_http_req_ctx_set_content(OSSL_HTTP_REQ_CTX *rctx,
 
     if ((req_len = BIO_get_mem_data(req_mem, &req)) <= 0)
         return 0;
-    rctx->state = OHS_WRITE_INIT;
 
     return BIO_printf(rctx->mem, "Content-Length: %ld\r\n\r\n", req_len) > 0
         && BIO_write(rctx->mem, req, req_len) == (int)req_len;
@@ -302,41 +328,38 @@ static int OSSL_HTTP_REQ_CTX_add1_headers(OSSL_HTTP_REQ_CTX *rctx,
     return 1;
 }
 
-/*-
- * Create OSSL_HTTP_REQ_CTX structure using the values provided.
- * If !use_http_proxy then the 'server' and 'port' parameters are ignored.
- * If req_mem == NULL then use GET and ignore content_type, else POST.
- */
-static OSSL_HTTP_REQ_CTX
-*ossl_http_req_ctx_new(BIO *wbio, BIO *rbio, int use_http_proxy,
-                       const char *server, const char *port,
-                       const char *path,
-                       const STACK_OF(CONF_VALUE) *headers,
-                       const char *content_type, BIO *req_mem,
-                       int buf_size, int timeout,
-                       const char *expected_ct, int expect_asn1)
+/* Create OSSL_HTTP_REQ_CTX structure using the values provided. */
+static OSSL_HTTP_REQ_CTX *http_req_ctx_new(int free_wbio, BIO *wbio, BIO *rbio,
+                                           OSSL_HTTP_bio_cb_t bio_update_fn,
+                                           void *arg, int use_ssl,
+                                           const char *proxy,
+                                           const char *server, const char *port,
+                                           int buf_size, unsigned long max_len,
+                                           int overall_timeout)
 {
-    OSSL_HTTP_REQ_CTX *rctx;
+    OSSL_HTTP_REQ_CTX *rctx = OSSL_HTTP_REQ_CTX_new(wbio, rbio, buf_size);
 
-    if (use_http_proxy && (server == NULL || port == NULL)) {
-        ERR_raise(ERR_LIB_HTTP, ERR_R_PASSED_NULL_PARAMETER);
+    if (rctx == NULL)
         return NULL;
-    }
-    /* remaining parameters are checked indirectly by the functions called */
+    OSSL_HTTP_REQ_CTX_set_max_response_length(rctx, max_len);
+    rctx->free_wbio = free_wbio;
+    rctx->upd_fn = bio_update_fn;
+    rctx->upd_arg = arg;
+    rctx->use_ssl = use_ssl;
+    if (proxy != NULL
+            && (rctx->proxy = OPENSSL_strdup(proxy)) == NULL)
+        goto err;
+    if (server != NULL
+            && (rctx->server = OPENSSL_strdup(server)) == NULL)
+        goto err;
+    if (port != NULL
+            && (rctx->port = OPENSSL_strdup(port)) == NULL)
+        goto err;
+    rctx->max_total_time =
+        overall_timeout > 0 ? time(NULL) + overall_timeout : 0;
+    return rctx;
 
-    if ((rctx = OSSL_HTTP_REQ_CTX_new(wbio, rbio, buf_size))
-        == NULL)
-        return NULL;
-    if (OSSL_HTTP_REQ_CTX_set_request_line(rctx, req_mem != NULL,
-                                           use_http_proxy ? server : NULL, port,
-                                           path)
-        && OSSL_HTTP_REQ_CTX_set_expected(rctx, expected_ct, expect_asn1,
-                                          timeout, 0)
-        && OSSL_HTTP_REQ_CTX_add1_headers(rctx, headers, server)
-        && (req_mem == NULL
-            || ossl_http_req_ctx_set_content(rctx, content_type, req_mem)))
-        return rctx;
-
+ err:
     OSSL_HTTP_REQ_CTX_free(rctx);
     return NULL;
 }
@@ -346,45 +369,42 @@ static OSSL_HTTP_REQ_CTX
  * We need to obtain the numeric code and (optional) informational message.
  */
 
-static int parse_http_line1(char *line)
+static int parse_http_line1(char *line, int *found_keep_alive)
 {
     int retcode;
     char *code, *reason, *end;
 
+    if (strncmp(line, HTTP_PREFIX_VERSION, HTTP_VERSION_PATT_LEN) != 0)
+        goto err;
+    /* above HTTP 1.0, connection persistence is the default */
+    *found_keep_alive = line[HTTP_VERSION_PATT_LEN] > '0';
+
     /* Skip to first whitespace (past protocol info) */
     for (code = line; *code != '\0' && !ossl_isspace(*code); code++)
         continue;
-    if (*code == '\0') {
-        ERR_raise(ERR_LIB_HTTP, HTTP_R_RESPONSE_PARSE_ERROR);
-        return 0;
-    }
+    if (*code == '\0')
+        goto err;
 
     /* Skip past whitespace to start of response code */
     while (*code != '\0' && ossl_isspace(*code))
         code++;
-
-    if (*code == '\0') {
-        ERR_raise(ERR_LIB_HTTP, HTTP_R_RESPONSE_PARSE_ERROR);
-        return 0;
-    }
+    if (*code == '\0')
+        goto err;
 
     /* Find end of response code: first whitespace after start of code */
     for (reason = code; *reason != '\0' && !ossl_isspace(*reason); reason++)
         continue;
 
-    if (*reason == '\0') {
-        ERR_raise(ERR_LIB_HTTP, HTTP_R_RESPONSE_PARSE_ERROR);
-        return 0;
-    }
+    if (*reason == '\0')
+        goto err;
 
     /* Set end of response code and start of message */
     *reason++ = '\0';
 
     /* Attempt to parse numeric code */
     retcode = strtoul(code, &end, 10);
-
     if (*end != '\0')
-        return 0;
+        goto err;
 
     /* Skip over any leading whitespace in message */
     while (*reason != '\0' && ossl_isspace(*reason))
@@ -418,6 +438,10 @@ static int parse_http_line1(char *line)
                            "Code=%s, Reason=%s", code, reason);
         return 0;
     }
+
+ err:
+    ERR_raise_data(ERR_LIB_HTTP, HTTP_R_HEADER_PARSE_ERROR, "%.40s", line);
+    return 0;
 }
 
 static int check_set_resp_len(OSSL_HTTP_REQ_CTX *rctx, unsigned long len)
@@ -439,7 +463,7 @@ static int check_set_resp_len(OSSL_HTTP_REQ_CTX *rctx, unsigned long len)
  */
 int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
 {
-    int i;
+    int i, found_expected_ct = 0, found_keep_alive = 0;
     long n;
     unsigned long resp_len;
     const unsigned char *p;
@@ -561,7 +585,7 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
 
         /* First line */
         if (rctx->state == OHS_FIRSTLINE) {
-            switch (parse_http_line1((char *)rctx->readbuf)) {
+            switch (parse_http_line1((char *)rctx->readbuf, &found_keep_alive)) {
             case HTTP_STATUS_CODE_OK:
                 rctx->state = OHS_HEADERS;
                 goto next_line;
@@ -605,8 +629,15 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
                                    rctx->expected_ct, value);
                     return 0;
                 }
-                OPENSSL_free(rctx->expected_ct);
-                rctx->expected_ct = NULL; /* content-type has been found */
+                found_expected_ct = 1;
+            }
+
+            /* https://tools.ietf.org/html/rfc7230#section-6.3 Persistence */
+            if (strcasecmp(key, "Connection") == 0) {
+                if (strcasecmp(value, "keep-alive") == 0)
+                    found_keep_alive = 1;
+                else if (strcasecmp(value, "close") == 0)
+                    found_keep_alive = 0;
             }
             if (strcasecmp(key, "Content-Length") == 0) {
                 resp_len = strtoul(value, &line_end, 10);
@@ -629,11 +660,21 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
         if (*p != '\0') /* not end of headers */
             goto next_line;
 
-        if (rctx->expected_ct != NULL) {
+        if (rctx->expected_ct != NULL && !found_expected_ct) {
             ERR_raise_data(ERR_LIB_HTTP, HTTP_R_MISSING_CONTENT_TYPE,
                            "expected=%s", rctx->expected_ct);
             return 0;
         }
+        if (rctx->keep_alive != 0 /* do not let server initiate keep_alive */
+                && !found_keep_alive /* otherwise there is no change */) {
+            if (rctx->keep_alive == 2) {
+                rctx->keep_alive = 0;
+                ERR_raise(ERR_LIB_HTTP, HTTP_R_SERVER_CANCELED_CONNECTION);
+                return 0;
+            }
+            rctx->keep_alive = 0;
+        }
+
         if (rctx->state == OHS_REDIRECT) {
             /* http status code indicated redirect but there was no Location */
             ERR_raise(ERR_LIB_HTTP, HTTP_R_MISSING_REDIRECT_LOCATION);
@@ -698,7 +739,7 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
     case OHS_CONTENT:
     default:
         n = BIO_get_mem_data(rctx->mem, NULL);
-        if (n < (long)rctx->resp_len /* may be 0 if no Content-Type or ASN.1 */)
+        if (n < (long)rctx->resp_len /* may be 0 if no Content-Length or ASN.1 */)
             goto next_io;
 
         rctx->state = OHS_DONE;
@@ -755,11 +796,6 @@ static BIO *HTTP_new_bio(const char *server /* optionally includes ":port" */,
 }
 #endif /* OPENSSL_NO_SOCK */
 
-int OSSL_HTTP_is_alive(const OSSL_HTTP_REQ_CTX *rctx)
-{
-    return rctx != NULL && rctx->keep_alive != 0;
-}
-
 BIO *OSSL_HTTP_REQ_CTX_exchange(OSSL_HTTP_REQ_CTX *rctx)
 {
     int rv;
@@ -791,84 +827,23 @@ BIO *OSSL_HTTP_REQ_CTX_exchange(OSSL_HTTP_REQ_CTX *rctx)
     return rctx->mem;
 }
 
-static int update_timeout(int timeout, time_t start_time)
+int OSSL_HTTP_is_alive(const OSSL_HTTP_REQ_CTX *rctx)
 {
-    long elapsed_time;
-
-    if (timeout == 0)
-        return 0;
-    elapsed_time = (long)(time(NULL) - start_time); /* this might overflow */
-    return timeout <= elapsed_time ? -1 : timeout - elapsed_time;
+    return rctx != NULL && rctx->keep_alive != 0;
 }
 
+/* High-level HTTP API implementation */
+
+/* Initiate an HTTP session using bio, else use given server, proxy, etc. */
 OSSL_HTTP_REQ_CTX *OSSL_HTTP_open(const char *server, const char *port,
                                   const char *proxy, const char *no_proxy,
                                   int use_ssl, BIO *bio, BIO *rbio,
                                   OSSL_HTTP_bio_cb_t bio_update_fn, void *arg,
-                                  int buf_size, int overall_timeout)
+                                  int buf_size, unsigned long max_resp_len,
+                                  int overall_timeout)
 {
-    return NULL; /* TODO(3.0) expand */
-}
-
-/*-
- * Exchange HTTP request and response with the given server.
- * If req_mem == NULL then use GET and ignore content_type, else POST.
- * The redirection_url output (freed by caller) parameter is used only for GET.
- *
- * Typically the bio and rbio parameters are NULL and a network BIO is created
- * internally for connecting to the given server and port, optionally via a
- * proxy and its port, and is then used for exchanging the request and response.
- * If bio is given and rbio is NULL then this BIO is used instead.
- * If both bio and rbio are given (which may be memory BIOs for instance)
- * then no explicit connection is attempted,
- * bio is used for writing the request, and rbio for reading the response.
- *
- * bio_update_fn is an optional BIO connect/disconnect callback function,
- * which has the prototype
- *   BIO *(*OSSL_HTTP_bio_cb_t) (BIO *bio, void *arg, int conn, int detail);
- * The callback may modify the HTTP BIO provided in the bio argument,
- * whereby it may make use of any custom defined argument 'arg'.
- * During connection establishment, just after BIO_do_connect_retry(),
- * the callback function is invoked with the 'conn' argument being 1
- * 'detail' indicating whether a HTTPS (i.e., TLS) connection is requested.
- * On disconnect 'conn' is 0 and 'detail' indicates that no error occurred.
- * For instance, on connect the funct may prepend a TLS BIO to implement HTTPS;
- * after disconnect it may do some error diagnostics and/or specific cleanup.
- * The function should return NULL to indicate failure.
- * After disconnect the modified BIO will be deallocated using BIO_free_all().
- */
-int OSSL_HTTP_set_request(OSSL_HTTP_REQ_CTX *rctx, const char *path,
-                          const STACK_OF(CONF_VALUE) *headers,
-                          const char *content_type, BIO *req,
-                          const char *expected_content_type, int expect_asn1,
-                          size_t max_resp_len, int timeout, int keep_alive)
-{
-    return 0; /* TODO(3.0) expand */
-}
-
-BIO *OSSL_HTTP_exchange(OSSL_HTTP_REQ_CTX *rctx, char **redirection_url)
-{
-    return NULL; /* TODO(3.0) expand */
-}
-
-BIO *OSSL_HTTP_transfer(OSSL_HTTP_REQ_CTX **prctx,
-                        const char *server, const char *port, const char *path,
-                        int use_ssl, const char *proxy, const char *no_proxy,
-                        BIO *bio, BIO *rbio,
-                        OSSL_HTTP_bio_cb_t bio_update_fn, void *arg,
-                        int buf_size, const STACK_OF(CONF_VALUE) *headers,
-                        const char *content_type, BIO *req_mem,
-                        const char *expected_ct, int expect_asn1,
-                        size_t max_resp_len, int timeout, int keep_alive)
-{
-    char **redirection_url = (char **)prctx; /* TODO(3.0) fix when API approved */
-    time_t start_time = timeout > 0 ? time(NULL) : 0;
-    BIO *cbio; /* = bio if present, used as connection BIO if rbio is NULL */
-    OSSL_HTTP_REQ_CTX *rctx;
-    BIO *resp = NULL;
-
-    if (redirection_url != NULL)
-        *redirection_url = NULL; /* do this beforehand to prevent dbl free */
+    BIO *cbio; /* == bio if supplied, used as connection BIO if rbio is NULL */
+    OSSL_HTTP_REQ_CTX *rctx = NULL;
 
     if (use_ssl && bio_update_fn == NULL) {
         ERR_raise(ERR_LIB_HTTP, HTTP_R_TLS_NOT_ENABLED);
@@ -889,7 +864,7 @@ BIO *OSSL_HTTP_transfer(OSSL_HTTP_REQ_CTX **prctx,
             ERR_raise(ERR_LIB_HTTP, ERR_R_PASSED_NULL_PARAMETER);
             return NULL;
         }
-        if (*port == '\0')
+        if (port != NULL && *port == '\0')
             port = NULL;
         if (port == NULL && strchr(server, ':') == NULL)
             port = use_ssl ? OSSL_HTTPS_PORT : OSSL_HTTP_PORT;
@@ -909,16 +884,19 @@ BIO *OSSL_HTTP_transfer(OSSL_HTTP_REQ_CTX **prctx,
         return NULL;
 #endif
     }
-    /* remaining parameters are checked indirectly by the functions called */
 
     (void)ERR_set_mark(); /* prepare removing any spurious libssl errors */
-    if (rbio == NULL && BIO_do_connect_retry(cbio, timeout, -1) <= 0)
+    if (rbio == NULL && BIO_do_connect_retry(cbio, overall_timeout, -1) <= 0) {
+        if (bio == NULL) /* cbio was not provided by caller */
+            BIO_free_all(cbio);
         goto end;
-    /* now timeout is guaranteed to be >= 0 */
+    }
+    /* now overall_timeout is guaranteed to be >= 0 */
 
     /* callback can be used to wrap or prepend TLS session */
     if (bio_update_fn != NULL) {
         BIO *orig_bio = cbio;
+
         cbio = (*bio_update_fn)(cbio, arg, 1 /* connect */, use_ssl);
         if (cbio == NULL) {
             cbio = orig_bio;
@@ -926,13 +904,63 @@ BIO *OSSL_HTTP_transfer(OSSL_HTTP_REQ_CTX **prctx,
         }
     }
 
-    rctx = ossl_http_req_ctx_new(cbio, rbio != NULL ? rbio : cbio,
-                                 !use_ssl && proxy != NULL, server, port, path,
-                                 headers, content_type, req_mem, buf_size,
-                                 update_timeout(timeout, start_time),
-                                 expected_ct, expect_asn1);
-    if (rctx == NULL)
-        goto end;
+    rctx = http_req_ctx_new(bio == NULL, cbio, rbio != NULL ? rbio : cbio,
+                            bio_update_fn, arg, use_ssl, proxy, server, port,
+                            buf_size, max_resp_len, overall_timeout);
+
+ end:
+    if (rctx != NULL)
+        /* remove any spurious error queue entries by ssl_add_cert_chain() */
+        (void)ERR_pop_to_mark();
+    else
+        (void)ERR_clear_last_mark();
+
+    return rctx;
+}
+
+int OSSL_HTTP_set_request(OSSL_HTTP_REQ_CTX *rctx, const char *path,
+                          const STACK_OF(CONF_VALUE) *headers,
+                          const char *content_type, BIO *req_mem,
+                          const char *expected_content_type, int expect_asn1,
+                          int timeout, int keep_alive)
+{
+    int use_http_proxy;
+
+    if (rctx == NULL) {
+        ERR_raise(ERR_LIB_HTTP, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    use_http_proxy = rctx->proxy != NULL && !rctx->use_ssl;
+    if (use_http_proxy && (rctx->server == NULL || rctx->port == NULL)) {
+        ERR_raise(ERR_LIB_HTTP, ERR_R_PASSED_INVALID_ARGUMENT);
+        return 0;
+    }
+
+    return OSSL_HTTP_REQ_CTX_set_request_line(rctx, req_mem != NULL,
+                                              use_http_proxy ? rctx->server
+                                              : NULL, rctx->port, path)
+        && OSSL_HTTP_REQ_CTX_add1_headers(rctx, headers, rctx->server)
+        && OSSL_HTTP_REQ_CTX_set_expected(rctx, expected_content_type,
+                                          expect_asn1, timeout, keep_alive)
+        && ossl_http_req_ctx_set_content(rctx, content_type, req_mem);
+}
+
+/*-
+ * Exchange single HTTP request and response according to rctx.
+ * If rctx->method_POST then use POST, else use GET and ignore content_type.
+ * The redirection_url output (freed by caller) parameter is used only for GET.
+ */
+BIO *OSSL_HTTP_exchange(OSSL_HTTP_REQ_CTX *rctx, char **redirection_url)
+{
+    BIO *resp;
+
+    if (rctx == NULL) {
+        ERR_raise(ERR_LIB_HTTP, ERR_R_PASSED_NULL_PARAMETER);
+        return NULL;
+    }
+
+    if (redirection_url != NULL)
+        *redirection_url = NULL; /* do this beforehand to prevent dbl free */
 
     resp = OSSL_HTTP_REQ_CTX_exchange(rctx);
     if (resp == NULL) {
@@ -956,43 +984,28 @@ BIO *OSSL_HTTP_transfer(OSSL_HTTP_REQ_CTX **prctx,
                         && reason == CMP_R_POTENTIALLY_INVALID_CERTIFICATE)
 #endif
                 ) {
-                BIO_snprintf(buf, 200, "server=%s:%s", server, port);
+                if (rctx->server != NULL) {
+                    BIO_snprintf(buf, 200, "server=http%s://%s",
+                                 rctx->use_ssl ? "s" : "", rctx->server);
+                    if (rctx->port != NULL)
+                        BIO_snprintf(buf + strlen(buf), 200 - strlen(buf),
+                                     ":%s", rctx->port);
+                }
                 ERR_add_error_data(1, buf);
-                if (proxy != NULL)
-                    ERR_add_error_data(2, " proxy=", proxy);
+                if (rctx->proxy != NULL)
+                    ERR_add_error_data(2, " proxy=", rctx->proxy);
                 if (err == 0) {
                     BIO_snprintf(buf, 200, " peer has disconnected%s",
-                                 use_ssl ? " violating the protocol" :
+                                 rctx->use_ssl ? " violating the protocol" :
                                  ", likely because it requires the use of TLS");
                     ERR_add_error_data(1, buf);
                 }
             }
         }
     }
-    /* callback can be used to clean up TLS session */
-    if (bio_update_fn != NULL
-            && (*bio_update_fn)(cbio, arg, 0, resp != NULL) == NULL)
-        resp = NULL;
 
     if (resp != NULL && !BIO_up_ref(resp))
         resp = NULL;
-    OSSL_HTTP_REQ_CTX_free(rctx);
-
- end:
-    /*
-     * Use BIO_free_all() because bio_update_fn may prepend or append to cbio.
-     * This also frees any (e.g., SSL/TLS) BIOs linked with bio and,
-     * like BIO_reset(bio), calls SSL_shutdown() to notify/alert the peer.
-     */
-    if (bio == NULL) /* cbio was not provided by caller */
-        BIO_free_all(cbio);
-
-    if (resp != NULL)
-        /* remove any spurious error queue entries by ssl_add_cert_chain() */
-        (void)ERR_pop_to_mark();
-    else
-        (void)ERR_clear_last_mark();
-
     return resp;
 }
 
@@ -1022,13 +1035,13 @@ BIO *OSSL_HTTP_get(const char *url, const char *proxy, const char *no_proxy,
                    const char *expected_ct, int expect_asn1,
                    size_t max_resp_len, int timeout)
 {
-    time_t start_time = timeout > 0 ? time(NULL) : 0;
     char *current_url, *redirection_url = NULL;
     int n_redirs = 0;
     char *host;
     char *port;
     char *path;
     int use_ssl;
+    OSSL_HTTP_REQ_CTX *rctx;
     BIO *resp = NULL;
 
     if (url == NULL) {
@@ -1043,14 +1056,26 @@ BIO *OSSL_HTTP_get(const char *url, const char *proxy, const char *no_proxy,
                                  &port, NULL /* port_num */, &path, NULL, NULL))
             break;
 
-     new_rpath:
-        resp = OSSL_HTTP_transfer((OSSL_HTTP_REQ_CTX **)&redirection_url, /* TODO(3.0) fix when API approved */
-                                  host, port, path, use_ssl, proxy, no_proxy,
-                                  bio, rbio,
-                                  bio_update_fn, arg, buf_size, headers, NULL, NULL,
-                                  expected_ct, expect_asn1,
-                                  max_resp_len,
-                                  update_timeout(timeout, start_time), 0);
+    new_rpath:
+        rctx = OSSL_HTTP_open(host, port, proxy, no_proxy,
+                              use_ssl, bio, rbio, bio_update_fn, arg,
+                              buf_size, max_resp_len, timeout);
+        if (rctx != NULL) {
+            if (!OSSL_HTTP_set_request(rctx, path, headers,
+                                       NULL /* content_type */,
+                                       NULL /* req_mem */,
+                                       expected_ct, expect_asn1,
+                                       -1 /* use same max time */,
+                                       0 /* no keep_alive */)) {
+                OSSL_HTTP_REQ_CTX_free(rctx);
+            } else {
+                resp = OSSL_HTTP_exchange(rctx, &redirection_url);
+                if (!OSSL_HTTP_close(rctx, resp != NULL)) {
+                    BIO_free(resp);
+                    resp = NULL;
+                }
+            }
+        }
         OPENSSL_free(path);
         if (resp == NULL && redirection_url != NULL) {
             if (redirection_ok(++n_redirs, current_url, redirection_url)) {
@@ -1075,9 +1100,50 @@ BIO *OSSL_HTTP_get(const char *url, const char *proxy, const char *no_proxy,
     return resp;
 }
 
+BIO *OSSL_HTTP_transfer(OSSL_HTTP_REQ_CTX **prctx,
+                        const char *server, const char *port,
+                        const char *path, int use_ssl,
+                        const char *proxy, const char *no_proxy,
+                        BIO *bio, BIO *rbio,
+                        OSSL_HTTP_bio_cb_t bio_update_fn, void *arg,
+                        int buf_size, const STACK_OF(CONF_VALUE) *headers,
+                        const char *content_type, BIO *req,
+                        const char *expected_ct, int expect_asn1,
+                        unsigned long max_resp_len, int timeout, int keep_alive)
+{
+    OSSL_HTTP_REQ_CTX *rctx = prctx == NULL ? NULL : *prctx;
+    BIO *resp = NULL;
+
+    if (rctx == NULL) {
+        rctx = OSSL_HTTP_open(server, port, proxy, no_proxy,
+                              use_ssl, bio, rbio, bio_update_fn, arg,
+                              buf_size, max_resp_len, timeout);
+        timeout = -1; /* Already set during opening the connection */
+    }
+    if (rctx != NULL) {
+        if (OSSL_HTTP_set_request(rctx, path, headers, content_type, req,
+                                  expected_ct, expect_asn1, timeout, keep_alive))
+            resp = OSSL_HTTP_exchange(rctx, NULL);
+        if (resp == NULL || !OSSL_HTTP_is_alive(rctx)) {
+            if (!OSSL_HTTP_close(rctx, resp != NULL))
+                resp = NULL;
+            rctx = NULL;
+        }
+    }
+    if (prctx != NULL)
+        *prctx = rctx;
+    return resp;
+}
+
 int OSSL_HTTP_close(OSSL_HTTP_REQ_CTX *rctx, int ok)
 {
-    return 0; /* TODO(3.0) expand */
+    int ret = 1;
+
+    /* callback can be used to clean up TLS session on disconnect */
+    if (rctx != NULL && rctx->upd_fn != NULL)
+        ret = (*rctx->upd_fn)(rctx->wbio, rctx->upd_arg, 0, ok) != NULL;
+    OSSL_HTTP_REQ_CTX_free(rctx);
+    return ret;
 }
 
 /* BASE64 encoder used for encoding basic proxy authentication credentials */
@@ -1137,7 +1203,7 @@ int OSSL_HTTP_proxy_connect(BIO *bio, const char *server, const char *port,
     }
     BIO_push(fbio, bio);
 
-    BIO_printf(fbio, "CONNECT %s:%s "HTTP_PREFIX"1.0\r\n", server, port);
+    BIO_printf(fbio, "CONNECT %s:%s "HTTP_1_0"\r\n", server, port);
 
     /*
      * Workaround for broken proxies which would otherwise close
@@ -1199,23 +1265,25 @@ int OSSL_HTTP_proxy_connect(BIO *bio, const char *server, const char *port,
         if (read_len < HTTP_LINE1_MINLEN)
             continue;
 
-        /* RFC 7231 4.3.6: any 2xx status code is valid */
+        /* Check for HTTP/1.x */
         if (strncmp(mbuf, HTTP_PREFIX, strlen(HTTP_PREFIX)) != 0) {
-            ERR_raise(ERR_LIB_HTTP, HTTP_R_RESPONSE_PARSE_ERROR);
+            ERR_raise(ERR_LIB_HTTP, HTTP_R_HEADER_PARSE_ERROR);
             BIO_printf(bio_err, "%s: HTTP CONNECT failed, non-HTTP response\n",
                        prog);
             /* Wrong protocol, not even HTTP, so stop reading headers */
             goto end;
         }
         mbufp = mbuf + strlen(HTTP_PREFIX);
-        if (strncmp(mbufp, HTTP_VERSION_PATT, strlen(HTTP_VERSION_PATT)) != 0) {
+        if (strncmp(mbufp, HTTP_VERSION_PATT, HTTP_VERSION_PATT_LEN) != 0) {
             ERR_raise(ERR_LIB_HTTP, HTTP_R_RECEIVED_WRONG_HTTP_VERSION);
             BIO_printf(bio_err,
                        "%s: HTTP CONNECT failed, bad HTTP version %.*s\n",
-                       prog, HTTP_VERSION_STR_LEN, mbufp);
+                       prog, (int)HTTP_VERSION_STR_LEN, mbufp);
             goto end;
         }
         mbufp += HTTP_VERSION_STR_LEN;
+
+        /* RFC 7231 4.3.6: any 2xx status code is valid */
         if (strncmp(mbufp, " 2", strlen(" 2")) != 0) {
             mbufp += 1;
             /* chop any trailing whitespace */
