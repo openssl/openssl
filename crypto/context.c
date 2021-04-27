@@ -12,6 +12,7 @@
 #include "internal/thread_once.h"
 #include "internal/property.h"
 #include "internal/core.h"
+#include "internal/bio.h"
 
 struct ossl_lib_ctx_onfree_list_st {
     ossl_lib_ctx_onfree_fn *fn;
@@ -184,6 +185,21 @@ OSSL_LIB_CTX *OSSL_LIB_CTX_new(void)
 }
 
 #ifndef FIPS_MODULE
+OSSL_LIB_CTX *OSSL_LIB_CTX_new_from_dispatch(const OSSL_DISPATCH *in)
+{
+    OSSL_LIB_CTX *ctx = OSSL_LIB_CTX_new();
+
+    if (ctx == NULL)
+        return NULL;
+
+    if (!ossl_bio_init_core(ctx, in)) {
+        OSSL_LIB_CTX_free(ctx);
+        return NULL;
+    }
+
+    return ctx;
+}
+
 int OSSL_LIB_CTX_load_config(OSSL_LIB_CTX *ctx, const char *config_file)
 {
     return CONF_modules_load_file_ex(ctx, config_file, NULL, 0) > 0;

@@ -68,7 +68,7 @@ static long bio_call_callback(BIO *b, int oper, const char *argp, size_t len,
     return ret;
 }
 
-BIO *BIO_new(const BIO_METHOD *method)
+BIO *BIO_new_ex(OSSL_LIB_CTX *libctx, const BIO_METHOD *method)
 {
     BIO *bio = OPENSSL_zalloc(sizeof(*bio));
 
@@ -77,6 +77,7 @@ BIO *BIO_new(const BIO_METHOD *method)
         return NULL;
     }
 
+    bio->libctx = libctx;
     bio->method = method;
     bio->shutdown = 1;
     bio->references = 1;
@@ -105,6 +106,11 @@ BIO *BIO_new(const BIO_METHOD *method)
 err:
     OPENSSL_free(bio);
     return NULL;
+}
+
+BIO *BIO_new(const BIO_METHOD *method)
+{
+    return BIO_new_ex(NULL, method);
 }
 
 int BIO_free(BIO *a)
