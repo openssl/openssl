@@ -91,6 +91,7 @@ void ossl_provider_unquery_operation(const OSSL_PROVIDER *prov,
 int ossl_provider_set_operation_bit(OSSL_PROVIDER *provider, size_t bitnum);
 int ossl_provider_test_operation_bit(OSSL_PROVIDER *provider, size_t bitnum,
                                      int *result);
+int ossl_provider_clear_all_operation_bits(OSSL_LIB_CTX *libctx);
 
 /* Configuration */
 void ossl_provider_add_conf_module(void);

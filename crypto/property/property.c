@@ -12,7 +12,9 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <openssl/crypto.h>
+#include "internal/core.h"
 #include "internal/property.h"
+#include "internal/provider.h"
 #include "crypto/ctype.h"
 #include <openssl/lhash.h>
 #include <openssl/rand.h>
@@ -425,6 +427,7 @@ static void ossl_method_cache_flush(OSSL_METHOD_STORE *store, int nid)
     ALGORITHM *alg = ossl_method_store_retrieve(store, nid);
 
     if (alg != NULL) {
+        ossl_provider_clear_all_operation_bits(store->ctx);
         store->nelem -= lh_QUERY_num_items(alg->cache);
         impl_cache_flush_alg(0, alg, NULL);
     }
@@ -436,6 +439,7 @@ int ossl_method_store_flush_cache(OSSL_METHOD_STORE *store, int all)
 
     if (!ossl_property_write_lock(store))
         return 0;
+    ossl_provider_clear_all_operation_bits(store->ctx);
     ossl_sa_ALGORITHM_doall_arg(store->algs, &impl_cache_flush_alg, arg);
     store->nelem = 0;
     ossl_property_unlock(store);
@@ -500,6 +504,7 @@ static void ossl_method_cache_flush_some(OSSL_METHOD_STORE *store)
     state.nelem = 0;
     if ((state.seed = OPENSSL_rdtsc()) == 0)
         state.seed = 1;
+    ossl_provider_clear_all_operation_bits(store->ctx);
     store->need_flush = 0;
     ossl_sa_ALGORITHM_doall_arg(store->algs, &impl_cache_flush_one_alg, &state);
     store->nelem = state.nelem;

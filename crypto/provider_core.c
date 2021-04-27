@@ -116,6 +116,7 @@ struct provider_store_st {
     CRYPTO_RWLOCK *lock;
     char *default_path;
     unsigned int use_fallbacks:1;
+    unsigned int freeing:1;
 };
 
 /*
@@ -137,6 +138,7 @@ static void provider_store_free(void *vstore)
 
     if (store == NULL)
         return;
+    store->freeing = 1;
     OPENSSL_free(store->default_path);
     sk_OSSL_PROVIDER_pop_free(store->providers, provider_deactivate_free);
     CRYPTO_THREAD_lock_free(store->default_path_lock);
@@ -676,44 +678,76 @@ static int provider_init(OSSL_PROVIDER *prov, int flag_lock)
     return ok;
 }
 
+/*
+ * Deactivate a provider.
+ * Return -1 on failure and the activation count on success
+ */
 static int provider_deactivate(OSSL_PROVIDER *prov)
 {
+    int count;
+
     if (!ossl_assert(prov != NULL))
-        return 0;
+        return -1;
 
     if (!CRYPTO_THREAD_write_lock(prov->flag_lock))
-        return 0;
+        return -1;
 
-    if (--prov->activatecnt < 1)
+    if ((count = --prov->activatecnt) < 1)
         prov->flag_activated = 0;
 
     CRYPTO_THREAD_unlock(prov->flag_lock);
 
     /* We don't deinit here, that's done in ossl_provider_free() */
-    return 1;
+    return count;
 }
 
+/*
+ * Activate a provider.
+ * Return -1 on failure and the activation count on success
+ */
 static int provider_activate(OSSL_PROVIDER *prov, int flag_lock)
 {
+    int count;
+
     if (provider_init(prov, flag_lock)) {
         if (flag_lock && !CRYPTO_THREAD_write_lock(prov->flag_lock))
-            return 0;
-        prov->activatecnt++;
+            return -1;
+        count = ++prov->activatecnt;
         prov->flag_activated = 1;
         if (flag_lock)
             CRYPTO_THREAD_unlock(prov->flag_lock);
 
-        return 1;
+        return count;
     }
 
-    return 0;
+    return -1;
+}
+
+static int provider_flush_store_cache(const OSSL_PROVIDER *prov)
+{
+    struct provider_store_st *store;
+    int freeing;
+
+    if ((store = get_provider_store(prov->libctx)) == NULL)
+        return 0;
+
+    if (!CRYPTO_THREAD_read_lock(store->lock))
+        return 0;
+    freeing = store->freeing;
+    CRYPTO_THREAD_unlock(store->lock);
+
+    if (!freeing)
+        return evp_method_store_flush(prov->libctx);
+    return 1;
 }
 
 int ossl_provider_activate(OSSL_PROVIDER *prov, int retain_fallbacks)
 {
+    int count;
+
     if (prov == NULL)
         return 0;
-    if (provider_activate(prov, 1)) {
+    if ((count = provider_activate(prov, 1)) > 0) {
         if (!retain_fallbacks) {
             if (!CRYPTO_THREAD_write_lock(prov->store->lock)) {
                 provider_deactivate(prov);
@@ -722,16 +756,18 @@ int ossl_provider_activate(OSSL_PROVIDER *prov, int retain_fallbacks)
             prov->store->use_fallbacks = 0;
             CRYPTO_THREAD_unlock(prov->store->lock);
         }
-        return 1;
+        return count == 1 ? provider_flush_store_cache(prov) : 1;
     }
     return 0;
 }
 
 int ossl_provider_deactivate(OSSL_PROVIDER *prov)
 {
-    if (prov == NULL)
+    int count;
+
+    if (prov == NULL || (count = provider_deactivate(prov)) < 0)
         return 0;
-    return provider_deactivate(prov);
+    return count == 0 ? provider_flush_store_cache(prov) : 1;
 }
 
 void *ossl_provider_ctx(const OSSL_PROVIDER *prov)
@@ -773,7 +809,7 @@ static void provider_activate_fallbacks(struct provider_store_st *store)
 
         if (ossl_provider_up_ref(prov)) {
             if (prov->flag_fallback) {
-                if (provider_activate(prov, 1))
+                if (provider_activate(prov, 1) > 0)
                     activated_fallback_count++;
             }
             ossl_provider_free(prov);
@@ -843,7 +879,7 @@ int ossl_provider_doall_activated(OSSL_LIB_CTX *ctx,
              * It's already activated, but we up the activated count to ensure
              * it remains activated until after we've called the user callback.
              */
-            if (!provider_activate(prov, 0)) {
+            if (provider_activate(prov, 0) < 0) {
                 ossl_provider_free(prov);
                 CRYPTO_THREAD_unlock(prov->flag_lock);
                 goto err_unlock;
@@ -984,7 +1020,7 @@ int ossl_provider_self_test(const OSSL_PROVIDER *prov)
         return 1;
     ret = prov->self_test(prov->provctx);
     if (ret == 0)
-        (void)evp_method_store_flush(ossl_provider_libctx(prov));
+        (void)provider_flush_store_cache(prov);
     return ret;
 }
 
@@ -1020,6 +1056,33 @@ void ossl_provider_unquery_operation(const OSSL_PROVIDER *prov,
 {
     if (prov->unquery_operation != NULL)
         prov->unquery_operation(prov->provctx, operation_id, algs);
+}
+
+int ossl_provider_clear_all_operation_bits(OSSL_LIB_CTX *libctx)
+{
+    struct provider_store_st *store;
+    OSSL_PROVIDER *provider;
+    int i, num, res = 1;
+
+    if ((store = get_provider_store(libctx)) != NULL) {
+        if (!CRYPTO_THREAD_read_lock(store->lock))
+            return 0;
+        num = sk_OSSL_PROVIDER_num(store->providers);
+        for (i = 0; i < num; i++) {
+            provider = sk_OSSL_PROVIDER_value(store->providers, i);
+            if (!CRYPTO_THREAD_write_lock(provider->opbits_lock)) {
+                res = 0;
+                continue;
+            }
+            if (provider->operation_bits != NULL)
+                memset(provider->operation_bits, 0,
+                       provider->operation_bits_sz);
+            CRYPTO_THREAD_unlock(provider->opbits_lock);
+        }
+        CRYPTO_THREAD_unlock(store->lock);
+        return res;
+    }
+    return 0;
 }
 
 int ossl_provider_set_operation_bit(OSSL_PROVIDER *provider, size_t bitnum)
