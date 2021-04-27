@@ -678,12 +678,14 @@ EC_KEY *d2i_EC_PUBKEY(EC_KEY **a, const unsigned char **pp, long length)
     EVP_PKEY *pkey;
     EC_KEY *key = NULL;
     const unsigned char *q;
+    int type;
 
     q = *pp;
     pkey = d2i_PUBKEY_legacy(NULL, &q, length);
     if (pkey == NULL)
         return NULL;
-    if (EVP_PKEY_id(pkey) == EVP_PKEY_EC)
+    type = EVP_PKEY_id(pkey);
+    if (type == EVP_PKEY_EC || type == EVP_PKEY_SM2)
         key = EVP_PKEY_get1_EC_KEY(pkey);
     EVP_PKEY_free(pkey);
     if (key == NULL)

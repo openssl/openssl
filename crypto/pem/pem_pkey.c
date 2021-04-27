@@ -7,7 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-/* We need to use some STORE deprecated APIs */
+/* We need to use some deprecated APIs */
 #define OPENSSL_SUPPRESS_DEPRECATED
 
 #include <stdio.h>
@@ -20,9 +20,8 @@
 #include <openssl/pem.h>
 #include <openssl/engine.h>
 #include <openssl/dh.h>
-#include <openssl/store.h>
+#include <openssl/decoder.h>
 #include <openssl/ui.h>
-#include "crypto/store.h"
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
 #include "pem_local.h"
@@ -32,71 +31,42 @@ int ossl_pem_check_suffix(const char *pem_str, const char *suffix);
 static EVP_PKEY *pem_read_bio_key(BIO *bp, EVP_PKEY **x,
                                   pem_password_cb *cb, void *u,
                                   OSSL_LIB_CTX *libctx, const char *propq,
-                                  int expected_store_info_type,
-                                  int try_secure)
+                                  int selection)
 {
-    EVP_PKEY *ret = NULL;
-    OSSL_STORE_CTX *ctx = NULL;
-    OSSL_STORE_INFO *info = NULL;
-    const UI_METHOD *ui_method = NULL;
-    UI_METHOD *allocated_ui_method = NULL;
+    EVP_PKEY *pkey = NULL;
+    OSSL_DECODER_CTX *dctx = NULL;
 
-    if (expected_store_info_type != OSSL_STORE_INFO_PKEY
-        && expected_store_info_type != OSSL_STORE_INFO_PUBKEY
-        && expected_store_info_type != OSSL_STORE_INFO_PARAMS) {
-        ERR_raise(ERR_LIB_PEM, ERR_R_PASSED_INVALID_ARGUMENT);
+    dctx = OSSL_DECODER_CTX_new_for_pkey(&pkey, "PEM", NULL, NULL,
+                                         selection, libctx, propq);
+
+    if (dctx == NULL)
         return NULL;
-    }
 
     if (cb == NULL)
         cb = PEM_def_callback;
-    ui_method = allocated_ui_method = UI_UTIL_wrap_read_pem_callback(cb, 0);
-    if (ui_method == NULL)
-        return NULL;
 
-    if ((ctx = OSSL_STORE_attach(bp, "file", libctx, propq, ui_method, u,
-                                 NULL, NULL, NULL)) == NULL)
+    if (!OSSL_DECODER_CTX_set_pem_password_cb(dctx, cb, u))
         goto err;
-#ifndef OPENSSL_NO_SECURE_HEAP
-# ifndef OPENSSL_NO_DEPRECATED_3_0
-    if (try_secure) {
-        int on = 1;
-        if (!OSSL_STORE_ctrl(ctx, OSSL_STORE_C_USE_SECMEM, &on))
+
+    while (!OSSL_DECODER_from_bio(dctx, bp) || pkey == NULL)
+        if (BIO_eof(bp) != 0)
             goto err;
-    }
-# endif
-#endif
 
-    if (!OSSL_STORE_expect(ctx, expected_store_info_type))
+    if (!evp_keymgmt_util_has(pkey, selection)) {
+        EVP_PKEY_free(pkey);
+        pkey = NULL;
+        ERR_raise(ERR_LIB_PEM, PEM_R_UNSUPPORTED_KEY_COMPONENTS);
         goto err;
-
-    while (!OSSL_STORE_eof(ctx)
-           && (info = OSSL_STORE_load(ctx)) != NULL) {
-        if (OSSL_STORE_INFO_get_type(info) == expected_store_info_type) {
-            switch (expected_store_info_type) {
-            case OSSL_STORE_INFO_PKEY:
-                ret = OSSL_STORE_INFO_get1_PKEY(info);
-                break;
-            case OSSL_STORE_INFO_PUBKEY:
-                ret = OSSL_STORE_INFO_get1_PUBKEY(info);
-                break;
-            case OSSL_STORE_INFO_PARAMS:
-                ret = OSSL_STORE_INFO_get1_PARAMS(info);
-                break;
-            }
-        }
-        OSSL_STORE_INFO_free(info);
-        info = NULL;
     }
 
-    if (ret != NULL && x != NULL)
-        *x = ret;
+    if (x != NULL) {
+        EVP_PKEY_free(*x);
+        *x = pkey;
+    }
 
  err:
-    OSSL_STORE_close(ctx);
-    UI_destroy_method(allocated_ui_method);
-    OSSL_STORE_INFO_free(info);
-    return ret;
+    OSSL_DECODER_CTX_free(dctx);
+    return pkey;
 }
 
 EVP_PKEY *PEM_read_bio_PUBKEY_ex(BIO *bp, EVP_PKEY **x,
@@ -104,7 +74,7 @@ EVP_PKEY *PEM_read_bio_PUBKEY_ex(BIO *bp, EVP_PKEY **x,
                                  OSSL_LIB_CTX *libctx, const char *propq)
 {
     return pem_read_bio_key(bp, x, cb, u, libctx, propq,
-                            OSSL_STORE_INFO_PUBKEY, 0);
+                            EVP_PKEY_PUBLIC_KEY);
 }
 
 EVP_PKEY *PEM_read_bio_PUBKEY(BIO *bp, EVP_PKEY **x, pem_password_cb *cb,
@@ -142,7 +112,7 @@ EVP_PKEY *PEM_read_bio_PrivateKey_ex(BIO *bp, EVP_PKEY **x,
                                      OSSL_LIB_CTX *libctx, const char *propq)
 {
     return pem_read_bio_key(bp, x, cb, u, libctx, propq,
-                            OSSL_STORE_INFO_PKEY, 1);
+                            EVP_PKEY_KEYPAIR);
 }
 
 EVP_PKEY *PEM_read_bio_PrivateKey(BIO *bp, EVP_PKEY **x, pem_password_cb *cb,
@@ -207,7 +177,7 @@ EVP_PKEY *PEM_read_bio_Parameters_ex(BIO *bp, EVP_PKEY **x,
                                      OSSL_LIB_CTX *libctx, const char *propq)
 {
     return pem_read_bio_key(bp, x, NULL, NULL, libctx, propq,
-                            OSSL_STORE_INFO_PARAMS, 0);
+                            EVP_PKEY_KEY_PARAMETERS);
 }
 
 EVP_PKEY *PEM_read_bio_Parameters(BIO *bp, EVP_PKEY **x)

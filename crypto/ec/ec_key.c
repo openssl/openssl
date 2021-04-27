@@ -678,6 +678,9 @@ int EC_KEY_set_group(EC_KEY *key, const EC_GROUP *group)
         return 0;
     EC_GROUP_free(key->group);
     key->group = EC_GROUP_dup(group);
+    if (key->group != NULL && EC_GROUP_get_curve_name(key->group) == NID_sm2)
+        EC_KEY_set_flags(key, EC_FLAG_SM2_RANGE);
+
     key->dirty_cnt++;
     return (key->group == NULL) ? 0 : 1;
 }
