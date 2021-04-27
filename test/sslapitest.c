@@ -8102,12 +8102,21 @@ static int test_sigalgs_available(int idx)
     if (!TEST_ptr(cctx) || !TEST_ptr(sctx))
         goto end;
 
-    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
-                                       TLS_client_method(),
-                                       TLS1_VERSION,
-                                       0,
-                                       &sctx, &cctx, cert, privkey)))
-        goto end;
+    if (idx != 5) {
+        if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+                                           TLS_client_method(),
+                                           TLS1_VERSION,
+                                           0,
+                                           &sctx, &cctx, cert, privkey)))
+            goto end;
+    } else {
+        if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+                                           TLS_client_method(),
+                                           TLS1_VERSION,
+                                           0,
+                                           &sctx, &cctx, cert2, privkey2)))
+            goto end;
+    }
 
     /* Ensure we only use TLSv1.2 ciphersuites based on SHA256 */
     if (idx < 4) {
@@ -8135,16 +8144,17 @@ static int test_sigalgs_available(int idx)
             goto end;
     }
 
-    if (!TEST_int_eq(SSL_CTX_use_certificate_file(sctx, cert2,
-                                                  SSL_FILETYPE_PEM), 1)
+    if (idx != 5
+        && (!TEST_int_eq(SSL_CTX_use_certificate_file(sctx, cert2,
+                                                      SSL_FILETYPE_PEM), 1)
             || !TEST_int_eq(SSL_CTX_use_PrivateKey_file(sctx,
                                                         privkey2,
                                                         SSL_FILETYPE_PEM), 1)
-            || !TEST_int_eq(SSL_CTX_check_private_key(sctx), 1))
+            || !TEST_int_eq(SSL_CTX_check_private_key(sctx), 1)))
         goto end;
 
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
-                                             NULL, NULL)))
+                                      NULL, NULL)))
         goto end;
 
     if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
