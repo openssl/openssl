@@ -194,10 +194,20 @@ The following options can be set:
         due to errors, warnings, general info, debugging, etc.
         Default is OSSL_CMP_LOG_INFO. See also L<OSSL_CMP_log_open(3)>.
 
+=item B<OSSL_CMP_OPT_KEEP_ALIVE>
+
+        If the given value is 0 then HTTP connections are not kept open
+        after receiving a response, which is the default behavior for HTTP 1.0.
+        If the value is 1 or 2 then persistent connections are requested.
+        If the value is 2 then persistent connections are required,
+        i.e., in case the server does not grant them an error occurs.
+        The default value is 1: prefer to keep the connection open.
+
 =item B<OSSL_CMP_OPT_MSG_TIMEOUT>
 
         Number of seconds (or 0 for infinite) a CMP message round trip is
-        allowed to take before a timeout error is returned. Default is 120.
+        allowed to take before a timeout error is returned.
+        Default is to use the B<OSSL_CMP_OPT_MSG_TIMEOUT> setting.
 
 =item B<OSSL_CMP_OPT_TOTAL_TIMEOUT>
 
@@ -602,6 +612,7 @@ OSSL_CMP_CTX_set_certConf_cb_arg(), or NULL if unset.
 
 OSSL_CMP_CTX_get_status() returns the PKIstatus from the last received
 CertRepMessage or Revocation Response or error message, or -1 if unset.
+For server contexts it returns -2 if a transaction is open, else -1.
 
 OSSL_CMP_CTX_get0_statusString() returns the statusString from the last received
 CertRepMessage or Revocation Response or error message, or NULL if unset.

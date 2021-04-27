@@ -89,6 +89,10 @@ Its arguments are the B<OSSL_CMP_SRV_CTX> I<srv_ctx> and the CMP request message
 I<req>. It does the typical generic checks on I<req>, calls
 the respective callback function (if present) for more specific processing,
 and then assembles a result message, which may be a CMP error message.
+If after return of the function the expression
+I<OSSL_CMP_CTX_get_status(OSSL_CMP_SRV_CTX_get0_cmp_ctx(srv_ctx))> yields -1
+then the function has closed the current transaction,
+which may be due to normal successful end of the transaction or due to an error.
 
 OSSL_CMP_CTX_server_perform() is an interface to
 OSSL_CMP_SRV_process_request() that can be used by a CMP client
