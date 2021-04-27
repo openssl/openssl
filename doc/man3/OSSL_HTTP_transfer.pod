@@ -52,8 +52,8 @@ OSSL_HTTP_close
 
 =head1 DESCRIPTION
 
-OSSL_HTTP_open() initiates an HTTP session using the I<bio> argument if not
-NULL, else by connecting to a given I<server> optionally via a I<proxy>.
+OSSL_HTTP_open() initiates an HTTP session using I<bio> if not NULL, else
+by connecting to a given I<server> optionally via a I<proxy>.
 
 Typically the OpenSSL build supports sockets and the I<bio> parameter is NULL.
 In this case I<rbio> must be NULL as well, and the
@@ -125,7 +125,9 @@ After disconnect the modified BIO will be deallocated using BIO_free_all().
 The I<buf_size> parameter specifies the response header maximum line length.
 A value <= 0 indicates that
 the B<HTTP_DEFAULT_MAX_LINE_LENGTH> of 4KiB should be used.
-I<buf_size> is also used as the number of content bytes that are read at a time.
+This length is also used as the number of content bytes that are read at a time.
+The I<max_resp_len> specifies the maximum allowed response content length.
+The value 0 indicates B<HTTP_DEFAULT_MAX_RESP_LEN>, which currently is 100 KiB.
 
 If the I<overall_timeout> parameter is > 0 this indicates the maximum number of
 seconds the overall HTTP transfer (i.e., connection setup if needed,
@@ -146,21 +148,18 @@ Since this function is typically called by applications such as
 L<openssl-s_client(1)> it uses the I<bio_err> and I<prog> parameters (unless
 NULL) to print additional diagnostic information in a user-oriented way.
 
+
 OSSL_HTTP_set_request() sets up in I<rctx> the request header and content data
 and expectations on the response using the following parameters.
 If I<path> is NULL it defaults to "/".
-If I<req> is NULL the HTTP GET method will be used to send the request
-else HTTP POST with the contents of I<req> and optional I<content_type>, where
-the length of the data in I<req> does not need to be determined in advance: the
-BIO will be read on-the-fly while sending the request, which supports streaming.
+If I<req_mem> is NULL the HTTP GET method will be used to send the request
+else HTTP POST with the contents of I<req_mem> and optional I<content_type>.
 The optional list I<headers> may contain additional custom HTTP header lines.
 If the parameter I<expected_content_type>
 is not NULL then the client will check that the given content type string
 is included in the HTTP header of the response and return an error if not.
 If the I<expect_asn1> parameter is nonzero,
 a structure in ASN.1 encoding will be expected as response content.
-The I<max_resp_len> parameter specifies the maximum allowed
-response content length, where the value 0 indicates no limit.
 If the I<timeout> parameter is > 0 this indicates the maximum number of seconds
 the subsequent HTTP transfer (sending the request and receiving a response)
 is allowed to take.
@@ -173,15 +172,15 @@ If the value is 1 or 2 then a persistent connection is requested.
 If the value is 2 then a persistent connection is required,
 i.e., an error occurs in case the server does not grant it.
 
-OSSL_HTTP_exchange() exchanges any form of HTTP request and response
+OSSL_HTTP_transfer() exchanges any form of HTTP request and response
 as specified by I<rctx>, which must include both connection and request data,
 typically set up using OSSL_HTTP_open() and OSSL_HTTP_set_request().
 It implements the core of the functions described below.
 If the HTTP method is GET and I<redirection_url>
 is not NULL the latter pointer is used to provide any new location that
 the server may return with HTTP code 301 (MOVED_PERMANENTLY) or 302 (FOUND).
-In this case the function returns NULL and the caller is
-responsible for deallocating the URL with L<OPENSSL_free(3)>.
+In this case the caller is responsible for deallocating this URL with
+L<OPENSSL_free(3)>.
 If the response header contains one or more "Content-Length" header lines and/or
 an ASN.1-encoded response is expected, which should include a total length,
 the length indications received are checked for consistency
@@ -202,17 +201,6 @@ Any query component is handled as part of the path component.
 If the scheme component of the I<url> is C<https> a TLS connection is requested
 and the I<bio_update_fn>, as described for OSSL_HTTP_open(), must be provided.
 Also the remaining parameters are interpreted as described for OSSL_HTTP_open()
-and OSSL_HTTP_set_request(), respectively.
-
-OSSL_HTTP_transfer() exchanges an HTTP request and response
-over a connection managed via I<prctx> without supporting redirection.
-It combines OSSL_HTTP_open(), OSSL_HTTP_set_request(), OSSL_HTTP_exchange(),
-and OSSL_HTTP_close().
-If I<prctx> is not NULL it reuses any open connection represented by a non-NULL
-I<*prctx>.  It keeps the connection open if a persistent connection is requested
-or required and this was granted by the server, else it closes the connection
-and assigns NULL to I<*prctx>.
-The remaining parameters are interpreted as described for OSSL_HTTP_open()
 and OSSL_HTTP_set_request(), respectively.
 
 OSSL_HTTP_close() closes the connection and releases I<rctx>.

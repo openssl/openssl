@@ -28,6 +28,19 @@
 #include <openssl/cmp.h>
 #include <openssl/err.h>
 
+static int keep_alive(int keep_alive, int body_type)
+{
+    if (keep_alive != 0
+        /* Ask for persistent connection only if may need more round trips */
+            && body_type != OSSL_CMP_PKIBODY_IR
+            && body_type != OSSL_CMP_PKIBODY_CR
+            && body_type != OSSL_CMP_PKIBODY_P10CR
+            && body_type != OSSL_CMP_PKIBODY_KUR
+            && body_type != OSSL_CMP_PKIBODY_POLLREQ)
+        keep_alive = 0;
+    return keep_alive;
+}
+
 /*
  * Send the PKIMessage req and on success return the response, else NULL.
  * Any previous error queue entries will likely be removed by ERR_clear_error().
@@ -55,11 +68,12 @@ OSSL_CMP_MSG *OSSL_CMP_MSG_http_perform(OSSL_CMP_CTX *ctx,
 
     if (ctx->serverPort != 0)
         BIO_snprintf(server_port, sizeof(server_port), "%d", ctx->serverPort);
-
     tls_used = OSSL_CMP_CTX_get_http_cb_arg(ctx) != NULL;
-    ossl_cmp_log2(DEBUG, ctx, "connecting to CMP server %s%s",
-                  ctx->server, tls_used ? " using TLS" : "");
-    rsp = OSSL_HTTP_transfer(NULL, ctx->server, server_port,
+    if (ctx->http_ctx == NULL)
+        ossl_cmp_log3(DEBUG, ctx, "connecting to CMP server %s:%s%s",
+                      ctx->server, server_port, tls_used ? " using TLS" : "");
+
+    rsp = OSSL_HTTP_transfer(&ctx->http_ctx, ctx->server, server_port,
                              ctx->serverPath, tls_used,
                              ctx->proxy, ctx->no_proxy,
                              NULL /* bio */, NULL /* rbio */,
@@ -67,12 +81,22 @@ OSSL_CMP_MSG *OSSL_CMP_MSG_http_perform(OSSL_CMP_CTX *ctx,
                              0 /* buf_size */, headers,
                              content_type_pkix, req_mem,
                              content_type_pkix, 1 /* expect_asn1 */,
-                             HTTP_DEFAULT_MAX_RESP_LEN,
-                             ctx->msg_timeout, 0 /* keep_alive */);
+                             OSSL_HTTP_DEFAULT_MAX_RESP_LEN,
+                             ctx->msg_timeout,
+                             keep_alive(ctx->keep_alive, req->body->type));
     BIO_free(req_mem);
     res = (OSSL_CMP_MSG *)ASN1_item_d2i_bio(it, rsp, NULL);
     BIO_free(rsp);
-    ossl_cmp_debug(ctx, "disconnected from CMP server");
+
+    if (ctx->http_ctx == NULL)
+        ossl_cmp_debug(ctx, "disconnected from CMP server");
+    /*
+     * Note that on normal successful end of the transaction the connection
+     * is not closed at this level, but this will be done by the CMP client
+     * application via OSSL_CMP_CTX_free() or OSSL_CMP_CTX_reinit().
+     */
+    if (res != NULL)
+        ossl_cmp_debug(ctx, "finished reading response from CMP server");
  err:
     sk_CONF_VALUE_pop_free(headers, X509V3_conf_free);
     return res;
