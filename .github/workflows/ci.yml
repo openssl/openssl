@@ -25,7 +25,7 @@ jobs:
     - name: make build_generated
       run: make -s build_generated
     - name: make update
-      run: make -s update
+      run: make update
     - name: git diff
       run: git diff --exit-code
 
