@@ -28,10 +28,11 @@
 
 int ossl_pem_check_suffix(const char *pem_str, const char *suffix);
 
-static EVP_PKEY *pem_read_bio_key(BIO *bp, EVP_PKEY **x,
-                                  pem_password_cb *cb, void *u,
-                                  OSSL_LIB_CTX *libctx, const char *propq,
-                                  int selection)
+static EVP_PKEY *pem_read_bio_key_decoder(BIO *bp, EVP_PKEY **x,
+                                          pem_password_cb *cb, void *u,
+                                          OSSL_LIB_CTX *libctx,
+                                          const char *propq,
+                                          int selection)
 {
     EVP_PKEY *pkey = NULL;
     OSSL_DECODER_CTX *dctx = NULL;
@@ -67,6 +68,151 @@ static EVP_PKEY *pem_read_bio_key(BIO *bp, EVP_PKEY **x,
  err:
     OSSL_DECODER_CTX_free(dctx);
     return pkey;
+}
+
+static EVP_PKEY *pem_read_bio_key_legacy(BIO *bp, EVP_PKEY **x,
+                                         pem_password_cb *cb, void *u,
+                                         OSSL_LIB_CTX *libctx,
+                                         const char *propq,
+                                         int selection)
+{
+    char *nm = NULL;
+    const unsigned char *p = NULL;
+    unsigned char *data = NULL;
+    long len;
+    int slen;
+    EVP_PKEY *ret = NULL;
+
+    ERR_set_mark();  /* not interested in PEM read errors */
+    if (selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) {
+        if (!PEM_bytes_read_bio_secmem(&data, &len, &nm,
+                                       PEM_STRING_EVP_PKEY,
+                                       bp, cb, u)) {
+            ERR_pop_to_mark();
+            return NULL;
+         }
+    } else {
+        const char *pem_string = PEM_STRING_PARAMETERS;
+
+        if (selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY)
+            pem_string = PEM_STRING_PUBLIC;
+        if (!PEM_bytes_read_bio(&data, &len, &nm,
+                                pem_string,
+                                bp, cb, u)) {
+            ERR_pop_to_mark();
+            return NULL;
+        }
+    }
+    ERR_clear_last_mark();
+    p = data;
+
+    if (strcmp(nm, PEM_STRING_PKCS8INF) == 0) {
+        PKCS8_PRIV_KEY_INFO *p8inf;
+
+        if ((p8inf = d2i_PKCS8_PRIV_KEY_INFO(NULL, &p, len)) == NULL)
+            goto p8err;
+        ret = evp_pkcs82pkey_legacy(p8inf, libctx, propq);
+        if (x != NULL) {
+            EVP_PKEY_free(*x);
+            *x = ret;
+        }
+        PKCS8_PRIV_KEY_INFO_free(p8inf);
+    } else if (strcmp(nm, PEM_STRING_PKCS8) == 0) {
+        PKCS8_PRIV_KEY_INFO *p8inf;
+        X509_SIG *p8;
+        int klen;
+        char psbuf[PEM_BUFSIZE];
+
+        if ((p8 = d2i_X509_SIG(NULL, &p, len)) == NULL)
+            goto p8err;
+        if (cb != NULL)
+            klen = cb(psbuf, PEM_BUFSIZE, 0, u);
+        else
+            klen = PEM_def_callback(psbuf, PEM_BUFSIZE, 0, u);
+        if (klen < 0) {
+            ERR_raise(ERR_LIB_PEM, PEM_R_BAD_PASSWORD_READ);
+            X509_SIG_free(p8);
+            goto err;
+        }
+        p8inf = PKCS8_decrypt(p8, psbuf, klen);
+        X509_SIG_free(p8);
+        OPENSSL_cleanse(psbuf, klen);
+        if (p8inf == NULL)
+            goto p8err;
+        ret = evp_pkcs82pkey_legacy(p8inf, libctx, propq);
+        if (x != NULL) {
+            EVP_PKEY_free(*x);
+            *x = ret;
+        }
+        PKCS8_PRIV_KEY_INFO_free(p8inf);
+    } else if ((slen = ossl_pem_check_suffix(nm, "PRIVATE KEY")) > 0) {
+        const EVP_PKEY_ASN1_METHOD *ameth;
+        ameth = EVP_PKEY_asn1_find_str(NULL, nm, slen);
+        if (ameth == NULL || ameth->old_priv_decode == NULL)
+            goto p8err;
+        ret = d2i_PrivateKey(ameth->pkey_id, x, &p, len);
+    } else if (selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) {
+        ret = d2i_PUBKEY(x, &p, len);
+    } else if ((slen = ossl_pem_check_suffix(nm, "PARAMETERS")) > 0) {
+        ret = EVP_PKEY_new();
+        if (ret == NULL)
+            goto err;
+        if (!EVP_PKEY_set_type_str(ret, nm, slen)
+            || !ret->ameth->param_decode
+            || !ret->ameth->param_decode(ret, &p, len)) {
+            EVP_PKEY_free(ret);
+            ret = NULL;
+            goto err;
+        }
+        if (x) {
+            EVP_PKEY_free(*x);
+            *x = ret;
+        }
+    }
+
+ p8err:
+    if (ret == NULL)
+        ERR_raise(ERR_LIB_PEM, ERR_R_ASN1_LIB);
+ err:
+    OPENSSL_secure_free(nm);
+    OPENSSL_secure_clear_free(data, len);
+    return ret;
+}
+
+static EVP_PKEY *pem_read_bio_key(BIO *bp, EVP_PKEY **x,
+                                  pem_password_cb *cb, void *u,
+                                  OSSL_LIB_CTX *libctx,
+                                  const char *propq,
+                                  int selection)
+{
+    EVP_PKEY *ret;
+    BIO *new_bio = NULL;
+    int pos;
+
+    if ((pos = BIO_tell(bp)) < 0) {
+        new_bio = BIO_new(BIO_f_readbuffer());
+        if (new_bio == NULL)
+            return NULL;
+        bp = BIO_push(new_bio, bp);
+        pos = BIO_tell(bp);
+    }
+
+    ERR_set_mark();
+    ret = pem_read_bio_key_decoder(bp, x, cb, u, libctx, propq, selection);
+    if (ret == NULL
+        && (BIO_seek(bp, pos) < 0
+            || (ret = pem_read_bio_key_legacy(bp, x, cb, u,
+                                              libctx, propq,
+                                              selection)) == NULL))
+        ERR_clear_last_mark();
+    else
+        ERR_pop_to_mark();
+
+    if (new_bio != NULL) {
+        BIO_pop(new_bio);
+        BIO_free(new_bio);
+    }
+    return ret;
 }
 
 EVP_PKEY *PEM_read_bio_PUBKEY_ex(BIO *bp, EVP_PKEY **x,
