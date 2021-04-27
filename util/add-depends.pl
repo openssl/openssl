@@ -214,11 +214,10 @@ my %procedures = (
         },
     'embarcadero' =>
         sub {
-            # With Embarcadero C++Builder's preprocessor (cpp32.exe) the -Hp
-            # flag gives us the preprocessed output annotated with the following
-            # note whenever a #include file is read:
+            # With Embarcadero C++Builder's preprocessor (cpp32.exe) the -Sx -Hp
+            # flags give us the list of #include files read, like the following:
             #
-            #    Including ->->{whatever header file}
+            #   Including ->->{whatever header file}
             #
             # where each "->" indicates the nesting level of the #include.  The
             # logic here is otherwise the same as the 'VC' scheme.
