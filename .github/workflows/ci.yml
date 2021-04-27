@@ -17,7 +17,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: config
-      run: ./config --strict-warnings && perl configdata.pm --dump
+      run: ./config --strict-warnings enable-fips && perl configdata.pm --dump
     - name: make build_generated
       run: make -s build_generated
     - name: make update
@@ -30,7 +30,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: config
-      run: ./config --strict-warnings && perl configdata.pm --dump
+      run: ./config --strict-warnings enable-fips && perl configdata.pm --dump
     - name: make build_generated
       run: make -s build_generated
     - name: make doc-nits
