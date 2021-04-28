@@ -1726,7 +1726,7 @@ int s_server_main(int argc, char *argv[])
 
     if (crl_file != NULL) {
         X509_CRL *crl;
-        crl = load_crl(crl_file, "CRL");
+        crl = load_crl(crl_file, 0, "CRL");
         if (crl == NULL)
             goto end;
         crls = sk_X509_CRL_new_null();

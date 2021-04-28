@@ -39,6 +39,11 @@ ok(compare1stline([qw{openssl crl -noout -hash -in},
                    srctop_file('test', 'testcrl.pem')],
                   '106cd822'));
 
+ok(compare1stline_stdin([qw{openssl crl -hash -noout}],
+                        srctop_file("test","testcrl.pem"),
+                        'issuer name hash=106cd822'),
+   "crl piped input test");
+
 ok(run(app(["openssl", "crl", "-text", "-in", $pem, "-out", $out,
             "-nameopt", "utf8"])));
 is(cmp_text($out, srctop_file("test/certs", "cyrillic_crl.utf8")),
@@ -47,6 +52,16 @@ is(cmp_text($out, srctop_file("test/certs", "cyrillic_crl.utf8")),
 sub compare1stline {
     my ($cmdarray, $str) = @_;
     my @lines = run(app($cmdarray), capture => 1);
+
+    return 1 if $lines[0] =~ m|^\Q${str}\E\R$|;
+    note "Got      ", $lines[0];
+    note "Expected ", $str;
+    return 0;
+}
+
+sub compare1stline_stdin {
+    my ($cmdarray, $infile, $str) = @_;
+    my @lines = run(app($cmdarray, stdin => $infile), capture => 1);
 
     return 1 if $lines[0] =~ m|^\Q${str}\E\R$|;
     note "Got      ", $lines[0];
