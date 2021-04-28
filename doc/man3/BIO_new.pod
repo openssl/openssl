@@ -2,22 +2,28 @@
 
 =head1 NAME
 
-BIO_new, BIO_up_ref, BIO_free, BIO_vfree, BIO_free_all
+BIO_new_ex, BIO_new, BIO_up_ref, BIO_free, BIO_vfree, BIO_free_all
 - BIO allocation and freeing functions
 
 =head1 SYNOPSIS
 
  #include <openssl/bio.h>
 
- BIO *  BIO_new(const BIO_METHOD *type);
- int    BIO_up_ref(BIO *a);
- int    BIO_free(BIO *a);
- void   BIO_vfree(BIO *a);
- void   BIO_free_all(BIO *a);
+ BIO *BIO_new_ex(OSSL_LIB_CTX *libctx, const BIO_METHOD *type);
+ BIO *BIO_new(const BIO_METHOD *type);
+ int BIO_up_ref(BIO *a);
+ int BIO_free(BIO *a);
+ void BIO_vfree(BIO *a);
+ void BIO_free_all(BIO *a);
 
 =head1 DESCRIPTION
 
-The BIO_new() function returns a new BIO using method B<type>.
+The BIO_new_ex() function returns a new BIO using method B<type> associated with
+the library context B<libctx> (see OSSL_LIB_CTX(3)). The library context may be
+NULL to indicate the default library context.
+
+The BIO_new() is the same as BIO_new_ex() excpet the default library context is
+always used.
 
 BIO_up_ref() increments the reference count associated with the BIO object.
 
