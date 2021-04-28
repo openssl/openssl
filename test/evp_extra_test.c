@@ -1173,15 +1173,16 @@ static int test_EVP_PKCS82PKEY(void)
 #endif
 static int test_EVP_PKCS82PKEY_wrong_tag(void)
 {
-    if (testctx != NULL)
-        /* test not supported with non-default context */
-        return 1;
     EVP_PKEY *pkey = NULL;
     EVP_PKEY *pkey2 = NULL;
     BIO *membio = NULL;
     char *membuf = NULL;
     PKCS8_PRIV_KEY_INFO *p8inf = NULL;
     int ok = 0;
+
+    if (testctx != NULL)
+        /* test not supported with non-default context */
+        return 1;
 
     if (!TEST_ptr(membio = BIO_new(BIO_s_mem()))
         || !TEST_ptr(pkey = load_example_rsa_key())
