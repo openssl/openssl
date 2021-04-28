@@ -8,7 +8,7 @@ EVP_MAC_provider, EVP_MAC_get_params, EVP_MAC_gettable_params,
 EVP_MAC_CTX, EVP_MAC_CTX_new, EVP_MAC_CTX_free, EVP_MAC_CTX_dup,
 EVP_MAC_CTX_mac, EVP_MAC_CTX_get_params, EVP_MAC_CTX_set_params,
 EVP_MAC_CTX_get_mac_size, EVP_MAC_init, EVP_MAC_update, EVP_MAC_final,
-EVP_MAC_gettable_ctx_params, EVP_MAC_settable_ctx_params,
+EVP_MAC_finalXOF, EVP_MAC_gettable_ctx_params, EVP_MAC_settable_ctx_params,
 EVP_MAC_CTX_gettable_params, EVP_MAC_CTX_settable_params,
 EVP_MAC_do_all_provided - EVP MAC routines
 
@@ -46,6 +46,7 @@ EVP_MAC_do_all_provided - EVP MAC routines
  int EVP_MAC_update(EVP_MAC_CTX *ctx, const unsigned char *data, size_t datalen);
  int EVP_MAC_final(EVP_MAC_CTX *ctx,
                    unsigned char *out, size_t *outl, size_t outsize);
+ int EVP_MAC_finalXOF(EVP_MAC_CTX *ctx, unsigned char *out, size_t outsize);
 
  const OSSL_PARAM *EVP_MAC_gettable_params(const EVP_MAC *mac);
  const OSSL_PARAM *EVP_MAC_gettable_ctx_params(const EVP_MAC *mac);
@@ -139,6 +140,9 @@ To figure out what the output length will be and allocate space for it
 dynamically, simply call with I<out> being NULL and I<outl>
 pointing at a valid location, then allocate space and make a second
 call with I<out> pointing at the allocated space.
+
+EVP_MAC_finalXOF() does the final computation for an XOF based MAC and stores
+the result in the memory pointed at by I<out> of size I<outsize>.
 
 EVP_MAC_get_params() retrieves details about the implementation
 I<mac>.
@@ -347,8 +351,8 @@ EVP_MAC_CTX_free() returns nothing at all.
 EVP_MAC_CTX_get_params() and EVP_MAC_CTX_set_params() return 1 on
 success, 0 on error.
 
-EVP_MAC_init(), EVP_MAC_update(), and EVP_MAC_final() return 1 on success, 0
-on error.
+EVP_MAC_init(), EVP_MAC_update(), EVP_MAC_final() and  EVP_MAC_finalXOF()
+return 1 on success, 0 on error.
 
 EVP_MAC_CTX_get_mac_size() returns the expected output size, or 0 if it isn't set.
 If it isn't set, a call to EVP_MAC_init() should get it set.
