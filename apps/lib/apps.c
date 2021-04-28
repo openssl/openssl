@@ -916,6 +916,7 @@ int load_key_certs_crls(const char *uri, int maybe_stdin,
 
     if (uri == NULL) {
         BIO *bio;
+
         if (!maybe_stdin) {
             BIO_printf(bio_err, "No filename or uri specified for loading");
             goto end;
