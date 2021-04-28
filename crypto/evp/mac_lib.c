@@ -116,19 +116,54 @@ int EVP_MAC_update(EVP_MAC_CTX *ctx, const unsigned char *data, size_t datalen)
     return ctx->meth->update(ctx->data, data, datalen);
 }
 
-int EVP_MAC_final(EVP_MAC_CTX *ctx,
-                  unsigned char *out, size_t *outl, size_t outsize)
+static int evp_mac_final(EVP_MAC_CTX *ctx, int xof,
+                         unsigned char *out, size_t *outl, size_t outsize)
 {
     size_t l;
-    int res = 1;
+    int res;
+    OSSL_PARAM params[2];
 
-    if (out != NULL)
-        res = ctx->meth->final(ctx->data, out, &l, outsize);
-    else
-        l = EVP_MAC_CTX_get_mac_size(ctx);
+    if (ctx == NULL || ctx->meth == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_NULL_ALGORITHM);
+        return 0;
+    }
+    if (ctx->meth->final == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_FINAL_ERROR);
+        return 0;
+    }
+
+    if (out == NULL) {
+        if (outl == NULL) {
+            ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+            return 0;
+        }
+        *outl = EVP_MAC_CTX_get_mac_size(ctx);
+        return 1;
+    }
+    if (xof) {
+        params[0] = OSSL_PARAM_construct_int(OSSL_MAC_PARAM_XOF, &xof);
+        params[1] = OSSL_PARAM_construct_end();
+
+        if (EVP_MAC_CTX_set_params(ctx, params) <= 0) {
+            ERR_raise(ERR_LIB_EVP, EVP_R_SETTING_XOF_FAILED);
+            return 0;
+        }
+    }
+    res = ctx->meth->final(ctx->data, out, &l, outsize);
     if (outl != NULL)
         *outl = l;
     return res;
+}
+
+int EVP_MAC_final(EVP_MAC_CTX *ctx,
+                  unsigned char *out, size_t *outl, size_t outsize)
+{
+    return evp_mac_final(ctx, 0, out, outl, outsize);
+}
+
+int EVP_MAC_finalXOF(EVP_MAC_CTX *ctx, unsigned char *out, size_t outsize)
+{
+    return evp_mac_final(ctx, 1, out, NULL, outsize);
 }
 
 /*
