@@ -156,7 +156,7 @@ L<EVP_PKEY_asn1_add0(3)>.
 The methods are the underlying implementations of a particular public
 key algorithm present by the B<EVP_PKEY> object.
 
- int (*pub_decode) (EVP_PKEY *pk, X509_PUBKEY *pub);
+ int (*pub_decode) (EVP_PKEY *pk, const X509_PUBKEY *pub);
  int (*pub_encode) (X509_PUBKEY *pub, const EVP_PKEY *pk);
  int (*pub_cmp) (const EVP_PKEY *a, const EVP_PKEY *b);
  int (*pub_print) (BIO *out, const EVP_PKEY *pkey, int indent,
@@ -431,6 +431,12 @@ or 1 on success.
 
 EVP_PKEY_get0_asn1() returns NULL on error, or a pointer to a constant
 B<EVP_PKEY_ASN1_METHOD> object otherwise.
+
+=head1 HISTORY
+
+The signature of the I<pub_decode> functional argument of
+EVP_PKEY_asn1_set_public() has changed in OpenSSL 3.0 so its I<pub>
+parameter is now constified.
 
 =head1 COPYRIGHT
 

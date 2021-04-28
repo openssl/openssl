@@ -40,6 +40,15 @@ OpenSSL 3.0
 
    *Boris Pismenny, John Baldwin and Andrew Gallatin*
 
+ * The signature of the `copy` functional parameter of the
+   EVP_PKEY_meth_set_copy() function has changed so its `src` argument is
+   now `const EVP_PKEY_CTX *` instead of `EVP_PKEY_CTX *`. Similarly
+   the signature of the `pub_decode` functional parameter of the
+   EVP_PKEY_asn1_set_public() function has changed so its `pub` argument is
+   now `const X509_PUBKEY *` instead of `X509_PUBKEY *`.
+
+   *David von Oheimb*
+
  * The error return values from some control calls (ctrl) have changed.
    One significant change is that controls which used to return -2 for
    invalid inputs, now return -1 indicating a generic error condition instead.
