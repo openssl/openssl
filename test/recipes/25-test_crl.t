@@ -41,7 +41,7 @@ ok(compare1stline([qw{openssl crl -noout -hash -in},
 
 ok(compare1stline_stdin([qw{openssl crl -hash -noout}],
                         srctop_file("test","testcrl.pem"),
-                        'issuer name hash=106cd822'),
+                        '106cd822'),
    "crl piped input test");
 
 ok(run(app(["openssl", "crl", "-text", "-in", $pem, "-out", $out,
