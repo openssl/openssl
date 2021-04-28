@@ -848,7 +848,6 @@ int load_key_certs_crls(const char *uri, int maybe_stdin,
                         X509 **pcert, STACK_OF(X509) **pcerts,
                         X509_CRL **pcrl, STACK_OF(X509_CRL) **pcrls)
 {
-    BIO *bio = NULL;
     PW_CB_DATA uidata;
     OSSL_STORE_CTX *ctx = NULL;
     OSSL_LIB_CTX *libctx = app_get0_libctx();
@@ -916,6 +915,7 @@ int load_key_certs_crls(const char *uri, int maybe_stdin,
     uidata.prompt_info = uri;
 
     if (uri == NULL) {
+        BIO *bio;
         if (!maybe_stdin) {
             BIO_printf(bio_err, "No filename or uri specified for loading");
             goto end;
@@ -923,9 +923,11 @@ int load_key_certs_crls(const char *uri, int maybe_stdin,
         uri = "<stdin>";
         unbuffer(stdin);
         bio = BIO_new_fp(stdin, 0);
-        if (bio != NULL)
+        if (bio != NULL) {
             ctx = OSSL_STORE_attach(bio, "file", libctx, propq,
                                     get_ui_method(), &uidata, NULL, NULL);
+            BIO_free(bio);
+        }
     } else {
         ctx = OSSL_STORE_open_ex(uri, libctx, propq, get_ui_method(), &uidata,
                                  NULL, NULL);
@@ -1023,7 +1025,6 @@ int load_key_certs_crls(const char *uri, int maybe_stdin,
 
  end:
     OSSL_STORE_close(ctx);
-    BIO_free(bio);
     if (failed == NULL) {
         int any = 0;
 
