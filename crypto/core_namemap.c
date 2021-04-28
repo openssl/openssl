@@ -379,66 +379,62 @@ int ossl_namemap_add_names(OSSL_NAMEMAP *namemap, int number,
 #include <openssl/evp.h>
 
 /* Creates an initial namemap with names found in the legacy method db */
-static void get_legacy_evp_names(const char *name, const char *desc,
-                                 const ASN1_OBJECT *obj, void *arg)
+static void get_legacy_evp_names(int base_nid, int nid, const char *pem_name,
+                                 void *arg)
 {
-    int num = ossl_namemap_add_name(arg, 0, name);
+    int num = 0;
+    ASN1_OBJECT *obj;
 
-    /*
-     * We currently treat the description ("long name" in OBJ speak) as an
-     * alias.
-     */
-
-    /*
-     * We could check that the returned value is the same as id, but since
-     * this is a void function, there's no sane way to report the error.
-     * The best we can do is trust ourselve to keep the legacy method
-     * database conflict free.
-     *
-     * This registers any alias with the same number as the main name.
-     * Should it be that the current |on| *has* the main name, this is
-     * simply a no-op.
-     */
-    if (desc != NULL) {
-        (void)ossl_namemap_add_name(arg, num, desc);
+    if (base_nid != NID_undef) {
+        num = ossl_namemap_add_name(arg, num, OBJ_nid2sn(base_nid));
+        num = ossl_namemap_add_name(arg, num, OBJ_nid2ln(base_nid));
     }
 
-    if (obj != NULL) {
-        char txtoid[OSSL_MAX_NAME_SIZE];
+    if (nid != NID_undef) {
+        num = ossl_namemap_add_name(arg, num, OBJ_nid2sn(nid));
+        num = ossl_namemap_add_name(arg, num, OBJ_nid2ln(nid));
+        if ((obj = OBJ_nid2obj(nid)) != NULL) {
+            char txtoid[OSSL_MAX_NAME_SIZE];
 
-        if (OBJ_obj2txt(txtoid, sizeof(txtoid), obj, 1))
-            (void)ossl_namemap_add_name(arg, num, txtoid);
+            if (OBJ_obj2txt(txtoid, sizeof(txtoid), obj, 1))
+                num = ossl_namemap_add_name(arg, num, txtoid);
+        }
     }
+    if (pem_name != NULL)
+        num = ossl_namemap_add_name(arg, num, pem_name);
 }
 
 static void get_legacy_cipher_names(const OBJ_NAME *on, void *arg)
 {
     const EVP_CIPHER *cipher = (void *)OBJ_NAME_get(on->name, on->type);
-    int nid = EVP_CIPHER_type(cipher);
 
-    get_legacy_evp_names(OBJ_nid2sn(nid), OBJ_nid2ln(nid), OBJ_nid2obj(nid),
-                         arg);
+    get_legacy_evp_names(NID_undef, EVP_CIPHER_type(cipher), NULL, arg);
 }
 
 static void get_legacy_md_names(const OBJ_NAME *on, void *arg)
 {
     const EVP_MD *md = (void *)OBJ_NAME_get(on->name, on->type);
-    int nid = EVP_MD_type(md);
 
-    get_legacy_evp_names(OBJ_nid2sn(nid), OBJ_nid2ln(nid), OBJ_nid2obj(nid),
-                         arg);
+    get_legacy_evp_names(0, EVP_MD_type(md), NULL, arg);
 }
 
 static void get_legacy_pkey_meth_names(const EVP_PKEY_ASN1_METHOD *ameth,
                                        void *arg)
 {
     int nid = 0, base_nid = 0, flags = 0;
+    const char *pem_name = NULL;
 
-    EVP_PKEY_asn1_get0_info(&nid, &base_nid, &flags, NULL, NULL, ameth);
+    EVP_PKEY_asn1_get0_info(&nid, &base_nid, &flags, NULL, &pem_name, ameth);
     if (nid != NID_undef) {
         if ((flags & ASN1_PKEY_ALIAS) == 0) {
-            get_legacy_evp_names(OBJ_nid2sn(nid), OBJ_nid2ln(nid),
-                                 OBJ_nid2obj(nid), arg);
+            switch (nid) {
+            case EVP_PKEY_DHX:
+                /* We know that the name "DHX" is used too */
+                get_legacy_evp_names(0, nid, "DHX", arg);
+                /* FALLTHRU */
+            default:
+                get_legacy_evp_names(0, nid, pem_name, arg);
+            }
         } else {
             /*
              * Treat aliases carefully, some of them are undesirable, or
@@ -447,20 +443,15 @@ static void get_legacy_pkey_meth_names(const EVP_PKEY_ASN1_METHOD *ameth,
 
             switch (nid) {
             case EVP_PKEY_SM2:
-            case EVP_PKEY_DHX:
                 /*
                  * SM2 is a separate keytype with providers, not an alias for
                  * EC.
-                 * DHX is a separate keytype with providers, not an alias for
-                 * DH.
                  */
-                get_legacy_evp_names(OBJ_nid2sn(nid), OBJ_nid2ln(nid),
-                                     OBJ_nid2obj(nid), arg);
+                get_legacy_evp_names(0, nid, pem_name, arg);
                 break;
             default:
                 /* Use the short name of the base nid as the common reference */
-                get_legacy_evp_names(OBJ_nid2sn(base_nid), OBJ_nid2ln(nid),
-                                     OBJ_nid2obj(nid), arg);
+                get_legacy_evp_names(base_nid, nid, pem_name, arg);
             }
         }
     }
