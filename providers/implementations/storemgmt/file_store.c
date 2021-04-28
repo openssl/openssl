@@ -415,7 +415,7 @@ static int file_setup_decoders(struct file_ctx_st *ctx)
     OSSL_DECODER_INSTANCE *to_obj_inst = NULL;
     OSSL_DECODER_CLEANUP *old_cleanup = NULL;
     void *old_construct_data = NULL;
-    int ok = 0;
+    int ok = 0, expect_evp_pkey = 0;
 
     /* Setup for this session, so only if not already done */
     if (ctx->_.file.decoderctx == NULL) {
@@ -423,6 +423,11 @@ static int file_setup_decoders(struct file_ctx_st *ctx)
             ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
             goto err;
         }
+
+        expect_evp_pkey = (ctx->expected_type == 0
+                           || ctx->expected_type == OSSL_STORE_INFO_PARAMS
+                           || ctx->expected_type == OSSL_STORE_INFO_PUBKEY
+                           || ctx->expected_type == OSSL_STORE_INFO_PKEY);
 
         /* Make sure the input type is set */
         if (!OSSL_DECODER_CTX_set_input_type(ctx->_.file.decoderctx,
@@ -462,9 +467,12 @@ static int file_setup_decoders(struct file_ctx_st *ctx)
          * Since we're setting up our own constructor, we don't need to care
          * more than that...
          */
-        if (!ossl_decoder_ctx_setup_for_pkey(ctx->_.file.decoderctx,
-                                             &dummy, NULL,
-                                             libctx, ctx->_.file.propq)
+        fprintf(stderr, "DEBUG[%s]: expect_evp_pkey = %d\n",
+                __func__, expect_evp_pkey);
+        if ((expect_evp_pkey
+             && !ossl_decoder_ctx_setup_for_pkey(ctx->_.file.decoderctx,
+                                                 &dummy, NULL,
+                                                 libctx, ctx->_.file.propq))
             || !OSSL_DECODER_CTX_add_extra(ctx->_.file.decoderctx,
                                            libctx, ctx->_.file.propq)) {
             ERR_raise(ERR_LIB_PROV, ERR_R_OSSL_DECODER_LIB);
