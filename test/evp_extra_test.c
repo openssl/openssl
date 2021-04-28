@@ -1175,6 +1175,7 @@ static int test_EVP_PKCS82PKEY_wrong_tag(void)
 {
     OSSL_PROVIDER *provider = OSSL_PROVIDER_load(NULL, "default");
     EVP_PKEY *pkey = NULL;
+    EVP_PKEY *pkey2 = NULL;
     BIO *membio = NULL;
     char *membuf = NULL;
     PKCS8_PRIV_KEY_INFO *p8inf = NULL;
@@ -1194,7 +1195,7 @@ static int test_EVP_PKCS82PKEY_wrong_tag(void)
                                                       NULL, 0, NULL, NULL),
                         0)
         || !TEST_ptr(p8inf = d2i_PKCS8_PRIV_KEY_INFO_bio(membio, NULL))
-        || !TEST_ptr(pkey = EVP_PKCS82PKEY(p8inf))
+        || !TEST_ptr(pkey2 = EVP_PKCS82PKEY(p8inf))
         || !TEST_int_eq(ERR_get_error(), 0)) {
         goto done;
     }
@@ -1202,6 +1203,7 @@ static int test_EVP_PKCS82PKEY_wrong_tag(void)
     ok = 1;
  done:
     EVP_PKEY_free(pkey);
+    EVP_PKEY_free(pkey2);
     PKCS8_PRIV_KEY_INFO_free(p8inf);
     BIO_free_all(membio);
     OSSL_PROVIDER_unload(provider);
