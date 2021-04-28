@@ -150,19 +150,113 @@ char *ossl_ec_pt_format_id2name(int id)
     return NULL;
 }
 
-int ossl_ec_group_todata(const EC_GROUP *group, OSSL_PARAM_BLD *tmpl,
-                         OSSL_PARAM params[], OSSL_LIB_CTX *libctx,
-                         const char *propq,
-                         BN_CTX *bnctx, unsigned char **genbuf)
+static int ec_group_explicit_todata(const EC_GROUP *group, OSSL_PARAM_BLD *tmpl,
+                                    OSSL_PARAM params[], BN_CTX *bnctx,
+                                    unsigned char **genbuf)
 {
-    int ret = 0, curve_nid, encoding_flag;
-    const char *field_type, *encoding_name, *pt_form_name;
+    int ret = 0, fid;
+    const char *field_type;
     const BIGNUM *cofactor, *order;
     BIGNUM *p = NULL, *a = NULL, *b = NULL;
     point_conversion_form_t genform;
     const EC_POINT *genpt;
     unsigned char *seed = NULL;
     size_t genbuf_len, seed_len;
+
+    genform = EC_GROUP_get_point_conversion_form(group);
+
+    fid = EC_GROUP_get_field_type(group);
+
+    if (fid == NID_X9_62_prime_field) {
+        field_type = SN_X9_62_prime_field;
+    } else if (fid == NID_X9_62_characteristic_two_field) {
+        field_type = SN_X9_62_characteristic_two_field;
+    } else {
+        ERR_raise(ERR_LIB_EC, EC_R_INVALID_FIELD);
+        return 0;
+    }
+
+    p = BN_CTX_get(bnctx);
+    a = BN_CTX_get(bnctx);
+    b = BN_CTX_get(bnctx);
+    if (b == NULL) {
+        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
+        goto err;
+    }
+
+    if (!EC_GROUP_get_curve(group, p, a, b, bnctx)) {
+        ERR_raise(ERR_LIB_EC, EC_R_INVALID_CURVE);
+        goto err;
+    }
+
+    order = EC_GROUP_get0_order(group);
+    if (order == NULL) {
+        ERR_raise(ERR_LIB_EC, EC_R_INVALID_GROUP_ORDER);
+        goto err;
+    }
+    genpt = EC_GROUP_get0_generator(group);
+    if (genpt == NULL) {
+        ERR_raise(ERR_LIB_EC, EC_R_INVALID_GENERATOR);
+        goto err;
+    }
+    genbuf_len = EC_POINT_point2buf(group, genpt, genform, genbuf, bnctx);
+    if (genbuf_len == 0) {
+        ERR_raise(ERR_LIB_EC, EC_R_INVALID_GENERATOR);
+        goto err;
+    }
+
+    if (!ossl_param_build_set_utf8_string(tmpl, params,
+                                          OSSL_PKEY_PARAM_EC_FIELD_TYPE,
+                                          field_type)
+        || !ossl_param_build_set_bn(tmpl, params, OSSL_PKEY_PARAM_EC_P, p)
+        || !ossl_param_build_set_bn(tmpl, params, OSSL_PKEY_PARAM_EC_A, a)
+        || !ossl_param_build_set_bn(tmpl, params, OSSL_PKEY_PARAM_EC_B, b)
+        || !ossl_param_build_set_bn(tmpl, params, OSSL_PKEY_PARAM_EC_ORDER,
+                                    order)
+        || !ossl_param_build_set_octet_string(tmpl, params,
+                                              OSSL_PKEY_PARAM_EC_GENERATOR,
+                                              *genbuf, genbuf_len)) {
+        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
+        goto err;
+    }
+
+    cofactor = EC_GROUP_get0_cofactor(group);
+    if (cofactor != NULL
+        && !ossl_param_build_set_bn(tmpl, params,
+                                    OSSL_PKEY_PARAM_EC_COFACTOR, cofactor)) {
+        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
+        goto err;
+    }
+
+    seed = EC_GROUP_get0_seed(group);
+    seed_len = EC_GROUP_get_seed_len(group);
+    if (seed != NULL
+        && seed_len > 0
+        && !ossl_param_build_set_octet_string(tmpl, params,
+                                              OSSL_PKEY_PARAM_EC_SEED,
+                                              seed, seed_len)) {
+        ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
+        goto err;
+    }
+#ifdef OPENSSL_NO_EC2M
+    if (fid == NID_X9_62_characteristic_two_field) {
+        ERR_raise(ERR_LIB_EC, EC_R_GF2M_NOT_SUPPORTED);
+        goto err;
+    }
+#endif
+    ret = 1;
+err:
+    return ret;
+}
+
+int ossl_ec_group_todata(const EC_GROUP *group, OSSL_PARAM_BLD *tmpl,
+                         OSSL_PARAM params[], OSSL_LIB_CTX *libctx,
+                         const char *propq,
+                         BN_CTX *bnctx, unsigned char **genbuf)
+{
+    int ret = 0, curve_nid, encoding_flag;
+    const char *encoding_name, *pt_form_name;
+    point_conversion_form_t genform;
 
     if (group == NULL) {
         ERR_raise(ERR_LIB_EC,EC_R_PASSED_NULL_PARAMETER);
@@ -188,89 +282,12 @@ int ossl_ec_group_todata(const EC_GROUP *group, OSSL_PARAM_BLD *tmpl,
         return 0;
     }
 
+    /* Get individual parameters even for named curves */
+    if (!ec_group_explicit_todata(group, tmpl, params, bnctx, genbuf))
+        goto err;
+    
     curve_nid = EC_GROUP_get_curve_name(group);
-    if (curve_nid == NID_undef) {
-        /* explicit curve */
-        int fid = EC_GROUP_get_field_type(group);
-
-        if (fid == NID_X9_62_prime_field) {
-            field_type = SN_X9_62_prime_field;
-        } else if (fid == NID_X9_62_characteristic_two_field) {
-            field_type = SN_X9_62_characteristic_two_field;
-        } else {
-            ERR_raise(ERR_LIB_EC, EC_R_INVALID_FIELD);
-            return 0;
-        }
-
-        p = BN_CTX_get(bnctx);
-        a = BN_CTX_get(bnctx);
-        b = BN_CTX_get(bnctx);
-        if (b == NULL) {
-            ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
-            goto err;
-        }
-
-        if (!EC_GROUP_get_curve(group, p, a, b, bnctx)) {
-            ERR_raise(ERR_LIB_EC, EC_R_INVALID_CURVE);
-            goto err;
-        }
-
-        order = EC_GROUP_get0_order(group);
-        if (order == NULL) {
-            ERR_raise(ERR_LIB_EC, EC_R_INVALID_GROUP_ORDER);
-            goto err;
-        }
-        genpt = EC_GROUP_get0_generator(group);
-        if (genpt == NULL) {
-            ERR_raise(ERR_LIB_EC, EC_R_INVALID_GENERATOR);
-            goto err;
-        }
-        genbuf_len = EC_POINT_point2buf(group, genpt, genform, genbuf, bnctx);
-        if (genbuf_len == 0) {
-            ERR_raise(ERR_LIB_EC, EC_R_INVALID_GENERATOR);
-            goto err;
-        }
-
-        if (!ossl_param_build_set_utf8_string(tmpl, params,
-                                              OSSL_PKEY_PARAM_EC_FIELD_TYPE,
-                                              field_type)
-            || !ossl_param_build_set_bn(tmpl, params, OSSL_PKEY_PARAM_EC_P, p)
-            || !ossl_param_build_set_bn(tmpl, params, OSSL_PKEY_PARAM_EC_A, a)
-            || !ossl_param_build_set_bn(tmpl, params, OSSL_PKEY_PARAM_EC_B, b)
-            || !ossl_param_build_set_bn(tmpl, params, OSSL_PKEY_PARAM_EC_ORDER,
-                                        order)
-            || !ossl_param_build_set_octet_string(tmpl, params,
-                                                  OSSL_PKEY_PARAM_EC_GENERATOR,
-                                                  *genbuf, genbuf_len)) {
-            ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
-            goto err;
-        }
-
-        cofactor = EC_GROUP_get0_cofactor(group);
-        if (cofactor != NULL
-            && !ossl_param_build_set_bn(tmpl, params,
-                                        OSSL_PKEY_PARAM_EC_COFACTOR, cofactor)) {
-            ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
-            goto err;
-        }
-
-        seed = EC_GROUP_get0_seed(group);
-        seed_len = EC_GROUP_get_seed_len(group);
-        if (seed != NULL
-            && seed_len > 0
-            && !ossl_param_build_set_octet_string(tmpl, params,
-                                                  OSSL_PKEY_PARAM_EC_SEED,
-                                                  seed, seed_len)) {
-            ERR_raise(ERR_LIB_EC, ERR_R_MALLOC_FAILURE);
-            goto err;
-        }
-#ifdef OPENSSL_NO_EC2M
-        if (fid == NID_X9_62_characteristic_two_field) {
-            ERR_raise(ERR_LIB_EC, EC_R_GF2M_NOT_SUPPORTED);
-            goto err;
-        }
-#endif
-    } else {
+    if (curve_nid != NID_undef) {
         /* named curve */
         const char *curve_name = ossl_ec_curve_nid2name(curve_nid);
 

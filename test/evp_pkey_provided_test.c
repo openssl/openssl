@@ -1117,6 +1117,13 @@ static int test_fromdata_ec(void)
     char out_curve_name[80];
     const OSSL_PARAM *gettable = NULL;
     size_t len;
+    EC_GROUP *group = NULL;
+    BIGNUM *group_a = NULL;
+    BIGNUM *group_b = NULL; 
+    BIGNUM *group_p = NULL;
+    BIGNUM *a = NULL;
+    BIGNUM *b = NULL;
+    BIGNUM *p = NULL;
 
 
     if (!TEST_ptr(bld = OSSL_PARAM_BLD_new()))
@@ -1168,6 +1175,22 @@ static int test_fromdata_ec(void)
                                                  OSSL_PKEY_PARAM_PRIV_KEY)))
             goto err;
 
+        if (!TEST_ptr(group = EC_GROUP_new_by_curve_name(OBJ_sn2nid(curve)))
+            || !TEST_ptr(group_p = BN_new())
+            || !TEST_ptr(group_a = BN_new())
+            || !TEST_ptr(group_b = BN_new())
+            || !TEST_true(EC_GROUP_get_curve(group, group_p, group_a, group_b, NULL)))
+            goto err;
+
+        if (!TEST_true(EVP_PKEY_get_bn_param(pk, OSSL_PKEY_PARAM_EC_A, &a))
+            || !TEST_true(EVP_PKEY_get_bn_param(pk, OSSL_PKEY_PARAM_EC_B, &b))
+            || !TEST_true(EVP_PKEY_get_bn_param(pk, OSSL_PKEY_PARAM_EC_P, &p)))
+            goto err;
+
+        if (!TEST_BN_eq(group_p, p) || !TEST_BN_eq(group_a, a)
+            || !TEST_BN_eq(group_b, b))
+            goto err;
+
         if (!EVP_PKEY_get_utf8_string_param(pk, OSSL_PKEY_PARAM_GROUP_NAME,
                                             out_curve_name,
                                             sizeof(out_curve_name),
@@ -1198,6 +1221,13 @@ static int test_fromdata_ec(void)
     }
 
 err:
+    EC_GROUP_free(group);
+    BN_free(group_a);
+    BN_free(group_b);
+    BN_free(group_p);
+    BN_free(a);
+    BN_free(b);
+    BN_free(p);
     BN_free(bn_priv);
     BN_free(ec_priv_bn);
     OSSL_PARAM_free(fromdata_params);
