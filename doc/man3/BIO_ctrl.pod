@@ -92,7 +92,7 @@ for success and -1 for failure.
 
 BIO_flush() returns 1 for success and 0 or -1 for failure.
 
-BIO_eof() returns 1 if EOF has been reached or an error occurred, 0 otherwise.
+BIO_eof() returns 1 if EOF has been reached, 0 if not, or -1 for failure.
 
 BIO_set_close() always returns 1.
 
