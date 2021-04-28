@@ -25,6 +25,7 @@
 #include "internal/nelem.h"
 #include "internal/sizes.h"
 #include "internal/cryptlib.h"
+#include "internal/sm3.h"
 #include "prov/implementations.h"
 #include "prov/provider_ctx.h"
 #include "crypto/ec.h"
@@ -64,13 +65,6 @@ typedef struct {
     EC_KEY *ec;
 
     /*
-     * Flag to determine if the hash function can be changed (1) or not (0)
-     * Because it's dangerous to change during a DigestSign or DigestVerify
-     * operation, this flag is cleared by their Init function, and set again
-     * by their Final function.
-     */
-    unsigned int flag_allow_md : 1;
-    /*
      * Flag to termine if the 'z' digest needs to be computed and fed to the
      * hash function.
      * This flag should be set on initialization and the compuation should
@@ -108,8 +102,8 @@ static void *sm2sig_newctx(void *provctx, const char *propq)
         ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
-    /* don't allow to change MD, and in fact there is no such need */
-    ctx->flag_allow_md = 0;
+    ctx->mdsize = SM3_DIGEST_LENGTH;
+    strcpy(ctx->mdname, OSSL_DIGEST_NAME_SM3);
     return ctx;
 }
 
@@ -186,8 +180,7 @@ static int sm2sig_digest_signverify_init(void *vpsm2ctx, const char *mdname,
     if (!sm2sig_signature_init(vpsm2ctx, ec, params))
         return ret;
 
-    ctx->md = EVP_MD_fetch(ctx->libctx, mdname, ctx->propq);
-    ctx->mdsize = EVP_MD_size(ctx->md);
+    ctx->md = EVP_MD_fetch(ctx->libctx, OSSL_DIGEST_NAME_SM3, ctx->propq);
     ctx->mdctx = EVP_MD_CTX_new();
     if (ctx->mdctx == NULL)
         goto error;
@@ -392,7 +385,7 @@ static int sm2sig_set_ctx_params(void *vpsm2ctx, const OSSL_PARAM params[])
 {
     PROV_SM2_CTX *psm2ctx = (PROV_SM2_CTX *)vpsm2ctx;
     const OSSL_PARAM *p;
-    char *mdname;
+    size_t mdsize;
 
     if (psm2ctx == NULL)
         return 0;
@@ -417,16 +410,9 @@ static int sm2sig_set_ctx_params(void *vpsm2ctx, const OSSL_PARAM params[])
         psm2ctx->id_len = tmp_idlen;
     }
 
-    if (psm2ctx->md != NULL) {
-        /*
-         * You cannot set the digest name/size when doing a DigestSign or
-         * DigestVerify.
-         */
-        return 1;
-    }
-
     p = OSSL_PARAM_locate_const(params, OSSL_SIGNATURE_PARAM_DIGEST_SIZE);
-    if (p != NULL && !OSSL_PARAM_get_size_t(p, &psm2ctx->mdsize))
+    if (p != NULL && (!OSSL_PARAM_get_size_t(p, &mdsize)
+                      || mdsize != psm2ctx->mdsize))
         return 0;
 
     /*
@@ -435,10 +421,22 @@ static int sm2sig_set_ctx_params(void *vpsm2ctx, const OSSL_PARAM params[])
      * previously set.
      */
     p = OSSL_PARAM_locate_const(params, OSSL_SIGNATURE_PARAM_DIGEST);
-    mdname = psm2ctx->mdname;
-    if (p != NULL
-            && !OSSL_PARAM_get_utf8_string(p, &mdname, sizeof(psm2ctx->mdname)))
-        return 0;
+    if (p != NULL) {
+        char *mdname = NULL;
+
+        if (!OSSL_PARAM_get_utf8_string(p, &mdname, 0))
+            return 0;
+        if (psm2ctx->md == NULL) /* We need an SM3 md to compare with */
+            psm2ctx->md = EVP_MD_fetch(psm2ctx->libctx, OSSL_DIGEST_NAME_SM3,
+                                       psm2ctx->propq);
+        if (psm2ctx->md == NULL
+            || strlen(mdname) >= sizeof(psm2ctx->mdname)
+            || !EVP_MD_is_a(psm2ctx->md, mdname)) {
+            OPENSSL_free(mdname);
+            return 0;
+        }
+        OPENSSL_strlcpy(psm2ctx->mdname, mdname, sizeof(psm2ctx->mdname));
+    }
 
     return 1;
 }
@@ -453,12 +451,6 @@ static const OSSL_PARAM known_settable_ctx_params[] = {
 static const OSSL_PARAM *sm2sig_settable_ctx_params(ossl_unused void *vpsm2ctx,
                                                     ossl_unused void *provctx)
 {
-    /*
-     * TODO(3.0): Should this function return a different set of settable ctx
-     * params if the ctx is being used for a DigestSign/DigestVerify? In that
-     * case it is not allowed to set the digest size/digest name because the
-     * digest is explicitly set as part of the init.
-     */
     return known_settable_ctx_params;
 }
 
