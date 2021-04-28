@@ -109,6 +109,7 @@ int X509_self_signed(X509 *cert, int verify_signature)
 /*
  * Given a certificate, try and find an exact match in the store.
  * Returns 1 on success, 0 on not found, -1 on internal error.
+ * If result is not NULL, on success *result will hold the up-ref'd found cert.
  */
 static int lookup_cert_match(X509 **result, X509_STORE_CTX *ctx, X509 *x)
 {
@@ -116,7 +117,8 @@ static int lookup_cert_match(X509 **result, X509_STORE_CTX *ctx, X509 *x)
     X509 *xtmp = NULL;
     int i, ret;
 
-    *result = NULL;
+    if (result != NULL)
+        *result = NULL;
     /* Lookup all certs with matching subject name */
     ERR_set_mark();
     certs = ctx->lookup_certs(ctx, X509_get_subject_name(x));
@@ -886,8 +888,10 @@ static int check_trust(X509_STORE_CTX *ctx, int num_untrusted)
          * we'll accept X509_TRUST_UNTRUSTED when not self-signed.
          */
         trust = X509_check_trust(mx, ctx->param->trust, 0);
-        if (trust == X509_TRUST_REJECTED)
+        if (trust == X509_TRUST_REJECTED) {
+            X509_free(mx);
             goto rejected;
+        }
 
         /* Replace leaf with trusted match */
         (void)sk_X509_set(ctx->chain, 0, mx);
