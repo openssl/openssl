@@ -75,7 +75,8 @@ int f (int a,       /*@ space after fn before '(', reported unless sloppy-spc */
        long l)      /*@ one-letter name 'l' */
 { int               /*@ code after '{' opening a block */
     xx = 1) +       /*@ unexpected closing parenthesis */
-        2] -        /*@ unexpected closing bracket */
+        0L <        /*@ constant on LHS of comparison operator */
+        a] -        /*@ unexpected closing bracket */
         3: *        /*@ unexpected ':' (without preceding '?') within expr */
         4};         /*@ unexpected closing brace within expression */
     char y[] = {    /*@0 unclosed brace within initializer/enum expression */
@@ -91,7 +92,7 @@ int f (int a,       /*@ space after fn before '(', reported unless sloppy-spc */
            b,       /*@ expr indent as on line above, accepted if sloppy-hang */
     b, /*@ expr indent off -8 but @ extra indent accepted if sloppy-hang */
    "again aligned" /*@ expr indent off by -9 (left of stmt indent, */ "right",
-            123 == /*@ .. so reported also with sloppy-hang; this line is too long */ 456
+            abc == /*@ .. so reported also with sloppy-hang; this line is too long */ 456
 # define MAC(A) (A) /*@ nesting indent of preprocessor directive off by 1 */
              ? 1    /*@ hanging expr indent off by 1 */
               : 2); /*@ hanging expr indent off by 2, or 1 for leading ':' */
