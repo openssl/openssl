@@ -124,7 +124,9 @@ static void *der2key_decode_p8(const unsigned char **input_der,
 
     ctx->flag_fatal = 0;
 
+    ERR_set_mark();
     if ((p8 = d2i_X509_SIG(NULL, input_der, input_der_len)) != NULL) {
+        ERR_clear_last_mark();
         char pbuf[PEM_BUFSIZE];
         size_t plen = 0;
 
@@ -136,6 +138,8 @@ static void *der2key_decode_p8(const unsigned char **input_der,
             ctx->flag_fatal = 1;
         X509_SIG_free(p8);
     } else {
+        // Pop any errors that might have been raised by d2i_X509_SIG.
+        ERR_pop_to_mark();
         p8inf = d2i_PKCS8_PRIV_KEY_INFO(NULL, input_der, input_der_len);
     }
     if (p8inf != NULL

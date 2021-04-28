@@ -1169,6 +1169,43 @@ static int test_EVP_PKCS82PKEY(void)
 
     return ret;
 }
+
+static int test_EVP_PKCS82PKEY_wrong_tag(void)
+{
+    OSSL_PROVIDER *provider = OSSL_PROVIDER_load(NULL, "default");
+    EVP_PKEY *pkey = NULL;
+    BIO *membio = NULL;
+    char *membuf = NULL;
+    PKCS8_PRIV_KEY_INFO *p8inf = NULL;
+    long membuf_len = 0;
+    int ok = 0;
+
+    if (!TEST_ptr(membio = BIO_new(BIO_s_mem()))
+        || !TEST_ptr(pkey = load_example_rsa_key())
+        || !TEST_int_gt(i2d_PKCS8PrivateKey_bio(membio, pkey, NULL,
+                                                NULL, 0, NULL, NULL),
+                        0)
+        || !TEST_int_gt(membuf_len = BIO_get_mem_data(membio, &membuf), 0)
+        || !TEST_ptr(membuf)
+        || !TEST_mem_eq(membuf, (size_t)membuf_len,
+                        kExampleRSAKeyPKCS8, sizeof(kExampleRSAKeyPKCS8))
+        || !TEST_int_gt(PEM_write_bio_PKCS8PrivateKey(membio, pkey, NULL,
+                                                      NULL, 0, NULL, NULL),
+                        0)
+        || !TEST_ptr(p8inf = d2i_PKCS8_PRIV_KEY_INFO_bio(membio, NULL))
+        || !TEST_ptr(pkey = EVP_PKCS82PKEY(p8inf))
+        || !TEST_int_eq(ERR_get_error(), 0)) {
+        goto done;
+    }
+
+    ok = 1;
+ done:
+    EVP_PKEY_free(pkey);
+    PKCS8_PRIV_KEY_INFO_free(p8inf);
+    BIO_free_all(membio);
+    OSSL_PROVIDER_unload(provider);
+    return ok;
+}
 #endif
 
 /* This uses kExampleRSAKeyDER and kExampleRSAKeyPKCS8 to verify encoding */
@@ -2891,6 +2928,7 @@ int setup_tests(void)
     ADD_TEST(test_EVP_Enveloped);
     ADD_ALL_TESTS(test_d2i_AutoPrivateKey, OSSL_NELEM(keydata));
     ADD_TEST(test_privatekey_to_pkcs8);
+    ADD_TEST(test_EVP_PKCS82PKEY_wrong_tag);
 #ifndef OPENSSL_NO_EC
     ADD_TEST(test_EVP_PKCS82PKEY);
 #endif
