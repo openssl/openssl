@@ -2,8 +2,9 @@
 
 =head1 NAME
 
-OSSL_LIB_CTX, OSSL_LIB_CTX_new, OSSL_LIB_CTX_free, OSSL_LIB_CTX_load_config,
-OSSL_LIB_CTX_get0_global_default, OSSL_LIB_CTX_set0_default
+OSSL_LIB_CTX, OSSL_LIB_CTX_new, OSSL_LIB_CTX_new_from_dispatch,
+OSSL_LIB_CTX_free, OSSL_LIB_CTX_load_config, OSSL_LIB_CTX_get0_global_default,
+OSSL_LIB_CTX_set0_default
 - OpenSSL library context
 
 =head1 SYNOPSIS
@@ -13,6 +14,7 @@ OSSL_LIB_CTX_get0_global_default, OSSL_LIB_CTX_set0_default
  typedef struct ossl_lib_ctx_st OSSL_LIB_CTX;
 
  OSSL_LIB_CTX *OSSL_LIB_CTX_new(void);
+ OSSL_LIB_CTX *OSSL_LIB_CTX_new_from_dispatch(const OSSL_DISPATCH *in);
  int OSSL_LIB_CTX_load_config(OSSL_LIB_CTX *ctx, const char *config_file);
  void OSSL_LIB_CTX_free(OSSL_LIB_CTX *ctx);
  OSSL_LIB_CTX *OSSL_LIB_CTX_get0_global_default(void);
@@ -31,6 +33,13 @@ the OSSL_LIB_CTX is freed.
 See L<OPENSSL_thread_stop_ex(3)> for more information.
 
 OSSL_LIB_CTX_new() creates a new OpenSSL library context.
+
+OSSL_LIB_CTX_new_from_dispatch() creates a new OpenSSL library context
+initialised to use callbacks from the OSSL_DISPATCH structure. This is primarily
+useful for provider authors. The dispatch structure passed should be the same
+one as passed to a provider's OSSL_provider_init function in the I<in> argument.
+Some OpenSSL functions, such as L<BIO_new_from_core_bio(3)>, require the library
+context to be created in this way in order to work.
 
 OSSL_LIB_CTX_load_config() loads a configuration file using the given C<ctx>.
 This can be used to associate a library context with providers that are loaded
@@ -69,9 +78,7 @@ OSSL_LIB_CTX_free() doesn't return any value.
 
 =head1 HISTORY
 
-OSSL_LIB_CTX, OSSL_LIB_CTX_new(), OSSL_LIB_CTX_load_config(),
-OSSL_LIB_CTX_free(), OSSL_LIB_CTX_get0_global_default() and
-OSSL_LIB_CTX_set0_default() were added in OpenSSL 3.0.
+All of the functions described on this page were added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
