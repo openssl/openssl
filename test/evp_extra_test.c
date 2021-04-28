@@ -1170,6 +1170,7 @@ static int test_EVP_PKCS82PKEY(void)
     return ret;
 }
 
+#endif
 static int test_EVP_PKCS82PKEY_wrong_tag(void)
 {
     OSSL_PROVIDER *provider = OSSL_PROVIDER_load(NULL, "default");
@@ -1206,7 +1207,6 @@ static int test_EVP_PKCS82PKEY_wrong_tag(void)
     OSSL_PROVIDER_unload(provider);
     return ok;
 }
-#endif
 
 /* This uses kExampleRSAKeyDER and kExampleRSAKeyPKCS8 to verify encoding */
 static int test_privatekey_to_pkcs8(void)
