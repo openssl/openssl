@@ -135,7 +135,8 @@ OSSL_STORE_open_ex(const char *uri, OSSL_LIB_CTX *libctx, const char *propq,
     }
 
     if (ui_method != NULL
-        && !ossl_pw_set_ui_method(&ctx->pwdata, ui_method, ui_data)) {
+        && (!ossl_pw_set_ui_method(&ctx->pwdata, ui_method, ui_data)
+            || !ossl_pw_enable_passphrase_caching(&ctx->pwdata))) {
         ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_CRYPTO_LIB);
         goto err;
     }
@@ -412,6 +413,9 @@ OSSL_STORE_INFO *OSSL_STORE_load(OSSL_STORE_CTX *ctx)
         if (v == NULL)
             goto again;
     }
+
+    /* Clear any internally cached passphrase */
+    (void)ossl_pw_clear_passphrase_cache(&ctx->pwdata);
 
     if (v != NULL && ctx->expected_type != 0) {
         int returned_type = OSSL_STORE_INFO_get_type(v);
