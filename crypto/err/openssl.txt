@@ -343,6 +343,7 @@ CMS_R_NO_PRIVATE_KEY:133:no private key
 CMS_R_NO_PUBLIC_KEY:134:no public key
 CMS_R_NO_RECEIPT_REQUEST:168:no receipt request
 CMS_R_NO_SIGNERS:135:no signers
+CMS_R_OPERATION_UNSUPPORTED:182:operation unsupported
 CMS_R_PEER_KEY_ERROR:188:peer key error
 CMS_R_PRIVATE_KEY_DOES_NOT_MATCH_CERTIFICATE:136:\
 	private key does not match certificate

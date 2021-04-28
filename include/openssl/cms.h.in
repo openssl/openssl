@@ -119,6 +119,9 @@ int SMIME_write_CMS(BIO *bio, CMS_ContentInfo *cms, BIO *data, int flags);
 
 int CMS_final(CMS_ContentInfo *cms, BIO *data, BIO *dcont,
               unsigned int flags);
+int CMS_final_digest(CMS_ContentInfo *cms,
+                     const unsigned char *md, unsigned int mdlen, BIO *dcont,
+                     unsigned int flags);
 
 CMS_ContentInfo *CMS_sign(X509 *signcert, EVP_PKEY *pkey,
                           STACK_OF(X509) *certs, BIO *data,

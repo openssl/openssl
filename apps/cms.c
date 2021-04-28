@@ -66,7 +66,7 @@ typedef enum OPTION_choice {
     OPT_DECRYPT, OPT_SIGN, OPT_CADES, OPT_SIGN_RECEIPT, OPT_RESIGN,
     OPT_VERIFY, OPT_VERIFY_RETCODE, OPT_VERIFY_RECEIPT,
     OPT_CMSOUT, OPT_DATA_OUT, OPT_DATA_CREATE, OPT_DIGEST_VERIFY,
-    OPT_DIGEST_CREATE, OPT_COMPRESS, OPT_UNCOMPRESS,
+    OPT_DIGEST, OPT_DIGEST_CREATE, OPT_COMPRESS, OPT_UNCOMPRESS,
     OPT_ED_DECRYPT, OPT_ED_ENCRYPT, OPT_DEBUG_DECRYPT, OPT_TEXT,
     OPT_ASCIICRLF, OPT_NOINTERN, OPT_NOVERIFY, OPT_NOCERTS,
     OPT_NOATTR, OPT_NODETACH, OPT_NOSMIMECAP, OPT_BINARY, OPT_KEYID,
@@ -106,6 +106,7 @@ const OPTIONS cms_options[] = {
      "Generate a signed receipt for a message"},
     {"verify_receipt", OPT_VERIFY_RECEIPT, '<',
      "Verify receipts; exit if receipt signatures do not verify"},
+    {"digest", OPT_DIGEST, 's', "Sign a pre-computed digest in hex notation"},
     {"digest_create", OPT_DIGEST_CREATE, '-',
      "Create a CMS \"DigestedData\" object"},
     {"digest_verify", OPT_DIGEST_VERIFY, '-',
@@ -293,6 +294,9 @@ int cms_main(int argc, char **argv)
     const char *CAfile = NULL, *CApath = NULL, *CAstore = NULL;
     char *certsoutfile = NULL, *digestname = NULL, *wrapname = NULL;
     int noCAfile = 0, noCApath = 0, noCAstore = 0;
+    char *digesthex = NULL;
+    unsigned char *digestbin = NULL;
+    long digestlen = 0;
     char *infile = NULL, *outfile = NULL, *rctfile = NULL;
     char *passinarg = NULL, *passin = NULL, *signerfile = NULL;
     char *originatorfile = NULL, *recipfile = NULL, *ciphername = NULL;
@@ -366,6 +370,9 @@ int cms_main(int argc, char **argv)
             break;
         case OPT_DIGEST_CREATE:
             operation = SMIME_DIGEST_CREATE;
+            break;
+        case OPT_DIGEST:
+            digesthex = opt_arg();
             break;
         case OPT_DIGEST_VERIFY:
             operation = SMIME_DIGEST_VERIFY;
@@ -885,10 +892,31 @@ int cms_main(int argc, char **argv)
             goto end;
     }
 
-    in = bio_open_default(infile, 'r',
-                          binary_files ? FORMAT_BINARY : informat);
-    if (in == NULL)
-        goto end;
+    if (digesthex != NULL) {
+        if (operation != SMIME_SIGN) {
+            BIO_printf(bio_err,
+                       "Cannot use -digest for non-signing operation\n");
+            goto end;
+        }
+        if (infile != NULL
+            || (flags & CMS_DETACHED) == 0
+            || (flags & CMS_STREAM) != 0) {
+            BIO_printf(bio_err,
+                       "Cannot use -digest when -in, -nodetach or streaming is used\n");
+            goto end;
+        }
+        digestbin = OPENSSL_hexstr2buf(digesthex, &digestlen);
+        if (digestbin == NULL) {
+            BIO_printf(bio_err,
+                       "Invalid hex value after -digest\n");
+            goto end;
+        }
+    } else {
+        in = bio_open_default(infile, 'r',
+                              binary_files ? FORMAT_BINARY : informat);
+        if (in == NULL)
+            goto end;
+    }
 
     if (operation & SMIME_IP) {
         cms = load_content_info(informat, in, flags, &indata, "SMIME");
@@ -1037,12 +1065,12 @@ int cms_main(int argc, char **argv)
     } else if (operation & SMIME_SIGNERS) {
         int i;
         /*
-         * If detached data content we enable streaming if S/MIME output
-         * format.
+         * If detached data content and not signing pre-computed digest, we
+         * enable streaming if S/MIME output format.
          */
         if (operation == SMIME_SIGN) {
 
-            if (flags & CMS_DETACHED) {
+            if ((flags & CMS_DETACHED) != 0 && digestbin == NULL) {
                 if (outformat == FORMAT_SMIME)
                     flags |= CMS_STREAM;
             }
@@ -1103,7 +1131,12 @@ int cms_main(int argc, char **argv)
             key = NULL;
         }
         /* If not streaming or resigning finalize structure */
-        if ((operation == SMIME_SIGN) && !(flags & CMS_STREAM)) {
+        if (operation == SMIME_SIGN && digestbin != NULL
+            && (flags & CMS_STREAM) == 0) {
+            /* Use pre-computed digest instead of content */
+            if (!CMS_final_digest(cms, digestbin, digestlen, NULL, flags))
+                goto end;
+        } else if (operation == SMIME_SIGN && (flags & CMS_STREAM) == 0) {
             if (!CMS_final(cms, in, NULL, flags))
                 goto end;
         }
@@ -1272,6 +1305,7 @@ int cms_main(int argc, char **argv)
     BIO_free(in);
     BIO_free(indata);
     BIO_free_all(out);
+    OPENSSL_free(digestbin);
     OPENSSL_free(passin);
     NCONF_free(conf);
     return ret;
