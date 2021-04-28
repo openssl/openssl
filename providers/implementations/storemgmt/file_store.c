@@ -467,8 +467,6 @@ static int file_setup_decoders(struct file_ctx_st *ctx)
          * Since we're setting up our own constructor, we don't need to care
          * more than that...
          */
-        fprintf(stderr, "DEBUG[%s]: expect_evp_pkey = %d\n",
-                __func__, expect_evp_pkey);
         if ((expect_evp_pkey
              && !ossl_decoder_ctx_setup_for_pkey(ctx->_.file.decoderctx,
                                                  &dummy, NULL,
