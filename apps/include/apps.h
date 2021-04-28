@@ -111,7 +111,7 @@ X509_REQ *load_csr(const char *file, int format, const char *desc);
 X509 *load_cert_pass(const char *uri, int maybe_stdin,
                      const char *pass, const char *desc);
 #define load_cert(uri, desc) load_cert_pass(uri, 1, NULL, desc)
-X509_CRL *load_crl(const char *uri, const char *desc);
+X509_CRL *load_crl(const char *uri, int maybe_stdin, const char *desc);
 void cleanse(char *str);
 void clear_free(char *str);
 EVP_PKEY *load_key(const char *uri, int format, int maybe_stdin,

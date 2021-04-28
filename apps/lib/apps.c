@@ -499,7 +499,7 @@ X509 *load_cert_pass(const char *uri, int maybe_stdin,
     return cert;
 }
 
-X509_CRL *load_crl(const char *uri, const char *desc)
+X509_CRL *load_crl(const char *uri, int maybe_stdin, const char *desc)
 {
     X509_CRL *crl = NULL;
 
@@ -510,7 +510,7 @@ X509_CRL *load_crl(const char *uri, const char *desc)
     else if (IS_HTTP(uri))
         crl = X509_CRL_load_http(uri, NULL, NULL, 0 /* timeout */);
     else
-        (void)load_key_certs_crls(uri, 0, NULL, desc,
+        (void)load_key_certs_crls(uri, maybe_stdin, NULL, desc,
                                   NULL, NULL,  NULL, NULL, NULL, &crl, NULL);
     if (crl == NULL) {
         BIO_printf(bio_err, "Unable to load %s\n", desc);
@@ -2318,8 +2318,8 @@ static X509_CRL *load_crl_crldp(STACK_OF(DIST_POINT) *crldp)
     for (i = 0; i < sk_DIST_POINT_num(crldp); i++) {
         DIST_POINT *dp = sk_DIST_POINT_value(crldp, i);
         urlptr = get_dp_url(dp);
-        if (urlptr)
-            return load_crl(urlptr, "CRL via CDP");
+        if (urlptr != NULL)
+            return load_crl(urlptr, 0, "CRL via CDP");
     }
     return NULL;
 }
