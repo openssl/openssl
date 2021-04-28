@@ -126,9 +126,9 @@ static void *der2key_decode_p8(const unsigned char **input_der,
 
     ERR_set_mark();
     if ((p8 = d2i_X509_SIG(NULL, input_der, input_der_len)) != NULL) {
-        ERR_clear_last_mark();
         char pbuf[PEM_BUFSIZE];
         size_t plen = 0;
+        ERR_clear_last_mark();
 
         if (!pw_cb(pbuf, sizeof(pbuf), &plen, NULL, pw_cbarg))
             ERR_raise(ERR_LIB_PROV, PROV_R_UNABLE_TO_GET_PASSPHRASE);
@@ -138,7 +138,7 @@ static void *der2key_decode_p8(const unsigned char **input_der,
             ctx->flag_fatal = 1;
         X509_SIG_free(p8);
     } else {
-        // Pop any errors that might have been raised by d2i_X509_SIG.
+        /* Pop any errors that might have been raised by d2i_X509_SIG. */
         ERR_pop_to_mark();
         p8inf = d2i_PKCS8_PRIV_KEY_INFO(NULL, input_der, input_der_len);
     }
