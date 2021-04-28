@@ -924,9 +924,11 @@ int load_key_certs_crls(const char *uri, int maybe_stdin,
         uri = "<stdin>";
         unbuffer(stdin);
         bio = BIO_new_fp(stdin, 0);
-        if (bio != NULL)
+        if (bio != NULL) {
             ctx = OSSL_STORE_attach(bio, "file", libctx, propq,
                                     get_ui_method(), &uidata, NULL, NULL);
+            BIO_free(bio);
+        }
     } else {
         ctx = OSSL_STORE_open_ex(uri, libctx, propq, get_ui_method(), &uidata,
                                  NULL, NULL);
