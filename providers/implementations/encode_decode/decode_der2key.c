@@ -128,6 +128,7 @@ static void *der2key_decode_p8(const unsigned char **input_der,
     if ((p8 = d2i_X509_SIG(NULL, input_der, input_der_len)) != NULL) {
         char pbuf[PEM_BUFSIZE];
         size_t plen = 0;
+
         ERR_clear_last_mark();
 
         if (!pw_cb(pbuf, sizeof(pbuf), &plen, NULL, pw_cbarg))
