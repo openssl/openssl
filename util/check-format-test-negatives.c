@@ -150,6 +150,10 @@ int f(void) /*
         hanging_stmt;
 }
 
+/* should not trigger: constant on LHS of comparison or assignment operator */
+X509 *x509 = NULL;
+int y = a + 1 < b;
+
 const OPTIONS passwd_options[] = {
     {"aixmd5", OPT_AIXMD5, '-', "AIX MD5-based password algorithm"},
 #if !defined(OPENSSL_NO_DES) && !defined(OPENSSL_NO_DEPRECATED_3_0)
