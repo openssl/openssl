@@ -66,7 +66,7 @@ typedef enum OPTION_choice {
     OPT_DECRYPT, OPT_SIGN, OPT_CADES, OPT_SIGN_RECEIPT, OPT_RESIGN,
     OPT_VERIFY, OPT_VERIFY_RETCODE, OPT_VERIFY_RECEIPT,
     OPT_CMSOUT, OPT_DATA_OUT, OPT_DATA_CREATE, OPT_DIGEST_VERIFY,
-    OPT_DIGEST_CREATE, OPT_COMPRESS, OPT_UNCOMPRESS,
+    OPT_DIGEST, OPT_DIGEST_CREATE, OPT_COMPRESS, OPT_UNCOMPRESS,
     OPT_ED_DECRYPT, OPT_ED_ENCRYPT, OPT_DEBUG_DECRYPT, OPT_TEXT,
     OPT_ASCIICRLF, OPT_NOINTERN, OPT_NOVERIFY, OPT_NOCERTS,
     OPT_NOATTR, OPT_NODETACH, OPT_NOSMIMECAP, OPT_BINARY, OPT_KEYID,
@@ -130,6 +130,7 @@ const OPTIONS cms_options[] = {
         "Exit non-zero on verification failure"},
     {"verify_receipt", OPT_VERIFY_RECEIPT, '<',
         "Verify receipts; exit if receipt signatures do not verify"},
+    {"digest", OPT_DIGEST, 's', "Sign a pre-computed digest"},
     {"digest_verify", OPT_DIGEST_VERIFY, '-',
         "Verify a CMS \"DigestedData\" object and output it"},
     {"digest_create", OPT_DIGEST_CREATE, '-',
@@ -286,6 +287,7 @@ int cms_main(int argc, char **argv)
     const char *CAfile = NULL, *CApath = NULL, *CAstore = NULL;
     char *certsoutfile = NULL, *digestname = NULL;
     int noCAfile = 0, noCApath = 0, noCAstore = 0;
+    char *digesthex = NULL; unsigned char *digestbin = NULL; long digestlen = 0;
     char *infile = NULL, *outfile = NULL, *rctfile = NULL;
     char *passinarg = NULL, *passin = NULL, *signerfile = NULL;
     char *originatorfile = NULL, *recipfile = NULL, *ciphername = NULL;
@@ -362,6 +364,9 @@ int cms_main(int argc, char **argv)
             break;
         case OPT_DATA_CREATE:
             operation = SMIME_DATA_CREATE;
+            break;
+        case OPT_DIGEST:
+            digesthex = opt_arg();
             break;
         case OPT_DIGEST_VERIFY:
             operation = SMIME_DIGEST_VERIFY;
@@ -872,9 +877,22 @@ int cms_main(int argc, char **argv)
             goto end;
     }
 
-    in = bio_open_default(infile, 'r', informat);
-    if (in == NULL)
-        goto end;
+    if (digesthex != NULL) {
+        if (infile != NULL ||
+            operation != SMIME_SIGN ||
+            !(flags & CMS_DETACHED)) {
+            // TODO: Forbid streaming here as well?
+            BIO_printf(bio_err, "Invalid use of -digest\n");
+            goto end;
+        }
+        digestbin = OPENSSL_hexstr2buf(digesthex, &digestlen);
+        if (digestbin == NULL)
+            goto end;
+    } else {
+        in = bio_open_default(infile, 'r', informat);
+        if (in == NULL)
+            goto end;
+    }
 
     if (operation & SMIME_IP) {
         cms = load_content_info(informat, in, &indata, "SMIME", libctx, app_get0_propq());
@@ -1089,7 +1107,11 @@ int cms_main(int argc, char **argv)
             key = NULL;
         }
         /* If not streaming or resigning finalize structure */
-        if ((operation == SMIME_SIGN) && !(flags & CMS_STREAM)) {
+        if (operation == SMIME_SIGN && digestbin != NULL && !(flags & CMS_STREAM)) {
+            /* Use pre-computed digest instead of content */
+            if (!CMS_final_digest(cms, digestbin, digestlen, NULL, flags))
+                goto end;
+        } else if ((operation == SMIME_SIGN) && !(flags & CMS_STREAM)) {
             if (!CMS_final(cms, in, NULL, flags))
                 goto end;
         }

@@ -5362,3 +5362,5 @@ EVP_SIGNATURE_name                      ?	3_0_0	EXIST::FUNCTION:
 EVP_ASYM_CIPHER_name                    ?	3_0_0	EXIST::FUNCTION:
 EVP_KEM_name                            ?	3_0_0	EXIST::FUNCTION:
 EVP_KEYEXCH_name                        ?	3_0_0	EXIST::FUNCTION:
+CMS_final_digest                        ?	3_0_0	EXIST::FUNCTION:CMS
+CMS_dataFinal_digest                    ?	3_0_0	EXIST::FUNCTION:CMS

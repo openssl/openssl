@@ -51,7 +51,7 @@ my ($no_des, $no_dh, $no_dsa, $no_ec, $no_ec2m, $no_rc2, $no_zlib)
 $no_rc2 = 1 if disabled("legacy");
 
 plan tests =>
-    + 10;
+    + 11;
 
 unless ($no_fips) {
     @config = ( "-config", srctop_file("test", "fips-and-base.cnf") );
@@ -810,6 +810,34 @@ subtest "CAdES ko tests\n" => sub {
         ok(!run(app(["openssl", "cms", @{$$_[3]}])), $$_[2]);
         }
     }
+};
+
+subtest "CMS signed digest" => sub {
+    plan tests => 2;
+
+    my $digest = "ff236ef61b396355f75a4cc6e1c306d4c309084ae271a9e2ad6888f10a101b32";
+    # my $dgst_file = "dgst-out.txt";
+    # ok(run(app(["openssl", "dgst", "-sha256",
+    #                 "-out", $dgst_file, $smcont])));
+    # open(my $fh, "<", $dgst_file) or die "open failed: $!";
+    # my $line = <$fh>;
+    # $line =~ /^.* ([a-f0-9]+)$/ or die "dgst output bad format";
+    # my $digest = $1;
+    # close $fh;
+
+    my $sig_file = "signature.der";
+    ok(run(app(["openssl", "cms", @prov, "-sign", "-digest", $digest,
+                    "-outform", "DER",
+                    "-certfile", catfile($smdir, "smroot.pem"),
+                    "-signer", catfile($smdir, "smrsa1.pem"),
+                    "-out", $sig_file])),
+        "CMS sign pre-computed digest");
+
+    ok(run(app(["openssl", "cms", @prov, "-verify", "-in", $sig_file,
+                    "-inform", "DER",
+                    "-CAfile", catfile($smdir, "smroot.pem"),
+                    "-content", $smcont])),
+       "Verify CMS signed digest");
 };
 
 sub check_availability {
