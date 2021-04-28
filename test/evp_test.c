@@ -1029,6 +1029,8 @@ typedef struct mac_data_st {
     /* MAC salt (blake2) */
     unsigned char *salt;
     size_t salt_len;
+    /* XOF mode? */
+    int xof;
     /* Collection of controls */
     STACK_OF(OPENSSL_STRING) *controls;
 } MAC_DATA;
@@ -1123,6 +1125,8 @@ static int mac_test_parse(EVP_TEST *t,
         return parse_bin(value, &mdata->input, &mdata->input_len);
     if (strcmp(keyword, "Output") == 0)
         return parse_bin(value, &mdata->output, &mdata->output_len);
+    if (strcmp(keyword, "XOF") == 0)
+        return mdata->xof = 1;
     if (strcmp(keyword, "Ctrl") == 0)
         return sk_OPENSSL_STRING_push(mdata->controls,
                                       OPENSSL_strdup(value)) != 0;
@@ -1163,6 +1167,10 @@ static int mac_test_run_pkey(EVP_TEST *t)
     unsigned char *got = NULL;
     size_t got_len;
     int i;
+
+    /* We don't do XOF mode via PKEY */
+    if (expected->xof)
+        return 1;
 
     if (expected->alg == NULL)
         TEST_info("Trying the EVP_PKEY %s test", OBJ_nid2sn(expected->type));
@@ -1360,20 +1368,31 @@ static int mac_test_run_mac(EVP_TEST *t)
         t->err = "MAC_UPDATE_ERROR";
         goto err;
     }
-    if (!EVP_MAC_final(ctx, NULL, &got_len, 0)) {
-        t->err = "MAC_FINAL_LENGTH_ERROR";
-        goto err;
-    }
-    if (!TEST_ptr(got = OPENSSL_malloc(got_len))) {
-        t->err = "TEST_FAILURE";
-        goto err;
-    }
-    if (!EVP_MAC_final(ctx, got, &got_len, got_len)
-        || !memory_err_compare(t, "TEST_MAC_ERR",
-                               expected->output, expected->output_len,
-                               got, got_len)) {
-        t->err = "TEST_MAC_ERR";
-        goto err;
+    if (expected->xof) {
+        if (!TEST_ptr(got = OPENSSL_malloc(expected->output_len))) {
+            t->err = "TEST_FAILURE";
+            goto err;
+        }
+        if (!EVP_MAC_finalXOF(ctx, got, expected->output_len)) {
+            t->err = "MAC_FINAL_ERROR";
+            goto err;
+        }
+    } else {
+        if (!EVP_MAC_final(ctx, NULL, &got_len, 0)) {
+            t->err = "MAC_FINAL_LENGTH_ERROR";
+            goto err;
+        }
+        if (!TEST_ptr(got = OPENSSL_malloc(got_len))) {
+            t->err = "TEST_FAILURE";
+            goto err;
+        }
+        if (!EVP_MAC_final(ctx, got, &got_len, got_len)
+            || !memory_err_compare(t, "TEST_MAC_ERR",
+                                   expected->output, expected->output_len,
+                                   got, got_len)) {
+            t->err = "TEST_MAC_ERR";
+            goto err;
+        }
     }
     t->err = NULL;
  err:
