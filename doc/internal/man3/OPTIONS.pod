@@ -89,7 +89,7 @@ containing these fields:
     const char *helpstr;
 
 The B<name> is the name of the option that the user would type. Options
-are words preceeded with a minus sign. If the user uses two minus signs,
+are words prefaced with a minus sign. If the user uses two minus signs,
 this is also accepted for compatibility with other GNU software. Some
 names are special, and are described below.
 
@@ -112,7 +112,7 @@ be chosen from the following set:
     'U' An unsigned number that fits in the C<uintmax_t> type
     'l' A signed number that fits in the C<long> type
     'u' An unsigned number that fits in the C<unsigned long> type
-    'c' File of fomer PEM, DER, or S/MIME
+    'c' File in PEM, DER, or S/MIME format
     'F' A file in PEM or DER format
     'E' Like 'F' but also allows ENGINE
     'f' Any file format
@@ -151,7 +151,7 @@ By default, the help display will include a standard prolog:
 
     Usage: PROGRAM [options]
     Valid options are:
-    ..detailed list of options...
+    ...detailed list of options...
 
 Sometimes there are parameters that should appear in the synopsis.
 Use B<OPT_HELP_STR> as the first entry in your array:
@@ -219,7 +219,7 @@ nicely-formatted output.
 
 Within the option parsing loop, opt_flag() returns the option,
 without any leading hyphens. The opt_arg() function returns
-the option's value, if there is one..
+the option's value, if there is one.
 
 In an option list, there can be at most one option with the empty string.
 This is a "wildcard" or "unknown" option. For example, it allows an
@@ -231,7 +231,7 @@ thing for message digest.
 There are a several useful functions for parsing numbers.  These are
 opt_int(), opt_long(), opt_ulong(), opt_imax(), and opt_umax().  They all
 take C<0x> to mean hexadecimal and C<0> to mean octal, and will do the
-necessary range-checking. They return B<1> if succcessful and fill in the
+necessary range-checking. They return B<1> if successful and fill in the
 C<result> pointer with the value, or B<0> on error. Note that opt_next()
 will also do range-check on the argument if the appropriate B<valtype>
 field is specified for the option. This means that error-checking inside
@@ -247,7 +247,7 @@ B<NULL>-terminated array of strings. It returns B<1> if found,
 or prints a diagnostic and returns B<0> if not.
 
 The opt_pair() function takes a list of B<pairs>, each of which
-has a text name and numeric value. The specified B<name> is
+has a text name and an integer. The specified B<name> is
 found on the list, it puts the index in B<*result>, and returns
 B<1>. If not found, it returns B<0>.
 
@@ -275,7 +275,7 @@ the C<switch> statement.
 
 The common options are used throughout the sources for the OpenSSL commands.
 They are also used with common descriptions when generating the
-manpages, in the file C<doc/perlvars.pm>, which follow a similar naming
+manpages, in the file F<doc/perlvars.pm>, which follow a similar naming
 convention.
 
 =head1 RETURN VALUES
