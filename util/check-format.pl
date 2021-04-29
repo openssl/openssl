@@ -929,10 +929,12 @@ while (<>) { # loop over all lines of all input files
     }
 
     # set $in_typedecl and potentially $hanging_offset for type declaration
-    if (!$in_expr && @nested_indents == 0 && # not in expression
-        m/(^|^.*\W)(typedef|struct|union|enum)(\W.*|$)$/ &&
-        parens_balance($1) == 0) { # not in newly started expression
-        # not needed: $keyword_opening_brace = $2 if $3 =~ m/\{/;
+    if (!$in_expr && @nested_indents == 0 # not in expression
+        && m/(^|^.*\W)(typedef|struct|union|enum)(\W.*|$)$/
+        && parens_balance($1) == 0 # not in newly started expression or function arg list
+        && ($2 eq "typedef" || !($3 =~ m/\s*\w++\s*(.)/ && $1 ne "{")) # 'struct'/'union'/'enum' <name> not followed by '{'
+        # not needed: && $keyword_opening_brace = $2 if $3 =~ m/\{/;
+        ) {
         $in_typedecl++;
         $hanging_offset += INDENT_LEVEL if m/\*.*\(/; # '*' followed by '(' - seems consistent with Emacs C mode
     }

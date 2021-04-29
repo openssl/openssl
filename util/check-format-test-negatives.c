@@ -273,11 +273,12 @@ static varref cmp_vars[] = { /* comment.  comment?  comment!  */
         /* comment */ \
     }
 
-/* 'struct' in function header */
-static int f(struct pem_pass_data *pass_data)
+union un var; /* struct/union/enum in variable type */
+struct provider_store_st *f() /* struct/union/enum in function return type */
 {
-    if (pass_data == NULL)
-        return 0;
+}
+static void f(struct pem_pass_data *data) /* struct/union/enum in arg list */
+{
 }
 
 static void *fun(void)
