@@ -40,6 +40,9 @@ BIO_new_from_core_bio() returns a BIO structure on success or NULL on failure.
 A failure will most commonly be because the library context was not constructed
 using OSSL_LIB_CTX_new_from_dispatch(3).
 
+=head1 HISTORY
+
+BIO_s_core() and BIO_new_from_core_bio() were added in OpenSSL 3.0.
 
 =head1 EXAMPLES
 

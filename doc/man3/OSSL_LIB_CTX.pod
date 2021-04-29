@@ -37,7 +37,7 @@ OSSL_LIB_CTX_new() creates a new OpenSSL library context.
 OSSL_LIB_CTX_new_from_dispatch() creates a new OpenSSL library context
 initialised to use callbacks from the OSSL_DISPATCH structure. This is primarily
 useful for provider authors. The dispatch structure passed should be the same
-one as passed to a provider's OSSL_provider_init function in the B<in> argument.
+one as passed to a provider's OSSL_provider_init function in the I<in> argument.
 Some OpenSSL functions, such as L<BIO_new_from_core_bio(3)>, require the library
 context to be created in this way in order to work.
 
@@ -78,9 +78,7 @@ OSSL_LIB_CTX_free() doesn't return any value.
 
 =head1 HISTORY
 
-OSSL_LIB_CTX, OSSL_LIB_CTX_new(), OSSL_LIB_CTX_load_config(),
-OSSL_LIB_CTX_free(), OSSL_LIB_CTX_get0_global_default() and
-OSSL_LIB_CTX_set0_default() were added in OpenSSL 3.0.
+All of the functions described on this page were added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
