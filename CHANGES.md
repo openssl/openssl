@@ -443,7 +443,7 @@ OpenSSL 3.0
 
    *Matt Caswell*
 
- * The security callback, which can be customised by application code, supports
+ * The security callback, which can be customized by application code, supports
    the security operation SSL_SECOP_TMP_DH. This is defined to take an EVP_PKEY
    in the "other" parameter. In most places this is what is passed. All these
    places occur server side. However there was one client side call of this
