@@ -15,7 +15,7 @@
  */
 
 /*-
- * allow double space  in format-tagged multi-line comment
+ * allow extra SPC  in format-tagged multi-line comment
  */
 int f(void) /*
              * trailing multi-line comment
