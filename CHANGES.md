@@ -23,6 +23,11 @@ OpenSSL 3.0
 
 ### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
 
+ * Add ".pragma abspath:true" to prevent relative file inclusion in
+   config files.
+
+   * Rich Salz *
+
  * OpenSSL includes a cryptographic module that is intended to be FIPS 140-2
    validated. The module is implemented as an OpenSSL provider, the so-called
    FIPS provider. A list of all changes related to the FIPS provider would go

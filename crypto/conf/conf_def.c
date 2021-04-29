@@ -188,6 +188,23 @@ static int def_load(CONF *conf, const char *name, long *line)
     return ret;
 }
 
+
+/* Parse a boolean value and fill in *flag. Return 0 on error. */
+static int parsebool(const char *pval, int *flag)
+{
+    if (strcmp(pval, "on") == 0
+            || strcmp(pval, "true") == 0) {
+        *flag = 1;
+    } else if (strcmp(pval, "off") == 0
+            || strcmp(pval, "false") == 0) {
+        *flag = 0;
+    } else {
+        ERR_raise(ERR_LIB_CONF, CONF_R_INVALID_PRAGMA);
+        return 0;
+    }
+    return 1;
+}
+
 static int def_load_bio(CONF *conf, BIO *in, long *line)
 {
 /* The macro BUFSIZE conflicts with a system macro in VxWorks */
@@ -399,16 +416,11 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
                  * dollarid     takes "on", "true or "off", "false"
                  */
                 if (strcmp(p, "dollarid") == 0) {
-                    if (strcmp(pval, "on") == 0
-                        || strcmp(pval, "true") == 0) {
-                        conf->flag_dollarid = 1;
-                    } else if (strcmp(pval, "off") == 0
-                               || strcmp(pval, "false") == 0) {
-                        conf->flag_dollarid = 0;
-                    } else {
-                        ERR_raise(ERR_LIB_CONF, CONF_R_INVALID_PRAGMA);
+                    if (!parsebool(pval, &conf->flag_dollarid))
                         goto err;
-                    }
+                } else if (strcmp(p, "abspath") == 0) {
+                    if (!parsebool(pval, &conf->flag_abspath))
+                        goto err;
                 }
                 /*
                  * We *ignore* any unknown pragma.
@@ -428,6 +440,11 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
                 trim_ws(conf, p);
                 if (!str_copy(conf, psection, &include, p))
                     goto err;
+
+                if (conf->flag_abspath && !ossl_is_absolute_path(include)) {
+                    ERR_raise(ERR_LIB_CONF, CONF_R_RELATIVE_PATH);
+                    goto err;
+                }
 
                 if (include_dir != NULL && !ossl_is_absolute_path(include)) {
                     size_t newlen = strlen(include_dir) + strlen(include) + 2;
