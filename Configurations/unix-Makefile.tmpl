@@ -1277,8 +1277,7 @@ fips-checksums: generate_fips_sources
 	      && cat providers/fips.module.sources \
 	             | xargs ./util/fips-checksums.sh \
 	             > providers/fips-sources.checksums \
-	      && openssl sha256 -hex \
-	             < providers/fips-sources.checksums \
+	      && sha256sum providers/fips-sources.checksums \
 	             > providers/fips.checksum ); \
 	else \
 	    echo >&2 "WARNING: unifdef not in your \$$PATH, FIPS checksums not calculated"; \
