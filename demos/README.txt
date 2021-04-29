@@ -3,11 +3,13 @@ OpenSSL Demonstration Applications
 This folder contains source code that demonstrates the proper use of the OpenSSL
 library API.
 
-bio:                   Demonstration of a simple TLS client and server.
+bio:                   Demonstration of a simple TLS client and server
 
 certs:                 Demonstration of creating certs, using OCSP
 
-ciphers:
+cipher:
+aesgcm.c               Demonstration of symmetric cipher GCM mode encrypt/decrypt
+aesccm.c               Demonstration of symmetric cipher CCM mode encrypt/decrypt
 
 cms:
 
