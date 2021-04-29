@@ -13,7 +13,7 @@
 #
 # usage:
 #   check-format.pl [-l|--sloppy-len] [-l|--sloppy-bodylen]
-#                   [-s|--sloppy-spc] [-c|--sloppy-cmt]
+#                   [-s|--sloppy-space] [-c|--sloppy-cmt]
 #                   [-m|--sloppy-macro] [-h|--sloppy-hang]
 #                   [-e|--extra-spc] [-1|--1-stmt]
 #                   <files>
@@ -30,7 +30,7 @@
 # options:
 #  -l | --sloppy-len   increase accepted max line length from 80 to 84
 #  -l | --sloppy-bodylen do not report function body length > 200
-#  -s | --sloppy-spc   do not report whitespace nits
+#  -s | --sloppy-space do not report whitespace nits
 #  -c | --sloppy-cmt   do not report indentation of comments
 #                      Otherwise for each multi-line comment the indentation of
 #                      its lines is checked for consistency. For each comment
@@ -114,15 +114,15 @@ while ($ARGV[0] =~ m/^-(\w|-[\w\-]+)$/) {
         $max_length += INDENT_LEVEL;
     } elsif ($arg =~ m/^(b|-sloppy-bodylen)$/) {
         $sloppy_bodylen = 1;
-    } elsif ($arg =~ m/^(s|-sloppy-spc)$/) {
-        $sloppy_SPC = 1;
+    } elsif ($arg =~ m/^(s|-sloppy-space)$/) {
+        $sloppy_SPC= 1;
     } elsif ($arg =~ m/^(c|-sloppy-cmt)$/) {
         $sloppy_cmt = 1;
     } elsif ($arg =~ m/^(m|-sloppy-macro)$/) {
         $sloppy_macro = 1;
     } elsif ($arg =~ m/^(h|-sloppy-hang)$/) {
         $sloppy_hang = 1;
-    } elsif ($arg =~ m/^(e|-extra-spc)$/) {
+    } elsif ($arg =~ m/^(e|-extra-space)$/) {
         $extra_spc = 1;
     } elsif ($arg =~ m/^(1|-1-stmt)$/) {
         $extended_1_stmt = 1;
@@ -220,7 +220,7 @@ sub report_flexibly {
     my $line = shift;
     my $msg = shift;
     my $contents = shift;
-    my $report_SPC = $msg =~ /SPC/;
+    my $report_SPC = $msg =~ /space/;
     return if $report_SPC && $sloppy_SPC;
 
     print "$ARGV:$line:$msg:$contents" unless $self_test;
@@ -513,7 +513,7 @@ while (<>) { # loop over all lines of all input files
     if ($in_comment > 0) { # this still includes the last line of multi-line commment
         my ($head, $any_symbol, $cmt_text) = m/^(\s*)(.?)(.*)$/;
         if ($any_symbol eq "*") {
-            report("no SPC after leading '*' in multi-line comment") if $cmt_text =~ m|^[^/\s$self_test_exception]|;
+            report("no space after leading '*' in multi-line comment") if $cmt_text =~ m|^[^/\s$self_test_exception]|;
         } else {
             report("no leading '*' in multi-line comment");
         }
@@ -522,8 +522,8 @@ while (<>) { # loop over all lines of all input files
 
     # detect end of comment, must be within multi-line comment, check if it is preceded by non-whitespace text
     if ((my ($head, $tail) = m|^(.*?)\*/(.*)$|) && $1 ne '/') { # ending comment: '*/'
-        report("neither SPC nor '*' before '*/'") if $head =~ m/[^*\s]$/;
-        report("no SPC after '*/'") if $tail =~ m/^[^\s,;)}\]]/; # no space or ,;)}] after '*/'
+        report("neither space nor '*' before '*/'") if $head =~ m/[^*\s]$/;
+        report("no space after '*/'") if $tail =~ m/^[^\s,;)}\]]/; # no space or ,;)}] after '*/'
         if (!($head =~ m|/\*|)) { # not begin of comment '/*', which is is handled below
             if ($in_comment == 0) {
                 report("unexpected '*/' outside comment");
@@ -546,9 +546,9 @@ while (<>) { # loop over all lines of all input files
     # detect begin of comment, check if it is followed by non-space text
   MATCH_COMMENT:
     if (my ($head, $opt_minus, $tail) = m|^(.*?)/\*(-?)(.*)$|) { # begin of comment: '/*'
-        report("no SPC before '/*'")
+        report("no space before '/*'")
             if $head =~ m/[^\s(\*]$/; # not space, '(', or or '*' (needed to allow '*/') before comment delimiter
-        report("neither SPC nor '*' after '/*' or '/*-'") if $tail =~ m/^[^\s*$self_test_exception]/;
+        report("neither space nor '*' after '/*' or '/*-'") if $tail =~ m/^[^\s*$self_test_exception]/;
         my $cmt_text = $opt_minus.$tail; # preliminary
         if ($in_comment > 0) {
             report("unexpected '/*' inside multi-line comment");
@@ -612,9 +612,9 @@ while (<>) { # loop over all lines of all input files
     if (!$sloppy_SPC && !($in_multiline_comment && $formatted_comment)) {
         sub extra_SPC {
             my $intra_line = shift;
-            return "extra SPC".($intra_line =~ m/@\s\s/ ?
-                                $in_comment != 0 ? " in multi-line comment"
-                                                 : " in intra-line comment" : "");
+            return "extra space".($intra_line =~ m/@\s\s/ ?
+                                  $in_comment != 0 ? " in multi-line comment"
+                                                   : " in intra-line comment" : "");
         }
         sub split_line_head {
             my $comment_symbol =
@@ -668,41 +668,41 @@ while (<>) { # loop over all lines of all input files
         $intra_line =~ s/(for\s*\([^;]+;[^;]+);(\))/"$1$2"/eg; # strip trailing ';' in for (;;)
         $intra_line =~ s/(=\s*)\{ /"$1@ "/eg;        # do not report {SPC in initializers such as ' = { 0, };'
         $intra_line =~ s/, \};/, @;/g;               # do not report SPC} in initializers such as ' = { 0, };'
-        report("SPC before '$1'") if $intra_line =~ m/[\w)\]]\s+(\+\+|--)/;  # postfix ++/-- with preceding space
-        report("SPC after '$1'")  if $intra_line =~ m/(\+\+|--)\s+[a-zA-Z_(]/; # prefix ++/-- with following space
+        report("space before '$1'") if $intra_line =~ m/[\w)\]]\s+(\+\+|--)/;  # postfix ++/-- with preceding space
+        report("space after '$1'")  if $intra_line =~ m/(\+\+|--)\s+[a-zA-Z_(]/; # prefix ++/-- with following space
         $intra_line =~ s/\.\.\./@/g;                 # blind '...'
-        report("SPC before '$1'") if $intra_line =~ m/\s(\.|->)/;            # '.' or '->' with preceding space
-        report("SPC after '$1'")  if $intra_line =~ m/(\.|->)\s/;            # '.' or '->' with following space
+        report("space before '$1'") if $intra_line =~ m/\s(\.|->)/;            # '.' or '->' with preceding space
+        report("space after '$1'")  if $intra_line =~ m/(\.|->)\s/;            # '.' or '->' with following space
         $intra_line =~ s/\-\>|\+\+|\-\-/@/g;         # blind '->,', '++', and '--'
-        report("SPC before '$2'")     if $intra_line =~ m/[^:]\s+(;)/;       # space before ';' but not after ':'
-        report("SPC before '$1'")     if $intra_line =~ m/\s([,)\]])/;       # space before ,)]
-        report("SPC after '$1'")      if $intra_line =~ m/([(\[~!])\s/;      # space after ([~!
-        report("SPC after '$1'")      if $intra_line =~ m/(defined)\s/;      # space after 'defined'
-        report("no SPC before '=' or '<op>='") if $intra_line =~ m/\S(=)/;   # '=' etc. without preceding space
-        report("no SPC before '$1'")  if $intra_line =~ m/\S([|\/%<>^\?])/;  # |/%<>^? without preceding space
+        report("space before '$2'")     if $intra_line =~ m/[^:]\s+(;)/;       # space before ';' but not after ':'
+        report("space before '$1'")     if $intra_line =~ m/\s([,)\]])/;       # space before ,)]
+        report("space after '$1'")      if $intra_line =~ m/([(\[~!])\s/;      # space after ([~!
+        report("space after '$1'")      if $intra_line =~ m/(defined)\s/;      # space after 'defined'
+        report("no space before '=' or '<op>='") if $intra_line =~ m/\S(=)/;   # '=' etc. without preceding space
+        report("no space before '$1'")  if $intra_line =~ m/\S([|\/%<>^\?])/;  # |/%<>^? without preceding space
         # TODO ternary ':' without preceding SPC, while allowing no SPC before ':' after 'case'
-        report("no SPC before binary '$1'")  if $intra_line =~ m/[^\s{()\[]([+\-])/;# +/- without preceding space or {()[
+        report("no space before binary '$1'")  if $intra_line =~ m/[^\s{()\[]([+\-])/;# +/- without preceding space or {()[
                                                                              # or ')' (which is used f type casts)
-        report("no SPC before binary '$1'")  if $intra_line =~ m/[^\s{()\[*!]([*])/; # '*' without preceding space or {()[*!
-        report("no SPC before binary '$1'")  if $intra_line =~ m/[^\s{()\[]([&])/;  # '&' without preceding space or {()[
-        report("no SPC after ternary '$1'") if $intra_line =~ m/(:)[^\s\d]/; # ':' without following space or digit
-        report("no SPC after '$1'")   if $intra_line =~ m/([,;=|\/%<>^\?])\S/; # ,;=|/%<>^? without following space
-        report("no SPC after binary '$1'") if $intra_line=~m/[^{(\[]([*])[^\sa-zA-Z_(),*]/;# '*' w/o space or \w(),* after
+        report("no space before binary '$1'")  if $intra_line =~ m/[^\s{()\[*!]([*])/; # '*' without preceding space or {()[*!
+        report("no space before binary '$1'")  if $intra_line =~ m/[^\s{()\[]([&])/;  # '&' without preceding space or {()[
+        report("no space after ternary '$1'") if $intra_line =~ m/(:)[^\s\d]/; # ':' without following space or digit
+        report("no space after '$1'")   if $intra_line =~ m/([,;=|\/%<>^\?])\S/; # ,;=|/%<>^? without following space
+        report("no space after binary '$1'") if $intra_line=~m/[^{(\[]([*])[^\sa-zA-Z_(),*]/;# '*' w/o space or \w(),* after
         # TODO unary '*' must not be followed by SPC
-        report("no SPC after binary '$1'") if $intra_line=~m/([&])[^\sa-zA-Z_(]/;  # '&' w/o following space or \w(
+        report("no space after binary '$1'") if $intra_line=~m/([&])[^\sa-zA-Z_(]/;  # '&' w/o following space or \w(
         # TODO unary '&' must not be followed by SPC
-        report("no SPC after binary '$1'") if $intra_line=~m/[^{(\[]([+\-])[^\s\d(]/;  # +/- w/o following space or \d(
+        report("no space after binary '$1'") if $intra_line=~m/[^{(\[]([+\-])[^\s\d(]/;  # +/- w/o following space or \d(
         # TODO unary '+' and '-' must not be followed by SPC
-        report("no SPC after '$2'")   if $intra_line =~ m/(^|\W)(if|while|for|switch|case)[^\w\s]/; # kw w/o SPC
-        report("no SPC after '$2'")   if $intra_line =~ m/(^|\W)(return)[^\w\s;]/;  # return w/o SPC or ';'
-        report("SPC after function/macro name")
+        report("no space after '$2'")   if $intra_line =~ m/(^|\W)(if|while|for|switch|case)[^\w\s]/; # kw w/o SPC
+        report("no space after '$2'")   if $intra_line =~ m/(^|\W)(return)[^\w\s;]/;  # return w/o SPC or ';'
+        report("space after function/macro name")
                                       if $intra_line =~ m/(\w+)\s+\(/        # fn/macro name with space before '('
        && !($1 =~ m/^(if|while|for|switch|return|typedef|void|char|unsigned|int|long|float|double)$/) # not keyword
                                     && !(m/^\s*#\s*define\s/); # we skip macro definitions here because macros
                                     # without parameters but with body beginning with '(', e.g., '#define X (1)',
                                     # would lead to false positives - TODO also check for macros with parameters
-        report("no SPC before '{'")   if $intra_line =~ m/[^\s{(\[]\{/;      # '{' without preceding space or {([
-        report("no SPC after '}'")    if $intra_line =~ m/\}[^\s,;\])}]/;    # '}' without following space or ,;])}
+        report("no space before '{'")   if $intra_line =~ m/[^\s{(\[]\{/;      # '{' without preceding space or {([
+        report("no space after '}'")    if $intra_line =~ m/\}[^\s,;\])}]/;    # '}' without following space or ,;])}
     }
 
     # preprocessor directives @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
