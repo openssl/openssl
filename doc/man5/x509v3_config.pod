@@ -142,7 +142,7 @@ Examples:
 =head2 Extended Key Usage
 
 This extension consists of a list of values indicating purposes for which
-the certificate public key can be used for.
+the certificate public key can be used.
 Each value can be either a short text name or an OID.
 The following text names, and their intended meaning, are known:
 

@@ -104,17 +104,17 @@ On session estabilishment by default no peer credentials verification is done.
 This must be explicitly requested, typically using L<SSL_CTX_set_verify(3)>.
 For verifying peer certificates many options can be set using various functions
 such as L<SSL_CTX_load_verify_locations(3)> and L<SSL_CTX_set1_param(3)>.
-The L<X509_VERIFY_PARAM_set_purpose(3)> can be used, also in conjunction with
-L<SSL_CTX_get0_param(3)>, to set the intended purpose of the session.
+The L<X509_VERIFY_PARAM_set_purpose(3)> function can be used, also in conjunction
+with L<SSL_CTX_get0_param(3)>, to set the intended purpose of the session.
 The default is B<X509_PURPOSE_SSL_SERVER> on the client side
 and B<X509_PURPOSE_SSL_CLIENT> on the server side.
 
 The SSL_CTX object uses I<method> as the connection method.
-The methods exists in a generic type (for client and server use),
-a server only type, and a client only type.
+Three method variants are available: a generic method (for either client or
+server use), a server-only method, and a client-only method.
 
 The I<method> parameter of SSL_CTX_new_ex() and SSL_CTX_new()
-can be one of the following types:
+can be one of the following:
 
 =over 4
 
