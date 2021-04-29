@@ -159,7 +159,7 @@ Use B<OPT_HELP_STR> as the first entry in your array:
     {OPT_HELP_STR, 1, '-', Usage: %s [options] [text...]\n"}
 
 The B<retval> and B<valtype> are ignored, and the B<helpstr> should
-follow the general construction as shown. The B<%s> will get the program
+follow the general construction as shown. The C<%s> will get the program
 name.
 
 If a command has a large set of options, it can be useful to break them
@@ -196,7 +196,7 @@ name. This function should only be called once.  Once set, opt_getprog()
 also returns the value.
 
 Once opt_init() has been called, opt_next() can be called in a loop to
-fetch each option in turn. It returns B<-1>, or B<OPT_EOF> when the
+fetch each option in turn. It returns -1, or OPT_EOF when the
 end of arguments has been reached. This is typically done like this:
 
     prog = opt_init(argc, argv, my_options);
@@ -223,9 +223,9 @@ the option's value, if there is one.
 
 In an option list, there can be at most one option with the empty string.
 This is a "wildcard" or "unknown" option. For example, it allows an
-option to be be taken as digest algorithm, like B<-sha1>. The
-function opt_cipher() takes the specified B<name> and fills in
-the cipher into B<cipherp>.  The function opt_md() does the same
+option to be be taken as digest algorithm, like C<-sha1>. The
+function opt_cipher() takes the specified I<name> and fills in
+the cipher into I<cipherp>.  The function opt_md() does the same
 thing for message digest.
 
 There are a several useful functions for parsing numbers.  These are
@@ -239,7 +239,7 @@ the C<switch> C<case> can often be elided.
 
 The opt_isdir() function returns 1 if the specified I<name> is
 a directory, or 0 if not. The opt_format() function takes a string value,
-such as used in with the B<-informat> or related flags, and fills
+such as used with the B<-informat> or similar option, and fills
 the value from the constants in F<fmt.h> file.
 
 The opt_string() function checks that I<name> appears in the
@@ -248,7 +248,7 @@ or prints a diagnostic and returns 0 if not.
 
 The opt_pair() function takes a list of I<pairs>, each of which
 has a text name and an integer. The specified I<name> is
-found on the list, it puts the index in B<*result>, and returns
+found on the list, it puts the index in I<*result>, and returns
 1. If not found, it returns 0.
 
 After processing all the options, the opt_num_rest() returns what is
