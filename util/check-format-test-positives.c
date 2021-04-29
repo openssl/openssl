@@ -72,7 +72,7 @@ void main(int n) {  /*@ opening brace at end of function definition header */
 #endif              /*@ unexpected #endif */
 int f (int a,       /*@ space after fn before '(', reported unless sloppy-spc */
       int b,        /*@ hanging expr indent off by -1 */
-       long l)      /*@ one-letter name 'l' */
+       long I)      /*@ single-letter name 'I' */
 { int               /*@ code after '{' opening a block */
     xx = 1) +       /*@ unexpected closing parenthesis */
         0L <        /*@ constant on LHS of comparison operator */
