@@ -41,7 +41,10 @@ int ossl_provider_set_fallback(OSSL_PROVIDER *prov);
 int ossl_provider_set_module_path(OSSL_PROVIDER *prov, const char *module_path);
 int ossl_provider_add_parameter(OSSL_PROVIDER *prov, const char *name,
                                 const char *value);
-void ossl_provider_set_child(OSSL_PROVIDER *prov);
+int ossl_provider_set_child(OSSL_PROVIDER *prov, const OSSL_CORE_HANDLE *handle);
+const OSSL_CORE_HANDLE *ossl_provider_get_parent(OSSL_PROVIDER *prov);
+int ossl_provider_up_ref_parent(OSSL_PROVIDER *prov, int activate);
+int ossl_provider_free_parent(OSSL_PROVIDER *prov, int deactivate);
 
 /* Disable fallback loading */
 int ossl_provider_disable_fallback_loading(OSSL_LIB_CTX *libctx);
@@ -50,7 +53,8 @@ int ossl_provider_disable_fallback_loading(OSSL_LIB_CTX *libctx);
  * Activate the Provider
  * If the Provider is a module, the module will be loaded
  */
-int ossl_provider_activate(OSSL_PROVIDER *prov, int retain_fallbacks);
+int ossl_provider_activate(OSSL_PROVIDER *prov, int retain_fallbacks,
+                           int upcalls);
 int ossl_provider_deactivate(OSSL_PROVIDER *prov);
 /* Check if the provider is available (activated) */
 int ossl_provider_available(OSSL_PROVIDER *prov);

@@ -169,7 +169,9 @@ typedef struct ossl_ex_data_global_st {
 # define OSSL_LIB_CTX_MAX_INDEXES                   19
 
 # define OSSL_LIB_CTX_METHOD_DEFAULT_PRIORITY       0
-# define OSSL_LIB_CTX_METHOD_HIGH_PRIORITY          1
+# define OSSL_LIB_CTX_METHOD_PRIORITY_1             1
+# define OSSL_LIB_CTX_METHOD_PRIORITY_2             2
+
 typedef struct ossl_lib_ctx_method {
     int priority;
     void *(*new_func)(OSSL_LIB_CTX *ctx);

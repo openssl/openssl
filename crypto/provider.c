@@ -23,7 +23,7 @@ OSSL_PROVIDER *OSSL_PROVIDER_try_load(OSSL_LIB_CTX *libctx, const char *name,
         && (prov = ossl_provider_new(libctx, name, NULL, 0)) == NULL)
         return NULL;
 
-    if (!ossl_provider_activate(prov, retain_fallbacks)) {
+    if (!ossl_provider_activate(prov, retain_fallbacks, 1)) {
         ossl_provider_free(prov);
         return NULL;
     }

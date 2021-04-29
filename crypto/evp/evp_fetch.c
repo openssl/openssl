@@ -36,7 +36,7 @@ static void *evp_method_store_new(OSSL_LIB_CTX *ctx)
 
 static const OSSL_LIB_CTX_METHOD evp_method_store_method = {
     /* We want evp_method_store to be cleaned up before the provider store */
-    OSSL_LIB_CTX_METHOD_HIGH_PRIORITY,
+    OSSL_LIB_CTX_METHOD_PRIORITY_2,
     evp_method_store_new,
     evp_method_store_free,
 };
