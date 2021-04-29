@@ -164,7 +164,6 @@ static void free_md(PROV_SM2_CTX *ctx)
     EVP_MD_free(ctx->md);
     ctx->mdctx = NULL;
     ctx->md = NULL;
-    ctx->mdsize = 0;
 }
 
 static int sm2sig_digest_signverify_init(void *vpsm2ctx, const char *mdname,
@@ -175,14 +174,15 @@ static int sm2sig_digest_signverify_init(void *vpsm2ctx, const char *mdname,
     WPACKET pkt;
     int ret = 0;
 
-    free_md(ctx);
-
     if (!sm2sig_signature_init(vpsm2ctx, ec, params))
         return ret;
 
-    ctx->md = EVP_MD_fetch(ctx->libctx, OSSL_DIGEST_NAME_SM3, ctx->propq);
+    if (ctx->md == NULL)
+        ctx->md = EVP_MD_fetch(ctx->libctx, OSSL_DIGEST_NAME_SM3, ctx->propq);
+
+    EVP_MD_CTX_free(ctx->mdctx);
     ctx->mdctx = EVP_MD_CTX_new();
-    if (ctx->mdctx == NULL)
+    if (ctx->mdctx == NULL || ctx->md == NULL)
         goto error;
 
     /*
