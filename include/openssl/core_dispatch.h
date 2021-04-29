@@ -189,6 +189,8 @@ OSSL_CORE_MAKE_FUNC(void, cleanup_nonce, (const OSSL_CORE_HANDLE *handle,
 #define OSSL_FUNC_PROVIDER_NAME                107
 #define OSSL_FUNC_PROVIDER_GET0_PROVIDER_CTX   108
 #define OSSL_FUNC_PROVIDER_GET0_DISPATCH       109
+#define OSSL_FUNC_PROVIDER_UP_REF              110
+#define OSSL_FUNC_PROVIDER_FREE                111
 
 OSSL_CORE_MAKE_FUNC(int, provider_register_child_cb,
                     (const OSSL_CORE_HANDLE *handle,
@@ -203,6 +205,10 @@ OSSL_CORE_MAKE_FUNC(void *, provider_get0_provider_ctx,
                     (const OSSL_CORE_HANDLE *prov))
 OSSL_CORE_MAKE_FUNC(const OSSL_DISPATCH *, provider_get0_dispatch,
                     (const OSSL_CORE_HANDLE *prov))
+OSSL_CORE_MAKE_FUNC(int, provider_up_ref,
+                    (const OSSL_CORE_HANDLE *prov, int activate))
+OSSL_CORE_MAKE_FUNC(int, provider_free,
+                    (const OSSL_CORE_HANDLE *prov, int deactivate))
 
 /* Functions provided by the provider to the Core, reserved numbers 1024-1535 */
 # define OSSL_FUNC_PROVIDER_TEARDOWN           1024
