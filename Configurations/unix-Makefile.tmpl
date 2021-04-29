@@ -1273,12 +1273,13 @@ tags TAGS: FORCE
 {- output_off() if $disabled{fips}; "" -}
 fips-checksums: generate_fips_sources
 	if which unifdef > /dev/null; then \
-	    cat $(SRCDIR)/providers/fips.module.sources \
-	       | (cd $(SRCDIR); xargs ./util/fips-checksums.sh ) \
-	       > $(SRCDIR)/providers/fips-sources.checksums \
-	    && openssl sha256 -hex \
-	       < $(SRCDIR)/providers/fips-sources.checksums \
-	       > $(SRCDIR)/providers/fips.checksum; \
+	    ( cd $(SRCDIR) \
+	      && cat providers/fips.module.sources \
+	             | xargs ./util/fips-checksums.sh \
+	             > providers/fips-sources.checksums \
+	      && openssl sha256 -hex \
+	             < providers/fips-sources.checksums \
+	             > providers/fips.checksum ); \
 	else \
 	    echo >&2 "WARNING: unifdef not in your \$$PATH, FIPS checksums not calculated"; \
 	fi
