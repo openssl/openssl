@@ -683,7 +683,7 @@ while (<>) { # loop over all lines of all input files
         # TODO ternary ':' without preceding SPC, while allowing no SPC before ':' after 'case'
         report("no SPC before binary '$1'")  if $intra_line =~ m/[^\s{()\[]([+\-])/;# +/- without preceding space or {()[
                                                                              # or ')' (which is used f type casts)
-        report("no SPC before binary '$1'")  if $intra_line =~ m/[^\s{()\[*]([*])/; # '*' without preceding space or {()[*
+        report("no SPC before binary '$1'")  if $intra_line =~ m/[^\s{()\[*!]([*])/; # '*' without preceding space or {()[*!
         report("no SPC before binary '$1'")  if $intra_line =~ m/[^\s{()\[]([&])/;  # '&' without preceding space or {()[
         report("no SPC after ternary '$1'") if $intra_line =~ m/(:)[^\s\d]/; # ':' without following space or digit
         report("no SPC after '$1'")   if $intra_line =~ m/([,;=|\/%<>^\?])\S/; # ,;=|/%<>^? without following space
