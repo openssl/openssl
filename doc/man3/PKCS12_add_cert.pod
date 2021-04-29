@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-PKCS12_add_cert, PKCS12_add_key, PKCS12_add_key_ex, 
+PKCS12_add_cert, PKCS12_add_key, PKCS12_add_key_ex,
 PKCS12_add_secret - Add an object to a set of PKCS#12 safeBags
 
 =head1 SYNOPSIS

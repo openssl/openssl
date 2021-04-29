@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-PKCS12_PBE_keyivgen, PKCS12_PBE_keyivgen_ex, 
+PKCS12_PBE_keyivgen, PKCS12_PBE_keyivgen_ex,
 PKCS12_pbe_crypt, PKCS12_pbe_crypt_ex - PKCS#12 Password based encryption
 
 =head1 SYNOPSIS

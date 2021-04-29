@@ -59,7 +59,7 @@ OpenSSL 3.0
    PKCS5_pbe_set0_algor_ex(), PKCS5_pbe_set_ex(), PKCS5_pbkdf2_set_ex(),
    PKCS5_v2_PBE_keyivgen_ex(), PKCS5_v2_scrypt_keyivgen_ex(),
    PKCS8_decrypt_ex(), PKCS8_encrypt_ex(), PKCS8_set0_pbe_ex().
- 
+
    As part of this change the EVP_PBE_xxx APIs can also accept a library
    context and property query and will call an extended version of the key/IV
    derivation function which supports these parameters. This includes

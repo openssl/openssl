@@ -32,7 +32,7 @@ encrypt/decrypt functions
 =head1 DESCRIPTION
 
 PKCS12_item_decrypt_d2i() and PKCS12_item_decrypt_d2i_ex() decrypt an octet
-string containing an ASN.1 encoded object using the algorithm I<algor> and 
+string containing an ASN.1 encoded object using the algorithm I<algor> and
 password I<pass> of length I<passlen>. If I<zbuf> is nonzero then the output
 buffer will zeroed after the decrypt.
 

@@ -67,7 +67,7 @@ typedef enum OPTION_choice {
     OPT_NAME, OPT_CSP, OPT_CANAME,
     OPT_IN, OPT_OUT, OPT_PASSIN, OPT_PASSOUT, OPT_PASSWORD, OPT_CAPATH,
     OPT_CAFILE, OPT_CASTORE, OPT_NOCAPATH, OPT_NOCAFILE, OPT_NOCASTORE, OPT_ENGINE,
-    OPT_R_ENUM, OPT_PROV_ENUM, 
+    OPT_R_ENUM, OPT_PROV_ENUM,
 #ifndef OPENSSL_NO_DES
     OPT_LEGACY_ALG
 #endif
@@ -962,7 +962,7 @@ int dump_certs_pkeys_bag(BIO *out, const PKCS12_SAFEBAG *bag,
         break;
 
     case NID_secretBag:
-        if (options & INFO) 
+        if (options & INFO)
             BIO_printf(bio_err, "Secret bag\n");
         print_attribs(out, attrs, "Bag Attributes");
         BIO_printf(bio_err, "Bag Type: ");

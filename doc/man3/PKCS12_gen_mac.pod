@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-PKCS12_gen_mac, PKCS12_setup_mac, PKCS12_set_mac, 
+PKCS12_gen_mac, PKCS12_setup_mac, PKCS12_set_mac,
 PKCS12_verify_mac - Functions to create and manipulate a PKCS#12 structure
 
 =head1 SYNOPSIS
