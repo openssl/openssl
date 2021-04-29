@@ -89,6 +89,21 @@ typedef struct {
     size_t id_len;
 } PROV_SM2_CTX;
 
+static int sm2sig_set_mdname(PROV_SM2_CTX *psm2ctx, const char *mdname)
+{
+    if (psm2ctx->md == NULL) /* We need an SM3 md to compare with */
+        psm2ctx->md = EVP_MD_fetch(psm2ctx->libctx, psm2ctx->mdname,
+                                   psm2ctx->propq);
+    if (psm2ctx->md == NULL
+        || strlen(mdname) >= sizeof(psm2ctx->mdname)
+        || !EVP_MD_is_a(psm2ctx->md, mdname)) {
+        return 0;
+    }
+
+    OPENSSL_strlcpy(psm2ctx->mdname, mdname, sizeof(psm2ctx->mdname));
+    return 1;
+}
+
 static void *sm2sig_newctx(void *provctx, const char *propq)
 {
     PROV_SM2_CTX *ctx = OPENSSL_zalloc(sizeof(PROV_SM2_CTX));
@@ -170,20 +185,20 @@ static int sm2sig_digest_signverify_init(void *vpsm2ctx, const char *mdname,
                                          void *ec, const OSSL_PARAM params[])
 {
     PROV_SM2_CTX *ctx = (PROV_SM2_CTX *)vpsm2ctx;
-    int md_nid = NID_sm3;
+    int md_nid;
     WPACKET pkt;
     int ret = 0;
 
-    if (!sm2sig_signature_init(vpsm2ctx, ec, params))
+    if (!sm2sig_signature_init(vpsm2ctx, ec, params)
+        || !sm2sig_set_mdname(ctx, mdname))
         return ret;
-
-    if (ctx->md == NULL)
-        ctx->md = EVP_MD_fetch(ctx->libctx, OSSL_DIGEST_NAME_SM3, ctx->propq);
 
     EVP_MD_CTX_free(ctx->mdctx);
     ctx->mdctx = EVP_MD_CTX_new();
-    if (ctx->mdctx == NULL || ctx->md == NULL)
+    if (ctx->mdctx == NULL)
         goto error;
+
+    md_nid = EVP_MD_type(ctx->md);
 
     /*
      * We do not care about DER writing errors.
@@ -278,10 +293,11 @@ int sm2sig_digest_verify_final(void *vpsm2ctx, const unsigned char *sig,
     unsigned char digest[EVP_MAX_MD_SIZE];
     unsigned int dlen = 0;
 
-    if (psm2ctx == NULL || psm2ctx->mdctx == NULL)
+    if (psm2ctx == NULL
+        || psm2ctx->mdctx == NULL
+        || EVP_MD_size(psm2ctx->md) > (int)sizeof(digest))
         return 0;
 
-    /* SM2 always use SM3 so it's not possible to exceed the limit */
     if (!(sm2sig_compute_z_digest(psm2ctx)
           && EVP_DigestFinal_ex(psm2ctx->mdctx, digest, &dlen)))
         return 0;
@@ -410,32 +426,28 @@ static int sm2sig_set_ctx_params(void *vpsm2ctx, const OSSL_PARAM params[])
         psm2ctx->id_len = tmp_idlen;
     }
 
+    /*
+     * The following code checks that the size is the same as the SM3 digest
+     * size returning an error otherwise.
+     * If there is ever any different digest algorithm allowed with SM2
+     * this needs to be adjusted accordingly.
+     */
     p = OSSL_PARAM_locate_const(params, OSSL_SIGNATURE_PARAM_DIGEST_SIZE);
     if (p != NULL && (!OSSL_PARAM_get_size_t(p, &mdsize)
                       || mdsize != psm2ctx->mdsize))
         return 0;
 
-    /*
-     * We never actually use the mdname, but we do support getting it later.
-     * This can be useful for applications that want to know the MD that they
-     * previously set.
-     */
     p = OSSL_PARAM_locate_const(params, OSSL_SIGNATURE_PARAM_DIGEST);
     if (p != NULL) {
         char *mdname = NULL;
 
         if (!OSSL_PARAM_get_utf8_string(p, &mdname, 0))
             return 0;
-        if (psm2ctx->md == NULL) /* We need an SM3 md to compare with */
-            psm2ctx->md = EVP_MD_fetch(psm2ctx->libctx, OSSL_DIGEST_NAME_SM3,
-                                       psm2ctx->propq);
-        if (psm2ctx->md == NULL
-            || strlen(mdname) >= sizeof(psm2ctx->mdname)
-            || !EVP_MD_is_a(psm2ctx->md, mdname)) {
+        if (!sm2sig_set_mdname(psm2ctx, mdname)) {
             OPENSSL_free(mdname);
             return 0;
         }
-        OPENSSL_strlcpy(psm2ctx->mdname, mdname, sizeof(psm2ctx->mdname));
+        OPENSSL_free(mdname);
     }
 
     return 1;
