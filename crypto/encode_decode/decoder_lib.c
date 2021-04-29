@@ -183,8 +183,8 @@ int OSSL_DECODER_CTX_set_input_structure(OSSL_DECODER_CTX *ctx,
     }
 
     /*
-     * NULL is a valid starting input type, and means that the caller leaves
-     * it to code to discover what the starting input type is.
+     * NULL is a valid starting input structure, and means that the caller
+     * leaves it to code to discover what the starting input structure is.
      */
     ctx->input_structure = input_structure;
     return 1;
