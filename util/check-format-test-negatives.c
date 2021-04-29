@@ -21,7 +21,7 @@ int f(void) /*
              * trailing multi-line comment
              */
 {
-    if (ctx == NULL) { /* non-leading intra-line comment */
+    if (ctx == NULL) {    /* non-leading end-of-line comment */
         if (/* comment after '(' */ pem_name != NULL /* comment before ')' */)
             /* entire-line comment indent usually like for the following line */
             return NULL; /* hanging indent also for this line after comment */
