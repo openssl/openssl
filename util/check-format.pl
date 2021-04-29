@@ -15,7 +15,7 @@
 #   check-format.pl [-l|--sloppy-len] [-l|--sloppy-bodylen]
 #                   [-s|--sloppy-space] [-c|--sloppy-cmt]
 #                   [-m|--sloppy-macro] [-h|--sloppy-hang]
-#                   [-e|--extra-spc] [-1|--1-stmt]
+#                   [-e|--eol-cmt] [-1|--1-stmt]
 #                   <files>
 #
 # run self-tests:
@@ -44,7 +44,7 @@
 #                      * same indentation as non-hanging indent level
 #                      * indentation moved left (not beyond non-hanging indent)
 #                        just to fit contents within the line length limit
-#  -e | --extra-spc    report needless intermediate multiple consecutive spaces
+#  -e | --eol-cmt      report needless intermediate multiple consecutive spaces also before end-of-line comments
 #  -1 | --1-stmt       do more aggressive checks for { 1 stmt } - see below
 #
 # There are non-trivial false positives and negatives such as the following.
@@ -66,8 +66,8 @@
 #   Yet with the --1-stmt option false positives are preferred over negatives.
 #   False negatives occur if the braces are more than two non-empty lines apart.
 #
-# * When the -e or --extra-spc option if given, the presence of
-#   multiple consecutive spaces is regarded a coding style nit
+# * The presence of multiple consecutive spaces is regarded a coding style nit
+#   except when this is before end-of-line comments (unless the --eol-cmt is given) and
 #   except when done in order to align certain columns over multiple lines, e.g.:
 #   # define AB  1
 #   # define CDE 22
@@ -105,7 +105,7 @@ my $sloppy_SPC = 0;
 my $sloppy_hang = 0;
 my $sloppy_cmt = 0;
 my $sloppy_macro = 0;
-my $extra_spc = 0;
+my $eol_cmt = 0;
 my $extended_1_stmt = 0;
 
 while ($ARGV[0] =~ m/^-(\w|-[\w\-]+)$/) {
@@ -122,8 +122,8 @@ while ($ARGV[0] =~ m/^-(\w|-[\w\-]+)$/) {
         $sloppy_macro = 1;
     } elsif ($arg =~ m/^(h|-sloppy-hang)$/) {
         $sloppy_hang = 1;
-    } elsif ($arg =~ m/^(e|-extra-space)$/) {
-        $extra_spc = 1;
+    } elsif ($arg =~ m/^(e|-eol-cmt)$/) {
+        $eol_cmt = 1;
     } elsif ($arg =~ m/^(1|-1-stmt)$/) {
         $extended_1_stmt = 1;
     } else {
@@ -136,10 +136,11 @@ my $self_test;             # whether the current input file is regarded to conta
 my $line;                  # current line number
 my $line_before;           # number of previous not essentially empty line (containing at most whitespace and '\')
 my $line_before2;          # number of not essentially empty line before previous not essentially empty line
-my $contents;              # contents of current line
-my $contents_before;       # contents of $line_before, if $line_before > 0
+my $contents;              # contents of current line (without blinding)
+#  $_                      # current line, where comments etc. get blinded
+my $contents_before;       # contents of $line_before (without blinding), if $line_before > 0
 my $contents_before_;      # contents of $line_before after blinding comments etc., if $line_before > 0
-my $contents_before2;      # contents of $line_before2, if $line_before2 > 0
+my $contents_before2;      # contents of $line_before2  (without blinding), if $line_before2 > 0
 my $contents_before_2;     # contents of $line_before2 after blinding comments etc., if $line_before2 > 0
 my $in_multiline_string;   # line starts within multi-line string literal
 my $count;                 # -1 or number of leading whitespace characters (except newline) in current line,
@@ -616,7 +617,7 @@ while (<>) { # loop over all lines of all input files
                                   $in_comment != 0 ? " in multi-line comment"
                                                    : " in intra-line comment" : "");
         }
-        sub split_line_head {
+        sub split_line_head { # split line contents into header containing leading spaces and the first non-space char, and the rest of the line
             my $comment_symbol =
                 $in_comment != 0 ? "@" : ""; # '@' will match the blinded leading '*' in multi-line comment
                                              # $in_comment may pertain to the following line due to delayed check
@@ -627,16 +628,19 @@ while (<>) { # loop over all lines of all input files
         my ($head , $intra_line ) = split_line_head($_);
         my ($head1, $intra_line1) = split_line_head($contents_before_ ) if $line_before > 0;
         my ($head2, $intra_line2) = split_line_head($contents_before_2) if $line_before2 > 0;
-        if ($extra_spc && $line_before > 0) { # check with one line delay, such that at least $contents_before is available
-            sub column_alignments_only {
-                my $head = shift;
-                my $intra = shift;
-                my $contents = shift;
+        if ($line_before > 0) { # check with one line delay, such that at least $contents_before is available
+            sub column_alignments_only { # return 1 if the given line has multiple consecutive spaces only at columns that match the reference line
+                # all parameter strings are assumed to contain contents after blinding comments etc.
+                my $head = shift;     # leading spaces and the first non-space char
+                my $intra = shift;    # the rest of the line contents
+                my $contents = shift; # reference line
                 # check if all extra SPC in $intra is used only for multi-line column alignment with $contents
                 my $offset = length($head);
                 for (my $col = 0; $col < length($intra) - 2; $col++) {
-                   return 0 if substr($intra   , $col, 3) =~ m/\s\s\S/ # extra SPC (after leading space)
-                          && !(substr($contents, $col + $offset + 1, 2) =~ m/\s\S/)
+                    my $substr = substr($intra, $col);
+                    next unless $substr =~ m/^\s\s\S/; # extra SPC (but not in leading spaces of the line)
+                    next if !$eol_cmt && $substr =~ m/^[@\s]+$/; # end-of-line comment
+                    return 0 unless substr($contents, $col + $offset + 1, 2) =~ m/\s\S/; # reference line contents do not match
                 }
                 return 1;
             }
