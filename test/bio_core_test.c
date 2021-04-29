@@ -43,7 +43,7 @@ static long tst_bio_core_ctrl(OSSL_CORE_BIO *bio, int cmd, long num, void *ptr)
     return BIO_ctrl(bio->bio, cmd, num, ptr);
 }
 
-const OSSL_DISPATCH biocbs[] = {
+static const OSSL_DISPATCH biocbs[] = {
     { OSSL_FUNC_BIO_READ_EX, (void (*)(void))tst_bio_core_read_ex },
     { OSSL_FUNC_BIO_WRITE_EX, (void (*)(void))tst_bio_core_write_ex },
     { OSSL_FUNC_BIO_GETS, (void (*)(void))tst_bio_core_gets },
