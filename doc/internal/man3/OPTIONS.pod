@@ -231,29 +231,29 @@ thing for message digest.
 There are a several useful functions for parsing numbers.  These are
 opt_int(), opt_long(), opt_ulong(), opt_imax(), and opt_umax().  They all
 take C<0x> to mean hexadecimal and C<0> to mean octal, and will do the
-necessary range-checking. They return B<1> if successful and fill in the
-C<result> pointer with the value, or B<0> on error. Note that opt_next()
+necessary range-checking. They return 1 if successful and fill in the
+C<result> pointer with the value, or 0 on error. Note that opt_next()
 will also do range-check on the argument if the appropriate B<valtype>
 field is specified for the option. This means that error-checking inside
 the C<switch> C<case> can often be elided.
 
-The opt_isdir() function returns B<1> if the specified B<name> is
-a directory, or B<0> if not. The opt_format() function takes a string value,
+The opt_isdir() function returns 1 if the specified I<name> is
+a directory, or 0 if not. The opt_format() function takes a string value,
 such as used in with the B<-informat> or related flags, and fills
 the value from the constants in F<fmt.h> file.
 
-The opt_string() function checks that B<name> appears in the
-B<NULL>-terminated array of strings. It returns B<1> if found,
-or prints a diagnostic and returns B<0> if not.
+The opt_string() function checks that I<name> appears in the
+NULL-terminated array of strings. It returns 1 if found,
+or prints a diagnostic and returns 0 if not.
 
-The opt_pair() function takes a list of B<pairs>, each of which
-has a text name and an integer. The specified B<name> is
+The opt_pair() function takes a list of I<pairs>, each of which
+has a text name and an integer. The specified I<name> is
 found on the list, it puts the index in B<*result>, and returns
-B<1>. If not found, it returns B<0>.
+1. If not found, it returns 0.
 
 After processing all the options, the opt_num_rest() returns what is
 left, and opt_rest() returns a pointer to the first non-option.
-If there were no parameters, it will point to the B<NULL> that is
+If there were no parameters, it will point to the NULL that is
 at the end of the standard B<argv> array.
 
 =head2 Common Options
