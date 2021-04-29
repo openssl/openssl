@@ -16,15 +16,6 @@ configuration:
 
 for:
     -
-        only_commits:
-            message: /\[extended tests\]/
-        configuration:
-            - shared
-            - plain
-            - minimal
-        environment:
-            EXTENDED_TESTS: yes
-    -
         branches:
             only:
                 - master
@@ -32,8 +23,6 @@ for:
             - shared
             - plain
             - minimal
-        environment:
-            EXTENDED_TESTS: yes
 
 before_build:
     - ps: >-
@@ -50,11 +39,11 @@ before_build:
         }
     - ps: >-
         If ($env:Configuration -Match "shared") {
-            $env:CONFIG_OPTS=""
+            $env:CONFIG_OPTS="enable-fips"
         } ElseIf ($env:Configuration -Match "minimal") {
             $env:CONFIG_OPTS="no-bulk no-asm -DOPENSSL_SMALL_FOOTPRINT"
         } Else {
-            $env:CONFIG_OPTS="no-shared"
+            $env:CONFIG_OPTS="no-fips no-shared"
         }
     - call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat" %VCVARS_PLATFORM%
     - mkdir _build
@@ -80,13 +69,13 @@ build_script:
 test_script:
     - cd _build
     - ps: >-
-        if ($env:EXTENDED_TESTS) {
+        if ($env:Configuration -Match "plain") {
             cmd /c "%NMAKE% test VERBOSE_FAILURE=yes 2>&1"
         } Else {
             cmd /c "%NMAKE% test VERBOSE_FAILURE=yes TESTS=-test_fuzz 2>&1"
         }
     - ps: >-
-        if ($env:EXTENDED_TESTS) {
+        if ($env:Configuration -Match "shared") {
             mkdir ..\_install
             cmd /c "%NMAKE% install DESTDIR=..\_install 2>&1"
         }
