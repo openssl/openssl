@@ -686,7 +686,7 @@ EOF
           my $pod = $gen0;
           return <<"EOF";
 $args{src}: "$pod"
-	\$(PERL) \$(SRCDIR)/util/mkpod2html.pl -i "$pod" -o \$\@ -t "$title" -r "\$(SRCDIR)/doc"
+	"\$(PERL)" "\$(SRCDIR)/util/mkpod2html.pl" -i "$pod" -o \$\@ -t "$title" -r "\$(SRCDIR)/doc"
 EOF
       } elsif (platform->isdef($args{src})) {
           #
