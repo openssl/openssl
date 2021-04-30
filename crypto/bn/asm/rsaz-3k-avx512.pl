@@ -203,8 +203,8 @@ $code.=<<___;
     vpbroadcastq    $_acc, $T0
     vpblendd \$3, $T0, $_R0, $_R0
 
-    # Extract "carries" (12 high bits) from each QW of R0..R2
-    # Save them to LSB of QWs in T0..T2
+    # Extract "carries" (12 high bits) from each QW of the bignum
+    # Save them to LSB of QWs in T0..Tn
     vpsrlq    \$52, $_R0,   $T0
     vpsrlq    \$52, $_R0h,  $T0h
     vpsrlq    \$52, $_R1,   $T1
@@ -214,7 +214,7 @@ $code.=<<___;
     vpsrlq    \$52, $_R3,   $T3
     vpsrlq    \$52, $_R3h,  $T3h
 
-    # "Shift left" T0..T2 by 1 QW
+    # "Shift left" T0..Tn by 1 QW
     valignq \$3, $T3,  $T3h,  $T3h
     valignq \$3, $T2h,  $T3,  $T3
     valignq \$3, $T2,  $T2h,  $T2h
@@ -224,7 +224,7 @@ $code.=<<___;
     valignq \$3, $T0,   $T0h, $T0h
     valignq \$3, .Lzeros(%rip), $T0,  $T0
 
-    # Drop "carries" from R0..R2 QWs
+    # Drop "carries" from R0..Rn QWs
     vpandq    .Lmask52x4(%rip), $_R0,  $_R0
     vpandq    .Lmask52x4(%rip), $_R0h, $_R0h
     vpandq    .Lmask52x4(%rip), $_R1,  $_R1
@@ -234,7 +234,7 @@ $code.=<<___;
     vpandq    .Lmask52x4(%rip), $_R3,  $_R3
     vpandq    .Lmask52x4(%rip), $_R3h, $_R3h
 
-    # Sum R0..R2 with corresponding adjusted carries
+    # Sum R0..Rn with corresponding adjusted carries
     vpaddq  $T0,  $_R0,  $_R0
     vpaddq  $T0h, $_R0h, $_R0h
     vpaddq  $T1,  $_R1,  $_R1
@@ -494,7 +494,7 @@ ___
 #
 # NOTE: the function uses zero-padded data - 2 high QWs is a padding.
 #
-# void RSAZ_amm52x32_x2_ifma256(BN_ULONG out[2][30],
+# void RSAZ_amm52x30_x2_ifma256(BN_ULONG out[2][32],
 #                               const BN_ULONG a[2][32],
 #                               const BN_ULONG b[2][32],
 #                               const BN_ULONG m[2][32],
@@ -659,14 +659,15 @@ ___
 ###############################################################################
 {
 # input parameters
-my ($out,$red_tbl,$red_tbl_idx,$tbl_idx)=$win64 ? ("%rcx","%rdx","%r8", "%r9") :  # Win64 order
-                                                  ("%rdi","%rsi","%rdx","%rcx");  # Unix order
+my ($out,$red_tbl,$red_tbl_idx1,$red_tbl_idx2)=$win64 ? ("%rcx","%rdx","%r8", "%r9") :  # Win64 order
+                                                        ("%rdi","%rsi","%rdx","%rcx");  # Unix order
 
 my ($t0,$t1,$t2,$t3,$t4,$t5) = map("%ymm$_", (0..5));
-my ($t6,$t7) = map("%ymm$_", (16..17));
+my ($t6,$t7,$t8,$t9,$t10,$t11,$t12,$t13,$t14,$t15) = map("%ymm$_", (16..25));
+my ($tmp,$cur_idx,$idx1,$idx2,$ones) = map("%ymm$_", (26..30));
+
+my @t = ($t0,$t1,$t2,$t3,$t4,$t5,$t6,$t7,$t8,$t9,$t10,$t11,$t12,$t13,$t14,$t15);
 my $t0xmm = $t0 =~ s/%y/%x/r;
-my ($tmp0,$tmp1,$tmp2,$tmp3,$tmp4,$tmp5,$tmp6,$tmp7) = map("%ymm$_", (20..27));
-my ($cur_idx,$idx) = map("%ymm$_", (30..31));
 
 $code.=<<___;
 .text
@@ -677,55 +678,43 @@ $code.=<<___;
 extract_multiplier_2x30_win5:
 .cfi_startproc
     endbranch
-    movq    $tbl_idx, %rax
-    imulq   \$`32*8`, %rax
-    addq    %rax, $red_tbl
-
-    vpbroadcastq    $red_tbl_idx, $idx
+    vmovdqa64   .Lones(%rip), $ones         # broadcast ones
+    vpbroadcastq    $red_tbl_idx1, $idx1
+    vpbroadcastq    $red_tbl_idx2, $idx2
     leaq   `(1<<5)*2*32*8`($red_tbl), %rax  # holds end of the tbl
 
+    # zeroing t0..n, cur_idx
     vpxor   $t0xmm, $t0xmm, $t0xmm
-    vmovdqa64   $t0, $t7
-    vmovdqa64   $t0, $t6
-    vmovdqa64   $t0, $t5
-    vmovdqa64   $t0, $t4
-    vmovdqa64   $t0, $t3
-    vmovdqa64   $t0, $t2
-    vmovdqa64   $t0, $t1
     vmovdqa64   $t0, $cur_idx
+___
+foreach (1..15) {
+    $code.="vmovdqa64   $t0, $t[$_] \n";
+}
+$code.=<<___;
 
 .align 32
 .Lloop:
-    vpcmpq  \$0, $cur_idx, $idx, %k1             # mask of (idx == cur_idx)
+    vpcmpq  \$0, $cur_idx, $idx1, %k1      # mask of (idx1 == cur_idx)
+    vpcmpq  \$0, $cur_idx, $idx2, %k2      # mask of (idx2 == cur_idx)
+___
+foreach (0..15) {
+    my $mask = $_<8?"%k1":"%k2";
+$code.=<<___;
+    vmovdqu64  `${_}*32`($red_tbl), $tmp     # load data from red_tbl
+    vpblendmq  $tmp, $t[$_], ${t[$_]}{$mask} # extract data when mask is not zero
+___
+}
+$code.=<<___;
+    vpaddq  $ones, $cur_idx, $cur_idx      # increment cur_idx
     addq    \$`2*32*8`, $red_tbl
-    vpaddq  .Lones(%rip), $cur_idx, $cur_idx     # increment cur_idx
-    vmovdqu64  `-2*32*8+0*32`($red_tbl), $tmp0   # load data from red_tbl
-    vmovdqu64  `-2*32*8+1*32`($red_tbl), $tmp1
-    vmovdqu64  `-2*32*8+2*32`($red_tbl), $tmp2
-    vmovdqu64  `-2*32*8+3*32`($red_tbl), $tmp3
-    vmovdqu64  `-2*32*8+4*32`($red_tbl), $tmp4
-    vmovdqu64  `-2*32*8+5*32`($red_tbl), $tmp5
-    vmovdqu64  `-2*32*8+6*32`($red_tbl), $tmp6
-    vmovdqu64  `-2*32*8+7*32`($red_tbl), $tmp7
-    vpblendmq  $tmp0, $t0, ${t0}{%k1}            # extract data when mask is not zero
-    vpblendmq  $tmp1, $t1, ${t1}{%k1}
-    vpblendmq  $tmp2, $t2, ${t2}{%k1}
-    vpblendmq  $tmp3, $t3, ${t3}{%k1}
-    vpblendmq  $tmp4, $t4, ${t4}{%k1}
-    vpblendmq  $tmp5, $t5, ${t5}{%k1}
-    vpblendmq  $tmp6, $t6, ${t6}{%k1}
-    vpblendmq  $tmp7, $t7, ${t7}{%k1}
     cmpq    $red_tbl, %rax
     jne .Lloop
-
-    vmovdqu64   $t0, `0*32`($out)               # store t0..9
-    vmovdqu64   $t1, `1*32`($out)
-    vmovdqu64   $t2, `2*32`($out)
-    vmovdqu64   $t3, `3*32`($out)
-    vmovdqu64   $t4, `4*32`($out)
-    vmovdqu64   $t5, `5*32`($out)
-    vmovdqu64   $t6, `6*32`($out)
-    vmovdqu64   $t7, `7*32`($out)
+___
+# store t0..n
+foreach (0..15) {
+    $code.="vmovdqu64   $t[$_], `${_}*32`($out) \n";
+}
+$code.=<<___;
 
     ret
 .cfi_endproc

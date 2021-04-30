@@ -118,7 +118,7 @@ my $zero = "%ymm0";
 my $Bi   = "%ymm1";
 my $Yi   = "%ymm2";
 my ($R0_0,$R0_0h,$R1_0,$R1_0h,$R2_0) = ("%ymm3",map("%ymm$_",(16..19)));
-my ($R0_1,$R0_1h,$R1_1,$R1_1h,$R2_1) = ("%ymm4",map("%ymm$_",(20..24)));
+my ($R0_1,$R0_1h,$R1_1,$R1_1h,$R2_1) = ("%ymm4",map("%ymm$_",(20..23)));
 
 # Registers mapping for normalization.
 my ($T0,$T0h,$T1,$T1h,$T2) = ("$zero", "$Bi", "$Yi", map("%ymm$_", (25..26)));
@@ -519,62 +519,63 @@ ___
 ###############################################################################
 {
 # input parameters
-my ($out,$red_tbl,$red_tbl_idx,$tbl_idx) = @_6_args_universal_ABI;
+my ($out,$red_tbl,$red_tbl_idx1,$red_tbl_idx2)=$win64 ? ("%rcx","%rdx","%r8", "%r9") :  # Win64 order
+                                                        ("%rdi","%rsi","%rdx","%rcx");  # Unix order
 
-my ($t0,$t1,$t2,$t3,$t4) = map("%ymm$_", (0..4));
+my ($t0,$t1,$t2,$t3,$t4,$t5) = map("%ymm$_", (0..5));
+my ($t6,$t7,$t8,$t9) = map("%ymm$_", (16..19));
+my ($tmp,$cur_idx,$idx1,$idx2,$ones) = map("%ymm$_", (20..24));
+
+my @t = ($t0,$t1,$t2,$t3,$t4,$t5,$t6,$t7,$t8,$t9);
 my $t4xmm = $t4;
 $t4xmm =~ s/%y/%x/;
-my ($tmp0,$tmp1,$tmp2,$tmp3,$tmp4) = map("%ymm$_", (16..20));
-my ($cur_idx,$idx,$ones) = map("%ymm$_", (21..23));
 
 $code.=<<___;
 .text
 
 .align 32
 .globl  ossl_extract_multiplier_2x20_win5
-.type   ossl_extract_multiplier_2x20_win5,\@function,4
+.type   ossl_extract_multiplier_2x20_win5,\@abi-omnipotent
 ossl_extract_multiplier_2x20_win5:
 .cfi_startproc
     endbranch
-    leaq    ($tbl_idx,$tbl_idx,4), %rax
-    salq    \$5, %rax
-    addq    %rax, $red_tbl
-
     vmovdqa64   .Lones(%rip), $ones         # broadcast ones
-    vpbroadcastq    $red_tbl_idx, $idx
+    vpbroadcastq    $red_tbl_idx1, $idx1
+    vpbroadcastq    $red_tbl_idx2, $idx2
     leaq   `(1<<5)*2*20*8`($red_tbl), %rax  # holds end of the tbl
 
+    # zeroing t0..n, cur_idx
     vpxor   $t0xmm, $t0xmm, $t0xmm
-    vmovdqa64   $t0, $t4                    # zeroing t0..4, cur_idx
-    vmovdqa64   $t0, $t3
-    vmovdqa64   $t0, $t2
-    vmovdqa64   $t0, $t1
     vmovdqa64   $t0, $cur_idx
+___
+foreach (1..9) {
+    $code.="vmovdqa64   $t0, $t[$_] \n";
+}
+$code.=<<___;
 
 .align 32
 .Lloop:
-    vpcmpq  \$0, $cur_idx, $idx, %k1           # mask of (idx == cur_idx)
+    vpcmpq  \$0, $cur_idx, $idx1, %k1      # mask of (idx1 == cur_idx)
+    vpcmpq  \$0, $cur_idx, $idx2, %k2      # mask of (idx2 == cur_idx)
+___
+foreach (0..9) {
+    my $mask = $_<5?"%k1":"%k2";
+$code.=<<___;
+    vmovdqu64  `${_}*32`($red_tbl), $tmp     # load data from red_tbl
+    vpblendmq  $tmp, $t[$_], ${t[$_]}{$mask} # extract data when mask is not zero
+___
+}
+$code.=<<___;
+    vpaddq  $ones, $cur_idx, $cur_idx      # increment cur_idx
     addq    \$`2*20*8`, $red_tbl
-    vpaddq  $ones, $cur_idx, $cur_idx          # increment cur_idx
-    vmovdqu64  `-2*20*8+0*32`($red_tbl), $tmp0 # load data from red_tbl
-    vmovdqu64  `-2*20*8+1*32`($red_tbl), $tmp1
-    vmovdqu64  `-2*20*8+2*32`($red_tbl), $tmp2
-    vmovdqu64  `-2*20*8+3*32`($red_tbl), $tmp3
-    vmovdqu64  `-2*20*8+4*32`($red_tbl), $tmp4
-    vpblendmq  $tmp0, $t0, ${t0}{%k1}          # extract data when mask is not zero
-    vpblendmq  $tmp1, $t1, ${t1}{%k1}
-    vpblendmq  $tmp2, $t2, ${t2}{%k1}
-    vpblendmq  $tmp3, $t3, ${t3}{%k1}
-    vpblendmq  $tmp4, $t4, ${t4}{%k1}
     cmpq    $red_tbl, %rax
     jne .Lloop
-
-    vmovdqu64   $t0, `0*32`($out)              # store t0..4
-    vmovdqu64   $t1, `1*32`($out)
-    vmovdqu64   $t2, `2*32`($out)
-    vmovdqu64   $t3, `3*32`($out)
-    vmovdqu64   $t4, `4*32`($out)
-
+___
+# store t0..n
+foreach (0..9) {
+    $code.="vmovdqu64   $t[$_], `${_}*32`($out) \n";
+}
+$code.=<<___;
     ret
 .cfi_endproc
 .size   ossl_extract_multiplier_2x20_win5, .-ossl_extract_multiplier_2x20_win5
@@ -694,10 +695,6 @@ rsaz_def_handler:
     .rva    .LSEH_end_ossl_rsaz_amm52x20_x2_ifma256
     .rva    .LSEH_info_ossl_rsaz_amm52x20_x2_ifma256
 
-    .rva    .LSEH_begin_ossl_extract_multiplier_2x20_win5
-    .rva    .LSEH_end_ossl_extract_multiplier_2x20_win5
-    .rva    .LSEH_info_ossl_extract_multiplier_2x20_win5
-
 .section    .xdata
 .align  8
 .LSEH_info_ossl_rsaz_amm52x20_x1_ifma256:
@@ -708,10 +705,6 @@ rsaz_def_handler:
     .byte   9,0,0,0
     .rva    rsaz_def_handler
     .rva    .Lrsaz_amm52x20_x2_ifma256_body,.Lrsaz_amm52x20_x2_ifma256_epilogue
-.LSEH_info_ossl_extract_multiplier_2x20_win5:
-    .byte   9,0,0,0
-    .rva    rsaz_def_handler
-    .rva    .LSEH_begin_ossl_extract_multiplier_2x20_win5,.LSEH_begin_ossl_extract_multiplier_2x20_win5
 ___
 }
 }}} else {{{                # fallback for old assembler

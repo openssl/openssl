@@ -78,7 +78,7 @@ void ossl_rsaz_amm52x20_x2_ifma256(BN_ULONG *out, const BN_ULONG *a,
                                    const BN_ULONG k0[2]);
 void ossl_extract_multiplier_2x20_win5(BN_ULONG *red_Y,
                                        const BN_ULONG *red_table,
-                                       int red_table_idx, int tbl_idx);
+                                       int red_table_idx1, int red_table_idx2);
 
 void RSAZ_amm52x30_x1_ifma256(BN_ULONG *res, const BN_ULONG *a,
                           const BN_ULONG *b, const BN_ULONG *m,
@@ -88,7 +88,7 @@ void RSAZ_amm52x30_x2_ifma256(BN_ULONG *out, const BN_ULONG *a,
                           const BN_ULONG k0[2]);
 void extract_multiplier_2x30_win5(BN_ULONG *red_Y,
                                   const BN_ULONG *red_table,
-                                  int red_table_idx, int tbl_idx);
+                                  int red_table_idx1, int red_table_idx2);
 
 void RSAZ_amm52x40_x1_ifma256(BN_ULONG *res, const BN_ULONG *a,
                           const BN_ULONG *b, const BN_ULONG *m,
@@ -98,7 +98,7 @@ void RSAZ_amm52x40_x2_ifma256(BN_ULONG *out, const BN_ULONG *a,
                           const BN_ULONG k0[2]);
 void extract_multiplier_2x40_win5(BN_ULONG *red_Y,
                                   const BN_ULONG *red_table,
-                                  int red_table_idx, int tbl_idx);
+                                  int red_table_idx1, int red_table_idx2);
 
 static int RSAZ_mod_exp_x2_ifma256(BN_ULONG *res, const BN_ULONG *base,
                                    const BN_ULONG *exp[2], const BN_ULONG *m,
@@ -421,8 +421,7 @@ int RSAZ_mod_exp_x2_ifma256(BN_ULONG *out,
         red_table_idx_0 >>= exp_chunk_shift;
         red_table_idx_1 >>= exp_chunk_shift;
 
-        extract(&red_Y[0 * red_digits], (const BN_ULONG*)red_table, (int)red_table_idx_0, 0);
-        extract(&red_Y[1 * red_digits], (const BN_ULONG*)red_table, (int)red_table_idx_1, 1);
+        extract(&red_Y[0 * red_digits], (const BN_ULONG*)red_table, (int)red_table_idx_0, (int)red_table_idx_1);
 
         /* Process other exp windows */
         for (exp_bit_no -= exp_win_size; exp_bit_no >= 0; exp_bit_no -= exp_win_size) {
@@ -446,8 +445,6 @@ int RSAZ_mod_exp_x2_ifma256(BN_ULONG *out,
                         red_table_idx_0 ^= T;
                     }
                     red_table_idx_0 &= table_idx_mask;
-
-                    extract(&red_X[0 * red_digits], (const BN_ULONG*)red_table, (int)red_table_idx_0, 0);
                 }
                 {
                     red_table_idx_1 = expz[exp_chunk_no + 1 * (exp_digits + 1)];
@@ -463,9 +460,9 @@ int RSAZ_mod_exp_x2_ifma256(BN_ULONG *out,
                         red_table_idx_1 ^= T;
                     }
                     red_table_idx_1 &= table_idx_mask;
-
-                    extract(&red_X[1 * red_digits], (const BN_ULONG*)red_table, (int)red_table_idx_1, 1);
                 }
+
+                extract(&red_X[0 * red_digits], (const BN_ULONG*)red_table, (int)red_table_idx_0, (int)red_table_idx_1);
             }
 
             /* Series of squaring */
@@ -484,9 +481,10 @@ int RSAZ_mod_exp_x2_ifma256(BN_ULONG *out,
      * NB: After the last AMM of exponentiation in Montgomery domain, the result
      * may be (modulus_bitsize + 1), but the conversion out of Montgomery domain
      * performs an AMM(x,1) which guarantees that the final result is less than
-     * |m|, so no conditional subtraction is needed here. See "Efficient
-     * Software Implementations of Modular Exponentiation" (by Shay Gueron)
-     * paper for details.
+     * |m|, so no conditional subtraction is needed here. See [1] for details.
+     *
+     * [1] Gueron, S. Efficient software implementations of modular exponentiation.
+     *     DOI: 10.1007/s13389-012-0031-5
      */
 
     /* Convert result back in regular 2^52 domain */
