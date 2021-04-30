@@ -414,6 +414,8 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
                  * Known pragmas:
                  *
                  * dollarid     takes "on", "true or "off", "false"
+                 * abspath      takes "on", "true or "off", "false"
+                 * includedir   directory prefix
                  */
                 if (strcmp(p, "dollarid") == 0) {
                     if (!parsebool(pval, &conf->flag_dollarid))
@@ -421,7 +423,13 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
                 } else if (strcmp(p, "abspath") == 0) {
                     if (!parsebool(pval, &conf->flag_abspath))
                         goto err;
+                } else if (strcmp(p, "includedir") == 0) {
+                    if ((conf->includedir = OPENSSL_strdup(pval)) == NULL) {
+                        ERR_raise(ERR_LIB_CONF, ERR_R_MALLOC_FAILURE);
+                        goto err;
+                    }
                 }
+
                 /*
                  * We *ignore* any unknown pragma.
                  */
@@ -432,6 +440,9 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
                 BIO *next;
                 const char *include_dir = ossl_safe_getenv("OPENSSL_CONF_INCLUDE");
                 char *include_path = NULL;
+
+                if (include_dir == NULL)
+                    include_dir = conf->includedir;
 
                 if (*p == '=') {
                     p++;
@@ -544,6 +555,7 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
      */
     sk_BIO_free(biosk);
     return 1;
+
  err:
     BUF_MEM_free(buff);
     OPENSSL_free(section);
