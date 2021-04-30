@@ -78,6 +78,7 @@ struct evp_keymgmt_st {
     int id;                      /* libcrypto internal */
 
     int name_id;
+    char *type_name;
     const char *description;
     OSSL_PROVIDER *prov;
     CRYPTO_REF_COUNT refcnt;
@@ -117,6 +118,7 @@ struct evp_keymgmt_st {
 
 struct evp_keyexch_st {
     int name_id;
+    char *type_name;
     const char *description;
     OSSL_PROVIDER *prov;
     CRYPTO_REF_COUNT refcnt;
@@ -136,6 +138,7 @@ struct evp_keyexch_st {
 
 struct evp_signature_st {
     int name_id;
+    char *type_name;
     const char *description;
     OSSL_PROVIDER *prov;
     CRYPTO_REF_COUNT refcnt;
@@ -170,6 +173,7 @@ struct evp_signature_st {
 
 struct evp_asym_cipher_st {
     int name_id;
+    char *type_name;
     const char *description;
     OSSL_PROVIDER *prov;
     CRYPTO_REF_COUNT refcnt;
@@ -190,6 +194,7 @@ struct evp_asym_cipher_st {
 
 struct evp_kem_st {
     int name_id;
+    char *type_name;
     const char *description;
     OSSL_PROVIDER *prov;
     CRYPTO_REF_COUNT refcnt;
@@ -212,6 +217,10 @@ int PKCS5_v2_PBKDF2_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass,
                              int passlen, ASN1_TYPE *param,
                              const EVP_CIPHER *c, const EVP_MD *md,
                              int en_de);
+int PKCS5_v2_PBKDF2_keyivgen_ex(EVP_CIPHER_CTX *ctx, const char *pass,
+                                int passlen, ASN1_TYPE *param,
+                                const EVP_CIPHER *c, const EVP_MD *md,
+                                int en_de, OSSL_LIB_CTX *libctx, const char *propq);
 
 struct evp_Encode_Ctx_st {
     /* number saved in a partial encode/decode */
@@ -321,7 +330,6 @@ void evp_cipher_free_int(EVP_CIPHER *md);
 void evp_md_free_int(EVP_MD *md);
 
 /* OSSL_PROVIDER * is only used to get the library context */
-const char *evp_first_name(const OSSL_PROVIDER *prov, int name_id);
 int evp_is_a(OSSL_PROVIDER *prov, int number,
              const char *legacy_name, const char *name);
 int evp_names_do_all(OSSL_PROVIDER *prov, int number,

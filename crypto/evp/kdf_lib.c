@@ -90,9 +90,7 @@ int EVP_KDF_number(const EVP_KDF *kdf)
 
 const char *EVP_KDF_name(const EVP_KDF *kdf)
 {
-    if (kdf->prov != NULL)
-        return evp_first_name(kdf->prov, kdf->name_id);
-    return NULL;
+    return kdf->type_name;
 }
 
 const char *EVP_KDF_description(const EVP_KDF *kdf)

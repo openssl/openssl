@@ -177,7 +177,7 @@ int crl_main(int argc, char **argv)
             nextupdate = ++num;
             break;
         case OPT_NOOUT:
-            noout = ++num;
+            noout = 1;
             break;
         case OPT_FINGERPRINT:
             fingerprint = ++num;

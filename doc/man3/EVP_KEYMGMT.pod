@@ -10,7 +10,7 @@ EVP_KEYMGMT_provider,
 EVP_KEYMGMT_is_a,
 EVP_KEYMGMT_number,
 EVP_KEYMGMT_description,
-EVP_KEYMGMT_get0_first_name,
+EVP_KEYMGMT_name,
 EVP_KEYMGMT_do_all_provided,
 EVP_KEYMGMT_names_do_all,
 EVP_KEYMGMT_gettable_params,
@@ -31,7 +31,7 @@ EVP_KEYMGMT_gen_settable_params
  const OSSL_PROVIDER *EVP_KEYMGMT_provider(const EVP_KEYMGMT *keymgmt);
  int EVP_KEYMGMT_is_a(const EVP_KEYMGMT *keymgmt, const char *name);
  int EVP_KEYMGMT_number(const EVP_KEYMGMT *keymgmt);
- const char *EVP_KEYMGMT_get0_first_name(const EVP_KEYMGMT *keymgmt);
+ const char *EVP_KEYMGMT_name(const EVP_KEYMGMT *keymgmt);
  const char *EVP_KEYMGMT_description(const EVP_KEYMGMT *keymgmt);
 
  void EVP_KEYMGMT_do_all_provided(OSSL_LIB_CTX *libctx,
@@ -74,11 +74,11 @@ algorithm that's identifiable with I<name>.
 EVP_KEYMGMT_number() returns the internal dynamic number assigned to
 the I<keymgmt>.
 
-EVP_KEYMGMT_get0_first_name() returns the first algorithm name that is found for
-the given I<keymgmt>. Note that the I<keymgmt> may have multiple synonyms
-associated with it. In this case it is undefined which one will be returned.
-Ownership of the returned string is retained by the I<keymgmt> object and should
-not be freed by the caller.
+EVP_KEYMGMT_name() returns the algorithm name from the provided implementation
+for the given I<keymgmt>. Note that the I<keymgmt> may have multiple synonyms
+associated with it. In this case the first name from the algorithm
+definition is returned. Ownership of the returned string is retained by the
+I<keymgmt> object and should not be freed by the caller.
 
 EVP_KEYMGMT_names_do_all() traverses all names for the I<keymgmt>, and
 calls I<fn> with each name and I<data>.
@@ -129,7 +129,7 @@ otherwise 0.
 
 EVP_KEYMGMT_number() returns an integer.
 
-EVP_KEYMGMT_get0_first_name() returns the name that is found or NULL on error.
+EVP_KEYMGMT_name() returns the algorithm name, or NULL on error.
 
 EVP_KEYMGMT_description() returns a pointer to a decription, or NULL if
 there isn't one.

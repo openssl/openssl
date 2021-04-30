@@ -971,6 +971,19 @@ static int execute_test_large_message(const SSL_METHOD *smeth,
                                        privkey)))
         goto end;
 
+#ifdef OPENSSL_NO_DTLS1_2
+    if (smeth == DTLS_server_method()) {
+        /*
+         * Default sigalgs are SHA1 based in <DTLS1.2 which is in security
+         * level 0
+         */
+        if (!TEST_true(SSL_CTX_set_cipher_list(sctx, "DEFAULT:@SECLEVEL=0"))
+                || !TEST_true(SSL_CTX_set_cipher_list(cctx,
+                                                    "DEFAULT:@SECLEVEL=0")))
+            goto end;
+    }
+#endif
+
     if (read_ahead) {
         /*
          * Test that read_ahead works correctly when dealing with large
@@ -1436,6 +1449,11 @@ static int test_large_message_tls_read_ahead(void)
 #ifndef OPENSSL_NO_DTLS
 static int test_large_message_dtls(void)
 {
+# ifdef OPENSSL_NO_DTLS1_2
+    /* Not supported in the FIPS provider */
+    if (is_fips)
+        return 1;
+# endif
     /*
      * read_ahead is not relevant to DTLS because DTLS always acts as if
      * read_ahead is set.
@@ -1466,6 +1484,26 @@ static int execute_cleanse_plaintext(const SSL_METHOD *smeth,
                                        &sctx, &cctx, cert,
                                        privkey)))
         goto end;
+
+#ifdef OPENSSL_NO_DTLS1_2
+    if (smeth == DTLS_server_method()) {
+# ifdef OPENSSL_NO_DTLS1_2
+        /* Not supported in the FIPS provider */
+        if (is_fips) {
+            testresult = 1;
+            goto end;
+        };
+# endif
+        /*
+         * Default sigalgs are SHA1 based in <DTLS1.2 which is in security
+         * level 0
+         */
+        if (!TEST_true(SSL_CTX_set_cipher_list(sctx, "DEFAULT:@SECLEVEL=0"))
+                || !TEST_true(SSL_CTX_set_cipher_list(cctx,
+                                                    "DEFAULT:@SECLEVEL=0")))
+            goto end;
+    }
+#endif
 
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
                                       NULL, NULL)))
@@ -1550,6 +1588,7 @@ static int test_cleanse_plaintext(void)
 #endif
 
 #if !defined(OPENSSL_NO_DTLS)
+
     if (!TEST_true(execute_cleanse_plaintext(DTLS_server_method(),
                                              DTLS_client_method(),
                                              DTLS1_VERSION,
@@ -6619,6 +6658,22 @@ static int test_ssl_pending(int tst)
                                            DTLS1_VERSION, 0,
                                            &sctx, &cctx, cert, privkey)))
             goto end;
+
+# ifdef OPENSSL_NO_DTLS1_2
+        /* Not supported in the FIPS provider */
+        if (is_fips) {
+            testresult = 1;
+            goto end;
+        };
+        /*
+         * Default sigalgs are SHA1 based in <DTLS1.2 which is in security
+         * level 0
+         */
+        if (!TEST_true(SSL_CTX_set_cipher_list(sctx, "DEFAULT:@SECLEVEL=0"))
+                || !TEST_true(SSL_CTX_set_cipher_list(cctx,
+                                                    "DEFAULT:@SECLEVEL=0")))
+            goto end;
+# endif
 #else
         return 1;
 #endif

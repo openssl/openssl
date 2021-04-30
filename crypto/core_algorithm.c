@@ -111,3 +111,24 @@ void ossl_algorithm_do_all(OSSL_LIB_CTX *libctx, int operation_id,
     else
         algorithm_do_this(provider, &cbdata);
 }
+
+char *ossl_algorithm_get1_first_name(const OSSL_ALGORITHM *algo)
+{
+    const char *first_name_end = NULL;
+    size_t first_name_len = 0;
+    char *ret;
+
+    if (algo->algorithm_names == NULL)
+        return NULL;
+
+    first_name_end = strchr(algo->algorithm_names, ':');
+    if (first_name_end == NULL)
+        first_name_len = strlen(algo->algorithm_names);
+    else
+        first_name_len = first_name_end - algo->algorithm_names;
+
+    ret = OPENSSL_strndup(algo->algorithm_names, first_name_len);
+    if (ret == NULL)
+        ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
+    return ret;
+}

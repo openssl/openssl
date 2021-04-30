@@ -688,6 +688,10 @@ int ASN1_item_sign_ctx(const ASN1_ITEM *it, X509_ALGOR *algor1,
                        X509_ALGOR *algor2, ASN1_BIT_STRING *signature,
                        const void *data, EVP_MD_CTX *ctx);
 
+#define X509_VERSION_1 0
+#define X509_VERSION_2 1
+#define X509_VERSION_3 2
+
 long X509_get_version(const X509 *x);
 int X509_set_version(X509 *x, long version);
 int X509_set_serialNumber(X509 *x, ASN1_INTEGER *serial);
@@ -729,6 +733,8 @@ EVP_PKEY *X509_get0_pubkey(const X509 *x);
 EVP_PKEY *X509_get_pubkey(X509 *x);
 ASN1_BIT_STRING *X509_get0_pubkey_bitstr(const X509 *x);
 
+#define X509_REQ_VERSION_1 0
+
 long X509_REQ_get_version(const X509_REQ *req);
 int X509_REQ_set_version(X509_REQ *x, long version);
 X509_NAME *X509_REQ_get_subject_name(const X509_REQ *req); /* TODO change to get0_ */
@@ -766,6 +772,9 @@ int X509_REQ_add1_attr_by_NID(X509_REQ *req,
 int X509_REQ_add1_attr_by_txt(X509_REQ *req,
                               const char *attrname, int type,
                               const unsigned char *bytes, int len);
+
+#define X509_CRL_VERSION_1 0
+#define X509_CRL_VERSION_2 1
 
 int X509_CRL_set_version(X509_CRL *x, long version);
 int X509_CRL_set_issuer_name(X509_CRL *x, const X509_NAME *name);
@@ -1058,14 +1067,25 @@ DECLARE_ASN1_FUNCTIONS(SCRYPT_PARAMS)
 
 int PKCS5_pbe_set0_algor(X509_ALGOR *algor, int alg, int iter,
                          const unsigned char *salt, int saltlen);
+int PKCS5_pbe_set0_algor_ex(X509_ALGOR *algor, int alg, int iter,
+                            const unsigned char *salt, int saltlen,
+                            OSSL_LIB_CTX *libctx);
 
 X509_ALGOR *PKCS5_pbe_set(int alg, int iter,
                           const unsigned char *salt, int saltlen);
+X509_ALGOR *PKCS5_pbe_set_ex(int alg, int iter,
+                             const unsigned char *salt, int saltlen,
+                             OSSL_LIB_CTX *libctx);
+
 X509_ALGOR *PKCS5_pbe2_set(const EVP_CIPHER *cipher, int iter,
                            unsigned char *salt, int saltlen);
 X509_ALGOR *PKCS5_pbe2_set_iv(const EVP_CIPHER *cipher, int iter,
                               unsigned char *salt, int saltlen,
                               unsigned char *aiv, int prf_nid);
+X509_ALGOR *PKCS5_pbe2_set_iv_ex(const EVP_CIPHER *cipher, int iter,
+                                 unsigned char *salt, int saltlen,
+                                 unsigned char *aiv, int prf_nid,
+                                 OSSL_LIB_CTX *libctx);
 
 #ifndef OPENSSL_NO_SCRYPT
 X509_ALGOR *PKCS5_pbe2_set_scrypt(const EVP_CIPHER *cipher,
@@ -1076,6 +1096,9 @@ X509_ALGOR *PKCS5_pbe2_set_scrypt(const EVP_CIPHER *cipher,
 
 X509_ALGOR *PKCS5_pbkdf2_set(int iter, unsigned char *salt, int saltlen,
                              int prf_nid, int keylen);
+X509_ALGOR *PKCS5_pbkdf2_set_ex(int iter, unsigned char *salt, int saltlen,
+                                int prf_nid, int keylen,
+                                OSSL_LIB_CTX *libctx);
 
 /* PKCS#8 utilities */
 

@@ -2209,7 +2209,7 @@ int do_X509_sign(X509 *cert, EVP_PKEY *pkey, const EVP_MD *md,
 
     if (sk_X509_EXTENSION_num(exts /* may be NULL */) > 0) {
         /* Prevent X509_V_ERR_EXTENSIONS_REQUIRE_VERSION_3 */
-        if (!X509_set_version(cert, 2)) /* Make sure cert is X509 v3 */
+        if (!X509_set_version(cert, X509_VERSION_3))
             goto end;
 
         /*

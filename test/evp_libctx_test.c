@@ -20,6 +20,7 @@
  * internal use.
  */
 #include "internal/deprecated.h"
+#include <assert.h>
 #include <openssl/evp.h>
 #include <openssl/provider.h>
 #include <openssl/dsa.h>
@@ -37,7 +38,7 @@
 static OSSL_LIB_CTX *libctx = NULL;
 static OSSL_PROVIDER *nullprov = NULL;
 static OSSL_PROVIDER *libprov = NULL;
-static STACK_OF(OPENSSL_CSTRING) *cipher_names = NULL;
+static STACK_OF(OPENSSL_STRING) *cipher_names = NULL;
 
 typedef enum OPTION_choice {
     OPT_ERR = -1,
@@ -338,7 +339,7 @@ static int test_cipher_reinit(int test_id)
         0x0f, 0x0e, 0x0d, 0x0c, 0x0b, 0x0a, 0x09, 0x08,
         0x07, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01, 0x00
     };
-    const char *name = sk_OPENSSL_CSTRING_value(cipher_names, test_id);
+    const char *name = sk_OPENSSL_STRING_value(cipher_names, test_id);
 
     if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new()))
         goto err;
@@ -420,7 +421,7 @@ static int test_cipher_reinit_partialupdate(int test_id)
         0x0f, 0x0e, 0x0d, 0x0c, 0x0b, 0x0a, 0x09, 0x08,
         0x07, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01, 0x00
     };
-    const char *name = sk_OPENSSL_CSTRING_value(cipher_names, test_id);
+    const char *name = sk_OPENSSL_STRING_value(cipher_names, test_id);
 
     if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new()))
         goto err;
@@ -473,9 +474,15 @@ static int name_cmp(const char * const *a, const char * const *b)
 
 static void collect_cipher_names(EVP_CIPHER *cipher, void *cipher_names_list)
 {
-    STACK_OF(OPENSSL_CSTRING) *names = cipher_names_list;
+    STACK_OF(OPENSSL_STRING) *names = cipher_names_list;
+    const char *name = EVP_CIPHER_name(cipher);
+    char *namedup = NULL;
 
-    sk_OPENSSL_CSTRING_push(names, EVP_CIPHER_name(cipher));
+    assert(name != NULL);
+    /* the cipher will be freed after returning, strdup is needed */
+    if ((namedup = OPENSSL_strdup(name)) != NULL
+        && !sk_OPENSSL_STRING_push(names, namedup))
+        OPENSSL_free(namedup);
 }
 
 static int rsa_keygen(int bits, EVP_PKEY **pub, EVP_PKEY **priv)
@@ -693,13 +700,13 @@ int setup_tests(void)
     ADD_TEST(dhx_cert_load);
 #endif
 
-    if (!TEST_ptr(cipher_names = sk_OPENSSL_CSTRING_new(name_cmp)))
+    if (!TEST_ptr(cipher_names = sk_OPENSSL_STRING_new(name_cmp)))
         return 0;
     EVP_CIPHER_do_all_provided(libctx, collect_cipher_names, cipher_names);
 
-    ADD_ALL_TESTS(test_cipher_reinit, sk_OPENSSL_CSTRING_num(cipher_names));
+    ADD_ALL_TESTS(test_cipher_reinit, sk_OPENSSL_STRING_num(cipher_names));
     ADD_ALL_TESTS(test_cipher_reinit_partialupdate,
-                  sk_OPENSSL_CSTRING_num(cipher_names));
+                  sk_OPENSSL_STRING_num(cipher_names));
     ADD_TEST(kem_rsa_gen_recover);
     ADD_TEST(kem_rsa_params);
 #ifndef OPENSSL_NO_DH
@@ -708,9 +715,15 @@ int setup_tests(void)
     return 1;
 }
 
+/* Because OPENSSL_free is a macro, it can't be passed as a function pointer */
+static void string_free(char *m)
+{
+    OPENSSL_free(m);
+}
+
 void cleanup_tests(void)
 {
-    sk_OPENSSL_CSTRING_free(cipher_names);
+    sk_OPENSSL_STRING_pop_free(cipher_names, string_free);
     OSSL_PROVIDER_unload(libprov);
     OSSL_LIB_CTX_free(libctx);
     OSSL_PROVIDER_unload(nullprov);

@@ -22,7 +22,12 @@
 #include "pkcs12.h" /* from the same directory */
 
 /* Set this to > 0 write test data to file */
-int write_files = 0;
+static int write_files = 0;
+
+static int legacy = 0;
+
+static OSSL_LIB_CTX *test_ctx = NULL;
+static const char *test_propq = NULL;
 
 /* -------------------------------------------------------------------------
  * Local function declarations
@@ -38,6 +43,31 @@ static PKCS12 *read_p12(const char *infile, const PKCS12_ENC *mac);
 static int check_p12_mac(PKCS12 *p12, const PKCS12_ENC *mac);
 static int check_asn1_string(const ASN1_TYPE *av, const char *txt);
 static int check_attrs(const STACK_OF(X509_ATTRIBUTE) *bag_attrs, const PKCS12_ATTR *attrs);
+
+
+/* --------------------------------------------------------------------------
+ * Global settings
+ */
+
+void PKCS12_helper_set_write_files(int enable)
+{
+    write_files = enable;
+}
+
+void PKCS12_helper_set_legacy(int enable)
+{
+    legacy = enable;
+}
+
+void PKCS12_helper_set_libctx(OSSL_LIB_CTX *libctx)
+{
+    test_ctx = libctx;
+}
+
+void PKCS12_helper_set_propq(const char *propq)
+{
+    test_propq = propq;
+}
 
 
 /* --------------------------------------------------------------------------
@@ -116,6 +146,7 @@ void end_pkcs12_with_mac(PKCS12_BUILDER *pb, const PKCS12_ENC *mac)
 static void generate_p12(PKCS12_BUILDER *pb, const PKCS12_ENC *mac)
 {
     PKCS12 *p12;
+    EVP_MD *md = NULL;
 
     if (!pb->success)
         return;
@@ -125,7 +156,10 @@ static void generate_p12(PKCS12_BUILDER *pb, const PKCS12_ENC *mac)
         pb->success = 0;
         return;
     }
-    p12 = PKCS12_add_safes(pb->safes, 0);
+    if (legacy)
+        p12 = PKCS12_add_safes(pb->safes, 0);
+    else
+        p12 = PKCS12_add_safes_ex(pb->safes, 0, test_ctx, test_propq);
     if (!TEST_ptr(p12)) {
         pb->success = 0;
         goto err;
@@ -133,8 +167,13 @@ static void generate_p12(PKCS12_BUILDER *pb, const PKCS12_ENC *mac)
     sk_PKCS7_pop_free(pb->safes, PKCS7_free);
 
     if (mac != NULL) {
+        if (legacy)
+            md = (EVP_MD *)EVP_get_digestbynid(mac->nid);
+        else
+            md = EVP_MD_fetch(test_ctx, OBJ_nid2sn(mac->nid), test_propq);
+
         if (!TEST_true(PKCS12_set_mac(p12, mac->pass, strlen(mac->pass),
-                                      NULL, 0, mac->iter, EVP_get_digestbynid(mac->nid)))) {
+                                      NULL, 0, mac->iter, md))) {
             pb->success = 0;
             goto err;
         }
@@ -145,6 +184,8 @@ static void generate_p12(PKCS12_BUILDER *pb, const PKCS12_ENC *mac)
     if (write_files)
         write_p12(p12, pb->filename);
 err:
+    if (!legacy && md != NULL)
+        EVP_MD_free(md);
     PKCS12_free(p12);
 }
 
@@ -169,7 +210,13 @@ static PKCS12 *from_bio_p12(BIO *bio, const PKCS12_ENC *mac)
 {
     PKCS12 *p12 = NULL;
 
-    p12 = d2i_PKCS12_bio(bio, NULL);
+    /* Supply a p12 with library context/propq to the d2i decoder*/
+    if (!legacy) {
+        p12 = PKCS12_init_ex(NID_pkcs7_data, test_ctx, test_propq);
+        if (!TEST_ptr(p12))
+            goto err;
+    }
+    p12 = d2i_PKCS12_bio(bio, &p12);
     BIO_free(bio);
     if (!TEST_ptr(p12))
         goto err;
@@ -245,10 +292,18 @@ void end_contentinfo(PKCS12_BUILDER *pb)
 void end_contentinfo_encrypted(PKCS12_BUILDER *pb, const PKCS12_ENC *enc)
 {
     if (pb->success) {
-        if (pb->bags 
-            && !TEST_true(PKCS12_add_safe(&pb->safes, pb->bags, enc->nid, enc->iter, enc->pass))) {
-            pb->success = 0;
-            return;
+        if (pb->bags) {
+            if (legacy) {
+                if (!TEST_true(PKCS12_add_safe(&pb->safes, pb->bags, enc->nid, enc->iter, enc->pass))) {
+                    pb->success = 0;
+                    return;
+                }
+            } else {
+                if (!TEST_true(PKCS12_add_safe_ex(&pb->safes, pb->bags, enc->nid, enc->iter, enc->pass, test_ctx, test_propq))) {
+                    pb->success = 0;
+                    return;
+                }
+            }
         }
     }
     sk_PKCS12_SAFEBAG_pop_free(pb->bags, PKCS12_SAFEBAG_free);
@@ -259,9 +314,13 @@ void end_contentinfo_encrypted(PKCS12_BUILDER *pb, const PKCS12_ENC *enc)
 static STACK_OF(PKCS12_SAFEBAG) *decode_contentinfo(STACK_OF(PKCS7) *safes, int idx, const PKCS12_ENC *enc)
 {
     STACK_OF(PKCS12_SAFEBAG) *bags = NULL;
+    int bagnid;
     PKCS7 *p7 = sk_PKCS7_value(safes, idx);
-    int bagnid = OBJ_obj2nid(p7->type);
 
+    if (!TEST_ptr(p7))
+        goto err;
+
+    bagnid = OBJ_obj2nid(p7->type);
     if (enc) {
         if (!TEST_int_eq(bagnid, NID_pkcs7_encrypted))
             goto err;
@@ -370,7 +429,11 @@ void add_keybag(PKCS12_BUILDER *pb, const unsigned char *bytes, int len,
         return;
     }
 
-    bag = PKCS12_add_key(&pb->bags, pkey, 0 /*keytype*/, enc->iter, enc->nid, enc->pass);
+    if (legacy)
+        bag = PKCS12_add_key(&pb->bags, pkey, 0 /*keytype*/, enc->iter, enc->nid, enc->pass);
+    else
+        bag = PKCS12_add_key_ex(&pb->bags, pkey, 0 /*keytype*/, enc->iter, enc->nid, enc->pass,
+                                test_ctx, test_propq);
     if (!TEST_ptr(bag)) {
         pb->success = 0;
         goto err;
@@ -550,7 +613,11 @@ void check_keybag(PKCS12_BUILDER *pb, const unsigned char *bytes, int len,
         break;
 
     case NID_pkcs8ShroudedKeyBag:
-        if (!TEST_ptr(p8 = PKCS12_decrypt_skey(bag, enc->pass, strlen(enc->pass)))) {
+        if (legacy)
+            p8 = PKCS12_decrypt_skey(bag, enc->pass, strlen(enc->pass));
+        else
+            p8 = PKCS12_decrypt_skey_ex(bag, enc->pass, strlen(enc->pass), test_ctx, test_propq);
+        if (!TEST_ptr(p8)) {
             pb->success = 0;
             goto err;
         }
@@ -584,13 +651,13 @@ void check_secretbag(PKCS12_BUILDER *pb, int secret_nid, const char *secret, con
 
     if (!pb->success)
         return;
-        
+
     bag = sk_PKCS12_SAFEBAG_value(pb->bags, pb->bag_idx++);
     if (!TEST_ptr(bag)) {
         pb->success = 0;
         return;
-    }   
-    
+    }
+
     if (!check_attrs(PKCS12_SAFEBAG_get0_attrs(bag), attrs)
         || !TEST_int_eq(PKCS12_SAFEBAG_get_nid(bag), NID_secretBag)
         || !TEST_int_eq(PKCS12_SAFEBAG_get_bag_nid(bag), secret_nid)
@@ -601,7 +668,12 @@ void check_secretbag(PKCS12_BUILDER *pb, int secret_nid, const char *secret, con
 
 void start_check_pkcs12(PKCS12_BUILDER *pb)
 {
-    PKCS12 *p12 = from_bio_p12(pb->p12bio, NULL);
+    PKCS12 *p12;
+
+    if (!pb->success)
+        return;
+
+    p12 = from_bio_p12(pb->p12bio, NULL);
     if (!TEST_ptr(p12)) {
         pb->success = 0;
         return;
@@ -616,22 +688,12 @@ void start_check_pkcs12(PKCS12_BUILDER *pb)
 
 void start_check_pkcs12_with_mac(PKCS12_BUILDER *pb, const PKCS12_ENC *mac)
 {
-    PKCS12 *p12 = from_bio_p12(pb->p12bio, mac); 
-    if (!TEST_ptr(p12)) {
-        pb->success = 0;
+    PKCS12 *p12;
+
+    if (!pb->success)
         return;
-    }
-    pb->safes = PKCS12_unpack_authsafes(p12); 
-    if (!TEST_ptr(pb->safes)) 
-        pb->success = 0;
 
-    pb->safe_idx = 0;
-    PKCS12_free(p12);
-}
-
-void start_check_pkcs12_file(PKCS12_BUILDER *pb)
-{
-    PKCS12 *p12 = read_p12(pb->filename, NULL);
+    p12 = from_bio_p12(pb->p12bio, mac);
     if (!TEST_ptr(p12)) {
         pb->success = 0;
         return;
@@ -642,11 +704,36 @@ void start_check_pkcs12_file(PKCS12_BUILDER *pb)
 
     pb->safe_idx = 0;
     PKCS12_free(p12);
-}       
-        
+}
+
+void start_check_pkcs12_file(PKCS12_BUILDER *pb)
+{
+    PKCS12 *p12;
+
+    if (!pb->success)
+        return;
+
+    p12 = read_p12(pb->filename, NULL);
+    if (!TEST_ptr(p12)) {
+        pb->success = 0;
+        return;
+    }
+    pb->safes = PKCS12_unpack_authsafes(p12);
+    if (!TEST_ptr(pb->safes))
+        pb->success = 0;
+
+    pb->safe_idx = 0;
+    PKCS12_free(p12);
+}
+
 void start_check_pkcs12_file_with_mac(PKCS12_BUILDER *pb, const PKCS12_ENC *mac)
 {
-    PKCS12 *p12 = read_p12(pb->filename, mac);
+    PKCS12 *p12;
+
+    if (!pb->success)
+        return;
+
+    p12 = read_p12(pb->filename, mac);
     if (!TEST_ptr(p12)) {
         pb->success = 0;
         return;
@@ -661,12 +748,18 @@ void start_check_pkcs12_file_with_mac(PKCS12_BUILDER *pb, const PKCS12_ENC *mac)
 
 void end_check_pkcs12(PKCS12_BUILDER *pb)
 {
+    if (!pb->success)
+        return;
+
     sk_PKCS7_pop_free(pb->safes, PKCS7_free);
 }
 
 
 void start_check_contentinfo(PKCS12_BUILDER *pb)
 {
+    if (!pb->success)
+        return;
+
     pb->bag_idx = 0;
     pb->bags = decode_contentinfo(pb->safes, pb->safe_idx++, NULL);
     if (!TEST_ptr(pb->bags)) {
@@ -678,6 +771,9 @@ void start_check_contentinfo(PKCS12_BUILDER *pb)
 
 void start_check_contentinfo_encrypted(PKCS12_BUILDER *pb, const PKCS12_ENC *enc)
 {
+    if (!pb->success)
+        return;
+
     pb->bag_idx = 0;
     pb->bags = decode_contentinfo(pb->safes, pb->safe_idx++, enc);
     if (!TEST_ptr(pb->bags)) {
@@ -690,6 +786,9 @@ void start_check_contentinfo_encrypted(PKCS12_BUILDER *pb, const PKCS12_ENC *enc
 
 void end_check_contentinfo(PKCS12_BUILDER *pb)
 {
+    if (!pb->success)
+        return;
+
     if (!TEST_int_eq(sk_PKCS12_SAFEBAG_num(pb->bags), pb->bag_idx))
         pb->success = 0;
     sk_PKCS12_SAFEBAG_pop_free(pb->bags, PKCS12_SAFEBAG_free);

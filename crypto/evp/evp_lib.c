@@ -659,8 +659,8 @@ int EVP_CIPHER_number(const EVP_CIPHER *cipher)
 
 const char *EVP_CIPHER_name(const EVP_CIPHER *cipher)
 {
-    if (cipher->prov != NULL)
-        return evp_first_name(cipher->prov, cipher->name_id);
+    if (cipher->type_name != NULL)
+        return cipher->type_name;
 #ifndef FIPS_MODULE
     return OBJ_nid2sn(EVP_CIPHER_nid(cipher));
 #else
@@ -726,8 +726,8 @@ const char *EVP_MD_name(const EVP_MD *md)
 {
     if (md == NULL)
         return NULL;
-    if (md->prov != NULL)
-        return evp_first_name(md->prov, md->name_id);
+    if (md->type_name != NULL)
+        return md->type_name;
 #ifndef FIPS_MODULE
     return OBJ_nid2sn(EVP_MD_nid(md));
 #else
@@ -817,6 +817,7 @@ EVP_MD *EVP_MD_meth_dup(const EVP_MD *md)
 
 void evp_md_free_int(EVP_MD *md)
 {
+    OPENSSL_free(md->type_name);
     ossl_provider_free(md->prov);
     CRYPTO_THREAD_lock_free(md->lock);
     OPENSSL_free(md);

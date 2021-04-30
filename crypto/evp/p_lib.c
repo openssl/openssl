@@ -292,10 +292,12 @@ static int evp_pkey_cmp_any(const EVP_PKEY *a, const EVP_PKEY *b,
     return evp_keymgmt_match(keymgmt1, keydata1, keydata2, selection);
 }
 
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 int EVP_PKEY_cmp_parameters(const EVP_PKEY *a, const EVP_PKEY *b)
 {
     return EVP_PKEY_parameters_eq(a, b);
 }
+#endif
 
 int EVP_PKEY_parameters_eq(const EVP_PKEY *a, const EVP_PKEY *b)
 {
@@ -315,10 +317,12 @@ int EVP_PKEY_parameters_eq(const EVP_PKEY *a, const EVP_PKEY *b)
     return -2;
 }
 
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 int EVP_PKEY_cmp(const EVP_PKEY *a, const EVP_PKEY *b)
 {
     return EVP_PKEY_eq(a, b);
 }
+#endif
 
 int EVP_PKEY_eq(const EVP_PKEY *a, const EVP_PKEY *b)
 {
@@ -890,13 +894,38 @@ IMPLEMENT_ECX_VARIANT(ED448)
 
 # if !defined(OPENSSL_NO_DH) && !defined(OPENSSL_NO_DEPRECATED_3_0)
 
-int EVP_PKEY_set1_DH(EVP_PKEY *pkey, DH *key)
+int EVP_PKEY_set1_DH(EVP_PKEY *pkey, DH *dhkey)
 {
-    int type = DH_get0_q(key) == NULL ? EVP_PKEY_DH : EVP_PKEY_DHX;
-    int ret = EVP_PKEY_assign(pkey, type, key);
+    int ret, type;
+
+    /*
+     * ossl_dh_is_named_safe_prime_group() returns 1 for named safe prime groups
+     * related to ffdhe and modp (which cache q = (p - 1) / 2),
+     * and returns 0 for all other dh parameter generation types including
+     * RFC5114 named groups.
+     *
+     * The EVP_PKEY_DH type is used for dh parameter generation types:
+     *  - named safe prime groups related to ffdhe and modp
+     *  - safe prime generator
+     *
+     * The type EVP_PKEY_DHX is used for dh parameter generation types
+     *  - fips186-4 and fips186-2
+     *  - rfc5114 named groups.
+     *
+     * The EVP_PKEY_DH type is used to save PKCS#3 data than can be stored
+     * without a q value.
+     * The EVP_PKEY_DHX type is used to save X9.42 data that requires the
+     * q value to be stored.
+     */
+    if (ossl_dh_is_named_safe_prime_group(dhkey))
+        type = EVP_PKEY_DH;
+    else
+        type = DH_get0_q(dhkey) == NULL ? EVP_PKEY_DH : EVP_PKEY_DHX;
+
+    ret = EVP_PKEY_assign(pkey, type, dhkey);
 
     if (ret)
-        DH_up_ref(key);
+        DH_up_ref(dhkey);
     return ret;
 }
 
@@ -1056,7 +1085,7 @@ int EVP_PKEY_can_sign(const EVP_PKEY *pkey)
         const char *supported_sig =
             pkey->keymgmt->query_operation_name != NULL
             ? pkey->keymgmt->query_operation_name(OSSL_OP_SIGNATURE)
-            : evp_first_name(prov, pkey->keymgmt->name_id);
+            : EVP_KEYMGMT_name(pkey->keymgmt);
         EVP_SIGNATURE *signature = NULL;
 
         signature = EVP_SIGNATURE_fetch(libctx, supported_sig, NULL);
@@ -1937,8 +1966,7 @@ int evp_pkey_copy_downgraded(EVP_PKEY **dest, const EVP_PKEY *src)
         int type = src->type;
         const char *keytype = NULL;
 
-        keytype = evp_first_name(EVP_KEYMGMT_provider(keymgmt),
-                                 keymgmt->name_id);
+        keytype = EVP_KEYMGMT_name(keymgmt);
 
         /*
          * If the type is EVP_PKEY_NONE, then we have a problem somewhere

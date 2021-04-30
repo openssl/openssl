@@ -24,8 +24,9 @@ IMPLEMENT_ASN1_FUNCTIONS(PBEPARAM)
 
 /* Set an algorithm identifier for a PKCS#5 PBE algorithm */
 
-int PKCS5_pbe_set0_algor(X509_ALGOR *algor, int alg, int iter,
-                         const unsigned char *salt, int saltlen)
+int PKCS5_pbe_set0_algor_ex(X509_ALGOR *algor, int alg, int iter,
+                            const unsigned char *salt, int saltlen,
+                            OSSL_LIB_CTX *ctx)
 {
     PBEPARAM *pbe = NULL;
     ASN1_STRING *pbe_str = NULL;
@@ -54,7 +55,7 @@ int PKCS5_pbe_set0_algor(X509_ALGOR *algor, int alg, int iter,
     }
     if (salt)
         memcpy(sstr, salt, saltlen);
-    else if (RAND_bytes(sstr, saltlen) <= 0)
+    else if (RAND_bytes_ex(ctx, sstr, saltlen) <= 0)
         goto err;
 
     ASN1_STRING_set0(pbe->salt, sstr, saltlen);
@@ -78,10 +79,17 @@ int PKCS5_pbe_set0_algor(X509_ALGOR *algor, int alg, int iter,
     return 0;
 }
 
+int PKCS5_pbe_set0_algor(X509_ALGOR *algor, int alg, int iter,
+                         const unsigned char *salt, int saltlen)
+{
+    return PKCS5_pbe_set0_algor_ex(algor, alg, iter, salt, saltlen, NULL);
+}
+
 /* Return an algorithm identifier for a PKCS#5 PBE algorithm */
 
-X509_ALGOR *PKCS5_pbe_set(int alg, int iter,
-                          const unsigned char *salt, int saltlen)
+X509_ALGOR *PKCS5_pbe_set_ex(int alg, int iter,
+                             const unsigned char *salt, int saltlen,
+                             OSSL_LIB_CTX *ctx)
 {
     X509_ALGOR *ret;
     ret = X509_ALGOR_new();
@@ -90,9 +98,16 @@ X509_ALGOR *PKCS5_pbe_set(int alg, int iter,
         return NULL;
     }
 
-    if (PKCS5_pbe_set0_algor(ret, alg, iter, salt, saltlen))
+    if (PKCS5_pbe_set0_algor_ex(ret, alg, iter, salt, saltlen, ctx))
         return ret;
 
     X509_ALGOR_free(ret);
     return NULL;
 }
+
+X509_ALGOR *PKCS5_pbe_set(int alg, int iter,
+                          const unsigned char *salt, int saltlen)
+{
+    return PKCS5_pbe_set_ex(alg, iter, salt, saltlen, NULL);
+}
+

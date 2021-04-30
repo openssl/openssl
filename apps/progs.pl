@@ -98,7 +98,6 @@ EOF
         gendh    => "dh",
         dhparam  => "dh",
         ecparam  => "ec",
-        pkcs12   => "des",
     );
     my %cmd_deprecated = (
 # The format of this table is:

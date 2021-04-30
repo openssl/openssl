@@ -240,7 +240,7 @@ int req_main(int argc, char **argv)
     X509 *new_x509 = NULL, *CAcert = NULL;
     X509_REQ *req = NULL;
     EVP_CIPHER *cipher = NULL;
-    EVP_MD *md_alg = NULL, *digest = NULL;
+    EVP_MD *digest = NULL;
     int ext_copy = EXT_COPY_UNSET;
     BIO *addext_bio = NULL;
     char *extensions = NULL;
@@ -482,9 +482,8 @@ int req_main(int argc, char **argv)
         goto end;
 
     if (digestname != NULL) {
-        if (!opt_md(digestname, &md_alg))
+        if (!opt_md(digestname, &digest))
             goto opthelp;
-        digest = md_alg;
     }
 
     if (!gen_x509) {
@@ -536,14 +535,13 @@ int req_main(int argc, char **argv)
     if (!add_oid_section(req_conf))
         goto end;
 
-    if (md_alg == NULL) {
+    if (digest == NULL) {
         p = NCONF_get_string(req_conf, section, "default_md");
         if (p == NULL) {
             ERR_clear_error();
         } else {
-            if (!opt_md(p, &md_alg))
+            if (!opt_md(p, &digest))
                 goto opthelp;
-            digest = md_alg;
         }
     }
 
@@ -1058,7 +1056,6 @@ int req_main(int argc, char **argv)
     BIO_free(addext_bio);
     BIO_free_all(out);
     EVP_PKEY_free(pkey);
-    EVP_MD_free(md_alg);
     EVP_MD_free(digest);
     EVP_PKEY_CTX_free(genctx);
     sk_OPENSSL_STRING_free(pkeyopts);
@@ -1120,7 +1117,8 @@ static int make_REQ(X509_REQ *req, EVP_PKEY *pkey, X509_NAME *fsubj,
         }
     }
 
-    if (!X509_REQ_set_version(req, 0L)) /* so far there is only version 1 */
+    /* so far there is only version 1 */
+    if (!X509_REQ_set_version(req, X509_REQ_VERSION_1))
         goto err;
 
     if (fsubj != NULL)

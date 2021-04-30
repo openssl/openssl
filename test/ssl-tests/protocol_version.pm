@@ -102,7 +102,10 @@ $min_dtls_enabled_fips = min_prot_enabled(\@dtls_protocols_fips, \@is_dtls_disab
 $max_dtls_enabled_fips = max_prot_enabled(\@dtls_protocols_fips, \@is_dtls_disabled_fips);
 
 sub no_tests {
-    my ($dtls) = @_;
+    my ($dtls, $fips) = @_;
+    if ($dtls && $fips) {
+        return disabled("dtls1_2");
+    }
     return $dtls ? alldisabled("dtls1", "dtls1_2") :
       alldisabled("ssl3", "tls1", "tls1_1", "tls1_2", "tls1_3");
 }
@@ -134,7 +137,7 @@ sub generate_version_tests {
         $max_enabled  = $dtls ? $max_dtls_enabled : $max_tls_enabled;
     }
 
-    if (no_tests($dtls)) {
+    if (no_tests($dtls, $fips)) {
         return;
     }
 

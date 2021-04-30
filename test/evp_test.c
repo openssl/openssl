@@ -504,6 +504,7 @@ typedef struct cipher_data_st {
     size_t key_len;
     size_t key_bits; /* Used by RC2 */
     unsigned char *iv;
+    unsigned char *next_iv; /* Expected IV state after operation */
     unsigned int rounds;
     size_t iv_len;
     unsigned char *plaintext;
@@ -564,6 +565,7 @@ static void cipher_test_cleanup(EVP_TEST *t)
 
     OPENSSL_free(cdat->key);
     OPENSSL_free(cdat->iv);
+    OPENSSL_free(cdat->next_iv);
     OPENSSL_free(cdat->ciphertext);
     OPENSSL_free(cdat->plaintext);
     for (i = 0; i < AAD_NUM; i++)
@@ -589,6 +591,8 @@ static int cipher_test_parse(EVP_TEST *t, const char *keyword,
     }
     if (strcmp(keyword, "IV") == 0)
         return parse_bin(value, &cdat->iv, &cdat->iv_len);
+    if (strcmp(keyword, "NextIV") == 0)
+        return parse_bin(value, &cdat->next_iv, &cdat->iv_len);
     if (strcmp(keyword, "Plaintext") == 0)
         return parse_bin(value, &cdat->plaintext, &cdat->plaintext_len);
     if (strcmp(keyword, "Ciphertext") == 0)
@@ -885,6 +889,19 @@ static int cipher_test_enc(EVP_TEST *t, int enc,
                                 rtag, expected->tag_len))
             goto err;
     }
+    /* Check the updated IV */
+    if (expected->next_iv != NULL) {
+        /* Some (e.g., GCM) tests use IVs longer than EVP_MAX_IV_LENGTH. */
+        unsigned char iv[128];
+        if (!TEST_true(EVP_CIPHER_CTX_get_updated_iv(ctx, iv, sizeof(iv)))
+                || ((EVP_CIPHER_flags(expected->cipher) & EVP_CIPH_CUSTOM_IV) == 0
+                    && !TEST_mem_eq(expected->next_iv, expected->iv_len, iv,
+                                    expected->iv_len))) {
+            t->err = "INVALID_NEXT_IV";
+            goto err;
+        }
+    }
+
     t->err = NULL;
     ok = 1;
  err:

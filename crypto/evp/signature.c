@@ -12,8 +12,9 @@
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 #include "internal/cryptlib.h"
-#include "crypto/evp.h"
 #include "internal/provider.h"
+#include "internal/core.h"
+#include "crypto/evp.h"
 #include "evp_local.h"
 
 static EVP_SIGNATURE *evp_signature_new(OSSL_PROVIDER *prov)
@@ -54,6 +55,8 @@ static void *evp_signature_from_algorithm(int name_id,
     }
 
     signature->name_id = name_id;
+    if ((signature->type_name = ossl_algorithm_get1_first_name(algodef)) == NULL)
+        goto err;
     signature->description = algodef->algorithm_description;
 
     for (; fns->function_id != 0; fns++) {
@@ -282,6 +285,7 @@ void EVP_SIGNATURE_free(EVP_SIGNATURE *signature)
     CRYPTO_DOWN_REF(&signature->refcnt, &i, signature->lock);
     if (i > 0)
         return;
+    OPENSSL_free(signature->type_name);
     ossl_provider_free(signature->prov);
     CRYPTO_THREAD_lock_free(signature->lock);
     OPENSSL_free(signature);
@@ -317,6 +321,11 @@ int EVP_SIGNATURE_is_a(const EVP_SIGNATURE *signature, const char *name)
 int EVP_SIGNATURE_number(const EVP_SIGNATURE *signature)
 {
     return signature->name_id;
+}
+
+const char *EVP_SIGNATURE_name(const EVP_SIGNATURE *signature)
+{
+    return signature->type_name;
 }
 
 const char *EVP_SIGNATURE_description(const EVP_SIGNATURE *signature)

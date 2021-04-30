@@ -10,10 +10,12 @@
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/asn1t.h>
+#include <openssl/core_names.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/x509.h>
 #include <openssl/rand.h>
+#include "crypto/evp.h"
 
 #ifndef OPENSSL_NO_SCRYPT
 /* PKCS#5 scrypt password based encryption structures */
@@ -206,9 +208,10 @@ static X509_ALGOR *pkcs5_scrypt_set(const unsigned char *salt, size_t saltlen,
     return NULL;
 }
 
-int PKCS5_v2_scrypt_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass,
-                             int passlen, ASN1_TYPE *param,
-                             const EVP_CIPHER *c, const EVP_MD *md, int en_de)
+int PKCS5_v2_scrypt_keyivgen_ex(EVP_CIPHER_CTX *ctx, const char *pass,
+                                int passlen, ASN1_TYPE *param,
+                                const EVP_CIPHER *c, const EVP_MD *md, int en_de,
+                                OSSL_LIB_CTX *libctx, const char *propq)
 {
     unsigned char *salt, key[EVP_MAX_KEY_LENGTH];
     uint64_t p, r, N;
@@ -252,7 +255,8 @@ int PKCS5_v2_scrypt_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass,
     if (ASN1_INTEGER_get_uint64(&N, sparam->costParameter) == 0
         || ASN1_INTEGER_get_uint64(&r, sparam->blockSize) == 0
         || ASN1_INTEGER_get_uint64(&p, sparam->parallelizationParameter) == 0
-        || EVP_PBE_scrypt(NULL, 0, NULL, 0, N, r, p, 0, NULL, 0) == 0) {
+        || EVP_PBE_scrypt_ex(NULL, 0, NULL, 0, N, r, p, 0, NULL, 0,
+                             libctx, propq) == 0) {
         ERR_raise(ERR_LIB_EVP, EVP_R_ILLEGAL_SCRYPT_PARAMETERS);
         goto err;
     }
@@ -261,8 +265,8 @@ int PKCS5_v2_scrypt_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass,
 
     salt = sparam->salt->data;
     saltlen = sparam->salt->length;
-    if (EVP_PBE_scrypt(pass, passlen, salt, saltlen, N, r, p, 0, key, keylen)
-        == 0)
+    if (EVP_PBE_scrypt_ex(pass, passlen, salt, saltlen, N, r, p, 0, key,
+                          keylen, libctx, propq) == 0)
         goto err;
     rv = EVP_CipherInit_ex(ctx, NULL, NULL, key, NULL, en_de);
  err:
@@ -271,4 +275,12 @@ int PKCS5_v2_scrypt_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass,
     SCRYPT_PARAMS_free(sparam);
     return rv;
 }
+
+int PKCS5_v2_scrypt_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass,
+                             int passlen, ASN1_TYPE *param,
+                             const EVP_CIPHER *c, const EVP_MD *md, int en_de)
+{
+    return PKCS5_v2_scrypt_keyivgen_ex(ctx, pass, passlen, param, c, md, en_de, NULL, NULL);
+}
+
 #endif /* OPENSSL_NO_SCRYPT */

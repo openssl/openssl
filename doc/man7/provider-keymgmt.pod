@@ -175,7 +175,7 @@ Indicating that all key object parameters should be considered,
 regardless of their more granular classification.
 
 =for comment This should used by EVP functions such as
-EVP_PKEY_copy_parameters() and EVP_PKEY_cmp_parameters()
+EVP_PKEY_copy_parameters() and EVP_PKEY_parameters_eq()
 
 This is a combination of B<OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS> and
 B<OSSL_KEYMGMT_SELECT_OTHER_PARAMETERS>.

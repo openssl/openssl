@@ -12,8 +12,9 @@
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 #include "internal/cryptlib.h"
-#include "crypto/evp.h"
 #include "internal/provider.h"
+#include "internal/core.h"
+#include "crypto/evp.h"
 #include "evp_local.h"
 
 static int evp_pkey_asym_cipher_init(EVP_PKEY_CTX *ctx, int operation,
@@ -289,6 +290,8 @@ static void *evp_asym_cipher_from_algorithm(int name_id,
     }
 
     cipher->name_id = name_id;
+    if ((cipher->type_name = ossl_algorithm_get1_first_name(algodef)) == NULL)
+        goto err;
     cipher->description = algodef->algorithm_description;
 
     for (; fns->function_id != 0; fns++) {
@@ -398,6 +401,7 @@ void EVP_ASYM_CIPHER_free(EVP_ASYM_CIPHER *cipher)
     CRYPTO_DOWN_REF(&cipher->refcnt, &i, cipher->lock);
     if (i > 0)
         return;
+    OPENSSL_free(cipher->type_name);
     ossl_provider_free(cipher->prov);
     CRYPTO_THREAD_lock_free(cipher->lock);
     OPENSSL_free(cipher);
@@ -433,6 +437,11 @@ int EVP_ASYM_CIPHER_is_a(const EVP_ASYM_CIPHER *cipher, const char *name)
 int EVP_ASYM_CIPHER_number(const EVP_ASYM_CIPHER *cipher)
 {
     return cipher->name_id;
+}
+
+const char *EVP_ASYM_CIPHER_name(const EVP_ASYM_CIPHER *cipher)
+{
+    return cipher->type_name;
 }
 
 const char *EVP_ASYM_CIPHER_description(const EVP_ASYM_CIPHER *cipher)

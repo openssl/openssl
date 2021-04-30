@@ -22,8 +22,7 @@
  */
 static int match_type(const EVP_KEYMGMT *keymgmt1, const EVP_KEYMGMT *keymgmt2)
 {
-    const OSSL_PROVIDER *prov2 = EVP_KEYMGMT_provider(keymgmt2);
-    const char *name2 = evp_first_name(prov2, EVP_KEYMGMT_number(keymgmt2));
+    const char *name2 = EVP_KEYMGMT_name(keymgmt2);
 
     return EVP_KEYMGMT_is_a(keymgmt1, name2);
 }

@@ -12,3 +12,5 @@
 const PKCS7_CTX *ossl_pkcs7_get0_ctx(const PKCS7 *p7);
 OSSL_LIB_CTX *ossl_pkcs7_ctx_get0_libctx(const PKCS7_CTX *ctx);
 const char *ossl_pkcs7_ctx_get0_propq(const PKCS7_CTX *ctx);
+
+int ossl_pkcs7_ctx_propagate(const PKCS7 *from, PKCS7 *to);

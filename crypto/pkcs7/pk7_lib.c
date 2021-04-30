@@ -469,6 +469,37 @@ const PKCS7_CTX *ossl_pkcs7_get0_ctx(const PKCS7 *p7)
     return p7 != NULL ? &p7->ctx : NULL;
 }
 
+void ossl_pkcs7_set0_libctx(PKCS7 *p7, OSSL_LIB_CTX *ctx)
+{
+    p7->ctx.libctx = ctx;
+}
+
+int ossl_pkcs7_set1_propq(PKCS7 *p7, const char *propq)
+{
+    if (p7->ctx.propq != NULL) {
+        OPENSSL_free(p7->ctx.propq);
+        p7->ctx.propq = NULL;
+    }
+    if (propq != NULL) {
+        p7->ctx.propq = OPENSSL_strdup(propq);
+        if (p7->ctx.propq == NULL) {
+            ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+            return 0;
+        }
+    }
+    return 1;
+}
+
+int ossl_pkcs7_ctx_propagate(const PKCS7 *from, PKCS7 *to)
+{
+    ossl_pkcs7_set0_libctx(to, from->ctx.libctx);
+    if (!ossl_pkcs7_set1_propq(to, from->ctx.propq))
+        return 0;
+
+    ossl_pkcs7_resolve_libctx(to);
+    return 1;
+}
+
 OSSL_LIB_CTX *ossl_pkcs7_ctx_get0_libctx(const PKCS7_CTX *ctx)
 {
     return ctx != NULL ? ctx->libctx : NULL;

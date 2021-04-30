@@ -455,7 +455,7 @@ my @smime_cms_cades_ko_tests = (
       [ @prov, "-sign", "-in", $smcont, "-outform", "DER", "-nodetach",
         "-certfile", catfile($smdir, "smroot.pem"),
         "-signer", catfile($smdir, "smrsa1.pem"), "-out", "{output}.cms" ],
-      "fail to verify token because requiring CAdES-BES compatibility",
+      "fail to verify token since requiring CAdES-BES compatibility",
       [ @prov, "-verify", "-cades", "-in", "{output}.cms", "-inform", "DER",
         "-CAfile", catfile($smdir, "smroot.pem"), "-out", "{output}.txt" ],
       \&final_compare
