@@ -73,7 +73,7 @@ int ec_main(int argc, char **argv)
     char *infile = NULL, *outfile = NULL, *ciphername = NULL, *prog;
     char *passin = NULL, *passout = NULL, *passinarg = NULL, *passoutarg = NULL;
     OPTION_CHOICE o;
-    int informat = FORMAT_PEM, outformat = FORMAT_PEM, text = 0, noout = 0;
+    int informat = FORMAT_UNDEF, outformat = FORMAT_PEM, text = 0, noout = 0;
     int pubin = 0, pubout = 0, param_out = 0, ret = 1, private = 0;
     int check = 0;
     char *asn1_encoding = NULL;

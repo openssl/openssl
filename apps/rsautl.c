@@ -81,7 +81,7 @@ int rsautl_main(int argc, char **argv)
     char rsa_mode = RSA_VERIFY, key_type = KEY_PRIVKEY;
     unsigned char *rsa_in = NULL, *rsa_out = NULL, pad = RSA_PKCS1_PADDING;
     size_t rsa_inlen, rsa_outlen = 0;
-    int keyformat = FORMAT_PEM, keysize, ret = 1, rv;
+    int keyformat = FORMAT_UNDEF, keysize, ret = 1, rv;
     int hexdump = 0, asn1parse = 0, need_priv = 0, rev = 0;
     OPTION_CHOICE o;
 
@@ -196,7 +196,7 @@ int rsautl_main(int argc, char **argv)
         break;
 
     case KEY_CERT:
-        x = load_cert(keyfile, "Certificate");
+        x = load_cert(keyfile, FORMAT_UNDEF, "Certificate");
         if (x) {
             pkey = X509_get_pubkey(x);
             X509_free(x);

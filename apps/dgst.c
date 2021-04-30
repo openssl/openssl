@@ -105,7 +105,7 @@ int dgst_main(int argc, char **argv)
     const char *sigfile = NULL;
     const char *md_name = NULL;
     OPTION_CHOICE o;
-    int separator = 0, debug = 0, keyform = FORMAT_PEM, siglen = 0;
+    int separator = 0, debug = 0, keyform = FORMAT_UNDEF, siglen = 0;
     int i, ret = 1, out_bin = -1, want_pub = 0, do_verify = 0;
     int xoflen = 0;
     unsigned char *buf = NULL, *sigbuf = NULL;

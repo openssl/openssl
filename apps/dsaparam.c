@@ -69,7 +69,7 @@ int dsaparam_main(int argc, char **argv)
     EVP_PKEY *params = NULL, *pkey = NULL;
     EVP_PKEY_CTX *ctx = NULL;
     int numbits = -1, num = 0, genkey = 0;
-    int informat = FORMAT_PEM, outformat = FORMAT_PEM, noout = 0;
+    int informat = FORMAT_UNDEF, outformat = FORMAT_PEM, noout = 0;
     int ret = 1, i, text = 0, private = 0;
     char *infile = NULL, *outfile = NULL, *prog;
     OPTION_CHOICE o;
@@ -181,7 +181,7 @@ int dsaparam_main(int argc, char **argv)
             goto end;
         }
     } else {
-        params = load_keyparams(infile, 1, "DSA", "DSA parameters");
+        params = load_keyparams(infile, informat, 1, "DSA", "DSA parameters");
     }
     if (params == NULL) {
         /* Error message should already have been displayed */

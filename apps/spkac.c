@@ -67,7 +67,7 @@ int spkac_main(int argc, char **argv)
     char *spkstr = NULL, *prog;
     const char *spkac = "SPKAC", *spksect = "default";
     int i, ret = 1, verify = 0, noout = 0, pubkey = 0;
-    int keyformat = FORMAT_PEM;
+    int keyformat = FORMAT_UNDEF;
     OPTION_CHOICE o;
 
     prog = opt_init(argc, argv, spkac_options);

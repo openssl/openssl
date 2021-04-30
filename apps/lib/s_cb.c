@@ -1019,7 +1019,8 @@ int load_excert(SSL_EXCERT **pexc)
             BIO_printf(bio_err, "Missing filename\n");
             return 0;
         }
-        exc->cert = load_cert(exc->certfile, "Server Certificate");
+        exc->cert = load_cert(exc->certfile, exc->certform,
+                              "Server Certificate");
         if (exc->cert == NULL)
             return 0;
         if (exc->keyfile != NULL) {

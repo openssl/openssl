@@ -149,15 +149,11 @@ static OSSL_DECODER_CLEANUP file_load_cleanup;
  *
  */
 static struct file_ctx_st *file_open_stream(BIO *source, const char *uri,
-                                            const char *input_type,
                                             void *provctx)
 {
     struct file_ctx_st *ctx;
 
-    if ((ctx = new_file_ctx(IS_FILE, uri, provctx)) == NULL
-        || (input_type != NULL
-            && (ctx->_.file.input_type =
-                OPENSSL_strdup(input_type)) == NULL)) {
+    if ((ctx = new_file_ctx(IS_FILE, uri, provctx)) == NULL) {
         ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
         goto err;
     }
@@ -285,7 +281,7 @@ static void *file_open(void *provctx, const char *uri)
     if (S_ISDIR(st.st_mode))
         ctx = file_open_dir(path, uri, provctx);
     else if ((bio = BIO_new_file(path, "rb")) == NULL
-             || (ctx = file_open_stream(bio, uri, NULL, provctx)) == NULL)
+             || (ctx = file_open_stream(bio, uri, provctx)) == NULL)
         BIO_free_all(bio);
 
     return ctx;
@@ -299,7 +295,7 @@ void *file_attach(void *provctx, OSSL_CORE_BIO *cin)
     if (new_bio == NULL)
         return NULL;
 
-    ctx = file_open_stream(new_bio, NULL, NULL, provctx);
+    ctx = file_open_stream(new_bio, NULL, provctx);
     if (ctx == NULL)
         BIO_free(new_bio);
     return ctx;
@@ -316,6 +312,7 @@ static const OSSL_PARAM *file_settable_ctx_params(void *provctx)
         OSSL_PARAM_utf8_string(OSSL_STORE_PARAM_PROPERTIES, NULL, 0),
         OSSL_PARAM_int(OSSL_STORE_PARAM_EXPECT, NULL),
         OSSL_PARAM_octet_string(OSSL_STORE_PARAM_SUBJECT, NULL, 0),
+        OSSL_PARAM_utf8_string(OSSL_STORE_PARAM_INPUT_TYPE, NULL, 0),
         OSSL_PARAM_END
     };
     return known_settable_ctx_params;
@@ -329,12 +326,22 @@ static int file_set_ctx_params(void *loaderctx, const OSSL_PARAM params[])
     if (params == NULL)
         return 1;
 
-    p = OSSL_PARAM_locate_const(params, OSSL_STORE_PARAM_PROPERTIES);
-    if (p != NULL) {
-        OPENSSL_free(ctx->_.file.propq);
-        ctx->_.file.propq = NULL;
-        if (!OSSL_PARAM_get_utf8_string(p, &ctx->_.file.propq, 0))
-            return 0;
+    if (ctx->type != IS_DIR) {
+        /* these parameters are ignored for directories */
+        p = OSSL_PARAM_locate_const(params, OSSL_STORE_PARAM_PROPERTIES);
+        if (p != NULL) {
+            OPENSSL_free(ctx->_.file.propq);
+            ctx->_.file.propq = NULL;
+            if (!OSSL_PARAM_get_utf8_string(p, &ctx->_.file.propq, 0))
+                return 0;
+        }
+        p = OSSL_PARAM_locate_const(params, OSSL_STORE_PARAM_INPUT_TYPE);
+        if (p != NULL) {
+            OPENSSL_free(ctx->_.file.input_type);
+            ctx->_.file.input_type = NULL;
+            if (!OSSL_PARAM_get_utf8_string(p, &ctx->_.file.input_type, 0))
+                return 0;
+        }
     }
     p = OSSL_PARAM_locate_const(params, OSSL_STORE_PARAM_EXPECT);
     if (p != NULL && !OSSL_PARAM_get_int(p, &ctx->expected_type))

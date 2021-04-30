@@ -121,7 +121,7 @@ int gendsa_main(int argc, char **argv)
         goto end;
     }
 
-    pkey = load_keyparams(dsaparams, 1, "DSA", "DSA parameters");
+    pkey = load_keyparams(dsaparams, FORMAT_UNDEF, 1, "DSA", "DSA parameters");
 
     out = bio_open_owner(outfile, FORMAT_PEM, private);
     if (out == NULL)

@@ -402,7 +402,7 @@ int ocsp_main(int argc, char **argv)
             path = opt_arg();
             break;
         case OPT_ISSUER:
-            issuer = load_cert(opt_arg(), "issuer certificate");
+            issuer = load_cert(opt_arg(), FORMAT_UNDEF, "issuer certificate");
             if (issuer == NULL)
                 goto end;
             if (issuers == NULL) {
@@ -414,7 +414,7 @@ int ocsp_main(int argc, char **argv)
             break;
         case OPT_CERT:
             X509_free(cert);
-            cert = load_cert(opt_arg(), "certificate");
+            cert = load_cert(opt_arg(), FORMAT_UNDEF, "certificate");
             if (cert == NULL)
                 goto end;
             if (cert_id_md == NULL)
@@ -565,7 +565,7 @@ int ocsp_main(int argc, char **argv)
     if (rsignfile != NULL) {
         if (rkeyfile == NULL)
             rkeyfile = rsignfile;
-        rsigner = load_cert(rsignfile, "responder certificate");
+        rsigner = load_cert(rsignfile, FORMAT_UNDEF, "responder certificate");
         if (rsigner == NULL) {
             BIO_printf(bio_err, "Error loading responder certificate\n");
             goto end;
@@ -581,7 +581,7 @@ int ocsp_main(int argc, char **argv)
             BIO_printf(bio_err, "Error getting password\n");
             goto end;
         }
-        rkey = load_key(rkeyfile, FORMAT_PEM, 0, passin, NULL,
+        rkey = load_key(rkeyfile, FORMAT_UNDEF, 0, passin, NULL,
                         "responder private key");
         if (rkey == NULL)
             goto end;
@@ -661,7 +661,7 @@ redo_accept:
     if (signfile != NULL) {
         if (keyfile == NULL)
             keyfile = signfile;
-        signer = load_cert(signfile, "signer certificate");
+        signer = load_cert(signfile, FORMAT_UNDEF, "signer certificate");
         if (signer == NULL) {
             BIO_printf(bio_err, "Error loading signer certificate\n");
             goto end;
@@ -671,7 +671,7 @@ redo_accept:
                             "signer certificates"))
                 goto end;
         }
-        key = load_key(keyfile, FORMAT_PEM, 0, NULL, NULL,
+        key = load_key(keyfile, FORMAT_UNDEF, 0, NULL, NULL,
                        "signer private key");
         if (key == NULL)
             goto end;

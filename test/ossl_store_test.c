@@ -47,7 +47,7 @@ static int test_store_open(void)
           && TEST_ptr(search = OSSL_STORE_SEARCH_by_alias("nothing"))
           && TEST_ptr(ui_method= UI_create_method("DummyUI"))
           && TEST_ptr(sctx = OSSL_STORE_open_ex(input, NULL, NULL, ui_method,
-                                                NULL, NULL, NULL))
+                                                NULL, NULL, NULL, NULL))
           && TEST_false(OSSL_STORE_find(sctx, NULL))
           && TEST_true(OSSL_STORE_find(sctx, search));
     UI_destroy_method(ui_method);
@@ -75,7 +75,7 @@ static int get_params(const char *uri, const char *type)
     OSSL_STORE_INFO *info;
     int ret = 0;
 
-    ctx = OSSL_STORE_open_ex(uri, NULL, NULL, NULL, NULL, NULL, NULL);
+    ctx = OSSL_STORE_open_ex(uri, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
     if (!TEST_ptr(ctx))
         goto err;
 
@@ -157,7 +157,7 @@ static int test_store_attach_unregistered_scheme(void)
           && TEST_ptr(provider = OSSL_PROVIDER_load(libctx, "default"))
           && TEST_ptr(bio = BIO_new_file(input, "r"))
           && TEST_ptr(store_ctx = OSSL_STORE_attach(bio, "file", libctx, NULL,
-                                                    NULL, NULL, NULL, NULL))
+                                                    NULL, NULL, NULL, NULL, NULL))
           && TEST_int_ne(ERR_GET_LIB(ERR_peek_error()), ERR_LIB_OSSL_STORE)
           && TEST_int_ne(ERR_GET_REASON(ERR_peek_error()),
                          OSSL_STORE_R_UNREGISTERED_SCHEME);
