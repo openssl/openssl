@@ -23,8 +23,8 @@ OpenSSL 3.0
 
 ### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
 
- * Add ".pragma abspath:true" to prevent relative file inclusion in
-   config files.
+ * Add "abspath" and "includedir" pragma's to config files, to prevent,
+   or modify relative pathname inclusion.
 
    * Rich Salz *
 
