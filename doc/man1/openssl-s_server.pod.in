@@ -672,7 +672,7 @@ disabling the ephemeral DH cipher suites.
 
 =item B<-alpn> I<val>, B<-nextprotoneg> I<val>
 
-These flags enable the Enable the Application-Layer Protocol Negotiation
+These flags enable the Application-Layer Protocol Negotiation
 or Next Protocol Negotiation (NPN) extension, respectively. ALPN is the
 IETF standard and replaces NPN.
 The I<val> list is a comma-separated list of supported protocol
