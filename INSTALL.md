@@ -521,9 +521,9 @@ never be used in production environments.  It will only work when used with
 gcc or clang and should be used in conjunction with the [no-shared](#no-shared)
 option.
 
-### no-acvp-tests
+### enable-acvp-tests
 
-Do not build support for Automated Cryptographic Validation Protocol (ACVP)
+Build support for Automated Cryptographic Validation Protocol (ACVP)
 tests.
 
 This is required for FIPS validation purposes. Certain ACVP tests require

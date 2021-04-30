@@ -513,6 +513,7 @@ my %deprecated_disablables = (
 
 our %disabled = ( # "what"         => "comment"
                   "fips"                => "default",
+                  "acvp-tests"          => "default",
                   "asan"                => "default",
                   "buildtest-c++"       => "default",
                   "crypto-mdebug"       => "default",
