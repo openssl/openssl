@@ -545,6 +545,8 @@ extern "C" {
 
 /* You may want to pass properties for the provider implementation to use */
 #define OSSL_STORE_PARAM_PROPERTIES "properties"   /* utf8_string */
+/* OSSL_DECODER input type if a decoder is used by the store */
+#define OSSL_STORE_PARAM_INPUT_TYPE "input-type"   /* UTF8_STRING */
 
 # ifdef __cplusplus
 }

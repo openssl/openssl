@@ -83,7 +83,7 @@ int pkcs8_main(int argc, char **argv)
     char *passin = NULL, *passout = NULL, *p8pass = NULL;
     OPTION_CHOICE o;
     int nocrypt = 0, ret = 1, iter = PKCS12_DEFAULT_ITER;
-    int informat = FORMAT_PEM, outformat = FORMAT_PEM, topk8 = 0, pbe_nid = -1;
+    int informat = FORMAT_UNDEF, outformat = FORMAT_PEM, topk8 = 0, pbe_nid = -1;
     int private = 0, traditional = 0;
 #ifndef OPENSSL_NO_SCRYPT
     long scrypt_N = 0, scrypt_r = 0, scrypt_p = 0;
@@ -214,7 +214,8 @@ int pkcs8_main(int argc, char **argv)
     if ((pbe_nid == -1) && cipher == NULL)
         cipher = (EVP_CIPHER *)EVP_aes_256_cbc();
 
-    in = bio_open_default(infile, 'r', informat);
+    in = bio_open_default(infile, 'r',
+                          informat == FORMAT_UNDEF ? FORMAT_PEM : informat);
     if (in == NULL)
         goto end;
     out = bio_open_owner(outfile, outformat, private);
@@ -298,7 +299,7 @@ int pkcs8_main(int argc, char **argv)
     }
 
     if (nocrypt) {
-        if (informat == FORMAT_PEM) {
+        if (informat == FORMAT_PEM || informat == FORMAT_UNDEF) {
             p8inf = PEM_read_bio_PKCS8_PRIV_KEY_INFO(in, NULL, NULL, NULL);
         } else if (informat == FORMAT_ASN1) {
             p8inf = d2i_PKCS8_PRIV_KEY_INFO_bio(in, NULL);
@@ -307,7 +308,7 @@ int pkcs8_main(int argc, char **argv)
             goto end;
         }
     } else {
-        if (informat == FORMAT_PEM) {
+        if (informat == FORMAT_PEM || informat == FORMAT_UNDEF) {
             p8 = PEM_read_bio_PKCS8(in, NULL, NULL, NULL);
         } else if (informat == FORMAT_ASN1) {
             p8 = d2i_PKCS8_bio(in, NULL);

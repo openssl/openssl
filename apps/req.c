@@ -256,7 +256,7 @@ int req_main(int argc, char **argv)
     int days = UNSET_DAYS;
     int ret = 1, gen_x509 = 0, i = 0, newreq = 0, verbose = 0;
     int pkey_type = -1;
-    int informat = FORMAT_PEM, outformat = FORMAT_PEM, keyform = FORMAT_PEM;
+    int informat = FORMAT_UNDEF, outformat = FORMAT_PEM, keyform = FORMAT_UNDEF;
     int modulus = 0, multirdn = 1, verify = 0, noout = 0, text = 0;
     int noenc = 0, newhdr = 0, subject = 0, pubkey = 0, precert = 0;
     long newkey_len = -1;
@@ -762,7 +762,7 @@ int req_main(int argc, char **argv)
             BIO_printf(bio_err,
                        "Ignoring -CAkey option since no -CA option is given\n");
         } else {
-            if ((CAkey = load_key(CAkeyfile, FORMAT_PEM,
+            if ((CAkey = load_key(CAkeyfile, FORMAT_UNDEF,
                                   0, passin, e, "issuer private key")) == NULL)
                 goto end;
         }
@@ -777,7 +777,7 @@ int req_main(int argc, char **argv)
                            "Need to give the -CAkey option if using -CA\n");
                 goto end;
             }
-            if ((CAcert = load_cert_pass(CAfile, 1, passin,
+            if ((CAcert = load_cert_pass(CAfile, FORMAT_UNDEF, 1, passin,
                                          "issuer certificate")) == NULL)
                 goto end;
             if (!X509_check_private_key(CAcert, CAkey)) {

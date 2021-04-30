@@ -75,7 +75,7 @@ int pkey_main(int argc, char **argv)
     char *infile = NULL, *outfile = NULL, *passin = NULL, *passout = NULL;
     char *passinarg = NULL, *passoutarg = NULL, *ciphername = NULL, *prog;
     OPTION_CHOICE o;
-    int informat = FORMAT_PEM, outformat = FORMAT_PEM;
+    int informat = FORMAT_UNDEF, outformat = FORMAT_PEM;
     int pubin = 0, pubout = 0, text_pub = 0, text = 0, noout = 0, ret = 1;
     int private = 0, traditional = 0, check = 0, pub_check = 0;
 #ifndef OPENSSL_NO_EC

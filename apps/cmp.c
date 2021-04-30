@@ -131,8 +131,8 @@ static int opt_revreason = CRL_REASON_NONE;
 /* credentials format */
 static char *opt_certform_s = "PEM";
 static int opt_certform = FORMAT_PEM;
-static char *opt_keyform_s = "PEM";
-static int opt_keyform = FORMAT_PEM;
+static char *opt_keyform_s = NULL;
+static int opt_keyform = FORMAT_UNDEF;
 static char *opt_otherpass = NULL;
 static char *opt_engine = NULL;
 
@@ -635,7 +635,7 @@ static X509 *load_cert_pwd(const char *uri, const char *pass, const char *desc)
     X509 *cert;
     char *pass_string = get_passwd(pass, desc);
 
-    cert = load_cert_pass(uri, 0, pass_string, desc);
+    cert = load_cert_pass(uri, FORMAT_UNDEF, 0, pass_string, desc);
     clear_free(pass_string);
     return cert;
 }
