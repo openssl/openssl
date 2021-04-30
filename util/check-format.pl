@@ -13,9 +13,9 @@
 #
 # usage:
 #   check-format.pl [-l|--sloppy-len] [-l|--sloppy-bodylen]
-#                   [-s|--sloppy-space] [-c|--sloppy-cmt]
+#                   [-s|--sloppy-space] [-c|--sloppy-comment]
 #                   [-m|--sloppy-macro] [-h|--sloppy-hang]
-#                   [-e|--eol-cmt] [-1|--1-stmt]
+#                   [-e|--eol-comment] [-1|--1-stmt]
 #                   <files>
 #
 # run self-tests:
@@ -28,24 +28,24 @@
 # Still it should be useful for detecting most typical glitches.
 #
 # options:
-#  -l | --sloppy-len   increase accepted max line length from 80 to 84
+#  -l | --sloppy-len     increase accepted max line length from 80 to 84
 #  -l | --sloppy-bodylen do not report function body length > 200
-#  -s | --sloppy-space do not report whitespace nits
-#  -c | --sloppy-cmt   do not report indentation of comments
-#                      Otherwise for each multi-line comment the indentation of
-#                      its lines is checked for consistency. For each comment
-#                      that does not begin to the right of normal code its
-#                      indentation must be as for normal code, while in case it
-#                      also has no normal code to its right it is considered to
-#                      refer to the following line and may be indented equally.
-#  -m | --sloppy-macro allow missing extra indentation of macro bodies
-#  -h | --sloppy-hang  when checking hanging indentation, do not report
-#                      * same indentation as on line before
-#                      * same indentation as non-hanging indent level
-#                      * indentation moved left (not beyond non-hanging indent)
-#                        just to fit contents within the line length limit
-#  -e | --eol-cmt      report needless intermediate multiple consecutive spaces also before end-of-line comments
-#  -1 | --1-stmt       do more aggressive checks for { 1 stmt } - see below
+#  -s | --sloppy-space   do not report whitespace nits
+#  -c | --sloppy-comment do not report indentation of comments
+#                        Otherwise for each multi-line comment the indentation of
+#                        its lines is checked for consistency. For each comment
+#                        that does not begin to the right of normal code its
+#                        indentation must be as for normal code, while in case it
+#                        also has no normal code to its right it is considered to
+#                        refer to the following line and may be indented equally.
+#  -m | --sloppy-macro   allow missing extra indentation of macro bodies
+#  -h | --sloppy-hang    when checking hanging indentation, do not report
+#                        * same indentation as on line before
+#                        * same indentation as non-hanging indent level
+#                        * indentation moved left (not beyond non-hanging indent)
+#                          just to fit contents within the line length limit
+#  -e | --eol-comment    report needless intermediate multiple consecutive spaces also before end-of-line comments
+#  -1 | --1-stmt         do more aggressive checks for { 1 stmt } - see below
 #
 # There are non-trivial false positives and negatives such as the following.
 #
@@ -67,7 +67,7 @@
 #   False negatives occur if the braces are more than two non-empty lines apart.
 #
 # * The presence of multiple consecutive spaces is regarded a coding style nit
-#   except when this is before end-of-line comments (unless the --eol-cmt is given) and
+#   except when this is before end-of-line comments (unless the --eol-comment is given) and
 #   except when done in order to align certain columns over multiple lines, e.g.:
 #   # define AB  1
 #   # define CDE 22
@@ -116,13 +116,13 @@ while ($ARGV[0] =~ m/^-(\w|-[\w\-]+)$/) {
         $sloppy_bodylen = 1;
     } elsif ($arg =~ m/^(s|-sloppy-space)$/) {
         $sloppy_SPC= 1;
-    } elsif ($arg =~ m/^(c|-sloppy-cmt)$/) {
+    } elsif ($arg =~ m/^(c|-sloppy-comment)$/) {
         $sloppy_cmt = 1;
     } elsif ($arg =~ m/^(m|-sloppy-macro)$/) {
         $sloppy_macro = 1;
     } elsif ($arg =~ m/^(h|-sloppy-hang)$/) {
         $sloppy_hang = 1;
-    } elsif ($arg =~ m/^(e|-eol-cmt)$/) {
+    } elsif ($arg =~ m/^(e|-eol-comment)$/) {
         $eol_cmt = 1;
     } elsif ($arg =~ m/^(1|-1-stmt)$/) {
         $extended_1_stmt = 1;
