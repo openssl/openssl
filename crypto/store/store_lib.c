@@ -32,9 +32,37 @@
 
 static int ossl_store_close_it(OSSL_STORE_CTX *ctx);
 
+static int loader_set_params(OSSL_STORE_LOADER *loader,
+                             OSSL_STORE_LOADER_CTX *loader_ctx,
+                             const OSSL_PARAM params[], const char *propq)
+{
+   if (params != NULL) {
+       if (!loader->p_set_ctx_params(loader_ctx, params))
+           return 0;
+   }
+
+   if (propq != NULL) {
+       OSSL_PARAM propp[2];
+
+       if (OSSL_PARAM_locate_const(params,
+                                   OSSL_STORE_PARAM_PROPERTIES) != NULL)
+           /* use the propq from params */
+           return 1;
+
+       propp[0] = OSSL_PARAM_construct_utf8_string(OSSL_STORE_PARAM_PROPERTIES,
+                                                   (char *)propq, 0);
+       propp[1] = OSSL_PARAM_construct_end();
+
+       if (!loader->p_set_ctx_params(loader_ctx, propp))
+           return 0;
+    }
+    return 1;
+}
+
 OSSL_STORE_CTX *
 OSSL_STORE_open_ex(const char *uri, OSSL_LIB_CTX *libctx, const char *propq,
                    const UI_METHOD *ui_method, void *ui_data,
+                   const OSSL_PARAM params[],
                    OSSL_STORE_post_process_info_fn post_process,
                    void *post_process_data)
 {
@@ -103,18 +131,11 @@ OSSL_STORE_open_ex(const char *uri, OSSL_LIB_CTX *libctx, const char *propq,
             if (loader_ctx == NULL) {
                 OSSL_STORE_LOADER_free(fetched_loader);
                 fetched_loader = NULL;
-            } else if (propq != NULL) {
-                OSSL_PARAM params[2];
-
-                params[0] = OSSL_PARAM_construct_utf8_string(
-                                OSSL_STORE_PARAM_PROPERTIES, (char *)propq, 0);
-                params[1] = OSSL_PARAM_construct_end();
-
-                if (!fetched_loader->p_set_ctx_params(loader_ctx, params)) {
-                    (void)fetched_loader->p_close(loader_ctx);
-                    OSSL_STORE_LOADER_free(fetched_loader);
-                    fetched_loader = NULL;
-                }
+            } else if(!loader_set_params(fetched_loader, loader_ctx,
+                                         params, propq)) {
+                (void)fetched_loader->p_close(loader_ctx);
+                OSSL_STORE_LOADER_free(fetched_loader);
+                fetched_loader = NULL;
             }
             loader = fetched_loader;
         }
@@ -187,8 +208,8 @@ OSSL_STORE_CTX *OSSL_STORE_open(const char *uri,
                                 OSSL_STORE_post_process_info_fn post_process,
                                 void *post_process_data)
 {
-    return OSSL_STORE_open_ex(uri, NULL, NULL, ui_method, ui_data, post_process,
-                              post_process_data);
+    return OSSL_STORE_open_ex(uri, NULL, NULL, ui_method, ui_data, NULL,
+                              post_process, post_process_data);
 }
 
 #ifndef OPENSSL_NO_DEPRECATED_3_0
@@ -927,6 +948,7 @@ const EVP_MD *OSSL_STORE_SEARCH_get0_digest(const OSSL_STORE_SEARCH *criterion)
 OSSL_STORE_CTX *OSSL_STORE_attach(BIO *bp, const char *scheme,
                                   OSSL_LIB_CTX *libctx, const char *propq,
                                   const UI_METHOD *ui_method, void *ui_data,
+                                  const OSSL_PARAM params[],
                                   OSSL_STORE_post_process_info_fn post_process,
                                   void *post_process_data)
 {
@@ -957,19 +979,11 @@ OSSL_STORE_CTX *OSSL_STORE_attach(BIO *bp, const char *scheme,
             || (loader_ctx = fetched_loader->p_attach(provctx, cbio)) == NULL) {
             OSSL_STORE_LOADER_free(fetched_loader);
             fetched_loader = NULL;
-        } else if (propq != NULL) {
-            OSSL_PARAM params[] = {
-                OSSL_PARAM_utf8_string(OSSL_STORE_PARAM_PROPERTIES,
-                                       NULL, 0),
-                OSSL_PARAM_END
-            };
-
-            params[0].data = (void *)propq;
-            if (!fetched_loader->p_set_ctx_params(loader_ctx, params)) {
-                (void)fetched_loader->p_close(loader_ctx);
-                OSSL_STORE_LOADER_free(fetched_loader);
-                fetched_loader = NULL;
-            }
+        } else if (!loader_set_params(fetched_loader, loader_ctx,
+                                      params, propq)) {
+            (void)fetched_loader->p_close(loader_ctx);
+            OSSL_STORE_LOADER_free(fetched_loader);
+            fetched_loader = NULL;
         }
         loader = fetched_loader;
         ossl_core_bio_free(cbio);

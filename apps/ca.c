@@ -274,7 +274,7 @@ int ca_main(int argc, char **argv)
     char def_dgst[80] = "";
     char *dgst = NULL, *policy = NULL, *keyfile = NULL;
     char *certfile = NULL, *crl_ext = NULL, *crlnumberfile = NULL;
-    int certformat = FORMAT_PEM, informat = FORMAT_PEM;
+    int certformat = FORMAT_UNDEF, informat = FORMAT_UNDEF;
     const char *infile = NULL, *spkac_file = NULL, *ss_cert_file = NULL;
     const char *extensions = NULL, *extfile = NULL, *passinarg = NULL;
     char *passin = NULL;
@@ -289,7 +289,7 @@ int ca_main(int argc, char **argv)
     size_t outdirlen = 0;
     int create_ser = 0, free_passin = 0, total = 0, total_done = 0;
     int batch = 0, default_op = 1, doupdatedb = 0, ext_copy = EXT_COPY_NONE;
-    int keyformat = FORMAT_PEM, multirdn = 1, notext = 0, output_der = 0;
+    int keyformat = FORMAT_UNDEF, multirdn = 1, notext = 0, output_der = 0;
     int ret = 1, email_dn = 1, req = 0, verbose = 0, gencrl = 0, dorevoke = 0;
     int rand_ser = 0, i, j, selfsign = 0, def_ret;
     char *crl_lastupdate = NULL, *crl_nextupdate = NULL;
@@ -594,7 +594,7 @@ end_of_options:
             && (certfile = lookup_conf(conf, section, ENV_CERTIFICATE)) == NULL)
             goto end;
 
-        x509 = load_cert_pass(certfile, 1, passin, "CA certificate");
+        x509 = load_cert_pass(certfile, certformat, 1, passin, "CA certificate");
         if (x509 == NULL)
             goto end;
 
@@ -1287,7 +1287,7 @@ end_of_options:
         } else {
             X509 *revcert;
 
-            revcert = load_cert_pass(infile, 1, passin,
+            revcert = load_cert_pass(infile, informat, 1, passin,
                                      "certificate to be revoked");
             if (revcert == NULL)
                 goto end;
@@ -1417,7 +1417,7 @@ static int certify_cert(X509 **xret, const char *infile, int certformat,
     EVP_PKEY *pktmp = NULL;
     int ok = -1, i;
 
-    if ((template_cert = load_cert_pass(infile, 1, passin,
+    if ((template_cert = load_cert_pass(infile, certformat, 1, passin,
                                         "template certificate")) == NULL)
         goto end;
     if (verbose)

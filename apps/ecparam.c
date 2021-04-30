@@ -240,7 +240,7 @@ int ecparam_main(int argc, char **argv)
             goto end;
         }
     } else {
-        params_key = load_keyparams(infile, 1, "EC", "EC parameters");
+        params_key = load_keyparams(infile, informat, 1, "EC", "EC parameters");
         if (params_key == NULL || !EVP_PKEY_is_a(params_key, "EC"))
             goto end;
         if (point_format

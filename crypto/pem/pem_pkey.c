@@ -55,7 +55,7 @@ static EVP_PKEY *pem_read_bio_key(BIO *bp, EVP_PKEY **x,
         return NULL;
 
     if ((ctx = OSSL_STORE_attach(bp, "file", libctx, propq, ui_method, u,
-                                 NULL, NULL)) == NULL)
+                                 NULL, NULL, NULL)) == NULL)
         goto err;
 #ifndef OPENSSL_NO_SECURE_HEAP
 # ifndef OPENSSL_NO_DEPRECATED_3_0

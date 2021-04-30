@@ -253,7 +253,7 @@ static int check(X509_STORE *ctx, const char *file,
     STACK_OF(X509) *chain = NULL;
     int num_untrusted;
 
-    x = load_cert(file, "certificate file");
+    x = load_cert(file, FORMAT_UNDEF, "certificate file");
     if (x == NULL)
         goto end;
 

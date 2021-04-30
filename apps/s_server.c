@@ -977,11 +977,11 @@ int s_server_main(int argc, char *argv[])
     int no_dhe = 0;
     int nocert = 0, ret = 1;
     int noCApath = 0, noCAfile = 0, noCAstore = 0;
-    int s_cert_format = FORMAT_PEM, s_key_format = FORMAT_PEM;
-    int s_dcert_format = FORMAT_PEM, s_dkey_format = FORMAT_PEM;
+    int s_cert_format = FORMAT_UNDEF, s_key_format = FORMAT_UNDEF;
+    int s_dcert_format = FORMAT_UNDEF, s_dkey_format = FORMAT_UNDEF;
     int rev = 0, naccept = -1, sdebug = 0;
     int socket_family = AF_UNSPEC, socket_type = SOCK_STREAM, protocol = 0;
-    int state = 0, crl_format = FORMAT_PEM, crl_download = 0;
+    int state = 0, crl_format = FORMAT_UNDEF, crl_download = 0;
     char *host = NULL;
     char *port = OPENSSL_strdup(PORT);
     unsigned char *context = NULL;
@@ -1687,7 +1687,8 @@ int s_server_main(int argc, char *argv[])
         if (s_key == NULL)
             goto end;
 
-        s_cert = load_cert_pass(s_cert_file, 1, pass, "server certificate");
+        s_cert = load_cert_pass(s_cert_file, s_cert_format, 1, pass,
+                                "server certificate");
 
         if (s_cert == NULL)
             goto end;
@@ -1703,7 +1704,7 @@ int s_server_main(int argc, char *argv[])
             if (s_key2 == NULL)
                 goto end;
 
-            s_cert2 = load_cert_pass(s_cert_file2, 1, pass,
+            s_cert2 = load_cert_pass(s_cert_file2, s_cert_format, 1, pass,
                                 "second server certificate");
 
             if (s_cert2 == NULL)
@@ -1726,7 +1727,7 @@ int s_server_main(int argc, char *argv[])
 
     if (crl_file != NULL) {
         X509_CRL *crl;
-        crl = load_crl(crl_file, 0, "CRL");
+        crl = load_crl(crl_file, crl_format, 0, "CRL");
         if (crl == NULL)
             goto end;
         crls = sk_X509_CRL_new_null();
@@ -1748,7 +1749,7 @@ int s_server_main(int argc, char *argv[])
         if (s_dkey == NULL)
             goto end;
 
-        s_dcert = load_cert_pass(s_dcert_file, 1, dpass,
+        s_dcert = load_cert_pass(s_dcert_file, s_dcert_format, 1, dpass,
                                  "second server certificate");
 
         if (s_dcert == NULL) {
@@ -1974,9 +1975,9 @@ int s_server_main(int argc, char *argv[])
         EVP_PKEY *dhpkey = NULL;
 
         if (dhfile != NULL)
-            dhpkey = load_keyparams(dhfile, 0, "DH", "DH parameters");
+            dhpkey = load_keyparams(dhfile, FORMAT_UNDEF, 0, "DH", "DH parameters");
         else if (s_cert_file != NULL)
-            dhpkey = load_keyparams(s_cert_file, 0, "DH", "DH parameters");
+            dhpkey = load_keyparams(s_cert_file, FORMAT_UNDEF, 0, "DH", "DH parameters");
 
         if (dhpkey != NULL) {
             BIO_printf(bio_s_out, "Setting temp DH parameters\n");
@@ -2008,7 +2009,8 @@ int s_server_main(int argc, char *argv[])
 
         if (ctx2 != NULL) {
             if (dhfile != NULL) {
-                EVP_PKEY *dhpkey2 = load_keyparams(s_cert_file2, 0, "DH",
+                EVP_PKEY *dhpkey2 = load_keyparams(s_cert_file2, FORMAT_UNDEF,
+                                                   0, "DH",
                                                    "DH parameters");
 
                 if (dhpkey2 != NULL) {

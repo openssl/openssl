@@ -266,9 +266,9 @@ int x509_main(int argc, char **argv)
     char *prog;
     int days = UNSET_DAYS; /* not explicitly set */
     int x509toreq = 0, modulus = 0, print_pubkey = 0, pprint = 0;
-    int CAformat = FORMAT_PEM, CAkeyformat = FORMAT_PEM;
+    int CAformat = FORMAT_UNDEF, CAkeyformat = FORMAT_UNDEF;
     int fingerprint = 0, reqfile = 0, checkend = 0;
-    int informat = FORMAT_PEM, outformat = FORMAT_PEM, keyformat = FORMAT_PEM;
+    int informat = FORMAT_UNDEF, outformat = FORMAT_PEM, keyformat = FORMAT_UNDEF;
     int next_serial = 0, subject_hash = 0, issuer_hash = 0, ocspid = 0;
     int noout = 0, CA_createserial = 0, email = 0;
     int ocsp_uri = 0, trustout = 0, clrtrust = 0, clrreject = 0, aliasout = 0;
@@ -719,7 +719,7 @@ int x509_main(int argc, char **argv)
             }
         }
     } else {
-        x = load_cert_pass(infile, 1, passin, "certificate");
+        x = load_cert_pass(infile, informat, 1, passin, "certificate");
         if (x == NULL)
             goto end;
     }
@@ -734,7 +734,7 @@ int x509_main(int argc, char **argv)
         goto end;
 
     if (CAfile != NULL) {
-        xca = load_cert_pass(CAfile, 1, passin, "CA certificate");
+        xca = load_cert_pass(CAfile, CAformat, 1, passin, "CA certificate");
         if (xca == NULL)
             goto end;
     }
