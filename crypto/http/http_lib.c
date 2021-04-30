@@ -113,7 +113,7 @@ int OSSL_parse_url(const char *url, char **pscheme, char **puser, char **phost,
     /* remaining port spec handling is also done for the default values */
     /* make sure a decimal port number is given */
     if (!sscanf(port, "%u", &portnum) || portnum > 65535) {
-        ERR_raise(ERR_LIB_HTTP, HTTP_R_INVALID_PORT_NUMBER);
+        ERR_raise_data(ERR_LIB_HTTP, HTTP_R_INVALID_PORT_NUMBER, "%s", port);
         goto err;
     }
     for (port_end = port; '0' <= *port_end && *port_end <= '9'; port_end++)
@@ -240,6 +240,7 @@ int OSSL_HTTP_parse_url(const char *url, int *pssl, char **puser, char **phost,
     return 0;
 }
 
+/* Respect no_proxy, taking default value from environment variable(s) */
 int ossl_http_use_proxy(const char *no_proxy, const char *server)
 {
     size_t sl;
@@ -257,6 +258,7 @@ int ossl_http_use_proxy(const char *no_proxy, const char *server)
         no_proxy = getenv("no_proxy");
     if (no_proxy == NULL)
         no_proxy = getenv(OPENSSL_NO_PROXY);
+
     if (no_proxy != NULL)
         found = strstr(no_proxy, server);
     while (found != NULL
@@ -266,12 +268,10 @@ int ossl_http_use_proxy(const char *no_proxy, const char *server)
     return found == NULL;
 }
 
+/* Take default value from environment variable(s), respect no_proxy */
 const char *ossl_http_adapt_proxy(const char *proxy, const char *no_proxy,
                                   const char *server, int use_ssl)
 {
-    const int http_len = strlen(OSSL_HTTP_PREFIX);
-    const int https_len = strlen(OSSL_HTTPS_PREFIX);
-
     /*
      * using environment variable names, both lowercase and uppercase variants,
      * compatible with other HTTP client implementations like wget, curl and git
@@ -281,16 +281,9 @@ const char *ossl_http_adapt_proxy(const char *proxy, const char *no_proxy,
     if (proxy == NULL)
         proxy = getenv(use_ssl ? OPENSSL_HTTP_PROXY :
                        OPENSSL_HTTPS_PROXY);
-    if (proxy == NULL)
-        return NULL;
 
-    /* skip any leading "http://" or "https://" */
-    if (strncmp(proxy, OSSL_HTTP_PREFIX, http_len) == 0)
-        proxy += http_len;
-    else if (strncmp(proxy, OSSL_HTTPS_PREFIX, https_len) == 0)
-        proxy += https_len;
-
-    if (*proxy == '\0' || !ossl_http_use_proxy(no_proxy, server))
+    if (proxy == NULL || *proxy == '\0'
+            || !ossl_http_use_proxy(no_proxy, server))
         return NULL;
     return proxy;
 }
