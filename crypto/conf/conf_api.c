@@ -146,6 +146,7 @@ void _CONF_free_data(CONF *conf)
      * with
      */
 
+    OPENSSL_free(conf->includedir);
     lh_CONF_VALUE_doall(conf->data, value_free_stack_doall);
     lh_CONF_VALUE_free(conf->data);
 }
