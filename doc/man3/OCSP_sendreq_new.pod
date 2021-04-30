@@ -2,6 +2,7 @@
 
 =head1 NAME
 
+OCSP_REQ_CTX,
 OCSP_sendreq_new,
 OCSP_sendreq_nbio,
 OCSP_sendreq_bio,
@@ -27,13 +28,14 @@ Deprecated since OpenSSL 3.0, can be hidden entirely by defining
 B<OPENSSL_API_COMPAT> with a suitable version value, see
 L<openssl_user_macros(7)>:
 
+ typedef OSSL_HTTP_REQ_CTX OCSP_REQ_CTX;
  int OCSP_REQ_CTX_i2d(OCSP_REQ_CT *rctx, const ASN1_ITEM *it, ASN1_VALUE *req);
  int OCSP_REQ_CTX_add1_header(OCSP_REQ_CT *rctx,
                               const char *name, const char *value);
- void OCSP_REQ_CTX_free(OSSL_HTTP_REQ_CTX *rctx);
+ void OCSP_REQ_CTX_free(OCSP_REQ_CTX *rctx);
  void OCSP_set_max_response_length(OCSP_REQ_CT *rctx,
                                    unsigned long len);
- int OCSP_REQ_CTX_set1_req(OSSL_HTTP_REQ_CTX *rctx, const OCSP_REQUEST *req);
+ int OCSP_REQ_CTX_set1_req(OCSP_REQ_CTX *rctx, const OCSP_REQUEST *req);
 
 =head1 DESCRIPTION
 
@@ -70,10 +72,11 @@ OCSP_REQ_CTX_i2d(rctx, it, req) is equivalent to the following:
 OCSP_REQ_CTX_set1_req(rctx, req) is equivalent to the following:
 
  OSSL_HTTP_REQ_CTX_set1_req(rctx, "application/ocsp-request",
-                            ASN1_ITEM_rptr(OCSP_REQUEST), (ASN1_VALUE *)req)
+                            ASN1_ITEM_rptr(OCSP_REQUEST),
+                            (const ASN1_VALUE *)req)
 
-The other deprecated type and functions have been superseded by the
-following equivalents:
+The deprecated type and the remaining deprecated functions
+have been superseded by the following equivalents:
 B<OCSP_REQ_CTX> by L<OSSL_HTTP_REQ_CTX(3)>,
 OCSP_REQ_CTX_add1_header() by L<OSSL_HTTP_REQ_CTX_add1_header(3)>,
 OCSP_REQ_CTX_free() by L<OSSL_HTTP_REQ_CTX_free(3)>, and

@@ -186,8 +186,10 @@ typedef OSSL_HTTP_REQ_CTX OCSP_REQ_CTX;
                                            NULL, NULL, path)
 #   define OCSP_REQ_CTX_add1_header(r, n, v) \
         OSSL_HTTP_REQ_CTX_add1_header(r, n, v)
-#   define OCSP_REQ_CTX_i2d(r, i, req) \
-        OSSL_HTTP_REQ_CTX_set1_req(r, "application/ocsp-request", i, req)
+#   define OCSP_REQ_CTX_i2d(r, it, req) \
+        OSSL_HTTP_REQ_CTX_set1_req(r, "application/ocsp-request", it, req)
+#   define OCSP_REQ_CTX_set1_req(r, req) \
+        OCSP_REQ_CTX_i2d(r, ASN1_ITEM_rptr(OCSP_REQUEST), (ASN1_VALUE *)(req))
 #   define OCSP_REQ_CTX_nbio(r) \
         OSSL_HTTP_REQ_CTX_nbio(r)
 #   define OCSP_REQ_CTX_nbio_d2i(r, p, i)        \
@@ -196,8 +198,6 @@ typedef OSSL_HTTP_REQ_CTX OCSP_REQ_CTX;
         OSSL_HTTP_REQ_CTX_get0_mem_bio(r)
 #   define OCSP_set_max_response_length(r, l) \
         OSSL_HTTP_REQ_CTX_set_max_response_length(r, l)
-#   define OCSP_REQ_CTX_set1_req(r, req) \
-        OCSP_REQ_CTX_i2d(r, ASN1_ITEM_rptr(OCSP_REQUEST), (ASN1_VALUE *)(req))
 #  endif
 
 OCSP_CERTID *OCSP_cert_to_id(const EVP_MD *dgst, const X509 *subject,
