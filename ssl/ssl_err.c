@@ -312,6 +312,8 @@ static const ERR_STRING_DATA SSL_str_reasons[] = {
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_NULL_SSL_CTX), "null ssl ctx"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_NULL_SSL_METHOD_PASSED),
     "null ssl method passed"},
+    {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_OCSP_CALLBACK_FAILURE),
+    "ocsp callback failure"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_OLD_SESSION_CIPHER_NOT_RETURNED),
     "old session cipher not returned"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_OLD_SESSION_COMPRESSION_ALGORITHM_NOT_RETURNED),
