@@ -210,6 +210,7 @@ Result = DIGESTSIGNINIT_ERROR
 # Test that SHA1 is not allowed in fips mode for signing
 Availablein = fips
 Sign = P-256
+Securitycheck = 1
 Ctrl = digest:SHA1
 Input = "0123456789ABCDEF1234"
 Result = PKEY_CTRL_ERROR
