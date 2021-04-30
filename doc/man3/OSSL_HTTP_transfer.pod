@@ -104,14 +104,15 @@ I<bio> is used for writing the request, and I<rbio> for reading the response.
 As soon as the client has flushed I<bio> the server must be ready to provide
 a response or indicate a waiting condition via I<rbio>.
 
-The optional I<proxy> parameter can be used to set the address of the an
+If I<bio> is NULL the optional I<proxy> parameter can be used to set an
 HTTP(S) proxy to use (unless overridden by "no_proxy" settings).
 If TLS is not used this defaults to the environment variable C<http_proxy>
 if set, else C<HTTP_PROXY>.
 If I<use_ssl> != 0 it defaults to C<https_proxy> if set, else C<HTTPS_PROXY>.
-An empty proxy string specifies not to use a proxy.
-Else the format is C<[http[s]://]address[:port][/path]>,
-where any path given is ignored.
+An empty proxy string C<""> forbids using a proxy.
+Else the format is
+C<[http[s]://][userinfo@]host[:port][/path][?query][#fragment]>,
+where any userinfo, path, query, and fragment given is ignored.
 The default proxy port number is 80, or 443 in case "https:" is given.
 The HTTP client functions connect via the given proxy unless the I<server>
 is found in the optional list I<no_proxy> of proxy hostnames (if not NULL;
